@@ -1,0 +1,63 @@
+  <chapter id="graphs-plots"><title>Graphs and plots</title>
+
+    <para>A separate program, namely gnuplot, is called to generate
+      graphs. Gnuplot is a very full-featured graphing program with
+      myriad options. It is available from <ulink
+	url="http://www.gnuplot.org/">gnuplot.org</ulink> (but note
+      that a copy of gnuplot is bundled with the MS Windows version of
+      <application>gretl</application>).
+      <application>gretl</application> gives you direct access, via a
+      graphical interface, to only a small subset of gnuplot's options
+      but it tries to choose sensible values for you; it also allows
+      you to take complete control over graph details if you
+      wish.</para>
+
+    <para>Under MS Windows you can click at the top left corner of a
+      graph window for a pull-down gnuplot menu that lets you choose
+      various things (including copying the graph to the Windows
+      clipboard and sending it to a printer).</para>
+
+    <para>For full control over a graph, follow this procedure:</para>
+
+    <orderedlist>
+      <listitem><para>Close the graph window.</para></listitem>
+      <listitem><para>From the Session menu, choose <quote>Add last
+	    graph</quote>.</para></listitem>
+      <listitem><para>In the session icon window, right-click on the
+	  new graph icon and choose either <quote>Edit using
+	    GUI</quote> or <quote>Edit plot
+	    commands</quote>.</para></listitem>
+    </orderedlist>
+
+    <para>The <quote>Edit using GUI</quote> item pops up a graphical
+      controller for gnuplot which lets you fine-tune various aspects
+      of the graph.  The <quote>Edit plot commands</quote> item opens
+      an editor window containing the actual gnuplot command file for
+      generating the graph: this gives you full control over graph
+      details &mdash; if you know something about gnuplot. To find out
+      more, see the gnuplot <ulink
+	url="http://ricardo.ecn.wfu.edu/gnuplot.html">online
+	manual</ulink> or <ulink
+	url="http://www.gnuplot.org/">gnuplot.org</ulink>.</para>
+
+    <para>See also the entry for <command>gnuplot</command> in 
+      <xref linkend="cmdref"/> below &mdash; and the
+      <command>graph</command> and <command>plot</command> commands
+      for <quote>quick and dirty</quote> ASCII graphs.</para>
+
+    <figure id="fig-plot" float="1" pgwide="1">
+      <title>gretl's gnuplot controller</title>
+      <screenshot>
+	<screeninfo>gnuplot controller</screeninfo>
+	<graphic fileref="figures/plot_control.png" align="center"/>
+      </screenshot>
+    </figure>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("manual.sgml" "book" "chapter")
+End:
+-->

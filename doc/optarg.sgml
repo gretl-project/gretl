@@ -1,0 +1,346 @@
+  <chapter id="optarg"><title>Options, arguments and path-searching</title>
+  
+
+  <sect1 id="optarg1"><title><application>gretl</application></title>
+
+    <para>
+      <command>gretl</command> (under MS Windows,
+      <command>gretlw32.exe</command>)<footnote><para>On unix-type systems,
+      a <quote>wrapper</quote> script named <filename>gretl</filename>
+      is installed.  This script checks whether the
+      <literal>DISPLAY</literal> environment variable is set; if so,
+      it launches the GUI program, <filename>gretl_x11</filename>, and
+      if not it launches the command-line program,
+      <filename>gretlcli</filename>.</para>
+	</footnote>
+    </para>
+
+    <para>
+      &mdash; Opens the program and waits for user input.
+    </para>
+
+    <para>
+      <command>gretl</command> <replaceable>datafile</replaceable>
+    </para>
+
+    <para>
+      &mdash; Starts the program with the specified datafile in its
+      workspace. The data file may be in native
+      <application>gretl</application> format, CSV format, or BOX1
+      format (see <xref linkend="datafiles"/> above).  The
+      program will try to detect the format of the file and treat it
+      appropriately. See also <xref linkend="path-search"/> below for
+      path-searching behavior.
+    </para>
+
+    <para>
+      <command>gretl --help</command> (or <command>gretl -h</command>)
+    </para>
+
+    <para>
+      &mdash; Print a brief summary of usage and exit.
+    </para>
+
+    <para>
+      <command>gretl --version</command> (or <command>gretl
+	-v</command>)
+    </para>
+
+    <para>
+      &mdash; Print version identification for the program and exit
+    </para>
+
+    <para>
+      <command>gretl --run</command> <replaceable>scriptfile</replaceable> (or
+      <command>gretl -r</command>
+      <replaceable>scriptfile</replaceable>)</para>
+
+    <para>&mdash; Start the program and open a window displaying the
+      specified script file, ready to run.  See <xref linkend="path-search"/>
+      below for path-searching behavior.</para>
+
+    <para>
+      <command>gretl --db</command> <replaceable>database</replaceable> (or
+      <command>gretl -d</command>
+      <replaceable>database</replaceable>)</para>
+
+    <para>&mdash; Start the program and open a window displaying the
+      specified database.  If the database files (the
+      <filename>.bin</filename> file and its accompanying
+      <filename>.idx</filename> file &mdash; see <xref linkend="dbase"/>) is not
+	in the default system database directory, you must specify the
+	full path.
+      </para>
+
+    <para>
+      <command>gretl --webdb</command> <replaceable>database</replaceable> (or
+      <command>gretl -w</command>
+      <replaceable>database</replaceable>)</para>
+
+    <para>&mdash; Start the program and open a window displaying the
+      specified remote (web) database.  The name of the database
+      should be given without the <filename>.bin</filename> suffix.
+      </para>
+
+    <para>Some things in <application>gretl</application> are
+      configurable under the <quote>File, Preferences</quote>
+      menu.</para>  
+
+    <itemizedlist>
+      <listitem><para>The base directory for
+	  <application>gretl</application>'s shared
+	  files.</para></listitem>
+      <listitem><para>The command to launch <application>gnuplot</application>.
+	  </para></listitem>
+      <listitem><para>The user's base directory for
+	  <application>gretl</application>-related
+	  files.</para></listitem>
+      <listitem><para>The command to launch GNU R (see 
+	  <xref linkend="app-c"/>).</para></listitem>
+      <listitem><para>The directory in which to start looking for
+	  native <application>gretl</application>
+	  databases.</para></listitem>
+      <listitem><para>The directory in which to start looking for RATS
+	  4 databases.</para></listitem>
+      <listitem><para>The IP number of the
+	  <application>gretl</application> database server to
+	  access.</para></listitem>
+      <listitem><para>The calculator and editor programs to launch
+	  from the toolbar.</para></listitem>
+      <listitem><para>The monospaced font to be used in
+	  <application>gretl</application> screen
+	  output.</para></listitem>
+    </itemizedlist>
+
+    <para>There are also some check boxes.  Checking the
+      <quote>expert</quote> box quells some warnings that are
+      otherwise issued.  Checking <quote>Tell me about gretl
+	updates</quote> makes <application>gretl</application> 
+      attempt to query the update server at start-up. Unchecking
+      <quote>Show gretl toolbar</quote> turns the icon toolbar
+      off.</para>
+
+    <para>Settings chosen in this way are handled differently
+    depending on the context.  Under MS Windows they are stored in the
+    Windows registry.  Under the <application>gnome</application>
+    desktop they are stored in <filename>.gnome/Gretl</filename> in
+    the user's home directory.  Otherwise they are stored in a file named
+      <filename>.gretlrc</filename> in the user's home directory.
+      </para>
+
+  </sect1>
+
+  <sect1 id="optarg2"><title><application>gretlcli</application></title>
+
+    <para><command>gretlcli</command></para>
+
+    <para>&mdash; Opens the program and waits for user input.
+    </para>
+
+    <para><command>gretlcli</command>
+      <replaceable>datafile</replaceable></para>  
+
+    <para>&mdash; Starts the program with the specified datafile in
+      its workspace. The data file may be in native
+      <application>gretl</application> format, CSV format, or BOX1
+      format (see <xref linkend="datafiles"/>).  The
+      program will try to detect the format of the file and treat it
+      appropriately. See also <xref linkend="path-search"/> for
+      path-searching behavior.</para>
+
+    <para><command>gretlcli --help</command> (or <command>gretlcli
+	-h</command>)</para>
+
+    <para>&mdash; Prints a brief summary of usage.</para>
+
+    <para><command>gretlcli --version</command> (or <command>gretlcli
+	-v</command>)</para>
+
+    <para>&mdash; Prints version identification for the
+      program.</para>
+
+    <para><command>gretlcli --pvalue</command> (or <command>gretlcli
+	-p</command>)</para>
+
+    <para>&mdash; Starts the program in a mode in which you can
+    interactively determine p-values for various common statistics.</para>
+
+    <para><command>gretlcli --run</command>
+      <replaceable>scriptfile</replaceable> (or <command>gretlcli
+	-r</command> <replaceable>scriptfile</replaceable>)</para>
+
+    <para>&mdash; Execute the commands in
+      <replaceable>scriptfile</replaceable> then hand over input to
+      the command line.  See <xref linkend="path-search"/> for
+      path-searching behavior.</para>  
+
+    <para><command>gretlcli --batch</command>
+      <replaceable>scriptfile</replaceable> (or <command>gretlcli
+	-b</command> <replaceable>scriptfile</replaceable>)</para>
+
+    <para>&mdash; Execute the commands in
+      <replaceable>scriptfile</replaceable> then exit.  When using
+      this option you will probably want to redirect output to a file.
+      See <xref linkend="path-search"/> for path-searching
+      behavior.</para>
+
+    <para>When using the <command>--run</command> and
+      <command>--batch</command> options, the script file in question
+      must call for a data file to be opened. This can be done using
+      the <command>open</command> command within the script. For
+      backward compatibility with Ramanathan's original
+      <application>ESL</application> program another mechanism is
+      offered (<application>ESL</application> doesn't have the
+      <command>open</command> command).  A line of the form:
+      
+      <programlisting> 
+	(* ! myfile.dat *)</programlisting> 
+
+      will (a) cause <application>gretlcli</application> to load
+      <filename>myfile.dat</filename>, but will (b) be ignored as a
+      comment by the original <application>ESL</application>.  Note
+      the specification carefully: There is exactly one space between
+      the begin comment marker, <literal>(*</literal>, and the
+      <literal>!</literal>; there is exactly one space between the
+      <literal>!</literal> and the name of the data file.</para>
+
+    <para>One further kludge enables <application>gretl</application>
+      and <application>gretlcli</application> to get datafile
+      information from the <application>ESL</application>
+      <quote>practice files</quote> included with the
+      <application>gretl</application> package.  A typical practice
+      file begins like this:</para>
+
+    <para>
+      <literal>
+      (* PS4.1, using data file DATA4-1, for reproducing Table 4.2 *)
+	</literal>
+    </para>
+
+    <para>This algorithm is used: if an input line begins with the
+      comment marker, search it for the string
+      <literal>DATA</literal> (upper case).  If this is found,
+      extract the string from the <literal>D</literal> up to the
+      next space or comma, put it into lower case, and treat it as the
+      name of a data file to be opened.</para>
+
+    </sect1>
+
+    <sect1 id="path-search"><title>Path searching</title>
+
+      <para>When the name of a data file or script file is supplied to
+	<application>gretl</application> or
+	<application>gretlcli</application> on the command line (see <xref
+	linkend="optarg1"/> and <xref linkend="optarg2"/>), the file is
+	looked for as follows:</para>
+
+      <orderedlist>
+	<listitem><para><quote>As is</quote>.  That is, in the current
+	    working directory or, if a full path is specified, at the
+	    specified location.</para>
+	</listitem>
+	<listitem><para>In the user's gretl directory (see <xref
+	    linkend="tab-path"/> for the default values).</para>
+	</listitem>
+	<listitem><para>In any immediate sub-directory of the user's
+	    gretl directory.</para></listitem>
+	<listitem><para>In the case of a data file, search continues
+	    with the main <application>gretl</application> data
+	    directory. In the case of a script file, the search
+	    proceeds to the system script directory.  See <xref
+	    linkend="tab-path"/> for the default settings.</para>
+	</listitem>
+	<listitem><para>In the case of data files the search then
+	    proceeds to all immediate sub-directories of the main data
+	    directory.</para>
+	</listitem>
+      </orderedlist>
+
+      <table id="tab-path" frame="none">
+	<title>Default path settings</title>
+	<tgroup cols="3">
+	  <thead>
+	    <row>
+	      <entry>&nbsp;</entry>
+	      <entry>Linux/unix</entry>
+	      <entry>MS Windows</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>User directory</entry>
+	      <entry><filename>$HOME/.gretl</filename></entry>
+	      <entry><filename>PREFIX\gretl\user</filename></entry>
+	    </row>
+	    <row>
+	      <entry>System data directory</entry>
+	      <entry><filename>PREFIX/share/gretl/data</filename></entry>
+	      <entry><filename>PREFIX\gretl\data</filename></entry>
+	    </row>
+	    <row>
+	      <entry>System script directory</entry>
+	      <entry><filename>PREFIX/share/gretl/scripts</filename></entry>
+	      <entry><filename>PREFIX\gretl\scripts</filename></entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+	<tgroup cols="1">
+	  <tbody>
+	    <row>
+	      <entry><emphasis>Note:</emphasis>
+		<filename>PREFIX</filename> denotes the base
+		directory chosen at the time
+		<application>gretl</application> is installed.
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+		
+
+      <para>Thus it is not necessary to specify the full path for a
+	data or script file unless you wish to override the automatic
+	searching mechanism. (This also applies within
+	<application>gretlcli</application>, when you supply a
+	filename as an argument to the <command>open</command> or
+	<command>run</command> commands.)</para>
+
+      <para>When a command script contains an instruction to open a
+	data file, the search order for the data file is as stated
+	above, except that the directory containing the script is also
+	searched, immediately after trying to find the data file
+	<quote>as is</quote>.
+      </para>
+
+      <sect2 id="MS-behave"><title>MS Windows</title>
+
+	<para>
+	  Under MS Windows configuration information for
+	  <application>gretl</application> and
+	  <application>gretlcli</application> is stored in the Windows
+	  registry. A suitable set of registry entries is created when
+	  <application>gretl</application> is first installed, and the
+	  settings can be changed under
+	  <application>gretl</application>'s <quote>File,
+	    Preferences</quote> menu. In case anyone needs to make
+	  manual adjustments to this information, the entries can be
+	  found (using the standard Windows program
+	  <application>regedit.exe</application>) under
+	  <literal>Software\gretl</literal> in 
+	  <literal>HKEY_CLASSES_ROOT</literal> (the main
+	  <application>gretl</application> directory and the command
+	  to invoke <application>gnuplot</application>) and
+	  <literal>HKEY_CURRENT_USER</literal> (all other
+	  configurable variables).</para>
+
+      </sect2>
+    </sect1>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("manual.sgml" "book" "chapter")
+End:
+-->

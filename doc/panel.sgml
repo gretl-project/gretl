@@ -1,0 +1,271 @@
+  <chapter id="panel"><title>Panel data</title>
+
+    <para>Panel data (pooled cross-section and time-series) require
+      special care.  Here are some pointers.</para>
+
+    <para>Consider a data set composed of observations on each of
+      <emphasis>n</emphasis> cross-sectional units (countries, states,
+      persons or whatever) in each of <emphasis>T</emphasis> periods.
+      Let each observation comprise the values of
+      <emphasis>m</emphasis> variables of interest.  The data set then
+      contains <emphasis>mnT</emphasis> values.</para>
+
+    <para>The data should be arranged <quote>by observation</quote>:
+      each row represents an observation; each column contains the
+      values of a particular variable. The data matrix then has
+      <emphasis>nT</emphasis> rows and <emphasis>m</emphasis> columns.
+      That leaves open the matter of how the rows should be arranged.
+      There are two possibilities.<footnote><para>If you don't intend
+	  to make any
+	  conceptual or statistical distinction between
+	  cross-sectional and temporal variation in the data you can
+	  arrange the rows arbitrarily, but this is probably wasteful
+	  of information.</para>
+      </footnote></para>
+
+    <itemizedlist>
+      <listitem><para>Rows grouped by <emphasis>unit</emphasis>.
+	  Think of the data matrix as composed of
+	  <emphasis>n</emphasis> blocks, each having
+	  <emphasis>T</emphasis> rows. The first block of
+	  <emphasis>T</emphasis> rows contains the observations on
+	  cross-sectional unit 1 for each of the periods; the next
+	  block contains the observations on unit 2 for all periods;
+	  and so on.  In effect, the data matrix is a set of
+	  time-series data sets, stacked vertically.</para></listitem>
+      <listitem><para>Rows grouped by <emphasis>period</emphasis>.
+	  Think of the data matrix as composed of
+	  <emphasis>T</emphasis> blocks, each having
+	  <emphasis>n</emphasis> rows. The first
+	  <emphasis>n</emphasis> rows contain the observations for
+	  each of the cross-sectional units in period 1; the next
+	  block contains the observations for all units in period 2;
+	  and so on.  The data matrix is a set of cross-sectional data
+	  sets, stacked vertically.</para></listitem>
+    </itemizedlist>
+
+    <para>You may use whichever arrangement is more convenient.  The
+      first is perhaps easier to keep straight.  If you use the second
+      then of course you must ensure that the cross-sectional units
+      appear in the same order in each of the period data
+      blocks.</para>
+
+    <para>In either case you can use the frequency field in the
+      <emphasis>observations</emphasis> line of the data header file (see
+      <xref linkend="datafiles"/>) to make life a little easier.</para>
+
+    <itemizedlist>
+      <listitem><para><emphasis>Grouped by unit</emphasis>: Set the
+	  frequency equal to <emphasis>T</emphasis>. Suppose you have
+	  observations on 20 units in each of 5 time periods. Then
+	  this observations line is appropriate: <literal>5 1.1
+	    20.5</literal> (read: frequency 5, starting with the
+	  observation for unit 1, period 1, and ending with the
+	  observation for unit 20, period 5). Then, for instance, you
+	  can refer to the observation for unit 2 in period 5 as
+	  <literal>2.5</literal>, and that for unit 13 in period 1 as
+	  <literal>13.1</literal>.</para></listitem>
+      <listitem><para><emphasis>Grouped by period</emphasis>: Set the
+	  frequency equal to <emphasis>n</emphasis>.  In this case if
+	  you have observations on 20 units in each of 5 periods, the
+	  observations line should be: <literal>20 1.01 5.20</literal>
+	  (read: frequency 20, starting with the observation for
+	  period 1, unit 01, and ending with the observation for
+	  period 5, unit 20).  One refers to the observation for unit
+	  2, period 5 as <literal>5.02</literal>.</para></listitem>
+    </itemizedlist>
+
+    <para>If you decide to construct a panel data set using a
+      spreadsheet program first, then bring the data into
+      <application>gretl</application> as a CSV import, the program
+      will (probably) not at first recognize the special nature of the
+      data.  You can fix this by using the command
+      <command>setobs</command> (see <xref linkend="cmdref"/>) or the
+      GUI menu item
+      <quote>Sample, Set frequency, startobs&hellip;</quote>.</para>
+
+    <sect1 id="dummies"><title>Dummy variables</title>
+
+      <para>In a panel study you may wish to construct dummy variables
+	of one or both of the following sorts: (a) dummies as unique
+	identifiers for the cross-sectional units, and (b) dummies as
+	unique identifiers of the time periods.  The former can be
+	used, for instance, to allow the intercept of the regression
+	to differ across the units, the latter to allow the intercept
+	to differ across periods. (You will not want to include all of
+	these dummies in a given regression!)</para>
+
+      <para>You can use two special functions to create such dummies.
+	These are found under the <quote>Data, Add variables</quote>
+	menu in the GUI, or under the <command>genr</command> command
+	in script mode or <application>gretlcli</application>.</para>
+
+      <orderedlist>
+	<listitem><para><quote>periodic dummies</quote> (script
+	    command <command>genr dummy</command>).  The common use
+	    for this command is to create a set of periodic dummy
+	    variables up to the data frequency in a time-series study
+	    (for instance a set of quarterly dummies for use in
+	    seasonal adjustment). But it also works with panel data.
+	    Note that the interpretation of the dummies created by
+	    this command differs depending on whether the data rows
+	    are grouped by unit or by period. If the grouping is by
+	    <emphasis>unit</emphasis> (frequency
+	    <emphasis>T</emphasis>) the resulting variables are
+	    <emphasis>period dummies</emphasis> and there will be
+	    <emphasis>T</emphasis> of them. For instance
+	    <varname>dummy_2</varname> will have value 1 in each data
+	    row corresponding to a period 2 observation, 0 otherwise.
+	    If the grouping is by <emphasis>period</emphasis>
+	    (frequency <emphasis>n</emphasis>) then
+	    <emphasis>n</emphasis> <emphasis>unit dummies</emphasis>
+	    will be generated: <varname>dummy_2</varname> will have
+	    value 1 in each data row associated with cross-sectional
+	    unit 2, 0 otherwise.</para></listitem>
+	<listitem><para><quote>panel dummies</quote> (script command
+	    <command>genr paneldum</command>).  This creates all the
+	    dummies, unit and period, at a stroke.  The default
+	    presumption is that the data rows are grouped by unit. The
+	    unit dummies are named <varname>du_1</varname>,
+	    <varname>du_2</varname> and so on, while the period
+	    dummies are named <varname>dt_1</varname>,
+	    <varname>dt_2</varname>, etc. The <varname>u</varname>
+	    (for unit) and <varname>t</varname> (for time) in these
+	    names will be wrong if the data rows are grouped by
+	    period: to get them right in that setting use
+	    <command>genr paneldum -o</command> (script mode
+	    only).</para>
+	</listitem>
+      </orderedlist>
+
+      <para>If a panel data set has the <literal>YEAR</literal> of the
+	observation entered as one of the variables you can create a
+	periodic dummy to pick out a particular year, e.g.
+	<command>genr dum = (YEAR=1960)</command>.  You can also
+	create periodic dummy variables using the modulus operator,
+	<literal>%</literal>.  For instance, to create a dummy with
+	value 1 for the first observation and every thirtieth
+	observation thereafter, 0 otherwise, do</para>
+
+      <programlisting>
+	genr index genr dum = ((index-1)%30) = 0</programlisting>
+
+    </sect1>
+
+    <sect1 id="panel-lagged"><title>Using lagged values with panel data</title>
+
+      <para>If the time periods are evenly spaced you may want to use
+	lagged values of variables in a panel regression.  In this
+	case arranging the data rows by <emphasis>unit</emphasis>
+	(stacked time-series) is definitely preferable.</para>
+
+      <para>Suppose you create a lag of variable<varname>x1</varname>, using
+	<command>genr x1_1 = x1(-1)</command>.  The values of this
+	variable will be mostly correct, but at the boundaries of the
+	unit data blocks they will be spurious and unusable.  E.g. the
+	value assigned to <varname>x1_1</varname> for observation 
+	<literal>2.1</literal>
+	is not the first lag of <varname>x1</varname> at all, but rather the
+	last observation of <varname>x1</varname> for unit 1.</para>
+
+      <para>If a lag of this sort is to be included in a regression
+	you must ensure that the first observation from each unit
+	block is dropped. One way to achieve this is to use Weighted
+	Least Squares (<command>wls</command>) using an appropriate
+	dummy variable as weight.  This dummy (call it
+	<command>lagdum</command>) should have value 0 for the
+	observations to be dropped, 1 otherwise.  In other words, it
+	is complementary to a dummy variable for period 1.  Thus if
+	you have already issued the command <command>genr
+	  dummy</command> you can now do <command>genr lagdum = 1 -
+	  dummy_1</command>.  If you have used <command>genr
+	  paneldum</command> you would now say <command>genr lagdum =
+	  1 - dt_1</command>. Either way, you can now do</para>
+
+      <para>
+	<command>wls lagdum y const x1_1 ...</command>
+      </para>
+
+      <para>to get a pooled regression using the first lag
+	of <varname>x1</varname>, dropping all observations from period
+	1.</para>
+
+      <para>Another option is to use the <command>smpl</command> with the
+	<command>-o</command> flag and a suitable dummy variable.  Here are
+	illustrative commands, assuming the unit data blocks each
+	contain 30 observations and we want to drop the first row of
+	each:</para>
+
+      <programlisting>
+	(* create index variable *) 
+	genr index 
+	(* create dum = 0 for every 30th obs *) 
+	genr dum = ((index-1)%30) > 0 
+	(* sample based on this dummy *) 
+	smpl -o dum 
+	(* recreate the obs. structure, for 56 units *) 
+	setobs 29 1.01 56.29</programlisting>
+
+      <para>You can now run regressions on the restricted data set
+	without having to use the <command>wls</command> command.  If
+	you plan to reuse the restricted data set you may wish to save
+	it using the <command>store</command> command (see <xref
+	  linkend="cmdref"/> below).</para>
+    </sect1>
+
+    <sect1 id="PWT"><title>Illustration: the Penn World Table</title>
+
+      <para>The Penn World Table (homepage at <ulink
+	  url="http://pwt.econ.upenn.edu/">pwt.econ.upenn.edu</ulink>) is a rich
+	macroeconomic panel dataset, spanning 152 countries over the
+	years 1950&ndash;1992.  The data are available in
+	<application>gretl</application> format; please see the
+	<application>gretl</application> <ulink
+	  url="http://ricardo.ecn.wfu.edu/gretl/gretl_data.html">data
+	  site</ulink> (this is a free download, although it is not
+	included in the main <application>gretl</application>
+	package).</para>  
+
+      <para><xref linkend="examp-pwt"/> below opens
+	<filename>pwt56_60_89.dat</filename>, a subset of the pwt
+	containing data on 120 countries, 1960&ndash;89, for 20 variables,
+	with no missing observations (the full data set, which is also
+	supplied in the pwt package for
+	<application>gretl</application>, has many missing
+	observations). Total growth of real GDP, 1960&ndash;89, is
+	calculated for each country and regressed against the 1960
+	level of real GDP, to see if there is evidence for
+	<quote>convergence</quote> (i.e. faster growth on the part of
+	countries starting from a low base).</para>
+
+      <example id="examp-pwt">
+	<title>Use of the Penn World Table</title>
+	<programlisting>
+	  open pwt56_60_89.dat 
+	  (* for 1989 (last obs), lag 29 gives 1960, the first obs *) 
+	  genr gdp60 = RGDPL(-29) 
+	  (* find total growth of real GDP over 30 years *) 
+	  genr gdpgro = (RGDPL - gdp60)/gdp60
+	  (* restrict the sample to a 1989 cross-section *) 
+	  smpl -r YEAR=1989 
+	  (* Convergence?  Did countries with a lower base grow faster? *) 
+	  ols gdpgro const gdp60 
+	  (* result: No! Try inverse relationship *) 
+	  genr gdp60inv = 1/gdp60 
+	  ols gdpgro const gdp60inv 
+	  (* No again.  Try dropping Africa? *) 
+	  genr afdum = (CCODE = 1)
+	  genr afslope = afdum * gdp60 
+	  ols gdpgro const afdum gdp60 afslope 
+	</programlisting>
+      </example>
+    </sect1>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("manual.sgml" "book" "chapter")
+End:
+-->

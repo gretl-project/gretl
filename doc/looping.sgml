@@ -1,0 +1,217 @@
+  <chapter id="looping"><title>Loop constructs</title>
+
+    <sect1 id="monte-carlo"><title>Monte Carlo simulations</title>
+
+    <para><application>gretl</application> offers (limited) support
+      for Monte Carlo simulations. To do such work you should either
+      use the GUI client program in <quote>script mode</quote> (see
+      <xref linkend="scripts"/> above), or use the command-line
+      client. The command <command>loop</command> opens a special mode
+      in which the program accepts commands to be repeated a specified
+      number of times. Within such a loop, only six commands can be
+      used: <command>genr</command>, <command>ols</command>,
+      <command>print</command>, <command>smpl</command>,
+      <command>store</command> and <command>summary</command>. With
+      <command>genr</command> and <command>ols</command> it is
+      possible to do quite a lot. You exit the mode of entering loop
+      commands with <command>endloop</command>: at this point the
+      stacked commands are executed.  Loops cannot be nested.</para>
+
+    <para>The <command>ols</command> command gives special output in a loop
+      context: the results from each individual regression are not
+      printed, but rather you get a printout of (a) the mean value of
+      each estimated coefficient across all the repetitions, (b) the
+      standard deviation of those coefficient estimates, (c) the mean
+      value of the estimated standard error for each coefficient, and
+      (d) the standard deviation of the estimated standard errors.
+      This makes sense only if there is some random input at each
+      step.</para>  
+
+    <para>The <command>print</command> command also behaves differently in the
+      context of a loop.  It prints the mean and standard deviation of
+      the variable, across the repetitions of the loop.  It is
+      intended for use with variables that have a single value at each
+      iteration, for example the error sum of squares from a
+      regression.</para>
+
+    <para>
+	The <command>store</command> command (use only one of these
+      per loop) writes out the values of the specified variables, from
+      each time round the loop, to the specified file.  Thus it keeps
+      a complete record of the variables.  This data file can then be
+      read into the program and analysed.</para>
+
+    <para>A simple example of Monte Carlo loop code is shown in
+      <xref linkend="script-loop"/>.</para>
+
+    <example id="script-loop"><title>Simple Monte Carlo loop</title>
+    <programlisting>
+	  (* create a blank data set with series length 50 *) 
+	  nulldata 50 
+	  genr x = uniform() 
+	  (* open a loop, to be repeated 100 times *) 
+	  loop 100 
+	    genr u = normal()
+	    (* construct the dependent variable *) 
+	    genr y = 10*x + 20*u 
+	    (* run OLS regression *) 
+	    ols y const x 
+	    (* grab the R-squared value from the regression *) 
+	    genr r2 = $rsq 
+	    (* arrange for statistics on R-squared to be printed *) 
+	    print r2 
+	    (* save the individual coefficient estimates *) 
+	    genr a = coeff(const) 
+	    genr b = coeff(x)
+	    (* and print them to file *) 
+	    store foo.dat a b 
+	  endloop</programlisting>
+    </example>
+
+    <para>This loop will print out summary statistics for the `a' and
+      `b' estimates across the 100 repetitions, and also for the &rsqu;
+      values for the 100 regressions.  After running the loop,
+      <filename>foo.dat</filename>, which contains the individual coefficient
+      estimates from all the runs, can be opened in
+      <application>gretl</application> to examine the frequency
+      distribution of the estimates in detail. Please note that while
+      comment lines are permitted in a loop (as shown in the example),
+      they cannot run over more than one line.</para>
+
+    <para>The command <command>nulldata</command> is useful for Monte
+	Carlo work.  Instead of opening a <quote>real</quote> data
+	set, <command>nulldata 50</command> (for instance) opens an
+	empty data set, with only a constant, with a series length of
+	50.  Constructed variables can then be added using the
+	<command>genr</command> command.</para>  
+
+    <para>See the <command>seed</command> command in 
+      <xref linkend="cmdref"/> for information on generating
+      repeatable pseudo-random series.</para>
+
+  </sect1>
+
+  <sect1 id="ils"><title>Iterated least squares</title>
+
+    <para>A second form of loop structure is designed
+      primarily for carrying out iterated least squares.  Greene
+      (2000, ch. 11) shows how this method can be used to estimate
+      nonlinear models.</para>
+
+    <para>To open this sort of loop you need to specify a
+	<emphasis>condition</emphasis> rather than an unconditional
+	number of times to iterate.  This should take the form of the
+	keyword <command>while</command> followed by an inequality:
+	the left-hand term should be the name of a variable that is
+	already defined; the right-hand side may be either a numerical
+	constant or the name of another predefined variable.  For
+	example,</para> 
+
+    <para>
+      <command> loop while essdiff > .00001 
+      </command>
+    </para>
+
+    <para>Execution of the commands within the loop (i.e. until
+      <command>endloop</command> is encountered) will continue so long
+      as the specified condition evaluates as true.</para>
+
+    <para>I assume that if you specify a <quote>number of
+	times</quote> loop you are probably doing a Monte Carlo
+      analysis, and hence you're not interested in the results from
+      each individual iteration but rather the moments of certain
+      variables over the ensemble of iterations.  On the other hand,
+      if you specify a <quote>while</quote> loop you're probably doing
+      something like iterated least squares, and so you'd like to see
+      the final result &mdash; as well, perhaps, as the value of some
+      variable(s) (e.g. the error sum of squares from a regression)
+      from each time round the loop. The behavior of the
+      <command>print</command> and <command>ols</command> commands are
+      tailored to this assumption.  In a <quote>while</quote> loop
+      <command>print</command> behaves as usual; thus you get a
+      printout of the specified variable(s) from each iteration.  The
+      <command>ols</command> command prints out the results from the
+      final estimation.</para>  
+
+    <para><xref linkend="greene-consump"/> uses a <quote>while</quote>
+      loop to replicate the estimation of a nonlinear consumption
+      function of the form 
+	<inlineequation>
+	  <alt>
+	    $C = \alpha + \beta Y^{\gamma} + \epsilon$
+	  </alt>
+	  <graphic align="center" fileref="figures/greeneC.png"/>
+	</inlineequation>
+	as presented in Greene (2000, Example 11.3).  This
+      script is included in the <application>gretl</application>
+      distribution under the name <filename>greene11_3.inp</filename>;
+      you can find it in <application>gretl</application> under the
+      menu item <quote>File, Open command file, practice file,
+	Greene...</quote>.</para>
+
+    <example id="greene-consump"><title>Nonlinear consumption function</title>
+    <programlisting>
+	  open greene11_3.dat 
+	  (* run initial OLS *) 
+	  ols C 0 Y 
+	  genr essbak = $ess 
+	  genr essdiff = 1
+	  genr b0 = coeff(Y) 
+	  genr gamma0 = 1 
+	  (* form the linearized variables *) 
+	  genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y) 
+	  genr x1 = Y^gamma0 
+	  genr x2 = b0 * Y^gamma0 * log(Y) 
+	  (* iterate OLS till the error sum of squares converges *) 
+	  loop while essdiff > .00001 
+	    ols C0 0 x1 x2 -o 
+	    genr b0 = coeff(x1) 
+	    genr gamma0 = coeff(x2) 
+	    genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y) 
+	    genr x1 = Y^gamma0 genr x2 = b0 * Y^gamma0 * log(Y) 
+	    genr ess = $ess genr
+	    essdiff = abs(ess - essbak)/essbak 
+	    genr essbak = ess 
+	  endloop 
+	  (* print parameter estimates using their "proper names" *) 
+	  genr alpha = coeff(0) 
+	  genr beta = coeff(x1) 
+	  genr gamma = coeff(x2)
+	  print alpha beta gamma</programlisting>
+      </example>
+
+  </sect1>
+
+  <sect1><title>Indexed loop</title>
+
+      <para>The third form of loop construct offered in
+      <application>gretl</application> is an indexed loop, using the
+      internal variable <varname>i</varname>.  You specify starting
+      and ending values for <varname>i</varname>, which is incremented
+      by one each time round the loop.  The syntax looks like this:
+      <command>loop i=1..20</command>. <xref linkend="panel-loop"/>
+      shows one use of this construct.  We have a panel data set, with
+      observations on a number of hospitals for the years 1991 to
+      2000.  We restrict the sample to each of these years in turn and
+      print cross-sectional summary statistics for variables 1 through
+      4.</para>
+
+    <example id="panel-loop"><title>Indexed loop example</title>
+    <programlisting>
+	  open hospitals.dat
+	  loop for i=1991..2000
+	    smpl -r (year=i)
+	    summary 1 2 3 4
+	  endloop</programlisting>
+      </example>
+
+    </sect1>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("manual.sgml" "book" "chapter")
+End:
+-->

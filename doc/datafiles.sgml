@@ -1,0 +1,509 @@
+
+  <chapter id="datafiles"><title>Data files</title>
+
+    <sect1 id="native"><title>Basic native format</title>
+
+      <para>In <application>gretl</application>'s native data format,
+	a data set is represented by two files.  One contains the
+	actual data and the other information on how the data should
+	be read.  To be more specific:</para>
+
+      <orderedlist>
+  
+	<listitem><para><emphasis>Actual data</emphasis>: A
+	    rectangular matrix of white-space separated numbers.  Each
+	    column represents a variable, each row an observation on
+	    each of the variables (spreadsheet style). Data columns
+	    can be separated by spaces or tabs. The filename should
+	    have either no suffix or the suffix
+	    <filename>.dat</filename>.  By default the data file is
+	    ASCII (plain text).  Optionally it can be gzip-compressed
+	    to save disk space. You can insert comments into a data
+	    file: if a line begins with the hash mark
+	    (<literal>#</literal>) the entire line is ignored. This is
+	    consistent with gnuplot and octave data
+	    files.</para></listitem>
+
+	<listitem><para><emphasis>Header</emphasis>: The data file
+	    must be accompanied by a header file which has the same
+	    basename as the data file plus the suffix
+	    <filename>.hdr</filename>.  This file contains, in
+	    order:</para>
+
+	  <itemizedlist mark="dash">
+	    <listitem><para>(Optional) <emphasis>comments</emphasis>
+		on the data, set off by the opening string
+		<literal>(*</literal> and the closing string
+		<literal>*)</literal>, each of these strings to occur
+		on lines by themselves.</para></listitem>
+	    <listitem><para>(Required) list of white-space separated
+		<emphasis>names of the variables</emphasis> in the
+		data file. Names are limited to 8 characters, must
+		start with a letter, and are limited to alphanumeric
+		characters plus the underscore.  The list may continue
+		over more than one line; it is terminated with a
+		semicolon, <literal>;</literal>.</para></listitem>
+	    <listitem><para>(Required) <emphasis>observations</emphasis> line of
+		the form <literal>1 1 85</literal>.  The first element
+		gives the data frequency (1 for undated or annual
+		data, 4 for quarterly, 12 for monthly).  The second
+		and third elements give the starting and ending
+		observations. Generally these will be 1 and the number
+		of observations respectively, for undated data.  For
+		time-series data one can use dates of the form
+		<command>1959.1</command> (quarterly, one digit after
+		the point) or <command>1967.03</command> (monthly, two
+		digits after the point). See <xref linkend="panel"/> below
+		for special use of this line in the case of panel
+		data.</para></listitem>
+	    <listitem><para>The keyword
+		<literal>BYOBS</literal>.</para></listitem> 
+	  </itemizedlist>
+	</listitem>   
+      </orderedlist> 
+
+      <para>Here is an example of a well-formed data header file.
+
+	<programlisting> 
+	  (* 
+	  DATA9-6: 
+	  Data on log(money), log(income) and interest rate from US. 
+	  Source: Stock and Watson (1993) Econometrica 
+	  (unsmoothed data) Period is 1900-1989 (annual data). 
+	  Data compiled by Graham Elliott. 
+	  *) 
+	  lmoney lincome intrate ; 
+	  1 1900 1989 BYOBS</programlisting>
+
+	The corresponding data file contains three columns of data, each
+	having 90 entries.</para>
+
+    </sect1>
+
+    <sect1 id="extensions"><title>Extensions to the basic data
+	format</title>
+
+      <para>
+	The options available in <application>gretl</application> data
+	files are broader than the setup just described, in three
+	ways:
+      </para>
+
+      <orderedlist>
+	<listitem><para>If the <literal>BYOBS</literal> keyword is
+	    replaced by <literal>BYVAR</literal>, and followed by the
+	    keyword <literal>BINARY</literal>, this indicates that the
+	    corresponding data file is in binary format.  Such data
+	    files can be written from
+	    <application>gretlcli</application> using the
+	    <command>store</command> command with the
+	    <command>-s</command> flag (single precision) or the
+	    <command>-o</command> flag (double
+	    precision).</para></listitem>
+	
+	<listitem><para>If <literal>BYOBS</literal> is followed by the
+	    keyword <literal>MARKERS</literal>,
+	    <application>gretl</application> expects a data file in
+	    which the <emphasis>first column</emphasis> contains strings (8
+	    characters maximum) used to identify the observations.
+	    This may be handy in the case of cross-sectional data
+	    where the units of observation are identifiable:
+	    countries, states, cities or whatever.  It can also be
+	    useful for irregular time series data, such as daily stock
+	    price data where some days are not trading days &mdash; in
+	    this case the observations can be marked with a date
+	    string such as <command>10/01/98</command>.  (Remember the
+	    8-character maximum.)  Note that <command>BINARY</command> and
+	    <command>MARKERS</command> are mutually exclusive flags. Also note
+	    that the <quote>markers</quote> are not considered to be a
+	    variable: this column does not have a corresponding entry
+	    in the list of variable names in the header
+	    file.</para></listitem>
+
+	<listitem><para>If a file with the same base name as the data
+	    file and header files, but with the suffix
+	    <filename>.lbl</filename>, is found, this is read to fill
+	    out the descriptive labels for the data series. The format
+	    of the (plain text) label file is simple: each line
+	    contains the name of one variable (as found in the header
+	    file), followed by one or more spaces, followed by the
+	    descriptive label. Here is an example: 
+
+	    <literal>price  New car price index, 1982 base year</literal>
+
+	    A label file of this sort is created automatically when
+	    you save data from <application>gretl</application>, if
+	    there is any descriptive information to be saved.  Such
+	    information can be added under the <quote>Variable, Edit
+	      label</quote> menu item.
+	  </para>
+	</listitem>
+      </orderedlist>
+
+    </sect1>
+
+    <sect1 id="other-formats"><title>Other data file formats</title>
+
+      <para>
+	<application>gretl</application> will read various other data
+	formats.
+      </para>
+
+      <itemizedlist>
+  
+	<listitem><para>Comma-Separated Values (CSV) files.  These can
+	    be brought in using <application>gretl</application>'s
+	    <quote>File, Open Data, Import CSV&hellip;</quote> menu
+	    item, or the <command>import</command> script command.
+	    The program expects a file that has (a) valid variable
+	    names on the first row and (b) a rectangular block of data
+	    beneath. Optionally the first column may contain strings
+	    such as dates (8 characters max.).  Such a column should be
+	    headed <quote><command>obs</command></quote> or
+	    <quote><command>date</command></quote>, or its first row
+	    cell may be left blank. There should be <emphasis>exactly
+	      one</emphasis> non-data row at the top of the file.  See
+	    also
+	    <xref linkend="scratch"/> below.</para></listitem>
+  
+	<listitem><para>BOX1 format data.  Large amounts of micro data
+	    are available (for free) in this format via the <ulink
+	      url="http://www.census.gov/ftp/pub/DES/www/welcome.html">Data 
+	      Extraction Service</ulink> of the US Bureau of the
+	    Census. BOX1 data may be imported using the <quote>File,
+	      Open Data, Import BOX&hellip;</quote> menu item or the
+	    <command>import -o</command> script command.</para>
+	</listitem>
+
+      </itemizedlist>
+
+      <para>When you import data from either of these two formats,
+	<application>gretl</application> opens a
+	<quote>diagnostic</quote> window, reporting on its progress in
+	reading the data.  If you encounter a problem with
+	ill-formatted data, the messages in this window should give
+	you a handle on fixing the problem.</para>
+
+      <para>For the convenience of anyone wanting to carry out more
+	complex data analysis, <application>gretl</application> has a
+	facility for writing out data in the native formats of GNU R
+	and GNU Octave (see <xref linkend="app-c"/>).  In the GUI
+	client this option is found under the <quote>File</quote>
+	menu; in the command-line client use the
+	<command>store</command> command with the flag
+	<command>-r</command> (R) or <command>-m</command>
+	(Octave).</para>
+
+    </sect1>
+
+  <sect1 id="dbase"><title>Binary databases</title>
+  
+    <para>For working with large amounts of data I have supplied
+      <application>gretl</application> with a database-handling
+      routine.  A <emphasis>database</emphasis>, as opposed to a
+      <emphasis>data file</emphasis>, is not read directly into the
+      program's workspace.  A database can contain series of mixed
+      frequencies and sample ranges.  You open the database and select
+      series to import into the working data set.  You can then save
+      those series in a native format data file if you wish.
+      Databases can be accessed via <application>gretl</application>'s
+      menu item <quote>File, Browse databases</quote>.</para>
+  
+    <para>A <application>gretl</application> database consists of two
+      parts: an ASCII index file (with filename suffix
+      <filename>.idx</filename>) containing information on the series,
+      and a binary file (suffix <filename>.bin</filename>) containing
+      the actual data.  Two examples of the format for an entry in the
+      <filename>idx</filename> file are shown below:</para>
+
+    <programlisting>
+      G0M910  Composite index of 11 leading indicators (1987=100) 
+      M 1948.01 - 1995.11  n = 575
+      currbal Balance of Payments: Balance on Current Account; SA 
+      Q 1960.1 - 1999.4 n = 160</programlisting>
+  
+    <para>The first field is the series name.  The second is a
+      description of the series (maximum 128 characters).  On the
+      second line the first field is a frequency code:
+      <literal>M</literal> for monthly, <literal>Q</literal> for
+      quarterly and <literal>A</literal> for annual.  No other
+      frequencies are accepted at present.  Then comes the starting
+      date (N.B. with two digits following the point for monthly data,
+      one for quarterly data, none for annual), a space, a hyphen,
+      another space, the ending date, the string <quote><literal>n
+	  = </literal></quote> and the integer number of observations.
+      This format must be respected exactly.</para>
+
+    <para>Optionally, the first line of the index file may contain a
+      short comment (up to 64 characters) on the source and nature of the
+      data, following a hash mark.  For example:</para>
+
+    <programlisting>
+    # Federal Reserve Board (interest rates)</programlisting>
+
+    <para>The corresponding binary database file holds the data
+	values, represented as <quote>floats</quote>, that is,
+	single-precision floating-point numbers, typically taking four
+	bytes apiece.  The numbers are packed <quote>by
+	  variable</quote>, so that the first <emphasis>n</emphasis>
+	numbers are the observations of variable 1, the next
+	<emphasis>m</emphasis> the observations on variable 2, and so
+	on.</para>
+
+    <sect2 id="online-data"><title>Online access to databases</title>
+
+      <para>As of version 0.40, <application>gretl</application> is
+	able to access databases via the internet.  Several databases
+	are available from Wake Forest University.  Your computer must
+	be connected to the internet for this option to work.  Please
+	see the item on <quote>Online databases</quote> under
+	<application>gretl</application>'s Help menu.  Expect to see
+	this facility developed further in future releases.</para>
+
+    </sect2>
+
+    <sect2 id="RATS"><title>RATS 4 databases</title>
+
+      <para>Thanks to Thomas Doan of <citetitle>Estima</citetitle>,
+	who provided me with the specification of the database format
+	used by RATS 4 (Regression Analysis of Time Series),
+	<application>gretl</application> can also handle such
+	databases.  Well, actually, a subset of same: I have only
+	worked on time-series databases containing monthly and
+	quarterly series.  My university has the RATS G7 database
+	containing data for the seven largest OECD economies and
+	<application>gretl</application> will read that OK.</para>
+
+      <tip><para>Visit the <application>gretl</application> <ulink
+	    url="http://ricardo.ecn.wfu.edu/gretl/gretl_data.html">data 
+	    page</ulink> for details and updates on available
+	  data.</para></tip>
+
+      </sect2>
+    </sect1>
+
+  <sect1 id="missing-data"><title>Missing data values</title>
+
+    <para>These are represented internally as &minus;999.  In a
+      native-format data file they should be represented the same way.
+      When importing CSV data <application>gretl</application> accepts
+      any of three representations of missing values: &minus;999, the
+      string <literal>NA</literal>, or simply a blank cell.  Blank
+      cells should, of course, be properly delimited, e.g.
+      <literal>120.6,,5.38</literal>, in which the middle value is
+      presumed missing.</para>
+
+    <para>As for handling of missing values in the course of
+      statistical analysis, <application>gretl</application> does the
+      following:</para>
+
+    <itemizedlist>
+      <listitem><para>In calculating descriptive statistics (mean,
+	  standard deviation, etc.) under the <command>summary</command>
+	  command, missing values are simply skipped and the sample
+	  size adjusted appropriately.</para></listitem>
+      <listitem><para>In running regressions
+	  <application>gretl</application> first adjusts the beginning
+	  and end of the sample range, truncating the sample if need
+	  be.  Missing values at the beginning of the sample are
+	  common in time series work due to the inclusion of lags,
+	  first differences and so on; missing values at the end of
+	  the range are not uncommon due to differential updating of
+	  series and possibly the inclusion of
+	  leads.</para></listitem>  
+      <listitem><para>If <application>gretl</application> detects any
+	  missing values <quote>inside</quote> the (possibly
+	  truncated) sample range for a regression it gives an error
+	  message and refuses to produce estimates.</para></listitem>
+    </itemizedlist>
+
+    <para>Missing values in the middle of a data set are a problem. In
+      a cross-sectional data set it may be possible to move the
+      offending observations to the beginning or the end of the file,
+      but obviously this won't do with time series data.  For those
+      who know what they are doing (!), the <command>misszero</command> function
+      is provided under the <command>genr</command> command.  By doing
+    </para> 
+
+    <para><command>genr foo = misszero(bar)</command>
+    </para>
+
+    <para>you can produce a series <command>foo</command> which is
+      identical to <command>bar</command> except that any &minus;999
+      values become zeros.  Then you can use carefully constructed
+      dummy variables to, in effect, drop the missing observations
+      from the regression while retaining the surrounding sample
+      range.<footnote><para><command>genr</command> also offers the inverse
+      function to <command>misszero</command>, namely
+      <command>zeromiss</command>, which replaces zeros in a given
+      series with the missing observation code.</para>
+      </footnote></para>
+
+    </sect1>
+
+  <sect1 id="scratch"><title>Creating a data file from scratch</title>
+
+    <para>There are four ways to do this: (1) Use your favorite text
+      editor to create the data file and header file independently.
+      (2) Use your favorite spreadsheet to establish the data file,
+      save it in Comma Separated Values format, then use
+      <application>gretl</application>'s <quote>Import CSV</quote>
+      option. (3) Use <application>gretl</application>'s built-in
+      spreadsheet. (4) Select data series from a suitable
+      database.</para>
+
+    <para>Here are a few comments and details on these methods.</para>
+
+    <sect2><title>Using a text editor</title>
+      <para>This may be the method of choice for those who have a
+	strong preference in editors, and who don't mind taking a few
+	minutes to study the specifications for valid data and header
+	files, as set out in <xref linkend="datafiles"/>
+	above.</para>
+
+      <para>Note that this method can be problematic under MS Windows
+	due to the propensity of Microsoft tools
+	<quote>helpfully</quote> to add the suffix
+	<filename>.txt</filename> to the filename you specify when you
+	save a plain text file &mdash; even if it already has a suffix.
+	This will render the files unusable with
+	<application>gretl</application>: you'll have to rename them
+	manually, outside of the editor.</para>
+    </sect2>
+
+    <sect2><title>Using a separate spreadsheet</title>
+      <para>This may be a good choice if you're comfortable with a
+	particular spreadsheet. Of course if you use a spreadsheet
+	you're able to carry out various transformations of the
+	<quote>raw</quote> data with ease (adding things up, taking
+	percentages or whatever): note, however, that you can also do
+	this sort of thing easily &mdash; perhaps more
+	easily &mdash; within <application>gretl</application>, by using
+	the tools under the <quote>Data, Add variables</quote> menu
+	and/or <quote>Variable, define new variable</quote>.</para>
+
+	<para>If you take this option, please pay attention to the
+	  specification of what your spreadsheet should look like
+	  before you save it in CSV format (<xref linkend="other-formats"/>).
+	  </para>
+  
+	<para>You may wish to establish a
+	  <application>gretl</application> data set piece by piece,
+	  via incremental importation of CSV data.  This is supported
+	  as follows. When you have a datafile open already, and then
+	  select the menu item <quote>File, Open data, import
+	    CSV&hellip;</quote> the program checks for conformability
+	  between the existing data set and the new import.  If the
+	  data frequency, starting observation and ending observation
+	  all seem to match, the new data are merged into the data
+	  set.  If not, an error message is printed and the import is
+	  refused.  If you want to import the new data <emphasis>in
+	  place of</emphasis> the existing data set, you can achieve this by
+	  first selecting <quote>File, Clear data
+	    set</quote>.</para>
+    </sect2>
+
+    <sect2><title>Using the built-in spreadsheet</title>
+      <para>Under <application>gretl</application>'s <quote>File,
+	  Create data set</quote> menu you can choose the sort of data
+	set you want to establish (e.g. quarterly time series,
+	cross-sectional).  You will then be prompted for starting and
+	ending dates (or observation numbers) and the name of the
+	first variable to add to the data set. After supplying this
+	information you will be faced with a simple spreadsheet into
+	which you can type data values.  In the spreadsheet window,
+	clicking the right mouse button will invoke a popup menu which
+	enables you to add a new variable (column), to add an
+	observation (append a row at the foot of the sheet), or to
+	insert an observation at the selected point (move the data
+	down and insert a blank row.)</para>
+  
+	<para>Once you have entered data into the spreadsheet you
+	  import these into <application>gretl</application>'s
+	  workspace using the spreadsheet's <quote>File, Apply
+	    changes</quote> menu item.</para>
+
+	<para>Please note that <application>gretl</application>'s
+	  spreadsheet is quite basic and has no support for functions
+	  or formulas.  Data transformations are done via the
+	  <quote>Data</quote> or <quote>Variable</quote> menus in the
+	  main <application>gretl</application> window.</para>
+    </sect2>
+
+    <sect2><title>Selecting from a database</title>
+      <para>The remaining alternative is to establish your data set by
+	selecting variables from a database.
+	<application>gretl</application> comes with a database of US
+	macroeconomic time series and, as mentioned above, the program
+	will reads RATS 4 databases.</para>   
+  
+      <para>Begin with <application>gretl</application>'s <quote>File,
+	  Browse databases</quote> menu item. This has three forks:
+	<quote>gretl native</quote>, <quote>RATS 4</quote> and
+	<quote>on database server</quote>.  You should be able to find
+	the file <filename>bcih.bin</filename> in the file selector
+	that opens if you choose the <quote>gretl native</quote>
+	option &mdash; this file is supplied with the
+	distribution.</para>
+	
+      <para>You won't find anything under <quote>RATS 4</quote> unless
+	  you have purchased RATS data<footnote><para>See <ulink
+		url="http://www.estima.com/">www.estima.com</ulink></para>
+	  </footnote>.  If you do possess RATS data you should go into
+	  <application>gretl</application>'s <quote>File, Preferences,
+	    General</quote> dialog, select the Databases tab, and fill
+	  in the correct path to your RATS files.</para> 
+  
+      <para>If your computer is connected to the internet you should
+	find several databases (at Wake Forest University) under
+	<quote>on database server</quote>.  You can browse these
+	remotely; you also have the option of installing them onto
+	your own computer.  The initial remote databases window has an
+	item showing, for each file, whether it is already installed
+	locally (and if so, if the local version is up to date with
+	the version at Wake Forest).</para> 
+
+      <para>Assuming you have managed to open a database you can
+	import selected series into <application>gretl</application>'s
+	workspace by using the <quote>Import</quote> menu item in the
+	database window.</para>   
+
+    </sect2>
+
+    <sect2><title>Further notes</title>
+  
+      <para>
+	<application>gretl</application> has no problem compacting
+	data series of relatively high frequency (e.g. monthly) to a
+	lower frequency (e.g. quarterly): this is done by averaging.
+	But it has no way of converting lower frequency data to
+	higher.  Therefore if you want to import series of various
+	different frequencies from a database into
+	<application>gretl</application> <emphasis>you must start by
+	  importing a series of the lowest frequency you intend to
+	  use.</emphasis> This will initialize your
+	<application>gretl</application> data set to the low
+	frequency, and higher frequency data can be imported
+	subsequently (they will be compacted automatically).  If you
+	start with a high frequency series you will not be able to
+	import any series of lower frequency.</para>
+
+    <para>If you establish a data set by any means other than creating
+      a data file and header file with a text editor (that is, if you
+      import CSV, use <application>gretl</application>'s spreadsheet,
+      or select from a database) you would be well advised to save the
+      data in <application>gretl</application>'s native format before
+      quitting the program.  You can do this via the <quote>File, Save
+	data&hellip;</quote> menu item.</para>
+    </sect2>
+
+    </sect1>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("manual.sgml" "book" "chapter")
+End:
+-->

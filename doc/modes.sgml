@@ -1,0 +1,249 @@
+
+  <chapter id="modes"><title>Modes of working</title>
+
+  <sect1 id="scripts"><title>Command scripts</title>
+
+    <para>
+      As you execute commands in <application>gretl</application>,
+      using the GUI and filling in dialog entries, those commands are
+      recorded in the form of a <quote>script</quote>.  Such scripts
+      can be edited and re-run, using either
+      <application>gretl</application> or the command-line client,
+      <application>gretlcli</application>.</para>
+
+    <para>
+      To view the current state of the script at any point in a
+      <application>gretl</application> session, choose <quote>Command
+	log</quote> under the File menu. This log file is called
+      <filename>session.inp</filename> and it is overwritten whenever
+      you start a new session.  To preserve it, save the script under
+      a different name.  Script files will be found most easily, using
+      the GUI file selector, if you name them with the extension
+      <quote><filename>.inp</filename></quote>.</para>
+
+    <para>To open a script you have written independently, use the
+      <quote>File, Open command file</quote> menu item.</para>
+
+    <para>With a script window open, use its <quote>File, Save and
+	Run</quote> menu item to run the commands.  All output is
+      directed to a single window, where it can be edited, saved or
+      copied to the clipboard.</para>
+
+    <para>To learn more about the possibilities of scripting, take a
+      look at the <application>gretl</application> Help item
+      <quote>Script commands syntax,</quote> or start up the
+      command-line program <application>gretlcli</application> and
+      consult its help, or consult <xref linkend="cmdref"/> in this
+      manual. In addition, the <application>gretl</application>
+      package includes over 70 <quote>practice</quote> scripts.  Most
+      of these relate to Ramanathan (2002), but they may also be used
+      as a free-standing introduction to scripting in
+      <application>gretl</application> and to various points of
+      econometric theory.  You can explore the practice files under
+      <quote>File, Open command file, practice file</quote>  There you
+      will find a listing of the files along with a brief description
+      of the points they illustrate and the data they employ.  Open
+      any file and run it (<quote>File, Run</quote> in the resulting
+      script window) to see the output.</para>
+
+    <para>Note that long commands in a script can be broken over two
+      or more lines, using backslash as a continuation
+      character.</para>
+
+    <para>You can, if you wish, use the GUI controls and the scripting
+      approach in tandem, exploiting each method where it offers
+      greater convenience.  Here are two suggestions.</para>
+
+    <itemizedlist>
+      <listitem><para>Open a data file in the GUI.  Explore the
+	  data &mdash; generate graphs, run regressions, perform tests.
+	  Then open the Command log, edit out any redundant commands,
+	  and save it under a specific name. Run the script to
+	  generate a single file containing a concise record of your
+	  work.</para></listitem>
+      <listitem><para>Start by establishing a new script file.  Type
+	  in any commands that may be required to set up
+	  transformations of the data (see the <command>genr</command> command
+	  in <xref linkend="cmdref"/> below). Typically this sort of thing
+	  can be accomplished more efficiently via commands assembled
+	  with forethought rather than point-and-click. Then save and
+	  run the script: the GUI data window will be updated
+	  accordingly. Now you can carry out further exploration of
+	  the data via the GUI. To revisit the data at a later point,
+	  open and rerun the <quote>preparatory</quote> script
+	  first.</para></listitem>
+    </itemizedlist>
+
+    <para>A further option is available for your computing
+      convenience. Under <application>gretl</application>'s File menu
+      you will find the item <quote>Gretl console</quote>.  This opens
+      up a window in which you can type commands and execute them one
+      by one (by pressing the Enter key) interactively.  This is
+      essentially the same as <application>gretlcli</application>'s
+      mode of operation, except that (a) the GUI is updated based on
+      commands executed from the console, enabling you to work back
+      and forth as you wish, and (b)
+      <application>gretl</application>'s Monte Carlo loop routine (see
+      <xref linkend="monte-carlo"/>) is not at present available in this
+      mode.</para>
+
+  </sect1>
+
+  <sect1 id="session"><title>The <quote>session</quote>
+      concept</title>
+
+    <para>
+      <application>gretl</application> offers the idea of a
+      <quote>session</quote> as a way of keeping track of your work
+      and revisiting it later.  This is experimental (and at present
+      more likely to be buggy than the rest of the program); I would
+      be interested in hearing people's reactions.</para>
+
+    <para>
+      The basic idea is to provide a little iconic space containing
+      various objects pertaining to your current working session (see
+      <xref linkend="fig-session"/>).  You can add objects (represented by
+      icons) to this space as you go along.  If you save the session,
+      these added objects should be available again if you re-open the
+      session later.</para>
+
+    <figure id="fig-session" float="1" pgwide="1">
+      <title>Icon view: one model and one graph have been added to the
+	default icons</title>
+      <screenshot>
+	<screeninfo>Session window</screeninfo>
+	<graphic fileref="figures/session.png" align="center"/>
+      </screenshot>
+    </figure>
+
+    <para>
+	If you start <application>gretl</application> and open a data
+	set, then select <quote>Icon view</quote> from the Session
+	menu, you should see the basic default set of icons: these
+	give you quick access to the command script, information on
+	the data set (if any), correlation matrix
+	(<quote>Corrmat</quote>) and descriptive summary statistics
+	(<quote>Summary</quote>). All of these are activated by
+	double-clicking the relevant icon. The <quote>Data set</quote>
+	icon is a little more complex: double-clicking opens up the
+	data in the built-in spreadsheet, but you can also right-click
+	on the icon for a menu of other actions.  </para>
+
+    <tip><para>In many <application>gretl</application> windows, the
+	right mouse button brings up a menu with common
+	tasks.</para></tip>
+
+    <para>Two sorts of objects can be added to the Icon View window:
+      models and graphs.</para>  
+
+    <para>To add a model, first estimate it using the Model menu. Then
+      pull down the File menu in the model window and select
+      <quote>Save to session as icon&hellip;</quote> or <quote>Save as icon
+	and close</quote> (the first of these prompts you for a name
+      for the model, while the second uses a default name, e.g.
+      <quote>Model 1</quote>).</para>
+
+    <para>To add a graph, first create it (under the Data menu,
+      <quote>Graph specified vars</quote>, or via one of
+      <application>gretl</application>'s other graph-generating
+      commands), then choose <quote>Add last graph</quote> from the
+      Session menu.</para>
+
+    <para>Once a model or graph is added its icon should appear in the
+      Icon View window.  Double-clicking on the icon redisplays the
+      object, while right-clicking brings up a menu which lets you
+      rename or delete the object.  This popup menu also gives you the
+      option of editing graphs.</para>
+
+    <para>If you create models or graphs that you think you may wish
+      to re-examine later, then before quitting
+      <application>gretl</application> select <quote>Save
+	as&hellip;</quote>  from the Session menu and give a name under
+      which to save the session.  To re-open the session later,
+      either</para>
+
+    <itemizedlist>
+      <listitem><para>Start <application>gretl</application> then
+	  re-open the session file by going to the <quote>Open</quote>
+	  item under the Session menu, or</para></listitem>
+      <listitem><para>From the command line, type <command>gretl -r</command>
+	  <replaceable>sessionfile</replaceable>, where 
+	  <replaceable>sessionfile</replaceable> is the name
+	  under which the session was saved.</para></listitem>
+    </itemizedlist>
+
+    <para>Also under the Session menu is an option to launch a GNU R
+      session.  R is a separate program (see <xref linkend="app-c"/>):
+      if R is not installed on your computer this menu item will not
+      accomplish anything.  This is a convenience function for anyone
+      wishing to carry out further statistical analyses not available
+      in <application>gretl</application>: when R is invoked in this
+      way, it comes up loaded with a copy of the current
+      <application>gretl</application> data set.</para>
+
+    </sect1>
+
+  <sect1 id="toolbar"><title>The gretl toolbar</title>
+
+    <para>At the bottom left of the main window sits the toolbar.</para>
+
+      <graphic fileref="figures/toolbar.png" align="center"/>
+
+      <para>The
+      icons have the following functions, reading from left to
+      right:</para>
+    
+
+    <orderedlist>
+      <listitem><para>Launch a calculator program.  A
+	  convenience function in case you want quick access to a
+	  calculator when you're working in
+	  <application>gretl</application>.  The default program is
+	  <filename>calc.exe</filename> under MS Windows, or
+	  <filename>xcalc</filename> under the X window system.  You
+	  can change the program under the <quote>File, Preferences,
+	    General</quote> menu, <quote>Toolbar</quote>
+	  tab.</para></listitem>
+      <listitem><para>Launch an editor or word processor.  The default
+	  is <filename>winword.exe</filename> under MS Windows,
+	  <filename>emacs</filename> under X. This is configurable in
+	  the same way as the calculator launcher.</para></listitem>
+      <listitem><para>Open the gretl console.  A shortcut to the
+	  <quote>Gretl console</quote> menu item (<xref linkend="menus"/>
+	  above).</para></listitem>
+      <listitem><para>Open the gretl session window.</para></listitem>
+      <listitem><para>Open the <application>gretl</application>
+	  website in your web browser.  This will work only if you are
+	  connected to the Internet and have a properly configured
+	  browser.</para></listitem>
+      <listitem><para>Open the current version of this manual, in PDF
+	  format.  As with the previous item, this requires an
+	  Internet connection; it also requires that your browser
+	  knows how to handle PDF files.</para></listitem>
+      <listitem><para>Open the  help item for script commands
+	  syntax (i.e. a listing with details of all available
+	  commands).</para></listitem>
+      <listitem><para>Open the dialog box for defining a
+	  graph.</para></listitem>
+      <listitem><para>Capture the last displayed graph for 
+          editing.</para></listitem>
+      <listitem><para>Open a window listing the datasets associated
+	  with Ramanathan's <citetitle>Introductory
+	  Econometrics</citetitle>.</para></listitem>
+    </orderedlist>
+
+    <para>
+      If you don't care to have the toolbar displayed, you can turn it
+      off under the <quote>File, Preferences, General</quote> menu. Go
+      to the Toolbar tab and uncheck the <quote>show gretl
+	toolbar</quote> box.</para>
+
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("manual.sgml" "book" "chapter")
+End:
+-->
