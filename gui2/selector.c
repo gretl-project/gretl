@@ -49,7 +49,8 @@ struct _selector {
     gpointer data;
 };
 
-#define WANT_TOGGLES(c) (c == OLS || c == TOBIT || c == ARMA || c == GARCH)
+#define WANT_TOGGLES(c) (c == OLS || c == TOBIT || c == ARMA || \
+                         c == GARCH || c == COINT2)
 
 static int default_var;
 static int *xlist;
@@ -1221,8 +1222,15 @@ build_selector_switches (selector *sr)
 	gtk_widget_show(hbox);
     }
 
-    if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH) {
-	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
+    if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH ||
+	sr->code == COINT2) {
+	if (sr->code == COINT2) {
+	    tmp = gtk_check_button_new_with_label
+		(_("Show details of regressions"));
+	} else {
+	    tmp = gtk_check_button_new_with_label
+		(_("Show details of iterations"));
+	}
 	g_signal_connect(G_OBJECT(tmp), "toggled",
 			 G_CALLBACK(verbose_callback), sr);
 	hbox = gtk_hbox_new(FALSE, 5);

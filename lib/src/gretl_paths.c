@@ -84,7 +84,61 @@ static char *unslash (const char *src)
     if (dest != NULL) strncpy(dest, src, n-1);
     return dest;
 }
-#endif
+
+static int win32_find_in_subdir (const char *topdir, char *fname, int code)
+{
+    HANDLE handle;
+    WIN32_FIND_DATA fdata;
+    FILE *fp;
+    char tmp[MAXLEN], orig[MAXLEN], lastdir[MAXLEN];
+    const char *gotname;
+    int found = 0;
+
+    /* record current dir in "lastdir" */
+
+    if (!SetCurrentDirectory(topdir)) {
+	return 0;
+    }
+
+    handle = FindFirstFile("*", &fdata); /* FIXME check first one too */
+    if (handle != INVALID_HANDLE_VALUE) {
+	while (!found && FindNextFile(handle, &fdata) != XXX) {
+	    gotname = fdata.cFileName;
+	    if (!strcmp(gotname, ".") || 
+		!strcmp(gotname, "..")) {
+		continue;
+	    }
+	    if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+		continue;
+	    }
+	    strcpy(tmp, topdir);
+	    strcat(tmp, gotname);
+	    path_append(fname, tmp);
+	    fp = fopen(fname, "r");
+	    if (fp != NULL) {
+		fclose(fp);
+		found = 1;
+	    } else if (code == DATA_SEARCH && add_gdt_suffix(fname)) {
+		fp = fopen(fname, "r");
+		if (fp != NULL) {
+		    fclose(fp);
+		    found = 1;
+		}
+	    }
+	    if (!found) {
+		/* failed: drop back to original filename */
+		strcpy(fname, orig);
+	    }
+	}
+	FindClose(handle);
+    }
+
+    SetCurrentDirectory(lastdir);
+
+    return found;
+}
+
+#endif /* WIN32 */
 
 /* .......................................................... */
 
@@ -107,7 +161,7 @@ static int find_in_subdir (const char *topdir, char *fname, int code)
 
     dir = opendir(top);
     if (dir != NULL) {
-	while ((dirent = readdir(dir)) != NULL && !found) {
+	while (!found && (dirent = readdir(dir))) {
 	    if (!strcmp(dirent->d_name, ".") || !strcmp(dirent->d_name, "..")) {
 		continue;
 	    }

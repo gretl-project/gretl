@@ -998,10 +998,12 @@ static void real_do_coint (gpointer p, int action)
 
     clear(line, MAXLEN);
 
+    cmd.opt = selector_get_opts(sr);
+
     if (action == COINT) {
 	sprintf(line, "coint %s", buf);
     } else {
-	sprintf(line, "coint2 %s", buf);
+	sprintf(line, "coint2 %s%s", buf, (cmd.opt)? " --verbose" : "");
     }	
 
     /* check the command and initialize output buffer */
@@ -1017,7 +1019,7 @@ static void real_do_coint (gpointer p, int action)
     if (action == COINT) {
 	err = coint(order, cmd.list, &Z, datainfo, prn);
     } else {
-	johansen_test(order, cmd.list, &Z, datainfo, 0, prn);
+	johansen_test(order, cmd.list, &Z, datainfo, cmd.opt, prn);
     }
 
     if (err) {
