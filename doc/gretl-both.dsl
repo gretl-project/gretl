@@ -181,6 +181,108 @@
   ;; If '#t', formal objects will float if floating is supported by the
   ;; backend. At present, only the TeX backend supports floats.
   #f)
+  
+;; don't put chapter numbers in running heads by default, just titles
+(define %chap-app-running-head-autolabel% #f)
+
+(mode chnum-mode
+  (element title
+    (let* ((component (ancestor-member (current-node) 
+                                       (component-element-list)))
+           (chaporapp (or (equal? (gi component) (normalize "chapter"))
+                          (equal? (gi component) (normalize "appendix")))))
+      (if %chap-app-running-heads%
+          (make sequence 
+            (if (and chaporapp
+                     %chapter-autolabel%
+                     (or %chap-app-running-heads%
+                         (attribute-string (normalize "label") component)))
+                (literal (gentext-element-name-space component)
+                         (element-label component))
+                         ;; (gentext-label-title-sep (gi component)))
+                (empty-sosofo)))
+          (empty-sosofo))))
+)
+
+
+;; but distinguish recto and verso: put chap number in recto header
+(define ($title-header-footer$)
+  (let* ((title (if (equal? (gi) (normalize "refentry"))
+                   ($refentry-header-footer-element$)
+                   ($title-header-footer-element$))))
+  (if-front-page
+    (make sequence
+      font-posture: 'italic
+      (with-mode hf-mode 
+        (process-node-list title)))
+    (make sequence
+      font-posture: 'italic
+      (with-mode chnum-mode 
+         (process-node-list title))))))
+
+(define (page-inner-header gi)
+  (cond
+   ((equal? (normalize gi) (normalize "dedication")) (empty-sosofo))
+   ((equal? (normalize gi) (normalize "lot")) (empty-sosofo))
+   ((equal? (normalize gi) (normalize "part")) (empty-sosofo))
+   ((equal? (normalize gi) (normalize "toc")) (empty-sosofo))
+   (else ($title-header-footer$))))
+
+(define (page-outer-header gi)
+  ($page-number-header-footer$))
+
+(define (first-page-inner-header gi)
+  (empty-sosofo))
+
+(define (first-page-outer-header gi)
+  ($page-number-header-footer$))
+
+(define ($left-header$ #!optional (gi (gi)))
+  (if-first-page
+   (if-front-page 
+       (first-page-inner-header gi)
+       (first-page-outer-header gi))
+   (if %two-side%
+       (if-front-page
+        (if (equal? %writing-mode% 'left-to-right)
+            (page-inner-header gi)
+            (page-outer-header gi))
+        (if (equal? %writing-mode% 'left-to-right)
+            (page-outer-header gi)
+            (page-inner-header gi)))
+       (if (equal? %writing-mode% 'left-to-right)
+           (page-inner-header gi)
+           (page-outer-header gi)))))
+  
+(define ($right-header$ #!optional (gi (gi)))
+  (if-first-page
+   (if-front-page
+       (first-page-outer-header gi)
+       (first-page-inner-header gi))
+   (if %two-side%
+       (if-front-page
+        (if (equal? %writing-mode% 'left-to-right)
+            (page-outer-header gi)
+            (page-inner-header gi))
+        (if (equal? %writing-mode% 'left-to-right)
+            (page-inner-header gi)
+            (page-outer-header gi)))
+       (if (equal? %writing-mode% 'left-to-right)
+           (page-outer-header gi)
+           (page-inner-header gi)))))
+
+;; blank out the footers
+(define (page-inner-footer gi)
+  (empty-sosofo))
+(define (page-outer-footer gi)
+  (empty-sosofo))
+(define (first-page-inner-footer gi)
+  (empty-sosofo))
+(define (first-page-outer-footer gi)
+  (empty-sosofo))
+
+(define %bottom-margin% 5pi) ;; default is 8pi
+(define %body-start-indent% 3pi) ;; default is 4pi  
 
 ;;======================================
 ;;Inlines
