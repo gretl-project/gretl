@@ -160,7 +160,24 @@
       è possibile scegliere di vedere un'anteprima della pagina finale, o
       di salvare il risultato in un file da includere in un documento
       &latex;. L'anteprima richiede che si disponga di un sistema &tex;
-      funzionante sul proprio computer.</para>
+      funzionante sul proprio computer. È possibile controllare l'aspetto
+      del &latex; generato da <application>gretl</application> includendo un
+      file chiamato <filename>gretlpre.tex</filename> nella propria
+      directory utente <application>gretl</application> (si veda
+      <xref linkend="optarg"/>). Il contenuto di tale file verrà usato come
+      <quote>preambolo</quote> &latex;, il cui valore predefinito è il
+      seguente:
+    </para>
+
+    <programlisting>
+      \documentclass[11pt]{article}
+      \usepackage[latin1]{inputenc}
+      \usepackage{amsmath}
+      \usepackage{dcolumn}
+      \begin{document}
+      \thispagestyle{empty}</programlisting>
+    <para>Si noti che sono richiesti i pacchetti <literal>amsmath</literal> e
+      <literal>dcolumn</literal>.</para>
 
     <para>Per importare i risultati di <application>gretl</application>
       in un word processor, è possibile fare copia e incolla da una

@@ -13,11 +13,11 @@
       o ciclo, è:</para>
     
     <programlisting>
-      loop <replaceable>espressione di controllo</replaceable> [ --progressive ]
+      loop <replaceable>espressione di controllo</replaceable> [ --progressive | --verbose ]
          <replaceable>corpo del loop</replaceable>
       endloop</programlisting>
 
-    <para>Come si spiega oltre, sono disponibili quattro tipi di
+    <para>Come si spiega oltre, sono disponibili cinque tipi di
       <replaceable>espressione di controllo</replaceable>. Nel
       <replaceable>corpo del loop</replaceable> sono accettati i seguenti comandi:
       <command>genr</command>, <command>ols</command>,
@@ -27,14 +27,32 @@
       <command>summary</command>, <command>if</command>,
       <command>else</command> e <command>endif</command>.</para>
 
+    <para>In modalità predefinita, il comando <command>genr</command> all'interno di
+      un loop opera in modo silenzioso (senza mostrare informazioni sulle
+      variabili generate). Per ottenere informazioni da
+      <command>genr</command> è possibile specificare l'opzione
+      <literal>--verbose</literal> con <command>loop</command>.
+    </para>
+
     <para>L'opzione <literal>--progressive</literal> di
       <command>loop</command> modifica il comportamento dei comandi
       <command>ols</command>, <command>print</command> e
       <command>store</command> rendendoli più comodi per l'uso in analisi di
-      tipo Monte Carlo. Le sezioni che seguono descrivono le varie forme di
-      espressioni di controllo e gli effetti dell'opzione
-      <literal>--progressive</literal>. Il capitolo termina con alcuni esempi
-      di uso dei loop.</para>  
+      tipo Monte Carlo (si veda <xref linkend="loop-progressive"/>).
+    </para>
+    <para>Le sezioni che seguono descrivono le varie forme di
+      espressioni di controllo e forniscono alcuni esempi di uso dei loop.
+    </para>  
+    
+    <tip>
+      <para>
+       Se occorre eseguire un'analisi Monte Carlo con molte migliaia di
+       ripetizioni, possono verificarsi problemi di memoria e di tempo
+       di calcolo. Un modo per minimizzare l'uso delle risorse di sistema
+       consiste nell'eseguire lo script usando il programma a riga di comando,
+       <application>gretlcli</application>, redirigendo i risultati su un file.
+      </para>
+    </tip>
 
   </sect1>
 
@@ -104,7 +122,27 @@
 
     </sect2>
 
-    <sect2 id="loop-for"><title>Loop di tipo for</title>
+    <sect2 id="loop-each"><title>Loop di tipo <quote>For each</quote></title>
+
+      <para>Anche il terzo tipo di controllo usa la variabile interna
+       <varname>i</varname>, che in questo caso può assumere valori solo
+       all'interno di una lista specifica di stringhe. Il loop è eseguito
+       una volta per ogni stringa presente nella lista, agevolando l'esecuzione
+       di operazioni ripetitive su un gruppo di variabili. Ecco un esempio:
+      </para>
+
+      <programlisting>
+       loop foreach i mele pere pesche
+          print "$i"
+       endloop</programlisting>
+      <para>Questo loop verrà eseguito tre volte, mostrando
+          <quote>mele</quote>, <quote>pere</quote> e
+          <quote>pesche</quote> ad ogni iterazione.
+      </para>
+
+    </sect2>
+
+    <sect2 id="loop-for"><title>Loop di tipo <quote>for</quote></title>
     
       <para>L'ultimo tipo di controllo usa una forma semplificata
         dell'istruzione <command>for</command> del linguaggio di

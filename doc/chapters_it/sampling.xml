@@ -22,20 +22,23 @@
       definizione di un campione ottenuta indicando il punto iniziale e/o
       quello finale dell'intervallo attuale del campione. Questa
       modalità è usata tipicamente con serie storiche; ad esempio se
-      si hanno dati trimestrali per l'intervallo 1960:1 to 2003:4 e si
+      si hanno dati trimestrali per l'intervallo da 1960:1 a 2003:4 e si
       vuole stimare una regressione usando solo i dati degli anni '70,
       un comando adeguato è
 
-      <programlisting>smpl 1970:1 1979:4</programlisting>
+      <programlisting>
+        smpl 1970:1 1979:4</programlisting>
       
       Oppure se si vuole riservare la parte finale delle osservazioni
       disponibili per eseguire una previsione "fuori dal campione", si
       può usare il comando
 
-      <programlisting>smpl ; 2000:4</programlisting>, 
+      <programlisting>
+        smpl ; 2000:4</programlisting>
+      
       dove il punto e virgola significa <quote>mantenere
       inalterata l'osservazione iniziale</quote> (e potrebbe essere
-      usata in modo analogo al posto del secondo parametro, indicando
+      usato in modo analogo al posto del secondo parametro, indicando
       di mantenere inalterata l'osservazione finale). Per
       <quote>inalterata</quote> in questo caso si intende inalterata
       relativamente all'ultima impostazione eseguita con
@@ -45,8 +48,7 @@
 
       <programlisting>
 	smpl 1970:1 2003:4
-	smpl ; 2000:4
-      </programlisting>
+	smpl ; 2000:4</programlisting>
       
       l'intervallo del campione sarà da 1970:1 a 2000:4.</para>  
 
@@ -57,23 +59,21 @@
     e virgola per indicare nessuna variazione). Ad esempio
 
       <programlisting>
-	smpl +1 ;
-      </programlisting>
+	smpl +1 ;</programlisting>
       
       sposterà in avanti di un'osservazione l'inizio del campione,
       mantenendo inalterata la fine del campione, mentre
 
       <programlisting>
-	smpl +2 -1
-      </programlisting> sposterà l'inizio del campione in avanti di
+	smpl +2 -1</programlisting> sposterà l'inizio del campione in avanti di
       due osservazioni e la fine del campione indietro di una.</para>
 
     <para>Una caratteristica importante dell'operazione di
-    <quote>impostazione</quote> del campione descritta fin qui è che
+    <quote>impostazione del campione</quote> descritta fin qui è che
     il sotto-campione creato risulta sempre composto da un insieme di
     osservazioni contigue. La struttura del dataset rimane quindi
     inalterata: se si lavora su una serie trimestrale, dopo aver
-    impostato il campione, la serie rimane trimestrale.
+    impostato il campione la serie rimarrà trimestrale.
     </para> 
 
   </sect1>
@@ -86,7 +86,7 @@
     numeri casuali. Questa modalità è usata tipicamente con dati di
     tipo cross-section o panel.</para>  
 
-    <para>Si supponga di avere dei dati di tipo cross-section, che descrivono
+    <para>Si supponga di avere dei dati di tipo cross-section che descrivono
     il genere, il reddito e altre caratteristiche di un gruppo di individui e
     si vogliano analizzare solo le donne presenti nel campione. Se si
     dispone di una variabile dummy <varname>genere</varname>, che vale
@@ -94,16 +94,14 @@
     risultato con
 
       <programlisting>
-	smpl genere=0 --restrict
-      </programlisting>.
+	smpl genere=0 --restrict</programlisting>
     
     Oppure si supponga di voler limitare il campione di lavoro ai soli
     individui con un reddito superiore ai 50.000 euro. Si potrebbe
     usare</para>
 
       <programlisting>
-	smpl reddito>50000 --restrict
-      </programlisting>
+	smpl reddito>50000 --restrict</programlisting>
 
     <para>Qui sorge un problema: eseguendo in sequenza i due comandi
     visti sopra, cosa conterrà il sotto-campione? Tutti gli individui
@@ -123,8 +121,7 @@
     <literal>replace</literal> al comando <literal>smpl</literal>:</para>
 
     <programlisting>
-      smpl income>50000 --restrict --replace
-    </programlisting>
+      smpl income>50000 --restrict --replace</programlisting>
 
     <para>Questa opzione ha l'effetto di re-impostare automaticamente
     il campione completo prima di applicare la nuova restrizione.</para>
@@ -141,10 +138,9 @@
     La restrizione
 
       <programlisting>
-	smpl anno=1995 --restrict
-      </programlisting> produce un dataset che non è più di tipo panel, ma
-      cross-section per l'anno 1995.
-      In modo simile
+	smpl anno=1995 --restrict</programlisting>
+    produce un dataset che non è più di tipo panel, ma cross-section per l'anno
+    1995.  In modo simile
 
       <programlisting>
 	smpl impresa=3 --restrict</programlisting> produce un dataset
@@ -160,7 +156,7 @@
     modelli, di calcolo delle statistiche ecc. Nel caso della
     restrizione, il programma crea una copia ridotta del dataset e la
     tratta come un semplice dataset di tipo cross-section non datato.
-    Se si vuole re-impostare un'interpretazione di tipo "serie
+    Se si vuole re-imporre un'interpretazione di tipo "serie
     storiche" o "panel" al dataset ridotto, occorre usare il comando
     <xref linkend="cmd-setobs"/> (e <xref linkend="cmd-panel"/>, se
       appropriato).</para> 
@@ -168,9 +164,9 @@
     <para>Il fatto che una <quote>restrizione</quote> del campione
     comporti la creazione di una copia ridotta del dataset originale
     può creare problemi quando il dataset è molto grande (nell'ordine
-    delle migliaia di osservazioni). Usando dataset simili, la
-    creazione di una copia può causare l'esaurimento della memoria del
-    sistema nel calcolo dei risultati delle regressioni. È possibile
+    delle migliaia di osservazioni). Se si usano simili dataset, la
+    creazione della copia può causare l'esaurimento della memoria del
+    sistema durante il calcolo dei risultati delle regressioni. È possibile
     aggirare il problema in questo modo:</para>
 
     <orderedlist>
@@ -198,14 +194,12 @@
 
   <sect1 id="sample-random"><title>Campionamento casuale</title>
 
-    <para>Se si usano dataset molto grandi (o se si deve studiare le
+    <para>Se si usano dataset molto grandi (o se si intende studiare le
     proprietà di uno stimatore), può essere utile estrarre un campione
     casuale dal dataset completo. È possibile farlo ad esempio con
 
       <programlisting>
-	smpl 100 --random
-      </programlisting> che seleziona 100 osservazioni.
-    
+	smpl 100 --random</programlisting> che seleziona 100 osservazioni.
     Se occorre che il campione sia riproducibile, occorre per prima
     cosa impostare il seme del generatore di numeri casuali, usando
     il comando <xref linkend="cmd-set"/>.</para>
@@ -230,7 +224,7 @@
     sul dataset è già stato impostato un sotto-campione, viene data la
     possibilità di preservare la restrizione già attiva o di sostituirla
     (in modo analogo a quanto avviene invocando l'opzione <literal>replace</literal>
-    descritta in (<xref linkend="sample-restrict"/>).
+    descritta nel<xref linkend="sample-restrict"/>.
     </para>
 
   </sect1>

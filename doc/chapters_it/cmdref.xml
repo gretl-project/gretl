@@ -488,12 +488,6 @@
 	  </row>
 	  <row>
 	    <entry><command>store</command></entry>
-	    <entry><literal>--cross</literal></entry>
-	    <entry>genera i prodotti incrociati</entry>
-	    <entry><literal>-o</literal></entry>
-	  </row>
-	  <row>
-	    <entry><command>store</command></entry>
 	    <entry><literal>--csv</literal></entry>
 	    <entry>valori separati da virgola</entry>
 	    <entry><literal>-c</literal></entry>

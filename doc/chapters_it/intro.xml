@@ -16,9 +16,9 @@
 	<listitem><para><application>gretl</application> offre
         un'interfaccia utente intuitiva, che permette di entrare subito
         nel vivo dell'analisi econometrica. Grazie all'integrazione con i
-        libri di testo di Ramu Ramanathan e Jeffrey Wooldridge, il
-        pacchetto offre molti file di dati e script di comandi,
-        commentati e pronti all'uso.</para>
+        libri di testo di Ramu Ramanathan, di Jeffrey Wooldridge, di James
+        Stock e Mark Watson, il pacchetto offre molti file di dati e script di
+        comandi, commentati e pronti all'uso.</para>
 	</listitem>
       </varlistentry>  
       <varlistentry><term>Flessibile</term>
@@ -76,7 +76,7 @@
       </varlistentry>
       <varlistentry><term>Internazionale</term>
 	<listitem><para><application>gretl</application> supporta le
-        lingue inglese, francese, italiano e spagnolo, a seconda
+        lingue inglese, francese, italiana, spagnola e polacca, a seconda
         della lingua impostata sul computer.
 	</para>
 	</listitem>
@@ -102,21 +102,30 @@
     </para>
 
     <para>
-      Sono grato a William Greene, autore di
-      <citetitle>Econometric Analysis</citetitle>, per avermi dato il
-      permesso di includere nella distribuzione di
-      <application>gretl</application> alcuni dei dataset analizzati nel
-      suo testo e a Jeffrey Wooldridge per avermi aiutato a preparare la
-      versione <application>gretl</application> dei dataset contenuti
-      nel suo <citetitle>Introductory Econometrics: A Modern
-      Approach</citetitle>.
+      Sono grato agli autori di molti testi di econometria per avermi dato il
+      permesso di creare delle versioni <application>gretl</application>
+      dei dataset contenuti nei loro libri. Questa lista al momento comprende
+      William Greene, autore di <citetitle>Econometric Analysis</citetitle>,
+      Jeffrey Wooldridge (<citetitle>Introductory Econometrics: A Modern
+      Approach</citetitle>); James Stock e Mark Watson (<citetitle>Introduction
+      to Econometrics</citetitle>); Damodar Gujarati (<citetitle>Basic
+      Econometrics</citetitle>); Russell Davidson e James MacKinnon
+      (<citetitle>Econometric Theory and Methods</citetitle>).
     </para>
-
+    
+    <para>La stima GARCH in <application>gretl</application> si basa sul
+      codice pubblicato sul <citetitle>Journal of Applied
+      Econometrics</citetitle> dai Prof. Fiorentini, Calzolari e Panattoni,
+      mentre il codice per generare i <emphasis>p</emphasis>-value per i test
+      Dickey Fuller è di James MacKinnon. In ognuno dei casi sono grato agli
+      autori per avermi permesso di usare il loro lavoro.
+    </para>
+     
     <para>Per quanto riguarda l'internazionalizzazione di
       <application>gretl</application>, vorrei ringraziare Ignacio
-      D&iacute;az-Emparanza, Michel Robitaille e Cristian
-      Rigamonti, che hanno curato le traduzioni spagnola, francese e
-      italiana.</para>
+      D&iacute;az-Emparanza, Michel Robitaille, Cristian
+      Rigamonti e Tadeusz Kufel, che hanno curato le traduzioni spagnola,
+      francese, italiana e polacca.</para>
 
     <para>
       Ho beneficiato largamente del lavoro di molti sviluppatori di
@@ -129,8 +138,8 @@
 
     <para>Molti utenti di <application>gretl</application> hanno fornito
       utili suggerimenti e segnalazioni di errori. Un ringraziamento
-      particolare a Ignacio D&iacute;az-Emparanza, Riccardo
-      <quote>Jack</quote> Lucchetti, che ha fornito alcune patch molto
+      particolare a Ignacio D&iacute;az-Emparanza, Tadeusz Kufel, Alan Isaac,
+      Riccardo <quote>Jack</quote> Lucchetti, che ha fornito alcune patch molto
       utili, e Dirk Eddelbuettel, che cura il pacchetto
       <application>gretl</application> per Debian GNU/Linux.</para>
 

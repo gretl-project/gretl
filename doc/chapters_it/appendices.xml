@@ -222,18 +222,21 @@
   </para>
 
   <para>
-    <application>gretl</application> viene sviluppato sotto Linux.
+    <application>gretl</application> è stato sviluppato sotto Linux.
     La libreria condivisa e il client a riga di comando dovrebbero essere
     compilabili su qualsiasi piattaforma che (a) supporti l'ISO/ANSI C e
-    (b) abbia installate le librerie zlib (per la compressione) e libxml
-    (manipolazione dell'XML), La home page di zlib si trova a <ulink
+    (b) abbia installate le seguenti librerie: zlib (per la compressione dei
+    dati), libxml (manipolazione dell'XML) e LAPACK (supporto per l'algebra
+    lineare). La home page di zlib si trova a <ulink
     url="http://www.info-zip.org/pub/infozip/zlib/">info-zip.org</ulink>,
-    mentre libxml si trova a <ulink url="http:/xmlsoft.org/">xmlsoft.org</ulink>.
-    Se il sistema ospita anche la libreria GNU readline, essa sarà usata
-    per <application>gretcli</application>, fornendo una riga di comando
-    molto più comoda da utilizzare. Si veda la <ulink
-      url="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html">home page
-      di readline</ulink>.
+    libxml si trova a <ulink url="http:/xmlsoft.org/">xmlsoft.org</ulink>,
+    mentre LAPACK è a <ulink
+    url="http://www.netlib.org/lapack/">netlib.org</ulink>.  Se il sistema
+    ospita anche la libreria GNU readline, essa sarà usata per
+    <application>gretcli</application>, fornendo una riga di comando molto più
+    comoda da utilizzare. Si veda la <ulink
+    url="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html">home page di
+    readline</ulink>.
   </para>
 
   <para>Il client grafico dovrebbe essere compilabile e utilizzabile su
@@ -265,9 +268,8 @@
     Alcune funzionalità di <application>gretl</application> fanno uso della
     libreria <application>gtkextra</application> di Adrian Feguin. È
     possibile trovare gtkextra a <ulink
-      url="http://gtkextra.sourceforge.net/">gtkextra.sourceforge.net</ulink>. 
-    Purtroppo sembra che <application>gtkextra</application> non sia più
-    sviluppato: le parti rilevanti di questo pacchetto sono incluse (in
+      url="http://gtkextra.sourceforge.net/">gtkextra.sourceforge.net</ulink>.
+    Le parti rilevanti di questo pacchetto sono incluse (in
     forma leggermente modificata) con la distribuzione sorgente di
     <application>gretl</application>.
   </para>

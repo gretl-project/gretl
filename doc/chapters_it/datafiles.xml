@@ -390,19 +390,24 @@
     <para>Se <application>gretl</application> trova dei valori mancanti
       <quote>all'interno</quote> dell'intervallo del campione per una
       regressione (che può anche essere troncato), il risultato dipende
-      dal tipo di dataset e dallo stimatore scelto. Nel caso di dati
-      cross-section, <application>gretl</application> salterà automaticamente
-      le osservazioni mancanti durante la stima della regressione, a meno
-      che lo stimatore non sia quello dei minimi quadrati a due stadi, o
-      uno stimatore di sistema, come il SUR. Nel caso di serie storiche o
-      di dati panel, o quando lo stimatore è uno di quelli appena citati,
-      il programma emette un messaggio di errore e non produce stime.
+      dal tipo di dataset e dallo stimatore scelto. In molti casi, il
+      programma eseguirà le stime saltando automaticamente le osservazioni
+      che contengono valori mancanti, emettendo un messaggio che indica quante
+      osservazioni sono state escluse. Tuttavia, ci sono procedure che non
+      saltano automaticamente le osservazioni mancanti: tutti gli stimatori
+      autoregressivi, gli stimatori di sistema (come il SUR) e i minimi
+      quadrati non lineari. Nel caso di dati panel, l'esclusione automatica
+      delle osservazioni mancanti avviene solo se il dataset risultante
+      costituisce un panel "bilanciato". In tutti i casi in cui l'esclusione
+      automatica delle osservazioni mancanti non è supportata,
+      <application>gretl</application> emette un messaggio di errore e non
+      produce stime.
     </para>
-
-    <para>I valori mancanti che si trovano in mezzo a un dataset sono
-      effettivamente un problema.  Chi ha sufficiente confidenza con i comandi
-      può usare la funzione <command>misszero</command> con il comando
-      <command>genr</command>.  Eseguendo
+    
+    <para>In tutti i casi problematici dovuti a valori mancanti all'interno
+      di un dataset, è possibile ricorrere alla funzione
+      <command>misszero</command> (da usare con cautela!) del comando
+      <command>genr</command>. Eseguendo
     </para> 
 
     <para><command>genr pippo = misszero(pluto)</command>
@@ -552,7 +557,7 @@
       dati della raccolta.</para>
 
     <para>I file di catalogo per le raccolte di file di comandi sono
-      molto simili a quelli visti, tranne per il fatto che ogni riga del
+      molto simili a quelli appena visti, tranne per il fatto che ogni riga del
       file contiene tre campi: il nome del file (senza l'estensione
       <literal>.inp</literal>), una breve descrizione del significato
       econometrico della serie di comandi contenuti nel file e una breve
@@ -604,9 +609,9 @@
     </orderedlist>
 
     <para>Se la raccolta creata non contiene dati proprietari, è
-      possibile inviarla in modo che venga resa disponibile a tutti gli
-      utenti di <application>gretl</application> come pacchetto dati
-      opzionale.</para> 
+      possibile inviarla al curatore di <application>gretl</application>
+      in modo che venga resa disponibile a tutti gli utenti del programma
+      come pacchetto dati opzionale.</para>
 
   </sect1>
 
