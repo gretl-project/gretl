@@ -23,6 +23,7 @@
 
 #include "libgretl.h"
 #include "internal.h"
+#include "libset.h"
 
 #include "fcp.h"
 
@@ -233,6 +234,23 @@ static int make_garch_dataset (const int *list, double **Z,
     return E_ALLOC;
 }
 
+static int get_vopt (int robust)
+{
+    int vopt = get_garch_vcv_version();
+
+    /* The defaults: QML if "robust" option is in force,
+       otherwise negative Hessian */
+    if (vopt == VCV_UNSET) {
+	if (robust) {
+	    vopt = VCV_QML;
+	} else {
+	    vopt = VCV_HESSIAN;
+	}
+    }
+
+    return vopt;
+}
+
 int do_fcp (const int *list, double **Z, 
 	    const DATAINFO *pdinfo, MODEL *pmod,
 	    PRN *prn, unsigned long opt)
@@ -248,12 +266,11 @@ int do_fcp (const int *list, double **Z,
     double *res = NULL, *res2 = NULL;
     double *coeff = NULL, *b = NULL;
     double *vcv = NULL;
-    int err = 0, iters = 0, robust = 0;
+    int err = 0, iters = 0;
     int nobs, maxlag, bign, pad = 0;
-    int nx, nparam;
-    int i;
+    int i, nx, nparam, vopt;
 
-    if (opt & OPT_R) robust = 1;
+    vopt = get_vopt(opt & OPT_R);
 
     nx = ncoeff - 1;
     maxlag = (p > q)? p : q; 
@@ -320,10 +337,9 @@ int do_fcp (const int *list, double **Z,
     }
 
     err = garch_estimate(t1 + pad, t2 + pad, bign, 
-			 (const double **) X, nx, 
-			 yhat, coeff, ncoeff, 
-			 vcv, res2, res, h, y, 
-			 amax, b, &iters, prn, robust);
+			 (const double **) X, nx, yhat, coeff, ncoeff, 
+			 vcv, res2, res, h, y, amax, b, &iters, prn, 
+			 vopt);
 
     if (err != 0) {
 	pmod->errcode = err;
@@ -341,6 +357,7 @@ int do_fcp (const int *list, double **Z,
 			  amax, nparam, pad, res, h);
 	make_packed_vcv(pmod, vcv, nparam);
 	gretl_model_set_int(pmod, "iters", iters);
+	gretl_model_set_int(pmod, "garch_vcv", vopt);
     }
 
  bailout:

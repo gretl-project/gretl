@@ -4200,10 +4200,11 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
     char fname[MAXLEN];
 
     if (!user_fopen("script_tmp", fname, &prn)) return;
+
     if (loop) pprintf(prn, "loop 1000\n\nendloop\n");
+
     gretl_print_destroy(prn);
     strcpy(scriptfile, fname);
-    
     view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
 }
 
@@ -5581,8 +5582,9 @@ int gui_exec_line (char *line,
             pprintf(prn, _("import command is malformed\n"));
             break;
         }
-	if (data_status & HAVE_DATA)
+	if (data_status & HAVE_DATA) {
 	    close_session();
+	}
         if (cmd.opt) {
             err = import_box(&Z, &datainfo, datfile, prn);
         } else {
@@ -5751,6 +5753,9 @@ int gui_exec_line (char *line,
 	    pprintf(prn, _("Data series too long\n"));
 	    err = 1;
 	    break;
+	}
+	if (data_status & HAVE_DATA) {
+	    close_session();
 	}
 	err = open_nulldata(&Z, datainfo, data_status, nulldata_n, prn);
 	if (err) { 

@@ -1957,6 +1957,8 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     cursor_to_top(vwin);
 #endif
 
+    gtk_widget_grab_focus(vwin->w);
+
     return vwin;
 }
 

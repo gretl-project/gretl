@@ -8,7 +8,7 @@
    Allin Cottrell, Feb 2004.
 */
 
-#include "libgretl.h"
+#include <gretl/libgretl.h>
 
 /* output XML preamble at start */
 

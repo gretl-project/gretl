@@ -384,24 +384,11 @@ make_garch_vcv (int t1, int t2,
 		double *alfa, double *beta, int q, int p, 
 		double *h, double **dhdp, double *zt,
 		const double *vch, double *vcv,
-		int robust)
+		int vopt)
 {
     double *vco = NULL, *vcr = NULL, *vci = NULL;
     int np2 = nparam * nparam;
-    int k, vopt;
-    int err = 0;
-
-    vopt = get_garch_vcv_version();
-
-    /* The defaults: QML if "robust" option is in force,
-       otherwise negative Hessian */
-    if (vopt == VCV_UNSET) {
-	if (robust) {
-	    vopt = VCV_QML;
-	} else {
-	    vopt = VCV_HESSIAN;
-	}
-    }
+    int k, err = 0;
 
     /* OP and robust variants need OP matrix */
     if (vopt == VCV_OP || vopt == VCV_QML || vopt == VCV_BW) {
@@ -490,7 +477,7 @@ int garch_estimate (int t1, int t2, int nobs,
 		    double *coeff, int nc, double *vcv, 
 		    double *res2, double *res, double *h,
 		    const double *y, double *amax, double *b, 
-		    int *iters, PRN *prn, int robust)
+		    int *iters, PRN *prn, int vopt)
 {
     int i, j;
 
@@ -731,7 +718,7 @@ int garch_estimate (int t1, int t2, int nobs,
 			     b, &a0, alfa, beta, q, p, 
 			     h, dhdp, zt,
 			     (const double *) vc5, vcv,
-			     robust);
+			     vopt);
 
 	if (!err) {
 	    /* transcribe coefficients and standard errors */

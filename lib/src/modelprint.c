@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "internal.h"
+#include "libset.h"
 
 #ifndef cmplx
 typedef struct _cmplx cmplx;
@@ -763,6 +764,76 @@ static int print_tsls_instruments (LIST list, const DATAINFO *pdinfo, PRN *prn)
 
 /* ......................................................... */
 
+static void hac_vcv_line (const MODEL *pmod, PRN *prn)
+{
+    int lag;
+
+    if (pmod->aux == AUX_SCR) {
+	lag = pmod->order;
+    } else {
+	lag = gretl_model_get_int(pmod, "hac_lag");
+    }
+
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, _("Serial correlation-robust standard errors, "
+		       "lag order %d\n"), lag);
+    } else {
+	pprintf(prn, I_("Serial correlation-robust standard errors, "
+		       "lag order %d\n"), lag);
+    }	
+}
+
+static void hc_vcv_line (const MODEL *pmod, PRN *prn)
+{
+    int v = gretl_model_get_int(pmod, "hc_version");
+
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, _("Heteroskedasticity-robust standard errors, "
+		       "variant HC%d\n"), v);
+    } else {
+	pprintf(prn, I_("Heteroskedasticity-robust standard errors, "
+			"variant HC%d\n"), v);
+    }	
+}
+
+static void garch_vcv_line (const MODEL *pmod, PRN *prn)
+{
+    int v = gretl_model_get_int(pmod, "garch_vcv");
+    int tex = TEX_FORMAT(prn->format);
+    int utf = PLAIN_FORMAT(prn->format);
+    const char *vcvstr = NULL;
+
+    switch (v) {
+    case VCV_HESSIAN:
+	vcvstr = N_("Standard errors based on Hessian");
+	break;
+    case VCV_IM:
+	vcvstr = N_("Standard errors based on Information Matrix");
+	break;
+    case VCV_OP:
+	vcvstr = N_("Standard errors based on Outer Products matrix");
+	break;
+    case VCV_QML:
+	vcvstr = N_("QML standard errors");
+	break;
+    case VCV_BW:
+	if (tex) {
+	    vcvstr = N_("Bollerslev--Wooldridge standard errors");
+	} else {
+	    vcvstr = N_("Bollerslev-Wooldridge standard errors");
+	}
+	break;
+    default:
+	break;
+    }
+
+    if (vcvstr != NULL) {
+	pprintf(prn, "%s\n", (utf)? _(vcvstr) : I_(vcvstr));
+    }
+}
+
+/* ......................................................... */
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 PRN *prn)
@@ -860,7 +931,8 @@ static void print_model_heading (const MODEL *pmod,
     /* special names for dependent variable in cases of certain sorts
        of auxiliary regressions */
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG) {
-	pprintf(prn, "%s: %s\n", _("Dependent variable"),
+	pprintf(prn, "%s: %s\n", 
+		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$\\hat{u}$" : "uhat");
     }
     else if (pmod->aux == AUX_WHITE) {
@@ -893,23 +965,18 @@ static void print_model_heading (const MODEL *pmod,
 
     /* supplementary strings below the estimator and sample info */
 
+    /* VCV variants */
     if (pmod->aux == AUX_SCR || gretl_model_get_int(pmod, "hac_lag")) {
-	if (pmod->aux == AUX_SCR) {
-	    pprintf(prn, _("Serial correlation-robust standard errors, "
-			   "lag order %d\n"), pmod->order);
-	} else {
-	    int lag = gretl_model_get_int(pmod, "hac_lag");
-
-	    pprintf(prn, _("Serial correlation-robust standard errors, "
-			   "lag order %d\n"), lag);
-	}
+	hac_vcv_line(pmod, prn);
     }
     else if (gretl_model_get_int(pmod, "hc")) {
-	int v = gretl_model_get_int(pmod, "hc_version");
-
-	    pprintf(prn, _("Heteroskedasticity-robust standard errors, "
-			   "variant HC%d\n"), v);
+	hc_vcv_line(pmod, prn);
     }
+    else if (gretl_model_get_int(pmod, "garch_vcv")) {
+	garch_vcv_line(pmod, prn);
+    }
+
+    /* weight variable for WLS and ARCH */
     else if (pmod->ci == WLS || pmod->ci == ARCH) {
 	if (tex) {
 	    tex_escape(vname, pdinfo->varname[pmod->nwt]);
@@ -919,15 +986,21 @@ static void print_model_heading (const MODEL *pmod,
 		(utf)? _("Variable used as weight") : I_("Variable used as weight"), 
 		(tex)? vname : pdinfo->varname[pmod->nwt]);
     }
+
+    /* rhohat for CORC and HILU (TeX) */
     else if (pmod->ci == CORC || pmod->ci == HILU) {
 	if (tex) {
 	    pprintf(prn, "\\\\ \n$\\hat{\\rho}$ = %g\n", 
 		    gretl_model_get_double(pmod, "rho_in"));
 	}
-    } else if (pmod->ci == TSLS) {
+    } 
+
+    /* list of instruments for TSLS */
+    else if (pmod->ci == TSLS) {
 	print_tsls_instruments (pmod->list, pdinfo, prn);
     }
 
+    /* message about new variable created */
     if (PLAIN_FORMAT(prn->format) && gretl_msg[0] != '\0' &&
 	strstr(gretl_msg, _("Replaced")) == NULL &&
 	strstr(gretl_msg, _("Generated")) == NULL) {

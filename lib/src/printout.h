@@ -78,7 +78,7 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn);
 
 void gretl_print_value (double x, PRN *prn);
 
-void gretl_fix_exponent (char *s);
+char *gretl_fix_exponent (char *s);
 
 void gretl_print_destroy (PRN *prn);
 

@@ -2761,10 +2761,12 @@ static void gtk_entry_set_has_frame (GtkEntry *entry, gboolean b)
 
 static void size_name_entry (GtkWidget *w, const char *name)
 {
-    int n = strlen(name) + 2;
+    PangoLayout *layout;
+    PangoRectangle rect;
 
-    if (n > SHOWNAMELEN) n = SHOWNAMELEN;
-    gtk_entry_set_width_chars(GTK_ENTRY(w), n);    
+    layout = gtk_entry_get_layout(GTK_ENTRY(w));
+    pango_layout_get_extents(layout, NULL, &rect);
+    gtk_widget_set_size_request(w, 2 + rect.width / PANGO_SCALE, -1); 
 }
 
 static gboolean object_name_return (GtkWidget *w,
@@ -2779,15 +2781,15 @@ static gboolean object_name_return (GtkWidget *w,
 	const gchar *newname = gtk_entry_get_text(GTK_ENTRY(gobj->label));
 
 	gtk_editable_set_position(GTK_EDITABLE(gobj->label), 0);
-	/* gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), FALSE); */
+	gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), FALSE);
 	gtk_editable_set_editable(GTK_EDITABLE(gobj->label), FALSE);
 	
 	if (newname != NULL && *newname != '\0' &&
 	    strcmp(newname, gobj->name)) {
 	    rename_session_object(gobj, newname);
-	    size_name_entry(gobj->label, newname);
 	}
 
+	size_name_entry(gobj->label, newname);
 	gtk_widget_grab_focus(icon_table);
 
 	return TRUE;
@@ -2804,8 +2806,9 @@ static gboolean start_rename_object (GtkWidget *w,
 	return FALSE;
     }
 
+    gtk_widget_set_size_request(gobj->label, -1, -1);
     gtk_entry_set_width_chars(GTK_ENTRY(gobj->label), SHOWNAMELEN);
-    /* gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), TRUE); */
+    gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), TRUE); 
     gtk_editable_set_editable(GTK_EDITABLE(gobj->label), TRUE);
     gtk_editable_select_region(GTK_EDITABLE(gobj->label), 0, -1);
     gtk_editable_set_position(GTK_EDITABLE(gobj->label), -1);

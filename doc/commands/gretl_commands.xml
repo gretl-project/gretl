@@ -1202,7 +1202,7 @@
     </usage>
 
     <description>
-      <para>
+      <para context="cli">
 	Estimates a GARCH model (GARCH = Generalized Autoregressive
 	Conditional Heteroskedasticity), either a univariate model or,
 	if <repl>indepvars</repl> are specified, including the given
@@ -1216,17 +1216,39 @@
 	  graphic="garch_h"/>
       </para>
 
+      <para context="gui">
+	Estimates a GARCH model (GARCH = Generalized Autoregressive
+	Conditional Heteroskedasticity), either a univariate model or,
+	if independent variables are selected, including the given
+	exogenous variables.  The conditional variance equation is
+	shown below.
+	<equation status="display" tex="\[h_t =
+	\sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} + \sum_{j=1}^p
+	\beta_i h_{t-j}\]" ascii="h(t) = sum(i=1 to q) a(i)*u(t-i) +
+	sum(j=1 to p) b(j)*h(t-j)" graphic="garch_h"/>
+      </para>
+
       <para>The gretl GARCH algorithm is basically that of Fiorentini,
 	Calzolari and Panattoni (1996), used by kind permission of
 	Professor Fiorentini.</para>
 
-      <para>Several variant estimates of the coefficient covariance
-	matrix are available with this command.  By default, the
-	Hessian is used unless the <lit>--robust</lit> option is
-	given, in which case the QML (White) covariance matrix is
-	used.  Other possibilities (e.g. the information matrix, or
-	the Bollerslev&ndash;Wooldridge estimator) can be specified
-	using the <cmdref targ="set"/> command.
+      <para context="cli">Several variant estimates of the coefficient
+	covariance matrix are available with this command.  By
+	default, the Hessian is used unless the <lit>--robust</lit>
+	option is given, in which case the QML (White) covariance
+	matrix is used.  Other possibilities (e.g. the information
+	matrix, or the Bollerslev&ndash;Wooldridge estimator) can be
+	specified using the <cmdref targ="set"/> command.
+      </para>
+
+      <para context="gui">Several variant estimates of the coefficient
+	covariance matrix are available with this command.  By
+	default, the Hessian is used unless the <quote>Robust standard
+	  errors</quote> box is checked, in which case the QML (White)
+	covariance matrix is used.  Other possibilities (e.g. the
+	information matrix, or the Bollerslev&ndash;Wooldridge
+	estimator) can be specified using the <cmdref targ="set"/>
+	command.
       </para>
     </description>
 

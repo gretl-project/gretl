@@ -198,8 +198,12 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 
     pprintf(prn, _("%sOf the 8 model selection statistics, %d "), 
 	    spc, add->score);
-    if (add->score == 1) pputs(prn, _("has improved.\n"));
-    else pputs(prn, _("have improved.\n\n"));
+    if (add->score == 1) {
+	pputs(prn, _("has improved.\n"));
+    }
+    else {
+	pputs(prn, _("have improved.\n\n"));
+    }
 }
 
 /* ........................................................... */
@@ -247,6 +251,7 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 	pprintf(prn, _("with p-value = %f\n\n"), 
 		chisq(omit->chisq, omit->dfn));
     }
+
     pprintf(prn, _("  Of the 8 model selection statistics, %d %s\n\n"), 
 	    omit->score, (omit->score == 1)? 
 	    _("has improved") : _("have improved"));
@@ -261,13 +266,16 @@ static int make_list (int **plist, const DATAINFO *pdinfo)
 
     trylist = malloc(pdinfo->v * sizeof *trylist);
     if (trylist == NULL) return 1;
+
     for (i=1; i<pdinfo->v; i++) {
 	if (hidden_var(i, pdinfo)) continue;
 	if (pdinfo->vector[i] == 0) continue;
 	trylist[n++] = i;
     }
+
     trylist[0] = n - 1;
     *plist = trylist;
+
     return 0;
 }
 
@@ -291,6 +299,7 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
     ncoeffs = (m * (m + 1)) / 2;
 
     pputs(prn, _("\nPairwise correlation coefficients:\n\n"));
+
     while (k < ncoeffs) {
         for (i=1; i<=m; i++) {
 	    k++;
@@ -298,20 +307,21 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
 		sprintf(corrstring, "corr(%s, %s)", 
 			pdinfo->varname[corrmat->list[i]], 
 			pdinfo->varname[corrmat->list[j]]);
-		if (na(corrmat->xpx[k]))
+		if (na(corrmat->xpx[k])) {
 		    pprintf(prn, "  %-24s    %s\n", 
 			    corrstring, _("undefined"));
-		
-		else if (corrmat->xpx[k] < 0.) 
+		} else if (corrmat->xpx[k] < 0.) {
 		    pprintf(prn, "  %-24s = %.4f\n", corrstring, 
 			    corrmat->xpx[k]);
-		else 
+		} else {
 		    pprintf(prn, "  %-24s =  %.4f\n", corrstring, 
 			    corrmat->xpx[k]);
+		}
 		k++;
 	    }
         }
     }
+
     pputc(prn, '\n');
 }
 
@@ -330,26 +340,39 @@ void printfreq (FREQDIST *freq, PRN *prn)
     char word[64];
 
     pprintf(prn, _("\nFrequency distribution for %s, obs %d-%d "
-	    "(%d valid observations)\n"),
-	   freq->varname, freq->t1 + 1, freq->t2 + 1, freq->n);
+		   "(%d valid observations)\n"),
+	    freq->varname, freq->t1 + 1, freq->t2 + 1, freq->n);
+
     pprintf(prn, _("number of bins = %d, mean = %g, sd = %g\n"), 
-	   freq->numbins, freq->xbar, freq->sdx);
+	    freq->numbins, freq->xbar, freq->sdx);
+
     pputs(prn, _("\n       interval          midpt      frequency\n\n"));
 
     for (k=0; k<=K; k++) {
 	*word = '\0';
-	if (k == 0) pputs(prn, "          <  ");
-	else if (k == K) pputs(prn, "          >= ");
-	else pprintf(prn, "%10g - ", freq->endpt[k]);
-	if (k == K) sprintf(word, "%g", freq->endpt[k]);
-	else sprintf(word, "%g", freq->endpt[k+1]);
+	if (k == 0) {
+	    pputs(prn, "          <  ");
+	} else if (k == K) {
+	    pputs(prn, "          >= ");
+	} else {
+	    pprintf(prn, "%10g - ", freq->endpt[k]);
+	}
+	if (k == K) {
+	    sprintf(word, "%g", freq->endpt[k]);
+	} else {
+	    sprintf(word, "%g", freq->endpt[k+1]);
+	}
 	pprintf(prn, "%s", word);
+
 	nlw = 10 - strlen(word);
 	_bufspace(nlw, prn);
+
 	sprintf(word, " %g", freq->midpt[k]);
 	pputs(prn, word);
+
 	nlw = 10 - strlen(word);
 	_bufspace(nlw, prn);
+
 	pprintf(prn, "%6d  ", freq->f[k]);
 	i = 36.0 * freq->f[k]/freq->n;
 	while (i--) pputc(prn, '*');
@@ -380,16 +403,18 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 
     if (fulln) {
 	pprintf(prn, _("Full data set: %d observations\n"
-		"Current sample: %d observations\n"), 
+		       "Current sample: %d observations\n"), 
 		fulln, pdinfo->n);
 	return;
     }
 
     ntodate_full(date1, pdinfo->t1, pdinfo);
     ntodate_full(date2, pdinfo->t2, pdinfo);
+
     pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
     pprintf(prn, "%s:  %s - %s", _("Current sample"), date1, date2);
+
     if (pdinfo->t1 == 0 && pdinfo->t2 == pdinfo->n - 1) {
 	pputc(prn, '\n');
     } else {
@@ -406,16 +431,15 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
  * checks for this and cuts it out if need be.
  */
 
-void gretl_fix_exponent (char *s)
+char *gretl_fix_exponent (char *s)
 {
     char *p;
 
-    if ((p = strstr(s, "E+0")) || (p = strstr(s, "E-0"))
-	|| (p = strstr(s, "e+0")) || (p = strstr(s, "e-0"))) {
-	if (strlen(p) == 5) {
-	    memmove(p+2, p+3, strlen(p+2));
-	}
+    if ((p = strstr(s, "+00")) || (p = strstr(s, "-00"))) {
+	memmove(p+2, p+3, strlen(p+2));
     }
+
+    return s;
 }
 
 /* For some reason sprintf using "%#G" seems to stick an extra
@@ -585,11 +609,14 @@ static void outxx (const double xx, int ci, PRN *prn)
     }
 
     else {
+	char numstr[18];
+
 	if (xx > -0.001 && xx < 0.001) {
-	    pprintf(prn, " %13e", xx);
+	    sprintf(numstr, " %13e", xx);
 	} else {
-	    pprintf(prn, " %13g", xx);
+	    sprintf(numstr, " %13g", xx);
 	}
+	pputs(prn, gretl_fix_exponent(numstr));
     }
 }
 
@@ -877,18 +904,23 @@ static void fit_resid_head (const FITRESID *fr,
 	    fdate1, fdate2, nobs);
     pprintf(prn, _("Model estimation range: %s - %s"), date1, date2);
 
-    if (fr->nobs == nobs) pputc(prn, '\n');
-    else pprintf(prn, " (n = %d)\n", fr->nobs); 
+    if (fr->nobs == nobs) {
+	pputc(prn, '\n');
+    } else {
+	pprintf(prn, " (n = %d)\n", fr->nobs); 
+    }
 
     pprintf(prn, _("Standard error of residuals = %f\n"), fr->sigma);
     
     pprintf(prn, "\n     %s ", _("Obs"));
+
     for (i=1; i<4; i++) {
 	if (i == 1) strcpy(label, fr->depvar);
 	if (i == 2) strcpy(label, _("fitted"));
 	if (i == 3) strcpy(label, _("residuals"));
 	pprintf(prn, "%*s", UTF_WIDTH(label, 13), label); 
     }
+
     pputs(prn, "\n\n");
 }
 
@@ -900,11 +932,14 @@ static void varheading (int v1, int v2,
 /*  skips to new page and prints names of variables
     from v1 to v2 */
 {
-    int mv;
+    int i;
         
     pputs(prn, "\n     Obs ");
-    for (mv=v1; mv<=v2; ++mv) 
-	pprintf(prn, "%13s", pdinfo->varname[list[mv]]);
+
+    for (i=v1; i<=v2; i++) { 
+	pprintf(prn, "%13s", pdinfo->varname[list[i]]);
+    }
+
     pputs(prn, "\n\n");
 }
 

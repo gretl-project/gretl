@@ -161,6 +161,21 @@ gamma_par_asymp (double tracetest, double lmaxtest, int det,
     return 0;
 }
 
+#if 0
+struct eigval {
+    double *v;
+    int i;
+}
+
+static int compare_eigvals (const void *a, const void *b)
+{
+    const double *da = (const double *) a;
+    const double *db = (const double *) b;
+
+    return (*da < *db) - (*da > *db);
+}
+#endif
+
 static int inverse_compare_doubles (const void *a, const void *b)
 {
     const double *da = (const double *) a;
@@ -186,6 +201,34 @@ static gretl_matrix *j_matrix_from_array (const double **X,
     } 
 
     return m;
+}
+
+static void print_eigvals_and_eigvecs (double *eigvals, gretl_matrix *vr, 
+				       int k)
+{
+    int i, j;
+
+    for (i=0; i<k; i++) {
+	double x, ev;
+
+	fprintf(stderr, "eigvals[%d] = %g\n", i, eigvals[i]);
+	fprintf(stderr, "vec = ( ");
+	for (j=0; j<k; j++) {
+	    fprintf(stderr, "%g ", gretl_matrix_get(vr, j, i));
+	}
+	fprintf(stderr, ")\n");
+	fprintf(stderr, " normalized vec = ( ");
+	for (j=0; j<k; j++) {
+	    if (j == 0) {
+		x = gretl_matrix_get(vr, j, i);
+		ev = 1.0;
+	    } else {
+		ev = - gretl_matrix_get(vr, j, i) / x;
+	    }
+	    fprintf(stderr, "%g ", ev);
+	}
+	fprintf(stderr, ")\n");
+    }
 }
 
 int johansen_eigenvals (const double **X, const double **Y, const double **Z, 
@@ -234,13 +277,21 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 
     if (err) goto eigenvals_bailout;
 
+#if 0
     eigvals = gretl_general_matrix_eigenvals(M);
+#else
+    eigvals = gretl_general_matrix_eigenvals_plus(M, TmpR);
+#endif
 
     if (eigvals != NULL) {
 	int i;
 	double cumeig = 0.0;
 	double *lambdamax = NULL, *trace = NULL;
 	double pval[2];
+
+#if 1
+	print_eigvals_and_eigvecs(eigvals, TmpR, k);
+#endif
 
 	trace = malloc(k * sizeof *trace);
 	lambdamax = malloc(k * sizeof *lambdamax);

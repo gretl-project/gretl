@@ -97,6 +97,9 @@ int gretl_invert_symmetric_matrix (gretl_matrix *m);
 
 double *gretl_general_matrix_eigenvals (gretl_matrix *m);
 
+double *gretl_general_matrix_eigenvals_plus (gretl_matrix *m,
+					     gretl_matrix *ev);
+
 double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 					  int eigenvecs);
 
