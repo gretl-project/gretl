@@ -2434,6 +2434,69 @@
 
   </command>
 
+  <command name="hurst" section="Statistics"
+    label="Hurst exponent">
+
+    <usage>
+      <arguments>
+        <argument>varname</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Calculates the Hurst exponent (a measure of persistence or
+	long memory) for a time-series variable having at least 128
+	observations.
+      </para>
+
+      <para>
+	The Hurst exponent is discussed by Mandelbrot.  In theoretical
+	terms it is the exponent, <mathvar>H</mathvar>, in the
+	relationship 
+	<equation status="display" 
+	  tex="\[\mathrm{RS}(x) = an^H\]" 
+	  ascii="RS(x) = an^H" 
+	  graphic="hurst"/>where RS is the <quote>rescaled
+	  range</quote> of the variable <mathvar>x</mathvar> in
+	samples of size <mathvar>n</mathvar> and <mathvar>a</mathvar>
+	is a constant. The rescaled range is the range (maximum minus
+	minimum) of the cumulated value or partial sum of
+	<mathvar>x</mathvar> over the sample period (after subtraction
+	of the sample mean), divided by the sample standard deviation.
+      </para>
+
+      <para>
+	As a reference point, if <mathvar>x</mathvar> is white noise
+	(zero mean, zero persistence) then the range of its cumulated
+	<quote>wandering</quote> (which forms a random walk), scaled
+	by the standard deviation, grows as the square root of the
+	sample size, giving an expected Hurst exponent of 0.5.  Values
+	of the exponent significantly in excess of 0.5 indicate
+	persistence, and values less than 0.5 indicate
+	anti-persistence (negative autocorrelation).  In principle the
+	exponent is bounded by 0 and 1, although in finite samples it
+	is possible to get an estimated exponent greater than 1.  
+      </para>
+
+      <para>
+	In gretl, the exponent is estimated using binary sub-sampling:
+	we start with the entire data range, then the two halves of
+	the range, then the four quarters, and so on.  For sample
+	sizes smaller than the data range, the RS value is the mean
+	across the available samples.  The exponent is then estimated
+	as the slope coefficient in a regression of the log of RS on
+	the log of sample size.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/FIXME</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="if" section="Programming" context="cli">
 
     <description>
@@ -3119,10 +3182,11 @@
       <para>The space for which distances are computed is defined by
 	the selected variables.  For each observation in the current
 	sample range, the distance is computed between the observation
-	and the centroid of the selected variables.  The distance is
-	in the nature of a <mathvar>z</mathvar>-score, and can be used
-	to judge whether a given observation <quote>belongs</quote>
-	with a group of other observations.
+	and the centroid of the selected variables.  This distance is
+	the multidimensional counterpart of a standard
+	<mathvar>z</mathvar>-score, and can be used to judge whether a
+	given observation <quote>belongs</quote> with a group of other
+	observations.
       </para>
 
       <para context="cli">If the <lit>--vcv</lit> option is given, the
@@ -3131,6 +3195,13 @@
 	the dataset under the name <lit>mdist</lit> (or
 	<lit>mdist1</lit>, <lit>mdist2</lit> and so on if there is
 	already a variable of that name).
+      </para>
+
+      <para context="gui">If the number of variables selected is 4 or
+	less, the covariance matrix and its inverse are printed.
+	Clicking the "+" button at the top of the window displaying
+	the distances give you the option of adding the distances to
+	the dataset as a new variable.
       </para>
 
     </description>
@@ -4050,8 +4121,9 @@
 	proportional, other things equal, to some known factor.  For
 	example, the number of traffic accidents might be supposed to
 	be proportional to traffic volume, other things equal, and in
-	that case traffic volume could be specified as an offset in
-	a Poisson model of the accident rate.
+	that case traffic volume could be specified as an
+	<quote>offset</quote> in a Poisson model of the accident rate.
+	The offset variable must be strictly positive.  
       </para>
 
     </description>

@@ -546,7 +546,6 @@ void add_mahalanobis_data (windata_t *vwin)
 
 /* ........................................................... */
 
-
 void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 {
     PRN *prn;
