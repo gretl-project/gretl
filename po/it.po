@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.2.6\n"
 "POT-Creation-Date: 2004-05-22 13:29-0400\n"
-"PO-Revision-Date: 2004-05-28 14:33+0200\n"
+"PO-Revision-Date: 2004-05-29 16:35+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2343,7 +2343,7 @@ msgstr "pila di serie cross section"
 
 #: lib/src/gretl_utils.c:1822 gui2/datafiles.c:1522
 msgid "stacked time series"
-msgstr "pila di serie temporali"
+msgstr "pila di serie storiche"
 
 #: lib/src/gretl_utils.c:1823
 #, c-format
@@ -2893,7 +2893,7 @@ msgstr "Variabile usata come peso"
 
 #: lib/src/modelprint.c:1026 lib/src/modelprint.c:1027
 msgid "Weight var is a dummy variable, effective obs ="
-msgstr "La variabile peso è una variabile dummy, osservazioni effettive ="
+msgstr "La variabile dei pesi è una variabile dummy, osservazioni effettive ="
 
 #: lib/src/modelprint.c:1077
 msgid ""
@@ -5545,7 +5545,7 @@ msgstr "/Variabile/Analisi _TRAMO"
 
 #: gui/gretl.c:431 gui2/gretl.c:492
 msgid "/Variable/Runs test"
-msgstr "/Variabile/Test delle se_quenze"
+msgstr "/Variabile/Test delle _successioni"
 
 #: gui/gretl.c:432 gui2/gretl.c:493
 msgid "/Variable/sep2"
@@ -5880,7 +5880,7 @@ msgstr "Test Dickey-Fuller"
 
 #: gui/gretl.c:1345 gui/gretl.c:1377 gui2/gretl.c:1442 gui2/gretl.c:1470
 msgid "Runs test"
-msgstr "Test delle sequenze"
+msgstr "Test delle successioni"
 
 #: gui/gretl.c:1347 gui/gretl.c:1378 gui2/gretl.c:1444 gui2/gretl.c:1471
 msgid "Edit attributes"
@@ -6075,7 +6075,7 @@ msgstr "OLS a precisione multipla"
 
 #: gui/selector.c:558 gui2/selector.c:802
 msgid "Weight variable"
-msgstr "Variabile peso"
+msgstr "Variabile pesi"
 
 #: gui/selector.c:562 gui2/selector.c:806
 msgid "List of AR lags"
@@ -7631,7 +7631,7 @@ msgstr "gretl: struttura panel"
 
 #: gui2/datafiles.c:1338 gui2/datafiles.c:1437
 msgid "Stacked time series"
-msgstr "Pila di serie temporali"
+msgstr "Pila di serie storiche"
 
 #: gui2/datafiles.c:1350 gui2/datafiles.c:1449
 msgid "Stacked cross sections"
@@ -7643,7 +7643,7 @@ msgid ""
 "as stacked time series?"
 msgstr ""
 "Ristrutturare l'attuale dataset panel\n"
-"rendendolo una pila di serie temporali?"
+"rendendolo una pila di serie storiche?"
 
 #: gui2/datafiles.c:1519
 msgid "Failed to change panel structure"
@@ -9006,7 +9006,7 @@ msgstr "Distribuzione di frequenza"
 
 #: gui2/library.c:873
 msgid "runs test"
-msgstr "Test delle sequenze"
+msgstr "Test delle successioni"
 
 #: gui2/library.c:878 gui2/library.c:884
 msgid "summary statistics"
@@ -9337,7 +9337,7 @@ msgid ""
 "Please use \"Sample/Set frequency, startobs\"."
 msgstr ""
 "Il dataset non è riconosciuto come panel.\n"
-"Si usi \"Campione/Imposta _frequenza e inizio...\"."
+"Si usi \"Campione/Imposta frequenza e inizio...\"."
 
 #: gui2/library.c:3130
 msgid "Error generating index variable"
