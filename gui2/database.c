@@ -757,9 +757,9 @@ static void db_drag_connect (windata_t *dbwin)
     gtk_drag_source_set(dbwin->listbox, GDK_BUTTON1_MASK,
 			&gretl_drag_targets[GRETL_POINTER],
 			1, GDK_ACTION_COPY);
-    gtk_signal_connect(G_OBJECT(dbwin->listbox), "drag_data_get",
-		       G_CALLBACK(db_drag_series),
-		       dbwin);
+    g_signal_connect(G_OBJECT(dbwin->listbox), "drag_data_get",
+		     G_CALLBACK(db_drag_series),
+		     dbwin);
 }
 
 /* ........................................................... */
