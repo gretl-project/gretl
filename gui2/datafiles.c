@@ -71,6 +71,7 @@ static int read_ps_descriptions (windata_t *fdata)
 {
     FILE *fp;
     GtkListStore *store;
+    GtkTreeSelection *selection;
     GtkTreeIter iter;
     char line[MAXLEN], fname[MAXLEN];
     gchar *row[3];
@@ -108,6 +109,11 @@ static int read_ps_descriptions (windata_t *fdata)
 
     fclose(fp);
 
+    /* select the first row */
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(fdata->listbox));
+    gtk_tree_selection_select_iter(selection, &iter);
+
     return 0;
 }
 
@@ -117,6 +123,7 @@ static int read_data_descriptions (windata_t *fdata)
 {
     FILE *fp;
     GtkListStore *store;
+    GtkTreeSelection *selection;
     GtkTreeIter iter;
     char line[MAXLEN], fname[MAXLEN];
     char descrip[80];
@@ -156,6 +163,11 @@ static int read_data_descriptions (windata_t *fdata)
     }
 
     fclose(fp);
+
+    /* select the first row */
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(fdata->listbox));
+    gtk_tree_selection_select_iter(selection, &iter);
     
     return 0;
 }
