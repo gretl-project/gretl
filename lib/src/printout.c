@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "internal.h"
 #include "version.h"
+#include <stdarg.h>
 #include <time.h>
 
 static void 
@@ -1502,3 +1503,117 @@ void gretl_print_attach_file (PRN *prn, FILE *fp)
     prn->fpaux = NULL;
     prn->format = GRETL_PRINT_FORMAT_PLAIN;
 }
+
+/**
+ * pprintf:
+ * @prn: gretl printing struct.
+ * @template: as in printf().
+ * @Varargs: arguments to be printed.
+ *
+ * Multi-purpose printing function: can output to stream, to buffer
+ * or to nowhere (silently discarding the output), depending on
+ * how @prn was initialized.
+ * 
+ * Returns: 0 on successful completion, 1 on memory allocation
+ * failure.
+ * 
+ */
+
+int pprintf (PRN *prn, const char *template, ...)
+{
+    va_list args;
+    size_t blen;
+
+    if (prn == NULL) return 0;
+
+    if (prn->fp != NULL) {
+	va_start(args, template);
+	vfprintf(prn->fp, template, args);
+	va_end(args);
+	return 0;
+    }
+
+    if (strncmp(template, "@init", 5) == 0) {
+	prn->bufsize = 2048;
+	prn->buf = malloc(prn->bufsize);
+#ifdef PRN_DEBUG
+  	fprintf(stderr, "pprintf: malloc'd %d bytes at %p\n", prn->bufsize,  
+		(void *) prn->buf); 
+#endif
+	if (prn->buf == NULL) return 1;
+	memset(prn->buf, 0, 1);
+	return 0;
+    }
+
+    if (prn->buf == NULL) return 1;
+
+    blen = strlen(prn->buf);
+    if (prn->bufsize - blen < 1024) { 
+	char *tmp;
+
+#ifdef PRN_DEBUG
+ 	fprintf(stderr, "%d bytes left\ndoing realloc(%p, %d)\n",
+ 		prn->bufsize - blen, prn->buf, 2 * prn->bufsize);
+#endif
+	prn->bufsize *= 2; 
+	tmp = realloc(prn->buf, prn->bufsize); 
+	if (tmp == NULL) return 1;
+	prn->buf = tmp;
+#ifdef PRN_DEBUG
+ 	fprintf(stderr, "realloc: prn->buf is %d bytes at %p\n",
+ 		prn->bufsize, (void *) prn->buf);
+#endif
+	memset(prn->buf + blen, 0, 1);
+    }
+    va_start(args, template);
+#ifdef PRN_DEBUG
+    fprintf(stderr, "printing at %p\n", (void *) (prn->buf + blen));
+#endif
+    vsprintf(prn->buf + blen, template, args);
+    va_end(args);
+#ifdef PRN_DEBUG
+    fprintf(stderr, "printed %d byte(s)\n", strlen(prn->buf) - blen);
+#endif
+
+    return 0;
+}
+
+/**
+ * pputs:
+ * @prn: gretl printing struct.
+ * @s: constant string to print,
+ * 
+ * Returns: 0 on successful completion, 1 on memory allocation
+ * failure.
+ */
+
+int pputs (PRN *prn, const char *s)
+{
+    size_t blen;
+
+    if (prn == NULL) return 0;
+
+    if (prn->fp != NULL) {
+	fputs(s, prn->fp);
+	return 0;
+    }
+
+    if (prn->buf == NULL) return 1;
+
+    blen = strlen(prn->buf);
+
+    if (prn->bufsize - blen < 1024) { 
+	char *tmp;
+
+	prn->bufsize *= 2; 
+	tmp = realloc(prn->buf, prn->bufsize); 
+	if (tmp == NULL) return 1;
+	prn->buf = tmp;
+	memset(prn->buf + blen, 0, 1);
+    }
+
+    strcpy(prn->buf + blen, s);
+
+    return 0;
+}
+

@@ -325,14 +325,11 @@ static PRN *bufopen_with_size (size_t sz)
 {
     PRN *prn;
 
-    prn = malloc(sizeof *prn);
+    prn = gretl_print_new (GRETL_PRINT_NULL, NULL);
     if (prn == NULL) {
 	errbox(_("Out of memory allocating output buffer"));
 	return NULL;
     }
-
-    prn->fp = NULL;
-    prn->fpaux = NULL;
 
     prn->buf = malloc(sz);
     if (prn->buf == NULL) {
@@ -4021,6 +4018,8 @@ int execute_script (const char *runfile, const char *buf,
 	/* recreating a gretl session */
 	clear_or_save_model(&models[0], datainfo, 1);
     }
+
+    refresh_data();
 
     return 0;
 }
