@@ -238,11 +238,17 @@ static int qr_make_hac (MODEL *pmod, const double **Z,
     int n = pmod->ncoeff;
     int p, i, j, t;
     double weight, uu;
-    double *uhat = pmod->uhat + pmod->t1;
+    double *uhat;
     int err = 0;
 
     X = make_data_X(pmod, Z);
     if (X == NULL) return 1;
+
+    /* pmod->uhat is a full-length series: we must take an offset
+       into it, equal to the offset of the data on which the model
+       is actually estimated.
+    */
+    uhat = pmod->uhat + pmod->t1;
 
     /* get the user's preferred maximum lag setting */
     p = get_hac_lag(m);
@@ -308,15 +314,21 @@ static int qr_make_hac (MODEL *pmod, const double **Z,
     return err;
 }
 
+/* Heteroskedasticity-Consistent Covariance Matrices: See Davidson
+   and MacKinnon, Econometric Theory and Methods, chapter 5, esp.
+   page 200.  Implements HC0, HC1, HC2 and HC3.
+*/
+
 static int qr_make_hccme (MODEL *pmod, const double **Z, 
-			  gretl_matrix *xpxinv)
+			  gretl_matrix *Q, gretl_matrix *xpxinv)
 {
     gretl_matrix *X;
     gretl_matrix *diag = NULL;
     gretl_matrix *tmp1 = NULL, *tmp2 = NULL, *tmp3 = NULL;
     int m = pmod->nobs; 
     int n = pmod->list[0] - 1;
-    int i, j = 0;
+    int hc_version;
+    int i, j, t;
     int err = 0;
 
     X = make_data_X(pmod, Z);
@@ -335,6 +347,33 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
 	err = 1;
 	goto bailout;
     }  
+
+    hc_version = get_hc_version();
+    gretl_model_set_int(pmod, "hc", 1);
+    if (hc_version > 0) {
+	gretl_model_set_int(pmod, "hc_version", hc_version);
+    }
+
+    if (hc_version == 1) {
+	for (t=0; t<m; t++) {
+	    diag->val[mdx(diag, t, t)] *= (double) m / (m - n);
+	}
+    } else if (hc_version > 1) {
+	/* do the h_t calculations */
+	for (t=0; t<m; t++) {
+	    double q, ht = 0.0;
+
+	    for (i=0; i<n; i++) {
+		q = Q->val[mdx(Q, t, i)];
+		ht += q * q;
+	    }
+	    if (hc_version == 2) {
+		diag->val[mdx(diag, t, t)] /= (1.0 - ht);
+	    } else { /* HC3 */
+		diag->val[mdx(diag, t, t)] /= (1.0 - ht) * (1.0 - ht);
+	    }
+	}
+    }
 
     gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 			      diag, GRETL_MOD_NONE,
@@ -619,7 +658,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 	if (opts & OPT_T) {
 	    qr_make_hac(pmod, Z, xpxinv);
 	} else {
-	    qr_make_hccme(pmod, Z, xpxinv);
+	    qr_make_hccme(pmod, Z, Q, xpxinv);
 	}
     } else {
 	qr_make_regular_vcv(pmod, xpxinv);

@@ -107,16 +107,9 @@ int parse_set_line (const char *line, int *echo_off)
 	    }
 	}
 	else if (!strcmp(setobj, "hc_version")) {
-	    if (!strcmp(setarg, "0")) {
-		robust_opts.hc_version = 0;
-		err = 0;
-	    }
-	    else if (!strcmp(setarg, "1")) {
-		robust_opts.hc_version = 1;
-		err = 0;
-	    }
-	    else if (!strcmp(setarg, "2")) {
-		robust_opts.hc_version = 2;
+	    if (!strcmp(setarg, "0") || !strcmp(setarg, "1") ||
+		!strcmp(setarg, "2") || !strcmp(setarg, "3")) {
+		robust_opts.hc_version = atoi(setarg);
 		err = 0;
 	    }
 	}

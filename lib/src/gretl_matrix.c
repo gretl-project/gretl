@@ -86,12 +86,12 @@ gretl_matrix *gretl_diagonal_matrix (const double *d, int n, int mod)
 	    if (i == j) {
 		x = *d++;
 		if (mod == GRETL_MOD_SQUARE) {
-		    gretl_matrix_set(m, i, j, x * x);
+		    m->val[mdx(m, i, j)] = x * x;
 		} else {
-		    gretl_matrix_set(m, i, j, x);
+		    m->val[mdx(m, i, j)] = x;
 		}
 	    }
-	    else gretl_matrix_set(m, i, j, 0.0);
+	    m->val[mdx(m, i, j)] = 0.0;
 	}
     }
 
@@ -388,9 +388,10 @@ void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn)
     pputc(prn, '\n');
 }
 
+/* Solves ax = b.  On exit, b is replaced by the solution vector */
+
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
 {
-    /* Solves ax = b.  On exit, b is replaced by the solution vector */
     char trans = 'N';
     integer info;
     integer m = a->rows;
@@ -426,19 +427,11 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
     if (m == NULL) return m;
 
     p = 0;
-#if 0
-    for (j=0; j<rows; j++) {
-	for (i=0; i<cols; i++) {
-	    m->val[p++] = X[i][j];
-	}
-    } 
-#else
     for (j=0; j<cols; j++) {
 	for (i=0; i<rows; i++) {
 	    m->val[p++] = X[j][i];
 	}
     }
-#endif
 
     return m;
 }

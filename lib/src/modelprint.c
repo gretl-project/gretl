@@ -877,6 +877,8 @@ static void print_model_heading (const MODEL *pmod,
 		(pmod->ci == TSLS && RTF_FORMAT(prn->format))? "\\par\n" : "\n");
     }
 
+    /* supplementary strings below the estimator and sample info */
+
     if (pmod->aux == AUX_SCR || gretl_model_get_int(pmod, "hac_lag")) {
 	if (pmod->aux == AUX_SCR) {
 	    pprintf(prn, _("Serial correlation-robust standard errors, "
@@ -887,6 +889,12 @@ static void print_model_heading (const MODEL *pmod,
 	    pprintf(prn, _("Serial correlation-robust standard errors, "
 			   "lag order %d\n"), lag);
 	}
+    }
+    else if (gretl_model_get_int(pmod, "hc")) {
+	int v = gretl_model_get_int(pmod, "hc_version");
+
+	    pprintf(prn, _("Heteroskedasticity-robust standard errors, "
+			   "variant HC%d\n"), v);
     }
     else if (pmod->ci == WLS || pmod->ci == ARCH) {
 	if (tex) {

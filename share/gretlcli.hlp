@@ -1373,26 +1373,35 @@ set
 Usage           set variable [value]
 
 Set the values of certain program parameters.  The given value remains in
-force until it is changed by a further call to "set".  The possibilities are
-as follows (default values are marked with an asterisk):
+force for the duration of the gretl session unless it is changed by a further
+call to "set".  The parameters that can be set in this way are enumerated
+below.  Note that the settings of "hac_lag" and "hc_version" are used when
+the "-r" or "--robust" option is given to the ols command.
 
-set echo [ off | on* ]     suppress or resume the echoing of commands in
-                           gretl's output
+1. set echo [ off | on* ]     suppress or resume the echoing of commands in
+                              gretl's output
 
-set qr   [ on | off* ]     use QR rather than Cholesky decomposition in
-                           calculating OLS estimates
+2. set qr   [ on | off* ]     use QR rather than Cholesky decomposition in
+                              calculating OLS estimates
 
-set hac_lag [ nw1* | nw2 | integer ]  
+3. set hac_lag [ nw1* | nw2 | integer ]  
 
-Set the maximum lag value, p, used when calculating HAC (Heteroskedasticity-
-and Autocorrelation-robust) standard errors using the Newey-West approach.
-"nw1" and "nw2" represent two variant automatic calculations based on the
-sample size, T.
+Set the maximum lag value, p, used when calculating HAC (Heteroskedasticity
+and Autocorrelation Consistent) standard errors using the Newey-West approach
+(for time series data). "nw1" and "nw2" represent two variant automatic
+calculations based on the sample size, T.
 
-nw1:   p = 0.75 * T^(1/3) 
-nw2:   p = 4 * (T/100)^(2/9) 
+   nw1:   p = 0.75 * T^(1/3) 
+   nw2:   p = 4 * (T/100)^(2/9) 
 
 Alternatively you can set p manually by supplying an integer value.
+
+4. set hc_version [ 0* | 1 | 2 | 3 ]
+
+Set the variant used when calculating Heteroskedasticity Consistent standard
+errors with cross-sectional data.  The options correspond to the HC0, HC1, HC2
+and HC3 discussed by Davidson and MacKinnon in Econometric Theory and Methods,
+chapter 5.  HC0 produces what are usually called "White's standard errors".  
 
 #
 setobs
