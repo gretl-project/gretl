@@ -537,7 +537,7 @@
 
       <listitem><para><guimenu>Menù modello</guimenu>: per i dettagli
       sui vari stimatori offerti in questo menù, si consulti
-	  <xref linkend="estimators"/> e il <xref
+	  <xref linkend="estimators"/> e il resto del <xref
 	linkend="cmdref"/>, oppure il capitolo <quote>Stima</quote>
         della guida in linea. Si veda anche il <xref
 	    linkend="chap-nls"/> a proposito della stima di modelli

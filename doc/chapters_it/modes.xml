@@ -58,8 +58,8 @@
     </para>
 
     <para>Per conoscere meglio le possibilità fornite dagli script, è
-    possibile usare il comando del menù <guimenuitem>Aiuto, Comandi:
-    sintassi</guimenuitem>, o eseguire la versione a riga di comando
+    possibile usare il comando del menù <guimenuitem>Aiuto, Comandi
+    testuali</guimenuitem>, o eseguire la versione a riga di comando
     del programma <application>gretlcli</application> e consultare il
     suo aiuto, oppure consultare il <xref linkend="cmdref"/> in questo
     manuale. In aggiunta, il pacchetto
