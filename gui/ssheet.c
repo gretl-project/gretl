@@ -563,6 +563,11 @@ void show_spreadsheet (DATAINFO *pdinfo)
 	return;
     }
 
+    if (pdinfo == NULL && datainfo->v == 1) {
+	errbox(_("Please add a variable to the dataset first"));
+	return;
+    }
+
     sheetwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(sheetwin), _("gretl: edit data"));
     gtk_widget_set_usize(GTK_WIDGET(sheetwin), 600, 400);

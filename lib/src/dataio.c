@@ -1488,6 +1488,9 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     pdinfo->markers = 0;
     pdinfo->S = NULL; 
 
+    /* no descriptive comments */
+    pdinfo->descrip = NULL;
+
     /* allocate dataset */
     if (prepZ(pZ, pdinfo)) return E_ALLOC;
 
