@@ -37,7 +37,7 @@ const char *x12a_series_strings[] = {
 };
 
 const char *tramo_series_strings[] = {
-    "safin.t", "trfin.t", "irreg.t"
+    "safin.t", "trfin.t", "irfin.t" /* irreg.t ? */
 };
 
 const char *tx_descrip_formats[] = {
@@ -194,6 +194,7 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
 			 PATHS *paths, int opt)
 {
     FILE *fp = NULL;
+    char title[32];
     int t;
 
     if (gnuplot_init(paths, &fp)) return E_FOPEN;
@@ -224,19 +225,16 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
     fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.32\n", fp);
 
     /* irregular component */    
-    if (opt == TRAMO) {
-	fprintf(fp, "plot '-' using 1:2 title '%s' w impulses\n", I_("irregular"));
-    } else {
-	char title[32];
-
-	sprintf(title, "%s - 1", I_("irregular"));
-	fprintf(fp, "set bars 0\n"
-		"set origin 0.0,0.0\n"
-		"plot '-' using 1:($2-1.0) title '%s' w impulses\n",
-		title);
-    }
+    sprintf(title, "%s - 1", I_("irregular"));
+    fprintf(fp, "set bars 0\n"
+	    "set origin 0.0,0.0\n"
+	    "plot '-' using 1:($2-1.0) title '%s' w impulses\n",
+	    title);
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[D13 + 1][t]);
+	double y = Z[D13 + 1][t];
+
+	fprintf(fp, "%g %g\n", Z[XAXIS][t], 
+		(opt == TRAMO)? y / 100.0 : y);
     }
     fputs("e\n", fp);
 
@@ -626,6 +624,8 @@ int write_tx_data (char *fname, int varnum,
     } else {
 	request.code = opt = X12A;
     }
+
+    request.pd = pdinfo->pd;
 
     /* show dialog and get option settings */
     doit = tx_dialog(&request); 

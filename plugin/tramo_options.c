@@ -27,6 +27,8 @@ struct _tramo_options {
     int iatip;    /* correction for outliers? 0=no, 1=auto */
     int aio;      /* sorts of outliers recognized (codes 1, 2, or 3) */
     float va;     /* critical value for outliers (or 0.0 for auto) */
+
+    /* widgets for dealing with outliers */
     GtkWidget *iatip_button;
     GtkWidget *aio_transitory_button;
     GtkWidget *aio_shift_button;
@@ -35,29 +37,48 @@ struct _tramo_options {
     GtkWidget *aio_label;
     GtkWidget *va_label;
 
-    int lam;      /* log transformation? (0=yes, 1=no, -1=auto) FIXME */
-    int imean;    /* mean correction? (0=yes, 1=no) FIXME */
+    int lam;      /* log transformation? (0=logs, 1=levels, -1=auto) */
+    int imean;    /* mean correction? (0=no, 1=yes) */
 
-    int d;        /* no. of non-seasonal differences */
-    int bd;       /* no. of seasonal differences */
-    int p;        /* no of non-seasonal AR terms */
-    int bp;       /* no of seasonal AR terms */
-    int q;        /* no of non-seasonal MA terms */
-    int bq;       /* no of seasonal MA terms */
+    int d;        /* number of non-seasonal differences */
+    int bd;       /* number of seasonal differences */
+    int p;        /* number of non-seasonal AR terms */
+    int bp;       /* number of seasonal AR terms */
+    int q;        /* number of non-seasonal MA terms */
+    int bq;       /* number of seasonal MA terms */
+
+    int mq;       /* periodicity (12 = monthly; acceptable values are
+		     1, 2, 3, 4, 5, 6 and 12 */
+    int noadmiss; /* when model "does not accept an admissable decomposition",
+		     use an approximation (1) or not (0) */
+    int seats;    /* 0: no SEARS input file created 
+		     1: create SEATS file; estimation redone in SEATS
+		     2: create SEATS file; no estimation redone in SEATS
+		  */
+    int out;      /* verbosity level: 
+		     0 = detailed output file per series
+		     1 = reduced output file per series
+		     2 = very brief summary
+		     3 = no output file
+		   */
 };
 
 #define option_widgets_shown(p)  (p->va_spinner != NULL)
 
-static void tramo_options_set_defaults (tramo_options *opts)
+static void tramo_options_set_defaults (tramo_options *opts, int pd)
 {
     opts->iatip = 1;         /* detect outliers */
     opts->aio = 2;           /* both transitory changes and level shifts */
     opts->va = 0.0;          /* let critical value be decided by tramo */
     opts->lam = -1;          /* leave log/level decision to tramo */
-    opts->imean = 1;         /* no mean correction */
+    opts->imean = 1;         /* mean correction */
     opts->d = opts->bd = 1;  
     opts->p = opts->bp = 0;
     opts->q = opts->bq = 1;
+    opts->mq = pd;
+    opts->noadmiss = 1;      /* use approximation if needed */
+    opts->seats = 2;         /* make SEATS file; don't re-do estimation */
+    opts->out = 0;           /* verbose */
 }
 
 static void va_spinner_set_state (tramo_options *opts)
@@ -138,6 +159,17 @@ static void tramo_aio_callback (GtkWidget *w, tramo_options *opts)
     }
 }
 
+static void set_out (GtkWidget *w, tramo_options *opts)
+{
+#if GTK_MAJOR_VERSION >= 2
+    opts->out = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), 
+						  "out_value"));
+#else
+    opts->out = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), 
+						    "out_value"));
+#endif
+}
+
 static void set_lam (GtkWidget *w, tramo_options *opts)
 {
 #if GTK_MAJOR_VERSION >= 2
@@ -187,11 +219,74 @@ static GtkWidget *make_notebook_page_table (GtkWidget *notebook,
 static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
 {
     GtkWidget *tbl, *tmp;
-    int tbl_len = 6, row = 0;
+    int tbl_len = 10, row = 0;
+    GSList *group = NULL;
 
     tbl = make_notebook_page_table(notebook, _("Output"), tbl_len, 2);
 
-    /* label pertaining saving series */
+    /* label for output window detail */
+    tmp = gtk_label_new(_("Output window:"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
+    row++;
+    gtk_widget_show(tmp);
+
+    /* full detail option */
+    tmp = gtk_radio_button_new_with_label(NULL, _("Full details"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);    
+#if GTK_MAJOR_VERSION >= 2
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
+#else
+    group = gtk_radio_button_group(GTK_RADIO_BUTTON(tmp));
+#endif
+    gtk_widget_show(tmp);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
+    row++;
+    
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(set_out), 
+		     request->opts);
+    g_object_set_data(G_OBJECT(tmp), "out_value", 
+                      GINT_TO_POINTER(0));
+#else
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(set_out), 
+		       request->opts);
+    gtk_object_set_data(GTK_OBJECT(tmp), "out_value", 
+			GINT_TO_POINTER(0));
+#endif
+
+    /* reduced output option */
+    tmp = gtk_radio_button_new_with_label(group, _("Reduced output"));
+#if GTK_MAJOR_VERSION >= 2
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
+#else
+    group = gtk_radio_button_group(GTK_RADIO_BUTTON(tmp));
+#endif
+    gtk_widget_show(tmp);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
+    row++;
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(set_out), 
+		     request->opts);
+    g_object_set_data(G_OBJECT(tmp), "out_value", 
+                      GINT_TO_POINTER(1));
+#else
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(set_out), 
+		       request->opts);
+    gtk_object_set_data(GTK_OBJECT(tmp), "out_value", 
+			GINT_TO_POINTER(1));
+#endif
+
+    /* horizontal separator */
+    tmp = gtk_hseparator_new();
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
+    row++;
+    gtk_widget_show(tmp);    
+
+    /* label pertaining to saving series */
     tmp = gtk_label_new(_("Save to data set:"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
     row++;
@@ -313,9 +408,12 @@ static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)
 #endif
 
     switch (opts->lam) {
-    case  0: gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE); break;
-    case  1: gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE); break;
-    case -1: gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b3), TRUE); break;
+    case  0: gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE); 
+	break;
+    case  1: gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE); 
+	break;
+    case -1: gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b3), TRUE); 
+	break;
     default: break;
     }
 
@@ -340,13 +438,13 @@ static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)
 		     G_CALLBACK(set_imean), 
 		     opts);
     g_object_set_data(G_OBJECT(b1), "imean_value", 
-                      GINT_TO_POINTER(0));
+                      GINT_TO_POINTER(1));
 #else
     gtk_signal_connect(GTK_OBJECT(b1), "clicked",
 		       GTK_SIGNAL_FUNC(set_imean), 
 		       opts);
     gtk_object_set_data(GTK_OBJECT(b1), "imean_value", 
-			GINT_TO_POINTER(0));
+			GINT_TO_POINTER(1));
 #endif
 
     b2 = gtk_radio_button_new_with_label(mean_group, _("No mean correction"));
@@ -362,18 +460,20 @@ static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)
 		     G_CALLBACK(set_imean), 
 		     opts);
     g_object_set_data(G_OBJECT(b2), "imean_value", 
-                      GINT_TO_POINTER(1));
+                      GINT_TO_POINTER(0));
 #else
     gtk_signal_connect(GTK_OBJECT(b2), "clicked",
 		       GTK_SIGNAL_FUNC(set_imean), 
 		       opts);
     gtk_object_set_data(GTK_OBJECT(b2), "imean_value", 
-			GINT_TO_POINTER(1));
+			GINT_TO_POINTER(0));
 #endif
 
     switch (opts->imean) {
-    case  0: gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE); break;
-    case  1: gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE); break;
+    case  1: gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE); 
+	break;
+    case  0: gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE); 
+	break;
     default: break;
     }
 }
@@ -641,14 +741,18 @@ static void real_show_tramo_options (tx_request *request, GtkWidget *vbox)
     tramo_tab_arima(notebook, request->opts);
 }
 
-static tramo_options *tramo_options_new (void)
+static tramo_options *tramo_options_new (int pd)
 {
     tramo_options *opts;
 
     opts = malloc(sizeof *opts);
     if (opts == NULL) return NULL;
 
-    tramo_options_set_defaults(opts);
+    if (pd == 4 || pd == 12) {
+	tramo_options_set_defaults(opts, pd);
+    } else {
+	tramo_options_set_defaults(opts, 0);
+    }
 
     opts->iatip_button = NULL;
     opts->aio_transitory_button = NULL;
@@ -665,7 +769,7 @@ int show_tramo_options (tx_request *request, GtkWidget *vbox)
 {
     tramo_options *opts;
 
-    opts = tramo_options_new();
+    opts = tramo_options_new(request->pd);
     if (opts == NULL) return 1;
 
     request->opts = opts;
@@ -674,6 +778,8 @@ int show_tramo_options (tx_request *request, GtkWidget *vbox)
 
     return 0;
 }
+
+/* below: print then free the tramo options structure */
 
 void print_tramo_options (tx_request *request, FILE *fp)
 {
@@ -684,9 +790,17 @@ void print_tramo_options (tx_request *request, FILE *fp)
     opts = request->opts;
 
     fputs("$INPUT ", fp);
-    fprintf(fp, "lam=%d,", opts->lam);
-    fprintf(fp, "imean=%d,", opts->imean);
+
+    if (opts->lam != -1) {
+	fprintf(fp, "lam=%d,", opts->lam);
+    }
+
+    if (opts->imean != 1) {
+	fprintf(fp, "imean=%d,", opts->imean);
+    }
+
     fprintf(fp, "iatip=%d,", opts->iatip);
+
     if (opts->iatip == 1) {
 	fprintf(fp, "aio=%d,", opts->aio);
 	if (opts->va != 0.0) {
@@ -700,7 +814,16 @@ void print_tramo_options (tx_request *request, FILE *fp)
     fprintf(fp, "Q=%d,BQ=%d,", opts->q, opts->bq);
 #endif
 
-    fputs("noadmiss=1,seats=2,$\n", fp);
+    if (opts->mq > 0) {
+	fprintf(fp, "mq=%d,", opts->mq);
+    }
+
+    if (opts->out != 0) {
+	fprintf(fp, "out=%d,", opts->out);
+    }
+
+    fprintf(fp, "noadmiss=%d,seats=%d\n", opts->noadmiss, 
+	    opts->seats);
 
     free(opts);
     request->opts = NULL;

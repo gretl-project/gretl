@@ -40,6 +40,7 @@ struct _tx_request {
     common_opt_info opt[4];
     void *opts;
     int savevars;
+    int pd;
 #if GTK_MAJOR_VERSION == 1
     int ret;
 #endif
