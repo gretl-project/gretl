@@ -20,193 +20,193 @@
 /* selector.c for gretl */
 
 #include "gretl.h"
-#include "fancy_dialog.h"
+#include "selector.h"
 
 static int default_var;
 static int *xlist;
 static int *instlist;
 
-static void set_weight_var (gint i, selector *nd)
+static void set_weight_var (gint i, selector *sr)
 {
     gchar *vnum, *vname;
 
-    gtk_clist_get_text(GTK_CLIST(nd->varlist), i, 0, &vnum); 
-    gtk_clist_get_text(GTK_CLIST(nd->varlist), i, 1, &vname);
-    gtk_entry_set_text(GTK_ENTRY(nd->extra), vname);
-    gtk_object_set_user_data(GTK_OBJECT(nd->extra),
+    gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &vnum); 
+    gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 1, &vname);
+    gtk_entry_set_text(GTK_ENTRY(sr->extra), vname);
+    gtk_object_set_user_data(GTK_OBJECT(sr->extra),
 			     GINT_TO_POINTER(atoi(vnum)));
 }
 
-static void select_weight_callback (GtkWidget *w, selector *nd)
+static void select_weight_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = GTK_CLIST(nd->varlist)->selection;
+    GList *mylist = GTK_CLIST(sr->varlist)->selection;
 
     if (mylist != NULL) {
 	mylist = g_list_first(mylist);
-	g_list_foreach(mylist, (GFunc) set_weight_var, nd);
+	g_list_foreach(mylist, (GFunc) set_weight_var, sr);
     }
 }
 
-static void set_dependent_var (gint i, selector *nd)
+static void set_dependent_var (gint i, selector *sr)
 {
     gchar *vnum, *vname;
 
-    gtk_clist_get_text(GTK_CLIST(nd->varlist), i, 0, &vnum); 
-    gtk_clist_get_text(GTK_CLIST(nd->varlist), i, 1, &vname);
-    gtk_entry_set_text(GTK_ENTRY(nd->depvar), vname);
-    gtk_object_set_user_data(GTK_OBJECT(nd->depvar),
+    gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &vnum); 
+    gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 1, &vname);
+    gtk_entry_set_text(GTK_ENTRY(sr->depvar), vname);
+    gtk_object_set_user_data(GTK_OBJECT(sr->depvar),
 			     GINT_TO_POINTER(atoi(vnum)));
 }
 
-static void select_dependent_callback (GtkWidget *w, selector *nd)
+static void select_dependent_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = GTK_CLIST(nd->varlist)->selection;
+    GList *mylist = GTK_CLIST(sr->varlist)->selection;
 
     if (mylist != NULL) {
 	mylist = g_list_first(mylist);
-	g_list_foreach(mylist, (GFunc) set_dependent_var, nd);
+	g_list_foreach(mylist, (GFunc) set_dependent_var, sr);
     }
 }
 
-static void add_instrument (gint i, selector *nd)
+static void add_instrument (gint i, selector *sr)
 {
     gchar *row[2];
-    gint j, rows = GTK_CLIST(nd->extra)->rows;
+    gint j, rows = GTK_CLIST(sr->extra)->rows;
     gint already_there = 0;
 
-    gtk_clist_get_text(GTK_CLIST(nd->varlist), i, 0, &row[0]);
+    gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &row[0]);
     for (j=0; j<rows; j++) {
 	gchar *test;
 
-	gtk_clist_get_text(GTK_CLIST(nd->extra), j, 0, &test);
+	gtk_clist_get_text(GTK_CLIST(sr->extra), j, 0, &test);
 	if (!strcmp(test, row[0])) {
 	    already_there = 1; 
 	    break;
 	}
     }
     if (!already_there) {
-	gtk_clist_get_text(GTK_CLIST(nd->varlist), i, 1, &row[1]);
-	gtk_clist_append(GTK_CLIST(nd->extra), row);
+	gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 1, &row[1]);
+	gtk_clist_append(GTK_CLIST(sr->extra), row);
     }
 }
 
-static void add_instrument_callback (GtkWidget *w, selector *nd)
+static void add_instrument_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = GTK_CLIST(nd->varlist)->selection;
+    GList *mylist = GTK_CLIST(sr->varlist)->selection;
 
     if (mylist != NULL) 
-	g_list_foreach(mylist, (GFunc) add_instrument, nd);
+	g_list_foreach(mylist, (GFunc) add_instrument, sr);
 }
 
-static void add_independent_var (gint i, selector *nd)
+static void add_independent_var (gint i, selector *sr)
 {
     gchar *row[2];
-    gint j, rows = GTK_CLIST(nd->rightvars)->rows;
+    gint j, rows = GTK_CLIST(sr->rightvars)->rows;
     gint already_there = 0;
 
-    gtk_clist_get_text(GTK_CLIST(nd->varlist), i, 0, &row[0]);
+    gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &row[0]);
     for (j=0; j<rows; j++) {
 	gchar *test;
 
-	gtk_clist_get_text(GTK_CLIST(nd->rightvars), j, 0, &test);
+	gtk_clist_get_text(GTK_CLIST(sr->rightvars), j, 0, &test);
 	if (!strcmp(test, row[0])) {
 	    already_there = 1; 
 	    break;
 	}
     }
     if (!already_there) {
-	gtk_clist_get_text(GTK_CLIST(nd->varlist), i, 1, &row[1]);
-	gtk_clist_append(GTK_CLIST(nd->rightvars), row);
+	gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 1, &row[1]);
+	gtk_clist_append(GTK_CLIST(sr->rightvars), row);
     }
 }
 
-static void add_independent_callback (GtkWidget *w, selector *nd)
+static void add_independent_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = GTK_CLIST(nd->varlist)->selection;
+    GList *mylist = GTK_CLIST(sr->varlist)->selection;
 
     if (mylist != NULL) 
-	g_list_foreach(mylist, (GFunc) add_independent_var, nd);
+	g_list_foreach(mylist, (GFunc) add_independent_var, sr);
 }
 
-static void remove_independent_var (gint i, selector *nd)
+static void remove_independent_var (gint i, selector *sr)
 {
-    gtk_clist_remove(GTK_CLIST(nd->rightvars), i);
+    gtk_clist_remove(GTK_CLIST(sr->rightvars), i);
 }
 
-static void remove_independent_callback (GtkWidget *w, selector *nd)
+static void remove_independent_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = GTK_CLIST(nd->rightvars)->selection;
+    GList *mylist = GTK_CLIST(sr->rightvars)->selection;
 
     if (mylist != NULL) 
-	g_list_foreach(mylist, (GFunc) remove_independent_var, nd);
+	g_list_foreach(mylist, (GFunc) remove_independent_var, sr);
 }
 
-static void remove_instrument (gint i, selector *nd)
+static void remove_instrument (gint i, selector *sr)
 {
-    gtk_clist_remove(GTK_CLIST(nd->extra), i);
+    gtk_clist_remove(GTK_CLIST(sr->extra), i);
 }
 
-static void remove_instrument_callback (GtkWidget *w, selector *nd)
+static void remove_instrument_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = GTK_CLIST(nd->extra)->selection;
+    GList *mylist = GTK_CLIST(sr->extra)->selection;
 
     if (mylist != NULL) 
-	g_list_foreach(mylist, (GFunc) remove_instrument, nd);
+	g_list_foreach(mylist, (GFunc) remove_instrument, sr);
 }
 
-static void clear_vars (GtkWidget *w, selector *nd)
+static void clear_vars (GtkWidget *w, selector *sr)
 {
     gchar *row[2];
 
-    gtk_clist_unselect_all(GTK_CLIST(nd->varlist));
-    if (nd->depvar != NULL) 
-	gtk_entry_set_text(GTK_ENTRY(nd->depvar), ""); 
-    gtk_clist_clear(GTK_CLIST(nd->rightvars));
-    if (MODEL_CODE(nd->code)) {
+    gtk_clist_unselect_all(GTK_CLIST(sr->varlist));
+    if (sr->depvar != NULL) 
+	gtk_entry_set_text(GTK_ENTRY(sr->depvar), ""); 
+    gtk_clist_clear(GTK_CLIST(sr->rightvars));
+    if (MODEL_CODE(sr->code)) {
 	row[0] = "0";
 	row[1] = "const";
-	gtk_clist_append(GTK_CLIST(nd->rightvars), row);
+	gtk_clist_append(GTK_CLIST(sr->rightvars), row);
     }
 }
 
-static void construct_cmdlist (GtkWidget *w, selector *nd)
+static void construct_cmdlist (GtkWidget *w, selector *sr)
 {
-    gint i = 0, rows = GTK_CLIST(nd->rightvars)->rows;
+    gint i = 0, rows = GTK_CLIST(sr->rightvars)->rows;
     gchar numstr[6];
     int err = 0;
 
-    nd->cmdlist = mymalloc(MAXLEN);
-    if (nd->cmdlist == NULL) return;
-    nd->cmdlist[0] = 0;
+    sr->cmdlist = mymalloc(MAXLEN);
+    if (sr->cmdlist == NULL) return;
+    sr->cmdlist[0] = 0;
 
-    if (nd->code == WLS) {
-	i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(nd->extra)));
+    if (sr->code == WLS) {
+	i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra)));
 	sprintf(numstr, "%d ", i);
-	strcat(nd->cmdlist, numstr);
+	strcat(sr->cmdlist, numstr);
     }
-    else if (nd->code == AR) {
+    else if (sr->code == AR) {
 	gchar *lags;
 
-	lags = gtk_entry_get_text(GTK_ENTRY(nd->extra));
-	strcat(nd->cmdlist, lags);
-	strcat(nd->cmdlist, " ; ");
+	lags = gtk_entry_get_text(GTK_ENTRY(sr->extra));
+	strcat(sr->cmdlist, lags);
+	strcat(sr->cmdlist, " ; ");
     }
-    else if (nd->code == VAR) {
+    else if (sr->code == VAR) {
 	GtkAdjustment *adj = 
-	    gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(nd->extra));
+	    gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
 
 	i = (gint) adj->value;
 	sprintf(numstr, "%d ", i);
-	strcat(nd->cmdlist, numstr);
+	strcat(sr->cmdlist, numstr);
     }
 
-    if (nd->depvar != NULL) {
-	i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(nd->depvar)));
+    if (sr->depvar != NULL) {
+	i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->depvar)));
 	sprintf(numstr, "%d", i);
-	strcat(nd->cmdlist, numstr);
+	strcat(sr->cmdlist, numstr);
     }
     
-    if (nd->default_check != NULL && GTK_TOGGLE_BUTTON(nd->default_check)->active) 
+    if (sr->default_check != NULL && GTK_TOGGLE_BUTTON(sr->default_check)->active) 
 	default_var = i;
 
     if (rows > 0) { 
@@ -217,24 +217,24 @@ static void construct_cmdlist (GtkWidget *w, selector *nd)
     for (i=0; i<rows; i++) {
 	gchar *rvar;
 
-	gtk_clist_get_text(GTK_CLIST(nd->rightvars), i, 0, &rvar);
-	strcat(nd->cmdlist, " ");
-	strcat(nd->cmdlist, rvar);
+	gtk_clist_get_text(GTK_CLIST(sr->rightvars), i, 0, &rvar);
+	strcat(sr->cmdlist, " ");
+	strcat(sr->cmdlist, rvar);
 	if (xlist != NULL) xlist[i+1] = atoi(rvar);
     }
 
-    if (nd->code == TSLS) {
-	rows = GTK_CLIST(nd->extra)->rows;
+    if (sr->code == TSLS) {
+	rows = GTK_CLIST(sr->extra)->rows;
 	if (rows > 0) {
 	    instlist = realloc(instlist, (rows + 1) * sizeof(int));
 	    if (instlist != NULL) instlist[0] = rows;
-	    strcat(nd->cmdlist, " ;");
+	    strcat(sr->cmdlist, " ;");
 	    for (i=0; i<rows; i++) {
 		gchar *inst;
 
-		gtk_clist_get_text(GTK_CLIST(nd->extra), i, 0, &inst);
-		strcat(nd->cmdlist, " ");
-		strcat(nd->cmdlist, inst);
+		gtk_clist_get_text(GTK_CLIST(sr->extra), i, 0, &inst);
+		strcat(sr->cmdlist, " ");
+		strcat(sr->cmdlist, inst);
 		if (instlist != NULL) instlist[i+1] = atoi(inst);
 	    }
 	} else {
@@ -243,17 +243,17 @@ static void construct_cmdlist (GtkWidget *w, selector *nd)
 	}
     }
 
-    fprintf(stderr, "cmdlist: '%s'\n", nd->cmdlist);
+    fprintf(stderr, "cmdlist: '%s'\n", sr->cmdlist);
     if (err) 
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
 }
 
-static void destroy_selector (GtkWidget *w, selector *nd) 
+static void destroy_selector (GtkWidget *w, selector *sr) 
 {
     gtk_main_quit();
-    fprintf(stderr, "done gtk_main_quit(), now freeing nd\n");
-    free(nd->cmdlist);
-    free(nd);
+    fprintf(stderr, "done gtk_main_quit(), now freeing sr\n");
+    free(sr->cmdlist);
+    free(sr);
 }
 
 static char *est_str (int cmdnum)
@@ -323,49 +323,49 @@ static char *extra_string (int cmdnum)
 
 static void 
 dialog_select_row (GtkCList *clist, gint row, gint column, 
-		   GdkEventButton *event, selector *nd) 
+		   GdkEventButton *event, selector *sr) 
 {
     
     if (event != NULL && event->type == GDK_2BUTTON_PRESS) {
-	set_dependent_var (row, nd);
+	set_dependent_var (row, sr);
     }
 }
 
 static gint
 remove_right_click (GtkWidget *widget, GdkEventButton *event, 
-		    selector *nd)
+		    selector *sr)
 {
     GdkWindow *topwin;
     GdkModifierType mods;
 
-    topwin = gtk_widget_get_parent_window(nd->rightvars);
+    topwin = gtk_widget_get_parent_window(sr->rightvars);
     gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
     if (mods & GDK_BUTTON3_MASK) {
-	remove_independent_callback (NULL, nd);
+	remove_independent_callback (NULL, sr);
     }
     return TRUE;
 }
 
 static gint
 dialog_right_click (GtkWidget *widget, GdkEventButton *event, 
-		    selector *nd)
+		    selector *sr)
 {
     GdkWindow *topwin;
     GdkModifierType mods;
 
-    topwin = gtk_widget_get_parent_window(nd->varlist);
+    topwin = gtk_widget_get_parent_window(sr->varlist);
     gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
     if (mods & GDK_BUTTON3_MASK) {
-	add_independent_callback (NULL, nd);
+	add_independent_callback (NULL, sr);
     }
     return TRUE;
 }
 
-static void build_depvar_section (selector *nd, GtkWidget *right_vbox)
+static void build_depvar_section (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *depvar_hbox;
 
-    if (nd->code == VAR)
+    if (sr->code == VAR)
 	tmp = gtk_label_new("First dependent variable");
     else
 	tmp = gtk_label_new("Dependent variable");
@@ -377,25 +377,25 @@ static void build_depvar_section (selector *nd, GtkWidget *right_vbox)
     tmp = gtk_button_new_with_label (_("Choose ->"));
     gtk_box_pack_start(GTK_BOX(depvar_hbox), tmp, TRUE, TRUE, 0);
     gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
-			GTK_SIGNAL_FUNC(select_dependent_callback), nd);
+			GTK_SIGNAL_FUNC(select_dependent_callback), sr);
     gtk_widget_show(tmp); 
 
-    nd->depvar = gtk_entry_new_with_max_length(9);
+    sr->depvar = gtk_entry_new_with_max_length(9);
     if (default_var) {
-	gtk_entry_set_text(GTK_ENTRY(nd->depvar), 
+	gtk_entry_set_text(GTK_ENTRY(sr->depvar), 
 			   datainfo->varname[default_var]);
-	gtk_object_set_user_data(GTK_OBJECT(nd->depvar),
+	gtk_object_set_user_data(GTK_OBJECT(sr->depvar),
 				 GINT_TO_POINTER(default_var));
     }
-    gtk_box_pack_start(GTK_BOX(depvar_hbox), nd->depvar, FALSE, FALSE, 0);
-    gtk_widget_show(nd->depvar); 
+    gtk_box_pack_start(GTK_BOX(depvar_hbox), sr->depvar, FALSE, FALSE, 0);
+    gtk_widget_show(sr->depvar); 
 
     gtk_box_pack_start(GTK_BOX(right_vbox), depvar_hbox, FALSE, FALSE, 0);
     gtk_widget_show(depvar_hbox); 
 
-    nd->default_check = gtk_check_button_new_with_label("Set as default");
-    gtk_box_pack_start(GTK_BOX(right_vbox), nd->default_check, FALSE, TRUE, 0);
-    gtk_widget_show(nd->default_check); 
+    sr->default_check = gtk_check_button_new_with_label("Set as default");
+    gtk_box_pack_start(GTK_BOX(right_vbox), sr->default_check, FALSE, TRUE, 0);
+    gtk_widget_show(sr->default_check); 
 
     /* separator */
     tmp = gtk_hseparator_new();
@@ -403,7 +403,7 @@ static void build_depvar_section (selector *nd, GtkWidget *right_vbox)
     gtk_widget_show(tmp);
 }
 
-static void lag_order_spin (selector *nd, GtkWidget *right_vbox)
+static void lag_order_spin (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *midhbox;
     GtkObject *adj;
@@ -412,17 +412,17 @@ static void lag_order_spin (selector *nd, GtkWidget *right_vbox)
     midhbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new("lag order:");
     adj = gtk_adjustment_new(order, 1, 24, 1, 1, 1);
-    nd->extra = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
+    sr->extra = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
     gtk_box_pack_start (GTK_BOX (midhbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
-    gtk_box_pack_start (GTK_BOX (midhbox), nd->extra, FALSE, FALSE, 5);
-    gtk_widget_show(nd->extra);
+    gtk_box_pack_start (GTK_BOX (midhbox), sr->extra, FALSE, FALSE, 5);
+    gtk_widget_show(sr->extra);
 
     gtk_box_pack_start(GTK_BOX(right_vbox), midhbox, FALSE, TRUE, 0);
     gtk_widget_show(midhbox); 
 }
 
-static void weight_box (selector *nd, GtkWidget *right_vbox)
+static void weight_box (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *midhbox;
 
@@ -430,18 +430,18 @@ static void weight_box (selector *nd, GtkWidget *right_vbox)
     tmp = gtk_button_new_with_label (_("Choose ->"));
     gtk_box_pack_start(GTK_BOX(midhbox), tmp, TRUE, TRUE, 0);
     gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
-			GTK_SIGNAL_FUNC(select_weight_callback), nd);
+			GTK_SIGNAL_FUNC(select_weight_callback), sr);
     gtk_widget_show(tmp); 
 
-    nd->extra = gtk_entry_new_with_max_length(8);
-    gtk_box_pack_start(GTK_BOX(midhbox), nd->extra, FALSE, TRUE, 0);
-    gtk_widget_show(nd->extra); 
+    sr->extra = gtk_entry_new_with_max_length(8);
+    gtk_box_pack_start(GTK_BOX(midhbox), sr->extra, FALSE, TRUE, 0);
+    gtk_widget_show(sr->extra); 
 
     gtk_box_pack_start(GTK_BOX(right_vbox), midhbox, FALSE, TRUE, 0);
     gtk_widget_show(midhbox); 
 }
 
-static void tsls_box (selector *nd, GtkWidget *right_vbox)
+static void tsls_box (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *midhbox, *button_vbox;
     GtkWidget *scroller;
@@ -453,13 +453,13 @@ static void tsls_box (selector *nd, GtkWidget *right_vbox)
     tmp = gtk_button_new_with_label (_("Add ->"));
     gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
     gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
-                        GTK_SIGNAL_FUNC(add_instrument_callback), nd);
+                        GTK_SIGNAL_FUNC(add_instrument_callback), sr);
     gtk_widget_show(tmp);
     
     tmp = gtk_button_new_with_label (_("<- Remove"));
     gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
     gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
-                        GTK_SIGNAL_FUNC(remove_instrument_callback), nd);
+                        GTK_SIGNAL_FUNC(remove_instrument_callback), sr);
     gtk_widget_show(tmp);
 
     gtk_box_pack_start(GTK_BOX(midhbox), button_vbox, TRUE, TRUE, 0);
@@ -470,8 +470,8 @@ static void tsls_box (selector *nd, GtkWidget *right_vbox)
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
 				    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 
-    nd->extra = gtk_clist_new(2);
-    gtk_clist_clear(GTK_CLIST(nd->extra));
+    sr->extra = gtk_clist_new(2);
+    gtk_clist_clear(GTK_CLIST(sr->extra));
 
     if (instlist != NULL) {
 	int i;
@@ -483,21 +483,21 @@ static void tsls_box (selector *nd, GtkWidget *right_vbox)
 	    sprintf(id, "%d", instlist[i]);
 	    row[0] = id;
 	    row[1] = datainfo->varname[instlist[i]];
-	    gtk_clist_append(GTK_CLIST(nd->extra), row);
+	    gtk_clist_append(GTK_CLIST(sr->extra), row);
 	}
     } else {
 	gchar *row[2];
 
 	row[0] = "0";
 	row[1] = "const";
-	gtk_clist_append(GTK_CLIST(nd->extra), row);
+	gtk_clist_append(GTK_CLIST(sr->extra), row);
     }
 
-    gtk_clist_set_column_width (GTK_CLIST(nd->extra), 1, 80);
-    gtk_widget_set_usize (nd->extra, 80, 120);
+    gtk_clist_set_column_width (GTK_CLIST(sr->extra), 1, 80);
+    gtk_widget_set_usize (sr->extra, 80, 120);
 
-    gtk_widget_show(nd->extra); 
-    gtk_container_add(GTK_CONTAINER(scroller), nd->extra);
+    gtk_widget_show(sr->extra); 
+    gtk_container_add(GTK_CONTAINER(scroller), sr->extra);
 
     gtk_widget_show(scroller);
     gtk_box_pack_start(GTK_BOX(midhbox), scroller, TRUE, TRUE, 0);
@@ -506,10 +506,10 @@ static void tsls_box (selector *nd, GtkWidget *right_vbox)
     gtk_widget_show(midhbox); 
 }
 
-static void build_mid_section (selector *nd, GtkWidget *right_vbox)
+static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp;
-    char *str = extra_string(nd->code);
+    char *str = extra_string(sr->code);
 
     if (str != NULL) {
 	tmp = gtk_label_new(str);
@@ -517,17 +517,17 @@ static void build_mid_section (selector *nd, GtkWidget *right_vbox)
 	gtk_widget_show(tmp);
     }	
 
-    if (nd->code == WLS) 
-	weight_box (nd, right_vbox);
-    else if (nd->code == VAR)
-	lag_order_spin (nd, right_vbox);
-    else if (nd->code == TSLS)
-	tsls_box (nd, right_vbox);
-    else if (nd->code == AR) {
-	nd->extra = gtk_entry_new_with_max_length(8);
-	gtk_box_pack_start(GTK_BOX(right_vbox), nd->extra, 
+    if (sr->code == WLS) 
+	weight_box (sr, right_vbox);
+    else if (sr->code == VAR)
+	lag_order_spin (sr, right_vbox);
+    else if (sr->code == TSLS)
+	tsls_box (sr, right_vbox);
+    else if (sr->code == AR) {
+	sr->extra = gtk_entry_new_with_max_length(8);
+	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra, 
 			   FALSE, TRUE, 0);
-	gtk_widget_show(nd->extra); 
+	gtk_widget_show(sr->extra); 
     }
 
     /* separator */
@@ -536,16 +536,16 @@ static void build_mid_section (selector *nd, GtkWidget *right_vbox)
     gtk_widget_show(tmp);
 }
 
-static void selector_init (selector *nd)
+static void selector_init (selector *sr)
 {
-    nd->dlg = NULL;
-    nd->varlist = NULL;
-    nd->depvar = NULL;
-    nd->rightvars = NULL;
-    nd->default_check = NULL;
-    nd->extra = NULL;
-    nd->code = 0;
-    nd->cmdlist = NULL;
+    sr->dlg = NULL;
+    sr->varlist = NULL;
+    sr->depvar = NULL;
+    sr->rightvars = NULL;
+    sr->default_check = NULL;
+    sr->extra = NULL;
+    sr->code = 0;
+    sr->cmdlist = NULL;
 }
 
 void selection_dialog (const char *title, const char *oktxt, 
@@ -554,34 +554,34 @@ void selection_dialog (const char *title, const char *oktxt,
     GtkWidget *right_vbox, *tmp;
     GtkWidget *big_hbox, *indepvar_hbox;
     GtkWidget *button_vbox, *scroller;
-    selector *nd;
+    selector *sr;
     char topstr[48];
     int i;
 
-    nd = mymalloc(sizeof *nd);
-    if (nd == NULL) return;
-    selector_init(nd);
+    sr = mymalloc(sizeof *sr);
+    if (sr == NULL) return;
+    selector_init(sr);
 
-    nd->code = cmdcode;
+    sr->code = cmdcode;
 
-    nd->dlg = gtk_dialog_new();
-    gtk_window_set_title(GTK_WINDOW(nd->dlg), title);
+    sr->dlg = gtk_dialog_new();
+    gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
 
-    gtk_signal_connect (GTK_OBJECT (nd->dlg), "destroy", 
+    gtk_signal_connect (GTK_OBJECT (sr->dlg), "destroy", 
 			GTK_SIGNAL_FUNC (destroy_selector), 
-			nd);    
+			sr);    
 
     gtk_container_border_width 
-        (GTK_CONTAINER(GTK_DIALOG(nd->dlg)->vbox), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(nd->dlg)->vbox), 5);
+        (GTK_CONTAINER(GTK_DIALOG(sr->dlg)->vbox), 5);
+    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 5);
 
     gtk_container_border_width 
-        (GTK_CONTAINER(GTK_DIALOG(nd->dlg)->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(nd->dlg)->action_area), 5);
-    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(nd->dlg)->action_area), TRUE);
+        (GTK_CONTAINER(GTK_DIALOG(sr->dlg)->action_area), 5);
+    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 5);
+    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), TRUE);
 
-    gtk_window_set_position(GTK_WINDOW(nd->dlg), GTK_WIN_POS_MOUSE);
-    /* gtk_window_set_default_size(GTK_WINDOW(nd->dlg), 363, 380); */
+    gtk_window_set_position(GTK_WINDOW(sr->dlg), GTK_WIN_POS_MOUSE);
+    /* gtk_window_set_default_size(GTK_WINDOW(sr->dlg), 363, 380); */
 
     if (MODEL_CODE(cmdcode))
 	sprintf(topstr, "%s model", est_str(cmdcode));
@@ -590,7 +590,7 @@ void selection_dialog (const char *title, const char *oktxt,
     else
 	strcpy(topstr, "fixme need string");
     tmp = gtk_label_new(topstr);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(nd->dlg)->vbox), 
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 
 		       tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
 
@@ -602,8 +602,8 @@ void selection_dialog (const char *title, const char *oktxt,
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
 				    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 
-    nd->varlist = gtk_clist_new(2);
-    gtk_clist_clear(GTK_CLIST(nd->varlist));
+    sr->varlist = gtk_clist_new(2);
+    gtk_clist_clear(GTK_CLIST(sr->varlist));
     for (i=0; i<datainfo->v; i++) {
 	gchar *row[2];
 	gchar id[5];
@@ -612,20 +612,20 @@ void selection_dialog (const char *title, const char *oktxt,
 	sprintf(id, "%d", i);
 	row[0] = id;
 	row[1] = datainfo->varname[i];
-        gtk_clist_append(GTK_CLIST(nd->varlist), row);
+        gtk_clist_append(GTK_CLIST(sr->varlist), row);
     }
-    gtk_clist_set_column_width (GTK_CLIST(nd->varlist), 1, 80);
-    /* gtk_clist_set_column_visibility (GTK_CLIST(nd->varlist), 0, FALSE); */
-    gtk_clist_set_selection_mode (GTK_CLIST(nd->varlist),
+    gtk_clist_set_column_width (GTK_CLIST(sr->varlist), 1, 80);
+    /* gtk_clist_set_column_visibility (GTK_CLIST(sr->varlist), 0, FALSE); */
+    gtk_clist_set_selection_mode (GTK_CLIST(sr->varlist),
 				  GTK_SELECTION_EXTENDED);
     if (MODEL_CODE(cmdcode)) {
-	gtk_signal_connect_after (GTK_OBJECT (nd->varlist), "select_row", 
-				  GTK_SIGNAL_FUNC(dialog_select_row), nd);
+	gtk_signal_connect_after (GTK_OBJECT (sr->varlist), "select_row", 
+				  GTK_SIGNAL_FUNC(dialog_select_row), sr);
     }
-    gtk_signal_connect(GTK_OBJECT(nd->varlist), "button_press_event",
-		       (GtkSignalFunc) dialog_right_click, nd);
-    gtk_widget_show(nd->varlist); 
-    gtk_container_add(GTK_CONTAINER(scroller), nd->varlist);
+    gtk_signal_connect(GTK_OBJECT(sr->varlist), "button_press_event",
+		       (GtkSignalFunc) dialog_right_click, sr);
+    gtk_widget_show(sr->varlist); 
+    gtk_container_add(GTK_CONTAINER(scroller), sr->varlist);
     gtk_widget_show(scroller);
     gtk_box_pack_start(GTK_BOX(big_hbox), scroller, TRUE, TRUE, 0);
 
@@ -638,11 +638,11 @@ void selection_dialog (const char *title, const char *oktxt,
 
     /* for models: top right -- dependent variable */
     if (MODEL_CODE(cmdcode)) 
-	build_depvar_section(nd, right_vbox);
+	build_depvar_section(sr, right_vbox);
 
     /* middle right: used for some estimators */
     if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || cmdcode == VAR) 
-	build_mid_section(nd, right_vbox);
+	build_mid_section(sr, right_vbox);
     
     /* lower right: independent variables */
     if (MODEL_CODE(cmdcode))
@@ -660,13 +660,13 @@ void selection_dialog (const char *title, const char *oktxt,
     tmp = gtk_button_new_with_label (_("Add ->"));
     gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
     gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
-                        GTK_SIGNAL_FUNC(add_independent_callback), nd);
+                        GTK_SIGNAL_FUNC(add_independent_callback), sr);
     gtk_widget_show(tmp);
     
     tmp = gtk_button_new_with_label (_("<- Remove"));
     gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
     gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
-                        GTK_SIGNAL_FUNC(remove_independent_callback), nd);
+                        GTK_SIGNAL_FUNC(remove_independent_callback), sr);
     gtk_widget_show(tmp);
 
     gtk_box_pack_start(GTK_BOX(indepvar_hbox), button_vbox, TRUE, TRUE, 0);
@@ -677,8 +677,8 @@ void selection_dialog (const char *title, const char *oktxt,
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
 				    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 
-    nd->rightvars = gtk_clist_new(2);
-    gtk_clist_clear(GTK_CLIST(nd->rightvars));
+    sr->rightvars = gtk_clist_new(2);
+    gtk_clist_clear(GTK_CLIST(sr->rightvars));
 
     if (xlist != NULL) {
 	for (i=1; i<=xlist[0]; i++) {
@@ -688,23 +688,23 @@ void selection_dialog (const char *title, const char *oktxt,
 	    sprintf(id, "%d", xlist[i]);
 	    row[0] = id;
 	    row[1] = datainfo->varname[xlist[i]];
-	    gtk_clist_append(GTK_CLIST(nd->rightvars), row);
+	    gtk_clist_append(GTK_CLIST(sr->rightvars), row);
 	}
     } else if (MODEL_CODE(cmdcode)) {
 	    gchar *row[2];
 
 	    row[0] = "0";
 	    row[1] = "const";
-	    gtk_clist_append(GTK_CLIST(nd->rightvars), row);
+	    gtk_clist_append(GTK_CLIST(sr->rightvars), row);
     }
 
-    gtk_clist_set_column_width (GTK_CLIST(nd->rightvars), 1, 80);
-    gtk_widget_set_usize (nd->rightvars, 80, 120);
-    gtk_signal_connect(GTK_OBJECT(nd->rightvars), "button_press_event",
-		       (GtkSignalFunc) remove_right_click, nd);
-    /* gtk_clist_set_column_visibility (GTK_CLIST(nd->rightvars), 0, FALSE); */
-    gtk_widget_show(nd->rightvars); 
-    gtk_container_add(GTK_CONTAINER(scroller), nd->rightvars);
+    gtk_clist_set_column_width (GTK_CLIST(sr->rightvars), 1, 80);
+    gtk_widget_set_usize (sr->rightvars, 80, 120);
+    gtk_signal_connect(GTK_OBJECT(sr->rightvars), "button_press_event",
+		       (GtkSignalFunc) remove_right_click, sr);
+    /* gtk_clist_set_column_visibility (GTK_CLIST(sr->rightvars), 0, FALSE); */
+    gtk_widget_show(sr->rightvars); 
+    gtk_container_add(GTK_CONTAINER(scroller), sr->rightvars);
 
     gtk_widget_show(scroller);
     gtk_box_pack_start(GTK_BOX(indepvar_hbox), scroller, TRUE, TRUE, 0);
@@ -718,50 +718,50 @@ void selection_dialog (const char *title, const char *oktxt,
     gtk_widget_show(right_vbox);
 
     /* pack the whole central section into the dialog's vbox */
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(nd->dlg)->vbox), 
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 
 		       big_hbox, TRUE, TRUE, 0);
     gtk_widget_show(big_hbox);
 
     /* buttons: "OK", Clear, Cancel, Help */
     tmp = gtk_button_new_with_label (oktxt);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(nd->dlg)->action_area), 
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
 		       tmp, TRUE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
-		       GTK_SIGNAL_FUNC(construct_cmdlist), nd);
+		       GTK_SIGNAL_FUNC(construct_cmdlist), sr);
     gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
-		       GTK_SIGNAL_FUNC(okfunc), nd);
+		       GTK_SIGNAL_FUNC(okfunc), sr);
     gtk_signal_connect_object(GTK_OBJECT (tmp), "clicked", 
 			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
-			      GTK_OBJECT(nd->dlg));
+			      GTK_OBJECT(sr->dlg));
     gtk_widget_show(tmp);
     gtk_widget_grab_default(tmp);
 
     tmp = gtk_button_new_with_label(_("Clear"));
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(nd->dlg)->action_area), 
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
 		       tmp, TRUE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
-		       GTK_SIGNAL_FUNC(clear_vars), nd);
+		       GTK_SIGNAL_FUNC(clear_vars), sr);
     gtk_widget_show(tmp);
 
     tmp = gtk_button_new_with_label(_("Cancel"));
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(nd->dlg)->action_area), 
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
 		       tmp, TRUE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-                       GTK_SIGNAL_FUNC(delete_widget), nd->dlg);
+                       GTK_SIGNAL_FUNC(delete_widget), sr->dlg);
     gtk_widget_show(tmp);
 
     tmp = gtk_button_new_with_label(_("Help"));
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(nd->dlg)->action_area), 
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
 		       tmp, TRUE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT (tmp), "clicked", 
 		       GTK_SIGNAL_FUNC(context_help), 
 		       GINT_TO_POINTER(cmdcode));
     gtk_widget_show(tmp);
 
-    gtk_widget_show(nd->dlg);
+    gtk_widget_show(sr->dlg);
     gtk_main();
 }

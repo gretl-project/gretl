@@ -20,11 +20,9 @@
 /* callbacks.c for gretl */
 
 #include "gretl.h"
+#include "selector.h"
 #ifndef G_OS_WIN32
 # include <gtkextra/gtkiconfilesel.h>
-#endif
-#ifndef OLD_DIALOGS
-# include "fancy_dialog.h"
 #endif
 
 extern void browser_open_data (GtkWidget *w, gpointer data);
@@ -250,8 +248,8 @@ void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
 
 void model_callback (gpointer data, guint model_code, GtkWidget *widget) 
 {
-    selector (_("gretl: specify model"), _("Estimate"), 
-	      do_model, model_code);
+    selection_dialog (_("gretl: specify model"), _("Estimate"), 
+		      do_model, model_code);
 }
 
 /* ........................................................... */

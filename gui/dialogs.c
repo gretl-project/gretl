@@ -343,7 +343,7 @@ void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
 	break;
 
     }
-    selector (title, _("Apply"), add_logs_etc, add_code);    
+    selection_dialog (title, _("Apply"), add_logs_etc, add_code);    
 }
 
 /* ........................................................... */
