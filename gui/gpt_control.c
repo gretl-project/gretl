@@ -899,10 +899,8 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     /* initialize the struct */
     if ((plot->lines = mymalloc(6 * sizeof(GPT_LINE))) == NULL)
 	return 1;
-    strcpy(plot->titles[0], "");
-    strcpy(plot->titles[1], "");
-    strcpy(plot->titles[2], "");
-    strcpy(plot->titles[3], "");
+    for (i=0; i<4; i++)
+	plot->titles[i][0] = 0;
     strcpy(plot->keyspec, "left top");
     strcpy(plot->xtics, "");
     strcpy(plot->mxtics, "");
@@ -953,6 +951,9 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 	}
 	if (strncmp(line, "# forecast", 10) == 0) {
 	    plot->code = FCASTERR;
+	    continue;
+	}
+	if (strncmp(line, "# timeseries", 12) == 0) {
 	    continue;
 	}
 	if (strncmp(line, "set ", 4)) 

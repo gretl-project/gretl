@@ -3422,7 +3422,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	return;
     }
 
-#define SELECT_FIRST
+    /* #define SELECT_FIRST */
 
     /* otherwise copying plain text from window */
     if (how == COPY_TEXT) {

@@ -13,7 +13,7 @@
 <xsl:param name="htmlhelp.chm" select="'gretl.chm'"/>
 
 <xsl:param name="admon.graphics" select="1"/>
-<xsl:param name="admon.graphics.extension" select="'.gif'"/>
+<xsl:param name="admon.graphics.extension" select="'gif'"/>
 
 <xsl:param name="navig.graphics" select="1"/>
 <xsl:param name="graphic.default.extension" select="'gif'"/>

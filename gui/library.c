@@ -3047,6 +3047,39 @@ int do_store (char *mydatfile, const int opt, int overwrite)
     return 0;
 }
 
+#ifdef G_OS_WIN32
+
+static void win_show_error (void)
+{
+    LPVOID lpMsgBuf;
+
+    FormatMessage( 
+		  FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+		  FORMAT_MESSAGE_FROM_SYSTEM | 
+		  FORMAT_MESSAGE_IGNORE_INSERTS,
+		  NULL,
+		  GetLastError(),
+		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		  (LPTSTR) &lpMsgBuf,
+		  0,
+		  NULL 
+		  );
+    MessageBox(NULL, (LPCTSTR)lpMsgBuf, "Error", MB_OK | MB_ICONINFORMATION);
+    LocalFree(lpMsgBuf);
+}
+
+static int get_latex_path (char *latex_path)
+{
+    int ret;
+    char *p;
+
+    ret = SearchPath(NULL, "latex.exe", NULL, MAXLEN, latex_path, &p);
+
+    return (ret == 0);
+}
+
+#endif
+
 /* ........................................................... */
 
 void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
@@ -3077,17 +3110,26 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 
 #ifdef G_OS_WIN32
     {
+	static char latex_path[MAXLEN];
 	char *texshort = strrchr(texbase, SLASH) + 1;
 
-	chdir(paths.userdir);
-	sprintf(tmp, "latex %s", texshort);
-	err = system(tmp);
-	if (err) { 
-	    errbox("Failed to run latex");
+	if (*latex_path == 0) {
+	    int err = get_latex_path(latex_path);
+	    
+	    if (err) {
+		win_show_error();
+		return;
+	    }
+	}
+
+	SetCurrentDirectory(paths.userdir);
+	sprintf(tmp, "\"%s\" %s", latex_path, texshort);
+	if (WinExec(tmp, SW_SHOWMINIMIZED) < 32) {
+	    win_show_error();
 	} else {
 	    sprintf(tmp, "\"%s\" %s.dvi", viewdvi, texbase);
 	    if (WinExec(tmp, SW_SHOWNORMAL) < 32)
-		errbox("Failed to run DVI viewer");	
+		win_show_error();	
 	}
     }
 #else
