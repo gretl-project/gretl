@@ -45,22 +45,6 @@ static gint remove_right_click (GtkWidget *widget, GdkEventButton *event,
 static gint add_right_click (GtkWidget *widget, GdkEventButton *event, 
 			     selector *sr);
 
-#if 0
-static inline guint STRING_WIDTH(GtkWidget *widget, const gchar *text)
-{
-  PangoRectangle rect;
-  PangoLayout *layout;
-
-  layout = gtk_widget_create_pango_layout(widget, text);
-
-  pango_layout_get_pixel_extents (layout, NULL, &rect);
-
-  g_object_unref(G_OBJECT(layout));
-
-  return rect.width;
-}
-#endif
-
 static gboolean set_active_var (GtkWidget *widget, GdkEventButton *event,
 				selector *sr)
 {
@@ -166,13 +150,6 @@ void clear_selector (void)
     free(instlist);
     instlist = NULL;
 }
-
-#ifdef notdef
-static gint list_sorter (gconstpointer a, gconstpointer b)
-{
-    return GPOINTER_TO_INT(b) - GPOINTER_TO_INT(a);
-}
-#endif
 
 /* add to "extra" var slot the current selection from sr->varlist */
 
@@ -1055,8 +1032,8 @@ static void selector_init (selector *sr, guint code, const char *title)
     GtkWidget *base, *hsep;
     int dlgheight = 300;
 
-    if (code == WLS || code == TSLS || code == AR) 
-	dlgheight = 350;
+    if (code == WLS || code == AR) dlgheight = 350;
+    else if (code == TSLS) dlgheight = 400;
 
     sr->varlist = NULL;
     sr->depvar = NULL;
@@ -1088,6 +1065,7 @@ static void selector_init (selector *sr, guint code, const char *title)
 
     sr->vbox = gtk_vbox_new(FALSE, 0);
     gtk_widget_show(sr->vbox);
+
     /* make (upper) vbox expansible */
     gtk_box_pack_start(GTK_BOX(base), sr->vbox, TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(sr->vbox), 5);
@@ -1099,15 +1077,13 @@ static void selector_init (selector *sr, guint code, const char *title)
 
     sr->action_area = gtk_hbox_new(FALSE, 0);
     gtk_widget_show(sr->action_area);
+
     /* hbox for buttons is not expansible */
     gtk_box_pack_start(GTK_BOX(base), sr->action_area, 
 		       FALSE, FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(sr->action_area), 5);
     gtk_box_set_spacing(GTK_BOX(sr->action_area), 5);
     gtk_box_set_homogeneous(GTK_BOX(sr->action_area), TRUE);
-#if 0
-    gtk_window_set_position(GTK_WINDOW(sr->dlg), GTK_WIN_POS_MOUSE);
-#endif
 }    
 
 static void 

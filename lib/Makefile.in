@@ -88,7 +88,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 $(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(AUX_LOBJ) \
-	-rpath $(prefix)/lib $(LIBS) -version-info 0:12:0
+	-rpath $(prefix)/lib $(LIBS) -version-info 0:13:0
 
 .deps:
 	mkdir $@
