@@ -1,2 +1,2 @@
-set args data4-1 
+set args greene9_1.dat 
 run

@@ -1028,11 +1028,14 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	    plotmin = freq->xbar - 3.3 * freq->sdx;
 	    if (freq->midpt[0] < plotmin) plotmin = freq->midpt[0];
 	    plotmax = freq->xbar + 3.3 * freq->sdx;
-	    fprintf(fp, "set label '%s:' at graph .05, graph .9\n",
-		    I_("Test statistic for normality"));
-	    sprintf(chilbl, I_("Chi-squared(2) = %.3f, pvalue %.5f"), 
-		    freq->chisqu, chisq(freq->chisqu, 2));
-	    fprintf(fp, "set label '%s' at graph .05, graph .85\n", chilbl);	
+
+	    if (!na(freq->chisqu)) {
+		fprintf(fp, "set label '%s:' at graph .05, graph .9\n",
+			I_("Test statistic for normality"));
+		sprintf(chilbl, I_("Chi-squared(2) = %.3f, pvalue %.5f"), 
+			freq->chisqu, chisq(freq->chisqu, 2));
+		fprintf(fp, "set label '%s' at graph .05, graph .85\n", chilbl);
+	    }	
 	}
 	else if (dist == GAMMA) {
 	    double xx, height, var = freq->sdx * freq->sdx;

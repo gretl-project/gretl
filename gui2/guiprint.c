@@ -65,7 +65,8 @@ static char *dosify_buffer (const char *buf)
 int win_copy_text (PRN *prn, int format)
 {
     HGLOBAL winclip;
-    char *ptr, *winbuf;
+    LPTSTR ptr;
+    char *winbuf;
     unsigned rtf_format;
     size_t len;
     gchar *tr = NULL;
@@ -91,18 +92,18 @@ int win_copy_text (PRN *prn, int format)
     winbuf = dosify_buffer((nls_on)? tr : prn->buf);
     len = strlen(winbuf);
         
-    winclip = GlobalAlloc(GMEM_DDESHARE, len + 1);        
-    ptr = (char *) GlobalLock(winclip);
+    winclip = GlobalAlloc(GMEM_MOVEABLE, len + 1);        
 
+    ptr = GlobalLock(winclip);
     memcpy(ptr, winbuf, len + 1);
-    if (nls_on) g_free(tr);
-    free(winbuf);
-
-    GlobalUnlock(winclip); /* FIXME: is the order right here? */
+    GlobalUnlock(winclip); 
 
     SetClipboardData(rtf_format, winclip);
 
     CloseClipboard();
+
+    if (nls_on) g_free(tr);
+    free(winbuf);
 
     return 0;
 }

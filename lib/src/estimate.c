@@ -2313,7 +2313,7 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     rearrange(list);
 
-    wlist = malloc((list[0] + 1) * sizeof *wlist);
+    wlist = malloc((list[0] + 2) * sizeof *wlist);
     if (wlist == NULL) {
 	lad_model.errcode = E_ALLOC;
 	return lad_model;
@@ -2349,13 +2349,17 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	return lad_model;
     }
 
-    while (cdiff > 0.001 && iter++ < 10) {
+    while (cdiff > 0.001 && iter++ < 20) {
 
 	for (t=0; t<pdinfo->n; t++) {
 	    if (na(lad_model.uhat[t])) {
 		(*pZ)[wtnum][t] = NADBL;
 	    } else {
-		(*pZ)[wtnum][t] = 1.0 / (fabs(lad_model.uhat[t]));
+		if (fabs(lad_model.uhat[t]) < .000001) {
+		    (*pZ)[wtnum][t] = 1000000;
+		} else {
+		    (*pZ)[wtnum][t] = 1.0 / (fabs(lad_model.uhat[t]));
+		}
 	    }
 	}
 
@@ -2398,6 +2402,7 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     xpxxpy = xpxxpy_func(list, lad_model.t1, lad_model.t2, *pZ, 0, 0.0);
     cb = cholbeta(xpxxpy);    
     lad_model.xpx = cb.xpxxpy.xpx;
+    free(xpxxpy.xpy);
     free(cb.xpxxpy.xpy);
 
     makevcv(&lad_model);

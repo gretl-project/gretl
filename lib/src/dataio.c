@@ -472,6 +472,11 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 	setlocale(LC_NUMERIC, "");
 #endif
     }
+
+    if (err) { /* should not be necessary */
+	fprintf(stderr, "%s\n", gretl_errmsg);
+    }
+
     return err;
 }
 
@@ -1576,8 +1581,9 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     /* read data header file */
     err = readhdr(hdrfile, pdinfo);
     if (err) return err;
-    else 
+    else { 
 	pprintf(prn, I_("\nReading header file %s\n"), hdrfile);
+    }
 
     /* deal with case where first col. of data file contains
        "marker" strings */
@@ -1593,10 +1599,11 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 	fz = gzopen(datfile, "rb");
 	if (fz == NULL) return E_FOPEN;
     } else {
-	if (pdinfo->bin)
+	if (pdinfo->bin) {
 	    dat = fopen(datfile, "rb");
-	else
+	} else {
 	    dat = fopen(datfile, "r");
+	}
 	if (dat == NULL) return E_FOPEN;
     }
 
@@ -1619,6 +1626,7 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 	err = readdata(dat, pdinfo, *pZ); 
 	fclose(dat);
     }
+
     if (err) return err;
 
     /* Set sample range to entire length of dataset by default */

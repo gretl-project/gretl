@@ -120,8 +120,8 @@ add_file ${TOPDIR}/share/bcih/bcih.idx gretl/db/bcih.idx
 
 # translations
 add_file mo/es.mo gretl/locale/es/LC_MESSAGES/gretl.mo
-add_file $GTKMO/glib20.mo gretl/lib/locale/es/LC_MESSAGES/glib20.mo
-add_file $GTKMO/gtk20.mo gretl/lib/locale/es/LC_MESSAGES/gtk20.mo
+add_file $GTK2MO/glib20.mo gretl/lib/locale/es/LC_MESSAGES/glib20.mo
+add_file $GTK2MO/gtk20.mo gretl/lib/locale/es/LC_MESSAGES/gtk20.mo
 
 # misc files
 add_file gretl_website.url gretl/gretl_website.url

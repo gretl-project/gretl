@@ -237,7 +237,7 @@ int main (int argc, char *argv[])
 {
     int cont = 0, cli_get_data = 0;
     char tmp[MAXLINE];
-    PRN prn;
+    PRN *prn;
 
 #ifdef OS_WIN32
     strcpy(tmp, argv[0]);
@@ -287,7 +287,9 @@ int main (int argc, char *argv[])
     logo();     /* print version info */
     session_time(stdout);
     fb = stdin; /* may be reset later wth "run" command */
-    prn.fp = stdout;
+
+    prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
+
     line = malloc(MAXLINE);
     if (line == NULL) noalloc(_("command line")); 
 
@@ -312,19 +314,19 @@ int main (int argc, char *argv[])
     if (!cli_get_data) {
 	clear(paths.datfile, MAXLEN);
 	strncpy(paths.datfile, argv[1], MAXLEN-1);
-	err = detect_filetype(paths.datfile, &paths, &prn);
+	err = detect_filetype(paths.datfile, &paths, prn);
 	if (err == GRETL_UNRECOGNIZED) 
 	    exit(EXIT_FAILURE);
 	if (err == GRETL_NATIVE_DATA)
 	    err = get_data(&Z, datainfo, paths.datfile, &paths, 
-			   data_status, &prn);
+			   data_status, prn);
 	if (err == GRETL_XML_DATA)
 	    err = get_xmldata(&Z, datainfo, paths.datfile, &paths, 
-			      data_status, &prn, 0);
+			      data_status, prn, 0);
 	else if (err == GRETL_CSV_DATA)
-	    err = import_csv(&Z, datainfo, paths.datfile, &prn);
+	    err = import_csv(&Z, datainfo, paths.datfile, prn);
 	else if (err == GRETL_BOX_DATA)
-	    err = import_box(&Z, datainfo, paths.datfile, &prn);
+	    err = import_box(&Z, datainfo, paths.datfile, prn);
 	else if (err == GRETL_SCRIPT) { /* maybe it's a script file? */
 	    runit = 1;
 	    strcpy(runfile, paths.datfile); 
@@ -333,7 +335,7 @@ int main (int argc, char *argv[])
 	}
 	if (!cli_get_data) {
 	    if (err) {
-		errmsg(err, &prn);
+		errmsg(err, prn);
 		if (err == E_FOPEN) show_paths(&paths);
 		return EXIT_FAILURE;
 	    }
@@ -369,7 +371,7 @@ int main (int argc, char *argv[])
     /* initialize random number generator */
     srand((unsigned int) time(NULL));
 
-    if (data_status) varlist(datainfo, &prn);
+    if (data_status) varlist(datainfo, prn);
     /* check for help file */
     if (!batch) {
 	dat = fopen(paths.helpfile, "r");
@@ -391,7 +393,7 @@ int main (int argc, char *argv[])
 
     if (batch || runit) {
 	sprintf(line, "run %s\n", runfile);
-	exec_line(line, &prn);
+	exec_line(line, prn);
     }
 
     /* should we stop immediately on error, in batch mode? */
@@ -411,9 +413,9 @@ int main (int argc, char *argv[])
 	    i = 0;
 	    while (j != MAXLOOP && loop_condition(i, &loop, Z, datainfo)) {
 		if (loop.type == FOR_LOOP && !echo_off)
-		    pprintf(&prn, "loop: i = %d\n\n", i + 1);
+		    pprintf(prn, "loop: i = %d\n\n", i + 1);
 		for (j=0; j<loop.ncmds; j++) {
-		    if (loop_exec_line(&loop, i, j, &prn)) {
+		    if (loop_exec_line(&loop, i, j, prn)) {
 			printf(_("Error in command loop: aborting\n"));
 			j = MAXLOOP - 1;
 		    }
@@ -421,7 +423,7 @@ int main (int argc, char *argv[])
 		i++;
 	    }
 	    if (j != MAXLOOP) {
-		print_loop_results(&loop, datainfo, &prn, &paths, 
+		print_loop_results(&loop, datainfo, prn, &paths, 
 				   &model_count, loopstorefile);
 		errfatal = 0;
 	    } 
@@ -467,7 +469,7 @@ int main (int argc, char *argv[])
 	    }
 	}
 	oflag = 0;
-	exec_line(line, &prn);
+	exec_line(line, prn);
     } /* end of get commands loop */
 
     /* leak check -- try explicitly freeing all memory allocated */
@@ -498,6 +500,8 @@ int main (int argc, char *argv[])
     }
 
     remove(paths.plotfile);
+
+    gretl_print_destroy(prn);
 
     return 0;
 }

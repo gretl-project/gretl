@@ -87,7 +87,7 @@ void session_time (FILE *fp)
 {
     time_t runtime = time(NULL);
 
-    fprintf(fp, "%s: %s", _("Current session"), print_time(&runtime));
+    fprintf(fp, "%s: %s\n", _("Current session"), print_time(&runtime));
 }
 
 /**
@@ -337,11 +337,12 @@ void printfreq (FREQDIST *freq, PRN *prn)
 	pprintf(prn, "\n");
     }
 
-    pprintf(prn, "\n%s:\n", _("Test for null hypothesis of normal distribution"));
-    
-    pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
-	    _("Chi-square"), freq->chisqu, 
-	    _("with p-value"), chisq(freq->chisqu, 2));
+    if (!na(freq->chisqu)) {
+	pprintf(prn, "\n%s:\n", _("Test for null hypothesis of normal distribution"));
+	pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
+		_("Chi-square"), freq->chisqu, 
+		_("with p-value"), chisq(freq->chisqu, 2));
+    }
 }
 
 /**

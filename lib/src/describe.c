@@ -70,7 +70,8 @@ static void moments (int t1, int t2, const double *zx,
 	other than when dealing with a regression residual */
 {
     int t, n = t2 - t1 + 1;
-    double sum = 0.0, p, var;
+    double dev, var;
+    double s, s2, s3, s4;
 
     if (_isconst(t1, t2, zx)) {
 	*xbar = zx[t1];
@@ -78,28 +79,36 @@ static void moments (int t1, int t2, const double *zx,
 	*skew = *kurt = NADBL;
 	return;
     }
-    for (t=t1; t<=t2; t++) sum += zx[t];
-    *xbar = sum/n;
+
+    s = 0.0;
+    for (t=t1; t<=t2; t++) s += zx[t];
+
+    *xbar = s / n;
     var = *skew = *kurt = 0.0;
+
+    s2 = s3 = s4 = 0.0;
     for (t=t1; t<=t2; t++) {
-	sum = zx[t] - *xbar;
-	p = sum * sum;
-	var += p;
-	p *= sum;
-	*skew = *skew + p;
-	p *= sum;
-	*kurt = *kurt + p;
+	dev = zx[t] - *xbar;
+	s2 += dev * dev;
+	s3 += pow(dev, 3);
+	s4 += pow(dev, 4);
     }
-    var /= (n - k);
+
+    var = s2 / (n-k);
+
     if (var < 0.0) {
 	*std = *skew = *kurt = NADBL;
 	return;
     }
+
     *std = sqrt(var);
+
     if (var > 0.0) {
-	*skew /= (n * var * (*std));
-	*kurt = (*kurt)/(n * var * var) - 3.0;
-    } else *skew = *kurt = NADBL;
+	*skew = (s3 / n) / pow(s2 / n, 1.5);
+	*kurt = (s4 / n) / pow(s2 / n, 2); /* - 3.0 */
+    } else {
+	*skew = *kurt = NADBL;
+    }
 }
 
 /**
@@ -116,6 +125,63 @@ void free_freq (FREQDIST *freq)
     free(freq->endpt);
     free(freq->f);
     free(freq);
+}
+
+static double rb1_to_z1 (double rb1, int n)
+{
+    double b, w2, d, y, z1;
+
+    b = 3.0 * (n*n + 27*n - 70) * (n+1) * (n+3) /
+	((n-2) * (n+5) * (n+7) * (n+9));
+
+    w2 = -1.0 + sqrt(2 * (b-1));
+
+    d = 1.0 / sqrt(log(sqrt(w2)));
+
+    y = rb1 * sqrt(((w2-1.0)/2.0) * ((n+1.0)*(n+3.0))/(6.0*(n-2)));
+
+    z1 = d * log(y + sqrt(y*y + 1));
+
+    return z1;
+}
+
+static double b2_to_z2 (double b1, double b2, int n)
+{
+    double d, a, c, k, alpha, chi, z2;
+    double n2 = n*n;
+
+    d = (n-3) * (n+1) * (n2 + 15*n - 4.0);
+
+    a = ((n-2) * (n+5) * (n+7) * (n2 + 27*n - 70.0)) / (6.0 * d);
+
+    c = ((n-7) * (n+5) * (n+7) * (n2 + 2*n - 5.0)) / (6.0 * d);
+
+    k = ((n+5) * (n+7) * (n2*n + 37*n2 + 11*n - 313.0)) / (12.0 * d);
+
+    alpha = a + b1 * c;
+
+    chi = (b2 - 1.0 - b1) * 2.0 * k;
+
+    z2 = (pow(chi/(2*alpha), 1.0/3.0) - 1.0 + (1.0 / (9.0*alpha))) *
+	sqrt(9.0*alpha);
+
+    return z2;
+}
+
+static double doornik_chisq (double skew, double kurt, int n)
+     /* Bowman-Shenton as modified by Doornik & Hansen */
+	
+{
+    double rb1, b1, b2, z1, z2;
+
+    rb1 = skew;
+    b1 = skew * skew;
+    b2 = kurt + 3.0;
+
+    z1 = rb1_to_z1 (rb1, n);
+    z2 = b2_to_z2 (b1, b2, n);
+
+    return z1*z1 + z2*z2;
 }
 
 /**
@@ -229,7 +295,11 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 		freq->f[k] += 1;
     }
 
-    freq->chisqu = freq->n * (skew * skew/6.0 + kurt * kurt/24.0); 
+    if (freq->n > 7) {
+	freq->chisqu = doornik_chisq(skew, kurt, freq->n); 
+    } else {
+	freq->chisqu = NADBL;
+    }
 
     free(x);
 
