@@ -54,4 +54,6 @@ void set_x12a_ok (int set);
 void first_time_set_user_dir (void);
 #endif
 
+int check_for_prog (const char *prog);
+
 #endif /* SETTINGS_H */

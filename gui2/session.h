@@ -104,4 +104,6 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 
 void save_plot_commands_callback (GtkWidget *w, gpointer p);
 
+void disable_graph_page (void);
+
 #endif /* SESSION_H */

@@ -1835,6 +1835,7 @@ static void batch_pack_icons (void)
 static void add_all_icons (void) 
 {
     int i;
+    int show_graph_page = check_for_prog("latex");
 
     active_object = NULL;
 
@@ -1845,7 +1846,9 @@ static void add_all_icons (void)
 	session_add_icon(NULL, 's', ICON_ADD_BATCH);     /* summary stats */
 	session_add_icon(NULL, 'r', ICON_ADD_BATCH);     /* correlation matrix */
 	session_add_icon(NULL, 't', ICON_ADD_BATCH);     /* model table */
-	session_add_icon(NULL, 'q', ICON_ADD_BATCH);     /* graph page */
+	if (show_graph_page) {
+	    session_add_icon(NULL, 'q', ICON_ADD_BATCH); /* graph page */
+	}
     }
 
     session_add_icon(NULL, 'p', ICON_ADD_BATCH);         /* script file */

@@ -361,7 +361,7 @@ static const char *get_reg_base (const char *key)
     return "gretl";
 }
 
-static int check_for_prog (const char *prog)
+int check_for_prog (const char *prog)
 {
     int ret = 1;
     char tmp[MAXLEN];
@@ -391,13 +391,18 @@ static void set_tramo_x12a_dirs (void)
 
 # else /* not G_OS_WIN32 */
 
-static int check_for_prog (const char *prog)
+int check_for_prog (const char *prog)
 {
     char tmp[MAXLEN];
 
     if (prog == NULL || *prog == 0) return 0;
 
-    sprintf(tmp, "%s > /dev/null 2>&1", prog);
+    if (!strcmp(prog, "latex")) {
+	strcpy(tmp, "latex x.tex > /dev/null");
+    } else {
+	sprintf(tmp, "%s > /dev/null 2>&1", prog);
+    }
+
     return (gretl_spawn(tmp) == 0);
 }
 
