@@ -3,6 +3,9 @@
  -->
 
 <!ELEMENT commandlist ( command )+>
+<!ATTLIST commandlist
+   language    CDATA #REQUIRED
+>
 
 <!-- The description is the only element that is absolutely
      required of a command -->

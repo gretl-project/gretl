@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE commandlist SYSTEM "gretl_commands.dtd">
 
-<commandlist> 
+<commandlist language="english"> 
 
   <command name="ols" xref="ols" section="Estimation">
     <arglist>
