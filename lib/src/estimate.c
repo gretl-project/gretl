@@ -60,7 +60,6 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 
 static double dwstat (int order, MODEL *pmod, double **Z);
 static double rhohat (int order, int t1, int t2, const double *uhat);
-static double altrho (int order, int t1, int t2, const double *uhat);
 static int hatvar (MODEL *pmod, int n, double **Z);
 static void dropwt (int *list);
 static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ, 
@@ -69,8 +68,7 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z);
 static void tsls_omitzero (int *list, double **Z, int t1, int t2);
 static int zerror (int t1, int t2, int yno, int nwt, double ***pZ);
 static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
-		       double ***pZ);
-static int tsls_match (const int *list1, const int *list2, int *newlist);
+		      double ***pZ);
 /* end private protos */
 
 static void model_depvar_stats (MODEL *pmod, const double **Z)
@@ -644,31 +642,30 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     return mdl;
 }
 
-/* .......................................................... */
+/*
+  form_xpxxpy: form the X'X matrix and X'y vector
+
+  - if rho is non-zero, quasi-difference the data first
+  - if nwt is non-zero, use that variable as weight
+  - if pwe is non-zero (as well as rho) construct the
+    first observation as per Prais-Winsten
+
+    Z[v][t] = observation t on variable v
+    n = number of obs in data set
+    t1, t2 = starting and ending observations
+    rho = first order serial correlation coefficent
+    nwt = ID number of variable used as weight
+
+    xpx = X'X matrix as a lower triangle
+          stacked by columns
+    xpy = X'y vector
+    xpy[0] = sum of y's
+    xpy[list[0]] = y'y
+*/
 
 static int form_xpxxpy (const int *list, int t1, int t2, 
 			double **Z, int nwt, double rho, int pwe,
 			double *xpx, double *xpy, const char *mask)
-/*
-        This function forms the X'X matrix and X'y vector
-
-        - if rho is non-zero, quasi-difference the data first
-        - if nwt is non-zero, use that variable as weight
-	- if pwe is non-zero (as well as rho) construct the
-	  first observation as per Prais-Winsten
-
-        Z[v][t] = observation t on variable v
-        n = number of obs in data set
-        t1, t2 = starting and ending observations
-        rho = first order serial correlation coefficent
-        nwt = ID number of variable used as weight
-
-        xpx = X'X matrix as a lower triangle
-                  stacked by columns
-        xpy = X'y vector
-        xpy[0] = sum of y's
-        xpy[list[0]] = y'y
-*/
 {
     int i, j, t;
     int li, lj, m;
@@ -709,8 +706,6 @@ static int form_xpxxpy (const int *list, int t1, int t2,
     }    
 
     m = 0;
-
-    /* FIXME: missing values and quasi-differencing */
 
     if (qdiff) {
 	/* quasi-difference the data */
@@ -850,24 +845,22 @@ static void compute_r_squared (MODEL *pmod, double *y)
     }
 }
 
-/* .......................................................... */
+/*
+  regress: takes xpx, the X'X matrix produced by form_xpxxpy(), and
+  xpy (X'y), and computes ols estimates and associated statistics.
+
+  n = no. of observations per series in data set
+  ifc = 1 if constant is present else = 0
+
+  ess = error sum of squares
+  sigma = standard error of regression
+  fstt = F-statistic
+  coeff = vector of regression coefficients
+  sderr = vector of standard errors of regression coefficients
+*/
 
 static void regress (MODEL *pmod, double *xpy, double **Z, 
 		     int n, double rho)
-/*
-        This function takes xpx, the X'X matrix output
-        by form_xpxxpy(), and xpy (X'y), and
-        computes ols estimates and associated statistics.
-
-        n = no. of observations per series in data set
-        ifc = 1 if constant is present else = 0
-
-        ess = error sum of squares
-        sigma = standard error of regression
-        fstt = F-statistic
-        coeff = vector of regression coefficients
-        sderr = vector of standard errors of regression coefficients
-*/
 {
     int v, yno = pmod->list[1];
     double ysum, ypy, zz, rss = 0.0;
@@ -980,26 +973,23 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     return;  
 }
 
-/* .......................................................... */
-
-static int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
-		     int nv)
 /*
+  cholbeta: does an in-place Choleski decomposition of xpx (lower
+  triangular matrix stacked in columns) and solves the normal
+  equations for coeff.  
 
-  This function does an in-place Choleski decomposition of xpx
-  (lower triangular matrix stacked in columns) and then
-  solves the normal equations for coeff.  xpx is X'X
-  on input and Choleski decomposition on output; xpy is
-  the X'y vector on input and Choleski-transformed t vector
-  on output. coeff is the vector of estimated coefficients; 
-  nv is the number of regression coefficients including the 
-  constant. 
+  xpx = X'X on input and Choleski decomposition on output
+  xpy = the X'y vector on input and Choleski-transformed t
+        vector on output 
+  coeff = array of estimated coefficients 
+  nv = number of regression coefficients including the constant
 
   The number of floating-point operations is basically 3.5 * nv^2
   plus (nv^3) / 3.
-
 */
 
+static int 
+cholbeta (double *xpx, double *xpy, double *coeff, double *rss, int nv)
 {
     int i, j, k, kk, l, jm1;
     double e, d, d1, d2, test, xx;
@@ -1081,17 +1071,16 @@ static int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
     return 0; 
 }
 
-/* ...............................................................    */
+/*
+  diaginv: solves for the diagonal elements of the X'X inverse matrix.
+
+  xpx = Cholesky-decomposed X'X matrix (input)
+  xpy = X'y vector (input) used as work array
+  diag = diagonal elements of X'X (output)
+  nv = number of regression coefficients
+*/
 
 static void diaginv (double *xpx, double *xpy, double *diag, int nv)
-/*
-        Solves for the diagonal elements of the X'X inverse matrix.
-
-        xpx = Cholesky-decomposed X'X matrix (input)
-        xpy = X'y vector (input) used as work array
-        diag = diagonal elements of X'X (output)
-        nv = number of regression coefficients
-*/
 {
     int kk, l, m, k, i, j;
     const int nxpx = nv * (nv + 1) / 2;
@@ -1203,8 +1192,6 @@ int makevcv (MODEL *pmod)
     return 0;
 }
 
-/* ............................................................... */
-
 /**
  * get_vcv:
  * @pmod: pointer to model.
@@ -1265,12 +1252,11 @@ void free_vcv (VCV *vcv)
     free(vcv);
 }
 
-/* ............................................................... */
-
-static double dwstat (int order, MODEL *pmod, double **Z)
-/*  computes durbin-watson statistic
+/*  dwstat: computes durbin-watson statistic
     order is the order of autoregression, 0 for OLS.
 */
+
+static double dwstat (int order, MODEL *pmod, double **Z)
 {
     double diff, ut, ut1;
     double diffsq = 0.0;
@@ -1278,15 +1264,18 @@ static double dwstat (int order, MODEL *pmod, double **Z)
 
     if (order) order--;
 
-    if (pmod->ess <= 0.0) return NADBL;
+    if (pmod->ess <= 0.0) {
+	return NADBL;
+    }
 
     for (t=pmod->t1+1+order; t<=pmod->t2; t++)  {
         ut = pmod->uhat[t];
         ut1 = pmod->uhat[t-1];
         if (na(ut) || na(ut1) ||
 	    (pmod->nwt && (floateq(Z[pmod->nwt][t], 0.0) || 
-			   floateq(Z[pmod->nwt][t-1], 0.0)))) 
+			   floateq(Z[pmod->nwt][t-1], 0.0)))) { 
 	    continue;
+	}
         diff = ut - ut1;
         diffsq += diff * diff;
     }
@@ -1294,12 +1283,49 @@ static double dwstat (int order, MODEL *pmod, double **Z)
     return diffsq / pmod->ess;
 }
 
-/* ......................................................  */
+/* altrho: alternative calculation of rho */
 
-static double rhohat (int order, int t1, int t2, const double *uhat)
-/*  computes first order serial correlation coefficient
+static double altrho (int order, int t1, int t2, const double *uhat)
+{
+    double *ut, *ut1;    
+    int t, n, len = t2 - (t1 + order) + 1;
+    double uh, uh1, rho;
+
+    ut = malloc(len * sizeof *ut);
+    if (ut == NULL) {
+	return NADBL;
+    }
+
+    ut1 = malloc(len * sizeof *ut1);
+    if (ut1 == NULL) {
+	free(ut);
+	return NADBL;
+    }
+
+    n = 0;
+    for (t=t1+order; t<=t2; t++) { 
+        uh = uhat[t];
+	uh1 = (t > 0)? uhat[t-1] : NADBL;
+        if (!na(uh) && !na(uh1)) {
+	    ut[n] = uh;
+	    ut1[n] = uh1;
+	    n++;
+	}
+    }
+
+    rho = gretl_corr(n, ut, ut1);
+
+    free(ut);
+    free(ut1);
+
+    return rho;
+}
+
+/*  rhohat: computes first order serial correlation coefficient
     order is the order of autoregression, 0 for OLS.
 */
+
+static double rhohat (int order, int t1, int t2, const double *uhat)
 {
     double ut, ut1, uu = 0.0, xx = 0.0;
     double rho;
@@ -1329,7 +1355,9 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
     }
 #endif
 
-    if (floateq(xx, 0.0)) return NADBL;
+    if (floateq(xx, 0.0)) {
+	return NADBL;
+    }
 
     rho = uu / xx;
     if (rho > 1.0 || rho < -1.0) {
@@ -1339,56 +1367,19 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
     return rho;
 }
 
-/* .........................................................   */
-
-static double altrho (int order, int t1, int t2, const double *uhat)
-/* alternative calculation of rho */
-{
-    double *ut, *ut1;    
-    int t, n, len = t2 - (t1 + order) + 1;
-    double uh, uh1, rho;
-
-    ut = malloc(len * sizeof *ut);
-    if (ut == NULL) return NADBL;
-
-    ut1 = malloc(len * sizeof *ut1);
-    if (ut1 == NULL) {
-	free(ut);
-	return NADBL;
-    }
-
-    n = 0;
-    for (t=t1+order; t<=t2; t++) { 
-        uh = uhat[t];
-	uh1 = (t > 0)? uhat[t-1] : NADBL;
-        if (!na(uh) && !na(uh1)) {
-	    ut[n] = uh;
-	    ut1[n] = uh1;
-	    n++;
-	}
-    }
-
-    rho = gretl_corr(n, ut, ut1);
-
-    free(ut);
-    free(ut1);
-
-    return rho;
-}
-
-/* ........................................................... */
+/* corrrsq: compute alternative R^2 value when there's no intercept 
+*/
 
 double corrrsq (int nobs, const double *y, const double *yhat)
-/* finds alternative R^2 value when there's no intercept */
 {
-    double x;
+    double x = gretl_corr(nobs, y, yhat);
 
-    x = gretl_corr(nobs, y, yhat);
-    if (na(x)) return NADBL;
-    else return x * x;
+    if (na(x)) {
+	return NADBL;
+    } else {
+	return x * x;
+    }
 }
-
-/* ........................................................... */
 
 /* compute fitted values and residuals */
 
@@ -1465,10 +1456,9 @@ static int hatvar (MODEL *pmod, int n, double **Z)
     return 0;
 }
 
-/* ........................................................... */
+/* dropwt: drop the weight var from the list of regressors (WLS) */
 
 static void dropwt (int *list)
-/* drop the weight var from the list of regressors (WLS) */
 {
     int i;
 
@@ -1823,6 +1813,35 @@ void tsls_free_data (const MODEL *pmod)
     }
 }
 
+/*
+  tsls_match: determines which variables in list1, when compared to
+  all predetermined and exogenous variables in list2, need to have a
+  reduced form ols regression run on them.  Returns the newlist of
+  dependent variables so that a reduced form ols regression can be run
+  on each of them.
+*/
+
+static int tsls_match (const int *list1, const int *list2, int *newlist)
+{
+    int i, j, m, index = 0;
+    int lo = list1[0], l2o = list2[0];
+
+    for (i=2; i<=lo; i++) {     
+	m = 0;
+	for (j=1; j<=l2o; j++) {
+	    if (list1[i] == list2[j]) j = l2o + 1;
+	    else m++;
+	    if (m == l2o) {
+		if (list1[i] == 0) return 1;
+		newlist[++index] = list1[i];
+	    }
+	}
+    }  
+    newlist[0] = index;
+
+    return 0;
+}
+
 /**
  * tsls_func:
  * @list: dependent variable plus list of regressors.
@@ -1863,14 +1882,17 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     gretl_model_init(&tsls);
     *gretl_errmsg = '\0';
 
+    /* reject missing obs within sample range? */
     missv = adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
-			(const double **) *pZ, &misst);
+			(const double **) *pZ, NULL); /* or &misst */
+#if 0
     if (missv) {
 	sprintf(gretl_errmsg, _("Missing value encountered for "
 				"variable %d, obs %d"), missv, misst);
 	tsls.errcode = E_DATA;
 	goto tsls_bailout;
     }
+#endif
 
     list1 = malloc(pos * sizeof *list1);
     list2 = malloc((list[0] - pos + 1) * sizeof *list2);
@@ -1888,6 +1910,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     for (i=1; i<pos; i++) {
 	list1[i] = list[i];
     }
+
     tsls_omitzero(list1, *pZ, pdinfo->t1, pdinfo->t2);
     rearrange_list(list1);
 
@@ -1899,6 +1922,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     for (i=1; i<=list2[0]; i++) {
 	list2[i] = list[i + pos];
     }
+
     tsls_omitzero(list2, *pZ, pdinfo->t1, pdinfo->t2);
 
     ncoeff = list2[0];
@@ -1980,6 +2004,10 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
     tsls.ess = 0.0;
     for (t=tsls.t1; t<=tsls.t2; t++) {
+	if (model_missing(&tsls, t)) {
+	    yhat[t] = NADBL;
+	    continue;
+	}
 	xx = 0.0;
 	for (i=0; i<tsls.ncoeff; i++) {
 	    xx += tsls.coeff[i] * (*pZ)[list1[i+2]][t];
@@ -1988,6 +2016,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	tsls.uhat[t] = (*pZ)[tsls.list[1]][t] - xx;
 	tsls.ess += tsls.uhat[t] * tsls.uhat[t];
     }
+
     tsls.sigma = (tsls.ess >= 0.0) ? sqrt(tsls.ess / tsls.dfd) : 0.0;
 
     if (opt & OPT_R) {
@@ -2010,25 +2039,34 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	form_xpxxpy(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0, 0,
-		    xpx, xpy, NULL); /* FIXME mask? */
+		    xpx, xpy, tsls.missmask);
+
 	cholbeta(xpx, xpy, NULL, NULL, nv);    
 	diaginv(xpx, xpy, diag, nv);
+
 	for (i=0; i<tsls.ncoeff; i++) {
 	    tsls.sderr[i] = tsls.sigma * sqrt(diag[i]); 
 	}
+
 	free(diag); 
 	free(xpx);
 	free(xpy);
     }
 
-    tsls.rsq = corrrsq(tsls.nobs, &(*pZ)[tsls.list[1]][tsls.t1], 
+    tsls.rsq = corrrsq(tsls.t2 - tsls.t1 + 1, 
+		       &(*pZ)[tsls.list[1]][tsls.t1], 
 		       yhat + tsls.t1);
     tsls.adjrsq = 
-	1 - ((1 - tsls.rsq) * (tsls.nobs - 1) / tsls.dfd);
-    tsls.fstt = tsls.rsq * tsls.dfd / (tsls.dfn * (1-tsls.rsq));
+	1.0 - ((1.0 - tsls.rsq) * (tsls.nobs - 1.0) / tsls.dfd);
+    tsls.fstt = tsls.rsq * tsls.dfd / (tsls.dfn * (1.0 - tsls.rsq));
     gretl_aic_etc(&tsls);
-    tsls.rho = rhohat(0, tsls.t1, tsls.t2, tsls.uhat);
-    tsls.dw = dwstat(0, &tsls, *pZ);
+
+    if (tsls.missmask == NULL) {
+	tsls.rho = rhohat(0, tsls.t1, tsls.t2, tsls.uhat);
+	tsls.dw = dwstat(0, &tsls, *pZ);
+    } else {
+	tsls.rho = tsls.dw = NADBL;
+    }
 
     tsls.ci = TSLS;
 
@@ -2079,13 +2117,13 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     return tsls;
 }
 
-/* ........................................................ */
+/* get_aux_uhat: feed in a uhat series -- this func finds the fitted
+   values for the series using an aux. regression with squares, and
+   adds that series to the data set 
+*/
 
 static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ, 
 			 DATAINFO *pdinfo)
-     /* feed in a uhat series -- this func finds the fitted values
-	for the series using an aux. regression with squares, and
-	adds that series to the data set */
 {
     int i, j, t, nxpx;
     int oldv = pdinfo->v, l0 = pmod->list[0];
@@ -2318,7 +2356,8 @@ static void free_hccm_p (double **p, int m)
  *
  * Estimate the model given in @list using OLS, compute
  * heteroskedasticity-consistent covariance matrix using the
- * McKinnon-White procedure, and report standard errors using this matrix.
+ * McKinnon-White procedure, and report standard errors using this
+ * matrix.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
@@ -2857,11 +2896,10 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     return ar;
 }
 
-/* ..........................................................  */
+/* From 2 to end of list, omits variables with all zero observations
+   and re-packs the rest of them */
 
 static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
-/* From 2 to end of list, omits variables with all zero observations
-   and packs the rest of them */
 {
     int t = 0, v, lv, offset, wtzero = 0, drop = 0;
     double xx = 0.;
@@ -2949,13 +2987,13 @@ static int zerror (int t1, int t2, int yno, int nwt, double ***pZ)
     return 0;
 }
 
-/* .......................................................... */
+/* lagdepvar: attempt to detect presence of a lagged dependent
+   variable among the regressors -- if found, return the position of
+   this lagged var in the list; otherwise return 0
+*/
 
 static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
 		      double ***pZ)
-/* attempt to detect presence of a lagged dependent variable
-   among the regressors -- if found, return the position of this
-   lagged var in the list; otherwise return 0 */
 {
     int i, t;
     char depvar[VNAMELEN], othervar[VNAMELEN];
@@ -2989,34 +3027,6 @@ static int lagdepvar (const int *list, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* ............................................................ */
-
-static int tsls_match (const int *list1, const int *list2, int *newlist)
-/*
-  Determines which variables in list1, when compared to all
-  predetermined and exogenous variables in list2, need to have a
-  reduced form ols regression run on them.  Returns the newlist of 
-  dependent variables so that a reduced form ols regression
-  can be run on each of them.  */
-{
-    int i, j, m, index = 0;
-    int lo = list1[0], l2o = list2[0];
-
-    for (i=2; i<=lo; i++) {     
-	m = 0;
-	for (j=1; j<=l2o; j++) {
-	    if (list1[i] == list2[j]) j = l2o + 1;
-	    else m++;
-	    if (m == l2o) {
-		if (list1[i] == 0) return 1;
-		newlist[++index] = list1[i];
-	    }
-	}
-    }  
-    newlist[0] = index;
-
-    return 0;
-}
 
 /**
  * arch:

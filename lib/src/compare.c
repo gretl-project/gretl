@@ -1076,7 +1076,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 {
     int *chowlist = NULL;
     int newvars = pmod->list[0] - 1;
-    int i, t, v = pdinfo->v, n = pdinfo->n;
+    int i, t, v = pdinfo->v;
     char chowdate[OBSLEN], s[OBSLEN];
     MODEL chow_mod;
     double F;
@@ -1086,19 +1086,15 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	return E_OLSONLY;
     }
 
-    if (has_missing_obs(pmod)) {
-	return E_DATA;
-    }
-
     /* temporarily impose the sample that was in force when the
        original model was estimated */
     exchange_smpl(pmod, pdinfo);
 
     gretl_model_init(&chow_mod);
 
-    if (sscanf(line, "%*s %8s", chowdate) != 1) 
+    if (sscanf(line, "%*s %8s", chowdate) != 1) {
 	err = E_PARSE;
-    else {
+    } else {
 	split = dateton(chowdate, pdinfo) - 1;
 	if (split <= 0 || split >= pdinfo->n) 
 	    err = E_SPLIT;
@@ -1107,15 +1103,17 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     if (!err) {
 	/* take the original regression list, add a split dummy
 	   and interaction terms. */
-	if (pmod->ifc == 0) newvars++;
-
+	if (pmod->ifc == 0) {
+	    newvars++;
+	}
 	if (dataset_add_vars(newvars, pZ, pdinfo)) {
 	    newvars = 0;
 	    err = E_ALLOC;
 	} else {
 	    chowlist = malloc((pmod->list[0] + newvars + 1) * sizeof *chowlist);
-	    if (chowlist == NULL) 
+	    if (chowlist == NULL) {
 		err = E_ALLOC;
+	    }
 	}
     }
 
@@ -1126,8 +1124,9 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	}
 
 	/* generate the split variable */
-	for (t=0; t<n; t++) 
+	for (t=0; t<pdinfo->n; t++) {
 	    (*pZ)[v][t] = (double) (t > split); 
+	}
 	strcpy(pdinfo->varname[v], "splitdum");
 	strcpy(VARLABEL(pdinfo, v), _("dummy variable for Chow test"));
 	chowlist[pmod->list[0] + 1] = v;
@@ -1135,18 +1134,21 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	/* and the interaction terms */
 	for (i=1; i<newvars; i++) {
 	    int orig = i + 1 + pmod->ifc;
+	    int plo = pmod->list[orig];
 
-	    for (t=0; t<n; t++) {
-		(*pZ)[v+i][t] = (*pZ)[v][t] * 
-		    (*pZ)[pmod->list[orig]][t];
+	    for (t=0; t<pdinfo->n; t++) {
+		if (model_missing(pmod, t)) {
+		    (*pZ)[v+i][t] = NADBL;
+		} else {
+		    (*pZ)[v+i][t] = (*pZ)[v][t] * (*pZ)[plo][t];
+		}
 	    }
-	    strcpy(s, pdinfo->varname[pmod->list[orig]]); 
+	    strcpy(s, pdinfo->varname[plo]); 
 	    gretl_trunc(s, 5);
 	    strcpy(pdinfo->varname[v+i], "sd_");
 	    strcat(pdinfo->varname[v+i], s);
-	    sprintf(VARLABEL(pdinfo, v+i), "splitdum * %s", 
-		    pdinfo->varname[pmod->list[orig]]);
-	    chowlist[pmod->list[0]+1+i] = v+i;
+	    sprintf(VARLABEL(pdinfo, v+i), "splitdum * %s", pdinfo->varname[plo]);
+	    chowlist[pmod->list[0] + 1 + i] = v + i;
 	}
 
 	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A, 0.0);

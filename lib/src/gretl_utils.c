@@ -48,10 +48,13 @@ double gretl_corr (int n, const double *zx, const double *zy)
     double sx, sy, sxx, syy, sxy, den, zxbar, zybar;
     double cval = 0.0;
 
-    if (n == 0) return NADBL;
-
-    if (gretl_isconst(0, n-1, zx) || gretl_isconst(0, n-1, zy)) 
+    if (n == 0) {
 	return NADBL;
+    }
+
+    if (gretl_isconst(0, n-1, zx) || gretl_isconst(0, n-1, zy)) {
+	return NADBL;
+    }
 
     nn = n;
     sx = sy = 0.0;
@@ -64,14 +67,18 @@ double gretl_corr (int n, const double *zx, const double *zy)
         sy += zy[i];
     }
 
-    if (nn == 0) return NADBL;
+    if (nn == 0) {
+	return NADBL;
+    }
 
     zxbar = sx / nn;
     zybar = sy / nn;
     sxx = syy = sxy = 0.0;
 
     for (i=0; i<n; ++i) {
-        if (na(zx[i]) || na(zy[i])) continue;
+        if (na(zx[i]) || na(zy[i])) {
+	    continue;
+	}
         sx = zx[i] - zxbar;
         sy = zy[i] - zybar;
 	sxx += sx * sx;
@@ -81,8 +88,11 @@ double gretl_corr (int n, const double *zx, const double *zy)
 
     if (sxy != 0.0) {
         den = sxx * syy;
-        if (den > 0.0) cval = sxy / sqrt(den);
-        else cval = NADBL;
+        if (den > 0.0) {
+	    cval = sxy / sqrt(den);
+        } else {
+	    cval = NADBL;
+	}
     }
 
     return cval;

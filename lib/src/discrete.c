@@ -34,21 +34,15 @@ static double _norm_pdf (const double xx)
     return (1.0 / sqrt(2.0 * M_PI)) * exp(-0.5 * xx * xx);
 }
 
-/* .......................................................... */
-
 static double _norm_cdf (const double xx)
 {
     return 1.0 - normal(xx);
 }
 
-/* .......................................................... */
-
 static double _logit (double xx)
 {
     return 1.0 / (1.0 + exp(-xx));
 }
-
-/* .......................................................... */
 
 static double _logit_pdf (double xx)
 {

@@ -379,8 +379,8 @@ MODEL tobit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 {
     MODEL model;
 
-    /* run initial OLS */
-    model = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    /* run initial OLS: OPT_M bans missing obs */
+    model = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
     if (model.errcode) {
 	return model;
     }    
