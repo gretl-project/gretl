@@ -428,17 +428,6 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
-static void maybe_insert_varname (char *s)
-{
-    int v = mdata->active_var;
-
-    if (datainfo->vector[v] && isdummy(Z[v], 0, datainfo->n)) {
-	strcpy(s, datainfo->varname[v]);
-    }
-}
-
-/* ........................................................... */
-
 void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 {
     char title[64], query[MAXLABEL], defstr[MAXLEN];

@@ -1504,13 +1504,15 @@ static int do_outfile_command (unsigned char flag, char *fname,
     return 1; /* not reached */
 }
 
+/* ........................................................ */
+
 int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
-		     DATAINFO *pdinfo, unsigned char oflag,
+		     DATAINFO *pdinfo, unsigned char *pflag,
 		     PRN *prn)
 {
     void *handle = NULL;
     int (*pca_from_corrmat) (CORRMAT *, double ***, DATAINFO *,
-			     unsigned char, PRN *);
+			     unsigned char *, PRN *);
     int err = 0;
 
     *gretl_errmsg = 0;
@@ -1528,7 +1530,7 @@ int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
         goto pca_bailout;
     }
         
-    err = (* pca_from_corrmat) (corrmat, pZ, pdinfo, oflag, prn);
+    err = (* pca_from_corrmat) (corrmat, pZ, pdinfo, pflag, prn);
     
  pca_bailout:
     if (handle != NULL) {
@@ -1592,7 +1594,7 @@ int simple_commands (CMD *cmd, const char *line,
 	if (corrmat == NULL) {
 	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	} else {
-	    err = call_pca_plugin(corrmat, pZ, datainfo, oflag, prn);
+	    err = call_pca_plugin(corrmat, pZ, datainfo, &oflag, prn);
 	    if (oflag && !err) {
 		varlist(datainfo, prn);
 	    }

@@ -17,7 +17,7 @@ void flip (GtkItemFactory *ifac, char *path, gboolean s);
 
 int copyfile (const char *src, const char *dest);
 
-void prn_to_clipboard (PRN *prn, int copycode);
+int prn_to_clipboard (PRN *prn, int copycode);
 
 int isdir (const char *path);
 

@@ -148,6 +148,16 @@ else
 fi,
 try_ole=yes)
 
+AC_ARG_WITH(gtksourceview,
+[  --with-gtksourceview   Use gtksourceview (gtk 2.0 only) [default=auto]],
+if test "x${withval}" = "xno"
+then
+  try_sourceview=no
+else
+  try_sourceview=yes
+fi,
+try_sourceview=yes)
+
 AC_ARG_WITH(gtkextra,
 [  --with-gtkextra   Use installed gtkextra (gtk 1.2 only) [default=auto]],
 if test "x${withval}" = "xno"
@@ -347,10 +357,13 @@ if test "$try_gtk2" = "yes" ; then
     )
 fi
 
-dnl if the above succeeds, check separately for glib 2.0 flags,
-dnl and gtksourceview flags
+dnl if the above succeeds, check separately for glib 2.0 flags
 if test "$have_gtk" = "2.0" ; then
      PKG_CHECK_MODULES(GLIB, glib-2.0,,,)
+fi
+
+dnl ...and try for gtksourceview flags, unless prohibited
+if test "$have_gtk" = "2.0" && "$try_sourceview" = "yes" ; then
      PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0,
      have_gtksourceview="yes"
      AC_DEFINE(USE_GTKSOURCEVIEW),

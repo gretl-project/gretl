@@ -26,9 +26,23 @@
 
 #include "gretl.h"
 #include <ctype.h>
+
 #ifdef G_OS_WIN32
 # include <windows.h>
 #endif
+
+#if GTK_MAJOR_VERSION < 2
+# define OLD_GTK
+#endif
+
+typedef struct _GretlChild GretlChild;
+
+struct _GretlChild {
+    GtkWidget *win;
+    GtkWidget *vbox;
+    GtkWidget *action_area;
+    gpointer data;
+};
 
 typedef struct {
     GtkWidget *entry[NTESTENTRY];
@@ -647,13 +661,16 @@ static void h_test (GtkWidget *w, gpointer data)
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[0]));
 	x[0] = getval(tmp, prn, 1);
 	if (na(x[0])) return;
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[1]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
 	x[1] = getval(tmp, prn, 1);
 	if (na(x[1])) return;
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[3]));
 	if ((n2 = getint(tmp, prn)) == -1) return;
+
 	pprintf(prn, _("Null hypothesis: the population proportions are "
 		       "equal\n"));
 	pprintf(prn, _("Sample 1:\n n = %d, proportion = %g\n"), n1, x[0]);
@@ -699,11 +716,23 @@ static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len,
     look[code]->entry[*tbl_len - 2] = tempwid;
 
     if (pval) {
+#ifdef OLD_GTK
+	gtk_signal_connect (GTK_OBJECT (tempwid), "activate", 
+			    GTK_SIGNAL_FUNC (get_pvalue), look);
+
+#else
 	g_signal_connect (G_OBJECT (tempwid), "activate", 
 			  G_CALLBACK (get_pvalue), look);
+#endif
     } else {
+#ifdef OLD_GTK
+	gtk_signal_connect (GTK_OBJECT (tempwid), "activate", 
+			    GTK_SIGNAL_FUNC (get_critical), look);
+
+#else
 	g_signal_connect (G_OBJECT (tempwid), "activate", 
 			  G_CALLBACK (get_critical), look);
+#endif
     }
 }
 
@@ -828,8 +857,7 @@ static void trash_look (GtkWidget *w, gpointer data)
     lookup_t **look = (lookup_t **) data;
     int i;
 
-    for (i=0; i<NLOOKUPS; i++)
-	free(look[i]);
+    for (i=0; i<NLOOKUPS; i++) free(look[i]);
     free(look);
 }
 
@@ -840,8 +868,7 @@ static void trash_test (GtkWidget *w, gpointer data)
     test_t **test = (test_t **) data;
     int i;
 
-    for (i=0; i<NTESTS; i++)
-	free(test[i]);
+    for (i=0; i<NTESTS; i++) free(test[i]);
     free(test);
 }
 
@@ -864,8 +891,14 @@ static void add_test_entry (GtkWidget *tbl, gint *tbl_len,
 			       tempwid, 1, 2, *tbl_len - 1, *tbl_len);
     gtk_widget_show (tempwid);
     test[code]->entry[*tbl_len - 2] = tempwid;
+#ifdef OLD_GTK
+    gtk_signal_connect (GTK_OBJECT (tempwid), "activate", 
+			GTK_SIGNAL_FUNC (h_test), test);
+
+#else
     g_signal_connect (G_OBJECT (tempwid), "activate", 
 		      G_CALLBACK (h_test), test);
+#endif
 }
 
 /* ........................................................... */
@@ -1032,9 +1065,15 @@ static GretlChild *gretl_child_new (const gchar *title)
 
     gtk_window_set_position(GTK_WINDOW(gchild->win), GTK_WIN_POS_MOUSE);
 
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(gchild->win), "destroy",
+		       GTK_SIGNAL_FUNC(gretl_child_destroy),
+		       gchild);
+#else
     g_signal_connect(G_OBJECT(gchild->win), "destroy",
                      G_CALLBACK(gretl_child_destroy),
                      gchild);
+#endif
 
     return gchild;
 }
@@ -1112,43 +1151,82 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	}
     }
 
+#ifdef OLD_GTK
+    tempwid = gtk_button_new_with_label(_("OK"));
+#else
     tempwid = standard_button(GTK_STOCK_OK);
+#endif
 
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(dialog->action_area), 
 			tempwid, TRUE, TRUE, 0);
     if (code == 0) {
+#ifdef OLD_GTK
+	gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			    GTK_SIGNAL_FUNC (get_pvalue), look);
+#else
 	g_signal_connect (G_OBJECT (tempwid), "clicked", 
 			  G_CALLBACK (get_pvalue), look);
+#endif
     }
     else if (code == 1) {
+#ifdef OLD_GTK
+	gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			    GTK_SIGNAL_FUNC (get_critical), look);
+#else
 	g_signal_connect (G_OBJECT (tempwid), "clicked", 
 			  G_CALLBACK (get_critical), look);
+#endif
     }
     else if (code == 2) {
+#ifdef OLD_GTK
+	gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			    GTK_SIGNAL_FUNC (h_test), test);
+#else
 	g_signal_connect (G_OBJECT (tempwid), "clicked", 
 			  G_CALLBACK (h_test), test);
+#endif
     }
     gtk_widget_show (tempwid);
 
     /* Close button */
+#ifdef OLD_GTK
+    tempwid = gtk_button_new_with_label(_("Close"));
+#else
     tempwid = standard_button(GTK_STOCK_CLOSE);
+#endif
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(dialog->action_area), 
 			tempwid, TRUE, TRUE, 0);
 
     if (code == 0 || code == 1) {
+#ifdef OLD_GTK	
+	gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			    GTK_SIGNAL_FUNC (trash_look), look);
+#else
 	g_signal_connect (G_OBJECT (tempwid), "clicked", 
 			  G_CALLBACK (trash_look), look);
+#endif
     }
     else if (code == 2) {
+#ifdef OLD_GTK
+	gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			    GTK_SIGNAL_FUNC (trash_test), test);
+#else
 	g_signal_connect (G_OBJECT (tempwid), "clicked", 
 			  G_CALLBACK (trash_test), test);
+#endif
     }
 
+#ifdef OLD_GTK
+    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			GTK_SIGNAL_FUNC (delete_widget), 
+			dialog->win);
+#else
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
 		      G_CALLBACK (delete_widget), 
 		      dialog->win);
+#endif
 
     gtk_widget_show (tempwid);
 

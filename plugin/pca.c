@@ -276,17 +276,24 @@ static void pca_print (CORRMAT *corrmat, gretl_matrix *m,
 }
 
 int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
-		      DATAINFO *pdinfo, unsigned char oflag,
+		      DATAINFO *pdinfo, unsigned char *pflag,
 		      PRN *prn)
 {
     gretl_matrix *m;
     double x;
     int i, j, idx, n = corrmat->list[0];
     double *evals;
+    unsigned char oflag = 0;
+
+    if (pflag != NULL) oflag = *pflag;
 
     if (oflag == 'd') { 
 	oflag = pca_flag_dialog();
-	if (!oflag) return 0; /* canceled */
+	if (!oflag) {
+	    /* canceled */
+	    *pflag = 0;
+	    return 0; 
+	}
     }    
 
     m = gretl_matrix_alloc(n, n);
@@ -415,6 +422,8 @@ int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
 
     free(evals);
     gretl_matrix_free(m);
+
+    if (pflag != NULL) *pflag = oflag;
 
     return 0;
 }

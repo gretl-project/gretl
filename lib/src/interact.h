@@ -72,7 +72,7 @@ int simple_commands (CMD *cmd, const char *line,
 		     PRN *prn);
 
 int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
-		     DATAINFO *pdinfo, unsigned char oflag,
+		     DATAINFO *pdinfo, unsigned char *pflag,
 		     PRN *prn);
 
 int ready_for_command (const char *line);

@@ -92,6 +92,8 @@ int isdummy (double *x, int t1, int t2);
 
 void printlist (const int *list, const char *msg);
 
+int print_list_to_buffer (const int *list, char *buf, size_t len);
+
 void list_exclude (int n, int *list);
 
 int set_obs (char *line, DATAINFO *pdinfo, unsigned char opt);

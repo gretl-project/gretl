@@ -568,10 +568,16 @@ int gnuplot_has_specified_colors (void)
     return 1;
 }
 
-static int gnuplot_has_filledcurve (void)
+static int gnuplot_has_style_fill (void)
 {
-    /* ... and that it does filledcurve */
+    /* ... and that it does style fill */
     return 1;
+}
+
+static char *label_front (void)
+{
+    /* ... and that it handles "front" for labels */
+    return " front";
 }
 
 #else
@@ -597,15 +603,28 @@ int gnuplot_has_specified_colors (void)
     return err;
 }
 
-static int gnuplot_has_filledcurve (void)
+static int gnuplot_has_style_fill (void)
 {
     static int err = -1; 
 
     if (err == -1) {
-	err = gnuplot_test_command("set data style filledcurve");
+	err = gnuplot_test_command("set style fill solid");
     }
     return !err;
 }
+
+static char *label_front (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set label 'foo' at 0,0 front");
+    }
+
+    if (err) return "";
+    else return " front";
+}
+
 
 #endif /* WIN32 */
 
@@ -1491,47 +1510,6 @@ int gnuplot_3d (LIST list, const char *literal,
     return 0;
 }
 
-/* ........................................................... */
-
-static int gnuplot_bars_sane (FREQDIST *freq, int dist, double lambda,
-			      double plotmin, double plotmax, 
-			      double barwidth, double barskip)
-{
-    int i;
-
-    for (i=0; i<freq->numbins; i++) { 
-	double x1, x2;
-
-	x1 = (i == 0)? freq->endpt[i+1] - barwidth : freq->endpt[i];
-	x2 = (i == freq->numbins - 1)? 
-	    freq->endpt[i] + barwidth : freq->endpt[i+1];
-
-	if (dist) {
-	    if (x1 < plotmin) x1 = plotmin;
-	    if (x2 > plotmax) x2 = plotmax;
-	}
-
-	if (x1 + barskip >= x2 - barskip) return 0;
-    }
-
-    return 1;
-}
-
-#if 0
-static double tallest_spike (FREQDIST *freq, double d)
-{
-    int i;
-    double x, ret = 0;
-
-    for (i=0; i<freq->numbins; i++) {
-	x = d * freq->f[i];
-	if (x > ret) ret = x;
-    }
-
-    return ret;
-}
-#endif
-
 /**
  * plot_freq:
  * @freq: frequency distribution struct.
@@ -1554,7 +1532,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     double barwidth = freq->endpt[K-1] - freq->endpt[K-2];
     double barskip = 0.005 * (freq->endpt[K] - freq->endpt[0]);
     int plottype = PLOT_FREQ_SIMPLE;
-    int use_bars = gnuplot_has_filledcurve();
+    int use_boxes = 1;
 
     if (freq->numbins > 16) barskip /= 2.0;
 
@@ -1603,11 +1581,13 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	    }
 
 	    if (!na(freq->chisqu)) {
-		fprintf(fp, "set label '%s:' at graph .03, graph .97\n",
-			I_("Test statistic for normality"));
+		fprintf(fp, "set label '%s:' at graph .03, graph .97%s\n",
+			I_("Test statistic for normality"),
+			label_front());
 		sprintf(chilbl, I_("Chi-squared(2) = %.3f, pvalue %.5f"), 
 			freq->chisqu, chisq(freq->chisqu, 2));
-		fprintf(fp, "set label '%s' at graph .03, graph .93\n", chilbl);
+		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
+			chilbl, label_front());
 	    }	
 	}
 	else if (dist == GAMMA) {
@@ -1655,23 +1635,12 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	return 1;
     }
 
-#if 0
-    /* need to allow for the function plotted to go higher */
-    fprintf(fp, "set yrange [0:%.8g]\n", 
-	    1.2 * tallest_spike(freq, lambda));
-#endif
-
-    if (use_bars) {
-	/* this won't work for "weird" distributions */
-	if (!gnuplot_bars_sane(freq, dist, lambda, plotmin, plotmax,
-			       barwidth, barskip)) {
-	    use_bars = 0;
-	}
-    }
-
     /* plot instructions */
-    if (use_bars) {
-	strcat(withstring, "w filledcurve");
+    if (use_boxes) {
+	if (gnuplot_has_style_fill()) {
+	    fputs("set style fill solid 0.5\n", fp);
+	}
+	strcat(withstring, "w boxes");
     } else {
 	strcat(withstring, "w impulses");
     }
@@ -1695,30 +1664,8 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 
     /* send sample data inline */
 
-    if (use_bars) {
-	/* construct solid histogram bars */
-	for (i=0; i<K; i++) { 
-	    double y = lambda * freq->f[i];
-	    double x1, x2;
-
-	    x1 = (i == 0)? freq->endpt[i+1] - barwidth : freq->endpt[i];
-	    x2 = (i == K-1)? freq->endpt[i] + barwidth : freq->endpt[i+1];
-
-	    if (dist) {
-		if (x1 < plotmin) x1 = plotmin;
-		if (x2 > plotmax) x2 = plotmax;
-	    }
-
-	    fprintf(fp, "%.8g 0.0\n", x1 + barskip);
-	    fprintf(fp, "%.8g %.8g\n", x1 + barskip, y);
-	    fprintf(fp, "%.8g %.8g\n", x2 - barskip, y);
-	    fprintf(fp, "%.8g 0\n", x2 - barskip);
-	}
-    } else {
-	/* plot with impulses */
-	for (i=0; i<K; i++) { 
-	    fprintf(fp, "%.8g %.8g\n", freq->midpt[i], lambda * freq->f[i]);
-	}
+    for (i=0; i<K; i++) { 
+	fprintf(fp, "%.8g %.8g\n", freq->midpt[i], lambda * freq->f[i]);
     }
 
     fputs("e\n", fp);
@@ -1923,10 +1870,11 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	if (!string_is_blank(spec->text_labels[i].text)) {
 	    char *label = escape_quotes(spec->text_labels[i].text);
 
-	    fprintf(fp, "set label \"%s\" at %s %s\n", 
+	    fprintf(fp, "set label \"%s\" at %s %s%s\n", 
 		    (label != NULL)? label : spec->text_labels[i].text,
 		    spec->text_labels[i].pos,
-		    spec->text_labels[i].just);
+		    spec->text_labels[i].just,
+		    label_front());
 	    if (label != NULL) free(label);
 	}
     }
@@ -1996,6 +1944,12 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	    nlines--;
 	}
     }
+
+    if ((spec->code == PLOT_FREQ_SIMPLE ||
+	 spec->code == PLOT_FREQ_NORMAL ||
+	 spec->code == PLOT_FREQ_GAMMA) && gnuplot_has_style_fill()) {
+	fputs("set style fill solid 0.5\n", fp);
+    }  
 
     fputs("plot \\\n", fp);
 

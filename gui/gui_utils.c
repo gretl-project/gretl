@@ -982,21 +982,42 @@ static void script_changed (GtkWidget *w, windata_t *vwin)
 # include "../pixmaps/stock_print_16.xpm"
 #endif
 
+/* ........................................................... */
+
 static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 {
     copy_format_dialog(vwin);
 }
 
+/* ........................................................... */
+
 static void pca_data_callback (GtkWidget *w, windata_t *vwin)
 {
     int err, oldv = datainfo->v;
+    unsigned char oflag = 'd';
+    CORRMAT *corrmat = (CORRMAT *) vwin->data;
 
-    err = call_pca_plugin((CORRMAT *) vwin->data, &Z, datainfo, 
-			  'd', NULL);
-    if (err) gui_errmsg(err);
-    else if (datainfo->v > oldv) {
+    err = call_pca_plugin(corrmat, &Z, datainfo, &oflag, NULL);
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
+
+    if (datainfo->v > oldv) {
 	infobox(_("data added"));
 	populate_varlist();
+
+	/* if data were added, register the command */
+	if (oflag == 'o' || oflag == 'a') {
+	    char listbuf[MAXLEN - 8];
+	    
+	    err = print_list_to_buffer(corrmat->list, listbuf, sizeof listbuf);
+	    if (!err) {
+		sprintf(line, "pca %s-%c", listbuf, oflag);
+		verify_and_record_command(line);
+	    }
+	}
     }
 }
 
@@ -1364,7 +1385,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 {
     GtkWidget *dialog, *close; 
     void *colptr = NULL, *nextcolor = NULL;
-    char tempstr[MAXSTR], *fle = NULL;
+    char tempstr[MAXSTR];
     FILE *fd = NULL;
     windata_t *vwin;
     gchar *title = NULL;
@@ -1429,13 +1450,6 @@ windata_t *view_file (char *filename, int editable, int del_file,
 				 (GtkSignalFunc) edit_script_help, vwin);
     } 
 
-    /* is the file to be deleted after viewing? */
-    if (del_file) {
-	if ((fle = mymalloc(strlen(filename) + 1)) == NULL)
-	    return NULL;
-	strcpy(fle, filename);
-    }
-
     /* Close button */
     close = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start(GTK_BOX(vwin->vbox), 
@@ -1491,8 +1505,10 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
     /* clean up when dialog is destroyed */
     if (del_file) {
+	gchar *fname = g_strdup(filename);
+
 	gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
-			   GTK_SIGNAL_FUNC(delete_file), (gpointer) fle);
+			   GTK_SIGNAL_FUNC(delete_file), (gpointer) fname);
     }
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(free_windata), vwin);
@@ -2333,20 +2349,22 @@ int validate_varname (const char *varname)
 
 /* .................................................................. */
 
-void prn_to_clipboard (PRN *prn, int copycode)
+int prn_to_clipboard (PRN *prn, int copycode)
 {
     size_t len;
 
-    if (prn->buf == NULL) return;
+    if (prn->buf == NULL) return 0;
     len = strlen(prn->buf);
 
     if (clipboard_buf) g_free(clipboard_buf);
     clipboard_buf = mymalloc(len + 1);
+    if (clipboard_buf == NULL) return 1;
 
     memcpy(clipboard_buf, prn->buf, len + 1);
     gtk_selection_owner_set(mdata->w,
 			    GDK_SELECTION_PRIMARY,
 			    GDK_CURRENT_TIME);
+    return 0;
 }
 
 /* .................................................................. */

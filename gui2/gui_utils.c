@@ -1051,21 +1051,42 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
 }
 #endif
 
+/* ........................................................... */
+
 static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 {
     copy_format_dialog(vwin);
 }
 
+/* ........................................................... */
+
 static void pca_data_callback (GtkWidget *w, windata_t *vwin)
 {
     int err, oldv = datainfo->v;
+    unsigned char oflag = 'd';
+    CORRMAT *corrmat = (CORRMAT *) vwin->data;
 
-    err = call_pca_plugin((CORRMAT *) vwin->data, &Z, datainfo, 
-			  'd', NULL);
-    if (err) gui_errmsg(err);
-    else if (datainfo->v > oldv) {
+    err = call_pca_plugin(corrmat, &Z, datainfo, &oflag, NULL);
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
+
+    if (datainfo->v > oldv) {
 	infobox(_("data added"));
 	populate_varlist();
+
+	/* if data were added, register the command */
+	if (oflag == 'o' || oflag == 'a') {
+	    char listbuf[MAXLEN - 8];
+	    
+	    err = print_list_to_buffer(corrmat->list, listbuf, sizeof listbuf);
+	    if (!err) {
+		sprintf(line, "pca %s-%c", listbuf, oflag);
+		verify_and_record_command(line);
+	    }
+	}
     }
 }
 
@@ -1773,10 +1794,13 @@ static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 	    if (help_role(role)) {
 		*chunk = ' ';
 		nextcolor = RED_TEXT;
-	    } else
+	    } else {
 		thiscolor = BLUE_TEXT;
-	} else
+	    }
+	} else {
 	    nextcolor = PLAIN_TEXT;
+	}
+
 	switch (thiscolor) {
 	case PLAIN_TEXT:
 	    gtk_text_buffer_insert(tbuf, &iter, chunk, -1);
@@ -1792,6 +1816,7 @@ static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 						      "redtext", NULL);
 	    break;
 	}
+
 	thiscolor = nextcolor;
 	memset(readbuf, 0, sizeof readbuf);
     }

@@ -915,7 +915,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	    gretl_print_destroy(prn);
 	    return;
 	} else {
-	    err = call_pca_plugin((CORRMAT *) obj, &Z, datainfo, 0, prn);
+	    err = call_pca_plugin((CORRMAT *) obj, &Z, datainfo, NULL, prn);
 	}
 	break;
     case SUMMARY:

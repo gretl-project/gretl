@@ -22,7 +22,6 @@
 
 typedef struct _dialog_t dialog_t;
 typedef struct _windata_t windata_t;
-typedef struct _GretlChild GretlChild;
 
 struct _dialog_t {
     GtkWidget *dialog;
@@ -48,13 +47,6 @@ struct _windata_t {
 #ifdef USE_GTKSOURCEVIEW
     GtkSourceBuffer *sbuf;
 #endif
-};
-
-struct _GretlChild {
-    GtkWidget *win;
-    GtkWidget *vbox;
-    GtkWidget *action_area;
-    gpointer data;
 };
 
 #endif /* GRETLTYPES_H */

@@ -258,6 +258,7 @@ static void terminate_plot_positioning (png_plot_t *plot)
     plot->labelpos_entry = NULL;
     gdk_window_set_cursor(plot->canvas->window, NULL);
     gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
+    gdk_window_raise(gpt_control->window);
 }
 
 static void close_plot_controller (GtkWidget *widget, gpointer data) 
