@@ -574,7 +574,7 @@ static void do_open_gnumeric (const char *fname)
 {
     int err;
     void *handle;
-    int (*gbook_get_data)(const char*, double ***, DATAINFO *);
+    int (*gbook_get_data)(const char*, double ***, DATAINFO *, char *);
 
     if (gui_open_plugin("gnumeric_import", &handle)) return;
     gbook_get_data = get_plugin_function("gbook_get_data", handle);
@@ -584,10 +584,14 @@ static void do_open_gnumeric (const char *fname)
         return;
     }
 
-    err = (*gbook_get_data)(fname, &Z, datainfo);
+    err = (*gbook_get_data)(fname, &Z, datainfo, errtext);
     close_plugin(handle);
 
-    if (err) return;
+    if (err) {
+	if (strlen(errtext)) errbox(errtext);
+	else errbox("Failed to import gnumeruc data");
+	return;
+    }
 
     data_status |= IMPORT_DATA;
     strcpy(paths.datfile, fname);

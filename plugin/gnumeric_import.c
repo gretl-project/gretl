@@ -57,6 +57,8 @@ typedef struct {
     char **label;
 } gsheet;
 
+char *errbuf;
+
 static void gsheet_init (gsheet *sheet)
 {
     sheet->maxcol = sheet->maxrow = 0;
@@ -94,7 +96,10 @@ static void gsheet_free (gsheet *sheet)
 
 static void gsheet_print_info (gsheet *sheet)
 {
-    int i, t;
+    int i;
+#ifdef notdef 
+    int t;
+#endif
 
     fprintf(stderr, "maxcol = %d\n", sheet->maxcol);
     fprintf(stderr, "maxrow = %d\n", sheet->maxrow);
@@ -209,25 +214,27 @@ int gsheet_parse_cells (xmlNodePtr node, gsheet *sheet)
 		/* check the top-left cell */
 		if (i_real == 0 && t_real == 0) {
 		    if (VTYPE_IS_NUMERIC(vtype)) {
-			fprintf(stderr, "Expected to find a variable name");
+			sprintf(errbuf, "Expected to find a variable name");
 			err = 1;
 		    }
 		}
 		else if (i_real >= 1 && t_real == 0 && 
 			 !(vtype == VALUE_STRING)) {
 		    /* ought to be a varname here */
-		    fprintf(stderr, "Expected to find a variable name");
+		    sprintf(errbuf, "Expected to find a variable name");
 		    err = 1;
 		}
 		if (!err && (tmp = xmlNodeGetContent(p))) {
+		    if (VTYPE_IS_NUMERIC(vtype) ||vtype == VALUE_STRING) {
+			if (i_real == 0) 
+			    strncat(sheet->label[t_real], tmp, 8);
+		    }
 		    if (VTYPE_IS_NUMERIC(vtype)) {
 			x = atof(tmp);
-			sheet->Z[i_real][t_real-1] = x;
+			sheet->Z[i_real][t_real] = x;
 			toprows[t_real] = leftcols[i_real] = 0;
 		    }
 		    else if (vtype == VALUE_STRING) {
-			if (i_real == 0) 
-			    strncat(sheet->label[t_real-1], tmp, 8);
 			if (t_real == 0)
 			    strncat(sheet->varname[i_real], tmp, 8);
 			toprows[t_real] = leftcols[i_real] = 1;
@@ -245,11 +252,11 @@ int gsheet_parse_cells (xmlNodePtr node, gsheet *sheet)
 	if (toprows[t]) sheet->text_rows += 1;
 
     if (sheet->text_rows > 1) {
-	fprintf(stderr, "Found an extraneous row of text\n");
+	sprintf(errbuf, "Found an extraneous row of text");
 	err = 1;
     }
     if (sheet->text_cols > 1) {
-	fprintf(stderr, "Found an extraneous column of text\n");
+	sprintf(errbuf, "Found an extraneous column of text");
 	err = 1;
     }
 
@@ -271,19 +278,19 @@ static int gsheet_get_data (const char *fname, gsheet *sheet)
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
-	fprintf(stderr, "xmlParseFile failed on %s\n", fname);
+	sprintf(errbuf, "xmlParseFile failed on %s", fname);
 	return 1;
     }
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
-        fprintf(stderr, "%s: empty document\n", fname);
+        sprintf(errbuf, "%s: empty document", fname);
 	xmlFreeDoc(doc);
 	return 1;
     }
 
     if (xmlStrcmp(cur->name, (UTF) "Workbook")) {
-        fprintf(stderr, "File of the wrong type, root node not Workbook\n");
+        sprintf(errbuf, "File of the wrong type, root node not Workbook");
 	xmlFreeDoc(doc);
 	return 1;
     }
@@ -403,19 +410,19 @@ static int gbook_get_info (const char *fname, gbook *book)
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
-	fprintf(stderr, "xmlParseFile failed on %s\n", fname);
+	sprintf(errbuf, "xmlParseFile failed on %s", fname);
 	return 1;
     }
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
-        fprintf(stderr, "%s: empty document\n", fname);
+        sprintf(errbuf, "%s: empty document", fname);
 	xmlFreeDoc(doc);
 	return 1;
     }
 
     if (xmlStrcmp(cur->name, (UTF) "Workbook")) {
-        fprintf(stderr, "File of the wrong type, root node not Workbook\n");
+        sprintf(errbuf, "File of the wrong type, root node not Workbook");
 	xmlFreeDoc(doc);
 	return 1;
     }
@@ -499,12 +506,14 @@ void gsheet_menu_quit (GtkWidget *w, gbook *book)
     gtk_main_quit();
 }
 
+static 
 void gbook_get_startcol (GtkWidget *w, gbook *book)
 {
     book->startcol = gtk_spin_button_get_value_as_int
 	(GTK_SPIN_BUTTON(book->colspin));
 }
 
+static 
 void gbook_get_startrow (GtkWidget *w, gbook *book)
 {
     book->startrow = gtk_spin_button_get_value_as_int
@@ -590,21 +599,95 @@ static void gsheet_menu (gbook *book, int multisheet)
     gtk_main();
 }
 
+static int gsheet_labels_complete (gsheet *sheet)
+{
+    int t, rows = sheet->maxrow + 2 - sheet->startrow;
+    
+    for (t=1; t<rows; t++) {
+	if (sheet->label[t][0] == '\0')
+	    return 0;
+    }
+    return 1;
+}
+
+static int label_is_date (char *str)
+{
+    size_t len = strlen(str);
+    int i, d, pd = 0;
+    double dd, sub;
+
+    for (i=0; i<len; i++)
+	if (str[i] == ':') str[i] = '.';
+     
+    if (len == 4 && sscanf(str, "%4d", &d) == 1 &&
+	d > 0 && d < 3000) {
+	pd = 1;
+    }
+    else if (len == 6 && sscanf(str, "%lf", &dd) == 1 &&
+	dd > 0 && dd < 3000) { 
+	sub = 10.0 * (dd - (int) dd);
+	if (sub >= .999 && sub <= 4.001) pd = 4;
+    }
+    else if (len == 7 && sscanf(str, "%lf", &dd) == 1 &&
+	dd > 0 && dd < 3000) {
+	sub = 100.0 * (dd - (int) dd);
+	if (sub >= .9999 && sub <= 12.0001) pd = 12;
+    }
+    return pd;
+}
+
+static int consistent_date_labels (gsheet *sheet)
+{
+    int t, rows = sheet->maxrow + 2 - sheet->startrow;
+    int pd = 0, pdbak = 0;
+    double x, xbak = 0.0;
+    
+    for (t=1; t<rows; t++) {
+	if (sheet->label[t][0] == '\0') return 0;
+	pd = label_is_date(sheet->label[t]);
+	if (pd == 0) return 0;
+	x = atof(sheet->label[t]);
+	if (t == 1) pdbak = pd;
+	else { /* t > 1 */
+	    if (pd != pdbak) return 0;
+	    if (x <= xbak) return 0;
+	}
+	xbak = x;
+    }
+    return pd;
+}
+
+static int obs_column (gsheet *sheet)
+{
+    if (sheet->label[0][0] == '\0') return 1;
+
+    lower(sheet->label[0]);
+    if (strcmp(sheet->label[0], "obs") == 0 ||
+	strcmp(sheet->label[0], "date") == 0 ||
+	strcmp(sheet->label[0], "year") == 0)
+	return 1;
+
+    return 0;
+}
+
 int gbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		    int data_status)
+		    char *errtext)
 {
     gbook book;
     gsheet sheet;
     int err = 0, sheetnum = -1;
 
+    errbuf = errtext;
+    errbuf[0] = '\0';
+
     if (gbook_get_info(fname, &book)) {
-	fprintf(stderr, "Failed to get workbook info\n");
+	sprintf(errbuf, "Failed to get workbook info");
 	err = 1;
     } else
 	gbook_print_info(&book);
 
     if (book.nsheets == 0) {
-	fprintf(stderr, "No sheets found\n");
+	sprintf(errbuf, "No sheets found");
     }
     else if (book.nsheets > 1) {
 	gsheet_menu(&book, 1);
@@ -616,9 +699,9 @@ int gbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (sheetnum >= 0) {
-	fprintf(stderr, "Getting data\n");
+	sprintf(errbuf, "Getting data");
 	if (gsheet_setup(&sheet, &book, sheetnum)) {
-	    fprintf(stderr, "error in gsheet_setup()\n");
+	    sprintf(errbuf, "error in gsheet_setup()");
 	    err = 1;
 	} else {
 	    err = gsheet_get_data(fname, &sheet);
@@ -630,9 +713,19 @@ int gbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     gbook_free(&book);
 
     if (!err) {
-	int i, t, i_sheet;
+	int i, t, i_sheet, label_strings = sheet.text_cols;
+	int time_series = 0;
 
-	if (data_status) clear_datainfo(pdinfo, CLEAR_FULL);
+	if (sheet.text_cols == 0 && obs_column(&sheet)) {
+	    int pd = consistent_date_labels(&sheet);
+
+	    if (pd) pdinfo->pd = pd;
+	    pdinfo->sd0 = atof(sheet.label[1]);
+	    strcpy(pdinfo->stobs, sheet.label[1]);
+	    pdinfo->time_series = TIME_SERIES;
+	    sheet.text_cols = 1;
+	    time_series = 1;
+	}
 
 	pdinfo->v = sheet.maxcol + 3 - sheet.startcol - sheet.text_cols;
 	pdinfo->n = sheet.maxrow + 1 - sheet.startrow;
@@ -641,34 +734,37 @@ int gbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
 	start_new_Z(pZ, pdinfo, 0);
 
-	strcpy(pdinfo->stobs, "1");
-	sprintf(pdinfo->endobs, "%d", pdinfo->n);
-	pdinfo->sd0 = 1.0;
-	pdinfo->pd = 1;
-	pdinfo->time_series = 0;
+	if (!time_series) {
+	    strcpy(pdinfo->stobs, "1");
+	    sprintf(pdinfo->endobs, "%d", pdinfo->n);
+	    pdinfo->sd0 = 1.0;
+	    pdinfo->pd = 1;
+	    pdinfo->time_series = 0;
+	} else {
+	    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+	}
 	pdinfo->extra = 0; 
 
 	for (i=1; i<pdinfo->v; i++) {
 	    i_sheet = i - 1 + sheet.text_cols;
 	    strcpy(pdinfo->varname[i], sheet.varname[i_sheet]);
 	    for (t=0; t<pdinfo->n; t++) {
-		(*pZ)[i][t] = sheet.Z[i_sheet][t];
+		(*pZ)[i][t] = sheet.Z[i_sheet][t+1];
 	    }
 	}
 
-	if (sheet.text_cols == 1) {
+	if (label_strings && gsheet_labels_complete(&sheet)) {
 	    char **S = NULL;
 
 	    pdinfo->markers = 1;
 	    if (allocate_case_markers(&S, pdinfo->n) == 0) {
 		pdinfo->markers = 1;
 		for (t=0; t<pdinfo->n; t++)
-		    strcpy(S[t], sheet.label[t]);
+		    strcpy(S[t], sheet.label[t+1]);
 		pdinfo->S = S;
 	    }
 	}
-
-    }
+    } 	    
 
     gsheet_free(&sheet);
 

@@ -540,6 +540,9 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	if (command->list[0] == 0) command->errcode = E_ARGS;
     }
 
+    if (NEEDS_TWO_VARS(command->ci) && command->list[0] == 1)
+	command->errcode = E_ARGS;
+
     if ((command->ci == AR || command->ci == TSLS || 
 	 command->ci == SCATTERS) && strlen(command->param) == 0) {
 	command->errcode = E_ARGS;
