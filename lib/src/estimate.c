@@ -493,9 +493,11 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     /* if opt != 0, compute rhohat and DW stat */
     if (opt) {
 	int order = (ci == CORC || ci == HILU)? 1 : 0;
-
+	
 	mdl.rho = rhohat(order, mdl.t1, mdl.t2, mdl.uhat);
 	mdl.dw = dwstat(order, &mdl, *pZ);
+    } else {
+	mdl.rho = mdl.dw = NADBL;
     }
 
     /* weird special case: degenerate model */
@@ -738,7 +740,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     }
 
     for (i=0; i<n; i++) {
-	pmod->yhat[i] = pmod->yhat[i] = 0.0;
+	pmod->yhat[i] = pmod->yhat[i] = NADBL;
     }    
 
     ysum = xpy[0];
@@ -1179,6 +1181,7 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
     if (rho > 1.0 || rho < -1.0) {
 	rho = altrho(order, t1, t2, uhat);
     }
+
     return rho;
 }
 
@@ -1188,26 +1191,34 @@ static double altrho (int order, int t1, int t2, const double *uhat)
 /* alternative calculation of rho */
 {
     double *ut, *ut1;    
-    int t, n = 0;
+    int t, n, len = t2 - (t1 + order) + 1;
     double uh, uh1, rho;
 
-    if ((ut = calloc(t2-(t1+order)+1, sizeof *ut)) == NULL) 
-	return NADBL;
-    if ((ut1 = calloc(t2-(t1+order)+1, sizeof *ut1)) == NULL) 
-	return NADBL;
+    ut = malloc(len * sizeof *ut);
+    if (ut == NULL) return NADBL;
 
+    ut1 = malloc(len * sizeof *ut1);
+    if (ut1 == NULL) {
+	free(ut);
+	return NADBL;
+    }
+
+    n = 0;
     for (t=t1+order; t<=t2; t++) { 
         uh = uhat[t];
-        if (t > 0) uh1 = uhat[t-1];
-	else uh1 = NADBL;
-        if (na(uh) || na(uh1)) continue;
-        ut[n] = uh;
-        ut1[n] = uh1;
-	n++;
+	uh1 = (t > 0)? uhat[t-1] : NADBL;
+        if (!na(uh) && !na(uh1)) {
+	    ut[n] = uh;
+	    ut1[n] = uh1;
+	    n++;
+	}
     }
+
     rho = _corr(n, ut, ut1);
+
     free(ut);
     free(ut1);
+
     return rho;
 }
 
@@ -1233,6 +1244,7 @@ static int hatvar (MODEL *pmod, double **Z)
     double x;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
+	pmod->yhat[t] = 0.0;
         for (i=0; i<pmod->ncoeff; i++) {
             xno = pmod->list[i+2];
 	    x = Z[xno][t];

@@ -290,6 +290,7 @@ for ($s = 0; $s < $nseries; $s++) {
 	if (/Series Title:/) {
 	    $title = <SOCK>;
 	    chop($title);
+	    if ($verbose) { print STDERR "title: $title\n"; }
 	    if ($title =~ /Weekly/) { last; }
 	    next;
 	}
@@ -321,9 +322,17 @@ for ($s = 0; $s < $nseries; $s++) {
 		print STDERR "Skipping this series\n";
 		$pd = -1;
 		last;
+	    } else {
+	        print STDERR "Frequency of series = $pd\n";
 	    }
 	    $n++;
 	}
+    }
+
+    if ($pd != 4 && $pd != 12 && $pd != 1 && $pd != 5 && $pd != 7) { 
+	print STDERR "Unrecognized frequency $pd for $sernames[$s]\n"; 
+	print STDERR "Skipping this series\n";
+	$pd = -1;
     }
     
     if ($pd == -1) { next; }
