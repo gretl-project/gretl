@@ -27,17 +27,43 @@
 */
 int newlag;
 
-int vars_identical (const double *x, const double *y, int n)
+enum {
+    VARS_IDENTICAL,
+    X_HAS_MISSING,
+    Y_HAS_MISSING,
+    VARS_DIFFER
+} varcomp_codes;
+
+static int check_vals (const double *x, const double *y, int n)
 {
+    int ret = VARS_IDENTICAL;
     int t;
 
     for (t=0; t<n; t++) {
 	if (floatneq(x[t], y[t])) {
-	    return 0;
+	    if (na(x[t]) && !na(y[t])) {
+		if (ret == VARS_IDENTICAL || ret == X_HAS_MISSING) {
+		    ret = X_HAS_MISSING;
+		} else {
+		    ret = VARS_DIFFER;
+		}
+	    } else if (!na(x[t]) && na(y[t])) {
+		if (ret == VARS_IDENTICAL || ret == Y_HAS_MISSING) {
+		    ret = Y_HAS_MISSING;
+		} else {
+		    ret = VARS_DIFFER;
+		}
+	    } else {
+		ret = VARS_DIFFER;
+	    }
+	    
+	}
+	if (ret == VARS_DIFFER) {
+	    break;
 	}
     }
 
-    return 1;
+    return ret;
 }
 
 static int 
@@ -302,13 +328,25 @@ check_add_transform (int vnum, const double *x,
 
     if (vnum < pdinfo->v) {
 	/* a variable of this name already exists */
-	if (vars_identical(x, (*pZ)[vnum], pdinfo->n)) {
-	    /* and it is just what we want */
+	int chk = check_vals(x, (*pZ)[vnum], pdinfo->n);
 
-	    /* fixme: what if _labels_ do not match? Then
-	       we may be unable to find this variable again
-	     */
+	/* heuristic: we'll assume that if the variables have the same
+	   name, and differ only in respect of one being more complete
+	   than the other (having valid values where the other has
+	   missing values), then we should not create a new variable,
+	   but rather use the more complete series.
 
+	   Watch out for cases where this is not the desired behavior!
+	*/
+
+	if (chk == VARS_IDENTICAL) {
+	    ret = VAR_EXISTS_OK;
+	} else if (chk == X_HAS_MISSING) { /* is this right? */
+	    ret = VAR_EXISTS_OK;
+	} else if (chk == Y_HAS_MISSING) {
+	    for (t=0; t<pdinfo->n; t++) {
+		(*pZ)[vnum][t] = x[t];
+	    }
 	    ret = VAR_EXISTS_OK;
 	} else {
 	    if (!strcmp(label, VARLABEL(pdinfo, vnum))) {
@@ -316,6 +354,7 @@ check_add_transform (int vnum, const double *x,
 		for (t=0; t<pdinfo->n; t++) {
 		    (*pZ)[vnum][t] = x[t];
 		}
+		ret = VAR_EXISTS_OK;
 	    } else {
 		/* labels do not match: problem */
 		ret = VARNAME_DUPLICATE;
