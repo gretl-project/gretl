@@ -462,7 +462,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION LIBVERSION CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE build build_cpu build_vendor build_os host host_cpu host_vendor host_os USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE HAVE_X12A HAVE_TRAMO LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL have_readline new_readline READLINE_CFLAGS READLINE_LIBS INETLIB have_zlib GMP_CFLAGS GMP_LIBS LAPACK_CFLAGS LAPACK_LIBS FLIB GNUPLOT LATEX PKG_CONFIG GTK_CFLAGS GTK_LIBS GLIB_CFLAGS GLIB_LIBS GTKSOURCEVIEW_CFLAGS GTKSOURCEVIEW_LIBS XML_CFLAGS XML_LIBS GTK_CONFIG GTK_EXTRA_CONFIG GTK_EXTRA_CFLAGS GTK_EXTRA_LIBS have_gtk have_gmp have_gtksourceview have_gnu_regex LIBOLE2_CONFIG LIBOLE2_CFLAGS LIBOLE2_LIBS PNG_CFLAGS PNG_LIBS GDK_PIXBUF_CFLAGS GDK_PIXBUF_LIBS GDK_PIXBUF_CONFIG GNOME_CFLAGS GNOME_LIBS GCONFTOOL GCONF_SCHEMA_CONFIG_SOURCE GCONF_SCHEMA_FILE_DIR GNOME have_gnome gnome_prefix XMLCONF LIBOLE_CFLAGS LIBOLE_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION LIBVERSION CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE build build_cpu build_vendor build_os host host_cpu host_vendor host_os USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE HAVE_X12A HAVE_TRAMO LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL have_readline new_readline READLINE_CFLAGS READLINE_LIBS INETLIB have_zlib GMP_CFLAGS GMP_LIBS LAPACK_CFLAGS LAPACK_LIBS FLIB GNUPLOT LATEX PKG_CONFIG GTK_CFLAGS GTK_LIBS GLIB_CFLAGS GLIB_LIBS GTKSOURCEVIEW_CFLAGS GTKSOURCEVIEW_LIBS XML_CFLAGS XML_LIBS GTK_CONFIG GTK_EXTRA_CONFIG GTK_EXTRA_CFLAGS GTK_EXTRA_LIBS have_gtk have_gmp have_gtksourceview have_gnu_regex LIBOLE2_CONFIG LIBOLE2_CFLAGS LIBOLE2_LIBS PNG_CFLAGS PNG_LIBS GDK_PIXBUF_CFLAGS GDK_PIXBUF_LIBS GDK_PIXBUF_CONFIG GNOME_CFLAGS GNOME_LIBS GCONFTOOL GCONF_SCHEMA_CONFIG_SOURCE GCONF_SCHEMA_FILE_DIR GNOME have_gnome gnome_prefix XMLCONF XSLT_CFLAGS XSLT_LIBS LIBOLE_CFLAGS LIBOLE_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1566,6 +1566,7 @@ have_x12a="yes"
 have_gnu_regex="no"
 have_libxml2="no"
 use_gtksourceview="no"
+have_xslt="no"
 MAKE="make"
 XML_LIBS=
 
@@ -6257,7 +6258,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6260 "configure"' > conftest.$ac_ext
+  echo '#line 6261 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7194,7 +7195,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:7197:" \
+echo "$as_me:7198:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -8199,11 +8200,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8202: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8203: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8206: \$? = $ac_status" >&5
+   echo "$as_me:8207: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -8431,11 +8432,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8434: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8435: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8438: \$? = $ac_status" >&5
+   echo "$as_me:8439: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -8498,11 +8499,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8501: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8502: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8505: \$? = $ac_status" >&5
+   echo "$as_me:8506: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10510,7 +10511,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10513 "configure"
+#line 10514 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10608,7 +10609,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10611 "configure"
+#line 10612 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12740,11 +12741,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12743: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12744: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12747: \$? = $ac_status" >&5
+   echo "$as_me:12748: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -12807,11 +12808,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12810: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12811: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12814: \$? = $ac_status" >&5
+   echo "$as_me:12815: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14050,7 +14051,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 14053 "configure"
+#line 14054 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14148,7 +14149,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 14151 "configure"
+#line 14152 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14970,11 +14971,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14973: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14974: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14977: \$? = $ac_status" >&5
+   echo "$as_me:14978: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15037,11 +15038,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15040: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15041: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15044: \$? = $ac_status" >&5
+   echo "$as_me:15045: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -16977,11 +16978,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16980: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16981: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16984: \$? = $ac_status" >&5
+   echo "$as_me:16985: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -17209,11 +17210,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17212: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17213: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:17216: \$? = $ac_status" >&5
+   echo "$as_me:17217: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -17276,11 +17277,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:17279: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17280: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:17283: \$? = $ac_status" >&5
+   echo "$as_me:17284: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -19288,7 +19289,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 19291 "configure"
+#line 19292 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19386,7 +19387,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 19389 "configure"
+#line 19390 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -25643,6 +25644,106 @@ done
 fi
 
 
+  succeeded=no
+
+  if test -z "$PKG_CONFIG"; then
+    # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PKG_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+
+if test -n "$PKG_CONFIG"; then
+  echo "$as_me:$LINENO: result: $PKG_CONFIG" >&5
+echo "${ECHO_T}$PKG_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  fi
+
+  if test "$PKG_CONFIG" = "no" ; then
+     echo "*** The pkg-config script could not be found. Make sure it is"
+     echo "*** in your path, or set the PKG_CONFIG environment variable"
+     echo "*** to the full path to pkg-config."
+     echo "*** Or see http://www.freedesktop.org/software/pkgconfig to get pkg-config."
+  else
+     PKG_CONFIG_MIN_VERSION=0.9.0
+     if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
+        echo "$as_me:$LINENO: checking for libxslt >= 1.1.2" >&5
+echo $ECHO_N "checking for libxslt >= 1.1.2... $ECHO_C" >&6
+
+        if $PKG_CONFIG --exists "libxslt >= 1.1.2" ; then
+            echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+            succeeded=yes
+
+            echo "$as_me:$LINENO: checking XSLT_CFLAGS" >&5
+echo $ECHO_N "checking XSLT_CFLAGS... $ECHO_C" >&6
+            XSLT_CFLAGS=`$PKG_CONFIG --cflags "libxslt >= 1.1.2"`
+            echo "$as_me:$LINENO: result: $XSLT_CFLAGS" >&5
+echo "${ECHO_T}$XSLT_CFLAGS" >&6
+
+            echo "$as_me:$LINENO: checking XSLT_LIBS" >&5
+echo $ECHO_N "checking XSLT_LIBS... $ECHO_C" >&6
+            XSLT_LIBS=`$PKG_CONFIG --libs "libxslt >= 1.1.2"`
+            echo "$as_me:$LINENO: result: $XSLT_LIBS" >&5
+echo "${ECHO_T}$XSLT_LIBS" >&6
+        else
+            XSLT_CFLAGS=""
+            XSLT_LIBS=""
+            ## If we have a custom action on failure, don't print errors, but
+            ## do set a variable so people can do so.
+            XSLT_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libxslt >= 1.1.2"`
+
+        fi
+
+
+
+     else
+        echo "*** Your version of pkg-config is too old. You need version $PKG_CONFIG_MIN_VERSION or newer."
+        echo "*** See http://www.freedesktop.org/software/pkgconfig"
+     fi
+  fi
+
+  if test $succeeded = yes; then
+     have_xslt="no"
+  else
+     have_xslt="yes"
+
+  fi
+
+
+
+
+
 
 
 
@@ -25658,7 +25759,7 @@ _ACEOF
 
 
 CFLAGS="$orig_CFLAGS"
-                                                                                                                                                                                                                                                ac_config_files="$ac_config_files Makefile gretl_sh gretl-config gretl.pc gui/Makefile gui/debug gui/gtkextra-lite/Makefile gui2/Makefile gui2/debug gui2/gtkextra-lite/Makefile gui2/gtksourceview/Makefile gui2/omf-install/Makefile gnome/Makefile gnome/gretl.keys cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile redhat/gretl.spec"
+                                                                                                                                                                                                                                                          ac_config_files="$ac_config_files Makefile gretl_sh gretl-config gretl.pc gui/Makefile gui/debug gui/gtkextra-lite/Makefile gui2/Makefile gui2/debug gui2/gtkextra-lite/Makefile gui2/gtksourceview/Makefile gui2/omf-install/Makefile gnome/Makefile gnome/gretl.keys cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile redhat/gretl.spec doc/commands/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -26223,6 +26324,7 @@ do
   "tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES tests/Makefile" ;;
   "extra/Makefile" ) CONFIG_FILES="$CONFIG_FILES extra/Makefile" ;;
   "redhat/gretl.spec" ) CONFIG_FILES="$CONFIG_FILES redhat/gretl.spec" ;;
+  "doc/commands/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/commands/Makefile" ;;
   "default-1" ) CONFIG_COMMANDS="$CONFIG_COMMANDS default-1" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -26412,6 +26514,8 @@ s,@GNOME@,$GNOME,;t t
 s,@have_gnome@,$have_gnome,;t t
 s,@gnome_prefix@,$gnome_prefix,;t t
 s,@XMLCONF@,$XMLCONF,;t t
+s,@XSLT_CFLAGS@,$XSLT_CFLAGS,;t t
+s,@XSLT_LIBS@,$XSLT_LIBS,;t t
 s,@LIBOLE_CFLAGS@,$LIBOLE_CFLAGS,;t t
 s,@LIBOLE_LIBS@,$LIBOLE_LIBS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t

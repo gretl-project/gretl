@@ -9,6 +9,8 @@ sharesrc = $(topsrc)/share
 
 INSTALL_DATA = cp -fp
 
+ENGLISH_HELPFILES = $(sharesrc)/gretl.hlp $(sharesrc)/gretlcli.hlp
+
 ifeq ($(have_gtk),2.0)
    ES_GUI_HLP = $(sharesrc)/gretl.hlp.es.utf8
    ES_CLI_HLP = $(sharesrc)/gretlcli.hlp.es.utf8
@@ -52,7 +54,7 @@ install_man: gretl.1
 	$(tooldir)/mkinstalldirs $(prefix)/share/man/man1
 	$(INSTALL_DATA) $(topsrc)/gretl.1 $(prefix)/share/man/man1
 
-install_help:  $(ES_GUI_HLP) $(ES_CLI_HLP)
+install_help:  $(ENGLISH_HELPFILES) $(ES_GUI_HLP) $(ES_CLI_HLP)
 	$(tooldir)/mkinstalldirs $(gretldir)
 	$(INSTALL_DATA) $(sharesrc)/gretl.hlp $(gretldir)/gretl.hlp
 	$(INSTALL_DATA) $(sharesrc)/gretlcli.hlp $(gretldir)/gretlcli.hlp
@@ -67,6 +69,9 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir)/scripts
 	$(tooldir)/mkinstalldirs $(gretldir)/scripts/misc 
 	$(tooldir)/mkinstalldirs $(gretldir)/db
+
+$(ENGLISH_HELPFILES):
+	make -C ../doc/commands hlp
 
 $(UTF8_FILES): $(sharesrc)/gretl.hlp.es $(sharesrc)/gretlcli.hlp.es
 	for f in $^ ; do recode l1..utf-8 < $$f > $$f.utf8 ; done

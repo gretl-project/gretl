@@ -49,10 +49,22 @@ enum {
 #define ROOTNODE "commandlist"
 #define UTF const xmlChar *
 
-int apply_xslt (xmlDocPtr doc, int output)
+static void full_fname (const char *fname, const char *dir,
+			char *targ)
+{
+    if (dir == NULL) {
+	strcpy(targ, fname);
+    } else {
+	sprintf(targ, "%s%s", dir, fname);
+    }
+}
+
+
+int apply_xslt (xmlDocPtr doc, int output, const char *docdir)
 {
     xsltStylesheetPtr style;
     xmlDocPtr result;
+    char styname[FILENAME_MAX];
     const char **null_params = NULL;
     const char *gui_params[] = {
 	"hlp", "\"gui\"",
@@ -65,7 +77,8 @@ int apply_xslt (xmlDocPtr doc, int output)
 
     /* make DocBook XML output */
     if (output == OUTPUT_BOTH || output == OUTPUT_DOCBOOK) {
-	style = xsltParseStylesheetFile("gretlman.xsl");
+	full_fname("gretlman.xsl", docdir, styname);
+	style = xsltParseStylesheetFile(styname);
 	if (style == NULL) {
 	    err = 1;
 	} else {
@@ -88,7 +101,8 @@ int apply_xslt (xmlDocPtr doc, int output)
 
     /* make plain text "hlp" output */
     if (output == OUTPUT_BOTH || output == OUTPUT_HLP) {
-	style = xsltParseStylesheetFile("gretltxt.xsl");
+	full_fname("gretltxt.xsl", docdir, styname);
+	style = xsltParseStylesheetFile(styname);
 	if (style == NULL) {
 	    err = 1;
 	} else {
@@ -127,7 +141,7 @@ int apply_xslt (xmlDocPtr doc, int output)
     return err;
 }
 
-int parse_commands_data (const char *fname, int output) 
+int parse_commands_data (const char *fname, int output, const char *docdir) 
 {
     xmlDocPtr doc;
     xmlNodePtr cur;
@@ -157,7 +171,7 @@ int parse_commands_data (const char *fname, int output)
 	goto bailout;
     }
 
-    apply_xslt(doc, output);
+    apply_xslt(doc, output, docdir);
 
  bailout:
 
@@ -167,9 +181,27 @@ int parse_commands_data (const char *fname, int output)
     return err;
 }
 
+static char *get_docdir (const char *fname)
+{
+    char *docdir, *p;
+
+    p = strrchr(fname, '/');
+    if (p == NULL) return NULL;
+
+    docdir = malloc(strlen(fname) + 1);
+    if (docdir == NULL) return NULL;
+
+    strcpy(docdir, fname);
+    p = strrchr(docdir, '/');
+    *(p + 1) = 0;
+
+    return docdir;
+}
+
 int main (int argc, char **argv)
 {
     const char *fname;
+    char *docdir;
     int output = OUTPUT_BOTH;
     int err;
 
@@ -190,7 +222,9 @@ int main (int argc, char **argv)
 	fname = argv[1];
     }
 
-    err = parse_commands_data(fname, output);
+    docdir = get_docdir(fname);
+
+    err = parse_commands_data(fname, output, docdir);
 
     return err;
 }

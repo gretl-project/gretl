@@ -46,6 +46,7 @@ have_x12a="yes"
 have_gnu_regex="no"
 have_libxml2="no"
 use_gtksourceview="no"
+have_xslt="no"
 MAKE="make"
 XML_LIBS=
 
@@ -544,9 +545,17 @@ if test x"${XML_LIBS}" = x ; then
   fi
 fi
 
+dnl Check for libxslt (for the helpfiles)
+PKG_CHECK_MODULES(XSLT, libxslt >= 1.1.2,	
+  have_xslt="no",
+  have_xslt="yes"
+)
+
 dnl record results on various libraries
 AC_SUBST(XML_CFLAGS)
 AC_SUBST(XML_LIBS)
+AC_SUBST(XSLT_CFLAGS)
+AC_SUBST(XSLT_LIBS)
 AC_SUBST(GDK_PIXBUF_CFLAGS)
 AC_SUBST(GDK_PIXBUF_LIBS) 
 AC_SUBST(LIBOLE_CFLAGS)
@@ -585,6 +594,7 @@ share/bcih/Makefile
 tests/Makefile
 extra/Makefile
 redhat/gretl.spec
+doc/commands/Makefile
 ])
 
 dnl Make links for gtk-1.2 build

@@ -67,7 +67,10 @@ static void arma_coeff_name (char *s, const DATAINFO *pdinfo,
 
 static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo)
 {
-    int i, np = 2 + pmod->list[1] + pmod->list[2];
+    int p = pmod->list[1];
+    int q = pmod->list[2];
+    int r = pmod->list[0] - 4;
+    int i, np = 2 + p + q + r;
 
     pmod->params = malloc(np * sizeof pmod->params);
     if (pmod->params == NULL) {
@@ -399,7 +402,7 @@ static int check_arma_list (const int *list)
     return err;
 }
 
-static const double **make_armax_X (int *list, const double **Z, int offset)
+static const double **make_armax_X (int *list, const double **Z)
 {
     const double **X;
     int nv = list[0] - 4;
@@ -411,9 +414,9 @@ static const double **make_armax_X (int *list, const double **Z, int offset)
     for (i=0; i<nv; i++) {
 	v = list[i + 5];
 #ifdef ARMA_DEBUG
-	fprintf(stderr, "make_armax_X: setting X[%d] -> Z[%d] + %d\n", i, v, offset);
+	fprintf(stderr, "make_armax_X: setting X[%d] -> Z[%d]\n", i, v);
 #endif
-	X[i] = Z[v] + offset;
+	X[i] = Z[v];
     }
 
     return X;
@@ -429,9 +432,9 @@ static int ar_init_by_ols (const int *list, double *coeff,
     int an = pdinfo->t2 - arma_t1 + 1;
     int p = list[1];
     int q = list[2];
+    int r = list[0] - 4;
     int ynum = list[4];
-    int n_regcoeff = list[0] - 4;
-    int av = p + 2 + n_regcoeff;
+    int av = p + r + 2;
     double **aZ = NULL;
     DATAINFO *ainfo = NULL;
     int *alist = NULL;
@@ -449,7 +452,7 @@ static int ar_init_by_ols (const int *list, double *coeff,
     for (i=0; i<p; i++) {
 	alist[i + 3] = i + 2;
     }
-    for (i=0; i<n_regcoeff; i++) {
+    for (i=0; i<r; i++) {
 	alist[i + 3 + p] = i + p + 2;
     }
 
@@ -472,7 +475,7 @@ static int ar_init_by_ols (const int *list, double *coeff,
 			i+1, ynum, s);
 	    }	    
 	}
-	for (i=0; i<n_regcoeff; i++) {
+	for (i=0; i<r; i++) {
 	    j = list[i+5];
 	    s = t + arma_t1;
 	    aZ[i+p+2][t] = Z[j][s];
@@ -503,7 +506,7 @@ static int ar_init_by_ols (const int *list, double *coeff,
 
 #ifdef ARMA_DEBUG
     fprintf(stderr, "\n");
-    for (i=0; i<=p + q + n_regcoeff; i++) {
+    for (i=0; i<=p + q + r; i++) {
 	fprintf(stderr, "ar_init_by_ols: coeff[%d] = %g\n", 
 		i, coeff[i]);
     }
@@ -518,24 +521,25 @@ static int ar_init_by_ols (const int *list, double *coeff,
 static void make_tmp_varnames (DATAINFO *ainfo, int p, int q, int r)
 {
     int i;
+    int nt = p + q + r;
 
     strcpy(ainfo->varname[1], "e");
     strcpy(ainfo->varname[2], "de_c");
-    strcpy(ainfo->varname[2+p+q+r+1], "dl_c");
+    strcpy(ainfo->varname[2+nt+1], "dl_c");
 
     for (i=0; i<p; i++) {
 	sprintf(ainfo->varname[3+i], "de_a%d", i + 1);
-	sprintf(ainfo->varname[3+p+q+r+1+i], "dl_a%d", i + 1);
+	sprintf(ainfo->varname[3+nt+1+i], "dl_a%d", i + 1);
     }
 
     for (i=0; i<q; i++) {
 	sprintf(ainfo->varname[3+p+i], "de_m%d", i + 1);
-	sprintf(ainfo->varname[3+2*p+q+r+1+i], "dl_m%d", i + 1);
+	sprintf(ainfo->varname[3+nt+1+p+i], "dl_m%d", i + 1);
     }
 
     for (i=0; i<r; i++) {
 	sprintf(ainfo->varname[3+p+q+i], "de_x%d", i + 1);
-	sprintf(ainfo->varname[3+2*p+q+r+1+i], "dl_x%d", i + 1);
+	sprintf(ainfo->varname[3+nt+1+p+q+i], "dl_x%d", i + 1);
     }   
 }
 #endif
@@ -692,7 +696,7 @@ MODEL armax_model (int *list, const double **Z, DATAINFO *pdinfo,
 
     /* construct virtual dataset for real regressors */
     if (r > 0) {
-	X = make_armax_X(list, Z, ainfo->t1);
+	X = make_armax_X(list, Z);
 	if (X == NULL) {
 	    armod.errcode = E_ALLOC;
 	    free(alist);
@@ -864,6 +868,9 @@ MODEL armax_model (int *list, const double **Z, DATAINFO *pdinfo,
     free_Z(aZ, ainfo);
     clear_datainfo(ainfo, CLEAR_FULL);
     free(ainfo);
+    free(X);
+
+    armod.errcode = 1; /* bodge */
 
     return armod;
 }

@@ -5,7 +5,7 @@
    Allin Cottrell, Feb 2004.
 */
 
-#include <gretl/libgretl.h>
+#include "libgretl.h"
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
