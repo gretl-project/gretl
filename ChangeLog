@@ -1,4 +1,7 @@
 version 1.3.0
+- fix bug in Prais-Winsten estimator
+- fix bug in influential observations printout, for non-
+  English locales
 - revamp the Dickey-Fuller test functionality, with more
   options, clearer presentation (I hope), and p-values
   using James MacKinnon's code (JAE, 1996)
