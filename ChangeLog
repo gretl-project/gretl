@@ -25,6 +25,8 @@ version 1.2.2
   the weight crashed gretl when using QR decomposition
 - Fix bug: a syntactically incorrect "genr" expression could
   lead to a crash (thanks to Steve Walesch for spotting this)
+- Fix bug: set panel structure dialog very messed up in the
+  gtk-1.2 version of the GUI program
 
 1/22/2004 version 1.2.1
 - Add Cristian Rigamonti's Italian translation

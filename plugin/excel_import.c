@@ -786,7 +786,7 @@ static int first_col_strings (wbook *book)
     return 1;
 }
 
-static int got_valid_varnames (wbook *book, int ncols, int skip)
+static int check_all_varnames (wbook *book, int ncols, int skip)
 {
     int i, t = book->row_offset;
     char *test;
@@ -842,35 +842,43 @@ struct string_err {
     char *str;
 };
 
-static int data_block (wbook *book, int ncols, int skip, struct string_err *err)
+static int check_data_block (wbook *book, int ncols, int skip, 
+			     struct string_err *err)
 {
-    int i, t;
+    int i, t, ret = 0;
 
     for (i=book->col_offset+skip; i<ncols; i++) {
 	for (t=1+book->row_offset; t<=lastrow; t++) {
-	    if (rowptr == NULL || rowptr[t].cells[i] == NULL) {
+	    if (rowptr[t].cells  == NULL) {
+#ifdef EDEBUG
+		fprintf(stderr, "data_block: rowptr[%d].cells is NULL\n", t);
+#endif
+		ret = -1;
+	    } 
+	    else if (rowptr[t].cells[i] == NULL) {
 #ifdef EDEBUG
 		fprintf(stderr, "data_block: rowptr[%d].cells[%d] is NULL\n",
 			t, i);
 #endif
 		rowptr[t].cells[i] = g_strdup("-999.0");
-		return -1;
+		ret = -1;
 	    }
-	    if (IS_STRING(rowptr[t].cells[i])) {
+	    else if (IS_STRING(rowptr[t].cells[i])) {
 		if (missval_string(rowptr[t].cells[i])) {
 		    free(rowptr[t].cells[i]);
 		    rowptr[t].cells[i] = g_strdup("-999.0");
-		    return -1;
+		    ret = -1;
 		} else {
 		    err->row = t + 1;
 		    err->column = i + 1;
 		    err->str = g_strdup(rowptr[t].cells[i]);
-		    return 0;
+		    return 1;
 		}
 	    }
 	}
     }
-    return 1;
+
+    return ret;
 }
 
 int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
@@ -878,7 +886,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 {
     FILE *fp;
     wbook book;
-    int err = 0, gotdata;
+    int err = 0;
     double **newZ = NULL;
     DATAINFO *newinfo;
     const char *adjust_rc = N_("Perhaps you need to adjust the "
@@ -964,7 +972,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	label_strings = first_col_strings(&book);
 	puts("found label strings in first column"); 
 
-	err = got_valid_varnames(&book, ncols, label_strings);
+	err = check_all_varnames(&book, ncols, label_strings);
 	if (err == VARNAMES_NULL || err == VARNAMES_NOTSTR) {
 	    pputs(prn, _("One or more variable names are missing.\n"));
 	    pputs(prn, _(adjust_rc));
@@ -974,17 +982,17 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
 	if (err) goto getout; 
 
-	gotdata = data_block(&book, ncols, label_strings, &strerr);
-	if (gotdata == 0) {
+	err = check_data_block(&book, ncols, label_strings, &strerr);
+	if (err == 1) {
 	    pprintf(prn, _("Expected numeric data, found string:\n"
 			   "%s at row %d, column %d\n"),
 		    strerr.str, strerr.row, strerr.column);
 	    g_free(strerr.str);
 	    pputs(prn, _(adjust_rc));
-	    err = 1;
 	    goto getout; 
-	} else if (gotdata == -1) {
+	} else if (err == -1) {
 	    pputs(prn, _("Warning: there were missing values\n"));
+	    err = 0;
 	}	    
 
 	i = book.col_offset;
@@ -1020,6 +1028,10 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
 	for (i=1; i<newinfo->v; i++) {
 	    i_sheet = i - 1 + skip;
+	    if (rowptr[book.row_offset].cells == NULL) {
+		err = 1;
+		break;
+	    }
 	    if (rowptr[book.row_offset].cells[i_sheet] == NULL) {
 		err = 1;
 		break;
@@ -1031,13 +1043,15 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		t_sheet = t + 1 + book.row_offset;
 		if (rowptr[t_sheet].cells == NULL ||
 		    rowptr[t_sheet].cells[i_sheet] == NULL) continue;
-#ifdef FULL_EDEBUG
+		fprintf(stderr, "accessing rowptr[%d].cells[%d] at %p\n",
+			t_sheet, i_sheet,
+			(void *) rowptr[t_sheet].cells[i_sheet]);
+#ifdef EDEBUG
 		fprintf(stderr, "setting Z[%d][%d] = rowptr[%d].cells[%d] "
 			"= '%s'\n", i, t, i_sheet, t_sheet, 
 			rowptr[t_sheet].cells[i_sheet]);
 #endif
-		newZ[i][t] = 
-		    atof(rowptr[t_sheet].cells[i_sheet]);
+		newZ[i][t] = atof(rowptr[t_sheet].cells[i_sheet]);
 	    }
 	}
 
@@ -1065,10 +1079,13 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
  getout:
+
     wbook_free(&book);
     free_sheet();
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
+
     return err;
 }  

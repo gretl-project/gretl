@@ -1166,15 +1166,19 @@ void set_sample_label (DATAINFO *pdinfo)
 
     if (strlen(paths.datfile) > 2) {
 	/* data file open already */
-	if (strrchr(paths.datfile, SLASH) == NULL)
+	if (strrchr(paths.datfile, SLASH) == NULL) {
 	    sprintf(labeltxt, " %s ", paths.datfile);
-	else
-	    sprintf(labeltxt, " %s ", 
-		    strrchr(paths.datfile, SLASH) + 1);
-	if (data_status & MODIFIED_DATA) 
+	} else {
+	    sprintf(labeltxt, " %s ", strrchr(paths.datfile, SLASH) + 1);
+	}
+	if (data_status & MODIFIED_DATA) { 
 	    strcat(labeltxt, "* ");
-	if (datalabel != NULL)
+	} else if (data_status & GZIPPED_DATA) {
+	    strcat(labeltxt, "[z] ");
+	}
+	if (datalabel != NULL) {
 	    gtk_label_set_text(GTK_LABEL(datalabel), labeltxt);
+	}
     } 
     else if (data_status & MODIFIED_DATA) {
 	strcpy(labeltxt, _(" Unsaved data "));

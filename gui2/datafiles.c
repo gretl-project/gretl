@@ -1255,13 +1255,13 @@ static void set_panel_code (GtkWidget *w, dialog_t *d)
     }
 }
 
-#ifndef OLD_GTK
-
 static gint dialog_unblock (GtkWidget *w, gpointer p)
 {
     gtk_main_quit();
     return FALSE;
 }
+
+#ifndef OLD_GTK
 
 void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
 {
@@ -1278,7 +1278,8 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
     d->dialog = gtk_dialog_new();
     w = d->dialog;
 
-    d->code = (dataset_is_panel(pdinfo))? pdinfo->time_series : STACKED_TIME_SERIES;
+    d->code = (dataset_is_panel(pdinfo))? 
+	pdinfo->time_series : STACKED_TIME_SERIES;
 
     gtk_window_set_title (GTK_WINDOW (d->dialog), _("gretl: panel structure"));
     gtk_window_set_resizable (GTK_WINDOW (d->dialog), FALSE);
@@ -1356,8 +1357,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
 
 #else /* now the old gtk version */
 
-void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
-			     void (*cleanfun)(), void (*helpfun)())
+void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
 {
     dialog_t *d;
     GtkWidget *button;
@@ -1372,7 +1372,8 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     d->dialog = gtk_dialog_new();
     w = d->dialog;
 
-    d->code = (dataset_is_panel(pdinfo))? pdinfo->time_series : STACKED_TIME_SERIES;
+    d->code = (dataset_is_panel(pdinfo))? 
+	pdinfo->time_series : STACKED_TIME_SERIES;
 
     gtk_window_set_title (GTK_WINDOW (d->dialog), _("gretl: panel structure"));
     gtk_window_set_policy (GTK_WINDOW (d->dialog), FALSE, FALSE, FALSE);
@@ -1387,8 +1388,10 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     gtk_window_set_position (GTK_WINDOW (d->dialog), GTK_WIN_POS_MOUSE);
 
     gtk_signal_connect (GTK_OBJECT (d->dialog), "destroy", 
-			GTK_SIGNAL_FUNC (cleanfun), 
+			GTK_SIGNAL_FUNC (destroy_dialog_data), 
 			d);
+    gtk_signal_connect (GTK_OBJECT (d->dialog), "destroy", 
+			GTK_SIGNAL_FUNC (dialog_unblock), NULL);
 
     button = gtk_radio_button_new_with_label (NULL, _("Stacked time series"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
@@ -1428,7 +1431,6 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
 
     /* Create the "Cancel" button */
     tempwid = gtk_button_new_with_label (_("Cancel"));
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
     gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
@@ -1438,11 +1440,10 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
 
     /* Create a "Help" button */
     tempwid = gtk_button_new_with_label (_("Help"));
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
     gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-			GTK_SIGNAL_FUNC (helpfun), 
+			GTK_SIGNAL_FUNC (context_help), 
 			GINT_TO_POINTER (PANEL));
     gtk_widget_show(tempwid);
 

@@ -4223,6 +4223,9 @@ int maybe_restore_full_data (int action)
 
 /* ........................................................... */
 
+#define DATA_EXPORT(o) (o == OPT_M || o == OPT_R || \
+                        o == OPT_A || o == OPT_C)
+
 int do_store (char *savename, unsigned long oflag, int overwrite)
 {
     gchar *msg, *tmp = NULL;
@@ -4237,32 +4240,33 @@ int do_store (char *savename, unsigned long oflag, int overwrite)
     /* "storelist" is a global */
     if (storelist == NULL) showlist = 0;
 
-    if (oflag != 0) { /* not a standard native save */
+    if (oflag != 0) { 
+	/* not a bog-standard native save */
 	const char *flagstr = print_flags(oflag);
 
 	tmp = g_strdup_printf("store '%s' %s%s", savename, 
 			      (showlist)? storelist : "", flagstr);
-    } else if (dat_suffix(savename)) { /* saving as ".dat" */
+    } else if (dat_suffix(savename)) { 
+	/* saving in "tradtional" mode as ".dat" */
 	tmp = g_strdup_printf("store '%s' %s -t", savename, 
 			      (showlist)? storelist : "");
 	oflag = OPT_T;
     } else {
-	if (!overwrite) {
-	    fp = fopen(savename, "rb");
-	    if (fp != NULL) {
-		fclose(fp);
-		if (yes_no_dialog(_("gretl: save data"), 
-				  _("There is already a data file of this name.\n"
-				    "OK to overwrite it?"), 
-				  0) == GRETL_NO) {
-		    goto store_get_out;
-		}
-	    }
-	}
+	/* standard data save */
 	tmp = g_strdup_printf("store '%s' %s", savename, 
 			      (showlist)? storelist : ""); 
-	if (paths.datfile != savename) {
-	    strcpy(paths.datfile, savename);
+    }
+
+    if (!overwrite) {
+	fp = fopen(savename, "rb");
+	if (fp != NULL) {
+	    fclose(fp);
+	    if (yes_no_dialog(_("gretl: save data"), 
+			      _("There is already a data file of this name.\n"
+				"OK to overwrite it?"), 
+			      0) == GRETL_NO) {
+		goto store_get_out;
+	    }
 	}
     }
 
@@ -4282,6 +4286,7 @@ int do_store (char *savename, unsigned long oflag, int overwrite)
 	}
     }
 
+    /* actually write the data to file */
     if (write_data(savename, cmd.list, Z, datainfo, 
 		   data_option(oflag), &paths)) {
 	sprintf(errtext, _("Write of data file failed\n%s"),
@@ -4291,19 +4296,23 @@ int do_store (char *savename, unsigned long oflag, int overwrite)
 	goto store_get_out;
     }
 
-    if (oflag != OPT_M && oflag != OPT_R && oflag != OPT_A) {
+    /* record that data have been saved, etc. */
+    if (!DATA_EXPORT(oflag)) {
 	mkfilelist(FILE_LIST_DATA, savename);
+	if (paths.datfile != savename) {
+	    strcpy(paths.datfile, savename);
+	}
+	data_status = (HAVE_DATA | USER_DATA);
+	if (is_gzipped(paths.datfile)) {
+	    data_status |= GZIPPED_DATA;
+	}
+	set_sample_label(datainfo);	
     }
 
+    /* tell the user */
     msg = g_strdup_printf(_("%s written OK"), savename);
     infobox(msg);
     g_free(msg);
-
-    /* record that data have been saved */
-    if (!oflag) {
-	data_status = (HAVE_DATA | USER_DATA);
-	set_sample_label(datainfo);
-    }
 
  store_get_out:
 

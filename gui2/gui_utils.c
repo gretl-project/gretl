@@ -729,6 +729,9 @@ void register_data (char *fname, const char *user_fname,
 	} else {
 	    data_status |= USER_DATA; 
 	}
+	if (is_gzipped(paths.datfile)) {
+	    data_status |= GZIPPED_DATA;
+	}
     }
 
     /* sync main window with datafile */
