@@ -50,7 +50,7 @@ static int printvars (FILE *fp, int t, const int *list, double **Z,
 	    if (i == 1) { /* the x variable */
 		xx += offset;
 	    }
-	    fprintf(fp, "%g ", xx);
+	    fprintf(fp, "%.8g ", xx);
 	}
     }
 
@@ -808,7 +808,7 @@ int gnuplot (LIST list, const int *lines,
 	xrange = xmax - xmin;
 	xmin -= xrange * .025;
 	xmax += xrange * .025;
-	fprintf(fq, "set xrange [%g:%g]\n", xmin, xmax);
+	fprintf(fq, "set xrange [%.8g:%.8g]\n", xmin, xmax);
 	xrange = xmax - xmin;
     }
 
@@ -908,9 +908,9 @@ int gnuplot (LIST list, const int *lines,
 		if (na(xx)) continue;
 		yy = (i)? yvar2[t-t1] : yvar1[t-t1];
 		if (na(yy)) {
-		    fprintf(fq, "%f ?\n", xx);
+		    fprintf(fq, "%.8g ?\n", xx);
 		} else {
-		    fprintf(fq, "%g %g", xx, yy);
+		    fprintf(fq, "%.8g %.8g", xx, yy);
 		    if (!ts_plot && pdinfo->markers) {
 			fprintf(fq, " # %s", pdinfo->S[t]);
 		    }
@@ -1047,11 +1047,11 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
 	    m = (yvar)? plotlist[i+1] : xvar;
 	    xx = (*pZ)[m][t];
 	    if (na(xx)) fputs("? ", fp);
-	    else fprintf(fp, "%g ", xx);
+	    else fprintf(fp, "%.8g ", xx);
 	    m = (yvar)? yvar : plotlist[i+1];
 	    xx = (*pZ)[m][t];
 	    if (na(xx)) fputs("?\n", fp);
-	    else fprintf(fp, "%g\n", xx);
+	    else fprintf(fp, "%.8g\n", xx);
 	}
 	fputs("e\n", fp);
 #ifdef ENABLE_NLS
@@ -1152,7 +1152,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	/* adjust max if needed */
 	if (freq->midpt[K-1] > plotmax) plotmax = freq->midpt[K-1];
 
-	fprintf(fp, "set xrange [%g:%g]\n", plotmin, plotmax);
+	fprintf(fp, "set xrange [%.8g:%.8g]\n", plotmin, plotmax);
 	fputs("set key right top\n", fp);
 	fputs("plot \\\n", fp);
 
@@ -1183,7 +1183,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 
     /* send sample data inline */
     for (i=0; i<K; i++) { 
-	fprintf(fp, "%g %g\n", freq->midpt[i], lambda * freq->f[i]);
+	fprintf(fp, "%.8g %.8g\n", freq->midpt[i], lambda * freq->f[i]);
     }
     fputs("e\n", fp);
 
@@ -1222,15 +1222,15 @@ int plot_fcast_errs (int n, const double *obs,
     setlocale(LC_NUMERIC, "C");
 #endif
     for (t=0; t<n; t++) {
-	fprintf(fp, "%g %g\n", obs[t], depvar[t]);
+	fprintf(fp, "%.8g %.8g\n", obs[t], depvar[t]);
     }
     fputs("e\n", fp);
     for (t=0; t<n; t++) {
-	fprintf(fp, "%g %g\n", obs[t], yhat[t]);
+	fprintf(fp, "%.8g %.8g\n", obs[t], yhat[t]);
     }
     fputs("e\n", fp);
     for (t=0; t<n; t++) {
-	fprintf(fp, "%g %g %g\n", obs[t], yhat[t], maxerr[t]);
+	fprintf(fp, "%.8g %.8g %.8g\n", obs[t], yhat[t], maxerr[t]);
     }
     fputs("e\n", fp);
 #ifdef ENABLE_NLS
@@ -1417,14 +1417,14 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 		fputs("? ", fp);
 		miss = 1;
 	    } else {
-		fprintf(fp, "%g ", xx);
+		fprintf(fp, "%.8g ", xx);
 	    }
 	    xx = spec->data[plotn * i + t - spec->t1];
 	    if (na(xx)) {
 		fputc('?', fp);
 		miss = 1;
 	    } else {
-		fprintf(fp, "%g", xx);
+		fprintf(fp, "%.8g", xx);
 	    }
 	    if (spec->labels != NULL && datlines == 1) {
 		fprintf(fp, " # %s", spec->labels[t]);

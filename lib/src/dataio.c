@@ -1033,8 +1033,8 @@ int get_precision (double *x, int n)
 	if (x[i] < 1.0e-6 || x[i] > 1.0e+8) {
 	    return 999;
 	}
-	p = 6;
-	sprintf(numstr, "%f", x[i]);
+	p = 8;
+	sprintf(numstr, "%.8f", x[i]);
 	s = numstr + strlen(numstr) - 1;
 	while (*s-- == '0') p--;
 	if (p > pmax) pmax = p;
