@@ -689,8 +689,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     */
 
     genr.scalar = 1;
-    gretl_errmsg[0] = '\0';
-    genr.label[0] = '\0';
+    *gretl_errmsg = '\0';
+    *genr.label = '\0';
 
     *s = *genrs = *snew = *sleft = '\0';
     get_genr_formula(s, line);
@@ -3154,8 +3154,63 @@ static void varerror (const char *ss)
 
 /* .......................................................... */
 
+/* ensure there's no gap betweeen a minus sign and the term
+   it qualifies, in a "sim" command */
+
+static char *close_minus (char *str)
+{
+    char *q, *p = str;
+
+    while ((p = strchr(p, '-'))) {
+	q = ++p;
+	while (*q == ' ') q++;
+	if (q != p) {
+	    memmove(p, q, strlen(q) + 1);
+	}
+    }
+
+    return str;
+}
+
+/* construct a descriptive label for a variable that is
+   modified via the "sim" command */
+
+static char *make_sim_label (char *label, const char *vname,
+			     char **parm, int nparm)
+{
+    int k, neg, started = 0;
+    char term[32];
+
+    sprintf(label, "%s(t)=", vname);
+
+    for (k=0; k<nparm; k++) {
+	if (isdigit(*parm[k]) && dot_atof(parm[k]) == 0.0) {
+	    continue;
+	}
+	if (k == 0) {
+	    strcpy(term, parm[k]);
+	} else {
+	    neg = (*parm[k] == '-');
+	    sprintf(term, "%s%s*%s(t-%d)", (neg)? "-" : 
+		    (started)? "+" : "",
+		    parm[k] + neg, vname, k);
+	}
+	if (strlen(label) + strlen(term) >= MAXLABEL - 4) {
+	    if (strlen(label) < MAXLABEL - 4) {
+		strcat(label, "...");
+	    }
+	    break;
+	} else {
+	    strcat(label, term);
+	}
+	started = 1;
+    }
+	
+    return label;
+}
+
 int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
-     /* implements "sim" command */
+     /* implements the "sim" command */
 {
     int f, i, t, t1, t2, m, nv = 0, pv;
     char varname[VNAMELEN], parm[16], tmpstr[MAXLEN];
@@ -3164,6 +3219,8 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
     int vtok = 0, err = 0;
 
     *gretl_errmsg = '\0';
+
+    close_minus(cmd);
 
     f = _count_fields(cmd);
     m = f - 2; /* default: allow for command word varname */
@@ -3291,14 +3348,16 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 
  sim_bailout:
 
-    free(a);
-    free(isconst);
-    free(toks);
-
     if (!err && nv > 0) {
 	sprintf(gretl_msg, "%s %s %s (ID %d)", 
 		_("Replaced"), _("vector"), pdinfo->varname[nv], nv);
+	make_sim_label(VARLABEL(pdinfo, nv), pdinfo->varname[nv],
+		       toks + vtok + 1, m);
     }
+
+    free(a);
+    free(isconst);
+    free(toks);
 
     return err;
 }

@@ -260,13 +260,6 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	break;
 
     case STORE:
-#ifdef notdef
-	if (plp->type != COUNT_LOOP) {
-	    pputs(prn, _("The store command is not available in "
-		    "this sort of loop.\n"));
-	    return 1;
-	}
-#endif
 	if (lround == 0) {
 	    plp->nstore = command.list[0];
 	    strcpy(loopstorefile, command.param);

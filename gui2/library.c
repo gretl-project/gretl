@@ -3845,10 +3845,6 @@ void display_var (void)
 
 /* ........................................................... */
 
-#define PGRAB /* downside is that this _may_ cause a lockup of the GUI,
-		 if execute_script() fails to terminate.  Hopefully
-		 we have made that very unlikely... */
-
 void do_run_script (gpointer data, guint code, GtkWidget *w)
 {
     PRN *prn;
@@ -3890,20 +3886,17 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	}
 
 	plswait = gdk_cursor_new(GDK_WATCH);
-	gdk_window_set_cursor(mdata->w->window, plswait);
-#if 0
 	gdk_pointer_grab(mydata->dialog->window, TRUE,
 			 GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK |
 			 GDK_BUTTON_RELEASE_MASK,
 			 NULL, plswait,
-			 GDK_CURRENT_TIME); /* FIXME: localize the grab? */
-#endif
+			 GDK_CURRENT_TIME); 
+	gdk_cursor_destroy(plswait);
 
 	err = execute_script(NULL, buf, prn, code);
 	g_free(buf);
-	gdk_window_set_cursor(mdata->w->window, NULL);
-	gdk_cursor_destroy(plswait);
-	/* gdk_pointer_ungrab(GDK_CURRENT_TIME); */
+
+	gdk_pointer_ungrab(GDK_CURRENT_TIME);
     } else {
 	/* get commands from file */
 	err = execute_script(runfile, NULL, prn, code);
@@ -4519,8 +4512,9 @@ int execute_script (const char *runfile, const char *buf,
 	    }
 	    i = 0;
 	    while (!aborted && loop_condition(i, &loop, Z, datainfo)) {
-		if (loop.type == FOR_LOOP && !echo_off)
+		if (loop.type == FOR_LOOP && !echo_off) {
 		    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
+		}
 		for (j=0; j<loop.ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, prn)) {
 			pprintf(prn, _("Error in command loop: aborting\n"));
@@ -4530,6 +4524,9 @@ int execute_script (const char *runfile, const char *buf,
 		}
 		i++;
 	    }
+	    if (loop.err) {
+		pprintf(prn, "\n%s\n", get_gretl_errmsg());
+	    }	    
 	    if (!aborted && loop.type != FOR_LOOP) {
 		print_loop_results(&loop, datainfo, prn, &paths, 
 				   &model_count, loopstorefile);

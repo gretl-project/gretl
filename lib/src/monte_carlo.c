@@ -164,6 +164,22 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
     return 1;
 }
 
+#define DEFAULT_MAX_ITER 250
+
+static int get_maxloop (void)
+{
+    static int ml = 0;
+
+    if (ml == 0) {
+	char *mlstr = getenv("GRETL_MAX_ITER");
+
+	if (mlstr != NULL && sscanf(mlstr, "%d", &ml)) ;
+	else ml = DEFAULT_MAX_ITER;
+    }
+
+    return ml;
+}
+
 /**
  * loop_condition:
  * @k: in case of a simple count loop, the number of iterations so far.
@@ -176,16 +192,22 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
  * Returns: 1 to indicate looping should continue, 0 to terminate.
  */
 
-#define MAXLOOP 20000
-
 int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 {
     int t, cont = 0;
+    static int maxloop = 0;
+
+    if (maxloop == 0) maxloop = get_maxloop();
 
     /* case of an inequality between variables */
     if (ploop->rvar > 0) {
 	ploop->ntimes += 1;
-	if (ploop->ntimes >= MAXLOOP) return 0; /* safety measure */
+	if (ploop->ntimes >= maxloop) {
+	    sprintf(gretl_errmsg, _("Warning: no convergence after %d interations"),
+		    maxloop);
+	    ploop->err = 1;
+	    return 0; /* safety measure */
+	}
 	if (ploop->ineq == GT) {
 	    cont = (Z[ploop->lvar][0] > Z[ploop->rvar][0]);
 	} else {
@@ -202,7 +224,12 @@ int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
     else if (ploop->lvar) {
 	/* case of inequality between a var and a number */
 	ploop->ntimes += 1;
-	if (ploop->ntimes >= MAXLOOP) return 0; /* safety measure */
+	if (ploop->ntimes >= maxloop) {
+	    sprintf(gretl_errmsg, _("Warning: no convergence after %d interations"),
+		    maxloop);
+	    ploop->err = 1;
+	    return 0; /* safety measure */
+	}
 	if (ploop->ineq == GT) {
 	    cont = (Z[ploop->lvar][0] > ploop->rval);
 	} else {
@@ -222,6 +249,7 @@ int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 static int monte_carlo_init (LOOPSET *ploop)
 {
     ploop->ntimes = 0;
+    ploop->err = 0;
     ploop->lvar = 0;
     ploop->rvar = 0;
     ploop->rval = 0;

@@ -68,6 +68,7 @@ typedef struct {
 
 typedef struct {
     char type;
+    int err;
     int ntimes;
     int lvar, rvar;
     double rval;

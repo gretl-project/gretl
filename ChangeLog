@@ -22,8 +22,9 @@ version 1.2.0
   comparisons, e.g. "genr dummy = t > 1973:4" will work for 
   quarterly data
 - Allow '#' comments in loop constructions
-- sim command: allow "full" in place of specifying starting and
-  ending observations, to simulate over the full sample range
+- sim command: allow omission of starting and ending observations, 
+  to simulate over the full sample range; also allow the use
+  of a minus sign to get the negative of a variable
 - VARs: add facility to separate deterministic terms such as 
   trend and dummies from the other variables in the regression 
   list; add Durbin-Watson statistic to model printouts; add 
@@ -42,6 +43,9 @@ version 1.2.0
 - Add a "lite" version of gtksourceview to the gtk2 source package
 - Add recognition of dated daily data in importing from ASCII:
   dates must be like 89/12/31, i.e. YY/MM/DD
+- Loops governed by a convergence criterion: set a failsafe
+  maximum number of iterations, namely 250.  This can be altered
+  by setting the environment variable GRETL_MAX_ITER
 - Update to gcc-3.3.1 and mingw-runtime-3.2 for Windows build
 
 10/31/2003 version 1.1.6

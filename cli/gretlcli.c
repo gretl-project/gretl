@@ -451,8 +451,9 @@ int main (int argc, char *argv[])
 	    }
 	    i = 0;
 	    while (!aborted && loop_condition(i, &loop, Z, datainfo)) {
-		if (loop.type == FOR_LOOP && !echo_off)
+		if (loop.type == FOR_LOOP && !echo_off) {
 		    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
+		}
 		for (j=0; j<loop.ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, prn)) {
 			printf(_("Error in command loop: aborting\n"));
@@ -460,6 +461,9 @@ int main (int argc, char *argv[])
 		    }
 		}
 		i++;
+	    }
+	    if (loop.err) {
+		pprintf(prn, "\n%s\n", get_gretl_errmsg());
 	    }
 	    if (!aborted) {
 		if (loop.type != FOR_LOOP) {
