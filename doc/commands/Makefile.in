@@ -18,6 +18,7 @@ LIBTOOL = ../../libtool
 
 CMDSDIR = $(topsrc)/doc/commands
 CHAPDIR = $(topsrc)/doc/chapters
+CHAPDIR_IT = $(topsrc)/doc/chapters_it
 SHAREDIR = $(topsrc)/share
 
 CMDSRC = $(CMDSDIR)/gretl_commands.xml \
@@ -70,11 +71,10 @@ docbook: xsltrans $(CMDSDIR)/gretl_commands.xml $(MANXSL) $(XMLSTRS)
 	cp cmdlist.xml $(CHAPDIR)/cmdlist.xml && \
 	rm cmdlist.xml
 
-# Generate docbook XML for a standalone command-reference
-docbook-standalone: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(MANXSL)
-	./xsltrans --docbook-standalone $(CMDSDIR)/gretl_commands_it.xml && \
-	cp cmdlist_standalone.xml $(CHAPDIR)/cmdlist_standalone_it.xml && \
-	rm cmdlist_standalone.xml
+docbook_it: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(MANXSL) $(XMLSTRS)
+	./xsltrans --docbook $(CMDSDIR)/gretl_commands_it.xml && \
+	cp cmdlist.xml $(CHAPDIR_IT)/cmdlist.xml && \
+	rm cmdlist.xml
 
 # Generate "online" help files, gretlcli.hlp and gretl.hlp
 hlp: xsltrans reflow $(CMDSRC) $(HLPXSL) $(XMLSTRS)

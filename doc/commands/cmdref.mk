@@ -8,9 +8,9 @@ docbook: xsltrans gretl_commands.xml gretlman.xsl
 	./xsltrans --docbook gretl_commands.xml && \
 	cp cmdlist.xml ../chapters/cmdlist.xml
 
-docbook-standalone: xsltrans gretl_commands_it.xml gretlman.xsl
-	./xsltrans --docbook-standalone gretl_commands_it.xml && \
-	cp cmdlist_standalone.xml ../chapters/cmdlist_standalone_it.xml
+docbook_it: xsltrans gretl_commands_it.xml gretlman.xsl
+	./xsltrans --docbook gretl_commands_it.xml && \
+	cp cmdlist.xml ../chapters_it/cmdlist.xml
 
 xsltrans: xsltrans.c 
 	$(CC) $(XML_CFLAGS) -o $@ $^ $(XML_LIBS)

@@ -2,7 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
 "/usr/share/sgml/docbook-xml-4.1.2/docbookx.dtd" [
 
-<!ENTITY version "1.0.7">
+<!ENTITY version "1.0.8">
 <!ENTITY latex "LaTeX">
 <!ENTITY tex "TeX">
 <!ENTITY opto "<literal>[ -o ]</literal>">
@@ -17,6 +17,7 @@
 <!ENTITY graphs SYSTEM "chapters/graphs.xml">
 <!ENTITY nls SYSTEM "chapters/nls.xml">
 <!ENTITY looping SYSTEM "chapters/looping.xml">
+<!ENTITY functions SYSTEM "chapters/functions.xml">
 <!ENTITY optarg SYSTEM "chapters/optarg.xml">
 <!ENTITY cmdref SYSTEM "chapters/cmdref.xml">
 <!ENTITY cmdlist SYSTEM "chapters/cmdlist.xml">
@@ -53,7 +54,7 @@
       <holder>Allin Cottrell</holder>
     </copyright>
 
-    <date>May, 2004</date>
+    <date>October, 2004</date>
 
     <legalnotice id="legalnotice">
       <para>Permission is granted to copy, distribute and/or modify
@@ -66,7 +67,7 @@
     </legalnotice>
 
     <releaseinfo>
-      This is version 1.0.6 of the Gretl manual.
+      This is version &version; of the Gretl manual.
     </releaseinfo>
 
   </bookinfo>
@@ -80,6 +81,7 @@
   &graphs;
   &nls;
   &looping;
+  &functions;
   &optarg;
   &cmdref;
   &trouble;

@@ -17,14 +17,21 @@ CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/panel.xml chapters/appendices.xml chapters/datafiles.xml \
 	chapters/nls.xml chapters/looping.xml chapters/starting.xml \
 	chapters/cli.xml chapters/graphs.xml chapters/optarg.xml \
-	chapters/trouble.xml chapters/biblio.xml chapters/sampling.xml
+	chapters/trouble.xml chapters/biblio.xml chapters/sampling.xml \
+	chapters/functions.xml
+
+CHAPTERS_IT = chapters_it/cmdref.xml chapters_it/intro.xml chapters_it/modes.xml \
+	chapters_it/panel.xml chapters_it/appendices.xml chapters_it/datafiles.xml \
+	chapters_it/nls.xml chapters_it/looping.xml chapters_it/starting.xml \
+	chapters_it/cli.xml chapters_it/graphs.xml chapters_it/optarg.xml \
+	chapters_it/trouble.xml chapters_it/biblio.xml chapters_it/sampling.xml
 
 CMDLIST = chapters/cmdlist.xml
-CMDLIST_STANDALONE = chapters/cmdlist_standalone_it.xml
-CMDREF_WRAPPER = chapters/cmdref_standalone_it.xml
+CMDLIST_IT = chapters_it/cmdlist.xml
 
 CMDREF = commands/gretl_commands.xml
 CMDREF_IT = commands/gretl_commands_it.xml
+
 MANXSL = commands/gretlman.xsl
 
 %.pdf: %.tex
@@ -38,6 +45,8 @@ all: manual.pdf manual-a4.pdf html chm # thumbs altthumbs
 manual.pdf: manual.tex jadetex.cfg lucidabr.tex
 
 manual-a4.pdf: manual-a4.tex jadetex.cfg lucidabr.tex
+
+manual_it.pdf: manual_it.tex jadetex.cfg lucidabr.tex
 
 thumbs: manual.pdf
 	thumbpdf manual
@@ -55,26 +64,28 @@ manual-a4.tex: manual-a4.xml $(CHAPTERS) $(ALTDSL) $(MATHSS) $(CMDLIST)
 	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
+manual_it.tex: manual_it.xml $(CHAPTERS_IT) $(ALTDSL) $(MATHSS) $(CMDLIST_IT)
+	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
+	./unescape_math.pl $@
+
 manual-a4.xml: manual.xml
 	cp $< $@
 
-# Italian standalone PDF command reference
-
-cmdbook_it.pdf: cmdbook_it.tex jadetex.cfg lucidabr.tex
-
-cmdbook_it.tex: cmdbook_it.xml $(CMDREF_WRAPPER) $(ALTDSL) $(MATHSS) $(CMDLIST_STANDALONE)
-	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
-	./unescape_math.pl $@
+# command reference section
 
 $(CMDLIST): $(CMDREF) $(MANXSL) 
 	make -C commands -f cmdref.mk docbook
 
-$(CMDLIST_STANDALONE): $(CMDREF) $(MANXSL) 
-	make -C commands -f cmdref.mk docbook-standalone
+$(CMDLIST_IT): $(CMDREF) $(MANXSL) 
+	make -C commands -f cmdref.mk docbook_it
 
 html: manual.xml db2html $(DSL) $(HMATHSS) 
 	./db2html manual.xml
 	./texmath2png.pl manual.html/equation-list.sgml
+
+html_it: manual_it.xml db2html $(DSL) $(HMATHSS) 
+	./db2html manual_it.xml
+	./texmath2png.pl manual_it.html/equation-list.sgml
 
 # make windows HTML help file for gretl
 
@@ -88,12 +99,20 @@ chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml
 	$(SAXON) ../$(topdoc)/manual.xml ../$(topdoc)/gretlhlp.xsl \
 	tex.math.in.alt=latex && $(HHC) gretl.hhp
 
+chm_it: $(topdoc)/manual_it.xml $(topdoc)/chapters_it/*.xml 
+	mkdir -p manual_it.chm/figures
+	cp $(topdoc)/figures/*.png manual_it.chm/figures
+	for f in manual_it.chm/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
+	cd manual_it.chm && \
+	$(SAXON) ../$(topdoc)/manual_it.xml ../$(topdoc)/gretlhlp.xsl \
+	tex.math.in.alt=latex && $(HHC) gretl_it.hhp
+
 clean:
-	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex
-	rm -rf manual.html manual.chm
+	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex manual_it.tex
+	rm -rf manual.html manual.chm manual_it.html manual_it.chm
 
 texclean:
-	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex cmdbook.tex
+	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex manual_it.tex
 
 install: 
 	cp manual.pdf manual-a4.pdf $(WEBDIR)

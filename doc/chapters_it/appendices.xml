@@ -448,7 +448,7 @@
     Inoltre, il modo esatto in cui R viene avviato dipende dalla variabile
     interna <varname>Rcommand</varname> di
     <application>gretl</application>, il cui valore deve essere impostato
-    nel menù <guimenutitem>File, Preferenze</guimenuitem>. Il comando
+    nel menù <guimenuitem>File, Preferenze</guimenuitem>. Il comando
     predefinito è <command>RGui.exe</command> in MS Windows, mentre in X è
     <command>R --gui=gnome</command> se al momento della compilazione è
     stata trovata un'installazione del desktop Gnome

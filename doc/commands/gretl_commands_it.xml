@@ -4715,14 +4715,13 @@
 	i valori stimati (<cmd>fitted</cmd>). Il sistema deve contenere
         almeno due equazioni specificate con il comando
         <cmd>equation</cmd> e deve essere chiuso con la riga <cmd>end
-        system</cmd>.
+        system</cmd>.</para>
 
       <para>
         Nel contesto di un sistema minimi quadrati a tre stadi, è possibile
         fornire un elenco di strumenti (indicando le variabili per nome o per
         numero), inserendole in una riga a sé stante, all'interno del blocco
         <cmd>system</cmd>, preceduta dall'istruzione <cmd>instr</cmd>.
-      </para>
       </para>
     </description>
 

@@ -268,7 +268,7 @@
 	Il modello a effetti fissi aggiunge una variabile dummy per
         tutte le unità cross section tranne una, permettendo così
         all'intercetta della regressione di variare per ogni unità.
-	Viene eseguito un test <mathvar>F</mathvar> per la
+	Viene eseguito un test <emphasis>F</emphasis> per la
         significatività congiunta di queste dummy: un basso p-value per
         questo test va contro l'ipotesi nulla (che il semplice modello
         pooled OLS sia adeguato) e a favore del modello a effetti
