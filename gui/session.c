@@ -21,13 +21,16 @@
 
 #include "gretl.h"
 #include "selector.h"
+#include "boxplots.h"
 #include "gpt_control.h"
 #include "guiprint.h"
-#include "boxplots.h"
+#include "model_table.h"
+
+#include <gdk-pixbuf/gdk-pixbuf.h>
+
 #include <sys/stat.h>
 #include <unistd.h>
-
-#include <gtkextra/gtkextra.h>
+#include <errno.h>
 
 #include "../pixmaps/model.xpm"
 #include "../pixmaps/boxplot.xpm"
@@ -38,15 +41,14 @@
 #include "../pixmaps/xfm_make.xpm"
 #include "../pixmaps/rhohat.xpm"
 #include "../pixmaps/summary.xpm"
+#include "../pixmaps/model_table.xpm"
 
 /* #define SESSION_DEBUG */
 
-/* from gui_utils.c */
-extern void winstack_init (void);
-extern void winstack_destroy (void);
-
-static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
-static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
+enum {
+    ICON_ADD_BATCH,
+    ICON_ADD_SINGLE
+};
 
 enum {
     SAVEFILE_SESSION,
@@ -54,11 +56,40 @@ enum {
     SAVEFILE_ERROR
 };
 
+static GtkTargetEntry model_table_drag_target = {
+    "model_pointer", GTK_TARGET_SAME_APP, GRETL_MODEL_POINTER 
+};
+
+/* from gui_utils.c */
+extern void winstack_init (void);
+extern void winstack_destroy (void);
+extern GtkTooltips *gretl_tips;
+
+extern int replay; /* lib.c */
+extern void show_spreadsheet (DATAINFO *pdinfo); /* ssheet.c */
+
+static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
+static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
+
 /* "session" struct and "errtext" are globals */
+
+static char *global_items[] = {
+    N_("Arrange icons"),
+#ifndef GNUPLOT_PNG
+    N_("Add last graph"),
+#endif
+    N_("Close window")
+};
 
 static char *model_items[] = {
     N_("Display"),
+    N_("Add to model table"),
     N_("Delete")
+};
+
+static char *model_table_items[] = {
+    N_("Display"),
+    N_("Clear table")
 };
 
 static char *graph_items[] = {
@@ -103,44 +134,59 @@ GtkItemFactoryEntry gp_edit_items[] = {
     { NULL, NULL, NULL, 0, NULL }
 };
 
+GtkItemFactoryEntry boxplot_edit_items[] = {
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" }, 
+    { N_("/File/_Save"), NULL, auto_save_gp, 0, NULL },
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_GP_CMDS, NULL },
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
+    { NULL, NULL, NULL, 0, NULL }
+};
+
+/* file-scope globals */
 static int session_file_open;
 
 static GtkWidget *iconview;
+static GtkWidget *icon_table;
+static GtkWidget *global_popup;
 static GtkWidget *session_popup;
 static GtkWidget *model_popup;
+static GtkWidget *model_table_popup;
 static GtkWidget *graph_popup;
+static GtkWidget *boxplot_popup;
 static GtkWidget *data_popup;
 static GtkWidget *info_popup;
-static GtkWidget *slist;
-static GList *gobjects;
-static GtkIconListItem *active_icon;
 static GtkWidget *addgraph;
 
-extern void show_spreadsheet (char *dataspec);
+static GList *icon_list;
+static gui_obj *active_object;
 
 /* private functions */
 static void session_build_popups (void);
+static void global_popup_activated (GtkWidget *widget, gpointer data);
 static void session_popup_activated (GtkWidget *widget, gpointer data);
 static void object_popup_activated (GtkWidget *widget, gpointer data);
 static void data_popup_activated (GtkWidget *widget, gpointer data);
 static void info_popup_activated (GtkWidget *widget, gpointer data);
-static gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort);
-static gui_obj *session_add_object (gpointer data, int sort);
+static gui_obj *gui_object_new (gchar *name, int sort);
+static void session_add_icon (gpointer data, int sort, int mode);
+static void session_delete_icon (gui_obj *gobj);
 static void open_gui_model (gui_obj *gobj);
 static void open_gui_graph (gui_obj *gobj);
 static void open_boxplot (gui_obj *gobj);
-static void session_open_object (GtkWidget *widget, 
-				 GtkIconListItem *item, GdkEvent *event,
-				 gpointer data);
+static gboolean session_icon_click (GtkWidget *widget, 
+				    GdkEventButton *event,
+				    gpointer data);
 
 /* ........................................................... */
 
 static int rebuild_init (SESSIONBUILD *rebuild)
 {
     rebuild->nmodels = 0;
-    rebuild->model_ID = malloc(sizeof(int));
+    rebuild->model_ID = malloc(sizeof *rebuild->model_ID);
     if (rebuild->model_ID == NULL) return 1;
-    rebuild->model_name = malloc(sizeof(char *));
+    rebuild->model_name = malloc(sizeof *rebuild->model_name);
     if (rebuild->model_name == NULL) return 1;
     rebuild->model_name[0] = malloc(64);
     if (rebuild->model_name[0] == NULL) return 1;
@@ -183,40 +229,46 @@ static void edit_session_notes (void)
 		EDIT_NOTES);
 }
 
-/* ........................................................... */
+/* .................................................................. */
 
 void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 {
-    char grname[12], pltname[MAXLEN], savedir[MAXLEN];
+    char pltname[MAXLEN], savedir[MAXLEN];
+    char grname[32];
     int i = session.ngraphs;
     int boxplot_count;
+    
+    errno = 0;
 
     get_default_dir(savedir);
 
-    if (code == GRETL_GNUPLOT_GRAPH) { 
+    if (code == GRETL_GNUPLOT_GRAPH) {
 #ifdef GNUPLOT_PNG
 	GPT_SPEC *plot = (GPT_SPEC *) data;
-#endif
 
+#endif
 	sprintf(pltname, "%ssession.Graph_%d", savedir, plot_count + 1);
 	sprintf(grname, "%s %d", _("Graph"), plot_count + 1);
 #ifdef GNUPLOT_PNG
-	if (copyfile(plot->fname, pltname) || 
-	    remove_png_term_from_plotfile(pltname)) {
+	/* move temporary plot file to permanent */
+	if (copyfile(plot->fname, pltname)) {
+	    return;
+	} 
+	if (remove_png_term_from_plotfile(pltname)) {
 	    errbox(_("Failed to copy graph file"));
 	    return;
 	}
 	remove(plot->fname);
 	strcpy(plot->fname, pltname);
-	mark_plot_as_saved(plot);
+	mark_plot_as_saved(plot);	
 #else
 	if (copyfile(paths.plotfile, pltname)) {
-	    errbox(_("No graph found"));
 	    return;
 	} 
 	remove(paths.plotfile);
 #endif
-    } else if (code == GRETL_BOXPLOT) {
+    } 
+    else if (code == GRETL_BOXPLOT) {
 	boxplot_count = augment_boxplot_count();
 	sprintf(pltname, "%ssession.Plot_%d", savedir, boxplot_count);
 	sprintf(grname, "%s %d", _("Boxplot"), boxplot_count);
@@ -224,10 +276,11 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 	    return;
 	} 
 	remove(boxplottmp);
-    } else {
+    }
+    else {
 	errbox("bad code in add_graph_to_session");
 	return;
-    }	
+    }
 
     /* write graph into session struct */
     if (session.ngraphs) {
@@ -251,12 +304,15 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
     
     session_changed(1);
 
-    if (iconview == NULL) {
-	infobox(_("Graph saved"));
-    } else {
-	session_add_object(session.graphs[i], 
-			   (code == GRETL_GNUPLOT_GRAPH)? 'g' : 'b');
+    infobox(_("Graph saved"));
+
+    if (icon_list != NULL) {
+	session_add_icon(session.graphs[i], 
+			 (code == GRETL_GNUPLOT_GRAPH)? 'g' : 'b',
+			 ICON_ADD_SINGLE);
     }
+
+    return;
 }
 
 /* ........................................................... */
@@ -267,7 +323,7 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     int i = session.nmodels;
-    char buf[24];
+    gchar *buf;
 
     for (i=0; i<session.nmodels; i++) {
 	if (session.models[i] == pmod) {
@@ -290,12 +346,14 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
     session.nmodels += 1;
     session.models[i] = pmod;
 
-    if (iconview != NULL) {
-	session_add_object(session.models[i], 'm'); 
+    /* add model icon to session display */
+    if (icon_list != NULL) {
+	session_add_icon(session.models[i], 'm', ICON_ADD_SINGLE);
     }
 
-    sprintf(buf, _("%s saved"), pmod->name);
+    buf = g_strdup_printf(_("%s saved"), pmod->name);
     infobox(buf);
+    g_free(buf);
 
     session_changed(1);
 
@@ -329,6 +387,7 @@ void session_init (void)
     session.name[0] = '\0';
     session_changed(0);
     winstack_init();
+    session_file_manager(CLEAR_DELFILES, NULL);
 }
 
 /* ........................................................... */
@@ -350,15 +409,15 @@ void do_open_session (GtkWidget *w, gpointer data)
     }
 
     fp = fopen(tryscript, "r");
-
     if (fp != NULL) {
 	fclose(fp);
 	strcpy(scriptfile, tryscript);
     } else {
-	char errbuf[MAXLEN];
+	gchar *errbuf;
 
-	sprintf(errbuf, _("Couldn't open %s\n"), tryscript);
+	errbuf = g_strdup_printf(_("Couldn't open %s\n"), tryscript);
 	errbox(errbuf);
+	g_free(errbuf);
 	delete_from_filelist(FILE_LIST_SESSION, tryscript);
 	delete_from_filelist(FILE_LIST_SCRIPT, tryscript);
 	return;
@@ -368,21 +427,17 @@ void do_open_session (GtkWidget *w, gpointer data)
     free_session();
     session_init();
 
-#ifdef SESSION_DEBUG
-    fprintf(stderr, "do_open_session: about to check %s\n", scriptfile);
-#endif
+    fprintf(stderr, I_("\nReading session file %s\n"), scriptfile);
 
     status = parse_savefile(scriptfile, &session, &rebuild);
     if (status == SAVEFILE_ERROR) return;
     if (status == SAVEFILE_SCRIPT) {
 	do_open_script(NULL, NULL);
 	return;
-    }	
-    
-    if (recreate_session(scriptfile, &session, &rebuild)) {
-	fprintf(stderr, "recreate_session failed on %s\n", scriptfile);
-	return;
     }
+
+    if (recreate_session(scriptfile, &session, &rebuild)) 
+	return;
 
     mkfilelist(FILE_LIST_SESSION, scriptfile);
 
@@ -416,8 +471,15 @@ void do_open_session (GtkWidget *w, gpointer data)
 
     /* sync gui with session */
     session_file_open = 1;
-    session_state(TRUE);
+    session_menu_state(TRUE);
     view_session();
+}
+
+/* ........................................................... */
+
+int session_file_is_open (void)
+{
+    return session_file_open;
 }
 
 /* ........................................................... */
@@ -426,7 +488,7 @@ void close_session (void)
 {
     clear_data(1); /* this was (0): why?? */
     free_session();
-    session_state(FALSE);
+    session_menu_state(FALSE);
     session_file_open = 0;
     if (iconview != NULL) 
 	gtk_widget_destroy(iconview);
@@ -442,11 +504,10 @@ void close_session (void)
 void verify_clear_data (void)
 {
     if (!expert) {
-        int resp = yes_no_dialog ("gretl",                      
-				  _("Clearing the data set will end\n"
-				    "your current session.  Continue?"), 0);
-
-        if (resp != GRETL_YES) { 
+        if (yes_no_dialog ("gretl",                      
+			   _("Clearing the data set will end\n"
+			     "your current session.  Continue?"), 
+			   0) != GRETL_YES) {
             return;
 	}
     }
@@ -497,67 +558,6 @@ void print_session (void)
     }
 }
 #endif
-
-/* ........................................................... */
-
-static int delete_session_object (gui_obj *obj)
-{
-    int i, j;
-
-    if (obj == NULL) return 0; 
-
-    if (obj->sort == 'm') { /* it's a model */
-	MODEL **ppmod, *junk = (MODEL *) obj->data;
-
-	/* special case: only one model currently */
-	if (session.nmodels == 1) {
-	    free_model(session.models[0]);
-	} else {
-	    ppmod = mymalloc((session.nmodels - 1) * sizeof(MODEL *));
-	    if (session.nmodels > 1 && ppmod == NULL) {
-		return 1;
-	    }
-	    j = 0;
-	    for (i=0; i<session.nmodels; i++) {
-		if ((session.models[i])->ID != junk->ID) 
-		    ppmod[j++] = session.models[i];
-		else 
-		    free_model(session.models[i]);
-	    }
-	    free(session.models);
-	    session.models = ppmod;
-	}
-	session.nmodels -= 1;
-    }
-    else if (obj->sort == 'g') { /* it's a graph */    
-	GRAPHT **ppgr, *junk = (GRAPHT *) obj->data;
-
-	/* special case: only one graph currently */
-	if (session.ngraphs == 1) {
-	    free(session.graphs[0]);
-	} else {
-	    ppgr = mymalloc((session.ngraphs - 1) * sizeof(GRAPHT *));
-	    if (session.ngraphs > 1 && ppgr == NULL) {
-		return 1;
-	    }
-	    j = 0;
-	    for (i=0; i<session.ngraphs; i++) {
-		if ((session.graphs[i])->ID != junk->ID) 
-		    ppgr[j++] = session.graphs[i];
-		else 
-		    free(session.graphs[i]);
-	    }
-	    free(session.graphs);
-	    session.graphs = ppgr;
-	}
-	session.ngraphs -= 1;
-    }
-
-    session_changed(1);
-
-    gtk_icon_list_remove(GTK_ICON_LIST(slist), active_icon);
-    return 0;
-}
 
 /* ........................................................... */
 
@@ -637,6 +637,8 @@ static int check_session_graph (const char *line,
 #define OBJECT_IS_MODEL(object) (strcmp(object, "model") == 0)
 #define OBJECT_IS_GRAPH(object) (strcmp(object, "graph") == 0)
 #define OBJECT_IS_PLOT(object) (strcmp(object, "plot") == 0)
+
+/* ........................................................... */
 
 int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 {
@@ -777,7 +779,6 @@ int recreate_session (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
      /* called on start-up when a "session" file is loaded */
 {
     PRN *prn;
-    extern int replay; /* lib.c */
 
     /* no printed output wanted */
     prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
@@ -801,127 +802,10 @@ int recreate_session (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 
 /* ........................................................... */
 
-static void iconview_off (GtkWidget *w, gpointer data)
-{
-    gui_obj *gobj;
-
-    iconview = NULL;
-
-    while (gobjects != NULL) {
-	gobj = (gui_obj *) gobjects->data;
-        if (gobj->name) g_free(gobj->name);
-	g_free(gobj);
-        gobjects = gobjects->next;
-    }
-    g_list_free(gobjects); /* FIXME? */
-}
-
-/* ........................................................... */
-
-static gint null_sort (gpointer a, gpointer b)
-{
-    return 0;
-}
-
-/* ........................................................... */
-
-void view_session (void)
-{
-    GtkWidget *hbox1, *scrollw1;
-    gint i;
-    gchar title[80];
-
-    if (iconview != NULL) {
-	gdk_window_show(iconview->window);
-	gdk_window_raise(iconview->window);
-	return;
-    }
-
-    sprintf(title, "gretl: %s", 
-	    (session.name[0])? session.name : _("current session"));
-    
-    iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(iconview), title);
-    gtk_widget_set_usize(iconview, 400, 300);
-    gtk_container_border_width(GTK_CONTAINER(iconview), 0);
-    gtk_signal_connect(GTK_OBJECT(iconview), "destroy",
-		       GTK_SIGNAL_FUNC(iconview_off), NULL);
-    gtk_signal_connect(GTK_OBJECT(iconview), "key_press_event",
-		       GTK_SIGNAL_FUNC(catch_view_key), 
-		       (gpointer) iconview);
-
-    session_build_popups();
-
-    hbox1 = gtk_hbox_new(FALSE,0);
-    gtk_container_add(GTK_CONTAINER(iconview), hbox1);
-    gtk_container_set_border_width(GTK_CONTAINER(hbox1), 5);
-    gtk_widget_show(hbox1);
-
-    scrollw1 = gtk_scrolled_window_new(NULL, NULL);
-    gtk_container_border_width(GTK_CONTAINER(scrollw1), 0);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollw1),
-				   GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
-    gtk_widget_show(scrollw1);
-
-    gtk_box_pack_start(GTK_BOX(hbox1), scrollw1, TRUE, TRUE, 0); 
-
-    slist = gtk_icon_list_new(48, 2);
-    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrollw1),
-					  slist);
-
-    gtk_signal_connect(GTK_OBJECT(slist), "select_icon",
-		       (GtkSignalFunc) session_open_object, NULL);
-
-    gtk_icon_list_set_editable(GTK_ICON_LIST(slist), FALSE); 
-    gtk_icon_list_set_selection_mode(GTK_ICON_LIST(slist), 
-				     GTK_SELECTION_BROWSE);
-    gtk_icon_list_set_text_space(GTK_ICON_LIST(slist), 80);
-    GTK_ICON_LIST(slist)->compare_func = (GCompareFunc) null_sort;
-
-    active_icon = NULL;
-    gobjects = NULL;
-
-    if (data_status) {
-	session_add_object(NULL, 'i');     /* data info */
-	session_add_object(NULL, 'd');     /* data file */
-	session_add_object(NULL, 'n');     /* session notes */
-	session_add_object(NULL, 'x');     /* summary stats */
-	session_add_object(NULL, 'r');     /* correlation matrix */
-    }
-
-    session_add_object(NULL, 's');         /* script file */
-
-#ifdef SESSION_DEBUG
-    fprintf(stderr, "view_session: session.nmodels = %d\n", session.nmodels);
-    fprintf(stderr, "view_session: session.ngraphs = %d\n", session.ngraphs);
-#endif
-
-    for (i=0; i<session.nmodels; i++) {
-	
-#ifdef SESSION_DEBUG
-	fprintf(stderr, "adding session.models[%d] to view\n", i);
-#endif
-	session_add_object(session.models[i], 'm');
-    }
-    for (i=0; i<session.ngraphs; i++) {
-#ifdef SESSION_DEBUG
-	fprintf(stderr, "adding session.graphs[%d] to view\n", i);
-#endif
-	/* distinguish gnuplot graphs from gretl boxplots */
-	session_add_object(session.graphs[i], 
-			   ((session.graphs[i])->sort == 1)? 'b' : 'g');
-    }
-
-    gtk_widget_show(slist);
-    gtk_widget_show(iconview);
-}
-
-/* ........................................................... */
-
 static void set_addgraph_mode (void)
 {
     GtkWidget *gmenu = 
-	gtk_item_factory_get_item(mdata->ifac, _("/Session/Add last graph"));
+	gtk_item_factory_get_item(mdata->ifac, "/Session/Add last graph");
 
     if (gmenu == NULL || addgraph == NULL) return;
 
@@ -930,170 +814,9 @@ static void set_addgraph_mode (void)
 
 /* ........................................................... */
 
-static void object_popup_show (GtkIconListItem *item, GdkEventButton *event)
+void save_session_callback (GtkWidget *w, guint code, gpointer data)
 {
-    gui_obj *gobj = (gui_obj *) gtk_icon_list_get_link(item);
-    GtkWidget *w = NULL;
-
-    active_icon = item;
-
-    switch (gobj->sort) {
-    case 'm': 
-	w = model_popup; 
-	break;
-    case 'g': 
-	w = graph_popup; 
-	break;
-    case 'd': 
-	w = data_popup; 
-	break;
-    case 'i': 
-	w = info_popup; 
-	break;
-    case 's': 
-	set_addgraph_mode(); 
-	w = session_popup; 
-	break;
-    default: 
-	break;
-    }
-	
-    gtk_menu_popup(GTK_MENU(w), NULL, NULL, NULL, NULL,
-		   event->button, event->time);
-}
-
-/* ........................................................... */
-
-static
-void session_open_object (GtkWidget *widget, 
-			  GtkIconListItem *item, GdkEvent *event,
-			  gpointer data)
-{
-    GtkIconList *iconlist;
-    gui_obj *gobj;
-    GdkModifierType mods;
-    iconlist = GTK_ICON_LIST(widget);
-
-    gdk_window_get_pointer(widget->window, NULL, NULL, &mods);
-    gobj = (gui_obj *) gtk_icon_list_get_link(item);
-    if (!event) return;
-
-    if ((mods & GDK_BUTTON1_MASK) && event->type == GDK_2BUTTON_PRESS) {
-	switch (gobj->sort) {
-	case 'm':
-	    open_gui_model(gobj); break;
-	case 'b':
-	    open_boxplot(gobj); break;
-	case 'g':
-	    open_gui_graph(gobj); break;
-	case 'd':
-	    show_spreadsheet(NULL); break;
-	case 'i':
-	    open_info(NULL, 0, NULL); break;
-	case 's':
-	    view_script_default(); break;
-	case 'n':
-	    edit_session_notes(); break;
-	case 'r':
-	    do_menu_op(NULL, CORR, NULL); break;
-	case 'x':
-	    do_menu_op(NULL, SUMMARY, NULL); break;
-	}
-    }
-
-    if (mods & GDK_BUTTON3_MASK && 
-        (gobj->sort == 'm' || 
-         gobj->sort == 'g' ||
-         gobj->sort == 'd' ||
-         gobj->sort == 'i' ||
-         gobj->sort == 's'))
-        object_popup_show(item, (GdkEventButton *) event);
-}
-
-/* ........................................................... */
-
-static void session_build_popups (void)
-{
-    GtkWidget *item;
-    int i;
-
-    if (session_popup == NULL) {
-	gint n = sizeof(session_items) / sizeof(session_items[0]);
-
-	session_popup = gtk_menu_new();
-	for (i=0; i<n; i++) {
-	    if (i < n-1) {
-		item = gtk_menu_item_new_with_label(_(session_items[i]));
-		gtk_signal_connect(GTK_OBJECT(item), "activate",
-				   (GtkSignalFunc) session_popup_activated,
-				   _(session_items[i]));
-		gtk_widget_show(item);
-		gtk_menu_append(GTK_MENU(session_popup),item);
-	    } else {
-		addgraph = gtk_menu_item_new_with_label(_(session_items[i]));
-		gtk_signal_connect(GTK_OBJECT(addgraph), "activate",
-				   (GtkSignalFunc) session_popup_activated,
-				   _(session_items[i]));
-		gtk_widget_show(addgraph);
-		gtk_menu_append(GTK_MENU(session_popup), addgraph);
-	    }
-	}
-    }
-
-    if (model_popup == NULL) {
-	model_popup = gtk_menu_new();
-	for (i=0; i<sizeof(model_items)/sizeof(model_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(_(model_items[i]));
-	    gtk_signal_connect(GTK_OBJECT(item), "activate",
-			       (GtkSignalFunc) object_popup_activated,
-			       _(model_items[i]));
-	    gtk_widget_show(item);
-	    gtk_menu_append(GTK_MENU(model_popup),item);
-	}
-    }
-
-    if (graph_popup == NULL) {
-	graph_popup = gtk_menu_new();
-	for (i=0; i<sizeof(graph_items)/sizeof(graph_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(_(graph_items[i]));
-	    gtk_signal_connect(GTK_OBJECT(item), "activate",
-			       (GtkSignalFunc) object_popup_activated,
-			       _(graph_items[i]));
-	    gtk_widget_show(item);
-	    gtk_menu_append(GTK_MENU(graph_popup),item);
-	}
-    }
-
-    if (data_popup == NULL) {
-	data_popup = gtk_menu_new();
-	for (i=0; i<sizeof(dataset_items)/sizeof(dataset_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(_(dataset_items[i]));
-	    gtk_signal_connect(GTK_OBJECT(item), "activate",
-			       (GtkSignalFunc) data_popup_activated,
-			       _(dataset_items[i]));
-	    gtk_widget_show(item);
-	    gtk_menu_append(GTK_MENU(data_popup),item);
-	}
-    }
-
-    if (info_popup == NULL) {
-	info_popup = gtk_menu_new();
-	for (i=0; i<sizeof(info_items)/sizeof(info_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(_(info_items[i]));
-	    gtk_signal_connect(GTK_OBJECT(item), "activate",
-			       (GtkSignalFunc) info_popup_activated,
-			       _(info_items[i]));
-	    gtk_widget_show(item);
-	    gtk_menu_append(GTK_MENU(info_popup),item);
-	}
-    }
-}
-
-/* ........................................................... */
-
-void save_session_callback (GtkWidget *w, guint i, gpointer data)
-{
-    if (i == 0 && session_file_open && scriptfile[0]) {
+    if (code == SAVE_AS_IS && session_file_open && scriptfile[0]) {
 	save_session(scriptfile);
 	session_changed(0);
     } else {
@@ -1103,90 +826,12 @@ void save_session_callback (GtkWidget *w, guint i, gpointer data)
 
 /* ........................................................... */
 
-static void session_popup_activated (GtkWidget *widget, gpointer data)
+#ifdef not_yet
+void delete_session_callback (GtkWidget *w, guint i, gpointer data)
 {
-    gchar *item = (gchar *) data;
-
-    if (strcmp(item, _("Save")) == 0) 
-	save_session_callback(NULL, 0, NULL);
-    else if (strcmp(item, _("Save As...")) == 0) 
-	save_session_callback(NULL, 1, NULL);
-    else if (strcmp(item, _("Add last graph")) == 0)
-	add_graph_to_session(NULL, GRETL_GNUPLOT_GRAPH, NULL);
+    dummy_call();
 }
-
-/* ........................................................... */
-
-static void info_popup_activated (GtkWidget *widget, gpointer data)
-{
-    gchar *item = (gchar *) data;
-
-    if (strcmp(item, _("View")) == 0) 
-	open_info(NULL, 0, NULL);
-    else if (strcmp(item, _("Edit")) == 0) 
-	edit_header(NULL, 0, NULL);
-}
-
-/* ........................................................... */
-
-static void data_popup_activated (GtkWidget *widget, gpointer data)
-{
-    gchar *item = (gchar *) data;
-
-    if (strcmp(item, _("Edit")) == 0) 
-	show_spreadsheet(NULL);
-    else if (strcmp(item, _("Save...")) == 0) 
-	file_save(mdata, SAVE_DATA, NULL);
-    else if (strcmp(item, _("Export as CSV...")) == 0) 
-	file_save(mdata, EXPORT_CSV, NULL);
-    else if (strcmp(item, _("Copy as CSV...")) == 0) 
-        csv_to_clipboard();
-}
-
-/* ........................................................... */
-
-static void object_popup_activated (GtkWidget *widget, gpointer data)
-{
-    gchar *item;
-    GtkIconList *iconlist;
-    gui_obj *myobject;
-
-    item = (gchar *) data;
-    iconlist = GTK_ICON_LIST(slist);
-
-    myobject = (gui_obj *) gtk_icon_list_get_link(active_icon);
-
-    if (strcmp(item, _("Display")) == 0) {
-	if (myobject->sort == 'm') open_gui_model(myobject);
-	else if (myobject->sort == 'g') open_gui_graph(myobject);
-    } 
-#ifndef GNUPLOT_PNG
-    else if (strcmp(item, _("Edit using GUI")) == 0) {
-	if (myobject->sort == 'g') {
-	    GRAPHT *graph = (GRAPHT *) myobject->data;
-
-	    start_editing_session_graph(graph->fname);
-	}
-    } 
 #endif
-    else if (strcmp(item, _("Edit plot commands")) == 0) {
-	if (myobject->sort == 'g') {
-	    GRAPHT *graph = (GRAPHT *) myobject->data;
-#ifdef GNUPLOT_PNG
-	    remove_png_term_from_plotfile(graph->fname);
-#endif
-	    view_file(graph->fname, 1, 0, 78, 400, GR_PLOT, gp_edit_items);
-	}
-    }   
-    else if (strcmp(item, _("Delete")) == 0) {
-	gchar msg[64];
-
-	sprintf(msg, _("Really delete %s?"), myobject->name);
-	if (yes_no_dialog(_("gretl: delete"), msg, 0) == GRETL_YES) {
-	    delete_session_object(myobject);
-	}
-    }
-}
 
 /* ........................................................... */
 
@@ -1223,28 +868,34 @@ static char *model_cmd_str (MODEL *pmod)
 
 /* ........................................................... */
 
-static char *graph_str (GRAPHT *graph)
+static gchar *graph_str (GRAPHT *graph)
 {
     FILE *fp;
-    char *str = NULL;
+    gchar *buf = NULL;
 
     fp = fopen(graph->fname, "r");
+
     if (fp != NULL) {
 	char xlabel[24], ylabel[24], line[48];
 	int gotxy = 0;
 
 	while (fgets(line, 47, fp) && gotxy < 2) {
-	    if (sscanf(line, "set xlabel %23s", xlabel) == 1) 
+	    if (strstr(line, "# timeseries")) {
+		break;
+	    }
+	    else if (sscanf(line, "set xlabel %23s", xlabel) == 1) {
 		gotxy++;
-	    else if (sscanf(line, "set ylabel %23s", ylabel) == 1)
+	    }
+	    else if (sscanf(line, "set ylabel %23s", ylabel) == 1) {
 		gotxy++;
+	    }
 	}
-	if (gotxy == 2 && (str = malloc(64))) {
-	    sprintf(str, "%s versus %s", ylabel, xlabel);
+	if (gotxy == 2) {
+	    buf = g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
 	}
 	fclose(fp);
     }
-    return str;
+    return buf;
 }
 
 /* ........................................................... */
@@ -1262,9 +913,10 @@ static char *boxplot_str (GRAPHT *graph)
 	if (str == NULL) return NULL;
 	str[0] = '\0';
 
-	while (fgets(line, 47, fp) && strlen(str) < MAXLEN-10) {
+	while (fgets(line, 47, fp) && strlen(str) < MAXLEN-48) {
+	    chopstr(line);
 	    if (sscanf(line, "%*d varname = %8s", vname) == 1) { 
-		strcat(str, vname);
+		strcat(str, strchr(line, '=') + 2);
 		strcat(str, " ");
 	    }
 	}
@@ -1273,90 +925,45 @@ static char *boxplot_str (GRAPHT *graph)
     return str;
 }
 
-/* ........................................................... */
-
-static gui_obj *session_add_object (gpointer data, int sort)
+static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
 {
-    gui_obj *gobj;
-    gchar *name = NULL;
-    MODEL *pmod = NULL;
-    GRAPHT *graph = NULL;
-    extern GtkTooltips *gretl_tips;
+    FILE *fp;
+    char msg[MAXLEN];
+    gchar *savestuff;
+    windata_t *mydata = (windata_t *) data;
 
-    switch (sort) {
-    case 'm':
-	pmod = (MODEL *) data;
-	name = g_strdup(pmod->name);
-	break;
-    case 'b':
-    case 'g':
-	graph = (GRAPHT *) data;
-	name = g_strdup(graph->name);
-	break;
-    case 'd':
-	name = g_strdup(_("Data set"));
-	break;
-    case 'i':
-	name = g_strdup(_("Data info"));
-	break;
-    case 's':
-	name = g_strdup(_("Session"));
-	break;
-    case 'n':
-	name = g_strdup(_("Notes"));
-	break;
-    case 'r':
-	name = g_strdup(_("Corrmat"));
-	break;
-    case 'x':
-	name = g_strdup(_("Summary"));
-	break;
-    default:
-	break;
+    if ((fp = fopen(mydata->fname, "w")) == NULL) {
+	sprintf(msg, _("Couldn't write to %s"), mydata->fname);
+	errbox(msg); 
+	return;
     }
-
-    gobj = gui_object_new(GTK_ICON_LIST(slist), name, sort);
-    if (sort == 'm') {
-	char *str = model_cmd_str(pmod);
-
-	gobj->data = pmod;
-	if (str != NULL) {
-	    gtk_tooltips_set_tip(gretl_tips, GTK_WIDGET(gobj->icon->entry), 
-				 str, NULL);
-	    free(str);
-	}
-    }
-    else if (sort == 'g') {
-	char *str = graph_str(graph);
-
-	gobj->data = graph;
-	if (str != NULL) {
-	    gtk_tooltips_set_tip(gretl_tips, GTK_WIDGET(gobj->icon->entry), 
-				 str, NULL);
-	    free(str);
-	}
-    }    
-    else if (sort == 'b') {
-	char *str = boxplot_str(graph);
-
-	gobj->data = graph;
-	if (str != NULL) {
-	    gtk_tooltips_set_tip(gretl_tips, GTK_WIDGET(gobj->icon->entry), 
-				 str, NULL);
-	    free(str);
-	}
-    }
-    else if (sort == 'd') gobj->data = paths.datfile;
-    else if (sort == 'i') gobj->data = NULL;
-    else if (sort == 's') gobj->data = cmdfile;
-    else if (sort == 'n') gobj->data = NULL;
-    else if (sort == 'x') gobj->data = NULL;
-    g_free(name);
-
-    return gobj;
+    savestuff = 
+	gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+    fprintf(fp, "%s", savestuff);
+    g_free(savestuff); 
+    fclose(fp);
+    if (!quiet) infobox(_("plot commands saved"));
 }
 
 /* ........................................................... */
+
+static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
+{
+    gchar *buf = NULL;
+    windata_t *mydata = (windata_t *) data;
+
+    auto_save_gp(data, 1, NULL);
+
+    buf = g_strdup_printf("gnuplot -persist \"%s\"", mydata->fname);
+    if (system(buf))
+        errbox(_("gnuplot command failed"));
+    g_free(buf);
+}
+
+/* ........................................................... */
+
+/* Now the apparatus for the GUI view of a gretl session in the form
+   of a window containing icons */
 
 static void open_gui_model (gui_obj *gobj)
 { 
@@ -1391,82 +998,966 @@ static void open_gui_graph (gui_obj *gobj)
 
 /* ........................................................... */
 
-extern int retrieve_boxplot (const char *fname);
-
 static void open_boxplot (gui_obj *gobj)
 {
     GRAPHT *graph = (GRAPHT *) gobj->data;
 
-    if (retrieve_boxplot(graph->fname)) 
-	errbox(_("Failed to reconstruct boxplot"));
+    retrieve_boxplot(graph->fname);
 }
 
 /* ........................................................... */
 
-static gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort)
+static void delete_delfiles (const gchar *fname, gpointer p)
+{
+    remove (fname);
+}
+
+void session_file_manager (int action, const char *fname)
+{
+    static GList *delfiles;
+
+    if (action == SCHEDULE_FOR_DELETION) {
+	gchar *delname;
+
+	delname = g_strdup(fname);
+	delfiles = g_list_append(delfiles, delname);
+    }
+
+    else if (action == REALLY_DELETE_ALL) {
+	if (delfiles != NULL) {
+	    g_list_foreach(delfiles, (GFunc) delete_delfiles, NULL);
+	    g_list_free(delfiles);
+	    delfiles = NULL;
+	}
+    }
+
+    else if (action == CLEAR_DELFILES) {
+	if (delfiles != NULL) {
+	    g_list_free(delfiles);
+	    delfiles = NULL;
+	}
+    }	     
+}
+
+/* ........................................................... */
+
+static int delete_session_object (gui_obj *obj)
+{
+    int i, j;
+
+    if (obj == NULL) return 0; 
+
+    if (obj->sort == 'm') { /* it's a model */
+	MODEL **ppmod, *junk = (MODEL *) obj->data;
+
+	remove_from_model_list(junk);
+
+	/* special case: only one model currently */
+	if (session.nmodels == 1) {
+	    free_model(session.models[0]);
+	} else {
+	    ppmod = mymalloc((session.nmodels - 1) * sizeof(MODEL *));
+	    if (session.nmodels > 1 && ppmod == NULL) {
+		return 1;
+	    }
+	    j = 0;
+	    for (i=0; i<session.nmodels; i++) {
+		if ((session.models[i])->ID != junk->ID) {
+		    ppmod[j++] = session.models[i];
+		} else {
+		    free_model(session.models[i]);
+		}
+	    }
+	    free(session.models);
+	    session.models = ppmod;
+	}
+	session.nmodels -= 1;
+    }
+    else if (obj->sort == 'g' || obj->sort == 'b') { /* it's a graph */    
+	GRAPHT **ppgr, *junk = (GRAPHT *) obj->data;
+
+	/* special case: only one graph currently */
+	if (session.ngraphs == 1) {
+	    session_file_manager(SCHEDULE_FOR_DELETION,
+				 (session.graphs[0])->fname);
+	    free(session.graphs[0]);
+	} else {
+	    ppgr = mymalloc((session.ngraphs - 1) * sizeof(GRAPHT *));
+	    if (session.ngraphs > 1 && ppgr == NULL) {
+		return 1;
+	    }
+	    j = 0;
+	    for (i=0; i<session.ngraphs; i++) {
+		if ((session.graphs[i])->ID != junk->ID) { 
+		    ppgr[j++] = session.graphs[i];
+		} else {
+		    session_file_manager(SCHEDULE_FOR_DELETION,
+					 (session.graphs[i])->fname);
+		    free(session.graphs[i]);
+		}
+	    }
+	    free(session.graphs);
+	    session.graphs = ppgr;
+	}
+	session.ngraphs -= 1;
+    }
+
+    session_changed(1);
+    replay = 0;
+
+    session_delete_icon(obj);
+
+    return 0;
+}
+
+/* ........................................................... */
+
+static void session_view_init (void)
+{
+    icon_list = NULL;
+    icon_table = NULL;
+}
+
+/* ........................................................... */
+
+static void delete_icons_at_close (gui_obj *gobj, gpointer p)
+{
+   if (gobj->name) g_free(gobj->name); 
+}
+
+static void session_view_free (GtkWidget *w, gpointer data)
+{
+    iconview = NULL;
+
+    g_list_foreach(icon_list, (GFunc) delete_icons_at_close, NULL);
+
+    g_list_free(icon_list);
+    icon_list = NULL;
+}
+
+/* ........................................................... */
+
+static GdkColor *get_white (void)
+{
+    GdkColormap *cmap;
+    static GdkColor *white;
+
+    if (white == NULL) {
+	white = malloc(sizeof *white);
+	cmap = gdk_colormap_get_system();
+	gdk_color_parse("white", white);
+	gdk_colormap_alloc_color(cmap, white, FALSE, TRUE);
+    }
+    return white;
+}
+
+/* ........................................................... */
+
+static void white_bg_style (GtkWidget *widget, gpointer data)
+{
+     GtkRcStyle *rc_style;
+     GdkColor *color = get_white();
+
+     rc_style = gtk_rc_style_new();
+     rc_style->bg[GTK_STATE_NORMAL] = *color;
+     rc_style->color_flags[GTK_STATE_NORMAL] |= GTK_RC_BG;
+
+     gtk_widget_modify_style(widget, rc_style);
+     gtk_rc_style_unref(rc_style);
+}
+
+/* ........................................................... */
+
+#define SESSION_VIEW_COLS 4
+
+static void session_delete_icon (gui_obj *gobj)
+{
+    if (gobj == NULL) return;
+
+    if (gobj->icon && GTK_IS_WIDGET(gobj->icon))
+	gtk_container_remove(GTK_CONTAINER(icon_table), gobj->icon);
+    if (gobj->label && GTK_IS_WIDGET(gobj->label))
+	gtk_container_remove(GTK_CONTAINER(icon_table), gobj->label);
+
+    free(gobj->name);
+
+    icon_list = g_list_first(icon_list);
+    icon_list = g_list_remove(icon_list, gobj);
+    if (icon_list == NULL) {
+	fprintf(stderr, "Bad: icon_list has gone NULL\n");
+    }
+}
+
+static void foreach_delete_icons (gui_obj *gobj, gpointer p)
+{
+    if (gobj->icon && GTK_IS_WIDGET(gobj->icon))
+	gtk_container_remove(GTK_CONTAINER(icon_table), gobj->icon);
+    if (gobj->label && GTK_IS_WIDGET(gobj->label))
+	gtk_container_remove(GTK_CONTAINER(icon_table), gobj->label);
+
+    free(gobj->name);
+}
+
+static void real_pack_icon (gui_obj *gobj, int row, int col)
+{
+    gobj->row = row;
+    gobj->col = col;
+
+    gtk_table_attach (GTK_TABLE(icon_table), gobj->icon,
+		      col, col + 1, row, row + 1,
+		      GTK_EXPAND, GTK_FILL, 5, 5);
+    gtk_widget_show(gobj->icon);
+
+    white_bg_style(gobj->icon, NULL);
+
+    gtk_table_attach (GTK_TABLE(icon_table), gobj->label,
+		      col, col + 1, row + 1, row + 2,
+		      GTK_EXPAND, GTK_FILL, 5, 5);
+    gtk_widget_show(gobj->label);
+}
+
+static void pack_single_icon (gui_obj *gobj)
+{
+    int row, col;
+    gui_obj *last_obj;
+
+    icon_list = g_list_last(icon_list);
+    last_obj = icon_list->data;
+    row = last_obj->row;
+    col = last_obj->col;  
+
+    icon_list = g_list_append(icon_list, gobj);
+
+    col++;
+    if (col > 0 && (col % SESSION_VIEW_COLS == 0)) {
+	col = 0;
+	row += 2;
+	gtk_table_resize(GTK_TABLE(icon_table), 2 * row, SESSION_VIEW_COLS);
+    } 
+
+    real_pack_icon(gobj, row, col);
+}
+
+static void batch_pack_icons (void)
 {
     gui_obj *gobj;
-    char **image = NULL;
+    int row = 0, col = 0;
 
-    gobj = g_new(gui_obj, 1);
-    gobj->name = g_strdup(name); 
+    icon_list = g_list_first(icon_list);
+
+    while (icon_list != NULL) {
+	gobj = (gui_obj *) icon_list->data;
+	real_pack_icon(gobj, row, col);
+	col++;
+	if (col > 0 && (col % SESSION_VIEW_COLS == 0)) {
+	    col = 0;
+	    row += 2;
+	    gtk_table_resize(GTK_TABLE(icon_table), 2 * row, SESSION_VIEW_COLS);
+	}
+	if (icon_list->next == NULL) break;
+	else icon_list = icon_list->next;
+    }
+}
+
+static void add_all_icons (void) 
+{
+    int i;
+
+    active_object = NULL;
+
+    if (data_status) {
+	session_add_icon(NULL, 'i', ICON_ADD_BATCH);     /* data info */
+	session_add_icon(NULL, 'd', ICON_ADD_BATCH);     /* data file */
+	session_add_icon(NULL, 'n', ICON_ADD_BATCH);     /* session notes */
+	session_add_icon(NULL, 'x', ICON_ADD_BATCH);     /* summary stats */
+	session_add_icon(NULL, 'r', ICON_ADD_BATCH);     /* correlation matrix */
+	session_add_icon(NULL, 't', ICON_ADD_BATCH);     /* model table */
+    }
+
+    session_add_icon(NULL, 's', ICON_ADD_BATCH);         /* script file */
+
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "view_session: session.nmodels = %d\n", session.nmodels);
+    fprintf(stderr, "view_session: session.ngraphs = %d\n", session.ngraphs);
+#endif
+
+    for (i=0; i<session.nmodels; i++) {
+#ifdef SESSION_DEBUG
+	fprintf(stderr, "adding session.models[%d] to view\n", i);
+#endif
+	session_add_icon(session.models[i], 'm', ICON_ADD_BATCH);
+    }
+
+    for (i=0; i<session.ngraphs; i++) {
+#ifdef SESSION_DEBUG
+	fprintf(stderr, "adding session.graphs[%d] to view\n", i);
+	fprintf(stderr, "this graph is of sort %d\n", (session.graphs[i])->sort);
+#endif
+	/* distinguish gnuplot graphs from gretl boxplots */
+	session_add_icon(session.graphs[i], 
+			 ((session.graphs[i])->sort == GRETL_BOXPLOT)? 'b' : 'g',
+			 ICON_ADD_BATCH);
+    }
+
+    batch_pack_icons();
+}
+
+/* ........................................................... */
+
+static void rearrange_icons (void) 
+{
+    g_list_foreach(icon_list, (GFunc) foreach_delete_icons, NULL);
+
+    g_list_free(icon_list);
+    icon_list = NULL;
+
+    add_all_icons();
+}
+
+/* ........................................................... */
+
+static gint catch_iconview_key (GtkWidget *w, GdkEventKey *key, 
+				gpointer p)
+{
+    if (key->keyval == GDK_q) { 
+        gtk_widget_destroy(w);
+    }
+    return FALSE;
+}
+
+static void color_white (GtkWidget *w)
+{
+     GtkRcStyle *rc_style;
+     GdkColor color;
+
+     gdk_color_parse("white", &color);
+     rc_style = gtk_rc_style_new();
+     rc_style->bg[GTK_STATE_NORMAL] = color;
+     rc_style->color_flags[GTK_STATE_NORMAL] |= GTK_RC_BG;
+
+     gtk_widget_modify_style(w, rc_style);
+     gtk_rc_style_unref(rc_style);
+}
+
+/* ........................................................... */
+
+void view_session (void)
+{
+    GtkWidget *hbox, *scroller;
+    gchar *title;
+
+    if (iconview != NULL) {
+	gdk_window_show(iconview->window);
+	gdk_window_raise(iconview->window);
+	return;
+    }
+
+    session_view_init();
+
+    title = g_strdup_printf("gretl: %s", 
+			    (session.name[0])? session.name : 
+			    _("current session"));
+    
+    iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(iconview), title);
+    g_free(title);
+    gtk_window_set_default_size(GTK_WINDOW(iconview), 400, 300);
+    gtk_container_set_border_width(GTK_CONTAINER(iconview), 0);
+
+    gtk_signal_connect(GTK_OBJECT(iconview), "destroy",
+		     GTK_SIGNAL_FUNC(session_view_free), NULL);
+    gtk_signal_connect(GTK_OBJECT(iconview), "key_press_event",
+		     GTK_SIGNAL_FUNC(catch_iconview_key), NULL);
+
+    session_build_popups();
+
+    hbox = gtk_hbox_new(FALSE,0);
+    gtk_container_add(GTK_CONTAINER(iconview), hbox);
+    gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
+
+    scroller = gtk_scrolled_window_new(NULL, NULL);
+    gtk_container_set_border_width(GTK_CONTAINER(scroller), 0);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
+				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_signal_connect(GTK_OBJECT(scroller), "button_press_event",
+		     GTK_SIGNAL_FUNC(session_icon_click), NULL);
+
+    gtk_box_pack_start(GTK_BOX(hbox), scroller, TRUE, TRUE, 0); 
+
+    icon_table = gtk_table_new(2, SESSION_VIEW_COLS, FALSE);
+
+    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), 
+					  icon_table);
+
+    add_all_icons();
+
+    gtk_widget_show(icon_table);
+    gtk_widget_show(scroller);
+    gtk_widget_show(hbox);
+    gtk_widget_show(iconview);
+
+    color_white(scroller);
+
+    gtk_container_foreach(GTK_CONTAINER(scroller), 
+			  (GtkCallback) white_bg_style, 
+			  NULL);
+}
+
+/* ........................................................... */
+
+static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
+{
+    GtkWidget *w = NULL;
+
+    active_object = gobj;
+
+    switch (gobj->sort) {
+    case 'm': 
+	w = model_popup; 
+	break;
+    case 't': 
+	w = model_table_popup; 
+	break;
+    case 'g': 
+	w = graph_popup; 
+	break;
+    case 'b': 
+	w = boxplot_popup; 
+	break;
+    case 'd': 
+	w = data_popup; 
+	break;
+    case 'i': 
+	w = info_popup; 
+	break;
+    case 's': 
+	set_addgraph_mode(); 
+	w = session_popup; 
+	break;
+    default: 
+	break;
+    }
+
+    gtk_menu_popup(GTK_MENU(w), NULL, NULL, NULL, NULL,
+		   event->button, event->time);
+}
+
+/* ........................................................... */
+
+static gboolean session_icon_click (GtkWidget *widget, 
+				    GdkEventButton *event,
+				    gpointer data)
+{
+    gui_obj *gobj;
+    GdkModifierType mods;
+
+    if (event == NULL) return FALSE;
+
+    gdk_window_get_pointer(widget->window, NULL, NULL, &mods);
+
+    if (data == NULL) { /* click on window background */
+	if (mods & GDK_BUTTON3_MASK) {
+	    gtk_menu_popup(GTK_MENU(global_popup), NULL, NULL, NULL, NULL,
+			   event->button, event->time);
+	}
+	return TRUE;
+    }
+
+    gobj = (gui_obj *) data;
+
+    if (event->type == GDK_2BUTTON_PRESS) {
+	switch (gobj->sort) {
+	case 'm':
+	    open_gui_model(gobj); break;
+	case 'b':
+	    open_boxplot(gobj); break;
+	case 'g':
+	    open_gui_graph(gobj); break;
+	case 'd':
+	    show_spreadsheet(NULL); break;
+	case 'i':
+	    open_info(NULL, 0, NULL); break;
+	case 's':
+	    view_script_default(); break;
+	case 'n':
+	    edit_session_notes(); break;
+	case 't':
+	    display_model_table(); break;
+	case 'r':
+	    do_menu_op(NULL, CORR, NULL); break;
+	case 'x':
+	    do_menu_op(NULL, SUMMARY, NULL); break;
+	}
+	return FALSE;
+    }
+
+    if (mods & GDK_BUTTON3_MASK) {
+	if (gobj->sort == 'm' || gobj->sort == 'g' ||
+	    gobj->sort == 'd' || gobj->sort == 'i' ||
+	    gobj->sort == 's' || gobj->sort == 'b' ||
+	    gobj->sort == 't') {
+	    object_popup_show(gobj, (GdkEventButton *) event);
+	}
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+/* ........................................................... */
+
+static void session_build_popups (void)
+{
+    GtkWidget *item;
+    int i;
+
+    if (global_popup == NULL) {
+	global_popup = gtk_menu_new();
+	for (i=0; i<sizeof(global_items) / sizeof(global_items[0]); i++) {
+	    item = gtk_menu_item_new_with_label(_(global_items[i]));
+	    gtk_signal_connect(GTK_OBJECT(item), "activate",
+			     GTK_SIGNAL_FUNC(global_popup_activated),
+			     _(global_items[i]));
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(global_popup), item);
+	}
+    }
+
+    if (session_popup == NULL) {
+	gint n = sizeof(session_items) / sizeof(session_items[0]);
+
+	session_popup = gtk_menu_new();
+	for (i=0; i<n; i++) {
+	    if (i < n-1) {
+		item = gtk_menu_item_new_with_label(_(session_items[i]));
+		gtk_signal_connect(GTK_OBJECT(item), "activate",
+				 GTK_SIGNAL_FUNC(session_popup_activated),
+				 _(session_items[i]));
+		gtk_widget_show(item);
+		gtk_menu_shell_append(GTK_MENU_SHELL(session_popup), item);
+	    } else {
+		addgraph = gtk_menu_item_new_with_label(_(session_items[i]));
+		gtk_signal_connect(GTK_OBJECT(addgraph), "activate",
+				 GTK_SIGNAL_FUNC(session_popup_activated),
+				 _(session_items[i]));
+		gtk_widget_show(addgraph);
+		gtk_menu_shell_append(GTK_MENU_SHELL(session_popup), addgraph);
+	    }
+	}
+    }
+
+    if (model_popup == NULL) {
+	model_popup = gtk_menu_new();
+	for (i=0; i<sizeof(model_items)/sizeof(model_items[0]); i++) {
+	    item = gtk_menu_item_new_with_label(_(model_items[i]));
+	    gtk_signal_connect(GTK_OBJECT(item), "activate",
+			     GTK_SIGNAL_FUNC(object_popup_activated),
+			     _(model_items[i]));
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(model_popup),item);
+	}
+    }
+
+    if (model_table_popup == NULL) {
+	model_table_popup = gtk_menu_new();
+	for (i=0; i<sizeof(model_table_items)/sizeof(model_table_items[0]); i++) {
+	    item = gtk_menu_item_new_with_label(_(model_table_items[i]));
+	    gtk_signal_connect(GTK_OBJECT(item), "activate",
+			     GTK_SIGNAL_FUNC(object_popup_activated),
+			     _(model_table_items[i]));
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(model_table_popup),item);
+	}
+    }
+
+    if (graph_popup == NULL) {
+	graph_popup = gtk_menu_new();
+	for (i=0; i<sizeof(graph_items)/sizeof(graph_items[0]); i++) {
+	    item = gtk_menu_item_new_with_label(_(graph_items[i]));
+	    gtk_signal_connect(GTK_OBJECT(item), "activate",
+			     GTK_SIGNAL_FUNC(object_popup_activated),
+			     _(graph_items[i]));
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(graph_popup),item);
+	}
+    }
+
+    if (boxplot_popup == NULL) {
+	boxplot_popup = gtk_menu_new();
+	for (i=0; i<sizeof(graph_items)/sizeof(graph_items[0]); i++) {
+	    if (strstr(graph_items[i], "GUI")) continue;
+	    item = gtk_menu_item_new_with_label(_(graph_items[i]));
+	    gtk_signal_connect(GTK_OBJECT(item), "activate",
+			     GTK_SIGNAL_FUNC(object_popup_activated),
+			     _(graph_items[i]));
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(boxplot_popup),item);
+	}
+    }
+
+    if (data_popup == NULL) {
+	data_popup = gtk_menu_new();
+	for (i=0; i<sizeof(dataset_items)/sizeof(dataset_items[0]); i++) {
+	    item = gtk_menu_item_new_with_label(_(dataset_items[i]));
+	    gtk_signal_connect(GTK_OBJECT(item), "activate",
+			     GTK_SIGNAL_FUNC(data_popup_activated),
+			     _(dataset_items[i]));
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(data_popup),item);
+	}
+    }
+
+    if (info_popup == NULL) {
+	info_popup = gtk_menu_new();
+	for (i=0; i<sizeof(info_items)/sizeof(info_items[0]); i++) {
+	    item = gtk_menu_item_new_with_label(_(info_items[i]));
+	    gtk_signal_connect(GTK_OBJECT(item), "activate",
+			     GTK_SIGNAL_FUNC(info_popup_activated),
+			     _(info_items[i]));
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(info_popup),item);
+	}
+    }
+}
+
+/* ........................................................... */
+
+static void global_popup_activated (GtkWidget *widget, gpointer data)
+{
+    gchar *item = (gchar *) data;
+
+    if (strcmp(item, _("Arrange icons")) == 0) 
+	rearrange_icons();
+    else if (strcmp(item, _("Close window")) == 0) 
+	gtk_widget_destroy(iconview);
+#ifndef GNUPLOT_PNG
+    else if (strcmp(item, _("Add last graph")) == 0)
+	add_graph_to_session(NULL, GRETL_GNUPLOT_GRAPH, NULL);
+#endif
+}
+
+/* ........................................................... */
+
+static void session_popup_activated (GtkWidget *widget, gpointer data)
+{
+    gchar *item = (gchar *) data;
+
+    if (strcmp(item, _("Save")) == 0) 
+	save_session_callback(NULL, SAVE_AS_IS, NULL);
+    else if (strcmp(item, _("Save As...")) == 0) 
+	save_session_callback(NULL, SAVE_RENAME, NULL);
+#ifndef GNUPLOT_PNG
+    else if (strcmp(item, _("Add last graph")) == 0)
+	add_graph_to_session(NULL, GRETL_GNUPLOT_GRAPH, NULL);
+#endif
+}
+
+/* ........................................................... */
+
+static void info_popup_activated (GtkWidget *widget, gpointer data)
+{
+    gchar *item = (gchar *) data;
+
+    if (strcmp(item, _("View")) == 0) 
+	open_info(NULL, 0, NULL);
+    else if (strcmp(item, _("Edit")) == 0) 
+	edit_header(NULL, 0, NULL);
+}
+
+/* ........................................................... */
+
+static void data_popup_activated (GtkWidget *widget, gpointer data)
+{
+    gchar *item = (gchar *) data;
+
+    if (strcmp(item, _("Edit")) == 0) 
+	show_spreadsheet(NULL);
+    else if (strcmp(item, _("Save...")) == 0) 
+	file_save(mdata, SAVE_DATA, NULL);
+    else if (strcmp(item, _("Export as CSV...")) == 0) 
+	file_save(mdata, EXPORT_CSV, NULL);
+    else if (strcmp(item, _("Copy as CSV...")) == 0) 
+	csv_to_clipboard();
+}
+
+/* ........................................................... */
+
+static void object_popup_activated (GtkWidget *widget, gpointer data)
+{
+    gchar *item = (gchar *) data;
+    gui_obj *obj;
+
+    obj = active_object;
+
+    if (strcmp(item, _("Display")) == 0) {
+	if (obj->sort == 'm') {
+	    open_gui_model(obj);
+	}
+	if (obj->sort == 't') {
+	    display_model_table();
+	}
+	else if (obj->sort == 'g') {
+	    open_gui_graph(obj);
+	}
+	else if (obj->sort == 'b') {
+	    open_boxplot(obj);
+	}
+    } 
+#ifndef GNUPLOT_PNG
+    else if (strcmp(item, _("Edit using GUI")) == 0) {
+	if (obj->sort == 'g') {
+	    GRAPHT *graph = (GRAPHT *) obj->data;
+
+	    start_editing_session_graph(graph->fname);
+	}
+    } 
+#endif
+    else if (strcmp(item, _("Edit plot commands")) == 0) {
+	if (obj->sort == 'g' || obj->sort == 'b') {
+	    GRAPHT *graph = (GRAPHT *) obj->data;
+
+#ifdef GNUPLOT_PNG
+	    remove_png_term_from_plotfile(graph->fname);
+#endif
+	    view_file(graph->fname, 1, 0, 78, 400, GR_PLOT, 
+		      (obj->sort == 'g')? gp_edit_items : 
+		      boxplot_edit_items);
+	}
+    }   
+    else if (strcmp(item, _("Delete")) == 0) {
+	gchar *msg;
+
+	msg = g_strdup_printf(_("Really delete %s?"), obj->name);
+	if (yes_no_dialog(_("gretl: delete"), msg, 0) == GRETL_YES) {
+	    delete_session_object(obj);
+	}
+	g_free(msg);
+    }
+    else if (strcmp(item, _("Add to model table")) == 0) {
+	if (obj->sort == 'm') {
+	    MODEL *pmod = (MODEL *) obj->data;
+	    add_to_model_list((const MODEL *) pmod,
+			      MODEL_ADD_FROM_MENU);
+	}
+    }
+    else if (strcmp(item, _("Clear table")) == 0) {
+	if (obj->sort == 't') {
+	    free_model_list();
+	}
+    }
+}
+
+/* ........................................................... */
+
+static gboolean icon_entered (GtkWidget *icon, GdkEventCrossing *event,
+			      gui_obj *gobj)
+{
+    gtk_widget_set_state(icon, GTK_STATE_SELECTED);
+    
+    return FALSE;
+}
+
+static gboolean icon_left (GtkWidget *icon, GdkEventCrossing *event,
+			   gui_obj *gobj)
+{
+    gtk_widget_set_state(icon, GTK_STATE_NORMAL);
+    
+    return FALSE;
+}
+
+/* ........................................................... */
+
+static void drag_model (GtkWidget *w, GdkDragContext *context,
+			GtkSelectionData *sel, guint info, guint t,
+			MODEL *pmod)
+{
+    gtk_selection_data_set(sel, GDK_SELECTION_TYPE_INTEGER, 8, 
+                           (const guchar *) &pmod, sizeof pmod);
+}
+
+static void model_drag_connect (GtkWidget *w, MODEL *pmod)
+{
+    gtk_drag_source_set(w, GDK_BUTTON1_MASK,
+                        &model_table_drag_target,
+                        1, GDK_ACTION_COPY);
+    gtk_signal_connect(GTK_OBJECT(w), "drag_data_get",
+                     GTK_SIGNAL_FUNC(drag_model), pmod);
+}
+
+static void 
+model_table_data_received (GtkWidget *widget,
+			   GdkDragContext *context,
+			   gint x,
+			   gint y,
+			   GtkSelectionData *data,
+			   guint info,
+			   guint time,
+			   gpointer p)
+{
+    if (info == GRETL_MODEL_POINTER && data != NULL && 
+	data->type == GDK_SELECTION_TYPE_INTEGER) {
+	MODEL *pmod = *(MODEL **) data->data;
+
+	add_to_model_list((const MODEL *) pmod, MODEL_ADD_BY_DRAG);
+    }
+}
+
+static void table_drag_setup (GtkWidget *w)
+{
+    gtk_drag_dest_set (w,
+                       GTK_DEST_DEFAULT_ALL,
+                       &model_table_drag_target, 1,
+                       GDK_ACTION_COPY);
+
+    gtk_signal_connect (GTK_OBJECT(w), "drag_data_received",
+                      GTK_SIGNAL_FUNC(model_table_data_received),
+                      NULL);
+}
+
+/* ........................................................... */
+
+static gui_obj *gui_object_new (gchar *name, int sort)
+{
+    gui_obj *gobj;
+    char **data = NULL;
+    GdkPixmap *pixmap;
+    GdkBitmap *mask;
+    GtkStyle *style;
+    GtkWidget *image;
+
+    gobj = mymalloc(sizeof *gobj);
+    gobj->name = name; 
     gobj->sort = sort;
-
-    gobjects = g_list_append(gobjects, gobj);
+    gobj->data = NULL;
 
     switch (sort) {
-    case 'm': image = model_xpm; break;
-    case 'b': image = boxplot_xpm; break;
-    case 'g': image = gnuplot_xpm; break;
-    case 'd': image = dot_sc_xpm; break;
-    case 'i': image = xfm_info_xpm; break;
-    case 's': image = xfm_make_xpm; break;
-    case 'n': image = text_xpm; break;
-    case 'r': image = rhohat_xpm; break;
-    case 'x': image = summary_xpm; break;
+    case 'm': data = model_xpm; break;
+    case 'b': data = boxplot_xpm; break;
+    case 'g': data = gnuplot_xpm; break;
+    case 'd': data = dot_sc_xpm; break;
+    case 'i': data = xfm_info_xpm; break;
+    case 's': data = xfm_make_xpm; break;
+    case 'n': data = text_xpm; break;
+    case 'r': data = rhohat_xpm; break;
+    case 'x': data = summary_xpm; break;
+    case 't': data = model_table_xpm; break;
     default: break;
     }
 
-    gobj->icon = gtk_icon_list_add_from_data(iconlist, image, 
-					     name, gobj);
+    style = gtk_widget_get_style(iconview);
+    pixmap = gdk_pixmap_create_from_xpm_d(mdata->w->window,
+					  &mask, 
+					  &style->bg[GTK_STATE_NORMAL], 
+					  data);
+
+    gobj->icon = gtk_event_box_new();
+    gtk_widget_set_usize(gobj->icon, 36, 36);
+
+    image = gtk_pixmap_new(pixmap, mask);
+
+    gtk_container_add(GTK_CONTAINER(gobj->icon), image);
+    gtk_widget_show(image);
+
+    if (sort == 't') table_drag_setup(gobj->icon);
+
+    gobj->label = gtk_label_new(gobj->name);
+
+    gtk_signal_connect(GTK_OBJECT(gobj->icon), "button_press_event",
+		       GTK_SIGNAL_FUNC(session_icon_click), gobj);
+    gtk_signal_connect(GTK_OBJECT(gobj->icon), "enter_notify_event",
+		       GTK_SIGNAL_FUNC(icon_entered), gobj);
+    gtk_signal_connect(GTK_OBJECT(gobj->icon), "leave_notify_event",
+		       GTK_SIGNAL_FUNC(icon_left), gobj);
+		    
     return gobj;
 } 
 
 /* ........................................................... */
 
-static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
+static void session_add_icon (gpointer data, int sort, int mode)
 {
-    FILE *fp;
-    char msg[MAXLEN];
-    gchar *savestuff;
-    windata_t *mydata = (windata_t *) data;
+    gui_obj *gobj;
+    gchar *name = NULL;
+    MODEL *pmod = NULL;
+    GRAPHT *graph = NULL;
 
-    if ((fp = fopen(mydata->fname, "w")) == NULL) {
-	sprintf(msg, _("Couldn't write to %s"), mydata->fname);
-	errbox(msg); 
-	return;
+    switch (sort) {
+    case 'm':
+	pmod = (MODEL *) data;
+	name = g_strdup(pmod->name);
+	break;
+    case 'b':
+    case 'g':
+	graph = (GRAPHT *) data;
+	name = g_strdup(graph->name);
+	break;
+    case 'd':
+	name = g_strdup(_("Data set"));
+	break;
+    case 'i':
+	name = g_strdup(_("Data info"));
+	break;
+    case 's':
+	name = g_strdup(_("Session"));
+	break;
+    case 'n':
+	name = g_strdup(_("Notes"));
+	break;
+    case 'r':
+	name = g_strdup(_("Correlations"));
+	break;
+    case 'x':
+	name = g_strdup(_("Summary"));
+	break;
+    case 't':
+	name = g_strdup(_("Model table"));
+	break;
+    default:
+	break;
     }
-    savestuff = 
-	gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
-    fprintf(fp, "%s", savestuff);
-    g_free(savestuff); 
-    fclose(fp);
-    if (!quiet) infobox(_("plot commands saved"));
+
+    gobj = gui_object_new(name, sort);
+
+    if (sort == 'm') {
+	char *str = model_cmd_str(pmod);
+
+	gobj->data = pmod;
+	model_drag_connect(gobj->icon, pmod);
+	if (str != NULL) {
+	    gretl_tooltips_add(GTK_WIDGET(gobj->icon), str);
+	    free(str);
+	}
+    }
+    else if (sort == 'g') {
+	char *str = graph_str(graph);
+
+	gobj->data = graph;
+	if (str != NULL) {
+	    gretl_tooltips_add(GTK_WIDGET(gobj->icon), str);
+	    free(str);
+	}
+    }    
+    else if (sort == 'b') {
+	char *str = boxplot_str(graph);
+
+	gobj->data = graph;
+	if (str != NULL) {
+	    gretl_tooltips_add(GTK_WIDGET(gobj->icon), str);
+	    free(str);
+	}
+    }
+    else if (sort == 'd') gobj->data = paths.datfile;
+    else if (sort == 's') gobj->data = cmdfile;
+    else if (sort == 't') gobj->data = NULL;
+
+    if (mode == ICON_ADD_SINGLE) 
+	pack_single_icon(gobj);
+    else if (mode == ICON_ADD_BATCH)
+	icon_list = g_list_append(icon_list, gobj);
 }
 
-/* ........................................................... */
 
-static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
-{
-    char buf[MAXLEN];
-    windata_t *mydata = (windata_t *) data;
 
-    auto_save_gp(data, 1, NULL);
-
-    sprintf(buf, "gnuplot -persist \"%s\"", mydata->fname);
-    if (system(buf))
-        errbox(_("gnuplot command failed"));
-}
 
 
 

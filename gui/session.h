@@ -22,16 +22,27 @@
 #ifndef SESSION_H
 #define SESSION_H
 
-#include <gtkextra/gtkiconlist.h>
-
 typedef struct {
     gchar *name;
     gint sort;
     gpointer data;
-    GtkIconListItem *icon;
+    GtkWidget *icon;
+    GtkWidget *label;
+    gint row, col;
 } gui_obj;
 
-void session_state (gboolean s);
+enum {
+    SCHEDULE_FOR_DELETION,
+    REALLY_DELETE_ALL,
+    CLEAR_DELFILES
+};
+
+enum {
+    SAVE_AS_IS,
+    SAVE_RENAME
+};
+
+void session_menu_state (gboolean s);
 
 void add_graph_to_session (gpointer data, guint code, GtkWidget *w);
 
@@ -58,5 +69,9 @@ int recreate_session (char *fname, SESSION *psession, SESSIONBUILD *rebuild);
 void view_session (void);
 
 void save_session_callback (GtkWidget *w, guint i, gpointer data);
+
+void session_file_manager (int action, const char *fname);
+
+int session_file_is_open (void);
 
 #endif /* SESSION_H */

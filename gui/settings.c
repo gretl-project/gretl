@@ -26,7 +26,6 @@
 char rcfile[MAXLEN];
 #endif
 
-extern GtkTooltips *gretl_tips;
 extern GtkWidget *toolbar_box;
 
 extern int want_toolbar;
@@ -1184,8 +1183,9 @@ void add_files_to_menu (int filetype)
 	    fileitem.callback = callfunc; 
 	    gtk_item_factory_create_item(mdata->ifac, &fileitem, NULL, 1);
 	    w = gtk_item_factory_get_widget_by_action(mdata->ifac, i);
-	    if (w != NULL)
-		gtk_tooltips_set_tip(gretl_tips, w, filep[i], NULL);
+	    if (w != NULL) {
+		gretl_tooltips_add(w, filep[i]);
+	    }
 	} else break;
     }
     free(fileitem.path);

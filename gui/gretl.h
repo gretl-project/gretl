@@ -254,7 +254,7 @@ enum data_status {
 enum drag_types {
     GRETL_FILENAME,
     GRETL_POINTER,
-    GRETL_ADDVAR_POINTER
+    GRETL_MODEL_POINTER
 };
 
 enum file_lists {
@@ -277,8 +277,6 @@ void menubar_state (gboolean s);
 #ifndef GNUPLOT_PNG
 void graphmenu_state (gboolean s);
 #endif
-
-void colorize_tooltips (GtkTooltips *tip);
 
 gint populate_main_varlist (void);
 

@@ -18,4 +18,10 @@ void menu_find (gpointer data, guint dbfind, GtkWidget *widget);
 
 void text_find_callback (GtkWidget *w, gpointer data);
 
+void colorize_tooltips (GtkTooltips *tip);
+
+void gretl_tooltips_init (void);
+
+void gretl_tooltips_add (GtkWidget *w, const gchar *str);
+
 #endif /* HELPFILES_H */

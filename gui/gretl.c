@@ -74,7 +74,6 @@ static GtkWidget *main_vbox;
 static GtkWidget *gretl_toolbar;
 static GtkWidget *selection_popup;
 
-GtkTooltips *gretl_tips;
 GdkColor red, blue, gray;
 
 static int popup_connected;
@@ -82,8 +81,7 @@ int *default_list = NULL;
 
 GtkTargetEntry gretl_drag_targets[] = {
     { "text/uri-list", 0, GRETL_FILENAME },
-    { "db_pointer", GTK_TARGET_SAME_APP, GRETL_POINTER },   
-    { "addvar_pointer", GTK_TARGET_SAME_APP, GRETL_ADDVAR_POINTER }    
+    { "db_pointer", GTK_TARGET_SAME_APP, GRETL_POINTER }   
 };
 
 static void  
@@ -713,8 +711,7 @@ int main (int argc, char *argv[])
     }
 
     /* create the GUI */
-    gretl_tips = gtk_tooltips_new();
-    colorize_tooltips(gretl_tips);
+    gretl_tooltips_init();
 
     /* make red, blue, gray available globally for colorizing text */
     gdk_color_parse("#ff0000", &red);
@@ -742,7 +739,7 @@ int main (int argc, char *argv[])
 #ifndef GNUPLOT_PNG
     graphmenu_state(FALSE);
 #endif
-    session_state(FALSE);
+    session_menu_state(FALSE);
     restore_sample_state(FALSE);
     menubar_state(FALSE);
 			  
@@ -881,7 +878,7 @@ void panel_menu_state (gboolean s)
 
 /* ........................................................... */
 
-void session_state (gboolean s)
+void session_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/Session/Icon view", s);
@@ -1618,23 +1615,6 @@ static void show_calc (void)
 static void show_edit (void)
 {
     gretl_fork(editor, NULL);
-}
-
-/* ........................................................... */
-
-void colorize_tooltips (GtkTooltips *tip)
-{
-    GdkColor t_back;
-    GtkStyle *style;
-
-    if (gdk_color_parse("light yellow", &t_back)) {
-	gtk_tooltips_force_window(tip);
-	if (gdk_color_alloc(gtk_widget_get_colormap(tip->tip_window), &t_back)) {
-	    style = gtk_style_copy(gtk_widget_get_style(tip->tip_window));
-	    style->bg[GTK_STATE_NORMAL] = t_back;
-	    gtk_widget_set_style(tip->tip_window, style);
-	} 
-    } 
 }
 
 /* ........................................................... */

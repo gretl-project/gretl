@@ -703,3 +703,34 @@ void text_find_callback (GtkWidget *w, gpointer data)
 {
     find_string_dialog(find_in_text, data);
 }
+
+/* ........................................................... */
+
+void colorize_tooltips (GtkTooltips *tip)
+{
+    GdkColor t_back;
+    GtkStyle *style;
+
+    if (gdk_color_parse("light yellow", &t_back)) {
+	gtk_tooltips_force_window(tip);
+	if (gdk_color_alloc(gtk_widget_get_colormap(tip->tip_window), &t_back)) {
+	    style = gtk_style_copy(gtk_widget_get_style(tip->tip_window));
+	    style->bg[GTK_STATE_NORMAL] = t_back;
+	    gtk_widget_set_style(tip->tip_window, style);
+	} 
+    } 
+}
+
+static GtkTooltips *gretl_tips;
+
+void gretl_tooltips_init (void)
+{
+    gretl_tips = gtk_tooltips_new();
+    gtk_tooltips_enable(gretl_tips); /* redundant? */
+    /* colorize_tooltips(gretl_tips); */
+}
+
+void gretl_tooltips_add (GtkWidget *w, const gchar *str)
+{
+    gtk_tooltips_set_tip(gretl_tips, w, str, NULL);
+}

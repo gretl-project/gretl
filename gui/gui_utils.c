@@ -481,7 +481,7 @@ void register_data (const char *fname, int record)
     populate_main_varlist();
     set_sample_label(datainfo);
     menubar_state(TRUE);
-    session_state(TRUE);
+    session_menu_state(TRUE);
 
     /* record opening of data file in command log */
     if (record && fname != NULL) {
@@ -1453,51 +1453,6 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     return vwin;
 }
 
-#if 0
-static void  
-receive_drag_var (GtkWidget *widget,
-		  GdkDragContext *context,
-		  gint x, gint y,
-		  GtkSelectionData *data,
-		  guint info, guint time,
-		  gpointer p)
-{
-    if (info == GRETL_ADDVAR_POINTER && 
-	data->type == GDK_SELECTION_TYPE_INTEGER) {
-	printf("%s\n", (char *) data->data);
-    }
-}
-
-static void model_drag_var (GtkWidget *w, GdkDragContext *context,
-                            GtkSelectionData *sel, guint info, guint t,
-                            gpointer p)
-{
-    char *addlist;
-
-    addlist = mdata_selection_to_string();
-
-    gtk_selection_data_set(sel, GDK_SELECTION_TYPE_INTEGER, 8, 
-                           (const guchar *) addlist, strlen(addlist));
-}
-
-static void model_drag_connect (windata_t *vwin)
-{
-    gtk_drag_source_set(mdata->listbox, GDK_BUTTON1_MASK,
-                        &gretl_drag_targets[GRETL_ADDVAR_POINTER], 
-                        1, GDK_ACTION_COPY);
-    gtk_signal_connect(GTK_OBJECT(mdata->listbox), "drag_data_get",
-                       GTK_SIGNAL_FUNC(model_drag_var),
-                       NULL);
-
-    gtk_drag_dest_set (vwin->w, GTK_DEST_DEFAULT_ALL,
-		       &gretl_drag_targets[GRETL_ADDVAR_POINTER],
-		       1, GDK_ACTION_COPY);
-    gtk_signal_connect (GTK_OBJECT(vwin->w), "drag_data_received",
-			GTK_SIGNAL_FUNC(receive_drag_var),
-			NULL);
-}
-#endif /* experimental code */
-
 /* ........................................................... */
 
 int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
@@ -1543,8 +1498,6 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gretl_print_destroy(prn);
 
     copylist(&default_list, pmod->list);
-
-    /* model_drag_connect(vwin); */
 
     /* attach shortcuts */
     gtk_object_set_data(GTK_OBJECT(dialog), "ddata", vwin);
