@@ -32,8 +32,8 @@
 
 #define MAX_ARMA_ORDER 6
 
-/* undef the following when the arma estimation routines 
-   work properly for a model without an intercept -- at
+/* undef the following when the arma estimation routine
+   works properly for a model without an intercept -- at
    present this does not work.  AC, 13 March 2005
 */
 #define FORCE_INTERCEPT
@@ -48,12 +48,10 @@ struct arma_info {
     int t2;     /* ending observation */
 };
 
-static void add_arma_varnames (MODEL *pmod, int ifc, const DATAINFO *pdinfo)
+static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
+			       struct arma_info *ainfo)
 {
-    int p = pmod->list[1];
-    int q = pmod->list[2];
-    int r = pmod->list[0] - 4;
-    int np = p + q + r + 1 + ifc;
+    int np = ainfo->p + ainfo->q + ainfo->r + 1 + ainfo->ifc;
     int i, j;
 
     pmod->params = malloc(np * sizeof pmod->params);
@@ -80,14 +78,14 @@ static void add_arma_varnames (MODEL *pmod, int ifc, const DATAINFO *pdinfo)
 
     strcpy(pmod->params[0], pdinfo->varname[pmod->list[4]]);
 
-    if (ifc) {
+    if (ainfo->ifc) {
 	strcpy(pmod->params[1], pdinfo->varname[0]);
 	j = 2;
     } else {
 	j = 1;
     }
 
-    for (i=0; i<p; i++) {
+    for (i=0; i<ainfo->p; i++) {
 	const char *depvar = pmod->params[0];
 	size_t n = strlen(depvar);
 	
@@ -98,11 +96,11 @@ static void add_arma_varnames (MODEL *pmod, int ifc, const DATAINFO *pdinfo)
 	}
     }
 
-    for (i=0; i<q; i++) {
+    for (i=0; i<ainfo->q; i++) {
 	sprintf(pmod->params[j++], "e(-%d)", i + 1);
     }
 
-    for (i=0; i<r; i++) {
+    for (i=0; i<ainfo->r; i++) {
 	strcpy(pmod->params[j++], pdinfo->varname[pmod->list[5+i]]); /* 5? */
     }    
 }
@@ -761,7 +759,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 				 (ainfo.p + ainfo.q) * sizeof *roots);
 	}
 
-	add_arma_varnames(pmod, ainfo.ifc, pdinfo);
+	add_arma_varnames(pmod, pdinfo, &ainfo);
 
 	armod = *pmod;
     }
