@@ -1,5 +1,5 @@
 # William Greene, Econometric Analysis, 5e, Chapter 9
-open greene5_1.dat
+open greene5_1.gdt
 ols realcons 0 realdpi
 genr alpha = coeff(0)
 genr beta = coeff(realdpi)
