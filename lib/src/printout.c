@@ -646,6 +646,7 @@ static int make_list (int **plist, const DATAINFO *pdinfo)
     if (trylist == NULL) return 1;
     for (i=1; i<pdinfo->v; i++) {
 	if (hidden_var(i, pdinfo)) continue;
+	if (pdinfo->vector[i] == 0) continue;
 	trylist[n++] = i;
     }
     trylist[0] = n - 1;
@@ -1491,6 +1492,19 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
     }
     l0 = list[0];
 
+    /* screen out any scalars and print them first */
+    for (j=1; j<=list[0]; j++) {
+	if (pdinfo->vector[list[j]] == 0) {
+	    pprintf(prn, "\n%8s = %10g", pdinfo->varname[list[j]], 
+		    (*pZ)[list[j]][0]);
+	    list_exclude(j, list);
+	}
+    }
+    if (list[0] < l0) {
+	pprintf(prn, "\n");
+	l0 = list[0];
+    }
+
     /* special case: all vars have constant value over sample */
     isconst = 1;
     for (j=1; j<=list[0]; j++) {
@@ -1511,6 +1525,7 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
     }
 
     if (!byobs) {
+	if (list[0] > 0) pprintf(prn, "\n");
 	/* print data by variables */
 	for (j=1; j<=list[0]; j++) {
 	    pprintf(prn, "Varname: %s\n", pdinfo->varname[list[j]]);

@@ -2344,6 +2344,7 @@ void add_model_stat (MODEL *pmod, const int which)
 
     strcpy(datainfo->varname[i], vname);
     strcpy(datainfo->label[i], vlabel);
+    datainfo->vector[i] = 0;
     populate_clist(mdata->listbox, datainfo);
     check_cmd(cmdstr);
     model_cmd_init(cmdstr, pmod->ID);

@@ -485,6 +485,14 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    return;
 	}
 
+	if (command->ci != PRINT && pdinfo->vector[command->list[j]] == 0) {
+	    command->errcode = 1;
+	    sprintf(gretl_errmsg, 
+		    "variable %s is a scalar", field);
+	    free(remainder);
+	    return;
+	}
+
 	n += strlen(field) + 1;
     }
 
@@ -699,6 +707,7 @@ int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
     } else {
 	strcpy(pdinfo->label[v], genr->label);
     }
+    pdinfo->vector[v] = !genr->scalar;
     xx = genr->xvec[pdinfo->t1];
     for (t=pdinfo->t1+1; t<=pdinfo->t2; t++) {
 	if (xx != genr->xvec[t]) {
@@ -706,12 +715,18 @@ int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
 	    break;
 	}
     }
-    if (isconst) {
-	for (t=0; t<n; t++) (*pZ)[v][t] = xx;
+
+    if (genr->scalar) {
+	(*pZ)[v] = realloc((*pZ)[v], sizeof ***pZ);
+	(*pZ)[v][0] = genr->xvec[0];
     } else {
-	for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-	    (*pZ)[v][t] = genr->xvec[t];
+	if (isconst) {
+	    for (t=0; t<n; t++) (*pZ)[v][t] = xx;
+	} else {
+	    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
+	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
+		(*pZ)[v][t] = genr->xvec[t];
+	}
     }
     if (genr->xvec != NULL) free(genr->xvec);
     return 0;
@@ -721,7 +736,7 @@ int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
 
 static int _full_list (const DATAINFO *pdinfo, CMD *command)
 /* create a gretl "list" containing all the vars in the data set,
-   except for the constant and any "hidden" variables */
+   except for the constant and any "hidden" variables or scalars */
 {
     int i, n = 1;
 
@@ -729,6 +744,7 @@ static int _full_list (const DATAINFO *pdinfo, CMD *command)
     if (command->list == NULL) return E_ALLOC;
     for (i=1; i<pdinfo->v; i++) {
 	if (hidden_var(i, pdinfo)) continue;
+	if (pdinfo->vector[i] == 0) continue;
 	command->list[n++] = i;
     }
     command->list[0] = n - 1;

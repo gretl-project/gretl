@@ -32,7 +32,7 @@ static int _evalexp (char *ss, double *xmvec, double *xxvec,
 static void _getvar (char *str, char *word, char *c);
 static int _getxvec (char *ss, double *xxvec, 
 		     double **Z, const DATAINFO *pdinfo, 
-		     const MODEL *pmod);
+		     const MODEL *pmod, int *scalar);
 static int _scanb (const char *ss, char *word);
 static char _strtype (char *ss, const DATAINFO *pdinfo);
 static int _whichtrans (const char *ss);
@@ -486,6 +486,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
     */
 
     genr.errcode = 0;
+    genr.scalar = 0;
     gretl_errmsg[0] = '\0';
     genr.msg[0] = genr.label[0] = '\0';
     if ((genr.xvec = malloc(n * sizeof(double))) == NULL) {
@@ -605,7 +606,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 		    return genr;
 	    } 
 	    else if (op1 == '\0' || is_operator(op1)) {
-		er = _getxvec(s1, genr.xvec, *pZ, pdinfo, pmod);
+		er = _getxvec(s1, genr.xvec, *pZ, pdinfo, pmod, &genr.scalar);
 		if (er == E_BADSTAT) {
 		    genr.errcode = E_BADSTAT;
 		    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
@@ -713,6 +714,13 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			return genr;
 		    }
 		    vi = varindex(pdinfo, word);
+		    if (!pdinfo->vector[vi]) {
+			genr.errcode = 1;
+			sprintf(gretl_errmsg, "Variable %s is a scalar; "
+				"can't do lags/leads", pdinfo->varname[vi]);
+			_genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
+			return genr;
+		    }
 		    _lag(sexpr, vi, mvec, *pZ, pdinfo);
 		    for (i=t1; i<=t2; i++) genr.xvec[i] = mvec[i];
 		    break;
@@ -770,8 +778,9 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			    return genr;
 			} else 
-			    for (i=t1; i<=t2; i++)
+			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
+			genr.scalar = 1;
 			break;
 		    }
 		    if (nt == T_CORR) {
@@ -781,8 +790,9 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			    return genr;
 			} else 
-			    for (i=t1; i<=t2; i++)
+			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
+			genr.scalar = 1;
 			break;
 		    }
 		    if (nt == T_VCV) {
@@ -792,8 +802,9 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			    return genr;
 			} else 
-			    for (i=t1; i<=t2; i++)
+			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
+			genr.scalar = 1;
 			break;
 		    }
 		    if (nt == T_PVALUE) {
@@ -803,8 +814,9 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			    return genr;
 			} else 
-			    for (i=t1; i<=t2; i++)
+			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
+			genr.scalar = 1;
 			break;
 		    }
 		    if (nt == T_COEFF || nt == T_STDERR) {
@@ -1235,7 +1247,7 @@ static int _evalexp (char *ss, double *xmvec, double *xxvec,
     do {
 	_getvar(ss, s3, &op2);
 	if (op2 == '\0' || is_operator(op2)) {
-	    ig = _getxvec(s3, xmvec, Z, pdinfo, pmod);
+	    ig = _getxvec(s3, xmvec, Z, pdinfo, pmod, &genr->scalar);
 	    if (ig != 0) return ig;
 	    _cstack(xxvec, xmvec, op3, pdinfo, genr);
 	    op3 = op2;
@@ -1325,7 +1337,7 @@ static int check_modelstat (const MODEL *pmod, int type1)
 
 static int _getxvec (char *ss, double *xxvec, 
 		     double **Z, const DATAINFO *pdinfo, 
-		     const MODEL *pmod)
+		     const MODEL *pmod, int *scalar)
      /* calculate and return the xxvec vector of values */
 {
     char type1;
@@ -1344,6 +1356,7 @@ static int _getxvec (char *ss, double *xxvec,
 
     case 'e':
 	for (i=0; i<n; i++) xxvec[i] = pmod->ess;
+	*scalar = 1;
 	break;
 
     case 'o':
@@ -1351,14 +1364,17 @@ static int _getxvec (char *ss, double *xxvec,
 	    if (pmod->list) xxvec[i] = (double) pmod->nobs;
 	    else xxvec[i] = (double) (pdinfo->t2 - pdinfo->t1 + 1);
 	}
+	*scalar = 1;
 	break;
 
     case 'r':
 	for (i=0; i<n; i++) xxvec[i] = pmod->rsq;
+	*scalar = 1;
 	break;
 
     case 'l':
 	for (i=0; i<n; i++) xxvec[i] = pmod->lnL;
+	*scalar = 1;
 	break;
 
     case 's':
@@ -1366,14 +1382,17 @@ static int _getxvec (char *ss, double *xxvec,
 	    for (i=0; i<n; i++) xxvec[i] = pmod->sigma_wt;
 	else 
 	    for (i=0; i<n; i++) xxvec[i] = pmod->sigma;
+	*scalar = 1;
 	break;
 
     case 'q':
 	for (i=0; i<n; i++) xxvec[i] = pmod->nobs * pmod->rsq;
+	*scalar = 1;
 	break;
 
     case 'd':
 	for (i=0; i<n; i++) xxvec[i] = (double) pmod->dfd;
+	*scalar = 1;
 	break;
 
     case 'n':
@@ -1413,7 +1432,8 @@ static int _getxvec (char *ss, double *xxvec,
 	    } else
 		for (i=0; i<n; i++) xxvec[i] = (double) (i + 1);
 	} else 
-	    for (i=0; i<n; i++) xxvec[i] = Z[v1][i];
+	    for (i=0; i<n; i++) 
+		xxvec[i] = (pdinfo->vector[v1])? Z[v1][i] : Z[v1][0] ;
 	break;
 
     case 'u':  return 1;
@@ -1922,7 +1942,7 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	    le_zero = 0;
 	    for (t=0; t<n; t++) (*pZ)[nvar+j][t] = NADBL;
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		xx = (*pZ)[v][t];
+		xx = (pdinfo->vector[v])? (*pZ)[v][t] : (*pZ)[v][0];
 		if (xx <= 0.0) {
 		    (*pZ)[nvar+j][t] = NADBL;
 		    if (!na(xx)) {
@@ -1951,8 +1971,10 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	    strcpy(pdinfo->label[nvar+j], s);
 	    check = varindex(pdinfo, pdinfo->varname[j]);
 	    if (check < nvar) {
-		if (_identical((*pZ)[check], (*pZ)[nvar+j], n)) {
-		    j--;
+		if (pdinfo->vector[check]) {
+		    if (_identical((*pZ)[check], (*pZ)[nvar+j], n)) {
+			j--;
+		    }
 		}
 	    } else printf("label: %s\n", pdinfo->label[nvar+j]);
 	} else _varerror(s);
@@ -1985,7 +2007,7 @@ int lags (const LIST list, double ***pZ, DATAINFO *pdinfo)
     
     for (v=1; v<=list[0]; v++) {
 	lv = list[v];
-	if (lv == 0) continue;
+	if (lv == 0 || !pdinfo->vector[lv]) continue;
 	for (l=1; l<=pdinfo->pd; l++) {
 	    check = _laggenr(lv, l, opt, pZ, pdinfo);
 	    if (check) return 1;

@@ -99,6 +99,10 @@ void clear_datainfo (DATAINFO *pdinfo, int subsample)
 	    free(pdinfo->descrip);
 	    pdinfo->descrip = NULL;
 	}
+	if (pdinfo->vector) {
+	    free(pdinfo->vector);
+	    pdinfo->vector = NULL;
+	}
     }
 }
 
@@ -187,6 +191,7 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
     
     pdinfo->varname = malloc(v * sizeof(char *));
     pdinfo->label = malloc(v * sizeof(char *));
+    pdinfo->vector = malloc(v);
     if (pdinfo->varname == NULL || pdinfo->label == NULL) return 1;
     for (i=0; i<v; i++) {
 	pdinfo->varname[i] = malloc(9);
@@ -194,6 +199,7 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
 	pdinfo->label[i] = malloc(MAXLABEL);
 	if (pdinfo->label[i] == NULL) return 1;
 	pdinfo->label[i][0] = '\0';
+	pdinfo->vector[i] = 1;
     }
     strcpy(pdinfo->varname[0], "const");
     strcpy(pdinfo->label[0], "auto-generated constant");
@@ -232,6 +238,7 @@ DATAINFO *datainfo_new (void)
     dinfo->markers = 0;    
     dinfo->S = NULL;
     dinfo->descrip = NULL;
+    dinfo->vector = NULL;
 
     return dinfo;
 }
@@ -943,11 +950,19 @@ int get_precision (double *x, int n)
 int write_data (const char *fname, const int *list, 
 		double **Z, const DATAINFO *pdinfo, int opt)
 {
-    int i = 0, t, l0 = list[0], n = pdinfo->n;
+    int i = 0, t, l0, n = pdinfo->n;
     char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
     FILE *fp = NULL;
     int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     double xx;
+
+    /* prune scalars out of the list: temporary, FIXME */
+    for (i=1; i<llist[0]; i++) {
+	if (!pdinfo->vector[list[i]])
+	    list_exclude(i, list);
+    }
+    l0 = list[0];
+    if (l0 == 0) return 1;
 
     if (opt == 0 || opt == GRETL_DATA_GZIPPED) 
 	return write_xmldata(fname, list, Z, pdinfo, opt);
@@ -1623,7 +1638,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     int i, j, k, t, blank_1 = 0, obs_1 = 0, len = 0, maxlen = 0, ok = 0;
     char *line, varname[9], numstr[32], field_1[32];
     FILE *fp;
-    DATAINFO csvinfo;
+    DATAINFO *csvinfo;
     double **csvZ = NULL;
     const char *msg = "\nPlease note:\n"
 	"- The first row of the CSV file should contain the "
@@ -1640,7 +1655,11 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    csvinfo.markers = 0;
+    csvinfo = datainfo_new();
+    if (csvinfo == NULL) {
+	pprintf(prn, "Out of memory\n");
+	return 1;
+    }
 
     pprintf(prn, "parsing %s...\n", fname);
 
@@ -1671,7 +1690,6 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     pprintf(prn, "   number of columns = %d\n", ncols);
 
     /* now count remaining non-blank rows, checking for fields */
-    csvinfo.n = 0;
     chkcols = (bad_commas)? -1: 0;
     while (fread(&c, 1, 1, fp)) {
 	if (!(isspace((unsigned char) c))) ok = 1;
@@ -1682,10 +1700,10 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    len = 0;
 	    if (ok) {
 		chkcols += 1; 
-		csvinfo.n += 1;
+		csvinfo->n += 1;
 		if (chkcols != ncols) {
 		    pprintf(prn, "   ...but row %d has %d fields: aborting\n",
-			    csvinfo.n, chkcols);
+			    csvinfo->n, chkcols);
 		    fclose(fp);
 		    pprintf(prn, msg);
 		    return 1;
@@ -1715,20 +1733,20 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    csvinfo.v = (blank_1 || obs_1)? ncols: ncols + 1;
-    pprintf(prn, "   number of variables: %d\n", csvinfo.v - 1);
+    csvinfo->v = (blank_1 || obs_1)? ncols: ncols + 1;
+    pprintf(prn, "   number of variables: %d\n", csvinfo->v - 1);
     pprintf(prn, "   number of non-blank lines: %d\n", 
-	    csvinfo.n + 1);
+	    csvinfo->n + 1);
 
     fclose(fp);
     /* end initial checking */
 
     /* initialize datainfo and Z */
-    if (start_new_Z(&csvZ, &csvinfo, 0)) return E_ALLOC;
+    if (start_new_Z(&csvZ, csvinfo, 0)) return E_ALLOC;
 
     if (blank_1 || obs_1) {
-	csvinfo.markers = 1;
-	if (dataset_allocate_markers(&csvinfo)) return E_ALLOC;
+	csvinfo->markers = 1;
+	if (dataset_allocate_markers(csvinfo)) return E_ALLOC;
     }
 
     /* second pass */
@@ -1737,7 +1755,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     line = malloc(maxlen + 1);
     if (line == NULL) {
 	fclose(fp);
-	clear_datainfo(&csvinfo, 0);
+	clear_datainfo(csvinfo, 0);
 	return E_ALLOC;
     }
 
@@ -1762,7 +1780,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    pprintf(prn, msg);
 	    fclose(fp);
 	    free(line);
-	    clear_datainfo(&csvinfo, 0);
+	    clear_datainfo(csvinfo, 0);
 	    return 1;
 	}
 	if (k == 1 && skipvar) {
@@ -1770,15 +1788,15 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    skipvar = 0;
 	} else {
 	    pprintf(prn, "   variable %d: '%s'\n", k, varname); 
-	    strcpy(csvinfo.varname[k], varname);
+	    strcpy(csvinfo->varname[k], varname);
 	} 
-	if (k == csvinfo.v - 1) break;
+	if (k == csvinfo->v - 1) break;
 	if ((k) && j == 8 && line[i] != ',') 
 	    while (line[i+1] != ',') i++;
     }
 
     pprintf(prn, "scanning for row labels and data...\n");
-    for (t=0; t<csvinfo.n; t++) {
+    for (t=0; t<csvinfo->n; t++) {
 	ok = 0;
 	fgets(line, maxlen + 1, fp);
 	trim_csv_line(line);
@@ -1827,7 +1845,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    else nv = k;
 	    if ((blank_1 || obs_1) && k == 1) {
 		_esl_trunc(numstr, 8);
-		strcpy(csvinfo.S[t], numstr);
+		strcpy(csvinfo->S[t], numstr);
 	    } else {
 		if (missval) 
 		    csvZ[nv][t] = NADBL;
@@ -1841,35 +1859,35 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     fclose(fp); 
     free(line);
 
-    csvinfo.t1 = 0;
-    csvinfo.t2 = csvinfo.n - 1;
-    if (blank_1 || obs_1) markertest = test_label(&csvinfo, prn);
+    csvinfo->t1 = 0;
+    csvinfo->t2 = csvinfo->n - 1;
+    if (blank_1 || obs_1) markertest = test_label(csvinfo, prn);
     if ((blank_1 || obs_1) && (markertest > 0))
 	pprintf(prn, "taking date information from row labels\n\n");
     else {
 	pprintf(prn, "treating these as undated data\n\n");
-	dataset_dates_defaults(&csvinfo);
+	dataset_dates_defaults(csvinfo);
     }	
-    if (csvinfo.pd != 1 || strcmp(csvinfo.stobs, "1")) 
-        csvinfo.time_series = TIME_SERIES;
+    if (csvinfo->pd != 1 || strcmp(csvinfo->stobs, "1")) 
+        csvinfo->time_series = TIME_SERIES;
 
     /* If there were observation labels and they were not interpretable
        as dates, and they weren't simply "1, 2, 3, ...", then they 
        should probably be preserved. */
 
-    if (csvinfo.S != NULL && markertest >= 0) {
-	csvinfo.markers = 0;
-	for (i=0; i<csvinfo.n; i++) free(csvinfo.S[i]);
-	free(csvinfo.S);
-	csvinfo.S = NULL;
+    if (csvinfo->S != NULL && markertest >= 0) {
+	csvinfo->markers = 0;
+	for (i=0; i<csvinfo->n; i++) free(csvinfo->S[i]);
+	free(csvinfo->S);
+	csvinfo->S = NULL;
     }
 
     if (*pZ == NULL) {
 	*pZ = csvZ;
-	*pdinfo = csvinfo;
+	*pdinfo = *csvinfo;
     } else {
-	if (check_csv_merge(pdinfo, &csvinfo, prn)) return 1;
-	if (do_csv_merge(pdinfo, &csvinfo, pZ, &csvZ, prn)) return 1;
+	if (check_csv_merge(pdinfo, csvinfo, prn)) return 1;
+	if (do_csv_merge(pdinfo, csvinfo, pZ, &csvZ, prn)) return 1;
     }
 
     return 0;
@@ -1967,7 +1985,7 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
     char *test, *line;
     double x;
     FILE *fp;
-    DATAINFO boxinfo;
+    DATAINFO *boxinfo;
     double **boxZ = NULL;
     extern int errno;
 
@@ -1977,13 +1995,18 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
+    boxinfo = datainfo_new();
+    if (boxinfo == NULL) {
+	pprintf(prn, "Out of memory\n");
+	return 1;
+    }
+
     pprintf(prn, "parsing %s...\n", fname);
 
     /* first pass: find max line length, number of vars and number
        of observations, plus basic sanity check */
     cc = maxline = 0;
-    boxinfo.n = 0;
-    boxinfo.v = 1;
+    boxinfo->v = 1;
     do {
 	c = getc(fp); 
 	if (c != EOF && c != 10 && !isprint((unsigned char) c)) {
@@ -2002,25 +2025,24 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 		tmp[1] = c; cc++;
 	    } else break;
 	    tmp[2] = '\0';
-	    if (!strcmp(tmp, "03")) boxinfo.v += 1;
-	    else if (!strcmp(tmp, "99")) boxinfo.n += 1;
+	    if (!strcmp(tmp, "03")) boxinfo->v += 1;
+	    else if (!strcmp(tmp, "99")) boxinfo->n += 1;
 	} else
 	    cc++;
     } while (c != EOF);
     fclose(fp);
 
-    pprintf(prn, "   found %d variables\n", boxinfo.v - 1);
-    pprintf(prn, "   found %d observations\n", boxinfo.n);
+    pprintf(prn, "   found %d variables\n", boxinfo->v - 1);
+    pprintf(prn, "   found %d observations\n", boxinfo->n);
     pprintf(prn, "   longest line = %d characters\n", maxline); 
     maxline += 2;
 
     /* allocate space for data etc */
     pprintf(prn, "allocating memory for data... ");
-    if (start_new_Z(&boxZ, &boxinfo, 0)) return E_ALLOC;
-    boxinfo.markers = 0;
-    varstart = malloc((boxinfo.v - 1) * sizeof *varstart);
+    if (start_new_Z(&boxZ, boxinfo, 0)) return E_ALLOC;
+    varstart = malloc((boxinfo->v - 1) * sizeof *varstart);
     if (varstart == NULL) return E_ALLOC;
-    varsize = malloc((boxinfo.v - 1) * sizeof *varsize);
+    varsize = malloc((boxinfo->v - 1) * sizeof *varsize);
     if (varsize == NULL) return E_ALLOC;
     line = malloc(maxline);
     if (line == NULL) return E_ALLOC;
@@ -2044,11 +2066,11 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 	case 2: /* raw data records types (ignored for now) */
 	    break;
 	case 3: /* variable info */
-	    strncpy(boxinfo.varname[realv], line+11, 8);
-	    boxinfo.varname[realv][8] = '\0';
-	    unspace(boxinfo.varname[realv]);
-	    lower(boxinfo.varname[realv]);
-	    pprintf(prn, " variable %d: '%s'\n", v+1, boxinfo.varname[realv]);
+	    strncpy(boxinfo->varname[realv], line+11, 8);
+	    boxinfo->varname[realv][8] = '\0';
+	    unspace(boxinfo->varname[realv]);
+	    lower(boxinfo->varname[realv]);
+	    pprintf(prn, " variable %d: '%s'\n", v+1, boxinfo->varname[realv]);
 #ifdef notdef  
 	    /* This is wrong!  How do you identify character data? */
 	    if (line[51] != '2') {
@@ -2077,10 +2099,10 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 	    if (strlen(tmp))
 		pprintf(prn, "   Warning: coded variable (format '%s' "
 			"in BOX file)\n", tmp);
-	    strncpy(boxinfo.label[realv], line+87, 99);
-	    boxinfo.label[realv][99] = '\0';
-	    unspace(boxinfo.label[realv]);
-	    pprintf(prn, "   definition: '%s'\n", boxinfo.label[realv]);
+	    strncpy(boxinfo->label[realv], line+87, 99);
+	    boxinfo->label[realv][99] = '\0';
+	    unspace(boxinfo->label[realv]);
+	    pprintf(prn, "   definition: '%s'\n", boxinfo->label[realv]);
 	    realv++;
 	    v++;
 	    break;
@@ -2140,17 +2162,17 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
     free(varsize);
     free(line);
 
-    dataset_dates_defaults(&boxinfo);
+    dataset_dates_defaults(boxinfo);
 
     if (dumpvars) {
-	dataset_drop_vars(dumpvars, &boxZ, &boxinfo);
+	dataset_drop_vars(dumpvars, &boxZ, boxinfo);
 	pprintf(prn, "Warning: discarded %d non-numeric variable(s)\n", 
 		dumpvars);
     }
 
     if (*pZ == NULL) {
 	*pZ = boxZ;
-	*pdinfo = boxinfo;
+	*pdinfo = *boxinfo;
     }
 
     return 0;

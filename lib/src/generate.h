@@ -39,6 +39,7 @@ typedef struct {
     int errcode;
     char msg[MAXLABEL];
     int special;
+    int scalar; 
 } GENERATE;
 
 typedef struct {

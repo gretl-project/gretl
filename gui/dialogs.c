@@ -53,6 +53,7 @@ int make_default_storelist (void)
 	strcpy(storelist, "1 ");
 	for (i=2; i<datainfo->v; i++) {
 	    if (hidden_var(i, datainfo)) continue;
+	    if (!datainfo->vector[i]) continue;
 	    sprintf(numstr, "%d ", i);
 	    strcat(storelist, numstr);
 	}

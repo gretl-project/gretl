@@ -1259,6 +1259,7 @@ int dataset_add_vars (const int newvars, double ***pZ, DATAINFO *pdinfo)
     double **newZ;
     char **varname;
     char **label;
+    char *vector;
     int i, n = pdinfo->n, v = pdinfo->v;    
 
 /*      printf("grow_Z: n = %d, v = %d, newvars = %d\n", n, v, newvars);  */
@@ -1292,6 +1293,12 @@ int dataset_add_vars (const int newvars, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
+    vector = realloc(pdinfo->vector, (v + newvars));
+    if (vector == NULL) return E_ALLOC;
+    else pdinfo->vector = vector;
+    for (i=0; i<newvars; i++) 
+	pdinfo->vector[v+i] = 1;
+
     pdinfo->v += newvars;
     return 0;
 }
@@ -1303,6 +1310,7 @@ int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo)
     double **newZ;
     char **varname;
     char **label;
+    char *vector;
     int i, v = pdinfo->v; 
 
     free(pdinfo->varname[varno]);
@@ -1319,6 +1327,10 @@ int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo)
     varname = realloc(pdinfo->varname, (v-1) * sizeof(char *));
     if (varname == NULL) return E_ALLOC;
     else pdinfo->varname = varname;
+
+    vector = realloc(pdinfo->vector, (v-1));
+    if (vector == NULL) return E_ALLOC;
+    else pdinfo->vector = vector;
 
     label = realloc(pdinfo->label, (v-1) * sizeof(char *));
     if (label == NULL) return E_ALLOC;
@@ -1340,6 +1352,7 @@ int dataset_drop_vars (const int delvars, double ***pZ, DATAINFO *pdinfo)
     double **newZ;
     char **varname;
     char **label;
+    char *vector;
     int i, v = pdinfo->v;   
 
     if (delvars <= 0) return 0;
@@ -1357,6 +1370,10 @@ int dataset_drop_vars (const int delvars, double ***pZ, DATAINFO *pdinfo)
     varname = realloc(pdinfo->varname, (v - delvars) * sizeof(char *));
     if (varname == NULL) return E_ALLOC;
     else pdinfo->varname = varname;
+
+    vector = realloc(pdinfo->vector, (v - delvars));
+    if (vector == NULL) return E_ALLOC;
+    else pdinfo->vector = vector;
 
     label = realloc(pdinfo->label, (v - delvars) * sizeof(char *));
     if (label == NULL) return E_ALLOC;
