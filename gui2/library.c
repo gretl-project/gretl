@@ -46,7 +46,7 @@ extern double **fullZ;
 /* ../cli/common.c */
 static int data_option (int flag);
 static int loop_exec_line (LOOPSET *plp, const int round, 
-			   const int cmdnum, PRN *prn, PRN *cmdprn);
+			   const int cmdnum, PRN *prn);
 
 int gui_exec_line (char *line, 
 		   LOOPSET *plp, int *plstack, int *plrun, 
@@ -3906,7 +3906,7 @@ int execute_script (const char *runfile, const char *buf,
 		if (loop.type == FOR_LOOP && !echo_off)
 		    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
 		for (j=0; j<loop.ncmds; j++) {
-		    if (loop_exec_line(&loop, i, j, prn, NULL)) {
+		    if (loop_exec_line(&loop, i, j, prn)) {
 			pprintf(prn, _("Error in command loop: aborting\n"));
 			j = MAXLOOP - 1;
 			i = loop.ntimes;
@@ -4483,7 +4483,7 @@ int gui_exec_line (char *line,
 	}
 	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
 	else {
-	    /* FIXME: sort out exec_code business here */
+	    /* FIXME: sort out exec_code business here? */
 	    if (plp == NULL) register_graph();
 	    err = maybe_save_graph(&command, paths.plotfile,
 				   GRETL_GNUPLOT_GRAPH, prn);

@@ -83,7 +83,7 @@ gretl_equation_system *sys;
 
 void exec_line (char *line, PRN *prn); 
 static int loop_exec_line (LOOPSET *plp, const int round, 
-			   const int cmdnum, PRN *prn, PRN *cmdprn);
+			   const int cmdnum, PRN *prn);
 
 void usage(void)
 {
@@ -418,7 +418,7 @@ int main (int argc, char *argv[])
 
 	if (err && batch && errfatal) gretl_abort(line);
 
-	if (looprun) { /* Are we doing a Monte Carlo simulation? */
+	if (looprun) { 
 	    if (!loop.ncmds) {
 		printf(_("No commands in loop\n"));
 		looprun = errfatal = 0;
@@ -429,7 +429,7 @@ int main (int argc, char *argv[])
 		if (loop.type == FOR_LOOP && !echo_off)
 		    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
 		for (j=0; j<loop.ncmds; j++) {
-		    if (loop_exec_line(&loop, i, j, prn, cmdprn)) {
+		    if (loop_exec_line(&loop, i, j, prn)) {
 			printf(_("Error in command loop: aborting\n"));
 			j = MAXLOOP - 1;
 		    }
@@ -517,7 +517,7 @@ int main (int argc, char *argv[])
 	free(fullinfo);
     }
 
-    if (runfile_open && fb != NULL) fclose (fb);
+    if (runfile_open && fb != NULL) fclose(fb);
     free(line);
 
     if (modelspec) {
@@ -562,7 +562,8 @@ void exec_line (char *line, PRN *prn)
     if (loopstack) {
 	get_cmd_ci(line, &command);
     } else {
-	getcmd(line, datainfo, &command, &ignore, &Z, cmdprn);
+	getcmd(line, datainfo, &command, &ignore, &Z, 
+	       (runit)? NULL : cmdprn);
     }
 
     /* if in batch mode, echo comments in input */
@@ -1241,6 +1242,7 @@ void exec_line (char *line, PRN *prn)
 	    }
 	} else {
 	    fprintf(stderr, _("%s opened OK\n"), runfile);
+	    pprintf(cmdprn, "run \"%s\"\n", runfile);
 	    runfile_open = 1;
 	    if (!batch) runit = 1;
 	}

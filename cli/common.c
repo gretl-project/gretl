@@ -64,8 +64,7 @@ static void substitute_dollar_i (char *str)
     }
 }
 
-static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn,
-			   PRN *cmdprn) 
+static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
      /* special version of command executor for loop construct */
 {
     int i, err, m, oflag = 0;
@@ -78,7 +77,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn,
 
     substitute_dollar_i(linecpy);
 
-    getcmd(linecpy, datainfo, &command, &ignore, &Z, cmdprn);
+    getcmd(linecpy, datainfo, &command, &ignore, &Z, NULL);
 
     if (command.ci < 0) return 0;
 

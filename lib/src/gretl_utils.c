@@ -1489,7 +1489,8 @@ int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo)
+static int real_dataset_add_vars (int newvars, double *x,
+				  double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;
     char **varname;
@@ -1500,10 +1501,17 @@ int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo)
     newZ = realloc(*pZ, (v + newvars) * sizeof *newZ);  
     if (newZ == NULL) return E_ALLOC;
 
-    for (i=0; i<newvars; i++) {
-	newZ[v+i] = malloc(n * sizeof **newZ);
-	if (newZ[v+i] == NULL) return E_ALLOC;
+    if (newvars == 1 && x != NULL) {
+	/* new var is pre-allocated */
+	newZ[v] = x;
+    } else {
+	/* need to allocate for new vars(s) */
+	for (i=0; i<newvars; i++) {
+	    newZ[v+i] = malloc(n * sizeof **newZ);
+	    if (newZ[v+i] == NULL) return E_ALLOC;
+	}
     }
+
     *pZ = newZ;
 
     varname = realloc(pdinfo->varname, (v + newvars) * sizeof *varname);
@@ -1537,6 +1545,18 @@ int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo)
 
     pdinfo->v += newvars;
     return 0;
+}
+
+/* ......................................................  */
+
+int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo)
+{
+    return real_dataset_add_vars(newvars, NULL, pZ, pdinfo);
+}
+
+int dataset_add_allocated_var (double *x, double ***pZ, DATAINFO *pdinfo)
+{
+    return real_dataset_add_vars(1, x, pZ, pdinfo);
 }
 
 /* ......................................................  */

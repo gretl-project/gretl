@@ -566,10 +566,10 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		/* an auto-generated variable? */
 		/* Case 1: automated lags:  e.g. 'var(-1)' */
 		if (_parse_lagvar(field, &lagvar, pdinfo)) {
-		    int lnum;
-		    int v = pdinfo->v;
+		    int lnum, new;
 
-		    lnum = laggenr(lagvar.varnum, lagvar.lag, 1, pZ, pdinfo);
+		    lnum = laggenr(lagvar.varnum, lagvar.lag, 1, 
+				   pZ, pdinfo, &new);
 		    if (lnum < 0) {
 			command->errcode = 1;
 			sprintf(gretl_errmsg, 
@@ -578,7 +578,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 			return;
 		    } else { 
 			command->list[j] = lnum;
-			if (lnum == v && cmds != NULL) {
+			if (new && cmds != NULL) {
 			    pprintf(cmds, "genr %s\n", VARLABEL(pdinfo, lnum));
 			}
 			n += strlen(field) + 1;

@@ -143,6 +143,7 @@ typedef struct _mp_results mp_results;
 struct _VARINFO {
     char label[MAXLABEL];
     char display_name[MAXDISP];
+    int compact_method;
 };
 
 /* information on data set */
@@ -342,6 +343,7 @@ struct _VCV {
 
 #define VARLABEL(p,i)  ((p->varinfo[i])->label)
 #define DISPLAYNAME(p,i)  ((p->varinfo[i])->display_name)
+#define COMPACT_METHOD(p, i) ((p->varinfo[i])->compact_method)
 
 #include "gretl_commands.h"
 #include "gretl_errors.h"

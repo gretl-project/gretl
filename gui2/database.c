@@ -210,6 +210,9 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
     int n, v, t, start, stop, pad1 = 0, pad2 = 0;
     int compact_method = COMPACT_AVG;
 
+    /* FIXME: allow for case where a series of the given name is
+       already in the working dataset */
+
     if (data_status) { 
 	/* we already have data in gretl's workspace */
 	err = check_db_import(sinfo, datainfo);

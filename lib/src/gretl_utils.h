@@ -144,6 +144,8 @@ int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo);
 
+int dataset_add_allocated_var (double *x, double ***pZ, DATAINFO *pdinfo);
+
 int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo);
 
 int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo);

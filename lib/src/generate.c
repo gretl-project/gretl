@@ -2302,41 +2302,59 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
    already exist.  
 
    Return the ID number of the lag var, or -1 on error.
+   If "new" is non-NULL, use it to record whether new
+   data were generated or not.
 */
 
-int laggenr (int iv, int lag, int opt, double ***pZ, 
-	     DATAINFO *pdinfo)
+int laggenr (int parent, int lag, int opt, double ***pZ, 
+	     DATAINFO *pdinfo, int *new)
 {
     char word[32];
     char s[32];
-    int lnum;
+    int lno;
+    double *lx;
 
     /* can't do lags of a scalar */
-    if (!pdinfo->vector[iv]) return -1;
+    if (!pdinfo->vector[parent]) return -1;
 
-    strcpy(s, pdinfo->varname[iv]);
+    lx = malloc(pdinfo->n * sizeof *lx);
+    if (lx == NULL) return -1;
+
+    strcpy(s, pdinfo->varname[parent]);
     if (pdinfo->pd >=10) _esl_trunc(s, 5);
     else _esl_trunc(s, 6);
     sprintf(word, "_%d", lag);
     strcat(s, word);
+    lno = varindex(pdinfo, s);
 
-    /* "s" should now contain the new variable name --
-       check whether it already exists: if so, get out */
-    lnum = varindex(pdinfo, s);
-    if (lnum < pdinfo->v) return lnum;
+    /* put the lag values into array lx */
+    get_lag(parent, lag, lx, *pZ, pdinfo);
 
-    if (dataset_add_vars(1, pZ, pdinfo)) return -1;
+    if (new != NULL) *new = 0;
 
-    get_lag(iv, lag, (*pZ)[lnum], *pZ, pdinfo);
-
-    strcpy(pdinfo->varname[lnum], s);
-
-    if (opt) { 
-	sprintf(VARLABEL(pdinfo, lnum), "%s = %s(-%d)", s, 
-		pdinfo->varname[iv], lag);
+    if (lno < pdinfo->v) {
+	/* a variable of this name already exists */
+	if (vars_identical(lx, (*pZ)[lno], pdinfo->n)) {
+	    /* and it is just what we want */
+	    free(lx);
+	} else {
+	    /* but the values are wrong: swap them */
+	    free((*pZ)[lno]);
+	    (*pZ)[lno] = lx;
+	    if (new != NULL) *new = 1;
+	}
+    } else {
+	/* no var of this name, working from scratch */
+	dataset_add_allocated_var(lx, pZ, pdinfo);
+	strcpy(pdinfo->varname[lno], s);
+	if (opt) { 
+	    sprintf(VARLABEL(pdinfo, lno), "%s = %s(-%d)", s, 
+		    pdinfo->varname[parent], lag);
+	}
+	if (new != NULL) *new = 1;
     }
 
-    return lnum;
+    return lno;
 }
 
 /**
@@ -2545,7 +2563,7 @@ int lags (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	lv = list[v];
 	if (lv == 0 || !pdinfo->vector[lv]) continue;
 	for (l=1; l<=maxlag; l++) {
-	    check = laggenr(lv, l, 1, pZ, pdinfo);
+	    check = laggenr(lv, l, 1, pZ, pdinfo, NULL);
 	    if (check < 0) return 1;
 	}
     }

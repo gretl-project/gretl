@@ -999,7 +999,7 @@ int autocorr_test (MODEL *pmod, int order,
 	for (i=1; i<=order; i++) {
 	    int lnum;
 
-	    lnum = laggenr(v, i, 1, pZ, pdinfo);
+	    lnum = laggenr(v, i, 1, pZ, pdinfo, NULL);
 	    if (lnum < 0) {
 		sprintf(gretl_errmsg, _("lagging uhat failed"));
 		err = E_LAGS;

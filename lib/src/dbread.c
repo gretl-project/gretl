@@ -85,7 +85,7 @@ static int db_type;
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    double ***pZ, DATAINFO *pdinfo,
-			    int compact_method);
+			    int compact_method, int dbv);
 
 /* ........................................................... */
 
@@ -1101,6 +1101,14 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
     /* now loop over variable names given on the line */
 
     while ((line = get_word_and_advance(line, series, 8))) {
+	int v, this_var_method = comp_method; 
+
+	/* see if the series is already in the dataset */
+	v = varindex(pdinfo, series);
+	fprintf(stderr, "db_get_series: pdinfo->v = %d, v = %d\n", pdinfo->v, v);
+	if (v < pdinfo->v && comp_method == COMPACT_NONE) {
+	    this_var_method = COMPACT_METHOD(pdinfo, v);
+	}
 
 	/* find the series information in the database */
 	if (db_type == GRETL_RATS_DB) {
@@ -1127,7 +1135,7 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (!err) {
-	    err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, comp_method);
+	    err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, this_var_method, v);
 	}
 
 	/* free up temp stuff */
@@ -1175,11 +1183,13 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    double ***pZ, DATAINFO *pdinfo,
-			    int compact_method)
+			    int compact_method, int dbv)
 {
     int err = 0;
     double *xvec;
-    int n, v, t, start, stop, pad1 = 0, pad2 = 0;
+    int n, t, start, stop, pad1 = 0, pad2 = 0;
+    int new = (dbv == pdinfo->v);
+    
 
     if (check_db_import(sinfo, pdinfo)) {
 	return 1;
@@ -1188,6 +1198,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     /* the data matrix may still be empty */
     if (pdinfo->v == 0) {
 	pdinfo->v = 1;
+	dbv = 1;
 	if (start_new_Z(pZ, pdinfo, 0)) {
 	    strcpy(gretl_errmsg, _("Out of memory adding series"));
 	    return 1;
@@ -1200,12 +1211,11 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    pdinfo->n, pdinfo->v, (void *) pdinfo->varname);
 #endif
 
-    if (dataset_add_vars(1, pZ, pdinfo)) {
+    if (new && dataset_add_vars(1, pZ, pdinfo)) {
 	strcpy(gretl_errmsg, _("Out of memory adding series"));
 	return 1;
     }
 
-    v = pdinfo->v;
     n = pdinfo->n;
 
     /* is the frequency of the new var higher? */
@@ -1213,12 +1223,12 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	if (pdinfo->pd != 1 && pdinfo->pd != 4 &&
 	    sinfo->pd != 12) {
 	    strcpy(gretl_errmsg, _("Sorry, can't handle this conversion yet!"));
-	    dataset_drop_vars(1, pZ, pdinfo);
+	    if (new) dataset_drop_vars(1, pZ, pdinfo);
 	    return 1;
 	}
 	if (compact_method == COMPACT_NONE) {
 	    strcpy(gretl_errmsg, _("You must specify a compaction method"));
-	    dataset_drop_vars(1, pZ, pdinfo);
+	    if (new) dataset_drop_vars(1, pZ, pdinfo);
 	    return 1;
 	}
 	if (sinfo->pd == 12 && pdinfo->pd == 4) {
@@ -1240,13 +1250,14 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 
     if (err) {
 	strcpy(gretl_errmsg, _("Out of memory adding series"));
-	dataset_drop_vars(1, pZ, pdinfo);
+	if (new) dataset_drop_vars(1, pZ, pdinfo);
 	return 1;
     }
 
     /* common stuff for adding a var */
-    strcpy(pdinfo->varname[v-1], sinfo->varname);
-    strcpy(VARLABEL(pdinfo, v-1), sinfo->descrip);
+    strcpy(pdinfo->varname[dbv], sinfo->varname);
+    strcpy(VARLABEL(pdinfo, dbv), sinfo->descrip);
+    COMPACT_METHOD(pdinfo, dbv) = compact_method;
     get_db_padding(sinfo, pdinfo, &pad1, &pad2);
 
     if (pad1 > 0) {
@@ -1254,7 +1265,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	fprintf(stderr, "Padding at start, %d obs\n", pad1);
 #endif
 	for (t=0; t<pad1; t++) {
-	    (*pZ)[v-1][t] = NADBL;
+	    (*pZ)[dbv][t] = NADBL;
 	}
 	start = pad1;
     } else start = 0;
@@ -1264,7 +1275,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	fprintf(stderr, "Padding at end, %d obs\n", pad2);
 #endif
 	for (t=n-1; t>=n-1-pad2; t--) {
-	    (*pZ)[v-1][t] = NADBL;
+	    (*pZ)[dbv][t] = NADBL;
 	}
 	stop = n - pad2;
     } else stop = n;
@@ -1274,7 +1285,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
 #endif
     for (t=start; t<stop; t++) {
-	(*pZ)[v-1][t] = xvec[t-pad1];
+	(*pZ)[dbv][t] = xvec[t-pad1];
     }
 
     free(xvec);

@@ -22,6 +22,7 @@
 #include <stdio.h>
 
 #define MAXTITLE 80
+#define MAX_PLOT_LABELS 2
 
 typedef struct {
     int varnum;            /* ID number of variable to plot */
@@ -31,6 +32,16 @@ typedef struct {
     char scale[8];         /* string repres. of scale factor */
     int yaxis;             /* 1 for left, 2 for right */
 } GPT_LINE;
+
+#define PLOT_LABEL_TEXT_LEN 31
+#define PLOT_LABEL_JUST_LEN  7
+#define PLOT_LABEL_POS_LEN  31
+
+typedef struct {
+    char text[PLOT_LABEL_TEXT_LEN + 1]; 
+    char just[PLOT_LABEL_JUST_LEN + 1];
+    char pos[PLOT_LABEL_POS_LEN + 1];
+} GPT_LABEL;
 
 typedef struct {
     FILE *fp;
@@ -52,6 +63,7 @@ typedef struct {
     double *data;              /* data to plot */
     char **labels;             /* data-point labels (not always present) */
     int nlabels;               /* number of labels */
+    GPT_LABEL text_labels[MAX_PLOT_LABELS];  /* textual labels written onto graph */
     void *ptr;                 /* for GUI use */
 } GPT_SPEC;
 

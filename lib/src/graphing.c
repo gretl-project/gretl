@@ -1403,6 +1403,15 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	fprintf(fp, "set y2label '%s'\n", spec->titles[3]);
     }
 
+    for (i=0; i<MAX_PLOT_LABELS; i++) {
+	if (!string_is_blank(spec->text_labels[i].text)) {
+	    fprintf(fp, "set label '%s' at %s %s\n",
+		    spec->text_labels[i].text,
+		    spec->text_labels[i].pos,
+		    spec->text_labels[i].just);
+	}
+    }
+
     fputs("set xzeroaxis\n", fp);
     fputs("set missing \"?\"\n", fp);
     if (strcmp(spec->keyspec, "none") == 0) {

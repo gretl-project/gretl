@@ -222,6 +222,27 @@ void gretl_varinfo_init (VARINFO *vinfo)
 {
     vinfo->label[0] = 0;
     vinfo->display_name[0] = 0;
+    vinfo->compact_method = COMPACT_NONE;
+}
+
+/* ................................................. */
+
+static char *compact_method_to_string (int method)
+{
+    if (method == COMPACT_SUM) return "COMPACT_SUM";
+    else if (method == COMPACT_AVG) return "COMPACT_AVG";
+    else if (method == COMPACT_SOP) return "COMPACT_SOP";
+    else if (method == COMPACT_EOP) return "COMPACT_EOP";
+    else return "COMPACT_NONE";
+}
+
+static int compact_string_to_int (const char *str)
+{
+    if (!strcmp(str, "COMPACT_SUM")) return COMPACT_SUM;
+    else if (!strcmp(str, "COMPACT_AVG")) return COMPACT_AVG;
+    else if (!strcmp(str, "COMPACT_SOP")) return COMPACT_SOP;
+    else if (!strcmp(str, "COMPACT_EOP")) return COMPACT_EOP;
+    else return COMPACT_NONE;
 }
 
 /* ................................................. */
@@ -3069,8 +3090,8 @@ static int write_xmldata (const char *fname, const int *list,
 	    xmlbuf = gretl_xml_encode(VARLABEL(pdinfo, list[i]));
 	    if (xmlbuf == NULL) return 1;
 	    else {
-		if (opt) gzprintf(fz, "\n label=\"%s\"\n", xmlbuf);
-		else fprintf(fp, "\n label=\"%s\"\n", xmlbuf);
+		if (opt) gzprintf(fz, "\n label=\"%s\"", xmlbuf);
+		else fprintf(fp, "\n label=\"%s\"", xmlbuf);
 		free(xmlbuf);
 	    }
 	} 
@@ -3078,13 +3099,18 @@ static int write_xmldata (const char *fname, const int *list,
 	    xmlbuf = gretl_xml_encode(DISPLAYNAME(pdinfo, list[i]));
 	    if (xmlbuf == NULL) return 1;
 	    else {
-		if (opt) gzprintf(fz, "\n displayname=\"%s\"\n", xmlbuf);
-		else fprintf(fp, "\n displayname=\"%s\"\n", xmlbuf);
+		if (opt) gzprintf(fz, "\n displayname=\"%s\"", xmlbuf);
+		else fprintf(fp, "\n displayname=\"%s\"", xmlbuf);
 		free(xmlbuf);
 	    }
 	} 
-	if (opt) gzputs(fz, "/>\n");
-	else fputs("/>\n", fp);
+	if (COMPACT_METHOD(pdinfo, list[i]) != COMPACT_NONE) {
+	    xmlbuf = compact_method_to_string(COMPACT_METHOD(pdinfo, list[i]));
+	    if (opt) gzprintf(fz, "\n compact-method=\"%s\"", xmlbuf);
+	    else fprintf(fp, "\n compact-method=\"%s\"", xmlbuf);
+	} 
+	if (opt) gzputs(fz, "\n/>\n");
+	else fputs("\n/>\n", fp);
 
     }
     if (opt) gzputs(fz, "</variables>\n");
@@ -3223,6 +3249,11 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	    if (tmp) {
 		*DISPLAYNAME(pdinfo, i) = 0;
 		strncat(DISPLAYNAME(pdinfo, i), tmp, MAXDISP-1);
+		free(tmp);
+	    }
+	    tmp = xmlGetProp(cur, (UTF) "compact-method");
+	    if (tmp) {
+		COMPACT_METHOD(pdinfo, i) = compact_string_to_int(tmp);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "role");
