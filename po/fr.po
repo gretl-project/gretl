@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
 "POT-Creation-Date: 2004-04-30 07:55-0400\n"
-"PO-Revision-Date: 2004-03-25 14:36-0500\n"
+"PO-Revision-Date: 2004-05-02 10:24-0400\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -586,7 +586,7 @@ msgstr "Le fichier de données est vide\n"
 
 #: lib/src/dataio.c:2503
 msgid "Data file has trailing commas\n"
-msgstr ""
+msgstr "Le fichier de données contient des virgules en suffixe\n"
 
 #: lib/src/dataio.c:2594
 #, c-format
@@ -612,9 +612,9 @@ msgstr ""
 "   AVERTISSEMENT: valeur manquante pour la variable %d, observation %d\n"
 
 #: lib/src/dataio.c:2700
-#, fuzzy, c-format
+#, c-format
 msgid "At variable %d, observation %d:\n"
-msgstr "pour la variable %s (%d observations valides)"
+msgstr "De la variable %d, observations %d:\n"
 
 #: lib/src/dataio.c:2738
 msgid ""
@@ -2239,19 +2239,21 @@ msgstr "gretlcli.hlp"
 #: lib/src/gretl_string_table.c:135
 #, c-format
 msgid "variable %d: translating from strings to code numbers\n"
-msgstr ""
+msgstr "variable %d: traduction à partir des chaînes en codes numériques\n"
 
 #: lib/src/gretl_string_table.c:192 lib/src/gretl_string_table.c:195
-#, fuzzy, c-format
+#, c-format
 msgid "String code table for variable %d (%s):\n"
-msgstr "Liste des étiquettes pour les variables:\n"
+msgstr "Table des chaînes de codes pour les variables %d (%s):\n"
 
 #: lib/src/gretl_string_table.c:208
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "String code table written to\n"
 " %s\n"
-msgstr "Modèle imprimé vers %s\n"
+msgstr ""
+"Table des chaînes de codes écrite dans\n"
+" %s\n"
 
 #: lib/src/gretl_utils.c:563
 #, c-format
@@ -2786,11 +2788,11 @@ msgstr "Hildreth-Lu"
 
 #: lib/src/modelprint.c:514
 msgid "Prais--Winsten"
-msgstr ""
+msgstr "Prais--Winsten"
 
 #: lib/src/modelprint.c:515 gui/selector.c:517 gui2/selector.c:761
 msgid "Prais-Winsten"
-msgstr ""
+msgstr "Prais-Winsten"
 
 #: lib/src/modelprint.c:527 gui/selector.c:535 gui2/selector.c:779
 msgid "ARMAX"
@@ -3978,18 +3980,16 @@ msgid "SUR"
 msgstr "SUR"
 
 #: lib/src/system.c:41
-#, fuzzy
 msgid "3SLS"
-msgstr "TSLS"
+msgstr "3SLS"
 
 #: lib/src/system.c:46
 msgid "Seemingly Unrelated Regressions"
-msgstr ""
+msgstr "Régressions semblablement sans liens"
 
 #: lib/src/system.c:47
-#, fuzzy
 msgid "Three-Stage Least Squares"
-msgstr "Moindres carrés en 2 étapes"
+msgstr "Moindres carrés en 3 étapes"
 
 #: lib/src/system.c:51
 msgid "No system of equations has been defined"
@@ -5638,9 +5638,8 @@ msgid "/Model/sep2"
 msgstr "/Modèle/sep2"
 
 #: gui/gretl.c:449 gui2/gretl.c:522
-#, fuzzy
 msgid "/Model/Time series"
-msgstr "série temporelle"
+msgstr "/Modèle/Séries temporelles"
 
 #: gui/gretl.c:450 gui2/gretl.c:523
 msgid "/Model/sep3"
@@ -5769,54 +5768,44 @@ msgid "main window"
 msgstr "fenêtre principale"
 
 #: gui/gretl.c:840 gui2/gretl.c:960
-#, fuzzy
 msgid "/Model/Time series/_Cochrane-Orcutt..."
-msgstr "/Model/_Cochrane-Orcutt..."
+msgstr "/Modèle/Séries temporelles/_Cochrane-Orcutt..."
 
 #: gui/gretl.c:841 gui2/gretl.c:961
-#, fuzzy
 msgid "/Model/Time series/_Hildreth-Lu..."
-msgstr "/Modèle/_Hildreth-Lu..."
+msgstr "/Modèle/Séries temporelles/_Hildreth-Lu..."
 
 #: gui/gretl.c:842 gui2/gretl.c:962
-#, fuzzy
 msgid "/Model/Time series/_Prais-Winsten..."
-msgstr "/Modèle/test de Cointégration/Johansen..."
+msgstr "/Modèle/Séries temporelles/_Prais-Winsten..."
 
 #: gui/gretl.c:843 gui2/gretl.c:963
-#, fuzzy
 msgid "/Model/Time series/_Autoregressive estimation..."
-msgstr "/Modèle/estimation _autoregressive..."
+msgstr "/Modèle/Séries temporelles/estimation _autoregressive..."
 
 #: gui/gretl.c:844 gui2/gretl.c:964
-#, fuzzy
 msgid "/Model/Time series/ARMA_X..."
-msgstr "/Modèle/ARMA_X..."
+msgstr "/Modèle/Séries temporelles/ARMA_X..."
 
 #: gui/gretl.c:845 gui2/gretl.c:965
-#, fuzzy
 msgid "/Model/Time series/GARCH..."
-msgstr "/Modèle/GARCH..."
+msgstr "/Modèle/Séries temporelles/GARCH..."
 
 #: gui/gretl.c:846 gui2/gretl.c:966
-#, fuzzy
 msgid "/Model/Time series/_Vector Autoregression..."
-msgstr "/Modèle/Autorégression _vectorielle..."
+msgstr "/Modèle/Séries temporelles/Autorégression _vectorielle..."
 
 #: gui/gretl.c:847 gui2/gretl.c:967
-#, fuzzy
 msgid "/Model/Time series/Cointegration test"
-msgstr "/Modèle/Test de cointégration"
+msgstr "/Modèle/Séries temporelles/test de cointégration"
 
 #: gui/gretl.c:848 gui2/gretl.c:968
-#, fuzzy
 msgid "/Model/Time series/Cointegration test/Engle-Granger..."
-msgstr "/Modèle/test de Cointégration/Engle_Granger..."
+msgstr "/Modèle/Séries temporelles/test de Cointégration/Engle-Granger..."
 
 #: gui/gretl.c:850 gui2/gretl.c:970
-#, fuzzy
 msgid "/Model/Time series/Cointegration test/Johansen..."
-msgstr "/Modèle/test de Cointégration/Johansen..."
+msgstr "/Modèle/Séries temporelles/test de Cointégration/Johansen..."
 
 #: gui/gretl.c:1062 gui/gretl.c:1261 gui2/gretl.c:1192 gui2/gretl.c:1362
 msgid " No datafile loaded "
@@ -6727,14 +6716,14 @@ msgid "Small samples: assuming normality and common variance\n"
 msgstr "Petits échantillons: normalité et variance commune supposées\n"
 
 #: gui2/calculator.c:625
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: z = (%g - %g - %g)/%g = %g\n"
-msgstr "Test statistique: z = (%g - %g)/%g = %g\n"
+msgstr "Test statistique: z = (%g - %g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:628
-#, fuzzy, c-format
+#, c-format
 msgid "Test statistic: z = [(%g - %g) - (%g)]/%g = %g\n"
-msgstr "Test statistique: z = (%g - %g) / %g = %g\n"
+msgstr "Test statistique: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:654
 msgid "Null hypothesis: The population variances are equal\n"
@@ -10842,9 +10831,9 @@ msgid "SUR residual, equation %d"
 msgstr "résidu SUR, équation %d"
 
 #: plugin/sur.c:215
-#, fuzzy, c-format
+#, c-format
 msgid "3SLS residual, equation %d"
-msgstr "résidu SUR, équation %d"
+msgstr "résidu 3SLS, équation %d"
 
 #: plugin/sur.c:230
 #, c-format
@@ -10852,9 +10841,9 @@ msgid "SUR fitted value, equation %d"
 msgstr "valeur ajusté SUR, équation %d"
 
 #: plugin/sur.c:233
-#, fuzzy, c-format
+#, c-format
 msgid "3SLS fitted value, equation %d"
-msgstr "valeur ajusté SUR, équation %d"
+msgstr "valeur ajusté 3SLS, équation %d"
 
 #: plugin/sur.c:438
 msgid "Cross-equation VCV for residuals"
