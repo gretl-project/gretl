@@ -418,7 +418,7 @@ void do_open_session (GtkWidget *w, gpointer data)
     status = parse_savefile(scriptfile, &session, &rebuild);
     if (status == SAVEFILE_ERROR) return;
     if (status == SAVEFILE_SCRIPT) {
-	do_open_script(NULL, NULL);
+	do_open_script();
 	return;
     }
 
