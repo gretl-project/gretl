@@ -1010,6 +1010,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	break;
 
+    case BREAK:
     case ENDLOOP:
 	pputs(prn, _("You can't end a loop here, "
 		     "you haven't started one\n"));

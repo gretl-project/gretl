@@ -205,6 +205,7 @@ static int aliased (char *str)
 	               c == IMPORT || \
                        c == APPEND || \
 	               c == ENDLOOP || \
+                       c == BREAK || \
 	               c == SIM || \
                        c == RENAME || \
 	               c == TESTUHAT || \
@@ -360,21 +361,42 @@ static void grab_gnuplot_literal_block (char *line, CMD *cmd)
 }
 
 static int parse_lagvar (const char *s, LAGVAR *lv, 
-			 const DATAINFO *pdinfo)
+			 const double **Z, const DATAINFO *pdinfo)
 {
-    int ret = 1;
+    char l1str[9], l2str[9];
+    int v, ret = 1;
 
     *lv->varname = 0;
     lv->firstlag = 0;
     lv->lastlag = 0;
     lv->varnum = 0;
 
-    if (sscanf(s, "%8[^(](-%d to -%d)", lv->varname, 
-	       &lv->firstlag, &lv->lastlag) == 3) {
+    if (sscanf(s, "%8[^(](-%8s to -%8[^)])", lv->varname, 
+	       l1str, l2str) == 3) {
 	lv->varnum = varindex(pdinfo, lv->varname);
 	if (lv->varnum < pdinfo->v) {
 	    ret = 0;
 	} 
+	if (isdigit(*l1str)) {
+	    lv->firstlag = atoi(l1str);
+	} else {
+	    v = varindex(pdinfo, l1str);
+	    if (v < pdinfo->v) {
+		lv->firstlag = Z[v][0];
+	    } else {
+		ret = 1;
+	    }
+	}
+	if (isdigit(*l2str)) {
+	    lv->lastlag = atoi(l2str);
+	} else {
+	    v = varindex(pdinfo, l2str);
+	    if (v < pdinfo->v) {
+		lv->lastlag = Z[v][0];
+	    } else {
+		ret = 1;
+	    }
+	}
     } else if (sscanf(s, "%8[^(](-%d)", lv->varname, 
 		      &lv->firstlag) == 2) {
 	lv->varnum = varindex(pdinfo, lv->varname);
@@ -417,7 +439,9 @@ int auto_lag_ok (const char *s, int *lnum,
     int llen = *lnum;
     int ok = 1;
 	
-    if (parse_lagvar(s, &lagvar, pdinfo)) return 0;
+    if (parse_lagvar(s, &lagvar, (const double **) *pZ, pdinfo)) {
+	return 0;
+    }
 
     nlags = lagvar.lastlag - lagvar.firstlag + 1;
     if (nlags <= 0) {

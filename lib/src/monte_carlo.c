@@ -97,6 +97,7 @@ struct LOOPSET_ {
     int ntimes;
     int index;
     double initval;
+    char brk;
     char ichar;
     int lvar;
     int rvar;
@@ -169,6 +170,7 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 	ci == IF ||
 	ci == ELSE ||
 	ci == ENDIF ||
+	ci == BREAK ||
 	ci == ENDLOOP) { 
 	return 1;
     }
@@ -918,8 +920,14 @@ loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
     int cont = 0;
     int oldtimes = loop->ntimes;
 
+    /* got "break" comand */
+    if (loop->brk) {
+	loop->brk = 0;
+	cont = 0;
+    }
+
     /* simple count loop */
-    if (loop->type == COUNT_LOOP) {
+    else if (loop->type == COUNT_LOOP) {
 	if (k < loop->ntimes) {
 	    cont = 1;
 	}
@@ -993,6 +1001,7 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->initval = 0.0;
     loop->err = 0;
     loop->ichar = 0;
+    loop->brk = 0;
     loop->lvar = 0;
     loop->rvar = 0;
     loop->rval = 0.0;
@@ -2217,6 +2226,10 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case LOOP:
 		err = loop_exec(loop->children[childnum++], NULL,
 				pZ, ppdinfo, models, echo_off, prn);
+		break;
+
+	    case BREAK:
+		loop->brk = 1;
 		break;
 
 	    case ENDLOOP:

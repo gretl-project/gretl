@@ -29,6 +29,7 @@ enum gretl_cmd_codes {
     AR,      
     ARCH,
     ARMA,
+    BREAK,
     BXPLOT,
     CHOW,
     COEFFSUM,

@@ -5502,6 +5502,7 @@ int gui_exec_line (char *line,
 	}
 	break;
 
+    case BREAK:
     case ENDLOOP:
 	pprintf(prn, _("You can't end a loop here, "
 		       "you haven't started one\n"));
