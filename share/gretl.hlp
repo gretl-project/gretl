@@ -191,7 +191,19 @@ Carries out the Johansen trace test for cointegration among the listed
 variables for the given order.  Critical values are computed via J. Doornik's
 gamma approximation (see "Approximations to the Asymptotic Distribution of
 Cointegration Tests," Journal of Economic Surveys, 1998).  For details of this
-test see for instance James D. Hamilton, Time Series Analysis, chapter 19.
+test see for instance James D. Hamilton, Time Series Analysis, chapter 20.
+
+The following table is offered as a guide to the interpretation of the results
+shown for the test, for the 3-variable case.  H0 denotes the null hypothesis,
+H1 the alternative hypothesis, and c the number of cointegrating relations.
+
+                 Rank     Trace test         Lmax test
+                          H0     H1          H0     H1
+                 ---------------------------------------
+                  0      c = 0  c = 3       c = 0  c = 1
+                  1      c = 1  c = 3       c = 1  c = 2
+                  2      c = 2  c = 3       c = 2  c = 3
+                 ---------------------------------------
 
 # 
 compact 

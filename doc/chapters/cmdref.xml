@@ -458,7 +458,7 @@
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry><command>coint2 4 y x1 x2 -o</command>
+	      <entry><command>coint2 4 y x1 x2 -v</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -469,8 +469,8 @@
 	Carries out the Johansen trace test for cointegration among
 	the listed variables for the given order. Critical values are
 	computed via J. Doornik's gamma approximation (Doornik, 1998).
-	For details of this test see Hamilton (1994, Chapter 19).  If
-	the <literal>-o</literal> flag is given the results of the
+	For details of this test see Hamilton (1994, Chapter 20).  If
+	the <literal>-v</literal> flag is given the results of the
 	various auxiliary regressions are printed.
       </para>
 

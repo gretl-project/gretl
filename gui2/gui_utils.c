@@ -1382,7 +1382,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
     int save_as_ok = (vwin->role != EDIT_HEADER && 
 		      vwin->role != EDIT_NOTES);
 
-    int help_ok = (vwin->role == LEVERAGE);
+    int help_ok = (vwin->role == LEVERAGE || vwin->role == COINT2);
 
 #ifndef OLD_GTK
     if (vwin->role == VIEW_MODELTABLE) tex_icon_init();

@@ -1028,7 +1028,7 @@ static void real_do_coint (gpointer p, int action)
     } 
 
     view_buffer(prn, 78, 400, _("gretl: cointegration test"), 
-		COINT, NULL);
+		action, NULL);
 }
 
 void do_coint (GtkWidget *widget, gpointer p)

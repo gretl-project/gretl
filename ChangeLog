@@ -6,6 +6,8 @@ version 1.2.2
 - Fix bug in accessing critical values of F (Utilities menu)
 - Add DFFITS values to the "influential observations" model
   test; also expand the help entry for this
+- Add a little explanation of Johansen cointegration test
+  results to GUI helpfile
 
 1/22/2004 version 1.2.1
 - Add Cristian Rigamonti's Italian translation
