@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 
-/* #define PCA_DEBUG 1 */
+#undef PCA_DEBUG
 
 static double *standardize (const double *x, int n)
 {
@@ -52,7 +52,7 @@ int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
     gretl_matrix *m;
     double x, y;
     int i, j, n = corrmat->list[0];
-    int idx;
+    int idx, cols;
     double *evals;
 
     m = gretl_matrix_alloc(n, n);
@@ -92,19 +92,26 @@ int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
 
     pputs(prn, "Eigenvectors (component loadings)\n\n");
 
-    pputs(prn, "Variable  ");
-    for (i=1; i<=n; i++) {
-	pprintf(prn, "%8s%d", "PC", i);
-    }
-    pputs(prn, "\n");
-    for (i=0; i<n; i++) {
-	pprintf(prn, "%-10s", pdinfo->varname[corrmat->list[i+1]]);
-	for (j=n-1; j>=0; j--) {
-	    pprintf(prn, "%9.3f", gretl_matrix_get(m, i, j));
+    cols = n;
+    while (cols > 0) {
+	int colsdone = 0;
+
+	pputs(prn, "Variable  ");
+	for (i=n-cols; i<n-cols+7 && i<n; i++) {
+	    pprintf(prn, "%8s%d", "PC", i + 1);
+	    colsdone++;
 	}
 	pputs(prn, "\n");
+	for (i=0; i<n; i++) {
+	    pprintf(prn, "%-10s", pdinfo->varname[corrmat->list[i+1]]);
+	    for (j=cols-1; j>cols-8 && j>=0; j--) {
+		pprintf(prn, "%9.3f", gretl_matrix_get(m, i, j));
+	    }
+	    pputs(prn, "\n");
+	}
+	cols -= colsdone;
+	pputs(prn, "\n");
     }
-    pputs(prn, "\n");
 
     if (oflag) {
 	/* add components with eigenvalues > 1 to the dataset */
