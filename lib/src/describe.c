@@ -105,7 +105,7 @@ static void moments (int t1, int t2, const double *zx,
 
     if (var > 0.0) {
 	*skew = (s3 / n) / pow(s2 / n, 1.5);
-	*kurt = (s4 / n) / pow(s2 / n, 2); /* - 3.0 */
+	*kurt = ((s4 / n) / pow(s2 / n, 2)) - 3.0; /* excess kurtosis */
     } else {
 	*skew = *kurt = NADBL;
     }
@@ -176,7 +176,7 @@ static double doornik_chisq (double skew, double kurt, int n)
 
     rb1 = skew;
     b1 = skew * skew;
-    b2 = kurt + 3.0;
+    b2 = kurt + 3.0; /* convert from "excess" to regular */
 
     z1 = rb1_to_z1 (rb1, n);
     z2 = b2_to_z2 (b1, b2, n);

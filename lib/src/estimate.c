@@ -531,7 +531,7 @@ static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
 
         ess = error sum of squares
         sigma = standard error of regression
-        fstt = f-statistics
+        fstt = F-statistic
         coeff = vector of regression coefficients
         sderr = vector of standard errors of regression coefficients
 */
@@ -1307,6 +1307,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     tsls.sigma = (tsls.ess >= 0.0) ? sqrt(tsls.ess/tsls.dfd) : 0.0;
 
     xpxxpy = xpxxpy_func(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0);
+
     diag = malloc((xpxxpy.nv + 1) * sizeof(double));
     if (diag == NULL) {
 	free(list1); free(list2);
@@ -1318,10 +1319,12 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 	tsls.errcode = E_ALLOC;
 	return tsls;
     }
+
     cb = cholbeta(xpxxpy);    
     diaginv(cb.xpxxpy, diag);
-    for (i=1; i<=tsls.ncoeff; i++) 
+    for (i=1; i<=tsls.ncoeff; i++) {
 	tsls.sderr[i] = tsls.sigma * sqrt(diag[i]); 
+    }
     if (diag != NULL) free(diag); 
     if (cb.xpxxpy.xpx != NULL) free(cb.xpxxpy.xpx);
     if (cb.xpxxpy.xpy != NULL) free(cb.xpxxpy.xpy);
@@ -2349,12 +2352,13 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	return lad_model;
     }
 
-    while (cdiff > 0.001 && iter++ < 20) {
+    while (cdiff > 0.0001 && iter++ < 20) {
 
 	for (t=0; t<pdinfo->n; t++) {
 	    if (na(lad_model.uhat[t])) {
 		(*pZ)[wtnum][t] = NADBL;
 	    } else {
+		/* bodge here !! */
 		if (fabs(lad_model.uhat[t]) < .000001) {
 		    (*pZ)[wtnum][t] = 1000000;
 		} else {
@@ -2399,10 +2403,23 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     lad_model.ess = residsum;                    /* not really "ess" */
     lad_model.sigma = residsum / lad_model.nobs; /* not really sigma */
 
+    /* allocation: 
+
+    if we're going to replace model.xpx, we should
+    free it first since it is already allocated.
+
+    if we're going to discard cb.coeff (not hook it to model.coeff)
+    we should free it after calling cholbeta
+
+    */
+
+    free(lad_model.xpx);
+    lad_model.xpx = NULL;
+
     xpxxpy = xpxxpy_func(list, lad_model.t1, lad_model.t2, *pZ, 0, 0.0);
     cb = cholbeta(xpxxpy);    
     lad_model.xpx = cb.xpxxpy.xpx;
-    free(xpxxpy.xpy);
+    free(cb.coeff);
     free(cb.xpxxpy.xpy);
 
     makevcv(&lad_model);

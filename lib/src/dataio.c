@@ -473,10 +473,6 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 #endif
     }
 
-    if (err) { /* should not be necessary */
-	fprintf(stderr, "%s\n", gretl_errmsg);
-    }
-
     return err;
 }
 
@@ -683,9 +679,6 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
     colonize_obs(pdinfo->endobs);
 
     pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
-    pdinfo->n = -1;
-    pdinfo->n = dateton(pdinfo->endobs, pdinfo) + 1;
-    pdinfo->extra = 0;    
 
     if (pdinfo->sd0 >= 2.0) 
         pdinfo->time_series = TIME_SERIES; /* actual time series? */
@@ -693,6 +686,10 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 	pdinfo->time_series = STACKED_TIME_SERIES; /* panel data? */
     }
     else pdinfo->time_series = 0;
+
+    pdinfo->n = -1;
+    pdinfo->n = dateton(pdinfo->endobs, pdinfo) + 1;
+    pdinfo->extra = 0;      
 
     pdinfo->bin = 0;
     pdinfo->markers = 0;
@@ -1580,16 +1577,18 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 
     /* read data header file */
     err = readhdr(hdrfile, pdinfo);
-    if (err) return err;
-    else { 
+    if (err) {
+	return err;
+    } else { 
 	pprintf(prn, I_("\nReading header file %s\n"), hdrfile);
     }
 
     /* deal with case where first col. of data file contains
        "marker" strings */
     pdinfo->S = NULL;
-    if (pdinfo->markers && dataset_allocate_markers(pdinfo)) 
+    if (pdinfo->markers && dataset_allocate_markers(pdinfo)) {
 	return E_ALLOC; 
+    }
     
     /* allocate dataset */
     if (prepZ(pZ, pdinfo)) return E_ALLOC;

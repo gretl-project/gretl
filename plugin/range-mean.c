@@ -92,10 +92,8 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
 
     if (pdinfo->pd > 1 && nsamp >= 3 * pdinfo->pd) {
 	k = pdinfo->pd;
-    } else if (nsamp >= 30) {
-	k = 10;
     } else {
-	k = 5;
+	k = (int) sqrt((double) nsamp);
     }
 
     extra = nsamp % k;

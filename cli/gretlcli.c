@@ -315,24 +315,32 @@ int main (int argc, char *argv[])
 	clear(paths.datfile, MAXLEN);
 	strncpy(paths.datfile, argv[1], MAXLEN-1);
 	err = detect_filetype(paths.datfile, &paths, prn);
-	if (err == GRETL_UNRECOGNIZED) 
+
+	if (err == GRETL_UNRECOGNIZED) { 
 	    exit(EXIT_FAILURE);
-	if (err == GRETL_NATIVE_DATA)
+	}
+
+	if (err == GRETL_NATIVE_DATA) {
 	    err = get_data(&Z, datainfo, paths.datfile, &paths, 
 			   data_status, prn);
-	if (err == GRETL_XML_DATA)
+	} 
+	else if (err == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, datainfo, paths.datfile, &paths, 
 			      data_status, prn, 0);
-	else if (err == GRETL_CSV_DATA)
+	} 
+	else if (err == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, datainfo, paths.datfile, prn);
-	else if (err == GRETL_BOX_DATA)
+	} 
+	else if (err == GRETL_BOX_DATA) {
 	    err = import_box(&Z, datainfo, paths.datfile, prn);
+	} 
 	else if (err == GRETL_SCRIPT) { /* maybe it's a script file? */
 	    runit = 1;
 	    strcpy(runfile, paths.datfile); 
 	    clear(paths.datfile, MAXLEN);
 	    cli_get_data = 1;
 	}
+
 	if (!cli_get_data) {
 	    if (err) {
 		errmsg(err, prn);
@@ -908,16 +916,17 @@ void exec_line (char *line, PRN *prn)
 	    }
 	}
 	check = detect_filetype(datfile, &paths, prn);
-	if (check == GRETL_CSV_DATA)
+	if (check == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, datainfo, datfile, prn);
-	else if (check == GRETL_BOX_DATA)
+	} else if (check == GRETL_BOX_DATA) {
 	    err = import_box(&Z, datainfo, datfile, prn);
-	else if (check == GRETL_XML_DATA)
+	} else if (check == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, datainfo, datfile, &paths, 
 			      data_status, prn, 0);
-	else 
+	} else {
 	    err = get_data(&Z, datainfo, datfile, &paths, 
 			   data_status, prn);
+	}
 	if (err) {
 	    errmsg(err, prn);
 	    break;
