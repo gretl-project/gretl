@@ -2,7 +2,7 @@
 
 use strict;
 
-my ($line, $foo, $figfile);
+my ($line, $texline, $foo, $figfile);
 my $manual = "./manual.xml";
 my $textmp = "./eqntmp";
 
@@ -14,7 +14,7 @@ sub printtex {
     print TEX "\\usepackage{mathtime\n}";
     print TEX "\\pagestyle{empty}\n";
     print TEX "\\begin{document}\n";
-    print TEX "$line\n";
+    print TEX "$texline\n";
     print TEX "\\end{document}\n";
     close (TEX);
     system ("latex $textmp");
@@ -23,15 +23,24 @@ sub printtex {
     system ("rm -f $textmp.*");
 }
 
+sub grabtex {
+    my $line = <MAN>; # grab line with literal tex
+    $line =~ s/\s+/ /g;
+    print "read TeX: $line";
+    $texline += $line;
+}
+
 while ($line = <MAN>) {
     chomp($line);
-    if ($line =~ /\<texmath/) {
+    if ($line =~ /equation\>/) {
+        $line = <MAN>;
 	($foo, $figfile) = split(/\"/, $line);
         print "Got figfile: $figfile\n";
-        $line = <MAN>;
-        chomp($line);
-        $line =~ s/\s+/ /g;
-        print "read TeX: $line\n";
+	$line = <MAN>; # skip <texmath>
+	grabtex();
+	while ($texline !~ /\$ +$/) {
+	    grabtex();
+	}
 	print "creating $figfile.png\n";
 	printtex();
     }
