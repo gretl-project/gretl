@@ -895,11 +895,8 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 				     spreadsheet *sheet)
 {   
     GdkModifierType mods; 
-
-    if (event->type != GDK_BUTTON_PRESS) {
-	return FALSE;
-    }
-
+    gint ret = FALSE;
+    
     gdk_window_get_pointer(view->window, NULL, NULL, &mods);
 
     if (mods & GDK_BUTTON3_MASK) {
@@ -909,12 +906,12 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 			bevent->button, bevent->time);
 	return TRUE;
     }
-
+    
     if (mods & GDK_BUTTON1_MASK) {
 	GdkEventButton *bevent = (GdkEventButton *) event;
 	GtkTreePath *path;
 	GtkTreeViewColumn *column;
-
+	
 	gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(sheet->view),
 				      (gint) bevent->x, 
 				      (gint) bevent->y,
@@ -926,13 +923,14 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 
 	    if (colnum == 0) {
 		/* don't respond to a click in a non-data column */
+		fprintf(stderr, "got colnum 0, ignoring\n");
 		ret = TRUE;
 	    } 
 	}
 	gtk_tree_path_free(path);
     }
 
-    return FALSE;
+    return ret;
 }
 
 static gboolean update_selected (GtkTreeSelection *selection, spreadsheet *sheet)
