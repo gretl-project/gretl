@@ -949,6 +949,10 @@ const char **get_opts_for_command (int ci)
     int i, j, nopt = 0;
     const char **ret = NULL;
 
+    if (is_model_ci(ci) && ci != OLS) {
+	nopt++; /* vcv */
+    }
+
     for (i=0; gretl_opts[i].ci != 0; i++) {
 	if (gretl_opts[i].ci == ci) nopt++;
     }
@@ -963,6 +967,10 @@ const char **get_opts_for_command (int ci)
 	if (gretl_opts[i].ci == ci) {
 	    ret[j++] = gretl_opts[i].longopt;
 	}
+    }
+
+    if (is_model_ci(ci) && ci != OLS) {
+	ret[j++] = "vcv";
     }
 
     ret[j] = NULL;
