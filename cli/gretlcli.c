@@ -24,7 +24,7 @@
 # include "../config.h"
 #else
 # include <windows.h>
-# include "../winconfig.h"
+# include "winconfig.h"
 #endif
 #include <stdio.h>
 #include <stdlib.h>

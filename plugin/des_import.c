@@ -22,7 +22,7 @@
 */
 
 #ifdef OS_WIN32
-# include "../winconfig.h"
+# include "winconfig.h"
 #else
 # include "../config.h"
 #endif
