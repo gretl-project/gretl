@@ -39,7 +39,7 @@ ifeq ($(LN),)
 endif
 
 ifeq ($(GTK_EXTRA_LIBS),)
-  GTK_EXTRA_CFLAGS = -I./gtkextra-lite
+  GTK_EXTRA_CFLAGS = -I.
   GTK_EXTRA_LIBS = -L./gtkextra-lite -lgtkextra-lite
   query_gtkextra_lib = gtkextra-lib
 endif
@@ -85,12 +85,13 @@ OBJS = gretl.o library.o gui_utils.o callbacks.o dialogs.o ssheet.o \
 	webget.o calculator.o guiprint.o boxplots.o \
 	selector.o settings.o helpfiles.o
 
-$(PROG): $(OBJS) $(query_gtkextra_lib)
+$(PROG): $(query_gtkextra_lib) $(OBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)
 
 .PHONY:
 
 gtkextra-lib: 
+	ln -sf ./gtkextra-lite ./gtkextra
 	make -C gtkextra-lite
 
 install: $(PROG) install-data $(query_install_gnome)

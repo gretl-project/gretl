@@ -24,37 +24,37 @@
 #include <gdk/gdk.h>
 #include <glib.h>
 
-#include <gtkextra/gtkbordercombo.h>
-#include <gtkextra/gtkcharsel.h>
-#include <gtkextra/gtkcheckitem.h>
-#include <gtkextra/gtkcolorcombo.h>
-#include <gtkextra/gtkcombobox.h>
-#include <gtkextra/gtkdirtree.h>
-#include <gtkextra/gtkextrafeatures.h>
+/* #include <gtkextra/gtkbordercombo.h> */
+/* #include <gtkextra/gtkcharsel.h> */
+/* #include <gtkextra/gtkcheckitem.h> */
+/* #include <gtkextra/gtkcolorcombo.h> */
+/* #include <gtkextra/gtkcombobox.h> */
+/* #include <gtkextra/gtkdirtree.h> */
+/* #include <gtkextra/gtkextrafeatures.h> */
 #include <gtkextra/gtkfilelist.h>
-#include <gtkextra/gtkfontcombo.h>
+/* #include <gtkextra/gtkfontcombo.h> */
 #include <gtkextra/gtkiconlist.h>
 #include <gtkextra/gtkitementry.h>
 #include <gtkextra/gtkiconfilesel.h>
 #include <gtkextra/gtkplot.h>
-#include <gtkextra/gtkplotpolar.h>
-#include <gtkextra/gtkplot3d.h>
-#include <gtkextra/gtkplotdata.h>
-#include <gtkextra/gtkplotsurface.h>
-#include <gtkextra/gtkplotcsurface.h>
-#include <gtkextra/gtkplotcanvas.h>
-#include <gtkextra/gtkplotbar.h>
-#include <gtkextra/gtkplotbox.h>
-#include <gtkextra/gtkplotdt.h>
-#include <gtkextra/gtkplotflux.h>
-#include <gtkextra/gtkplotpixmap.h>
-#include <gtkextra/gtkplotgdk.h>
-#include <gtkextra/gtkplotpc.h>
-#include <gtkextra/gtkplotprint.h>
+/* #include <gtkextra/gtkplotpolar.h> */
+/* #include <gtkextra/gtkplot3d.h> */
+/* #include <gtkextra/gtkplotdata.h> */
+/* #include <gtkextra/gtkplotsurface.h> */
+/* #include <gtkextra/gtkplotcsurface.h> */
+/* #include <gtkextra/gtkplotcanvas.h> */
+/* #include <gtkextra/gtkplotbar.h> */
+/* #include <gtkextra/gtkplotbox.h> */
+/* #include <gtkextra/gtkplotdt.h> */
+/* #include <gtkextra/gtkplotflux.h> */
+/* #include <gtkextra/gtkplotpixmap.h> */
+/* #include <gtkextra/gtkplotgdk.h */>
+#include <gtkextra/gtkplotpc.h> 
+/* #include <gtkextra/gtkplotprint.h> */
 #include <gtkextra/gtkplotps.h>
 #include <gtkextra/gtkpsfont.h>
 #include <gtkextra/gtksheet.h>
-#include <gtkextra/gtktogglecombo.h>
+/* #include <gtkextra/gtktogglecombo.h> */
 
 
 #endif /* GTK_EXTRA_H */
