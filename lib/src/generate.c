@@ -1956,6 +1956,8 @@ static void get_genr_formula (char *formula, const char *line,
     if (sscanf(line, "%8[^[][%10[^]]", vname, obs) == 2) {
 	genr->obs = dateton(obs, genr->pdinfo);
 
+	fprintf(stderr, "obs='%s', genr->obs = %d\n", obs, genr->obs);
+
 	if (genr->obs < 0 || genr->obs >= genr->pdinfo->n) {
 	    genr->obs = plain_obs_number(obs, genr->pdinfo);
 	}

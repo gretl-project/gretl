@@ -35,7 +35,8 @@ GtkWidget *standard_button (int code)
 	N_("Apply"),
 	N_("Help"),
 	N_("Forward"),
-	N_("Back")
+	N_("Back"),
+	N_("Find next"),
     };
 
     return gtk_button_new_with_label(_(button_strings[code]));

@@ -976,6 +976,21 @@ static int check_date (const char *date)
     return 0;
 }
 
+static void maybe_unquote_label (char *targ, const char *src)
+{
+    if (*src == '"' || *src == '\'') {
+	int n;
+
+	strcpy(targ, src + 1);
+	n = strlen(targ);
+	if (n > 0 && (targ[n-1] == '"' || targ[n-1] == '\'')) {
+	    targ[n-1] = '\0';
+	}
+    } else {
+	strcpy(targ, src);
+    }
+}
+
 /**
  * dateton:
  * @date: string representation of date for processing.
@@ -1023,6 +1038,15 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	/* undated time series */
 	if (sscanf(date, "%d", &i) && i > 0 && i <= pdinfo->n) {
 	    return i - 1;
+	}
+    } else if (pdinfo->markers && pdinfo->S != NULL) {
+	char test[OBSLEN];
+
+	maybe_unquote_label(test, date);
+	for (i=0; i<pdinfo->n; i++) {
+	    if (!strcmp(test, pdinfo->S[i])) {
+		return i;
+	    }
 	}
     }
 

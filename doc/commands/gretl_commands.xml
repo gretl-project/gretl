@@ -4606,7 +4606,7 @@
       <para>
 	The starting observation represents the starting date in the
 	case of time series data.  Years may be given with two or four
-	digits; subperiods (for example, quarters or years) should be
+	digits; subperiods (for example, quarters or months) should be
 	separated from the year with a colon.  In the case of panel
 	data the starting observation should be given as 1:1; and in
 	the case of cross-sectional data, as 1.  Starting observations

@@ -1446,6 +1446,7 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
 	gtk_editable_select_region (GTK_EDITABLE (find_entry), 0, 
 				    strlen (needle));
     }
+
     g_signal_connect(G_OBJECT(find_entry), "activate", 
 		     G_CALLBACK(findfunc), find_window);
 
@@ -1464,7 +1465,7 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
     gtk_window_set_position(GTK_WINDOW (find_window), GTK_WIN_POS_MOUSE);
 
     /* find button -- make this the default */
-    button = gtk_button_new_with_label (_("Find next"));
+    button = standard_button(GTK_STOCK_FIND);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
@@ -1474,7 +1475,8 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
     gtk_widget_show(button);
 
     /* cancel button */
-    button = gtk_button_new_with_label (_("Cancel"));
+    button = standard_button(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
     g_signal_connect(G_OBJECT (button), "clicked",

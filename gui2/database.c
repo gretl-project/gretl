@@ -598,8 +598,6 @@ static void test_db_book (const char *fname, int *cb)
     }
 }
 
-/* ........................................................... */
-
 static int display_db_series_list (int action, char *fname, char *buf)
 {
     GtkWidget *listbox, *closebutton;

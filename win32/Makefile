@@ -6,22 +6,25 @@ include config.mk
 # directories
 topsrc = ..
 libdir  = $(topsrc)/lib/src
-extradir = ../gui2/gtkextra-lite
-plugindir = ../plugin
+plugindir = $(topsrc)/plugin
 guidir = $(topsrc)/gui2
+extradir = $(guidir)/gtkextra-lite
 imports = ./import-libs
 
 # tools
 CC = $(MGW_PREFIX)-gcc -Wall -O2 -mms-bitfields -DWIN32
 AS = $(MGW_PREFIX)-as
 DLLWRAP = $(MGW_PREFIX)-dllwrap
+DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
+RC = $(MGW_PREFIX)-windres
+RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
+	--define __GNUWIN32__
 
 # libraries
 GTKLIBS := -L$(imports) $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
                           pkg-config --libs gtk+-win32-2.0)
 GLIBLIB := -L$(imports) $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
                           pkg-config --libs glib-2.0)
-ZLIB_LIB = -lz
 CLI_LIBS = -L$(imports) -lreadline.dll
 GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lgtksourceview -lwsock32 #-lhhctrl
 GRETLLIB = -L$(imports) -lgretl -lintl
@@ -37,20 +40,16 @@ vpath %.c $(libdir)
 vpath %.c $(topsrc)/cephes
 vpath %.c $(topsrc)/minpack
 vpath %.c $(topsrc)/cli
-vpath %.c $(topsrc)/gui2
+vpath %.c $(guidir)
 vpath %.c $(extradir)
-vpath %.c $(topsrc)/plugin
-vpath %.c $(topsrc)/plugin/libole2
+vpath %.c $(plugindir)
+vpath %.c $(plugindir)/libole2
 vpath %.c $(topsrc)/tests
-vpath %.h $(libdir):$(topsrc)/cli:$(topsrc)/gui2:$(extradir):$(topsrc)/plugin:.
+vpath %.h $(libdir):$(topsrc)/cli:$(guidir):$(extradir):$(plugindir):.
 vpath %.h $(topsrc)/cephes:..
 vpath %.rc $(topsrc)/win32
 
 #### End of system configuration section. ####
-
-CLIPROG = gretlcli.exe
-GUIPROG = gretlw32.exe
-UPDATER = gretl_updater.exe
 
 PLUGINSRC = \
 	excel_import.c \
@@ -108,13 +107,6 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/vif.dll \
 	plugins/urcdist.dll
 
-WRES    = gretlw32_res.o
-RC      = $(MGW_PREFIX)-windres
-RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
-	--define __GNUWIN32__
-RCOUT   = gretlw32_res.o
-RES2COFF = echo gretlw32_res.o
-
 LIBSRC = bhhh_max.c \
 	calendar.c \
 	compare.c \
@@ -162,6 +154,7 @@ LIBSRC = bhhh_max.c \
 LIBOBJ = $(LIBSRC:.c=.o)
 
 CLISRC = gretlcli.c complete.c 
+
 CLIOBJ = $(CLISRC:.c=.o)
 
 GUISRC = about.c \
@@ -173,7 +166,7 @@ GUISRC = about.c \
 	database.c \
 	datafiles.c \
 	dialogs.c \
-	dlgutils.h \
+	dlgutils.c \
 	filelists.c \
 	fileselect.c \
 	gpt_control.c \
@@ -216,7 +209,7 @@ MINOBJ = $(MINSRC:.c=.o)
 
 OBJS = $(LIBOBJ) $(CLIOBJ) $(GUIOBJ) $(PLUGINOBJ)
 
-MO = mo/es.mo mo/fr.mo mo/it.mo
+MOFILES = mo/es.mo mo/fr.mo mo/it.mo
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
@@ -224,57 +217,23 @@ MO = mo/es.mo mo/fr.mo mo/it.mo
 
 # targets begin
 
-all: buildstamp dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) \
-	$(CHECKER) $(MO)
+all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll dlls/libgtkextra-lite.dll \
+	$(PLUGINS) gretlcli.exe gretlw32.exe $(MOFILES)
 
--include $(OBJS:.o=.d)
+gretlcli.exe: $(CLIOBJ)
+	$(CC) -o $@ $^ $(LIBS) $(CLI_LIBS) -lz -lmingwex -s
 
-$(CLIPROG): $(CLIOBJ) 
-	$(CC) -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB) -lmingwex -s
+gretlw32.exe: $(GUIOBJ) gretlw32_res.o
+	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lpng -lz -lmingwex -s
 
-$(GUIPROG): $(GUIOBJ) $(WRES)
-	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lpng $(ZLIB_LIB) -lmingwex -s
+gretlw32_res.o: gretlw32.rc 
+	$(RC) $(RCFLAGS) $< $@
 
-$(CHECKER): $(CHECKSRC)
-	$(CC) -s -I. -I../lib/src -DUSE_GMP -o $@ $^ $(LIBS) $(ZLIB_LIB)
-
-buildstamp:
-	./builddate.pl
-
-$(WRES): gretlw32.rc 
-	$(RC) $(RCFLAGS) $< $(RCOUT)
-	$(RES2COFF)
-
-$(UPDATER):
+gretl_updater.exe:
 	make -C updater
 
-$(MO):
+$(MOFILES):
 	make -C mo
-
-dirs:
-	mkdir -p dlls 
-	mkdir -p plugins 
-
-clean:
-	rm -f *.o *.d *.def *.exe $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*
-	rm -f plugins/* $(PLUGINS)
-	rm -f dlls/libgtkextra-lite.dll $(imports)/*.a $(imports)/libgtkextra-lite.def
-	rm -f gretl.stamp build.h
-	rm -f windist/MANIFEST windist/gretl.iss 
-	rm -rf windist/gretl windist/gnuplot windist/Output
-	make -C updater clean
-	make -C mo clean
-
-cleandist:
-	rm -f windist/MANIFEST windist/gretl.iss
-	rm -rf windist/gretl windist/gnuplot windist/Output
-
-dll: dlls/libgretl.dll
-extra-dll: dlls/libgtkextra-lite.dll
-prob-dll: dlls/libprob.dll
-plugin: $(PLUGINS)
-
-DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
 
 dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
@@ -394,12 +353,36 @@ workbook.o: workbook.c $(topsrc)/plugin/libole2/ms-ole.h
 midi_utils.o: midi_utils.c $(topsrc)/plugin/midi_utils.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
 
+-include $(OBJS:.o=.d)
+
 # Distribution executable
 
 dist.stamp:
 	sh ./mkwindist
 
-dist: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) dist.stamp
+.PHONY:
 
+dirs:
+	mkdir -p dlls 
+	mkdir -p plugins 
+
+buildstamp:
+	./builddate.pl
+
+clean:
+	rm -f *.o *.d *.def *.exe $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*
+	rm -f plugins/* $(PLUGINS)
+	rm -f dlls/libgtkextra-lite.dll $(imports)/*.a $(imports)/libgtkextra-lite.def
+	rm -f gretl.stamp build.h
+	rm -f windist/MANIFEST windist/gretl.iss 
+	rm -rf windist/gretl windist/gnuplot windist/Output
+	make -C updater clean
+	make -C mo clean
+
+cleandist:
+	rm -f windist/MANIFEST windist/gretl.iss
+	rm -rf windist/gretl windist/gnuplot windist/Output
+
+dist: all dist.stamp
 
 

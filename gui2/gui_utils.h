@@ -31,7 +31,8 @@ enum {
     GTK_STOCK_APPLY,
     GTK_STOCK_HELP,
     GTK_STOCK_GO_FORWARD,
-    GTK_STOCK_GO_BACK
+    GTK_STOCK_GO_BACK,
+    GTK_STOCK_FIND
 };
 
 # define G_OBJECT(o)                    GTK_OBJECT(o)
