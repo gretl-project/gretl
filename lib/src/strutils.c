@@ -405,22 +405,23 @@ int top_n_tail (char *str)
  * 
  */
 
-void compress_spaces (char *str)
+void compress_spaces (char *s)
 {
-    int i, j, n;
+    char *p;
 
-    if (str == NULL || *str == 0) return;
+    if (s == NULL || *s == 0) return;
 
-    n = strlen(str);
-
-    for (i=0; i<n; i++) {
-	if (str[i] == ' ' && str[i+1] == ' ') {
-	    n--;
-	    for (j=i+1; j<=n; j++) str[j] = str[j+1];
-	    i--;
+    p = s;
+    while (*s) {
+	if (*s == ' ') {
+	    p = s + 1;
+	    if (*p == 0) break;
+	    while (*p == ' ') p++;
+	    if (p - s > 1) memmove(s + 1, p, strlen(p) + 1);
 	}
+	s++;
     }
-}   
+} 
 
 /**
  * pprintf:

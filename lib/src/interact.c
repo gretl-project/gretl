@@ -799,6 +799,8 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
     int t, t1, t2, vi;
     char t1str[9], t2str[9], varname[9];
 
+    if (pmod->ci == NLS) return -1; /* FIXME? */
+
     *t1str = '\0'; *t2str = '\0';
 
     /* the varname should either be in the 2nd or 4th position */

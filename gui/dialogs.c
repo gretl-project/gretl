@@ -317,6 +317,49 @@ void destroy_dialog_data (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
+static void dialog_table_setup (dialog_t *dlg, int hsize)
+{
+    GtkWidget *sw;
+
+    sw = gtk_scrolled_window_new (NULL, NULL);
+    gtk_widget_set_usize(sw, hsize, 300);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg->dialog)->vbox), 
+		       sw, TRUE, TRUE, FALSE);
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
+				    GTK_POLICY_AUTOMATIC,
+				    GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw),
+					 GTK_SHADOW_IN);
+    gtk_container_add(GTK_CONTAINER(sw), dlg->edit); 
+    gtk_widget_show(dlg->edit);
+    gtk_widget_show(sw);
+}
+
+/* ........................................................... */
+
+static GtkWidget *text_edit_new (int *hsize)
+{
+    GtkText *tbuf;
+
+    tbuf = gtk_text_new(NULL);
+
+#if 0
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tview), GTK_WRAP_WORD);
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(tview), 4);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(tview), 4);
+
+    gtk_widget_modify_font(GTK_WIDGET(tview), fixed_font);
+    *hsize *= get_char_width(tview);
+    *hsize += 48;
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(tview), TRUE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(tview), TRUE);
+#endif
+
+    return tbuf;
+}
+
+/* ........................................................... */
+
 void edit_dialog (char *diagtxt, char *infotxt, char *deftext, 
 		  int edit_shown, 
 		  char *oktxt, void (*okfunc)(), void *okptr,
@@ -344,11 +387,6 @@ void edit_dialog (char *diagtxt, char *infotxt, char *deftext,
     open_dialog = d->dialog;
     d->code = cmdcode;
 
-#ifdef notdef
-    gtk_window_set_transient_for(GTK_WINDOW(d->dialog),
-				 GTK_WINDOW(mdata->w)); 
-#endif
-
     gtk_window_set_title (GTK_WINDOW (d->dialog), diagtxt);
     gtk_window_set_policy (GTK_WINDOW (d->dialog), FALSE, FALSE, FALSE);
     gtk_container_border_width (GTK_CONTAINER 
@@ -369,29 +407,36 @@ void edit_dialog (char *diagtxt, char *infotxt, char *deftext,
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			tempwid, TRUE, TRUE, FALSE);
     gtk_widget_show (tempwid);
-   
-    d->edit = cancel_d->edit = gtk_entry_new ();
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+
+    if (cmdcode == NLS) {
+	int hsize = 64;
+
+	d->edit = text_edit_new (&hsize);
+	dialog_table_setup(d, hsize);	
+    } else {
+	d->edit = cancel_d->edit = gtk_entry_new ();
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			d->edit, TRUE, TRUE, FALSE);
 
-    /* make the Enter key do the business */
-    if (okfunc) 
-	gtk_signal_connect (GTK_OBJECT (d->edit), "activate", 
-			    GTK_SIGNAL_FUNC (okfunc), (gpointer) d);
-    gtk_signal_connect_object (GTK_OBJECT (d->edit), "activate", 
-			       GTK_SIGNAL_FUNC (gtk_object_destroy), 
-			       GTK_OBJECT(d->dialog));
+	/* make the Enter key do the business */
+	if (okfunc) 
+	    gtk_signal_connect (GTK_OBJECT (d->edit), "activate", 
+				GTK_SIGNAL_FUNC (okfunc), (gpointer) d);
+	gtk_signal_connect_object (GTK_OBJECT (d->edit), "activate", 
+				   GTK_SIGNAL_FUNC (gtk_object_destroy), 
+				   GTK_OBJECT(d->dialog));
 
-    gtk_entry_set_visibility (GTK_ENTRY (d->edit), edit_shown);
-    if (deftext) {
-	gtk_entry_set_text (GTK_ENTRY (d->edit), deftext);
-	gtk_entry_select_region (GTK_ENTRY (d->edit), 0, strlen (deftext));
-    }
-    if (edit_shown) {
-	gtk_widget_show (d->edit);
-	if (varclick == 1) active_edit_id = d->edit; 
-	if (varclick == 2) active_edit_name = d->edit;
-	gtk_widget_grab_focus (d->edit);
+	gtk_entry_set_visibility (GTK_ENTRY (d->edit), edit_shown);
+	if (deftext) {
+	    gtk_entry_set_text (GTK_ENTRY (d->edit), deftext);
+	    gtk_entry_select_region (GTK_ENTRY (d->edit), 0, strlen (deftext));
+	}
+	if (edit_shown) {
+	    gtk_widget_show (d->edit);
+	    if (varclick == 1) active_edit_id = d->edit; 
+	    if (varclick == 2) active_edit_name = d->edit;
+	    gtk_widget_grab_focus (d->edit);
+	}
     }
 
     /* Create the "OK" button */

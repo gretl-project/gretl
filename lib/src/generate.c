@@ -392,7 +392,7 @@ static void otheruse (const char *str1, const char *str2)
 
 int _reserved (const char *str)
 {
-    const char *resword[] = {"uhat", 
+    const char *resword[] = {"uhat", "yhat",
 			     "const", "CONST", 
 			     "coeff", "stderr", "rho",
 			     "mean", "median", "var", "cov", "vcv", "sd",
@@ -409,28 +409,31 @@ int _reserved (const char *str)
 	    case 0: 
 		otheruse(str, _("residual vector"));
 		break;
-	    case 1: case 2:
+	    case 1: 
+		otheruse(str, _("fitted values"));
+		break;
+	    case 2: case 3:
 		otheruse(str, _("constant"));
 		break;
-	    case 3:
+	    case 4:
 		otheruse(str, _("regr. coeff."));
 		break;
-	    case 4:
+	    case 5:
 		otheruse(str, _("standard error"));
 		break;
-	    case 5:
+	    case 6:
 		otheruse(str, _("autocorr. coeff."));
 		break;
-	    case 6: case 7: case 8: case 9: case 10: case 11:
+	    case 7: case 8: case 9: case 10: case 11: case 12:
 		otheruse(str, _("stats function"));
 		break;
-	    case 12: case 13:
+	    case 13: case 14:
 		otheruse(str, _("sampling concept"));
 		break;
-	    case 14: case 15: case 16: case 17: case 18:
+	    case 15: case 16: case 17: case 18: case 19:
 		otheruse(str, _("plotting variable"));
 		break;
-	    case 19:
+	    case 20:
 		otheruse(str, _("internal variable"));
 		break;
 	    default:
@@ -1471,7 +1474,7 @@ static int evalexp (char *ss, int nt, double *mvec, double *xvec,
 	/* don't expand real, vector variables */
 	expand = genr->scalar;
 	v = varindex(pdinfo, ss);
-	if (v == UHATNUM || v == TNUM || v == INDEXNUM ||
+	if (v == UHATNUM || v == YHATNUM || v == TNUM || v == INDEXNUM ||
 	    (v < pdinfo->v && pdinfo->vector[v])) expand = 0;
 	getvar(ss, s3, &op2);
 	if (op2 == '\0' || is_operator(op2)) {
@@ -1677,6 +1680,26 @@ static int getxvec (char *s, double *xvec,
 		for (t=t2+1; t<n; t++) xvec[t] = NADBL;
 	    } else {
 		for (t=pmod->t1; t<=pmod->t2; t++) xvec[t] = pmod->uhat[t]; 
+		for (t=pmod->t2 + 1; t<n; t++) xvec[t] = NADBL;
+	    }
+	    if (scalar != NULL) *scalar = 0;
+	}
+	else if (v == YHATNUM) { /* model fitted values */
+	    if (pmod->yhat == NULL) return 1;
+	    if (pmod->t2 - pmod->t1 + 1 > n ||
+		model_sample_issue(pmod, NULL, Z, pdinfo)) {
+		strcpy(gretl_errmsg, 
+		       _("Can't retrieve yhat: data set has changed"));
+		return 1;
+	    }	    
+	    for (t=0; t<pmod->t1; t++) xvec[t] = NADBL;
+	    if (pmod->data != NULL) {
+		int t2 = pmod->t2 + get_misscount(pmod);
+
+		for (t=pmod->t1; t<=t2; t++) xvec[t] = pmod->yhat[t]; 
+		for (t=t2+1; t<n; t++) xvec[t] = NADBL;
+	    } else {
+		for (t=pmod->t1; t<=pmod->t2; t++) xvec[t] = pmod->yhat[t]; 
 		for (t=pmod->t2 + 1; t<n; t++) xvec[t] = NADBL;
 	    }
 	    if (scalar != NULL) *scalar = 0;
@@ -1894,7 +1917,8 @@ static int strtype (char *ss, const DATAINFO *pdinfo)
     }
 
     i = varindex(pdinfo, ss);
-    if (i < pdinfo->v || i == UHATNUM || i == TNUM || i == INDEXNUM) {
+    if (i < pdinfo->v || i == UHATNUM || i == YHATNUM ||
+	i == TNUM || i == INDEXNUM) {
 	return R_VARNAME; 
     }
 
@@ -2225,6 +2249,7 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     if (varname == NULL) return pdinfo->v;
 
     if (!strcmp(varname, "uhat")) return UHATNUM; 
+    if (!strcmp(varname, "yhat")) return YHATNUM; 
     if (!strcmp(varname, "t"))    return TNUM;
     if (!strcmp(varname, "i"))    return INDEXNUM;
     if (!strcmp(varname, "const") || !strcmp(varname, "CONST"))

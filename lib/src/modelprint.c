@@ -389,8 +389,8 @@ static int _pmax (const MODEL *pmod)
 
 /* ......................................................... */ 
 
-static void pmax_line (const MODEL *pmod, const DATAINFO *pdinfo, 
-		       PRN *prn)
+static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo, 
+			   PRN *prn)
 {
     if (!TEX_FORMAT(prn->format)) {
 	int k = pmod->ncoeff - pmod->ifc;
@@ -849,7 +849,7 @@ static void model_format_start (PRN *prn)
                        "\\cellx6666\\cellx8000\n\\intbl"
 
 
-static void print_coeff_table_start (PRN *prn, int discrete)
+static void print_coeff_table_start (const MODEL *pmod, PRN *prn, int discrete)
 {
     if (PLAIN_FORMAT(prn->format)) {
 	if (discrete) {
@@ -857,61 +857,78 @@ static void print_coeff_table_start (PRN *prn, int discrete)
 			   "       T STAT       SLOPE\n"));
 	    pprintf(prn, "                                                 "
 		    "                 %s\n", _("(at mean)"));
+	} else if (pmod->ci == NLS) {
+	    pputs(prn, _("      PARAMETER      ESTIMATE          STDERROR"
+			   "       T STAT   2Prob(t > |T|)\n\n"));
 	} else {
 	    pputs(prn, _("      VARIABLE      COEFFICIENT        STDERROR"
 			   "       T STAT   2Prob(t > |T|)\n\n"));
 	}
-    }
-
-    else if (TEX_FORMAT(prn->format)) {
-	char pt = get_local_decpoint();
-
-	pprintf(prn, "\\vspace{1em}\n\n"
-		"\\begin{tabular*}{\\textwidth}"
-		"{@{\\extracolsep{\\fill}}\n"
-		"l%% col 1: varname\n"
-		"  D{%c}{%c}{-1}%% col 2: coeff\n"
-		"    D{%c}{%c}{-1}%% col 3: sderr\n"
-		"      D{%c}{%c}{-1}%% col 4: t-stat\n"
-		"        D{%c}{%c}{4}}%% col 5: p-value (or slope)\n"
-		"%s &\n"
-		"  \\multicolumn{1}{c}{%s} &\n"
-		"    \\multicolumn{1}{c}{%s} &\n"
-		"      \\multicolumn{1}{c}{%s} &\n"
-		"        \\multicolumn{1}{c}{%s%s} \\\\[1ex]\n",
-		pt, pt, pt, pt, pt, pt, pt, pt, I_("Variable"),
-		I_("Coefficient"), I_("Std.\\ Error"), 
-		I_("$t$-statistic"), 
-		(discrete)? I_("Slope"): I_("p-value"),
-		(discrete)? "$^*$" : "");
-    }   
-
-    else if (RTF_FORMAT(prn->format)) {
-	if (discrete) {
-	    pprintf(prn, "{" RTF_DISCRETE_ROW
-		    " \\qr \\cell"
-		    " \\qc {\\i %s}\\cell"
-		    " \\qc {\\i %s}\\cell"
-		    " \\qc {\\i %s}\\cell"
-		    " \\qc {\\i %s}\\cell"
-		    " \\qc {\\i %s{\\super *}}\\cell"
-		    " \\intbl \\row\n",
-		    I_("Variable"), I_("Coefficient"), I_("Std. Error"), 
-		    I_("t-statistic"), I_("Slope"));
-	} else {
-	    pprintf(prn, "{" RTF_COEFF_ROW
-		    " \\qr \\cell"
-		    " \\qc {\\i %s}\\cell"
-		    " \\qc {\\i %s}\\cell"
-		    " \\qc {\\i %s}\\cell"
-		    " \\qc {\\i %s}\\cell"
-		    " \\qc {\\i %s}\\cell"
-		    " \\ql \\cell"
-		    " \\intbl \\row\n",
-		    I_("Variable"), I_("Coefficient"), I_("Std. Error"), 
-		    I_("t-statistic"), I_("p-value"));
-	}
+	return;
     } 
+    else {
+	char col1[16], col2[16];
+
+	if (pmod->ci == NLS) {
+	    strcpy(col1, N_("Parameter"));
+	    strcpy(col2, N_("Estimate"));
+	} else {
+	    strcpy(col1, N_("Variable"));
+	    strcpy(col2, N_("Coefficient"));
+	}	    
+
+	if (TEX_FORMAT(prn->format)) {
+	    char pt = get_local_decpoint();
+
+	    pprintf(prn, "\\vspace{1em}\n\n"
+		    "\\begin{tabular*}{\\textwidth}"
+		    "{@{\\extracolsep{\\fill}}\n"
+		    "l%% col 1: varname\n"
+		    "  D{%c}{%c}{-1}%% col 2: coeff\n"
+		    "    D{%c}{%c}{-1}%% col 3: sderr\n"
+		    "      D{%c}{%c}{-1}%% col 4: t-stat\n"
+		    "        D{%c}{%c}{4}}%% col 5: p-value (or slope)\n"
+		    "%s &\n"
+		    "  \\multicolumn{1}{c}{%s} &\n"
+		    "    \\multicolumn{1}{c}{%s} &\n"
+		    "      \\multicolumn{1}{c}{%s} &\n"
+		    "        \\multicolumn{1}{c}{%s%s} \\\\[1ex]\n",
+		    pt, pt, pt, pt, pt, pt, pt, pt, I_(col1),
+		    I_(col2), I_("Std.\\ Error"), 
+		    I_("$t$-statistic"), 
+		    (discrete)? I_("Slope"): I_("p-value"),
+		    (discrete)? "$^*$" : "");
+	    return;
+	}   
+
+	if (RTF_FORMAT(prn->format)) {
+	    if (discrete) {
+		pprintf(prn, "{" RTF_DISCRETE_ROW
+			" \\qr \\cell"
+			" \\qc {\\i %s}\\cell"
+			" \\qc {\\i %s}\\cell"
+			" \\qc {\\i %s}\\cell"
+			" \\qc {\\i %s}\\cell"
+			" \\qc {\\i %s{\\super *}}\\cell"
+			" \\intbl \\row\n",
+			I_(col1), I_(col2), I_("Std. Error"), 
+			I_("t-statistic"), I_("Slope"));
+	    } else {
+		pprintf(prn, "{" RTF_COEFF_ROW
+			" \\qr \\cell"
+			" \\qc {\\i %s}\\cell"
+			" \\qc {\\i %s}\\cell"
+			" \\qc {\\i %s}\\cell"
+			" \\qc {\\i %s}\\cell"
+			" \\qc {\\i %s}\\cell"
+			" \\ql \\cell"
+			" \\intbl \\row\n",
+			I_(col1), I_(col2), I_("Std. Error"), 
+			I_("t-statistic"), I_("p-value"));
+	    }
+	    return;
+	} 
+    }
 }
 
 static void print_coeff_table_end (PRN *prn)
@@ -1105,7 +1122,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
     print_model_heading (pmod, pdinfo, prn);
 
-    print_coeff_table_start (prn, is_discrete);
+    print_coeff_table_start (pmod, prn, is_discrete);
 
     gotnan = print_coefficients (pmod, pdinfo, prn);
 
@@ -1246,7 +1263,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     else if (TEX_FORMAT(prn->format)) tex_print_aicetc(pmod, prn);
     else if (RTF_FORMAT(prn->format)) rtf_print_aicetc(pmod, prn);
 
-    pmax_line(pmod, pdinfo, prn);
+    if (pmod->ci != NLS) pval_max_line(pmod, pdinfo, prn);
     
     print_model_tests(pmod, prn);
 
@@ -1362,7 +1379,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
     char varname[12];
 
-    /* special treatment for ARCH model coefficients */
+    /* special treatment for ARCH model coefficients, NLS */
     if (pmod->aux == AUX_ARCH) {
 	make_cname(pdinfo->varname[pmod->list[c]], varname);
     } else if (pmod->ci == NLS) {
@@ -1452,6 +1469,8 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     /* special treatment for ARCH model coefficients */
     if (pmod->aux == AUX_ARCH) {
 	make_cname(pdinfo->varname[pmod->list[c]], varname);
+    } else if (pmod->ci == NLS) {
+	strcpy(varname, pmod->params[c-1]);
     } else {
 	strcpy(varname, pdinfo->varname[pmod->list[c]]);
     }    

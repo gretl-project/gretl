@@ -26,7 +26,8 @@
 #define _VSMALL 1.0e-14  /* adjustment for (int) conversion */
 
 typedef enum {
-    UHATNUM = 999,
+    UHATNUM = 998,
+    YHATNUM = 999,
     TNUM,
     INDEXNUM
 } genr_numbers;

@@ -462,6 +462,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/Least _Absolute Deviation..."), NULL, model_callback, LAD, NULL },
     { N_("/Model/_Rank correlation..."), NULL, gretl_callback, SPEARMAN, NULL },
     { N_("/Model/_Pooled OLS (panel)..."), NULL, model_callback, POOLED, NULL },
+    { N_("/Model/Nonlinear Least Squares..."), NULL, gretl_callback, NLS, NULL },
 #ifdef ENABLE_GMP
     { N_("/Model/High precision OLS..."), NULL, mp_ols_callback, MPOLS, NULL },
 #endif

@@ -57,6 +57,7 @@ int gui_exec_line (char *line,
 /* private functions */
 static void finish_genr (MODEL *pmod);
 static gint stack_model (int gui);
+static char *bufgets (char *s, int size, const char *buf);
 
 int echo_off;               /* don't echo commands */
 int replay;                 /* are we replaying old session commands or not? */
@@ -1795,6 +1796,73 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
+void do_nls_model (GtkWidget *widget, dialog_t *ddata)
+{
+    gchar *buf;
+    PRN *prn;
+    char title[26], modelgenr[80];
+    int err = 0;
+    MODEL *pmod = NULL;
+
+    buf = textview_get_text(GTK_TEXT_VIEW(ddata->edit));
+    if (*buf == '\0') return;
+
+    while (bufgets(line, MAXLEN-1, buf)) {
+	err = nls_parse_line(line, (const double **) Z, datainfo);
+	if (err) gui_errmsg(err);
+    }
+
+    g_free(buf);
+
+    modelgenr[0] = '\0';
+    if (check_model_cmd(line, modelgenr)) return;
+    echo_cmd(&command, datainfo, line, 0, 1, oflag, NULL);
+
+    if (bufopen(&prn)) return;
+
+    pmod = gretl_model_new(datainfo);
+    if (pmod == NULL) {
+	errbox(_("Out of memory"));
+	return;
+    }
+
+    *pmod = nls(&Z, datainfo, prn);
+    err = model_output(pmod, prn);
+    /* if (oflag) outcovmx(pmod, datainfo, 0, prn); */
+
+    if (err) {
+	gretl_print_destroy(prn);
+	return;
+    }
+
+    if (modelgenr[0] && record_model_genr(modelgenr)) {
+	errbox(_("Error saving model information"));
+	return;
+    }
+    if (cmd_init(line) || stack_model(1)) {
+	errbox(_("Error saving model information"));
+	return;
+    }
+
+    /* make copy of most recent model */
+    if (copy_model(models[2], pmod, datainfo))
+	errbox(_("Out of memory copying model"));
+
+    /* record sub-sample info (if any) with the model */
+    if (fullZ != NULL) {
+	fullinfo->varname = datainfo->varname;
+	fullinfo->label = datainfo->label;	
+	attach_subsample_to_model(pmod, &fullZ, fullinfo);
+    }
+    
+    /* record the fact that the last model was estimated via GUI */
+    sprintf(title, _("gretl: model %d"), pmod->ID);
+
+    view_model(prn, pmod, 78, 400, title); 
+}
+
+/* ........................................................... */
+
 void do_model (GtkWidget *widget, gpointer p) 
 {
     char *edttext;
@@ -1918,6 +1986,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	errbox(_("Error saving model information"));
 	return;
     }
+
     /* make copy of most recent model */
     if (copy_model(models[2], pmod, datainfo))
 	errbox(_("Out of memory copying model"));
@@ -4174,7 +4243,7 @@ int gui_exec_line (char *line,
 	    }
 	    ++model_count;
 	    (models[0])->ID = model_count;
-	    /* printmodel(models[0], datainfo, prn); */
+	    printmodel(models[0], datainfo, prn);
 	} 
 	else {
 	    err = 1;
@@ -4482,6 +4551,7 @@ int gui_exec_line (char *line,
 
     case NLS:
 	err = nls_parse_line(line, (const double **) Z, datainfo);
+	if (err) errmsg(err, prn);
 	break;
 
     case NOECHO:

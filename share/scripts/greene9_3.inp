@@ -1,0 +1,13 @@
+# William Greene, Econometric Analysis, 5e, Chapter 9
+open greene5_1.dat
+ols realcons 0 realdpi
+genr alpha = coeff(0)
+genr beta = coeff(realdpi)
+genr gamma = 1.0
+nls realcons = alpha + beta * (realdpi^gamma)
+deriv alpha = 1
+deriv beta = realdpi^gamma
+deriv gamma = beta * realdpi^gamma * log(realdpi)
+end nls
+
+

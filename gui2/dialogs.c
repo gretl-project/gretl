@@ -307,6 +307,49 @@ void destroy_dialog_data (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
+static void dialog_table_setup (dialog_t *dlg, int hsize)
+{
+    GtkWidget *sw;
+
+    sw = gtk_scrolled_window_new (NULL, NULL);
+    gtk_widget_set_size_request(sw, hsize, 300);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg->dialog)->vbox), 
+		       sw, TRUE, TRUE, FALSE);
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
+				    GTK_POLICY_AUTOMATIC,
+				    GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw),
+					 GTK_SHADOW_IN);
+    gtk_container_add(GTK_CONTAINER(sw), dlg->edit); 
+    gtk_widget_show(dlg->edit);
+    gtk_widget_show(sw);
+}
+
+/* ........................................................... */
+
+static GtkWidget *text_edit_new (int *hsize)
+{
+    GtkTextBuffer *tbuf;
+    GtkWidget *tview;
+
+    tbuf = gtk_text_buffer_new(NULL);
+    tview = gtk_text_view_new_with_buffer(tbuf);
+
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tview), GTK_WRAP_WORD);
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(tview), 4);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(tview), 4);
+
+    gtk_widget_modify_font(GTK_WIDGET(tview), fixed_font);
+    *hsize *= get_char_width(tview);
+    *hsize += 48;
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(tview), TRUE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(tview), TRUE);
+
+    return tview;
+}
+
+/* ........................................................... */
+
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
 		  guint cmdcode, guint varclick)
@@ -344,25 +387,33 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 			tempwid, TRUE, TRUE, 10);
 
     gtk_widget_show (tempwid);
-   
-    d->edit = gtk_entry_new ();
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
-			d->edit, TRUE, TRUE, 0);
 
-    /* make the Enter key do the business */
-    if (okfunc) 
+    if (cmdcode == NLS) {
+	int hsize = 64;
+
+	d->edit = text_edit_new (&hsize);
+	dialog_table_setup(d, hsize);
+    } else {
+	d->edit = gtk_entry_new ();
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d->dialog)->vbox), 
+			   d->edit, TRUE, TRUE, 0);
+
+	/* make the Enter key do the business */
+	if (okfunc) 
+	    g_signal_connect (G_OBJECT (d->edit), "activate", 
+			      G_CALLBACK (okfunc), (gpointer) d);
 	g_signal_connect (G_OBJECT (d->edit), "activate", 
-			  G_CALLBACK (okfunc), (gpointer) d);
-    g_signal_connect (G_OBJECT (d->edit), "activate", 
-		      G_CALLBACK (delete_widget), 
-		      d->dialog);
+			  G_CALLBACK (delete_widget), 
+			  d->dialog);
+	
+	if (deftext) {
+	    gtk_entry_set_text (GTK_ENTRY (d->edit), deftext);
+	    gtk_editable_select_region (GTK_EDITABLE(d->edit), 0, strlen(deftext));
+	}
 
-    if (deftext) {
-	gtk_entry_set_text (GTK_ENTRY (d->edit), deftext);
-	gtk_editable_select_region (GTK_EDITABLE(d->edit), 0, strlen (deftext));
+	gtk_widget_show (d->edit);
     }
 
-    gtk_widget_show (d->edit);
     if (varclick == 1) active_edit_id = d->edit; 
     if (varclick == 2) active_edit_name = d->edit;
     gtk_widget_grab_focus (d->edit);

@@ -64,7 +64,8 @@ depvar is the dependent variable and indepvars is the list of independent
 variables separated by spaces.  Use the number zero for a constant term.  If
 the -o flag is present, the covariance matrix of regression coefficients will
 be printed.  Residuals of the transformed regression are stored under the name
-uhat, which can be retrieved by genr.
+uhat and fitted values under the name yhat.  These series can be retrieved
+with the genr command.
 
 #
 arch
@@ -146,7 +147,7 @@ terminated when successive rho values do not differ by more than 0.001 or when
 matrix of regression coefficients is printed.  The final transformed
 regression is performed for the observation range stobs+1 endobs currently in
 effect.  Residuals of this transformed regression are stored under the name
-uhat.
+uhat, and fitted values under the name yhat.
 
 #
 corr
@@ -409,6 +410,9 @@ uses of genr:
   rho(i)       ith order autoregressive coefficient for residuals
   vcv(xi,xj)   covariance between coefficients for vars xi and xj
 
+The internal series uhat and yhat hold, respectively, the residuals and fitted
+values from the last regression.
+
 The internal variable $nobs holds the number of observations in the current
 sample range, which may or may not equal the value of $T for the last model.
 
@@ -554,7 +558,7 @@ model is graphed against the value of rho from -0.99 to 0.99.  If the -o flag
 is present, the covariance matrix of regression coefficients will be printed.
 The final transformed regression is performed for the observation range
 stobs+1 endobs currently in effect.  Residuals of this transformed regression
-are stored under the name uhat.  
+are stored under the name uhat, and fitted values under the name yhat.  
 
 #
 hsk
@@ -898,12 +902,13 @@ Computes ordinary least squares estimates with depvar as the dependent
 variable and indepvars as the list of independent variables.  The -o flag will
 print the covariance matrix of regression coefficients.  The variables can be
 specified either by names or by their number.  Use the number zero for a
-constant term.  The program also prints the p-values for t (two-tailed) and
-F-statistics.  A p-value below 0.01 indicates significance at the 1 percent
-level and is denoted by three *'s.  Two *'s indicate significance between 1
-and 5 percent and one * indicates significance between 5 and 10 percent
-levels.  Model selection statistics described in Ramanathan Section 4.4 are
-also printed.  
+constant term.  The program prints the p-values for two-tailed t-statistics.
+A p-value below 0.01 indicates significance at the 1 percent level and is
+denoted by three *'s.  Two *'s indicate significance between 1 and 5 percent
+and one * indicates significance between 5 and 10 percent levels.  If the
+regression has more than one independent variable the F-statistic for
+assessing the overall fit is printed, along with its p-value.  Model selection
+statistics described in Ramanathan Section 4.4 are also printed.
 
 #
 omit

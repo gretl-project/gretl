@@ -668,6 +668,35 @@ results may be limited by (a) the precision of the data read from file, and
 using ordinary double-precision floating-point arithmetic.
 
 #
+nls
+@Estimation
+
+Performs Nonlinear Least Squares estimation using a modified version of the
+Levenberg-Marquandt algorithm (as in the MINPACK function lmder).  The user
+must supply a function specification and expressions for the derivatives with
+respect to each of the parameters.  
+
+Suppose we have a data set with variables C and Y (e.g. greene11_3.gdt) and we
+wish to estimate a nonlinear consumption function of the form
+
+                         C = alpha + beta * Y^gamma
+
+The parameters alpha, beta and gamma must first be added to the dataset and
+given initial values (using the genr command or via menu choices).
+
+In the Nonlinear Least Squares specification window we type the following
+lines:
+
+C = alpha + beta * Y^gamma
+deriv alpha = 1
+deriv beta = Y^gamma
+deriv gamma = beta * Y^gamma * log(Y)
+
+The first line specifies the regression function, and the next three lines
+supply the derivatives of that function with respect to each of the parameters
+in turn.
+
+#
 nulldata
 @Dataset
 

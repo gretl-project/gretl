@@ -101,16 +101,16 @@ void tex_dcolumn_double (double xx, char *numstr)
     }
 }
 
-static void tex_make_cname (const char *orig, char *cname)
+static void tex_make_cname (char *cname, const char *src)
 {
     char *p;
     unsigned char c;
 
-    if (orig == NULL || strlen(orig) == 0) return;
+    if (src == NULL || strlen(src) == 0) return;
 
-    p = strrchr(orig, '_');
+    p = strrchr(src, '_');
     if (p == NULL) {
-	tex_escape(cname, orig);
+	tex_escape(cname, src);
 	return;
     }
 
@@ -121,8 +121,34 @@ static void tex_make_cname (const char *orig, char *cname)
 
 	sprintf(cname, "$u_{t-%d}^2$", lag);
     } else {
-	tex_escape(cname, orig);
+	tex_escape(cname, src);
     }
+}
+
+static int tex_greek_param (char *targ, const char *src)
+{
+    *targ = 0;
+
+    if (!strcmp(src, "alpha")) {
+	strcpy(targ, "$\\alpha$");
+    }
+    else if (!strcmp(src, "beta")) {
+	strcpy(targ, "$\\beta$");
+    }
+    else if (!strcmp(src, "gamma")) {
+	strcpy(targ, "$\\gamma$");
+    }
+    else if (!strcmp(src, "delta")) {
+	strcpy(targ, "$\\delta$");
+    }
+    else if (!strcmp(src, "pi")) {
+	strcpy(targ, "$\\pi$");
+    }
+    else if (!strcmp(src, "lambda")) {
+	strcpy(targ, "$\\lambda$");
+    }
+
+    return (*targ != 0);
 }
 
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
@@ -141,7 +167,11 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     *tmp = 0;
     if (pmod->aux == AUX_ARCH) {
-	tex_make_cname(pdinfo->varname[pmod->list[c]], tmp);
+	tex_make_cname(tmp, pdinfo->varname[pmod->list[c]]);
+    } else if (pmod->ci == NLS) {
+	if (!tex_greek_param(tmp, pmod->params[c-1])) {
+	    tex_escape(tmp, pmod->params[c-1]);
+	}
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
     }

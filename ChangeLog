@@ -1,6 +1,8 @@
 version 1.0.9
-- add non-linear least squares ("nls" command, Levenberg-
+- Add non-linear least squares ("nls" command, Levenberg-
   Marquandt algorithm from minpack)
+- Fix focus bug when editing the description for a variable in
+  the gretl main window
 
 05/02/03 version 1.0.8
 - Require lapack

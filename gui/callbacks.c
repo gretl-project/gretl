@@ -543,7 +543,12 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(query, _("Specify variables to plot:"));
 	okfunc = do_box_graph_trad;
 	varclick = 2;
-	break;	
+	break;
+    case NLS:
+	strcpy(title, _("gretl: nonlinear least squares"));
+	strcpy(query, _("Specify regression function and derivatives:"));
+	okfunc = do_nls_model;
+	break;		
     default:
 	errbox("Bug: unrecognized action code in gretl_callback");
 	return;
