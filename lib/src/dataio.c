@@ -239,6 +239,7 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
     for (i=0; i<v; i++) {
 	pdinfo->varname[i] = malloc(9);
 	if (pdinfo->varname[i] == NULL) return 1;
+	pdinfo->varname[i][0] = '\0';
 	pdinfo->label[i] = malloc(MAXLABEL);
 	if (pdinfo->label[i] == NULL) return 1;
 	pdinfo->label[i][0] = '\0';

@@ -141,12 +141,13 @@ void _delete (char *str, int indx, int count)
 
 int haschar (char c, const char *str)
 {
-    size_t i = 0, n = strlen(str);
+    int i = 0;
 
-    do {
-        if (str[i] == c) return i;
-        i++;
-    } while (i < n);
+    while (*str) {
+	if (*str++ == c) return i;
+	i++;
+    }
+
     return -1;
 }
 
