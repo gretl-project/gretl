@@ -32,6 +32,8 @@ void logo (void);
 
 void lib_logo (void);
 
+void gui_script_logo (PRN *prn);
+
 void gui_logo (FILE *fp);
 
 void text_print_model_confints (const CONFINT *cf,

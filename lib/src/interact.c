@@ -1409,7 +1409,7 @@ real_safe_print_line (const char *line, int cli, int batch,
     if (cli) {
 	printf("%s", (batch)? "? " : " ");
     } else if (script) {
-	pprintf(prn, "\n? ");
+	pputs(prn, "? "); /* was "\n? " */
     }	
 
     rem = n = strlen(line);

@@ -285,6 +285,36 @@ int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
+void script_loop_init (LOOPSET *ploop)
+{
+    ploop->ntimes = 0;
+    ploop->err = 0;
+    ploop->lvar = 0;
+    ploop->rvar = 0;
+    ploop->rval = 0;
+    ploop->ineq = 0;
+
+    ploop->ncmds = 0;
+    ploop->nmod = 0;
+    ploop->nprn = 0;
+    ploop->nstore = 0;
+
+    ploop->next_model = 0;
+    ploop->next_print = 0;
+
+    ploop->lines = NULL;
+    ploop->ci = NULL;
+    ploop->models = NULL;
+    ploop->lmodels = NULL;
+    ploop->prns = NULL;
+
+    ploop->storename = NULL;
+    ploop->storelbl = NULL;
+    ploop->storeval = NULL;
+
+    return 0;
+}
+
 static int monte_carlo_init (LOOPSET *ploop)
 {
     ploop->ntimes = 0;
@@ -299,8 +329,6 @@ static int monte_carlo_init (LOOPSET *ploop)
     ploop->nstore = 0;
     ploop->next_model = 0;
     ploop->next_print = 0;
-    ploop->lines = malloc(32 * sizeof *ploop->lines); 
-    ploop->ci = malloc(32 * sizeof *ploop->ci);
     ploop->models = NULL;
     ploop->lmodels = NULL;
     ploop->prns = NULL;
@@ -308,6 +336,13 @@ static int monte_carlo_init (LOOPSET *ploop)
 #ifdef ENABLE_GMP
     mpf_set_default_prec(256);
 #endif
+
+    ploop->lines = malloc(32 * sizeof *ploop->lines); 
+    ploop->ci = malloc(32 * sizeof *ploop->ci);
+    
+    if (ploop->lines == NULL || ploop->ci == NULL) {
+	return 1;
+    }
 
     return 0;
 }

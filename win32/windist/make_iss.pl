@@ -35,8 +35,16 @@ print "DefaultDirName=c:\\userdata\\gretl\n";
 print "DefaultGroupName=gretl\n";
 print "UninstallDisplayIcon={app}\\gretlw32.exe\n";
 print "ChangesAssociations=yes\n";
+print "DirExistsWarning=no\n";
 # print "MinVersion=4,3.51\n";
 # print "UsePreviousAppDir=no\n";
+
+print "\n[INI]\n";
+print "Filename: \"{win}\\WGNUPLOT.INI\"; Section: \"WGNUPLOT\"; Flags: createkeyifdoesntexist\n";
+print "Filename: \"{win}\\WGNUPLOT.INI\"; Section: \"WGNUPLOT\"; Key: \"TextFont\"; String: \"Courier New, 9\"\n";
+
+print "\n[InstallDelete]\n";
+print "Type: files; Name: \"{app}\\*.dll\"\n";
 
 print "\n[Files]\n";
 

@@ -118,6 +118,20 @@ void lib_logo (void)
 }
 
 /**
+ * gui_script_logo:
+ *
+ * header for script output in gui program
+ */
+
+void gui_script_logo (PRN *prn)
+{
+    time_t runtime = time(NULL);
+
+    pprintf(prn, _("gretl version %s\n"), version_string);
+    pprintf(prn, "%s: %s\n", _("Current session"), print_time(&runtime));
+}
+
+/**
  * text_print_model_confints:
  * @cf: pointer to confidence intervals.
  * @pdinfo: data information struct.

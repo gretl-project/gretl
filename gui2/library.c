@@ -4471,6 +4471,58 @@ static const char *exec_string (int i)
 
 /* ........................................................... */
 
+static int ok_script_file (const char *runfile)
+{
+    FILE *fp;
+    char myline[32];
+    int content = 0;
+
+    fp = fopen(runfile, "r");
+    if (fp == NULL) {
+	errbox(_("Couldn't open script"));
+	return 0;
+    }
+
+    /* check that the file has something in it */
+    while (fgets(myline, sizeof myline, fp)) {
+	const char *p = myline;
+
+	while (*p) {
+	    if (!isspace(*p)) {
+		content = 1;
+		break;
+	    }
+	    p++;
+	}
+	if (content) break;
+    }
+
+    fclose(fp);
+
+    if (!content) {
+	errbox(_("No commands to execute"));
+	return 0;
+    }
+
+    return 1;
+}
+
+static void output_line (const char *line, PRN *prn) 
+{
+    int n = strlen(line);
+
+    if ((line[0] == '(' && line[1] == '*') ||
+	(line[n-1] == ')' && line[n-2] == '*')) {
+	pprintf(prn, "\n%s\n", line);
+    } else if (line[0] == '#') {
+	pprintf(prn, "%s\n", line);
+    } else if (!string_is_blank(line)) {
+	safe_print_line(line, prn);
+    }
+}
+
+/* ........................................................... */
+
 int execute_script (const char *runfile, const char *buf,
 		    PRN *prn, int exec_code)
      /* run commands from runfile or buf, output to prn */
@@ -4479,7 +4531,7 @@ int execute_script (const char *runfile, const char *buf,
     int exec_err = 0;
     int i, j = 0, loopstack = 0, looprun = 0, aborted = 0;
     char tmp[MAXLEN];
-    LOOPSET loop;            /* struct for monte carlo loop */
+    LOOPSET loop; 
 
 #if 0
     debug_print_model_info(models[0], "Start of execute_script, models[0]");
@@ -4487,59 +4539,26 @@ int execute_script (const char *runfile, const char *buf,
 
     if (runfile != NULL) { 
 	/* we'll get commands from file */
-	int content = 0;
-
+	if (!ok_script_file(runfile)) {
+	    return -1;
+	}
 	fb = fopen(runfile, "r");
-	if (fb == NULL) {
-	    errbox(_("Couldn't open script"));
-	    return -1;
-	}
-
-	/* check that the file has something in it */
-	while (fgets(tmp, MAXLEN-1, fb)) {
-	    if (*tmp != '\0') {
-		int n = strlen(tmp);
-
-		for (i=0; i<n; i++) {
-		    if (!isspace(tmp[i])) {
-			content = 1;
-			break;
-		    }
-		}
-	    }
-	    if (content) break;
-	}
-	fclose(fb);
-
-	if (!content) {
-	    errbox(_("No commands to execute"));
-	    return -1;
-	}
     } else { 
 	/* no runfile, commands from buffer */
 	if (buf == NULL || *buf == '\0') {
 	    errbox(_("No commands to execute"));
 	    return -1;	
 	}
+	bufgets(NULL, 0, buf);
     }
-
-    if (runfile != NULL) fb = fopen(runfile, "r");
-    else bufgets(NULL, 0, buf);
 
     /* reset model count to 0 if starting/saving session */
     if (exec_code == SESSION_EXEC || exec_code == REBUILD_EXEC ||
 	exec_code == SAVE_SESSION_EXEC) 
 	reset_model_count();
 
-    /* monte carlo struct */
-    loop.lines = NULL;
-    loop.models = NULL;
-    loop.lmodels = NULL;
-    loop.prns = NULL;
-    loop.storename = NULL;
-    loop.storelbl = NULL;
-    loop.storeval = NULL;
-    loop.nmod = 0;
+    /* looping struct */
+    script_loop_init(&loop);
 
 #if 0
     /* Put the action of running this script into the command log? */
@@ -4551,6 +4570,8 @@ int execute_script (const char *runfile, const char *buf,
 	cmd_init(runcmd);
     }
 #endif
+
+    gui_script_logo(prn);
 
     *cmd.cmd = '\0';
 
@@ -4615,16 +4636,10 @@ int execute_script (const char *runfile, const char *buf,
 	    }
 	    if (!exec_err) {
 		if (!strncmp(line, "noecho", 6)) echo_off = 1;
-		if (strncmp(line, "(* saved objects:", 17) == 0) 
+		if (strncmp(line, "(* saved objects:", 17) == 0) { 
 		    strcpy(line, "quit"); 
-		else if (!echo_off) {
-		    if ((line[0] == '(' && line[1] == '*') ||
-			(line[strlen(line)-1] == ')' && 
-			 line[strlen(line)-2] == '*')) {
-			pprintf(prn, "\n%s\n", line);
-		    } else if (!string_is_blank(line)) {
-			safe_print_line(line, prn);
-		    }
+		} else if (!echo_off) {
+		    output_line(line, prn);
 		}
 		strcpy(tmp, line);
 		exec_err = gui_exec_line(line, &loop, &loopstack, 
@@ -4774,7 +4789,7 @@ int gui_exec_line (char *line,
         return 1;
     }	
 
-    /* but if we're stacking commands for a loop, parse "lightly" */
+    /* if we're stacking commands for a loop, parse "lightly" */
     if (*plstack) { 
 	get_cmd_ci(line, &cmd);
     } else {
@@ -4840,17 +4855,20 @@ int gui_exec_line (char *line,
 
     switch (cmd.ci) {
 
-    case ADF: case COINT: case COINT2:
+    case ADF: 
+    case COINT: case COINT2:
     case CORR:
-    case CRITERIA: case CRITICAL: case DATA:
-    case DIFF: case LDIFF: case LAGS: case LOGS:
+    case CRITERIA: case CRITICAL: 
+    case DATA:
+    case DIFF: case LDIFF: 
+    case LAGS: case LOGS:
     case MULTIPLY:
     case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
-    case PRINT: 
-    case SUMMARY:
+    case PRINT: case SUMMARY:
     case MEANTEST: case VARTEST:
-    case RUNS: case SPEARMAN: case OUTFILE: case PCA:
+    case RUNS: case SPEARMAN: case PCA:
+    case OUTFILE:
 	err = simple_commands(&cmd, line, &Z, datainfo, &paths,
 			      outprn);
 	if (err) errmsg(err, prn);

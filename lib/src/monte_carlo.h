@@ -91,6 +91,8 @@ typedef struct {
 
 /* functions follow */
 
+void script_loop_init (LOOPSET *ploop);
+
 int ok_in_loop (int ci, const LOOPSET *ploop);
 
 int parse_loopline (char *line, LOOPSET *ploop, 

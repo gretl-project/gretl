@@ -148,7 +148,6 @@ done
 # misc files
 add_file gretl_website.url gretl/gretl_website.url
 add_file updater/gretl_updater.exe gretl/gretl_updater.exe
-add_file wgnuplot.ini wgnuplot.ini
 date > gretl.stamp
 add_file gretl.stamp gretl/gretl.stamp
 

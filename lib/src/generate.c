@@ -3501,6 +3501,7 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
 	}
     }
     if (n % 5) pputc(prn, '\n');
+    pputc(prn, '\n');
 }
 
 /**

@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-07-19 14:12-0400\n"
-"PO-Revision-Date: 2004-07-03 18:41-0400\n"
+"PO-Revision-Date: 2004-07-20 16:01-0400\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -2265,35 +2265,34 @@ msgid "parse error in '%s'\n"
 msgstr "Erreur d'analyse de syntaxe dans « %s »\n"
 
 #: lib/src/gretl_restrict.c:306
-#, fuzzy
 msgid "Restriction set"
-msgstr "Description"
+msgstr "Ensemble de restrictions"
 
 #: lib/src/gretl_restrict.c:308
-#, fuzzy
 msgid "Restriction"
-msgstr "Description"
+msgstr "Restriction"
 
 #: lib/src/gretl_restrict.c:413
-#, fuzzy, c-format
+#, c-format
 msgid "Coefficient number (%d) is out of range"
-msgstr "Numéro de variable %d est hors limite"
+msgstr "Numéro du cofficient (%d) est hors limite"
 
 #: lib/src/gretl_restrict.c:446
 #, c-format
 msgid "Too many restrictions (maximum is %d)"
-msgstr ""
+msgstr "Trop de restrictions (maximum est de %d)"
 
 #: lib/src/gretl_restrict.c:497 lib/src/gretl_restrict.c:557
 msgid ""
 "Matrix inversion failed:\n"
 " restrictions may be inconsistent or redundant\n"
 msgstr ""
+"L'inversion de la matrice a échoué:\n"
+" les restrictions peuvent être inconsistentes ou redondantes\n"
 
 #: lib/src/gretl_restrict.c:564
-#, fuzzy
 msgid "Failed to compute F statistic for test\n"
-msgstr "Échec de génération de sommaire des statistiques"
+msgstr "Échec de calcul de la statistique F pour le test\n"
 
 #: lib/src/gretl_restrict.c:571 lib/src/printout.c:171 lib/src/printout.c:231
 msgid "Robust F"
@@ -3982,9 +3981,9 @@ msgid "Variable '%s' not defined"
 msgstr "Variable « %s » non définie"
 
 #: lib/src/subsample.c:272
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid number of cases %d"
-msgstr "   nombre de variables: %d\n"
+msgstr "Nombre invalides de cas %d"
 
 #: lib/src/subsample.c:303
 msgid "automatic sub-sampling dummy"
@@ -5318,9 +5317,8 @@ msgid "/Sample/_Restrict, based on criterion..."
 msgstr "/Échantillon/_Restreindre, basé sur le critère..."
 
 #: gui/gretl.c:394 gui2/gretl.c:470
-#, fuzzy
 msgid "/Sample/R_andom sub-sample..."
-msgstr "/Échantillon/Initialiser l'_Étendue..."
+msgstr "/Échantillon/Sous-échantillons _aléatoires..."
 
 #: gui/gretl.c:395 gui2/gretl.c:471
 msgid "/Sample/sep3"
@@ -7191,14 +7189,12 @@ msgid "NLS: Specify function, and derivatives if possible:"
 msgstr "NLS: spécifiez une fonction et les dérivatifs si possible:"
 
 #: gui2/callbacks.c:617
-#, fuzzy
 msgid "gretl: linear restrictions"
-msgstr "gretl: non linéarité des moindres carrés"
+msgstr "gretl: restrictions linéaires"
 
 #: gui2/callbacks.c:618
-#, fuzzy
 msgid "Specify restrictions:"
-msgstr "Tests F de restriction zéro"
+msgstr "Spécifier les restrictions:"
 
 #: gui2/callbacks.c:644 gui2/library.c:3479 gui2/session.c:1501
 #, c-format
@@ -7669,14 +7665,12 @@ msgstr ""
 "comme un fréquence valide de série temporelle"
 
 #: gui2/dialogs.c:264
-#, fuzzy
 msgid "replace current restriction"
-msgstr "session courante"
+msgstr "remplacer la restriction courante"
 
 #: gui2/dialogs.c:271
-#, fuzzy
 msgid "add to current restriction"
-msgstr "session courante"
+msgstr "ajouter à la restriction courante"
 
 #: gui2/dialogs.c:380
 msgid "(Please refer to Help for guidance)"
@@ -7804,9 +7798,9 @@ msgid "Name of dummy variable to use:"
 msgstr "Nom de la variable auxiliaire à utiliser:"
 
 #: gui2/dialogs.c:1867
-#, fuzzy, c-format
+#, c-format
 msgid "Number of observations to select (max %d)"
-msgstr "Nombre d'itérations = %d\n"
+msgstr "Nombre d'observations à sélectionner (max %d)"
 
 #: gui2/dialogs.c:1888
 msgid "Set sample range"
@@ -8577,9 +8571,8 @@ msgid "/Tests/sum of coefficients"
 msgstr "/Tests/somme des coefficients"
 
 #: gui2/gui_utils.c:130 gui2/gui_utils.c:198
-#, fuzzy
 msgid "/Tests/linear restrictions"
-msgstr "Tests F de restriction zéro"
+msgstr "/Tests/restrictions linéaires"
 
 #: gui2/gui_utils.c:131 gui2/gui_utils.c:199
 msgid "/Tests/sep1"
@@ -9347,9 +9340,8 @@ msgid "gretl: high precision estimates"
 msgstr "gretl: estimés avec grande précision"
 
 #: gui2/library.c:1871
-#, fuzzy
 msgid "linear restrictions"
-msgstr "Tests F de restriction zéro"
+msgstr "restrictions linéaires"
 
 #: gui2/library.c:2000
 msgid "A variable was duplicated in the list of regressors"
