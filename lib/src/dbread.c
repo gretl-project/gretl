@@ -184,7 +184,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 {
     FILE *fp;
     char dbidx[MAXLEN];
-    char sername[9];
+    char sername[VNAMELEN];
     char line1[256], line2[72];
     char stobs[11], endobs[11];
     char *p, pdc;
@@ -353,7 +353,7 @@ static int dinfo_to_tbl_row (const DATEINFO *dinfo, db_table_row *row,
 			     const char *varname, const char *comment,
 			     int n)
 {
-    char pd = 0, pdstr[3], endobs[9];
+    char pd = 0, pdstr[3], endobs[OBSLEN];
     int startfrac = 0;
     int err = 0;
 
@@ -966,7 +966,7 @@ int set_db_name (const char *fname, int filetype, const PATHS *ppaths,
 
 int db_set_sample (const char *line, DATAINFO *pdinfo)
 {
-    char cmd[5], start[9], stop[9];
+    char cmd[5], start[OBSLEN], stop[OBSLEN];
     int t1 = 0, t2 = 0;
 
     if (sscanf(line, "%4s %8s %8s", cmd, start, stop) != 3) {

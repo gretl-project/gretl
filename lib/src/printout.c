@@ -362,7 +362,7 @@ void printfreq (FREQDIST *freq, PRN *prn)
 
 void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 {
-    char date1[9], date2[9];
+    char date1[OBSLEN], date2[OBSLEN];
 
     if (fulln) {
 	pprintf(prn, _("Full data set: %d observations\n"
@@ -826,8 +826,8 @@ static void fit_resid_head (const FITRESID *fr,
 			    PRN *prn)
 {
     int i;
-    char label[16], date1[9], date2[9]; 
-    char fdate1[9], fdate2[9];
+    char label[16], date1[OBSLEN], date2[OBSLEN]; 
+    char fdate1[OBSLEN], fdate2[OBSLEN];
     int nobs = t2 - t1 + 1;
 
     ntodate(date1, fr->t1, pdinfo);
@@ -1115,7 +1115,7 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
     if (pdinfo->markers) { 
 	pprintf(prn, "%8s ", pdinfo->S[t]); 
     } else {
-	char tmp[9]; 
+	char tmp[OBSLEN]; 
 
 	ntodate(tmp, t, pdinfo);
 	pprintf(prn, "%8s ", tmp);
@@ -1247,7 +1247,7 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 		if (pdinfo->markers) { /* data marker strings present */
 		    sprintf(line, "%8s ", pdinfo->S[t]);
 		} else {
-		    char tmp[9];
+		    char tmp[OBSLEN];
 
 		    ntodate(tmp, t, pdinfo);
 		    sprintf(line, "%8s ", tmp);

@@ -726,7 +726,7 @@ void set_miss (LIST list, const char *param, double **Z,
 int set_obs (char *line, DATAINFO *pdinfo, unsigned char opt)
 {
     int pd, pos, i, len, dc = 0, bad = 0;
-    char stobs[9], endobs[9], endbit[7], *p;
+    char stobs[OBSLEN], endobs[OBSLEN], endbit[7], *p;
     long ed0 = 0L;
 
     *gretl_errmsg = '\0';
@@ -1555,7 +1555,7 @@ static int real_dataset_add_vars (int newvars, double *x,
 
     pdinfo->varname = varname;
     for (i=0; i<newvars; i++) {
-	pdinfo->varname[v+i] = malloc(9);
+	pdinfo->varname[v+i] = malloc(VNAMELEN);
 	if (pdinfo->varname[v+i] == NULL) return E_ALLOC;
 	pdinfo->varname[v+i][0] = '\0';
     }
@@ -1614,7 +1614,7 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
     varname = realloc(pdinfo->varname, (v + 1) * sizeof *varname);
     if (varname == NULL) return E_ALLOC;
     else pdinfo->varname = varname;
-    pdinfo->varname[v] = malloc(9);
+    pdinfo->varname[v] = malloc(VNAMELEN);
     if (pdinfo->varname[v] == NULL) return E_ALLOC;
     pdinfo->varname[v][0] = '\0';
 
@@ -2102,7 +2102,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     int ft1, ft2;
     int i, j, k, t, nfcast, n_est, nv;
     int yno = pmod->list[1];
-    char t1str[9], t2str[9];
+    char t1str[OBSLEN], t2str[OBSLEN];
 
     fr = fit_resid_new(0, 1); 
     if (fr == NULL) return NULL;
@@ -2498,7 +2498,7 @@ int set_panel_structure (unsigned char flag, DATAINFO *pdinfo, PRN *prn)
 
 int balanced_panel (const DATAINFO *pdinfo)
 {
-    char unit[9], period[9];
+    char unit[OBSLEN], period[OBSLEN];
 
     if ((pdinfo->t2 - pdinfo->t1 + 1) % pdinfo->pd)
         return 0;

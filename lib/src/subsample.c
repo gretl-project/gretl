@@ -128,7 +128,7 @@ int allocate_case_markers (char ***S, int n)
 	return E_ALLOC;
     }
     for (t=0; t<n; t++) {
-	(*S)[t] = malloc(9);
+	(*S)[t] = malloc(OBSLEN);
 	if ((*S)[t] == NULL) {
 	    free(*S);
 	    return E_ALLOC;
@@ -190,7 +190,7 @@ int restrict_sample (const char *line,
 	boolean condition */
 {
     double xx, *dum = NULL;
-    char **S = NULL, dumv[9];
+    char **S = NULL, dumv[VNAMELEN];
     int subnum = 0, dumnum = 0;
     int i, t, st, sn, n = oldinfo->n;
     int opt = SUBSAMPLE_UNKNOWN;
@@ -369,7 +369,7 @@ static int get_sample_increment (const char *str)
 int set_sample (const char *line, DATAINFO *pdinfo)
 {
     int nf, new_t1 = 0, new_t2 = 0;
-    char cmd[5], newstart[9], newstop[9];
+    char cmd[5], newstart[OBSLEN], newstop[OBSLEN];
 
     *gretl_errmsg = '\0';
 

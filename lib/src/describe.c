@@ -1072,7 +1072,7 @@ static void center_line (char *str, PRN *prn, int dblspc)
 static void prhdr (const char *str, const DATAINFO *pdinfo, 
 		   int ci, PRN *prn)
 {
-    char date1[9], date2[9], tmp[96];
+    char date1[OBSLEN], date2[OBSLEN], tmp[96];
 
     ntodate(date1, pdinfo->t1, pdinfo);
     ntodate(date2, pdinfo->t2, pdinfo);

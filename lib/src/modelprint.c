@@ -722,7 +722,7 @@ static void print_model_heading (const MODEL *pmod,
 				 const DATAINFO *pdinfo, 
 				 PRN *prn)
 {
-    char startdate[9], enddate[9], vname[16];
+    char startdate[OBSLEN], enddate[OBSLEN], vname[16];
     int t1 = pmod->t1, t2 = pmod->t2;
     int tex = TEX_FORMAT(prn->format);
     int utf = PLAIN_FORMAT(prn->format);
@@ -1892,7 +1892,7 @@ void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
 			  PRN *prn)
 {
     int i;
-    char startdate[9], enddate[9];
+    char startdate[OBSLEN], enddate[OBSLEN];
     int nobs = mpvals->t2 - mpvals->t1 + 1;
 
     ntodate(startdate, mpvals->t1, pdinfo);

@@ -35,9 +35,9 @@ typedef struct _nls_spec nls_spec;
 typedef struct _nls_term nls_term;
 
 struct _nls_term {
-    char name[9];       /* name of parameter */
-    char *deriv;        /* string representation of derivative */
-    int varnum;         /* ID number of the var holding the derivative */
+    char name[VNAMELEN]; /* name of parameter */
+    char *deriv;         /* string representation of derivative */
+    int varnum;          /* ID number of the var holding the derivative */
 };
 
 struct _nls_spec {
@@ -139,7 +139,7 @@ static int get_params_from_nlfunc (void)
 {
     const char *s = nlspec.nlfunc;
     const char *p;
-    char vname[9];
+    char vname[VNAMELEN];
     int n, np = 0;
     int err = 0;
 
@@ -240,7 +240,7 @@ static int get_resid (double *fvec)
 static int get_deriv (int i, double *deriv)
 {
     int j, t, v, vec;
-    char varname[9];
+    char varname[VNAMELEN];
 
     if (nls_auto_gen(i + 1)) return 1;
 
@@ -346,7 +346,7 @@ static int add_param_names_to_model (MODEL *pmod)
     pmod->params = malloc((1 + pmod->ncoeff) * sizeof *pmod->params);
     if (pmod->params == NULL) return 1;
 
-    pmod->params[0] = malloc(9);
+    pmod->params[0] = malloc(VNAMELEN);
     if (pmod->params[0] == NULL) {
 	free(pmod->params);
 	return 1;
@@ -354,7 +354,7 @@ static int add_param_names_to_model (MODEL *pmod)
     strcpy(pmod->params[0], pdinfo->varname[nlspec.depvar]);
 
     for (i=1; i<=pmod->ncoeff; i++) {
-	pmod->params[i] = malloc(9);
+	pmod->params[i] = malloc(VNAMELEN);
 	if (pmod->params[i] == NULL) {
 	    int j;
 
@@ -504,7 +504,7 @@ static void clear_nls_spec (void)
 
 static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
 {
-    char depvarname[9];
+    char depvarname[VNAMELEN];
     const char *p;
     int v;
 

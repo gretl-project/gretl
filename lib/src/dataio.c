@@ -31,7 +31,7 @@
 #include <libxml/parser.h>
 
 #define QUOTE                  '\''
-#define SCALAR_DIGITS          12
+#define SCALAR_DIGITS           12
 #define PMAX_NOT_AVAILABLE     666
 
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
@@ -217,7 +217,7 @@ static int dataset_allocate_markers (DATAINFO *pdinfo)
     if (pdinfo->S == NULL) return 1; 
 
     for (i=0; i<pdinfo->n; i++) {
-	pdinfo->S[i] = malloc(9);
+	pdinfo->S[i] = malloc(OBSLEN);
 	if (pdinfo->S[i] == NULL) {
 	    for (k=0; k<i; k++) free(pdinfo->S[k]);
 	    free(pdinfo->S);
@@ -273,7 +273,7 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
 	pdinfo->vector == NULL) return 1;
 
     for (i=0; i<v; i++) {
-	pdinfo->varname[i] = malloc(9);
+	pdinfo->varname[i] = malloc(VNAMELEN);
 	if (pdinfo->varname[i] == NULL) return 1;
 
 	pdinfo->varname[i][0] = '\0';
@@ -466,7 +466,7 @@ static void eatspace (FILE *fp)
 static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 {
     int i, t, n = pdinfo->n;
-    char c, marker[9];
+    char c, marker[OBSLEN];
     int err = 0;
     float x;
 
@@ -1037,7 +1037,7 @@ static int writehdr (const char *hdrfile, const int *list,
 {
     FILE *fp;
     int bin = 0, i;
-    char startdate[9], enddate[9];
+    char startdate[OBSLEN], enddate[OBSLEN];
 
     if (opt == GRETL_DATA_FLOAT) bin = 1;
     else if (opt == GRETL_DATA_DOUBLE) bin = 2;
@@ -1279,7 +1279,7 @@ int write_data (const char *fname, const int *list,
 	    if (pdinfo->S != NULL) {
 		fprintf(fp, "%s%c", pdinfo->S[t], delim);
 	    } else {
-		char tmp[9];
+		char tmp[OBSLEN];
 
 		ntodate(tmp, t, pdinfo);
 		fprintf(fp, "\"%s\"%c", tmp, delim);
@@ -1301,7 +1301,7 @@ int write_data (const char *fname, const int *list,
     }
     else if (opt == GRETL_DATA_R_ALT && pdinfo->time_series == TIME_SERIES) {
 	/* new (October, 2003) attempt at improved R time-series structure */
-	char *p, datestr[9];
+	char *p, datestr[OBSLEN];
 	int subper = 1;
 
 	fprintf(fp, "\"%s\" <- ts (t (matrix (data = c(\n", "gretldata");
@@ -1443,7 +1443,7 @@ static void pd_string (char *str, const DATAINFO *pdinfo)
 
 int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 {
-    char startdate[9], enddate[9], tmp[MAXLEN];
+    char startdate[OBSLEN], enddate[OBSLEN], tmp[MAXLEN];
     time_t prntime = time(NULL);
     int i;
 
@@ -1474,7 +1474,8 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
     pprintf(prn, "%s:\n\n", _("Listing of variables"));
 
     for (i=1; i<pdinfo->v; i++) {
-	pprintf(prn, "%9s  %s\n", pdinfo->varname[i], VARLABEL(pdinfo, i));
+	pprintf(prn, "%*s  %s\n", VNAMELEN, pdinfo->varname[i], 
+		VARLABEL(pdinfo, i));
     }
 
     return 0;
@@ -1509,7 +1510,7 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
      /* read data "labels" from file */
 {
     FILE * fp;
-    char line[MAXLEN], *label, varname[9];
+    char line[MAXLEN], *label, varname[VNAMELEN];
     int v;
     
     *gretl_errmsg = '\0';
@@ -2009,8 +2010,8 @@ static int test_label (DATAINFO *pdinfo, char **missvec, PRN *prn)
 	frequency */
 {
     int n1, n2, try;
-    char year[5], subper[3], endobs[9];
-    char lbl1[9], lbl2[9];
+    char year[5], subper[3], endobs[OBSLEN];
+    char lbl1[OBSLEN], lbl2[OBSLEN];
 
     *lbl1 = *lbl2 = 0;
     strncat(lbl1, pdinfo->S[0], 8);
@@ -2275,7 +2276,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 	       err = 1;
 	   } else {
 	       for (t=pdinfo->n; t<tnew && !err; t++) {
-		   S[t] = malloc(9);
+		   S[t] = malloc(OBSLEN);
 		   if (S[t] == NULL) err = 1;
 		   else strcpy(S[t], addinfo->S[t - pdinfo->n]);
 	       }
@@ -2824,7 +2825,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 int add_case_markers (DATAINFO *pdinfo, const char *fname)
 {
     FILE *fp;
-    char **S, marker[9];
+    char **S, marker[OBSLEN];
     int i, t;
 
     fp = fopen(fname, "r");
@@ -2833,7 +2834,7 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
     S = malloc(pdinfo->n * sizeof *S);
     if (S == NULL) return E_ALLOC; 
     for (i=0; i<pdinfo->n; i++) {
-	S[i] = malloc(9);
+	S[i] = malloc(OBSLEN);
 	if (S[i] == NULL) return E_ALLOC; 
     }
 
@@ -3327,7 +3328,7 @@ static int write_xmldata (const char *fname, const int *list,
     FILE *fp = NULL;
     gzFile *fz = Z_NULL;
     int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
-    char startdate[9], enddate[9], datname[MAXLEN], type[32];
+    char startdate[OBSLEN], enddate[OBSLEN], datname[MAXLEN], type[32];
     char *xmlbuf = NULL;
     long sz = 0L;
     void *handle = NULL;

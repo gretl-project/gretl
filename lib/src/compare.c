@@ -1093,7 +1093,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     int *chowlist = NULL;
     int newvars = pmod->list[0] - 1;
     int i, t, v = pdinfo->v, n = pdinfo->n;
-    char chowdate[9], s[9];
+    char chowdate[OBSLEN], s[OBSLEN];
     MODEL chow_mod;
     double F;
     int split = 0, err = 0;
@@ -1254,7 +1254,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     const int T = pmod->t2 - pmod->t1 + 1;
     const int K = pmod->ncoeff;
     MODEL cum_mod;
-    char cumdate[9];
+    char cumdate[OBSLEN];
     double xx, yy, sigma, hct, wbar = 0.0;
     double *cresid = NULL, *W = NULL, *xvec = NULL;
     FILE *fq = NULL;

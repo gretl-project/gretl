@@ -45,7 +45,7 @@ static void get_optional_filename (const char *line, CMD *cmd);
 typedef struct {
     int lag;
     int varnum;
-    char varname[9];
+    char varname[VNAMELEN];
 } LAGVAR;
 
 /* ........................................................... */
@@ -307,7 +307,7 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
 			      const DATAINFO *pdinfo)
 {
     int v, vnum;
-    char vname[9];
+    char vname[VNAMELEN];
 
     line += strlen("rename ");
 
@@ -717,7 +717,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		else if (!command->errcode) {
 		    command->errcode = 1; /* presume guilt at this stage */
 		    if (strlen(field) > 8) {
-			char test[9];
+			char test[VNAMELEN];
 
 			*test = 0;
 			strncat(test, field, 8);
@@ -995,7 +995,7 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 	   double ***pZ)
 {
     int t, t1, t2, vi;
-    char t1str[9], t2str[9], varname[9];
+    char t1str[OBSLEN], t2str[OBSLEN], varname[VNAMELEN];
 
     if (pmod->ci == NLS) return -1; /* FIXME? */
 
@@ -1366,7 +1366,7 @@ static int make_var_label (const char *line, const DATAINFO *pdinfo,
 			   PRN *prn)
 {
     char *p;
-    char vname[9];
+    char vname[VNAMELEN];
     int v;
 
     if (pdinfo->varinfo == NULL) return 1;

@@ -87,7 +87,7 @@ int ok_in_loop (int ci, const LOOPSET *ploop)
 
 int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 {
-    char lvar[9], rvar[9], op[8];
+    char lvar[VNAMELEN], rvar[VNAMELEN], op[8];
     int start, end;
     int n, v;
     int err = 0;
@@ -726,7 +726,7 @@ static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
 			      const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
-    char startdate[9], enddate[9];
+    char startdate[OBSLEN], enddate[OBSLEN];
 
     ntodate(startdate, plmod->t1, pdinfo);
     ntodate(enddate, plmod->t2, pdinfo);

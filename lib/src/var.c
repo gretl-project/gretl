@@ -1943,7 +1943,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	int T = resids.t2 - resids.t1 + 1;
 	double **Suu, **Svv, **Suv;
 	double **u = NULL, **v = NULL;
-	char stobs[9], endobs[9];
+	char stobs[OBSLEN], endobs[OBSLEN];
 
 	if (allocate_sigmas(&Suu, &Svv, &Suv, k)) {
 	    err = E_ALLOC;
@@ -2131,7 +2131,7 @@ const char *gretl_var_get_name (const GRETL_VAR *var)
 int gretl_var_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 				     double ***pZ, DATAINFO *pdinfo)
 {
-    char vname[9], vlabel[MAXLABEL];
+    char vname[VNAMELEN], vlabel[MAXLABEL];
     MODEL *pmod = var->models[eqnum];
     int i, n, t, t1 = pmod->t1, t2 = pmod->t2;
 
