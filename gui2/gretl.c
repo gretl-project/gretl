@@ -384,7 +384,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/Sort variables/by name"), NULL, sort_varlist, 1, NULL },
     { N_("/Data/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/Data/_Graph specified vars"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Data/Graph specified vars/Time-series plot..."), 
+    { N_("/Data/Graph specified vars/Time series plot..."), 
       NULL, selector_callback, GR_PLOT, NULL },
     { N_("/Data/Graph specified vars/X-Y scatter..."), 
       NULL, selector_callback, GR_XY, NULL },
@@ -972,7 +972,7 @@ void graphmenu_state (gboolean s)
 static void time_series_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Data/Graph specified vars/Time-series plot...", s);
+	flip(mdata->ifac, "/Data/Graph specified vars/Time series plot...", s);
 	flip(mdata->ifac, "/Variable/Time series plot", s);
 	flip(mdata->ifac, "/Variable/Correlogram", s);
 	flip(mdata->ifac, "/Variable/Spectrum", s);

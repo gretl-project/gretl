@@ -77,59 +77,6 @@ typedef struct {
 #endif
 } tx_request;
 
-#ifdef G_OS_WIN32
-static void win_show_error (DWORD dw)
-{
-    LPVOID buf;
-
-    FormatMessage( 
-                  FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-                  FORMAT_MESSAGE_FROM_SYSTEM | 
-                  FORMAT_MESSAGE_IGNORE_INSERTS,
-                  NULL,
-                  dw,
-                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                  (LPTSTR) &buf,
-                  0,
-                  NULL 
-                  );
-    MessageBox(NULL, (LPCTSTR) buf, "Error", MB_OK | MB_ICONERROR);
-    LocalFree(buf);
-}
-
-static int win_fork_prog (char *cmdline, const char *dir)
-{
-    int child;
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi; 
-
-    ZeroMemory(&si, sizeof si);
-    si.cb = sizeof si;
-    si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_SHOWMINIMIZED;
-
-    ZeroMemory(&pi, sizeof pi);    
-
-    /* win32 API: zero return means failure */
-    child = CreateProcess(NULL, cmdline, 
-                          NULL, NULL, FALSE,
-                          CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
-                          NULL, dir,
-                          &si, &pi);
-    if (!child) {
-	DWORD dw = GetLastError();
-        win_show_error(dw);
-        return 1;
-    }
-
-    WaitForSingleObject(pi.hProcess, INFINITE);    
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-
-    return 0;
-}
-#endif
-
 #if GTK_MAJOR_VERSION == 1
 static void tx_dialog_ok (GtkWidget *w, tx_request *request)
 {
@@ -738,7 +685,8 @@ int write_tx_data (char *fname, int varnum,
     if (opt == X12A) {
 #ifdef G_OS_WIN32
 	sprintf(cmd, "\"%s\" %s -r -p -q", prog, varname);
-	err = win_fork_prog(cmd, workdir);
+	err = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
+		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
 #else
 	sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", 
 		workdir, prog, varname);
@@ -749,11 +697,13 @@ int write_tx_data (char *fname, int varnum,
 
 #ifdef OS_WIN32 
 	sprintf(cmd, "\"%s\" -i %s -k serie", prog, varname);
-	err = win_fork_prog(cmd, workdir);
+	err = winfork(cmd, workdir, SW_SHOWMINIMIZED,
+		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
 	if (!err) {
 	    get_seats_command(seats, prog);
 	    sprintf(cmd, "\"%s\" -OF %s", seats, varname);
-	    err = win_fork_prog(cmd, workdir);
+	    err = winfork(cmd, workdir, SW_SHOWMINIMIZED,
+			  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
 	}
 #else
 	sprintf(cmd, "cd \"%s\" && \"%s\" -i %s -k serie >/dev/null", workdir, prog, 

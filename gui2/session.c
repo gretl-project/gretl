@@ -928,6 +928,13 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     fprintf(fp, "%s", savestuff);
 #endif
 
+#ifdef G_OS_WIN32
+    if (strstr(savestuff, "set term") == NULL &&
+	strstr(savestuff, "pause -1") == NULL) {
+	fputs("\npause -1\n", fp);
+    }
+#endif
+
     g_free(savestuff); 
     fclose(fp);
     if (!quiet) infobox(_("plot commands saved"));

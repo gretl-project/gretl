@@ -8,6 +8,7 @@ lib/src/estimate.c
 lib/src/generate.c
 lib/src/graphing.c
 lib/src/gretl_utils.c
+lib/src/gretl_win32.c
 lib/src/interact.c
 lib/src/modelprint.c
 lib/src/monte_carlo.c
@@ -18,7 +19,6 @@ lib/src/strutils.c
 lib/src/subsample.c
 lib/src/texprint.c
 lib/src/var.c
-lib/src/win32.c
 cli/common.c
 cli/complete.c
 cli/gretlcli.c
@@ -77,5 +77,6 @@ plugin/progress_bar-2.c
 plugin/progress_bar.c
 plugin/range-mean.c
 plugin/stats_tables.c
+plugin/sur.c
 plugin/tramo-x12a.c
 plugin/workbook.c

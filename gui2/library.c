@@ -2728,19 +2728,14 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     int err, origv = datainfo->v, plot_list[4], lines[2];
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
-    int ts = dataset_is_time_series(datainfo);
-    int add_fitted = 1;
 
-    /* special case: simple regression */
-    if (xvar && pmod->list[0] == 3) {
-	add_fitted = 0;
+    if (xvar && pmod->list[0] == 3 && pmod->ifc) {
+	/* special case: simple regression with intercept */
 	plot_list[0] = 2;
 	plot_list[1] = pmod->list[1];
 	plot_list[2] = xvar;
 	lines[0] = lines[1] = 0;
-    }
-
-    if (add_fitted) {
+    } else {
 	/* add fitted values to data set temporarily */
 	if (add_fit_resid(pmod, 1, 1)) return;
 	plot_list[0] = 3;
@@ -2755,6 +2750,8 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	    lines[1] = 0;
 	} else { 
 	    /* plot against obs */
+	    int ts = dataset_is_time_series(datainfo);
+
 	    err = plotvar(&Z, datainfo, (ts)? "time" : "index");
 	    if (err) {
 		errbox(_("Failed to add plotting index variable"));
