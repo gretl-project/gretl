@@ -138,7 +138,7 @@
   ;; If '%two-side%' is true, headers and footers are alternated
   ;; so that the "outer" and "inner" headers will be correctly
   ;; placed in the bound document.  Default #f
-  #t)
+  #f)
 
 (define %admon-graphics%
   ;; If true, admonitions are presented in an alternate style that uses
