@@ -1315,11 +1315,19 @@ int plot_fcast_errs (int n, const double *obs,
 		     PATHS *ppaths)
 {
     FILE *fp = NULL;
+    double xmin, xmax, xrange;
     int t;
 
     if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
 
     fputs("# forecasts with 95 pc conf. interval\n", fp);
+
+    _minmax(0, n - 1, obs, &xmin, &xmax);
+    xrange = xmax - xmin;
+    xmin -= xrange * .025;
+    xmax += xrange * .025;
+    fprintf(fp, "set xrange [%.8g:%.8g]\n", xmin, xmax);
+
     fprintf(fp, "set key left top\n"
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
 	    "'-' using 1:2 title '%s' w lines , \\\n"

@@ -2948,7 +2948,11 @@ static int get_plot_ranges (png_plot_t *plot)
 	    fclose(fp);
 	    return 0;
 	}
-	if (strstr(line, "# range-mean")) {
+	if (strstr(line, "# forecasts with 95")) {
+	    /* auto-parse can't handle the error bars */
+	    plot->status_flags |= PLOT_DONT_EDIT;
+	}
+	else if (strstr(line, "# range-mean")) {
 	    plot->spec->code = PLOT_RANGE_MEAN;
 	}
 	else if (sscanf(line, "set xrange [%lf:%lf]", 
@@ -3019,6 +3023,10 @@ static int get_plot_ranges (png_plot_t *plot)
 	    plot->yint = 1;
 	}
     }
+
+    if (!got_x) {
+	plot->status_flags |= PLOT_DONT_ZOOM;
+    }    
 
     return got_x;
 }

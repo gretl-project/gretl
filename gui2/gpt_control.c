@@ -2989,6 +2989,9 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
     remove(dumbgp);
 
     if (err) {
+#ifdef POINTS_DEBUG
+	fputs("get_dumb_plot_yrange(): plot command failed\n", stderr);
+#endif
 	return 1;
     } else {
 	double y[16];
@@ -3103,7 +3106,11 @@ static int get_plot_ranges (png_plot_t *plot)
 	    fclose(fp);
 	    return 0;
 	}
-	if (strstr(line, "# range-mean")) {
+	if (strstr(line, "# forecasts with 95")) {
+	    /* auto-parse can't handle the error bars */
+	    plot->status_flags |= PLOT_DONT_EDIT;
+	}	
+	else if (strstr(line, "# range-mean")) {
 	    plot->spec->code = PLOT_RANGE_MEAN;
 	}
 	else if (sscanf(line, "set xrange [%lf:%lf]", 
@@ -3125,6 +3132,7 @@ static int get_plot_ranges (png_plot_t *plot)
 	    } else if (!strncmp(line, "set y2ti", 8)) {
 		plot->format |= PLOT_Y2AXIS;
 	    } else if (cant_zoom(line)) {
+		fprintf(stderr, "get_plot_ranges(): cant_zoom\n");
 		plot->status_flags |= PLOT_DONT_ZOOM;
 	    } 
 	}
@@ -3165,10 +3173,12 @@ static int get_plot_ranges (png_plot_t *plot)
 #endif /* PNG_COMMENTS */
 
     if (got_x) {
-#ifdef POINTS_DEBUG
+#ifdef POINTS_DEBUG 
+	/* get the "dumb" coodinates for comparison */
 	get_dumb_plot_yrange(plot);	
 #else
-	if (!plot_has_png_coords(plot)) { /* change for real build */
+	if (!plot_has_png_coords(plot)) { 
+	    /* get "dumb" coords only if better ones not available */
 	    get_dumb_plot_yrange(plot);
 	}
 #endif
@@ -3181,6 +3191,13 @@ static int get_plot_ranges (png_plot_t *plot)
 	    (plot->pixel_ymax - plot->pixel_ymin) >= 1.0) {
 	    plot->yint = 1;
 	}
+    }
+
+    if (!got_x) {
+	plot->status_flags |= PLOT_DONT_ZOOM;
+#ifdef POINTS_DEBUG 
+	fputs("get_plot_ranges(): got_x = 0\n", stderr);
+#endif
     }
 
     return got_x;
