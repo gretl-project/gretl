@@ -27,7 +27,7 @@
 # include <sys/stat.h>
 #endif
 
-#define GRAPHS_MAX 6
+#define GRAPHS_MAX 8
 
 enum {
     PS_OUTPUT,
@@ -92,19 +92,40 @@ static void graph_page_init (void)
 
 static void doctop (int otype, FILE *fp)
 {
-    fputs("\\documentclass{article}\n", fp);
+    fprintf(fp, "\\documentclass%s{article}\n", (in_usa)? "" : "[a4paper]");
     fprintf(fp, "\\usepackage[%s]{graphicx}\n", 
 	    (otype == PS_OUTPUT)? "dvips" : "pdftex");
 }
+
+/* A4 is 210mm * 297mm */
 
 static int geomline (int ng, FILE *fp)
 {
     double width = 7.0, height = 10.0;
     double tmarg = 0.5, lmarg = 0.75;
+    char unit[3];
 
-    fprintf(fp, "\\usepackage[body={%gin,%gin},"
-	    "top=%gin,left=%gin,nohead]{geometry}\n\n",
-	    width, height, tmarg, lmarg);
+    if (in_usa()) {
+	strcpy(unit, "in");
+    } else {
+	strcpy(unit, "mm");
+	width = 190;
+	height = 277.0;
+	tmarg = lmarg = 10.0;
+    }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
+    fprintf(fp, "\\usepackage[body={%g%s,%g%s},"
+	    "top=%g%s,left=%g%s,nohead]{geometry}\n\n",
+	    width, unit, height, unit, 
+	    tmarg, unit, lmarg, unit);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     return 0;
 }
@@ -115,6 +136,11 @@ static void common_setup (FILE *fp)
 	  "\\thispagestyle{empty}\n\n"
 	  "\\vspace*{\\stretch{1}}\n\n"
 	  "\\begin{center}\n", fp);
+}
+
+static int oddgraph (int ng, int i)
+{
+    return (ng % 2) && (i == ng - 1);
 }
 
 static int tex_graph_setup (int ng, FILE *fp)
@@ -128,6 +154,10 @@ static int tex_graph_setup (int ng, FILE *fp)
 	fprintf(stderr, "ng (%d) out of range\n", ng);
 	return 1;
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
 
     if (ng == 1) {
 	sprintf(fname, "%s_1", gpage_base);
@@ -154,21 +184,35 @@ static int tex_graph_setup (int ng, FILE *fp)
     }    
 
     else {
-	scale = 0.9;
-	vspace = 0.25;
+	if (ng > 6) {
+	    scale = 0.85;
+	    vspace = 0.20;
+	} else {
+	    scale = 0.9;
+	    vspace = 0.25;
+	}	    
 	fputs("\\begin{tabular}{cc}\n", fp);
 	for (i=0; i<ng; i++) {
 	    sprintf(fname, "%s_%d", gpage_base, i + 1);
-	    fprintf(fp, "\\includegraphics[scale=%g]{%s}",
-		    scale, fname);
-	    if (i % 2 == 0) {
-		fputs(" &\n  ", fp);
+	    if (oddgraph(ng, i)) {
+		fprintf(fp, "\\multicolumn{2}{c}{\\includegraphics[scale=%g]{%s}}",
+			scale, fname);
 	    } else {
-		fprintf(fp, " \\\\ [%gin]\n", vspace);
+		fprintf(fp, "\\includegraphics[scale=%g]{%s}",
+			scale, fname);
+		if (i % 2 == 0) {
+		    fputs(" &\n  ", fp);
+		} else if (i < ng - 1) {
+		    fprintf(fp, " \\\\ [%gin]\n", vspace);
+		}
 	    }
 	}
 	fputs("\\end{tabular}\n", fp);
-    } 
+    }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif 
 
     return 0;
 }
@@ -261,6 +305,10 @@ static int gp_make_outfile (const char *gfname, int i, double scale,
 	fclose(fp);
 	return 1;
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
     
     if (output == PDF_OUTPUT) {
 	fprintf(fq, "set term png%s font verdana 6 size %g,%g\n", 
@@ -274,6 +322,10 @@ static int gp_make_outfile (const char *gfname, int i, double scale,
 	    fprintf(fq, "set size %g,%g\n", scale, scale);
 	}
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     fprintf(fq, "set output '%s'\n", fname);
 

@@ -1972,3 +1972,28 @@ int do_printf (const char *line, double ***pZ,
 
     return err;
 }
+
+
+int in_usa (void)
+{
+    static int ustime = -1;
+
+    if (ustime < 0) {
+	char test[12];
+	struct tm t = {0};
+
+	t.tm_year = 100;
+	t.tm_mon = 0;
+	t.tm_mday = 31;
+
+	strftime(test, sizeof test, "%x", &t);
+
+	if (!strncmp(test, "01/31", 5)) {
+	    ustime = 1;
+	} else {
+	    ustime = 0;
+	}
+    }
+
+    return ustime;
+}

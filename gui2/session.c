@@ -1835,7 +1835,11 @@ static void batch_pack_icons (void)
 static void add_all_icons (void) 
 {
     int i;
+#ifdef G_OS_WIN32
+    int show_graph_page = check_for_prog("latex.exe");
+#else
     int show_graph_page = check_for_prog("latex");
+#endif
 
     active_object = NULL;
 

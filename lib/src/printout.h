@@ -97,3 +97,5 @@ int pputc (PRN *prn, int c);
 int do_printf (const char *line, double ***pZ, 
 	       DATAINFO *pdinfo, MODEL *pmod,
 	       PRN *prn);
+
+int in_usa (void);

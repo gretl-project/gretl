@@ -394,6 +394,7 @@ static void set_tramo_x12a_dirs (void)
 int check_for_prog (const char *prog)
 {
     char tmp[MAXLEN];
+    int ret = 0;
 
     if (prog == NULL || *prog == 0) return 0;
 
@@ -403,7 +404,11 @@ int check_for_prog (const char *prog)
 	sprintf(tmp, "%s > /dev/null 2>&1", prog);
     }
 
-    return (gretl_spawn(tmp) == 0);
+    ret = gretl_spawn(tmp) == 0;
+
+    if (!strcmp(prog, "latex")) remove("x.log");
+
+    return ret;
 }
 
 static int my_mkdir (const char *dirname)
