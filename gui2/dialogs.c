@@ -438,17 +438,20 @@ void about_dialog (gpointer data)
 					TRUE,
 					NULL);
 
-    if (pixfile != NULL) pbuf = gdk_pixbuf_new_from_file(pixfile, NULL);
-
+    if (pixfile != NULL) {
+	pbuf = gdk_pixbuf_new_from_file(pixfile, NULL);
+    } else {
+	fprintf(stderr, "Couldn't find gretl-logo.xpm\n");
+    }
 
     about = gnome_about_new ("gretl", version_string,
 			     "(C) 2000-2002 Allin Cottrell",
 			     _("An econometrics program for the gnome desktop "
 			       "issued under the GNU General Public License.  "
-			       "http://gretl.sourceforge.net/"),			     
+			       "http://gretl.sourceforge.net/"),
 			     (const char **)authors,
 			     (const char **)documenters,
-			     strcmp (translator_credits, "translator_credits") != 0 ? 
+			     strcmp (translator_credits, "translator_credits") != 0 ?
 			     (const char *)translator_credits : NULL,
 			     pbuf);
 
