@@ -143,9 +143,12 @@ void free_series_view (gpointer p)
 {
     series_view_t *sview = (series_view_t *) p;
 
-    if (sview == NULL || sview->points == NULL) return;
+    if (sview == NULL) return;
 
-    free(sview->points);
+    if (sview->points != NULL) {
+	free(sview->points);
+    }
+
     free(sview);
 }
 
