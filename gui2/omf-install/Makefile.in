@@ -1,15 +1,18 @@
 # needs to be generalized as Makefile.in
 
-INSTALL = /bin/install -c
-docdir = /opt/gnome2/share/gnome/help/gretl2/C
+INSTALL = @INSTALL@
+gnome_prefix = @gnome_prefix@
 
-gretl2-C.omf: gretl2-C-in.omf
+docdir = $(gnome_prefix)/share/gnome/help/gretl/C
+omfdir = $(gnome_prefix)/share/omf/gretl
+
+gretl-C.omf: gretl-C.omf.in
 	  scrollkeeper-preinstall $(docdir)/`awk 'BEGIN {RS = ">" } \
 	  /identifier/ {print $$0}' $< | awk 'BEGIN {FS="\""} /url/ \
 	  {print $$2}'` $< $@; 
 	touch omf_timestamp
 
-install: gretl2-C.omf
-	../../tools/mkinstalldirs /opt/gnome2/share/omf/gretl2
-	$(INSTALL) -m 644 $< /opt/gnome2/share/omf/gretl2
-	scrollkeeper-update -p /opt/gnome2/var/scrollkeeper
+install: gretl-C.omf
+	../../tools/mkinstalldirs $(omfdir)
+	$(INSTALL) -m 644 $< $(omfdir)
+	scrollkeeper-update -p $(gnome_prefix)/var/scrollkeeper

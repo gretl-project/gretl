@@ -107,7 +107,7 @@ drag_data_received  (GtkWidget          *widget,
 
 #ifdef USE_GNOME
 char *optrun = NULL, *optdb = NULL;
-static GnomeProgram *gretl2;
+static GnomeProgram *gretl;
 
 static const struct poptOption options[] = {
     {"run", 'r', POPT_ARG_STRING, &optrun, 0, 
@@ -178,7 +178,7 @@ static void gnome_help (void)
 {
     GError *error = NULL;
 
-    gnome_help_display ("gretl2.xml", NULL, &error);
+    gnome_help_display ("gretl.xml", NULL, &error);
         
     if (error != NULL) {
 	g_warning (error->message);
@@ -659,7 +659,7 @@ int main (int argc, char *argv[])
 
     /* Initialize gnome or GTK */
 #ifdef USE_GNOME
-    gretl2 = gnome_program_init ("gretl2", version_string,
+    gretl2 = gnome_program_init ("gretl", version_string,
 				 LIBGNOMEUI_MODULE, argc, argv,
 				 GNOME_PARAM_POPT_TABLE, options,
 				 GNOME_PARAM_HUMAN_READABLE_NAME,

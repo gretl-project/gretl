@@ -5,6 +5,6 @@ Exec=gretl2 %F
 Icon=gretl.png
 Terminal=0
 Type=Application
-DocPath=gretl2/manual.xml
+DocPath=gretl/gretl.xml
 Categories=Application;Scientific;Econometrics
 

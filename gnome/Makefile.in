@@ -1,0 +1,34 @@
+tooldir = ../tools
+
+INSTALL = @INSTALL@
+gnome_prefix = @gnome_prefix@
+
+ifeq ($(INSTALL_DATA),)
+  INSTALL_DATA = $(INSTALL) -m 644
+endif
+
+desktopdir = $(gnome_prefix)/share/applications
+mimedir = $(gnome_prefix)/share/mime-info
+gpixmaps = $(gnome_prefix)/share/pixmaps/gretl
+ghelpdir = $(gnome_prefix)/share/gnome/help/gretl
+
+install: 
+	$(tooldir)/mkinstalldirs $(gpixmaps)
+	$(INSTALL_DATA) ../pixmaps/gretl-logo.xpm $(gpixmaps)
+	$(INSTALL_DATA) ../gnome/gretl.png $(gpixmaps)
+	$(INSTALL_DATA) ../gnome/gnome-*.png $(gpixmaps)
+	$(tooldir)/mkinstalldirs $(desktopdir)
+	$(INSTALL_DATA) ../gnome/gretl.desktop $(desktopdir)
+	$(tooldir)/mkinstalldirs $(mimedir)
+	$(INSTALL_DATA) ../gnome/gretl.mime $(mimedir)
+	$(INSTALL_DATA) ../gnome/gretl.keys $(mimedir)
+	$(tooldir)/mkinstalldirs $(ghelpdir)
+	$(tooldir)/mkinstalldirs $(ghelpdir)/C
+	$(tooldir)/mkinstalldirs $(ghelpdir)/C/figures
+	$(tooldir)/mkinstalldirs $(ghelpdir)/C/chapters
+	cat $(docdir)/manual.xml | sed s+fileref=\"figures/[^\"]*+\&.png+g \
+	  > $(ghelpdir)/C/gretl.xml
+	for f in $(docdir)/chapters/*.xml ; do \
+	  cat $$f | sed s+fileref=\"figures/[^\"]*+\&.png+g > \
+	  $(ghelpdir)/C/chapters/`basename $$f` ; done
+	$(INSTALL_DATA) $(docdir)/figures/*.png $(ghelpdir)/C/figures

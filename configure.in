@@ -389,6 +389,7 @@ gretl2.pc
 gui/Makefile
 gui2/Makefile
 gui2/gtkextra-lite/Makefile
+gui2/omf-install/Makefile
 gnome/gretl.keys 
 gnome/gretl2.keys 
 cli/Makefile 
