@@ -72,7 +72,7 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
     ok = g_spawn_sync (workdir,
 		       argv,
 		       NULL,
-		       0,
+		       G_SPAWN_SEARCH_PATH,
 		       NULL,
 		       NULL,
 		       &sout,
