@@ -41,7 +41,7 @@ static int populate_remote_series_list (windata_t *dbwin, char *buf);
 static int rats_populate_series_list (windata_t *dbwin);
 static SERIESINFO *get_series_info (windata_t *ddata, int action);
 static void update_statusline (windata_t *windat, char *str);
-static void data_compact_dialog (int spd, int *target_pd, 
+static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
 				 gint *compact_method);
 
 extern void trim_ext (char *fname); /* datafiles.c */
@@ -235,7 +235,7 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 		return;
 	    }
 
-	    data_compact_dialog(sinfo->pd, &datainfo->pd, &compact_method);
+	    data_compact_dialog(dbwin->w, sinfo->pd, &datainfo->pd, &compact_method);
 
 	    if (compact_method == COMPACT_NONE) {
 		dataset_drop_vars(1, &Z, datainfo);
@@ -1500,7 +1500,15 @@ static void pd_buttons (dialog_t *d, int *target_pd)
 
 /* .................................................................. */
 
-static void data_compact_dialog (int spd, int *target_pd, 
+static gint dialog_unblock (GtkWidget *w, gpointer p)
+{
+    gtk_main_quit();
+    return FALSE;
+}
+
+/* .................................................................. */
+
+static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
 				 gint *compact_method)
 {
     dialog_t *d;
@@ -1550,6 +1558,8 @@ static void data_compact_dialog (int spd, int *target_pd,
     g_signal_connect (G_OBJECT (d->dialog), "destroy", 
 		      G_CALLBACK (destroy_dialog_data), 
 		      d);
+    g_signal_connect (G_OBJECT (d->dialog), "destroy", 
+		      G_CALLBACK (dialog_unblock), NULL);
 
     tempwid = gtk_label_new(labelstr);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
@@ -1632,6 +1642,8 @@ static void data_compact_dialog (int spd, int *target_pd,
     gtk_widget_show (tempwid);
 
     gtk_widget_show (d->dialog);
+    gtk_window_set_transient_for(GTK_WINDOW(d->dialog), GTK_WINDOW(w));
+    gtk_window_set_modal (GTK_WINDOW(d->dialog), TRUE);
     gtk_main();
 }
 
@@ -1682,7 +1694,7 @@ void compact_data_set (void)
     if (maybe_restore_full_data(COMPACT)) return;
 
     newpd = 0;
-    data_compact_dialog(oldpd, &newpd, &method);
+    data_compact_dialog(mdata->w, oldpd, &newpd, &method);
     if (method == COMPACT_NONE) return;
 
     cfac = oldpd / newpd;

@@ -716,6 +716,14 @@ static void set_panel_code (GtkWidget *w, dialog_t *d)
 
 /* .................................................................. */
 
+static gint dialog_unblock (GtkWidget *w, gpointer p)
+{
+    gtk_main_quit();
+    return FALSE;
+}
+
+/* .................................................................. */
+
 void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
 {
     dialog_t *d;
@@ -743,6 +751,8 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
     g_signal_connect (G_OBJECT (d->dialog), "destroy", 
 		      G_CALLBACK (destroy_dialog_data), 
 		      d);
+    g_signal_connect (G_OBJECT (d->dialog), "destroy", 
+		      G_CALLBACK (dialog_unblock), NULL);
 
     button = gtk_radio_button_new_with_label (NULL, _("Stacked time series"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
@@ -801,6 +811,8 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
     gtk_widget_show (tempwid);
 
     gtk_widget_show (d->dialog);
+    gtk_window_set_transient_for(GTK_WINDOW(d->dialog), GTK_WINDOW(mdata->w));
+    gtk_window_set_modal (GTK_WINDOW(d->dialog), TRUE);
     gtk_main();
 }
 

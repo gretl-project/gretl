@@ -300,7 +300,6 @@ void destroy_dialog_data (GtkWidget *w, gpointer data)
 {
     dialog_t *ddata = (dialog_t *) data;
 
-    gtk_main_quit();
     /* FIXME? */
     g_free (ddata);
     open_dialog = NULL;
@@ -416,11 +415,6 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	    g_signal_connect (G_OBJECT (d->edit), "activate", 
 			      G_CALLBACK (okfunc), (gpointer) d);
 	}
-#if 0
-	g_signal_connect (G_OBJECT (d->edit), "activate", 
-			  G_CALLBACK (delete_widget), 
-			  d->dialog);
-#endif
 	
 	if (deftext) {
 	    gtk_entry_set_text (GTK_ENTRY (d->edit), deftext);
@@ -448,11 +442,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	g_signal_connect (G_OBJECT (tempwid), "clicked", 
 			  G_CALLBACK (okfunc), (gpointer) d);
     }
-#if 0
-    g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      G_CALLBACK (delete_widget), 
-		      d->dialog);
-#endif
+
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 
@@ -477,8 +467,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	gtk_widget_show (tempwid);
     }
 
-    gtk_widget_show (d->dialog); 
-    gtk_main();
+    gtk_window_set_transient_for(GTK_WINDOW(d->dialog), GTK_WINDOW(mdata->w));
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(d->dialog), TRUE);
+    gtk_widget_show(d->dialog); 
 } 
 
 #ifdef USE_GNOME
@@ -1226,3 +1217,5 @@ void varinfo_dialog (int varnum)
 
     gtk_widget_show (vset->dlg);
 }
+
+

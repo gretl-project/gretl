@@ -1084,6 +1084,7 @@ void populate_varlist (void)
     char id[4];
     gint i;
     static gint check_connected;
+    static gint click_connected;
 
     /* find and clear the existing list */
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox)));
@@ -1116,10 +1117,13 @@ void populate_varlist (void)
 	check_connected = 1;
     }
 
-    if (mdata->popup == NULL) {
+    fprintf(stderr, "populate_varlist(), mdata->popup = %p\n", (void *) mdata->popup);
+
+    if (!click_connected) {
 	g_signal_connect (G_OBJECT(mdata->listbox), "button_press_event",
 			  G_CALLBACK(main_varclick),
 			  mdata);
+	click_connected = 1;
     }
 
     build_main_popups();

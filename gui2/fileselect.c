@@ -847,7 +847,8 @@ void file_selector (const char *msg, int action, gpointer data)
 					  startdir, suffix);
     }
 
-    gtk_main(); /* make file selector modal */
+    gtk_window_set_modal (GTK_WINDOW(filesel), TRUE);
+    gtk_main(); 
 }
 
 #endif /* end of non-MS Windows code */
