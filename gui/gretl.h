@@ -245,6 +245,13 @@ enum data_status {
     MODIFIED_DATA = 1 << 5
 };
 
+#ifdef TRAMO_X12
+enum tramo_x12_opts {
+    TRAMO,
+    X12A
+};
+#endif
+
 /* functions follow */
 
 #ifndef G_OS_WIN32

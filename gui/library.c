@@ -29,10 +29,6 @@
 
 #include "selector.h"
 
-#ifdef TRAMO_X12
-# include "x12arima.h"
-#endif
-
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
 extern double **subZ;

@@ -24,10 +24,6 @@
 #include "ssheet.h"
 #include "gpt_control.h"
 
-#ifdef TRAMO_X12
-# include "x12arima.h"
-#endif
-
 #include <dirent.h>
 
 #ifndef G_OS_WIN32

@@ -1,11 +1,20 @@
 /* TRAMO/SEATS, X-12-ARIMA plugin for gretl */
 
 #include "libgretl.h"
-#include "x12arima.h"
 
 #ifdef OS_WIN32
 # include <windows.h>
 #endif
+
+typedef enum {
+    D11,     /* seasonally adjusted series */
+    D12,     /* trend/cycle */
+    D13      /* irregular component */
+} x12a_series;
+
+const char *x12a_series_strings[] = {
+    "d11", "d12", "d13"
+};
 
 const char *x12a_descrip_formats[] = {
     N_("seasonally adjusted %s"),
@@ -13,7 +22,7 @@ const char *x12a_descrip_formats[] = {
     N_("irregular component of %s")
 };
 
-int write_tramo_data (char *fname, int varnum, const int *list,
+int write_tramo_data (char *fname, int varnum, 
 		      double ***pZ, DATAINFO *pdinfo, 
 		      const char *tramodir)
 {
@@ -209,13 +218,14 @@ static int add_x12a_series (const char *fname, int code,
     return err;
 }
 
-int write_x12a_data (char *fname, int varnum, const int *list,
+int write_x12a_data (char *fname, int varnum, 
 		     double ***pZ, DATAINFO *pdinfo, 
 		     const char *x12adir)
 {
     int i, t, err = 0;
     char tmp[8], varname[9], cmd[MAXLEN];
     int startyr, startper;
+    int *savelist = NULL; /* FIXME configuration */
     double x;
     FILE *fp = NULL;
 
@@ -277,13 +287,13 @@ int write_x12a_data (char *fname, int varnum, const int *list,
     /* FIXME: make these values configurable */
     fputs("automdl{}\nx11{", fp);
     
-    if (list != NULL) {
-	if (list[0] == 1) {
-	    fprintf(fp, " save=%s ", x12a_series_strings[list[1]]); 
+    if (savelist != NULL) {
+	if (savelist[0] == 1) {
+	    fprintf(fp, " save=%s ", x12a_series_strings[savelist[1]]); 
 	} else {
 	    fputs(" save=( ", fp);
-	    for (i=1; i<=list[0]; i++) {
-		fprintf(fp, "%s ", x12a_series_strings[list[i]]);
+	    for (i=1; i<=savelist[0]; i++) {
+		fprintf(fp, "%s ", x12a_series_strings[savelist[i]]);
 	    }
 	    fputs(") ", fp);
 	}
@@ -305,9 +315,9 @@ int write_x12a_data (char *fname, int varnum, const int *list,
 
     sprintf(fname, "%s%c%s.out", x12adir, SLASH, varname); 
 
-    if (list != NULL) {
-	for (i=1; i<=list[0]; i++) {
-	    err = add_x12a_series (fname, list[i], pZ, pdinfo, varnum);
+    if (savelist != NULL) {
+	for (i=1; i<=savelist[0]; i++) {
+	    err = add_x12a_series (fname, savelist[i], pZ, pdinfo, varnum);
 	}
 	/* testing */
 	graph_x12a_series(*pZ, pdinfo, varnum);

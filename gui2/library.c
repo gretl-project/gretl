@@ -25,10 +25,6 @@
 # include "gpt_control.h"
 #endif
 
-#ifdef TRAMO_X12
-# include "../lib/src/x12arima.h"
-#endif
-
 #ifdef G_OS_WIN32 
 # include "../lib/src/cmdlist.h"
 # include <io.h>
@@ -2242,7 +2238,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     gchar *databuf;
     GError *error = NULL;
     void *handle;
-    int (*write_ts_data) (char *, int, const int *,
+    int (*write_ts_data) (char *, int, 
 			  double ***, DATAINFO *, 
 			  const char *);
     PRN *prn;
@@ -2278,12 +2274,10 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     }
 
     if (opt == TRAMO) {
-	err = write_ts_data (fname, mdata->active_var, NULL, &Z, datainfo, 
+	err = write_ts_data (fname, mdata->active_var, &Z, datainfo, 
 			     tramodir);
     } else { /* X12A */
-	int list[] = {3, D11, D12, D13};
-
-	err = write_ts_data (fname, mdata->active_var, list, &Z, datainfo, 
+	err = write_ts_data (fname, mdata->active_var, &Z, datainfo, 
 			     x12adir);
     }
 

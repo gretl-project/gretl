@@ -21,10 +21,6 @@
 
 #include "gretl.h"
 
-#ifdef TRAMO_X12
-# include "x12arima.h"
-#endif
-
 #include <dirent.h>
 #include <unistd.h>
 #include <signal.h>
