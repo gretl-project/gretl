@@ -236,7 +236,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 	dvlen = pmod->list[0] + ndum;
-	ndum--; /* ? */
+	ndum--; 
     }
 
     /* We can be assured there's an intercept in the original
@@ -308,12 +308,12 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    haus->bdiff[i-1] = lsdv.coeff[i];
 	}
 
-	for (i=0; i<nunits; i++) {
+	for (i=0; i<=ndum; i++) {
 	    /* print per-unit intercept estimates */
 	    char dumstr[VNAMELEN];
 	    double x;
 
-	    if (i == nunits - 1) {
+	    if (i == ndum) {
 		x = lsdv.coeff[0];
 	    } else {
 		x = lsdv.coeff[i + pmod->list[0] - 1] + lsdv.coeff[0];
@@ -324,11 +324,10 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 	pprintf(prn, _("\nResidual variance: %g/(%d - %d) = %g\n"), 
 		lsdv.ess, lsdv.nobs, lsdv.ncoeff, var);
-	F = (pmod->ess - lsdv.ess) * lsdv.dfd /
-	    (lsdv.ess * (nunits - 1.0));
+	F = (pmod->ess - lsdv.ess) * lsdv.dfd / (lsdv.ess * ndum);
 	pprintf(prn, _("Joint significance of unit dummy variables:\n"
-		       " F(%d, %d) = %g with p-value %g\n"), nunits - 1,
-		lsdv.dfd, F, fdist(F, nunits - 1, lsdv.dfd));
+		       " F(%d, %d) = %g with p-value %g\n"), ndum,
+		lsdv.dfd, F, fdist(F, ndum, lsdv.dfd));
 	pputs(prn, _("(A low p-value counts against the null hypothesis that "
 		     "the pooled OLS model\nis adequate, in favor of the fixed "
 		     "effects alternative.)\n\n"));
@@ -337,7 +336,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     clear_model(&lsdv);
-    dataset_drop_vars(nunits - 1, pZ, pdinfo);
+    dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo);
     free(dvlist);
 
     return var;
@@ -660,7 +659,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-#if 0
+#ifdef ALLOW_UNBALANCED
     if (pmod->missmask != NULL) {
 	int i;
 
@@ -670,13 +669,9 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
 	effn = n_included_units(pmod, pdinfo, unit_obs);
 	fprintf(stderr, "number of units included = %d\n", effn);
-	for (i=0; i<nunits; i++) {
-	    fprintf(stderr, " unit[%d]: n = %d\n", i+1, unit_obs[i]);
-	}
+	effT = T;
     }
-#endif
-
-#if 1
+#else
     effective_panel_structure(pmod, pdinfo, nunits, T,
 			      &effn, &effT);
 #endif
@@ -702,7 +697,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
 		   "cross-sectional units\n "
 		   "                        observed over %d periods\n\n"), 
-	    nunits, T);
+	    effn, effT);
 
     var2 = LSDV(pmod, pZ, pdinfo, nunits, unit_obs, T, &haus, prn);
 

@@ -357,8 +357,8 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 	/* reject missing obs within adjusted sample */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
 			    Z, misst);
-    } else if (0 && dataset_is_panel(pdinfo)) {
-	/* compensate for missing obs if they preserve a
+    } else if (pmod->ci == POOLED) {
+	/* compensate for missing obs only if they preserve a
 	   balanced panel */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
 			    Z, NULL);
@@ -501,6 +501,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     if (ci == WLS) {
 	dropwt(mdl.list);
     }
+
     yno = mdl.list[1];
     
     /* check for unknown vars in list */

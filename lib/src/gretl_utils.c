@@ -621,7 +621,7 @@ void gretl_criteria (const double ess, int nobs, int ncoeff,
 
 char *real_format_obs (char *obs, int maj, int min, int pd, char sep)
 {
-    if (pd > 10) {
+    if (pd >= 10) {
 	int pdp = pd / 10, minlen = 2;
 	char fmt[16];
 
@@ -683,8 +683,7 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
     }
 
     /* special case: daily data (dated or undated) */
-    if ((pd >= 5 && pd <= 7) && 
-	((strstr(stobs, "/") || !strcmp(stobs, "1"))) &&
+    if ((pd >= 5 && pd <= 7) && (strchr(stobs, '/') || !strcmp(stobs, "1")) &&
 	opt != OPT_S && opt != OPT_C) {
 	if (strcmp(stobs, "1")) {
 	    /* dated */
@@ -735,14 +734,15 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	    maj = atoi(stobs);
 	    strcpy(endbit, stobs + pos + 1);
 	    min = atoi(endbit);
+	    fprintf(stderr, "set_obs: maj=%d, min=%d\n", maj, min);
 	    if (min < 0 || min > pd) {
 		sprintf(gretl_errmsg, 
 			_("starting obs '%s' is incompatible with frequency"), 
 			stobs);
 		return 1;
 	    }
-
 	    real_format_obs(stobs, maj, min, pd, '.');
+	    fprintf(stderr, "stobs = '%s'\n", stobs);
 	}
     }
 
