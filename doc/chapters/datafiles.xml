@@ -226,9 +226,9 @@
 	distribution.</para>
 	
       <para>You won't find anything under <quote>RATS 4</quote> unless
-	you have purchased RATS data<footnote><para>See <ulink
+	you have purchased RATS data.<footnote><para>See <ulink
 	      url="http://www.estima.com/">www.estima.com</ulink></para>
-	  </footnote>.  If you do possess RATS data you should go into
+	  </footnote>  If you do possess RATS data you should go into
 	<application>gretl</application>'s <quote>File, Preferences,
 	  General</quote> dialog, select the Databases tab, and fill
 	in the correct path to your RATS files.</para> 

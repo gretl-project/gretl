@@ -2,7 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 "/usr/share/sgml/docbook-xml-4.2/docbookx.dtd" [
 
-<!ENTITY version "0.999">
+<!ENTITY version "1.0">
 <!ENTITY latex "LaTeX">
 <!ENTITY tex "TeX">
 <!ENTITY opto "<literal>[ -o ]</literal>">
@@ -63,7 +63,7 @@
     </legalnotice>
 
     <releaseinfo>
-      This is version 0.4 of the Gretl manual.
+      This is version 1.0 of the Gretl manual.
     </releaseinfo>
 
   </bookinfo>

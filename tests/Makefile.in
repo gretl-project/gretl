@@ -9,7 +9,7 @@ ifeq ($(CC),)
   CC = gcc
 endif
 
-LIBGRETL = ../lib/libgretl.la
+LIBGRETL = ../lib/libgretl-1.0.la
 
 ifeq ($(GMP_LIBS),)
   DEFINES = -DNO_GMP
