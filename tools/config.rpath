@@ -234,7 +234,7 @@ else
       libext=lib
       ;;
     darwin* | rhapsody*)
-      hardcode_direct=yes
+      hardcode_direct=no
       ;;
     freebsd1*)
       ld_shlibs=no
