@@ -32,7 +32,6 @@
 #ifdef GNUPLOT_PNG
 # include <gdk-pixbuf/gdk-pixbuf.h>
 # include <gdk/gdkkeysyms.h>
-# define PNG_COMMENTS 1
 #endif
 
 #ifdef PNG_COMMENTS
