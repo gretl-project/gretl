@@ -37,8 +37,10 @@ const char *x12a_series_strings[] = {
     "d11", "d12", "d13"
 };
 
+static int tramo_got_irfin;
+
 const char *tramo_series_strings[] = {
-    "safin.t", "trfin.t", "irfin.t" /* irreg.t ? */
+    "safin.t", "trfin.t", "irfin.t", "irreg.t"
 };
 
 const char *tx_descrip_formats[] = {
@@ -226,8 +228,12 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
 
     fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.32\n", fp);
 
-    /* irregular component */    
-    sprintf(title, "%s - 1", I_("irregular"));
+    /* irregular component */
+    if (opt == TRAMO_SEATS && !tramo_got_irfin) {
+	sprintf(title, "%s", I_("irregular"));
+    } else {
+	sprintf(title, "%s - 1", I_("irregular"));
+    }
     fprintf(fp, "set bars 0\n"
 	    "set origin 0.0,0.0\n"
 	    "plot '-' using 1:($2-1.0) title '%s' w impulses\n",
@@ -236,7 +242,7 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
 	double y = Z[D13 + 1][t];
 
 	fprintf(fp, "%g %g\n", Z[XAXIS][t], 
-		(opt == TRAMO_SEATS)? y / 100.0 : y);
+		(opt == TRAMO_SEATS && tramo_got_irfin)? y / 100.0 : y);
     }
     fputs("e\n", fp);
 
@@ -300,7 +306,7 @@ static void clear_tramo_files (const char *tpath, const char *varname)
     char tfname[MAXLEN];
     int i;
 
-    for (i=D11; i<TRIGRAPH; i++) {
+    for (i=D11; i<=TRIGRAPH; i++) {
 	sprintf(tfname, "%s%cgraph%cseries%c%s", tpath, SLASH, SLASH, SLASH,
 		tramo_series_strings[i]);
 	remove(tfname);
@@ -321,6 +327,7 @@ static int add_series_from_file (const char *fname, int code,
     int t;
 
     if (opt == TRAMO_SEATS) {
+	tramo_got_irfin = 1;
 	sprintf(sfname, "%s%cgraph%cseries%c%s", fname, SLASH, SLASH, SLASH,
 		tramo_series_strings[code]);
     } else {
@@ -331,8 +338,24 @@ static int add_series_from_file (const char *fname, int code,
 
     fp = fopen(sfname, "r");
     if (fp == NULL) {
-	sprintf(errmsg, _("Couldn't open %s"), sfname);
-	return 1;
+	int gotit = 0;
+
+	/* this is a bit of a pest: under some configurations, tramo/seats
+	   outputs a series "irfin", but sometimes that is not created, but
+	   we do get an "irreg".  So if we can't find the one, try looking
+	   for the other.
+	*/
+	if (opt == TRAMO_SEATS && code == D13) { /* irregular, try the alternate */
+	    sprintf(sfname, "%s%cgraph%cseries%c%s", fname, SLASH, SLASH, SLASH,
+		    tramo_series_strings[code + 1]);
+	    fp = fopen(sfname, "r");
+	    if (fp != NULL) gotit = 1;
+	    tramo_got_irfin = 0;
+	}
+	if (!gotit) {
+	    sprintf(errmsg, _("Couldn't open %s"), sfname);
+	    return 1;
+	}
     }
 
     /* formulate name of new variable to add */
@@ -706,6 +729,7 @@ int write_tx_data (char *fname, int varnum,
 	write_tramo_file(fname, *pZ, pdinfo, varnum, &request);
 	if (request.code == TRAMO_ONLY) {
 	    cancel_savevars(&request); /* FIXME later */
+	    varlist[0] = 0;
 	}
     }
 
