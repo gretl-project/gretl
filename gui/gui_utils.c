@@ -1543,8 +1543,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
 		       close, FALSE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(close), "clicked", 
-		       GTK_SIGNAL_FUNC(delete_file_viewer), 
-		       (gpointer) dialog);
+		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
     gtk_widget_show(close);
 
     /* insert and then free the text buffer */
@@ -1772,8 +1771,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
 			   close, FALSE, TRUE, 0);
 	gtk_signal_connect(GTK_OBJECT(close), "clicked", 
-			   GTK_SIGNAL_FUNC(delete_file_viewer), 
-			   (gpointer) dialog);
+			   GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
 	gtk_widget_show(close);
     }
 
@@ -2255,8 +2253,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
 		       close, FALSE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(close), "clicked", 
-		       GTK_SIGNAL_FUNC(delete_file_viewer), 
-		       (gpointer) dialog);
+		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
     gtk_widget_show(close);
 
     /* insert and then free the model buffer */
