@@ -60,7 +60,7 @@ installdirs:
 	../tools/mkinstalldirs $(share)/plugins
 
 clean:
-	rm -f *.o $(PLUGINS) core 
+	rm -f *.o $(PLUGINS) .libs core 
 
 
 

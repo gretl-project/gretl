@@ -76,9 +76,11 @@ sharedir = ./share
 
 GUI_SRC = ./gui/gretl.c ./gui/lib.c ./gui/gui_utils.c ./gui/callbacks.c \
 	./gui/dialogs.c ./gui/ssheet.c ./gui/datafiles.c ./gui/database.c \
-	./gui/fileselect.c
+	./gui/fileselect.c ./gui/gpt_control.c ./gui/session.c \
+	./gui/webget.c ./gui/calculator.c ./gui/htmlprint.c ./gui/guiprint.c \
+	./gui/exitprompt.c ./gui/boxplots.c ./gui/plotps.c
 
-PLUGIN_SRC = ./plugin/stats_tables.c
+PLUGIN_SRC = ./plugin/stats_tables.c ./plugin/panel_data.c
 
 COMMON = ./cli/common.c
 
