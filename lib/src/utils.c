@@ -441,43 +441,71 @@ void criteria (const double ess, const int nobs, const int ncoeff,
 
 /* ....................................................... */
 
-CORRMAT corrlist (int *list, const double *Z, const DATAINFO *pdinfo)
+void free_corrmat (CORRMAT *corrmat)
+{
+    free(corrmat->list);
+    free(corrmat->xpx);
+    free(corrmat);
+}
+
+/* ....................................................... */
+
+CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo)
 /* computes pairwise correlation coefficients for 
    variables in list, other than a constant, from
    obs pdinfo->t1 to pdinfo->t2.  
 */
 {
-    CORRMAT corrmat;
-    int i = 0, j, m, n, v, numcoeffs, nobs;
+    CORRMAT *corrmat;
+    int *p;
+    int i = 0, j, lo, n, nij, mm;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
 
+    corrmat = malloc(sizeof *corrmat);
+    if (corrmat == NULL) return NULL;
+
     if (list == NULL) {
-	list = malloc(pdinfo->v * sizeof *list);
-	if (list == NULL) {
-	    corrmat.errcode = E_ALLOC;
-	    return corrmat;
+	p = malloc(pdinfo->v * sizeof *p);
+	if (p == NULL) {
+	    free(corrmat);
+	    return NULL;
 	}
-	list[0] = pdinfo->v - 1;
-	for (j=1; j<pdinfo->v; j++) list[j] = j;
+	p[0] = pdinfo->v - 1;
+	for (j=1; j<pdinfo->v; j++) p[j] = j;
+    } else {
+	copylist(&p, list);
     }
-    m = list[0];  
+
     n = pdinfo->n;
-    nobs = t2 - t1 + 1;
-    numcoeffs = (m*m - m)/2;
-    corrmat.errcode = 0;
-    if ((corrmat.r = calloc(numcoeffs, sizeof(double))) == NULL) {
-        corrmat.errcode = E_ALLOC;
-	return corrmat;
+    /* drop any constants from list */
+    for (i=1; i<=p[0]; i++) {
+	if (isconst(pdinfo->t1, pdinfo->t2, &(*pZ)[n * p[i]])) {
+	    list_exclude(i, p);
+	    i--;
+	}
     }
-    corrmat.nvar = m;	
-    while (i < numcoeffs) {
-        for (v=1; v<=m; v++) {
-	    for (j=v+1; j<=m; j++) {
-		corrmat.r[i] = corr(nobs, &Z(list[v], t1), &Z(list[j], t1));
-		i++;
+    corrmat->list = p;
+
+    lo = corrmat->list[0];  
+    corrmat->n = t2 - t1 + 1;
+    mm = (lo * (lo + 1))/2;
+    if ((corrmat->xpx = malloc(mm * sizeof(double))) == NULL) {
+	free_corrmat(corrmat);
+	return NULL;
+    }
+    for (i=1; i<=lo; i++) {   
+	for (j=i; j<=lo; j++)  {
+	    nij = ijton(i, j, lo);
+	    if (i == j) {
+		corrmat->xpx[nij] = 1.0;
+		continue;
 	    }
-        }
+	    corrmat->xpx[nij] = corr(corrmat->n, 
+				     &(*pZ)[n * corrmat->list[i] + t1],
+				     &(*pZ)[n * corrmat->list[j] + t1]);
+	}
     }
+
     return corrmat;
 }
 

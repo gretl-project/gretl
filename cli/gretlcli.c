@@ -75,7 +75,7 @@ int ignore;                 /* trap for comments */
 int order;                  /* VAR lag order */
 int lines[1];               /* for gnuplot command */
 char *line;                 /* non-Readline command line */
-char *texfile;
+char texfile[MAXLEN];
 char response[3];
 char linebak[MAXLEN];      /* for storing comments */
 char *line_read;
@@ -473,7 +473,6 @@ void exec_line (char *line, print_t *prn)
     int check, nulldata_n;
     char s1[12], s2[12];
     double rho;
-    print_t texprn;
 
     /* are we ready for this? */
     if (!data_file_open && !ignore && !ready_for_command(line)) {
@@ -680,21 +679,15 @@ void exec_line (char *line, print_t *prn)
     case TABPRINT:
 	if ((err = model_test_start(0, prn, 1))) break;
 	if (command.ci == EQNPRINT)
-	    texfile = make_texfile(&paths, model_count, 1, &texprn);
+	    err = eqnprint(models[0], datainfo, &paths, 
+			   texfile, model_count, oflag);
 	else
-	    texfile = make_texfile(&paths, model_count, 0, &texprn);
-	if (texfile == NULL) {
+	    err = tabprint(models[0], datainfo, &paths, 
+			   texfile, model_count, oflag);
+	if (err) 
 	    pprintf(prn, "Couldn't open tex file for writing.\n");
-	    err = 1;
-	} else {
-	    if (command.ci == EQNPRINT) {
-		tex_print_equation(models[0], datainfo, oflag, &texprn);
-	    } else {
-		tex_print_model(models[0], datainfo, oflag, &texprn);
-	    }
-	    pprintf(prn, "Model printed to %s\n", texfile); 
-	    free(texfile);
-	}
+	else 
+	   pprintf(prn, "Model printed to %s\n", texfile);
 	break;
 
     case FCAST:

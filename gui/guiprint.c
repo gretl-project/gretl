@@ -622,17 +622,17 @@ static void printfrtf (const double zz, print_t *prn, int endrow)
 {
     if (na(zz)) {
 	if (endrow)
-	    pprintf(prn, "undefined\\\\");
+	    pprintf(prn, "\\qr undefined\\cell\\intbl \\row\n");
 	else
-	    pprintf(prn, "undefined & ");
+	    pprintf(prn, "\\qr undefined\\cell");
     } else {
 	char s[32];
 
 	printxx(zz, s, SUMMARY);
 	if (endrow) 
-	    pprintf(prn, "$%s$\\\\");
+	    pprintf(prn, "\\qr %s\\cell\\intbl \\row\n");
 	else
-	    pprintf(prn, "$%s$ & ");
+	    pprintf(prn, "\\qr %s\\cell");
     }	
 }
 
@@ -747,7 +747,7 @@ void texprint_summary (GRETLSUMMARY *summ,
 		       const DATAINFO *pdinfo,
 		       print_t *prn)
 {
-    char date1[9], date2[9];
+    char date1[9], date2[9], tmp[16];
     double xbar, std, xcv;
     int lo = summ->list[0], v, lv;
 
@@ -759,8 +759,9 @@ void texprint_summary (GRETLSUMMARY *summ,
 	    date1, date2);
     
     if (lo == 1) {
+	tex_escape(tmp, pdinfo->varname[summ->list[1]]);
 	pprintf(prn, "for the variable %s (%d valid observations)\\\\[8pt]\n\n", 
-		pdinfo->varname[summ->list[1]], summ->n);
+		tmp, summ->n);
 	pprintf(prn, "\\begin{tabular}{rrrr}\n");
     } else {
 	pprintf(prn, "(missing values denoted by $-999$ will be "
@@ -774,8 +775,10 @@ void texprint_summary (GRETLSUMMARY *summ,
     for (v=1; v<=lo; v++) {
 	lv = summ->list[v];
 	xbar = summ->coeff[v];
-	if (lo > 1)
-	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
+	if (lo > 1) {
+	    tex_escape(tmp, pdinfo->varname[lv]);
+	    pprintf(prn, "%s & ", tmp);
+	}
 	printftex(xbar, prn, 0);
 	printftex(summ->xmedian[v], prn, 0);
 	printftex(summ->xpx[v], prn, 0);
@@ -788,8 +791,10 @@ void texprint_summary (GRETLSUMMARY *summ,
     pprintf(prn, "S.D. & C.V. & SKEW & EXCSKURT\\\\\\hline\n");
     for (v=1; v<=lo; v++) {
 	lv = summ->list[v];
-	if (lo > 1)
-	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
+	if (lo > 1) {
+	    tex_escape(tmp, pdinfo->varname[lv]);
+	    pprintf(prn, "%s & ", tmp);
+	}
 	xbar = summ->coeff[v];
 	std = summ->sderr[v];
 	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
@@ -804,3 +809,119 @@ void texprint_summary (GRETLSUMMARY *summ,
     pprintf(prn, "\\end{tabular}\n\\end{center}\n");
     
 }
+
+/* ......................................................... */ 
+
+static void outxx (const double xx, print_t *prn)
+{
+    if (na(xx)) pprintf(prn, "undefined & ");
+    else pprintf(prn, "$%.3f$ & ", xx);
+}
+
+/* ......................................................... */ 
+
+void texprint_corrmat (CORRMAT *corr,
+		       const DATAINFO *pdinfo, 
+		       print_t *prn)
+{
+    register int i, j;
+    int lo, ljnf, nf, li2, p, k, index, ij2;
+    char tmp[16];
+    enum { FIELDS = 5 };
+
+    pprintf(prn, "\\begin{center}\n"
+	    "\\begin{tabular}{rrrrr}\n");
+
+    lo = corr->list[0];
+    for (i=0; i<=lo/FIELDS; i++) {
+	nf = i * FIELDS;
+	li2 = lo - nf;
+	p = (li2 > FIELDS) ? FIELDS : li2;
+	if (p == 0) break;
+
+	/* print the varname headings */
+	for (j=1; j<=p; ++j)  {
+	    ljnf = corr->list[j + nf];
+	    tex_escape(tmp, pdinfo->varname[ljnf]);
+	    pprintf(prn, "%d) %s%s", ljnf, tmp,
+		    (j == p)? " &\\\\" : " & ");
+	}
+	pprintf(prn, "\n");
+	
+	/* insert spacers */
+	for (j=1; j<=p; ++j) 
+	    pprintf(prn, "\\rule{13ex}{0pt} & ");
+	pprintf(prn, "\\\\\[-4pt]\n");    
+
+	/* print rectangular part, if any, of matrix */
+	for (j=1; j<=nf; j++) {
+	    for (k=1; k<=p; k++) {
+		index = ijton(j, nf+k, lo);
+		outxx(corr->xpx[index], prn);
+	    }
+	    pprintf(prn, "(%d\\\\\n", corr->list[j]);
+	}
+
+	/* print upper triangular part of matrix */
+	for (j=1; j<=p; ++j) {
+	    ij2 = nf + j;
+	    for (k=0; k<j-1; k++) pprintf(prn, " & ");
+	    for (k=j; k<=p; k++) {
+		index = ijton(ij2, nf+k, lo);
+		outxx(corr->xpx[index], prn);
+	    }
+	    pprintf(prn, "(%d\\\\\n", corr->list[ij2]);
+	}
+	pprintf(prn, "\\end{tabular}\n\\end{center}\n");
+    }
+}
+
+/* .................................................................. */
+
+void augment_copy_menu (windata_t *vwin)
+{
+    GtkItemFactoryEntry item;
+
+    item.path = NULL;
+
+    if (gtk_item_factory_get_item(vwin->ifac, "/Edit/Copy all"))
+	gtk_item_factory_delete_item(vwin->ifac, "/Edit/Copy all");
+
+    /* menu branch */
+    item.path = mymalloc(64);
+    sprintf(item.path, "/Edit/Copy _all");
+    item.callback = NULL;
+    item.callback_action = 0;
+    item.item_type = "<Branch>";
+    item.accelerator = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    
+    /* plain text option */
+    item.path = mymalloc(64);
+    sprintf(item.path, "/Edit/Copy all/as plain _text");
+    item.callback = text_copy;
+    item.callback_action = COPY_TEXT;
+    item.item_type = NULL;
+    item.accelerator = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);    
+
+    /* LaTeX option */
+    item.path = mymalloc(64);
+    sprintf(item.path, "/Edit/Copy all/as _LaTeX");
+    item.callback = text_copy;
+    item.callback_action = COPY_LATEX;
+    item.item_type = NULL;
+    item.accelerator = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1); 
+
+    /* RTF option */
+    item.path = mymalloc(64);
+    sprintf(item.path, "/Edit/Copy all/as _RTF");
+    item.callback = text_copy;
+    item.callback_action = COPY_RTF;
+    item.item_type = NULL;
+    item.accelerator = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);  
+} 
+
+

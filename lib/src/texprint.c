@@ -49,7 +49,7 @@ static void tex_print_float (const double x, const int tab, print_t *prn)
 
 /* ......................................................... */ 
 
-static void tex_escape (char *targ, const char *src)
+char *tex_escape (char *targ, const char *src)
 {
     while (*src) {
 	if (*src == '$' || *src == '&' || *src == '_' || 
@@ -58,6 +58,7 @@ static void tex_escape (char *targ, const char *src)
 	*targ++ = *src++;
     }
     *targ = '\0';
+    return targ;
 }
 
 /* ......................................................... */ 
@@ -96,29 +97,17 @@ static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
 /* ......................................................... */
 
-char *make_texfile (const PATHS *ppaths, const int model_count,
-		    int equation, print_t *prn)
+static int make_texfile (const PATHS *ppaths, const int model_count,
+			 int equation, char *texfile, print_t *prn)
 {
-    char texname[14], *texfile;
-
     prn->buf = NULL;
 
-    texfile = malloc(MAXLEN);
-    if (texfile == NULL) return NULL;
-
-    strcpy(texfile, ppaths->userdir);
-    if (equation)
-	sprintf(texname, "equation_%d.tex", model_count);
-    else
-	sprintf(texname, "model_%d.tex", model_count);
-    strcat(texfile, texname);
+    sprintf(texfile, "%s%s_%d.tex", ppaths->userdir,
+	    (equation)? "equation" : "model", model_count);
 
     prn->fp = fopen(texfile, "w");
-    if (prn->fp == NULL) {
-	free(texfile);
-	return NULL;
-    }
-    return texfile;
+    if (prn->fp == NULL) return 1;
+    else return 0;
 }
 
 /* ......................................................... */
@@ -295,3 +284,32 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     return 0;
 }
 
+/* ......................................................... */
+
+int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
+	      const PATHS *ppaths, char *texfile,
+	      const int model_count, int oflag)
+{
+    print_t prn;
+
+    if (make_texfile(ppaths, model_count, 0, texfile, &prn))
+	return 1;
+
+    tex_print_model(pmod, pdinfo, oflag, &prn);
+    return 0;
+}
+
+/* ......................................................... */
+
+int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
+	      const PATHS *ppaths, char *texfile,
+	      const int model_count, int oflag)
+{
+    print_t prn;
+
+    if (make_texfile(ppaths, model_count, 1, texfile, &prn))
+	return 1;
+
+    tex_print_equation(pmod, pdinfo, oflag, &prn);
+    return 0;
+}

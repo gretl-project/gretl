@@ -771,8 +771,20 @@ GRETLSUMMARY *summary (const int *list,
 
 /* ............................................................ */
 
+void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
+			const int batch, print_t *prn)
+{
+    prhdr("Correlation Coefficients", pdinfo, CORR, prn);
+    pprintf(prn, "              5%% critical value (two-tailed) = "
+	    "%.3f for n = %d\n\n", _rhocrit95(corr->n), corr->n);
+
+    _mxout(corr->xpx, corr->list, CORR, pdinfo, batch, prn);
+}
+
+/* ............................................................ */
+
 int esl_corrmx (int *list, double **pZ, const DATAINFO *pdinfo, 
-		const int batch, const int format, print_t *prn)
+		const int batch, print_t *prn)
 {
     int lo, n, i, j, ni, nj, nij;
     int mm, len = pdinfo->t2 - pdinfo->t1 + 1;
@@ -792,17 +804,17 @@ int esl_corrmx (int *list, double **pZ, const DATAINFO *pdinfo,
 
     mm = (lo * (lo + 1))/2;
 
-    if ((x = calloc (len, sizeof *x)) == NULL) return E_ALLOC;
-    if ((y = calloc (len, sizeof *y)) == NULL) return E_ALLOC;
-    if ((xpx = calloc (mm, sizeof *xpx)) == NULL) return E_ALLOC; 
+    if ((x = calloc(len, sizeof *x)) == NULL) return E_ALLOC;
+    if ((y = calloc(len, sizeof *y)) == NULL) return E_ALLOC;
+    if ((xpx = calloc(mm, sizeof *xpx)) == NULL) return E_ALLOC; 
 
     lo = list[0];
     prhdr("Correlation Coefficients", pdinfo, CORR, prn);
     pprintf(prn, "              5%% critical value (two-tailed) = "
 	    "%.3f for n = %d\n\n", _rhocrit95(len), len);
 
-    for(i=1; i<=lo; i++) {   
-	for(j=i;j<=lo; j++)  {
+    for (i=1; i<=lo; i++) {   
+	for (j=i;j<=lo; j++)  {
 	    nij = ijton(i, j, lo);
 	    if (i == j) {
 		xpx[nij] = 1.0;

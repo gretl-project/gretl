@@ -38,6 +38,10 @@ void print_model_confints (const MODEL *pmod,
 void printfreq (FREQDIST *freq, 
 		print_t *prn);
 
+void printcorr (const CORRMAT *corrmat, 
+		const DATAINFO *pdinfo, 
+		print_t *prn);
+
 void print_smpl (const DATAINFO *pdinfo, 
 		 int fulln, print_t *prn); 
 

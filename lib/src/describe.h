@@ -62,8 +62,7 @@ void free_summary (GRETLSUMMARY *summ);
 
 int esl_corrmx (int *list, 
 		double **pZ, const DATAINFO *pdinfo, 
-		const int batch, const int format,
-		print_t *prn);
+		const int batch, print_t *prn);
 
 int means_test (int *list, 
 		double *Z, const DATAINFO *pdinfo, 
@@ -72,3 +71,6 @@ int means_test (int *list,
 int vars_test (int *list, 
 	       double *Z, const DATAINFO *pdinfo, 
 	       print_t *prn);
+
+void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
+			const int batch, print_t *prn);

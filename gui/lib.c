@@ -100,10 +100,7 @@ GtkItemFactoryEntry script_out_items[] = {
 GtkItemFactoryEntry view_items[] = {
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, NULL, 0, "<Branch>" },
-    { "/Edit/Copy _all/as plain _text", NULL, text_copy, COPY_TEXT, NULL },
-    { "/Edit/Copy _all/as _LaTeX", NULL, text_copy, COPY_LATEX, NULL },
-    { "/Edit/Copy _all/as _RTF", NULL, text_copy, COPY_RTF, NULL }
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
 };
 
 const char *CANTDO = "Can't do this: no model has been estimated yet\n";
@@ -530,6 +527,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     int err = 0;
     windata_t *vwin;
     GRETLSUMMARY *summ;
+    CORRMAT *corr;
     gint hsize = 78, vsize = 380;
 
     clear(line, MAXLEN);
@@ -570,7 +568,15 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     /* execute the command */
     switch (action) {
     case CORR:
-	err = esl_corrmx(command.list, &Z, datainfo, 1, TEXT, &prn);
+	/* err = esl_corrmx(command.list, &Z, datainfo, 1, TEXT, &prn); */
+	corr = corrlist(command.list, &Z, datainfo);
+	if (corr == NULL) {
+	    errbox("Failed to generate correlation matrix");
+	    prnclose(&prn);
+	    return;
+	} 
+	/* printcorr(corr, datainfo, &prn); */
+	matrix_print_corr(corr, datainfo, 1, &prn);
 	break;
     case FREQ:
 	if (1) {
@@ -603,6 +609,9 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 
     if (vwin && (action == SUMMARY || action == VAR_SUMMARY)) {
 	vwin->data = summ;
+    }
+    if (vwin && (action == CORR)) {
+	vwin->data = corr;
     }
 }
 
@@ -2671,27 +2680,20 @@ void do_store (char *mydatfile, const int opt)
 
 void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 {
-    char *texfile;
-    char texbase[MAXLEN], tmp[MAXLEN];
+    char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
     int dot, err;
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
-    print_t texprn;
 
-    if (prn_code)  
-	texfile = make_texfile(&paths, model_count, 1, &texprn);
+    if (prn_code)
+	err = eqnprint(pmod, datainfo, &paths, texfile, model_count, 1);
     else 
-	texfile = make_texfile(&paths, model_count, 0, &texprn);
-
-    if (texfile == NULL) {
+	err = tabprint(pmod, datainfo, &paths, texfile, model_count, 1);
+	
+    if (err) {
 	errbox("Couldn't open tex file for writing");
 	return;
     }
-
-    if (prn_code)
-	tex_print_equation(pmod, datainfo, 1, &texprn);
-    else
-	tex_print_model(pmod, datainfo, 1, &texprn);
 
     dot = dotpos(texfile);
     clear(texbase, MAXLEN);
@@ -2707,34 +2709,27 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
     remove(tmp);
     sprintf(tmp, "%s.aux", texbase);
     remove(tmp);
-    free(texfile);
 }
 
 /* ........................................................... */
 
 void do_save_tex (char *fname, const int code, MODEL *pmod)
 {
-    char *texfile;
     print_t texprn;
 
-    if (code == SAVE_TEX_EQ)
-	texfile = make_texfile(&paths, model_count, 1, &texprn);
-    else
-	texfile = make_texfile(&paths, model_count, 0, &texprn);
-
-    if (texfile == NULL) {
+    texprn.buf = NULL;
+    texprn.fp = fopen(fname, "w");
+    if (texprn.fp == NULL) {
 	errbox("Couldn't open tex file for writing");
 	return;
-    }   
+    }  
 
     if (code == SAVE_TEX_EQ)
 	tex_print_equation(pmod, datainfo, 1, &texprn);
     else 
 	tex_print_model(pmod, datainfo, 1, &texprn);
 
-    free(texfile);
-    if (code != COPY_LATEX)
-	infobox("LaTeX file saved");
+    infobox("LaTeX file saved");
 }
 
 /* ........................................................... */
@@ -2920,12 +2915,11 @@ static int gui_exec_line (char *line,
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN], msg[80];
     char linecopy[MAXLEN];
-    char *texfile;
+    char texfile[MAXLEN];
     MODEL tmpmod;
     FREQDIST freq;              /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
-    print_t texprn;
     void *ptr;
 
     if (!data_file_open && !ready_for_command(line)) {
@@ -3152,21 +3146,15 @@ static int gui_exec_line (char *line,
     case TABPRINT:
 	if ((err = script_model_test(0, prn, 1))) break;
 	if (command.ci == EQNPRINT)
-	    texfile = make_texfile(&paths, model_count, 1, &texprn);
+	    err = eqnprint(models[0], datainfo, &paths, 
+			   texfile, model_count, oflag);
 	else
-	    texfile = make_texfile(&paths, model_count, 0, &texprn);
-	if (texfile == NULL) {
+	    err = tabprint(models[0], datainfo, &paths, 
+			   texfile, model_count, oflag);
+	if (err) 
 	    pprintf(prn, "Couldn't open tex file for writing.\n");
-	    err = 1;
-	} else {
-	    if (command.ci == EQNPRINT) {
-		tex_print_equation(models[0], datainfo, oflag, &texprn);
-	    } else {
-		tex_print_model(models[0], datainfo, oflag, &texprn);
-	    }
-	    pprintf(prn, "Model printed to %s\n", texfile); 
-	    free(texfile);
-	}	    
+	else 
+	    pprintf(prn, "Model printed to %s\n", texfile);
 	break;
 
     case FCAST:

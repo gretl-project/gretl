@@ -36,9 +36,6 @@ void print_omit (const COMPARE *omit, const int *omitvars,
 
 void print_aicetc (const MODEL *pmod, print_t *prn);
 
-void printcorr (int *list, const CORRMAT corrmat, 
-		const DATAINFO *pdinfo, print_t *prn);
-
 void graphyzx (const int *list, const double *zy1, const double *zy2, 
 	       const double *zx, int n, const char *yname, 
 	       const char *xname, const DATAINFO *pdinfo, 
@@ -61,8 +58,6 @@ void shiftleft (char *str, size_t move);
 double corr (const int n, const double *zx, const double *zy);
 
 double covar (const int n, const double *zx, const double *zy);
-
-int ijton (const int i, const int j, const int lo);
 
 int iszero (const int t1, const int t2, const double *x);
 
@@ -87,8 +82,6 @@ void aicetc (MODEL *pmod);
 
 void criteria (const double ess, const int nobs, const int ncoeff, 
 	       print_t *prn);
-
-CORRMAT corrlist (int *list, const double *Z, const DATAINFO *pdinfo);
 
 int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
 		 const double *Z, const int n, int *misst);

@@ -826,6 +826,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gtk_object_unref(GTK_OBJECT(mydata->popup));
 	if (mydata->action == SUMMARY || mydata->action == VAR_SUMMARY)
 	    free_summary(mydata->data); 
+	if (mydata->action == CORR)
+	    free_corrmat(mydata->data); 
 	free(mydata);
 	mydata = NULL;
     }
@@ -1172,6 +1174,12 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     gtk_item_factory_create_items(vwin->ifac, n_items, items, vwin);
     vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
     gtk_accel_group_attach(accel, GTK_OBJECT (window));
+
+    if (vwin->action == SUMMARY || vwin->action == VAR_SUMMARY
+	|| vwin->action == CORR) {
+	augment_copy_menu(vwin);
+	return;
+    }
 
     if (vwin->data) {  /* FIXME? what if "data" is not ptr to model? */
 	MODEL *pmod = (MODEL *) vwin->data;
@@ -2221,6 +2229,7 @@ void buf_to_clipboard (char *buf)
 void text_copy (gpointer data, guint how, GtkWidget *widget) 
 {
     windata_t *mydata = (windata_t *) data;
+    print_t prn;
 
     /* mydata->action code says what sort of thing is displayed in
        the window in question */
@@ -2228,7 +2237,6 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     if ((mydata->action == SUMMARY || mydata->action == VAR_SUMMARY)
 	&& (how == COPY_LATEX || how == COPY_RTF)) {
 	GRETLSUMMARY *summ = (GRETLSUMMARY *) mydata->data;
-	print_t prn;
 	
 	if (bufopen(&prn)) return;
 	if (how == COPY_LATEX) {
@@ -2246,6 +2254,21 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	return;
     }
 
+    if (mydata->action == CORR && how == COPY_LATEX) {
+	CORRMAT *corr = (CORRMAT *) mydata->data;
+
+	if (bufopen(&prn)) return;
+	texprint_corrmat(corr, datainfo, &prn);
+	buf_to_clipboard(prn.buf);
+	prnclose(&prn);
+	return;
+    }
+
+    if (mydata->action == CORR && how == COPY_RTF) {
+	dummy_call();
+	return;
+    }
+
     if (how == COPY_RTF) {
 	MODEL *pmod = (MODEL *) mydata->data;
 
@@ -2255,15 +2278,14 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
     else if (how == COPY_LATEX || how == COPY_HTML) {
 	MODEL *pmod = (MODEL *) mydata->data;
-	print_t modprn;
 
-	if (bufopen(&modprn)) return;
+	if (bufopen(&prn)) return;
 	if (how == COPY_LATEX)
-	    tex_print_model(pmod, datainfo, 0, &modprn);
+	    tex_print_model(pmod, datainfo, 0, &prn);
 	else
-	    h_printmodel(pmod, datainfo, &modprn);
-	buf_to_clipboard(modprn.buf);
-	prnclose(&modprn);
+	    h_printmodel(pmod, datainfo, &prn);
+	buf_to_clipboard(prn.buf);
+	prnclose(&prn);
 	return;
     }
 

@@ -611,43 +611,36 @@ static int make_list (int **plist, const DATAINFO *pdinfo)
 
 /* ......................................................... */ 
 
-void printcorr (int *list, const CORRMAT corrmat, 
-		const DATAINFO *pdinfo, print_t *prn)
+void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo, 
+		print_t *prn)
 {
-    int i = 1, j, k = 0, m, ncoeffs, freelist = 0;
+    int i = 1, j, k = 0, m, ncoeffs;
     char corrstring[25];
-    int *tmplist;
 
-    if (list == NULL) {
-	make_list(&tmplist, pdinfo);
-	list = tmplist;
-	freelist = 1;
-    }
-
-    m = corrmat.nvar;
-    ncoeffs = (m * m - m)/2;
+    m = corrmat->list[0];
+    ncoeffs = (m * (m + 1))/2;
 
     pprintf(prn, "\nPairwise correlation coefficients:\n\n");
     while (k < ncoeffs) {
         for (i=1; i<=m; i++) {
+	    k++;
 	    for (j=i+1; j<=m; j++) {
 		sprintf(corrstring, "corr(%s, %s)", 
-			pdinfo->varname[list[i]], 
-			pdinfo->varname[list[j]]);
-		if (na(corrmat.r[k]))
+			pdinfo->varname[corrmat->list[i]], 
+			pdinfo->varname[corrmat->list[j]]);
+		if (na(corrmat->xpx[k]))
 		    pprintf(prn, "  %-24s is undefined\n", corrstring);
-		else if (corrmat.r[k] < 0.) 
+		else if (corrmat->xpx[k] < 0.) 
 		    pprintf(prn, "  %-24s = %.3f\n", corrstring, 
-			    corrmat.r[k]);
+			    corrmat->xpx[k]);
 		else 
 		    pprintf(prn, "  %-24s =  %.3f\n", corrstring, 
-			    corrmat.r[k]);
+			    corrmat->xpx[k]);
 		k++;
 	    }
         }
     }
     pprintf(prn, "\n");
-    if (freelist) free(list);
 }
 
 /* ......................................................... */ 
@@ -952,17 +945,18 @@ void _pgbreak (const int n, int *lineno, const int batch)
 
 void _mxout (const double *rr, const int *list, const int ci,
 	     const DATAINFO *pdinfo, const int batch, print_t *prn)
-/*  Given a single dimensional array, which represents a
-    symmetric matrix, prints out an upper triangular matrix
-    of any size. However due to screen and printer column
-    limitations the program breaks up a large upper triangular
-    matrix into 5 variables at a time. For example, if there
-    were 10 variables the program would first print an upper
-    triangular matrix of the first 5 rows and columns, then
-    it would print a rectangular matrix of the first 5 rows
-    but now columns 6 - 10, and finally an upper triangular
-    matrix of rows 6 -10 and columns 6 - 10
-*/
+     /*  Given a single dimensional array, which represents a
+	 symmetric matrix, prints out an upper triangular matrix
+	 of any size. 
+
+	 Due to screen and printer column limitations the program breaks up
+	 a large upper triangular matrix into 5 variables at a time. For
+	 example, if there were 10 variables the program would first print
+	 an upper triangular matrix of the first 5 rows and columns, then
+	 it would print a rectangular matrix of the first 5 rows but now
+	 columns 6 - 10, and finally an upper triangular matrix of rows 6
+	 - 10 and columns 6 - 10
+     */
 {
     register int i, j;
     int lo, ljnf, nf, li2, p, k, index, ij2, lineno = 0;
@@ -980,7 +974,7 @@ void _mxout (const double *rr, const int *list, const int ci,
 	_pgbreak(3, &lineno, batch);
 
 	/* print the varname headings */
-	for(j=1; j<=p; ++j)  {
+	for (j=1; j<=p; ++j)  {
 	    ljnf = list[j + nf];
 	    strcpy(s, pdinfo->varname[ljnf]);
 	    space(9 - strlen(s), prn);
@@ -993,7 +987,7 @@ void _mxout (const double *rr, const int *list, const int ci,
 	for (j=1; j<=nf; j++) {
 	    _pgbreak(1, &lineno, batch);
 	    lineno++;
-	    for(k=1; k<=p; k++) {
+	    for (k=1; k<=p; k++) {
 		index = ijton(j, nf+k, lo);
 		outxx(rr[index], ci, prn);
 	    }

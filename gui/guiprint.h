@@ -36,4 +36,10 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 		       const DATAINFO *pdinfo,
 		       print_t *prn);
 
+void texprint_corrmat (CORRMAT *corr,
+		       const DATAINFO *pdinfo, 
+		       print_t *prn);
+
+void augment_copy_menu (windata_t *vwin);
+
 #endif /* GUIPRINT_H */

@@ -21,12 +21,21 @@
 
 /* functions follow */
 
-char *make_texfile (const PATHS *ppaths, const int model_count,
-		    int equation, print_t *prn);
- 
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
 			const int standalone, print_t *prn);
 
 int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
 		     const int standalone, print_t *prn);
+
+int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
+	      const PATHS *ppaths, char *texfile,
+	      const int model_count, int oflag);
+
+int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
+	      const PATHS *ppaths, char *texfile,
+	      const int model_count, int oflag);
+
+char *tex_escape (char *targ, const char *src);
+
+
 

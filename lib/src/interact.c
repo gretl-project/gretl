@@ -877,7 +877,7 @@ int simple_commands (CMD *cmd, const char *line,
 	side */
 {
     int err = 0, order = 0;
-    CORRMAT corrmat;
+    CORRMAT *corrmat;
     GRETLSUMMARY *summ;
 
     switch (cmd->ci) {
@@ -899,17 +899,16 @@ int simple_commands (CMD *cmd, const char *line,
 
     case CORR:
 	if (cmd->list[0] > 3) {
-	    err = esl_corrmx(cmd->list, pZ, datainfo, 
-			     batch, TEXT, prn);
+	    err = esl_corrmx(cmd->list, pZ, datainfo, batch, prn);
 	    if (err) 
 		pprintf(prn, "Error in generating correlation matrix\n");
 	    break;
 	}
-	corrmat = corrlist(cmd->list, *pZ, datainfo);
-	if ((err = corrmat.errcode)) 
+	corrmat = corrlist(cmd->list, pZ, datainfo);
+	if (corrmat == NULL) 
 	    pprintf(prn, "Couldn't allocate memory for correlation matrix.\n");
-	else printcorr(cmd->list, corrmat, datainfo, prn);
-	if (corrmat.r != NULL) free(corrmat.r);
+	else printcorr(corrmat, datainfo, prn);
+	free_corrmat(corrmat);
 	break;
 
     case CRITERIA:

@@ -88,6 +88,12 @@ typedef struct {
     double *xskew, *xkurt, *xmedian, *coeff, *sderr, *xpx, *xpy;
 } GRETLSUMMARY;
 
+typedef struct {
+    int n;
+    int *list;
+    double *xpx;
+} CORRMAT;
+
 /* struct to hold model results */
 typedef struct {
     int ID;                      /* ID number for model */

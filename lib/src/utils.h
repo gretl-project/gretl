@@ -24,12 +24,6 @@
 
 #include <stdio.h>
 
-typedef struct {
-    double *r;
-    int nvar;
-    int errcode;
-} CORRMAT;
-
 enum flagvals {
     OPT_O = 1,
     OPT_M,
@@ -118,5 +112,11 @@ int re_estimate (char *model_spec, MODEL *tmpmod, DATAINFO *pdinfo,
 		 double **pZ);
 
 double *copyvec (const double *src, const int n);
+
+CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo);
+
+void free_corrmat (CORRMAT *corrmat);
+
+int ijton (const int i, const int j, const int lo);
 
 #endif /* UTILS_H */
