@@ -69,7 +69,7 @@ static int obs_column (char *label)
     if (*label == '\0') return 1;    
 
     lower(label);
-    if (strcmp(label, "obs") == 0 ||
+    if (strncmp(label, "obs", 3) == 0 ||
 	strcmp(label, "date") == 0 ||
 	strcmp(label, "year") == 0)
 	return 1;

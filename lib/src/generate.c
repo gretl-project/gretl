@@ -63,8 +63,10 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 			MODEL *pmod);
 static int genr_mpow (const char *str, double *xvec, double **pZ, 
 		      DATAINFO *pdinfo);
+#ifdef HAVE_MPFR
 static int genr_mlog (const char *str, double *xvec, double **pZ, 
 		      DATAINFO *pdinfo);
+#endif
 static void genr_msg (GENERATE *pgenr, int nv);
 static int ismatch (int lv, const int *list);
 static void varerror (const char *ss);
@@ -104,7 +106,9 @@ enum transformations {
     T_ZEROMISS,
     T_PVALUE,
     T_MPOW,
+#ifdef HAVE_MPFR
     T_MLOG,
+#endif
     T_SST
 };
 
@@ -163,7 +167,9 @@ static char *math[] = {
     "zeromiss",
     "pvalue",
     "mpow",
+#ifdef HAVE_MPFR
     "mlog",
+#endif
     "sst",
     NULL
 };
@@ -920,6 +926,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 			}
 			break;
 		    }
+#ifdef HAVE_MPFR
 		    if (nt == T_MLOG) {
 			genr.scalar = 0;
 			err = genr_mlog(sexpr, genr.xvec, *pZ, pdinfo);
@@ -929,6 +936,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 			}
 			break;
 		    }
+#endif
 		    if (nt == T_COEFF || nt == T_STDERR) {
 			if (pmod == NULL || pmod->list == NULL) {
 			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
@@ -2625,7 +2633,7 @@ static int genr_mpow (const char *str, double *xvec, double **Z,
     return err;
 }
 
-/* ...................................................... */
+#ifdef HAVE_MPFR
 
 static int genr_mlog (const char *str, double *xvec, double **Z, 
 		      DATAINFO *pdinfo)
@@ -2663,6 +2671,8 @@ static int genr_mlog (const char *str, double *xvec, double **Z,
     
     return err;
 }
+
+#endif /* HAVE_MPFR */
 
 /* ...................................................... */
 
