@@ -20,46 +20,6 @@
 #ifndef GRETLTYPES_H
 #define GRETLTYPES_H
 
-enum extra_cmds {
-    RENAME = NC,
-    RELABEL,
-    VSETMISS,
-    GSETMISS,
-    SMPLDUM,
-    SMPLBOOL,
-    MARKERS,
-    STORE_MODEL,
-    VAR_SUMMARY,
-    GENR_NORMAL,
-    GENR_UNIFORM,
-    ONLINE,
-    EXPORT,
-    MEANTEST2,
-    MODEL_GENR,
-    GR_PLOT,
-    GR_XY,
-    GR_IMP,
-    GR_DUMMY,
-    GR_BOX,
-    GR_NBOX,
-    COMPACT,
-    CONFINT,
-    COVAR,
-    STAT_TABLE,
-    H_TEST,
-    VIEW_MODEL,
-    VIEW_LOG,
-    VIEW_DATA,
-    VIEW_SCRIPT,
-    SCRIPT_OUT,
-    CONSOLE,
-    EDIT_HEADER,
-    EDIT_SCRIPT,
-    EDIT_NOTES,
-    CLI_HELP,
-    CMD_LAST
-};
-
 typedef struct {
     GtkWidget *dialog;
     GtkWidget *edit;

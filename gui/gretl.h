@@ -87,8 +87,48 @@ extern char viewdvi[MAXSTR];
 extern windata_t *mdata;
 extern GdkFont *fixed_font;
 
+enum extra_cmds {
+    RENAME = NC,
+    RELABEL,
+    VSETMISS,
+    GSETMISS,
+    SMPLDUM,
+    SMPLBOOL,
+    MARKERS,
+    STORE_MODEL,
+    VAR_SUMMARY,
+    GENR_NORMAL,
+    GENR_UNIFORM,
+    ONLINE,
+    EXPORT,
+    MEANTEST2,
+    MODEL_GENR,
+    GR_PLOT,
+    GR_XY,
+    GR_IMP,
+    GR_DUMMY,
+    GR_BOX,
+    GR_NBOX,
+    COMPACT,
+    CONFINT,
+    COVAR,
+    STAT_TABLE,
+    H_TEST,
+    VIEW_MODEL,
+    VIEW_LOG,
+    VIEW_DATA,
+    VIEW_SCRIPT,
+    SCRIPT_OUT,
+    CONSOLE,
+    EDIT_HEADER,
+    EDIT_SCRIPT,
+    EDIT_NOTES,
+    CLI_HELP,
+    CMD_MAX
+};
+
 enum file_ops {
-    OPEN_DATA = 1,
+    OPEN_DATA = CMD_MAX + 1, /* don't collide with extra_cmds */
     OPEN_DB,
     OPEN_RATSDB,
     OPEN_SCRIPT,
@@ -129,17 +169,8 @@ enum file_ops {
     OP_MAX
 };
 
-enum stat_codes {
-    ESS = 1,
-    R2,
-    TR2,
-    DF,
-    SIGMA,
-    LNL
-};
-
 enum browser_codes {
-    RAMU_DATA = OP_MAX + 1,
+    RAMU_DATA = OP_MAX + 1, /* don't collide with file_ops enum */
     RAMU_PS,
     GREENE_DATA,
     GREENE_PS,
@@ -152,6 +183,15 @@ enum browser_codes {
     RATS_SERIES,
     REMOTE_SERIES,
     MAINWIN
+};
+
+enum stat_codes {
+    ESS = 1,
+    R2,
+    TR2,
+    DF,
+    SIGMA,
+    LNL
 };
 
 enum exec_codes {
@@ -178,7 +218,7 @@ enum clipstuff {
 };
 
 enum copy_variants {
-    COPY_SELECTION,
+    COPY_SELECTION = 1,
     COPY_TEXT,
     COPY_HTML,
     COPY_LATEX,

@@ -1686,7 +1686,12 @@ int gnuplot_show_png (char *plotfile)
     /* parse this file for x range */
     plot_has_xrange = get_plot_ranges(plot);
 
+    gtk_widget_push_visual(gdk_rgb_get_visual());
+    gtk_widget_push_colormap(gdk_rgb_get_cmap());
     plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_widget_pop_visual();
+    gtk_widget_pop_colormap();
+
     gtk_widget_ref(plot->shell);
     gtk_window_set_title(GTK_WINDOW(plot->shell), "gretl: gnuplot graph"); 
 

@@ -3344,6 +3344,8 @@ void prn_to_clipboard (PRN *prn)
 
 /* .................................................................. */
 
+#define SPECIAL_COPY(h) (h == COPY_LATEX || h == COPY_RTF)
+
 void text_copy (gpointer data, guint how, GtkWidget *widget) 
 {
     windata_t *vwin = (windata_t *) data;
@@ -3351,14 +3353,14 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
     /* descriptive statistics */
     if ((vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
-	&& (how == COPY_LATEX || how == COPY_RTF)) {
+	&& SPECIAL_COPY(how)) {
 	GRETLSUMMARY *summ = (GRETLSUMMARY *) vwin->data;
 	
 	if (bufopen(&prn)) return;
 	if (how == COPY_LATEX) {
 	    texprint_summary(summ, datainfo, prn);
 	    prn_to_clipboard(prn);
-	} else {
+	} else { /* RTF */
 	    rtfprint_summary(summ, datainfo, prn);
 #ifdef G_OS_WIN32
 	    win_copy_rtf(prn);
@@ -3371,15 +3373,14 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     }
 
     /* correlation matrix */
-    if (vwin->role == CORR 
-	&& (how == COPY_LATEX || how == COPY_RTF)) {
+    if (vwin->role == CORR && SPECIAL_COPY(how)) {
 	CORRMAT *corr = (CORRMAT *) vwin->data;
 
 	if (bufopen(&prn)) return;
-	if (how == COPY_LATEX) {
+	if (how == COPY_LATEX) { 
 	    texprint_corrmat(corr, datainfo, prn);
 	    prn_to_clipboard(prn);
-	} else {
+	} else { /* RTF */
 	    rtfprint_corrmat(corr, datainfo, prn);
 #ifdef G_OS_WIN32
 	    win_copy_rtf(prn);
@@ -3392,38 +3393,36 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     }
 
     /* or it's a model window we're copying from? */
-    if (how == COPY_RTF) {
+    if (vwin->role == VIEW_MODEL &&
+	(how == COPY_RTF || how == COPY_LATEX ||
+	 how == COPY_LATEX_EQUATION || how == COPY_HTML)) {
 	MODEL *pmod = (MODEL *) vwin->data;
 
 	if (pmod->errcode) 
 	    errbox("Couldn't format model");
-	else
-	    model_to_rtf(pmod);	
 	return;
-    }
-    else if (how == COPY_LATEX || how == COPY_HTML) {
-	MODEL *pmod = (MODEL *) vwin->data;
+
+	if (how == COPY_RTF) {
+	    model_to_rtf(pmod);
+	    return;
+	}
 
 	if (bufopen(&prn)) return;
-	if (how == COPY_LATEX)
+
+	if (how == COPY_LATEX) 
 	    tex_print_model(pmod, datainfo, 0, prn);
-	else
+	else if (how == COPY_LATEX_EQUATION)
+	    tex_print_equation(pmod, datainfo, 0, prn);
+	else /* HTML */
 	    h_printmodel(pmod, datainfo, prn);
+
 	prn_to_clipboard(prn);
 	gretl_print_destroy(prn);
 	return;
-    }
-    else if (how == COPY_LATEX_EQUATION) {
-	MODEL *pmod = (MODEL *) vwin->data;
 
-	if (bufopen(&prn)) return;
-	tex_print_equation(pmod, datainfo, 0, prn);
-	prn_to_clipboard(prn);
-	gretl_print_destroy(prn);
-	return;
     }
 
-    /* otherwise just copying plain text from plain text window */
+    /* otherwise just copying plain text from window */
     else if (how == COPY_TEXT) {
 	gtk_editable_select_region(GTK_EDITABLE(vwin->w), 0, -1);
 	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
