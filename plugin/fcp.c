@@ -4,233 +4,238 @@
 */
 
 #include "libgretl.h"
-#include "f2c.h"
-#include "fcp.P"
+#include "fcp.h"
 
-/* Table of constant values */
+/* private functions */
 
-static integer c__9 = 9;
-static integer c__1 = 1;
-static integer c__5 = 5;
-static integer c__13 = 13;
-static real c_b164 = 2.f;
+static int gj_invert(double *g, int ig, int n, 
+		     double *aux, int *ier);
+
+static int vsmode_(double *y, double *x, int nexo, 
+		   int iread, int i, double *yl,
+		   double *u, double *a, double *z__,
+		   int ncoeff);
+
+static int ols_(int t1, int t2, double *yobs,
+		int iread, double *xobs, int nexo, double *umc,
+		double *yy, double *c__, int ncoeff, double *oldc,
+		double *vc, double *ystoc, double *amax, double *aux,
+		double *b, int *ncoefb, double *g);
+
+static  double valunc_(double *c__, int ncoeff, double *res2, 
+		       double *res, double *ydet, double *yobs, 
+		       double *ystoc, double *xobs, int iread, 
+		       int nexo, double *umc, int t1, 
+		       int t2, double *param, 
+		       double *b, int *ncoefb, double *alfa0, 
+		       double *alfa, double *beta, int nalfa, 
+		       int nbeta, double *ht);
+
+static int sig_(int t1, int t2, double *yobs,
+		int iread, double *umc, double *xobs, int nexo,
+		double *yy, double *c__, int ncoeff, double *res,
+		double *sigma, double *ystoc, double *b, int *ncoefb,
+		double *alfa0, double *alfa, double *beta, int nalfa,
+		int nbeta);
+
+static int check_(double *param, int ncoeff, int nparam);
+
+static int garcim_(int t1, int t2, double *yobs,
+		   int iread, double *xobs, int nexo, double *umc,
+		   double *ydet, double *c__, int ncoeff, double *res2,
+		   double *res, double *ystoc, double *toler, 
+		   int *ivolta, double *vc5, int *ih, double *g,
+		   double *pp, double *aux3, double *param, int nparam,
+		   double *b, int *ncoefb, double *alfa0, double *alfa,
+		   double *beta, int nalfa, int nbeta, double *ht,
+		   double *dhtdp, double *zt);
+
+static int garcfh_(int t1, int t2, double *yobs,
+		   int iread, double *xobs, int nexo, double *umc,
+		   double *ydet, double *c__, int ncoeff, double *res2,
+		   double *res, double *ystoc, double *toler, int *izo,
+		   int *ivolta, double *vc5, int *ih, double *g,
+		   double *pp, double *aux3, double *param, int nparam,
+		   double *b, int *ncoefb, double *alfa0, double *alfa,
+		   double *beta, int nalfa, int nbeta, double *ht,
+		   double *dhtdp, double *zt);
+
+static int vsrstr_(double *c__, int ncoeff, double *b, int *ncoefb);
+
+#define log10e 0.43429448190325182765
+
+static double d_lg10 (double x)
+{
+    return log10e * log(x);
+}
 
 /* Gabriele FIORENTINI, Giorgio CALZOLARI, Lorenzo PANATTONI */
 /* Journal of APPLIED ECONOMETRICS, 1996 */
 
-/* MIXED GRADIENT ALGORITHM */
+/* mixed gradient algorithm */
 
-/* GARCH(P,Q) ESTIMATES OF A LINEAR EQUATION */
+/* garch(p,q) estimates of a linear equation */
 /* SEE BOLLERSLEV, JOE 31(1986),307-327. */
 
-/* RIMEMBER TO PUT ENOUGH LAGGED OBSERVATIONS IN THE DATA FILE */
-/* (AT LEAST =MAX(P,Q)) TO HAVE RESIDUALS AT TIME 0, -1, ETC. */
+/* rimember to put enough lagged observations in the data file */
+/* (at least =max(p,q)) to have residuals at time 0, -1, etc. */
+
 /* *********************************************************************** */
-/* *********************************************************************** */
-/* MAXIMUM DIMENSION (IF NOT ENOUGH, ENLARGE USING 'CHANGE GLOBAL', */
+/* maximum dimension (if not enough, enlarge using 'change global', */
 /* OR REDUCE TO SAVE STORAGE REQUIREMENTS) */
 /* NUMBER OF EXOGENOUS VARIABLES                                 =  0005 */
 /* SAMPLE (OR SIMULATION) PERIOD INCLUDING LAGGED INITIAL OBSERV.=003009 */
 /* NUMBER OF REGRESSION COEFFICIENTS                             =  0007 */
 /* NUMBER OF PARAMETERS (COEFF.+ALFAS+BETAS)                     =  0013 */
 /* *********************************************************************** */
-/* VC = MATR DI COMODO CHE SERVE AL CALCOLO --- INOLTRE SI USA COME */
-/*      INVERSA DELLA MAT. DI COV. DEI SOLI COEFF. PER LA MAT. DI INF. */
-/* VC5= MATRICE DI INFORMAZIONE. */
-/* VC8= INVERSA DELLA MAT. DI COV. DEI SOLI COEFF. PER L'FULHESSIANO */
-/* VC9= FULHESSIAN OF UNCONCENTRATED LOG-LIK. (NPARAM,NPARAM). */
-/* VC10=MATRIX AS IN WHITE (1982,P.....), COMPUTED USING THE COMPLETE */
-/*      INVERSE OF VC9 AND THE FULL VC6 MATRIX. */
-/*      CONSISTENT AND ROBUST. */
-/* DHTDP SONO LE DERIVATE DI HT RISPETTO A TUTTI I PARAMETRI */
 
-int vsanal_(integer *ninit, integer *nfinsm, doublereal *
-	    yobs, integer *iread, doublereal *xobs, integer *nexo, 
-	    doublereal *umc, doublereal *ydet, doublereal *yy, 
-	    doublereal *coeff, integer *ncoeff, doublereal *d__, doublereal *oldc,
-	    doublereal *vc, doublereal *res2, doublereal *res, doublereal *sigma,
-	    doublereal *a, doublereal *ystoc, doublereal *amax, doublereal *amin,
-	    doublereal *b, integer *ncoefb, integer *iters, integer *info,
+/* VC = matr di comodo che serve al calcolo --- inoltre si usa come */
+/*      inversa della mat. di cov. dei soli coeff. per la mat. di inf. */
+/* VC5= matrice di informazione. */
+/* VC8= inversa della mat. di cov. dei soli coeff. per l'fulhessiano */
+/* VC9= fulhessian of unconcentrated log-lik. (nparam,nparam). */
+/* VC10=matrix as in white (1982,p.....), computed using the complete */
+/*      inverse of VC9 and the full VC6 matrix. */
+/*      consistent and robust. */
+/* dhtdp sono le derivate di ht rispetto a tutti i parametri */
+
+int vsanal_(int t1, int t2, double *yobs,
+	    int iread, double *xobs, int nexo, 
+	    double *umc, double *ydet, double *yy, 
+	    double *coeff, int ncoeff, double *d__, double *oldc,
+	    double *vc, double *res2, double *res, double *sigma,
+	    double *ystoc, double *amax, 
+	    double *b, int *ncoefb, int *iters, int *info,
 	    PRN *prn)
 {
-    /* Format strings */
-#ifdef PRINT_LL
-    static char fmt_8901[] = "(4g19.12)";
-#endif
-
     /* System generated locals */
-    integer yobs_dim1, yoff, xobs_dim1, xoff, ydet_dim1, 
-	    ydet_offset, d_dim1, d_offset, vc_dim1, vc_offset, ystoc_dim1, 
-	    ystoc_offset, res2_dim1, res2_offset, amax_dim1, amax_offset, 
-	    amin_dim1, amin_offset, sigma_dim1, sigma_offset, a_dim1, 
-	    a_offset, res_dim1, res_offset, i__1, i__2;
-    doublereal d__1;
-
-    /* Builtin functions */
-    double d_lg10(doublereal *);
-    integer s_wsle(cilist *), do_lio(integer *, integer *, char *, ftnlen), 
-	e_wsle(void), s_wsfe(cilist *), do_fio(integer *, char *, ftnlen),
-	e_wsfe(void);
-    double sqrt(doublereal);
+    int xobs_dim1, xoff, 
+	    d_dim1, d_offset, vc_dim1, vc_offset, 
+	    i1, i2;
+    double d__1;
 
     /* Local variables */
-    static doublereal c__[7], g[21063]	/* was [7][3009] */;
-    static integer i__, j, ih, ik;
-    static doublereal fu, ht[3009], pp[141], zt[6], vc5[169]	/* was [13][
+    static double c__[7], g[21063]	/* was [7][3009] */;
+    static int i, j, ih, ik;
+    static double fu, ht[3009], pp[141], zt[6], vc5[169]	/* was [13][
 	    13] */, aux[7];
-    static integer izo, nzo;
-    static doublereal aux3[13], svc5[13];
-    static integer nzo1;
-    static doublereal alfa[4], beta[4];
-    static integer maxc;
-    static doublereal sdue, alfa0, suno, alin0;
-    static integer nalfa;
-    static doublereal alfin[4];
-    static integer nbeta;
-    static doublereal param[13], betin[4], dhtdp[39117]	/* was [13][3009] */, 
+    static int izo, nzo;
+    static double aux3[13], svc5[13];
+    static int nzo1;
+    static double alfa[4], beta[4];
+    static int maxc;
+    static double sdue, alfa0, suno, alin0;
+    static int nalfa;
+    static double alfin[4];
+    static int nbeta;
+    static double param[13], betin[4], dhtdp[39117]	/* was [13][3009] */, 
 	    sderr[13], pappo, toler1, toler2, toler3;
-    static integer ivolt2;
-    static doublereal flikel[50];
-    static integer nparam;
-    static doublereal reldis, rellog;
-    static doublereal parpre[13], partrc[650]	/* was [13][50] */;
-    static integer ivolta;
-    static doublereal tollog, sumgra, totdis;
-
-    /* Fortran I/O blocks */
-    static cilist io___41 = { 0, 6, 0, 0, 0 };
-#ifdef PRINT_LL
-    static cilist io___42 = { 0, 6, 0, fmt_8901, 0 };
-#endif
-
+    static int ivolt2;
+    static double flikel[50];
+    static int nparam;
+    static double reldis, rellog;
+    static double parpre[13], partrc[650]	/* was [13][50] */;
+    static int ivolta;
+    static double tollog, sumgra, totdis;
 
 /*     The first row of AMAX contains the initial values */
 /*     of the parameters on entry */
 
     /* Parameter adjustments */
-    a_dim1 = 1;
-    a_offset = 1 + a_dim1;
-    a -= a_offset;
-    --oldc;
-    --yy;
-    amin_dim1 = 1;
-    amin_offset = 1 + amin_dim1;
-    amin -= amin_offset;
-    amax_dim1 = 1;
-    amax_offset = 1 + amax_dim1;
-    amax -= amax_offset;
-    ystoc_dim1 = 1;
-    ystoc_offset = 1 + ystoc_dim1;
-    ystoc -= ystoc_offset;
-    res2_dim1 = 1;
-    res2_offset = 1 + res2_dim1;
-    res2 -= res2_offset;
-    ydet_dim1 = 1;
-    ydet_offset = 1 + ydet_dim1;
-    ydet -= ydet_offset;
-    yobs_dim1 = 1;
-    yoff = 1 + yobs_dim1;
-    yobs -= yoff;
-    xobs_dim1 = *nexo;
+    xobs_dim1 = nexo;
     xoff = 1 + xobs_dim1;
     xobs -= xoff;
-    sigma_dim1 = 1;
-    sigma_offset = 1 + sigma_dim1;
-    sigma -= sigma_offset;
-    res_dim1 = 1;
-    res_offset = 1 + res_dim1;
-    res -= res_offset;
-    --umc;
-    vc_dim1 = *ncoeff;
+    vc_dim1 = ncoeff;
     vc_offset = 1 + vc_dim1;
     vc -= vc_offset;
     d_dim1 = 1;
     d_offset = 1 + d_dim1;
     d__ -= d_offset;
-    --coeff;
-    --b;
 
     /* Function Body */
-/* L102: */
-    alin0 = amax[amax_dim1 + 1];
-    nalfa = (integer) amax[(amax_dim1 << 1) + 1];
-    nbeta = (integer) amax[amax_dim1 * 3 + 1];
-    i__1 = nalfa;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	alfin[i__ - 1] = amax[(i__ + 3) * amax_dim1 + 1];
-/* L11: */
+    alin0 = amax[0];
+    nalfa = (int) amax[1];
+    nbeta = (int) amax[2];
+    fprintf(stderr, "got nalfa=%d, nbeta=%d\n", nalfa, nbeta);
+
+    for (i = 0; i < nalfa; ++i) {
+	alfin[i] = amax[3 + i];
+	fprintf(stderr, "read initial alpha[%d] = %g\n", i, alfin[i]);
     }
-    i__1 = nbeta;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	betin[i__ - 1] = amax[(i__ + 3 + nalfa) * amax_dim1 + 1];
-/* L12: */
+
+    i1 = nbeta;
+    for (i = 0; i < nbeta; ++i) {
+	betin[i] = amax[3 + nalfa + i];
+	fprintf(stderr, "read initial beta[%d] = %g\n", i, betin[i]);
     }
-/* CLEAR the error code */
+
+    /* CLEAR the error code */
     *info = 0;
 
-/* NUMBER OF PARAMETERS OF UNCONCENTRATED LIKELIHOOD */
-    nparam = *ncoeff + 1 + nalfa + nbeta;
-    if (*nexo <= 5 && *iread <= 3009 && *ncoeff <= 7 && nparam <= 13 
-        && (nparam * nparam + nparam) / 2 <= 141 && 1 <= 3) {
+    /* number of parameters of unconcentrated likelihood */
+    nparam = ncoeff + 1 + nalfa + nbeta;
+    if (nexo <= 5 && iread <= 3009 && ncoeff <= 7 && nparam <= 13 
+        && (nparam * nparam + nparam) / 2 <= 141) {
 	goto L2;
     }
     *info = 1;
     goto L999;
+
 L2:
-/* EXPERIMENTAL OPTIMAL CHOICE FOR TOLER1 ON MODEL VSSER2 */
+    /* experimental optimal choice for toler1 on model vsser2 */
     toler1 = .05;
     toler2 = 1e-8;
     toler3 = 1e-9;
-    tollog = d_lg10(&toler2);
-    i__1 = *ncoeff;
-    for (ik = 1; ik <= i__1; ++ik) {
-	c__[ik - 1] = coeff[ik];
-/* L1555: */
+    tollog = d_lg10(toler2);
+
+    for (ik = 0; ik < ncoeff; ++ik) {
+	c__[ik] = coeff[ik];
     }
-    i__1 = nparam;
-    for (ik = 1; ik <= i__1; ++ik) {
-	svc5[ik - 1] = 0.f;
-/* L1603: */
+
+    for (ik = 1; ik <= nparam; ++ik) {
+	svc5[ik - 1] = 0.0;
     }
-/*     SUL 486 LA DUE RIGA SEGUENTI DANNO ERRORE IN COMPILAZIONE. TOLTE. */
-    for (i__ = 1; i__ <= 50; ++i__) {
-	flikel[i__ - 1] = 0.f;
-/* L2731: */
+
+    /* sul 486 la due riga seguenti danno errore in compilazione. tolte. */
+    for (i = 1; i <= 50; ++i) {
+	flikel[i - 1] = 0.0;
     }
-    i__1 = *ncoeff;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L270: */
-	param[i__ - 1] = coeff[i__];
+
+    for (i = 0; i < ncoeff; ++i) {
+	param[i] = coeff[i];
     }
-    param[*ncoeff] = alin0;
+
+    param[ncoeff] = alin0;
     if (nalfa <= 0) {
 	goto L260;
     }
-    i__1 = nalfa;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L261: */
-	param[*ncoeff + 1 + i__ - 1] = alfin[i__ - 1];
+
+    for (i = 1; i <= nalfa; ++i) {
+	param[ncoeff + 1 + i - 1] = alfin[i - 1];
     }
+
 L260:
     if (nbeta <= 0) {
 	goto L262;
     }
-    i__1 = nbeta;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L263: */
-	param[*ncoeff + 1 + nalfa + i__ - 1] = betin[i__ - 1];
+
+    for (i = 1; i <= nbeta; ++i) {
+	param[ncoeff + 1 + nalfa + i - 1] = betin[i - 1];
     }
+
 L262:
-/* NUMBER OF ITERATIONS USING FULHESSIAN OR AMEMIYA'S MATRIX */
-/* THE VARIABLE APPEARING ON */
-/* THE LEFT HAND SIDE MUST BE Y(1) */
-    maxc = *ncoeff;
-    vsrstr_(c__, ncoeff, &b[1], ncoefb);
-/* DIMENSIONS CONTROL */
+/* number of iterations using fulhessian or amemiya's matrix 
+    the variable appearing on the left hand side must be Y(1) 
+*/
+    maxc = ncoeff;
+    vsrstr_(c__, ncoeff, b, ncoefb);
+
+/* dimensions control */
     if (maxc > 7) {
 	goto L99;
     }
-/* IF EVERYTHING IS OK: */
+
+/* if everything is ok: */
     goto L1;
 L99:
     *info = 1;
@@ -239,38 +244,33 @@ L1:
     ivolta = 0;
     ivolt2 = 0;
 
-/* TO GENERATE HISTORICAL VALUES */
+/* to generate historical values */
 
-/* THIS IS ONLY TO CALCULATE MATRIX OF REGRESSORS (G) */
-    ols_(ninit, nfinsm, &yobs[yoff], iread, &xobs[xoff], 
-	 nexo, &umc[1], &yy[1], c__, ncoeff, &oldc[1], 
-	 &vc[vc_offset], &ystoc[ystoc_offset], &amax[amax_offset], aux, 
-	 &b[1], ncoefb, g);
-/* L1650: */
-    i__1 = 1;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	umc[i__] = 0.f;
-/* L2063: */
-    }
+/* this is only to calculate matrix of regressors (g) */
+    ols_(t1, t2, yobs, iread, &xobs[xoff], 
+	 nexo, umc, yy, c__, ncoeff, oldc, 
+	 &vc[vc_offset], ystoc, amax, aux, 
+	 b, ncoefb, g);
 
-/* ********************************************************************** */
-/* ITERATIVE ESTIMATION */
-/* *********************************************************************** */
+    *umc = 0.0;
+
+/* iterative estimation */
 
     ivolta = 0;
     nzo = 0;
     for (izo = 1; izo <= 100; ++izo) {
 	ih = 0;
+
 /*      IF(IZO.GT.50)IH=1 */
 /* IF NOT ENOUGH, FOR ITERATIONS WITH INFORMATION'S MATRIX, */
 /* REPLACE WITH DO 8765 IZO=1,300 */
 /* COMPUTE RESIDUALS FOR COVARIANCE MATRIX */
+
 /* *******I PARAMETRI SONO PASSATI DENTRO 'PARAM' *********************** */
-	fu = valunc_(c__, ncoeff, &res2[res2_offset], &res[res_offset], &ydet[
-		ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &xobs[
-		xoff], iread, nexo, &umc[1], ninit, 
-		nfinsm, param, &nparam, &b[1], ncoefb, &alfa0, alfa, beta, &
-		nalfa, &nbeta, ht);
+	fu = valunc_(c__, ncoeff, res2, res, ydet,
+		yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+		t2, param, b, ncoefb, &alfa0, alfa, beta,
+		nalfa, nbeta, ht);
 /*      WRITE(6,7500)FU */
 /* 7500  FORMAT(' LOG-LIKELIHOOD=',G15.6,/) */
 	++nzo;
@@ -278,32 +278,30 @@ L1:
 	    nzo = 50;
 	}
 	flikel[nzo - 1] = fu;
-/* STORE PREVIOUS COEFFICIENTS */
-	i__1 = nparam;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    parpre[i__ - 1] = param[i__ - 1];
-/* L300: */
-	    partrc[i__ + nzo * 13 - 14] = param[i__ - 1];
+/* store previous coefficients */
+	i1 = nparam;
+	for (i = 1; i <= i1; ++i) {
+	    parpre[i - 1] = param[i - 1];
+	    partrc[i + nzo * 13 - 14] = param[i - 1];
 	}
-/* *******I PARAMETRI SONO PASSATI DENTRO 'PARAM' *********************** */
-	garcim_(ninit, nfinsm, &yobs[yoff], iread, &xobs[
-		xoff], nexo, &umc[1], &ydet[ydet_offset], c__, 
-		ncoeff, &res2[res2_offset], &res[res_offset], &ystoc[
-		ystoc_offset], &toler1, &nzo, &ivolta, vc5, &ih, g, pp, aux3, 
-		param, &nparam, &b[1], ncoefb, &alfa0, alfa, beta, &nalfa, &
+/* i parametri sono passati dentro 'param' */
+	garcim_(t1, t2, yobs, iread, &xobs[
+		xoff], nexo, umc, ydet, c__, 
+		ncoeff, res2, res, ystoc,
+		&toler1, &ivolta, vc5, &ih, g, pp, aux3, 
+		param, nparam, b, ncoefb, &alfa0, alfa, beta, nalfa,
 		nbeta, ht, dhtdp, zt);
-/* ********************************************************************* */
-/* IF RELATIVE EUCLIDEAN DISTANCE IS USED AS CONVERG. */
-	suno = 0.f;
-	sdue = 0.f;
-	i__1 = nparam;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    suno += parpre[i__ - 1] * parpre[i__ - 1];
-	    pappo = param[i__ - 1] - parpre[i__ - 1];
+
+/* if relative euclidean distance is used as converg. */
+	suno = 0.0;
+	sdue = 0.0;
+	i1 = nparam;
+	for (i = 1; i <= i1; ++i) {
+	    suno += parpre[i - 1] * parpre[i - 1];
+	    pappo = param[i - 1] - parpre[i - 1];
 	    sdue += pappo * pappo;
-/* L3: */
 	}
-	if (suno == 0.f) {
+	if (suno == 0.0) {
 	    suno = 1e-10;
 	}
 	if (sdue / suno > toler1 * toler1) {
@@ -315,21 +313,23 @@ L8765:
 	;
     }
 L8766:
+
 /* L222: */
-/* FULHESSIAN AND SEARCH */
+/* fulhessian and search */
     ivolt2 = 0;
     for (izo = 1; izo <= 100; ++izo) {
 	ih = 0;
 /*      IF(IZO.GT.50)IH=1 */
-/* IF NOT ENOUGH, FOR ITERATIONS WITH FULL HESSIAN MATRIX, */
+/* if not enough, for iterations with full hessian matrix, */
 /* REPLACE WITH DO 6765 IZO=1,300 */
-/* COMPUTE RESIDUALS FOR COVARIANCE MATRIX */
+/* compute residuals for covariance matrix */
+
 /* *******I PARAMETRI SONO PASSATI DENTRO 'PARAM' *********************** */
-	fu = valunc_(c__, ncoeff, &res2[res2_offset], &res[res_offset], &ydet[
-		ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &xobs[
-		xoff], iread, nexo, &umc[1], ninit, 
-		nfinsm, param, &nparam, &b[1], ncoefb, &alfa0, alfa, beta, &
-		nalfa, &nbeta, ht);
+
+	fu = valunc_(c__, ncoeff, res2, res, ydet,
+		yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+		t2, param, b, ncoefb, &alfa0, alfa, beta, 
+		nalfa, nbeta, ht);
 /*      WRITE(6,7500)FU */
 	++nzo;
 	if (nzo > 50) {
@@ -337,101 +337,88 @@ L8766:
 	}
 	flikel[nzo - 1] = fu;
 /* STORE PREVIOUS COEFFICIENTS */
-	i__1 = nparam;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    parpre[i__ - 1] = param[i__ - 1];
+	i1 = nparam;
+	for (i = 1; i <= i1; ++i) {
+	    parpre[i - 1] = param[i - 1];
 /* L301: */
-	    partrc[i__ + nzo * 13 - 14] = param[i__ - 1];
+	    partrc[i + nzo * 13 - 14] = param[i - 1];
 	}
 /* *******I PARAMETRI SONO PASSATI DENTRO 'PARAM' *********************** */
-	garcfh_(ninit, nfinsm, &yobs[yoff], iread, &xobs[
-		xoff], nexo, &umc[1], &ydet[ydet_offset], c__, 
-		ncoeff, &res2[res2_offset], &res[res_offset], &ystoc[
-		ystoc_offset], &toler2, &nzo, &ivolt2, vc5, &ih, g, pp, aux3, 
-		param, &nparam, &b[1], ncoefb, &alfa0, alfa, beta, &nalfa, &
+	garcfh_(t1, t2, yobs, iread, &xobs[
+		xoff], nexo, umc, ydet, c__, 
+		ncoeff, res2, res, ystoc,
+		&toler2, &nzo, &ivolt2, vc5, &ih, g, pp, aux3, 
+		param, nparam, b, ncoefb, &alfa0, alfa, beta, nalfa,
 		nbeta, ht, dhtdp, zt);
-/* ********************************************************************* */
+
 /* IF RELATIVE EUCLIDEAN DISTANCE IS USED AS CONVERG. */
-	suno = 0.f;
-	sdue = 0.f;
-	i__1 = nparam;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    suno += parpre[i__ - 1] * parpre[i__ - 1];
-	    pappo = param[i__ - 1] - parpre[i__ - 1];
+	suno = 0.0;
+	sdue = 0.0;
+	i1 = nparam;
+	for (i = 1; i <= i1; ++i) {
+	    suno += parpre[i - 1] * parpre[i - 1];
+	    pappo = param[i - 1] - parpre[i - 1];
 	    sdue += pappo * pappo;
-/* L13: */
 	}
-	if (suno == 0.f) {
+	if (suno == 0.0) {
 	    suno = 1e-10;
 	}
 	if (sdue / suno > toler2 * toler2) {
 	    goto L6765;
 	}
 /* ********************************************************************* */
-	sumgra = 0.f;
-	i__1 = nparam;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-/* L411: */
-	    sumgra += aux3[i__ - 1] * aux3[i__ - 1];
+	sumgra = 0.0;
+	i1 = nparam;
+	for (i = 1; i <= i1; ++i) {
+	    sumgra += aux3[i - 1] * aux3[i - 1];
 	}
 	if (sumgra < 1e-4) {
 	    goto L511;
 	}
-	s_wsle(&io___41);
-	do_lio(&c__9, &c__1, "SUMGRA ", (ftnlen)7);
-	do_lio(&c__5, &c__1, (char *)&sumgra, (ftnlen)sizeof(doublereal));
-	e_wsle();
+	fprintf(stderr, "Sum of gradients = %g\n", (double) sumgra);
 	*info = 2;
 	goto L999;
 L511:
 /*      WRITE(6,221)NZO,TOLER2 */
 /* 221   FORMAT(' FULL HESS. CONVERG. REACHED, ITER=',I3,'; TOLER2=',G15.6) */
 	*iters = nzo;
-	amax[amax_dim1 + 1] = toler2;
+	amax[0] = toler2;
 /*      WRITE(6,8900)NZO */
-#ifdef PRINT_LL
-	s_wsfe(&io___42);
-	i__1 = nzo;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    do_fio(&c__1, (char *)&flikel[i__ - 1], (ftnlen)sizeof(doublereal)
-		    );
+	i1 = nzo;
+	for (i = 1; i <= i1; ++i) {
+	    fprintf(stderr, " %g\n", flikel[i - 1]);
 	}
-	e_wsfe();
-#endif
 /* 8900  FORMAT(I5) */
-	tollog = 0.f;
-	totdis = 0.f;
-	i__1 = nparam;
-	for (j = 1; j <= i__1; ++j) {
-/* L310: */
-/* Computing 2nd power */
+	tollog = 0.0;
+	totdis = 0.0;
+	i1 = nparam;
+	for (j = 1; j <= i1; ++j) {
+	    /* Computing 2nd power */
 	    d__1 = param[j - 1] - partrc[j - 1];
 	    totdis += d__1 * d__1;
 	}
 	totdis = sqrt(totdis);
-	i__1 = nzo;
-	for (i__ = 1; i__ <= i__1; ++i__) {
+	i1 = nzo;
+	for (i = 1; i <= i1; ++i) {
 /* ********************************************************************* */
 /* IF EUCLEDEAN DISTANCE OR DISTANCE IN LOG-LIKEL. IS USED */
-	    sdue = 0.f;
-	    i__2 = nparam;
-	    for (j = 1; j <= i__2; ++j) {
-/* L311: */
-/* Computing 2nd power */
-		d__1 = param[j - 1] - partrc[j + i__ * 13 - 14];
+	    sdue = 0.0;
+	    i2 = nparam;
+	    for (j = 1; j <= i2; ++j) {
+		/* Computing 2nd power */
+		d__1 = param[j - 1] - partrc[j + i * 13 - 14];
 		sdue += d__1 * d__1;
 	    }
 	    sdue = sqrt(sdue);
-	    reldis = 0.f;
-	    if (totdis != 0.f) {
+	    reldis = 0.0;
+	    if (totdis != 0.0) {
 		reldis = sdue / totdis;
 	    }
 /* ********************************************************************* */
 	    rellog = tollog;
-	    if (reldis != 0.f) {
+	    if (reldis != 0.0) {
 		rellog = reldis;
 	    }
-/* L8910: */
 	}
 	nzo1 = nzo + 1;
 	if (nzo1 > 50) {
@@ -446,459 +433,338 @@ L6765:
     goto L999;
 
 L6766:
-/* SI METTE PROVVISORIO, NEL PROGRAMMA SERIO CI VUOLE LA COVART */
-    *ncoeff = nparam;
-    i__1 = nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	sderr[i__ - 1] = 0.f;
-	if (vc5[i__ + i__ * 13 - 14] > 0.f) {
-	    sderr[i__ - 1] = sqrt(vc5[i__ + i__ * 13 - 14]);
+
+    /* si mette provvisorio, nel programma serio ci vuole la covart */
+    for (i = 0; i < nparam; ++i) {
+	int j = i + 1;
+
+	sderr[i] = 0.0;
+	if (vc5[j + j * 13 - 14] > 0.0) {
+	    sderr[i] = sqrt(vc5[j + j * 13 - 14]);
 	}
-	amax[(i__ + 1) * amax_dim1 + 1] = param[i__ - 1];
-	amax[(i__ + 1 + nparam) * amax_dim1 + 1] = sderr[i__ - 1];
-/* L118: */
+	amax[i] = param[i];
+	amax[i + nparam] = sderr[i];
     }
-/* L600: */
+
 L999:
     return 0;
 } /* vsanal_ */
 
 
-/* SUBROUTINE FOR OLS ESTIMATION */
+/* subroutine for ols estimation */
 
-int ols_(integer *ninit, integer *nfinsm, doublereal *yobs, 
-	 integer *iread, doublereal *xobs, integer *nexo, 
-	 doublereal *umc, doublereal *yy, doublereal *c__, 
-	 integer *ncoeff, doublereal *oldc, doublereal *vc, doublereal *ystoc, 
-	 doublereal *amax, doublereal *aux, doublereal *b, integer *ncoefb, 
-	 doublereal *g)
+int ols_(int t1, int t2, double *yobs, 
+	 int iread, double *xobs, int nexo, 
+	 double *umc, double *yy, double *c__, 
+	 int ncoeff, double *oldc, double *vc, double *ystoc, 
+	 double *amax, double *aux, double *b, int *ncoefb, 
+	 double *g)
 {
-    /* Format strings */
-    static char fmt_101[] = "(\002 OLS: MATRIX IS SINGULAR\002,/,\002 ITERAT"
-	    "ION INVALID FOR THIS EQUATION\002,/,\002 INITIAL COEFFICIENTS RE"
-	    "MAIN UNCHANGED\002)";
-
     /* System generated locals */
-    integer yobs_dim1, yoff, xobs_dim1, xoff, vc_dim1, 
-	    vc_offset, ystoc_dim1, ystoc_offset, amax_dim1, amax_offset, i__1,
-	     i__2, i__3;
-
-    /* Builtin functions */
-    integer s_wsfe(cilist *), e_wsfe(void);
+    int xobs_dim1, xoff, vc_dim1, vc_offset, i1;
 
     /* Local variables */
-    static doublereal d__[7];
-    static integer i__, j, ic, nc, nab, ier;
-    static doublereal deltc;
-    static integer iexpl;
-    static doublereal relinc, derivo;
-
-    /* Fortran I/O blocks */
-    static cilist io___60 = { 0, 6, 0, fmt_101, 0 };
+    static double d__[7];
+    static int i, j, ic, nc, nab, ier;
+    static double deltc;
+    static int iexpl;
+    static double relinc, derivo;
 
     /* Parameter adjustments */
-    --oldc;
-    --yy;
-    amax_dim1 = 1;
-    amax_offset = 1 + amax_dim1;
-    amax -= amax_offset;
-    ystoc_dim1 = 1;
-    ystoc_offset = 1 + ystoc_dim1;
-    ystoc -= ystoc_offset;
-    yobs_dim1 = 1;
-    yoff = 1 + yobs_dim1;
-    yobs -= yoff;
-    xobs_dim1 = *nexo;
+    xobs_dim1 = nexo;
     xoff = 1 + xobs_dim1;
     xobs -= xoff;
-    --umc;
     --aux;
-    vc_dim1 = *ncoeff;
+    vc_dim1 = ncoeff;
     vc_offset = 1 + vc_dim1;
     vc -= vc_offset;
     --c__;
-    --b;
     g -= 8;
 
     /* Function Body */
-    relinc = .5f;
-    vsrstr_(&c__[1], ncoeff, &b[1], ncoefb);
-    i__1 = *nfinsm;
-    for (ic = *ninit; ic <= i__1; ++ic) {
-	vsmode_(&ystoc[ic * ystoc_dim1 + 1], &xobs[xoff], nexo, iread, 
-		&ic, &yobs[yoff], &umc[1], &b[1], &amax[ic * 
-		amax_dim1 + 1], ncoefb);
-/* L88: */
+    relinc = .5;
+    vsrstr_(&c__[1], ncoeff, b, ncoefb);
+    i1 = t2;
+    for (ic = t1; ic <= i1; ++ic) {
+	vsmode_(&ystoc[ic-1], &xobs[xoff], nexo, iread, 
+		ic, yobs, umc, b, 
+		&amax[ic-1], *ncoefb);
     }
-    i__1 = *ncoeff;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	aux[i__] = 0.f;
-	i__2 = *ncoeff;
-	for (j = 1; j <= i__2; ++j) {
-/* L87: */
-	    vc[i__ + j * vc_dim1] = 0.f;
+
+    for (i = 1; i <= ncoeff; ++i) {
+	aux[i] = 0.0;
+	for (j = 1; j <= ncoeff; ++j) {
+	    vc[i + j * vc_dim1] = 0.0;
 	}
     }
-    i__2 = *nfinsm;
-    for (ic = *ninit; ic <= i__2; ++ic) {
-	i__1 = *ncoeff;
-	for (iexpl = 1; iexpl <= i__1; ++iexpl) {
+
+    for (ic = t1; ic <= t2; ++ic) {
+	for (iexpl = 1; iexpl <= ncoeff; ++iexpl) {
 	    oldc[1] = c__[iexpl];
 	    deltc = relinc;
-	    if (oldc[1] != 0.f) {
+	    if (oldc[1] != 0.0) {
 		deltc = oldc[1] * relinc;
 	    }
 	    c__[iexpl] = oldc[1] + deltc;
-	    vsrstr_(&c__[1], ncoeff, &b[1], ncoefb);
-	    vsmode_(&ystoc[ic * ystoc_dim1 + 1], &xobs[xoff], nexo, 
-		    iread, &ic, &yobs[yoff], &umc[1], &b[1], &yy[
-		    1], ncoefb);
-	    deltc = c__[iexpl] - oldc[1];
-	    derivo = (yy[1] - amax[ic * amax_dim1 + 1]) / deltc;
-	    c__[iexpl] = oldc[1];
+	    vsrstr_(&c__[1], ncoeff, b, ncoefb);
+	    vsmode_(&ystoc[ic-1], &xobs[xoff], nexo, 
+		    iread, ic, yobs, umc, b, yy, 
+		    *ncoefb);
+	    deltc = c__[iexpl] - *oldc;
+	    derivo = (*yy - amax[ic-1]) / deltc;
+	    c__[iexpl] = *oldc;
 	    g[iexpl + ic * 7] = derivo;
-/* L91: */
 	}
-	vsrstr_(&c__[1], ncoeff, &b[1], ncoefb);
+	vsrstr_(&c__[1], ncoeff, b, ncoefb);
 
-/*  CUMULATES ALL THE W'Z INTO DIAGONAL BLOCKS OF VC */
-/*  AND W'Y INTO ELEMENTS OF AUX */
+	/* cumulates all the w'z into diagonal blocks of vc */
+	/* and w'y into elements of aux */
 
-	i__1 = *ncoeff;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    aux[i__] += g[i__ + ic * 7] * ystoc[ic * ystoc_dim1 + 1];
-	    i__3 = *ncoeff;
-	    for (j = 1; j <= i__3; ++j) {
-/* L71: */
-		vc[i__ + j * vc_dim1] += g[i__ + ic * 7] * g[j + ic * 7];
+	for (i = 1; i <= ncoeff; ++i) {
+	    aux[i] += g[i + ic * 7] * ystoc[ic-1];
+	    for (j = 1; j <= ncoeff; ++j) {
+		vc[i + j * vc_dim1] += g[i + ic * 7] * g[j + ic * 7];
 	    }
 	}
-/* L90: */
     }
     nab = 0;
-    nc = *ncoeff;
-    vsdmig_(&vc[vc_offset], ncoeff, ncoeff, d__, &ier);
+    nc = ncoeff;
+    gj_invert(&vc[vc_offset], ncoeff, ncoeff, d__, &ier);
     if (ier == 0) {
 	goto L3;
     }
-    s_wsfe(&io___60);
-    e_wsfe();
-    i__2 = nc;
-    for (i__ = 1; i__ <= i__2; ++i__) {
-	i__3 = nc;
-	for (j = 1; j <= i__3; ++j) {
-/* L96: */
-	    vc[i__ + j * vc_dim1] = 0.f;
+    fprintf(stderr, "OLS: matrix is singular\n"
+	    "Iteration invalid for this equation, "
+	    "initial coefficients are unchanged\n");
+
+    for (i = 1; i <= nc; ++i) {
+	for (j = 1; j <= nc; ++j) {
+	    vc[i + j * vc_dim1] = 0.0;
 	}
     }
     goto L99;
 L3:
 
-/* COMPUTES COEFFICIENTS */
-
-    i__3 = *ncoeff;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-/* L135: */
-	c__[i__] = 0.f;
+    /* computes coefficients */
+    for (i = 1; i <= ncoeff; ++i) {
+	c__[i] = 0.0;
     }
-    i__3 = *ncoeff;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-	i__2 = *ncoeff;
-	for (j = 1; j <= i__2; ++j) {
-	    c__[i__] += vc[i__ + j * vc_dim1] * aux[j];
-/* L2: */
+    for (i = 1; i <= ncoeff; ++i) {
+	for (j = 1; j <= ncoeff; ++j) {
+	    c__[i] += vc[i + j * vc_dim1] * aux[j];
 	}
-/* L1: */
     }
-    vsrstr_(&c__[1], ncoeff, &b[1], ncoefb);
+    vsrstr_(&c__[1], ncoeff, b, ncoefb);
+
 L99:
     return 0;
 } /* ols_ */
 
 
-/* COMPUTE MATRIX OF RESIDUALS (RES) AND THEIR COVARIANCE MATRIX (SIGMA) */
+/* compute matrix of residuals (res) and their covariance matrix (sigma) */
 
-/* COMPUTE THE LOG-LIKELIHOOD FUNCTION */
-/* I PARAMETRI SONO PASSATI NEL VETTORE PARAM(NPARAM). */
-/* ALFA0, ALFA E BETA VENGONO RICAVATI DAL VETTORE PARAM IN VALUNC */
-/* RES, RES2 E HT DEVONO ESSERE CALCOLATI DENTRO VALUNC */
-/* RES2 CONTIENE I RESIDUI AL QUADRATO */
+/* compute the log-likelihood function */
+/* i parametri sono passati nel vettore param(nparam). */
+/* alfa0, alfa e beta vengono ricavati dal vettore param in valunc */
+/* res, res2 e ht devono essere calcolati dentro valunc */
+/* res2 contiene i residui al quadrato */
 
-doublereal valunc_(doublereal *c__, integer *ncoeff, doublereal *res2, 
-	doublereal *res, doublereal *ydet, doublereal *yobs, doublereal *
-	ystoc, doublereal *xobs, integer *iread, integer *nexo,
-	 doublereal *umc, integer *ninit, integer *nfinsm, 
-	doublereal *param, integer *nparam, doublereal *b, integer *ncoefb, 
-	doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa,
-	 integer *nbeta, doublereal *ht)
+double valunc_(double *c__, int ncoeff, double *res2, 
+	       double *res, double *ydet, double *yobs, 
+	       double *ystoc, double *xobs, int iread, int nexo,
+	       double *umc, int t1, int t2, 
+	       double *param, double *b, int *ncoefb, 
+	       double *alfa0, double *alfa, double *beta, int nalfa,
+	       int nbeta, double *ht)
 {
     /* System generated locals */
-    integer ydet_dim1, ydet_offset, yobs_dim1, yoff, res2_dim1, 
-	    res2_offset, ystoc_dim1, ystoc_offset, res_dim1, res_offset, 
-	    xobs_dim1, xoff, i__1, i__2;
-    doublereal ret_val;
-
-    /* Builtin functions */
-    integer s_wsfe(cilist *), do_fio(integer *, char *, ftnlen), e_wsfe(void);
-    double log(doublereal);
+    int xobs_dim1, xoff, i1;
+    double ret_val;
 
     /* Local variables */
-    static integer i__, i1, i2, ic, iculo, indiet;
-    static doublereal uncvar;
+    static int i, istat1, istat2, ic, iculo, indiet;
+    static double uncvar;
 
     /* Parameter adjustments */
     --c__;
     --ht;
-    ystoc_dim1 = 1;
-    ystoc_offset = 1 + ystoc_dim1;
-    ystoc -= ystoc_offset;
-    yobs_dim1 = 1;
-    yoff = 1 + yobs_dim1;
-    yobs -= yoff;
-    ydet_dim1 = 1;
-    ydet_offset = 1 + ydet_dim1;
-    ydet -= ydet_offset;
-    res2_dim1 = 1;
-    res2_offset = 1 + res2_dim1;
-    res2 -= res2_offset;
-    xobs_dim1 = *nexo;
+    xobs_dim1 = nexo;
     xoff = 1 + xobs_dim1;
     xobs -= xoff;
-    --umc;
-    res_dim1 = 1;
-    res_offset = 1 + res_dim1;
-    res -= res_offset;
     --param;
-    --b;
     --alfa;
     --beta;
 
     /* Function Body */
-    i__1 = *ncoeff;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L1: */
-	c__[i__] = param[i__];
+    i1 = ncoeff;
+    for (i = 1; i <= i1; ++i) {
+	c__[i] = param[i];
     }
-    *alfa0 = param[*ncoeff + 1];
-    if (*nalfa <= 0) {
+    *alfa0 = param[ncoeff + 1];
+    if (nalfa <= 0) {
 	goto L660;
     }
-    i__1 = *nalfa;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L661: */
-	alfa[i__] = param[*ncoeff + 1 + i__];
+    i1 = nalfa;
+    for (i = 1; i <= i1; ++i) {
+	alfa[i] = param[ncoeff + 1 + i];
     }
 L660:
-    if (*nbeta <= 0) {
+    if (nbeta <= 0) {
 	goto L662;
     }
-    i__1 = *nbeta;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L663: */
-	beta[i__] = param[*ncoeff + 1 + *nalfa + i__];
+    i1 = nbeta;
+    for (i = 1; i <= i1; ++i) {
+	beta[i] = param[ncoeff + 1 + nalfa + i];
     }
 L662:
-/* L600: */
-/* CALCOLA RESIDUI ECC. NEL PERIODO VERO DI STIMA */
-    vsrstr_(&c__[1], ncoeff, &b[1], ncoefb);
-    i__1 = *nfinsm;
-    for (ic = *ninit; ic <= i__1; ++ic) {
-	vsmode_(&ystoc[ic * ystoc_dim1 + 1], &xobs[xoff], nexo, iread, 
-		&ic, &yobs[yoff], &umc[1], &b[1], &ydet[ic * 
-		ydet_dim1 + 1], ncoefb);
-/* L506: */
+
+    /* calcola residui ecc. nel periodo vero di stima */
+    vsrstr_(&c__[1], ncoeff, b, ncoefb);
+
+    for (ic = t1; ic <= t2; ++ic) {
+	vsmode_(&ystoc[ic-1], &xobs[xoff], nexo, iread, 
+		ic, yobs, umc, b, &ydet[ic-1], *ncoefb);
     }
-    i__1 = *nfinsm;
-    for (ic = *ninit; ic <= i__1; ++ic) {
-	res[ic * res_dim1 + 1] = ystoc[ic * ystoc_dim1 + 1] - ydet[ic * 
-		ydet_dim1 + 1];
-	res2[ic * res2_dim1 + 1] = res[ic * res_dim1 + 1] * res[ic * res_dim1 
-		+ 1];
-/* L501: */
+
+    for (ic = t1-1; ic < t2; ++ic) {
+	res[ic] = ystoc[ic] - ydet[ic];
+	res2[ic] = res[ic] * res[ic];
     }
-/* COME VALORE INIZIALE (AI TEMPI 0, -1, -2, ECC.) */
-/* DEL RESIDUO AL QUADRATO E DI HT SI IMPIEGA LA VARIANZA NONCONDIZIONATA */
-/* CALCOLATA DAL CAMPIONE. */
-/* COME VALORE INIZIALE DEI RESIDUI SI USA ZERO. */
-    indiet = *nalfa;
+
+/* come valore iniziale (ai tempi 0, -1, -2, ecc.) */
+/* del residuo al quadrato e di ht si impiega la varianza noncondizionata */
+/* calcolata dal campione. */
+/* come valore iniziale dei residui si usa zero. */
+
+    indiet = nalfa;
     uncvar = 0.;
-    i__1 = *nfinsm;
-    for (ic = *ninit; ic <= i__1; ++ic) {
-/* L131: */
-	uncvar += res2[ic * res2_dim1 + 1];
+    for (ic = t1-1; ic < t2; ++ic) {
+	uncvar += res2[ic];
     }
-    iculo = *nfinsm - *ninit + 1;
+    iculo = t2 - t1 + 1;
     uncvar /= iculo;
-    if (*nbeta > *nalfa) {
-	indiet = *nbeta;
+    if (nbeta > nalfa) {
+	indiet = nbeta;
     }
-    i1 = *ninit - indiet;
-    i2 = *ninit - 1;
-    i__1 = i2;
-    for (ic = i1; ic <= i__1; ++ic) {
-	res[ic * res_dim1 + 1] = 0.f;
-	res2[ic * res2_dim1 + 1] = uncvar;
+    istat1 = t1 - indiet;
+    istat2 = t1 - 1;
+    for (ic = istat1; ic <= istat2; ++ic) { /* FIXME!! */
+	res[ic] = 0.0;
+	res2[ic] = uncvar;
 	ht[ic] = uncvar;
-/* L2: */
     }
-    i__1 = *nfinsm;
-    for (ic = *ninit; ic <= i__1; ++ic) {
+    for (ic = t1; ic <= t2; ++ic) {
 	ht[ic] = *alfa0;
-	if (*nalfa <= 0) {
+	if (nalfa <= 0) {
 	    goto L270;
 	}
-	i__2 = *nalfa;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-/* L271: */
-	    ht[ic] += res2[(ic - i__) * res2_dim1 + 1] * alfa[i__];
+	for (i = 1; i <= nalfa; ++i) {
+	    ht[ic] += res2[ic - i] * alfa[i];
 	}
 L270:
-	if (*nbeta <= 0) {
+	if (nbeta <= 0) {
 	    goto L272;
 	}
-	i__2 = *nbeta;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-/* L273: */
-	    ht[ic] += ht[ic - i__] * beta[i__];
+	for (i = 1; i <= nbeta; ++i) {
+	    ht[ic] += ht[ic - i] * beta[i];
 	}
 L272:
 /* ARBITRARIO */
-	if (ht[ic] <= 0.f) {
-	    ht[ic] = 1e-7f;
+	if (ht[ic] <= 0.0) {
+	    ht[ic] = 1.0e-7;
 	}
-/* L3: */
     }
-    ret_val = 0.f;
-    i__1 = *nfinsm;
-    for (ic = *ninit; ic <= i__1; ++ic) {
-	ret_val = ret_val - log(ht[ic]) * .5f - res2[ic * res2_dim1 + 1] * 
-		.5f / ht[ic] - .9189385332056725;
-/* L4: */
+
+    ret_val = 0.0;
+    for (ic = t1; ic <= t2; ++ic) {
+	ret_val -= log(ht[ic]) * .5f - res2[ic-1] * .5 / ht[ic] - .9189385332056725;
     }
+
     return ret_val;
 } /* valunc_ */
 
 
-/* ********************************************************************** */
-/* COMPUTE MATRIX OF RESIDUALS (RES) AND THEIR COVARIANCE MATRIX (SIGMA) */
-/* ********************************************************************** */
+/* compute matrix of residuals (res) and their covariance matrix (sigma) */
 
-int sig_(integer *ninit, integer *nfinsm, doublereal *yobs, 
-	 integer *iread, doublereal *umc, doublereal *xobs, 
-	 integer *nexo, doublereal *yy, doublereal *c__, 
-	 integer *ncoeff, doublereal *res, doublereal *sigma, doublereal *
-	 ystoc, doublereal *b, integer *ncoefb, doublereal *alfa0, doublereal *
-	 alfa, doublereal *beta, integer *nalfa, integer *nbeta)
+int sig_(int t1, int t2, double *yobs, 
+	 int iread, double *umc, double *xobs, 
+	 int nexo, double *yy, double *c__, 
+	 int ncoeff, double *res, double *sigma, double *
+	 ystoc, double *b, int *ncoefb, double *alfa0, double *
+	 alfa, double *beta, int nalfa, int nbeta)
 {
     /* System generated locals */
-    integer yobs_dim1, yoff, xobs_dim1, xoff, ystoc_dim1, 
-	    ystoc_offset, sigma_dim1, sigma_offset, res_dim1, res_offset, 
-	    i__1;
-
-    /* Builtin functions */
-    integer s_wsfe(cilist *), e_wsfe(void), do_fio(integer *, char *, ftnlen);
+    int xobs_dim1, xoff;
 
     /* Local variables */
-    static integer i__, k, ic;
+    static int i, k, ic;
 
     /* Parameter adjustments */
-    --yy;
-    ystoc_dim1 = 1;
-    ystoc_offset = 1 + ystoc_dim1;
-    ystoc -= ystoc_offset;
-    yobs_dim1 = 1;
-    yoff = 1 + yobs_dim1;
-    yobs -= yoff;
-    xobs_dim1 = *nexo;
+    xobs_dim1 = nexo;
     xoff = 1 + xobs_dim1;
     xobs -= xoff;
-    sigma_dim1 = 1;
-    sigma_offset = 1 + sigma_dim1;
-    sigma -= sigma_offset;
-    res_dim1 = 1;
-    res_offset = 1 + res_dim1;
-    res -= res_offset;
-    --umc;
     --c__;
-    --b;
     --alfa;
     --beta;
 
     /* Function Body */
-    vsrstr_(&c__[1], ncoeff, &b[1], ncoefb);
-    i__1 = *nfinsm;
-    for (ic = *ninit; ic <= i__1; ++ic) {
-	vsmode_(&ystoc[ic * ystoc_dim1 + 1], &xobs[xoff], nexo, iread, 
-		&ic, &yobs[yoff], &umc[1], &b[1], &yy[1], 
-		 ncoefb);
-	res[ic * res_dim1 + 1] = ystoc[ic * ystoc_dim1 + 1] - yy[1];
-/* L1035: */
+    vsrstr_(&c__[1], ncoeff, b, ncoefb);
+    for (ic = t1; ic <= t2; ++ic) {
+	vsmode_(&ystoc[ic-1], &xobs[xoff], nexo, iread, 
+		ic, yobs, umc, b, yy, *ncoefb);
+	res[ic-1] = ystoc[ic-1] - *yy;
     }
-/*     COMPUTE VARIANCE OF RESIDUALS (HOMOSKEDASTIC) */
-    sigma[sigma_dim1 + 1] = 0.f;
-    i__1 = *nfinsm;
-    for (k = *ninit; k <= i__1; ++k) {
-/* L1098: */
-	sigma[sigma_dim1 + 1] += res[k * res_dim1 + 1] * res[k * res_dim1 + 1]
-		;
+
+    /* compute variance of residuals (homoskedastic) */
+    *sigma = 0.0;
+    for (k = t1; k <= t2; ++k) {
+	*sigma += res[k + 1] * res[k + 1];
     }
-    sigma[sigma_dim1 + 1] /= *nfinsm - *ninit + 1;
-/*     E METTE A XXXX GLI ALTRI ALFA E BETA */
-    if (*nalfa <= 0) {
+    *sigma /= t2 - t1 + 1;
+
+    /* e mette a xxxx gli altri alfa e beta */
+    if (nalfa <= 0) {
 	goto L1;
     }
-    i__1 = *nalfa;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L2: */
-	alfa[i__] = .15f / *nalfa;
+
+    for (i = 1; i <= nalfa; ++i) {
+	alfa[i] = .15 / nalfa;
     }
 L1:
-    if (*nbeta > 0) {
+    if (nbeta > 0) {
 	goto L6;
     }
-    i__1 = *nalfa;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L7: */
-	alfa[i__] = .7f / *nalfa;
+    for (i = 1; i <= nalfa; ++i) {
+	alfa[i] = .70 / nalfa;
     }
-    if (*nbeta <= 0) {
+    if (nbeta <= 0) {
 	goto L3;
     }
 L6:
-    i__1 = *nbeta;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L4: */
-	beta[i__] = .55f / *nbeta;
+    for (i = 1; i <= nbeta; ++i) {
+	beta[i] = .55 / nbeta;
     }
 L3:
-    *alfa0 = sigma[sigma_dim1 + 1] * .3f;
-/* SI NOTI CHE SOMME DI ALFA' PIU SOMME DI BETA E' SEMPRE UGUALE 0.7 */
+    *alfa0 = *sigma * .30;
+
+    /* si noti che somme di alfa' piu somme di beta e' sempre uguale 0.7 */
     return 0;
 } /* sig_ */
 
 
 
-/* ******           MATRICE DI INFORMAZIONE */
-/* ****** */
-/* ******  I PARAMETRI SONO PASSATI DENTRO IL VETTORE PARAM */
-/* ******  C, ALFA E BETA SI RICAVANO ALL'INIZIO DA PARAM */
-/* ****** */
-/* ****** */
+/* ****** MATRICE DI INFORMAZIONE */
+
+/* ****** I PARAMETRI SONO PASSATI DENTRO IL VETTORE PARAM */
+/* ****** C, ALFA E BETA SI RICAVANO ALL'INIZIO DA PARAM */
 
 /* ********************HESSTOBI******************************************* */
 
-
-int check_(doublereal *param, integer *ncoeff, integer *
-	   nparam)
+int check_(double *param, int ncoeff, int nparam)
 {
-    /* System generated locals */
-    integer i__1;
-
-    /* Local variables */
-    static integer i__;
-    static doublereal sum;
-    static integer iculo, nabet1;
-
+    static int i;
+    static double sum;
+    static int iculo, nvparm;
 
 /*     THIS ROUTINE CONTROLL THAT THE VALUES OF THE PARAMETERS OF THE */
 /*     CONDITIONAL VARIANCE HT ARE IN THE SET OF THE ADMISSIBLE VALUES */
@@ -911,125 +777,90 @@ int check_(doublereal *param, integer *ncoeff, integer *
     --param;
 
     /* Function Body */
-    nabet1 = *nparam - *ncoeff;
+    nvparm = nparam - ncoeff;
     sum = 0.;
-    if (param[*ncoeff + 1] <= 0.) {
-	param[*ncoeff + 1] = 1e-7f;
+
+    if (param[ncoeff + 1] <= 0.) {
+	param[ncoeff + 1] = 1.0e-7;
     }
-    if (nabet1 <= 1) {
+    if (nvparm <= 1) {
 	goto L2;
     }
-    iculo = nabet1 - 1;
-    i__1 = iculo;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	if (param[*ncoeff + 1 + i__] < 0.) {
-	    param[*ncoeff + 1 + i__] = 0.f;
+    iculo = nvparm - 1;
+    for (i = 1; i <= iculo; ++i) {
+	if (param[ncoeff + 1 + i] < 0.) {
+	    param[ncoeff + 1 + i] = 0.0;
 	}
-	sum += param[*ncoeff + 1 + i__];
-/* L1: */
+	sum += param[ncoeff + 1 + i];
     }
 L2:
-    if (sum <= 1.f) {
+    if (sum <= 1.0) {
 	goto L4;
     }
-    i__1 = iculo;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	param[*ncoeff + 1 + i__] /= sum;
-/* L3: */
+    for (i = 1; i <= iculo; ++i) {
+	param[ncoeff + 1 + i] /= sum;
     }
 L4:
     return 0;
 } /* check_ */
 
 
-/*     MATRICE DI INFORMAZIONE DIAGONALE A BLOCCHI */
+/* MATRICE DI INFORMAZIONE DIAGONALE A BLOCCHI */
 
-/*     I PARAMETRI SONO PASSATI DENTRO IL VETTORE PARAM */
-/*     C, ALFA E BETA SI RICAVANO ALL'INIZIO DA PARAM */
+/* I PARAMETRI SONO PASSATI DENTRO IL VETTORE PARAM */
+/* C, ALFA E BETA SI RICAVANO ALL'INIZIO DA PARAM */
 
-
-int garcim_(integer *ninit, integer *nfinsm, doublereal *
-	    yobs, integer *iread, doublereal *xobs, integer *nexo, 
-	    doublereal *umc, doublereal *ydet, doublereal *c__, 
-	    integer *ncoeff, doublereal *res2, doublereal *res, doublereal *ystoc,
-	    doublereal *toler, integer *izo, integer *ivolta, doublereal *vc5, 
-	    integer *ih, doublereal *g, doublereal *pp, doublereal *aux3, 
-	    doublereal *param, integer *nparam, doublereal *b, integer *ncoefb, 
-	    doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa,
-	    integer *nbeta, doublereal *ht, doublereal *dhtdp, doublereal *zt)
+int garcim_(int t1, int t2, double *
+	    yobs, int iread, double *xobs, int nexo, 
+	    double *umc, double *ydet, double *c__, 
+	    int ncoeff, double *res2, double *res, double *ystoc,
+	    double *toler, int *ivolta, double *vc5, 
+	    int *ih, double *g, double *pp, double *aux3, 
+	    double *param, int nparam, double *b, int *ncoefb, 
+	    double *alfa0, double *alfa, double *beta, int nalfa,
+	    int nbeta, double *ht, double *dhtdp, double *zt)
 {
-    /* Format strings */
-    static char fmt_640[] = "(\002 IER5=\002,i5)";
-
     /* System generated locals */
-    integer yobs_dim1, yoff, xobs_dim1, xoff, ydet_dim1, 
-	    ydet_offset, ystoc_dim1, ystoc_offset, res2_dim1, res2_offset, 
-	    res_dim1, res_offset, i__1, i__2, i__3;
-    doublereal d__1;
-
-    /* Builtin functions */
-    integer s_wsfe(cilist *), do_fio(integer *, char *, ftnlen), e_wsfe(void);
-    double sqrt(doublereal), pow_ri(real *, integer *);
+    int xobs_dim1, xoff, 
+	i1, i2, i3;
+    double d__1;
 
     /* Local variables */
-    static integer i__, j;
-    static doublereal d0, d1, d2, f1, f2, d3;
-    static integer i1, i2;
-    static doublereal f3, d12, d31, d23, dd;
-    static integer ic;
-    static doublereal di, gg[13], ff, dm;
-    static integer nc;
-    static doublereal ds, fs;
-    static integer iv;
-    static doublereal a1s, a2s, a3s;
-    static integer it1, it2, it3, it4, it5;
-    static doublereal dac;
-    static integer nab;
-    static doublereal d12s, dub, d23s, d31s;
-    static integer ieq, isp, ier5;
-    static doublereal bigd, sdue;
-    static integer nexp;
-    static doublereal step[13], stre, rsuh, suno, asum2[7], r2suh;
-    static doublereal cappa;
-    static integer nabet, ncall, iculo;
-    static doublereal r2suh3;
-    static integer nabet1, ncoef1, indiet;
-    static doublereal oldstp;
-
-    /* Fortran I/O blocks */
-    static cilist io___102 = { 0, 6, 0, fmt_640, 0 };
-
-
-
+    static int i, j;
+    static double d0, d1, d2, f1, f2, d3;
+    static int istat1, istat2;
+    static double f3, d12, d31, d23, dd;
+    static int ic;
+    static double di, gg[13], ff, dm;
+    static int nc;
+    static double ds, fs;
+    static int iv;
+    static double a1s, a2s, a3s;
+    static int it1, it2, it3, it4, it5;
+    static double dac;
+    static int nab;
+    static double d12s, dub, d23s, d31s;
+    static int ieq, isp, ier5;
+    static double bigd, sdue;
+    static int nexp;
+    static double step[13], stre, rsuh, suno, asum2[7], r2suh;
+    static double cappa;
+    static int ncall, iculo;
+    static double r2suh3;
+    static int nvparm, ncoef1, indiet;
+    static double oldstp;
 
     /* Parameter adjustments */
     --ht;
-    ystoc_dim1 = 1;
-    ystoc_offset = 1 + ystoc_dim1;
-    ystoc -= ystoc_offset;
-    res2_dim1 = 1;
-    res2_offset = 1 + res2_dim1;
-    res2 -= res2_offset;
-    ydet_dim1 = 1;
-    ydet_offset = 1 + ydet_dim1;
-    ydet -= ydet_offset;
-    yobs_dim1 = 1;
-    yoff = 1 + yobs_dim1;
-    yobs -= yoff;
-    xobs_dim1 = *nexo;
+    xobs_dim1 = nexo;
     xoff = 1 + xobs_dim1;
     xobs -= xoff;
-    res_dim1 = 1;
-    res_offset = 1 + res_dim1;
-    res -= res_offset;
-    --umc;
     --c__;
     vc5 -= 14;
     g -= 8;
     --pp;
     --param;
     --aux3;
-    --b;
     --alfa;
     --beta;
     dhtdp -= 14;
@@ -1043,33 +874,29 @@ int garcim_(integer *ninit, integer *nfinsm, doublereal *
     it4 = 0;
     it5 = 0;
     oldstp = 9e39;
-    nabet = *nalfa + *nbeta;
-    nabet1 = nabet + 1;
-    ncoef1 = *ncoeff + 1;
-/* L1011: */
+    nvparm = nalfa + nbeta + 1;
+    ncoef1 = ncoeff + 1;
+
     ++(*ivolta);
-    i__1 = *ncoeff;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L28: */
-	c__[i__] = param[i__];
+    i1 = ncoeff;
+    for (i = 1; i <= i1; ++i) {
+	c__[i] = param[i];
     }
-    *alfa0 = param[*ncoeff + 1];
-    if (*nalfa <= 0) {
+    *alfa0 = param[ncoeff + 1];
+    if (nalfa <= 0) {
 	goto L660;
     }
-    i__1 = *nalfa;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L661: */
-	alfa[i__] = param[*ncoeff + 1 + i__];
+    i1 = nalfa;
+    for (i = 1; i <= i1; ++i) {
+	alfa[i] = param[ncoeff + 1 + i];
     }
 L660:
-    if (*nbeta <= 0) {
+    if (nbeta <= 0) {
 	goto L662;
     }
-    i__1 = *nbeta;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L663: */
-	beta[i__] = param[*ncoeff + 1 + *nalfa + i__];
+    i1 = nbeta;
+    for (i = 1; i <= i1; ++i) {
+	beta[i] = param[ncoeff + 1 + nalfa + i];
     }
 L662:
 
@@ -1081,74 +908,62 @@ L662:
 /* DI HT SI IMPIEGA LA VARIANZA NONCONDIZIONATA */
 /* CALCOLATA DAI RESIDUI. */
 
-    if (*nbeta <= 0) {
+    if (nbeta <= 0) {
 	goto L121;
     }
-    i__1 = *nbeta;
-    for (ic = 1; ic <= i__1; ++ic) {
-	i__2 = nabet1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    dhtdp[*ncoeff + i__ + (*ninit - ic) * 13] = 0.;
-/* L31: */
+    i1 = nbeta;
+    for (ic = 1; ic <= i1; ++ic) {
+	for (i = 1; i <= nvparm; ++i) {
+	    dhtdp[ncoeff + i + (t1 - ic) * 13] = 0.;
 	}
-/* L21: */
     }
 L121:
 
 /* COSTRUZIONE MATRICE DHTDP, PARTE RELATIVA A ALFA E BETA (EQ.21) */
 
-    i__1 = *nfinsm;
-    for (ic = *ninit; ic <= i__1; ++ic) {
+    i1 = t2;
+    for (ic = t1; ic <= i1; ++ic) {
 
 /* SI RIEMPIE ZT AL TEMPO IC (PAG.315) */
 
-	zt[1] = 1.f;
-	if (*nalfa <= 0) {
+	zt[1] = 1.0;
+	if (nalfa <= 0) {
 	    goto L270;
 	}
-	i__2 = *nalfa;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-/* L271: */
-	    zt[i__ + 1] = res2[(ic - i__) * res2_dim1 + 1];
+	i2 = nalfa;
+	for (i = 1; i <= i2; ++i) {
+	    zt[i + 1] = res2[(ic - i)];
 	}
 L270:
-	if (*nbeta <= 0) {
+	if (nbeta <= 0) {
 	    goto L272;
 	}
-	i__2 = *nbeta;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-/* L273: */
-	    zt[*nalfa + 1 + i__] = ht[ic - i__];
+	i2 = nbeta;
+	for (i = 1; i <= i2; ++i) {
+	    zt[nalfa + 1 + i] = ht[ic - i];
 	}
 L272:
 
 /*  SI RIEMPIE DHTDP AL TEMPO IC */
 /*  LA PARTE RELATIVA AI PARAMETRI ALFA E BETA (EQ.21 PAG.316) */
 
-	i__2 = nabet1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    dhtdp[*ncoeff + i__ + ic * 13] = 0.f;
-/* L5: */
+	for (i = 1; i <= nvparm; ++i) {
+	    dhtdp[ncoeff + i + ic * 13] = 0.0;
 	}
-	i__2 = nabet1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    dhtdp[*ncoeff + i__ + ic * 13] += zt[i__];
-/* L6: */
+	for (i = 1; i <= nvparm; ++i) {
+	    dhtdp[ncoeff + i + ic * 13] += zt[i];
 	}
-	if (*nbeta <= 0) {
+	if (nbeta <= 0) {
 	    goto L7;
 	}
-	i__2 = nabet1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    i__3 = *nbeta;
-	    for (j = 1; j <= i__3; ++j) {
-/* L8: */
-		dhtdp[*ncoeff + i__ + ic * 13] += dhtdp[*ncoeff + i__ + (ic - 
-			j) * 13] * beta[j];
+	for (i = 1; i <= nvparm; ++i) {
+	    i3 = nbeta;
+	    for (j = 1; j <= i3; ++j) {
+		dhtdp[ncoeff + i + ic * 13] += 
+		    dhtdp[ncoeff + i + (ic - j) * 13] * beta[j];
 	    }
 	}
 L7:
-/* L4: */
 	;
     }
 
@@ -1158,133 +973,120 @@ L7:
 /* COME VALORI INIZIALI DEI RESIDUI SI PRENDE ZERO */
 /* (GIA' FATTO DENTRO VALUNC) */
 
-    indiet = *nalfa;
-    if (*nbeta > *nalfa) {
-	indiet = *nbeta;
+    indiet = nalfa;
+    if (nbeta > nalfa) {
+	indiet = nbeta;
     }
-    i1 = *ninit - indiet;
-    i2 = *ninit - 1;
-    iculo = *nfinsm - *ninit + 1;
-    i__1 = i2;
-    for (ic = i1; ic <= i__1; ++ic) {
-	i__3 = *ncoeff;
-	for (i__ = 1; i__ <= i__3; ++i__) {
-	    asum2[i__ - 1] = 0.f;
-	    i__2 = *nfinsm;
-	    for (isp = *ninit; isp <= i__2; ++isp) {
-		asum2[i__ - 1] -= res[isp * res_dim1 + 1] * 2.f * g[i__ + isp 
-			* 7];
-/* L45: */
+    istat1 = t1 - indiet;
+    istat2 = t1 - 1;
+    iculo = t2 - t1 + 1;
+    i1 = istat2;
+    for (ic = istat1; ic <= i1; ++ic) {
+	i3 = ncoeff;
+	for (i = 1; i <= i3; ++i) {
+	    asum2[i - 1] = 0.0;
+	    i2 = t2;
+	    for (isp = t1; isp <= i2; ++isp) {
+		asum2[i - 1] -= res[isp-1] * 2.0 * g[i + isp * 7];
 	    }
-	    asum2[i__ - 1] /= iculo;
-/* L10: */
-	    dhtdp[i__ + ic * 13] = asum2[i__ - 1];
+	    asum2[i - 1] /= iculo;
+	    dhtdp[i + ic * 13] = asum2[i - 1];
 	}
     }
-    i__3 = *nfinsm;
-    for (ic = *ninit; ic <= i__3; ++ic) {
-	i__1 = *ncoeff;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    dhtdp[i__ + ic * 13] = 0.f;
-/* L11: */
+    i3 = t2;
+    for (ic = t1; ic <= i3; ++ic) {
+	i1 = ncoeff;
+	for (i = 1; i <= i1; ++i) {
+	    dhtdp[i + ic * 13] = 0.0;
 	}
-	if (*nalfa <= 0) {
+	if (nalfa <= 0) {
 	    goto L15;
 	}
-	i__1 = *ncoeff;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    i__2 = *nalfa;
-	    for (j = 1; j <= i__2; ++j) {
-		if (ic - *nalfa < *ninit) {
+	i1 = ncoeff;
+	for (i = 1; i <= i1; ++i) {
+	    i2 = nalfa;
+	    for (j = 1; j <= i2; ++j) {
+		if (ic - nalfa < t1) {
 		    goto L376;
 		}
-		dhtdp[i__ + ic * 13] -= alfa[j] * 2.f * g[i__ + (ic - j) * 7] 
-			* res[(ic - j) * res_dim1 + 1];
+		dhtdp[i + ic * 13] -= alfa[j] * 2.0 * g[i + (ic - j) * 7] 
+			* res[(ic - j)];
 		goto L12;
 L376:
-		dhtdp[i__ + ic * 13] += alfa[j] * asum2[i__ - 1];
+		dhtdp[i + ic * 13] += alfa[j] * asum2[i - 1];
 L12:
 		;
 	    }
 	}
 L15:
-	if (*nbeta <= 0) {
+	if (nbeta <= 0) {
 	    goto L13;
 	}
-	i__2 = *ncoeff;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    i__1 = *nbeta;
-	    for (j = 1; j <= i__1; ++j) {
-/* L14: */
-		dhtdp[i__ + ic * 13] += dhtdp[i__ + (ic - j) * 13] * beta[j];
+	i2 = ncoeff;
+	for (i = 1; i <= i2; ++i) {
+	    i1 = nbeta;
+	    for (j = 1; j <= i1; ++j) {
+		dhtdp[i + ic * 13] += dhtdp[i + (ic - j) * 13] * beta[j];
 	    }
 	}
 L13:
-/* L9: */
 	;
     }
 
 /*  SI INIZIA IL CALCOLO DEL GRADIENTE AUX3 */
 
 
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-	aux3[i__] = 0.f;
-/* L20: */
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	aux3[i] = 0.0;
     }
-    i__3 = *nfinsm;
-    for (ic = *ninit; ic <= i__3; ++ic) {
+    i3 = t2;
+    for (ic = t1; ic <= i3; ++ic) {
 
 /*  PRIMA PARTE RELATIVA AI COEFFICIENTI (EQ. 22 PAG. 316) ERR. DI */
 /*  STAMPA NEL SECONDO TERMINE C'E' UN *HT INVECE DI /HT */
-	rsuh = res[ic * res_dim1 + 1] / ht[ic];
-	r2suh = rsuh * res[ic * res_dim1 + 1];
-	i__1 = *ncoeff;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    aux3[i__] = aux3[i__] + rsuh * g[i__ + ic * 7] + .5 / ht[ic] * 
-		    dhtdp[i__ + ic * 13] * (r2suh - 1.f);
-/* L22: */
+	rsuh = res[ic-1] / ht[ic];
+	r2suh = rsuh * res[ic-1];
+	i1 = ncoeff;
+	for (i = 1; i <= i1; ++i) {
+	    aux3[i] = aux3[i] + rsuh * g[i + ic * 7] + .5 / ht[ic] * 
+		    dhtdp[i + ic * 13] * (r2suh - 1.0);
 	}
 
 /* SECONDA PARTE RELATIVA AD ALFA E BETA (EQ. 19 PAG. 315) */
 
-	i__1 = nabet1;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    aux3[*ncoeff + i__] += .5 / ht[ic] * dhtdp[*ncoeff + i__ + ic * 
-		    13] * (r2suh - 1.f);
-/* L23: */
+	for (i = 1; i <= nvparm; ++i) {
+	    aux3[ncoeff + i] += .5 / ht[ic] * dhtdp[ncoeff + i + ic * 
+		    13] * (r2suh - 1.0);
 	}
-/* L61: */
     }
 
 /*     ORA SI RIEMPIE LA MATINF */
 
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-	i__1 = *nparam;
-	for (j = 1; j <= i__1; ++j) {
-/* L24: */
-	    vc5[i__ + j * 13] = 0.f;
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	i1 = nparam;
+	for (j = 1; j <= i1; ++j) {
+	    vc5[i + j * 13] = 0.0;
 	}
     }
 
-    i__1 = *nfinsm;
-    for (ic = *ninit; ic <= i__1; ++ic) {
-	rsuh = res[ic * res_dim1 + 1] / ht[ic];
-	r2suh = rsuh * res[ic * res_dim1 + 1];
+    i1 = t2;
+    for (ic = t1; ic <= i1; ++ic) {
+	rsuh = res[ic-1] / ht[ic];
+	r2suh = rsuh * res[ic-1];
 	r2suh3 = r2suh / (ht[ic] * ht[ic]);
 
 /*  PARTE RELATIVA AI COEFFICIENTI (EQ. 23 PAG. 316) */
 /*  SI RICORDA CHE SI PRENDE IL VALORE ATTESO E RESTANO SOLO I PRIMI */
 /*  DUE TERMINI */
 
-	i__3 = *ncoeff;
-	for (i__ = 1; i__ <= i__3; ++i__) {
-	    i__2 = *ncoeff;
-	    for (j = 1; j <= i__2; ++j) {
-/* L26: */
-		vc5[i__ + j * 13] = vc5[i__ + j * 13] - g[i__ + ic * 7] * g[j 
-			+ ic * 7] / ht[ic] - dhtdp[i__ + ic * 13] * .5 * 
+	i3 = ncoeff;
+	for (i = 1; i <= i3; ++i) {
+	    i2 = ncoeff;
+	    for (j = 1; j <= i2; ++j) {
+		vc5[i + j * 13] = vc5[i + j * 13] - g[i + ic * 7] * g[j 
+			+ ic * 7] / ht[ic] - dhtdp[i + ic * 13] * .5 * 
 			dhtdp[j + ic * 13] / (ht[ic] * ht[ic]);
 	    }
 	}
@@ -1293,29 +1095,25 @@ L13:
 /*  SI RICORDA CHE SI PRENDE IL VALORE ATTESO E RESTA SOLO IL SECONDO */
 /*  TERMINE */
 
-	i__2 = *nparam;
-	for (i__ = ncoef1; i__ <= i__2; ++i__) {
-	    i__3 = *nparam;
-	    for (j = ncoef1; j <= i__3; ++j) {
-/* L27: */
-		vc5[i__ + j * 13] -= dhtdp[i__ + ic * 13] * .5f * dhtdp[j + 
+	i2 = nparam;
+	for (i = ncoef1; i <= i2; ++i) {
+	    i3 = nparam;
+	    for (j = ncoef1; j <= i3; ++j) {
+		vc5[i + j * 13] -= dhtdp[i + ic * 13] * .5f * dhtdp[j + 
 			ic * 13] / (ht[ic] * ht[ic]);
 	    }
 	}
-/* L25: */
     }
 /* ********************************************************************* */
 /* ADESSO SI INVERTE LA MATINF */
 /* ********************************************************************* */
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
 /* L690: */
     }
-    vsdmig_(&vc5[14], &c__13, nparam, &pp[1], &ier5);
+    gj_invert(&vc5[14], 13, nparam, &pp[1], &ier5);
     if (ier5 != 0) {
-	s_wsfe(&io___102);
-	do_fio(&c__1, (char *)&ier5, (ftnlen)sizeof(integer));
-	e_wsfe();
+	fprintf(stderr, "gj_invert failed\n");
     }
 /*      DO 690 I=1,NPARAM */
 /* 690   WRITE(6,5000)(VC5(I,J),J=1,NPARAM) */
@@ -1328,28 +1126,25 @@ L13:
 /* ADESSO SI COMINCIA CON LE ITERAZIONI */
 /* ********************************************************************** */
 /* CALCOLARE LO STEP PER I NUOVI COEFFICENTI */
-    sdue = 0.f;
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	gg[i__ - 1] = param[i__];
-	step[i__ - 1] = 0.f;
-	i__3 = *nparam;
-	for (j = 1; j <= i__3; ++j) {
-/* L57: */
-	    step[i__ - 1] -= vc5[i__ + j * 13] * aux3[j];
+    sdue = 0.0;
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
+	gg[i - 1] = param[i];
+	step[i - 1] = 0.0;
+	i3 = nparam;
+	for (j = 1; j <= i3; ++j) {
+	    step[i - 1] -= vc5[i + j * 13] * aux3[j];
 	}
-	sdue += step[i__ - 1] * step[i__ - 1];
-/* L56: */
+	sdue += step[i - 1] * step[i - 1];
     }
 
 /* IF RELATIVE EUCLIDEAN DISTANCE IS USED AS CONVERG. */
-    suno = 0.f;
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	suno += param[i__] * param[i__];
-/* L3: */
+    suno = 0.0;
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
+	suno += param[i] * param[i];
     }
-    if (suno == 0.f) {
+    if (suno == 0.0) {
 	suno = 1e-10;
     }
     stre = sdue / suno;
@@ -1357,23 +1152,20 @@ L13:
     if (*ih == 0) {
 	goto L5656;
     }
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L5657: */
-	param[i__] = gg[i__ - 1] + step[i__ - 1] * 1.f;
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
+	param[i] = gg[i - 1] + step[i - 1] * 1.0;
     }
     check_(&param[1], ncoeff, nparam);
     goto L299;
 L5656:
     sdue = sqrt(sdue);
     stre = sqrt(stre);
-/* L8976: */
-/* L58: */
+
     oldstp = sdue;
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L48: */
-	step[i__ - 1] /= sdue;
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
+	step[i - 1] /= sdue;
     }
 /*      CALL CTIME (IV,IT) */
     it4 += iv;
@@ -1387,81 +1179,73 @@ L5656:
     if (nexp > 5) {
 	nexp = 5;
     }
-    cappa = pow_ri(&c_b164, &nexp);
+    cappa = pow(2.0, nexp);
     d0 = sdue;
     d0 /= cappa;
     dac = d0 * .001f;
     dub = d0 * 4.f;
 /* 604   FORMAT(' D0,DAC,DUB =',3G16.8/) */
     if (*ivolta == 1) {
-	f1 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-		ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-		xobs[xoff], iread, nexo, &umc[1], ninit, 
-		nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &
-		beta[1], nalfa, nbeta, &ht[1]);
+	f1 = -valunc_(&c__[1], ncoeff, res2, res, 
+		ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+		t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+		&beta[1], nalfa, nbeta, &ht[1]);
     }
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L300: */
-	param[i__] = gg[i__ - 1] + step[i__ - 1] * d0;
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
+	param[i] = gg[i - 1] + step[i - 1] * d0;
     }
     check_(&param[1], ncoeff, nparam);
 /*      WRITE(6,7700) */
 /*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
-    f2 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-	    xobs[xoff], iread, nexo, &umc[1], ninit, 
-	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
-	    1], nalfa, nbeta, &ht[1]);
+    f2 = -valunc_(&c__[1], ncoeff, res2, res, 
+	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+            &beta[1], nalfa, nbeta, &ht[1]);
     if (f2 > f1) {
 	goto L307;
     }
-    d1 = 0.f;
+    d1 = 0.0;
     d2 = d0;
     d3 = d0 + d0;
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L301: */
-	param[i__] = gg[i__ - 1] + step[i__ - 1] * d3;
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
+	param[i] = gg[i - 1] + step[i - 1] * d3;
     }
     check_(&param[1], ncoeff, nparam);
 /*      WRITE(6,7700) */
 /*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
-    f3 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-	    xobs[xoff], iread, nexo, &umc[1], ninit, 
-	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
-	    1], nalfa, nbeta, &ht[1]);
+    f3 = -valunc_(&c__[1], ncoeff, res2, res, 
+	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+            &beta[1], nalfa, nbeta, &ht[1]);
     goto L325;
 L307:
     d1 = -d0;
-    d2 = 0.f;
+    d2 = 0.0;
     d3 = d0;
     f3 = f2;
     f2 = f1;
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L315: */
-	param[i__] = gg[i__ - 1] + step[i__ - 1] * d1;
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
+	param[i] = gg[i - 1] + step[i - 1] * d1;
     }
     check_(&param[1], ncoeff, nparam);
 /*      WRITE(6,7700) */
 /*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
-    f1 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-	    xobs[xoff], iread, nexo, &umc[1], ninit, 
-	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
-	    1], nalfa, nbeta, &ht[1]);
+    f1 = -valunc_(&c__[1], ncoeff, res2, res, 
+	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+            &beta[1], nalfa, nbeta, &ht[1]);
 L325:
     d23 = d2 - d3;
     d31 = d3 - d1;
     d12 = d1 - d2;
     di = d23 * f1 + d31 * f2 + d12 * f3;
-    bigd = di * -2.f / (d23 * d31 * d12);
-    if (bigd > 0.f) {
+    bigd = di * -2.0 / (d23 * d31 * d12);
+    if (bigd > 0.0) {
 	goto L400;
     }
-/* L605: */
     if (f3 <= f1) {
 	goto L341;
     }
@@ -1471,19 +1255,17 @@ L329:
     d2 = d1;
     f2 = f1;
     d1 -= dub;
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L334: */
-	param[i__] = gg[i__ - 1] + d1 * step[i__ - 1];
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
+	param[i] = gg[i - 1] + d1 * step[i - 1];
     }
     check_(&param[1], ncoeff, nparam);
 /*      WRITE(6,7700) */
 /*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
-    f1 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-	    xobs[xoff], iread, nexo, &umc[1], ninit, 
-	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
-	    1], nalfa, nbeta, &ht[1]);
+    f1 = -valunc_(&c__[1], ncoeff, res2, res, 
+		  ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+		  t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+		  &beta[1], nalfa, nbeta, &ht[1]);
     ++ncall;
     if (ncall > 100) {
 	goto L490;
@@ -1495,19 +1277,18 @@ L341:
     d2 = d3;
     f2 = f3;
     d3 += dub;
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L355: */
-	param[i__] = gg[i__ - 1] + d3 * step[i__ - 1];
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
+	param[i] = gg[i - 1] + d3 * step[i - 1];
     }
     check_(&param[1], ncoeff, nparam);
 /*      WRITE(6,7700) */
 /*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
-    f3 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-	    xobs[xoff], iread, nexo, &umc[1], ninit, 
-	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
-	    1], nalfa, nbeta, &ht[1]);
+    f3 = -valunc_(&c__[1], ncoeff, res2, res, 
+	    ydet, yobs, ystoc, &
+	    xobs[xoff], iread, nexo, umc, t1, 
+	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+            &beta[1], nalfa, nbeta, &ht[1]);
     ++ncall;
     if (ncall > 100) {
 	goto L490;
@@ -1518,27 +1299,27 @@ L400:
     d31s = d31 * (d3 + d1);
     d12s = d12 * (d1 + d2);
     ds = (d23s * f1 + d31s * f2 + d12s * f3) * .5f / di;
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L411: */
-	param[i__] = gg[i__ - 1] + step[i__ - 1] * ds;
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
+	param[i] = gg[i - 1] + step[i - 1] * ds;
     }
     check_(&param[1], ncoeff, nparam);
 /*      WRITE(6,7700) */
 /*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
-    fs = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-	    xobs[xoff], iread, nexo, &umc[1], ninit, 
-	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
-	    1], nalfa, nbeta, &ht[1]);
+    fs = -valunc_(&c__[1], ncoeff, res2, res, 
+	    ydet, yobs, ystoc, &
+	    xobs[xoff], iread, nexo, umc, t1, 
+	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+            &beta[1], nalfa, nbeta, &ht[1]);
     ++ncall;
     if (ncall > 100) {
 	goto L490;
     }
-    a1s = (d__1 = d1 - ds, abs(d__1));
-    a2s = (d__1 = d2 - ds, abs(d__1));
-    a3s = (d__1 = d3 - ds, abs(d__1));
-/* L603: */
+
+    a1s = (d__1 = d1 - ds, fabs(d__1));
+    a2s = (d__1 = d2 - ds, fabs(d__1));
+    a3s = (d__1 = d3 - ds, fabs(d__1));
+
     dm = a1s;
     if (a3s < dm) {
 	dm = a3s;
@@ -1612,15 +1393,13 @@ L492:
     fs = f3;
     ds = d3;
 L496:
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L497: */
-	param[i__] = gg[i__ - 1] + ds * step[i__ - 1];
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
+	param[i] = gg[i - 1] + ds * step[i - 1];
     }
     check_(&param[1], ncoeff, nparam);
     f1 = fs;
     fs = -fs;
-/* L601: */
     it5 += iv;
     if (*ivolta != *ivolta) {
 	goto L133;
@@ -1631,30 +1410,22 @@ L133:
     if (nab == 0) {
 	goto L299;
     }
-    i__1 = 1;
-    for (ieq = 1; ieq <= i__1; ++ieq) {
+    i1 = 1;
+    for (ieq = 1; ieq <= i1; ++ieq) {
 /*      IDPNDN=NAM(IEQ) */
 /*      NC=ICOEFF(IEQ) */
-/* L134: */
-/* L135: */
-/* L1202: */
-/* L102: */
-/* L1204: */
-/* L1203: */
+
 	nab += nc;
-/* L34: */
     }
 L299:
-/* L1000: */
 
 /* SI CAMBIA IL SEGNO ALLA MATRICE */
 
-    i__1 = *nparam;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	i__3 = *nparam;
-	for (j = 1; j <= i__3; ++j) {
-/* L692: */
-	    vc5[i__ + j * 13] = -vc5[i__ + j * 13];
+    i1 = nparam;
+    for (i = 1; i <= i1; ++i) {
+	i3 = nparam;
+	for (j = 1; j <= i3; ++j) {
+	    vc5[i + j * 13] = -vc5[i + j * 13];
 	}
     }
 
@@ -1672,100 +1443,61 @@ L299:
 /* ****** */
 /* *********************************************************************** */
 
-/* Subroutine */ int garcfh_(integer *ninit, integer *nfinsm, doublereal *
-	yobs, integer *iread, doublereal *xobs, integer *nexo, 
-	doublereal *umc, doublereal *ydet, doublereal *c__, 
-	integer *ncoeff, doublereal *res2, doublereal *res, doublereal *ystoc,
-	 doublereal *toler, integer *izo, integer *ivolta, doublereal *vc5, 
-	integer *ih, doublereal *g, doublereal *pp, doublereal *aux3, 
-	doublereal *param, integer *nparam, doublereal *b, integer *ncoefb, 
-	doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa,
-	 integer *nbeta, doublereal *ht, doublereal *dhtdp, doublereal *zt)
+int garcfh_(int t1, int t2, double *
+	    yobs, int iread, double *xobs, int nexo, 
+	    double *umc, double *ydet, double *c__, 
+	    int ncoeff, double *res2, double *res, double *ystoc,
+	    double *toler, int *izo, int *ivolta, double *vc5, 
+	    int *ih, double *g, double *pp, double *aux3, 
+	    double *param, int nparam, double *b, int *ncoefb, 
+	    double *alfa0, double *alfa, double *beta, int nalfa,
+	    int nbeta, double *ht, double *dhtdp, double *zt)
 {
-    /* Format strings */
-    static char fmt_640[] = "(\002 IER5=\002,i5)";
-    static char fmt_134[] = "(///,\002 EQUATION \002,i3,\002; \002,i5,\002TH"
-	    " STAGE\002)";
-    static char fmt_1202[] = "(\002 INITIAL COEFFICIENTS\002)";
-    static char fmt_102[] = "(5g15.6)";
-    static char fmt_1203[] = "(/,\002 COMPUTED COEFFICIENTS\002)";
-
     /* System generated locals */
-    integer yobs_dim1, yoff, xobs_dim1, xoff, ydet_dim1, 
-	    ydet_offset, ystoc_dim1, ystoc_offset, res2_dim1, res2_offset, 
-	    res_dim1, res_offset, i__1, i__2, i__3, i__4;
-    doublereal d__1;
-
-    /* Builtin functions */
-    integer s_wsfe(cilist *), do_fio(integer *, char *, ftnlen), e_wsfe(void);
-    double sqrt(doublereal), pow_ri(real *, integer *);
+    int xobs_dim1, xoff, 
+	res_dim1, i1, i2, i3, i4;
+    double d__1;
 
     /* Local variables */
-    static integer i__, j, k;
-    static doublereal d0, d1, d2, f1, f2, d3;
-    static integer i1, i2;
-    static doublereal f3, d12, d31, d23, dd;
-    static integer ic;
-    static doublereal di, gg[13], ff;
-    static integer ii;
-    static doublereal dm;
-    static integer nc;
-    static doublereal ds, fs;
-    static integer iv;
-    static doublereal a1s, a2s, a3s;
-    static integer it1, it2, it3, it4, it5;
-    static doublereal dac;
-    static integer nab;
-    static doublereal d12s, dub, d23s, d31s;
-    static integer ieq, isp, ier5;
-    static doublereal bigd, sdue;
-    static integer nexp;
-    static doublereal step[13], stre, rsuh, suno, asum2[7], r2suh, usuh2;
-    static doublereal cappa;
-    static integer nabet, ncall, iculo;
-    static doublereal r2suh3;
-    static integer nabet1, ncoef1;
-    static doublereal dhdpdp[676]	/* was [13][13][4] */;
-    static integer indiet;
-    static doublereal oldstp;
-
-    /* Fortran I/O blocks */
-    static cilist io___165 = { 0, 6, 0, fmt_640, 0 };
-    static cilist io___201 = { 0, 6, 0, fmt_134, 0 };
-    static cilist io___202 = { 0, 6, 0, fmt_1202, 0 };
-    static cilist io___203 = { 0, 6, 0, fmt_102, 0 };
-    static cilist io___205 = { 0, 6, 0, fmt_1203, 0 };
-    static cilist io___206 = { 0, 6, 0, fmt_102, 0 };
-
+    static int i, j, k;
+    static double d0, d1, d2, f1, f2, d3;
+    static int istat1, istat2;
+    static double f3, d12, d31, d23, dd;
+    static int ic;
+    static double di, gg[13], ff;
+    static int ii;
+    static double dm;
+    static int nc;
+    static double ds, fs;
+    static int iv;
+    static double a1s, a2s, a3s;
+    static int it1, it2, it3, it4, it5;
+    static double dac;
+    static int nab;
+    static double d12s, dub, d23s, d31s;
+    static int ieq, isp, ier5;
+    static double bigd, sdue;
+    static int nexp;
+    static double step[13], stre, rsuh, suno, asum2[7], r2suh, usuh2;
+    static double cappa;
+    static int ncall, iculo;
+    static double r2suh3;
+    static int nvparm, ncoef1;
+    static double dhdpdp[676]	/* was [13][13][4] */;
+    static int indiet;
+    static double oldstp;
 
     /* Parameter adjustments */
     --ht;
-    ystoc_dim1 = 1;
-    ystoc_offset = 1 + ystoc_dim1;
-    ystoc -= ystoc_offset;
-    res2_dim1 = 1;
-    res2_offset = 1 + res2_dim1;
-    res2 -= res2_offset;
-    ydet_dim1 = 1;
-    ydet_offset = 1 + ydet_dim1;
-    ydet -= ydet_offset;
-    yobs_dim1 = 1;
-    yoff = 1 + yobs_dim1;
-    yobs -= yoff;
-    xobs_dim1 = *nexo;
+    xobs_dim1 = nexo;
     xoff = 1 + xobs_dim1;
     xobs -= xoff;
-    res_dim1 = 1;
-    res_offset = 1 + res_dim1;
-    res -= res_offset;
-    --umc;
     --c__;
     vc5 -= 14;
     g -= 8;
     --pp;
     --param;
     --aux3;
-    --b;
     --alfa;
     --beta;
     dhtdp -= 14;
@@ -1780,34 +1512,30 @@ L299:
     it4 = 0;
     it5 = 0;
     oldstp = 9e39;
-    nabet = *nalfa + *nbeta;
-    nabet1 = nabet + 1;
-    ncoef1 = *ncoeff + 1;
-/* L1011: */
+    nvparm = nalfa + nbeta + 1;
+    ncoef1 = ncoeff + 1;
+
     ++(*ivolta);
 /*     IF (IVOLTA.GT.11) STOP */
-    i__1 = *ncoeff;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L28: */
-	c__[i__] = param[i__];
+    i1 = ncoeff;
+    for (i = 1; i <= i1; ++i) {
+	c__[i] = param[i];
     }
-    *alfa0 = param[*ncoeff + 1];
-    if (*nalfa <= 0) {
+    *alfa0 = param[ncoeff + 1];
+    if (nalfa <= 0) {
 	goto L660;
     }
-    i__1 = *nalfa;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L661: */
-	alfa[i__] = param[*ncoeff + 1 + i__];
+    i1 = nalfa;
+    for (i = 1; i <= i1; ++i) {
+	alfa[i] = param[ncoeff + 1 + i];
     }
 L660:
-    if (*nbeta <= 0) {
+    if (nbeta <= 0) {
 	goto L662;
     }
-    i__1 = *nbeta;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-/* L663: */
-	beta[i__] = param[*ncoeff + 1 + *nalfa + i__];
+    i1 = nbeta;
+    for (i = 1; i <= i1; ++i) {
+	beta[i] = param[ncoeff + 1 + nalfa + i];
     }
 L662:
 
@@ -1819,80 +1547,64 @@ L662:
 /* DI HT SI IMPIEGA LA VARIANZA NONCONDIZIONATA */
 /* CALCOLATA DAI RESIDUI. */
 
-    if (*nbeta <= 0) {
+    if (nbeta <= 0) {
 	goto L121;
     }
-    i__1 = *nbeta;
-    for (ic = 1; ic <= i__1; ++ic) {
-	i__2 = nabet1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    dhtdp[*ncoeff + i__ + (*ninit - ic) * 13] = 0.;
-	    i__3 = nabet1;
-	    for (j = 1; j <= i__3; ++j) {
-		dhdpdp[*ncoeff + i__ + (*ncoeff + j + (ic + 1) * 13) * 13 - 
-			183] = 0.;
-/* L33: */
+    i1 = nbeta;
+    for (ic = 1; ic <= i1; ++ic) {
+	for (i = 1; i <= nvparm; ++i) {
+	    dhtdp[ncoeff + i + (t1 - ic) * 13] = 0.;
+	    for (j = 1; j <= nvparm; ++j) {
+		dhdpdp[ncoeff + i + (ncoeff + j + (ic) * 13) * 13 - 183] = 0.;
 	    }
-/* L31: */
 	}
-/* L21: */
     }
 L121:
 
-/* COSTRUZIONE MATRICE DHTDP, PARTE RELATIVA A ALFA E BETA (EQ.21) */
+/* costruzione matrice dhtdp, parte relativa a alfa e beta (eq. 21) */
 
-    i__1 = *nfinsm;
-    for (ic = *ninit; ic <= i__1; ++ic) {
+    i1 = t2;
+    for (ic = t1; ic <= i1; ++ic) {
 
-/* SI RIEMPIE ZT AL TEMPO IC (PAG.315) */
+/* si riempie zt al tempo ic (pag. 315) */
 
-	zt[1] = 1.f;
-	if (*nalfa <= 0) {
+	zt[1] = 1.0;
+	if (nalfa <= 0) {
 	    goto L270;
 	}
-	i__2 = *nalfa;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-/* L271: */
-	    zt[i__ + 1] = res2[(ic - i__) * res2_dim1 + 1];
+	i2 = nalfa;
+	for (i = 1; i <= i2; ++i) {
+	    zt[i + 1] = res2[ic - i];
 	}
 L270:
-	if (*nbeta <= 0) {
+	if (nbeta <= 0) {
 	    goto L272;
 	}
-	i__2 = *nbeta;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-/* L273: */
-	    zt[*nalfa + 1 + i__] = ht[ic - i__];
+	i2 = nbeta;
+	for (i = 1; i <= i2; ++i) {
+	    zt[nalfa + 1 + i] = ht[ic - i];
 	}
 L272:
 
 /*  SI RIEMPIE DHTDP AL TEMPO IC */
 /*  LA PARTE RELATIVA AI PARAMETRI ALFA E BETA (EQ.21 PAG.316) */
 
-	i__2 = nabet1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    dhtdp[*ncoeff + i__ + ic * 13] = 0.f;
-/* L5: */
+	for (i = 1; i <= nvparm; ++i) {
+	    dhtdp[ncoeff + i + ic * 13] = 0.0;
 	}
-	i__2 = nabet1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    dhtdp[*ncoeff + i__ + ic * 13] += zt[i__];
-/* L6: */
+	for (i = 1; i <= nvparm; ++i) {
+	    dhtdp[ncoeff + i + ic * 13] += zt[i];
 	}
-	if (*nbeta <= 0) {
+	if (nbeta <= 0) {
 	    goto L7;
 	}
-	i__2 = nabet1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    i__3 = *nbeta;
-	    for (j = 1; j <= i__3; ++j) {
-/* L8: */
-		dhtdp[*ncoeff + i__ + ic * 13] += dhtdp[*ncoeff + i__ + (ic - 
+	for (i = 1; i <= nvparm; ++i) {
+	    for (j = 1; j <= nbeta; ++j) {
+		dhtdp[ncoeff + i + ic * 13] += dhtdp[ncoeff + i + (ic - 
 			j) * 13] * beta[j];
 	    }
 	}
 L7:
-/* L4: */
 	;
     }
 
@@ -1903,260 +1615,223 @@ L7:
 /* (GIA' FATTO DENTRO VALUNC) */
 /* COSTRUZIONE DELLA MATRICE DHDPDP INIZIALE */
 
-    indiet = *nalfa;
-    if (*nbeta > *nalfa) {
-	indiet = *nbeta;
+    indiet = nalfa;
+    if (nbeta > nalfa) {
+	indiet = nbeta;
     }
-    i1 = *ninit - indiet;
-    i2 = *ninit - 1;
-    iculo = *nfinsm - *ninit + 1;
-    i__1 = i2;
-    for (ic = i1; ic <= i__1; ++ic) {
-	i__3 = *ncoeff;
-	for (i__ = 1; i__ <= i__3; ++i__) {
-	    asum2[i__ - 1] = 0.f;
-	    i__2 = *nfinsm;
-	    for (isp = *ninit; isp <= i__2; ++isp) {
-		asum2[i__ - 1] -= res[isp * res_dim1 + 1] * 2.f * g[i__ + isp 
-			* 7];
-/* L45: */
+    istat1 = t1 - indiet;
+    istat2 = t1 - 1;
+    iculo = t2 - t1 + 1;
+    i1 = istat2;
+    for (ic = istat1; ic <= i1; ++ic) {
+	i3 = ncoeff;
+	for (i = 1; i <= i3; ++i) {
+	    asum2[i - 1] = 0.0;
+	    i2 = t2;
+	    for (isp = t1; isp <= i2; ++isp) {
+		asum2[i - 1] -= res[isp-1] * 2.0 * g[i + isp * 7];
 	    }
-	    asum2[i__ - 1] /= iculo;
-/* L10: */
-	    dhtdp[i__ + ic * 13] = asum2[i__ - 1];
+	    asum2[i - 1] /= iculo;
+	    dhtdp[i + ic * 13] = asum2[i - 1];
 	}
     }
 
-/*  I VALORI INIZIALI DI DHDPDP SONO 2/T X'X */
-/*  E ZERO PER I BLOCCHI FUORI DIAGONALE */
+/*  i valori iniziali di dhdpdp sono 2/t x'x */
+/*  e zero per i blocchi fuori diagonale */
 
-    i__3 = indiet;
-    for (ic = 1; ic <= i__3; ++ic) {
-	i__1 = *ncoeff;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    i__2 = *ncoeff;
-	    for (j = 1; j <= i__2; ++j) {
-/* L52: */
-		dhdpdp[i__ + (j + (ic + 1) * 13) * 13 - 183] = 0.;
+    i3 = indiet;
+    for (ic = 1; ic <= i3; ++ic) {
+	i1 = ncoeff;
+	for (i = 1; i <= i1; ++i) {
+	    i2 = ncoeff;
+	    for (j = 1; j <= i2; ++j) {
+		dhdpdp[i + (j + (ic) * 13) * 13 - 183] = 0.;
 	    }
 	}
-	i__2 = *nfinsm;
-	for (isp = *ninit; isp <= i__2; ++isp) {
-	    i__1 = *ncoeff;
-	    for (i__ = 1; i__ <= i__1; ++i__) {
-		i__4 = *ncoeff;
-		for (j = 1; j <= i__4; ++j) {
-/* L54: */
-		    dhdpdp[i__ + (j + (ic + 1) * 13) * 13 - 183] += g[i__ + 
-			    isp * 7] * g[j + isp * 7] * 2.f / iculo;
+	i2 = t2;
+	for (isp = t1; isp <= i2; ++isp) {
+	    i1 = ncoeff;
+	    for (i = 1; i <= i1; ++i) {
+		i4 = ncoeff;
+		for (j = 1; j <= i4; ++j) {
+		    dhdpdp[i + (j + (ic) * 13) * 13 - 183] += g[i + 
+			    isp * 7] * g[j + isp * 7] * 2.0 / iculo;
 		}
 	    }
-/* L53: */
 	}
-	i__2 = *ncoeff;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    i__4 = nabet1;
-	    for (j = 1; j <= i__4; ++j) {
-		dhdpdp[i__ + (*ncoeff + j + (ic + 1) * 13) * 13 - 183] = 0.;
-/* L212: */
+	i2 = ncoeff;
+	for (i = 1; i <= i2; ++i) {
+	    for (j = 1; j <= nvparm; ++j) {
+		dhdpdp[i + (ncoeff + j + (ic) * 13) * 13 - 183] = 0.;
 	    }
-/* L211: */
 	}
-/* L51: */
     }
-    i__3 = *nfinsm;
-    for (ic = *ninit; ic <= i__3; ++ic) {
-	i__2 = *ncoeff;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    dhtdp[i__ + ic * 13] = 0.f;
-/* L11: */
+    i3 = t2;
+    for (ic = t1; ic <= i3; ++ic) {
+	i2 = ncoeff;
+	for (i = 1; i <= i2; ++i) {
+	    dhtdp[i + ic * 13] = 0.0;
 	}
-	if (*nalfa <= 0) {
+	if (nalfa <= 0) {
 	    goto L15;
 	}
-	i__2 = *ncoeff;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    i__4 = *nalfa;
-	    for (j = 1; j <= i__4; ++j) {
-		if (ic - *nalfa < *ninit) {
+	i2 = ncoeff;
+	for (i = 1; i <= i2; ++i) {
+	    i4 = nalfa;
+	    for (j = 1; j <= i4; ++j) {
+		if (ic - nalfa < t1) {
 		    goto L376;
 		}
-		dhtdp[i__ + ic * 13] -= alfa[j] * 2.f * g[i__ + (ic - j) * 7] 
-			* res[(ic - j) * res_dim1 + 1];
+		dhtdp[i + ic * 13] -= 
+		    alfa[j] * 2.0 * g[i + (ic - j) * 7] * res[ic - j];
 		goto L12;
 L376:
-		dhtdp[i__ + ic * 13] += alfa[j] * asum2[i__ - 1];
+		dhtdp[i + ic * 13] += alfa[j] * asum2[i - 1];
 L12:
 		;
 	    }
 	}
 L15:
-	if (*nbeta <= 0) {
+	if (nbeta <= 0) {
 	    goto L13;
 	}
-	i__4 = *ncoeff;
-	for (i__ = 1; i__ <= i__4; ++i__) {
-	    i__2 = *nbeta;
-	    for (j = 1; j <= i__2; ++j) {
-/* L14: */
-		dhtdp[i__ + ic * 13] += dhtdp[i__ + (ic - j) * 13] * beta[j];
+	i4 = ncoeff;
+	for (i = 1; i <= i4; ++i) {
+	    i2 = nbeta;
+	    for (j = 1; j <= i2; ++j) {
+		dhtdp[i + ic * 13] += dhtdp[i + (ic - j) * 13] * beta[j];
 	    }
 	}
 L13:
-/* L9: */
 	;
     }
 
-/*  SI INIZIA IL CALCOLO DEL GRADIENTE AUX3 */
+/*  si inizia il calcolo del gradiente aux3 */
 
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-	aux3[i__] = 0.f;
-/* L20: */
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	aux3[i] = 0.0;
     }
-    i__3 = *nfinsm;
-    for (ic = *ninit; ic <= i__3; ++ic) {
+    i3 = t2;
+    for (ic = t1; ic <= i3; ++ic) {
 
-/*  PRIMA PARTE RELATIVA AI COEFFICIENTI (EQ. 22 PAG. 316) ERR. DI STAMPA */
-/*  NEL SECONDO TERMINE C'E' UN *HT INVECE DI /HT */
-	rsuh = res[ic * res_dim1 + 1] / ht[ic];
-	r2suh = rsuh * res[ic * res_dim1 + 1];
-	i__2 = *ncoeff;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    aux3[i__] = aux3[i__] + rsuh * g[i__ + ic * 7] + .5f / ht[ic] * 
-		    dhtdp[i__ + ic * 13] * (r2suh - 1.f);
-/* L22: */
+/*  prima parte relativa ai coefficienti (eq. 22 pag. 316) err. di stampa */
+/*  nel secondo termine c'e' un *ht invece di /ht */
+	rsuh = res[ic-1] / ht[ic];
+	r2suh = rsuh * res[ic-1];
+	i2 = ncoeff;
+	for (i = 1; i <= i2; ++i) {
+	    aux3[i] = aux3[i] + rsuh * g[i + ic * 7] + .5f / ht[ic] * 
+		    dhtdp[i + ic * 13] * (r2suh - 1.0);
 	}
 
 /* SECONDA PARTE RELATIVA AD ALFA E BETA (EQ. 19 PAG. 315) */
 
-	i__2 = nabet1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    aux3[*ncoeff + i__] += .5f / ht[ic] * dhtdp[*ncoeff + i__ + ic * 
-		    13] * (r2suh - 1.f);
-/* L23: */
+	for (i = 1; i <= nvparm; ++i) {
+	    aux3[ncoeff + i] += .5f / ht[ic] * dhtdp[ncoeff + i + ic * 
+		    13] * (r2suh - 1.0);
 	}
-/* L61: */
     }
 
 /*     ORA SI RIEMPIE LA HESS */
 
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-	i__2 = *nparam;
-	for (j = 1; j <= i__2; ++j) {
-/* L24: */
-	    vc5[i__ + j * 13] = 0.f;
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	i2 = nparam;
+	for (j = 1; j <= i2; ++j) {
+	    vc5[i + j * 13] = 0.0;
 	}
     }
 
-    i__2 = *nfinsm;
-    for (ic = *ninit; ic <= i__2; ++ic) {
-	rsuh = res[ic * res_dim1 + 1] / ht[ic];
-	r2suh = rsuh * res[ic * res_dim1 + 1];
+    i2 = t2;
+    for (ic = t1; ic <= i2; ++ic) {
+	rsuh = res[ic-1] / ht[ic];
+	r2suh = rsuh * res[ic-1];
 	r2suh3 = r2suh / (ht[ic] * ht[ic]);
-	usuh2 = 1.f / (ht[ic] * ht[ic]);
-	i__3 = *nparam;
-	for (i__ = 1; i__ <= i__3; ++i__) {
-	    i__4 = *nparam;
-	    for (j = 1; j <= i__4; ++j) {
-/* L71: */
-		dhdpdp[i__ + (j + 13) * 13 - 183] = 0.f;
+	usuh2 = 1.0 / (ht[ic] * ht[ic]);
+	i3 = nparam;
+	for (i = 1; i <= i3; ++i) {
+	    i4 = nparam;
+	    for (j = 1; j <= i4; ++j) {
+		dhdpdp[i + (j + 13) * 13 - 183] = 0.0;
 	    }
 	}
 	if (indiet <= 0) {
 	    goto L90;
 	}
-	i__4 = *nalfa;
-	for (ii = 1; ii <= i__4; ++ii) {
-	    i__3 = *ncoeff;
-	    for (i__ = 1; i__ <= i__3; ++i__) {
-		i__1 = *ncoeff;
-		for (j = 1; j <= i__1; ++j) {
-		    if (ic - *nalfa < *ninit) {
+	i4 = nalfa;
+	for (ii = 1; ii <= i4; ++ii) {
+	    i3 = ncoeff;
+	    for (i = 1; i <= i3; ++i) {
+		i1 = ncoeff;
+		for (j = 1; j <= i1; ++j) {
+		    if (ic - nalfa < t1) {
 			goto L377;
 		    }
-		    dhdpdp[i__ + (j + 13) * 13 - 183] += g[i__ + (ic - ii) * 
-			    7] * 2.f * g[j + (ic - ii) * 7] * alfa[ii];
+		    dhdpdp[i + (j + 13) * 13 - 183] += 
+			g[i + (ic - ii) * 7] * 2.0 * g[j + (ic - ii) * 7] * alfa[ii];
 		    goto L92;
 L377:
-		    dhdpdp[i__ + (j + 13) * 13 - 183] += dhdpdp[i__ + (j + (*
-			    nalfa + 1) * 13) * 13 - 183] * alfa[ii];
+		    dhdpdp[i + (j + 13) * 13 - 183] += 
+			dhdpdp[i + (j + (nalfa + 1) * 13) * 13 - 183] * alfa[ii];
 L92:
 		    ;
 		}
 	    }
-/* L91: */
 	}
-	i__4 = *nbeta;
-	for (ii = 1; ii <= i__4; ++ii) {
-	    i__1 = *ncoeff;
-	    for (i__ = 1; i__ <= i__1; ++i__) {
-		i__3 = *ncoeff;
-		for (j = 1; j <= i__3; ++j) {
-/* L94: */
-		    dhdpdp[i__ + (j + 13) * 13 - 183] += dhdpdp[i__ + (j + (
-			    ii + 1) * 13) * 13 - 183] * beta[ii];
+	i4 = nbeta;
+	for (ii = 1; ii <= i4; ++ii) {
+	    i1 = ncoeff;
+	    for (i = 1; i <= i1; ++i) {
+		i3 = ncoeff;
+		for (j = 1; j <= i3; ++j) {
+		    dhdpdp[i + (j + 13) * 13 - 183] += 
+			dhdpdp[i + (j + (ii + 1) * 13) * 13 - 183] * beta[ii];
 		}
 	    }
-/* L93: */
 	}
-	i__4 = *ncoeff;
-	for (i__ = 1; i__ <= i__4; ++i__) {
-	    i__3 = *nalfa;
-	    for (ii = 1; ii <= i__3; ++ii) {
-		if (ic - *nalfa < *ninit) {
+	i4 = ncoeff;
+	for (i = 1; i <= i4; ++i) {
+	    i3 = nalfa;
+	    for (ii = 1; ii <= i3; ++ii) {
+		if (ic - nalfa < t1) {
 		    goto L477;
 		}
-		dhdpdp[i__ + (*ncoeff + 1 + ii + 13) * 13 - 183] -= g[i__ + (
-			ic - ii) * 7] * 2 * res[(ic - ii) * res_dim1 + 1];
+		dhdpdp[i + (ncoeff + 1 + ii + 13) * 13 - 183] -= 
+		    g[i + (ic - ii) * 7] * 2 * res[ic - ii];
 		goto L214;
 L477:
-		dhdpdp[i__ + (*ncoeff + 1 + ii + 13) * 13 - 183] += asum2[i__ 
-			- 1];
+		dhdpdp[i + (ncoeff + 1 + ii + 13) * 13 - 183] += asum2[i - 1];
 L214:
 		;
 	    }
-	    i__3 = *nbeta;
-	    for (ii = 1; ii <= i__3; ++ii) {
-		dhdpdp[i__ + (*ncoeff + 1 + *nalfa + ii + 13) * 13 - 183] += 
-			dhtdp[i__ + (ic - ii) * 13];
-/* L215: */
+	    for (ii = 1; ii <= nbeta; ++ii) {
+		dhdpdp[i + (ncoeff + 1 + nalfa + ii + 13) * 13 - 183] += 
+			dhtdp[i + (ic - ii) * 13];
 	    }
-/* L213: */
 	}
-	i__4 = *nbeta;
-	for (ii = 1; ii <= i__4; ++ii) {
-	    i__3 = *ncoeff;
-	    for (i__ = 1; i__ <= i__3; ++i__) {
-		i__1 = nabet1;
-		for (j = 1; j <= i__1; ++j) {
-		    dhdpdp[i__ + (*ncoeff + j + 13) * 13 - 183] += dhdpdp[i__ 
-			    + (*ncoeff + j + (ii + 1) * 13) * 13 - 183] * 
-			    beta[ii];
-/* L218: */
+	for (ii = 1; ii <= nbeta; ++ii) {
+	    for (i = 1; i <= ncoeff; ++i) {
+		for (j = 1; j <= nvparm; ++j) {
+		    dhdpdp[i + (ncoeff + j + 13) * 13 - 183] += 
+			dhdpdp[i + (ncoeff + j + (ii + 1) * 13) * 13 - 183] * beta[ii];
 		}
-/* L217: */
 	    }
-/* L216: */
 	}
 L90:
 
 /*  PARTE RELATIVA AI COEFFICIENTI (EQ. 23 PAG. 316) */
 /*  SI RICORDA CHE SI PRENDE IL VALORE ATTESO E RESTANO SOLO I PRIMI */
 /*  DUE TERMINI */
-	i__4 = *ncoeff;
-	for (i__ = 1; i__ <= i__4; ++i__) {
-	    i__3 = *ncoeff;
-	    for (j = 1; j <= i__3; ++j) {
-/* L26: */
-		vc5[i__ + j * 13] = vc5[i__ + j * 13] - g[i__ + ic * 7] * g[j 
-			+ ic * 7] / ht[ic] - r2suh3 * .5f * dhtdp[i__ + ic * 
+	for (i = 1; i <= ncoeff; ++i) {
+	    for (j = 1; j <= ncoeff; ++j) {
+		vc5[i + j * 13] = vc5[i + j * 13] - g[i + ic * 7] * g[j 
+			+ ic * 7] / ht[ic] - r2suh3 * .5f * dhtdp[i + ic * 
 			13] * dhtdp[j + ic * 13] - rsuh * g[j + ic * 7] * 
-			dhtdp[i__ + ic * 13] / ht[ic] - rsuh * g[i__ + ic * 7]
-			 * dhtdp[j + ic * 13] / ht[ic] + (r2suh - 1.f) * .5f *
-			 (dhdpdp[i__ + (j + 13) * 13 - 183] / ht[ic] - dhtdp[
-			i__ + ic * 13] * dhtdp[j + ic * 13] / (ht[ic] * ht[ic]
+			dhtdp[i + ic * 13] / ht[ic] - rsuh * g[i + ic * 7]
+			 * dhtdp[j + ic * 13] / ht[ic] + (r2suh - 1.0) * .5f *
+			 (dhdpdp[i + (j + 13) * 13 - 183] / ht[ic] - dhtdp[
+			i + ic * 13] * dhtdp[j + ic * 13] / (ht[ic] * ht[ic]
 			));
 	    }
 	}
@@ -2168,54 +1843,44 @@ L90:
 
 /*  CALCOLO DI DHDPDP AL TEMPO IC CHE VA' NEL POSTO 1 DEL TERZO INDICE */
 
-	if (*nbeta <= 0) {
+	if (nbeta <= 0) {
 	    goto L80;
 	}
 
-	i__3 = nabet1;
-	for (i__ = 1; i__ <= i__3; ++i__) {
-	    i__4 = *nbeta;
-	    for (j = 1; j <= i__4; ++j) {
-		dhdpdp[*ncoeff + i__ + (*ncoeff + *nalfa + 1 + j + 13) * 13 - 
-			183] += dhtdp[*ncoeff + i__ + (ic - j) * 13];
-/* L73: */
+	for (i = 1; i <= nvparm; ++i) {
+	    i4 = nbeta;
+	    for (j = 1; j <= i4; ++j) {
+		dhdpdp[ncoeff + i + (ncoeff + nalfa + 1 + j + 13) * 13 - 
+			183] += dhtdp[ncoeff + i + (ic - j) * 13];
 	    }
-/* L72: */
 	}
-	i__3 = *nbeta;
-	for (i__ = 1; i__ <= i__3; ++i__) {
-	    i__4 = nabet1;
-	    for (j = 1; j <= i__4; ++j) {
-		dhdpdp[*ncoeff + *nalfa + 1 + i__ + (*ncoeff + j + 13) * 13 - 
-			183] += dhtdp[*ncoeff + j + (ic - i__) * 13];
-/* L83: */
+	for (i = 1; i <= nbeta; ++i) {
+	    i4 = nvparm;
+	    for (j = 1; j <= i4; ++j) {
+		dhdpdp[ncoeff + nalfa + 1 + i + (ncoeff + j + 13) * 13 - 
+			183] += dhtdp[ncoeff + j + (ic - i) * 13];
 	    }
-/* L82: */
 	}
-	i__3 = *nbeta;
-	for (ii = 1; ii <= i__3; ++ii) {
-	    i__4 = nabet1;
-	    for (i__ = 1; i__ <= i__4; ++i__) {
-		i__1 = nabet1;
-		for (j = 1; j <= i__1; ++j) {
-/* L75: */
-		    dhdpdp[*ncoeff + i__ + (*ncoeff + j + 13) * 13 - 183] += 
-			    beta[ii] * dhdpdp[*ncoeff + i__ + (*ncoeff + j + (
+	for (ii = 1; ii <= nbeta; ++ii) {
+	    i4 = nvparm;
+	    for (i = 1; i <= i4; ++i) {
+		i1 = nvparm;
+		for (j = 1; j <= i1; ++j) {
+		    dhdpdp[ncoeff + i + (ncoeff + j + 13) * 13 - 183] += 
+			    beta[ii] * dhdpdp[ncoeff + i + (ncoeff + j + (
 			    ii + 1) * 13) * 13 - 183];
 		}
 	    }
-/* L74: */
 	}
 L80:
-	i__3 = *nparam;
-	for (i__ = ncoef1; i__ <= i__3; ++i__) {
-	    i__1 = *nparam;
-	    for (j = ncoef1; j <= i__1; ++j) {
-/* L27: */
-		vc5[i__ + j * 13] = vc5[i__ + j * 13] + usuh2 * .5f * dhtdp[
-			i__ + ic * 13] * dhtdp[j + ic * 13] - r2suh3 * dhtdp[
-			i__ + ic * 13] * dhtdp[j + ic * 13] + (r2suh - 1.f) * 
-			.5f / ht[ic] * dhdpdp[i__ + (j + 13) * 13 - 183];
+	i3 = nparam;
+	for (i = ncoef1; i <= i3; ++i) {
+	    i1 = nparam;
+	    for (j = ncoef1; j <= i1; ++j) {
+		vc5[i + j * 13] = vc5[i + j * 13] + usuh2 * .5f * dhtdp[
+			i + ic * 13] * dhtdp[j + ic * 13] - r2suh3 * dhtdp[
+			i + ic * 13] * dhtdp[j + ic * 13] + (r2suh - 1.0) * 
+			.5f / ht[ic] * dhdpdp[i + (j + 13) * 13 - 183];
 	    }
 	}
 
@@ -2224,18 +1889,17 @@ L80:
 /*  PARTE MISTA IN ALTO DESTRA */
 
 
-	i__1 = *ncoeff;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    i__3 = nabet1;
-	    for (j = 1; j <= i__3; ++j) {
-/* L226: */
-		vc5[i__ + (*ncoeff + j) * 13] = vc5[i__ + (*ncoeff + j) * 13] 
-			- g[i__ + ic * 7] * rsuh * dhtdp[*ncoeff + j + ic * 
-			13] / ht[ic] - (r2suh - 1.f) * .5f * dhtdp[*ncoeff + 
-			j + ic * 13] * dhtdp[i__ + ic * 13] / (ht[ic] * ht[ic]
-			) + (r2suh - 1.f) * .5f * dhdpdp[i__ + (*ncoeff + j + 
+	i1 = ncoeff;
+	for (i = 1; i <= i1; ++i) {
+	    i3 = nvparm;
+	    for (j = 1; j <= i3; ++j) {
+		vc5[i + (ncoeff + j) * 13] = vc5[i + (ncoeff + j) * 13] 
+			- g[i + ic * 7] * rsuh * dhtdp[ncoeff + j + ic * 
+			13] / ht[ic] - (r2suh - 1.0) * .5f * dhtdp[ncoeff + 
+			j + ic * 13] * dhtdp[i + ic * 13] / (ht[ic] * ht[ic]
+			) + (r2suh - 1.0) * .5f * dhdpdp[i + (ncoeff + j + 
 			13) * 13 - 183] / ht[ic] - r2suh * .5f * usuh2 * 
-			dhtdp[i__ + ic * 13] * dhtdp[*ncoeff + j + ic * 13];
+			dhtdp[i + ic * 13] * dhtdp[ncoeff + j + ic * 13];
 	    }
 	}
 
@@ -2244,34 +1908,30 @@ L80:
 	if (indiet <= 0) {
 	    goto L190;
 	}
-	i__3 = indiet;
-	for (ii = 1; ii <= i__3; ++ii) {
-	    i__1 = *nparam;
-	    for (i__ = 1; i__ <= i__1; ++i__) {
-		i__4 = *nparam;
-		for (j = 1; j <= i__4; ++j) {
-/* L112: */
-		    dhdpdp[i__ + (j + (indiet + 2 - ii) * 13) * 13 - 183] = 
-			    dhdpdp[i__ + (j + (indiet + 1 - ii) * 13) * 13 - 
+	i3 = indiet;
+	for (ii = 1; ii <= i3; ++ii) {
+	    i1 = nparam;
+	    for (i = 1; i <= i1; ++i) {
+		i4 = nparam;
+		for (j = 1; j <= i4; ++j) {
+		    dhdpdp[i + (j + (indiet + 2 - ii) * 13) * 13 - 183] = 
+			    dhdpdp[i + (j + (indiet + 1 - ii) * 13) * 13 - 
 			    183];
 		}
 	    }
-/* L111: */
 	}
 L190:
-/* L25: */
 	;
     }
 
 /*  IL DO 25 SUL TEMPO E' FINITO E ALLORA SI RIEMPIE LA PARTE */
 /*  MISTA IN BASSO A SINISTRA */
 
-    i__2 = *ncoeff;
-    for (i__ = 1; i__ <= i__2; ++i__) {
-	i__3 = nabet1;
-	for (j = 1; j <= i__3; ++j) {
-/* L227: */
-	    vc5[*ncoeff + j + i__ * 13] = vc5[i__ + (*ncoeff + j) * 13];
+    i2 = ncoeff;
+    for (i = 1; i <= i2; ++i) {
+	i3 = nvparm;
+	for (j = 1; j <= i3; ++j) {
+	    vc5[ncoeff + j + i * 13] = vc5[i + (ncoeff + j) * 13];
 	}
     }
 
@@ -2280,41 +1940,34 @@ L190:
 /* ADESSO SI INVERTE LA HESS */
 /* ********************************************************************* */
 
-    vsdmig_(&vc5[14], &c__13, nparam, &pp[1], &ier5);
+    gj_invert(&vc5[14], 13, nparam, &pp[1], &ier5);
     if (ier5 != 0) {
-	s_wsfe(&io___165);
-	do_fio(&c__1, (char *)&ier5, (ftnlen)sizeof(integer));
-	e_wsfe();
+	fprintf(stderr, "gj_invert failed\n");
     }
-/* L5000: */
-/* L3300: */
-/* L3301: */
+
 /* ********************************************************************** */
 /* ADESSO SI COMINCIA CON LE ITERAZIONI */
 /* ********************************************************************** */
 /* CALCOLARE LO STEP PER I NUOVI COEFFICENTI */
-    sdue = 0.f;
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-	gg[i__ - 1] = param[i__];
-	step[i__ - 1] = 0.f;
-	i__2 = *nparam;
-	for (j = 1; j <= i__2; ++j) {
-/* L57: */
-	    step[i__ - 1] -= vc5[i__ + j * 13] * aux3[j];
+    sdue = 0.0;
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	gg[i - 1] = param[i];
+	step[i - 1] = 0.0;
+	i2 = nparam;
+	for (j = 1; j <= i2; ++j) {
+	    step[i - 1] -= vc5[i + j * 13] * aux3[j];
 	}
-	sdue += step[i__ - 1] * step[i__ - 1];
-/* L56: */
+	sdue += step[i - 1] * step[i - 1];
     }
 /* ********************************************************************* */
 /* IF RELATIVE EUCLIDEAN DISTANCE IS USED AS CONVERG. */
-    suno = 0.f;
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-	suno += param[i__] * param[i__];
-/* L3: */
+    suno = 0.0;
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	suno += param[i] * param[i];
     }
-    if (suno == 0.f) {
+    if (suno == 0.0) {
 	suno = 1e-10;
     }
     stre = sdue / suno;
@@ -2322,10 +1975,9 @@ L190:
     if (*ih == 0) {
 	goto L5656;
     }
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-/* L5657: */
-	param[i__] = gg[i__ - 1] + step[i__ - 1] * 1.f;
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	param[i] = gg[i - 1] + step[i - 1] * 1.0;
     }
     check_(&param[1], ncoeff, nparam);
 /*      WRITE(6,7700) */
@@ -2335,13 +1987,11 @@ L190:
 L5656:
     sdue = sqrt(sdue);
     stre = sqrt(stre);
-/* L8976: */
-/* L58: */
+
     oldstp = sdue;
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-/* L48: */
-	step[i__ - 1] /= sdue;
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	step[i - 1] /= sdue;
     }
 /*      CALL CTIME (IV,IT) */
     it4 += iv;
@@ -2355,75 +2005,68 @@ L5656:
     if (nexp > 5) {
 	nexp = 5;
     }
-    cappa = pow_ri(&c_b164, &nexp);
+    cappa = pow(2.0, nexp);
     d0 = sdue;
     d0 /= cappa;
     dac = d0 * .001f;
     dub = d0 * 4.f;
 /* 604   FORMAT(' D0,DAC,DUB =',3G16.8/) */
     if (*ivolta == 1) {
-	f1 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-		ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-		xobs[xoff], iread, nexo, &umc[1], ninit, 
-		nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &
-		beta[1], nalfa, nbeta, &ht[1]);
+	f1 = -valunc_(&c__[1], ncoeff, res2, res, 
+		ydet, yobs, ystoc, &
+		xobs[xoff], iread, nexo, umc, t1, 
+		t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+                &beta[1], nalfa, nbeta, &ht[1]);
     }
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-/* L300: */
-	param[i__] = gg[i__ - 1] + step[i__ - 1] * d0;
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	param[i] = gg[i - 1] + step[i - 1] * d0;
     }
     check_(&param[1], ncoeff, nparam);
-    f2 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-	    xobs[xoff], iread, nexo, &umc[1], ninit, 
-	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
-	    1], nalfa, nbeta, &ht[1]);
+    f2 = -valunc_(&c__[1], ncoeff, res2, res, 
+	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+            &beta[1], nalfa, nbeta, &ht[1]);
     if (f2 > f1) {
 	goto L307;
     }
-    d1 = 0.f;
+    d1 = 0.0;
     d2 = d0;
     d3 = d0 + d0;
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-/* L301: */
-	param[i__] = gg[i__ - 1] + step[i__ - 1] * d3;
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	param[i] = gg[i - 1] + step[i - 1] * d3;
     }
     check_(&param[1], ncoeff, nparam);
-    f3 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-	    xobs[xoff], iread, nexo, &umc[1], ninit, 
-	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
-	    1], nalfa, nbeta, &ht[1]);
+    f3 = -valunc_(&c__[1], ncoeff, res2, res, 
+	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+            &beta[1], nalfa, nbeta, &ht[1]);
     goto L325;
 L307:
     d1 = -d0;
-    d2 = 0.f;
+    d2 = 0.0;
     d3 = d0;
     f3 = f2;
     f2 = f1;
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-/* L315: */
-	param[i__] = gg[i__ - 1] + step[i__ - 1] * d1;
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	param[i] = gg[i - 1] + step[i - 1] * d1;
     }
     check_(&param[1], ncoeff, nparam);
-    f1 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-	    xobs[xoff], iread, nexo, &umc[1], ninit, 
-	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
-	    1], nalfa, nbeta, &ht[1]);
+    f1 = -valunc_(&c__[1], ncoeff, res2, res, 
+	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+            &beta[1], nalfa, nbeta, &ht[1]);
 L325:
     d23 = d2 - d3;
     d31 = d3 - d1;
     d12 = d1 - d2;
     di = d23 * f1 + d31 * f2 + d12 * f3;
-    bigd = di * -2.f / (d23 * d31 * d12);
-    if (bigd > 0.f) {
+    bigd = di * -2.0 / (d23 * d31 * d12);
+    if (bigd > 0.0) {
 	goto L400;
     }
-/* L605: */
     if (f3 <= f1) {
 	goto L341;
     }
@@ -2433,17 +2076,15 @@ L329:
     d2 = d1;
     f2 = f1;
     d1 -= dub;
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-/* L334: */
-	param[i__] = gg[i__ - 1] + d1 * step[i__ - 1];
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	param[i] = gg[i - 1] + d1 * step[i - 1];
     }
     check_(&param[1], ncoeff, nparam);
-    f1 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-	    xobs[xoff], iread, nexo, &umc[1], ninit, 
-	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
-	    1], nalfa, nbeta, &ht[1]);
+    f1 = -valunc_(&c__[1], ncoeff, res2, res, 
+	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+            &beta[1], nalfa, nbeta, &ht[1]);
     ++ncall;
     if (ncall > 100) {
 	goto L490;
@@ -2455,17 +2096,15 @@ L341:
     d2 = d3;
     f2 = f3;
     d3 += dub;
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-/* L355: */
-	param[i__] = gg[i__ - 1] + d3 * step[i__ - 1];
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	param[i] = gg[i - 1] + d3 * step[i - 1];
     }
     check_(&param[1], ncoeff, nparam);
-    f3 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-	    xobs[xoff], iread, nexo, &umc[1], ninit, 
-	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
-	    1], nalfa, nbeta, &ht[1]);
+    f3 = -valunc_(&c__[1], ncoeff, res2, res, 
+	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+            &beta[1], nalfa, nbeta, &ht[1]);
     ++ncall;
     if (ncall > 100) {
 	goto L490;
@@ -2476,25 +2115,24 @@ L400:
     d31s = d31 * (d3 + d1);
     d12s = d12 * (d1 + d2);
     ds = (d23s * f1 + d31s * f2 + d12s * f3) * .5f / di;
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-/* L411: */
-	param[i__] = gg[i__ - 1] + step[i__ - 1] * ds;
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	param[i] = gg[i - 1] + step[i - 1] * ds;
     }
     check_(&param[1], ncoeff, nparam);
-    fs = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
-	    xobs[xoff], iread, nexo, &umc[1], ninit, 
-	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
-	    1], nalfa, nbeta, &ht[1]);
+    fs = -valunc_(&c__[1], ncoeff, res2, res, 
+	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
+	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
+            &beta[1], nalfa, nbeta, &ht[1]);
     ++ncall;
     if (ncall > 100) {
 	goto L490;
     }
-    a1s = (d__1 = d1 - ds, abs(d__1));
-    a2s = (d__1 = d2 - ds, abs(d__1));
-    a3s = (d__1 = d3 - ds, abs(d__1));
-/* L603: */
+
+    a1s = (d__1 = d1 - ds, fabs(d__1));
+    a2s = (d__1 = d2 - ds, fabs(d__1));
+    a3s = (d__1 = d3 - ds, fabs(d__1));
+
     dm = a1s;
     if (a3s < dm) {
 	dm = a3s;
@@ -2568,15 +2206,13 @@ L492:
     fs = f3;
     ds = d3;
 L496:
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-/* L497: */
-	param[i__] = gg[i__ - 1] + ds * step[i__ - 1];
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	param[i] = gg[i - 1] + ds * step[i - 1];
     }
     check_(&param[1], ncoeff, nparam);
     f1 = fs;
     fs = -fs;
-/* L601: */
     it5 += iv;
     if (*ivolta != *ivolta) {
 	goto L133;
@@ -2587,93 +2223,63 @@ L133:
     if (nab == 0) {
 	goto L299;
     }
-    i__3 = 1;
-    for (ieq = 1; ieq <= i__3; ++ieq) {
+    i3 = 1;
+    for (ieq = 1; ieq <= i3; ++ieq) {
 /*      IDPNDN=NAM(IEQ) */
 /*      NC=ICOEFF(IEQ) */
-	s_wsfe(&io___201);
-	do_fio(&c__1, (char *)&ieq, (ftnlen)sizeof(integer));
-	do_fio(&c__1, (char *)&(*izo), (ftnlen)sizeof(integer));
-	e_wsfe();
+	fprintf(stderr, "EQUATION %d, stage %d\n", (int) ieq,
+		(int) *izo);
 /*      WRITE(6,135)IDPNDN */
-/* L135: */
-	s_wsfe(&io___202);
-	e_wsfe();
-	s_wsfe(&io___203);
-	i__2 = nc;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    do_fio(&c__1, (char *)&gg[nab + i__ - 1], (ftnlen)sizeof(
-		    doublereal));
+	fputs("initial coefficients\n", stderr);
+	i2 = nc;
+	for (i = 1; i <= i2; ++i) {
+	    fprintf(stderr, " %g\n", gg[nab + i - 1]);
 	}
-	e_wsfe();
 /*      WRITE(6,1204)INRES(IEQ),NFRES(IEQ) */
-/* L1204: */
-	s_wsfe(&io___205);
-	e_wsfe();
-	s_wsfe(&io___206);
-	i__2 = nc;
-	for (k = 1; k <= i__2; ++k) {
-	    do_fio(&c__1, (char *)&c__[nab + k], (ftnlen)sizeof(doublereal));
+	fputs("computed coefficients\n", stderr);
+	i2 = nc;
+	for (k = 1; k <= i2; ++k) {
+	    fprintf(stderr, " %g\n", c__[nab + k]);
 	}
-	e_wsfe();
 	nab += nc;
-/* L34: */
     }
 L299:
 
 /* SI CAMBIA IL SEGNO ALLA MATRICE */
 
-    i__3 = *nparam;
-    for (i__ = 1; i__ <= i__3; ++i__) {
-	i__2 = *nparam;
-	for (j = 1; j <= i__2; ++j) {
-/* L692: */
-	    vc5[i__ + j * 13] = -vc5[i__ + j * 13];
+    i3 = nparam;
+    for (i = 1; i <= i3; ++i) {
+	i2 = nparam;
+	for (j = 1; j <= i2; ++j) {
+	    vc5[i + j * 13] = -vc5[i + j * 13];
 	}
     }
 
     return 0;
 } /* garcfh_ */
 
-
-
-
 /* Standard for models with no restrictions on */
 /* the structural coefficients, such as distributed lags, */
 /* or restrictions on the sum (Cobb-Douglas), etc. */
 /* The first time must return only the value of NCOEFB. */
 
-int vsrstr_(doublereal *c__, integer *ncoeff, doublereal *b, 
-	    integer *ncoefb)
+int vsrstr_(double *c__, int ncoeff, double *b, int *ncoefb)
 {
-    /* Initialized data */
-
-    static integer ivolta = 0;
-
-    /* System generated locals */
-    integer i__1;
-
-    /* Local variables */
-    static integer i__;
+    static int ivolta = 0;
+    int i;
 
     /* Parameter adjustments */
     --c__;
-    --b;
+    
+    if (ivolta == 0) {
+	*ncoefb = ncoeff;
+	ivolta = 1;
+    } else {
+	for (i = 0; i < ncoeff; ++i) {
+	    b[i] = c__[i+1];
+	}
+    }
 
-    /* Function Body */
-    ++ivolta;
-    if (ivolta > 1) {
-	goto L2;
-    }
-    *ncoefb = *ncoeff;
-    goto L99;
-L2:
-    i__1 = *ncoeff;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	b[i__] = c__[i__];
-/* L1: */
-    }
-L99:
     return 0;
 } /* vsrstr_ */
 
@@ -2688,21 +2294,20 @@ L99:
 /*     *                                                                * */
 /*     ****************************************************************** */
 
-int vsdmig_(doublereal *g, integer *ig, integer *n, 
-	    doublereal *aux, integer *ier)
+static int gj_invert(double *g, int ig, int n, double *aux, int *ier)
 {
     /* System generated locals */
-    integer i__1, i__2, i__3;
-    doublereal d__1;
+    int i1, i2, i3;
+    double d__1;
 
     /* Local variables */
-    static doublereal d__;
-    static integer i__, j, k;
-    static doublereal s;
-    static integer jc, kc, ij;
-    static doublereal gm;
-    static integer jk, kk, ik, kj, ir, kr, icg, idg, ing, irg, ipiv, inder, 
-	    icpiv, irpiv, kporin;
+    static double d__;
+    static int i, j, k;
+    static double s;
+    static int jc, kc, ij;
+    static double gm;
+    static int jk, kk, ik, kj, ir, kr, icg, idg, ing, irg, ipiv, inder, 
+	icpiv, irpiv, kporin;
 
 /* MODIFICA PANATTONI (TOLTO L'EQUIVALENCE) */
     /* Parameter adjustments */
@@ -2713,7 +2318,7 @@ int vsdmig_(doublereal *g, integer *ig, integer *n,
     ing = 1;
     inder = *ier;
     *ier = 0;
-    if (*n <= 0) {
+    if (n <= 0) {
 	goto L1;
     } else {
 	goto L2;
@@ -2722,26 +2327,26 @@ L1:
     *ier += 1000;
     goto L30;
 L2:
-    if (*ig < 0) {
+    if (ig < 0) {
 	goto L3;
-    } else if (*ig == 0) {
+    } else if (ig == 0) {
 	goto L1;
     } else {
 	goto L4;
     }
 L3:
     *ier = 1;
-    irg = -(*ig);
+    irg = -ig;
     icg = ing;
-    if (*ig + *n <= 0) {
+    if (ig + n <= 0) {
 	goto L5;
     } else {
 	goto L1;
     }
 L4:
     irg = ing;
-    icg = *ig;
-    if (*ig - *n >= 0) {
+    icg = ig;
+    if (ig - n >= 0) {
 	goto L5;
     } else {
 	goto L1;
@@ -2749,14 +2354,14 @@ L4:
 L5:
     idg = irg + icg;
     ir = 1;
-    i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	s = (d__1 = g[ir], abs(d__1));
+    i1 = n;
+    for (i = 1; i <= i1; ++i) {
+	s = (d__1 = g[ir], fabs(d__1));
 	jc = ir;
-	i__2 = *n;
-	for (j = 2; j <= i__2; ++j) {
+	i2 = n;
+	for (j = 2; j <= i2; ++j) {
 	    jc += icg;
-	    d__ = (d__1 = g[jc], abs(d__1));
+	    d__ = (d__1 = g[jc], fabs(d__1));
 	    if (d__ - s <= 0.) {
 		goto L7;
 	    } else {
@@ -2767,31 +2372,30 @@ L6:
 L7:
 	    ;
 	}
-	aux[i__] = s;
-/* L8: */
+	aux[i] = s;
 	ir += irg;
     }
     kc = 1;
     kk = 1;
     kr = 1;
-    i__1 = *n;
-    for (k = 1; k <= i__1; ++k) {
+    i1 = n;
+    for (k = 1; k <= i1; ++k) {
 /* CORREZIONE PORINELLI (FEB.1985) */
 	kporin = k;
 	ipiv = k;
-	s = (d__1 = g[kk], abs(d__1));
+	s = (d__1 = g[kk], fabs(d__1));
 	s /= aux[k];
 	j = k + 1;
 	jk = kk + irg;
 /* CORREZIONE SANDI. IN ORIGINE ERA 10,13,13 */
 L9:
-	if (j - *n <= 0) {
+	if (j - n <= 0) {
 	    goto L10;
 	} else {
 	    goto L13;
 	}
 L10:
-	gm = (d__1 = g[jk], abs(d__1));
+	gm = (d__1 = g[jk], fabs(d__1));
 	gm /= aux[j];
 	if (gm - s <= 0.) {
 	    goto L12;
@@ -2815,18 +2419,17 @@ L14:
 	aux[ipiv] = aux[k];
 	irpiv = irg * (ipiv - 1) + 1;
 	ir = kr;
-	i__2 = *n;
-	for (i__ = 1; i__ <= i__2; ++i__) {
+	i2 = n;
+	for (i = 1; i <= i2; ++i) {
 	    s = g[irpiv];
 	    g[irpiv] = g[ir];
 	    g[ir] = s;
 	    ir += icg;
-/* L15: */
 	    irpiv += icg;
 	}
 L16:
 	d__ = g[kk];
-	aux[k] = (doublereal) ipiv;
+	aux[k] = (double) ipiv;
 	if (d__ != 0.) {
 	    goto L18;
 	} else {
@@ -2839,9 +2442,9 @@ L18:
 	d__ = 1. / d__;
 	ik = kc;
 	ir = 1;
-	i__2 = *n;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    if (i__ - k != 0) {
+	i2 = n;
+	for (i = 1; i <= i2; ++i) {
+	    if (i - k != 0) {
 		goto L19;
 	    } else {
 		goto L21;
@@ -2850,30 +2453,26 @@ L19:
 	    s = -d__ * g[ik];
 	    ij = ir;
 	    kj = kr;
-	    i__3 = *n;
-	    for (j = 1; j <= i__3; ++j) {
+	    i3 = n;
+	    for (j = 1; j <= i3; ++j) {
 		g[ij] += s * g[kj];
 		ij += icg;
-/* L20: */
 		kj += icg;
 	    }
 	    g[ik] = s;
 L21:
 	    ir += irg;
-/* L22: */
 	    ik += irg;
 	}
 	kj = kr;
-	i__2 = *n;
-	for (j = 1; j <= i__2; ++j) {
+	i2 = n;
+	for (j = 1; j <= i2; ++j) {
 	    g[kj] *= d__;
-/* L23: */
 	    kj += icg;
 	}
 	g[kk] = d__;
 	kk += idg;
 	kr += irg;
-/* L24: */
 	kc += icg;
     }
 
@@ -2889,7 +2488,7 @@ L25:
 	goto L26;
     }
 L26:
-    ipiv = (integer) aux[k];
+    ipiv = (int) aux[k];
     kc -= icg;
     if (ipiv - k <= 0) {
 	goto L25;
@@ -2899,13 +2498,12 @@ L26:
 L27:
     icpiv = icg * (ipiv - 1) + 1;
     ik = kc;
-    i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
+    i1 = n;
+    for (i = 1; i <= i1; ++i) {
 	s = g[ik];
 	g[ik] = g[icpiv];
 	g[icpiv] = s;
 	icpiv += irg;
-/* L28: */
 	ik += irg;
     }
     goto L25;
@@ -2924,25 +2522,22 @@ L30:
 L31:
 L32:
     return 0;
-} /* vsdmig_ */
-
-
+} /* gj_invert */
 
 /* Model: Bollerslev and Ghysels */
 
-int vsmode_(doublereal *y, doublereal *x, integer *nexo, 
-	    integer *iread, integer *i__, doublereal *yl,
-	    doublereal *u, doublereal *a, doublereal *z__,
-	    integer *ncoeff)
+int vsmode_(double *y, double *x, int nexo, 
+	    int iread, int i, double *yl,
+	    double *u, double *a, double *z,
+	    int ncoeff)
 {
     /* System generated locals */
-    integer x_dim1, x_offset, yl_dim1, yl_offset, j;
+    int x_dim1, x_offset, yl_dim1, yl_offset, j;
 
     /* Parameter adjustments */
-    x_dim1 = *nexo;
+    x_dim1 = nexo;
     x_offset = 1 + x_dim1;
     x -= x_offset;
-    --z__;
     yl_dim1 = 1;
     yl_offset = 1 + yl_dim1;
     yl -= yl_offset;
@@ -2950,10 +2545,10 @@ int vsmode_(doublereal *y, doublereal *x, integer *nexo,
     --u;
     --a;
 
-    z__[1] = a[1] + u[1];
+    *z = a[1] + u[1];
 
-    for (j = 0; j < *nexo; j++) {
-	z__[1] += a[j + 2] * x[*i__ * x_dim1 + j + 2];
+    for (j = 0; j < nexo; j++) {
+	*z += a[j + 2] * x[i * x_dim1 + j + 2];
     }
 
     return 0;

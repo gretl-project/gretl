@@ -24,8 +24,7 @@
 #include "libgretl.h"
 #include "internal.h"
 
-#include <f2c.h>
-#include "fcp.P"
+#include "fcp.h"
 
 /* vsanal error codes (in "info"):
    0 OK
@@ -37,18 +36,18 @@
 int do_fcp (const int *list, const double **Z, 
 	    const DATAINFO *pdinfo, PRN *prn)
 {
-    integer t1, t2;
-    doublereal *yobs, *xobs;
-    integer nexo, nobs;
-    doublereal *umc, *ydet, *yy;
-    integer ncoeff, ncoefb;
-    doublereal *coeff, *d, *oldc;
-    doublereal *vc, *res2;
-    doublereal *res, *sigma;
-    doublereal *ystoc;
-    doublereal *a, *amax, *amin;
-    doublereal *b;
-    integer iters, info;
+    int t1, t2;
+    double *yobs, *xobs;
+    int nexo, nobs;
+    double *ydet;
+    int ncoeff, ncoefb;
+    double *coeff, *d;
+    double *vc, *res, *res2;
+    double *ystoc;
+    double *amax;
+    double *b;
+    double oldc, yy, umc, sigma;
+    int info, iters = 0;
     
     int i, p, q, ynum;
 
@@ -64,42 +63,30 @@ int do_fcp (const int *list, const double **Z,
     q = list[2];
     ynum = list[4];
 
-    yobs = malloc((nobs + 1) * sizeof *yobs);
-    ydet = malloc((nobs + 1) * sizeof *ydet);
-    ystoc = malloc((nobs + 1) * sizeof *ystoc);
+    yobs = malloc(nobs * sizeof *yobs);
+    ydet = malloc(nobs * sizeof *ydet);
+    ystoc = malloc(nobs * sizeof *ystoc);
 
-    res2 = malloc((nobs + 1) * sizeof *res2);
-    for (i=1; i<=nobs; i++) {
+    res2 = malloc(nobs * sizeof *res2);
+    for (i=0; i<nobs; i++) {
 	res2[i] = 0.0;
     }
 
-    umc = malloc(2 * sizeof *umc);
-    umc[1] = 0.0;
-
-    res = malloc((nobs + 1) * sizeof *res);
-    for (i=1; i<=nobs; i++) {
+    res = malloc(nobs * sizeof *res);
+    for (i=0; i<nobs; i++) {
 	res[i] = 0.0;
     }    
 
-    sigma = malloc(2 * sizeof *sigma);
-    sigma[1] = 0.0;
+    sigma = umc = oldc = yy = 0.0;
 
-    oldc = malloc(2 * sizeof *oldc);
-    yy = malloc(2 * sizeof *yy);
-    oldc[1] = yy[1] = 0.0;
-
-    a = malloc(2 * sizeof *a);
-    a[1] = 0.0;
-
-    amax = malloc((nobs + 1) * sizeof *amax);
-    amin = malloc((nobs + 1) * sizeof *amin);
-    for (i=1; i<=nobs; i++) {
-	amax[i] = amin[i] = 0.0;
+    amax = malloc(nobs * sizeof *amax);
+    for (i=0; i<nobs; i++) {
+	amax[i] = 0.0;
     }
 
-    coeff = malloc((ncoeff + 1) * sizeof *coeff);
-    b = malloc((ncoeff + 1) * sizeof *b);
-    for (i=1; i<=ncoeff; i++) {
+    coeff = malloc(ncoeff * sizeof *coeff);
+    b = malloc(ncoeff * sizeof *b);
+    for (i=0; i<ncoeff; i++) {
 	coeff[i] = b[i] = 0.0;
     }    
 
@@ -113,59 +100,53 @@ int do_fcp (const int *list, const double **Z,
 	xobs = malloc((nobs * nexo + 1) * sizeof *xobs);
 	/* now fill in exog var values */
     } else {
-	xobs = NULL;
+	xobs = malloc((nobs + 1) * sizeof *xobs);
     }
 
-    for (i=1; i<=nobs; i++) {
-	ystoc[i] = ydet[i] = yobs[i] = Z[ynum][i-1];
+    for (i=0; i<nobs; i++) {
+	ystoc[i] = ydet[i] = yobs[i] = Z[ynum][i];
     }
 
     /* initialize at unconditional mean of y */
-    coeff[1] = _esl_mean(0, nobs - 1, Z[ynum]);
+    coeff[0] = _esl_mean(0, nobs - 1, Z[ynum]);
 
     /* initialize elements of alpha, beta such that 
        alpha_0/(1 - alpha_1 - beta_1) = unconditional
        variance of y (????)
     */
-    amax[1] = _esl_variance(0, nobs - 1, Z[ynum]);
-    amax[2] = p;
-    amax[3] = q; 
-    amax[4] = 0.1; /* initial alpha_1 */
-    amax[5] = 0.1; /* initial beta_1 */
-
-    printf("t1=%d\n"
-	   "t2=%d\n"
-	   "nobs=%d\n"
-	   "nexo=%d\n"
-	   "ncoeff=%d\n",
-	   (int) t1, (int) t2, (int) nobs, 
-	   (int) nexo, (int) ncoeff);
-
-    vsanal_(&t1, &t2, &yobs[1], &nobs,
-	    xobs, &nexo, &umc[1], &ydet[1], 
-	    &yy[1], &coeff[1], &ncoeff, &d[1], &oldc[1], 
-	    &vc[1], &res2[1], &res[1], &sigma[1], &a[1], &ystoc[1], 
-	    &amax[1], &amin[1], &b[1], &ncoefb, &iters, &info, prn);
-
-    if (info != 0) {
-	fprintf(stderr, "vsanal returned with info = %d\n", (int) info);
+    amax[0] = _esl_variance(0, nobs - 1, Z[ynum]);
+    amax[1] = p;
+    amax[2] = q; 
+    for (i=0; i<p+q; i++) {
+	/* initial alpha, beta values */
+	amax[3+i] = 0.1;
     }
 
-    pprintf(prn, "Number of iterations = %d\n", (int) iters);
+    vsanal_(t1, t2, yobs, nobs,
+	    &xobs[1], nexo, &umc, ydet, 
+	    &yy, coeff, ncoeff, &d[1], &oldc, 
+	    &vc[1], res2, res, &sigma, ystoc, 
+	    amax, b, &ncoefb, &iters, &info, prn);
+
+    if (info != 0) {
+	fprintf(stderr, "vsanal returned with info = %d\n", info);
+    }
+
+    pprintf(prn, "Number of iterations = %d\n", iters);
 
     if (info == 0) {
-	int k;
+	int k, nparam = ncoeff + p + q + 1;
 
 	pprintf(prn, "Convergence reached, with tolerance = %g\n", 
-	       amax[1]);
+	       amax[0]);
 	pputs(prn, "\nRegression coefficient estimates:\n");
 	for (i=1; i<=1+nexo; i++) {
-	    pprintf(prn, "     [%d]: %#14.6g (%#.6g)\n", i, amax[i+1],
-		   amax[i+1+ncoeff]);
+	    pprintf(prn, "    A[%d]: %#14.6g (%#.6g)\n", i, amax[i],
+		   amax[i+ncoeff]);
 	}
 	k = i;
 	pputs(prn, "\nGARCH coefficient estimates:\n");
-	for (i=k; i<=ncoeff; i++) {
+	for (i=k; i<=nparam; i++) {
 	    if (i==k) {
 		pputs(prn, "alpha[0]: ");
 	    } else if (i-k <= p) {
@@ -173,27 +154,21 @@ int do_fcp (const int *list, const double **Z,
 	    } else {
 		pprintf(prn, " beta[%d]: ", i-k-p);
 	    }
-	    pprintf(prn, "%#14.6g (%#.6g)\n", amax[i+1], amax[i+1+ncoeff]);
+	    pprintf(prn, "%#14.6g (%#.6g)\n", amax[i], amax[i+nparam]);
 	}
 	pputs(prn, "\n(Standard errors in parentheses)\n");
     }
 
     free(yobs);
     free(xobs);
-    free(umc);
     free(ydet);
-    free(yy);
     free(coeff);
     free(d);
-    free(oldc);
     free(vc);
     free(res2);
     free(res);
-    free(sigma);
-    free(a);
     free(ystoc);
     free(amax);
-    free(amin);
     free(b);
 
     return 0;
