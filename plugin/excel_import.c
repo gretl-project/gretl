@@ -33,17 +33,13 @@
 #include "importer.h"
 #include "biff.h"
 
-/* from workbook.c */
-extern int excel_book_get_info (const char *fname, wbook *book);
-
 static void free_sheet (void);
 static int allocate_row_col (int row, int col, wbook *book);
 static char *copy_unicode_string (unsigned char **src);
-static char *convert8to7 (const char *src, int count);
-static char *convert16to7 (const char *src, int count);
+static char *convert8to7 (const unsigned char *s, int count);
+static char *convert16to7 (const unsigned char *s, int count);
 static char *mark_string (char *str);
 
-#undef EDEBUG
 #undef MEMDEBUG
 
 #define EXCEL_IMPORTER
@@ -69,25 +65,6 @@ char **sst = NULL;
 int sstsize = 0, sstnext = 0;
 struct rowdescr *rowptr = NULL;
 int lastrow = 0; 
-
-static double biff_get_double (const unsigned char *rec) 
-{	
-    union { 
-	unsigned char cc[8];
-	double d;
-    } dconv;
-    char *d;
-    const char *s;
-    int i;
-
-#if G_BYTE_ORDER == G_BIG_ENDIAN
-    for (s=rec+8, d=dconv.cc, i=0; i<8; i++) *(d++) = *(--s);
-#else       
-    for (s=rec, d=dconv.cc, i=0; i<8; i++) *(d++) = *(s++);
-#endif     
-
-    return dconv.d;
-}
 
 static double get_le_double (const void *p)
 {
@@ -182,6 +159,63 @@ static int row_col_err (int row, int col, PRN *prn)
     return err;
 }
 
+static int check_copy_string (struct rowdescr *prow, int row, int col, 
+			      int idx, const char *s)
+{
+    if (row > 0 && col > 0) {
+	int i, len = strlen(s);
+	int commas = 0;
+	static int warned = 0;
+
+	for (i=0; i<len; i++) {
+	    if (!isdigit(s[i]) && s[i] != ' ' && s[i] != '-' &&
+		s[i] != ',' && s[i] != '.') {
+		len = 0;
+		break;
+	    }
+	    if (s[i] == ',') commas++;
+	}
+
+	if (len > 0) {
+	    char *p, *q = malloc(len + 1);
+
+	    if (q == NULL) return 1;
+
+	    p = q;
+	    for (i=0; i<len; i++) {
+		if (s[i] != ' ' && s[i] != ',') {
+		    *p++ = s[i];
+		} 
+		if (commas == 1 && s[i] == ',') {
+		    /* single comma could be for 000s, or decimal */
+		    if (!warned) {
+			fprintf(stderr, "Warning: found ambiguous comma in '%s'\n", s);
+			warned = 1;
+		    }
+		    if (len - i != 4) {
+			/* probably decimal? */
+			*p++ = '.';
+		    }
+		}
+	    }
+	    *p = '\0';
+#ifdef EDEBUG
+	    fprintf(stderr, "converting sst[%d] '%s' to numeric as %s\n", idx, s, q);
+#endif
+	    prow->cells[col] = g_strdup_printf("%s", q);
+	    free(q);
+	    return 0;
+	}
+    }
+
+#ifdef EDEBUG
+    fprintf(stderr, "copying sst[%d] '%s' into place\n", idx, s);
+#endif
+    prow->cells[col] = g_strdup_printf("\"%s", s);
+
+    return 0;
+}
+
 static int process_item (BiffQuery *q, wbook *book, PRN *prn) 
 {
     struct rowdescr *prow = NULL;
@@ -255,8 +289,8 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	fprintf(stderr, "Got LABEL, row=%d, col=%d\n", row, col);
 #endif
 	if (allocate_row_col(row, col, book)) return 1;
-
 	prow = rowptr + row;
+
 	prow->cells[col] = mark_string(convert8to7(q->data + 8, len));
 	break;
     }   
@@ -265,22 +299,18 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	unsigned int sstidx = MS_OLE_GET_GUINT16(q->data + 6);
 
 #ifdef EDEBUG
-	fprintf(stderr, "Got CONSTANT_STRING, row=%d, col=%d\n", row, col);
+	fprintf(stderr, "Got LABELSST, row=%d, col=%d\n", row, col);
 #endif
 	saved_ref = NULL;
 
 	if (allocate_row_col(row, col, book)) return 1;
-
 	prow = rowptr + row;
+
 	if (sstidx >= sstsize) {
 	    pprintf(prn, _("String index too large"));
 	    pputc(prn, '\n');
-	} else if (sst[sstidx] != NULL) {	
-#ifdef EDEBUG
-	    fprintf(stderr, "copying sst[%d] '%s' into place\n", 
-		    sstidx, sst[sstidx]);
-#endif
-	    prow->cells[col] = g_strdup_printf("\"%s", sst[sstidx]);
+	} else if (sst[sstidx] != NULL) {
+	    check_copy_string(prow, row, col, sstidx, sst[sstidx]);
 	} else {
 	    prow->cells[col] = malloc(2);
 	    if (prow->cells[col] != NULL) {
@@ -297,7 +327,8 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 
 	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
-	v = biff_get_double(q->data + 6);
+
+	v = get_le_double(q->data + 6);
 	prow->cells[col] = g_strdup_printf("%.10g", v);
 #ifdef EDEBUG
 	fprintf(stderr, "Got NUMBER (%g), row=%d, col=%d\n", v, row, col);
@@ -312,6 +343,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 
 	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
+
 	v = biff_get_rk(q->data + 6);
 	prow->cells[col] = g_strdup_printf("%.10g", v);
 #ifdef EDEBUG
@@ -345,31 +377,43 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 
     case BIFF_FORMULA: { 
 	saved_ref = NULL;
+	const guint8 *result = q->data + 6;
 
 #ifdef EDEBUG
 	fprintf(stderr, "Got FORMULA, row=%d, col=%d\n", row, col);
 #endif
 	if (allocate_row_col(row, col, book)) return 1;
-
 	prow = rowptr + row;
-	if (((unsigned char) q->data[12] == 0xFF) && 
-	    (unsigned char) q->data[13] == 0xFF) {
+
+	if (result[6] == 0xff && result[7] == 0xff) {
 	    /* not a floating point value */
-	    if (q->data[6] == 1) {
-		/* boolean */
-		char buf[2] = "0";
 
-		buf[0] += q->data[9];
-		prow->cells[col] = g_strdup(buf);
-	    } else if (q->data[6] == 2) {
-		/* error */
-		prow->cells[col] = g_strdup("ERROR");
-	    } else if (q->data[6] == 0) {
+	    switch (*result) {
+	    case 0x0: /* string formula */
 		saved_ref = prow->cells + col;
-	    }   
+		break;
+	    case 0x1: /* boolean value */
+		prow->cells[col] = g_strdup((result[2])? "1" : "0");
+		break;
+	    case 0x2: /* error code */
+		prow->cells[col] = g_strdup("-999.0");
+		break;
+	    default:
+		fprintf(stderr, "Bad formula code 0x%u\n", 
+			(unsigned) *result);
+		break;
+	    }
+#ifdef EDEBUG
+	    fprintf(stderr, " non floating-point value, code = 0x%u\n", 
+		    (unsigned) *result);
+#endif
 	} else {
-	    double v = biff_get_double(q->data + 6);
+	    /* floating-point */
+	    double v = get_le_double(result);
 
+#ifdef EDEBUG
+	    fprintf(stderr, " floating-point value = %g\n", v);
+#endif
 	    if (isnan(v)) {
 		fprintf(stderr, "Got a NaN\n");
 		prow->cells[col] = g_strdup("-999.0");
@@ -390,6 +434,9 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	}
 	len = MS_OLE_GET_GUINT16(q->data + 0);
 	*saved_ref = mark_string(convert8to7(q->data + 2, len + 1));
+#ifdef EDEBUG
+	fprintf(stderr, "Got STRING, reference = '%s'\n", *saved_ref);	
+#endif
 	break;
     }
 
@@ -417,28 +464,28 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     return 0;
 }
 
-static int handled_record (int r)
+static int handled_record (BiffQuery *q)
 { 
-    int rp;
-
-    if (r == BIFF_SST || 
-	r == BIFF_CONTINUE ||  
-	r == BIFF_LABELSST || 
-	r == BIFF_MULRK || 
-	r == BIFF_FORMULA) {
+    if (q->opcode == BIFF_SST || 
+	q->opcode == BIFF_CONTINUE ||  
+	q->opcode == BIFF_LABELSST || 
+	q->opcode == BIFF_MULRK || 
+	q->opcode == BIFF_FORMULA) {
 	return 1;
     }
 
-    rp = r - 0x200;
-
-    if (rp == BIFF_LABEL ||
-	rp == BIFF_NUMBER ||
-	rp == BIFF_RK ||
-	rp == BIFF_STRING) {
-	return 1;
+    if (q->ms_op == 0x02) {
+	if (q->ls_op == BIFF_LABEL ||
+	    q->ls_op == BIFF_NUMBER ||
+	    q->ls_op == BIFF_RK ||
+	    q->ls_op == BIFF_STRING) {
+	    return 1;
+	}
     }
 
-    if (r - 0x800 == BIFF_BOF) return 1;
+    if (q->ms_op == 0x08) {
+	if (q->ls_op == BIFF_BOF) return 1;
+    }
 
     return 0;
 }
@@ -484,8 +531,8 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
 
     while (!err && ms_biff_query_next(q)) {
 #ifdef EDEBUG
-	    fprintf(stderr, "At %lu: q->opcode=0x%02x, ms_op=0x%02x, ls_op=0x%02x\n", 
-		    (unsigned long) q->streamPos, q->opcode, q->ms_op, q->ls_op);
+	    fprintf(stderr, "At %lu: q->opcode=0x%02x\n", 
+		    (unsigned long) q->streamPos, q->opcode);
 #endif
 	if (q->opcode == BIFF_EOF) {
 #ifdef EDEBUG
@@ -507,11 +554,14 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
 	    else continue;
 	} 
 
-	if (handled_record(q->opcode)) {
+	if (handled_record(q)) {
 	    err = process_item(q, book, prn);
-	} else {
+	} 
+#ifdef EDEBUG
+	else {
 	    fprintf(stderr, "skipping unhandled opcode 0x%02x\n", q->opcode);
 	}
+#endif
     }
 
     ms_biff_query_destroy(q);
@@ -583,21 +633,20 @@ static char *copy_unicode_string (unsigned char **src)
     }
 }
 
-static char *convert8to7 (const char *src, int count) 
+static char *convert8to7 (const unsigned char *s, int count) 
 {
     char *p, *dest;
-    int i, j = 0;
-    unsigned char u;
+    int i, j;
 
     dest = malloc(VNAMELEN);
     if (dest == NULL) return NULL;
     memset(dest, 0, VNAMELEN);
 
     p = dest;
+    j = 0;
     for (i=0; i<count && j<VNAMELEN-1; i++) {
-	u = (unsigned char) src[i];
-	if ((isalnum(u) || ispunct(u)) && u < 128) {
-	    *p++ = u;
+	if ((isalnum(s[i]) || ispunct(s[i])) && s[i] < 128) {
+	    *p++ = s[i];
 	    j++;
 	}
     }
@@ -613,21 +662,22 @@ static char *convert8to7 (const char *src, int count)
     return dest;
 }
 
-static char *convert16to7 (const char *src, int count) 
+static char *convert16to7 (const unsigned char *s, int count) 
 {
-    const char *s = src;
-    char *p, *dest = malloc(VNAMELEN);
-    int i, j = 0, u;
+    char *p, *dest;
+    int i, j;
+    guint16 u;
 
     dest = malloc(VNAMELEN);
     if (dest == NULL) return NULL;
     memset(dest, 0, VNAMELEN);
 
     p = dest;
+    j = 0;
     for (i=0; i<count && j<VNAMELEN-1; i++) {
 	u = MS_OLE_GET_GUINT16(s);
 	s += 2;
-	if (isalnum(u) && u < 128) {
+	if ((isalnum(u) || ispunct(u)) && u < 128) {
 	    *p++ = u;
 	    j++;
 	}
@@ -718,7 +768,7 @@ static void free_sheet (void)
 	free(sst);
     }
 
-    /* free cells (was i<lastrow below) */
+    /* free cells */
     if (rowptr != NULL) {
 	for (i=0; i<=lastrow; i++) {
 	    if (rowptr[i].cells == NULL) {
@@ -1003,7 +1053,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	err = check_data_block(&book, ncols, label_strings, &strerr);
 	if (err == 1) {
 	    pprintf(prn, _("Expected numeric data, found string:\n"
-			   "%s at row %d, column %d\n"),
+			   "%s\" at row %d, column %d\n"),
 		    strerr.str, strerr.row, strerr.column);
 	    g_free(strerr.str);
 	    pputs(prn, _(adjust_rc));

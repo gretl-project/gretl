@@ -12,6 +12,8 @@
 
 #include <libole2/ms-ole.h>
 
+#undef EDEBUG
+
 typedef struct _BiffQuery BiffQuery;
 
 /**
@@ -70,52 +72,6 @@ typedef enum { MS_BIFF_F_MS=0, MS_BIFF_F_LOTUS=1 } MsBiffFormat ;
 typedef enum { MS_BIFF_E_CONTEXT=0, MS_BIFF_E_LEFT_TO_RIGHT=1,
 	       MS_BIFF_E_RIGHT_TO_LEFT=2 } MsBiffEastern ;
 
-typedef enum {
-	MS_BIFF_F_U_NONE = 1,
-	MS_BIFF_F_U_SINGLE = 2,
-	MS_BIFF_F_U_DOUBLE = 3,
-	MS_BIFF_F_U_SINGLE_ACC = 4,
-	MS_BIFF_F_U_DOUBLE_ACC = 5
-} MsBiffFontUnderline ;
-
-typedef enum { MS_BIFF_F_S_NONE, 
-	       MS_BIFF_F_S_SUB, 
-	       MS_BIFF_F_S_SUPER 
-} MsBiffFontScript ;
-
-typedef enum {	/* Horizontal alignment */
-	MS_BIFF_H_A_GENERAL = 0,
-	MS_BIFF_H_A_LEFT    = 1,
-	MS_BIFF_H_A_CENTER  = 2,
-	MS_BIFF_H_A_RIGHT   = 3,
-	MS_BIFF_H_A_FILL    = 4,
-	MS_BIFF_H_A_JUSTIFTY = 5,
-	MS_BIFF_H_A_CENTER_ACROSS_SELECTION = 6
-} MsBiffHAlign;
-
-typedef enum {	/* Vertical alignment */
-	MS_BIFF_V_A_TOP     = 0,
-	MS_BIFF_V_A_CENTER  = 1,
-	MS_BIFF_V_A_BOTTOM  = 2,
-	MS_BIFF_V_A_JUSTIFY = 3
-} MsBiffVAlign;
-
-typedef enum {	/* Text orientation */
-	MS_BIFF_O_HORIZ         = 0,
-	MS_BIFF_O_VERT_HORIZ = 1,
-	MS_BIFF_O_VERT_VERT  = 2,
-	MS_BIFF_O_VERT_VERT2 = 3
-} MsBiffOrient;
-
-typedef enum { /* Differences to parent styles */
-	MS_BIFF_D_FORMAT_BIT = 10,
-	MS_BIFF_D_FONT_BIT   = 11,
-	MS_BIFF_D_ALIGN_BIT  = 12,
-	MS_BIFF_D_BORDER_BIT = 13,
-	MS_BIFF_D_FILL_BIT   = 14,
-	MS_BIFF_D_LOCK_BIT   = 15
-} MsBiffDifferences;
-
 typedef struct
 {
   MsBiffVersion version ;
@@ -127,8 +83,9 @@ typedef enum {
 	MsBiffMaxRowsV8 = 65536
 } MsBiffMaxRows;
 
-extern MsBiffBofData *new_ms_biff_bof_data  (BiffQuery *pos);
-extern void free_ms_biff_bof_data (MsBiffBofData *data);
+int excel_book_get_info (const char *fname, wbook *book);
+MsBiffBofData *new_ms_biff_bof_data  (BiffQuery *pos);
+void free_ms_biff_bof_data (MsBiffBofData *data);
 BiffQuery *ms_biff_query_new (MsOleStream *ptr);
 int ms_biff_query_next (BiffQuery *bq);
 void ms_biff_query_destroy (BiffQuery *bq);

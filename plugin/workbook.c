@@ -26,8 +26,9 @@
 #include <glib.h>
 
 #include "libgretl.h"
-#include "biff.h"
+
 #include "importer.h"
+#include "biff.h"
 
 typedef struct _BiffBoundsheetData BiffBoundsheetData;
 
@@ -59,11 +60,12 @@ BiffQuery *ms_biff_query_new (MsOleStream *ptr)
  **/
 int ms_biff_query_next (BiffQuery *bq)
 {
-    guint8  tmp[4];
-    int ans=1;
+    guint8 tmp[4];
+    int ans = 1;
 
-    if (!bq || bq->pos->position >= bq->pos->size)
+    if (!bq || bq->pos->position >= bq->pos->size) {
 	return 0;
+    }
 
     if (bq->data_malloced) {
 	g_free (bq->data);
@@ -72,12 +74,14 @@ int ms_biff_query_next (BiffQuery *bq)
     }
 
     bq->streamPos = bq->pos->position;
-    if (!bq->pos->read_copy (bq->pos, tmp, 4))
+    if (!bq->pos->read_copy (bq->pos, tmp, 4)) {
 	return 0;
-    bq->opcode = MS_OLE_GET_GUINT16 (tmp);
-    bq->length = MS_OLE_GET_GUINT16 (tmp+2);
-    bq->ms_op  = (bq->opcode>>8);
-    bq->ls_op  = (bq->opcode&0xff);
+    }
+
+    bq->opcode = MS_OLE_GET_GUINT16(tmp);
+    bq->length = MS_OLE_GET_GUINT16(tmp+2);
+    bq->ms_op  = (bq->opcode >> 8);
+    bq->ls_op  = (bq->opcode & 0xff);
 
     if (bq->length > 0 &&
 	!(bq->data = bq->pos->read_ptr(bq->pos, bq->length))) {
@@ -85,10 +89,11 @@ int ms_biff_query_next (BiffQuery *bq)
 	if (!bq->pos->read_copy(bq->pos, bq->data, bq->length)) {
 	    ans = 0;
 	    g_free(bq->data);
-	    bq->data = 0;
+	    bq->data = NULL;
 	    bq->length = 0;
-	} else
+	} else {
 	    bq->data_malloced = 1;
+	}
     }
 
     if (!bq->length) {
@@ -96,18 +101,18 @@ int ms_biff_query_next (BiffQuery *bq)
 	return 1;
     }
 
-    return (ans);
+    return ans;
 }
 
 void ms_biff_query_destroy (BiffQuery *bq)
 {
     if (bq != NULL) {
 	if (bq->data_malloced) {
-	    g_free (bq->data);
+	    g_free(bq->data);
 	    bq->data = 0;
 	    bq->data_malloced = 0;
 	}
-	g_free (bq);
+	g_free(bq);
     }
 }
 
@@ -126,9 +131,10 @@ get_xtn_lens (guint32 *pre_len, guint32 *end_len, const guint8 *ptr,
 	(*pre_len) += 2;
 	ptr        += 2;
 
-	if (!warned)
+	if (!warned) {
 	    printf ("FIXME: rich string support unimplemented:"
 		    "discarding %d runs\n", formatting_runs);
+	}
 	warned = TRUE;
     }
     if (ext_str) { /* NB this data always comes after the rich_str data */
@@ -138,9 +144,10 @@ get_xtn_lens (guint32 *pre_len, guint32 *end_len, const guint8 *ptr,
 	(*end_len) += len_ext_rst;
 	(*pre_len) += 4;
 
-	if (!warned)
+	if (!warned) {
 	    printf ("FIXME: extended string support unimplemented:"
 		    "ignoring %u bytes\n", len_ext_rst);
+	}
 	warned = TRUE;
     }
 }
@@ -148,36 +155,41 @@ get_xtn_lens (guint32 *pre_len, guint32 *end_len, const guint8 *ptr,
 static char *
 get_chars (char const *ptr, guint length, gboolean high_byte)
 {
-    char* ans;
+    char *ans;
     guint32 lp;
 
     if (high_byte) {
-	wchar_t* wc = g_new (wchar_t, length + 2);
+	wchar_t *wc = g_new(wchar_t, length + 2);
 	size_t retlength;
-	ans = g_new (char, (length + 2) * 8);
+
+	ans = g_new(char, (length + 2) * 8);
 
 	for (lp = 0; lp < length; lp++) {
-	    guint16 c = MS_OLE_GET_GUINT16 (ptr);
+	    guint16 c = MS_OLE_GET_GUINT16(ptr);
+
 	    ptr += 2;
 	    wc[lp] = c;
 	}
 
 	retlength = length;
 	g_free (wc);
-	if (retlength == (size_t)-1)
+	if (retlength == (size_t)-1) {
 	    retlength = 0;
+	}
 	ans[retlength] = 0;
-	ans = g_realloc (ans, retlength + 2);
+	ans = g_realloc(ans, retlength + 2);
     } else {
 	size_t outbytes = (length + 2) * 8;
 
-	ans = g_new (char, outbytes + 1);
+	ans = g_new(char, outbytes + 1);
 	for (lp = 0; lp < length; lp++) {
 	    unsigned u = *ptr++;
+
 	    ans[lp] = (u < 128)? u : '_';
 	}
 	ans[lp] = 0;
     }
+
     return ans;
 }
 
@@ -187,7 +199,7 @@ biff_string_get_flags (const guint8 *ptr, gboolean *word_chars,
 {
     guint8 header;
 
-    header = MS_OLE_GET_GUINT8 (ptr);
+    header = MS_OLE_GET_GUINT8(ptr);
 
     if (((header & 0xf2) == 0)) {
 	*word_chars = (header & 0x1) != 0;
@@ -212,6 +224,7 @@ biff_get_text (guint8 const *pos, guint32 length, guint32 *byte_length)
     gboolean high_byte;
     gboolean ext_str;
     gboolean rich_str;
+    guint32 pre_len, end_len;
 
     if (byte_length == NULL) {
 	byte_length = &byte_len;
@@ -231,20 +244,16 @@ biff_get_text (guint8 const *pos, guint32 length, guint32 *byte_length)
 	ptr = pos;
     }
 
-    {
-	guint32 pre_len, end_len;
-
-	get_xtn_lens (&pre_len, &end_len, ptr, ext_str, rich_str);
-	ptr += pre_len;
-	(*byte_length) += pre_len + end_len;
-    }
+    get_xtn_lens (&pre_len, &end_len, ptr, ext_str, rich_str);
+    ptr += pre_len;
+    (*byte_length) += pre_len + end_len;
 
     if (!length) {
-	ans = g_new (char, 2);
-	g_warning ("Warning unterminated string floating");
+	ans = g_new(char, 2);
+	g_warning("Warning unterminated string floating");
     } else {
 	(*byte_length) += (high_byte ? 2 : 1) * length;
-	ans = get_chars ((char *) ptr, length, high_byte);
+	ans = get_chars((char *) ptr, length, high_byte);
     }
 
     return ans;
@@ -262,8 +271,9 @@ biff_boundsheet_data_new (BiffQuery *q, MsBiffVersion ver)
     }
 
     startpos = MS_OLE_GET_GUINT32(q->data);
-    if (!(startpos == MS_OLE_GET_GUINT32(q->data)))
+    if (!(startpos == MS_OLE_GET_GUINT32(q->data))) {
 	return NULL;
+    }
 
     if (MS_OLE_GET_GUINT8(q->data + 4) == 0 &&
 	((MS_OLE_GET_GUINT8(q->data + 5)) & 0x3) == 0) { /* worksheet, visible */
@@ -281,6 +291,7 @@ static MsBiffBofData *ms_biff_bof_data_new (BiffQuery *q)
     MsBiffBofData *ans = g_new (MsBiffBofData, 1);
 
     if ((q->opcode & 0xff) == BIFF_BOF && (q->length >= 4)) {
+
 	switch (q->opcode >> 8) {
 	case 0: ans->version = MS_BIFF_V2;
 	    break;
@@ -288,27 +299,27 @@ static MsBiffBofData *ms_biff_bof_data_new (BiffQuery *q)
 	    break;
 	case 4: ans->version = MS_BIFF_V4;
 	    break;
-	case 8: 
-	    {
-		switch (MS_OLE_GET_GUINT16 (q->data)) {
-		case 0x0600: ans->version = MS_BIFF_V8;
-		    break;
-		case 0x500: 
-		    ans->version = MS_BIFF_V7;
-		    break;
-		default:
-		    printf ("Unknown BIFF sub-number in BOF %x\n", q->opcode);
-		    ans->version = MS_BIFF_V_UNKNOWN;
-		}
+	case 8: {
+	    switch (MS_OLE_GET_GUINT16 (q->data)) {
+	    case 0x0600: ans->version = MS_BIFF_V8;
 		break;
+	    case 0x500: 
+		ans->version = MS_BIFF_V7;
+		break;
+	    default:
+		printf ("Unknown BIFF sub-number in BOF %x\n", q->opcode);
+		ans->version = MS_BIFF_V_UNKNOWN;
 	    }
+	    break;
+	}
 
 	default:
 	    printf ("Unknown BIFF number in BOF %x\n", q->opcode);
 	    ans->version = MS_BIFF_V_UNKNOWN;
 	    printf ("Biff version %d\n", ans->version);
 	}
-	switch (MS_OLE_GET_GUINT16 (q->data + 2)) {
+
+	switch (MS_OLE_GET_GUINT16(q->data + 2)) {
 	case 0x0005: ans->type = MS_BIFF_TYPE_Workbook; break;
 	case 0x0006: ans->type = MS_BIFF_TYPE_VBModule; break;
 	case 0x0010: ans->type = MS_BIFF_TYPE_Worksheet; break;
@@ -350,16 +361,18 @@ ms_excel_read_bof (BiffQuery *q,
     }
 
     *version = ver = ms_biff_bof_data_new(q);
-    if (vv != MS_BIFF_V_UNKNOWN)
+    if (vv != MS_BIFF_V_UNKNOWN) {
 	ver->version = vv;
+    }
 
     if (ver->type == MS_BIFF_TYPE_Workbook) {
 	if (ver->version >= MS_BIFF_V8) {
 	    guint32 ver = MS_OLE_GET_GUINT32 (q->data + 4);
-	    if (ver == 0x4107cd18)
+	    if (ver == 0x4107cd18) {
 		printf ("Excel 2000 ?\n");
-	    else
+	    } else {
 		printf ("Excel 97 +\n");
+	    }
 	} else if (ver->version >= MS_BIFF_V7)
 	    printf ("Excel 95\n");
 	else if (ver->version >= MS_BIFF_V5)
@@ -378,8 +391,7 @@ ms_excel_read_bof (BiffQuery *q,
 	       ver->type == MS_BIFF_TYPE_Macrosheet) {
 	printf ("VB Module or Macrosheet.\n");
 
-	while (ms_biff_query_next (q) &&
-	       q->opcode != BIFF_EOF)
+	while (ms_biff_query_next (q) && q->opcode != BIFF_EOF)
 	    ;
 	if (q->opcode != BIFF_EOF)
 	    g_warning ("EXCEL: file format error.  Missing BIFF_EOF");
@@ -412,7 +424,6 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	}
     }
 
-    fprintf(stderr, _("Reading file...\n"));
     q = ms_biff_query_new(stream);
 
     while (problem_loading == NULL && ms_biff_query_next(q)) {
@@ -448,7 +459,9 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	case BIFF_BOUNDSHEET: {
 	    BiffBoundsheetData *ans;
 
+#ifdef EDEBUG
 	    fprintf(stderr, "Got BIFF_BOUNDSHEET\n");
+#endif
 	    ans = biff_boundsheet_data_new(q, ver->version);
 	    if (ans != NULL) {
 		*bounds = g_realloc(*bounds, (*nsheets + 1) * sizeof **bounds);
@@ -468,15 +481,11 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	    break;
 
 	case BIFF_SST:
-	    /* read_sst(q, wb, ver->version); */
-	    break;
-
 	case BIFF_EXTSST: 
 	    break;
 
 	case BIFF_EXTERNSHEET: /* See: S59D82.HTM */
-	    fprintf(stderr, "Got BIFF_EXTERNSHEET\n");
-	    /* ms_excel_externsheet(q, wb, ver); */
+	    /* fprintf(stderr, "Got BIFF_EXTERNSHEET\n"); */
 	    break;
 
 	case BIFF_FORMAT: 
@@ -498,13 +507,15 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	    break;
 
 	case BIFF_EXTERNNAME:
+#ifdef EDEBUG
 	    fprintf(stderr, "Got BIFF_EXTERNNAME\n");
-	    /* ms_excel_externname (q, wb, NULL); */
+#endif
 	    break;
 
 	case BIFF_NAME:
+#ifdef EDEBUG
 	    fprintf(stderr, "Got BIFF_NAME\n");
-	    /* ms_excel_read_name (q, wb, NULL);; */
+#endif
 	    break;
 
 	case BIFF_WRITEACCESS:
@@ -521,7 +532,9 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	case BIFF_SELECTION: /* 0, NOT 10 */
 	    break;
 	case BIFF_DIMENSIONS:	/* 2, NOT 1,10 */
+#ifdef EDEBUG
 	    fprintf(stderr, "Got BIFF_DIMENSIONS\n");
+#endif
 	    /* ms_excel_biff_dimensions (q, wb); */
 	    break;
 	case BIFF_OBJ: /* See: ms-obj.c and S59DAD.HTM */
@@ -536,13 +549,14 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 
 	default:
 	    /* fprintf(stderr, "ms_excel_unexpected_biff\n"); */
-	    /* ms_excel_unexpected_biff (q, "Workbook", ms_excel_read_debug); */
 	    break;
 	}
     }
 
     ms_biff_query_destroy(q);
-    if (ver) ms_biff_bof_data_destroy(ver);
+    if (ver) {
+	ms_biff_bof_data_destroy(ver);
+    }
     ms_ole_stream_close(&stream);
 }
 
@@ -594,46 +608,3 @@ int excel_book_get_info (const char *fname, wbook *book)
 } 
 
 
-#ifdef STANDALONE
-int main (int argc, char *argv[]) {
-    MsOleErr ole_error;
-    MsOle *f;
-    char *filename;
-    BiffBoundsheetData **bounds = NULL;
-    int i, nsheets = 0;
-
-    if (argc == 2) 
-	filename = argv[1];
-    else
-	return 1;
-
-    ole_error = ms_ole_open (&f, filename);
-
-    if (ole_error != MS_OLE_ERR_OK) {
-	char const *msg = (ole_error == MS_OLE_ERR_INVALID ||
-			   ole_error == MS_OLE_ERR_FORMAT) ?
-	    _("This file is not an 'OLE' file -- it may be too "
-	      "old for gretl to read\n")
-	    : _("Unexpected error reading the file");
-	ms_ole_destroy (&f);
-	fprintf (stderr, msg);
-	return 1;
-    }
-
-    ms_excel_read_workbook (f, &bounds, &nsheets);
-    ms_ole_destroy (&f);
-
-    for (i=0; i<nsheets; i++) {
-	printf("Worksheet, name = '%s', offset = %u\n", 
-	       (bounds[i])->name, (bounds[i])->streamStartPos);
-    }
-
-    for (i=0; i<nsheets; i++) { 
-	biff_boundsheet_data_destroy(NULL, bounds[i], NULL);
-    }
-
-    g_free(bounds);
-
-    return 0;
-}
-#endif
