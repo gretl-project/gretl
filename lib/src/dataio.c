@@ -79,7 +79,9 @@ void free_Z (double **Z, DATAINFO *pdinfo)
 
     if (Z == NULL || pdinfo == NULL) return;
 
-    for (i=0; i<pdinfo->v; i++) free(Z[i]);
+    for (i=0; i<pdinfo->v; i++) {
+	free(Z[i]);
+    }
     free(Z);
 }
 
@@ -131,14 +133,16 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
     if (code == CLEAR_FULL) {
 	if (pdinfo->varname != NULL) {
-	    for (i=0; i<pdinfo->v; i++) 
+	    for (i=0; i<pdinfo->v; i++) {
 		free(pdinfo->varname[i]); 
+	    }
 	    free(pdinfo->varname);
 	    pdinfo->varname = NULL;
 	}
 	if (pdinfo->varinfo != NULL) {
-	    for (i=0; i<pdinfo->v; i++) 
+	    for (i=0; i<pdinfo->v; i++) {
 		free(pdinfo->varinfo[i]); 
+	    }
 	    free(pdinfo->varinfo);
 	    pdinfo->varinfo = NULL;
 	}
@@ -188,22 +192,25 @@ double get_date_x (int pd, const char *obs)
     return x;
 }
 
-/* ......................................................... */
+/* Skip past comments in .hdr file.  Return 0 if comments found,
+   otherwise 1.
+*/
 
 static int skipcomments (FILE *fp, const char *str)
-/* Skips past comments in .hdr file.  Returns 
-   0 if comments found, otherwise 1.
-*/
 {
-    char commentword[MAXLEN];  /* should be big enough to accommodate
-			          strings among the comments? */
-    commentword[0] = '\0';
+    char word[MAXLEN];  /* should be big enough to accommodate
+			   strings among the comments? */
+
+    *word = '\0';
+
     if (strncmp(str, STARTCOMMENT, 2) == 0) {
-        while (strcmp(commentword, ENDCOMMENT)) {
-            fscanf(fp, "%s", commentword);
+        while (strcmp(word, ENDCOMMENT)) {
+            fscanf(fp, "%s", word);
         }
         return 0;
-    } else return 1;
+    } 
+
+    return 1;
 }
 
 /* ................................................. */
@@ -211,9 +218,9 @@ static int skipcomments (FILE *fp, const char *str)
 static int comment_lines (FILE *fp, char **pbuf)
 {
     char s[MAXLEN], *mybuf = NULL;
-    int count = 0, bigger = 1, bufsize;
+    int count = 0, bigger = 1;
 
-    if (fgets(s, MAXLEN-1, fp) == NULL) {
+    if (fgets(s, sizeof s, fp) == NULL) {
 	return 0;
     }
 
@@ -226,17 +233,13 @@ static int comment_lines (FILE *fp, char **pbuf)
 
 	**pbuf = '\0';
 
-	do {
-	    if (fgets(s, MAXLEN-1, fp) == NULL) {
-		break;
-	    }
+	while (fgets(s, sizeof s, fp)) {
 	    if (!strncmp(s, ENDCOMMENT, 2)) {
 		break;
 	    }
-	    count++;
-	    if (count > 20*bigger) {
-		bigger++;
-		bufsize = 20 * MAXLEN * bigger;
+	    if (++count > 20 * bigger) {
+		size_t bufsize = 20 * MAXLEN * ++bigger;
+
 		mybuf = realloc(*pbuf, bufsize);
 		if (mybuf == NULL) {
 		    return -1;
@@ -245,10 +248,31 @@ static int comment_lines (FILE *fp, char **pbuf)
 		}
 	    }
 	    strcat(*pbuf, s);
-	} while (s != NULL);
+	} 
     }
 
     return count;
+}
+
+static int add_case_marker (DATAINFO *pdinfo, int n)
+{
+    char **S;
+
+    S = realloc(pdinfo->S, n * sizeof *S);
+    if (S == NULL) {
+	return 1;
+    }
+
+    pdinfo->S = S;
+
+    pdinfo->S[n-1] = malloc(OBSLEN);
+    if (pdinfo->S[n-1] == NULL) {
+	return 1;
+    }
+
+    strcpy(pdinfo->S[n-1], "NA");
+
+    return 0;
 }
 
 /* allocate_case_markers:
@@ -359,16 +383,6 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
     return 0;
 }
 
-#ifdef notdef
-static char locale_friendly_delim (void)
-{
-    if (',' == get_local_decpoint())
-	return ' ';
-    else
-	return ',';
-}
-#endif
-
 /**
  * datainfo_new:
  *
@@ -394,16 +408,20 @@ DATAINFO *datainfo_new (void)
     dinfo->t2 = 0;
     dinfo->stobs[0] = '\0';
     dinfo->endobs[0] = '\0';
+
     dinfo->varname = NULL;
     dinfo->varinfo = NULL;    
+
     dinfo->markers = NO_MARKERS;  
     dinfo->delim = ',';
     dinfo->decpoint = '.';
+
     dinfo->S = NULL;
     dinfo->descrip = NULL;
     dinfo->vector = NULL;
     dinfo->subdum = NULL;
     dinfo->data = NULL;
+
     dinfo->structure = CROSS_SECTION;
 
     return dinfo;
@@ -424,11 +442,8 @@ DATAINFO *datainfo_new (void)
  *
  */
 
-DATAINFO *create_new_dataset (double ***pZ,  
-			      int nvar,
-			      int nobs,
-			      int markers
-			      )
+DATAINFO *
+create_new_dataset (double ***pZ, int nvar, int nobs, int markers)
 {
     DATAINFO *pdinfo;
 
@@ -503,12 +518,17 @@ static int prepZ (double ***pZ, const DATAINFO *pdinfo)
     int i, t;
 
     if (*pZ != NULL) free(*pZ);
+
     *pZ = malloc(pdinfo->v * sizeof **pZ);
-    if (*pZ == NULL) return 1;
+    if (*pZ == NULL) {
+	return 1;
+    }
 
     for (i=0; i<pdinfo->v; i++) {
 	(*pZ)[i] = malloc(pdinfo->n * sizeof ***pZ);
-	if (*pZ == NULL) return 1;
+	if (*pZ == NULL) {
+	    return 1;
+	}
     }
 
     for (t=0; t<pdinfo->n; t++) {
@@ -2905,6 +2925,7 @@ static int csv_missval (const char *str, int i, int t, PRN *prn)
 static int dataset_add_obs (double ***pZ, DATAINFO *pdinfo)
 {
     int i;
+    int err = 0;
 
     for (i=0; i<pdinfo->v; i++) {
 	if (pdinfo->vector[i]) {
@@ -2928,7 +2949,11 @@ static int dataset_add_obs (double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    return 0;
+    if (pdinfo->S != NULL) {
+	err = add_case_marker(pdinfo, pdinfo->n);
+    }
+
+    return err;
 }
 
 static int blank_so_far (double *x, int obs)
@@ -3043,6 +3068,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     DATAINFO *csvinfo = NULL;
     double **csvZ = NULL;
     char *line = NULL, *p = NULL, *descrip = NULL;
+
     const char *msg = M_("\nPlease note:\n"
 	"- The first row of the CSV file should contain the "
 	"names of the variables.\n"
@@ -3051,6 +3077,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	"should be blank, or should say 'obs' or 'date'.\n"
 	"- The remainder of the file must be a rectangular "
 	"array of data.\n");
+
     char delim = '\t';
     int numcount, auto_name_vars = 0;
     gretl_string_table *st = NULL;
@@ -3291,7 +3318,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		p++;
 	    }
 	    csvstr[i] = 0;
-	    if (k == 0 && (blank_1 || obs_1)) {
+	    if (k == 0 && (blank_1 || obs_1) && csvinfo->S != NULL) {
 		csvinfo->S[t][0] = 0;
 		strncat(csvinfo->S[t], csvstr, OBSLEN - 1);
 		iso_to_ascii(csvinfo->S[t]);
@@ -4870,4 +4897,59 @@ int check_atof (const char *numstr)
     }
 
     return 1;
+}
+
+int transpose_data (double ***pZ, DATAINFO *pdinfo)
+{
+    double **tZ = NULL;
+    DATAINFO *tinfo;
+    int k = pdinfo->n + 1;
+    int T = pdinfo->v - 1;
+    int i, t;
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (!pdinfo->vector[i]) {
+	    strcpy(gretl_errmsg, _("Dataset contains scalars, can't transpose"));
+	    return E_DATA;
+	}
+    }
+
+    tinfo = create_new_dataset(&tZ, k, T, 0);
+    if (tinfo == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=1; i<pdinfo->v; i++) {
+	for (t=0; t<pdinfo->n; t++) {
+	    tZ[t+1][i-1] = (*pZ)[i][t];
+	}
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (pdinfo->S != NULL && pdinfo->S[t][0] != '\0') {
+	    strcpy(tinfo->varname[t+1], pdinfo->S[t]);
+	} else {
+	    sprintf(tinfo->varname[t+1], "v%d", t+1);
+	}
+    }
+
+    free_Z(*pZ, pdinfo);
+    *pZ = tZ;
+
+    clear_datainfo(pdinfo, CLEAR_FULL);
+
+    pdinfo->v = k;
+    pdinfo->n = T;
+    pdinfo->t1 = 0;
+    pdinfo->t2 = pdinfo->n - 1;
+
+    pdinfo->varname = tinfo->varname;
+    pdinfo->varinfo = tinfo->varinfo;
+    pdinfo->vector = tinfo->vector;
+
+    dataset_dates_defaults(pdinfo);
+
+    free(tinfo);
+
+    return 0;
 }

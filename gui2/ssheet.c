@@ -85,6 +85,7 @@ static char *single_underscores (char *targ, const char *src)
 	}
 	src++;
     }
+
     *p = '\0';
 
     return targ;
@@ -160,9 +161,8 @@ static void move_to_next_cell (spreadsheet *sheet, GtkTreePath *path,
 	    set_locator_label(sheet, newpath, column);
 	    gtk_tree_path_free(newpath);
 	}
-    } 
-    /* ...or try the next column */
-    else {
+    } else {
+	/* ...or try the next column */
 	gpointer p = g_object_get_data(G_OBJECT(column), "colnum");
 
 	if (p != NULL && (colnum = GPOINTER_TO_INT(p)) < sheet->datacols) {
@@ -183,12 +183,25 @@ static void move_to_next_cell (spreadsheet *sheet, GtkTreePath *path,
 
 static gint sheet_cell_edited (GtkCellRendererText *cell,
 			       const gchar *path_string,
-			       const gchar *new_text,
+			       const gchar *user_text,
 			       spreadsheet *sheet)
 {
-    if (check_atof(new_text)) {
-	errbox(get_gretl_errmsg());
+    const gchar *new_text;
+    int err = 0;
+
+    if (!strcmp(user_text, "na") || !strcmp(user_text, "NA")) {
+	/* allow conversion to "missing" */
+	new_text = "";
     } else {
+	err = check_atof(user_text);
+	if (err) {
+	    errbox(get_gretl_errmsg());
+	} else {
+	    new_text = user_text;
+	}
+    }
+
+    if (!err) {
 	GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
 	GtkTreeModel *model = gtk_tree_view_get_model(view);
 	GtkTreeViewColumn *column;

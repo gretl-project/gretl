@@ -140,3 +140,6 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 char *get_xml_description (const char *fname);
 
 int check_atof (const char *numstr);
+
+int transpose_data (double ***pZ, DATAINFO *pdinfo);
+

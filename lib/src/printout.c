@@ -734,10 +734,14 @@ void gretl_printxs (double xx, int n, int ci, PRN *prn)
     int ls;
     char s[32];
 
-    printxx(xx, s, ci);
+    if (na(xx)) {
+	*s = '\0';
+    } else {
+	printxx(xx, s, ci);
+    }
     ls = strlen(s);
     pputc(prn, ' ');
-    bufspace(n-3-ls, prn);
+    bufspace(n - 3 - ls, prn);
     pputs(prn, s);
 }
 
@@ -1259,11 +1263,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 
     for (t=0; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
-	if (na(fr->actual[t])) {
-	    bufspace(15, prn);
-	} else {
-	    gretl_printxs(fr->actual[t], 15, PRINT, prn);
-	}
+	gretl_printxs(fr->actual[t], 15, PRINT, prn);
 	if (na(fr->fitted[t])) {
 	    pputc(prn, '\n');
 	    continue;

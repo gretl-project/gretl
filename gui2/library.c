@@ -4384,6 +4384,37 @@ int maybe_restore_full_data (int action)
 
 /* ........................................................... */
 
+void gui_transpose_data (gpointer p, guint u, GtkWidget *w)
+{
+    int i, resp;
+
+    for (i=1; i<datainfo->v; i++) {
+	if (!datainfo->vector[i]) {
+	    errbox(_("Dataset contains scalars, can't transpose"));
+	    return;
+	}
+    }
+
+    resp = yes_no_dialog(_("gretl: transpose data"), 
+			 _("Transposing means that each variable becomes interpreted\n"
+			   "as an observation, and each observation as a variable.\n"
+			   "Do you want to proceed?"), 0);
+
+    if (resp == GRETL_YES) {
+	int err = transpose_data(&Z, datainfo);
+    
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    mark_dataset_as_modified();
+	    populate_varlist();
+	    infobox(_("Data tranposed"));
+	}
+    }
+}
+
+/* ........................................................... */
+
 #define DATA_EXPORT(o) (o == OPT_M || o == OPT_R || \
                         o == OPT_A || o == OPT_C)
 

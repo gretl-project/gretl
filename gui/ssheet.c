@@ -67,7 +67,8 @@ static int check_data_in_sheet (void)
 	for (t=0; t<n; t++) {
 	    celltext = gtk_sheet_cell_get_text(GTK_SHEET(gretlsheet), t, i);
 	    if (celltext != NULL) {
-		strncpy(numstr, celltext, 31);
+		*numstr = 0;
+		strncat(numstr, celltext, 31);
 		err = check_atof(numstr);
 		if (err) {
 		    errbox(get_gretl_errmsg());
@@ -76,6 +77,7 @@ static int check_data_in_sheet (void)
 	    }
 	}
     }
+
     return 0;
 }
 
@@ -114,8 +116,7 @@ static void name_var_dialog (void)
     edit_dialog (_("gretl: name variable"), 
 		 _("Enter name for new variable\n"
 		 "(max. 8 characters)"),
-		 NULL, 
-		 name_new_var, mdata, 
+		 NULL, name_new_var, mdata, 
 		 0, 0);
 }
 
@@ -126,8 +127,7 @@ static void new_case_dialog (void)
     edit_dialog (_("gretl: case marker"), 
 		 _("Enter case marker for new obs\n"
 		 "(max. 8 characters)"),
-		 NULL, 
-		 name_new_obs, mdata, 
+		 NULL, name_new_obs, mdata, 
 		 0, 0);
 }
 
@@ -213,10 +213,11 @@ static void sheet_clear (gpointer *data, guint all, GtkWidget *w)
 {
     GtkSheet *sheet = GTK_SHEET(gretlsheet);
 
-    if (!all && sheet->state != GTK_SHEET_NORMAL) 
+    if (!all && sheet->state != GTK_SHEET_NORMAL) { 
 	gtk_sheet_range_clear(sheet, &sheet->range);
-    else
-	gtk_sheet_range_clear(sheet, NULL);	
+    } else {
+	gtk_sheet_range_clear(sheet, NULL);
+    }	
 }
 
 /* ........................................................... */
@@ -227,17 +228,16 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
 
     if (strcmp(item, _("Add Variable")) == 0) { 
 	sheet_add_var();
-    }
-    else if (strcmp(item, _("Add Observation")) == 0) {
+    } else if (strcmp(item, _("Add Observation")) == 0) {
 	sheet_add_obs();
-    }
-    else if (strcmp(item, _("Insert Observation")) == 0) {
+    } else if (strcmp(item, _("Insert Observation")) == 0) {
 	sheet_insert_obs();
-    }
-    else if (strcmp(item, _("Clear Cells")) == 0) {
+    } else if (strcmp(item, _("Clear Cells")) == 0) {
 	sheet_clear(NULL, 0, NULL);
     } 
+
     gtk_widget_destroy(sheet_popup);
+
     return TRUE;
 }
 
@@ -266,6 +266,7 @@ static GtkWidget *build_menu (GtkWidget *sheet)
         gtk_widget_show(item);
         gtk_menu_append(GTK_MENU(menu), item);
     }
+
     return menu;
 }
 
@@ -286,6 +287,7 @@ static gint do_sheet_popup (GtkWidget *widget, GdkEventButton *event,
         gtk_menu_popup(GTK_MENU(sheet_popup), NULL, NULL, NULL, NULL,
                        event->button, event->time);
     }
+
     return TRUE;
 }
 
@@ -300,33 +302,19 @@ static void parse_numbers (GtkWidget *widget, gpointer data)
     entrytext = gtk_entry_get_text(GTK_ENTRY(sheet->sheet_entry));
     if (entrytext == NULL) return;
 
-    if (check_atof(entrytext)) {
+    if (!strcmp(entrytext, "na") || !strcmp(entrytext, "NA")) {
+	*label = 0;
+    } else if (check_atof(entrytext)) {
 	errbox(get_gretl_errmsg());
 	*label = 0;
     } else {
 	sprintf(label, "%.*f", DEFAULT_PRECISION, atof(entrytext));
     }
+
     gtk_sheet_set_cell(sheet, sheet->active_cell.row,
                        sheet->active_cell.col, GTK_JUSTIFY_RIGHT, label); 
+
     sheet_modified = 1;
-}
-
-/* ........................................................... */
-
-static void clipboard_handler (GtkWidget *widget, GdkEventKey *key)
-{
-    GtkSheet *sheet = GTK_SHEET(widget);
-
-    if (key->state & GDK_CONTROL_MASK || key->keyval == GDK_Control_L ||
-       key->keyval == GDK_Control_R) {
-	if ((key->keyval == 'c' || key->keyval == 'C') && 
-	   sheet->state != GTK_STATE_NORMAL) {
-            if (GTK_SHEET_IN_CLIP(sheet)) gtk_sheet_unclip_range(sheet);
-            gtk_sheet_clip_range(sheet, &sheet->range);
-	}
-	if (key->keyval == 'x' || key->keyval == 'X')
-            gtk_sheet_unclip_range(sheet);    
-    }
 }
 
 /* ........................................................... */
@@ -342,8 +330,9 @@ static void show_sheet_entry (GtkWidget *widget, gpointer data)
     sheet = GTK_SHEET(gretlsheet);
     sheet_entry = GTK_ENTRY(sheet->sheet_entry);
 
-    if ((text = gtk_entry_get_text(GTK_ENTRY(topentry))))
+    if ((text = gtk_entry_get_text(GTK_ENTRY(topentry)))) {
         gtk_entry_set_text(sheet_entry, text);
+    }
 }
 
 /* ........................................................... */
@@ -435,6 +424,7 @@ static void get_data_from_sheet (void)
 	}
 	n = datainfo->n;
     }
+
     if (newvars > 0) {
 	if (dataset_add_vars(newvars, &Z, datainfo)) {
 	    errbox(_("Failed to allocate memory for new data"));
@@ -446,28 +436,36 @@ static void get_data_from_sheet (void)
 	    strcpy(VARLABEL(datainfo, i + oldv), "");
 	}
     }
+
     for (i=0; i<datainfo->v-1; i++) {
 	for (t=0; t<n; t++) {
-	    if (datainfo->vector[i+1] == 0 && t > 0) continue;
+	    if (datainfo->vector[i+1] == 0 && t > 0) {
+		continue;
+	    }
 	    celltext = gtk_sheet_cell_get_text(sheet, t, i);
-	    if (celltext != NULL)
+	    if (celltext != NULL && *celltext != 0) {
 		Z[i+1][t] = atof(celltext);
-	    else {
+	    } else {
 		Z[i+1][t] = NADBL;
 		missobs = 1;
 	    }
 	}
     }
+
     if (datainfo->markers && datainfo->S != NULL) {
-	for (t=0; t<n; t++)
+	for (t=0; t<n; t++) {
 	    strcpy(datainfo->S[t], sheet->row[t].button.label); 
+	}
     }
+
     data_status |= (GUI_DATA|MODIFIED_DATA);
     register_data(NULL, NULL, 0);
-    if (missobs)
+
+    if (missobs) {
 	infobox(_("Warning: there were missing observations"));
-    else
+    } else {
 	infobox(_("Data updated OK"));
+    }
 
     sheet_modified = 0;
 }
@@ -487,26 +485,27 @@ static void add_data_to_sheet (GtkWidget *w)
 	gtk_sheet_set_column_title(sheet, i, datainfo->varname[i+1]);
     }
     numcolumns = i;
+
     for (t=0; t<n; t++) {
 	get_full_obs_string(rowlabel, t, datainfo);
 	gtk_sheet_row_button_add_label(sheet, t, rowlabel);
 	gtk_sheet_set_row_title(sheet, t, rowlabel);
     }
     numrows = t;
+
     /* enter the data values */
     for (t=0; t<n; t++) {
 	for (i=0; i<datainfo->v-1; i++) {
 	    if (datainfo->vector[i+1] == 0 && t > 0) continue;
 	    xx = Z[i+1][t];
-	    if (!na(xx)) 
+	    if (!na(xx)) {
 		sprintf(label, "%.*f", DEFAULT_PRECISION, Z[i+1][t]);
-	    else
-		strcpy(label, "");
+	    } else {
+		*label = 0;
+	    }
 	    gtk_sheet_set_cell(sheet, t, i, GTK_JUSTIFY_RIGHT, label); 
 	}
     }
-    gtk_signal_connect(GTK_OBJECT(sheet), "key_press_event",
-		       (GtkSignalFunc) clipboard_handler, NULL);
 
     sheet_modified = 0;
 }
@@ -524,15 +523,19 @@ static void add_skel_to_sheet (GtkWidget *w)
 	gtk_sheet_set_column_title(sheet, i, datainfo->varname[i+1]);
     }
     numcolumns = i;
+
     for (t=0; t<n; t++) {
 	get_full_obs_string(rowlabel, t, datainfo);
 	gtk_sheet_row_button_add_label(sheet, t, rowlabel);
 	gtk_sheet_set_row_title(sheet, t, rowlabel);
     }
     numrows = t;
-    for (i=0; i<datainfo->v-1; i++) 
-	for (t=0; t<n; t++) 
+
+    for (i=0; i<datainfo->v-1; i++) {
+	for (t=0; t<n; t++) {
 	    gtk_sheet_set_cell(sheet, t, i, GTK_JUSTIFY_RIGHT, ""); 
+	}
+    }
 
     sheet_modified = 0;
 }

@@ -402,6 +402,9 @@ void set_sample_label (DATAINFO *pdinfo)
     flip(mdata->ifac, "/Sample/Restructure panel...", 
 	 dataset_is_panel(pdinfo));
 
+    flip(mdata->ifac, "/Sample/Transpose data...", 
+	 !dataset_is_panel(pdinfo));
+
     sprintf(labeltxt, _("%s: Full range %s - %s"), 
 	    pdstr, stobs, endobs);
 

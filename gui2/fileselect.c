@@ -890,8 +890,8 @@ void file_selector (const char *msg, int action, gpointer data)
 	    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
 					  strvar);
 	} else {
-	    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
-					  "/usr/bin");
+	    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), 
+						"/usr/bin");
 	}	    
     }	
 

@@ -91,6 +91,8 @@ int dataset_is_restricted (void);
 
 int maybe_restore_full_data (int action);
 
+void gui_transpose_data (gpointer p, guint u, GtkWidget *w);
+
 /* model-related functions */
 
 void do_coint (GtkWidget *widget, gpointer p);

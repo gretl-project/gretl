@@ -892,8 +892,7 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget)
 	obsstr = g_strdup_printf("1950:1 2001:4 %s", _("newvar"));
 	break;
     case 5:
-	obsstr = g_strdup_printf("99/01/18 01/03/31 %s", _("newvar"));
-	break;
+    case 6:
     case 7:
 	obsstr = g_strdup_printf("99/01/18 01/03/31 %s", _("newvar"));
 	break;
