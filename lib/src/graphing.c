@@ -1396,6 +1396,21 @@ static int gnuplot_bars_sane (FREQDIST *freq, int dist, double lambda,
     return 1;
 }
 
+#if 0
+static double tallest_spike (FREQDIST *freq, double d)
+{
+    int i;
+    double x, ret = 0;
+
+    for (i=0; i<freq->numbins; i++) {
+	x = d * freq->f[i];
+	if (x > ret) ret = x;
+    }
+
+    return ret;
+}
+#endif
+
 /**
  * plot_freq:
  * @freq: frequency distribution struct.
@@ -1502,8 +1517,6 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 
 	fprintf(fp, "set xrange [%.8g:%.8g]\n", plotmin, plotmax);
 	fputs("set key right top\n", fp);
-	fputs("plot \\\n", fp);
-
     } else { /* plain frequency plot */
 	fputs("(simple)\n", fp);
 
@@ -1517,6 +1530,12 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	if (fp) fclose(fp);
 	return 1;
     }
+
+#if 0
+    /* need to allow for the function plotted to go higher */
+    fprintf(fp, "set yrange [0:%.8g]\n", 
+	    1.2 * tallest_spike(freq, lambda));
+#endif
 
     if (use_bars) {
 	/* this won't work for "weird" distributions */
@@ -1536,12 +1555,14 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     if (!dist) {
 	fprintf(fp, "plot '-' using 1:($2) %s\n", withstring);
     } else if (dist == NORMAL) {
+	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:($2) title '%s' %s , \\\n"
 		"(1/(sqrt(2*pi)*sigma)*exp(-(x-mu)**2/(2*sigma**2))) "
 		"title 'N(%.4f,%.4f)' w lines\n",
 		freq->varname, withstring, freq->xbar, freq->sdx);
     }
     else if (dist == GAMMA) {
+	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:($2) title '%s' %s ,\\\n"
 		"x**(alpha-1.0)*exp(-x/beta)/(gamma(alpha)*(beta**alpha)) "
 		"title 'gamma(%.4f,%.4f)' w lines\n",
