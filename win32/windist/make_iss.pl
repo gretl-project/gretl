@@ -128,7 +128,7 @@ print "\"updater\"; ValueData: \"false\"\n";
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"calculator\"; ValueData: \"calc.exe\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"editor\"; ValueData: \"winword.exe\"\n";   
+print "\"editor\"; ValueData: \"c:\\Program Files\\Microsoft Office\\Office\\winword.exe\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"toolbar\"; ValueData: \"true\"\n";   
 
