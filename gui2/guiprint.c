@@ -457,8 +457,7 @@ void winprint (char *fullbuf, char *selbuf)
     GtkWidget *dialog;
     gint response;
     gboolean preview = FALSE;
-    GnomeFont *font;
-    const guchar *font_name;
+    GnomeFont *font = NULL;
     char *p, linebuf[90], hdrstart[48], hdr[70];
     int page_lines = 47;
     int x, y, line, page;
@@ -481,20 +480,16 @@ void winprint (char *fullbuf, char *selbuf)
 	preview = TRUE;
 	break;
     default:
-	g_object_unref(G_OBJECT(config));
-	g_object_unref(G_OBJECT(gpc));
-	g_object_unref(G_OBJECT(job));
-	gtk_widget_destroy(dialog);
-	free(fullbuf);
-	free(selbuf);
-	return;
+	goto winprint_bailout;
     }
 
     gnome_print_beginpage(gpc, _("gretl output"));
 
-    font = gnome_font_find_closest("Courier", 10);
-    font_name = gnome_font_get_name(font);
-    /* g_print ("Found font: %s\n", font_name); */
+    font = gnome_font_find_closest("Monospace", 10);
+    if (font == NULL) {
+	fprintf(stderr, "gnomeprint couldn't find \"Monospace\"\n");
+	goto winprint_bailout;
+    }
 
     gnome_print_setfont(gpc, font);
     /* gnome_print_setrgbcolor(gpc, 0, 0, 0); */
@@ -539,12 +534,14 @@ void winprint (char *fullbuf, char *selbuf)
 
     save_gretl_print_config_to_file(config);
 
+ winprint_bailout:
+
     g_object_unref(G_OBJECT(config));
     g_object_unref(G_OBJECT(gpc));
     g_object_unref(G_OBJECT(job));
 
     gtk_widget_destroy (dialog);
-    gnome_font_unref(font);
+    if (font != NULL) gnome_font_unref(font);
 
     free(fullbuf);
     if (selbuf) free(selbuf);
