@@ -168,22 +168,24 @@ static COMPARE add_compare (const MODEL *pmodA, const MODEL *pmodB)
     add.m1 = pmodA->ID;
     add.m2 = pmodB->ID;
     add.F = 0.0;
-    add.ols = add.discrete = 0;
+    add.ci = pmodA->ci;
 
-    if (pmodA->ci == OLS) add.ols = 1;
-    if (pmodA->ci == LOGIT || pmodA->ci == PROBIT)
-	add.discrete = 1;
     add.score = 0;
     add.dfn = pmodB->ncoeff - pmodA->ncoeff;
     add.dfd = pmodB->dfd;
-    if (add.ols && pmodB->aux == AUX_ADD) {
+
+    if (add.ci == OLS && pmodB->aux == AUX_ADD) {
 	add.F = ((pmodA->ess - pmodB->ess)/pmodB->ess)
-	    * add.dfd/add.dfn;
+	    * add.dfd / add.dfn;
     }
-    else if (add.discrete) {
+    else if (add.ci == LOGIT || add.ci == PROBIT) {
 	add.chisq = 2.0 * (pmodB->lnL - pmodA->lnL);
 	return add;
     }
+    else if (add.ci == HCCM) {
+	add.chisq = pmodB->chisq; 
+    }
+
     for (i=0; i<8; i++) {
 	if (pmodB->criterion[i] < pmodA->criterion[i]) add.score++;
     }
@@ -203,18 +205,15 @@ static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
 
     omit.m1 = pmodA->ID;
     omit.m2 = pmodB->ID;
-    omit.ols = omit.discrete = 0;
-
-    if (pmodA->ci == OLS) omit.ols = 1;
-    if (pmodA->ci == LOGIT || pmodA->ci == PROBIT)
-	omit.discrete = 1;
+    omit.ci = pmodA->ci;
     omit.score = 0;
 
-    if (omit.ols || omit.discrete) {
-	omit.dfn = pmodA->dfn - pmodB->dfn;
+    omit.dfn = pmodA->dfn - pmodB->dfn;
+
+    if (omit.ci == OLS || omit.ci == LOGIT || omit.ci == PROBIT) {
 	omit.dfd = pmodA->dfd;
 	if (pmodA->ifc && !pmodB->ifc) omit.dfn += 1;
-	if (omit.ols) {
+	if (omit.ci == OLS) {
 	    omit.F = ((pmodB->ess - pmodA->ess)/pmodA->ess)
 		* omit.dfd/omit.dfn;
 	} else {
@@ -223,66 +222,87 @@ static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
 	}
     }
 
+    if (omit.ci == HCCM) {
+	omit.chisq = pmodB->chisq;
+    }
+
     for (i=0; i<8; i++) 
 	if (pmodB->criterion[i] < pmodA->criterion[i]) omit.score++;
 
     return omit;
 }
 
-#if 0
-static double robust_lm_test (MODEL *orig, MODEL *new, int *omitvars,
+/* ........................................................... */
+
+static double robust_lm_test (MODEL *unrest, MODEL *rest, 
+			      const int *omitvars,
 			      double ***pZ, DATAINFO *pdinfo)
 {
     double **r = NULL;
-    double lm;
+    double lm = -1;
     MODEL aux;
     int *auxlist = NULL;
     int i, q = omitvars[0];
     int origv = pdinfo->v;
 
     r = malloc(q * sizeof *r);
-    if (r == NULL) return -1.0;
+    if (r == NULL) return lm;
+    for (i=0; i<q; i++) r[i] = NULL;
 
     _init_model(&aux, pdinfo);
 
-    for (i=1; i<=omitvars[1]; i++) {
-	new->list[1] = omitvars[i];
-	auxmod = lsq(new->list, pZ, pdinfo, OLS, 1, 0.0);
-	r[i] = auxmod->uhat;
-	auxmod->uhat = NULL;
+    for (i=0; i<q; i++) {
+	rest->list[1] = omitvars[i + 1];
+	aux = lsq(rest->list, pZ, pdinfo, OLS, 1, 0.0);
+	if (aux.errcode) {
+	    clear_model(&aux, pdinfo);
+	    goto cleanup;
+	}
+	r[i] = aux.uhat;
+	aux.uhat = NULL;
 	clear_model(&aux, pdinfo);
     }
+    rest->list[1] = unrest->list[1];
 
-    if (dataset_add_vars(q, pZ, pdinfo)) {
-	free(r);
-	return -1.0;
-    }
+    if (dataset_add_vars(q, pZ, pdinfo)) goto cleanup;
+
+    auxlist = malloc((q + 2) * sizeof *auxlist);
+    if (auxlist == NULL) goto cleanup;
 
     auxlist[0] = q + 1;
+    auxlist[1] = 0;
 
-    for (i=origv; i<pdinfo->v; i++) {
+    for (i=0; i<q; i++) {
 	int t;
 
 	for (t=0; t<pdinfo->n; t++) {
-	    if (na(new->uhat[t]) || na(r[j][t])) {
-		(*pZ)[i][t] = NADBL;
+	    if (na(rest->uhat[t]) || na(r[i][t])) {
+		(*pZ)[origv + i][t] = NADBL;
 	    } else {
-		(*pZ)[i][t] = new->uhat[t] * r[j][t];
+		(*pZ)[origv + i][t] = rest->uhat[t] * r[i][t];
 	    }
 	}
-	auxlist[] = i;
+	auxlist[i + 2] = origv + i;
     }
 	
     aux = lsq(auxlist, pZ, pdinfo, OLS, 1, 0.0);
+    if (!aux.errcode) {
+	lm = (double) (aux.t2 - aux.t1 + 1) - aux.ess;
+    }
+    clear_model(&aux, pdinfo);
 
-    lm = (aux.t2 - aux.t1 + 1) - aux.ess;
-
-    free(r);
-    dataset_drop_vars();
+ cleanup:
+    if (r != NULL) {
+	for (i=0; i<q; i++) {
+	    free(r[i]);
+	}
+	free(r);
+    }
+    free(auxlist);
+    dataset_drop_vars(q, pZ, pdinfo);
 
     return lm;
 }
-#endif	    
 
 /**
  * auxreg:
@@ -396,7 +416,9 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    else if (orig->ci == LOGIT || orig->ci == PROBIT) {
 		*new = logit_probit(newlist, pZ, pdinfo, orig->ci);
 	    }
-	    else *new = lsq(newlist, pZ, pdinfo, orig->ci, 1, rho);
+	    else {
+		*new = lsq(newlist, pZ, pdinfo, orig->ci, 1, rho);
+	    }
 
 	    if (new->nobs < orig->nobs) 
 		new->errcode = E_MISS;
@@ -460,7 +482,12 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     }
 
     if (!err) {
-	if (aux_code == AUX_ADD) new->aux = aux_code;
+	if (aux_code == AUX_ADD) {
+	    new->aux = aux_code;
+	    if (orig->ci == HCCM) {
+		new->chisq = robust_lm_test(new, orig, addvars, pZ, pdinfo);
+	    }
+	}
 	add = add_compare(orig, new);
 	add.trsq = trsq;
 
@@ -570,8 +597,9 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    *new = logit_probit(tmplist, pZ, pdinfo, orig->ci);
 	    new->aux = AUX_OMIT;
 	}
-	else 
+	else {
 	    *new = lsq(tmplist, pZ, pdinfo, orig->ci, 1, rho);
+	}
 
 	if (new->errcode) {
 	    pprintf(prn, "%s\n", gretl_errmsg);
@@ -583,8 +611,9 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     if (!err) {
 	++m;
 	new->ID = m;
-	if (orig->ci == HCCM) 
-	    robust_lm_test(orig, new);
+	if (orig->ci == HCCM) { 
+	    new->chisq = robust_lm_test(orig, new, omitvars, pZ, pdinfo);
+	}
 	omit = omit_compare(orig, new);
 	if (orig->ci != AR && orig->ci != ARCH) 
 	    printmodel(new, pdinfo, prn); 

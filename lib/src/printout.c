@@ -156,7 +156,7 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 		add->m1, add->m2);
     } else spc[0] = '\0';
 
-    if (aux_code == AUX_ADD && addvars[0] > 1 && add->ols) {
+    if (aux_code == AUX_ADD && addvars[0] > 1 && add->ci == OLS) {
 	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
 		"zero for the added variables\n\n"), spc);
 	for (i = 1; i<=addvars[0]; i++) 
@@ -166,7 +166,19 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 	pprintf(prn, _("with p-value = %f\n"), 
 		fdist(add->F, add->dfn, add->dfd));
     }
-    else if (aux_code == AUX_ADD && addvars[0] > 1 && add->discrete) {
+    else if (aux_code == AUX_ADD && addvars[0] > 1 && add->ci == HCCM) {
+	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
+		"zero for the added variables\n\n"), spc);
+	for (i = 1; i<=addvars[0]; i++) 
+	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
+	pprintf(prn, "\n  %s: %s(%d) = %f, ", _("Test statistic"), 
+		_("Chi-square"), add->dfn, add->chisq);
+	pprintf(prn, _("with p-value = %f\n\n"), 
+		chisq(add->chisq, add->dfn));
+	return;
+    }
+    else if (aux_code == AUX_ADD && addvars[0] > 1 && 
+	     (add->ci == LOGIT || add->ci == PROBIT)) {
 	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
 		"zero for the added variables\n\n"), spc);
 	for (i = 1; i<=addvars[0]; i++) 
@@ -198,7 +210,7 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 
     pprintf(prn, _("Comparison of Model %d and Model %d:\n\n"),
 	    omit->m1, omit->m2);
-    if (omit->ols && omit->dfn > 0 && omitvars[0] > 1) {
+    if (omit->ci == OLS && omit->dfn > 0 && omitvars[0] > 1) {
 	pprintf(prn, _("  Null hypothesis: the regression parameters "
 		"are zero for the variables\n\n"));
 	for (i = 1; i<=omitvars[0]; i++) {
@@ -209,7 +221,8 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 	pprintf(prn, _("with p-value = %f\n"), 
 		fdist(omit->F, omit->dfn, omit->dfd));
     }
-    else if (omit->discrete && omit->dfn > 0 && omitvars[0] > 1) {
+    else if ((omit->ci == LOGIT || omit->ci == PROBIT) && 
+	     omit->dfn > 0 && omitvars[0] > 1) {
 	pputs(prn, _("  Null hypothesis: the regression parameters "
 		"are zero for the variables\n\n"));
 	for (i = 1; i<=omitvars[0]; i++) {
@@ -221,6 +234,17 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 		chisq(omit->chisq, omit->dfn));
 	return;
     } 
+    else if (omit->ci == HCCM) {
+	pputs(prn, _("  Null hypothesis: the regression parameters "
+		"are zero for the variables\n\n"));
+	for (i = 1; i<=omitvars[0]; i++) {
+	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
+	} 
+	pprintf(prn, "\n  %s: %s(%d) = %f, ",  _("Test statistic"),
+		_("Chi-square"), omit->dfn, omit->chisq);
+	pprintf(prn, _("with p-value = %f\n\n"), 
+		chisq(omit->chisq, omit->dfn));
+    }
     pprintf(prn, _("  Of the 8 model selection statistics, %d %s\n\n"), 
 	    omit->score, (omit->score == 1)? 
 	    _("has improved") : _("have improved"));

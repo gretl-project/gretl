@@ -40,8 +40,7 @@ typedef enum {
 typedef struct {
     int m1;        /* ID for first model */
     int m2;        /* ID for second model */
-    int ols;       /* was the first model estimated via OLS? */
-    int discrete;  /* logit or probit model? */
+    int ci;        /* estimator code for the first */
     int dfn;       /* numerator degrees of freedom */
     int dfd;       /* denominator degrees of freedom */ 
     double F;      /* F test statistic */
