@@ -372,7 +372,7 @@ void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
     switch(pmod->aux) {
     case AUX_AR:
-	pprintf(prn, _("\nTest for autocorrelation up to the periodicity\n"));
+	pprintf(prn, _("\nTest for autocorrelation\n"));
 	break;	
     case AUX_ARCH:
 	pprintf(prn, _("\nTest for ARCH of order %d\n"), 

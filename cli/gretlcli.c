@@ -907,7 +907,9 @@ void exec_line (char *line, PRN *prn)
 	}
 	/* autocorrelation or heteroskedasticity */
 	if (oflag == OPT_M || oflag == OPT_O) {
-	    err = autocorr_test(models[0], &Z, datainfo, prn, NULL);
+	    int order = atoi(command.param);
+
+	    err = autocorr_test(models[0], order, &Z, datainfo, prn, NULL);
 	    if (err) errmsg(err, prn);
 	} 
 	if (oflag == OPT_C || !oflag) {

@@ -266,8 +266,8 @@ GtkItemFactoryEntry data_items[] = {
     { _("/File/sep1"), NULL, NULL, 0, "<Separator>" },
 #ifndef GNUPLOT_PNG
     { _("/File/Save last graph"), NULL, gpt_save_dialog, 0, NULL }, 
-#endif
     { _("/File/sep2"), NULL, NULL, 0, "<Separator>" },
+#endif
     { _("/File/_View command log"), NULL, view_log, 0, NULL },
     { _("/File/sep2a"), NULL, NULL, 0, "<Separator>" },
     { _("/File/Open command file/user file..."), NULL, open_script, 

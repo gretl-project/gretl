@@ -183,7 +183,7 @@ GtkItemFactoryEntry model_items[] = {
     { _("/Tests/non-linearity (squares)"), NULL, do_lmtest, AUX_SQ, NULL },
     { _("/Tests/non-linearity (logs)"), NULL, do_lmtest, AUX_LOG, NULL },
     { _("/Tests/sep2"), NULL, NULL, 0, "<Separator>" },
-    { _("/Tests/autocorrelation"), NULL, do_lmtest, AUX_AR, NULL },
+    { _("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL },
     { _("/Tests/heteroskedasticity"), NULL, do_lmtest, AUX_WHITE, NULL },
     { _("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL },
     { _("/Tests/CUSUM test"), NULL, do_cusum, 0, NULL },

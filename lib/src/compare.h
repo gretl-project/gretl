@@ -61,7 +61,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	       double ***pZ, DATAINFO *pdinfo, 
 	       PRN *prn);
 
-int autocorr_test (MODEL *pmod, 
+int autocorr_test (MODEL *pmod, int order,
 		   double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn, GRETLTEST *test);
 

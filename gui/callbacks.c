@@ -327,6 +327,12 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(defstr, "1");
 	okfunc = do_arch;
 	break;
+    case LMTEST: 
+	strcpy(title, _("gretl: autocorrelation"));
+	strcpy(query, _("Lag order for test:"));
+	sprintf(defstr, "%d", datainfo->pd);
+	okfunc = do_autocorr;
+	break;
     case CHOW:
 	ntodate(startdate, datainfo->t1, datainfo);
 	ntodate(enddate, datainfo->t2, datainfo);

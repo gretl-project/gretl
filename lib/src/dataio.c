@@ -2383,7 +2383,7 @@ void *get_plugin_function (const char *funcname, void *handle)
 #else
     funp = dlsym(handle, funcname);
     if (funp == NULL) 
-	fprintf(stderr, "%s\n", dlerror());
+	fputs (dlerror(), stderr);
 #endif   
     return funp;
 }
@@ -2393,8 +2393,7 @@ void close_plugin (void *handle)
 #ifdef OS_WIN32
     FreeLibrary(handle);
 #else
-    if (dlclose(handle)) 
-	fprintf(stderr, "%s\n", dlerror());
+    dlclose(handle);
 #endif
 }
 

@@ -189,11 +189,7 @@ void winprint (char *fullbuf, char *selbuf)
 
 #elif defined(USE_GNOME)
 
-#include <gnome.h>
-#include <libgnomeprint/gnome-printer.h>
 #include <libgnomeprint/gnome-print.h>
-#include <libgnomeprint/gnome-print-meta.h>
-#include <libgnomeprint/gnome-font.h>
 #include <libgnomeprint/gnome-printer-dialog.h>
 
 void winprint (char *fullbuf, char *selbuf)
@@ -214,12 +210,13 @@ void winprint (char *fullbuf, char *selbuf)
 	return;
     }
 
-    pc = gnome_print_context_new_with_paper_size(printer, _("US-Letter"));
+    pc = gnome_print_context_new_with_paper_size(printer, "US-Letter");
 
     gnome_print_beginpage (pc, _("gretl output"));
 
     /* could use GNOME_FONT_MEDIUM below */
-    font = gnome_font_new_closest("Courier", GNOME_FONT_BOOK, 0, 10);
+    /* font = gnome_font_new_closest("Courier", GNOME_FONT_BOOK, FALSE, 10); */
+    font = gnome_font_new("Courier", 10.0);
     gnome_print_setfont(pc, font);
     gnome_print_setrgbcolor(pc, 0, 0, 0);
 
@@ -258,6 +255,49 @@ void winprint (char *fullbuf, char *selbuf)
     free(fullbuf);
     if (selbuf) 
 	free(selbuf);
+}
+
+void gnome_print_graph (const char *fname)
+{
+    GnomePrinter *printer;
+    GnomePrintContext *pc; 
+    GdkPixbuf *pbuf;
+    char plotcmd[MAXLEN];
+    int image_left_x = 530, image_bottom_y = 50;
+    int width, height;
+
+    printer = gnome_printer_dialog_new_modal();
+
+    if (!printer) return;
+
+    /* run gnuplot on the plotfile to generate pngtmp */
+    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, fname);
+    if (system(plotcmd)) {
+	errbox("Failed to generate graph");
+	gtk_object_unref(GTK_OBJECT(printer));
+	return;
+    }
+
+    pbuf = gdk_pixbuf_new_from_file("gretltmp.png");
+    width = gdk_pixbuf_get_width(pbuf);
+    height = gdk_pixbuf_get_height(pbuf);
+    remove("gretltmp.png");
+
+    pc = gnome_print_context_new_with_paper_size(printer, "US-Letter");
+
+    gnome_print_beginpage(pc, _("gretl output"));
+
+    gnome_print_gsave(pc);
+    gnome_print_translate(pc, image_left_x, image_bottom_y);
+    gnome_print_rotate(pc, 90);
+    gnome_print_scale(pc, width, height);
+    gnome_print_pixbuf(pc, pbuf);
+    gnome_print_grestore(pc);
+    gnome_print_showpage(pc);
+
+    /* clean up */
+    gnome_print_context_close(pc);
+    gtk_object_unref(GTK_OBJECT(printer));
 }
 
 #endif /* G_OS_WIN32, USE_GNOME */

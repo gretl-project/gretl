@@ -1,2 +1,2 @@
-set args data4-1.gdt 
+set args data4-3 
 run

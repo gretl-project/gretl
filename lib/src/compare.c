@@ -542,18 +542,21 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 /**
  * autocorr_test:
  * @pmod: pointer to model to be tested.
+ * @order: lag order for test.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
  * @test: hypothesis test results struct.
  *
  * Tests the given model for autocorrelation of order equal to
- * the frequency of the data. Gives TR^2 and LMF test statistics.
+ * the specified value, or equal to the frequency of the data if
+ * the supplied @order is zero. Gives TR^2 and LMF test statistics.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
 
-int autocorr_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+int autocorr_test (MODEL *pmod, int order, 
+		   double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn, GRETLTEST *test)
 {
     int *newlist;
@@ -565,12 +568,14 @@ int autocorr_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     exchange_smpl(pmod, pdinfo);
     _init_model(&aux, pdinfo);
 
-    k = pdinfo->pd + 1;
+    if (order <= 0) order = pdinfo->pd;
+
+    k = order + 1;
     newlist = malloc((pmod->list[0] + k) * sizeof *newlist);
     if (newlist == NULL) {
 	err = E_ALLOC;
     } else {
-	newlist[0] = pmod->list[0] + pdinfo->pd;
+	newlist[0] = pmod->list[0] + order;
 	for (i=2; i<=pmod->list[0]; i++) newlist[i] = pmod->list[i];
 
 	if (dataset_add_vars(1, pZ, pdinfo)) {
@@ -588,7 +593,7 @@ int autocorr_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	strcpy(pdinfo->varname[v], "uhat");
 	strcpy(pdinfo->label[v], _("residual"));
 	/* then lags of same */
-	for (i=1; i<=pdinfo->pd; i++) {
+	for (i=1; i<=order; i++) {
 	    if (_laggenr(v, i, 1, pZ, pdinfo)) {
 		sprintf(gretl_errmsg, _("lagging uhat failed"));
 		err = E_LAGS;
@@ -612,28 +617,28 @@ int autocorr_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	printmodel(&aux, pdinfo, prn);
 	trsq = aux.rsq * aux.nobs;
 	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
-	    (aux.nobs - pmod->ncoeff - pdinfo->pd)/pdinfo->pd; 
+	    (aux.nobs - pmod->ncoeff - order)/order; 
 
 	pprintf(prn, _("\nTest statistic: LMF = %f,\n"), LMF);
 	pprintf(prn, _("with p-value = prob(F(%d,%d) > %f) = %f\n"), 
-		pdinfo->pd, aux.nobs - pmod->ncoeff - pdinfo->pd, LMF,
-		fdist(LMF, pdinfo->pd, aux.nobs - pmod->ncoeff - pdinfo->pd));
+		order, aux.nobs - pmod->ncoeff - order, LMF,
+		fdist(LMF, order, aux.nobs - pmod->ncoeff - order));
 
 	pprintf(prn, _("\nAlternative statistic: TR^2 = %f,\n"), trsq);
 	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %f) = %f\n\n"), 
-		pdinfo->pd, trsq, chisq(trsq, pdinfo->pd));
+		order, trsq, chisq(trsq, order));
 
 	if (test != NULL) {
 	    strcpy(test->type, _("LM test for autocorrelation"));
-	    sprintf(test->h_0, _("no autocorrelation up to order %d"), pdinfo->pd);
+	    sprintf(test->h_0, _("no autocorrelation up to order %d"), order);
 	    /* sprintf(test->teststat, "TR^2 = %f", trsq); */
 	    /* sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
-	       pdinfo->pd, trsq, chisq(trsq, pdinfo->pd)); */
+	       order, trsq, chisq(trsq, order)); */
 	    sprintf(test->teststat, "LMF = %f", trsq);
-	    sprintf(test->pvalue, _("prob(F(%d,%d) > %f) = %f"), pdinfo->pd, 
-		    aux.nobs - pmod->ncoeff - pdinfo->pd, LMF,
-		    fdist(LMF, pdinfo->pd, 
-			  aux.nobs - pmod->ncoeff - pdinfo->pd));	
+	    sprintf(test->pvalue, _("prob(F(%d,%d) > %f) = %f"), order, 
+		    aux.nobs - pmod->ncoeff - order, LMF,
+		    fdist(LMF, order, 
+			  aux.nobs - pmod->ncoeff - order));	
 	}
     }
 

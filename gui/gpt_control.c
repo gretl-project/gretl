@@ -1127,6 +1127,10 @@ typedef struct png_plot_t {
 #define WIDTH 640    /* try 576 */
 #define HEIGHT 480   /* try 432 */
 
+#ifdef USE_GNOME
+extern void gnome_print_graph (const char *fname);
+#endif
+
 static gint plot_popup_activated (GtkWidget *w, gpointer data)
 {
     gchar *item = (gchar *) data;
@@ -1144,10 +1148,12 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     }
     else if (!strcmp(item, "Save to session as icon")) { 
 	add_last_graph(plot->spec, 0, NULL);
-    } 
+    }
+#ifdef USE_GNOME 
     else if (!strcmp(item, "Print...")) { 
-        fprintf(stderr, "Chose print\n");
-    } 
+	gnome_print_graph(plot->spec->fname);
+    }
+#endif 
     else if (!strcmp(item, "Close")) { 
         gtk_widget_destroy(plot->window);
     } 
@@ -1164,7 +1170,9 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
         "Save as postscript (EPS)...",
 	"Save as PNG...",
 	"Save to session as icon",
+#ifdef USE_GNOME
 	"Print...",
+#endif
         "Close",
         NULL
     };

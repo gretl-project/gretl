@@ -70,6 +70,8 @@ void do_add_omit (GtkWidget *widget, dialog_t *ddata);
 
 void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget);
 
+void do_autocorr (GtkWidget *widget, dialog_t *ddata);
+
 void do_chow (GtkWidget *widget, dialog_t *ddata);
 
 void do_cusum (gpointer data, guint u, GtkWidget *widget);

@@ -1367,19 +1367,6 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 		print_test_to_window(&test, mydata->w);
 	}
     } 
-    else if (aux_code == AUX_AR) {
-	strcpy(line, "lmtest -m");
-	err = autocorr_test(pmod, &Z, datainfo, prn, &test);
-	if (err) {
-	    gui_errmsg(err);
-	    gretl_print_destroy(prn);
-	    return;
-	} else {
-	    strcat(title, _("(autocorrelation)"));
-	    if (add_test_to_model(&test, pmod) == 0)
-		print_test_to_window(&test, mydata->w);
-	}
-    } 
     else {
 	if (aux_code == AUX_SQ) 
 	    strcpy(line, "lmtest -s");
@@ -1531,6 +1518,44 @@ void do_chow (GtkWidget *widget, dialog_t *ddata)
 void do_cusum (gpointer data, guint u, GtkWidget *widget)
 {
     do_chow_cusum(data, CUSUM);
+}
+
+/* ........................................................... */
+
+void do_autocorr (GtkWidget *widget, dialog_t *ddata)
+{
+    windata_t *mydata = ddata->data;
+    MODEL *pmod = mydata->data;
+    GRETLTEST test;
+    char *edttext;
+    PRN *prn;
+    char title[40];
+    int order, err;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
+    if (*edttext == '\0') return;
+
+    order = atoi(edttext);
+
+    if (bufopen(&prn)) return;
+    strcpy(title, _("gretl: LM test (autocorrelation)"));
+
+    clear(line, MAXLEN);
+    sprintf(line, "lmtest -m %d", order);
+
+    err = autocorr_test(pmod, order, &Z, datainfo, prn, &test);
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+	return;
+    } else {
+	if (add_test_to_model(&test, pmod) == 0)
+	    print_test_to_window(&test, mydata->w);
+    }
+
+    if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
+
+    view_buffer(prn, 77, 400, title, LMTEST, view_items); 
 }
 
 /* ........................................................... */
@@ -2003,6 +2028,7 @@ static int real_do_setmiss (double missval, int varno)
     }
 
     for (i=start; i<end; i++) {
+	if (!datainfo->vector[i]) continue;
 	for (t=0; t<datainfo->n; t++) {
 	    if (Z[i][t] == missval) {
 		Z[i][t] = NADBL;
@@ -2024,7 +2050,12 @@ void do_global_setmiss (GtkWidget *widget, dialog_t *ddata)
 
     missval = atof(edttext);
     count = real_do_setmiss(missval, 0);
-    if (count == 0)
+
+    if (count) {
+	sprintf(errtext, _("Set %d values to \"missing\""), count);
+	infobox(errtext);
+	data_status |= MODIFIED_DATA;
+    } else 
 	errbox(_("Didn't find any matching observations"));	
 }
 
@@ -2051,7 +2082,6 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
 	data_status |= MODIFIED_DATA;
     } else 
 	errbox(_("Didn't find any matching observations"));
-
 }
 
 /* ........................................................... */
@@ -3738,7 +3768,9 @@ static int gui_exec_line (char *line,
 	}
 	/* autocorrelation or heteroskedasticity */
 	if (oflag == OPT_M || oflag == OPT_O) {
-	    err = autocorr_test(models[0], &Z, datainfo, prn, ptest);
+	    int order = atoi(command.param);
+
+	    err = autocorr_test(models[0], order, &Z, datainfo, prn, ptest);
 	    if (err) errmsg(err, prn);
 	    /* FIXME: need to respond? */
 	} 
@@ -3897,6 +3929,10 @@ static int gui_exec_line (char *line,
 	    print_smpl(datainfo, 0, prn);
 	}
 	break;	
+
+    case SETMISS:
+        set_miss(command.list, command.param, Z, datainfo, prn);
+        break;
 
     case SHELL:
 	pprintf(prn, _("shell command not implemented in script mode\n"));
