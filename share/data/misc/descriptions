@@ -6,6 +6,7 @@
 "djclose","Daily close of Dow-Jones, 1980s"
 "ects_nls","Nonlinear least squares example"
 "hamilton","Prices and exchange rate, U.S. and Italy"
+"jgm-data","Interest rates and inflation, Canada"
 "klein","US macro data for Klein's Model 1"
 "longley","Annual U.S. labor-market data"
 "leverage","Illustrates detection of incorrect data"

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="jgm-data" frequency="1" startobs="1952" endobs="1994" type="time-series">
+<description>Data from:
+James G. MacKinnon, &quot;Numerical Distribution Functions for Unit Root and
+Cointegration Tests&quot;, Journal of Applied Econometrics, Vol. 11, No. 6, 
+1996, pp. 601-618.
+
+See http://qed.econ.queensu.ca/pub/faculty/mackinnon/numdist/
+
+This file contains the annual data used in Section 7 of the paper.
+ 
+pi_c  inflation rate based on the CPI; see footnote 1 of the paper
+pi_y  inflation rate based on the GDP deflator; see footnote 1
+r_s   short term interest rate, from CANSIM B14001
+r_m   medium term interest rate, from CANSIM B14010
+r_l   long term interest rate, from CANSIM B14003</description>
+<variables count="5">
+<variable name="pi_c"
+ label="inflation rate based on the CPI"
+/>
+<variable name="pi_y"
+ label="inflation rate based on the GDP deflator"
+/>
+<variable name="r_s"
+ label="short term interest rate, from CANSIM B14001"
+/>
+<variable name="r_m"
+ label="medium term interest rate, from CANSIM B14010"
+/>
+<variable name="r_l"
+ label="long term interest rate, from CANSIM B14003"
+/>
+</variables>
+<observations count="43" labels="false">
+<obs>2.46347 4.49336 1.06583 3.24167 3.53917 </obs>
+<obs>-0.93133 -0.24884 1.69083 3.44667 3.76917 </obs>
+<obs>0.6606 1.44679 1.46583 2.66833 3.25500 </obs>
+<obs>0.077402 0.76162 1.55333 2.79083 3.18917 </obs>
+<obs>1.42176 3.0433 2.90250 3.75750 3.60583 </obs>
+<obs>3.1546 2.31477 3.77750 4.56500 4.12500 </obs>
+<obs>2.48276 1.36357 2.29250 3.46917 4.11500 </obs>
+<obs>1.18302 2.07219 4.80500 4.93833 5.04917 </obs>
+<obs>1.23963 1.21386 3.32417 4.51917 5.18917 </obs>
+<obs>1.01561 0.46074 2.83417 4.37500 5.05833 </obs>
+<obs>1.10879 1.37372 4.01250 4.60000 5.10083 </obs>
+<obs>1.70829 2.04184 3.57250 4.48000 5.09083 </obs>
+<obs>1.81273 2.5877 3.74250 4.72083 5.18417 </obs>
+<obs>2.49684 3.31031 3.96750 4.89917 5.20167 </obs>
+<obs>3.60085 4.72365 4.99833 5.54833 5.68500 </obs>
+<obs>3.5059 4.14178 4.58667 5.64000 5.89833 </obs>
+<obs>3.96972 3.57138 6.24500 6.67750 6.72500 </obs>
+<obs>4.43129 4.41562 7.14667 7.66333 7.55833 </obs>
+<obs>3.27988 4.55531 6.11750 7.10500 7.96500 </obs>
+<obs>2.81035 3.10383 3.61667 5.55500 6.94500 </obs>
+<obs>4.69832 5.45023 3.54583 6.25667 7.22500 </obs>
+<obs>7.33239 8.41061 5.38750 6.98417 7.55000 </obs>
+<obs>10.36205 13.43793 7.78417 8.12333 8.87000 </obs>
+<obs>10.2032 9.43372 7.36583 7.71917 8.99333 </obs>
+<obs>7.22462 8.38706 8.89167 8.35000 9.22917 </obs>
+<obs>7.71755 6.09521 7.35250 7.90250 8.69333 </obs>
+<obs>8.54662 5.85012 8.58417 8.99917 9.23583 </obs>
+<obs>8.7521 9.52905 11.57417 10.41917 10.17917 </obs>
+<obs>9.68625 10.09435 12.68083 12.37083 12.33833 </obs>
+<obs>11.73003 10.27568 17.77750 15.67583 14.98917 </obs>
+<obs>10.2587 8.38642 13.82750 14.00083 14.38333 </obs>
+<obs>5.65329 4.91071 9.32333 10.61250 11.76500 </obs>
+<obs>4.24734 3.08629 11.09750 11.90750 12.73833 </obs>
+<obs>3.87488 2.53609 9.45750 10.38583 11.11417 </obs>
+<obs>4.08913 2.35438 8.99083 9.21333 9.54417 </obs>
+<obs>4.27228 4.60797 8.16917 9.41583 9.92667 </obs>
+<obs>3.94387 4.52556 9.41583 9.77167 10.22750 </obs>
+<obs>4.87426 4.72576 12.01583 10.20333 9.92167 </obs>
+<obs>4.65466 3.1015 12.80500 11.19250 10.81167 </obs>
+<obs>5.46325 2.86143 8.83008 9.16250 9.80667 </obs>
+<obs>1.49461 1.2281 6.50875 7.43167 8.77167 </obs>
+<obs>1.82462 1.04732 4.92675 6.45833 7.87667 </obs>
+<obs>0.18511 0.60929 5.41675 7.78667 8.58000 </obs>
+</observations>
+</gretldata>
