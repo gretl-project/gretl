@@ -1229,7 +1229,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	    if (verify_and_record_command(line)) {
 		return TRUE;
 	    }
-	    err = set_sample(line, datainfo);
+	    err = set_sample(line, (const double **) Z, datainfo);
 	    if (err) {
 		gui_errmsg(err);
 	    } else {

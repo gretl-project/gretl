@@ -824,18 +824,52 @@ int restrict_sample (const char *line,
 
 /* .......................................................... */
 
-static int get_sample_increment (const char *str)
+static int 
+get_sample_limit (const char *s, const double **Z, DATAINFO *pdinfo)
 {
-    if ((*str == '-' || *str == '+') && isdigit((unsigned char) str[1])) {
-	return atoi(str);
+    int v, ret = -1;
+
+    if (*s == '-' || *s == '+') {
+	int incr = 0;
+
+	if (isdigit((unsigned char) s[1])) {
+	    incr = atoi(s);
+	} else {
+	    v = varindex(pdinfo, s + 1);
+	    if (v < pdinfo->v) {
+		incr = (int) Z[v][0];
+		if (*s == '-') {
+		    incr = -incr;
+		}
+	    }
+	}
+	ret = pdinfo->t1 + incr;
+    } else {
+	ret = dateton(s, pdinfo);
+	if (ret < 0) {
+	    if (isdigit((unsigned char) *s)) {
+		ret = plain_obs_number(s, pdinfo);
+	    } else {
+		v = varindex(pdinfo, s);
+		if (v < pdinfo->v) {
+		    ret = (int) Z[v][0];
+		    if (ret >= pdinfo->n) {
+			char try[16];
+
+			sprintf(try, "%d", ret);
+			ret = dateton(try, pdinfo);
+		    }
+		}
+	    }
+	}
     }
 
-    return 0;
+    return ret;
 }
 
 /* .......................................................... */
 
-int set_sample (const char *line, DATAINFO *pdinfo)
+int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
 {
     int nf, new_t1 = pdinfo->t1, new_t2 = pdinfo->t2;
     char cmd[5], newstart[OBSLEN], newstop[OBSLEN];
@@ -865,17 +899,8 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	    strcpy(gretl_errmsg, _("error reading smpl line"));
 	    return 1;
 	} else {
-	    new_t1 = get_sample_increment(newstart);
-	    if (new_t1) {
-		new_t1 = pdinfo->t1 + new_t1;
-		if (new_t1 < 0) {
-		   strcpy(gretl_errmsg, _("Observation number out of bounds"));
-		} 
-	    } else {
-		new_t1 = dateton(newstart, pdinfo);
-	    }
-	    if (*gretl_errmsg) return 1;
-	    if (new_t1 < 0 || new_t1 > pdinfo->n) {
+	    new_t1 = get_sample_limit(newstart, Z, pdinfo);
+	    if (new_t1 < 0 || new_t1 >= pdinfo->n) {
 		strcpy(gretl_errmsg, _("error in new starting obs"));
 		return 1;
 	    }
@@ -890,25 +915,15 @@ int set_sample (const char *line, DATAINFO *pdinfo)
     }
 
     if (strcmp(newstart, ";")) {
-	new_t1 = get_sample_increment(newstart);
-	if (new_t1) {
-	    new_t1 = pdinfo->t1 + new_t1;
-	} else {
-	    new_t1 = dateton(newstart, pdinfo);
-	}
+	new_t1 = get_sample_limit(newstart, Z, pdinfo);
 	if (new_t1 < 0 || new_t1 >= pdinfo->n) {
-	    strcpy(gretl_errmsg, _("Observation number out of bounds"));
+	    strcpy(gretl_errmsg, _("error in new starting obs"));
 	    return 1;
 	}	
     }
 
     if (strcmp(newstop, ";")) {
-	new_t2 = get_sample_increment(newstop);
-	if (new_t2) {
-	    new_t2 = pdinfo->t2 + new_t2;
-	} else {
-	    new_t2 = dateton(newstop, pdinfo);
-	}
+	new_t2 = get_sample_limit(newstop, Z, pdinfo);
 	if (new_t2 < 0 || new_t2 >= pdinfo->n) {
 	    strcpy(gretl_errmsg, _("error in new ending obs"));
 	    return 1;

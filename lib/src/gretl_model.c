@@ -283,7 +283,7 @@ static void destroy_all_data_items (MODEL *pmod)
 int gretl_model_destroy_data_item (MODEL *pmod, const char *key)
 {
     model_data_item *junk = NULL;
-    int i, targ;
+    int i, targ = 0;
     int err = 0;
 
     for (i=0; i<pmod->n_data_items; i++) {

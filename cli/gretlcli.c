@@ -1512,7 +1512,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 		   !strcmp(line, "smpl --full")) {
 	    err = restore_full_sample(&Z, &datainfo, OPT_C);
 	} else { 
-	    err = set_sample(line, datainfo);
+	    err = set_sample(line, (const double **) Z, datainfo);
 	}
 
 	if (err) {

@@ -94,7 +94,8 @@ struct LOOPSET_ {
     char flags;
     int level;
     int err;
-    int ntimes;
+    int itermax;
+    int iter;
     int index;
     double initval;
     char brk;
@@ -401,7 +402,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	loop->initval = nstart;
 	loop->lvar = 0;
 	loop->rvar = 0;
-	loop->ntimes = nend - nstart + 1; 
+	loop->itermax = nend - nstart + 1; 
 	if (dated) {
 	    loop->type = DATED_LOOP;
 	} else {
@@ -432,7 +433,7 @@ static int parse_as_count_loop (LOOPSET *loop,
     }
 
     if (!err) {
-	loop->ntimes = nt;
+	loop->itermax = nt;
 	loop->type = COUNT_LOOP;
     }
 
@@ -609,7 +610,7 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
     
     if (!err) {
 	loop->type = EACH_LOOP;
-	loop->ntimes = nf;
+	loop->itermax = nf;
     }    
 
     return err;
@@ -674,7 +675,7 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 
 	if (!err) {
 	    loop->type = EACH_LOOP;
-	    loop->ntimes = nf;
+	    loop->itermax = nf;
 	}
     }
 
@@ -818,7 +819,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	err = 1;
     }
 
-    if (!err && loop->lvar == 0 && loop->ntimes < 2) {
+    if (!err && loop->lvar == 0 && loop->itermax < 2) {
 	strcpy(gretl_errmsg, _("Loop count missing or invalid\n"));
 	err = 1;
     }
@@ -860,7 +861,7 @@ static int get_max_iters (void)
 static int loop_count_too_high (LOOPSET *loop)
 {
     static int max_iters = 0;
-    int nt = loop->ntimes + 1;
+    int nt = loop->iter + 1;
 
     if (loop->type == FOR_LOOP) {
 	/* FIXME */
@@ -904,7 +905,6 @@ eval_numeric_condition (int op, double xl, double xr)
 
 /**
  * loop_condition:
- * @k: in case of a simple count loop, the number of iterations so far.
  * @loop: pointer to loop commands struct.
  * @Z: data matrix.
  * @pdinfo: data information struct.
@@ -915,74 +915,52 @@ eval_numeric_condition (int op, double xl, double xr)
  */
 
 static int 
-loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
+loop_condition (LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 {
-    int cont = 0;
-    int oldtimes = loop->ntimes;
+    int ok = 0;
 
-    /* got "break" comand */
     if (loop->brk) {
+	/* got "break" comand */
 	loop->brk = 0;
-	cont = 0;
-    }
-
-    /* simple count loop */
-    else if (loop->type == COUNT_LOOP) {
-	if (k < loop->ntimes) {
-	    cont = 1;
+	ok = 0;
+    } else if (loop->type == COUNT_LOOP || indexed_loop(loop)) {
+	/* simple count loop or indexed loop */
+	if (loop->iter < loop->itermax) {
+	    ok = 1;
 	}
-    }
-
-    /* a loop indexed by 'i' */
-    else if (indexed_loop(loop)) {
-	if (k > 0) {
-	    loop->index += 1;
-	}
-	if (loop->index < loop->ntimes) {
-	    cont = 1;
-	}
-    } 
-
-    /* more complex forms */
-    else {
-
-	/* safeguard */
+    } else {
+	/* more complex forms of control... */
 	if (loop_count_too_high(loop)) {
-	    cont = 0;
-	}
-	
-	/* inequality between variables */
-	else if (loop->rvar > 0) {
-	    if (loop->type == FOR_LOOP && k > 0) {
+	    /* safeguard against infinite loops */
+	    ok = 0;
+	} else if (loop->rvar > 0) {
+	    /* inequality between variables */
+	    if (loop->type == FOR_LOOP && loop->iter > 0) {
 		Z[loop->lvar][0] += loop->incr;
 	    }
-	    cont = eval_numeric_condition(loop->ineq,
-					  Z[loop->lvar][0],
-					  Z[loop->rvar][0]);
-	} 
-
-	/* inequality between var and constant */
-	else if (loop->lvar > 0) {
-	    if (loop->type == FOR_LOOP && k > 0) {
+	    ok = eval_numeric_condition(loop->ineq,
+					Z[loop->lvar][0],
+					Z[loop->rvar][0]);
+	} else if (loop->lvar > 0) {
+	    /* inequality between var and constant */
+	    if (loop->type == FOR_LOOP && loop->iter > 0) {
 		Z[loop->lvar][0] += loop->incr;
 	    }
-	    cont = eval_numeric_condition(loop->ineq,
-					  Z[loop->lvar][0],
-					  loop->rval);
-	}
-
-	if (cont) {
-	    loop->ntimes += 1;
+	    ok = eval_numeric_condition(loop->ineq,
+					Z[loop->lvar][0],
+					loop->rval);
 	}
     }
 
-    if (!cont && oldtimes == 0) {
-	strcpy(gretl_errmsg, _("Loop condition not satisfied at first round"));
-	loop->err = 1;
-	loop->ntimes = 0;
+    if (!ok) {
+	if (loop->iter == 0) {
+	    strcpy(gretl_errmsg, _("Loop condition not satisfied at first round"));
+	    loop->err = 1;
+	    loop->brk = 1;
+	}
     }
 
-    return cont;
+    return ok;
 }
 
 /* ......................................................  */
@@ -996,8 +974,8 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->flags = 0;
     loop->level = 0;
 
-    loop->ntimes = 0;
-    loop->index = 0;
+    loop->itermax = 0;
+    loop->iter = 0;
     loop->initval = 0.0;
     loop->err = 0;
     loop->ichar = 0;
@@ -1072,7 +1050,7 @@ void gretl_loop_destroy (LOOPSET *loop)
     }
 
     if (loop->eachstrs != NULL) {
-	for (i=0; i<loop->ntimes; i++) {
+	for (i=0; i<loop->itermax; i++) {
 	    free(loop->eachstrs[i]);
 	}
 	free(loop->eachstrs);
@@ -1244,7 +1222,7 @@ static int loop_print_init (LOOP_PRINT *lprn, const int *list, int id)
 static int loop_store_init (LOOPSET *loop, const char *fname, 
 			    const int *list, DATAINFO *pdinfo)
 {
-    int i, tot = list[0] * loop->ntimes;
+    int i, tot = list[0] * loop->itermax;
 
     loop->storefile[0] = '\0';
     strncat(loop->storefile, fname, MAXLEN - 1);
@@ -1466,7 +1444,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
     int i;
 
     if (loop->type != COUNT_LOOP) {
-	pprintf(prn, _("\nNumber of iterations: %d\n\n"), loop->ntimes);
+	pprintf(prn, _("\nNumber of iterations: %d\n\n"), loop->iter);
     }
 
     for (i=0; i<loop->ncmds; i++) {
@@ -1495,11 +1473,11 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 		loop->ci[i] == HSK || loop->ci[i] == HCCM || 
 		loop->ci[i] == WLS) {
 		print_loop_model(&loop->lmodels[loop->next_model], 
-				 loop->ntimes, pdinfo, prn);
+				 loop->itermax, pdinfo, prn);
 		loop->next_model += 1;
 	    } else if (loop->ci[i] == PRINT) {
 		print_loop_prn(&loop->prns[loop->next_print], 
-			       loop->ntimes, pdinfo, prn);
+			       loop->itermax, pdinfo, prn);
 		loop->next_print += 1;
 	    } else if (loop->ci[i] == STORE) {
 		print_loop_store(loop, prn);
@@ -1852,13 +1830,13 @@ static int print_loop_store (LOOPSET *loop, PRN *prn)
     writetime = time(NULL);
 
     pprintf(prn, _("printing %d values of variables to %s\n"), 
-	    loop->ntimes, gdtfile);
+	    loop->itermax, gdtfile);
 
     fprintf(fp, "<?xml version=\"1.0\"?>\n"
 	    "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 	    "<gretldata name=\"%s\" frequency=\"1\" "
 	    "startobs=\"1\" endobs=\"%d\" ", 
-	    gdtfile, loop->ntimes);
+	    gdtfile, loop->itermax);
 
     fprintf(fp, "type=\"cross-section\">\n");
 
@@ -1888,14 +1866,14 @@ static int print_loop_store (LOOPSET *loop, PRN *prn)
 
     /* print actual data */
     fprintf(fp, "<observations count=\"%d\" labels=\"false\">\n",
-	    loop->ntimes);
+	    loop->itermax);
 
-    for (t=0; t<loop->ntimes; t++) {
+    for (t=0; t<loop->itermax; t++) {
 	double x;
 
 	fputs("<obs>", fp);
 	for (i=0; i<loop->nstore; i++) {
-	    x = loop->storeval[loop->ntimes * i + t];
+	    x = loop->storeval[loop->itermax * i + t];
 	    if (na(x)) {
 		fputs("NA ", fp);
 	    } else {
@@ -2015,7 +1993,7 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 	targ[0] = '$';
 	targ[1] = loop->ichar;
 	targlen = 2;
-	idx = loop->initval + loop->index;
+	idx = loop->initval + loop->iter;
     } else {
 	return 1;
     }
@@ -2062,13 +2040,13 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 }
 
 static void 
-loop_add_storevals (const int *list, LOOPSET *loop, int lround,
+loop_add_storevals (const int *list, LOOPSET *loop,
 		    const double **Z, DATAINFO *pdinfo)
 {
     int i, sv;
 
     for (i=0; i<list[0]; i++) {
-	sv = i * loop->ntimes + lround;
+	sv = i * loop->itermax + loop->iter;
 	if (pdinfo->vector[list[i+1]]) { 
 	    loop->storeval[sv] = Z[list[i+1]][pdinfo->t1 + 1];
 	} else {
@@ -2079,11 +2057,10 @@ loop_add_storevals (const int *list, LOOPSET *loop, int lround,
 
 static void top_of_loop (LOOPSET *loop, double **Z)
 {
-    if (indexed_loop(loop)) {
-	loop->index = 0;
-    } else if (loop->type == FOR_LOOP) {
+    loop->iter = 0;
+
+    if (loop->type == FOR_LOOP) {
 	Z[loop->lvar][0] = loop->initval;
-	loop->ntimes = 0;
     }
 }
 
@@ -2091,7 +2068,7 @@ static void
 print_loop_progress (const LOOPSET *loop, const DATAINFO *pdinfo,
 		     PRN *prn)
 {
-    int i = loop->initval + loop->index;
+    int i = loop->initval + loop->iter;
 
     if (loop->type == INDEX_LOOP) {
 	pprintf(prn, "loop: %c = %d\n\n", loop->ichar, i);
@@ -2138,7 +2115,7 @@ int loop_exec (LOOPSET *loop, char *line,
     CMD cmd;
     MODEL *lastmod = models[0];
     char linecpy[MAXLINE];
-    int m = 0, lround = 0, ignore = 0;
+    int m = 0, ignore = 0;
     int modnum = 0;
     int err = 0;
 
@@ -2165,12 +2142,12 @@ int loop_exec (LOOPSET *loop, char *line,
 
     top_of_loop(loop, *pZ);
 
-    while (!err && loop_condition(lround, loop, *pZ, *ppdinfo)) {
+    while (!err && loop_condition(loop, *pZ, *ppdinfo)) {
 	int childnum = 0;
 	int j;
 
 #ifdef LOOP_DEBUG
-	fprintf(stderr, "top of loop: lround = %d\n", lround);
+	fprintf(stderr, "top of loop: iter = %d\n", loop->iter);
 #endif
 
 	if (!(*echo_off) && indexed_loop(loop)) {
@@ -2199,9 +2176,7 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    if (cmd.ci < 0) {
 		continue;
-	    }
-
-	    if (cmd.errcode) {
+	    } else if (cmd.errcode) {
 		err = cmd.errcode;
 		break;
 	    }
@@ -2252,7 +2227,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case ARMA:
 		/* if this is the first time round, allocate space
 		   for each loop model */
-		if (lround == 0) {
+		if (loop->iter == 0) {
 		    if (loop_is_progressive(loop)) {
 			err = add_loop_model(loop);
 		    } else if (cmd.opt & OPT_P) {
@@ -2281,7 +2256,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		}
 
 		if (loop_is_progressive(loop)) {
-		    if (lround == 0 && loop_model_init(&loop->lmodels[loop->nmod - 1], 
+		    if (loop->iter == 0 && loop_model_init(&loop->lmodels[loop->nmod - 1], 
 						       models[0], j)) { 
 			gretl_errmsg_set(_("Failed to initialize model for loop\n"));
 			err = 1;
@@ -2306,7 +2281,6 @@ int loop_exec (LOOPSET *loop, char *line,
 		}
 		break;
 
-		
 	    case ADD:
 	    case OMIT:
 		/* FIXME: this needs work, and should only be allowed
@@ -2333,7 +2307,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		if (cmd.param[0] != '\0') {
 		    err = simple_commands(&cmd, linecpy, pZ, *ppdinfo, prn);
 		} else if (loop_is_progressive(loop)) {
-		    if (lround == 0) {
+		    if (loop->iter == 0) {
 			if ((err = add_loop_print(loop, cmd.list, j))) {
 			    break;
 			}
@@ -2366,7 +2340,8 @@ int loop_exec (LOOPSET *loop, char *line,
 			   !strcmp(linecpy, "smpl --full")) {
 		    err = restore_full_sample(pZ, ppdinfo, OPT_C);
 		} else { 
-		    err = set_sample(linecpy, *ppdinfo);
+		    err = set_sample(linecpy, (const double **) *pZ,
+				     *ppdinfo);
 		}
 
 		if (err) {
@@ -2378,15 +2353,16 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    case STORE:
 		if (loop_is_progressive(loop)) {
-		    if (lround == 0) {
+		    if (loop->iter == 0) {
 			loop->nstore = cmd.list[0];
 			if (loop_store_init(loop, cmd.param, cmd.list, *ppdinfo)) {
 			    err = 1;
 			}
 		    }
 		    if (!err) {
-			loop_add_storevals(cmd.list, loop, lround,
-					   (const double **) *pZ, *ppdinfo);
+			loop_add_storevals(cmd.list, loop, 
+					   (const double **) *pZ, 
+					   *ppdinfo);
 		    }
 		} else {
 		    simple_commands(&cmd, linecpy, pZ, *ppdinfo, prn);
@@ -2398,7 +2374,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    default: 
-		/* not reachable (because loop commands were screened in advance) */
+		/* not reachable (since commands were screened in advance) */
 		pprintf(prn, _("command: '%s'\nThis is not available in a loop.\n"),
 			linecpy);
 		err = 1;
@@ -2408,12 +2384,12 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	} /* end execution of commands within loop */
 
-	if (get_halt_on_error() == 0) {
+	if (err && get_halt_on_error() == 0) {
 	    errmsg(err, prn);
 	    err = 0;
 	}
 
-	lround++;
+	loop->iter += 1;
 
     } /* end iterations of loop */
 
@@ -2425,7 +2401,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	err = loop->err;
     }
 
-    if (!err && lround > 0) {
+    if (!err && loop->iter > 0) {
 	print_loop_results(loop, *ppdinfo, prn); 
     }
 

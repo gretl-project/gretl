@@ -60,7 +60,7 @@ static int listpos (int v, const int *list);
 static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr);
 
 static int math_tokenize (char *s, GENERATE *genr, int level);
-static double get_obs_value (const char *s, double **Z, 
+static double get_obs_value (const char *s, const double **Z, 
 			     const DATAINFO *pdinfo);
 static int model_scalar_stat_index (const char *s);
 static int model_vector_index (const char *s);
@@ -559,7 +559,7 @@ static genatom *parse_token (const char *s, char op,
 	    }
 	} 
 	else if (strchr(s, '[')) {
-	    val = get_obs_value(s, *genr->pZ, genr->pdinfo);
+	    val = get_obs_value(s, (const double **) *genr->pZ, genr->pdinfo);
 	    if (val == NADBL) {
 		DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
 		genr->err = E_SYNTAX; 
@@ -1913,7 +1913,7 @@ static void copy_compress (char *targ, const char *src, int len)
 
 /* ........................................................... */
 
-static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
+int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
 {
     char *test;
     int t = -1;
@@ -1956,7 +1956,7 @@ static void get_genr_formula (char *formula, const char *line,
     }
 
     /* allow for generating a single value in a series */
-    if (sscanf(line, "%8[^[][%10[^]]", vname, obs) == 2) {
+    if (sscanf(line, "%8[^[ =][%10[^]]", vname, obs) == 2) {
 	genr->obs = dateton(obs, genr->pdinfo);
 	if (genr->obs < 0 || genr->obs >= genr->pdinfo->n) {
 	    genr->obs = plain_obs_number(obs, genr->pdinfo);
@@ -3423,7 +3423,7 @@ static void fix_calendar_date (char *s)
     }
 }
 
-static double get_obs_value (const char *s, double **Z, 
+static double get_obs_value (const char *s, const double **Z, 
 			     const DATAINFO *pdinfo)
 {
     char vname[USER_VLEN], obs[OBSLEN];
@@ -3436,27 +3436,16 @@ static double get_obs_value (const char *s, double **Z,
 	if (i < pdinfo->v && pdinfo->vector[i]) {
 	    if (calendar_data(pdinfo)) {
 		fix_calendar_date(obs);
-	    } else if (dataset_is_time_series(pdinfo)) {
-		if (pdinfo->pd == 1 || strchr(obs, ':') == NULL) {
-		    int tryt = atoi(obs);
-
-		    if (pdinfo->pd == 1 && tryt >= 0 && tryt < pdinfo->sd0) {
-			t = tryt;
-		    } else if (pdinfo->pd > 1) {
-			t = tryt;
-		    }
-		}
-	    }
-
+	    } 
+	    t = dateton(obs, pdinfo);
 	    if (t < 0) {
-		t = dateton(obs, pdinfo);
+		t = plain_obs_number(obs, pdinfo);
 	    }
-
 	    if (t >= 0 && t < pdinfo->n) {
 		val = Z[i][t];
 	    }
 	}
-    }
+    }	    
 
     return val;
 }

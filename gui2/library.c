@@ -5974,7 +5974,7 @@ int gui_exec_line (char *line,
 	    restore_sample(OPT_C);
 	    chk = 1;
 	} else {
-	    err = set_sample(line, datainfo);
+	    err = set_sample(line, (const double **) Z, datainfo);
 	}
 
 	if (err) {
