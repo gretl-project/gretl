@@ -1193,6 +1193,7 @@ typedef struct png_plot_t {
     int title;
     guint cid;
     int range_mean;
+    int saved;
     zoom_t *zoom;
 } png_plot_t;
 
@@ -1424,6 +1425,11 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 	}
 	if (plot->range_mean == 0 &&
 	    !strcmp(plot_items[i], "Help")) {
+	    i++;
+	    continue;
+	}
+	if (plot->saved &&
+	    !strcmp(plot_items[i], "Save to session as icon")) {
 	    i++;
 	    continue;
 	}
@@ -1757,7 +1763,7 @@ static int get_plot_ranges (png_plot_t *plot)
     return got_x;
 }
 
-int gnuplot_show_png (char *plotfile)
+int gnuplot_show_png (char *plotfile, int saved)
 {
     png_plot_t *plot;
     int plot_has_xrange;
@@ -1782,6 +1788,7 @@ int gnuplot_show_png (char *plotfile)
     plot->zoom->zoomed = 0;
 
     plot->range_mean = 0;
+    plot->saved = saved;
 
     /* record name of tmp file containing plot commands */
     strcpy(plot->spec->fname, plotfile);

@@ -29,7 +29,7 @@ void gpt_save_dialog (void);
 #ifdef GNUPLOT_PNG
 void save_this_graph (GPT_SPEC *plot, const char *fname);
 
-int gnuplot_show_png (const char *plotfile);
+int gnuplot_show_png (const char *plotfile, int saved);
 #endif /* GNUPLOT_PNG */
 
 #endif /* GPT_CONTROL_H */

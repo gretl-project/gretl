@@ -1608,7 +1608,8 @@ static int create_child_process (char *prog)
 			&proc_info);   /* receives PROCESS_INFORMATION  */
 
     if (ret == 0) {
-	win_show_error();
+	DWORD dw = GetLastError();
+	win_show_error(dw);
     }
 
     return ret;

@@ -157,9 +157,9 @@ static char last_model = 's';
 void register_graph (void)
 {
 #ifdef GNUPLOT_PNG
-    extern int gnuplot_show_png(const char *fname);
+    extern int gnuplot_show_png(const char *fname, int saved);
 
-    gnuplot_show_png(paths.plotfile);
+    gnuplot_show_png(paths.plotfile, 0);
 #else
     graphmenu_state(TRUE);
 #endif    

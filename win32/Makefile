@@ -160,6 +160,9 @@ clean:
 	make -C updater clean
 	make -C mo clean
 
+depend:
+	makedepend -Y$(libsrc) ../gui2/*.c
+
 dll: dlls/libgretl.dll
 extra-dll: dlls/libgtkextra-lite.dll
 prob-dll: dlls/libprob.dll
@@ -230,5 +233,4 @@ ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 
 workbook.o: workbook.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(OLEFLAGS) $(GLIBINC) $<
-
 

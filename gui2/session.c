@@ -996,19 +996,46 @@ static void open_gui_model (gui_obj *gobj)
 
 static void open_gui_graph (gui_obj *gobj)
 {
-    gchar *buf = NULL;
     GRAPHT *graph = (GRAPHT *) gobj->data;
+#ifdef GNUPLOT_PNG
+    FILE *fp, *fq;
+#else
+    gchar *buf = NULL;
+#endif
 
-#ifdef G_OS_WIN32
+#ifdef GNUPLOT_PNG
+    if (gnuplot_init(&paths, &fp)) {
+	errbox(_("gnuplot command failed"));
+	return;
+    }
+    
+    fq = fopen(graph->fname, "r");
+    if (fq == NULL) {
+	fclose(fp);
+	errbox(_("gnuplot command failed"));
+    } else {
+	int c;
+
+	while ((c = fgetc(fq)) != EOF) {
+	    fputc(c, fp);
+	}
+	fclose(fp);
+	fclose(fq);
+	gnuplot_display(&paths);
+	gnuplot_show_png(paths.plotfile, 1);
+    }
+#else
+# ifdef G_OS_WIN32
     buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, graph->fname);
     if (WinExec(buf, SW_SHOWNORMAL) < 32)
 	errbox(_("gnuplot command failed"));
-#else
+# else
     buf = g_strdup_printf("gnuplot -persist \"%s\"", graph->fname);
     if (system(buf))
 	errbox(_("gnuplot command failed"));
-#endif
+# endif
     g_free(buf);
+#endif /* GNUPLOT_PNG */
 }
 
 /* ........................................................... */

@@ -1309,12 +1309,42 @@ static void open_gui_model (gui_obj *gobj)
 
 static void open_gui_graph (gui_obj *gobj)
 {
-    char buf[MAXLEN];
     GRAPHT *graph = (GRAPHT *) gobj->data;
+#ifdef GNUPLOT_PNG
+    FILE *fp, *fq;
+    extern int gnuplot_show_png(const char *fname, int saved);
+#else
+    gchar *buf = NULL;
+#endif
 
-    sprintf(buf, "gnuplot -persist \"%s\"", graph->fname);
-    if (system(buf))
+#ifdef GNUPLOT_PNG
+    if (gnuplot_init(&paths, &fp)) {
 	errbox(_("gnuplot command failed"));
+	return;
+    }
+    
+    fq = fopen(graph->fname, "r");
+    if (fq == NULL) {
+	fclose(fp);
+	errbox(_("gnuplot command failed"));
+    } else {
+	int c;
+
+	while ((c = fgetc(fq)) != EOF) {
+	    fputc(c, fp);
+	}
+	fclose(fp);
+	fclose(fq);
+	gnuplot_display(&paths);
+	gnuplot_show_png(paths.plotfile, 1);
+    }
+#else
+    buf = g_strdup_printf("gnuplot -persist \"%s\"", graph->fname);
+    if (system(buf)) {
+	errbox(_("gnuplot command failed"));
+    }
+    g_free(buf);
+#endif /* GNUPLOT_PNG */
 }
 
 /* ........................................................... */

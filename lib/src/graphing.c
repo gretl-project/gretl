@@ -505,7 +505,7 @@ int gnuplot_display (const PATHS *ppaths)
 
 #ifdef GNUPLOT_PNG
 # ifdef OS_WIN32
-    sprintf(plotcmd, "%s \"%s\"", ppaths->gnuplot, ppaths->plotfile);
+    sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
     if (WinExec(plotcmd, SW_SHOWMINIMIZED) < 32) err = 1;
 # else
     sprintf(plotcmd, "%s%s \"%s\"", ppaths->gnuplot, 
@@ -514,7 +514,7 @@ int gnuplot_display (const PATHS *ppaths)
 # endif /* OS_WIN32 */
 #else  
 # ifdef OS_WIN32
-    sprintf(plotcmd, "%s \"%s\"", ppaths->gnuplot, ppaths->plotfile);
+    sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
     if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
 # else
     sprintf(plotcmd, "%s -persist \"%s\"", ppaths->gnuplot, ppaths->plotfile);

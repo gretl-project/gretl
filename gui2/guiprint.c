@@ -82,10 +82,7 @@ int win_copy_buf (char *buf, int format, size_t buflen)
 
     EmptyClipboard();
 
-    if (format == COPY_EMF) {
-	winbuf = buf;
-    }	
-    else if (nls_on && format == COPY_TEXT) {
+    if (nls_on && format == COPY_TEXT) {
 	gsize bytes;
 
 	tr = g_locale_from_utf8 (buf, -1, NULL, &bytes, NULL);
@@ -113,8 +110,6 @@ int win_copy_buf (char *buf, int format, size_t buflen)
 
     if (format == COPY_RTF) { 
 	clip_format = RegisterClipboardFormat("Rich Text Format");
-    } else if (format == COPY_EMF) {
-	clip_format = CF_ENHMETAFILE;	
     } else {
 	clip_format = CF_TEXT;
     }
@@ -124,9 +119,8 @@ int win_copy_buf (char *buf, int format, size_t buflen)
     CloseClipboard();
 
     if (tr != NULL) free(tr);
-    if (winbuf != buf) {
-	free(winbuf);
-    }
+
+    free(winbuf);
 
     return 0;
 }

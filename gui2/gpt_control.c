@@ -686,9 +686,9 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 {
     FILE *fq;
     PRN *prn;
-    char plottmp[MAXLEN], plotline[MAXLEN], plotcmd[MAXLEN];
-    char termstr[MAXLEN];
-    int cmds;
+    char plottmp[MAXLEN], plotline[MAXLEN], termstr[MAXLEN];
+    gchar *plotcmd = NULL;
+    int cmds, err;
 
     if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
 
@@ -720,11 +720,24 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
     }
     gretl_print_destroy(prn);
     fclose(fq);
-    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
-    if (system(plotcmd))
-	errbox(_("Gnuplot error creating graph"));
+
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
+			      plottmp);
+
+#ifdef G_OS_WIN32
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
+#else
+    err = system(plotcmd);
+#endif
+
     remove(plottmp);
-    infobox(_("Graph saved"));
+    g_free(plotcmd);
+
+    if (err) {
+	errbox(_("Gnuplot error creating graph"));
+    } else {
+	infobox(_("Graph saved"));
+    }
 }
 
 #endif
@@ -735,17 +748,19 @@ void do_save_graph (const char *fname, char *savestr)
 {
     FILE *fq;
     PRN *prn;
-    char plottmp[MAXLEN], plotline[MAXLEN], plotcmd[MAXLEN];
-    char termstr[MAXLEN];
+    char plottmp[MAXLEN], plotline[MAXLEN], termstr[MAXLEN];
+    gchar *plotcmd = NULL;
     int cmds, err = 0;
 
     if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
+
     fq = fopen(paths.plotfile, "r");
     if (fq == NULL) {
 	errbox(_("Couldn't access graph info"));
 	gretl_print_destroy(prn);
 	return;
     } 
+
     cmds = termtype_to_termstr(savestr, termstr);  
     if (cmds) {
 	if (copyfile(paths.plotfile, fname)) 
@@ -764,23 +779,27 @@ void do_save_graph (const char *fname, char *savestr)
 		pprintf(prn, "%s", plotline);
 	}
     }
+
     gretl_print_destroy(prn);
     fclose(fq);
-    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
+
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
+			      plottmp);
 
 #ifdef G_OS_WIN32
-    if (WinExec(plotcmd, SW_SHOWMINIMIZED) < 32) {
-	err = 1;
-	errbox(_("Gnuplot error creating graph"));
-    }
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
 #else
-    if (system(plotcmd)) {
-	err = 1;
-	errbox(_("Gnuplot error creating graph"));
-    }
+    err = system(plotcmd);
 #endif
+
+    g_free(plotcmd);
     remove(plottmp);
-    if (!err) infobox(_("Graph saved"));
+
+    if (err) {
+	errbox(_("Gnuplot error creating graph"));
+    } else {
+	infobox(_("Graph saved"));
+    }
 }
 
 /* ........................................................... */
@@ -1264,6 +1283,7 @@ typedef struct png_plot_t {
     int title;
     guint cid;
     int range_mean;
+    int saved;
     zoom_t *zoom;
 } png_plot_t;
 
@@ -1507,6 +1527,11 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 	    i++;
 	    continue;
 	}
+	if (plot->saved &&
+	    !strcmp(plot_items[i], "Save to session as icon")) {
+	    i++;
+	    continue;
+	}
         item = gtk_menu_item_new_with_label(_(plot_items[i]));
         g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(plot_popup_activated),
@@ -1524,7 +1549,8 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 static int make_new_png (png_plot_t *plot, int view)
 {
     int err = 0;
-    char fullname[MAXLEN], sysline[MAXLEN];
+    char fullname[MAXLEN];
+    gchar *plotcmd = NULL;
 
     if (view == PNG_ZOOM) {
 	FILE *fpin, *fpout;
@@ -1561,14 +1587,22 @@ static int make_new_png (png_plot_t *plot, int view)
 	fclose(fpout);
 	fclose(fpin);
 
-	sprintf(sysline, "gnuplot %s", fullname);
-	err = system(sysline);
-	/* remove(fullname); */
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
+				 fullname);
     } else { /* PNG_UNZOOM */
-	char syscmd[36];
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
+				 plot->spec->fname);
+    }
 
-	sprintf(syscmd, "gnuplot %s", plot->spec->fname);
-	err = system(syscmd);
+#ifdef G_OS_WIN32
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
+#else
+    err = system(plotcmd);
+#endif
+    g_free(plotcmd);  
+
+    if (view == PNG_ZOOM) {
+	remove(fullname);
     }
 
     if (err) {
@@ -1663,12 +1697,13 @@ static void render_pngfile (const char *fname, png_plot_t *plot,
     gint width;
     gint height;
     GdkPixbuf *pbuf;
+    GError *error = NULL;
 
-    pbuf = gdk_pixbuf_new_from_file(fname, NULL);
+    pbuf = gdk_pixbuf_new_from_file(fname, &error);
+
     if (pbuf == NULL) {
-	errbox(_("Failed to create pixbuf from file"));
-	fprintf(stderr, "fname='%s'\n", fname);
-	remove(fname);
+        errbox(error->message);
+        g_error_free(error);
 	return;
     }
 
@@ -1716,6 +1751,7 @@ static int get_plot_yrange (png_plot_t *plot)
 {
     FILE *fpin, *fpout;
     char line[MAXLEN], dumbgp[MAXLEN], dumbtxt[MAXLEN];
+    gchar *plotcmd = NULL;
     int err = 0, x2axis = 0;
 
     fpin = fopen(plot->spec->fname, "r");
@@ -1742,8 +1778,15 @@ static int get_plot_yrange (png_plot_t *plot)
     fclose(fpin);
     fclose(fpout);
 
-    sprintf(line, "gnuplot %s", dumbgp);
-    err = system(line);
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot,
+			      dumbgp);
+#ifdef G_OS_WIN32
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
+#else
+    err = system(plotcmd);
+#endif
+    
+    g_free(plotcmd);
     remove(dumbgp);
 
     if (err) 
@@ -1836,7 +1879,7 @@ static int get_plot_ranges (png_plot_t *plot)
     return got_x;
 }
 
-int gnuplot_show_png (const char *plotfile)
+int gnuplot_show_png (const char *plotfile, int saved)
 {
     png_plot_t *plot;
     int plot_has_xrange;
@@ -1861,6 +1904,7 @@ int gnuplot_show_png (const char *plotfile)
     plot->zoom->zoomed = 0;
 
     plot->range_mean = 0;
+    plot->saved = saved;
 
     /* record name of tmp file containing plot commands */
     strcpy(plot->spec->fname, plotfile);
@@ -1992,15 +2036,31 @@ int gnuplot_show_png (const char *plotfile)
    it on the clipboard.
 */
 
+static int win_copy_emf (HENHMETAFILE hemf)
+{
+    if (!OpenClipboard(NULL)) {
+	errbox(_("Cannot open the clipboard"));
+	return 1;
+    }
+
+    EmptyClipboard();
+    SetClipboardData(CF_ENHMETAFILE, hemf);
+    CloseClipboard();
+
+    return 0;
+}
+
 static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
 {
     FILE *fq;
     PRN *prn;
-    char plottmp[MAXLEN], plotline[MAXLEN], plotcmd[MAXLEN];
-    const char *emftmp = "gpttmp.emf";
-    gchar *emfbuf;
-    GError *error = NULL;
+    char plottmp[MAXLEN], plotline[MAXLEN];
+    gchar *plotcmd = NULL;
+    gchar *emfname = NULL;
+    gchar *emfbuf = NULL;
+    HENHMETAFILE hemf;
     size_t emflen;
+    int err;
 
     if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
 
@@ -2010,9 +2070,10 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
 	gretl_print_destroy(prn);
 	return;
     }
- 
+
+    emfname = g_strdup_printf("%sgpttmp.emf", paths.userdir);
     pprintf(prn, "set term emf\n");
-    pprintf(prn, "set output '%s'\n", emftmp);
+    pprintf(prn, "set output '%s'\n", emfname);
     while (fgets(plotline, MAXLEN-1, fq)) {
 	if (strncmp(plotline, "set term", 8) && 
 	    strncmp(plotline, "set output", 10))
@@ -2021,26 +2082,42 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
 
     gretl_print_destroy(prn);
     fclose(fq);
-    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
-    if (system(plotcmd)) {
-	errbox(_("Gnuplot error creating graph"));
-	remove(plottmp);
+
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
+			      plottmp);
+
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
+
+    g_free(plotcmd);
+    remove(plottmp);
+    
+    if (err) {
+        errbox(_("Gnuplot error creating graph"));
+	g_free(emfname);
 	return;
     }
 
-    /* delete the gnuplot command file that generated the EMF */
-    remove(plottmp);
+    hemf = GetEnhMetaFile(emfname);
+    emflen = GetEnhMetaFileBits(hemf, 0, NULL);
+    GetEnhMetaFileBits(hemf, emflen, emfbuf);
+    {
+	gchar *msg = g_strdup_printf("Got %d bytes from %s",
+				     (int) emflen, emfname);
+	infobox(msg);
+	g_free(msg);
+    }
+    DeleteEnhMetaFile(hemf); /* trash the handle */
 
-    /* EMF file is written: now we grab it into memory */
-    g_file_get_contents (emftmp, &emfbuf, &emflen, &error);
-
-    /* place the buffer on the clipboard */
-    win_copy_buf(emfbuf, COPY_EMF, emflen);
+    /* place the buffer on the clipboard */    
+    hemf = SetEnhMetaFileBits(emflen, emfbuf);
+    win_copy_emf(hemf);
 
     /* clean up: delete the EMF on disk, and free the buffer that has
        been copied to the clipboard */
-    remove(emftmp);
-    g_free(emfbuf);
+    remove(emfname);
+    g_free(emfname);
+    free(emfbuf);
+    DeleteEnhMetaFile(hemf);
 }
 
 #endif /* G_OS_WIN32 */

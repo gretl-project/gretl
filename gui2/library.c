@@ -152,7 +152,7 @@ static char last_model = 's';
 void register_graph (void)
 {
 #ifdef GNUPLOT_PNG
-    gnuplot_show_png(paths.plotfile);
+    gnuplot_show_png(paths.plotfile, 0);
 #else
     graphmenu_state(TRUE);
 #endif    
@@ -3344,7 +3344,7 @@ int do_store (char *mydatfile, int opt, int overwrite)
 
 #ifdef G_OS_WIN32
 
-void win_show_error (void)
+void win_show_error (DWORD dw)
 {
     LPVOID buf;
 
@@ -3353,7 +3353,7 @@ void win_show_error (void)
 		  FORMAT_MESSAGE_FROM_SYSTEM | 
 		  FORMAT_MESSAGE_IGNORE_INSERTS,
 		  NULL,
-		  GetLastError(),
+		  dw,
 		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		  (LPTSTR) &buf,
 		  0,
@@ -3373,7 +3373,7 @@ static int get_latex_path (char *latex_path)
     return (ret == 0);
 }
 
-static int winfork (char *cmdline, const char *dir, int wshow)
+int winfork (char *cmdline, const char *dir, int wshow)
 {
     int child;
     STARTUPINFO si;
@@ -3388,13 +3388,14 @@ static int winfork (char *cmdline, const char *dir, int wshow)
 
     /* zero return means failure */
     child = CreateProcess(NULL, cmdline, 
-			  NULL,NULL, FALSE,
+			  NULL, NULL, FALSE,
 			  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
 			  NULL, dir,
 			  &si, &pi);
 
     if (!child) {
-	win_show_error();
+	DWORD dw = GetLastError();
+	win_show_error(dw);
 	return 1;
     }
 
@@ -3442,7 +3443,8 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 	char *texshort = strrchr(texbase, SLASH) + 1;
 
 	if (*latex_path == 0 && get_latex_path(latex_path)) {
-	    win_show_error();
+	    DWORD dw = GetLastError();
+	    win_show_error(dw);
 	    return;
 	}
 
@@ -3451,8 +3453,10 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 	    return;
 	} else {
 	    sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);
-	    if (WinExec(tmp, SW_SHOWNORMAL) < 32)
-		win_show_error();	
+	    if (WinExec(tmp, SW_SHOWNORMAL) < 32) {
+		DWORD dw = GetLastError();
+		win_show_error(dw);
+	    }	
 	}
     }
 #else

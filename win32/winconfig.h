@@ -50,7 +50,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define HAVE_GNUPLOT 1
 
 /* Use gnuplot PNG output? */
-#undef GNUPLOT_PNG
+#define GNUPLOT_PNG 1
 
 /* Is LaTeX available? */
 #define HAVE_LATEX 1
