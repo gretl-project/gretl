@@ -769,6 +769,7 @@ static void destroy_format_dialog (GtkWidget *w, struct format_info *finfo)
 
 static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
 {
+    gtk_widget_hide(finfo->dialog);
     text_copy(finfo->vwin, finfo->format, NULL);
     gtk_widget_destroy(finfo->dialog);
 }

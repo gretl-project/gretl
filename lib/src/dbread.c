@@ -336,6 +336,9 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
     } else {
 	fprintf(stderr, I_("frequency (%d) does not make seem to make sense"),
 		(int) dinfo->info);
+	fputc('\n', stderr);
+	sprintf(gretl_errmsg, ("frequency (%d) does not make seem to make sense"), 
+		(int) dinfo->info);
 	err = 1;
     }   
 
@@ -384,6 +387,9 @@ static int dinfo_to_tbl_row (const DATEINFO *dinfo, db_table_row *row,
 	startfrac = 0;
     } else {
 	fprintf(stderr, I_("frequency (%d) does not make seem to make sense"),
+		(int) dinfo->info);
+	fputc('\n', stderr);
+	sprintf(gretl_errmsg, ("frequency (%d) does not make seem to make sense"), 
 		(int) dinfo->info);
 	err = 1;
     }
@@ -557,7 +563,7 @@ db_table *read_rats_db (FILE *fp)
     fseek(fp, 4L, SEEK_CUR);
 
     /* basic check */
-    if (forward <= 0) {
+    if (forward <= 0) { 
 	strcpy(gretl_errmsg, _("This is not a valid RATS 4.0 database"));
 	fprintf(stderr, "rats database: got forward = %ld\n", forward);
 	return NULL;
