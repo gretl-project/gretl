@@ -270,8 +270,8 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book)
 	int i;
 
 	if (sst != NULL) {
-	    fprintf(stderr, "Got a second SST: problem\n");
-	    return 1;
+	    fprintf(stderr, "Got a second string table: this is nonsense\n");
+	    return 0;
 	}
 
 	sstsize = getshort(rec, 4);
@@ -587,11 +587,11 @@ static char *convert16to7 (char *src, int count)
 
 #define NEW_ALLOC 1
 
-static void rowptr_init (struct rowdescr row)
+static void rowptr_init (struct rowdescr *row)
 {
-    row.last = 0;
-    row.end = 0;
-    row.cells = NULL;
+    row->last = 0;
+    row->end = 0;
+    row->cells = NULL;
 }
 
 static int allocate_row_col (int row, int col, wbook *book) 
@@ -618,7 +618,7 @@ static int allocate_row_col (int row, int col, wbook *book)
 # ifdef FULL_EDEBUG
 	    fprintf(stderr, "allocate: initing rowptr[%d]\n", i);
 # endif
-	    rowptr_init(rowptr + i);
+	    rowptr_init(&rowptr[i]);
 	    fprintf(stderr, "rowptr[%d].end=%d\n", i, rowptr[i].end);
 	}
 #else
