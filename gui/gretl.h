@@ -218,13 +218,16 @@ gint main_popup (GtkWidget *widget, GdkEventButton *event,
 /* functions defined in files other than gretl.c */
 
 void file_selector (char *msg, int action, gpointer data);
-int retrieve_url (int opt, const char *dbase, const char *series, 
-		  int filesave, char **saver, char *errbuf);
 void gui_get_series (gpointer data, guint bci_code, 
 		     GtkWidget *widget);
-int update_query (void); 
 void display_files (gpointer data, guint code, GtkWidget *widget);
 void gpt_save_dialog (void);
+
+/* webget.c */
+int update_query (void); 
+int retrieve_url (int opt, const char *dbase, const char *series, 
+		  int filesave, char **saver, char *errbuf);
+int proxy_init (void);
 
 
 #ifndef G_OS_WIN32

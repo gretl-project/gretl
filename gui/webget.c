@@ -115,6 +115,8 @@ enum spflags {
 
 extern const char *version_string;
 
+static struct urlinfo gretlproxy; 
+
 /* prototypes */
 static char *time_str (time_t *tm);
 static void rbuf_initialize (struct rbuf *rbuf, int fd);
@@ -136,8 +138,9 @@ static int http_process_none (const char *hdr, void *arg);
 static int http_process_type (const char *hdr, void *arg);
 static int numdigit (long a);
 static char *herrmsg (int error);
-static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, int *dt);
-static uerr_t http_loop (struct urlinfo *u, int *dt);
+static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, int *dt,
+		       struct urlinfo *proxy);
+static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy);
 static struct urlinfo *newurl (void);
 static void freeurl (struct urlinfo *u, int complete);
 static int get_contents (int fd, FILE *fp, char **getbuf, long *len, 
@@ -509,12 +512,73 @@ static char *herrmsg (int error)
 
 /* ........................................................... */
 
-static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, int *dt)
+static void
+base64_encode (const char *s, char *store, int length)
+{
+    /* Conversion table.  */
+    static char tbl[64] = {
+	'A','B','C','D','E','F','G','H',
+	'I','J','K','L','M','N','O','P',
+	'Q','R','S','T','U','V','W','X',
+	'Y','Z','a','b','c','d','e','f',
+	'g','h','i','j','k','l','m','n',
+	'o','p','q','r','s','t','u','v',
+	'w','x','y','z','0','1','2','3',
+	'4','5','6','7','8','9','+','/'
+    };
+    int i;
+    unsigned char *p = (unsigned char *)store;
+
+    /* Transform the 3x8 bits to 4x6 bits, as required by base64.  */
+    for (i = 0; i < length; i += 3) {
+	*p++ = tbl[s[0] >> 2];
+	*p++ = tbl[((s[0] & 3) << 4) + (s[1] >> 4)];
+	*p++ = tbl[((s[1] & 0xf) << 2) + (s[2] >> 6)];
+	*p++ = tbl[s[2] & 0x3f];
+	s += 3;
+    }
+    /* Pad the result if necessary...  */
+    if (i == length + 1)
+	*(p - 1) = '=';
+    else if (i == length + 2)
+	*(p - 1) = *(p - 2) = '=';
+    /* ...and zero-terminate it.  */
+    *p = '\0';
+}
+
+/* ........................................................... */
+
+#define BASE64_LENGTH(len) (4 * (((len) + 2) / 3))
+
+static char *
+basic_authentication_encode (const char *user, const char *passwd,
+                             const char *header)
+{
+    char *t1, *t2, *res;
+    int len1 = strlen(user) + 1 + strlen(passwd);
+    int len2 = BASE64_LENGTH(len1);
+
+    t1 = malloc(len1 + 1);
+    sprintf(t1, "%s:%s", user, passwd);
+    t2 = malloc(1 + len2);
+    base64_encode(t1, t2, len1);
+    res = malloc(len2 + 11 + strlen (header));
+    sprintf (res, "%s: Basic %s\r\n", header, t2);
+
+    return res;
+}
+
+/* ........................................................... */
+
+static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, 
+		       int *dt, struct urlinfo *proxy)
 {
     char *request, *type, *command, *path;
-    char *pragma_h, *useragent, *range, *remhost;
+    char *pragma_h, *useragent, *range;
     char *all_headers = NULL;
-    int sock, hcount, num_written, all_length, remport, statcode;
+    char *proxyauth = NULL;
+    struct urlinfo *conn;
+    int sock, hcount, num_written, all_length, statcode;
     long contlen, contrange;
     uerr_t err;
     FILE *fp;
@@ -527,23 +591,28 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, int *dt)
     hs->remote_time = NULL;
     hs->error = NULL;
 
-    err = make_connection(&sock, u->host, u->port);
+    /* If we're using a proxy, we will be connecting to the proxy
+       server. */
+    conn = (proxy != NULL)? proxy : u;
+
+    err = make_connection(&sock, conn->host, conn->port);
 
     switch (err) {
     case HOSTERR:
-	sprintf(u->errbuf, "%s: %s.\n", u->host, herrmsg(h_errno));
+	sprintf(conn->errbuf, "%s: %s.\n", conn->host, herrmsg(h_errno));
 	return HOSTERR;
 	break;
     case CONSOCKERR:
-	sprintf(u->errbuf, "socket: %s\n", strerror(errno));
+	sprintf(conn->errbuf, "socket: %s\n", strerror(errno));
 	return CONSOCKERR;
 	break;
     case CONREFUSED:
-	sprintf(u->errbuf, "Connection to %s:%hu refused.\n", u->host, u->port);
+	sprintf(conn->errbuf, "Connection to %s:%hu refused.\n", 
+		conn->host, conn->port);
 	close(sock);
 	return CONREFUSED;
     case CONERROR:
-	sprintf(u->errbuf, "connect: %s\n", strerror(errno));
+	sprintf(conn->errbuf, "connect: %s\n", strerror(errno));
 	close(sock);
 	return CONERROR;
 	break;
@@ -564,7 +633,11 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, int *dt)
     } else 
 	fp = NULL; /* use local buffer instead */
 
-    path = u->path;
+    if (proxy && proxy->user && proxy->passwd) 
+	    proxyauth = basic_authentication_encode (proxy->user, proxy->passwd,
+						     "Proxy-Authorization");
+
+    path = u->path; 
     command = (*dt & HEAD_ONLY)? "HEAD" : "GET";
     if (*dt & SEND_NOCACHE)
 	pragma_h = "Pragma: no-cache\r\n";
@@ -577,23 +650,23 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, int *dt)
 #ifdef G_OS_WIN32
     strcat(useragent, "w");
 #endif
-    remhost = u->host;
-    remport = u->port;
 
     request = mymalloc(strlen(command) + strlen(path)
 		       + strlen(useragent)
-		       + strlen(remhost) + numdigit(remport)
+		       + strlen(u->host) + numdigit(u->port)
 		       + strlen(HTTP_ACCEPT)
+		       + (proxyauth ? strlen (proxyauth) : 0)
 		       + strlen(pragma_h)
 		       + 64);
     sprintf(request, "%s %s HTTP/1.0\r\n"
 	    "User-Agent: %s\r\n"
 	    "Host: %s:%d\r\n"
 	    "Accept: %s\r\n"
-	    "%s\r\n",
-	    command, path, useragent, remhost, remport, HTTP_ACCEPT, 
-	    pragma_h); 
+	    "%s%s\r\n",
+	    command, path, useragent, u->host, u->port, HTTP_ACCEPT,
+	    proxyauth ? proxyauth : "", pragma_h); 
     free(useragent);
+
     /* Send the request to server */
     num_written = iwrite(sock, request, strlen(request));
     free(request); /* moved from within following conditional, 03/25/01 */
@@ -771,7 +844,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, int *dt)
 
 /* ........................................................... */
 
-static uerr_t http_loop (struct urlinfo *u, int *dt)
+static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 {
     int count;
     char *tms;
@@ -789,7 +862,7 @@ static uerr_t http_loop (struct urlinfo *u, int *dt)
 	*dt &= ~SEND_NOCACHE;
 
 	/* Try fetching the document, or at least its head.  :-) */
-	err = gethttp(u, &hstat, dt);
+	err = gethttp(u, &hstat, dt, proxy);
 	/* Time?  */
 	tms = time_str(NULL);
 
@@ -1089,6 +1162,10 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate)
     int dt, err = 0;
     char datestr[32];
     const char *cgi = "/gretl/cgi-bin/gretl_update.cgi";
+    struct urlinfo *proxy = NULL; 
+
+    if (gretlproxy.host != NULL)
+	proxy = &gretlproxy;
 
     u = newurl();
     u->proto = URLHTTP;
@@ -1105,7 +1182,7 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate)
     u->filesave = 0;
     u->local = saver;
 
-    result = http_loop(u, &dt);
+    result = http_loop(u, &dt, proxy); 
 
     if (result == RETROK) {
         errbuf[0] = '\0';
@@ -1216,6 +1293,23 @@ int update_query (void)
 
     free(getbuf);
     return err;
+}
+
+/* ........................................................... */
+
+int proxy_init (void)
+{
+    gretlproxy.url = NULL;
+    gretlproxy.proto = URLHTTP;
+    gretlproxy.port = 8080;
+    gretlproxy.filesave = 0;
+    gretlproxy.path = NULL; 
+    gretlproxy.local = NULL;
+    gretlproxy.user = NULL;
+    gretlproxy.passwd = NULL;
+    gretlproxy.host = malloc(strlen("127.0.0.1") + 1);
+    strcpy(gretlproxy.host, "127.0.0.1");
+    return 0;
 } 
 
 /* ........................................................... */
@@ -1233,6 +1327,10 @@ int retrieve_url (int opt, const char *dbase, const char *series,
     int dt;
     const char *cgi = "/gretl/cgi-bin/gretldata.cgi";
     size_t dblen = 0L;
+    struct urlinfo *proxy = NULL; 
+
+    if (gretlproxy.host != NULL)
+	proxy = &gretlproxy;
 
     if (dbase != NULL)
 	dblen = strlen(dbase);
@@ -1264,7 +1362,7 @@ int retrieve_url (int opt, const char *dbase, const char *series,
 	u->local = saver;
     }
 
-    result = http_loop(u, &dt);
+    result = http_loop(u, &dt, proxy);
     freeurl(u, 1);
 
     if (result == RETROK) {

@@ -715,6 +715,7 @@ int main (int argc, char *argv[])
     }
 
     /* check for program updates? */
+    proxy_init();
     if (updater) update_query(); 
 
     /* try opening specified database */
