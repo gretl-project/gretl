@@ -817,6 +817,8 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
     select = gtk_tree_view_get_selection (GTK_TREE_VIEW(view));
     gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
 
+    /* FIXME: the locator should be updated on movement or click, not
+       just on change of selection */
     g_signal_connect (G_OBJECT(select), "changed",
 		      G_CALLBACK(update_selected), sheet);
 
