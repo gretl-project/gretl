@@ -4,9 +4,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: GNU gretl 1.0pre3\n"
+"Project-Id-Version: GNU gretl 1.0pre4\n"
 "POT-Creation-Date: 2002-11-06 14:45-0500\n"
-"PO-Revision-Date: 2002-10-12 12:00-0500\n"
+"PO-Revision-Date: 2002-11-07 08:00-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -18,14 +18,12 @@ msgid "Replaced"
 msgstr "Remplacé"
 
 #: lib/src/compare.c:386
-#, fuzzy
 msgid "Non-linearity test (squares)"
-msgstr "Test de non linéarité (%s)"
+msgstr "Test de non linéarité (carrés)"
 
 #: lib/src/compare.c:387
-#, fuzzy
 msgid "Non-linearity test (logs)"
-msgstr "Test de non linéarité (%s)"
+msgstr "Test de non linéarité (logs)"
 
 #: lib/src/compare.c:388
 msgid "relationship is linear"
@@ -51,11 +49,11 @@ msgstr "avec valeur de P"
 
 #: lib/src/compare.c:669
 msgid "RESET test for specification"
-msgstr ""
+msgstr "Réinitialisation du test pour la spécification"
 
 #: lib/src/compare.c:670
 msgid "specification is adequate"
-msgstr ""
+msgstr "spécification adéquate"
 
 #: lib/src/compare.c:741 lib/src/graphing.c:696 lib/src/graphing.c:704
 msgid "residual"
@@ -78,14 +76,13 @@ msgid "Chi-square"
 msgstr "Khi-deux"
 
 #: lib/src/compare.c:793
-#, fuzzy, c-format
+#, c-format
 msgid "LM test for autocorrelation up to order %s"
-msgstr "pas d'autocorrélation de l'ordre de %d"
+msgstr "Test LM d'autocorrélation jusqu'à l'ordre de %s"
 
 #: lib/src/compare.c:794
-#, fuzzy
 msgid "no autocorrelation"
-msgstr "autocorrélation"
+msgstr "pas d'autocorrélation"
 
 #: lib/src/compare.c:877
 msgid "dummy variable for Chow test"
@@ -617,9 +614,8 @@ msgid "   number of non-blank lines: %d\n"
 msgstr "   nombre de lignes non vides: %d\n"
 
 #: lib/src/dataio.c:2095
-#, fuzzy
 msgid "Invalid data file\n"
-msgstr "Ouvrir le fichier de données"
+msgstr "Fichier de données invalide\n"
 
 #: lib/src/dataio.c:2119
 msgid "scanning for variable names...\n"
@@ -1142,20 +1138,20 @@ msgid "Variable"
 msgstr "Variable"
 
 #: lib/src/describe.c:903
-#, fuzzy
 msgid ""
 "      MEAN           MEDIAN           MIN             MAX\n"
 "\n"
 msgstr ""
-"      MOYENNE         MÉDIANE           MIN              MAX\n"
+"      MOYENNE        MÉDIANE          MIN             MAX\n"
 "\n"
 
 #: lib/src/describe.c:927
-#, fuzzy
 msgid ""
 "      S.D.            C.V.            SKEW          EXCSKURT\n"
 "\n"
-msgstr "      E.T.              C.V.            ASYM           APLATISSEMENT\n"
+msgstr ""
+"      E.T.            C.V.            ASYM          APLATISSEMENT\n"
+"\n"
 
 #: lib/src/describe.c:1014
 #, c-format
@@ -1610,9 +1606,9 @@ msgid "No of obs. = %d, unadjusted R^2 = %f\n"
 msgstr "Nb d'observations = %d, non ajustées R^2 = %f\n"
 
 #: lib/src/estimate.c:2298
-#, fuzzy, c-format
+#, c-format
 msgid "Test for ARCH of order %s"
-msgstr "Test pour ARCH d'ordre %d"
+msgstr "Test pour ARCH d'ordre %s"
 
 #: lib/src/estimate.c:2300
 msgid "no ARCH effect is present"
@@ -1772,14 +1768,14 @@ msgid "Scientific notation not allowed for numbers"
 msgstr "Notation scientifique n'est pas permise dans les nombres"
 
 #: lib/src/generate.c:1866
-#, fuzzy, c-format
+#, c-format
 msgid "= 1 if quarter = %d, 0 otherwise"
-msgstr "%s = 1 si la période est %d, 0 autrement"
+msgstr "= 1 si le quart =%d, 0 autrement"
 
 #: lib/src/generate.c:1874
-#, fuzzy, c-format
+#, c-format
 msgid "= 1 if month is %s, 0 otherwise"
-msgstr "%s = 1 si %s est %d, 0 autrement"
+msgstr "= 1 si le mois est %s, 0 autrement"
 
 #: lib/src/generate.c:1878
 #, c-format
@@ -2464,9 +2460,8 @@ msgid "Augmented Dickey-Fuller regression"
 msgstr "Régression augmentée de Dicker-Fuller"
 
 #: lib/src/modelprint.c:424
-#, fuzzy
 msgid "Auxiliary regression for RESET specification test"
-msgstr "Régression auxiliaire pour le test de non linéarité (termes en log)"
+msgstr "Régression auxiliaire pour le test RESET de spécification"
 
 #: lib/src/modelprint.c:433 gui/selector.c:388 gui2/selector.c:639
 msgid "OLS"
@@ -2609,9 +2604,8 @@ msgid "$t$-statistic"
 msgstr "Statistique-$t$"
 
 #: lib/src/modelprint.c:846 lib/src/modelprint.c:861
-#, fuzzy
 msgid "Slope"
-msgstr "Fermer"
+msgstr "Pente"
 
 #: lib/src/modelprint.c:860 lib/src/modelprint.c:872
 msgid "Std. Error"
@@ -2680,11 +2674,8 @@ msgid "Likelihood ratio test"
 msgstr "Similaire au test des proportions"
 
 #: lib/src/modelprint.c:1522 lib/src/modelprint.c:1543
-#, fuzzy
 msgid "Evaluated at the mean"
-msgstr ""
-"\n"
-"Entrer la moyenne: "
+msgstr "Évalué à la moyenne"
 
 #: lib/src/modelprint.c:1549
 msgid "Number of cases `correctly predicted'"
@@ -4238,15 +4229,13 @@ msgid "Unrecognized variable '%s' in p-value command"
 msgstr "Variable « %s » non reconnnue dans la commande de la valeur P"
 
 #: gui/calculator.c:91 gui2/calculator.c:94
-#, fuzzy
 msgid "Incomplete entry"
-msgstr "Entrée incomplète pour la valeur de P"
+msgstr "Entrée incomplète"
 
 #: gui/calculator.c:96 gui/calculator.c:101 gui2/calculator.c:99
 #: gui2/calculator.c:104
-#, fuzzy
 msgid "Invalid entry"
-msgstr "Entrée invalide\n"
+msgstr "Entrée invalide"
 
 #: gui/calculator.c:120 gui2/calculator.c:123
 msgid "Incomplete entry for hypothesis test"
@@ -7173,7 +7162,7 @@ msgstr "/Tests/non-linéarité (logarithmes)"
 
 #: gui/gui_utils.c:76 gui2/gui_utils.c:80
 msgid "/Tests/Ramsey's RESET"
-msgstr ""
+msgstr "/Tests/Ramsey's RESET"
 
 #: gui/gui_utils.c:77 gui2/gui_utils.c:81
 msgid "/Tests/sep2"
@@ -7905,11 +7894,11 @@ msgstr "(non linéaire)"
 
 #: gui/library.c:1539 gui2/library.c:1382
 msgid "gretl: panel model diagnostics"
-msgstr "gretl: diagnostiqu du panneau de modèle"
+msgstr "gretl: diagnostique du panneau de modèle"
 
 #: gui/library.c:1565 gui2/library.c:1409
 msgid "This test only implemented for OLS models"
-msgstr "Ce test est implanté seulement pour les mod`les OLS"
+msgstr "Ce test est implanté seulement pour les modèles OLS"
 
 #: gui/library.c:1602 gui2/library.c:1447
 msgid "gretl: Chow test output"
@@ -7920,9 +7909,8 @@ msgid "gretl: CUSUM test output"
 msgstr "gretl: sortie du test CUSUM"
 
 #: gui/library.c:1633 gui2/library.c:1477
-#, fuzzy
 msgid "gretl: RESET test"
-msgstr "gretl: test de l'ARCH"
+msgstr "gretl: test RESET"
 
 #: gui/library.c:1671 gui2/library.c:1515
 msgid "gretl: LM test (autocorrelation)"
@@ -7934,7 +7922,7 @@ msgstr "N'a pu lire l'odre de ARCH"
 
 #: gui/library.c:1846 gui2/library.c:1702
 msgid "gretl: high precision estimates"
-msgstr "gretl: estimés à haute précision"
+msgstr "gretl: estimés avec grande précision"
 
 #: gui/library.c:1876 gui2/library.c:1734
 msgid "A variable was duplicated in the list of regressors"
@@ -9295,11 +9283,11 @@ msgstr "Corrélations"
 
 #: gui2/settings.c:148
 msgid "Toolbar folder icon opens Wooldridge data"
-msgstr ""
+msgstr "Icône du dossier de la barre d'outils ouvre les données Wooldridge"
 
 #: gui2/settings.c:149
 msgid "Toolbar folder icon opens Ramanathan data"
-msgstr ""
+msgstr "Icône du dossier de la barre d'outils ouvre les données Ramanathan"
 
 #: gui2/settings.c:153
 msgid "Menu font"
@@ -9796,15 +9784,11 @@ msgstr "Erreur inattendue durant la lecture du fichier\n"
 msgid "Unexpected error reading the file"
 msgstr "Erreur inattendue durant la lecture du fichier"
 
-#~ msgid "%s: contains non-numeric entries"
-#~ msgstr "%s: contient des entrées non numériques"
+#~ msgid "squares"
+#~ msgstr "carrés"
 
-#~ msgid "%s: found non-numeric data in column %d"
-#~ msgstr "%s: des données non numériques repérés dans la colonne %d"
-
-#, fuzzy
-#~ msgid "Test for ARCH of order "
-#~ msgstr "Test pour ARCH d'ordre"
+#~ msgid "logs"
+#~ msgstr "logarithmes"
 
 #~ msgid "LM test for autocorrelation"
 #~ msgstr "test LM pour l'autocorrélation"
@@ -9812,11 +9796,11 @@ msgstr "Erreur inattendue durant la lecture du fichier"
 #~ msgid "Slope at mean"
 #~ msgstr "Pente à la moyenne"
 
-#~ msgid "squares"
-#~ msgstr "carrés"
+#~ msgid "%s: contains non-numeric entries"
+#~ msgstr "%s: contient des entrées non numériques"
 
-#~ msgid "logs"
-#~ msgstr "logarithmes"
+#~ msgid "%s: found non-numeric data in column %d"
+#~ msgstr "%s: des données non numériques repérés dans la colonne %d"
 
 #~ msgid "Heteroskedasticity"
 #~ msgstr "Hétéroskédasticité"
