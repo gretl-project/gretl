@@ -598,6 +598,8 @@ static void get_worksheet_data (const char *fname, int datatype)
     err = (*sheet_get_data)(fname, &Z, datainfo, errtext);
     close_plugin(handle);
 
+    if (datatype == GRETL_EXCEL) return;
+
     if (err) {
 	if (strlen(errtext)) errbox(errtext);
 	else errbox("Failed to import spreadsheet data");
