@@ -66,13 +66,9 @@ struct help_head_t {
     int *pos;
     int ntopics;
 };
-struct gui_help_string {
-    int pos;
-    char string[16];
-};
+
 static int help_length, gui_help_length, script_help_length;
 static struct help_head_t **cli_heads, **gui_heads;
-static struct gui_help_string **gui_help_strings;
 
 /* searching stuff */
 static int look_for_string (char *haystack, char *needle, int nStart);
@@ -720,19 +716,50 @@ void save_session (char *fname)
 
 /* ......................................................... */
 
+struct gui_help_item {
+    int code;
+    char *string;
+};
+
+static struct gui_help_item gui_help_items[] = {
+    { GR_PLOT,    "graphing" },
+    { GR_XY,      "graphing" },
+    { GR_GNUPLOT, "graphing" },
+    { GR_DUMMY,   "factorized" },
+    { GR_BOX,     "boxplots" },
+    { GR_NBOX,    "boxplots" },
+    { ONLINE,     "online" },
+    { MARKERS,    "markers" },
+    { EXPORT,     "export" },
+    { SMPLBOOL,   "sampling" },
+    { SMPLDUM,    "sampling" },
+    { PANEL,      "panel" },
+    { COMPACT,    "compact" },
+    { 0,          NULL },
+};
+
+/* ......................................................... */
+
 static int extra_command_number (const char *s)
 {
-    if (!strcmp(s, "graphing")) return GR_PLOT;
-    if (!strcmp(s, "factorized")) return GR_DUMMY;
-    if (!strcmp(s, "boxplots")) return GR_BOX;
-    if (!strcmp(s, "online")) return ONLINE;
-    if (!strcmp(s, "markers")) return MARKERS;
-    if (!strcmp(s, "export")) return EXPORT;
-    if (!strcmp(s, "export")) return EXPORT;
-    if (!strcmp(s, "sampling")) return SMPLBOOL;
-    if (!strcmp(s, "panel")) return PANEL;
-    if (!strcmp(s, "compact")) return COMPACT;
+    int i;
+
+    for (i=0; gui_help_items[i].code; i++)
+	if (!strcmp(s, gui_help_items[i].string))
+	    return gui_help_items[i].code;
     return 0;
+}
+
+/* ......................................................... */
+
+static char *help_string_from_cmd (int cmd)
+{
+    int i;
+
+    for (i=0; gui_help_items[i].code; i++)
+	if (cmd == gui_help_items[i].code)
+	    return gui_help_items[i].string;
+    return NULL;    
 }
 
 /* ......................................................... */
@@ -821,18 +848,6 @@ static int real_helpfile_init (int cli)
 		if (t) (heads[match])->topics[m] = t;
 		else (heads[match])->topics[m] = 
 			 extra_command_number(topicword);
-		if (t == 0) {
-		    gui_help_strings = realloc(gui_help_strings, 
-					       (g+2) * sizeof *gui_help_strings);
-		    if (gui_help_strings != NULL) {
-			gui_help_strings[g] = malloc(sizeof **gui_help_strings);
-			if (gui_help_strings[g] != NULL) {
-			    strcpy((gui_help_strings[g])->string, topicword);
-			    (gui_help_strings[g])->pos = pos - 1;
-			    g++;
-			} else memfail = 1;
-		    } else memfail = 1;
-		}
 		(heads[match])->pos[m] = pos - 1;
 		(heads[match])->ntopics += 1;
 	    }		
@@ -841,8 +856,6 @@ static int real_helpfile_init (int cli)
 	else topic = 0;
     }
     fclose(fp);
-
-    if (g) gui_help_strings[g] = NULL;
 
     if (cli) cli_heads = heads;
     else gui_heads = heads;
@@ -863,12 +876,12 @@ void helpfile_init (void)
 
 static char *get_gui_help_string (int pos)
 {
-    int i;
+    int i, j;
 
-    for (i=0; gui_help_strings[i] != NULL; i++) {
-	if ((gui_help_strings[i])->pos == pos)
-	    return (gui_help_strings[i])->string;
-    }
+    for (i=0; gui_heads[i] != NULL; i++) 
+	for (j=0; j<(gui_heads[i])->ntopics; j++)
+	    if (pos == (gui_heads[i])->pos[j])
+		return help_string_from_cmd((gui_heads[i])->topics[j]);
     return NULL;
 }
 
@@ -964,6 +977,16 @@ void context_help (GtkWidget *widget, gpointer data)
 	for (j=0; j<(gui_heads[i])->ntopics; j++)
 	    if (help_code == (gui_heads[i])->topics[j])
 		pos = (gui_heads[i])->pos[j];
+    }
+    /* fallback */
+    if (!pos) {
+	char *helpstr = help_string_from_cmd(help_code);
+	int altcode = extra_command_number(helpstr);
+
+	for (i=0; gui_heads[i] != NULL; i++)
+	    for (j=0; j<(gui_heads[i])->ntopics; j++)
+		if (altcode == (gui_heads[i])->topics[j])
+		    pos = (gui_heads[i])->pos[j];
     }
     do_gui_help(NULL, pos, NULL);
 }
