@@ -793,9 +793,9 @@
 	one-step ahead forecast errors is obtained by running a series
 	of regressions: the first regression uses the first
 	<mathvar>k</mathvar> observations and is used to generate a
-	prediction of the dependent variable at observation at
-	observation <mathvar>k</mathvar> + 1; the second uses the
-	first <mathvar>k</mathvar> + 1 observations and generates a
+	prediction of the dependent variable at observation
+	<mathvar>k</mathvar> + 1; the second uses the first
+	<mathvar>k</mathvar> + 1 observations and generates a
 	prediction for observation <mathvar>k</mathvar> + 2, and so on
 	(where <mathvar>k</mathvar> is the number of parameters in the
 	original model).  The cumulated sum of the scaled forecast
