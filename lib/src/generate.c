@@ -177,6 +177,8 @@ static char operators[] = {
                          t == T_VAR || t == T_MEDIAN || t == T_MIN || \
                          t == T_SST || t == T_MAX)
 
+#define MAXTERMS 64
+
 /* ...................................................... */
 
 static int is_operator (char c)
@@ -621,9 +623,11 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	return E_ALLOC; 
     } 
 
-    for (i=0; i<n; i++) genr.xvec[i] = 0;
-    for (i=0; i<n; i++) mstack[i] = 0;
-    for (i=0; i<n; i++) mvec[i] = 0;
+    for (i=0; i<n; i++) {
+	genr.xvec[i] = 0;
+	mstack[i] = 0;
+	mvec[i] = 0;
+    }
 
     *newvar = '\0';
     op0 = '\0';
@@ -667,6 +671,9 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
 	return E_ALLOC;
     }
+#ifdef GENR_DEBUG
+    fprintf(stderr, "after parenthesize: s='%s'\n", s);
+#endif
 
     while ((ls = strlen(s)) > 0) {
 #ifdef GENR_DEBUG
@@ -756,7 +763,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
             if (iw == 0) {
 		/* there is an operator in front of (  */
                 nvtmp++;
-                if (nvtmp > 20) {
+                if (nvtmp > MAXTERMS) {
 		    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
                     return E_NEST;
                 }
@@ -779,7 +786,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
             } else  {
 		/* there is a math function or lag/lead in form of ( */
                 nvtmp++;
-                if (nvtmp > 20) {
+                if (nvtmp > MAXTERMS) {
 		    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
                     return E_NEST;
                 }

@@ -376,17 +376,19 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	if (spec->lines[i].yaxis == 2) spec->y2axis = 1;
     }
 
-    k = (spec->y2axis)? 3 : 2;
-    for (i=0; i<k; i++) {
-	if (axis_range[i].isauto != NULL) {
-	    if (GTK_TOGGLE_BUTTON (axis_range[i].isauto)->active) {
-		strcpy(spec->range[i][0], "*");
-		strcpy(spec->range[i][1], "*");
-	    } else {
-		widget_to_str(axis_range[i].min, spec->range[i][0], 
-			      sizeof spec->range[0][0]);
-		widget_to_str(axis_range[i].max, spec->range[i][1], 
-			      sizeof spec->range[0][1]);
+    if (spec->code == PLOT_REGULAR) {
+	k = (spec->y2axis)? 3 : 2;
+	for (i=0; i<k; i++) {
+	    if (axis_range[i].isauto != NULL) {
+		if (GTK_TOGGLE_BUTTON (axis_range[i].isauto)->active) {
+		    strcpy(spec->range[i][0], "*");
+		    strcpy(spec->range[i][1], "*");
+		} else {
+		    widget_to_str(axis_range[i].min, spec->range[i][0], 
+				  sizeof spec->range[0][0]);
+		    widget_to_str(axis_range[i].max, spec->range[i][1], 
+				  sizeof spec->range[0][1]);
+		}
 	    }
 	}
     }
@@ -768,7 +770,9 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 	    gtk_widget_show(tempwid);
 	    gpt_titles[i].widget = tempwid;
 	}
-    }    
+    } 
+
+    if (spec->code != PLOT_REGULAR) return;
 
     /* axis range: auto versus manual buttons */
     axis_range[axis].ID = axis;
