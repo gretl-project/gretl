@@ -284,8 +284,7 @@ void file_selector (char *msg, char *startdir, int action,
 	if (spos) strncpy(paths.currdir, scriptfile, spos + 1);
 	mkfilelist(3, scriptfile);
 
-	view_file(scriptfile, 1, 0, 78, 370, title, 
-		  script_items, sizeof(script_items));
+	view_file(scriptfile, 1, 0, 78, 370, title, script_items);
     }
     else if (action == OPEN_SESSION) {
 	int n = strlen(paths.scriptdir);
@@ -296,11 +295,9 @@ void file_selector (char *msg, char *startdir, int action,
 	    return;
 	}
 	if (strncmp(scriptfile, paths.scriptdir, n)) 
-	    view_file(scriptfile, 1, 0, 78, 370, title, 
-		      script_items, sizeof script_items);
+	    view_file(scriptfile, 1, 0, 78, 370, title, script_items);
 	else 
-	    view_file(scriptfile, 1, 0, 78, 370, title, 
-		      sample_script_items, sizeof sample_script_items);
+	    view_file(scriptfile, 1, 0, 78, 370, title, sample_script_items);
     }
 
     if (action < END_OPEN) return;
@@ -423,8 +420,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	if (strncmp(scriptfile, paths.scriptdir, n)) 
 	    view_file(scriptfile, 1, 0, 78, 370, title, script_items);
 	else 
-	    view_file(scriptfile, 1, 0, 78, 370, title, 
-		      sample_script_items);
+	    view_file(scriptfile, 1, 0, 78, 370, title, sample_script_items);
     }
 
     if (action < END_OPEN) {
