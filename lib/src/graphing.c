@@ -1294,11 +1294,11 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	    }
 
 	    if (!na(freq->chisqu)) {
-		fprintf(fp, "set label '%s:' at graph .05, graph .9\n",
+		fprintf(fp, "set label '%s:' at graph .03, graph .97\n",
 			I_("Test statistic for normality"));
 		sprintf(chilbl, I_("Chi-squared(2) = %.3f, pvalue %.5f"), 
 			freq->chisqu, chisq(freq->chisqu, 2));
-		fprintf(fp, "set label '%s' at graph .05, graph .85\n", chilbl);
+		fprintf(fp, "set label '%s' at graph .03, graph .93\n", chilbl);
 	    }	
 	}
 	else if (dist == GAMMA) {
