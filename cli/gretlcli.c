@@ -116,8 +116,9 @@ int make_userdir (PATHS *ppaths)
 	    return 1;
 	} else 
 	    fprintf(stderr, _("Created user directory %s\n"), ppaths->userdir);
-    } else 
+    } else {
 	closedir(dir);
+    }
     return 0;
 }
 

@@ -3331,24 +3331,32 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
     gint i, err, *lines = NULL;
 
     liststr = mdata_selection_to_string(0);
-    if (liststr == NULL) return;
+    if (liststr == NULL || *liststr == 0) return;
 
     clear(line, MAXLEN);
     sprintf(line, "gnuplot%s time", liststr);
     free(liststr);
 
     if (verify_and_record_command(line)) return;
-    lines = mymalloc(command.list[0] - 1);
+    if (command.list[0] < 2) return;
+
+    lines = mymalloc((command.list[0] - 1) * sizeof *lines);
     if (lines == NULL) return;
-    for (i=0; i<command.list[0]-1 ; i++) lines[i] = 1;
+
+    for (i=0; i<command.list[0]-1; i++) {
+	lines[i] = 1;
+    }
 
     err = gnuplot(command.list, lines, NULL, &Z, datainfo,
 		  &paths, &plot_count, GP_GUI);
 
-    if (err == -999)
+    if (err == -999) {
 	errbox(_("No data were available to graph"));
-    else if (err < 0) errbox(_("gnuplot command failed"));
-    else register_graph();
+    } else if (err < 0) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	register_graph();
+    }
 
     free(lines);
 }

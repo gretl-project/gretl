@@ -1,3 +1,20 @@
+version 1.1.3
+- Improve formatting of "influential observations" test output
+  for non-English locales
+
+09/09/03 version 1.1.2
+- Fix bug in time-series plot from popup menu in main window
+- Fix build problem: "make install" could fail to install the
+  GUI program under some conditions (thanks to Dirk Eddelbuettel
+  for spotting this)
+- Update the Spanish translation
+- Win32 version: switch to the native Windows font selection
+  dialog box (some problems were reported with the modified
+  gtk font selection on win32)
+- Win32 version: update to gtk 2.2.4 and pango 1.2.5
+- Library: switch to using the Cephes gamma() code throughout,
+  and delete some redundant code
+
 09/07/03 version 1.1.1
 - Graph editing: add facility to write labels onto the graph
 - Graph editing: allow removal of auto-fitted OLS line

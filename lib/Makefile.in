@@ -86,7 +86,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 $(LIBGRETL): $(LOBJS) $(AUX_LOBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(AUX_LOBJ) \
-	-rpath $(prefix)/lib $(LIBS) -version-info 0:10:0
+	-rpath $(prefix)/lib $(LIBS) -version-info 0:11:0
 
 -include $(LOBJS:.lo=.d)
 

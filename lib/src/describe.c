@@ -652,6 +652,9 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     tmpdinfo.extra = 1;
     if (start_new_Z(&tmpZ, &tmpdinfo, 1))
 	return 1;
+
+    /* Test from Geweke and Porter-Hudak, as set out in
+       Greene, Econometric Analysis 4e, p. 787 */
     
     for (t=0; t<n; t++) {
 	tmpZ[0][t] = 1.0;

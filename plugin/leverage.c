@@ -198,11 +198,11 @@ int model_leverage (const MODEL *pmod, double ***pZ,
     }
 
     pputs(prn, "        ");
-    pprintf(prn, "%*s", UTF_WIDTH(_("residual"), 13), _("residual"));
-    pprintf(prn, "%*s", UTF_WIDTH(_("leverage"), 13), _("leverage"));
-    pprintf(prn, "%*s", UTF_WIDTH(_("influence"), 13), _("influence"));
+    pprintf(prn, "%*s", UTF_WIDTH(_("residual"), 16), _("residual"));
+    pprintf(prn, "%*s", UTF_WIDTH(_("leverage"), 16), _("leverage"));
+    pprintf(prn, "%*s", UTF_WIDTH(_("influence"), 16), _("influence"));
     pputs(prn, "\n        ");
-    pputs(prn, "         u         0<=h<=1    u*h/(1-h)\n\n");
+    pputs(prn, "            u          0<=h<=1         u*h/(1-h)\n\n");
 
     lp = 2.0 * n / m;
 
@@ -219,13 +219,13 @@ int model_leverage (const MODEL *pmod, double ***pZ,
 	if (h > lp) gotlp = 1;
 	if (h < 1.0) {
 	    f = pmod->uhat[tmod] * h / (1.0 - h);
-	    sprintf(fstr, "%12.5g", f);
+	    sprintf(fstr, "%15.5g", f);
 	} else {
 	    f = 0.0;
-	    sprintf(fstr, "%12s", _("undefined"));
+	    sprintf(fstr, "%15s", _("undefined"));
 	}
 	print_obs_marker(tmod, pdinfo, prn);
-	pprintf(prn, "%12.5g %11.3f%s %s\n", pmod->uhat[tmod], h, 
+	pprintf(prn, "%14.5g %14.3f%s %s\n", pmod->uhat[tmod], h, 
 		(h > lp)? "*" : " ", fstr);
 	if (hvec != NULL) hvec[t] = h;
     }

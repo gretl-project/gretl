@@ -733,13 +733,13 @@ int main (int argc, char *argv[])
 				  GNOME_PARAM_NONE);
 #else
     gtk_init(&argc, &argv);
-#endif
+#endif /* USE_GNOME */
 
     set_paths(&paths, 1, 1); /* 1 = defaults, 1 = gui */
 
 #ifdef G_OS_WIN32
     read_rc(); /* get config info from registry */
-#ifdef HUSH_RUNTIME_WARNINGS
+# ifdef HUSH_RUNTIME_WARNINGS
     g_log_set_handler ("Gtk",
 		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
 		       (GLogFunc) dummy_output_handler,
@@ -752,11 +752,11 @@ int main (int argc, char *argv[])
 		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
 		       (GLogFunc) dummy_output_handler,
 		       NULL);
-#endif /* HUSH_RUNTIME_WARNINGS */ 
+# endif /* HUSH_RUNTIME_WARNINGS */ 
     ws_startup(); 
     atexit(write_rc);
 #else 
-    set_rcfile();
+    set_rcfile(); /* also calls read_rc() */
     make_userdir(&paths);
 #endif/* G_OS_WIN32 */
 
