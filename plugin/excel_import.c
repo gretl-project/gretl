@@ -914,7 +914,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	gotdata = data_block(&book, ncols, label_strings, &strerr);
 	if (gotdata == 0) {
 	    sprintf(errbuf, _("Expected numeric data, found string:\n"
-			      "'%s' at row %d, column %d\n"),
+			      "%s at row %d, column %d\n"),
 		    strerr.str, strerr.row, strerr.column);
 	    g_free(strerr.str);
 	    strcat(errbuf, _(adjust_rc));
