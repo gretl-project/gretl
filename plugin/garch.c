@@ -355,6 +355,28 @@ int do_fcp (const int *list, double **Z,
     return err;
 }
 
+/* sanity/dimension check */
+
+static int check_garch_list (const int *list)
+{
+    int p = list[1], q = list[2];
+    int err = 0;
+
+    /* rule out pure AR in variance */
+    if (p > 0 && q == 0) {
+	gretl_errmsg_set(_("Error in garch command"));
+	err = 1;
+    }
+
+    /* rule out excessive total GARCH terms */
+    else if (p + q > 5) {
+	gretl_errmsg_set(_("Error in garch command"));
+	err = 1;
+    }
+
+    return err;
+}
+
 /* make regresson list for initial OLS */
 
 static int *make_ols_list (const int *list)
@@ -389,6 +411,11 @@ MODEL garch_model (int *list, double ***pZ, DATAINFO *pdinfo,
     int *ols_list;
 
     gretl_model_init(&model, NULL);
+
+    if (check_garch_list(list)) {
+	model.errcode = E_DATA;
+	return model;
+    }
 
     ols_list = make_ols_list(list);
     if (ols_list == NULL) {

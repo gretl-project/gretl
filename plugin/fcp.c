@@ -7,6 +7,12 @@
     then edited extensively to turn it into more idiomatic C, and
     to convert from fixed-size arrays to dynamic memory allocation.
 
+    I have also modified the comments at certain places in the code,
+    where reference is made to the equations in the FCP paper.  The
+    comments in the Fortran apparently pertained to a draft of the
+    paper; I have updated them relative to the paper as published in
+    JAE, 1996, pp. 399-417.
+
     Allin Cottrell, Wake Forest University, March 2004.
 */
 
@@ -27,7 +33,7 @@
 #undef FDEBUG
 
 #define NLL    50   /* number of iterative results to store */
-#define ABNUM   4   /* max number of GARCH lags */
+#define ABNUM   3   /* max number of GARCH lags */
 
 #define LN_SQRT_2_PI  0.9189385332056725
 #define SMALL_HT      1.0e-7 
@@ -499,7 +505,7 @@ int garch_estimate (int t1, int t2, int nobs,
     int q, p, nparam;
 
     double alfa[ABNUM], beta[ABNUM];
-    double zt[6];   /* max alpha + beta ? */
+    double zt[6];   /* max value of (1 + q + p) */
 
     double pappo, toler1, toler2;
     double reldis, rellog, tollog, sumgra, totdis; 
@@ -754,11 +760,10 @@ int garch_estimate (int t1, int t2, int nobs,
     return err;
 }
 
-/* Compute the log-likelihood function.
-   parameters are passed in the param(nparam) vector
-   a0, alfa and beta get extracted from param in garch_ll.
-   res, res2 and ht must be computed inside garch_ll;
-   res2 holds squared residuals.
+/* Compute the log-likelihood.  Parameters are passed in the
+   param(nparam) vector; a0, alfa and beta get extracted from param in
+   garch_ll; res, res2 and ht must be computed inside garch_ll (res2
+   holds squared residuals).
 */
 
 static double 
@@ -886,9 +891,18 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 		      double **dhdp, double *zt, 
 		      double ***H, double *vcv, int code)
 {
-    int i, j, k, t, n, lag;
-    int nvparm = q + p + 1;
+    int i, j, k, t, n, lag, nvparm;
     double *asum2;
+
+    /* some useful abbreviations */
+    nvparm = 1 + q + p;
+    lag = (p > q)? p : q;
+    n = t2 - t1 + 1;
+
+#ifdef FDEBUG
+    fprintf(stderr, "make vcv: lag=%d, nc=%d, nparam=%d\n",
+	    lag, nc, nparam);
+#endif
 
     asum2 = malloc(nc * sizeof *asum2);
     if (asum2 == NULL) {
@@ -922,15 +936,13 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 #endif
     }
 
-    lag = (p > q)? p : q;
-
     /* Begin computation of dhtdp wrt the parameters alfa and beta; we
        start computing derivatives of starting values; for ht starting
        values are obtained from the unconditional variance of the
        residuals.
      */
 
-    for (k = 1; k <= p; k++) { /* ? */
+    for (k = 1; k <= p; k++) {
 	for (i = 0; i < nvparm; ++i) {
 	    dhdp[nc+i][t1-k] = 0.0;
 	    if (H != NULL) { /* hessian only */
@@ -945,7 +957,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 
     for (t = t1; t <= t2; ++t) {
 
-	/* filling in zt at time t */
+	/* fill in zt at time t (see p. 401) */
 	zt[0] = 1.0;
 	for (i = 1; i <= q; ++i) {
 	    zt[i] = res2[t-i];
@@ -954,35 +966,24 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	    zt[q+i] = h[t-i];
 	}
 
-	/* Filling in dhtdp at time t (part relative to alfa and beta)
-	   (eq. 21) */
-
+	/* Fill in dhtdp at time t, part relative to variance parameters
+	   (eq. 7, p. 402) 
+	*/
 	for (i = 0; i < nvparm; ++i) {
-	    dhdp[nc+i][t] = 0.0;
-	}	
-	for (i = 0; i < nvparm; ++i) {
-	    dhdp[nc+i][t] += zt[i];
-	}
-	for (i = 0; i < nvparm; ++i) {
+	    dhdp[nc+i][t] = zt[i];
 	    for (j = 1; j <= p; ++j) {
 		dhdp[nc+i][t] += dhdp[nc+i][t-j] * beta[j-1];
 	    }
 	}
     }
 
-    /* Building matrix dhtdp, block for coefficients (eq. 24); we use
-       0 as starting value (time 0, -1, etc.) for the derivatives of
-       ht wrt the coefficients. We also use 0 as starting values for
-       the residuals (already done within garch_ll).
+    /* Build matrix dhtdp, block for coefficients (eq. 13). We use 0
+       as starting value (time 0, -1, etc.) for the derivatives of ht
+       wrt the coefficients; we also use 0 as starting values for the
+       residuals.
     */
 
-    n = t2 - t1 + 1;
-
-#ifdef FDEBUG
-    fprintf(stderr, "make vcv: lag=%d, nc=%d, nparam=%d\n",
-	    lag, nc, nparam);
-#endif
-
+    /* pre-sample range */
     for (t = t1-lag; t < t1; ++t) {
 	int s;
 
@@ -1000,21 +1001,31 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	}
     }
 
-    /* Initial values in dhdpdp (H) are 2/t x'x and zero for off-diagonal
-       blocks. */
-
-    if (H != NULL) {
-#if 1
-	/* zero the whole matrix -- should not be needed? */
-	for (i=0; i<nparam; i++) {
-	    for (j=0; j<nparam; j++) {
-		for (k=0; k<=lag; k++) {
-		    H[i][j][k] = 0.0;
+    /* actual sample range */
+    for (t = t1; t <= t2; ++t) {
+	for (i = 0; i < nc; ++i) {
+	    dhdp[i][t] = 0.0;
+	}
+	for (i = 0; i < nc; ++i) {
+	    for (j = 1; j <= q; ++j) {
+		if (t - q < t1) {
+		    dhdp[i][t] += alfa[j-1] * asum2[i];
+		} else {
+		    dhdp[i][t] -= alfa[j-1] * 2.0 * g[i][t-j] * res[t-j];
 		}
 	    }
 	}
-#endif
+	for (i = 0; i < nc; ++i) {
+	    for (j = 1; j <= p; ++j) {
+		dhdp[i][t] += dhdp[i][t-j] * beta[j-1];
+	    }
+	}
+    }
 
+    /* Initial values in dhdpdp (here, H) are 2/t x'x, and zero for
+       off-diagonal (mixed) blocks. */
+
+    if (H != NULL) {
 	for (k = 0; k < lag; ++k) {
 	    for (i = 0; i < nc; ++i) {
 		for (j = 0; j < nc; ++j) {
@@ -1030,29 +1041,9 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	    }
 	    for (i = 0; i < nc; ++i) {
 		for (j = 0; j < nvparm; ++j) {
-		    H[i][nc+j][k+1] = 0.0; 
+		    /* mod. by AC: zero _all_ mixed entries */
+		    H[i][nc+j][k+1] = H[nc+j][i][k+1] = 0.0; 
 		}
-	    }
-	}
-    }
-
-    for (t = t1; t <= t2; ++t) {
-	for (i = 0; i < nc; ++i) {
-	    dhdp[i][t] = 0.0;
-	}
-	for (i = 0; i < nc; ++i) {
-	    for (j = 1; j <= q; ++j) {
-		if (t - q < t1) {
-		    dhdp[i][t] += alfa[j-1] * asum2[i];
-		} else {
-		    dhdp[i][t] -= 
-			alfa[j-1] * 2.0 * g[i][t-j] * res[t-j];
-		}
-	    }
-	}
-	for (i = 0; i < nc; ++i) {
-	    for (j = 1; j <= p; ++j) {
-		dhdp[i][t] += dhdp[i][t-j] * beta[j-1];
 	    }
 	}
     }
@@ -1071,7 +1062,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	double aa, bb;
 
 	/* 
-	   First part, relative to coefficients (eq. 22) 
+	   First part, relative to regression coefficients (eq. 22) 
  	*/
 	for (i = 0; i < nc; ++i) {
 	    aa = r_h * g[i][t] + .5 / h[t] * dhdp[i][t] * (r2_h - 1.0);
@@ -1279,15 +1270,14 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	    for (j = 0; j < nvparm; ++j) {
 		vcv[vix(i,nc+j)] = vcv[vix(i,nc+j)]
 		    - g[i][t] * r_h * dhdp[nc+j][t] / h[t] 
-		    - .5 * (r2_h - 1.0) * dhdp[nc+j][t] * 
-		    dhdp[i][t] / (h[t] * h[t]) 
+		    - .5 * (r2_h - 1.0) * dhdp[nc+j][t] * dhdp[i][t] / (h[t] * h[t]) 
 		    + .5 * (r2_h - 1.0) * H[i][nc+j][0] / h[t] 
 		    - .5 * r2_h * u_h2 * dhdp[i][t] * dhdp[nc+j][t];
 	    }
 	}
 
 	/* before quitting time t, tidy up dhdpdp */
-	for (k = 0; k < lag; ++k) { /* index, "lag", FIXME? */
+	for (k = 0; k < lag; ++k) { 
 	    for (i = 0; i < nparam; ++i) {
 		for (j = 0; j < nparam; ++j) {
 		    /* FIXME: uninitialized data for some p,q combinations */
