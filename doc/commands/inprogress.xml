@@ -25,7 +25,7 @@
 	Must be invoked after an estimation command.  The variables in
 	<repl>varlist</repl> are added to the previous model and the
 	new model estimated.  If more than one variable is added, the
-	<emphasis>F</emphasis> statistic for the added variables will
+	<mathvar>F</mathvar> statistic for the added variables will
 	be printed (for the OLS procedure only) along with its
 	p-value.  A p-value below 0.05 means that the coefficients are
 	jointly significant at the 5 percent level. A number of
@@ -86,13 +86,13 @@
 	  Computes statistics for two Dickey&ndash;Fuller tests.  In
 	each case the null hypothesis is that the variable in question
 	exhibits a unit root. The first is a
-	<emphasis>t</emphasis>-test based on the model 
+	<mathvar>t</mathvar>-test based on the model 
 	  <equation status="display"
 	  tex="\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]"
 	  ascii="(1 - L)x(t) = m + gx(t-1) + e(t)"
 	  graphic="adf1"/>
 	  The null hypothesis is that
-	<emphasis>g</emphasis> = 0. The second (augmented) test
+	<mathvar>g</mathvar> = 0. The second (augmented) test
 	proceeds by estimating an unrestricted regression (with
 	regressors a constant, a time trend, the first lag of the
 	variable, and <repl>order</repl> lags of the
@@ -102,8 +102,8 @@
 	  tex="\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]"
 	  ascii="F(2, T-k) = [(ESSr - ESSu)/2] / [ESSu/(T - k)]"
 	  graphic="adf2"/>
-	  where <emphasis>T</emphasis> is the
-	sample size, <emphasis>k</emphasis> the number of parameters
+	  where <mathvar>T</mathvar> is the
+	sample size, <mathvar>k</mathvar> the number of parameters
 	in the unrestricted model, and the subscripts
 	<mathvar>u</mathvar> and <mathvar>r</mathvar> denote the
 	unrestricted and restricted models respectively. Note that the
