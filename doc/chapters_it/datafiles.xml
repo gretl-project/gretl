@@ -9,7 +9,7 @@
       interessata a leggere o scrivere questi file con altri programmi
       che non siano <application>gretl</application>, ma ciò potrebbe
       essere utile in alcune occasioni: per ulteriori dettagli si veda
-      l'???<xref linkend="app-datafile"/>.</para>
+      l'<xref linkend="app-datafile"/>.</para>
 
   </sect1>
 
@@ -27,7 +27,7 @@
       <quote>File, Apri dati, Importa ASCII&hellip;</quote>
       dell'interfaccia grafica o il comando <command>import</command>
       dell'interfaccia a riga di comando. Per ulteriori dettagli sul
-      formato di questo tipo di file, si veda ??? <xref linkend="scratch"/>.</para>
+      formato di questo tipo di file, si veda <xref linkend="scratch"/>.</para>
       </listitem>
       <listitem><para>File con valori separati da virgole (CSV).
       Possono essere importati in <application>gretl</application>
@@ -63,7 +63,7 @@
     <para>Per venire incontro a chi vuole eseguire analisi più sofisticate,
       <application>gretl</application> offre la possibilità di salvare
       i dati nei formati usati dai programmi GNU R e GNU Octave (si
-      veda l'???<xref linkend="app-advanced"/>). Nell'interfaccia
+      veda l'<xref linkend="app-advanced"/>). Nell'interfaccia
       grafica, questa opzione si trova nel menù <quote>File</quote>,
       mentre nel client a riga di comando occorre usare il comando
       <command>store</command> con l'opzione <command>-r</command>
@@ -85,7 +85,7 @@
       attraverso il comando <quote>File, Consulta database</quote>.</para>
 
     <para>Per i dettagli sul formato dei database di
-      <application>gretl</application> databases, si veda l'???<xref
+      <application>gretl</application> databases, si veda l'<xref
 	linkend="app-datafile"/>.</para>
   
     <sect2 id="online-data"><title>Accesso ai database online</title>
@@ -171,7 +171,7 @@
 	    con una variabile per colonna e un'osservazione per riga.
             Il numero delle varibili (colonne dei dati) deve
             corrispondere al numero di nomi di variabile specificati.
-            Si veda anche ???<xref linkend="missing-data"/>. Il
+            Si veda anche <xref linkend="missing-data"/>. Il
             programma si aspetta dati di tipo numerico, ma nel caso di
             importazione da file ASCII/CSV, c'è un supporto limitato
             per dati di tipo carattere (stringa): se una colonna
@@ -327,7 +327,7 @@
         <application>sed</application> o
         <application>perl</application>. Ovviamente occorrerà studiare i
         formati di dati di <application>gretl</application> (il formato XML
-        o quello <quote>tradizionale</quote>) descritti in??? 
+        o quello <quote>tradizionale</quote>) descritti in
 	<xref linkend="datafiles"/>.</para>
 
     </sect2>
@@ -463,7 +463,7 @@
       <quote>di sistema</quote> dei file di dati, la directory di
       sistema dei file di comandi, la directory utente e tutte le loro
       sotto-directory di primo livello. Valori tipici per i nomi di
-      queste directory sono mostrati nella ??? <xref
+      queste directory sono mostrati nella <xref
 	  linkend="tab-colls"/>.)</para>
       </listitem>
     </itemizedlist>
@@ -612,7 +612,7 @@
 Local variables:
 sgml-default-dtd-file:"../manual.ced"
 mode: xml
-sgml-parent-document:("../manual.xml" "book" "chapter")
+sgml-parent-document:("../manual_it.xml" "book" "chapter")
 End:
 -->
 

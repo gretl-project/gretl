@@ -13,22 +13,24 @@
       <application>gretlcli</application> ha un file di aiuto, a cui si
       accede inserendo il comando <quote>help</quote> al prompt. Inoltre,
       può essere usato in modalità batch, inviando i risultati direttamente
-      a un file (si veda il??? <xref linkend="optarg2"/> sopra???).
+      a un file (si veda <xref linkend="optarg2"/>).
     </para>
 
     <para>
       Se <application>gretlcli</application> è linkato alla libreria
       <application>readline</application> (ciò avviene automaticamente
-      nella versione MS Windows version, si veda anche la???
-      <xref linkend="app-technote"/>), è possibile richiamare e modificare
-      i comandi già eseguiti, inoltre è disponibile il completamento 
+      nella versione MS Windows version, si veda anche l'<xref
+	linkend="app-technote"/>), è possibile richiamare e modificare
+      i comandi già eseguiti, inoltre è disponibile il completamento
       automatico dei comandi. Per muoversi nella lista dei comandi già
-      eseguiti è possibile usare i tasti Freccia Su/Giù, mentre per muoversi
-      sulla riga di comando è possibile usare i tasti Freccia a destra/sinistra
-      e le scorciatoie in stile Emacs<footnote><para>In realtà quelli mostrati
-      sono i valori predefiniti, ma possono essere modificati: si veda il
-      <ulink url="http://cnswww.cns.cwru.edu/~chet/readline/readline.html">manuale
-      di readline</ulink>.</para>
+      eseguiti è possibile usare i tasti Freccia Su/Giù, mentre per
+      muoversi sulla riga di comando è possibile usare i tasti Freccia
+      a destra/sinistra e le scorciatoie in stile
+      Emacs<footnote><para>In realtà quelli
+	  mostrati sono i valori predefiniti, ma possono essere
+	  modificati: si veda il <ulink
+	    url="http://cnswww.cns.cwru.edu/~chet/readline/readline.html">manuale 
+	    di readline</ulink>.</para>
       </footnote>. Le scorciatoie più usate sono:
     </para>
 
@@ -137,7 +139,7 @@
 Local variables:
 sgml-default-dtd-file:"../manual.ced"
 mode: xml
-sgml-parent-document:("../manual.xml" "book" "chapter")
+sgml-parent-document:("../manual_it.xml" "book" "chapter")
 End:
 -->
 

@@ -32,7 +32,7 @@
         disponibile anche per MS Windows. È possibile compilarlo per
         Mac OS X e AIX, e dovrebbe funzionare su qualsiasi sistema
         operativo simile a UNIX, fornito delle librerie di base
-        richieste (si veda l'???<xref linkend="app-technote"/>).</para>
+        richieste (si veda l'<xref linkend="app-technote"/>).</para>
 	</listitem>
       </varlistentry>  
       <varlistentry><term>Open source</term>
@@ -54,13 +54,15 @@
         di professione, supporta l'esportazione dei dati nei formati
         usati da (<ulink url="http://www.r-project.org/">GNU R</ulink>)
         e (<ulink url="http://www.octave.org/">GNU Octave</ulink>)
-        consentendo così analisi più sofisticate (si veda ??? <xref
+        consentendo così analisi più sofisticate (si veda l'<xref
 	      linkend="app-advanced"/>).</para></listitem>
       </varlistentry>
       <varlistentry><term>Accurato</term>
-	<listitem><para><application>gretl</application> è stato testato
-        a fondo con il dataset di riferimento NIST. Si veda ???
-	    <xref linkend="app-accuracy"/>.</para>
+	<listitem>
+	  <para>
+	    <application>gretl</application> è stato testato a fondo
+	    con il dataset di riferimento NIST. Si veda l'<xref
+	      linkend="app-accuracy"/>.</para>
 	</listitem>
       </varlistentry>
       <varlistentry><term>Pronto per internet</term>
@@ -115,9 +117,10 @@
       Rigamonti, che hanno curato le traduzioni spagnola, francese e
       italiana.</para>
 
-    <para>Ho beneficiato largamente del lavoro di molti sviluppatori di
-      software open-source: per i dettagli si veda la ???
-      <xref linkend="app-technote"/> a questo manuale. Devo ringraziare
+    <para>
+      Ho beneficiato largamente del lavoro di molti sviluppatori di
+      software open-source: per i dettagli si veda l'<xref
+	linkend="app-technote"/> a questo manuale. Devo ringraziare
       Richard Stallman della Free Software Foundation per il suo
       supporto al software libero in generale, ma in particolare per
       aver accettato di <quote>adottare</quote>
@@ -186,7 +189,7 @@
             installerà il tutto sotto la directory <filename>/usr</filename>.
             Se la procedura di configurazione si interrompe perchè una
             delle librerie richieste non è disponibile sul sistema, si
-            veda l'???<xref linkend="app-technote"/> del manuale.
+            veda l'<xref linkend="app-technote"/> del manuale.
 	  </para>
 	</listitem>
       </orderedlist>
@@ -210,7 +213,7 @@
 	<filename>gretl_install.exe</filename> ed eseguire questo
         programma. Verrà chiesta una posizione in cui installare il
         pacchetto (quella predefinita è
-	<filename>c:\userdata\gretl</filename>).  </para>
+	<filename>c:\userdata\gretl</filename>).</para>
 
     </sect2>
 
@@ -249,7 +252,7 @@
 Local variables:
 sgml-default-dtd-file:"../manual.ced"
 mode: xml
-sgml-parent-document:("../manual.xml" "book" "chapter")
+sgml-parent-document:("../manual_it.xml" "book" "chapter")
 End:
 -->
 

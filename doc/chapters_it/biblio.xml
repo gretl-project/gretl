@@ -154,6 +154,6 @@
 Local variables:
 sgml-default-dtd-file:"../manual.ced"
 mode: xml
-sgml-parent-document:("../manual.xml" "book" "bibliography")
+sgml-parent-document:("../manual_it.xml" "book" "bibliography")
 End:
 -->

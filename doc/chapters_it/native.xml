@@ -54,7 +54,7 @@
                 date nel formato <command>1959.1</command> (trimestre
                 indicato con una cifra dopo il punto) o <command>1967.03</command>
                 (mese indicato con due cifre dopo il punto). Si veda
-                il??? <xref linkend="chap-panel"/> più avanti??? per
+                <xref linkend="chap-panel"/> per
                 l'uso di questa riga con dati panel.</para></listitem>
 	    <listitem><para>La parola chiave
 		<literal>BYOBS</literal>.</para></listitem> 
@@ -148,6 +148,6 @@
 Local variables:
 sgml-default-dtd-file:"../manual.ced"
 mode: sgml
-sgml-parent-document:("../manual.xml" "book" "chapter")
+sgml-parent-document:("../manual_it.xml" "book" "chapter")
 End:
 -->

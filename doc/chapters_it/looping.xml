@@ -243,7 +243,7 @@
         consumo non lineare nella forma
 	<inlineequation>
 	  <alt role="tex">
-	    $C = \alfa + \beta Y^{\gamma} + \epsilon$
+	    $C = \alpha + \beta Y^{\gamma} + \epsilon$
 	  </alt>
 	  <inlinemediaobject>
 	    <imageobject>
@@ -421,7 +421,7 @@
 Local variables:
 sgml-default-dtd-file:"../manual.ced"
 mode: xml
-sgml-parent-document:("../manual.xml" "book" "chapter")
+sgml-parent-document:("../manual_it.xml" "book" "chapter")
 End:
 -->
 

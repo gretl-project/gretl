@@ -42,11 +42,11 @@ MANXSL = commands/gretlman.xsl
 
 all: manual.pdf manual-a4.pdf html chm # thumbs altthumbs
 
-manual.pdf: manual.tex jadetex.cfg lucidabr.tex
+manual.pdf: manual.tex jadetex.cfg.en lucidabr.tex
 
-manual-a4.pdf: manual-a4.tex jadetex.cfg lucidabr.tex
+manual-a4.pdf: manual-a4.tex jadetex.cfg.en lucidabr.tex
 
-manual_it.pdf: manual_it.tex jadetex.cfg lucidabr.tex
+manual_it.pdf: manual_it.tex jadetex.cfg.it lucidabr.tex
 
 thumbs: manual.pdf
 	thumbpdf manual
@@ -55,6 +55,10 @@ thumbs: manual.pdf
 altthumbs: manual-a4.pdf
 	thumbpdf manual-a4
 	pdfjadetex manual-a4
+
+thumbs_it: manual_it.pdf
+	thumbpdf manual_it
+	pdfjadetex manual_it
 
 manual.tex: manual.xml $(CHAPTERS) $(DSL) $(MATHSS) $(CMDLIST)
 	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
@@ -115,4 +119,4 @@ texclean:
 	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex manual_it.tex
 
 install: 
-	cp manual.pdf manual-a4.pdf $(WEBDIR)
+	cp manual.pdf manual-a4.pdf manual_it.pdf $(WEBDIR)
