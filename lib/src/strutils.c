@@ -840,12 +840,17 @@ const char *get_gnuplot_charset (void)
     return NULL;
 }
 
+int doing_iso_latin_2 (void)
+{
+    return (gretl_cset_maj == 8859 && gretl_cset_min == 2);
+}
+
 char *iso_gettext (const char *msgid)
 {
    char *ret;
    static int cli;
    static int iso_ok = -1;
-   static char *cset;
+   static const char *cset;
 
    /* the command-line program is "special": it doesn't emit
       utf-8 at all, so we omit the redundant switching of
@@ -1099,6 +1104,166 @@ char *iso_to_ascii (char *s)
 
     return s;
 }
+
+#ifdef ENABLE_NLS
+
+struct l2sym {
+    int l2val;
+    int ucs2val;
+};
+
+static struct l2sym l2table[] = { 
+    { 161, 260 }, /*  A; */
+    { 162, 728 }, /*  '( */
+    { 163, 321 }, /*  L/ */
+    { 165, 317 }, /*  L< */
+    { 166, 346 }, /*  S' */
+    { 169, 352 }, /*  S< */
+    { 170, 350 }, /*  S, */
+    { 171, 356 }, /*  T< */
+    { 172, 377 }, /*  Z' */
+    { 174, 381 }, /*  Z< */
+    { 175, 379 }, /*  Z. */
+    { 177, 261 }, /*  a; */
+    { 178, 731 }, /*  '; */
+    { 179, 322 }, /*  l/ */
+    { 181, 318 }, /*  l< */
+    { 182, 347 }, /*  s' */
+    { 183, 711 }, /*  '< */
+    { 185, 353 }, /*  s< */
+    { 186, 351 }, /*  s, */
+    { 187, 357 }, /*  t< */
+    { 188, 378 }, /*  z' */
+    { 189, 733 }, /*  '" */
+    { 190, 382 }, /*  z< */
+    { 191, 380 }, /*  z. */
+    { 192, 340 }, /*  R' */
+    { 195, 258 }, /*  A( */
+    { 197, 313 }, /*  L' */
+    { 198, 262 }, /*  C' */
+    { 200, 268 }, /*  C< */
+    { 202, 280 }, /*  E; */
+    { 204, 282 }, /*  E< */
+    { 207, 270 }, /*  D< */
+    { 208, 272 }, /*  D/ */
+    { 209, 323 }, /*  N' */
+    { 210, 327 }, /*  N< */
+    { 213, 336 }, /*  O" */
+    { 216, 344 }, /*  R< */
+    { 217, 366 }, /*  U0 */
+    { 219, 368 }, /*  U" */
+    { 222, 354 }, /*  T, */
+    { 224, 341 }, /*  r' */
+    { 227, 259 }, /*  a( */
+    { 229, 314 }, /*  l' */
+    { 230, 263 }, /*  c' */
+    { 232, 269 }, /*  c< */
+    { 234, 281 }, /*  e; */
+    { 236, 283 }, /*  e< */
+    { 239, 271 }, /*  d< */
+    { 240, 273 }, /*  d/ */
+    { 241, 324 }, /*  n' */
+    { 242, 328 }, /*  n< */
+    { 245, 337 }, /*  o" */
+    { 248, 345 }, /*  r< */
+    { 249, 367 }, /*  u0 */
+    { 251, 369 }, /*  u" */
+    { 254, 355 }, /*  t, */
+    { 255, 729 }  /*  '. */
+};
+
+static int l2_lookup (int c)
+{
+    int i, n = sizeof l2table / sizeof l2table[0];
+
+    for (i=0; i<n; i++) {
+	if (c == l2table[i].l2val) {
+	    return l2table[i].ucs2val;
+	}
+    }
+
+    return c;
+}
+
+static int ucs_lookup (int c)
+{
+    int i, n = sizeof l2table / sizeof l2table[0];
+
+    for (i=0; i<n; i++) {
+	if (c == l2table[i].ucs2val) {
+	    return l2table[i].l2val;
+	}
+    }
+
+    return c;
+}
+
+char *sprint_l2_to_html (char *targ, const char *s, size_t len)
+{
+    unsigned char c;
+    char *p = targ;
+
+    *p = '\0';
+
+    while ((c = *s)) {
+	if (c > 160) {
+	    sprintf(p, "&#%d;", l2_lookup(c));
+	    p += 6;
+	} else if (c > 127) {
+	    sprintf(p, "&#%d;", c);
+	    p += 6;
+	} else {
+	    *p++ = c;
+	}
+	s++;
+	if (p - targ > len - 8) {
+	    break;
+	}
+    }
+
+    *p = '\0';
+
+    return targ;
+}
+
+int print_as_html (const char *s, FILE *fp)
+{
+    unsigned char c;
+    int nread = 0;
+
+    while ((c = *s)) {
+        if (c > 160) {
+            fprintf(fp, "&#%d;", l2_lookup(c));
+        } else if (c > 127) {
+            fprintf(fp, "&#%d;", c);
+        } else {
+            fputc(c, fp);
+        }
+        s++;
+        nread++;
+    }
+
+    return nread;
+}
+
+int print_as_locale (const char *s, FILE *fp)
+{
+    int u, nwrote = 0;
+
+    while (*s) {
+	if (sscanf(s, "&#%d;", &u)) {
+	    fputc(ucs_lookup(u), fp);
+	    s = strchr(s, ';') + 1;
+	} else {
+	    fputc(*s++, fp);
+	}
+	nwrote++;
+    }
+
+    return nwrote;
+}
+
+#endif /* ENABLE_NLS */
 
 char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo) 
 {

@@ -39,7 +39,8 @@ enum gptspec_flags {
     GPTSPEC_Y2AXIS        = 1 << 1,
     GPTSPEC_AUTO_OLS      = 1 << 2,
     GPTSPEC_OLS_HIDDEN    = 1 << 3,
-    GPTSPEC_BORDER_HIDDEN = 1 << 4
+    GPTSPEC_BORDER_HIDDEN = 1 << 4,
+    GPTSPEC_PNG_OUTPUT    = 1 << 5
 }; 
 
 #define MAXTITLE 128
@@ -67,7 +68,6 @@ typedef struct {
 typedef struct {
     FILE *fp;
     char fname[MAXLEN];        /* for gui purposes */
-    int edit;                  /* 1 for editing existing plot */
     int code;                  /* to deal with FREQ, FCASTERR... */
     unsigned char flags;       /* bitwise OR of options (gptspec_flags) */
     int t1, t2;                /* starting and ending obs */
@@ -113,6 +113,9 @@ enum plot_type_codes {
 #define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
 				c == PLOT_FREQ_NORMAL || \
 				c == PLOT_FREQ_GAMMA)
+
+#define set_png_output(p) (p->flags |= GPTSPEC_PNG_OUTPUT)
+#define get_png_output(p) (p->flags & GPTSPEC_PNG_OUTPUT) 
     
 /* functions follow */
  
@@ -186,4 +189,12 @@ void set_gnuplot_pallette (int i, const char *colstr);
 const char *get_gnuplot_pallette (int i, int plottype);
 
 int gnuplot_test_command (const char *cmd);
+
+#ifdef ENABLE_NLS
+
+void pprint_gnuplot_encoding (const char *termstr, PRN *prn);
+
+void fprint_gnuplot_encoding (const char *termstr, FILE *fp);
+
+#endif
 

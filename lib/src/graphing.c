@@ -1968,38 +1968,70 @@ static char *escape_quotes (const char *s)
 
 /* ........................................................... */
 
+static void 
+gp_string (FILE *fp, const char *fmt, const char *s, int png)
+{
+#ifdef ENABLE_NLS    
+    if (png) {
+	static int l2 = -1;
+
+	if (l2 < 0) {
+	    l2 = doing_iso_latin_2();
+	}
+
+	if (l2) {
+	    char htmlstr[128];
+
+	    sprint_l2_to_html(htmlstr, s, sizeof htmlstr);
+	    fprintf(fp, fmt, htmlstr);
+	}
+    } else {
+	fprintf(fp, fmt, s); 
+    }
+#else
+    fprintf(fp, fmt, s);
+#endif
+}
+
 int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 {
     int i, k, t, datlines;
     int plotn, nlines = spec->nlines;
+    int png = get_png_output(spec);
     int miss = 0;
     double xx;
 
     if (!string_is_blank(spec->titles[0])) {
 	if ((spec->flags & GPTSPEC_OLS_HIDDEN) && 
-	    is_auto_ols_string(spec->titles[0])) ;
-	else fprintf(fp, "set title '%s'\n", spec->titles[0]);
+	    is_auto_ols_string(spec->titles[0])) {
+	    ;
+	} else {
+	    gp_string(fp, "set title '%s'\n", spec->titles[0], png);
+	}
     }
     if (!string_is_blank(spec->titles[1])) {
-	fprintf(fp, "set xlabel '%s'\n", spec->titles[1]);
+	gp_string(fp, "set xlabel '%s'\n", spec->titles[1], png);
     }
     if (!string_is_blank(spec->titles[2])) {
-	fprintf(fp, "set ylabel '%s'\n", spec->titles[2]);
+	gp_string(fp, "set ylabel '%s'\n", spec->titles[2], png);
     }
     if ((spec->flags & GPTSPEC_Y2AXIS) && !string_is_blank(spec->titles[3])) {
-	fprintf(fp, "set y2label '%s'\n", spec->titles[3]);
+	gp_string(fp, "set y2label '%s'\n", spec->titles[3], png);
     }
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
 	if (!string_is_blank(spec->text_labels[i].text)) {
 	    char *label = escape_quotes(spec->text_labels[i].text);
 
-	    fprintf(fp, "set label \"%s\" at %s %s%s\n", 
-		    (label != NULL)? label : spec->text_labels[i].text,
+	    gp_string(fp, "set label \"%s\" ", (label != NULL)? 
+		      label : spec->text_labels[i].text, png);
+	    fprintf(fp, "at %s %s%s\n", 
 		    spec->text_labels[i].pos,
 		    spec->text_labels[i].just,
 		    label_front());
-	    if (label != NULL) free(label);
+	    if (label != NULL) {
+		free(label);
+	    }
 	}
     }
 
@@ -2098,9 +2130,8 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	if (spec->lines[i].yaxis != 1) {
 	    fprintf(fp, "axes x1y%d ", spec->lines[i].yaxis);
 	}
-	fprintf(fp, "title '%s' w %s", 
-		spec->lines[i].title,
-		spec->lines[i].style);
+	gp_string(fp, "title '%s' ", spec->lines[i].title, png);
+	fprintf(fp, "w %s", spec->lines[i].style);
 	if (i == nlines - 1) {
 	    fputc('\n', fp);
 	} else {
@@ -2163,29 +2194,23 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
 	if (fp == NULL) return 1;
     } else {     
 	/* output to gnuplot, for screen or other "term" */
-#ifdef GNUPLOT_PIPE
-	fp = spec->fp; /* pipe */
-#else
 	if (spec->fp == NULL) {
 	    fp = fopen(ppaths->plotfile, "w");
 	}
 	if (fp == NULL) return 1;
-#endif /* GNUPLOT_PIPE */
+
 	if (fname != NULL) { 
-	    
+#ifdef ENABLE_NLS
+	    fprint_gnuplot_encoding(termstr, fp);
+#endif 
 	    /* file, not screen display */
 	    fprintf(fp, "set term %s\n", termstr);
-#ifdef ENABLE_NLS
-	    if (strstr(termstr, "postscript")) {
-		const char *enc = get_gretl_charset();
-
-		if (enc != NULL) {
-		    fprintf(fp, "set encoding %s\n", enc);
-		}
-	    }
-#endif /* ENABLE_NLS */
 	    fprintf(fp, "set output '%s'\n", fname);
 	}
+    }
+
+    if (strstr(termstr, "png")) {
+	set_png_output(spec);
     }
 
     miss = print_plotspec_details(spec, fp);
@@ -2196,32 +2221,34 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
 	fclose(fp);
     }
     
-#ifndef GNUPLOT_PIPE
     if (!dump) {
 	char plotcmd[MAXLEN];
-# ifdef WIN32
+#ifdef WIN32
 	int winshow = 0;
 
 	if (fname == NULL) { /* sending plot to screen */
 	    fputs("pause -1\n", fp);
 	    winshow = 1;
 	} 
-# endif
+#endif
 	fclose(fp);
 	spec->fp = NULL;
 	sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
-# ifdef WIN32
+#ifdef WIN32
 	if (winshow) {
 	    err = (WinExec(plotcmd, SW_SHOWNORMAL) < 32);
 	} else {
 	    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 	}
-# else
+#else
 	if (gretl_spawn(plotcmd)) err = 1;
-# endif 
+#endif 
     }
-#endif /* GNUPLOT_PIPE */
-    if (miss) err = 2;
+
+    if (miss) {
+	err = 2;
+    }
+
     return err;
 }
 
@@ -2368,45 +2395,28 @@ void set_gnuplot_pallette (int i, const char *colstr)
     }
 }
 
-#if 0
+#ifdef ENABLE_NLS
 
-char *octalize (unsigned char *s)
+void pprint_gnuplot_encoding (const char *termstr, PRN *prn)
 {
-    int len = strlen(s) + 1;
-    char *p = s;
-    int c;
-    char *targ;
+    if (strstr(termstr, "postscript")) {
+	const char *enc = get_gnuplot_charset();
 
-    while (*p) {
-	c = *p;
-	if (c > 127) {
-	    len += 3;
+	if (enc != NULL) {
+	    pprintf(prn, "set encoding %s\n", enc);
 	}
-	p++;
     }
-
-    targ = malloc(len);
-    if (targ == NULL) {
-	return NULL;
-    }
-
-    p = targ;
-    while (*s) {
-	c = *s;
-	if (c > 127) {
-	    *p = '\\';
-	    sprintf(p + 1, "%03o", *s);
-	    p += 3;
-	} else {
-	    *p = *s;
-	}
-	p++;
-	s++;
-    }
-
-    *p = '\0';
-
-    return targ;
 }
 
-#endif    
+void fprint_gnuplot_encoding (const char *termstr, FILE *fp)
+{
+    if (strstr(termstr, "postscript")) {
+	const char *enc = get_gnuplot_charset();
+
+	if (enc != NULL) {
+	    fprintf(fp, "set encoding %s\n", enc);
+	}
+    }
+}
+
+#endif 

@@ -319,11 +319,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale,
 	fname = gpage_fname(".png", i);
     } else {
 #ifdef ENABLE_NLS
-	const char *enc = get_gnuplot_charset();
-
-	if (enc != NULL) {
-	    fprintf(fq, "set encoding %s\n", enc);
-	}
+	fprint_gnuplot_encoding("postscript", fq);
 #endif
 	fprintf(fq, "set term postscript eps%s\n", (color)? " color" : "");
 	fname = gpage_fname(".ps", i);

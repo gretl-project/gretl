@@ -234,10 +234,6 @@ static void close_plot_controller (GtkWidget *widget, gpointer data)
 
     gpt_control = NULL;
 
-#ifdef GNUPLOT_PIPE
-    pclose(spec->fp);
-    free_plotspec(spec); 
-#else
     if (plot != NULL) { /* PNG plot window open */
 	plot->status_flags ^= PLOT_HAS_CONTROLLER;
 	if (plot_doing_position(plot)) {
@@ -246,7 +242,6 @@ static void close_plot_controller (GtkWidget *widget, gpointer data)
     } else {
 	free_plotspec(spec); 
     }
-#endif
 } 
 
 /* ........................................................... */
@@ -338,37 +333,76 @@ static const char *just_int_to_string (int j)
 
 /* ........................................................... */
 
+static void line_to_file (const char *s, FILE *fp, int l2)
+{
+#ifdef ENABLE_NLS
+    if (l2 == -1) {
+	print_as_html(s, fp);
+    } else if (l2 == 1) {
+	print_as_locale(s, fp);
+    } else {
+	fputs(s, fp);
+    }
+#else
+    fputs(s, fp);
+#endif
+}
+
+static FILE *open_gp_file (const char *fname, const char *mode)
+{
+    FILE *fp = fopen(fname, mode);
+
+    if (fp == NULL) {
+	if (*mode == 'w') {
+	    sprintf(errtext, _("Couldn't write to %s"), fname);
+	} else {
+	    sprintf(errtext, _("Couldn't open %s"), fname);
+	}
+        errbox(errtext);
+    }
+
+    return fp;
+}
+
+static int commented_term_line (const char *s)
+{
+    return !strncmp(s, "# set term png", 14);
+}
+
+static int set_output_line (const char *s)
+{
+    return !strncmp(s, "set output", 10);
+}
+
 static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 {
     FILE *fsrc, *ftmp;
     char temp[MAXLEN], fline[MAXLEN];
-    char restore_line[MAXLEN];
+    char restore_line[MAXLEN] = {0};
     int png_line_saved = 0;
+#ifdef ENABLE_NLS
+    int l2 = doing_iso_latin_2();
+#else
+    int l2 = 0;
+#endif
 
     sprintf(temp, "%sgpttmp.XXXXXX", paths.userdir);
     if (mktemp(temp) == NULL) return 1;
 
-    ftmp = fopen(temp, "w");
-    if (ftmp == NULL) {
-        sprintf(errtext, _("Couldn't write to %s"), temp);
-        errbox(errtext);
-        return 1;
-    }
+    ftmp = open_gp_file(temp, "w");
+    if (ftmp == NULL) return 1;
 
-    fsrc = fopen(fname, "r");
+    fsrc = open_gp_file(fname, "r");
     if (fsrc == NULL) {
-	sprintf(errtext, _("Couldn't open %s"), fname);
-	errbox(errtext);
 	fclose(ftmp);
 	return 1;
     }
 
     if (add && spec == NULL) {
 	/* see if there's a commented out term setting to restore */
-	*restore_line = 0;
-	while (fgets(fline, MAXLEN-1, fsrc)) {
-	    if (!strncmp(fline, "# set term png", 14)) {
-		strcpy(restore_line, fline + 2);
+	while (fgets(fline, sizeof fline, fsrc)) {
+	    if (commented_term_line(fline)) {
+		strcat(restore_line, fline + 2);
 		break;
 	    }
 	}
@@ -376,29 +410,31 @@ static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
     }
 
     if (add) {
-	if (spec != NULL) {
-	    fprintf(ftmp, "%s\n", 
-		    get_gretl_png_term_line(&paths, spec->code));
-	} else {
-	    /* spec is NULL: we're reconstituting a session
-	       graph from a saved gnuplot command file */
+	int need_term_line = 1;
+
+	if (spec == NULL) {
+	    /* we're reconstituting a session graph from a 
+	       saved gnuplot command file */
 	    if (*restore_line) {
 		/* found a saved png term specification */
 		fputs(restore_line, ftmp);
-	    } else {
-		/* fallback */
-		fprintf(ftmp, "%s\n",
-			get_gretl_png_term_line(&paths, PLOT_REGULAR));
+		need_term_line = 0;
 	    }
 	}
+	if (need_term_line) {
+	    fprintf(ftmp, "%s\n",
+		    get_gretl_png_term_line(&paths, PLOT_REGULAR));
+	}	    
 	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
 		paths.userdir);
     }
 
     /* now for the body of the plot file */
-    while (fgets(fline, MAXLEN-1, fsrc)) {
+    while (fgets(fline, sizeof fline, fsrc)) {
 	if (add) {
-	    fputs(fline, ftmp);
+	    if (!commented_term_line(fline) && !set_output_line(fline)) {
+		line_to_file(fline, ftmp, -l2);
+	    }
 	} else {
 	    /* we're removing the png term line */
 	    int printit = 1;
@@ -411,11 +447,17 @@ static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 		} 
 		printit = 0;
 	    }
-	    else if (!strncmp(fline, "# set term png", 14)) printit = 0;
-	    else if (!strncmp(fline, "set output", 10)) printit = 0;
-	    else if (spec != NULL && (spec->flags & GPTSPEC_OLS_HIDDEN)
-		     && is_auto_ols_string(fline)) printit = 0;
-	    if (printit) fputs(fline, ftmp);
+	    else if (commented_term_line(fline)) {
+		printit = 0;
+	    } else if (set_output_line(fline)) {
+		printit = 0;
+	    } else if (spec != NULL && (spec->flags & GPTSPEC_OLS_HIDDEN)
+		       && is_auto_ols_string(fline)) {
+		printit = 0;
+	    }
+	    if (printit) {
+		line_to_file(fline, ftmp, l2);
+	    }
 	}
     }
 
@@ -457,16 +499,17 @@ static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
     return 0;
 }
 
-void display_session_graph_png (const char *fname) 
+void display_session_graph_png (char *fname) 
 {
+    char *myfname = fname;
     gchar *plotcmd;
     int err = 0;
 
     /* take saved plot source file and make PNG from it, then display
        the PNG */
-    if (add_png_term_to_plotfile(fname)) return;
+    if (add_png_term_to_plotfile(myfname)) return;
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, fname);
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, myfname);
 #ifdef G_OS_WIN32
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
@@ -477,7 +520,7 @@ void display_session_graph_png (const char *fname)
     if (err) {
 	errbox(_("Gnuplot error creating graph"));
     } else {
-	gnuplot_show_png(fname, NULL, 1);
+	gnuplot_show_png(myfname, NULL, 1);
     }
 }
 
@@ -487,6 +530,9 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 {
     const gchar *yaxis;
     int i, k, save = 0;
+
+    /* widget_to_str translates from utf-8 to the locale, if
+       using NLS */
 
     if (widget == filesavebutton) {
 	widget_to_str(GTK_COMBO(termcombo)->entry, spec->termtype, 
@@ -609,17 +655,9 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-#ifdef GNUPLOT_PIPE
-    if (spec->edit == 2 || spec->edit == 3) {  /* silent update */
-	spec->edit -= 2;
-	return;
-    }
-#endif
-
     if (save) { /* do something other than a screen graph? */
 	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, spec);
     } else { 
-#ifndef GNUPLOT_PIPE
 	png_plot_t *plot = (png_plot_t *) spec->ptr;
 
 	if (spec->flags & GPTSPEC_Y2AXIS) {
@@ -629,36 +667,12 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
 
 	redisplay_edited_png(plot);
-#else
-	go_gnuplot(spec, NULL, &paths);
-#endif /* GNUPLOT_PIPE */
     }
 
     session_changed(1);
 }
 
 /* ........................................................... */
-
-#ifdef GNUPLOT_PIPE
-static void save_session_graph_plotspec (GtkWidget *w, GPT_SPEC *spec)
-{
-    int err = 0;
-
-    spec->edit += 2;
-    apply_gpt_changes(NULL, spec);
-
-    strcpy(spec->termtype, "plot commands");
-
-    plot->edit += 2;
-    err = go_gnuplot(spec, spec->fname, &paths);
-
-    if (err == 1) {
-	errbox(_("Error saving graph"));
-    } else {
-	infobox(_("Graph saved"));
-    }
-}
-#endif
 
 static void set_keyspec_sensitivity (GPT_SPEC *spec)
 {
@@ -1694,22 +1708,6 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
 #endif
     gtk_widget_show (tempwid);
 
-    /* Old, weird stuff */
-#ifdef GNUPLOT_PIPE
-    tempwid = standard_button(GTK_STOCK_SAVE);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
-		       tempwid, TRUE, TRUE, 0);
-# ifdef OLD_GTK
-    gtk_signal_connect (GTK_OBJECT(tempwid), "clicked", 
-                        GTK_SIGNAL_FUNC(save_session_graph_plotspec), spec);
-# else
-    g_signal_connect (G_OBJECT(tempwid), "clicked", 
-		      G_CALLBACK(save_session_graph_plotspec), spec);
-# endif
-    gtk_widget_show (tempwid);
-#endif /* GNUPLOT_PIPE */
-
     /* Close button (do not apply changes */
     tempwid = standard_button(GTK_STOCK_CLOSE);
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
@@ -1776,11 +1774,7 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 	return;
     } else {
 #ifdef ENABLE_NLS
-	const char *enc = get_gretl_charset();
-
-	if (enc != NULL) {
-	    pprintf(prn, "set encoding %s\n", enc);
-	}
+	pprint_gnuplot_encoding(termstr, prn);
 #endif /* ENABLE_NLS */
 	pprintf(prn, "set term %s\n", termstr);
 	pprintf(prn, "set output '%s'\n", fname);
@@ -1995,7 +1989,6 @@ static GPT_SPEC *plotspec_new (void)
     spec->labels = NULL;
     spec->nlabels = 0;
     spec->ptr = NULL;
-    spec->edit = 0;
     spec->nlines = 0;
     spec->n_y_series = 0;
 
@@ -2154,23 +2147,6 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *line,
 
     return 0;
 }
-
-/* ........................................................... */
-
-#ifdef GNUPLOT_PIPE
-static int open_gnuplot_pipe (const PATHS *ppaths, GPT_SPEC *plot)
-     /* add file or pipe to plot struct */
-{
-#ifdef G_OS_WIN32
-    plot->fp = NULL; /* will be opened later as needed */
-#else
-    plot->fp = popen(ppaths->gnuplot, "w");
-    if (plot->fp == NULL) return 1;
-#endif
-    plot->edit = 1;
-    return 0;
-}
-#endif
 
 /* ........................................................... */
 
@@ -2465,30 +2441,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     fclose(fp);
     return 1;
 }
-
-#ifdef GNUPLOT_PIPE
-void start_editing_session_graph (const char *fname)
-{
-    GPT_SPEC *spec;
-
-    spec = plotspec_new();
-    if (spec == NULL) return;
-
-    strcpy(spec->fname, fname);
-    if (read_plotspec_from_file(spec)) {
-	free_plotspec(spec);
-	return;
-    }
-
-    if (open_gnuplot_pipe(&paths, spec)) {
-	errbox(_("gnuplot command failed"));
-	free_plotspec(spec);
-	return;
-    } 
-
-    show_gnuplot_dialog(spec);
-}
-#endif
 
 /* Size of drawing area */
 #define PLOT_PIXEL_WIDTH  640   /* try 576? 608? */
@@ -3129,6 +3081,7 @@ static int redisplay_edited_png (png_plot_t *plot)
     if (fp == NULL) return 1;
 
     /* dump the edited plot details to file */
+    set_png_output(plot->spec);
     print_plotspec_details(plot->spec, fp);
     fclose(fp);
 

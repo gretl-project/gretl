@@ -102,6 +102,14 @@ const char *get_gretl_charset (void);
 
 const char *get_gnuplot_charset (void);
 
+int doing_iso_latin_2 (void);
+
+char *sprint_l2_to_html (char *targ, const char *s, size_t len);
+
+int print_as_html (const char *s, FILE *fp);
+
+int print_as_locale (const char *s, FILE *fp);
+
 int get_utf_width (const char *str, int width);
 
 # define UTF_WIDTH(s, w) get_utf_width(s, w) 
