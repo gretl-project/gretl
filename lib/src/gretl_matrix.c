@@ -1178,6 +1178,41 @@ double gretl_matrix_dot_product (const gretl_matrix *a, int aflag,
 
     return ret;
 }
+/**
+ * gretl_matrix_dot_multiply:
+ * @a: left-hand matrix.
+ * @b: right-hand matrix.
+ * 
+ * Returns: a new matrix, each of whose elements is the product of the
+ * corresponding elements of the matrices @a and @b (or %NULL on
+ * failure).
+ *
+ */
+
+gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a, 
+					 const gretl_matrix *b)
+{
+    gretl_matrix *c;
+    int i, n;
+
+    if (a->rows != b->rows || a->cols != b->cols) {
+	fputs("gretl_matrix_dot_multiply: matrices not conformable\n", stderr);
+	return NULL;
+    }
+
+    c = gretl_matrix_alloc(a->rows, a->cols);
+    if (c == NULL) {
+	return NULL;
+    }
+
+    n = a->rows * a->cols;
+
+    for (i=0; i<n; i++) {
+	c->val[i] = a->val[i] * b->val[i];
+    }
+
+    return c;
+}
 
 static double 
 gretl_matrix_column_mean (const gretl_matrix *m, int col)

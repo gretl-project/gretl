@@ -112,6 +112,9 @@ double gretl_matrix_dot_product (const gretl_matrix *a, int aflag,
 				 const gretl_matrix *b, int bflag,
 				 int *err);
 
+gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a, 
+					 const gretl_matrix *b);
+
 gretl_matrix *gretl_matrix_vcv (gretl_matrix *m);
 
 double gretl_matrix_determinant (gretl_matrix *a);

@@ -1339,9 +1339,6 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 
     rset = rset_new(u, p);
     if (rset == NULL) return;
-    
-    g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
-		     G_CALLBACK(free_rsetting), rset);
 
     gtk_window_set_title(GTK_WINDOW(rset->dlg), _("gretl: set sample"));
     set_dialog_border_widths(rset->dlg);
@@ -1476,6 +1473,9 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 
     /* And a Cancel button */
     cancel_delete_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg);
+
+    g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
+		     G_CALLBACK(free_rsetting), rset);
 
     gtk_widget_show_all(rset->dlg);
 

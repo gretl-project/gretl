@@ -266,7 +266,7 @@ int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo)
  * @t2: ending observation. 
  * 
  * Check whether variable @x has only 0 or 1 values over the
- * given sample range. 
+ * given sample range (or possibly missing values).
  *
  * Returns: 0 if the variable is not a 0/1 dummy, otherwise the
  * number of 1s in the series.
@@ -277,13 +277,21 @@ int isdummy (const double *x, int t1, int t2)
     int t, m = 0;
 
     for (t=t1; t<=t2; t++) {
+#if 1
+	if (floatneq(x[t], 0.0) && floatneq(x[t], 1.0) && !na(x[t])) {
+	    return 0;
+	}
+#else
 	if (floatneq(x[t], 0.0) && floatneq(x[t], 1.0)) {
 	    return 0;
 	}
+#endif
 	if (floateq(x[t], 1.0)) m++;
     }
 
-    if (m < t2 - t1 + 1) return m;
+    if (m < t2 - t1 + 1) {
+	return m;
+    }
 
     return 0;
 } 

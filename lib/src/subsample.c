@@ -160,24 +160,6 @@ static double *get_old_mask (double **Z, const DATAINFO *pdinfo)
     return mask;
 }
 
-static int dummy_with_missing (const double *x, int t1, int t2)
-{
-    int t, m = 0;
-    double xx;
-
-    for (t=t1; t<=t2; t++) {
-	xx = x[t];
-	if (!na(xx) && floatneq(xx, 0.0) && floatneq(xx, 1.0)) { 
-	    return 0;
-	}
-	if (floateq(xx, 1.0)) m++;
-    }
-
-    if (m < t2 - t1 + 1) return m;
-
-    return 0;
-} 
-
 static int overlay_masks (char *targ, const double *src, int n)
 {
     int i, sn = 0;
@@ -233,14 +215,7 @@ static void copy_to_mask (char *mask, const double *x, int n)
     int t;
 
     for (t=0; t<n; t++) {
-	mask[t] = (x[t] != 0.0);
-    }
-}
-
-static void check_dummy_missvals (const double *x, int t1, int t2)
-{
-    if (dummy_with_missing(x, t1, t2)) {
-	strcpy(gretl_errmsg, _("Missing values found when applying criterion"));
+	mask[t] = (x[t] != 0.0 && !na(x[t]));
     }
 }
 
@@ -260,9 +235,6 @@ static int sn_from_tmp_dummy (double ***pZ, DATAINFO *pdinfo,
     dnum = varindex(pdinfo, "tmpmsk");
 
     isdum = isdummy((*pZ)[dnum], pdinfo->t1, pdinfo->t2);
-    if (isdum == 0) {
-	check_dummy_missvals((*pZ)[dnum], pdinfo->t1, pdinfo->t2);
-    } 
 
     copy_to_mask(mask, (*pZ)[dnum], pdinfo->n);
 
@@ -285,9 +257,6 @@ static int sn_from_dummy (const double **Z, const DATAINFO *pdinfo,
     } 
 
     isdum = isdummy(Z[dnum], pdinfo->t1, pdinfo->t2);
-    if (isdum == 0) {
-	check_dummy_missvals(Z[dnum], pdinfo->t1, pdinfo->t2);
-    } 
 
     copy_to_mask(mask, Z[dnum], pdinfo->n);
 
@@ -677,16 +646,12 @@ int restrict_sample (const char *line,
 
     if (opt == SUBSAMPLE_DROP_MISSING) {   
 	sn = make_missing_mask((const double **) *pZ, *ppdinfo, list, mask);
-    }  
-
-    else if (opt == SUBSAMPLE_RANDOM) {
+    } else if (opt == SUBSAMPLE_RANDOM) {
 	sn = make_random_mask(oldmask, (*ppdinfo)->n, atoi(line + 4), mask);
 	if (sn == 0) {
 	    err = 1;
 	}
-    }
-
-    else if (opt == SUBSAMPLE_USE_DUMMY || opt == SUBSAMPLE_BOOLEAN) {
+    } else if (opt == SUBSAMPLE_USE_DUMMY || opt == SUBSAMPLE_BOOLEAN) {
 	if (opt == SUBSAMPLE_USE_DUMMY) {
 	    sn = sn_from_dummy((const double **) *pZ, *ppdinfo, dname, mask);
 	} else {
@@ -695,9 +660,7 @@ int restrict_sample (const char *line,
 	if (sn < 0) {
 	    err = 1;
 	}
-    } 
-
-    else {
+    } else {
 	/* impossible */
 	strcpy(gretl_errmsg, _("Sub-sample command failed mysteriously"));
 	err = 1;
