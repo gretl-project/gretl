@@ -121,6 +121,7 @@ void time_series_menu_state (gboolean s)
 #ifdef HAVE_TRAMO
 	flip(mdata->ifac, "/Variable/TRAMO analysis", s);
 #endif
+	flip(mdata->ifac, "/Variable/Hurst exponent", s);
 	/* Model menu */
 	flip(mdata->ifac, "/Model/Time series", s);
 	/* Sample menu */

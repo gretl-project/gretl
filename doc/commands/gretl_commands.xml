@@ -2492,7 +2492,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variable/FIXME</menu-path>
+      <menu-path>/Variable/Hurst exponent</menu-path>
     </gui-access>
 
   </command>
@@ -3171,10 +3171,10 @@
 	statistical variation in each dimension of the space.  For
 	example, if <mathvar>p</mathvar> and <mathvar>q</mathvar> are
 	two observations on a set of <mathvar>k</mathvar> variables
-	which has covariance matrix <mathvar>C</mathvar>, then the
+	with covariance matrix <mathvar>C</mathvar>, then the
 	Mahalanobis distance between the observations is given by
 	<equation status="display"
-        tex="\[\sqrt{(p-q)^'C^{-1}(p-q)}\]"
+        tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inverse * (p - q))"
           graphic="mahal"/>where 
 	<equation status="inline" tex="$(p-q)$" ascii="(p - q)"/> is a

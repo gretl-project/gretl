@@ -1737,11 +1737,12 @@ static int add_more_loop_lines (LOOPSET *loop)
  * add_to_loop:
  * @line: command line.
  * @ci: command index number.
- * @oflags: option flag(s) associated with the command.
+ * @opt: option flag(s) associated with the command.
  * @pdinfo: dataset information.
  * @pZ: pointer to data matrix.
+ * @loop: #LOOPSET to which command should be added
  * @loopstack: pointer to integer stacking level.
- * @pointer to integer switch for running loop.
+ * @looprun: pointer to integer switch for running loop.
  *
  * Add line and command index to accumulated loop buffer.
  *
@@ -2131,9 +2132,9 @@ static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum)
 /**
  * get_cmd_ci:
  * @line: command line.
- * @command: pointer to gretl command struct.
+ * @cmd: pointer to gretl command struct.
  *
- * Parse @line and assign to @command->ci the index number of
+ * Parse @line and assign to @cmd->ci the index number of
  * the command embedded in @line.
  */
 

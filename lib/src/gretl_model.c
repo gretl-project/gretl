@@ -191,7 +191,7 @@ void *gretl_model_get_data_and_size (const MODEL *pmod, const char *key,
  * @pmod: pointer to #MODEL.
  * @key: key string.
  *
- * Returns the data pointer identified by @key, or %NULL on failure.
+ * Returns: the data pointer identified by @key, or %NULL on failure.
  */
 
 void *gretl_model_get_data (const MODEL *pmod, const char *key)

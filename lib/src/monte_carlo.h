@@ -28,7 +28,7 @@ typedef struct LOOPSET_ LOOPSET;
 
 int ok_in_loop (int ci, const LOOPSET *loop);
 
-LOOPSET *add_to_loop (char *line, int ci, gretlopt oflags,
+LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
 		      DATAINFO *pdinfo, double ***pZ,
 		      LOOPSET *loop, int *loopstack, int *looprun);
 

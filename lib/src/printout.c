@@ -118,8 +118,9 @@ void lib_logo (void)
 
 /**
  * gui_script_logo:
+ * @prn: gretl printing struct.
  *
- * header for script output in gui program
+ * Print to @prn a header for script output in gui program.
  */
 
 void gui_script_logo (PRN *prn)
@@ -1026,7 +1027,7 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
 /**
  * printdata:
  * @list: list of variables to print.
- * @pZ: pointer to data matrix.
+ * @Z: data matrix.
  * @pdinfo: data information struct.
  * @oflag: if = OPT_O, print the data by observation (series in columns);
  *          if = OPT_T, print the data to 10 significant digits.

@@ -620,6 +620,7 @@ char *tailstrip (char *str)
  * Reduce multiple contiguous space characters to single spaces
  * within @s.
  * 
+ * Returns: the compressed string.
  */
 
 char *compress_spaces (char *s)

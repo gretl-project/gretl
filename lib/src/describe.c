@@ -1378,7 +1378,7 @@ static GRETLSUMMARY *summary_new (const int *list)
 /**
  * summary:
  * @list: list of variables to process.
- * @pZ: pointer to data matrix.
+ * @Z: data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
  *
@@ -1474,7 +1474,7 @@ void free_corrmat (CORRMAT *corrmat)
 /**
  * corrlist:
  * @list: list of variables to process, by ID number.
- * @pZ: pointer to data matrix.
+ * @Z: data matrix.
  * @pdinfo: data information struct.
  *
  * Computes pairwise correlation coefficients for the variables
@@ -1600,7 +1600,7 @@ int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo,
  * @list: gives the ID numbers of the variables to compare.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @vardiff: if non-zero, assume population variances are different.
+ * @opt: if OPT_O, assume population variances are different.
  * @prn: gretl printing struct.
  *
  * Carries out test of the null hypothesis that the means of two

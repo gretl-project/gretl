@@ -29,7 +29,8 @@ struct MODELSPEC_ {
 
 /**
  * model_ci_from_modelspec:
- * @spec: pointer to model specification.
+ * @spec: pointer to array of model specifications.
+ * @i: index number of model within array.
  *
  * Returns: the command index (e.g. OLS, CORC) associated
  * with the model specification.
@@ -158,7 +159,9 @@ int modelspec_save (MODEL *pmod, MODELSPEC **pmspec)
 
     if (pmod->list == NULL) return 1;
 
-    if (modelspec_expand(pmspec, &i)) return E_ALLOC;
+    if (modelspec_expand(pmspec, &i)) {
+	return E_ALLOC;
+    }
 
     spec = *pmspec;
 

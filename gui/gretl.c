@@ -417,6 +417,7 @@ GtkItemFactoryEntry data_items[] = {
 #ifdef HAVE_TRAMO  
     { N_("/Variable/TRAMO analysis"), NULL, do_tramo_x12a, TRAMO, NULL }, 
 #endif
+    { N_("/Variable/Hurst exponent"), NULL, do_hurst, 0, NULL }, 
     { N_("/Variable/Runs test"), NULL, do_menu_op, RUNS, NULL }, 
     { N_("/Variable/sep2"), NULL, NULL, 0, "<Separator>" },
     { N_("/Variable/Set missing value code..."), NULL, gretl_callback, 
