@@ -48,11 +48,11 @@ LIBTOOL = ../libtool
 	$(CC) -c $(CFLAGS) $<
 	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(CLI): dep.stamp $(OBJS)
-	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB) $(READLINE_LIBS) 
+$(CLI): .deps $(OBJS)
+	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(GRETLLIB) $(READLINE_LIBS) 
 
-dep.stamp:
-	mkdir -p .deps && touch dep.stamp
+.deps:
+	mkdir $@
 
 -include .deps/*.d
 
@@ -68,7 +68,7 @@ installdirs: $(tooldir)/mkinstalldirs
 	$(tooldir)/mkinstalldirs $(bindir)
 
 clean:
-	rm -f *.o $(CLI) dep.stamp
+	rm -f *.o $(CLI)
 	rm -rf .libs .deps
 
 distclean: clean

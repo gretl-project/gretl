@@ -86,12 +86,12 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 	$(COMPILE) -o $@ $<
 	$(CC) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
 
-$(LIBGRETL): dep.stamp $(LOBJS) $(AUX_LOBJ)
+$(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(AUX_LOBJ) \
 	-rpath $(prefix)/lib $(LIBS) -version-info 0:12:0
 
-dep.stamp:
-	mkdir -p .deps && touch dep.stamp
+.deps:
+	mkdir $@
 
 -include .deps/*.d
 
@@ -118,7 +118,7 @@ installdirs:
 	$(topsrc)/tools/mkinstalldirs $(INSTALLDIRS)
 
 clean:
-	rm -f *.lo $(LIBGRETL) dep.stamp
+	rm -f *.lo $(LIBGRETL)
 	rm -rf .libs .deps
 
 distclean: clean

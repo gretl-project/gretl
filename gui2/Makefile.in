@@ -105,7 +105,7 @@ GTKEXTRA_LITE = gtkextra-lite/libgtkextra-lite.a
 	$(CC) -c $(CFLAGS) $<
 	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(PROG): dep.stamp $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE)
+$(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(HACK_OBJ) $(LIBS) $(INETLIB)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
@@ -114,8 +114,8 @@ $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 $(GTKEXTRA_LITE): 
 	make -C gtkextra-lite
 
-dep.stamp:
-	mkdir -p .deps && touch dep.stamp
+.deps:
+	mkdir $@
 
 -include .deps/*.d
 
@@ -147,7 +147,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir)
 
 clean:
-	rm -f *.o $(PROG) dep.stamp
+	rm -f *.o $(PROG)
 	rm -rf .libs .deps
 	make -C gtkextra-lite clean
 

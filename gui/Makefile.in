@@ -90,11 +90,11 @@ OBJS = $(SRCS:.c=.o)
 	$(CC) -c $(CFLAGS) $<
 	$(CC) $(CFLAGS) -MM  $< > .deps/$*.d 
 
-$(PROG): dep.stamp $(query_gtkextra_lib) $(OBJS) 
+$(PROG): .deps $(query_gtkextra_lib) $(OBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)
 
-dep.stamp:
-	mkdir -p .deps && touch dep.stamp
+.deps:
+	mkdir $@
 
 -include .deps/*.d
 
@@ -126,7 +126,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir)
 
 clean:
-	rm -f *.o $(PROG) dep.stamp
+	rm -f *.o $(PROG)
 	rm -rf .libs .deps
 	make -C gtkextra-lite clean
 

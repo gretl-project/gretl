@@ -84,12 +84,10 @@ override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(XML_CFLAGS) \
 	$(COMPILE) $< 
 	$(CC) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d 
 
-all: $(PLUGINS)
+all: .deps $(PLUGINS)
 
-$(PLUGINS): dep.stamp 
-
-dep.stamp:
-	mkdir -p .deps && touch dep.stamp
+.deps:
+	mkdir $@
 
 -include .deps/*.d
 
@@ -149,7 +147,7 @@ installdirs:
 	$(topsrc)/tools/mkinstalldirs $(plugindir)
 
 clean:
-	rm -f *.lo *.la dep.stamp
+	rm -f *.lo *.la
 	rm -rf .libs .deps
 
 distclean: clean
