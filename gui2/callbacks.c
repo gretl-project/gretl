@@ -1028,7 +1028,7 @@ void do_nistcheck (gpointer p, guint v, GtkWidget *w)
 
     close_plugin(handle);
 
-    view_file(fname, 0, 1, 78, 400, VIEW_FILE);
+    view_file(fname, 0, 1, 78, 400, VIEW_CODEBOOK);
 
     g_free(fname);
 }

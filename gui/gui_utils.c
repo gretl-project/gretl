@@ -24,7 +24,6 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
-#include <dlfcn.h>
 
 #include "guiprint.h"
 #include "model_table.h"
@@ -38,8 +37,8 @@ extern int session_saved;
 extern GtkWidget *mysheet;
 extern GdkColor red, blue;
 
-#define SCRIPT_CHANGED(w) (w->active_var = 1)
-#define SCRIPT_SAVED(w) (w->active_var = 0)
+#define MARK_SCRIPT_CHANGED(w) (w->active_var = 1)
+#define MARK_SCRIPT_SAVED(w) (w->active_var = 0)
 #define SCRIPT_IS_CHANGED(w) (w->active_var == 1)
 
 #define MULTI_COPY_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY \
@@ -50,13 +49,13 @@ extern GdkColor red, blue;
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
+static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
+static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
 static void add_var_menu_items (windata_t *vwin);
 static void check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
-static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
-static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 static void buf_edit_save (GtkWidget *widget, gpointer data);
 
 extern void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
@@ -177,15 +176,19 @@ gchar *menu_translate (const gchar *path, gpointer p)
 int copyfile (const char *src, const char *dest) 
 {
     FILE *srcfd, *destfd;
-    char buf[8192];
+    char buf[GRETL_BUFSIZE];
     size_t n;
 
     if (!strcmp(src, dest)) return 1;
    
     if ((srcfd = fopen(src, "rb")) == NULL) {
+	sprintf(errtext, _("Couldn't open %s"), src);
+	errbox(errtext);
 	return 1; 
     }
     if ((destfd = fopen(dest, "wb")) == NULL) {
+	sprintf(errtext, _("Couldn't write to %s"), dest);
+	errbox(errtext);
 	fclose(srcfd);
 	return 1;
     }
@@ -264,10 +267,13 @@ static int winstack (int code, GtkWidget *w, gpointer ptest)
 	    if (wstack[i] != NULL) 
 		gtk_widget_destroy(wstack[i]);
 	free(wstack);
+	/* fall-through intended */
+
     case STACK_INIT:
 	wstack = NULL;
 	n_windows = 0;
 	break;
+
     case STACK_ADD:
 	for (i=0; i<n_windows; i++) {
 	    if (wstack[i] == NULL) {
@@ -282,6 +288,7 @@ static int winstack (int code, GtkWidget *w, gpointer ptest)
 		wstack[n_windows-1] = w;
 	}
 	break;
+
     case STACK_REMOVE:
 	for (i=0; i<n_windows; i++) {
 	    if (wstack[i] == w) {
@@ -290,6 +297,7 @@ static int winstack (int code, GtkWidget *w, gpointer ptest)
 	    }
 	}
 	break;
+
     case STACK_QUERY:
 	for (i=0; i<n_windows; i++) {
 	    if (wstack[i] != NULL) {
@@ -303,6 +311,7 @@ static int winstack (int code, GtkWidget *w, gpointer ptest)
 	    }
 	}
 	break;
+
     default:
 	break;
     }
@@ -337,10 +346,10 @@ static void winstack_remove (GtkWidget *w)
 
 /* ........................................................... */
 
-static void delete_file (GtkWidget *widget, char *fle) 
+static void delete_file (GtkWidget *widget, char *fname) 
 {
-    remove(fle);
-    g_free(fle);
+    remove(fname);
+    g_free(fname);
 }
 
 /* ........................................................... */
@@ -354,8 +363,9 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
 
 	resp = query_save_script(NULL, NULL, vwin);
 	if (!resp) gtk_widget_destroy(vwin->dialog);
-    } else 
+    } else {
 	gtk_widget_destroy(vwin->dialog);
+    }
 }
 
 /* ........................................................... */
@@ -504,13 +514,15 @@ void register_data (const char *fname, const char *user_fname,
     orig_vars = datainfo->v;
 
     /* set appropriate data_status bits */
-    if (fname == NULL)
-	data_status |= (GUI_DATA|MODIFIED_DATA);
-    else if (!(data_status & IMPORT_DATA)) {
-	if (strstr(paths.datfile, paths.datadir) != NULL) 
+    if (fname == NULL) {
+	data_status |= GUI_DATA;
+	mark_dataset_as_modified();
+    } else if (!(data_status & IMPORT_DATA)) {
+	if (strstr(paths.datfile, paths.datadir) != NULL) {
 	    data_status |= BOOK_DATA;
-	else
+	} else {
 	    data_status |= USER_DATA; 
+	}
     }
 
     /* sync main window with datafile */
@@ -540,7 +552,7 @@ int get_worksheet_data (const char *fname, int datatype, int append)
     int err;
     void *handle;
     PRN *errprn;
-    int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *prn);
+    int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *);
 
     if (datatype == GRETL_GNUMERIC) {
 	sheet_get_data = gui_get_plugin_function("wbook_get_data",
@@ -584,7 +596,6 @@ int get_worksheet_data (const char *fname, int datatype, int append)
     gretl_print_destroy(errprn);
 
     if (append) {
-	infobox(_("Data appended OK"));
 	register_data(NULL, NULL, 0);
     } else {
 	data_status |= IMPORT_DATA;
@@ -600,12 +611,13 @@ int get_worksheet_data (const char *fname, int datatype, int append)
 void do_open_data (GtkWidget *w, gpointer data, int code)
      /* cases: 
 	- called from dialog: user has said Yes to opening data file,
-	although a data file is already open
+	although a data file is already open (or user wants to append
+	data)
 	- reached without dialog, in expert mode or when no datafile
 	is open yet
      */
 {
-    gint datatype, err;
+    gint datatype, err = 0;
     dialog_t *d = NULL;
     windata_t *fwin = NULL;
     int append = APPENDING(code);
@@ -620,17 +632,22 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }
 
     if (code == OPEN_CSV || code == APPEND_CSV || code == OPEN_ASCII ||
-	code == APPEND_ASCII)
+	code == APPEND_ASCII) {
 	datatype = GRETL_CSV_DATA;
-    if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC)
+    }
+    else if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC) {
 	datatype = GRETL_GNUMERIC;
-    else if (code == OPEN_EXCEL || code == APPEND_EXCEL)
+    }
+    else if (code == OPEN_EXCEL || code == APPEND_EXCEL) {
 	datatype = GRETL_EXCEL;
-    else if (code == OPEN_BOX)
+    }
+    else if (code == OPEN_BOX) {
 	datatype = GRETL_BOX_DATA;
-    else if (code == OPEN_DES)
-	datatype = GRETL_DES_DATA;
-    else {
+    }
+    else if (code == OPEN_DES) {
+        datatype = GRETL_DES_DATA;
+    } else {
+	/* no filetype specified: have to guess */
 	PRN *prn;	
 
 	if (bufopen(&prn)) return;
@@ -654,18 +671,19 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	return;
     }
     else if (datatype == GRETL_DES_DATA) {
-	get_worksheet_data(trydatfile, datatype, 0);
-	return;
+        get_worksheet_data(trydatfile, datatype, 0);
+        return;
     }    
     else { /* native data */
 	PRN prn;
 
 	gretl_print_attach_file(&prn, stderr);
-	if (datatype == GRETL_XML_DATA)
+	if (datatype == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, datainfo, trydatfile, &paths, 
 			      data_status, &prn, 1);
-	else
+	} else {
 	    err = get_data(&Z, datainfo, trydatfile, &paths, data_status, &prn);
+	}
     }
 
     if (err) {
@@ -675,14 +693,14 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }	
 
     /* trash the practice files window that launched the query? */
-    if (fwin != NULL) gtk_widget_destroy(fwin->w); 
+    if (fwin != NULL) gtk_widget_destroy(fwin->w);
 
     if (append) {
 	register_data(NULL, NULL, 0);
     } else {
 	strcpy(paths.datfile, trydatfile);
 	register_data(paths.datfile, NULL, 1);
-    }
+    } 
 }
 
 /* ........................................................... */
@@ -852,7 +870,7 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 	    sprintf(buf, _("Saved %s\n"), vwin->fname);
 	    infobox(buf);
 	    if (vwin->role == EDIT_SCRIPT) 
-		SCRIPT_SAVED(vwin);
+		MARK_SCRIPT_SAVED(vwin);
 	}
     }
 } 
@@ -862,8 +880,8 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 void windata_init (windata_t *vwin)
 {
     vwin->dialog = NULL;
-    vwin->vbox = NULL;
     vwin->listbox = NULL;
+    vwin->vbox = NULL;
     vwin->mbar = NULL;
     vwin->w = NULL;
     vwin->status = NULL;
@@ -943,7 +961,7 @@ static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 
 static void script_changed (GtkWidget *w, windata_t *vwin)
 {
-    SCRIPT_CHANGED(vwin);
+    MARK_SCRIPT_CHANGED(vwin);
 }
 
 /* ........................................................... */
@@ -1703,7 +1721,7 @@ static void auto_save_script (windata_t *vwin)
     g_free(savestuff); 
     fclose(fp);
     infobox(_("script saved"));
-    SCRIPT_SAVED(vwin);
+    MARK_SCRIPT_SAVED(vwin);
 }
 
 /* ........................................................... */
@@ -2696,7 +2714,7 @@ int build_path (const char *dir, const char *fname, char *path, const char *ext)
 	    path[len-1] = '\0';
     }    
 
-    if (path[len - 1] == '/' || path[len - 1] == '\\') {
+    if (path[len-1] == '/' || path[len-1] == '\\') {
 	/* dir is already properly terminated */
 	strcat(path, fname);
     } else {

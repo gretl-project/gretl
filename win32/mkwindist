@@ -46,11 +46,13 @@ mkdir -p windist
 mkdir -p windist/gretl
 mkdir -p windist/gretl/data
 mkdir -p windist/gretl/data/greene
+mkdir -p windist/gretl/data/misc
+mkdir -p windist/gretl/data/nist
 mkdir -p windist/gretl/scripts
+mkdir -p windist/gretl/scripts/misc
 mkdir -p windist/gretl/db
 mkdir -p windist/gretl/user
 mkdir -p windist/gretl/plugins
-mkdir -p windist/gretl/nist
 mkdir -p windist/gretl/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/locale/fr/LC_MESSAGES
@@ -62,7 +64,6 @@ mkdir -p windist/gretl/share/gtksourceview-1.0/language-specs
 # put binaries in place
 add_file gretlcli.exe gretl/gretlcli.exe
 add_file gretlw32.exe gretl/gretlw32.exe
-add_file nisttest.exe gretl/nisttest.exe
 
 # home-made dynamic libs
 for f in dlls/*.dll ; do
@@ -130,10 +131,19 @@ done
 for f in ${TOPDIR}/share/data/greene/* ; do
     add_file $f gretl/data/greene/`basename $f`
 done
+for f in ${TOPDIR}/share/data/misc/* ; do
+    add_file $f gretl/data/misc/`basename $f`
+done
+for f in ${TOPDIR}/tests/*.dat ; do
+    add_file $f gretl/data/nist/`basename $f`
+done
 
 # scripts
 for f in ${TOPDIR}/share/scripts/* ; do
     add_file $f gretl/scripts/`basename $f`
+done
+for f in ${TOPDIR}/share/scripts/misc/* ; do
+    add_file $f gretl/scripts/misc/`basename $f`
 done
 
 # database files
@@ -146,11 +156,6 @@ add_file ${TOPDIR}/share/bcih/bcih.idx gretl/db/bcih.idx
 make -C mo
 for lang in es fr ; do
   add_file mo/$lang.mo gretl/locale/$lang/LC_MESSAGES/gretl.mo
-done
-
-# NIST test data
-for f in ${TOPDIR}/tests/*.dat ; do
-   add_file $f gretl/nist/`basename $f`
 done
 
 # misc files

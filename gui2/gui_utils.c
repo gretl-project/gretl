@@ -26,10 +26,10 @@
 #include <unistd.h>
 
 #include "guiprint.h"
+#include "model_table.h"
 #include "series_view.h"
 #include "console.h"
 #include "session.h"
-#include "model_table.h"
 
 #include "../pixmaps/mini.tex.xpm"
 
@@ -544,7 +544,7 @@ void *mymalloc (size_t size)
 {
     void *mem;
    
-    if((mem = malloc(size)) == NULL) 
+    if ((mem = malloc(size)) == NULL) 
 	errbox(_("Out of memory!"));
     return mem;
 }
@@ -651,8 +651,7 @@ int get_worksheet_data (const char *fname, int datatype, int append)
     if (err) {
 	if (*errprn->buf != '\0') {
 	    errbox(errprn->buf);
-	}
-	else {
+	} else {
 	    errbox(_("Failed to import spreadsheet data"));
 	}
 	return 1;
@@ -667,7 +666,7 @@ int get_worksheet_data (const char *fname, int datatype, int append)
     } else {
 	data_status |= IMPORT_DATA;
 	strcpy(paths.datfile, fname);
-	register_data(fname, NULL, 1);
+	if (mdata != NULL) register_data(fname, NULL, 1);
     }
 
     return 0;

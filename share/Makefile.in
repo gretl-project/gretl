@@ -39,6 +39,8 @@ install_datafiles:
 	$(INSTALL_DATA) $$f $(gretldir)/data/greene ; done
 	for f in $(sharesrc)/data/misc/* ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/data/misc ; done
+	for f in $(topsrc)/tests/*.dat ; do \
+	$(INSTALL_DATA) $$f $(gretldir)/data/nist ; done
 
 install_scripts:
 	for f in $(sharesrc)/scripts/* ; do \
@@ -61,6 +63,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir) $(gretldir)/data 
 	$(tooldir)/mkinstalldirs $(gretldir)/data/greene
 	$(tooldir)/mkinstalldirs $(gretldir)/data/misc
+	$(tooldir)/mkinstalldirs $(gretldir)/data/nist
 	$(tooldir)/mkinstalldirs $(gretldir)/scripts
 	$(tooldir)/mkinstalldirs $(gretldir)/scripts/misc 
 	$(tooldir)/mkinstalldirs $(gretldir)/db

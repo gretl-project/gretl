@@ -919,6 +919,27 @@ int main (int argc, char *argv[])
 
 #else /* !STANDALONE */
 
+static void nist_intro (PRN *prn)
+{
+    pputs(prn, "What you should see below: A series of 11 tests, using the "
+	  "reference data sets for linear regression from the U.S. National "
+	  "Institute of Standards and Technology (NIST). If you scroll to "
+	  "the bottom you will see a summary of the results: if all is well "
+	  "there should be 0 values for \"data files missing\", \"unexpected "
+	  "errors\" and \"poor results\".\n\n");
+
+#ifdef USE_GMP
+    pputs(prn, "Each test cases is run twice, once using the standard "
+	  "linear regression calculation in the gretl library and once "
+	  "using mulitple precision arithmetic.\n\n");
+#endif
+
+    pputs(prn, "For more information, please see "
+	  "http://www.itl.nist.gov/div898/strd/general/main.html");
+
+    pputs(prn, "\n\n");
+}
+
 int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 {
     int j;
@@ -949,6 +970,8 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
     sprintf(datadir, "%snist", datapath);
 
     prn = gretl_print_new(GRETL_PRINT_FILE, outfile); 
+
+    nist_intro(prn);
 
     for (j=0; j<ntests; j++) {
 	if (read_nist_file(nist_files[j], &Z, &datainfo, &certvals,

@@ -28,7 +28,7 @@ LIBS = -lm $(GRETLLIB) -ladvapi32
 LAPACK_LIBS = -llapack -lblas -lf2c
 
 # flags/defines
-CFLAGS = -I. -I$(libdir) -I$(extradir) -I$(plugindir)
+CFLAGS = -I. -I$(libdir) -I$(extradir) -I$(plugindir) -DUSE_GMP
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
 # source paths
@@ -50,7 +50,6 @@ vpath %.rc $(topsrc)/win32
 CLIPROG = gretlcli.exe
 GUIPROG = gretlw32.exe
 UPDATER = gretl_updater.exe
-CHECKER = nisttest.exe
 
 PLUGINSRC = \
 	excel_import.c \
@@ -68,6 +67,7 @@ PLUGINSRC = \
 	sur.c \
 	tramo_options.c \
 	tramo-x12a.c \
+	nistcheck.c \
 	workbook.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
@@ -77,7 +77,7 @@ PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/excel_import.dll plugins/mp_ols.dll plugins/sur.dll \
 	plugins/johansen.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll \
-	plugins/leverage.dll plugins/pca.dll
+	plugins/leverage.dll plugins/pca.dll plugins/nistcheck.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
@@ -95,8 +95,6 @@ LIBOBJ = $(LIBSRC:.c=.o)
 
 CLISRC = gretlcli.c complete.c 
 CLIOBJ = $(CLISRC:.c=.o)
-
-CHECKSRC = nistcheck.c
 
 GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c gpt_control.c session.c webget.c \
@@ -253,6 +251,10 @@ plugins/leverage.dll: leverage.o dllinit.o
 plugins/pca.dll: pca.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) $(LAPACK_LIBS)
+
+plugins/nistcheck.dll: nistcheck.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
