@@ -1,12 +1,11 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html> <head>
 <title>Data for gretl</title>
-<LINK REL=STYLESHEET TYPE="text/css" 
-HREF="./css-gretl.html">
+<LINK REL=STYLESHEET TYPE="text/css" HREF="./css-gretl.html">
 </head>
 
 <body>
-[<a href="./index.html">gretl main page</a>]
+<p>[<a href="./index.html">gretl main page</a>]</p>
 
 <center>
 <h1>Data for gretl</h1>
@@ -19,8 +18,8 @@ HREF="./css-gretl.html">
   <td align=left>
      <font face="sans-serif" size="-1">
       <p><a href="#db">gretl databases</a>
-      <p><a href="#df">big datafiles</a>
       <p><a href="#jw">textbook datasets</a>
+      <p><a href="#df">big datafiles</a>
       <p><a href="#custom">custom data collections</a>
       <p><a href="#perl">data utilities</a>
       </font> 
@@ -60,7 +59,60 @@ additional databases via the menu item <kbd>File/Browse databases/on
 database server</kbd> (provided you are connected to the
 internet).</p>
 
-<h2><a name="df">2. Big datafiles</a></h2>
+<h2><a name="jw">2. Textbook datasets</a></h2>
+
+<p>Datasets and replication scripts for Ramu Ramanathan's 
+<a href="http://econ.ucsd.edu/~rramanat/embook5.htm"><i>Introductory Econometrics 
+with Applications</i></a>, and selected data from William Greene's
+<a href="http://pages.stern.nyu.edu/~wgreene/Text/econometricanalysis.htm"><i>Econometric
+Analysis</i></a>, are provided with the base gretl package.  Additional textbook datasets
+are available as follows.</p>
+
+<p><i>Wooldridge</i>: gretl offers support for the datasets used in
+Jeffrey Wooldridge's textbook, <a
+href="http://www.swcollege.com/bef/wooldridge/wooldridge2e/wooldridge2e.html">Introductory
+Econometrics: A Modern Approach</a>.  
+The datasets are available as a Windows self-installer,
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.exe">wooldridge_data.exe</a>, 
+or as a compressed archive,
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.tar.gz">wooldridge_data.tar.gz</a>.</p>
+</p>
+
+<p><i>Gujarati</i>: gretl supports the datasets in Damodar Gujarati's
+<a href="http://www.mhhe.com/economics/gujarati4/">Basic Econometrics</a>.
+Please look <a href="./gujarati/index.html">here</a> for details.</p>
+
+<p><i>Stock and Watson</i>: gretl supports the datasets in James Stock and Mark Watson's
+<a href="http://wps.aw.com/aw_stockwatsn_economtrcs_1">Introduction to Econometrics</a>.
+Replication scripts are also provided.  
+The package is available as a Windows self-installer,
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.exe">stock_watson.exe</a>, 
+or as a compressed archive,
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.tar.gz">stock_watson.tar.gz</a>.</p>
+</p>
+
+<p><i>Davidson and MacKinnon</i>: gretl supports the datasets in their
+<a href="http://www.econ.queensu.ca/ETM/">Econometric Theory and Methods</a>.
+The datasets are available as a Windows self-installer,
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.exe">ETM_data.exe</a>, 
+or as a compressed archive,
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.tar.gz">ETM_data.tar.gz</a>.</p>
+
+<p>With the Windows self-installers, just download them to the desktop then double-click 
+on the installer icon.  (Once the datasets are installed you can delete the installer.)</p>
+
+<p>The gzipped archive versions should be decompressed in the gretl "share" directory.  For
+example, if gretl is installed under <kbd>/usr</kbd> you could install the Stock and Watson 
+data and scripts like this (as the root user):</p>
+
+<pre>
+cd /usr/share/gretl
+wget ftp://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.tar.gz
+tar xvfz stock_watson.tar.gz
+rm stock_watson.tar.gz
+</pre>
+
+<h2><a name="df">3. Big datafiles</a></h2>
 
 <p>The following packages each contain one or more gretl datafiles with
 accompanying header and label files.  They should be unzipped into the
@@ -68,36 +120,35 @@ user's gretl directory (by default <kbd>$HOME/gretl</kbd> on unix-type
 systems, or <kbd>c:\userdata\gretl\user</kbd> on MS Windows).</p>
 
 <table width="90%" border=0 cellspacing=4 cellpadding=4>
-<tr><th align=left bgcolor="#808080"><FONT COLOR="white">Source (with
-  list of series)</font></th>
-  <th align=left bgcolor="#808080"><FONT COLOR="white">Description</font></th>
-    <th align=left bgcolor="#808080"><FONT COLOR="white">Zipfile (FTP)</font></th>
-      <th align=left bgcolor="#808080"><FONT COLOR="white">Size (bytes)</font></th></tr> 
+<tr><th align=left bgcolor="#808080">Source (with list of series)</th>
+  <th align=left bgcolor="#808080">Description</th>
+    <th align=left bgcolor="#808080">Zipfile (FTP)</th>
+      <th align=left bgcolor="#808080">Size (bytes)</th></tr> 
 <tr bgcolor="#E0E0E0">
-  <td><a href="http://pwt.econ.upenn.edu/">U. Penn</a></td>
-    <td>Penn World Table, PWT56 (cross-country macro panel data)</td>
-     <td>
+  <td><p><a href="http://pwt.econ.upenn.edu/">U. Penn</a></p></td>
+    <td><p>Penn World Table, PWT56 (cross-country macro panel data)</p></td>
+     <td><p>
 	 <a
-	 href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/pwt56.tar.gz">pwt56.tar.gz</a>
+	 href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/pwt56.tar.gz">pwt56.tar.gz</a></p>
 	 </td>
-   <td align=right>566100&nbsp;</td></tr>
+   <td align=right><p>566100&nbsp;</p></td></tr>
 <tr bgcolor="#E0E0E0">
-  <td><a href="http://www.nber.org/databases/jones-obstfeld/index.html">NBER</a></td>
-    <td>Jones-Obstfeld Saving and Investment Data for 13 Countries
-	(historical panel)</td>
-     <td>
+  <td><p><a href="http://www.nber.org/databases/jones-obstfeld/index.html">NBER</a></p></td>
+    <td><p>Jones-Obstfeld Saving and Investment Data for 13 Countries
+	(historical panel)</p></td>
+     <td><p>
 	 <a
-	 href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/jones_obst.zip">jones_obst.zip</a>
+	 href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/jones_obst.zip">jones_obst.zip</a></p>
      </td>
-   <td align=right>42895&nbsp;</td></tr>
+   <td align=right><p>42895&nbsp;</p></td></tr>
 <tr bgcolor="#E0E0E0">
-  <td><a href="http://www.nber.org/nberprod/">NBER</a></td>
-    <td>NBER-CES/Census Manufacturing Industry Productivity Data
-	11/25/98 (covers c. 17,000 industries)</td>
-      <td><a
-	 href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/nberpr87.zip">nberpr87.zip</a>
+  <td><p><a href="http://www.nber.org/nberprod/">NBER</a></p></td>
+    <td><p>NBER-CES/Census Manufacturing Industry Productivity Data
+	11/25/98 (covers c. 17,000 industries)</p></td>
+      <td><p><a
+	 href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/nberpr87.zip">nberpr87.zip</a></p>
 	 </td>
-   <td align=right>899962&nbsp;</td></tr>
+   <td align=right><p>899962&nbsp;</p></td></tr>
    <tr><td>&nbsp;</td></tr>
 </table>
 
@@ -135,29 +186,6 @@ the data.</p>
 <p>I suggest you consult the <a href="./manual.pdf">gretl manual</a> for
 advice on dealing with panel data.</p>
 
-<h2><a name="jw">3. Textbook datasets</a></h2>
-
-<p><i>Wooldridge</i>: gretl offers support for the datasets used in
-Jeffrey Wooldridge's textbook, <a
-href="http://www.swcollege.com/bef/wooldridge/wooldridge2e/wooldridge2e.html">Introductory
-Econometrics: A Modern Approach</a>.  
-The datasets are available as a Windows self-installer,
-<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.exe">wooldridge_data.exe</a>, 
-or as a compressed archive,
-<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.tar.gz">wooldridge_data.tar.gz</a>.</p>
-</p>
-
-<p><i>Gujarati</i>: gretl supports the datasets in Damodar Gujarati's
-<a href="http://www.mhhe.com/economics/gujarati4/">Basic Econometrics</a>.
-Please look <a href="./gujarati/index.html">here</a> for details.</p>
-
-<p><i>Davidson and MacKinnon</i>: gretl supports the datasets in their
-<a href="http://www.econ.queensu.ca/ETM/">Econometric Theory and Methods</a>.
-The datasets are available as a Windows self-installer,
-<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.exe">ETM_data.exe</a>, 
-or as a compressed archive,
-<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.tar.gz">ETM_data.tar.gz</a>.</p>
-
 <h2><a name="custom">4. Custom data collections</a></h2>
 
 <p>If you use gretl in your teaching you may wish to set up a custom collection
@@ -179,9 +207,6 @@ you need to be connected to the internet.</p>
 <p>
 <address>
 Allin Cottrell <a href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a></address>
-<!-- hhmts start -->
-Last modified: Fri May 31 09:42:21 EDT 2002
-<!-- hhmts end -->
 </p>
 
 </body>

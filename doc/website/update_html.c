@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define WEBDIR "/home/allin/stats/esl/website"
-#define SRCDIR "/home/allin/src"
-#define WEBSRC "/home/allin/src/doc/website"
+#define WEBDIR "/home/cottrell/stats/esl/website"
+#define SRCDIR "/home/cottrell/src"
+#define WEBSRC "/home/cottrell/src/doc/website"
 
 #define MYLEN 96
 #define HTMLLEN 1024

@@ -14,12 +14,6 @@
 </head>
 <body>
 
-<center>
-
-<h1>Gnu Regression, Econometrics and Time-series Library</h1>
-
-</center>
-
 <table>
   <tr>
     <td width="30%" valign="top">
@@ -55,18 +49,35 @@
   <td><a href="./gretl_screen.html"><img src="./images/gretl_thumb.png" 
 	alt="screenshot thumbnail - click to enlarge"></a></td></tr>
 
-<tr><td>&nbsp;</td></tr>	
+<tr><td>&nbsp;</td></tr>
 
 <tr>
   <td class="menu-item"><i>Gretl is hosted by</i></td></tr>
   <tr><td><a href="http://sourceforge.net">
 <IMG src="http://sourceforge.net/sflogo.php?group_id=36234&amp;type=2"
       width="125" height="37" border="0" alt="SourceForge Logo"></a></td></tr>
-	
+
+<tr><td>&nbsp;</td></tr>
+<tr><td>&nbsp;</td></tr>
+
+<tr>
+<td><p>
+      <a href="http://validator.w3.org/check?uri=referer"><img border="0"
+          src="http://www.w3.org/Icons/valid-html40"
+          alt="Valid HTML 4.0!" height="31" width="88"></a>
+    </p></td>
+</tr>
 
     </table>
       </td>
+
+<!-- begin right-hand-column -->
+
 <td width="70%">
+
+    <center>
+     <h2>Gnu Regression, Econometrics and Time-series Library</h2>
+    </center>
 
     <center>
       <img alt="gretl text" src="./images/gretl-text.png">
@@ -117,7 +128,7 @@ See also the <a href="./gretl_data.html">gretl data page</a>.
 
 <h2><a name="dl">Download</a></h2>
 
-<TABLE width="99%" align="left">
+<TABLE cellpadding="2">
 <TR>
 <TD><p class="in-cell">The current source package</p></TD>
 <TD><p class="in-cell"><a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.tar.bz2">gretl-VERSION.tar.bz2</a>
@@ -135,46 +146,57 @@ href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-1generic.i386.rpm">
 </TD>
 </TR>
 <TR>
-<TD><p class="in-cell">Binary RPM for X-12-ARIMA, for use with gretl</p></TD>
-<TD><p class="in-cell"><a
-href="ftp://ricardo.ecn.wfu.edu/pub/gretl/x12a-0.2.10-1.i386.rpm">x12a-0.2.10-1.i386.rpm</a></p>
-</TD
-</TR>
-<TR>
-<TD><p class="in-cell">Binary RPM for TRAMO/SEATS, for use with gretl</p></TD>
-<TD><p class="in-cell"><a
-href="ftp://ricardo.ecn.wfu.edu/pub/gretl/tramo-seats-98-1.i386.rpm">tramo-seats-98-1.i386.rpm</a></p>
-</TD>
-</TR>
-<TR>
 <TD><p class="in-cell"><a href="http://www.debian.org">Debian GNU/Linux</a> packages,
 maintained by Dirk Eddelbuettel</p></TD>
 <TD><p class="in-cell"><a href="http://packages.debian.org/gretl">packages.debian.org</a>; see also
 <a href="http://packages.qa.debian.org/g/gretl.html">packages.qa.debian.org</a></p></TD>
 </TR>
-<TR>
-<TD><p class="in-cell">Debian packages for X-12-ARIMA and TRAMO/SEATS</p></TD>
-<TD>
-<p class="in-cell"><a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/x12a_0.2.10-2_i386.deb">x12a_0.2.10-2_i386.deb</a>
-<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/tramo-seats_98-2_i386.deb">tramo-seats_98-2_i386.deb</a></p>
-</TD>
-</TR>
+<TR><TD></TD><TD></TD></TR>
 </TABLE>
-
-<p>&nbsp;</p>
 
 <p>Whether you're compiling from source or installing a pre-compiled binary, 
 you may want/need to check out <a href="./depend.html">gretl's dependencies</a>.</p>
+
+<p>Gretl for MS Windows can be found <a href="./win32/">here</a>, 
+and gretl for Mac OS X <a href="./osx.html">here</a>.</p>
+
+<p>The time-series analysis programs X-12-ARIMA and TRAMO/SEATS
+ are available in a form suitable for use with gretl on Linux, as follows.</p>
+
+<TABLE cellpadding="2">
+<TR>
+<TD><p class="in-cell">Binary RPM for X-12-ARIMA</p></TD>
+<TD><p class="in-cell"><a
+href="ftp://ricardo.ecn.wfu.edu/pub/gretl/x12a-0.2.10-1.i386.rpm">x12a-0.2.10-1.i386.rpm</a></p>
+</TD
+</TR>
+<TR>
+<TD><p class="in-cell">Binary RPM for TRAMO/SEATS</p></TD>
+<TD><p class="in-cell"><a
+href="ftp://ricardo.ecn.wfu.edu/pub/gretl/tramo-seats-98-1.i386.rpm">tramo-seats-98-1.i386.rpm</a></p>
+</TD>
+</TR>
+<TR>
+<TD><p class="in-cell">Debian package for X-12-ARIMA</p></TD>
+<TD>
+<p class="in-cell">
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/x12a_0.2.10-2_i386.deb">x12a_0.2.10-2_i386.deb</a>
+</p></TD>
+</TR>
+<TR>
+<TD><p class="in-cell">Debian package for TRAMO/SEATS</p></TD>
+<TD>
+<p class="in-cell">
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/tramo-seats_98-2_i386.deb">tramo-seats_98-2_i386.deb</a></p>
+</TD>
+</TR>
+<TR><TD></TD><TD></TD></TR>
+</TABLE>
 
 <p>Gretl calls gnuplot to generate graphs.  The latest official
 release of gnuplot is version 4.0 (dated April 2004), which is available via
 <a href="http://www.gnuplot.info/">www.gnuplot.info</a>.
 </p>
-
-<p>A version of gretl for MS Windows can be found <a
-href="./win32/">here</a>.</p>
-
-<p>Gretl for Mac OS X can be found <a href="./osx.html">here</a>.</p>
 
 <h2><a name="man">Manual</a></h2>
 
@@ -186,7 +208,7 @@ An Italian translation of the command reference section of the manual
 is also available in PDF (<a href="./cmdbook_it.pdf">cmdbook_it.pdf</a>),
 thanks to Cristian Rigamonti.
 If you don't have the
-software to read PDF files you can download it for free from
+software to read PDF files you can download it from
 <a href="http://www.adobe.com/products/acrobat/readstep2.html">the Adobe
 website</a>.</p>
 
