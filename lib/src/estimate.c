@@ -68,7 +68,8 @@ static int depvar_zero (int t1, int t2, int yno, int nwt,
 			const double **Z);
 static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
 		      double ***pZ);
-static MODEL pooled_wls (int *list, double ***pZ, DATAINFO *pdinfo);
+static MODEL pooled_wls (int *list, double ***pZ, DATAINFO *pdinfo,
+			 gretlopt opt);
 /* end private protos */
 
 
@@ -469,7 +470,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     } else if (ci == HCCM) {
 	return hccm_func(list, pZ, pdinfo);
     } else if (ci == POOLED && (opts & OPT_W)) {
-	return pooled_wls(list, pZ, pdinfo);
+	return pooled_wls(list, pZ, pdinfo, opts);
     }
 
     gretl_model_init(&mdl);
@@ -3439,11 +3440,13 @@ MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
     return gmod;
 } 
 
-static MODEL pooled_wls (int *list, double ***pZ, DATAINFO *pdinfo)
+static MODEL pooled_wls (int *list, double ***pZ, DATAINFO *pdinfo,
+			 gretlopt opt)
 {
     MODEL wmod;
     void *handle;
-    MODEL (*panel_wls_by_unit) (int *, double ***, DATAINFO *);
+    MODEL (*panel_wls_by_unit) (int *, double ***, DATAINFO *,
+				gretlopt);
 
     *gretl_errmsg = '\0';
 
@@ -3455,7 +3458,7 @@ static MODEL pooled_wls (int *list, double ***pZ, DATAINFO *pdinfo)
 	return wmod;
     }
 
-    wmod = (*panel_wls_by_unit) (list, pZ, pdinfo);
+    wmod = (*panel_wls_by_unit) (list, pZ, pdinfo, opt);
 
     close_plugin(handle);
 

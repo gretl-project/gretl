@@ -850,26 +850,20 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 /* .................................................................. */
 
 static int 
-add_uvar_to_dataset (double *uvar, int nunits, int T,
-		     double ***pZ, DATAINFO *pdinfo)
+write_uvar_to_dataset (double *uvar, int nunits, int T,
+		       double **Z, DATAINFO *pdinfo)
 {
-    int i, t, uv, bigt;
-
-    if (dataset_add_vars(1, pZ, pdinfo)) {
-	return E_ALLOC;
-    }
-
-    uv = pdinfo->v - 1;
-    strcpy(pdinfo->varname[uv], "unit_wt");
+    int i, t, bigt;
+    int uv = pdinfo->v - 1;
 
     if (pdinfo->time_series == STACKED_TIME_SERIES) {
 	for (i=0; i<nunits; i++) {
 	    for (t=0; t<T; t++) {
 		bigt = i * T + t;
 		if (uvar[i] <= 0.0) {
-		    (*pZ)[uv][bigt] = 0.0;
+		    Z[uv][bigt] = 0.0;
 		} else {
-		    (*pZ)[uv][bigt] = 1.0 / sqrt(uvar[i]);
+		    Z[uv][bigt] = 1.0 / sqrt(uvar[i]);
 		}
 	    }
 	}
@@ -878,9 +872,9 @@ add_uvar_to_dataset (double *uvar, int nunits, int T,
 	    for (i=0; i<nunits; i++) {
 		bigt = t * nunits + i;
 		if (uvar[i] <= 0.0) {
-		    (*pZ)[uv][bigt] = 0.0;
+		    Z[uv][bigt] = 0.0;
 		} else {
-		    (*pZ)[uv][bigt] = 1.0 / sqrt(uvar[i]);
+		    Z[uv][bigt] = 1.0 / sqrt(uvar[i]);
 		}
 	    }
 	}
@@ -889,15 +883,48 @@ add_uvar_to_dataset (double *uvar, int nunits, int T,
     return 0;
 }
 
-MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo)
+static int
+allocate_weight_var (double ***pZ, DATAINFO *pdinfo)
+{
+    if (dataset_add_vars(1, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
+
+    strcpy(pdinfo->varname[pdinfo->v - 1], "unit_wt");
+
+    return 0;
+}
+
+static double max_coeff_diff (const MODEL *pmod, const double *bvec)
+{
+    double diff, maxdiff = 0.0;
+    int i;
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	diff = fabs(pmod->coeff[i] - bvec[i]);
+	if (diff > maxdiff) {
+	    maxdiff = diff;
+	}
+    }
+
+    return maxdiff;
+}
+
+#define SMALLDIFF 0.0001
+#define WLS_MAX   20
+
+MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
+			 gretlopt opt)
 {
     MODEL mdl;
     double *uvar = NULL;
+    double *bvec = NULL;
+    double diff = 1.0;
     int *unit_obs = NULL;
     int *wlist = NULL;
     int nunits, effn, T, effT;
     int orig_v = pdinfo->v;
-    int i;
+    int i, iters = 0;
 
     gretl_model_init(&mdl);
 
@@ -927,49 +954,90 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo)
     effn = n_included_units(&mdl, pdinfo, unit_obs);
     effT = effective_T(unit_obs, nunits);    
 
-    unit_error_variances(uvar, &mdl, pdinfo, nunits, T, unit_obs);
-
-#if 0
-    for (i=0; i<nunits; i++) {
-	if (unit_obs[i] > 0) {
-	    fprintf(stderr, "unit or group error variance, unit %d = %g\n",
-		    i + 1, uvar[i]);
-	}
-    }
-#endif
-
-    if (add_uvar_to_dataset(uvar, nunits, T, pZ, pdinfo)) {
+    if (allocate_weight_var(pZ, pdinfo)) {
 	mdl.errcode = E_ALLOC;
 	goto bailout;
-    }	
+    }
 
+    if (opt & OPT_T) {
+	bvec = malloc(mdl.ncoeff * sizeof *bvec);
+	if (bvec == NULL) {
+	    mdl.errcode = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    /* allocate and construct WLS regression list */
     wlist = malloc((mdl.list[0] + 2) * sizeof *wlist);
     if (wlist == NULL) {
 	mdl.errcode = E_ALLOC;
 	goto bailout;
     }
-
-    /* construct WLS regression list */
     wlist[0] = mdl.list[0] + 1;
-    wlist[1] = pdinfo->v - 1; /* weight var, last added */
+    wlist[1] = pdinfo->v - 1; /* weight variable: the last var added */
     for (i=2; i<=wlist[0]; i++) {
 	wlist[i] = mdl.list[i-1];
     }
 
-    clear_model(&mdl);
+    /* if wanted, iterate to ML solution; otherwise just do
+       one-step estimation 
+    */
 
-    mdl = lsq(wlist, pZ, pdinfo, WLS, OPT_NONE, 0.0);
+    while (diff > SMALLDIFF) {
+
+	iters++;
+
+	unit_error_variances(uvar, &mdl, pdinfo, nunits, T, unit_obs);
+
+	if (opt & OPT_V) {
+	    fputc('\n', stderr);
+	    for (i=0; i<nunits; i++) {
+		if (unit_obs[i] > 0) {
+		    fprintf(stderr, "group error variance, unit %d = %g\n",
+			    i + 1, uvar[i]);
+		}
+	    }
+	}
+
+	write_uvar_to_dataset(uvar, nunits, T, *pZ, pdinfo);
+
+	if (opt & OPT_T) {
+	    for (i=0; i<mdl.ncoeff; i++) {
+		bvec[i] = mdl.coeff[i];
+	    }
+	}
+
+	clear_model(&mdl);
+
+	mdl = lsq(wlist, pZ, pdinfo, WLS, OPT_NONE, 0.0);
+
+	if (mdl.errcode || iters > WLS_MAX) {
+	    mdl.errcode = E_NOCONV;
+	    break;
+	}
+
+	if (opt & OPT_T) {
+	    diff = max_coeff_diff(&mdl, bvec);
+	} else {
+	    break;
+	} 
+    }
+
     if (!mdl.errcode) {
 	gretl_model_set_int(&mdl, "n_included_units", effn);
 	gretl_model_set_int(&mdl, "unit_weights", 1);
+	if (iters > 1) {
+	    gretl_model_set_int(&mdl, "iters", iters);
+	}
 	mdl.nwt = 0;
-    }
+    }    
 
  bailout:
 
     free(unit_obs);
     free(uvar);
     free(wlist);
+    free(bvec);
 
     dataset_drop_vars(pdinfo->v - orig_v, pZ, pdinfo);
     
