@@ -538,10 +538,7 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
     char startdate[9], enddate[9];
     int t1 = pmod->t1, t2 = pmod->t2;
 
-    if (pmod->ci == CORC || pmod->ci == HILU) t1 += 1;
-
-    if (pmod->data) 
-	t2 += get_misscount(pmod);
+    modelprint_setup_obs(pmod, &t1, &t2);
 
     ncoeff = pmod->list[0];
     ntodate(startdate, t1, pdinfo);
