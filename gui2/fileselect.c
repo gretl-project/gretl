@@ -341,6 +341,24 @@ static void filesel_open_session (const char *fname)
 
 /* ........................................................... */
 
+static char *suggested_savename (const char *fname)
+{
+    char *s = g_strdup(fname);
+    char *sfx = strrchr(s, '.');
+
+    if (sfx != NULL && strlen(sfx) == 4) {
+	const char *test = (olddat)? ".dat" : ".gdt";
+
+	if (strcmp(test, sfx)) {
+	    strcpy(sfx, test);
+	}
+    }
+
+    return s;
+}
+
+/* ........................................................... */
+
           /* MS Windows version of file selection code */
 
 /* ........................................................... */
@@ -506,8 +524,12 @@ void file_selector (const char *msg, int action, gpointer data)
 
     /* special case: default save of data */
     if ((action == SAVE_DATA || action == SAVE_GZDATA) && 
-	has_native_data_suffix(paths.datfile)) {
-	strcpy(fname, paths.datfile + slashpos(paths.datfile) + 1);
+	paths.datfile[0])) {
+	char *tmp = paths.datfile + slashpos(paths.datfile) + 1;
+	char *savename = suggested_savename(tmp);
+	
+	strcpy(fname, savename);
+	g_free(savename);
 	get_base(startdir, paths.datfile, SLASH);
     }
 
@@ -882,9 +904,12 @@ void file_selector (const char *msg, int action, gpointer data)
 
     else if ((action == SAVE_DATA || action == SAVE_GZDATA) 
 	     && paths.datfile[0]) {
+	char *savename = suggested_savename(paths.datfile);
+
 	gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
-					paths.datfile);
-	if (!strstr(paths.datfile, startdir)) do_glob = 0;
+					savename);
+	if (!strstr(savename, startdir)) do_glob = 0;
+	g_free(savename);
     }
 
     else if ((action == SAVE_SESSION) 
@@ -971,16 +996,18 @@ void file_selector (const char *msg, int action, gpointer data)
 	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
 
     else if ((action == SAVE_DATA || action == SAVE_GZDATA) 
-	     && paths.datfile[0] && dat_ext(paths.datfile, 0)) {
+	     && paths.datfile[0]) {
 	char *fname = paths.datfile + slashpos(paths.datfile) + 1;
+	char *savename = suggested_savename(fname);
 	char startd[MAXLEN];
 
 	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
-			   fname);
+			   savename);
 	if (get_base(startd, paths.datfile, SLASH) == 1) {
 	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
 	    gotdir = 1;
 	}
+	g_free(savename);
     }
 
     else if (action == SET_PATH) {

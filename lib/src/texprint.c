@@ -220,10 +220,11 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 		tratio,
 		pval);	
     } else { /* LOGIT, PROBIT */
+	double *slopes = gretl_model_get_data(pmod, "slopes");
 	char slope[32];
 
 	if (pmod->list[c]) {
-	    tex_dcolumn_double(pmod->slope[v], slope);
+	    tex_dcolumn_double(slopes[v], slope);
 	}
 	pprintf(prn, "%s &\n"
 		"  %s &\n"
@@ -357,8 +358,8 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 		    pmod->dfn, pmod->dfd, pmod->fstt);
 	}
 	pprintf(prn, "$\\, \\hat{\\sigma}$ = %.4g", pmod->sigma);
-	if (!floateq(pmod->rho_in, 0.0)) {
-	    double r = pmod->rho_in;
+	if (!na(gretl_model_get_double(pmod, "rho_in"))) {
+	    double r = gretl_model_get_double(pmod, "rho_in");
 	    char rstr[16];
 
 	    if (r < 0.0) sprintf(rstr, "$-$%.4g", fabs(r));

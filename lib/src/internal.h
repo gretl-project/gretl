@@ -95,8 +95,6 @@ int _forecast (int t1, int t2, int nv,
 
 int _full_model_list (MODEL *pmod, int **plist);
 
-void _init_model (MODEL *pmod, const DATAINFO *pdinfo);
-
 int _ztoxy (int v1, int v2, double *px, double *py, 
 	    const DATAINFO *pdinfo, double **Z);
 

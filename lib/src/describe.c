@@ -503,7 +503,7 @@ static int get_pacf (double *pacf, int m, int varnum,
 	laglist[i-1] = lnum; 
     }
 
-    _init_model(&tmp, pdinfo);
+    gretl_model_init(&tmp, pdinfo);
     pdinfo->t1 = t1;
 
     list[1] = varnum;
@@ -810,7 +810,7 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     list[2] = 0;
     list[3] = 2;
 
-    _init_model(&tmp, &tmpdinfo);
+    gretl_model_init(&tmp, &tmpdinfo);
     tmp = lsq(list, &tmpZ, &tmpdinfo, OLS, 0, 0);
 
     if (!tmp.errcode) {

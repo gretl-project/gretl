@@ -174,6 +174,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 {
     int t;
     int p = list[1], q = list[2];
+    double mean_error;
 
     pmod->ci = ARMA;
     pmod->ifc = 1;
@@ -187,19 +188,19 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
     pmod->ybar = _esl_mean(pmod->t1, pmod->t2, y);
     pmod->sdy = _esl_stddev(pmod->t1, pmod->t2, y);
 
-    pmod->ess_wt = pmod->ess = 0.0;
+    mean_error = pmod->ess = 0.0;
     for (t=0; t<pdinfo->n; t++) {
 	if (!na(pmod->uhat[t])) {
 	    pmod->yhat[t] = y[t] - pmod->uhat[t];
 	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
-	    pmod->ess_wt += pmod->uhat[t];
+	    mean_error += pmod->uhat[t];
 	} else {
 	    pmod->yhat[t] = NADBL;
 	}
     }
 
-    /* ess_wt is being "borrowed" to record the mean error */
-    pmod->ess_wt /= pmod->nobs;
+    mean_error /= pmod->nobs;
+    gretl_model_set_double(pmod, "mean_error", mean_error);
 
     pmod->sigma = sqrt(pmod->ess / pmod->dfd);
 
@@ -647,7 +648,7 @@ MODEL arma_x12_model (int *list, const double **Z,
     int t1, t2;
     MODEL armod;
 
-    _init_model(&armod, pdinfo);  
+    gretl_model_init(&armod, pdinfo);  
 
     if (check_arma_list(list)) {
 	armod.errcode = E_UNSPEC;

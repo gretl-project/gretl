@@ -79,6 +79,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { LDIFF,    "ldiff" },
     { LEVERAGE, "leverage" },
     { LMTEST,   "lmtest" }, 
+    { LOGISTIC, "logistic" },
     { LOGIT,    "logit" },
     { LOGS,     "logs" },
     { LOOP,     "loop" },

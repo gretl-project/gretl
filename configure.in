@@ -45,6 +45,8 @@ prefer_xml1="no"
 have_tramo="yes"
 have_x12a="yes"
 have_gnu_regex="no"
+have_libxml2="no"
+use_gtksourceview="no"
 MAKE="make"
 XML_LIBS=
 
@@ -376,18 +378,30 @@ if test "$have_gtk" = "2.0" && test "$try_sourceview" = "yes" ; then
      PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0,
      have_gtksourceview="yes"
      have_gnu_regex="yes"
+     use_gtksourceview="yes"
      AC_DEFINE(USE_GTKSOURCEVIEW),
      have_gtksourceview="no"
     )
 fi
 
-dnl Fallback: try using supplied gtksourceview?
+dnl Fallback on supplied gtksourceview? Check for libxml2 first
 if test "$have_gtk" = "2.0" && \
    test "$try_sourceview" = "yes" && \
    test "$have_gtksourceview" = "no" ; then
+    PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0,
+    have_libxml2="yes",
+    have_libxml2="no")
+fi
+
+dnl Now try using supplied gtksourceview
+if test "$have_gtk" = "2.0" && \
+   test "$try_sourceview" = "yes" && \
+   test "$have_gtksourceview" = "no" && \
+   test "$have_libxml2" = "yes" ; then
     AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
     AC_DEFINE(USE_GTKSOURCEVIEW)
-    have_gnu_regex="yes",
+    have_gnu_regex="yes"
+    use_gtksourceview="yes",
     have_gtksourceview="no")
 fi
 
@@ -415,7 +429,6 @@ AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(GTKSOURCEVIEW_CFLAGS)
 AC_SUBST(GTKSOURCEVIEW_LIBS)
-
 
 dnl
 dnl Should we try to use an installed version of libole2?
@@ -546,7 +559,6 @@ if test x"${XML_LIBS}" = x ; then
   fi
 fi
 
-
 dnl record results on various libraries
 AC_SUBST(XML_CFLAGS)
 AC_SUBST(XML_LIBS)
@@ -554,7 +566,6 @@ AC_SUBST(GDK_PIXBUF_CFLAGS)
 AC_SUBST(GDK_PIXBUF_LIBS) 
 AC_SUBST(LIBOLE_CFLAGS)
 AC_SUBST(LIBOLE_LIBS)
-
 
 dnl Determine installation prefix
 if test "${prefix}" = "NONE" ; then
@@ -628,13 +639,13 @@ Configuration:
   Gnu Multiple Precision support:         ${have_gmp}
   LAPACK support:                         ${have_lapack}
   Build with GTK version:                 ${have_gtk}
-  Use installed gtksourceview:            ${have_gnu_regex}
+  Use gtksourceview for scripts:          ${use_gtksourceview}
   Use installed libole2:                  ${have_libole2}
   Use installed gtkextra:		  ${have_gtkextra}
   Build with gnome support:               ${have_gnome}
   Gnome installation prefix:              ${gnome_prefix}
-  X-12-ARIMA support (experimental)       ${have_x12a}
-  TRAMO/SEATS support (experimental)      ${have_tramo}
+  X-12-ARIMA support:                     ${have_x12a}
+  TRAMO/SEATS support:                    ${have_tramo}
   
 
 Now type '$MAKE' to build gretl.

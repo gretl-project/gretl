@@ -1002,7 +1002,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	tmplist[1] = list[1];
 	tmplist[2] = 0;
 	tmplist[3] = list[2];	
-	_init_model(&plotmod, pdinfo);
+	gretl_model_init(&plotmod, pdinfo);
 	plotmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
 	if (!plotmod.errcode) {
 	    /* is the fit significant? */
@@ -1463,7 +1463,7 @@ int gnuplot_3d (LIST list, const char *literal,
 	_minmax(t1, t2, (*pZ)[list[2]], &umin, &umax);
 	_minmax(t1, t2, (*pZ)[list[1]], &vmin, &vmax);
 
-	_init_model(&pmod, pdinfo);
+	gretl_model_init(&pmod, pdinfo);
 	pmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
 	if (!pmod.errcode && !na(pmod.fstt) &&
 	    (fdist(pmod.fstt, pmod.dfn, pmod.dfd) < .10 ||

@@ -13,6 +13,8 @@ version 1.2.1
 - Fix occasional bug in copying data to clipboard as CSV
 - Add a mechanism for configuring gretl as a networked
   application under Windows
+- Small fixes for data importation 
+- Don't overwrite CSV datafiles with gretl format data
 
 12/14/2003 version 1.2.0
 - add "rename" command (rename a variable)

@@ -70,6 +70,7 @@ typedef enum {
     LDIFF,
     LEVERAGE,
     LMTEST, 
+    LOGISTIC,
     LOGIT,
     LOGS,
     LOOP,

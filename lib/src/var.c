@@ -1110,7 +1110,7 @@ static int real_var (int order, const LIST inlist,
     } 
 
     /* even in case of VAR_IMPULSE_RESPONSES this may be used */
-    _init_model(&var_model, pdinfo);
+    gretl_model_init(&var_model, pdinfo);
 
     if (flags & VAR_PRINT_MODELS) {
 	pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
@@ -1355,7 +1355,7 @@ int coint (int order, const LIST list, double ***pZ,
     MODEL coint_model;
     int *cointlist = NULL;
 
-    _init_model(&coint_model, pdinfo);
+    gretl_model_init(&coint_model, pdinfo);
 
     /* step 1: test all the vars for unit root */
     for (i=1; i<=l0; i++) {
@@ -1463,7 +1463,7 @@ int adf_test (int order, int varno, double ***pZ,
 
     if (varno == 0) return E_DATA;
 
-    _init_model(&adf_model, pdinfo);
+    gretl_model_init(&adf_model, pdinfo);
     k = 3 + order;
 
     adflist = malloc((5 + order) * sizeof *adflist);
@@ -1632,7 +1632,7 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     malist[2] = v;       /* new var: moving average of indep var */
     malist[3] = 0;
 
-    _init_model(&mamod, pdinfo);
+    gretl_model_init(&mamod, pdinfo);
 
     a = aopt = 0.0;
     essmin = 0.0;
@@ -1697,7 +1697,7 @@ has_time_trend (LIST varlist, double ***pZ, DATAINFO *pdinfo)
     int trends = 0;
     MODEL tmod;
 
-    _init_model(&tmod, pdinfo);
+    gretl_model_init(&tmod, pdinfo);
 
     tlist[0] = 3;
     tlist[2] = 0;

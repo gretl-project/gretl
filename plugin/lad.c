@@ -21,6 +21,7 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 {
     double *a = NULL, *b = NULL, *e = NULL, *x = NULL;
     int i, j, k, m, n, nrows, dim;
+    int ladcode;
 
     m = pmod->nobs;
     n = pmod->list[0] - 1;
@@ -69,9 +70,11 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
     l1_(m, n, a, b, x, e);
 
     /* handle case where exit code indicates numeric error */
-    pmod->correct = (int) a[m + 2 + (n + 1) * nrows - (nrows + 1)];
-    if (pmod->correct == 2) {
+    ladcode = (int) a[m + 2 + (n + 1) * nrows - (nrows + 1)];
+    if (ladcode == 2) {
 	pmod->errcode = E_SINGULAR;
+    } else {
+	gretl_model_set_int(pmod, "ladcode", ladcode);
     }
 
     if (pmod->errcode == 0) {

@@ -63,12 +63,16 @@ static int make_logistic_depvar (double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-static int transform_fit_resid (const double **Z, const DATAINFO *pdinfo,
-				MODEL *pmod, int dv, int lmax)
+static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
+				   MODEL *pmod, int dv, int lmax)
 {
     int t;
     double x;
 
+    pmod->ybar = _esl_mean(pmod->t1, pmod->t2, Z[dv]);
+    pmod->sdy = _esl_stddev(pmod->t1, pmod->t2, Z[dv]);
+
+    pmod->ess = 0.0;
     for (t=0; t<pdinfo->n; t++) {
 	x = pmod->yhat[t];
 	if (na(x)) continue;
@@ -77,7 +81,38 @@ static int transform_fit_resid (const double **Z, const DATAINFO *pdinfo,
 	    pmod->yhat[t] *= 100.0;
 	} 
 	pmod->uhat[t] = Z[dv][t] - pmod->yhat[t];
+	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
+
+    pmod->sigma = sqrt(pmod->ess / pmod->dfd);
+
+    pmod->tss = 0.0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	pmod->tss += (Z[dv][t] - pmod->ybar) * (Z[dv][t] - pmod->ybar);
+    }
+
+    pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
+
+    pmod->rsq = pmod->adjrsq = NADBL;
+
+    if (pmod->tss > 0) {
+	pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
+	if (pmod->dfd > 0) {
+	    double den = pmod->tss * pmod->dfd;
+
+	    pmod->adjrsq = 1.0 - (pmod->ess * (pmod->nobs - 1) / den);
+	}
+    }
+
+    pmod->list[1] = dv;
+
+    if (lmax == LMAX_HUNDRED) {
+	gretl_model_set_int(pmod, "logistic_percent", 1);
+    }
+
+    pmod->ci = LOGISTIC;
+
+    gretl_aic_etc(pmod);
 
     return 0;
 }
@@ -88,7 +123,7 @@ MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo)
     int dv = list[1];
     MODEL lmod;
 
-    _init_model(&lmod, pdinfo); 
+    gretl_model_init(&lmod, pdinfo); 
 
     lmax = get_lmax((*pZ)[dv], pdinfo);
  
@@ -106,12 +141,9 @@ MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo)
 
     lmod = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
     if (!lmod.errcode) {
-	transform_fit_resid((const double **) *pZ, pdinfo, &lmod,
-			    dv, lmax);
+	rewrite_logistic_stats((const double **) *pZ, pdinfo, &lmod,
+			       dv, lmax);
     }
-
-    /* restore original list */
-    lmod.list[1] = dv;
 
     dataset_drop_vars(1, pZ, pdinfo);
     

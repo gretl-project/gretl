@@ -253,6 +253,7 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
     int p = list[1], q = list[2];
     int realt1 = pmod->t1 + pdinfo->t1;
     int realt2 = pmod->t2 + pdinfo->t1;
+    double mean_error;
 
     pmod->ci = ARMA;
     pmod->ifc = 1;
@@ -277,7 +278,7 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 	}
     }
 
-    pmod->ess_wt = pmod->ess = 0.0;
+    mean_error = pmod->ess = 0.0;
     for (t=0; t<pdinfo->n; t++) {
 	if (t < realt1 || t > realt2) {
 	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
@@ -285,12 +286,12 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 	    pmod->uhat[t] = e[t - realt1];
 	    pmod->yhat[t] = y[t] - pmod->uhat[t];
 	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
-	    pmod->ess_wt += pmod->uhat[t];
+	    mean_error += pmod->uhat[t];
 	}
     }
 
-    /* ess_wt is being "borrowed" to record the mean error */
-    pmod->ess_wt /= pmod->nobs;
+    mean_error /= pmod->nobs;
+    gretl_model_set_double(pmod, "mean_error", mean_error);
 
     pmod->sigma = sqrt(pmod->ess / pmod->dfd);
 
@@ -353,7 +354,7 @@ static int ar_init_by_ols (int v, int p, double *coeff,
     MODEL armod;
     int i, t, err = 0;
 
-    _init_model(&armod, pdinfo);  
+    gretl_model_init(&armod, pdinfo);  
 
     alist = malloc((p + 3) * sizeof *alist);
     if (alist == NULL) return 1;
@@ -416,7 +417,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     int *alist;
     MODEL armod;
 
-    _init_model(&armod, pdinfo);  
+    gretl_model_init(&armod, pdinfo);  
 
     if (check_arma_list(list)) {
 	armod.errcode = E_UNSPEC;

@@ -197,7 +197,7 @@ static COMPARE add_compare (const MODEL *pmodA, const MODEL *pmodB)
 	return add;
     }
     else if (add.ci == HCCM) {
-	add.chisq = pmodB->chisq; 
+	add.chisq = gretl_model_get_double(pmodB, "chisq");
     }
 
     for (i=0; i<8; i++) {
@@ -237,7 +237,7 @@ static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
     }
 
     if (omit.ci == HCCM) {
-	omit.chisq = pmodB->chisq;
+	omit.chisq = gretl_model_get_double(pmodB, "chisq");
     }
 
     for (i=0; i<8; i++) 
@@ -263,7 +263,7 @@ static double robust_lm_test (MODEL *unrest, MODEL *rest,
     if (r == NULL) return lm;
     for (i=0; i<q; i++) r[i] = NULL;
 
-    _init_model(&aux, pdinfo);
+    gretl_model_init(&aux, pdinfo);
 
     for (i=0; i<q; i++) {
 	rest->list[1] = omitvars[i + 1];
@@ -354,7 +354,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
        original model was estimated */
     exchange_smpl(orig, pdinfo);
 
-    _init_model(&aux, pdinfo);
+    gretl_model_init(&aux, pdinfo);
 
     /* was a specific list of vars to add passed in, or should we
        concoct one? (e.g. "lmtest") */
@@ -508,7 +508,10 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	if (aux_code == AUX_ADD) {
 	    new->aux = aux_code;
 	    if (orig->ci == HCCM) {
-		new->chisq = robust_lm_test(new, orig, addvars, pZ, pdinfo);
+		double chisq;
+
+		chisq = robust_lm_test(new, orig, addvars, pZ, pdinfo);
+		gretl_model_set_double(new, "chisq", chisq);
 	    }
 	}
 	add = add_compare(orig, new);
@@ -635,7 +638,10 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	++m;
 	new->ID = m;
 	if (orig->ci == HCCM) { 
-	    new->chisq = robust_lm_test(orig, new, omitvars, pZ, pdinfo);
+	    double chisq;
+
+	    chisq = robust_lm_test(orig, new, omitvars, pZ, pdinfo);
+	    gretl_model_set_double(new, "chisq", chisq);
 	}
 	omit = omit_compare(orig, new);
 	if (orig->ci != AR && orig->ci != ARCH) 
@@ -730,7 +736,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (pmod->ci != OLS) return E_OLSONLY;
 
-    _init_model(&aux, pdinfo);
+    gretl_model_init(&aux, pdinfo);
 
     if (pmod->ncoeff + 2 >= pdinfo->t2 - pdinfo->t1)
 	return E_DF;
@@ -852,7 +858,7 @@ static int autocorr_standard_errors (MODEL *pmod, double ***pZ,
 
     auxlist[0] = pmod->list[0] - 1;
 
-    _init_model(&auxmod, pdinfo);
+    gretl_model_init(&auxmod, pdinfo);
 
     /* loop across the indep vars in the original model */
     for (i=2; i<=pmod->list[0]; i++) {
@@ -963,7 +969,7 @@ int autocorr_test (MODEL *pmod, int order,
     }
 
     exchange_smpl(pmod, pdinfo);
-    _init_model(&aux, pdinfo);
+    gretl_model_init(&aux, pdinfo);
 
     if (order <= 0) order = pdinfo->pd;
 
@@ -1098,7 +1104,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
        original model was estimated */
     exchange_smpl(pmod, pdinfo);
 
-    _init_model(&chow_mod, pdinfo);
+    gretl_model_init(&chow_mod, pdinfo);
 
     if (sscanf(line, "%*s %8s", chowdate) != 1) 
 	err = E_PARSE;
@@ -1270,7 +1276,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     }
 
     if (!err) {
-	_init_model(&cum_mod, pdinfo);
+	gretl_model_init(&cum_mod, pdinfo);
 	for (j=0; j<n_est; j++) {
 	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, 2, 0.0);
 	    err = cum_mod.errcode;
@@ -1725,7 +1731,7 @@ int sum_test (LIST sumvars, MODEL *pmod,
        original model was estimated */
     exchange_smpl(pmod, pdinfo);
 
-    _init_model(&summod, pdinfo);
+    gretl_model_init(&summod, pdinfo);
 
     if (pmod->ci == CORC || pmod->ci == HILU) {
 	err = hilu_corc(&rho, tmplist, pZ, pdinfo, 

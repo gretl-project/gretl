@@ -155,6 +155,7 @@ typedef struct _DATASET DATASET;
 typedef struct _GRETL_VAR GRETL_VAR;
 
 typedef struct _mp_results mp_results;
+typedef struct _model_data_item model_data_item;
 
 
 /* information on individual variable */
@@ -272,13 +273,9 @@ struct _MODEL {
     int ci;                      /* "command index" -- depends on 
 				    estimation method */
     int nwt;                     /* ID of the weight variable (WLS) */
-    int wt_dummy;                /* Is the weight var a 0/1 dummy? */
     int order;                   /* lag order (e.g. for ARCH) */
     int aux;                     /* code representing the sort of
 				    auxiliary regression this is (or not) */
-    int ldepvar;                 /* = 1 if there's a lag of the
-				    dependent variable on the RHS, else 0 */
-    int correct;                 /* cases 'correct' (binary depvar) */
     double *coeff;               /* array of coefficient estimates */
     double *sderr;               /* array of estimated std. errors */
     double *uhat;                /* regression residuals */
@@ -292,16 +289,12 @@ struct _MODEL {
     double rsq, adjrsq;          /* Unadjusted and adjusted R^2 */     
     double fstt;                 /* F-statistic */
     double lnL;                  /* log-likelihood */
-    double chisq;                /* Chi-square */
     double ybar, sdy;            /* mean and std. dev. of dependent var. */
     double criterion[8];         /* array of model selection statistics */
     double dw, rho;              /* Durbin-Watson stat. and estimated 1st
 				    order autocorrelation coefficient */
-    double rho_in;               /* the rho value input into the 
-				    regression (e.g. CORC) */
     ARINFO *arinfo;              /* struct to hold special info for 
 				    autoregressive model */ 
-    double *slope;               /* for nonlinear models */
     int errcode;                 /* Error code in case of failure */
     char *name;
     char **params;               /* for named model parameters */
@@ -310,6 +303,8 @@ struct _MODEL {
     void *data;                  /* pointer for use in re. missing data */
     DATASET *dataset;            /* for handling models estimated on a
 				    sub-sampled portion of the dataset */
+    int n_data_items;            /* number of extra data items */
+    model_data_item **data_items; /* pointer to additional data */
 };
 
 struct _MODELSPEC {

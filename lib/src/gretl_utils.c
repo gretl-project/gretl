@@ -610,7 +610,7 @@ int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     int i, t, dwt = 0, t1min = *t1, t2max = *t2;
     double xx;
 
-    if (pmod != NULL && pmod->wt_dummy) dwt = pmod->nwt;
+    if (pmod != NULL && gretl_model_get_int(pmod, "wt_dummy")) dwt = pmod->nwt;
 
     for (i=1; i<=list[0]; i++) {
 	for (t=t1min; t<t2max; t++) {
@@ -1170,11 +1170,177 @@ int _list_dups (const int *list, int ci)
 
 /* .......................................................... */
 
-void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
+struct _model_data_item {
+    char *key;
+    void *ptr;
+    size_t size;
+};
+
+static void free_item_data (const char *key, void *ptr)
+{
+    /* FIXME? (case of structs) */
+    free(ptr);
+}
+
+static model_data_item *create_data_item (const char *key, void *ptr, size_t size)
+{
+    model_data_item *item;
+
+    item = malloc(sizeof *item);
+    if (item != NULL) {
+	item->key = malloc(strlen(key) + 1);
+	if (item->key == NULL) {
+	    free(item);
+	    item = NULL;
+	} else {
+	    strcpy(item->key, key);
+	    item->ptr = ptr;
+	    item->size = size;
+	}
+    }
+
+    return item;
+}
+
+int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size)
+{
+    model_data_item **items;
+    model_data_item *item;
+    int n_items = pmod->n_data_items + 1;
+
+    items = realloc(pmod->data_items, n_items * sizeof *items);
+    if (items == NULL) return 1;
+
+    pmod->data_items = items;
+
+    item = create_data_item(key, ptr, size);
+    if (item == NULL) return 1;
+
+    pmod->data_items[n_items - 1] = item;
+    pmod->n_data_items += 1;
+
+    return 0;
+}
+
+int gretl_model_set_int (MODEL *pmod, const char *key, int val)
+{
+    int *valp;
+    int err;
+
+    /* if value is already set, reset it */
+    valp = gretl_model_get_data(pmod, key);
+    if (valp != NULL) {
+	*valp = val;
+	return 0;
+    }
+
+    valp = malloc(sizeof *valp);
+    if (valp == NULL) return 1;
+
+    *valp = val;
+
+    err = gretl_model_set_data(pmod, key, valp, sizeof(int));
+    if (err) free(valp);
+
+    return err;
+}
+
+int gretl_model_set_double (MODEL *pmod, const char *key, double val)
+{
+    double *valp;
+    int err;
+
+    /* if value is already set, reset it */
+    valp = gretl_model_get_data(pmod, key);
+    if (valp != NULL) {
+	*valp = val;
+	return 0;
+    }
+
+    valp = malloc(sizeof *valp);
+    if (valp == NULL) return 1;
+
+    *valp = val;
+
+    err = gretl_model_set_data(pmod, key, valp, sizeof(double));
+    if (err) free(valp);
+
+    return err;
+}
+
+void *gretl_model_get_data (const MODEL *pmod, const char *key)
+{
+    int i;
+
+    for (i=0; i<pmod->n_data_items; i++) {
+	if (!strcmp(key, (pmod->data_items[i])->key)) {
+	    return (pmod->data_items[i])->ptr;
+	}
+    }
+
+    return NULL;
+}
+
+int gretl_model_get_int (const MODEL *pmod, const char *key)
+{
+    int *valp = NULL;
+    int i;
+
+    for (i=0; i<pmod->n_data_items; i++) {
+	if (!strcmp(key, (pmod->data_items[i])->key)) {
+	    valp = (int *) (pmod->data_items[i])->ptr;
+	    return *valp;
+	}
+    }
+
+    return 0;
+}
+
+double gretl_model_get_double (const MODEL *pmod, const char *key)
+{
+    double *valp = NULL;
+    int i;
+
+    for (i=0; i<pmod->n_data_items; i++) {
+	if (!strcmp(key, (pmod->data_items[i])->key)) {
+	    valp = (double *) (pmod->data_items[i])->ptr;
+	    return *valp;
+	}
+    }
+
+    return NADBL;
+}
+
+static void destroy_all_data_items (MODEL *pmod)
+{
+    model_data_item *item;
+    int i;
+
+    for (i=0; i<pmod->n_data_items; i++) {
+	item = pmod->data_items[i];
+	free_item_data(item->key, item->ptr);
+	free(item->key);
+	free(item);
+    }
+
+    free(pmod->data_items);
+    pmod->data_items = NULL;
+}
+
+static void model_data_items_init (MODEL *pmod)
+{
+    pmod->n_data_items = 0;
+    pmod->data_items = NULL;
+}
+
+/* .......................................................... */
+
+void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo)
 {
     int i;
 
     if (pmod == NULL) return;
+
     pmod->list = NULL;
     pmod->subdum = NULL;
     if (pdinfo != NULL) {
@@ -1188,7 +1354,6 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->xpx = NULL;
     pmod->vcv = NULL;
     pmod->arinfo = NULL;
-    pmod->slope = NULL;
     pmod->name = NULL;
     pmod->params = NULL;
     pmod->ntests = 0;
@@ -1198,15 +1363,14 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->errcode = 0;
     pmod->ci = 0;
     pmod->ifc = 0;
-    pmod->wt_dummy = 0;
-    pmod->rho_in = 0.0;
     pmod->aux = AUX_NONE;
-    pmod->correct = 0;
     *gretl_msg = '\0';
     
     for (i=0; i<8; i++) {
 	pmod->criterion[i] = 0.0;
     }
+
+    model_data_items_init(pmod);
 }
 
 /**
@@ -1222,7 +1386,7 @@ MODEL *gretl_model_new (const DATAINFO *pdinfo)
 {
     MODEL *pmod = malloc(sizeof *pmod);
 
-    _init_model(pmod, pdinfo);
+    gretl_model_init(pmod, pdinfo);
     return pmod;
 }
 
@@ -1265,13 +1429,12 @@ void debug_print_model_info (const MODEL *pmod, const char *msg)
 	    " pmod->name = %p\n"
 	    " pmod->params = %p\n"
 	    " pmod->arinfo = %p\n"
-	    " pmod->slope = %p\n"
 	    " pmod->tests = %p\n"
 	    " pmod->data = %p\n", msg,
 	    pmod, pmod->list, pmod->subdum, pmod->coeff,
 	    pmod->sderr, pmod->yhat, pmod->uhat, pmod->xpx,
 	    pmod->vcv, pmod->name, pmod->params, pmod->arinfo, 
-	    pmod->slope, pmod->tests, pmod->data);
+	    pmod->tests, pmod->data);
 }
 
 /* .......................................................... */
@@ -1294,9 +1457,6 @@ void clear_model (MODEL *pmod, const DATAINFO *pdinfo)
 	if (pmod->arinfo) {
 	    clear_ar_info(pmod);
 	}
-	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
-	    if (pmod->slope) free(pmod->slope);
-	}
 	if (pmod->ntests) free(pmod->tests);
 	if (pmod->params) {
 	    int i;
@@ -1314,9 +1474,10 @@ void clear_model (MODEL *pmod, const DATAINFO *pdinfo)
 	if (pmod->dataset) {
 	    free_model_dataset(pmod);
 	}
+	destroy_all_data_items(pmod);
     }
 
-    _init_model(pmod, pdinfo);
+    gretl_model_init(pmod, pdinfo);
 }
 
 /* .......................................................... */
@@ -1880,6 +2041,69 @@ static ARINFO *copy_ar_info (const ARINFO *src)
     return targ;
 }
 
+static char *my_strdup (const char *src)
+{
+    char *targ = malloc(strlen(src) + 1);
+
+    if (src != NULL) {
+	strcpy(targ, src);
+    }
+
+    return targ;
+}
+
+static int copy_model_data_items (MODEL *targ, const MODEL *src)
+{
+    int i, n = src->n_data_items;
+    int err = 0;
+
+    targ->data_items = malloc(n * sizeof *targ->data_items);
+    if (targ->data_items == NULL) return 1;
+
+    for (i=0; i<src->n_data_items; i++) {
+	targ->data_items[i] = NULL;
+    }
+
+    for (i=0; i<src->n_data_items; i++) {
+	model_data_item *targitem, *srcitem;
+
+	targitem = malloc(sizeof *targitem);
+	if (targitem == NULL) {
+	    err = 1;
+	    break;
+	}
+
+	srcitem = src->data_items[i];
+	targ->data_items[i] = targitem;
+	
+	targitem->key = my_strdup(srcitem->key);
+	if (targitem->key == NULL) {
+	    err = 1;
+	    break;
+	}
+
+	targitem->ptr = malloc(srcitem->size);
+	if (targitem->ptr == NULL) {
+	    free(targitem->key);
+	    err = 1;
+	    break;
+	}
+
+	memcpy(targitem->ptr, srcitem->ptr, srcitem->size);
+	targitem->size = srcitem->size;
+    }
+
+    if (err) {
+	for (i=0; i<targ->n_data_items; i++) {
+	    free(targ->data_items[i]);
+	}
+	free(targ->data_items);
+	targ->data_items = NULL;
+    }
+
+    return err;
+}
+
 /* ........................................................... */
 
 int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
@@ -1891,13 +2115,15 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
     *targ = *src;
 
     /* now work on pointer members */
-    _init_model(targ, pdinfo);
-    if ((targ->coeff = copyvec(src->coeff, src->ncoeff)) == NULL)
+    gretl_model_init(targ, pdinfo);
+    if ((targ->coeff = copyvec(src->coeff, src->ncoeff)) == NULL) 
 	return 1;
-    if ((targ->sderr = copyvec(src->sderr, src->ncoeff))  == NULL)  
+    if ((targ->sderr = copyvec(src->sderr, src->ncoeff))  == NULL)   
 	return 1;
-    if ((targ->uhat = copyvec(src->uhat, pdinfo->n)) == NULL) return 1;
-    if ((targ->yhat = copyvec(src->yhat, pdinfo->n)) == NULL) return 1;
+    if ((targ->uhat = copyvec(src->uhat, pdinfo->n)) == NULL) 
+	return 1;
+    if ((targ->yhat = copyvec(src->yhat, pdinfo->n)) == NULL) 
+	return 1;
     if (src->subdum != NULL && 
 	(targ->subdum = copyvec(src->subdum, pdinfo->n)) == NULL) return 1;
 
@@ -1912,9 +2138,12 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
 	    return 1; 
     }
 
-    if (src->slope != NULL &&
-	(targ->slope = copyvec(src->slope, src->ncoeff)) == NULL)
+    if (src->n_data_items > 0) {
+	copy_model_data_items(targ, src);
+	if (targ->data_items == NULL) {
 	    return 1;
+	}
+    }
 
     m = src->list[0];
     targ->list = malloc((m + 1) * sizeof *targ->list);
@@ -1988,8 +2217,17 @@ int _forecast (int t1, int t2, int nv,
 		zz = zz + xx * pmod->coeff[v];
 	    }
 	}
+
+	if (pmod->ci == LOGISTIC) {
+	    zz = 1.0 / (1.0 + exp(zz));
+	    if (gretl_model_get_int(pmod, "logistic_percent")) {
+		zz *= 100.0;
+	    }
+	}
+
 	(*pZ)[nv][t] = zz;
     }
+
     return 0;
 }
 
@@ -2216,7 +2454,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	list[i] = i - 1;
     }
 
-    _init_model(&fmod, finfo);
+    gretl_model_init(&fmod, finfo);
 
     /* loop across the observations for which we want forecasts
        and standard errors */
@@ -2407,7 +2645,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
     getcmd(model_spec, pdinfo, &command, &ignore, pZ, NULL);
 
-    _init_model(tmpmod, pdinfo);
+    gretl_model_init(tmpmod, pdinfo);
 
     switch(command.ci) {
     case AR:

@@ -107,7 +107,7 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 
 	if (pmod->ci == ARMA) {
 	    pprintf(prn, "  %s = %.*g\n", _("Mean of residuals"), 
-		    GRETL_DIGITS, pmod->ess_wt);
+		    GRETL_DIGITS, gretl_model_get_double(pmod, "mean_error"));
 	}
 
 	pprintf(prn, "  %s = %.*g\n", _("Sum of squared residuals"), 
@@ -129,7 +129,7 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 
 	if (pmod->ci == ARMA) {
 	    pprintf(prn, "%s = %g\n", I_("Mean of residuals"), 
-		    pmod->ess_wt);
+		    gretl_model_get_double(pmod, "mean_error"));
 	}
 
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Sum of squared residuals"), 
@@ -143,7 +143,7 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 	char x1str[32], x2str[32];
 
 	if (pmod->ci == ARMA) {
-	    tex_dcolumn_double(pmod->ess_wt, x1str);
+	    tex_dcolumn_double(gretl_model_get_double(pmod, "mean_error"), x1str);
 	    pprintf(prn, "%s & %s \\\\\n", I_("Mean of residuals"), 
 		    x1str);
 	}
@@ -225,8 +225,12 @@ static void ladstats (const MODEL *pmod, PRN *prn)
 		I_("Sum of squared residuals"),
 		GRETL_DIGITS, pmod->ess);
 
-	if (pmod->correct == 0 && utf) {
-	    pputs(prn, _("\nWarning: solution is probably not unique\n"));
+	if (utf) {
+	    int ladcode = gretl_model_get_int(pmod, "ladcode");
+
+	    if (ladcode == 0) {
+		pputs(prn, _("\nWarning: solution is probably not unique\n"));
+	    }
 	}
     }
 }
@@ -352,9 +356,10 @@ static void dwline (const MODEL *pmod, PRN *prn)
 static void dhline (const MODEL *pmod, PRN *prn)
 {
     double sderr, h = 0.0;
-    int i = pmod->ldepvar, T = pmod->nobs - 1;
+    int ldepvar = gretl_model_get_int(pmod, "ldepvar");
+    int T = pmod->nobs - 1;
 
-    sderr = pmod->sderr[i-2];
+    sderr = pmod->sderr[ldepvar - 2];
 
     if (pmod->ess <= 0.0 || (T * sderr * sderr) >= 1.0) return;
 
@@ -367,7 +372,7 @@ static void dhline (const MODEL *pmod, PRN *prn)
         pprintf(prn, "  %s\n", tmp);
 
         sprintf(tmp, _("(Using variable %d for h stat, with T' = %d)"), 
-                pmod->list[i], T);
+                pmod->list[ldepvar], T);
         pprintf(prn, "  %s\n", tmp);
     }
 
@@ -378,7 +383,7 @@ static void dhline (const MODEL *pmod, PRN *prn)
         pprintf(prn, RTFTAB "%s\n", tmp);
 
         sprintf(tmp, I_("(Using variable %d for h stat, with T' = %d)"), 
-                pmod->list[i], T);
+                pmod->list[ldepvar], T);
         pprintf(prn, RTFTAB "%s\n", tmp);
     }
 
@@ -487,6 +492,7 @@ const char *estimator_string (int ci, int format)
     else if (ci == POOLED) return N_("Pooled OLS");
     else if (ci == NLS) return N_("NLS");
     else if (ci == ARMA) return N_("ARMA");
+    else if (ci == LOGISTIC) return N_("Logistic");
     else if (ci == CORC) {
 	if (TEX_FORMAT(format)) return N_("Cochrane--Orcutt");
 	else return N_("Cochrane-Orcutt");
@@ -879,7 +885,8 @@ static void print_model_heading (const MODEL *pmod,
     }
     else if (pmod->ci == CORC || pmod->ci == HILU) {
 	if (tex) {
-	    pprintf(prn, "\\\\ \n$\\hat{\\rho}$ = %g\n", pmod->rho_in);
+	    pprintf(prn, "\\\\ \n$\\hat{\\rho}$ = %g\n", 
+		    gretl_model_get_double(pmod, "rho_in"));
 	}
     } else if (pmod->ci == TSLS) {
 	print_tsls_instruments (pmod->list, pdinfo, prn);
@@ -891,7 +898,7 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, "%s\n", gretl_msg);
     }
 
-    if (pmod->wt_dummy) { /* FIXME alt formats */
+    if (gretl_model_get_int(pmod, "wt_dummy")) { /* FIXME alt formats */
 	pprintf(prn, "%s %d\n", 
 		(utf)? _("Weight var is a dummy variable, effective obs =") :
 		I_("Weight var is a dummy variable, effective obs ="),
@@ -1261,7 +1268,8 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS 
 	|| pmod->ci == HCCM || pmod->ci == POOLED || pmod->ci == NLS
 	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
-	|| pmod->ci == ARMA || (pmod->ci == WLS && pmod->wt_dummy)) {
+	|| pmod->ci == ARMA || pmod->ci == LOGISTIC
+	|| (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
 	print_middle_table_start(prn);
 	if (pmod->ci != VAR) depvarstats(pmod, prn);
 	if (essline(pmod, prn, 0)) {
@@ -1274,9 +1282,9 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
 	if (dataset_is_time_series(pdinfo)) {
 	    if (pmod->ci == OLS || pmod->ci == VAR ||
-		(pmod->ci == WLS && pmod->wt_dummy)) {
+		(pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
 		dwline(pmod, prn);
-		if (pmod->ci != VAR && pmod->ldepvar) {
+		if (pmod->ci != VAR && gretl_model_get_int(pmod, "ldepvar")) {
 		    dhline(pmod, prn);
 		} 
 	    }
@@ -1286,8 +1294,9 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	    }
 	}
 
-	if (pmod->ci == ARMA && !na(pmod->lnL)) 
+	if (pmod->ci == ARMA && !na(pmod->lnL)) {
 	    print_ll_stats(pmod, prn);
+	}
 
 	print_middle_table_end(prn);
 
@@ -1297,7 +1306,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     else if (pmod->ci == HSK || pmod->ci == ARCH ||
-	     (pmod->ci == WLS && pmod->wt_dummy == 0)) {
+	     (pmod->ci == WLS && !gretl_model_get_int(pmod, "wt_dummy"))) {
 
 	weighted_stats_message(prn);
 	print_middle_table_start(prn);
@@ -1343,8 +1352,9 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	else if (RTF_FORMAT(prn->format)) rtf_print_aicetc(pmod, prn);
     }
 
-    if (pmod->ci != ARMA && pmod->ci != NLS) 
+    if (pmod->ci != ARMA && pmod->ci != NLS) {
 	pval_max_line(pmod, pdinfo, prn);
+    }
     
     print_model_tests(pmod, prn);
 
@@ -1530,8 +1540,13 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	else if (pvalue < 0.05) pputs(prn, " **");
 	else if (pvalue < 0.10) pputs(prn, " *");
     } 
-    else if (pmod->list[c] != 0 && pmod->slope != NULL) { /* LOGIT, PROBIT */
-	gretl_print_value (pmod->slope[c-2], prn);
+    else if (pmod->list[c] != 0 && 
+	     (pmod->ci == LOGIT || pmod->ci == PROBIT)) { 
+	double *slopes = gretl_model_get_data(pmod, "slopes");
+
+	if (slopes != NULL) {
+	    gretl_print_value(slopes[c-2], prn);
+	}
     }
 
     pputs(prn, "\n");
@@ -1619,8 +1634,13 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	    pputs(prn, " \\ql *\\cell");
 	else 
 	    pputs(prn, " \\ql \\cell");
-    } else if (pmod->list[c] != 0 && pmod->slope != NULL) { /* LOGIT, PROBIT */
-	rtf_print_double(pmod->slope[c-2], prn);
+    } else if (pmod->list[c] != 0 && 
+	       (pmod->ci == LOGIT || pmod->ci == PROBIT)) { 
+	double *slopes = gretl_model_get_data(pmod, "slopes");
+
+	if (slopes != NULL) {
+	    rtf_print_double(slopes[c-2], prn);
+	}	
     }
 
  rtf_coeff_getout:
@@ -1748,14 +1768,16 @@ static void print_discrete_statistics (const MODEL *pmod,
 				       PRN *prn)
 {
     int i;
-    double pc_correct = 100 * (double) pmod->correct / pmod->nobs;
+    int correct = gretl_model_get_int(pmod, "correct");
+    double pc_correct = 100 * (double) correct / pmod->nobs;
+    double model_chisq = gretl_model_get_double(pmod, "chisq");
 
     if (PLAIN_FORMAT(prn->format)) {
 	pputs(prn, "\n");
 	pprintf(prn, "%s %s = %.3f\n", _("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
 	pprintf(prn, "%s = %d (%.1f%%)\n", _("Number of cases 'correctly predicted'"), 
-		pmod->correct, pc_correct);
+		correct, pc_correct);
 	pprintf(prn, "f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
 		pmod->sdy);
 	pprintf(prn, "%s = %.3f\n", _("Log-likelihood"), pmod->lnL);
@@ -1763,7 +1785,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 	    i = pmod->ncoeff - 1;
 	    pprintf(prn, "%s: %s(%d) = %.3f (%s %f)\n",
 		    _("Likelihood ratio test"), _("Chi-square"), 
-		    i, pmod->chisq, _("p-value"), chisq(pmod->chisq, i));
+		    i, model_chisq, _("p-value"), chisq(model_chisq, i));
 	}
 	pputs(prn, "\n");
     }
@@ -1774,7 +1796,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 	pprintf(prn, "\\par %s %s = %.3f\n", I_("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
 	pprintf(prn, "\\par %s = %d (%.1f%%)\n", I_("Number of cases 'correctly predicted'"), 
-		pmod->correct, pc_correct);
+		correct, pc_correct);
 	pprintf(prn, "\\par f(beta'x) %s = %.3f\n", I_("at mean of independent vars"), 
 		pmod->sdy);
 	pprintf(prn, "\\par %s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
@@ -1782,7 +1804,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 	    i = pmod->ncoeff - 1;
 	    pprintf(prn, "\\par %s: %s(%d) = %.3f (%s %f)\\par\n",
 		    I_("Likelihood ratio test"), I_("Chi-square"), 
-		    i, pmod->chisq, I_("p-value"), chisq(pmod->chisq, i));
+		    i, model_chisq, I_("p-value"), chisq(model_chisq, i));
 	}
 	pputs(prn, "\n");
     }
@@ -1798,7 +1820,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
 	pprintf(prn, "%s = %d (%.1f percent)\\\\\n", 
 		I_("Number of cases `correctly predicted'"), 
-		pmod->correct, pc_correct);
+		correct, pc_correct);
 	pprintf(prn, "$f(\\beta'x)$ %s = %.3f\\\\\n", I_("at mean of independent vars"), 
 		pmod->sdy);
 	tex_float_str(pmod->lnL, lnlstr);
@@ -1807,7 +1829,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 	    i = pmod->ncoeff - 1;
 	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f (%s %f)\\\\\n",
 		    I_("Likelihood ratio test"), 
-		    i, pmod->chisq, I_("p-value"), chisq(pmod->chisq, i));
+		    i, model_chisq, I_("p-value"), chisq(model_chisq, i));
 	}
 	pputs(prn, "\\end{raggedright}\n");
     }

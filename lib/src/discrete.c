@@ -66,7 +66,7 @@ static double _logit_pdf (double xx)
 static void Lr_chisq (MODEL *pmod, double **Z)
 {
     int t, zeros, ones = 0, m = pmod->nobs;
-    double Lr;
+    double Lr, chisq;
     
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (floateq(Z[pmod->list[1]][t], 1.0)) ones++;
@@ -76,7 +76,8 @@ static void Lr_chisq (MODEL *pmod, double **Z)
     Lr = (double) ones * log((double) ones/ (double) m);
     Lr += (double) zeros * log((double) zeros/(double) m);
 
-    pmod->chisq = 2.0 * (pmod->lnL - Lr);
+    chisq = 2.0 * (pmod->lnL - Lr);
+    gretl_model_set_double(pmod, "chisq", chisq);
     
     /* McFadden pseudo-R^2 */
     pmod->rsq = 1.0 - pmod->lnL / Lr;
@@ -110,7 +111,7 @@ static MODEL get_logistic_model (int *list, double ***pZ, DATAINFO *pdinfo)
 
     logistic_model = get_plugin_function("logistic_model", &handle);
     if (logistic_model == NULL) {
-	_init_model(&lmod, pdinfo);
+	gretl_model_init(&lmod, pdinfo);
 	lmod.errcode = E_FOPEN;
 	return lmod;
     }
@@ -120,6 +121,31 @@ static MODEL get_logistic_model (int *list, double ***pZ, DATAINFO *pdinfo)
     close_plugin(handle);
 
     return lmod;
+}
+
+static int add_slopes_to_model (MODEL *pmod, double fbx)
+{
+    double *slopes;
+    size_t size = pmod->ncoeff * sizeof *slopes;
+    int i;
+
+    slopes = malloc(size);
+
+    if (slopes == NULL) {
+	return 1;
+    }
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	if (pmod->list[i+2] == 0) continue;
+	slopes[i] = pmod->coeff[i] * fbx;
+    }
+
+    if (gretl_model_set_data(pmod, "slopes", slopes, size)) {
+	free(slopes);
+	return 1;
+    }
+
+    return 0;
 }
 
 /**
@@ -142,12 +168,12 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     int i, t, v, depvar = list[1];
     int n = pdinfo->n, itermax = 200;
     int *dmodlist = NULL;
-    int dummy;
+    int dummy, n_correct;
     double xx, zz, fx, Fx, fbx, Lbak;
     double *xbar, *diag, *xpx = NULL;
     MODEL dmod;
 
-    _init_model(&dmod, pdinfo);
+    gretl_model_init(&dmod, pdinfo);
     
     /* check whether depvar is binary */
     dummy = isdummy((*pZ)[depvar], pdinfo->t1, pdinfo->t2);
@@ -291,35 +317,31 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     }
     free(xbar);
 
-    if (opt == LOGIT)
+    if (opt == LOGIT) {
 	fbx = _logit_pdf(xx);
-    else
+    } else {
 	fbx = _norm_pdf(xx);
+    }
 
-    dmod.slope = malloc(dmod.ncoeff * sizeof(double));
-    if (dmod.slope == NULL) {
+    if (add_slopes_to_model(&dmod, fbx)) {
 	dmod.errcode = E_ALLOC;
 	return dmod;
     }
 
-    for (i=0; i<dmod.ncoeff; i++) {
-	if (dmod.list[i+2] == 0) continue;
-	dmod.slope[i] = dmod.coeff[i] * fbx;
-    }
-
     /* calculate additional statistics */
     xx = 0.0;
-    dmod.correct = 0;
+    n_correct = 0;
     for (t=dmod.t1; t<=dmod.t2; t++) {
 	zz = (*pZ)[depvar][t];
 	xx += zz;
-	dmod.correct += ((dmod.yhat[t] > 0.0 && floateq(zz, 1.0)) ||
-		    (dmod.yhat[t] <= 0.0 && floateq(zz, 0.0)));
+	n_correct += ((dmod.yhat[t] > 0.0 && floateq(zz, 1.0)) ||
+		      (dmod.yhat[t] <= 0.0 && floateq(zz, 0.0)));
     }
 
     xx /= dmod.nobs;
     dmod.ybar = xx;
     dmod.sdy = fbx;
+    gretl_model_set_int(&dmod, "correct", n_correct);
 
     return dmod;
 }

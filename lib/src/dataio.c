@@ -2002,6 +2002,39 @@ static int check_daily_dates (DATAINFO *pdinfo, char **pmiss)
 
 /* ......................................................... */
 
+static int labels_all_numeric (DATAINFO *pdinfo)
+{
+    int t, ret = 1;
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (!_isnumber(pdinfo->S[t])) {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return  ret;
+}
+
+static int complete_year_labels (DATAINFO *pdinfo)
+{
+    int t, yr, yrbak = atoi(pdinfo->S[0]);
+    int ret = 1;
+
+    for (t=1; t<pdinfo->n; t++) {
+	yr = atoi(pdinfo->S[t]);
+	if (yr != yrbak + 1) {
+	    ret = 0;
+	    break;
+	}
+	yrbak = yr;
+    }
+
+    return  ret;
+}
+
+/* ......................................................... */
+
 static int test_label (DATAINFO *pdinfo, char **missvec, PRN *prn)
      /* attempt to parse csv row labels as dates.  Return -1 if
 	this doesn't work out, 0 if the labels seem to be just
@@ -2072,12 +2105,16 @@ static int test_label (DATAINFO *pdinfo, char **missvec, PRN *prn)
 	    }
 	    if (n1 == 4) {
 		pputs(prn, M_("and just a year\n"));
-		strcpy(pdinfo->stobs, year);
-		pdinfo->sd0 = atof(pdinfo->stobs);
-		/* need more checking? FIXME */
-		strcpy(pdinfo->endobs, lbl2);
-		pdinfo->pd = 1;
-		return 1;
+		if (complete_year_labels(pdinfo)) {
+		    strcpy(pdinfo->stobs, year);
+		    pdinfo->sd0 = atof(pdinfo->stobs);
+		    strcpy(pdinfo->endobs, lbl2);
+		    pdinfo->pd = 1;
+		    return 1;
+		} else {
+		    pputs(prn, M_("   but the dates are not complete and consistent\n"));
+		    return -1;
+		}
 	    }
 	    if (lbl1[4] == '.' || lbl1[4] == ':' || lbl1[4] == 'Q') {
 		strcpy(subper, lbl1 + 5);

@@ -1086,7 +1086,9 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 	else if (z < 1000000) l = 6;
 	else l = 7;
 
-	if (l >= signif) { 
+	if (l == 6 && signif < 6) {
+	   sprintf(numstr, "%.0f", x); 
+	} else if (l >= signif) { 
 #ifdef PRN_DEBUG
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
 		    "printing with %%.%dG\n", l, signif, signif);

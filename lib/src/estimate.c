@@ -201,7 +201,8 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     }
 
     pmod->arinfo->arlist[0] = pmod->arinfo->arlist[1] = 1;
-    pmod->arinfo->rho[1] = pmod->rho_in = rho;
+    pmod->arinfo->rho[1] = rho;
+    gretl_model_set_double(pmod, "rho_in", rho);
 
     if (pmod->ifc) {
 	pmod->coeff[0] /= (1.0 - rho);
@@ -270,7 +271,7 @@ static void fix_wls_values (MODEL *pmod, double **Z)
 {
     int t;
 
-    if (pmod->wt_dummy) {
+    if (gretl_model_get_int(pmod, "wt_dummy")) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (floateq(Z[pmod->nwt][t], 0.0)) 
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
@@ -317,6 +318,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     int l0, yno, i;
     int effobs = 0;
     int missv = 0, misst = 0;
+    int ldepvar = 0;
     double *xpy;
     MODEL mdl;
 
@@ -336,7 +338,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	return hccm_func(list, pZ, pdinfo);
     }
 
-    _init_model(&mdl, pdinfo);
+    gretl_model_init(&mdl, pdinfo);
 
     if (list[0] == 1 || pdinfo->v == 1) {
 	fprintf(stderr, "E_DATA: lsq: list[0] = %d, pdinfo->v = %d\n",
@@ -357,7 +359,6 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     mdl.ci = ci;
 
     /* Doing weighted least squares? */
-    mdl.wt_dummy = 0;
     mdl.nwt = 0;
     if (ci == WLS) { 
 	mdl.nwt = mdl.list[1];
@@ -366,7 +367,9 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	    return mdl;
 	}
 	effobs = isdummy((*pZ)[mdl.nwt], mdl.t1, mdl.t2);
-	if (effobs) mdl.wt_dummy = 1;
+	if (effobs) {
+	    gretl_model_set_int(&mdl, "wt_dummy", 1);
+	}
     }
 
     /* check for missing obs in sample */
@@ -414,7 +417,10 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     if (i > 2) rearrange_list(mdl.list);
 
     /* check for presence of lagged dependent variable */
-    mdl.ldepvar = lagdepvar(mdl.list, pdinfo, pZ);
+    ldepvar = lagdepvar(mdl.list, pdinfo, pZ);
+    if (ldepvar) {
+	gretl_model_set_int(&mdl, "ldepvar", ldepvar);
+    }
 
     l0 = mdl.list[0];  /* holds 1 + number of coeffs */
     mdl.ncoeff = l0 - 1; 
@@ -463,7 +469,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* get the mean and sd of depvar and make available */
-    if (mdl.ci == WLS && mdl.wt_dummy) {
+    if (mdl.ci == WLS && gretl_model_get_int(&mdl, "wt_dummy")) {
 	mdl.ybar = wt_dummy_mean(&mdl, *pZ);
 	mdl.sdy = wt_dummy_stddev(&mdl, *pZ);
     } else {
@@ -1026,7 +1032,7 @@ int makevcv (MODEL *pmod)
     if (pmod->ci != HCCM && pmod->ci != LOGIT && pmod->ci != PROBIT) {
 	double sigma = pmod->sigma;
 
-	if ((pmod->ci == WLS && !(pmod->wt_dummy)) || 
+	if ((pmod->ci == WLS && !(gretl_model_get_int(pmod, "wt_dummy"))) || 
 	    pmod->ci == ARCH || pmod->ci == HSK) {
 	    sigma = pmod->sigma_wt;
 	} 
@@ -1036,7 +1042,9 @@ int makevcv (MODEL *pmod)
     }
 
     if ((pmod->ci == CORC || pmod->ci == HILU) && pmod->ifc) {
-	d = 1.0 / (1.0 - pmod->rho_in);
+	double r = gretl_model_get_double(pmod, "rho_in");
+
+	d = 1.0 / (1.0 - r);
 	kk = -1;
 	for (i=0; i<nv; i++) {
 	    for (j=0; j<nv; j++) {
@@ -1316,7 +1324,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 
     *gretl_errmsg = '\0';
 
-    _init_model(&corc_model, pdinfo);
+    gretl_model_init(&corc_model, pdinfo);
 
     uhat = malloc(pdinfo->n * sizeof *uhat);
     if (uhat == NULL) return E_ALLOC;
@@ -1462,7 +1470,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 
     *gretl_errmsg = '\0';
 
-    _init_model(&tsls, pdinfo);
+    gretl_model_init(&tsls, pdinfo);
 
     list1 = malloc(pos * sizeof *list1);
     list2 = malloc((list[0] - pos + 1) * sizeof *list2);
@@ -1704,7 +1712,7 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
     int i, j, l0 = pmod->list[0], listlen, check, shrink;
     MODEL aux;
 
-    _init_model(&aux, pdinfo);
+    gretl_model_init(&aux, pdinfo);
 
     if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
@@ -1790,7 +1798,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     *gretl_errmsg = '\0';
 
-    _init_model(&hsk, pdinfo);
+    gretl_model_init(&hsk, pdinfo);
 
     lo = list[0];         /* number of vars in original list */
     yno = list[1];        /* ID number of original dependent variable */
@@ -1875,7 +1883,7 @@ static int whites_standard_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 
     auxlist[0] = pmod->list[0] - 1;
 
-    _init_model(&auxmod, pdinfo);
+    gretl_model_init(&auxmod, pdinfo);
 
     /* loop across the indep vars in the original model */
     for (i=2; i<=pmod->list[0]; i++) {
@@ -1941,7 +1949,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     *gretl_errmsg = '\0';
 
-    _init_model(&hccm, pdinfo);
+    gretl_model_init(&hccm, pdinfo);
 
     n = pdinfo->n;
     t1 = pdinfo->t1; t2 = pdinfo->t2;
@@ -2100,7 +2108,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (pmod->ci == NLS) return E_NOTIMP;
 
-    _init_model(&white, pdinfo);
+    gretl_model_init(&white, pdinfo);
 
     lo = pmod->list[0];
     yno = pmod->list[1];
@@ -2228,7 +2236,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 	return armod;
     }
 
-    _init_model(&armod, pdinfo);
+    gretl_model_init(&armod, pdinfo);
 
     /* run initial OLS */
     armod = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
@@ -2409,8 +2417,8 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     *gretl_errmsg = '\0';
 
-    _init_model(&ar, pdinfo);
-    _init_model(&rhomod, pdinfo);
+    gretl_model_init(&ar, pdinfo);
+    gretl_model_init(&rhomod, pdinfo);
 
     arlist = malloc(pos * sizeof *arlist);
     reglist = malloc((list[0] - pos + 2) * sizeof *reglist);
@@ -2743,15 +2751,21 @@ static int lagdepvar (const int *list, const DATAINFO *pdinfo,
 	    /* looks like a lag */
 	    size_t len = strlen(othervar) - strlen(p);
 
-	    if (strncmp(depvar, othervar, len) == 0) {
+	    if (!strncmp(depvar, othervar, len)) {
+		int gotlag = 1;
+
 		/* strong candidate for lagged depvar, but make sure */
-		for (t=pdinfo->t1+1; t<=pdinfo->t2; t++) 
-		    if ((*pZ)[list[1]][t-1] 
-			!= (*pZ)[list[i]][t]) return 0;
-		return i; 
+		for (t=pdinfo->t1+1; t<=pdinfo->t2; t++) {
+		    if ((*pZ)[list[1]][t-1] != (*pZ)[list[i]][t]) {
+			gotlag = 0;
+			break;
+		    }
+		}
+		if (gotlag) return i;
 	    }
 	}
     } 
+
     return 0;
 }
 
@@ -2866,7 +2880,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 
     *gretl_errmsg = '\0';
 
-    _init_model(&archmod, pdinfo);
+    gretl_model_init(&archmod, pdinfo);
 
     /* assess the lag order */
     if (order < 1) {

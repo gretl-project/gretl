@@ -110,9 +110,23 @@ int catchflag (char *line, unsigned char *oflag);
 
 MODEL *gretl_model_new (const DATAINFO *pdinfo);
 
+void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo);
+
 void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo);
 
 void clear_model (MODEL *pmod, const DATAINFO *pdinfo);
+
+int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size);
+
+int gretl_model_set_int (MODEL *pmod, const char *key, int val);
+
+int gretl_model_set_double (MODEL *pmod, const char *key, double val);
+
+void *gretl_model_get_data (const MODEL *pmod, const char *key);
+
+int gretl_model_get_int (const MODEL *pmod, const char *key);
+
+double gretl_model_get_double (const MODEL *pmod, const char *key);
 
 void debug_print_model_info (const MODEL *pmod, const char *msg);
 

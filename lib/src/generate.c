@@ -2207,7 +2207,7 @@ get_model_data_element (const char *s, GENERATE *genr,
 	}
 	else if (dot_atof(s) == 1 && 
 		 (pmod->ci == CORC || pmod->ci == HILU)) {
-	    x = pmod->rho_in;
+	    x = gretl_model_get_double(pmod, "rho_in");
 	}
 	else if (pmod->ci != AR && dot_atof(s) == 1) {
 	    x = pmod->rho;

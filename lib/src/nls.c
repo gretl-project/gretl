@@ -398,7 +398,7 @@ static MODEL GNR (double *fvec, double *fjac)
 
     ninfo = create_new_dataset(&nZ, nlspec.nparam + 1, pdinfo->n, 0);
     if (ninfo == NULL) {
-	_init_model(&gnr, NULL);
+	gretl_model_init(&gnr, NULL);
 	gnr.errcode = E_ALLOC;
 	return gnr;
     }
@@ -407,7 +407,7 @@ static MODEL GNR (double *fvec, double *fjac)
     if (nlist == NULL) {
 	free_Z(nZ, ninfo);
 	free_datainfo(ninfo);
-	_init_model(&gnr, NULL);
+	gretl_model_init(&gnr, NULL);
 	gnr.errcode = E_ALLOC;
 	return gnr;
     }
@@ -463,8 +463,8 @@ static MODEL GNR (double *fvec, double *fjac)
 	add_param_names_to_model(&gnr);
 	add_fit_resid_to_model(&gnr, fvec);
 	gnr.list[1] = nlspec.depvar;
-	gnr.correct = iters; /* this is being "borrowed" */
-	gnr.chisq = nlspec.tol; /* ditto */
+	gretl_model_set_int(&gnr, "iters", iters);
+	gretl_model_set_double(&gnr, "tol", nlspec.tol);
     }
 
     nlspec.t1 = t1;
@@ -853,7 +853,7 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     int origv = maininfo->v;
     int err = 0;
 
-    _init_model(&nlsmod, maininfo);
+    gretl_model_init(&nlsmod, maininfo);
 
     if (nlspec.nlfunc == NULL) {
 	strcpy(gretl_errmsg, _("No regression function has been specified"));

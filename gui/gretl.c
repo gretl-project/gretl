@@ -1942,6 +1942,19 @@ static void clip_init (GtkWidget *w)
 
 /* ........................................................... */
 
+static int native_datafile (void)
+{
+    int n = strlen(paths.datfile);
+    extern int olddat; /* settings.c */
+    
+    if (n > 4) {
+	if (!strcmp(paths.datfile + n - 4, ".gdt")) return 1;
+	if (olddat && !strcmp(paths.datfile + n - 4, ".dat")) return 1;
+    }
+
+    return 0;
+}
+
 static void auto_store (void)
 {
     unsigned char oflag = 0;
@@ -1951,10 +1964,11 @@ static void auto_store (void)
     if (strlen(paths.datfile) && is_gzipped(paths.datfile))
 	oflag = 'z';
 
-    if ((data_status & USER_DATA) && *paths.datfile)
+    if ((data_status & USER_DATA) && native_datafile()) {
 	do_store(paths.datfile, oflag, 1);
-    else
-	file_selector(_("Save data file"), SAVE_DATA, NULL);	
+    } else {
+	file_selector(_("Save data file"), SAVE_DATA, NULL);
+    }	
 }
 
 /* ........................................................... */
