@@ -29,7 +29,8 @@ enum gretl_matrix_errors {
     GRETL_MATRIX_OK = 0,
     GRETL_MATRIX_NOMEM,
     GRETL_MATRIX_NON_CONFORM,
-    GRETL_MATRIX_RANGE
+    GRETL_MATRIX_RANGE,
+    GRETL_MATRIX_ERR 
 };
 
 enum gretl_matrix_mods {
@@ -100,6 +101,6 @@ double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 
-void gretl_matrix_print (gretl_matrix *X, PRN *prn);
+void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn);
 
 #endif /* GRETL_MATRIX_H */

@@ -260,11 +260,13 @@ int gretl_matrix_set (gretl_matrix *m, int i, int j, double x)
     return 0;
 }
 
-void gretl_matrix_print (gretl_matrix *m, PRN *prn)
+void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn)
 {
     int i, j;
 
-    pprintf(prn, "printing %d x %d gretl matrix...\n\n", m->rows, m->cols);
+    if (msg != NULL && *msg != '\0') {
+	pprintf(prn, "%s\n\n", msg);
+    }
 
     for (i=0; i<m->rows; i++) {
 	for (j=0; j<m->cols; j++) {
@@ -334,20 +336,26 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
     int aidx, amax = a->rows * a->cols;
     int bidx, bmax = b->rows * b->cols;
 
+    if (a == c || b == c) {
+	fputs("gretl_matrix_multiply:\n product matrix must be "
+	      "distinct from both input matrices\n", stderr);
+	return GRETL_MATRIX_ERR;
+    }
+
     lrows = (atr)? a->cols : a->rows;
     lcols = (atr)? a->rows : a->cols;
     rrows = (btr)? b->cols : b->rows;
     rcols = (btr)? b->rows : b->cols;
 
     if (lcols != rrows) {
-	fprintf(stderr, "gretl_matrix_multiply_mod: matrices not conformable\n");
+	fputs("gretl_matrix_multiply_mod: matrices not conformable\n", stderr);
 	fprintf(stderr, "left-hand cols = %d, right-hand rows = %d\n",
 		lcols, rrows);	
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
     if (c->rows != lrows || c->cols != rcols) {
-	fprintf(stderr, "gretl_matrix_multiply_mod: matrices not conformable\n");
+	fputs("gretl_matrix_multiply_mod: matrices not conformable\n", stderr);
 	fprintf(stderr, "Product cols = %d, right-hand cols = %d;\n"
 		"Product rows = %d, left-hand rows = %d\n",
 		c->cols, rcols, c->rows, lrows);

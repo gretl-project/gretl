@@ -23,7 +23,7 @@
 #include "var.h"  
 #include "internal.h"
 
-#define VAR_DEBUG
+/* #define VAR_DEBUG */
 
 struct var_resids {
     int *levels_list;
@@ -167,8 +167,7 @@ static int gretl_var_do_error_decomp (GRETL_VAR *var)
     if (1) {
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 
-	fprintf(stderr, "Sigma-hat from VAR system\n");
-	gretl_matrix_print(tmp, prn);
+	gretl_matrix_print(tmp, "Sigma-hat from VAR system", prn);
 	gretl_print_destroy(prn);
     }
 #endif
@@ -814,14 +813,12 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     if (flags & VAR_IMPULSE_RESPONSES) {
 	if (!err) {
 #ifdef VAR_DEBUG
-	    pputs(prn, "var->A\n");
-	    gretl_matrix_print(var->A, prn);
+	    gretl_matrix_print(var->A, "var->A", prn);
 #endif
 	    err = gretl_var_do_error_decomp(var);
 	    if (!err) {
 #ifdef VAR_DEBUG
-		pputs(prn, "var->C\n");
-		gretl_matrix_print(var->C, prn);
+		gretl_matrix_print(var->C, "var->C", prn);
 #endif
 		for (i=0; i<var->neqns; i++) {
 		    /* FIXME: make horizon configurable, or at least smarter */
