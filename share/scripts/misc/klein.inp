@@ -19,5 +19,16 @@ system type=3sls
  equation Wp 0 X X1 A
  instr 0 G T A Wg P1 K1 X1
 end system
+# and FIML
+system type=fiml
+ equation C 0 P P1 W 
+ equation I 0 P P1 K1
+ equation Wp 0 X X1 A
+ identity P = X - T - Wp
+ identity W = Wp + Wg
+ identity X = C + I + G
+ endog C I Wp P W X
+end system
+
 
 
