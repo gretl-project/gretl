@@ -491,6 +491,9 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *plot, gint axis)
    
     for (i=0; i<NTITLES; i++) {
 	if (gpt_titles[i].tab == 1 + axis) {
+	    gsize bytes;
+	    gchar *titlestr;
+
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
             
@@ -503,7 +506,12 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *plot, gint axis)
 	    tempwid = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      tempwid, 1, 2, tbl_len-1, tbl_len);
-	    gtk_entry_set_text(GTK_ENTRY(tempwid), plot->titles[i]);
+
+	    titlestr = g_locale_to_utf8(plot->titles[i], -1, NULL,
+					&bytes, NULL);
+	    gtk_entry_set_text(GTK_ENTRY(tempwid), titlestr);
+	    g_free(titlestr);
+
 	    g_signal_connect(G_OBJECT (tempwid), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     plot);
@@ -693,6 +701,11 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 	return;
     } else {
 	pprintf(prn, "set term %s\n", termstr);
+#ifdef ENABLE_NLS
+	if (strstr(termstr, "postscript")) {
+	    pprintf(prn, "set encoding iso_8859_1\n");
+	}
+#endif	
 	pprintf(prn, "set output '%s'\n", fname);
 	while (fgets(plotline, MAXLEN-1, fq)) {
 	    if (strncmp(plotline, "set term", 8) && 
@@ -735,6 +748,11 @@ void do_save_graph (const char *fname, char *savestr)
 	return;
     } else {
 	pprintf(prn, "set term %s\n", termstr);
+#ifdef ENABLE_NLS
+	if (strstr(termstr, "postscript")) {
+	    pprintf(prn, "set encoding iso_8859_1\n");
+	}
+#endif	
 	pprintf(prn, "set output '%s'\n", fname);
 	while (fgets(plotline, MAXLEN-1, fq)) {
 	    if (strncmp(plotline, "pause", 5)) 
@@ -954,6 +972,8 @@ static int parse_set_line (GPT_SPEC *plot, const char *line,
 {
     char set_thing[12], setting[MAXLEN], range[32];
     size_t n, j;
+
+    if (strstr(line, "encoding")) return 0;
 
     if (sscanf(line + 4, "%11s", set_thing) != 1) {
 	errbox(_("Failed to parse gnuplot file"));

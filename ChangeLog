@@ -5,6 +5,8 @@ version 1.0pre4
 - more translation fixes
 - small LaTeX output fixes
 - fix gnuplot PNG output for gnuplot version 3.8
+- fix encoding for gnuplot postscript output under NLS
+- fix pango encoding issue for gnuplot axis label strings
 
 10/10/02 version 1.0pre3
 - improve accuracy of calculation of standard errors, and

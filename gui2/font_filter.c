@@ -8,6 +8,11 @@ static gboolean font_is_latin_monospaced (PangoFontDescription *desc)
     wdg = gtk_label_new(NULL);
 
     context = gtk_widget_get_pango_context(wdg);
+    if (context == NULL) {
+	gtk_widget_destroy(wdg);
+	return FALSE;
+    }
+
     pango_context_set_font_description(context, desc);
 
     layout = pango_layout_new(context);
@@ -35,7 +40,10 @@ static gboolean font_is_latin_text_font (PangoFontDescription *desc,
     if (pfont == NULL) return FALSE;
 
     lang = pango_language_from_string("en_US");
+    if (lang == NULL) return FALSE;
+
     coverage = pango_font_get_coverage(pfont, lang);
+    if (coverage == NULL) return FALSE;
 
     if (pango_coverage_get(coverage, 'A') == PANGO_COVERAGE_EXACT) {
 	ok = TRUE;
@@ -76,7 +84,8 @@ static gboolean validate_font_family (const gchar *familyname,
 	PangoFontDescription *desc;
 
 #ifdef FONT_FILTER_DEBUG
-	fprintf(stderr, "Checking font family '%s'\n", familyname);
+	fprintf(dbg, "Checking font family '%s'\n", familyname);
+	fflush(dbg);
 #endif
 
 #ifdef SHOW_PROGRESS
@@ -106,21 +115,23 @@ static gboolean validate_font_family (const gchar *familyname,
 	desc = pango_font_description_from_string(fontname);
 	g_free(fontname);
 
-	if (font_is_latin_text_font(desc, context)) {
-	    /* extend the cache */
-	    latin_families = g_realloc(latin_families, (n_latin + 1) * sizeof *latin_families);
-	    monospaced = g_realloc(monospaced, (n_latin + 1) * sizeof *monospaced);
+	if (desc != NULL) {
+	    if (font_is_latin_text_font(desc, context)) {
+		/* extend the cache */
+		latin_families = g_realloc(latin_families, (n_latin + 1) * sizeof *latin_families);
+		monospaced = g_realloc(monospaced, (n_latin + 1) * sizeof *monospaced);
 
-	    latin_families[n_latin] = g_strdup(familyname);
-	    is_latin = TRUE;
-	    if (font_is_latin_monospaced(desc)) {
-		is_mono = monospaced[n_latin] = TRUE;
-	    } else {
-		is_mono = monospaced[n_latin] = FALSE;
+		latin_families[n_latin] = g_strdup(familyname);
+		is_latin = TRUE;
+		if (font_is_latin_monospaced(desc)) {
+		    is_mono = monospaced[n_latin] = TRUE;
+		} else {
+		    is_mono = monospaced[n_latin] = FALSE;
+		}
+		n_latin++;
 	    }
-	    n_latin++;
+	    pango_font_description_free(desc);
 	}
-	pango_font_description_free(desc);
 
     } else if (filter != GTK_FONT_HACK_NONE) { /* refer to the cached information */
 	gint i;

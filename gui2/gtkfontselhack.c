@@ -626,9 +626,6 @@ gtk_font_selection_hack_scroll_on_map (GtkWidget		*widget,
 {
   GtkFontSelectionHack *fontsel;
   
-#ifdef FONTSEL_DEBUG
-  g_message ("In expose_list\n");
-#endif
   fontsel = GTK_FONT_SELECTION_HACK (data);
   
   /* Try to scroll the font family list to the selected item */
@@ -685,6 +682,12 @@ cmp_families (const void *a, const void *b)
   return g_utf8_collate (a_name, b_name);
 }
 
+/* #define FONT_FILTER_DEBUG */
+
+#ifdef FONT_FILTER_DEBUG
+FILE *dbg;
+#endif
+
 #include "font_filter.c"
 
 static void
@@ -697,6 +700,11 @@ gtk_font_selection_hack_show_available_fonts (GtkFontSelectionHack *fontsel)
   gint n_families, i, got_ok;
   GtkTreeIter match_row;
   static gboolean cache_built;
+
+#ifdef FONT_FILTER_DEBUG
+  dbg = fopen("debug.txt", "w");
+  if (dbg == NULL) return;
+#endif
   
   model = GTK_LIST_STORE (gtk_tree_view_get_model (GTK_TREE_VIEW (fontsel->family_list)));
 
@@ -713,11 +721,17 @@ gtk_font_selection_hack_show_available_fonts (GtkFontSelectionHack *fontsel)
       const gchar *name = pango_font_family_get_name (families[i]);
       GtkTreeIter iter;
 
+#ifdef FONT_FILTER_DEBUG
+      fprintf(dbg, "Examining font '%s'\n", name);
+      fflush(dbg);
+#endif
+
       /* validate the font? */
       if (fontsel->filter != GTK_FONT_HACK_NONE && 
 	  !validate_font_family (name, context, fontsel->filter, n_families, cache_built)) {
 #ifdef FONT_FILTER_DEBUG
-	  fprintf(stderr, "Skipping font '%s'\n", name);
+	  fprintf(dbg, "Skipping font '%s'\n", name);
+	  fflush(dbg);
 #endif
 	  continue;
       }

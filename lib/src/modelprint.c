@@ -455,7 +455,24 @@ static const char *estimator_string (int ci, int format)
 
 /* ......................................................... */
 
-void get_test_stat_string (GRETLTEST *test, char *str, int format)
+void get_test_type_string (const GRETLTEST *test, char *str, int format)
+{
+    if (PLAIN_FORMAT(format)) {
+	if (test->param[0]) {
+	    sprintf(str, _(test->type), test->param);
+	} else {
+	    strcpy(str, _(test->type));
+	} 
+    } else {
+	if (test->param[0]) {
+	    sprintf(str, I_(test->type), test->param);
+	} else {
+	    strcpy(str, I_(test->type));
+	}
+    }
+}
+
+void get_test_stat_string (const GRETLTEST *test, char *str, int format)
 {
     int tex = TEX_FORMAT(format);
 
@@ -496,7 +513,7 @@ void get_test_stat_string (GRETLTEST *test, char *str, int format)
     }
 }
 
-void get_test_pval_string (GRETLTEST *test, char *str, int format)
+void get_test_pval_string (const GRETLTEST *test, char *str, int format)
 {
     int tex = TEX_FORMAT(format);
 
@@ -510,7 +527,7 @@ void get_test_pval_string (GRETLTEST *test, char *str, int format)
     case GRETL_TEST_F:
     case GRETL_TEST_RESET:
 	if (tex) 
-	    sprintf(str, "$P$($F(%d, %d) >$ %g)$ = %g", 
+	    sprintf(str, "$P$($F(%d, %d) >$ %g) = %g", 
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	else 
 	    sprintf(str, "P(F(%d, %d) > %g) = %g", 
@@ -518,7 +535,7 @@ void get_test_pval_string (GRETLTEST *test, char *str, int format)
 	break;
     case GRETL_TEST_LMF:
 	if (tex) 
-	    sprintf(str, "$P$($\\chi^2_{%d} >$ > %g) = %g", 
+	    sprintf(str, "$P$($\\chi^2_{%d} >$ %g) = %g", 
 		    test->dfn, test->value, test->pvalue);
 	else
 	    sprintf(str, "P(Chi-Square(%d) > %g) = %g", 
@@ -545,17 +562,18 @@ void get_test_pval_string (GRETLTEST *test, char *str, int format)
 static void print_model_tests (const MODEL *pmod, PRN *prn)
 {
     int i;
-    char test_str[64], pval_str[64];
+    char test_str[64], pval_str[64], type_str[96];
 
     if (PLAIN_FORMAT(prn->format)) {
 	for (i=0; i<pmod->ntests; i++) {
+	    get_test_type_string(&pmod->tests[i], type_str, prn->format);
 	    get_test_stat_string(&pmod->tests[i], test_str, prn->format);
 	    get_test_pval_string(&pmod->tests[i], pval_str, prn->format);
 	    pprintf(prn, "%s -\n"
 		    "  %s: %s\n"
 		    "  %s: %s\n"
 		    "  %s = %s\n\n",
-		    _((pmod->tests[i]).type), 
+		    type_str, 
 		    _("Null hypothesis"), _((pmod->tests[i]).h_0), 
 		    _("Test statistic"), test_str, 
 		    _("with p-value"), pval_str);
@@ -569,13 +587,14 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 		if (i > 0) {
 		    pprintf(prn, "\\vspace{1ex}\n");;
 		}
+		get_test_type_string(&pmod->tests[i], type_str, prn->format);
 		get_test_stat_string(&pmod->tests[i], test_str, prn->format);
 		get_test_pval_string(&pmod->tests[i], pval_str, prn->format);
 		pprintf(prn, "%s --\\\\\n"
 			"\\quad %s: %s\\\\\n"
 			"\\quad %s: %s\\\\\n"
 			"\\quad %s = %s\\\\\n",
-			I_((pmod->tests[i]).type), 
+			type_str, 
 			I_("Null hypothesis"), I_((pmod->tests[i]).h_0), 
 			I_("Test statistic"), test_str, 
 			I_("with p-value"), pval_str);
@@ -586,13 +605,14 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 
     else if (RTF_FORMAT(prn->format)) {
 	for (i=0; i<pmod->ntests; i++) {
+	    get_test_type_string(&pmod->tests[i], type_str, prn->format);
 	    get_test_stat_string(&pmod->tests[i], test_str, prn->format);
 	    get_test_pval_string(&pmod->tests[i], pval_str, prn->format);
 	    pprintf(prn, "\\par \\ql %s -\\par\n"
 		    " %s: %s\\par\n"
 		    " %s: %s\\par\n"
 		    " %s = %s\\par\n\n",
-		    I_((pmod->tests[i]).type), 
+		    type_str, 
 		    I_("Null hypothesis"), I_((pmod->tests[i]).h_0),
 		    I_("Test statistic"), test_str, 
 		    I_("with p-value"), pval_str);

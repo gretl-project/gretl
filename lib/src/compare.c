@@ -379,7 +379,8 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		printmodel(&aux, pdinfo, prn);
 		trsq = aux.rsq * aux.nobs;
 
-		if (test) {
+		if (test != NULL) {
+		    gretl_test_init(test);
 		    df = newlist[0] - orig->list[0];
 		    strcpy(test->type, (aux_code == AUX_SQ)?
 			    N_("Non-linearity test (squares)") :
@@ -419,8 +420,9 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	if (addvars == NULL) free(tmplist); 
 
 	/* trash any extra variables generated (squares, logs) */
-	if (pdinfo->v > orig_nvar)
+	if (pdinfo->v > orig_nvar) {
 	    dataset_drop_vars(pdinfo->v - orig_nvar, pZ, pdinfo);
+	}
     }
 
     /* put back into pdinfo what was there on input */
@@ -586,6 +588,13 @@ static int box_pierce (int varno, int order, double **Z,
     return 0;
 }
 
+void gretl_test_init (GRETLTEST *test)
+{
+    test->type[0] = 0;
+    test->h_0[0] = 0;
+    test->param[0] = 0;
+}
+
 /**
  * reset_test:
  * @pmod: pointer to model to be tested.
@@ -656,6 +665,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		2, aux.dfd, RF, fdist(RF, 2, aux.dfd));
 
 	if (test != NULL) {
+	    gretl_test_init(test);
 	    strcpy(test->type, N_("RESET test for specification"));
 	    strcpy(test->h_0, N_("specification is adequate"));
 	    test->teststat = GRETL_TEST_RESET;
@@ -779,8 +789,10 @@ int autocorr_test (MODEL *pmod, int order,
 	}
 
 	if (test != NULL) {
-	    strcpy(test->type, N_("LM test for autocorrelation"));
-	    sprintf(test->h_0, N_("no autocorrelation up to order %d"), order);
+	    gretl_test_init(test);
+	    strcpy(test->type, N_("LM test for autocorrelation up to order %s"));
+	    strcpy(test->h_0, N_("no autocorrelation"));
+	    sprintf(test->param, "%d", order);
 	    test->teststat = GRETL_TEST_LMF;
 	    test->dfn = order;
 	    test->dfd = aux.nobs - pmod->ncoeff - order;
@@ -894,8 +906,10 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		    fdist(F, newvars, chow_mod.dfd)); 
 
 	    if (test != NULL) {
-		sprintf(test->type, N_("Chow test for structural break at "
-			"observation %s"), chowdate);
+		gretl_test_init(test);
+		strcpy(test->type, N_("Chow test for structural break at "
+			"observation %s"));
+		strcpy(test->param, chowdate);
 		strcpy(test->h_0, N_("no structural break"));
 		test->teststat = GRETL_TEST_F;
 		test->dfn = newvars;
@@ -1053,6 +1067,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 		T-K-1, hct, tprob(hct, T-K-1));
 
 	if (test != NULL) {
+	    gretl_test_init(test);
 	    strcpy(test->type, N_("CUSUM test for parameter stability"));
 	    strcpy(test->h_0, N_("no change in parameters"));
 	    test->teststat = GRETL_TEST_HARVEY_COLLIER;

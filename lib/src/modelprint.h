@@ -21,9 +21,11 @@
 
 int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
 
-void get_test_stat_string (GRETLTEST *test, char *str, int format);
+void get_test_type_string (const GRETLTEST *test, char *str, int format);
 
-void get_test_pval_string (GRETLTEST *test, char *str, int format);
+void get_test_stat_string (const GRETLTEST *test, char *str, int format);
+
+void get_test_pval_string (const GRETLTEST *test, char *str, int format);
 
 void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
 			  PRN *prn);

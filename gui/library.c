@@ -1386,6 +1386,7 @@ static gint add_test_to_model (GRETLTEST *test, MODEL *pmod)
 
     strcpy(pmod->tests[nt].type, test->type);
     strcpy(pmod->tests[nt].h_0, test->h_0);
+    strcpy(pmod->tests[nt].param, test->param);
     pmod->tests[nt].teststat = test->teststat;
     pmod->tests[nt].value = test->value;
     pmod->tests[nt].dfn = test->dfn;
@@ -1404,9 +1405,10 @@ static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
     if (w == NULL) {
         return;
     } else {
-        char test_str[64], pval_str[64];
+        char test_str[64], pval_str[64], type_str[96];
         gchar *tempstr;
 
+	get_test_type_string (test, type_str, GRETL_PRINT_FORMAT_PLAIN);
         get_test_stat_string (test, test_str, GRETL_PRINT_FORMAT_PLAIN);
         get_test_pval_string (test, pval_str, GRETL_PRINT_FORMAT_PLAIN);
 
@@ -1414,7 +1416,7 @@ static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
                                   "  %s: %s\n"
                                   "  %s: %s\n"
                                   "  %s = %s\n\n",
-                                  _(test->type), 
+                                  type_str, 
                                   _("Null hypothesis"), _(test->h_0), 
                                   _("Test statistic"), test_str, 
                                   _("with p-value"), pval_str);
@@ -2303,6 +2305,7 @@ static void normal_test (GRETLTEST *test, FREQDIST *freq)
 {
     strcpy(test->type, _("Test for normality of residual"));
     strcpy(test->h_0, _("error is normally distributed"));
+    test->param[0] = 0;
     test->teststat = GRETL_TEST_NORMAL_CHISQ;
     test->value = freq->chisqu;
     test->dfn = 2;

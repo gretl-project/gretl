@@ -1228,6 +1228,11 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 #endif
 	if (fname != NULL) { /* not a screen display */
 	    fprintf(fp, "set term %s\n", termstr);
+#ifdef ENABLE_NLS
+	    if (strstr(termstr, "postscript")) {
+		fprintf(fp, "set encoding iso_8859_1\n");
+	    }
+#endif
 	    fprintf(fp, "set output '%s'\n", fname);
 	}
     }

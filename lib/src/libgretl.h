@@ -163,6 +163,7 @@ typedef struct {
 typedef struct {
     char type[72];
     char h_0[64];
+    char param[9];
     unsigned char teststat;
     int dfn, dfd;
     double value;
