@@ -286,11 +286,6 @@ int sur (gretl_equation_system *sys, double ***pZ,
 	}
     }
 
-#ifdef LDEBUG 
-    pprintf(prn, "Initial uhat matrix\n");
-    simple_matrix_print(uhat, m, T, prn);
-#endif
-
     sigma = gls_sigma_inverse_from_uhat (uhat, m, T);
 
 #ifdef LDEBUG 
@@ -308,14 +303,27 @@ int sur (gretl_equation_system *sys, double ***pZ,
 	    if (i != j) {
 		make_Xi_from_Z(Xj, *pZ, sys->lists[j], T);
 	    }
+#ifdef LDEBUG
+	    pprintf(prn, "Xi:\n");
+	    simple_matrix_print(Xi, k, k, prn);	    
+#endif
 	    ApB ((const gsl_matrix *) Xi, 
 		 (i == j)? (const gsl_matrix *) Xi : 
 		 (const gsl_matrix *) Xj, M);
+#ifdef LDEBUG
+	    pprintf(prn, "M:\n");
+	    simple_matrix_print(M, k, k, prn);	    
+#endif
 	    kronecker_place (X, (const gsl_matrix *) M,
 			     i, j, k, 
 			     gsl_matrix_get(sigma, i, j)); 
 	}
     }
+
+#ifdef LDEBUG 
+    pprintf(prn, "big X matrix\n");
+    simple_matrix_print(X, bigrows, bigrows, prn);
+#endif
 
     tmp_y = malloc((m * k) * sizeof *tmp_y);
 

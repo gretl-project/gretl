@@ -65,9 +65,7 @@ static int gretl_matmult_mod (const gretl_matrix *a, int aflag,
 			      gretl_matrix *c);
 static int invert_general_gretl_matrix (gretl_matrix *m);
 
-
-
-#define LDEBUG 1
+#define LDEBUG 1 
 
 static gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 {
@@ -87,6 +85,31 @@ static gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     m->cols = cols;
 
     return m;
+}
+
+static gretl_matrix *gretl_matrix_copy (gretl_matrix *m)
+{
+    gretl_matrix *c;
+    int i, n = m->rows * m->cols;
+
+    c = malloc(sizeof *c);
+    if (c == NULL) return c;
+
+    c->val = malloc(n * sizeof *c->val);
+
+    if (c->val == NULL) {
+	free(c);
+	return NULL;
+    }
+
+    c->rows = m->rows;
+    c->cols = m->cols;
+
+    for (i=0; i<n; i++) {
+	c->val[i] = m->val[i];
+    }
+
+    return c;
 }
 
 static void gretl_matrix_free (gretl_matrix *m)
@@ -231,11 +254,6 @@ gls_sigma_inverse_from_uhat (const gretl_matrix *e, int m, int T)
 	}
     }
 
-#if 0 /* FIXME */
-    gretl_linalg_LU_decomp (sigma, p, &sign);
-    gretl_linalg_LU_invert (sigma, p, inverse);
-#endif
-
     invert_general_gretl_matrix(sigma);
 
     return sigma;
@@ -244,17 +262,6 @@ gls_sigma_inverse_from_uhat (const gretl_matrix *e, int m, int T)
 /* m = number of equations 
    k = number of indep vars per equation 
 */
-
-static int ApB (const gretl_matrix * A, const gretl_matrix * B,
-		gretl_matrix *C) 
-{
-    int err;
-
-    err = gretl_matmult_mod (A, GRETL_MOD_TRANSPOSE,
-			     B, GRETL_MOD_NONE,
-			     C);
-    return err;
-}
 
 static void sur_resids (MODEL *pmod, double **Z, gretl_matrix *uhat)
 {
@@ -313,6 +320,7 @@ static int calculate_coefficients (MODEL **models, double **Z,
 				   double *tmp_y, int m, int k)
 {
     gretl_vector *coeff;
+    gretl_matrix *vcv;
     int i, j;
     int ncoeff = m * k;
 
@@ -322,19 +330,21 @@ static int calculate_coefficients (MODEL **models, double **Z,
 	gretl_vector_set(coeff, i, tmp_y[i]);
     }
 
+    vcv = gretl_matrix_copy(X);
     gretl_LU_solve (X, coeff);
-    invert_general_gretl_matrix(X); /* generates VCV */ 
+    invert_general_gretl_matrix(vcv); 
 
     for (i=0; i<m; i++) {
 	for (j=0; j<k; j++) {
 	    (models[i])->coeff[j+1] = gretl_vector_get(coeff, i * k + j);
 	    (models[i])->sderr[j+1] = 
-		sqrt(gretl_matrix_get(X, i * k + j, i * k + j));
+		sqrt(gretl_matrix_get(vcv, i * k + j, i * k + j));
 	}
 	sur_resids(models[i], Z, uhat);
     }
 
     gretl_vector_free (coeff);
+    gretl_matrix_free (vcv);
 
     return 0;
 }
@@ -389,21 +399,18 @@ int sur (gretl_equation_system *sys, double ***pZ,
 	}
     }
 
-#ifdef LDEBUG 
-    pprintf(prn, "Initial uhat matrix\n");
-    simple_matrix_print(uhat, m, T, prn);
-#endif
-
     sigma = gls_sigma_inverse_from_uhat (uhat, m, T);
 
 #ifdef LDEBUG 
     pprintf(prn, "gls sigma inverse matrix\n");
-    simple_matrix_print(sigma, m, T, prn);
+    simple_matrix_print(sigma, m, m, prn);
     /* OK so far, it seems */
 #endif
 
     /* Xi = data matrix for equation i, specified in lists[i] */
     for (i=0; i<m; i++) {
+	const gretl_matrix *Y;
+
 #ifdef SUR_DEBUG
 	fprintf(stderr, "doing make_Xi_from_Z(), i=%d\n", i);
 #endif
@@ -412,14 +419,28 @@ int sur (gretl_equation_system *sys, double ***pZ,
 	    if (i != j) {
 		make_Xi_from_Z(Xj, *pZ, sys->lists[j], T);
 	    }
-	    ApB ((const gretl_matrix *) Xi, 
-		 (i == j)? (const gretl_matrix *) Xi : 
-		 (const gretl_matrix *) Xj, M);
+#ifdef LDEBUG
+	    pprintf(prn, "Xi:\n");
+	    simple_matrix_print(Xi, k, k, prn);	    
+#endif
+	    Y = (i == j)? Xi : Xj;
+	    gretl_matmult_mod ((const gretl_matrix *) Xi, 
+			       GRETL_MOD_TRANSPOSE,
+			       Y, GRETL_MOD_NONE, M);
+#ifdef LDEBUG
+	    pprintf(prn, "M:\n");
+	    simple_matrix_print(M, k, k, prn);	    
+#endif
 	    kronecker_place (X, (const gretl_matrix *) M,
 			     i, j, k, 
 			     gretl_matrix_get(sigma, i, j)); 
 	}
     }
+
+#ifdef LDEBUG 
+    pprintf(prn, "big X matrix\n");
+    simple_matrix_print(X, bigrows, bigrows, prn);
+#endif
 
     tmp_y = malloc((m * k) * sizeof *tmp_y);
 
@@ -493,7 +514,6 @@ int sur (gretl_equation_system *sys, double ***pZ,
     return 0;
 }
 
-
 static gretl_matrix *gretl_matrix_from_2d_array (const double **X, 
 						 int rows, int cols)
 {
@@ -523,6 +543,7 @@ static int gretl_matmult_mod (const gretl_matrix *a, int aflag,
     int rrows, rcols;
     int atr = (aflag == GRETL_MOD_TRANSPOSE);
     int btr = (bflag == GRETL_MOD_TRANSPOSE);
+    int bmax = b->rows * b->cols;
 
     lrows = (atr)? a->cols : a->rows;
     lcols = (atr)? a->rows : a->cols;
@@ -530,19 +551,34 @@ static int gretl_matmult_mod (const gretl_matrix *a, int aflag,
     rcols = (btr)? b->rows : b->cols;
 
     if (lcols != rrows) {
+#ifdef LDEBUG
+	fprintf(stderr, "gretl_matmult_mod: matrices not conformable\n");
+	fprintf(stderr, "left-hand cols = %d, right-hand rows = %d\n",
+		lcols, rrows);	
+#endif
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
-    if (c->cols != lcols || c->rows != rrows) {
+    if (c->rows != lrows || c->cols != rcols) {
+#ifdef LDEBUG
+	fprintf(stderr, "gretl_matmult_mod: matrices not conformable\n");
+	fprintf(stderr, "Product cols = %d, left-hand cols = %d;\n"
+		"Product rows = %d, right-hand rows = %d\n",
+		c->cols, lcols, c->rows, rrows);
+#endif	
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
-    for (i=0; i<rrows; i++) {
-	for (j=0; j<lcols; j++) {
+    for (i=0; i<lrows; i++) {
+	for (j=0; j<rcols; j++) {
 	    c->val[mdx(c, i, j)] = 0.0;
-	    for (k=0; k<c->cols; k++) {
+	    for (k=0; k<lcols; k++) {
 		x = (atr)? a->val[mdxtr(a,i,k)] : a->val[mdx(a,i,k)];
 		y = (btr)? b->val[mdxtr(b,k,j)] : b->val[mdx(b,k,j)];
+		if (mdx(b,k,j) >= bmax) {
+		    fprintf(stderr, "Bmax = %d exceeded\n", bmax);
+		    return 1;
+		}
 		c->val[mdx(c, i, j)] += x * y;
 	    }
 	}
@@ -688,6 +724,7 @@ static double *gretl_lapack_eigenvals (gretl_matrix *m)
     return wr;
 }
 
+#if 0
 static void print_gretl_matrix (gretl_matrix *m)
 {
     int i, j;
@@ -702,6 +739,7 @@ static void print_gretl_matrix (gretl_matrix *m)
     } 
     putchar('\n');
 }
+#endif
 
 int johansen_eigenvals (const double **X, const double **Y, const double **Z, 
 			int k, double *evals)
