@@ -285,7 +285,8 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 		return;
 	    }
 
-	    data_compact_dialog(dbwin->w, sinfo->pd, &datainfo->pd, &compact_method);
+	    data_compact_dialog(dbwin->w, sinfo->pd, &datainfo->pd, NULL, 
+				&compact_method);
 
 	    if (compact_method == COMPACT_NONE) {
 		if (!overwrite) {
@@ -1912,6 +1913,11 @@ static int compact_series (double **Z, int i, int n, int oldn,
     int lead = startskip - min_startskip;
     double *x;
 
+#if 0
+    printf("compact_series: startskip=%d, min_startskip=%d, compfac=%d "
+	   "lead=%d\n", startskip, min_startskip, compfac, lead);
+#endif
+
     x = malloc(n * sizeof *x);
     if (x == NULL) return 1;
 
@@ -2037,7 +2043,7 @@ void compact_data_set (void)
 {
     int newpd, oldpd = datainfo->pd;
     int newn, oldn = datainfo->n;
-    int compfac;
+    int compfac, monstart;
     int startmaj, startmin;
     int endmaj, endmin;
     int any_eop, all_same;
@@ -2050,14 +2056,21 @@ void compact_data_set (void)
 
     newpd = 0;
 
-    data_compact_dialog(mdata->w, oldpd, &newpd, &default_method);
+    data_compact_dialog(mdata->w, oldpd, &newpd, &monstart, &default_method);
     if (default_method == COMPACT_NONE) return;
 
     if (oldpd == 5 || oldpd == 7) {
 	/* daily to weekly */
 	compfac = oldpd;
 	if (dated_daily_data(datainfo)) {
-	    startmin = get_day_of_week(datainfo->stobs) + 1;
+	    startmin = get_day_of_week(datainfo->stobs);
+	    if (oldpd == 7) {
+		if (monstart) {
+		    startmin = startmin % 7;
+		} else {
+		    startmin++;
+		}
+	    }
 	} else {
 	    startmin = 1;
 	}
@@ -2110,6 +2123,11 @@ void compact_data_set (void)
     datainfo->t1 = 0;
     datainfo->t2 = datainfo->n - 1;
     ntodate(datainfo->endobs, datainfo->t2, datainfo);
+    
+    if (oldpd == 5 || oldpd == 7) {
+	/* remove any daily date strings */
+	destroy_dataset_markers(datainfo);
+    }
 
     /* compact the individual data series */
     for (i=0; i<datainfo->v && err == 0; i++) {
@@ -2148,5 +2166,3 @@ void compact_data_set (void)
 	flip(mdata->ifac, "/Sample/Compact data...", FALSE);
     }
 }
-
-

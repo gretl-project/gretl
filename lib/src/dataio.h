@@ -74,6 +74,8 @@ DATAINFO *create_new_dataset (double ***pZ, /* data matrix */
 
 void clear_datainfo (DATAINFO *pdinfo, int code);
 
+void destroy_dataset_markers (DATAINFO *pdinfo);
+
 int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);
 
 int dateton (const char *date, const DATAINFO *pdinfo);

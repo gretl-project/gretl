@@ -1048,6 +1048,10 @@ static GtkItemFactoryEntry time_series_model_items[] = {
       selector_callback, COINT2, NULL, GNULL }
 };
 
+#define DATASET_COMPACTABLE(d) (d->time_series == TIME_SERIES && \
+                                (d->pd == 4 || d->pd == 12 || \
+                                 d->pd == 5 || d->pd == 7))
+
 static void time_series_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
@@ -1066,7 +1070,7 @@ static void time_series_menu_state (gboolean s)
 #endif
 	flip(mdata->ifac, "/Model/Time series", s);
 	flip(mdata->ifac, "/Sample/Compact data...", 
-	     s && (datainfo->pd == 4 || datainfo->pd == 12));
+	     s && DATASET_COMPACTABLE(datainfo));
 
 	if (s) {
 	    GtkWidget *w =  

@@ -2327,6 +2327,19 @@ static void set_target_pd (GtkWidget *w, gpointer data)
     }
 }
 
+static void set_mon_start (GtkWidget *w, gpointer data)
+{
+    gint *ms = (gint *) data;
+
+    if (GTK_TOGGLE_BUTTON (w)->active) {
+#ifndef OLD_GTK
+        *ms = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+#else
+        *ms = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
+#endif
+    }
+}
+
 static void pd_buttons (dialog_t *d, int *target_pd)
 {    
     GtkWidget *button, *hs;
@@ -2379,8 +2392,59 @@ static void pd_buttons (dialog_t *d, int *target_pd)
     gtk_widget_show (hs);
 }
 
+static void mon_start_buttons (dialog_t *d, int *mon_start)
+{
+    GtkWidget *button, *hs;
+    GtkWidget *vbox;
+    GSList *group;
+
+    vbox = dialog_data_get_vbox(d);
+
+    button = gtk_radio_button_new_with_label(NULL, _("Week starts on Monday"));
+    gtk_box_pack_start (GTK_BOX(vbox), 
+			button, TRUE, TRUE, FALSE);
+
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+
+#ifndef OLD_GTK
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_mon_start), mon_start);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(1));
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_mon_start), mon_start);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(1));
+#endif
+    gtk_widget_show (button);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label (group, _("Week starts on Sunday"));
+    gtk_box_pack_start (GTK_BOX(vbox), 
+			button, TRUE, TRUE, FALSE);
+
+#ifndef OLD_GTK
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_mon_start), mon_start);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(0));
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_mon_start), mon_start);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(0));
+#endif
+    gtk_widget_show (button);
+
+    hs = gtk_hseparator_new();
+    gtk_box_pack_start (GTK_BOX(vbox), 
+			hs, TRUE, TRUE, FALSE);
+    gtk_widget_show (hs);
+}
+
 void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
-			  gint *compact_method)
+			  int *mon_start, gint *compact_method)
 {
     dialog_t *d;
     GtkWidget *button;
@@ -2388,10 +2452,14 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     GSList *group;
     int show_pd_buttons = 0;
     int all_vars = 0;
-    gchar *labelstr;
+    gchar *labelstr = NULL;
 
     d = dialog_data_new(NULL, 0, _("gretl: compact data"));
     if (d == NULL) return;
+
+    if (mon_start != NULL) {
+	*mon_start = 1;
+    }
     
     if (*target_pd != 0) {
 	/* importing series from database */
@@ -2432,7 +2500,13 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 			tempwid, TRUE, TRUE, FALSE);
     gtk_widget_show (tempwid);
 
-    if (show_pd_buttons) pd_buttons(d, target_pd);
+    if (show_pd_buttons) {
+	pd_buttons(d, target_pd);
+    }
+
+    if (spd == 7 && mon_start != NULL) {
+	mon_start_buttons(d, mon_start);
+    }
 
     button = gtk_radio_button_new_with_label (NULL, _("Compact by averaging"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 

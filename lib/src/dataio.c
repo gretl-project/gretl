@@ -83,6 +83,27 @@ void free_Z (double **Z, DATAINFO *pdinfo)
 }
 
 /**
+ * destroy_dataset_markers:
+ * @pdinfo: data information struct.
+ *
+ * Free any allocated observation markers for @pdinfo.
+ */
+
+void destroy_dataset_markers (DATAINFO *pdinfo)
+{
+    int i;
+
+    if (pdinfo->S != NULL) {
+	for (i=0; i<pdinfo->n; i++) { 
+	   free(pdinfo->S[i]); 
+	}
+	free(pdinfo->S);
+	pdinfo->S = NULL;
+	pdinfo->markers = NO_MARKERS;
+    } 
+}
+
+/**
  * clear_datainfo:
  * @pdinfo: data information struct.
  * @code: either CLEAR_FULL or CLEAR_SUBSAMPLE.
@@ -98,11 +119,7 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
     if (pdinfo == NULL) return;
 
     if (pdinfo->S != NULL) {
-	for (i=0; i<pdinfo->n; i++) 
-	   free(pdinfo->S[i]); 
-	free(pdinfo->S);
-	pdinfo->S = NULL;
-	pdinfo->markers = NO_MARKERS;
+	destroy_dataset_markers(pdinfo);
     } 
 
     if (pdinfo->subdum != NULL) {
@@ -962,12 +979,17 @@ static char *real_ntodate (char *datestr, int t, const DATAINFO *pdinfo,
 	return datestr;
     }
 
+    if (pdinfo->time_series == TIME_SERIES && pdinfo->pd == 52) {
+	/* special: weekly data */
+	x = date(t, 1, pdinfo->sd0);
+	sprintf(datestr, "%d", (int) x);
+	return datestr;
+    }
+
     x = date(t, pdinfo->pd, pdinfo->sd0);
 
     if (pdinfo->pd == 1) {
-        int n = (int) x;
-
-        sprintf(datestr, "%d", n);
+        sprintf(datestr, "%d", (int) x);
     } else {
 	int pdp = pdinfo->pd, len = 1;
 	char fmt[8];

@@ -59,7 +59,7 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w);
 void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w);
 
 void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
-			  gint *compact_method);
+			  int *mon_start, gint *compact_method);
 
 
 #ifdef OLD_GTK

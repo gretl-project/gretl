@@ -2074,7 +2074,7 @@ static void field_init (struct label_field *f)
     f->vnum = -1;
 }
 
-static int copy_field_literal (const char *s, struct label_field *f)
+static void copy_field_literal (const char *s, struct label_field *f)
 {
     int len = strlen(s) - 2;
 
