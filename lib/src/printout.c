@@ -1853,7 +1853,7 @@ int pputc (PRN *prn, int c)
 
 /* apparatus for user-defined printf statements */
 
-#define PRINTF_DEBUG
+#undef PRINTF_DEBUG
 
 #define is_format_char(c) (c == 'f' || c == 'g' || c == 'd' || c == 's')
 

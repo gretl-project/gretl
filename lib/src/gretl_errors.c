@@ -156,7 +156,7 @@ char *get_gretl_msg (void)
 void print_gretl_msg (PRN *prn)
 {
     if (*gretl_msg != '\0') {
-	pprintf(prn, "%s\n", gretl_errmsg);
+	pprintf(prn, "%s\n", gretl_msg);
     }	
 }
 
