@@ -897,8 +897,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	if (ddata->code == CORRGM) 
-	    register_graph();
+	if (ddata->code == CORRGM) register_graph();
 	view_buffer(prn, hsize, vsize, title, ddata->code, view_items);
     }
 }
@@ -2235,11 +2234,13 @@ extern char x12adir[];
 void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
+    int graph = 0;
     gchar *databuf;
     GError *error = NULL;
     void *handle;
     int (*write_ts_data) (char *, int, 
 			  double ***, DATAINFO *, 
+			  PATHS *, int *,
 			  const char *);
     PRN *prn;
     char fname[MAXLEN];
@@ -2275,10 +2276,10 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 
     if (opt == TRAMO) {
 	err = write_ts_data (fname, mdata->active_var, &Z, datainfo, 
-			     tramodir);
+			     &paths, &graph, tramodir);
     } else { /* X12A */
 	err = write_ts_data (fname, mdata->active_var, &Z, datainfo, 
-			     x12adir);
+			     &paths, &graph, x12adir);
     }
 
     close_plugin(handle);
@@ -2307,6 +2308,11 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 		(opt == TRAMO)? _("gretl: TRAMO analysis") :
 		_("gretl: X-12-ARIMA analysis"),
 		TRAMO_X12A, view_items);
+
+    if (graph) {
+	gnuplot_display(&paths);
+	register_graph();
+    }
 
 }
 #endif

@@ -22,8 +22,17 @@ const char *x12a_descrip_formats[] = {
     N_("irregular component of %s")
 };
 
+const char *default_mdl = {
+    "(0 1 1)(0 1 1) X\n"
+    "(0 1 2)(0 1 1) X\n"
+    "(2 1 0)(0 1 1) X\n"
+    "(0 2 2)(0 1 1) X\n"
+    "(2 1 2)(0 1 1)\n"
+};    
+
 int write_tramo_data (char *fname, int varnum, 
 		      double ***pZ, DATAINFO *pdinfo, 
+		      PATHS *paths, int *graph,
 		      const char *tramodir)
 {
     int i, t;
@@ -115,43 +124,65 @@ static void truncate (char *str, int n)
     if (len > n) str[n] = 0;
 }
 
-static int graph_x12a_series (double **Z, DATAINFO *pdinfo, int varno)
+static int graph_x12a_series (double **Z, DATAINFO *pdinfo, 
+			      PATHS *paths, int varno)
 {
-    FILE *fp;
+    FILE *fp = NULL;
     int i, t;
 
-    fp = fopen("x12a_gp.dat", "w");
-    if (fp == NULL) return 1;
+    if (gnuplot_init(paths, &fp)) return E_FOPEN;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	fprintf(fp, "%g ", Z[varno][t]);
-	for (i=1; i<4; i++) {
-	    fprintf(fp, "%g ", Z[pdinfo->v - i][t]);
-	}
-	fprintf(fp, "\n");
-    }
-    fclose(fp);
-
-    fp = fopen("x12a.gp", "w");
-    if (fp == NULL) return 1;
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
 
     /* fixme tics */
+
     fprintf(fp, "set multiplot\n"
-	    "set size 1.0,0.32\n"
-	    "set origin 0.0,0.0\n"
-	    "plot 'x12a_gp.dat' using 2 w l t 'irregular'\n"
-	    "set origin 0.0,0.33\n"
-	    "plot 'x12a_gp.dat' using 1 w l t '%s', \\\n"
-	    " 'x12a_gp.dat' using 3 w l t 'trend/cycle'\n"
-	    "set origin 0.0,0.66\n"
-	    "plot 'x12a_gp.dat' using 1 w l t '%s', \\\n"
-	    " 'x12a_gp.dat' using 4 w l t 'adjusted'\n"
-	    "unset multiplot\n", 
-	    pdinfo->varname[varno], pdinfo->varname[varno]);
+	    "set size 1.0,0.32\n");
+    
+    /* irregular component */
+    fprintf(fp, "set origin 0.0,0.0\n"
+	    "plot '-' using 1 w i title '%s'\n", I_("irregular"));
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	fprintf(fp, "%g\n", Z[pdinfo->v - 1][t]);
+    }
+    fprintf(fp, "e\n");
+
+    /* actual vs trend/cycle */
+    fprintf(fp, "set origin 0.0,0.33\n"
+	    "plot '-' using 1 w l title '%s', \\\n"
+	    " '-' using 1 w l title '%s'\n",
+	    pdinfo->varname[varno], I_("trend/cycle"));
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
+	fprintf(fp, "%g\n", Z[varno][t]);
+    fprintf(fp, "e , \\\n");
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
+	fprintf(fp, "%g\n", Z[pdinfo->v - 2][t]);
+    fprintf(fp, "e\n");
+
+    /* actual vs seasonally adjusted */
+    fprintf(fp, "set origin 0.0,0.66\n"
+	    "plot '-' using 1 w l title '%s', \\\n"
+	    " '-' using 1 w l title '%s'\n",
+	    pdinfo->varname[varno], I_("adjusted"));
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
+	fprintf(fp, "%g\n", Z[varno][t]);
+    fprintf(fp, "e\n");
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
+	fprintf(fp, "%g\n", Z[pdinfo->v - 3][t]);
+
+    fprintf(fp, "unset multiplot\n");
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+    fprintf(fp, "pause -1\n");
+#endif
 
     fclose(fp);
-    
-    system("gnuplot -persist x12a.gp");
 
     return 0;
 }
@@ -218,14 +249,29 @@ static int add_x12a_series (const char *fname, int code,
     return err;
 }
 
+int *make_savelist (void)
+{
+    int *list = malloc(4 * sizeof *list);
+
+    if (list == NULL) return NULL;
+    
+    list[0] = 3;
+    list[1] = D11;
+    list[2] = D12;
+    list[3] = D13;
+
+    return list;
+}
+
 int write_x12a_data (char *fname, int varnum, 
 		     double ***pZ, DATAINFO *pdinfo, 
+		     PATHS *paths, int *graph,
 		     const char *x12adir)
 {
     int i, t, err = 0;
     char tmp[8], varname[9], cmd[MAXLEN];
     int startyr, startper;
-    int *savelist = NULL; /* FIXME configuration */
+    int *savelist = NULL;
     double x;
     FILE *fp = NULL;
 
@@ -243,11 +289,7 @@ int write_x12a_data (char *fname, int varnum,
     if (fp == NULL) {
 	fp = fopen(fname, "w");
 	if (fp == NULL) return 1;
-	fprintf(fp, "(0 1 1)(0 1 1) X\n"
-		"(0 1 2)(0 1 1) X\n"
-		"(2 1 0)(0 1 1) X\n"
-		"(0 2 2)(0 1 1) X\n"
-		"(2 1 2)(0 1 1)\n");
+	fprintf(fp, "%s", default_mdl);
 	fclose(fp);
     } else {
 	fclose(fp);
@@ -283,6 +325,8 @@ int write_x12a_data (char *fname, int varnum,
 	i++;
     }
     fputs(" )\n}\n", fp);
+
+    savelist = make_savelist();
 
     /* FIXME: make these values configurable */
     fputs("automdl{}\nx11{", fp);
@@ -320,7 +364,8 @@ int write_x12a_data (char *fname, int varnum,
 	    err = add_x12a_series (fname, savelist[i], pZ, pdinfo, varnum);
 	}
 	/* testing */
-	graph_x12a_series(*pZ, pdinfo, varnum);
+	err = graph_x12a_series(*pZ, pdinfo, paths, varnum);
+	if (!err) *graph = 1;
     }
 
     return err;

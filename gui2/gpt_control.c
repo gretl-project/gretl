@@ -1665,7 +1665,7 @@ static void render_pngfile (const char *fname, png_plot_t *plot,
 				  GDK_RGB_DITHER_NONE, 0, 0);
 
     g_object_unref(pbuf);
-    remove(fname);
+    /* remove(fname); */
     
     if (view == PNG_ZOOM || view == PNG_UNZOOM) { 
 	/* refresh the whole canvas */
