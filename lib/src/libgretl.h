@@ -149,6 +149,7 @@ typedef struct _FITRESID FITRESID;
 typedef struct _CONFINT CONFINT;
 typedef struct _VCV VCV;
 typedef struct _DATASET DATASET;
+typedef struct _GRETL_VAR GRETL_VAR;
 
 typedef struct _mp_results mp_results;
 

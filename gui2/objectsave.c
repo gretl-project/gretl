@@ -24,11 +24,15 @@
 #include "gpt_control.h"
 #include "objectsave.h"
 
+#include "var.h"
+
 enum {
     OBJ_NONE,
     OBJ_MODEL_SHOW,
     OBJ_MODEL_FREE,
     OBJ_MODEL_STAT,
+    OBJ_VAR_SHOW,
+    OBJ_VAR_FREE,
     OBJ_GRAPH_SHOW,
     OBJ_GRAPH_FREE
 };
@@ -40,6 +44,12 @@ static int match_object_command (const char *s, char sort)
 	if (strcmp(s, "show") == 0) return OBJ_MODEL_SHOW;
 	if (strcmp(s, "free") == 0) return OBJ_MODEL_FREE; 
 	return OBJ_MODEL_STAT;
+    }
+
+    if (sort == 'v') {
+	if (*s == 0) return OBJ_VAR_SHOW; /* default */
+	if (strcmp(s, "show") == 0) return OBJ_VAR_SHOW;
+	if (strcmp(s, "free") == 0) return OBJ_VAR_FREE; 
     }
 
     if (sort == 'g') {
@@ -83,6 +93,18 @@ static void show_saved_model (MODEL *pmod, const DATAINFO *pdinfo)
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
     view_model(prn, pmod, 78, 400, title); 
+}
+
+static void show_saved_var (GRETL_VAR *var, const DATAINFO *pdinfo)
+{
+    windata_t *vwin;
+    PRN *prn;
+
+    if (bufopen(&prn)) return;
+
+    gretl_var_print(var, pdinfo, prn);
+    vwin = view_buffer(prn, 78, 450, gretl_var_get_name(var), VAR, NULL);
+    if (vwin != NULL) vwin->data = var;
 }
 
 static void get_word_and_command (const char *s, char *word, 
@@ -200,6 +222,32 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
     return err;
 }
 
+int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    GRETL_VAR *var;
+    int err;
+
+    if (*cmd->savename == 0) return 0;
+
+    var = full_var(atoi(cmd->param), cmd->list, pZ, pdinfo, NULL);
+
+    if (var == NULL) {
+	err = E_ALLOC;
+    } else {
+	gretl_var_assign_specific_name(var, cmd->savename);
+	err = try_add_var_to_session(var);
+
+	if (!err) {
+	    pprintf(prn, _("%s saved\n"), cmd->savename);
+	} else {
+	    gretl_var_free(var);
+	    err = E_ALLOC;
+	}
+    }
+
+    return err;
+}
+
 int maybe_save_graph (const CMD *cmd, const char *fname, int code,
 		      PRN *prn)
 {
@@ -269,6 +317,15 @@ int saved_object_action (const char *line,
 	print_model_stat((MODEL *) ptr, param, prn);
     }
 
+    if (action == OBJ_VAR_SHOW) {
+	show_saved_var((GRETL_VAR *) ptr, pdinfo);
+    } 
+
+    else if (action == OBJ_VAR_FREE) {
+	delete_var_from_session((GRETL_VAR *) ptr);
+	pprintf(prn, _("Freed %s\n"), savename);
+    }
+
     else if (action == OBJ_GRAPH_SHOW) {
 	GRAPHT *graph = (GRAPHT *) ptr;
 	display_session_graph_png(graph->fname);
@@ -276,6 +333,7 @@ int saved_object_action (const char *line,
 
     else if (action == OBJ_GRAPH_FREE) {
 	/* FIXME */
+	dummy_call();
 	fprintf(stderr, "Got request to delete graph\n");
     }
 

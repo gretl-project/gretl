@@ -22,35 +22,23 @@
 
 #include "gretl_matrix.h"
 
-typedef struct _GRETL_VAR GRETL_VAR;
-
-struct _GRETL_VAR {
-    int neqns;         /* number of equations in system */
-    int order;         /* lag order */
-    int n;             /* number of observations */
-    int ifc;           /* equations include a constant (1) or not (0) */
-    gretl_matrix *A;   /* augmented coefficient matrix */
-    gretl_matrix *E;   /* residuals matrix */
-    gretl_matrix *C;   /* augmented Cholesky-decomposed error matrix */
-    MODEL **models;    /* pointers to individual equation estimates */
-    double *Fvals;     /* hold results of F-tests */
-};
- 
 int list_diffgenr (const LIST list, 
 		   double ***pZ, DATAINFO *pdinfo);
 
 int list_ldiffgenr (const LIST list, 
 		    double ***pZ, DATAINFO *pdinfo);
 
-int var (int order, const LIST list, 
-	 double ***pZ, DATAINFO *pdinfo,
-	 int pause, PRN *prn);
+int simple_var (int order, const LIST list, 
+		double ***pZ, DATAINFO *pdinfo,
+		int pause, PRN *prn);
 
 GRETL_VAR *full_var (int order, const LIST list, 
 		     double ***pZ, DATAINFO *pdinfo,
 		     PRN *prn);
 
-void gretl_var_free (GRETL_VAR *var, const DATAINFO *pdinfo);
+void gretl_var_free (GRETL_VAR *var);
+
+void gretl_var_free_unnamed (GRETL_VAR *var);
 
 int coint (int order, const LIST list, 
 	   double ***pZ, DATAINFO *pdinfo, 
@@ -72,7 +60,13 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATAINFO *pdinfo, 
 				  PRN *prn);
 
-int print_var (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn);
+int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn);
+
+void gretl_var_assign_name (GRETL_VAR *var);
+
+void gretl_var_assign_specific_name (GRETL_VAR *var, const char *name);
+
+const char *gretl_var_get_name (const GRETL_VAR *var);
 
 #endif /* VAR_H_ */
 

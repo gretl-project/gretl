@@ -89,7 +89,7 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/File/Save to session as icon"), NULL, remember_model, 0, NULL, GNULL },
     { N_("/File/Save as icon and close"), NULL, remember_model, 1, NULL, GNULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy"), "", model_copy_callback, 0, "<StockItem>", GTK_STOCK_COPY },
@@ -165,6 +165,17 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/LaTeX/Copy/_Tabular"), NULL, text_copy, COPY_LATEX, NULL, GNULL },
     { N_("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
+};
+
+GtkItemFactoryEntry var_items[] = {
+    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, 
+      "<StockItem>", GTK_STOCK_SAVE_AS },
+    { N_("/File/Save to session as icon"), NULL, remember_var, 0, NULL, GNULL },
+    { N_("/File/Save as icon and close"), NULL, remember_var, 1, NULL, GNULL },
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
+#endif
 };
 
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
@@ -992,10 +1003,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_gretl_mp_results(vwin->data);
 	else if (vwin->role == VIEW_SERIES)
 	    free_series_view(vwin->data);
-#if 1
 	else if (vwin->role == VAR) 
-	    gretl_var_free(vwin->data, datainfo);
-#endif
+	    gretl_var_free_unnamed(vwin->data);
 
 	if (vwin->dialog)
 	    winstack_remove(vwin->dialog);
@@ -1515,7 +1524,7 @@ static void cursor_to_top (windata_t *vwin)
 /* ........................................................... */
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
-			char *title, int role, 
+			const char *title, int role, 
 			GtkItemFactoryEntry menu_items[]) 
 {
     GtkWidget *close;
@@ -1526,6 +1535,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     if (vwin == NULL) return NULL;
 
     viewer_box_config(vwin);
+
+    if (role == VAR) menu_items = var_items;
 
     if (menu_items != NULL) {
 	set_up_viewer_menu(vwin->dialog, vwin, menu_items);

@@ -23,6 +23,8 @@
 #include <gtkextra/gtksheet.h>
 #include <gtkextra/gtkitementry.h>
 
+#include "ssheet.h"
+
 #define DEFAULT_PRECISION 6
 #define DEFAULT_SPACE 8
 

@@ -25,6 +25,19 @@
 
 /* #define VAR_DEBUG */
 
+struct _GRETL_VAR {
+    int neqns;         /* number of equations in system */
+    int order;         /* lag order */
+    int n;             /* number of observations */
+    int ifc;           /* equations include a constant (1) or not (0) */
+    gretl_matrix *A;   /* augmented coefficient matrix */
+    gretl_matrix *E;   /* residuals matrix */
+    gretl_matrix *C;   /* augmented Cholesky-decomposed error matrix */
+    MODEL **models;    /* pointers to individual equation estimates */
+    double *Fvals;     /* hold results of F-tests */
+    char *name;        /* for use in session management */
+};
+
 struct var_resids {
     int *levels_list;
     double **uhat;
@@ -68,6 +81,7 @@ gretl_var_init (GRETL_VAR *var, int neqns, int order, const DATAINFO *pdinfo,
     var->C = NULL;
     var->models = NULL;
     var->Fvals = NULL;
+    var->name = NULL;
 
     if (neqns > 0) {
 	var->A = gretl_matrix_alloc(rows, rows);
@@ -123,25 +137,37 @@ gretl_var_init (GRETL_VAR *var, int neqns, int order, const DATAINFO *pdinfo,
     return err;
 }
 
-void gretl_var_free (GRETL_VAR *var, const DATAINFO *pdinfo)
+void gretl_var_free (GRETL_VAR *var)
 {
     int i;
+
+    if (var == NULL) return;
 
     gretl_matrix_free(var->A);
     gretl_matrix_free(var->E);
     gretl_matrix_free(var->C);
 
     free(var->Fvals);
+    free(var->name);
 
     if (var->models != NULL) {
 	for (i=0; i<var->neqns; i++) {
-	    clear_model(var->models[i], pdinfo);
+	    clear_model(var->models[i], NULL);
 	    free(var->models[i]);
 	}
 	free(var->models);
     }
 
     free(var);
+}
+
+void gretl_var_free_unnamed (GRETL_VAR *var)
+{
+    if (var == NULL) return;
+
+    if (var->name == NULL || *var->name == '\0') {
+	gretl_var_free(var);
+    }
 }
 
 GRETL_VAR *gretl_var_new (int neqns, int order, const DATAINFO *pdinfo,
@@ -863,7 +889,7 @@ static int real_var (int order, const LIST list,
 	if ((flags & VAR_SAVE) && pvar != NULL) {
 	    *pvar = var;
 	} else {
-	    gretl_var_free(var, pdinfo);
+	    gretl_var_free(var);
 	}
     }
 
@@ -871,7 +897,7 @@ static int real_var (int order, const LIST list,
 }
 
 /**
- * var:
+ * simple_var:
  * @order: lag order for the VAR
  * @list: specification for the first model in the set.
  * @pZ: pointer to data matrix.
@@ -885,8 +911,8 @@ static int real_var (int order, const LIST list,
  *
  */
 
-int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
-	 int pause, PRN *prn)
+int simple_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
+		int pause, PRN *prn)
 {
     char flags = VAR_PRINT_MODELS | VAR_DO_FTESTS;
 
@@ -913,7 +939,7 @@ GRETL_VAR *full_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		   VAR_PRINT_MODELS | VAR_DO_FTESTS | 
 		   VAR_IMPULSE_RESPONSES | VAR_SAVE);
     if (err) {
-	gretl_var_free(var, pdinfo);
+	gretl_var_free(var);
 	return NULL;
     } else {
 	return var;
@@ -1613,7 +1639,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-int print_var (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
+int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, j, k, v;
     int dfd = (var->models[0])->dfd;
@@ -1653,4 +1679,29 @@ int print_var (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
     }
 
     return 0;
+}
+
+void gretl_var_assign_name (GRETL_VAR *var)
+{
+    static int n = 0;
+
+    if (var->name != NULL) free(var->name);
+    var->name = malloc(8);
+    if (var->name != NULL) {
+	sprintf(var->name, "%s %d", _("VAR"), ++n);
+    }
+}
+
+void gretl_var_assign_specific_name (GRETL_VAR *var, const char *name)
+{
+    if (var->name != NULL) free(var->name);
+    var->name = malloc(strlen(name) + 1);
+    if (var->name != NULL) {
+	strcpy(var->name, name);
+    }    
+}
+
+const char *gretl_var_get_name (const GRETL_VAR *var)
+{
+    return var->name;
 }

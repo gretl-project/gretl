@@ -28,6 +28,8 @@
 #include "guiprint.h"
 #include "model_table.h"
 
+#include "var.h"
+
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
@@ -35,6 +37,19 @@
 #ifdef G_OS_WIN32
 # include <windows.h>
 #endif
+
+#ifdef OLD_GTK
+# include <gdk-pixbuf/gdk-pixbuf.h>
+#endif
+
+/* from gui_utils.c */
+extern void winstack_init (void);
+extern void winstack_destroy (void);
+extern int winstack_match_data (gpointer p);
+
+extern int replay; /* lib.c */
+
+static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 
 #include "../pixmaps/model.xpm"
 #include "../pixmaps/boxplot.xpm"
@@ -57,8 +72,10 @@ struct _SESSION {
     char name[32];
     int nmodels;
     int ngraphs;
+    int nvars;
     MODEL **models;
     GRAPHT **graphs;
+    GRETL_VAR **vars;
     char *notes;
 };
 
@@ -92,17 +109,6 @@ static GtkTargetEntry model_table_drag_target = {
     "model_pointer", GTK_TARGET_SAME_APP, GRETL_MODEL_POINTER 
 };
 
-/* from gui_utils.c */
-extern void winstack_init (void);
-extern void winstack_destroy (void);
-extern int winstack_match_data (gpointer p);
-
-extern int replay; /* lib.c */
-
-static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
-
-/* "session" struct and "errtext" are globals */
-
 static char *global_items[] = {
     N_("Arrange icons"),
 #ifndef GNUPLOT_PNG
@@ -121,6 +127,11 @@ static char *model_table_items[] = {
     N_("Display"),
     N_("Clear table"),
     N_("Help")
+};
+
+static char *var_items[] = {
+    N_("Display"),
+    N_("Delete")
 };
 
 static char *graph_items[] = {
@@ -167,6 +178,7 @@ static GtkWidget *global_popup;
 static GtkWidget *session_popup;
 static GtkWidget *model_popup;
 static GtkWidget *model_table_popup;
+static GtkWidget *var_popup;
 static GtkWidget *graph_popup;
 static GtkWidget *boxplot_popup;
 static GtkWidget *data_popup;
@@ -187,6 +199,7 @@ static gui_obj *gui_object_new (gchar *name, int sort);
 static gui_obj *session_add_icon (gpointer data, int sort, int mode);
 static void session_delete_icon (gui_obj *gobj);
 static void open_gui_model (gui_obj *gobj);
+static void open_gui_var (gui_obj *gobj);
 static void open_gui_graph (gui_obj *gobj);
 static void open_boxplot (gui_obj *gobj);
 static gboolean session_icon_click (GtkWidget *widget, 
@@ -249,6 +262,8 @@ static int look_up_graph_by_name (const char *grname)
     }
     return -1;
 }
+
+/* .................................................................. */
 
 int real_add_graph_to_session (const char *fname, const char *grname,
 			       int code)
@@ -369,6 +384,18 @@ static int model_already_saved (MODEL *pmod)
     return 0;
 }
 
+static int var_already_saved (GRETL_VAR *var)
+{
+    int i;
+
+    for (i=0; i<session.nvars; i++) {
+	if (session.vars[i] == var) {
+	    return 1;
+	}
+    }
+    return 0;
+}
+
 /* ........................................................... */
 
 static int real_add_model_to_session (MODEL *pmod)
@@ -395,6 +422,30 @@ static int real_add_model_to_session (MODEL *pmod)
     return 0;
 }
 
+static int real_add_var_to_session (GRETL_VAR *var)
+{
+    int n = session.nvars; 
+
+    if (session.nvars) {
+	session.vars = myrealloc(session.vars, 
+				   (n + 1) * sizeof *session.vars);
+    } else {
+	session.vars = mymalloc(sizeof *session.vars);
+    }
+
+    if (session.vars == NULL) return 1;
+
+    session.vars[n] = var;
+    session.nvars += 1;
+
+    /* add var icon to session display */
+    if (icon_list != NULL) {
+	session_add_icon(session.vars[n], 'v', ICON_ADD_SINGLE);
+    }    
+
+    return 0;
+}
+
 /* ........................................................... */
 
 void *get_session_object_by_name (const char *name, char *which)
@@ -405,6 +456,13 @@ void *get_session_object_by_name (const char *name, char *which)
 	if (strcmp(name, (session.models[i])->name) == 0) {
 	    *which = 'm';
 	    return session.models[i];
+	}
+    }
+
+    for (i=0; i<session.nvars; i++) {
+	if (strcmp(name, gretl_var_get_name(session.vars[i])) == 0) {
+	    *which = 'v';
+	    return session.vars[i];
 	}
     }
 
@@ -427,6 +485,13 @@ int try_add_model_to_session (MODEL *pmod)
     return 0;
 }
 
+int try_add_var_to_session (GRETL_VAR *var)
+{
+    if (var_already_saved(var)) return 1;
+    if (real_add_var_to_session(var)) return 1;
+    return 0;
+}
+
 /* ........................................................... */
 
 void remember_model (gpointer data, guint close, GtkWidget *widget)
@@ -435,6 +500,8 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     gchar *buf;
+
+    if (pmod == NULL) return;
 
     if (model_already_saved(pmod)) {
 	infobox(_("Model is already saved"));
@@ -459,6 +526,38 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
 
 /* ........................................................... */
 
+void remember_var (gpointer data, guint close, GtkWidget *widget)
+     /* called directly from VAR window */
+{
+    windata_t *mydata = (windata_t *) data;
+    GRETL_VAR *var = (GRETL_VAR *) mydata->data;
+    gchar *buf;
+
+    if (var == NULL) return;
+
+    if (var_already_saved(var)) {
+	infobox(_("VAR is already saved"));
+	return;
+    }
+
+    gretl_var_assign_name(var);
+
+    if (real_add_var_to_session(var)) return;
+
+    buf = g_strdup_printf(_("%s saved"), gretl_var_get_name(var));
+    infobox(buf);
+    g_free(buf);
+
+    session_changed(1);
+
+    /* close VAR window */
+    if (close) {
+	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(mydata->w)));
+    } 
+}
+
+/* ........................................................... */
+
 int session_changed (int set)
 {
     static int has_changed;
@@ -474,10 +573,12 @@ int session_changed (int set)
 void session_init (void)
 {
     session.models = NULL;
+    session.vars = NULL;
     session.graphs = NULL;
     session.notes = NULL;
     session.nmodels = 0;
     session.ngraphs = 0;
+    session.nvars = 0;
     *session.name = '\0';
 
     session_changed(0);
@@ -572,33 +673,6 @@ void do_open_session (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-int session_file_is_open (void)
-{
-    return session_file_open;
-}
-
-/* ........................................................... */
-
-void close_session (void)
-{
-    clear_data();
-    free_session();
-    free_model_table_list();
-
-    session_menu_state(FALSE);
-    session_file_open = 0;
-    if (iconview != NULL) 
-	gtk_widget_destroy(iconview);
-    session_changed(0);
-    winstack_destroy();
-    clear_selector();
-
-    plot_count = 0;
-    zero_boxplot_count();
-}
-
-/* ........................................................... */
-
 void verify_clear_data (void)
 {
     if (!expert) {
@@ -626,6 +700,14 @@ void free_session (void)
 	session.models = NULL;
     }
 
+    if (session.vars) {
+	for (i=0; i<session.nvars; i++) {
+	    gretl_var_free(session.vars[i]);
+	}
+	free(session.vars);
+	session.vars = NULL;
+    }
+
     if (session.graphs) {
 	free(session.graphs);
 	session.graphs = NULL;
@@ -637,8 +719,35 @@ void free_session (void)
     }
 
     session.nmodels = 0;
+    session.nvars = 0;
     session.ngraphs = 0;
     *session.name = '\0';
+}
+/* ........................................................... */
+
+int session_file_is_open (void)
+{
+    return session_file_open;
+}
+
+/* ........................................................... */
+
+void close_session (void)
+{
+    clear_data(); /* in gtk1 version: clear_data(1); */
+    free_session();
+    free_model_table_list();
+
+    session_menu_state(FALSE);
+    session_file_open = 0;
+    if (iconview != NULL) 
+	gtk_widget_destroy(iconview);
+    session_changed(0);
+    winstack_destroy();
+    clear_selector();
+
+    plot_count = 0;
+    zero_boxplot_count();
 }
 
 /* ........................................................... */
@@ -652,6 +761,10 @@ void print_session (void)
     for (i=0; i<session.nmodels; i++) {
 	printf("model %d %s\n", (session.models[i])->ID,
 	       (session.models[i])->name);
+    }
+    printf("Session contains %d vars:\n", session.nvars);
+    for (i=0; i<session.nvars; i++) {
+	printf("var '%s'\n", gretl_var_get_name(session.vars[i]));
     }
     printf("Session contains %d graphs:\n", session.ngraphs);
     for (i=0; i<session.ngraphs; i++) {
@@ -688,6 +801,8 @@ int saved_objects (char *fname)
     fclose(fp);
     return saves;
 }
+
+/* ........................................................... */
 
 static int check_session_graph (const char *line, 
 				char **name, char **fname)
@@ -991,6 +1106,9 @@ static gchar *graph_str (GRAPHT *graph)
 	    }
 	}
 	if (gotxy == 2) {
+#ifdef OLD_GTK
+	    buf = g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
+#else
 	    char *str = malloc(64);
 	    gsize bytes;
 
@@ -999,6 +1117,7 @@ static gchar *graph_str (GRAPHT *graph)
 		buf = g_locale_to_utf8(str, -1, NULL, &bytes, NULL);
 		free(str);
 	    }
+#endif /* OLD_GTK */
 	}
 	fclose(fp);
     }
@@ -1034,170 +1153,32 @@ static char *boxplot_str (GRAPHT *graph)
 
 /* ........................................................... */
 
-static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
-{
-    FILE *fp;
-    gchar *msg, *savestuff;
-    windata_t *mydata = (windata_t *) data;
-#ifdef ENABLE_NLS
-    gsize bytes;
-    gchar *trbuf;
-#endif
-
-    savestuff = textview_get_text(GTK_TEXT_VIEW(mydata->w));
-
-    if (savestuff == NULL) return;
-
-    if ((fp = fopen(mydata->fname, "w")) == NULL) {
-	msg = g_strdup_printf(_("Couldn't write to %s"), mydata->fname);
-	errbox(msg); 
-	g_free(msg);
-	g_free(savestuff);
-	return;
-    }
-
-#ifdef ENABLE_NLS
-    trbuf = g_locale_from_utf8(savestuff, -1, NULL, &bytes, NULL);
-    fprintf(fp, "%s", trbuf);
-    g_free(trbuf);
-#else
-    fprintf(fp, "%s", savestuff);
-#endif
-
-#ifdef OLD_G_OS_WIN32
-    if (strstr(savestuff, "set term") == NULL &&
-	strstr(savestuff, "pause -1") == NULL) {
-	fputs("\npause -1\n", fp);
-    }
-#endif
-
-    g_free(savestuff); 
-    fclose(fp);
-    if (!quiet) infobox(_("plot commands saved"));
-}
-
-void save_plot_commands_callback (GtkWidget *w, gpointer p)
-{
-    auto_save_gp(p, 0, NULL);
-}
-
-/* ........................................................... */
-
-#ifdef G_OS_WIN32
-static char *add_pause_to_plotfile (const char *fname)
-{
-    FILE *fin, *fout;
-    char fline[MAXLEN];
-    char *tmpfile = NULL;
-    int gotpause = 0;
-
-    fin = fopen(fname, "r");
-    if (fin == NULL) return NULL;
-
-    tmpfile = g_strdup_printf("%showtmp.gp", paths.userdir);
-
-    fout = fopen(tmpfile, "w");
-    if (fout == NULL) {
-	fclose(fin);
-	g_free(tmpfile);
-	return NULL;
-    }
-
-    while (fgets(fline, MAXLEN - 1, fin)) {
-	fputs(fline, fout);
-	if (strstr(fline, "pause -1")) gotpause = 1;
-    }
-
-    if (!gotpause) {
-	fputs("pause -1\n", fout);
-    }
-
-    fclose(fin);
-    fclose(fout);
-
-    return tmpfile;
-}
-#endif
-
-/* ........................................................... */
-
-void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
-{
-    gchar *buf = NULL;
-    windata_t *mydata = (windata_t *) data;
-    int err = 0;
-#ifdef G_OS_WIN32
-    gchar *tmpfile;
-#endif
-
-    auto_save_gp(data, 1, NULL);
-
-#ifdef G_OS_WIN32
-    tmpfile = add_pause_to_plotfile(mydata->fname);
-    if (tmpfile != NULL) {
-	buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, tmpfile);
-	err = (WinExec(buf, SW_SHOWNORMAL) < 32);
-	remove(tmpfile); /* is this OK? */
-	g_free(tmpfile);
-    } else {
-	err = 1;
-    }
-#else
-    buf = g_strdup_printf("gnuplot -persist \"%s\"", mydata->fname);
-    err = gretl_spawn(buf);
-#endif
-
-    if (err) errbox(_("gnuplot command failed"));
-
-    g_free(buf);
-}
-
-/* ........................................................... */
-
-/* Now the apparatus for the GUI view of a gretl session in the form
-   of a window containing icons */
-
 static void open_gui_model (gui_obj *gobj)
 { 
     PRN *prn;
     MODEL *pmod = (MODEL *) gobj->data;
 
     if (bufopen(&prn)) return;
+
     if (printmodel(pmod, datainfo, prn))
 	pmod->errcode = E_NAN;
     view_model(prn, pmod, 78, 400, gobj->name);
 }
 
-#ifdef GNUPLOT_PNG
+/* ........................................................... */
 
-static void open_gui_graph (gui_obj *gobj)
-{
-    GRAPHT *graph = (GRAPHT *) gobj->data;
+static void open_gui_var (gui_obj *gobj)
+{ 
+    PRN *prn;
+    GRETL_VAR *var = (GRETL_VAR *) gobj->data;
+    windata_t *vwin;
 
-    display_session_graph_png(graph->fname);
+    if (bufopen(&prn)) return;
+
+    gretl_var_print(var, datainfo, prn);
+    vwin = view_buffer(prn, 78, 450, gobj->name, VAR, NULL);
+    if (vwin != NULL) vwin->data = var;
 }
-
-#else /* non-PNG version */
-
-static void open_gui_graph (gui_obj *gobj)
-{
-    GRAPHT *graph = (GRAPHT *) gobj->data;
-    gchar *buf = NULL;
-    int err = 0;
-
-#ifdef G_OS_WIN32
-    buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, graph->fname);
-    err = (WinExec(buf, SW_SHOWNORMAL) < 32);
-#else
-    buf = g_strdup_printf("\"%s\" -persist \"%s\"", paths.gnuplot, graph->fname);
-    err = gretl_spawn(buf);
-#endif
-    g_free(buf);
-
-    if (err) errbox(_("gnuplot command failed"));
-}
-
-#endif /* GNUPLOT_PNG */
 
 /* ........................................................... */
 
@@ -1214,6 +1195,8 @@ static void delete_delfiles (const gchar *fname, gpointer p)
 {
     remove (fname);
 }
+
+/* ........................................................... */
 
 void session_file_manager (int action, const char *fname)
 {
@@ -1276,6 +1259,40 @@ static int real_delete_model_from_session (MODEL *junk)
     return 0;
 }
 
+/* ........................................................... */
+
+static int real_delete_var_from_session (GRETL_VAR *junk)
+{
+    if (session.nvars == 1) {
+	gretl_var_free(session.vars[0]);
+    } else {
+	GRETL_VAR **ppvar;
+	int i, j;
+
+	ppvar = mymalloc((session.nvars - 1) * sizeof *ppvar);
+	if (session.nvars > 1 && ppvar == NULL) {
+	    return 1;
+	}
+	j = 0;
+	for (i=0; i<session.nvars; i++) {
+	    if (session.vars[i] != junk) {
+		ppvar[j++] = session.vars[i];
+	    } else {
+		gretl_var_free(session.vars[i]);
+	    }
+	}
+	free(session.vars);
+	session.vars = ppvar;
+    }
+
+    session.nvars -= 1;
+    session_changed(1);
+
+    return 0;
+}
+
+/* ........................................................... */
+
 static int real_delete_graph_from_session (GRAPHT *junk)
 {
     int i, j;
@@ -1311,12 +1328,19 @@ static int real_delete_graph_from_session (GRAPHT *junk)
     return 0;
 }
 
+/* ........................................................... */
+
 static int delete_session_object (gui_obj *obj)
 {
     if (obj->sort == 'm') { /* it's a model */
 	MODEL *junk = (MODEL *) obj->data;
 
 	real_delete_model_from_session(junk);
+    }
+    if (obj->sort == 'v') { /* it's a VAR */
+	GRETL_VAR *junk = (GRETL_VAR *) obj->data;
+
+	real_delete_var_from_session(junk);
     }
     else if (obj->sort == 'g' || obj->sort == 'b') { /* it's a graph */    
 	GRAPHT *junk = (GRAPHT *) obj->data;
@@ -1344,6 +1368,7 @@ static void maybe_delete_session_object (gui_obj *obj)
     if (yes_no_dialog(_("gretl: delete"), msg, 0) == GRETL_YES) {
 	delete_session_object(obj);
     }
+
     g_free(msg);
 }
 
@@ -1382,6 +1407,22 @@ void delete_model_from_session (MODEL *pmod)
     }
 }
 
+void delete_var_from_session (GRETL_VAR *var)
+{
+    gui_obj *obj;
+
+    obj = get_gui_obj_from_data((void *) var);
+
+    if (winstack_match_data(var)) {
+	errbox(_("Please close this object's window first"));
+	return;
+    }
+
+    real_delete_var_from_session(var);
+    if (obj != NULL) {
+	session_delete_icon(obj);
+    }
+}
 /* ........................................................... */
 
 static void session_view_init (void)
@@ -1405,29 +1446,6 @@ static void session_view_free (GtkWidget *w, gpointer data)
 
     g_list_free(icon_list);
     icon_list = NULL;
-}
-
-/* ........................................................... */
-
-static GdkColor *get_white (void)
-{
-    GdkColormap *cmap;
-    static GdkColor *white;
-
-    if (white == NULL) {
-	white = malloc(sizeof *white);
-	cmap = gdk_colormap_get_system();
-	gdk_color_parse("white", white);
-	gdk_colormap_alloc_color(cmap, white, FALSE, TRUE);
-    }
-    return white;
-}
-
-/* ........................................................... */
-
-static void white_bg_style (GtkWidget *widget, gpointer data)
-{
-    gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, get_white());
 }
 
 /* ........................................................... */
@@ -1462,9 +1480,66 @@ static void foreach_delete_icons (gui_obj *gobj, gpointer p)
     free(gobj->name);
 }
 
+/* apparatus for getting a white background */
+
+#ifdef OLD_GTK
+
+static void white_bg_style (GtkWidget *widget, gpointer data)
+{
+     GtkRcStyle *rc_style;
+     GdkColor *color = get_white();
+
+     rc_style = gtk_rc_style_new();
+     rc_style->bg[GTK_STATE_NORMAL] = *color;
+     rc_style->color_flags[GTK_STATE_NORMAL] |= GTK_RC_BG;
+
+     gtk_widget_modify_style(widget, rc_style);
+     gtk_rc_style_unref(rc_style);
+}
+
+static void color_white (GtkWidget *w)
+{
+     GtkRcStyle *rc_style;
+     GdkColor color;
+
+     gdk_color_parse("white", &color);
+     rc_style = gtk_rc_style_new();
+     rc_style->bg[GTK_STATE_NORMAL] = color;
+     rc_style->color_flags[GTK_STATE_NORMAL] |= GTK_RC_BG;
+
+     gtk_widget_modify_style(w, rc_style);
+     gtk_rc_style_unref(rc_style);
+}
+
+#else
+
+static GdkColor *get_white (void)
+{
+    GdkColormap *cmap;
+    static GdkColor *white;
+
+    if (white == NULL) {
+	white = malloc(sizeof *white);
+	cmap = gdk_colormap_get_system();
+	gdk_color_parse("white", white);
+	gdk_colormap_alloc_color(cmap, white, FALSE, TRUE);
+    }
+    return white;
+}
+
+static void white_bg_style (GtkWidget *widget, gpointer data)
+{
+    gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, get_white());
+}
+
+#endif /* OLD_GTK */
+
+
 static void real_pack_icon (gui_obj *gobj, int row, int col)
 {
+#ifndef OLD_GTK
     GdkColor *white = get_white();
+#endif
 
     gobj->row = row;
     gobj->col = col;
@@ -1473,11 +1548,17 @@ static void real_pack_icon (gui_obj *gobj, int row, int col)
 		      col, col + 1, row, row + 1,
 		      GTK_EXPAND, GTK_FILL, 5, 5);
     gtk_widget_show(gobj->icon);
+
+#ifdef OLD_GTK
+    white_bg_style(gobj->icon, NULL);
+#else
     gtk_widget_modify_bg(gobj->icon, GTK_STATE_NORMAL, white);
+#endif
 
     gtk_table_attach (GTK_TABLE(icon_table), gobj->label,
 		      col, col + 1, row + 1, row + 2,
 		      GTK_EXPAND, GTK_FILL, 5, 5);
+
     gtk_widget_show(gobj->label);
 }
 
@@ -1543,6 +1624,7 @@ static void add_all_icons (void)
 
 #ifdef SESSION_DEBUG
     fprintf(stderr, "view_session: session.nmodels = %d\n", session.nmodels);
+    fprintf(stderr, "view_session: session.nvars = %d\n", session.nvars);
     fprintf(stderr, "view_session: session.ngraphs = %d\n", session.ngraphs);
 #endif
 
@@ -1551,6 +1633,13 @@ static void add_all_icons (void)
 	fprintf(stderr, "adding session.models[%d] to view\n", i);
 #endif
 	session_add_icon(session.models[i], 'm', ICON_ADD_BATCH);
+    }
+
+    for (i=0; i<session.nvars; i++) {
+#ifdef SESSION_DEBUG
+	fprintf(stderr, "adding session.vars[%d] to view\n", i);
+#endif
+	session_add_icon(session.vars[i], 'v', ICON_ADD_BATCH);
     }
 
     for (i=0; i<session.ngraphs; i++) {
@@ -1592,68 +1681,6 @@ static gint catch_iconview_key (GtkWidget *w, GdkEventKey *key,
 
 /* ........................................................... */
 
-void view_session (void)
-{
-    GtkWidget *hbox, *scroller;
-    gchar *title;
-
-    if (iconview != NULL) {
-	gdk_window_show(iconview->window);
-	gdk_window_raise(iconview->window);
-	return;
-    }
-
-    session_view_init();
-
-    title = g_strdup_printf("gretl: %s", 
-			    (session.name[0])? session.name : 
-			    _("current session"));
-    
-    iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(iconview), title);
-    g_free(title);
-    gtk_window_set_default_size(GTK_WINDOW(iconview), 400, 300);
-    gtk_container_set_border_width(GTK_CONTAINER(iconview), 0);
-
-    g_signal_connect(G_OBJECT(iconview), "destroy",
-		     G_CALLBACK(session_view_free), NULL);
-    g_signal_connect(G_OBJECT(iconview), "key_press_event",
-		     G_CALLBACK(catch_iconview_key), NULL);
-
-    session_build_popups();
-
-    hbox = gtk_hbox_new(FALSE,0);
-    gtk_container_add(GTK_CONTAINER(iconview), hbox);
-    gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
-
-    scroller = gtk_scrolled_window_new(NULL, NULL);
-    gtk_container_set_border_width(GTK_CONTAINER(scroller), 0);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
-				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    g_signal_connect(G_OBJECT(scroller), "button_press_event",
-		     G_CALLBACK(session_icon_click), NULL);
-
-    gtk_box_pack_start(GTK_BOX(hbox), scroller, TRUE, TRUE, 0); 
-
-    icon_table = gtk_table_new(2, SESSION_VIEW_COLS, FALSE);
-
-    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), 
-					  icon_table);
-
-    add_all_icons();
-
-    gtk_widget_show(icon_table);
-    gtk_widget_show(scroller);
-    gtk_widget_show(hbox);
-    gtk_widget_show(iconview);
-
-    gtk_container_foreach(GTK_CONTAINER(scroller), 
-			 (GtkCallback) white_bg_style, 
-			 NULL);
-}
-
-/* ........................................................... */
-
 static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
 {
     GtkWidget *w = NULL;
@@ -1666,6 +1693,9 @@ static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
 	break;
     case 't': 
 	w = model_table_popup; 
+	break;
+    case 'v': 
+	w = var_popup; 
 	break;
     case 'g': 
 	w = graph_popup; 
@@ -1718,6 +1748,8 @@ static gboolean session_icon_click (GtkWidget *widget,
 	switch (gobj->sort) {
 	case 'm':
 	    open_gui_model(gobj); break;
+	case 'v':
+	    open_gui_var(gobj); break;
 	case 'b':
 	    open_boxplot(gobj); break;
 	case 'g':
@@ -1744,7 +1776,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 	if (gobj->sort == 'm' || gobj->sort == 'g' ||
 	    gobj->sort == 'd' || gobj->sort == 'i' ||
 	    gobj->sort == 's' || gobj->sort == 'b' ||
-	    gobj->sort == 't') {
+	    gobj->sort == 't' || gobj->sort == 'v') {
 	    object_popup_show(gobj, (GdkEventButton *) event);
 	}
 	return TRUE;
@@ -1752,123 +1784,6 @@ static gboolean session_icon_click (GtkWidget *widget,
 
     return FALSE;
 }
-
-/* ........................................................... */
-
-static void session_build_popups (void)
-{
-    GtkWidget *item;
-    size_t i;
-
-    if (global_popup == NULL) {
-	global_popup = gtk_menu_new();
-	for (i=0; i<sizeof(global_items) / sizeof(global_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(_(global_items[i]));
-	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(global_popup_activated),
-			     _(global_items[i]));
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(global_popup), item);
-	}
-    }
-
-    if (session_popup == NULL) {
-	size_t n = sizeof(session_items) / sizeof(session_items[0]);
-
-	session_popup = gtk_menu_new();
-	for (i=0; i<n; i++) {
-	    if (i < n-1) {
-		item = gtk_menu_item_new_with_label(_(session_items[i]));
-		g_signal_connect(G_OBJECT(item), "activate",
-				 G_CALLBACK(session_popup_activated),
-				 _(session_items[i]));
-		gtk_widget_show(item);
-		gtk_menu_shell_append(GTK_MENU_SHELL(session_popup), item);
-	    } else {
-		addgraph = gtk_menu_item_new_with_label(_(session_items[i]));
-		g_signal_connect(G_OBJECT(addgraph), "activate",
-				 G_CALLBACK(session_popup_activated),
-				 _(session_items[i]));
-		gtk_widget_show(addgraph);
-		gtk_menu_shell_append(GTK_MENU_SHELL(session_popup), addgraph);
-	    }
-	}
-    }
-
-    if (model_popup == NULL) {
-	model_popup = gtk_menu_new();
-	for (i=0; i<sizeof(model_items)/sizeof(model_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(_(model_items[i]));
-	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(object_popup_activated),
-			     _(model_items[i]));
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(model_popup),item);
-	}
-    }
-
-    if (model_table_popup == NULL) {
-	model_table_popup = gtk_menu_new();
-	for (i=0; i<sizeof(model_table_items)/sizeof(model_table_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(_(model_table_items[i]));
-	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(object_popup_activated),
-			     _(model_table_items[i]));
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(model_table_popup),item);
-	}
-    }
-
-    if (graph_popup == NULL) {
-	graph_popup = gtk_menu_new();
-	for (i=0; i<sizeof(graph_items)/sizeof(graph_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(_(graph_items[i]));
-	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(object_popup_activated),
-			     _(graph_items[i]));
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(graph_popup),item);
-	}
-    }
-
-    if (boxplot_popup == NULL) {
-	boxplot_popup = gtk_menu_new();
-	for (i=0; i<sizeof(graph_items)/sizeof(graph_items[0]); i++) {
-	    if (strstr(graph_items[i], "GUI")) continue;
-	    item = gtk_menu_item_new_with_label(_(graph_items[i]));
-	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(object_popup_activated),
-			     _(graph_items[i]));
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(boxplot_popup),item);
-	}
-    }
-
-    if (data_popup == NULL) {
-	data_popup = gtk_menu_new();
-	for (i=0; i<sizeof(dataset_items)/sizeof(dataset_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(_(dataset_items[i]));
-	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(data_popup_activated),
-			     _(dataset_items[i]));
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(data_popup),item);
-	}
-    }
-
-    if (info_popup == NULL) {
-	info_popup = gtk_menu_new();
-	for (i=0; i<sizeof(info_items)/sizeof(info_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(_(info_items[i]));
-	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(info_popup_activated),
-			     _(info_items[i]));
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(info_popup),item);
-	}
-    }
-}
-
 /* ........................................................... */
 
 static void global_popup_activated (GtkWidget *widget, gpointer data)
@@ -1942,6 +1857,9 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	if (obj->sort == 'm') {
 	    open_gui_model(obj);
 	}
+	if (obj->sort == 'v') {
+	    open_gui_var(obj);
+	}
 	if (obj->sort == 't') {
 	    display_model_table();
 	}
@@ -2011,23 +1929,6 @@ static gboolean icon_left (GtkWidget *icon, GdkEventCrossing *event,
 
 /* ........................................................... */
 
-static void drag_model (GtkWidget *w, GdkDragContext *context,
-			GtkSelectionData *sel, guint info, guint t,
-			MODEL *pmod)
-{
-    gtk_selection_data_set(sel, GDK_SELECTION_TYPE_INTEGER, 8, 
-                           (const guchar *) &pmod, sizeof pmod);
-}
-
-static void model_drag_connect (GtkWidget *w, MODEL *pmod)
-{
-    gtk_drag_source_set(w, GDK_BUTTON1_MASK,
-                        &model_table_drag_target,
-                        1, GDK_ACTION_COPY);
-    g_signal_connect(G_OBJECT(w), "drag_data_get",
-                     G_CALLBACK(drag_model), pmod);
-}
-
 static void 
 model_table_data_received (GtkWidget *widget,
 			   GdkDragContext *context,
@@ -2053,63 +1954,33 @@ static void table_drag_setup (GtkWidget *w)
                        &model_table_drag_target, 1,
                        GDK_ACTION_COPY);
 
+#ifdef OLD_GTK
+    gtk_signal_connect (GTK_OBJECT(w), "drag_data_received",
+			GTK_SIGNAL_FUNC(model_table_data_received),
+			NULL);
+#else
     g_signal_connect (G_OBJECT(w), "drag_data_received",
                       G_CALLBACK(model_table_data_received),
                       NULL);
+#endif
 }
 
-/* ........................................................... */
-
-static gui_obj *gui_object_new (gchar *name, int sort)
+static void drag_model (GtkWidget *w, GdkDragContext *context,
+			GtkSelectionData *sel, guint info, guint t,
+			MODEL *pmod)
 {
-    gui_obj *gobj;
-    char **data = NULL;
-    GdkPixbuf *pbuf;
-    GtkWidget *image;
+    gtk_selection_data_set(sel, GDK_SELECTION_TYPE_INTEGER, 8, 
+                           (const guchar *) &pmod, sizeof pmod);
+}
 
-    gobj = mymalloc(sizeof *gobj);
-    gobj->name = name; 
-    gobj->sort = sort;
-    gobj->data = NULL;
-
-    switch (sort) {
-    case 'm': data = model_xpm; break;
-    case 'b': data = boxplot_xpm; break;
-    case 'g': data = gnuplot_xpm; break;
-    case 'd': data = dot_sc_xpm; break;
-    case 'i': data = xfm_info_xpm; break;
-    case 's': data = xfm_make_xpm; break;
-    case 'n': data = text_xpm; break;
-    case 'r': data = rhohat_xpm; break;
-    case 'x': data = summary_xpm; break;
-    case 't': data = model_table_xpm; break;
-    default: break;
-    }
-
-    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) data);
-
-    gobj->icon = gtk_event_box_new();
-    gtk_widget_set_size_request(gobj->icon, 36, 36);
-
-    image = gtk_image_new_from_pixbuf(pbuf);
-    g_object_unref(G_OBJECT(pbuf));
-
-    gtk_container_add(GTK_CONTAINER(gobj->icon), image);
-    gtk_widget_show(image);
-
-    if (sort == 't') table_drag_setup(gobj->icon);
-
-    gobj->label = gtk_label_new(gobj->name);
-
-    g_signal_connect(G_OBJECT(gobj->icon), "button_press_event",
-		     G_CALLBACK(session_icon_click), gobj);
-    g_signal_connect(G_OBJECT(gobj->icon), "enter_notify_event",
-		     G_CALLBACK(icon_entered), gobj);
-    g_signal_connect(G_OBJECT(gobj->icon), "leave_notify_event",
-		     G_CALLBACK(icon_left), gobj);
-		    
-    return gobj;
-} 
+static void model_drag_connect (GtkWidget *w, MODEL *pmod)
+{
+    gtk_drag_source_set(w, GDK_BUTTON1_MASK,
+                        &model_table_drag_target,
+                        1, GDK_ACTION_COPY);
+    g_signal_connect(G_OBJECT(w), "drag_data_get",
+                     G_CALLBACK(drag_model), pmod);
+}
 
 /* ........................................................... */
 
@@ -2118,12 +1989,17 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     gui_obj *gobj;
     gchar *name = NULL;
     MODEL *pmod = NULL;
+    GRETL_VAR *var = NULL;
     GRAPHT *graph = NULL;
 
     switch (sort) {
     case 'm':
 	pmod = (MODEL *) data;
 	name = g_strdup(pmod->name);
+	break;
+    case 'v':
+	var = (GRETL_VAR *) data;
+	name = g_strdup(gretl_var_get_name(var));
 	break;
     case 'b':
     case 'g':
@@ -2185,6 +2061,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	    free(str);
 	}
     }
+    else if (sort == 'v') gobj->data = var;
     else if (sort == 'd') gobj->data = paths.datfile;
     else if (sort == 's') gobj->data = cmdfile;
     else if (sort == 't') gobj->data = NULL;
@@ -2328,3 +2205,504 @@ int print_session_notes (const char *fname)
 
     return err;
 }
+
+static GtkWidget *create_popup_item (GtkWidget *popup, char *str, 
+				     void *callback)
+{
+    GtkWidget *item;
+
+    item = gtk_menu_item_new_with_label(str);
+
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(item), "activate",
+		       GTK_SIGNAL_FUNC(callback),
+		       str);
+#else
+    g_signal_connect(G_OBJECT(item), "activate",
+		     G_CALLBACK(callback),
+		     str);
+#endif
+
+    gtk_widget_show(item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);
+
+    return item;
+}
+
+/* ........................................................... */
+
+static void session_build_popups (void)
+{
+    size_t i;
+
+    if (global_popup == NULL) {
+	global_popup = gtk_menu_new();
+	for (i=0; i<sizeof global_items / sizeof global_items[0]; i++) {
+	    create_popup_item(global_popup, 
+			      _(global_items[i]), 
+			      global_popup_activated);
+	}
+    }
+
+    if (session_popup == NULL) {
+	size_t n = sizeof session_items / sizeof session_items[0];
+
+	session_popup = gtk_menu_new();
+	for (i=0; i<n; i++) {
+	    if (i < n-1) {
+		create_popup_item(session_popup, 
+				  _(session_items[i]), 
+				  session_popup_activated);
+	    } else {
+		addgraph = 
+		    create_popup_item(session_popup, 
+				      _(session_items[i]), 
+				      session_popup_activated);
+	    }
+	}
+    }
+
+    if (model_popup == NULL) {
+	model_popup = gtk_menu_new();
+	for (i=0; i<sizeof model_items / sizeof model_items[0]; i++) {
+		create_popup_item(model_popup, 
+				  _(model_items[i]), 
+				  object_popup_activated);
+	}
+    }
+
+    if (var_popup == NULL) {
+	var_popup = gtk_menu_new();
+	for (i=0; i<sizeof var_items / sizeof var_items[0]; i++) {
+		create_popup_item(var_popup, 
+				  _(var_items[i]), 
+				  object_popup_activated);
+	}
+    }
+
+    if (model_table_popup == NULL) {
+	model_table_popup = gtk_menu_new();
+	for (i=0; i<sizeof model_table_items / sizeof model_table_items[0]; i++) {
+		create_popup_item(model_table_popup, 
+				  _(model_table_items[i]), 
+				  object_popup_activated);
+	}
+    }
+
+    if (graph_popup == NULL) {
+	graph_popup = gtk_menu_new();
+	for (i=0; i<sizeof graph_items / sizeof graph_items[0]; i++) {
+		create_popup_item(graph_popup, 
+				  _(graph_items[i]), 
+				  object_popup_activated);
+	}
+    }
+
+    if (boxplot_popup == NULL) {
+	boxplot_popup = gtk_menu_new();
+	for (i=0; i<sizeof(graph_items)/sizeof(graph_items[0]); i++) {
+	    if (strstr(graph_items[i], "GUI")) continue;
+		create_popup_item(boxplot_popup, 
+				  _(graph_items[i]), 
+				  object_popup_activated);
+	}
+    }
+
+    if (data_popup == NULL) {
+	data_popup = gtk_menu_new();
+	for (i=0; i<sizeof(dataset_items)/sizeof(dataset_items[0]); i++) {
+		create_popup_item(data_popup, 
+				  _(dataset_items[i]), 
+				  data_popup_activated);	    
+	}
+    }
+
+    if (info_popup == NULL) {
+	info_popup = gtk_menu_new();
+	for (i=0; i<sizeof(info_items)/sizeof(info_items[0]); i++) {
+		create_popup_item(info_popup, 
+				  _(info_items[i]), 
+				  info_popup_activated);	    
+	}
+    }
+}
+
+/* ........................................................... */
+
+static void iconview_connect_signals (GtkWidget *iconview)
+{
+#ifdef OLD_GDK
+    gtk_signal_connect(GTK_OBJECT(iconview), "destroy",
+		     GTK_SIGNAL_FUNC(session_view_free), NULL);
+    gtk_signal_connect(GTK_OBJECT(iconview), "key_press_event",
+		     GTK_SIGNAL_FUNC(catch_iconview_key), NULL);
+#else
+    g_signal_connect(G_OBJECT(iconview), "destroy",
+		     G_CALLBACK(session_view_free), NULL);
+    g_signal_connect(G_OBJECT(iconview), "key_press_event",
+		     G_CALLBACK(catch_iconview_key), NULL);
+#endif
+}
+
+void view_session (void)
+{
+    GtkWidget *hbox, *scroller;
+    gchar *title;
+
+    if (iconview != NULL) {
+	gdk_window_show(iconview->window);
+	gdk_window_raise(iconview->window);
+	return;
+    }
+
+    session_view_init();
+
+    title = g_strdup_printf("gretl: %s", 
+			    (session.name[0])? session.name : 
+			    _("current session"));
+    
+    iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(iconview), title);
+    g_free(title);
+    gtk_window_set_default_size(GTK_WINDOW(iconview), 400, 300);
+    gtk_container_set_border_width(GTK_CONTAINER(iconview), 0);
+
+    iconview_connect_signals(iconview);
+
+    session_build_popups();
+
+    hbox = gtk_hbox_new(FALSE,0);
+    gtk_container_add(GTK_CONTAINER(iconview), hbox);
+    gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
+
+    scroller = gtk_scrolled_window_new(NULL, NULL);
+    gtk_container_set_border_width(GTK_CONTAINER(scroller), 0);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
+				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    g_signal_connect(G_OBJECT(scroller), "button_press_event",
+		     G_CALLBACK(session_icon_click), NULL);
+
+    gtk_box_pack_start(GTK_BOX(hbox), scroller, TRUE, TRUE, 0); 
+
+    icon_table = gtk_table_new(2, SESSION_VIEW_COLS, FALSE);
+
+    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), 
+					  icon_table);
+
+    add_all_icons();
+
+    gtk_widget_show(icon_table);
+    gtk_widget_show(scroller);
+    gtk_widget_show(hbox);
+    gtk_widget_show(iconview);
+
+    gtk_container_foreach(GTK_CONTAINER(scroller), 
+			 (GtkCallback) white_bg_style, 
+			 NULL);
+}
+
+#ifdef OLD_GTK
+
+static void create_gobj_icon (gui_obj *gobj, const char **data)
+{
+    GdkPixmap *pixmap;
+    GdkBitmap *mask;
+    GtkStyle *style;
+    GtkWidget *image;
+
+    style = gtk_widget_get_style(iconview);
+    pixmap = gdk_pixmap_create_from_xpm_d(mdata->w->window,
+					  &mask, 
+					  &style->bg[GTK_STATE_NORMAL], 
+					  data);
+
+    gobj->icon = gtk_event_box_new();
+    gtk_widget_set_usize(gobj->icon, 36, 36);
+
+    image = gtk_pixmap_new(pixmap, mask);
+
+    gtk_container_add(GTK_CONTAINER(gobj->icon), image);
+    gtk_widget_show(image);
+
+    if (sort == 't') table_drag_setup(gobj->icon);
+
+    gobj->label = gtk_label_new(gobj->name);
+
+    gtk_signal_connect(GTK_OBJECT(gobj->icon), "button_press_event",
+		       GTK_SIGNAL_FUNC(session_icon_click), gobj);
+    gtk_signal_connect(GTK_OBJECT(gobj->icon), "enter_notify_event",
+		       GTK_SIGNAL_FUNC(icon_entered), gobj);
+    gtk_signal_connect(GTK_OBJECT(gobj->icon), "leave_notify_event",
+		       GTK_SIGNAL_FUNC(icon_left), gobj);
+}
+
+#else
+
+static void create_gobj_icon (gui_obj *gobj, const char **data)
+{
+    GdkPixbuf *pbuf;
+    GtkWidget *image;
+
+    pbuf = gdk_pixbuf_new_from_xpm_data(data);
+
+    gobj->icon = gtk_event_box_new();
+    gtk_widget_set_size_request(gobj->icon, 36, 36);
+
+    image = gtk_image_new_from_pixbuf(pbuf);
+    g_object_unref(G_OBJECT(pbuf));
+
+    gtk_container_add(GTK_CONTAINER(gobj->icon), image);
+    gtk_widget_show(image);
+
+    if (gobj->sort == 't') table_drag_setup(gobj->icon);
+
+    gobj->label = gtk_label_new(gobj->name);
+
+    g_signal_connect(G_OBJECT(gobj->icon), "button_press_event",
+		     G_CALLBACK(session_icon_click), gobj);
+    g_signal_connect(G_OBJECT(gobj->icon), "enter_notify_event",
+		     G_CALLBACK(icon_entered), gobj);
+    g_signal_connect(G_OBJECT(gobj->icon), "leave_notify_event",
+		     G_CALLBACK(icon_left), gobj);
+}
+
+#endif /* OLD_GTK */
+
+static gui_obj *gui_object_new (gchar *name, int sort)
+{
+    gui_obj *gobj;
+    char **data = NULL;
+
+    gobj = mymalloc(sizeof *gobj);
+    gobj->name = name; 
+    gobj->sort = sort;
+    gobj->data = NULL;
+
+    switch (sort) {
+    case 'm': data = model_xpm; break;
+    case 'v': data = model_xpm; break;	
+    case 'b': data = boxplot_xpm; break;
+    case 'g': data = gnuplot_xpm; break;
+    case 'd': data = dot_sc_xpm; break;
+    case 'i': data = xfm_info_xpm; break;
+    case 's': data = xfm_make_xpm; break;
+    case 'n': data = text_xpm; break;
+    case 'r': data = rhohat_xpm; break;
+    case 'x': data = summary_xpm; break;
+    case 't': data = model_table_xpm; break;
+    default: break;
+    }
+
+    create_gobj_icon (gobj, (const char **) data);
+
+    return gobj;
+} 
+
+/* ........................................................... */
+
+#ifdef OLD_GTK
+
+static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
+{
+    FILE *fp;
+    char msg[MAXLEN];
+    gchar *savestuff;
+    windata_t *mydata = (windata_t *) data;
+
+    if ((fp = fopen(mydata->fname, "w")) == NULL) {
+	sprintf(msg, _("Couldn't write to %s"), mydata->fname);
+	errbox(msg); 
+	return;
+    }
+
+    savestuff = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+    fprintf(fp, "%s", savestuff);
+    g_free(savestuff); 
+    fclose(fp);
+
+    if (!quiet) infobox(_("plot commands saved"));
+}
+
+#else /* end of gtk-1.2 version, on to gtk-2.0 */
+
+static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
+{
+    FILE *fp;
+    gchar *msg, *savestuff;
+    windata_t *mydata = (windata_t *) data;
+# ifdef ENABLE_NLS
+    gsize bytes;
+    gchar *trbuf;
+# endif
+
+    savestuff = textview_get_text(GTK_TEXT_VIEW(mydata->w));
+
+    if (savestuff == NULL) return;
+
+    if ((fp = fopen(mydata->fname, "w")) == NULL) {
+	msg = g_strdup_printf(_("Couldn't write to %s"), mydata->fname);
+	errbox(msg); 
+	g_free(msg);
+	g_free(savestuff);
+	return;
+    }
+
+# ifdef ENABLE_NLS
+    trbuf = g_locale_from_utf8(savestuff, -1, NULL, &bytes, NULL);
+    fprintf(fp, "%s", trbuf);
+    g_free(trbuf);
+# else
+    fprintf(fp, "%s", savestuff);
+# endif
+
+    g_free(savestuff); 
+    fclose(fp);
+    if (!quiet) infobox(_("plot commands saved"));
+}
+
+#endif /* gtk-2.0 branch */
+
+#ifdef G_OS_WIN32
+
+static char *add_pause_to_plotfile (const char *fname)
+{
+    FILE *fin, *fout;
+    char fline[MAXLEN];
+    char *tmpfile = NULL;
+    int gotpause = 0;
+
+    fin = fopen(fname, "r");
+    if (fin == NULL) return NULL;
+
+    tmpfile = g_strdup_printf("%showtmp.gp", paths.userdir);
+
+    fout = fopen(tmpfile, "w");
+    if (fout == NULL) {
+	fclose(fin);
+	g_free(tmpfile);
+	return NULL;
+    }
+
+    while (fgets(fline, MAXLEN - 1, fin)) {
+	fputs(fline, fout);
+	if (strstr(fline, "pause -1")) gotpause = 1;
+    }
+
+    if (!gotpause) {
+	fputs("pause -1\n", fout);
+    }
+
+    fclose(fin);
+    fclose(fout);
+
+    return tmpfile;
+}
+
+#endif /* G_OS_WIN32 */
+
+#ifdef OLD_GTK
+
+static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
+{
+    gchar *buf = NULL;
+    windata_t *mydata = (windata_t *) data;
+
+    auto_save_gp(data, 1, NULL);
+
+    buf = g_strdup_printf("gnuplot -persist \"%s\"", mydata->fname);
+
+    if (system(buf))
+        errbox(_("gnuplot command failed"));
+
+    g_free(buf);
+}
+
+#else /* not gtk-1.2, but gtk-2.0 */
+
+void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
+{
+    gchar *buf = NULL;
+    windata_t *mydata = (windata_t *) data;
+    int err = 0;
+# ifdef G_OS_WIN32
+    gchar *tmpfile;
+# endif
+
+    auto_save_gp(data, 1, NULL);
+
+# ifdef G_OS_WIN32
+    tmpfile = add_pause_to_plotfile(mydata->fname);
+    if (tmpfile != NULL) {
+	buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, tmpfile);
+	err = (WinExec(buf, SW_SHOWNORMAL) < 32);
+	remove(tmpfile); /* is this OK? */
+	g_free(tmpfile);
+    } else {
+	err = 1;
+    }
+# else
+    buf = g_strdup_printf("gnuplot -persist \"%s\"", mydata->fname);
+    err = gretl_spawn(buf);
+# endif
+
+    if (err) errbox(_("gnuplot command failed"));
+
+    g_free(buf);
+}
+
+void save_plot_commands_callback (GtkWidget *w, gpointer p)
+{
+    auto_save_gp(p, 0, NULL);
+}
+
+#endif /* gtk versions fork */
+
+#ifdef GNUPLOT_PNG
+
+static void open_gui_graph (gui_obj *gobj)
+{
+    GRAPHT *graph = (GRAPHT *) gobj->data;
+
+    display_session_graph_png(graph->fname);
+}
+
+#else /* non-PNG versions */
+
+# ifdef OLD_GTK
+
+static void open_gui_graph (gui_obj *gobj)
+{
+    GRAPHT *graph = (GRAPHT *) gobj->data;
+    gchar *buf = NULL;
+
+    buf = g_strdup_printf("\"%s\" -persist \"%s\"", paths.gnuplot, graph->fname);
+    if (system(buf)) {
+	errbox(_("gnuplot command failed"));
+    }
+    g_free(buf);
+}
+
+# else
+
+static void open_gui_graph (gui_obj *gobj)
+{
+    GRAPHT *graph = (GRAPHT *) gobj->data;
+    gchar *buf = NULL;
+    int err = 0;
+
+#  ifdef G_OS_WIN32
+    buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, graph->fname);
+    err = (WinExec(buf, SW_SHOWNORMAL) < 32);
+#  else
+    buf = g_strdup_printf("\"%s\" -persist \"%s\"", paths.gnuplot, graph->fname);
+    err = gretl_spawn(buf);
+#  endif
+    g_free(buf);
+
+    if (err) errbox(_("gnuplot command failed"));
+}
+
+# endif /* alternate gtk versions */
+
+#endif /* ! GNUPLOT_PNG */
+

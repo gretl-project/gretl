@@ -2643,6 +2643,17 @@ void free_confint (CONFINT *cf)
 
 #ifdef GLIB2
 
+static int font_not_found (const char *s)
+{
+    /* "Could not find/open font when opening font X, using default" */
+
+    if (strstr(s, "using default")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 int gretl_spawn (const char *cmdline)
 {
     GError *error = NULL;
@@ -2668,7 +2679,9 @@ int gretl_spawn (const char *cmdline)
     } else if (errout && *errout) {
 	strcpy(gretl_errmsg, errout);
 	fprintf(stderr, "stderr: '%s'\n", errout);
-	ret = 1;
+	if (!font_not_found(errout)) {
+	    ret = 1;
+	}
     } else if (status != 0) {
 	sprintf(gretl_errmsg, "%s\n%s", 
 		_("Command failed"),

@@ -17,19 +17,9 @@
  *
  */
 
-#ifndef OBJECTSAVE_H
-#define OBJECTSAVE_H
+#ifndef SSHEET_H
+#define SSHEET_H
 
-int maybe_save_model (const CMD *cmd, MODEL **ppmod, 
-		      DATAINFO *pdinfo, PRN *prn);
+void show_spreadsheet (DATAINFO *pdinfo);
 
-int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, 
-		    PRN *prn);
-
-int maybe_save_graph (const CMD *cmd, const char *fname, int code, PRN *prn);
-
-int saved_object_action (const char *line, 
-			 const DATAINFO *pdinfo,
-			 PRN *prn);
-
-#endif /* OBJECTSAVE_H */
+#endif /* SSHEET_H */

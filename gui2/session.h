@@ -48,11 +48,17 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w);
 
 void remember_model (gpointer data, guint close, GtkWidget *widget);
 
+void remember_var (gpointer data, guint close, GtkWidget *widget);
+
 int try_add_model_to_session (MODEL *pmod);
+
+int try_add_var_to_session (GRETL_VAR *var);
 
 void *get_session_object_by_name (const char *name, char *which);
 
 void delete_model_from_session (MODEL *pmod);
+
+void delete_var_from_session (GRETL_VAR *var);
 
 int session_changed (int set);
 

@@ -20,6 +20,8 @@
 /* gui_utils.c for gretl */
 
 #include "gretl.h"
+#include "var.h"
+
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dlfcn.h>
@@ -138,6 +140,16 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/LaTeX/Copy/_Tabular"), NULL, text_copy, COPY_LATEX, NULL },
     { N_("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL },
     { NULL, NULL, NULL, 0, NULL}
+};
+
+GtkItemFactoryEntry var_items[] = {
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, NULL },
+    { N_("/File/Save to session as icon"), NULL, remember_var, 0, NULL },
+    { N_("/File/Save as icon and close"), NULL, remember_var, 1, NULL },
+#if defined(USE_GNOME)
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
+#endif
 };
 
 GtkItemFactoryEntry edit_items[] = {
@@ -910,6 +922,9 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_vcv(vwin->data);
 	else if (vwin->role == VIEW_SERIES)
 	    free_series_view(vwin->data);
+	else if (vwin->role == VAR) 
+	    gretl_var_free_unnamed(vwin->data);
+
 	if (vwin->dialog)
 	    winstack_remove(vwin->dialog);
 	free(vwin);
@@ -1228,7 +1243,7 @@ static void dialog_table_setup (windata_t *vwin)
 /* ........................................................... */
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
-			char *title, int role,
+			const char *title, int role,
 			GtkItemFactoryEntry menu_items[]) 
 {
     GtkWidget *dialog, *close;
@@ -1241,6 +1256,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     dialog = vwin->dialog;
     viewer_box_config(vwin);
+
+    if (role == VAR) menu_items = var_items;
 
     if (menu_items != NULL) {
 	set_up_viewer_menu(dialog, vwin, menu_items);

@@ -105,11 +105,17 @@ static gretl_equation_system *sys;
 
 void register_graph (void)
 {
+    const char *msg;
+
 #ifdef GNUPLOT_PNG
     gnuplot_show_png(paths.plotfile, NULL, 0);
 #else
     graphmenu_state(TRUE);
-#endif    
+#endif 
+    msg = get_gretl_errmsg();
+    if (msg != NULL && *msg != '\0') {
+	errbox(msg);
+    }
 }
 
 static void gui_graph_handler (int err)
@@ -2172,7 +2178,6 @@ void do_model (GtkWidget *widget, gpointer p)
     case VAR:
 	/* requires special treatment: doesn't return model */
 	sscanf(buf, "%d", &order);
-#if 1
 	var = full_var(order, command.list, &Z, datainfo, prn);
 	if (var == NULL) {
 	    ; /* error message */
@@ -2182,19 +2187,7 @@ void do_model (GtkWidget *widget, gpointer p)
 			    VAR, NULL);
 
 	    if (vwin != NULL) vwin->data = var;
-	    if (1) {
-		PRN *varprn = gretl_print_new(GRETL_PRINT_FILE, "foo.out");
-
-		print_var(var, datainfo, varprn);
-		gretl_print_destroy(varprn);
-	    }
 	}
-#else
-	err = var(order, command.list, &Z, datainfo, 0, prn);
-	if (err) errmsg(err, prn);
-	view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
-		    VAR, NULL);
-#endif
 	return;
 
     case LOGIT:
@@ -5426,7 +5419,10 @@ int gui_exec_line (char *line,
 
     case VAR:
 	order = atoi(command.param);
-	err = var(order, command.list, &Z, datainfo, 0, prn);
+	err = simple_var(order, command.list, &Z, datainfo, 0, prn);
+	if (!err) {
+	    err = maybe_save_var(&command, &Z, datainfo, prn);
+	}
 	break;
 
     case 999:
@@ -5447,7 +5443,7 @@ int gui_exec_line (char *line,
     if ((is_model_cmd(command.cmd) || !strncmp(line, "end nls", 7))
 	&& !err) {
 	err = stack_model(0);
-	if (*command.savename != 0) {
+	if (*command.savename != '\0') {
 	    maybe_save_model(&command, &models[0], datainfo, prn);
 	}
     }
