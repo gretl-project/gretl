@@ -1508,8 +1508,21 @@ static void render_pngfile (const char *fname, png_plot_t *plot,
     GdkPixbuf *pbuf;
 
     pbuf = gdk_pixbuf_new_from_file(fname);
+    if (pbuf == NULL) {
+	errbox("Failed to create pixbuf from file");
+	remove(fname);
+	return;
+    }
+
     width = gdk_pixbuf_get_width(pbuf);
     height = gdk_pixbuf_get_height(pbuf);
+
+    if (width == 0 || height == 0) {
+	errbox("Malformed PNG file for graph");
+	gdk_pixbuf_unref(pbuf);
+	remove(fname);
+	return;
+    }
 
     gdk_pixbuf_render_to_drawable_alpha(pbuf, plot->pixmap,
 					0, 0, 0, 0, width, height,
