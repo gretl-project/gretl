@@ -723,8 +723,8 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
 #ifdef USE_LAPACK
 
-#include <gretl_lapack/f2c.h>
-#include <gretl_lapack/clapack.h>
+#include "lapack/f2c.h"
+#include "lapack/clapack.h"
 
 static int ijtok (int i, int j, int n)
 {
