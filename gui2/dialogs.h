@@ -16,12 +16,6 @@ int make_default_storelist (void);
 
 int storevars_dialog (int export); 
 
-void random_dialog (gpointer data, guint uni, GtkWidget *widget);
-
-void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget);
-
-void start_panel_dialog (gpointer data, guint pd_code, GtkWidget *widget);
-
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
 		  guint hlpcode, guint varclick);

@@ -66,4 +66,12 @@ void gp_send_callback (GtkWidget *w, gpointer data);
 
 void file_save_callback (GtkWidget *w, gpointer data);
 
+void add_random_callback (gpointer data, guint code, GtkWidget *widget);
+
+void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget);
+
+#if 0
+void start_panel_callback (gpointer data, guint u, GtkWidget *widget);
+#endif
+
 #endif /* CALLBACKS_H */

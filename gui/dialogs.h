@@ -13,12 +13,6 @@ enum {
 
 int make_default_storelist (void);
 
-void random_dialog (gpointer data, guint uni, GtkWidget *widget);
-
-void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget);
-
-void start_panel_dialog (gpointer data, guint pd_code, GtkWidget *widget);
-
 void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget);
 
 void edit_dialog (char *diagtxt, char *infotxt, char *deftext, 
