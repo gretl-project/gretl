@@ -839,23 +839,28 @@ void do_help (gpointer data, guint code, GtkWidget *widget)
 
 /* ........................................................... */
 
-void file_viewer_save (GtkWidget *widget, gpointer data)
+static void buf_edit_save (GtkWidget *widget, gpointer data)
+{
+    windata_t *mydata = (windata_t *) data;
+    gchar *text;
+    char **pbuf = (char **) mydata->data;
+
+    text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+    if (text != NULL && strlen(text) > 0) {
+	free(*pbuf); 
+	*pbuf = text;
+	infobox("Data info saved");
+    } else if (strlen(text))
+	g_free(text);
+}
+
+/* ........................................................... */
+
+static void file_viewer_save (GtkWidget *widget, gpointer data)
 {
     gchar *text;
     FILE *fp;
     windata_t *mydata = (windata_t *) data;
-
-    if (mydata->fname[0] == '\0') { /* no file, creating data header */
-	text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
-	if (text != NULL && strlen(text) > 0) {
-	    free(datainfo->descrip);
-	    datainfo->descrip = mymalloc(strlen(text) + 1);
-	    if (datainfo->descrip != NULL)
-		strcpy(datainfo->descrip, text);
-	    g_free(text);
-	}
-	return;
-    }
 
     fp = fopen(mydata->fname, "w");
     if (fp == NULL) {
@@ -1013,21 +1018,17 @@ windata_t *view_file (char *filename, int editable, int del_file,
     windata_t *vwin;
     int console = 0;
 
-    if (filename != NULL) {
-	fd = fopen(filename, "r");
-	if (fd == NULL) {
-	    sprintf(tempstr, "Can't open %s for reading", filename);
-	    errbox(tempstr);
-	    return NULL;
-	}
+    fd = fopen(filename, "r");
+    if (fd == NULL) {
+	sprintf(tempstr, "Can't open %s for reading", filename);
+	errbox(tempstr);
+	return NULL;
     }
 
     if ((vwin = mymalloc(sizeof *vwin)) == NULL)
 	return NULL;
     windata_init(vwin);
-
-    if (filename != NULL)     
-	strcpy(vwin->fname, filename);
+    strcpy(vwin->fname, filename);
 
     hsize *= gdk_char_width(fixed_font, 'W');
     hsize += 48;
@@ -1114,24 +1115,22 @@ windata_t *view_file (char *filename, int editable, int del_file,
     gtk_widget_show(close);
 
     /* insert the file text */
-    if (fd != NULL) {
+    memset(tempstr, 0, sizeof tempstr);
+    while (fgets(tempstr, sizeof tempstr - 1, fd)) {
+	if (tempstr[0] == '?') 
+	    colptr = (console)? &red : &blue;
+	if (tempstr[0] == '#') {
+	    tempstr[0] = ' ';
+	    nextcolor = &red;
+	} else
+	    nextcolor = NULL;
+	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+			colptr, NULL, tempstr, 
+			strlen(tempstr));
+	colptr = nextcolor;
 	memset(tempstr, 0, sizeof tempstr);
-	while (fgets(tempstr, sizeof tempstr - 1, fd)) {
-	    if (tempstr[0] == '?') 
-		colptr = (console)? &red : &blue;
-	    if (tempstr[0] == '#') {
-		tempstr[0] = ' ';
-		nextcolor = &red;
-	    } else
-		nextcolor = NULL;
-	    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-			    colptr, NULL, tempstr, 
-			    strlen(tempstr));
-	    colptr = nextcolor;
-	    memset(tempstr, 0, sizeof tempstr);
-	}
-	fclose(fd);
     }
+    fclose(fd);
 
     /* clean up when dialog is destroyed */
     if (del_file) {
@@ -1142,6 +1141,90 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
 			   GTK_SIGNAL_FUNC(catch_key), dialog);
     }
+    gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
+		       GTK_SIGNAL_FUNC(free_windata), vwin);
+
+    gtk_widget_show(dialog);
+
+    return vwin;
+}
+
+/* ........................................................... */
+
+windata_t *edit_buffer (char **pbuf, int hsize, int vsize, char *title) 
+{
+    GtkWidget *dialog, *close, *save, *table;
+    GtkWidget *vscrollbar; 
+    windata_t *vwin;
+
+    if ((vwin = mymalloc(sizeof *vwin)) == NULL)
+	return NULL;
+    windata_init(vwin);
+    vwin->data = pbuf;
+
+    hsize *= gdk_char_width(fixed_font, 'W');
+    hsize += 48;
+
+    dialog = gtk_dialog_new();
+    gtk_widget_set_usize (dialog, hsize, vsize);
+    gtk_window_set_title(GTK_WINDOW(dialog), title);
+    gtk_container_border_width (GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), 5);
+    gtk_container_border_width 
+        (GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), 5);
+    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
+    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(dialog)->action_area), TRUE);
+#ifndef G_OS_WIN32
+    gtk_signal_connect_after(GTK_OBJECT(dialog), "realize", 
+			     GTK_SIGNAL_FUNC(set_wm_icon), 
+			     NULL);
+#endif
+
+    table = gtk_table_new(1, 2, FALSE);
+    gtk_widget_set_usize(table, 500, 400);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       table, TRUE, TRUE, FALSE);
+
+    vwin->w = gtk_text_new(NULL, NULL);
+
+    gtk_text_set_editable(GTK_TEXT(vwin->w), TRUE);
+    gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
+
+    gtk_table_attach(GTK_TABLE(table), vwin->w, 0, 1, 0, 1,
+		     GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
+		     GTK_SHRINK, 0, 0);
+    gtk_widget_show(vwin->w);
+
+    vscrollbar = gtk_vscrollbar_new (GTK_TEXT (vwin->w)->vadj);
+    gtk_table_attach (GTK_TABLE (table), 
+		      vscrollbar, 1, 2, 0, 1,
+		      GTK_FILL, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
+    gtk_widget_show (vscrollbar);
+
+    gtk_widget_show(table);
+
+    /* add a "save" button */
+    save = gtk_button_new_with_label("Save");
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
+		       save, FALSE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(save), "clicked", 
+		       GTK_SIGNAL_FUNC(buf_edit_save), 
+		       vwin);
+    gtk_widget_show(save);
+
+    /* and a close button */
+    close = gtk_button_new_with_label("Close");
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
+		       close, FALSE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
+		       GTK_SIGNAL_FUNC(delete_file_viewer), 
+		       (gpointer) dialog);
+    gtk_widget_show(close);
+
+    /* insert the buffer text */
+    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+		    NULL, NULL, *pbuf, strlen(*pbuf));
+
+    /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(free_windata), vwin);
 

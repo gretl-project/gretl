@@ -195,7 +195,7 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
 	if (!yes_no_dialog("gretl: add info", 
 			   "The data file contains no informative comments.\n"
 			   "Would you like to add some now?", 0)) {
-	    edit_header(NULL, 1, NULL);
+	    edit_header(NULL, 0, NULL);
 	}
     } else {
 	PRN *prn;
@@ -211,9 +211,12 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
 
 /* ........................................................... */
 
-void edit_header (gpointer data, guint save, GtkWidget *widget)
+void edit_header (gpointer data, guint unused, GtkWidget *widget)
 {
-    view_file(NULL, 1, 0, 80, 300, "gretl: edit data info", NULL);
+    if (data_status & BOOK_DATA)
+	errbox("You don't have permission to do this");
+    else
+	edit_buffer(&datainfo->descrip, 80, 300, "gretl: edit data info");
 }
 
 /* ........................................................... */

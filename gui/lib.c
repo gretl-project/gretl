@@ -2723,7 +2723,7 @@ void do_open_csv_box (char *fname, int code)
 
 /* ........................................................... */
 
-int do_store (char *mydatfile, const int opt)
+int do_store (char *mydatfile, const int opt, int overwrite)
 {
     char f = getflag(opt);
     gchar *msg;
@@ -2731,9 +2731,20 @@ int do_store (char *mydatfile, const int opt)
 
     line[0] = '\0';
 
-    if (f) 
+    if (f) { /* not a standard native save */
 	sprintf(line, "store -%c '%s' %s", f, mydatfile, storelist);
-    else {
+    } else {
+	if (!overwrite) {
+	    fp = fopen(mydatfile, "r");
+	    if (fp != NULL) {
+		fclose(fp);
+		if (yes_no_dialog("gretl: save data", 
+				  "There is already a data file of this name.\n"
+				  "OK to overwrite it?", 0)) {
+		    return 1;
+		}
+	    }
+	}
 	sprintf(line, "store '%s' %s", mydatfile, storelist);   
 	strcpy(paths.datfile, mydatfile);
     }

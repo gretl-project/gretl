@@ -352,7 +352,10 @@ void file_selector (char *msg, int action, gpointer data)
     maybe_add_ext(fname, action, data);
 
     if (action >= SAVE_DATA && action < END_SAVE_DATA) {
-	do_store(fname, action_to_flag(action));
+	int overwrite = 0;
+
+	if (!strcmp(fname, paths.datfile)) overwrite = 1;
+	do_store(fname, action_to_flag(action), overwrite);
     }
     else if (action == SAVE_GNUPLOT) {
 	int err = 0;
@@ -421,7 +424,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     /* do some elementary checking */
     if (action < END_OPEN) {
 	if ((fp = fopen(fname, "r")) == NULL) {
-	    errbox("Couldn't open specified file");
+	    errbox("Couldn't open the specified file");
 	    return;
 	} else fclose(fp);
     } 
@@ -479,7 +482,10 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     }
 
     if (action >= SAVE_DATA && action < END_SAVE_DATA) {
-	do_store(fname, action_to_flag(action));
+	int overwrite = 0;
+
+	if (!strcmp(fname, paths.datfile)) overwrite = 1;
+	do_store(fname, action_to_flag(action), overwrite);
     }
     else if (action == SAVE_GNUPLOT) {
 	int err = 0;

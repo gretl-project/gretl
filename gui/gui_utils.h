@@ -69,8 +69,6 @@ void windata_init (windata_t *mydata);
 
 void free_windata (GtkWidget *w, gpointer data);
 
-void file_viewer_save (GtkWidget *widget, gpointer data);
-
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			char *title, int action,
 			GtkItemFactoryEntry menu_items[]);
@@ -78,6 +76,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 windata_t *view_file (char *filename, int editable, int del_file, 
 		      int hsize, int vsize, char *title, 
 		      GtkItemFactoryEntry menu_items[]);
+
+windata_t *edit_buffer (char **pbuf, int hsize, int vsize, char *title);
 
 int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title);

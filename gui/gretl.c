@@ -659,13 +659,12 @@ int main (int argc, char *argv[])
     graphmenu_state(FALSE);
     session_state(FALSE);
     restore_sample_state(FALSE);
-    if (gui_get_data) menubar_state(FALSE);
-    else session_state(TRUE);
+    menubar_state(FALSE);
 			  
     check_for_pwt();
 
     if (!gui_get_data)
-	mkfilelist(1, paths.datfile);
+	register_data(paths.datfile, 1);
 
     /* opening a script from the command line? */
     if (scriptfile[0] != '\0') 
@@ -1676,7 +1675,7 @@ static void auto_store (void)
     if (make_default_storelist()) return;
 
     if (data_status & USER_DATA)
-	do_store(paths.datfile, 0);
+	do_store(paths.datfile, 0, 1);
     else
 	file_selector("Save data file", SAVE_DATA, NULL);	
 }

@@ -83,7 +83,7 @@ int storevars_dialog (int code)
 		 "gretl: export data": "gretl: store data",
 		 "Enter ID numbers of variables to save: ", 
 		 storelist, 1, 
-		 " Save ", set_storelist, NULL, 
+		 " OK ", set_storelist, NULL, 
 		 " Cancel ", cancel_data_save, &cancel, code, 1);
     return cancel;
 }

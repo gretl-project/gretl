@@ -148,7 +148,7 @@ void do_new_script (gpointer data, guint action, GtkWidget *widget);
 
 void do_open_csv_box (char *fname, int code);
 
-int do_store (char *mydatfile, const int fmt);
+int do_store (char *mydatfile, const int fmt, int overwrite);
 
 void view_latex (gpointer data, guint prn_code, GtkWidget *widget);
 
