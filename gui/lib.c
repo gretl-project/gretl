@@ -2763,11 +2763,18 @@ int do_store (char *mydatfile, const int opt, int overwrite)
     char f = getflag(opt);
     gchar *msg;
     FILE *fp;
+    size_t len;
+    int showlist = 1;
 
     line[0] = '\0';
 
+    len = strlen(storelist);
+    if (len >= MAXLEN)  /* too many variables */
+	showlist = 0;
+
     if (f) { /* not a standard native save */
-	sprintf(line, "store '%s' %s -%c", mydatfile, storelist, f);
+	sprintf(line, "store '%s' %s -%c", mydatfile, 
+		(showlist)? storelist : "", f);
     } else {
 	if (!overwrite) {
 	    fp = fopen(mydatfile, "r");
@@ -2780,7 +2787,8 @@ int do_store (char *mydatfile, const int opt, int overwrite)
 		}
 	    }
 	}
-	sprintf(line, "store '%s' %s", mydatfile, storelist);   
+	sprintf(line, "store '%s' %s", mydatfile, 
+	       (showlist)? storelist : "");   
 	strcpy(paths.datfile, mydatfile);
     }
 
