@@ -1,0 +1,64 @@
+#!/bin/sh
+
+VERSION=$(cat ../gretl/lib/src/version.h | grep version_ | \
+     awk '{ print $NF}' | sed s/[\"\;]//g)
+ZIPFILE="gretl-${VERSION}-win32.zip"
+
+GNUPLOT=/home/ftp/pub/gp372w32.zip
+
+rm -f windist/*.zip
+
+# make directory structure
+mkdir -p windist
+mkdir -p windist/gretl
+mkdir -p windist/gretl/data
+mkdir -p windist/gretl/data/greene
+mkdir -p windist/gretl/scripts
+mkdir -p windist/gretl/db
+mkdir -p windist/gretl/user
+mkdir -p windist/gretl/locale/es/LC_MESSAGES
+
+# put binaries in place
+cp gretlcli.exe windist/gretl
+cp gretlw32.exe windist/gretl
+
+# dynamic libs
+cp dlls/* windist/gretl
+
+# help files, license, logo
+cp -p ../gretl/share/gretlcli.hlp windist/gretl/gretlcli_hlp.txt
+cp -p ../gretl/share/gretl.hlp windist/gretl/gretl_hlp.txt
+cp -p ../gretl/COPYING windist/gretl/COPYING
+cp -p ../gretl/gui/gretl-logo.xpm windist/gretl/gretl-logo.xpm
+cp -p doc/gretl.chm windist/gretl/gretl.chm
+
+# data files
+cp -p ../gretl/share/data/* windist/gretl/data
+cp -p ../gretl/share/data/greene/* windist/gretl/data/greene
+
+# scripts
+cp -p ../gretl/share/scripts/* windist/gretl/scripts
+
+# database files
+cp -p ../gretl/share/bcih/README windist/gretl/db
+cp -p ../gretl/share/bcih/bcih.bin windist/gretl/db
+cp -p ../gretl/share/bcih/bcih.idx windist/gretl/db 
+
+# translations
+cp -p mo/es.mo windist/gretl/locale/es/LC_MESSAGES/gretl.mo
+
+# misc files
+cp gretl_website.url windist/gretl
+# cp installer/makecfg.exe windist/gretl
+cp updater/gretl_updater.exe windist/gretl
+date > windist/gretl/gretl.stamp
+
+# put gnuplot in place -- or leave as a separate download
+cd windist
+unzip -X $GNUPLOT
+
+# make zipfile
+zip -r ${ZIPFILE} gretl gnuplot
+rm -rf gretl gnuplot
+unzip -l gr*.zip | ./ziptoiss.pl | todos >gretl.iss
+

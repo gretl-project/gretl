@@ -1,3 +1,12 @@
+# Makefile for cross-compiling gretl for win32 on Linux,
+# using mingw compiler
+
+# Directories
+topsrc = /home/cottrell/stats/esl/gretl
+libdir  = $(topsrc)/lib/src
+extradir = ./gtkextra-lib
+imports = ./a_libs
+
 # tools
 CC = mingw32-gcc -fnative-struct -Wall
 AS = mingw32-as
@@ -9,12 +18,12 @@ CLIPROG = gretlcli.exe
 GUIPROG = gretlw32.exe
 
 # libraries
-GTKLIBS = -L./a_libs -lglib-2.0.dll -lgtk.dll -lgdk.dll
+GTKLIBS = -L$(imports) -lglib-2.0.dll -lgtk.dll -lgdk.dll
 ZLIB_LIB = -lz.dll
-CLI_LIBS = -L./a_libs -lreadline.dll
+CLI_LIBS = -L$(imports) -lreadline.dll
 GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lwsock32 #-lhhctrl
-GRETLLIB = -L./libgretl -lgretl -L./a_libs -lintl.dll
-PIXBUFLIB = -L./a_libs -lgdk-pixbuf -lpng -lz.dll
+GRETLLIB = -L./libgretl -lgretl -L$(imports) -lintl.dll
+PIXBUFLIB = -L$(imports) -lgdk-pixbuf -lpng -lz.dll
 LIBS = -lm $(GRETLLIB) -ladvapi32
 
 # flags/defines
@@ -22,17 +31,14 @@ LDFLAGS = -s
 GLIBINC = -I./include/glib-2.0 -I$(extradir) 
 CFLAGS = -I. -I$(libdir) -I./include -DHAVE_READLINE -DOS_WIN32 $(GLIBINC)
 
-# Directories
-gretldir = /home/cottrell/stats/esl/gretl
-libdir  = $(gretldir)/lib/src
-extradir = ./gtkextra-lib
+# source paths
 vpath %.c $(libdir)
-vpath %.c $(gretldir)/cli
-vpath %.c $(gretldir)/gui
+vpath %.c $(topsrc)/cli
+vpath %.c $(topsrc)/gui
 vpath %.c $(extradir)
-vpath %.c $(gretldir)/plugin
-vpath %.c $(gretldir)/plugin/libole2
-vpath %.h $(libdir):$(gretldir)/cli:$(gretldir)/gui:$(extradir):$(gretldir)/plugin
+vpath %.c $(topsrc)/plugin
+vpath %.c $(topsrc)/plugin/libole2
+vpath %.h $(libdir):$(topsrc)/cli:$(topsrc)/gui:$(extradir):$(topsrc)/plugin
 
 #### End of system configuration section. ####
 
@@ -94,7 +100,7 @@ $(WRES): gretlw32.rc
 	$(RC) $(RCFLAGS) gretlw32.rc $(RCOUT)
 	$(RES2COFF)
 
-windist: $(CLIPROG) $(GUIPROG) dll extra-dll plugin
+dist: $(CLIPROG) $(GUIPROG) dll extra-dll plugin
 	./mkwindist 
 
 topclean:
@@ -119,7 +125,7 @@ dlls/libgretl.dll: $(LIBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl/libgretl.def \
 	--implib libgretl/libgretl.a \
-	-o $@ $^ -lm -L./a_libs -lxml -lz.dll -lintl.dll
+	-o $@ $^ -lm -L$(imports) -lxml -lz.dll -lintl.dll
 
 dlls/libgtkextra-lite.dll: $(EXTRAOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
@@ -137,11 +143,11 @@ dlls/panel_data.dll: panel_data.o dllinit.o
 
 dlls/progress_bar.dll: progress_bar.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GTKLIBS) -L./a_libs -lintl.dll
+	--implib plugins/$(<:.o=.a) $^ $(GTKLIBS) -L$(imports) -lintl.dll
 
 dlls/gnumeric_import.dll: gnumeric_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ -L./a_libs -lxml \
+	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml \
 	$(GRETLLIB) $(GTKLIBS)
 
 dlls/excel_import.dll: excel_import.o workbook.o ms-ole.o dllinit.o
@@ -159,12 +165,12 @@ dlls/mp_ols.dll: mp_ols.o dllinit.o
 panel_data.o: panel_data.c 
 	$(CC) -c $(CFLAGS) $(GLIBINC) $<
 
-OLEFLAGS = -I$(gretldir)/plugin
+OLEFLAGS = -I$(topsrc)/plugin
 
-ms-ole.o: ms-ole.c $(gretldir)/plugin/libole2/ms-ole.h
+ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(OLEFLAGS) $(GLIBINC) $<
 
-workbook.o: workbook.c $(gretldir)/plugin/libole2/ms-ole.h
+workbook.o: workbook.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(OLEFLAGS) $(GLIBINC) $<
 
 
