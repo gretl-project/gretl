@@ -1488,7 +1488,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     }
 
     /* buttons: OK, Clear, Cancel, Help */
-    build_selector_buttons (sr, okfunc);
+    build_selector_buttons(sr, okfunc);
 
     gtk_widget_show(sr->dlg);
 }

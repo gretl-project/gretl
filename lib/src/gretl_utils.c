@@ -412,8 +412,11 @@ int gretl_hasconst (const int *list)
 {
     int i;
 
-    for (i=2; i<=list[0]; i++) 
-        if (list[i] == 0) return i;
+    for (i=2; i<=list[0]; i++) {
+        if (list[i] == 0) {
+	    return 1;
+	}
+    }
 
     return 0;
 }

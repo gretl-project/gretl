@@ -569,25 +569,35 @@ void get_test_stat_string (const GRETLTEST *test, char *str, int format)
 	break;
     case GRETL_TEST_F:
     case GRETL_TEST_RESET:
-	if (tex) 
+	if (tex) {
 	    sprintf(str, "$F(%d, %d)$ = %g", test->dfn, test->dfd, test->value);
-	else 
+	} else {
 	    sprintf(str, "F(%d, %d) = %g", test->dfn, test->dfd, test->value);
+	}
 	break;
     case GRETL_TEST_LMF:
 	sprintf(str, "LMF = %g", test->value);
 	break;
     case GRETL_TEST_HARVEY_COLLIER:
-	if (tex)
+	if (tex) {
 	    sprintf(str, "Harvey--Collier $t(%d)$ = %g", test->dfn, test->value);
-	else
+	} else {
 	    sprintf(str, "Harvey-Collier t(%d) = %g", test->dfn, test->value);
+	}
 	break;
     case GRETL_TEST_NORMAL_CHISQ:
-	if (tex)
+	if (tex) {
 	    sprintf(str, "$\\chi^2_2$ = %g", test->value); 
-	else
+	} else {
 	    sprintf(str, "%s(2) = %g", _("Chi-square"), test->value);
+	}
+	break;
+    case GRETL_TEST_LR:
+	if (tex) {
+	    sprintf(str, "$\\chi^2_%d$ = %g", test->dfn, test->value); 
+	} else {
+	    sprintf(str, "%s(%d) = %g", _("Chi-square"), test->dfn, test->value);
+	}
 	break;
     default:
 	*str = 0;
@@ -634,6 +644,7 @@ void get_test_pval_string (const GRETLTEST *test, char *str, int format)
 	}
 	break;
     case GRETL_TEST_NORMAL_CHISQ:
+    case GRETL_TEST_LR:
 	sprintf(str, "%g", test->pvalue);
 	break;
     default:
@@ -1028,8 +1039,13 @@ static void print_model_heading (const MODEL *pmod,
 	if (tex) {
 	    pputs(prn, "\\\\\n");
 	}
-	pprintf(prn, (utf)? _("Weights based on per-unit error variances") : 
-		I_("Weights based on per-unit error variances"));
+	if (gretl_model_get_int(pmod, "iters")) {
+	    pprintf(prn, (utf)? _("Allowing for groupwise heteroskedasticity") : 
+		    I_("Allowing for groupwise heteroskedasticity"));
+	} else {
+	    pprintf(prn, (utf)? _("Weights based on per-unit error variances") : 
+		    I_("Weights based on per-unit error variances"));
+	}
 	pputc(prn, '\n');
     }
 
@@ -1516,6 +1532,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	}
 
 	rsqline(pmod, prn);
+
 	if (pmod->ci != NLS) {
 	    Fline(pmod, prn);
 	}
@@ -1549,6 +1566,14 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	}
     }
 
+    else if (pmod->ci == WLS && gretl_model_get_int(pmod, "iters")) {
+	/* panel ML estimation */
+	print_middle_table_start(prn);
+	depvarstats(pmod, prn);
+	print_ll(pmod, prn);
+	print_middle_table_end(prn);
+    }
+
     else if (pmod->ci == HSK || pmod->ci == ARCH ||
 	     (pmod->ci == WLS && !gretl_model_get_int(pmod, "wt_dummy"))) {
 
@@ -1576,10 +1601,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	if (essline(pmod, prn, 0)) {
 	    print_middle_table_end(prn);
 	    goto close_format;
-	}
-
-	if (pmod->ci == WLS && gretl_model_get_int(pmod, "iters")) {
-	    print_ll(pmod, prn);
 	}
 
 	print_middle_table_end(prn);

@@ -88,8 +88,6 @@ int gretl_forecast (int t1, int t2, int nv,
 
 int gretl_is_reserved (const char *str);
 
-void gretl_test_init (GRETLTEST *test);
-
 int vars_identical (const double *x, const double *y, int n);
 
 int real_list_laggenr (const int *list, double ***pZ, 

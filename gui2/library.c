@@ -1233,42 +1233,6 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
-static gint add_test_to_model (GRETLTEST *test, MODEL *pmod)
-{
-    int i, nt = pmod->ntests;
-
-    if (nt == 0) {
-	pmod->tests = malloc(sizeof *pmod->tests);
-    } else {
-	for (i=0; i<nt; i++) {
-	    if (!strcmp(test->type, pmod->tests[i].type)) {
-		/* already done */
-		return -1;
-	    }
-	}
-	pmod->tests = myrealloc(pmod->tests, 
-				(nt + 1) * sizeof *pmod->tests);
-    }
-
-    if (pmod->tests == NULL) return 1;
-
-    strcpy(pmod->tests[nt].type, test->type);
-    strcpy(pmod->tests[nt].h_0, test->h_0);
-    strcpy(pmod->tests[nt].param, test->param);
-
-    pmod->tests[nt].teststat = test->teststat;
-    pmod->tests[nt].value = test->value;
-    pmod->tests[nt].dfn = test->dfn;
-    pmod->tests[nt].dfd = test->dfd;
-    pmod->tests[nt].pvalue = test->pvalue;
-
-    pmod->ntests += 1;
-
-    return 0;
-}
-
-/* ........................................................... */
-
 #ifdef OLD_GTK
 
 static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
@@ -1358,7 +1322,7 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	    return;
 	} else {
 	    strcat(title, _("(heteroskedasticity)"));
-	    if (add_test_to_model(&test, pmod) == 0) {
+	    if (add_test_to_model(pmod, &test) == 0) {
 		print_test_to_window(&test, mydata->w);
 	    }
 	}
@@ -1379,7 +1343,7 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	    return;
 	} else {
 	    strcat(title, _("(non-linearity)"));
-	    if (add_test_to_model(&test, pmod) == 0) {
+	    if (add_test_to_model(pmod, &test) == 0) {
 		print_test_to_window(&test, mydata->w);
 	    }
 	} 
@@ -1413,8 +1377,9 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     void *handle;
-    void (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, PRN *);
+    int (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, PRN *);
     PRN *prn;
+    int err;
 
     if (!balanced_panel(datainfo)) {
 	errbox(_("Sorry, can't do this test on an unbalanced panel.\n"
@@ -1434,12 +1399,17 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 	return;
     }	
 	
-    (*panel_diagnostics)(pmod, &Z, datainfo, prn);
+    err = (*panel_diagnostics)(pmod, &Z, datainfo, prn);
 
     close_plugin(handle);
 
-    view_buffer(prn, 78, 400, _("gretl: panel model diagnostics"), 
-		PANEL, NULL);
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	view_buffer(prn, 78, 400, _("gretl: panel model diagnostics"), 
+		    PANEL, NULL);
+    }
 }
 
 /* ........................................................... */
@@ -1632,7 +1602,7 @@ static void do_chow_cusum (gpointer data, int code)
 	close_dialog(ddata);
     }
 
-    if (add_test_to_model(&test, pmod) == 0) {
+    if (add_test_to_model(pmod, &test) == 0) {
 	print_test_to_window(&test, mydata->w);
     }
 
@@ -1682,7 +1652,7 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
 	return;
-    } else if (add_test_to_model(&test, pmod) == 0) {
+    } else if (add_test_to_model(pmod, &test) == 0) {
 	print_test_to_window(&test, mydata->w);
     }
 
@@ -1739,7 +1709,7 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
 	return;
-    } else if (add_test_to_model(&test, pmod) == 0) {
+    } else if (add_test_to_model(pmod, &test) == 0) {
 	print_test_to_window(&test, mydata->w);
     }
 
@@ -1790,7 +1760,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 		      &test, cmd.opt, prn);
     if ((err = (models[1])->errcode)) { 
 	errmsg(err, prn);
-    } else if (add_test_to_model(&test, pmod) == 0) {
+    } else if (add_test_to_model(pmod, &test) == 0) {
 	print_test_to_window(&test, mydata->w);
     }
 
@@ -2661,7 +2631,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     
     normal_test(&test, freq);
 
-    if (add_test_to_model(&test, pmod) == 0) {
+    if (add_test_to_model(pmod, &test) == 0) {
 	print_test_to_window(&test, mydata->w);
     }
 
@@ -5274,7 +5244,7 @@ int gui_exec_line (char *line,
 	    do_arch = 1;
 	    swap_models(&models[0], &models[1]);
 	} else if (rebuild) {
-	    add_test_to_model(ptest, models[0]);
+	    add_test_to_model(models[0], ptest);
 	}
 	clear_model(models[1]);
 	break;
@@ -5325,7 +5295,7 @@ int gui_exec_line (char *line,
 	err = chow_test(line, models[0], &Z, datainfo, outprn, ptest);
 	if (err) errmsg(err, prn);
 	else if (rebuild) 
-	    add_test_to_model(ptest, models[0]);
+	    add_test_to_model(models[0], ptest);
 	break;
 
     case COEFFSUM:
@@ -5339,7 +5309,7 @@ int gui_exec_line (char *line,
 	err = cusum_test(models[0], &Z, datainfo, outprn, ptest);
 	if (err) errmsg(err, prn);
 	else if (rebuild) 
-	    add_test_to_model(ptest, models[0]);
+	    add_test_to_model(models[0], ptest);
 	break;
 
     case RESET:
@@ -5347,7 +5317,7 @@ int gui_exec_line (char *line,
 	err = reset_test(models[0], &Z, datainfo, outprn, ptest);
 	if (err) errmsg(err, prn);
 	else if (rebuild) 
-	    add_test_to_model(ptest, models[0]);
+	    add_test_to_model(models[0], ptest);
 	break;
 
     case CORC:
@@ -5745,7 +5715,7 @@ int gui_exec_line (char *line,
 	    if (err) errmsg(err, prn);
 	}
 	if (rebuild)
-	    add_test_to_model(ptest, models[0]);
+	    add_test_to_model(models[0], ptest);
 	break;
 
     case LOGISTIC:
@@ -5979,7 +5949,7 @@ int gui_exec_line (char *line,
 	    if (!(err = freq_error(freq, prn))) {
 		if (rebuild) {
 		    normal_test(ptest, freq);
-		    add_test_to_model(ptest, models[0]);
+		    add_test_to_model(models[0], ptest);
 		}
 		print_freq(freq, outprn); 
 		free_freq(freq);

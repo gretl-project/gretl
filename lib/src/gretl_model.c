@@ -502,6 +502,50 @@ static int copy_model_tests (MODEL *targ, const MODEL *src)
     return 0;
 }
 
+void gretl_test_init (GRETLTEST *test)
+{
+    test->type[0] = 0;
+    test->h_0[0] = 0;
+    test->param[0] = 0;
+    test->teststat = 0;
+    test->dfn = test->dfd = 0;
+    test->value = test->pvalue = NADBL;
+}
+
+int add_test_to_model (MODEL *pmod, const GRETLTEST *test)
+{
+    GRETLTEST *tests;
+    int i, nt = pmod->ntests;
+
+    for (i=0; i<nt; i++) {
+	if (!strcmp(test->type, pmod->tests[i].type)) {
+	    /* already done */
+	    return -1;
+	}
+    }
+
+    tests = realloc(pmod->tests, (nt + 1) * sizeof *tests);
+    if (tests == NULL) {
+	return 1;
+    }
+
+    pmod->tests = tests;
+
+    strcpy(pmod->tests[nt].type, test->type);
+    strcpy(pmod->tests[nt].h_0, test->h_0);
+    strcpy(pmod->tests[nt].param, test->param);
+
+    pmod->tests[nt].teststat = test->teststat;
+    pmod->tests[nt].value = test->value;
+    pmod->tests[nt].dfn = test->dfn;
+    pmod->tests[nt].dfd = test->dfd;
+    pmod->tests[nt].pvalue = test->pvalue;
+
+    pmod->ntests += 1;
+
+    return 0;
+}
+
 static ARINFO *copy_ar_info (const ARINFO *src)
 {
     ARINFO *targ;
@@ -770,10 +814,13 @@ int command_ok_for_model (int test_ci, int model_ci)
 	if (model_ci != OLS) ok = 0;
 	break;
 
+    case LMTEST:
+	if (model_ci != OLS && model_ci != POOLED) ok = 0;
+	break;
+
     case ARCH:
     case CHOW:
     case CUSUM:
-    case LMTEST:
     case LEVERAGE:
     case RESET:
 	if (model_ci != OLS) ok = 0;

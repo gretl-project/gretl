@@ -752,13 +752,6 @@ static int ljung_box (int varno, int order, const double **Z,
     return 0;
 }
 
-void gretl_test_init (GRETLTEST *test)
-{
-    test->type[0] = 0;
-    test->h_0[0] = 0;
-    test->param[0] = 0;
-}
-
 /**
  * reset_test:
  * @pmod: pointer to model to be tested.
@@ -785,8 +778,9 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&aux);
 
-    if (pmod->ncoeff + 2 >= pdinfo->t2 - pdinfo->t1)
+    if (pmod->ncoeff + 2 >= pdinfo->t2 - pdinfo->t1) {
 	return E_DF;
+    }
 
     newlist = malloc((pmod->list[0] + 3) * sizeof *newlist);
     if (newlist == NULL) {

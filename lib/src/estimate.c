@@ -393,27 +393,31 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 	/* reject missing obs within adjusted sample */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
 			    Z, misst);
-    } else if (pmod->ci == POOLED) {
-	/* compensate for missing obs only if they preserve a
-	   balanced panel */
-	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
-			    Z, NULL);
-	if (pmod->missmask != NULL) {
-	    if (!model_mask_leaves_balanced_panel(pmod, pdinfo)) {
-		free(pmod->missmask);
-		pmod->missmask = NULL;
-		missv = adjust_t1t2(pmod, pmod->list, 
-				    &pmod->t1, &pmod->t2,
-				    Z, misst);
-	    }
-	}
     } else {
 	/* we'll try to compensate for missing obs */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
 			    Z, NULL);
+	if (pmod->ci == POOLED && pmod->missmask != NULL) {
+	    if (!model_mask_leaves_balanced_panel(pmod, pdinfo)) {
+		gretl_model_set_int(pmod, "unbalanced", 1);
+	    }
+	}
     }
 
     return missv;
+}
+
+static int const_pos (const int *list)
+{
+    int i;
+
+    for (i=2; i<=list[0]; i++) {
+        if (list[i] == 0) {
+	    return i;
+	}
+    }
+
+    return 0;
 }
 
 /**
@@ -558,7 +562,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     omitzero(&mdl, pdinfo, *pZ);
 
     /* if regressor list contains a constant, place it first */
-    i = gretl_hasconst(mdl.list);
+    i = const_pos(mdl.list);
     mdl.ifc = (i > 1);
     if (i > 2) {
 	rearrange_list(mdl.list);
@@ -2186,18 +2190,28 @@ MODEL tsls_func (int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 }
 
 /* Given an original regression list, augment it by adding the squares
-   or logs of the original independent variables.  Generate these
-   variables if need be.  Return the augmented list, or NULL on
-   failure.
+   (and cross-products, if wanted) or logs of the original independent
+   variables.  Generate these variables if need be.  Return the
+   augmented list, or NULL on failure.
 */
 
 int *augment_regression_list (const int *orig, int aux, 
 			      double ***pZ, DATAINFO *pdinfo)
 {
     int *list;
+    int listlen;
     int i, k;
 
-    list = malloc((2 * orig[0]) * sizeof *list);
+    if (aux == AUX_WHITE) {
+	int trv = orig[0] - 1 - gretl_hasconst(orig);
+	int nt = (trv * trv + trv) / 2;
+
+	listlen = orig[0] + nt + 1;
+    } else {
+	listlen = 2 * orig[0];
+    }
+
+    list = malloc(listlen * sizeof *list);
     if (list == NULL) {
 	return NULL;
     }
@@ -2207,7 +2221,7 @@ int *augment_regression_list (const int *orig, int aux,
 	list[i] = orig[i];
     }
 
-    /* add squares or logs of independent vars */
+    /* add squares, cross-products or logs of independent vars */
     k = list[0];
     for (i=2; i<=orig[0]; i++) {
 	int vnew, vi = orig[i];
@@ -2215,15 +2229,28 @@ int *augment_regression_list (const int *orig, int aux,
 	if (vi == 0) {
 	    continue;
 	}
-	if (aux == AUX_SQ) {
+
+	if (aux == AUX_SQ || aux == AUX_WHITE) {
 	    vnew = xpxgenr(vi, vi, pZ, pdinfo);
-	} else {
+	    if (vnew > 0) list[++k] = vnew;
+	    if (aux == AUX_WHITE) {
+		int j, vj;
+
+		for (j=i+1; j<=orig[0]; j++) {
+		    vj = orig[j];
+		    if (vj == 0) {
+			continue;
+		    }
+		    vnew = xpxgenr(vi, vj, pZ, pdinfo);
+		    if (vnew > 0) list[++k] = vnew;
+		}
+	    }
+	} else if (aux == AUX_LOG) {
 	    vnew = loggenr(vi, pZ, pdinfo);
-	}
-	if (vnew > 0) {
-	    list[++k] = vnew;
+	    if (vnew > 0) list[++k] = vnew;
 	}
     }
+
     list[0] = k;
 
     return list;
@@ -2563,7 +2590,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		 PRN *prn, GRETLTEST *test)
 {
     int lo, ncoeff, yno, t;
-    int shrink, v = pdinfo->v;
+    int v = pdinfo->v;
     int *list = NULL;
     double zz;
     MODEL white;
@@ -2602,9 +2629,9 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	/* build aux regression list, adding the squares of the original
-	   independent vars */
-	list = augment_regression_list(pmod->list, AUX_SQ, pZ, pdinfo);
+	/* build aux regression list, adding squares and
+	   cross-products of the original independent vars */
+	list = augment_regression_list(pmod->list, AUX_WHITE, pZ, pdinfo);
 	if (list == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -2635,10 +2662,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     clear_model(&white);
 
-    shrink = pdinfo->v - v;
-    if (shrink > 0) {
-	dataset_drop_vars(shrink, pZ, pdinfo);
-    }
+    dataset_drop_vars(pdinfo->v - v, pZ, pdinfo);
 
     free(list);
 
@@ -2713,7 +2737,7 @@ MODEL ar_func (int *list, int pos, double ***pZ,
     rholist[0] = arlist[0] + 1;
     maxlag = ar_list_max(arlist);
 
-    if (gretl_hasconst(reglist)) {
+    if (const_pos(reglist) > 2) {
 	rearrange_list(reglist);
     }
 
@@ -2831,8 +2855,7 @@ MODEL ar_func (int *list, int pos, double ***pZ,
     for (i=0; i<=reglist[0]; i++) {
 	ar.list[i] = reglist[i];
     }
-    i = gretl_hasconst(reglist);
-    if (i > 1) {
+    if (gretl_hasconst(reglist)) {
 	ar.ifc = 1;
     }
     if (ar.ifc) {

@@ -136,7 +136,8 @@ enum test_stats {
     GRETL_TEST_F,
     GRETL_TEST_LMF,
     GRETL_TEST_HARVEY_COLLIER,
-    GRETL_TEST_RESET
+    GRETL_TEST_RESET,
+    GRETL_TEST_LR
 };
 
 enum gretl_opt_flags {

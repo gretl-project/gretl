@@ -77,6 +77,10 @@ void model_count_minus (void);
 
 void set_model_id (MODEL *pmod);
 
+void gretl_test_init (GRETLTEST *test);
+
+int add_test_to_model (MODEL *pmod, const GRETLTEST *test);
+
 void model_list_to_string (int *list, char *buf);
 
 int highest_numbered_var_in_model (const MODEL *pmod, 
