@@ -38,6 +38,7 @@
 
 #define SESSION_DEBUG
 
+extern char *endbit (char *dest, char *src, int addscore);
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 gint yes_no_dialog (char *title, char *msg, int cancel);
@@ -64,6 +65,12 @@ static char *dataset_items[] = {
     "Export as CSV..."
 };
 
+static char *session_items[] = {
+    "Save",
+    "Save As...",
+    "Add last graph"
+};
+
 GtkItemFactoryEntry gp_edit_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" }, 
     { "/File/_Save", NULL, auto_save_gp, 0, NULL },
@@ -78,13 +85,14 @@ GtkItemFactoryEntry gp_edit_items[] = {
 int session_file_open = 0;
 
 static GtkWidget *iconview;
+static GtkWidget *session_popup;
 static GtkWidget *model_popup;
 static GtkWidget *graph_popup;
 static GtkWidget *data_popup;
 static GtkWidget *iconlist1;
 static GList *gobjects;
 static GtkIconListItem *active_icon;
-static gui_obj *active_object;
+static GtkWidget *addgraph;
 
 extern void view_script_default (void);
 extern int read_plotfile (GPT_SPEC *plot, char *fname);
@@ -98,6 +106,7 @@ gtk_icon_list_set_text_space (GtkIconList *iconlist, guint spacing);
 /* end gtkextra functions */
 
 static void session_build_popups (void);
+static void session_popup_activated (GtkWidget *widget, gpointer data);
 static void object_popup_activated (GtkWidget *widget, gpointer data);
 static void data_popup_activated (GtkWidget *widget, gpointer data);
 static void rename_object (GtkWidget *widget, dialog_t *ddata);
@@ -108,9 +117,9 @@ gui_obj *session_new_model (void);
 gui_obj *session_add_object (gpointer data, int sort);
 void open_gui_model (gui_obj *gobj);
 void open_gui_graph (gui_obj *gobj);
-void session_open_object (GtkWidget *widget, 
-			  GtkIconListItem *item, GdkEvent *event,
-			  gpointer data);
+static void session_open_object (GtkWidget *widget, 
+				 GtkIconListItem *item, GdkEvent *event,
+				 gpointer data);
 
 /* ........................................................... */
 
@@ -272,6 +281,7 @@ void session_init (void)
     session.graphs = NULL;
     session.nmodels = 0;
     session.ngraphs = 0;
+    session.name[0] = '\0';
 }
 
 /* ........................................................... */
@@ -304,6 +314,8 @@ void do_open_session (GtkWidget *w, gpointer data)
 	return;
 
     mkfilelist(2, scriptfile);
+
+    endbit (session.name, scriptfile, 0);
 
     /* trash the practice files window that launched the query? */
     if (fwin) gtk_widget_destroy(fwin->w);    
@@ -618,14 +630,18 @@ void view_session (void)
 {
     GtkWidget *hbox1, *scrollw1;
     gint i;
+    gchar title[80];
 
     if (iconview != NULL) {
 	gdk_window_raise(iconview->window);
 	return;
     }
+
+    sprintf(title, "gretl: %s", 
+	    (session.name[0])? session.name : "current session");
     
     iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(iconview), "gretl session: icon view");
+    gtk_window_set_title(GTK_WINDOW(iconview), title);
     gtk_widget_set_usize(iconview, 400, 300);
     gtk_container_border_width(GTK_CONTAINER(iconview), 0);
     gtk_signal_connect(GTK_OBJECT(iconview), "destroy",
@@ -656,9 +672,6 @@ void view_session (void)
     gtk_signal_connect(GTK_OBJECT(iconlist1), "select_icon",
 		       (GtkSignalFunc) session_open_object, NULL);
 
-/*      gtk_signal_connect(GTK_OBJECT(iconlist1), "click_event", */
-/*  		       (GtkSignalFunc) session_get_click, NULL); */
-
     gtk_icon_list_set_editable(GTK_ICON_LIST(iconlist1), FALSE); 
     gtk_icon_list_set_selection_mode(GTK_ICON_LIST(iconlist1), 
 				     GTK_SELECTION_BROWSE);
@@ -666,7 +679,6 @@ void view_session (void)
     GTK_ICON_LIST(iconlist1)->compare_func = (GCompareFunc) null_sort;
 
     active_icon = NULL;
-    active_object = NULL;
     gobjects = NULL;
 
     if (data_file_open) {
@@ -785,6 +797,16 @@ static void rename_object (GtkWidget *w, dialog_t *ddata)
 
 /* ........................................................... */
 
+static void set_addgraph_mode (void)
+{
+    GtkWidget *gmenu = 
+	gtk_item_factory_get_item(mdata->ifac, "/Session/Add last graph");
+
+    gtk_widget_set_sensitive(addgraph, GTK_WIDGET_IS_SENSITIVE(gmenu));
+}
+
+/* ........................................................... */
+
 static void object_popup_show (GtkIconListItem *item, GdkEventButton *event)
 {
     gui_obj *gobj = (gui_obj *) gtk_icon_list_get_link(item);
@@ -799,10 +821,16 @@ static void object_popup_show (GtkIconListItem *item, GdkEventButton *event)
     else if (gobj->sort == 'd')
 	gtk_menu_popup(GTK_MENU(data_popup), NULL, NULL, NULL, NULL,
 		       event->button, event->time);
+    else if (gobj->sort == 's') {
+	set_addgraph_mode();
+	gtk_menu_popup(GTK_MENU(session_popup), NULL, NULL, NULL, NULL,
+		       event->button, event->time);
+    }
 }
 
 /* ........................................................... */
 
+static
 void session_open_object (GtkWidget *widget, 
 			  GtkIconListItem *item, GdkEvent *event,
 			  gpointer data)
@@ -838,11 +866,12 @@ void session_open_object (GtkWidget *widget,
     if (mods & GDK_BUTTON3_MASK && 
 	(gobj->sort == 'm' || 
 	 gobj->sort == 'g' ||
-	 gobj->sort == 'd'))
+	 gobj->sort == 'd' ||
+	 gobj->sort == 's'))
 	object_popup_show(item, (GdkEventButton *) event);
   
-    active_object = gobj;
 }
+
 
 /* ........................................................... */
 
@@ -850,6 +879,29 @@ static void session_build_popups (void)
 {
     GtkWidget *item;
     int i;
+
+    if (session_popup == NULL) {
+	gint n = sizeof(session_items) / sizeof(session_items[0]);
+
+	session_popup = gtk_menu_new();
+	for (i=0; i<n; i++) {
+	    if (i < n-1) {
+		item = gtk_menu_item_new_with_label(session_items[i]);
+		gtk_signal_connect(GTK_OBJECT(item), "activate",
+				   (GtkSignalFunc) session_popup_activated,
+				   session_items[i]);
+		gtk_widget_show(item);
+		gtk_menu_append(GTK_MENU(session_popup),item);
+	    } else {
+		addgraph = gtk_menu_item_new_with_label(session_items[i]);
+		gtk_signal_connect(GTK_OBJECT(addgraph), "activate",
+				   (GtkSignalFunc) session_popup_activated,
+				   session_items[i]);
+		gtk_widget_show(addgraph);
+		gtk_menu_append(GTK_MENU(session_popup), addgraph);
+	    }
+	}
+    }
 
     if (model_popup == NULL) {
 	model_popup = gtk_menu_new();
@@ -886,6 +938,24 @@ static void session_build_popups (void)
 	    gtk_menu_append(GTK_MENU(data_popup),item);
 	}
     }
+}
+
+/* ........................................................... */
+
+static void session_popup_activated (GtkWidget *widget, gpointer data)
+{
+    gchar *item = (gchar *) data;
+
+    if (strcmp(item, "Save") == 0) {
+	if (session_file_open && scriptfile[0]) 
+	    save_session(scriptfile);
+	else
+	    file_selector("Save session", paths.userdir, SAVE_SESSION, NULL);
+    }
+    else if (strcmp(item, "Save As...") == 0) 
+	file_selector("Save session", paths.userdir, SAVE_SESSION, NULL);
+    else if (strcmp(item, "Add last graph") == 0)
+	add_last_graph();
 }
 
 /* ........................................................... */
@@ -977,7 +1047,7 @@ gui_obj *session_add_object (gpointer data, int sort)
 	name = g_strdup("Data info");
 	break;
     case 's':
-	name = g_strdup("Script");
+	name = g_strdup("Session");
 	break;
     case 'r':
 	name = g_strdup("Corrmat");
@@ -996,7 +1066,6 @@ gui_obj *session_add_object (gpointer data, int sort)
     else if (sort == 'i') gobj->data = paths.hdrfile;
     else if (sort == 's') gobj->data = cmdfile;
     else if (sort == 'x') gobj->data = NULL;
-    active_object = gobj;
     g_free(name);
 
     return gobj;

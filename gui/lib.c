@@ -3380,6 +3380,7 @@ static int gui_exec_line (char *line,
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_SQ, prn, ptest);
 	    clear_model(models[1], NULL, NULL);
+	    model_count--;
 	    if (err) errmsg(err, NULL, prn);
 	}
 	/* non-linearity (logs) */
@@ -3387,6 +3388,7 @@ static int gui_exec_line (char *line,
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_LOG, prn, ptest);
 	    clear_model(models[1], NULL, NULL);
+	    model_count--;
 	    if (err) errmsg(err, NULL, prn);
 	}
 	/* autocorrelation or heteroskedasticity */

@@ -171,6 +171,7 @@ typedef struct {
 } GRAPHT; 
 
 typedef struct {
+    char name[32];
     int nmodels;
     int ngraphs;
     MODEL **models;
