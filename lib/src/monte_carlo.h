@@ -43,7 +43,7 @@ LOOPSET *add_to_loop (char *line, int ci, gretlopt oflags,
 
 void gretl_loop_destroy (LOOPSET *loop);
 
-void get_cmd_ci (const char *line, CMD *command);
+void get_cmd_ci (const char *line, CMD *cmd);
 
 int loop_exec (LOOPSET *loop, char *line,
 	       double ***pZ, DATAINFO **ppdinfo, 

@@ -294,8 +294,12 @@ static void gretl_equation_system_clear (gretl_equation_system *sys)
 {
     if (sys == NULL || sys->lists == NULL) return;
 
-    sys->ll = sys->llu = 0.0;
+    sys->flags = 0;
     sys->type = -1;
+
+    sys->ll = 0.0;
+    sys->llu = 0.0;
+    sys->X2 = 0.0;
 }
 
 void gretl_equation_system_destroy (gretl_equation_system *sys)
@@ -591,10 +595,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	return stack_system(sys, prn);
     }
 
-    if (sys->type != SUR && 
-	sys->type != THREESLS && 
-	sys->type != FIML &&
-	sys->type != LIML) {
+    if (sys->type < 0 || sys->type >= SYSMAX) {
 	strcpy(gretl_errmsg, _(badsystem));
 	gretl_equation_system_destroy(sys);
 	return 1;
@@ -1183,7 +1184,7 @@ static int make_instrument_list (gretl_equation_system *sys)
 	return 0;
     }
 
-    if (sys->type != SUR && elist == NULL) {
+    if (sys->type != SUR && sys->type != SYS_OLS && elist == NULL) {
 	/* no list of endog vars: can't proceed */
 	return 1;
     }

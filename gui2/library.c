@@ -313,6 +313,8 @@ void clear_data (void)
     gretl_equation_systems_cleanup();
 
     reset_model_count();
+
+    gretl_cmd_destroy_context(&cmd);
 }
 
 /* ........................................................... */
@@ -454,12 +456,12 @@ gint cmd_init (char *cmdstr)
 
 #ifdef CMD_DEBUG
     fprintf(stderr, "cmd_init: got cmdstr: '%s'\n", cmdstr);
-    fprintf(stderr, "cmd.cmd: '%s'\n", cmd.cmd);
+    fprintf(stderr, "cmd.word: '%s'\n", cmd.word);
     fprintf(stderr, "cmd.param: '%s'\n", cmd.param);
 #endif
 
     if (cmd.ci == OPEN || cmd.ci == RUN) {
-	maybe_quote_filename(cmdstr, cmd.cmd);
+	maybe_quote_filename(cmdstr, cmd.word);
     }
 
     if (bufopen(&echo)) return 1;
@@ -3506,9 +3508,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
        program.
     */
 
-    prcmd.list = malloc(sizeof *prcmd.list);
-    prcmd.param = malloc(1);
-    if (prcmd.list == NULL || prcmd.param == NULL) {
+    if (gretl_cmd_init(&prcmd)) {
 	errbox(_("Out of memory!"));
 	return;
     }
@@ -4894,9 +4894,9 @@ int execute_script (const char *runfile, const char *buf,
 
     gui_script_logo(prn);
 
-    *cmd.cmd = '\0';
+    *cmd.word = '\0';
 
-    while (strcmp(cmd.cmd, "quit")) {
+    while (strcmp(cmd.word, "quit")) {
 	if (looprun) { 
 	    exec_err = loop_exec(loop, line, &Z, &datainfo,
 				 models, &echo_off, prn);
@@ -5824,6 +5824,7 @@ int gui_exec_line (char *line,
     case NLS:
 	err = nls_parse_line(line, (const double **) Z, datainfo);
 	if (err) errmsg(err, prn);
+	else gretl_cmd_set_context(&cmd, NLS);
 	break;
 
     case NULLDATA:
@@ -5990,6 +5991,8 @@ int gui_exec_line (char *line,
 	    if (rset == NULL) {
 		err = 1;
 		errmsg(err, prn);
+	    } else {
+		gretl_cmd_set_context(&cmd, RESTRICT);
 	    }
 	} else {
 	    err = restriction_set_parse_line(rset, line);
@@ -6007,6 +6010,8 @@ int gui_exec_line (char *line,
 	    if (sys == NULL) {
 		err = 1;
 		errmsg(err, prn);
+	    } else {
+		gretl_cmd_set_context(&cmd, SYSTEM);
 	    }
 	} else {
 	    err = system_parse_line(sys, line, datainfo);
@@ -6065,7 +6070,7 @@ int gui_exec_line (char *line,
 
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
-		       "in libgretl\n"), cmd.cmd);
+		       "in libgretl\n"), cmd.word);
 	break;
     } /* end of command switch */
 
@@ -6089,7 +6094,7 @@ int gui_exec_line (char *line,
 	outprn = NULL;
     }
 
-    if (!err && (is_model_cmd(cmd.cmd) || do_nls || do_arch)
+    if (!err && (is_model_cmd(cmd.word) || do_nls || do_arch)
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) {
 	gretl_model_set_int(models[0], "script", 1);
 	err = stack_model(models[0]);

@@ -37,6 +37,7 @@ extern int liml_driver (gretl_equation_system *sys, double ***pZ,
 static void 
 print_system_vcv (const gretl_matrix *m, int triangle, PRN *prn)
 {
+    gretl_matrix *mcopy;
     int jmax = (triangle)? 1 : m->cols;
     char numstr[16];
     double x;
@@ -61,6 +62,15 @@ print_system_vcv (const gretl_matrix *m, int triangle, PRN *prn)
 	if (triangle && jmax < m->cols) {
 	    jmax++;
 	}
+    }
+
+    mcopy = gretl_matrix_copy(m);
+    if (mcopy != NULL) {
+	x = gretl_vcv_log_determinant(mcopy);
+	if (!na(x)) {
+	    pprintf(prn, "\n%s = %g\n", _("log determinant"), x);
+	}
+	gretl_matrix_free(mcopy);
     }
 
     pputc(prn, '\n');
@@ -142,7 +152,8 @@ gls_sigma_from_uhat (gretl_matrix *sigma, const gretl_matrix *e,
 
 /* compute SUR or 3SLS parameter residuals */
 
-static void sys_resids (MODEL *pmod, const double **Z, gretl_matrix *uhat)
+static void 
+sys_resids (int systype, MODEL *pmod, const double **Z, gretl_matrix *uhat)
 {
     double yh;
     int i, t;
@@ -161,44 +172,87 @@ static void sys_resids (MODEL *pmod, const double **Z, gretl_matrix *uhat)
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
-    /* df correction could be applied here */
-    pmod->sigma = sqrt(pmod->ess / pmod->nobs);
+    /* df correction? */
+    if (systype == SYS_OLS) {
+	pmod->sigma = sqrt(pmod->ess / pmod->dfd);
+    } else {
+	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
+    }
 }
 
-/* compute SUR or 3SLS parameter estimates */
+static double system_sigma (MODEL **models, int m, int nr)
+{
+    double ess = 0.0;
+    int df = 0;
+    int i;
+
+    for (i=0; i<m; i++) {
+	ess += models[i]->ess;
+	df += models[i]->nobs - models[i]->ncoeff;
+    }
+
+    df += nr;
+
+    return sqrt(ess / df);
+}
+
+/* compute SUR or 3SLS parameter estimates (or restricted OLS, TSLS) */
 
 static int 
-calculate_sys_coefficients (MODEL **models, const double **Z,
+calculate_sys_coefficients (gretl_equation_system *sys,
+			    MODEL **models, const double **Z,
 			    gretl_matrix *X, gretl_matrix *uhat,
 			    gretl_matrix *y, int m, int mk)
 {
+    int systype = system_get_type(sys);
     gretl_matrix *vcv;
-    int i, j, start;
+    int i, j, k, j0;
+    int err = 0;
 
     vcv = gretl_matrix_copy(X);
     if (vcv == NULL) {
 	return 1;
     }
 
-    gretl_LU_solve(X, y);
-    gretl_invert_general_matrix(vcv); 
+    err = gretl_LU_solve(X, y);
+    if (err) {
+	return err;
+    }
 
-    start = 0;
+    err = gretl_invert_general_matrix(vcv);
+    if (err) {
+	return err;
+    }
+
+#if SDEBUG
+    gretl_matrix_print(vcv, "in calc_coeffs, vcv", NULL);
+#endif
+
+    j0 = 0;
     for (i=0; i<m; i++) {
-	int nci = models[i]->ncoeff;
-
-	for (j=0; j<nci; j++) {
-	    models[i]->coeff[j] = gretl_vector_get(y, start + j);
-	    models[i]->sderr[j] = 
-		sqrt(gretl_matrix_get(vcv, start + j, start + j));
+	for (j=0; j<models[i]->ncoeff; j++) {
+	    k = j0 + j;
+	    models[i]->coeff[j] = gretl_vector_get(y, k);
+	    models[i]->sderr[j] = sqrt(gretl_matrix_get(vcv, k, k));
 	}
-	sys_resids(models[i], Z, uhat);
-	start += nci;
+	sys_resids(systype, models[i], Z, uhat);
+	j0 += models[i]->ncoeff;
+    }
+
+    if (systype == SYS_OLS) {
+	int nr = system_n_restrictions(sys);
+	double s = system_sigma(models, m, nr);
+
+	for (i=0; i<m; i++) {
+	    for (j=0; j<models[i]->ncoeff; j++) {
+		models[i]->sderr[j] *= s;
+	    }
+	}
     }
 
     gretl_matrix_free(vcv);
 
-    return 0;
+    return err;
 }
 
 /* FIXME below: naming and labeling of added variables */
@@ -320,9 +374,7 @@ print_system_overidentification_test (const gretl_equation_system *sys,
 	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
 		df, X2, _("with p-value"), chisq(X2, df));
 	pputc(prn, '\n');
-    }
-
-    else if ((systype == THREESLS || systype == SUR) && df > 0) {
+    } else if ((systype == THREESLS || systype == SUR) && df > 0) {
 	double X2 = system_get_X2(sys);
 
 	if (na(X2) || X2 == 0.0) {
@@ -335,102 +387,6 @@ print_system_overidentification_test (const gretl_equation_system *sys,
 	pputc(prn, '\n');
     }
 }
-
-#if SDEBUG
-
-/* longhand check on Hansen-Sargan test statistic: we don't
-   really need to burn this much memory or CPU cycles
-*/
-
-static int hs_check (gretl_equation_system *sys, 
-		     const gretl_matrix *sigma,
-		     double ***pZ, DATAINFO *pdinfo)
-{
-    const int *exlist = system_get_instr_vars(sys);
-    const MODEL *pmod;
-    int nx = exlist[0];
-    int m = system_n_equations(sys);
-    int T = system_n_obs(sys);
-    int df = system_get_df(sys);
-    int oldv = pdinfo->v;
-
-    MODEL hmod;
-    int *hlist;
-
-    double x, X2;
-    int i, j, t;
-    int err = 0;
-
-    hlist = malloc((nx + 2) * sizeof *hlist);
-    if (hlist == NULL) {
-	return 1;
-    }
-
-    /* on RHS: all the exog vars */
-    for (i=0; i<nx; i++) {
-	hlist[i+2] = exlist[i+1];
-    }
-
-    hlist[0] = nx + 1;
-
-    /* add space for resids series */
-    err = dataset_add_vars(2 * m, pZ, pdinfo);
-    if (err) {
-	fprintf(stderr, "Failed to expand dataset\n");
-	free(hlist);
-	return 1;
-    }
-
-    /* populate resids series */
-    for (i=0; i<m; i++) {
-	pmod = system_get_model(sys, i);
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[oldv + i][t] = pmod->uhat[t];
-	}
-    }
-
-    /* run aux regressions, get fitted values */
-    for (i=0; i<m; i++) {
-	hlist[1] = oldv + i;
-	hmod = lsq(hlist, pZ, pdinfo, OLS, OPT_A, 0.0);
-	if (hmod.errcode) {
-	    fprintf(stderr, "hmod error!\n");
-	    clear_model(&hmod);
-	    err = 1;
-	    goto cleanup;
-	}
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[oldv + m + i][t] = hmod.yhat[t];
-	}
-	clear_model(&hmod);
-    }
-
-    /* cumulate the Chi-square value */
-    X2 = 0.0;
-    for (i=0; i<m; i++) {
-	for (j=0; j<m; j++) {
-	    x = 0.0;
-	    for (t=0; t<T; t++) {
-		x += (*pZ)[oldv + i][t + pdinfo->t1] *
-		    (*pZ)[oldv + m + j][t + pdinfo->t1];
-	    }
-	    X2 += gretl_matrix_get(sigma, i, j) * x;
-	}
-    }
-
-    fprintf(stderr, "Hansen-Sargan, longhand version:\n"
-	    "  Chi-square(%d) = %g (p-value %g)\n", 
-	    df, X2, chisq(X2, df));
-
- cleanup:
-
-    dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo);
-    free(hlist);
-
-    return err;
-}
-
-#endif /* SDEBUG */
 
 /* Hansen-Sargan overidentification test for the system as a whole,
    as in Davidson and MacKinnon, ETM, p. 532 and equation (12.61).
@@ -692,6 +648,8 @@ augment_X_with_restrictions (gretl_matrix *X, int mk,
     R = system_get_R_matrix(sys);
     if (R == NULL) return 1;
 
+    /* place the R matrix */
+
     kronecker_place(X, R, mk, 0, 1.0);
 
     /* place R-transpose */
@@ -703,6 +661,14 @@ augment_X_with_restrictions (gretl_matrix *X, int mk,
 	for (j=0; j<Rcols; j++) {
 	    rij = gretl_matrix_get(R, i, j);
 	    gretl_matrix_set(X, j, i + mk, rij);
+	}
+    }
+
+    /* zero the bottom right block */
+
+    for (i=mk; i<mk+Rrows; i++) {
+	for (j=mk; j<mk+Rrows; j++) {
+	    gretl_matrix_set(X, i, j, 0.0);
 	}
     }
 
@@ -987,12 +953,15 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
        these estimates will be either SUR or 3SLS -- unless we're just
        doing restricted single-equation estimates
     */
-    calculate_sys_coefficients(models, (const double **) *pZ, X, uhat, 
-			       y, m, mk);
+    calculate_sys_coefficients(sys, models, (const double **) *pZ, X, 
+			       uhat, y, m, mk);
 
     if (do_iteration) {
 	double ll = sur_ll(sys, uhat, m, T);
 
+#if SDEBUG
+	printf("SUR iteration %d, ll = %.8g\n", iters, ll);
+#endif
 	if (ll - llbak > SYS_LL_TOL) {
 	    if (iters < SYS_MAX_ITER) {
 		llbak = ll;
@@ -1007,15 +976,9 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	} 
     }
 
-    if (systype == THREESLS || systype == SUR) {
+    if (nr == 0 && (systype == THREESLS || systype == SUR)) {
 	/* do this while we have sigma-inverse available */
 	hansen_sargan_test(sys, sigma, uhat, (const double **) *pZ, t1);
-#if SDEBUG 
-	/* try to verify the above result */
-	system_attach_models(sys, models);
-	hs_check(sys, sigma, pZ, pdinfo);
-	system_unattach_models(sys);
-#endif
     }
 
     /* refresh sigma (non-inverted) */

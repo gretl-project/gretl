@@ -297,6 +297,8 @@ static int clear_data (void)
 
     reset_model_count();
 
+    gretl_cmd_destroy_context(&cmd);
+
     return err;
 }
 
@@ -566,7 +568,7 @@ int main (int argc, char *argv[])
     }
 
     /* main command loop */
-    while (strcmp(cmd.cmd, "quit")) {
+    while (strcmp(cmd.word, "quit")) {
 	char linecopy[MAXLEN];
 
 	if (err && batch && errfatal) {
@@ -1329,6 +1331,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case NLS:
 	err = nls_parse_line(line, (const double **) Z, datainfo);
 	if (err) errmsg(err, prn);
+	else gretl_cmd_set_context(&cmd, NLS);
 	break;
 
     case NULLDATA:
@@ -1414,7 +1417,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    }
 	    fb = stdin;
 	    runfile_open = 0;
-	    strcpy(cmd.cmd, "endrun"); /* overwrite "quit" */
+	    strcpy(cmd.word, "endrun"); /* overwrite "quit" */
 	    break;
 	}
 	printf(_("commands saved as %s\n"), cmdfile);
@@ -1531,6 +1534,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    if (rset == NULL) {
 		err = 1;
 		errmsg(err, prn);
+	    } else {
+		gretl_cmd_set_context(&cmd, RESTRICT);
 	    }
 	} else {
 	    err = restriction_set_parse_line(rset, line);
@@ -1548,13 +1553,15 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    if (sys == NULL) {
 		err = 1;
 		errmsg(err, prn);
+	    } else {
+		gretl_cmd_set_context(&cmd, SYSTEM);
 	    }
 	} else {
 	    err = system_parse_line(sys, line, datainfo);
 	    if (err) {
 		errmsg(err, prn);
 		sys = NULL;
-	    }	
+	    } 
 	}
 	break;
 
@@ -1590,7 +1597,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
-		       "in gretlcli\n"), cmd.cmd);
+		       "in gretlcli\n"), cmd.word);
 	err = 1;
 	break;
     }
@@ -1599,7 +1606,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	gretl_function_error();
     }
 
-    if (!err && (is_model_cmd(cmd.cmd) || do_nls || do_arch)
+    if (!err && (is_model_cmd(cmd.word) || do_nls || do_arch)
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) { 
 
 	attach_subsample_to_model(models[0], datainfo);

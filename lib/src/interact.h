@@ -30,8 +30,9 @@
 typedef struct _CMD CMD;
 
 struct _CMD {
-    char cmd[9];                /* command word */
+    char word[9];               /* command word */
     int ci;                     /* command index number */
+    int context;                /* context for subsetted commands */
     gretlopt opt;               /* option flags */
     char savename[MAXSAVENAME]; /* name used to save an object from the command */
     char str[4];                /* used, e.g., in "multiply" command */
@@ -53,11 +54,17 @@ enum option_codes {
 };
     
 /* functions follow */
+
+int gretl_cmd_init (CMD *cmd);
  
-void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
+void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd, 
 	     int *ignore, double ***pZ, PRN *cmdprn);
 
 int command_number (const char *cmd);
+
+void gretl_cmd_set_context (CMD *cmd, int ci);
+
+void gretl_cmd_destroy_context (CMD *cmd);
 
 int help (const char *cmd, const char *helpfile, PRN *prn);
 

@@ -28,15 +28,14 @@ typedef struct restriction_ restriction;
 struct restriction_ {
     int nterms;      /* number of terms in restriction */
     double *mult;    /* array of numerical multipliers on coeffs */
-    int *eq;         /* array of equation numbers (cross-equation case) */
+    int *eq;         /* array of equation numbers (for cross-equation case) */
     int *coeff;      /* array of coeff numbers */
     double rhs;      /* numerical value on right-hand side */
 };
 
 struct restriction_set_ {
     int cross;                    /* 1 for cross-equation set, else 0 */
-    int k;                        /* number of restrictions */
-    int ncoeff;                   /* number of coefficients referenced */                 
+    int k;                        /* number of restrictions (rows) */
     char *mask;                   /* selection mask for coeffs */
     restriction **restrictions;
     MODEL *pmod;
@@ -67,29 +66,15 @@ static int check_R_matrix (const gretl_matrix *R)
     return err;
 }
 
-static int total_indep_vars (const gretl_restriction_set *rset)
-{
-    int nx = 0;
-
-    if (rset->pmod != NULL) {
-	nx = rset->pmod->ncoeff;
-    } else if (rset->sys != NULL) {
-	nx = system_n_indep_vars(rset->sys);
-    } 
-
-    return nx;
-}
-
 static int 
 get_R_column (const gretl_restriction_set *rset, int i, int j)
 {
     const restriction *r = rset->restrictions[i];
     const int *list;
     int col = r->coeff[j];
-    int eq = r->eq[j];
     int k;
 
-    for (k=0; k<eq; k++) {
+    for (k=0; k<r->eq[j]; k++) {
 	list = system_get_list(rset->sys, k);
 	col += list[0] - 1;
     }
@@ -112,6 +97,25 @@ static double get_restriction_param (const restriction *r, int k)
     return x;
 }
 
+static int R_n_columns (gretl_restriction_set *rset)
+{
+    int cols = 0;
+
+    if (rset->cross) {
+	cols = system_n_indep_vars(rset->sys);
+    } else {
+	int i;
+
+	for (i=0; i<rset->pmod->ncoeff; i++) {
+	    if (rset->mask[i]) {
+		cols++;
+	    }
+	}
+    }
+
+    return cols;
+}
+
 static int 
 restriction_set_form_matrices (gretl_restriction_set *rset,
 			       gretl_matrix **Rin,
@@ -121,17 +125,9 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
     gretl_vector *q;
     restriction *r;
     double x;
-    int nx;
-    int i, j, k;
+    int col, i, j;
 
-    nx = total_indep_vars(rset);
-    if (nx == 0) return E_DATA;
-
-    if (rset->cross) {
-	R = gretl_matrix_alloc(rset->k, nx);
-    } else {
-	R = gretl_matrix_alloc(rset->k, rset->ncoeff);
-    }
+    R = gretl_matrix_alloc(rset->k, R_n_columns(rset));
 
     if (R == NULL) return E_ALLOC;
 
@@ -145,34 +141,26 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
     gretl_matrix_zero(R);
     gretl_matrix_zero(q);
 
-    if (rset->cross) {
-	int col;
-
-	for (i=0; i<rset->k; i++) { 
-	    r = rset->restrictions[i];
+    for (i=0; i<rset->k; i++) { 
+	r = rset->restrictions[i];
+	if (rset->cross) {
 	    for (j=0; j<r->nterms; j++) {
 		col = get_R_column(rset, i, j);
 		x = r->mult[j];
-#if RDEBUG
-		printf("restriction %d, term %d: col=%d, x=%g\n", i, j, col, x);
-#endif
 		gretl_matrix_set(R, i, col, x);
 	    }
-	    gretl_vector_set(q, i, r->rhs);
-	}
-    } else {
-	for (i=0; i<rset->k; i++) { 
-	    r = rset->restrictions[i];
-	    j = 0;
-	    for (k=0; k<nx; k++) {
-		if (rset->mask[k]) {
-		    x = get_restriction_param(r, k);
-		    gretl_matrix_set(R, i, j++, x);
+	} else {
+	    col = 0;
+	    for (j=0; j<rset->pmod->ncoeff; j++) {
+		if (rset->mask[j]) {
+		    x = get_restriction_param(r, j);
+		    gretl_matrix_set(R, i, col++, x);
 		}
 	    }
-	    gretl_vector_set(q, i, r->rhs);
 	}
+	gretl_vector_set(q, i, r->rhs);
     }
+
 
 #if RDEBUG
     gretl_matrix_print(R, "R", NULL);
@@ -185,19 +173,21 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
     return 0;
 }
 
-/* make a mask with 1s in positions in the array of coeffs where
-   a coeff is referenced in one or more restrictions, 0s otherwise
+/* Make a mask with 1s in positions in the array of coeffs where
+   a coeff is referenced in one or more restrictions, 0s otherwise.
+   We do this only for single-equation restriction sets.
 */
 
 static int restriction_set_make_mask (gretl_restriction_set *rset)
 {
     restriction *r;
-    int nx, i, j;
+    int i, j;
 
-    nx = total_indep_vars(rset);
-    if (nx == 0) return E_DATA;
+    if (rset->pmod == NULL) {
+	return 1;
+    }
 
-    rset->mask = calloc(nx, 1);
+    rset->mask = calloc(rset->pmod->ncoeff, 1);
 
     if (rset->mask == NULL) {
 	destroy_restriction_set(rset);
@@ -209,13 +199,6 @@ static int restriction_set_make_mask (gretl_restriction_set *rset)
 	for (j=0; j<r->nterms; j++) {
 	    rset->mask[r->coeff[j]] = 1;
 	}	
-    }
-
-    rset->ncoeff = 0;
-    for (i=0; i<nx; i++) {
-	if (rset->mask[i]) {
-	    rset->ncoeff += 1;
-	}
     }
 
     return 0;
@@ -282,6 +265,11 @@ parse_coeff_chunk (const char *s, double *x, int *eq, int *bnum)
     if (err) {
 	sprintf(gretl_errmsg, _("parse error in '%s'\n"), s);
     } 
+
+#if RDEBUG
+    printf("parse_coeff_chunk: x=%g, eq=%d, bnum=%d\n", 
+	   *x, *eq, *bnum);
+#endif
 
     return err;
 }
@@ -431,23 +419,18 @@ print_restriction_set (const gretl_restriction_set *rset, PRN *prn)
 	if (rset->k > 1) {
 	    pprintf(prn, " %d: ", i + 1);
 	} else {
-	    pputs(prn, " ");
+	    pputc(prn, ' ');
 	}
 	print_restriction(rset, i, prn);
     }
 
 #if RDEBUG
     if (rset->pmod != NULL) {
-	int nc = total_indep_vars(rset);
-
 	pprintf(prn, "Selection mask for coefficients:");
-	for (i=0; i<nc; i++) {
-	    pprintf(prn, " %d", rset->mask[i]);
+	for (i=0; i<rset->pmod->ncoeff; i++) {
+	    pprintf(prn, " %d", (int) rset->mask[i]);
 	}
 	pputc(prn, '\n');
-
-	pprintf(prn, "Number of coefficients referenced = %d\n",
-		rset->ncoeff);
     }
 #endif
 }
@@ -479,7 +462,6 @@ real_restriction_set_start (MODEL *pmod, const DATAINFO *pdinfo,
     rset->sys = sys;
 
     rset->k = 0;
-    rset->ncoeff = 0;
     rset->mask = NULL;
     rset->restrictions = NULL;
 
@@ -531,6 +513,10 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
     int sgn = 1;
     int i, nt, err = 0;
 
+#if RDEBUG
+    printf("parse restriction line: got '%s'\n", line);
+#endif
+
     if (!strncmp(p, "restrict", 8)) {
 	if (strlen(line) == 8) {
 	    if (first) {
@@ -543,13 +529,16 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 	while (isspace((unsigned char) *p)) p++;
     }
 
-    if (*p == '+') p++;
-    else if (*p == '-') {
-	sgn = -1;
+    if (*p == '+' || *p == '-') {
+	sgn = (*p == '+')? 1 : -1;
 	p++;
     }
 
     nt = 1 + count_ops(p);
+
+#if RDEBUG
+    printf("restriction line: assuming %d terms\n", nt);
+#endif
 
     r = augment_restriction_set(rset, nt);
 
@@ -568,9 +557,14 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 	    err = 1;
 	    break;
 	}
+
 	*chunk = 0;
 	strncat(chunk, p, len);
 	p += len;
+
+#if RDEBUG
+	printf(" working on chunk %d, '%s'\n", i, chunk);
+#endif
 
 	err = parse_coeff_chunk(chunk, &mult, &eq, &bnum);
 	if (err) {
@@ -606,9 +600,15 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 int 
 restriction_set_parse_line (gretl_restriction_set *rset, const char *line)
 {
-    int nx = total_indep_vars(rset);
+    int nx = 0;
 
-    if (rset->k == nx) {
+    if (rset->pmod != NULL) {
+	nx = rset->pmod->ncoeff;
+    } else if (rset->sys != NULL) {
+	nx = system_n_indep_vars(rset->sys);
+    } 
+
+    if (rset->k >= nx) {
 	sprintf(gretl_errmsg, _("Too many restrictions (maximum is %d)"), 
 		nx - 1);
 	destroy_restriction_set(rset);
@@ -813,6 +813,15 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset, PRN *prn)
 	print_restriction_set(rset, prn);
 #endif
 	err = restriction_set_form_matrices(rset, &R, &q);
+	if (!err) {
+	    err = check_R_matrix(R);
+	    if (err == GRETL_MATRIX_SINGULAR) {
+		pputs(prn, _("Matrix inversion failed:\n"
+			     " restrictions may be inconsistent or redundant\n"));
+	    } else if (err) {
+		err = E_ALLOC;
+	    }
+	}	
 	if (!err) {
 	    system_set_restriction_matrices(rset->sys, R, q);
 	}

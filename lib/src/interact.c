@@ -37,7 +37,7 @@
 # endif
 #endif
 
-static int make_full_list (const DATAINFO *pdinfo, CMD *command);
+static int make_full_list (const DATAINFO *pdinfo, CMD *cmd);
 static void get_optional_filename (const char *line, CMD *cmd);
 
 typedef struct {
@@ -141,74 +141,43 @@ static int get_rhodiff_param (char *str, CMD *cmd)
 
 /* ........................................................... */
 
-static int restrict_bnum (const char *s)
+static int aliased (char *str)
 {
-    if (*s == 'b') {
-	s++;
-	if (isdigit((unsigned char) *s) || *s == '[') {
-	    return 1;
-	}
-    } 
+    int ret = 0;
 
-    return 0;
-}
+    if (!strcmp(str, "q")) {
+	strcpy(str, "quit");
+	ret = 1;
+    } else if (!strcmp(str, "x")) {
+	strcpy(str, "quit");
+	ret = 2;
+    } else if (!strcmp(str, "let")) {
+	strcpy(str, "genr");
+	ret = 1;
+    } else if (!strcmp(str, "ls")) {
+	strcpy(str, "varlist");
+	ret = 1;
+    } else if (!strcmp(str, "list")) {
+	strcpy(str, "varlist");
+	ret = 1;
+    } else if (!strcmp(str, "boxplots")) { 
+	strcpy(str, "boxplot");
+	ret = 1;
+    } else if (!strcmp(str, "man")) {
+	strcpy(str, "help");
+	ret = 1;
+    } else if (!strcmp(str, "sample")) {
+	strcpy(str, "smpl");
+	ret = 1;
+    } else if (!strcmp(str, "eval")) {
+	strcpy(str, "genr");
+	ret = 1;
+    } else if (str[0] == '!') {
+	strcpy(str, "shell");
+	ret = 1;
+    }
 
-static int subsetted_command (const char *cmd)
-{    
-    if (strcmp(cmd, "deriv") == 0)    return NLS;
-    if (strcmp(cmd, "identity") == 0) return SYSTEM;
-    if (strcmp(cmd, "endog") == 0)    return SYSTEM;
-    if (strcmp(cmd, "instr") == 0)    return SYSTEM;
-    if (restrict_bnum(cmd))           return RESTRICT;
-
-    return 0;
-}
-
-/* ........................................................... */
-
-static int aliased (char *cmd)
-{
-    if (!strcmp(cmd, "q")) {
-	strcpy(cmd, "quit");
-	return 1;
-    }
-    else if (!strcmp(cmd, "x")) {
-	strcpy(cmd, "quit");
-	return 2;
-    }
-    else if (!strcmp(cmd, "let")) {
-	strcpy(cmd, "genr");
-	return 1;
-    }
-    else if (!strcmp(cmd, "ls")) {
-	strcpy(cmd, "varlist");
-	return 1;
-    }
-    else if (!strcmp(cmd, "list")) {
-	strcpy(cmd, "varlist");
-	return 1;
-    }
-    else if (!strcmp(cmd, "boxplots")) { 
-	strcpy(cmd, "boxplot");
-	return 1;
-    }
-    else if (!strcmp(cmd, "man")) {
-	strcpy(cmd, "help");
-	return 1;
-    }
-    else if (!strcmp(cmd, "sample")) {
-	strcpy(cmd, "smpl");
-	return 1;
-    }
-    else if (!strcmp(cmd, "eval")) {
-	strcpy(cmd, "genr");
-	return 1;
-    }
-    else if (cmd[0] == '!') {
-	strcpy(cmd, "shell");
-	return 1;
-    }
-    return 0;
+    return ret;
 }
 
 #define NO_VARLIST(c) (c == VARLIST || \
@@ -252,6 +221,35 @@ static int aliased (char *cmd)
                        c == FUNC || \
                        c == OUTFILE)
 
+#define USES_LISTSEP(c) (c == TSLS || \
+                         c == AR || \
+                         c == MPOLS || \
+                         c == SCATTERS || \
+                         c == ARMA || \
+                         c == GARCH || \
+		         c == EQUATION) 
+
+#define TAKES_LAG_ORDER(c) (c == ADF || \
+                            c == KPSS || \
+                            c == ARCH || \
+                            c == COINT || \
+                            c == COINT2 || \
+                            c == VAR)
+
+#define DEFAULTS_TO_FULL_LIST(c) (c == PRINT || \
+                                  c == STORE || \
+                                  c == CORR || \
+                                  c == LOGS || \
+                                  c == SQUARE || \
+                                  c == DIFF || \
+                                  c == LDIFF || \
+                                  c == SUMMARY || \
+                                  c == SMPL || \
+                                  c == PCA || \
+                                  c == LAGS)
+
+#define SCALARS_OK_IN_LIST(c) (c == PRINT || c == STORE || c == DELEET)
+
 /* ........................................................... */
 
 static int flow_control (const char *line, double ***pZ, 
@@ -269,13 +267,9 @@ static int flow_control (const char *line, double ***pZ,
 	if (ret == -1 || ifstate((ret)? SET_TRUE : SET_FALSE)) { 
 	    cmd->errcode = E_SYNTAX;
 	}
-    }
-
-    else if (cmd->ci == ELSE && ifstate(SET_ELSE)) {
+    } else if (cmd->ci == ELSE && ifstate(SET_ELSE)) {
 	cmd->errcode = E_SYNTAX;
-    }
-
-    else if (cmd->ci == ENDIF && ifstate(SET_ENDIF)) {
+    } else if (cmd->ci == ENDIF && ifstate(SET_ENDIF)) {
 	cmd->errcode = E_SYNTAX;
     }
 
@@ -304,7 +298,52 @@ static void get_savename (char *s, CMD *cmd)
     }
 }
 
-static void grab_gnuplot_literal_block (char *line, CMD *command)
+static int 
+get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
+{
+    int quoted = 0;
+    int q, len;
+
+    q = *s;
+
+    if (q == '"' || q == '\'') {
+	char *p = strchr(s + 1, q);
+
+	if (p == NULL) {
+	    return E_SYNTAX;
+	}
+	len = p - s - 1;
+	if (len == 0) {
+	    return E_SYNTAX;
+	}
+	quoted = 1;
+    } else {
+	len = strcspn(s, " ");
+    }
+
+    cmd->param = realloc(cmd->param, len + 1);
+    if (cmd->param == NULL) {
+	return E_ALLOC;
+    }
+
+    *cmd->param = '\0';
+    strncat(cmd->param, s + quoted, len);
+
+    if (quoted) {
+	char *p = cmd->param;
+
+	while (*p) {
+	    if (*p == ' ') *nf -= 1;
+	    p++;
+	}
+    }
+
+    shift_left(s, len + 2 * quoted);
+
+    return 0;
+} 
+
+static void grab_gnuplot_literal_block (char *line, CMD *cmd)
 {
     char *p = strchr(line, '{');
     char *bl = NULL;
@@ -313,34 +352,34 @@ static void grab_gnuplot_literal_block (char *line, CMD *command)
 	bl = malloc(strlen(p) + 1);
 	if (bl != NULL) {
 	    strcpy(bl, p);
-	    free(command->param);
-	    command->param = bl;
+	    free(cmd->param);
+	    cmd->param = bl;
 	    *p = 0;
 	}
     }
 }
 
-static int parse_lagvar (const char *s, LAGVAR *plagv, 
+static int parse_lagvar (const char *s, LAGVAR *lv, 
 			 const DATAINFO *pdinfo)
 {
     int ret = 1;
 
-    *plagv->varname = 0;
-    plagv->firstlag = 0;
-    plagv->lastlag = 0;
-    plagv->varnum = 0;
+    *lv->varname = 0;
+    lv->firstlag = 0;
+    lv->lastlag = 0;
+    lv->varnum = 0;
 
-    if (sscanf(s, "%8[^(](-%d to -%d)", plagv->varname, 
-	       &plagv->firstlag, &plagv->lastlag) == 3) {
-	plagv->varnum = varindex(pdinfo, plagv->varname);
-	if (plagv->varnum < pdinfo->v) {
+    if (sscanf(s, "%8[^(](-%d to -%d)", lv->varname, 
+	       &lv->firstlag, &lv->lastlag) == 3) {
+	lv->varnum = varindex(pdinfo, lv->varname);
+	if (lv->varnum < pdinfo->v) {
 	    ret = 0;
 	} 
-    } else if (sscanf(s, "%8[^(](-%d)", plagv->varname, 
-		      &plagv->firstlag) == 2) {
-	plagv->varnum = varindex(pdinfo, plagv->varname);
-	if (plagv->varnum < pdinfo->v) {
-	    plagv->lastlag = plagv->firstlag;
+    } else if (sscanf(s, "%8[^(](-%d)", lv->varname, 
+		      &lv->firstlag) == 2) {
+	lv->varnum = varindex(pdinfo, lv->varname);
+	if (lv->varnum < pdinfo->v) {
+	    lv->lastlag = lv->firstlag;
 	    ret = 0;
 	} 
     }
@@ -348,12 +387,12 @@ static int parse_lagvar (const char *s, LAGVAR *plagv,
     return ret;
 }
 
-static int expand_command_list (CMD *cmd, int nadd)
+static int expand_command_list (CMD *cmd, int add)
 {
     int oldn = cmd->list[0];
     int *list;
 
-    list = realloc(cmd->list, (oldn + nadd) * sizeof *list);
+    list = realloc(cmd->list, (oldn + add) * sizeof *list);
     if (list == NULL) {
 	cmd->errcode = E_ALLOC;
 	strcpy (gretl_errmsg, 
@@ -362,7 +401,7 @@ static int expand_command_list (CMD *cmd, int nadd)
     }
 
     /* one of the vars was "already assumed" */
-    list[0] += (nadd - 1);
+    list[0] += (add - 1);
     
     cmd->list = list;
 
@@ -596,6 +635,41 @@ static int field_from_line (char *field, const char *s)
     return ret;
 }
 
+static void accommodate_obsolete_commands (char *word, char *line)
+{
+    if (!strcmp(word, "noecho")) {
+	strcpy(word, "set");
+	strcpy(line, "set echo off");
+    } else if (!strcmp(word, "seed")) {
+	char seedstr[16];
+
+	strcpy(word, "set");
+	if (sscanf(line, "%*s %15s", seedstr)) {
+	    sprintf(line, "set seed %s", seedstr);
+	} else {
+	    strcpy(line, "set seed");
+	}
+    }
+}
+
+static int fix_semicolon_after_var (char *s, int len)
+{
+    int i, j;
+
+    for (i=0; i<len-1; i++) {
+	if (isalnum((unsigned char) s[i]) && s[i+1] == ';') {
+	    for (j=len; j>i+1; j--) {
+		s[j] = s[j-1];
+	    }
+	    s[i+1] = ' ';
+	    s[len + 1] = '\0';
+	    len = strlen(s);
+	}
+    }
+
+    return len;
+}
+
 #define COMMAND_CAN_END(c) (c == SYSTEM || \
                             c == NLS || \
 			    c == RESTRICT || \
@@ -619,32 +693,62 @@ static void check_end_command (CMD *cmd)
     }
 }
 
+static int resize_cmd_param (CMD *cmd, const char *s, int inlen)
+{
+    char *param;
+    int len;
+
+    if (inlen > 0) {
+	len = inlen;
+    } else if (s != NULL) {
+	if (strchr(s, ' ') == NULL) {
+	    len = strlen(s);
+	} else {
+	    len = strcspn(s, " ");
+	}
+	len++;
+    } else {
+	return 1;
+    }
+
+    param = realloc(cmd->param, len);
+    if (param == NULL) {
+	return 1;
+    }
+
+    cmd->param = param;
+    
+    return 0;
+}
+
 /**
  * getcmd:
  * @line: the command line (string).
  * @pdinfo: pointer to data information struct.
- * @command: pointer to #CMD struct.
+ * @cmd: pointer to #CMD struct.
  * @ignore: pointer to int indicating whether (1) or not (0) we're
  * in comment mode, and @line should not be parsed.
  * @pZ: pointer to data matrix.
  * @cmdprn: pointer to gretl printing struct.
  *
  * Parses @line and fills out @command accordingly.  In case
- * of error, @command->errcode gets a non-zero value.
+ * of error, @cmd->errcode gets a non-zero value.
  */
 
-void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
+void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd, 
 	     int *ignore, double ***pZ, PRN *cmdprn)
 {
-    int i, j, nf, linelen, n, v, lnum;
+    int j, nf, linelen, n, v, lnum;
     int gotdata = 0, ar = 0, poly = 0;
-    int spacename = 0;
-    char field[10], *remainder;
+    char *remainder = NULL;
+    char field[16] = {0};
 
-    command->ci = 0;
-    command->errcode = 0;
-    command->nolist = 0;
-    *command->param = '\0';
+    cmd->ci = 0;
+    cmd->errcode = 0;
+    cmd->nolist = 0;
+    *cmd->word = '\0';
+    *cmd->param = '\0';
+    *cmd->str = '\0';
 
     *gretl_errmsg = '\0';
 
@@ -657,174 +761,167 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     /* trap comments */
     if (!gotdata) {
 	if (filter_comments(line, ignore)) {
-	    command->nolist = 1;
-	    command->ci = CMD_COMMENT;
+	    cmd->nolist = 1;
+	    cmd->ci = CMD_COMMENT;
 	    return;
 	}
     }
 
     /* also new-style comments */
     if (*line == '#') {
-	command->nolist = 1;
-	command->ci = CMD_COMMENT;
+	cmd->nolist = 1;
+	cmd->ci = CMD_COMMENT;
 	return;
     }    
 
     /* extract "savename" for storing an object? */
-    get_savename(line, command);
+    get_savename(line, cmd);
 
     /* no command here? */
-    if (sscanf(line, "%s", command->cmd) != 1) {
-	command->nolist = 1;
-	command->ci = CMD_NULL;
+    if (sscanf(line, "%8s", cmd->word) != 1) {
+	cmd->nolist = 1;
+	cmd->ci = CMD_NULL;
 	return;
     }
 
+    /* backwards compatibility */
+    accommodate_obsolete_commands(cmd->word, line);
+
     linelen = strlen(line);
 
-    /* backwards compatibility for obsolete commands */
-    if (!strcmp(command->cmd, "noecho")) {
-	strcpy(command->cmd, "set");
-	strcpy(line, "set echo off");
-    } else if (!strcmp(command->cmd, "seed")) {
-	char seedstr[16];
-
-	strcpy(command->cmd, "set");
-	if (sscanf(line, "%*s %15s", seedstr)) {
-	    sprintf(line, "set seed %s", seedstr);
-	} else {
-	    strcpy(line, "set seed");
-	}
-    }
-
     /* command aliases */
-    if (aliased(command->cmd) == 2) {
-	command->param = realloc(command->param, 2);
-	strcpy(command->param, "x");
+    if (aliased(cmd->word) == 2) {
+	if (resize_cmd_param(cmd, NULL, 2)) {
+	    cmd->errcode = E_ALLOC;
+	    goto bailout;
+	}
+	strcpy(cmd->param, "x");
     }
 
     /* subsetted commands (e.g. "deriv" in relation to "nls") */
-    command->ci = subsetted_command(command->cmd);
+    if (!strcmp(cmd->word, "end")) {
+	cmd->context = 0;
+    } else if (cmd->context && strcmp(cmd->word, "equation")) {
+	/* "equation" occurs in the SYSTEM context, but it is
+	   a command in its own right */
+	cmd->ci = cmd->context;
+    }
 
     /* trap bogus commands */ 
-    if (command->ci == 0) {
-	command->ci = gretl_command_number(command->cmd);
-	if (command->ci == 0) {
-	    command->errcode = 1;
+    if (cmd->ci == 0) {
+	cmd->ci = gretl_command_number(cmd->word);
+	if (cmd->ci == 0) {
+	    cmd->errcode = 1;
 	    sprintf(gretl_errmsg, _("command '%s' not recognized"), 
-		    command->cmd);
-	    return;
+		    cmd->word);
+	    goto bailout;
 	}
     }
 
     /* if, else, endif controls */
-    if (flow_control(line, pZ, pdinfo, command)) {
-	command->nolist = 1;
-	command->ci = CMD_NULL;
+    if (flow_control(line, pZ, pdinfo, cmd)) {
+	cmd->nolist = 1;
+	cmd->ci = CMD_NULL;
 	return;
     }
 
     /* tex printing commands can take a filename parameter; so
        can gnuplot command */
-    if (command->ci == EQNPRINT || command->ci == TABPRINT) {
-	get_optional_filename(line, command);
+    if (cmd->ci == EQNPRINT || cmd->ci == TABPRINT) {
+	get_optional_filename(line, cmd);
     } 
 
     /* the "outfile" command may have a filename */
-    else if (command->ci == OUTFILE) {
-	parse_outfile_cmd(line, command);
+    else if (cmd->ci == OUTFILE) {
+	parse_outfile_cmd(line, cmd);
     }
 
     /* the "rename" command calls for a variable number and a
        new name */
-    else if (command->ci == RENAME) {
-	parse_rename_cmd(line, command, pdinfo);
+    else if (cmd->ci == RENAME) {
+	parse_rename_cmd(line, cmd, pdinfo);
     }  
 
     /* "logistic" can have a special parameter */
-    else if (command->ci == LOGISTIC) {
-	parse_logistic_ymax(line, command);
+    else if (cmd->ci == LOGISTIC) {
+	parse_logistic_ymax(line, cmd);
     }      
 
     /* commands that never take a list of variables */
-    if (NO_VARLIST(command->ci)) {
-	command->nolist = 1;
+    if (NO_VARLIST(cmd->ci)) {
+	cmd->nolist = 1;
 	return;
     }
 
     /* smpl can be special: only takes a list in case of OPT_M
        "--no-missing" */
-    if (command->ci == SMPL && !(command->opt & OPT_M)) {
-	command->nolist = 1;
+    if (cmd->ci == SMPL && !(cmd->opt & OPT_M)) {
+	cmd->nolist = 1;
 	return;
     }	
 
     /* boxplots can be special: boolean conditions embedded in
        the list, which have to be parsed separately */
-    if (command->ci == BXPLOT && strchr(line, '(')) {
-	command->nolist = 1;
+    if (cmd->ci == BXPLOT && strchr(line, '(')) {
+	cmd->nolist = 1;
 	return;
     }
 
     /* gnuplot command can have a block of stuff to pass literally
        to gnuplot */
-    if (command->ci == GNUPLOT) {
-	grab_gnuplot_literal_block(line, command);
+    if (cmd->ci == GNUPLOT) {
+	grab_gnuplot_literal_block(line, cmd);
     }
 
     /* fix lines that contain a semicolon right after a var */
-    for (i=0; i<linelen-1; i++) {
-	if (isalnum((unsigned char) line[i]) && line[i+1] == ';') {
-	    for (j=linelen; j>i+1; j--) line[j] = line[j-1];
-	    line[i+1] = ' ';
-	    line[linelen + 1] = '\0';
-	    linelen = strlen(line);
-	}
-    }
+    linelen = fix_semicolon_after_var(line, linelen);
 
     /* now we're probably dealing with a command that wants a list... */    
     nf = count_fields(line) - 1;
-    n = strlen(command->cmd);
+    n = strlen(cmd->word);
 
     /* unless it's on a short list of specials */
-    if (command->ci == HELP ||
-	command->ci == LOOP ||
-	command->ci == END ||
-	command->ci == LMTEST ||
-	command->ci == RESTRICT ||
-	command->ci == NULLDATA ||
-	(command->ci == PRINT && strstr(line, "\""))) {
-	command->nolist = 1;
-	if (!strncmp(line, "man ", 4)) n--;
+    if (cmd->ci == HELP ||
+	cmd->ci == LOOP ||
+	cmd->ci == END ||
+	cmd->ci == LMTEST ||
+	cmd->ci == RESTRICT ||
+	cmd->ci == NULLDATA ||
+	(cmd->ci == PRINT && strstr(line, "\""))) {
+	cmd->nolist = 1;
+	if (!strncmp(line, "man ", 4)) {
+	    n--;
+	}
 	if (nf) {
-	    command->param = realloc(command->param, linelen - n + 1);
-	    if (command->ci == PRINT) {
-		strcpy(command->param, line + n + 1);
+	    if (resize_cmd_param(cmd, NULL, linelen - n + 1)) {
+		cmd->errcode = E_ALLOC;
+		goto bailout;
+	    } else if (cmd->ci == PRINT) {
+		strcpy(cmd->param, line + n + 1);
 	    } else {
-		sscanf(line + n + 1, "%s", command->param);
+		sscanf(line + n + 1, "%s", cmd->param);
 	    }
 	}
-	if (command->ci == END) {
-	    check_end_command(command);
+	if (cmd->ci == END) {
+	    check_end_command(cmd);
 	}
 	return;
     }
 
-    remainder = malloc(linelen - n + 1);
+    remainder = calloc(linelen - n + 1, 1);
     if (remainder == NULL) {
-	command->errcode = E_ALLOC;
-	return;
+	cmd->errcode = E_ALLOC;
+	goto bailout;
     }
 
     /* need to treat rhodiff specially -- put everything from
        the end of the command word to the first semicolon into
        "param", for processing later */
-    if (command->ci == RHODIFF) {  /* FIXME */
+    if (cmd->ci == RHODIFF) {  /* FIXME */
 	strcpy(remainder, line + n + 1);
-	if (get_rhodiff_param(remainder, command)) {
-	    command->errcode = E_SYNTAX;
-	    free(remainder);
-	    return;
+	if (get_rhodiff_param(remainder, cmd)) {
+	    cmd->errcode = E_SYNTAX;
+	    goto bailout;
 	}
 	strcpy(line, remainder);
 	linelen = strlen(line);
@@ -834,108 +931,71 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
     /* "store" is a special case since the filename that comes
        before the list may be quoted, and have spaces in it.  Groan */
-    if (command->ci == STORE && nf) {
-	int q, qmatch = 0;
-
-	if ((q = line[n+1]) == '"' || (q = line[n+1]) == '\'') {
-	    spacename = 1;
-	    command->param = realloc(command->param, linelen - n + 1);
-	    if (command->param == NULL) {
-		command->errcode = E_ALLOC;
-		return;
-	    }
-	    strcpy(remainder, line + n + 1);
-	    for (i=1; i< (int) strlen(remainder); i++) {
-		if (remainder[i] == q) {
-		    strncpy(command->param, remainder, i + 1);
-		    command->param[i+1] = '\0';
-		    qmatch = 1;
-		    break;
-		}
-		if (remainder[i] == ' ') nf--;
-	    }
-	    if (!qmatch) {
-		command->errcode = E_SYNTAX;
-		free(remainder);
-		return;
-	    }
-	    /* fprintf(stderr, "got filename '%s'\n", command->param); */
-	    shift_left(remainder, strlen(command->param));
-	    /* unquote the filename */
-	    for (i=0; i< (int) strlen(command->param) - 2; i++) {
-		command->param[i] = command->param[i+1];
-	    }
-	    command->param[i] = '\0';
-	    nf--;
+    if (cmd->ci == STORE && nf > 0) {
+	strcpy(remainder, line + n + 1);
+	cmd->errcode = get_maybe_quoted_storename(cmd, remainder, &nf);
+	if (cmd->errcode) {
+	    goto bailout;
+	} else {
 	    n = 0;
-	    if (nf > 0) {
+	    if (--nf > 0) {
 		strcpy(line, remainder);	
 		linelen = strlen(line);
-	    }
+	    }		
 	}
-    } /* end if STORE && nf */
+    }
 
-    /* "store" takes a filename before the list
-       "var" takes a lag order 
-       "adf" takes a lag order 
-       "arch" takes a lag order
-       "multiply" takes a multiplier  
-       "omitfrom" and "addto" take the ID of a previous model
-       "setmiss" takes a value to be interpreted as missing 
+    /* 
+       "multiply" takes a multiplier;
+       "omitfrom" and "addto" take the ID of a previous model;
+       "setmiss" takes a value to be interpreted as missing;
+       these are captured in cmd->param
     */
-    if ((command->ci == STORE && !spacename) ||
-	command->ci == ADF ||
-	command->ci == KPSS ||
-	command->ci == ARCH ||
-	command->ci == COINT ||
-	command->ci == COINT2 ||
-	command->ci == ADDTO ||
-	command->ci == OMITFROM ||
-	command->ci == MULTIPLY ||
-	command->ci == SETMISS ||
-	command->ci == VAR) {
+    if (TAKES_LAG_ORDER(cmd->ci) ||
+	cmd->ci == ADDTO ||
+	cmd->ci == OMITFROM ||
+	cmd->ci == MULTIPLY ||
+	cmd->ci == SETMISS) {
 	if (nf) {
-	    command->param = realloc(command->param, linelen - n + 1);
-	    if (command->param == NULL) {
-		command->errcode = E_ALLOC;
-		return;
+	    if (resize_cmd_param(cmd, line + n + 1, 0)) {
+		cmd->errcode = E_ALLOC;
+		goto bailout;
 	    }
-	    strcpy(remainder, line + n + 1);
-	    sscanf(remainder, "%s", command->param);
-	    shift_left(remainder, strlen(command->param));
-	    nf--;
+	    sscanf(line + n + 1, "%s", cmd->param);
+	    strcpy(remainder, line + n + 1 + strlen(cmd->param));
 	    n = 0;
-	    if (nf > 0) {
+	    if (--nf > 0) {
 		strcpy(line, remainder);
 		linelen = strlen(line);
 	    }
 	} 
     }
 
-    if (command->ci == MULTIPLY) { 
+    if (cmd->ci == MULTIPLY) { 
 	char suffix[4];
 
 	sscanf(line, "%3s", suffix);
-	strcpy(command->str, suffix);
+	strcpy(cmd->str, suffix);
 	shift_left(line, strlen(suffix));
 	nf--;
 	n = 0;
 	linelen = strlen(line);
     }
 
-    if (command->ci == AR || command->ci == ARMA ||
-	command->ci == GARCH) {
+    if (cmd->ci == AR || cmd->ci == ARMA ||
+	cmd->ci == GARCH) {
 	ar = 1;
     }
 
-    command->list = realloc(command->list, (1 + nf) * sizeof *command->list);
-    if (command->list == NULL) {
-	command->errcode = E_ALLOC;
+    cmd->list = realloc(cmd->list, (1 + nf) * sizeof *cmd->list);
+
+    if (cmd->list == NULL) {
+	cmd->errcode = E_ALLOC;
 	strcpy (gretl_errmsg, _("Memory allocation failed for command list"));
-	free(remainder);
-	return;
+	goto bailout;
     }
-    command->list[0] = nf;
+
+    cmd->list[0] = nf;
 
     /* now assemble the command list */
     for (j=1,lnum=1; j<=nf; j++) {
@@ -944,17 +1004,20 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	strcpy(remainder, line + n + 1);
 
 	/* special: optional lag order for correlogram */
-	if (command->ci == CORRGM && j == 2) {
-	    command->list[0] = 1;
-	    command->param = realloc(command->param, linelen - n + 1);
-	    sscanf(remainder, "%s", command->param);
+	if (cmd->ci == CORRGM && j == 2) {
+	    cmd->list[0] = 1;
+	    if (resize_cmd_param(cmd, remainder, 0)) {
+		cmd->errcode = E_ALLOC;
+		goto bailout;
+	    }
+	    sscanf(remainder, "%s", cmd->param);
 	    break;
 	}
 
 	skip = field_from_line(field, remainder);
 	if (skip > 0) {
 	    nf -= skip;
-	    command->list[0] -= skip;
+	    cmd->list[0] -= skip;
 	}
 
 	if (isalpha((unsigned char) *field)) {
@@ -963,19 +1026,19 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		field[strlen(field) - 1] = '\0';
 	    if ((v = varindex(pdinfo, field)) < pdinfo->v) {
 		/* yes, it's an existing variable */
-		command->list[lnum++] = v;
+		cmd->list[lnum++] = v;
 	    } else { /* possibly an auto-generated variable? */
 
 		/* Case 1: automated lags:  e.g. 'var(-1)' */
-		if (auto_lag_ok(field, &lnum, pZ, pdinfo, command, cmdprn)) {
+		if (auto_lag_ok(field, &lnum, pZ, pdinfo, cmd, cmdprn)) {
 		    /* handled, get on with it */
 		    n += strlen(field) + 1;
 		    continue; 
 		}
 
 		/* Case 2: special plotting variable */
-		else if (!command->errcode && 
-			 plot_var_ok(field, &lnum, pZ, pdinfo, command)) {
+		else if (!cmd->errcode && 
+			 plot_var_ok(field, &lnum, pZ, pdinfo, cmd)) {
 		    /* handled, get on with it */
 		    n += strlen(field) + 1;
 		    continue; 
@@ -983,35 +1046,34 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
 #if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
 		/* wildcard expansion? */
-		else if (!command->errcode && 
-			 wildcard_expand_ok(field, &lnum, pdinfo, command)) {
+		else if (!cmd->errcode && 
+			 wildcard_expand_ok(field, &lnum, pdinfo, cmd)) {
 		    /* handled, get on with it */
 		    n += strlen(field) + 1;
 		    continue; 			
 		}
 #endif
 		/* last chance: try abbreviating the varname? */
-		else if (!command->errcode) {
-		    command->errcode = 1; /* presume guilt at this stage */
+		else if (!cmd->errcode) {
+		    cmd->errcode = 1; /* presume guilt at this stage */
 		    if (strlen(field) > 8) {
 			char test[VNAMELEN];
 
 			*test = 0;
 			strncat(test, field, 8);
 			if ((v = varindex(pdinfo, test)) <= pdinfo->v - 1) {
-			    command->list[lnum++] = v;
-			    command->errcode = 0;
+			    cmd->list[lnum++] = v;
+			    cmd->errcode = 0;
 			} 
 		    } 
-		    if (command->errcode) {
+		    if (cmd->errcode) {
 			sprintf(gretl_errmsg, 
 				_("'%s' is not the name of a variable"), field);
 		    }
 		}
 
-		if (command->errcode) {
-		    free(remainder);
-		    return;
+		if (cmd->errcode) {
+		    goto bailout;
 		}
 	    }
 	} /* end if isalpha(*field) */
@@ -1020,61 +1082,51 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    /* could be the ID number of a variable */
 	    v = atoi(field);
 	    if (!ar && !poly && v > pdinfo->v - 1) {
-		command->errcode = 1;
+		cmd->errcode = 1;
 		sprintf(gretl_errmsg, 
                        _("%d is not a valid variable number"), v);
-		free(remainder);
-		return;
+		goto bailout;
 	    }	
-	    command->list[lnum++] = v;
+	    cmd->list[lnum++] = v;
 	}
 
 	else if (*field == ';') {
 	    /* could be the separator between two sub-lists */
-	    if (command->ci == TSLS || command->ci == AR ||
-		command->ci == MPOLS || command->ci == SCATTERS ||
-		command->ci == ARMA || command->ci == GARCH ||
-		command->ci == EQUATION) {
-		command->param = realloc(command->param, 4);
-		sprintf(command->param, "%d", lnum);
+	    if (USES_LISTSEP(cmd->ci)) {
+		if (resize_cmd_param(cmd, NULL, 4)) {
+		    cmd->errcode = E_ALLOC;
+		    goto bailout;
+		}
+		sprintf(cmd->param, "%d", lnum);
 		n += strlen(field) + 1;
-		command->list[lnum++] = LISTSEP;
+		cmd->list[lnum++] = LISTSEP;
 		ar = 0; /* turn off acceptance of AR lags */
-		if (command->ci == MPOLS) poly = 1;
+		if (cmd->ci == MPOLS) {
+		    poly = 1;
+		}
 		continue;
-	    }
-	    else if (command->ci == VAR) {
+	    } else if (cmd->ci == VAR) {
 		n += strlen(field) + 1;
-		command->list[lnum++] = LISTSEP;
+		cmd->list[lnum++] = LISTSEP;
 		continue;
-	    }
-	    else {
-		command->list[0] -= 1;
+	    } else {
+		cmd->list[0] -= 1;
 		break;
 	    }
 	}
 
-	if (!isalpha((unsigned char) *field) && 
-	    !isdigit((unsigned char) *field) &&
-	    !(spacename && (*field == '"' || *field == '\''))) { 
-	    command->errcode = 1;
-	    sprintf(gretl_errmsg, 
-		    _("field '%s' in command is invalid"), field);
-	    free(remainder);
-	    return;
+	if (!isalpha((unsigned char) *field) && !isdigit((unsigned char) *field)) {
+	    cmd->errcode = 1;
+	    sprintf(gretl_errmsg, _("field '%s' in command is invalid"), field);
+	    goto bailout;
 	}
 
-	/* check command->list for scalars */
-	if (!ar && !poly && 
-	    command->ci != PRINT && 
-	    command->ci != STORE &&
-	    command->ci != DELEET) {
-	    if (!pdinfo->vector[command->list[lnum-1]]) {
-		command->errcode = 1;
-		sprintf(gretl_errmsg, 
-			_("variable %s is a scalar"), field);
-		free(remainder);
-		return;
+	/* check cmd->list for scalars */
+	if (!ar && !poly && !(SCALARS_OK_IN_LIST(cmd->ci))) {
+	    if (!pdinfo->vector[cmd->list[lnum-1]]) {
+		cmd->errcode = 1;
+		sprintf(gretl_errmsg, _("variable %s is a scalar"), field);
+		goto bailout;
 	    }
 	}
 
@@ -1084,34 +1136,33 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     /* commands that can take a specified list, but where if the
        list is null or just ";" we want to operate on all variables
     */    
-    if (command->ci == PRINT ||
-	command->ci == STORE || 
-	command->ci == CORR || 
-	command->ci == LOGS ||
-	command->ci == SQUARE ||
-	command->ci == DIFF ||
-	command->ci == LDIFF ||
-	command->ci == SUMMARY ||
-	command->ci == SMPL ||
-	command->ci == PCA ||
-	command->ci == LAGS) {
-	if (command->list[0] == 0) {
-	    make_full_list(pdinfo, command);
+    if (DEFAULTS_TO_FULL_LIST(cmd->ci)) {
+	if (cmd->list[0] == 0) {
+	    make_full_list(pdinfo, cmd);
 	    /* suppress echo of the list -- may be too long */
-	    command->nolist = 1;
+	    cmd->nolist = 1;
 	}
-    } else if (command->ci != SETMISS && command->ci != DELEET) {
-	/* command that needs a list but doesn't have one */
-	if (command->list[0] == 0) command->errcode = E_ARGS;
+    } else if (cmd->ci != SETMISS && cmd->ci != DELEET) {
+	/* the command needs a list but doesn't have one */
+	if (cmd->list[0] == 0) {
+	    cmd->errcode = E_ARGS;
+	}
     }
 
-    if (NEEDS_TWO_VARS(command->ci) && command->list[0] == 1)
-	command->errcode = E_ARGS;
+    if (NEEDS_TWO_VARS(cmd->ci) && cmd->list[0] == 1) {
+	cmd->errcode = E_ARGS;
+    }
 
-    if ((command->ci == AR || command->ci == TSLS || 
-	 command->ci == ARMA || command->ci == SCATTERS ||
-	 command->ci == GARCH) && strlen(command->param) == 0) {
-	command->errcode = E_ARGS;
+    if ((cmd->ci == AR || cmd->ci == TSLS || 
+	 cmd->ci == ARMA || cmd->ci == SCATTERS ||
+	 cmd->ci == GARCH) && *cmd->param == '\0') {
+	cmd->errcode = E_ARGS;
+    }
+
+ bailout:
+
+    if (cmd->errcode) {
+	cmd->context = 0;
     }
 
     free(remainder);
@@ -1334,7 +1385,7 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
    except for the constant and any "hidden" variables or scalars 
 */
 
-static int make_full_list (const DATAINFO *pdinfo, CMD *command)
+static int make_full_list (const DATAINFO *pdinfo, CMD *cmd)
 {
     int i, n;
     int *list;
@@ -1346,18 +1397,18 @@ static int make_full_list (const DATAINFO *pdinfo, CMD *command)
 	}
     }
 
-    list = realloc(command->list, n * sizeof *list);
+    list = realloc(cmd->list, n * sizeof *list);
     if (list == NULL) {
 	return E_ALLOC;
     }
 
-    command->list = list;
-    command->list[0] = n - 1;
+    cmd->list = list;
+    cmd->list[0] = n - 1;
 
     n = 1;
     for (i=1; i<pdinfo->v; i++) {
 	if (!hidden_var(i, pdinfo) && pdinfo->vector[i]) {
-	    command->list[n++] = i;
+	    cmd->list[n++] = i;
 	}
     }
 
@@ -1553,6 +1604,26 @@ void safe_print_line (const char *line, int loopstack, PRN *prn)
     real_safe_print_line(line, 0, 0, 1, loopstack, prn);
 }
 
+static void 
+print_maybe_quoted_str (const char *s)
+{
+    if (strchr(s, ' ') != NULL) {
+	printf(" \"%s\"", s);
+    } else {
+	printf(" %s", s);
+    }
+}
+
+static void 
+pprint_maybe_quoted_str (PRN *prn, const char *s)
+{
+    if (strchr(s, ' ') != NULL) {
+	pprintf(prn, " \"%s\"", s);
+    } else {
+	pprintf(prn, " %s", s);
+    }
+}
+
 /**
  * echo_cmd:
  * @pcmd: pointer to #CMD struct.
@@ -1596,7 +1667,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     fprintf(stderr, "echo_cmd: line='%s', gui=%d, cmd->opt=%ld, batch=%d, "
 	    "param='%s', nolist=%d\n", line, gui, cmd->opt, batch, cmd->param,
 	    cmd->nolist);
-    fprintf(stderr, "cmd->cmd='%s'\n", cmd->cmd);
+    fprintf(stderr, "cmd->word='%s'\n", cmd->word);
 #endif
 
     /* special case: gui "store" command, which could overflow the
@@ -1633,22 +1704,22 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	if (cli) {
 	    if (batch) {
 		if (cmd->ci != EQUATION) putchar('\n');
-		printf("%c %s", leadchar, cmd->cmd);
+		printf("%c %s", leadchar, cmd->word);
 	    } else {
-		printf(" %s", cmd->cmd);
+		printf(" %s", cmd->word);
 	    }
 	    if (cmd->ci == RHODIFF) {
 		printf(" %s;", cmd->param);
 	    } else if (*cmd->param && !hold_param(cmd->ci)) {
-		printf(" %s", cmd->param);
+		print_maybe_quoted_str(cmd->param);
 	    }
 	}
 	if (!batch) {
-	    pprintf(prn, "%s", cmd->cmd);
+	    pprintf(prn, "%s", cmd->word);
 	    if (cmd->ci == RHODIFF) {
 		pprintf(prn, " %s;", cmd->param);
 	    } else if (*cmd->param && !hold_param(cmd->ci)) {
-		pprintf(prn, " %s", cmd->param);
+		pprint_maybe_quoted_str(prn, cmd->param);
 	    }
 	}
 
@@ -1719,7 +1790,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	real_safe_print_line(line, cli, batch, 0, loopstack, prn);
     }
 
-    else if (strcmp(cmd->cmd, "quit")) {
+    else if (strcmp(cmd->word, "quit")) {
 	if (cli) {
 	    if (batch) {
 		printf("%c %s", leadchar, line);
@@ -2303,6 +2374,9 @@ int gretl_cmd_init (CMD *cmd)
 	return 1;
     }
 
+    cmd->ci = 0;
+    cmd->context = 0;
+
     return 0;
 }
 
@@ -2311,6 +2385,17 @@ void gretl_cmd_free (CMD *cmd)
     free(cmd->list);
     free(cmd->param);
 }
+
+void gretl_cmd_set_context (CMD *cmd, int ci)
+{
+    cmd->context = ci;
+}
+
+void gretl_cmd_destroy_context (CMD *cmd)
+{
+    cmd->context = 0;
+}
+
 
 
 

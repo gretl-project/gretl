@@ -126,8 +126,6 @@ int gretl_function_stack_depth (void);
 
 /* init and cleanup functions */
 
-int gretl_cmd_init (CMD *cmd);
-
 void gretl_cmd_free (CMD *cmd);
 
 void gretl_functions_cleanup (void);

@@ -1852,33 +1852,33 @@ static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum)
  * the command embedded in @line.
  */
 
-void get_cmd_ci (const char *line, CMD *command)
+void get_cmd_ci (const char *line, CMD *cmd)
 {
     /* allow for leading spaces */
     while (isspace(*line)) line++;
 
     if (*line == '#') {
-	command->nolist = 1;
-	command->ci = CMD_COMMENT;
+	cmd->nolist = 1;
+	cmd->ci = CMD_COMMENT;
 	return;
     }
 
-    if (sscanf(line, "%s", command->cmd) != 1 || 
+    if (sscanf(line, "%s", cmd->word) != 1 || 
 	*line == '(' || *line == '#') {
-	command->nolist = 1;
-	command->ci = -1;
+	cmd->nolist = 1;
+	cmd->ci = -1;
 	return;
     }
 
-    if ((command->ci = gretl_command_number(command->cmd)) == 0) {
-	command->errcode = 1;
+    if ((cmd->ci = gretl_command_number(cmd->word)) == 0) {
+	cmd->errcode = 1;
 	sprintf(gretl_errmsg, _("command \"%s\" not recognized"), 
-		command->cmd);
+		cmd->word);
 	return;
     }
 
     if (!strcmp(line, "end loop")) {
-	command->ci = ENDLOOP;
+	cmd->ci = ENDLOOP;
     }
 } 
 
