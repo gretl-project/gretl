@@ -1144,7 +1144,7 @@ Vector Autoregression
 
 This command requires an integer lag order.  Select the dependent and
 independent variables for the first equation in the system; these will be
-permuted to obtain the other equations.  DON'T include any lagged variables in
+permuted to obtain the other equations.  Don't include any lagged variables in
 the list of independent variables -- they will be added automatically.
 
 In general, a regression will be run for each variable in the list, excluding

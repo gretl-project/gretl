@@ -1497,18 +1497,34 @@ predetermined variables.
 #
 var
 @Estimation
-Usage:          var order depvar indepvars
-Examples:       var 4 x1 const time x2 x3
-                var 3 1 0 2 3 4
+Usage:          var order varlist ; deterministic terms
+Examples:       var 4 x1 x2 x3 ; const time
+                var 3 1 2 3 4 ; 0
 
-Sets up and estimates (via OLS) a vector autoregression.  The first argument
-specifies the lag order, then follows the setup for the first equation, much
-as in the "ols" command.  Don't include lags among the elements of the
-"indepvars" list -- they will be added automatically. A regression will be run
-for each variable in the list, excluding the constant, the time trend and any
-dummy variables.  Output for each equation includes F-tests for zero
-restrictions on all lags of each of the variables, and an F-test for the
-maximum lag.
+Sets up and estimates (via OLS) a vector autoregression (VAR).  The first
+argument specifies the lag order, then follows the setup for the first
+equation.  Don't include lags among the elements of "varlist" -- they will be
+added automatically.  The semi-colon separates the stochastic variables, for
+which "order" lags will be included, from the deterministic terms, such as the
+constant, a time trend, and dummy variables.
+
+In fact, gretl is able to recognize the more common deterministic variables
+(constant, time trend, dummy variables with no values other than 0 and 1) as
+such, so these do not have to placed after the semi-colon.  More complex
+deterministic variables (e.g. a time trend interacted with a dummy variable)
+must be put after the semi-colon.
+
+A separate regression will be run for each variable in varlist.  Output for
+each equation includes F-tests for zero restrictions on all lags of each of
+the variables and an F-test for the maximum lag.  Following the equations,
+impulse responses are shown, for a one-standard error shock to each of the
+elements in "varlist".
+
+The order of the terms in "varlist" matters, since it determines the ordering
+for the Cholesky decomposition of the error covariance matrix, which is used
+in generating estimated impulse responses.  You should place first in the list
+the variable which is "most exogenous", that is, least likely to be affected
+within the period of observation by shocks to the other variables.  
 
 # 
 varlist
