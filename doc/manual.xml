@@ -1,14 +1,14 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
-          "/usr/share/sgml/docbook-xml-4.1.2/docbookx.dtd" [
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"/usr/share/sgml/docbook-xml-4.2/docbookx.dtd" [
 
-<!ENTITY version "0.98">
+<!ENTITY version "0.999">
 <!ENTITY latex "LaTeX">
 <!ENTITY tex "TeX">
 <!ENTITY opto "<literal>[ -o ]</literal>">
 <!ENTITY cmdcol "82pt">
 <!ENTITY rsqu "<emphasis>R</emphasis><superscript>2</superscript>">
-<!ENTITY intro SYSTEM "chapters/intro.xml">
+<!ENTITY introduction SYSTEM "chapters/intro.xml">
 <!ENTITY starting SYSTEM "chapters/starting.xml">
 <!ENTITY menus SYSTEM "chapters/menus.xml">
 <!ENTITY modes SYSTEM "chapters/modes.xml">
@@ -67,7 +67,7 @@
 
   </bookinfo>
 
-  &intro;
+  &introduction;
   &starting;
   &menus;
   &modes;
