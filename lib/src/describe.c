@@ -805,6 +805,18 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
 /* ............................................................. */
 
+static void printf15 (double zz, PRN *prn)
+{
+    if (na(zz)) pprintf(prn, "%15s", _("undefined"));
+    else {
+	pprintf(prn, " ");
+	gretl_print_fullwidth_double(zz, 5, prn);	
+    }
+}
+
+/* ............................................................. */
+
+#ifdef notdef
 static void printf17 (double zz, PRN *prn)
 {
     if (na(zz)) pprintf(prn, "%17s", _("undefined"));
@@ -813,6 +825,7 @@ static void printf17 (double zz, PRN *prn)
 	gretl_print_value(zz, prn);
     }
 }
+#endif
 
 /* ............................................................. */
 
@@ -887,8 +900,8 @@ void print_summary (GRETLSUMMARY *summ,
 	pprintf(prn, "\n%s  ", _("Variable"));
     }
 
-    pprintf(prn, _("      MEAN            MEDIAN            MIN"
-            "              MAX\n\n"));
+    pprintf(prn, _("      MEAN           MEDIAN           MIN"
+            "             MAX\n\n"));
 
 
     for (v=1; v<=lo; v++) {
@@ -899,10 +912,10 @@ void print_summary (GRETLSUMMARY *summ,
 	if (lo > 1)
 	    pprintf(prn, "%-10s", pdinfo->varname[lv]);
 	else _bufspace(2, prn);
-	printf17(xbar, prn);
-	printf17(summ->xmedian[v], prn);
-	printf17(summ->xpx[v], prn);
-	printf17(summ->xpy[v], prn);
+	printf15(xbar, prn);
+	printf15(summ->xmedian[v], prn);
+	printf15(summ->xpx[v], prn);
+	printf15(summ->xpy[v], prn);
 	pprintf(prn, "\n");
     }
 
@@ -911,8 +924,8 @@ void print_summary (GRETLSUMMARY *summ,
     pprintf(prn, "\n");
 
     if (lo > 1) pprintf(prn, "\n%s  ", _("Variable"));
-    pprintf(prn, _("      S.D.              C.V.           "
-	 " SKEW           EXCSKURT\n\n"));
+    pprintf(prn, _("      S.D.            C.V.           "
+	 " SKEW          EXCSKURT\n\n"));
 
     for (v=1; v<=lo; v++) {
 	if (pause) page_break(1, &lineno, 0);
@@ -925,10 +938,10 @@ void print_summary (GRETLSUMMARY *summ,
 	std = summ->sderr[v];
 	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
 	else xcv = -999;
-	printf17(std, prn);
-	printf17(xcv, prn);
-	printf17(summ->xskew[v], prn);
-	printf17(summ->xkurt[v], prn);
+	printf15(std, prn);
+	printf15(xcv, prn);
+	printf15(summ->xskew[v], prn);
+	printf15(summ->xkurt[v], prn);
 	pprintf(prn, "\n");
     }
     pprintf(prn, "\n");

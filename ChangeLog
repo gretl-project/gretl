@@ -13,6 +13,8 @@ version 1.0pre4
 - add printing of rho (used in quasi-differencing) to LaTeX
   output for corc and hilu models
 - enhanced support for Wooldridge data files
+- add "-t" flag to print command: print variables to ten
+  significant digits
 
 10/10/02 version 1.0pre3
 - improve accuracy of calculation of standard errors, and
