@@ -882,10 +882,6 @@ void time_series_menu_state (gboolean s)
     if (mdata->ifac != NULL) {
 	/* Data menu */
 	flip(mdata->ifac, "/Data/Graph specified vars/Time series plot...", s);
-	flip(mdata->ifac, "/Data/Add variables/time trend", s);
-	flip(mdata->ifac, "/Data/Add variables/lags of selected variables", s);
-	flip(mdata->ifac, "/Data/Add variables/first differences of selected variables", s);
-	flip(mdata->ifac, "/Data/Add variables/log differences of selected variables", s);
 	/* Variable menu */
 	flip(mdata->ifac, "/Variable/Time series plot", s);
 	flip(mdata->ifac, "/Variable/Correlogram", s);
@@ -937,11 +933,15 @@ void panel_menu_state (gboolean s)
 
 /* ........................................................... */
 
-void periodic_dummies_menu_state (gboolean s)
+void ts_or_panel_menu_state (gboolean s)
 {
-    if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Data/Add variables/periodic dummies", s);
-    }
+    if (mdata->ifac == NULL) return;
+
+    flip(mdata->ifac, "/Data/Add variables/time trend", s);
+    flip(mdata->ifac, "/Data/Add variables/lags of selected variables", s);
+    flip(mdata->ifac, "/Data/Add variables/first differences of selected variables", s);
+    flip(mdata->ifac, "/Data/Add variables/log differences of selected variables", s);
+    flip(mdata->ifac, "/Data/Add variables/periodic dummies", s);
 }
 
 /* ........................................................... */
@@ -1181,8 +1181,8 @@ void set_sample_label (DATAINFO *pdinfo)
 
     time_series_menu_state(dataset_is_time_series(pdinfo));
     panel_menu_state(dataset_is_panel(pdinfo));
-    periodic_dummies_menu_state(dataset_is_time_series(pdinfo) ||
-				dataset_is_panel(pdinfo));
+    ts_or_panel_menu_state(dataset_is_time_series(pdinfo) ||
+			   dataset_is_panel(pdinfo));
 
     flip(mdata->ifac, "/Sample/Interpret as time series...", 
 	 !(dataset_is_time_series(pdinfo)));

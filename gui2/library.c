@@ -284,7 +284,7 @@ static void set_sample_label_special (void)
 
     time_series_menu_state(FALSE);
     panel_menu_state(FALSE);
-    periodic_dummies_menu_state(FALSE);
+    ts_or_panel_menu_state(FALSE);
 }
 
 /* ........................................................... */
