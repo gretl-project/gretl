@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.0.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-14 09:38-0400\n"
+"POT-Creation-Date: 2004-10-15 14:24-0400\n"
 "PO-Revision-Date: 2003-03-22 21:18+0900\n"
 "Last-Translator: Masayuki Hatta <mhatta@po.airs.net>\n"
 "Language-Team: Japanese <translation-team-ja@lists.sourceforge.net>\n"
@@ -19,81 +19,81 @@ msgstr ""
 msgid "step length"
 msgstr ""
 
-#: lib/src/compare.c:380
+#: lib/src/compare.c:383
 msgid "Non-linearity test (squares)"
 msgstr ""
 
-#: lib/src/compare.c:381
+#: lib/src/compare.c:384
 msgid "Non-linearity test (logs)"
 msgstr ""
 
-#: lib/src/compare.c:382
+#: lib/src/compare.c:385
 msgid "relationship is linear"
 msgstr ""
 
-#: lib/src/compare.c:759 lib/src/compare.c:1010 lib/src/describe.c:1550
+#: lib/src/compare.c:762 lib/src/compare.c:1013 lib/src/describe.c:1550
 #: lib/src/gretl_restrict.c:575 lib/src/modelprint.c:655
-#: lib/src/modelprint.c:676 lib/src/modelprint.c:694 lib/src/modelprint.c:1305
-#: lib/src/modelprint.c:1314 lib/src/modelprint.c:1323 lib/src/printout.c:183
+#: lib/src/modelprint.c:676 lib/src/modelprint.c:694 lib/src/modelprint.c:1294
+#: lib/src/modelprint.c:1303 lib/src/modelprint.c:1312 lib/src/printout.c:183
 #: lib/src/printout.c:194 lib/src/printout.c:201 lib/src/printout.c:243
 #: lib/src/printout.c:256 lib/src/strutils.c:700 gui2/library.c:1248
 #: gui2/library.c:1282 plugin/panel_data.c:694
 msgid "Test statistic"
 msgstr ""
 
-#: lib/src/compare.c:760 lib/src/compare.c:1012 lib/src/compare.c:1017
-#: lib/src/compare.c:1023 lib/src/describe.c:785 lib/src/modelprint.c:656
-#: lib/src/modelprint.c:677 lib/src/modelprint.c:695 lib/src/modelprint.c:1308
-#: lib/src/modelprint.c:1317 lib/src/modelprint.c:1326 lib/src/printout.c:398
+#: lib/src/compare.c:763 lib/src/compare.c:1015 lib/src/compare.c:1020
+#: lib/src/compare.c:1026 lib/src/describe.c:785 lib/src/modelprint.c:656
+#: lib/src/modelprint.c:677 lib/src/modelprint.c:695 lib/src/modelprint.c:1297
+#: lib/src/modelprint.c:1306 lib/src/modelprint.c:1315 lib/src/printout.c:398
 #: gui2/library.c:1249 gui2/library.c:1283 plugin/panel_data.c:695
 #: plugin/panel_data.c:701
 msgid "with p-value"
 msgstr ""
 
-#: lib/src/compare.c:765
+#: lib/src/compare.c:768
 msgid "RESET test for specification"
 msgstr ""
 
-#: lib/src/compare.c:766
+#: lib/src/compare.c:769
 msgid "specification is adequate"
 msgstr ""
 
-#: lib/src/compare.c:977 lib/src/graphing.c:1124 lib/src/graphing.c:1132
+#: lib/src/compare.c:980 lib/src/graphing.c:1124 lib/src/graphing.c:1132
 #: lib/src/graphing.c:1229 lib/src/graphing.c:1859 gui2/guiprint_common.c:687
 #: gui2/library.c:3264 plugin/leverage.c:471 plugin/panel_data.c:555
 msgid "residual"
 msgstr ""
 
-#: lib/src/compare.c:984
+#: lib/src/compare.c:987
 #, c-format
 msgid "lagging uhat failed"
 msgstr ""
 
-#: lib/src/compare.c:1016 plugin/panel_data.c:700
+#: lib/src/compare.c:1019 plugin/panel_data.c:700
 msgid "Alternative statistic"
 msgstr ""
 
-#: lib/src/compare.c:1018 lib/src/compare.c:1023 lib/src/modelprint.c:583
-#: lib/src/modelprint.c:1308 lib/src/modelprint.c:1317
-#: lib/src/modelprint.c:2140 lib/src/modelprint.c:2159 lib/src/printout.c:195
+#: lib/src/compare.c:1021 lib/src/compare.c:1026 lib/src/modelprint.c:583
+#: lib/src/modelprint.c:1297 lib/src/modelprint.c:1306
+#: lib/src/modelprint.c:2142 lib/src/modelprint.c:2161 lib/src/printout.c:195
 #: lib/src/printout.c:257 lib/src/printout.c:397 plugin/panel_data.c:702
 msgid "Chi-square"
 msgstr ""
 
-#: lib/src/compare.c:1029 plugin/panel_data.c:705
+#: lib/src/compare.c:1032 plugin/panel_data.c:705
 #, c-format
 msgid "LM test for autocorrelation up to order %s"
 msgstr ""
 
-#: lib/src/compare.c:1030 plugin/panel_data.c:706
+#: lib/src/compare.c:1033 plugin/panel_data.c:706
 msgid "no autocorrelation"
 msgstr ""
 
-#: lib/src/compare.c:1125
+#: lib/src/compare.c:1128
 msgid "dummy variable for Chow test"
 msgstr ""
 
-#: lib/src/compare.c:1154
+#: lib/src/compare.c:1157
 #, c-format
 msgid ""
 "\n"
@@ -102,32 +102,32 @@ msgid ""
 "\n"
 msgstr ""
 
-#: lib/src/compare.c:1161
+#: lib/src/compare.c:1164
 #, c-format
 msgid "Chow test for structural break at observation %s"
 msgstr ""
 
-#: lib/src/compare.c:1164
+#: lib/src/compare.c:1167
 msgid "no structural break"
 msgstr ""
 
-#: lib/src/compare.c:1298
+#: lib/src/compare.c:1301
 msgid "CUSUM test for stability of parameters"
 msgstr ""
 
-#: lib/src/compare.c:1299
+#: lib/src/compare.c:1302
 #, c-format
 msgid "mean of scaled residuals = %g\n"
 msgstr ""
 
-#: lib/src/compare.c:1307
+#: lib/src/compare.c:1310
 #, c-format
 msgid ""
 "sigmahat                 = %g\n"
 "\n"
 msgstr ""
 
-#: lib/src/compare.c:1312
+#: lib/src/compare.c:1315
 #, c-format
 msgid ""
 "Cumulated sum of scaled residuals\n"
@@ -135,7 +135,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: lib/src/compare.c:1326
+#: lib/src/compare.c:1329
 #, c-format
 msgid ""
 "\n"
@@ -143,54 +143,54 @@ msgid ""
 "\n"
 msgstr ""
 
-#: lib/src/compare.c:1331
+#: lib/src/compare.c:1334
 msgid "CUSUM test for parameter stability"
 msgstr ""
 
-#: lib/src/compare.c:1332
+#: lib/src/compare.c:1335
 msgid "no change in parameters"
 msgstr ""
 
-#: lib/src/compare.c:1345
+#: lib/src/compare.c:1348
 msgid "Observation"
 msgstr ""
 
-#: lib/src/compare.c:1349
+#: lib/src/compare.c:1352
 #, no-c-format
 msgid "CUSUM plot with 95% confidence band"
 msgstr ""
 
-#: lib/src/compare.c:1397
+#: lib/src/compare.c:1400
 msgid "This test is only relevant for pooled models\n"
 msgstr ""
 
-#: lib/src/compare.c:1402
+#: lib/src/compare.c:1405
 msgid "This test requires that the model contains a constant\n"
 msgstr ""
 
-#: lib/src/compare.c:1407 gui2/library.c:1374
+#: lib/src/compare.c:1410 gui2/library.c:1374
 msgid ""
 "Sorry, can't do this test on an unbalanced panel.\n"
 "You need to have the same number of observations\n"
 "for each cross-sectional unit"
 msgstr ""
 
-#: lib/src/compare.c:1451 lib/src/dbread.c:1196 lib/src/dbread.c:1208
+#: lib/src/compare.c:1454 lib/src/dbread.c:1196 lib/src/dbread.c:1208
 #: lib/src/dbread.c:1244 gui2/database.c:273
 msgid "Out of memory adding series"
 msgstr ""
 
-#: lib/src/compare.c:1605 lib/src/gretl_utils.c:2372 gui/gretl.c:1619
+#: lib/src/compare.c:1608 lib/src/gretl_utils.c:2372 gui/gretl.c:1619
 #: gui2/gretl.c:1832 gui2/library.c:1497 gui2/library.c:1532
 #: plugin/audio.c:1027
 msgid "Command failed"
 msgstr ""
 
-#: lib/src/compare.c:1672
+#: lib/src/compare.c:1675
 msgid "Failed to parse mp_ols command\n"
 msgstr ""
 
-#: lib/src/compare.c:1686 lib/src/dbread.c:588 lib/src/dbread.c:599
+#: lib/src/compare.c:1689 lib/src/dbread.c:588 lib/src/dbread.c:599
 #: lib/src/dbread.c:1123 lib/src/gretl_restrict.c:467
 #: lib/src/monte_carlo.c:433 lib/src/monte_carlo.c:645
 #: lib/src/monte_carlo.c:655 lib/src/monte_carlo.c:1495
@@ -200,24 +200,24 @@ msgstr ""
 msgid "Out of memory!"
 msgstr ""
 
-#: lib/src/compare.c:1790 lib/src/compare.c:1810 lib/src/pvalues.c:664
+#: lib/src/compare.c:1793 lib/src/compare.c:1813 lib/src/pvalues.c:664
 msgid "Invalid input\n"
 msgstr ""
 
-#: lib/src/compare.c:1831
+#: lib/src/compare.c:1834
 #, fuzzy
 msgid "Variables"
 msgstr "/変数(_V)"
 
-#: lib/src/compare.c:1836 gui2/library.c:1123
+#: lib/src/compare.c:1839 gui2/library.c:1123
 msgid "Sum of coefficients"
 msgstr ""
 
-#: lib/src/compare.c:1841 lib/src/modelprint.c:2280
+#: lib/src/compare.c:1844 lib/src/modelprint.c:2284
 msgid "Standard error"
 msgstr ""
 
-#: lib/src/compare.c:1846 lib/src/gretl_restrict.c:578 lib/src/printout.c:186
+#: lib/src/compare.c:1849 lib/src/gretl_restrict.c:578 lib/src/printout.c:186
 #: lib/src/printout.c:246
 #, c-format
 msgid "with p-value = %g\n"
@@ -262,7 +262,7 @@ msgid ""
 "Use only letters, digits and underscore"
 msgstr ""
 
-#: lib/src/dataio.c:735 lib/src/dataio.c:1871
+#: lib/src/dataio.c:735 lib/src/dataio.c:1877
 #, c-format
 msgid "Couldn't open file %s"
 msgstr ""
@@ -293,7 +293,7 @@ msgstr ""
 msgid "Date strings inconsistent"
 msgstr ""
 
-#: lib/src/dataio.c:963 lib/src/generate.c:4884 lib/src/subsample.c:760
+#: lib/src/dataio.c:963 lib/src/generate.c:4969 lib/src/subsample.c:760
 #: lib/src/subsample.c:785
 #, c-format
 msgid "Observation number out of bounds"
@@ -303,8 +303,8 @@ msgstr ""
 msgid "space for comments"
 msgstr ""
 
-#: lib/src/dataio.c:1085 lib/src/dataio.c:1097 lib/src/dataio.c:2866
-#: lib/src/dataio.c:3271 lib/src/dbread.c:943 gui2/session.c:691
+#: lib/src/dataio.c:1085 lib/src/dataio.c:1097 lib/src/dataio.c:2872
+#: lib/src/dataio.c:3277 lib/src/dbread.c:943 gui2/session.c:691
 #, c-format
 msgid "Couldn't open %s\n"
 msgstr ""
@@ -325,265 +325,265 @@ msgstr ""
 msgid " (none)\n"
 msgstr ""
 
-#: lib/src/dataio.c:1278 gui2/guiprint_common.c:980
+#: lib/src/dataio.c:1284 gui2/guiprint_common.c:980
 #, c-format
 msgid ""
 "You can't use the same character for the column delimiter and the decimal "
 "point"
 msgstr ""
 
-#: lib/src/dataio.c:1301
+#: lib/src/dataio.c:1307
 msgid "Write of header file failed"
 msgstr ""
 
-#: lib/src/dataio.c:1305
+#: lib/src/dataio.c:1311
 msgid "Write of labels file failed"
 msgstr ""
 
-#: lib/src/dataio.c:1537
+#: lib/src/dataio.c:1543
 msgid "time series"
 msgstr ""
 
-#: lib/src/dataio.c:1539
+#: lib/src/dataio.c:1545
 msgid "panel"
 msgstr ""
 
-#: lib/src/dataio.c:1542 gui2/dialogs.c:2108
+#: lib/src/dataio.c:1548 gui2/dialogs.c:2108
 msgid "Stacked time series"
 msgstr ""
 
-#: lib/src/dataio.c:1542 gui2/dialogs.c:2122
+#: lib/src/dataio.c:1548 gui2/dialogs.c:2122
 msgid "Stacked cross sections"
 msgstr ""
 
-#: lib/src/dataio.c:1545
+#: lib/src/dataio.c:1551
 msgid "undated"
 msgstr ""
 
-#: lib/src/dataio.c:1553 lib/src/strutils.c:701
+#: lib/src/dataio.c:1559 lib/src/strutils.c:701
 msgid "annual"
 msgstr ""
 
-#: lib/src/dataio.c:1555 gui2/dialogs.c:2422
+#: lib/src/dataio.c:1561 gui2/dialogs.c:2422
 msgid "quarterly"
 msgstr ""
 
-#: lib/src/dataio.c:1557 gui2/dialogs.c:2422
+#: lib/src/dataio.c:1563 gui2/dialogs.c:2422
 msgid "monthly"
 msgstr ""
 
-#: lib/src/dataio.c:1559
+#: lib/src/dataio.c:1565
 msgid "hourly"
 msgstr ""
 
-#: lib/src/dataio.c:1561
+#: lib/src/dataio.c:1567
 msgid "weekly"
 msgstr ""
 
-#: lib/src/dataio.c:1563 lib/src/dataio.c:1565
+#: lib/src/dataio.c:1569 lib/src/dataio.c:1571
 msgid "daily"
 msgstr ""
 
-#: lib/src/dataio.c:1567 lib/src/modelprint.c:1821 lib/src/var.c:1729
+#: lib/src/dataio.c:1573 lib/src/modelprint.c:1823 lib/src/var.c:1729
 msgid "unknown"
 msgstr ""
 
-#: lib/src/dataio.c:1592
+#: lib/src/dataio.c:1598
 #, c-format
 msgid ""
 "Data file %s\n"
 "as of"
 msgstr ""
 
-#: lib/src/dataio.c:1593
+#: lib/src/dataio.c:1599
 msgid "(unsaved)"
 msgstr ""
 
-#: lib/src/dataio.c:1598 gui2/database.c:1081 gui2/database.c:1106
+#: lib/src/dataio.c:1604 gui2/database.c:1081 gui2/database.c:1106
 msgid "Description"
 msgstr ""
 
-#: lib/src/dataio.c:1603
+#: lib/src/dataio.c:1609
 msgid "Type of data"
 msgstr ""
 
-#: lib/src/dataio.c:1607 lib/src/modelprint.c:1971 lib/src/modelprint.c:1979
+#: lib/src/dataio.c:1613 lib/src/modelprint.c:1973 lib/src/modelprint.c:1981
 msgid "Frequency"
 msgstr ""
 
-#: lib/src/dataio.c:1610
+#: lib/src/dataio.c:1616
 msgid "Range"
 msgstr ""
 
-#: lib/src/dataio.c:1613
+#: lib/src/dataio.c:1619
 msgid "Listing of variables"
 msgstr ""
 
-#: lib/src/dataio.c:1666
+#: lib/src/dataio.c:1672
 #, c-format
 msgid "Bad data label in %s"
 msgstr ""
 
-#: lib/src/dataio.c:1678
+#: lib/src/dataio.c:1684
 #, c-format
 msgid "extraneous label for var '%s'\n"
 msgstr ""
 
-#: lib/src/dataio.c:1811
+#: lib/src/dataio.c:1817
 #, c-format
 msgid ""
 "\n"
 "Read datafile %s\n"
 msgstr ""
 
-#: lib/src/dataio.c:1812 lib/src/dataio.c:1937 lib/src/dataio.c:2038
+#: lib/src/dataio.c:1818 lib/src/dataio.c:1943 lib/src/dataio.c:2044
 #, c-format
 msgid ""
 "periodicity: %d, maxobs: %d,\n"
 "observations range: %s-%s\n"
 msgstr ""
 
-#: lib/src/dataio.c:1901
+#: lib/src/dataio.c:1907
 #, c-format
 msgid ""
 "\n"
 "Reading header file %s\n"
 msgstr ""
 
-#: lib/src/dataio.c:1941
+#: lib/src/dataio.c:1947
 msgid ""
 "\n"
 "Reading "
 msgstr ""
 
-#: lib/src/dataio.c:1943
+#: lib/src/dataio.c:1949
 msgid "time-series"
 msgstr ""
 
-#: lib/src/dataio.c:1943
+#: lib/src/dataio.c:1949
 msgid "cross-sectional"
 msgstr ""
 
-#: lib/src/dataio.c:1944
+#: lib/src/dataio.c:1950
 msgid " datafile"
 msgstr ""
 
-#: lib/src/dataio.c:2032 lib/src/generate.c:3896
+#: lib/src/dataio.c:2038 lib/src/generate.c:3975
 msgid "index variable"
 msgstr ""
 
-#: lib/src/dataio.c:2250
+#: lib/src/dataio.c:2256
 #, c-format
 msgid "   first row label \"%s\", last label \"%s\"\n"
 msgstr ""
 
-#: lib/src/dataio.c:2259
+#: lib/src/dataio.c:2265
 msgid "   label strings can't be consistent dates\n"
 msgstr ""
 
-#: lib/src/dataio.c:2263
+#: lib/src/dataio.c:2269
 msgid "trying to parse row labels as dates...\n"
 msgstr ""
 
-#: lib/src/dataio.c:2294
+#: lib/src/dataio.c:2300
 #, c-format
 msgid "   %s: probably a year... "
 msgstr ""
 
-#: lib/src/dataio.c:2296
+#: lib/src/dataio.c:2302
 #, c-format
 msgid "   %s: out of bounds for a year?\n"
 msgstr ""
 
-#: lib/src/dataio.c:2299
+#: lib/src/dataio.c:2305
 msgid "   but I can't make sense of the extra bit\n"
 msgstr ""
 
-#: lib/src/dataio.c:2303
+#: lib/src/dataio.c:2309
 msgid "and just a year\n"
 msgstr ""
 
-#: lib/src/dataio.c:2311
+#: lib/src/dataio.c:2317
 msgid "   but the dates are not complete and consistent\n"
 msgstr ""
 
-#: lib/src/dataio.c:2318
+#: lib/src/dataio.c:2324
 #, c-format
 msgid "quarter %s?\n"
 msgstr ""
 
-#: lib/src/dataio.c:2329
+#: lib/src/dataio.c:2335
 #, c-format
 msgid "month %s?\n"
 msgstr ""
 
-#: lib/src/dataio.c:2340
+#: lib/src/dataio.c:2346
 msgid "   definitely not a four-digit year\n"
 msgstr ""
 
-#: lib/src/dataio.c:2435
+#: lib/src/dataio.c:2441
 msgid "Data frequency does not match\n"
 msgstr ""
 
-#: lib/src/dataio.c:2445
+#: lib/src/dataio.c:2451
 msgid "New data not conformable for appending\n"
 msgstr ""
 
-#: lib/src/dataio.c:2462
+#: lib/src/dataio.c:2468
 msgid "Starting point of new data does not fit\n"
 msgstr ""
 
-#: lib/src/dataio.c:2466
+#: lib/src/dataio.c:2472
 msgid "Inconsistency in observation markers\n"
 msgstr ""
 
-#: lib/src/dataio.c:2479 lib/src/dataio.c:2541
+#: lib/src/dataio.c:2485 lib/src/dataio.c:2547
 msgid "Out of memory adding data\n"
 msgstr ""
 
-#: lib/src/dataio.c:2550
+#: lib/src/dataio.c:2556
 msgid "Data appended OK\n"
 msgstr ""
 
-#: lib/src/dataio.c:2591
+#: lib/src/dataio.c:2597
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
 msgstr ""
 
-#: lib/src/dataio.c:2605
+#: lib/src/dataio.c:2611
 msgid "Data file is empty\n"
 msgstr ""
 
-#: lib/src/dataio.c:2607
+#: lib/src/dataio.c:2613
 msgid "Data file has trailing commas\n"
 msgstr ""
 
-#: lib/src/dataio.c:2699
+#: lib/src/dataio.c:2705
 #, c-format
 msgid "   first field: '%s'\n"
 msgstr ""
 
-#: lib/src/dataio.c:2703
+#: lib/src/dataio.c:2709
 msgid "   seems to be observation label\n"
 msgstr ""
 
-#: lib/src/dataio.c:2723
+#: lib/src/dataio.c:2729
 #, c-format
 msgid ""
 "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 
-#: lib/src/dataio.c:2732
+#: lib/src/dataio.c:2738
 #, c-format
 msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr ""
 
-#: lib/src/dataio.c:2806
+#: lib/src/dataio.c:2812
 #, c-format
 msgid "At variable %d, observation %d:\n"
 msgstr ""
 
-#: lib/src/dataio.c:2845
+#: lib/src/dataio.c:2851
 msgid ""
 "\n"
 "Please note:\n"
@@ -594,321 +594,321 @@ msgid ""
 "- The remainder of the file must be a rectangular array of data.\n"
 msgstr ""
 
-#: lib/src/dataio.c:2873 lib/src/dataio.c:2898 lib/src/dataio.c:2951
-#: lib/src/dataio.c:2958 lib/src/dataio.c:3025 lib/src/dataio.c:3278
+#: lib/src/dataio.c:2879 lib/src/dataio.c:2904 lib/src/dataio.c:2957
+#: lib/src/dataio.c:2964 lib/src/dataio.c:3031 lib/src/dataio.c:3284
 #: plugin/excel_import.c:982 plugin/gnumeric_import.c:567
 msgid "Out of memory\n"
 msgstr ""
 
-#: lib/src/dataio.c:2878 lib/src/dataio.c:3283
+#: lib/src/dataio.c:2884 lib/src/dataio.c:3289
 msgid "parsing"
 msgstr ""
 
-#: lib/src/dataio.c:2890
+#: lib/src/dataio.c:2896
 #, c-format
 msgid "using delimiter '%c'\n"
 msgstr ""
 
-#: lib/src/dataio.c:2891
+#: lib/src/dataio.c:2897
 #, c-format
 msgid "   longest line: %d characters\n"
 msgstr ""
 
-#: lib/src/dataio.c:2921
+#: lib/src/dataio.c:2927
 #, c-format
 msgid "   number of columns = %d\n"
 msgstr ""
 
-#: lib/src/dataio.c:2924
+#: lib/src/dataio.c:2930
 #, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
 msgstr ""
 
-#: lib/src/dataio.c:2936
+#: lib/src/dataio.c:2942
 #, fuzzy, c-format
 msgid "   number of variables: %d\n"
 msgstr "/変数(_V)"
 
-#: lib/src/dataio.c:2937
+#: lib/src/dataio.c:2943
 #, c-format
 msgid "   number of non-blank lines: %d\n"
 msgstr ""
 
-#: lib/src/dataio.c:2945
+#: lib/src/dataio.c:2951
 msgid "Invalid data file\n"
 msgstr ""
 
-#: lib/src/dataio.c:2970
+#: lib/src/dataio.c:2976
 msgid "scanning for variable names...\n"
 msgstr ""
 
-#: lib/src/dataio.c:2982
+#: lib/src/dataio.c:2988
 #, c-format
 msgid "   line: %s\n"
 msgstr ""
 
-#: lib/src/dataio.c:3001
+#: lib/src/dataio.c:3007
 #, c-format
 msgid "   variable name %d is missing: aborting\n"
 msgstr ""
 
-#: lib/src/dataio.c:3023
+#: lib/src/dataio.c:3029
 msgid "it seems there are no variable names\n"
 msgstr ""
 
-#: lib/src/dataio.c:3047
+#: lib/src/dataio.c:3053
 msgid "scanning for row labels and data...\n"
 msgstr ""
 
-#: lib/src/dataio.c:3064
+#: lib/src/dataio.c:3070
 #, c-format
 msgid "warning: truncating data at row %d, column %d\n"
 msgstr ""
 
-#: lib/src/dataio.c:3100
+#: lib/src/dataio.c:3106
 msgid ""
 "taking date information from row labels\n"
 "\n"
 msgstr ""
 
-#: lib/src/dataio.c:3102
+#: lib/src/dataio.c:3108
 msgid ""
 "treating these as undated data\n"
 "\n"
 msgstr ""
 
-#: lib/src/dataio.c:3292
+#: lib/src/dataio.c:3298
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid BOX1 file\n"
 msgstr ""
 
-#: lib/src/dataio.c:3316
+#: lib/src/dataio.c:3322
 #, c-format
 msgid "   found %d variables\n"
 msgstr ""
 
-#: lib/src/dataio.c:3317
+#: lib/src/dataio.c:3323
 #, c-format
 msgid "   found %d observations\n"
 msgstr ""
 
-#: lib/src/dataio.c:3318
+#: lib/src/dataio.c:3324
 #, c-format
 msgid "   longest line = %d characters\n"
 msgstr ""
 
-#: lib/src/dataio.c:3322
+#: lib/src/dataio.c:3328
 msgid "allocating memory for data... "
 msgstr ""
 
-#: lib/src/dataio.c:3341
+#: lib/src/dataio.c:3347
 msgid "done\n"
 msgstr ""
 
-#: lib/src/dataio.c:3348
+#: lib/src/dataio.c:3354
 msgid "reading variable information...\n"
 msgstr ""
 
-#: lib/src/dataio.c:3372
+#: lib/src/dataio.c:3378
 #, c-format
 msgid " variable %d: '%s'\n"
 msgstr ""
 
-#: lib/src/dataio.c:3376
+#: lib/src/dataio.c:3382
 msgid "   Non-numeric data: will be skipped\n"
 msgstr ""
 
-#: lib/src/dataio.c:3386
+#: lib/src/dataio.c:3392
 #, c-format
 msgid "   starting col. %d, "
 msgstr ""
 
-#: lib/src/dataio.c:3390
+#: lib/src/dataio.c:3396
 #, c-format
 msgid "field width %d, "
 msgstr ""
 
-#: lib/src/dataio.c:3393
+#: lib/src/dataio.c:3399
 #, c-format
 msgid "decimal places %d\n"
 msgstr ""
 
-#: lib/src/dataio.c:3399
+#: lib/src/dataio.c:3405
 #, c-format
 msgid "   Warning: coded variable (format '%s' in BOX file)\n"
 msgstr ""
 
-#: lib/src/dataio.c:3404
+#: lib/src/dataio.c:3410
 #, c-format
 msgid "   definition: '%s'\n"
 msgstr ""
 
-#: lib/src/dataio.c:3449
+#: lib/src/dataio.c:3455
 msgid "done reading data\n"
 msgstr ""
 
-#: lib/src/dataio.c:3460
+#: lib/src/dataio.c:3466
 #, c-format
 msgid "Warning: discarded %d non-numeric variable(s)\n"
 msgstr ""
 
-#: lib/src/dataio.c:3604
+#: lib/src/dataio.c:3610
 msgid "box file seems to be malformed\n"
 msgstr ""
 
-#: lib/src/dataio.c:3685 gui2/boxplots.c:1409 gui2/database.c:1629
+#: lib/src/dataio.c:3691 gui2/boxplots.c:1409 gui2/database.c:1629
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr ""
 
-#: lib/src/dataio.c:3691 gui2/database.c:414 gui2/library.c:1154
+#: lib/src/dataio.c:3697 gui2/database.c:414 gui2/library.c:1154
 #: gui2/library.c:2027 gui2/library.c:2098 gui2/library.c:2256
 #, c-format
 msgid "Out of memory"
 msgstr ""
 
-#: lib/src/dataio.c:3697
+#: lib/src/dataio.c:3703
 #, c-format
 msgid "Writing %ld Kbytes of data\n"
 msgstr ""
 
-#: lib/src/dataio.c:3956
+#: lib/src/dataio.c:3962
 #, c-format
 msgid "Failed to parse count of variables"
 msgstr ""
 
-#: lib/src/dataio.c:3960 lib/src/dataio.c:3966
+#: lib/src/dataio.c:3966 lib/src/dataio.c:3972
 #, c-format
 msgid "Out of memory reading data file"
 msgstr ""
 
-#: lib/src/dataio.c:3974 lib/src/dataio.c:3984
+#: lib/src/dataio.c:3980 lib/src/dataio.c:3990
 #, c-format
 msgid "Got no variables"
 msgstr ""
 
-#: lib/src/dataio.c:3997
+#: lib/src/dataio.c:4003
 #, c-format
 msgid "Variable %d has no name"
 msgstr ""
 
-#: lib/src/dataio.c:4039
+#: lib/src/dataio.c:4045
 #, c-format
 msgid "Number of variables does not match declaration"
 msgstr ""
 
-#: lib/src/dataio.c:4081
+#: lib/src/dataio.c:4087
 #, c-format
 msgid "Failed to parse data values at obs %d"
 msgstr ""
 
-#: lib/src/dataio.c:4108
+#: lib/src/dataio.c:4114
 #, c-format
 msgid "Failed to parse number of observations"
 msgstr ""
 
-#: lib/src/dataio.c:4124
+#: lib/src/dataio.c:4130
 #, c-format
 msgid "labels attribute for observations must be 'true' or 'false'"
 msgstr ""
 
-#: lib/src/dataio.c:4151
+#: lib/src/dataio.c:4157
 #, c-format
 msgid "Got no observations\n"
 msgstr ""
 
-#: lib/src/dataio.c:4167
+#: lib/src/dataio.c:4173
 #, c-format
 msgid "Case marker missing at obs %d"
 msgstr ""
 
-#: lib/src/dataio.c:4179
+#: lib/src/dataio.c:4185
 #, c-format
 msgid "Values missing at observation %d"
 msgstr ""
 
-#: lib/src/dataio.c:4195
+#: lib/src/dataio.c:4201
 #, c-format
 msgid "Number of observations does not match declaration"
 msgstr ""
 
-#: lib/src/dataio.c:4273
+#: lib/src/dataio.c:4279
 msgid "Uncompressing"
 msgstr ""
 
-#: lib/src/dataio.c:4273
+#: lib/src/dataio.c:4279
 msgid "Reading"
 msgstr ""
 
-#: lib/src/dataio.c:4274
+#: lib/src/dataio.c:4280
 msgid "of data"
 msgstr ""
 
-#: lib/src/dataio.c:4280 lib/src/dataio.c:4517 plugin/gnumeric_import.c:318
+#: lib/src/dataio.c:4286 lib/src/dataio.c:4523 plugin/gnumeric_import.c:318
 #: plugin/gnumeric_import.c:421
 #, c-format
 msgid "xmlParseFile failed on %s"
 msgstr ""
 
-#: lib/src/dataio.c:4293 lib/src/dataio.c:4523 plugin/gnumeric_import.c:324
+#: lib/src/dataio.c:4299 lib/src/dataio.c:4529 plugin/gnumeric_import.c:324
 #: plugin/gnumeric_import.c:427
 #, c-format
 msgid "%s: empty document"
 msgstr ""
 
-#: lib/src/dataio.c:4300 lib/src/dataio.c:4529
+#: lib/src/dataio.c:4306 lib/src/dataio.c:4535
 #, c-format
 msgid "File of the wrong type, root node not gretldata"
 msgstr ""
 
-#: lib/src/dataio.c:4310
+#: lib/src/dataio.c:4316
 #, c-format
 msgid "Required attribute 'type' is missing from data file"
 msgstr ""
 
-#: lib/src/dataio.c:4323
+#: lib/src/dataio.c:4329
 #, c-format
 msgid "Unrecognized type attribute for data file"
 msgstr ""
 
-#: lib/src/dataio.c:4339
+#: lib/src/dataio.c:4345
 msgid "Failed to parse data frequency"
 msgstr ""
 
-#: lib/src/dataio.c:4375
+#: lib/src/dataio.c:4381
 msgid "Failed to parse startobs"
 msgstr ""
 
-#: lib/src/dataio.c:4399
+#: lib/src/dataio.c:4405
 msgid "Failed to parse endobs"
 msgstr ""
 
-#: lib/src/dataio.c:4425 lib/src/dataio.c:4448
+#: lib/src/dataio.c:4431 lib/src/dataio.c:4454
 #, c-format
 msgid "Variables information is missing"
 msgstr ""
 
-#: lib/src/dataio.c:4453
+#: lib/src/dataio.c:4459
 #, c-format
 msgid "No observations were found"
 msgstr ""
 
-#: lib/src/dataio.c:4561
+#: lib/src/dataio.c:4567
 #, c-format
 msgid "'%s' -- no numeric conversion performed!"
 msgstr ""
 
-#: lib/src/dataio.c:4567
+#: lib/src/dataio.c:4573
 #, c-format
 msgid "Extraneous character '%c' in data"
 msgstr ""
 
-#: lib/src/dataio.c:4569
+#: lib/src/dataio.c:4575
 #, c-format
 msgid "Extraneous character (0x%x) in data"
 msgstr ""
 
-#: lib/src/dataio.c:4575
+#: lib/src/dataio.c:4581
 #, c-format
 msgid "'%s' -- number out of range!"
 msgstr ""
@@ -930,7 +930,7 @@ msgstr ""
 msgid "This is not a valid RATS 4.0 database"
 msgstr ""
 
-#: lib/src/dbread.c:348 lib/src/dbread.c:402 lib/src/gretl_utils.c:634
+#: lib/src/dbread.c:348 lib/src/dbread.c:402 lib/src/gretl_utils.c:638
 #, c-format
 msgid "frequency (%d) does not make seem to make sense"
 msgstr ""
@@ -940,7 +940,7 @@ msgstr ""
 msgid "error reading smpl line"
 msgstr ""
 
-#: lib/src/dbread.c:975 lib/src/generate.c:4886 lib/src/subsample.c:810
+#: lib/src/dbread.c:975 lib/src/generate.c:4971 lib/src/subsample.c:810
 #, c-format
 msgid "Invalid null sample"
 msgstr ""
@@ -1128,15 +1128,15 @@ msgstr ""
 msgid "Fractional integration test failed"
 msgstr ""
 
-#: lib/src/describe.c:991 lib/src/describe.c:992 lib/src/estimate.c:2639
-#: lib/src/estimate.c:2640 lib/src/modelprint.c:296 lib/src/modelprint.c:306
-#: lib/src/modelprint.c:321 lib/src/modelprint.c:1623
-#: lib/src/modelprint.c:1694 lib/src/modelprint.c:1704
-#: lib/src/modelprint.c:1740 lib/src/modelprint.c:1801
-#: lib/src/modelprint.c:1808 lib/src/modelprint.c:1809
-#: lib/src/modelprint.c:1810 lib/src/modelprint.c:1832
-#: lib/src/modelprint.c:2215 lib/src/modelprint.c:2265
-#: lib/src/modelprint.c:2299 lib/src/printout.c:324 lib/src/printout.c:551
+#: lib/src/describe.c:991 lib/src/describe.c:992 lib/src/estimate.c:2706
+#: lib/src/estimate.c:2707 lib/src/modelprint.c:296 lib/src/modelprint.c:306
+#: lib/src/modelprint.c:321 lib/src/modelprint.c:1625
+#: lib/src/modelprint.c:1696 lib/src/modelprint.c:1706
+#: lib/src/modelprint.c:1742 lib/src/modelprint.c:1803
+#: lib/src/modelprint.c:1810 lib/src/modelprint.c:1811
+#: lib/src/modelprint.c:1812 lib/src/modelprint.c:1834
+#: lib/src/modelprint.c:2217 lib/src/modelprint.c:2268
+#: lib/src/modelprint.c:2304 lib/src/printout.c:324 lib/src/printout.c:551
 #: lib/src/printout.c:559 lib/src/printout.c:618 lib/src/printout.c:619
 #: lib/src/texprint.c:229 lib/src/texprint.c:235 lib/src/texprint.c:236
 #: lib/src/texprint.c:237 gui2/guiprint_common.c:72 gui2/guiprint_common.c:74
@@ -1203,7 +1203,7 @@ msgstr ""
 msgid "for the variable '%s' (%d valid observations)"
 msgstr ""
 
-#: lib/src/describe.c:1130 lib/src/describe.c:1155 lib/src/modelprint.c:1107
+#: lib/src/describe.c:1130 lib/src/describe.c:1155 lib/src/modelprint.c:1096
 #: gui2/guiprint_common.c:120 gui2/guiprint_common.c:144
 #: gui2/guiprint_common.c:229 gui2/guiprint_common.c:253
 #: gui2/guiprint_common.c:876 gui2/guiprint_common.c:933
@@ -1327,30 +1327,31 @@ msgstr ""
 msgid "Failed to construct Hessian matrix"
 msgstr ""
 
-#: lib/src/estimate.c:180 plugin/mp_ols.c:628
+#: lib/src/estimate.c:180 plugin/mp_ols.c:634
 #, c-format
 msgid "No. of obs (%d) is less than no. of parameters (%d)"
 msgstr ""
 
-#: lib/src/estimate.c:424 plugin/arma.c:558 plugin/arma_x12.c:658
+#: lib/src/estimate.c:435 lib/src/estimate.c:1809 plugin/arma.c:558
+#: plugin/arma_x12.c:658
 #, c-format
 msgid "Missing value encountered for variable %d, obs %d"
 msgstr ""
 
-#: lib/src/estimate.c:876 lib/src/modelprint.c:113 lib/src/modelprint.c:134
+#: lib/src/estimate.c:881 lib/src/modelprint.c:113 lib/src/modelprint.c:134
 #, c-format
 msgid "Error sum of squares (%g) is not > 0"
 msgstr ""
 
-#: lib/src/estimate.c:988
+#: lib/src/estimate.c:993
 msgid "Warning: data matrix close to singularity!"
 msgstr ""
 
-#: lib/src/estimate.c:1447 lib/src/estimate.c:1544 lib/src/estimate.c:1623
+#: lib/src/estimate.c:1452 lib/src/estimate.c:1549 lib/src/estimate.c:1628
 msgid "ESS"
 msgstr ""
 
-#: lib/src/estimate.c:1600
+#: lib/src/estimate.c:1605
 #, c-format
 msgid ""
 "\n"
@@ -1359,443 +1360,443 @@ msgid ""
 "\n"
 msgstr ""
 
-#: lib/src/estimate.c:1607
+#: lib/src/estimate.c:1612
 msgid ""
 "\n"
 "Fine-tune rho using the CORC procedure...\n"
 "\n"
 msgstr ""
 
-#: lib/src/estimate.c:1619
+#: lib/src/estimate.c:1624
 msgid ""
 "\n"
 "Performing iterative calculation of rho...\n"
 "\n"
 msgstr ""
 
-#: lib/src/estimate.c:1623
+#: lib/src/estimate.c:1628
 msgid "ITER"
 msgstr ""
 
-#: lib/src/estimate.c:1651
+#: lib/src/estimate.c:1656
 #, c-format
 msgid ""
 "                final %11.5f\n"
 "\n"
 msgstr ""
 
-#: lib/src/estimate.c:1829
+#: lib/src/estimate.c:1847
 #, c-format
 msgid ""
 "Order condition for identification is not satisfied.\n"
 "varlist 2 needs at least %d more variable(s) not in varlist1."
 msgstr ""
 
-#: lib/src/estimate.c:1839
+#: lib/src/estimate.c:1857
 msgid "Constant term is in varlist1 but not in varlist2"
 msgstr ""
 
-#: lib/src/estimate.c:2037 lib/src/estimate.c:2415
+#: lib/src/estimate.c:2065 lib/src/estimate.c:2482
 #, c-format
 msgid "generation of squares failed\n"
 msgstr ""
 
-#: lib/src/estimate.c:2441
+#: lib/src/estimate.c:2508
 msgid "didn't add to list\n"
 msgstr ""
 
-#: lib/src/estimate.c:2458 lib/src/modelprint.c:460
+#: lib/src/estimate.c:2525 lib/src/modelprint.c:460
 msgid "White's test for heteroskedasticity"
 msgstr ""
 
-#: lib/src/estimate.c:2459
+#: lib/src/estimate.c:2526
 msgid "heteroskedasticity not present"
 msgstr ""
 
-#: lib/src/estimate.c:2576
+#: lib/src/estimate.c:2643
 msgid "Generalized Cochrane-Orcutt estimation"
 msgstr ""
 
-#: lib/src/estimate.c:2579
+#: lib/src/estimate.c:2646
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
 msgstr ""
 
-#: lib/src/estimate.c:2731 lib/src/generate.c:4721
+#: lib/src/estimate.c:2798 lib/src/generate.c:4800
 #, fuzzy
 msgid "variable"
 msgstr "/変数(_V)"
 
-#: lib/src/estimate.c:2751
+#: lib/src/estimate.c:2818
 #, c-format
 msgid "weighted %s "
 msgstr ""
 
-#: lib/src/estimate.c:2759
+#: lib/src/estimate.c:2826
 msgid "omitted because all obs are zero."
 msgstr ""
 
-#: lib/src/estimate.c:2907
+#: lib/src/estimate.c:2974
 #, c-format
 msgid "Invalid lag order for arch (%d)"
 msgstr ""
 
-#: lib/src/estimate.c:2959
+#: lib/src/estimate.c:3026
 #, c-format
 msgid "No of obs. = %d, unadjusted R^2 = %f\n"
 msgstr ""
 
-#: lib/src/estimate.c:2966
+#: lib/src/estimate.c:3033
 #, c-format
 msgid "Test for ARCH of order %s"
 msgstr ""
 
-#: lib/src/estimate.c:2968
+#: lib/src/estimate.c:3035
 msgid "no ARCH effect is present"
 msgstr ""
 
-#: lib/src/estimate.c:2975
+#: lib/src/estimate.c:3042
 #, c-format
 msgid ""
 "LM test statistic (%f) is distributed as Chi-square (%d)\n"
 "Area to the right of LM = %f  "
 msgstr ""
 
-#: lib/src/estimate.c:2979
+#: lib/src/estimate.c:3046
 msgid "ARCH effect is insignificant at the 10 percent level"
 msgstr ""
 
-#: lib/src/estimate.c:2980
+#: lib/src/estimate.c:3047
 msgid "Weighted estimation not done"
 msgstr ""
 
-#: lib/src/estimate.c:2983
+#: lib/src/estimate.c:3050
 msgid "ARCH effect is significant at the 10 percent level"
 msgstr ""
 
-#: lib/src/estimate.c:3053 lib/src/pvalues.c:699
+#: lib/src/estimate.c:3119 lib/src/pvalues.c:699
 msgid "Couldn't load plugin function\n"
 msgstr ""
 
-#: lib/src/generate.c:331
+#: lib/src/generate.c:343
 #, c-format
 msgid "Variable %s is a scalar; can't do lags/leads"
 msgstr ""
 
-#: lib/src/generate.c:481
+#: lib/src/generate.c:493
 #, c-format
 msgid "Undefined variable name '%s' in genr"
 msgstr ""
 
-#: lib/src/generate.c:1638
+#: lib/src/generate.c:1680
 #, c-format
 msgid "'%s' refers to a %s and may not be used as a variable name"
 msgstr ""
 
-#: lib/src/generate.c:1705
+#: lib/src/generate.c:1747
 msgid "residual vector"
 msgstr ""
 
-#: lib/src/generate.c:1708
+#: lib/src/generate.c:1750
 msgid "fitted values vector"
 msgstr ""
 
-#: lib/src/generate.c:1711
+#: lib/src/generate.c:1753
 msgid "constant"
 msgstr ""
 
-#: lib/src/generate.c:1714
+#: lib/src/generate.c:1756
 msgid "regr. coeff."
 msgstr ""
 
-#: lib/src/generate.c:1717
+#: lib/src/generate.c:1759
 msgid "standard error"
 msgstr ""
 
-#: lib/src/generate.c:1720
+#: lib/src/generate.c:1762
 msgid "autocorr. coeff."
 msgstr ""
 
-#: lib/src/generate.c:1723
+#: lib/src/generate.c:1765
 msgid "stats function"
 msgstr ""
 
-#: lib/src/generate.c:1726
+#: lib/src/generate.c:1768
 msgid "sampling concept"
 msgstr ""
 
-#: lib/src/generate.c:1729
+#: lib/src/generate.c:1771
 msgid "plotting variable"
 msgstr ""
 
-#: lib/src/generate.c:1732
+#: lib/src/generate.c:1774
 msgid "internal variable"
 msgstr ""
 
-#: lib/src/generate.c:1735 lib/src/generate.c:1744
+#: lib/src/generate.c:1777 lib/src/generate.c:1786
 msgid "math function"
 msgstr ""
 
-#: lib/src/generate.c:1965
+#: lib/src/generate.c:2007
 #, c-format
 msgid "Set tolerance to %g"
 msgstr ""
 
-#: lib/src/generate.c:1968
+#: lib/src/generate.c:2010
 msgid "The setting for \"toler\" must be numeric"
 msgstr ""
 
-#: lib/src/generate.c:1999
+#: lib/src/generate.c:2041
 #, c-format
 msgid "Replaced after model %d: "
 msgstr ""
 
-#: lib/src/generate.c:2066
+#: lib/src/generate.c:2108
 msgid "Periodic dummy variables generated.\n"
 msgstr ""
 
-#: lib/src/generate.c:2072 lib/src/generate.c:2079
+#: lib/src/generate.c:2115 lib/src/generate.c:2122
 msgid "Panel dummy variables generated.\n"
 msgstr ""
 
-#: lib/src/generate.c:2277
+#: lib/src/generate.c:2320
 msgid " (scalar)"
 msgstr ""
 
-#: lib/src/generate.c:2357
+#: lib/src/generate.c:2407
 #, c-format
 msgid "Zero denominator for obs %d"
 msgstr ""
 
-#: lib/src/generate.c:2369
+#: lib/src/generate.c:2421
 #, c-format
 msgid ""
 "Invalid power function args for obs. %d\n"
 "base value = %f, exponent = %f"
 msgstr ""
 
-#: lib/src/generate.c:2992
+#: lib/src/generate.c:3070
 msgid "No $T (number of obs for model) value is available"
 msgstr ""
 
-#: lib/src/generate.c:2996
+#: lib/src/generate.c:3074
 msgid "No $ess (error sum of squares) value is available"
 msgstr ""
 
-#: lib/src/generate.c:3000
+#: lib/src/generate.c:3078
 msgid "No $rsq (R-squared) value is available"
 msgstr ""
 
-#: lib/src/generate.c:3004
+#: lib/src/generate.c:3082
 msgid "No $trsq (T*R-squared) value is available"
 msgstr ""
 
-#: lib/src/generate.c:3008
+#: lib/src/generate.c:3086
 msgid "No $df (degrees of freedom) value is available"
 msgstr ""
 
-#: lib/src/generate.c:3012
+#: lib/src/generate.c:3090
 msgid "No $sigma (std. err. of model) value is available"
 msgstr ""
 
-#: lib/src/generate.c:3016
+#: lib/src/generate.c:3094
 msgid "No $lnl (log-likelihood) value is available"
 msgstr ""
 
-#: lib/src/generate.c:3020 lib/src/generate.c:3036
+#: lib/src/generate.c:3098 lib/src/generate.c:3114
 msgid "No $aic (Akaike Information Criterion) value is available"
 msgstr ""
 
-#: lib/src/generate.c:3030
+#: lib/src/generate.c:3108
 msgid "$lnl (log-likelihood) is not available for the last model"
 msgstr ""
 
-#: lib/src/generate.c:3269
+#: lib/src/generate.c:3348
 msgid "Can't retrieve uhat: data set has changed"
 msgstr ""
 
-#: lib/src/generate.c:3271
+#: lib/src/generate.c:3350
 msgid "Can't retrieve yhat: data set has changed"
 msgstr ""
 
-#: lib/src/generate.c:3272
+#: lib/src/generate.c:3351
 msgid "Can't retrieve ht: data set has changed"
 msgstr ""
 
-#: lib/src/generate.c:3284
+#: lib/src/generate.c:3363
 msgid "Can't retrieve error variance"
 msgstr ""
 
-#: lib/src/generate.c:3577
+#: lib/src/generate.c:3656
 #, c-format
 msgid "= 1 if quarter = %d, 0 otherwise"
 msgstr ""
 
-#: lib/src/generate.c:3585
+#: lib/src/generate.c:3664
 #, c-format
 msgid "= 1 if month is %s, 0 otherwise"
 msgstr ""
 
-#: lib/src/generate.c:3596
+#: lib/src/generate.c:3675
 #, c-format
 msgid "%s = 1 if period is %d, 0 otherwise"
 msgstr ""
 
-#: lib/src/generate.c:3681 lib/src/generate.c:3710
+#: lib/src/generate.c:3760 lib/src/generate.c:3789
 #, c-format
 msgid "%s = 1 if %s is %d, 0 otherwise"
 msgstr ""
 
-#: lib/src/generate.c:3682 lib/src/generate.c:3711
+#: lib/src/generate.c:3761 lib/src/generate.c:3790
 msgid "unit"
 msgstr ""
 
-#: lib/src/generate.c:3682 lib/src/generate.c:3711 lib/src/var.c:373
+#: lib/src/generate.c:3761 lib/src/generate.c:3790 lib/src/var.c:373
 #: lib/src/var.c:375 lib/src/var.c:662 lib/src/var.c:664
 msgid "period"
 msgstr ""
 
-#: lib/src/generate.c:3798 lib/src/generate.c:3889 lib/src/generate.c:3902
+#: lib/src/generate.c:3877 lib/src/generate.c:3968 lib/src/generate.c:3981
 #: lib/src/var.c:770
 msgid "time trend variable"
 msgstr ""
 
-#: lib/src/generate.c:3801
+#: lib/src/generate.c:3880
 msgid "data index variable"
 msgstr ""
 
-#: lib/src/generate.c:3848
+#: lib/src/generate.c:3927
 msgid "annual plotting variable"
 msgstr ""
 
-#: lib/src/generate.c:3854
+#: lib/src/generate.c:3933
 msgid "quarterly plotting variable"
 msgstr ""
 
-#: lib/src/generate.c:3861
+#: lib/src/generate.c:3940
 msgid "monthly plotting variable"
 msgstr ""
 
-#: lib/src/generate.c:3868
+#: lib/src/generate.c:3947
 msgid "hourly plotting variable"
 msgstr ""
 
-#: lib/src/generate.c:3876
+#: lib/src/generate.c:3955
 #, fuzzy
 msgid "daily plotting variable"
 msgstr "/変数(_V)"
 
-#: lib/src/generate.c:3994
+#: lib/src/generate.c:4073
 #, c-format
 msgid "Listing %d variables:\n"
 msgstr ""
 
-#: lib/src/generate.c:4198
+#: lib/src/generate.c:4277
 #, c-format
 msgid "Log error: Variable '%s', obs %d, value = %g\n"
 msgstr ""
 
-#: lib/src/generate.c:4218
+#: lib/src/generate.c:4297
 msgid " = log of "
 msgstr ""
 
-#: lib/src/generate.c:4344
+#: lib/src/generate.c:4423
 #, c-format
 msgid "%s = %s squared"
 msgstr ""
 
-#: lib/src/generate.c:4372
+#: lib/src/generate.c:4451
 #, c-format
 msgid "%s = %s times %s"
 msgstr ""
 
-#: lib/src/generate.c:4447
+#: lib/src/generate.c:4526
 #, c-format
 msgid "%s = rho-differenced %s"
 msgstr ""
 
-#: lib/src/generate.c:4719
+#: lib/src/generate.c:4798
 #, fuzzy
 msgid "Modified"
 msgstr "/モデル(_M)"
 
-#: lib/src/generate.c:4720 lib/src/generate.c:4978 lib/src/gretl_list.c:224
-#: lib/src/gretl_utils.c:1502 lib/src/modelprint.c:1031
+#: lib/src/generate.c:4799 lib/src/generate.c:5063 lib/src/gretl_list.c:224
+#: lib/src/gretl_utils.c:1506 lib/src/modelprint.c:1020
 msgid "Replaced"
 msgstr ""
 
-#: lib/src/generate.c:4720 lib/src/gretl_utils.c:1502
-#: lib/src/modelprint.c:1032
+#: lib/src/generate.c:4799 lib/src/gretl_utils.c:1506
+#: lib/src/modelprint.c:1021
 msgid "Generated"
 msgstr ""
 
-#: lib/src/generate.c:4722
+#: lib/src/generate.c:4801
 msgid "scalar"
 msgstr ""
 
-#: lib/src/generate.c:4722 lib/src/generate.c:4978 lib/src/gretl_utils.c:1503
+#: lib/src/generate.c:4801 lib/src/generate.c:5063 lib/src/gretl_utils.c:1507
 msgid "vector"
 msgstr ""
 
-#: lib/src/generate.c:4764
+#: lib/src/generate.c:4849
 #, c-format
 msgid "Undefined variable name '%s'"
 msgstr ""
 
-#: lib/src/generate.c:4767
+#: lib/src/generate.c:4852
 #, c-format
 msgid "const cannot be used to store values"
 msgstr ""
 
-#: lib/src/generate.c:4770
+#: lib/src/generate.c:4855
 #, c-format
 msgid ""
 "uhat can be used only in genr.  First use the command: genr newname = uhat"
 msgstr ""
 
-#: lib/src/generate.c:4773
+#: lib/src/generate.c:4858
 #, c-format
 msgid ""
 "Reserved var. names starting with $ can be used only in genr.\n"
 "First use the command:  genr newname = %s"
 msgstr ""
 
-#: lib/src/generate.c:4900 lib/src/interact.c:1040
+#: lib/src/generate.c:4985 lib/src/interact.c:1040
 #, c-format
 msgid "variable %s is a scalar"
 msgstr ""
 
-#: lib/src/generate.c:4907
+#: lib/src/generate.c:4992
 #, c-format
 msgid "For 'sim', the variable must already exist"
 msgstr ""
 
-#: lib/src/generate.c:4909
+#: lib/src/generate.c:4994
 #, c-format
 msgid "You can't use the constant for this purpose"
 msgstr ""
 
-#: lib/src/generate.c:4930
+#: lib/src/generate.c:5015
 #, c-format
 msgid "Bad varname '%s' in sim"
 msgstr ""
 
-#: lib/src/generate.c:5085
+#: lib/src/generate.c:5177
 #, c-format
 msgid "residual from model %d"
 msgstr ""
 
-#: lib/src/generate.c:5091
+#: lib/src/generate.c:5184
 #, c-format
 msgid "fitted value from model %d"
 msgstr ""
 
-#: lib/src/generate.c:5097
+#: lib/src/generate.c:5191
 #, c-format
 msgid "squared residual from model %d"
 msgstr ""
 
-#: lib/src/generate.c:5103
+#: lib/src/generate.c:5198
 #, c-format
 msgid "fitted variance from model %d"
 msgstr ""
@@ -2199,36 +2200,36 @@ msgid ""
 " %s\n"
 msgstr ""
 
-#: lib/src/gretl_utils.c:564
+#: lib/src/gretl_utils.c:568
 #, c-format
 msgid "Using ess = %f, %d observations, %d coefficients\n"
 msgstr ""
 
-#: lib/src/gretl_utils.c:566
+#: lib/src/gretl_utils.c:570
 msgid ""
 "\n"
 "MODEL SELECTION STATISTICS\n"
 "\n"
 msgstr ""
 
-#: lib/src/gretl_utils.c:622
+#: lib/src/gretl_utils.c:626
 msgid "Failed to parse line as frequency, startobs"
 msgstr ""
 
-#: lib/src/gretl_utils.c:652 lib/src/gretl_utils.c:679
+#: lib/src/gretl_utils.c:656 lib/src/gretl_utils.c:683
 #, c-format
 msgid "starting obs '%s' is invalid"
 msgstr ""
 
-#: lib/src/gretl_utils.c:683
+#: lib/src/gretl_utils.c:687
 msgid "starting obs must contain a ':' with frequency > 1"
 msgstr ""
 
-#: lib/src/gretl_utils.c:688
+#: lib/src/gretl_utils.c:692
 msgid "no ':' allowed in starting obs with frequency 1"
 msgstr ""
 
-#: lib/src/gretl_utils.c:699
+#: lib/src/gretl_utils.c:703
 #, c-format
 msgid "starting obs '%s' is incompatible with frequency"
 msgstr ""
@@ -2493,26 +2494,26 @@ msgstr ""
 msgid "Pseudo-random number generator seeded with %d\n"
 msgstr ""
 
-#: lib/src/missing.c:442
+#: lib/src/missing.c:484
 #, c-format
 msgid "Set %d values to \"missing\"\n"
 msgstr ""
 
-#: lib/src/missing.c:444
+#: lib/src/missing.c:486
 msgid "Didn't find any matching observations\n"
 msgstr ""
 
-#: lib/src/missing.c:451
+#: lib/src/missing.c:493
 #, c-format
 msgid "The variable %s is a scalar\n"
 msgstr ""
 
-#: lib/src/missing.c:457
+#: lib/src/missing.c:499
 #, c-format
 msgid "%s: set %d observations to \"missing\"\n"
 msgstr ""
 
-#: lib/src/missing.c:460
+#: lib/src/missing.c:502
 #, c-format
 msgid "%s: Didn't find any matching observations\n"
 msgstr ""
@@ -2551,11 +2552,11 @@ msgstr ""
 msgid "Standard error of residuals"
 msgstr ""
 
-#: lib/src/modelprint.c:176 lib/src/modelprint.c:2288
+#: lib/src/modelprint.c:176 lib/src/modelprint.c:2292
 msgid "Unadjusted R-squared"
 msgstr ""
 
-#: lib/src/modelprint.c:180 lib/src/modelprint.c:2292
+#: lib/src/modelprint.c:180 lib/src/modelprint.c:2296
 msgid "Adjusted R-squared"
 msgstr ""
 
@@ -2585,9 +2586,9 @@ msgid ""
 "Warning: solution is probably not unique\n"
 msgstr ""
 
-#: lib/src/modelprint.c:255 lib/src/modelprint.c:258 lib/src/modelprint.c:1130
-#: lib/src/modelprint.c:1158 lib/src/modelprint.c:2141
-#: lib/src/modelprint.c:2160 lib/src/modelprint.c:2185 lib/src/var.c:1729
+#: lib/src/modelprint.c:255 lib/src/modelprint.c:258 lib/src/modelprint.c:1119
+#: lib/src/modelprint.c:1147 lib/src/modelprint.c:2143
+#: lib/src/modelprint.c:2162 lib/src/modelprint.c:2187 lib/src/var.c:1729
 #: lib/src/var.c:1732 plugin/johansen.c:361 plugin/johansen.c:362
 msgid "p-value"
 msgstr ""
@@ -2696,8 +2697,8 @@ msgstr ""
 msgid "Heteroskedasticity-corrected"
 msgstr ""
 
-#: lib/src/modelprint.c:492 lib/src/modelprint.c:1984
-#: lib/src/modelprint.c:1986 lib/src/modelprint.c:1990
+#: lib/src/modelprint.c:492 lib/src/modelprint.c:1986
+#: lib/src/modelprint.c:1988 lib/src/modelprint.c:1992
 msgid "AR"
 msgstr ""
 
@@ -2769,297 +2770,297 @@ msgstr ""
 msgid "ARMA"
 msgstr ""
 
-#: lib/src/modelprint.c:720 lib/src/modelprint.c:722 lib/src/modelprint.c:725
+#: lib/src/modelprint.c:711 lib/src/modelprint.c:713 lib/src/modelprint.c:716
 #: gui/selector.c:560 gui2/selector.c:804
 msgid "Instruments"
 msgstr ""
 
-#: lib/src/modelprint.c:778 lib/src/modelprint.c:781
+#: lib/src/modelprint.c:769 lib/src/modelprint.c:772
 #, c-format
 msgid "Serial correlation-robust standard errors, lag order %d\n"
 msgstr ""
 
-#: lib/src/modelprint.c:791 lib/src/modelprint.c:794
+#: lib/src/modelprint.c:782 lib/src/modelprint.c:785
 #, c-format
 msgid "Heteroskedasticity-robust standard errors, variant HC%d\n"
 msgstr ""
 
-#: lib/src/modelprint.c:808
+#: lib/src/modelprint.c:799
 msgid "Standard errors based on Hessian"
 msgstr ""
 
-#: lib/src/modelprint.c:811
+#: lib/src/modelprint.c:802
 msgid "Standard errors based on Information Matrix"
 msgstr ""
 
-#: lib/src/modelprint.c:814
+#: lib/src/modelprint.c:805
 msgid "Standard errors based on Outer Products matrix"
 msgstr ""
 
-#: lib/src/modelprint.c:817
+#: lib/src/modelprint.c:808
 msgid "QML standard errors"
 msgstr ""
 
-#: lib/src/modelprint.c:821
+#: lib/src/modelprint.c:812
 msgid "Bollerslev--Wooldridge standard errors"
 msgstr ""
 
-#: lib/src/modelprint.c:823
+#: lib/src/modelprint.c:814
 msgid "Bollerslev-Wooldridge standard errors"
 msgstr ""
 
-#: lib/src/modelprint.c:883 lib/src/modelprint.c:885
+#: lib/src/modelprint.c:872 lib/src/modelprint.c:874
 msgid "Breusch-Godfrey test for"
 msgstr ""
 
-#: lib/src/modelprint.c:888 lib/src/modelprint.c:889
+#: lib/src/modelprint.c:877 lib/src/modelprint.c:878
 msgid "autocorrelation up to order"
 msgstr ""
 
-#: lib/src/modelprint.c:892 lib/src/modelprint.c:893
+#: lib/src/modelprint.c:881 lib/src/modelprint.c:882
 msgid "first-order autocorrelation"
 msgstr ""
 
-#: lib/src/modelprint.c:898 lib/src/modelprint.c:899
+#: lib/src/modelprint.c:887 lib/src/modelprint.c:888
 msgid "Test for ARCH of order"
 msgstr ""
 
-#: lib/src/modelprint.c:904 lib/src/modelprint.c:908
+#: lib/src/modelprint.c:893 lib/src/modelprint.c:897
 msgid "Equation"
 msgstr ""
 
-#: lib/src/modelprint.c:916 gui2/session.c:585
+#: lib/src/modelprint.c:905 gui2/session.c:585
 msgid "Model"
 msgstr ""
 
-#: lib/src/modelprint.c:923 lib/src/modelprint.c:924 lib/src/modelprint.c:942
-#: lib/src/modelprint.c:943
+#: lib/src/modelprint.c:912 lib/src/modelprint.c:913 lib/src/modelprint.c:931
+#: lib/src/modelprint.c:932
 #, c-format
 msgid "%s estimates using the %d observations %s%s%s"
 msgstr ""
 
-#: lib/src/modelprint.c:932 lib/src/modelprint.c:933
+#: lib/src/modelprint.c:921 lib/src/modelprint.c:922
 #, c-format
 msgid "%s estimates using %d observations from %s%s%s"
 msgstr ""
 
-#: lib/src/modelprint.c:938 lib/src/modelprint.c:939
+#: lib/src/modelprint.c:927 lib/src/modelprint.c:928
 msgid "Missing or incomplete observations dropped"
 msgstr ""
 
-#: lib/src/modelprint.c:949 lib/src/modelprint.c:950
+#: lib/src/modelprint.c:938 lib/src/modelprint.c:939
 #, c-format
 msgid "%s estimates using %d observations"
 msgstr ""
 
-#: lib/src/modelprint.c:961 lib/src/modelprint.c:966 lib/src/modelprint.c:971
-#: lib/src/modelprint.c:977 lib/src/modelprint.c:986 lib/src/modelprint.c:2343
+#: lib/src/modelprint.c:950 lib/src/modelprint.c:955 lib/src/modelprint.c:960
+#: lib/src/modelprint.c:966 lib/src/modelprint.c:975 lib/src/modelprint.c:2349
 #: gui/selector.c:696 gui2/model_table.c:760 gui2/model_table.c:875
 #: gui2/selector.c:923
 msgid "Dependent variable"
 msgstr ""
 
-#: lib/src/modelprint.c:1017
+#: lib/src/modelprint.c:1006
 msgid "Variable used as weight"
 msgstr ""
 
-#: lib/src/modelprint.c:1039 lib/src/modelprint.c:1040
+#: lib/src/modelprint.c:1028 lib/src/modelprint.c:1029
 msgid "Weight var is a dummy variable, effective obs ="
 msgstr ""
 
-#: lib/src/modelprint.c:1087
+#: lib/src/modelprint.c:1076
 msgid ""
 "      VARIABLE      COEFFICIENT        STDERROR       T STAT       SLOPE\n"
 msgstr ""
 
-#: lib/src/modelprint.c:1090
+#: lib/src/modelprint.c:1079
 msgid "(at mean)"
 msgstr ""
 
-#: lib/src/modelprint.c:1092
+#: lib/src/modelprint.c:1081
 msgid ""
 "      PARAMETER      ESTIMATE          STDERROR       T STAT   2Prob(t > |"
 "T|)\n"
 "\n"
 msgstr ""
 
-#: lib/src/modelprint.c:1095
+#: lib/src/modelprint.c:1084
 msgid ""
 "      VARIABLE      COEFFICIENT        STDERROR       T STAT   2Prob(t > |"
 "T|)\n"
 "\n"
 msgstr ""
 
-#: lib/src/modelprint.c:1104
+#: lib/src/modelprint.c:1093
 msgid "Parameter"
 msgstr ""
 
-#: lib/src/modelprint.c:1105
+#: lib/src/modelprint.c:1094
 msgid "Estimate"
 msgstr ""
 
-#: lib/src/modelprint.c:1108 gui2/guiprint_common.c:876
+#: lib/src/modelprint.c:1097 gui2/guiprint_common.c:876
 #: gui2/guiprint_common.c:933
 msgid "Coefficient"
 msgstr ""
 
-#: lib/src/modelprint.c:1128
+#: lib/src/modelprint.c:1117
 msgid "Std.\\ Error"
 msgstr ""
 
-#: lib/src/modelprint.c:1129
+#: lib/src/modelprint.c:1118
 msgid "$t$-statistic"
 msgstr ""
 
-#: lib/src/modelprint.c:1130 lib/src/modelprint.c:1146
+#: lib/src/modelprint.c:1119 lib/src/modelprint.c:1135
 msgid "Slope"
 msgstr ""
 
-#: lib/src/modelprint.c:1145 lib/src/modelprint.c:1157
+#: lib/src/modelprint.c:1134 lib/src/modelprint.c:1146
 msgid "Std. Error"
 msgstr ""
 
-#: lib/src/modelprint.c:1146 lib/src/modelprint.c:1158
+#: lib/src/modelprint.c:1135 lib/src/modelprint.c:1147
 msgid "t-statistic"
 msgstr ""
 
-#: lib/src/modelprint.c:1253
+#: lib/src/modelprint.c:1242
 msgid ""
 "R-squared is computed as the square of the correlation between observed and\n"
 "fitted values of the dependent variable"
 msgstr ""
 
-#: lib/src/modelprint.c:1260 lib/src/modelprint.c:1264
-#: lib/src/modelprint.c:1268
+#: lib/src/modelprint.c:1249 lib/src/modelprint.c:1253
+#: lib/src/modelprint.c:1257
 msgid "Statistics based on the weighted data"
 msgstr ""
 
-#: lib/src/modelprint.c:1275 lib/src/modelprint.c:1279
-#: lib/src/modelprint.c:1283
+#: lib/src/modelprint.c:1264 lib/src/modelprint.c:1268
+#: lib/src/modelprint.c:1272
 msgid "Statistics based on the original data"
 msgstr ""
 
-#: lib/src/modelprint.c:1290 lib/src/modelprint.c:1294
-#: lib/src/modelprint.c:1298
+#: lib/src/modelprint.c:1279 lib/src/modelprint.c:1283
+#: lib/src/modelprint.c:1287
 msgid "Statistics based on the rho-differenced data"
 msgstr ""
 
-#: lib/src/modelprint.c:1360 lib/src/nls.c:757 lib/src/nls.c:834
+#: lib/src/modelprint.c:1349 lib/src/nls.c:757 lib/src/nls.c:834
 #, c-format
 msgid "Convergence achieved after %d iterations\n"
 msgstr ""
 
-#: lib/src/modelprint.c:1604
+#: lib/src/modelprint.c:1597
 msgid "MODEL SELECTION STATISTICS"
 msgstr ""
 
-#: lib/src/modelprint.c:1920
+#: lib/src/modelprint.c:1922
 msgid "Estimates of the AR coefficients"
 msgstr ""
 
-#: lib/src/modelprint.c:1935
+#: lib/src/modelprint.c:1937
 msgid "Sum of AR coefficients"
 msgstr ""
 
-#: lib/src/modelprint.c:1949
+#: lib/src/modelprint.c:1951
 msgid "                        Real  Imaginary    Modulus  Frequency"
 msgstr ""
 
-#: lib/src/modelprint.c:1971 lib/src/modelprint.c:1979
+#: lib/src/modelprint.c:1973 lib/src/modelprint.c:1981
 msgid "Real"
 msgstr ""
 
-#: lib/src/modelprint.c:1971 lib/src/modelprint.c:1979
+#: lib/src/modelprint.c:1973 lib/src/modelprint.c:1981
 msgid "Imaginary"
 msgstr ""
 
-#: lib/src/modelprint.c:1971 lib/src/modelprint.c:1979
+#: lib/src/modelprint.c:1973 lib/src/modelprint.c:1981
 msgid "Modulus"
 msgstr ""
 
-#: lib/src/modelprint.c:2001 lib/src/modelprint.c:2005
-#: lib/src/modelprint.c:2015 lib/src/modelprint.c:2039
-#: lib/src/modelprint.c:2043 lib/src/modelprint.c:2053
+#: lib/src/modelprint.c:2003 lib/src/modelprint.c:2007
+#: lib/src/modelprint.c:2017 lib/src/modelprint.c:2041
+#: lib/src/modelprint.c:2045 lib/src/modelprint.c:2055
 msgid "Root"
 msgstr ""
 
-#: lib/src/modelprint.c:2022 lib/src/modelprint.c:2024
-#: lib/src/modelprint.c:2028
+#: lib/src/modelprint.c:2024 lib/src/modelprint.c:2026
+#: lib/src/modelprint.c:2030
 msgid "MA"
 msgstr ""
 
-#: lib/src/modelprint.c:2074 lib/src/modelprint.c:2079
-#: lib/src/modelprint.c:2087
+#: lib/src/modelprint.c:2076 lib/src/modelprint.c:2081
+#: lib/src/modelprint.c:2089
 msgid "Censored observations"
 msgstr ""
 
-#: lib/src/modelprint.c:2075 lib/src/modelprint.c:2080
+#: lib/src/modelprint.c:2077 lib/src/modelprint.c:2082
 msgid "sigma"
 msgstr ""
 
-#: lib/src/modelprint.c:2076 lib/src/modelprint.c:2081
-#: lib/src/modelprint.c:2091 lib/src/modelprint.c:2098
-#: lib/src/modelprint.c:2103 lib/src/modelprint.c:2111
-#: lib/src/modelprint.c:2136 lib/src/modelprint.c:2155
-#: lib/src/modelprint.c:2180
+#: lib/src/modelprint.c:2078 lib/src/modelprint.c:2083
+#: lib/src/modelprint.c:2093 lib/src/modelprint.c:2100
+#: lib/src/modelprint.c:2105 lib/src/modelprint.c:2113
+#: lib/src/modelprint.c:2138 lib/src/modelprint.c:2157
+#: lib/src/modelprint.c:2182
 msgid "Log-likelihood"
 msgstr ""
 
-#: lib/src/modelprint.c:2099 lib/src/modelprint.c:2104
-#: lib/src/modelprint.c:2113
+#: lib/src/modelprint.c:2101 lib/src/modelprint.c:2106
+#: lib/src/modelprint.c:2115
 msgid "AIC"
 msgstr ""
 
-#: lib/src/modelprint.c:2100 lib/src/modelprint.c:2105
-#: lib/src/modelprint.c:2115
+#: lib/src/modelprint.c:2102 lib/src/modelprint.c:2107
+#: lib/src/modelprint.c:2117
 msgid "BIC"
 msgstr ""
 
-#: lib/src/modelprint.c:2130 lib/src/modelprint.c:2149
-#: lib/src/modelprint.c:2172
+#: lib/src/modelprint.c:2132 lib/src/modelprint.c:2151
+#: lib/src/modelprint.c:2174
 msgid "Mean of"
 msgstr ""
 
-#: lib/src/modelprint.c:2132 lib/src/modelprint.c:2151
+#: lib/src/modelprint.c:2134 lib/src/modelprint.c:2153
 msgid "Number of cases 'correctly predicted'"
 msgstr ""
 
-#: lib/src/modelprint.c:2134 lib/src/modelprint.c:2153
-#: lib/src/modelprint.c:2177
+#: lib/src/modelprint.c:2136 lib/src/modelprint.c:2155
+#: lib/src/modelprint.c:2179
 msgid "at mean of independent vars"
 msgstr ""
 
-#: lib/src/modelprint.c:2140 lib/src/modelprint.c:2159
-#: lib/src/modelprint.c:2184
+#: lib/src/modelprint.c:2142 lib/src/modelprint.c:2161
+#: lib/src/modelprint.c:2186
 msgid "Likelihood ratio test"
 msgstr ""
 
-#: lib/src/modelprint.c:2148 lib/src/modelprint.c:2169
+#: lib/src/modelprint.c:2150 lib/src/modelprint.c:2171
 msgid "Evaluated at the mean"
 msgstr ""
 
-#: lib/src/modelprint.c:2175
+#: lib/src/modelprint.c:2177
 msgid "Number of cases `correctly predicted'"
 msgstr ""
 
-#: lib/src/modelprint.c:2198
+#: lib/src/modelprint.c:2200
 msgid "Model selection statistics"
 msgstr ""
 
-#: lib/src/modelprint.c:2238
+#: lib/src/modelprint.c:2241
 msgid "Model Selection Statistics"
 msgstr ""
 
-#: lib/src/modelprint.c:2284
+#: lib/src/modelprint.c:2288
 msgid "Error Sum of Squares"
 msgstr ""
 
-#: lib/src/modelprint.c:2340
+#: lib/src/modelprint.c:2346
 #, c-format
 msgid "Multiple-precision OLS estimates using the %d observations %s-%s\n"
 msgstr ""
 
-#: lib/src/modelprint.c:2346
+#: lib/src/modelprint.c:2352
 msgid "      VARIABLE         COEFFICIENT                  STD. ERROR\n"
 msgstr ""
 
@@ -4109,7 +4110,7 @@ msgstr ""
 msgid "VAR"
 msgstr ""
 
-#: lib/src/var.c:2265
+#: lib/src/var.c:2266
 #, c-format
 msgid "residual from VAR system, equation %d"
 msgstr ""
@@ -10118,7 +10119,7 @@ msgstr ""
 msgid "No leverage points were found"
 msgstr ""
 
-#: plugin/logistic.c:50 plugin/logistic.c:185
+#: plugin/logistic.c:50 plugin/logistic.c:192
 msgid "Invalid value for the maximum of the dependent variable"
 msgstr ""
 
@@ -10132,21 +10133,21 @@ msgid ""
 "dependent variable"
 msgstr ""
 
-#: plugin/logistic.c:166
+#: plugin/logistic.c:169
 msgid "Illegal non-positive value of the dependent variable"
 msgstr ""
 
-#: plugin/mp_ols.c:129
+#: plugin/mp_ols.c:131
 #, c-format
 msgid "Missing observations for variable '%s'"
 msgstr ""
 
-#: plugin/mp_ols.c:136
+#: plugin/mp_ols.c:140
 #, c-format
 msgid "Variable '%s' is all zeros"
 msgstr ""
 
-#: plugin/mp_ols.c:817
+#: plugin/mp_ols.c:823
 #, c-format
 msgid "Error sum of squares is not >= 0"
 msgstr ""
