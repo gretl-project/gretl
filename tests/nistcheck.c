@@ -586,7 +586,7 @@ int mp_vals_differ (double x, double y, double *diff)
 	*diff = fabs (y - x);
     }
 
-    if (ret && verbose && strcmp(xstr, "inf")) {
+    if (ret && verbose && strcmp(xstr, "inf") && strncmp(xstr, "-999", 4)) {
 	printf(" ** using gretl GMP plugin: results differ by "
 	       "%#.*g\n", MP_CHECK_DIGITS, *diff);
     }

@@ -1,8 +1,9 @@
-version 1.0pre3
+10/10/02 version 1.0pre3
 - improve accuracy of calculation of standard errors, and
   numerical accuracy on MS Windows in general
 - make gretl databases installable in user directory as well as
   system database directory
+- make console output scroll to cursor in gtk2 version
 - fix more translation issues
 - fix bug in normality chi-square test for large n
 - fix bug that prevented CUSUM plot from displaying
