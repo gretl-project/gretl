@@ -101,6 +101,7 @@
 	     <keyword>quit</keyword>
              <keyword>rename</keyword> 
 	     <keyword>reset</keyword>
+             <keyword>restrict</keyword>
 	     <keyword>rhodiff</keyword> 
 	     <keyword>rmplot</keyword>
 	     <keyword>run</keyword>
