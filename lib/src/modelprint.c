@@ -1419,6 +1419,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
 static void rtf_print_double (double xx, PRN *prn)
 {
+    xx = screen_zero(xx);
     pprintf(prn, " \\qc %#.*g\\cell", GRETL_DIGITS, xx);
 }
 

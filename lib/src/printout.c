@@ -451,6 +451,10 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
     decpoint = get_local_decpoint();
 #endif
 
+    /* let's not print non-zero values for numbers smaller than
+       machine zero */
+    x = screen_zero(x);
+
     sprintf(numstr, "%#.*G", digits, x);
 
     fix_exponent(numstr);

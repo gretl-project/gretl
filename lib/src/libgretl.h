@@ -70,6 +70,9 @@
 # define M_PI 3.14159265358979323846
 #endif
 
+/* numbers smaller than the given limit will print as zero */
+#define screen_zero(x)  ((fabs(x) > 1.0e-13)? x : 0.0)
+
 typedef enum {
     GRETL_PRINT_STDOUT,
     GRETL_PRINT_STDERR,

@@ -311,15 +311,19 @@ static void print_model_table_coeffs (PRN *prn)
 {
     int i, j, k;
     const MODEL *pmod;
-    char se[16];
+    char tmp[16];
     int tex = (prn->format == GRETL_PRINT_FORMAT_TEX);
     int rtf = (prn->format == GRETL_PRINT_FORMAT_RTF);
 
     for (i=2; i<=grand_list[0]; i++) {
 	int v = grand_list[i];
 	int f = 1;
-	
-	if (rtf) {
+
+	if (tex) {
+	    tex_escape(tmp, datainfo->varname[v]);
+	    pprintf(prn, "%s ", tmp);
+	}
+	else if (rtf) {
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", datainfo->varname[v]);
 	} else {
 	    pprintf(prn, "%8s ", datainfo->varname[v]);
@@ -328,9 +332,16 @@ static void print_model_table_coeffs (PRN *prn)
 	    pmod = model_list[j];
 	    if (pmod == NULL) continue;
 	    if ((k = var_is_in_model(v, pmod))) {
-		double x = pmod->coeff[k-1];
-		double t = x / pmod->sderr[k-1];
-		double pval = tprob(t, pmod->dfd);
+		double x = screen_zero(pmod->coeff[k-1]);
+		double s = screen_zero(pmod->sderr[k-1]);
+		double pval;
+
+		if (floateq(s, 0.0)) {
+		    if (floateq(x, 0.0)) pval = 1.0;
+		    else pval = 0.0001;
+		} else {
+		    pval = tprob(x / s, pmod->dfd);
+		}
 
 		if (tex) {
 		    if (x < 0) {
@@ -370,8 +381,8 @@ static void print_model_table_coeffs (PRN *prn)
 		    pprintf(prn, "\\qc (%#.4g)\\cell ", pmod->sderr[k-1]);
 		    f = 0;
 		} else {
-		    sprintf(se, "(%#.4g)", pmod->sderr[k-1]);
-		    pprintf(prn, "%12s", se);
+		    sprintf(tmp, "(%#.4g)", pmod->sderr[k-1]);
+		    pprintf(prn, "%12s", tmp);
 		}
 	    } else {
 		if (tex) pputs(prn, "& ");
@@ -529,6 +540,7 @@ static void tex_print_model_table (void)
 {
     int j, ci;
     int binary = 0;
+    char tmp[16];
     PRN *prn;
 
     if (model_list_empty()) {
@@ -552,8 +564,8 @@ static void tex_print_model_table (void)
 	pputs(prn, "\\\\\n");
     }
 
-    pprintf(prn, "%s: %s \\\\\n", I_("Dependent variable"),
-	    datainfo->varname[grand_list[1]]);
+    tex_escape(tmp, datainfo->varname[grand_list[1]]);
+    pprintf(prn, "%s: %s \\\\\n", I_("Dependent variable"), tmp);
 
     pputs(prn, "\\vspace{1em}\n\n");
     pputs(prn, "\\begin{tabular}{l");

@@ -31,6 +31,8 @@ static void tex_print_float (double x, int tab, PRN *prn)
 {
     char number[16];
 
+    x = screen_zero(x);
+
     sprintf(number, "%#.*g", GRETL_DIGITS, x);
 
     if (!tab) {
@@ -78,7 +80,10 @@ static void cut_extra_zero (char *numstr)
 
 void tex_dcolumn_double (double xx, char *numstr)
 {
-    double a = fabs(xx);
+    double a;
+
+    xx = screen_zero(xx);
+    a = fabs(xx);
 
     sprintf(numstr, "%#.*g", GRETL_DIGITS, xx);
 
@@ -278,16 +283,24 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     /* additional info (R^2 etc) */
     pputs(prn, "\\vspace{.8ex}\n");
 
-    if (na(pmod->fstt)) { /* LAD model */
+    if (pmod->ci == LAD) { 
 	pprintf(prn, "$T = %d,\\, \\sum |\\hat{u}_t| = %g$\n",
 		pmod->nobs, pmod->rho);
     } else {
-	pprintf(prn, "$T$ = %d, $\\, \\bar{R}^2$ = %.3f, "
-		"$\\, F(%d,%d)$ = %.5g, $\\, \\hat{\\sigma}$ = %.4g",
-		pmod->nobs, pmod->adjrsq, pmod->dfn, 
-		pmod->dfd, pmod->fstt, pmod->sigma);
+	pprintf(prn, "$T$ = %d, $\\, \\bar{R}^2$ = %.3f, ",
+		pmod->nobs, pmod->adjrsq);
+	if (!na(pmod->fstt)) {
+	    pprintf(prn, "$\\, F(%d,%d)$ = %.5g, ", 
+		    pmod->dfn, pmod->dfd, pmod->fstt);
+	}
+	pprintf(prn, "$\\, \\hat{\\sigma}$ = %.4g", pmod->sigma);
 	if (!floateq(pmod->rho_in, 0.0)) {
-	    pprintf(prn, ", $\\, \\rho$ = %.4g", pmod->rho_in);
+	    double r = pmod->rho_in;
+	    char rstr[16];
+
+	    if (r < 0.0) sprintf(rstr, "$-$%.4g", fabs(r));
+	    else sprintf(rstr, "%.4g", r);
+	    pprintf(prn, ", $\\, \\rho$ = %s", rstr);
 	}
 	pputs(prn, "\n");
     }
