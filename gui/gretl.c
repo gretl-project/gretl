@@ -146,9 +146,12 @@ extern const char *version_string;
 char Rcommand[MAXSTR] = "xterm -e R";
 #endif
 
-#ifdef TRAMO_X12
+#ifdef HAVE_TRAMO
 char tramo[MAXSTR] = "tramo";
 char tramodir[MAXSTR] = "";
+#endif
+
+#ifdef HAVE_X12A
 char x12a[MAXSTR] = "x12a";
 char x12adir[MAXSTR] = "";
 #endif
@@ -423,8 +426,10 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL }, 
     { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, gretl_callback, 
       ADF, NULL },
-#ifdef TRAMO_X12
-    { N_("/Variable/X-12-ARIMA analysis"), NULL, do_tramo_x12a, X12A, NULL }, 
+#ifdef HAVE_X12A
+    { N_("/Variable/X-12-ARIMA analysis"), NULL, do_tramo_x12a, X12A, NULL },
+#endif
+#ifdef HAVE_TRAMO  
     { N_("/Variable/TRAMO analysis"), NULL, do_tramo_x12a, TRAMO, NULL }, 
 #endif
     { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL }, 

@@ -39,9 +39,11 @@ extern char editor[MAXSTR];
 extern char Rcommand[MAXSTR];
 extern char dbproxy[21];
 
-#ifdef TRAMO_X12
+#ifdef HAVE_TRAMO
 extern char tramo[MAXSTR];
 extern char tramodir[MAXSTR];
+
+#ifdef HAVE_X12A
 extern char x12a[MAXSTR];
 extern char x12adir[MAXSTR];
 #endif
@@ -117,11 +119,13 @@ RCVARS rc_vars[] = {
      'U', MAXSTR, 3, NULL},
     {"editor", N_("Editor"), NULL, editor, 
      'U', MAXSTR, 3, NULL},
-#ifdef TRAMO_X12
+#ifdef HAVE_X12A
     {"x12a", N_("path to x12arima"), NULL, x12a, 
      'R', MAXSTR, 3, NULL},
     {"x12adir", N_("X-12-ARIMA working directory"), NULL, x12adir, 
      'R', MAXSTR, 3, NULL},
+#endif
+#ifdef HAVE_TRAMO
     {"tramo", N_("path to tramo"), NULL, tramo, 
      'R', MAXSTR, 3, NULL},
     {"tramodir", N_("TRAMO working directory"), NULL, tramodir, 
@@ -175,18 +179,24 @@ void get_default_dir (char *s)
 
 /* ........................................................... */
 
-#ifdef TRAMO_X12
+#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
+
 static void set_tramo_x12a_dirs (void)
 {
     char cmd[MAXLEN];
 
+# ifdef HAVE_TRAMO
     if (*tramodir == 0) {
 	sprintf(tramodir, "%s%ctramo", paths.userdir, SLASH);
     }
+# endif
+# ifdef HAVE_X12A
     if (*x12adir == 0) {
 	sprintf(x12adir, "%s%cx12a", paths.userdir, SLASH);
     }
-    
+# endif
+
+# ifdef HAVE_TRAMO    
     /* make tramo directory structure */
     sprintf(cmd, "mkdir -p %s/output", tramodir);
     system(cmd);
@@ -200,8 +210,9 @@ static void set_tramo_x12a_dirs (void)
     system(cmd);
     sprintf(cmd, "mkdir -p %s/graph/spectra", tramodir);
     system(cmd);
+# endif /* tramo */
 }
-#endif
+#endif /* tramo or x12a */
 
 /* ........................................................... */
 
@@ -588,7 +599,7 @@ static void read_rc (void)
     }
 
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
-#ifdef TRAMO_X12
+#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
 #endif
 #ifdef ENABLE_NLS
@@ -664,7 +675,7 @@ void read_rc (void)
     }
 
     set_paths(&paths, 0, 1);
-#ifdef TRAMO_X12
+#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
 #endif
 #ifdef ENABLE_NLS
