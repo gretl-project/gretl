@@ -1009,7 +1009,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case SPEARMAN:
-	err = spearman(cmd->list, *pZ, datainfo, prn, oflag);
+	err = spearman(cmd->list, *pZ, datainfo, oflag, prn);
 	break;
 
     default:

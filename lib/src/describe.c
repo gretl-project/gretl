@@ -36,6 +36,18 @@ extern void _mxout (const double *rr, const int *list, const int ci,
 
 /* ........................................................... */
 
+static int missvals (double *x, int n)
+{
+    int t;
+    
+    for (t=0; t<n; t++)
+	if (na(x[t])) return 1;
+	    
+    return 0;
+}
+
+/* ........................................................... */
+
 double esl_median (const double *zx, const int n)
 /* if zx is in increasing order, finds median for observations 0
    to n-1 */
@@ -111,14 +123,20 @@ FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
      */
 {
     FREQDIST *freq;
-    double *x;
+    double *x = NULL;
     double xx, xmin, xmax, xbar, sdx;
     double skew, kurt;
-    int i, k, n, t, t1, t2;
+    int i, k, n, t;
     int maxend = 16;
 
     freq = malloc(sizeof *freq);
     if (freq == NULL) return NULL;
+
+    x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x);
+    if (x == NULL) {
+	free(freq);
+	return NULL;
+    }
 
     freq->errcode = 0;
     freq->errmsg[0] = '\0';
@@ -127,37 +145,37 @@ FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
     freq->f = NULL;
 
     if (pZ != NULL) {
-	int list[2]; 
-
-	list[0] = 1;
-	list[1] = i = varindex(pdinfo, varname);
+	i = varindex(pdinfo, varname);
 	if (i > pdinfo->v - 1) {
 	    freq->errcode = E_DATA;
 	    sprintf(freq->errmsg, "'%s' is not in the data set", varname);
+	    free(x);
+	    return freq;
+	}	
+	n = ztox(i, x, pdinfo, *pZ);
+	if (n < 3) {
+	    freq->errcode = E_DATA;
+	    sprintf(freq->errmsg, "Insufficient data to build frequency "
+		    "distribution for variable %s", varname);
+	    free(x);
 	    return freq;
 	}
-	n = pdinfo->n;
-	x = &(*pZ)[i*n];
-	list[0] = 1;
-	t1 = pdinfo->t1; t2 = pdinfo->t2;
-	adjust_t1t2(NULL, list, &t1, &t2, *pZ, n, NULL);
-	n = t2 - t1 + 1;
     } else {
 	n = nzz;
 	x = zz;
-	t1 = 0;
-	t2 = n - 1;
     }
-    strcpy(freq->varname, varname);
-    freq->t1 = t1; freq->t2 = t2;
 
-    if (isconst(t1, t2, x)) {
+    strcpy(freq->varname, varname);
+    freq->t1 = pdinfo->t1; 
+    freq->t2 = pdinfo->t2;
+
+    if (isconst(0, n-1, x)) {
 	freq->errcode = 1;
-	sprintf(freq->errmsg, "'%s' is a constant", freq->varname);
+	sprintf(freq->errmsg, "%s is a constant", freq->varname);
 	return freq;
     }    
     
-    moments(t1, t2, x, &(freq->xbar), &(freq->sdx), &skew, &kurt, params);
+    moments(0, n-1, x, &freq->xbar, &freq->sdx, &skew, &kurt, params);
     xbar = freq->xbar;
     sdx = freq->sdx;
 
@@ -168,11 +186,12 @@ FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
 	freq->f == NULL) {
 	freq->errcode = E_ALLOC;
 	strcpy(freq->errmsg, "Out of memory for frequency distribution");
+	free(x);
 	return freq;
     }
     
-    minmax(t1, t2, x, &xmin, &xmax);
-    freq->n = t2 - t1 + 1;
+    minmax(0, n-1, x, &xmin, &xmax);
+    freq->n = n;
     freq->endpt[0] = xmin;
 
     xx = xbar - 3.75 * sdx;
@@ -194,7 +213,7 @@ FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
 	freq->f[k] = 0;
 	freq->midpt[k] = (freq->endpt[k] + freq->endpt[k+1])/2;
     }
-    for (i=t1; i<=t2; i++) {
+    for (i=0; i<n; i++) {
 	xx = x[i];
 	if (xx < freq->endpt[1]) {
 	    freq->f[0] += 1;
@@ -209,7 +228,9 @@ FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
 		freq->f[k] += 1;
     }
 
-    freq->chisqu = freq->n * (skew * skew/6.0 + kurt * kurt/24.0);    
+    freq->chisqu = freq->n * (skew * skew/6.0 + kurt * kurt/24.0); 
+
+    free(x);
 
     return freq;
 }
@@ -281,6 +302,12 @@ int corrgram (const int *list, const int order, double **pZ,
 
     adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
     nobs = t2 - t1 + 1;
+
+    if (missvals(&(*pZ)[v*n + t1], nobs)) {
+	pprintf(prn, "\nMissing values within sample -- can't do correlogram");
+	return 1;
+    }
+
     if (nobs < 4) {
 	pprintf(prn, "\nInsufficient observations for correlogram");
 	return 1;
@@ -492,6 +519,12 @@ int periodogram (const int *list, double **pZ, const DATAINFO *pdinfo,
     
     adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
     nobs = t2 - t1 + 1;
+
+    if (missvals(&(*pZ)[v*n + t1], nobs)) {
+	pprintf(prn, "\nMissing values within sample -- can't do periodogram");
+	return 1;
+    }    
+
     if (nobs < 9) {
 	pprintf(prn, "\nInsufficient observations for periodogram");
 	return 1;
@@ -723,13 +756,14 @@ GRETLSUMMARY *summary (int *list,
 		       double **pZ, const DATAINFO *pdinfo,
 		       print_t *prn) 
 {
-    int mm, lo, len = pdinfo->t2 - pdinfo->t1 + 1;
+    int mm, lo;
     int v, *tmp = NULL;
     GRETLSUMMARY *summ;
-    double xbar, std, low, high, skew, kurt, *x;
+    double xbar, std, low, high, skew, kurt, *x = NULL;
 
     summ = malloc(sizeof *summ);
     if (summ == NULL) return NULL;
+    summ->list = NULL;
 
     lo = list[0];
     mm = lo + 1;
@@ -740,21 +774,22 @@ GRETLSUMMARY *summary (int *list,
     if ((summ->sderr = malloc(mm * sizeof(double))) == NULL) return NULL;
     if ((summ->xpx = malloc(mm * sizeof(double))) == NULL) return NULL;
     if ((summ->xpy = malloc(mm * sizeof(double))) == NULL) return NULL;
-    if ((x = malloc(len * sizeof *x)) == NULL) return NULL;
+    if ((x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x)) == NULL) 
+	return NULL;
 
     for (v=1; v<=lo; v++)  {
-	x[0] = -999999.0;
 	summ->n = ztox(list[v], x, pdinfo, *pZ);
 	if (summ->n < 2) { /* zero or one observations */
 	    if (summ->n == 0)
 		pprintf(prn, "Dropping %s: sample range contains no valid "
-			"observations.\n", pdinfo->varname[list[v]]);
+			"observations\n", pdinfo->varname[list[v]]);
 	    else
 		pprintf(prn, "Dropping %s: sample range has only one "
-			"observation.\n", pdinfo->varname[list[v]]);
+			"obs, namely %g\n", pdinfo->varname[list[v]], x[0]);
 	    list_exclude(v, list);
 	    if (list[0] == 0) {
 		free_summary(summ);
+		free(x);
 		return NULL;
 	    } else {
 		lo--;
@@ -763,8 +798,7 @@ GRETLSUMMARY *summary (int *list,
 	    }
 	}
 	minmax(0, summ->n-1, x, &low, &high);	
-	moments(0, summ->n-1, x, 
-		&xbar, &std, &skew, &kurt, 1);
+	moments(0, summ->n-1, x, &xbar, &std, &skew, &kurt, 1);
 	summ->xpx[v] = low;
 	summ->xpy[v] = high;
 	summ->coeff[v] = xbar;
@@ -890,12 +924,16 @@ int means_test (int *list, double *Z, const DATAINFO *pdinfo,
     if ((x = malloc(n * sizeof *x)) == NULL) return E_ALLOC;
     if ((y = malloc(n * sizeof *y)) == NULL) return E_ALLOC;
 
-    x[0] = y[0] = -999999.0;
     n1 = ztox(list[1], x, pdinfo, Z);
     n2 = ztox(list[2], y, pdinfo, Z);
-    if (n1 == 0 || n2 == 0) return 1;
+    if (n1 == 0 || n2 == 0) {
+	pprintf(prn, "Sample range has no valid observations.");
+	free(x); free(y);
+	return 1;
+    }
     if (n1 == 1 || n2 == 1) {
 	pprintf(prn, "Sample range has only one observation.");
+	free(x); free(y);
 	return 1;
     }
     df = n1 + n2 - 2;
@@ -946,12 +984,16 @@ int vars_test (int *list, double *Z, const DATAINFO *pdinfo,
     if ((x = malloc(n * sizeof *x)) == NULL) return E_ALLOC;
     if ((y = malloc(n * sizeof *y)) == NULL) return E_ALLOC;
 
-    x[0] = y[0] = -999999.0;
     n1 = ztox(list[1], x, pdinfo, Z);
     n2 = ztox(list[2], y, pdinfo, Z);
-    if (n1 == 0 || n2 == 0) return 1;
+    if (n1 == 0 || n2 == 0) {
+	pprintf(prn, "Sample range has no valid observations.");
+	free(x); free(y);
+	return 1;
+    }
     if (n1 == 1 || n2 == 1) {
 	pprintf(prn, "Sample range has only one observation.");
+	free(x); free(y);
 	return 1;
     }
     

@@ -61,8 +61,6 @@ double covar (const int n, const double *zx, const double *zy);
 
 int iszero (const int t1, const int t2, const double *x);
 
-void list_exclude (const int n, int *list);
-
 int isconst (const int t1, const int t2, const double *x);
 
 double esl_mean (const int t1, const int t2, const double *x);

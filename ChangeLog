@@ -1,4 +1,5 @@
 version 0.97
+- fix breakage of var command in GUI
 - add facility to draw boxplots
 - add various formats to copy of models to clipboard (HTML,
   RTF, LaTeX)

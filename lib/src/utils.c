@@ -187,6 +187,10 @@ int ztox (const int i, double *px, const DATAINFO *pdinfo,
 {
     int t, m = 0, n = pdinfo->n;
     double xx;
+
+#ifdef notdef
+    fprintf(stderr, "ztox: working on %s\n", pdinfo->varname[i]);
+#endif
     
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	xx = Z(i, t);
@@ -194,7 +198,10 @@ int ztox (const int i, double *px, const DATAINFO *pdinfo,
 	else px[m++] = xx;
     }
     if (m == 0)
-	fprintf(stderr, "\nNo obs. left for var.: %s\n", 
+	fprintf(stderr, "\nztox: No valid observations for variable %s\n", 
+		pdinfo->varname[i]);
+    else if (m < pdinfo->t2 - pdinfo->t1 + 1)
+	fprintf(stderr, "\nztox: Dropped missing obs for var %s\n",
 		pdinfo->varname[i]);
     return m;
 }

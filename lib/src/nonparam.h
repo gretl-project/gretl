@@ -23,7 +23,7 @@
  
 int spearman (const int *list, 
 	      const double *Z, const DATAINFO *pdinfo,
-	      print_t *prn, const int opt);
+	      const int opt, print_t *prn);
 
 int runs_test (const int *list, 
 	       const double *Z, const DATAINFO *pdinfo, 

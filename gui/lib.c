@@ -36,7 +36,7 @@ extern int loop_exec_line (LOOPSET *plp, const int round,
 extern void restore_sample (gpointer data, int verbose, GtkWidget *w);
 extern void restore_sample_state (gboolean s);
 extern char *endbit (char *dest, char *src, int addscore);
-extern int boxplots (const int *list, 
+extern int boxplots (int *list, 
 		     double **pZ, const DATAINFO *pdinfo, 
 		     int notches);
 
@@ -554,8 +554,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     char title[48];
     int err = 0;
     windata_t *vwin;
-    GRETLSUMMARY *summ;
-    CORRMAT *corr;
+    gpointer obj;
     gint hsize = 78, vsize = 380;
 
     clear(line, MAXLEN);
@@ -596,48 +595,46 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     /* execute the command */
     switch (action) {
     case CORR:
-	corr = corrlist(command.list, &Z, datainfo);
-	if (corr == NULL) {
+	obj = corrlist(command.list, &Z, datainfo);
+	if (obj == NULL) {
 	    errbox("Failed to generate correlation matrix");
 	    prnclose(&prn);
 	    return;
 	} 
 	/* printcorr(corr, datainfo, &prn); */
-	matrix_print_corr(corr, datainfo, 1, &prn);
+	matrix_print_corr(obj, datainfo, 1, &prn);
 	break;
     case FREQ:
-	if (1) {
-	    FREQDIST *freq;
-
-	    freq = freq_func(&Z, datainfo, NULL, 0,
-			     datainfo->varname[mdata->active_var], 1);
-	    if (freq_error(freq, NULL)) {
-		prnclose(&prn);
-		return;
-	    } 
-	    printfreq(freq, &prn);
-	    free_freq(freq);
-	}
+	obj = freq_func(&Z, datainfo, NULL, 0,
+			datainfo->varname[mdata->active_var], 1);
+	if (freq_error(obj, NULL)) {
+	    prnclose(&prn);
+	    return;
+	} 
+	printfreq(obj, &prn);
+	free_freq(obj);
 	break;
     case RUNS:
 	err = runs_test(command.list, Z, datainfo, &prn);
 	break;
     case SUMMARY:
     case VAR_SUMMARY:	
-	summ = summary(command.list, &Z, datainfo, &prn);
-	if (summ != NULL) print_summary(summ, datainfo, &prn, 1);
+	obj = summary(command.list, &Z, datainfo, &prn);
+	if (obj == NULL) {
+	    errbox("Failed to generate summary statistics");
+	    prnclose(&prn);
+	    return;
+	}	    
+	print_summary(obj, datainfo, &prn, 1);
 	break;
     }
     if (err) gui_errmsg(err, errtext);
 
     vwin = view_buffer(&prn, hsize, vsize, title, action, view_items);
 
-    if (vwin && (action == SUMMARY || action == VAR_SUMMARY) && summ) {
-	vwin->data = summ;
-    }
-    if (vwin && (action == CORR)) {
-	vwin->data = corr;
-    }
+    if (vwin && 
+	(action == SUMMARY || action == VAR_SUMMARY || action == CORR)) 
+	vwin->data = obj;
 }
 
 /* ........................................................... */
@@ -721,7 +718,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	    err = coint(order, command.list, &Z, datainfo, &prn);
 	break;
     case SPEARMAN:
-	err = spearman(command.list, Z, datainfo, &prn, 1);
+	err = spearman(command.list, Z, datainfo, 1, &prn);
 	break;
     case MEANTEST:
 	err = means_test(command.list, Z, datainfo, 1, &prn);;
@@ -1545,10 +1542,12 @@ void do_model (GtkWidget *widget, dialog_t *ddata)
 
     if (bufopen(&prn)) return;
 
-    pmod = gretl_model_new();
-    if (pmod == NULL) {
-	errbox("Out of memory");
-	return;
+    if (action != VAR) {
+	pmod = gretl_model_new();
+	if (pmod == NULL) {
+	    errbox("Out of memory");
+	    return;
+	}
     }
 
     switch (action) {
@@ -1599,10 +1598,13 @@ void do_model (GtkWidget *widget, dialog_t *ddata)
 	break;
 
     case VAR:
+	/* requires special treatment: doesn't return model */
 	sscanf(edttext, "%d", &order);
 	err = var(order, command.list, &Z, datainfo, 1, &prn);
 	if (err) errmsg(err, NULL, &prn);
-	break;
+	view_buffer(&prn, 78, 450, "gretl: vector autoregression", 
+		    VAR, view_items);
+	return;
 
     case LOGIT:
     case PROBIT:
@@ -1877,8 +1879,8 @@ void do_edit_label (GtkWidget *widget, dialog_t *ddata)
     edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
     if (*edttext == '\0') return;
     
-    /* FIXME - need to validate new label */
-    strcpy(datainfo->label[mdata->active_var], edttext);
+    strncpy(datainfo->label[mdata->active_var], edttext, MAXLABEL-1);
+    datainfo->label[mdata->active_var][MAXLABEL-1] = '\0';
     populate_clist(mdata->listbox, datainfo);
 }
 
@@ -2308,7 +2310,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
     int err;
     print_t prn;
 
-    if (datainfo->v * datainfo->n > MAXDISPLAY) { /* use disk file */
+    if (datainfo->v * datainfo->n > MAXDISPLAY) { /* use file */
 	char fname[MAXLEN];
 
 	if (!user_fopen("data_display_tmp", fname, &prn)) {
@@ -2625,7 +2627,7 @@ void do_open_script (GtkWidget *w, GtkFileSelection *fs)
 	verify_open_session(NULL);
 	return;
     }
-    /* ... or just an "ordinary" script */
+    /* or just an "ordinary" script */
     mkfilelist(3, scriptfile);
     strcpy(title, "gretl: ");
     strncat(title, endbit(tmp, scriptfile, 0), 40);
@@ -3062,7 +3064,7 @@ static int gui_exec_line (char *line,
 	    errmsg(err, NULL, prn);
 	    clear_model(models[1], NULL, NULL);
 	} else {
-	    /* for command-line use, we keep a "stack" of 
+	    /* for command-line use, we keep a stack of 
 	       two models, and recycle the places */
 	    swap_models(&models[0], &models[1]);
 	    clear_model(models[1], NULL, NULL);

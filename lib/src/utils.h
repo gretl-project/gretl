@@ -65,6 +65,8 @@ int isdummy (const int varnum, const int t1, const int t2,
 
 void printlist (const int *list, const char *msg);
 
+void list_exclude (const int n, int *list);
+
 int set_obs (char *line, DATAINFO *pdinfo, int opt, char *msg);
 
 char *addpath (char *filename, PATHS *ppaths, int script);

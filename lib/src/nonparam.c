@@ -33,7 +33,7 @@ static int inverse_compare_doubles (const void *a, const void *b)
 /* ........................................................... */
 
 int spearman (const int *list, const double *Z, const DATAINFO *pdinfo, 
-	      print_t *prn, const int opt)
+	      const int opt, print_t *prn)
 {
     double xx, yy, *sx, *sy, *rx, *ry, *tmp;
     double xdate, rsum, avg, z = 0;

@@ -191,7 +191,7 @@ char *get_errmsg (const int code, char *errtext, print_t *prn)
 	       "for this model.");
 	break;
     default:
-	strcpy(tmpstr, "Unspecified error.  FIXME.");
+	strcpy(tmpstr, "Unclassified error");
 	fprintf(stderr, "Numeric error code = %d\n", code); 
 	break;
     }

@@ -650,8 +650,9 @@ void printfreq (FREQDIST *freq, print_t *prn)
     int i, k, nlw, K = freq->numbins - 1;
     char word[32];
 
-    pprintf(prn, "\nFrequency distribution for %s, obs %d-%d\n", 
-	   freq->varname, freq->t1 + 1, freq->t2 + 1);
+    pprintf(prn, "\nFrequency distribution for %s, obs %d-%d "
+	    "(%d valid observations)\n",
+	   freq->varname, freq->t1 + 1, freq->t2 + 1, freq->n);
     pprintf(prn, "number of bins = %d, mean = %.3f, sd = %.3f\n", 
 	   freq->numbins, freq->xbar, freq->sdx);
     pprintf(prn, "\n       interval          midpt      frequency\n\n");
@@ -1266,47 +1267,9 @@ static void bufspace (char *buf, int n)
     if (n > 0) while (n--) strcat(buf, " ");
 }
 
-#ifdef OLD_PRINT 
 /* ........................................................... */
 
-static void bufprintxx (const double xx, char *str)
-{
-#define BIG 1.0e+9
-#define SMALL 1.0e-6
-    char word[32];
-    double xf, xxabs;
-    long xi;
-
-    if (xx < BIG) {
-	xi = xx;
-	xf = xx - xi;
-    }
-    else xf = 0.5;
-
-    xxabs = fabs(xx);
-    if (xf == 0.0) sprintf(word, "%.0f", xx); 
-    else if (xxabs < SMALL) sprintf(word, "%.4g", xx);
-    else if (xxabs < 1.0) sprintf(word, "%.*g", 8, xx);
-    else sprintf(word, "%.*g", 6, xx);
-    strcpy(str, word);	
-}	 
-
-/* ........................................................... */
-
-static void bufprintxs (char *buf, double xx)
-{
-    int ls;
-    char s[32];
-
-    bufprintxx(xx, s);
-    ls = strlen(s);
-    strcat(buf, " ");
-    bufspace(buf, 12-ls);
-    strcat(buf, s);
-}
-#endif /* OLD_PRINT */
-
-/* ........................................................... */
+#undef PRN_DEBUG
 
 int get_signif (double *x, int n)
      /* return either (a) the number of significant digits in
@@ -1320,8 +1283,12 @@ int get_signif (double *x, int n)
     double xx;
 
     for (i=0; i<n; i++) {
+	if (na(x[i])) continue;
 	xx = fabs(x[i]);
 	sprintf(numstr, "%.12f", xx);
+#ifdef PRN_DEBUG
+	fprintf(stderr, "get_signif: numstr = '%s'\n", numstr);
+#endif
 	s = strlen(numstr) - 1;
 	for (j=s; j>0; j--) {
 	    if (numstr[j] == '0') s--;
@@ -1329,6 +1296,9 @@ int get_signif (double *x, int n)
 	    else break;
 	}
 	if (s > smax) smax = s;
+#ifdef PRN_DEBUG
+	fprintf(stderr, "get_signif: set smax = %d\n", smax);
+#endif
 	lead = 0;
 	for (j=0; j<=s; j++) {
 	    if (xx >= 1.0 && numstr[j] != '.') lead++;
@@ -1344,29 +1314,13 @@ int get_signif (double *x, int n)
 	smax = 0;
     else if (leadmax == 0)
 	smax = -1 * (smax - 1);
+#ifdef PRN_DEBUG
+	fprintf(stderr, "get_signif: returning smax = %d\n", smax);
+#endif
     return smax;
 }
 
 /* ........................................................... */
-
-#ifdef notdef
-static int get_leading_zeros (double x)
-{
-    x = fabs(x);
-
-    if (x < .000001) return 6;
-    if (x < .00001) return 5;
-    if (x < .0001) return 4;
-    if (x < .001) return 3;
-    if (x < .01) return 2;
-    if (x < .1) return 1;
-    return 0;
-}
-#endif
-
-/* ........................................................... */
-
-/* #define PRN_DEBUG 1 */
 
 int bufprintnum (char *buf, double x, int signif, int width)
 {

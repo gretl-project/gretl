@@ -360,8 +360,8 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
     setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 10, 
 		top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
 
-    /* special string for notched plots */
-    if (grp->plots[0].conf[0] != -999.0) {
+    /* special on-screen string for notched plots */
+    if (pc == NULL && grp->plots[0].conf[0] != -999.0) {
 	setup_text (grp->area, grp->pixmap, gc, pc, 
 		    "notches show bootstrapped 90% confidence intervals "
 		    "for medians", 
@@ -773,8 +773,7 @@ five_numbers (gpointer data)
 
 /* ............................................................. */
 
-int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo,
-	      int notches)
+int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
 {
     int i, n = pdinfo->t2 - pdinfo->t1 + 1;
     double *x;
@@ -785,22 +784,38 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo,
     if (x == NULL) return 1;
 
     plotgrp = mymalloc(sizeof *plotgrp);
-    if (plotgrp == NULL) return 1;
+    if (plotgrp == NULL) {
+	free(x);
+	return 1;
+    }
 
     plotgrp->nplots = list[0];
     plotgrp->plots = mymalloc (plotgrp->nplots * sizeof(BOXPLOT));
     if (plotgrp->plots == NULL) {
 	free(plotgrp);
+	free(x);
 	return 1;
     }
 
     for (i=0; i<plotgrp->nplots; i++) {
 	n = ztox(list[i+1], x, pdinfo, *pZ);
 	if (n < 2) {
-	    fprintf(stderr, "Inadequate sample range.\n");
-	    free(x);
-	    free(plotgrp->plots);
-	    return 1;
+	    char s[63];
+
+	    sprintf(s, "Dropping %s: inadequate observations for boxplot",
+		    pdinfo->varname[list[i+1]]);
+	    errbox(s);
+	    list_exclude(i+1, list);
+	    if (list[0] == 0) {
+		free(plotgrp->plots);
+		free(plotgrp);
+		free(x);
+		return 1;
+	    } else {
+		plotgrp->nplots -= 1;
+		i--;
+		continue;
+	    }
 	}
 	qsort(x, n, sizeof *x, compare_doubles);
 	plotgrp->plots[i].min = x[0];
@@ -826,7 +841,11 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo,
     plotgrp->pixmap = NULL;
     place_plots (plotgrp);
 
-    if (make_area(plotgrp) == NULL) return 1;
+    if (make_area(plotgrp) == NULL) {
+	free(plotgrp->plots);
+	free(plotgrp);
+	return 1;
+    }
     gtk_widget_show(plotgrp->window);
 
     for (i=0; i<plotgrp->nplots; i++)
@@ -851,119 +870,118 @@ static int cb_copy_image (gpointer data)
     GdkImage *image;
     int i, j;
     guint32 pixel, white_pixel;
-    
-    int dibsize = 0;
-    int palsize = sizeof(RGBQUAD) * 2;
-
+    size_t image_bytes, dibsize, palsize = sizeof(RGBQUAD) * 2;
     HANDLE hDIB;
-    BOOL bRet;
-    BITMAPINFOHEADER *pInfo;
+    BOOL ret;
+    BITMAPINFOHEADER *hdr;
 
     image = gdk_image_get(grp->pixmap, 0, 0, 
 			  grp->width, grp->height);
 
     white_pixel = pow(2, image->depth) - 1;
+    image_bytes = grp->height * grp->width / 8;
 
     /* allocate room for DIB */
-    dibsize = palsize + (grp->width / 8) * grp->height
-        + sizeof (BITMAPINFOHEADER);
+    dibsize = sizeof(BITMAPINFOHEADER) + palsize + image_bytes;
 
-    hDIB = GlobalAlloc (GMEM_MOVEABLE | GMEM_DDESHARE, dibsize);
-    if (NULL == hDIB) {
+    hDIB = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, dibsize);
+    if (hDIB == NULL) {
 	    errbox ("Failed to allocate DIB");
 	    return FALSE;
     }
 
+    {
+	char infostr[128];
+	sprintf(infostr, "sizeof BITMAPINFOHEADER = %d\n"
+		"palsize = %d\n", sizeof(BITMAPINFOHEADER), palsize);
+	infobox(infostr);
+    }
+    
+
     /* fill header info */
-    bRet = FALSE;
-    pInfo = GlobalLock (hDIB);
-    if (pInfo) {
-	pInfo->biSize   = sizeof(BITMAPINFOHEADER);
-	pInfo->biWidth  = grp->width;
-	pInfo->biHeight = grp->height; 
-	pInfo->biPlanes = 1;
-	pInfo->biBitCount = 1;
-	pInfo->biCompression = BI_RGB; /* none */
-	pInfo->biSizeImage = 0; /* not calculated/needed */
-	pInfo->biXPelsPerMeter =
-	    pInfo->biYPelsPerMeter = 0;
-	/* color map size */
-	pInfo->biClrUsed = 0; /* all */
-	pInfo->biClrImportant = 0; /* all */
+    ret = FALSE;
+    hdr = GlobalLock(hDIB);
+    if (hdr) {
+	hdr->biSize = sizeof(BITMAPINFOHEADER);
+	hdr->biWidth = grp->width;
+	hdr->biHeight = -1 * grp->height; 
+	hdr->biPlanes = 1;
+	hdr->biBitCount = 1;
+	hdr->biCompression = BI_RGB; /* none */
+	hdr->biSizeImage = image_bytes; /* not needed? */
+	hdr->biXPelsPerMeter = 0;
+	hdr->biYPelsPerMeter = 0;
+	hdr->biClrUsed = 0; 
+	hdr->biClrImportant = 0; /* all */
           
-	GlobalUnlock (hDIB);
-	bRet = TRUE;
+	GlobalUnlock(hDIB);
+	ret = TRUE;
     } else 
 	errbox("Failed to lock DIB Header");
 
     /* fill color map */
-    if (bRet) {
-	char *pBmp;
+    if (ret) {
+	char *bmp = GlobalLock(hDIB);
       
-	bRet = FALSE;
-	pBmp = GlobalLock (hDIB);
-	if (pBmp) {
-	    RGBQUAD *pPal;
-
-	    pPal = (RGBQUAD*)(pBmp + sizeof(BITMAPINFOHEADER));
+	ret = FALSE;
+	if (bmp) {
+	    RGBQUAD *pal = (RGBQUAD *)(bmp + sizeof(BITMAPINFOHEADER));
 
 	    /* white, for cleared bits */
-	    pPal[0].rgbBlue = pPal[0].rgbGreen = pPal[0].rgbRed = 255;
+	    pal[0].rgbBlue = pal[0].rgbGreen = pal[0].rgbRed = 255;
+	    pal[0].rgbReserved = 0;
 	    /* black, for set bits */
-	    pPal[1].rgbBlue = pPal[1].rgbGreen = pPal[1].rgbRed = 0;
-	    pPal[0].rgbReserved = pPal[1].rgbReserved = 0;
+	    pal[1].rgbBlue = pal[1].rgbGreen = pal[1].rgbRed = 0;
+	    pal[1].rgbReserved = 0;
 	  
-	    bRet = TRUE;
-	    GlobalUnlock (hDIB);
-	} 
-	else
+	    ret = TRUE;
+	    GlobalUnlock(hDIB);
+	} else
 	    errbox ("Failed to lock DIB Palette");
     } 
   
     /* copy data to DIB */
-    if (bRet) {
-	unsigned char *pData;
+    if (ret) {
+	unsigned char *data = GlobalLock(hDIB);
       
-	bRet = FALSE;
-	pData = GlobalLock (hDIB);
-
-	if (pData) {
+	ret = FALSE;
+	if (data) {
 	    int x, y;
 	    unsigned char c;
 	    
-	    /* calculate real offset */
-	    pData += (sizeof(BITMAPINFOHEADER) + palsize);
+	    /* calculate offset */
+	    data += (sizeof(BITMAPINFOHEADER) + palsize);
 
-	    /* FIXME: are the bits, and the rows, in the right order? */
-	    for (y=grp->height-1; y>=0; y--) {
+	    for (y=0; y<grp->height; y++) {
 		i = 0; c = 0;
 		for (x=0; x<grp->width; x++) {
 		    pixel = gdk_image_get_pixel(image, x, y);
-		    if (pixel != white_pixel) c |= (1 << i);
-		    if (i == 7) { /* done 8 bits */
-			*pData++ = c;
+		    if (pixel != white_pixel) c |= (1 << i); /* 7-i ?? */
+		    i++;
+		    if (i == 8) { /* done 8 bits -> ship out char */
+			*data++ = c;
 			i = 0;
 			c = 0;
 		    }
 		}
 	    }
-	    bRet = TRUE;
+	    ret = TRUE;
 	    GlobalUnlock (hDIB);
 	} else 
 	    errbox("Failed to lock DIB Data");
     } /* copy data to DIB */
   
     /* copy DIB to ClipBoard */
-    if (bRet) {      
+    if (ret) {      
 	if (!OpenClipboard (NULL)) {
 	    errbox ("Cannot open the Clipboard!");
-	    bRet = FALSE;
+	    ret = FALSE;
 	} else {
-	    if (bRet && !EmptyClipboard ()) {
+	    if (ret && !EmptyClipboard ()) {
 		errbox ("Cannot empty the Clipboard");
-		bRet = FALSE;
+		ret = FALSE;
 	    }
-	    if (bRet) {
+	    if (ret) {
 		if (NULL != SetClipboardData (CF_DIB, hDIB))
 		    hDIB = NULL; /* data now owned by clipboard */
 		else
@@ -978,7 +996,7 @@ static int cb_copy_image (gpointer data)
   
     gdk_image_destroy (image);
   
-    return bRet;
+    return ret;
 } 
 
 #else /* end G_OS_WIN32 */
@@ -1021,6 +1039,38 @@ int plot_to_xpm (const char *fname, gpointer data)
 	}
 	fprintf(fp, "\"%s\n", (i<grp->height-1)? "," : "};");
     }
+
+#ifdef notdef
+    { /* test in re. copy to clipboard */
+	int i, x, y;
+	unsigned char c;
+	FILE *fp;
+	unsigned char *pData, *start;
+	int psize = grp->height * grp->width / 8;
+
+	pData = malloc(psize);
+	start = pData;
+	fp = fopen("testbits", "w");
+
+	for (y=grp->height-1; y>=0; y--) {
+	    i = 0; c = 0;
+	    for (x=0; x<grp->width; x++) {
+		pixel = gdk_image_get_pixel(image, x, y);
+		if (pixel != white_pixel) c |= (1 << (7-i));
+		i++;
+		if (i == 8) { /* done 8 bits */
+		    *pData++ = c;
+		    i = 0;
+		    c = 0;
+		}
+	    }
+	}
+	i = 0;
+	while (i < psize) fputc(start[i++], fp);
+	free(start);
+	fclose(fp);
+    } /* end test */
+#endif
 
     gdk_image_destroy(image);
 

@@ -847,8 +847,7 @@ windata_t *view_buffer (print_t *prn, int hsize, int vsize,
     GtkWidget *vscrollbar; 
     windata_t *vwin;
 
-    if ((vwin = mymalloc(sizeof *vwin)) == NULL)
-	return NULL;
+    if ((vwin = mymalloc(sizeof *vwin)) == NULL) return NULL;
     windata_init(vwin);
     vwin->action = action;
 
