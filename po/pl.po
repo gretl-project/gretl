@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-10-26 13:22-0400\n"
-"PO-Revision-Date: 2004-11-11 23:00+0100\n"
+"PO-Revision-Date: 2004-11-14 01:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1385,11 +1385,11 @@ msgstr "Wariancje z dwóch populacji s± jednakowe"
 #: lib/src/discrete.c:266
 #, c-format
 msgid "The dependent variable '%s' is not a 0/1 variable.\n"
-msgstr ""
+msgstr "Zmienna zale¿na '%s' nie jest zmienn± zero-jedynkow±\n"
 
 #: lib/src/discrete.c:382
 msgid "Failed to construct Hessian matrix"
-msgstr ""
+msgstr "B³±d w konstruowaniu macierzy Hessian"
 
 #: lib/src/estimate.c:185 plugin/mp_ols.c:634
 #, c-format
@@ -1467,11 +1467,11 @@ msgstr ""
 
 #: lib/src/estimate.c:2624 lib/src/modelprint.c:460
 msgid "White's test for heteroskedasticity"
-msgstr ""
+msgstr "Test White'a na heteroskedastyczno¶æ wariancji"
 
 #: lib/src/estimate.c:2625
 msgid "heteroskedasticity not present"
-msgstr ""
+msgstr "Heteroskedastyczno¶æ wariancji nie wystêpuje"
 
 #: lib/src/estimate.c:2748
 msgid "Generalized Cochrane-Orcutt estimation"
@@ -1498,21 +1498,21 @@ msgstr ""
 #: lib/src/estimate.c:3067
 #, c-format
 msgid "Invalid lag order for arch (%d)"
-msgstr ""
+msgstr "B³êdny rz±d opó¼nienia dla ARCH(%d)"
 
 #: lib/src/estimate.c:3124
 #, c-format
 msgid "No of obs. = %d, unadjusted R^2 = %f\n"
-msgstr ""
+msgstr "Liczba obserwacji =%d,  R^2 = %f\n"
 
 #: lib/src/estimate.c:3131
 #, c-format
 msgid "Test for ARCH of order %s"
-msgstr ""
+msgstr "Test ARCH dla rzêdu opó¼nienia %s"
 
 #: lib/src/estimate.c:3133
 msgid "no ARCH effect is present"
-msgstr ""
+msgstr "Efekt ARCH nie wystêpuje"
 
 #: lib/src/estimate.c:3140
 #, c-format
@@ -1523,7 +1523,7 @@ msgstr ""
 
 #: lib/src/estimate.c:3144
 msgid "ARCH effect is insignificant at the 10 percent level"
-msgstr ""
+msgstr "Efekt ARCH jest nieistotny na poziomie 10% b³êdu"
 
 #: lib/src/estimate.c:3145
 msgid "Weighted estimation not done"
@@ -1531,7 +1531,7 @@ msgstr ""
 
 #: lib/src/estimate.c:3148
 msgid "ARCH effect is significant at the 10 percent level"
-msgstr ""
+msgstr "Efekt ARCH jest istotny na poziomie 10% b³êdu"
 
 #: lib/src/estimate.c:3217 lib/src/pvalues.c:699
 msgid "Couldn't load plugin function\n"
@@ -5589,7 +5589,7 @@ msgstr ""
 #: gui2/gpt_control.c:2790 gui2/gpt_control.c:2894 gui2/gretl.c:1696
 #: gui2/gretl.c:1712
 msgid "Copy to clipboard"
-msgstr ""
+msgstr "Kopiuj do schowka"
 
 #: gui/gretl.c:1572 gui2/gretl.c:1797
 msgid "Full sample range restored"
@@ -5597,7 +5597,7 @@ msgstr "Przywrócony pe³ny zakres próby"
 
 #: gui/gretl.c:1597 gui/gretl.c:1694 gui2/gretl.c:1940 gui2/library.c:193
 msgid "Couldn't fork"
-msgstr ""
+msgstr "Nieudane rozdzielenie (fork)"
 
 #: gui/gretl.c:1631 gui/gretl.c:1780 gui/gretl.c:1788 gui/gretl.c:1796
 #: gui2/gretl.c:1854 gui2/gretl.c:2052 gui2/gretl.c:2061 gui2/gretl.c:2070
@@ -5760,22 +5760,22 @@ msgstr "Lista opó¼nieñ AR (np. 1 3 4)"
 #: gui/selector.c:572 gui/selector.c:638 gui2/selector.c:813
 #: gui2/selector.c:839
 msgid "Y-axis variable"
-msgstr ""
+msgstr "Zmienna dla osi Y"
 
 #: gui/selector.c:623 gui/selector.c:1181 gui2/selector.c:826
 #: gui2/selector.c:1408
 msgid "Y-axis variables"
-msgstr ""
+msgstr "Zmienne dla osi Y"
 
 #: gui/selector.c:625 gui/selector.c:1183 gui2/selector.c:824
 #: gui2/selector.c:1411
 msgid "X-axis variables"
-msgstr ""
+msgstr "Zmienne dla osi X"
 
 #: gui/selector.c:639 gui/selector.c:669 gui2/selector.c:840
 #: gui2/selector.c:915
 msgid "X-axis variable"
-msgstr ""
+msgstr "Zmienna dla osi X"
 
 #: gui/selector.c:677 gui/selector.c:709 gui/selector.c:760 gui/selector.c:776
 #: gui2/selector.c:935
@@ -5863,7 +5863,7 @@ msgstr "Pomoc"
 
 #: gui/selector.c:1105 gui2/selector.c:1335
 msgid "XY scatterplot"
-msgstr ""
+msgstr "Wykres rozrzutu XY"
 
 #: gui/selector.c:1107 gui2/selector.c:1337
 msgid "plot with impulses"
@@ -5871,15 +5871,15 @@ msgstr ""
 
 #: gui/selector.c:1109 gui2/selector.c:1339
 msgid "3D plot"
-msgstr ""
+msgstr "Wykres 3D"
 
 #: gui/selector.c:1111 gui2/selector.c:1341
 msgid "multiple scatterplots"
-msgstr ""
+msgstr "Wykres rozrzutu dla wielu zmiennych"
 
 #: gui/selector.c:1113 gui2/selector.c:1343
 msgid "factorized plot"
-msgstr ""
+msgstr "Czynnikowy wykres rozrzutu XY"
 
 #: gui/selector.c:1179 gui2/selector.c:1405
 msgid "Independent variables"
@@ -5887,11 +5887,11 @@ msgstr "Zmienne niezale¿ne (X):"
 
 #: gui/selector.c:1185 gui2/selector.c:989
 msgid "Factor (dummy)"
-msgstr ""
+msgstr "Czynnik (zmienna 0-1)"
 
 #: gui/selector.c:1187 gui2/selector.c:996
 msgid "Z-axis variable"
-msgstr ""
+msgstr "Zmienna dla osi Z"
 
 #: gui/selector.c:1290 gui2/selector.c:1492
 msgid "Select variables for logging"
@@ -5967,7 +5967,7 @@ msgstr "Wybór zmiennych do kopiowania"
 
 #: gui/selector.c:1562 gui2/selector.c:1812
 msgid "Copy data"
-msgstr ""
+msgstr "Kopiowanie danych"
 
 #: gui/selector.c:1562 gui2/selector.c:1812 plugin/tramo-x12a.c:204
 msgid "Save data"
@@ -6127,7 +6127,7 @@ msgstr ""
 #: gui2/boxplots.c:148 gui2/boxplots.c:159 gui2/boxplots.c:187
 #: gui2/boxplots.c:190 gui2/boxplots.c:198
 msgid "Save boxplot file"
-msgstr ""
+msgstr "Zapisz plik boxplot"
 
 #: gui2/boxplots.c:177 gui2/boxplots.c:223 gui2/boxplots.c:969
 msgid "Five-number summary"
@@ -6136,27 +6136,27 @@ msgstr ""
 #: gui2/boxplots.c:180 gui2/boxplots.c:224 gui2/gpt_control.c:2815
 #: gui2/gpt_control.c:2896
 msgid "Save to session as icon"
-msgstr ""
+msgstr "Zapisz jako ikonê sesji"
 
 #: gui2/boxplots.c:186 gui2/boxplots.c:225
 msgid "Save as EPS..."
-msgstr ""
+msgstr "Zapisz jako EPS..."
 
 #: gui2/boxplots.c:189 gui2/boxplots.c:226
 msgid "Save as PS..."
-msgstr ""
+msgstr "Zapisz jako PS..."
 
 #: gui2/boxplots.c:197 gui2/boxplots.c:230
 msgid "Save as XPM..."
-msgstr ""
+msgstr "Zapisz jako XPM..."
 
 #: gui2/boxplots.c:698 gui2/callbacks.c:599
 msgid "gretl: boxplots"
-msgstr ""
+msgstr "gretl: boxplots"
 
 #: gui2/boxplots.c:970 gui2/boxplots.c:998
 msgid "median"
-msgstr ""
+msgstr "mediana"
 
 #: gui2/boxplots.c:995
 msgid "Five-number summary with bootstrapped confidence interval for median"
@@ -6165,7 +6165,7 @@ msgstr ""
 #: gui2/boxplots.c:1000
 #, no-c-format
 msgid "(90% interval)"
-msgstr ""
+msgstr "(90% przedzia³)"
 
 #: gui2/boxplots.c:1024
 msgid "gretl: 5 numbers"
@@ -6221,7 +6221,7 @@ msgstr ""
 #: plugin/tramo-x12a.c:449
 #, c-format
 msgid "Couldn't open %s"
-msgstr ""
+msgstr "Niemo¿liwe otwarcie pliku %s"
 
 #: gui2/boxplots.c:1593
 msgid "boxplot file is corrupt"
@@ -6782,7 +6782,7 @@ msgstr "Rz±d opó¼nienia dla testu:"
 
 #: gui2/callbacks.c:408
 msgid "gretl: Chow test"
-msgstr "gretl: test Chow"
+msgstr "gretl: test Chowa"
 
 #: gui2/callbacks.c:409
 #, c-format
@@ -6929,7 +6929,7 @@ msgstr ""
 
 #: gui2/callbacks.c:600
 msgid "Specify variables to plot:"
-msgstr ""
+msgstr "Wyspecyfikuj zmienne do wykresu:"
 
 #: gui2/callbacks.c:606
 msgid "gretl: nonlinear least squares"
@@ -7793,47 +7793,47 @@ msgstr "B³±d w pliku dialog box"
 
 #: gui2/gpt_control.c:81
 msgid "Title of plot"
-msgstr ""
+msgstr "Tytu³ wykresu"
 
 #: gui2/gpt_control.c:82 gui2/gpt_control.c:83 gui2/gpt_control.c:84
 msgid "Title for axis"
-msgstr ""
+msgstr "Tytu³ osi"
 
 #: gui2/gpt_control.c:345
 msgid "Invalid label position, must be X,Y"
-msgstr ""
+msgstr "B³êdne po³o¿enie opisu, musi byæ X,Y"
 
 #: gui2/gpt_control.c:392 gui2/gpt_control.c:528 gui2/gui_utils.c:315
 #: gui2/gui_utils.c:2257 gui2/library.c:4516 gui2/session.c:3046
 #: gui2/session.c:3075
 #, c-format
 msgid "Couldn't write to %s"
-msgstr ""
+msgstr "Niemo¿liwe zapisanie do pliku %s"
 
 #: gui2/gpt_control.c:556 gui2/gpt_control.c:1715 gui2/gpt_control.c:4136
 msgid "Gnuplot error creating graph"
-msgstr ""
+msgstr "B³±d w tworzeniu pliku graficznego gnuplot"
 
 #: gui2/gpt_control.c:696 gui2/gpt_control.c:2778 gui2/gpt_control.c:2786
 #: gui2/gpt_control.c:2813
 msgid "Save gnuplot graph"
-msgstr ""
+msgstr "Zapisz plik graficzny gnuplot"
 
 #: gui2/gpt_control.c:849
 msgid "Main"
-msgstr ""
+msgstr "Ogólne"
 
 #: gui2/gpt_control.c:888
 msgid "key position"
-msgstr ""
+msgstr "Po³o¿enie"
 
 #: gui2/gpt_control.c:903
 msgid "Show full border"
-msgstr ""
+msgstr "Poka¿ pe³n± ramkê"
 
 #: gui2/gpt_control.c:919
 msgid "Hide fitted line"
-msgstr ""
+msgstr "Ukryj linie dopasowania"
 
 #: gui2/gpt_control.c:950 gui2/gpt_control.c:951
 msgid "None"
@@ -7841,7 +7841,7 @@ msgstr ""
 
 #: gui2/gpt_control.c:962
 msgid "TrueType font"
-msgstr ""
+msgstr "Czcionka True Type"
 
 #: gui2/gpt_control.c:1023
 #, c-format
@@ -7851,15 +7851,15 @@ msgstr ""
 #: gui2/gpt_control.c:1025
 #, c-format
 msgid "Color %d"
-msgstr ""
+msgstr "Kolor %d"
 
 #: gui2/gpt_control.c:1072
 msgid "Output to file"
-msgstr ""
+msgstr "Format pliku"
 
 #: gui2/gpt_control.c:1084
 msgid "output format"
-msgstr ""
+msgstr "Format pliku"
 
 #: gui2/gpt_control.c:1096
 msgid "Save to file..."
@@ -7867,81 +7867,81 @@ msgstr "Zapisz jako plik..."
 
 #: gui2/gpt_control.c:1144
 msgid "Lines"
-msgstr ""
+msgstr "Linie"
 
 #: gui2/gpt_control.c:1162
 #, c-format
 msgid "line %d: "
-msgstr ""
+msgstr "linia %d: "
 
 #: gui2/gpt_control.c:1169
 msgid "legend"
-msgstr ""
+msgstr "legenda"
 
 #: gui2/gpt_control.c:1191
 msgid "type"
-msgstr ""
+msgstr "typ"
 
 #: gui2/gpt_control.c:1207
 msgid "scale"
-msgstr ""
+msgstr "mno¿nik skali"
 
 #: gui2/gpt_control.c:1232
 msgid "y axis"
-msgstr ""
+msgstr "opis na osi-Y"
 
 #: gui2/gpt_control.c:1265
 msgid " Click to set label position"
-msgstr ""
+msgstr " Wska¿ po³ó¿enie opisu"
 
 #: gui2/gpt_control.c:1282
 msgid "Labels"
-msgstr ""
+msgstr "Dodaj opis"
 
 #: gui2/gpt_control.c:1308
 #, c-format
 msgid "label %d: "
-msgstr ""
+msgstr "opis %d: "
 
 #: gui2/gpt_control.c:1315
 msgid "text"
-msgstr ""
+msgstr "tekst"
 
 #: gui2/gpt_control.c:1341
 msgid "position (X,Y)"
-msgstr ""
+msgstr "po³ó¿enie (X,Y)"
 
 #: gui2/gpt_control.c:1394
 msgid "justification"
-msgstr ""
+msgstr "wyrównanie"
 
 #: gui2/gpt_control.c:1431
 msgid "X-axis"
-msgstr ""
+msgstr "O¶-X"
 
 #: gui2/gpt_control.c:1433
 msgid "Y-axis"
-msgstr ""
+msgstr "O¶-Y"
 
 #: gui2/gpt_control.c:1435
 msgid "Y2-axis"
-msgstr ""
+msgstr "O¶-Y2"
 
 #: gui2/gpt_control.c:1484
 msgid "auto axis range"
-msgstr ""
+msgstr "automatyczny zakres skali"
 
 #: gui2/gpt_control.c:1501
 msgid "manual range:"
-msgstr ""
+msgstr "manualny zakres skali:"
 
 #: gui2/gpt_control.c:1512
 msgid "minimum"
-msgstr ""
+msgstr "minimum"
 
 #: gui2/gpt_control.c:1530
 msgid "maximum"
-msgstr ""
+msgstr "maksimum"
 
 #: gui2/gpt_control.c:1568
 msgid ""
@@ -7951,7 +7951,7 @@ msgstr ""
 
 #: gui2/gpt_control.c:1582
 msgid "gretl plot controls"
-msgstr ""
+msgstr "gretl edycja opcji wykresu"
 
 #: gui2/gpt_control.c:1674 gui2/gpt_control.c:4109
 msgid "Couldn't access graph info"
@@ -7983,7 +7983,7 @@ msgstr "czarno-bia³y"
 
 #: gui2/gpt_control.c:2773 gui2/gpt_control.c:2889
 msgid "Save as postscript (EPS)..."
-msgstr "Zapisz jako postscript (ES)..."
+msgstr "Zapisz jako postscript (EPS)..."
 
 #: gui2/gpt_control.c:2781 gui2/gpt_control.c:2886 gui2/gpt_control.c:2891
 msgid "Save as Windows metafile (EMF)..."
@@ -7999,7 +7999,7 @@ msgstr "Zapisz jako PNG..."
 
 #: gui2/gpt_control.c:2822 gui2/gpt_control.c:2898
 msgid "Clear data labels"
-msgstr ""
+msgstr "Wyczy¶æ opisy danych"
 
 #: gui2/gpt_control.c:2826 gui2/gpt_control.c:2900
 msgid "Zoom..."
@@ -8179,12 +8179,12 @@ msgstr ""
 #: gui2/guiprint_common.c:106
 #, c-format
 msgid "Summary Statistics, using the observations %s - %s"
-msgstr ""
+msgstr "Statystyki opisowe, dla obserwacji z próby %s - %s"
 
 #: gui2/guiprint_common.c:112 gui2/guiprint_common.c:218
 #, c-format
 msgid "for the variable %s (%d valid observations)"
-msgstr ""
+msgstr "dla zmiennej %s (%d prawid³owych obserwacji)"
 
 #: gui2/guiprint_common.c:117
 msgid "(missing values denoted by -999 will be skipped)"
@@ -9348,6 +9348,8 @@ msgid ""
 "You must supply three variables, the last\n"
 "of which is a dummy variable (values 1 or 0)"
 msgstr ""
+"Nale¿y wprowadziæ trzy zmienne, ale ostatnia musi\n"
+"byæ zmienn± zero-jedynkow± (tylko warto¶ci 0 lub 1)"
 
 #: gui2/library.c:3895
 msgid "Couldn't find xterm or rxvt"
@@ -9606,7 +9608,7 @@ msgstr "Opcje tabeli modeli"
 #: gui2/objectsave.c:78
 #, c-format
 msgid "%s: ess = %.8g\n"
-msgstr ""
+msgstr "%s: ess = %.8g\n"
 
 #: gui2/objectsave.c:81
 #, c-format
@@ -9744,7 +9746,7 @@ msgstr "Kopiuj jako CSV..."
 
 #: gui2/session.c:170 gui2/session.c:2115
 msgid "View"
-msgstr ""
+msgstr "Poka¿"
 
 #: gui2/session.c:176 gui2/session.c:2105
 msgid "Save As..."
@@ -9955,11 +9957,11 @@ msgstr " \".gdt\" - domy¶lne rozszrzenie plików danych"
 
 #: gui2/settings.c:227
 msgid "Use QR decomposition"
-msgstr ""
+msgstr "Wykonaj dekompozycje QR"
 
 #: gui2/settings.c:227
 msgid "Use Cholesky decomposition"
-msgstr ""
+msgstr "Wykonaj dekompozycje Cholesky"
 
 #: gui2/settings.c:229
 msgid "Fixed font"
@@ -9979,7 +9981,7 @@ msgstr ""
 
 #: gui2/settings.c:550
 msgid "gretl: options"
-msgstr ""
+msgstr "gretl: opcje"
 
 #: gui2/settings.c:651
 msgid "Browse..."
@@ -10116,6 +10118,8 @@ msgid ""
 "New files are available from the gretl web site\n"
 "http://gretl.sourceforge.net/"
 msgstr ""
+"Nowa wersja gretla dostêpna jest na stronie internetowej:\n"
+"http://gretl.sourceforge.net/ oraz www.kufel.torun.pl"
 
 #: gui2/webget.c:1716
 msgid ""
@@ -10155,7 +10159,7 @@ msgstr "B³êdna sk³adnia w poleceniu ARMA"
 
 #: plugin/arma_x12.c:776 plugin/tramo-x12a.c:762
 msgid "is a scalar"
-msgstr ""
+msgstr "jest skalarem"
 
 #: plugin/arma_x12.c:823
 msgid "Failed to execute x12arima"
@@ -10369,12 +10373,12 @@ msgstr ""
 #: plugin/mp_ols.c:131
 #, c-format
 msgid "Missing observations for variable '%s'"
-msgstr ""
+msgstr "Puste obserwacje dla zmiennej '%s'"
 
 #: plugin/mp_ols.c:140
 #, c-format
 msgid "Variable '%s' is all zeros"
-msgstr ""
+msgstr "Zmienna '%s' zawiera same zera"
 
 #: plugin/mp_ols.c:823
 #, c-format
@@ -10556,7 +10560,7 @@ msgstr ""
 
 #: plugin/range-mean.c:61 plugin/range-mean.c:161
 msgid "range"
-msgstr ""
+msgstr "zakres"
 
 #: plugin/range-mean.c:136
 msgid "Sample is too small for range-mean graph\n"
@@ -10677,22 +10681,22 @@ msgstr ""
 #: plugin/sysest.c:223
 #, c-format
 msgid "SUR residual, equation %d"
-msgstr ""
+msgstr "reszty SUR, równania %d"
 
 #: plugin/sysest.c:226
 #, c-format
 msgid "3SLS residual, equation %d"
-msgstr ""
+msgstr "reszty 3MNK, równania %d"
 
 #: plugin/sysest.c:245
 #, c-format
 msgid "SUR fitted value, equation %d"
-msgstr ""
+msgstr "teoretyczne warto¶ci SUR, równaia %d"
 
 #: plugin/sysest.c:248
 #, c-format
 msgid "3SLS fitted value, equation %d"
-msgstr ""
+msgstr "teoretyczne warto¶ci 3MNK, równania %d"
 
 #: plugin/sysest.c:508
 msgid "Cross-equation VCV for residuals"
@@ -10708,7 +10712,7 @@ msgstr ""
 
 #: plugin/tramo_options.c:357
 msgid "Time-series model only"
-msgstr ""
+msgstr "Model tylko dla szeregów czasowych"
 
 #: plugin/tramo_options.c:363
 msgid "Standard automatic analysis"
