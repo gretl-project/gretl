@@ -50,7 +50,7 @@ else
   GRETL_LIBOLE2_CFLAGS := -I. $(shell glib-config --cflags)
 endif  
 
-PLUGINS = stats_tables.so panel_data.so des_import.so range-mean.so \
+PLUGINS = stats_tables.so panel_data.so des_import.so range-mean.so lad.so \
 	tramo-seats.so $(PROGRESS_PLUGIN) $(GNUMERIC_PLUGIN) $(EXCEL_PLUGIN)
 
 ifdef GMP_LIBS
@@ -73,6 +73,9 @@ panel_data.so: panel_data.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 range-mean.so: range-mean.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
+
+lad.so: lad.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 tramo-seats.so: tramo-seats.lo
@@ -102,16 +105,19 @@ des_import.so: des_import.lo
 mp_ols.so: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS)
 
-stats_tables.lo: stats_tables.c $(GRETLLIB) 
+stats_tables.lo: stats_tables.c
 	$(COMPILE) $(GRETLINC) $< 
 
-panel_data.lo: panel_data.c $(GRETLLIB)
+panel_data.lo: panel_data.c
 	$(COMPILE) $(GRETLINC) $< 
 
-range-mean.lo: range-mean.c $(GRETLLIB)
+range-mean.lo: range-mean.c
 	$(COMPILE) $(GRETLINC) $< 
 
-tramo-seats.lo: tramo-seats.c $(GRETLLIB)
+lad.lo: lad.c
+	$(COMPILE) $(GRETLINC) $< 
+
+tramo-seats.lo: tramo-seats.c
 	$(COMPILE) $(GRETLINC) $< 
 
 progress_bar.lo: progress_bar.c
@@ -120,19 +126,19 @@ progress_bar.lo: progress_bar.c
 progress_bar-2.lo: progress_bar-2.c
 	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $< 
 
-gnumeric_import.lo: gnumeric_import.c import_common.c $(GRETLLIB)
+gnumeric_import.lo: gnumeric_import.c import_common.c
 	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $(XML_CFLAGS) $< 
 
-gnumeric_import-2.lo: gnumeric_import.c import_common-2.c $(GRETLLIB)
+gnumeric_import-2.lo: gnumeric_import.c import_common-2.c
 	$(COMPILE) -o $@ $(GRETLINC) $(GTK_CFLAGS) $(XML_CFLAGS) $< 
 
-excel_import.lo: excel_import.c import_common.c xltypes.h $(GRETLLIB)
+excel_import.lo: excel_import.c import_common.c xltypes.h
 	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $<
 
-excel_import-2.lo: excel_import.c import_common-2.c xltypes.h $(GRETLLIB)
+excel_import-2.lo: excel_import.c import_common-2.c xltypes.h
 	$(COMPILE) -o $@ $(GRETLINC) $(GTK_CFLAGS) $<
 
-des_import.lo: des_import.c $(GRETLLIB)
+des_import.lo: des_import.c
 	$(COMPILE) $(GRETLINC) $<
 
 workbook.lo: workbook.c biff.h
