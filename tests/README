@@ -9,6 +9,9 @@ precision plugin.
 There's also a tester for the Pseudo-Random Number Generator (PRNG) in
 gretl -- see below.
 
+And there's a sub-dir named nist-nls with a rig for checking gretl's
+nonlinear regression code against the NIST reference datasets.
+
 NIST Results with libgretl
 ==========================
 

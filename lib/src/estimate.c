@@ -310,6 +310,10 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	return model;
     }
 
+    /* initialize xpy, xpx */
+    for (i=0; i<=l0; i++) xpy[i] = 0.0;
+    for (i=0; i<=nxpx; i++) model.xpx[i] = 0.0;
+
     /* calculate regression results */
     xpxxpy_func(model.list, t1, t2, *pZ, nwt, rho,
 		model.xpx, xpy);
