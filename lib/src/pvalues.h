@@ -27,6 +27,8 @@ double chisq (double x, int df);
 
 double normal (double x);
 
+double gamma_dist (double s1, double s2, double x, int control);
+
 double tcrit95 (int df);
 
 double rhocrit95 (int n);

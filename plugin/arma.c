@@ -212,9 +212,11 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     int an = pdinfo->t2 - pdinfo->t1 + 1;
     int nc, v, p, q;
     int iters, itermax;
+    int subiters, subitermax;
     int i, t;
     double tol, crit, ll = 0.0;
-    double *e, *coeff;
+    double ll_prev = -9999999.0, steplength;
+    double *e, *coeff, *d_coef;
     const double *y;
     double **aZ;
     DATAINFO *ainfo;
@@ -257,6 +259,15 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	return armod;
     }
 
+    /* and its change on each iteration */
+    d_coef = malloc(nc * sizeof *d_coef);
+    if (d_coef == NULL) {
+	free(alist);
+	free(coeff);
+	armod.errcode = E_ALLOC;
+	return armod;
+    }
+
     ainfo = create_new_dataset(&aZ, nc * 2 + 2, an, 0);
     if (ainfo == NULL) {
 	free(alist);
@@ -286,16 +297,18 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     tol = 1.0e-9;
     iters = 0;
     itermax = get_maxiter();
+    subitermax = 10;
+    steplength = 1.0;
+
+    /* generate one-step forecast errors */
+    update_fcast_errs(e, y, coeff, an, p, q);
+
+    /* calculate log-likelihood */
+    ll = get_ll(e, an);
 
     while (crit > tol && iters++ < itermax) {
 
 	pprintf(prn, "Iteration %d\n", iters);
-
-	/* generate one-step forecast errors */
-	update_fcast_errs(e, y, coeff, an, p, q);
-
-        /* calculate log-likelihood */
-	ll = get_ll(e, an);
         pprintf(prn, "  log likelihood = %g\n", ll);
 
         /* partials of e wrt coeffs */
@@ -309,10 +322,40 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	if (armod.errcode) {
 	    goto arma_bailout;
 	}
-	
+
+	/* compute direction */
+	for (i=0; i<armod.ncoeff; i++) {
+	    d_coef[i] = armod.coeff[i];
+	}
+
 	/* update parameters */
 	for (i=0; i<armod.ncoeff; i++) {
-	    coeff[i] += armod.coeff[i];
+	  coeff[i] += d_coef[i] * steplength;
+	}
+
+	/* compute loglikelihood at new point */
+	update_fcast_errs(e, y, coeff, an, p, q);
+	ll = get_ll(e, an);
+
+	/* subiterations for best steplength */
+	subiters = 0;
+	while (steplength > 1.0E-06 && subiters++ < subitermax && ll < ll_prev) {
+
+	    /* if we've gone down, halve steplength and go back */
+	    if (ll < ll_prev){
+		steplength *= 0.5;
+		for (i=0; i<armod.ncoeff; i++) {
+		    coeff[i] -= d_coef[i] * steplength;
+		}
+	    }
+	    /* compute loglikelihood again */
+	    update_fcast_errs(e, y, coeff, an, p, q);
+	    ll = get_ll(e, an);
+	}
+
+	if (subiters > subitermax) {
+	    pprintf(prn, "Maximum number of subiterations reached: quitting\n");
+	    goto arma_bailout;
 	}
 
 	pprintf(prn, "  constant        = %.8g (gradient = %#.6g)\n", 
@@ -325,10 +368,19 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	    pprintf(prn, "  ma%d coefficient = %.8g (gradient = %#.6g)\n", 
 		    i + 1, coeff[1+p+i], armod.coeff[1+p+i]);
 	}
+	pprintf(prn, "  steplength = %.6g (subiterations = %d)\n", 
+		steplength, subiters);
 
 	/* update criterion */
 	crit = armod.nobs - armod.ess;
 	pprintf(prn, "  criterion = %g\n\n", crit);
+
+	/* try and re-double the steplength for next iteration */
+	if (subiters == 1 && steplength < 1.0){
+	  steplength *= 2.0;
+	}
+
+	ll_prev = ll;
 
     }
 
@@ -339,6 +391,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
  arma_bailout:
 
     free(coeff);
+    free(d_coef);
     free_Z(aZ, ainfo);
     clear_datainfo(ainfo, CLEAR_FULL);
     free(ainfo);

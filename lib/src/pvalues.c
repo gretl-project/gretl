@@ -33,8 +33,6 @@ static void _pgamma (void);
 static double _getvalue (void);
 static void _enterdf (const char *str);
 
-double gamma_dist (double s1, double s2, double x, int control);
-
 const char negval[] = N_("\nEnter x value (value < 0 will exit menu): "); 
 
 /**

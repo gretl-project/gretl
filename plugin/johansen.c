@@ -18,103 +18,150 @@
  */
 
 #include "libgretl.h"
+#include "pvalues.h"
 #include "gretl_matrix.h"
 
-enum {
-    HA_NO_RESTRICTIONS,
-    HA_H_PLUS_ONE
-} alt_hypotheses;
-
-/* Critical values for Johansen's likelihood ratio test of the
-   null hypothesis of h cointegrating relations against the
-   alternative of no restrictions.
+/* 
+   Critical values for Johansen's likelihood ratio tests
+   are computed using J. Doornik's gamma approximation
 */
 
-const double johansen_pvals_a[15][3] = {
-    /* .1      .05      .01  = p-value */ 
-    /* case 1 (no constant included in auxiliary regressions) */
-    {  2.86,   3.84,   6.51}, /* g = 1 (# of random walks) */
-    { 10.47,  12.53,  16.31}, /* g = 2 */
-    { 21.63,  24.31,  29.75}, /* g = 3 */
-    { 36.58,  39.89,  45.58}, /* g = 4 */
-    { 55.44,  59.46,  55.52}, /* g = 5 */
-    /* case 2 (no deterministic trends) */
-    { 6.691,  8.083, 11.576}, /* g = 1 */
-    {15.583, 17.844, 21.962}, /* g = 2 */
-    {28.436, 31.256, 37.291}, /* g = 3 */
-    {45.248, 48.419, 55.551}, /* g = 4 */
-    {65.956, 69.977, 77.911}, /* g = 5 */
-    /* case 3 (one or more vars has deterministic trend) */
-    { 2.816,  3.962,  6.936}, /* g = 1 */
-    {13.338, 15.197, 19.310}, /* g = 2 */
-    {26.791, 29.509, 35.397}, /* g = 3 */
-    {43.964, 47.181, 53.792}, /* g = 4 */
-    {65.063, 68.905, 76.955}  /* g = 5 */
+/* Matrices for the trace test */
+
+const double s_mTrace_m_coef[5][6] = {
+/*  n^2     n        1    n==1     n==2  n^1/2 */
+  {2,  -1.00,    0.07,   0.07,       0,     0},
+  {2,   2.01,       0,   0.06,    0.05,     0},
+  {2,   1.05,   -1.55,  -0.50,   -0.23,     0},
+  {2,   4.05,    0.50,  -0.23,   -0.07,     0},
+  {2,   2.85,   -5.10,  -0.10,   -0.06,  1.35}
 };
 
-/* Critical values for Johansen's likelihood ratio test of the
-   null hypothesis of h cointegrating relations against the
-   alternative of h + 1 relations.
-*/
-
-const double johansen_pvals_b[15][3] = {
-    /* .1      .05      .01  = p-value */ 
-    /* case 1 (no constant included in auxiliary regressions) */
-    {  2.86,   3.84,   6.51}, /* g = 1 (# of random walks) */
-    {  9.52,  11.44,  15.69}, /* g = 2 */
-    { 15.59,  17.89,  22.99}, /* g = 3 */
-    { 21.58,  23.80,  28.82}, /* g = 4 */
-    { 27.62,  30.04,  35.17}, /* g = 5 */
-    /* case 2 (no deterministic trends) */
-    { 6.691,  8.083, 11.576}, /* g = 1 */
-    {12.783, 14.595, 18.782}, /* g = 2 */
-    {18.959, 21.279, 26.154}, /* g = 3 */
-    {24.917, 27.341, 32.616}, /* g = 4 */
-    {30.818, 33.262, 38.858}, /* g = 5 */
-    /* case 3 (one or more vars has deterministic trend) */
-    { 2.816,  3.962,  6.936}, /* g = 1 */
-    {12.099, 14.036, 17.936}, /* g = 2 */
-    {18.697, 20.778, 25.521}, /* g = 3 */
-    {24.712, 27.169, 31.943}, /* g = 4 */
-    {30.774, 33.178, 38.341}  /* g = 5 */
+const double s_mTrace_v_coef[5][6] = {
+  {3,  -0.33,  -0.55,      0,        0,     0},
+  {3,    3.6,   0.75,   -0.4,     -0.3,     0},
+  {3,    1.8,      0,   -2.8,     -1.1,     0},
+  {3,    5.7,    3.2,   -1.3,     -0.5,     0},
+  {3,    4.0,    0.8,   -5.8,    -2.66,     0}
 };
 
-static void p_value_string (double lr, int jcase, int g, int ha,
-			    PRN *prn)
+const double s_mTrace_m_time[5][7] = {
+/* sqrt(n)/T   n/T  n^2/T^2   n==1/T     n==1     n==2     n==3 */
+  {-0.101,   0.499,   0.896,  -0.562, 0.00229, 0.00662,       0}, 
+  {     0,   0.465,   0.984,  -0.273,-0.00244,       0,       0}, 
+  { 0.134,   0.422,    1.02,    2.17,-0.00182,       0,-0.00321}, 
+  {0.0252,   0.448,    1.09,  -0.353,       0,       0,       0}, 
+  {-0.819,   0.615,   0.896,    2.43, 0.00149,       0,       0}
+};
+
+const double s_mTrace_v_time[5][7] = {
+  {-0.204,   0.980,    3.11,   -2.14,  0.0499, -0.0103,-0.00902}, 
+  { 0.224,   0.863,    3.38,  -0.807,       0,       0, -0.0091}, 
+  { 0.422,   0.734,    3.76,    4.32,-0.00606,       0,-0.00718}, 
+  {     0,   0.836,    3.99,   -1.33,-0.00298,-0.00139,-0.00268}, 
+  { -1.29,    1.01,    3.92,    4.67, 0.00484,-0.00127, -0.0199}
+};
+
+/* Matrices for the lambdamax test */
+
+const double s_mMaxev_m_coef[5][5] = {
+/*   n            1        n==1         n==2        n^1/2 */
+  {6.0019,     -2.7558,     0.67185,     0.11490,     -2.7764},  
+  {5.9498,     0.43402,    0.048360,    0.018198,     -2.3669},  
+  {5.8271,     -1.6487,     -1.6118,    -0.25949,     -1.5666},  
+  {5.8658,      2.5595,    -0.34443,   -0.077991,     -1.7552},  
+  {5.6364,    -0.90531,     -3.5166,    -0.47966,    -0.21447}
+}; 
+
+const double s_mMaxev_v_coef[5][5] = {
+  {1.8806,     -15.499,      1.1136,    0.070508,      14.714},  
+  {2.2231,     -7.9064,     0.58592,   -0.034324,      12.058},  
+  {2.0785,     -9.7846,     -3.3680,    -0.24528,      13.074},  
+  {1.9955,     -5.5428,      1.2425,     0.41949,      12.841},  
+  {2.0899,     -5.3303,     -7.1523,    -0.25260,      12.393}
+}; 
+
+
+static int
+gamma_par_asymp (double tracetest, double lmaxtest, int det, 
+		 int N, int T, double *pval)
 {
-    int row;
-    const double *pvals;
+    /*
+      Asymptotic critical values for Johansen's LR tests via gamma approximation
 
-    row = (jcase - 1) * 5 + (g - 1);
+      params:
+      tracetest, lmaxtest: trace and lambdamax est. statistics
+      det: deterministic trends; 
+      0 = no constant
+      1 = restricted constant
+      2 = unrestricted constant
+      4 = restricted trend
+      5 = unrestricted trend
+      N: cointegration rank under H0;
+      T: sample size;
+      pval: on output, array of pvalues, for the two tests;
+    */
+    
+    double mt, vt, ml, vl, *x;
+    const double *tracem, *tracev, *lmaxm, *lmaxv;
+    int i;
 
-    if (ha == HA_NO_RESTRICTIONS) {
-	pvals = johansen_pvals_a[row];
-    }
-    else {
-	pvals = johansen_pvals_b[row];
+    tracem = s_mTrace_m_coef[det];
+    tracev = s_mTrace_v_coef[det];
+    lmaxm = s_mMaxev_m_coef[det];
+    lmaxv = s_mMaxev_v_coef[det];
+
+    mt = vt = 0.0;
+    ml = vl = 0.0;
+
+    x = malloc(7 * sizeof *x);
+    if (x == NULL) return 1;
+
+    x[0] = N * N;
+    x[1] = N;
+    x[2] = 1.0;
+    x[3] = (N == 1) ? 1.0 : 0.0 ;
+    x[4] = (N == 2) ? 1.0 : 0.0 ;
+    x[5] = sqrt((double) N);
+
+    for (i=0; i<6; i++) {
+	mt += x[i] * tracem[i];
+	vt += x[i] * tracev[i];
+	if(i){
+	    ml += x[i] * lmaxm[i-1];
+	    vl += x[i] * lmaxv[i-1];
+	}
     }
 
-    pprintf(prn, "%s:\n"
-	    " 10 %s %.2f\n"
-	    "  5 %s %.2f\n"
-	    "  1 %s %.2f\n\n", 
-	    _("Approximate critical values"), 
-	    _("percent"), pvals[0],
-	    _("percent"), pvals[1],
-	    _("percent"), pvals[2]);
+    if (T > 0) {
+	double m2 = 0.0, v2 = 0.0;
 
-    if (lr < pvals[0]) {
-	pprintf(prn, "%s > %.2f\n", _("p-value"), .10);
+	tracem = s_mTrace_m_time[det];
+	tracev = s_mTrace_v_time[det];
+
+	x[0] = sqrt((double) N) / T;
+	x[1] = N / T;
+	x[2] = x[1] * x[1];
+	x[3] = (N == 1) ? 1.0/ T : 0.0;
+	x[4] = (N == 1) ? 1.0 : 0.0;
+	x[5] = (N == 2) ? 1.0 : 0.0;
+	x[6] = (N == 3) ? 1.0 : 0.0;
+
+	for (i=0; i<7; i++) {
+	    m2 += x[i] * tracem[i];
+	    v2 += x[i] * tracev[i];
+	}
+
+	mt *= exp(m2);
+	vt *= exp(v2);
     }
-    else if (lr >= pvals[0] && lr <= pvals[1]) {
-	pprintf(prn, "%.2f > %s > %.2f\n", .10, _("p-value"), .05);
-    }
-    else if (lr >= pvals[1] && lr <= pvals[2]) {
-	pprintf(prn, "%.2f > %s > %.2f\n", .05, _("p-value"), .01);
-    }
-    else if (lr > pvals[2]) {
-	pprintf(prn, "%s < %.2f\n", _("p-value"), .01);
-    }
+
+    free(x);
+
+    pval[0] = 1.0 - gamma_dist(mt, vt, tracetest, 2);
+    pval[1] = 1.0 - gamma_dist(ml, vl, lmaxtest, 2);
+
+    return 0;
 }
 
 static int inverse_compare_doubles (const void *a, const void *b)
@@ -158,48 +205,46 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 
     if (eigvals != NULL) {
 	int i;
-	double lr = 0.0;
+	double cumeig = 0.0;
+	double *lambdamax = NULL, *trace = NULL;
+	double pval[2];
+
+	trace = malloc(k * sizeof *trace);
+	lambdamax = malloc(k * sizeof *lambdamax);
+	if (trace == NULL || lambdamax == NULL) {
+	    free(trace);
+	    free(lambdamax);
+	    err = 1;
+	    goto eigenvals_bailout;
+	}
 
 	qsort(eigvals, k, sizeof *eigvals, inverse_compare_doubles);
 
-	pprintf(prn, "\n%s\n\n", _("Ordered eigenvalues for trace test:"));
-	for (i=0; i<k; i++) {
-	    pprintf(prn, "lambda %d = ", i + 1);
-	    gretl_print_fullwidth_double(eigvals[i], GRETL_DIGITS, prn);
-	    pputs(prn, "\n");
+	for (i=k-1; i>=0; i--){
+      	    lambdamax[i] = -T * log(1.0 - eigvals[i]); 
+	    cumeig += lambdamax[i];
+ 	    trace[i] = cumeig; 
 	}
-	pputs(prn, "\n");
+
+	pputs(prn, _("\nRank Eigenvalue Trace test [p.val.]  Lmax test [p.val.]\n"));
 
 	for (i=0; i<k; i++) {
-	    double xx = T * log(1.0 - eigvals[i]);
-
-	    pprintf(prn, "T * log(1 - lambda %d) = ", i + 1);
-	    gretl_print_fullwidth_double(xx, GRETL_DIGITS, prn);
-	    pputs(prn, "\n");
-	    lr -= xx;
+	    gamma_par_asymp(trace[i], lambdamax[i], 2 , k-i, T, pval);
+	    pprintf(prn, "%4d%11.4f%11.4f [%6.4f]%11.4f [%6.4f]\n", \
+		    i, eigvals[i], trace[i], pval[0], lambdamax[i], pval[1]);
 	}
-	pputs(prn, "\n");
-
-	pprintf(prn, _("Null hypothesis: No cointegrating relations\n"));
-
-	pprintf(prn, _("\nAlternative hypothesis: %d cointegrating "
-		"relations\n\n"), k);
-	pprintf(prn, "%s = %g\n\n", _("Likelihood ratio test"), lr);
-	p_value_string(lr, trends? 3 : 2, k, HA_NO_RESTRICTIONS, prn);
-
-	pputs(prn, _("\nAlternative hypothesis: one cointegrating "
-	      "relation\n\n"));
-	lr = - T * log(1.0 - eigvals[0]);
-	pprintf(prn, "%s = %g\n\n", _("Likelihood ratio test"), lr);
-	p_value_string(lr, trends? 3 : 2, k, HA_H_PLUS_ONE, prn);
+	pputc(prn, '\n');
 
 	free(eigvals);
+	free(lambdamax);
+	free(trace);
 
     } else {
 	pputs(prn, _("Failed to find eigenvalues\n"));
     }
 
-    /* free stuff */
+ eigenvals_bailout:    
+
     gretl_matrix_free(Svv);
     gretl_matrix_free(Suu);
     gretl_matrix_free(Suv);
