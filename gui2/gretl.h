@@ -127,6 +127,8 @@ void time_series_menu_state (gboolean s);
 
 void panel_menu_state (gboolean s);
 
+void period_dummies_menu_state (gboolean s);
+
 void edit_info_state (gboolean s);
 
 void add_remove_markers_state (gboolean s);

@@ -2049,8 +2049,16 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     }
     else if (strcmp(s, "paneldum") == 0) {
 	genr.err = paneldum(pZ, pdinfo);
-	if (!genr.err)
+	if (!genr.err) {
 	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
+	}
+	return genr.err;
+    }
+    else if (strcmp(s, "unitdum") == 0) {
+	genr.err = panel_unit_dummies(pZ, pdinfo);
+	if (!genr.err) {
+	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
+	}
 	return genr.err;
     }
     else if (!strcmp(s, "time") || !strcmp(s, "index")) {
@@ -3525,7 +3533,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
 	ndums = pdinfo->pd;
     }
 
-    if (ndums == 1 || ndums > 999999) {
+    if (ndums == 1 || ndums > 99999) {
 	return E_PDWRONG;
     }
 
@@ -3587,43 +3595,49 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
     return 0;
 }
 
-/**
- * paneldum:
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Adds to the data set a set of panel data dummy variables (for
- * both unit and period).
- *
- * Returns: 0 on successful completion, error code on error.
- */
+/* if both == 1, generate both unit and period dummies,
+   otherwise just generate unit dummies
+*/
 
-int paneldum (double ***pZ, DATAINFO *pdinfo)
+static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
+			  int both)
 {
     char vname[16];
     int vi, t, yy, pp, mm;
     int xsect, nvar = pdinfo->v;
-    int ndum, nudum, ntdum;
+    int ndum, n_blockdum = 0, n_freqdum = 0;
     int offset, bad = 0;
     double xx;
 
-    ntdum = pdinfo->pd;
-    if (ntdum == 1) {
-	return E_PDWRONG;
+    xsect = (pdinfo->time_series == STACKED_CROSS_SECTION);
+
+    /* in case xsect, block dummies are per time-period,
+       frequency dummies are for units;
+       in case of stacked time series, block dummies are
+       per cross-sectional unit, frequency ones are for periods
+    */
+
+    if (both || xsect) {
+	n_freqdum = pdinfo->pd;
+	if (n_freqdum == 1) {
+	    return E_PDWRONG;
+	}
     }
 
-    nudum = pdinfo->n / pdinfo->pd;
-    if (pdinfo->n % pdinfo->pd) nudum++;
-    if (nudum == 1) {
-	return E_PDWRONG;
+    if (both || !xsect) {
+	n_blockdum = pdinfo->n / pdinfo->pd;
+	if (pdinfo->n % pdinfo->pd) {
+	    n_blockdum++;
+	}
+	if (n_blockdum == 1) {
+	    return E_PDWRONG;
+	}
     }
 
-    ndum = ntdum + nudum;
+    ndum = n_freqdum + n_blockdum;
     if (dataset_add_vars(ndum, pZ, pdinfo)) {
 	return E_ALLOC;
     }
-
-    xsect = (pdinfo->time_series == STACKED_CROSS_SECTION);
 
     pp = pdinfo->pd;
     mm = 10;
@@ -3632,7 +3646,7 @@ int paneldum (double ***pZ, DATAINFO *pdinfo)
     }
 
     /* first generate the frequency-based dummies */
-    for (vi=1; vi<=ntdum; vi++) {
+    for (vi=1; vi<=n_freqdum; vi++) {
 	int dnum = nvar + vi - 1;
 	
 	if (xsect) {
@@ -3657,8 +3671,8 @@ int paneldum (double ***pZ, DATAINFO *pdinfo)
     offset = panel_x_offset(pdinfo, &bad);
 
     /* and then the block-based ones */
-    for (vi=1; vi<=nudum; vi++) {
-	int dnum = nvar + ntdum + vi - 1;
+    for (vi=1; vi<=n_blockdum; vi++) {
+	int dnum = nvar + n_freqdum + vi - 1;
 	int dmin = (vi-1) * pdinfo->pd;
 	int dmax = vi * pdinfo->pd - offset;
 
@@ -3687,6 +3701,38 @@ int paneldum (double ***pZ, DATAINFO *pdinfo)
     }
 
     return 0;
+}
+
+/**
+ * panel_unit_dummies:
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Adds to the data set a set of dummy variables corresponding
+ * to the cross-sectional units in a panel.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int panel_unit_dummies (double ***pZ, DATAINFO *pdinfo)
+{
+    return real_paneldum(pZ, pdinfo, 0);
+}
+
+/**
+ * paneldum:
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Adds to the data set a set of panel data dummy variables (for
+ * both unit and period).
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int paneldum (double ***pZ, DATAINFO *pdinfo)
+{
+    return real_paneldum(pZ, pdinfo, 1);
 }
 
 /* ........................................................  */

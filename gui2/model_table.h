@@ -40,4 +40,6 @@ int rtf_print_model_table (void);
 
 int modeltab_parse_line (const char *line, const MODEL *pmod, PRN *prn);
 
+void model_table_dialog (void);
+
 #endif /* MODEL_TABLE_H */

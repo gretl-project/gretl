@@ -27,6 +27,7 @@
 static const MODEL **model_list;
 static int model_list_len;
 static int *grand_list;
+static int use_tstats;
 
 static void print_rtf_row_spec (PRN *prn, int tall);
 
@@ -450,18 +451,26 @@ static void print_model_table_coeffs (PRN *prn)
 	    pputs(prn, "\n          ");
 	}
 
-	/* print the estimated standard errors across a row */
+	/* print the t-stats or standard errors across a row */
 	f = 1;
 	for (j=0; j<model_list_len; j++) {
 	    pmod = model_list[j];
 	    if (pmod == NULL) continue;
 	    if ((k = var_is_in_model(v, pmod))) {
+		double val;
+
+		if (use_tstats) {
+		    val = pmod->coeff[k-2] / pmod->sderr[k-2];
+		} else {
+		    val = pmod->sderr[k-2];
+		}
+
 		if (tex) {
-		    pprintf(prn, "& \\footnotesize{(%#.4g)} ", pmod->sderr[k-2]);
+		    pprintf(prn, "& \\footnotesize{(%#.4g)} ", val);
 		} else {
 		    char numstr[32];
 
-		    sprintf(numstr, "%#.4g", pmod->sderr[k-2]);
+		    sprintf(numstr, "%#.4g", val);
 		    gretl_fix_exponent(numstr);
 		    if (rtf) {
 			if (f == 1) pputs(prn, "\\qc \\cell ");
@@ -693,7 +702,11 @@ int display_model_table (int gui)
     print_model_table_coeffs(prn);
     print_n_r_squared(prn, &binary);
 
-    pprintf(prn, "%s\n", _("Standard errors in parentheses"));
+    if (use_tstats) {
+	pprintf(prn, "%s\n", _("t-statistics in parentheses"));
+    } else {
+	pprintf(prn, "%s\n", _("Standard errors in parentheses"));
+    }
     pprintf(prn, "%s\n", _("* indicates significance at the 10 percent level"));
     pprintf(prn, "%s\n", _("** indicates significance at the 5 percent level"));
    
@@ -949,3 +962,20 @@ int modeltab_parse_line (const char *line, const MODEL *pmod, PRN *prn)
 
     return err;
 }
+
+void model_table_dialog (void)
+{
+    const char *opts[] = {
+	N_("standard errors in parentheses"),
+	N_("t-statistics in parentheses")
+    };
+    int opt;
+    
+
+    opt = radio_dialog(_("model table options"), opts, 2, use_tstats);
+
+    if (opt >= 0) {
+	use_tstats = opt;
+    }
+}
+

@@ -1035,8 +1035,11 @@ static void find_in_help (GtkWidget *widget, gpointer data)
     haystack = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0,
 	gtk_text_get_length(GTK_TEXT(vwin->w)));
 
-    if (vwin->role == CLI_HELP) help_length = script_help_length;
-    else if (vwin->role == GUI_HELP) help_length = gui_help_length;
+    if (vwin->role == CLI_HELP) {
+	help_length = script_help_length;
+    } else if (vwin->role == GUI_HELP) {
+	help_length = gui_help_length;
+    }
 
 # ifdef ENABLE_NLS
     if (vwin->role == CLI_HELP_ENGLISH) {
@@ -1383,6 +1386,7 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
 	gtk_object_set_data(GTK_OBJECT(find_window), "windat", mydat);
 #endif
 	parent_find(find_window, mydat);
+	gdk_window_raise(find_window->window);
 	return;
     }
 

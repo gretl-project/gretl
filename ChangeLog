@@ -3,6 +3,8 @@ version 1.3.0
   frequency greater than 99, and the "panel" command did not
   obey the "cross-section" option (thanks to Mihai Nica for
   the report)
+- add facility to generate cross-sectional unit dummies with
+  panel data ("genr unitdum")
 - add facility for nesting loops and fix some loop bugs
 - fix some bugs in LaTeX equation display
 - fix some breakage in online help system (e.g. for boxplots)

@@ -355,7 +355,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/Add variables/log differences of selected variables"), NULL, 
       add_logs_etc, LDIFF, NULL },
     { N_("/Data/Add variables/periodic dummies"), NULL, add_dummies, 0, NULL },
-    { N_("/Data/Add variables/panel dummies"), NULL, add_dummies, 1, NULL },
+    { N_("/Data/Add variables/unit dummies"), NULL, add_dummies, 1, NULL },
+    { N_("/Data/Add variables/panel dummies"), NULL, add_dummies, 2, NULL },
     { N_("/Data/Add variables/sep"), NULL, NULL, 0, "<Separator>" },
     { N_("/Data/Add variables/random normal..."), NULL, 
       add_random_callback, GENR_NORMAL, NULL },
@@ -885,7 +886,6 @@ void time_series_menu_state (gboolean s)
 	flip(mdata->ifac, "/Data/Add variables/lags of selected variables", s);
 	flip(mdata->ifac, "/Data/Add variables/first differences of selected variables", s);
 	flip(mdata->ifac, "/Data/Add variables/log differences of selected variables", s);
-	flip(mdata->ifac, "/Data/Add variables/periodic dummies", s);
 	/* Variable menu */
 	flip(mdata->ifac, "/Variable/Time series plot", s);
 	flip(mdata->ifac, "/Variable/Correlogram", s);
@@ -930,7 +930,17 @@ void panel_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/Model/Pooled OLS (panel)...", s);
+	flip(mdata->ifac, "/Data/Add variables/unit dummies", s);
 	flip(mdata->ifac, "/Data/Add variables/panel dummies", s);
+    }
+}
+
+/* ........................................................... */
+
+void periodic_dummies_menu_state (gboolean s)
+{
+    if (mdata->ifac != NULL) {
+	flip(mdata->ifac, "/Data/Add variables/periodic dummies", s);
     }
 }
 
@@ -1169,8 +1179,10 @@ void set_sample_label (DATAINFO *pdinfo)
     else 
 	strcpy(pdstr, _("Undated"));
 
-    panel_menu_state(dataset_is_panel(pdinfo));
     time_series_menu_state(dataset_is_time_series(pdinfo));
+    panel_menu_state(dataset_is_panel(pdinfo));
+    periodic_dummies_menu_state(dataset_is_time_series(pdinfo) ||
+				dataset_is_panel(pdinfo));
 
     flip(mdata->ifac, "/Sample/Interpret as time series...", 
 	 !(dataset_is_time_series(pdinfo)));

@@ -740,7 +740,9 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
 	if (pdinfo->vector[i]) {
 	    tmpZ[j] = malloc(pdinfo->n * sizeof **tmpZ);
 	    if (tmpZ[j] == NULL) {
-		for (i=0; i<j; i++) free(tmpZ[i]);
+		for (i=0; i<j; i++) {
+		    free(tmpZ[i]);
+		}
 		free(tmpZ);
 		return E_ALLOC;
 	    }
@@ -798,17 +800,18 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
     /* change the datainfo setup */
     pdinfo->time_series = STACKED_TIME_SERIES;
     pdinfo->pd = nperiods;
-    if (nperiods < 9) {
-	strcpy(pdinfo->stobs, "1:1");
-    } else {
-	strcpy(pdinfo->stobs, "1:01");
-    }
+
+    ntodate(pdinfo->stobs, 0, pdinfo);
     pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
     ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
 
     /* clean up */
-    for (i=0; i<nvec; i++) free(tmpZ[i]);
+
+    for (i=0; i<nvec; i++) {
+	free(tmpZ[i]);
+    }
     free(tmpZ);
+
     if (markers != NULL) {
 	for (t=0; t<pdinfo->n; t++) {
 	    free(markers[t]);

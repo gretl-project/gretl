@@ -134,7 +134,14 @@ static char *model_items[] = {
     N_("Delete")
 };
 
-static char *table_items[] = {
+static char *model_table_items[] = {
+    N_("Display"),
+    N_("Clear"),
+    N_("Options"),
+    N_("Help")
+};
+
+static char *graph_page_items[] = {
     N_("Display"),
     N_("Clear"),
     N_("Help")
@@ -180,9 +187,10 @@ static GtkWidget *icon_table;
 static GtkWidget *global_popup;
 static GtkWidget *session_popup;
 static GtkWidget *model_popup;
-static GtkWidget *table_popup;
+static GtkWidget *model_table_popup;
 static GtkWidget *var_popup;
 static GtkWidget *graph_popup;
+static GtkWidget *graph_page_popup;
 static GtkWidget *boxplot_popup;
 static GtkWidget *data_popup;
 static GtkWidget *info_popup;
@@ -1926,8 +1934,10 @@ static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
 	w = model_popup; 
 	break;
     case 't': 
+	w = model_table_popup;
+	break;
     case 'q':
-	w = table_popup; 
+	w = graph_page_popup; 
 	break;
     case 'v': 
     case 'x':
@@ -2153,7 +2163,14 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	else if (obj->sort == 'q') {
 	    context_help(NULL, GINT_TO_POINTER(GRAPHPAGE));
 	}
-    }    
+    } 
+    else if (strcmp(item, _("Options")) == 0) {
+	if (obj->sort == 't') {
+	    model_table_dialog();
+	} else {
+	    dummy_call();
+	}
+    }     
 }
 
 /* ........................................................... */
@@ -2590,6 +2607,15 @@ static void session_build_popups (void)
 	}
     }
 
+    if (model_table_popup == NULL) {
+	model_table_popup = gtk_menu_new();
+	for (i=0; i<sizeof model_table_items / sizeof model_table_items[0]; i++) {
+		create_popup_item(model_table_popup, 
+				  _(model_table_items[i]), 
+				  object_popup_activated);
+	}
+    }
+
     if (var_popup == NULL) {
 	var_popup = gtk_menu_new();
 	for (i=0; i<sizeof var_items / sizeof var_items[0]; i++) {
@@ -2599,20 +2625,20 @@ static void session_build_popups (void)
 	}
     }
 
-    if (table_popup == NULL) {
-	table_popup = gtk_menu_new();
-	for (i=0; i<sizeof table_items / sizeof table_items[0]; i++) {
-		create_popup_item(table_popup, 
-				  _(table_items[i]), 
-				  object_popup_activated);
-	}
-    }
-
     if (graph_popup == NULL) {
 	graph_popup = gtk_menu_new();
 	for (i=0; i<sizeof graph_items / sizeof graph_items[0]; i++) {
 		create_popup_item(graph_popup, 
 				  _(graph_items[i]), 
+				  object_popup_activated);
+	}
+    }
+
+    if (graph_page_popup == NULL) {
+	graph_page_popup = gtk_menu_new();
+	for (i=0; i<sizeof graph_page_items / sizeof graph_page_items[0]; i++) {
+		create_popup_item(graph_page_popup, 
+				  _(graph_page_items[i]), 
 				  object_popup_activated);
 	}
     }

@@ -97,6 +97,23 @@ void close_dialog (dialog_t *ddata)
 
 /* ........................................................... */
 
+static GtkWidget *
+simple_dialog_new (const char *title)
+{
+    GtkWidget *d;
+
+    d = gtk_dialog_new();
+
+    gtk_window_set_title(GTK_WINDOW(d), title);
+
+    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(d)->action_area), TRUE);
+    gtk_window_set_position(GTK_WINDOW(d), GTK_WIN_POS_MOUSE);
+
+    return d;
+}
+
+/* ........................................................... */
+
 gchar *dialog_data_special_get_text (dialog_t *ddata)
 {
     gchar *buf;
@@ -314,6 +331,38 @@ static GtkWidget *cancel_delete_button (GtkWidget *box, GtkWidget *targ)
 			GTK_SIGNAL_FUNC(delete_widget), 
 			targ);
 #else
+    g_signal_connect (G_OBJECT(w), "clicked", 
+		      G_CALLBACK(delete_widget), 
+		      targ);
+#endif
+    gtk_widget_show(w);
+
+    return w;
+}
+
+static void radio_invalid (GtkWidget *w, int *opt)
+{
+    *opt = -1;
+}
+
+static GtkWidget *cancel_radios_button (GtkWidget *box, GtkWidget *targ,
+					int *opt)
+{
+    GtkWidget *w;
+
+    w = standard_button(GTK_STOCK_CANCEL);
+    gtk_box_pack_start(GTK_BOX(box), w, TRUE, TRUE, 0);
+#ifdef OLD_GTK
+    gtk_signal_connect (GTK_OBJECT(w), "clicked", 
+			GTK_SIGNAL_FUNC(radio_invalid), 
+			opt);
+    gtk_signal_connect (GTK_OBJECT(w), "clicked", 
+			GTK_SIGNAL_FUNC(delete_widget), 
+			targ);
+#else
+    g_signal_connect (G_OBJECT(w), "clicked", 
+		      G_CALLBACK(radio_invalid), 
+		      opt);
     g_signal_connect (G_OBJECT(w), "clicked", 
 		      G_CALLBACK(delete_widget), 
 		      targ);
@@ -811,14 +860,12 @@ void delimiter_dialog (void)
 #ifdef OLD_GTK
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_delim), csvptr);
-    gtk_object_set_data(GTK_OBJECT(button), "action", 
-			GINT_TO_POINTER(','));
 #else
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvptr);
+#endif
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(','));
-#endif
     gtk_widget_show (button);
 
     /* space separator */
@@ -831,34 +878,31 @@ void delimiter_dialog (void)
 #ifdef OLD_GTK
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_delim), csvptr);
-    gtk_object_set_data(GTK_OBJECT(button), "action", 
-			GINT_TO_POINTER(' '));
 #else
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvptr);
+#endif 
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(' '));  
-#endif  
     gtk_widget_show (button);
 
     /* tab separator */
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label(group, _("tab"));
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
-    if (csvptr->delim == '\t')
+    if (csvptr->delim == '\t') {
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    }
 #ifdef OLD_GTK
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_delim), csvptr);
-    gtk_object_set_data(GTK_OBJECT(button), "action", 
-			GINT_TO_POINTER('\t'));
 #else
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvptr);
+#endif
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER('\t'));    
     gtk_widget_show (button);
-#endif
 
 #ifdef ENABLE_NLS
     if (',' == get_local_decpoint()) {
@@ -881,19 +925,18 @@ void delimiter_dialog (void)
 	csvptr->point_button = button;
 	gtk_box_pack_start (GTK_BOX(internal_vbox), 
 			    button, TRUE, TRUE, 0);
-	if (csvptr->decpoint == '.')
+	if (csvptr->decpoint == '.') {
 	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+	}
 # ifdef OLD_GTK
 	gtk_signal_connect(GTK_OBJECT(button), "clicked",
 			   GTK_SIGNAL_FUNC(set_dec), csvptr);
-	gtk_object_set_data(GTK_OBJECT(button), "action", 
-			    GINT_TO_POINTER('.'));
 # else
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_dec), csvptr);
+# endif
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER('.'));
-# endif
 	gtk_widget_show (button);
 
 	/* comma decpoint */
@@ -906,14 +949,12 @@ void delimiter_dialog (void)
 # ifdef OLD_GTK
 	gtk_signal_connect(GTK_OBJECT(button), "clicked",
 			   GTK_SIGNAL_FUNC(set_dec), csvptr);
-	gtk_object_set_data(GTK_OBJECT(button), "action", 
-			    GINT_TO_POINTER(','));
 # else
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_dec), csvptr);
+# endif 
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(','));   
-# endif 
 	gtk_widget_show (button);
     }
 #endif /* ENABLE_NLS */
@@ -2152,11 +2193,7 @@ static void set_panel_code (GtkWidget *w, dialog_t *d)
     gint i;
 
     if (GTK_TOGGLE_BUTTON(w)->active) {
-#ifndef OLD_GTK
 	i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
-#else
-	i = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
-#endif
 	d->code = i;
     }
 }
@@ -2323,11 +2360,7 @@ static void set_compact_type (GtkWidget *w, gpointer data)
     gint *method = (gint *) data;
 
     if (GTK_TOGGLE_BUTTON (w)->active) {
-#ifndef OLD_GTK
         *method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
-#else
-        *method = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
-#endif
     }
 }
 
@@ -2336,13 +2369,8 @@ static void set_target_pd (GtkWidget *w, gpointer data)
     struct compaction_info *cinfo = data;
 
     if (GTK_TOGGLE_BUTTON (w)->active) {
-#ifndef OLD_GTK
 	*cinfo->target_pd = 
 	    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
-#else
-	*cinfo->target_pd =
-	    GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
-#endif
     }
 
     if (cinfo->monday_button != NULL) {
@@ -2360,11 +2388,7 @@ static void set_mon_start (GtkWidget *w, gpointer data)
     gint *ms = (gint *) data;
 
     if (GTK_TOGGLE_BUTTON (w)->active) {
-#ifndef OLD_GTK
         *ms = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
-#else
-        *ms = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
-#endif
     }
 }
 
@@ -2401,14 +2425,13 @@ static void pd_buttons (dialog_t *d, int spd, struct compaction_info *cinfo)
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_target_pd), cinfo);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(f1));
 #else
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_target_pd), cinfo);
-    gtk_object_set_data(GTK_OBJECT(button), "action", 
-			GINT_TO_POINTER(f1));
 #endif
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(f1));
+
     gtk_widget_show (button);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
@@ -2419,14 +2442,13 @@ static void pd_buttons (dialog_t *d, int spd, struct compaction_info *cinfo)
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_target_pd), cinfo);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(f2));
 #else
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_target_pd), cinfo);
-    gtk_object_set_data(GTK_OBJECT(button), "action", 
-			GINT_TO_POINTER(f2));
 #endif
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(f2));
+
     gtk_widget_show (button);
 }
 
@@ -2448,14 +2470,13 @@ static void monday_buttons (dialog_t *d, int *mon_start,
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_mon_start), mon_start);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(1));
 #else
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_mon_start), mon_start);
-    gtk_object_set_data(GTK_OBJECT(button), "action", 
-			GINT_TO_POINTER(1));
 #endif
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(1));
+
     gtk_widget_show (button);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
@@ -2467,14 +2488,13 @@ static void monday_buttons (dialog_t *d, int *mon_start,
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_mon_start), mon_start);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(0));
 #else
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_mon_start), mon_start);
-    gtk_object_set_data(GTK_OBJECT(button), "action", 
-			GINT_TO_POINTER(0));
 #endif
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(0));
+
     gtk_widget_show (button);
 }
 
@@ -2506,14 +2526,13 @@ static void compact_method_buttons (dialog_t *d, gint *compact_method,
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_compact_type), compact_method);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(COMPACT_AVG));
 #else
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
                        GTK_SIGNAL_FUNC(set_compact_type), compact_method);
-    gtk_object_set_data(GTK_OBJECT(button), "action", 
-			GINT_TO_POINTER(COMPACT_AVG));
 #endif
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(COMPACT_AVG));
+
     gtk_widget_show (button);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
@@ -2523,14 +2542,13 @@ static void compact_method_buttons (dialog_t *d, gint *compact_method,
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_compact_type), compact_method);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(COMPACT_SUM));
 #else
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_compact_type), compact_method);
-    gtk_object_set_data(GTK_OBJECT(button), "action", 
-			GINT_TO_POINTER(COMPACT_SUM));
 #endif
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(COMPACT_SUM));
+
     gtk_widget_show (button);
 
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
@@ -2557,14 +2575,13 @@ static void compact_method_buttons (dialog_t *d, gint *compact_method,
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_compact_type), compact_method);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(COMPACT_SOP));
 #else
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
                        GTK_SIGNAL_FUNC(set_compact_type), compact_method);
-    gtk_object_set_data(GTK_OBJECT(button), "action", 
-			GINT_TO_POINTER(COMPACT_SOP));
 #endif
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(COMPACT_SOP));
+
     gtk_widget_show (button);
 }
 
@@ -2735,6 +2752,95 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     gtk_main();
 }
 
+/* ........................................................... */
+
+static void set_radio_opt (GtkWidget *w, int *opt)
+{
+    *opt = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+}
+
+int radio_dialog (const char *title, const char **opts, 
+		  int nopts, int deflt)
+{
+    GtkWidget *dialog;
+    GtkWidget *button;
+    GtkWidget *tempwid;
+    GSList *group;
+    int i, ret = -1;
+
+    dialog = simple_dialog_new(title);
+
+    no_resize(dialog);
+
+#ifndef OLD_GTK
+    g_signal_connect (G_OBJECT(dialog), "destroy", 
+		      G_CALLBACK(dialog_unblock), NULL);
+#else
+    gtk_signal_connect (GTK_OBJECT(dialog), "destroy", 
+			GTK_SIGNAL_FUNC(dialog_unblock), NULL);
+#endif
+
+    button = gtk_radio_button_new_with_label(NULL, _(opts[0]));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG(dialog)->vbox), 
+			button, TRUE, TRUE, 0);
+    if (deflt == 0) {
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    }
+#ifndef OLD_GTK
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_radio_opt), &ret);
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_radio_opt), &ret);
+#endif
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(0));
+    gtk_widget_show (button);
+
+    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+
+    for (i=1; i<nopts; i++) {
+	button = gtk_radio_button_new_with_label(group, _(opts[i]));
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			    button, TRUE, TRUE, 0);
+	if (deflt == i) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+	}
+#ifndef OLD_GTK
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_radio_opt), &ret);
+#else
+	gtk_signal_connect(GTK_OBJECT(button), "clicked",
+			   GTK_SIGNAL_FUNC(set_radio_opt), &ret);
+#endif
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(i));
+	gtk_widget_show (button);
+    }
+
+    /* Create the "OK" button */
+    tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
+#ifndef OLD_GTK
+    g_signal_connect(G_OBJECT (tempwid), "clicked", 
+		     G_CALLBACK (delete_widget), 
+		     dialog);
+#else
+    gtk_signal_connect(GTK_OBJECT (tempwid), "clicked", 
+		       GTK_SIGNAL_FUNC (delete_widget), 
+		       dialog);
+#endif
+    gtk_widget_grab_default (tempwid);
+    gtk_widget_show (tempwid);
+
+    /* Create the "Cancel" button */
+    cancel_radios_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
+
+    gtk_widget_show(dialog);
+
+    gtk_main();
+
+    return ret;
+}
 
 /* ........................................................... */
 

@@ -284,6 +284,7 @@ static void set_sample_label_special (void)
 
     time_series_menu_state(FALSE);
     panel_menu_state(FALSE);
+    periodic_dummies_menu_state(FALSE);
 }
 
 /* ........................................................... */
@@ -2900,16 +2901,20 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 
 /* ......................................................... */
 
-void add_dummies (gpointer data, guint panel, GtkWidget *widget)
+void add_dummies (gpointer data, guint u, GtkWidget *widget)
 {
     gint err;
 
     clear(line, MAXLEN);
 
-    if (panel) {
+    if (u > 0) {
 	if (datainfo->time_series == STACKED_TIME_SERIES ||
 	    datainfo->time_series == STACKED_CROSS_SECTION) {
-	    sprintf(line, "genr paneldum");
+	    if (u == 1) {
+		sprintf(line, "genr unitdum");
+	    } else {
+		sprintf(line, "genr paneldum");
+	    }
 	} else {
 	    errbox(_("Data set is not recognized as a panel.\n"
 		   "Please use \"Sample/Set frequency, startobs\"."));
@@ -2921,10 +2926,14 @@ void add_dummies (gpointer data, guint panel, GtkWidget *widget)
 
     if (verify_and_record_command(line)) return;
 
-    if (panel) {
+    if (u == 0) {
+	err = dummy(&Z, datainfo);
+    } else if (u == 1) {
+	err = panel_unit_dummies(&Z, datainfo);
+    } else if (u == 2) {
 	err = paneldum(&Z, datainfo);
     } else {
-	err = dummy(&Z, datainfo);
+	err = 1;
     }
 
     if (err) {

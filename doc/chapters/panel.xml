@@ -96,40 +96,36 @@
       units, the latter to allow the intercept to differ across
       periods.</para>
 
-    <para>You can use two special functions to create such dummies.
+    <para>You can use three special functions to create such dummies.
       These are found under the <quote>Data, Add variables</quote>
       menu in the GUI, or under the <command>genr</command> command in
       script mode or <application>gretlcli</application>.</para>
 
     <orderedlist>
       <listitem><para><quote>periodic dummies</quote> (script command
-	  <command>genr dummy</command>).  The common use for this
-	  command is to create a set of periodic dummy variables up to
-	  the data frequency in a time-series study (for instance a
-	  set of quarterly dummies for use in seasonal adjustment).
-	  But it also works with panel data. Note that the
-	  interpretation of the dummies created by this command
-	  differs depending on whether the data rows are grouped by
-	  unit or by period. If the grouping is by
-	  <emphasis>unit</emphasis> (frequency <emphasis>T</emphasis>)
-	  the resulting variables are <emphasis>period
-	    dummies</emphasis> and there will be
-	  <emphasis>T</emphasis> of them. For instance
-	  <varname>dummy_2</varname> will have value 1 in each data
-	  row corresponding to a period 2 observation, 0 otherwise. If
-	  the grouping is by <emphasis>period</emphasis> (frequency
-	  <emphasis>n</emphasis>) then <emphasis>n</emphasis>
-	  <emphasis>unit dummies</emphasis> will be generated:
-	  <varname>dummy_2</varname> will have value 1 in each data
-	  row associated with cross-sectional unit 2, 0
-	  otherwise.</para></listitem>
+	  <command>genr dummy</command>).  This command creates a set
+	  of dummy variables identifying the periods.  The variable
+	  <varname>dummy_1</varname> will have value 1 in each row
+	  corresponding to a period 1 observation, 0 otherwise;
+	  <varname>dummy_2</varname> will have value 1 in each row
+	  corresponding to a period 2 observation, 0 otherwise; and so
+	  on.</para>
+      </listitem>
+      <listitem><para><quote>unit dummies</quote> (script command
+	  <command>genr unitdum</command>).  This command creates a
+	  set of dummy variables identifying the cross-sectional
+	  units.  The variable <varname>du_1</varname> will have value
+	  1 in each row corresponding to a unit 1 observation, 0
+	  otherwise; <varname>du_2</varname> will have value 1 in each
+	  row corresponding to a unit 2 observation, 0 otherwise; and
+	  so on.</para>
+      </listitem>
       <listitem><para><quote>panel dummies</quote> (script command
-	  <command>genr paneldum</command>).  This creates all the
-	  dummies, unit and period, at a stroke.  The
-	  unit dummies are named <varname>du_1</varname>,
-	  <varname>du_2</varname> and so on, while the period dummies
-	  are named <varname>dt_1</varname>, <varname>dt_2</varname>,
-	  etc.</para>
+	  <command>genr paneldum</command>).  This creates both period
+	  and unit dummy variables. The unit dummies are named
+	  <varname>du_1</varname>, <varname>du_2</varname> and so on,
+	  while the period dummies are named <varname>dt_1</varname>,
+	  <varname>dt_2</varname>, etc.</para>
       </listitem>
     </orderedlist>
 

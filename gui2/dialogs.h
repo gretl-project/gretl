@@ -61,6 +61,8 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w);
 void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
 			  int *mon_start, gint *compact_method);
 
+int radio_dialog (const char *title, const char **opts, 
+		  int nopts, int deflt);
 
 #ifdef OLD_GTK
 GtkWidget *standard_button (int code);
