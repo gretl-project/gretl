@@ -2294,7 +2294,6 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @prn: gretl printing struct
  *
  * Estimate the model given in @list using the method of Least
  * Absolute Deviation (LAD).
@@ -2302,12 +2301,12 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     int err = 0;
     MODEL lad_model;
     void *handle;
-    int (*lad_driver)(MODEL *, double **, DATAINFO *, PRN *);
+    int (*lad_driver)(MODEL *, double **, DATAINFO *);
 
     /* run an initial OLS to "set the model up" and check for errors.
        the lad function will overwrite the coefficients etc.
@@ -2319,20 +2318,20 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     }
 
     if (open_plugin("lad", &handle)) {
-	pprintf(prn, _("Couldn't load plugin function\n"));
+	fprintf(stderr, _("Couldn't load plugin function\n"));
 	lad_model.errcode = E_FOPEN;
 	return lad_model;
     }
 
     lad_driver = get_plugin_function("lad_driver", handle);
     if (lad_driver == NULL) {
-	pprintf(prn, _("Couldn't load plugin function\n"));
+	fprintf(stderr, _("Couldn't load plugin function\n"));
 	close_plugin(handle);
 	lad_model.errcode = E_FOPEN;
 	return lad_model;
     }
 
-    (*lad_driver) (&lad_model, *pZ, pdinfo, prn);
+    (*lad_driver) (&lad_model, *pZ, pdinfo);
     close_plugin(handle);
 
     return lad_model;

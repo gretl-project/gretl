@@ -408,6 +408,8 @@ static char *est_str (int cmdnum)
 	return N_("Autoregressive");
     case VAR:
 	return N_("VAR");
+    case LAD:
+	return N_("LAD");
     case COINT:
 	return N_("Cointegration");
 #ifdef ENABLE_GMP

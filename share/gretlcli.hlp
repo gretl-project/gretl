@@ -579,6 +579,17 @@ Prints out the informative labels for any variables that have been defined
 using the "genr" command.
 
 #
+lad
+@Estimation
+Usage:          lad depvar indepvars
+
+Calculates a regression that minimizes the sum of the absolute deviations of
+the observed from the fitted values of the dependent variable.  Coefficient
+estimates are derived using the Barrodale-Roberts simplex algorithm; a
+warning is printed if the solution is not unique.  Standard errors are
+derived using the bootstrap procedure with 500 drawings.  
+
+#
 lags
 @Transformations
 Usage:          lags varlist

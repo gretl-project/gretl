@@ -20,7 +20,7 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 		   int m, int n, int dim);
 
 
-int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo, PRN *prn)
+int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 {
     double *a = NULL, *b = NULL, *e = NULL, *x = NULL;
     int i, j, k, m, n, nrows, dim;
@@ -71,28 +71,40 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo, PRN *prn)
 
     l1_(m, n, a, b, x, e);
 
-    for (i=0; i<n; i++) {
-	pmod->coeff[i+1] = x[i];
-    }
-
-    pmod->ess = 0.0;
-    for (i=0; i<m; i++) {
-	pmod->yhat[i + pmod->t1] = Z[pmod->list[1]][i + pmod->t1] - e[i];
-	pmod->uhat[i + pmod->t1] = e[i];
-	pmod->ess += e[i] * e[i];
-    }
-
-    /* abuse of "correct" and "rho" here! */
-
-    /* exit code from L1 function */
+    /* handle case where exit code indicates numeric error */
     pmod->correct = (int) a[m + 2 + (n + 1) * nrows - (nrows + 1)];
-    /* sum of absolute residuals */
-    pmod->rho = a[m + 1 + (n + 1) * nrows - (nrows + 1)];
+    if (pmod->correct == 2) {
+	pmod->errcode = E_SINGULAR;
+    }
 
-    pmod->sigma = pmod->rho / pmod->nobs;
+    if (pmod->errcode == 0) {
 
-    if (bootstrap_stderrs (pmod, Z, a, b, e, x, m, n, dim)) {
-	pmod->errcode = E_ALLOC;
+	for (i=0; i<n; i++) {
+	    pmod->coeff[i+1] = x[i];
+	}
+
+	pmod->ess = 0.0;
+	for (i=0; i<m; i++) {
+	    pmod->yhat[i + pmod->t1] = Z[pmod->list[1]][i + pmod->t1] - e[i];
+	    pmod->uhat[i + pmod->t1] = e[i];
+	    pmod->ess += e[i] * e[i];
+	}
+
+	/* sum of absolute residuals (abuse of "rho") */
+	pmod->rho = a[m + 1 + (n + 1) * nrows - (nrows + 1)];
+
+	/* set ess-based stats to missing value */
+	pmod->rsq = NADBL;
+	pmod->adjrsq = NADBL;
+	pmod->fstt = NADBL;
+	/* LaPlace errors: equivalent of standard error is sum of
+	   absolute residuals over nobs */
+	pmod->sigma = pmod->rho / pmod->nobs; 
+
+	if (bootstrap_stderrs (pmod, Z, a, b, e, x, m, n, dim)) {
+	    pmod->errcode = E_ALLOC;
+	}
+
     }
 
     pmod->ci = LAD;
@@ -149,6 +161,13 @@ C  * A(M+2,N+2)  NUMBER OF SIMPLEX ITERATIONS PERFORMED.          *
 C  *                                                              *
 C  ****************************************************************
 C */
+
+/* Modifications to the above: "toler" is not entered as a parameter,
+   it is "global" to this translation unit.  Regression residuals
+   are found in the array e on exit.  The following function was
+   translated from the Fortran by f2c, then rendered into slightly more
+   idiomatic C by me.  Allin Cottrell, September 2002.
+*/
 
 static int l1_ (int m, int n, 
 		double *a, double *b, 
@@ -535,7 +554,7 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 	    x[i] = 0.0;
 	}
 	
-	/* create sample index array */
+	/* create random sample index array */
 	for (i=0; i<m; i++) {
 	    sample[i] = rand() / (RAND_MAX / m + 1);
 	}
@@ -563,7 +582,7 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 	}
     }
 
-    /* initialize */
+    /* initialize means and standard deviations */
     for (i=0; i<pmod->ncoeff; i++) {
 	coeffs[i][ITERS] = 0.0;
 	pmod->sderr[i+1] = 0.0;
@@ -578,13 +597,11 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
     }    
 
     /* find standard deviations */
-    for (k=0; k<ITERS; k++) {
-	for (i=0; i<pmod->ncoeff; i++) {
-	    pmod->sderr[i+1] += (coeffs[i][k] - coeffs[i][ITERS]) *
-		(coeffs[i][k] - coeffs[i][ITERS]); 
-	}
-    }
     for (i=0; i<pmod->ncoeff; i++) {
+	for (k=0; k<ITERS; k++) {
+	   pmod->sderr[i+1] += (coeffs[i][k] - coeffs[i][ITERS]) *
+	       (coeffs[i][k] - coeffs[i][ITERS]);
+	}
 	pmod->sderr[i+1] = sqrt(pmod->sderr[i+1] / ITERS);
     }
 

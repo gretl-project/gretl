@@ -516,6 +516,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/sep4"),  NULL, NULL, 0, "<Separator>" },
     { N_("/Model/_Logit..."), NULL, model_callback, LOGIT, NULL },
     { N_("/Model/_Probit..."), NULL, model_callback, PROBIT, NULL },
+    { N_("/Model/Least _Absolute Deviation..."), NULL, model_callback, LAD, NULL },
     { N_("/Model/_Rank correlation..."), NULL, gretl_callback, SPEARMAN, NULL },
     { N_("/Model/_Pooled OLS (panel)..."), NULL, model_callback, POOLED, NULL },
 #ifdef ENABLE_GMP

@@ -1767,6 +1767,11 @@ void do_model (GtkWidget *widget, gpointer p)
 	err = model_output(pmod, prn);
 	break;	
 
+    case LAD:
+	*pmod = lad(command.list, &Z, datainfo);
+	err = model_output(pmod, prn);
+	break;	
+
     default:
 	errbox(_("Sorry, not implemented yet!"));
 	break;
@@ -3761,6 +3766,22 @@ int gui_exec_line (char *line,
 	    (models[0])->errcode = E_NAN;
 	if (oflag) outcovmx(models[0], datainfo, 0, prn);
 	break;
+
+    case LAD:
+	if (rebuilding)
+	    save_model_copy(&models[0], psession, rebuild, datainfo);
+	else
+	    clear_model(models[0], datainfo); 
+        *models[0] = lad(command.list, &Z, datainfo);
+        if ((err = (models[0])->errcode)) {
+            errmsg(err, prn);
+            break;
+        }
+        ++model_count;
+        (models[0])->ID = model_count;
+        printmodel(models[0], datainfo, prn);
+        /* if (oflag) outcovmx(models[0], datainfo, !batch, prn); */
+        break;
 
     case CORRGM:
 	order = atoi(command.param);

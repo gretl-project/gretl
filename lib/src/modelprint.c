@@ -200,6 +200,10 @@ static void ladstats (const MODEL *pmod, PRN *prn)
 		(utf)? _("Sum of squared residuals") :
 		I_("Sum of squared residuals"),
 		pmod->ess);
+
+	if (pmod->correct == 0 && utf) {
+	    pprintf(prn, _("\nWarning: solution is probably not unique\n"));
+	}
     }
 }
 

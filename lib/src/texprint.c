@@ -252,10 +252,16 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     /* additional info (R^2 etc) */
     pprintf(prn, "\\vspace{.8ex}\n");
-    pprintf(prn, "$T = %d,\\, \\bar{R}^2 = %.3f,\\, F(%d,%d) = %#g,\\, "
-	    "\\hat{\\sigma} = %#g$\n",
-	    pmod->nobs, pmod->adjrsq, pmod->dfn, 
-	    pmod->dfd, pmod->fstt, pmod->sigma);
+
+    if (na(pmod->fstt)) { /* LAD model */
+	pprintf(prn, "$T = %d,\\, \\sum |\\hat{u}_t| = %g$\n",
+		pmod->nobs, pmod->rho);
+    } else {
+	pprintf(prn, "$T = %d,\\, \\bar{R}^2 = %.3f,\\, F(%d,%d) = %g,\\, "
+		"\\hat{\\sigma} = %g$\n",
+		pmod->nobs, pmod->adjrsq, pmod->dfn, 
+		pmod->dfd, pmod->fstt, pmod->sigma);
+    }
 
     pprintf(prn, "\n(%s)\n\\end{center}\n", 
 	    I_("$t$-statistics in parentheses"));

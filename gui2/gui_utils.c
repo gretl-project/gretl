@@ -1617,6 +1617,15 @@ static void lmmenu_state (GtkItemFactory *ifac, gboolean s)
 
 /* ........................................................... */
 
+static void lad_menu (GtkItemFactory *ifac)
+{
+    /* FIXME: this is actually unnecessarily restrictive */
+    flip(ifac, "/Tests", FALSE);
+    flip(ifac, "/Model data/Add to data set", FALSE);
+}
+
+/* ........................................................... */
+
 static void latex_menu_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/LaTeX", s);
@@ -1673,6 +1682,9 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	if (pmod->name) {
 	    model_save_state(vwin->ifac, FALSE);
 	}
+
+	if (pmod->ci == LAD) lad_menu(vwin->ifac);
+
     }
 }
 
