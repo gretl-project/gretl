@@ -32,7 +32,7 @@ GRETLLIB = ../lib/libgretl-1.0.la
 # Working directories
 tooldir = $(topsrc)/tools
 libsrc = $(topsrc)/lib/src
-VPATH = $(topsrc)/cli
+VPATH = $(topsrc)/cli:..
 
 #### End of system configuration section. ####
 

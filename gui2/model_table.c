@@ -196,7 +196,7 @@ static void add_to_grand_list (const int *list)
 
 static int make_grand_varlist (void)
 {
-    int i, j;
+    int i, j, f = 1;
     int l0 = 0;
     const MODEL *pmod;
 
@@ -211,12 +211,13 @@ static int make_grand_varlist (void)
     if (grand_list == NULL) return 1;
 
     for (i=0; i<model_list_len; i++) {
+	if (model_list[i] == NULL) continue;
 	pmod = model_list[i];
-	if (pmod == NULL) continue;
-	if (i == 0) {
+	if (f == 1) {
 	    for (j=0; j<=pmod->list[0]; j++) {
 		grand_list[j] = pmod->list[j];
 	    }
+	    f = 0;
 	} else {
 	    add_to_grand_list(pmod->list);
 	}
@@ -244,7 +245,7 @@ static int common_estimator (void)
 {
     int i, ci0 = -1;
 
-    for (i=1; i<model_list_len; i++) {
+    for (i=0; i<model_list_len; i++) {
 	if (model_list[i] == NULL) continue;
 	if (ci0 == -1) {
 	    ci0 = (model_list[i])->ci;
@@ -260,7 +261,7 @@ static int common_df (void)
 {
     int i, dfn0 = -1, dfd0 = -1;
 
-    for (i=1; i<model_list_len; i++) {
+    for (i=0; i<model_list_len; i++) {
 	if (model_list[i] == NULL) continue;
 	if (dfn0 == -1) {
 	    dfn0 = (model_list[i])->dfn;

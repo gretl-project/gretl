@@ -1527,7 +1527,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 	return TRUE;
     }
 
-    return TRUE;
+    return FALSE;
 }
 
 /* ........................................................... */
