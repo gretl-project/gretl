@@ -94,7 +94,7 @@ void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo,
 
 int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo);
 
-int compact_data_set (double **Z, DATAINFO *pdinfo, int newpd,
+int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 		      int default_method, int monstart);
 
 #endif /* DBREAD_H */

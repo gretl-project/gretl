@@ -98,7 +98,7 @@ long get_epoch_day (const char *date)
     if (year > 9999 || month > 12 || day > 31) return -1;
 
     if (year < 100) {
-	year += (year < 50)? 2000 : 1900;
+	year = FOUR_DIGIT_YEAR(year);
     }
 
     temp = (long)(year - 1) * 365 + leap_years_since_year_1(year - 1)
@@ -220,7 +220,7 @@ double get_dec_date (const char *date)
     edn = get_epoch_day(tmp);
 
     if (yr < 100) {
-	yr += (yr < 50)? 2000 : 1900;
+	yr = FOUR_DIGIT_YEAR(yr);
     }
 
     dyr = yr;
@@ -266,7 +266,7 @@ int get_day_of_week (const char *date)
     }
 
     if (yr < 100) {
-	yr += (yr < 50)? 2000 : 1900;
+	yr = FOUR_DIGIT_YEAR(yr);
     }
 
     return day_of_week_from_ymd(yr, mo, day);
@@ -402,6 +402,32 @@ int days_in_month_after (int yr, int mon, int day, int wkdays)
     }
 
     return ret;    
+}
+
+/* For daily data with user-supplied data strings, 
+   determine the number of "hidden" missing observations,
+   i.e. the difference between the actual number of
+   observations and the number that should be there,
+   according to the calendar (may include holidays).
+   Allowance is made for business-day data, via the
+   frequency, pdinfo->pd.
+*/
+
+int n_hidden_missing_obs (const DATAINFO *pdinfo)
+{
+    int t1, t2;
+    int cal_n;
+
+    if (!dated_daily_data(pdinfo) || pdinfo->S == NULL) {
+	return 0;
+    }
+    
+    t1 = daily_obs_number(pdinfo->S[0], pdinfo);
+    t2 = daily_obs_number(pdinfo->S[pdinfo->n - 1], pdinfo);
+
+    cal_n = t2 - t1 + 1;
+
+    return cal_n - pdinfo->n;
 }
 
 /* The following functions have nothing to do with the "cal" program,

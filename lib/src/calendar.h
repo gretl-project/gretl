@@ -25,6 +25,8 @@ typedef struct {
     char *missvec;
 } MISSOBS;
 
+#define FOUR_DIGIT_YEAR(y) ((y < 50)? y + 2000 : y + 1900)
+
 long get_epoch_day (const char *date);
 
 int get_day_of_week (const char *date);
@@ -44,6 +46,8 @@ int daily_obs_number (const char *date, const DATAINFO *pdinfo);
 void daily_date_string (char *str, int t, const DATAINFO *pdinfo);
 
 double get_dec_date (const char *date);
+
+int n_hidden_missing_obs (const DATAINFO *pdinfo);
 
 char *missobs_vector (double **Z, const DATAINFO *pdinfo, int *misscount);
 

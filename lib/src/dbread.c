@@ -809,7 +809,7 @@ get_rats_data_by_offset (const char *fname,
     return ret;
 }
 
-/* ........................................................... */
+/* For importation of database series */
 
 static double *get_compacted_xt (const double *src,
 				 int n, int method, int compfac,
@@ -849,7 +849,14 @@ static double *get_compacted_xt (const double *src,
     return x;
 }
 
-/* ........................................................... */
+/* Compact a single series from a database, for importation 
+   into a working dataset of lower frequency.  At present
+   this is permitted only for the cases:
+
+     quarterly -> annual
+     monthly   -> quarterly
+     monthly   -> annual
+*/
 
 double *compact_db_series (const double *src, SERIESINFO *sinfo,
 			   int target_pd, int method)
@@ -1279,7 +1286,9 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     return 0;
 }
 
-/* .................................................................. */
+/* compact an individual series, in the context of converting an
+   entire working dataset to a lower frequency
+*/
 
 static double *compact_series (double *src, int i, int n, int oldn,
 			       int startskip, int min_startskip, int compfac,
@@ -1289,7 +1298,7 @@ static double *compact_series (double *src, int i, int n, int oldn,
     int lead = startskip - min_startskip;
     double *x;
 
-#if 0
+#ifdef DB_DEBUG
     printf("compact_series: startskip=%d, min_startskip=%d, compfac=%d "
 	   "lead=%d\n", startskip, min_startskip, compfac, lead);
 #endif
@@ -1310,21 +1319,31 @@ static double *compact_series (double *src, int i, int n, int oldn,
 	if (method == COMPACT_SOP || method == COMPACT_EOP) {
 	    x[t] = src[idx];
 	} else {
-	    int st;
+	    /* sum or average */
+	    int st, den = compfac;
 
 	    if (idx + compfac - 1 > oldn - 1) break;
 	    x[t] = 0.0;
 	    for (j=0; j<compfac; j++) {
 		st = idx + j;
 		if (na(src[st])) {
-		    x[t] = NADBL;
-		    break;
+		    if ((compfac == 5 || compfac == 7) &&
+			method == COMPACT_AVG) {
+			den--;
+		    } else {
+			x[t] = NADBL;
+			break;
+		    }
 		} else {
 		    x[t] += src[st];
 		}
 	    }
 	    if (method == COMPACT_AVG && !na(x[t])) {
-		x[t] /= (double) compfac;	
+		if (den > 0) {
+		    x[t] /= den;
+		} else {
+		    x[t] = NADBL;
+		}
 	    }
 	}
 	idx += compfac;
@@ -1365,6 +1384,8 @@ get_startskip_etc (int compfac, int startmin, int endmin,
     *newn = n;
 }
 
+/* specific to compaction of daily time series */
+
 static void 
 get_daily_compact_params (int default_method, 
 			  int *any_eop, int *any_sop,
@@ -1403,6 +1424,8 @@ get_daily_compact_params (int default_method,
 	*any_sop = 0;
     }
 }
+
+/* specific to non-daily time series (monthly or quarterly) */
 
 static void 
 get_global_compact_params (int compfac, int startmin, int endmin,
@@ -1458,6 +1481,10 @@ static int get_obs_maj_min (const char *obs, int *maj, int *min)
     return (np == 2);
 }
 
+/* for daily data, figure the number of observations to
+   be skipped at the start of each series 
+*/
+
 static int get_daily_offset (const DATAINFO *pdinfo,
 			     int y, int m, int d, 
 			     int skip)
@@ -1476,6 +1503,10 @@ static int get_daily_offset (const DATAINFO *pdinfo,
     return ret;
 }
 
+/* for daily data, figure the number of valid monthly 
+   observations that can be constructed by compaction
+*/
+
 static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
 			    int *startyr, int *startmon,
 			    int *endyr, int *endmon,
@@ -1493,10 +1524,10 @@ static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
     }
 
     if (y1 < 100) {
-	y1 += (y1 < 50)? 2000 : 1900;
+	y1 = FOUR_DIGIT_YEAR(y1);
     }
     if (y2 < 100) {
-	y2 += (y2 < 50)? 2000 : 1900;
+	y2 = FOUR_DIGIT_YEAR(y2);
     }
 
     nm = 12 * (y2 - y1) + m2 - m1 + 1;
@@ -1535,6 +1566,8 @@ static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
 
     return nm;
 }
+
+/* driver for converting daily time series to monthly */
 
 static double *
 daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
@@ -1586,22 +1619,33 @@ daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
 	    } else {
 		x[t] = Z[i][eopt];
 	    }
-	} else {
-	    /* sum or average */
-	    int mt, dayt;
+	} else if (method == COMPACT_SUM ||
+		   method == COMPACT_AVG) {
+	    int mt, dayt, den = mdays;
 
 	    x[t] = 0.0;
 	    for (mt=0; mt<mdays; mt++) {
 		dayt = sopt + mt;
-		if (dayt >= pdinfo->n || na(Z[i][dayt])) {
+		if (dayt >= pdinfo->n) {
 		    x[t] = NADBL;
 		    break;
+		} else if (na(Z[i][dayt])) {
+		    if (method == COMPACT_AVG) {
+			den--;
+		    } else {
+			x[t] = NADBL;
+			break;
+		    }
 		} else {
 		    x[t] += Z[i][dayt];
 		}
 	    }
 	    if (method == COMPACT_AVG && !na(x[t])) {
-		x[t] /= (double) mdays;
+		if (den > 0) {
+		    x[t] /= (double) den;
+		} else {
+		    x[t] = NADBL;
+		}
 	    }
 	}
 
@@ -1618,7 +1662,9 @@ daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
     return x;
 }
 
-static int dataset_to_monthly (double **Z, DATAINFO *pdinfo,
+/* driver for converting full dataset from daily to monthly */
+
+static int dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 			       int default_method)
 {
     int nm, startyr, startmon, endyr, endmon;
@@ -1638,15 +1684,15 @@ static int dataset_to_monthly (double **Z, DATAINFO *pdinfo,
 	    if (i > 0 && !pdinfo->vector[i]) {
 		continue;
 	    }
-	    x = daily_series_to_monthly(Z, pdinfo, i,
+	    x = daily_series_to_monthly(*pZ, pdinfo, i,
 					default_method, nm,
 					startyr, startmon, 
 					offset, any_eop);
 	    if (x == NULL) {
 		err = E_ALLOC;
 	    } else {
-		free(Z[i]);
-		Z[i] = x;
+		free((*pZ)[i]);
+		(*pZ)[i] = x;
 	    }
 	}
     }
@@ -1666,7 +1712,80 @@ static int dataset_to_monthly (double **Z, DATAINFO *pdinfo,
     return err;
 }
 
-int compact_data_set (double **Z, DATAINFO *pdinfo, int newpd,
+static int get_daily_skip (const DATAINFO *pdinfo, int t)
+{
+    int dd = daily_obs_number(pdinfo->S[t], pdinfo) -
+	daily_obs_number(pdinfo->S[t-1], pdinfo);
+
+    return dd - 1;
+}
+
+static int 
+insert_missing_hidden_obs (double ***pZ, DATAINFO *pdinfo,
+			   int nmiss)
+{
+    int oldn = pdinfo->n;
+    double *tmp;
+    int i, s, t, skip;
+    int err = 0;
+
+    tmp = malloc(oldn * sizeof *tmp);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    err = grow_nobs(nmiss, pZ, pdinfo);
+    if (err) {
+	free(tmp);
+	return err;
+    }
+
+    for (i=1; i<pdinfo->v && !err; i++) {
+	for (s=0; s<oldn; s++) {
+	    tmp[s] = (*pZ)[i][s];
+	}
+
+	(*pZ)[i][0] = tmp[0];
+	t = 1;
+	for (s=1; s<oldn; s++) {
+	    skip = get_daily_skip(pdinfo, s);
+	    if (skip < 0) {
+		err = E_DATA;
+		break;
+	    }
+	    while (skip--) {
+		(*pZ)[i][t++] = NADBL;
+	    }
+	    (*pZ)[i][t++] = tmp[s];
+	}
+    }
+
+    free(tmp);
+
+    if (!err) {
+	destroy_dataset_markers(pdinfo);
+	pdinfo->t2 = pdinfo->n - 1;
+	ntodate_full(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+    }
+
+    return err;
+}
+
+int maybe_expand_daily_data (double ***pZ, DATAINFO *pdinfo)
+{
+    int nmiss = n_hidden_missing_obs(pdinfo);
+    int err = 0;
+
+    if (nmiss < 0) {
+	err = 1;
+    } else if (nmiss > 0) {
+	err = insert_missing_hidden_obs(pZ, pdinfo, nmiss);
+    }
+
+    return err;
+}
+
+int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 		      int default_method, int monstart)
 {
     int newn, oldn = pdinfo->n, oldpd = pdinfo->pd;
@@ -1680,9 +1799,18 @@ int compact_data_set (double **Z, DATAINFO *pdinfo, int newpd,
 
     *gretl_errmsg = '\0';
 
+    if (dated_daily_data(pdinfo)) {
+	/* allow for the possibility that the daily dataset
+	   contains "hidden" or suppressed missing observations
+	   (holidays are just skipped)
+	*/
+	err = maybe_expand_daily_data(pZ, pdinfo);
+	if (err) return err;
+    }
+
     if (newpd == 12 && (oldpd == 5 || oldpd == 7)) {
 	/* daily to monthly: special */
-	return dataset_to_monthly(Z, pdinfo, default_method);
+	return dataset_to_monthly(pZ, pdinfo, default_method);
     } else if (oldpd == 5 || oldpd == 7) {
 	/* daily to weekly */
 	compfac = oldpd;
@@ -1777,13 +1905,13 @@ int compact_data_set (double **Z, DATAINFO *pdinfo, int newpd,
 		}
 	    }
 
-	    x = compact_series(Z[i], i, pdinfo->n, oldn, startskip, 
+	    x = compact_series((*pZ)[i], i, pdinfo->n, oldn, startskip, 
 			       min_startskip, compfac, this_method);
 	    if (x == NULL) {
 		err = E_ALLOC;
 	    } else {
-		free(Z[i]);
-		Z[i] = x;
+		free((*pZ)[i]);
+		(*pZ)[i] = x;
 	    }
 	}
     }

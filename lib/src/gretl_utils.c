@@ -1019,6 +1019,8 @@ int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo)
 
     pdinfo->n += newobs;
     pdinfo->t2 = pdinfo->n - 1;
+
+    /* does daily data need special handling? */
     ntodate(pdinfo->endobs, pdinfo->t2, pdinfo);
 
     return 0;

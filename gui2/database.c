@@ -1881,7 +1881,7 @@ void do_compact_data_set (void)
 	return;
     }
 
-    err = compact_data_set(Z, datainfo, newpd, default_method, monstart);
+    err = compact_data_set(&Z, datainfo, newpd, default_method, monstart);
 
     if (err) {
 	gui_errmsg(err);
