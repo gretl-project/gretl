@@ -366,17 +366,12 @@ static char *make_winfilter (int action, gpointer data)
 
     filter = get_filter(action, data);
 
-    if (nls_on) {
-	gint wrote;
-
-	trf = g_locale_from_utf8 (_(filter.descrip), -1, NULL, &wrote, NULL);
-	strcpy(p, trf);
-    } else strcpy(p, _(filter.descrip));
+    strcpy(p, I_(filter.descrip));
 
     p += strlen(p) + 1;
     strcpy(p, filter.pat);
     p += strlen(p) + 1;
-    strcpy(p, _("all files (*.*)")); /* ENCODING? */
+    strcpy(p, I_("all files (*.*)"));
     p += strlen(p) + 1;
     strcpy(p, "*.*");
     p += strlen(p) + 1;

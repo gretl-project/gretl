@@ -579,29 +579,22 @@ void dummy_output_handler (const gchar *log_domain,
 #endif /* G_OS_WIN32 */
 
 #ifdef ENABLE_NLS
-# ifdef G_OS_WIN32
 void nls_init (void)
 {
-    char gretldir[MAXSTR], localedir[MAXSTR];
+# ifdef G_OS_WIN32
+    char gretldir[MAXSTR], LOCALEDIR[MAXSTR];
 
     if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir))
 	return;
-    build_path(gretldir, "locale", localedir, NULL);
-    setlocale (LC_ALL, "");
-    bindtextdomain ("gretl", localedir);
-    /* bind_textdomain_codeset ("gretl", "UTF-8"); */
-    textdomain ("gretl");
-    nls_on = doing_nls();
-}
-# else
-void nls_init (void)
-{
+    build_path(gretldir, "locale", LOCALEDIR, NULL);
+#endif /* G_OS_WIN32 */
+
     setlocale (LC_ALL, "");
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
+    bind_textdomain_codeset (PACKAGE, "UTF-8");
     nls_on = doing_nls();
 }
-# endif /* G_OS_WIN32 */
 #endif /* ENABLE_NLS */
 
 int main (int argc, char *argv[])
