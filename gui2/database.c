@@ -913,7 +913,7 @@ static SERIESINFO *get_series_info (windata_t *win, int action)
 
 	sinfo->offset = 0;
 	for (i=0; i<win->active_var; i++) {
-
+	    n = 0;
 	    tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
 				 i, 2, &temp);
 	    sscanf(temp, "%*c %*s %*s %*s %*s %*s %d", &n);
@@ -931,7 +931,7 @@ static SERIESINFO *get_series_info (windata_t *win, int action)
 
     tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
 			 win->active_var, 1, &temp);
-    sinfo->descrip[0] = 0;
+    *sinfo->descrip = 0;
     strncat(sinfo->descrip, temp, MAXLABEL-1);
     g_free(temp);
 
