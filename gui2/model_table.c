@@ -279,6 +279,7 @@ int display_model_table (void)
 {
     int i, j, gl0, ci;
     int same_df;
+    int binary = 0;
     const MODEL *pmod;
     PRN *prn;
     char se[16];
@@ -381,6 +382,7 @@ int display_model_table (void)
 	pmod = model_list[j];
 	if (pmod == NULL) continue;
 	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+	    binary = 1;
 	    /* McFadden */
 	    pprintf(prn, "%#12.4g", pmod->rsq);
 	} else {
@@ -388,6 +390,11 @@ int display_model_table (void)
 	}
     }
     pputs(prn, "\n");
+
+    if (binary) {
+	pputs(prn, "\n%s\n", _("For logit and probit, R-squared is "
+			       "McFadden's pseudo-R-squared"));
+    }
 
     view_buffer(prn, 78, 450, _("gretl: model table"), PRINT, 
 		model_table_items);
@@ -399,6 +406,7 @@ static void tex_print_model_table (void)
 {
     int i, j, gl0, ci;
     int same_df;
+    int binary = 0;
     const MODEL *pmod;
     PRN *prn;
 
@@ -511,6 +519,7 @@ static void tex_print_model_table (void)
 	pmod = model_list[j];
 	if (pmod == NULL) continue;
 	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+	    binary = 1;
 	    /* McFadden */
 	    pprintf(prn, "& %.4f ", pmod->rsq);
 	} else {
@@ -519,7 +528,12 @@ static void tex_print_model_table (void)
     }
     pputs(prn, "\n");
 
-    pputs(prn, "\\end{tabular}\n\\end{center}");
+    pputs(prn, "\\end{tabular}\n");
+    if (binary) {
+	pprintf(prn, "\n%s\n", I_("For logit and probit, $R^2$ is "
+				  "McFadden's pseudo-$R^2$"));
+    }
+    pputs(prn, "\\end{center}");
 
     prn_to_clipboard(prn, COPY_LATEX);
 }
