@@ -38,21 +38,6 @@
 		       test */
 #define SMALL 1.0e-8
 
-typedef struct {
-    double *xpx;
-    double *xpy;
-    int ivalue;
-    int nv;
-    int errcode;
-} XPXXPY;	
-
-typedef struct {
-    XPXXPY xpxxpy;
-    double *coeff;
-    double rss;
-    int errcode;
-} CHOLBETA;
-
 extern void _print_rho (int *arlist, const MODEL *pmod, 
 			int c, PRN *prn);
 extern int _addtolist (const int *oldlist, const int *addvars, 
@@ -60,12 +45,13 @@ extern int _addtolist (const int *oldlist, const int *addvars,
 		       int model_count);
 
 /* private function prototypes */
-static XPXXPY xpxxpy_func (const int *list, int t1, int t2, 
-			   double **Z, int nwt, double rho);
-static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z, 
-		     int n, double rho);
-static CHOLBETA cholbeta (XPXXPY xpxxpy);
-static void diaginv (XPXXPY xpxxpy, double *diag);
+static int xpxxpy_func (const int *list, int t1, int t2, 
+			double **Z, int nwt, double rho,
+			double *xpx, double *xpy);
+static void regress (MODEL *pmod, double *xpy, double **Z, 
+		     int n, int nv, double rho);
+static void diaginv (double *xpx, double *xpy, double *diag, int nv);
+
 static double dwstat (int order, MODEL *pmod, double **Z);
 static double corrrsq (int nobs, const double *y, const double *yhat);
 static double rhohat (int order, int t1, int t2, const double *uhat);
@@ -177,11 +163,11 @@ static int ar_info_init (MODEL *pmod, int nterms)
 MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo, 
 	   int ci, int opt, double rho)
 {
-    int l0, ifc, nwt, yno, i, n;
-    int t, t1, t2, v, order, effobs = 0;
+    int l0, ifc, nwt, yno, i, n, nxpx;
+    int t, t1, t2, l, v, order, effobs = 0;
     int missv = 0, misst = 0;
     double xx;
-    XPXXPY xpxxpy;
+    double *xpy;
     MODEL model;
 
     if (list == NULL || pZ == NULL || pdinfo == NULL) {
@@ -189,10 +175,12 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
         return model;
     }
 
-    if (ci == HSK)
+    if (ci == HSK) {
 	return hsk_func(list, pZ, pdinfo);
-    if (ci == HCCM)
+    }
+    if (ci == HCCM) {
 	return hccm_func(list, pZ, pdinfo);
+    }
 
     _init_model(&model, pdinfo);
 
@@ -300,13 +288,28 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
         return model; 
     }
 
-    /* calculate regression results */
-    xpxxpy = xpxxpy_func(model.list, t1, t2, *pZ, nwt, rho);
-    model.tss = xpxxpy.xpy[l0];
+    /* allocation for xpx, xpy, coeff */
+    l = l0 - 1;
+    nxpx = l * (l + 1) / 2;
+    xpy = malloc((l0 + 1) * sizeof *xpy);
+    model.xpx = malloc((nxpx + 1) * sizeof(double));
+    model.coeff = malloc(l0 * sizeof(double));
+    if (xpy == NULL || model.xpx == NULL || model.coeff == NULL) {
+	model.errcode = E_ALLOC;
+	return model;
+    }
 
-    regress(&model, xpxxpy, *pZ, n, rho);
-    free(xpxxpy.xpy);
-    if (model.errcode) return model;
+    /* calculate regression results */
+    xpxxpy_func(model.list, t1, t2, *pZ, nwt, rho,
+		model.xpx, xpy);
+    model.tss = xpy[l0];
+
+    regress(&model, xpy, *pZ, n, l0 - 1, rho);
+    free(xpy);
+
+    if (model.errcode) {
+	return model;
+    }
 
     /* get the mean and sd of depvar and make available */
     if (model.ci == WLS && model.wt_dummy) {
@@ -396,8 +399,9 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
 /* .......................................................... */
 
-static XPXXPY xpxxpy_func (const int *list, int t1, int t2, 
-			   double **Z, int nwt, double rho)
+static int xpxxpy_func (const int *list, int t1, int t2, 
+			double **Z, int nwt, double rho,
+			double *xpx, double *xpy)
 /*
         This function forms the X'X matrix and X'y vector
 
@@ -419,110 +423,114 @@ static XPXXPY xpxxpy_func (const int *list, int t1, int t2,
 {
     int i, j, li, lj, m, l0 = list[0], yno = list[1], t;
     double xx, z1, z2;
-    XPXXPY xpxxpy;
 
     i = l0 - 1;
     m = i * (i + 1) / 2;
 
-    if ((xpxxpy.xpy = malloc((l0 + 1) * sizeof(double))) == NULL ||
-	(xpxxpy.xpx = malloc((m + 1) * sizeof(double))) == NULL) {
-        xpxxpy.errcode = E_ALLOC;
-        return xpxxpy;
-    }
-    xpxxpy.xpy[0] = xpxxpy.xpy[l0] = 0;
+    xpy[0] = xpy[l0] = 0;
 
-    xpxxpy.nv = l0 - 1;
-    if (rho) for (t=t1+1; t<=t2; t++) {
-        xx = Z[yno][t] - rho * Z[yno][t-1];
-        xpxxpy.xpy[0] += xx;
-        xpxxpy.xpy[l0] += xx * xx;
+    if (rho) {
+	for (t=t1+1; t<=t2; t++) {
+	    xx = Z[yno][t] - rho * Z[yno][t-1];
+	    xpy[0] += xx;
+	    xpy[l0] += xx * xx;
+	}
     }
-    else if (nwt) for (t=t1; t<=t2; t++) {
-        xx = Z[yno][t] * Z[nwt][t];       
-        xpxxpy.xpy[0] += xx;
-        xpxxpy.xpy[l0] += xx * xx;
-    }
+    else if (nwt) {
+	for (t=t1; t<=t2; t++) {
+	    xx = Z[yno][t] * Z[nwt][t];       
+	    xpy[0] += xx;
+	    xpy[l0] += xx * xx;
+	}
+    } 
     else for (t=t1; t<=t2; t++) {
         xx = Z[yno][t]; 
-        xpxxpy.xpy[0] += xx;
-        xpxxpy.xpy[l0] += xx * xx;
+        xpy[0] += xx;
+        xpy[l0] += xx * xx;
     }
-    if (floateq(xpxxpy.xpy[l0], 0.0)) {
-         xpxxpy.ivalue = yno; 
-         return xpxxpy; 
+
+    if (floateq(xpy[l0], 0.0)) {
+         return yno; 
     }    
     m = 0;
 
-    if (rho) for (i=2; i<=l0; i++) {
-        li = list[i];
-        z1 = li? rho: 0.0;
-        for (j=i; j<=l0; j++) {
-            lj = list[j];
-            z2 = lj? rho: 0.0;
-            xx = 0.0;
-            for (t=t1+1; t<=t2; t++)
-                xx += (Z[li][t] - z1 * Z[li][t-1]) * 
-		    (Z[lj][t] - z2 * Z[lj][t-1]);
-                if (floateq(xx, 0.0) && li == lj)  {
-                    xpxxpy.ivalue = li;
-                    return xpxxpy; 
-                }
-                xpxxpy.xpx[++m] = xx;
-        }
-        xx = 0;
-        for (t=t1+1; t<=t2; t++)
-            xx = xx + (Z[yno][t] - rho * Z[yno][t-1]) *
-		(Z[li][t] - z1 * Z[li][t-1]);
-        xpxxpy.xpy[i-1] = xx;
+    if (rho) {
+	for (i=2; i<=l0; i++) {
+	    li = list[i];
+	    z1 = li? rho: 0.0;
+	    for (j=i; j<=l0; j++) {
+		lj = list[j];
+		z2 = (lj)? rho: 0.0;
+		xx = 0.0;
+		for (t=t1+1; t<=t2; t++) {
+		    xx += (Z[li][t] - z1 * Z[li][t-1]) * 
+			(Z[lj][t] - z2 * Z[lj][t-1]);
+		}
+		if (floateq(xx, 0.0) && li == lj)  {
+		    return li;
+		}
+		xpx[++m] = xx;
+	    }
+	    xx = 0;
+	    for (t=t1+1; t<=t2; t++) {
+		xx = xx + (Z[yno][t] - rho * Z[yno][t-1]) *
+		    (Z[li][t] - z1 * Z[li][t-1]);
+	    }
+	    xpy[i-1] = xx;
+	}
     }
-    else if (nwt) for (i=2; i<=l0; i++) {
-        li = list[i];
-        for (j=i; j<=l0; j++) {
-            lj = list[j];
-            xx = 0.0;
-            for (t=t1; t<=t2; t++) {
-                z1 = Z[nwt][t];
-                xx += z1 * z1 * Z[li][t] * Z[lj][t];
-            }
-            if (floateq(xx, 0.0) && li == lj)  {
-                xpxxpy.ivalue = li;
-                return xpxxpy;
-            }   
-            xpxxpy.xpx[++m] = xx;
-        }
-        xx = 0;
-        for (t=t1; t<=t2; t++) {
-            z1 = Z[nwt][t];
-            xx += z1 * z1 * Z[yno][t] * Z[li][t];
-        }
-        xpxxpy.xpy[i-1] = xx;
+    else if (nwt) {
+	for (i=2; i<=l0; i++) {
+	    li = list[i];
+	    for (j=i; j<=l0; j++) {
+		lj = list[j];
+		xx = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    z1 = Z[nwt][t];
+		    xx += z1 * z1 * Z[li][t] * Z[lj][t];
+		}
+		if (floateq(xx, 0.0) && li == lj)  {
+		    return li;
+		}   
+		xpx[++m] = xx;
+	    }
+	    xx = 0;
+	    for (t=t1; t<=t2; t++) {
+		z1 = Z[nwt][t];
+		xx += z1 * z1 * Z[yno][t] * Z[li][t];
+	    }
+	    xpy[i-1] = xx;
+	}
     }
-    else for (i=2; i<=l0; i++) {
-        li = list[i];
-        for (j=i; j<=l0; j++) {
-            lj = list[j];
-            xx = 0.0;
-            for (t=t1; t<=t2; t++) xx += Z[li][t] * Z[lj][t];
-            if (floateq(xx, 0.0) && li == lj)  {
-                xpxxpy.ivalue = li;
-                return xpxxpy;  
-            }
-            xpxxpy.xpx[++m] = xx;
-        }
-        xx = 0;
-        for (t=t1; t<=t2; t++) xx += Z[yno][t] * Z[li][t];
-        xpxxpy.xpy[i-1] = xx;
+    else {
+	for (i=2; i<=l0; i++) {
+	    li = list[i];
+	    for (j=i; j<=l0; j++) {
+		lj = list[j];
+		xx = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    xx += Z[li][t] * Z[lj][t];
+		}
+		if (floateq(xx, 0.0) && li == lj)  {
+		    return li;
+		}
+		xpx[++m] = xx;
+	    }
+	    xx = 0;
+	    for (t=t1; t<=t2; t++) {
+		xx += Z[yno][t] * Z[li][t];
+	    }
+	    xpy[i-1] = xx;
+	}
     }
 
-    xpxxpy.ivalue = 0;
-
-    return xpxxpy; 
+    return 0; 
 }
 
 /* .......................................................... */
 
-static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z, 
-		     int n, double rho)
+static void regress (MODEL *pmod, double *xpy, double **Z, 
+		     int n, int nv, double rho)
 /*
         This function takes xpx, the X'X matrix ouput
         by xpxxpy_func(), and xpy, which is X'y, and
@@ -538,13 +546,12 @@ static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
         sderr = vector of standard errors of regression coefficients
 */
 {
-    int t, v, nobs, nv, yno, nwt = pmod->nwt;
+    int t, v, nobs, yno, nwt = pmod->nwt;
     int t1 = pmod->t1, t2 = pmod->t2;
     double *diag, ysum, ypy, zz, ess, rss, tss;
     double den = 0.0, sgmasq = 0.0;
-    CHOLBETA cb;
+    int err = 0;
 
-    nv = xpxxpy.nv;
     yno = pmod->list[1];
 
     if ((pmod->sderr = calloc(nv+1, sizeof(double))) == NULL ||
@@ -555,20 +562,23 @@ static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
     }
 
     nobs = pmod->nobs;
-    if (rho) pmod->nobs = nobs = t2-t1;
+    if (rho) pmod->nobs = nobs = t2 - t1;
     pmod->ncoeff = nv;
+
     pmod->dfd = nobs - nv;
     if (pmod->dfd < 0) { 
        pmod->errcode = E_DF; 
        return; 
     }
+
     pmod->dfn = nv - pmod->ifc;
-    ysum = xpxxpy.xpy[0];
-    ypy = xpxxpy.xpy[nv+1];
+    ysum = xpy[0];
+    ypy = xpy[nv+1];
     if (floateq(ypy, 0.0)) { 
         pmod->errcode = E_YPY;
         return; 
     }
+
     zz = ysum * ysum/nobs;
     tss = ypy - zz;
     if (floatlt(tss, 0.0)) { 
@@ -577,23 +587,23 @@ static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
     }
 
     /*  Choleski-decompose X'X and find the coefficients */
-    cb = cholbeta(xpxxpy);
-    pmod->coeff = cb.coeff;
-    pmod->xpx = cb.xpxxpy.xpx;
+    err = cholbeta(pmod->xpx, xpy, pmod->coeff, &rss, nv);
 
-    if (cb.errcode) {
+    if (err) {
         pmod->errcode = E_ALLOC;
         return;
-    }   
-    rss = cb.rss;
+    } 
+  
     if (rss == -1.0) { 
         pmod->errcode = E_SINGULAR;
         return; 
     }
 
     pmod->ess = ess = ypy - rss;
-    if (ess < SMALL && ess > (-SMALL)) pmod->ess = ess = 0.0;
-    else if (ess < 0.0) { 
+
+    if (ess < SMALL && ess > (-SMALL)) {
+	pmod->ess = ess = 0.0;
+    } else if (ess < 0.0) { 
         /*  pmod->errcode = E_ESS; */ 
 	sprintf(gretl_errmsg, _("Error sum of squares (%g) is not > 0"),
 		ess);
@@ -632,8 +642,12 @@ static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
         zz = 0.0;
         pmod->dfn = 1;
     }
-    if (sgmasq <= 0.0 || pmod->dfd == 0) pmod->fstt = NADBL;
-    else pmod->fstt = (rss - zz * pmod->ifc)/(sgmasq * pmod->dfn);
+
+    if (sgmasq <= 0.0 || pmod->dfd == 0) {
+	pmod->fstt = NADBL;
+    } else {
+	pmod->fstt = (rss - zz * pmod->ifc)/(sgmasq * pmod->dfn);
+    }
 
     /* Calculation of WLS stats in agreement with GNU R */
     if (nwt && !(pmod->wt_dummy)) {
@@ -663,15 +677,18 @@ static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
     }
 
     diag = malloc((nv+1) * sizeof *diag); 
+
     if (diag == NULL) {
 	pmod->errcode = E_ALLOC;
 	return;
     }
 
-    diaginv(xpxxpy, diag);
+    diaginv(pmod->xpx, xpy, diag, nv);
+
     for (v=1; v <= nv; v++) { 
        pmod->sderr[v] = pmod->sigma * sqrt(diag[v]); 
     }
+
     free(diag); 
     
     return;  
@@ -679,7 +696,9 @@ static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
 
 /* .......................................................... */
 
-static CHOLBETA cholbeta (XPXXPY xpxxpy)
+int cholbeta (double *xpx, double *xpy, 
+	      double *coeff, double *rss,
+	      int nv)
 /*
   This function does an inplace Choleski decomposition of xpx
   (lower triangular matrix stacked in columns) and then
@@ -690,26 +709,22 @@ static CHOLBETA cholbeta (XPXXPY xpxxpy)
   nv is the number of regression coefficients including the 
   constant.  */
 {
-    int nm1, i, j, k, kk, l, jm1, nv;
+    int nm1, i, j, k, kk, l, jm1;
     double e, d, d1, test, xx;
-    CHOLBETA cb;
 
-    nv = xpxxpy.nv; 
-    cb.errcode = 0; 
-
-    if ((cb.coeff = malloc((nv + 1) * sizeof(double))) == NULL) {
-        cb.errcode = E_ALLOC;
-        return cb;
+    if (coeff != NULL) {
+	for (j=0; j<nv+1; j++) {
+	    coeff[j] = 0.0;
+	}
     }
-    for (j=0; j<nv+1; j++) cb.coeff[j] = 0.0;
-
-    cb.xpxxpy = xpxxpy;
 
     nm1 = nv - 1;
-    e = 1/sqrt(xpxxpy.xpx[1]);
-    xpxxpy.xpx[1] = e;
-    xpxxpy.xpy[1] *= e;
-    for (i=2; i<=nv; i++) xpxxpy.xpx[i] *= e;
+    e = 1 / sqrt(xpx[1]);
+    xpx[1] = e;
+    xpy[1] *= e;
+    for (i=2; i<=nv; i++) {
+	xpx[i] *= e;
+    }
     kk = nv + 1;
 
     for (j=2; j<=nv; j++) {
@@ -718,57 +733,62 @@ static CHOLBETA cholbeta (XPXXPY xpxxpy)
         k = j;
         jm1 = j - 1;
         for (l=1; l<=jm1; l++) {
-            xx = xpxxpy.xpx[k];
-            d1 += xx * xpxxpy.xpy[l];
+            xx = xpx[k];
+            d1 += xx * xpy[l];
             d += xx * xx;
             k += nv-l;
         }
-        test = xpxxpy.xpx[kk] - d;
+        test = xpx[kk] - d;
         if (test <= TINY) {
-           cb.rss = -1.0; 
-           return cb;
+	    if (rss != NULL) *rss = -1.0;
+	    return 0;
         }
 	if (test < SMALL) {
 	    strcpy(gretl_msg, _("Warning: data matrix close to singularity!"));
 	}
-        e = 1/sqrt(test);
-        xpxxpy.xpx[kk] = e;
-        xpxxpy.xpy[j] = (xpxxpy.xpy[j] - d1) * e;
+        e = 1 / sqrt(test);
+        xpx[kk] = e;
+        xpy[j] = (xpy[j] - d1) * e;
         /* off-diagonal elements */
         for (i=j+1; i<=nv; i++) {
             kk++;
             d = 0.0;
             k = j;
             for (l=1; l<=jm1; l++) {
-                d += xpxxpy.xpx[k] * xpxxpy.xpx[k-j+i];
+                d += xpx[k] * xpx[k - j + i];
                 k += nv - l;
             }
-            xpxxpy.xpx[kk] = (xpxxpy.xpx[kk] - d) * e;
+            xpx[kk] = (xpx[kk] - d) * e;
         }
         kk++;
     }
     kk--;
     d = 0.0;
-    for(j=1; j<=nv; j++) {
-        d += xpxxpy.xpy[j] * xpxxpy.xpy[j];
+    for (j=1; j<=nv; j++) {
+        d += xpy[j] * xpy[j];
     }
-    cb.rss = d;
-    cb.coeff[nv] = xpxxpy.xpy[nv] * xpxxpy.xpx[kk];
-    for(j=nm1; j>=1; j--) {
-        d = xpxxpy.xpy[j];
-        for (i=nv; i>=j+1; i--) {
-            kk--;
-            d = d - cb.coeff[i] * xpxxpy.xpx[kk];
-        }
-        kk--;
-        cb.coeff[j] = d * xpxxpy.xpx[kk];
-    }    
-    return cb; 
+
+    if (rss != NULL) *rss = d;
+
+    if (coeff != NULL ) {
+	coeff[nv] = xpy[nv] * xpx[kk];
+	for (j=nm1; j>=1; j--) {
+	    d = xpy[j];
+	    for (i=nv; i>=j+1; i--) {
+		kk--;
+		d = d - coeff[i] * xpx[kk];
+	    }
+	    kk--;
+	    coeff[j] = d * xpx[kk];
+	}  
+    }  
+
+    return 0; 
 }
 
 /* ...............................................................    */
 
-static void diaginv (XPXXPY xpxxpy, double *diag)
+static void diaginv (double *xpx, double *xpy, double *diag, int nv)
 /*
         Solves for the diagonal elements of the X'X inverse matrix.
 
@@ -778,15 +798,14 @@ static void diaginv (XPXXPY xpxxpy, double *diag)
         nv = no. of regression coefficients
 */
 {
-    int kk = 1, l, m, nstop, k, i, j, nv;
+    int kk = 1, l, m, nstop, k, i, j;
     double d, e;
 
-    nv = xpxxpy.nv;
     nstop = nv * (nv + 1) / 2;
 
     for (l=1; l<=nv-1; l++) {
-        d = xpxxpy.xpx[kk];
-        xpxxpy.xpy[l] = d;
+        d = xpx[kk];
+        xpy[l] = d;
         e = d * d;
         m = 0;
         if (l > 1) {
@@ -796,17 +815,17 @@ static void diaginv (XPXXPY xpxxpy, double *diag)
             d = 0.0;
             k = i + m;
             for (j=l; j<=i-1; j++) {
-                d += xpxxpy.xpy[j] * xpxxpy.xpx[k];
+                d += xpy[j] * xpx[k];
                 k += nv - j;
             }
-            d = (-1.0) * d * xpxxpy.xpx[k];
-            xpxxpy.xpy[i] = d;
+            d = (-1.0) * d * xpx[k];
+            xpy[i] = d;
             e += d * d;
         }
         kk += nv + 1 - l;
         diag[l] = e;
     }
-    diag[nv] = xpxxpy.xpx[nstop] * xpxxpy.xpx[nstop];
+    diag[nv] = xpx[nstop] * xpx[nstop];
 }
 
 /**
@@ -1174,14 +1193,9 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 {
     int i, j, t, v, ncoeff, *list1, *list2, *newlist, *s1list, *s2list;
     int yno, n = pdinfo->n, orig_nvar = pdinfo->v;
+    int nv, nxpx;
     MODEL tsls;
-    XPXXPY xpxxpy;
-    CHOLBETA cb;
-    double xx, *diag, *yhat;
-
-    /*  printf("tsls list:\n"); */
-    /*  printlist(list); */
-    /*  printf("pos = %d\n", pos); */
+    double xx, *diag, *yhat, *xpx, *xpy;
 
     _init_model(&tsls, pdinfo);
 
@@ -1201,10 +1215,6 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     for (i=0; i<pos; i++) s2list[i] = list1[i];
     list2[0] = list[0] - pos;
     for (i=1; i<=list2[0]; i++) list2[i] = list[i+pos];
-/*      printf("list1:\n"); */
-/*      printlist(list1); */
-/*      printf("list2:\n"); */
-/*      printlist(list2); */
 
     ncoeff = list2[0];
     if (ncoeff < list1[0]-1) {
@@ -1230,8 +1240,6 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 	return tsls;
     }
 
-/*      printf("newlist:\n"); */
-/*      printlist(newlist);  */
     /* newlist[0] holds the number of new vars to create */
     if (dataset_add_vars(newlist[0], pZ, pdinfo)) {
 	free(list1); free(list2);
@@ -1246,10 +1254,12 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 	yno = newlist[i];
         s1list[0] = ncoeff + 1;
         s1list[1] = yno;
-        for (v=2; v<=s1list[0]; v++) s1list[v] = list2[v-1];
+
+        for (v=2; v<=s1list[0]; v++) {
+	    s1list[v] = list2[v-1];
+	}
+
 	/* run first-stage regression */
-/*  	printf("running 1st stage:\n"); */
-/*  	printlist(s1list); */
 	clear_model(&tsls, pdinfo);
 	tsls = lsq(s1list, pZ, pdinfo, OLS, 0, 0.0);
 	if (tsls.errcode) {
@@ -1259,6 +1269,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 	    free(newlist);
 	    return tsls;
 	}
+
         /* grab fitted values and stick into Z */
 	for (j=2; j<=list1[0]; j++) {
 	    if (list1[j] == newlist[i]) {
@@ -1266,17 +1277,20 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 		break;
 	    }
 	}
-	for (t=0; t<n; t++) (*pZ)[orig_nvar+i-1][t] = NADBL;
-	for (t=tsls.t1; t<=tsls.t2; t++)
+
+	for (t=0; t<n; t++) {
+	    (*pZ)[orig_nvar+i-1][t] = NADBL;
+	}
+	for (t=tsls.t1; t<=tsls.t2; t++) {
 	    (*pZ)[orig_nvar+i-1][t] = tsls.yhat[t];
+	}
 	strcpy(pdinfo->varname[orig_nvar+i-1], pdinfo->varname[newlist[i]]);
     } 
 
     /* second-stage regression */
     clear_model(&tsls, pdinfo);
     tsls = lsq(s2list, pZ, pdinfo, OLS, 1, 0.0);
-/*      printf("second stage\n"); */
-/*      printlist(s2list); */
+
     if (tsls.errcode) {
 	free(list1); free(list2);
 	free(s1list); free(s2list);
@@ -1287,7 +1301,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 
     /* special: need to use the original RHS vars to compute residuals 
        and associated statistics */
-    yhat = malloc(n * sizeof(double));
+    yhat = malloc(n * sizeof *yhat);
     if (yhat == NULL) {
 	free(list1); free(list2);
 	free(s1list); free(s2list);
@@ -1296,13 +1310,11 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 	tsls.errcode = E_ALLOC;
 	return tsls;
     }
+
     tsls.ess = 0.0;
     for (t=tsls.t1; t<=tsls.t2; t++) {
 	xx = 0.0;
 	for (i=1; i<=tsls.ncoeff; i++) {
-/*  	    printf("coeff[%d] = %f, Z(%d, %d) = %f\n",  */
-/*  		   i, tsls.coeff[i], list1[i+1], t,  */
-/*  		   (*pZ)[list1[i+1]*n + t]);  */
 	    xx += tsls.coeff[i] * (*pZ)[list1[i+1]][t];
 	}
 	yhat[t] = xx; 
@@ -1311,10 +1323,13 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     }
     tsls.sigma = (tsls.ess >= 0.0) ? sqrt(tsls.ess/tsls.dfd) : 0.0;
 
-    xpxxpy = xpxxpy_func(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0);
+    nv = s2list[0] - 1;
+    nxpx = nv * (nv + 1) / 2;
+    xpx = malloc((nxpx + 1) * sizeof *xpx);
+    xpy = malloc((s2list[0] + 1) * sizeof *xpy);
+    diag = malloc(s2list[0] * sizeof *diag);
 
-    diag = malloc((xpxxpy.nv + 1) * sizeof(double));
-    if (diag == NULL) {
+    if (xpy == NULL || xpx == NULL || diag == NULL) {
 	free(list1); free(list2);
 	free(s1list); free(s2list);
 	clear_model(&tsls, pdinfo);
@@ -1325,15 +1340,16 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 	return tsls;
     }
 
-    cb = cholbeta(xpxxpy);    
-    diaginv(cb.xpxxpy, diag);
+    xpxxpy_func(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0,
+		xpx, xpy);
+    cholbeta(xpx, xpy, NULL, NULL, nv);    
+    diaginv(xpx, xpy, diag, nv);
     for (i=1; i<=tsls.ncoeff; i++) {
 	tsls.sderr[i] = tsls.sigma * sqrt(diag[i]); 
     }
-    if (diag != NULL) free(diag); 
-    if (cb.xpxxpy.xpx != NULL) free(cb.xpxxpy.xpx);
-    if (cb.xpxxpy.xpy != NULL) free(cb.xpxxpy.xpy);
-    if (cb.coeff != NULL) free(cb.coeff);
+    free(diag); 
+    free(xpx);
+    free(xpy);
 
     tsls.rsq = corrrsq(tsls.nobs, &(*pZ)[tsls.list[1]][tsls.t1], 
 			yhat + tsls.t1);

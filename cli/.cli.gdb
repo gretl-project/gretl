@@ -1,2 +1,2 @@
-set args -b ./test.inp
+set args -b ps13-1.inp
 run
