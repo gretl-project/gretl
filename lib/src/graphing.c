@@ -500,17 +500,6 @@ int gnuplot_display (const PATHS *ppaths)
     return err;
 }
 
-static void print_xrange (FILE *fp, double xmin, double xmax)
-{
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
-    fprintf(fp, "set xrange [%g:%g]\n", xmin, xmax);
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
-}
-
 enum {
     GTITLE_VLS,
     GTITLE_RESID,
@@ -694,6 +683,10 @@ int gnuplot (LIST list, const int *lines,
     } else
 	fprintf(fq, "set key left top\n");
 
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "C");
+#endif
+
     xvar = (opt == OPT_Z || opt == OPT_RESIDZ)? list[lo - 1] : list[lo];
     if (isdummy(xvar, t1, t2, *pZ)) {
 	fputs("set xrange[-1:2]\n", fq);	
@@ -705,7 +698,7 @@ int gnuplot (LIST list, const int *lines,
 	xrange = xmax - xmin;
 	xmin -= xrange * .025;
 	xmax += xrange * .025;
-	print_xrange(fq, xmin, xmax);
+	fprintf(fq, "set xrange [%g:%g]\n", xmin, xmax);
     }
 
     if (tscale) { /* two or more vars plotted against time */
@@ -776,9 +769,7 @@ int gnuplot (LIST list, const int *lines,
 	    else fputc('\n', fq);
 	}
     } 
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "C");
-#endif
+
     if (ols_ok) 
 	fprintf(fq, "%f + %f*x title '%s' w lines\n", a, b, 
 		_("least squares fit"));
@@ -978,7 +969,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	   height adjustment factor for the impulses */
 
 	if (dist == NORMAL) {
-	    char chilbl[32];
+	    char chilbl[80];
 
 	    propn = normal((freq->endpt[i-1] - freq->xbar)/freq->sdx) -
 		normal((freq->endpt[i] - freq->xbar)/freq->sdx);
@@ -1017,7 +1008,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	/* adjust max if needed */
 	if (freq->midpt[K-1] > plotmax) plotmax = freq->midpt[K-1];
 
-	print_xrange(fp, plotmin, plotmax);
+	fprintf(fp, "set xrange [%g:%g]\n", plotmin, plotmax);
 	fprintf(fp, "set key right top\n");
 	fprintf(fp, "plot \\\n");
 
