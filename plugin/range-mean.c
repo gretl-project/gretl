@@ -19,7 +19,7 @@
 
 #include "libgretl.h"
 
-static void get_range_and_mean (int t1, int t2, double *x,
+static void get_range_and_mean (int t1, int t2, const double *x,
 				double *range, double *mean)
 {
     double me = 0.0, mi = x[t1], ma = x[t1];
@@ -207,7 +207,8 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
 	} 
     }
 
-    err = do_range_mean_plot(m, rmZ, yhat, pdinfo->varname[vnum]);
+    err = do_range_mean_plot(m, (const double **) rmZ, yhat, 
+			     pdinfo->varname[vnum]);
 
     clear_model(&rmmod);
     free_Z(rmZ, rminfo);

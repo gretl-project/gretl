@@ -64,6 +64,7 @@ PLUGINSRC = \
 	pca.c \
 	progress_bar.c \
 	range-mean.c \
+	fractals.c \
 	stats_tables.c \
 	sysest.c \
 	fiml.c \
@@ -95,6 +96,7 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/arma.dll \
 	plugins/arma_x12.dll \
 	plugins/range-mean.dll \
+	plugins/fractals.dll \
 	plugins/lad.dll \
 	plugins/tramo-x12a.dll \
 	plugins/leverage.dll \
@@ -256,6 +258,10 @@ plugins/stats_tables.dll: stats_tables.o dllinit.o
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/range-mean.dll: range-mean.o dllinit.o 
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+
+plugins/fractals.dll: fractals.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
