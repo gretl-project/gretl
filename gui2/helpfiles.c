@@ -165,7 +165,7 @@ static int new_style_gui_help (FILE *fp)
     char s[128];
     int newhelp = 0;
 
-    while (fgets(line, sizeof s, fp)) {
+    while (fgets(s, sizeof s, fp)) {
 	if (*s == '@') {
 	    if (!strncmp(s, "@new-style", 10)) {
 		newhelp = 1;
@@ -186,8 +186,11 @@ static void set_english_help_file (int script)
     FILE *fp;
     int newhelp = 0;
 
-    if (script) helpfile = paths.cmd_helpfile;
-    else helpfile = paths.helpfile;
+    if (script) {
+	helpfile = paths.cmd_helpfile;
+    } else {
+	helpfile = paths.helpfile;
+    }
 
     tmp = malloc(strlen(helpfile) + 1);
 
@@ -205,6 +208,7 @@ static void set_english_help_file (int script)
 	} else {
 	    english_gui_helpfile = tmp;
 	}
+
 	fp = fopen(tmp, "r");
 	if (fp != NULL) {
 	    char test[128];
@@ -223,8 +227,11 @@ static void set_english_help_file (int script)
 	    }
 	    fclose(fp);
 
-	    if (script) english_script_help_length = len;
-	    else english_gui_help_length = len;
+	    if (script) {
+		english_script_help_length = len;
+	    } else {
+		english_gui_help_length = len;
+	    }
 	}
     }
 }
@@ -263,9 +270,9 @@ static int real_helpfile_init (int cli)
     FILE *fp;
     char *helpfile, *headstr;
     struct help_head_t **heads = NULL;
-    char test[MAXLEN], topicword[32];
+    char test[128], topicword[32];
     int i, g, pos, match, nh = 0, topic = 0;
-    int length = 0, memfail = 0, newhelp = 0;
+    int length, memfail = 0, newhelp = 0;
 
     helpfile = (cli)? paths.cmd_helpfile : paths.helpfile;
 
@@ -285,9 +292,11 @@ static int real_helpfile_init (int cli)
 	newhelp = new_style_gui_help(fp);
     }
 
-    while (!memfail && fgets(test, MAXLEN-1, fp)) {
+    length = 0;
+    while (!memfail && fgets(test, sizeof test, fp)) {
 	if (*test == '@') {
 	    chopstr(test);
+	    if (newhelp) length -= 2;
 	    if (!strcmp(test, "@Obsolete")) continue;
 	    match = 0;
 	    for (i=0; i<nh; i++) {
@@ -312,7 +321,6 @@ static int real_helpfile_init (int cli)
 		    } else memfail = 1;
 		} else memfail = 1;
 	    }
-	    if (newhelp) length -= 2;
 	} else {
 	    length++;
 	}
@@ -333,19 +341,18 @@ static int real_helpfile_init (int cli)
 
     if (memfail) return -1;
 
-    /* calculating length of help file: need to drop
+    /* calculating length of GUI help file: need to drop
        2 lines for every heading */
 
     /* second pass, assemble the topic list */
     fp = fopen(helpfile, "r");
-    i = 0;
-    pos = 0;
-    g = 0;
-    while (!memfail && fgets(test, MAXLEN-1, fp)) {
+    i = pos = g = 0;
+    while (!memfail && fgets(test, sizeof test, fp)) {
 	if (topic == 1) 
 	    sscanf(test, "%31s", topicword);
 
 	if (*test == '@') {
+	    if (newhelp) pos -= 2;
 	    chopstr(test);
 	    if (!strcmp(test, "@Obsolete")) continue;
 	    match = -1;
@@ -365,9 +372,6 @@ static int real_helpfile_init (int cli)
 		(heads[match])->pos[m] = pos - 1;
 		(heads[match])->ntopics += 1;
 	    }
-	    if (newhelp) {
-		pos -= 2;
-	    }
 	} else {
 	    pos++;
 	}
@@ -375,10 +379,14 @@ static int real_helpfile_init (int cli)
 	if (*test == '#') topic = 1;
 	else topic = 0;
     }
+
     fclose(fp);
 
-    if (cli) cli_heads = heads;
-    else gui_heads = heads;
+    if (cli) {
+	cli_heads = heads;
+    } else {
+	gui_heads = heads;
+    }
 
     return length;
 }
