@@ -1867,6 +1867,8 @@ drag_data_received  (GtkWidget *widget,
 	strcat(tmp, dfname + skip);
     }
 
+    unescape_url(tmp);
+
     suff = strrchr(tmp, '.');
     if (suff && (!strncmp(suff, ".gretl", 6) || 
 		 !strncmp(suff, ".inp", 4) ||

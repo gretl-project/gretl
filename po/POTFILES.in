@@ -43,6 +43,7 @@ gui/guiprint.c
 gui/gui_utils.c
 gui/helpfiles.c
 gui/library.c
+gui/model_table.c
 gui/objectsave.c
 gui/plotps.c
 gui/selector.c

@@ -95,4 +95,6 @@ const char *print_time (const time_t *timep);
 
 char *gretl_xml_encode (char *buf);
 
+void unescape_url (char *url);
+
 #endif /* STRUTILS_H */

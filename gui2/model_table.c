@@ -343,8 +343,8 @@ static void print_model_table_coeffs (PRN *prn)
 	    pmod = model_list[j];
 	    if (pmod == NULL) continue;
 	    if ((k = var_is_in_model(v, pmod))) {
-		double x = screen_zero(pmod->coeff[k-1]);
-		double s = screen_zero(pmod->sderr[k-1]);
+		double x = screen_zero(pmod->coeff[k-2]);
+		double s = screen_zero(pmod->sderr[k-2]);
 		double pval;
 		char numstr[32];
 
@@ -398,11 +398,11 @@ static void print_model_table_coeffs (PRN *prn)
 	    if (pmod == NULL) continue;
 	    if ((k = var_is_in_model(v, pmod))) {
 		if (tex) {
-		    pprintf(prn, "& (%#.4g) ", pmod->sderr[k-1]);
+		    pprintf(prn, "& (%#.4g) ", pmod->sderr[k-2]);
 		} else {
 		    char numstr[32];
 
-		    sprintf(numstr, "%#.4g", pmod->sderr[k-1]);
+		    sprintf(numstr, "%#.4g", pmod->sderr[k-2]);
 		    gretl_fix_exponent(numstr);
 		    if (rtf) {
 			if (f == 1) pputs(prn, "\\qc \\cell ");

@@ -10,6 +10,9 @@ version 1.1.1
   info so it's accessible for genr, etc.
 - Fix bug in numbering of auto-generated lagged variables
 - Fix bug in parsing of gnuplot { ... } special command list
+- Fix bug in model table (wrong coefficient numbering)
+- Fix bug: when a file is dragged onto gretl, opening the
+  file failed if it has a space in its name
 
 07/23/03 version 1.1.0
 - Extend DATAINFO structure -- allow specification of "display

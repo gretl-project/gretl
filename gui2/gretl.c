@@ -207,7 +207,7 @@ static void win_help (void)
 {
     char hlpfile[MAXLEN];
 
-    sprintf(hlpfile, "hh.exe \"%s\\gretl.chm\"", paths.gretldir);
+    sprintf(hlpfile, "hh.exe \"%s\\%s\"", paths.gretldir, _("gretl.chm"));
     if (WinExec(hlpfile, SW_SHOWNORMAL) < 32) {
         errbox(_("Couldn't access help file"));
     }
@@ -2185,8 +2185,12 @@ drag_data_received  (GtkWidget *widget,
     if ((pos = haschar('\r', dfname)) > 0 || 
 	(pos = haschar('\n', dfname) > 0)) {
 	strncat(tmp, dfname + skip, pos - skip);
-    } else
+    } else {
 	strcat(tmp, dfname + skip);
+    }
+
+    /* handle spaces in filenames */
+    unescape_url(tmp);
 
 #ifdef G_OS_WIN32
     slash_convert(tmp, TO_BACKSLASH);

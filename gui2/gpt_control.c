@@ -198,6 +198,14 @@ static int get_png_bounds_info (png_bounds_t *bounds);
 
 /* ........................................................... */
 
+static void terminate_plot_positioning (png_plot_t *plot)
+{
+    plot->status_flags ^= PLOT_POSITIONING;
+    plot->labelpos_entry = NULL;
+    gdk_window_set_cursor(plot->canvas->window, NULL);
+    gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
+}
+
 static void close_plot_controller (GtkWidget *widget, gpointer data) 
 {
     GPT_SPEC *spec = (GPT_SPEC *) data;
@@ -213,11 +221,14 @@ static void close_plot_controller (GtkWidget *widget, gpointer data)
 #else
     if (plot != NULL) { /* PNG plot window open */
 	plot->status_flags ^= PLOT_HAS_CONTROLLER;
+	if (plot_doing_position(plot)) {
+	    terminate_plot_positioning(plot);
+	}
     } else {
 	free_plotspec(spec); 
     }
 #endif
-}     
+} 
 
 /* ........................................................... */
 
@@ -814,7 +825,7 @@ static void label_pos_click (GtkWidget *w, GPT_SPEC *spec)
 	plot->labelpos_entry = entry;
 	plot->status_flags |= PLOT_POSITIONING;
 	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
-			   _(" Click to define label coordinates"));
+			   _(" Click to set label position"));
     }
 }
 
@@ -2708,11 +2719,8 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 #endif
 	    gtk_entry_set_text(GTK_ENTRY(plot->labelpos_entry), posstr);
 	    g_free(posstr);
-	}
-	plot->status_flags ^= PLOT_POSITIONING;
-	plot->labelpos_entry = NULL;
-	gdk_window_set_cursor(plot->canvas->window, NULL);
-	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
+	} 
+	terminate_plot_positioning(plot);
 	return TRUE;
     }
 

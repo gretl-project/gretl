@@ -545,7 +545,6 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	gtk_text_buffer_get_iter_at_mark(buf, &iter,
 					 gtk_text_buffer_get_insert(buf));
 
-
 	if (gtk_text_iter_inside_word(&iter)) {
 	    GtkTextIter w_start, w_end;
 
@@ -563,10 +562,12 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	if (text != NULL && strlen(text) > 0) {
 	    char word[9];
+	    int cmdnum;
 
 	    *word = 0;
 	    strncat(word, text, 8);
-	    pos = pos_from_cmd(command_number(word));
+	    cmdnum = command_number(word);
+	    pos = pos_from_cmd(cmdnum);
 	} 
 	
 	real_do_help(pos, 1);
