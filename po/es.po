@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.1.0\n"
-"POT-Creation-Date: 2003-07-21 08:21-0400\n"
+"POT-Creation-Date: 2003-07-24 13:28-0400\n"
 "PO-Revision-Date: 2003-07-15 10:15+0200\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -66,8 +66,8 @@ msgstr "No ha sido posible acceder al enchufe ('plugin') de panel\n"
 #: lib/src/compare.c:957 lib/src/compare.c:1427 lib/src/compare.c:1534
 #: lib/src/estimate.c:2964 lib/src/estimate.c:2971 lib/src/generate.c:2803
 #: lib/src/generate.c:2842 lib/src/graphing.c:1613 lib/src/pvalues.c:598
-#: lib/src/system.c:194 lib/src/system.c:201 lib/src/var.c:965
-#: lib/src/var.c:972
+#: lib/src/system.c:194 lib/src/system.c:201 lib/src/var.c:968
+#: lib/src/var.c:975
 msgid "Couldn't load plugin function\n"
 msgstr "No ha sido posible cargar la función de enchufe ('plugin')\n"
 
@@ -3638,7 +3638,7 @@ msgstr ""
 msgid " 10%% in right tail %.2f\n"
 msgstr " 10%% en la cola derecha %.2f\n"
 
-#: lib/src/strutils.c:649 gui/console.c:32 gui/gretl.c:190 gui/gui_utils.c:58
+#: lib/src/strutils.c:647 gui/console.c:32 gui/gretl.c:190 gui/gui_utils.c:58
 #: gui/library.c:57 gui/library.c:70 gui/library.c:86 gui/library.c:99
 #: gui/library.c:112 gui/session.c:158 gui/session.c:169 gui2/console.c:32
 #: gui2/gretl.c:234 gui2/gui_utils.c:71 gui2/library.c:65 gui2/library.c:78
@@ -3647,7 +3647,7 @@ msgstr " 10%% en la cola derecha %.2f\n"
 msgid "/_File"
 msgstr "/_Archivo"
 
-#: lib/src/strutils.c:795
+#: lib/src/strutils.c:793
 msgid "out of memory in XML encoding"
 msgstr "fuera de memoria en la codificación XML"
 
@@ -3771,11 +3771,11 @@ msgstr "%s = primera diferencia de %s"
 msgid "%s = log difference of %s"
 msgstr "%s = diferencia logarítmica de %s"
 
-#: lib/src/var.c:282
+#: lib/src/var.c:285
 msgid "Not much point in a zero-order \"VAR\" surely?\n"
 msgstr "No muchos puntos en un \"VAR\" de orden cero ¿no?\n"
 
-#: lib/src/var.c:340
+#: lib/src/var.c:343
 #, c-format
 msgid ""
 "\n"
@@ -3786,7 +3786,7 @@ msgstr ""
 "Sistema VAR, orden del retardo %d\n"
 "\n"
 
-#: lib/src/var.c:387
+#: lib/src/var.c:390
 msgid ""
 "\n"
 "F-tests of zero restrictions:\n"
@@ -3796,32 +3796,32 @@ msgstr ""
 "Contrastes F de restricciones cero:\n"
 "\n"
 
-#: lib/src/var.c:400
+#: lib/src/var.c:403
 #, c-format
 msgid "All lags of %-8s "
 msgstr "Todos los retardos de %-8s "
 
-#: lib/src/var.c:407 lib/src/var.c:429
+#: lib/src/var.c:410 lib/src/var.c:432
 #, c-format
 msgid "p-value %f\n"
 msgstr "valor p %f\n"
 
-#: lib/src/var.c:410
+#: lib/src/var.c:413
 #, c-format
 msgid "All vars, lag %-6d "
 msgstr "Todas las variables, retardo %-6d "
 
-#: lib/src/var.c:501
+#: lib/src/var.c:504
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr "Etapa %d: contrastando la existencia de una raíz unitaria en %s\n"
 
-#: lib/src/var.c:517
+#: lib/src/var.c:520
 #, c-format
 msgid "Step %d: cointegration\n"
 msgstr "Etapa %d: cointegración\n"
 
-#: lib/src/var.c:539
+#: lib/src/var.c:542
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -3843,31 +3843,31 @@ msgstr ""
 "estadísticos D-W y F\n"
 "no pueden obtenerse a partir de las tablas estadísticas usuales.)\n"
 
-#: lib/src/var.c:632
+#: lib/src/var.c:635
 msgid "significance level unknown"
 msgstr "nivel de significación desconocido"
 
-#: lib/src/var.c:635
+#: lib/src/var.c:638
 msgid "significant at the 1 percent level"
 msgstr "significativo al nivel del 1 por ciento"
 
-#: lib/src/var.c:637
+#: lib/src/var.c:640
 msgid "significant at the 2.5 percent level"
 msgstr "significativo al nivel del 2.5 por ciento"
 
-#: lib/src/var.c:639
+#: lib/src/var.c:642
 msgid "significant at the 5 percent level"
 msgstr "significativo al nivel del 5 por ciento"
 
-#: lib/src/var.c:641
+#: lib/src/var.c:644
 msgid "significant at the 10 percent level"
 msgstr "significativo al nivel del 10 por ciento"
 
-#: lib/src/var.c:643
+#: lib/src/var.c:646
 msgid "not significant at the 10 percent level"
 msgstr "no significativo al nivel del 10 por ciento"
 
-#: lib/src/var.c:646
+#: lib/src/var.c:649
 #, c-format
 msgid ""
 "\n"
@@ -3888,31 +3888,31 @@ msgstr ""
 "   estadístico de contraste: t = %f, con tamaño muestral %d\n"
 "   %s\n"
 
-#: lib/src/var.c:701
+#: lib/src/var.c:704
 msgid "unknown pvalue"
 msgstr "valor p desconocido"
 
-#: lib/src/var.c:703
+#: lib/src/var.c:706
 msgid "pvalue < .01"
 msgstr "valor p < .01"
 
-#: lib/src/var.c:704
+#: lib/src/var.c:707
 msgid ".025 > pvalue > .01"
 msgstr ".025 > valor p > .01"
 
-#: lib/src/var.c:705
+#: lib/src/var.c:708
 msgid ".05 > pvalue > .025"
 msgstr ".05 > valor p > .025"
 
-#: lib/src/var.c:706
+#: lib/src/var.c:709
 msgid ".10 > pvalue > .05"
 msgstr ".10 > valor p > .05"
 
-#: lib/src/var.c:707
+#: lib/src/var.c:710
 msgid "pvalue > .10"
 msgstr "valor p > .10"
 
-#: lib/src/var.c:710
+#: lib/src/var.c:713
 #, c-format
 msgid ""
 "Augmented Dickey-Fuller test on %s:\n"
@@ -3921,7 +3921,7 @@ msgstr ""
 "Contraste aumentado de Dickey-Fuller sobre %s:\n"
 "   F(2, %d) = %f, con %s\n"
 
-#: lib/src/var.c:712
+#: lib/src/var.c:715
 #, c-format
 msgid ""
 "The null hypothesis is that %s has a unit root, i.e. the parameters on\n"
@@ -3930,35 +3930,35 @@ msgstr ""
 "La hipótesis nula es que %s tiene una raíz unitaria, es decir, que los\n"
 "parámetros de la tendencia temporal y %s son ambos cero.\n"
 
-#: lib/src/var.c:927
+#: lib/src/var.c:930
 msgid "Sample variance-covariance matrices for residuals"
 msgstr "Matrices de varianzas y covarianzas muestrales de los residuos"
 
-#: lib/src/var.c:932
+#: lib/src/var.c:935
 msgid "VAR system in first differences"
 msgstr "Sistema VAR en primeras diferencias"
 
-#: lib/src/var.c:936
+#: lib/src/var.c:939
 msgid "System with levels as dependent variable"
 msgstr "Sistema con variable dependiente en niveles"
 
-#: lib/src/var.c:940
+#: lib/src/var.c:943
 msgid "Cross-products"
 msgstr "Productos cruzados"
 
-#: lib/src/var.c:1078
+#: lib/src/var.c:1081
 msgid "Johansen test"
 msgstr "Contraste de Johansen"
 
-#: lib/src/var.c:1079
+#: lib/src/var.c:1082
 msgid "Number of equations"
 msgstr "Número de ecuaciones"
 
-#: lib/src/var.c:1080
+#: lib/src/var.c:1083
 msgid "Estimation period"
 msgstr "Periodo de estimación"
 
-#: lib/src/var.c:1105
+#: lib/src/var.c:1108
 msgid "Error checking for time trends"
 msgstr "Error al comprobar las tendencias temporales"
 
@@ -8249,7 +8249,7 @@ msgid "Out of memory copying model"
 msgstr "Fuera de memoria al copiar el modelo"
 
 #: gui/library.c:1307 gui/library.c:1934 gui/library.c:2077
-#: gui/objectsave.c:48 gui2/library.c:1309 gui2/library.c:1937
+#: gui/objectsave.c:83 gui2/library.c:1309 gui2/library.c:1937
 #: gui2/library.c:2080 gui2/objectsave.c:83
 #, c-format
 msgid "gretl: model %d"
@@ -8709,12 +8709,48 @@ msgstr "Reemplazar todo"
 msgid "String to replace was not found"
 msgstr "No se encontró la cadena a reemplazar."
 
-#: gui/objectsave.c:130 gui2/objectsave.c:161
+#: gui/objectsave.c:58 gui2/objectsave.c:58
+#, c-format
+msgid "%s: ess = %.8g\n"
+msgstr "%s: scr = %.8g\n"
+
+#: gui/objectsave.c:61 gui2/objectsave.c:61
+#, c-format
+msgid "%s: R^2 = %.8g\n"
+msgstr "%s: R^2 = %.8g\n"
+
+#: gui/objectsave.c:64 gui2/objectsave.c:64
+#, c-format
+msgid "%s: sigma = %.8g\n"
+msgstr "%s: sigma = %.8g\n"
+
+#: gui/objectsave.c:67 gui2/objectsave.c:67
+#, c-format
+msgid "%s: df = %d\n"
+msgstr "%s: gl =%d\n"
+
+#: gui/objectsave.c:70 gui2/objectsave.c:70
+#, c-format
+msgid "%s: no data for '%s'\n"
+msgstr "%s: no hay datos para '%s'\n"
+
+#: gui/objectsave.c:161 gui2/objectsave.c:161
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: no existe ese objeto\n"
 
-#: gui/objectsave.c:205 gui2/objectsave.c:259
+#: gui/objectsave.c:193 gui/objectsave.c:230 gui2/objectsave.c:193
+#: gui2/objectsave.c:230
+#, c-format
+msgid "%s saved\n"
+msgstr "%s guardado\n"
+
+#: gui/objectsave.c:228 gui2/objectsave.c:228
+#, c-format
+msgid "%s replaced\n"
+msgstr "%s reemplazado\n"
+
+#: gui/objectsave.c:259 gui2/objectsave.c:259
 #, c-format
 msgid "Freed %s\n"
 msgstr "Liberado %s\n"
@@ -9877,41 +9913,6 @@ msgstr "Para logit y probit, el $R^2$ es el pseudo-$R^2$ de McFadden"
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
 msgstr ""
 "Para logit y probit, el R{\\super 2} es el pseudo-R{\\super 2} de McFadden"
-
-#: gui2/objectsave.c:58
-#, c-format
-msgid "%s: ess = %.8g\n"
-msgstr "%s: scr = %.8g\n"
-
-#: gui2/objectsave.c:61
-#, c-format
-msgid "%s: R^2 = %.8g\n"
-msgstr "%s: R^2 = %.8g\n"
-
-#: gui2/objectsave.c:64
-#, c-format
-msgid "%s: sigma = %.8g\n"
-msgstr "%s: sigma = %.8g\n"
-
-#: gui2/objectsave.c:67
-#, c-format
-msgid "%s: df = %d\n"
-msgstr "%s: gl =%d\n"
-
-#: gui2/objectsave.c:70
-#, c-format
-msgid "%s: no data for '%s'\n"
-msgstr "%s: no hay datos para '%s'\n"
-
-#: gui2/objectsave.c:193 gui2/objectsave.c:230
-#, c-format
-msgid "%s saved\n"
-msgstr "%s guardado\n"
-
-#: gui2/objectsave.c:228
-#, c-format
-msgid "%s replaced\n"
-msgstr "%s reemplazado\n"
 
 #: gui2/selector.c:795
 msgid "Choose->"
