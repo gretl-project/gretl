@@ -59,7 +59,7 @@ while the link on the right leads to a search for the package on
 </tr>
 <tr bgcolor="#E0E0E0">
   <td><a href="ftp://ftp.gnome.org/pub/GNOME/stable/latest/sources/">gdk-pixbuf</a></td>
-  <td>recommended [<a href="#note1">1</a>]</td>
+  <td>required</td>
   <td>handle graphs in PNG format; make gnuplot graphs interactive</td>
   <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gdk-pixbuf">search</a></td>
 </tr>
@@ -79,7 +79,7 @@ while the link on the right leads to a search for the package on
 </tr>
 <tr bgcolor="#E0E0E0">
   <td><a href="ftp://ftp.gnome.org/pub/GNOME/sources/libole2/">libole2</a></td>
-  <td>optional [<a href="#note2">2</a>]</td>
+  <td>optional [<a href="#note1">1</a>]</td>
   <td>import data from MS Excel</td>
   <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=libole2">search</a></td>
 </tr>
@@ -93,13 +93,7 @@ while the link on the right leads to a search for the package on
 
 <h3>Notes</h3>
 
-<p><a name="note1">1.</a> If you are compiling gretl yourself, you can
-remove the dependency on gdk-pixbuf by giving the option
-<tt>--disable-png-graphics</tt> to <tt>configure</tt>.  You will
-still get graphs OK, but they will not be interactive.</p>
-
-
-<p><a name="note2">2.</a> The relevant part of the libole2 code is
+<p><a name="note1">1.</a> The relevant part of the libole2 code is
 included in the gretl source package, and if libole2 is not found on
 your system this code will be compiled into gretl.</p>
 
