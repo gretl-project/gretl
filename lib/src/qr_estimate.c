@@ -122,6 +122,9 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 				int fulln)
 {
     int t, i = 0;
+    int dwt = gretl_model_get_int(pmod, "wt_dummy");
+
+    if (dwt) dwt = pmod->nwt;
 
     pmod->ess = 0.0;
 
@@ -146,11 +149,15 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 	    } else {
 		double x = Z[pmod->list[1]][t];
 
-		x *= Z[pmod->nwt][t];
-		pmod->yhat[t] = y->val[i];
-		pmod->uhat[t] = x - y->val[i];
-		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
-		i++;
+		if (dwt && Z[dwt][t] == 0.0) {
+		    pmod->yhat[t] = NADBL;
+		} else {
+		    if (!dwt) x *= Z[pmod->nwt][t];
+		    pmod->yhat[t] = y->val[i];
+		    pmod->uhat[t] = x - y->val[i];
+		    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+		    i++;
+		}
 	    }
 	}
     } else {

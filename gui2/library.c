@@ -5631,8 +5631,10 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	(models[0])->ID = ++model_count;
-	if (!(cmd.opt & OPT_Q) && printmodel(models[0], datainfo, prn)) {
-	    (models[0])->errcode = E_NAN;
+	if (!(cmd.opt & OPT_Q)) {
+	    if (printmodel(models[0], datainfo, prn)) {
+		(models[0])->errcode = E_NAN;
+	    }
 	}
 	if (want_vcv(cmd.opt)) {
 	    outcovmx(models[0], datainfo, 0, prn); 
