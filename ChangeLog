@@ -1,8 +1,8 @@
-version 1.2.0
+12/14/2003 version 1.2.0
 - add "rename" command (rename a variable)
 - add "printf" command for generating formatted output
-- "delete" command: add the ability to delete a specific
-  variable, identified by its number
+- "delete" command: add the ability to delete specified
+  variables, identified by name or number
 - add "eval" command: syntax as in a "genr" formula; the
   result of calculation (or retrieval) is printed then
   discarded, not added to the data set as with genr

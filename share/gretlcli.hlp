@@ -1559,7 +1559,7 @@ Sets up and estimates (via OLS) a vector autoregression (VAR).  The first
 argument specifies the lag order, then follows the setup for the first
 equation.  Don't include lags among the elements of "varlist" -- they will be
 added automatically.  The semi-colon separates the stochastic variables, for
-which "order" lags will be included, from the deterministic terms, such as the
+which "order" lags will be included, from deterministic terms such as the
 constant, a time trend, and dummy variables.
 
 In fact, gretl is able to recognize the more common deterministic variables
@@ -1570,7 +1570,13 @@ must be put after the semi-colon.
 
 A separate regression will be run for each variable in varlist.  Output for
 each equation includes F-tests for zero restrictions on all lags of each of
-the variables and an F-test for the maximum lag.  
+the variables; an F-test for the significance of the maximum lag; forecast
+variance decompositions; and impulse response functions.
+
+The variance decompositions and impulse responses are based on the Cholesky
+decomposition of the contemporaneous covariance matrix, and in this context
+the order in which the (stochastic) variables are given matters.  The first
+variable in the list is assumed to be "most exogenous" within-period.  
 
 # 
 varlist

@@ -3664,17 +3664,13 @@
 	  <tbody>
 	    <row>
 	      <entry>Arguments:</entry>
-	      <entry><replaceable>order depvar indepvar</replaceable>
+	      <entry><replaceable>order varlist</replaceable> ; 
+		<replaceable>detlist</replaceable>
 	      </entry>
 	    </row>
 	    <row>
-	      <entry>Examples: </entry>
-	      <entry><command>var 4 x1 const time x2 x3</command>
-	      </entry>
-	    </row>
-	    <row>
-	      <entry></entry>
-	      <entry><command>var 3 1 0 2 3 4</command>
+	      <entry>Example: </entry>
+	      <entry><command>var 4 x1 x2 x3 ; const time</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -3682,18 +3678,39 @@
       </informaltable>
 
       <para>
-	Sets up and estimates (via OLS) a vector autoregression. The
-	first argument specifies the lag order, then follows the setup
-	for the first equation, as in the <command>ols</command>
-	command.  Don't include lags among the elements of the
-	<replaceable>indepvar</replaceable> list &mdash; they will be
-	added automatically. A regression will be run for each
-	variable in the list, excluding the constant, the time trend
-	and any dummy variables. Output for each equation includes
-	<emphasis>F</emphasis>-tests for zero restrictions on all lags
-	of each of the variables, and an <emphasis>F</emphasis>-test
-	for the maximum lag.
-      </para>
+	Sets up and estimates (using OLS) a vector autoregression
+	(VAR).  The first argument specifies the lag order, then
+	follows the setup for the first equation.  Don't include lags
+	among the elements of <replaceable>varlist</replaceable>
+	&mdash; they will be added automatically.  The semi-colon
+	separates the stochastic variables, for which
+	<replaceable>order</replaceable> lags will be included, from
+	deterministic terms in <replaceable>detlist</replaceable>, such
+	as the constant, a time trend, and dummy variables.</para>
+
+      <para>
+	In fact, gretl is able to recognize the more common
+	deterministic variables (constant, time trend, dummy variables
+	with no values other than 0 and 1) as such, so these do not
+	have to placed after the semi-colon.  More complex
+	deterministic variables (e.g. a time trend interacted with a
+	dummy variable) must be put after the semi-colon.</para>
+
+      <para>
+	A separate regression is run for each variable in varlist.
+	Output for each equation includes <emphasis>F</emphasis>-tests
+	for zero restrictions on all lags of each of the variables; an
+	<emphasis>F</emphasis>-test for the significance of the
+	maximum lag; forecast variance decompositions; and impulse
+	response functions.</para>
+
+      <para>
+	The variance decompositions and impulse responses are based on
+	the Cholesky decomposition of the contemporaneous covariance
+	matrix, and in this context the order in which the
+	(stochastic) variables are given matters.  The first variable
+	in the list is assumed to be <quote>most exogenous</quote>
+	within-period.</para>  
 
     </sect2>
 
