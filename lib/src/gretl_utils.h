@@ -85,6 +85,17 @@ enum model_selection_criteria {
                              p->sd0 > 10000.0)
 
 /**
+ * dated_seven_day_data:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a data set contains dated daily 
+ * (seven-day) time series data (1) or not (0).
+ */
+#define dated_seven_day_data(p) (p->time_series == TIME_SERIES \
+                                 && p->pd == 7 && \
+                                 p->sd0 > 10000.0)
+
+/**
  * dataset_is_panel:
  * @p: pointer to data information struct.
  *

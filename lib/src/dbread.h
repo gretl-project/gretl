@@ -78,11 +78,8 @@ int get_rats_data_by_series_number (const char *fname,
 				    SERIESINFO *sinfo, 
 				    double **Z);
 
-double *mon_to_quart (double *src, SERIESINFO *sinfo,
-		      int method);
-
-double *to_annual (double *src, SERIESINFO *sinfo,
-		   int method);
+double *compact_db_series (const double *src, SERIESINFO *sinfo,
+			   int target_pd, int method);
 
 int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
 		 PRN *prn);

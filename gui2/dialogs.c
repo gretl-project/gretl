@@ -1568,24 +1568,32 @@ void varinfo_dialog (int varnum, int full)
 
 	vset->compaction_menu = gtk_option_menu_new();
 	menu = gtk_menu_new();
+
+#ifndef OLD_GTK
 	for (i=COMPACT_NONE; i<COMPACT_MAX; i++) {
-#ifdef OLD_GTK
+	    tempwid = gtk_menu_item_new_with_label(_(comp_int_to_string(i)));
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tempwid);
+	}
+#else
+	for (i=COMPACT_NONE; i<COMPACT_MAX; i++) {
 	    child = gtk_menu_item_new_with_label(_(comp_int_to_string(i)));
 	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
 	    gtk_object_set_data(GTK_OBJECT(child), "option",
 				GINT_TO_POINTER(i));
-#else
-	    tempwid = gtk_menu_item_new_with_label(_(comp_int_to_string(i)));
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tempwid);
-#endif
 	}
+#endif
+
 	gtk_option_menu_set_menu(GTK_OPTION_MENU(vset->compaction_menu), menu);
 	gtk_option_menu_set_history(GTK_OPTION_MENU(vset->compaction_menu),
 				    COMPACT_METHOD(datainfo, varnum));    
 
 	hbox = gtk_hbox_new(FALSE, 0);
+#ifndef OLD_GTK
 	gtk_box_pack_start(GTK_BOX(hbox), 
 			   vset->compaction_menu, FALSE, FALSE, 0);
+#else
+	gtk_container_add(GTK_CONTAINER(hbox), vset->compaction_menu);
+#endif
 	gtk_widget_show_all(vset->compaction_menu); 
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
@@ -2295,7 +2303,13 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
 
 #endif /* old versus new gtk */
 
-/* .................................................................. */
+/* next section: material relating to the data compaction dialog */
+
+struct compaction_info {
+    int *target_pd;
+    GtkWidget *monday_button;
+    GtkWidget *sunday_button;
+};
 
 static void abort_compact (GtkWidget *w, gpointer data)
 {
@@ -2319,14 +2333,25 @@ static void set_compact_type (GtkWidget *w, gpointer data)
 
 static void set_target_pd (GtkWidget *w, gpointer data)
 {
-    gint *pd = (gint *) data;
+    struct compaction_info *cinfo = data;
 
     if (GTK_TOGGLE_BUTTON (w)->active) {
 #ifndef OLD_GTK
-        *pd = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+	*cinfo->target_pd = 
+	    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 #else
-        *pd = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
+	*cinfo->target_pd =
+	    GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
 #endif
+    }
+
+    if (cinfo->monday_button != NULL) {
+	gtk_widget_set_sensitive(cinfo->monday_button, 
+				 *cinfo->target_pd == 52);
+    }
+    if (cinfo->sunday_button != NULL) {
+	gtk_widget_set_sensitive(cinfo->sunday_button, 
+				 *cinfo->target_pd == 52);
     }
 }
 
@@ -2343,16 +2368,31 @@ static void set_mon_start (GtkWidget *w, gpointer data)
     }
 }
 
-static void pd_buttons (dialog_t *d, int *target_pd)
+static void pd_buttons (dialog_t *d, int spd, struct compaction_info *cinfo)
 {    
     GtkWidget *button;
     GtkWidget *vbox;
     GSList *group;
-    gint quart = 4, ann = 1;
+    gint f1, f2;
+    const char *f1str, *f2str;
+
+    if (spd == 12) {
+	f1 = 4;
+	f2 = 1;
+	f1str = N_("Quarterly");
+	f2str = N_("Annual");
+    } else if (spd == 5 || spd == 7) {
+	f1 = 52;
+	f2 = 12;
+	f1str = N_("Weekly");
+	f2str = N_("Monthly");
+    } else {
+	return;
+    }
 
     vbox = dialog_data_get_vbox(d);
 
-    button = gtk_radio_button_new_with_label(NULL, _("Quarterly"));
+    button = gtk_radio_button_new_with_label(NULL, _(f1str));
     gtk_box_pack_start (GTK_BOX(vbox), 
 			button, TRUE, TRUE, FALSE);
 
@@ -2360,37 +2400,38 @@ static void pd_buttons (dialog_t *d, int *target_pd)
 
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_target_pd), target_pd);
+		     G_CALLBACK(set_target_pd), cinfo);
     g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(quart));
+		      GINT_TO_POINTER(f1));
 #else
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		       GTK_SIGNAL_FUNC(set_target_pd), target_pd);
+		       GTK_SIGNAL_FUNC(set_target_pd), cinfo);
     gtk_object_set_data(GTK_OBJECT(button), "action", 
-			GINT_TO_POINTER(quart));
+			GINT_TO_POINTER(f1));
 #endif
     gtk_widget_show (button);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label (group, _("Annual"));
+    button = gtk_radio_button_new_with_label (group, _(f2str));
     gtk_box_pack_start (GTK_BOX(vbox), 
 			button, TRUE, TRUE, FALSE);
 
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_target_pd), target_pd);
+		     G_CALLBACK(set_target_pd), cinfo);
     g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(ann));
+		      GINT_TO_POINTER(f2));
 #else
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		       GTK_SIGNAL_FUNC(set_target_pd), target_pd);
+		       GTK_SIGNAL_FUNC(set_target_pd), cinfo);
     gtk_object_set_data(GTK_OBJECT(button), "action", 
-			GINT_TO_POINTER(ann));
+			GINT_TO_POINTER(f2));
 #endif
     gtk_widget_show (button);
 }
 
-static void monday_buttons (dialog_t *d, int *mon_start)
+static void monday_buttons (dialog_t *d, int *mon_start,
+			    struct compaction_info *cinfo)
 {
     GtkWidget *button;
     GtkWidget *vbox;
@@ -2399,10 +2440,10 @@ static void monday_buttons (dialog_t *d, int *mon_start)
     vbox = dialog_data_get_vbox(d);
 
     button = gtk_radio_button_new_with_label(NULL, _("Week starts on Monday"));
+    cinfo->monday_button = button;
     gtk_box_pack_start (GTK_BOX(vbox), 
 			button, TRUE, TRUE, FALSE);
-
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
 
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(button), "clicked",
@@ -2419,6 +2460,7 @@ static void monday_buttons (dialog_t *d, int *mon_start)
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label (group, _("Week starts on Sunday"));
+    cinfo->sunday_button = button;
     gtk_box_pack_start (GTK_BOX(vbox), 
 			button, TRUE, TRUE, FALSE);
 
@@ -2564,10 +2606,15 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     int show_monday_buttons = 0;
     int show_method_buttons = 0;
     int methods_set = NO_METHODS_SET;
+    struct compaction_info cinfo;
     gchar *labelstr = NULL;
 
     d = dialog_data_new(NULL, 0, _("gretl: compact data"));
     if (d == NULL) return;
+
+    cinfo.target_pd = target_pd;
+    cinfo.monday_button = NULL;
+    cinfo.sunday_button = NULL;
 
     if (mon_start != NULL) {
 	*mon_start = 1;
@@ -2590,7 +2637,12 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	    show_pd_buttons = 1;
 	} else if (spd == 5 || spd == 7) {
 	    /* source data are daily */
-	    labelstr = g_strdup(_("Compact daily data to weekly"));
+	    if (dated_daily_data(datainfo)) {
+		labelstr = g_strdup(_("Compact daily data to:"));
+		show_pd_buttons = 1;
+	    } else {
+		labelstr = g_strdup(_("Compact daily data to weekly"));
+	    }
 	    *target_pd = 52;
 	    if (mon_start != NULL) {
 		show_monday_buttons = 1;
@@ -2617,17 +2669,18 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
     show_method_buttons = (methods_set != ALL_METHODS_SET);
 
-    /* 7-day daily data: give choice of when the week starts */
-    if (show_monday_buttons) {
-	monday_buttons(d, mon_start);
-	if (show_pd_buttons || show_method_buttons) {
+    /* monthly data: give choice of going to quarterly or annual
+       dated daily: choice of going to weekly or monthly */
+    if (show_pd_buttons) {
+	pd_buttons(d, spd, &cinfo);
+	if (show_monday_buttons || show_method_buttons) {
 	    dialog_hsep(d);
 	}	
     }
 
-    /* monthly data: give choice of going to quarterly or annual */
-    if (show_pd_buttons) {
-	pd_buttons(d, target_pd);
+    /* 7-day daily data: give choice of when the week starts */
+    if (show_monday_buttons) {
+	monday_buttons(d, mon_start, &cinfo);
 	if (show_method_buttons) {
 	    dialog_hsep(d);
 	}	

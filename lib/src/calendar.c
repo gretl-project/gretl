@@ -229,25 +229,9 @@ double get_dec_date (const char *date)
     return dyr + frac;
 }
 
-/**
- * get_day_of_week:
- * @date: calendar representation of date, [YY]YY/MM/DD
- * 
- * Returns: day of week as integer, Sunday = 0.
- */
-
-int get_day_of_week (const char *date)
+static int day_of_week_from_ymd (int yr, int mo, int day)
 {
-    int yr, mo, day;
     int c, d;
-
-    if (sscanf(date, "%d/%d/%d", &yr, &mo, &day) != 3) {
-	return -1;
-    }
-
-    if (yr < 100) {
-	yr += (yr < 50)? 2000 : 1900;
-    }
 
     /* Uspensky and Heaslet, Elementary Number Theory (1939) */
 
@@ -264,6 +248,120 @@ int get_day_of_week (const char *date)
     return ((day % 7) + ((int) floor(2.6 * mo - 0.2) % 7) + 
 	    (d % 7) + ((int) floor(d / 4.0) % 7) + ((int) floor(c / 4.0) % 7)
 	    - ((2 * c) % 7)) % 7; 
+}
+
+/**
+ * get_day_of_week:
+ * @date: calendar representation of date, [YY]YY/MM/DD
+ * 
+ * Returns: day of week as integer, Sunday = 0.
+ */
+
+int get_day_of_week (const char *date)
+{
+    int yr, mo, day;
+
+    if (sscanf(date, "%d/%d/%d", &yr, &mo, &day) != 3) {
+	return -1;
+    }
+
+    if (yr < 100) {
+	yr += (yr < 50)? 2000 : 1900;
+    }
+
+    return day_of_week_from_ymd(yr, mo, day);
+}
+
+/**
+ * day_starts_month:
+ * @d: day of month, 1-based
+ * @m: month number, 1-based
+ * @y: 4-digit year
+ * @wkdays: number of days in week (7 or 5)
+ * 
+ * Returns: 1 if the day is the "first day of the month", 
+ * allowance made for the possibility of a 5-day week, else 0.
+ */
+
+int day_starts_month (int d, int m, int y, int wkdays)
+{
+    int ret = 0;
+
+    if (wkdays == 7) {
+	ret = (d == 1);
+    } else {
+	/* 5-day week: check for first weekday */
+	int i, wd;
+
+	for (i=1; i<4; i++) {
+	   wd = day_of_week_from_ymd(y, m, i); 
+	   if (wd != 0 && wd != 6) break;
+	}
+	ret = (d == i);
+    }
+    
+    return ret;
+}
+
+/**
+ * day_ends_month:
+ * @d: day of month, 1-based
+ * @m: month number, 1-based
+ * @y: 4-digit year
+ * @wkdays: number of days in week (7 or 5)
+ * 
+ * Returns: 1 if the day is the "last day of the month", 
+ * allowance made for the possibility of a 5-day week, else 0.
+ */
+
+int day_ends_month (int d, int m, int y, int wkdays)
+{
+    int ret = 0;
+    int dm = days_in_month[leap_year(y)][m];
+
+    if (wkdays == 7) {
+	ret = (d == dm);
+    } else {
+	/* 5-day week: check for last weekday */
+	int i, wd;
+
+	for (i=dm; i>0; i--) {
+	    wd = day_of_week_from_ymd(y, m, i);
+	    if (wd != 0 && wd != 6) break;
+	}
+	ret = (d == i);
+    }
+
+    return ret;
+}
+
+/**
+ * get_days_in_month:
+ * @mon: month number, 1-based
+ * @yr: 4-digit year
+ * @wkdays: number of days in week (7 or 5)
+ * 
+ * Returns: the number of days in the month, allowance made 
+ * for the possibility of a 5-day week.
+ */
+
+int get_days_in_month (int mon, int yr, int wkdays)
+{
+    int ret = 0;
+    int dm = days_in_month[leap_year(yr)][mon];
+
+    if (wkdays == 7) {
+	ret = dm;
+    } else {
+	int i, wd;
+
+	for (i=0; i<dm; i++) {
+	    wd = day_of_week_from_ymd(yr, mon, i + 1);
+	    if (wd != 0 && wd != 6) ret++;
+	}
+    }
+
+    return ret;
 }
 
 /* The following functions have nothing to do with the "cal" program,

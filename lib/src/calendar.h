@@ -29,6 +29,12 @@ long get_epoch_day (const char *date);
 
 int get_day_of_week (const char *date);
 
+int day_starts_month (int d, int m, int y, int wkdays);
+
+int day_ends_month (int d, int m, int y, int wkdays);
+
+int get_days_in_month (int mon, int yr, int wkdays);
+
 int daily_obs_number (const char *date, const DATAINFO *pdinfo);
 
 void daily_date_string (char *str, int t, const DATAINFO *pdinfo);

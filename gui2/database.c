@@ -294,12 +294,8 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 		}
 		return;
 	    }
-	    if (sinfo->pd == 12 && datainfo->pd == 4) {
-		xvec = mon_to_quart(dbZ[1], sinfo, compact_method);
-	    }
-	    else if (datainfo->pd == 1) {
-		xvec = to_annual(dbZ[1], sinfo, compact_method);
-	    }
+	    xvec = compact_db_series(dbZ[1], sinfo, datainfo->pd, 
+				     compact_method);
 	} else {  
 	    /* series does not need compacting */
 	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
@@ -1871,10 +1867,15 @@ void do_compact_data_set (void)
 {
     int default_method = COMPACT_AVG;
     int err, newpd = 0, monstart = 1;
+    int *pmonstart = NULL;
 
     if (maybe_restore_full_data(COMPACT)) return;
 
-    data_compact_dialog(mdata->w, datainfo->pd, &newpd, &monstart, &default_method);
+    if (dated_seven_day_data(datainfo)) {
+	pmonstart = &monstart;
+    }
+
+    data_compact_dialog(mdata->w, datainfo->pd, &newpd, pmonstart, &default_method);
     if (default_method == COMPACT_NONE) {
 	/* the user cancelled */
 	return;
