@@ -336,10 +336,12 @@ void _minmax (int t1, int t2, const double zx[],
 
     *min = zx[t1];
     *max = zx[t1];
+
     if (t2-t1+1 == 0) {
         *min = *max = NADBL;
         return;
     }
+
     for (t=t1; t<=t2; t++) {
         xt = zx[t];
 	if (!(na(xt))) {

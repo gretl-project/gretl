@@ -80,6 +80,8 @@ enum transformations {
     T_LDIFF, 
     T_MEAN, 
     T_SD, 
+    T_MIN,
+    T_MAX,
     T_SORT, 
     T_INT, 
     T_LN, 
@@ -113,6 +115,7 @@ enum retrieve {
     R_DF,
     R_LNL,
     R_TRSQ,
+    R_PD,
     R_NUMERIC,
     R_MATH,
     R_VARNAME,
@@ -134,6 +137,8 @@ static char *math[] = {
     "ldiff", 
     "mean", 
     "sd", 
+    "min",
+    "max",
     "sort", 
     "int", 
     "ln", 
@@ -169,7 +174,8 @@ static char operators[] = {
 
 #define SCALAR_SCOPE(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
                          t == T_CORR || t == T_COV || \
-                         t == T_VAR || t == T_MEDIAN)
+                         t == T_VAR || t == T_MEDIAN || t == T_MIN || \
+                         t == T_MAX)
 
 /* ...................................................... */
 
@@ -1290,6 +1296,8 @@ static int domath (double *xvec, const double *mvec, int nt,
     case T_SD:
     case T_VAR:
     case T_MEDIAN:
+    case T_MIN:
+    case T_MAX:
     case T_SORT:
 	x = malloc((t2 - t1 + 1) * sizeof *x);
 	if (x == NULL) return E_ALLOC;
@@ -1308,13 +1316,21 @@ static int domath (double *xvec, const double *mvec, int nt,
 	    xx = _esl_mean(0, i, x);
 	    xx *= (i + 1);
 	}
-	else if (nt == T_SD)
+	else if (nt == T_SD) {
 	    xx = _esl_stddev(0, i, x);
-	else if (nt == T_VAR)
+	}
+	else if (nt == T_VAR) {
 	    xx = _esl_variance(0, i, x);
+	}
 	else if (nt == T_MEDIAN) {
 	    qsort(x, i+1, sizeof(double), _compare_doubles);
 	    xx = esl_median(x, i+1);
+	}
+	else if (nt == T_MIN || nt == T_MAX) {
+	    double min, max;
+
+	    _minmax(0, i, x, &min, &max);
+	    xx = (nt == T_MIN)? min : max;
 	}
 
 	if (nt == T_SORT) {
@@ -1551,6 +1567,10 @@ static int getxvec (char *s, double *xvec,
 	    xvec[t] = (double) (pdinfo->t2 - pdinfo->t1 + 1);
 	break;
 
+    case R_PD:
+	for (t=0; t<n; t++) xvec[t] = (double) pdinfo->pd;
+	break;
+
     case R_T:
 	for (t=0; t<n; t++) xvec[t] = (double) pmod->nobs;
 	break;	
@@ -1763,6 +1783,8 @@ static int strtype (char *ss, const DATAINFO *pdinfo)
 	    return R_LNL;
         if (strcmp(ss, "$nrsq") == 0 || strcmp(ss, "$trsq") == 0) 
 	    return R_TRSQ;
+	if (strcmp(ss, "$pd") == 0)
+	    return R_PD;
     }
 
     if (_isnumber(ss)) {
