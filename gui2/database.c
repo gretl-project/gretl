@@ -606,7 +606,7 @@ static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
 /* ........................................................... */
 
-void display_db_series_list (int action, char *fname, char *buf)
+static int display_db_series_list (int action, char *fname, char *buf)
 {
     GtkWidget *listbox, *closebutton;
     GtkWidget *main_vbox;
@@ -616,7 +616,7 @@ void display_db_series_list (int action, char *fname, char *buf)
     int err = 0;
 
     dbwin = mymalloc(sizeof *dbwin);
-    if (dbwin == NULL) return;
+    if (dbwin == NULL) return 1;
 
     windata_init(dbwin);
     dbwin->role = action;
@@ -694,9 +694,13 @@ void display_db_series_list (int action, char *fname, char *buf)
 	err = rats_populate_series_list(dbwin);
     } 
 
-    if (!err) {
+    if (err) {
+	gtk_widget_destroy(dbwin->w);
+    } else {
 	gtk_widget_show_all(dbwin->w); 
     }
+
+    return err;
 }
 
 /* ........................................................... */
@@ -1259,6 +1263,7 @@ void open_named_db_list (char *dbname)
     } else {
 	fclose(fp);
 	display_db_series_list(action, dbname, NULL);
+	/* FIXME: check for error */
     } 
 }
 
@@ -1342,6 +1347,7 @@ void open_named_remote_db_list (char *dbname)
 	errbox(getbuf);
     } else {
 	display_db_series_list(REMOTE_SERIES, dbname, getbuf);
+	/* check for error */
     }
 
     free(getbuf);
@@ -1379,6 +1385,7 @@ void open_remote_db_list (GtkWidget *w, gpointer data)
     } else {
 	update_statusline(win, "OK");
 	display_db_series_list(REMOTE_SERIES, fname, getbuf);
+	/* check for error */
     }
 
 #ifndef OLD_GTK
