@@ -473,6 +473,17 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
+static void maybe_insert_varname (char *s)
+{
+    int v = mdata->active_var;
+
+    if (datainfo->vector[v] && isdummy(Z[v], 0, datainfo->n)) {
+	strcpy(s, datainfo->varname[v]);
+    }
+}
+
+/* ........................................................... */
+
 void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 {
     char title[64], query[MAXLABEL], defstr[MAXLEN];
@@ -495,7 +506,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
     case SMPLDUM:
 	strcpy(title, _("gretl: define sample"));
 	strcpy(query, _("Name of dummy variable to use:"));
-	strcpy(defstr, datainfo->varname[mdata->active_var]);
+	maybe_insert_varname(defstr);
 	okfunc = do_sampledum;
 	varclick = VARCLICK_INSERT_NAME;
 	break;
