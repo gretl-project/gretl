@@ -137,7 +137,7 @@ int yes_no_dialog (char *title, char *message, int cancel)
     else return -1;
 }
 
-#endif /* G_OS_WIN32 */
+#else /* G_OS_WIN32 */
 
 struct yes_no_data {
     GtkWidget *dialog;
@@ -221,6 +221,7 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
    return ret;
 }
 
+#endif
 #endif /* plain GTK */
 
 /* ........................................................... */

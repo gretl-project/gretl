@@ -20,6 +20,7 @@
 /*  guiprint.c - RTF and LaTeX generation for gretl */ 
 
 #include "gretl.h"
+
 #ifdef G_OS_WIN32
 # include <windows.h>
 #endif
@@ -489,7 +490,6 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
     pprintf(prn, "}\n");
 }
 
-
 /* ....................................................... */
 
 static void r_print_aicetc (const MODEL *pmod, print_t *prn)
@@ -634,8 +634,6 @@ static void printfrtf (const double zz, print_t *prn, int endrow)
 	    pprintf(prn, "\\qr %s\\cell");
     }	
 }
-
-/* FIXME */
 
 #define SUMM_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                    "\\cellx1600\\cellx3200\\cellx4800\\cellx6400" \
@@ -814,6 +812,8 @@ static void outxx (const double xx, print_t *prn)
     else pprintf(prn, "$%.3f$ & ", xx);
 }
 
+/* ......................................................... */ 
+
 static void rtf_outxx (const double xx, print_t *prn)
 {
     if (na(xx)) pprintf(prn, "undefined\\cell ");
@@ -832,7 +832,7 @@ void rtfprint_corrmat (CORRMAT *corr,
 {
     register int i, j;
     int lo, ljnf, nf, li2, p, k, index, ij2;
-    char date1[9], date2[9], tmp[16];
+    char date1[9], date2[9];
     enum { FIELDS = 5 };
 
     ntodate(date1, corr->t1, pdinfo);
@@ -885,7 +885,6 @@ void rtfprint_corrmat (CORRMAT *corr,
 	pprintf(prn, "\\intbl \\intbl \\row\n");
     }
     pprintf(prn, "}}\n");
-    
 }
 
 /* ......................................................... */ 
@@ -956,7 +955,6 @@ void texprint_corrmat (CORRMAT *corr,
 	pprintf(prn, "\\\\\n");
     }
     pprintf(prn, "\\end{tabular}\n\\end{center}\n");
-    
 }
 
 /* .................................................................. */
