@@ -47,6 +47,7 @@ HDRS = libgretl.h commands.h estimate.h utils.h errors.h pvalues.h \
 	nonparam.h discrete.h subsample.h calendar.h internal.h
 OBJS = $(SRCS:.c=.o)
 LOBJS = $(SRCS:.c=.lo)
+CEPHES_OBJ = $(wildcard ../cephes/*.lo)
 
 LIBTOOL = $(topsrc)/libtool
 
@@ -58,7 +59,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 	$(COMPILE) $<
 
 $(LIBGRETL): $(OBJS) $(LOBJS)
-	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) ../cephes/libprob.la \
+	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(CEPHES_OBJ) \
 	-rpath $(prefix)/lib $(LIBS) -version-info 15:0:0
 
 .PHONY: 

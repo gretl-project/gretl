@@ -9,15 +9,11 @@ CFLAGS = @CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
 
-ifeq ($(INSTALL_PROGRAM),)
-  INSTALL_PROGRAM = $(INSTALL) -m 755
-endif
 ifeq ($(INSTALL_DATA),)
   INSTALL_DATA = $(INSTALL) -m 644
 endif
 
-# Installation directories
-libdir = $(prefix)/lib
+# Installation directory
 includedir = $(prefix)/include/gretl
 
 INCS = mconf.h
@@ -30,29 +26,20 @@ OBJS = $(SRCS:.c=.o)
 LOBJS = $(SRCS:.c=.lo)
 
 LIBTOOL = $(topsrc)/libtool
-LIBPROB = libprob.la
 
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 .c.o:        
 	$(COMPILE) $<
 
-$(LIBPROB): $(OBJS) $(LOBJS)
-	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) \
-	-rpath $(prefix)/lib -version-info 0:0:0
+$(LOBJS): $(OBJS)
 
-install: $(LIBPROB) install-data 
-	$(LIBTOOL) $(INSTALL_PROGRAM) $< $(libdir)/$<
-
-install-strip: $(LIBPROB) install-data
-	$(LIBTOOL) $(INSTALL_PROGRAM) -s $< $(libdir)/$<
-
-install-data: installdirs
+install: installdirs
 	$(INSTALL_DATA) libprob.h $(includedir)
 
 installdirs:
 	$(topsrc)/tools/mkinstalldirs $(libdir) $(includedir)
 
 clean:
-	rm -f *.o *.lo $(LIBPROB)
-	rm -rf .libs
+	rm -f *.o *.lo 
+
