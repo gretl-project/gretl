@@ -1440,10 +1440,10 @@ static struct winfilter get_gp_filter 313,7750
 static struct winfilter get_filter 338,8467
 static char *make_winfilter 402,11106
 void file_selector 428,11640
-static void filesel_callback 570,15221
-static void extra_get_filter 694,18510
-gtk_file_selection_glob_populate 711,18842
-void file_selector 744,19716
+static void filesel_callback 572,15228
+static void extra_get_filter 696,18517
+gtk_file_selection_glob_populate 713,18849
+void file_selector 746,19723
 
 gui2/fileselect.h,246
 #define IS_DAT_ACTION(IS_DAT_ACTION3,32
@@ -1536,7 +1536,7 @@ int gnuplot_show_png 1826,50318
 gui2/gpt_control.h,29
 #define GPT_CONTROL_H21,791
 
-gui2/gretl.c,3767
+gui2/gretl.c,3768
 GtkWidget *toolbar_box 84,2955
 static GtkWidget *datalabel;86,3016
 static GtkWidget *main_vbox;87,3045
@@ -1579,80 +1579,80 @@ int want_toolbar 150,4876
 char dbproxy[151,4901
 char Rcommand[154,4938
 char editor[155,4974
-char calculator[156,5011
-char viewdvi[157,5049
-char editor[159,5092
-char calculator[160,5123
-char viewdvi[161,5158
-char Rcommand[163,5207
-char Rcommand[166,5290
-char tramo[171,5362
-char tramodir[172,5392
-char x12a[176,5445
-char x12adir[177,5473
-static void spreadsheet_edit 180,5508
-static void manual_update_query 185,5607
-static void gnome_help 192,5725
-static void win_help 205,5957
-GtkItemFactoryEntry data_items[220,6329
-static void make_userdir 562,23917
-static void gui_usage 579,24372
-static void noalloc 588,24680
-static void get_runfile 594,24813
-static void fix_dbname 618,25345
-static void destroy 634,25659
-void dummy_output_handler 642,25789
-void nls_init 652,26049
-int main 672,26502
-void refresh_data 927,32775
-void main_menubar_state 935,32935
-void graphmenu_state 956,33601
-void panel_menu_state 966,33842
-void session_menu_state 976,34101
-void restore_sample_state 987,34379
-static void populate_list 997,34638
-static void sort_varlist 1043,36019
-void populate_varlist 1054,36348
-void clear_varlist 1061,36493
-void clear_sample_label 1071,36739
-void set_sample_label 1079,36967
-#define NAME_BUFFER_LEN 1149,38882
-static void try_to_get_windows_font 1151,38910
-static float get_gui_scale 1213,40355
-static GtkWidget *make_main_window 1238,40849
-static void set_up_main_menu 1344,43732
-static void mdata_edit 1359,44242
-static gint var_popup_click 1396,45273
-static void build_var_popup 1434,46606
-static gint selection_popup_click 1471,47487
-static void build_selection_popup 1486,47983
-static void check_for_extra_data 1512,48613
-void restore_sample 1565,50182
-BOOL CreateChildProcess 1589,50687
-void gretl_fork 1619,51510
-static char *slash_convert 1646,51975
-static void startR 1659,52119
-static void Rcleanup 1759,54332
-static void show_calc 1780,54825
-static void show_edit 1791,55028
-static void open_textbook_data 1802,55223
-void show_toolbar 1815,55487
-static void netscape_open 1825,55686
-static void gretl_website 1840,56014
-static void gretl_pdf 1850,56217
-static void xy_graph 1860,56439
-static void go_session 1868,56586
-static GtkWidget *image_button_new 1878,56780
-static void make_toolbar 1895,57279
-void set_wm_icon 1998,59641
-drag_data_received 2009,59885
-special_selection_get 2059,61126
-static void clip_init 2100,62083
-static void auto_store 2122,62781
-static int old_windows 2143,63261
-static int unmangle 2167,63881
-static void count_selections 2190,64408
-static gboolean main_popup_handler 2196,64546
+char calculator[156,5056
+char viewdvi[157,5094
+char editor[159,5137
+char calculator[160,5168
+char viewdvi[161,5203
+char Rcommand[163,5252
+char Rcommand[166,5335
+char tramo[171,5407
+char tramodir[172,5437
+char x12a[176,5490
+char x12adir[177,5518
+static void spreadsheet_edit 180,5553
+static void manual_update_query 185,5652
+static void gnome_help 192,5770
+static void win_help 205,6002
+GtkItemFactoryEntry data_items[220,6374
+static void make_userdir 562,23961
+static void gui_usage 579,24416
+static void noalloc 588,24724
+static void get_runfile 594,24857
+static void fix_dbname 618,25389
+static void destroy 634,25703
+void dummy_output_handler 642,25833
+void nls_init 652,26093
+int main 672,26546
+void refresh_data 927,32819
+void main_menubar_state 935,32979
+void graphmenu_state 956,33645
+void panel_menu_state 966,33886
+void session_menu_state 976,34145
+void restore_sample_state 987,34423
+static void populate_list 997,34682
+static void sort_varlist 1043,36063
+void populate_varlist 1054,36392
+void clear_varlist 1061,36537
+void clear_sample_label 1071,36783
+void set_sample_label 1079,37011
+#define NAME_BUFFER_LEN 1149,38926
+static void try_to_get_windows_font 1151,38954
+static float get_gui_scale 1213,40399
+static GtkWidget *make_main_window 1238,40893
+static void set_up_main_menu 1344,43776
+static void mdata_edit 1359,44286
+static gint var_popup_click 1396,45317
+static void build_var_popup 1434,46650
+static gint selection_popup_click 1471,47531
+static void build_selection_popup 1486,48027
+static void check_for_extra_data 1512,48657
+void restore_sample 1565,50226
+int create_child_process 1589,50731
+void gretl_fork 1619,51556
+static char *slash_convert 1646,52021
+static void startR 1659,52165
+static void Rcleanup 1759,54378
+static void show_calc 1780,54871
+static void show_edit 1791,55074
+static void open_textbook_data 1802,55269
+void show_toolbar 1815,55533
+static void netscape_open 1825,55732
+static void gretl_website 1840,56060
+static void gretl_pdf 1850,56263
+static void xy_graph 1860,56485
+static void go_session 1868,56632
+static GtkWidget *image_button_new 1878,56826
+static void make_toolbar 1895,57325
+void set_wm_icon 1998,59687
+drag_data_received 2009,59931
+special_selection_get 2059,61172
+static void clip_init 2100,62129
+static void auto_store 2122,62827
+static int old_windows 2143,63307
+static int unmangle 2167,63927
+static void count_selections 2190,64454
+static gboolean main_popup_handler 2196,64592
 
 gui2/gretl.h,3807
 #define GRETL_H23,833
@@ -1912,47 +1912,46 @@ gui2/gtkfontselhack.h,1947
   struct _GtkFontSelectionHackDialogClass_GtkFontSelectionHackDialogClass133,4936
   GtkType	   gtk_font_selection_hack_get_type	151,5473
 
-gui2/guiprint.c,1287
+gui2/guiprint.c,1258
 static char *dosify_buffer 31,971
 int win_copy_text 64,1497
 static void time_string 127,2669
 void winprint 149,3141
 void winprint 272,6315
 print_image_from_pixbuf 361,8476
-void gnome_print_graph 383,9105
-#define STATS_ROW 448,10768
-static void printfrtf 453,10982
-#define SUMM_ROW 474,11433
-#define VAR_SUMM_ROW 478,11605
-void rtfprint_summary 483,11815
-static void printftex 564,13929
-void texprint_summary 585,14375
-static void tex_outxx 670,16872
-static void rtf_outxx 678,17089
-static void rtf_corr_row 686,17322
-static void rtf_table_pad 710,17930
-rtfprint_matrix 718,18102
-    enum { FIELDS 725,18315
-void rtfprint_corrmat 798,20116
-texprint_matrix 809,20387
-    enum { FIELDS 816,20611
-void texprint_corrmat 899,22602
-void tex_fit_resid_head 910,22871
-void rtf_fit_resid_head 935,23636
-texprint_fit_resid 960,24338
-#define FR_ROW 1011,25678
-void rtfprint_fit_resid 1015,25841
-void texprint_fcast_with_errs 1065,27060
-#define FC_ROW 1121,28812
-void rtfprint_fcast_with_errs 1125,28975
-texprint_coeff_interval 1169,30139
-void texprint_confints 1200,30962
-rtfprint_coeff_interval 1239,32034
-#define CF_ROW 1259,32629
-void rtfprint_confints 1262,32761
-void texprint_vcv 1293,33503
-void rtfprint_vcv 1303,33782
-void augment_copy_menu 1313,34060
+void gnome_print_graph 382,9104
+#define STATS_ROW 447,10767
+static void printfrtf 452,10981
+#define SUMM_ROW 473,11435
+#define VAR_SUMM_ROW 477,11607
+void rtfprint_summary 482,11817
+static void printftex 563,13931
+void texprint_summary 586,14394
+static void tex_outxx 671,16891
+static void rtf_outxx 682,17116
+static void rtf_corr_row 693,17358
+static void rtf_table_pad 717,17966
+rtfprint_matrix 725,18138
+    enum { FIELDS 732,18351
+void rtfprint_corrmat 813,20304
+texprint_matrix 824,20575
+void texprint_corrmat 934,23223
+void tex_fit_resid_head 945,23492
+void rtf_fit_resid_head 970,24257
+texprint_fit_resid 995,24966
+#define FR_ROW 1045,26267
+void rtfprint_fit_resid 1049,26430
+void texprint_fcast_with_errs 1101,27707
+#define FC_ROW 1157,29459
+void rtfprint_fcast_with_errs 1161,29622
+texprint_coeff_interval 1205,30788
+void texprint_confints 1236,31611
+rtfprint_coeff_interval 1275,32683
+#define CF_ROW 1295,33280
+void rtfprint_confints 1298,33412
+void texprint_vcv 1329,34154
+void rtfprint_vcv 1339,34433
+void augment_copy_menu 1349,34711
 
 gui2/guiprint.h,26
 #define GUIPRINT_H23,850
@@ -2107,7 +2106,7 @@ void text_find_callback 708,19686
 gui2/helpfiles.h,25
 #define HELPFILES_H2,20
 
-gui2/library.c,4264
+gui2/library.c,4293
 int echo_off;61,1683
 int replay;62,1737
 GtkItemFactoryEntry log_items[64,1818
@@ -2210,35 +2209,36 @@ void display_data 2771,69532
 void display_selected 2800,70278
 void display_fit_resid 2868,71991
 void do_graph_var 2892,72616
-void do_boxplot_var 2913,73175
-void do_scatters 2926,73540
-void do_box_graph_trad 2946,74078
-void do_dummy_graph 2968,74759
-void do_graph_from_selector 2999,75607
-void plot_from_selection 3047,76790
-void display_var 3077,77599
-void do_run_script 3106,78176
-void do_open_script 3155,79374
-void do_new_script 3186,80172
-void do_open_csv_box 3201,80595
-static int dat_suffix 3231,81245
-int do_store 3248,81533
-void win_show_error 3339,83636
-static int get_latex_path 3358,84020
-static int winfork 3368,84192
-void view_latex 3404,84925
-void do_save_tex 3474,86609
-static char *bufgets 3500,87302
-int execute_script 3536,88065
-static int ready_for_command 3684,92012
-static int script_model_test 3704,92459
-int gui_exec_line 3749,93823
-void view_script_default 4589,116817
-struct search_replace search_replace4599,117057
-static void replace_string_callback 4609,117263
-static void trash_replace 4621,117614
-static void replace_string_dialog 4631,117846
-void text_replace 4701,120365
+void ts_plot_var 2914,73177
+void do_boxplot_var 2921,73349
+void do_scatters 2934,73714
+void do_box_graph_trad 2954,74252
+void do_dummy_graph 2976,74933
+void do_graph_from_selector 3007,75781
+void plot_from_selection 3055,76964
+void display_var 3085,77773
+void do_run_script 3114,78350
+void do_open_script 3163,79548
+void do_new_script 3194,80346
+void do_open_csv_box 3209,80769
+static int dat_suffix 3239,81419
+int do_store 3256,81707
+void win_show_error 3347,83810
+static int get_latex_path 3366,84194
+static int winfork 3376,84366
+void view_latex 3412,85099
+void do_save_tex 3482,86783
+static char *bufgets 3508,87476
+int execute_script 3544,88239
+static int ready_for_command 3692,92186
+static int script_model_test 3712,92633
+int gui_exec_line 3757,93997
+void view_script_default 4597,116991
+struct search_replace search_replace4607,117231
+static void replace_string_callback 4617,117437
+static void trash_replace 4629,117788
+static void replace_string_dialog 4639,118020
+void text_replace 4709,120539
 
 gui2/library.h,25
 #define LIBRARY_H23,814
@@ -2315,16 +2315,16 @@ int win_buf_to_clipboard 63,2179
 static int buf_to_clipboard 90,2670
 void free_series_view 110,3072
 static int series_view_allocate 121,3278
-static int compare_points 156,4040
-static void series_view_print 164,4250
-static void series_view_sort 204,5396
-series_view_graph 222,5795
-scalar_to_clipboard 234,6060
-void series_view_connect 257,6518
-void series_view_format_cancel 276,6871
-void series_view_get_figures 282,6976
-set_series_float_format 289,7152
-series_view_format_dialog 301,7426
+static void series_view_print 156,4040
+static int compare_points 196,5186
+static void series_view_sort 204,5418
+series_view_graph 222,5837
+scalar_to_clipboard 234,6102
+void series_view_connect 257,6560
+void series_view_format_cancel 276,6913
+void series_view_get_figures 282,7018
+set_series_float_format 289,7194
+series_view_format_dialog 301,7468
 
 gui2/series_view.h,29
 #define SERIES_VIEW_H21,791

@@ -57,8 +57,8 @@ print "Name: \"{app}\\..\\gnuplot\\demo\"\n";
 print "Name: \"{app}\\lib\"\n";
 print "Name: \"{app}\\lib\\gtk-2.0\"\n";
 print "Name: \"{app}\\lib\\gtk-2.0\"\n";
-print "Name: \"{app}\\lib\\gtk-2.0\\2.0.0\"\n";
-print "Name: \"{app}\\lib\\gtk-2.0\\2.0.0\\loaders\"\n";
+print "Name: \"{app}\\lib\\gtk-2.0\\2.2.0\"\n";
+print "Name: \"{app}\\lib\\gtk-2.0\\2.2.0\\loaders\"\n";
 print "Name: \"{app}\\lib\\pango\"\n";
 print "Name: \"{app}\\lib\\pango\\1.0.0\"\n";
 print "Name: \"{app}\\lib\\pango\\1.0.0\\modules\"\n";
@@ -70,8 +70,9 @@ print "Name: \"{app}\\lib\\locale\\es\\LC_MESSAGES\"\n";
 print "Name: \"{app}\\lib\\locale\\fr\"\n";
 print "Name: \"{app}\\lib\\locale\\fr\\LC_MESSAGES\"\n";
 
-# pango module catalog
+# module catalogs
 print "Name: \"{app}\\etc\"\n";
+print "Name: \"{app}\\etc\\gtk-2.0\"\n";
 print "Name: \"{app}\\etc\\pango\"\n";
 
 print "\n[Files]\n";

@@ -152,7 +152,7 @@ char dbproxy[21];
 
 #ifdef G_OS_WIN32
 char Rcommand[MAXSTR] = "RGui.exe";
-char editor[MAXSTR] = "winword.exe";
+char editor[MAXSTR] = "c:\\Program Files\\Microsoft Office\\Office\\winword.exe";
 char calculator[MAXSTR] = "calc.exe";
 char viewdvi[MAXSTR] = "windvi.exe";
 #else
@@ -1586,15 +1586,15 @@ void restore_sample (gpointer data, int verbose, GtkWidget *w)
 
 #ifdef G_OS_WIN32
 
-BOOL CreateChildProcess (char *prog) 
+int create_child_process (char *prog) 
 { 
-    PROCESS_INFORMATION piProcInfo; 
-    STARTUPINFO siStartInfo; 
+    PROCESS_INFORMATION proc_info; 
+    STARTUPINFO start_info; 
     int ret;
  
-    ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
-    ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
-    siStartInfo.cb = sizeof(STARTUPINFO); 
+    ZeroMemory(&proc_info, sizeof(PROCESS_INFORMATION));
+    ZeroMemory(&start_info, sizeof(STARTUPINFO));
+    start_info.cb = sizeof(STARTUPINFO); 
  
     ret = CreateProcess(NULL, 
 			prog,          /* command line */
@@ -1604,8 +1604,8 @@ BOOL CreateChildProcess (char *prog)
 			0,             /* creation flags  */
 			NULL,          /* use parent's environment  */
 			NULL,          /* use parent's current directory  */
-			&siStartInfo,  /* STARTUPINFO pointer */ 
-			&piProcInfo);  /* receives PROCESS_INFORMATION  */
+			&start_info,   /* STARTUPINFO pointer */ 
+			&proc_info);   /* receives PROCESS_INFORMATION  */
 
     if (ret == 0) {
 	win_show_error();
@@ -1716,7 +1716,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     fclose(fp);
 
 #ifdef G_OS_WIN32
-    CreateChildProcess(Rcommand);
+    create_child_process(Rcommand);
 #else
     s0 = mymalloc(64);
     s1 = mymalloc(32);
@@ -1780,7 +1780,7 @@ static void Rcleanup (void)
 static void show_calc (void)
 {
 #ifdef G_OS_WIN32
-    CreateChildProcess(calculator);
+    create_child_process(calculator);
 #else
     gretl_fork(calculator, NULL);
 #endif 
@@ -1791,7 +1791,7 @@ static void show_calc (void)
 static void show_edit (void)
 {
 #ifdef G_OS_WIN32
-    CreateChildProcess(editor);
+    create_child_process(editor);
 #else
     gretl_fork(editor, NULL);
 #endif 
