@@ -2367,3 +2367,46 @@ void set_gnuplot_pallette (int i, const char *colstr)
 	fprintf(stderr, "Invalid color spec, '%s'\n", colstr);
     }
 }
+
+#if 0
+
+char *octalize (unsigned char *s)
+{
+    int len = strlen(s) + 1;
+    char *p = s;
+    int c;
+    char *targ;
+
+    while (*p) {
+	c = *p;
+	if (c > 127) {
+	    len += 3;
+	}
+	p++;
+    }
+
+    targ = malloc(len);
+    if (targ == NULL) {
+	return NULL;
+    }
+
+    p = targ;
+    while (*s) {
+	c = *s;
+	if (c > 127) {
+	    *p = '\\';
+	    sprintf(p + 1, "%03o", *s);
+	    p += 3;
+	} else {
+	    *p = *s;
+	}
+	p++;
+	s++;
+    }
+
+    *p = '\0';
+
+    return targ;
+}
+
+#endif    
