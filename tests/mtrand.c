@@ -21,7 +21,7 @@ int main (int argc, char *argv[])
 	gretl_rand_set_seed((unsigned) seed);
     }
 
-    fp = fopen("gretl.32", "wb");
+    fp = fopen("gretl_output.32", "wb");
 
     for (i=0; i<NINTS; i++) {
 	r = gretl_rand_int();

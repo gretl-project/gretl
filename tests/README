@@ -76,7 +76,7 @@ pseudo-random unsigned integers generated via gretl's PRNG, and a file
 named "gretl_rand.txt" containing a summary of the analysis.  (You
 should also see the results zipping by on standard output, probably
 too fast to read.)  Basically, you are looking for p-values from the
-various tests uniformly distributed on (0, 1).  If you should see
+various tests uniformly distributed on [0,1).  If you should see
 blocks of p-values of 0.0 or 1.0, something is seriously wrong.
 
 Doing "make clean" in here will delete the big file of random numbers,

@@ -4,12 +4,12 @@
 */
 
 #include "f2c.h"
+#include <string.h>
 
 /* Table of constant values */
 
 static integer c__1 = 1;
 static integer c__9 = 9;
-static integer c__15 = 15;
 static real c_b135 = (float)2.;
 static integer c__2 = 2;
 static integer c__20 = 20;
@@ -34,13 +34,11 @@ static doublereal c_b1030 = .5;
 static doublereal c_b1033 = .33333;
 
 /* ************top of file */
-/* Main program */ MAIN__()
+/* Main program */ 
+int MAIN__()
 {
     /* Format strings */
     static char fmt_766[] = "(a78)";
-    static char fmt_845[] = "(a25)";
-    static char fmt_158[] = "(a)";
-    static char fmt_876[] = "(15i1)";
     static char fmt_472[] = "(\002 Results of DIEHARD battery of tests sent \
 to file \002,a15)";
 
@@ -70,36 +68,8 @@ to file \002,a15)";
     static cilist io___1 = { 0, 4, 0, fmt_766, 0 };
     static cilist io___4 = { 0, 4, 0, fmt_766, 0 };
     static cilist io___6 = { 0, 6, 0, fmt_766, 0 };
-    static cilist io___7 = { 0, 6, 0, 0, 0 };
-    static cilist io___8 = { 0, 5, 0, fmt_845, 0 };
-    static cilist io___10 = { 0, 6, 0, 0, 0 };
-    static cilist io___11 = { 0, 5, 0, fmt_845, 0 };
     static cilist io___13 = { 0, 6, 0, fmt_766, 0 };
     static cilist io___14 = { 0, 3, 0, fmt_766, 0 };
-    static cilist io___15 = { 0, 6, 0, 0, 0 };
-    static cilist io___16 = { 0, 6, 0, 0, 0 };
-    static cilist io___17 = { 0, 6, 0, 0, 0 };
-    static cilist io___18 = { 0, 6, 0, 0, 0 };
-    static cilist io___19 = { 0, 6, 0, 0, 0 };
-    static cilist io___20 = { 0, 6, 0, 0, 0 };
-    static cilist io___21 = { 0, 6, 0, 0, 0 };
-    static cilist io___22 = { 0, 6, 0, 0, 0 };
-    static cilist io___23 = { 0, 6, 0, 0, 0 };
-    static cilist io___24 = { 0, 6, 0, 0, 0 };
-    static cilist io___25 = { 0, 6, 0, 0, 0 };
-    static cilist io___26 = { 0, 6, 0, 0, 0 };
-    static cilist io___27 = { 0, 6, 0, 0, 0 };
-    static cilist io___28 = { 0, 6, 0, 0, 0 };
-    static cilist io___29 = { 0, 6, 0, 0, 0 };
-    static cilist io___30 = { 0, 6, 0, 0, 0 };
-    static cilist io___31 = { 0, 6, 0, 0, 0 };
-    static cilist io___32 = { 0, 6, 0, 0, 0 };
-    static cilist io___33 = { 0, 6, 0, 0, 0 };
-    static cilist io___34 = { 0, 6, 0, 0, 0 };
-    static cilist io___35 = { 0, 6, 0, 0, 0 };
-    static cilist io___36 = { 0, 6, 0, 0, 0 };
-    static cilist io___37 = { 0, 6, 0, fmt_158, 0 };
-    static cilist io___38 = { 0, 5, 0, fmt_876, 0 };
     static cilist io___40 = { 0, 6, 0, fmt_472, 0 };
     static cilist io___41 = { 0, 3, 0, fmt_472, 0 };
 
@@ -142,8 +112,9 @@ to file \002,a15)";
     do_fio(&c__1, filename, 25L);
     e_rsfe();
 #else
-    o__1.ofnm = "gretl.32";
-    strcpy(filename, "gretl.32");
+    o__1.ofnmlen = 15;
+    o__1.ofnm = "gretl_output.32";
+    strcpy(filename, "gretl_output.32");
 #endif
     o__1.oerr = 0;
     o__1.ounit = 1;
@@ -316,6 +287,7 @@ umns:", 55L);
     s_wsfe(&io___41);
     do_fio(&c__1, fileout, 25L);
     e_wsfe();
+    return 0;
 } /* MAIN__ */
 
 /* Subroutine */ int cdbitst_(filename, filename_len)
@@ -3499,7 +3471,7 @@ ftnlen filename_len;
     static char fmt_2345[] = "(\002           Results for \002,a15)";
     static char fmt_432[] = "(17x,\002  For a sample of size\002,i4,\002:   \
   mean   \002)";
-    static char fmt_331[] = "(10x,a16,\002 using bits \002,i2,\002 to \002,i\
+    static char fmt_331[] = "(10x,a15,\002 using bits \002,i2,\002 to \002,i\
 2,f8.3,f10.6)";
     static char fmt_652[] = "(\002   The 9 p-values were\002,/,f15.6,4f10.6,\
 /,f15.6,4f10.6)";
