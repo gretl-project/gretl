@@ -317,6 +317,7 @@ print_system_overidentification_test (const gretl_equation_system *sys,
 	pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), llu);
 	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
 		df, X2, _("with p-value"), chisq(X2, df));
+	pputc(prn, '\n');
     }
 
     else if ((systype == THREESLS || systype == SUR) && df > 0) {
@@ -329,6 +330,7 @@ print_system_overidentification_test (const gretl_equation_system *sys,
 	pprintf(prn, "\n%s:\n", _("Hansen-Sargan over-identification test"));
 	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
 		df, X2, _("with p-value"), chisq(X2, df));
+	pputc(prn, '\n');
     }
 }
 
@@ -648,15 +650,20 @@ double sur_ll (gretl_equation_system *sys, const gretl_matrix *uhat,
 	       int m, int T)
 {
     gretl_matrix *sigma;
-    double ll = 0.0;
+    double ldet, ll;
 
     sigma = gretl_matrix_alloc(m, m);
     if (sigma == NULL) return NADBL;
 
     gls_sigma_from_uhat(sigma, uhat, m, T);
+    ldet = gretl_vcv_log_determinant(sigma);
 
-    ll -= (m * T / 2.0) * (LN_2_PI + 1.0);
-    ll -= (T / 2.0) * gretl_vcv_log_determinant(sigma);
+    if (na(ldet)) {
+	ll = NADBL;
+    } else {
+	ll = -(m * T / 2.0) * (LN_2_PI + 1.0);
+	ll -= (T / 2.0) * ldet;
+    }
 
     system_set_ll(sys, ll);
 
