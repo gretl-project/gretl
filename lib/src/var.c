@@ -23,6 +23,8 @@
 #include "var.h"  
 #include "internal.h"
 
+/* #define VAR_DEBUG */
+
 struct var_resids {
     int *levels_list;
     double **uhat;
@@ -152,11 +154,24 @@ static int gretl_var_do_error_decomp (GRETL_VAR *var)
     if (tmp == NULL) err = E_ALLOC;
 
     /* form e'e */
-    if (!err && gretl_matmult_mod (var->E, GRETL_MOD_TRANSPOSE,
-				   var->E, GRETL_MOD_NONE,
-				   tmp)) {
+    if (!err && gretl_matrix_multiply_mod (var->E, GRETL_MOD_TRANSPOSE,
+					   var->E, GRETL_MOD_NONE,
+					   tmp)) {
 	err = 1;
     }
+
+    /* divide by df to get sigma-hat */
+    gretl_matrix_divide_by_scalar(tmp, (double) (var->models[0])->dfd);
+
+#ifdef VAR_DEBUG
+    if (1) {
+	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+
+	fprintf(stderr, "Sigma-hat from VAR system\n");
+	gretl_matrix_print(tmp, prn);
+	gretl_print_destroy(prn);
+    }
+#endif
 
     /* lower-triangularize and decompose */
     if (!err) {
@@ -191,20 +206,16 @@ static int gretl_var_do_error_decomp (GRETL_VAR *var)
 /* ......................................................  */
 
 int 
-gretl_var_print_impulse_response (GRETL_VAR *var, int targ, int shock,
+gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, DATAINFO *pdinfo, 
 				  PRN *prn)
 {
-    int t, v1, v2;
+    int i, t, v1, v2;
     int rows = var->neqns * var->order;
     gretl_matrix *tmp;
     double r;
     int err = 0;
 
-    if (targ >= var->neqns) {
-	fprintf(stderr, "Response variable out of bounds\n");
-	return 1;
-    }
     if (shock >= var->neqns) {
 	fprintf(stderr, "Shock variable out of bounds\n");
 	return 1;
@@ -213,22 +224,38 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int targ, int shock,
     tmp = gretl_matrix_alloc(rows, var->neqns);
     if (tmp == NULL) err = E_ALLOC;
 
-    v1 = (var->models[targ])->list[1];
-    v2 = (var->models[shock])->list[1];
+    v1 = (var->models[shock])->list[1];
 
-    pprintf(prn, "Response of %s to a unit shock in %s\n\n",
-	    pdinfo->varname[v1], pdinfo->varname[v2]);
+    /* FIXME: formatting below not very good; also need to
+       allow for too many variables to fit on one line */
+
+    /* TODO: add standard errors alongside point estimates */
+
+    pprintf(prn, "Responses to a one-standard error shock in %s\n\n",
+	    pdinfo->varname[v1]);
+
+    pputs(prn, "period ");
+    for (i=0; i<var->neqns; i++) {
+	v2 = (var->models[i])->list[1];
+	pprintf(prn, "  %8s  ", pdinfo->varname[v2]);
+    }
+    pputs(prn, "\n\n");
 
     for (t=0; t<periods && !err; t++) {
+	pprintf(prn, "  %-3d  ", t);
 	if (t == 0) {
-	    err = gretl_matmult(var->A, var->C, tmp);
+	    err = gretl_matrix_copy_values(tmp, var->C);
 	} else {
-	    err = gretl_matmult(var->A, tmp, tmp);
+	    err = gretl_matrix_multiply(var->A, tmp, tmp);
 	}
 	if (err) break;
-	r = gretl_matrix_get(tmp, targ, shock);
-	pprintf(prn, "period %d: %g\n", t, r);
+	for (i=0; i<var->neqns; i++) {
+	    r = gretl_matrix_get(tmp, i, shock);
+	    pprintf(prn, "%#12.5g ", r);
+	}
+	pputs(prn, "\n");
     }
+    pputs(prn, "\n");
 
     if (tmp != NULL) gretl_matrix_free(tmp);
 
@@ -691,7 +718,6 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		}
 		pprintf(prn, _("All lags of %-8s "), 
 			pdinfo->varname[depvars[j]]);
-		/*  printlist(shortlist); */
 		var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
 		F = ((var_model.ess - essu) / order) / (essu / dfd);
 		clear_model(&var_model, pdinfo);
@@ -740,14 +766,21 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     /* clear the var structure? */
     if (flags & VAR_IMPULSE_RESPONSES) {
 	if (!err) {
+#ifdef VAR_DEBUG
 	    pputs(prn, "var->A\n");
-	    simple_print_gretl_matrix(var->A, prn);
+	    gretl_matrix_print(var->A, prn);
+#endif
 	    err = gretl_var_do_error_decomp(var);
 	    if (!err) {
+#ifdef VAR_DEBUG
 		pputs(prn, "var->C\n");
-		simple_print_gretl_matrix(var->C, prn);
-		gretl_var_print_impulse_response(var, 0, 1, 10,
-						 pdinfo, prn);
+		gretl_matrix_print(var->C, prn);
+#endif
+		for (i=0; i<var->neqns; i++) {
+		    /* FIXME: make horizon configurable */
+		    gretl_var_print_impulse_response(var, i, 10,
+						     pdinfo, prn);
+		}
 	    } else {
 		fprintf(stderr, "failed: gretl_var_do_error_decomp\n");
 	    }

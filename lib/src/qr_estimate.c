@@ -373,15 +373,15 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
     }
 
     /* make "g" into gamma-hat */    
-    gretl_matmult_mod(Q, GRETL_MOD_TRANSPOSE,
-		      y, GRETL_MOD_NONE, g);
+    gretl_matrix_multiply_mod(Q, GRETL_MOD_TRANSPOSE,
+			      y, GRETL_MOD_NONE, g);
 
     /* OLS coefficients */
-    gretl_matmult(R, g, b);
+    gretl_matrix_multiply(R, g, b);
     save_coefficients(pmod, b, n);
 
     /* write vector of fitted values into y */
-    gretl_matmult(Q, g, y);    
+    gretl_matrix_multiply(Q, g, y);    
 
     /* get vector of residuals and SSR */
     get_resids_and_SSR(pmod, Z, y, ypy, fulln);
@@ -395,9 +395,9 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
 
     /* create (X'X)' */
     xpxinv = gretl_matrix_alloc(n, n);
-    gretl_matmult_mod(R, GRETL_MOD_NONE,
-		      R, GRETL_MOD_TRANSPOSE,
-		      xpxinv);
+    gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
+			      R, GRETL_MOD_TRANSPOSE,
+			      xpxinv);
 
     save_standard_errors(pmod, xpxinv, n);
 

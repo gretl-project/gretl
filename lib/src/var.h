@@ -60,7 +60,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		   int verbose, PRN *prn);
 
 int 
-gretl_var_print_impulse_response (GRETL_VAR *var, int targ, int shock,
+gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, DATAINFO *pdinfo, 
 				  PRN *prn);
 

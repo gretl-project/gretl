@@ -65,20 +65,29 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
 
 void gretl_matrix_zero (gretl_matrix *m);
 
+void 
+gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x);
+
+void 
+gretl_matrix_divide_by_scalar (gretl_matrix *m, double x);
+
 void gretl_matrix_free (gretl_matrix *m);
 
 double *gretl_matrix_steal_data (gretl_matrix *m);
+
+int gretl_matrix_copy_values (gretl_matrix *targ, 
+			      const gretl_matrix *src);
 
 double gretl_matrix_get (const gretl_matrix *m, int i, int j);
 
 int gretl_matrix_set (gretl_matrix *m, int i, int j, double x);
 
-int gretl_matmult_mod (const gretl_matrix *a, int aflag,
-		       const gretl_matrix *b, int bflag,
-		       gretl_matrix *c);
+int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
+			       const gretl_matrix *b, int bflag,
+			       gretl_matrix *c);
 
-int gretl_matmult (const gretl_matrix *a, const gretl_matrix *b,
-		   gretl_matrix *c);
+int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
+			   gretl_matrix *c);
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 
@@ -91,6 +100,6 @@ double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 
-void simple_print_gretl_matrix (gretl_matrix *X, PRN *prn);
+void gretl_matrix_print (gretl_matrix *X, PRN *prn);
 
 #endif /* GRETL_MATRIX_H */

@@ -133,6 +133,69 @@ void gretl_matrix_zero (gretl_matrix *m)
 
 /* ....................................................... */
 
+void 
+gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x)
+{
+    int i, n;
+
+    if (m == NULL || m->val == NULL) return;
+
+    if (m->packed) {
+	n = (m->rows * m->rows + m->rows) / 2;
+    } else {
+	n = m->rows * m->cols;
+    }
+    
+    for (i=0; i<n; i++) m->val[i] *= x;
+}
+
+/* ....................................................... */
+
+void 
+gretl_matrix_divide_by_scalar (gretl_matrix *m, double x)
+{
+    int i, n;
+
+    if (m == NULL || m->val == NULL) return;
+
+    if (m->packed) {
+	n = (m->rows * m->rows + m->rows) / 2;
+    } else {
+	n = m->rows * m->cols;
+    }
+    
+    for (i=0; i<n; i++) m->val[i] /= x;
+}
+
+/* ....................................................... */
+
+int gretl_matrix_copy_values (gretl_matrix *targ, 
+			      const gretl_matrix *src)
+{
+    int i, n;
+
+    if (targ->rows != src->rows || targ->cols != src->cols) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    if (targ->packed != src->packed) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    if (src->packed) {
+	n = (src->rows * src->rows + src->rows) / 2;
+    } else {
+	n = src->rows * src->cols;
+    }
+    
+    for (i=0; i<n; i++) targ->val[i] = src->val[i];
+
+    return GRETL_MATRIX_OK;
+}
+
+
+/* ....................................................... */
+
 double *gretl_matrix_steal_data (gretl_matrix *m)
 {
     double *vals = NULL;
@@ -197,7 +260,7 @@ int gretl_matrix_set (gretl_matrix *m, int i, int j, double x)
     return 0;
 }
 
-void simple_print_gretl_matrix (gretl_matrix *m, PRN *prn)
+void gretl_matrix_print (gretl_matrix *m, PRN *prn)
 {
     int i, j;
 
@@ -259,9 +322,9 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
     return m;
 }
 
-int gretl_matmult_mod (const gretl_matrix *a, int aflag,
-		       const gretl_matrix *b, int bflag,
-		       gretl_matrix *c)
+int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
+			       const gretl_matrix *b, int bflag,
+			       gretl_matrix *c)
 {
     int i, j, k;
     double x, y;
@@ -277,14 +340,14 @@ int gretl_matmult_mod (const gretl_matrix *a, int aflag,
     rcols = (btr)? b->rows : b->cols;
 
     if (lcols != rrows) {
-	fprintf(stderr, "gretl_matmult_mod: matrices not conformable\n");
+	fprintf(stderr, "gretl_matrix_mulitply_mod: matrices not conformable\n");
 	fprintf(stderr, "left-hand cols = %d, right-hand rows = %d\n",
 		lcols, rrows);	
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
     if (c->rows != lrows || c->cols != rcols) {
-	fprintf(stderr, "gretl_matmult_mod: matrices not conformable\n");
+	fprintf(stderr, "gretl_matrix_mulitply_mod: matrices not conformable\n");
 	fprintf(stderr, "Product cols = %d, left-hand cols = %d;\n"
 		"Product rows = %d, right-hand rows = %d\n",
 		c->cols, lcols, c->rows, rrows);
@@ -298,7 +361,8 @@ int gretl_matmult_mod (const gretl_matrix *a, int aflag,
 		x = (atr)? a->val[mdxtr(a,i,k)] : a->val[mdx(a,i,k)];
 		y = (btr)? b->val[mdxtr(b,k,j)] : b->val[mdx(b,k,j)];
 		if (mdx(b,k,j) >= bmax) {
-		    fprintf(stderr, "gretl_matmult_mod: Bmax = %d exceeded\n", 
+		    fprintf(stderr, 
+			    "gretl_matrix_mulitply_mod: Bmax = %d exceeded\n", 
 			    bmax);
 		    return 1;
 		}
@@ -310,12 +374,12 @@ int gretl_matmult_mod (const gretl_matrix *a, int aflag,
     return GRETL_MATRIX_OK;
 }
 
-int gretl_matmult (const gretl_matrix *a, const gretl_matrix *b,
-		   gretl_matrix *c)
+int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
+			   gretl_matrix *c)
 {
-    return gretl_matmult_mod(a, GRETL_MOD_NONE,
-			     b, GRETL_MOD_NONE,
-			     c);
+    return gretl_matrix_multiply_mod(a, GRETL_MOD_NONE,
+				     b, GRETL_MOD_NONE,
+				     c);
 }
 
 int gretl_matrix_cholesky_decomp (gretl_matrix *a)

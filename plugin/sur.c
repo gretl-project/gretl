@@ -289,9 +289,9 @@ int sur (gretl_equation_system *sys,
 	    simple_matrix_print(Xi, k, k, prn);	    
 #endif
 	    Y = (i == j)? Xi : Xj;
-	    gretl_matmult_mod ((const gretl_matrix *) Xi, 
-			       GRETL_MOD_TRANSPOSE,
-			       Y, GRETL_MOD_NONE, M);
+	    gretl_matrix_multiply_mod ((const gretl_matrix *) Xi, 
+				       GRETL_MOD_TRANSPOSE,
+				       Y, GRETL_MOD_NONE, M);
 #ifdef LDEBUG
 	    pprintf(prn, "M:\n");
 	    simple_matrix_print(M, k, k, prn);	    

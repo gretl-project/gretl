@@ -144,15 +144,15 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 
     /* calculate Suu^{-1} Suv */
     gretl_invert_general_matrix(Suu);
-    gretl_matmult(Suu, Suv, TmpR);
+    gretl_matrix_multiply(Suu, Suv, TmpR);
 
     /* calculate Svv^{-1} Suv' */
     gretl_invert_general_matrix(Svv);
-    gretl_matmult_mod(Svv, GRETL_MOD_NONE,
-		      Suv, GRETL_MOD_TRANSPOSE, 
-		      TmpL);
+    gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
+			      Suv, GRETL_MOD_TRANSPOSE, 
+			      TmpL);
 
-    gretl_matmult(TmpL, TmpR, M);
+    gretl_matrix_multiply(TmpL, TmpR, M);
 
     eigvals = gretl_general_matrix_eigenvals(M);
 
