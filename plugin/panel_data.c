@@ -544,7 +544,7 @@ int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo,
 
 /* .................................................................. */
 
-static int hausman_test (hausman_t *haus, PRN *prn)
+static int do_hausman_test (hausman_t *haus, PRN *prn)
 {
 #ifdef notdef
     int i, ns = haus->ns;
@@ -628,7 +628,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    theta = 1.0 - sqrt(var2 / (T * var1));
 	    random_effects(pmod, *pZ, pdinfo, groupZ, theta, nunits, T, 
 			   &haus, prn);
-	    hausman_test(&haus, prn);
+	    do_hausman_test(&haus, prn);
 	}
 	free_Z(groupZ, ginfo);
 	clear_datainfo(ginfo, 1);

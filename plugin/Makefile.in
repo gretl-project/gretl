@@ -65,7 +65,6 @@ panel_data.o: ../lib/src/interact.h ../lib/src/graphing.h
 panel_data.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 panel_data.o: ../lib/src/discrete.h ../lib/src/subsample.h
 panel_data.o: ../gui/gretltypes.h
-progress_bar.o: progress.h
 stats_tables.o: ../lib/src/libgretl.h ../lib/src/commands.h
 stats_tables.o: ../lib/src/errors.h ../lib/src/estimate.h
 stats_tables.o: ../lib/src/generate.h ../lib/src/utils.h ../lib/src/compare.h
