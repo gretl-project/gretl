@@ -394,17 +394,27 @@ void edit_dialog (char *diagtxt, char *infotxt, char *deftext,
 			GTK_SIGNAL_FUNC (destroy_dialog_data), 
 			cancel_d);
 
-    tempwid = gtk_label_new (infotxt);
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
-			tempwid, TRUE, TRUE, FALSE);
-    gtk_widget_show (tempwid);
-
     if (cmdcode == NLS) {
 	int hsize = 64;
+	gchar *lbl;
+
+	lbl = g_strdup_printf("%s\n%s", infotxt,
+			      _("(Please refer to Help for guidance)"));
+	tempwid = gtk_label_new (lbl);
+	gtk_label_set_justify(GTK_LABEL(tempwid), GTK_JUSTIFY_CENTER);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			    tempwid, TRUE, TRUE, 10);
+	gtk_widget_show (tempwid);
+	g_free(lbl);
 
 	d->edit = text_edit_new (&hsize);
 	dialog_table_setup(d, hsize);	
     } else {
+	tempwid = gtk_label_new (infotxt);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			    tempwid, TRUE, TRUE, FALSE);
+	gtk_widget_show (tempwid);
+
 	d->edit = cancel_d->edit = gtk_entry_new ();
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			    d->edit, TRUE, TRUE, FALSE);

@@ -1190,7 +1190,7 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
     sprintf(tmp, _("5%% critical value (two-tailed) = "
 	    "%.4f for n = %d"), rhocrit95(corr->n), corr->n);
     center_line(tmp, prn, 1);
-    text_print_matrix(corr->xpx, corr->list, CORR, pdinfo, pause, prn);
+    text_print_matrix(corr->xpx, corr->list, NULL, pdinfo, pause, prn);
 }
 
 /**

@@ -541,7 +541,7 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause,
     tmplist[0] = nbetas;
 
     if (pmod->vcv == NULL && makevcv(pmod)) return E_ALLOC;
-    text_print_matrix(pmod->vcv, tmplist, pmod->ci, pdinfo, pause, prn);  
+    text_print_matrix(pmod->vcv, tmplist, pmod, pdinfo, pause, prn);  
 
     free(tmplist);
     return 0;
@@ -626,7 +626,7 @@ int page_break (int n, int *lineno, int quit_option)
 /* ........................................................ */
 
 void text_print_matrix (const double *rr, const int *list, 
-			int ci, const DATAINFO *pdinfo, 
+			MODEL *pmod, const DATAINFO *pdinfo, 
 			int pause, PRN *prn)
      /*  Given a single dimensional array, which represents a
 	 symmetric matrix, prints out an upper triangular matrix
@@ -642,12 +642,14 @@ void text_print_matrix (const double *rr, const int *list,
      */
 {
     register int i, j;
-    int lo, ljnf, nf, li2, p, k, index, ij2, lineno = 0;
+    int lo, ljnf, nf, li2, p, k, m, index, ij2, lineno = 0;
+    int nls = (pmod != NULL && pmod->ci == NLS);
     char s[16];
     enum { FIELDS = 5 };
 
-    if (ci != CORR) covhdr(prn);
+    if (pmod != NULL) covhdr(prn);
 
+    m = 1;
     lo = list[0];
     for (i=0; i<=lo/FIELDS; i++) {
 	nf = i * FIELDS;
@@ -658,8 +660,13 @@ void text_print_matrix (const double *rr, const int *list,
 
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
-	    ljnf = list[j + nf];
-	    strcpy(s, pdinfo->varname[ljnf]);
+	    if (nls) {
+		ljnf = j + nf;
+		strcpy(s, pmod->params[ljnf]);
+	    } else {
+		ljnf = list[j + nf];
+		strcpy(s, pdinfo->varname[ljnf]);
+	    }
 	    _bufspace(9 - strlen(s), prn);
 	    pprintf(prn, "%3d) %s", ljnf, s);
 	}
@@ -672,9 +679,9 @@ void text_print_matrix (const double *rr, const int *list,
 	    lineno++;
 	    for (k=1; k<=p; k++) {
 		index = ijton(j, nf+k, lo);
-		outxx(rr[index], ci, prn);
+		outxx(rr[index], (pmod == NULL)? CORR : 0, prn);
 	    }
-	    pprintf(prn, "   (%d\n", list[j]);
+	    pprintf(prn, "   (%d\n", (nls)? j : list[j]);
 	}
 
 	/* print upper triangular part of matrix */
@@ -685,14 +692,13 @@ void text_print_matrix (const double *rr, const int *list,
 	    _bufspace(14 * (j - 1), prn);
 	    for (k=j; k<=p; k++) {
 		index = ijton(ij2, nf+k, lo);
-		outxx(rr[index], ci, prn);
+		outxx(rr[index], (pmod == NULL)? CORR : 0, prn);
 	    }
-	    pprintf(prn, "   (%d\n", list[ij2]);
+	    pprintf(prn, "   (%d\n", (nls)? ij2 : list[ij2]);
 	}
 	pputs(prn, "\n");
     }
 }
-
 
 /* ........................................................ */
 

@@ -111,6 +111,12 @@ int add_to_model_list (const MODEL *pmod, int add_mode)
 {
     const MODEL **tmp;
 
+    /* NLS models won't work */
+    if (pmod->ci == NLS) {
+	errbox(_("Sorry, NLS models can't be put in the model table"));
+	return 1;
+    }	
+
     /* check that list is really started */
     if (model_list_len == 0) {
 	return start_model_list(pmod, add_mode);

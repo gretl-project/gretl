@@ -2661,7 +2661,7 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 	errbox(_("Error generating covariance matrix"));
     } else {
 	text_print_matrix (vcv->vec, vcv->list, 
-			   vcv->ci, datainfo, 0, prn);
+			   pmod, datainfo, 0, prn);
 	vwin = view_buffer(prn, 78, 300, _("gretl: coefficient covariances"), 
 			   COVAR, view_items);
 	vwin->data = vcv;

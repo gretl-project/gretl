@@ -518,7 +518,8 @@ static int check_derivs (integer m, integer n, double *x,
     }
 
     if (zerocount > 0) {
-	pputs(prn, _("Warning: The supplied derivatives seem to be incorrect.\n\n"));
+	strcpy(gretl_errmsg, 
+	       _("NLS: The supplied derivatives seem to be incorrect"));
     }    
     else if (badcount > 0) {
 	pputs(prn, _("Warning: The supplied derivatives may be incorrect, or perhaps\n"
@@ -532,7 +533,7 @@ static int check_derivs (integer m, integer n, double *x,
     free(err);
     free(fvecp);
 
-    return 0;
+    return zerocount;
 }
 
 static int lm_calculate (double *fvec, double toler)
@@ -555,11 +556,12 @@ static int lm_calculate (double *fvec, double toler)
     fjac = malloc(m * n * sizeof *fjac);
 
     if (wa == NULL || ipvt == NULL || fjac == NULL) {
-	err = 1;
+	err = E_ALLOC;
 	goto nls_cleanup;
     }
 
-    check_derivs(m, n, nlspec.coeff, fvec, fjac, ldfjac);
+    err = check_derivs(m, n, nlspec.coeff, fvec, fjac, ldfjac);
+    if (err) goto nls_cleanup; 
 
     /* run levenberg-marquandt nonlinear least squares from minpack */
     lmder1_(nls_calc, &m, &n, nlspec.coeff, fvec, fjac, &ldfjac, &tol, 
@@ -643,7 +645,7 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 	return nlsmod;
     }
 
-    /* "export" these as local globals ;-) */
+    /* "export" these as file-scope globals */
     pZ = mainZ;
     pdinfo = maininfo;
     prn = mainprn;
@@ -654,15 +656,8 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 
     nlsmod.errcode = err = check_for_missing_vals();
 
-    if (!err) {
-	err = lm_calculate(fvec, toler);
-	if (err) {
-	    nlsmod.errcode = E_UNSPEC;
-	} else {
-	    nlsmod = GNR(fvec);
-	}
-    }
-
+    if (!err) err = lm_calculate(fvec, toler);
+    if (!err) nlsmod = GNR(fvec);
     if (!err) {
 	add_stats_to_model(&nlsmod);  
 	_aicetc(&nlsmod);

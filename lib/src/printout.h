@@ -71,7 +71,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 				PATHS *ppaths, int plot);
 
 void text_print_matrix (const double *rr, const int *list, 
-			int ci, const DATAINFO *pdinfo, 
+			MODEL *pmod, const DATAINFO *pdinfo, 
 			int pause, PRN *prn);
 
 void printxx (double xx, char *str, int ci);
