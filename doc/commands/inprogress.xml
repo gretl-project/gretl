@@ -1977,26 +1977,19 @@
 
     <usage>
       <arguments>
-        <argument>command</argument>
+        <argument>add</argument>
+        <argument alternate="true">show</argument>
+        <argument alternate="true">free</argument>
       </arguments>
     </usage>
 
     <description>
       <para>Manipulates the gretl <quote>model table</quote>.
-	<manref targ="modes" before="See" after="for details"/>
-	<repl>command</repl> should be one of the following.</para>
-
-      <ilist>
-	<li><para><literal>add</literal>: add the last model estimated
-	    to the model table, if possible</para>
-	</li>
-	<li><para><literal>show</literal>: display the model table in a
-	    window</para>
-	</li>
-	<li><para><literal>free</literal>: clear the table </para>
-	</li>
-      </ilist>
-
+	<manref targ="modes" before="See" after="for details"/>. The
+	sub-commands have the following effects: <cmd>add</cmd> adds
+	the last model estimated to the model table, if possible;
+	<cmd>show</cmd> displays the model table in a window; and
+	<cmd>free</cmd> clears the table.</para>
     </description>
 
     <gui-access>

@@ -14,7 +14,7 @@ DTD, gretl_commands.dtd.  This could provide a basis for a
 translation.  It is designed as a purely content-oriented
 "database" for the gretl command reference.
 
-The DTD itself is, I'd, say more than half-done.  It could do with
+The DTD itself is, I'd say, more than half-done.  It could do with
 some more work in places, and as we go through the entire command
 listing I'm sure we'll find that more elements or attributes
 need to be added (e.g., for tables, which appear in the manual
@@ -33,11 +33,11 @@ will be developed to the point where it can output:
 
 * the "online" help files gretl.hlp and gretlcli.hlp
 
-This is only partly implemented at present.  It uses the two XSL
+This is partly implemented at present.  It uses the two XSL
 stylesheets, gretlman.xsl and gretltxt.xsl.  These need more work.
-Right now the text stylesheet leaves a certain amount of work
-undone, and it is supplemented by a C post-processor (see doline.c,
-which is used to make the "reflow" program.)  
+Right now the text stylesheet leaves a certain amount of work undone,
+and it is supplemented by a C post-processor (see doline.c, which is
+used to make the "reflow" program.)  
 
 You will probably have to edit the Makefile before doing anything
 else.  Once that's ready, try:
@@ -48,14 +48,13 @@ and take a look at the output: skeleton.xml.
 
 You may also try
 
-make sample
+make chapter
 
 which processes inprogress.xml.  This file is based on skeleton.xml,
-but I have made a start on filling out some of the fields with
-the content from the existing manual and helpfiles. "make sample"
-should generate command.xml and commands.hlp.  The first of these
-is supposed to be part-way towards the chapters/cmdref.xml
-replacement, while the second is part-way to a replacement for the
-online help file(s).
+but I have now filled out most of the fields with the content from the
+existing manual and helpfiles. "make chapter" should generate
+command.xml and commands.hlp.  The first of these is  part-way towards
+the chapters/cmdref.xml replacement, while the second is part-way to a
+replacement for the online help file(s).
 
 Allin Cottrell, February 2004
