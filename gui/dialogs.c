@@ -208,8 +208,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
     strcpy(datainfo->stobs, stobs);
     strcpy(datainfo->endobs, endobs);
     datainfo->sd0 = sd0;
-    datainfo->n = dateton(datainfo->endobs, datainfo->pd, 
-			  datainfo->stobs) + 1;
+    datainfo->n = dateton(datainfo->endobs, datainfo) + 1; 
     datainfo->v = 2;
     start_new_Z(&Z, datainfo, 0);
     datainfo->markers = 0;

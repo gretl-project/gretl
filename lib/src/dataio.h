@@ -63,7 +63,7 @@ void clear_datainfo (DATAINFO *pdinfo, int subsample);
 
 int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);
 
-int dateton (const char *date, const int pd, const char *startdate);
+int dateton (const char *date, const DATAINFO *pdinfo);
 
 void ntodate (char *datestr, const int nt, const DATAINFO *pdinfo);
 

@@ -686,8 +686,8 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
     }
 
     if (*t1str && *t2str) {
-	t1 = dateton(t1str, pdinfo->pd, pdinfo->stobs);
-	t2 = dateton(t2str, pdinfo->pd, pdinfo->stobs);
+	t1 = dateton(t1str, pdinfo);
+	t2 = dateton(t2str, pdinfo);
 	if (t1 < 0 || t2 < 0 || t2 < t1) return -1;
     } else {
 	t1 = pdinfo->t1;

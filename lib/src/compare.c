@@ -681,7 +681,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     if (sscanf(line, "%*s %8s", chowdate) != 1) 
 	err = E_PARSE;
     else {
-	split = dateton(chowdate, pdinfo->pd, pdinfo->stobs) - 1;
+	split = dateton(chowdate, pdinfo) - 1;
 	if (split <= 0 || split >= pdinfo->n) 
 	    err = E_SPLIT;
     }

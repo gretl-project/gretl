@@ -592,10 +592,13 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
     }
 
     /* special case: dated daily data */
-    if (pd == 5 || pd == 7 && strstr(stobs, "/")) {
+    if ((pd == 5 || pd == 7) && strstr(stobs, "/")) {
 	ed0 = get_epoch_day(stobs);
-	if (ed0 > 0) pdinfo->sd0 = ed0;
-	else ed0 = 0;
+	if (ed0 < 0) {
+	    sprintf(gretl_errmsg, "starting obs '%s' is invalid", stobs);
+	    return 1;
+	}
+	else pdinfo->sd0 = (double) ed0;
     } else {
 	/* is stobs acceptable? */
 	len = strlen(stobs);
@@ -643,6 +646,8 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
     pdinfo->pd = pd;
     if (ed0 == 0L) 
 	pdinfo->sd0 = atof(stobs);
+    else
+	pdinfo->time_series = TIME_SERIES;
     ntodate(pdinfo->stobs, 0, pdinfo);
     ntodate(endobs, pdinfo->n - 1, pdinfo);
     strcpy(pdinfo->endobs, endobs);
@@ -1623,8 +1628,8 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     /* parse dates */
     if (sscanf(str, "%*s %8s %8s", t1str, t2str) != 2) 
 	return E_OBS; 
-    ft1 = dateton(t1str, pdinfo->pd, pdinfo->stobs);
-    ft2 = dateton(t2str, pdinfo->pd, pdinfo->stobs);
+    ft1 = dateton(t1str, pdinfo);
+    ft2 = dateton(t2str, pdinfo);
     if (ft1 < 0 || ft2 < 0 || ft2 < ft1) return E_OBS;
 
     orig_v = pmod->list[0];

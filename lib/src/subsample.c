@@ -315,7 +315,7 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	    sprintf(gretl_errmsg, "error reading smpl line");
 	    return 1;
 	} else {
-	    new_t1 = dateton(newstart, pdinfo->pd, pdinfo->stobs);
+	    new_t1 = dateton(newstart, pdinfo);
 	    if (new_t1 < 0 || strlen(gretl_errmsg)) return 1;
 	    if (new_t1 > pdinfo->n) {
 		sprintf(gretl_errmsg, "error in new starting obs");
@@ -330,14 +330,14 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	return 1;
     }
     if (strcmp(newstart, ";")) {
-	new_t1 = dateton(newstart, pdinfo->pd, pdinfo->stobs);
+	new_t1 = dateton(newstart, pdinfo);
 	if (new_t1 < 0 || strlen(gretl_errmsg)) {
 	    return 1;
 	}
 	pdinfo->t1 = new_t1;
     }
     if (strcmp(newstop, ";")) {
-	new_t2 = dateton(newstop, pdinfo->pd, pdinfo->stobs);
+	new_t2 = dateton(newstop, pdinfo);
 	if (strlen(gretl_errmsg)) return 1;
 	if (new_t2 >= pdinfo->n) {
 	    sprintf(gretl_errmsg, "error in new ending obs");

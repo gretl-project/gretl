@@ -44,9 +44,6 @@ static int xmlfile (const char *fname);
 
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
-static char *wkdays[] = {
-    "mon", "tue", "wed", "thu", "fri", "sat", "sun"    
-};
 
 /**
  * free_Z:
@@ -606,8 +603,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
     fscanf(fp, "%s", pdinfo->stobs);
     fscanf(fp, "%s", pdinfo->endobs);
     pdinfo->sd0 = atof(pdinfo->stobs);
-    pdinfo->n = dateton(pdinfo->endobs, pdinfo->pd, 
-			pdinfo->stobs) + 1;
+    pdinfo->n = dateton(pdinfo->endobs, pdinfo) + 1;
     pdinfo->extra = 0;    
 
     if (pdinfo->sd0 >= 2.0) 
@@ -693,23 +689,10 @@ static int check_date (const char *date)
     return 0;
 }
 
-/* .......................................................... */
-
-static int dayindex (char *day)
-{
-    int i;
-
-    for (i=0; i<7; i++) 
-	if (!strcmp(day, wkdays[i])) 
-	    return i + 1;
-    return 0;
-}
-
 /**
  * dateton:
  * @date: string representation of date for processing.
- * @pd: periodicity or frequency of data.
- * @startdate: string representing starting date.
+ * @pdinfo: pointer to data information struct.
  * 
  * Given a "current" date string, a periodicity, and a starting
  * date string, returns the observation number corresponding to
@@ -719,12 +702,19 @@ static int dayindex (char *day)
  *
  */
 
-int dateton (const char *date, const int pd, const char *startdate)
+int dateton (const char *date, const DATAINFO *pdinfo)
 {
     int dotpos1 = 0, dotpos2 = 0, maj = 0, min = 0, n, i;
     char majstr[5], minstr[3];
     char startmajstr[5], startminstr[3];
     int startmaj, startmin;
+
+    if (dated_daily_data(pdinfo)) {
+	long tmp = get_epoch_day(date);
+
+	if (tmp < 0) return -1;
+	else return (int) ((long) tmp - (long) pdinfo->sd0);
+    }
 
     if (check_date(date)) return -1;
 
@@ -741,9 +731,9 @@ int dateton (const char *date, const int pd, const char *startdate)
         strcpy(minstr, date + dotpos1 + 1);
         min = atoi(minstr);
     }
-    n = strlen(startdate);
+    n = strlen(pdinfo->stobs);
     for (i=1; i<n; i++) {
-        if (startdate[i] == '.' || startdate[i] == ':') {
+        if (pdinfo->stobs[i] == '.' || pdinfo->stobs[i] == ':') {
 	    dotpos2 = i;
 	    break;
 	}
@@ -753,16 +743,13 @@ int dateton (const char *date, const int pd, const char *startdate)
 	return -1;  
     }
     if (!dotpos1 && !dotpos2) {
-        return (atoi(date) - atoi(startdate));
+        return (atoi(date) - atoi(pdinfo->stobs));
     }
-    safecpy(startmajstr, startdate, dotpos2);
+    safecpy(startmajstr, pdinfo->stobs, dotpos2);
     startmaj = atoi(startmajstr);
-    strcpy(startminstr, startdate + dotpos2 + 1);
-    if (isdigit(startminstr[0]))
-	startmin = atoi(startminstr);
-    else /* daily data */
-	startmin = dayindex(startminstr);
-    n = pd * (maj - startmaj);
+    strcpy(startminstr, pdinfo->stobs + dotpos2 + 1);
+    startmin = atoi(startminstr);
+    n = pdinfo->pd * (maj - startmaj);
     n += min - startmin;
    
     return n;
@@ -784,7 +771,7 @@ void ntodate (char *datestr, const int nt, const DATAINFO *pdinfo)
 {
     double xn;
 
-    if (dataset_is_daily(pdinfo) && pdinfo->sd0 > 60000) {
+    if (dated_daily_data(pdinfo)) {
 	daily_date_string(datestr, nt, pdinfo);
 	return;
     }
@@ -795,11 +782,6 @@ void ntodate (char *datestr, const int nt, const DATAINFO *pdinfo)
         int n = (int) xn;
 
         sprintf(datestr, "%d", n);
-    }
-    else if (dataset_is_daily(pdinfo)) {
-	int day = 10 * xn - ((int) xn * 10);
-
-	sprintf(datestr, "%d.%s", (int) xn, wkdays[day-1]);
     }
     else if (pdinfo->pd < 10) 
 	sprintf(datestr, "%.1f", xn);
@@ -944,30 +926,6 @@ static int writehdr (const char *hdrfile, const int *list,
  * Returns: the required number of decimal places.
  *
  */
-
-#ifdef notdef
-int get_precision (double *x, int n)
-{
-    int i, j, p, dot, len, pmax = 0;
-    char numstr[48];
-
-    for (i=0; i<n; i++) {
-	sprintf(numstr, "%f", x[i]);
-	numstr[31] = '\0';
-	len = strlen(numstr);
-	dot = dotpos(numstr);
-	p = len - dot - 1;
-	if (p > 0) { /* figures after decimal point */
-	    for (j=len-1; j>1; j--) {
-		if (numstr[j] == '0') p--;
-		else break;
-	    }
-	    if (p > pmax) pmax = p;
-	}
-    }
-    return pmax;
-}
-#endif
 
 int get_precision (double *x, int n)
 {
@@ -2962,7 +2920,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     xmlDocPtr doc;
     xmlNodePtr cur;
     char *tmp;
-    int gotvars = 0, gotobs = 0;
+    int gotvars = 0, gotobs = 0, err = 0;
     long fsz, progress = 0L;
 
     gretl_errmsg[0] = '\0';
@@ -3035,33 +2993,48 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	}
 	free(tmp);
     }
+
     strcpy(pdinfo->stobs, "1");
     tmp = xmlGetProp(cur, (UTF) "startobs");
     if (tmp) {
-	double x;
+	if (dataset_is_daily(pdinfo)) {
+	    long ed = get_epoch_day(tmp);
 
-	if (sscanf(tmp, "%lf", &x) == 1) {
-	    strncpy(pdinfo->stobs, tmp, 8);
-	    pdinfo->stobs[8] = '\0';
-	    pdinfo->sd0 = atof(pdinfo->stobs);
+	    if (ed < 0) err = 1;
+	    else pdinfo->sd0 = ed;
 	} else {
+	    double x;
+
+	    if (sscanf(tmp, "%lf", &x) != 1) err = 1;
+	    else pdinfo->sd0 = atof(tmp);
+	}
+	if (err) {
 	    strcpy(gretl_errmsg, "failed to parse startobs");
 	    return 1;
 	}
+	strncpy(pdinfo->stobs, tmp, 8);
+	pdinfo->stobs[8] = '\0';
 	free(tmp);
     }
+
     pdinfo->endobs[0] = '\0';
     tmp = xmlGetProp(cur, (UTF) "endobs");
     if (tmp) {
-	double x;
+	if (dataset_is_daily(pdinfo)) {
+	    long ed = get_epoch_day(tmp);
 
-	if (sscanf(tmp, "%lf", &x) == 1) {
-	    strncpy(pdinfo->endobs, tmp, 8);
-	    pdinfo->endobs[8] = '\0';
+	    if (ed < 0) err = 1;
 	} else {
+	    double x;
+
+	    if (sscanf(tmp, "%lf", &x) != 1) err = 1;
+	} 
+	if (err) {
 	    strcpy(gretl_errmsg, "failed to parse endobs");
 	    return 1;
 	}
+	strncpy(pdinfo->endobs, tmp, 8);
+	pdinfo->endobs[8] = '\0';
 	free(tmp);
     }
 

@@ -761,7 +761,7 @@ static int check_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 static void get_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
 			 int *pad1, int *pad2)
 {
-    *pad1 = dateton(sinfo->stobs, pdinfo->pd, pdinfo->stobs); 
+    *pad1 = dateton(sinfo->stobs, pdinfo); 
     *pad2 = pdinfo->n - sinfo->nobs - *pad1;
 } 
 

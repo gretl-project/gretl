@@ -71,6 +71,17 @@ enum flagvals {
                              && (p->pd == 5 || p->pd == 7))
 
 /**
+ * dated_daily_data:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a data set contains dated daily time series
+ * data (1) or not (0).
+ */
+#define dated_daily_data(p) (p->time_series == TIME_SERIES \
+                             && (p->pd == 5 || p->pd == 7) && \
+                             p->sd0 > 10000.0)
+
+/**
  * dataset_is_panel:
  * @p: pointer to data information struct.
  *

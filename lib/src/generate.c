@@ -2389,8 +2389,8 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* try getting valid obs from stobs and endobs */
-    t1 = dateton(toks[0], pdinfo->pd, pdinfo->stobs);
-    t2 = dateton(toks[1], pdinfo->pd, pdinfo->stobs);
+    t1 = dateton(toks[0], pdinfo);
+    t2 = dateton(toks[1], pdinfo);
     if (strlen(gretl_errmsg) || t1 < 0 || t1 >= t2 || t2 > pdinfo->n) {
 	free(a);
 	free(toks);
