@@ -125,7 +125,7 @@ char *get_month_name (char *mname, int m);
 
 int gretl_function_stack_depth (void);
 
-void record_test_result (double teststat, double pval, const char *blurb);
+void record_test_result (double teststat, double pval, char *blurb);
 
 double get_last_test_statistic (char *blurb);
 

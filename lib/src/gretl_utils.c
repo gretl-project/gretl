@@ -2680,7 +2680,7 @@ record_or_get_test_result (double teststat, double pval, char *blurb,
     return ret;
 }
 
-void record_test_result (double teststat, double pval, const char *blurb)
+void record_test_result (double teststat, double pval, char *blurb)
 {
     record_or_get_test_result(teststat, pval, blurb, SET_TEST_STAT);
 }

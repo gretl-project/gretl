@@ -2524,6 +2524,10 @@
 	quoted string).  If a variable has a display name, this is
 	used when generating graphs.
       </para>
+      <para>
+	If neither flag is given, this command prints the current
+	descriptive label for the specified variable, if any.
+      </para>
     </description>
 
     <description context="gui">

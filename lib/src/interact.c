@@ -1937,11 +1937,15 @@ static int make_var_label (const char *line, const DATAINFO *pdinfo,
 {
     char *p;
     char vname[VNAMELEN];
-    int v;
+    int v, setstuff = 0;
 
-    if (pdinfo->varinfo == NULL) return 1;
+    if (pdinfo->varinfo == NULL) {
+	return 1;
+    }
 
-    if (sscanf(line, "label %8s", vname) != 1) return E_PARSE;
+    if (sscanf(line, "label %8s", vname) != 1) {
+	return E_PARSE;
+    }
 
     v = varindex(pdinfo, vname);
     if (v == pdinfo->v) {
@@ -1951,6 +1955,7 @@ static int make_var_label (const char *line, const DATAINFO *pdinfo,
 
     p = get_flag_field(line + 6, 'd');
     if (p != NULL) {
+	setstuff = 1;
 	*VARLABEL(pdinfo, v) = 0;
 	strncat(VARLABEL(pdinfo, v), p, MAXLABEL - 1);
 	free(p);
@@ -1958,10 +1963,15 @@ static int make_var_label (const char *line, const DATAINFO *pdinfo,
 
     p = get_flag_field(line + 6, 'n');
     if (p != NULL) {
+	setstuff = 1;
 	*DISPLAYNAME(pdinfo, v) = 0;
 	strncat(DISPLAYNAME(pdinfo, v), p, MAXDISP - 1);
 	free(p);
-    }  
+    } 
+
+    if (!setstuff && *VARLABEL(pdinfo, v) != 0) {
+	pprintf(prn, "%s\n", VARLABEL(pdinfo, v));
+    }
 
     return 0;
 }
