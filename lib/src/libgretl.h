@@ -67,7 +67,7 @@
 # endif /* ENABLE_NLS */
 #endif /* __GNOME_I18N_H__ */
 
-#define MAXLINE 1024  /* maximum length of command line */
+#define MAXLINE 2048  /* maximum length of command line */
 #define MAXLABEL 128  /* maximum length of descriptive labels for variables */
 #define MAXLEN   512  /* max length of regular "long" strings */
 #define ERRLEN   256  /* max length of libgretl error messages */

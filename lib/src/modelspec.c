@@ -134,7 +134,7 @@ static int modelspec_expand (MODELSPEC **pmspec, int *idx)
 
     *pmspec = mspec;
 
-    mspec[m].cmd = malloc(MAXLEN);
+    mspec[m].cmd = malloc(MAXLINE);
     if (mspec[m].cmd == NULL) return E_ALLOC;
 
     mspec[m].subdum = NULL;

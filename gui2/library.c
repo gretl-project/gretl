@@ -319,6 +319,13 @@ void clear_data (void)
 
 /* ........................................................... */
 
+static void clear_line (void)
+{
+    clear(line, MAXLINE);
+}
+
+/* ........................................................... */
+
 char *user_fopen (const char *fname, char *fullname, PRN **pprn)
 {
     strcpy(fullname, paths.userdir);
@@ -527,7 +534,7 @@ void add_mahalanobis_data (windata_t *vwin)
 	return;
     }
 
-    clear(line, MAXLEN);
+    clear_line();
     strcpy(line, "mahal");
     strcat(line, liststr);
     strcat(line, " --save");
@@ -556,7 +563,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     gretlopt opt = OPT_NONE;
     gint hsize = 78, vsize = 380;
 
-    clear(line, MAXLEN);
+    clear_line();
     strcpy(title, "gretl: ");
 
     if (action == CORR_SELECTED || action == SUMMARY_SELECTED ||
@@ -699,7 +706,7 @@ static void real_do_coint (gpointer p, int action)
     buf = selector_list(sr);
     if (*buf == 0) return;
 
-    clear(line, MAXLEN);
+    clear_line();
 
     if (action == COINT) {
 	cmd.opt = (selector_list_hasconst(sr))? OPT_NONE : OPT_N;
@@ -896,7 +903,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	if (action != CORRGM) return;
     }
 
-    clear(line, MAXLEN);
+    clear_line();
     strcpy(title, "gretl: ");
 
     /* set up the command */
@@ -1063,7 +1070,7 @@ void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
     int err = bool_subsample(OPT_M);
 
     if (!err) {
-	clear(line, MAXLEN);
+	clear_line();
 	strcpy(line, "smpl --no-missing");
 	verify_and_record_command(line);
     }
@@ -1082,7 +1089,8 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 
     opt = dialog_data_get_opt(ddata);
 
-    clear(line, MAXLEN);
+    clear_line();
+
     if (opt & OPT_C) { 
 	sprintf(line, "smpl %s --restrict --replace", buf); 
     } else {
@@ -1158,7 +1166,7 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
     buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
     
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "fcasterr %s", buf);
     if (verify_and_record_command(line) || bufopen(&prn)) return;
 
@@ -1196,7 +1204,7 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
     buf = selector_list(sr);
     if (buf == NULL || *buf == 0) return;
     
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "coeffsum %s", buf);
 
     if (check_cmd(line) || bufopen(&prn)) return;
@@ -1233,7 +1241,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 	return;
     }
     
-    clear(line, MAXLEN);
+    clear_line();
     if (selector_code(sr) == ADD) {
         sprintf(line, "addto %d %s", orig->ID, buf);
     } else {
@@ -1343,7 +1351,7 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
     if (bufopen(&prn)) return;
 
     strcpy(title, _("gretl: LM test "));
-    clear(line, MAXLEN);
+    clear_line();
 
     if (action == LMTEST_WHITE) {
 	strcpy(line, "lmtest -w");
@@ -1655,7 +1663,7 @@ static void do_chow_cusum (gpointer data, int code)
     if (code == CHOW) {
 	buf = dialog_data_get_text(ddata);
 	if (buf == NULL) return;
-	clear(line, MAXLEN);
+	clear_line();
 	sprintf(line, "chow %s", buf);
     } else {
 	strcpy(line, "cusum");
@@ -1724,7 +1732,7 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
 
     strcpy(title, _("gretl: RESET test"));
 
-    clear(line, MAXLEN);
+    clear_line();
     strcpy(line, "reset");
 
     err = reset_test(pmod, &Z, datainfo, prn, &test);
@@ -1762,7 +1770,7 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
 
     strcpy(title, _("gretl: LM test (autocorrelation)"));
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "lmtest -m %d", order);
 
     if (dataset_is_panel(datainfo)) {
@@ -1816,7 +1824,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "arch %s ", buf);
 
     for (i=1; i<=pmod->list[0]; i++) {
@@ -1937,7 +1945,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     buf = selector_list(sr);    
     if (*buf == 0) return;
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "%s %s", estimator, buf);
 
     if (verify_and_record_command(line) || bufopen(&prn)) return;
@@ -1990,7 +1998,7 @@ static int record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 
     gretl_cmd_set_context(&cmd, RESTRICT);
 
-    while (bufgets(line, MAXLEN-1, buf)) {
+    while (bufgets(line, MAXLINE-1, buf)) {
 	if (string_is_blank(line)) {
 	    continue;
 	}
@@ -2025,7 +2033,7 @@ void do_restrict (GtkWidget *widget, dialog_t *ddata)
 
     bufgets(NULL, 0, buf);
 
-    while (bufgets(line, MAXLEN-1, buf) && !err) {
+    while (bufgets(line, MAXLINE-1, buf) && !err) {
 	if (string_is_blank(line)) {
 	    continue;
 	}
@@ -2106,7 +2114,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 
     bufgets(NULL, 0, buf);
 
-    while (bufgets(line, MAXLEN-1, buf) && !err) {
+    while (bufgets(line, MAXLINE-1, buf) && !err) {
 	if (string_is_blank(line)) {
 	    continue;
 	}
@@ -2118,7 +2126,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 	    continue;
 	}
 	if (!started && strncmp(line, "nls", 3)) {
-	    char tmp[MAXLEN];
+	    char tmp[MAXLINE];
 	    
 	    strcpy(tmp, line);
 	    strcpy(line, "nls ");
@@ -2203,7 +2211,7 @@ void do_model (GtkWidget *widget, gpointer p)
     buf = selector_list(sr);    
     if (buf == NULL || *buf == 0) return;
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "%s %s%s", estimator, buf, print_flags(cmd.opt, action));
 
 #if 0
@@ -2458,7 +2466,7 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
     buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "nulldata %s", buf);
     if (verify_and_record_command(line)) return;
 
@@ -2493,7 +2501,7 @@ void do_genr (GtkWidget *widget, dialog_t *ddata)
     buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "genr %s", buf);
 
     if (verify_and_record_command(line)) return;
@@ -2512,7 +2520,7 @@ void do_model_genr (GtkWidget *widget, dialog_t *ddata)
     buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "genr %s", buf);
 
     if (model_command_init(line, &cmd, pmod->ID)) return;
@@ -2552,7 +2560,7 @@ void do_random (GtkWidget *widget, dialog_t *ddata)
     strncat(vname, tmp, 8);
     if (validate_varname(vname)) return;
 
-    clear(line, MAXLEN);
+    clear_line();
 
     if (action == GENR_NORMAL) {
 	if (f1 != 0. || f2 != 1.) {
@@ -2587,7 +2595,7 @@ void do_seed (GtkWidget *widget, dialog_t *ddata)
 
     sscanf(buf, "%31s", tmp);
 	
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "set seed %s", tmp); 
 
     if (verify_and_record_command(line)) return;
@@ -2764,7 +2772,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 	print_test_to_window(&test, mydata->w);
     }
 
-    clear(line, MAXLEN);
+    clear_line();
     strcpy(line, "testuhat");
     if (model_command_init(line, &cmd, pmod->ID)) return;
  
@@ -2795,7 +2803,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 	return;
     }
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "freq %s%s", datainfo->varname[mdata->active_var],
 	    (dist == GAMMA)? " --gamma" : "");
 
@@ -3043,7 +3051,7 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 
     if (bufopen(&prn)) return;
 
-    clear(line, MAXLEN);
+    clear_line();
     if (opt) {
 	sprintf(line, "pergm %s -o", datainfo->varname[mdata->active_var]);
     } else {
@@ -3123,7 +3131,7 @@ void add_dummies (gpointer data, guint u, GtkWidget *widget)
 {
     gint err;
 
-    clear(line, MAXLEN);
+    clear_line();
 
     if (u > 0) {
 	if (datainfo->structure == STACKED_TIME_SERIES ||
@@ -3165,7 +3173,7 @@ void add_dummies (gpointer data, guint u, GtkWidget *widget)
 
 void add_index (gpointer data, guint tm, GtkWidget *widget)
 {
-    clear(line, MAXLEN);
+    clear_line();
     strcpy(line, (tm)? "genr time" : "genr index");
 
     if (verify_and_record_command(line)) return;
@@ -3655,7 +3663,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
     liststr = mdata_selection_to_string(0);
     if (liststr == NULL) return;
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "print%s", liststr);
     free(liststr);
     getcmd(line, datainfo, &prcmd, &ig, &Z, NULL);
@@ -3799,7 +3807,7 @@ void delete_selected_vars (int id)
     }
 
     g_free(msg);
-    clear(line, MAXLEN);
+    clear_line();
 
     if (id > 0) {
 	sprintf(line, "delete %d", id);
@@ -3848,7 +3856,7 @@ void do_graph_var (int varnum)
 	return;
     }
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "gnuplot %s time", datainfo->varname[varnum]);
     if (verify_and_record_command(line)) {
 	return;
@@ -3873,7 +3881,7 @@ void ts_plot_var (gpointer data, guint opt, GtkWidget *widget)
 void do_boxplot_var (int varnum)
 {
     if (varnum < 0) return;
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "boxplot %s", datainfo->varname[varnum]);
     if (verify_and_record_command(line)) return;
 
@@ -3892,7 +3900,7 @@ void do_scatters (GtkWidget *widget, gpointer p)
     buf = selector_list(sr);
     if (*buf == 0) return;
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "scatters %s", buf);
     if (verify_and_record_command(line)) return;
 
@@ -3919,7 +3927,7 @@ void do_box_graph (GtkWidget *widget, dialog_t *ddata)
     if (strchr(buf, '(')) {
 	err = boolean_boxplots(buf, &Z, datainfo, (action == GR_NBOX));
     } else {
-	clear(line, MAXLEN);
+	clear_line();
 	sprintf(line, "boxplot %s%s", (action == GR_NBOX)? "-o " : "", buf);
 
 	if (verify_and_record_command(line)) return;
@@ -3945,7 +3953,7 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
     buf = selector_list(sr);
     if (*buf == 0) return;
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "gnuplot -z %s", buf);
 
     if (verify_and_record_command(line)) return;
@@ -3979,7 +3987,7 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
     buf = selector_list(sr);
     if (*buf == '\0') return;
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "gnuplot %s%s", buf, (imp)? " -m" : "");
 
     if (selector_code(sr) == GR_PLOT) { 
@@ -4093,7 +4101,7 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
     buf = selector_list(sr);
     if (*buf == '\0') return;
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "gnuplot %s", buf);
 
     if (check_cmd(line) || cmd.list[0] != 3) {
@@ -4216,7 +4224,7 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
 	if (err) return;
     }
 
-    clear(line, MAXLEN);
+    clear_line();
     sprintf(line, "gnuplot%s%s", liststr, (action == GR_PLOT)? " time" : "");
     free(liststr);
 
@@ -5000,7 +5008,7 @@ int execute_script (const char *runfile, const char *buf,
 		    PRN *prn, int exec_code)
 {
     FILE *fb = NULL;
-    char tmp[MAXLEN];
+    char tmp[MAXLINE];
     int loopstack = 0, looprun = 0;
     int exec_err = 0;
     LOOPSET *loop = NULL;
@@ -5060,12 +5068,12 @@ int execute_script (const char *runfile, const char *buf,
 	    *line = '\0';
 
 	    if (gretl_executing_function()) {
-		gotline = gretl_function_get_line(line, MAXLEN,
+		gotline = gretl_function_get_line(line, MAXLINE,
 						  &Z, datainfo);
 	    } else if (fb != NULL) {
-		gotline = fgets(line, MAXLEN, fb);
+		gotline = fgets(line, MAXLINE, fb);
 	    } else {
-		gotline = bufgets(line, MAXLEN, buf);
+		gotline = bufgets(line, MAXLINE, buf);
 	    }
 
 	    if (gotline == NULL) {
@@ -5078,18 +5086,18 @@ int execute_script (const char *runfile, const char *buf,
 		*tmp = '\0';
 
 		if (gretl_executing_function()) {
-		    gretl_function_get_line(tmp, MAXLEN - 1, 
+		    gretl_function_get_line(tmp, MAXLINE - 1, 
 					    &Z, datainfo);
 		} else if (fb != NULL) {
-		    fgets(tmp, MAXLEN - 1, fb);
+		    fgets(tmp, MAXLINE - 1, fb);
 		} else {
-		    bufgets(tmp, MAXLEN - 1, buf); 
+		    bufgets(tmp, MAXLINE - 1, buf); 
 		}
 
 		if (*tmp != '\0') {
-		    if (strlen(line) + strlen(tmp) > MAXLEN - 1) {
+		    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
 			pprintf(prn, _("Maximum length of command line "
-				       "(%d bytes) exceeded\n"), MAXLEN);
+				       "(%d bytes) exceeded\n"), MAXLINE);
 			exec_err = 1;
 			break;
 		    } else {

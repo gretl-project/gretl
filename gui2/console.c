@@ -231,7 +231,7 @@ static void console_exec (void)
 {
     static int redirected;
     int oldv = datainfo->v;
-    char execline[MAXLEN];
+    char execline[MAXLINE];
 #ifndef OLD_GTK
     GtkTextBuffer *buf;
     GtkTextIter start, end;
@@ -268,7 +268,7 @@ static void console_exec (void)
     }
 
     *execline = 0;
-    strncat(execline, cbuf, MAXLEN - 1);
+    strncat(execline, cbuf, MAXLINE - 1);
     g_free(cbuf);
     cbuf = NULL;
 

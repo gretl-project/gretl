@@ -76,7 +76,7 @@ int lines[1];               /* for gnuplot command */
 char *line;                 /* non-Readline command line */
 char texfile[MAXLEN];
 char response[3];
-char linebak[MAXLEN];      /* for storing comments */
+char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
 
 gretl_equation_system *sys;
@@ -186,7 +186,7 @@ void file_get_line (void)
 	strcpy(line, "quit");
     } else {
 	*linebak = 0;
-	strncat(linebak, line, MAXLEN-1);
+	strncat(linebak, line, MAXLINE - 1);
     }
 
     if (!strncmp(line, "noecho", 6)) {
@@ -209,7 +209,7 @@ void fn_get_line (void)
     }
 
     *linebak = 0;
-    strncat(linebak, line, MAXLEN-1);
+    strncat(linebak, line, MAXLINE - 1);
 
     if (!strncmp(line, "noecho", 6)) {
 	echo_off = 1;
@@ -340,20 +340,20 @@ static int maybe_get_input_line_continuation (char *tmp)
 	tmp[0] = '\0';
 
 	if (gretl_executing_function()) {
-	    gretl_function_get_line(tmp, MAXLEN - 1, &Z, datainfo);
+	    gretl_function_get_line(tmp, MAXLINE - 1, &Z, datainfo);
 	} else if (batch || runit) {
-	    fgets(tmp, MAXLEN - 1, fb);
+	    fgets(tmp, MAXLINE - 1, fb);
 	} else {
 #ifdef HAVE_READLINE
 	    rl_gets(&line_read, "> ");
 	    strcpy(tmp, line_read);
 #else
-	    fgets(tmp, MAXLEN - 1, stdin); 
+	    fgets(tmp, MAXLINE - 1, stdin); 
 #endif /* HAVE_READLINE */
 	}
 
 	if (*tmp != '\0') {
-	    if (strlen(line) + strlen(tmp) > MAXLEN - 1) {
+	    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
 		err = 1;
 		break;
 	    } else {
@@ -563,7 +563,7 @@ int main (int argc, char *argv[])
 
     /* main command loop */
     while (strcmp(cmd.word, "quit")) {
-	char linecopy[MAXLEN];
+	char linecopy[MAXLINE];
 
 	if (err && batch && errfatal) {
 	    gretl_abort(linecopy);
@@ -584,7 +584,7 @@ int main (int argc, char *argv[])
 	cmd_overflow = maybe_get_input_line_continuation(tmp);
 	if (cmd_overflow) {
 	    fprintf(stderr, _("Maximum length of command line "
-			      "(%d bytes) exceeded\n"), MAXLEN);
+			      "(%d bytes) exceeded\n"), MAXLINE);
 	    break;
 	} else {
 	    strcpy(linecopy, line);
