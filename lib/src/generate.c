@@ -1913,7 +1913,7 @@ static void copy_compress (char *targ, const char *src, int len)
 
 /* ........................................................... */
 
-int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
+static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
 {
     char *test;
     int t = -1;
@@ -1931,6 +1931,46 @@ int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
 	}
     } 
     
+    return t;
+}
+
+static void fix_calendar_date (char *s)
+{
+    while (*s) {
+	if (*s == ':') *s = '/';
+	s++;
+    }
+}
+
+int get_t_from_obs_string (char *s, const double **Z, 
+			   const DATAINFO *pdinfo)
+{
+    int t;
+
+    if (calendar_data(pdinfo)) {
+	fix_calendar_date(s);
+    } 
+
+    t = dateton(s, pdinfo);
+
+    if (t < 0) {
+	if (isdigit((unsigned char) *s)) {
+	    t = plain_obs_number(s, pdinfo);
+	} else {
+	    int v = varindex(pdinfo, s);
+
+	    if (v < pdinfo->v) {
+		t = (int) Z[v][0];
+		if (t >= pdinfo->n) {
+		    char try[16];
+
+		    sprintf(try, "%d", t);
+		    t = dateton(try, pdinfo);
+		}
+	    }
+	}
+    }
+
     return t;
 }
 
@@ -1957,10 +1997,8 @@ static void get_genr_formula (char *formula, const char *line,
 
     /* allow for generating a single value in a series */
     if (sscanf(line, "%8[^[ =][%10[^]]", vname, obs) == 2) {
-	genr->obs = dateton(obs, genr->pdinfo);
-	if (genr->obs < 0 || genr->obs >= genr->pdinfo->n) {
-	    genr->obs = plain_obs_number(obs, genr->pdinfo);
-	}
+	genr->obs = get_t_from_obs_string(obs, (const double **) *genr->pZ, 
+					  genr->pdinfo);
     }
 
     if (gretl_executing_function()) {
@@ -3415,14 +3453,6 @@ static double get_dataset_statistic (DATAINFO *pdinfo, int idx)
 
 /* ...........................................................*/
 
-static void fix_calendar_date (char *s)
-{
-    while (*s) {
-	if (*s == ':') *s = '/';
-	s++;
-    }
-}
-
 static double get_obs_value (const char *s, const double **Z, 
 			     const DATAINFO *pdinfo)
 {
@@ -3430,22 +3460,15 @@ static double get_obs_value (const char *s, const double **Z,
     double val = NADBL;
 
     if (sscanf(s, "%8[^[][%10[^]]]", vname, obs) == 2) {
-	int i = varindex(pdinfo, vname);
-	int t = -1;
+	int t, i = varindex(pdinfo, vname);
 
 	if (i < pdinfo->v && pdinfo->vector[i]) {
-	    if (calendar_data(pdinfo)) {
-		fix_calendar_date(obs);
-	    } 
-	    t = dateton(obs, pdinfo);
-	    if (t < 0) {
-		t = plain_obs_number(obs, pdinfo);
-	    }
+	    t = get_t_from_obs_string(obs, Z, pdinfo);
 	    if (t >= 0 && t < pdinfo->n) {
 		val = Z[i][t];
 	    }
 	}
-    }	    
+    }
 
     return val;
 }

@@ -830,6 +830,7 @@ get_sample_limit (const char *s, const double **Z, DATAINFO *pdinfo)
     int v, ret = -1;
 
     if (*s == '-' || *s == '+') {
+	/* incremental form */
 	int incr = 0;
 
 	if (isdigit((unsigned char) s[1])) {
@@ -845,23 +846,8 @@ get_sample_limit (const char *s, const double **Z, DATAINFO *pdinfo)
 	}
 	ret = pdinfo->t1 + incr;
     } else {
-	ret = dateton(s, pdinfo);
-	if (ret < 0) {
-	    if (isdigit((unsigned char) *s)) {
-		ret = plain_obs_number(s, pdinfo);
-	    } else {
-		v = varindex(pdinfo, s);
-		if (v < pdinfo->v) {
-		    ret = (int) Z[v][0];
-		    if (ret >= pdinfo->n) {
-			char try[16];
-
-			sprintf(try, "%d", ret);
-			ret = dateton(try, pdinfo);
-		    }
-		}
-	    }
-	}
+	/* absolute form */
+	ret = get_t_from_obs_string(s, Z, pdinfo);
     }
 
     return ret;

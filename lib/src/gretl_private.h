@@ -67,7 +67,8 @@ int calculate_criteria (double *x, double ess, int nobs, int ncoeff);
 int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
 		 const double **Z, int *misst);
 
-int plain_obs_number (const char *obs, const DATAINFO *pdinfo);
+int get_t_from_obs_string (char *s, const double **Z, 
+			   const DATAINFO *pdinfo);
 
 int undo_daily_repack (MODEL *pmod, double **Z, 
 		       const DATAINFO *pdinfo);
