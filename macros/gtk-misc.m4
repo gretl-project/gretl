@@ -4,7 +4,7 @@
 dnl AM_PATH_GTK([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [, MODULES]]]])
 dnl Test for GTK, and define GTK_CFLAGS and GTK_LIBS
 dnl
-AC_DEFUN(AM_PATH_GTK,
+AC_DEFUN([AM_PATH_GTK],
 [dnl 
 dnl Get the cflags and libraries from the gtk-config script
 dnl
@@ -200,7 +200,7 @@ main ()
 dnl AM_PATH_GTK_EXTRA([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [, MODULES]]]])
 dnl Test for GTK_EXTRA, and define GTK_EXTRA_CFLAGS and GTK_EXTRA_LIBS
 dnl
-AC_DEFUN(AM_PATH_GTK_EXTRA,
+AC_DEFUN([AM_PATH_GTK_EXTRA],
 [dnl 
 dnl Get the cflags and libraries from the gtkextra-config script
 dnl
@@ -406,7 +406,7 @@ dnl Example of use (write the following in your 'configure.in'):
 dnl AM_PATH_LIBOLE2(0.0.1, [LIBS="$LIBS $LIBOLE2_LIBS" CFLAGS="$CFLAGS $LIBOLE2_CFLAGS"], AC_MSG_ERROR([Can't find libole2.]))
 dnl
 dnl
-AC_DEFUN(AM_PATH_LIBOLE2,
+AC_DEFUN([AM_PATH_LIBOLE2],
 [dnl 
 dnl Get the cflags and libraries from the libole2-config script
 dnl
@@ -629,7 +629,7 @@ main ()
 dnl AM_PATH_GDK_PIXBUF([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for GDK_PIXBUF, and define GDK_PIXBUF_CFLAGS and GDK_PIXBUF_LIBS
 dnl
-AC_DEFUN(AM_PATH_GDK_PIXBUF,
+AC_DEFUN([AM_PATH_GDK_PIXBUF],
 [dnl 
 dnl Get the cflags and libraries from the gdk-pixbuf-config script
 dnl

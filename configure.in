@@ -306,12 +306,15 @@ AM_PATH_LAPACK(, have_lapack="yes")
 dnl
 dnl Check for FLITE 
 dnl
-AM_PATH_FLITE(, have_flite="yes")
+AM_PATH_FLITE(, 
+  have_flite="yes"
+  AC_DEFINE(HAVE_FLITE)
+)
 
 dnl
 dnl Check for gnuplot, and its PNG capacity
 dnl
-AC_DEFUN(AC_PROG_GNUPLOT,
+AC_DEFUN([AC_PROG_GNUPLOT],
 [AC_CHECK_PROG(GNUPLOT,gnuplot,yes)])
 
 AC_PROG_GNUPLOT
@@ -337,7 +340,7 @@ fi
 dnl
 dnl Check for latex executable
 dnl
-AC_DEFUN(AC_PROG_LATEX,
+AC_DEFUN([AC_PROG_LATEX],
 [AC_CHECK_PROG(LATEX,latex,yes)])
 
 AC_PROG_LATEX
@@ -522,22 +525,25 @@ dnl If we have gtk 2.0, test for gnome 2.0
         fi 
     else
 dnl Still trying for gnome, but we don't have gtk 2.0 so test for gnome 1.4  
-       AC_DEFUN(AC_PROG_GNOME,
+       AC_DEFUN([AC_PROG_GNOME],
        [AC_CHECK_PROG(GNOME,gnome-config,yes)])
 
        AC_PROG_GNOME
        GNOME_CFLAGS=''
        GNOME_LIBS=''
        if test x"${GNOME}" = xyes ; then
-           AC_DEFINE(USE_GNOME)
-           have_gnome="1.4"
-           if test "${gnome_prefix}" = "NA" ; then
-               gnome_prefix="`gnome-config --prefix`"
-           fi
-           GNOME_CFLAGS=`gnome-config --cflags gnomeui print`
-           GNOME_LIBS=`gnome-config --libs gnomeui print`
-           XML_CFLAGS=`gnome-config --cflags xml`
-           XML_LIBS=`gnome-config --libs xml`
+           AM_PATH_GNOME_PRINT(0.1.0,
+             AC_DEFINE(USE_GNOME)
+             have_gnome="1.4"
+             if test "${gnome_prefix}" = "NA" ; then
+                gnome_prefix="`gnome-config --prefix`"
+             fi
+             GNOME_CFLAGS=`gnome-config --cflags gnomeui print`
+             GNOME_LIBS=`gnome-config --libs gnomeui print`
+             XML_CFLAGS=`gnome-config --cflags xml`
+             XML_LIBS=`gnome-config --libs xml`,
+             echo "* gretl will be built without gnome support"
+           )
        fi
     fi
     AC_SUBST(have_gnome)

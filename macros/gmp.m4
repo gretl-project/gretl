@@ -7,7 +7,7 @@
 dnl AM_PATH_GMP([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for GMP, and define GMP_CFLAGS and GMP_LIBS.
 dnl
-AC_DEFUN(AM_PATH_GMP,
+AC_DEFUN([AM_PATH_GMP],
 [dnl 
 AC_ARG_WITH(gmp-prefix,[  --with-gmp-prefix=PFX   Prefix where GMP is installed (optional)],
             gmp_config_prefix="$withval", gmp_config_prefix="")

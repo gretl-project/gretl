@@ -4,7 +4,7 @@
 dnl AM_PATH_FLITE([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for FLITE, and define FLITE_CFLAGS and FLITE_LIBS.
 dnl
-AC_DEFUN(AM_PATH_FLITE,
+AC_DEFUN([AM_PATH_FLITE],
 [dnl 
 AC_ARG_WITH(flite-prefix,[  --with-flite-prefix=PFX   Prefix where FLITE is installed (optional)],
             flite_config_prefix="$withval", flite_config_prefix="")
@@ -79,6 +79,5 @@ main (void)
   fi
   AC_SUBST(FLITE_CFLAGS)
   AC_SUBST(FLITE_LIBS)
-  AC_SUBST(FLIB)
   rm -f conf.flitetest
 ])

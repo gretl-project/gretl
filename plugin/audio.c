@@ -42,8 +42,6 @@
 
 #undef DEBUG
 
-#define HAVE_FLITE 1
-
 #ifdef HAVE_FLITE
 # include <flite/flite.h>
 extern cst_voice *register_cmu_us_kal (void);
@@ -59,10 +57,16 @@ enum dataset_comments {
     N_COMMENTS
 };
     
+typedef struct _datapoint datapoint;
 typedef struct _dataset dataset;
 typedef struct _midi_spec midi_spec;
 typedef struct _midi_track midi_track;
 typedef struct _note_event note_event;
+
+struct _datapoint {
+    double x;
+    double y;
+};
 
 struct _dataset {
     int pd;
@@ -70,8 +74,7 @@ struct _dataset {
     int series2;
     double intercept;
     double slope;
-    double *x;
-    double *y;
+    datapoint *points;
     double *y2;
     gchar *comments[N_COMMENTS];
 };
@@ -188,7 +191,7 @@ static void write_midi_track (midi_track *track,
 
 static void four_four_header (midi_spec *spec)
 {
-    int len, ticklen;
+    int ticklen, len = 0;
     long pos, pos1;
     long min_note_time = 60000;
     long max_note_time = 180000;
@@ -201,7 +204,8 @@ static void four_four_header (midi_spec *spec)
     write_be_long(0, spec->fp); /* revisit below */
 
     /* time sig */
-    len = write_var_len(0, spec->fp);
+    delta_time_zero(spec->fp);
+    len++;
     len += write_midi_meta(MIDI_TIME_SIG, spec->fp);
     /* size (bytes) */
     len += write_midi_byte(4, spec->fp);
@@ -214,7 +218,8 @@ static void four_four_header (midi_spec *spec)
     len += write_midi_byte(8, spec->fp);
 
     /* tempo */
-    len += write_var_len(0, spec->fp);
+    delta_time_zero(spec->fp);
+    len++;
     len += write_midi_meta(MIDI_TEMPO, spec->fp);
     /* bytes */
     len += write_midi_byte(3, spec->fp);
@@ -254,8 +259,7 @@ static void dataset_init (dataset *dset)
 {
     int i;
 
-    dset->x = NULL;
-    dset->y = NULL;
+    dset->points = NULL;
     dset->y2 = NULL;
 
     dset->n = 0;
@@ -274,8 +278,7 @@ static void dataset_free (dataset *dset)
 {
     int i;
 
-    free(dset->x);
-    free(dset->y);
+    free(dset->points);
 
     if (dset->y2 != NULL) {
 	free(dset->y2);
@@ -490,9 +493,8 @@ static int read_datafile (const char *fname, dataset *dset)
 	goto bailout;
     } 
 
-    dset->x = malloc(dset->n * sizeof *dset->x);
-    dset->y = malloc(dset->n * sizeof *dset->y);
-    if (dset->x == NULL || dset->y == NULL) {
+    dset->points = malloc(dset->n * sizeof *dset->points);
+    if (dset->points == NULL) {
 	err = 1;
 	fputs("Out of memory\n", stderr);
 	goto bailout;
@@ -531,8 +533,8 @@ static int read_datafile (const char *fname, dataset *dset)
 		err = 1;
 	    } else {
 		if (!got_e) {
-		    dset->x[i] = x;
-		    dset->y[i] = y;
+		    dset->points[i].x = x;
+		    dset->points[i].y = y;
 		} else {
 		    dset->y2[i] = y;
 		}
@@ -550,6 +552,24 @@ static int read_datafile (const char *fname, dataset *dset)
     }
 
     return err;
+}
+
+static void points_min_max (const datapoint *points, 
+			    double *xmin, double *xmax,
+			    double *ymin, double *ymax,
+			    int n)
+{
+    int i;
+
+    *xmin = *xmax = points[0].x;
+    *ymin = *ymax = points[0].y;
+
+    for (i=1; i<n; i++) {
+	if (points[i].x < *xmin) *xmin = points[i].x;
+	if (points[i].x > *xmax) *xmax = points[i].x;
+	if (points[i].y < *ymin) *ymin = points[i].y;
+	if (points[i].y > *ymax) *ymax = points[i].y;
+    }
 }
 
 static void min_max (const double *x, double *min, double *max,
@@ -580,10 +600,6 @@ static void speak_dataset_comments (const dataset *dset)
 	    flite_text_to_speech(dset->comments[i], v, "play");
 	}
     }
-
-# ifdef DEBUG
-    fprintf(stderr, "dset->n_comments=%d, done\n", dset->n_comments); 
-# endif
 }
 #endif
 
@@ -618,6 +634,14 @@ static void audio_graph_error (const char *msg)
 #endif
 }
 
+static int compare_points (const void *a, const void *b)
+{
+    const datapoint *pa = (const datapoint *) a;
+    const datapoint *pb = (const datapoint *) b;
+     
+    return (pa->x > pb->x) - (pa->x < pb->x);
+}
+
 static int play_dataset (midi_spec *spec, midi_track *track,
 			 const dataset *dset)
 {
@@ -635,10 +659,15 @@ static int play_dataset (midi_spec *spec, midi_track *track,
     track->channel = 0;
     track->patch = PC_GRAND; 
     track->n_notes = dset->n;
-   
-    min_max(dset->x, &xmin, &xmax, dset->n);
 
-    min_max(dset->y, &ymin, &ymax, dset->n);
+    if (dset->pd == 0) {
+	/* scatter plot: sort data by x value */
+	qsort((void *) dset->points, (size_t) dset->n, 
+	      sizeof dset->points[0], compare_points);
+    }
+
+    points_min_max(dset->points, &xmin, &xmax, &ymin, &ymax, dset->n);
+   
     if (dset->y2 != NULL) {
 	double y2min, y2max;
 
@@ -656,18 +685,18 @@ static int play_dataset (midi_spec *spec, midi_track *track,
     for (i=0; i<dset->n; i++) {
 	double dtx, dux, ypos;
 
-	ypos = (dset->y[i] - ymin) * yscale;
+	ypos = (dset->points[i].y - ymin) * yscale;
 
 	if (i == 0) {
 	    dtx = 0.0;
 	} else {
-	    dtx = xscale * (dset->x[i] - dset->x[i-1]);
+	    dtx = xscale * (dset->points[i].x - dset->points[i-1].x);
 	}
 
 	if (i == dset->n - 1) {
 	    dux = xscale * xavg;
 	} else {
-	    dux = xscale * (dset->x[i+1] - dset->x[i]);
+	    dux = xscale * (dset->points[i+1].x - dset->points[i].x);
 	}
 
 	track->notes[i].dtime = dtx;
@@ -676,10 +705,8 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 	track->notes[i].force = 64;
 
 #ifdef DEBUG
-	fprintf(stderr, "Obs %d: x = %g, y = %g\n", i, 
-		dset->x[i], dset->y[i]);
-	fprintf(stderr, " ypos = %g, dtx = %g, dux = %g\n",
-		ypos, dtx, dux);
+	fprintf(stderr, "Obs %d: x = %g, y = %g, ypos = %g\n", i, 
+		dset->points[i].x, dset->points[i].y, ypos);
 	fprintf(stderr, " dtime=%g, duration=%g, pitch=%d\n",
 		track->notes[i].dtime, track->notes[i].duration,
 		track->notes[i].pitch);
@@ -688,10 +715,6 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 
     write_midi_track(track, spec);
 
-    fprintf(stderr, "checking for series2: dset->y2=%p,\n"
-	    "dset->intercept=%g, dset->slope=%g\n",
-	    (void *) dset->y2, dset->intercept, dset->slope);
-
     if (dset->series2) {
 	for (i=0; i<dset->n; i++) {
 	    double yi, ypos;
@@ -699,10 +722,17 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 	    if (dset->y2 != NULL) {
 		yi = dset->y2[i];
 	    } else {
-		yi = dset->intercept + dset->slope * dset->x[i];
+		yi = dset->intercept + dset->slope * dset->points[i].x;
 	    }
 	    ypos = (yi - ymin) * yscale;
 	    track->notes[i].pitch = 36 + (int) (ypos + 0.5);
+#ifdef DEBUG
+	    fprintf(stderr, "Series2, Obs %d: x = %g, y = %g, ypos = %g\n", i, 
+		    dset->points[i].x, yi, ypos);
+	    fprintf(stderr, " dtime=%g, duration=%g, pitch=%d\n",
+		    track->notes[i].dtime, track->notes[i].duration,
+		    track->notes[i].pitch);
+#endif
 	}
 	track->channel = 1;
 	track->patch = PC_MARIMBA; 
@@ -710,10 +740,6 @@ static int play_dataset (midi_spec *spec, midi_track *track,
     }	
 
     free(track->notes);
-
-#ifdef DEBUG
-    fprintf(stderr, "freed track->notes, returning\n");
-#endif
 
     return 0;
 }

@@ -4,7 +4,7 @@
 dnl AM_PATH_LAPACK([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for LAPACK, and define LAPACK_CFLAGS and LAPACK_LIBS.
 dnl
-AC_DEFUN(AM_PATH_LAPACK,
+AC_DEFUN([AM_PATH_LAPACK],
 [dnl 
 AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is installed (optional)],
             lapack_config_prefix="$withval", lapack_config_prefix="")

@@ -5,7 +5,7 @@
 dnl AM_PATH_READLINE([ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for READLINE, and define READLINE_CFLAGS and READLINE_LIBS.
 dnl
-AC_DEFUN(AM_PATH_READLINE,
+AC_DEFUN([AM_PATH_READLINE],
 [dnl 
 AC_ARG_WITH(readline-prefix,[  --with-readline-prefix=PFX   Prefix where readline is installed (optional)],
             readline_config_prefix="$withval", readline_config_prefix="")

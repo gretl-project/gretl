@@ -108,4 +108,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Enable audio graphs */
 #undef HAVE_AUDIO
 
+/* Use flite for speech synthesis */
+#undef HAVE_FLITE
+
 #endif /* CONFIG_H */
