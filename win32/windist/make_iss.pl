@@ -133,6 +133,10 @@ print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"editor\"; ValueData: \"c:\\Program Files\\Microsoft Office\\Office\\winword.exe\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"toolbar\"; ValueData: \"true\"\n";   
+print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "\"png-font\"; ValueData: \"verdana\"\n";   
+print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "\"png-font-size\"; ValueData: \"8\"\n";   
 
 # Establish file associations
 

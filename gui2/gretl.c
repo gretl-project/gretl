@@ -52,6 +52,12 @@
 # include "../pixmaps/mini.camera.xpm"
 #endif
 
+/* win32 debugging? */
+/* #define WINDEBUG 1 */
+#ifdef WINDEBUG
+FILE *dbg;
+#endif
+
 /* functions from other gretl GUI files */
 
 extern void free_modelspec (void);    /* lib.c */
@@ -686,6 +692,10 @@ int main (int argc, char *argv[])
     GnomeProgram *program;
 #endif
 
+#ifdef WINDEBUG
+    dbg = fopen("debug.txt", "w");
+#endif    
+
 #ifdef ENABLE_NLS
     nls_init();
 #endif  
@@ -815,6 +825,12 @@ int main (int argc, char *argv[])
 	if (prn == NULL) exit(EXIT_FAILURE);
 
 	*paths.datfile = '\0';
+
+#ifdef WINDEBUG
+	fprintf(dbg, "About to call unmangle(), argc = %d, argv[1] = '%s'\n",
+		argc, argv[1]);
+	fflush(dbg);
+#endif
 #ifdef G_OS_WIN32
 	if (unmangle(argv[1], paths.datfile)) 
 	    exit(EXIT_FAILURE);
@@ -866,6 +882,11 @@ int main (int argc, char *argv[])
 	}
 	gretl_print_destroy(prn);
     }
+
+#ifdef WINDEBUG
+    fprintf(dbg, "starting on GUI building\n");
+    fclose(dbg);
+#endif
 
     /* create the GUI */
     gretl_tooltips_init();
@@ -2331,7 +2352,12 @@ static int old_windows (void) {
 
 static int unmangle (const char *dosname, char *longname)
 {
-    if (old_windows()) {
+    if (strchr(dosname, ':') == NULL) {
+	/* not a full path */
+	strcpy(longname, dosname);
+	return 0;
+    }	
+    else if (old_windows()) {
 	/* sorry but I really can't be bothered */
 	strcpy(longname, dosname);
 	return 0;
@@ -2339,13 +2365,19 @@ static int unmangle (const char *dosname, char *longname)
 	int err;
 	void *handle;
 	void (*real_unmangle)(const char *, char *, int, int *); 
-	
+
 	if (gui_open_plugin("longname", &handle)) return 1;
 
 	real_unmangle = get_plugin_function("real_unmangle", handle);
 	if (real_unmangle == NULL) return 1;
+
+#ifdef WINDEBUG
+	fprintf(dbg, "calling real_unmangle with dosname='%s'\n", dosname);
+	fflush(dbg);
+#endif
 	(*real_unmangle)(dosname, longname, MAXLEN, &err);
 	close_plugin(handle);
+
 	return err;
     }
 }

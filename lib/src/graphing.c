@@ -484,16 +484,35 @@ const char *get_gretl_png_term_line (void)
     static int done = 0;
 
     if (!done) {
-	const char *grfont;
-	const char *grfsize;
+	const char *grfont = NULL;
+	const char *grfsize = NULL;
+#ifdef OS_WIN32
+	char pngfont[MAXLEN];
+	char pngfontsize[MAXLEN];
+#endif
 
 	strcpy(png_term_line, "set term png");
-    
+
+#ifdef OS_WIN32
+	*pngfont = 0;
+	*pngfontsize = 0;
+	read_reg_val(HKEY_CURRENT_USER, "gretl", "png-font", pngfont);
+	if (*pngfont) 
+	    grfont = pngfont;
+	else 
+	    grfont = getenv("GRETL_PNG_GRAPH_FONT");
+	read_reg_val(HKEY_CURRENT_USER, "gretl", "png-font-size", pngfontsize);
+	if (*pngfontsize) 
+	    grfsize = pngfontsize;
+	else 
+	    grfsize = getenv("GRETL_PNG_GRAPH_FONT_SIZE");
+#else
 	grfont = getenv("GRETL_PNG_GRAPH_FONT");
 	grfsize = getenv("GRETL_PNG_GRAPH_FONT_SIZE");
+#endif
 
 	if (grfont != NULL && grfsize != NULL) {
-	    char fontspec[32];
+	    char fontspec[64];
 
 	    sprintf(fontspec, " font '%s' %s", grfont, grfsize);
 	    strcat(png_term_line, fontspec);
@@ -1389,6 +1408,39 @@ int termtype_to_termstr (const char *termtype, char *termstr)
 
 /* ........................................................... */
 
+static char *escape_quotes (const char *s)
+{
+    if (strchr(s, '"') == NULL) return NULL;
+    else {
+	int qcount = 0;
+	char *ret, *r;
+	const char *p = s;
+
+	while (*p) {
+	    if (*p == '"') qcount++;
+	    p++;
+	}
+	ret = malloc(strlen(s) + 1 + qcount);
+	if (ret == NULL) return NULL;
+
+	r = ret;
+	while (*s) {
+	    if (*s == '"') {
+		*r++ = '\\';
+		*r++ = '"';
+	    } else {
+		*r++ = *s;
+	    }
+	    s++;
+	}
+
+	*r = 0;
+	return ret;
+    }
+}
+
+/* ........................................................... */
+
 int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 {
     int i, k, t, datlines;
@@ -1413,10 +1465,13 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
 	if (!string_is_blank(spec->text_labels[i].text)) {
-	    fprintf(fp, "set label '%s' at %s %s\n",
-		    spec->text_labels[i].text,
+	    char *label = escape_quotes(spec->text_labels[i].text);
+
+	    fprintf(fp, "set label \"%s\" at %s %s\n", 
+		    (label != NULL)? label : spec->text_labels[i].text,
 		    spec->text_labels[i].pos,
 		    spec->text_labels[i].just);
+	    if (label != NULL) free(label);
 	}
     }
 

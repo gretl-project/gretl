@@ -113,6 +113,12 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 	sprintf(ppaths->gretldir, "%c:\\userdata\\gretl", drive);
     }
 
+    ppaths->userdir[0] = '\0';
+    read_reg_val(HKEY_CURRENT_USER, "gretl", "userdir", ppaths->userdir);
+    if (ppaths->userdir[0] == '\0') {
+	sprintf(ppaths->userdir, "%c:\\userdata\\gretl\\user", drive);
+    }
+
     ppaths->gnuplot[0] = '\0';
     read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gnuplot", ppaths->gnuplot);
     if (ppaths->gnuplot[0] == '\0') {

@@ -112,29 +112,40 @@ static void beep (void)
 static char *pop_history_line (int keyval)
 {
     static int blank;
+    static int beeptime;
+    static int lastkey;
+    char *ret = NULL;
 
     if (keyval == GDK_Up) {
+	if (lastkey == GDK_Down) hl += 2;
 	if (hl < 0) hl = (hlmax > 1 && !blank)? 1 : 0;
 	if (hl == hlmax) {
 	    beep();
-	    return NULL;
+	} else {
+	    blank = 0;
+	    ret = cmd_history[hl];
+	    hl++;
 	}
-	blank = 0;
-	return cmd_history[hl++];
     }
 
-    if (keyval == GDK_Down) {
+    else if (keyval == GDK_Down) {
+	if (lastkey == GDK_Up) hl -= 2;
 	if (hl == hlmax) hl = hlmax - 2;
 	if (hl < 0) {
 	    blank = 1;
-	    beep();
-	    return NULL;
+	    if (beeptime) beep();
+	    beeptime = 1;
+	} else {
+	    blank = 0;
+	    beeptime = 0;
+	    ret = cmd_history[hl];
+	    hl--;
 	}
-	blank = 0;
-	return cmd_history[hl--];
     }
 
-    return NULL;
+    lastkey = keyval;
+
+    return ret;
 }
 
 static int last_console_line_len (int len)
