@@ -44,7 +44,7 @@
 #ifdef HAVE_READLINE
 # include <readline/readline.h>
 /* readline functions from complete.c */
-extern char *rl_gets (char **line_read, int loop);
+extern char *rl_gets (char **line_read, const char *prompt);
 extern void initialize_readline (void);
 #endif /* HAVE_READLINE */
 
@@ -203,7 +203,7 @@ void fn_get_line (void)
 {
     clear(line, MAXLINE);
     
-    gretl_function_get_line(line, MAXLINE);
+    gretl_function_get_line(line, MAXLINE, &Z, datainfo);
 
     if (*line == '\0') {
 	return;
@@ -510,15 +510,21 @@ int main (int argc, char *argv[])
 	} else { 
 #ifdef HAVE_READLINE
 	    if (!runit && !batch) { /* normal interactive use */
-		rl_gets(&line_read, (loopstack)? 1 : 0);
-		if (line_read == NULL) strcpy(line, "quit");
-		else strcpy(line, line_read);
+		rl_gets(&line_read, (loopstack || gretl_compiling_function())? 
+			"> " : "? ");
+		if (line_read == NULL) {
+		    strcpy(line, "quit");
+		} else {
+		    strcpy(line, line_read);
+		}
 	    } else { 
 		file_get_line();
 	    }
 #else
-	    if (!runit && !batch) { /* normal interactive use */
-		printf("%s", (loopstack)? "> " : "? ");
+	    if (!runit && !batch) { 
+		/* normal interactive use */
+		printf("%s", (loopstack || gretl_compiling_function())? 
+		       "> " : "? ");
 		fflush(stdout);
 	    }
 	    file_get_line();
@@ -526,14 +532,16 @@ int main (int argc, char *argv[])
 	} 
 
 	if (strncmp(line, "quit", 4)) {
-	    /* allow for backslash continuation of lines */
+	    /* allow for backslash continuation of lines: FIXME func exec */
 	    while ((cont = top_n_tail(line))) {
 		*tmp = '\0';
 #ifdef HAVE_READLINE
 		if (batch || runit) {
 		    fgets(tmp, MAXLEN-1, fb);
 		} else {
-		    rl_gets(&line_read, (loopstack || cont)? 1 : 0);
+		    rl_gets(&line_read, 
+			    (loopstack || cont || gretl_compiling_function)? 
+			    "> " : "? ");
 		    strcpy(tmp, line_read);
 		}
 #else
@@ -622,6 +630,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     char s1[12], s2[12];
     int fncall = 0;
     double rho;
+
+    if (*line == '\0') return;
 
     /* catch any user-defined functions */
     err = handle_user_defined_function(line, &fncall);

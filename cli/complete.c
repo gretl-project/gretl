@@ -95,7 +95,7 @@ static char **gretl_completion (char *text, int start, int end)
 
 /* ........................................................... */
 
-char *rl_gets (char **line_read, int loop)
+char *rl_gets (char **line_read, const char *prompt)
      /* Read a string, and return a pointer to it.  Returns NULL on EOF. */
 {
     /* If the buffer has already been allocated, return the memory
@@ -106,11 +106,12 @@ char *rl_gets (char **line_read, int loop)
     }
      
     /* Get a line from the user. */
-    if (loop) *line_read = readline("> ");
-    else *line_read = readline("? ");
+    *line_read = readline(prompt);
 
     /* If the line has any text in it, save it on the history. */
-    if (*line_read && **line_read) add_history(*line_read);
+    if (*line_read && **line_read) {
+	add_history(*line_read);
+    }
      
     return *line_read;
 }

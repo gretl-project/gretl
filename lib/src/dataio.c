@@ -285,6 +285,7 @@ void gretl_varinfo_init (VARINFO *vinfo)
     *vinfo->label = '\0';
     *vinfo->display_name = '\0';
     vinfo->compact_method = COMPACT_NONE;
+    vinfo->stack_level = 0;
 }
 
 /* ................................................. */

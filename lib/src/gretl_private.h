@@ -104,7 +104,7 @@ void gretl_test_init (GRETLTEST *test);
 
 int vars_identical (const double *x, const double *y, int n);
 
-int get_function (const char *s);
+int get_genr_function (const char *s);
 
 void gretl_varinfo_init (VARINFO *vinfo);
 
@@ -129,6 +129,8 @@ void difflist (int *biglist, int *smalist, int *targ);
 int takenotes (int quit_opt);
 
 char *get_month_name (char *mname, int m);
+
+int gretl_function_stack_depth (void);
 
 /* init and cleanup functions */
 

@@ -108,6 +108,7 @@ struct _GENERATE {
     int err;
     char save;
     char scalar; 
+    char local;
     double *xvec;
     int varnum;
     char varname[VNAMELEN];

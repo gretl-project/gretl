@@ -20,6 +20,7 @@
 /* generate.c for gretl */
 
 #include "libgretl.h"
+#include "gretl_func.h"
 #include "gretl_private.h"
 #include "genstack.h"
 #include "libset.h"
@@ -93,6 +94,10 @@ static double evaluate_pvalue (const char *s, const double **Z,
 static double evaluate_critval (const char *s, const double **Z,
 				const DATAINFO *pdinfo, int *err);
 static int genr_scalar_index (int opt, int put);
+static int real_varindex (const DATAINFO *pdinfo, 
+			  const char *varname, 
+			  int local);
+
 
 enum retrieve {
     R_ESS = 1,
@@ -212,6 +217,7 @@ static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
     genr->err = 0;
     genr->save = 1;
     genr->scalar = 1;
+    genr->local = 0;
     genr->xvec = NULL;
     genr->varnum = 0;
     *genr->varname = '\0';
@@ -496,7 +502,7 @@ static genatom *parse_token (const char *s, char op,
 	    /* try for a function first */
 	    lag = 0;
 	    v = -1;
-	    func = get_function(s);
+	    func = get_genr_function(s);
 	    if (func) {
 		DPRINTF(("recognized function #%d (%s)\n", func, 
 			 get_func_word(func)));
@@ -1656,7 +1662,7 @@ static const char *get_func_word (int fnum)
 
 /* not static because used in nls.c */
 
-int get_function (const char *s)
+int get_genr_function (const char *s)
 {
     char word[VNAMELEN];
     const char *p;
@@ -1736,7 +1742,7 @@ int gretl_is_reserved (const char *str)
 	i++; 
     } 
 
-    if (get_function(str)) {
+    if (get_genr_function(str)) {
 	otheruse(str, _("math function"));
 	return 1;
     }
@@ -1831,7 +1837,7 @@ static void fix_decimal_commas (char *str)
 
 /* ........................................................... */
 
-static int copy_compress (char *targ, const char *src, int len)
+static void copy_compress (char *targ, const char *src, int len)
 {
     int j = 0;
 
@@ -1843,8 +1849,6 @@ static int copy_compress (char *targ, const char *src, int len)
     }
 
     targ[j] = '\0';
-
-    return *src;
 }
 
 /* ........................................................... */
@@ -1864,6 +1868,16 @@ static void get_genr_formula (char *formula, const char *line,
     if (!strncmp(line, "genr", 4) || !genr->save) {
 	line += 4;
 	while (isspace((unsigned char) *line)) line++;
+    }
+
+    if (gretl_executing_function()) {
+	char test[8];
+
+	/* allow for generation of vars local to function */
+	if (sscanf(line, "my %7s =", test)) {
+	    genr->local = 1;
+	    line += 3;
+	}
     }
 
     *formula = '\0';
@@ -2043,7 +2057,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    genr.err = E_SYNTAX;
 	    goto genr_return;
 	}
-	genr.varnum = varindex(pdinfo, newvar);
+	genr.varnum = real_varindex(pdinfo, newvar, genr.local);
     } else {
 	/* no "lhs=" bit */
 	if (!genr.save) {
@@ -2148,15 +2162,25 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 
     /* is the new variable an addition to data set? */
     if (v >= pdinfo->v) {
-	if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
+	if (dataset_add_vars(1, pZ, pdinfo)) {
+	    return E_ALLOC;
+	}
 	strcpy(pdinfo->varname[v], genr->varname);
     } else {
 	modify = 1;
-	if (!pdinfo->vector[v]) was_scalar = 1;
+	if (!pdinfo->vector[v]) {
+	    was_scalar = 1;
+	}
     }
 
     strcpy(VARLABEL(pdinfo, v), genr->label);
     pdinfo->vector[v] = !genr->scalar;
+    if (genr->local) {
+	/* record as a var local to a particular function
+	   stack depth */
+	STACK_LEVEL(pdinfo, v) = gretl_function_stack_depth();
+    }
+
     xx = genr->xvec[pdinfo->t1];
 
 #ifdef GENR_DEBUG
@@ -3834,23 +3858,15 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
     pputc(prn, '\n');
 }
 
-/**
- * varindex:
- * @pdinfo: data information struct.
- * @varname: name of variable to test.
- *
- * Returns: the ID number of the variable whose name is given,
- * or the next available ID number if there is no variable of
- * that name.
- *
- */
-
-int varindex (const DATAINFO *pdinfo, const char *varname)
+static int 
+real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 {
     const char *check;
-    int i;
+    int i, sd = 0, ret = pdinfo->v;
 
-    if (varname == NULL) return pdinfo->v;
+    if (varname == NULL) {
+	return ret;
+    }
 
     if (!strncmp(varname, "__", 2)) {
 	check = varname + 2;
@@ -3882,13 +3898,71 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 	return 0;
     }
 
-    for (i=0; i<pdinfo->v; i++) { 
-	if (!strcmp(pdinfo->varname[i], check)) { 
-	    return i;
+    if (gretl_executing_function()) {
+	sd = gretl_function_stack_depth();
+    } 
+
+    /* inside a function, generating a "my" local var:
+       ignore globals */
+    if (local) {
+	for (i=1; i<pdinfo->v; i++) { 
+	    if (!strcmp(pdinfo->varname[i], check) &&
+		STACK_LEVEL(pdinfo, i) == sd) {
+		ret = i;
+		break;
+	    }
+	}
+    } else if (sd > 0) {
+	/* executing a function: pick a local var as first
+	   choice, global as second */
+	int localv = -1;
+	int globalv = -1;
+
+	for (i=1; i<pdinfo->v; i++) { 
+	    if (!strcmp(pdinfo->varname[i], check)) {
+		if (STACK_LEVEL(pdinfo, i) == 0) {
+		    globalv = i;
+		} else if (STACK_LEVEL(pdinfo, i) == sd) {
+		    localv = i;
+		}
+		if (globalv > 0 && localv > 0) {
+		    break;
+		}
+	    }
+	}
+
+	if (localv > 0) {
+	    ret = localv;
+	} else if (globalv > 0) {
+	    ret = globalv;
+	}
+    } else {
+	/* not inside a function, simple */
+	for (i=1; i<pdinfo->v; i++) { 
+	    if (!strcmp(pdinfo->varname[i], check)) { 
+		ret = i;
+		break;
+	    }
 	}
     }
 
-    return pdinfo->v;
+    return ret;
+}
+
+/**
+ * varindex:
+ * @pdinfo: data information struct.
+ * @varname: name of variable to test.
+ *
+ * Returns: the ID number of the variable whose name is given,
+ * or the next available ID number if there is no variable of
+ * that name.
+ *
+ */
+
+int varindex (const DATAINFO *pdinfo, const char *varname)
+{
+    return real_varindex(pdinfo, varname, 0);
 }
 
 static int descindex (const DATAINFO *pdinfo, const char *desc)

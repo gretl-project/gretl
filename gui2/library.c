@@ -4616,7 +4616,8 @@ int execute_script (const char *runfile, const char *buf,
 	    *line = '\0';
 
 	    if (gretl_executing_function()) {
-		gotline = gretl_function_get_line(line, MAXLEN);
+		gotline = gretl_function_get_line(line, MAXLEN,
+						  &Z, datainfo);
 	    } else if (fb != NULL) {
 		gotline = fgets(line, MAXLEN, fb);
 	    } else {

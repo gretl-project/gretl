@@ -121,7 +121,7 @@ static void callstack_destroy (void)
     callstack = NULL;
 }
 
-static int callstack_get_n_calls (void)
+int gretl_function_stack_depth (void)
 {
     int i, n = 0;
 
@@ -141,7 +141,7 @@ static int push_fncall (fncall *call)
 	return E_ALLOC;
     }
 
-    nc = callstack_get_n_calls();
+    nc = gretl_function_stack_depth();
     if (nc == CALLSTACK_DEPTH) {
 	strcpy(gretl_errmsg, "Function call stack depth exceeded");
 	return 1;
@@ -158,13 +158,62 @@ static int push_fncall (fncall *call)
     return 0;
 }
 
-static void unstack_fncall (void)
+static int 
+destroy_local_vars (double ***pZ, DATAINFO *pdinfo, int nc)
+{
+    int i, nlocal = 0;
+    int err = 0;
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (STACK_LEVEL(pdinfo, i) == nc) {
+	    nlocal++;
+	}
+    }
+
+    if (nlocal > 0) {
+	int *locals = malloc((nlocal + 1) * sizeof *locals);
+
+	if (locals == NULL) {
+	    err = 1;
+	} else {
+	    int j = 1;
+
+	    locals[0] = nlocal;
+	    for (i=1; i<pdinfo->v; i++) {
+		if (STACK_LEVEL(pdinfo, i) == nc) {
+#ifdef FN_DEBUG
+                    fprintf(stderr, "local variable ID %d '%s' "
+			    "marked for deletion\n", i,
+			    pdinfo->varname[i]);
+#endif
+		    locals[j++] = i;
+		}
+	    }
+	    err = dataset_drop_listed_vars(locals, pZ, pdinfo, NULL);
+	}
+	free(locals);
+    }
+
+    return err;
+}
+
+static int unstack_fncall (double ***pZ, DATAINFO *pdinfo)
 {
     int i, nc;
+    int err = 0;
 
-    if (callstack == NULL) return;
+    if (callstack == NULL) return 1;
 
-    nc = callstack_get_n_calls();
+    nc = gretl_function_stack_depth();
+
+#ifdef FN_DEBUG
+    fprintf(stderr, "unstack_fncall: terminating call to "
+	    "function '%s' at depth %d\n", 
+	    (callstack[0])->fun->name, nc);
+#endif
+
+    free_fncall(callstack[0]);
+    err = destroy_local_vars(pZ, pdinfo, nc);
 
     for (i=0; i<nc; i++) {
 	if (i == nc - 1) {
@@ -175,6 +224,8 @@ static void unstack_fncall (void)
     }
 
     set_executing_off();
+
+    return err;
 }
 
 static fncall *current_call (void)
@@ -300,14 +351,18 @@ static ufunc *get_ufunc_by_name (const char *fname)
 
 int gretl_is_user_function (const char *s)
 {
-    char fname[32];
+    int ret = 0;
 
-    sscanf(s, "%31s", fname);
-    if (get_ufunc_by_name(fname) != NULL) {
-	return 1;
-    } else {
-	return 0;
+    if (n_ufuns > 0 && *s != '\0') {
+	char fname[32];
+
+	if (sscanf(s, "%31s", fname) &&
+	    get_ufunc_by_name(fname) != NULL) {
+	    ret = 1;
+	}
     }
+
+    return ret;
 }
 
 static void delete_ufunc_from_list (ufunc *fun)
@@ -504,6 +559,12 @@ int gretl_function_append_line (const char *line)
 	return err;
     }
 
+    if (!strncmp(line, "quit", 4)) {
+	delete_ufunc_from_list(fun);
+	set_compiling_off();
+	return err;
+    }
+
     if (!strncmp(line, "function", 8)) {
 	strcpy(gretl_errmsg, "You can't define a function within a function");
 	return 1;
@@ -615,7 +676,8 @@ substitute_dollar_terms (char *targ, const char *src,
     return err;
 }
 
-char *gretl_function_get_line (char *line, int len)
+char *gretl_function_get_line (char *line, int len,
+			       double ***pZ, DATAINFO *pdinfo)
 {
     fncall *call = current_call();
     const char *src;
@@ -626,7 +688,8 @@ char *gretl_function_get_line (char *line, int len)
     }
 
     if (call->lnum > call->fun->n_lines - 1) {
-	unstack_fncall();
+	/* finished executing */
+	unstack_fncall(pZ, pdinfo);
 	return NULL;
     } 
 

@@ -1054,12 +1054,16 @@ static int real_dataset_add_vars (int newvars, double *x,
     *pZ = newZ;
 
     varname = realloc(pdinfo->varname, (v + newvars) * sizeof *varname);
-    if (varname == NULL) return E_ALLOC;
+    if (varname == NULL) {
+	return E_ALLOC;
+    }
 
     pdinfo->varname = varname;
     for (i=0; i<newvars; i++) {
 	pdinfo->varname[v+i] = malloc(VNAMELEN);
-	if (pdinfo->varname[v+i] == NULL) return E_ALLOC;
+	if (pdinfo->varname[v+i] == NULL) {
+	    return E_ALLOC;
+	}
 	pdinfo->varname[v+i][0] = '\0';
     }
 

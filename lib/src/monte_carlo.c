@@ -1795,7 +1795,6 @@ int loop_exec (LOOPSET *loop, char *line,
 	       MODEL **models, PATHS *paths, 
 	       int *echo_off, PRN *prn)
 {
-    DATAINFO *pdinfo = *ppdinfo;
     CMD cmd;
     int lround = 0;
     int ignore = 0;
@@ -1824,7 +1823,8 @@ int loop_exec (LOOPSET *loop, char *line,
 
     top_of_loop(loop, *pZ);
 
-    while (!err && loop_condition(lround, loop, *pZ, pdinfo)) {
+    while (!err && loop_condition(lround, loop, *pZ, *ppdinfo)) {
+	DATAINFO *pdinfo = *ppdinfo;
 	int childnum = 0;
 	int modnum = 0;
 	int j;
@@ -2063,7 +2063,7 @@ int loop_exec (LOOPSET *loop, char *line,
 
     if (!err && lround > 0) {
 	if (loop->type != INDEX_LOOP) {
-	    print_loop_results(loop, pdinfo, prn, paths); 
+	    print_loop_results(loop, *ppdinfo, prn, paths); 
 	}
     }
 

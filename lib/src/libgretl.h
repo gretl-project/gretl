@@ -188,7 +188,8 @@ typedef struct _model_data_item model_data_item;
 struct _VARINFO {
     char label[MAXLABEL];
     char display_name[MAXDISP];
-    int compact_method;
+    char compact_method;
+    char stack_level;
 };
 
 /* information on data set */
@@ -394,6 +395,7 @@ struct _VCV {
 #define VARLABEL(p,i)  ((p->varinfo[i])->label)
 #define DISPLAYNAME(p,i)  ((p->varinfo[i])->display_name)
 #define COMPACT_METHOD(p,i) ((p->varinfo[i])->compact_method)
+#define STACK_LEVEL(p,i) ((p->varinfo[i])->stack_level)
 
 #include "gretl_commands.h"
 #include "gretl_errors.h"
