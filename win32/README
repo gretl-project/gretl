@@ -36,7 +36,7 @@ B. Modifications to scripts:
 
 1. At the top of the shell script, mkwindist, you will need to enter
 correct settings for (a) the location of the zipfile containing
-gnuplot for win32 and (b) the path to the Inno Setup compiler.  If you
+gnuplot for win32, and (b) the path to the Inno Setup compiler.  If you
 are building on win32 you will have to make further changes to this
 script (e.g., as it stands, the Inno compiler is called using wine).
 
@@ -49,6 +49,9 @@ When you have everything in place you can do "make" to build gretl for
 win32, and "make dist" to build the installer executable for gretl.
 If all goes well, you should find gretl_install.exe in windist/Output.
 
+In anyone wants to contribute a set of scripts that work for a build 
+of gretl actually on win32 (or even using the MS C compiler), please
+do so and and I'll add them to this directory.
 
 Allin Cottrell
 August, 2002
