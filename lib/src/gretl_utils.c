@@ -683,7 +683,7 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
     char stobs[9], endobs[9], endbit[7], *p;
     long ed0 = 0L;
 
-    gretl_errmsg[0] = '\0';
+    *gretl_errmsg = '\0';
 
     if (sscanf(line, "%*s %d %8s", &pd, stobs) != 2) {
 	strcpy(gretl_errmsg, _("Failed to parse line as frequency, startobs"));
@@ -773,11 +773,13 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
         pdinfo->time_series = TIME_SERIES; /* but might be panel? */
     else pdinfo->time_series = 0;
 
-    /* and report */
+    /* and report? */
+#if 0
     fprintf(stderr, _("setting data frequency = %d\n"), pd);
     if (pdinfo->n > 0) {
 	fprintf(stderr, _("data range: %s - %s\n"), pdinfo->stobs, pdinfo->endobs);
     }
+#endif
 
     return 0;
 }

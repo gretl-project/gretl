@@ -85,10 +85,11 @@ RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 RCOUT   = gretlw32_res.o
 RES2COFF = echo gretlw32_res.o
 
-LIBSRC = estimate.c compare.c gretl_utils.c gretl_errors.c pvalues.c dataio.c \
-       generate.c strutils.c describe.c printout.c modelprint.c texprint.c var.c \
-       interact.c graphing.c gretl_win32.c monte_carlo.c nonparam.c discrete.c \
-       subsample.c calendar.c system.c random.c nls.c gretl_matrix.c qr_estimate.c 
+LIBSRC = calendar.c compare.c dataio.c dbread.c describe.c discrete.c \
+        estimate.c generate.c graphing.c gretl_errors.c gretl_matrix.c \
+        gretl_utils.c gretl_win32.c interact.c modelprint.c monte_carlo.c \
+	nls.c nonparam.c printout.c pvalues.c qr_estimate.c random.c \
+	strutils.c subsample.c system.c texprint.c var.c
 LIBOBJ = $(LIBSRC:.c=.o)
 
 CLISRC = gretlcli.c complete.c 
@@ -212,7 +213,7 @@ plugins/lad.dll: lad.o dllinit.o
 
 plugins/panel_data.dll: panel_data.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS)
+	--implib plugins/$(<:.o=.a) $^ $(LAPACK_LIBS) $(GRETLLIB) $(GTKLIBS) 
 
 plugins/tramo-x12a.dll: tramo-x12a.o tramo_options.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

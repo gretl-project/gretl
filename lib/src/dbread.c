@@ -81,6 +81,7 @@ typedef struct {
 } RATSData;
 
 static char db_name[MAXLEN];
+static int db_type;
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    double ***pZ, DATAINFO *pdinfo,
@@ -735,6 +736,8 @@ get_rats_series_info_by_name (const char *series_name,
     if (fp == NULL) return DB_NOT_FOUND;
     
     offset = get_rats_series_offset_by_name(fp, series_name, sinfo);
+    fclose(fp);
+
     if (offset <= 0) return DB_NOT_FOUND;
 
 #ifdef DB_DEBUG
@@ -923,10 +926,24 @@ int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
     return 0;
 }
 
-void set_db_name (const char *fname)
+int set_db_name (const char *fname, int filetype, PRN *prn)
 {
+    FILE *fp;
+    int err = 0;
+
     *db_name = 0;
-    strncat(db_name, fname, MAXLEN - 1);
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) {
+	pprintf(prn, _("Couldn't open %s\n"), fname);
+	err = 1;
+    } else {
+	fclose(fp);
+	strncat(db_name, fname, MAXLEN - 1);
+	db_type = filetype;
+    }
+
+    return err;
 }
 
 int db_set_sample (const char *line, DATAINFO *pdinfo)
@@ -1055,14 +1072,11 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
     SERIESINFO sinfo;
     double **dbZ;
     int err = 0;
-    int rats = 0;
 
     if (*db_name == 0) {
 	strcpy(gretl_errmsg, _("No database has been opened"));
 	return 1;
     }   
-
-    if (strstr(db_name, ".rat")) rats = 1;
 
     line = get_compact_method_and_advance(line, &comp_method);
 
@@ -1071,7 +1085,7 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
     while ((line = get_word_and_advance(line, series, 8))) {
 
 	/* find the series information in the database */
-	if (rats) {
+	if (db_type == GRETL_RATS_DB) {
 	    err = get_rats_series_info_by_name (series, &sinfo);
 	} else {	
 	    err = get_native_series_info (series, &sinfo);
@@ -1088,7 +1102,7 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    return 1;
 	}
 
-	if (rats) {
+	if (db_type == GRETL_RATS_DB) {
 	    err = get_rats_data_by_offset (db_name, &sinfo, dbZ);
 	} else {
 	    get_native_db_data (db_name, &sinfo, dbZ);

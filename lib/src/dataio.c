@@ -2763,23 +2763,9 @@ void close_plugin (void *handle)
 static int file_has_suffix (const char *fname, const char *sfx)
 {
     const char *p = strrchr(fname, '.');
-    size_t n;
 
-    if (p != NULL && (n = strlen(p)) > 3) {
-	char *q, s[9];
-
-	*s = 0;
-	strncat(s, p + 1, 8);
-	q = s;
-	while (*q) {
-	    *q = tolower(*q);
-	    q++;
-	}
-
-	if (!strcmp(s, sfx)) return 1;
-    }
-
-    return 0;
+    if (p != NULL && !strcmp(p + 1, sfx)) return 1;
+    else return 0;
 }
 
 /**
@@ -2797,14 +2783,14 @@ static int file_has_suffix (const char *fname, const char *sfx)
 
 int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 {
-    size_t n = strlen(fname);
     int i, c, ftype = GRETL_NATIVE_DATA;
     char teststr[5];
     FILE *fp;
 
     /* might be a script file? (watch out for DOS-mangled names) */
     if (file_has_suffix(fname, "inp") ||
-	file_has_suffix(fname, "gre"))
+	file_has_suffix(fname, "gre") ||
+	file_has_suffix(fname, "GRE"))
 	return GRETL_SCRIPT;
     if (file_has_suffix(fname, "gretl"))
 	return GRETL_SCRIPT; 
@@ -2828,16 +2814,14 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     if (fp == NULL)  
 	return GRETL_NATIVE_DATA; /* may be native file in different location */
 
-    /* first look at extension */
-    n = strlen(fname);
-    if (n >= 5) {
-	if (strcmp(fname + n - 4, ".csv") == 0) 
-	    ftype = GRETL_CSV_DATA;
-	else if (strcmp(fname + n - 4, ".txt") == 0) 
-	    ftype = GRETL_CSV_DATA;
-	else if (strcmp(fname + n - 4, ".box") == 0) 
-	    ftype = GRETL_BOX_DATA;
-    }
+    /* look at extension */
+    if (file_has_suffix(fname, "csv")) 
+	ftype = GRETL_CSV_DATA;
+    else if (file_has_suffix(fname, "txt"))
+	ftype = GRETL_CSV_DATA;
+    else if (file_has_suffix(fname, "box"))
+	ftype = GRETL_BOX_DATA;
+
     /* then take a peek at content */
     for (i=0; i<80; i++) {
 	c = getc(fp);
@@ -2848,6 +2832,7 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	}
 	if (i < 4) teststr[i] = c;
     }
+
     fclose(fp);
     teststr[4] = 0;
 

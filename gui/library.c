@@ -4023,7 +4023,8 @@ int gui_exec_line (char *line,
 		   PRN *prn, int exec_code, 
 		   const char *myname) 
 {
-    int i, err = 0, check = 0, rebuild, order, nulldata_n, lines[1];
+    int i, err = 0, chk = 0, rebuild, order, nulldata_n, lines[1];
+    int dbdata = 0;
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN];
     char linecopy[1024];
@@ -4528,17 +4529,21 @@ int gui_exec_line (char *line,
 #ifdef CMD_DEBUG
 	fprintf(stderr, "OPEN in gui_exec_line, datfile='%s'\n", datfile);
 #endif
-	if (data_status & HAVE_DATA)
+	chk = detect_filetype(datfile, &paths, prn);
+	dbdata = (chk == GRETL_NATIVE_DB || chk == GRETL_RATS_DB);
+
+	if ((data_status & HAVE_DATA) && !dbdata) {
 	    close_session();
-	check = detect_filetype(datfile, &paths, prn);
-	if (check == GRETL_CSV_DATA) {
+	}
+
+	if (chk == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, datainfo, datfile, prn);
-	} else if (check == GRETL_BOX_DATA) {
+	} else if (chk == GRETL_BOX_DATA) {
 	    err = import_box(&Z, datainfo, datfile, prn);
-	} else if (check == GRETL_XML_DATA) {
+	} else if (chk == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, datainfo, datfile, &paths, data_status, prn, 0);
-	} else if (check == GRETL_NATIVE_DB || check == GRETL_RATS_DB) {
-	    set_db_name(datfile);
+	} else if (dbdata) {
+	    err = set_db_name(datfile, chk, prn);
 	} else {
 	    err = get_data(&Z, datainfo, datfile, &paths, data_status, prn);
 	}
@@ -4547,11 +4552,14 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	strncpy(paths.datfile, datfile, MAXLEN-1);
-	if (check == GRETL_CSV_DATA || check == GRETL_BOX_DATA) {
+	if (chk == GRETL_CSV_DATA || chk == GRETL_BOX_DATA || dbdata) {
 	    data_status |= IMPORT_DATA;
 	}
-	register_data(paths.datfile, (exec_code != REBUILD_EXEC));
-	varlist(datainfo, prn);
+	if (datainfo->v > 0 && !dbdata) {
+	    /* below: was (exec_code != REBUILD_EXEC), not 0 */
+	    register_data(paths.datfile, 0);
+	    varlist(datainfo, prn);
+	}
 	paths.currdir[0] = '\0'; 
 	break;
 
@@ -4753,8 +4761,12 @@ int gui_exec_line (char *line,
 	err = set_obs(line, datainfo, oflag);
 	if (err) errmsg(err, prn);
 	else {
-	    set_sample_label(datainfo);
-	    print_smpl(datainfo, 0, prn);
+	    if (datainfo->n > 0) {
+		set_sample_label(datainfo);
+		print_smpl(datainfo, 0, prn);
+	    } else {
+		pprintf(prn, _("setting data frequency = %d\n"), datainfo->pd);
+	    }
 	}
 	break;	
 
@@ -4792,7 +4804,7 @@ int gui_exec_line (char *line,
 	else if (strcmp(line, "smpl full") == 0) {
 	    restore_sample();
 	    restore_sample_state(FALSE);
-	    check = 1;
+	    chk = 1;
 	} else {
 	    err = set_sample(line, datainfo);
 	}
@@ -4804,14 +4816,14 @@ int gui_exec_line (char *line,
 	    } else {
 		set_sample_label(datainfo);
 	    }
-	    if (!check) restore_sample_state(TRUE);
+	    if (!chk) restore_sample_state(TRUE);
 	}
 	break;
 
     case SQUARE:
-	if (oflag) check = xpxgenr(command.list, &Z, datainfo, 1, 1);
-	else check = xpxgenr(command.list, &Z, datainfo, 0, 1);
-	if (check < 0) {
+	if (oflag) chk = xpxgenr(command.list, &Z, datainfo, 1, 1);
+	else chk = xpxgenr(command.list, &Z, datainfo, 0, 1);
+	if (chk < 0) {
 	    pprintf(prn, _("Failed to generate squares\n"));
 	    err = 1;
 	} else {

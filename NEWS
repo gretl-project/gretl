@@ -46,25 +46,27 @@ New features:
    The new command "data" is used, followed by a list of series to
    extract.  The data command must be prefaced by an "open" command
    that opens the database in question.  It must also be prefaced by
-   "setobs" and "smpl" commands that establish the frequency and range
-   of the working data set.  For example:
+   "setobs" and "smpl" commands that jointly establish the frequency
+   and range of the working data set.  For example:
 
-   open /path/to/foo.bin
-   setobs 4 1959.1
-   smpl ; 2000.4
-   data (compact=average) cpiu unemp
+   open /home/cottrell/stats/macrodat.rat
+   setobs 4 1959:1
+   smpl ; 1999:4
+   data GDP_JP
+   data (compact=average) LHUR PUNEW
+   data (compact=last) FYFF EXRUK
 
    In the above example the "setobs" command establishes a quarterly
    dataset starting in the first quarter of 1959.  The "smpl" command
-   says the data set will run till the 4th quarter of 2000.  The
-   "data" command then imports two series, "cpiu" and "unemp", from
-   the previously opened foo.bin.  The "(compact=average)" option is
-   used in this case to specify that the series should be compacted to
-   quarterly format by averaging.  A compaction method should be
-   specified if the series in the database are of higher frequency
-   that the working data set.  (In the example, the series to be
-   imported are monthly.)  If the data series are of the same
-   frequency as the dataset, no "compact" option is needed.
+   says the data set will run till the 4th quarter of 1999.  The first
+   "data" command imports the series GDP_JP, which is implicitly of
+   the same frequency as the working data set.  The second "data" line
+   imports two series, LHUR and PUNEW.  These are monthly and must be
+   compacted somehow: the "(compact=average)" option tells gretl to do
+   this by averaging the monthly values.  The final "data" line
+   imports FYFF and EXRUK, compacting by taking the last month's value
+   in each quarter.  Other valid compaction options are "sum" and
+   "first".
 
 March 2003
 

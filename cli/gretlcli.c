@@ -532,7 +532,8 @@ static int data_option (int flag);
 
 void exec_line (char *line, PRN *prn) 
 {
-    int check, nulldata_n;
+    int chk, nulldata_n;
+    int dbdata = 0;
     char s1[12], s2[12];
     double rho;
 
@@ -981,8 +982,12 @@ void exec_line (char *line, PRN *prn)
 	    pputs(prn, _("'open' command is malformed\n"));
 	    break;
 	}
-	if (data_status && !(batch) 
-	    && strcmp(datfile, paths.datfile)) {
+
+	chk = detect_filetype(datfile, &paths, prn);
+	dbdata = (chk == GRETL_NATIVE_DB || chk == GRETL_RATS_DB);
+
+	if (data_status && !batch && !dbdata &&
+	    strcmp(datfile, paths.datfile)) {
 	    fprintf(stderr, _("Opening a new data file closes the "
 		    "present one.  Proceed? (y/n) "));
 	    fgets(response, 2, stdin);
@@ -992,20 +997,21 @@ void exec_line (char *line, PRN *prn)
 		break;
 	    }
 	}
-	check = detect_filetype(datfile, &paths, prn);
-	if (check == GRETL_CSV_DATA) {
+
+	if (chk == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, datainfo, datfile, prn);
-	} else if (check == GRETL_BOX_DATA) {
+	} else if (chk == GRETL_BOX_DATA) {
 	    err = import_box(&Z, datainfo, datfile, prn);
-	} else if (check == GRETL_XML_DATA) {
+	} else if (chk == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, datainfo, datfile, &paths, 
 			      data_status, prn, 0);
-	} else if (check == GRETL_NATIVE_DB || check == GRETL_RATS_DB) {
-	    set_db_name(datfile);
+	} else if (dbdata) {
+	    err = set_db_name(datfile, chk, prn);
 	} else {
 	    err = get_data(&Z, datainfo, datfile, &paths, 
 			   data_status, prn);
 	}
+
 	if (err) {
 	    errmsg(err, prn);
 	    break;
@@ -1013,7 +1019,7 @@ void exec_line (char *line, PRN *prn)
 	strncpy(paths.datfile, datfile, MAXLEN-1);
 	fullZ = NULL;
 	data_status = 1;
-	if (datainfo->v > 0) {
+	if (datainfo->v > 0 && !dbdata) {
 	    varlist(datainfo, prn);
 	}
 	paths.currdir[0] = '\0';
@@ -1249,8 +1255,12 @@ void exec_line (char *line, PRN *prn)
     case SETOBS:
 	err = set_obs(line, datainfo, oflag);
 	if (err) errmsg(err, prn);
-	else if (datainfo->n > 0) {
-	    print_smpl(datainfo, 0, prn);
+	else {
+	    if (datainfo->n > 0) {
+		print_smpl(datainfo, 0, prn);
+	    } else {
+		pprintf(prn, _("setting data frequency = %d\n"), datainfo->pd);
+	    }
 	}
 	break;
 
@@ -1306,9 +1316,9 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case SQUARE:
-	if (oflag) check = xpxgenr(command.list, &Z, datainfo, 1, 1);
-	else check = xpxgenr(command.list, &Z, datainfo, 0, 1);
-	if (check < 0) {
+	if (oflag) chk = xpxgenr(command.list, &Z, datainfo, 1, 1);
+	else chk = xpxgenr(command.list, &Z, datainfo, 0, 1);
+	if (chk < 0) {
 	    pputs(prn, _("Failed to generate squares\n"));
 	    err = 1;
 	} else {
