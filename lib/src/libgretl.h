@@ -30,11 +30,7 @@
 #endif
 
 #ifdef OS_WIN32
-# ifdef MINIMAL
-#  include "minconfig.h"
-# else
-#  include "winconfig.h"
-# endif
+# include "winconfig.h"
 #endif
 
 #ifdef OS_WIN32
