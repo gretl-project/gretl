@@ -526,7 +526,7 @@ int write_x12a_data (char *fname, int varnum,
     write_spc_file(fname, *pZ, pdinfo, varnum, varlist, &request);
 
     /* run the x12a program -- FIXME win32 */
-    sprintf(cmd, "cd %s && %s %s -r -p -q >/dev/null", x12adir, x12a, varname);
+    sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", x12adir, x12a, varname);
     err = system(cmd);
     
     if (!err) {
