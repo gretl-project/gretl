@@ -519,14 +519,13 @@ void print_nist_summary (int ntests, int missing, int modelerrs,
 			 const char *prog, PRN *prn)
 {
 #ifdef USE_GMP
-    pprintf(prn, "\nSummary of NIST test results:\n"
+    pprintf(prn, "\nSummary of NIST linear regression test results:\n"
 	    " * number of tests carried out: %d\n"
 	    " * reference data files missing or corrupted: %d\n"
 	    " * unexpected errors in estimation of models: %d\n"
 	    " * poor or unacceptable results with libgretl: %d\n"
-	    " * cases where results from the gretl GMP plugin, printed using %d\n"
-	    "   significant figures, disagreed with the NIST"
-	    " certified values: %d\n",
+	    " * cases where results from the gretl GMP plugin disagreed with the NIST\n"
+	    "   certified values, at %d significant figures: %d\n",
 	    ntests - missing, missing, modelerrs, poorvals,
 	    MP_CHECK_DIGITS, mpfails);
 #else
