@@ -824,17 +824,23 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      tempwid, 1, TAB_MAIN_COLS, 
 				      tbl_len-1, tbl_len);
+				      
+            if (spec->titles[i] != NULL && *spec->titles[i] != '\0') {		      
 #ifdef OLD_GTK
-	    gtk_entry_set_text(GTK_ENTRY(tempwid), spec->titles[i]);
+	        gtk_entry_set_text(GTK_ENTRY(tempwid), spec->titles[i]);
+#else		
+	        titlestr = g_locale_to_utf8(spec->titles[i], -1, NULL,
+					    &bytes, NULL);
+	        gtk_entry_set_text(GTK_ENTRY(tempwid), titlestr);
+	        g_free(titlestr);
+#endif
+            }		
+
+#ifdef OLD_GTK		
 	    gtk_signal_connect(GTK_OBJECT(tempwid), "activate", 
 			       GTK_SIGNAL_FUNC(apply_gpt_changes), 
 			       spec);
 #else
-	    titlestr = g_locale_to_utf8(spec->titles[i], -1, NULL,
-					&bytes, NULL);
-	    gtk_entry_set_text(GTK_ENTRY(tempwid), titlestr);
-	    g_free(titlestr);
-
 	    g_signal_connect(G_OBJECT(tempwid), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     spec);

@@ -923,7 +923,6 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 
 	    if (colnum == 0) {
 		/* don't respond to a click in a non-data column */
-		fprintf(stderr, "got colnum 0, ignoring\n");
 		ret = TRUE;
 	    } 
 	}
