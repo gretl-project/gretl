@@ -24,6 +24,8 @@
 typedef struct _tramo_options tramo_options;
 
 struct _tramo_options {
+    int rsa;      /* for standard auto setting, rsa = 3 (guide.pdf) */
+
     int iatip;    /* correction for outliers? 0=no, 1=auto */
     int aio;      /* sorts of outliers recognized (codes 1, 2, or 3;
 		     0 is also acceptable in case only tramo is run) */
@@ -76,12 +78,15 @@ struct _tramo_options {
 		     2 = very brief summary
 		     3 = no output file
 		   */
+
+    tx_request *request; /* generic tramo/x-12-arima request struct */
 };
 
 #define option_widgets_shown(p)  (p->va_spinner != NULL)
 
 static void tramo_options_set_defaults (tramo_options *opts, int pd)
 {
+    opts->rsa = 3;           /* standard auto analysis */
     opts->iatip = 1;         /* detect outliers */
     opts->aio = 2;           /* both transitory changes and level shifts */
     opts->va = 0.0;          /* let critical value be decided by tramo */
@@ -97,6 +102,35 @@ static void tramo_options_set_defaults (tramo_options *opts, int pd)
     opts->noadmiss = 1;      /* use approximation if needed */
     opts->seats = 1;         /* make SEATS file and re-do estimation */
     opts->out = 0;           /* verbose */
+}
+
+static void 
+tramo_custom_tabs_set_sensitive (GtkWidget *notebook, gboolean s)
+{
+    gint i;
+    GtkWidget *page;
+
+    for (i=2; i<5; i++) {
+	page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), i);
+	gtk_widget_set_sensitive(page, s);
+    }
+}
+
+static void main_auto_callback (GtkWidget *w, GtkWidget *notebook)
+{
+#if GTK_MAJOR_VERSION >= 2
+    tramo_options *opts = g_object_get_data(G_OBJECT(notebook), "opts");
+#else
+    tramo_options *opts = gtk_object_get_data(GTK_OBJECT(notebook), "opts");
+#endif
+
+    if (w == NULL || GTK_TOGGLE_BUTTON(w)->active) {
+	tramo_custom_tabs_set_sensitive(notebook, FALSE);
+	opts->rsa = 3;
+    } else {
+	tramo_custom_tabs_set_sensitive(notebook, TRUE);
+	opts->rsa = 0;
+    }
 }
 
 static void va_spinner_set_state (tramo_options *opts)
@@ -213,14 +247,26 @@ static void tramo_aio_callback (GtkWidget *w, tramo_options *opts)
     }
 }
 
+static void 
+seats_specific_widgets_set_sensitive (tramo_options *opts,
+				      gboolean s)
+{
+    tx_request *request = opts->request;
+
+    gtk_widget_set_sensitive(opts->aio_innov_button, !s); 
+    gtk_widget_set_sensitive(request->opt[D11].check, s);
+    gtk_widget_set_sensitive(request->opt[D12].check, s);
+    gtk_widget_set_sensitive(request->opt[D13].check, s);
+}				      
+
 static void real_set_seats (tramo_options *opts, gint run_seats)
 {
     if (run_seats) {
 	opts->seats = 1; /* should this be 2? */
-	gtk_widget_set_sensitive(opts->aio_innov_button, FALSE);
+	seats_specific_widgets_set_sensitive(opts, TRUE);
     } else {
 	opts->seats = 0;
-	gtk_widget_set_sensitive(opts->aio_innov_button, TRUE);
+	seats_specific_widgets_set_sensitive(opts, FALSE);
     }
 }
 
@@ -304,12 +350,25 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
    
     tbl = make_notebook_page_table(notebook, _("General"), tbl_len, 2);
 
-    /* checkbox for standard default run -- FIXME: hook me up!*/
+    /* checkbox for standard default run */
     tmp = gtk_check_button_new_with_label(_("Standard automatic analysis"));
     gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
     row++;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);    
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+#if GTK_MAJOR_VERSION >= 2
+    g_object_set_data(G_OBJECT(notebook), "opts",
+		      request->opts);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(main_auto_callback), 
+		     notebook);
+#else
+    gtk_object_set_data(GTK_OBJECT(notebook), "opts",
+			request->opts);
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(main_auto_callback), 
+		       notebook);
+#endif
 
     /* horizontal separator */
     tmp = gtk_hseparator_new();
@@ -441,7 +500,7 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
     row++;
     request->opt[D11].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
 
     tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
     gtk_widget_show(tmp);
@@ -916,6 +975,7 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts)
 static void real_show_tramo_options (tx_request *request, GtkWidget *vbox) 
 {
     GtkWidget *notebook;
+    tramo_options *opts = (tramo_options *) request->opts;
 
     notebook = gtk_notebook_new();
     gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
@@ -923,9 +983,13 @@ static void real_show_tramo_options (tx_request *request, GtkWidget *vbox)
 
     tramo_tab_general(notebook, request);    
     tramo_tab_output(notebook, request);
-    tramo_tab_outliers(notebook, request->opts);
-    tramo_tab_transform(notebook, request->opts);
-    tramo_tab_arima(notebook, request->opts);
+    tramo_tab_outliers(notebook, opts);
+    tramo_tab_transform(notebook, opts);
+    tramo_tab_arima(notebook, opts);
+
+    if (opts->rsa == 3) {
+	main_auto_callback(NULL, notebook);
+    }
 }
 
 static tramo_options *tramo_options_new (int pd)
@@ -959,7 +1023,9 @@ int show_tramo_options (tx_request *request, GtkWidget *vbox)
     opts = tramo_options_new(request->pd);
     if (opts == NULL) return 1;
 
+    /* mutual pointer hook-up */
     request->opts = opts;
+    opts->request = request;
 
     real_show_tramo_options(request, vbox);
 
@@ -980,6 +1046,11 @@ int print_tramo_options (tx_request *request, FILE *fp)
     opts = request->opts;
 
     fputs("$INPUT ", fp);
+
+    if (opts->rsa == 3) {
+	fputs("rsa=3,", fp);
+	goto set_out;
+    }
 
     /* note: if values are at their TRAMO defaults, don't bother
        printing them */
@@ -1016,12 +1087,13 @@ int print_tramo_options (tx_request *request, FILE *fp)
 	fprintf(fp, "mq=%d,", opts->mq);
     }
 
-    if (opts->out != 0) {
-	fprintf(fp, "out=%d,", opts->out);
-    }
-
     if (opts->noadmiss != 1) {
 	fprintf(fp, "noadmiss=%d,", opts->noadmiss);
+    }
+
+ set_out:
+    if (opts->out != 0) {
+	fprintf(fp, "out=%d,", opts->out);
     }
 
     fprintf(fp, "seats=%d\n", opts->seats);

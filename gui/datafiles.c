@@ -183,7 +183,7 @@ static void browse_header (GtkWidget *w, gpointer data)
 	build_path(paths.datadir, fname, hdrname, ".gdt");
     else if (win->role == JW_DATA)
 	build_path(woolpath, fname, hdrname, ".gdt");
-    else if (win->role == TEXTBOOK_DATA) {
+    else if (win->role == TEXTBOOK_DATA) 
 	get_textbook_file_path(fname, hdrname, ".gdt");
     else if (win->role == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
@@ -963,10 +963,10 @@ static int populate_notebook_filelists (windata_t *fdata,
 
     if (jwdata) {
 	fdata->listbox = lbox2;
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 1);
+	gtk_notebook_set_page(GTK_NOTEBOOK(notebook), 1);
     } else {
 	fdata->listbox = lbox1;
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 0);
+	gtk_notebook_set_page(GTK_NOTEBOOK(notebook), 0);
     }
 
     fdata->role = role;
