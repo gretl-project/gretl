@@ -77,7 +77,8 @@ vpath %.c $(topsrc)/cli
 OBJS = gretl.o library.o gui_utils.o callbacks.o dialogs.o ssheet.o \
 	datafiles.o database.o fileselect.o gpt_control.o session.o \
 	webget.o calculator.o guiprint.o boxplots.o \
-	console.o selector.o settings.o helpfiles.o treeutils.o
+	console.o selector.o settings.o helpfiles.o treeutils.o \
+	series_view.o
 
 HACK_SRC = gtkfontselhack.c font_filter.c
 HACK_HDR = gtkfontselhack.h

@@ -128,6 +128,7 @@ enum extra_cmds {
     TRAMO,
     X12A,
     RANGE_MEAN,
+    VIEW_SERIES,
     VIEW_MODEL,
     VIEW_LOG,
     VIEW_DATA,

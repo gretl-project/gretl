@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "guiprint.h"
+#include "series_view.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -376,7 +377,7 @@ gint catch_view_key (GtkWidget *w, GdkEventKey *key)
 
 /* ........................................................... */
 
-gint catch_button (GtkWidget *w, GdkEventButton *event)
+static gint catch_button (GtkWidget *w, GdkEventButton *event)
 {
     GdkModifierType mods;
 
@@ -852,7 +853,7 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 	    }
 	}
     }
-} 
+}
 
 /* .................................................................. */
 
@@ -901,6 +902,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_corrmat(vwin->data);
 	else if (vwin->role == MPOLS)
 	    free_gretl_mp_results(vwin->data);
+	else if (vwin->role == VIEW_SERIES)
+	    free_series_view(vwin->data);
 	if (vwin->dialog)
 	    winstack_remove(vwin->dialog);
 	free(vwin);
@@ -1315,8 +1318,16 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_view_key), vwin->dialog);
 
-    g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
-		     G_CALLBACK(catch_button), vwin->w);
+    /* make popup? */
+    if (role == VIEW_SERIES) {
+	build_series_view_popup(vwin);
+	g_signal_connect (G_OBJECT(vwin->w), "button_press_event",
+			  G_CALLBACK(popup_menu_handler), 
+			  (gpointer) vwin->popup);
+    } else {
+	g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
+			 G_CALLBACK(catch_button), vwin->w);
+    }
 
     /* clean up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 

@@ -23,6 +23,7 @@
 #include <unistd.h>
 
 #include "selector.h"
+#include "series_view.h"
 
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
@@ -3001,7 +3002,15 @@ void display_selected (GtkWidget *widget, gpointer p)
     if (prcmd.errcode) {
 	gui_errmsg(prcmd.errcode);
 	return;
-    }    
+    }   
+
+    /* special case: showing only one series */
+    if (prcmd.list[0] == 1) {
+	free(prcmd.list);
+	free(prcmd.param);
+	display_var();
+	return;
+    } 
 
     if (prcmd.list[0] * datainfo->n > MAXDISPLAY) { /* use disk file */
 	char fname[MAXLEN];
@@ -3010,7 +3019,7 @@ void display_selected (GtkWidget *widget, gpointer p)
 
 	printdata(prcmd.list, &Z, datainfo, 0, 1, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 77, 350, VIEW_DATA, NULL);
+	view_file(fname, 0, 1, 78, 350, VIEW_DATA, NULL);
     } else { /* use buffer */
 	int err;
 
@@ -3021,7 +3030,7 @@ void display_selected (GtkWidget *widget, gpointer p)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	view_buffer(prn, 77, 350, _("gretl: display data"), PRINT, NULL);
+	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, NULL);
     }
     free(prcmd.list);
     free(prcmd.param);
@@ -3234,12 +3243,22 @@ void display_var (void)
 {
     int list[2];
     PRN *prn;
+    windata_t *vwin;
 
     list[0] = 1;
     list[1] = mdata->active_var;
+
     if (bufopen(&prn)) return;
+
     printdata(list, &Z, datainfo, 0, 1, prn);
-    view_buffer(prn, 24, 350, _("gretl: display data"), PRINT, NULL);    
+
+    vwin = view_buffer(prn, 28, 350, datainfo->varname[list[1]], VIEW_SERIES,
+		       NULL);   
+
+    if (datainfo->time_series == 0 && datainfo->vector[list[1]]) { 
+	/* cross-sectional data series */
+	series_view_connect(vwin, list[1]);
+    } 
 }
 
 /* ........................................................... */

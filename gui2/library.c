@@ -34,6 +34,7 @@
 
 #include "selector.h"
 #include "boxplots.h"
+#include "series_view.h"
 
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
@@ -2797,6 +2798,13 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
     PRN *prn;
     int ig = 0;
     CMD prcmd;
+    int width = 78;
+
+    /* We use a local "CMD" here, since we don't want to record the
+       printing of a variable or variables as part of the command
+       script every time a user chooses to view variables in the gui
+       program.
+    */
 
     prcmd.list = malloc(sizeof(int));
     prcmd.param = malloc(1);
@@ -2815,7 +2823,15 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
     if (prcmd.errcode) {
 	gui_errmsg(prcmd.errcode);
 	return;
-    }    
+    }   
+
+    /* special case: showing only one series */
+    if (prcmd.list[0] == 1) {
+	free(prcmd.list);
+	free(prcmd.param);
+	display_var();
+	return;
+    }
 
     if (prcmd.list[0] * datainfo->n > MAXDISPLAY) { /* use disk file */
 	char fname[MAXLEN];
@@ -2824,7 +2840,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 
 	printdata(prcmd.list, &Z, datainfo, 0, 1, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 78, 350, VIEW_DATA, view_items);
+	view_file(fname, 0, 1, width, 350, VIEW_DATA, view_items);
     } else { /* use buffer */
 	int err;
 
@@ -2835,7 +2851,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, 
+	view_buffer(prn, width, 350, _("gretl: display data"), PRINT, 
 		    view_items);
     }
     free(prcmd.list);
@@ -3053,13 +3069,22 @@ void display_var (void)
 {
     int list[2];
     PRN *prn;
+    windata_t *vwin;
 
     list[0] = 1;
     list[1] = mdata->active_var;
+
     if (bufopen(&prn)) return;
+
     printdata(list, &Z, datainfo, 0, 1, prn);
-    view_buffer(prn, 24, 350, _("gretl: display data"), PRINT, 
-		view_items);    
+
+    vwin = view_buffer(prn, 28, 350, datainfo->varname[list[1]], VIEW_SERIES, 
+		       view_items); 
+
+    if (datainfo->time_series == 0 && datainfo->vector[list[1]]) { 
+	/* cross-sectional data series */
+	series_view_connect(vwin, list[1]);
+    }
 }
 
 /* ........................................................... */

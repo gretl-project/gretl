@@ -83,7 +83,7 @@ vpath %.c $(topsrc)/cli
 OBJS = gretl.o library.o gui_utils.o callbacks.o dialogs.o ssheet.o \
 	datafiles.o database.o fileselect.o gpt_control.o session.o \
 	webget.o calculator.o guiprint.o boxplots.o \
-	selector.o settings.o helpfiles.o
+	selector.o settings.o helpfiles.o series_view.o
 
 $(PROG): $(query_gtkextra_lib) $(OBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)

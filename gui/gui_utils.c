@@ -25,6 +25,7 @@
 #include <dlfcn.h>
 
 #include "guiprint.h"
+#include "series_view.h"
 
 char *storelist = NULL;
 
@@ -878,6 +879,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_summary(vwin->data); 
 	if (vwin->role == CORR)
 	    free_corrmat(vwin->data);
+	else if (vwin->role == VIEW_SERIES)
+	    free_series_view(vwin->data);
 	if (vwin->dialog)
 	    winstack_remove(vwin->dialog);
 	free(vwin);
@@ -1228,6 +1231,13 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     
     gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
 		       GTK_SIGNAL_FUNC(catch_view_key), dialog);
+
+    if (role == VIEW_SERIES) {
+	build_series_view_popup(vwin);
+	gtk_signal_connect (GTK_OBJECT(vwin->w), "button_press_event",
+			    GTK_SIGNAL_FUNC(popup_menu_handler), 
+			    (gpointer) vwin->popup);
+    } 
 
     /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
