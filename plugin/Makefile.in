@@ -168,7 +168,7 @@ install-strip: $(PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s \
 	$(PLUGINS) $(plugindir)
 
-install-lapack: $(PLUGINS) installdirs
+install-lapack: $(LAPACK_PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) \
 	$(LAPACK_PLUGINS) $(plugindir)
 

@@ -4,7 +4,7 @@ WWW='allin@gretl.sourceforge.net:~/www/'
 topdir=/home/cottrell/stats/esl/gretl
 version=$(cat lib/src/version.h | grep version_ | \
      awk '{ print $NF}' | sed s/[\"\;]//g)
-tarfile="gretl-${version}.tar.gz"
+tarfile="gretl-${version}.tar.bz2"
 
 echo "making dist file for gretl $version using filename $tarfile"
 
@@ -57,7 +57,7 @@ find gretl-$version -name "*.tar.gz" | xargs rm -f
 # make the archive and remove the dist dir
 echo "making archive..."
 rm -f $tarfile
-tar cvfz $tarfile gretl-$version
+tar cvfy $tarfile gretl-$version
 rm -rf gretl-$version
 
 # scp gretl/doc/manual.pdf allin@gretl.sourceforge.net:~/www/

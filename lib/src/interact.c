@@ -1097,6 +1097,9 @@ int simple_commands (CMD *cmd, const char *line,
     case COINT2:
 	order = atoi(cmd->param);
 	err = johansen_test(order, cmd->list, pZ, datainfo, oflag, prn);
+	if (err && *gretl_errmsg) {
+	    pprintf(prn, "%s\n", gretl_errmsg);
+	}
 	break;
 
     case CORR:

@@ -953,6 +953,8 @@ johansen_complete (const double **X, const double **Y, const double **Z,
     int (*johansen) (const double **, const double **, const double **,
 		     int, int, int, PRN *);
     int err = 0;
+
+    *gretl_errmsg = 0;
     
     if (open_plugin("johansen", &handle)) {
         err = 1;

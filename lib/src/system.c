@@ -162,6 +162,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
     int (*system_est) (gretl_equation_system *, 
 		       double ***, DATAINFO *, PRN *);
 
+    *gretl_errmsg = 0;
 
     if (sys == NULL) {
 	strcpy(gretl_errmsg, _(nosystem));
