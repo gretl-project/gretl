@@ -1081,6 +1081,7 @@ void exec_line (char *line, PRN *prn)
 
     case NLS:
 	err = nls_parse_line(line, (const double **) Z, datainfo);
+	if (err) errmsg(err, prn);
 	break;
 
     case NOECHO:

@@ -79,8 +79,6 @@ else
   png_comments=no
 fi])
 
-
-
 AC_ARG_WITH(gmake,
 [  --with-gmake           Use GNU make explicitly [default=no]],
 [ case "$withval" in

@@ -14,6 +14,7 @@ GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 GMP_CFLAGS = @GMP_CFLAGS@
 GMP_LIBS = @GMP_LIBS@
+FLIB = @FLIB@
 have_gtk = @have_gtk@
 
 ifeq ($(INSTALL_PROGRAM),)
@@ -44,7 +45,7 @@ else
   INSTALL_CFG = install-cfg-old
 endif
 
-LIBS = -lm -ldl -L/usr/local/lib -lz $(XML_LIBS) $(GLIB_LIBS) $(GMP_LIBS)
+LIBS = $(FLIB) -lm -ldl -L/usr/local/lib -lz $(XML_LIBS) $(GLIB_LIBS) $(GMP_LIBS)
 
 #### End of system configuration section. ####
 
@@ -89,7 +90,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 $(LIBGRETL): $(OBJS) $(LOBJS) $(AUX_OBJ) $(AUX_LOBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(AUX_LOBJ) \
-	-rpath $(prefix)/lib $(LIBS) -version-info 0:7:0
+	-rpath $(prefix)/lib $(LIBS) -version-info 0:8:0
 
 -include $(OBJS:.o=.d)
 

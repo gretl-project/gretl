@@ -270,6 +270,10 @@ static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
     const char *p;
     int v;
 
+    if (nlspec.nparam > 0) return 1;
+
+    nlspec.depvar = -1;
+
     if (strncmp(nlfunc, "nls ", 4) == 0) 
 	p = nlfunc + 4;
     else 
@@ -303,12 +307,12 @@ static int parse_deriv_line (const char *line, int i, nls_term *term,
     const char *p;
 
     term->deriv = malloc(strlen(line) - 10);
-    if (term->deriv == NULL) return 1;
+    if (term->deriv == NULL) return E_ALLOC;
 
     if (sscanf(line, "deriv %8s = %s", term->name, term->deriv) != 2) {
 	free(term->deriv);
 	term->deriv = NULL;
-	return 1;
+	return E_PARSE;
     }
 
     p = strchr(line, '=') + 1;
@@ -322,7 +326,7 @@ static int parse_deriv_line (const char *line, int i, nls_term *term,
     } else {
 	free(term->deriv);
 	term->deriv = NULL;
-	err = 1;
+	err = E_UNKVAR;
     }	
 
     return err;
@@ -335,22 +339,25 @@ static int nls_spec_add_term (const char *line, const double **Z,
     double *coeff;
     int nt = nlspec.nparam + 1; 
     int err = 0;
+
+    if (nlspec.nlfunc == NULL) {
+	strcpy(gretl_errmsg, _("No regression function has been specified"));
+	return E_PARSE;
+    }
   
     terms = realloc(nlspec.terms, nt * sizeof *nlspec.terms);
-    if (terms == NULL) return 1;
+    if (terms == NULL) return E_ALLOC;
 
     coeff = realloc(nlspec.coeff, nt * sizeof *nlspec.coeff);
     if (coeff == NULL) {
 	free(terms);
-	return 1;
+	return E_ALLOC;
     }
 
     nlspec.coeff = coeff;
 
     err = parse_deriv_line(line, nt-1, &terms[nt-1], Z, datainfo);
-    if (err) {
-	/* do something? */;
-    } else {
+    if (!err) {
 	nlspec.terms = terms;
 	nlspec.nparam += 1;
     }
@@ -387,7 +394,7 @@ static void clear_nls_spec (void)
     nlspec.coeff = NULL;
 
     nlspec.nparam = 0;
-    nlspec.depvar = 0;
+    nlspec.depvar = -1;
     nlspec.iters = 0;
 }
 
@@ -531,9 +538,23 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 {
     MODEL nlsmod;
     double *fvec;
-    double toler = 0.0001;
+    double toler = 0.0001; /* make this configurable */
     int origv = maininfo->v;
     int err = 0;
+
+    _init_model(&nlsmod, maininfo);
+
+    if (nlspec.nlfunc == NULL) {
+	sprintf(gretl_errmsg, _("No regression function has been specified"));
+	nlsmod.errcode = E_PARSE;
+	return nlsmod;
+    }    
+
+    if (nlspec.nparam == 0) {
+	sprintf(gretl_errmsg, _("No derivatives have been specified"));
+	nlsmod.errcode = E_PARSE;
+	return nlsmod;
+    }
 
     fvec = malloc(maininfo->n * sizeof *fvec);
     if (fvec == NULL) {
