@@ -864,6 +864,7 @@ int is_model_ref_cmd (int ci)
 	ci == CUSUM ||
 	ci == LMTEST ||
 	ci == LEVERAGE ||
+	ci == RESTRICT ||
 	ci == FCAST ||
 	ci == FCASTERR ||
 	ci == FIT) {
@@ -1267,11 +1268,12 @@ int gretl_forecast (int t1, int t2, int nv,
 		    const MODEL *pmod, double ***pZ)
 {
     double xx, zz, zr;
-    int i, k, maxlag = 0, yno, ARMODEL;
+    int i, k, maxlag = 0, yno;
     int v, t, miss;
     const int *arlist = NULL;
+    int ar = AR_MODEL(pmod->ci);
 
-    if (pmod->ci == NLS || pmod->ci == ARMA) {
+    if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
 	for (t=t1; t<=t2; t++) {
 	    (*pZ)[nv][t] = pmod->yhat[t];
 	}
@@ -1280,10 +1282,7 @@ int gretl_forecast (int t1, int t2, int nv,
 
     yno = pmod->list[1];
 
-    ARMODEL = (pmod->ci == AR || pmod->ci == CORC || 
-	       pmod->ci == HILU)? 1 : 0;
-
-    if (ARMODEL) {
+    if (ar) {
 	arlist = pmod->arinfo->arlist;
 	maxlag = arlist[arlist[0]];
 	if (t1 < maxlag) t1 = maxlag; 
@@ -1292,7 +1291,7 @@ int gretl_forecast (int t1, int t2, int nv,
     for (t=t1; t<=t2; t++) {
 	miss = 0;
 	zz = 0.0;
-	if (ARMODEL) 
+	if (ar) 
 	    for (k=1; k<=arlist[0]; k++) {
 	    xx = (*pZ)[yno][t - arlist[k]];
 	    zr = pmod->arinfo->rho[k];
@@ -1305,7 +1304,7 @@ int gretl_forecast (int t1, int t2, int nv,
 		}
 	    }
 	    zz = zz + xx * zr;
-	} /* end if ARMODEL */
+	} /* end if ar */
 	for (v=0; !miss && v<pmod->ncoeff; v++) {
 	    k = pmod->list[v+2];
 	    xx = (*pZ)[k][t];
@@ -1313,7 +1312,7 @@ int gretl_forecast (int t1, int t2, int nv,
 		zz = NADBL;
 		miss = 1;
 	    }
-	    if (!miss && ARMODEL) {
+	    if (!miss && ar) {
 		xx = (*pZ)[k][t];
 		for (i=1; i<=arlist[0]; i++) {
 		    xx -= pmod->arinfo->rho[i] * (*pZ)[k][t - arlist[i]];

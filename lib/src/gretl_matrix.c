@@ -1057,7 +1057,7 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
  * factorization.  On exit @a is overwritten with the inverse.
  * Uses the lapack functions dgetrf and dgetri.
  *
- * Returns: 0 on success; non-zero lapack error code on failure.
+ * Returns: 0 on success; non-zero error code on failure.
  * 
  */
 
@@ -1069,6 +1069,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     integer lwork;
     integer *ipiv;
     int lipiv;
+    int err = 0;
 
     double *work;
 
@@ -1077,20 +1078,20 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 
     ipiv = malloc(lipiv * sizeof *ipiv);
     if (ipiv == NULL) {
-	return 1;
+	return GRETL_MATRIX_NOMEM;
     }
 
     work = malloc(sizeof *work);
     if (work == NULL) {
 	free(ipiv);
-	return 1;
+	return GRETL_MATRIX_NOMEM;
     }    
 
     dgetrf_(&m, &n, a->val, &m, ipiv, &info);   
 
     if (info != 0) {
 	free(ipiv);
-	return info;
+	return GRETL_MATRIX_SINGULAR;
     }
 
     lwork = -1;
@@ -1099,7 +1100,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     if (info != 0 || work[0] <= 0.0) {
 	fputs(wspace_fail, stderr);
 	free(ipiv);
-	return 1;
+	return GRETL_MATRIX_ERR;
     }
 
     lwork = (integer) work[0];
@@ -1111,7 +1112,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     work = realloc(work, lwork * sizeof *work);
     if (work == NULL) {
 	free(ipiv);
-	return 1;
+	return GRETL_MATRIX_NOMEM;
     }  
 
     dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
@@ -1123,7 +1124,11 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     free(work);
     free(ipiv);
 
-    return info;
+    if (info) {
+	err = GRETL_MATRIX_SINGULAR;
+    }
+
+    return err;
 }
 
 /* In the case of symmetric matrices, the lapack functions tend
@@ -1169,7 +1174,7 @@ gretl_symmetric_matrix_expand (gretl_matrix *m, char uplo)
  * using Cholesky factorization.  On exit @a is overwritten with 
  * the inverse. Uses the lapack functions dpotrf and dpotri.
  *
- * Returns: 0 on success; non-zero lapack error code on failure.
+ * Returns: 0 on success; non-zero error code on failure.
  * 
  */
 
@@ -1177,11 +1182,12 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 {
     integer n, info;
     char uplo = 'U';
+    int err = 0;
 
     if (a->cols != a->rows) {
 	fputs("gretl_invert_symmetric_matrix: input is not square\n",
 	      stderr);
-	return 1;
+	return GRETL_MATRIX_NON_CONFORM;
     }
 
     n = a->cols;
@@ -1190,7 +1196,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 
     if (info != 0) {
 	fputs("gretl_invert_symmetric_matrix: dpotrf failed\n", stderr);
-	return info;
+	return GRETL_MATRIX_SINGULAR;
     }
 
     dpotri_(&uplo, &n, a->val, &n, &info);
@@ -1200,12 +1206,13 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 #endif
     
     if (info != 0) {
+	err = GRETL_MATRIX_SINGULAR;
 	fputs("gretl_invert_symmetric_matrix: dpotrf failed\n", stderr);
     } else {
 	gretl_symmetric_matrix_expand(a, uplo);
     }
 
-    return info;
+    return err;
 }
 
 static void transcribe_eigenvectors(double *vi, gretl_matrix *ev, int n)

@@ -381,10 +381,10 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     double trsq = 0.0;
     int newvars = 0, err = 0;
 
-    if (orig->ci == TSLS || orig->ci == NLS || orig->ci == ARMA) 
+    if (!command_ok_for_model(ADD, orig->ci))
 	return E_NOTIMP;
 
-    if ((orig->ci == LOGISTIC || orig->ci == LAD) && aux_code != AUX_ADD)
+    if (aux_code != AUX_ADD && (orig->ci == LOGISTIC || orig->ci == LAD))
 	return E_NOTIMP;
 
     /* temporarily re-impose the sample that was in force when the
@@ -699,7 +699,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     int maxlag = 0, t1 = pdinfo->t1;
     int err = 0;
 
-    if (orig->ci == TSLS || orig->ci == NLS || orig->ci == ARMA) 
+    if (!command_ok_for_model(OMIT, orig->ci))
 	return E_NOTIMP;
 
     /* temporarily impose the sample that was in force when the
@@ -1867,8 +1867,7 @@ int sum_test (LIST sumvars, MODEL *pmod,
 	return E_DATA;
     }
 
-    if (pmod->ci == TSLS || pmod->ci == NLS || pmod->ci == ARMA ||
-	pmod->ci == GARCH) 
+    if (!command_ok_for_model(COEFFSUM, pmod->ci)) 
 	return E_NOTIMP;
 
     tmplist = malloc((pmod->list[0] + 1) * sizeof *tmplist);

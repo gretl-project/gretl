@@ -32,6 +32,8 @@
                              free(p); \
                           }
 
+#define AR_MODEL(c) (c == AR || c == CORC || c == PWE || c == HILU)
+
 
 MODEL *gretl_model_new (const DATAINFO *pdinfo);
 
@@ -60,5 +62,9 @@ void debug_print_model_info (const MODEL *pmod, const char *msg);
 int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo);
 
 int swap_models (MODEL **targ, MODEL **src);
+
+int command_ok_for_model (int test_ci, int model_ci);
+
+int model_ci_from_modelspec (MODELSPEC *spec);
 
 #endif /* GRETL_MODEL_H */

@@ -56,6 +56,10 @@ enum extra_cmds {
     MODELTABLE,
     GRAPHPAGE,
     CREATE_USERDIR,
+    LMTEST_LOGS,
+    LMTEST_SQUARES,
+    LMTEST_WHITE,
+    LMTEST_BG,
     GUI_CMD_MAX
 };
 

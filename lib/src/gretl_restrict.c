@@ -68,6 +68,27 @@ static double get_restriction_param (const restriction *r, int k)
     return x;
 }
 
+static int check_R_matrix (const gretl_matrix *R)
+{
+    gretl_matrix *m;
+    int k = gretl_matrix_rows(R);
+    int err = 0;
+
+    m = gretl_matrix_alloc(k, k);
+    if (m == NULL) return GRETL_MATRIX_NOMEM;
+
+    gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
+			      R, GRETL_MOD_TRANSPOSE,
+			      m);
+
+    err = gretl_invert_general_matrix(m);
+    if (err) err = GRETL_MATRIX_SINGULAR;
+    
+    gretl_matrix_free(m);
+
+    return err;
+}
+
 static int 
 restriction_set_form_matrices (gretl_restriction_set *rset,
 			       gretl_matrix **Rin,
@@ -389,6 +410,11 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 	if (bnum < 0) {
 	    err = E_PARSE;
 	    break;
+	} else if (bnum >= rset->pmod->ncoeff) {
+	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
+		    bnum);
+	    err = E_DATA;
+	    break;
 	}
 
 	mult *= sgn;
@@ -417,6 +443,13 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 int 
 restriction_set_parse_line (gretl_restriction_set *rset, const char *line)
 {
+    if (rset->n_equations == rset->pmod->ncoeff) {
+	sprintf(gretl_errmsg, _("Too many restrictions (maximum is %d)"), 
+		rset->pmod->ncoeff);
+	destroy_restriction_set(rset);
+	return 1;
+    }
+
     return real_restriction_set_parse_line(rset, line, 0);
 }
 
@@ -459,6 +492,16 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     gretl_matrix_print(R, "R matrix", prn);
     gretl_matrix_print(r, "r vector", prn);
 #endif
+
+    if ((err = check_R_matrix(R))) {
+	if (err == GRETL_MATRIX_SINGULAR) {
+	    pputs(prn, _("Matrix inversion failed:\n"
+			 " restrictions may be inconsistent or redundant\n"));
+	} else {
+	    err = E_ALLOC;
+	}
+	goto bailout;
+    }	
 
     b = gretl_coeff_vector_from_model(rset->pmod, rset->select);
     vcv = gretl_vcv_matrix_from_model(rset->pmod, rset->select);
@@ -512,7 +555,8 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
 
     err = gretl_invert_symmetric_matrix(Rv);
     if (err) {
-	pputs(prn, _("Matrix inversion failed: restrictions may be inconsistent\n"));
+	pputs(prn, _("Matrix inversion failed:\n"
+		     " restrictions may be inconsistent or redundant\n"));
 	goto bailout;
     }
     

@@ -154,29 +154,31 @@ void nosub (PRN *prn)
 	    "the one on which\nthe reference model was estimated\n"));
 }
 
-int model_test_start (const int id, PRN *prn, int ols_only)
+int model_test_start (int test_ci, int model_id, PRN *prn)
 {
-    int m = (id)? id - 1 : model_count - 1;
+    int m = (model_id)? model_id - 1 : model_count - 1;
+    int err = 0;
 
     if (model_count == 0) { 
 	pputs(prn, _("Can't do this: no model has been estimated yet\n"));
-	return 1;
+	err = 1;
     }
-    else if (id > model_count) { 
-	pprintf(prn, _("Can't do this: there is no model %d\n"), id);
-	return 1;
+    else if (model_id > model_count) { 
+	pprintf(prn, _("Can't do this: there is no model %d\n"), model_id);
+	err = 1;
     }    
-    else if (ols_only && strncmp(modelspec[m].cmd, "ols", 3) &&
-	     strncmp(modelspec[m].cmd, "pooled", 6)) {
-	pputs(prn, _("This command is only available for OLS models "
-		"at present\n"));
-	return 1;
+    else if (!command_ok_for_model(test_ci, 
+				   model_ci_from_modelspec(&modelspec[m]))) {
+	pputs(prn, _("Sorry, command not available for this estimator"));
+	pputc(prn, '\n');
+	err = 1;
     }
     else if (model_sample_issue(NULL, &modelspec[m], datainfo)) {
 	nosub(prn);
-	return 1;
+	err = 1;
     }
-    return 0;
+
+    return err;
 }
 
 void file_get_line (void)
@@ -718,7 +720,7 @@ void exec_line (char *line, PRN *prn)
 
     case ADD:
     case OMIT:
-	if ((err = model_test_start(0, prn, 0))) break;
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;
     plain_add_omit:
 	clear_model(models[1], NULL);
 	if (cmd.ci == ADD || cmd.ci == ADDTO) {
@@ -747,7 +749,7 @@ void exec_line (char *line, PRN *prn)
     case ADDTO:
     case OMITFROM:
 	i = atoi(cmd.param);
-	if ((err = model_test_start(i, prn, 0))) break;
+	if ((err = model_test_start(cmd.ci, i, prn))) break;
 	if (i == (models[0])->ID) goto plain_add_omit;
 	err = re_estimate(modelspec[i-1].cmd, &tmpmod, &Z, datainfo);
 	if (err) {
@@ -850,25 +852,25 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case CHOW:
-        if ((err = model_test_start(0, prn, 1))) break;
+        if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = chow_test(line, models[0], &Z, datainfo, prn, NULL);
 	if (err) errmsg(err, prn);
 	break;
 
     case COEFFSUM:
-        if ((err = model_test_start(0, prn, 0))) break;
+        if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = sum_test(cmd.list, models[0], &Z, datainfo, prn);
 	if (err) errmsg(err, prn);
 	break;
 
     case CUSUM:
-	if ((err = model_test_start(0, prn, 1))) break;
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = cusum_test(models[0], &Z, datainfo, prn, &paths, NULL);
 	if (err) errmsg(err, prn);
 	break;
 
     case RESET:
-        if ((err = model_test_start(0, prn, 1))) break;
+        if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = reset_test(models[0], &Z, datainfo, prn, NULL);
 	if (err) errmsg(err, prn);
 	break;
@@ -998,22 +1000,24 @@ void exec_line (char *line, PRN *prn)
     case EQNPRINT:
     case TABPRINT:
 	strcpy(texfile, cmd.param);
-	if ((err = model_test_start(0, prn, (cmd.ci == EQNPRINT)))) 
+	if ((err = model_test_start(cmd.ci, 0, prn))) 
 	    break;
-	if (cmd.ci == EQNPRINT)
+	if (cmd.ci == EQNPRINT) {
 	    err = eqnprint(models[0], datainfo, &paths, 
 			   texfile, model_count, cmd.opt);
-	else
+	} else {
 	    err = tabprint(models[0], datainfo, &paths, 
 			   texfile, model_count, cmd.opt);
-	if (err) 
+	}
+	if (err) {
 	    pputs(prn, _("Couldn't open tex file for writing\n"));
-	else 
+	} else {
 	    pprintf(prn, _("Model printed to %s\n"), texfile);
+	}
 	break;
 
     case FCAST:
-	if ((err = model_test_start(0, prn, 0))) break;
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = fcast(line, models[0], datainfo, &Z);
 	if (err < 0) {
 	    err *= -1;
@@ -1026,14 +1030,14 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case FCASTERR:
-	if ((err = model_test_start(0, prn, 0))) break;
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = fcast_with_errs(line, models[0], &Z, datainfo, prn,
 			      &paths, cmd.opt); 
 	if (err) errmsg(err, prn);
 	break;
 
     case FIT:
-	if ((err = model_test_start(0, prn, 0))) break;
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = fcast("fcast autofit", models[0], datainfo, &Z);
 	if (err < 0) {
 	    err *= -1;
@@ -1126,7 +1130,7 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case HAUSMAN:
-	if ((err = model_test_start(0, prn, 0))) break;
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = hausman_test(models[0], &Z, datainfo, prn);
 	break;
 
@@ -1232,14 +1236,17 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case LEVERAGE:
-	if ((err = model_test_start(0, prn, 1))) break;	
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;	
 	err = leverage_test(models[0], &Z, datainfo, prn, NULL, cmd.opt);
-	if (err > 1) errmsg(err, prn);
-	else if (cmd.opt) varlist(datainfo, prn);
+	if (err > 1) {
+	    errmsg(err, prn);
+	} else if (cmd.opt) {
+	    varlist(datainfo, prn);
+	}
 	break;
 
     case LMTEST:
-	if ((err = model_test_start(0, prn, 1))) break;
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	/* non-linearity (squares) */
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    clear_model(models[1], NULL);
@@ -1573,7 +1580,7 @@ void exec_line (char *line, PRN *prn)
 
     case RESTRICT:
 	/* joint hypothesis test on model */
-	if ((err = model_test_start(0, prn, 1))) break;
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	if (rset == NULL) {
 	    rset = restriction_set_start(line, models[0], datainfo);
 	    if (rset == NULL) {
@@ -1584,6 +1591,7 @@ void exec_line (char *line, PRN *prn)
 	    err = restriction_set_parse_line(rset, line);
 	    if (err) {
 		errmsg(err, prn);
+		rset = NULL;
 	    }	
 	}
 	break;
@@ -1600,18 +1608,13 @@ void exec_line (char *line, PRN *prn)
 	    err = system_parse_line(sys, line, datainfo);
 	    if (err) {
 		errmsg(err, prn);
+		sys = NULL;
 	    }	
 	}
 	break;
 
     case TESTUHAT:
-	if ((models[0])->ci == TOBIT) {
-	    pprintf(prn, _("Sorry, command not available for this estimator"));
-	    pputc(prn, '\n');
-	    err = 1;
-	    break;
-	}
-	if ((err = model_test_start(0, prn, 0))) break;
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
 	    pputs(prn, _("Out of memory attempting to add variable\n"));
 	    err = 1;

@@ -1,18 +1,18 @@
+# Illustrations of use of the "restrict" command
 open data4-10
+# initial OLS
 ols 1 0 2 3 4 5
-
 # Evaluate two zero restrictions
 restrict 
-b3 = 0
-b4 = 0
+  b3 = 0
+  b4 = 0
 end restrict
 # Equivalent: use the "omit" command
 omit 4 5
-
 # Now try a test for equality of coefficients
 ols 1 0 2 3 4 5
 restrict
-b3 - b4 = 0
+  b3 - b4 = 0
 end restrict
 # Manual equivalent to the above...
 genr essu = $ess
@@ -22,5 +22,12 @@ ols 1 0 2 3 vsum
 genr essr = $ess
 genr Fval = (essr - essu)/(essu/dfu)
 pvalue F 1 dfu Fval 
+# Try testing for sum of coefficients
+ols 1 0 2 3 4 5
+restrict
+  b3 + b4 = 0
+end restrict
+# Alternative method (t-test)
+coeffsum WHITE ADMEXP
 
 

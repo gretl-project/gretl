@@ -602,3 +602,70 @@ int swap_models (MODEL **targ, MODEL **src)
     *src = tmp;
     return 0;
 }
+
+/* ........................................................... */
+
+int command_ok_for_model (int test_ci, int model_ci)
+{
+    int ok = 1;
+
+    switch (test_ci) {
+    case ADD:
+    case ADDTO:
+    case OMIT:
+    case OMITFROM:
+    case COEFFSUM:	
+	if (model_ci == TSLS || model_ci == NLS || 
+	    model_ci == ARMA || model_ci == GARCH) ok = 0;
+	break;
+
+    case EQNPRINT:
+	if (model_ci != OLS) ok = 0; /* unduly restrictive? */
+	break;
+
+    case FCAST:
+    case FIT:
+	break;
+    case FCASTERR:
+	if (model_ci != OLS) ok = 0;
+	break;
+
+    case ARCH:
+    case CHOW:
+    case CUSUM:
+    case LMTEST:
+    case LEVERAGE:
+    case RESET:
+	if (model_ci != OLS) ok = 0;
+	break;
+
+    case HAUSMAN:
+	if (model_ci != POOLED) ok = 0;
+	break;
+    case RESTRICT:
+	if (model_ci == LAD) ok = 0;
+	break;
+    case TESTUHAT:
+	if (model_ci == TOBIT || model_ci == GARCH) ok = 0; /* garch? */
+	break;
+
+    default:
+	break;
+    }
+
+    return ok;
+}
+
+int model_ci_from_modelspec (MODELSPEC *spec)
+{
+    char mword[9];
+    int ci;
+
+    if (!sscanf(spec->cmd, "%8s", mword)) {
+	ci = -1;
+    } else {
+	ci = gretl_command_number(mword);
+    }
+
+    return ci;
+}

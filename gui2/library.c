@@ -596,6 +596,9 @@ static gint model_cmd_init (char *line, int ID)
     PRN *echo;
     size_t len;
 
+    /* pre-process the line */
+    if (check_cmd(line)) return 1;
+
     /* have we started this stuff at all, yet? */
     if (n_mstacks == 0) { /* no */
 	if (grow_mstack(0, ID)) {
@@ -627,7 +630,7 @@ static gint model_cmd_init (char *line, int ID)
 		sn, mstack[sn].n+1);
 #endif
 	mstack[sn].cmds = myrealloc(mstack[sn].cmds,
-				    (mstack[sn].n+1) * sizeof(char **));
+				    (mstack[sn].n + 1) * sizeof(char **));
 	if (mstack[sn].cmds == NULL) {
 	    /* do more stuff! */
 	    return 1;
@@ -635,6 +638,7 @@ static gint model_cmd_init (char *line, int ID)
     }
 
     if (bufopen(&echo)) return 1;
+
     echo_cmd(&cmd, datainfo, line, 0, 1, echo);
 
     len = strlen(echo->buf);
@@ -645,6 +649,7 @@ static gint model_cmd_init (char *line, int ID)
 	return 1;
     }
     strcpy(mstack[sn].cmds[mstack[sn].n], echo->buf);
+
     gretl_print_destroy(echo);
 
     mstack[sn].n += 1;
@@ -1624,7 +1629,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 	} 
     }
 
-    if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
+    if (model_cmd_init(line, pmod->ID)) return;
 
     view_buffer(prn, 78, 400, title, LMTEST, NULL); 
 }
@@ -1710,7 +1715,6 @@ void add_leverage_data (windata_t *vwin)
 						   "model_ID"));
 #endif
 	strcpy(line, "leverage -o");
-	check_cmd(line);
 	model_cmd_init(line, ID);
     }
 }
@@ -1816,7 +1820,7 @@ static void do_chow_cusum (gpointer data, int code)
 	print_test_to_window(&test, mydata->w);
     }
 
-    if (check_cmd(line) || model_cmd_init(line, pmod->ID)) {
+    if (model_cmd_init(line, pmod->ID)) {
 	return;
     }
 
@@ -1866,7 +1870,7 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
 	    print_test_to_window(&test, mydata->w);
     }
 
-    if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
+    if (model_cmd_init(line, pmod->ID)) return;
 
     view_buffer(prn, 78, 400, title, RESET, NULL); 
 }
@@ -1923,7 +1927,7 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
 	    print_test_to_window(&test, mydata->w);
     }
 
-    if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
+    if (model_cmd_init(line, pmod->ID)) return;
 
     close_dialog(ddata);
     view_buffer(prn, 78, 400, title, LMTEST, NULL); 
@@ -2085,8 +2089,11 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     close_plugin(handle);
 
     if (err) {
-	if (errtext[0] != 0) errbox(errtext);
-	else errbox(get_errmsg(err, errtext, NULL));
+	if (*errtext != '\0') {
+	    errbox(errtext);
+	} else {
+	    errbox(get_errmsg(err, errtext, NULL));
+	}
 	gretl_print_destroy(prn);
 	return;
     }
@@ -2099,6 +2106,32 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
+static int record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
+					   int got_start, int got_end)
+{
+    bufgets(NULL, 0, buf);
+
+    if (!got_start) {
+	strcpy(line, "restrict");
+	model_cmd_init(line, pmod->ID);
+    }
+
+    while (bufgets(line, MAXLEN-1, buf)) {
+	if (string_is_blank(line)) continue;
+	top_n_tail(line);
+	model_cmd_init(line, pmod->ID);
+    }
+
+    if (!got_end) {
+	strcpy(line, "end restrict");
+	model_cmd_init(line, pmod->ID);
+    }
+
+    return 0;
+}
+
+/* ........................................................... */
+
 void do_restrict (GtkWidget *widget, dialog_t *ddata)
 {
     gchar *buf;
@@ -2106,6 +2139,7 @@ void do_restrict (GtkWidget *widget, dialog_t *ddata)
     char title[64];
     windata_t *vwin = (windata_t *) ddata->data;
     MODEL *pmod = (MODEL *) vwin->data;
+    int got_start_line = 0, got_end_line = 0;
     int err = 0;
 
 #ifdef OLD_GTK
@@ -2118,6 +2152,13 @@ void do_restrict (GtkWidget *widget, dialog_t *ddata)
     bufgets(NULL, 0, buf);
     while (bufgets(line, MAXLEN-1, buf) && !err) {
 	if (string_is_blank(line)) continue;
+	top_n_tail(line);
+	if (!strcmp(line, "end restrict")) {
+	    got_end_line = 1;
+	    break;
+	} else if (!strncmp(line, "restrict", 8)) {
+	    got_start_line = 1;
+	}
 	if (rset == NULL) {
 	    rset = restriction_set_start(line, pmod, datainfo);
 	    if (rset == NULL) {
@@ -2128,20 +2169,31 @@ void do_restrict (GtkWidget *widget, dialog_t *ddata)
 	    err = restriction_set_parse_line(rset, line);
 	    if (err) {
 		gui_errmsg(err);
+		rset = NULL;
 	    }
-	}	
+	}
     }
 
-    g_free(buf);
-    if (err) return;
+    if (err) {
+	g_free(buf);
+	return;
+    }
 
     close_dialog(ddata);
 
     if (bufopen(&prn)) return; 
 
     err = gretl_restriction_set_finalize(rset, prn);
-    if (err) errmsg(err, prn);
     rset = NULL;
+
+    if (err) {
+	errmsg(err, prn);
+    } else {
+	record_model_commands_from_buf(buf, pmod, got_start_line,
+				       got_end_line);
+    }
+
+    g_free(buf);
 
     strcpy(title, "gretl: ");
     strcat(title, _("linear restrictions"));
@@ -2592,7 +2644,7 @@ void do_model_genr (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     sprintf(line, "genr %s", buf);
-    if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
+    if (model_cmd_init(line, pmod->ID)) return;
 
     finish_genr(pmod, ddata);
 }
@@ -2829,7 +2881,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 
     clear(line, MAXLEN);
     strcpy(line, "testuhat");
-    if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
+    if (model_cmd_init(line, pmod->ID)) return;
  
     printfreq(freq, prn);
 
@@ -3287,7 +3339,6 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
 	    sprintf(line, "genr %s = $h", datainfo->varname[v]);
 	}
 
-	check_cmd(line);
 	model_cmd_init(line, pmod->ID);
 
 	infobox(_("variable added"));
@@ -3403,7 +3454,6 @@ void add_model_stat (MODEL *pmod, int which)
     sprintf(cmdstr, "genr %s = %s", datainfo->varname[i], statname);
 
     populate_varlist();
-    check_cmd(cmdstr);
     model_cmd_init(cmdstr, pmod->ID);
     infobox(_("variable added"));
 
@@ -4646,8 +4696,6 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 #endif
     }
 
-    remove(texfile);
-
 #ifdef KILL_DVI_FILE
     sleep(2); /* let forked xdvi get the DVI file */
     sprintf(tmp, "%s.dvi", texbase);
@@ -4658,6 +4706,7 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
     if (err == LATEX_ERROR) {
 	view_file(tmp, 0, 1, 78, 350, VIEW_FILE);
     } else {
+	remove(texfile);
 	remove(tmp);
     }
 
@@ -4907,24 +4956,24 @@ static int get_modelspec_number (int m)
 
 /* ........................................................... */
 
-static int script_model_test (int id, PRN *prn, int ols_only)
+static int script_model_test (int test_ci, int model_id, PRN *prn)
 {
     /* need to work in terms of modelspec here, _not_ model_count */
 
-    int m = (id)? id - 1 : 0;
+    int m = (model_id)? model_id - 1 : 0;
 
     if (model_count == 0) { 
 	pprintf(prn, _("Can't do this: no model has been estimated yet\n"));
 	return 1;
     }
 
-    if (id > model_count) { 
-	pprintf(prn, _("Can't do this: there is no model %d\n"), id);
+    if (model_id > model_count) { 
+	pprintf(prn, _("Can't do this: there is no model %d\n"), model_id);
 	return 1;
     }
 
     /* ID == 0 -> no model specified -> look for last script model */
-    if (modelspec != NULL && id == 0) {
+    if (modelspec != NULL && model_id == 0) {
 	m = model_count - 1;
 	while (m) { 
 	    if (model_origin[m] == 's') break;
@@ -4945,11 +4994,12 @@ static int script_model_test (int id, PRN *prn, int ols_only)
 	return 1;
     }
 
-    if (ols_only && strncmp(modelspec[m].cmd, "ols", 3)) {
-	pprintf(prn, _("This command is only available for OLS models "
-		"at present\n"));
+    if (!command_ok_for_model(test_ci, 
+			      model_ci_from_modelspec(&modelspec[m]))) {
+	pputs(prn, _("Sorry, command not available for this estimator"));
+	pputc(prn, '\n');
 	return 1;
-    }
+    }			      
 
     if (model_sample_issue(NULL, &modelspec[m], datainfo)) {
 	pprintf(prn, _("Can't do: the current data set is different from "
@@ -5115,7 +5165,7 @@ int gui_exec_line (char *line,
 
     case ADD:
     case OMIT:
-	if ((err = script_model_test(0, prn, 0))) break;
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
     plain_add_omit:
 	clear_model(models[1], NULL);
 	if (cmd.ci == ADD || cmd.ci == ADDTO)
@@ -5143,7 +5193,7 @@ int gui_exec_line (char *line,
     case ADDTO:
     case OMITFROM:
 	i = atoi(cmd.param);
-	if ((err = script_model_test(i, prn, 0))) break;
+	if ((err = script_model_test(cmd.ci, i, prn))) break;
 	if (i == (models[0])->ID) goto plain_add_omit;
 	err = re_estimate(modelspec[i-1].cmd, &tmpmod, &Z, datainfo);
 	if (err) {
@@ -5258,7 +5308,7 @@ int gui_exec_line (char *line,
 	break;
 
     case CHOW:
-	if ((err = script_model_test(0, prn, 1))) break;
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = chow_test(line, models[0], &Z, datainfo, outprn, ptest);
 	if (err) errmsg(err, prn);
 	else if (rebuild) 
@@ -5266,13 +5316,13 @@ int gui_exec_line (char *line,
 	break;
 
     case COEFFSUM:
-        if ((err = script_model_test(0, prn, 0))) break;
+        if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = sum_test(cmd.list, models[0], &Z, datainfo, outprn);
 	if (err) errmsg(err, prn);
 	break;
 
     case CUSUM:
-	if ((err = script_model_test(0, prn, 1))) break;
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = cusum_test(models[0], &Z, datainfo, outprn, 
 			 &paths, ptest);
 	if (err) errmsg(err, prn);
@@ -5281,7 +5331,7 @@ int gui_exec_line (char *line,
 	break;
 
     case RESET:
-	if ((err = script_model_test(0, prn, 1))) break;
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = reset_test(models[0], &Z, datainfo, outprn, ptest);
 	if (err) errmsg(err, prn);
 	else if (rebuild) 
@@ -5419,7 +5469,7 @@ int gui_exec_line (char *line,
 	    pprintf(prn, _("Couldn't format model\n"));
 	    break;
 	}
-	if ((err = script_model_test(0, prn, (cmd.ci == EQNPRINT)))) 
+	if ((err = script_model_test(cmd.ci, 0, prn))) 
 	    break;
 	strcpy(texfile, cmd.param);
 	if (cmd.ci == EQNPRINT) {
@@ -5437,7 +5487,7 @@ int gui_exec_line (char *line,
 	break;
 
     case FCAST:
-	if ((err = script_model_test(0, prn, 0))) break;
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = fcast(line, models[0], datainfo, &Z);
 	if (err < 0) {
 	    err *= -1;
@@ -5450,14 +5500,14 @@ int gui_exec_line (char *line,
 	break;
 
     case FCASTERR:
-	if ((err = script_model_test(0, prn, 0))) break;
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = fcast_with_errs(line, models[0], &Z, datainfo, outprn,
 			      &paths, (cmd.opt != 0)); 
 	if (err) errmsg(err, prn);
 	break;
 
     case FIT:
-	if ((err = script_model_test(0, prn, 0))) break;
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = fcast("fcast autofit", models[0], datainfo, &Z);
 	if (err < 0) {
 	    err *= -1;
@@ -5552,7 +5602,7 @@ int gui_exec_line (char *line,
 	break;
 
     case HAUSMAN:
-	if ((err = script_model_test(0, prn, 0))) break;
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = hausman_test(models[0], &Z, datainfo, outprn);
 	break;
 
@@ -5657,14 +5707,14 @@ int gui_exec_line (char *line,
 	break;
 
     case LEVERAGE:
-	if ((err = script_model_test(0, prn, 1))) break;
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = leverage_test(models[0], &Z, datainfo, outprn, NULL, cmd.opt);
 	if (err > 1) errmsg(err, prn);
 	else if (cmd.opt) varlist(datainfo, prn);
 	break;
 
     case LMTEST:
-	if ((err = script_model_test(0, prn, 1))) break;
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	/* non-linearity (squares) */
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
@@ -5967,7 +6017,7 @@ int gui_exec_line (char *line,
 
     case RESTRICT:
 	/* joint hypothesis test on model */
-	if ((err = script_model_test(0, prn, 1))) break;
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	if (rset == NULL) {
 	    rset = restriction_set_start(line, models[0], datainfo);
 	    if (rset == NULL) {
@@ -5978,6 +6028,7 @@ int gui_exec_line (char *line,
 	    err = restriction_set_parse_line(rset, line);
 	    if (err) {
 		errmsg(err, prn);
+		rset = NULL;
 	    }	
 	}
 	break;
@@ -5994,18 +6045,13 @@ int gui_exec_line (char *line,
 	    err = system_parse_line(sys, line, datainfo);
 	    if (err) {
 		errmsg(err, prn);
+		sys = NULL;
 	    }
 	}
 	break;
 
     case TESTUHAT:
-	if ((models[0])->ci == TOBIT) {
-	    pprintf(prn, _("Sorry, command not available for this estimator"));
-	    pputc(prn, '\n');
-	    err = 1;
-	    break;
-	}
-	if ((err = script_model_test(0, prn, 0))) break;
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
 	    pprintf(prn, _("Out of memory attempting to add variable\n"));
 	    err = 1;

@@ -21,7 +21,7 @@
 #include "gretl_private.h"
 
 #define is_model_ci(c) (c == OLS || c == CORC || c == HILU || \
-                        c == WLS || c == POOLED || c == HCCM || \
+                        c == WLS || c == PWE || c == POOLED || c == HCCM || \
                         c == HSK || c == ADD || c == LAD || \
                         c == OMIT || c == TSLS || c == LOGIT || \
                         c == PROBIT || c == TOBIT || c == ARMA || \
@@ -29,9 +29,9 @@
                         c == GARCH)
 
 struct gretl_option {
-    int ci;
-    gretlopt o;
-    const char *longopt;
+    int ci;              /* command index (context) */
+    gretlopt o;          /* index of integer type */
+    const char *longopt; /* -- string representation of option */
 };
 
 struct flag_match {
@@ -40,8 +40,9 @@ struct flag_match {
 };
 
 /* Below: This is used as a one-way mapping from the long form
-   to the char, so a given char can have more than one long-form
-   counterpart. */
+   to the index (e.g. OPT_Q), so a given index can have more than 
+   one long-form counterpart, depending on context. 
+*/
 
 struct gretl_option gretl_opts[] = {
     { ADD,      OPT_Q, "quiet" },
@@ -249,6 +250,7 @@ static int valid_long_opt (int ci, const char *lopt)
     int opt = 0L;
 
     if (is_model_ci(ci) && ci != LAD && !strcmp(lopt, "vcv")) {
+	/* VCV is available for all but LAD models */
 	return OPT_O;
     }
 

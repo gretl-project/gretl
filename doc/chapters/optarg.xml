@@ -83,6 +83,15 @@
       directory, you must specify the full path.
     </para>
 
+    <para>
+      <command>gretl --dump</command> (or <command>gretl -c</command>)
+    </para>
+
+    <para>&mdash; Dump the program's configuration information to a
+      plain text file (the name of the file is printed on standard
+      output).  May be useful for trouble-shooting.
+    </para>
+
     <para>Various things in <application>gretl</application> are
       configurable under the <quote>File, Preferences</quote>
       menu.</para>  
@@ -106,7 +115,7 @@
 	  databases.</para></listitem> 
       <listitem><para>The directory in which to start looking for RATS
 	  4 databases.</para></listitem> 
-      <listitem><para>The IP number of the
+      <listitem><para>The host name of the
 	  <application>gretl</application> database server to
 	  access.</para></listitem> 
       <listitem><para>The IP number and port number of the HTTP proxy

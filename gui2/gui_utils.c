@@ -128,18 +128,18 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/sum of coefficients"), NULL, selector_callback, COEFFSUM, NULL, GNULL },
     { N_("/Tests/linear restrictions"), NULL, gretl_callback, RESTRICT, NULL, GNULL },
     { N_("/Tests/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/non-linearity (squares)"), NULL, do_lmtest, AUX_SQ, NULL, GNULL },
-    { N_("/Tests/non-linearity (logs)"), NULL, do_lmtest, AUX_LOG, NULL, GNULL },
-    { N_("/Tests/Ramsey's RESET"), NULL, do_reset, 0, NULL, GNULL },
+    { N_("/Tests/non-linearity (squares)"), NULL, do_lmtest, LMTEST_SQUARES, NULL, GNULL },
+    { N_("/Tests/non-linearity (logs)"), NULL, do_lmtest, LMTEST_LOGS, NULL, GNULL },
+    { N_("/Tests/Ramsey's RESET"), NULL, do_reset, RESET, NULL, GNULL },
     { N_("/Tests/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL, GNULL },
-    { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, AUX_WHITE, NULL, GNULL },
-    { N_("/Tests/influential observations"), NULL, do_leverage, 0, NULL, GNULL },
+    { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL, GNULL },
+    { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL, GNULL },
     { N_("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL, GNULL },
-    { N_("/Tests/CUSUM test"), NULL, do_cusum, 0, NULL, GNULL },
+    { N_("/Tests/CUSUM test"), NULL, do_cusum, CUSUM, NULL, GNULL },
     { N_("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL, GNULL },
-    { N_("/Tests/normality of residual"), NULL, do_resid_freq, 0, NULL, GNULL },
-    { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, 0, NULL, GNULL },
+    { N_("/Tests/normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL, GNULL },
+    { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL, GNULL },
     { N_("/_Graphs"), NULL, NULL, 0, "<Branch>", GNULL }, 
     { N_("/Graphs/residual plot"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Graphs/fitted, actual plot"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -196,18 +196,18 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/sum of coefficients"), NULL, selector_callback, COEFFSUM, NULL },
     { N_("/Tests/linear restrictions"), NULL, gretl_callback, RESTRICT, NULL },
     { N_("/Tests/sep1"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Tests/non-linearity (squares)"), NULL, do_lmtest, AUX_SQ, NULL },
-    { N_("/Tests/non-linearity (logs)"), NULL, do_lmtest, AUX_LOG, NULL },
-    { N_("/Tests/Ramsey's RESET"), NULL, do_reset, 0, NULL },
+    { N_("/Tests/non-linearity (squares)"), NULL, do_lmtest, LMTEST_SQUARES, NULL },
+    { N_("/Tests/non-linearity (logs)"), NULL, do_lmtest, LMTEST_LOGS, NULL },
+    { N_("/Tests/Ramsey's RESET"), NULL, do_reset, RESET, NULL },
     { N_("/Tests/sep2"), NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL },
-    { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, AUX_WHITE, NULL },
-    { N_("/Tests/influential observations"), NULL, do_leverage, 0, NULL },
+    { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL },
+    { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL },
     { N_("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL },
-    { N_("/Tests/CUSUM test"), NULL, do_cusum, 0, NULL },
+    { N_("/Tests/CUSUM test"), NULL, do_cusum, CUSUM, NULL },
     { N_("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL },
-    { N_("/Tests/normality of residual"), NULL, do_resid_freq, 0, NULL },
-    { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, 0, NULL },
+    { N_("/Tests/normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL },
+    { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL },
     { N_("/_Graphs"), NULL, NULL, 0, "<Branch>" }, 
     { N_("/Graphs/residual plot"), NULL, NULL, 0, "<Branch>" },
     { N_("/Graphs/fitted, actual plot"), NULL, NULL, 0, "<Branch>" },
@@ -2373,87 +2373,53 @@ static void model_equation_copy_state (GtkItemFactory *ifac, gboolean s)
 
 /* ........................................................... */
 
-static void model_arch_menu_state (GtkItemFactory *ifac, gboolean s)
+static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 {
-    flip(ifac, "/Tests/ARCH", s);
+    int i, cmd_ci, ok;
+
+    for (i=0; model_items[i].path != NULL; i++) {
+	if (model_items[i].item_type == NULL &&
+	    strstr(model_items[i].path, "Tests")) {
+	    cmd_ci = model_items[i].callback_action;
+	    if (cmd_ci == LMTEST_SQUARES || 
+		cmd_ci == LMTEST_LOGS ||
+		cmd_ci == LMTEST_WHITE) {
+		cmd_ci = LMTEST;
+	    }
+	    ok = command_ok_for_model(cmd_ci, pmod->ci);
+	    flip(ifac, model_items[i].path, ok);
+	}
+    }
 }
 
 /* ........................................................... */
 
-static void model_panel_menu_state (GtkItemFactory *ifac, gboolean s)
+static void arch_menu_off (GtkItemFactory *ifac)
 {
-    flip(ifac, "/Tests/panel diagnostics", s);
+    flip(ifac, "/Tests/ARCH", FALSE);
 }
 
 /* ........................................................... */
 
-static void model_menu_state (GtkItemFactory *ifac, gboolean s)
+static void fit_resid_menu_off (GtkItemFactory *ifac)
 {
-    flip(ifac, "/Tests/non-linearity (squares)", s);
-    flip(ifac, "/Tests/non-linearity (logs)", s);
-    flip(ifac, "/Tests/autocorrelation", s);
-    flip(ifac, "/Tests/heteroskedasticity", s);
-    flip(ifac, "/Tests/Chow test", s);
-    flip(ifac, "/Tests/CUSUM test", s);
-    flip(ifac, "/Tests/ARCH", s);
-    flip(ifac, "/Tests/normality of residual", s);
-    flip(ifac, "/Graphs", s);
-    flip(ifac, "/Model data/Display actual, fitted, residual", s);
-    flip(ifac, "/Model data/Forecasts with standard errors", s);
-}
-
-/* ........................................................... */
-
-static void ols_menu_state (GtkItemFactory *ifac, gboolean s)
-{
-    flip(ifac, "/Tests/non-linearity (squares)", s);
-    flip(ifac, "/Tests/non-linearity (logs)", s);
-    flip(ifac, "/Tests/Ramsey's RESET", s);
-    flip(ifac, "/Tests/autocorrelation", s);
-    flip(ifac, "/Tests/heteroskedasticity", s);
-    flip(ifac, "/Tests/Chow test", s);
-    flip(ifac, "/Tests/CUSUM test", s);
-    flip(ifac, "/Tests/ARCH", s);
-    flip(ifac, "/Tests/influential observations", s);
-}
-
-/* ........................................................... */
-
-static void tobit_menu_mod (GtkItemFactory *ifac)
-{
-    flip(ifac, "/Tests/sum of coefficients", FALSE);
-    flip(ifac, "/Tests/normality of residual", FALSE);
+    flip(ifac, "/Graphs", FALSE);
+    flip(ifac, "/Model data/Display actual, fitted, residual", FALSE);
     flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
 }
 
-/* ........................................................... */
-
-static void lad_menu_mod (GtkItemFactory *ifac)
+static void fcast_menu_off (GtkItemFactory *ifac)
 {
-    flip(ifac, "/Tests/sum of coefficients", FALSE);
     flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
+}
+
+static void vcv_menu_off (GtkItemFactory *ifac)
+{
     flip(ifac, "/Model data/coefficient covariance matrix", FALSE);
 }
 
-/* ........................................................... */
-
-static void nls_menu_mod (GtkItemFactory *ifac)
+static void confint_menu_off (GtkItemFactory *ifac)
 {
-    flip(ifac, "/Tests/omit variables", FALSE);
-    flip(ifac, "/Tests/add variables", FALSE);
-    flip(ifac, "/Tests/sum of coefficients", FALSE);
-    flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
-    flip(ifac, "/Model data/Confidence intervals for coefficients", FALSE);
-}
-
-/* ........................................................... */
-
-static void arma_menu_mod (GtkItemFactory *ifac)
-{
-    flip(ifac, "/Tests/omit variables", FALSE);
-    flip(ifac, "/Tests/add variables", FALSE);
-    flip(ifac, "/Tests/sum of coefficients", FALSE);
-    flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
     flip(ifac, "/Model data/Confidence intervals for coefficients", FALSE);
 }
 
@@ -2462,11 +2428,6 @@ static void arma_menu_mod (GtkItemFactory *ifac)
 static void latex_menu_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/LaTeX", s);
-}
-
-static void normality_test_state (GtkItemFactory *ifac, gboolean s)
-{
-    flip(ifac, "/Tests/normality of residual", s);
 }
 
 static void model_save_state (GtkItemFactory *ifac, gboolean s)
@@ -2479,6 +2440,46 @@ static void arma_x12_menu_mod (windata_t *vwin)
 {
     flip(vwin->ifac, "/Model data/coefficient covariance matrix", FALSE);
     add_x12_output_menu_item(vwin);
+}
+
+/* ........................................................... */
+
+static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
+{
+    latex_menu_state(vwin->ifac, !pmod->errcode);
+
+    model_equation_copy_state(vwin->ifac, 
+			      !pmod->errcode && pmod->ci != NLS);
+
+    set_tests_menu_state(vwin->ifac, pmod);
+
+    if (LIMDEP(pmod->ci)) {
+	if (pmod->ci == TOBIT) {
+	    fcast_menu_off(vwin->ifac);
+	} else {
+	    fit_resid_menu_off(vwin->ifac);
+	}
+    } 
+
+    /* disallow saving an already-saved model */
+    if (pmod->name) model_save_state(vwin->ifac, FALSE);
+
+    if (pmod->ci == LAD) {
+	fcast_menu_off(vwin->ifac);
+	vcv_menu_off(vwin->ifac);
+    }
+
+    else if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
+	fcast_menu_off(vwin->ifac);
+	confint_menu_off(vwin->ifac);
+	if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
+	    arma_x12_menu_mod(vwin);
+	}	
+    }
+
+    if (dataset_is_panel(datainfo)) {
+	arch_menu_off(vwin->ifac);
+    }
 }
 
 /* ........................................................... */
@@ -2505,48 +2506,16 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     gtk_item_factory_create_items(vwin->ifac, n_items, items, vwin);
     vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
 #ifdef OLD_GTK
-    gtk_accel_group_attach(accel, GTK_OBJECT (window));
+    gtk_accel_group_attach(accel, GTK_OBJECT(window));
 #endif
 
-    if (vwin->role == VIEW_MODEL && vwin->data != NULL) { 
+    if (vwin->data == NULL) return;
+
+    if (vwin->role == VIEW_MODEL) { 
 	MODEL *pmod = (MODEL *) vwin->data;
 
-	latex_menu_state(vwin->ifac, !pmod->errcode);
-
-	model_equation_copy_state(vwin->ifac, 
-				  !pmod->errcode && pmod->ci != NLS);
-
-	model_panel_menu_state(vwin->ifac, pmod->ci == POOLED);
-
-	ols_menu_state(vwin->ifac, pmod->ci == OLS || pmod->ci == POOLED);
-
-	if (LIMDEP(pmod->ci)) {
-	    if (pmod->ci == TOBIT) {
-		tobit_menu_mod(vwin->ifac);
-	    } else {
-		model_menu_state(vwin->ifac, FALSE);
-	    }
-	} 
-
-	if (pmod->name) model_save_state(vwin->ifac, FALSE);
-
-	if (pmod->ci == LAD) lad_menu_mod(vwin->ifac);
-	else if (pmod->ci == NLS) nls_menu_mod(vwin->ifac);
-	else if (pmod->ci == ARMA) {
-	    arma_menu_mod(vwin->ifac);
-	    if (arma_by_x12a(pmod)) {
-		arma_x12_menu_mod(vwin);
-	    }
-	}
-	else if (pmod->ci == GARCH) {
-	    arma_menu_mod(vwin->ifac);
-	    normality_test_state(vwin->ifac, FALSE);
-	}
-
-	if (dataset_is_panel(datainfo)) {
-	    model_arch_menu_state(vwin->ifac, FALSE);
-	}
-    } else if (vwin->role == VAR && vwin->data != NULL) {
+	adjust_model_menu_state(vwin, pmod);
+    } else if (vwin->role == VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
 	const char *name = gretl_var_get_name(var);
 

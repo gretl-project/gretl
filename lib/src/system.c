@@ -680,19 +680,25 @@ int
 system_parse_line (gretl_equation_system *sys, const char *line,
 		   const DATAINFO *pdinfo)
 {
+    int err = 1;
+
     *gretl_errmsg = '\0';
 
     if (strncmp(line, "identity", 8) == 0) {
-	return add_identity_to_sys(sys, line + 8, pdinfo);
+	err = add_identity_to_sys(sys, line + 8, pdinfo);
     } 
     else if (strncmp(line, "endog", 5) == 0) {
-	return add_aux_list_to_sys(sys, line + 5, pdinfo, ENDOG_LIST);
+	err = add_aux_list_to_sys(sys, line + 5, pdinfo, ENDOG_LIST);
     }
     else if (strncmp(line, "instr", 5) == 0) {
-	return add_aux_list_to_sys(sys, line + 5, pdinfo, INSTR_LIST);
+	err = add_aux_list_to_sys(sys, line + 5, pdinfo, INSTR_LIST);
     }
 
-    return 1;
+    if (err) {
+	gretl_equation_system_destroy(sys);
+    }
+
+    return err;
 }
 
 /* More FIML-related functionality */

@@ -1009,7 +1009,7 @@ static void print_model_heading (const MODEL *pmod,
     /* rhohat for CORC and HILU (TeX) */
     else if (pmod->ci == CORC || pmod->ci == HILU || pmod->ci == PWE) {
 	if (tex) {
-	    pprintf(prn, "\\\\ \n$\\hat{\\rho}$ = %g\n", 
+	    pprintf(prn, "$\\hat{\\rho}$ = %g\n", 
 		    gretl_model_get_double(pmod, "rho_in"));
 	}
     } 

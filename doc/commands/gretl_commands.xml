@@ -1962,7 +1962,7 @@
 	standard OLS procedure, but the standard errors of the
 	coefficient estimates are computed in a manner that is robust
 	in the face of heteroskedasticity, namely using the
-	MacKinnon-White <quote>jackknife</quote> procedure.
+	MacKinnon&ndash;White <quote>jackknife</quote> procedure.
       </para>
     </description>
 
@@ -2886,12 +2886,12 @@
 
     <description context="gui">
 
-      <para>Performs Nonlinear Least Squares (NLS)
-	estimation using a modified version of the Levenberg-Marquandt
-	algorithm. You must supply a function specification; it is
-	recommended that you also supply expressions for the
-	derivatives of this function with respect to each of the
-	parameters if possible.</para>
+      <para>Performs Nonlinear Least Squares (NLS) estimation using a
+	modified version of the Levenberg&ndash;Marquandt algorithm.
+	You must supply a function specification; it is recommended
+	that you also supply expressions for the derivatives of this
+	function with respect to each of the parameters if
+	possible.</para>
 
       <para>Example: Suppose we have a data set with
 	variables C and Y (e.g. greene11_3.gdt) and we wish to
@@ -3788,8 +3788,7 @@
 
   </command>
 
-  <command name="reset" section="Tests"
-    label="Ramsey's RESET">
+  <command name="reset" section="Tests" label="Ramsey's RESET">
 
     <description>
       <para>
@@ -3808,32 +3807,15 @@
 
   </command>
 
-  <command name="restrict" section="Tests"
-    label="Linear restrictions">
-
-    <usage>
-      <examples>
-        <example>restrict</example>
-	<example>b1 = 0</example>
-	<example>b2 - b3 = 0</example>
-	<example>b4 + 2*b5 = 1</example>
-	<example>end restrict</example>
-      </examples>
-    </usage>
+  <command name="restrict" section="Tests" label="Linear restrictions">
 
     <description>
-      <para context="gui">
+      <para>
 	Evaluates a set of linear restrictions on the parameters of
 	the model last estimated.  In script mode, the set of
 	restrictions must be enclosed by <quote>restrict</quote> and
 	<quote>end restrict</quote>, but in the restrictions dialog
 	box these lines may be omitted.</para>
-
-      <para context="cli">
-	Evaluates a set of linear restrictions on the parameters of the
-	model last estimated.  The set of restrictions must be
-	terminated with <quote>end restrict</quote>.
-      </para>
 
       <para>Each restriction in the set should be expressed as an
 	equation, with a linear combination of parameters on the left
@@ -3844,24 +3826,31 @@
 	denotes the second regression parameter.
       </para>
 
-      <para>The <lit>bN</lit> terms may be prefixed with a numeric
-      multiplier, using <lit>*</lit> to represent multiplication, for
-      example <lit>3.5*b4</lit>.</para>
+      <para>The second and subsequent <lit>bN</lit> terms in an
+	equation may be prefixed with a numeric multiplier, using
+	<lit>*</lit> to represent multiplication, for example
+	<lit>3.5*b4</lit>.
+      </para>
 
-      <para context="gui">Example restrictions:</para>
+      <para>Here is an example of a set of restrictions:</para>
 
-      <code context="gui">
-	b1 = 0
-	b2 - b3 = 0
-	b4 + 2*b5 = 1
-      </code>
+      <code>
+	restrict
+	 b1 = 0
+	 b2 - b3 = 0
+	 b4 + 2*b5 = 1
+	end restrict</code>
 
-      <para>The set of restrictions is evaluated via an F-test,
-	using the coefficient covariance matrix of the model
-	in question.
+      <para>The restrictions are evaluated via a Wald F-test,
+	using the coefficient covariance matrix of the model in
+	question.
       </para>
 
     </description>
+
+    <gui-access>
+      <menu-path>Model window, /Tests/linear restrictions</menu-path>
+    </gui-access>
 
   </command>
 
