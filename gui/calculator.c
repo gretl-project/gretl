@@ -30,8 +30,6 @@
 # include <windows.h>
 #endif
 
-static double f_crit_a (const double a, const int df1, const int df2);
-
 typedef struct {
     GtkWidget *entry[NTESTENTRY];
     GtkWidget *book;
@@ -125,23 +123,7 @@ static int getint (const char *s, PRN *prn)
 
 /* ........................................................... */
 
-static int parse_critical_input (const char *str, int *i, 
-				 int *df, int *n)
-{
-    *i = -1;
-
-    if (sscanf(str, "critical F %d %d", df, n) == 2) *i = 3;
-    else if (sscanf(str, "critical X %d", df) == 1) *i = 2;
-    else if (sscanf(str, "critical t %d", df) == 1) *i = 1;
-    else if (!strncmp(str, "critical N", 10)) *i = 0;
-    
-    if (*i >= 0) return 0;
-    else return 1;
-}
-
-/* ........................................................... */
-
-void get_critical (GtkWidget *w, gpointer data)
+static void get_critical (GtkWidget *w, gpointer data)
 {
     lookup_t **look = (lookup_t **) data;
     void *handle;
@@ -150,94 +132,89 @@ void get_critical (GtkWidget *w, gpointer data)
     void (*dw)(int, PRN *) = NULL;
     void (*tcrit)(int, PRN *, int) = NULL;
     void (*chicrit)(int, PRN *, int) = NULL;
-    int i, n = -1, df = -1;
+    int i, n = -1, df = -1, err = 0;
     PRN *prn;
     extern GtkItemFactoryEntry view_items[];
 
     if (gui_open_plugin("stats_tables", &handle)) return;
 
-    if (w == NULL) { /* command line, not GUI menu */
-	lineprint_t *lpt = (lineprint_t *) data;
-
-	if (parse_critical_input(lpt->line, &i, &df, &n)) {
-	    errbox(_("Couldn't parse 'critical' line"));
-	    close_plugin(handle);
-	    return;
-	}
-	prn = lpt->prn;
-    } else { /* coming off GUI menu */
-	i = gtk_notebook_get_current_page(GTK_NOTEBOOK(look[0]->book));
-	if (bufopen(&prn)) {
-	    close_plugin(handle);
-	    return;
-	}	
-    }
+    i = gtk_notebook_get_current_page(GTK_NOTEBOOK(look[0]->book));
+    if (bufopen(&prn)) {
+	close_plugin(handle);
+	return;
+    }	
 
     switch (i) {
     case 0: /* normal */
 	funp = norm_table = get_plugin_function("norm_lookup", handle);
 	break;
     case 1: /* t */
-	if (w != NULL && df == -1)
-	    df = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
+	df = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
 	funp = tcrit = get_plugin_function("t_lookup", handle);
 	break;
     case 2: /* chi-square */
-	if (w != NULL && df == -1)
-	    df = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
+	df = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
 	funp = chicrit = get_plugin_function("chisq_lookup", handle);
 	break;
     case 3: /* F */
-	if (w != NULL && df == -1) {
-	    df = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
-	    n = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[1])));
-	}
+	df = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
+	n = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[1])));
 	break;
     case 4: /* DW */
-	if (w != NULL)
-	    n = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
+	n = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
 	funp = dw = get_plugin_function("dw_lookup", handle);
 	break;
     default:
 	break;
     }
 
-    if (i != 3 && funp == NULL)  {
-	errbox(_("Couldn't load plugin function"));
-	close_plugin(handle);
-	if (w != NULL) gretl_print_destroy(prn);
-	return;
+    /* sanity */
+    if ((0 < i && i < 4 && df <= 0) || (i == 3 && n <= 0)) {
+	errbox(_("Invalid degrees of freedom"));
+	err = 1;
     }
-    
-    switch (i) {
-    case 0:
-	(*norm_table)(prn, w != NULL);
-	break;
-    case 1:
-	(*tcrit)(df, prn, w != NULL);
-	break;
-    case 2:
-	(*chicrit)(df, prn, w != NULL);
-	break;	
-    case 3:
-	pprintf(prn, _("Approximate critical values of F(%d, %d)\n\n"),
-		df, n);
-	pprintf(prn, _(" 10%% in right tail %.2f\n"), f_crit_a(.10, df, n));
-	pprintf(prn, "  5%%               %.2f\n", f_crit_a(.05, df, n));	
-	pprintf(prn, "  1%%               %.2f\n", f_crit_a(.01, df, n));
-	break;
-    case 4:
-	(*dw)(n, prn);
-	break;
-    default:
-	break;
+    else if (i == 4 && n <= 0) {
+	errbox(_("Invalid sample size"));
+	err = 1;
+    }
+    else if (i != 3 && funp == NULL)  {
+	errbox(_("Couldn't load plugin function"));
+	err = 1;
+    }
+
+    if (!err) {
+	switch (i) {
+	case 0:
+	    (*norm_table)(prn, 1);
+	    break;
+	case 1:
+	    (*tcrit)(df, prn, 1);
+	    break;
+	case 2:
+	    (*chicrit)(df, prn, 1);
+	    break;	
+	case 3:
+	    pprintf(prn, _("Approximate critical values of F(%d, %d)\n\n"),
+		    df, n);
+	    pprintf(prn, _(" 10%% in right tail %.2f\n"), f_crit_a(.10, df, n));
+	    pprintf(prn, "  5%%               %.2f\n", f_crit_a(.05, df, n));	
+	    pprintf(prn, "  1%%               %.2f\n", f_crit_a(.01, df, n));
+	    break;
+	case 4:
+	    (*dw)(n, prn);
+	    break;
+	default:
+	    break;
+	}
     }
 
     close_plugin(handle);
 
-    if (w != NULL)
-	view_buffer(prn, 77, 300, _("gretl: statistical table"), STAT_TABLE,
-		    view_items);
+    if (err) 
+	gretl_print_destroy(prn);
+    else
+	view_buffer(prn, 77, 300, _("gretl: statistical table"), 
+		    STAT_TABLE, view_items);
 }
 
 /* ........................................................... */
@@ -356,20 +333,6 @@ static double f_crit (const int df1, const int df2)
     double x = 2.0;
 
     while (fdist(x, df1, df2) > .001) x += .5;
-    return x;
-}
-
-/* ...................................................................	*/
-
-static double f_crit_a (const double a, const int df1, const int df2)
-{
-    double x = 1.0;
-
-    while (fdist(x, df1, df2) > a) x += .5;
-    if (x > .5) x -= .5;
-    while (fdist(x, df1, df2) > a) x += .1; 
-    if (x > .5) x -= .1;
-    while (fdist(x, df1, df2) > a) x += .01;
     return x;
 }
 

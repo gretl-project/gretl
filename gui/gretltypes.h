@@ -83,9 +83,4 @@ typedef struct {
     char fname[MAXLEN];
 } windata_t; 
 
-typedef struct {
-    char *line;
-    PRN *prn;
-} lineprint_t;
-
 #endif /* GRETLTYPES_H */

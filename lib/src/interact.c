@@ -1008,6 +1008,10 @@ int simple_commands (CMD *cmd, const char *line,
 	    pprintf(prn, _("Error in computing model selection criteria.\n"));
 	break;
 
+    case CRITICAL:
+	err = print_critical(line, paths, prn);
+	break;
+
     case DIFF:
 	err = list_diffgenr(cmd->list, pZ, datainfo);
 	if (err) 

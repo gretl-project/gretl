@@ -1,0 +1,10 @@
+#!/bin/sh
+
+WWW='allin@gretl.sourceforge.net:~/www/'
+topdir=/home/cottrell/stats/esl/gretl
+webdir=/home/cottrell/stats/esl/website
+
+scp $topdir/doc/manual.pdf $WWW
+scp $topdir/doc/manual-a4.pdf $WWW
+scp $topdir/ChangeLog $WWW
+cp $topdir/ChangeLog $webdir

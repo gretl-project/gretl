@@ -301,7 +301,7 @@ int set_sample_dummy (const char *line,
 
 int set_sample (const char *line, DATAINFO *pdinfo)
 {
-    int nf, new_t1, new_t2;
+    int nf, new_t1 = 0, new_t2 = 0;
     char cmd[5], newstart[9], newstop[9];
 
     gretl_errmsg[0] = '\0';

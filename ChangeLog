@@ -1,3 +1,7 @@
+version 0.992
+- bounds checking for critical values look-up; also add this
+  as a regular gretlcli command, "critical".
+
 03/20/2002 version 0.991
 - fix several "out of bounds" bugs kindly reported by Tavis Barr
 - streamline the online help system

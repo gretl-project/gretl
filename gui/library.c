@@ -42,9 +42,6 @@ extern int boxplots (int *list, char **bools,
 extern int boolean_boxplots (const char *str, double ***pZ, 
 			     DATAINFO *pdinfo, int notches);
 
-/* calculator.c */
-extern void get_critical (GtkWidget *w, gpointer data);
-
 /* private functions */
 static int gui_exec_line (char *line, 
 			  LOOPSET *plp, int *plstack, int *plrun, 
@@ -3183,7 +3180,8 @@ static int ready_for_command (char *line)
         strncmp(line, "!", 1) == 0 ||
         strncmp(line, "(*", 2) == 0 ||
         strncmp(line, "man ", 4) == 0 ||
-        strncmp(line, "help", 4) == 0)
+        strncmp(line, "help", 4) == 0 ||
+        strncmp(line, "critical", 8) == 0)
         return 1;
     return 0;
 }
@@ -3325,7 +3323,7 @@ static int gui_exec_line (char *line,
 
     case ADF: case COINT:
     case CORR:
-    case CRITERIA:
+    case CRITERIA: case CRITICAL:
     case DIFF: case LDIFF: case LAGS: case LOGS:
     case MULTIPLY:
     case GRAPH: case PLOT:
@@ -3471,16 +3469,6 @@ static int gui_exec_line (char *line,
 	err = corrgram(command.list[1], order, &Z, datainfo, &paths,
 		       1, prn);
 	if (err) pprintf(prn, _("Failed to generate correlogram\n"));
-	break;
-
-    case CRITICAL:
-	if (1) {
-	    lineprint_t lpt;
-
-	    lpt.line = line;
-	    lpt.prn = prn;
-	    get_critical(NULL, &lpt);
-	}
 	break;
 
     case DELEET:

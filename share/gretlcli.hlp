@@ -167,9 +167,14 @@ critical
 Usage:          critical t df           e.g. critical t 20
                 critical X df           e.g. critical X 5
                 critical F dfn dfd      e.g. critical F 3 37
-Available only in the gretl console, or when running a script in the gretl
-GUI.  Prints out the critical values of the given statistic (t, chi-square or
-F), for the specified degrees of freedom, at the common significance levels.
+                critical d n            e.g. critical d 24
+If the first parameter is t, X or F, prints out the critical values for the
+students's t, chi-square or F distribution respectively, for the common
+significance levels and using the specified degrees of freedom.  If the first
+parameter is d, prints the upper and lower values of the Durbin-Watson
+statistic at 5 percent significance, for the given n (number of observations),
+and for the range of 1 to 5 explanatory variables.
+
 
 #
 cusum

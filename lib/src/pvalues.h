@@ -35,4 +35,8 @@ double batch_pvalue (const char *str,
 
 void interact_pvalue (void);
 
+double f_crit_a (const double a, const int df1, const int df2);
+
+int print_critical (const char *line, PATHS *ppaths, PRN *prn);
+
 

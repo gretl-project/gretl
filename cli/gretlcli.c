@@ -109,6 +109,7 @@ int ready_for_command (char *line)
 	strncmp(line, "nulldata", 8) == 0 ||
 	strncmp(line, "import", 4) == 0 ||
 	strncmp(line, "pvalue", 6) == 0 ||
+	strncmp(line, "critical", 6) == 0 ||
 	strncmp(line, "!", 1) == 0 ||
 	strncmp(line, "(*", 2) == 0 ||
 	strncmp(line, "man", 3) == 0 ||
@@ -527,7 +528,7 @@ void exec_line (char *line, PRN *prn)
 
     case ADF: case COINT:
     case CORR:
-    case CRITERIA:
+    case CRITERIA: case CRITICAL:
     case DIFF: case LDIFF: case LAGS: case LOGS:
     case MULTIPLY:
     case GRAPH: case PLOT:

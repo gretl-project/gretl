@@ -612,6 +612,146 @@ static void _enterdf (const char *str)
     printf(_("\nEnter d.f.%s(value <= 0 will exit menu): "), str);
 }
 
+/**
+ * f_crit_a:
+ * @a: significance level.
+ * @df1: numerator degrees of freedom.
+ * @df2: denominator degrees of freedom.
+ *
+ * Returns the critical value for F(df1, df2, a).
+ *
+ */
+
+double f_crit_a (const double a, const int df1, const int df2)
+{
+    double x = 1.0;
+
+    while (fdist(x, df1, df2) > a) x += .5;
+    if (x > .5) x -= .5;
+    while (fdist(x, df1, df2) > a) x += .1; 
+    if (x > .5) x -= .1;
+    while (fdist(x, df1, df2) > a) x += .01;
+    return x;
+}
+
+/* ........................................................ */
+
+static int parse_critical_input (const char *str, int *i, 
+				 int *df, int *n)
+{
+    *i = -1;
+
+    if (sscanf(str, "critical F %d %d", df, n) == 2) *i = 3;
+    else if (sscanf(str, "critical X %d", df) == 1) *i = 2;
+    else if (sscanf(str, "critical t %d", df) == 1) *i = 1;
+    else if (sscanf(str, "critical d %d", n) == 1) *i = 4;
+    else if (!strncmp(str, "critical N", 10)) *i = 0;
+    
+    if (*i >= 0) return 0;
+    else return 1;
+}
+
+/**
+ * print_critical:
+ * @str: the command line, which should be of one of the following forms:
+ * critical t df (student's t)
+ * critical X df (chi-square)
+ * critical F dfn dfd (F distribution)
+ * @ppaths: pointer to paths information struct.
+ * @prn: gretl printing struct.
+ *
+ * Prints critical values for the specified distribution at the
+ * commonly used significance levels.
+ *
+ * Returns: 0 if successful, 1 on error.
+ *
+ */
+
+int print_critical (const char *line, PATHS *ppaths, PRN *prn)
+{
+    void *handle;
+    void *funp = NULL;
+    void (*norm_table)(PRN *, int) = NULL;
+    void (*dw)(int, PRN *) = NULL;
+    void (*tcrit)(int, PRN *, int) = NULL;
+    void (*chicrit)(int, PRN *, int) = NULL;
+    int i, n = -1, df = -1, err = 0;
+
+    if (open_plugin(ppaths, "stats_tables", &handle)) return 1;
+
+    if (parse_critical_input(line, &i, &df, &n)) {
+	pprintf(prn, _("Invalid input\n"));
+	err = 1;
+    }
+
+    if ((0 < i && i < 4 && df <= 0) || (i == 3 && n <= 0)) {
+	pprintf(prn, _("Invalid degrees of freedom\n"));
+	err = 1;
+    }
+    else if (i == 4 && n <= 0) {
+	pprintf(prn, _("Invalid sample size\n"));
+	err = 1;
+    }    
+
+    if (err) {
+	close_plugin(handle);
+	return 1;
+    }
+
+    switch (i) {
+    case 0: /* normal */
+	funp = norm_table = get_plugin_function("norm_lookup", handle);
+	break;
+    case 1: /* t */
+	funp = tcrit = get_plugin_function("t_lookup", handle);
+	break;
+    case 2: /* chi-square */
+	funp = chicrit = get_plugin_function("chisq_lookup", handle);
+	break;
+    case 3: /* F */
+	break;
+    case 4: /* DW */
+	funp = dw = get_plugin_function("dw_lookup", handle);
+	break;
+    default:
+	break;
+    }
+
+    if (i != 3 && funp == NULL)  {
+	pprintf(prn, _("Couldn't load plugin function\n"));
+	close_plugin(handle);
+	return 1;
+    }
+    
+    switch (i) {
+    case 0:
+	(*norm_table)(prn, 0);
+	break;
+    case 1:
+	(*tcrit)(df, prn, 0);
+	break;
+    case 2:
+	(*chicrit)(df, prn, 0);
+	break;	
+    case 3:
+	pprintf(prn, _("Approximate critical values of F(%d, %d)\n\n"),
+		df, n);
+	pprintf(prn, _(" 10%% in right tail %.2f\n"), f_crit_a(.10, df, n));
+	pprintf(prn, "  5%%               %.2f\n", f_crit_a(.05, df, n));	
+	pprintf(prn, "  1%%               %.2f\n", f_crit_a(.01, df, n));
+	break;
+    case 4:
+	(*dw)(n, prn);
+	break;
+    default:
+	break;
+    }
+
+    close_plugin(handle);
+
+    return 0;
+}
+
 /* ........................................................ */
 
 /* Functions relating to the gamma distribution.
