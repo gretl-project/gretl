@@ -510,16 +510,44 @@ static void make_tmp_varnames (DATAINFO *ainfo, int p, int q)
 }
 #endif
 
-static void adjust_t2 (DATAINFO *pdinfo, const double *y)
+static int adjust_sample (DATAINFO *pdinfo, const double *y,
+			  int p, int q, int v)
 {
-    int t, t2 = pdinfo->t2;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int maxlag = (p>q)? p : q;
+    int t, n;
+
+    if (maxlag > pdinfo->t1) {
+	t1 = pdinfo->t1 = maxlag;
+    }
+
+    for (t=pdinfo->t1-maxlag; t<=pdinfo->t2; t++) {
+	if (na(y[t])) t1++;
+	else break;
+    }
 
     for (t=pdinfo->t2; t>=pdinfo->t1; t--) {
 	if (na(y[t])) t2--;
 	else break;
     }
 
+    for (t=t1+1; t<t2; t++) {
+	if (na(y[t])) {
+	    char msg[64];
+
+	    sprintf(msg, _("Missing value encountered for "
+			   "variable %d, obs %d"), v, t);
+	    return 0;
+	}
+    }
+
+    pdinfo->t1 = t1;
+    if (p > q) pdinfo->t1 -= p - q;
     pdinfo->t2 = t2;
+
+    n = pdinfo->t2 - pdinfo->t1 + 1;
+    
+    return n;
 }
 
 MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo, 
@@ -550,21 +578,20 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
     p = list[1]; /* AR order */
     q = list[2]; /* MA order */
+    v = list[4]; /* dependent var */
     maxlag = (p>q) ? p : q; /* maximum lag in the model */
 
-    /* adjust starting point? */
-    if (q > pdinfo->t1) pdinfo->t1 = q;
+    /* adjust sample? */
+    an = adjust_sample(pdinfo, Z[v], p, q, v);
+    if (an <= p + q + 1) {
+	pdinfo->t1 = orig_t1;
+	pdinfo->t2 = orig_t2;
+	armod.errcode = E_DATA;
+	return armod;
+    }
 
-    /* the dependent variable */
-    v = list[4]; 
+    /* values of the dependent variable */
     y = &Z[v][pdinfo->t1];
-
-    /* adjust end point? */
-    adjust_t2(pdinfo, y);
-
-    an = pdinfo->t2 - pdinfo->t1 + 1;
-
-    fprintf(stderr, "t1=%d\n", pdinfo->t1);
 
     /* number of coefficients */
     nc = 1 + p + q;
