@@ -2290,7 +2290,6 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
     int err, nulldata_n;
-    PRN *prn;
 
     buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
@@ -2311,17 +2310,12 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
 
     close_dialog(ddata);
     
-    prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
-    if (prn == NULL) return;
-
-    err = open_nulldata(&Z, datainfo, data_status, nulldata_n, prn);
+    err = open_nulldata(&Z, datainfo, data_status, nulldata_n, NULL);
     if (err) { 
 	errbox(_("Failed to create empty data set"));
 	return;
     }
 
-    infobox(prn->buf);
-    gretl_print_destroy(prn);
     *paths.datfile = '\0';
     register_data(NULL, NULL, 0);
 }

@@ -124,6 +124,7 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 
     if (pdinfo->subdum != NULL) {
 	free(pdinfo->subdum);
+	pdinfo->subdum = NULL;
     }
 
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
@@ -2008,29 +2009,30 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     int t;
 
     /* clear any existing data info */
-    if (data_status) clear_datainfo(pdinfo, CLEAR_FULL);
+    if (data_status) {
+	clear_datainfo(pdinfo, CLEAR_FULL);
+    }
 
     /* dummy up the data info */
     pdinfo->n = length;
     pdinfo->v = 2;
     dataset_dates_defaults(pdinfo);
 
-    if (dataset_allocate_varnames(pdinfo)) return E_ALLOC;
-
-    /* no observation markers */
-    pdinfo->markers = NO_MARKERS;
-    pdinfo->S = NULL; 
-
-    /* no descriptive comments */
-    pdinfo->descrip = NULL;
+    if (dataset_allocate_varnames(pdinfo)) {
+	return E_ALLOC;
+    }
 
     /* allocate dataset */
-    if (prepZ(pZ, pdinfo)) return E_ALLOC;
+    if (prepZ(pZ, pdinfo)) {
+	return E_ALLOC;
+    }
 
     /* add an index var */
     strcpy(pdinfo->varname[1], "index");
     strcpy(VARLABEL(pdinfo, 1), _("index variable"));
-    for (t=0; t<pdinfo->n; t++) (*pZ)[1][t] = (double) (t + 1);
+    for (t=0; t<pdinfo->n; t++) {
+	(*pZ)[1][t] = (double) (t + 1);
+    }
 
     /* print out basic info */
     pprintf(prn, I_("periodicity: %d, maxobs: %d,\n"
