@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
-"POT-Creation-Date: 2004-03-18 11:07-0500\n"
+"POT-Creation-Date: 2004-03-18 14:55-0500\n"
 "PO-Revision-Date: 2004-02-18 13:10-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -2292,7 +2292,7 @@ msgstr "aucun '.' permis dans l'observation de départ avec une fréquence de 1"
 msgid "starting obs '%s' is incompatible with frequency"
 msgstr "observation de départ « %s » est incompatible avec la fréquence"
 
-#: lib/src/gretl_utils.c:2128
+#: lib/src/gretl_utils.c:1795
 msgid ""
 "The current data frequency, 1, is not compatible with panel data.\n"
 "Please see the 'setobs' command.\n"
@@ -2301,29 +2301,29 @@ msgstr ""
 "données.\n"
 "SVP voir la commande 'setobs'.\n"
 
-#: lib/src/gretl_utils.c:2141
+#: lib/src/gretl_utils.c:1808
 msgid "Failed to set panel structure\n"
 msgstr "Échec d'initialisation de la structure du panel\n"
 
-#: lib/src/gretl_utils.c:2145
+#: lib/src/gretl_utils.c:1812
 #, c-format
 msgid "Panel structure set to %s\n"
 msgstr "Structure de panel initialisé à %s\n"
 
-#: lib/src/gretl_utils.c:2147
+#: lib/src/gretl_utils.c:1814
 msgid "stacked cross sections"
 msgstr "coupe transversale empilée"
 
-#: lib/src/gretl_utils.c:2147 gui2/datafiles.c:1522
+#: lib/src/gretl_utils.c:1814 gui2/datafiles.c:1522
 msgid "stacked time series"
 msgstr "série temporelle empilée"
 
-#: lib/src/gretl_utils.c:2148
+#: lib/src/gretl_utils.c:1815
 #, c-format
 msgid "(%d units observed in each of %d periods)\n"
 msgstr "(%d unités observés dans chaque %d périodes)\n"
 
-#: lib/src/gretl_utils.c:2468 gui/gretl.c:1512 gui2/gretl.c:1662
+#: lib/src/gretl_utils.c:2135 gui/gretl.c:1512 gui2/gretl.c:1662
 #: gui2/library.c:1792
 msgid "Command failed"
 msgstr "Échec de l'exécution de la commande"

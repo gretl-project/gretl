@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2004-03-18 11:07-0500\n"
+"POT-Creation-Date: 2004-03-18 14:55-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2145,35 +2145,35 @@ msgstr ""
 msgid "starting obs '%s' is incompatible with frequency"
 msgstr ""
 
-#: lib/src/gretl_utils.c:2128
+#: lib/src/gretl_utils.c:1795
 msgid ""
 "The current data frequency, 1, is not compatible with panel data.\n"
 "Please see the 'setobs' command.\n"
 msgstr ""
 
-#: lib/src/gretl_utils.c:2141
+#: lib/src/gretl_utils.c:1808
 msgid "Failed to set panel structure\n"
 msgstr ""
 
-#: lib/src/gretl_utils.c:2145
+#: lib/src/gretl_utils.c:1812
 #, c-format
 msgid "Panel structure set to %s\n"
 msgstr ""
 
-#: lib/src/gretl_utils.c:2147
+#: lib/src/gretl_utils.c:1814
 msgid "stacked cross sections"
 msgstr ""
 
-#: lib/src/gretl_utils.c:2147 gui2/datafiles.c:1522
+#: lib/src/gretl_utils.c:1814 gui2/datafiles.c:1522
 msgid "stacked time series"
 msgstr ""
 
-#: lib/src/gretl_utils.c:2148
+#: lib/src/gretl_utils.c:1815
 #, c-format
 msgid "(%d units observed in each of %d periods)\n"
 msgstr ""
 
-#: lib/src/gretl_utils.c:2468 gui/gretl.c:1512 gui2/gretl.c:1662
+#: lib/src/gretl_utils.c:2135 gui/gretl.c:1512 gui2/gretl.c:1662
 #: gui2/library.c:1792
 msgid "Command failed"
 msgstr ""

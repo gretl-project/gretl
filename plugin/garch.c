@@ -375,35 +375,40 @@ int do_fcp (const int *list, double **Z,
 
 /* sanity/dimension check */
 
-static int check_garch_list (int *list)
+static int check_garch_list (const int *list, int **plist)
 {
     int i, p = list[1], q = list[2];
-    int err = 0, ifc = 0;
+    int err = 0, add0 = 1;
 
     /* rule out pure AR in variance */
     if (p > 0 && q == 0) {
 	gretl_errmsg_set(_("Error in garch command"));
-	err = 1;
+	err = E_DATA;
     }
 
     /* rule out excessive total GARCH terms */
     else if (p + q > 5) {
 	gretl_errmsg_set(_("Error in garch command"));
-	err = 1;
+	err = E_DATA;
     }
 
     /* insert constant if not present */
     for (i=4; i<=list[0]; i++) {
-	if (list[i] == 0) ifc = 1;
+	if (list[i] == 0) {
+	    add0 = 0;
+	    break;
+	}
     }
-    if (!ifc) {
-	int *mylist = realloc(list, (list[0] + 2) * sizeof *list);
-
-	if (mylist == NULL) err = E_ALLOC;
-	else {
-	    list = mylist;
-	    list[0] += 1;
-	    list[list[0]] = 0;
+    *plist = malloc((list[0] + 1 + add0) * sizeof **plist);
+    if (*plist == NULL) {
+	err = E_ALLOC;
+    } else {
+	(*plist)[0] = list[0] + add0;
+	for (i=1; i<=list[0]; i++) {
+	    (*plist)[i] = list[i];
+	}
+	if (add0) {
+	    (*plist)[i] = 0;
 	}
     }
 
@@ -430,16 +435,16 @@ static int *make_ols_list (const int *list)
 
 /* the driver function for the plugin */
 
-MODEL garch_model (int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn, unsigned long opt) 
 {
     MODEL model;
-    int *ols_list;
+    int *list, *ols_list;
 
     gretl_model_init(&model, NULL);
 
-    if (check_garch_list(list)) {
-	model.errcode = E_DATA;
+    model.errcode = check_garch_list(cmdlist, &list);
+    if (model.errcode) {
 	return model;
     }
 

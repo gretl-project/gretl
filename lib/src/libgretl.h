@@ -415,6 +415,7 @@ struct _VCV {
 #include "random.h"
 #include "monte_carlo.h"
 #include "nonparam.h"
+#include "options.h"
 #include "discrete.h"
 #include "subsample.h"
 #include "calendar.h"
