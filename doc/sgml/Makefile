@@ -1,7 +1,5 @@
-# XMLDCL = /opt/jade/share/xml.dcl
 MANUAL = manual
 DSL = gretl-both.dsl
-HDSL = gretl_htmlmath.dsl
 MATHSS = TeXMath.dsl
 HMATHSS = HTMLMath.dsl
 
@@ -11,7 +9,7 @@ pdf: $(MANUAL).tex jadetex.cfg lucidabr.tex
 	pdfjadetex $(MANUAL)
 
 $(MANUAL).tex: $(MANUAL).sgml $(DSL) $(MATHSS) titlepage.dsl
-	jade -t tex -d $(DSL) $(MANUAL).sgml
+	jade -t tex -d $(DSL)\#print $(MANUAL).sgml
 	./unescape_math.pl
 
 html: manual.sgml db2html $(HDSL) $(HMATHSS) pix

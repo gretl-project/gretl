@@ -1670,11 +1670,11 @@
 	  genr gdpgro = (RGDPL - gdp60)/gdp60
 	  (* restrict the sample to a 1989 cross-section *) 
 	  smpl -r YEAR=1989 
-	  (* Convergence?  Have countries with a lower base grown
-	  faster? *) 
+	  (* Convergence?  Did countries with a lower base grow faster? *) 
 	  ols gdpgro const gdp60 
 	  (* result: No! Try inverse relationship *) 
-	  genr gdp60inv = 1/gdp60 ols gdpgro const gdp60inv 
+	  genr gdp60inv = 1/gdp60 
+	  ols gdpgro const gdp60inv 
 	  (* No again.  Try dropping Africa? *) 
 	  genr afdum = (CCODE = 1)
 	  genr afslope = afdum * gdp60 
@@ -1819,20 +1819,21 @@
 	genr x = uniform() 
 	(* open a loop, to be repeated 100 times *) 
 	loop 100 
-	genr u = normal()
-	(* construct the dependent variable *) 
-	genr y = 10*x + 20*u 
-	(* run OLS regression *) 
-	ols y const x 
-	(* grab the R-squared value from the regression *) 
-	genr r2 = $rsq 
-	(* arrange for statistics on R-squared to be printed *) 
-	print r2 
-	(* save the individual coefficient estimates *) 
-	genr a = coeff(const) 
-	genr b = coeff(x)
-	(* and print them to file *) 
-	store foo.dat a b endloop
+	  genr u = normal()
+	  (* construct the dependent variable *) 
+	  genr y = 10*x + 20*u 
+	  (* run OLS regression *) 
+	  ols y const x 
+	  (* grab the R-squared value from the regression *) 
+	  genr r2 = $rsq 
+	  (* arrange for statistics on R-squared to be printed *) 
+	  print r2 
+	  (* save the individual coefficient estimates *) 
+	  genr a = coeff(const) 
+	  genr b = coeff(x)
+	  (* and print them to file *) 
+	  store foo.dat a b 
+	endloop
     </programlisting>
     </example>
 
@@ -1932,14 +1933,14 @@
       genr x2 = b0 * Y^gamma0 * log(Y) 
       (* iterate OLS till the error sum of squares converges *) 
       loop while essdiff > .00001 
-      ols C0 0 x1 x2 -o 
-      genr b0 = coeff(x1) 
-      genr gamma0 = coeff(x2) 
-      genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y) 
-      genr x1 = Y^gamma0 genr x2 = b0 * Y^gamma0 * log(Y) 
-      genr ess = $ess genr
-      essdiff = abs(ess - essbak)/essbak 
-      genr essbak = ess 
+        ols C0 0 x1 x2 -o 
+        genr b0 = coeff(x1) 
+        genr gamma0 = coeff(x2) 
+        genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y) 
+        genr x1 = Y^gamma0 genr x2 = b0 * Y^gamma0 * log(Y) 
+        genr ess = $ess genr
+        essdiff = abs(ess - essbak)/essbak 
+        genr essbak = ess 
       endloop 
       (* print parameter estimates using their "proper names" *) 
       genr alpha = coeff(0) 
@@ -3214,6 +3215,8 @@
 
 	  <informaltable frame="none">
 	    <tgroup cols="2">
+	      <colspec colwidth="100pt"/>
+		<colspec colwidth="300pt"/>
 	      <tbody>
 		<row>
 		  <entry><varname>$ess</varname></entry>
@@ -3298,7 +3301,7 @@
 	model currently displayed in a window (whether or not it's the
 	most recent model).  You do this under the <quote>Model
 	  data</quote> menu in the model's window.
-	Table~\ref{tab:genr} gives several examples of uses of
+	<xref linkend="tab-genr"/> gives several examples of uses of
 	<command>genr</command> with explanatory notes; here are a
 	couple of tips on dummy variables:
       </para>
@@ -3329,9 +3332,115 @@
 	</listitem>
       </itemizedlist>
 
-      <para>
-	TABLE goes here.
-      </para>
+<table id="tab-genr" frame="none">
+  <title>Examples of use of genr command</title>
+  <tgroup cols="2">
+    <thead>
+      <row>
+	<entry>Command</entry>
+	<entry>Comment</entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+	<entry><command>genr y = x1^3</command></entry>
+	<entry><command>x1</command> cubed</entry>
+      </row>          
+      <row>
+	<entry><command>genr y = ln((x1+x2)/x3)</command></entry>
+	<entry></entry>
+      </row>
+      <row>
+	<entry><command>genr z = x&gt;y</command></entry>
+	<entry>sets <command>z(t)</command> to 1 if <command>x(t) &gt;
+	    y(t)</command> else to 0</entry>
+      </row> 
+      <row>
+	<entry><command>genr y = x(-2)</command></entry>
+	<entry><command><varname>x</varname> lagged 2
+	periods</command></entry>
+      </row>     
+      <row>
+	<entry><command>genr y = x(2)</command></entry>
+	<entry><command><varname>x</varname> led 2 periods</command></entry>
+      </row>
+      <row>
+	<entry><command>genr y = diff(x)</command></entry>
+	<entry><command>y(t) = x(t) - x(t-1)</command></entry>
+      </row>
+      <row>
+	<entry><command>genr y = ldiff(x)</command></entry>
+	<entry><command>y(t) = log x(t) - log x(t-1)</command>, the
+	  instantaneous rate of growth of <varname>x</varname></entry>
+      </row>
+      <row>
+	<entry><command>genr y = sort(x)</command></entry>
+	<entry>sorts <varname>x</varname> in
+	    increasing order and stores in <varname>y</varname></entry>
+      </row>
+      <row>
+	<entry><command>genr y = -sort(-x)</command></entry>
+	<entry>sort <varname>x</varname> in decreasing order</entry>
+      </row>
+      <row>
+	<entry><command>genr y = int(x)</command></entry>
+	<entry>truncate <varname>x</varname> and
+	    store its integer value as <varname>y</varname></entry>
+      </row>
+      <row>
+	<entry><command>genr y = abs(x)</command></entry>
+	<entry>store the absolute values of <command>x</command></entry>
+      </row>
+      <row>
+	<entry><command>genr y = sum(x)</command></entry>
+	<entry>sum <varname>x</varname> values excluding missing 
+	  &minus;999 entries</entry>
+      </row>
+      <row>
+	<entry><command>genr y = cum(x)</command></entry>
+	<entry>cumulation: 
+	  <inlineequation>
+	    <inlinegraphic fileref="figures/cumulate.png"/>
+	  <texmath>
+	      $y_t = \sum_{\tau=1}^t x_{\tau}$
+	    </texmath>
+	  </inlineequation>
+	</entry>
+      </row>
+      <row>
+	<entry><command>genr aa = $ess</command></entry>
+	<entry>set <varname>aa</varname> equal to the Error Sum of
+	  Squares from last regression</entry>
+      </row>
+      <row>
+	<entry><command>genr x = coeff(sqft)</command></entry>
+	<entry>grab the estimated coefficient on the variable
+	  <varname>sqft</varname> from the last regression</entry>
+      </row>
+      <row>
+	<entry><command>genr rho4 = rho(4)</command></entry>
+	<entry>grab the 4th-order autoregressive coefficient from the
+	  last model (presumes an <command>ar</command> model)</entry>
+      </row>
+      <row>
+	<entry><command>genr cvx1x2 = vcv(x1, x2)</command></entry>
+	<entry>grab the estimated coefficient covariance of vars
+	  <varname>x1</varname> and <varname>x2</varname> from the
+	  last model</entry>
+      </row>
+      <row>
+	<entry><command>genr foo = uniform()/100</command></entry>
+	<entry>uniform pseudo-random variable in range
+	0&ndash;1</entry>
+      </row>
+      <row>
+	<entry><command>genr bar = 3 * normal()</command></entry>
+	<entry>normal pseudo-random variable, &mu; = 0, &sigma; =
+	3</entry>
+      </row>
+    </tbody>
+  </tgroup>
+</table>
 
     </sect2>
 
@@ -3587,7 +3696,7 @@
 	variable names on the first line and a rectangular data matrix
 	on the remaining lines.  Variables should be arranged <quote>by
 	observation</quote> (one column per variable; each row represents an
-	observation).  See section~\ref{csvetc} of this manual for
+	observation).  See <xref linkend="datafiles"/> for
 	details.
       </para>
 
@@ -3856,8 +3965,7 @@
       </para>
 
       <para>
-	See sections~\ref{monte} and \ref{iterate} of this manual for
-	details.
+	See <xref linkend="looping"/> for details.
       </para>
 
     </sect2>
@@ -4237,27 +4345,27 @@
 	  <tbody>
 	    <row>
 	      <entry><command>print</command></entry>
-	      <entry> prints the entire file by variables </entry>
+	      <entry>prints the entire file by variables </entry>
 	    </row>
 	    <row>
-	      <entry><command>print -o</command> </entry>
-	      <entry> prints the entire file by observations in a
+	      <entry><command>print -o</command></entry>
+	      <entry>prints the entire file by observations in a
 		tabular form </entry>
 	    </row>
 	    <row>
-	      <entry><command>print 3 6</command> </entry>
-	      <entry> prints variables number 3 and 6 by variables
+	      <entry><command>print 3 6</command></entry>
+	      <entry>prints variables number 3 and 6 by variables
 	      </entry>
 	    </row>
 	    <row>
-	      <entry><command>print x y z</command> </entry>
-	      <entry> prints <varname>x</varname>,
+	      <entry><command>print x y z</command></entry>
+	      <entry>prints <varname>x</varname>,
 		<varname>y</varname> and <varname>z</varname> by
 		variables </entry>
 	    </row>
 	    <row>
-	      <entry><command>print -o x y</command> </entry>
-	      <entry> prints <varname>x</varname> and
+	      <entry><command>print -o x y</command></entry>
+	      <entry>prints <varname>x</varname> and
 		<varname>y</varname> by observations</entry>
 	    </row> 
 	  </tbody> 
@@ -4313,16 +4421,14 @@
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		  <command>pvalue 1</command>
+	      <entry><command>pvalue 1</command>
 		  <replaceable>xvalue</replaceable>
 		  (normal distribution)
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry> 
-		  <command>pvalue  2</command>
+	      <entry><command>pvalue  2</command>
 		  <replaceable>df xvalue</replaceable>
 		  (<emphasis>t</emphasis> distribution)
 		</entry>
@@ -4330,24 +4436,21 @@
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>pvalue 3</command> 
+	      <entry><command>pvalue 3</command> 
 		<replaceable>df xvalue</replaceable>
 		  (&khgr;<superscript>2</superscript> distribution)
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry> 
-		<command>pvalue 4</command> 
+	      <entry><command>pvalue 4</command> 
 		<replaceable>dfn dfd xvalue</replaceable>
 		  (<emphasis>F</emphasis> distribution)
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>pvalue 5</command> 
+	      <entry><command>pvalue 5</command> 
 		<replaceable>mean variance xvalue</replaceable>
 		  (Gamma distribution)
 	      </entry>
@@ -4609,7 +4712,7 @@
 	<replaceable>periodicity</replaceable> must be an integer;
 	<replaceable>startobs</replaceable> is a string representing
 	the date or panel ID of the first observation. See also
-	sections~\ref{dfiles} and \ref{panel} of this manual.
+	<xref linkend="panel"/>.
       </para>
 
     </sect2>
@@ -4662,18 +4765,14 @@
 	      <entry>
 		<command>sim 1979.2 1983.1 y 0 0.9</command>
 	      </entry>
-	      <entry>
-		creates 
-		  <varname>y(t) =  0.9*y(t-1)</varname>
+	      <entry>creates <varname>y(t) =  0.9*y(t-1)</varname>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>sim 15 25 y 10 0.8 x</command>
+	      <entry><command>sim 15 25 y 10 0.8 x</command>
 	      </entry>
-	      <entry>
-		creates 
+	      <entry>creates 
 		  <varname>y(t) = 10 + 0.8*y(t-1) + x(t)*y(t-2)</varname>
 	      </entry>
 	    </row>
@@ -4748,65 +4847,50 @@
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry>
-		<command>smpl 3 10</command>
+	      <entry><command>smpl 3 10</command>
 	      </entry>
-	      <entry>
-		data with periodicity 1</entry>
+	      <entry>data with periodicity 1</entry>
 	    </row>
 	    <row>
-	      <entry>
-		  <command>smpl 1950 1990</command>
+	      <entry><command>smpl 1950 1990</command>
 	      </entry>
-	      <entry>
-		annual data, periodicity 1</entry> 
+	      <entry>annual data, periodicity 1</entry> 
 	    </row>
 	    <row>
-	      <entry>
-		  <command>smpl 1960.2 1982.4</command>
+	      <entry><command>smpl 1960.2 1982.4</command>
 	      </entry>
-	      <entry>
-		quarterly data</entry>
+	      <entry>quarterly data</entry>
 	    </row>
 	    <row>
-	      <entry>
-		  <command>smpl 1960.04 1985.10</command>
+	      <entry><command>smpl 1960.04 1985.10</command>
 	      </entry>
-	      <entry>
-		monthly data</entry>
+	      <entry>monthly data</entry>
 	    </row>
 	    <row>
 	      <entry><command>smpl 1960.2 ;</command>
 	      </entry>
-	      <entry>
-		keep <replaceable>endobs</replaceable>
+	      <entry>keep <replaceable>endobs</replaceable>
 		unchanged
 		</entry>
 	    </row>
 	    <row>
-	      <entry>
-		  <command>smpl ; 1984.3</command>
+	      <entry><command>smpl ; 1984.3</command>
 	      </entry>
-	      <entry>
-		keep <replaceable>startobs</replaceable>
+	      <entry>keep <replaceable>startobs</replaceable>
 		unchanged
 		</entry>
 	    </row>
 	    <row>
-	      <entry>
-		  <command>smpl -o dum1</command>
+	      <entry><command>smpl -o dum1</command>
 	      </entry>
-	      <entry>
-		draw sample of observations where
+	      <entry>draw sample of observations where
 		<literal>dum1=1</literal>
 		</entry>
 	    </row>
 	    <row>
-	      <entry>
-		  <command>smpl -r income > 30000</command>
+	      <entry><command>smpl -r income > 30000</command>
 	      </entry>
-	      <entry>
-		sample cases where <varname>income</varname> has a
+	      <entry>sample cases where <varname>income</varname> has a
 		value greater than 30000.
 		</entry>
 	    </row>
@@ -5543,151 +5627,62 @@
       automatically.  If there's more than one completion, pressing
       Tab a second time brings up a list.</para>
 
-    <para>The rest of this section is given over to the changes in
-      <application>gretlcli</application> relative to Ramu
-      Ramanathan's original <application>ESL</application>.  Command
-      scripts developed for <application>ESL</application> should be
-      usable with <application>gretlcli</application> with few or no
-      changes: the only things to watch for are multi-line commands
-      and the <command>freq</command> command, both discussed
-      below.</para>
+    <sect1 id="cli-syntax"><title>Changes from ESL</title>
 
-    <sect1 id="cli-syntax"><title>Change of syntax</title>
-
-      <para>
-	There is only one significant change.  In
-	<application>ESL</application>, a semicolon is used as a
-	terminator for many commands.  I decided to remove this in
-	<application>gretlcli</application>. Semicolons are simply
-	ignored, apart from a few special cases where they have a
-	definite meaning: as a separator for two lists in the
-	<command>ar</command> and <command>tsls</command> commands,
-	and as a marker for an unchanged starting or ending
-	observation in the <command>smpl</command> command. In
-	<application>ESL</application> semicolon termination gives the
-	possibility of breaking long commands over more than one line;
-	in <application>gretlcli</application> this is done by putting
-	a trailing backslash <literal>\</literal> at the end of a line
-	that is to be continued.
+      <para>Command scripts developed for Ramanathan's original
+	<application>ESL</application> should be usable with
+	<application>gretlcli</application> with few or no changes:
+	the only things to watch for are multi-line commands and the
+	<command>freq</command> command.
       </para>
-    </sect1>
 
-    <sect1 id="cli-changes"><title>Change in command-line
-	    arguments</title>
+      <itemizedlist>
+	<listitem>
+	  <para>In <application>ESL</application>, a semicolon is used
+	    as a terminator for many commands.  I decided to remove
+	    this in <application>gretlcli</application>. Semicolons
+	    are simply ignored, apart from a few special cases where
+	    they have a definite meaning: as a separator for two lists
+	    in the <command>ar</command> and <command>tsls</command>
+	    commands, and as a marker for an unchanged starting or
+	    ending observation in the <command>smpl</command> command.
+	    In <application>ESL</application> semicolon termination
+	    gives the possibility of breaking long commands over more
+	    than one line; in <application>gretlcli</application> this
+	    is done by putting a trailing backslash
+	    <literal>\</literal> at the end of a line that is to be
+	    continued.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>With <command>freq</command>, you can't at
+	  present specify user-defined ranges as
+	  in <application>ESL</application>.  A chi-square test for
+	  normality has been added to the output of this command.
+	  </para>
+	</listitem>
+      </itemizedlist>
 
       <para>
-	The command-line syntax for running a batch job is simplified.
-	For <application>ESL</application> you type, e.g. 
-
+	Note also that the command-line syntax for running a batch job
+	is simplified. For <application>ESL</application> you type,
+	e.g. 
+	<programlisting> 
+	  esl -b datafile &lt; inputfile &gt; outputfile 
+	</programlisting> 
+	while for <application>gretlcli</application> you type: 
 	<programlisting>
-	  esl -b datafile &lt; inputfile &gt; outputfile
-	</programlisting>
-
-	For <application>gretlcli</application> you type: 
-
-	<programlisting>
-	  gretlcli -b inputfile &gt; outputfile
-	</programlisting>
-
-	The inputfile is treated as a program argument; it should
-	specify a datafile to use internally, using the syntax
-	<command>open datafile</command>  or the special comment 
-	<literal>(* !</literal> <replaceable>datafile</replaceable>
+	  gretlcli -b inputfile &gt; outputfile 
+	</programlisting> 
+	The
+	inputfile is treated as a program argument; it should specify
+	a datafile to use internally, using the syntax <command>open
+	  datafile</command>  or the special comment <literal>(*
+	  !</literal> <replaceable>datafile</replaceable>
 	<literal>*)</literal>
       </para>
 
     </sect1>
-
-    <sect1 id="cli-missing"><title>Commands missing from gretlcli</title>
-
-      <para>I have not implemented the commands designed to make
-	working interactively at the DOS command prompt a bit easier
-	(<command>scroll</command> and <command>edit</command>).  I
-	presume that with the new GUI these will not be needed, and
-	that people who choose to use the command-line interface
-	interactively will probably be running it in a proper
-	scrollable terminal window (e.g. xterm).
-      </para>
-    </sect1>
-
-    <sect1 id="cli-redefined"><title>Commands redefined in gretlcli</title>
-
-      <para>A few commands have been simplified, or augmented, or
-	their output has been changed somewhat. 
-      </para>
-
-      <itemizedlist>
-	<listitem><para><command>freq</command>: At present you can't
-	    specify particular ranges as in
-	    <application>esl</application>.  A chi-square test for
-	    normality has been added.</para>
-	</listitem>
-	<listitem><para><command>genr</command>: The functions
-	    <function>cov</function>, <function>corr</function>,
-	    <function>median</function>, <function>var</function> and
-	    <function>vcv</function> have been added.</para>
-	</listitem>
-	<listitem><para><command>smpl</command>: The
-	    <command>-o</command> switch sets the sample using a dummy
-	    variable.</para>
-	</listitem>
-	<listitem><para><command>store</command>: The
-	    <command>-o</command> switch now saves the data by
-	    variable in binary format.  There are three new switches:
-	    <command>-z</command> invokes gzip compression;
-	    <command>-c</command> saves in CSV format;
-	    <command>-r</command> saves in GNU R format;
-	    <command>-m</command> saves in GNU Octave format.</para>
-	</listitem>
-      </itemizedlist> 
-
-      <para>
-	The output from many commands is formatted a little
-	differently.
-      </para>
-    </sect1>
-
-    <sect1 id="cli-added"><title>New commands added to gretlcli</title>
-
-      <para>
-	These are described in detail in <xref linkend="cmdref"/>. They
-	are briefly summarized in Table~\ref{cmdtab}.
-      </para> 
-
-      <para>TABLE MISSING HERE</para>
-    </sect1>
-
-    <sect1 id="cli-newfeatures"><title>Some of the new features added to
-	gretlcli</title>
-      
-      <itemizedlist>
-	<listitem><para>Specifying lags: You don't have to create
-	    lagged variables in advance of a regression.  The syntax
-	    <varname>foo(-1)</varname> in a regression list will cause
-	    the first lag of<varname>foo</varname> (if
-	    <varname>foo</varname> exists) to be generated and added
-	    to the data set.</para>
-	</listitem>
-	<listitem><para>You can switch data files without quitting
-	    <application>gretlcli</application>. If a data file has
-	    already been read, using the <command>open</command>
-	    command will replace it with a new one (after a prompt for
-	    whether this is really wanted).</para>
-	</listitem>
-	<listitem><para>You can assign <quote>labels</quote> to
-	    variables: explanatory or descriptive tags of up to 128
-	    characters.  These go in a file with the same basename as
-	    the datafile plus the suffix <filename>.lbl</filename>.
-	    One variable per line, the name of the variable first,
-	    followed by white space, followed by the label.  These
-	    labels will be read if they're present and can be
-	    retrieved with the <command>labels</command>
-	    command.</para>
-	</listitem>
-      </itemizedlist>
-    </sect1>
-			
-
   </chapter>
 
   <chapter id="nist"><title>Assessing program accuracy: the NIST

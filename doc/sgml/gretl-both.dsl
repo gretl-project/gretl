@@ -3,14 +3,14 @@
 <![%html;[
 <!ENTITY % print "IGNORE">
 <!ENTITY docbook.dsl SYSTEM "/usr/share/sgml/docbook-dsssl-1.72/html/docbook.dsl" CDATA dsssl>
-<!ENTITY htmlmath.dsl SYSTEM "HTMLMath.dsl">
 ]]>
 <!ENTITY % print "INCLUDE">
 <![%print;[
 <!ENTITY docbook.dsl SYSTEM "/usr/share/sgml/docbook-dsssl-1.72/print/docbook.dsl" CDATA dsssl>
+]]>
+<!ENTITY htmlmath.dsl SYSTEM "HTMLMath.dsl">
 <!ENTITY texmath.dsl SYSTEM "TeXMath.dsl">
 <!ENTITY titlepage.dsl SYSTEM "titlepage.dsl">
-]]>
 ]>
 
 <!-- gretl customizations by Allin Cottrell -->
@@ -124,6 +124,61 @@
         (normalize "author")
         (normalize "date")))
 
+(define %footnote-size-factor% 
+  ;; When printing footnotes, the current font size is multiplied by the
+  ;; '%footnote-size-factor%'.  Default 0.9
+  0.8)
+
+(define %two-side% 
+  ;; If '%two-side%' is true, headers and footers are alternated
+  ;; so that the "outer" and "inner" headers will be correctly
+  ;; placed in the bound document.  Default #f
+  #t)
+
+(define %admon-graphics%
+  ;; If true, admonitions are presented in an alternate style that uses
+  ;; a graphic.  Default graphics are provided in the distribution.
+  #t)
+
+(define %admon-graphics-path%
+  ;; Sets the path, probably relative to the directory where the HTML
+  ;; files are created, to the admonition graphics.
+  "../figures/")
+
+(define admon-graphic-default-extension
+  ;; Identifies the default extension for admonition graphics. This allows
+  ;; backends to select different images (e.g., EPS for print, PNG for
+  ;; PDF, etc.)
+  ".png")
+
+(define %line-spacing-factor% 
+  ;; The leading is calculated by multiplying the current font size by the 
+  ;; '%line-spacing-factor%'. For example, if the font size is 10pt and
+  ;; the '%line-spacing-factor%' is 1.1, then the text will be
+  ;; printed "10-on-11".  Default 1.3
+  1.2)
+
+(define %head-before-factor% 
+  ;; The space before a title is calculated by multiplying the font size
+  ;; used in the title by the '%head-before-factor%'.  Default 0.75
+  0.5)
+
+(define %head-after-factor% 
+  ;; The space after a title is calculated by multiplying the font size used
+  ;; in the title by the '%head-after-factor%'.  Default 0.5
+  0.2)
+
+(define %block-sep% 
+  ;; The '%block-sep%' is the vertical distance between
+  ;; block elements (figures, tables, etc.)
+  ;; Default (* %para-sep% 2.0)
+  (* %para-sep% 1.0))
+
+(define formal-object-float
+  ;; If '#t', formal objects will float if floating is supported by the
+  ;; backend. At present, only the TeX backend supports floats.
+  #t)
+
 ;;======================================
 ;;Inlines
 ;;======================================
@@ -143,6 +198,15 @@
 <style-specification-body> 
 
 ;; customize the html stylesheet
+
+;; This specifies the HTML extension to put on output files.
+(define %html-ext% ".html")
+
+;; Name for the root HTML document (default "book1")
+(define %root-filename% "index")
+
+(element application ($mono-seq$))
+(element command ($mono-seq$))
 
 &htmlmath.dsl;
 
