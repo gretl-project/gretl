@@ -64,7 +64,7 @@ PLUGINSRC = \
 	progress_bar.c \
 	range-mean.c \
 	stats_tables.c \
-	sur.c \
+	sysest.c \
 	tramo_options.c \
 	tramo-x12a.c \
 	nistcheck.c \
@@ -81,7 +81,7 @@ PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll \
 	plugins/progress_bar.dll plugins/gnumeric_import.dll \
-	plugins/excel_import.dll plugins/mp_ols.dll plugins/sur.dll \
+	plugins/excel_import.dll plugins/mp_ols.dll plugins/sysest.dll \
 	plugins/johansen.dll plugins/arma.dll plugins/arma_x12.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll \
 	plugins/leverage.dll plugins/pca.dll plugins/nistcheck.dll \
@@ -267,7 +267,7 @@ plugins/mp_ols.dll: mp_ols.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp.dll
 
-plugins/sur.dll: sur.o dllinit.o
+plugins/sysest.dll: sysest.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 

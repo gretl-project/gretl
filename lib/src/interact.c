@@ -129,6 +129,7 @@ int subsetted_command (const char *cmd)
     if (strcmp(cmd, "deriv") == 0) return NLS;
     if (strcmp(cmd, "identity") == 0) return SYSTEM;
     if (strcmp(cmd, "endog") == 0) return SYSTEM;
+    if (strcmp(cmd, "instr") == 0) return SYSTEM;
     return 0;
 }
 

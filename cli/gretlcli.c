@@ -1574,6 +1574,9 @@ void exec_line (char *line, PRN *prn)
 	    }
 	} else {
 	    err = system_parse_line(sys, line, datainfo);
+	    if (err) {
+		errmsg(err, prn);
+	    }	
 	}
 	break;
 

@@ -1032,10 +1032,12 @@
       <para>
 	Specifies an equation within a system of equations (see 
 	<cmdref targ="system"/>).  The syntax for specifying an
-	equation is the same as that for, e.g., 
-	<cmdref targ="ols"/> (except for a Three-Stage Least Squares
-	system, in which the syntax is the same as for <cmdref
-	  targ="tsls"/>).
+	equation within an SUR system is the same as that for, e.g., 
+	<cmdref targ="ols"/>.  For an equation within a Three-Stage Least
+	Squares system you may either (a) give an OLS-type equation
+	specification and provide a common list of instruments using the
+	<cmd>instr</cmd> keyword (again, see <cmdref targ="system"/>),
+	or (b) use the same equation syntax as for <cmdref targ="tsls"/>.
       </para>
     </description>
 
@@ -4504,6 +4506,10 @@
 	  <flag>--gzipped</flag>
 	  <effect>apply gzip compression</effect>
         </option>
+        <option>
+	  <flag>--dat</flag>
+	  <effect>use PcGive ASCII format</effect>
+        </option>
       </options>
     </usage>
 
@@ -4519,8 +4525,9 @@
 	format, but the option flags permit saving in several
 	alternative formats.  CSV (Comma-Separated Values) data may be
 	read into spreadsheet programs, and can also be manipulated
-	using a text editor.  The formats of <program>Octave</program>
-	and <program>R</program> are designed for use with the
+	using a text editor.  The formats of
+	<program>Octave</program>, <program>R</program> and
+	<program>PcGive</program> are designed for use with the
 	respective programs.  Gzip compression may be useful for large
 	datasets.  See <manref targ="datafiles"/> for details on the
 	various formats.</para>
@@ -4590,6 +4597,12 @@
 	contain at least two equations specified using the
 	<cmd>equation</cmd> command, and it must be terminated with
 	the line <cmd>end system</cmd>.
+      </para>
+
+      <para>In the context of a Three-Stage Least Squares system, you
+	may provide a list of instruments (by name or number).  This
+	should be on a line by itself, within the <cmd>system</cmd>
+	block, prefaced with the keyword <cmd>instr</cmd>.
       </para>
     </description>
 

@@ -39,11 +39,13 @@
 	     <keyword>cusum</keyword>
 	     <keyword>data</keyword>
 	     <keyword>delete</keyword>
+             <keyword>deriv</keyword>
 	     <keyword>diff</keyword>
 	     <keyword>else</keyword>
 	     <keyword>end</keyword>
 	     <keyword>endif</keyword>
 	     <keyword>endloop</keyword>
+             <keyword>endog</keyword>
 	     <keyword>eqnprint</keyword>
 	     <keyword>equation</keyword>
 	     <keyword>fcast</keyword> 
@@ -58,10 +60,12 @@
 	     <keyword>hccm</keyword> 
 	     <keyword>help</keyword>    
 	     <keyword>hilu</keyword>    
-	     <keyword>hsk</keyword> 
+	     <keyword>hsk</keyword>
+             <keyword>identity</keyword> 
 	     <keyword>if</keyword>
 	     <keyword>import</keyword>
-	     <keyword>info</keyword> 
+	     <keyword>info</keyword>
+             <keyword>instr</keyword> 
 	     <keyword>label</keyword>
 	     <keyword>labels</keyword>
 	     <keyword>lad</keyword>

@@ -54,6 +54,8 @@ int system_save_yhat (const gretl_equation_system *sys);
 
 int system_n_equations (const gretl_equation_system *sys);
 
+int system_n_identities (const gretl_equation_system *sys);
+
 int system_max_indep_vars (const gretl_equation_system *sys);
 
 int system_n_indep_vars (const gretl_equation_system *sys);
@@ -63,10 +65,19 @@ int system_adjust_t1t2 (const gretl_equation_system *sys,
 
 int *system_get_list (const gretl_equation_system *sys, int i);
 
+int *compose_tsls_list (const gretl_equation_system *sys, int i);
+
 int system_get_depvar (const gretl_equation_system *sys, int i);
 
 const char *gretl_system_short_string (const MODEL *pmod);
 
 int system_get_type (const gretl_equation_system *sys);
+
+int *system_get_endog_vars (const gretl_equation_system *sys);
+
+int *system_get_instr_vars (const gretl_equation_system *sys);
+
+void print_fiml_sys_info (const gretl_equation_system *sys, 
+			  const DATAINFO *pdinfo, PRN *prn);
 
 #endif /* GRETL_EQUATION_SYSTEM_H */

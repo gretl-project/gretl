@@ -21,6 +21,17 @@
 #include "gretl_matrix.h"
 #include "gretl_matrix_private.h"
 
+static int in_list (const int *list, int k)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (k == list[i]) return 1;
+    }
+
+    return 0;
+}
+
 static void 
 print_system_vcv (const gretl_matrix *m, int triangle, PRN *prn)
 {
@@ -76,7 +87,7 @@ static int make_sys_X_block (gretl_matrix *X,
     X->cols = pmod->ncoeff;
 
     for (i=0; i<X->cols; i++) {
-	if (systype == THREESLS) {
+	if (systype == THREESLS || systype == FIML) {
 	    Xi = tsls_get_Xi(pmod, Z, i);
 	} else {
 	    Xi = Z[pmod->list[i+2]];
@@ -243,6 +254,33 @@ static void restore_sample (DATAINFO *pdinfo, int t1, int t2)
     pdinfo->t2 = t2;
 }
 
+static int *
+system_model_list (gretl_equation_system *sys, int i, int *freeit)
+{
+    int systype = system_get_type(sys);
+
+    if (systype == SUR) {
+	*freeit = 0;
+	return system_get_list(sys, i);
+    } 
+
+    if (systype == THREESLS) {
+	int *list = system_get_list(sys, i);
+	
+	if (in_list(list, LISTSEP)) {
+	    *freeit = 0;
+	    return list;
+	}
+    }
+
+    if (systype == THREESLS || systype == FIML) {
+	*freeit = 1;
+	return compose_tsls_list(sys, i);
+    }
+
+    return NULL;
+}
+
 int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo, 
 		     PRN *prn)
 {
@@ -302,13 +340,29 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
+    /* just testing for now */
+    if (systype == FIML) {
+	print_fiml_sys_info(sys, pdinfo, prn);
+    }
+
     /* first grab the single-equation residuals */
     for (i=0; i<m; i++) {
-	if (systype == SUR) {
-	    *models[i] = lsq(system_get_list(sys, i), pZ, pdinfo, OLS, OPT_A, 0.0);
-	} else if (systype == THREESLS) {
-	    *models[i] = tsls_func(system_get_list(sys, i), 0, pZ, pdinfo, OPT_S);
+	int freeit = 0;
+	int *list = system_model_list(sys, i, &freeit);
+
+	if (list == NULL) {
+	    err = 1;
+	    goto bailout;
 	}
+
+	if (systype == SUR) {
+	    *models[i] = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	} else if (systype == THREESLS || systype == FIML) {
+	    *models[i] = tsls_func(list, 0, pZ, pdinfo, OPT_S);
+	}
+
+	if (freeit) free(list);
+
 	if ((models[i])->errcode) {
 	    fprintf(stderr, "model failed on lists[%d], code=%d\n",
 		    i, (models[i])->errcode);
@@ -413,6 +467,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     calculate_sys_coefficients(models, (const double **) *pZ, X, uhat, 
 			       tmp_y, m, mk);
+
     gls_sigma_from_uhat(sigma, uhat, m, T);
 
     j = 0;
@@ -428,7 +483,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     for (i=0; i<m; i++) {
 	printmodel(models[i], pdinfo, prn);
 	add_results_to_dataset(sys, models[i], i, &j, *pZ, pdinfo, systype);
-	if (systype == THREESLS) {
+	if (systype == THREESLS || systype == FIML) {
 	    tsls_free_data(models[i]);
 	}
     }

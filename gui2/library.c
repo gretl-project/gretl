@@ -5915,6 +5915,9 @@ int gui_exec_line (char *line,
 	    }
 	} else {
 	    err = system_parse_line(sys, line, datainfo);
+	    if (err) {
+		errmsg(err, prn);
+	    }
 	}
 	break;
 

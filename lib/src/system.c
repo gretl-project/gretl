@@ -31,6 +31,11 @@ enum {
     OP_MINUS
 } identity_ops;
 
+enum {
+    ENDOG_LIST,
+    INSTR_LIST
+} aux_list_types;
+
 struct id_atom_ {
     int op;
     int varnum;
@@ -49,6 +54,7 @@ struct _gretl_equation_system {
     char flags;
     int **lists;
     int *endog_vars;
+    int *instr_vars;
     identity **idents;
 };
 
@@ -78,9 +84,53 @@ const char *badsystem = N_("Unrecognized equation system type");
 const char *toofew = N_("An equation system must have at least two equations");
 
 static void destroy_ident (identity *pident);
-static void 
-print_ident (const identity *pident, const DATAINFO *pdinfo);
+static int make_instrument_list (gretl_equation_system *sys);
 
+/* FIML checking stuff */
+
+static void 
+print_ident (const identity *pident, const DATAINFO *pdinfo, PRN *prn)
+{
+    int i;
+
+    pprintf(prn, "Identity: %s = %s ", 
+	    pdinfo->varname[pident->depvar],
+	    pdinfo->varname[pident->atoms[0].varnum]);
+    for (i=1; i<pident->n_atoms; i++) {
+	pprintf(prn, "%c %s ", (pident->atoms[i].op == OP_PLUS)? '+' : '-',
+		pdinfo->varname[pident->atoms[i].varnum]);
+    }
+    pputc(prn, '\n');
+}
+
+void print_fiml_sys_info (const gretl_equation_system *sys, 
+			  const DATAINFO *pdinfo, PRN *prn)
+{
+    int i;
+
+    for (i=0; i<sys->n_identities; i++) {
+	print_ident(sys->idents[i], pdinfo, prn);
+    }
+
+    if (sys->endog_vars != NULL) {
+	pputs(prn, "Endogenous variables:");
+	for (i=1; i<=sys->endog_vars[0]; i++) {
+	    pprintf(prn, " %s", pdinfo->varname[sys->endog_vars[i]]);
+	}
+	pputc(prn, '\n');
+    }
+
+    if (sys->instr_vars != NULL) {
+	pputs(prn, "Instruments:");
+	for (i=1; i<=sys->instr_vars[0]; i++) {
+	    pprintf(prn, " %s", pdinfo->varname[sys->instr_vars[i]]);
+	}
+	pputc(prn, '\n');
+    }
+
+}
+
+/* end FIML checking stuff */
 
 static int gretl_system_type_from_string (const char *str)
 {
@@ -110,6 +160,7 @@ static gretl_equation_system *gretl_equation_system_new (int type)
     sys->flags = 0;
     sys->lists = NULL;
     sys->endog_vars = NULL;
+    sys->instr_vars = NULL;
     sys->idents = NULL;
 
     return sys;
@@ -133,6 +184,7 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
     free(sys->idents);
 
     free(sys->endog_vars);
+    free(sys->instr_vars);
 
     free(sys);
 }
@@ -204,21 +256,6 @@ gretl_equation_system *system_start (const char *line)
     return sys;
 }
 
-static void
-debug_print_sys (const gretl_equation_system *sys, 
-		 const DATAINFO *pdinfo)
-{
-    int i;
-
-    for (i=0; i<sys->n_identities; i++) {
-	print_ident(sys->idents[i], pdinfo);
-    }
-
-    if (sys->endog_vars != NULL) {
-	printlist(sys->endog_vars, "system endog vars");
-    }
-}
-
 int gretl_equation_system_finalize (gretl_equation_system *sys, 
 				    double ***pZ, DATAINFO *pdinfo,
 				    PRN *prn)
@@ -248,9 +285,8 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
     }
 
     if (sys->type == FIML) {
-	debug_print_sys(sys, pdinfo);
-	gretl_equation_system_destroy(sys);
-	return 0;
+	err = make_instrument_list(sys);
+	if (err) goto system_bailout;
     }
 
     system_est = get_plugin_function("system_estimate", &handle);
@@ -334,6 +370,35 @@ int system_adjust_t1t2 (const gretl_equation_system *sys,
     return err;
 }
 
+int *compose_tsls_list (const gretl_equation_system *sys, int i)
+{
+    int *list;
+    int j, k1, k2;
+
+    if (i >= sys->n_equations || sys->instr_vars == NULL) {
+	return NULL;
+    }
+
+    k1 = sys->lists[i][0];
+    k2 = sys->instr_vars[0];
+
+    list = malloc((k1 + k2 + 2) * sizeof *list);
+    if (list == NULL) return NULL;
+
+    list[0] = k1 + k2 + 1;
+    for (j=1; j<=list[0]; j++) {
+	if (j <= k1) {
+	    list[j] = sys->lists[i][j];
+	} else if (j == k1 + 1) {
+	    list[j] = LISTSEP;
+	} else {
+	    list[j] = sys->instr_vars[j - (k1 + 1)];
+	}
+    }
+
+    return list;
+}
+
 /* simple accessor functions */
 
 int system_save_uhat (const gretl_equation_system *sys)
@@ -349,6 +414,11 @@ int system_save_yhat (const gretl_equation_system *sys)
 int system_n_equations (const gretl_equation_system *sys)
 {
     return sys->n_equations;
+}
+
+int system_n_indentities (const gretl_equation_system *sys)
+{
+    return sys->n_identities;
 }
 
 int *system_get_list (const gretl_equation_system *sys, int i)
@@ -375,9 +445,9 @@ int *system_get_endog_vars (const gretl_equation_system *sys)
     return sys->endog_vars;
 }
 
-int *system_get_exog_vars (const gretl_equation_system *sys)
+int *system_get_instr_vars (const gretl_equation_system *sys)
 {
-    return sys->endog_vars;
+    return sys->instr_vars;
 }
 
 /* dealing with identities (FIML) */
@@ -425,35 +495,20 @@ static identity *ident_new (int nv)
     return pident;
 }
 
-static void 
-print_ident (const identity *pident, const DATAINFO *pdinfo)
-{
-    int i;
-
-    fprintf(stderr, "Identity: LHS = %d (%s), RHS: ", pident->depvar,
-	    pdinfo->varname[pident->depvar]);
-    for (i=0; i<pident->n_atoms; i++) {
-	fprintf(stderr, "%s %d (%s) ", (pident->atoms[i].op == OP_PLUS)? 
-		"plus" : "minus",
-		pident->atoms[i].varnum,
-		pdinfo->varname[pident->atoms[i].varnum]);
-    }
-    fputc('\n', stderr);
-}
-
 static identity *
-parse_identity (const char *str, const DATAINFO *pdinfo)
+parse_identity (const char *str, const DATAINFO *pdinfo, int *err)
 {
     identity *pident;
     const char *p;
     char f1[24], f2[16];
     char op, vname1[VNAMELEN], vname2[VNAMELEN];
-    int i, nv, err = 0;
+    int i, nv;
 
     sprintf(f1, "%%%ds = %%%d[^+ -]", VNAMELEN - 1, VNAMELEN - 1);
     sprintf(f2, "%%c %%%d[^+ -]", VNAMELEN - 1);
 
     if (sscanf(str, f1, vname1, vname2) != 2) {
+	*err = E_PARSE;
 	return NULL;
     }
 
@@ -465,11 +520,15 @@ parse_identity (const char *str, const DATAINFO *pdinfo)
     }
 
     pident = ident_new(nv);
-    if (pident == NULL) return NULL;
+    if (pident == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
 
     pident->depvar = varindex(pdinfo, vname1);
     if (pident->depvar == pdinfo->v) {
 	destroy_ident(pident);
+	*err = E_UNKVAR;
 	return NULL;
     }
 
@@ -477,27 +536,28 @@ parse_identity (const char *str, const DATAINFO *pdinfo)
     pident->atoms[0].varnum = varindex(pdinfo, vname2);
     if (pident->atoms[0].varnum == pdinfo->v) {
 	destroy_ident(pident);
+	*err = E_UNKVAR;
 	return NULL;
     }
 
     p = str;
-    for (i=1; i<nv && !err; i++) {
+    for (i=1; i<nv && !*err; i++) {
 	p += strcspn(p, "+-");
 	sscanf(p, f2, &op, vname1);
 	if (op == '+') op = OP_PLUS;
 	else if (op == '-') op = OP_MINUS;
-	else err = 1;
-	if (!err) {
+	else *err = E_PARSE;
+	if (!*err) {
 	    pident->atoms[i].op = op;
 	    pident->atoms[i].varnum = varindex(pdinfo, vname1);
 	    if (pident->atoms[i].varnum == pdinfo->v) {
-		err = 1;
+		*err = E_UNKVAR;
 	    }
 	}
 	p++;
     }
 
-    if (err) {
+    if (*err) {
 	destroy_ident(pident);
 	pident = NULL;
     }
@@ -512,15 +572,16 @@ add_identity_to_sys (gretl_equation_system *sys, const char *line,
     identity **ppident;
     identity *pident;
     int ni = sys->n_identities;
+    int err = 0;
 
-    pident = parse_identity(line, pdinfo);
-    if (pident == NULL) return 1;
+    pident = parse_identity(line, pdinfo, &err);
+    if (pident == NULL) return err;
 
     /* connect the identity to the equation system */
     ppident = realloc(sys->idents, (ni + 1) * sizeof *sys->idents);
     if (ppident == NULL) {
 	destroy_ident(pident);
-	return 1;
+	return E_ALLOC;
     }
 
     sys->idents = ppident;
@@ -531,8 +592,8 @@ add_identity_to_sys (gretl_equation_system *sys, const char *line,
 }
 
 static int
-add_endog_list_to_sys (gretl_equation_system *sys, const char *line,
-		       const DATAINFO *pdinfo)
+add_aux_list_to_sys (gretl_equation_system *sys, const char *line,
+		     const DATAINFO *pdinfo, int which)
 {
     const char *p;
     char vname[VNAMELEN];
@@ -540,8 +601,21 @@ add_endog_list_to_sys (gretl_equation_system *sys, const char *line,
     int i, v, nf, len, cplen;
     int err = 0;
 
-    if (sys->endog_vars != NULL) {
-	/* a duplicate? */
+    if (which == ENDOG_LIST) {
+	if (sys->endog_vars != NULL) {
+	    strcpy(gretl_errmsg, "Only one list of endogenous variables may be given");
+	    return 1;
+	}
+    } else if (which == INSTR_LIST) {
+	if (sys->instr_vars != NULL) {
+	    strcpy(gretl_errmsg, "Only one list of instruments may be given");
+	    return 1;
+	}
+	if (sys->type != THREESLS) {
+	    strcpy(gretl_errmsg, "Instruments may only be specified for 3SLS");
+	    return 1;
+	}
+    } else {
 	return 1;
     }
 
@@ -549,7 +623,7 @@ add_endog_list_to_sys (gretl_equation_system *sys, const char *line,
     if (nf < 1) return 1;
 
     list = malloc((nf + 1) * sizeof *list);
-    if (list == NULL) return 1;
+    if (list == NULL) return E_ALLOC;
 
     list[0] = nf;
     
@@ -568,6 +642,7 @@ add_endog_list_to_sys (gretl_equation_system *sys, const char *line,
 	    v = varindex(pdinfo, vname);
 	}
 	if (v < 0 || v >= pdinfo->v) {
+	    sprintf(gretl_errmsg, "Undefined variable '%s'.", vname);
 	    err = 1;
 	} else {
 	    list[i] = v;
@@ -580,8 +655,12 @@ add_endog_list_to_sys (gretl_equation_system *sys, const char *line,
 	return err;
     }
 
-    sys->endog_vars = list;
-    
+    if (which == ENDOG_LIST) {
+	sys->endog_vars = list;
+    } else {
+	sys->instr_vars = list;
+    }
+
     return 0;
 }
 
@@ -589,12 +668,115 @@ int
 system_parse_line (gretl_equation_system *sys, const char *line,
 		   const DATAINFO *pdinfo)
 {
+    *gretl_errmsg = '\0';
+
     if (strncmp(line, "identity", 8) == 0) {
 	return add_identity_to_sys(sys, line + 8, pdinfo);
     } 
     else if (strncmp(line, "endog", 5) == 0) {
-	return add_endog_list_to_sys(sys, line + 5, pdinfo);
+	return add_aux_list_to_sys(sys, line + 5, pdinfo, ENDOG_LIST);
+    }
+    else if (strncmp(line, "instr", 5) == 0) {
+	return add_aux_list_to_sys(sys, line + 5, pdinfo, INSTR_LIST);
     }
 
     return 1;
+}
+
+/* More FIML-related functionality */
+
+static int in_list (const int *list, int k)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] < 0) break;
+	if (k == list[i]) return 1;
+    }
+
+    return 0;
+}
+
+static int make_instrument_list (gretl_equation_system *sys)
+{
+    int *ilist, *elist = sys->endog_vars;
+    int i, j, k, nexo, maxnexo = 0;
+
+    if (elist == NULL) return 1;
+
+    /* First pass: get a count of the max possible number of
+       exogenous variables (probably an over-estimate due to
+       double-counting).
+    */
+
+    for (i=0; i<sys->n_equations; i++) {
+	const int *slist = sys->lists[i];
+
+	for (j=2; j<=slist[0]; j++) {
+	    if (!in_list(elist, slist[j])) maxnexo++;
+	}
+    }
+
+    for (i=0; i<sys->n_identities; i++) {
+	const identity *ident = sys->idents[i];
+
+	for (j=0; j<ident->n_atoms; j++) {
+	    if (!in_list(elist, ident->atoms[j].varnum)) maxnexo++;
+	}
+    }
+
+    ilist = malloc((maxnexo + 1) * sizeof *ilist);
+    if (ilist == NULL) {
+	return E_ALLOC;
+    }
+
+    ilist[0] = maxnexo;
+    for (i=1; i<=maxnexo; i++) {
+	ilist[i] = -1;
+    }
+
+    /* Form list of exogenous variables, drawing on both the
+       stochastic equations and the identities, if any. 
+    */
+
+    nexo = 0;
+
+    for (i=0; i<sys->n_equations; i++) {
+	const int *slist = sys->lists[i];
+
+	for (j=2; j<=slist[0]; j++) {
+	    k = slist[j];
+	    if (!in_list(elist, k) && 
+		!in_list(ilist, k)) {
+		ilist[++nexo] = k;
+	    }
+	}
+    } 
+
+    for (i=0; i<sys->n_identities; i++) {
+	const identity *ident = sys->idents[i];
+
+	for (j=0; j<ident->n_atoms; j++) {
+	    k = ident->atoms[j].varnum;
+	    if (!in_list(elist, k) &&
+		!in_list(ilist, k)) {
+		ilist[++nexo] = k;
+	    }
+	}
+    }
+
+    /* Trim the list (remove effect of double-counting) */
+
+    if (nexo < maxnexo) {
+	int *plist = realloc(ilist, (nexo + 1) * sizeof *plist);
+
+	if (plist != NULL) {
+	    ilist = plist;
+	}
+	ilist[0] = nexo;
+    }
+
+    sys->instr_vars = ilist;
+
+    return 0;
 }

@@ -40,7 +40,7 @@ enum {
     P_PROGRESS_BAR,
     P_RANGE_MEAN,
     P_STATS_TABLES,
-    P_SUR,
+    P_SYSEST,
     P_TRAMO_X12A,
     P_NISTCHECK,
     P_ARMA,
@@ -77,7 +77,7 @@ struct plugin_info plugins[] = {
     { P_PROGRESS_BAR,    "progress_bar" },
     { P_RANGE_MEAN,      "range-mean" },
     { P_STATS_TABLES,    "stats_tables" },
-    { P_SUR,             "sur" },
+    { P_SYSEST,          "sysest" },
     { P_TRAMO_X12A,      "tramo-x12a" },
     { P_NISTCHECK,       "nistcheck" },
     { P_ARMA,            "arma" },
@@ -130,8 +130,8 @@ struct plugin_function plugin_functions[] = {
     { "chisq_lookup", P_STATS_TABLES },
     { "dw_lookup",    P_STATS_TABLES },
 
-    /* SUR and 3SLS */
-    { "system_estimate", P_SUR },
+    /* SUR, 3SLS, FIML */
+    { "system_estimate", P_SYSEST },
 
     /* TRAMO/SEATS and X12A */
     { "write_tx_data", P_TRAMO_X12A },
