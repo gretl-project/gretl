@@ -2228,7 +2228,7 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
     gint err;
     void *handle;
     int (*range_mean_graph) (int, double **, const DATAINFO *, 
-			     PRN *);
+			     PRN *, PATHS *);
     PRN *prn;
 
     if (gui_open_plugin("range-mean", &handle)) return;
@@ -2245,12 +2245,18 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 	return; 
     }
 
-    err = range_mean_graph (mdata->active_var, Z, datainfo, prn);
+    err = range_mean_graph (mdata->active_var, Z, datainfo, 
+			    prn, &paths);
 
     close_plugin(handle);
 
+    if (!err) {
+	gnuplot_display(&paths);
+	register_graph();
+    }
+
     /* FIXME TRAMO */
-    view_buffer(prn, 78, 350, _("gretl: Range-mean model"), TRAMO, NULL);
+    view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), TRAMO, NULL);
 }
 
 /* ........................................................... */
