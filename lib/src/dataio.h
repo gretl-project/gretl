@@ -28,7 +28,8 @@ enum data_options {
     GRETL_DATA_R,         /* data in Gnu R format */
     GRETL_DATA_R_ALT,     /* data in alternate Gnu R format */
     GRETL_DATA_GZIPPED,   /* gzipped data */
-    GRETL_DATA_TRAD       /* traditional (ESL-style) data */
+    GRETL_DATA_TRAD,      /* traditional (ESL-style) data */
+    GRETL_DATA_DAT        /* data in PcGive format */
 };
 
 enum gretl_filetypes {

@@ -1,6 +1,9 @@
 version 1.2.8
 - correct Spanish help strings
 - fix font problem in session window
+- fix for exporting time-series data to R version 1.9
+- add option to export data to PcGive .dat format (thanks to
+  Michal Kurcewicz)
 
 6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)

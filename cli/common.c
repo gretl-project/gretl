@@ -323,6 +323,8 @@ static int data_option (unsigned long flag)
 	return GRETL_DATA_R;
     case OPT_Z:
 	return GRETL_DATA_GZIPPED;
+    case OPT_D:
+        return GRETL_DATA_DAT;
     default:
 	return 0;
     }

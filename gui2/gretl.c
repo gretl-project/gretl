@@ -273,6 +273,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/GNU _R..."), NULL, file_save, EXPORT_R, NULL, GNULL },
     { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
       EXPORT_OCTAVE, NULL, GNULL },
+    { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL, GNULL },
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, 
       "<StockItem>", GTK_STOCK_CLEAR },
     { N_("/File/sep0"), NULL, NULL, 0, "<Separator>", GNULL },

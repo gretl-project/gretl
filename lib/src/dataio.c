@@ -1216,7 +1216,8 @@ int write_data (const char *fname, const int *list,
 
     /* write header and label files if not exporting to other formats */
     if (opt != GRETL_DATA_R && opt != GRETL_DATA_R_ALT && 
-	opt != GRETL_DATA_CSV && opt != GRETL_DATA_OCTAVE) {
+	opt != GRETL_DATA_CSV && opt != GRETL_DATA_OCTAVE &&
+	opt != GRETL_DATA_DAT) {
 	if (!has_gz_suffix(datfile)) {
 	    switch_ext(hdrfile, datfile, "hdr");
 	    switch_ext(lblfile, datfile, "lbl");
@@ -1252,8 +1253,7 @@ int write_data (const char *fname, const int *list,
 		fwrite(&x, sizeof(float), 1, fp);
 	    }
 	}
-    }
-    else if (opt == GRETL_DATA_DOUBLE) { /* double-precision binary */
+    } else if (opt == GRETL_DATA_DOUBLE) { /* double-precision binary */
 	for (i=1; i<=l0; i++) {
 	    if (pdinfo->vector[list[i]])
 		fwrite(&Z[list[i]][0], sizeof(double), n, fp);
@@ -1265,7 +1265,7 @@ int write_data (const char *fname, const int *list,
     }
 
     if (opt == GRETL_DATA_CSV || opt == GRETL_DATA_OCTAVE || 
-	GRETL_DATA_R || opt == GRETL_DATA_TRAD) { 
+	GRETL_DATA_R || opt == GRETL_DATA_TRAD || opt == GRETL_DATA_DAT) { 
 	/* an ASCII variant of some sort */
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) return 1;
@@ -1410,6 +1410,39 @@ int write_data (const char *fname, const int *list,
 			    (pdinfo->vector[list[i]])? 
 			    Z[list[i]][t] : Z[list[i]][0]);
 		}
+	    }
+	    fputc('\n', fp);
+	}
+	fputc('\n', fp);
+    }
+    else if (opt == GRETL_DATA_DAT) { 
+	/* PcGive: data file with load info */
+	for (i=1; i<=list[0]; i++) {
+	    fprintf(fp, ">%s ", pdinfo->varname[list[i]]);
+	    if (pdinfo->time_series == TIME_SERIES) {
+		double ts = obs_float(pdinfo, 0);
+		double te = obs_float(pdinfo, 1);
+		int pd = pdinfo->pd;
+			   
+		fprintf(fp, "%d %d %d %d %d\n",
+			(int) (floor(ts)), (int) (ts - floor(ts)) * pd + 1,
+			(int) (floor(te)), (int) (te - floor(te)) * pd + 1, pd);
+	    } else {
+		fprintf(fp, "%d 1 %d 1 1", pdinfo->t1, pdinfo->t2);
+	    }
+			   
+	    fputc('\n', fp);
+
+	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+		xx = (pdinfo->vector[list[i]])? Z[list[i]][t] : Z[list[i]][0];
+		if (na(xx)) {
+		    fprintf(fp, "-9999.99");
+		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
+		    fprintf(fp, "%.12g", xx);;
+		} else {
+		    fprintf(fp, "%.*f", pmax[i-1], xx);
+		}
+		fputc('\n', fp);
 	    }
 	    fputc('\n', fp);
 	}
@@ -2194,7 +2227,7 @@ static int test_label (DATAINFO *pdinfo, char **missvec, PRN *prn)
 		    return -1;
 		}
 	    }
-	    if (lbl1[4] == '.' || lbl1[4] == ':' || lbl1[4] == 'Q') {
+	    if (lbl1[4] == '.' || lbl1[4] == ':' || lbl1[4] == 'Q' || lbl1[4] == 'P') {
 		strcpy(subper, lbl1 + 5);
 		if (n1 == 6) {
 		    pprintf(prn, M_("quarter %s?\n"), subper);

@@ -91,6 +91,7 @@ struct gretl_opt gretl_opts[] = {
     { SPEARMAN, OPT_O, "verbose" },
     { SQUARE,   OPT_O, "cross" },
     { STORE,    OPT_C, "csv" },
+    { STORE,    OPT_D, "dat" },
     { STORE,    OPT_M, "gnu-octave" },
     { STORE,    OPT_R, "gnu-R" },
     { STORE,    OPT_T, "traditional" },

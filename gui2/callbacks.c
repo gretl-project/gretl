@@ -274,6 +274,7 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     case EXPORT_R:
     case EXPORT_R_ALT:
     case EXPORT_OCTAVE:
+    case EXPORT_DAT:
 	data_save_selection_wrapper(file_code);
 	break;
     case SAVE_TEX_TAB:

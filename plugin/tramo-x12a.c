@@ -137,11 +137,13 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
     if (sout != NULL) g_free(sout);
 
     if (ret != 0) fputc(' ', stderr);
+
     for (i=0; i<nargs; i++) {
 	if (ret != 0) fprintf(stderr, "%s ", argv[i]);
 	free(argv[i]);
     }
     free(argv);
+
     if (ret != 0) fputc('\n', stderr);
     
     return ret;
@@ -168,7 +170,11 @@ static int tx_dialog (tx_request *request)
 {
     GtkWidget *hbox, *vbox, *tmp;
 #if GTK_MAJOR_VERSION >= 2
-    gint ret = 0;
+    gint i, ret = 0;
+
+    for (i=0; i<N_COMMON_OPTS; i++) {
+	request->opt[i].check = NULL;
+    }
 
     request->dialog = 
 	gtk_dialog_new_with_buttons (
@@ -834,13 +840,13 @@ int write_tx_data (char *fname, int varnum,
 	err = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
 		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
 #elif defined(GLIB2)
-       err = tramo_x12a_spawn(workdir, prog, varname, "-r", "-p", "-q", NULL);
+	err = tramo_x12a_spawn(workdir, prog, varname, "-r", "-p", "-q", NULL);
 #else
-       sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", 
-	       workdir, prog, varname);
-       err = gretl_spawn(cmd);
+	sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", 
+		workdir, prog, varname);
+	err = gretl_spawn(cmd);
 #endif
-       } else { /* TRAMO_SEATS */
+    } else { /* TRAMO_SEATS */
 	char seats[MAXLEN];
 
 	/* ensure any stale files get deleted first, just in case */

@@ -67,7 +67,8 @@
 #define EXPORT_ACTION(i) (i == EXPORT_OCTAVE || \
                           i == EXPORT_R || \
                           i == EXPORT_R_ALT || \
-                          i == EXPORT_CSV)
+                          i == EXPORT_CSV || \
+                          i == EXPORT_DAT)
 
 extern int olddat; /* settings.c */
 
@@ -97,6 +98,7 @@ static struct extmap action_map[] = {
     { EXPORT_R,          ".R" },
     { EXPORT_R_ALT,      ".R" },
     { EXPORT_OCTAVE,     ".m" },
+    { EXPORT_DAT,        ".dat" },
     { SAVE_OUTPUT,       ".txt" },
     { SAVE_TEX_TAB,      ".tex" },
     { SAVE_TEX_EQ,       ".tex" },
@@ -130,6 +132,7 @@ static unsigned long action_to_opt (const int action)
     case EXPORT_R:      return OPT_R;
     case EXPORT_R_ALT:  return OPT_A;
     case EXPORT_CSV:    return OPT_C;
+    case EXPORT_DAT:    return OPT_D;
     default: return 0L;
     }
 }
@@ -402,6 +405,9 @@ static char *suggested_exportname (const char *fname, int action)
 	case EXPORT_CSV:
 	    test = ".csv";
 	    break;
+	case EXPORT_DAT:
+	    test = ".dat";
+	    break;
 	default:
 	    test = NULL;
 	    break;
@@ -455,7 +461,8 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 
     /* now for the save options */
 
-    if (action > SAVE_BIN2 && dat_ext(fname, 1)) return;
+    if (action > SAVE_BIN2 && action != EXPORT_DAT && dat_ext(fname, 1)) 
+	return;
 
     if (check_maybe_add_ext(fname, action, data)) return;
 
@@ -573,6 +580,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{EXPORT_R,     { N_("GNU R files (*.R)"), "*.R" }},
 	{EXPORT_R_ALT, { N_("GNU R files (*.R)"), "*.R" }},
 	{EXPORT_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},
+	{EXPORT_DAT  , { N_("PcGive files (*.dat)"), "*.dat" }},
 	{SAVE_OUTPUT,  { N_("text files (*.txt)"), "*.txt" }},
 	{SAVE_TEX_TAB, { N_("TeX files (*.tex)"), "*.tex" }},
 	{SAVE_TEX_EQ,  { N_("TeX files (*.tex)"), "*.tex" }},

@@ -100,7 +100,7 @@ static void tramo_options_set_defaults (tramo_options *opts, int pd)
     opts->q = opts->bq = 1;
     opts->mq = pd;
     opts->noadmiss = 1;      /* use approximation if needed */
-    opts->seats = 1;         /* make SEATS file and re-do estimation */
+    opts->seats = (pd > 1);  /* make SEATS file and re-do estimation? */
     opts->out = 0;           /* verbose */
 }
 
@@ -183,11 +183,14 @@ static void flip_auto_va (GtkWidget *w, tramo_options *opts)
 static void arima_options_set_sensitive (tramo_options *opts, gboolean s)
 {
     gtk_widget_set_sensitive(opts->d_list, s);
-    gtk_widget_set_sensitive(opts->bd_list, s);
     gtk_widget_set_sensitive(opts->p_list, s);
-    gtk_widget_set_sensitive(opts->bp_list, s);
     gtk_widget_set_sensitive(opts->q_list, s);
-    gtk_widget_set_sensitive(opts->bq_list, s);
+
+    if (opts->request->pd > 1) {
+	gtk_widget_set_sensitive(opts->bd_list, s);
+	gtk_widget_set_sensitive(opts->bp_list, s);
+	gtk_widget_set_sensitive(opts->bq_list, s);
+    }
 }
 
 static void flip_auto_arima (GtkWidget *w, tramo_options *opts)
@@ -252,12 +255,17 @@ seats_specific_widgets_set_sensitive (tramo_options *opts,
 				      gboolean s)
 {
     tx_request *request = opts->request;
+    int i;
 
-    gtk_widget_set_sensitive(opts->aio_innov_button, !s); 
-    gtk_widget_set_sensitive(request->opt[D11].check, s);
-    gtk_widget_set_sensitive(request->opt[D12].check, s);
-    gtk_widget_set_sensitive(request->opt[D13].check, s);
-    gtk_widget_set_sensitive(request->opt[TRIGRAPH].check, s);
+    if (opts->aio_innov_button != NULL) {
+	gtk_widget_set_sensitive(opts->aio_innov_button, !s); 
+    }
+    
+    for (i=0; i<N_COMMON_OPTS; i++) {
+	if (request->opt[i].check != NULL) {
+	    gtk_widget_set_sensitive(request->opt[D11].check, s);
+	}
+    }
 }				      
 
 static void real_set_seats (tramo_options *opts, gint val)
@@ -379,7 +387,8 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
 
     /* TRAMO + SEATS option */
     tmp = gtk_radio_button_new_with_label(NULL, _(radio_labels[0]));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);    
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (request->pd > 1));
+    gtk_widget_set_sensitive(tmp, (request->pd > 1));
 #if GTK_MAJOR_VERSION >= 2
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
 #else
@@ -401,6 +410,8 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
 
     /* TRAMO-only option */
     tmp = gtk_radio_button_new_with_label(group, _(radio_labels[1]));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (request->pd == 1));
+    gtk_widget_set_sensitive(tmp, (request->pd > 1));
 #if GTK_MAJOR_VERSION >= 2
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
 #else
@@ -425,6 +436,8 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
     GtkWidget *tbl, *tmp;
     int tbl_len = 10, row = 0;
     GSList *group = NULL;
+
+    if (request->pd == 1) tbl_len--;
 
     tbl = make_notebook_page_table(notebook, _("Output"), tbl_len, 2);
 
@@ -496,12 +509,14 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
     row++;
     gtk_widget_show(tmp);
 
-    tmp = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
-    gtk_widget_show(tmp);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
-    row++;
-    request->opt[D11].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+    if (request->pd > 1) {
+	tmp = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
+	gtk_widget_show(tmp);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
+	row++;
+	request->opt[D11].check = tmp;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+    }
 
     tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
     gtk_widget_show(tmp);
@@ -526,7 +541,7 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
     gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
     request->opt[TRIGRAPH].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (request->pd > 1));
 }
 
 static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)
@@ -885,7 +900,7 @@ static GtkWidget *make_labeled_combo (const gchar *label,
     return w;
 }
 
-static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts)
+static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts, int pd)
 {
     GtkWidget *tbl, *tmp;
     int i, tbl_len = 10, row = 0;
@@ -894,8 +909,10 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts)
 	"0", "1", "2", "3"
     };
 
-    for (i=0; i<2; i++) {
-	onelist = g_list_append(onelist, intvals[i]);
+    if (pd > 1) {
+	for (i=0; i<2; i++) {
+	    onelist = g_list_append(onelist, intvals[i]);
+	}
     }
     for (i=0; i<3; i++) {
 	twolist = g_list_append(twolist, intvals[i]);
@@ -903,6 +920,8 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts)
     for (i=0; i<4; i++) {
 	threelist = g_list_append(threelist, intvals[i]);
     }
+
+    if (pd == 1) tbl_len -= 3;
 
     tbl = make_notebook_page_table(notebook, _("ARIMA"), tbl_len, 2);
     gtk_table_set_homogeneous(GTK_TABLE(tbl), FALSE);
@@ -929,11 +948,16 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts)
     row++;
     gtk_widget_show(tmp);
     opts->d_list = tmp;
-    tmp = make_labeled_combo(_("Seasonal differences:"), tbl, row,
-			     onelist, &opts->bd);
-    row++;
-    gtk_widget_show(tmp);
-    opts->bd_list = tmp;
+
+    if (pd > 1) {
+	tmp = make_labeled_combo(_("Seasonal differences:"), tbl, row,
+				 onelist, &opts->bd);
+	row++;
+	gtk_widget_show(tmp);
+	opts->bd_list = tmp;
+    } else {
+	opts->bd_list = NULL;
+    }
 	    
     /* horizontal separator */
     tmp = gtk_hseparator_new();
@@ -947,11 +971,16 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts)
     row++;
     gtk_widget_show(tmp);
     opts->p_list = tmp;
-    tmp = make_labeled_combo(_("Seasonal AR terms:"), tbl, row,
-			     onelist, &opts->bp);
-    row++;
-    gtk_widget_show(tmp);
-    opts->bp_list = tmp;
+
+    if (pd > 1) {
+	tmp = make_labeled_combo(_("Seasonal AR terms:"), tbl, row,
+				 onelist, &opts->bp);
+	row++;
+	gtk_widget_show(tmp);
+	opts->bp_list = tmp;
+    } else {
+	opts->bp_list = NULL;
+    }
 
     /* horizontal separator */
     tmp = gtk_hseparator_new();
@@ -965,10 +994,15 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts)
     row++;
     gtk_widget_show(tmp);
     opts->q_list = tmp;
-    tmp = make_labeled_combo(_("Seasonal MA terms:"), tbl, row,
-			     onelist, &opts->bq);
-    gtk_widget_show(tmp);
-    opts->bq_list = tmp;
+    
+    if (pd > 1) {
+	tmp = make_labeled_combo(_("Seasonal MA terms:"), tbl, row,
+				 onelist, &opts->bq);
+	gtk_widget_show(tmp);
+	opts->bq_list = tmp;
+    } else {
+	opts->bq_list = NULL;
+    }
 
     arima_options_set_sensitive(opts, (opts->auto_arima == 0));
 }
@@ -986,7 +1020,7 @@ static void real_show_tramo_options (tx_request *request, GtkWidget *vbox)
     tramo_tab_output(notebook, request);
     tramo_tab_outliers(notebook, opts);
     tramo_tab_transform(notebook, opts);
-    tramo_tab_arima(notebook, opts);
+    tramo_tab_arima(notebook, opts, request->pd);
 
     if (opts->rsa == 3) {
 	main_auto_callback(NULL, notebook);

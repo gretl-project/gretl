@@ -17,6 +17,8 @@
  *
  */
 
+#define N_COMMON_OPTS 4
+
 enum tx_objects {
     D11,      /* seasonally adjusted series */
     D12,      /* trend/cycle */
@@ -37,7 +39,7 @@ struct _common_opt_info {
 struct _tx_request {
     int code;          /* tramo vs x12arima */
     GtkWidget *dialog;
-    common_opt_info opt[4];
+    common_opt_info opt[N_COMMON_OPTS];
     void *opts;
     int savevars;
     int pd;
