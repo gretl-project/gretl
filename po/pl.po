@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-09-08 12:33-0400\n"
-"PO-Revision-Date: 2004-10-04 23:00+0100\n"
+"PO-Revision-Date: 2004-10-07 21:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1049,7 +1049,7 @@ msgstr ""
 #: lib/src/describe.c:577
 #, c-format
 msgid "Autocorrelation function for %s"
-msgstr "Funkcja autokorelacji dla %s"
+msgstr "Funkcja autokorelacji (ACF): %s"
 
 #: lib/src/describe.c:589
 #, c-format
@@ -2083,7 +2083,7 @@ msgstr "B³êdna sk³adnia w poleceniu"
 
 #: lib/src/gretl_errors.c:66
 msgid "No independent variables left after omissions"
-msgstr "Brak niezaleznych zmiennych dla polecenia omit"
+msgstr "Brak niezale¿nych zmiennych dla polecenia omit"
 
 #: lib/src/gretl_errors.c:67
 msgid "No independent variables were omitted"
@@ -2844,7 +2844,7 @@ msgstr ""
 #: gui/selector.c:696 gui2/model_table.c:754 gui2/model_table.c:864
 #: gui2/selector.c:923
 msgid "Dependent variable"
-msgstr ""
+msgstr "Zmienna zale¿na"
 
 #: lib/src/modelprint.c:1005
 msgid "Variable used as weight"
@@ -5448,15 +5448,15 @@ msgstr ""
 
 #: gui/gretl.c:1288 gui2/gretl.c:1450
 msgid "ID #"
-msgstr ""
+msgstr "ID #"
 
 #: gui/gretl.c:1289 gui2/gretl.c:1451
 msgid "Variable name"
-msgstr ""
+msgstr "Nazwa zmiennej"
 
 #: gui/gretl.c:1290 gui2/gretl.c:1452
 msgid "Descriptive label"
-msgstr ""
+msgstr "Pe³ny opis zmiennej"
 
 #: gui/gretl.c:1302 gui2/gretl.c:1469
 msgid "Econometrics program"
@@ -5732,49 +5732,49 @@ msgstr ""
 #: gui/selector.c:670 gui/selector.c:702 gui/selector.c:753 gui/selector.c:769
 #: gui2/selector.c:931
 msgid "Choose ->"
-msgstr ""
+msgstr "Wybór ->"
 
 #: gui/selector.c:694 gui2/selector.c:921
 msgid "First dependent variable"
-msgstr ""
+msgstr "Pierwsza zmienna zale¿na:"
 
 #: gui/selector.c:721 gui2/selector.c:954
 msgid "Set as default"
-msgstr ""
+msgstr "Ustaw jako domy¶ln± zmienn±"
 
 #: gui/selector.c:737 gui2/selector.c:970
 msgid "lag order:"
-msgstr ""
+msgstr "rz±d opó¼nienia:"
 
 #: gui/selector.c:792 gui/selector.c:1195 gui2/selector.c:1013
 #: gui2/selector.c:1418
 msgid "Add ->"
-msgstr ""
+msgstr "Dodaj ->"
 
 #: gui/selector.c:798 gui/selector.c:1201 gui/selector.c:1466
 #: gui2/selector.c:1019 gui2/selector.c:1424 gui2/selector.c:1669
 msgid "<- Remove"
-msgstr ""
+msgstr "<- Usuñ"
 
 #: gui/selector.c:876 gui2/selector.c:1088
 msgid "Deterministic variables"
-msgstr ""
+msgstr "Deterministyczne zmienne"
 
 #: gui/selector.c:957 gui2/dialogs.c:2063 gui2/selector.c:1200
 msgid "AR order:"
-msgstr ""
+msgstr "rz±d AR"
 
 #: gui/selector.c:959 gui2/selector.c:1202
 msgid "ARCH p:"
-msgstr ""
+msgstr "ARCH p:"
 
 #: gui/selector.c:969 gui2/dialogs.c:2070 gui2/selector.c:1212
 msgid "MA order:"
-msgstr ""
+msgstr "rz±d MA:"
 
 #: gui/selector.c:971 gui2/selector.c:1214
 msgid "ARCH q:"
-msgstr ""
+msgstr "ARCH q:"
 
 #: gui/selector.c:991 gui2/selector.c:1233
 msgid "Robust standard errors"
@@ -5782,35 +5782,35 @@ msgstr ""
 
 #: gui/selector.c:1007 gui2/selector.c:1248
 msgid "Show details of regressions"
-msgstr ""
+msgstr "Poka¿ detale dla regresji"
 
 #: gui/selector.c:1010 gui2/dialogs.c:2082 gui2/selector.c:1251
 msgid "Show details of iterations"
-msgstr ""
+msgstr "Poka¿ detale dla iteracji"
 
 #: gui/selector.c:1029 gui2/dialogs.c:1062 gui2/dialogs.c:2810
 #: gui2/dialogs.c:2884 plugin/leverage.c:175 plugin/logistic.c:123
 #: plugin/pca.c:190 plugin/tramo-x12a.c:253
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: gui/selector.c:1043 gui2/session.c:139 gui2/session.c:2154
 msgid "Clear"
-msgstr ""
+msgstr "Wyczy¶æ"
 
 #: gui/selector.c:1051 gui2/dialogs.c:634 gui2/dialogs.c:1072
 #: gui2/dialogs.c:2885 gui2/helpfiles.c:1440 gui2/textutil.c:133
 #: plugin/leverage.c:191 plugin/logistic.c:141 plugin/pca.c:206
 #: plugin/progress_bar.c:118
 msgid "Cancel"
-msgstr ""
+msgstr "Anuluj"
 
 #: gui/selector.c:1060 gui2/boxplots.c:201 gui2/boxplots.c:232
 #: gui2/dialogs.c:2888 gui2/gpt_control.c:2937 gui2/gpt_control.c:2997
 #: gui2/gui_utils.c:1354 gui2/gui_utils.c:1376 gui2/session.c:140
 #: gui2/session.c:2162
 msgid "Help"
-msgstr ""
+msgstr "Pomoc"
 
 #: gui/selector.c:1098 gui2/selector.c:1331
 msgid "XY scatterplot"
@@ -5834,7 +5834,7 @@ msgstr ""
 
 #: gui/selector.c:1172 gui2/selector.c:1401
 msgid "Independent variables"
-msgstr ""
+msgstr "Zmienne niezale¿ne"
 
 #: gui/selector.c:1178 gui2/selector.c:985
 msgid "Factor (dummy)"
@@ -5866,39 +5866,39 @@ msgstr ""
 
 #: gui/selector.c:1293 gui2/selector.c:1498
 msgid "Select variables to add"
-msgstr ""
+msgstr "Wybór zmiennych do testu dodanych zm. (add vars)"
 
 #: gui/selector.c:1295 gui2/selector.c:1500
 msgid "Select variables to omit"
-msgstr ""
+msgstr "Wybór zmiennych do testu pominiêtych zm. (omit vars)"
 
 #: gui/selector.c:1297 gui2/selector.c:1502
 msgid "Select coefficients to sum"
-msgstr ""
+msgstr "Wybór wspó³czynników do sumy"
 
 #: gui/selector.c:1299 gui2/selector.c:1504
 msgid "Select variables to display"
-msgstr ""
+msgstr "Wybór zmiennych do prezentacji"
 
 #: gui/selector.c:1303 gui2/selector.c:1508
 msgid "Select variables to plot"
-msgstr ""
+msgstr "Wybór zmiennych do wykresu"
 
 #: gui/selector.c:1390 gui2/selector.c:1609
 msgid "Available vars"
-msgstr ""
+msgstr "Dostêpne zmienne"
 
 #: gui/selector.c:1398 gui2/selector.c:1617
 msgid "Selected vars"
-msgstr ""
+msgstr "Wybrane zmienne"
 
 #: gui/selector.c:1452 gui2/selector.c:1654
 msgid "Select ->"
-msgstr ""
+msgstr "Wybór ->"
 
 #: gui/selector.c:1459 gui2/selector.c:1662
 msgid "All ->"
-msgstr ""
+msgstr "Wszystkie ->"
 
 #: gui/selector.c:1517 gui2/selector.c:1770
 msgid "Save CSV data file"
@@ -5914,7 +5914,7 @@ msgstr ""
 
 #: gui/selector.c:1524 gui2/selector.c:1517
 msgid "Select variables to copy"
-msgstr ""
+msgstr "Wybór zmiennych do kopiowania"
 
 #: gui/selector.c:1555 gui2/selector.c:1808
 msgid "Copy data"
@@ -5922,7 +5922,7 @@ msgstr ""
 
 #: gui/selector.c:1555 gui2/selector.c:1808 plugin/tramo-x12a.c:204
 msgid "Save data"
-msgstr ""
+msgstr "Zapisywanie danych"
 
 #: gui/selector.c:1601 gui2/selector.c:1747
 msgid "Too many items were selected"
@@ -5935,15 +5935,15 @@ msgstr ""
 
 #: gui/ssheet.c:48 gui2/ssheet.c:62
 msgid "/_Observation"
-msgstr ""
+msgstr "_Obserwacje"
 
 #: gui/ssheet.c:49 gui2/ssheet.c:63
 msgid "/Observation/_Append obs"
-msgstr ""
+msgstr "/Obserwacje/_Do³±czyæ obs"
 
 #: gui/ssheet.c:50 gui2/ssheet.c:65
 msgid "/Observation/_Insert obs"
-msgstr ""
+msgstr "/Obserwacje/_Wstawiæ obs"
 
 #: gui/ssheet.c:52
 msgid "/Variable/_Add"
@@ -5963,13 +5963,15 @@ msgstr ""
 
 #: gui/ssheet.c:114 gui2/ssheet.c:424
 msgid "gretl: name variable"
-msgstr ""
+msgstr "gretl: nazwa zmiennej"
 
 #: gui/ssheet.c:115 gui2/ssheet.c:425
 msgid ""
 "Enter name for new variable\n"
 "(max. 8 characters)"
 msgstr ""
+"Wprowadz nazwê nowej zmiennej\n"
+"(maksymalnie 8 znaków)"
 
 #: gui/ssheet.c:126 gui2/ssheet.c:435
 msgid "gretl: case marker"
@@ -6024,7 +6026,7 @@ msgstr ""
 
 #: gui/ssheet.c:587 gui2/ssheet.c:1283
 msgid "gretl: edit data"
-msgstr ""
+msgstr "gretl: edycja danych"
 
 #: gui/ssheet.c:641
 msgid "Apply Changes"
@@ -6683,15 +6685,15 @@ msgstr "Zapisz polecenia skryptowe"
 
 #: gui2/callbacks.c:285
 msgid "Save LaTeX file"
-msgstr ""
+msgstr "Zapisz plik LaTeX"
 
 #: gui2/callbacks.c:288
 msgid "Save model output"
-msgstr ""
+msgstr "Zapisz wyniki modelu"
 
 #: gui2/callbacks.c:291
 msgid "Save gnuplot commands"
-msgstr ""
+msgstr "Zapisz polecenia gnuplot"
 
 #: gui2/callbacks.c:302
 msgid "Sorry, this item not yet implemented!"
@@ -6711,27 +6713,27 @@ msgstr "gretl: edycja opisu pliku"
 
 #: gui2/callbacks.c:364 gui2/callbacks.c:372
 msgid "gretl: specify model"
-msgstr ""
+msgstr "gretl: specyfikacja modelu"
 
 #: gui2/callbacks.c:390 gui2/library.c:1683
 msgid "gretl: ARCH test"
-msgstr ""
+msgstr "gretl: test ARCH"
 
 #: gui2/callbacks.c:391
 msgid "Lag order for ARCH test:"
-msgstr ""
+msgstr "Rz±d opó¼nienia dla testu ARCH:"
 
 #: gui2/callbacks.c:396
 msgid "gretl: autocorrelation"
-msgstr ""
+msgstr "gretl: autokorelacja"
 
 #: gui2/callbacks.c:397
 msgid "Lag order for test:"
-msgstr ""
+msgstr "Rz±d opó¼nienia dla testu:"
 
 #: gui2/callbacks.c:408
 msgid "gretl: Chow test"
-msgstr ""
+msgstr "gretl: test Chow"
 
 #: gui2/callbacks.c:409
 #, c-format
@@ -6754,19 +6756,19 @@ msgstr ""
 
 #: gui2/callbacks.c:423 gui2/callbacks.c:576
 msgid "gretl: add var"
-msgstr ""
+msgstr "gretl: dodawanie zmiennej do bazy"
 
 #: gui2/callbacks.c:424 gui2/callbacks.c:577
 msgid "Enter formula for new variable:"
-msgstr ""
+msgstr "Wprowadz formu³ê wyliczania nowej zmiennej:"
 
 #: gui2/callbacks.c:443 gui2/callbacks.c:448 gui2/library.c:689
 msgid "gretl: cointegration test"
-msgstr ""
+msgstr "gretl: test kointegracji"
 
 #: gui2/callbacks.c:471
 msgid "gretl: define graph"
-msgstr ""
+msgstr "gretl: definiowanie wykresu"
 
 #: gui2/callbacks.c:476 gui2/callbacks.c:482 gui2/callbacks.c:488
 msgid "gretl: model tests"
@@ -6794,13 +6796,15 @@ msgstr ""
 
 #: gui2/callbacks.c:522
 msgid "gretl: random variables"
-msgstr ""
+msgstr "gretl: losowanie zmiennych"
 
 #: gui2/callbacks.c:523
 msgid ""
 "Enter integer seed for\n"
 "pseudo-random number generator:"
 msgstr ""
+"Wprowadz sta³± startow± (liczbê ca³kowit±)\n"
+"dla generatora liczb pseudolosowych:"
 
 #: gui2/callbacks.c:530
 msgid "You can't simulate with the constant"
@@ -6819,19 +6823,19 @@ msgstr ""
 
 #: gui2/callbacks.c:545
 msgid "gretl: simulation data"
-msgstr ""
+msgstr "gertl: dane generowane"
 
 #: gui2/callbacks.c:546
 msgid "Series length for simulation data set:"
-msgstr ""
+msgstr "Liczba obserwacji dla danych generowanych:"
 
 #: gui2/callbacks.c:551
 msgid "gretl: ADF test"
-msgstr ""
+msgstr "gretl: test ADF"
 
 #: gui2/callbacks.c:552
 msgid "Lag order for ADF test:"
-msgstr ""
+msgstr "Rz±d opó¼nienia dla testu ADF:"
 
 #: gui2/callbacks.c:557
 msgid "gretl: rank correlation"
@@ -6891,20 +6895,20 @@ msgstr ""
 
 #: gui2/callbacks.c:617
 msgid "gretl: linear restrictions"
-msgstr ""
+msgstr "gretl: liniowe restrykcje"
 
 #: gui2/callbacks.c:618
 msgid "Specify restrictions:"
-msgstr ""
+msgstr "Specyfikacja restrykcji:"
 
 #: gui2/callbacks.c:644 gui2/library.c:3494 gui2/session.c:1502
 #, c-format
 msgid "Really delete %s?"
-msgstr ""
+msgstr "Czy na pewno usun±æ zmienne: %s?"
 
 #: gui2/callbacks.c:645 gui2/library.c:3495 gui2/session.c:1503
 msgid "gretl: delete"
-msgstr ""
+msgstr "gretl: usuwanie zmiennych"
 
 #: gui2/callbacks.c:657 gui2/library.c:3511
 msgid "Out of memory reorganizing data set"
@@ -6916,21 +6920,23 @@ msgstr ""
 
 #: gui2/callbacks.c:751
 msgid "gretl: uniform variable"
-msgstr ""
+msgstr "gretl: generowanie zmiennej z rozk³adu jednostajnego"
 
 #: gui2/callbacks.c:752
 msgid ""
 "Enter name for variable, and\n"
 "minimum and maximum values:"
 msgstr ""
+"Wprowadz nazwê zmiennej oraz jej\n"
+"minimaln± i maksymaln± warto¶æ:"
 
 #: gui2/callbacks.c:758
 msgid "gretl: normal variable"
-msgstr ""
+msgstr "gret: generowanie zmiennej z rozk³adu normalnego"
 
 #: gui2/callbacks.c:759
 msgid "Enter name, mean and standard deviation:"
-msgstr ""
+msgstr "Wprowad¿ nazwê zmiennej, ¶redni± i odchylenie standardowe:"
 
 #: gui2/callbacks.c:801
 msgid "Insufficient dataset information supplied"
@@ -6939,12 +6945,12 @@ msgstr ""
 #: gui2/callbacks.c:813 gui2/callbacks.c:829
 #, c-format
 msgid "Invalid starting observation '%s'"
-msgstr ""
+msgstr "B³êdna startowa obserwacja '%s'"
 
 #: gui2/callbacks.c:817 gui2/callbacks.c:836 gui2/callbacks.c:859
 #, c-format
 msgid "Invalid ending observation '%s'"
-msgstr ""
+msgstr "B³êdna koñcowa obserwacja '%s'"
 
 #: gui2/callbacks.c:843
 #, c-format
@@ -6988,17 +6994,19 @@ msgstr ""
 #: gui2/callbacks.c:959 gui2/callbacks.c:962 gui2/callbacks.c:965
 #: gui2/callbacks.c:968 gui2/callbacks.c:971
 msgid "newvar"
-msgstr ""
+msgstr "nowa_zm"
 
 #: gui2/callbacks.c:975
 msgid "gretl: create data set"
-msgstr ""
+msgstr "gretl: tworzenie zbioru danych"
 
 #: gui2/callbacks.c:976
 msgid ""
 "Enter start and end obs for new data set\n"
 "and name of first var to add:"
 msgstr ""
+"Wprowadz startow± i koñcow± obserwacje dla nowego\n"
+"zbioru danych oraz nazwê pierwszej zmiennej:"
 
 #: gui2/callbacks.c:992
 msgid "gretl: create panel data set"
@@ -7022,7 +7030,7 @@ msgstr ""
 
 #: gui2/cmdstack.c:301
 msgid "The command log is empty"
-msgstr ""
+msgstr "Dziennik poleceñ jest pusty"
 
 #: gui2/console.c:81
 msgid "Closing redirected output file"
@@ -7044,11 +7052,11 @@ msgstr "Odbieranie danych..."
 
 #: gui2/database.c:179
 msgid "gretl: display database series"
-msgstr ""
+msgstr "gretl: seria danych"
 
 #: gui2/database.c:194 gui2/library.c:3562 gui2/library.c:3611
 msgid "boxplot command failed"
-msgstr ""
+msgstr "b³êdne polecenie boxplot"
 
 #: gui2/database.c:215 gui2/fileselect.c:483
 msgid "There were missing observations"
@@ -7069,20 +7077,20 @@ msgstr ""
 
 #: gui2/database.c:362
 msgid "Couldn't access binary data"
-msgstr ""
+msgstr "Niemo¿liwy dostêp do binarnych danych"
 
 #: gui2/database.c:365 gui2/database.c:440
 msgid "Warning: series has missing observations"
-msgstr ""
+msgstr "Uwaga: seria zawiera puste obserwacje"
 
 #: gui2/database.c:443
 msgid "Couldn't access binary datafile"
-msgstr ""
+msgstr "Niemozliwy dostêp do binarnego pliku danych"
 
 #: gui2/database.c:497 gui2/session.c:132 gui2/session.c:138
 #: gui2/session.c:144 gui2/session.c:149 gui2/session.c:2112
 msgid "Display"
-msgstr ""
+msgstr "Poka¿"
 
 #: gui2/database.c:504 gui2/session.c:347
 msgid "Graph"
@@ -7098,36 +7106,36 @@ msgstr "Znajd¼..."
 
 #: gui2/database.c:526
 msgid "Codebook"
-msgstr ""
+msgstr "Kody"
 
 #: gui2/database.c:542 gui2/database.c:553
 msgid "/_Series/_Display"
-msgstr ""
+msgstr "/_Serie/_Poka¿"
 
 #: gui2/database.c:543 gui2/database.c:554
 msgid "/_Series/_Graph"
-msgstr ""
+msgstr "/_Serie/_Wykres"
 
 #: gui2/database.c:544 gui2/database.c:555
 msgid "/_Series/_Import"
-msgstr ""
+msgstr "/_Serie/_Import"
 
 #: gui2/database.c:545 gui2/database.c:556 gui2/helpfiles.c:70
 #: gui2/helpfiles.c:77 gui2/helpfiles.c:85 gui2/helpfiles.c:91
 msgid "/_Find"
-msgstr ""
+msgstr "/_Znajd¼"
 
 #: gui2/database.c:546 gui2/helpfiles.c:71 gui2/helpfiles.c:86
 msgid "/Find/_Find in window"
-msgstr ""
+msgstr "/Znajd¼/_Znajd¼ w oknie"
 
 #: gui2/database.c:547 gui2/database.c:557
 msgid "/_Codebook"
-msgstr ""
+msgstr "_Kody"
 
 #: gui2/database.c:548
 msgid "/Codebook/_Open"
-msgstr ""
+msgstr "/Kody/_Otwórz plik"
 
 #: gui2/database.c:697 gui2/datafiles.c:1012
 msgid "Network status: OK"
@@ -7136,7 +7144,7 @@ msgstr "Stan po³±czenia z sieci±: OK"
 #: gui2/database.c:748
 #, c-format
 msgid "Database parse error at variable '%s'"
-msgstr ""
+msgstr "B³±d bazy danych dla zmiennej '%s'"
 
 #: gui2/database.c:1038
 msgid "Couldn't open RATS data file"
@@ -7144,11 +7152,11 @@ msgstr "Niemo¿liwe otwarcie pliku danych RATS"
 
 #: gui2/database.c:1076 gui2/database.c:1101
 msgid "Name"
-msgstr ""
+msgstr "Nazwa"
 
 #: gui2/database.c:1078 gui2/database.c:1103
 msgid "Observations"
-msgstr ""
+msgstr "Zakres obserwacji"
 
 #: gui2/database.c:1294
 msgid "Couldn't open database"
@@ -7200,11 +7208,11 @@ msgstr ""
 
 #: gui2/datafiles.c:732 gui2/datafiles.c:737
 msgid "Not installed"
-msgstr ""
+msgstr "Nie zainstalowano"
 
 #: gui2/datafiles.c:741
 msgid "Unknown: access error"
-msgstr ""
+msgstr "Nieznany b³±d dostêpu"
 
 #: gui2/datafiles.c:746
 msgid "Not up to date"
@@ -7252,28 +7260,28 @@ msgstr "Znajd¼"
 
 #: gui2/datafiles.c:1116 gui2/datafiles.c:1185
 msgid "File"
-msgstr ""
+msgstr "Pliki"
 
 #: gui2/datafiles.c:1117 gui2/datafiles.c:1186 gui2/session.c:2334
 msgid "Summary"
-msgstr ""
+msgstr "Opis"
 
 #: gui2/datafiles.c:1120 gui2/datafiles.c:1189
 msgid "Script"
-msgstr ""
+msgstr "Plik skryptu"
 
 #: gui2/datafiles.c:1121 gui2/datafiles.c:1190
 msgid "Topic"
-msgstr ""
+msgstr "Opis skryptu"
 
 #: gui2/datafiles.c:1122 gui2/datafiles.c:1191
 msgid "Data"
-msgstr ""
+msgstr "Plik danych"
 
 #: gui2/datafiles.c:1125 gui2/datafiles.c:1129 gui2/datafiles.c:1194
 #: gui2/datafiles.c:1198
 msgid "Database"
-msgstr "Baza"
+msgstr "Baza danych"
 
 #: gui2/datafiles.c:1126 gui2/datafiles.c:1130 gui2/datafiles.c:1195
 #: gui2/datafiles.c:1199
@@ -7355,7 +7363,7 @@ msgstr ""
 
 #: gui2/dialogs.c:380
 msgid "(Please refer to Help for guidance)"
-msgstr ""
+msgstr "(Proszê skorzystaæ z porady w Pomocy dla polecenia)"
 
 #: gui2/dialogs.c:615
 msgid "Yes"
@@ -7517,23 +7525,23 @@ msgstr "Tydzieñ zaczyna siê od niedzieli"
 
 #: gui2/dialogs.c:2496
 msgid "Default method:"
-msgstr "Domy¶lna metoda agregacji"
+msgstr "Domy¶lna metoda agregacji:"
 
 #: gui2/dialogs.c:2502
 msgid "Compact by averaging"
-msgstr "wykorzystaæ ¶redni± z obserwacji w okresie"
+msgstr "wykorzystaj ¶redni± z obserwacji w okresie"
 
 #: gui2/dialogs.c:2520
 msgid "Compact by summing"
-msgstr "wykorzystaæ sumê z obserwacji w okresie"
+msgstr "wykorzystaj sumê z obserwacji w okresie"
 
 #: gui2/dialogs.c:2537
 msgid "Use end-of-period values"
-msgstr "wykorzystaæ ostatni± obserwacjê w okresie"
+msgstr "wykorzystaj ostatni± obserwacjê w okresie"
 
 #: gui2/dialogs.c:2554
 msgid "Use start-of-period values"
-msgstr "wykorzystaæ pierwsz± obserwacjê w okresie"
+msgstr "wykorzystaj pierwsz± obserwacjê w okresie"
 
 #: gui2/dialogs.c:2612
 msgid "gretl: compact data"
@@ -7632,7 +7640,7 @@ msgstr "pliki gnuplot (*.plt)"
 
 #: gui2/fileselect.c:545 gui2/fileselect.c:645
 msgid "all files (*.*)"
-msgstr "Wszystkie pliki (*.*)"
+msgstr "wszystkie pliki (*.*)"
 
 #: gui2/fileselect.c:567 gui2/fileselect.c:568 gui2/fileselect.c:569
 #: gui2/fileselect.c:570 gui2/fileselect.c:571 gui2/fileselect.c:590
@@ -8551,7 +8559,7 @@ msgstr "LaTeX"
 
 #: gui2/gui_utils.c:1353 gui2/gui_utils.c:1375
 msgid "Add to dataset..."
-msgstr ""
+msgstr "Dodaj do bazy danych..."
 
 #: gui2/gui_utils.c:1569
 msgid "gretl: help"
@@ -9237,7 +9245,7 @@ msgstr ""
 #: gui2/library.c:4112 gui2/library.c:4173 plugin/leverage.c:89
 #: plugin/pca.c:109
 msgid "gretl: save data"
-msgstr ""
+msgstr "gretl: zapisywanie danych"
 
 #: gui2/library.c:4113
 msgid ""
@@ -9536,7 +9544,7 @@ msgstr ""
 
 #: gui2/selector.c:1515
 msgid "Select variables to save"
-msgstr ""
+msgstr "Wybór zmiennych do zapisania w pliku"
 
 #: gui2/series_view.c:47 gui2/series_view.c:66
 msgid "/Edit/_Copy selection"
@@ -9549,15 +9557,15 @@ msgstr ""
 
 #: gui2/series_view.c:51 gui2/series_view.c:69
 msgid "/_Series"
-msgstr ""
+msgstr "/_Serie"
 
 #: gui2/series_view.c:52 gui2/series_view.c:70
 msgid "/Series/_Sort"
-msgstr ""
+msgstr "/Serie/_Sortuj"
 
 #: gui2/series_view.c:53 gui2/series_view.c:71
 msgid "/Series/_Graph"
-msgstr ""
+msgstr "/Serie/_Wykres"
 
 #: gui2/series_view.c:60 gui2/series_view.c:78
 msgid "/Edit/_Copy value"
@@ -9565,23 +9573,23 @@ msgstr ""
 
 #: gui2/series_view.c:364
 msgid "gretl: data format"
-msgstr ""
+msgstr "gretl: format danych"
 
 #: gui2/series_view.c:376
 msgid "Select data format"
-msgstr ""
+msgstr "Wybór formatu wy¶wietlania"
 
 #: gui2/series_view.c:383
 msgid "Show"
-msgstr ""
+msgstr "Miejsca dziesiêtne:"
 
 #: gui2/series_view.c:397
 msgid "significant figures"
-msgstr ""
+msgstr "poka¿ tylko istotne"
 
 #: gui2/series_view.c:414
 msgid "decimal places"
-msgstr ""
+msgstr "poka¿ dok³adnie"
 
 #: gui2/session.c:127 gui2/session.c:2057
 msgid "Arrange icons"
@@ -9696,11 +9704,11 @@ msgstr "Notatnik"
 
 #: gui2/session.c:2331
 msgid "Correlations"
-msgstr "Macierz korelacji"
+msgstr "Korelacje"
 
 #: gui2/session.c:2337
 msgid "Model table"
-msgstr "Tabela modeli"
+msgstr "Tabela model"
 
 #: gui2/session.c:2340
 msgid "Graph page"
@@ -9935,7 +9943,7 @@ msgstr ""
 
 #: gui2/ssheet.c:67
 msgid "/Add _Variable"
-msgstr ""
+msgstr "Dodaj zmienn±"
 
 #: gui2/textutil.c:68
 msgid "gretl: replace"
@@ -9959,12 +9967,12 @@ msgstr ""
 
 #: gui2/textutil.c:704
 msgid "Copied selection to clipboard"
-msgstr ""
+msgstr "Skopiowano wybór do schowka"
 
 #: gui2/textutil.c:731
 #, c-format
 msgid "Copied contents of window as %s"
-msgstr ""
+msgstr "Skopiowano zawarto¶æ okna jako %s"
 
 #: gui2/webget.c:342 gui2/webget.c:348
 msgid "Couldn't find usable socket driver\n"
@@ -9972,11 +9980,11 @@ msgstr ""
 
 #: gui2/webget.c:792
 msgid "Host not found"
-msgstr ""
+msgstr "Nie znaleziono serwera"
 
 #: gui2/webget.c:794
 msgid "Unknown error"
-msgstr ""
+msgstr "Nieznany b³±d"
 
 #: gui2/webget.c:990
 msgid "No data received"
@@ -10203,7 +10211,7 @@ msgstr ""
 
 #: plugin/leverage.c:112 plugin/pca.c:132
 msgid "Variables to save:"
-msgstr ""
+msgstr "Zmienne do zapisu:"
 
 #: plugin/leverage.c:119 plugin/leverage.c:246 plugin/leverage.c:457
 msgid "leverage"
@@ -10376,15 +10384,15 @@ msgstr ""
 
 #: plugin/pca.c:140
 msgid "Components with eigenvalues > 1.0"
-msgstr ""
+msgstr "Sk³adowe z warto¶ci± w³asn± > 1.0"
 
 #: plugin/pca.c:160
 msgid "All components"
-msgstr ""
+msgstr "Wszystkie wektory sk³adowe"
 
 #: plugin/pca.c:232
 msgid "Principal Components Analysis"
-msgstr ""
+msgstr "Analiza g³ównych sk³adowych"
 
 #: plugin/pca.c:233
 msgid "Eigenanalysis of the Correlation Matrix"
@@ -10392,11 +10400,11 @@ msgstr ""
 
 #: plugin/pca.c:235
 msgid "Component  Eigenvalue  Proportion   Cumulative\n"
-msgstr ""
+msgstr "Czynnik  Warto¶æ w³asna  Udzia³    Skumulowany udzia³ w wariancji\n"
 
 #: plugin/pca.c:251
 msgid "Eigenvectors (component loadings)"
-msgstr ""
+msgstr "Wektory warto¶ci w³asnych (³adunki sk³adowej)"
 
 #: plugin/progress_bar.c:77
 msgid "gretl: loading data"
