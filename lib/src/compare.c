@@ -172,153 +172,53 @@ static int just_replaced (int i, const DATAINFO *pdinfo,
 
 /* ........................................................... */
 
-static COMPARE add_compare (const MODEL *pmodA, const MODEL *pmodB) 
-/* Generate comparison statistics between an initial model, A,
-   and a new model, B, arrived at by adding variables to A. */
+static COMPARE 
+add_or_omit_compare (const MODEL *pmodA, const MODEL *pmodB, int add)
 {
-    COMPARE add;
+    COMPARE cmp;
+    const MODEL *umod, *rmod;
     int i;	
 
-    add.m1 = pmodA->ID;
-    add.m2 = pmodB->ID;
-    add.F = 0.0;
-    add.ci = pmodA->ci;
-
-    add.score = 0;
-    add.dfn = pmodB->ncoeff - pmodA->ncoeff;
-    add.dfd = pmodB->dfd;
-
-    if (add.ci == OLS && pmodB->aux == AUX_ADD) {
-	add.F = ((pmodA->ess - pmodB->ess)/pmodB->ess)
-	    * add.dfd / add.dfn;
-    }
-    else if (LIMDEP(add.ci)) {
-	add.chisq = 2.0 * (pmodB->lnL - pmodA->lnL);
-	return add;
-    }
-    else if (add.ci == HCCM) {
-	add.chisq = gretl_model_get_double(pmodB, "chisq");
+    if (add) {
+	umod = pmodB;
+	rmod = pmodA;
+    } else {
+	umod = pmodA;
+	rmod = pmodB;
     }
 
-    for (i=0; i<8; i++) {
-	if (pmodB->criterion[i] < pmodA->criterion[i]) add.score++;
-    }
-    return add;
-}	    
+    cmp.m1 = pmodA->ID;
+    cmp.m2 = pmodB->ID;
+    cmp.ci = pmodA->ci;
 
-/* ........................................................... */
+    cmp.F = cmp.chisq = cmp.trsq = 0.0;
+    cmp.score = 0;
 
-static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
-/* Generate comparison statistics between a general model, A,
-   and a restricted model B, arrived at via one or more
-   zero restrictions on the parameters of A.
-*/
-{
-    COMPARE omit;
-    int i;	
-
-    omit.m1 = pmodA->ID;
-    omit.m2 = pmodB->ID;
-    omit.ci = pmodA->ci;
-    omit.score = 0;
-
-    omit.dfn = pmodA->dfn - pmodB->dfn;
-
-    if (omit.ci == OLS || LIMDEP(omit.ci)) {
-	omit.dfd = pmodA->dfd;
-	if (pmodA->ifc && !pmodB->ifc) omit.dfn += 1;
-	if (omit.ci == OLS) {
-	    omit.F = ((pmodB->ess - pmodA->ess)/pmodA->ess)
-		* omit.dfd/omit.dfn;
-	} else {
-	    omit.chisq = 2.0 * (pmodA->lnL - pmodB->lnL);
-	    return omit;
-	}
+    if (gretl_model_get_int(pmodA, "robust") || pmodA->ci == HCCM) {
+	cmp.robust = 1;
+    } else {
+	cmp.robust = 0;
     }
 
-    if (omit.ci == HCCM) {
-	omit.chisq = gretl_model_get_double(pmodB, "chisq");
+    cmp.dfn = umod->ncoeff - rmod->ncoeff;
+    cmp.dfd = umod->dfd;
+
+    if (LIMDEP(cmp.ci)) {
+	cmp.chisq = 2.0 * (umod->lnL - rmod->lnL);
+	return cmp;
+    }
+
+    if (cmp.ci == OLS && !cmp.robust) {
+	cmp.F = ((rmod->ess - umod->ess) / umod->ess) * cmp.dfd / cmp.dfn;
     }
 
     for (i=0; i<8; i++) { 
 	if (pmodB->criterion[i] < pmodA->criterion[i]) {
-	    omit.score++;
+	    cmp.score++;
 	}
     }
 
-    return omit;
-}
-
-/* ........................................................... */
-
-static double robust_lm_test (MODEL *unrest, MODEL *rest, 
-			      const int *omitvars,
-			      double ***pZ, DATAINFO *pdinfo)
-{
-    double **r = NULL;
-    double lm = -1;
-    MODEL aux;
-    int *auxlist = NULL;
-    int i, q = omitvars[0];
-    int origv = pdinfo->v;
-
-    r = malloc(q * sizeof *r);
-    if (r == NULL) return lm;
-    for (i=0; i<q; i++) r[i] = NULL;
-
-    gretl_model_init(&aux, pdinfo);
-
-    for (i=0; i<q; i++) {
-	rest->list[1] = omitvars[i + 1];
-	aux = lsq(rest->list, pZ, pdinfo, OLS, OPT_A, 0.0);
-	if (aux.errcode) {
-	    clear_model(&aux, pdinfo);
-	    goto cleanup;
-	}
-	r[i] = aux.uhat;
-	aux.uhat = NULL;
-	clear_model(&aux, pdinfo);
-    }
-    rest->list[1] = unrest->list[1];
-
-    if (dataset_add_vars(q, pZ, pdinfo)) goto cleanup;
-
-    auxlist = malloc((q + 2) * sizeof *auxlist);
-    if (auxlist == NULL) goto cleanup;
-
-    auxlist[0] = q + 1;
-    auxlist[1] = 0;
-
-    for (i=0; i<q; i++) {
-	int t;
-
-	for (t=0; t<pdinfo->n; t++) {
-	    if (na(rest->uhat[t]) || na(r[i][t])) {
-		(*pZ)[origv + i][t] = NADBL;
-	    } else {
-		(*pZ)[origv + i][t] = rest->uhat[t] * r[i][t];
-	    }
-	}
-	auxlist[i + 2] = origv + i;
-    }
-	
-    aux = lsq(auxlist, pZ, pdinfo, OLS, OPT_A, 0.0);
-    if (!aux.errcode) {
-	lm = (double) (aux.t2 - aux.t1 + 1) - aux.ess;
-    }
-    clear_model(&aux, pdinfo);
-
- cleanup:
-    if (r != NULL) {
-	for (i=0; i<q; i++) {
-	    free(r[i]);
-	}
-	free(r);
-    }
-    free(auxlist);
-    dataset_drop_vars(q, pZ, pdinfo);
-
-    return lm;
+    return cmp;
 }
 
 /**
@@ -458,7 +358,12 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		*new = logistic_model(newlist, pZ, pdinfo, lmaxstr);
 	    }
 	    else {
-		*new = lsq(newlist, pZ, pdinfo, orig->ci, OPT_D, rho);
+		unsigned long lsqopt = OPT_D;
+
+		if (gretl_model_get_int(orig, "robust")) {
+		    lsqopt |= OPT_R;
+		}
+		*new = lsq(newlist, pZ, pdinfo, orig->ci, lsqopt, rho);
 	    }
 
 	    if (new->nobs < orig->nobs) 
@@ -525,15 +430,9 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     if (!err) {
 	if (aux_code == AUX_ADD) {
 	    new->aux = aux_code;
-	    if (orig->ci == HCCM) {
-		double chisq;
-
-		chisq = robust_lm_test(new, orig, addvars, pZ, pdinfo);
-		gretl_model_set_double(new, "chisq", chisq);
-	    }
 	}
 
-	add = add_compare(orig, new);
+	add = add_or_omit_compare(orig, new, 1);
 	add.trsq = trsq;
 
 	if (aux_code == AUX_ADD && !(opt & OPT_Q) && 
@@ -544,6 +443,10 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 
 	if (addvars != NULL) {
 	    difflist(new->list, orig->list, addvars);
+	    if (gretl_model_get_int(orig, "hc") || orig->ci == HCCM) {
+		/* FIXME: what about HAC? */
+		add.F = robust_omit_F(addvars, new);
+	    }
 	    gretl_print_add(&add, addvars, pdinfo, aux_code, prn, opt);
 	} else {
 	    add.dfn = newlist[0] - orig->list[0];
@@ -565,9 +468,13 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     return err;
 }
 
-static int in_omit_list (int k, const int *list)
+static int in_omit_list (int k, int j, const int *list)
 {
     int i;
+
+    if (list == NULL) {
+	return k != 0 && j > 1;
+    }
 
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == k) return 1;
@@ -576,15 +483,25 @@ static int in_omit_list (int k, const int *list)
     return 0;
 }
 
-static int robust_omit_test (LIST list, MODEL *pmod, PRN *prn)
+#undef FDEBUG
+
+double robust_omit_F (LIST list, MODEL *pmod)
 {
-    int err = 0;
-    int q = list[0];
+    int q, err = 0;
     gretl_matrix *sigma = NULL;
     gretl_matrix *betahat = NULL;
     gretl_matrix *tmp = NULL;
     double F;
     int i, j, k, ii, jj, idx;
+#ifdef FDEBUG
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+#endif
+
+    if (list != NULL) {
+	q = list[0];
+    } else {
+	q = pmod->list[0] - 1 - pmod->ifc;
+    } 
     
     sigma = gretl_matrix_alloc(q, q);
     betahat = gretl_matrix_alloc(q, 1);
@@ -594,18 +511,18 @@ static int robust_omit_test (LIST list, MODEL *pmod, PRN *prn)
 	gretl_matrix_free(sigma);
 	gretl_matrix_free(betahat);
 	gretl_matrix_free(tmp);
-	return E_ALLOC;
+	return NADBL;
     }
 
     ii = 0;
     for (i=2; i<=pmod->list[0]; i++) {
 	k = pmod->list[i];
-	if (in_omit_list(k, list)) {
+	if (in_omit_list(k, i, list)) {
 	    gretl_matrix_set(betahat, ii, 0, pmod->coeff[i-2]);
 	    jj = 0;
 	    for (j=ii; j<=pmod->list[0]; j++) {
 		k = pmod->list[j];
-		if (in_omit_list(k, list)) {
+		if (in_omit_list(k, j, list)) {
 		    idx = ijton(i-1, j-1, pmod->ncoeff);
 		    gretl_matrix_set(sigma, ii, jj, pmod->vcv[idx]);
 		    jj++;
@@ -615,7 +532,15 @@ static int robust_omit_test (LIST list, MODEL *pmod, PRN *prn)
 	}
     }
 
+#ifdef FDEBUG
+    gretl_matrix_print(sigma, "sigma", prn);
+#endif
+
     err = gretl_invert_symmetric_matrix(sigma);
+
+#ifdef FDEBUG
+    pprintf(prn, "invert returned %d\n", err);
+#endif
 
     if (!err) {
 	err = gretl_matrix_multiply_mod(betahat, GRETL_MOD_TRANSPOSE,
@@ -630,17 +555,17 @@ static int robust_omit_test (LIST list, MODEL *pmod, PRN *prn)
 	F /= q;
     }
 
-    if (!err) {
-	pprintf(prn, "  \"Robust\" Wald F(%d, %d) = %g, "
-		"with p-value = %g\n", q, pmod->dfd, F,
-		fdist(F, q, pmod->dfd));
-    }
+    if (err) F = NADBL;
 
     gretl_matrix_free(sigma);
     gretl_matrix_free(betahat);
     gretl_matrix_free(tmp);
 
-    return err;
+#ifdef FDEBUG
+    gretl_print_destroy(prn);
+#endif
+
+    return F;
 }
 
 /**
@@ -743,7 +668,13 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    *new = logistic_model(tmplist, pZ, pdinfo, lmaxstr);
 	}
 	else {
-	    *new = lsq(tmplist, pZ, pdinfo, orig->ci, OPT_D, rho);
+	    /* re-establish any robust estimation variant of OLS */
+	    unsigned long lsqopt = OPT_D;
+
+	    if (gretl_model_get_int(orig, "robust")) {
+		lsqopt |= OPT_R;
+	    }
+	    *new = lsq(tmplist, pZ, pdinfo, orig->ci, lsqopt, rho);
 	}
 
 	if (new->errcode) {
@@ -756,14 +687,8 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     if (!err) {
 	++m;
 	new->ID = m;
-	if (orig->ci == HCCM) { 
-	    double chisq;
 
-	    chisq = robust_lm_test(orig, new, omitvars, pZ, pdinfo);
-	    gretl_model_set_double(new, "chisq", chisq);
-	}
-
-	omit = omit_compare(orig, new);
+	omit = add_or_omit_compare(orig, new, 0);
 
 	if (!(opt & OPT_Q) && orig->ci != AR && orig->ci != ARCH) {
 	    printmodel(new, pdinfo, prn); 
@@ -771,11 +696,13 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	}
 
 	difflist(orig->list, new->list, omitvars);
-	gretl_print_omit(&omit, omitvars, pdinfo, prn, opt); 
 
-	if (gretl_model_get_int(orig, "hc")) {
-	    robust_omit_test(omitvars, orig, prn);
-	}    
+	if (gretl_model_get_int(orig, "hc") || orig->ci == HCCM) {
+	    /* FIXME: what about HAC? */
+	    omit.F = robust_omit_F(omitvars, orig);
+	}
+
+	gretl_print_omit(&omit, omitvars, pdinfo, prn, opt); 
 
 	free(tmplist);
 

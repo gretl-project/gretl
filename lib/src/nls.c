@@ -252,8 +252,11 @@ static int get_deriv (int i, double *deriv)
 
     j = 0;
     for (t=nlspec.t1; t<=nlspec.t2; t++) {
-	if (vec) deriv[j] = - (*pZ)[v][t];
-	else deriv[j] = - (*pZ)[v][0];
+	if (vec) {
+	    deriv[j] = - (*pZ)[v][t];
+	} else {
+	    deriv[j] = - (*pZ)[v][0];
+	}
 	j++;
     }
 
@@ -310,6 +313,7 @@ static void add_stats_to_model (MODEL *pmod)
 	d = (*pZ)[nlspec.depvar][t] - pmod->ybar;
 	tss += d * d;
     }    
+
     pmod->rsq = 1.0 - nlspec.ess / tss;
     pmod->adjrsq = NADBL;
 }
@@ -322,9 +326,13 @@ static int add_std_errs_to_model (MODEL *pmod)
 
     for (i=0; i<pmod->ncoeff; i++) {
 	k = ijton(i+1, i+1, pmod->ncoeff);
-	if (pmod->vcv[k] == 0.0) pmod->sderr[i] = 0.0;
-	else if (pmod->vcv[k] > 0.0) pmod->sderr[i] = sqrt(pmod->vcv[k]);
-	else pmod->sderr[i] = NADBL;
+	if (pmod->vcv[k] == 0.0) {
+	    pmod->sderr[i] = 0.0;
+	} else if (pmod->vcv[k] > 0.0) {
+	    pmod->sderr[i] = sqrt(pmod->vcv[k]);
+	} else {
+	    pmod->sderr[i] = NADBL;
+	}
     }
 
     return 0;
@@ -517,10 +525,11 @@ static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
 	clear_nls_spec();
     }
 
-    if (strncmp(nlfunc, "nls ", 4) == 0) 
+    if (strncmp(nlfunc, "nls ", 4) == 0) { 
 	p = nlfunc + 4;
-    else 
+    } else {
 	p = nlfunc;
+    }
 
     if (sscanf(p, "%8s = %*s", depvarname) != 1) {
 	sprintf(gretl_errmsg, _("parse error in '%s'\n"), p);
@@ -874,8 +883,11 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 	err = get_params_from_nlfunc();
 	if (err) {
 	    clear_nls_spec();
-	    if (err == 1) nlsmod.errcode = E_PARSE;
-	    else nlsmod.errcode = err;
+	    if (err == 1) {
+		nlsmod.errcode = E_PARSE;
+	    } else {
+		nlsmod.errcode = err;
+	    }
 	    return nlsmod;
 	}
     }

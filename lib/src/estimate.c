@@ -2134,8 +2134,11 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	for (t=t1; t<=t2; t++) {
 	    xx = 0.0;
 	    for (j=1; j<=ncoeff; j++) {
-		if (i <= j) index = ijton(i, j, ncoeff);
-		else index = ijton(j, i, ncoeff);
+		if (i <= j) {
+		    index = ijton(i, j, ncoeff);
+		} else {
+		    index = ijton(j, i, ncoeff);
+		}
 		xx += hccm.vcv[index] * (*pZ)[list[j+1]][t];
 	    }
 	    p[i][t] = xx;
@@ -2144,35 +2147,51 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     for (t=t1; t<=t2; t++) {
 	xx = 0.0;
-	for (i=1; i<=ncoeff; i++) xx += (*pZ)[list[i+1]][t] * p[i][t];
+	for (i=1; i<=ncoeff; i++) {
+	    xx += (*pZ)[list[i+1]][t] * p[i][t];
+	}
 	if (floateq(xx, 1.0)) xx = 0.0;
 	uhat1[t] = hccm.uhat[t] / (1 - xx);
     }
 
     for (i=1; i<=ncoeff; i++) {
 	xx = 0.0;
-	for (t=t1; t<=t2; t++) xx += p[i][t] * uhat1[t];
+	for (t=t1; t<=t2; t++) {
+	    xx += p[i][t] * uhat1[t];
+	}
 	st[i] = xx;
     }
 
     for (t=t1; t<=t2; t++) {
-	for (i=1; i<=ncoeff; i++) p[i][t] *= uhat1[t];
+	for (i=1; i<=ncoeff; i++) {
+	    p[i][t] *= uhat1[t];
+	}
     }
 
     index = 0;
     for (i=1; i<=ncoeff; i++) {
 	for (j=i; j<=ncoeff; j++) {
 	    xx = 0.0;
-	    for (t=t1; t<=t2; t++) xx += p[i][t] * p[j][t];
+	    for (t=t1; t<=t2; t++) {
+		xx += p[i][t] * p[j][t];
+	    }
 	    xx = xx * (nobs - 1) / nobs -
 		(nobs - 1) * st[i] * st[j] / (nobs * nobs);
-	    if (i == j) hccm.sderr[i-1] = sqrt(xx);
+	    if (i == j) {
+		hccm.sderr[i-1] = sqrt(xx);
+	    }
 	    hccm.vcv[index++] = xx;
 	}
     }
 
+    /* substitute robust F stat */
+    if (hccm.dfd > 0 && hccm.dfn > 1) {
+	hccm.fstt = robust_omit_F(NULL, &hccm);
+    }
+
     free(st);
     free(uhat1);
+
     for (i=0; i<lo; i++) free(p[i]);
     free(p);
 
@@ -2832,6 +2851,7 @@ static int zerror (int t1, int t2, int yno, int nwt, double ***pZ)
 
     xx = gretl_mean(t1, t2, (*pZ)[yno]);
     yy = gretl_stddev(t1, t2, (*pZ)[yno]);
+
     if (floateq(xx, 0.0) && floateq(yy, 0.0)) return 1;
 
     if (nwt) {
@@ -2842,6 +2862,7 @@ static int zerror (int t1, int t2, int yno, int nwt, double ***pZ)
 	}
 	return 1;
     }
+
     return 0;
 }
 

@@ -159,31 +159,22 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 		add->m1, add->m2);
     } else spc[0] = '\0';
 
-    if (aux_code == AUX_ADD && addvars[0] > 1 && add->ci == OLS) {
+    if (aux_code == AUX_ADD && addvars[0] > 1 && 
+	(add->ci == OLS || add->ci == HCCM)) {
 	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
 		"zero for the added variables\n\n"), spc);
-	for (i = 1; i<=addvars[0]; i++) 
+	for (i=1; i<=addvars[0]; i++) 
 	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
-	pprintf(prn, "\n  %s: F(%d, %d) = %g, ", _("Test statistic"), 
+	pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
+		(add->robust)? _("Robust F"): "F",
 		add->dfn, add->dfd, add->F);
 	pprintf(prn, _("with p-value = %g\n"), 
 		fdist(add->F, add->dfn, add->dfd));
     }
-    else if (aux_code == AUX_ADD && addvars[0] > 1 && add->ci == HCCM) {
-	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
-		"zero for the added variables\n\n"), spc);
-	for (i = 1; i<=addvars[0]; i++) 
-	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
-	pprintf(prn, "\n  %s: %s(%d) = %g, ", _("Test statistic"), 
-		_("Chi-square"), add->dfn, add->chisq);
-	pprintf(prn, _("with p-value = %g\n\n"), 
-		chisq(add->chisq, add->dfn));
-	return;
-    }
     else if (aux_code == AUX_ADD && addvars[0] > 1 && LIMDEP(add->ci)) {
 	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
 		"zero for the added variables\n\n"), spc);
-	for (i = 1; i<=addvars[0]; i++) 
+	for (i=1; i<=addvars[0]; i++) 
 	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
 	pprintf(prn, "\n  %s: %s(%d) = %g, ", _("Test statistic"), 
 		_("Chi-square"), add->dfn, add->chisq);
@@ -226,16 +217,21 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
     } else {
 	pputc(prn, '\n');
     }
-    if (omit->ci == OLS && omit->dfn > 0 && omitvars[0] > 1) {
+
+    if ((omit->ci == OLS || omit->ci == HCCM) && 
+	omit->dfn > 0 && omitvars[0] > 1) {
 	pprintf(prn, _("  Null hypothesis: the regression parameters "
 		"are zero for the variables\n\n"));
 	for (i=1; i<=omitvars[0]; i++) {
 	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
+	}
+	if (!na(omit->F)) {
+	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
+		    (omit->robust)? _("Robust F") : "F",
+		    omit->dfn, omit->dfd, omit->F);
+	    pprintf(prn, _("with p-value = %g\n"), 
+		    fdist(omit->F, omit->dfn, omit->dfd));	    
 	} 
-	pprintf(prn, "\n  %s: F(%d, %d) = %g, ", _("Test statistic"), 
-		omit->dfn, omit->dfd, omit->F);
-	pprintf(prn, _("with p-value = %g\n"), 
-		fdist(omit->F, omit->dfn, omit->dfd));
     }
     else if (LIMDEP(omit->ci) && omit->dfn > 0 && omitvars[0] > 1) {
 	pputs(prn, _("  Null hypothesis: the regression parameters "
@@ -249,17 +245,6 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 		chisq(omit->chisq, omit->dfn));
 	return;
     } 
-    else if (omit->ci == HCCM) {
-	pputs(prn, _("  Null hypothesis: the regression parameters "
-		"are zero for the variables\n\n"));
-	for (i=1; i<=omitvars[0]; i++) {
-	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
-	} 
-	pprintf(prn, "\n  %s: %s(%d) = %g, ",  _("Test statistic"),
-		_("Chi-square"), omit->dfn, omit->chisq);
-	pprintf(prn, _("with p-value = %g\n\n"), 
-		chisq(omit->chisq, omit->dfn));
-    }
 
     if (!(opt & OPT_Q)) {
 	pprintf(prn, _("  Of the 8 model selection statistics, %d %s\n\n"), 

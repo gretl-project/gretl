@@ -660,6 +660,57 @@ void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn)
 }
 
 /**
+ * gretl_LU_determinant:
+ * @a: gretl_matrix.
+ *
+ * Compute the determinant of the square matrix @a using the LU
+ * factorization.  Matrix @a is not preserved: it is overwritten
+ * by the factorization.
+ * 
+ * Returns: the determinant, or NABDL on failure.
+ * 
+ */
+
+double gretl_LU_determinant (gretl_matrix *a)
+{
+    integer info;
+    integer m = a->rows;
+    integer n = a->cols;
+    integer *ipiv;
+    double det;
+    int i;
+
+    if (a->rows != a->cols) {
+	fputs("gretl_LU_determinant: matrix must be square\n", stderr);
+	return NADBL;
+    }
+
+    ipiv = malloc(n * sizeof *ipiv);
+    if (ipiv == NULL) return NADBL;
+
+    dgetrf_(&m, &n, a->val, &n, ipiv, &info);
+
+    if (info != 0) {
+	fprintf(stderr, "gretl_LU_determinant: dgetrf gave info = %d\n", 
+		(int) info);
+	free(ipiv);
+	return NADBL;
+    }
+
+    det = 1.0;
+    for (i=0; i<n; i++) {
+	if (ipiv[i] != i + 1) {
+	    det = -det;
+	}
+	det *= a->val[mdx(a, i, i)];
+    }
+
+    free(ipiv);
+
+    return det;
+}
+
+/**
  * gretl_LU_solve:
  * @a: gretl_matrix.
  * @b: gretl_vector.
@@ -689,6 +740,8 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
     dgetrf_(&m, &n, a->val, &n, ipiv, &info);
 
     if (info != 0) {
+	fprintf(stderr, "gretl_LU_solve: dgetrf gave info = %d\n", 
+		(int) info);
 	free(ipiv);
 	return info;
     }
@@ -1386,7 +1439,7 @@ get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
  * @vcv: matrix to hold the covariance matrix of the coefficients,
  * or NULL if this is not needed.
  *
- * Does the OLS calculation using LU factorization, and puts the
+ * Computes OLS estimates using LU factorization, and puts the
  * coefficient estimates in @b.  Optionally, calculates the
  * covariance matrix in @vcv.
  * 

@@ -48,6 +48,20 @@ static double get_tss (const double *y, int n, int ifc)
     return tss;
 }
 
+static void qr_compute_f_stat (MODEL *pmod, unsigned long opts)
+{
+    if (pmod->dfd > 0 && pmod->dfn > 1) {
+	if (opts & OPT_R) {
+	    pmod->fstt = robust_omit_F(NULL, pmod);
+	} else {
+	    pmod->fstt = (pmod->tss - pmod->ess) * pmod->dfd / 
+		(pmod->ess * pmod->dfn);
+	}
+    } else {
+	pmod->fstt = NADBL;
+    }
+}
+
 static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
 {
     if (pmod->dfd > 0) {
@@ -66,11 +80,8 @@ static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
 		pmod->adjrsq = 1.0 - ((1 - alt) * (n - 1.0) / pmod->dfd);
 	    }
 	}
-	pmod->fstt = (pmod->tss - pmod->ess) * pmod->dfd / 
-	    (pmod->ess * pmod->dfn);
     } else {
 	pmod->rsq = 1.0;
-	pmod->fstt = NADBL;
     }
 }
 
@@ -722,8 +733,9 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 	qr_make_regular_vcv(pmod, xpxinv);
     }
 
-    /* get R^2 and F-stat */
+    /* get R^2 */
     qr_compute_r_squared(pmod, Z[pmod->list[1]], m);
+    qr_compute_f_stat(pmod, opts);
 
  qr_cleanup:
     gretl_matrix_free(Q);

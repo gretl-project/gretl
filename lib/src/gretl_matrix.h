@@ -101,6 +101,8 @@ double gretl_matrix_dot_product (const gretl_matrix *a, int aflag,
 
 gretl_matrix *gretl_matrix_vcv (gretl_matrix *m);
 
+double gretl_LU_determinant (gretl_matrix *a);
+
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 
 int gretl_invert_general_matrix (gretl_matrix *m);

@@ -58,6 +58,7 @@ typedef struct {
     double chisq;  /* Chi-square test statistic */
     double trsq;   /* T*R^2 test statistic */
     int score;     /* "cases correct" for discrete models */
+    int robust;    /* = 1 when robust vcv is in use, else 0 */
 } COMPARE;
 
 /* functions follow */
@@ -67,6 +68,8 @@ int auxreg (LIST addvars,
 	    double ***pZ, DATAINFO *pdinfo, 
 	    int aux_code, 
 	    PRN *prn, GRETLTEST *test, unsigned long opt);
+
+double robust_omit_F (LIST list, MODEL *pmod);
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
 	       int *model_count, 

@@ -108,6 +108,9 @@ add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
 add_file ${TOPDIR}/doc/manual.chm/gretl.chm gretl/gretl.chm
 add_file /home/cottrell/stats/esl/es/gretl_es.chm gretl/gretl_es.chm
 
+# user readme file
+add_file $HOME_WIN32/readme.user gretl/user/README.txt
+
 # data files
 for f in ${TOPDIR}/share/data/* ; do
     add_file $f gretl/data/`basename $f`

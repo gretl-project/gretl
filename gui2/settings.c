@@ -23,6 +23,8 @@
 #include "webget.h"
 
 #include <unistd.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #if defined(USE_GNOME) && !defined(OLD_GTK)
 # define GNOME2
@@ -36,9 +38,7 @@
 # include <windows.h>
 # include "gretlwin32.h"
 #else
-# include <dirent.h>
 # include <sys/stat.h>
-# include <sys/types.h>
 # include <fcntl.h>
 # include <errno.h>
 # ifndef OLD_GTK
@@ -46,12 +46,7 @@
 # endif
 #endif
 
-#ifdef G_OS_WIN32 
-# include "../lib/src/version.h"
-# include "build.h"
-#else 
 extern const char *version_string;
-#endif
 
 #if !defined(G_OS_WIN32) && !defined(USE_GNOME)
 char rcfile[MAXLEN];
@@ -1001,13 +996,13 @@ static void str_to_boolvar (char *s, void *b)
     }	
 }
 
+#endif
+
 static void boolvar_to_str (void *b, char *s)
 {
     if (*(int *)b) strcpy(s, "true");
     else strcpy(s, "false");
 }
-
-#endif
 
 /* .................................................................. */
 
@@ -2471,19 +2466,33 @@ void gnuplot_color_selector (GtkWidget *w, gpointer p)
 
 /* end graph color selection apparatus */
 
+static int dir_exists (const char *dname, FILE *fp)
+{
+    DIR *test;
+    int ok = 0;
+
+    test = opendir(dname);
+
+    if (test != NULL) {
+	ok = 1;
+	if (fp != NULL) {
+	    fprintf(fp, "Directory '%s' exists, OK\n", dname);
+	}
+	closedir(test);
+    } else if (fp != NULL) {
+	fprintf(fp, "Directory '%s' does not exist\n", dname);
+    }
+
+    return ok;
+}
+
 #ifndef G_OS_WIN32
 
 static int validate_dir (const char *dirname)
 {
-    DIR *test;
     int err = 0;
 
-    test = opendir(dirname);
-
-    if (test != NULL) {
-	fprintf(stderr, "Working dir already exists, OK\n");
-	closedir(test);
-    } else {
+    if (!dir_exists(dirname, NULL)) {
 	err = mkdir(dirname, 0755);
 	if (err) {
 	    sprintf(errtext, _("Couldn't create directory '%s'"), dirname);
@@ -2577,6 +2586,9 @@ void dump_rc (void)
 	    fprintf(fp, "%s = %s\n", rc_vars[i].key, (char *) rc_vars[i].var);
 	}
     }
+
+    dir_exists(paths.userdir, fp);
+    dir_exists(paths.gretldir, fp);
 
     fprintf(stderr, "Config info written to %s\n", dumper);
 

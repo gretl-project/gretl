@@ -362,7 +362,9 @@ static int get_db_host_ip (char *h_ip, const char *h_name)
     h_ent = gethostbyname(h_name);
     if (h_ent == NULL) {
 	*h_ip = '\0';
+#ifndef WIN32
 	herror(NULL);
+#endif
 	return 1;
     }
 
