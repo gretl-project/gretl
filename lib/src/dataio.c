@@ -3804,10 +3804,9 @@ static int transcribe_string (char *targ, const char *src, int maxlen,
 
 #ifndef USE_GTK2
     if (convert) {
-	char tmp[128];
+	char tmp[128] = {0};
 
 	if (maxlen > 128) maxlen = 128;
-	*tmp = 0;
 	strncat(tmp, src, maxlen - 1);
 	utf8_to_iso_latin_1(targ, maxlen, tmp, maxlen);
     } else {

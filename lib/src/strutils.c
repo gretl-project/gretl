@@ -903,7 +903,8 @@ void unescape_url (char *url)
 #ifndef USE_GTK2
 
 int
-utf8_to_iso_latin_1 (unsigned char* out, int outlen, unsigned char* in, int inlen)
+utf8_to_iso_latin_1 (unsigned char *out, int outlen, 
+		     unsigned char *in, int inlen)
 {
     unsigned char* outstart = out;
     unsigned char* outend = out + outlen;

@@ -1132,6 +1132,7 @@ int dataset_drop_listed_vars (const int *list, double ***pZ,
 		for (i=v; i<vmax; i++) {
 		    pdinfo->varname[i] = pdinfo->varname[i + gap];
 		    pdinfo->varinfo[i] = pdinfo->varinfo[i + gap];
+		    pdinfo->vector[i] = pdinfo->vector[i + gap];
 		    (*pZ)[i] = (*pZ)[i + gap];
 		}		    
 	    } else {

@@ -1,8 +1,8 @@
 version 1.2.7
 - add start-up option "-e" or "--english" to force use of
-  English strings when LANG would indicate translation;
-  also recognize environment variable GRETL_LANG: if this
-  is "english" or "C", run in English
+  English strings when LANG would indicate translation
+  (also recognize environment variable GRETL_LANG: if this
+  is "english" or "C", run in English)
 - allow for missing values (silent) in audio graphs
 - add a few keystrokes to the main gretl window:
   'a': audio (read list of variables)
@@ -10,6 +10,7 @@ version 1.2.7
   'e': edit attributes of current variable
   't': plot current variable
 - make start-up tests for tramo and x12a less verbose
+- fix bug in deletion of scalar variables from the dataset
 
 5/25/2004 version 1.2.6
 - add Hodrick-Prescott filter, as "hpfilt" function in the
