@@ -2482,9 +2482,9 @@
     </usage>
 
     <description>
-      <para>The parameter <repl>control</repl> must take one of three
-	forms, as shown in the examples: an integer number of times to
-	repeat the commands within the loop;
+      <para>The parameter <repl quote="true">control</repl> must take
+	one of three forms, as shown in the examples: an integer
+	number of times to repeat the commands within the loop;
 	<quote><lit>while</lit></quote> plus a numerical condition; or
 	<quote><lit>for</lit></quote> plus a range of values for the
 	internal index variable <lit>i</lit>.
