@@ -3031,6 +3031,63 @@
     </description>
 
   </command>
+  
+  <command name="mahal" section="Statistics"
+    label="Distanze di Mahalanobis">
+
+    <usage>
+      <arguments>
+        <argument>lista-variabili</argument>
+      </arguments>
+      <options>
+       <option>
+         <flag>--save</flag>
+         <effect>salva le distanze nel dataset</effect>
+       </option>
+       <option>
+         <flag>--vcv</flag>
+         <effect>mostra la matrice di covarianza</effect>
+       </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+       La distanza di Mahalanobis è la distanza tra due punti in uno spazio
+       <mathvar>N</mathvar>-dimensionale, scalata rispetto alla variazione
+       statistica in ogni componente del punto. Ad esempio, se
+       <mathvar>p</mathvar> e <mathvar>q</mathvar> sono due punti dalla stessa
+       distribuzione con matrice di covarianza <mathvar>C</mathvar>, la distanza
+       di Mahalanobis è data da
+       <equation status="display"
+        tex="\[\sqrt{(p-q)^'C^{-1}(p-q)}\]"
+        ascii="sqrt((p - q)' * C-inversa * (p - q))"
+          graphic="mahal"/> che corrisponde alla distanza euclidea se la matrice
+       di covarianza è la matrice identità.
+      </para>
+
+      <para>Lo spazio in cui vengono calcolate le distanze è definito dalle
+      variabili selezionate; per ogni osservazione nell'intervallo attuale
+      viene calcolata la distanza tra l'osservazione e il centroide delle
+      variabili selezionate. La distanza è simile a uno
+      <mathvar>z</mathvar>-score e può essere usata per giudicare se una certa
+      osservazione <quote>appartiene</quote> aun gruppo di altre osservazioni.
+      </para>
+
+      <para context="cli">Se si usa l'opzione <lit>--vcv</lit>, vengono mostrate
+      la matrice di covarianza e la sua inversa. Se si usa l'opzione
+      <lit>--save</lit>, le distanze vengono salvate nel dataset con il nome
+      <lit>mdist</lit> (o <lit>mdist1</lit>, <lit>mdist2</lit> e così via, se
+      esiste già una variabile con quel nome).
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Dati/Distanze di Mahalanobis</menu-path>
+    </gui-access>
+
+  </command>
 
   <command name="markers" section="Dataset" context="gui"
     label="Aggiunta di marcatori">
@@ -3866,6 +3923,74 @@
     <gui-access>
       <menu-path>/Variabile/Spettro</menu-path>
       <other-access>Menù pop-up nella finestra principale (selezione singola)</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="poisson" section="Estimation" label="Poisson">
+
+    <usage>
+      <arguments>
+        <argument>variabile-dipendente</argument>
+        <argument>variabili-indipendenti</argument>
+        <argument separated="true" optional="true">offset</argument>
+      </arguments>
+      <options>
+        <option>
+          <flag>--vcv</flag>
+          <effect>mostra la matrice di covarianza</effect>
+        </option>
+        <option>
+          <flag>--verbose</flag>
+          <effect>mostra i dettagli delle iterazioni</effect>
+        </option>
+      </options>
+      <examples>
+        <example>poisson y 0 x1 x2</example>
+       <example>poisson y 0 x1 x2 ; S</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>Stimates una regressione di Poisson, in cui la variabile dipendente
+      rappresenta le occorrenze di un qualche tipo di evento e può assumere solo
+      valori interi non negativi.
+      </para>
+
+      <para>Se una variabile casuale discreta <mathvar>Y</mathvar> segue la
+      distribuzione di Poisson, 
+        <equation status="display"
+          tex="\[\mathrm{Pr}(Y = y) = \frac{e^{-v} v^y}{y!}\]"
+          ascii="Pr(Y = y) = exp(-v) * v^y / y!"
+          graphic="poisson-dist"/>per <mathvar>y</mathvar> = 0, 1,
+      2,&hellip;.  La media e la varianza della distribuzione sono entrambe uguali a
+      <mathvar>v</mathvar>. Nel modello di regressione di Poisson, il parametro
+      <mathvar>v</mathvar> è rappresentato da una funzione di una o più varabili
+      indipendenti. La versione più comune del modello (e l'unica supportata da
+      gretl) ha
+        <equation status="display"
+          tex="\[v = \mathrm{exp}(\beta_0 + \beta_1 x_1 + \beta_2 x_2 +
+      \cdots)\]"
+          ascii="v = exp(b0 + b1*x1 + b2*x2 + ...)"
+          graphic="poisson-model"/>, ossia il logaritmo di
+      <mathvar>v</mathvar> è una funzione lineare delle variabili indipendenti.
+      </para>
+
+      <para>Opzionalmente è possibile aggiungere una variabile
+      <quote>offset</quote> alla specificazione, ossia una variabile di scala,
+       il cui logaritmo viene aggiunto alla funzione di regressione lineare
+       (con un coefficiente implicito di 1.0). Ciò ha senso se si ipotizza che
+       il numero di occorrenze dell'evento in questione sia proporzionale a
+       qualche fattore noto, a parità di altre condizioni. Ad esempio, il numero
+       di incidenti stradali può essere ipotizzato proporzionale al volume del
+       traffico, che potrebbe essere specificato come una variabile di offset in
+       un modello di Poisson per il tasso di incidenti.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Modello/Poisson</menu-path>
     </gui-access>
 
   </command>
