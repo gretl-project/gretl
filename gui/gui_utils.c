@@ -1235,7 +1235,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     /* popup menu? */
     if (role == VIEW_SERIES) {
 	series_view_build_popup(vwin);
-	gtk_signal_connect (GTK_OBJECT(vwin->dialog), "button_press_event",
+	gtk_signal_connect (GTK_OBJECT(vwin->w), "button_press_event",
 			    GTK_SIGNAL_FUNC(popup_menu_handler), 
 			    (gpointer) vwin->popup);
     } 
@@ -2189,7 +2189,8 @@ gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 	GdkEventButton *bevent = (GdkEventButton *) event; 
 	gtk_menu_popup (GTK_MENU(data), NULL, NULL, NULL, NULL,
 			bevent->button, bevent->time);
-	return TRUE;
+	/* return TRUE; */
+	return FALSE;
     }
     return FALSE;
 }

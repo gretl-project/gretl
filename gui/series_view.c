@@ -368,8 +368,6 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
 
     gtk_widget_show_all(w);
 
-    gtk_window_set_modal(GTK_WINDOW(w), TRUE);
-
     gtk_main(); /* block */
 
     if (sview->digits > 0) {
