@@ -9,6 +9,7 @@
 
 #define OPEN_DATA_ACTION(i)  (i == OPEN_DATA || \
                               i == OPEN_CSV || \
+                              i == OPEN_ASCII || \
 	                      i == OPEN_BOX || \
                               i == OPEN_GNUMERIC || \
 	                      i == OPEN_EXCEL || \

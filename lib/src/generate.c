@@ -94,6 +94,7 @@ enum transformations {
     T_RHO, 
     T_SQRT, 
     T_SUM, 
+    T_NOBS,
     T_NORMAL, 
     T_UNIFORM, 
     T_STDERR,
@@ -163,6 +164,7 @@ static char *math[] = {
     "rho", 
     "sqrt", 
     "sum", 
+    "nobs",
     "normal", 
     "uniform", 
     "stderr",
@@ -195,7 +197,7 @@ static char operators[] = {
 #define SCALAR_SCOPE(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
                          t == T_CORR || t == T_COV || \
                          t == T_VAR || t == T_MEDIAN || t == T_MIN || \
-                         t == T_SST || t == T_MAX)
+                         t == T_SST || t == T_MAX || t == T_NOBS)
 
 #define MAXTERMS 64
 
@@ -1473,6 +1475,14 @@ static int domath (double *xvec, const double *mvec, int nt,
 	    xvec[t] = log(xx) - log(yy);
 	}
 	xvec[t1] = NADBL;
+	break;
+
+    case T_NOBS:
+	i = 0;
+	for (t=t1; t<=t2; t++) {
+	    if (!na(mvec[t])) i++;
+	}
+	for (t=0; t<pdinfo->n; t++) xvec[t] = (double) i;
 	break;
 
     case T_MEAN: 

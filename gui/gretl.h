@@ -150,6 +150,7 @@ enum file_ops {
     OPEN_SCRIPT,
     OPEN_CSV,
     APPEND_CSV,
+    OPEN_ASCII,
     OPEN_BOX,
     OPEN_GNUMERIC,
     APPEND_GNUMERIC,

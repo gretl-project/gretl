@@ -195,6 +195,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open data/sample file..."), NULL, display_files, TEXTBOOK_DATA, NULL },
     { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>" },    
     { N_("/File/Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL },
+    { N_("/File/Open data/import ASCII..."), NULL, open_data, OPEN_ASCII, NULL },
     { N_("/File/Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL },
     { N_("/File/Open data/import Gnumeric..."), NULL, open_data, 
       OPEN_GNUMERIC, NULL },

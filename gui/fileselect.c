@@ -68,8 +68,9 @@ static struct extmap action_map[] = {
     {OPEN_DATA, ".gdt"},
     {OPEN_SCRIPT, ".inp"},
     {OPEN_SESSION, ".gretl"},
-    {OPEN_CSV,  ".csv"},
-    {APPEND_CSV,  ".csv"},
+    {OPEN_CSV, ".csv"},
+    {APPEND_CSV, ".csv"},
+    {OPEN_ASCII, ".txt"},
     {OPEN_BOX, ".box"},
     {OPEN_GNUMERIC, ".gnumeric"},
     {APPEND_GNUMERIC, ".gnumeric"},
@@ -276,8 +277,8 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	strcpy(remember_dir, path);
     }
 
-    if (action == OPEN_DATA || action == OPEN_CSV || 
-	action == OPEN_BOX || action == OPEN_GNUMERIC || 
+    if (action == OPEN_DATA || action == OPEN_CSV || action == OPEN_ASCII
+	|| action == OPEN_BOX || action == OPEN_GNUMERIC || 
 	action == OPEN_EXCEL || action == OPEN_DES) {
 	strcpy(trydatfile, fname);
 	gtk_widget_destroy(GTK_WIDGET(fs));  

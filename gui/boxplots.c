@@ -37,6 +37,7 @@ typedef struct {
     double conf[2];
     double uq, lq;
     double max, min;
+    int n;
     double xbase;
     char varname[9];
     char *bool;
@@ -838,17 +839,22 @@ five_numbers (gpointer data)
 		"min", "Q1", _("median"), "Q3", "max");
 
 	for (i=0; i<grp->nplots; i++) {
+	    char nstr[12];
+
+	    sprintf(nstr, "  (n=%d)", grp->plots[i].n);
 	    if (grp->plots[i].bool != NULL) {
-		pprintf(prn, "%s\n %10s%9g%10g%10g%10g%10g\n",
+		pprintf(prn, "%s\n %10s%9g%10g%10g%10g%10g%s\n",
 			grp->plots[i].varname, grp->plots[i].bool,
 			grp->plots[i].min, 
 			grp->plots[i].lq, grp->plots[i].median,
-			grp->plots[i].uq, grp->plots[i].max);
+			grp->plots[i].uq, grp->plots[i].max,
+			nstr);
 	    } else {
-		pprintf(prn, "%-10s%10g%10g%10g%10g%10g\n",
+		pprintf(prn, "%-10s%10g%10g%10g%10g%10g%s\n",
 			grp->plots[i].varname, grp->plots[i].min, 
 			grp->plots[i].lq, grp->plots[i].median,
-			grp->plots[i].uq, grp->plots[i].max);
+			grp->plots[i].uq, grp->plots[i].max,
+			nstr);
 	    }
 	}
     } else { /* confidence intervals */
@@ -944,6 +950,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	plotgrp->plots[i].min = x[0];
 	plotgrp->plots[i].max = x[n-1];
 	quartiles(x, n, &plotgrp->plots[i]);
+	plotgrp->plots[i].n = n;
 	/* notched boxplots wanted? */
 	if (notches) {
 	    if (median_interval(x, n, &plotgrp->plots[i].conf[0],
@@ -952,8 +959,9 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 		plotgrp->plots[i].conf[0] = 
 		    plotgrp->plots[i].conf[1] = -999.0;
 	    }
-	} else 
+	} else {
 	    plotgrp->plots[i].conf[0] = plotgrp->plots[i].conf[1] = -999.0;
+	}
 	strcpy(plotgrp->plots[i].varname, pdinfo->varname[list[i+1]]);
 	if (bools) {
 	    plotgrp->plots[i].bool = bools[j];

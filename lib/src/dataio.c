@@ -2054,7 +2054,8 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
 	    continue;
 	}
 	if (c == EOF) break;
-	if (!isspace((unsigned char) c) && !isprint((unsigned char) c)) {
+	if (!isspace((unsigned char) c) && !isprint((unsigned char) c) &&
+	    !(c == CTRLZ)) {
 	    pprintf(prn, _("Binary data (%d) encountered: this is not a valid "
 			   "text file\n"), c);
 	    return -1;

@@ -655,7 +655,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	}
     }
 
-    if (code == OPEN_CSV || code == APPEND_CSV) {
+    if (code == OPEN_CSV || code == APPEND_CSV || code == OPEN_ASCII) {
 	datatype = GRETL_CSV_DATA;
     }
     else if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC) {

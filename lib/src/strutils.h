@@ -32,6 +32,8 @@
 #define SLASHSTR "/"
 #endif
 
+#define CTRLZ 26
+
 extern char gretl_tmp_str[MAXLEN];
 
 /* functions follow */

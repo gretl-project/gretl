@@ -258,6 +258,7 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>", GNULL },    
     { N_("/File/Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL, GNULL },
+    { N_("/File/Open data/import ASCII..."), NULL, open_data, OPEN_ASCII, NULL, GNULL },
     { N_("/File/Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL, GNULL },
 #ifdef G_OS_WIN32
     { N_("/File/Open data/import Excel..."), NULL, open_data, 

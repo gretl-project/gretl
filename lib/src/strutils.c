@@ -41,7 +41,7 @@ int string_is_blank (const char *s)
     if (s == NULL) return 1;
 
     while (*s) {
-        if (!isspace((unsigned char) *s)) return 0;
+        if (!isspace((unsigned char) *s) && *s != CTRLZ) return 0;
         s++;
     }
 
