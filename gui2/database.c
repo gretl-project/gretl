@@ -1711,7 +1711,7 @@ gint populate_dbfilelist (windata_t *win)
     }
 
 #ifdef G_OS_WIN32 
-    /* opendir doesn't work on e.g. c:\foo\ */
+    /* opendir doesn't work on e.g. c:\foo\ !! */
     if (strlen(dbdir) > 3 && dbdir[strlen(dbdir) - 1] == '\\') {
 	dbdir[strlen(dbdir) - 1] = '\0';
     }
