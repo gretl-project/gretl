@@ -250,7 +250,7 @@ Other access: <xsl:apply-templates/>
 <xsl:text>[/TABLE]&#xa;</xsl:text>
 </xsl:template>
 
-<xsl:template match="table[@context and @context=$hlp]"/>
+<xsl:template match="table[@context and @context!=$hlp]"/>
 
 <xsl:template match="row">
   <xsl:text>[ROW]&#xa;</xsl:text>
