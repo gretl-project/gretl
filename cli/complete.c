@@ -21,14 +21,18 @@
 # include "config.h"
 #endif
 
-#include "libgretl.h"
+#include <stdio.h> 
+#include <stdlib.h>
+#include <string.h>
+
+#include "gretl_commands.h"
 
 #include <readline/readline.h>
 #include <readline/history.h> 
 
 #ifdef OS_WIN32
 # ifndef CLI
-#  include "cmdlist.h"
+#  include "gretl_cmdlist.h"
 # endif
 #endif
 
@@ -61,7 +65,7 @@ static char *command_generator (char *text, int state)
     }
 
     /* Return the next name which partially matches from the command list. */
-    while ((name = commands[list_index]) && list_index < NC) {
+    while ((name = gretl_commands[list_index]) && list_index < NC) {
 	list_index++;
 	if (strncmp(name, text, len) == 0) {
 	    return dupstr(name);

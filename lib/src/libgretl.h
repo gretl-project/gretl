@@ -319,8 +319,8 @@ typedef struct {
     double *vec;
 } VCV;
 
-#include "commands.h"
-#include "errors.h"
+#include "gretl_commands.h"
+#include "gretl_errors.h"
 #include "estimate.h"
 #include "generate.h"
 #include "gretl_utils.h"

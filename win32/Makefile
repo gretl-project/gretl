@@ -28,8 +28,8 @@ LIBS = -lm $(GRETLLIB) -ladvapi32
 
 # flags/defines
 LDFLAGS = -s 
-CFLAGS := -DOS_WIN32 -I. -I$(libdir) -I$(extradir) -I$(plugindir) \
-$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
+CFLAGS = -DOS_WIN32 -I. -I$(libdir) -I$(extradir) -I$(plugindir)
+GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
 # source paths
 vpath %.c $(libdir)
@@ -84,11 +84,11 @@ RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 RCOUT   = gretlw32_res.o
 RES2COFF = echo gretlw32_res.o
 
-LIBSRC = estimate.c compare.c gretl_utils.c errors.c pvalues.c dataio.c \
+LIBSRC = estimate.c compare.c gretl_utils.c gretl_errors.c pvalues.c dataio.c \
        generate.c strutils.c describe.c printout.c modelprint.c texprint.c var.c \
        interact.c graphing.c gretl_win32.c monte_carlo.c nonparam.c discrete.c \
        subsample.c calendar.c system.c random.c
-LIBHDR = libgretl.h commands.h estimate.h gretl_utils.h errors.h pvalues.h \
+LIBHDR = libgretl.h gretl_commands.h estimate.h gretl_utils.h gretl_errors.h pvalues.h \
        compare.h dataio.h generate.h strutils.h describe.h printout.h modelprint.h \
        version.h texprint.h var.h interact.h graphing.h monte_carlo.h random.h \
        nonparam.h discrete.h subsample.h calendar.h system.h gretl_win32.h
@@ -102,10 +102,10 @@ CHECKSRC = nistcheck.c
 GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c gpt_control.c session.c webget.c \
 	calculator.c fileselect.c guiprint.c boxplots.c series_view.c \
-	selector.c settings.c helpfiles.c treeutils.c console.c 
+	selector.c settings.c helpfiles.c treeutils.c console.c model_table.c
 GUIHDR = gretl.h library.h gui_utils.h callbacks.h dialogs.h session.h \
 	webget.h guiprint.h selector.h settings.h helpfiles.h \
-	treeutils.h build.h
+	treeutils.h model_table.h build.h
 GUIOBJ = $(GUISRC:.c=.o)
 
 HACK_SRC = gtkfontselhack.c font_filter.c
@@ -127,7 +127,7 @@ OBJS = $(LIBOBJ) $(CLIOBJ) $(GUIOBJ) $(PLUGINOBJ)
 MO = mo/es.mo mo/fr.mo
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $<
+	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
 	$(CC) -MM -MG $(CFLAGS) $< > $*.d 2>/dev/null
 
 # targets begin
@@ -180,7 +180,7 @@ topclean:
 	rm -f *.o *.exe
 
 clean:
-	rm -f *.o *.def $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*
+	rm -f *.o *.d *.def $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*
 	rm -f plugins/* $(PLUGINS)
 	rm -f dlls/libgtkextra-lite.dll $(imports)/libgtkextra-lite.a $(imports)/libgtkextra-lite.def
 	rm -f gretl.stamp build.h
@@ -269,8 +269,8 @@ plugins/leverage.dll: leverage.o gretl_matrix.o dllinit.o
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -llapack -lblas -lf2c
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
-	$(CC) -c $(CFLAGS) $(GLIBINC) $<
+	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
 
 workbook.o: workbook.c $(topsrc)/plugin/libole2/ms-ole.h
-	$(CC) -c $(CFLAGS) $(GLIBINC) $<
+	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
 

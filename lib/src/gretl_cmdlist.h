@@ -22,7 +22,7 @@
 #ifndef CMDLIST_H
 #define CMDLIST_H
 
-char *commands[] = {
+char *gretl_commands[] = {
     ";",     
     "add",
     "addto",

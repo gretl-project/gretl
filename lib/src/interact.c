@@ -33,7 +33,7 @@
 # endif
 #endif
 
-#include "cmdlist.h"
+#include "gretl_cmdlist.h"
 
 extern int _omitfromlist (int *list, const int *omitvars, int newlist[],
 			  const DATAINFO *pdinfo, const int model_count);
@@ -122,7 +122,7 @@ int command_number (const char *cmd)
     int i;
 
     for (i=0; i<NC; i++) 
-	if (strcmp(cmd, commands[i]) == 0) 
+	if (strcmp(cmd, gretl_commands[i]) == 0) 
 	    return i;
     return 0;
 }
@@ -650,7 +650,7 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
     if (cmd == NULL) {
 	pputs(prn, _("\nValid gretl commands are:\n"));
 	for (i=1; i<NC; i++) {
-	    pprintf(prn, "%-9s", commands[i]);
+	    pprintf(prn, "%-9s", gretl_commands[i]);
 	    if (i%8 == 0) pputs(prn, "\n");
 	    else pputs(prn, " ");
 	}
@@ -665,14 +665,14 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 
     ok = 0;
     for (i=1; i<NC; i++) {
-	if (!strcmp(commands[i], cmd)) {
+	if (!strcmp(gretl_commands[i], cmd)) {
 	    ok = 1;
 	    break;
 	}
     }
     if (!ok && aliased(cmdcopy)) {
 	for (i=1; i<NC; i++) {
-	    if (!strcmp(commands[i], cmdcopy)) {
+	    if (!strcmp(gretl_commands[i], cmdcopy)) {
 		ok = 1;
 		break;
 	    }

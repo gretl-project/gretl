@@ -9,6 +9,8 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 
 have_gtk = @have_gtk@
+have_gmp = @have_gmp@
+
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 XML_CFLAGS = @XML_CFLAGS@
@@ -55,17 +57,11 @@ SRCS = excel_import.c gnumeric_import.c gretl_matrix.c import_common.c \
 	workbook.c
 
 PLUGINS = lad.la stats_tables.la panel_data.la range-mean.la \
-	progress_bar.la gnumeric_import.la excel_import.la $(TXPLUGIN)
+	progress_bar.la gnumeric_import.la excel_import.la \
+	johansen.la sur.la leverage.la $(TXPLUGIN)
 
-LAPACK_PLUGINS = johansen.la sur.la leverage.la
-
-ifdef GMP_LIBS
+ifeq ($(have_gmp),yes)
   PLUGINS += mp_ols.la
-endif
-
-ifdef LAPACK_LIBS
-  PLUGINS += $(LAPACK_PLUGINS)
-  LAPACK_CFLAGS = -I.
 endif
 
 ifeq ($(HAVE_TRAMO),1)
@@ -84,7 +80,7 @@ endif
 
 %.lo: %.c
 	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(XML_CFLAGS) \
-	$(LIBOLE2_CFLAGS) $(LAPACK_CFLAGS) $< 
+	$(LIBOLE2_CFLAGS) -I. $< 
 	$(CC) -MM -MG $(GRETLINC) $< >$*.d 2>/dev/null
 
 all: $(PLUGINS)
@@ -132,17 +128,13 @@ $(GRETLLIB):
 
 .PHONY: 
 
-install: $(PLUGINS) installdirs
+install: $(GRETLLIB) $(PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) \
 	$(PLUGINS) $(plugindir)
 
-install-strip: $(PLUGINS) installdirs
+install-strip: $(GRETLLIB) $(PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s \
 	$(PLUGINS) $(plugindir)
-
-install-lapack: $(GRETLLIB) $(LAPACK_PLUGINS) installdirs
-	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) \
-	$(LAPACK_PLUGINS) $(plugindir)
 
 installdirs:
 	$(topsrc)/tools/mkinstalldirs $(plugindir)

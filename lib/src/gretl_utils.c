@@ -2188,7 +2188,7 @@ int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo)
 {
     if (pmod->list == NULL) return 1;
 
-    sprintf(spec->cmd, "%s ", commands[pmod->ci]);
+    sprintf(spec->cmd, "%s ", gretl_commands[pmod->ci]);
     
     if (pmod->ci == AR) {
 	store_list(pmod->arinfo->arlist, spec->cmd);

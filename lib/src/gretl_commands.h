@@ -122,6 +122,6 @@ typedef enum {
                            (c) == TSLS || (c) == VAR || (c) == WLS || \
                            (c) == SPEARMAN)
 
-extern char *commands[];  /* see cmdlist.h */
+extern char *gretl_commands[];  /* see gretl_cmdlist.h */
 
 #endif /* COMMANDS_H */

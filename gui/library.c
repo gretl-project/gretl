@@ -1912,7 +1912,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     PRN *prn;
 
     action = sr->code;
-    strcpy(estimator, commands[action]);
+    strcpy(estimator, gretl_commands[action]);
 
     edttext = sr->cmdlist;    
     if (*edttext == '\0') return;
@@ -1961,7 +1961,7 @@ void do_model (GtkWidget *widget, gpointer p)
     selector *sr = (selector *) p;  
 
     action = sr->code;
-    strcpy(estimator, commands[action]);
+    strcpy(estimator, gretl_commands[action]);
 
     edttext = sr->cmdlist;    
     if (*edttext == '\0') return;
@@ -2826,7 +2826,7 @@ void add_logs_etc (GtkWidget *widget, gpointer p)
 
     line[0] = '\0';
     msg[0] = '\0';
-    sprintf(line, "%s %s", commands[ddata->code], edttext);
+    sprintf(line, "%s %s", gretl_commands[ddata->code], edttext);
 
     if (check_cmd(line) || cmd_init(line)) return;
 

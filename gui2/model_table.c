@@ -112,7 +112,9 @@ void free_model_list (void)
     free(grand_list);
     grand_list = NULL;
     model_list_len = 0;
+#if 0
     infobox(_("Model table cleared"));
+#endif
 }
 
 static int var_is_in_model (int v, const MODEL *pmod)

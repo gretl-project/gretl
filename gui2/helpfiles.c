@@ -269,7 +269,7 @@ static void add_help_topics (windata_t *hwin, int script)
 	    if ((heads[i])->topics[j] < NC) {
 		sprintf(helpitem.path, "%s/%s/%s", 
 			mpath, _((heads[i])->name), 
-			commands[(heads[i])->topics[j]]);
+			gretl_commands[(heads[i])->topics[j]]);
 	    } else {
 		sprintf(helpitem.path, "%s/%s/%s", 
 			mpath, _((heads[i])->name), 

@@ -15,6 +15,8 @@ CLI_LIBS = @CLI_LIBS@
 RL_OBJ = @RL_OBJ@
 USE_NLS = @USE_NLS@
 
+GMP_CFLAGS = @GMP_CFLAGS@
+
 ifeq ($(CC),)
   CC = gcc
 endif
@@ -45,7 +47,7 @@ VPATH = $(topsrc)/cli
 SRCS = gretlcli.c common.c complete.c
 OBJS = gretlcli.o $(RL_OBJ)
 
-override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(DEFS)
+override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(GMP_CFLAGS) $(DEFS)
 
 CLI = gretlcli
 LIBTOOL = ../libtool

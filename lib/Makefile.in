@@ -56,12 +56,12 @@ libdir = $(prefix)/lib
 includedir = $(prefix)/include/gretl
 
 SRCS = calendar.c compare.c dataio.c describe.c discrete.c \
-	errors.c estimate.c generate.c graphing.c \
+	estimate.c generate.c graphing.c gretl_errors.c \
 	gretl_utils.c interact.c modelprint.c monte_carlo.c nonparam.c \
 	printout.c pvalues.c random.c strutils.c subsample.c system.c \
 	texprint.c var.c 
 
-HDRS = libgretl.h commands.h estimate.h gretl_utils.h errors.h pvalues.h \
+HDRS = libgretl.h gretl_commands.h estimate.h gretl_utils.h gretl_errors.h pvalues.h \
 	random.h compare.h dataio.h generate.h strutils.h describe.h \
 	printout.h modelprint.h version.h texprint.h var.h interact.h graphing.h \
 	monte_carlo.h nonparam.h discrete.h subsample.h system.h calendar.h \
@@ -116,7 +116,7 @@ installdirs:
 	$(topsrc)/tools/mkinstalldirs $(INSTALLDIRS)
 
 clean:
-	rm -f *.o *.lo $(LIBGRETL) core 
+	rm -f *.o *.d *.lo $(LIBGRETL) core 
 	rm -rf ./.libs
 
 distclean: clean
