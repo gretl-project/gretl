@@ -1,4 +1,4 @@
-<!doctype article PUBLIC "-//OASIS//DTD DocBook V4.1//EN" [
+<!doctype article PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 <!ENTITY gretl-bhhh-max SYSTEM "sgml/bhhh_max.sgml">
 <!ENTITY gretl-calendar SYSTEM "sgml/calendar.sgml">
 <!ENTITY gretl-compare SYSTEM "sgml/compare.sgml">

@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-enum data_options {
+typedef enum {
     GRETL_DATA_FLOAT = 1, /* single-precision binary data */
     GRETL_DATA_DOUBLE,    /* double-precision binary data */
     GRETL_DATA_OCTAVE,    /* data in Gnu Octave format */
@@ -30,9 +30,9 @@ enum data_options {
     GRETL_DATA_GZIPPED,   /* gzipped data */
     GRETL_DATA_TRAD,      /* traditional (ESL-style) data */
     GRETL_DATA_DAT        /* data in PcGive format */
-};
+} gretl_data_format;
 
-enum gretl_filetypes {
+typedef enum {
     GRETL_NATIVE_DATA,    /* gretl native format data file */
     GRETL_XML_DATA,       /* gretl xml format data file */
     GRETL_CSV_DATA,       /* comma-separated data file */
@@ -43,18 +43,18 @@ enum gretl_filetypes {
     GRETL_NATIVE_DB,      /* gretl database */
     GRETL_RATS_DB,        /* RATS 4.0 database */
     GRETL_UNRECOGNIZED    /* none of the above */
-};
+} gretl_filetype;
 
-enum clear_codes {
-    CLEAR_FULL,
-    CLEAR_SUBSAMPLE
-};
+typedef enum {
+    CLEAR_FULL,           /* fully clear the dataset */
+    CLEAR_SUBSAMPLE       /* dataset is sub-sampled: clear partially */
+} data_clear_code;
 
-enum data_open_codes {
-    DATA_NONE,
-    DATA_CLEAR,
-    DATA_APPEND
-};
+typedef enum {
+    DATA_NONE,    /* no dataset is currently open */
+    DATA_CLEAR,   /* dataset is open: dataset info should be cleared */
+    DATA_APPEND   /* dataset is open: attempt to append new data */
+} data_open_code;
 
 
 #define free_datainfo(p) do { if (p != NULL) { clear_datainfo(p, 0); free(p); } \
@@ -106,7 +106,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 
 int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, 
 		    char *datfile, PATHS *ppaths, 
-		    int data_status, PRN *prn);
+		    data_open_code code, PRN *prn);
 
 int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
 		   int data_status, int length,

@@ -21,13 +21,13 @@ void gretl_rand_init (void);
 
 void gretl_rand_free (void);
 
-void gretl_rand_set_seed (unsigned seed);
+void gretl_rand_set_seed (unsigned int seed);
 
 void gretl_uniform_dist (double *a, int t1, int t2);
 
 void gretl_normal_dist (double *a, int t1, int t2);
 
-unsigned gretl_rand_int (void);
+unsigned int gretl_rand_int (void);
 
-unsigned gretl_rand_int_max (unsigned max);
+unsigned int gretl_rand_int_max (unsigned int max);
 

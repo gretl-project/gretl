@@ -61,7 +61,7 @@ void gretl_rand_init (void)
  *
  */
 
-void gretl_rand_set_seed (unsigned seed)
+void gretl_rand_set_seed (unsigned int seed)
 {
 #ifdef HAVE_G_RAND
     g_rand_set_seed(gretl_rand, seed);
@@ -128,7 +128,7 @@ void gretl_normal_dist (double *a, int t1, int t2)
     }
 }
 
-unsigned gretl_rand_int (void)
+unsigned int gretl_rand_int (void)
 {
 #ifdef HAVE_G_RAND
     return g_rand_int(gretl_rand);
@@ -146,7 +146,7 @@ unsigned gretl_rand_int (void)
  *
  */
 
-unsigned gretl_rand_int_max (unsigned max)
+unsigned int gretl_rand_int_max (unsigned int max)
 {
 #ifdef HAVE_G_RAND
     return g_rand_int_range(gretl_rand, 0, max);

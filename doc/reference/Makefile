@@ -30,7 +30,7 @@ HFILE_GLOB=
 CFILE_GLOB=
 
 # Header files to ignore when scanning.
-IGNORE_HFILES = f2c.h
+IGNORE_HFILES = f2c.h clapack_double.h gretl_matrix_private.h gretl_private.h version.h
 
 # Extra SGML files that are included by $(DOC_MAIN_SGML_FILE).
 content_files =

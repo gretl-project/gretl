@@ -50,7 +50,7 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols);
 
 gretl_matrix *gretl_packed_matrix_alloc (int rows);
 
-gretl_matrix *gretl_matrix_copy (gretl_matrix *m);
+gretl_matrix *gretl_matrix_copy (const gretl_matrix *m);
 
 gretl_matrix *gretl_diagonal_matrix (const double *d, int n, int mod);
 

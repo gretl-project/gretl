@@ -1745,8 +1745,7 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
  * @ppdinfo: pointer to data information struct.
  * @datfile: name of file to try.
  * @ppaths: path information struct.
- * @data_status: DATA_NONE: no datafile currently open; DATA_CLEAR: datafile
- * is open, should be cleared; DATA_APPEND: add to current dataset.
+ * @code: option.
  * @prn: where messages should be written.
  * 
  * Read data from file into gretl's work space, allocating space as
@@ -1757,7 +1756,7 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
  */
 
 int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppaths, 
-		    int data_status, PRN *prn) 
+		    data_open_code code, PRN *prn) 
 {
     DATAINFO *tmpdinfo = NULL;
     double **tmpZ = NULL;
@@ -1802,7 +1801,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     /* catch XML files that have strayed in here? */
     if (add_gdt && xmlfile(datfile)) {
 	return get_xmldata(pZ, ppdinfo, datfile, ppaths, 
-			   data_status, prn, 0);
+			   code, prn, 0);
     }
 
     tmpdinfo = datainfo_new();
@@ -1889,11 +1888,11 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     err = readlbl(lblfile, tmpdinfo);
     if (err) goto bailout;
 
-    if (data_status == DATA_APPEND) {
+    if (code == DATA_APPEND) {
 	err = merge_data(pZ, *ppdinfo, tmpZ, tmpdinfo, prn);
     } else {
 	free_Z(*pZ, *ppdinfo);
-	if (data_status == DATA_CLEAR) {
+	if (code == DATA_CLEAR) {
 	    clear_datainfo(*ppdinfo, CLEAR_FULL);
 	}
 	free(*ppdinfo);

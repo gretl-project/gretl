@@ -38,14 +38,6 @@ get_misscount
 </SECTION>
 
 <SECTION>
-<FILE>clapack_double</FILE>
-icmax1_
-ieeeck_
-ilaenv_
-izmax1_
-</SECTION>
-
-<SECTION>
 <FILE>compare</FILE>
 COMPARE
 auxreg
@@ -64,6 +56,10 @@ sum_test
 
 <SECTION>
 <FILE>dataio</FILE>
+gretl_data_format
+gretl_filetype
+data_clear_code
+data_open_code
 free_datainfo
 free_Z
 datainfo_new
@@ -310,13 +306,6 @@ gretl_matrix_rows
 </SECTION>
 
 <SECTION>
-<FILE>gretl_matrix_private</FILE>
-gretl_matrix
-mdx
-mdxtr
-</SECTION>
-
-<SECTION>
 <FILE>gretl_model</FILE>
 free_model
 gretl_model_new
@@ -345,54 +334,6 @@ getopenfile
 show_paths
 set_paths
 fetch_gretl_lib_path
-</SECTION>
-
-<SECTION>
-<FILE>gretl_private</FILE>
-laggenr
-gretl_multiply
-gretl_print_add
-gretl_print_omit
-graphyzx
-gretl_printxs
-bufspace
-gretl_print_ar
-gretl_delete
-numeric_string
-gretl_trunc
-count_fields
-shift_left
-gretl_corr
-gretl_covar
-gretl_iszero
-gretl_isconst
-gretl_mean
-gretl_minmax
-gretl_hasconst
-gretl_compare_doubles
-gretl_stddev
-gretl_variance
-gretl_sst
-gretl_aic_etc
-gretl_criteria
-adjust_t1t2
-list_dups
-gretl_forecast
-z_to_xy
-gretl_is_reserved
-gretl_test_init
-rearrange_list
-vars_identical
-get_function
-gretl_varinfo_init
-corrrsq
-big_list
-get_hac_lag
-get_hc_version
-get_use_qr
-copy_subdum
-get_vcv_index
-path_append
 </SECTION>
 
 <SECTION>
@@ -784,12 +725,5 @@ gretl_var_get_name
 gretl_var_get_variable_number
 gretl_var_get_n_equations
 gretl_var_add_resids_to_dataset
-</SECTION>
-
-<SECTION>
-<FILE>version</FILE>
-LIBGRETL_CURRENT
-LIBGRETL_REVISION
-LIBGRETL_AGE
 </SECTION>
 

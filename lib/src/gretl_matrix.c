@@ -129,7 +129,8 @@ gretl_matrix *gretl_diagonal_matrix (const double *d, int n, int mod)
 
 /* ....................................................... */
 
-static gretl_matrix *gretl_matrix_copy_mod (gretl_matrix *m, int mod)
+static gretl_matrix *
+gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 {
     gretl_matrix *c;
     int i, j, n;
@@ -184,7 +185,7 @@ static gretl_matrix *gretl_matrix_copy_mod (gretl_matrix *m, int mod)
  * 
  */
 
-gretl_matrix *gretl_matrix_copy (gretl_matrix *m)
+gretl_matrix *gretl_matrix_copy (const gretl_matrix *m)
 {
     return gretl_matrix_copy_mod(m, GRETL_MOD_NONE);
 }
@@ -1277,7 +1278,7 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
  * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
  * 
  * Computes the eigenvalues of the real symmetric matrix @m.  
- * If @ev eigenvecs is non-zero, also compute the orthonormal
+ * If @eigenvecs is non-zero, also compute the orthonormal
  * eigenvectors of @m, which are stored in @m. Uses the lapack 
  * function dsyev.
  *
@@ -1286,8 +1287,8 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
  * 
  */
 
-double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
-					  int eigenvecs) 
+double *
+gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs) 
 {
     integer n = m->rows;
     integer info;
@@ -1513,7 +1514,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
  * @err: pointer to error code variable.
  *
  * Computes the scalar produce, @b transpose times @X times @b.
- * On success, *err = 0, otherwise it is non-xero.
+ * On success, *err = 0, otherwise it is non-zero.
  * 
  * Returns: scalar product.
  * 

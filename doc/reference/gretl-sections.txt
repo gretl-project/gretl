@@ -56,6 +56,10 @@ sum_test
 
 <SECTION>
 <FILE>dataio</FILE>
+gretl_data_format
+gretl_filetype
+data_clear_code
+data_open_code
 free_datainfo
 free_Z
 datainfo_new
@@ -170,6 +174,28 @@ rhodiff
 simulate
 genr_fit_resid
 genr_scalar_index
+</SECTION>
+
+<SECTION>
+<FILE>genstack</FILE>
+dprintf
+DPRINTF
+ATOMLEN
+genatom
+push_atom
+pop_atom
+pop_child_atom
+peek_child_atom
+reset_atom_stack
+destroy_atom_stack
+atom_stack_set_parentage
+atom_eat_children
+atom_stack_bookmark
+atom_stack_resume
+atom_stack_check_for_scalar
+calc_push
+calc_pop
+reset_calc_stack
 </SECTION>
 
 <SECTION>
@@ -418,8 +444,10 @@ OBSLEN
 M_PI
 LISTSEP
 PMAX_NOT_AVAILABLE
+OPT_NONE
 screen_zero
 LIST
+gretlopt
 VARINFO
 DATAINFO
 PATHS
@@ -698,4 +726,5 @@ gretl_var_get_variable_number
 gretl_var_get_n_equations
 gretl_var_add_resids_to_dataset
 </SECTION>
+
 
