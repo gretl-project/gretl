@@ -4816,7 +4816,13 @@ int gui_exec_line (char *line,
 	return err;
     } else if (fncall) {
 	return 0;
-    }  
+    } 
+
+    if (gretl_compiling_function()) {
+	err = gretl_function_append_line(line);
+	if (err) errmsg(err, prn);
+	return err;
+    }  	 
 
     /* catch requests relating to saved objects, which are not
        really "commands" as such */
@@ -4841,12 +4847,6 @@ int gui_exec_line (char *line,
         errmsg(err, prn);
         return 1;
     }
-
-    if (gretl_compiling_function()) {
-	err = gretl_function_append_line(line);
-	if (err) errmsg(err, prn);
-	return err;
-    }  	
 
     /* if we're stacking commands for a loop, parse "lightly" */
     if (loopstack) { 

@@ -560,6 +560,7 @@ int gretl_function_append_line (const char *line)
     }
 
     if (!strncmp(line, "quit", 4)) {
+	/* abort compilation */
 	delete_ufunc_from_list(fun);
 	set_compiling_off();
 	return err;
@@ -623,54 +624,57 @@ int gretl_function_start_exec (const char *line)
     return err;
 }
 
-static int dollar_term_length (const char *s)
+static int 
+safe_strncat (char *targ, const char *src, int n, int maxlen)
 {
-    int len = 1;
-
-    s++;
-    while (*s) {
-	if (isdigit((unsigned char) *s)) len++;
-	else break;
-	s++;
+    if (n == 0) {
+	n = strlen(src);
     }
 
-    return len;
+    if (strlen(targ) + n >= maxlen) {
+	return 1;
+    }
+
+    strncat(targ, src, n);
+
+    return 0;
 }
 
 static int 
 substitute_dollar_terms (char *targ, const char *src, 
-			 int len, int argc, const char **argv)
+			 int maxlen, int argc, 
+			 const char **argv)
 {
-    char *p;
     int pos, err = 0;
 
     *targ = '\0';
-    strncat(targ, src, len - 1);
 
-    while ((p = strstr(targ, "$")) != NULL) {
-	int dlen;
+    while (*src && !err) {
+	int len;
+
+	if (strchr(src, '$') == NULL) {
+	    err = safe_strncat(targ, src, 0, maxlen);
+	    break;
+	}
+
+	len = strcspn(src, "$");
+	if ((err = safe_strncat(targ, src, len, maxlen))) {
+	    break;
+	}
+	src += len;
 
 	/* got a positional parameter? */
-	if (!sscanf(p, "$%d", &pos)) {
-	    continue;
-	}
-	dlen = dollar_term_length(p);
-	if (pos > argc) {
-	    /* blank the field */
-	    memmove(p, p + dlen, strlen(p + dlen) + 1);
-	} else {
-	    /* make the substitution */
-	    char *q = malloc(strlen(p));
-
-	    if (q == NULL) {
-		err = 1;
-		break;
+	if (*(src+1) && sscanf(src, "$%d", &pos)) {
+	    if (pos <= argc) {
+		/* make the substitution */
+		err = safe_strncat(targ, argv[pos - 1], 0, maxlen);
 	    }
-	    strcpy(q, p + dlen);
-	    strcpy(p, argv[pos - 1]);
-	    strcpy(p + strlen(argv[pos - 1]), q);
-	    free(q);	
-	}
+	    src++;
+	    while (isdigit((unsigned char) *src)) src++;
+	} else {
+	    err = safe_strncat(targ, "$", 1, maxlen);
+	    src++;
+	} 
     }
 
     return err;
@@ -694,11 +698,23 @@ char *gretl_function_get_line (char *line, int len,
     } 
 
     src = call->fun->lines[call->lnum];
+    if (!strncmp(src, "exit", 4)) {
+	/* terminate execution */
+	unstack_fncall(pZ, pdinfo);
+	return NULL;
+    } 
+
     call->lnum += 1;
 
     err = substitute_dollar_terms(line, src, len, call->argc, 
 				  (const char **) call->argv); 
-     /* figure out response to error here */
+    if (err) {
+	sprintf(gretl_errmsg,
+		_("Maximum length of command line "
+		  "(%d bytes) exceeded\n"), MAXLEN);
+	unstack_fncall(pZ, pdinfo);
+	return NULL;
+    }
 
 #ifdef FN_DEBUG
     fprintf(stderr, "src='%s', line='%s'\n", src, line);

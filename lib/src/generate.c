@@ -2003,10 +2003,14 @@ int generate (double ***pZ, DATAINFO *pdinfo,
        and compressing spaces */
     get_genr_formula(s, line, &genr);
 
+    if (*s == '\0') {
+	return E_EQN;
+    }
+
     /* record the full genr expression */
     strcpy(genrs, s);
 
-    DPRINTF(("\n*** starting genr, s='%s'\n", s)); 
+    DPRINTF(("\n*** starting genr, s='%s'\n", s));
 
 #ifdef ENABLE_NLS
     if (',' == get_local_decpoint())

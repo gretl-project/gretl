@@ -676,6 +676,12 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     } else if (fncall) {
 	return;
     }
+
+    if (gretl_compiling_function()) {
+	err = gretl_function_append_line(line);
+	if (err) errmsg(err, prn);
+	return;
+    }  
     
     /* are we ready for this? */
     if (!data_status && !ignore && 
@@ -692,12 +698,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     }
 
     compress_spaces(line);
-
-    if (gretl_compiling_function()) {
-	err = gretl_function_append_line(line);
-	if (err) errmsg(err, prn);
-	return;
-    }    
 
     /* if we're stacking commands for a loop, parse "lightly" */
     if (loopstack) {
