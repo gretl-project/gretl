@@ -707,7 +707,7 @@ static void force_english (void)
 
 int main (int argc, char *argv[])
 {
-    int err = 0, gui_get_data = 0, dump = 0;
+    int err = 0, gui_get_data = 0;
     char dbname[MAXLEN];
     char filearg[MAXLEN];
 #ifdef USE_GNOME

@@ -1505,3 +1505,88 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 
     return err;
 }
+
+/**
+ * gretl_scalar_b_prime_X_b:
+ * @b: column k-vector.
+ * @X: k x k matrix.
+ * @err: pointer to error code variable.
+ *
+ * Computes the scalar produce, @b transpose times @X times @b.
+ * On success, *err = 0, otherwise it is non-xero.
+ * 
+ * Returns: scalar product.
+ * 
+ */
+
+double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
+				 int *err)
+{
+    gretl_matrix *tmp;
+    double ret = NADBL;
+
+    *err = 0;
+
+    if (b->rows != X->rows ||
+	X->rows != X->cols ||
+	b->cols != 1) {
+	*err = GRETL_MATRIX_NON_CONFORM;
+	return ret;
+    }
+
+    tmp = gretl_matrix_alloc(1, b->rows);
+    if (tmp == NULL) {
+	*err = GRETL_MATRIX_NOMEM;
+	return ret;
+    }
+
+    *err = gretl_matrix_multiply_mod(b, GRETL_MOD_TRANSPOSE,
+				     X, GRETL_MOD_NONE,
+				     tmp);
+
+    if (!*err) {
+	ret = gretl_matrix_dot_product(tmp, GRETL_MOD_NONE,
+				       b, GRETL_MOD_NONE,
+				       err);
+    }
+
+    if (*err) ret = NADBL;
+
+    gretl_matrix_free(tmp);
+
+    return ret;
+}
+
+/**
+ * gretl_vcv_matrix_from_model:
+ * @pmod: pointer to model
+ *
+ * Produces the covariance matrix for a gretl #MODEL, in the
+ * form of a gretl_matrix.  Storage is allocated, to be freed
+ * by the caller.
+ * 
+ * Returns: the covariance matrix, or NULL on error
+ * 
+ */
+
+gretl_matrix *gretl_vcv_matrix_from_model (const MODEL *pmod)
+{
+    gretl_matrix *vcv;
+    int nc = pmod->ncoeff;
+    int i, j, idx;
+
+    vcv = gretl_matrix_alloc(nc, nc);
+    if (vcv == NULL) return NULL;
+
+    for (i=0; i<nc; i++) {
+	for (j=0; j<=i; j++) {
+	    idx = ijton(i+1, j+1, nc);
+	    gretl_matrix_set(vcv, i, j, pmod->vcv[idx]);
+	    if (j != i) {
+		gretl_matrix_set(vcv, j, i, pmod->vcv[idx]);
+	    }
+	}
+    }
+
+    return vcv;
+}

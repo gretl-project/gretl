@@ -443,8 +443,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 
 	if (addvars != NULL) {
 	    difflist(new->list, orig->list, addvars);
-	    if (gretl_model_get_int(orig, "hc") || orig->ci == HCCM) {
-		/* FIXME: what about HAC? */
+	    if (gretl_model_get_int(orig, "robust") || orig->ci == HCCM) {
 		add.F = robust_omit_F(addvars, new);
 	    }
 	    gretl_print_add(&add, addvars, pdinfo, aux_code, prn, opt);
@@ -468,13 +467,9 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     return err;
 }
 
-static int in_omit_list (int k, int j, const int *list)
+static int in_omit_list (int k, const int *list)
 {
     int i;
-
-    if (list == NULL) {
-	return k != 0 && j > 1;
-    }
 
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == k) return 1;
@@ -483,16 +478,44 @@ static int in_omit_list (int k, int j, const int *list)
     return 0;
 }
 
+int omit_index (int i, const int *list, const MODEL *pmod)
+{
+    /* return pos. in model coeff array of ith var to omit */
+    int k = 0;
+
+    if (list != NULL) {
+	/* omitting a specific list of vars */
+	int j, match = 0;
+
+	for (j=2; j<=pmod->list[0]; j++) {
+	    if (in_omit_list(pmod->list[j], list)) {
+		if (match == i) {
+		    k = j - 2;
+		    break;
+		}
+		match++;
+	    }
+	}
+    } else {
+	/* omitting all but the constant */
+	k = i + pmod->ifc;
+    }
+
+    return k;
+}
+
 #undef FDEBUG
+
+/* below: simple form of Wald test for omission of variables:
+   could be generalized */
 
 double robust_omit_F (LIST list, MODEL *pmod)
 {
     int q, err = 0;
     gretl_matrix *sigma = NULL;
-    gretl_matrix *betahat = NULL;
-    gretl_matrix *tmp = NULL;
+    gretl_vector *br = NULL;
     double F;
-    int i, j, k, ii, jj, idx;
+    int i, j, ii, jj, idx;
 #ifdef FDEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 #endif
@@ -504,31 +527,24 @@ double robust_omit_F (LIST list, MODEL *pmod)
     } 
     
     sigma = gretl_matrix_alloc(q, q);
-    betahat = gretl_matrix_alloc(q, 1);
-    tmp = gretl_matrix_alloc(1, q);
+    br = gretl_column_vector_alloc(q);
 
-    if (sigma == NULL || betahat == NULL || tmp == NULL) {
+    if (sigma == NULL || br == NULL) {
 	gretl_matrix_free(sigma);
-	gretl_matrix_free(betahat);
-	gretl_matrix_free(tmp);
+	gretl_matrix_free(br);
 	return NADBL;
     }
 
-    ii = 0;
-    for (i=2; i<=pmod->list[0]; i++) {
-	k = pmod->list[i];
-	if (in_omit_list(k, i, list)) {
-	    gretl_matrix_set(betahat, ii, 0, pmod->coeff[i-2]);
-	    jj = 0;
-	    for (j=ii; j<=pmod->list[0]; j++) {
-		k = pmod->list[j];
-		if (in_omit_list(k, j, list)) {
-		    idx = ijton(i-1, j-1, pmod->ncoeff);
-		    gretl_matrix_set(sigma, ii, jj, pmod->vcv[idx]);
-		    jj++;
-		}
+    for (i=0; i<q; i++) {
+	ii = omit_index(i, list, pmod);
+	gretl_vector_set(br, i, pmod->coeff[ii]);
+	for (j=0; j<=i; j++) {
+	    jj = omit_index(j, list, pmod);
+	    idx = ijton(ii+1, jj+1, pmod->ncoeff);
+	    gretl_matrix_set(sigma, i, j, pmod->vcv[idx]);
+	    if (i != j) {
+		gretl_matrix_set(sigma, j, i, pmod->vcv[idx]);
 	    }
-	    ii++;
 	}
     }
 
@@ -543,23 +559,17 @@ double robust_omit_F (LIST list, MODEL *pmod)
 #endif
 
     if (!err) {
-	err = gretl_matrix_multiply_mod(betahat, GRETL_MOD_TRANSPOSE,
-					sigma, GRETL_MOD_NONE,
-					tmp);
+	F = gretl_scalar_b_prime_X_b(br, sigma, &err);
     }
 
-    if (!err) {
-	F = gretl_matrix_dot_product(tmp, GRETL_MOD_NONE,
-				     betahat, GRETL_MOD_NONE,
-				     &err);
+    if (err) {
+	F = NADBL;
+    } else {
 	F /= q;
     }
 
-    if (err) F = NADBL;
-
     gretl_matrix_free(sigma);
-    gretl_matrix_free(betahat);
-    gretl_matrix_free(tmp);
+    gretl_matrix_free(br);
 
 #ifdef FDEBUG
     gretl_print_destroy(prn);
@@ -697,8 +707,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 
 	difflist(orig->list, new->list, omitvars);
 
-	if (gretl_model_get_int(orig, "hc") || orig->ci == HCCM) {
-	    /* FIXME: what about HAC? */
+	if (gretl_model_get_int(orig, "robust") || orig->ci == HCCM) {
 	    omit.F = robust_omit_F(omitvars, orig);
 	}
 
@@ -1120,12 +1129,8 @@ int autocorr_test (MODEL *pmod, int order,
     dataset_drop_vars(k, pZ, pdinfo); 
     clear_model(&aux, pdinfo); 
 
-    if (pval < 0.05) {
-	int robust = gretl_model_get_int(pmod, "robust");
-
-	if (!robust) {
-	    autocorr_standard_errors(pmod, pZ, pdinfo, prn);
-	}
+    if (pval < 0.05 && !gretl_model_get_int(pmod, "robust")) {
+	autocorr_standard_errors(pmod, pZ, pdinfo, prn);
     }
 
     exchange_smpl(pmod, pdinfo);

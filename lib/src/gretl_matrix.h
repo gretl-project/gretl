@@ -119,6 +119,11 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *b, gretl_matrix *vcv);
 
+double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
+				 int *err);
+
+gretl_matrix *gretl_vcv_matrix_from_model (const MODEL *pmod);
+
 void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn);
 
 void gretl_matrix_set_int (gretl_matrix *m, int t);
