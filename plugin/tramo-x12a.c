@@ -788,7 +788,9 @@ int write_tx_data (char *fname, int varnum,
 					   request.code, errmsg);
 	    }
 	    if (request.opt[TRIGRAPH].save) {
-		err = make_x_axis_var(&tmpZ, tmpinfo);
+		int pv = make_x_axis_var(&tmpZ, tmpinfo);
+
+		if (pv < 0) err = 1;
 		if (!err) {
 		    err = graph_series(tmpZ, tmpinfo, paths, request.code);
 		}

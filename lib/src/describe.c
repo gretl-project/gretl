@@ -337,7 +337,7 @@ static int get_pacf (double *pacf, int m, int varnum,
 
     /* add appropriate number of lags to data set */
     for (i=1; i<=m; i++) {
-	int lnum = laggenr(varnum, i, 0, pZ, pdinfo, NULL);
+	int lnum = laggenr(varnum, i, 0, pZ, pdinfo);
 
 	if (lnum < 0) {
 	    free(list);

@@ -558,43 +558,52 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	/* fprintf(stderr, "remainder: %s\n", remainder); */
 
 	if (isalpha((unsigned char) *field)) {
-	    /* fprintf(stderr, "field: %s\n", field); */
-	    if (field[strlen(field)-1] == ';')
-		field[strlen(field)-1] = '\0';
+	    /* should be the name of a variable */
+	    if (field[strlen(field) - 1] == ';')
+		field[strlen(field) - 1] = '\0';
 	    if ((v = varindex(pdinfo, field)) <= pdinfo->v - 1) {
+		/* yes, it's an existing variable */
 		command->list[j] = v;
 	    } else {
-		/* an auto-generated variable? */
+		/* no: an auto-generated variable? */
 		/* Case 1: automated lags:  e.g. 'var(-1)' */
 		if (_parse_lagvar(field, &lagvar, pdinfo)) {
-		    int lnum, new;
+		    int lnum;
 
-		    lnum = laggenr(lagvar.varnum, lagvar.lag, 1, 
-				   pZ, pdinfo, &new);
+		    lnum = laggenr(lagvar.varnum, lagvar.lag, 1, pZ, pdinfo);
 		    if (lnum < 0) {
 			command->errcode = 1;
 			sprintf(gretl_errmsg, 
 				_("generation of lag variable failed"));
-			free(remainder);
-			return;
 		    } else { 
 			command->list[j] = lnum;
-			if (new && cmds != NULL) {
+			if (cmds != NULL) {
 			    pprintf(cmds, "genr %s\n", VARLABEL(pdinfo, lnum));
 			}
+			/* fully handled, get on with it */
 			n += strlen(field) + 1;
 			continue; 
 		    }
 		} 
 		/* Case 2: special plotting variable */
-		if (!strcmp(field, "qtrs") || 
-		    !strcmp(field, "months") || !strcmp(field, "time")) {
-		    plotvar(pZ, pdinfo, field);
-		    command->list[j] = pdinfo->v - 1;
-		} else {
-		    int fail = 1;
+		else if (!command->errcode && (!strcmp(field, "qtrs") || 
+		    !strcmp(field, "months") || !strcmp(field, "time"))) {
+		    int pnum = plotvar(pZ, pdinfo, field);
 
-		    /* try abbreviating the word? */
+		    if (pnum < 0) {
+			command->errcode = 1;
+			sprintf(gretl_errmsg, 
+				_("Failed to add plotting index variable"));
+		    } else {
+			command->list[j] = pnum;
+			/* fully handled, get on with it */
+			n += strlen(field) + 1;
+			continue; 
+		    }
+		} 
+		/* last chance: try abbreviating the varname? */
+		else if (!command->errcode) {
+		    command->errcode = 1; /* presume guilt at this stage */
 		    if (strlen(field) > 8) {
 			char test[9];
 
@@ -602,21 +611,24 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 			strncat(test, field, 8);
 			if ((v = varindex(pdinfo, test)) <= pdinfo->v - 1) {
 			    command->list[j] = v;
-			    fail = 0;
-			}
+			    command->errcode = 0;
+			} 
 		    } 
-		    if (fail) {
-			command->errcode = 1;
+		    if (command->errcode) {
 			sprintf(gretl_errmsg, 
 				_("'%s' is not the name of a variable"), field);
-			free(remainder);
-			return;
 		    }
+		}
+
+		if (command->errcode) {
+		    free(remainder);
+		    return;
 		}
 	    }
 	} /* end if isalpha(*field) */
 
-	if (isdigit(*field)) {
+	else if (isdigit(*field)) {
+	    /* could be the ID number of a variable */
 	    v = atoi(field);
 	    if (!ar && !poly && v > pdinfo->v - 1) {
 		command->errcode = 1;
@@ -629,6 +641,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	}
 
 	else if (*field == ';') {
+	    /* could be the separator between two sub-lists */
 	    if (command->ci == TSLS || command->ci == AR ||
 		command->ci == MPOLS || command->ci == SCATTERS) {
 		command->param = realloc(command->param, 4);
@@ -667,7 +680,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	}
 
 	n += strlen(field) + 1;
-    }
+    } /* end of loop through fields in command line */
 
     /* commands that can take a specified list, but where if the
        list is null or just ";" we want to operate on all variables

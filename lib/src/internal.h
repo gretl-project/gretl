@@ -23,7 +23,7 @@
 #define GRETL_INTERNAL_H
 
 int laggenr (int parent, int lag, int opt, double ***pZ, 
-	     DATAINFO *pdinfo, int *new);
+	     DATAINFO *pdinfo);
 
 int _multiply (char *s, int *list, char *sfx, double ***pZ,
 	       DATAINFO *pdinfo);

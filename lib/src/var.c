@@ -317,7 +317,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    depvars[neqns] = list[i];
 	    neqns++;
 	    for (l=1; l<=order; l++) {
-		int lnum = laggenr(list[i], l, 1, pZ, pdinfo, NULL);
+		int lnum = laggenr(list[i], l, 1, pZ, pdinfo);
 
 		/* FIXME: handle laggenr error */
 		if (lnum > 0) {
@@ -609,7 +609,7 @@ int adf_test (int order, int varno, double ***pZ,
     i = pdinfo->t1;
     pdinfo->t1 = 0;
     diffgenr(varno, pZ, pdinfo);
-    if (laggenr(varno, 1, 1, pZ, pdinfo, NULL) < 0) {
+    if (laggenr(varno, 1, 1, pZ, pdinfo) < 0) {
 	free(adflist);
 	free(shortlist);
 	return E_DATA;
@@ -668,7 +668,7 @@ int adf_test (int order, int varno, double ***pZ,
     adflist[3] = lagvarnum(varno, 1, pdinfo);
 
     for (l=1; l<=order; l++) {
-	int lnum = laggenr(adflist[1], l, 1, pZ, pdinfo, NULL);
+	int lnum = laggenr(adflist[1], l, 1, pZ, pdinfo);
 
 	/* FIXME: handle laggenr error */
 	if (lnum > 0) {
@@ -1028,7 +1028,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    hasconst = 1;
 	    continue;
 	}
-	lnum = laggenr(list[i], 1, 1, pZ, pdinfo, NULL);
+	lnum = laggenr(list[i], 1, 1, pZ, pdinfo);
 	/* FIXME: handle laggenr error */
 	if (lnum > 0) {
 	    resids.levels_list[j++] = lnum;

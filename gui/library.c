@@ -2795,15 +2795,15 @@ void add_dummies (gpointer data, guint panel, GtkWidget *widget)
 
 void add_time (gpointer data, guint index, GtkWidget *widget)
 {
-    gint err;
+    int pv;
 
     clear(line, MAXLEN);
     if (index) sprintf(line, "genr index");
     else sprintf(line, "genr time");
     if (verify_and_record_command(line)) return;
 
-    err = plotvar(&Z, datainfo, (index)? "index" : "time");
-    if (err) 
+    pv = plotvar(&Z, datainfo, (index)? "index" : "time");
+    if (pv < 0) 
 	errbox((index)? _("Error generating index variable") : 
 	       _("Error generating time trend"));
     else populate_main_varlist();
@@ -2971,13 +2971,15 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 	plot_list[2] = xvar;
 	lines[0] = 0;
     } else {    /* plot against obs index or time */
-	err = plotvar(&Z, datainfo, (ts)? "time" : "index");
-	if (err) {
+	int pv;
+
+	pv = plotvar(&Z, datainfo, (ts)? "time" : "index");
+	if (pv < 0) {
 	    errbox(_("Failed to add plotting index variable"));
 	    dataset_drop_vars(1, &Z, datainfo);
 	    return;
 	}
-	plot_list[2] = varindex(datainfo, (ts)? "time" : "index");
+	plot_list[2] = pv;
 	lines[0] = (ts)? 1 : 0;
     } 
 
@@ -3029,13 +3031,15 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	    lines[1] = 0;
 	} else { 
 	    /* plot against obs */
-	    err = plotvar(&Z, datainfo, (ts)? "time" : "index");
-	    if (err) {
+	    int pv;
+
+	    pv = plotvar(&Z, datainfo, (ts)? "time" : "index");
+	    if (pv < 0) {
 		errbox(_("Failed to add plotting index variable"));
 		dataset_drop_vars(1, &Z, datainfo);
 		return;
 	    }
-	    plot_list[3] = varindex(datainfo, (ts)? "time" : "index");
+	    plot_list[3] = pv;
 	    lines[0] = (ts)? 1 : 0; 
 	    lines[1] = (ts)? 1 : 0;
 	} 

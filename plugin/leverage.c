@@ -37,12 +37,16 @@ static int leverage_plot (int n, int tstart, const double *uhat,
     if (dataset_is_time_series(pdinfo) && 
 	(pdinfo->pd == 1 || pdinfo->pd == 4 || pdinfo->pd == 12)) {
 	char per[8];
+	int pv;
 
 	if (pdinfo->pd == 1) strcpy(per, "annual");
 	else if (pdinfo->pd == 4) strcpy(per, "qtrs");
 	else if (pdinfo->pd == 12) strcpy(per, "months");
-	plotvar(pZ, pdinfo, per);
-	timeplot = varindex(pdinfo, per);
+	timeplot = plotvar(pZ, pdinfo, per);
+	if (timeplot < 0) {
+	    if (fp != NULL) fclose(fp);
+	    return 1;
+	}
     }
 
     fputs("# leverage/influence plot\n", fp);

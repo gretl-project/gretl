@@ -524,7 +524,7 @@ const char *get_gretl_png_term_line (const PATHS *ppaths)
 	strcat(png_term_line, " color"); 
     } else {
 	strcat(png_term_line, 
-	       " xffffff x000000 x202020 xff0000 x0000ff x00ff00"); 
+	       " xffffff x000000 x202020 xff0000 x0000ff x00aa00"); 
     }
 #endif 
 
@@ -768,8 +768,13 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 
     if (strcmp(pdinfo->varname[list[lo]], "time") == 0) {
 	if (get_timevar(pdinfo, s2) >= 0) {
-	    plotvar(pZ, pdinfo, s2);
-	    list[lo] = varindex(pdinfo, s2);
+	    int pv = plotvar(pZ, pdinfo, s2);
+
+	    if (pv > 0) list[lo] = pv;
+	    else {
+		if (fq != NULL) fclose(fq);
+		return E_ALLOC;
+	    }
 	}
 	strcpy(xlabel, I_("Observation"));
 	if (lo > 2 && lo < 7) tscale = 1;

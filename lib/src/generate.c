@@ -2242,18 +2242,21 @@ static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
  * @period: string to identify periodicity: "annual", "qtrs",
  * "months", "time" or "index".
  *
- * Adds to the data set a special summy variable for use in plotting.
+ * Adds to the data set a special dummy variable for use in plotting.
  *
- * Returns: 0 on successful completion, error code on error.
+ * Returns: the ID number of the variable (> 0) or -1 on failure
  */
 
 int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 {
-    int t, vi, y1, n = pdinfo->n, v = pdinfo->v;
+    int t, vi, y1, n = pdinfo->n;
     float rm;
 
-    if ((vi = varindex(pdinfo, period)) < v) return 0;
-    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
+    vi = varindex(pdinfo, period);
+    if (vi < pdinfo->v) return vi;
+
+    if (dataset_add_vars(1, pZ, pdinfo)) return -1;
+
     strcpy(pdinfo->varname[vi], period);
 
     y1 = (int) pdinfo->sd0;
@@ -2294,7 +2297,8 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
     default:
 	break;
     }
-    return 0;
+
+    return vi;
 }
 
 /* ......................................................  */
@@ -2303,12 +2307,10 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
    already exist.  
 
    Return the ID number of the lag var, or -1 on error.
-   If "new" is non-NULL, use it to record whether new
-   data were generated or not.
 */
 
 int laggenr (int parent, int lag, int opt, double ***pZ, 
-	     DATAINFO *pdinfo, int *new)
+	     DATAINFO *pdinfo)
 {
     char word[32];
     char s[32];
@@ -2331,8 +2333,6 @@ int laggenr (int parent, int lag, int opt, double ***pZ,
     /* put the lag values into array lx */
     get_lag(parent, lag, lx, *pZ, pdinfo);
 
-    if (new != NULL) *new = 0;
-
     if (lno < pdinfo->v) {
 	/* a variable of this name already exists */
 	if (vars_identical(lx, (*pZ)[lno], pdinfo->n)) {
@@ -2342,7 +2342,6 @@ int laggenr (int parent, int lag, int opt, double ***pZ,
 	    /* but the values are wrong: swap them */
 	    free((*pZ)[lno]);
 	    (*pZ)[lno] = lx;
-	    if (new != NULL) *new = 1;
 	}
     } else {
 	/* no var of this name, working from scratch */
@@ -2352,7 +2351,6 @@ int laggenr (int parent, int lag, int opt, double ***pZ,
 	    sprintf(VARLABEL(pdinfo, lno), "%s = %s(-%d)", s, 
 		    pdinfo->varname[parent], lag);
 	}
-	if (new != NULL) *new = 1;
     }
 
     return lno;
@@ -2564,7 +2562,7 @@ int lags (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	lv = list[v];
 	if (lv == 0 || !pdinfo->vector[lv]) continue;
 	for (l=1; l<=maxlag; l++) {
-	    check = laggenr(lv, l, 1, pZ, pdinfo, NULL);
+	    check = laggenr(lv, l, 1, pZ, pdinfo);
 	    if (check < 0) return 1;
 	}
     }
@@ -2583,6 +2581,7 @@ int _parse_lagvar (const char *varname, LAGVAR *plagv, DATAINFO *pdinfo)
     /*  fprintf(stderr, "_parse_lagvar: varname = %s\n", varname); */
 
     for (i=0; i<3; i++) testint[i] = '\0';
+
     for (i=0; i<n-3; i++) {
 	if (varname[i] == '(') {
 	    l = i;
@@ -2603,8 +2602,7 @@ int _parse_lagvar (const char *varname, LAGVAR *plagv, DATAINFO *pdinfo)
 			    < pdinfo->v) {
 			    plagv->varnum = n;
 			    return l;
-			}
-			else return 0;
+			} else return 0;
 		    } else return 0;
 		}
 	    }

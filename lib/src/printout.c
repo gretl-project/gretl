@@ -1299,7 +1299,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 				double ***pZ, DATAINFO *pdinfo, PRN *prn,
 				PATHS *ppaths, int plot)
 {
-    int err = 0;
+    int pv, err = 0;
     int t;
     double *maxerr;
 
@@ -1331,27 +1331,32 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 	if (pdinfo->time_series == TIME_SERIES) {
 	    switch (pdinfo->pd) {
 	    case 1:
-		plotvar(pZ, pdinfo, "annual");
+		pv = plotvar(pZ, pdinfo, "annual");
 		break;
 	    case 4:
-		plotvar(pZ, pdinfo, "qtrs");
+		pv = plotvar(pZ, pdinfo, "qtrs");
 		break;
 	    case 12:
-		plotvar(pZ, pdinfo, "months");
+		pv = plotvar(pZ, pdinfo, "months");
 		break;
 	    case 24:
-		plotvar(pZ, pdinfo, "hrs");
+		pv = plotvar(pZ, pdinfo, "hrs");
 		break;
 	    default:
-		plotvar(pZ, pdinfo, "time");
+		pv = plotvar(pZ, pdinfo, "time");
 	    }
 	} else {
-	    plotvar(pZ, pdinfo, "index");
+	    pv = plotvar(pZ, pdinfo, "index");
 	}
-	err = plot_fcast_errs(fr->nobs, &(*pZ)[pdinfo->v - 1][fr->t1], 
-			      fr->actual, fr->fitted, maxerr, 
-			      fr->depvar, 
-			      ppaths);
+
+	if (pv < 0) {
+	    err = 1;
+	} else {
+	    err = plot_fcast_errs(fr->nobs, &(*pZ)[pv][fr->t1], 
+				  fr->actual, fr->fitted, maxerr, 
+				  fr->depvar, 
+				  ppaths);
+	}
     }
 
     free(maxerr);
