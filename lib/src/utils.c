@@ -1134,74 +1134,49 @@ void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo)
 int silent_remember (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild,
 		     DATAINFO *pdinfo)
 {
-    int i = psession->nmodels;
     MODEL *pmod = *ppmod;
-    MODEL *tmp;
+    MODEL *tmp; /* will be returned in place of the saved model */
 
 #ifdef SESSION_DEBUG
     fprintf(stderr, "psession->nmodels = %d\n", psession->nmodels);
 #endif
 
     if ((pmod->name = malloc(64)) == NULL) return 1;
-    strncpy(pmod->name, rebuild->model_name[i], 63);
 
-    if (psession->nmodels)
-	psession->models = realloc(psession->models, 
-				   (i + 1) * sizeof(MODEL *));
-    else
+    pmod->name[0] = 0;
+    strncat(pmod->name, rebuild->model_name[psession->nmodels], 63);
+
+    if (psession->nmodels == 0) {
 	psession->models = malloc(sizeof(MODEL *));
+    } else {
+	psession->models = realloc(psession->models, 
+				   (psession->nmodels + 1) * sizeof(MODEL *));
+    }
+
     if (psession->models == NULL) return 1;
+
+    psession->models[psession->nmodels] = pmod;
     psession->nmodels += 1;
-    psession->models[i] = pmod;
+
     tmp = malloc(sizeof *tmp);
     if (tmp == NULL) return 1;
-    *ppmod = tmp;
+
+    *ppmod = tmp; /* replaced */
     _init_model(tmp, pdinfo);
 
 #ifdef SESSION_DEBUG
     fprintf(stderr, "copied '%s' to psession->models[%d]\n" 
-	    " nmodels = %d\n", rebuild->model_name[i], i, psession->nmodels); 
+	    " nmodels = %d\n", rebuild->model_name[psession->nmodels-1], 
+	    psession->nmodels-1, psession->nmodels); 
 #endif
+
     return 0;
 }
-    
+
 /* .......................................................... */
 
-int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild,
-		 DATAINFO *pdinfo)
+void clear_model (MODEL *pmod, DATAINFO *pdinfo)
 {
-    int i;
-    static int save;
-    MODEL *pmod;
-    MODEL **ppmod;
-
-    if (rebuild && psession) {
-	ppmod = (MODEL **) ptr;
-	pmod = *ppmod;
-
-#ifdef SESSION_DEBUG
-	fprintf(stderr, "clear_model: rebuild & psession non-NULL, save = %d\n", 
-		save);
-#endif
-	if (save) {
-	    for (i=0; i<rebuild->nmodels; i++) {
-#ifdef SESSION_DEBUG
-		fprintf(stderr, "i=%d, pmod->ID=%d, rebuild->model_ID[%d] = %d\n",
-			i, pmod->ID, i, rebuild->model_ID[i]);
-#endif		
-		if (pmod->ID == rebuild->model_ID[i]) {
-#ifdef SESSION_DEBUG
-  		    fprintf(stderr, "Rebuilding saved model %d (%s)\n",  
-  			   pmod->ID, rebuild->model_name[i]);
-#endif	 
-		    return silent_remember(ppmod, psession, rebuild, pdinfo);
-		}
-	    }
-	}
-	save = 1;
-    } else 
-	pmod = (MODEL *) ptr;
-
     if (pmod != NULL) {
 	if (pmod->list) free(pmod->list);
 	if (pmod->subdum) free(pmod->subdum);
@@ -1226,11 +1201,36 @@ int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild,
 	    free(pmod->data);
 	}
     }
+
     _init_model(pmod, pdinfo);
+}
+
+/* .......................................................... */
+
+int save_model_copy (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild,
+		     DATAINFO *pdinfo)
+{
+    static int save;
+    MODEL *pmod = *ppmod; /* copy _current_ pointer! */
+
+    if (rebuild == NULL || psession == NULL) return 1;
+
+    if (save) {
+	int i;
+
+	for (i=0; i<rebuild->nmodels; i++) {
+	    if (pmod->ID == rebuild->model_ID[i]) {
+		return silent_remember(ppmod, psession, rebuild, pdinfo);
+	    }
+	}
+    }
+    save = 1;
+
+    clear_model(pmod, pdinfo); /* hmm */
 
     return 0;
 }
-
+    
 /* .......................................................... */
 
 void show_paths (PATHS *ppaths)
@@ -1844,7 +1844,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     fmod = lsq(list, &fZ, &fdatainfo, OLS, 1, 0.0);
     if (fmod.errcode) {
 	err = fmod.errcode;
-	clear_model(&fmod, NULL, NULL, &fdatainfo);
+	clear_model(&fmod, &fdatainfo);
 	free_Z(fZ, &fdatainfo);
 	free(list);
 	free(yhat);
@@ -1934,7 +1934,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 			      ppaths);
     }
 
-    clear_model(&fmod, NULL, NULL, &fdatainfo);
+    clear_model(&fmod, &fdatainfo);
     free_Z(fZ, &fdatainfo);
     free(list);
     free(yhat);
@@ -2077,7 +2077,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
     if (tmpmod->errcode) {
 	err = 1;
-	clear_model(tmpmod, NULL, NULL, pdinfo);
+	clear_model(tmpmod, pdinfo);
     }
     if (command.list) free(command.list);
     if (command.param) free(command.param);

@@ -195,7 +195,7 @@ MODEL logit_probit (const LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
 	if (fabs(dmod.lnL - Lbak) < .000005) break; 
 	/*  printf("Log likelihood = %f\n", dmod.lnL); */
 	Lbak = dmod.lnL;
-	clear_model(&dmod, NULL, NULL, NULL);
+	clear_model(&dmod, NULL);
 	dmod = lsq(dmodlist, pZ, pdinfo, OLS, 0, 0);
 	if (dmod.errcode) {
 	    fprintf(stderr, "logit_probit: dmod errcode=%d\n", dmod.errcode);

@@ -266,9 +266,9 @@ void clear_data (int full)
     menubar_state(FALSE);
 
     /* clear everything out */
-    clear_model(models[0], NULL, NULL, NULL);
-    clear_model(models[1], NULL, NULL, NULL);
-    clear_model(models[2], NULL, NULL, NULL);
+    clear_model(models[0], NULL);
+    clear_model(models[1], NULL);
+    clear_model(models[2], NULL);
 
     free_command_stack(); 
     free_modelspec();
@@ -1339,7 +1339,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     if (err) {
         gui_errmsg(err);
         gretl_print_destroy(prn);
-        clear_model(pmod, NULL, NULL, NULL); 
+        clear_model(pmod, NULL); 
         return;
     }
 
@@ -1444,16 +1444,16 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 	    strcpy(line, "lmtest -s");
 	else
 	    strcpy(line, "lmtest -l");
-	clear_model(models[0], NULL, NULL, NULL);
+	clear_model(models[0], NULL);
 	err = auxreg(NULL, pmod, models[0], &model_count, 
 		     &Z, datainfo, aux_code, prn, &test);
 	if (err) {
 	    gui_errmsg(err);
-	    clear_model(models[0], NULL, NULL, NULL);
+	    clear_model(models[0], NULL);
 	    gretl_print_destroy(prn);
 	    return;
 	} else {
-	    clear_model(models[0], NULL, NULL, NULL); 
+	    clear_model(models[0], NULL); 
 	    model_count--;
 	    strcat(title, _("(non-linearity)"));
 	    if (add_test_to_model(&test, pmod) == 0)
@@ -1663,7 +1663,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 
     if (bufopen(&prn)) return;
 
-    clear_model(models[1], NULL, NULL, NULL);
+    clear_model(models[1], NULL);
     exchange_smpl(pmod, datainfo);
     *models[1] = arch(order, pmod->list, &Z, datainfo, 
 		     NULL, prn, &test);
@@ -1674,7 +1674,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 	    print_test_to_window(&test, mydata->w);
 	if (oflag) outcovmx(models[1], datainfo, 0, prn);
     }
-    clear_model(models[1], NULL, NULL, NULL);
+    clear_model(models[1], NULL);
     exchange_smpl(pmod, datainfo);
 
     view_buffer(prn, 78, 400, _("gretl: ARCH test"), ARCH, view_items);
@@ -3504,7 +3504,7 @@ int execute_script (const char *runfile, const char *buf,
  endwhile:
     if (fb) fclose(fb);
     if (psession && rebuild) /* recreating a gretl session */
-	clear_model(&models[0], psession, rebuild, datainfo);
+	save_model_copy(&models[0], psession, rebuild, datainfo);
     return 0;
 }
 
@@ -3582,7 +3582,7 @@ static int gui_exec_line (char *line,
 			  PRN *prn, int exec_code, 
 			  const char *myname) 
 {
-    int i, err = 0, check = 0, order, nulldata_n, lines[1];
+    int i, err = 0, check = 0, rebuilding = 0, order, nulldata_n, lines[1];
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN];
     char linecopy[1024];
@@ -3591,12 +3591,13 @@ static int gui_exec_line (char *line,
     FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
-    void *ptr;
 
     if (!data_status && !ready_for_command(line)) {
 	pprintf(prn, _("You must open a data file first\n"));
 	return 1;
     }
+
+    if (psession != NULL && rebuild != NULL) rebuilding = 1;
 
 #ifdef CMD_DEBUG
     fprintf(stderr, "gui_exec_line: '%s'\n", line);
@@ -3683,7 +3684,7 @@ static int gui_exec_line (char *line,
     case OMIT:
 	if ((err = script_model_test(0, prn, 0))) break;
     plain_add_omit:
-	clear_model(models[1], NULL, NULL, NULL);
+	clear_model(models[1], NULL);
 	if (command.ci == ADD || command.ci == ADDTO)
 	    err = auxreg(command.list, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_ADD, prn, NULL);
@@ -3692,12 +3693,12 @@ static int gui_exec_line (char *line,
 			    &model_count, &Z, datainfo, prn);
 	if (err) {
 	    errmsg(err, prn);
-	    clear_model(models[1], NULL, NULL, NULL);
+	    clear_model(models[1], NULL);
 	} else {
 	    /* for command-line use, we keep a stack of 
 	       two models, and recycle the places */
 	    swap_models(&models[0], &models[1]);
-	    clear_model(models[1], NULL, NULL, NULL);
+	    clear_model(models[1], NULL);
 	    if (oflag) outcovmx(models[0], datainfo, 0, prn);
 	}
 	break;	
@@ -3712,7 +3713,7 @@ static int gui_exec_line (char *line,
 	    pprintf(prn, _("Failed to reconstruct model %d\n"), i);
 	    break;
 	} 
-	clear_model(models[1], NULL, NULL, NULL);
+	clear_model(models[1], NULL);
 	tmpmod.ID = i;
 	if (command.ci == ADDTO)
 	    err = auxreg(command.list, &tmpmod, models[1], &model_count, 
@@ -3722,20 +3723,21 @@ static int gui_exec_line (char *line,
 			    &model_count, &Z, datainfo, prn);
 	if (err) {
 	    errmsg(err, prn);
-	    clear_model(models[1], NULL, NULL, NULL);
+	    clear_model(models[1], NULL);
 	    break;
 	} else {
 	    swap_models(&models[0], &models[1]);
-	    clear_model(models[1], NULL, NULL, NULL);
+	    clear_model(models[1], NULL);
 	    if (oflag) outcovmx(models[0], datainfo, 0, prn);
 	}
-	clear_model(&tmpmod, NULL, NULL, NULL);
+	clear_model(&tmpmod, NULL);
 	break;
 
     case AR:
-	ptr = (psession && rebuild)? 
-	    (void *) &models[0] : (void *) models[0];
-	clear_model(ptr, psession, rebuild, datainfo);
+	if (rebuilding)
+	    save_model_copy(&models[0], psession, rebuild, datainfo);
+	else
+	    clear_model(models[0], datainfo); 
 	*models[0] = ar_func(command.list, atoi(command.param), &Z, 
 			    datainfo, &model_count, prn);
 	if ((err = (models[0])->errcode)) { 
@@ -3747,7 +3749,7 @@ static int gui_exec_line (char *line,
 
     case ARCH:
 	order = atoi(command.param);
-	clear_model(models[1], NULL, NULL, NULL);
+	clear_model(models[1], NULL);
 	*models[1] = arch(order, command.list, &Z, datainfo, 
 			  &model_count, prn, ptest);
 	if ((err = (models[1])->errcode)) 
@@ -3757,7 +3759,7 @@ static int gui_exec_line (char *line,
 	    if (oflag) outcovmx(models[0], datainfo, 0, prn);
 	} else if (rebuild)
 	    add_test_to_model(ptest, models[0]);
-	clear_model(models[1], NULL, NULL, NULL);
+	clear_model(models[1], NULL);
 	break;
 
     case BXPLOT:
@@ -3793,9 +3795,10 @@ static int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	    break;
 	}
-	ptr = (psession && rebuild)? 
-	    (void *) &models[0] : (void *) models[0];	
-	clear_model(ptr, psession, rebuild, datainfo);
+	if (rebuilding)
+	    save_model_copy(&models[0], psession, rebuild, datainfo);
+	else
+	    clear_model(models[0], datainfo); 
 	*models[0] = lsq(command.list, &Z, datainfo, command.ci, 1, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
@@ -3953,9 +3956,10 @@ static int gui_exec_line (char *line,
 
     case HCCM:
     case HSK:
-	ptr = (psession && rebuild)? 
-	    (void *) &models[0] : (void *) models[0];	
-	clear_model(ptr, psession, rebuild, datainfo);
+	if (rebuilding)
+	    save_model_copy(&models[0], psession, rebuild, datainfo);
+	else
+	    clear_model(models[0], datainfo); 
 	if (command.ci == HCCM)
 	    *models[0] = hccm_func(command.list, &Z, datainfo);
 	else
@@ -4045,7 +4049,7 @@ static int gui_exec_line (char *line,
 	if (oflag == OPT_S || oflag == OPT_O || !oflag) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_SQ, prn, ptest);
-	    clear_model(models[1], NULL, NULL, NULL);
+	    clear_model(models[1], NULL);
 	    model_count--;
 	    if (err) errmsg(err, prn);
 	}
@@ -4053,7 +4057,7 @@ static int gui_exec_line (char *line,
 	if (oflag == OPT_L || oflag == OPT_O || !oflag) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_LOG, prn, ptest);
-	    clear_model(models[1], NULL, NULL, NULL);
+	    clear_model(models[1], NULL);
 	    model_count--;
 	    if (err) errmsg(err, prn);
 	}
@@ -4075,9 +4079,10 @@ static int gui_exec_line (char *line,
 
     case LOGIT:
     case PROBIT:
-	ptr = (psession && rebuild)? 
-	    (void *) &models[0] : (void *) models[0];
-	clear_model(ptr, psession, rebuild, datainfo);
+	if (rebuilding)
+	    save_model_copy(&models[0], psession, rebuild, datainfo);
+	else
+	    clear_model(models[0], datainfo); 
 	*models[0] = logit_probit(command.list, &Z, datainfo, command.ci);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
@@ -4140,9 +4145,10 @@ static int gui_exec_line (char *line,
     case OLS:
     case WLS:
     case POOLED:
-	ptr = (psession && rebuild)? 
-	    (void *) &models[0] : (void *) models[0];
-	clear_model(ptr, psession, rebuild, datainfo);
+	if (rebuilding)
+	    save_model_copy(&models[0], psession, rebuild, datainfo);
+	else
+	    clear_model(models[0], datainfo); 
 	*models[0] = lsq(command.list, &Z, datainfo, command.ci, 1, 0.0);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn); 
@@ -4337,11 +4343,12 @@ static int gui_exec_line (char *line,
 	break;
 
     case TSLS:
-	ptr = (psession && rebuild)? 
-	    (void *) &models[0] : (void *) models[0];
-	clear_model(ptr, psession, rebuild, datainfo);
+	if (rebuilding)
+	    save_model_copy(&models[0], psession, rebuild, datainfo);
+	else
+	    clear_model(models[0], datainfo); 
 	*models[0] = tsls_func(command.list, atoi(command.param), 
-			      &Z, datainfo);
+			       &Z, datainfo);
 	if ((err = (models[0])->errcode)) {
 	    errmsg((models[0])->errcode, prn);
 	    break;

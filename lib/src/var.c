@@ -341,7 +341,7 @@ int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	/* keep some results for hypothesis testing */
 	essu = var_model.ess;
 	dfd = var_model.dfd;
-	clear_model(&var_model, NULL, NULL, pdinfo);
+	clear_model(&var_model, pdinfo);
 	/* now build truncated lists for hyp. tests */
 	shortlist[1] = varlist[1];
 	pprintf(prn, _("\nF-tests of zero restrictions:\n\n"));
@@ -362,7 +362,7 @@ int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    /*  printlist(shortlist); */
 	    var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
 	    F = ((var_model.ess - essu)/order)/(essu/dfd);
-	    clear_model(&var_model, NULL, NULL, pdinfo);
+	    clear_model(&var_model, pdinfo);
 	    pprintf(prn, "F(%d, %d) = %f, ", order, dfd, F);
 	    pprintf(prn, _("p-value %f\n"), fdist(F, order, dfd));
 	}
@@ -384,7 +384,7 @@ int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    /*  printlist(shortlist); */
 	    var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
 	    F = ((var_model.ess - essu)/neqns)/(essu/dfd);
-	    clear_model(&var_model, NULL, NULL, pdinfo);
+	    clear_model(&var_model, pdinfo);
 	    pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
 	    pprintf(prn, _("p-value %f\n"), fdist(F, neqns, dfd)); 
 	}
@@ -471,7 +471,7 @@ int coint (int order, const LIST list, double ***pZ,
 	    "cannot be \nread from the usual statistical tables.)\n"));
 
     /* clean up and get out */
-    clear_model(&coint_model, NULL, NULL, pdinfo);
+    clear_model(&coint_model, pdinfo);
     free(cointlist);
     dataset_drop_vars(1, pZ, pdinfo);
     return 0;
@@ -569,7 +569,7 @@ int adf_test (int order, int varno, double ***pZ,
 	    "   %s\n"),
 	    pdinfo->varname[varno], pdinfo->varname[varno],
 	    adf_model.coeff[1], DFt, adf_model.nobs, pval);
-    clear_model(&adf_model, NULL, NULL, pdinfo);
+    clear_model(&adf_model, pdinfo);
 
     /* then do ADF test using F-statistic */
     adflist[0] = 4 + order;
@@ -595,7 +595,7 @@ int adf_test (int order, int varno, double ***pZ,
     printmodel(&adf_model, pdinfo, prn);
     essu = adf_model.ess;
     T = adf_model.nobs;
-    clear_model(&adf_model, NULL, NULL, pdinfo);
+    clear_model(&adf_model, pdinfo);
 
     shortlist[0] = adflist[0] - 2;
     shortlist[1] = adflist[1];
@@ -606,7 +606,7 @@ int adf_test (int order, int varno, double ***pZ,
     if (adf_model.errcode)
 	return adf_model.errcode;	
     F = (adf_model.ess - essu) * (T - k)/(2 * essu);
-    clear_model(&adf_model, NULL, NULL, pdinfo);
+    clear_model(&adf_model, pdinfo);
 
     row = -1;
     if (T > 500) row = 5;
@@ -675,10 +675,10 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	    /*  printf("newvars[%d] %g %g\n", t, 
 		(*pZ)[v*n + t], (*pZ)[(v+1)*n + t]); */
 	}
-	clear_model(&mamod, NULL, NULL, pdinfo);
+	clear_model(&mamod, pdinfo);
 	mamod = lsq(malist, pZ, pdinfo, OLS, 0, 0.0);
 	if ((err = mamod.errcode)) {
-	    clear_model(&mamod, NULL, NULL, pdinfo);
+	    clear_model(&mamod, pdinfo);
 	    return err;
 	}	
 	if (step == 1) {
@@ -708,7 +708,7 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     pprintf(prn, "slope:    %.4g\n", mamod.coeff[1] / (1 - a));
     pprintf(prn, "adaptive coefficient: %.2f\n", a);
 	   
-    clear_model(&mamod, NULL, NULL, pdinfo);
+    clear_model(&mamod, pdinfo);
 
     dataset_drop_vars(1, pZ, pdinfo);
 

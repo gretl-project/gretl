@@ -277,10 +277,10 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
 	tmp = lsq(list, pZ, pdinfo, OLS, 0, 0);
 	if ((err = tmp.errcode)) break;
 	pacf[i-1] = tmp.coeff[i];
-	if (i < *maxlag) clear_model(&tmp, NULL, NULL, pdinfo);
+	if (i < *maxlag) clear_model(&tmp, pdinfo);
     }
 
-    clear_model(&tmp, NULL, NULL, pdinfo);
+    clear_model(&tmp, pdinfo);
     dataset_drop_vars(pdinfo->v - v, pZ, pdinfo);
     free(laglist);
     free(list);
@@ -530,7 +530,7 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
 		tmp.coeff[1], tmp.dfd, tstat, tprob(tstat, tmp.dfd));
     } else err = tmp.errcode;
 
-    clear_model(&tmp, NULL, NULL, &tmpdinfo);
+    clear_model(&tmp, &tmpdinfo);
     free_Z(tmpZ, &tmpdinfo);
     clear_datainfo(&tmpdinfo, CLEAR_FULL);
 

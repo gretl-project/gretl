@@ -21,6 +21,8 @@
 
 #include "libgretl.h"
 
+#define USE_DCOLUMN 1
+
 /* ......................................................... */
 
 static void tex_print_float (const double x, const int tab, PRN *prn)
@@ -81,6 +83,7 @@ char *tex_escape (char *targ, const char *src)
 
 /* ......................................................... */ 
 
+#ifndef USE_DCOLUMN
 static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			     const int c, PRN *prn)
 {
@@ -112,6 +115,27 @@ static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	    tprob(pmod->coeff[c-1]/pmod->sderr[c-1], 
 		  pmod->dfd));	
 }
+#else
+static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
+			     const int c, PRN *prn)
+{
+    char tmp[16];
+    
+    tmp[0] = '\0';
+    tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
+    pprintf(prn, "%s &\n"
+	    "  %#G &\n"
+	    "    %#G &\n"
+	    "      %.4f &\n"
+	    "        %.4f \\\\\n",  
+	    tmp,
+	    pmod->coeff[c-1],
+	    pmod->sderr[c-1],
+	    pmod->coeff[c-1]/pmod->sderr[c-1],
+	    tprob(pmod->coeff[c-1]/pmod->sderr[c-1], 
+		  pmod->dfd));	
+}
+#endif /* DCOLUMN */
 
 /* ......................................................... */
 
@@ -223,36 +247,36 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
 static void tex_depvarstats (const MODEL *pmod, PRN *prn)
 {
-    pprintf(prn, "Mean of dep.\\ var. & $%f$ &"
+    pprintf(prn, "Mean of dep.\\ var. & $%#G$ &"
 	    "S.D. of dep. variable & %f\\\\\n", 
 	    pmod->ybar, pmod->sdy);
 }
 
 static void tex_essline (const MODEL *pmod, PRN *prn)
 {
-    pprintf(prn, "ESS & %f &"
-	    "Std Err of Resid. ($\\hat{\\sigma}$) & %f\\\\\n",
+    pprintf(prn, "ESS & %#G &"
+	    "Std Err of Resid. ($\\hat{\\sigma}$) & %#G\\\\\n",
 	    pmod->ess, pmod->sigma);
 }
 
 static void tex_rsqline (const MODEL *pmod, PRN *prn)
 {
-    pprintf(prn, "$R^2$  & %f &"
-	    "$\\bar{R}^2$        & $%f$ \\\\\n",
+    pprintf(prn, "$R^2$  & %#G &"
+	    "$\\bar{R}^2$        & $%#G$ \\\\\n",
 	    pmod->rsq, pmod->adjrsq);
 }
 
 static void tex_Fline (const MODEL *pmod, PRN *prn)
 {
-    pprintf(prn, "F-statistic (%d, %d) & %f &"
-	    "p-value for F()          & %f\\\\\n",
+    pprintf(prn, "F-statistic (%d, %d) & %#G &"
+	    "p-value for F()          & %#G\\\\\n",
 	    pmod->dfn, pmod->dfd, pmod->fstt,
 	    fdist(pmod->fstt, pmod->dfn, pmod->dfd));
 }
 
 static void tex_dwline (const MODEL *pmod, PRN *prn)
 {
-    pprintf(prn, "Durbin--Watson stat. & $%f$ &"
+    pprintf(prn, "Durbin--Watson stat. & $%#G$ &"
 	    "$\\hat{\\rho}$ & $%f$ \n",
 	    pmod->dw, pmod->rho);
 }
@@ -265,14 +289,14 @@ static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
 	    "\\vspace{1em}\n\n"
 	    "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlrlr}\n");
     pprintf(prn, 
-	    "\\textsc{sgmasq}  &  %g   &"  
-	    "\\textsc{aic}     &  %g  &"  
-	    "\\textsc{fpe}     &  %g  \\\\\n"
-	    "\\textsc{hq}      &  %g  &"
-	    "\\textsc{schwarz} &  %g  &"  
-	    "\\textsc{shibata} &  %g  \\\\\n"
-	    "\\textsc{gcv}     &  %g  &"  
-	    "\\textsc{rice}    &  %g\n",
+	    "\\textsc{sgmasq}  &  %#G  &"  
+	    "\\textsc{aic}     &  %#G  &"  
+	    "\\textsc{fpe}     &  %#G  \\\\\n"
+	    "\\textsc{hq}      &  %#G  &"
+	    "\\textsc{schwarz} &  %#G  &"  
+	    "\\textsc{shibata} &  %#G  \\\\\n"
+	    "\\textsc{gcv}     &  %#G  &"  
+	    "\\textsc{rice}    &  %#G\n",
 	    pmod->criterion[0], pmod->criterion[1], pmod->criterion[2],
 	    pmod->criterion[3], pmod->criterion[4], pmod->criterion[5],
 	    pmod->criterion[6], pmod->criterion[7]);
@@ -332,8 +356,15 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     ntodate(enddate, t2, pdinfo);
 
     if (standalone) {
-	pprintf(prn, "\\documentclass{article}\n\\begin{document}\n\n"
+#ifdef USE_DCOLUMN
+	pprintf(prn, "\\documentclass{article}\n\\usepackage{dcolumn}\n"
+		"\\begin{document}\n\n"
 		"\\thispagestyle{empty}\n");
+#else
+	pprintf(prn, "\\documentclass{article}\n"
+		"\\begin{document}\n\n"
+		"\\thispagestyle{empty}\n");
+#endif
     }
 
     pprintf(prn, "\\begin{center}\n");
@@ -352,6 +383,21 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
 	pprintf(prn, "\n\n");
 
     /* start table of coefficients */
+#ifdef USE_DCOLUMN
+    pprintf(prn, "\\vspace{1em}\n\n"
+	    "\\begin{tabular*}{\\textwidth}"
+	    "{@{\\extracolsep{\\fill}}\n"
+	    "l%% col 1: varname\n"
+	    "  D{.}{.}{-1}%% col 2: coeff\n"
+	    "    D{.}{.}{-1}%% col 3: stderr\n"
+	    "      D{.}{.}{4}%% col 4: t-stat\n"
+	    "        D{.}{.}{4}}%% col 5: p-value\n"
+	    "Variable &\n"
+	    "  \\multicolumn{1}{c}{Coefficient} &\n"
+	    "    \\multicolumn{1}{c}{Std.\\ Error} &\n"
+	    "      \\multicolumn{1}{c}{$t$-statistic} &\n"
+	    "        \\multicolumn{1}{c}{p-value} \\\\[1ex]\n");
+#else
     pprintf(prn, "\\vspace{1em}\n\n"
 	  "\\begin{tabular*}{\\textwidth}"
 	  "{@{\\extracolsep{\\fill}}\n"
@@ -364,6 +410,7 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
 	  "    \\multicolumn{1}{c}{Std.\\ Error} &\n"
 	  "      \\multicolumn{1}{c}{$t$-statistic} &\n"
 	  "        \\multicolumn{1}{c}{p-value} \\\\[1ex]\n");
+#endif /* USE_DCOLUMN */
 
     if (pmod->ifc) {
 	tex_print_coeff(pdinfo, pmod, ncoeff, prn);

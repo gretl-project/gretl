@@ -79,7 +79,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    }
 	} /* end of basic round 0 setup */
 	/* estimate the model called for */
-	clear_model(models[0], NULL, NULL, NULL);
+	clear_model(models[0], NULL);
 	*models[0] = lsq(command.list, &Z, datainfo, OLS, 1, 0.0);
 	if ((models[0])->errcode) {
 	    errmsg((models[0])->errcode, prn);

@@ -339,7 +339,7 @@ char *switch_ext (char *targ, const char *src, char *ext)
  * If @c is found in @src, puts into @targ the portion of @src up to and 
  * including the last occurrence of @c within @src.
  *
- * Returns: 1 if @c is found in @str, othewise 0.
+ * Returns: 1 if @c is found in @str, otherwise 0.
  *
  */
 

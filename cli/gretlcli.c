@@ -585,7 +585,7 @@ void exec_line (char *line, PRN *prn)
     case OMIT:
 	if ((err = model_test_start(0, prn, 0))) break;
     plain_add_omit:
-	clear_model(models[1], NULL, NULL, NULL);
+	clear_model(models[1], NULL);
 	if (command.ci == ADD || command.ci == ADDTO)
 	    err = auxreg(command.list, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_ADD, prn, NULL);
@@ -594,12 +594,12 @@ void exec_line (char *line, PRN *prn)
 			    &model_count, &Z, datainfo, prn);
 	if (err) {
 	    errmsg(err, prn);
-	    clear_model(models[1], NULL, NULL, NULL);
+	    clear_model(models[1], NULL);
 	} else {
 	    /* for command-line use, we keep a "stack" of 
 	       two models, and recycle the places */
 	    swap_models(&models[0], &models[1]); 
-	    clear_model(models[1], NULL, NULL, NULL);
+	    clear_model(models[1], NULL);
 	    if (oflag) outcovmx(models[0], datainfo, !batch, prn);
 	}
 	break;	
@@ -614,7 +614,7 @@ void exec_line (char *line, PRN *prn)
 	    pprintf(prn, _("Failed to reconstruct model %d\n"), i);
 	    break;
 	} 
-	clear_model(models[1], NULL, NULL, NULL);
+	clear_model(models[1], NULL);
 	tmpmod.ID = i;
 	if (command.ci == ADDTO)
 	    err = auxreg(command.list, &tmpmod, models[1], &model_count, 
@@ -624,18 +624,18 @@ void exec_line (char *line, PRN *prn)
 			    &model_count, &Z, datainfo, prn);
 	if (err) {
 	    errmsg(err, prn);
-	    clear_model(models[1], NULL, NULL, NULL);
+	    clear_model(models[1], NULL);
 	    break;
 	} else {
 	    swap_models(&models[0], &models[1]);
-	    clear_model(models[1], NULL, NULL, NULL);
+	    clear_model(models[1], NULL);
 	    if (oflag) outcovmx(models[0], datainfo, !batch, prn);
 	}
-	clear_model(&tmpmod, NULL, NULL, NULL);
+	clear_model(&tmpmod, NULL);
 	break;
 
     case AR:
-	clear_model(models[0], NULL, NULL, NULL);
+	clear_model(models[0], NULL);
 	*models[0] = ar_func(command.list, atoi(command.param), &Z, 
 			    datainfo, &model_count, prn);
 	if ((err = (models[0])->errcode)) { 
@@ -647,7 +647,7 @@ void exec_line (char *line, PRN *prn)
 
     case ARCH:
 	order = atoi(command.param);
-	clear_model(models[1], NULL, NULL, NULL);
+	clear_model(models[1], NULL);
 	*models[1] = arch(order, command.list, &Z, datainfo, 
 			 &model_count, prn, NULL);
 	if ((err = (models[1])->errcode)) 
@@ -656,7 +656,7 @@ void exec_line (char *line, PRN *prn)
 	    swap_models(&models[0], &models[1]); 
 	    if (oflag) outcovmx(models[0], datainfo, !batch, prn);
 	}
-	clear_model(models[1], NULL, NULL, NULL);
+	clear_model(models[1], NULL);
 	break;
 
     case CHOW:
@@ -678,7 +678,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	clear_model(models[0], NULL, NULL, NULL);
+	clear_model(models[0], NULL);
 	*models[0] = lsq(command.list, &Z, datainfo, command.ci, 1, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
@@ -832,7 +832,7 @@ void exec_line (char *line, PRN *prn)
 
     case HCCM:
     case HSK:
-	clear_model(models[0], NULL, NULL, NULL);
+	clear_model(models[0], NULL);
 	if (command.ci == HCCM)
 	    *models[0] = hccm_func(command.list, &Z, datainfo);
 	else
@@ -921,10 +921,10 @@ void exec_line (char *line, PRN *prn)
 	if ((err = model_test_start(0, prn, 1))) break;
 	/* non-linearity (squares) */
 	if (oflag == OPT_S || oflag == OPT_O || !oflag) {
-	    clear_model(models[1], NULL, NULL, NULL);
+	    clear_model(models[1], NULL);
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_SQ, prn, NULL);
-	    clear_model(models[1], NULL, NULL, NULL);
+	    clear_model(models[1], NULL);
 	    model_count--;
 	    if (err) errmsg(err, prn);
 	    if (oflag == OPT_S || (!batch && page_break(0, NULL, 1))) break;
@@ -933,7 +933,7 @@ void exec_line (char *line, PRN *prn)
 	if (oflag == OPT_L || oflag == OPT_O || !oflag) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_LOG, prn, NULL);
-	    clear_model(models[1], NULL, NULL, NULL); 
+	    clear_model(models[1], NULL); 
 	    model_count--;
 	    if (err) errmsg(err, prn);
 	    if (oflag == OPT_L || (!batch && page_break(0, NULL, 1))) break;
@@ -955,7 +955,7 @@ void exec_line (char *line, PRN *prn)
 
     case LOGIT:
     case PROBIT:
-	clear_model(models[0], NULL, NULL, NULL);
+	clear_model(models[0], NULL);
 	*models[0] = logit_probit(command.list, &Z, datainfo, command.ci);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
@@ -1010,11 +1010,11 @@ void exec_line (char *line, PRN *prn)
     case OLS:
     case WLS:
     case POOLED:
-	clear_model(models[0], NULL, NULL, NULL);
+	clear_model(models[0], NULL);
 	*models[0] = lsq(command.list, &Z, datainfo, command.ci, 1, 0.0);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
-	    clear_model(models[0], NULL, NULL, NULL);
+	    clear_model(models[0], NULL);
 	    break;
 	}
 	++model_count;
@@ -1229,7 +1229,7 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case TSLS:
-	clear_model(models[0], NULL, NULL, NULL);
+	clear_model(models[0], NULL);
 	*models[0] = tsls_func(command.list, atoi(command.param), 
 			      &Z, datainfo);
 	if ((err = (models[0])->errcode)) {

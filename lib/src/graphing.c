@@ -643,7 +643,7 @@ int gnuplot (LIST list, const int *lines,
 		a = plotmod.coeff[2];
 	    }
 	}
-	clear_model(&plotmod, NULL, NULL, pdinfo);
+	clear_model(&plotmod, pdinfo);
     }
 
     _adjust_t1t2(NULL, list, &t1, &t2, *pZ, NULL);
@@ -1169,7 +1169,7 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
      /* ship out a plot struct, to gnuplot or file.  
 	N.B. under unix plot->fp will be a pipe */
 {
-    FILE *fp;
+    FILE *fp = NULL;
     int i, k, t, dump = 0, plotn, lo = plot->list[0];
     int err = 0, miss, datlines;
     char termstr[72];

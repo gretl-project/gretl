@@ -344,7 +344,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		err = new->errcode;
 		free(newlist);
 		if (addvars == NULL) free(tmplist); 
-		clear_model(new, NULL, NULL, pdinfo);
+		clear_model(new, pdinfo);
 	    } else {
 		++m;
 		new->ID = m;
@@ -389,7 +389,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 			    df, trsq, chisq(trsq, df));
 		}
 	    } /* ! aux.errcode */
-	    clear_model(&aux, NULL, NULL, pdinfo);
+	    clear_model(&aux, pdinfo);
 	    /* shrink for uhat */
 	    dataset_drop_vars(1, pZ, pdinfo);
 	    pdinfo->extra = 0;
@@ -699,7 +699,7 @@ int autocorr_test (MODEL *pmod, int order,
 
     free(newlist);
     dataset_drop_vars(k, pZ, pdinfo); 
-    clear_model(&aux, NULL, NULL, pdinfo); 
+    clear_model(&aux, pdinfo); 
     exchange_smpl(pmod, pdinfo);
 
     return err;
@@ -810,7 +810,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		sprintf(test->pvalue, "%f", fdist(F, newvars, chow_mod.dfd));
 	    }
 	}
-	clear_model(&chow_mod, NULL, NULL, pdinfo);
+	clear_model(&chow_mod, pdinfo);
     }
 
     /* clean up extra variables */
@@ -901,7 +901,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	    err = cum_mod.errcode;
 	    if (err) {
 		errmsg(err, prn);
-		clear_model(&cum_mod, NULL, NULL, pdinfo);
+		clear_model(&cum_mod, pdinfo);
 		break;
 	    } else {
 		t = pdinfo->t2 + 1;
@@ -918,7 +918,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 		cresid[j] /= sqrt(1.0 + xx);
 		/*  printf("w[%d] = %g\n", t, cresid[j]); */
 		wbar += cresid[j];
-		clear_model(&cum_mod, NULL, NULL, pdinfo);
+		clear_model(&cum_mod, pdinfo);
 		pdinfo->t2 += 1;
 	    }
 	}
