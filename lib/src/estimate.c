@@ -35,10 +35,8 @@
    not getting any garbage results.
 */
 
-/* TINY was set at 5.0e-9 */
-
-#define TINY 1e-9 /* was 1.0e-13, produced poor results on NIST Filip
-		       test */
+#define TINY 4.75e-9 /* was 1.0e-13, produced poor results on NIST Filip
+		        test */
 #define SMALL 1.0e-8
 
 extern void _print_rho (int *arlist, const MODEL *pmod, 
@@ -76,7 +74,7 @@ static double wt_dummy_stddev (const MODEL *pmod, double **Z);
 
 
 /* use Choleski or QR for regression? */
-static int use_qr = 1;
+static int use_qr;
 void set_use_qr (int set)
 {
     use_qr = set;
@@ -390,7 +388,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
         goto lsq_abort; 
     }
 
-    if (use_qr) {
+    if (use_qr || getenv("GRETL_USE_QR")) {
 	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo->n);
     } else {
 	int l = l0 - 1;
@@ -624,12 +622,13 @@ static void compute_r_squared (MODEL *pmod, double *y)
     if (pmod->dfd > 0) {
 	double den = pmod->tss * pmod->dfd;
 
-	pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1) / den);
-	if (!pmod->ifc) {  
+	if (pmod->ifc) {
+	    pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1) / den);
+	} else {
 	    pmod->rsq = corrrsq(pmod->nobs, y, pmod->yhat + pmod->t1);
 	    pmod->adjrsq = 
 		1 - ((1 - pmod->rsq) * (pmod->nobs - 1) / pmod->dfd);
-	}
+	} 
     }
 }
 
@@ -858,6 +857,7 @@ int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
         }
         test = xpx[kk] - d;
         if (test <= TINY) {
+	    fprintf(stderr, "cholbeta: test = %g\n", test);
 	    if (rss != NULL) *rss = -1.0;
 	    return E_SINGULAR;
         }

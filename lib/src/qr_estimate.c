@@ -22,7 +22,7 @@
 #include "gretl_matrix.h"
 #include "internal.h"
 
-#define QR_RCOND_MIN 1e-12 /* experiment with this */
+#define QR_RCOND_MIN 1e-15 /* experiment with this */
 
 /* In fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.
@@ -48,20 +48,22 @@ static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
 {
     pmod->tss = get_tss(y, n);
 
-    pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
-
     if (pmod->dfd > 0) {
 	double den = pmod->tss * pmod->dfd;
 
-	pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1) / den);
-	if (!pmod->ifc) {  
-	    pmod->rsq = corrrsq(pmod->nobs, y, pmod->yhat + pmod->t1);
+	if (pmod->ifc) {
+	    pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
+	    pmod->adjrsq = 1 - (pmod->ess * (n - 1) / den);
+	} else {
+	    printf("Calculating rsq for no constant\n");
+	    pmod->rsq = corrrsq(n, y, pmod->yhat + pmod->t1);
 	    pmod->adjrsq = 
-		1 - ((1 - pmod->rsq) * (pmod->nobs - 1) / pmod->dfd);
+		1 - ((1 - pmod->rsq) * (n - 1) / pmod->dfd);
 	}
 	pmod->fstt = ((pmod->tss - pmod->ess) / pmod->dfn) /
 	    (pmod->ess / pmod->dfd);
     } else {
+	pmod->rsq = 1.0;
 	pmod->fstt = NADBL;
     }
 }
@@ -243,7 +245,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
 	pmod->sderr[i+1] = pmod->sigma * sqrt(x);
     }
 
-    qr_compute_r_squared(pmod, y->val, m);
+    qr_compute_r_squared(pmod, &Z[pmod->list[1]][pmod->t1], m);
 
  qr_cleanup:
     gretl_matrix_free(Q);
