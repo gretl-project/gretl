@@ -1346,13 +1346,15 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 
     if (found >= 0) {
 	if (wrapped) infobox(_("Search wrapped"));
+	gtk_clist_freeze(GTK_CLIST(win->listbox));
 	gtk_clist_moveto(GTK_CLIST(win->listbox), i, 0, 0, .1);
+	gtk_clist_unselect_all(GTK_CLIST(win->listbox));
 	gtk_clist_select_row(GTK_CLIST(win->listbox), i, 0);
+	GTK_CLIST(win->listbox)->focus_row = i;
+	gtk_clist_thaw(GTK_CLIST(win->listbox));
 	win->active_var = i;
 	clist_start_row = i + 1;
     } else {
-	gtk_clist_select_row(GTK_CLIST(win->listbox), 0, 0);
-	win->active_var = 0;
 	infobox(_("String was not found."));
     }
 #endif /* OLD_GTK */
