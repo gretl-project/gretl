@@ -3786,7 +3786,9 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	return 1;
     }
 
-    strcpy(ppaths->datfile, fname);
+    if (fname != ppaths->datfile) {
+	strcpy(ppaths->datfile, fname);
+    }
 
     pprintf(prn, I_("\nRead datafile %s\n"), fname);
     pprintf(prn, I_("periodicity: %d, maxobs: %d, "

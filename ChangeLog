@@ -7,6 +7,7 @@ version 1.1.6
   of model results
 - Improve the mechanism for detecting the presence of a lagged
   dependent variable in a regression list
+- Fix bug in graph editing for non-English locales
 
 10/24/2003 version 1.1.5
 - Updates to manual
