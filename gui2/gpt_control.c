@@ -1714,9 +1714,16 @@ write_label_to_plot (png_plot_t *plot, const gchar *label,
 		     gint x, gint y)
 {
     static GdkFont *label_font;
+    size_t len = strlen(label);
 
     if (label_font == NULL) {
+#ifdef G_OS_WIN32
+	label_font = 
+	    gdk_font_load("-b&h-lucidatypewriter-medium-r-normal"
+			  "-sans-12-*-*-*-*-*-*-*");
+#else
 	label_font = gdk_font_load("fixed");
+#endif
     }
 
     if (plot->invert_gc == NULL) {
@@ -1728,8 +1735,7 @@ write_label_to_plot (png_plot_t *plot, const gchar *label,
 		   label_font,
 		   plot->invert_gc,
 		   x, y,
-		   label,
-		   strlen(label));
+		   label, len);
 
     /* show the modified pixmap */
     gdk_window_copy_area(plot->canvas->window,
@@ -1744,8 +1750,7 @@ write_label_to_plot (png_plot_t *plot, const gchar *label,
 		   label_font,
 		   plot->invert_gc,
 		   x, y,
-		   label,
-		   strlen(label));
+		   label, len);
 }
 
 #define TOLDIST 0.01
