@@ -3,10 +3,8 @@
   <sect1 id="trouble-bugs"><title>Bug reports</title>
 
     <para>
-      As I steer <application>gretl</application> towards a
-      <quote>stable</quote> release (version 1.0) I welcome any
-      reports of bugs in the program.  I think you are unlikely to
-      find bugs in the actual calculations done by
+      Bug reports are welcome. I believe you are unlikely to find bugs
+      in the actual calculations done by
       <application>gretl</application> (although this statement does
       not constitute any sort of warranty). You may, however, come
       across bugs or oddities in the behavior of the graphical
@@ -14,9 +12,7 @@
       is greatly enhanced if you can be as specific as possible: what
       <emphasis>exactly</emphasis> went wrong, under what conditions,
       and on what operating system?  If you saw an error message, what
-      precisely did it say?  (You needn't bother, though, to quote the
-      memory address numbers given in any crash reports from MS
-      Windows &mdash; these won't mean anything to me.)</para>
+      precisely did it say?</para>
 
   </sect1>
 

@@ -574,6 +574,55 @@
 
     </sect2>
 
+    <sect2 id="critical"><title>critical</title>
+
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>dist param1 </replaceable>
+		<literal>[</literal>
+	      <replaceable>param2</replaceable> <literal>]</literal>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Examples:</entry>
+	      <entry><command>critical t 20</command>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry><command>critical X 5</command>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry><command>critical F 3 37</command>
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+
+      <para>If <replaceable>dist</replaceable> is
+	<literal>t</literal>, <literal>X</literal> or
+	<literal>F</literal>, prints out the critical values for the
+	student's <emphasis>t</emphasis>, chi-square or
+	<emphasis>F</emphasis> distribution respectively, for the
+	common significance levels and using the specified degrees of
+	freedom, given as <replaceable>param1</replaceable> for t and
+	chi-square, or <replaceable>param1</replaceable> and
+	<replaceable>param2</replaceable> for <emphasis>F</emphasis>.
+	If <replaceable>dist</replaceable> is <literal>d</literal>,
+	prints the upper and lower values of the Durbin-Watson
+	statistic at 5 percent significance, for the given number of
+	observations, <replaceable>param1</replaceable>, and for the
+	range of 1 to 5 explanatory variables.
+      </para>
+
+    </sect2>
+
     <sect2 id="cusum"><title>cusum</title>
 
       <para>
@@ -966,7 +1015,9 @@
 	      <function>misszero</function> (replace the missing
 	      observation code in a given series with zeros),
 	      <command>zeromiss</command> (the inverse operation to
-	      <command>misszero</command>).</para>
+	      <command>misszero</command>), <function>nobs</function>
+	      (return the number of valid observations in a given data
+	      series).</para>
 	  </listitem>
 	</itemizedlist> 
 
@@ -1304,7 +1355,14 @@
 	      </entry>
 	    </row>
 	    <row>
-	      <entry>Alternate:</entry>
+	      <entry>Addendum:</entry>
+	      <entry><literal>{ </literal> 
+		<replaceable>literal gnuplot commands</replaceable>
+		<literal>}</literal> 
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Alternate form:</entry>
 	      <entry><literal>-z</literal> <replaceable>yvar xvar
 		  dummy</replaceable>
 	      </entry>
@@ -1322,11 +1380,11 @@
       </para>
 
       <para>
-	In the second case (with <literal>-z</literal>)
-	<replaceable>yvar</replaceable> is graphed against
-	<replaceable>xvar</replaceable> with the points shown in
-	different colors depending on whether the value of
-	<replaceable>dummy</replaceable> is 1 or 0.
+	In the <quote>alternate form</quote> (with
+	<literal>-z</literal>) <replaceable>yvar</replaceable> is
+	graphed against <replaceable>xvar</replaceable> with the
+	points shown in different colors depending on whether the
+	value of <replaceable>dummy</replaceable> is 1 or 0.
       </para>
 
       <para>
@@ -1682,7 +1740,6 @@
 	</para>
 
       </sect2>
-
 
       <sect2 id="lags"><title>lags</title>
 
@@ -2175,7 +2232,7 @@
 	      <row>
 		<entry>Arguments:</entry>
 		<entry><replaceable>depvar indepvars</replaceable>
-		  &opto;
+		  <literal>[ -o | -q ]</literal>
 		</entry>
 	      </row>
 	      <row>
@@ -2188,17 +2245,27 @@
 		<entry><command>ols -o y 0 x1 x2 x3</command>
 		</entry>
 	      </row>
+	      <row>
+		<entry></entry>
+		<entry><command>ols -q y 0 x1 x2 x3</command>
+		</entry>
+	      </row>
 	    </tbody>
 	  </tgroup>
 	</informaltable>                
 
 	<para>
-	  Computes ordinary least squares estimates with
+	  Computes ordinary least squares (OLS) estimates with
 	  <replaceable>depvar</replaceable> as the dependent variable
 	  and <replaceable>indepvars</replaceable> as the list of
 	  independent variables. The <literal>-o</literal> flag calls
 	  for printing of the covariance matrix of regression
-	  coefficients.  The variables may be specified by name or
+	  coefficients in addition to the various statistics that are
+	  printed by default.  The <literal>-q</literal> flag suppresses the
+	  printing of output.
+      </para>
+
+      <para>Variables may be specified by name or
 	  number; use the number zero for a constant term. The program
 	  also prints the p-values for <emphasis>t</emphasis>
 	  (two-tailed) and <emphasis>F</emphasis>-statistics.  A
@@ -2311,6 +2378,116 @@
       </para>
 
       </sect2>
+
+    <sect2 id="outfile"><title>outfile</title>
+
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry>Argument:</entry>
+	      <entry><literal>[</literal>
+		<replaceable>flag</replaceable> <literal>]</literal>
+		<literal>[</literal>
+		<replaceable>filename</replaceable>
+		<literal>]</literal>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Example:</entry>
+	      <entry>outfile -w regress.txt</entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry>ols y 0 x1 x2</entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry>outfile -c</entry>
+	    </row>	  
+	  </tbody>
+	</tgroup>
+      </informaltable>
+
+      <para>Divert output to <replaceable>filename</replaceable>,
+	until further notice.  Use the flag <literal>-a</literal> to
+	append output to an existing file, or <literal>-w</literal> to
+	start a new file (or overwrite an existing one).  Only one
+	file can be opened in this way at any given time.</para>
+
+      <para>The <literal>-c</literal> flag is used to close an output
+	file that was previously opened as above.  Output will then
+	revert to the default stream.</para>
+
+      <para>In the example above, the results of one regression are
+	written to the file <filename>regress.txt</filename>, which is
+	then closed.</para>
+
+    </sect2>
+
+      <sect2 id="pca"><title>pca</title>
+
+	<informaltable role="cmd" frame="none">
+	  <tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	    <tbody>
+	      <row>
+		<entry>Argument:</entry>
+		<entry><replaceable>varlist</replaceable>
+		<literal>[</literal> <replaceable>flag</replaceable>
+		<literal>]</literal>
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+
+      <para>Rudimentary Principal Components Analysis.  Prints the
+	eigenvalues of the correlation matrix for the variables in
+	<replaceable>varlist</replaceable> along with the proportion
+	of the joint variance accounted for by each component.  Also
+	prints the corresponding eigenvectors (<quote>component
+	loadings</quote>).</para>  
+
+      <para>If the <literal>-o</literal> flag is given, components
+	with eigenvalues greater than 1.0 are saved to the dataset as
+	variables, with names <varname>PC1</varname>,
+	<varname>PC2</varname> and so on.  These artificial variables
+	are formed as the sum of (component loading) times
+	(standardized <varname>Xi</varname>), where
+	<varname>Xi</varname> denotes the <emphasis>i</emphasis>th
+	variable in <replaceable>varlist</replaceable>.</para>
+
+      <para>If the <literal>-a</literal> flag is given, all of the
+	components are saved as described above.</para> 
+
+    </sect2>
+
+    <sect2 id="panel-cmd"><title>panel</title>
+
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry>Argument:</entry>
+	      <entry><literal>-s</literal> or <literal>-c</literal>
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+
+      <para>Request that the current data set be interpreted as a
+	panel (pooled cross section and time series).  With no flag,
+	or with the <literal>-s</literal> flag, the data set is taken
+	to be in the form of stacked time series (successive blocks of
+	data contain time series for each cross-sectional unit).  With
+	the <literal>-c</literal> flag, the data set is read as
+	stacked cross-sections (successive blocks contain cross
+	sections for each time period).  See also <xref
+	  linkend="setobs"/>.
+      </para>
+
+    </sect2>    
 
       <sect2 id="pergm"><title>pergm</title>
 
@@ -3059,6 +3236,14 @@
 	  </tgroup>
 	</informaltable>
 
+      <para>The intenal variable <varname>obs</varname> may be used in
+	the last-noted form of <command>smpl</command> above, to
+	exclude particular observations from the sample.  For example,
+	<command>smpl -r obs!=4</command> will drop just the fourth
+	observation. If the data points are identified by labels,
+	<command>smpl -r obs!="USA"</command> will drop the
+	observation with label <quote>USA</quote>.</para>
+
 	<para>
 	  One point should be noted about the <literal>-o</literal>
 	  and <literal>-r</literal> forms of <command>smpl</command>:
@@ -3569,6 +3754,11 @@
 	    <entry>Two-Stage Least Squares
 	      (<command>tsls</command>)</entry>
 	    <entry>Simultaneous equations</entry>
+	  </row>
+	  <row>
+	    <entry>Nonlinear Least Squares
+	      (<command>nls</command>)</entry>
+	    <entry>Nonlinear models</entry>
 	  </row>
 	  <row>
 	    <entry>Logit

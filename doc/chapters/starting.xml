@@ -165,17 +165,21 @@
 
     <para>To import <application>gretl</application> output into a
       word processor, you may copy and paste from an output window,
-      using its <guimenuitem>Edit</guimenuitem> menu, to the target
-      program.  Many (not all) <application>gretl</application>
-      windows offer the option of copying in RTF (Microsoft's
-      <quote>Rich Text Format</quote>) or as &latex;. If you are
-      pasting into a word processor, RTF may be a good option because
-      the tabular formatting of the output is
+      using its <guimenuitem>Edit</guimenuitem> menu (or Copy button,
+      in some contexts) to the target program.  Many (not all)
+      <application>gretl</application> windows offer the option of
+      copying in RTF (Microsoft's <quote>Rich Text Format</quote>) or
+      as &latex;. If you are pasting into a word processor, RTF may be
+      a good option because the tabular formatting of the output is
       preserved.<footnote><para>Note that when you copy as RTF under
 	  MS Windows, Windows will only allow you to paste the
 	  material into applications that <quote>understand</quote>
 	  RTF.  Thus you will be able to paste into MS Word, but not
-	  into notepad.</para>
+	  into notepad.  Note also that there appears to be a bug in
+	  some versions of Windows, whereby the paste will not work
+	  properly unless the <quote>target</quote> application (e.g.
+	  MS Word) is running prior to copying the material in
+	  question.</para>
       </footnote>  Alternatively, you can save the output to a (plain
       text) file then import the file into the target program.  When
       you finish a <application>gretl</application> session you are
@@ -544,10 +548,9 @@
 	  system.  You can change the program under the <quote>File,
 	    Preferences, General</quote> menu, <quote>Programs</quote>
 	  tab.</para></listitem>
-      <listitem><para>Launch an editor or word processor.  The default
-	  is <filename>winword.exe</filename> under MS Windows,
-	  <filename>emacs</filename> under X. This is configurable in
-	  the same way as the calculator launcher.</para></listitem>
+      <listitem><para>Start a new script.  Opens an editor window in
+	  which you can type a series of commands to be sent to the
+	  program as a batch.</para></listitem>
       <listitem><para>Open the gretl console.  A shortcut to the
 	  <quote>Gretl console</quote> menu item (<xref
 	    linkend="menus"/> above).</para></listitem>
@@ -565,11 +568,14 @@
 	  commands).</para></listitem>
       <listitem><para>Open the dialog box for defining a
 	  graph.</para></listitem>
+      <listitem><para>Open the dialog box for estimating a model
+	  using ordinary least squares.</para></listitem>
       <listitem><para>Open a window listing the datasets associated
 	  with Ramanathan's <citetitle>Introductory
-	    Econometrics</citetitle> (or this button can be configured
-	  to show the datasets from Wooldridge (2002) instead &mdash;
-	  see <xref linkend="optarg"/>).</para></listitem>
+	    Econometrics</citetitle> (and also the datasets from
+	  Jeffrey Wooldridge's text, if these are installed &mdash;
+	  see <xref
+	    linkend="optarg"/>).</para></listitem>
     </orderedlist>
 
     <para>

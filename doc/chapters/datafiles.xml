@@ -20,14 +20,20 @@
     </para>
 
     <itemizedlist>
-  
-      <listitem><para>Comma-Separated Values (CSV) files.  These can
-	  be brought in using <application>gretl</application>'s
-	  <quote>File, Open Data, Import CSV&hellip;</quote> menu
-	  item, or the <command>import</command> script command.  For
-	  details on what <application>gretl</application> expects of
-	  a CSV file, see
+
+      <listitem><para>Plain text (ASCII) files.  These can be brought
+	  in using <application>gretl</application>'s <quote>File,
+	    Open Data, Import ASCII&hellip;</quote> menu item, or the
+	  <command>import</command> script command.  For details on
+	  what <application>gretl</application> expects of such files,
+	  see
 	  <xref linkend="scratch"/>.</para>
+      </listitem>
+      <listitem><para>Comma-Separated Values (CSV) files.  These can
+	  be imported using <application>gretl</application>'s
+	  <quote>File, Open Data, Import CSV&hellip;</quote> menu
+	  item, or the <command>import</command> script command. See
+	  also <xref linkend="scratch"/>.</para>
       </listitem>
       <listitem><para>Worksheets in the format of either MS
 	  <application>Excel</application> or
@@ -48,7 +54,7 @@
 
     </itemizedlist>
 
-    <para>When you import data from the CSV or BOX formats,
+    <para>When you import data from the ASCII, CSV or BOX formats,
       <application>gretl</application> opens a
       <quote>diagnostic</quote> window, reporting on its progress in
       reading the data.  If you encounter a problem with ill-formatted
@@ -116,43 +122,91 @@
 
   <sect1 id="scratch"><title>Creating a data file from scratch</title>
 
-    <para>There are four ways to do this: (1) Use your favorite
-      spreadsheet to establish the data file, save it in Comma
-      Separated Values format if necessary, then use
-      <application>gretl</application>'s <quote>Import</quote>
-      option. (2) Use <application>gretl</application>'s built-in
-      spreadsheet. (3) Select data series from a suitable database.
-      (4) Use your favorite text editor or other software tools to
-      create the data file independently.</para>
+    <para>There are five ways to do this: (1) Find, or create using a
+      text editor, a plain text data file and open it with
+      <application>gretl</application>'s <quote>Import ASCII</quote>
+      option. (2) Use your favorite spreadsheet to establish the data
+      file, save it in Comma Separated Values format if necessary
+      (this should not be necessary if the spreadsheet program is MS
+      Excel or Gnumeric), then use one of
+      <application>gretl</application>'s <quote>Import</quote> options
+      (CSV, Excel or Gnumeric, as the case may be). (3) Use
+      <application>gretl</application>'s built-in spreadsheet. (4)
+      Select data series from a suitable database. (5) Use your
+      favorite text editor or other software tools to a create data
+      file in <application>gretl</application> format
+      independently.</para>
 
     <para>Here are a few comments and details on these methods.</para>
 
-    <sect2><title>Using a separate spreadsheet</title>
+    <sect2><title>Common points on imported data</title>
+      
+      <para>Options (1) and (2) involve using
+	<application>gretl</application>'s <quote>import</quote>
+	mechanism.  For <application>gretl</application> to read such
+	data successfully, certain general conditions must be
+	satisfied:</para>
 
-      <para>This may be a good choice if you're comfortable with a
-	particular spreadsheet.  If you take this option, please pay
-	attention to the specification of what your spreadsheet should
-	look like. <application>gretl</application> expects a file
-	that has (a) valid variable names on the first row and (b) a
-	rectangular block of data beneath. A valid variable name is of
-	8 characters maximum; starts with a letter; and contains
-	nothing but letters, numbers and the underscore character,
-	<literal>_</literal>.  Optionally the first column may contain
-	strings such as dates (8 characters maximum).  Such a column
-	should be headed <quote><command>obs</command></quote> or
-	<quote><command>date</command></quote>, or its first row cell
-	may be left blank. There should be <emphasis>exactly
-	  one</emphasis> non-data row at the top of the file.
-      </para>
+      <itemizedlist>
+	<listitem>
+	  <para>The first row must contain valid variable names.  A
+	    valid variable name is of 8 characters maximum; starts
+	    with a letter; and contains nothing but letters, numbers
+	    and the underscore character, <literal>_</literal>.
+	    (Longer variable names will be truncated to 8 characters.)
+	    Qualifications to the above:  First, in the case of an
+	    ASCII or CSV import, if the file contains no row with
+	    variable names the program will automatically add names,
+	    <varname>v1</varname>, <varname>v2</varname> and so on.
+	    Second, by <quote>the first row</quote> is meant the first
+	    <emphasis>relevant</emphasis> row.  In the case of ASCII
+	    and CSV imports, blank rows and rows beginning with a hash
+	    mark, <literal>#</literal>, are ignored.  In the case of
+	    Excel and Gnumeric imports, you are presented with a
+	    dialog box where you can select an offset into the
+	    spreadsheet, so that <application>gretl</application> will
+	    ignore a specified number of rows and/or columns.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Data values: these should constitute a rectangular
+	    block, with one variable per column (and one observation
+	    per row).  The number of variables (data columns) must
+	    match the number of variable names given. See also
+	    <xref linkend="missing-data"/>.  
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Dates (or observation labels): Optionally, the
+	    <emphasis>first</emphasis> column may contain strings such
+	    as dates, or labels for cross-sectional observations.
+	    Such strings have a maximum of 8 characters (as with
+	    variable names, longer strings will be truncated).  A
+	    column of this sort should be headed with the string
+	    <literal>obs</literal> or <literal>date</literal>, or the
+	    first row entry may be left blank.</para>
+	  <para>For dates to be recognized as such, the date strings
+	    must adhere to one or other of a set of specific formats,
+	    as follows.  For <emphasis>annual</emphasis> data: 4-digit
+	    years.  For <emphasis>quarterly</emphasis> data: a 4-digit
+	    year, followed by a separator (either a period, a colon,
+	    or the letter <literal>Q</literal>), followed by a 1-digit
+	    quarter.  Examples: <literal>1997.1</literal>,
+	    <literal>2002:3</literal>, <literal>1947Q1</literal>.  For
+	    <emphasis>monthly</emphasis> data: a 4-digit year,
+	    followed by a period or a colon, followed by a two-digit
+	    month.  Examples: <literal>1997.01</literal>,
+	    <literal>2002:10</literal>.
+	  </para>
+	</listitem>
 
-      <para>In the case of an import from CSV, the format described
-	above must be respected exactly.  In the case of an import
-	from an <application>Excel</application> or
-	<application>Gnumeric</application> worksheet you have
-	slightly more freedom: you can select the starting row and
-	column for the import, hence skipping any <quote>extra</quote>
-	rows or columns.  Within the area selected for importing,
-	however, the above rules apply.</para>
+      </itemizedlist>
+
+      <para>CSV files can use comma, space or tab as the column
+	separator.  When you use the <quote>Import CSV</quote> menu
+	item you are prompted to specify the separator.  In the case
+	of <quote>Import ASCII</quote> the program attempts to
+	auto-detect the separator that was used.</para>
 
       <para>If you use a spreadsheet to prepare your data you are able
 	to carry out various transformations of the <quote>raw</quote>
@@ -163,6 +217,11 @@
 	<quote>Data, Add variables</quote> menu and/or
 	<quote>Variable, define new variable</quote>.</para>
 
+    </sect2>
+
+
+    <sect2><title>Appending imported data</title>
+
       <para>You may wish to establish a
 	<application>gretl</application> data set piece by piece, by
 	incremental importation of data from other sources.  This is
@@ -170,14 +229,13 @@
 	<application>gretl</application> will check the new data for
 	conformability with the existing data set and, if everything
 	seems OK, will merge the data.  You can add new variables in
-	this way, provided the data frequency, starting observation
-	and series length all match the existing data set.  Or you can
-	append new observations for data series that are already
-	present; in this case the variable names must match up
-	correctly.  Note that by default (that is, if you choose
-	<quote>Open data</quote> rather than <quote>Append
-	  data</quote>), opening a new data file closes the current
-	one.</para>
+	this way, provided the data frequency matches that of the
+	existing data set.  Or you can append new observations for
+	data series that are already present; in this case the
+	variable names must match up correctly.  Note that by default
+	(that is, if you choose <quote>Open data</quote> rather than
+	<quote>Append data</quote>), opening a new data file closes
+	the current one.</para>
 
     </sect2>
 
@@ -250,14 +308,14 @@
 
     </sect2>
 
-    <sect2><title>Creating a data file independently</title>
+    <sect2><title>Creating a gretl data file independently</title>
 
-      <para>It is possible to create a
-	<application>gretl</application> data file using a text editor
-	or software tools such as <application>awk</application>,
-	<application>sed</application> or
-	<application>perl</application>.  This may be a good choice if
-	you have large amounts of data already in machine readable
+      <para>It is possible to create a data file in one or other of
+	<application>gretl</application>'s own formats using a text
+	editor or software tools such as
+	<application>awk</application>, <application>sed</application>
+	or <application>perl</application>.  This may be a good choice
+	if you have large amounts of data already in machine readable
 	form. You will, of course, need to study the
 	<application>gretl</application> data formats (XML format or
 	<quote>traditional</quote> format) as described in 
@@ -290,11 +348,12 @@
   <sect1 id="missing-data"><title>Missing data values</title>
 
     <para>These are represented internally as &minus;999.  In a
-      native-format data file they should be represented the same way.
-      When importing CSV data <application>gretl</application> accepts
-      any of three representations of missing values: &minus;999, the
-      string <literal>NA</literal>, or simply a blank cell.  Blank
-      cells should, of course, be properly delimited, e.g.
+      native-format data file they should be represented as
+      <literal>NA</literal>. When importing CSV data
+      <application>gretl</application> accepts any of three
+      representations of missing values: &minus;999, the string
+      <literal>NA</literal>, or simply a blank cell.  Blank cells
+      should, of course, be properly delimited, e.g.
       <literal>120.6,,5.38</literal>, in which the middle value is
       presumed missing.</para>
 

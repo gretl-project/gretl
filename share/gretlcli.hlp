@@ -645,13 +645,25 @@ Usage:          import csv_file
                 import -o box_file
 
 Without the -o flag, brings in data from a comma-separated values (CSV) format
-file, such as can easily be written from a spreadsheet program.  The file
-should have variable names on the first line and a rectangular data matrix on
-the remaining lines.  Variables should be arranged "by observation" (one
-column per variable; each row represents an observation).
+file, such as can easily be written from a spreadsheet program.  With the -o
+flag, reads a data file in BOX1 format, as can be obtained using the Data
+Extraction Service of the US Bureau of the Census.  BOX1 files have a definite
+fixed format; the remainder of this entry pertains to CSV files.
 
-With the -o flag, reads a data file in BOX1 format, as can be obtained using
-the Data Extraction Service of the US Bureau of the Census.
+The file should have variable names on the first line and a rectangular data
+matrix on the remaining lines.  Variables should be arranged "by observation"
+(one column per variable; each row represents an observation).  The column
+separator need not be a comma; spaces and tabs are also acceptable.
+
+The first column of the file can contain identifiers for the observations --
+either strings such as the names of countries, or dates.  In this case the
+first column heading should be "obs" or "date", or may be left blank.  For
+dates to be recognized as such they should adhere to one of the following
+patterns:
+
+annual:    dates represented by 4-digit years
+quarterly: use "1997.1" or "1997:1" or "1997Q1" for 1997, first quarter
+monthly:   use "1997.01" or "1997:01" for January, 1997
 
 #
 info

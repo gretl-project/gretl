@@ -15,8 +15,8 @@
 	<listitem><para><application>gretl</application> offers an
 	    intuitive user interface; it is very easy to get up and
 	    running with econometric analysis. Thanks to its
-	    association with Ramanathan's <citetitle>Introductory
-	      Econometrics</citetitle> the package offers many
+	    association with the econometrics textbooks by Ramu
+	    Ramanathan and Jeffrey Wooldridge the package offers many
 	    practice data files and command scripts.  These are well
 	    annotated and accessible.</para>
 	</listitem>
@@ -47,22 +47,22 @@
       <varlistentry><term>Reasonably sophisticated</term>
 	<listitem><para><application>gretl</application> offers a full
 	    range of least-squares based estimators, including
-	    Two-Stage Least Squares.  It also offers (binomial) logit
-	    and probit estimation, and has a loop construct for
-	    running Monte Carlo analyses or iterated least squares
-	    estimation of non-linear models.  While it does not
-	    include all the estimators and tests that a professional
-	    econometrician might require, it supports the export of
-	    data to the formats of (<ulink
+	    two-stage least squares and nonlinear least squares.  It
+	    also offers (binomial) logit and probit estimation, and
+	    has a loop construct for running Monte Carlo analyses or
+	    iterative estimation of non-linear models. While it does
+	    not include all the estimators and tests that a
+	    professional econometrician might require, it supports the
+	    export of data to the formats of (<ulink
 	      url="http://www.r-project.org/">GNU R</ulink>) and
 	    (<ulink url="http://www.octave.org/">GNU Octave</ulink>)
 	    for further analysis (see <xref
 	      linkend="app-advanced"/>).</para></listitem>
       </varlistentry>
       <varlistentry><term>Accurate</term>
-	<listitem><para><application>gretl</application> does well on
-	    the NIST reference datasets. See <xref
-	      linkend="app-accuracy"/>.</para>
+	<listitem><para><application>gretl</application> has been
+	    thoroughly tested on the NIST reference datasets. See
+	    <xref linkend="app-accuracy"/>.</para>
 	</listitem>
       </varlistentry>
       <varlistentry><term>Internet ready</term>
@@ -124,6 +124,13 @@
       <quote>adopt</quote> <application>gretl</application> as a GNU
       program in particular.</para>
 
+    <para>Many users of <application>gretl</application> have
+      submitted useful suggestions and bug reports.  In this
+      connection particular thanks are due to Ignacio
+      D&iacute;az-Emparanza and Dirk Eddelbuettel, who maintains the
+      <application>gretl</application> package for Debian
+      GNU/Linux.</para>
+
   </sect1>
 
   <sect1 id="install"><title>Installing the programs</title>
@@ -162,7 +169,7 @@
 	    <command>N</command> with the specific version number of
 	    the file you downloaded at step 1).</para></listitem>
 	<listitem><para>Change directory to the gretl source directory
-	    created at step 2 (e.g. <filename>gretl-1.0</filename>).
+	    created at step 2 (e.g. <filename>gretl-1.1.5</filename>).
 	  </para></listitem>  
 	<listitem><para>The basic routine is then 
 	    <programlisting>

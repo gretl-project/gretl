@@ -6,11 +6,10 @@
 
     <para>
       The <application>gretl</application> package includes the
-      command-line program <application>gretlcli</application>.  This
-      is essentially an updated version of Ramu Ramanathan's
-      <application>ESL</application>.  On Linux it can be run from the
-      console, or in an xterm (or similar).  Under MS Windows it can
-      be run in a <quote>DOS box</quote>.
+      command-line program <application>gretlcli</application>. On
+      Linux it can be run from the console, or in an xterm (or
+      similar).  Under MS Windows it can be run in a console window
+      (sometimes inaccurately called a <quote>DOS box</quote>).
       <application>gretlcli</application> has its own help file, which
       may be accessed by typing <quote>help</quote> at the prompt. It
       can be run in batch mode, sending outout directly to a file (see
@@ -77,13 +76,14 @@
 
   </sect1>
 
-  <sect1 id="cli-syntax"><title>Changes from ESL</title>
+  <sect1 id="cli-syntax"><title>Changes from Ramanathan's ESL</title>
 
-    <para>Command scripts developed for Ramanathan's original
-      <application>ESL</application> should be usable with
-      <application>gretlcli</application> with few or no changes: the
-      only things to watch for are multi-line commands and the
-      <command>freq</command> command.
+    <para><application>gretlcli</application> inherits its basic
+      command syntax from Ramu Ramanathan's
+      <application>ESL</application>, and command scripts developed
+      for <application>ESL</application> should be usable with few or
+      no changes: the only things to watch for are multi-line commands
+      and the <command>freq</command> command.
     </para>
 
     <itemizedlist>

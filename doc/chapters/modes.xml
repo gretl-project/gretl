@@ -34,20 +34,15 @@
      </screenshot>
     </figure>
 
-    <para>The toolbar at the botton left of the script window offers
-      the following functions (left to right): (1) Save the file; (2)
-      Save the file under a specified name; (3) Print the file (under
+    <para>The toolbar at the top of the script window offers the
+      following functions (left to right): (1) Save the file; (2) Save
+      the file under a specified name; (3) Print the file (under
       Windows or the gnome desktop only); (4) Execute the commands in
       the file; (5) Copy selected text; (6) Paste the selected text;
       (7) Find and replace text; (8) Undo the last Paste or Replace
       action; (9) Help (if you place the cursor in a command word and
       press the question mark you will get help on that command); (10)
       Close the window.
-    </para>
-
-    <para>These functions may also be found under the
-      <quote>File</quote> and <quote>Edit</quote> menus at the top of
-      the script window.
     </para>
 
     <para>When you click the Execute icon or choose the <quote>File,
@@ -101,6 +96,9 @@
 	  open and rerun the <quote>preparatory</quote> script
 	  first.</para></listitem>
     </itemizedlist>
+
+    <para>Para on saving objects.
+    </para>
 
     <para>A further option is available for your computing
       convenience. Under <application>gretl</application>'s Utilities
