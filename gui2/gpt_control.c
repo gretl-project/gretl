@@ -2523,6 +2523,7 @@ static int get_data_xy (png_plot_t *plot, int x, int y,
 #endif
 
     if (xmin == 0.0 && xmax == 0.0) { /* unknown x range */
+	fprintf(stderr, "get_data_xy: unknown x range\n");
 	*data_x = NADBL;
     } else {
 	*data_x = xmin + ((double) x - plot->pixel_xmin) / 
@@ -2531,6 +2532,7 @@ static int get_data_xy (png_plot_t *plot, int x, int y,
 
     if (!na(*data_x)) {
 	if (ymin == 0.0 && ymax == 0.0) { /* unknown y range */
+	    fprintf(stderr, "get_data_xy: unknown y range\n");
 	    *data_y = NADBL;
 	} else {
 	    *data_y = ymax - ((double) y - plot->pixel_ymin) / 
@@ -2785,6 +2787,7 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	double data_x, data_y;
 
 	if (!get_data_xy(plot, x, y, &data_x, &data_y)) {
+	    /* FIXME: x may be available even if y is not */
 	    return TRUE;
 	}
 
@@ -3222,6 +3225,7 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 
 	if (!get_data_xy(plot, event->x, event->y, 
 			 &plot->zoom->xmax, &plot->zoom->ymax)) {
+	    /* FIXME: think about this */
 	    return TRUE;
 	}
 
@@ -3255,6 +3259,7 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 			       png_plot_t *plot)
 {
     if (plot_is_zooming(plot)) {
+	/* think about this */
 	if (get_data_xy(plot, event->x, event->y, 
 			&plot->zoom->xmin, &plot->zoom->ymin)) {
 	    plot->zoom->screen_xmin = event->x;
@@ -3266,11 +3271,10 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
     if (plot_doing_position(plot)) {
 	if (plot->labelpos_entry != NULL) {
 	    double dx, dy;
-	    gchar *posstr = NULL;
 	    
-	    if (!get_data_xy(plot, event->x, event->y, &dx, &dy)) {
-		fprintf(stderr, "Couldn't get coordinates\n");
-	    } else {
+	    if (get_data_xy(plot, event->x, event->y, &dx, &dy)) {
+		gchar *posstr;
+
 #ifdef ENABLE_NLS
 		setlocale(LC_NUMERIC, "C");
 #endif
