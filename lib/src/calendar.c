@@ -188,10 +188,10 @@ void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
 
     day = rem - modays;
 
-    if (strlen(pdinfo->stobs) > 8) {
-	sprintf(str, "%04d/%02d/%02d", yr, mo, day); 
+    if (strlen(pdinfo->stobs) == 8) {
+	sprintf(str, "%02d/%02d/%02d", yr % 100, mo, day);
     } else {
-	sprintf(str, "%02d/%02d/%02d", yr % 100, mo, day); 
+	sprintf(str, "%04d/%02d/%02d", yr, mo, day);
     }
 }
 
@@ -229,19 +229,6 @@ double get_dec_date (const char *date)
     return dyr + frac;
 }
 
-#define CCODE(c) ((c == 14 || c == 18)? 2 : \
-		  (c == 15 || c == 19)? 0 : \
-		  (c == 16 || c == 20)? 5 : 4)
-
-#define MCODE(m) ((m == 1 || m == 10)? 0 : \
-		  (m == 2 || m == 3 || m == 11)? 3 : \
-		  (m == 4 || m == 7)? 6 : \
-		  (m == 5)? 1 : \
-		  (m == 6)? 4 : \
-		  (m == 8)? 2 : 5)
-
-#define LEAPDAYS(y,m) ((y % 100) / 4 + (y % 400 == 0) - (m < 3))
-
 /**
  * get_day_of_week:
  * @date: calendar representation of date, [YY]YY/MM/DD
@@ -252,6 +239,7 @@ double get_dec_date (const char *date)
 int get_day_of_week (const char *date)
 {
     int yr, mo, day;
+    int c, d;
 
     if (sscanf(date, "%d/%d/%d", &yr, &mo, &day) != 3) {
 	return -1;
@@ -261,8 +249,21 @@ int get_day_of_week (const char *date)
 	yr += (yr < 50)? 2000 : 1900;
     }
 
-    return (CCODE(yr / 100) + (yr % 100) 
-	    + LEAPDAYS(yr, mo) + MCODE(mo) + day) % 7;
+    /* Uspensky and Heaslet, Elementary Number Theory (1939) */
+
+    if (mo < 3) {
+	yr--;
+	mo += 10;
+    } else {
+	mo -= 2;
+    }
+
+    c = yr / 100;
+    d = yr % 100;
+
+    return ((day % 7) + ((int) floor(2.6 * mo - 0.2) % 7) + 
+	    (d % 7) + ((int) floor(d / 4.0) % 7) + ((int) floor(c / 4.0) % 7)
+	    - ((2 * c) % 7)) % 7; 
 }
 
 /* The following functions have nothing to do with the "cal" program,

@@ -461,7 +461,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Sample/sep1"), NULL, NULL, 0, "<Separator>", NULL },    
     { N_("/Sample/Set _frequency, startobs..."), NULL, gretl_callback, 
       SETOBS, NULL, GNULL },
-    { N_("/Sample/Compact data..."), NULL, compact_data_set, 0, NULL, GNULL },
+    { N_("/Sample/Compact data..."), NULL, do_compact_data_set, 0, NULL, GNULL },
     { N_("/Sample/sep2"), NULL, NULL, 0, "<Separator>", NULL },   
     { N_("/Sample/_Define, based on dummy..."), NULL, sample_range_dialog, 
       SMPLDUM, NULL, GNULL },

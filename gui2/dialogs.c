@@ -2500,12 +2500,12 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 			tempwid, TRUE, TRUE, FALSE);
     gtk_widget_show (tempwid);
 
-    if (show_pd_buttons) {
-	pd_buttons(d, target_pd);
-    }
-
     if (spd == 7 && mon_start != NULL) {
 	mon_start_buttons(d, mon_start);
+    }
+
+    if (show_pd_buttons) {
+	pd_buttons(d, target_pd);
     }
 
     button = gtk_radio_button_new_with_label (NULL, _("Compact by averaging"));

@@ -8,5 +8,6 @@ void open_named_remote_db_list (char *dbname);
 void grab_remote_db (GtkWidget *w, gpointer data);
 gint populate_dbfilelist (windata_t *ddata);
 void display_db_error (windata_t *dbwin, char *buf);
+void do_compact_data_set (void);
 
 #endif

@@ -733,9 +733,14 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 
     *gretl_errmsg = '\0';
 
-    if (sscanf(line, "%*s %d %8s", &pd, stobs) != 2) {
+    if (sscanf(line, "%*s %d %10s", &pd, stobs) != 2) {
 	strcpy(gretl_errmsg, _("Failed to parse line as frequency, startobs"));
 	return 1;
+    }
+
+    /* truncate stobs if not a date */
+    if (strchr(stobs, '/') == NULL) {
+	stobs[8] = '\0';
     }
 
     /* does frequency make sense? */
@@ -763,6 +768,8 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 		return 1;
 	    }
 	    pdinfo->sd0 = (double) ed0;
+	    /* replace any existing markers with date strings */
+	    destroy_dataset_markers(pdinfo);
 	} else {
 	    /* undated */
 	    pdinfo->sd0 = 1.0;
@@ -837,8 +844,8 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	pdinfo->time_series = 0;
     }
 
-    ntodate(pdinfo->stobs, 0, pdinfo);
-    ntodate(endobs, pdinfo->n - 1, pdinfo);
+    ntodate_full(pdinfo->stobs, 0, pdinfo); 
+    ntodate_full(endobs, pdinfo->n - 1, pdinfo);
     strcpy(pdinfo->endobs, endobs);
 
     return 0;

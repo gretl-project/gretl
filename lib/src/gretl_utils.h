@@ -54,6 +54,26 @@ enum model_selection_criteria {
                              && (p->pd == 5 || p->pd == 7))
 
 /**
+ * dataset_is_weekly:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a data set contains weekly time series
+ * data (1) or not (0).
+ */
+#define dataset_is_weekly(p) (p->time_series == TIME_SERIES \
+                              && p->pd == 52)
+
+/**
+ * dataset_is_hourly:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a data set contains hourly time series
+ * data (1) or not (0).
+ */
+#define dataset_is_hourly(p) (p->time_series == TIME_SERIES \
+                              && p->pd == 24)
+
+/**
  * dated_daily_data:
  * @p: pointer to data information struct.
  *

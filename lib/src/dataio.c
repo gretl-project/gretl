@@ -894,8 +894,10 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	} else {
 	    return daily_obs_number(date, pdinfo);
 	}
-    } else if (dataset_is_daily(pdinfo)) {
-	/* undated daily data */
+    } else if (dataset_is_daily(pdinfo) ||
+	       dataset_is_weekly(pdinfo) ||
+	       dataset_is_hourly(pdinfo)) {
+	/* undated time series */
 	if (sscanf(date, "%d", &i) && i > 0 && i <= pdinfo->n) {
 	    return i - 1;
 	}
@@ -973,18 +975,14 @@ static char *real_ntodate (char *datestr, int t, const DATAINFO *pdinfo,
 	    strcpy(datestr, tmp + 2);
 	}
 	return datestr;
-    } else if (dataset_is_daily(pdinfo)) {
-	/* undated daily data */
-	sprintf(datestr, "%d", t + 1);
-	return datestr;
-    }
-
-    if (pdinfo->time_series == TIME_SERIES && pdinfo->pd == 52) {
-	/* special: weekly data */
+    } else if (dataset_is_daily(pdinfo) || 
+	       dataset_is_weekly(pdinfo) ||
+	       dataset_is_hourly(pdinfo)) {
+	/* undated time series */
 	x = date(t, 1, pdinfo->sd0);
 	sprintf(datestr, "%d", (int) x);
 	return datestr;
-    }
+    } 
 
     x = date(t, pdinfo->pd, pdinfo->sd0);
 

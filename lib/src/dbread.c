@@ -828,11 +828,12 @@ static int get_places (double x)
 }
 #endif
 
-int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
-		  int method)
+double *mon_to_quart (double *src, SERIESINFO *sinfo,
+		      int method)
 {
     int t, p, m0, q0, y0, skip = 0, endskip, goodobs;
     float q;
+    double *x;
     double val = 0.;
 #ifdef LIMIT_DIGITS
     int pmax = 0;
@@ -840,7 +841,7 @@ int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 
     /* record the precision of the original data */
     for (t=0; t<sinfo->nobs; t++) {
-	p = get_places(mvec[t]);
+	p = get_places(src[t]);
 	if (p > pmax) pmax = p;
     }
 #endif
@@ -868,42 +869,43 @@ int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
     fprintf(stderr, "starting date = %s\n", sinfo->stobs);
 #endif
 
-    *pq = malloc(goodobs * sizeof **pq);
-    if (*pq == NULL) return 1;
+    x = malloc(goodobs * sizeof *x);
+    if (x == NULL) return NULL;
 
     for (t=0; t<goodobs; t++) {
 	p = (t + 1) * 3;
 	if (method == COMPACT_AVG) { 
-	    val = (mvec[p-3+skip] + mvec[p-2+skip] + mvec[p-1+skip]) / 3.0;
+	    val = (src[p-3+skip] + src[p-2+skip] + src[p-1+skip]) / 3.0;
 	} else if (method == COMPACT_SUM) {
-	    val = mvec[p-3+skip] + mvec[p-2+skip] + mvec[p-1+skip];
+	    val = src[p-3+skip] + src[p-2+skip] + src[p-1+skip];
 	} else if (method == COMPACT_EOP) {
-	    val = mvec[p-1+skip];
+	    val = src[p-1+skip];
 	} else if (method == COMPACT_SOP) {
-	    val = mvec[p-3+skip];
+	    val = src[p-3+skip];
 	}
 	/* do we want to limit the precision of the compacted
 	   data to that of the original data? */
 #ifdef LIMIT_DIGITS
 	sprintf(numstr, "%.*f", pmax, val);
-	(*pq)[t] = atof(numstr);
+	x[t] = atof(numstr);
 #else
-	(*pq)[t] = val;
+	x[t] = val;
 #endif
     }
 
     sinfo->pd = 4;
 
-    return 0;
+    return x;
 }
 
 /* ........................................................... */
 
-int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
-	       int method)
+double *to_annual (double *src, SERIESINFO *sinfo,
+		   int method)
 {
     int i, t, p, p0, y0, skip = 0, endskip, goodobs;
     int pd = sinfo->pd;
+    double *x;
     double val;
 #ifdef LIMIT_DIGITS
     int pmax = 0;
@@ -911,7 +913,7 @@ int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
 
     /* record the precision of the original data */
     for (t=0; t<sinfo->nobs; t++) {
-	p = get_places(mvec[t]);
+	p = get_places(src[t]);
 	if (p > pmax) pmax = p;
     }
 #endif
@@ -933,8 +935,8 @@ int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
     sprintf(sinfo->stobs, "%d", y0);
     fprintf(stderr, "starting date = %s\n", sinfo->stobs);
 
-    *pq = malloc(goodobs * sizeof **pq);
-    if (*pq == NULL) return 1;
+    x = malloc(goodobs * sizeof *x);
+    if (x == NULL) return NULL;
 
     for (t=0; t<goodobs; t++) {
 	p = (t + 1) * pd;
@@ -942,28 +944,28 @@ int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
 
 	if (method == COMPACT_AVG || method == COMPACT_SUM) { 
 	    for (i=1; i<=pd; i++) {
-		val += mvec[p-i+skip];
+		val += src[p-i+skip];
 	    }
 	    if (method == COMPACT_AVG) {
 		val /= (double) pd;
 	    }
 	} else if (method == COMPACT_EOP) {
-	    val = mvec[p-1+skip];
+	    val = src[p-1+skip];
 	} else if (method == COMPACT_SOP) {
-	    val = mvec[p-pd+skip];
+	    val = src[p-pd+skip];
 	}
 
 #ifdef LIMIT_DIGITS
 	sprintf(numstr, "%.*f", pmax, val);
-	(*pq)[t] = atof(numstr);
+	x[t] = atof(numstr);
 #else
-	(*pq)[t] = val;
+	x[t] = val;
 #endif
     }
 
     sinfo->pd = 1;
 
-    return 0;
+    return x;
 }
 
 int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
@@ -1232,11 +1234,9 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 			    double ***pZ, DATAINFO *pdinfo,
 			    int compact_method, int dbv)
 {
-    int err = 0;
-    double *xvec;
+    double *xvec = NULL;
     int n, t, start, stop, pad1 = 0, pad2 = 0;
     int new = (dbv == pdinfo->v);
-    
 
     if (check_db_import(sinfo, pdinfo)) {
 	return 1;
@@ -1282,24 +1282,22 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    return 1;
 	}
 	if (sinfo->pd == 12 && pdinfo->pd == 4) {
-	    mon_to_quart(&xvec, dbZ[1], sinfo, compact_method);
+	    xvec = mon_to_quart(dbZ[1], sinfo, compact_method);
 	}
 	else if (pdinfo->pd == 1) {
-	    to_annual(&xvec, dbZ[1], sinfo, compact_method);
+	    xvec = to_annual(dbZ[1], sinfo, compact_method);
 	}
     } else {  
 	/* series does not need compacting */
 	xvec = malloc(sinfo->nobs * sizeof *xvec);
-	if (xvec == NULL) {
-	    err = 1;
-	} else {
+	if (xvec != NULL) {
 	    for (t=0; t<sinfo->nobs; t++) {
 		xvec[t] = dbZ[1][t];
 	    }
 	} 
     }
 
-    if (err) {
+    if (xvec == NULL) {
 	strcpy(gretl_errmsg, _("Out of memory adding series"));
 	if (new) {
 	    dataset_drop_vars(1, pZ, pdinfo);
@@ -1346,3 +1344,257 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     return 0;
 }
 
+/* .................................................................. */
+
+static double *compact_series (double *src, int i, int n, int oldn,
+			       int startskip, int min_startskip, int compfac,
+			       int method)
+{
+    int t, j, idx;
+    int lead = startskip - min_startskip;
+    double *x;
+
+#if 0
+    printf("compact_series: startskip=%d, min_startskip=%d, compfac=%d "
+	   "lead=%d\n", startskip, min_startskip, compfac, lead);
+#endif
+
+    x = malloc(n * sizeof *x);
+    if (x == NULL) return NULL;
+
+    if (i == 0) {
+	for (t=0; t<n; t++) {
+	    x[t] = 1.0;
+	}
+    } else {
+	for (t=0; t<n; t++) {
+	    x[t] = NADBL;
+	}
+	idx = startskip;
+	for (t=lead; t<n && idx<oldn; t++) {
+	    if (method == COMPACT_SOP || method == COMPACT_EOP) {
+		x[t] = src[idx];
+	    } else {
+		if (idx + compfac - 1 > oldn - 1) break;
+		x[t] = 0.0;
+		for (j=0; j<compfac; j++) {
+		    x[t] += src[idx + j];
+		}
+		if (method == COMPACT_AVG) {
+		    x[t] /= (double) compfac;	
+		}
+	    }
+	    idx += compfac;
+	}
+    }
+
+    return x;
+}
+
+static void 
+get_startskip_etc (int compfac, int startmin, int endmin, 
+		   int oldn, int method, 
+		   int *startskip, int *newn) 
+{
+    int ss = compfac - (startmin % compfac) + 1;
+    int es, n;
+
+    ss = ss % compfac;
+
+    if (method == COMPACT_EOP) {
+	if (ss > 0) {
+	    ss--;
+	} else {
+	    /* move to end of initial period */
+	    ss = compfac - 1;
+	}
+    }
+
+    es = endmin % compfac;
+    if (method == COMPACT_SOP && es > 1) {
+	es--;
+    }
+
+    n = (oldn - ss - es) / compfac;
+    if (ss && method == COMPACT_EOP) n++;
+    if (es && method == COMPACT_SOP) n++;
+
+    *startskip = ss;
+    *newn = n;
+}
+
+static void 
+get_global_compact_params (int compfac, int startmin, int endmin,
+			   int default_method, 
+			   int *min_startskip, int *max_n,
+			   int *any_eop, int *all_same,
+			   DATAINFO *pdinfo)
+{
+    int i, startskip, n, method;
+    int n_not_eop = 0;
+
+    for (i=0; i<pdinfo->v; i++) {
+	if (i == 0) {
+	    get_startskip_etc(compfac, startmin, endmin, pdinfo->n, 
+			      default_method, &startskip, &n);
+	    if (default_method == COMPACT_EOP) {
+		*any_eop = 1;
+	    }
+	} else {
+	    method = COMPACT_METHOD(pdinfo, i);
+	    if (method != default_method && method != COMPACT_NONE) {
+		get_startskip_etc(compfac, startmin, endmin, pdinfo->n, 
+				  method, &startskip, &n);
+		*all_same = 0;
+		if (method == COMPACT_EOP) {
+		    *any_eop = 1;
+		} else {
+		    n_not_eop++;
+		}
+	    }
+	}
+	if (startskip < *min_startskip) {
+	    *min_startskip = startskip;
+	}
+	if (n > *max_n) {
+	    *max_n = n;
+	}
+    }
+
+    if (n_not_eop == pdinfo->v - 1) {
+	*any_eop = 0;
+    }
+}
+
+static int get_obs_maj_min (const char *obs, int *maj, int *min)
+{
+    int np = sscanf(obs, "%d:%d", maj, min);
+
+    if (np < 2) {
+	np = sscanf(obs, "%d.%d", maj, min);
+    }
+
+    return (np == 2);
+}
+
+int compact_data_set (double **Z, DATAINFO *pdinfo, int newpd,
+		      int default_method, int monstart)
+{
+    int newn, oldn = pdinfo->n, oldpd = pdinfo->pd;
+    int compfac;
+    int startmaj, startmin;
+    int endmaj, endmin;
+    int any_eop, all_same;
+    int min_startskip = 0;
+    char stobs[OBSLEN];
+    int i, err = 0;
+
+    *gretl_errmsg = '\0';
+
+    if (oldpd == 5 || oldpd == 7) {
+	/* daily to weekly */
+	compfac = oldpd;
+	if (dated_daily_data(pdinfo)) {
+	    startmin = get_day_of_week(pdinfo->stobs);
+	    if (oldpd == 7) {
+		if (monstart) {
+		    if (startmin == 0) startmin = 7;
+		} else {
+		    startmin++;
+		}
+	    }
+	} else {
+	    startmin = 1;
+	}
+    } else {
+	compfac = oldpd / newpd;
+	/* get starting obs major and minor components */
+	if (!get_obs_maj_min(pdinfo->stobs, &startmaj, &startmin)) {
+	    return 1;
+	}
+	/* get ending obs major and minor components */
+	if (!get_obs_maj_min(pdinfo->endobs, &endmaj, &endmin)) {
+	    return 1;
+	} 
+    }
+
+    min_startskip = oldpd;
+    newn = 0;
+    any_eop = 0;
+    all_same = 1;
+    get_global_compact_params(compfac, startmin, endmin, default_method,
+			      &min_startskip, &newn, &any_eop, &all_same, 
+			      pdinfo);
+    if (newn == 0) {
+	gretl_errmsg_set(_("Compacted dataset would be empty"));
+	return 1;
+    }    
+
+    if (newpd == 1) {
+	if (min_startskip > 0 && !any_eop) { 
+	    startmaj++;
+	}
+	sprintf(stobs, "%d", startmaj);
+    } else if (newpd == 52) {
+	strcpy(stobs, "1");
+    } else {
+	int m0 = startmin + min_startskip;
+	int minor = m0 / compfac + (m0 % compfac > 0);
+
+	if (minor > newpd) {
+	    startmaj++;
+	    minor -= newpd;
+	}
+	format_obs(stobs, startmaj, minor, newpd);
+    }
+
+    /* revise datainfo members */
+    strcpy(pdinfo->stobs, stobs);
+    pdinfo->pd = newpd;
+    pdinfo->n = newn;
+    pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
+    pdinfo->t1 = 0;
+    pdinfo->t2 = pdinfo->n - 1;
+    ntodate(pdinfo->endobs, pdinfo->t2, pdinfo);
+    
+    if (oldpd == 5 || oldpd == 7) {
+	/* remove any daily date strings */
+	destroy_dataset_markers(pdinfo);
+    }
+
+    /* compact the individual data series */
+    for (i=0; i<pdinfo->v && err == 0; i++) {
+	if (pdinfo->vector[i]) {
+	    int this_method = default_method;
+	    int startskip = min_startskip;
+	    double *x;
+
+	    if (!all_same) {
+		if (COMPACT_METHOD(pdinfo, i) != COMPACT_NONE) {
+		    this_method = COMPACT_METHOD(pdinfo, i);
+		}
+
+		startskip = compfac - (startmin % compfac) + 1;
+		startskip = startskip % compfac;
+		if (this_method == COMPACT_EOP) {
+		    if (startskip > 0) {
+			startskip--;
+		    } else {
+			startskip = compfac - 1;
+		    }
+		}
+	    }
+
+	    x = compact_series(Z[i], i, pdinfo->n, oldn, startskip, 
+			       min_startskip, compfac, this_method);
+	    if (x == NULL) {
+		err = E_ALLOC;
+	    } else {
+		free(Z[i]);
+		Z[i] = x;
+	    }
+	}
+    }
+
+    return err;
+}

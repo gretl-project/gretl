@@ -238,7 +238,7 @@ init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
 static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 {
     gint err = 0;
-    double *xvec;
+    double *xvec = NULL;
     int n, t, start, stop, pad1 = 0, pad2 = 0;
     int compact_method = COMPACT_AVG;
     int overwrite = 0;
@@ -295,22 +295,25 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 		return;
 	    }
 	    if (sinfo->pd == 12 && datainfo->pd == 4) {
-		mon_to_quart(&xvec, dbZ[1], sinfo, compact_method);
+		xvec = mon_to_quart(dbZ[1], sinfo, compact_method);
 	    }
 	    else if (datainfo->pd == 1) {
-		to_annual(&xvec, dbZ[1], sinfo, compact_method);
+		xvec = to_annual(dbZ[1], sinfo, compact_method);
 	    }
 	} else {  
 	    /* series does not need compacting */
 	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
-	    if (xvec == NULL) {
-		errbox(_("Out of memory attempting to add variable"));
-		if (!overwrite) dataset_drop_vars(1, &Z, datainfo);
-		return;
+	    if (xvec != NULL) {
+		for (t=0; t<sinfo->nobs; t++) {
+		    xvec[t] = dbZ[1][t];
+		}
 	    }
-	    for (t=0; t<sinfo->nobs; t++) {
-		xvec[t] = dbZ[1][t];
-	    }
+	}
+
+	if (xvec == NULL) {
+	    errbox(_("Out of memory attempting to add variable"));
+	    if (!overwrite) dataset_drop_vars(1, &Z, datainfo);
+	    return;
 	}
 
 	/* common stuff for adding a var */
@@ -1903,266 +1906,27 @@ gint populate_dbfilelist (windata_t *win)
     return 0;
 }
 
-/* .................................................................. */
-
-static int compact_series (double **Z, int i, int n, int oldn,
-			   int startskip, int min_startskip, int compfac,
-			   int method)
+void do_compact_data_set (void)
 {
-    int t, j, idx;
-    int lead = startskip - min_startskip;
-    double *x;
-
-#if 0
-    printf("compact_series: startskip=%d, min_startskip=%d, compfac=%d "
-	   "lead=%d\n", startskip, min_startskip, compfac, lead);
-#endif
-
-    x = malloc(n * sizeof *x);
-    if (x == NULL) return 1;
-
-    if (i == 0) {
-	for (t=0; t<n; t++) {
-	    x[t] = 1.0;
-	}
-    } else {
-	for (t=0; t<n; t++) {
-	    x[t] = NADBL;
-	}
-	idx = startskip;
-	for (t=lead; t<n && idx<oldn; t++) {
-	    if (method == COMPACT_SOP || method == COMPACT_EOP) {
-		x[t] = Z[i][idx];
-	    } else {
-		if (idx + compfac - 1 > oldn - 1) break;
-		x[t] = 0.0;
-		for (j=0; j<compfac; j++) {
-		    x[t] += Z[i][idx + j];
-		}
-		if (method == COMPACT_AVG) {
-		    x[t] /= (double) compfac;	
-		}
-	    }
-	    idx += compfac;
-	}
-    }
-
-    free(Z[i]);
-
-    Z[i] = x;
-
-    return 0;
-}
-
-static void 
-get_startskip_etc (int compfac, int startmin, int endmin, 
-		   int oldn, int method, 
-		   int *startskip, int *newn) 
-{
-    int ss = compfac - (startmin % compfac) + 1;
-    int es, n;
-
-    ss = ss % compfac;
-
-    if (method == COMPACT_EOP) {
-	if (ss > 0) {
-	    ss--;
-	} else {
-	    /* move to end of initial period */
-	    ss = compfac - 1;
-	}
-    }
-
-    es = endmin % compfac;
-    if (method == COMPACT_SOP && es > 1) {
-	es--;
-    }
-
-    n = (oldn - ss - es) / compfac;
-    if (ss && method == COMPACT_EOP) n++;
-    if (es && method == COMPACT_SOP) n++;
-
-    *startskip = ss;
-    *newn = n;
-}
-
-static void 
-get_global_compact_params (int compfac, int startmin, int endmin,
-			   int oldn, int default_method, 
-			   int *min_startskip, int *max_n,
-			   int *any_eop, int *all_same)
-{
-    int i, startskip, n, method;
-    int n_not_eop = 0;
-
-    for (i=0; i<datainfo->v; i++) {
-	if (i == 0) {
-	    get_startskip_etc(compfac, startmin, endmin, oldn, 
-			      default_method, &startskip, &n);
-	    if (default_method == COMPACT_EOP) {
-		*any_eop = 1;
-	    }
-	} else {
-	    method = COMPACT_METHOD(datainfo, i);
-	    if (method != default_method && method != COMPACT_NONE) {
-		get_startskip_etc(compfac, startmin, endmin, oldn, 
-				  method, &startskip, &n);
-		*all_same = 0;
-		if (method == COMPACT_EOP) {
-		    *any_eop = 1;
-		} else {
-		    n_not_eop++;
-		}
-	    }
-	}
-	if (startskip < *min_startskip) {
-	    *min_startskip = startskip;
-	}
-	if (n > *max_n) {
-	    *max_n = n;
-	}
-    }
-
-    if (n_not_eop == datainfo->v - 1) {
-	*any_eop = 0;
-    }
-}
-
-static int get_obs_maj_min (const char *obs, int *maj, int *min)
-{
-    int np = sscanf(obs, "%d:%d", maj, min);
-
-    if (np < 2) {
-	np = sscanf(obs, "%d.%d", maj, min);
-    }
-
-    return (np == 2);
-}
-
-void compact_data_set (void)
-{
-    int newpd, oldpd = datainfo->pd;
-    int newn, oldn = datainfo->n;
-    int compfac, monstart;
-    int startmaj, startmin;
-    int endmaj, endmin;
-    int any_eop, all_same;
-    int min_startskip = 0;
-    int i, err = 0;
     int default_method = COMPACT_AVG;
-    char stobs[OBSLEN];
+    int err, newpd = 0, monstart = 1;
 
     if (maybe_restore_full_data(COMPACT)) return;
 
-    newpd = 0;
-
-    data_compact_dialog(mdata->w, oldpd, &newpd, &monstart, &default_method);
+    data_compact_dialog(mdata->w, datainfo->pd, &newpd, &monstart, &default_method);
     if (default_method == COMPACT_NONE) return;
 
-    if (oldpd == 5 || oldpd == 7) {
-	/* daily to weekly */
-	compfac = oldpd;
-	if (dated_daily_data(datainfo)) {
-	    startmin = get_day_of_week(datainfo->stobs);
-	    if (oldpd == 7) {
-		if (monstart) {
-		    startmin = startmin % 7;
-		} else {
-		    startmin++;
-		}
-	    }
-	} else {
-	    startmin = 1;
-	}
+    err = compact_data_set(Z, datainfo, newpd, default_method, monstart);
+
+    if (err) {
+	gui_errmsg(err);
     } else {
-	compfac = oldpd / newpd;
-	/* get starting obs major and minor components */
-	if (!get_obs_maj_min(datainfo->stobs, &startmaj, &startmin)) {
-	    return;
+	data_status |= MODIFIED_DATA;
+	set_sample_label(datainfo);
+
+	if (datainfo->pd == 1 || datainfo->pd == 52) {
+	    flip(mdata->ifac, "/Sample/Compact data...", FALSE);
 	}
-	/* get ending obs major and minor components */
-	if (!get_obs_maj_min(datainfo->endobs, &endmaj, &endmin)) {
-	    return;
-	} 
-    }
-
-    min_startskip = oldpd;
-    newn = 0;
-    any_eop = 0;
-    all_same = 1;
-    get_global_compact_params(compfac, startmin, endmin, oldn, default_method,
-			      &min_startskip, &newn, &any_eop, &all_same);
-    if (newn == 0) {
-	errbox(_("Compacted dataset would be empty"));
-	return;
-    }    
-
-    if (newpd == 1) {
-	if (min_startskip > 0 && !any_eop) { 
-	    startmaj++;
-	}
-	sprintf(stobs, "%d", startmaj);
-    } else if (newpd == 52) {
-	strcpy(stobs, "1");
-    } else {
-	int m0 = startmin + min_startskip;
-	int minor = m0 / compfac + (m0 % compfac > 0);
-
-	if (minor > newpd) {
-	    startmaj++;
-	    minor -= newpd;
-	}
-	format_obs(stobs, startmaj, minor, newpd);
-    }
-
-    /* revise datainfo members */
-    strcpy(datainfo->stobs, stobs);
-    datainfo->pd = newpd;
-    datainfo->n = newn;
-    datainfo->sd0 = get_date_x(datainfo->pd, datainfo->stobs);
-    datainfo->t1 = 0;
-    datainfo->t2 = datainfo->n - 1;
-    ntodate(datainfo->endobs, datainfo->t2, datainfo);
-    
-    if (oldpd == 5 || oldpd == 7) {
-	/* remove any daily date strings */
-	destroy_dataset_markers(datainfo);
-    }
-
-    /* compact the individual data series */
-    for (i=0; i<datainfo->v && err == 0; i++) {
-	if (datainfo->vector[i]) {
-	    int this_method = default_method;
-	    int startskip = min_startskip;
-
-	    if (!all_same) {
-		if (COMPACT_METHOD(datainfo, i) != COMPACT_NONE) {
-		    this_method = COMPACT_METHOD(datainfo, i);
-		}
-
-		startskip = compfac - (startmin % compfac) + 1;
-		startskip = startskip % compfac;
-		if (this_method == COMPACT_EOP) {
-		    if (startskip > 0) {
-			startskip--;
-		    } else {
-			startskip = compfac - 1;
-		    }
-		}
-	    }
-
-	    if (compact_series(Z, i, datainfo->n, oldn, startskip, min_startskip,
-			       compfac, this_method)) {
-		errbox(_("Out of memory!"));
-		err = 1;
-	    }
-	}
-    }
-
-    data_status |= MODIFIED_DATA;
-    set_sample_label(datainfo);
-
-    if (datainfo->pd == 1) {
-	flip(mdata->ifac, "/Sample/Compact data...", FALSE);
     }
 }
+

@@ -78,11 +78,11 @@ int get_rats_data_by_series_number (const char *fname,
 				    SERIESINFO *sinfo, 
 				    double **Z);
 
-int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
-		  int method);
+double *mon_to_quart (double *src, SERIESINFO *sinfo,
+		      int method);
 
-int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
-	       int method);
+double *to_annual (double *src, SERIESINFO *sinfo,
+		   int method);
 
 int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
 		 PRN *prn);
@@ -97,5 +97,7 @@ void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo,
 
 int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo);
 
+int compact_data_set (double **Z, DATAINFO *pdinfo, int newpd,
+		      int default_method, int monstart);
 
 #endif /* DBREAD_H */

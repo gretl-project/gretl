@@ -311,8 +311,6 @@ void script_loop_init (LOOPSET *ploop)
     ploop->storename = NULL;
     ploop->storelbl = NULL;
     ploop->storeval = NULL;
-
-    return 0;
 }
 
 static int monte_carlo_init (LOOPSET *ploop)
