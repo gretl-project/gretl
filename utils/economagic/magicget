@@ -34,6 +34,7 @@ my $nseries = 0;
 my $interactive = 1;
 my $verbose = 0;
 my $tester = 0;
+my $getdaily = 0;
 
 sub check_series_name {
     if ($_[0] =~ m@[^a-zA-Z0-9\+-_/]@) { return 1; }
@@ -135,6 +136,7 @@ Options:
          database after retrieving list of variable names.
      -v  Verbose operation.
      -t  Test mode: print out raw and parsed data to .tst file
+     -d  Include daily data series (if any) in database
 
 The "data_source_identifier" (e.g. fedbog, ecb) is the abbreviation used
 by economagic for a given data source.
@@ -146,10 +148,11 @@ EndUsage
 
 # Get command-line options (b for batch, h for help, etc.);
 
-if (!(&Getopts('bvh')) || $opt_h) { &usage; }
+if (!(&Getopts('bvhtd')) || $opt_h) { &usage; }
 if ($opt_b) { $interactive = 0; }
 if ($opt_v) { $verbose = 1; }
 if ($opt_t) { $tester = 1; }
+if ($opt_d) { $getdaily = 1; }
 
 if (@ARGV == 0) { &usage; }
 my $source = $ARGV[0];
@@ -247,6 +250,10 @@ for ($s = 0; $s < $nseries; $s++) {
 
     # if ($sernames[$s] !~ /day-tcm3y/) { next; }
 
+    if (($daily[$s] || $business[$s]) && $getdaily == 0) {
+	next;
+    }
+
     if ($source eq "sp") {
 	$grab = "sp/" . "$sernames[$s]";
     } else {
@@ -283,6 +290,7 @@ for ($s = 0; $s < $nseries; $s++) {
 	if (/Series Title:/) {
 	    $title = <SOCK>;
 	    chop($title);
+	    if ($title =~ /Weekly/) { last; }
 	    next;
 	}
 
