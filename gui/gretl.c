@@ -410,7 +410,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/_Display values"), NULL, display_var, 0, NULL },
     { N_("/Variable/_Summary statistics"), NULL, do_menu_op, 
       VAR_SUMMARY, NULL },
-    { N_("/Variable/_Time series plot"), NULL, do_graph_var, 0, NULL },
+    { N_("/Variable/_Time series plot"), NULL, ts_plot_var, 0, NULL },
     { N_("/Variable/_Frequency distribution"), NULL, do_menu_op, 
       FREQ, NULL },
     { N_("/Variable/Frequency plot"), NULL, NULL, 0, "<Branch>" },

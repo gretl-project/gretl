@@ -2893,7 +2893,8 @@ void do_graph_var (int varnum)
 {
     int err, lines[1];
 
-    if (varnum < 0) return;
+    if (varnum <= 0) return;
+
     clear(line, MAXLEN);
     sprintf(line, "gnuplot %s time", datainfo->varname[varnum]);
     if (check_cmd(line) || cmd_init(line)) return;
@@ -2906,6 +2907,13 @@ void do_graph_var (int varnum)
     else if (err < 0) 
 	errbox(_("gnuplot command failed"));
     else register_graph();
+}
+
+/* ........................................................... */
+
+void ts_plot_var (gpointer data, guint opt, GtkWidget *widget)
+{
+    do_graph_var(mdata->active_var);
 }
 
 /* ........................................................... */

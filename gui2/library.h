@@ -152,6 +152,8 @@ void do_graph_var (int varnum);
 
 void do_boxplot_var (int varnum);
 
+void ts_plot_var (gpointer data, guint opt, GtkWidget *widget);
+
 void do_scatters (GtkWidget *widget, gpointer p);
 
 void do_graph_from_selector (GtkWidget *widget, gpointer p);
