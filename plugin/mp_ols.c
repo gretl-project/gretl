@@ -341,100 +341,6 @@ static void get_mp_varname (const MPMODEL *pmod, const DATAINFO *pdinfo,
     } 
 }
 
-static void print_mp_coeff (const MPMODEL *pmod, const DATAINFO *pdinfo,
-			    int c, PRN *prn)
-{
-    char vname[12];
-    double xx = mpf_get_d (pmod->coeff[c-1]);
-    double yy = mpf_get_d (pmod->sderr[c-1]);
-
-    /* a bit of a fiddle getting the variable names to come
-       out right */
-
-    get_mp_varname (pmod, pdinfo, c, vname);
-
-    pprintf(prn, " %3d) %8s ", pmod->varlist[c], vname);
-
-    gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
-    gretl_print_fullwidth_double(yy, GRETL_MP_DIGITS, prn); 
-
-    pputs(prn, "\n");
-}
-
-static void other_stats (const MPMODEL *pmod, PRN *prn)
-{
-    double xx;
-    char fstr[16];
-    int len = 24;
-
-    if (doing_nls()) len = 36;
-    
-    xx = mpf_get_d (pmod->sigma);
-    if (xx < DBL_EPSILON) xx = 0.0;
-    pprintf(prn, "%-*s", len, _("Standard error"));
-    gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
-    pputs(prn, "\n");
-
-    xx = mpf_get_d (pmod->ess);
-    if (xx < DBL_EPSILON) xx = 0.0;
-    pprintf(prn, "%-*s", len, _("Error Sum of Squares"));
-    gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
-    pputs(prn, "\n");
-
-    xx = mpf_get_d (pmod->rsq);
-    pprintf(prn, "%-*s", len, _("Unadjusted R-squared"));
-    gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
-    pputs(prn, "\n");
-
-    xx = mpf_get_d (pmod->adjrsq);
-    pprintf(prn, "%-*s", len, _("Adjusted R-squared"));
-    gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
-    pputs(prn, "\n");
-
-    xx = mpf_get_d (pmod->fstt);
-    sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
-    pprintf(prn, "%-*s", len, fstr);
-    if (na(xx)) {
-	pprintf(prn, "            %s", _("undefined"));
-    } else {
-	gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
-    }
-    pputs(prn, "\n");
-}
-
-static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
-{
-    int i, ncoeff;
-    char startdate[9], enddate[9];
-    int t1 = pmod->t1, t2 = pmod->t2;
-
-    ncoeff = pmod->list[0];
-    ntodate(startdate, t1, pdinfo);
-    ntodate(enddate, t2, pdinfo);
-
-    pprintf(prn, _("Multiple-precision OLS estimates using "
-		   "the %d observations %s-%s\n"),
-	    pmod->nobs, startdate, enddate);
-    pprintf(prn, "%s: %s\n\n", _("Dependent variable"),
-	    pdinfo->varname[pmod->varlist[1]]);
-
-    pputs(prn, _("      VARIABLE         COEFFICIENT          "
-		 "        STD. ERROR\n"));
-
-    if (pmod->ifc) {
-	print_mp_coeff(pmod, pdinfo, ncoeff, prn);
-	ncoeff--;
-    }
-    for (i=2; i<=ncoeff; i++) {
-	print_mp_coeff(pmod, pdinfo, i, prn);
-    }
-    pputs(prn, "\n");
-
-    other_stats (pmod, prn);
-
-    return 0;
-}
-
 /**
  * mp_vector_raise_to_power:
  * @srcvec: source vector (doubles)
@@ -723,11 +629,7 @@ int mplsq (const int *list, const int *polylist,
     ret = model.errcode;
 
     if (ret == 0) {
-	if (results == NULL) {
-	    print_mp_ols (&model, pdinfo, prn);
-	} else {
-	    copy_mp_results (&model, pdinfo, results);
-	}
+	copy_mp_results (&model, pdinfo, results);
     }
 
     /* free all the mpf stuff */

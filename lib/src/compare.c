@@ -1483,6 +1483,7 @@ int mp_ols (const LIST list, const char *pos,
 		 DATAINFO *, PRN *, char *, mp_results *);
     const int *reglist = NULL;
     int *polylist = NULL, *tmplist = NULL;
+    mp_results *mpvals = NULL;
     int err = 0;
 
     if (open_plugin("mp_ols", &handle)) {
@@ -1508,15 +1509,26 @@ int mp_ols (const LIST list, const char *pos,
 	reglist = list;
     }
 
+    mpvals = gretl_mp_results_new(list[0]);
+    if (mpvals == NULL || allocate_mp_varnames(mpvals)) {
+	pprintf(prn, "%s\n", _("Out of memory!"));
+	err = 1;
+    }
+
     if (!err) {
 	err = (*mplsq)(reglist, polylist, pZ, pdinfo, prn, 
-		       gretl_errmsg, NULL); 
+		       gretl_errmsg, mpvals); 
+    }
+
+    if (!err) {
+	print_mpols_results(mpvals, pdinfo, prn);
     }
 
     close_plugin(handle);
 
     free(polylist);
     free(tmplist);
+    free_gretl_mp_results(mpvals);
 
     return err;
 }

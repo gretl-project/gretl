@@ -1907,6 +1907,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     void *handle;
     int (*mplsq)(const int *, const int *,
 		 double ***, DATAINFO *, PRN *, char *, mp_results *);
+    mp_results *mpvals = NULL;
     int err, action;
     selector *sr = (selector *) p;
     PRN *prn;
@@ -1931,7 +1932,14 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    err = (*mplsq)(command.list, NULL, &Z, datainfo, prn, errtext, NULL);
+    mpvals = gretl_mp_results_new (command.list[0]);
+
+    if (mpvals == NULL || allocate_mp_varnames(mpvals)) {
+	errbox(_("Out of memory!"));
+	return;
+    }
+
+    err = (*mplsq)(command.list, NULL, &Z, datainfo, prn, errtext, mpvals);
 
     close_plugin(handle);
 
@@ -1942,8 +1950,12 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 	return;
     }
 
+    print_mpols_results (mpvals, datainfo, prn);
+
     view_buffer(prn, 78, 400, _("gretl: high precision estimates"), 
                 MPOLS, view_items);
+
+    free_gretl_mp_results(mpvals);
 }
 
 #endif /* ENABLE_GMP */

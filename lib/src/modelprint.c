@@ -1749,7 +1749,7 @@ static void mp_other_stats (const mp_results *mpvals, PRN *prn)
     } else {
 	gretl_print_fullwidth_double(mpvals->fstt, GRETL_MP_DIGITS, prn);
     }
-
+    pputs(prn, "\n\n");
 }
 
 /* ....................................................... */
@@ -1783,6 +1783,8 @@ void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
     ncoeff = mpvals->ncoeff;
     ntodate(startdate, mpvals->t1, pdinfo);
     ntodate(enddate, mpvals->t2, pdinfo);
+
+    pputs(prn, "\n");
 
     if (!PLAIN_FORMAT(prn->format)) {
 	pputs(prn, "FIXME: this is still to be implemented!\n\n");
