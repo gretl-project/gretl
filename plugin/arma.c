@@ -96,11 +96,12 @@ static int get_maxiter (void)
     return ml;
 }
 
-static void update_fcast_errs (double *e, const double *y, 
-			       const double *coeff, 
-			       int n, int p, int q)
+static double update_fcast_errs (double *e, const double *y, 
+				 const double *coeff, 
+				 int n, int p, int q)
 {
     int i, k, t;
+    double s2 = 0.0;
 
     for (t=0; t<n; t++) {
 
@@ -118,7 +119,12 @@ static void update_fcast_errs (double *e, const double *y,
 	    if (k < 0) continue;
 	    e[t] -= coeff[i+p+1] * e[k];
 	}
+	s2 += e[t] * e[t];
     }
+
+    s2 /= (double) t;
+
+    return s2;
 }
 
 /* ARMA (1,1) example:
@@ -192,7 +198,7 @@ static void update_error_partials (double *e, const double *y,
    genr sc_m = -de_m * e
 */
 
-static void update_ll_partials (double *e, double **Z, 
+static void update_ll_partials (double *e, double **Z, double s2,
 				int n, int p, int q)
 {
     int i, j, t;
@@ -201,7 +207,7 @@ static void update_ll_partials (double *e, double **Z,
     for (i=0; i<nc; i++) {
 	j = 3 + p + q + i;
 	for (t=0; t<n; t++) {
-	    Z[j][t] = -Z[j-nc][t] * e[t];
+	    Z[j][t] = -Z[j-nc][t] * e[t] / s2;
 	}
     }
 }
@@ -406,7 +412,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     int iters, itermax;
     int subiters, subitermax;
     int i, t;
-    double tol, crit, ll = 0.0;
+    double s2, tol, crit, ll = 0.0;
     double steplength, ll_prev = -1.0e+8;
     double *e, *coeff, *d_coef;
     const double *y;
@@ -498,7 +504,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     steplength = 1.0;
 
     /* generate one-step forecast errors */
-    update_fcast_errs(e, y, coeff, an, p, q);
+    s2 = update_fcast_errs(e, y, coeff, an, p, q);
 
     /* calculate log-likelihood */
     ll = get_ll(e, an);
@@ -512,7 +518,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	update_error_partials(e, y, aZ, coeff, an, p, q);
 
 	/* partials of l wrt coeffs */
-	update_ll_partials(e, aZ, an, p, q);
+	update_ll_partials(e, aZ, s2, an, p, q);
 
 	/* OPG regression */
 	armod = lsq(alist, &aZ, ainfo, OLS, 1, 0.0);
@@ -531,7 +537,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	}
 
 	/* compute log-likelihood at new point */
-	update_fcast_errs(e, y, coeff, an, p, q);
+	s2 = update_fcast_errs(e, y, coeff, an, p, q);
 	ll = get_ll(e, an);
 
 	/* subiterations for best steplength */
@@ -545,7 +551,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	    }
 
 	    /* compute loglikelihood again */
-	    update_fcast_errs(e, y, coeff, an, p, q);
+	    s2 = update_fcast_errs(e, y, coeff, an, p, q);
 	    ll = get_ll(e, an);
 	}
 

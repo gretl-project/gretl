@@ -305,7 +305,6 @@ static int get_estimates (const char *fname, double *coeff, double *sderr,
 		if (sscanf(line, "%*s %*s %lf %lf", &b, &se) == 2) {
 		    coeff[0] = b;
 		    sderr[0] = se;
-		    /* FIXME: these need adjusting */
 		}
 	    }
 	    else if (!strcmp(word, "AR")) {
