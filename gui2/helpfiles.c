@@ -564,7 +564,7 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 	found = look_for_string(haystack, needle, 0);
 	if (found >= 0) break;
 	/* then column 0 */
-	gtk_tree_model_get (model, &iter, 1, &tmp, -1);
+	gtk_tree_model_get (model, &iter, 0, &tmp, -1);
 	strcpy(haystack, tmp);
 	g_free(tmp);
 	lower(haystack);
