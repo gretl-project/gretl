@@ -1034,7 +1034,7 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     center_line(tmp, prn, 0);
 
     if (ci == CORR) {
-	strcpy(tmp, _("(missing values denoted by -999 will be skipped)"));
+	strcpy(tmp, _("(missing values will be skipped)"));
 	center_line(tmp, prn, 1);
     }
 }
@@ -1125,7 +1125,7 @@ void print_summary (GRETLSUMMARY *summ,
     }
 
     prhdr(_("Summary Statistics"), pdinfo, SUMMARY, prn);
-    strcpy(tmp, _("(missing values denoted by -999 will be skipped)"));
+    strcpy(tmp, _("(missing values will be skipped)"));
     center_line(tmp, prn, 1);
     pprintf(prn, "\n%s  ", _("Variable"));
 

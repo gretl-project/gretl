@@ -564,14 +564,10 @@ void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     ntodate(date2, fr->t2, pdinfo);
 
     pputs(prn, "\\begin{raggedright}\n");
-    pputs(prn, I_("Full data range:"));
-    pprintf(prn, " %s--%s ($n$ = %d)\\\\\n", 
-	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
     pputs(prn, I_("Model estimation range:"));
     pprintf(prn, " %s--%s", date1, date2);
 
-    if (fr->nobs == pdinfo->n) pputs(prn, "\\\\\n");
-    else pprintf(prn, " ($n$ = %d)\\\\\n", fr->nobs); 
+    pprintf(prn, " ($n$ = %d)\\\\\n", fr->nobs); 
 
     pprintf(prn, I_("Standard error of residuals = %g"), fr->sigma);
     pputs(prn, "\n\\end{raggedright}\n");
@@ -590,10 +586,6 @@ void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     ntodate(date2, fr->t2, pdinfo);
 
     pputs(prn, "{\\rtf1\\par\n\\qc ");
-    pputs(prn, I_("Full data range:"));
-    pprintf(prn, " %s - %s\\par\n", pdinfo->stobs, pdinfo->endobs);
-
-    pputs(prn, "\\qc ");
     pputs(prn, I_("Model estimation range:")); 
     pprintf(prn, " %s - %s (n = %d)\\par\n", date1, date2, fr->nobs);
 
@@ -630,9 +622,11 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 
 	print_obs_marker(t, pdinfo, prn);
 	pputs(prn, " & ");
-	
-	if (na(fr->actual[t]) || na(fr->fitted[t])) { 
+
+	if (na(fr->actual[t])) {
 	    pputs(prn, "\\\\\n");
+	} else if (na(fr->fitted[t])) {
+	    pprintf(prn, "%13.*f \\\\\n", fr->pmax, fr->actual[t]);
 	} else {
 	    int ast;
 
@@ -690,16 +684,22 @@ void rtfprint_fit_resid (const FITRESID *fr,
 	pputs(prn, "\\qr ");
 	print_obs_marker(t, pdinfo, prn);
 	pputs(prn, "\\cell"); 
-	
-	if (na(fr->actual[t]) || na(fr->fitted[t])) { 
+
+	if (na(fr->actual[t])) {
 	    pputs(prn, "\\qc \\cell \\qc \\cell \\qc \\cell \\ql \\cell"
+		  " \\intbl \\row\n"); 
+	} else if (na(fr->fitted[t])) {	 
+	    printfrtf(fr->actual[t], prn, 0);
+	    pputs(prn, "\\qc \\cell \\qc \\cell \\ql \\cell"
 		  " \\intbl \\row\n"); 
 	} else {
 	    int ast;
 
 	    xx = fr->actual[t] - fr->fitted[t];
 	    ast = (fabs(xx) > 2.5 * fr->sigma);
-	    if (ast) anyast = 1;
+	    if (ast) {
+		anyast = 1;
+	    }
 	    printfrtf(fr->actual[t], prn, 0);
 	    printfrtf(fr->fitted[t], prn, 0);
 	    printfrtf(xx, prn, 0);

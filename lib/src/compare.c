@@ -173,9 +173,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     gretl_model_init(&rep);
 
     if (orig->ci == CORC || orig->ci == HILU || orig->ci == PWE) {
-	rep.errcode = hilu_corc(&rho, list, pZ, pdinfo, NULL, 1, orig->ci, prn);
-    }
-    else if (orig->ci == WLS || orig->ci == AR) {
+	rho = estimate_rho(list, pZ, pdinfo, NULL, 1, orig->ci, 
+			   &rep.errcode, prn);
+    } else if (orig->ci == WLS || orig->ci == AR) {
 	int *full_list = full_model_list(orig, list, &pos);
 
 	free(list);

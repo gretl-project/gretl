@@ -5190,7 +5190,11 @@ int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	sprintf(vname, "usq%d", pmod->ID);
 	sprintf(vlabel, _("squared residual from model %d"), pmod->ID);
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    (*pZ)[i][t] = pmod->uhat[t] * pmod->uhat[t];
+	    if (na(pmod->uhat[t])) {
+		(*pZ)[i][t] = NADBL;
+	    } else {
+		(*pZ)[i][t] = pmod->uhat[t] * pmod->uhat[t];
+	    }
 	}
     }
     else if (code == GENR_H) { /* garch variance */

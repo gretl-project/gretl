@@ -1580,9 +1580,12 @@ void varinfo_dialog (int varnum, int full)
 			    LABEL);
     }
 
-    gtk_widget_show (vset->dlg);
+    gtk_widget_show(vset->dlg);
 
-    if (!full) gtk_main();
+    if (!full) {
+	gtk_window_set_modal(GTK_WINDOW(vset->dlg), TRUE);
+	gtk_main();
+    }
 }
 
 /* apparatus for setting sample range */

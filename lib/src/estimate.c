@@ -204,28 +204,22 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     pmod->arinfo->rho[1] = rho;
     gretl_model_set_double(pmod, "rho_in", rho);
 
-    t = pmod->t1;
-    if (pmod->ci == PWE) {
-	x = pw1 * Z[yno][t];
-	for (i=pmod->ifc; i<pmod->ncoeff; i++) {
-	    x -= pmod->coeff[i] * pw1 * Z[pmod->list[i+2]][t];
-	}
-	if (pmod->ifc) {
-	    x -= pw1 * pmod->coeff[0];
-	}
-	pmod->uhat[t] = x;
-	pmod->yhat[t] = Z[yno][t] - x;
-    } else {
-	pmod->uhat[t] = NADBL;
-	pmod->yhat[t] = NADBL;
-    }
-
-    for (t=pmod->t1 + 1; t<=pmod->t2; t++) {
-	x = Z[yno][t] - rho * Z[yno][t-1];
-	for (i=0; i<pmod->ncoeff; i++) {
-	    x -= pmod->coeff[i] * 
-		(Z[pmod->list[i+2]][t] - 
-		 rho * Z[pmod->list[i+2]][t-1]);
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (t == pmod->t1 && pmod->ci == PWE) {
+	    x = pw1 * Z[yno][t];
+	    for (i=pmod->ifc; i<pmod->ncoeff; i++) {
+		x -= pmod->coeff[i] * pw1 * Z[pmod->list[i+2]][t];
+	    }
+	    if (pmod->ifc) {
+		x -= pw1 * pmod->coeff[0];
+	    }
+	} else {
+	    x = Z[yno][t] - rho * Z[yno][t-1];
+	    for (i=0; i<pmod->ncoeff; i++) {
+		x -= pmod->coeff[i] * 
+		    (Z[pmod->list[i+2]][t] - 
+		     rho * Z[pmod->list[i+2]][t-1]);
+	    }
 	}
 	pmod->uhat[t] = x;
 	pmod->yhat[t] = Z[yno][t] - x;
@@ -412,10 +406,9 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
     if (ci == HSK) {
 	return hsk_func(list, pZ, pdinfo);
-    }
-    if (ci == HCCM) {
+    } else if (ci == HCCM) {
 	return hccm_func(list, pZ, pdinfo);
-    }
+    } 
 
     gretl_model_init(&mdl);
     gretl_model_smpl_init(&mdl, pdinfo);
@@ -1502,13 +1495,17 @@ static int hilu_plot (double *ssr, double *rho, int n,
     return 0;
 }
 
-static double autores (MODEL *pmod, double rho, const double **Z,
-		       int opt)
+#undef USE_DW
+
+static double autores (MODEL *pmod, const double **Z, int opt)
 {
     int t, v, t1 = pmod->t1;
     double x, num = 0.0, den = 0.0;
+    double rhohat;
 
-    if (opt == CORC || opt == HILU) t1--;
+    if (opt == CORC || opt == HILU) {
+	t1--;
+    }
 
     for (t=t1; t<=pmod->t2; t++) {
 	x = Z[pmod->list[1]][t];
@@ -1517,56 +1514,70 @@ static double autores (MODEL *pmod, double rho, const double **Z,
 	}
 	pmod->uhat[t] = x;
 	if (t > t1) {
+#ifdef USE_DW
+	    x = pmod->uhat[t] - pmod->uhat[t-1];
+	    num += x * x;
+#else
 	    num += pmod->uhat[t] * pmod->uhat[t-1];
+#endif
 	    den += pmod->uhat[t-1] * pmod->uhat[t-1];
 	}
-    }
+    } 
 
-    return num / den;
+#ifdef USE_DW
+    den += pmod->uhat[pmod->t2] * pmod->uhat[pmod->t2];
+    rhohat = 1.0 - num / (den * 2.0);
+#else
+    rhohat = num / den;
+#endif
+
+    return rhohat;
 }
 
 #undef AR_DEBUG
 
 /**
- * hilu_corc:
- * @toprho: pointer to receive final rho value.
+ * estimate_rho:
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @ppaths: pointer to gretl paths info struct
+ * @ppaths: pointer to gretl paths info struct.
  * @batch: = 1 if in batch mode
  * @opt: option flag: CORC for Cochrane-Orcutt, HILU for Hildreth-Lu,
- *                    PWE for Prais-Winsten estimator
- * @prn: gretl printing struct
+ *                    PWE for Prais-Winsten estimator.
+ * @err: pointer for error code.
+ * @prn: gretl printing struct.
  *
- * Estimate the model given in @list using either the Cochrane-Orcutt
- * procedure or Hildreth-Lu (for first-order serial correlation).
- * Print a trace of the search for the appropriate quasi-differencing
- * coefficient, rho.
+ * Estimate the quasi-differencing coefficient for use with the
+ * Cochrane-Orcutt, Hildreth-Lu or Prais-Winsten procedures for
+ * handling first-order serial correlation).  Print a trace of the
+ * search for rho.
  * 
- * Returns: 0 on successful completion, error code on error.
+ * Returns: rho estimate on successful completion, %NADBL error.
  */
 
-int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
-	       PATHS *ppaths, int batch, int opt, PRN *prn)
+double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
+		     PATHS *ppaths, int batch, int opt, int *err,
+		     PRN *prn)
 {
     double rho = 0.0, rho0 = 0.0, diff;
     double finalrho = 0.0, essmin = 1.0e8;
     double ess, ssr[199], rh[199]; 
     int iter, nn = 0;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int missv = 0, misst = 0, err = 0;
+    int missv = 0, misst = 0;
     gretlopt lsqopt = OPT_A;
     MODEL corc_model;
 
     *gretl_errmsg = '\0';
+    *err = 0;
 
     missv = adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
 			(const double **) *pZ, &misst);
     if (missv) {
 	sprintf(gretl_errmsg, _("Missing value encountered for "
 				"variable %d, obs %d"), missv, misst);
-	err = E_DATA;
+	*err = E_DATA;
 	goto bailout;
     }
 
@@ -1580,7 +1591,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	for (rho = -0.990, iter = 0; rho < 1.0; rho += .01, iter++) {
 	    clear_model(&corc_model);
 	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
-	    if ((err = corc_model.errcode)) {
+	    if ((*err = corc_model.errcode)) {
 		clear_model(&corc_model);
 		goto bailout;
 	    }
@@ -1621,7 +1632,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    for (rho = 0.99; rho <= 0.999; rho += .001) {
 		clear_model(&corc_model);
 		corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
-		if ((err = corc_model.errcode)) {
+		if ((*err = corc_model.errcode)) {
 		    clear_model(&corc_model);
 		    goto bailout;
 		}
@@ -1638,7 +1649,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    for (rho = 0.9991; rho <= 0.9999; rho += .0001) {
 		clear_model(&corc_model);
 		corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
-		if ((err = corc_model.errcode)) {
+		if ((*err = corc_model.errcode)) {
 		    clear_model(&corc_model);
 		    goto bailout;
 		}
@@ -1665,11 +1676,15 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	if (!corc_model.errcode && corc_model.dfd == 0) {
 	    corc_model.errcode = E_DF;
 	}
-	if ((err = corc_model.errcode)) {
+	if ((*err = corc_model.errcode)) {
 	    clear_model(&corc_model);
 	    goto bailout;
 	}
+#ifdef USE_DW
+	rho0 = rho = 1.0 - (corc_model.dw / 2.0);
+#else
 	rho0 = rho = corc_model.rho;
+#endif
 	pputs(prn, _("\nPerforming iterative calculation of rho...\n\n"));
     }
 
@@ -1688,7 +1703,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 		corc_model.uhat[corc_model.t1],
 		corc_model.uhat[corc_model.t1+1]);
 #endif
-	if ((err = corc_model.errcode)) {
+	if ((*err = corc_model.errcode)) {
 	    clear_model(&corc_model);
 	    goto bailout;
 	}
@@ -1696,7 +1711,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 #ifdef AR_DEBUG
 	printmodel(&corc_model, pdinfo, OPT_NONE, prn);
 #endif
-	rho = autores(&corc_model, rho, (const double **) *pZ, opt);
+	rho = autores(&corc_model, (const double **) *pZ, opt);
 	diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
 	rho0 = rho;
 	if (iter == 30) break;
@@ -1706,13 +1721,16 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 
     clear_model(&corc_model);
 
-    *toprho = rho;
-
  bailout:
+
     pdinfo->t1 = t1;
     pdinfo->t2 = t2;
 
-    return err;
+    if (*err) {
+	rho = NADBL;
+    }
+
+    return rho;
 }
 
 /* .......................................................... */
@@ -2725,7 +2743,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
-	err = hilu_corc(&xx, reglist, pZ, pdinfo, NULL, 1, CORC, prn);
+	xx = estimate_rho(reglist, pZ, pdinfo, NULL, 1, CORC, &err, prn);
 	if (err) {
 	    ar.errcode = err;
 	} else {

@@ -2104,8 +2104,8 @@ void do_model (GtkWidget *widget, gpointer p)
     case CORC:
     case HILU:
     case PWE: 
-	err = hilu_corc(&rho, cmd.list, &Z, datainfo, 
-			&paths, 0, action, prn);
+	rho = estimate_rho(cmd.list, &Z, datainfo, &paths, 0, action, 
+			   &err, prn);
 	if (err) {
 	    errmsg(err, prn);
 	    break;
@@ -4947,7 +4947,7 @@ int gui_exec_line (char *line,
     chk = saved_object_action(line, datainfo, prn);
     if (chk == 1) return 0;   /* action was OK */
     if (chk == -1) return 1;  /* action was faulty */
-
+	
     if (!data_status && !ready_for_command(line)) {
 	pprintf(prn, _("You must open a data file first\n"));
 	return 1;
@@ -5220,8 +5220,9 @@ int gui_exec_line (char *line,
 
     case CORC:
     case HILU:
-	err = hilu_corc(&rho, cmd.list, &Z, datainfo, 
-			NULL, 1, cmd.ci, outprn);
+    case PWE:
+	rho = estimate_rho(cmd.list, &Z, datainfo, NULL, 1, cmd.ci,
+			   &err, outprn);
 	if (err) {
 	    errmsg(err, prn);
 	    break;

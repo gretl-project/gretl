@@ -930,29 +930,18 @@ void graphyzx (const int *list, const double *zy1, const double *zy2,
 /* ........................................................... */
 
 static void fit_resid_head (const FITRESID *fr, 
-			    int t1, int t2,
 			    const DATAINFO *pdinfo, 
 			    PRN *prn)
 {
     int i;
-    char label[16], date1[OBSLEN], date2[OBSLEN]; 
-    char fdate1[OBSLEN], fdate2[OBSLEN];
-    int nobs = t2 - t1 + 1;
+    char label[16];
+    char mdate1[OBSLEN], mdate2[OBSLEN];
 
-    ntodate(date1, fr->t1, pdinfo);
-    ntodate(date2, fr->t2, pdinfo);
-    ntodate(fdate1, t1, pdinfo);
-    ntodate(fdate2, t2, pdinfo);
+    ntodate(mdate1, fr->t1, pdinfo);
+    ntodate(mdate2, fr->t2, pdinfo);
 
-    pprintf(prn, _("\nFull data range: %s - %s (n = %d)\n"),
-	    fdate1, fdate2, nobs);
-    pprintf(prn, _("Model estimation range: %s - %s"), date1, date2);
-
-    if (fr->nobs == nobs) {
-	pputc(prn, '\n');
-    } else {
-	pprintf(prn, " (n = %d)\n", fr->nobs); 
-    }
+    pprintf(prn, _("Model estimation range: %s - %s"), mdate1, mdate2);
+    pprintf(prn, " (n = %d)\n", fr->nobs);
 
     pprintf(prn, _("Standard error of residuals = %f\n"), fr->sigma);
     
@@ -1419,39 +1408,25 @@ int
 text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 {
     int t, anyast = 0;
-    int n = pdinfo->n;
-    int t1, t2;
     double xx;
 
-    /* adjust the starting and ending points if need be */
-    for (t=0; t<n; t++) {
-	if (!na(fr->actual[t]) && !na(fr->fitted[t])) break;
-    }
-    t1 = t;
+    fit_resid_head(fr, pdinfo, prn); 
 
-    for (t=n-1; t>=0; t--) {
-	if (!na(fr->actual[t]) && !na(fr->fitted[t])) break;
-    }
-    t2 = t;  
-
-    if (t2 == t1) return 1;
-
-    fit_resid_head(fr, t1, t2, pdinfo, prn); 
-
-    for (t=t1; t<=t2; t++) {
-	if (t == fr->t1 && t > t1) pputc(prn, '\n');
-	if (t == fr->t2 + 1) pputc(prn, '\n');
-
+    for (t=fr->t1; t<=fr->t2; t++) {
 	print_obs_marker(t, pdinfo, prn);
 
-	if (na(fr->actual[t]) || na(fr->fitted[t])) { 
+	if (na(fr->actual[t])) {
 	    pputc(prn, '\n');
+	} else if (na(fr->fitted[t])) {
+	    pprintf(prn, "%13g\n", fr->actual[t]);
 	} else {
 	    int ast;
 
 	    xx = fr->actual[t] - fr->fitted[t];
 	    ast = (fabs(xx) > 2.5 * fr->sigma);
-	    if (ast) anyast = 1;
+	    if (ast) {
+		anyast = 1;
+	    }
 	    if (fr->pmax != PMAX_NOT_AVAILABLE) {
 		pprintf(prn, "%13.*f%13.*f%13.*f%s\n", 
 			fr->pmax, fr->actual[t],
@@ -1468,8 +1443,11 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 
     pputc(prn, '\n');
 
-    if (anyast) pputs(prn, _("Note: * denotes a residual in excess of "
-			       "2.5 standard errors\n"));
+    if (anyast) {
+	pputs(prn, _("Note: * denotes a residual in excess of "
+		     "2.5 standard errors\n"));
+    }
+
     return 0;
 }
 
@@ -1567,11 +1545,14 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
 {
     FITRESID *fr;
 
-    fr = get_fit_resid (pmod, pZ, pdinfo);
-    if (fr == NULL) return 1;
+    fr = get_fit_resid(pmod, pZ, pdinfo);
+    if (fr == NULL) {
+	return 1;
+    }
 
-    text_print_fit_resid (fr, pdinfo, prn);
+    text_print_fit_resid(fr, pdinfo, prn);
     free_fit_resid(fr);
+
     return 0;
 }
 

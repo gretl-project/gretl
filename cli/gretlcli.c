@@ -930,8 +930,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case CORC:
     case HILU:
     case PWE:
-	err = hilu_corc(&rho, cmd.list, &Z, datainfo, 
-			NULL, 1, cmd.ci, prn);
+	rho = estimate_rho(cmd.list, &Z, datainfo, NULL, 1, cmd.ci,
+			   &err, prn);
 	if (err) {
 	    errmsg(err, prn);
 	    break;

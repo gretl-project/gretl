@@ -1667,7 +1667,6 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 			 DATAINFO *pdinfo)
 {
     int depvar, t;
-    int t1 = pmod->t1, t2 = pmod->t2;
     FITRESID *fr;
 
     if (pmod->ci == ARMA) {
@@ -1677,7 +1676,9 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     }
 
     fr = fit_resid_new(pdinfo->n, 0);
-    if (fr == NULL) return NULL;
+    if (fr == NULL) {
+	return NULL;
+    }
 
     fr->sigma = pmod->sigma;
 
@@ -1694,9 +1695,9 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     
     strcpy(fr->depvar, pdinfo->varname[depvar]);
     
-    fr->t1 = t1;
-    fr->t2 = t2;
-    fr->nobs = t2 - t1 + 1;
+    fr->t1 = pmod->t1;
+    fr->t2 = pmod->t2;
+    fr->nobs = pmod->t2 - pmod->t1 + 1;
 
     return fr;
 }
@@ -1950,8 +1951,8 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     case CORC:
     case HILU:
     case PWE:
-	err = hilu_corc(&rho, cmd.list, pZ, pdinfo, 
-			NULL, 1, cmd.ci, &prn);
+	rho = estimate_rho(cmd.list, pZ, pdinfo, NULL, 1, cmd.ci, 
+			   &err, &prn);
 	if (!err) {
 	    *tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, 0, rho);
 	}
