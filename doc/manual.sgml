@@ -2542,14 +2542,13 @@
 	iterations. <replaceable>lags</replaceable> is
 	a list of lags in the residuals, terminated by a semicolon. In
 	the above example, the error term is specified as 
-	<inlineequation>
-	  <inlinegraphic fileref="figures/corc.png"/>
+	<informalequation>
+	  <graphic fileref="figures/corc.png"/>
 	  <texmath>
-	    $u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} +
-	    e_t$
+	    \[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} +
+	    e_t\]
 	  </texmath>
-	</inlineequation></para>
-	<para>
+	</informalequation>
 	<replaceable>depvar</replaceable> is the dependent variable
 	and <replaceable>indepvars</replaceable> is the list of
 	independent variables.  If the <literal>-o</literal> flag
@@ -3410,6 +3409,10 @@
     </tbody>
   </tgroup>
 </table>
+
+<para>
+&nbsp;
+</para>
 
     </sect2>
 
