@@ -257,6 +257,10 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 	return 1;
     }
 
+    if (ci == NLS || ci == END) {
+	return 1;
+    }
+
     if (ci == ADF || ci == KPSS || ci == HURST) {
 	return 1;
     }
@@ -2100,14 +2104,20 @@ static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum)
 
 void get_cmd_ci (const char *line, CMD *cmd)
 {
+    static int context;
+
     /* allow for leading spaces */
-    while (isspace(*line)) line++;
+    while (isspace(*line)) {
+	line++;
+    }
 
     if (*line == '#') {
 	cmd->nolist = 1;
 	cmd->ci = CMD_COMMENT;
 	return;
     }
+
+    fprintf(stderr, "get_cmd_ci: line = '%s'\n", line);
 
     if (sscanf(line, "%s", cmd->word) != 1 || 
 	*line == '(' || *line == '#') {
@@ -2116,11 +2126,23 @@ void get_cmd_ci (const char *line, CMD *cmd)
 	return;
     }
 
-    if ((cmd->ci = gretl_command_number(cmd->word)) == 0) {
+    /* subsetted commands (e.g. "deriv" in relation to "nls") */
+    if (!strcmp(cmd->word, "end")) {
+	context = 0;
+	cmd->ci = END;
+    } else if (context && strcmp(cmd->word, "equation")) {
+	/* "equation" occurs in the SYSTEM context, but it is
+	   a command in its own right */
+	cmd->ci = context;
+    } else if ((cmd->ci = gretl_command_number(cmd->word)) == 0) {
 	cmd->errcode = 1;
 	sprintf(gretl_errmsg, _("command \"%s\" not recognized"), 
 		cmd->word);
 	return;
+    }
+
+    if (cmd->ci == NLS) {
+	context = NLS;
     }
 
     if (!strcmp(line, "end loop")) {
@@ -2524,6 +2546,10 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    case ADD:
 	    case OMIT:
+		if (loop_is_progressive(loop)) {
+		    err = 1;
+		    break;
+		}
 		/* FIXME: this needs work, and should only be allowed
 		   under certain conditions */
 		clear_model(models[1]);
@@ -2543,6 +2569,34 @@ int loop_exec (LOOPSET *loop, char *line,
 		    clear_model(models[1]);
 		}
 		break;	
+
+	    case NLS:
+		if (loop_is_progressive(loop) || (cmd.opt & OPT_P)) {
+		    err = 1;
+		} else {
+		    err = nls_parse_line(linecpy, (const double **) *pZ, *ppdinfo);
+		    if (err) {
+			errmsg(err, prn);
+		    } else {
+			gretl_cmd_set_context(&cmd, NLS);
+		    }
+		}
+		break;
+
+	    case END:
+		if (!strcmp(cmd.param, "nls")) {
+		    clear_model(models[0]);
+		    *models[0] = nls(pZ, *ppdinfo, prn);
+		    if ((err = (models[0])->errcode)) {
+			errmsg(err, prn);
+		    } else {
+			printmodel(models[0], *ppdinfo, cmd.opt, prn);
+			lastmod = models[0];
+		    }
+		} else {
+		    err = 1;
+		}
+		break;
 
 	    case PRINT:
 		if (cmd.param[0] != '\0') {
@@ -2849,5 +2903,3 @@ int ifstate (int code)
 
     return 0;
 }
-
-
