@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.2.7\n"
 "POT-Creation-Date: 2004-06-07 11:36-0400\n"
-"PO-Revision-Date: 2004-06-07 11:37-0400\n"
+"PO-Revision-Date: 2004-06-08 01:52+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2343,7 +2343,7 @@ msgstr "pila di serie cross section"
 
 #: lib/src/gretl_utils.c:1808 gui2/datafiles.c:1522
 msgid "stacked time series"
-msgstr "pila di serie temporali"
+msgstr "pila di serie storiche"
 
 #: lib/src/gretl_utils.c:1809
 #, c-format
@@ -2893,7 +2893,7 @@ msgstr "Variabile usata come peso"
 
 #: lib/src/modelprint.c:1026 lib/src/modelprint.c:1027
 msgid "Weight var is a dummy variable, effective obs ="
-msgstr "La variabile peso è una variabile dummy, osservazioni effettive ="
+msgstr "La variabile dei pesi è una variabile dummy, osservazioni effettive ="
 
 #: lib/src/modelprint.c:1077
 msgid ""
@@ -5550,7 +5550,7 @@ msgstr "/Variabile/Analisi _TRAMO"
 
 #: gui/gretl.c:434 gui2/gretl.c:493
 msgid "/Variable/Runs test"
-msgstr "/Variabile/Test delle se_quenze"
+msgstr "/Variabile/Test delle _successioni"
 
 #: gui/gretl.c:435 gui2/gretl.c:494
 msgid "/Variable/sep2"
@@ -5890,7 +5890,7 @@ msgstr "Test Dickey-Fuller"
 
 #: gui/gretl.c:1394 gui/gretl.c:1426 gui2/gretl.c:1495 gui2/gretl.c:1523
 msgid "Runs test"
-msgstr "Test delle sequenze"
+msgstr "Test delle successioni"
 
 #: gui/gretl.c:1396 gui/gretl.c:1427 gui2/gretl.c:1497 gui2/gretl.c:1524
 msgid "Edit attributes"
@@ -6085,7 +6085,7 @@ msgstr "OLS a precisione multipla"
 
 #: gui/selector.c:558 gui2/selector.c:802
 msgid "Weight variable"
-msgstr "Variabile peso"
+msgstr "Variabile pesi"
 
 #: gui/selector.c:562 gui2/selector.c:806
 msgid "List of AR lags"
@@ -7650,7 +7650,7 @@ msgstr "gretl: struttura panel"
 
 #: gui2/datafiles.c:1338 gui2/datafiles.c:1437
 msgid "Stacked time series"
-msgstr "Pila di serie temporali"
+msgstr "Pila di serie storiche"
 
 #: gui2/datafiles.c:1350 gui2/datafiles.c:1449
 msgid "Stacked cross sections"
@@ -7662,7 +7662,7 @@ msgid ""
 "as stacked time series?"
 msgstr ""
 "Ristrutturare l'attuale dataset panel\n"
-"rendendolo una pila di serie temporali?"
+"rendendolo una pila di serie storiche?"
 
 #: gui2/datafiles.c:1519
 msgid "Failed to change panel structure"
@@ -8027,7 +8027,7 @@ msgid ""
 "at any given time"
 msgstr ""
 "È possibile aprire una sola finestra\n"
-"di modifica grafici alla volta"
+"di modifica del grafico alla volta"
 
 #: gui2/gpt_control.c:1621
 msgid "gretl plot controls"
@@ -8947,7 +8947,7 @@ msgstr "Programmazione"
 
 #: gui2/helpfiles.c:135
 msgid "Statistics"
-msgstr "Statistica"
+msgstr "Statistiche"
 
 #: gui2/helpfiles.c:136
 msgid "Tests"
@@ -9021,7 +9021,7 @@ msgstr "Distribuzione di frequenza"
 
 #: gui2/library.c:873
 msgid "runs test"
-msgstr "Test delle sequenze"
+msgstr "Test delle successioni"
 
 #: gui2/library.c:878 gui2/library.c:884
 msgid "summary statistics"
@@ -9352,7 +9352,7 @@ msgid ""
 "Please use \"Sample/Set frequency, startobs\"."
 msgstr ""
 "Il dataset non è riconosciuto come panel.\n"
-"Si usi \"Campione/Imposta _frequenza e inizio...\"."
+"Si usi \"Campione/Imposta frequenza e inizio...\"."
 
 #: gui2/library.c:3130
 msgid "Error generating index variable"
@@ -9582,19 +9582,19 @@ msgstr "La stringa da sostituire non è stata trovata"
 
 #: gui2/model_table.c:57
 msgid "Model table is full"
-msgstr "La tabella del modello è piena"
+msgstr "La tabella modelli è piena"
 
 #: gui2/model_table.c:108
 msgid "Sorry, NLS models can't be put in the model table"
-msgstr "I modelli NLS non possono essere aggiunti alla tabella dei modelli"
+msgstr "I modelli NLS non possono essere aggiunti alla tabella modelli"
 
 #: gui2/model_table.c:115
 msgid "Sorry, ARMA models can't be put in the model table"
-msgstr "I modelli ARMA non possono essere aggiunti alla tabella dei modelli"
+msgstr "I modelli ARMA non possono essere aggiunti alla tabella modelli"
 
 #: gui2/model_table.c:122
 msgid "Sorry, TSLS models can't be put in the model table"
-msgstr "I modelli TSLS non possono essere aggiunti alla tabella dei modelli"
+msgstr "I modelli TSLS non possono essere aggiunti alla tabella modelli"
 
 #: gui2/model_table.c:138
 msgid ""
@@ -9613,7 +9613,7 @@ msgstr "Modello aggiunto alla tabella"
 
 #: gui2/model_table.c:198
 msgid "Model table cleared"
-msgstr "Tabella dei modelli cancellata"
+msgstr "Tabella modelli cancellata"
 
 #: gui2/model_table.c:350
 msgid "HSK"
@@ -9646,7 +9646,7 @@ msgstr "R**2 Corr."
 #: gui2/model_table.c:642 gui2/model_table.c:720 gui2/model_table.c:840
 #: gui2/model_table.c:942
 msgid "The model table is empty"
-msgstr "La tabella dei modelli è vuota"
+msgstr "La tabella modelli è vuota"
 
 #: gui2/model_table.c:657 gui2/model_table.c:747 gui2/model_table.c:857
 #, c-format
@@ -9681,7 +9681,7 @@ msgstr "Per logit e probit, R-quadro è lo pseudo-R-quadro di McFadden"
 
 #: gui2/model_table.c:706
 msgid "gretl: model table"
-msgstr "gretl: tabella dei modelli"
+msgstr "gretl: tabella modelli"
 
 #: gui2/model_table.c:801
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
@@ -9924,7 +9924,7 @@ msgstr "Modelli"
 
 #: gui2/session.c:2329
 msgid "Graph page"
-msgstr "Pagina dei grafici"
+msgstr "Grafici"
 
 #: gui2/session.c:2683
 msgid "current session"
