@@ -4,20 +4,29 @@
 
 <!ELEMENT commandlist ( command )+>
 
+<!-- The description is the only element that is absolutely
+     required of a command -->
+
 <!ELEMENT command (arglist?, optargs?, options?, examples?,
-                   description, gui-access?)>
+                   description, option-notes?, addendum?, 
+                   gui-access?)>
+
 <!ATTLIST command
-   name         NMTOKEN #REQUIRED
+   name         CDATA #REQUIRED
    xref         CDATA #REQUIRED
-   section      CDATA #REQUIRED
+   section      (Dataset | Estimation | Graphs | Prediction |
+                 Printing | Programming | Statistics | Tests |
+                 Transformations | Utilities) "Estimation"
 >
 
-<!ELEMENT arglist     ( argument )+>
-<!ELEMENT optargs     ( argument )+>
-<!ELEMENT options     ( option )+>
-<!ELEMENT examples    ( example )+>
-<!ELEMENT description ( para )+>
-<!ELEMENT gui-access  ( menu-path?, other-access? )>
+<!ELEMENT arglist      ( argument )+>
+<!ELEMENT optargs      ( argument )+>
+<!ELEMENT options      ( option )+>
+<!ELEMENT examples     ( example )+>
+<!ELEMENT description  ( para )+>
+<!ELEMENT option-notes ( para )+>
+<!ELEMENT addendum     ( para )+>
+<!ELEMENT gui-access   ( menu-path, other-access? )>
 
 <!ELEMENT argument ( #PCDATA )>
 <!ELEMENT option   ( flag, effect )>
@@ -29,7 +38,24 @@
 <!ELEMENT menu-path    ( #PCDATA )>
 <!ELEMENT other-access ( #PCDATA )>
 
-<!ELEMENT para      ( #PCDATA )>
+<!ELEMENT para ANY>
+
+<!-- stuff that can go into paras -->
+
+<!ELEMENT equation ( EMPTY )>
+<!ATTLIST equation
+   tex     CDATA #REQUIRED
+   ascii   CDATA #REQUIRED
+   graphic CDATA #REQUIRED
+   status (inline | display) "inline"
+>
+<!ELEMENT itals   ( #PCDATA )>
+<!ELEMENT program ( #PCDATA )>
+<!ELEMENT tt      ( #PCDATA )>
+<!ELEMENT mathvar ( #PCDATA | sub | super)*>
+<!ELEMENT sub     ( #PCDATA )>
+<!ELEMENT super   ( #PCDATA )>
+
 
 
 
