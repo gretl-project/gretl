@@ -364,45 +364,54 @@ static void maybe_quote_filename (char *line, char *cmd)
 	}
     }
 }
+/* ........................................................... */
+
+static int add_command_to_stack (const char *str)
+{
+    if (n_cmds == 0) {
+	cmd_stack = mymalloc(sizeof *cmd_stack);
+    } else {
+	cmd_stack = myrealloc(cmd_stack, (n_cmds + 1) * sizeof *cmd_stack);
+    }
+
+    if (cmd_stack == NULL) return 1;
+
+    if ((cmd_stack[n_cmds] = mymalloc(strlen(str) + 1)) == NULL)
+	return 1;
+
+    strcpy(cmd_stack[n_cmds], str);
+    
+    n_cmds++;
+
+    return 0;
+}
 
 /* ........................................................... */
 
-gint cmd_init (char *line)
+gint cmd_init (char *cmdstr)
 {
-    size_t len;
     PRN *echo;
+    int err;
 
 #ifdef CMD_DEBUG
-    fprintf(stderr, "cmd_init: got line: '%s'\n", line);
+    fprintf(stderr, "cmd_init: got cmdstr: '%s'\n", cmdstr);
     fprintf(stderr, "command.cmd: '%s'\n", command.cmd);
     fprintf(stderr, "command.param: '%s'\n", command.param);
 #endif
 
-    if (n_cmds == 0) 
-	cmd_stack = mymalloc(sizeof *cmd_stack);
-    else 
-	cmd_stack = myrealloc(cmd_stack, (n_cmds + 1) * sizeof *cmd_stack);
-    if (cmd_stack == NULL) return 1;
-
-    if (command.ci == OPEN || command.ci == RUN) 
-	maybe_quote_filename(line, command.cmd);
+    if (command.ci == OPEN || command.ci == RUN) {
+	maybe_quote_filename(cmdstr, command.cmd);
+    }
 
     if (bufopen(&echo)) return 1;
 
-    echo_cmd(&command, datainfo, line, 0, 1, oflag, echo);
+    echo_cmd(&command, datainfo, cmdstr, 0, 1, oflag, echo);
 
-    len = strlen(echo->buf);
-    if ((cmd_stack[n_cmds] = mymalloc(len + 1)) == NULL)
-	return 1;
-    strcpy(cmd_stack[n_cmds], echo->buf);
-#ifdef CMD_DEBUG
-    fprintf(stderr, "cmd_init: cmd_stack[%d] now contains: '%s'\n", 
-	    n_cmds, cmd_stack[n_cmds]);
-#endif
+    err = add_command_to_stack(echo->buf);
+
     gretl_print_destroy(echo);
-    n_cmds++;
 
-    return 0;
+    return err;
 }
 
 /* ........................................................... */
