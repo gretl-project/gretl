@@ -51,7 +51,7 @@ static int win_copy_rtf (char *rtf_str)
     size_t len;
 
     if (rtf_str == NULL) return 0;
-    if (!OpenClipboard()) return 1;
+    if (!OpenClipboard(NULL)) return 1;
 
     EmptyClipboard();
 

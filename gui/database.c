@@ -32,10 +32,6 @@
 #include <netinet/in.h>
 #endif
 
-#ifdef G_OS_WIN32
-#define isnan(x) ((x) != (x))
-#endif
-
 #define RECNUM long
 #define NAMELENGTH 16
 #define RATSCOMMENTLENGTH 80
