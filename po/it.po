@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-10-04 14:31-0400\n"
-"PO-Revision-Date: 2004-10-02 10:13+0200\n"
+"PO-Revision-Date: 2004-10-05 00:09+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1444,7 +1444,7 @@ msgid "ESS"
 msgstr "ESS"
 
 #: lib/src/estimate.c:1538
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -1453,7 +1453,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"ESS è minimo per rho = %.2f\n"
+"ESS è minimo per rho = %g\n"
 "\n"
 
 #: lib/src/estimate.c:1545
@@ -1837,9 +1837,8 @@ msgid "%s = rho-differenced %s"
 msgstr "%s = rho-differenziato %s"
 
 #: lib/src/generate.c:4646
-#, fuzzy
 msgid "Modified"
-msgstr "Modello %d"
+msgstr "Modificato"
 
 #: lib/src/generate.c:4647 lib/src/generate.c:4905 lib/src/gretl_list.c:224
 #: lib/src/gretl_utils.c:1617 lib/src/modelprint.c:1012
@@ -2153,9 +2152,8 @@ msgid "This command is implemented only for OLS models"
 msgstr "Questo comando è implementato solo per modelli OLS"
 
 #: lib/src/gretl_errors.c:61
-#, fuzzy
 msgid "Invalid argument for coeff, corr, stderr, rho, pvalue, critical or mpow"
-msgstr "Argomento non valido per coeff, corr, stderr, rho, pvalue o mpow"
+msgstr "Argomento non valido per coeff, corr, stderr, rho, pvalue, critical o mpow"
 
 #: lib/src/gretl_errors.c:63
 msgid "Invalid lag order for adf command"
@@ -2261,9 +2259,9 @@ msgstr ""
 "È stata superata la lunghezza massima della riga di comando (%d byte)\n"
 
 #: lib/src/gretl_list.c:162
-#, fuzzy, c-format
+#, c-format
 msgid "Variable %d was not in the original list"
-msgstr "La variabile %d non ha nome"
+msgstr "La variabile %d non è nella lista originale"
 
 #: lib/src/gretl_paths.c:571
 #, c-format
@@ -2470,13 +2468,13 @@ msgid "'%s': there is already a variable of this name"
 msgstr "'%s': c'è già una variabile con questo nome"
 
 #: lib/src/interact.c:584
-#, fuzzy, c-format
+#, c-format
 msgid "command 'end %s' not recognized"
-msgstr "comando '%s' non riconosciuto"
+msgstr "comando 'end %s' non riconosciuto"
 
 #: lib/src/interact.c:589
 msgid "end: nothing to end"
-msgstr ""
+msgstr "end: non c'è niente da finire"
 
 #: lib/src/interact.c:685 gui2/objectsave.c:206
 #, c-format
@@ -3248,9 +3246,8 @@ msgid "Undefined variable '%s' in loop condition."
 msgstr "Variabile non definita '%s' nella condizione del loop"
 
 #: lib/src/monte_carlo.c:242
-#, fuzzy
 msgid "The loop control variable must be a scalar"
-msgstr "La variabile %s è uno scalare\n"
+msgstr "La variabile di controllo del loop deve essere uno scalare"
 
 #: lib/src/monte_carlo.c:320
 #, c-format
@@ -3281,7 +3278,7 @@ msgstr "Limite per il loop mancante o invalido\n"
 #: lib/src/monte_carlo.c:663
 #, c-format
 msgid "Reached maximum interations, %d"
-msgstr ""
+msgstr "Raggiunto il massimo numero di iterazioni, %d"
 
 #: lib/src/monte_carlo.c:673
 #, c-format
@@ -3519,7 +3516,7 @@ msgstr "Valore z = %f, con p-value a due code %f\n"
 #: lib/src/options.c:438
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
-msgstr ""
+msgstr "Attenzione: opzione %s ignorata al di fuori del loop"
 
 #: lib/src/plugins.c:193
 #, c-format
@@ -3705,14 +3702,14 @@ msgid "Test for null hypothesis of normal distribution"
 msgstr "Test per l'ipotesi nulla di distribuzione normale"
 
 #: lib/src/printout.c:417 lib/src/printout.c:428
-#, fuzzy, c-format
+#, c-format
 msgid "Full data set: %d observations\n"
-msgstr "Ultimo valore"
+msgstr "Dataset completo: %d osservazioni\n"
 
 #: lib/src/printout.c:419
-#, fuzzy, c-format
+#, c-format
 msgid "Current sample: %d observations\n"
-msgstr "Osservazioni censurate"
+msgstr "Campione attuale: %d osservazioni\n"
 
 #: lib/src/printout.c:430
 msgid "Full data range"
@@ -7968,9 +7965,8 @@ msgid "PNG files (*.png)"
 msgstr "file PNG (*.png)"
 
 #: gui2/fileselect.c:550
-#, fuzzy
 msgid "Windows metafiles (*.emf)"
-msgstr "file xfig (*.fig)"
+msgstr "Windows metafile (*.emf)"
 
 #: gui2/fileselect.c:551 gui2/fileselect.c:588
 msgid "gnuplot files (*.plt)"
@@ -8252,9 +8248,8 @@ msgid "Save as postscript (EPS)..."
 msgstr "Salva come postscript (EPS)..."
 
 #: gui2/gpt_control.c:2861 gui2/gpt_control.c:2973 gui2/gpt_control.c:2978
-#, fuzzy
 msgid "Save as Windows metafile (EMF)..."
-msgstr "Salva come postscript (EPS)..."
+msgstr "Salva come Windows metafile (EMF)..."
 
 #: gui2/gpt_control.c:2873 gui2/gpt_control.c:2992
 msgid "Print"
@@ -8644,10 +8639,11 @@ msgstr "/Test/LMTEST - Eteroschedasticità"
 msgid "/Tests/influential observations"
 msgstr "/Test/LEVERAGE - Osservazioni influenti"
 
-#: gui2/gui_utils.c:139 gui2/gui_utils.c:208
 #, fuzzy
+#  Comando???
+#: gui2/gui_utils.c:139 gui2/gui_utils.c:208
 msgid "/Tests/collinearity"
-msgstr "/Test/LMTEST - Non-linearità (logaritmi)"
+msgstr "/Test/Collinearità"
 
 #: gui2/gui_utils.c:140 gui2/gui_utils.c:209
 msgid "/Tests/Chow test"
@@ -9362,9 +9358,8 @@ msgid "gretl: leverage and influence"
 msgstr "gretl: leverage e influenza"
 
 #: gui2/library.c:1484
-#, fuzzy
 msgid "gretl: collinearity"
-msgstr "gretl: test di cointegrazione"
+msgstr "gretl: collinearità"
 
 #: gui2/library.c:1515
 msgid "This test only implemented for OLS models"
@@ -11192,21 +11187,23 @@ msgstr ""
 
 #: plugin/vif.c:121
 msgid "Variance Inflation Factors"
-msgstr ""
+msgstr "Fattori di Inflazione della Varianza (VIF)"
 
 #: plugin/vif.c:123
 msgid "Minimum possible value = 1.0"
-msgstr ""
+msgstr "Valore minimo possibile: 1.0"
 
 #: plugin/vif.c:124
 msgid "Values > 10.0 may indicate a collinearity problem"
-msgstr ""
+msgstr "Valori superiori a 10.0 indicano un problema di collinearità"
 
 #: plugin/vif.c:136
 msgid ""
 "VIF(j) = 1/(1 - R(j)^2), where R(j) is the multiple correlation coefficient\n"
 "between variable j and the other independent variables"
 msgstr ""
+"VIF(j) = 1/(1 - R(j)^2), dove R(j) è il coefficiente di correlazione multipla\n"
+"tra la variabile j e le altre variabili indipendenti"
 
 #: plugin/workbook.c:505
 msgid "Password protected workbooks are not supported yet."
