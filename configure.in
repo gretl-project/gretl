@@ -450,8 +450,9 @@ dnl If we have gtk 2.0, test for gnome 2.0
 	    AC_PATH_PROG(GCONFTOOL, gconftool-2, no)
 	    if test x"$GCONFTOOL" = xno; then
               AC_MSG_ERROR([gconftool-2 executable not found in your path])
+            else
+	      AM_GCONF_SOURCE_2
             fi
-	    AM_GCONF_SOURCE_2
         fi 
     else
 dnl Still trying for gnome, but we don't have gtk 2.0 so test for gnome 1.4  

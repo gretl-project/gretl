@@ -467,7 +467,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION LIBVERSION SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT build build_cpu build_vendor build_os host host_cpu host_vendor host_os USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB X12A HAVE_X12A TRAMO HAVE_TRAMO MAKE LN_S ECHO RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CPP EGREP LIBTOOL have_readline CLI_LIBS RL_OBJ new_readline INETLIB have_zlib GMP_CFLAGS GMP_LIBS GNUPLOT LATEX PKG_CONFIG GTK_CFLAGS GTK_LIBS GLIB_CFLAGS GLIB_LIBS GTK_CONFIG GTK_EXTRA_CONFIG GTK_EXTRA_CFLAGS GTK_EXTRA_LIBS have_gtk LIBOLE2_CFLAGS LIBOLE2_LIBS LIBOLE2_CONFIG PNG_CFLAGS PNG_LIBS GDK_PIXBUF_CFLAGS GDK_PIXBUF_LIBS GDK_PIXBUF_CONFIG GNOME_CFLAGS GNOME_LIBS XML_CFLAGS XML_LIBS GCONFTOOL GCONF_SCHEMA_CONFIG_SOURCE GCONF_SCHEMA_FILE_DIR GCONF_SCHEMAS_INSTALL_TRUE GCONF_SCHEMAS_INSTALL_FALSE GNOME have_gnome gnome_prefix XMLCONF LIBOLE_CFLAGS LIBOLE_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION LIBVERSION SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT build build_cpu build_vendor build_os host host_cpu host_vendor host_os USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB X12A HAVE_X12A TRAMO HAVE_TRAMO MAKE LN_S ECHO RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CPP EGREP LIBTOOL have_readline CLI_LIBS RL_OBJ new_readline INETLIB have_zlib GMP_CFLAGS GMP_LIBS GNUPLOT LATEX PKG_CONFIG GTK_CFLAGS GTK_LIBS GLIB_CFLAGS GLIB_LIBS GTK_CONFIG GTK_EXTRA_CONFIG GTK_EXTRA_CFLAGS GTK_EXTRA_LIBS have_gtk LIBOLE2_CFLAGS LIBOLE2_LIBS LIBOLE2_CONFIG PNG_CFLAGS PNG_LIBS GDK_PIXBUF_CFLAGS GDK_PIXBUF_LIBS GDK_PIXBUF_CONFIG GNOME_CFLAGS GNOME_LIBS XML_CFLAGS XML_LIBS GCONFTOOL GCONF_SCHEMA_CONFIG_SOURCE GCONF_SCHEMA_FILE_DIR GNOME have_gnome gnome_prefix XMLCONF LIBOLE_CFLAGS LIBOLE_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1015,7 +1015,6 @@ Optional Features:
   --disable-gtkextratest       Do not try to compile and run a test GTK_EXTRA program
   --disable-libole2test       Do not try to compile and run a test libole2 program
   --disable-gdk_pixbuftest       Do not try to compile and run a test GDK_PIXBUF program
-  --disable-schemas-install	Disable the schemas installation
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -6691,7 +6690,7 @@ test "x$enable_libtool_lock" != xno && enable_libtool_lock=yes
 case $host in
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6694 "configure"' > conftest.$ac_ext
+  echo '#line 6693 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7220,7 +7219,7 @@ chmod -w .
 save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
 compiler_c_o=no
-if { (eval echo configure:7223: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+if { (eval echo configure:7222: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
   # The compiler can only warn and ignore the option if not recognized
   # So say no if there are warnings
   if test -s out/conftest.err; then
@@ -9052,7 +9051,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9055 "configure"
+#line 9054 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9150,7 +9149,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9153 "configure"
+#line 9152 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13988,7 +13987,7 @@ fi
               { { echo "$as_me:$LINENO: error: gconftool-2 executable not found in your path" >&5
 echo "$as_me: error: gconftool-2 executable not found in your path" >&2;}
    { (exit 1); exit 1; }; }
-            fi
+            else
 
   if test "x$GCONF_SCHEMA_INSTALL_SOURCE" = "x"; then
     GCONF_SCHEMA_CONFIG_SOURCE=`gconftool-2 --get-default-source`
@@ -14024,30 +14023,7 @@ fi;
   echo "$as_me:$LINENO: result: Using $GCONF_SCHEMA_FILE_DIR as install directory for schema files" >&5
 echo "${ECHO_T}Using $GCONF_SCHEMA_FILE_DIR as install directory for schema files" >&6
 
-  # Check whether --enable-schemas-install or --disable-schemas-install was given.
-if test "${enable_schemas_install+set}" = set; then
-  enableval="$enable_schemas_install"
-  case "${enableval}" in
-       yes) schemas_install=true ;;
-       no)  schemas_install=false ;;
-       *) { { echo "$as_me:$LINENO: error: bad value ${enableval} for --disable-schemas-install" >&5
-echo "$as_me: error: bad value ${enableval} for --disable-schemas-install" >&2;}
-   { (exit 1); exit 1; }; } ;;
-     esac
-else
-  schemas_install=true
-fi;
-
-
-if test x$schemas_install = xtrue; then
-  GCONF_SCHEMAS_INSTALL_TRUE=
-  GCONF_SCHEMAS_INSTALL_FALSE='#'
-else
-  GCONF_SCHEMAS_INSTALL_TRUE='#'
-  GCONF_SCHEMAS_INSTALL_FALSE=
-fi
-
-
+            fi
         fi
     else
 
@@ -14311,13 +14287,6 @@ LIBOBJS=$ac_libobjs
 LTLIBOBJS=$ac_ltlibobjs
 
 
-if test -z "${GCONF_SCHEMAS_INSTALL_TRUE}" && test -z "${GCONF_SCHEMAS_INSTALL_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"GCONF_SCHEMAS_INSTALL\" was never defined.
-Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"GCONF_SCHEMAS_INSTALL\" was never defined.
-Usually this means the macro was only invoked conditionally." >&2;}
-   { (exit 1); exit 1; }; }
-fi
 
 : ${CONFIG_STATUS=./config.status}
 ac_clean_files_save=$ac_clean_files
@@ -14955,8 +14924,6 @@ s,@XML_LIBS@,$XML_LIBS,;t t
 s,@GCONFTOOL@,$GCONFTOOL,;t t
 s,@GCONF_SCHEMA_CONFIG_SOURCE@,$GCONF_SCHEMA_CONFIG_SOURCE,;t t
 s,@GCONF_SCHEMA_FILE_DIR@,$GCONF_SCHEMA_FILE_DIR,;t t
-s,@GCONF_SCHEMAS_INSTALL_TRUE@,$GCONF_SCHEMAS_INSTALL_TRUE,;t t
-s,@GCONF_SCHEMAS_INSTALL_FALSE@,$GCONF_SCHEMAS_INSTALL_FALSE,;t t
 s,@GNOME@,$GNOME,;t t
 s,@have_gnome@,$have_gnome,;t t
 s,@gnome_prefix@,$gnome_prefix,;t t
