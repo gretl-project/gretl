@@ -39,7 +39,7 @@ struct _cmplx {
 #define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || a == AUX_AR)
 
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			int c, PRN *prn);
+			int c, int longnames, PRN *prn);
 static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			    int c, PRN *prn);
 static void depvarstats (const MODEL *pmod, PRN *prn);
@@ -1155,11 +1155,9 @@ static void print_coeff_table_end (PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
 	pputs(prn, "\n");
-    }
-    else if (TEX_FORMAT(prn->format)) {
+    } else if (TEX_FORMAT(prn->format)) {
 	pputs(prn, "\\end{tabular*}\n\n");
-    }
-    else if (RTF_FORMAT(prn->format)) {
+    } else if (RTF_FORMAT(prn->format)) {
 	pputs(prn, "}\n\n");
     }
 }
@@ -1178,28 +1176,44 @@ static void model_format_end (PRN *prn)
     }
 } 
 
-static int print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+static int 
+print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0, gotnan = 0;
     int n = pmod->ncoeff;
+    int longnames = 0;
     int gn = -1;
 
-    if (pmod->ci == GARCH) gn = pmod->list[0] - 4;
+    if (pmod->ci == GARCH) {
+	gn = pmod->list[0] - 4;
+    }
+
+    if (PLAIN_FORMAT(prn->format) && 
+	pmod->aux != AUX_ARCH &&
+	pmod->ci != NLS && 
+	pmod->ci != ARMA && 
+	pmod->ci != GARCH) {
+	for (i=0; i<n; i++) {
+	    int len = strlen(pdinfo->varname[pmod->list[i+2]]);
+
+	    if (len > 8) {
+		longnames = 1;
+	    }
+	}
+    }
 
     for (i=0; i<n; i++) {
 	if (PLAIN_FORMAT(prn->format)) {
 	    if (i == gn) {
 		pputc(prn, '\n');
 	    }
-	    err = print_coeff(pdinfo, pmod, i + 2, prn);
-	}
-	else if (TEX_FORMAT(prn->format)) {
+	    err = print_coeff(pdinfo, pmod, i + 2, longnames, prn);
+	} else if (TEX_FORMAT(prn->format)) {
 	    if (i == gn) {
 		pputs(prn, "\\\\ \n");
 	    }
 	    err = tex_print_coeff(pdinfo, pmod, i + 2, prn);
-	}
-	else if (RTF_FORMAT(prn->format)) {
+	} else if (RTF_FORMAT(prn->format)) {
 	    if (i == gn) {
 		pputc(prn, '\n');
 	    }
@@ -1665,12 +1679,12 @@ static void print_pval_str (double pval, char *str)
 /* ......................................................... */ 
 
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			int c, PRN *prn)
+			int c, int longnames, PRN *prn)
 {
     double t, pvalue = 999.0;
     int gotnan = 0;
     int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
-    char varname[12];
+    char varname[24];
 
     /* special treatment for ARCH model coefficients, NLS, ARMA */
     if (pmod->aux == AUX_ARCH) {
@@ -1681,7 +1695,9 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	strcpy(varname, pdinfo->varname[pmod->list[c]]);
     }
 
-    if (pmod->ci == GARCH) {
+    if (longnames) {
+	pprintf(prn, " %13s ", varname);
+    } else if (pmod->ci == GARCH) {
 	pprintf(prn, "      %8s ", varname);
     } else if (pmod->ci == ARMA) {
 	pprintf(prn, " %3d) %8s ", c - 1, varname);
@@ -1689,14 +1705,14 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	pprintf(prn, " %3d) %8s ", pmod->list[c], varname);
     }
 
-    bufspace(2, prn);
+    bufspace((strlen(varname) > 12)? 1 : 2, prn);
 
     /* print coeff value if well-defined */
     if (isnan(pmod->coeff[c-2]) || na(pmod->coeff[c-2])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17), _("undefined"));
 	gotnan = 1;
     } else {
-	gretl_print_value (pmod->coeff[c-2], prn);
+	gretl_print_value(pmod->coeff[c-2], prn);
     }
 
     bufspace(2, prn);

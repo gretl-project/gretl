@@ -1145,7 +1145,7 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	pputc(prn, '\n');
 	for (i=1; i<pdinfo->v; i++) {
 	    if (missvec[i] > 0) {
-		pprintf(prn, "%*s: %d %s\n", VNAMELEN, pdinfo->varname[i], 
+		pprintf(prn, "%8s: %d %s\n", pdinfo->varname[i], 
 			missvec[i], _("missing values"));
 	    }
 	}

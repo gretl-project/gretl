@@ -3026,13 +3026,19 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
     } else if (action == LOGS) {
 	/* returns number of terms created */
 	err = logs(cmd.list, &Z, datainfo);
-	if (err < cmd.list[0]) err = 1;
-	else err = 0;
+	if (err < cmd.list[0]) {
+	    err = 1;
+	} else {
+	    err = 0;
+	}
     } else if (action == SQUARE) {
 	/* returns number of terms created */
 	err = xpxgenr(cmd.list, &Z, datainfo, 0, 1);
-	if (err <= 0) err = 1;
-	else err = 0;
+	if (err <= 0) {
+	    err = 1;
+	} else {
+	    err = 0;
+	}
     } else if (action == DIFF) {
 	err = list_diffgenr(cmd.list, &Z, datainfo);
     } else if (action == LDIFF) {

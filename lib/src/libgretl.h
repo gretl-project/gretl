@@ -70,7 +70,7 @@
 #define MAXLEN   512  /* max length of regular "long" strings */
 #define ERRLEN   256  /* max length of libgretl error messages */
 #define MAXDISP   20  /* max length of "display names" for variables */
-#define VNAMELEN   9  /* space allocated for var names (including termination) */
+#define VNAMELEN  14  /* space allocated for var names (including termination) */
 #define OBSLEN    11  /* space allocated for obs strings (including termination) */
 
 #ifndef M_PI

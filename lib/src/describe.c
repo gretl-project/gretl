@@ -1207,6 +1207,38 @@ void free_summary (GRETLSUMMARY *summ)
     free(summ);
 }
 
+static GRETLSUMMARY *summary_new (int nv)
+{
+    GRETLSUMMARY *summ = malloc(sizeof *summ);
+
+    if (summ == NULL) {
+	return NULL;
+    }
+
+    summ->list = NULL;
+    summ->xskew = summ->xkurt = summ->xmedian = NULL;
+    summ->coeff = summ->sderr = NULL;
+    summ->xpx = summ->xpy = NULL;
+
+    summ->xskew = malloc(nv * sizeof *summ->xskew);
+    summ->xkurt = malloc(nv * sizeof *summ->xkurt);
+    summ->xmedian = malloc(nv * sizeof *summ->xmedian);
+    summ->coeff = malloc(nv * sizeof *summ->coeff);
+    summ->sderr = malloc(nv * sizeof *summ->sderr);
+    summ->xpx = malloc(nv * sizeof *summ->xpx);
+    summ->xpy = malloc(nv * sizeof *summ->xpy);
+
+    if (summ->xskew == NULL || summ->xkurt == NULL ||
+	summ->xmedian == NULL || summ->coeff == NULL ||
+	summ->sderr == NULL || summ->xpx == NULL ||
+	summ->xpy == NULL) {
+	free_summary(summ);
+	return NULL;
+    }
+
+    return summ;
+}
+
 /**
  * summary:
  * @list: list of variables to process.
@@ -1229,30 +1261,28 @@ GRETLSUMMARY *summary (LIST list,
     GRETLSUMMARY *summ;
     double xbar, std, low, high, skew, kurt, *x = NULL;
 
-    summ = malloc(sizeof *summ);
-    if (summ == NULL) return NULL;
-    summ->list = NULL;
-
-    if ((summ->xskew = malloc(lo * sizeof(double))) == NULL) return NULL;
-    if ((summ->xkurt = malloc(lo * sizeof(double))) == NULL) return NULL;
-    if ((summ->xmedian = malloc(lo * sizeof(double))) == NULL) return NULL;
-    if ((summ->coeff = malloc(lo * sizeof(double))) == NULL) return NULL;
-    if ((summ->sderr = malloc(lo * sizeof(double))) == NULL) return NULL;
-    if ((summ->xpx = malloc(lo * sizeof(double))) == NULL) return NULL;
-    if ((summ->xpy = malloc(lo * sizeof(double))) == NULL) return NULL;
-    if ((x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x)) == NULL) 
+    summ = summary_new(lo);
+    if (summ == NULL) {
 	return NULL;
+    }
+
+    x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x);
+    if (x == NULL) {
+	free_summary(summ);
+	return NULL;
+    }
 
     for (v=0; v<lo; v++)  {
 	summ->n = ztox(list[v+1], x, *pZ, pdinfo);
 	if (summ->n < 2) { /* zero or one observations */
-	    if (summ->n == 0)
+	    if (summ->n == 0) {
 		pprintf(prn, _("Dropping %s: sample range contains no valid "
 			"observations\n"), pdinfo->varname[list[v+1]]);
-	    else
+	    } else {
 		pprintf(prn, _("Dropping %s: sample range has only one "
 			"obs, namely %g\n"), pdinfo->varname[list[v+1]], x[0]);
-	    list_exclude(v+1, list);
+	    }
+	    list_exclude(v + 1, list);
 	    if (list[0] == 0) {
 		free_summary(summ);
 		free(x);

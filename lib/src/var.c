@@ -794,21 +794,17 @@ static int diffvarnum (int index, const DATAINFO *pdinfo)
 static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo,
 		     int logdiff)
 {
-    char word[32];
     char s[32];
     int t, t1, n = pdinfo->n, v = pdinfo->v;
     double x0, x1;
 
     /* compose the varname */
-    strcpy(word, pdinfo->varname[iv]);
     if (logdiff) {
-	gretl_trunc(word, 5);
-	strcpy(s, "ld_");
+	sprintf(s, "ld_%s", pdinfo->varname[iv]);
     } else {
-	gretl_trunc(word, 6);
-	strcpy(s, "d_");
+	sprintf(s, "d_%s", pdinfo->varname[iv]);
     }
-    strcat(s, word);
+    gretl_trunc(s, VNAMELEN - 1);
 
     /* "s" should now contain the new variable name --
      check whether it already exists: if so, get out */
@@ -920,15 +916,9 @@ static int lagvarnum (int iv, int lag, const DATAINFO *pdinfo)
 {
     char lagname[16], ext[6];
 
-    strcpy(lagname, pdinfo->varname[iv]);
-
-    if (pdinfo->pd >=10) {
-	gretl_trunc(lagname, 5);
-    } else {
-	gretl_trunc(lagname, 6);
-    }
-
-    sprintf(ext, "_%d", lag);
+    *lagname = '\0';
+    strncat(lagname, pdinfo->varname[iv], 8);
+    sprintf(ext, "{-%d}", lag);
     strcat(lagname, ext);
 
     return varindex(pdinfo, lagname);
@@ -940,7 +930,9 @@ static void reset_list (int *list1, int *list2)
 {
     int i;
     
-    for (i=2; i<=list1[0]; i++) list1[i] = list2[i];
+    for (i=2; i<=list1[0]; i++) {
+	list1[i] = list2[i];
+    }
 }
 
 /* ...................................................................  */

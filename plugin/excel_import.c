@@ -387,7 +387,8 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 
 	    switch (*result) {
 	    case 0x0: /* string formula */
-		string_targ = &prow->cells[col];
+		/* record target for following STRING record */
+		string_targ = prow->cells + col;
 		break;
 	    case 0x1: /* boolean value */
 		prow->cells[col] = g_strdup((result[2])? "1" : "0");
@@ -427,7 +428,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    break;
 	}
 	len = MS_OLE_GET_GUINT16(q->data + 0);
-	*string_targ = mark_string(convert8to7(q->data + 2, len + 1));
+	*string_targ = mark_string(convert8to7(q->data + 2, len));
 #ifdef EDEBUG
 	fprintf(stderr, "Filled out string formula with '%s'\n", *string_targ);	
 #endif
@@ -675,9 +676,13 @@ static char *convert8to7 (const unsigned char *s, int count)
 {
     char *dest;
 
+    if (count > VNAMELEN - 1) {
+	count = VNAMELEN - 1;
+    }
+
     dest = malloc(VNAMELEN);
     *dest = '\0';
-    strncat(dest, s, VNAMELEN - 1);
+    strncat(dest, s, count);
     iso_to_ascii(dest);
 
     if (*dest == '\0') {
@@ -1021,17 +1026,6 @@ static int check_data_block (wbook *book, int ncols, int skip,
     return ret;
 }
 
-static void print_excel_version (int version, PRN *prn)
-{
-    if (version == MS_BIFF_V5) {
-	pputs(prn, "Excel 5.0\n");
-    } else if (version == MS_BIFF_V7) {
-	pputs(prn, "Excel 95\n");
-    } else if (version == MS_BIFF_V8) {
-	pputs(prn, "Excel 97 +\n");
-    }
-}
-
 int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		    PRN *prn)
 {
@@ -1061,7 +1055,6 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	pputs(prn, _("No worksheets found"));
 	err = 1;
     } else {
-	print_excel_version(book.version, prn);
 	wbook_print_info(&book);
     }
 

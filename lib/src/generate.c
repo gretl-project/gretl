@@ -368,6 +368,20 @@ static int get_lagvar (const char *s, int *lag, GENERATE *genr)
     return v;
 }
 
+static int premade_lag (const char *s, GENERATE *genr)
+{
+    int v, len = strlen(s);
+
+    if (len < VNAMELEN && s[len - 1] == '}') {
+	v = varindex(genr->pdinfo, s);
+	if (v < genr->pdinfo->v) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /* also used in do_printf function */
 
 int get_generated_value (const char *argv, double *val,
@@ -1269,6 +1283,9 @@ static int token_is_atomic (const char *s, GENERATE *genr)
     /* treat lag variable as atom */
     if (get_lagvar(s, NULL, genr)) return 1;
 
+    /* pre-defined lag variable */
+    if (premade_lag(s, genr)) return 1;
+
     while (*s) {
 	/* token is non-atomic if it contains an operator,
 	   or parentheses */
@@ -1430,6 +1447,7 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
     char tok[TOKLEN];
     const char *q, *p;
     int inparen = 0;
+    int inbrace = 0;
     int strip = strip_wrapper_parens(s);
 
     if (strip) {
@@ -1465,13 +1483,15 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 
 	if (*p == '(') inparen++;
 	else if (*p == ')') inparen--;
+	else if (*p == '{') inbrace++;
+	else if (*p == '}') inbrace--;
 
 	if (inparen < 0) {
 	    DPRINTF(("error: inparen < 0: '%s'\n", s));
 	    return E_UNBAL;
 	}
 
-	if (!inparen && op_level(*p)) {
+	if (!inparen && !inbrace && op_level(*p)) {
 	    if (p - q > TOKLEN - 1) {
 		fprintf(stderr, "genr error: token too long: '%s'\n", q);
 		return 1;
@@ -1487,7 +1507,7 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 	    if (numeric_string(p)) {
 		DPRINTF(("got a constant numeric token\n"));
 		goto atomic_case;
-	    }	    
+	    }
 	}
 	p++;
     }
@@ -4028,9 +4048,9 @@ int laggenr (int parent, int lag, int opt, double ***pZ,
 	return -1;
     }
 
-    strcpy(s, pdinfo->varname[parent]);
-    gretl_trunc(s, (pdinfo->pd >= 10)? 5 : 6);
-    sprintf(word, "_%d", lag);
+    *s = '\0';
+    strncat(s, pdinfo->varname[parent], 8);
+    sprintf(word, "{-%d}", lag);
     strcat(s, word);
     lno = varindex(pdinfo, s);
 
@@ -4055,7 +4075,7 @@ int laggenr (int parent, int lag, int opt, double ***pZ,
 	dataset_add_allocated_var(lx, pZ, pdinfo);
 	strcpy(pdinfo->varname[lno], s);
 	if (opt) { 
-	    sprintf(VARLABEL(pdinfo, lno), "%s = %s(-%d)", s, 
+	    sprintf(VARLABEL(pdinfo, lno), "%s = %s(t - %d)", s, 
 		    pdinfo->varname[parent], lag);
 	}
     }

@@ -1286,16 +1286,29 @@ static int make_full_list (const DATAINFO *pdinfo, CMD *command)
    except for the constant and any "hidden" variables or scalars */
 {
     int i, n = 1;
+    int *list;
 
-    command->list = realloc(command->list, pdinfo->v * sizeof(int));
-    if (command->list == NULL) return E_ALLOC;
+    list = realloc(command->list, pdinfo->v * sizeof *list);
+    if (list == NULL) {
+	return E_ALLOC;
+    }
+
+    command->list = list;
 
     for (i=1; i<pdinfo->v; i++) {
-	if (hidden_var(i, pdinfo)) continue;
-	if (pdinfo->vector[i] == 0) continue;
+	if (hidden_var(i, pdinfo)) {
+	    continue;
+	}
+	if (pdinfo->vector[i] == 0) {
+	    continue;
+	}
+	if (strchr(pdinfo->varname[i], '{')) {
+	    continue;
+	}
 	command->list[n++] = i;
     }
     command->list[0] = n - 1;
+
     return 0;
 }
 

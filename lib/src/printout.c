@@ -534,7 +534,9 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
     strcat(final, numstr);
 
     tmp = 2 * digits + 5 - strlen(final);
-    for (i=0; i<tmp; i++) strcat(final, " ");
+    for (i=0; i<tmp; i++) {
+	strcat(final, " ");
+    }
 
     pputs(prn, final);
 }
