@@ -301,6 +301,18 @@ static void get_cmdword (const char *line, char *word)
     }
 }
 
+static void tail_strip (char *s)
+{
+    int i, n = strlen(s);
+
+    for (i=n-1; i>0; i--) {
+	if (s[i] == '\n' || s[i] == ' ') {
+	    s[i] = '\0';
+	}
+	else break;
+    }
+}
+
 /**
  * catchflags:
  * @line: command line to parse.
@@ -360,6 +372,9 @@ int catchflags (char *line, gretlopt *oflags)
 	    *oflags |= opt;
 	}
     }
+
+    /* strip trailing whitespace after processing */
+    tail_strip(line);
 
     return err;
 }

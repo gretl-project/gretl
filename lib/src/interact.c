@@ -1483,7 +1483,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	if (cmd->opt) { 
 	    const char *flagstr = print_flags(cmd->opt, cmd->ci);
 
-	    pprintf(prn, "%s", flagstr);
+	    pputs(prn, flagstr);
 	}
 	pputc(prn, '\n');
 	return;

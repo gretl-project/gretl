@@ -22,7 +22,7 @@
 #include "libgretl.h"
 #include "gretl_private.h"
 
-#define SUBDEBUG
+#undef SUBDEBUG
 
 /* .......................................................... */
 
@@ -693,6 +693,8 @@ static int make_smpl_mask (double ***pZ, DATAINFO *pdinfo)
 
 /* ........................................................... */
 
+/* OPT_C -> replace (do not cumulate) sample restrictions */
+
 int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 			 DATAINFO **subinfo, DATAINFO **fullinfo,
 			 DATAINFO **datainfo, gretlopt opt)
@@ -701,7 +703,18 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
     *gretl_errmsg = '\0';
 
-    if (!(opt & OPT_C)) {   
+#ifdef SUBDEBUG
+    fprintf(stderr, "restore_full_sample: subZ=%p, fullZ=%p, Z=%p\n"
+	    "subinfo=%p, fullinfo=%p, datainfo=%p, opt=%lu\n",
+	    (void *) subZ, (void *) fullZ, (void *) Z, 
+	    (void *) subinfo, (void *) fullinfo, (void *) datainfo, opt);
+    fprintf(stderr, "*subZ=%p, *fullZ=%p, *Z=%p\n"
+	    "*subinfo=%p, *fullinfo=%p, *datainfo=%p\n",
+	    (void *) *subZ, (void *) *fullZ, (void *) *Z, 
+	    (void *) *subinfo, (void *) *fullinfo, (void *) *datainfo);
+#endif
+
+    if (*Z != NULL && !(opt & OPT_C)) {   
 	/* cumulating, not replacing restrictions */
 	err = make_smpl_mask(Z, *datainfo);
     }
@@ -721,19 +734,20 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
     /* in case any new vars added, try to merge them in */
     err = datamerge(fullZ, *fullinfo, Z, *subinfo);
-    if (err == E_ALLOC)
+    if (err == E_ALLOC) {
         sprintf(gretl_errmsg, _("Out of memory expanding data set\n"));
-    if (err == E_NOMERGE)
+    } else if (err == E_NOMERGE) {
         sprintf(gretl_errmsg, 
 		_("Missing sub-sample information; can't merge data\n"));
+    }
 
-    /* reattach the malloc'd elements, which might have moved */
+    /* reattach malloc'd elements, which may have moved */
     (*fullinfo)->varname = (*subinfo)->varname;
     (*fullinfo)->varinfo = (*subinfo)->varinfo;
     (*fullinfo)->vector = (*subinfo)->vector;
     (*fullinfo)->descrip = (*subinfo)->descrip;  
 
-    /* zero out the "subdum" dummy variable, if not cumulating
+    /* zero out the "subdum" dummy variable, if replacing
        sample restrictions */
     if (opt & OPT_C) {
 	i = varindex(*fullinfo, "subdum");

@@ -1,4 +1,4 @@
-7/07/2004 version 1.2.8
+7/07/2004 version 1.2.9
 - fixes for LaTeX printing of autoregressive models
 - correct Spanish help strings
 - fix font problem for some objects in session window
@@ -19,15 +19,16 @@
 - Replace fixed IP address for database server with hostname
 - Fix for copying material from gretl using Ctrl-C on Windows
 - Update Windows version to gtk 2.4.3 runtime
-- add "restrict" command for general Wald test (not yet trans-
-  lated, too new)
+- add "restrict" command for general Wald test of linear
+  restrictions on a model
 - add "ok(x)" as a short synonym for "!missing(x)" in the 
   context of the genr command
-- add a new "smpl" option: "smpl 100 --random" selects 100
+- change smpl behavior: restrictions now cumulate by default
+- add "smpl" option: "--replace" makes a sample restriction
+  start from the full dataset rather than cumulating with any
+  previous restrictions (note: this was the old default)
+- another new "smpl" option: "smpl 100 --random" selects 100
   observations from the dataset at random
-- another "smpl" option: "--cumulate" makes restrictions
-  cumulative, rather than starting from the full data set with
-  each restriction specified
 - allow the "--robust" option to the "var" command
 - fix for effect of Up/Down keys in main gretl window
 - gretlcli in batch mode: pass "#"-style comments through
@@ -42,6 +43,9 @@
   using a shortcut of the form "x(-1 to -4)"
 - fix some subtle genr bugs, and some breakage in the nls
   command following earlier changes in genr
+
+version 1.2.8: a "test-only" version, with some of the features
+of 1.2.9, depending on the date of the build.
 
 6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)

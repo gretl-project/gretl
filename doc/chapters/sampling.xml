@@ -7,10 +7,10 @@
     <para>Some subtle issues can arise here.  This section attempts to
       explain the issues.</para>
 
-    <para><application>A sub-sample may be defined in relation to a
-	full data set in two different ways: we will refer to these as
-	<quote>setting</quote> the sample and
-	<quote>restricting</quote> the sample respectively.</para>
+    <para>A sub-sample may be defined in relation to a full data set
+      in two different ways: we will refer to these as
+      <quote>setting</quote> the sample and <quote>restricting</quote>
+      the sample respectively.</para>
 
   </sect1>
 
@@ -204,7 +204,7 @@
     <para>The menu items mostly work in the same way as the
       corresponding <literal>smpl</literal> variant, except that when
       you use the item <quote>Sample, Restrict based on
-	criterion</quote>, and the dataset is already restricted, you
+	criterion</quote>, and the dataset is already sub-sampled, you
       are given the option of preserving or replacing the current
       restriction.  Replacinging the current restriction means, in
       effect, invoking the <literal>replace</literal> option described

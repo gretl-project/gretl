@@ -294,11 +294,17 @@ static void set_sample_label_special (void)
 void clear_data (void)
 {
     *paths.datfile = 0;
-    restore_sample(OPT_NONE);
-    if (Z != NULL) free_Z(Z, datainfo); 
+
+    restore_sample(OPT_C);
+
+    if (Z != NULL) {
+	free_Z(Z, datainfo);
+    } 
     clear_datainfo(datainfo, CLEAR_FULL);
+
     Z = NULL;
     fullZ = NULL;
+
     clear_varlist(mdata->listbox);
     clear_sample_label();
     data_status = 0;
@@ -919,9 +925,11 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
     } else {
 	sprintf(line, "smpl %s --restrict", buf);
     }
+
     if (verify_and_record_command(line)) return;
 
     err = bool_subsample(opt | OPT_R);
+
     if (!err) {
 	close_dialog(ddata);
     }
@@ -4107,8 +4115,7 @@ int maybe_restore_full_data (int action)
 	}
 
 	if (resp == GRETL_YES) {
-	    restore_sample(OPT_NONE);
-	    restore_sample_state(FALSE);
+	    restore_sample(OPT_C);
 	} else if (resp == GRETL_CANCEL || resp < 0 || action == COMPACT) {
 	    return 1;
 	}
@@ -5621,8 +5628,7 @@ int gui_exec_line (char *line,
 		save_full_dataset();
 	    }
 	} else if (strcmp(line, "smpl full") == 0) {
-	    restore_sample(OPT_NONE);
-	    restore_sample_state(FALSE);
+	    restore_sample(OPT_C);
 	    chk = 1;
 	} else {
 	    err = set_sample(line, datainfo);

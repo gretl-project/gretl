@@ -807,15 +807,16 @@ int session_file_is_open (void)
 
 void close_session (void)
 {
-    clear_data(); /* in gtk1 version: clear_data(1); */
+    clear_data(); 
     free_session();
     free_model_table_list(NULL);
     clear_graph_page();
 
     session_menu_state(FALSE);
     session_file_open = 0;
-    if (iconview != NULL) 
+    if (iconview != NULL) {
 	gtk_widget_destroy(iconview);
+    }
     session_changed(0);
     winstack_destroy();
     clear_selector();

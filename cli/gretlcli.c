@@ -262,11 +262,16 @@ int clear_data (void)
     int err = 0;
 
     *paths.datfile = 0;
+
     err = restore_full_sample(&subZ, &fullZ, &Z,
-			      &subinfo, &fullinfo, 
-			      &datainfo, OPT_NONE);
-    if (Z != NULL) free_Z(Z, datainfo); 
+			      &subinfo, &fullinfo, &datainfo, 
+			      OPT_C); 
+
+    if (Z != NULL) {
+	free_Z(Z, datainfo); 
+    }
     clear_datainfo(datainfo, CLEAR_FULL);
+
     Z = NULL;
     fullZ = NULL;
     data_status = 0;
@@ -1487,7 +1492,7 @@ void exec_line (char *line, PRN *prn)
 	} else if (strcmp(line, "smpl full") == 0) {
 	    err = restore_full_sample(&subZ, &fullZ, &Z,
 				      &subinfo, &fullinfo, 
-				      &datainfo, OPT_NONE);
+				      &datainfo, OPT_C);
 	} else { 
 	    err = set_sample(line, datainfo);
 	}

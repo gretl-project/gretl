@@ -244,7 +244,7 @@ static GtkWidget *text_edit_new (int *hsize)
 
 /* ........................................................... */
 
-static void set_cumulate_restrictions (GtkWidget *w, gpointer p)
+static void set_replace_restrictions (GtkWidget *w, gpointer p)
 {
     dialog_t *d = (dialog_t *) p;
     
@@ -255,7 +255,7 @@ static void set_cumulate_restrictions (GtkWidget *w, gpointer p)
     }
 }
 
-static void sample_cumulate_buttons (GtkWidget *box, gpointer data)
+static void sample_replace_buttons (GtkWidget *box, gpointer data)
 {
     GtkWidget *tmp;
     GSList *group;
@@ -274,10 +274,10 @@ static void sample_cumulate_buttons (GtkWidget *box, gpointer data)
 
 #ifdef OLD_GTK
     gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(set_cumulate_restrictions), data);
+		       GTK_SIGNAL_FUNC(set_replace_restrictions), data);
 #else
     g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(set_cumulate_restrictions), data);
+		     G_CALLBACK(set_replace_restrictions), data);
 #endif
 
     gtk_widget_show(tmp);
@@ -414,7 +414,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     }
 
     if (cmdcode == SMPLBOOL && dataset_is_restricted()) {
-	sample_cumulate_buttons(top_vbox, d);
+	sample_replace_buttons(top_vbox, d);
     }
 
     if (varclick == VARCLICK_INSERT_ID) 
@@ -1822,7 +1822,11 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	dumlist = get_dummy_list(&thisdum);
 
 	if (dumlist == NULL) {
-	    errbox(_("There are no dummy variables in the dataset"));
+	    if (dataset_is_restricted()) {
+		errbox(_("There are no dummy variables in the current sample"));
+	    } else {
+		errbox(_("There are no dummy variables in the dataset"));
+	    }
 	    gtk_widget_destroy(rset->dlg);
 	    return;
 	}
