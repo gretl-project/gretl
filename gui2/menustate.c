@@ -398,7 +398,7 @@ void set_sample_label (DATAINFO *pdinfo)
 			   dataset_is_panel(pdinfo));
 
     flip(mdata->ifac, "/Sample/Restructure panel...", 
-	 pdinfo->structure == STACKED_CROSS_SECTION);
+	 dataset_is_panel(pdinfo));
 
     sprintf(labeltxt, _("%s: Full range %s - %s"), 
 	    pdstr, stobs, endobs);

@@ -1427,10 +1427,11 @@ int panel_autocorr_test (MODEL *pmod, int order,
 
 int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
 {
+    int sts = (pdinfo->structure == STACKED_TIME_SERIES);
     double **tmpZ;
     int i, j, k, t, nvec;
-    int nunits = pdinfo->pd;
-    int nperiods = pdinfo->n / nunits;
+    int pd = pdinfo->pd;
+    int nblocks = pdinfo->n / pd;
     double pdx;
     char **markers = NULL;
 
@@ -1484,31 +1485,31 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
 	} 
     }
 
-    /* copy the data back in transformed order: construct a set of
-       time series for each unit in turn -- and do markers if present */
-    for (k=0; k<nunits; k++) {
+    /* copy the data back in transformed order; also do markers if
+       present */
+    for (k=0; k<pd; k++) {
 	j = 0;
 	for (i=1; i<pdinfo->v; i++) {
 	    if (!pdinfo->vector[i]) continue;
-	    for (t=0; t<nperiods; t++) {
-		Z[i][k * nperiods + t] = tmpZ[j][k + nunits * t];
+	    for (t=0; t<nblocks; t++) {
+		Z[i][k * nblocks + t] = tmpZ[j][k + pd * t];
 	    }
 	    j++;
 	}
 	if (markers != NULL) {
-	    for (t=0; t<nperiods; t++) {
-		strcpy(pdinfo->S[k * nperiods + t], markers[k + nunits * t]);
+	    for (t=0; t<nblocks; t++) {
+		strcpy(pdinfo->S[k * nblocks + t], markers[k + pd * t]);
 	    }
 	}
     }
 
     /* change the datainfo setup */
-    pdinfo->structure = STACKED_TIME_SERIES;
-    pdinfo->pd = nperiods;
+    pdinfo->structure = (sts)? STACKED_CROSS_SECTION : STACKED_TIME_SERIES;
+    pdinfo->pd = nblocks;
 
     pdinfo->sd0 = 1.0;
     pdx = 0.1;
-    while (nperiods /= 10) {
+    while (nblocks /= 10) {
 	pdx *= 0.1;
     }
     pdinfo->sd0 += pdx;

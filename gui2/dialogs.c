@@ -3124,7 +3124,7 @@ datawiz_make_changes (DATAINFO *dwinfo)
     if (dwinfo->structure == datainfo->structure &&
 	dwinfo->pd == datainfo->pd &&
 	strcmp(dwinfo->stobs, datainfo->stobs) == 0) {
-	infobox("No changes were made");
+	infobox(_("No changes were made"));
 	return 0;
     }
 
@@ -3520,6 +3520,9 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 
 	make_confirmation_text(ctxt, dwinfo);
 	tempwid = gtk_label_new(ctxt);
+#ifndef OLD_GTK
+	gtk_label_set_justify(GTK_LABEL(tempwid), GTK_JUSTIFY_CENTER);
+#endif
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   tempwid, TRUE, TRUE, 5);
 	gtk_widget_show(tempwid);
