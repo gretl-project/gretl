@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-03 14:41-0500\n"
-"PO-Revision-Date: 2004-12-26 15:36+0100\n"
+"PO-Revision-Date: 2005-01-04 14:55+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2350,14 +2350,14 @@ msgid "Restriction"
 msgstr "Vincolo"
 
 #: lib/src/gretl_restrict.c:490 lib/src/gretl_restrict.c:500
-#, fuzzy, c-format
+#, c-format
 msgid "Equation number (%d) is out of range"
-msgstr "Il numero di coefficienti (%d) è fuori dai limiti"
+msgstr "Il numero di equazioni (%d) è fuori dai limiti"
 
 #: lib/src/gretl_restrict.c:493
-#, fuzzy, c-format
+#, c-format
 msgid "Coefficient number (%d) out of range for equation %d"
-msgstr "Il numero di coefficienti (%d) è fuori dai limiti"
+msgstr "Il numero di coefficienti (%d) è fuori dai limiti per l'equazione %d"
 
 #: lib/src/gretl_restrict.c:503
 #, c-format
@@ -4243,14 +4243,12 @@ msgid "Limited Information Maximum Likelihood"
 msgstr "Massima verosimiglianza ad informazione limitata"
 
 #: lib/src/system.c:118
-#, fuzzy
 msgid "Ordinary Least Squares"
-msgstr "/Modello/_OLS - Minimi quadrati ordinari..."
+msgstr "Minimi quadrati ordinari"
 
 #: lib/src/system.c:119
-#, fuzzy
 msgid "Two-Stage Least Squares"
-msgstr "Minimi quadrati a tre stadi"
+msgstr "Minimi quadrati a due stadi"
 
 #: lib/src/system.c:123
 msgid "No system of equations has been defined"
@@ -4265,14 +4263,12 @@ msgid "An equation system must have at least two equations"
 msgstr "Un sistema di equazioni deve avere almeno due equazioni"
 
 #: lib/src/system.c:675
-#, fuzzy
 msgid "F test for the specified restrictions"
-msgstr "Test RESET di specificazione"
+msgstr "Test F per i vincoli specificati"
 
 #: lib/src/system.c:702
-#, fuzzy
 msgid "LR test for the specified restrictions"
-msgstr "Test RESET di specificazione"
+msgstr "Test LR per i vincoli specificati"
 
 #: lib/src/system.c:703 plugin/sysest.c:401
 msgid "Restricted log-likelihood"
@@ -4283,9 +4279,9 @@ msgid "Unrestricted log-likelihood"
 msgstr "Log-verosimiglianza non vincolata"
 
 #: lib/src/system.c:1065
-#, fuzzy, c-format
+#, c-format
 msgid "iterated %s"
-msgstr "%s pesato"
+msgstr "%s iterato"
 
 #: lib/src/texprint.c:571 gui2/model_table.c:802
 msgid "$t$-statistics in parentheses"
@@ -11225,7 +11221,7 @@ msgstr "correlazioni sopra la diagonale"
 
 #: plugin/sysest.c:71
 msgid "log determinant"
-msgstr ""
+msgstr "log determinante"
 
 #: plugin/sysest.c:307
 #, c-format
@@ -11252,16 +11248,12 @@ msgid "Hansen-Sargan over-identification test"
 msgstr "Test di sovra-identificazione di Hansen-Sargan"
 
 #: plugin/sysest.c:629 plugin/sysest.c:633
-#, fuzzy
 msgid "Equation system"
-msgstr ""
-"Sistema di equazioni, %s\n"
-"\n"
+msgstr "Sistema di equazioni"
 
 #: plugin/sysest.c:630
-#, fuzzy
 msgid "Estimator"
-msgstr "Stima"
+msgstr "Stimatore"
 
 #: plugin/tramo_options.c:356
 msgid "Time-series model plus seasonal adjustment"
