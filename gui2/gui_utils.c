@@ -1437,7 +1437,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
-    } else {
+    } else if (role != IMPORT) {
 	make_viewbar(vwin, 1);
     }
 
