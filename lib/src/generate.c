@@ -1082,15 +1082,17 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 static int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
 {
     int t, n = pdinfo->n, v = genr->varnum;
-    int old_scalar = 0;
+    int modify = 0, old_scalar = 0;
     double xx;
 
     /* is the new variable an addition to data set? */
     if (v >= pdinfo->v) {
 	if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 	strcpy(pdinfo->varname[v], genr->varname);
-    } else 
+    } else {
+	modify = 1;
 	if (!pdinfo->vector[v]) old_scalar = 1;
+    }
 
     strcpy(VARLABEL(pdinfo, v), genr->label);
     pdinfo->vector[v] = !genr->scalar;
@@ -1105,6 +1107,8 @@ static int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
 	    (*pZ)[v] = realloc((*pZ)[v], pdinfo->n * sizeof ***pZ);
 	    if ((*pZ)[v] == NULL) return E_ALLOC;
 	}
+#if 0
+	/* expanding constants is probably not a good idea */
 	if (_isconst(pdinfo->t1, pdinfo->t2, genr->xvec)) {
 	    for (t=0; t<n; t++) (*pZ)[v][t] = xx;
 	} else {
@@ -1112,6 +1116,13 @@ static int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
 		(*pZ)[v][t] = genr->xvec[t];
 	}
+#else
+	if (!modify) {
+	    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
+	}
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
+	    (*pZ)[v][t] = genr->xvec[t];
+#endif
     }
     if (genr->xvec != NULL) free(genr->xvec);
     return 0;
