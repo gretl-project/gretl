@@ -101,7 +101,7 @@
 	<listitem>
 	  <para>With <command>freq</command>, you can't at
 	  present specify user-defined ranges as
-	  in <application>ESL</application>.  A &chisq; test for
+	  in <application>ESL</application>.  A chi-square test for
 	  normality has been added to the output of this command.
 	  </para>
 	</listitem>

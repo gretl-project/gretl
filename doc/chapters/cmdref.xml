@@ -459,13 +459,13 @@
       </para>
 
       <para>
-	  The partial autocorrelations are also shown: these are net
-	  of the effects of intervening lags.  The command also graphs
-	  the correlogram and prints the Box-Pierce
-	  <emphasis>Q</emphasis> statistic for testing the null
-	  hypothesis that the series is <quote>white noise</quote>.
-	This is asymptotically distributed as &chisq; with degrees
-	  of freedom equal to the number of lags used.
+	The partial autocorrelations are also shown: these are net of
+	the effects of intervening lags.  The command also graphs the
+	correlogram and prints the Box-Pierce <emphasis>Q</emphasis>
+	statistic for testing the null hypothesis that the series is
+	<quote>white noise</quote>. This is asymptotically distributed
+	as chi-square with degrees of freedom equal to the number of
+	lags used.
       </para>
 
       <para>
@@ -695,10 +695,10 @@
       </informaltable>
 
       <para>
-	  Prints the frequency distribution for
-	  <replaceable>var</replaceable> (given by name or number) along
-	  with a &chisq; test for normality. In interactive mode a gnuplot
-	  graph of the distribution is displayed.  
+	Prints the frequency distribution for
+	<replaceable>var</replaceable> (given by name or number) along
+	with a chi-square test for normality. In interactive mode a
+	gnuplot graph of the distribution is displayed.  
       </para>
 
       <para role="bodge">&nbsp;</para>
@@ -1422,16 +1422,15 @@
       </informaltable>
 
       <para>
-	  Binomial logit regression. The dependent variable should be
-	  a binary variable.  Maximum likelihood estimates of the
-	  coefficients on <replaceable>indepvars</replaceable> are
-	  obtained via the EM or Expectation&ndash;Maximization method
-	  (see Ruud, 2000, ch. 27).  As the model is nonlinear the
-	  slopes depend on the values of the independent variables:
-	  the reported slopes are evaluated at the means of those
-	variables. The &chisq; statistic
-	  tests the null hypothesis that all coefficients are zero
-	  apart from the constant.
+	Binomial logit regression. The dependent variable should be a
+	binary variable.  Maximum likelihood estimates of the
+	coefficients on <replaceable>indepvars</replaceable> are
+	obtained via the EM or Expectation&ndash;Maximization method
+	(see Ruud, 2000, ch. 27).  As the model is nonlinear the
+	slopes depend on the values of the independent variables: the
+	reported slopes are evaluated at the means of those variables.
+	The chi-square statistic tests the null hypothesis that all
+	coefficients are zero apart from the constant.
       </para>
 
       <para>
@@ -1920,16 +1919,15 @@
       </informaltable>
 
       <para>
-	  Probit regression. The dependent variable should be a binary
-	  variable. Maximum likelihood estimates of the coefficients
-	  on <replaceable>indepvars</replaceable> are obtained via
-	  iterated least squares (the EM or
-	  Expectation&ndash;Maximization method).  As the model is
-	  nonlinear the slopes depend on the values of the independent
-	  variables: the reported slopes are evaluated at the means of
-	  those variables.  The &chisq; statistic tests the null
-	  hypothesis that all coefficients are zero apart from the
-	  constant.
+	Probit regression. The dependent variable should be a binary
+	variable. Maximum likelihood estimates of the coefficients on
+	<replaceable>indepvars</replaceable> are obtained via iterated
+	least squares (the EM or Expectation&ndash;Maximization
+	method).  As the model is nonlinear the slopes depend on the
+	values of the independent variables: the reported slopes are
+	evaluated at the means of those variables.  The chi-square
+	statistic tests the null hypothesis that all coefficients are
+	zero apart from the constant.
       </para>
 
       <para>
@@ -1967,7 +1965,7 @@
 	      <entry></entry>
 	      <entry><command>pvalue 3</command> 
 		<replaceable>df xvalue</replaceable>
-		  (&chisq; distribution)
+		  (chi-square distribution)
 	      </entry>
 	    </row>
 	    <row>
@@ -1989,17 +1987,17 @@
       </informaltable>     
 
       <para>
-	  Computes the area to the right of
-	  <replaceable>xvalue</replaceable> in the specified
-	  distribution.  <replaceable>df</replaceable> is the degrees
-	  of freedom, <replaceable>dfn</replaceable> is the d.f. for
-	  the numerator, <replaceable>dfd</replaceable> is the d.f.
-	  for the denominator.  Instead of the code numbers you can
-	  use <literal>z</literal>, <literal>t</literal>,
-	  <literal>X</literal>, <literal>F</literal> and
-	  <literal>G</literal> for the normal, <emphasis>t</emphasis>,
-	  &chisq;, <emphasis>F</emphasis>,
-	  and gamma distributions respectively.
+	Computes the area to the right of
+	<replaceable>xvalue</replaceable> in the specified
+	distribution.  <replaceable>df</replaceable> is the degrees of
+	freedom, <replaceable>dfn</replaceable> is the d.f. for the
+	numerator, <replaceable>dfd</replaceable> is the d.f. for the
+	denominator.  Instead of the code numbers you can use
+	<literal>z</literal>, <literal>t</literal>,
+	<literal>X</literal>, <literal>F</literal> and
+	<literal>G</literal> for the normal, <emphasis>t</emphasis>,
+	chi-square, <emphasis>F</emphasis>, and gamma distributions
+	respectively.
       </para>
 
     </sect2>
@@ -2604,7 +2602,7 @@
       <para>
 	Must follow a model estimation command.  Gives the frequency
 	distribution for the residual from the model along with a
-	&chisq; test for normality.
+	chi-square test for normality.
       </para>
 
     </sect2>

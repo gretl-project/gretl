@@ -8,7 +8,6 @@
 <!ENTITY opto "<literal>[ -o ]</literal>">
 <!ENTITY cmdcol "82pt">
 <!ENTITY rsqu "<emphasis>R</emphasis><superscript>2</superscript>">
-<!ENTITY chisq SYSTEM "chisqu.def">
 <!ENTITY intro SYSTEM "chapters/intro.xml">
 <!ENTITY starting SYSTEM "chapters/starting.xml">
 <!ENTITY menus SYSTEM "chapters/menus.xml">

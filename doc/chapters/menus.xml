@@ -78,12 +78,12 @@
     <itemizedlist mark="dash">
       <listitem><para><guimenuitem>Statistical tables</guimenuitem>:
 	  Look up critical values for commonly used distributions
-	  (normal or Gaussian, <emphasis>t</emphasis>, &chisq;,
+	  (normal or Gaussian, <emphasis>t</emphasis>, chi-square,
 	  <emphasis>F</emphasis> and
 	  Durbin&ndash;Watson).</para></listitem>
       <listitem><para><guimenuitem>p-value finder</guimenuitem>: Open
 	  a window which enables you to look up p-values from the
-	  Gaussian, <emphasis>t</emphasis>, &chisq;,
+	  Gaussian, <emphasis>t</emphasis>, chi-square,
 	  <emphasis>F</emphasis> or gamma distributions. See also the
 	  <command>pvalue</command> command in <xref
 	    linkend="cmdref"/>.</para></listitem>
