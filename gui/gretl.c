@@ -1062,11 +1062,11 @@ static int get_windows_font (char *fontspec)
 static GtkWidget *make_main_window (int gui_get_data) 
 {
     GtkWidget *box, *scroller, *dframe;
-    char *titles[3] = {"ID #", _("Variable name"), _("Descriptive label")};
+    char *titles[3] = {_("ID #"), _("Variable name"), _("Descriptive label")};
     int listbox_id_width = 30;
-    int listbox_varname_width = 100;
+    int listbox_varname_width = 90;
     int listbox_label_width = 400;
-    int listbox_data_width = 480;
+    int listbox_data_width = 500;
     int listbox_file_height = 300;
 #ifdef G_OS_WIN32
     GtkStyle *style;
@@ -1077,6 +1077,9 @@ static GtkWidget *make_main_window (int gui_get_data)
     mdata->listbox = NULL;
     mdata->popup = NULL;
     mdata->role = MAINWIN;
+
+    /* allow for longer foreign strings */
+    if (strcmp(titles[1], "Variable name")) listbox_varname_width = 110;
 
 #ifdef USE_GNOME
     mdata->w = gnome_app_new("gretl", _("Econometrics program"));
@@ -1112,7 +1115,7 @@ static GtkWidget *make_main_window (int gui_get_data)
 #ifdef USE_GNOME
     gnome_app_set_contents (GNOME_APP (mdata->w), main_vbox);
 #else
-    gtk_container_add(GTK_CONTAINER (mdata->w), main_vbox);
+    gtk_container_add (GTK_CONTAINER (mdata->w), main_vbox);
 #endif
 
     set_up_main_menu();
@@ -1270,10 +1273,10 @@ static GtkWidget *build_var_menu (void)
 
     var_menu = gtk_menu_new();
     for (i=0; i<(sizeof var_items / sizeof var_items[0]); i++) {
-	var_item = gtk_menu_item_new_with_label(var_items[i]);
+	var_item = gtk_menu_item_new_with_label(_(var_items[i]));
 	gtk_signal_connect(GTK_OBJECT(var_item), "activate",
 			   (GtkSignalFunc) popup_activated,
-			   var_items[i]);
+			   _(var_items[i]));
 	GTK_WIDGET_SET_FLAGS (var_item, GTK_SENSITIVE | GTK_CAN_FOCUS);
 	gtk_widget_show(var_item);
 	gtk_menu_append(GTK_MENU(var_menu), var_item);
@@ -1609,9 +1612,9 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     GtkWidget *iconw, *button;
     GdkPixmap *icon;
     GdkBitmap *mask;
-    GdkColormap *colormap;
+    GdkColormap *cmap;
     int i;
-    const gchar *toolstrings[] = {
+    const char *toolstrings[] = {
 	N_("launch calculator"), 
 	N_("launch editor"), 
 	N_("open gretl console"),
@@ -1626,8 +1629,9 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     };
     gchar **toolxpm = NULL;
     void (*toolfunc)() = NULL;
+    gchar *toolstr;
 
-    colormap = gdk_colormap_get_system();
+    cmap = gdk_colormap_get_system();
     toolbar_box = gtk_handle_box_new();
     gtk_handle_box_set_shadow_type(GTK_HANDLE_BOX(toolbar_box), NONE);
     gtk_box_pack_start(GTK_BOX(box), toolbar_box, FALSE, FALSE, 0);
@@ -1692,11 +1696,12 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	if (i == 8) continue;
 #endif
 
-	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, colormap, &mask, NULL, 
-						     toolxpm);
+	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, 
+						     NULL, toolxpm);
 	iconw = gtk_pixmap_new(icon, mask);
+	toolstr = _(toolstrings[i]);
 	button = gtk_toolbar_append_item(GTK_TOOLBAR(gretl_toolbar),
-					 NULL, _(toolstrings[i]), NULL,
+					 NULL, toolstr, NULL,
 					 iconw, toolfunc, NULL);
     }
     gtk_widget_show(gretl_toolbar);

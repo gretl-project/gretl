@@ -1096,7 +1096,7 @@ static void add_help_topics (windata_t *hwin, int script)
 {
     int i, j;
     GtkItemFactoryEntry helpitem;
-    gchar *mpath = _("/_Topics");
+    const gchar *mpath = N_("/_Topics");
     struct help_head_t **heads = (script)? cli_heads : gui_heads;
 
     helpitem.path = NULL;
@@ -1120,11 +1120,11 @@ static void add_help_topics (windata_t *hwin, int script)
 	    helpitem.item_type = NULL;
 	    if ((heads[i])->topics[j] < NC) {
 		sprintf(helpitem.path, "%s/%s/%s", 
-			mpath, (heads[i])->name, 
+			mpath, _((heads[i])->name), 
 			commands[(heads[i])->topics[j]]);
 	    } else {
 		sprintf(helpitem.path, "%s/%s/%s", 
-			mpath, (heads[i])->name, 
+			mpath, _((heads[i])->name), 
 			get_gui_help_string((heads[i])->pos[j]));
 	    }
 	    helpitem.callback = (script)? do_script_help : do_gui_help; 
@@ -2191,8 +2191,10 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 {
     int i, j;
     GtkItemFactoryEntry varitem;
-    gchar *mpath[] = {_("/Graphs/residual plot"), 
-		      _("/Graphs/fitted, actual plot")};
+    const gchar *mpath[] = {
+	N_("/Graphs/residual plot"), 
+	N_("/Graphs/fitted, actual plot")
+    };
     MODEL *pmod = vwin->data;
 
     varitem.path = NULL;
