@@ -113,23 +113,25 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 
 /* .................................................................. */
 
-static int listbox_rename_var (const gchar *newname) 
+static int listbox_rename_var (const gchar *newname, gint varnum) 
 {
     if (*newname == '\0' || validate_varname(newname)) return 1;
 
-    strcpy(datainfo->varname[mdata->active_var], newname);
+    strcpy(datainfo->varname[varnum], newname);
     data_status |= MODIFIED_DATA; 
+    set_sample_label(datainfo);
 
     return 0;
 }
 
 /* .................................................................. */
 
-static void listbox_edit_label (const gchar *newlabel) 
+static void listbox_edit_label (const gchar *newlabel, gint varnum) 
 {
-    datainfo->label[mdata->active_var][0] = 0;
-    strncat(datainfo->label[mdata->active_var], newlabel, MAXLABEL-1);
+    datainfo->label[varnum][0] = 0;
+    strncat(datainfo->label[varnum], newlabel, MAXLABEL-1);
     data_status |= MODIFIED_DATA; 
+    set_sample_label(datainfo);
 }
 
 /* .................................................................. */
@@ -142,21 +144,21 @@ static void cell_edited (GtkCellRendererText *cell,
     GtkTreeModel *model = (GtkTreeModel *) data;
     GtkTreePath *path = gtk_tree_path_new_from_string (path_string);
     GtkTreeIter iter;
-    gchar *old_text;
+    gchar *old_text, *numstr;
     gint err = 0, *column;
 
     column = g_object_get_data(G_OBJECT(cell), "column");
     gtk_tree_model_get_iter(model, &iter, path);
+    gtk_tree_model_get(model, &iter, 0, &numstr, -1);
     gtk_tree_model_get(model, &iter, column, &old_text, -1);
 
     if (strcmp(old_text, new_text)) {
 	switch (GPOINTER_TO_INT(column)) {
 	case 1: /* varname */
-	    err = listbox_rename_var(new_text);
+	    err = listbox_rename_var(new_text, atoi(numstr));
 	    break;
-
 	case 2: /* var label */
-	    listbox_edit_label(new_text);
+	    listbox_edit_label(new_text, atoi(numstr));
 	    break;
 	}
     }
