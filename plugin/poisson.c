@@ -22,8 +22,6 @@
 #include "gretl_private.h"
 #include "../cephes/libprob.h"
 
-#define GNR_METHOD 0
-
 #undef PDEBUG 
 
 #define POISSON_TOL 1.0e-10 
@@ -131,6 +129,7 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     targ->sigma = NADBL;
     targ->fstt = NADBL;
 
+    /* make and correct the variance matrix */
     if (makevcv(src)) {
 	err = 1;
     } else {
@@ -152,37 +151,6 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     return err;
 }
 
-#if GNR_METHOD
-
-/* construct the log of the "offset" variable */
-
-static double *get_log_offset (MODEL *pmod, int offvar, double **Z)
-{
-    double *logoff = NULL;
-    int t, err = 0;
-
-    for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
-	if (na(pmod->uhat[t])) {
-	    continue;
-	} else if (na(Z[offvar][t])) {
-	    err = 1;
-	} else if (Z[offvar][t] <= 0.0) {
-	    err = 1;
-	} else {
-	    pmod->uhat[t] = log(Z[offvar][t]);
-	}
-    }
-
-    if (err == 0) {
-	/* we're borrowing this allocated storage */
-	logoff = pmod->uhat;
-    }
-
-    return logoff;
-}
-
-#else
-
 static double *get_offset (MODEL *pmod, int offvar, double **Z,
 			   double *offmean)
 {
@@ -194,7 +162,7 @@ static double *get_offset (MODEL *pmod, int offvar, double **Z,
 	    continue;
 	} else if (na(Z[offvar][t])) {
 	    err = 1;
-	} else if (Z[offvar][t] <= 0.0) {
+	} else if (Z[offvar][t] < 0.0) {
 	    err = 1;
 	} 
     }
@@ -207,28 +175,19 @@ static double *get_offset (MODEL *pmod, int offvar, double **Z,
     return offset;
 }
 
-#endif
-
-/* GNR_METHOD: the GNR-type approach in Davidson and MacKinnon, ETM, ch 11 */
-
 static int 
 do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
-    int i, t;
     int origv = pdinfo->v;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
+    int i, t;
 
     int iter = 0;
     double crit = 1.0;
 
     double *offset = NULL;
-
-#if GNR_METHOD
-    double xb;
-#else
     double offmean = NADBL;
-#endif
 
     double *y;
     double *wgt;
@@ -255,11 +214,7 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     }
 
     if (offvar > 0) {
-#if GNR_METHOD
-	offset = get_log_offset(pmod, offvar, *pZ);
-#else
 	offset = get_offset(pmod, offvar, *pZ, &offmean);
-#endif
 	if (offset == NULL) {
 	    pmod->errcode = E_DATA;
 	    goto bailout;
@@ -272,11 +227,11 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     /* local_list includes a weight variable */
     local_list[0] = pmod->list[0] + 1;
 
-    /* weighting variable */
+    /* weighting variable (first newly added var) */
     local_list[1] = origv;
     wgt = (*pZ)[origv];
 
-    /* dependent variable for GNR */
+    /* dependent variable for GNR (second newly added var) */
     local_list[2] = origv + 1;
     depvar = (*pZ)[origv + 1];
     
@@ -286,37 +241,25 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     }    
 
     pmod->coeff[0] = log(pmod->ybar);
-    for (i=1; i<pmod->ncoeff; i++) { 
-	pmod->coeff[i] = 0.0;
-    }
-
-#if GNR_METHOD
-    xb = pmod->coeff[0];
-#else
     if (offvar > 0) {
 	pmod->coeff[0] -= log(offmean);
     }
-#endif
+
+    for (i=1; i<pmod->ncoeff; i++) { 
+	pmod->coeff[i] = 0.0;
+    }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (na(pmod->uhat[t])) {
 	    depvar[t] = NADBL;
 	    wgt[t] = NADBL;
 	} else {
-#if GNR_METHOD
-	    if (offvar > 0) {
-		xb = pmod->coeff[0] + offset[t];
-	    }
-	    depvar[t] = exp(-xb) * (y[t] - exp(xb));
-	    wgt[t] = exp(.5 * xb);
-#else
 	    pmod->yhat[t] = pmod->ybar;
 	    if (offvar > 0) {
 		pmod->yhat[t] *= offset[t] / offmean;
 	    }
 	    depvar[t] = y[t] / pmod->yhat[t] - 1.0;
 	    wgt[t] = sqrt(pmod->yhat[t]);
-#endif
 	}
     }
 
@@ -351,24 +294,9 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	    if (na(pmod->uhat[t])) {
 		continue;
 	    }
-#if GNR_METHOD
-	    xb = 0.0;
-	    for (i=0; i<tmpmod.ncoeff; i++) { 
-		int vi = pmod->list[i+2];
-
-		xb += pmod->coeff[i] * (*pZ)[vi][t];
-	    }
-	    if (offvar > 0) {
-		xb += offset[t];
-	    }
-	    pmod->yhat[t] = exp(xb);
-	    depvar[t] = exp(-xb) * (y[t] - exp(xb));
-	    wgt[t] = exp(.5 * xb);
-#else
 	    pmod->yhat[t] *= exp(tmpmod.yhat[t]);
 	    depvar[t] = y[t] / pmod->yhat[t] - 1;
 	    wgt[t] = sqrt(pmod->yhat[t]);
-#endif
 	}
 
 	if (crit > POISSON_TOL) {
