@@ -5,7 +5,7 @@
     <para>A separate program, namely gnuplot, is called to generate
       graphs. Gnuplot is a very full-featured graphing program with
       myriad options. It is available from <ulink
-	url="http://www.gnuplot.org/">gnuplot.org</ulink> (but note
+	url="http://www.gnuplot.info/">gnuplot.info</ulink> (but note
       that a copy of gnuplot is bundled with the MS Windows version of
       <application>gretl</application>).
       <application>gretl</application> gives you direct access, via a
@@ -40,7 +40,7 @@
       more, see the gnuplot <ulink
 	url="http://ricardo.ecn.wfu.edu/gnuplot.html">online
 	manual</ulink> or <ulink
-	url="http://www.gnuplot.org/">gnuplot.org</ulink>.</para>
+	url="http://www.gnuplot.info/">gnuplot.info</ulink>.</para>
 
     <para>See also the entry for <command>gnuplot</command> in 
       <xref linkend="cmdref"/> below &mdash; and the

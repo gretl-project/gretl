@@ -635,13 +635,13 @@ void about_dialog (gpointer data)
 	gtk_box_pack_start (GTK_BOX (box), tempwid, FALSE, FALSE, 0);
 	gtk_widget_show (tempwid);
     }
-    tempstr = g_strdup_printf (_("gretl, version %s\n")
+    tempstr = g_strdup_printf ("gretl, version %s\n"
 #ifdef G_OS_WIN32
 			       BUILD_DATE
 #endif
-			       _("Copyright (C) 2000-2001 Allin Cottrell "
+			       "Copyright (C) 2000-2001 Allin Cottrell "
 			       "<cottrell@wfu.edu>\nHomepage: "
-			       "http://gretl.sourceforge.net/"),
+			       "http://gretl.sourceforge.net/",
 			       version_string);
     tempwid = gtk_label_new (tempstr);
     g_free (tempstr);

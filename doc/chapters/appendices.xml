@@ -245,8 +245,8 @@
     <para>
       <application>gretl</application> calls gnuplot for graphing. You
       can find gnuplot at <ulink
-	url="http://www.gnuplot.org/">gnuplot.org</ulink>.  As of this
-      writing the current version is 3.7.1.
+	url="http://www.gnuplot.info/">gnuplot.info</ulink>.  As of this
+      writing the current version is 3.7.2.
     </para>
 
     <para>
@@ -419,8 +419,8 @@
 </varlistentry>
 
 <varlistentry><term>Gnuplot homepage</term>
- <listitem><para><ulink url="http://www.gnuplot.org/">
-  <literal>http://www.gnuplot.org/</literal></ulink></para>
+ <listitem><para><ulink url="http://www.gnuplot.info/">
+  <literal>http://www.gnuplot.info/</literal></ulink></para>
  </listitem>
 </varlistentry>
 

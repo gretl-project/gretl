@@ -1,22 +1,7 @@
-ifeq ($(CC),)
-  CC = gcc
-endif
-ifeq ($(CFLAGS),)
-  CFLAGS = -g -O2 -Wall
-endif
-ifeq ($(MAKE),)
-  MAKE = make
-endif
+CFLAGS = -g -O2 -Wall `gretl-config --cflags`
+LDFLAGS = `gretl-config --libs`
 
-all: client
-
-COMPILE = $(CC) -c $(CFLAGS) `gretl-config --cflags`
-
-.c.o:
-	$(COMPILE) $<
-
-client: simple_client.o Makefile
-	$(CC) -o client simple_client.o `gretl-config --libs`
+all: simple_client
 
 clean:
-	rm -f *.o ./client core 
+	rm -f ./simple_client core 

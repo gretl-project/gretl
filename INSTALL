@@ -30,9 +30,6 @@ you want to override this behavior you may use the option
 the prefix you want to use.
 
 * The programs here call on gnuplot to generate graphs.  As of this
-writing the latest gnuplot can be obtained from:
+writing the latest gnuplot can be obtained from http://www.gnuplot.info/
 
-ftp://ftp.gnuplot.vt.edu/pub/gnuplot/gnuplot-3.7.1.tar.gz
-
-
-Allin Cottrell, December 2001.
+Allin Cottrell, March, 2002.

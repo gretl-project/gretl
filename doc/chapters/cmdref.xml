@@ -1134,7 +1134,7 @@
 	are created, with the number in the file name incremented.)
 	The plots can be generated later using the command
 	<command>gnuplot gpttmp.plt</command>.  (Under MS Windows,
-	start wgnuplot and open the file
+	start <application>wgnuplot</application> and open the file
 	<filename>gpttmp01.plt</filename>.)  To gain control over the
 	details of the plot, edit the <filename>.plt</filename> file.
       </para>

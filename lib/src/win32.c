@@ -108,7 +108,7 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     read_reg_val(HKEY_CLASSES_ROOT, "gnuplot", ppaths->gnuplot);
     if (ppaths->gnuplot[0] == '\0')
 	sprintf(ppaths->gnuplot, 
-		"%c:\\userdata\\gp371w32\\pgnuplot.exe", drive);
+		"%c:\\userdata\\gnuplot\\pgnuplot.exe", drive);
 
     ppaths->userdir[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "userdir", ppaths->userdir);
