@@ -4179,7 +4179,7 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
 	err = winprint_graph(emfname);
     }
 
-    /* remove(emfname); */
+    remove(emfname);
     g_free(emfname);
 }
 
