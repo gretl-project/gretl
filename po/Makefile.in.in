@@ -310,6 +310,8 @@ Makefile: Makefile.in.in $(top_builddir)/config.status POTFILES.in
 	  && CONFIG_FILES=$(subdir)/$@.in CONFIG_HEADERS= \
 	       $(SHELL) ./config.status
 
+depend:
+
 force:
 
 # Tell versions [3.59,3.63) of GNU make not to export all variables.

@@ -1,9 +1,14 @@
 version 0.996
 - closing a session clears the selector dialog presets
 - fix bug with scalar data and the data-editing spreadsheet
-- revert boxplots to the older selection dialog (so can add
+- revert boxplots to the older selection dialog (so user can add
   boolean conditions)
-- print warning when data matrix is close to singularity
+- Regressions: print warning when data matrix is close to 
+  singularity
+- add Gnu Multiple Precision plugin for running multiple
+  precision OLS regressions (unix only, right now)
+- Add Spanish translations and make enabling NLS the default
+- Try to fix the win32 GUI font for high-res monitors
 
 05/15/2002 version 0.995
 - Raise library version to 13.0.0

@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2002-05-19 18:53-0400\n"
+"POT-Creation-Date: 2002-05-20 11:36-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1310,7 +1310,7 @@ msgstr ""
 msgid "Missing value encountered for variable %d, obs %d"
 msgstr ""
 
-#: lib/src/estimate.c:246
+#: lib/src/estimate.c:246 plugin/mp_ols.c:341
 #, c-format
 msgid "No. of obs (%d) is less than no. of parameters (%d)"
 msgstr ""
@@ -1948,7 +1948,7 @@ msgstr ""
 msgid "Statistics for %d repetitions\n"
 msgstr ""
 
-#: lib/src/monte_carlo.c:609
+#: lib/src/monte_carlo.c:609 plugin/mp_ols.c:265
 #, c-format
 msgid ""
 "Dependent variable: %s\n"
@@ -2073,19 +2073,19 @@ msgid ""
 "\n"
 msgstr ""
 
-#: lib/src/printout.c:168
+#: lib/src/printout.c:168 plugin/mp_ols.c:243
 msgid "Error Sum of Squares"
 msgstr ""
 
-#: lib/src/printout.c:170
+#: lib/src/printout.c:170 plugin/mp_ols.c:241
 msgid "Standard error"
 msgstr ""
 
-#: lib/src/printout.c:195
+#: lib/src/printout.c:195 plugin/mp_ols.c:245
 msgid "Unadjusted R-squared"
 msgstr ""
 
-#: lib/src/printout.c:198
+#: lib/src/printout.c:198 plugin/mp_ols.c:247
 msgid "Adjusted R-squared"
 msgstr ""
 
@@ -4446,7 +4446,7 @@ msgid "Info"
 msgstr ""
 
 #: gui/datafiles.c:479
-msgid "Data file"
+msgid "File"
 msgstr ""
 
 #: gui/datafiles.c:479 gui/session.c:1241
@@ -8137,4 +8137,27 @@ msgstr ""
 
 #: plugin/workbook.c:639
 msgid "Unexpected error reading the file"
+msgstr ""
+
+#: plugin/mp_ols.c:101
+#, c-format
+msgid "Missing observations for variable '%s'"
+msgstr ""
+
+#: plugin/mp_ols.c:108
+#, c-format
+msgid "Variable '%s' is all zeros"
+msgstr ""
+
+#: plugin/mp_ols.c:263
+#, c-format
+msgid "Multiple-precision OLS estimates using the %d observations %s-%s\n"
+msgstr ""
+
+#: plugin/mp_ols.c:268
+msgid "      VARIABLE         COEFFICIENT          STD. ERROR\n"
+msgstr ""
+
+#: plugin/mp_ols.c:515
+msgid "Error sum of squares is not > 0"
 msgstr ""

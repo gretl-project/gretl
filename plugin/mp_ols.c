@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Allin Cottrell
+ *  Copyright (c) 2002 by Allin Cottrell
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -17,12 +17,16 @@
  *
  */
 
-/* precise.c - gretl least squares with high precision */
+/* mp_ols.c - gretl least squares with multiple precision (GMP) */
+
+#ifdef OS_WIN32
+# include "../winconfig.h"
+#else
+# include "../config.h"
+#endif
 
 #include "libgretl.h"
 #include <gmp.h>
-
-#define MP_DIGITS 14
 
 static mpf_t MPF_ONE;
 static mpf_t MPF_ZERO;
@@ -44,7 +48,6 @@ typedef struct {
     mpf_t *uhat;                 /* regression residuals */
     mpf_t *yhat;                 /* fitted values from regression */
     mpf_t *xpx;
-    mpf_t *vcv;                  /* VCV matrix for coeff. estimates */
     mpf_t ess, tss;              /* Error and Total Sums of Squares */
     mpf_t sigma;                 /* Standard error of regression */
     mpf_t rsq, adjrsq;           /* Unadjusted and adjusted R^2 */     
@@ -89,32 +92,6 @@ static void mpf_constants_clear (void)
     mpf_clear (MPF_ZERO);
     mpf_clear (MPF_MINUS_ONE);
 }
-
-#ifdef notdef
-static int dec (double x)
-{
-    int i, dec = 0;
-    char numstr[24];
-
-    sprintf(numstr, "%14g", x);
-    for (i=strlen(numstr)-1; i>0; i--) {
-	if (numstr[i] != '.' && numstr[i] != ',') dec++;
-	else break;
-    }
-    return dec;
-}
-#endif
-
-#ifdef notdef
-static void mpf_print (char *s, mpf_t x)
-{
-    mp_exp_t e;
-    char numstr[16];
-
-    mpf_get_str (numstr, &e, 10, MP_DIGITS, x);
-    sprintf(s, "%se%3d", numstr, (int) e);
-}
-#endif
 
 static int data_problems (const int *list, double **Z, DATAINFO *pdinfo,
 			  char *errbuf)
@@ -221,9 +198,6 @@ static void mp_model_free (MPMODEL *pmod)
 	mpf_clear (pmod->xpx[i]);
     free (pmod->xpx);
 
-#ifdef notyet
-    pmod->vcv = NULL;
-#endif
     mpf_clear (pmod->ess);
     mpf_clear (pmod->tss);
     mpf_clear (pmod->sigma);
@@ -245,7 +219,6 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
     pmod->uhat = NULL;
     pmod->yhat = NULL;
     pmod->xpx = NULL;
-    pmod->vcv = NULL;
     mpf_init (pmod->ess);
     mpf_init (pmod->tss);
     mpf_init (pmod->sigma);
@@ -255,7 +228,7 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
     pmod->errcode = 0;
 }
 
-static void print_mp_coeff_1 (const MPMODEL *pmod, const DATAINFO *pdinfo,
+static void print_mp_coeff (const MPMODEL *pmod, const DATAINFO *pdinfo,
 			    int c, PRN *prn)
 {
     double xx = mpf_get_d (pmod->coeff[c-1]);
@@ -268,18 +241,22 @@ static void print_mp_coeff_1 (const MPMODEL *pmod, const DATAINFO *pdinfo,
 static void other_stats (const MPMODEL *pmod, PRN *prn)
 {
     double xx;
+    char fstr[16];
+    int len = 24;
+
+    if (doing_nls()) len = 36;
     
     xx = mpf_get_d (pmod->sigma);
-    pprintf(prn, _("Standard error        %20.12g\n"), xx);
+    pprintf(prn, "%-*s%20.12g\n", len, _("Standard error"), xx);
     xx = mpf_get_d (pmod->ess);
-    pprintf(prn, _("Error Sum of Squares  %20.12g\n"), xx);
+    pprintf(prn, "%-*s%20.12g\n", len, _("Error Sum of Squares"), xx);
     xx = mpf_get_d (pmod->rsq);
-    pprintf(prn, _("Unadjusted R-squared  %20.12g\n"), xx);
+    pprintf(prn, "%-*s%20.12g\n", len, _("Unadjusted R-squared"), xx);
     xx = mpf_get_d (pmod->adjrsq);
-    pprintf(prn, _("Adjusted R-squared    %20.12g\n"), xx);
+    pprintf(prn, "%-*s%20.12g\n", len, _("Adjusted R-squared"), xx);
     xx = mpf_get_d (pmod->fstt);
-    pprintf(prn, _("F(%d, %d)             %20.12g\n"), pmod->dfn, pmod->dfd, xx);
-    
+    sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
+    pprintf(prn, "%-*s%20.12g\n", len, fstr, xx);
 }
 
 static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
@@ -300,11 +277,11 @@ static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     pprintf(prn, _("      VARIABLE         COEFFICIENT          STD. ERROR\n"));
 
     if (pmod->ifc) {
-	print_mp_coeff_1(pmod, pdinfo, ncoeff, prn);
+	print_mp_coeff(pmod, pdinfo, ncoeff, prn);
 	ncoeff--;
     }
     for (i=2; i<=ncoeff; i++) {
-	print_mp_coeff_1(pmod, pdinfo, i, prn);
+	print_mp_coeff(pmod, pdinfo, i, prn);
     }
     pprintf(prn, "\n");
 
@@ -578,13 +555,19 @@ static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n)
 	mpf_div (tmp, tmp, den);
 	mpf_mul (tmp, tmp, pmod->ess);
 	mpf_sub (pmod->adjrsq, MPF_ONE, tmp);
-#ifdef nodef
-	if (!pmod->ifc) {  
-	    pmod->rsq = corrrsq(nobs, &mpZ[yno][t1], pmod->yhat + t1);
-	    pmod->adjrsq = 
-		1 - ((1 - pmod->rsq)*(nobs - 1)/pmod->dfd);
+	if (!pmod->ifc) { 
+	    mpf_t df;
+
+	    mpf_div (tmp, pmod->ess, ypy);
+	    mpf_sub (pmod->rsq, MPF_ONE, tmp);
+	    mpf_sub (tmp, MPF_ONE, pmod->rsq);
+	    mpf_init_set_d (df, (double) (nobs - 1));
+	    mpf_mul (tmp, tmp, df);
+	    mpf_set_d (df, (double) pmod->dfd);
+	    mpf_div (tmp, tmp, df);
+	    mpf_sub (pmod->adjrsq, MPF_ONE, tmp);
+	    mpf_clear (df);
 	}
-#endif
     }
 
     if (pmod->ifc && nv == 1) {

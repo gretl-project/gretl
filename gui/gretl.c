@@ -1056,29 +1056,35 @@ static int get_windows_font (char *fontspec)
     HGDIOBJ h_font;
     TEXTMETRIC tm;
     char name[NAME_BUFFER_LEN];
-    int len, pix_height;
 
     h_dc = CreateDC("DISPLAY", NULL, NULL, NULL);
     if (h_dc == NULL) return 1;
-    h_font = GetStockObject(DEFAULT_GUI_FONT);
+
+    h_font = GetStockObject(DEFAULT_GUI_FONT); 
     if (h_font == NULL || !SelectObject(h_dc, h_font)) {
 	DeleteDC(h_dc);
 	return 1;
     }
-    len = GetTextFace(h_dc, NAME_BUFFER_LEN, name);
-    if (len <= 0) {
+
+    if (GetTextFace(h_dc, NAME_BUFFER_LEN, name) <= 0) {
 	DeleteDC(h_dc);
 	return 1;
     }
+
     if (!GetTextMetrics(h_dc, &tm)) {
 	DeleteDC(h_dc);
 	return 1;
+    } else {
+	HDC screen = GetDC(0);
+	double scaleY = GetDeviceCaps(screen, LOGPIXELSY) / 96.0;
+	int pix_height = (int) (tm.tmHeight * scaleY);
+
+	ReleaseDC(0, screen);
+	DeleteDC(h_dc);
+	sprintf(fontspec, "-*-%s-*-*-*-*-%i-*-*-*-p-*-iso8859-1", name,
+		pix_height);
+	return 0;
     }
-    pix_height = tm.tmHeight;
-    DeleteDC(h_dc);
-    sprintf(fontspec, "-*-%s-*-*-*-*-%i-*-*-*-p-*-iso8859-1", name,
-	    pix_height);
-    return 0;
 }
 #endif
 

@@ -29,6 +29,10 @@
 # include "config.h"
 #endif
 
+#ifdef OS_WIN32
+# include "../../winconfig.h"
+#endif
+
 #ifndef __GNOME_I18N_H__
 # ifdef ENABLE_NLS
 #  include "gettext.h"

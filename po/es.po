@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 0.995\n"
-"POT-Creation-Date: 2002-05-19 18:53-0400\n"
-"PO-Revision-Date: 2002-05-19 21:43-0400\n"
+"POT-Creation-Date: 2002-05-20 11:36-0400\n"
+"PO-Revision-Date: 2002-05-20 11:50-0400\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -374,7 +374,7 @@ msgstr "Sin fecha"
 msgid ""
 "Data file %s\n"
 "as of %s\n"
-msgstr "Ficheros de datos"
+msgstr "Ficheros de datos %s\n"
 
 #: lib/src/dataio.c:1211
 msgid "(unsaved)"
@@ -384,7 +384,9 @@ msgstr ""
 msgid ""
 "Description:\n"
 "\n"
-msgstr "Descripción:\n"
+msgstr ""
+"Descripción:\n"
+"\n"
 
 #: lib/src/dataio.c:1220
 #, fuzzy, c-format
@@ -502,15 +504,15 @@ msgstr "Los nuevos datos tienen la estructura adecuada para añadirlos"
 
 #: lib/src/dataio.c:1739
 msgid "Starting observation does not match"
-msgstr "   La observación inicial no casa"
+msgstr "La observación inicial no casa"
 
 #: lib/src/dataio.c:1743
 msgid "Ending observation does not match"
-msgstr "   La observación final no casa"
+msgstr "La observación final no casa"
 
 #: lib/src/dataio.c:1752
 msgid "Starting point of new data does not fit"
-msgstr "   El punto inicial de los nuevos datos no casa"
+msgstr "El punto inicial de los nuevos datos no casa"
 
 #: lib/src/dataio.c:1756
 msgid "Inconsistency in observation markers"
@@ -1057,8 +1059,7 @@ msgid ""
 "               (missing values denoted by -999 will be skipped)\n"
 "\n"
 msgstr ""
-"               (los valores perdidos, denotados mediante -999, serán "
-"deshechados)\n"
+"        (los valores perdidos, denotados mediante -999, serán deshechados)\n"
 "\n"
 
 #: lib/src/describe.c:734
@@ -1084,11 +1085,11 @@ msgstr ""
 
 #: lib/src/describe.c:745
 msgid "             MEAN         MEDIAN            MIN            MAX\n"
-msgstr "             MEDIA        MEDIANA           MIN            MAX\n"
+msgstr "            MEDIA        MEDIANA            MIN            MAX\n"
 
 #: lib/src/describe.c:765
 msgid "             S.D.           C.V.           SKEW       EXCSKURT\n"
-msgstr "             D.T.           C.V.           ASIMETRIA  EXC.CURTOSIS\n"
+msgstr "             D.T.           C.V.      ASIMETRIA   EXC.CURTOSIS\n"
 
 #: lib/src/describe.c:850
 #, c-format
@@ -1429,7 +1430,7 @@ msgstr "Información de sub-muestra perdida; no se pueden unir los datos"
 msgid "Missing value encountered for variable %d, obs %d"
 msgstr "Hay un valor perdido para la variable %d, obs %d"
 
-#: lib/src/estimate.c:246
+#: lib/src/estimate.c:246 plugin/mp_ols.c:341
 #, c-format
 msgid "No. of obs (%d) is less than no. of parameters (%d)"
 msgstr "Núm. de observaciones (%d) es menor que el núm. de parámetros (%d)"
@@ -2129,7 +2130,7 @@ msgstr "Estimaciones MCO utilizando las %d observaciones %s-%s\n"
 msgid "Statistics for %d repetitions\n"
 msgstr "Estadísticas para %d repeticiones\n"
 
-#: lib/src/monte_carlo.c:609
+#: lib/src/monte_carlo.c:609 plugin/mp_ols.c:265
 #, c-format
 msgid ""
 "Dependent variable: %s\n"
@@ -2265,13 +2266,12 @@ msgstr ""
 "\n"
 
 #: lib/src/printout.c:84
-#, fuzzy
 msgid "Mean of dependent variable"
-msgstr "Variables independientes"
+msgstr "Media de la var. dependiente"
 
 #: lib/src/printout.c:87
 msgid "Standard deviation of dep. var."
-msgstr ""
+msgstr "D.T. de la var. dependiente"
 
 #: lib/src/printout.c:90
 #, c-format
@@ -2287,23 +2287,21 @@ msgstr ""
 "La suma de cuadrados de los residuos (%g) no es > 0\n"
 "\n"
 
-#: lib/src/printout.c:168
-#, fuzzy
+#: lib/src/printout.c:168 plugin/mp_ols.c:243
 msgid "Error Sum of Squares"
-msgstr "Suma de cuadrados de los residuos (SCR)"
+msgstr "Suma de cuadrados de los residuos"
 
-#: lib/src/printout.c:170
-#, fuzzy
+#: lib/src/printout.c:170 plugin/mp_ols.c:241
 msgid "Standard error"
 msgstr "Desviación típica"
 
-#: lib/src/printout.c:195
+#: lib/src/printout.c:195 plugin/mp_ols.c:245
 msgid "Unadjusted R-squared"
-msgstr ""
+msgstr "R-cuadrado no corregido"
 
-#: lib/src/printout.c:198
+#: lib/src/printout.c:198 plugin/mp_ols.c:247
 msgid "Adjusted R-squared"
-msgstr ""
+msgstr "R-cuadrado corregido"
 
 #: lib/src/printout.c:205
 msgid "undefined\n"
@@ -2327,16 +2325,12 @@ msgid "undefined"
 msgstr "indefinido"
 
 #: lib/src/printout.c:251
-#, fuzzy
 msgid "Durbin-Watson statistic"
-msgstr ""
-"Valores críticos al 5%% del estadístico de Durbin-Watson\n"
-"\n"
+msgstr "Estadístico de Durbin-Watson"
 
 #: lib/src/printout.c:254
-#, fuzzy
 msgid "1st-order autocorrelation coeff."
-msgstr "autocorrelación de primer orden\n"
+msgstr "Coef. de autocorr. de primer orden"
 
 #: lib/src/printout.c:277
 msgid "         undefined"
@@ -2637,6 +2631,8 @@ msgid ""
 "Statistics based on the weighted data:\n"
 "\n"
 msgstr ""
+"Estadísticos basados en los datos ponderados:\n"
+"\n"
 
 #: lib/src/printout.c:622
 msgid ""
@@ -2644,6 +2640,9 @@ msgid ""
 "Statistics based on the original data:\n"
 "\n"
 msgstr ""
+"\n"
+"Estadísticos basados en los datos originales:\n"
+"\n"
 
 #: lib/src/printout.c:630
 msgid ""
@@ -4944,8 +4943,8 @@ msgid "Info"
 msgstr "Información"
 
 #: gui/datafiles.c:479
-msgid "Data file"
-msgstr "Fichero de datos"
+msgid "File"
+msgstr "Fichero"
 
 #: gui/datafiles.c:479 gui/session.c:1241
 msgid "Summary"
@@ -5194,23 +5193,20 @@ msgstr ""
 "en el conjunto de datos actual?"
 
 #: gui/dialogs.c:908
-#, fuzzy
 msgid "gretl: data delimiter"
-msgstr "gretl: cabecera de los datos"
+msgstr "gretl: delimitador de los datos"
 
 #: gui/dialogs.c:923
 msgid "separator for data columns:"
 msgstr ""
 
 #: gui/dialogs.c:929
-#, fuzzy
 msgid "comma (,)"
-msgstr "instrucciones:"
+msgstr "coma (,)"
 
 #: gui/dialogs.c:942
-#, fuzzy
 msgid "space"
-msgstr "Reemplazado"
+msgstr "espacio"
 
 #: gui/dialogs.c:955
 msgid "tab"
@@ -5452,11 +5448,8 @@ msgid "gretl: save graph"
 msgstr "gretl: guardar gráfico"
 
 #: gui/gpt_control.c:793
-#, fuzzy
 msgid "output type"
-msgstr ""
-"\n"
-"resultado: "
+msgstr "formato de la salida"
 
 #: gui/gpt_control.c:882
 msgid "Sorry, can't edit multiple scatterplots"
@@ -5479,9 +5472,8 @@ msgid "Couldn't open graph file"
 msgstr "No se pudo abrir fichero de gráfico"
 
 #: gui/gpt_control.c:1018
-#, fuzzy
 msgid "Plot file is corrupted"
-msgstr "el fichero boxplot está corrupto\n"
+msgstr "el fichero de gráfico está corrupto"
 
 #: gui/gretl.c:103
 msgid "open a script file on startup"
@@ -6256,7 +6248,7 @@ msgstr "/Model/MCO Combinados (panel)..."
 #: gui/gretl.c:468
 #, fuzzy
 msgid "/Model/High precision OLS..."
-msgstr "/Modelo/_Hildreth-Lu..."
+msgstr "/Modelo/XXX..."
 
 #: gui/gretl.c:470
 msgid "/_Help"
@@ -6919,27 +6911,24 @@ msgid "Dataset"
 msgstr "Conjunto de datos"
 
 #: gui/gui_utils.c:952
-#, fuzzy
 msgid "Estimation"
-msgstr "Estimar"
+msgstr "Estimación"
 
 #: gui/gui_utils.c:953
 msgid "Graphs"
 msgstr "Gráficos"
 
 #: gui/gui_utils.c:954
-#, fuzzy
 msgid "Prediction"
-msgstr "predicción"
+msgstr "Predicción"
 
 #: gui/gui_utils.c:955
-#, fuzzy
 msgid "Printing"
-msgstr "Imprimir..."
+msgstr "Impresión"
 
 #: gui/gui_utils.c:956
 msgid "Programming"
-msgstr ""
+msgstr "Programación"
 
 #: gui/gui_utils.c:957
 msgid "Statistics"
@@ -6950,9 +6939,8 @@ msgid "Tests"
 msgstr "Contrastes"
 
 #: gui/gui_utils.c:959
-#, fuzzy
 msgid "Transformations"
-msgstr "Información de los datos"
+msgstr "Transformaciones"
 
 #: gui/gui_utils.c:960
 msgid "Utilities"
@@ -7688,12 +7676,13 @@ msgid "got invalid field '%s'"
 msgstr "se obtuvo un campo '%s' no válido"
 
 #: gui/boxplots.c:1517
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "boxplots: generation of dummy variable failed\n"
 "%s"
 msgstr ""
-"gráficos de caja(boxplots): falló la generación de la variable ficticia"
+"gráficos de caja(boxplots): falló la generación de la variable ficticia\n"
+"%s"
 
 #: gui/guiprint.c:91
 #, c-format
@@ -7930,7 +7919,7 @@ msgstr "No se pudo leer el orden del ARCH"
 #: gui/library.c:1789
 #, fuzzy
 msgid "gretl: high precision estimates"
-msgstr "gretl: notas de sesión"
+msgstr "gretl: XXX"
 
 #: gui/library.c:1819
 msgid "A variable was duplicated in the list of regressors"
@@ -8782,7 +8771,7 @@ msgstr ""
 #: plugin/excel_import.c:708 plugin/gnumeric_import.c:506
 #, fuzzy
 msgid "No worksheets found"
-msgstr "No se ha encontrado ningún gráfico"
+msgstr "No se ha encontrado ningún XXX"
 
 #: plugin/excel_import.c:735
 msgid "Failed to process Excel file"
@@ -8791,12 +8780,12 @@ msgstr "Fallo al pasar fichero Excel"
 #: plugin/excel_import.c:757
 #, fuzzy
 msgid "No data found.\n"
-msgstr "No se ha encontrado ningún gráfico"
+msgstr "No se ha encontrado ningún XXX"
 
 #: plugin/excel_import.c:767
 #, fuzzy
 msgid "One or more variable names are missing.\n"
-msgstr "   falta el nombre de la variable %d: abortando\n"
+msgstr "falta XXX\n"
 
 #: plugin/excel_import.c:776
 msgid "Expected numeric data, found string.\n"
@@ -8810,9 +8799,8 @@ msgid ""
 msgstr ""
 
 #: plugin/gnumeric_import.c:214 plugin/gnumeric_import.c:221
-#, fuzzy
 msgid "Expected to find a variable name"
-msgstr "Nombre de variable '%s' no definido "
+msgstr ""
 
 #: plugin/gnumeric_import.c:258
 msgid "Found an extraneous row of text"
@@ -8862,11 +8850,34 @@ msgstr "Error inesperado al leer el fichero\n"
 msgid "Unexpected error reading the file"
 msgstr "Error inesperado al leer el fichero"
 
+#: plugin/mp_ols.c:101
+#, c-format
+msgid "Missing observations for variable '%s'"
+msgstr "Dato perdido para la variable '%s'"
+
+#: plugin/mp_ols.c:108
+#, fuzzy, c-format
+msgid "Variable '%s' is all zeros"
+msgstr "La variable '%s' ya existe"
+
+#: plugin/mp_ols.c:263
+#, fuzzy, c-format
+msgid "Multiple-precision OLS estimates using the %d observations %s-%s\n"
+msgstr "Estimaciones MCO XXX utilizando las %d observaciones %s-%s\n"
+
+#: plugin/mp_ols.c:268
+msgid "      VARIABLE         COEFFICIENT          STD. ERROR\n"
+msgstr "      VARIABLE         COEFICIENTE           DESV.TÍP.\n"
+
+#: plugin/mp_ols.c:515
+msgid "Error sum of squares is not > 0"
+msgstr "La suma de cuadrados de los residuos no es > 0"
+
+#~ msgid "Data file"
+#~ msgstr "Fichero de datos"
+
 #~ msgid "csv file seems to be malformed\n"
 #~ msgstr "el fichero CSV parece estar mal formado\n"
-
-#~ msgid "Variable '%s' already exists"
-#~ msgstr "La variable '%s' ya existe"
 
 #~ msgid "  Std Err of Resid. (sgmahat) "
 #~ msgstr "  Desv. Típ. de los resid (sgmahat) "

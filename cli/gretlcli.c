@@ -24,6 +24,7 @@
 # include "../config.h"
 #else
 # include <windows.h>
+# include "../winconfig.h"
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -210,6 +211,30 @@ void file_get_line (void)
     }
 }
 
+#ifdef ENABLE_NLS
+# ifdef OS_WIN32
+void nls_init (void)
+{
+    char gretldir[MAXLEN], localedir[MAXLEN];
+
+    if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir))
+        return;
+    sprintf(localedir, "%s\\locale", gretldir);
+    setlocale (LC_ALL, "");
+    bindtextdomain ("gretl", localedir);
+    textdomain ("gretl");    
+}
+# else
+void nls_init (void)
+{
+    setlocale (LC_ALL, "");
+    bindtextdomain (PACKAGE, LOCALEDIR);
+    textdomain (PACKAGE);
+}
+# endif /* OS_WIN32 */
+#endif /* ENABLE_NLS */
+
+
 int main (int argc, char *argv[])
 {
     int cont = 0, cli_get_data = 0;
@@ -221,9 +246,7 @@ int main (int argc, char *argv[])
 #endif
 
 #ifdef ENABLE_NLS
-    setlocale(LC_ALL, "");
-    bindtextdomain(PACKAGE, LOCALEDIR);
-    textdomain(PACKAGE);
+    nls_init();
 #endif
 
     datainfo = datainfo_new();

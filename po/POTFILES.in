@@ -47,3 +47,4 @@ plugin/excel_import.c
 plugin/gnumeric_import.c
 plugin/import_common.c
 plugin/workbook.c
+plugin/mp_ols.c

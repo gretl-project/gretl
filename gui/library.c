@@ -1781,7 +1781,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 
     if (err) {
 	if (errtext[0] != 0) errbox(errtext);
-	else errbox(get_errmsg(err, NULL, NULL));
+	else errbox(get_errmsg(err, errtext, NULL));
 	gretl_print_destroy(prn);
 	return;
     }

@@ -245,8 +245,8 @@ static int process_line (char *line, char *fname, time_t *date)
     char mon[4], hrs[9];
     int day, yr;
     struct tm mytime;
-    static char *months[] = {"Jan","Feb","Mar","Apr","May","Jun",
-			     "Jul","Aug","Sep","Oct","Nov","Dec"};
+    const char *months[] = {"Jan","Feb","Mar","Apr","May","Jun",
+			    "Jul","Aug","Sep","Oct","Nov","Dec"};
     int i;
 
     if (sscanf(line, "%*s%*s%3s%2d%8s%4d%16s", 
@@ -476,7 +476,7 @@ gint populate_filelist (windata_t *fdata)
 
 static GtkWidget *files_window (windata_t *fdata) 
 {
-    char *data_titles[] = {_("Data file"), _("Summary")};
+    char *data_titles[] = {_("File"), _("Summary")};
     char *ps_titles[] = {_("Script"), _("Topic"), _("Data")};
     char *db_titles[] = {_("Database"), _("Source")};
     char *remote_titles[] = {_("Database"), _("Source"), _("Local status")};

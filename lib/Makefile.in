@@ -58,7 +58,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 $(LIBGRETL): $(OBJS) $(LOBJS)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) \
-	-rpath $(prefix)/lib $(LIBS) -version-info 13:0:0
+	-rpath $(prefix)/lib $(LIBS) -version-info 14:0:0
 
 .PHONY: 
 
