@@ -91,16 +91,16 @@ int loop_condition (int k, LOOPSET *ploop,
 void monte_carlo_free (LOOPSET *ploop);
 
 int loop_model_init (LOOP_MODEL *plmod, const MODEL *pmod,
-		     const int id);
+		     int id);
 
-int loop_print_init (LOOP_PRINT *pprn, const LIST list, const int id);
+int loop_print_init (LOOP_PRINT *pprn, const LIST list, int id);
 
 int loop_store_init (LOOPSET *ploop, const LIST list, 
 		     DATAINFO *pdinfo);
 
-int update_loop_model (LOOPSET *ploop, const int cmdnum, MODEL *pmod);
+int update_loop_model (LOOPSET *ploop, int cmdnum, MODEL *pmod);
 
-int update_loop_print (LOOPSET *ploop, const int cmdnum, 
+int update_loop_print (LOOPSET *ploop, int cmdnum, 
 		       const LIST list, double ***pZ, 
 		       const DATAINFO *pdinfo);
 
@@ -109,12 +109,11 @@ void print_loop_results (LOOPSET *ploop,
 			 PRN *prn, PATHS *ppaths, int *model_count,
 			 char *loopstorefile);
 
-int add_to_loop (LOOPSET *ploop, char *line, const int ci,
-		 const int opt);
+int add_to_loop (LOOPSET *ploop, char *line, int ci, int opt);
 
 void get_cmd_ci (const char *line, CMD *command);
 
-int get_modnum_by_cmdnum (LOOPSET *ploop, const int cmdnum);
+int get_modnum_by_cmdnum (LOOPSET *ploop, int cmdnum);
 
 int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo);
 

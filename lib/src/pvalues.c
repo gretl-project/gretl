@@ -23,7 +23,7 @@
 
 #include "libgretl.h" 
  
-extern void _putxx (const double xx);
+extern void _putxx (double xx);
 
 static void _pnormal (void);
 static void _ptvalue (void);
@@ -46,7 +46,7 @@ const char negval[] = N_("\nEnter x value (value < 0 will exit menu): ");
  *
  */
 
-double _tcrit95 (const int df)
+double _tcrit95 (int df)
 {
     double x = 1.960;
     
@@ -63,7 +63,7 @@ double _tcrit95 (const int df)
  *
  */
 
-double rhocrit95 (const int n)
+double rhocrit95 (int n)
 {
     double x = 1.960;
     
@@ -80,7 +80,7 @@ double rhocrit95 (const int n)
  *
  */
 
-double tprob (const double x, const int df)
+double tprob (double x, int df)
 {
     double xx;
 
@@ -100,7 +100,7 @@ double tprob (const double x, const int df)
  * negative.
  */
 
-double fdist (const double x, const int dfn, const int dfd)
+double fdist (double x, int dfn, int dfd)
 {
     int ia, ib, i, j;
     double xi, fia, fi1, fi2, w, zz, p, zy, d, zk;
@@ -168,7 +168,7 @@ double fdist (const double x, const int dfn, const int dfd)
  * Chi-squared(@df) is greater than @x.
  */
 
-double chisq (const double x, const int df)
+double chisq (double x, int df)
 {
     double aa, bb, absx, p, zy, zz, h, d, sum, xs, xh, xi, xx, x2;
     int i, m, iy;
@@ -237,7 +237,7 @@ double chisq (const double x, const int df)
  *
  */
 
-double normal (const double x)
+double normal (double x)
 {
     const double a1 = .0705230784;
     const double a2 = .0422820123;
@@ -622,7 +622,7 @@ static void _enterdf (const char *str)
  *
  */
 
-double f_crit_a (const double a, const int df1, const int df2)
+double f_crit_a (double a, int df1, int df2)
 {
     double x = 1.0;
 

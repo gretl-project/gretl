@@ -38,13 +38,13 @@ int dotpos (const char *str);
 
 int slashpos (const char *str);
 
-void delchar (const int c, char *str);
+void delchar (int c, char *str);
 
-int haschar (const char c, const char *str);
+int haschar (char c, const char *str);
 
 void lower (char *str);
 
-void clear (char *str, const int len);
+void clear (char *str, int len);
 
 void chopstr (char *str);
 

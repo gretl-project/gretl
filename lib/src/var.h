@@ -25,15 +25,15 @@ int list_diffgenr (const LIST list,
 int list_ldiffgenr (const LIST list, 
 		    double ***pZ, DATAINFO *pdinfo);
 
-int var (const int order, const LIST list, 
+int var (int order, const LIST list, 
 	 double ***pZ, DATAINFO *pdinfo,
 	 const int pause, PRN *prn);
 
-int coint (const int order, const LIST list, 
+int coint (int order, const LIST list, 
 	   double ***pZ, DATAINFO *pdinfo, 
 	   PRN *prn);
 
-int adf_test (const int order, const int varno, 
+int adf_test (int order, const int varno, 
 	      double ***pZ, DATAINFO *pdinfo, 
 	      PRN *prn);
 

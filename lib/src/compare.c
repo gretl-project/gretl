@@ -28,7 +28,7 @@
 # include <windows.h>
 #endif
 
-static int _justreplaced (const int i, const DATAINFO *pdinfo, 
+static int _justreplaced (int i, const DATAINFO *pdinfo, 
 			  const int *list);
 
 /* ........................................................... */

@@ -19,15 +19,15 @@
 
 /* functions follow */
 
-double tprob (const double x, const int df);
+double tprob (double x, int df);
 
-double fdist (const double x, const int dfn, const int dfd);
+double fdist (double x, int dfn, int dfd);
 
-double chisq (const double x, const int df);
+double chisq (double x, int df);
 
-double normal (const double x);
+double normal (double x);
 
-double rhocrit95 (const int n);
+double rhocrit95 (int n);
 
 double batch_pvalue (const char *str, 
 		     double **Z, const DATAINFO *pdinfo, 
@@ -35,7 +35,7 @@ double batch_pvalue (const char *str,
 
 void interact_pvalue (void);
 
-double f_crit_a (const double a, const int df1, const int df2);
+double f_crit_a (double a, int df1, int df2);
 
 int print_critical (const char *line, PATHS *ppaths, PRN *prn);
 

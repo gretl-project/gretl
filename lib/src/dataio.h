@@ -67,7 +67,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);
 
 int dateton (const char *date, const DATAINFO *pdinfo);
 
-void ntodate (char *datestr, const int nt, const DATAINFO *pdinfo);
+void ntodate (char *datestr, int nt, const DATAINFO *pdinfo);
 
 int get_info (const char *hdrfile, PRN *prn);
 
@@ -91,10 +91,10 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 
 int get_data (double ***pZ, DATAINFO *pdinfo, 
 	      char *datfile, PATHS *ppaths, 
-	      const int data_status, PRN *prn);
+	      int data_status, PRN *prn);
 
 int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
-		   const int data_status, const int length,
+		   int data_status, int length,
 		   PRN *prn);
 
 int import_csv (double ***pZ, DATAINFO *pdinfo, 

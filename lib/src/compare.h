@@ -53,7 +53,7 @@ typedef struct {
 int auxreg (LIST addvars, 
 	    MODEL *orig, MODEL *new, int *model_count, 
 	    double ***pZ, DATAINFO *pdinfo, 
-	    const int aux_code, 
+	    int aux_code, 
 	    PRN *prn, GRETLTEST *test);
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 

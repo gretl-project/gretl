@@ -102,13 +102,13 @@ enum flagvals {
 
 /* functions follow */
  
-double date (const int nt, const int pd, const double sd0);
+double date (int nt, int pd, const double sd0);
 
-int isdummy (const int varnum, const int t1, const int t2, double **Z);
+int isdummy (int varnum, int t1, int t2, double **Z);
 
 void printlist (const int *list, const char *msg);
 
-void list_exclude (const int n, int *list);
+void list_exclude (int n, int *list);
 
 int set_obs (char *line, DATAINFO *pdinfo, int opt);
 
@@ -133,21 +133,21 @@ int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild,
 
 void show_paths (PATHS *ppaths);
 
-int set_paths (PATHS *ppaths, const int defaults, const int gui);
+int set_paths (PATHS *ppaths, int defaults, int gui);
 
 int copylist (int **target, const int *src);
 
-int grow_nobs (const int newobs, double ***pZ, DATAINFO *pdinfo);
+int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo);
 
-int dataset_add_vars (const int newvars, double ***pZ, DATAINFO *pdinfo);
+int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo);
 
 int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo);
 
-int dataset_drop_vars (const int delvars, double ***pZ, DATAINFO *pdinfo);
+int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo);
 
-int hidden_var (const int i, const DATAINFO *pdinfo);
+int hidden_var (int i, const DATAINFO *pdinfo);
 
 int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo);
 
@@ -155,22 +155,22 @@ int swap_models (MODEL **targ, MODEL **src);
 
 int fcast_with_errs (const char *str, const MODEL *pmod, 
 		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
-		     const PATHS *ppaths, const int plot);
+		     const PATHS *ppaths, int plot);
 
 int is_model_cmd (const char *line);
 
-int is_model_ref_cmd (const int ci);
+int is_model_ref_cmd (int ci);
 
 int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo);
 
 int re_estimate (char *model_spec, MODEL *tmpmod, 
 		 double ***pZ, DATAINFO *pdinfo);
 
-double *copyvec (const double *src, const int n);
+double *copyvec (const double *src, int n);
 
-int ijton (const int i, const int j, const int lo);
+int ijton (int i, int j, int lo);
 
-int ztox (const int i, double *px, 
+int ztox (int i, double *px, 
 	  double **Z, const DATAINFO *pdinfo);
 
 int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T);

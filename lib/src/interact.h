@@ -59,12 +59,11 @@ int parseopt (const char *s);
 int shell (const char *arg);
 
 void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line, 
-	       const int batch, const int gui, const int oflag, 
-	       PRN *prn);
+	       int batch, int gui, int oflag, PRN *prn);
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *datainfo, PATHS *paths,
-		     const int batch, const int oflag, 
+		     int batch, int oflag, 
 		     PRN *prn);
 
 #endif /* INTERACT_H */

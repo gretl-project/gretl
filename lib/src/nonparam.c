@@ -213,7 +213,7 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
  * @prn: gretl printing struct.
  *
  * Performs, and prints the results of, the runs test for randomness
- * for the variable specified in @list.
+ * for the variable specified by @varno.
  * 
  * Returns: 0 on successful completion, non-zero on error.
  */

@@ -75,7 +75,7 @@ int slashpos (const char *str)
  *
  */
 
-void copy (const char *str, const int indx, const int count, char *dest)
+void copy (const char *str, int indx, int count, char *dest)
 {
     int i;
 
@@ -93,7 +93,7 @@ void copy (const char *str, const int indx, const int count, char *dest)
  *
  */
 
-void delchar (const int c, char *str)
+void delchar (int c, char *str)
 {
     int i, j;
 
@@ -114,7 +114,7 @@ void delchar (const int c, char *str)
  *
  */
 
-void _delete (char *str, const int indx, const int count)
+void _delete (char *str, int indx, int count)
 {
     size_t i, n = strlen(str);
 
@@ -132,7 +132,7 @@ void _delete (char *str, const int indx, const int count)
  *
  */
 
-int haschar (const char c, const char *str)
+int haschar (char c, const char *str)
 {
     size_t i = 0, n = strlen(str);
 
@@ -202,7 +202,7 @@ void lower (char *str)
  *
  */
 
-void _esl_trunc (char *str, const int n)
+void _esl_trunc (char *str, int n)
 {
     size_t len = strlen(str);
 
@@ -219,7 +219,7 @@ void _esl_trunc (char *str, const int n)
  *
  */
 
-void clear (char *str, const int len)
+void clear (char *str, int len)
 {
     memset(str, 0, len);
 }

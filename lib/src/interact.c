@@ -225,7 +225,19 @@ static int flow_control (const char *line, double ***pZ,
     return 1;
 }
 
-/* ........................................................... */
+/**
+ * getcmd:
+ * @line: the command line (string).
+ * @pdinfo: pointer to data information struct.
+ * @command: pointer to #CMD struct.
+ * @ignore: pointer to int indicating whether (1) or not (0) we're
+ * in comment mode, and @line should not be parsed.
+ * @pZ: pointer to data matrix.
+ * @cmds: pointer to gretl printing struct.
+ *
+ * Parses @line and fills out @command accordingly.  In case
+ * of error, @command->errcode gets a non-zero value.
+ */
 
 void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
 	     int *ignore, double ***pZ, PRN *cmds)
@@ -588,7 +600,19 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     return;
 }
 
-/* ........................................................... */
+/**
+ * help:
+ * @cmd: the command on which help is wanted.
+ * @helpfile: path to the gretl help file.
+ * @prn: pointer to gretl printing struct.
+ *
+ * Searches in @helpfile for help on @cmd and, if help is found,
+ * prints it to @prn.  If @cmd is a NULL pointer, lists the valid
+ * commands.
+ *
+ * Returns: 0 on success, 1 if the helpfile was not found or the
+ * requested topic was not found.
+ */
 
 int help (const char *cmd, const char *helpfile, PRN *prn)
 {
@@ -710,12 +734,24 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * fcast:
+ * @line: the command line, giving a starting observation, ending
+ * observation, and variable name to use for the forecast values
+ * (the starting and ending observations may be omitted).
+ * @pmod: pointer to gretl #MODEL.
+ * @pdinfo: pointer to data information struct.
+ * @pZ: pointer to data matrix.
+ *
+ * Creates a new variable containing predicted values for the
+ * dependent variable in @pmod.
+ *
+ * Returns: the ID number of the newly created variable containing the
+ * forecast, or a negative integer on error.
+ */
 
 int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 
 	   double ***pZ)
-     /* return ID of var containing the forecast, or negative int on 
-	error */
 {
     int t, t1, t2, vi;
     char t1str[9], t2str[9], varname[9];
@@ -772,7 +808,13 @@ static int _full_list (const DATAINFO *pdinfo, CMD *command)
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * parseopt:
+ * @s: option string, as supplied on the command line.
+ *
+ * Returns: the gretl option code correspoding to @s, or 0 if the option
+ * string is not recognized.
+ */
 
 int parseopt (const char *s)
 {
@@ -846,11 +888,22 @@ int shell (const char *arg)
 
 #endif
 
-/* ........................................................ */
+/**
+ * echo_cmd:
+ * @pcmd: pointer to #CMD struct.
+ * @pdinfo: pointer to data information struct.
+ * @line: "raw" command line to be echoed.
+ * @batch: set to 1 for batch mode, 0 for interactive.
+ * @gui: 1 for the gretl GUI, 0 for command-line program.
+ * @oflag:
+ * @prn: pointer to gretl printing struct.
+ *
+ * Echoes the use command represented by @pcmd and @line.
+ * 
+ */
 
 void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line, 
-	       const int nopause, const int gui, const int oflag, 
-	       PRN *prn)
+	       int batch, int gui, int oflag, PRN *prn)
      /* echo a given command: depending on the circumstances, either
 	to stdout or to a buffer, or both */
 
@@ -865,7 +918,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 
     if (!pcmd->nolist) { /* print list of params to command */
 	if (!gui) {
-	    if (!nopause) printf(" %s", pcmd->cmd);
+	    if (!batch) printf(" %s", pcmd->cmd);
 	    else printf("\n? %s", pcmd->cmd);
 	    if (pcmd->ci == RHODIFF) printf(" %s;", pcmd->param);
 	    else if (strlen(pcmd->param) && pcmd->ci != TSLS 
@@ -873,7 +926,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 		     && pcmd->ci != SCATTERS) 
 		printf(" %s", pcmd->param);
 	}
-	if (!nopause) {
+	if (!batch) {
 	    pprintf(prn, "%s", pcmd->cmd);
 	    if (pcmd->ci == RHODIFF) pprintf(prn, " %s;", pcmd->param);
 	    else if (strlen(pcmd->param) && pcmd->ci != TSLS 
@@ -884,12 +937,12 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	/* if list is very long, break it up over lines */
 	if (pcmd->ci == STORE) {
 	    if (!gui) printf(" \\\n");
-	    if (!nopause) pprintf(prn, " \\\n");
+	    if (!batch) pprintf(prn, " \\\n");
 	}
 	for (i=1; i<=pcmd->list[0]; i++) {
 	    if (pcmd->list[i] == 999) {
 		if (!gui) printf(" ;");
-		if (!nopause) pprintf(prn, " ;");
+		if (!batch) pprintf(prn, " ;");
 		got999 = 1;
 		continue;
 	    }
@@ -900,7 +953,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 		if (i > 1 && i < pcmd->list[0] && (i+1) % 10 == 0) 
 		    printf(" \\\n"); /* break line */
 	    }
-	    if (!nopause) {
+	    if (!batch) {
 		if (got999) 
 		    pprintf(prn, " %s", pdinfo->varname[pcmd->list[i]]);
 		else pprintf(prn, " %d", pcmd->list[i]);
@@ -911,7 +964,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	/* corrgm: param comes last */
 	if (pcmd->ci == CORRGM && strlen(pcmd->param)) { 
 	    if (!gui) printf(" %s", pcmd->param);
-	    if (!nopause) pprintf(prn, " %s", pcmd->param);
+	    if (!batch) pprintf(prn, " %s", pcmd->param);
 	}
 	err = _list_dups(pcmd->list, pcmd->ci);
 	if (err) {
@@ -922,18 +975,18 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
     } /* end if !pcmd->nolist */
     else if (strcmp (pcmd->cmd, "quit")) {
 	if (!gui) {
-	    if (nopause) printf("? %s", line);
+	    if (batch) printf("? %s", line);
 	    else printf(" %s", line);
 	}
-	if (!nopause) pprintf(prn, "%s", line);
+	if (!batch) pprintf(prn, "%s", line);
     }
     if (oflag) { 
 	flagc = getflag(oflag);
 	if (!gui) printf(" -%c", flagc);
-	if (!nopause) pprintf(prn, " -%c", flagc);
+	if (!batch) pprintf(prn, " -%c", flagc);
     }
     if (!gui) putchar('\n');
-    if (!nopause) {
+    if (!batch) {
 	pprintf(prn, "\n");
 	if (prn != NULL && prn->fp) fflush(prn->fp);
     }
@@ -969,8 +1022,7 @@ static void do_print_string (char *str, PRN *prn)
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *datainfo, PATHS *paths,
-		     const int pause, const int oflag, 
-		     PRN *prn)
+		     int pause, int oflag, PRN *prn)
      /* common code for command-line and GUI client programs, where
 	the command doesn't require special handling on the client
 	side */

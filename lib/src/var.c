@@ -43,7 +43,7 @@ static int gettrend (double ***pZ, DATAINFO *pdinfo)
 
 /* ...................................................................  */
 
-static int diffvarnum (const int index, const DATAINFO *pdinfo)
+static int diffvarnum (int index, const DATAINFO *pdinfo)
      /* Given an "ordinary" variable name, construct the name of the
 	corresponding first difference and find its ID number */
 {
@@ -58,7 +58,7 @@ static int diffvarnum (const int index, const DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-static int diffgenr (const int iv, double ***pZ, DATAINFO *pdinfo)
+static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
 {
     char word[32];
     char s[32];
@@ -96,7 +96,7 @@ static int diffgenr (const int iv, double ***pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-static int ldiffgenr (const int iv, double ***pZ, DATAINFO *pdinfo)
+static int ldiffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
 {
     char word[32];
     char s[32];
@@ -189,7 +189,7 @@ int list_ldiffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
  *
  */
 
-int _lagvarnum (const int iv, const int lag, const DATAINFO *pdinfo)
+int _lagvarnum (int iv, int lag, const DATAINFO *pdinfo)
 {
     char lagname[16], s[4];
     
@@ -212,7 +212,7 @@ static void reset_list (int *list1, int *list2)
 
 /* ...................................................................  */
 
-static int get_listlen (const int *varlist, const int order, double **Z, 
+static int get_listlen (const int *varlist, int order, double **Z, 
 			const DATAINFO *pdinfo)
      /* parse varlist (for a VAR) and determine how long the augmented 
 	list will be, once all the appropriate lag terms are inserted */
@@ -243,8 +243,8 @@ static int get_listlen (const int *varlist, const int order, double **Z,
  *
  */
 
-int var (const int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
-	 const int pause, PRN *prn)
+int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
+	 int pause, PRN *prn)
 {
     /* construct the respective lists by adding the appropriate
        number of lags ("order") to the variables in list 
@@ -417,7 +417,7 @@ int var (const int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
  *
  */
 
-int coint (const int order, const LIST list, double ***pZ, 
+int coint (int order, const LIST list, double ***pZ, 
 	   DATAINFO *pdinfo, PRN *prn)
      /* FIXME - need proper error checking here */
 {
@@ -492,7 +492,7 @@ int coint (const int order, const LIST list, double ***pZ,
  *
  */
 
-int adf_test (const int order, const int varno, double ***pZ,
+int adf_test (int order, int varno, double ***pZ,
 	      DATAINFO *pdinfo, PRN *prn)
 {
     int i, l, T, k, row, orig_nvars = pdinfo->v;

@@ -35,8 +35,8 @@ static int prepZ (double ***pZ, const DATAINFO *pdinfo);
 static int writelbl (const char *lblfile, const int *list, 
 		     const DATAINFO *pdinfo);
 static int writehdr (const char *hdrfile, const int *list, 
-		     const DATAINFO *pdinfo, const int opt);
-static double obs_float (const DATAINFO *pdinfo, const int end);
+		     const DATAINFO *pdinfo, int opt);
+static double obs_float (const DATAINFO *pdinfo, int end);
 static int write_xmldata (const char *fname, const int *list, 
 			  double **Z, const DATAINFO *pdinfo, 
 			  int opt, PATHS *ppaths);
@@ -775,7 +775,7 @@ int dateton (const char *date, const DATAINFO *pdinfo)
  * 
  */
 
-void ntodate (char *datestr, const int nt, const DATAINFO *pdinfo)
+void ntodate (char *datestr, int nt, const DATAINFO *pdinfo)
 /* print to datestr the calendar representation of nt */
 {
     double xn;
@@ -871,7 +871,7 @@ int get_info (const char *hdrfile, PRN *prn)
 /* ................................................ */
 
 static int writehdr (const char *hdrfile, const int *list, 
-		     const DATAINFO *pdinfo, const int opt)
+		     const DATAINFO *pdinfo, int opt)
 {
     FILE *fp;
     int bin = 0, i;
@@ -1230,7 +1230,7 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 
 /* ................................................. */
 
-static double obs_float (const DATAINFO *pdinfo, const int end)
+static double obs_float (const DATAINFO *pdinfo, int end)
 {
     double xx, xx2 = 0.;
     int i, x1, x2 = 0;
@@ -1421,7 +1421,7 @@ static void try_gdt (char *fname)
  */
 
 int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths, 
-	      const int data_status, PRN *prn) 
+	      int data_status, PRN *prn) 
 {
 
     FILE *dat = NULL;
@@ -1551,7 +1551,7 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
  */
 
 int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
-		   const int data_status, const int length,
+		   int data_status, int length,
 		   PRN *prn) 
 {
     /* clear any existing data info */

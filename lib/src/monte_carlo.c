@@ -34,15 +34,15 @@ extern int genr_scalar_index (int opt, int put);
 static int monte_carlo_init (LOOPSET *ploop);
 static void _free_loop_model (LOOP_MODEL *plmod);
 static void _free_loop_print (LOOP_PRINT *pprn);
-static void _print_loop_model (LOOP_MODEL *plmod, const int loopnum,
+static void _print_loop_model (LOOP_MODEL *plmod, int loopnum,
 			       const DATAINFO *pdinfo, PRN *prn);
 static void _print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *plmod, 
-			       const int c, const int n, PRN *prn);
-static void _print_loop_prn (LOOP_PRINT *pprn, const int n,
+			       int c, int n, PRN *prn);
+static void _print_loop_prn (LOOP_PRINT *pprn, int n,
 			     const DATAINFO *pdinfo, PRN *prn);
 static int _print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
 			      char *loopstorefile);
-static int get_prnnum_by_id (LOOPSET *ploop, const int id);
+static int get_prnnum_by_id (LOOPSET *ploop, int id);
 
 /**
  * ok_in_loop:
@@ -313,7 +313,7 @@ void monte_carlo_free (LOOPSET *ploop)
  */
 
 int loop_model_init (LOOP_MODEL *plmod, const MODEL *pmod,
-		     const int id)
+		     int id)
 {
     int i, ncoeff = pmod->ncoeff;
 
@@ -356,7 +356,7 @@ int loop_model_init (LOOP_MODEL *plmod, const MODEL *pmod,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int loop_print_init (LOOP_PRINT *pprn, const LIST list, const int id)
+int loop_print_init (LOOP_PRINT *pprn, const LIST list, int id)
 {
     int i;
 
@@ -428,7 +428,7 @@ int loop_store_init (LOOPSET *ploop, const LIST list, DATAINFO *pdinfo)
  * Returns: 0 on successful completion.
  */
 
-int update_loop_model (LOOPSET *ploop, const int cmdnum, MODEL *pmod)
+int update_loop_model (LOOPSET *ploop, int cmdnum, MODEL *pmod)
 {
     int j, i = get_modnum_by_cmdnum(ploop, cmdnum);
     LOOP_MODEL *plmod;
@@ -458,7 +458,7 @@ int update_loop_model (LOOPSET *ploop, const int cmdnum, MODEL *pmod)
  */
 
 
-int update_loop_print (LOOPSET *ploop, const int cmdnum, 
+int update_loop_print (LOOPSET *ploop, int cmdnum, 
 		       const LIST list, double ***pZ, 
 		       const DATAINFO *pdinfo)
 {
@@ -568,8 +568,8 @@ static void _free_loop_print (LOOP_PRINT *pprn)
  * Returns: 0 on successful completion.
  */
 
-int add_to_loop (LOOPSET *ploop, char *line, const int ci,
-		 const int opt)
+int add_to_loop (LOOPSET *ploop, char *line, int ci,
+		 int opt)
 {
     int i = ploop->ncmds;
 
@@ -593,7 +593,7 @@ int add_to_loop (LOOPSET *ploop, char *line, const int ci,
 
 /* ......................................................... */ 
 
-static void _print_loop_model (LOOP_MODEL *plmod, const int loopnum,
+static void _print_loop_model (LOOP_MODEL *plmod, int loopnum,
 			       const DATAINFO *pdinfo, PRN *prn)
 {
     int i, nc = plmod->ncoeff;
@@ -624,7 +624,7 @@ static void _print_loop_model (LOOP_MODEL *plmod, const int loopnum,
 
 static void _print_loop_coeff (const DATAINFO *pdinfo, 
 			       const LOOP_MODEL *plmod, 
-			       const int c, const int n, PRN *prn)
+			       int c, int n, PRN *prn)
 {
     long double m1, m2, var1, var2, sd1, sd2;
 
@@ -644,7 +644,7 @@ static void _print_loop_coeff (const DATAINFO *pdinfo,
 
 /* ......................................................... */ 
 
-static void _print_loop_prn (LOOP_PRINT *pprn, const int n,
+static void _print_loop_prn (LOOP_PRINT *pprn, int n,
 			     const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
@@ -718,7 +718,7 @@ static int _print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
 
 /* ......................................................... */ 
 
-static int get_prnnum_by_id (LOOPSET *ploop, const int id)
+static int get_prnnum_by_id (LOOPSET *ploop, int id)
 {
     int i;
 
@@ -737,7 +737,7 @@ static int get_prnnum_by_id (LOOPSET *ploop, const int id)
  * Returns: model ID number, or -1 in case of no match.
  */
 
-int get_modnum_by_cmdnum (LOOPSET *ploop, const int cmdnum)
+int get_modnum_by_cmdnum (LOOPSET *ploop, int cmdnum)
 {
     int i;
 

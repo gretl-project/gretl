@@ -31,9 +31,9 @@
 
 static DIR *dir;
 
-static int _pdton (const int pd);
+static int _pdton (int pd);
 
-extern int plot_fcast_errs (const int n, const double *obs, 
+extern int plot_fcast_errs (int n, const double *obs, 
 			    const double *depvar, const double *yhat, 
 			    const double *maxerr, const char *varname, 
 			    const PATHS *ppaths);
@@ -59,7 +59,7 @@ static int path_append (char *file, const char *path)
 
 /* .......................................................  */
 
-double _corr (const int n, const double *zx, const double *zy)
+double _corr (int n, const double *zx, const double *zy)
 /*
         returns the simple correlation coefficient between the the
         arrays zx and zy, for the n observations 0 to n-1.  returns
@@ -109,7 +109,7 @@ double _corr (const int n, const double *zx, const double *zy)
 
 /* .......................................................  */
 
-double _covar (const int n, const double *zx, const double *zy)
+double _covar (int n, const double *zx, const double *zy)
 {
     register int i;
     int nn;
@@ -152,7 +152,7 @@ double _covar (const int n, const double *zx, const double *zy)
  * Returns: the date corresponding to @nt, as a double-precision number.
  */
 
-double date (const int nt, const int pd, const double sd0)
+double date (int nt, int pd, const double sd0)
 {
     int ysd = (int) sd0, yy, pp, yp;
     double dd;
@@ -184,7 +184,7 @@ double date (const int nt, const int pd, const double sd0)
  * Returns: position in 1-dimensional array.
  */
 
-int ijton (const int i, const int j, const int lo)
+int ijton (int i, int j, int lo)
 {
     int n;
 
@@ -204,7 +204,7 @@ int ijton (const int i, const int j, const int lo)
  * Returns: the number of valid observations put into @px.
  */
 
-int ztox (const int i, double *px, double **Z, const DATAINFO *pdinfo) 
+int ztox (int i, double *px, double **Z, const DATAINFO *pdinfo) 
 {
     int t, m = 0;
     double xx;
@@ -246,7 +246,7 @@ int ztox (const int i, double *px, double **Z, const DATAINFO *pdinfo)
  * number of 1s in the series.
  */
 
-int isdummy (const int varnum, const int t1, const int t2, double **Z)
+int isdummy (int varnum, int t1, int t2, double **Z)
 {
     int t, m = 0;
     double xx;
@@ -263,7 +263,7 @@ int isdummy (const int varnum, const int t1, const int t2, double **Z)
 
 /* ........................................................  */
 
-int _iszero (const int t1, const int t2, const double *x)
+int _iszero (int t1, int t2, const double *x)
 /*  checks whether all obs are zero for variable x from t1 to t2 */
 {
     int t;
@@ -285,7 +285,7 @@ int _iszero (const int t1, const int t2, const double *x)
  * Removes the element at position @n within @list.
  */
 
-void list_exclude (const int n, int *list)
+void list_exclude (int n, int *list)
 {
     int i;
 
@@ -295,7 +295,7 @@ void list_exclude (const int n, int *list)
 
 /* ........................................................  */
 
-int _isconst (const int t1, const int t2, const double *x)
+int _isconst (int t1, int t2, const double *x)
 {
     int t;
     double xx = x[t1];
@@ -306,7 +306,7 @@ int _isconst (const int t1, const int t2, const double *x)
 
 /* ............................................................  */
 
-double _esl_mean (const int t1, const int t2, const double *x)
+double _esl_mean (int t1, int t2, const double *x)
 /* returns mean of array x from obs t1 through t2 */
 {
     int n;
@@ -331,7 +331,7 @@ double _esl_mean (const int t1, const int t2, const double *x)
 
 /* ......................................................  */
 
-void _minmax (const int t1, const int t2, const double zx[], 
+void _minmax (int t1, int t2, const double zx[], 
 	      double *min, double *max)
 /*  returns min and max of array zx for sample t1 through t2  */
 {
@@ -355,7 +355,7 @@ void _minmax (const int t1, const int t2, const double zx[],
 
 /* .......................................................     */
 
-static int _pdton (const int pd)
+static int _pdton (int pd)
 {
     if (pd == 1) return 1;
     if (pd < 10) return 10;
@@ -388,7 +388,7 @@ int _compare_doubles (const void *a, const void *b)
 
 /* .............................................................  */
 
-double _esl_stddev (const int t1, const int t2, const double *x)
+double _esl_stddev (int t1, int t2, const double *x)
 /*  returns standard deviation of array x from t1 through t2
     return -999 if square root argument is invalid
     or there are no observations
@@ -403,7 +403,7 @@ double _esl_stddev (const int t1, const int t2, const double *x)
 
 /* .............................................................  */
 
-double _esl_variance (const int t1, const int t2, const double *x)
+double _esl_variance (int t1, int t2, const double *x)
 {
     int n;
     register int i;
@@ -475,7 +475,7 @@ void _aicetc (MODEL *pmod)
 
 /* ....................................................... */
 
-void _criteria (const double ess, const int nobs, const int ncoeff, 
+void _criteria (const double ess, int nobs, int ncoeff, 
 		PRN *prn)
 {
     double zz, zx, ersq, zn;
@@ -788,7 +788,7 @@ static int get_subdir (const char *topdir, int first, char *fname)
 /* .......................................................... */
 
 static char *search_dir (char *filename, const char *topdir, 
-			 const int recurse)
+			 int recurse)
 {
     FILE *test;
     int got = 0;
@@ -1246,7 +1246,7 @@ void show_paths (PATHS *ppaths)
 
 #ifdef OS_WIN32
 
-int set_paths (PATHS *ppaths, const int defaults, const int gui)
+int set_paths (PATHS *ppaths, int defaults, int gui)
 {
     if (defaults) {
 	char *home;
@@ -1292,7 +1292,7 @@ int set_paths (PATHS *ppaths, const int defaults, const int gui)
 
 #else
 
-int set_paths (PATHS *ppaths, const int defaults, const int gui)
+int set_paths (PATHS *ppaths, int defaults, int gui)
 {
     if (defaults) {
 	char *home;
@@ -1367,7 +1367,7 @@ int copylist (int **target, const int *src)
 
 /* ......................................................  */
 
-int grow_nobs (const int newobs, double ***pZ, DATAINFO *pdinfo)
+int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo)
 {
     double *x;
     int i, t, n = pdinfo->n, v = pdinfo->v;
@@ -1398,7 +1398,7 @@ int grow_nobs (const int newobs, double ***pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-int dataset_add_vars (const int newvars, double ***pZ, DATAINFO *pdinfo)
+int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;
     char **varname;
@@ -1529,7 +1529,7 @@ int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-int dataset_drop_vars (const int delvars, double ***pZ, DATAINFO *pdinfo)
+int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;
     char **varname;
@@ -1567,7 +1567,7 @@ int dataset_drop_vars (const int delvars, double ***pZ, DATAINFO *pdinfo)
 
 /* ........................................................... */
 
-int hidden_var (const int i, const DATAINFO *pdinfo)
+int hidden_var (int i, const DATAINFO *pdinfo)
 {
     if (strcmp(pdinfo->varname[i], "subdum") == 0 ||
 	strcmp(pdinfo->varname[i], "annual") == 0 ||
@@ -1580,7 +1580,7 @@ int hidden_var (const int i, const DATAINFO *pdinfo)
 
 /* ........................................................... */
 
-double *copyvec (const double *src, const int n)
+double *copyvec (const double *src, int n)
 {
     int i;
     double *xx;
@@ -1649,7 +1649,7 @@ int swap_models (MODEL **targ, MODEL **src)
 
 /* ........................................................... */
 
-int _forecast (int t1, const int t2, const int nv, 
+int _forecast (int t1, int t2, int nv, 
 	       const MODEL *pmod, double ***pZ)
 {
     double xx, zz, zr;
@@ -1738,7 +1738,7 @@ int _full_model_list (MODEL *pmod, int **plist)
 
 int fcast_with_errs (const char *str, const MODEL *pmod, 
 		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
-		     const PATHS *ppaths, const int plot)
+		     const PATHS *ppaths, int plot)
      /* use Salkever's method to generate forecasts plus forecast
 	variances -- FIXME ifc = 0, and methods other than OLS */
 {
@@ -1978,7 +1978,7 @@ int is_model_cmd (const char *line)
 
 /* ........................................................... */
 
-int is_model_ref_cmd (const int ci)
+int is_model_ref_cmd (int ci)
 {
     if (ci == ADD ||
 	ci == OMIT ||
