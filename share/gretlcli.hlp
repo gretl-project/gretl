@@ -961,6 +961,7 @@ ols
 Usage:          ols depvar indepvars      or     ols -o depvar indepvars 
 Examples:       ols 1 0 2 4 6 7                  ols -o 1 0 2 4 6 7  
                 ols y 0 x1 x2 x3                 ols -o y 0 x1 x2 x3
+                ols -q 1 0 2 3
   
 Computes ordinary least squares estimates with depvar as the dependent
 variable and indepvars as the list of independent variables.  The -o flag will
@@ -973,6 +974,9 @@ and one * indicates significance between 5 and 10 percent levels.  If the
 regression has more than one independent variable the F-statistic for
 assessing the overall fit is printed, along with its p-value.  Model selection
 statistics described in Ramanathan Section 4.4 are also printed.
+
+If the -q ("quiet") flag is given the results will not be printed, which may
+be appropriate for auxiliary regressions.
 
 #
 omit
