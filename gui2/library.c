@@ -55,7 +55,7 @@ int gui_exec_line (char *line,
 		   const char *myname); 
 
 /* private functions */
-static void finish_genr (MODEL *pmod);
+static void finish_genr (MODEL *pmod, dialog_t *ddata);
 static gint stack_model (int gui);
 static char *bufgets (char *s, int size, const char *buf);
 
@@ -767,15 +767,15 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 void do_coint (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
-    char *edttext;
+    char *buf;
     PRN *prn;
     int err = 0, order = 0;
 
-    edttext = sr->cmdlist;
-    if (*edttext == 0) return;
+    buf = sr->cmdlist;
+    if (*buf == 0) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "coint %s", edttext);
+    sprintf(line, "coint %s", buf);
 
     /* check the command and initialize output buffer */
     if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
@@ -800,16 +800,33 @@ void do_coint (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
+int blank_entry (const char *entry, dialog_t *ddata)
+{
+    if (entry == NULL || *entry == 0) {
+	gtk_widget_destroy(ddata->dialog);
+	return 1;
+    }
+
+    return 0;
+}
+
+void close_dialog (dialog_t *ddata)
+{
+    gtk_widget_destroy(ddata->dialog);
+}
+
+/* ........................................................... */
+
 void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 {
-    const gchar *edttext;
+    const gchar *buf;
     PRN *prn;
     char title[48];
     int err = 0, order = 0, mvar = mdata->active_var;
     gint hsize = 78, vsize = 300;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
-    if (*edttext == '\0' && ddata->code != CORRGM) return;
+    buf = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
+    if (ddata->code != CORRGM && blank_entry(buf, ddata)) return;
 
     clear(line, MAXLEN);
     strcpy(title, "gretl: ");
@@ -817,34 +834,34 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
     /* set up the command */
     switch (ddata->code) {
     case ADF:
-	sprintf(line, "adf %s %s", edttext, datainfo->varname[mvar]);
+	sprintf(line, "adf %s %s", buf, datainfo->varname[mvar]);
 	strcat(title, _("adf test"));
 	vsize = 350;
 	break;
     case COINT:
-	sprintf(line, "coint %s", edttext);
+	sprintf(line, "coint %s", buf);
 	strcat(title, _("cointegration test"));
 	vsize = 400;
 	break;
     case SPEARMAN:
-	sprintf(line, "spearman -o %s", edttext);
+	sprintf(line, "spearman -o %s", buf);
 	strcat(title, _("rank correlation"));
 	vsize = 400;
 	break;
     case MEANTEST:
-	sprintf(line, "meantest -o %s", edttext);
+	sprintf(line, "meantest -o %s", buf);
 	strcat(title, _("means test"));
 	break;
     case MEANTEST2:
-	sprintf(line, "meantest %s", edttext);
+	sprintf(line, "meantest %s", buf);
 	strcat(title, _("means test"));
 	break;
     case VARTEST:
-	sprintf(line, "vartest %s", edttext);
+	sprintf(line, "vartest %s", buf);
 	strcat(title, _("variances test"));
 	break;
     case CORRGM:
-	if (*edttext != '\0') order = atoi(edttext);
+	if (*buf != '\0') order = atoi(buf);
 	if (order) 
 	    sprintf(line, "corrgm %s %d", 
 		    datainfo->varname[mvar], order);
@@ -855,6 +872,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	break;
     default:
 	dummy_call();
+	close_dialog(ddata);
 	return;
     }
 
@@ -895,6 +913,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	break;
     default:
 	dummy_call();
+	close_dialog(ddata);
 	return;
     }
 
@@ -902,6 +921,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
+	close_dialog(ddata);
 	if (ddata->code == CORRGM) register_graph();
 	view_buffer(prn, hsize, vsize, title, ddata->code, view_items);
     }
@@ -966,19 +986,20 @@ void gui_errmsg (const int errcode)
 
 void change_sample (GtkWidget *widget, dialog_t *ddata) 
 {
-    const gchar *edttext;
+    const gchar *buf;
     int err;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "smpl %s", edttext);
+    sprintf(line, "smpl %s", buf);
     if (check_cmd(line) || cmd_init(line)) return;
 
     err = set_sample(line, datainfo);
     if (err) gui_errmsg(err);
     else {
+	close_dialog(ddata);
 	set_sample_label(datainfo);
 	restore_sample_state(TRUE);
     }
@@ -1024,15 +1045,16 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
 
 void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 {
-    const gchar *edttext = NULL;
+    const gchar *buf = NULL;
 
-    edttext = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "smpl %s -r", edttext); 
+    sprintf(line, "smpl %s -r", buf); 
     if (check_cmd(line) || cmd_init(line)) return;
 
+    close_dialog(ddata);
     bool_subsample(NULL, OPT_R, NULL);
 }
 
@@ -1040,18 +1062,20 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 
 void do_sampledum (GtkWidget *widget, dialog_t *ddata)
 {
-    const gchar *edttext = NULL;
+    const gchar *buf = NULL;
     char dumv[9];
 
-    edttext = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
-    sscanf(edttext, "%8s", dumv);
+    buf = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
+
+    sscanf(buf, "%8s", dumv);
     dumv[8] = '\0';
 	
     clear(line, MAXLEN);
     sprintf(line, "smpl %s -o", dumv);
     if (check_cmd(line) || cmd_init(line)) return;
 
+    close_dialog(ddata);    
     bool_subsample(NULL, OPT_O, NULL);
 }
 
@@ -1059,14 +1083,14 @@ void do_sampledum (GtkWidget *widget, dialog_t *ddata)
 
 void do_setobs (GtkWidget *widget, dialog_t *ddata)
 {
-    const gchar *edttext;
+    const gchar *buf;
     char pdstr[8], stobs[9];
     int err, opt;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
-    sscanf(edttext, "%7s %8s", pdstr, stobs);
+    sscanf(buf, "%7s %8s", pdstr, stobs);
 	
     clear(line, MAXLEN);
     sprintf(line, "setobs %s %s ", pdstr, stobs);
@@ -1080,6 +1104,7 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata)
     } else {
 	char msg[80];
 
+	close_dialog(ddata);
 	sprintf(msg, _("Set data frequency to %d, starting obs to %s"),
 		datainfo->pd, datainfo->stobs);
 	infobox(msg);
@@ -1107,16 +1132,18 @@ void count_missing (void)
 
 void do_add_markers (GtkWidget *widget, dialog_t *ddata) 
 {
-    const gchar *edttext;
+    const gchar *buf;
     char fname[MAXLEN];
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
-    strcpy(fname, edttext);
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
+
+    strcpy(fname, buf);
 
     if (add_case_markers(datainfo, fname)) 
 	errbox(_("Failed to add case markers"));
     else {
+	close_dialog(ddata);
 	infobox(_("Case markers added"));
 	mark_dataset_as_modified();
     }
@@ -1130,17 +1157,18 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
     windata_t *vwin;
     MODEL *pmod = mydata->data;
     FITRESID *fr;
-    const gchar *edttext;
+    const gchar *buf;
     PRN *prn;
     int err;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
     
     clear(line, MAXLEN);
-    sprintf(line, "fcasterr %s", edttext);
+    sprintf(line, "fcasterr %s", buf);
     if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
 
+    close_dialog(ddata);
     fr = get_fcast_with_errs(line, pmod, &Z, datainfo, prn);
 
     if (fr == NULL) {
@@ -1165,18 +1193,18 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
     windata_t *vwin = sr->data;
-    char *edttext;
+    char *buf;
     PRN *prn;
     char title[48];
     MODEL *pmod;
     gint err;
 
     pmod = vwin->data;
-    edttext = sr->cmdlist;
-    if (*edttext == '\0') return;
+    buf = sr->cmdlist;
+    if (*buf == 0) return;
     
     clear(line, MAXLEN);
-    sprintf(line, "coeffsum %s", edttext);
+    sprintf(line, "coeffsum %s", buf);
 
     if (check_cmd(line) || bufopen(&prn)) return;
 
@@ -1199,21 +1227,21 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
     windata_t *vwin = sr->data;
-    char *edttext;
+    char *buf;
     PRN *prn;
     char title[48];
     MODEL *orig, *pmod;
     gint err;
 
     orig = vwin->data;
-    edttext = sr->cmdlist;
-    if (*edttext == '\0') return;
+    buf = sr->cmdlist;
+    if (*buf == 0) return;
     
     clear(line, MAXLEN);
     if (sr->code == ADD) 
-        sprintf(line, "addto %d %s", orig->ID, edttext);
+        sprintf(line, "addto %d %s", orig->ID, buf);
     else 
-        sprintf(line, "omitfrom %d %s", orig->ID, edttext);
+        sprintf(line, "omitfrom %d %s", orig->ID, buf);
 
     if (check_cmd(line) || bufopen(&prn)) return;
 
@@ -1473,7 +1501,7 @@ static void do_chow_cusum (gpointer data, int code)
     windata_t *mydata;
     dialog_t *ddata = NULL;
     MODEL *pmod;
-    const gchar *edttext;
+    const gchar *buf;
     PRN *prn;
     GRETLTEST test;
     gint err;
@@ -1492,10 +1520,10 @@ static void do_chow_cusum (gpointer data, int code)
     }
 
     if (code == CHOW) {
-	edttext = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
-	if (*edttext == '\0') return;
+	buf = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
+	if (blank_entry(buf, ddata)) return;
 	clear(line, MAXLEN);
-	sprintf(line, "chow %s", edttext);
+	sprintf(line, "chow %s", buf);
     } else {
 	strcpy(line, "cusum");
     }
@@ -1582,15 +1610,15 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
     windata_t *mydata = ddata->data;
     MODEL *pmod = mydata->data;
     GRETLTEST test;
-    const gchar *edttext;
+    const gchar *buf;
     PRN *prn;
     char title[40];
     int order, err;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
-    order = atoi(edttext);
+    order = atoi(buf);
 
     if (bufopen(&prn)) return;
     strcpy(title, _("gretl: LM test (autocorrelation)"));
@@ -1634,6 +1662,7 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
 
     if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
 
+    close_dialog(ddata);
     view_buffer(prn, 78, 400, title, LMTEST, view_items); 
 }
 
@@ -1644,16 +1673,16 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     windata_t *mydata = ddata->data;
     MODEL *pmod = mydata->data;
     GRETLTEST test;
-    const gchar *edttext;
+    const gchar *buf;
     PRN *prn;
     char tmpstr[26];
     int order, err, i;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "arch %s ", edttext);
+    sprintf(line, "arch %s ", buf);
     for (i=1; i<=pmod->list[0]; i++) {
 	sprintf(tmpstr, "%d ", pmod->list[i]);
 	strcat(line, tmpstr);
@@ -1665,6 +1694,8 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 	errbox(_("Couldn't read ARCH order"));
 	return;
     }
+
+    close_dialog(ddata);
 
     if (bufopen(&prn)) return;
 
@@ -1717,7 +1748,8 @@ static gint check_model_cmd (char *line, char *modelgenr)
     PRN *getgenr;
 
     if (bufopen(&getgenr)) return 1;
-    strcpy(command.param, "");
+
+    command.param[0] = 0;
     catchflag(line, &oflag);
     getcmd(line, datainfo, &command, &ignore, &Z, getgenr); 
     if (command.errcode) {
@@ -1735,7 +1767,7 @@ static gint check_model_cmd (char *line, char *modelgenr)
 
 void do_mp_ols (GtkWidget *widget, gpointer p)
 {
-    const char *edttext;
+    const char *buf;
     char estimator[9];
     void *handle;
     int (*mplsq)(const int *, const int *,
@@ -1749,11 +1781,11 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     action = sr->code;
     strcpy(estimator, gretl_commands[action]);
 
-    edttext = sr->cmdlist;    
-    if (*edttext == '\0') return;
+    buf = sr->cmdlist;    
+    if (*buf == 0) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "%s %s", estimator, edttext);
+    sprintf(line, "%s %s", estimator, buf);
 
     if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
 
@@ -1800,24 +1832,35 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 {
     gchar *buf;
     PRN *prn;
-    char title[26], modelgenr[80];
-    int err = 0;
+    char title[26];
+    int err = 0, started = 0;
     MODEL *pmod = NULL;
 
     buf = textview_get_text(GTK_TEXT_VIEW(ddata->edit));
-    if (*buf == 0) return;
+    if (blank_entry(buf, ddata)) return;
 
     bufgets(NULL, 0, buf);
     while (bufgets(line, MAXLEN-1, buf)) {
+	if (!started && strncmp(line, "nls", 3)) {
+	    char tmp[MAXLEN];
+	    
+	    strcpy(tmp, line);
+	    strcpy(line, "nls ");
+	    strcat(line, tmp);
+	}
 	err = nls_parse_line(line, (const double **) Z, datainfo);
+	started = 1;
 	if (err) gui_errmsg(err);
+	else err = cmd_init(line);
     }
 
     g_free(buf);
+    if (err) return;
 
-    modelgenr[0] = '\0';
-    if (check_model_cmd(line, modelgenr)) return;
-    echo_cmd(&command, datainfo, line, 0, 1, oflag, NULL);
+    if (strncmp(line, "end nls", 7)) {
+	strcpy(line, "end nls");
+	cmd_init(line);
+    }
 
     if (bufopen(&prn)) return;
 
@@ -1836,11 +1879,9 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 	return;
     }
 
-    if (modelgenr[0] && record_model_genr(modelgenr)) {
-	errbox(_("Error saving model information"));
-	return;
-    }
-    if (cmd_init(line) || stack_model(1)) {
+    close_dialog(ddata);
+
+    if (stack_model(1)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -1866,7 +1907,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 
 void do_model (GtkWidget *widget, gpointer p) 
 {
-    char *edttext;
+    char *buf;
     PRN *prn;
     char title[26], estimator[9], modelgenr[80];
     int order, err = 0, action;
@@ -1877,11 +1918,11 @@ void do_model (GtkWidget *widget, gpointer p)
     action = sr->code;
     strcpy(estimator, gretl_commands[action]);
 
-    edttext = sr->cmdlist;    
-    if (*edttext == '\0') return;
+    buf = sr->cmdlist;    
+    if (*buf == 0) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "%s %s", estimator, edttext);
+    sprintf(line, "%s %s", estimator, buf);
     modelgenr[0] = '\0';
     if (check_model_cmd(line, modelgenr)) return;
     echo_cmd(&command, datainfo, line, 0, 1, oflag, NULL);
@@ -1951,7 +1992,7 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case VAR:
 	/* requires special treatment: doesn't return model */
-	sscanf(edttext, "%d", &order);
+	sscanf(buf, "%d", &order);
 	err = var(order, command.list, &Z, datainfo, 0, prn);
 	if (err) errmsg(err, prn);
 	view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
@@ -2010,15 +2051,15 @@ void do_model (GtkWidget *widget, gpointer p)
 
 void do_sim (GtkWidget *widget, dialog_t *ddata)
 {
-    const gchar *edttext;
+    const gchar *buf;
     char varname[9], info[24];
     int err;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "sim %s", edttext);
+    sprintf(line, "sim %s", buf);
     if (check_cmd(line) || cmd_init(line)) return;
 
     sscanf(line, "%*s %*s %*s %s", varname);
@@ -2026,22 +2067,25 @@ void do_sim (GtkWidget *widget, dialog_t *ddata)
 
     err = simulate(line, &Z, datainfo);
     if (err) gui_errmsg(err);
-    else infobox(info);
+    else {
+	close_dialog(ddata);
+	infobox(info);
+    }
 } 
 
 /* ........................................................... */
 
 void do_simdata (GtkWidget *widget, dialog_t *ddata) 
 {
-    const gchar *edttext;
+    const gchar *buf;
     int err, nulldata_n;
     PRN *prn;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "nulldata %s", edttext);
+    sprintf(line, "nulldata %s", buf);
     if (check_cmd(line) || cmd_init(line)) return;
 
     nulldata_n = atoi(command.param);
@@ -2053,6 +2097,8 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
 	errbox(_("Data series too long"));
 	return;
     }
+
+    close_dialog(ddata);
     
     prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
     if (prn == NULL) return;
@@ -2080,47 +2126,47 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
 
 void do_genr (GtkWidget *widget, dialog_t *ddata) 
 {
-    const gchar *edttext;
+    const gchar *buf;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "genr %s", edttext);
+    sprintf(line, "genr %s", buf);
     if (check_cmd(line) || cmd_init(line)) return;
 
-    finish_genr(NULL);
+    finish_genr(NULL, ddata);
 }
 
 /* ........................................................... */
 
 void do_model_genr (GtkWidget *widget, dialog_t *ddata) 
 {
-    const gchar *edttext;
+    const gchar *buf;
     windata_t *mydata = (windata_t *) ddata->data;
     MODEL *pmod = mydata->data;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "genr %s", edttext);
+    sprintf(line, "genr %s", buf);
     if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
 
-    finish_genr(pmod);
+    finish_genr(pmod, ddata);
 }
 /* ........................................................... */
 
 void do_random (GtkWidget *widget, dialog_t *ddata) 
 {
-    const gchar *edttext;
+    const gchar *buf;
     char tmp[32], vname[9];
     float f1, f2;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
-    if (sscanf(edttext, "%s %f %f", tmp, &f1, &f2) != 3) {
+    if (sscanf(buf, "%s %f %f", tmp, &f1, &f2) != 3) {
 	if (ddata->code == GENR_NORMAL) 
 	    errbox(_("Specification is malformed\n"
 		   "Should be like \"foo 1 2.5\""));
@@ -2157,20 +2203,20 @@ void do_random (GtkWidget *widget, dialog_t *ddata)
 
     if (check_cmd(line) || cmd_init(line)) return;
 
-    finish_genr(NULL);
+    finish_genr(NULL, ddata);
 }
 
 /* ........................................................... */
 
 void do_seed (GtkWidget *widget, dialog_t *ddata)
 {
-    const gchar *edttext;
+    const gchar *buf;
     char tmp[32];
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
-    sscanf(edttext, "%31s", tmp);
+    sscanf(buf, "%31s", tmp);
 	
     clear(line, MAXLEN);
     sprintf(line, "seed %s", tmp); 
@@ -2181,7 +2227,7 @@ void do_seed (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
-static void finish_genr (MODEL *pmod)
+static void finish_genr (MODEL *pmod, dialog_t *ddata)
 {
     int err;
 
@@ -2198,6 +2244,7 @@ static void finish_genr (MODEL *pmod)
 	free(cmd_stack[n_cmds-1]);
 	n_cmds--;
     } else {
+	close_dialog(ddata);
 	populate_varlist();
 	mark_dataset_as_modified();
     }
@@ -2229,14 +2276,14 @@ static int real_do_setmiss (double missval, int varno)
 
 void do_global_setmiss (GtkWidget *widget, dialog_t *ddata)
 {
-    const gchar *edttext;
+    const gchar *buf;
     double missval;
     int count;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
-    missval = atof(edttext);
+    missval = atof(buf);
     count = real_do_setmiss(missval, 0);
 
     if (count) {
@@ -2250,19 +2297,19 @@ void do_global_setmiss (GtkWidget *widget, dialog_t *ddata)
 
 void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
 {
-    const gchar *edttext;
+    const gchar *buf;
     double missval;
     int count;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
     if (!datainfo->vector[mdata->active_var]) {
 	errbox(_("This variable is a scalar"));
 	return;
     }
 
-    missval = atof(edttext);
+    missval = atof(buf);
     count = real_do_setmiss(missval, mdata->active_var);
 
     if (count) {
@@ -3098,14 +3145,14 @@ void do_boxplot_var (int varnum)
 void do_scatters (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
-    char *edttext;
+    char *buf;
     gint err; 
 
-    edttext = sr->cmdlist;
-    if (*edttext == 0) return;
+    buf = sr->cmdlist;
+    if (*buf == 0) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "scatters %s", edttext);
+    sprintf(line, "scatters %s", buf);
     if (check_cmd(line) || cmd_init(line)) return;
     err = multi_scatters(command.list, atoi(command.param), &Z, 
 			 datainfo, &paths);
@@ -3117,17 +3164,17 @@ void do_scatters (GtkWidget *widget, gpointer p)
 
 void do_box_graph_trad (GtkWidget *widget, dialog_t *ddata)
 {
-    const gchar *edttext;
+    const gchar *buf;
     gint err, code = ddata->code; 
 
-    edttext = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
-    if (edttext == NULL || *edttext == 0) return;
+    buf = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
-    if (strchr(edttext, '(')) {
-	err = boolean_boxplots(edttext, &Z, datainfo, (code == GR_NBOX));
+    if (strchr(buf, '(')) {
+	err = boolean_boxplots(buf, &Z, datainfo, (code == GR_NBOX));
     } else {
 	clear(line, MAXLEN);
-	sprintf(line, "boxplot %s%s", (code == GR_NBOX)? "-o " : "", edttext);
+	sprintf(line, "boxplot %s%s", (code == GR_NBOX)? "-o " : "", buf);
 
 	if (check_cmd(line) || cmd_init(line)) return;
 	err = boxplots(command.list, NULL, &Z, datainfo, (code == GR_NBOX));
@@ -3142,14 +3189,14 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
      /* X, Y scatter with separation by dummy (factor) */
 {
     selector *sr = (selector *) p;
-    char *edttext;
+    char *buf;
     gint err, lines[1] = {0}; 
 
-    edttext = sr->cmdlist;
-    if (*edttext == 0) return;
+    buf = sr->cmdlist;
+    if (*buf == 0) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "gnuplot -z %s", edttext);
+    sprintf(line, "gnuplot -z %s", buf);
 
     if (check_cmd(line) || cmd_init(line)) return;
 
@@ -3172,15 +3219,15 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
 void do_graph_from_selector (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
-    char *edttext;
+    char *buf;
     gint i, err, *lines = NULL;
     gint imp = (sr->code == GR_IMP);
 
-    edttext = sr->cmdlist;
-    if (*edttext == '\0') return;
+    buf = sr->cmdlist;
+    if (*buf == 0) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "gnuplot %s%s", edttext, (imp)? " -m" : "");
+    sprintf(line, "gnuplot %s%s", buf, (imp)? " -m" : "");
 
     if (sr->code == GR_PLOT) { 
         strcat(line, " time");

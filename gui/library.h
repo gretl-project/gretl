@@ -24,6 +24,10 @@
 
 /* general purpose functions */
 
+int blank_entry (const char *entry, dialog_t *ddata);
+
+void close_dialog (dialog_t *ddata);
+
 char *user_fopen (const char *fname, char *fullname, PRN **pprn);
 
 gint bufopen (PRN **pprn);

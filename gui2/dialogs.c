@@ -312,7 +312,7 @@ static void dialog_table_setup (dialog_t *dlg, int hsize)
     GtkWidget *sw;
 
     sw = gtk_scrolled_window_new (NULL, NULL);
-    gtk_widget_set_size_request(sw, hsize, 260);
+    gtk_widget_set_size_request(sw, hsize, 200);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg->dialog)->vbox), 
 		       sw, TRUE, TRUE, FALSE);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
@@ -399,12 +399,15 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 			   d->edit, TRUE, TRUE, 0);
 
 	/* make the Enter key do the business */
-	if (okfunc) 
+	if (okfunc) {
 	    g_signal_connect (G_OBJECT (d->edit), "activate", 
 			      G_CALLBACK (okfunc), (gpointer) d);
+	}
+#if 0
 	g_signal_connect (G_OBJECT (d->edit), "activate", 
 			  G_CALLBACK (delete_widget), 
 			  d->dialog);
+#endif
 	
 	if (deftext) {
 	    gtk_entry_set_text (GTK_ENTRY (d->edit), deftext);
@@ -424,12 +427,15 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, 0);
-    if (okfunc) 
+    if (okfunc) {
 	g_signal_connect (G_OBJECT (tempwid), "clicked", 
 			  G_CALLBACK (okfunc), (gpointer) d);
+    }
+#if 0
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
 		      G_CALLBACK (delete_widget), 
 		      d->dialog);
+#endif
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 

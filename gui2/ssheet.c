@@ -119,28 +119,30 @@ static void sheet_cell_edited (GtkCellRendererText *cell,
 
 static void name_new_var (GtkWidget *widget, dialog_t *ddata) 
 {
-    const gchar *edttext;
+    const gchar *buf;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
+    
+    if (validate_varname(buf)) return;
 
-    if (*edttext == 0 || validate_varname(edttext)) return;
-
+    close_dialog(ddata);
     *newvarname = 0;
-    strncat(newvarname, edttext, 8);
+    strncat(newvarname, buf, 8);
 }
 
 /* ........................................................... */
 
 static void name_new_obs (GtkWidget *widget, dialog_t *ddata) 
 {
-    const gchar *edttext;
+    const gchar *buf;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
 
-    if (*edttext == 0) return;
-
+    close_dialog(ddata);
     *newobsmarker = 0;
-    strncat(newobsmarker, edttext, 8);
+    strncat(newobsmarker, buf, 8);
 }
 
 /* ........................................................... */

@@ -107,22 +107,28 @@ static int check_data_in_sheet (void)
 
 static void name_new_var (GtkWidget *widget, dialog_t *ddata) 
 {
-    char *edttext;
+    char *buf;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0' || validate_varname(edttext)) return;
-    strcpy(newvarname, edttext);
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
+
+    if (validate_varname(buf)) return;
+
+    close_dialog(ddata);
+    strcpy(newvarname, buf);
 }
 
 /* ........................................................... */
 
 static void name_new_obs (GtkWidget *widget, dialog_t *ddata) 
 {
-    char *edttext;
+    char *buf;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
-    strncpy(newobsmarker, edttext, 8);
+    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (blank_entry(buf, ddata)) return;
+
+    close_dialog(ddata);
+    strncpy(newobsmarker, buf, 8);
     newobsmarker[8] = '\0';
 }
 
