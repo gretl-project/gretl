@@ -259,10 +259,10 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
     
     session_changed(1);
 
-    if (iconview == NULL) 
-	view_session();
-    else 
-	session_add_object(session.graphs[i], (code == 0)? 'g' : 'b');   
+    if (iconview == NULL)
+	infobox(_("Graph saved"));
+    else
+	session_add_object(session.graphs[i], (code == 0)? 'g' : 'b');
 }
 
 /* ........................................................... */

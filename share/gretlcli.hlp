@@ -296,7 +296,8 @@ Supported arithmetical operators are, in order of precedence: ^
 (exponentiation); *, / and % (modulus or remainder); + and -.  
 
 Boolean operators (again in order of precedence) are ! (logical NOT), &
-(logical AND), | (logical OR), >, <, = and != (NOT EQUALS).  The Boolean
+(logical AND), | (logical OR), >, <, = and the composite symbols != (not
+equal), >= (greater than or equal) and <= (less than or equal).  The Boolean
 operators can be used in constructing dummy variables: for instance (x > 10)
 returns 1 if x(t) > 10, 0 otherwise.
 

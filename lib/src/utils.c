@@ -253,7 +253,8 @@ int isdummy (const int varnum, const int t1, const int t2, double **Z)
 
     for (t=t1; t<=t2; t++) {
 	xx = Z[varnum][t];
-	if (floatneq(xx, 0.0) && floatneq(xx, 1.0)) return 0;
+	if (floatneq(xx, 0.0) && floatneq(xx, 1.0)) 
+	    return 0;
 	if (floateq(xx, 1.0)) m++;
     }
     if (m < t2 - t1 + 1) return m;

@@ -2142,6 +2142,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	/* print results */
 	archmod.aux = AUX_ARCH;
+	archmod.order = order;
 	printmodel(&archmod, pdinfo, prn);
 	pprintf(prn, _("No of obs. = %d, unadjusted R^2 = %f\n"),
 		archmod.nobs, archmod.rsq);
@@ -2187,7 +2188,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 		} else 
 		    archmod.ID = -1;
 		archmod.ci = ARCH;
-		archmod.archp = order;
+		archmod.order = order;
 		printmodel(&archmod, pdinfo, prn);
 	    }
 	}

@@ -19,6 +19,12 @@
 
 /* monte_carlo.h for gretl */
 
+typedef enum {
+    COUNT_LOOP,
+    WHILE_LOOP,
+    FOR_LOOP
+} loop_types;
+
 typedef struct {
     int ID;
     int *list;
@@ -42,6 +48,7 @@ typedef struct {
 } LOOP_MODEL;
 
 typedef struct {
+    char type;
     int ntimes;
     int lvar, rvar;
     double rval;

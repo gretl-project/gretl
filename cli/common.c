@@ -22,7 +22,7 @@
 
 int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum, 
 		    PRN *prn) 
-/* special version of command executor for monte carlo loop */
+     /* special version of command executor for loop construct */
 {
     int i, m, oflag = 0;
     char linecpy[MAXLEN];
@@ -36,7 +36,10 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     if (command.errcode) {
 	errmsg(command.errcode, prn);
 	return 1;
-    }    
+    }
+
+    if (plp->type == FOR_LOOP)
+	echo_cmd(&command, datainfo, linecpy, 0, 1, oflag, prn);
 
     switch (command.ci) {
 
@@ -62,7 +65,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	   for each loop model */
 	if (round == 0) {
 	    plp->nmod += 1;
-	    if (plp->lvar) { /* a conditional loop */
+	    if (plp->type != COUNT_LOOP) { /* a conditional loop */
 		if (plp->models == NULL) 
 		    plp->models = malloc(sizeof(MODEL *));
 		else 
@@ -90,7 +93,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    errmsg((models[0])->errcode, prn);
 	    return 1;
 	}
-	if (plp->lvar) { /* conditional loop */
+	if (plp->type != COUNT_LOOP) { /* conditional loop */
 	    /* deal with model estimate for "while" loop */
 	    m = get_modnum_by_cmdnum(plp, cmdnum);
 	    swap_models(&models[0], &plp->models[m]);
@@ -112,7 +115,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	break;
 
     case PRINT:
-	if (plp->lvar) {
+	if (plp->type != COUNT_LOOP) {
 	    printdata(command.list, &Z, datainfo, 0, oflag, prn);
 	    break;
 	}
@@ -134,7 +137,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    return 1;
 	}
 	break;
-	
+
     case SMPL:
 	if (oflag) {
 	    if (restore_full_sample(&subZ, &fullZ, &Z,
@@ -164,7 +167,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 
     case STORE:
 #ifdef notdef
-	if (plp->lvar) {
+	if (plp->type != COUNT_LOOP) {
 	    pprintf(prn, _("The store command is not available in "
 		    "this sort of loop.\n"));
 	    return 1;
@@ -191,7 +194,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	break;
 
     case SUMMARY:
-	if (!plp->lvar) {
+	if (plp->type == COUNT_LOOP) {
 	    pprintf(prn, _("The summary command is not available in "
 		    "this sort of loop.\n"));
 	    return 1;

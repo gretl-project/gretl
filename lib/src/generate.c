@@ -61,36 +61,42 @@ static void _genrtime (DATAINFO *pdinfo, GENERATE *genr, int time);
 extern double esl_median (const double *zx, const int n);
 
 enum transformations {
-	T_LOG = 1, 
-	T_EXP, 
-	T_SIN, 
-	T_COS, 
-	T_DIFF,
-	T_LDIFF, 
-	T_MEAN, 
-	T_SD, 
-	T_SORT, 
-	T_INT, 
-	T_LN, 
-	T_COEFF,
-	T_ABS, 
-	T_RHO, 
-	T_SQRT, 
-	T_SUM, 
-	T_NORMAL, 
-	T_UNIFORM, 
-	T_STDERR,
-	T_CUM, 
-	T_MISSING,
-	T_MISSZERO,
-	T_CORR,
-	T_VCV,
-	T_VAR,
-	T_COV,
-	T_MEDIAN,
-	T_ZEROMISS,
-	T_PVALUE
-};	
+    T_LOG = 1, 
+    T_EXP, 
+    T_SIN, 
+    T_COS, 
+    T_DIFF,
+    T_LDIFF, 
+    T_MEAN, 
+    T_SD, 
+    T_SORT, 
+    T_INT, 
+    T_LN, 
+    T_COEFF,
+    T_ABS, 
+    T_RHO, 
+    T_SQRT, 
+    T_SUM, 
+    T_NORMAL, 
+    T_UNIFORM, 
+    T_STDERR,
+    T_CUM, 
+    T_MISSING,
+    T_MISSZERO,
+    T_CORR,
+    T_VCV,
+    T_VAR,
+    T_COV,
+    T_MEDIAN,
+    T_ZEROMISS,
+    T_PVALUE
+};
+
+enum composites {
+    NEQ = 21,
+    GEQ,
+    LEQ
+};
 
 static char *math[] = {
     "log", 
@@ -128,7 +134,7 @@ static char *math[] = {
 static char operators[] = {
     '+', '-', '|',
     '*', '/', '%', '&',
-    '^', '<', '>', '=', '!', '@', 0
+    '^', '<', '>', '=', '!', NEQ, GEQ, LEQ, 0
 };
 
 #define LEVELS 7
@@ -146,14 +152,24 @@ static int is_operator (char c)
 
 /* ...................................................... */
 
-static void catch_not_equals (char *str)
+static void catch_double_symbols (char *str)
 {
     int i, n = strlen(str);
 
     for (i=1; i<n; i++) {
-	if (str[i] == '=' && str[i-1] == '!') {
-	    str[i-1] = '@';
-	    str[i] = ' ';
+	if (str[i] == '=') {
+	    if (str[i-1] == '!') {
+		str[i-1] = NEQ;
+		str[i] = ' ';
+	    }
+	    else if (str[i-1] == '>') {
+		str[i-1] = GEQ;	
+		str[i] = ' ';
+	    }
+	    else if (str[i-1] == '<') {
+		str[i-1] = LEQ;	
+		str[i] = ' ';
+	    }	    
 	}
     }
 }
@@ -168,9 +184,9 @@ static int op_level (int c)
 	return 2;
     if (c == '+' || c == '-') 
 	return 3;
-    if (c == '>' || c == '<') 
+    if (c == '>' || c == '<' || c == GEQ || c == LEQ) 
 	return 4;
-    if (c == '=' || c == '@') /* '@' is internal version of != */
+    if (c == '=' || c == NEQ) 
 	return 5;
     if (c == '&') 
 	return 6;
@@ -247,7 +263,10 @@ static int parenthesize (char *str)
 		break;
 	    }
 	}
-	if (oppos == 0) break;
+	if (oppos == 0) {
+	    priority++;
+	    continue;
+	}
 	/* work to left of operator... */
 	inparens = 0;
 	pbak = 0; 
@@ -500,7 +519,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
     get_genr_formula(s, line);
     delchar('\n', s);
     strcpy(genrs, s); 
-    catch_not_equals(s);
+    catch_double_symbols(s);
     delchar(' ', s);
     genr.special = 0;
  
@@ -912,7 +931,7 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
 		    const DATAINFO *pdinfo)
      /*  calculate stack vector  */
 {
-    register int i;
+    register int t;
     long int ny;
     double xx, yy, *st2;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -920,94 +939,108 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
     st2 = malloc(pdinfo->n * sizeof *st2);
     if (st2 == NULL) return E_ALLOC;
 
-    for (i=t1; i<=t2; i++) st2[i] = xstack[i];
+    for (t=t1; t<=t2; t++) st2[t] = xstack[t];
 
     switch (op) {
     case '\0':
-	for (i=t1; i<=t2; i++) xstack[i] = xxvec[i];
+	for (t=t1; t<=t2; t++) xstack[t] = xxvec[t];
 	break;
     case '+':
-	for (i=t1; i<=t2; i++) xstack[i] += xxvec[i];
+	for (t=t1; t<=t2; t++) xstack[t] += xxvec[t];
 	break;
     case '|':
-	for (i=t1; i<=t2; i++) {
-	    xstack[i] = xstack[i] + xxvec[i];
-	    if (floatneq(xstack[i], 0.)) xstack[i] = 1.0;
+	for (t=t1; t<=t2; t++) {
+	    xstack[t] = xstack[t] + xxvec[t];
+	    if (floatneq(xstack[t], 0.)) xstack[t] = 1.0;
 	}
 	break;
     case '-':
-	for (i=t1; i<=t2; i++) xstack[i] -= xxvec[i];
+	for (t=t1; t<=t2; t++) xstack[t] -= xxvec[t];
 	break;
     case '*':
-	for (i=t1; i<=t2; i++) xstack[i] *= xxvec[i];
+	for (t=t1; t<=t2; t++) xstack[t] *= xxvec[t];
 	break;
     case '&':
-	for (i=t1; i<=t2; i++) {
-	    xstack[i] = xstack[i] * xxvec[i];
-	    if (xstack[i] != 0.) xstack[i] = 1.0;
+	for (t=t1; t<=t2; t++) {
+	    xstack[t] = xstack[t] * xxvec[t];
+	    if (xstack[t] != 0.) xstack[t] = 1.0;
 	}
 	break;
     case '%':
-	for (i=t1; i<=t2; i++) 
-	    xstack[i] = (double) ((int) xstack[i] % (int) xxvec[i]);
+	for (t=t1; t<=t2; t++) 
+	    xstack[t] = (double) ((int) xstack[t] % (int) xxvec[t]);
 	break;
     case '/':
-	for (i=t1; i<=t2; i++)  {
-	    xx = xxvec[i];
+	for (t=t1; t<=t2; t++)  {
+	    xx = xxvec[t];
 	    if (floateq(xx, 0.0)) {  
-		sprintf(gretl_errmsg, _("Zero denominator for obs %d"), i+1);
+		sprintf(gretl_errmsg, _("Zero denominator for obs %d"), t+1);
 		free(st2);
 		return 1;
 	    }
-	    xstack[i] /= xx;
+	    xstack[t] /= xx;
 	}
 	break;
     case '^':
-	for (i=t1; i<=t2; i++) {
-	    xx = xstack[i];
-	    yy = xxvec[i];
+	for (t=t1; t<=t2; t++) {
+	    xx = xstack[t];
+	    yy = xxvec[t];
 	    ny = (long) yy;
 	    if ((floateq(xx, 0.0) && yy <= 0.0) || 
 		(xx < 0.0 && (double) ny != yy)) {
 		sprintf(gretl_errmsg, 
 			_("Invalid power function args for obs. %d"
-			"\nbase value = %f, exponent = %f"), i, xx, yy);
+			"\nbase value = %f, exponent = %f"), t, xx, yy);
 		free(st2);
 		return 1;
 	    }
-	    if (floateq(xx, 0.0)) xstack[i] = 0.0;
-	    else xstack[i] = pow(xx, yy);
+	    if (floateq(xx, 0.0)) xstack[t] = 0.0;
+	    else xstack[t] = pow(xx, yy);
 	}
 	break;
     case '<':
-	for (i=t1; i<=t2; i++) 
-            if (xstack[i] < xxvec[i]) xstack[i] = 1.0;
-            else xstack[i] = 0.0;
+	for (t=t1; t<=t2; t++) 
+            if (xstack[t] < xxvec[t]) xstack[t] = 1.0;
+            else xstack[t] = 0.0;
 	break;
     case '>':
-	for (i=t1; i<=t2; i++) 
-            if (xstack[i] > xxvec[i]) xstack[i] = 1.0;
-            else xstack[i] = 0.0;
+	for (t=t1; t<=t2; t++) 
+            if (xstack[t] > xxvec[t]) xstack[t] = 1.0;
+            else xstack[t] = 0.0;
 	break;
     case '=':
-	for (i=t1; i<=t2; i++) 
-            if (floateq(xstack[i], xxvec[i])) xstack[i] = 1.0;
-            else xstack[i] = 0.0;
+	for (t=t1; t<=t2; t++) 
+            if (floateq(xstack[t], xxvec[t])) xstack[t] = 1.0;
+            else xstack[t] = 0.0;
 	break;
-    case '@':
-	for (i=t1; i<=t2; i++) 
-            if (floateq(xstack[i], xxvec[i])) xstack[i] = 0.0;
-            else xstack[i] = 1.0;
+    case NEQ: /* not equals */
+	for (t=t1; t<=t2; t++) 
+            if (floateq(xstack[t], xxvec[t])) xstack[t] = 0.0;
+            else xstack[t] = 1.0;
+	break;
+    case GEQ: /* greater than or equal */
+	for (t=t1; t<=t2; t++) {
+            if (floateq(xstack[t], xxvec[t])) xstack[t] = 1.0;
+            else if (xstack[t] > xxvec[t]) xstack[t] = 1.0;
+	    else xstack[t] = 0.0;
+	}
+	break;
+    case LEQ: /* less than or equal */
+	for (t=t1; t<=t2; t++) {
+            if (floateq(xstack[t], xxvec[t])) xstack[t] = 1.0;
+	    else if (xstack[t] < xxvec[t]) xstack[t] = 1.0;
+            else xstack[t] = 0.0;
+	}
 	break;
     case '!':
-	for (i=t1; i<=t2; i++)
-	    if (floatneq(xxvec[i], 0.0)) xstack[i] = 0.0;
-	else xstack[i] = 1.0;
+	for (t=t1; t<=t2; t++)
+	    if (floatneq(xxvec[t], 0.0)) xstack[t] = 0.0;
+	else xstack[t] = 1.0;
 	break;
     } /* end of operator switch */
 
-    for (i=t1; i<=t2; i++) 
-        if (na(xxvec[i]) || na(st2[i])) xstack[i] = NADBL;
+    for (t=t1; t<=t2; t++) 
+        if (na(xxvec[t]) || na(st2[t])) xstack[t] = NADBL;
 
     free(st2);
     return 0;

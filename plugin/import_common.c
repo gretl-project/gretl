@@ -17,6 +17,8 @@
  *
  */
 
+#ifdef EXCEL_IMPORTER
+
 static void set_all_missing (double **Z, DATAINFO *pdinfo)
 {
     int i, t;
@@ -25,6 +27,8 @@ static void set_all_missing (double **Z, DATAINFO *pdinfo)
 	for (t=0; t<pdinfo->n; t++)
 	    Z[i][t] = NADBL;
 }
+
+#endif
 
 static int label_is_date (char *str)
 {

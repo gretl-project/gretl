@@ -370,13 +370,16 @@ void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     ntodate(startdate, t1, pdinfo);
     ntodate(enddate, t2, pdinfo);
 
-    switch(pmod->aux) {
+    switch (pmod->aux) {
     case AUX_AR:
-	pprintf(prn, _("\nTest for autocorrelation\n"));
+	pprintf(prn, _("\nTest for "));
+	if (pmod->order > 1)
+	    pprintf(prn, _("autocorrelation up to order %d\n"), pmod->order);
+	else
+	    pprintf(prn, _("first-order autocorrelation\n"));
 	break;	
     case AUX_ARCH:
-	pprintf(prn, _("\nTest for ARCH of order %d\n"), 
-		pmod->list[0] - 2);
+	pprintf(prn, _("\nTest for ARCH of order %d\n"), pmod->order);
 	break;	
     case AUX_SQ:
 	pprintf(prn, _("\nAuxiliary regression for non-linearity test "

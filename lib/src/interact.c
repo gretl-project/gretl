@@ -106,14 +106,11 @@ static int get_rhodiff_param (char *str, CMD *cmd)
 {
     int k;
 
-    /*  printf("get_rhodiff_param: str = %s\n", str); */
     if ((k = haschar(';', str)) < 0) return 1;
-    /*  printf("get_rhodiff_param: k = %d\n", k); */
     cmd->param = realloc(cmd->param, k+1);
     if (cmd->param == NULL) return E_ALLOC;
     strncpy(cmd->param, str, k);
     cmd->param[k] = '\0';
-    /*  printf("get_rhodiff_param: param = %s\n", cmd->param); */
     _shiftleft(str, k + 1);
     return 0;
 }
@@ -235,7 +232,6 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == FIT ||
 	command->ci == LABELS ||
 	command->ci == INFO ||
-	command->ci == LMTEST ||
 	command->ci == CRITERIA ||
 	command->ci == PVALUE ||
 	command->ci == RUN ||
@@ -278,11 +274,11 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     nf = _count_fields(line) - 1;
     n = strlen(command->cmd);
 
-    /* ...unless it's "help", "loop", or "nulldata" 
-       which are special */
+    /* unless it's on a short list of specials */
     if (command->ci == HELP ||
 	command->ci == LOOP ||
 	command->ci == SEED ||
+	command->ci == LMTEST ||
 	command->ci == NULLDATA) {
 	command->nolist = 1;
 	if (!strncmp(line, "man ", 4)) n--;

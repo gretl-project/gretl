@@ -376,6 +376,8 @@ int main (int argc, char *argv[])
 	    }
 	    i = 0;
 	    while (j != 1000 && loop_condition(i, &loop, Z, datainfo)) {
+		if (loop.type == FOR_LOOP)
+		    pprintf(&prn, "loop: i = %d\n\n", i + 1);
 		for (j=0; j<loop.ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, &prn)) {
 			printf(_("Error in command loop: aborting\n"));
@@ -905,13 +907,14 @@ void exec_line (char *line, PRN *prn)
 	    if (err) errmsg(err, prn);
 	    if (oflag == OPT_L || (!batch && page_break(0, NULL, 1))) break;
 	}
-	/* autocorrelation or heteroskedasticity */
+	/* autocorrelation */
 	if (oflag == OPT_M || oflag == OPT_O) {
 	    int order = atoi(command.param);
 
 	    err = autocorr_test(models[0], order, &Z, datainfo, prn, NULL);
 	    if (err) errmsg(err, prn);
-	} 
+	}
+	/* heteroskedasticity */
 	if (oflag == OPT_C || !oflag) {
 	    err = whites_test(models[0], &Z, datainfo, prn, NULL);
 	    if (err) errmsg(err, prn);

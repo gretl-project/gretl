@@ -61,6 +61,7 @@ char *errbuf;
 
 /* #define EDEBUG 1 */
 
+#define EXCEL_IMPORTER
 #include "import_common.c"
 
 static char *format_double (char *rec, int offset) 

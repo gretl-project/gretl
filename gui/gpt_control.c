@@ -684,13 +684,8 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
     gretl_print_destroy(prn);
     fclose(fq);
     sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
-#ifdef G_OS_WIN32
-    if (WinExec(plotcmd, SW_SHOWMINIMIZED) < 32)
-	errbox(_("Gnuplot error creating graph"));
-#else
     if (system(plotcmd))
 	errbox(_("Gnuplot error creating graph"));
-#endif
     remove(plottmp);
     infobox(_("Graph saved"));
 }
@@ -928,8 +923,6 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     /* first get the "set" lines */
     i = 0;
     while (fgets(line, MAXLEN - 1, fp)) {
-	if (strncmp(line, "gtkfunc", 7) == 0)
-	    continue;
 	if (strncmp(line, "# mult", 6) == 0) {
 	    errbox(_("Sorry, can't edit multiple scatterplots"));
 	    free(plot->lines);

@@ -82,6 +82,7 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
     char lvar[9], rvar[9], op[8];
     int start, end;
     int n, v;
+    int err = 0;
 
     gretl_errmsg[0] = '\0';
     monte_carlo_init(ploop);
@@ -95,23 +96,23 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 	else {
 	    sprintf(gretl_errmsg, 
 		    _("Undefined variable '%s' in loop condition."), lvar);
-	    return 1;
+	    err = 1;
 	}
-	if (isdigit((unsigned char) rvar[0]) 
-	    || rvar[0] == '.') { /* numeric rvalue? */
+	if (!err && (isdigit((unsigned char) rvar[0]) 
+	    || rvar[0] == '.')) { /* numeric rvalue? */
 	    ploop->rval = atof(rvar);
-	    return 0; /* OK, done */
-	} /* otherwise try a varname */
-	v = varindex(pdinfo, rvar);
-	if (v > 0 && v < pdinfo->v) {
-	    ploop->rvar = v;
-	    return 0;
-	} else {
-	    sprintf(gretl_errmsg, 
-		    _("Undefined variable '%s' in loop condition."), rvar);
-	    ploop->lvar = 0;
-	    return 1;
+	} else if (!err) { /* otherwise try a varname */
+	    v = varindex(pdinfo, rvar);
+	    if (v > 0 && v < pdinfo->v) ploop->rvar = v;
+	    else {
+		sprintf(gretl_errmsg, 
+			_("Undefined variable '%s' in loop condition."), rvar);
+		ploop->lvar = 0;
+		err = 1;
+	    }
 	}
+	ploop->type = WHILE_LOOP;
+	return err;
     }
 
     /* or try parsing as a for loop */
@@ -120,25 +121,34 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 	    sprintf(gretl_errmsg, 
 		    _("The index variable in a 'for' loop must be the "
 		    "special variable 'i'"));
-	    return 1;
+	    err = 1;
 	}
-	if (end <= start) {
+	if (!err && end <= start) {
 	    sprintf(gretl_errmsg, _("Ending value for loop index must be greater "
 		    "than starting value."));
-	    return 1;
+	    err = 1;
 	}
-	/* initialize special genr index to starting value */
-	genr_scalar_index(1, start - 1);
-	ploop->lvar = INDEXNUM;
-	ploop->rvar = 0;
-	ploop->ntimes = end;
-	return 0;
+	if (!err) {
+	    /* initialize special genr index to starting value */
+	    genr_scalar_index(1, start - 1);
+	    ploop->lvar = INDEXNUM;
+	    ploop->rvar = 0;
+	    ploop->ntimes = end;
+	    ploop->type = FOR_LOOP;
+	}
+	return err;
     }
 
     /* or just as a simple count loop */
     else if (sscanf(line, "loop %d", &n) == 1) {
-	ploop->ntimes = n;
-	return 0;
+	if (n <= 0) {
+	    strcpy(gretl_errmsg, _("Loop count must be positive."));
+	    err = 1;
+	} else {
+	    ploop->ntimes = n;
+	    ploop->type = COUNT_LOOP;
+	}
+	return err;
     }
 
     /* out of options, complain */

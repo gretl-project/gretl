@@ -3159,6 +3159,8 @@ int execute_script (const char *runfile,
 	    }
 	    i = 0;
 	    while (j != 1000 && loop_condition(i, &loop, Z, datainfo)) {
+		if (loop.type == FOR_LOOP)
+		    pprintf(prn, "loop: i = %d\n\n", i + 1);
 		for (j=0; j<loop.ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, prn)) {
 			pprintf(prn, _("Error in command loop: aborting\n"));

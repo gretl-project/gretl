@@ -147,7 +147,7 @@ typedef struct {
 				    estimation method */
     int nwt;                     /* ID of the weight variable (WLS) */
     int wt_dummy;                /* Is the weight var a 0/1 dummy? */
-    int archp;                   /* ARCH lag order */
+    int order;                   /* lag order (e.g. for ARCH) */
     int aux;                     /* code representing the sort of
 				    auxiliary regression this is (or not) */
     int ldepvar;                 /* = 1 if there's a lag of the

@@ -329,7 +329,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		*model_count -= 1;
 	    }
 	    else if (orig->ci == ARCH) {
-		*new = arch(orig->archp, newlist, pZ, pdinfo, model_count, 
+		*new = arch(orig->order, newlist, pZ, pdinfo, model_count, 
 			    prn, NULL);
 		*model_count -= 1;
 	    } 
@@ -461,7 +461,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     if (orig->ci == AR) 
 	maxlag = orig->arlist[orig->arlist[0]];
     else if (orig->ci == ARCH) 
-	maxlag = orig->archp;
+	maxlag = orig->order;
     pdinfo->t1 = orig->t1 - maxlag;
 
     tmplist = malloc((orig->ncoeff + 2) * sizeof(int));
@@ -498,7 +498,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    *model_count -= 1;
 	}
 	else if (orig->ci == ARCH) {
-	    *new = arch(orig->archp, tmplist, pZ, pdinfo, model_count, 
+	    *new = arch(orig->order, tmplist, pZ, pdinfo, model_count, 
 			prn, NULL);
 	    *model_count -= 1;
 	} 
@@ -570,6 +570,9 @@ int autocorr_test (MODEL *pmod, int order,
 
     if (order <= 0) order = pdinfo->pd;
 
+    if (pmod->ncoeff + order >= pdinfo->t2 - pdinfo->t1)
+	return E_DF;
+
     k = order + 1;
     newlist = malloc((pmod->list[0] + k) * sizeof *newlist);
     if (newlist == NULL) {
@@ -577,7 +580,6 @@ int autocorr_test (MODEL *pmod, int order,
     } else {
 	newlist[0] = pmod->list[0] + order;
 	for (i=2; i<=pmod->list[0]; i++) newlist[i] = pmod->list[i];
-
 	if (dataset_add_vars(1, pZ, pdinfo)) {
 	    k = 0;
 	    err = E_ALLOC;
@@ -614,6 +616,7 @@ int autocorr_test (MODEL *pmod, int order,
 
     if (!err) {
 	aux.aux = AUX_AR;
+	aux.order = order;
 	printmodel(&aux, pdinfo, prn);
 	trsq = aux.rsq * aux.nobs;
 	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
