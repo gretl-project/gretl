@@ -24,6 +24,7 @@
 #include "gretl_func.h"
 #include "gretl_private.h"
 #include "compat.h"
+#include "system.h"
 
 /* equipment for the "shell" command */
 #ifndef WIN32

@@ -1136,6 +1136,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	gchar id[5];
 
 	if (i == 0 && !MODEL_CODE(cmdcode)) continue;
+	if (i == 0 && COINT_CODE(cmdcode)) continue;
         if (hidden_var(i, datainfo)) continue;
 	if (screen_scalar(i, cmdcode)) continue;
 	sprintf(id, "%d", i);

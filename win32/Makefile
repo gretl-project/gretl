@@ -68,6 +68,7 @@ PLUGINSRC = \
 	stats_tables.c \
 	sysest.c \
 	fiml.c \
+	liml.c \
 	tramo_options.c \
 	tramo-x12a.c \
 	nistcheck.c \
@@ -341,7 +342,7 @@ plugins/mp_ols.dll: mp_ols.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp.dll
 
-plugins/sysest.dll: sysest.o fiml.o dllinit.o
+plugins/sysest.dll: sysest.o fiml.o liml.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 

@@ -1367,6 +1367,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     
     for (i=0; i<datainfo->v; i++) {
 	if (i == 0 && !MODEL_CODE(cmdcode)) continue;
+	if (i == 0 && COINT_CODE(cmdcode)) continue;
         if (hidden_var(i, datainfo)) continue;
 	if (screen_scalar(i, cmdcode)) continue;
 	gtk_list_store_append(store, &iter);

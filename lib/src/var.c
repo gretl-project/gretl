@@ -23,7 +23,7 @@
 #include "var.h"  
 #include "gretl_private.h"
 
-#undef VAR_DEBUG
+#define VAR_DEBUG 0
 
 struct GRETL_VAR_ {
     int neqns;         /* number of equations in system */
@@ -141,7 +141,7 @@ gretl_var_init (GRETL_VAR *var, int neqns, int order, const DATAINFO *pdinfo,
 	int m = neqns * neqns;
 	
 	if (order > 1) m += neqns;
-#ifdef VAR_DEBUG
+#if VAR_DEBUG
 	fprintf(stderr, "var->Fvals: allocating %d terms\n", m);
 #endif
 	var->Fvals = malloc(m  * sizeof *var->Fvals);
@@ -221,7 +221,7 @@ static int gretl_var_do_error_decomp (GRETL_VAR *var)
     */
     gretl_matrix_divide_by_scalar(tmp, (double) var->n);
 
-#ifdef VAR_DEBUG
+#if VAR_DEBUG
     if (1) {
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 
@@ -873,21 +873,22 @@ static int organize_var_lists (const int *list, const double **Z,
     int ndet = 0, nstoch = 0;
     int gotsep = 0;
     char *d;
-    int i, j, k;
+    int i, j, k, li;
     
     d = calloc(list[0] + 1, 1);
     if (d == NULL) return 1;
 
     /* figure out the lengths of the lists */
     for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
+	li = list[i];
+	if (li == LISTSEP) {
 	    gotsep = 1;
 	    continue;
 	}
 	if (gotsep || 
-	    !strcmp(pdinfo->varname[list[i]], "const") ||	   
-	    !strcmp(pdinfo->varname[list[i]], "time") ||
-	    isdummy(Z[list[i]], pdinfo->t1, pdinfo->t2)) {
+	    !strcmp(pdinfo->varname[li], "const") ||	   
+	    !strcmp(pdinfo->varname[li], "time") ||
+	    isdummy(Z[li], pdinfo->t1, pdinfo->t2)) {
 	    d[i] = 1;
 	    ndet++;
 	} else {
@@ -1062,7 +1063,7 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 	    if (na(F)) err = 1;
 	} else {
 	    testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
-#ifdef VAR_DEBUG
+#if VAR_DEBUG
 	    printmodel(&testmod, pdinfo, OPT_NONE, prn);
 #endif
 	    err = testmod.errcode;
@@ -1274,12 +1275,12 @@ static int real_var (int order, const int *inlist,
 
     if (flags & VAR_IMPULSE_RESPONSES) {
 	if (!err) {
-#ifdef VAR_DEBUG
+#if VAR_DEBUG
 	    gretl_matrix_print(var->A, "var->A", prn);
 #endif
 	    err = gretl_var_do_error_decomp(var);
 	    if (!err) {
-#ifdef VAR_DEBUG
+#if VAR_DEBUG
 		gretl_matrix_print(var->C, "var->C", prn);
 #endif
 		for (i=0; i<var->neqns; i++) {
@@ -2048,30 +2049,35 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
     int orig_v = pdinfo->v;
     int *varlist;
     int verbose = (opt & OPT_O);
-    int hasconst = 0;
+    int hasconst = gretl_hasconst(list);
+    int l0 = list[0];
     int trends = 0;
 
+    if (order <= 0 || list[0] - hasconst < 2) {
+	strcpy(gretl_errmsg, "coint2: needs a positive lag order "
+	       "and at least two variables");
+	return 1;
+    }
+
     /* we're assuming that the list we are fed is in levels */
-    resids.levels_list = malloc((1 + list[0]) * sizeof *list);
+    resids.levels_list = malloc((1 + l0) * sizeof *list);
     if (resids.levels_list == NULL) {
 	return E_ALLOC;
     }
 
-    varlist = malloc((2 + list[0]) * sizeof *list);
+    varlist = malloc((2 + l0) * sizeof *list);
     if (varlist == NULL) {
 	free(resids.levels_list);
 	return E_ALLOC;
     }
 
-    resids.levels_list[0] = varlist[0] = list[0];
+    varlist[0] = resids.levels_list[0] = l0 - hasconst;
 
     j = 1;
     for (i=1; i<=list[0]; i++) {
 	int lnum;
 
 	if (list[i] == 0) {
-	    resids.levels_list[0] -= 1;
-	    hasconst = 1;
 	    continue;
 	}
 	lnum = laggenr(list[i], 1, pZ, pdinfo);
@@ -2083,7 +2089,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	resids.levels_list[j++] = lnum;
     }
 
-    /* now get differences and put them into list */
+    /* now get first differences and put them into list */
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == 0) {
 	    continue;
@@ -2096,10 +2102,9 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (!hasconst) {
-	varlist[0] += 1;
-	varlist[varlist[0]] = 0;
-    }
+    /* add the constant to the VAR list */
+    varlist[0] += 1;
+    varlist[varlist[0]] = 0;
 
     if (verbose) {
 	flags = VAR_PRINT_MODELS;
