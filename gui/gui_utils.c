@@ -47,6 +47,7 @@ extern int want_toolbar;
 extern char calculator[MAXSTR];
 extern char editor[MAXSTR];
 extern char Rcommand[MAXSTR];
+extern char dbproxy[21];
 
 /* filelist stuff */
 #define MAXRECENT 4
@@ -132,6 +133,8 @@ RCVARS rc_vars[] = {
      'U', MAXLEN, 2, NULL},
     {"dbhost_ip", "Database server IP", NULL, paths.dbhost_ip, 
      'U', 16, 2, NULL},
+    {"dbproxy", "HTTP proxy (ipnumber:port)", NULL, dbproxy, 
+     'U', 21, 2, NULL},
     {"calculator", "Calculator", NULL, calculator, 
      'U', MAXSTR, 3, NULL},
     {"editor", "Editor", NULL, editor, 
@@ -1964,6 +1967,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	gtk_widget_destroy(toolbar_box);
 	toolbar_box = NULL;
     }
+    proxy_init(dbproxy);
 }
 
 /* .................................................................. */

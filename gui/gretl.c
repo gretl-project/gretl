@@ -135,6 +135,7 @@ gchar *clipboard_buf; /* for copying models as HTML, LaTeX */
 int expert = FALSE; 
 int updater = FALSE;
 int want_toolbar = TRUE;
+char dbproxy[21];
 
 #ifdef G_OS_WIN32
     char Rcommand[MAXSTR] = "RGui.exe";
@@ -715,7 +716,7 @@ int main (int argc, char *argv[])
     }
 
     /* check for program updates? */
-    proxy_init();
+    proxy_init(dbproxy);
     if (updater) update_query(); 
 
     /* try opening specified database */

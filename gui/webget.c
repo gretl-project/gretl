@@ -19,6 +19,8 @@
 
 /* webget.c for gretl -- based on parts of GNU Wget */
 
+#define WDEBUG
+
 #include "gretl.h"
 
 #include <stdio.h>
@@ -210,6 +212,7 @@ static int rbuf_peek (struct rbuf *rbuf, char *store)
 {
     if (!rbuf->buffer_left) {
 	int res;
+
 	rbuf->buffer_pos = rbuf->buffer;
 	rbuf->buffer_left = 0;
 	res = iread (rbuf->fd, rbuf->buffer, sizeof rbuf->buffer);
@@ -623,6 +626,11 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	break;
     } 
 
+#ifdef WDEBUG
+    fprintf(stderr, "connected to %s, port %d at socket %d\n",
+	    conn->host, conn->port, sock);
+#endif   
+
     if (u->filesave) { /* save output to file */
 	fp = fopen(*(u->local), "wb");
 	if (fp == NULL) {
@@ -667,11 +675,18 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	    proxyauth ? proxyauth : "", pragma_h); 
     free(useragent);
 
+#ifdef WDEBUG
+    fprintf(stderr, "Request:\n%s", request);
+#endif
+
     /* Send the request to server */
     num_written = iwrite(sock, request, strlen(request));
     free(request); /* moved from within following conditional, 03/25/01 */
     if (num_written < 0) {
 	close(sock);
+#ifdef WDEBUG
+	fprintf(stderr, "Failed to write to socket\n");
+#endif
 	return WRITEFAILED;
     }
     contlen = contrange = -1;
@@ -697,6 +712,9 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 			    (hcount == 1 ? HG_NO_CONTINUATIONS : HG_NONE));
 	/* Check for errors.  */
 	if (status == HG_EOF && *hdr) {
+#ifdef WDEBUG
+	    fprintf(stderr, "Got status == HG_EOF\n");
+#endif
 	    free(hdr);
 	    free(type);
 	    free(hs->newloc);
@@ -704,6 +722,9 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	    close(sock);
 	    return HEOF;
 	} else if (status == HG_ERROR) {
+#ifdef WDEBUG
+	    fprintf(stderr, "Got status == HG_ERROR\n");
+#endif
 	    free(hdr);
 	    free(type);
 	    free(hs->newloc);
@@ -737,6 +758,10 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 		hs->error = g_strdup(error);
 	    goto done_header;
 	}
+
+#ifdef WDEBUG
+	fprintf(stderr, "hs->error: '%s'\n", hs->error);
+#endif
 
 	/* Exit on empty header */
 	if (!*hdr) {
@@ -865,6 +890,11 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 	err = gethttp(u, &hstat, dt, proxy);
 	/* Time?  */
 	tms = time_str(NULL);
+
+#ifdef WDEBUG
+	fprintf(stderr, "conn->err = '%s'\n", 
+		(proxy)? proxy->errbuf : u->errbuf);
+#endif
 
 	switch (err) {
 	case HERR: case HEOF: case CONSOCKERR: case CONCLOSED:
@@ -1297,18 +1327,40 @@ int update_query (void)
 
 /* ........................................................... */
 
-int proxy_init (void)
+int proxy_init (const char *dbproxy)
 {
+    char *p;
+
     gretlproxy.url = NULL;
     gretlproxy.proto = URLHTTP;
-    gretlproxy.port = 8080;
+    gretlproxy.port = 0;
     gretlproxy.filesave = 0;
     gretlproxy.path = NULL; 
     gretlproxy.local = NULL;
     gretlproxy.user = NULL;
     gretlproxy.passwd = NULL;
-    gretlproxy.host = malloc(strlen("127.0.0.1") + 1);
-    strcpy(gretlproxy.host, "127.0.0.1");
+    if (gretlproxy.host)
+	free(gretlproxy.host);
+    gretlproxy.host = NULL;
+
+    if (!strlen(dbproxy)) return 0;
+
+    p = strrchr(dbproxy, ':');
+    if (p == NULL) {
+	errbox("Failed to parse HTTP proxy:\n"
+	       "format must be ipnumber:port");
+	return 1;
+    }
+    gretlproxy.port = atoi(p + 1);
+    gretlproxy.host = mymalloc(16);
+    gretlproxy.host[0] = '\0';
+    if (gretlproxy.host == NULL) return 1;
+    strncat(gretlproxy.host, dbproxy, p - dbproxy);
+#ifdef WDEBUG
+    fprintf(stderr, "dbproxy: host='%s', port=%d\n", 
+	    gretlproxy.host, gretlproxy.port);
+#endif
+
     return 0;
 } 
 

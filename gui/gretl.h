@@ -227,7 +227,7 @@ void gpt_save_dialog (void);
 int update_query (void); 
 int retrieve_url (int opt, const char *dbase, const char *series, 
 		  int filesave, char **saver, char *errbuf);
-int proxy_init (void);
+int proxy_init (const char *dbproxy);
 
 
 #ifndef G_OS_WIN32
