@@ -41,8 +41,9 @@
 #include <libxslt/xsltutils.h>
 
 enum {
-    OUTPUT_BOTH,
+    OUTPUT_ALL,
     OUTPUT_DOCBOOK,
+    OUTPUT_DOCBOOK_STANDALONE,
     OUTPUT_HLP
 };
 
@@ -70,13 +71,17 @@ int apply_xslt (xmlDocPtr doc, int output, const char *docdir)
 	"hlp", "\"gui\"",
 	NULL
     };
+    const char *standalone_params[] = {
+	"standalone", "\"true\"",
+	NULL
+    };
     FILE *fp;
     int err = 0;
 
     xmlIndentTreeOutput = 1;
 
-    /* make DocBook XML output */
-    if (output == OUTPUT_BOTH || output == OUTPUT_DOCBOOK) {
+    /* make "full" DocBook XML output */
+    if (output == OUTPUT_ALL || output == OUTPUT_DOCBOOK) {
 	full_fname("gretlman.xsl", docdir, styname);
 	style = xsltParseStylesheetFile(styname);
 	if (style == NULL) {
@@ -99,8 +104,32 @@ int apply_xslt (xmlDocPtr doc, int output, const char *docdir)
 	}
     }
 
+    /* make "standalone" DocBook XML output */
+    if (output == OUTPUT_ALL || output == OUTPUT_DOCBOOK_STANDALONE) {
+	full_fname("gretlman.xsl", docdir, styname);
+	style = xsltParseStylesheetFile(styname);
+	if (style == NULL) {
+	    err = 1;
+	} else {
+	    result = xsltApplyStylesheet(style, doc, standalone_params);
+	    if (result == NULL) {
+		err = 1;
+	    } else {
+		fp = fopen("cmdlist_standalone.xml", "w");
+		if (fp == NULL) {
+		    err = 1;
+		} else {
+		    xsltSaveResultToFile(fp, result, style);
+		    fclose(fp);
+		}
+		xsltFreeStylesheet(style);
+		xmlFreeDoc(result);
+	    }	    
+	}
+    }
+
     /* make plain text "hlp" output */
-    if (output == OUTPUT_BOTH || output == OUTPUT_HLP) {
+    if (output == OUTPUT_ALL || output == OUTPUT_HLP) {
 	full_fname("gretltxt.xsl", docdir, styname);
 	style = xsltParseStylesheetFile(styname);
 	if (style == NULL) {
@@ -202,7 +231,7 @@ int main (int argc, char **argv)
 {
     const char *fname;
     char *docdir;
-    int output = OUTPUT_BOTH;
+    int output = OUTPUT_ALL;
     int err;
 
     if (argc < 2) {
@@ -214,6 +243,9 @@ int main (int argc, char **argv)
 	fname = argv[2];
 	if (!strcmp(argv[1], "--docbook")) {
 	    output = OUTPUT_DOCBOOK;
+	}
+	if (!strcmp(argv[1], "--docbook-standalone")) {
+	    output = OUTPUT_DOCBOOK_STANDALONE;
 	}
 	else if (!strcmp(argv[1], "--hlp")) {
 	    output = OUTPUT_HLP;

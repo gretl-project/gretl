@@ -241,7 +241,14 @@
 </xsl:template>
 
 <xsl:template match="manref">
-  <xref linkend="{@targ}"/>
+  <xsl:choose>
+    <xsl:when test="$standalone='true'">
+	  <xsl:text>the full gretl manual</xsl:text>
+	</xsl:when>
+	<xsl:otherwise>
+      <xref linkend="{@targ}"/>
+	</xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="tabref">

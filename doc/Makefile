@@ -20,8 +20,11 @@ CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/trouble.xml chapters/biblio.xml 
 
 CMDLIST = chapters/cmdlist.xml
+CMDLIST_STANDALONE = chapters/cmdlist_standalone.xml
+CMDREF_WRAPPER = chapters/cmdref_standalone.xml
 
 CMDREF = commands/gretl_commands.xml
+CMDREF_IT = commands/gretl_commands_it.xml
 MANXSL = commands/gretlman.xsl
 
 all: manual.pdf manual-a4.pdf html chm # thumbs altthumbs
@@ -50,10 +53,6 @@ manual.tex: manual.xml $(CHAPTERS) $(DSL) $(MATHSS) $(CMDLIST)
 	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
-cmdbook.tex: cmdbook.xml $(CHAPTERS) $(DSL) $(MATHSS) $(CMDLIST)
-	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
-	./unescape_math.pl $@
-
 manual-a4.tex: manual-a4.xml $(CHAPTERS) $(ALTDSL) $(MATHSS) $(CMDLIST)
 	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
@@ -61,8 +60,17 @@ manual-a4.tex: manual-a4.xml $(CHAPTERS) $(ALTDSL) $(MATHSS) $(CMDLIST)
 manual-a4.xml: manual.xml
 	cp $< $@
 
+# Italian standalone PDF command reference
+
+cmdbook.tex: cmdbook.xml $(CMDREF_WRAPPER) $(DSL) $(MATHSS) $(CMDLIST_STANDALONE)
+	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
+	./unescape_math.pl $@
+
 $(CMDLIST): $(CMDREF) $(MANXSL) 
-	make -C commands -f cmdref.mk
+	make -C commands -f cmdref.mk docbook
+
+$(CMDLIST_STANDALONE): $(CMDREF) $(MANXSL) 
+	make -C commands -f cmdref.mk docbook-standalone
 
 html: manual.xml db2html $(DSL) $(HMATHSS) 
 	./db2html manual.xml
