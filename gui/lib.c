@@ -854,6 +854,9 @@ gboolean console_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
     }
     /* make up-arrow recall last command entered */
     if (key->keyval == GDK_Up) {
+#ifdef CMD_DEBUG
+	fprintf(stderr, "errline: '%s', n_cmds = %d\n", errline, n_cmds);
+#endif
 	key->keyval = GDK_VoidSymbol;
 	if (lastkey != GDK_Up) {
 	    if (errline[0] != '\0') {
