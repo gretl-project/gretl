@@ -1154,15 +1154,15 @@ int plot_fcast_errs (int n, const double *obs,
 
 /* ........................................................... */
 
-void free_plot (GPT_SPEC *plot)
+void free_plotspec (GPT_SPEC *spec)
 {
     int i;
 
-    if (plot->lines) free(plot->lines);
-    if (plot->data) free(plot->data);
-    if (plot->literal[0]) {
-	for (i=0; i<4; i++) {
-	    free(plot->literal[i]);
+    if (spec->lines) free(spec->lines);
+    if (spec->data) free(spec->data);
+    for (i=0; i<4; i++) {
+	if (spec->literal[i]) {
+	    free(spec->literal[i]);
 	}
     }
 }
@@ -1195,57 +1195,57 @@ int termtype_to_termstr (const char *termtype, char *termstr)
 
 /* ........................................................... */
 
-int print_plot_details (const GPT_SPEC *plot, FILE *fp)
+int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 {
     int i, k, t, datlines;
-    int plotn, lo = plot->list[0];
+    int plotn, lo = spec->list[0];
     int miss = 0;
     double xx;
 
-    fprintf(fp, "set title '%s'\n", plot->titles[0]);
-    fprintf(fp, "set xlabel '%s'\n", plot->titles[1]);
-    fprintf(fp, "set ylabel '%s'\n", plot->titles[2]);
-    if (plot->y2axis) {
-	fprintf(fp, "set y2label '%s'\n", plot->titles[3]);
+    fprintf(fp, "set title '%s'\n", spec->titles[0]);
+    fprintf(fp, "set xlabel '%s'\n", spec->titles[1]);
+    fprintf(fp, "set ylabel '%s'\n", spec->titles[2]);
+    if (spec->y2axis) {
+	fprintf(fp, "set y2label '%s'\n", spec->titles[3]);
     }
 
     fprintf(fp, "set xzeroaxis\n");
     fprintf(fp, "set missing \"?\"\n");
-    if (strcmp(plot->keyspec, "none") == 0) {
+    if (strcmp(spec->keyspec, "none") == 0) {
 	fprintf(fp, "set nokey\n");
     } else {
-	fprintf(fp, "set key %s\n", plot->keyspec);
+	fprintf(fp, "set key %s\n", spec->keyspec);
     }
 
-    k = (plot->y2axis)? 3: 2;
+    k = (spec->y2axis)? 3: 2;
     for (i=0; i<k; i++) {
 	fprintf(fp, "set %srange [%s:%s]\n",
 		(i==0)? "x" : (i==1)? "y" : "y2",
-		plot->range[i][0], plot->range[i][1]);
+		spec->range[i][0], spec->range[i][1]);
     }
 
     /* customized xtics? */
-    if (strlen(plot->xtics)) {
-	fprintf(fp, "set xtics %s\n", plot->xtics);
+    if (strlen(spec->xtics)) {
+	fprintf(fp, "set xtics %s\n", spec->xtics);
     }
-    if (strlen(plot->mxtics)) {
-	fprintf(fp, "set mxtics %s\n", plot->mxtics);
+    if (strlen(spec->mxtics)) {
+	fprintf(fp, "set mxtics %s\n", spec->mxtics);
     }
 
     /* using two y axes? */
-    if (plot->y2axis) {
+    if (spec->y2axis) {
 	fprintf(fp, "set ytics nomirror\n");
 	fprintf(fp, "set y2tics\n");
     }
 
-    if (plot->code == FREQ || plot->code == PERGM) { 
-	if (plot->code == FREQ) {
+    if (spec->code == FREQ || spec->code == PERGM) { 
+	if (spec->code == FREQ) {
 	    fprintf(fp, "# frequency plot\n");
 	} else {
 	    fprintf(fp, "# periodogram\n");
 	}
 	for (i=0; i<4; i++) {
-	    fprintf(fp, "%s\n", plot->literal[i]);
+	    fprintf(fp, "%s\n", spec->literal[i]);
 	}
     } 
 
@@ -1253,17 +1253,17 @@ int print_plot_details (const GPT_SPEC *plot, FILE *fp)
 
     datlines = lo - 1;
     for (i=1; i<lo; i++) {
-	if (strcmp(plot->lines[i-1].scale, "NA")) {
+	if (strcmp(spec->lines[i-1].scale, "NA")) {
 	    fprintf(fp, "'-' using 1:($2*%s) ", 
-		    plot->lines[i-1].scale);
+		    spec->lines[i-1].scale);
 	} else {
-	    fprintf(fp, "%s ", plot->lines[i-1].formula); 
+	    fprintf(fp, "%s ", spec->lines[i-1].formula); 
 	    datlines--;
 	}
 	fprintf(fp, "axes x1y%d title '%s' w %s", 
-		plot->lines[i-1].yaxis,
-		plot->lines[i-1].title,
-		plot->lines[i-1].style);
+		spec->lines[i-1].yaxis,
+		spec->lines[i-1].title,
+		spec->lines[i-1].style);
 	if (i == lo - 1) {
 	    fprintf(fp, "\n");
 	} else {
@@ -1276,17 +1276,17 @@ int print_plot_details (const GPT_SPEC *plot, FILE *fp)
     setlocale(LC_NUMERIC, "C");
 #endif
     miss = 0;
-    plotn = plot->t2 - plot->t1 + 1;
+    plotn = spec->t2 - spec->t1 + 1;
     for (i=1; i<=datlines; i++) {  
-	for (t=plot->t1; t<=plot->t2; t++) {
-	    xx = plot->data[t - plot->t1];
+	for (t=spec->t1; t<=spec->t2; t++) {
+	    xx = spec->data[t - spec->t1];
 	    if (na(xx)) {
 		fprintf(fp, "? ");
 		miss = 1;
 	    } else {
 		fprintf(fp, "%f ", xx);
 	    }
-	    xx = plot->data[plotn * i + t - plot->t1];
+	    xx = spec->data[plotn * i + t - spec->t1];
 	    if (na(xx)) {
 		fprintf(fp, "?\n");
 		miss = 1;
@@ -1305,40 +1305,44 @@ int print_plot_details (const GPT_SPEC *plot, FILE *fp)
 
 /* ........................................................... */
 
-int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
-     /* ship out a plot struct, to gnuplot or file.  
-	N.B. under unix plot->fp will be a pipe */
+int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
+     /* ship out a plot struct, to gnuplot or file */
 {
     FILE *fp = NULL;
     int dump = 0;
     int err = 0, miss;
     char termstr[72];
 
-    dump = termtype_to_termstr(plot->termtype, termstr);
+    dump = termtype_to_termstr(spec->termtype, termstr);
 
-    if (dump) {  /* dump of gnuplot commands to named file */
+    if (dump) {  
+	/* dump of gnuplot commands to named file */
 	if (fname == NULL) return 1;  /* impossible */
 	fp = fopen(fname, "w");
 	if (fp == NULL) return 1;
-    } else {     /* output to gnuplot, for screen or other "term" */
-#ifdef OS_WIN32
-	if (plot->fp == NULL) fp = fopen(ppaths->plotfile, "w");
-	if (fp == NULL) return 1;
+    } else {     
+	/* output to gnuplot, for screen or other "term" */
+#ifdef GNUPLOT_PIPE
+	fp = spec->fp; /* pipe */
 #else
-	fp = plot->fp; /* pipe */
-#endif
-	if (fname != NULL) { /* file, not screen display */
+	if (spec->fp == NULL) {
+	    fp = fopen(ppaths->plotfile, "w");
+	}
+	if (fp == NULL) return 1;
+#endif /* GNUPLOT_PIPE */
+	if (fname != NULL) { 
+	    /* file, not screen display */
 	    fprintf(fp, "set term %s\n", termstr);
 #ifdef ENABLE_NLS
 	    if (strstr(termstr, "postscript")) {
 		fprintf(fp, "set encoding iso_8859_1\n");
 	    }
-#endif
+#endif /* ENABLE_NLS */
 	    fprintf(fp, "set output '%s'\n", fname);
 	}
     }
 
-    miss = print_plot_details(plot, fp);
+    miss = print_plotspec_details(spec, fp);
     fflush(fp);
 
     if (dump) {
@@ -1346,9 +1350,10 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	fclose(fp);
     }
     
-#ifdef OS_WIN32
+#ifndef GNUPLOT_PIPE
     if (!dump) {
 	char plotcmd[MAXLEN];
+# ifdef OS_WIN32
 	int winshow;
 
 	if (fname == NULL) { /* sending plot to screen */
@@ -1357,12 +1362,17 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	} else {
 	    winshow = SW_SHOWMINIMIZED;
 	}
+# endif
 	fclose(fp);
-	plot->fp = NULL;
+	spec->fp = NULL;
 	sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
+# ifdef OS_WIN32
 	if (WinExec(plotcmd, winshow) < 32) err = 1;
+# else
+	if (system(plotcmd)) err = 1;
+# endif 
     }
-#endif
+#endif /* GNUPLOT_PIPE */
     if (miss) err = 2;
     return err;
 }

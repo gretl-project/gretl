@@ -55,7 +55,9 @@ static char *model_items[] = {
 
 static char *graph_items[] = {
     N_("Display"),
+#ifdef GNUPLOT_PIPE
     N_("Edit using GUI"),
+#endif
     N_("Edit plot commands"),
     N_("Delete")
 };
@@ -172,42 +174,6 @@ static void edit_session_notes (void)
 		EDIT_NOTES);
 }
 
-/* .................................................................. */
-
-#ifdef GNUPLOT_PNG
-
-static int filter_plotfile (const char *src, const char *dest)
-{
-    FILE *fs, *fd;
-    char fline[MAXLEN];
-
-    fs = fopen(src, "r");
-    if (!fs) {
-	errbox("Couldn't read graph file");
-	return 1;
-    }
-
-    fd = fopen(dest, "w");
-    if (!fd) {
-	errbox("Couldn't write graph file");
-	fclose(fs);
-	return 1;
-    }
-
-    while (fgets(fline, MAXLEN-1, fs)) {
-	if (strncmp(fline, "set term", 8) && 
-	    strncmp(fline, "set output", 10))
-	    fputs(fline, fd);
-    }
-
-    fclose(fs);
-    fclose(fd);
-    
-    return 0;
-}
-
-#endif /* GNUPLOT_PNG */
-
 /* ........................................................... */
 
 void add_last_graph (gpointer data, guint code, GtkWidget *w)
@@ -215,17 +181,23 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
     char grname[12], pltname[MAXLEN], savedir[MAXLEN];
     int i = session.ngraphs;
     static int boxplot_count;
-#ifdef GNUPLOT_PNG
-    GPT_SPEC *plot = (GPT_SPEC *) data;
-#endif
 
     get_default_dir(savedir);
 
     if (code == 0) { /* gnuplot graph */
+#ifdef GNUPLOT_PNG
+	GPT_SPEC *plot = (GPT_SPEC *) data;
+#endif
+
 	sprintf(pltname, "%ssession.Graph_%d", savedir, plot_count + 1);
 	sprintf(grname, "%s %d", _("Graph"), plot_count + 1);
 #ifdef GNUPLOT_PNG
-	if (filter_plotfile(plot->fname, pltname)) return;
+	if (copyfile(plot->fname, pltname) || 
+	    remove_png_term_from_plotfile(pltname)) {
+	    errbox(_("Failed to copy graph file"));
+	    return;
+	}
+	mark_plot_as_saved(plot);
 #else
 	if (copyfile(paths.plotfile, pltname)) {
 	    errbox(_("No graph found"));
@@ -241,7 +213,7 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
 	    errbox(_("Failed to copy boxplot file"));
 	    return;
 	}
-	remove("boxdump.tmp");
+	remove("boxdump.tmp"); 
     }	
 
     /* write graph into session struct */
@@ -1100,6 +1072,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	if (myobject->sort == 'm') open_gui_model(myobject);
 	else if (myobject->sort == 'g') open_gui_graph(myobject);
     } 
+#ifdef GNUPLOT_PIPE
     else if (strcmp(item, _("Edit using GUI")) == 0) {
 	if (myobject->sort == 'g') {
 	    GRAPHT *graph = (GRAPHT *) myobject->data;
@@ -1107,10 +1080,13 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	    start_editing_session_graph(graph->fname);
 	}
     } 
+#endif
     else if (strcmp(item, _("Edit plot commands")) == 0) {
 	if (myobject->sort == 'g') {
 	    GRAPHT *graph = (GRAPHT *) myobject->data;
-
+#ifdef GNUPLOT_PNG
+	    remove_png_term_from_plotfile(graph->fname);
+#endif
 	    view_file(graph->fname, 1, 0, 78, 400, GR_PLOT, gp_edit_items);
 	}
     }   

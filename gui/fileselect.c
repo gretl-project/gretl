@@ -360,6 +360,12 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 
 	save_this_graph(plot, fname);
     }
+#else
+    else if (action == SAVE_LAST_GRAPH) {
+	char *savestr = gtk_object_get_data(GTK_OBJECT(fs), "graph");
+	
+	do_save_graph(fname, savestr);
+    } 
 #endif
     else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
 	int err;
@@ -376,11 +382,6 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	if (!err) infobox(_("boxplots saved"));
 	else errbox(_("boxplot save failed"));
     }
-    else if (action == SAVE_LAST_GRAPH) {
-	char *savestr = gtk_object_get_data(GTK_OBJECT(fs), "graph");
-	
-	do_save_graph(fname, savestr);
-    }    
     else if (action == SAVE_SESSION) {
 	save_session(fname);
     }

@@ -380,7 +380,6 @@ gpt_control.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 gpt_control.o: ../gui2/callbacks.h ../gui2/dialogs.h
 gpt_control.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
 gpt_control.o: ../gui2/helpfiles.h ../gui2/gpt_control.h
-gpt_control.o: ../gui2/guiprint.h
 gretl.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
 gretl.o: ../lib/src/commands.h ../lib/src/errors.h
 gretl.o: ../lib/src/estimate.h ../lib/src/generate.h

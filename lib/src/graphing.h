@@ -85,11 +85,11 @@ int multi_scatters (const LIST list, int pos,
 
 int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist);
 
-int print_plot_details (const GPT_SPEC *plot, FILE *fp);
+int print_plotspec_details (const GPT_SPEC *spec, FILE *fp);
 
-int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths);
+int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths);
 
-void free_plot (GPT_SPEC *plot);
+void free_plotspec (GPT_SPEC *spec);
 
 int termtype_to_termstr (const char *termtype, char *termstr);
 

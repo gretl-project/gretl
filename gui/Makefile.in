@@ -216,6 +216,7 @@ gpt_control.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 gpt_control.o: ../lib/src/discrete.h ../lib/src/subsample.h
 gpt_control.o: ../lib/src/calendar.h gretltypes.h gui_utils.h callbacks.h
 gpt_control.o: dialogs.h library.h session.h settings.h helpfiles.h
+gpt_control.o: gpt_control.h
 gretl.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 gretl.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 gretl.o: ../lib/src/gretl_utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -278,7 +279,7 @@ library.o: ../lib/src/graphing.h ../lib/src/monte_carlo.h
 library.o: ../lib/src/nonparam.h ../lib/src/discrete.h ../lib/src/subsample.h
 library.o: ../lib/src/calendar.h gretltypes.h gui_utils.h callbacks.h
 library.o: dialogs.h library.h session.h settings.h helpfiles.h selector.h
-library.o: series_view.h ../cli/common.c
+library.o: series_view.h gpt_control.h ../cli/common.c
 selector.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 selector.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 selector.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
@@ -312,10 +313,11 @@ session.o: ../lib/src/graphing.h ../lib/src/monte_carlo.h
 session.o: ../lib/src/nonparam.h ../lib/src/discrete.h ../lib/src/subsample.h
 session.o: ../lib/src/calendar.h gretltypes.h gui_utils.h callbacks.h
 session.o: dialogs.h library.h session.h settings.h helpfiles.h selector.h
-session.o: ../pixmaps/model.xpm ../pixmaps/boxplot.xpm ../pixmaps/gnuplot.xpm
-session.o: ../pixmaps/xfm_sc.xpm ../pixmaps/xfm_info.xpm
-session.o: ../pixmaps/xfm_text.xpm ../pixmaps/xfm_make.xpm
-session.o: ../pixmaps/rhohat.xpm ../pixmaps/summary.xpm
+session.o: gpt_control.h ../pixmaps/model.xpm ../pixmaps/boxplot.xpm
+session.o: ../pixmaps/gnuplot.xpm ../pixmaps/xfm_sc.xpm
+session.o: ../pixmaps/xfm_info.xpm ../pixmaps/xfm_text.xpm
+session.o: ../pixmaps/xfm_make.xpm ../pixmaps/rhohat.xpm
+session.o: ../pixmaps/summary.xpm
 settings.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 settings.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 settings.o: ../lib/src/gretl_utils.h ../lib/src/compare.h

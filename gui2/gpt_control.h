@@ -20,16 +20,19 @@
 #ifndef GPT_CONTROL_H
 #define GPT_CONTROL_H
 
-int read_plotfile (const char *fname);
-
-void do_save_graph (const char *fname, char *savestr);
-
-void gpt_save_dialog (void);
+#ifdef GNUPLOT_PIPE
+void start_editing_session_graph (const char *fname);
+#endif
 
 #ifdef GNUPLOT_PNG
-void save_this_graph (GPT_SPEC *plot, const char *fname);
-
+void mark_plot_as_saved (GPT_SPEC *spec);
+int remove_png_term_from_plotfile (const char *fname);
+void save_this_graph (GPT_SPEC *spec, const char *fname);
+void display_session_graph_png (const char *fname);
 int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved);
-#endif /* GNUPLOT_PNG */
+#else
+void do_save_graph (const char *fname, char *savestr);
+void gpt_save_dialog (void);
+#endif
 
 #endif /* GPT_CONTROL_H */

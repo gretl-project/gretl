@@ -55,6 +55,7 @@ typedef struct {
     double gmax, gmin;
     GtkWidget *window, *area, *popup;
     GdkPixmap *pixmap;
+    int saved;
 } PLOTGROUP;
 
 char boxplottmp[MAXLEN];
@@ -162,6 +163,7 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
     else if (!strcmp(item, _("Save to session as icon"))) {
         if (dump_boxplot(grp) == 0) {
 	    add_last_graph(NULL, GRETL_BOXPLOT, NULL);
+	    grp->saved = 1;
 	}
     }
     else if (!strcmp(item, _("Save as EPS..."))) {
@@ -197,7 +199,7 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-static GtkWidget *build_menu (gpointer data)
+static GtkWidget *build_menu (PLOTGROUP *grp)
 {
     GtkWidget *menu, *item;    
     static char *items[] = {
@@ -219,11 +221,15 @@ static GtkWidget *build_menu (gpointer data)
     menu = gtk_menu_new();
 
     while (items[i]) {
+	if (grp->saved && !strcmp(items[i], "Save to session as icon")) {
+	    i++;
+	    continue;
+	}	
         item = gtk_menu_item_new_with_label(_(items[i]));
         g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(box_popup_activated),
 			 _(items[i]));
-	g_object_set_data(G_OBJECT(item), "group", data);
+	g_object_set_data(G_OBJECT(item), "group", grp);
         gtk_widget_show(item);
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	i++;
@@ -239,7 +245,7 @@ static gint box_popup (GtkWidget *widget, GdkEventButton *event,
     PLOTGROUP *grp = (PLOTGROUP *) data;
 
     if (grp->popup) g_free(grp->popup);
-    grp->popup = build_menu(data);
+    grp->popup = build_menu(grp);
     gtk_menu_popup(GTK_MENU(grp->popup), NULL, NULL, NULL, NULL,
 		   event->button, event->time);
     return TRUE;
@@ -902,6 +908,8 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	return 1;
     }
 
+    plotgrp->saved = 0;
+
     plotgrp->nplots = list[0];
     plotgrp->plots = mymalloc (plotgrp->nplots * sizeof(BOXPLOT));
     if (plotgrp->plots == NULL) {
@@ -1325,6 +1333,7 @@ int retrieve_boxplot (const char *fname)
 	return 1;
     }
 
+    grp->saved = 1;
     grp->numbers = NULL;
 
     for (i=0; i<6 && fgets(line, 79, fp); i++) {
