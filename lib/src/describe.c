@@ -139,7 +139,7 @@ void free_freq (FREQDIST *freq)
     free(freq);
 }
 
-static double rb1_to_z1 (double rb1, int n)
+static double rb1_to_z1 (double rb1, double n)
 {
     double b, w2, d, y, z1;
 
@@ -147,7 +147,7 @@ static double rb1_to_z1 (double rb1, int n)
 	((n-2) * (n+5) * (n+7) * (n+9));
 
     w2 = -1.0 + sqrt(2 * (b-1));
-
+    
     d = 1.0 / sqrt(log(sqrt(w2)));
 
     y = rb1 * sqrt(((w2-1.0)/2.0) * ((n+1.0)*(n+3.0))/(6.0*(n-2)));
@@ -157,10 +157,10 @@ static double rb1_to_z1 (double rb1, int n)
     return z1;
 }
 
-static double b2_to_z2 (double b1, double b2, int n)
+static double b2_to_z2 (double b1, double b2, double n)
 {
     double d, a, c, k, alpha, chi, z2;
-    double n2 = n*n;
+    double n2 = n * n;
 
     d = (n-3) * (n+1) * (n2 + 15*n - 4.0);
 
@@ -190,8 +190,8 @@ static double doornik_chisq (double skew, double kurt, int n)
     b1 = skew * skew;
     b2 = kurt + 3.0; /* convert from "excess" to regular */
 
-    z1 = rb1_to_z1 (rb1, n);
-    z2 = b2_to_z2 (b1, b2, n);
+    z1 = rb1_to_z1 (rb1, (double) n);
+    z2 = b2_to_z2 (b1, b2, (double) n);
 
     return z1*z1 + z2*z2;
 }
