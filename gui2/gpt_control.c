@@ -3031,6 +3031,11 @@ static void build_plot_menu (png_plot_t *plot)
 	    i++;
 	    continue;
 	}
+	if (plot_not_editable(plot) && 
+	    !strcmp(plot_items[i], "Audio")) {
+	    i++;
+	    continue;
+	}
 #ifndef OLD_GTK
 	if (!plot_has_data_labels(plot) &&
 	    !strcmp(plot_items[i], "Clear data labels")) {
