@@ -345,10 +345,10 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
     int i;
 
     for (i=0; i<pmod->ntests; i++) {
-	pprintf(prn, _("%s -\n"
+	pprintf(prn, "%s -\n"
 		"  %s: %s\n"
 		"  %s: %s\n"
-		"  %s = %s\n\n"),
+		"  %s = %s\n\n",
 		(pmod->tests[i]).type, 
 		_("Null hypothesis"), (pmod->tests[i]).h_0, 
 		_("Test statistic"), (pmod->tests[i]).teststat, 
@@ -648,15 +648,15 @@ static void print_aicetc (const MODEL *pmod, PRN *prn)
     }
 
     pprintf(prn, "\n  %s\n\n", _("MODEL SELECTION STATISTICS"));	
-    pprintf(prn, _("  SGMASQ    %#11g     AIC       %#11g     FPE       %#11g\n"
+    pprintf(prn, "  SGMASQ    %#11g     AIC       %#11g     FPE       %#11g\n"
 	    "  HQ        %#11g     SCHWARZ   %#11g     SHIBATA   %#11g\n"
-	    "  GCV       %#11g"),
+	    "  GCV       %#11g",
 	    pmod->criterion[0], pmod->criterion[1], 
 	    pmod->criterion[2], pmod->criterion[3], 
 	    pmod->criterion[4], pmod->criterion[5], pmod->criterion[6]);
-    if (pmod->criterion[7] > 0.0) pprintf(prn, _("     RICE      %#11g\n"), 
+    if (pmod->criterion[7] > 0.0) pprintf(prn, "     RICE      %#11g\n", 
 					  pmod->criterion[7]);
-    else pprintf(prn, _("     RICE        %s\n"), _("undefined"));
+    else pprintf(prn, "     RICE        %s\n", _("undefined"));
     pprintf(prn, "\n");
 }
 
@@ -707,7 +707,7 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
 			pdinfo->varname[corrmat->list[i]], 
 			pdinfo->varname[corrmat->list[j]]);
 		if (na(corrmat->xpx[k]))
-		    pprintf(prn, _("  %-24s    %s\n"), 
+		    pprintf(prn, "  %-24s    %s\n", 
 			    corrstring, _("undefined"));
 		
 		else if (corrmat->xpx[k] < 0.) 
@@ -1929,8 +1929,8 @@ static int print_discrete_stats (const MODEL *pmod,
 
     pprintf(prn, _("      VARIABLE      COEFFICIENT        STDERROR       "
 	    "T STAT       SLOPE\n"));
-    pprintf(prn, _("                                                    "
-	    "              %s\n"),
+    pprintf(prn, "                                                    "
+	    "              %s\n",
 	    _("(at mean)"));
 
     if (pmod->ifc) {

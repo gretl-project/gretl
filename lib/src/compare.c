@@ -34,7 +34,7 @@ static int _justreplaced (int i, const DATAINFO *pdinfo,
 /* ........................................................... */
 
 int _addtolist (const int *oldlist, const int *addvars, int **pnewlist,
-		const DATAINFO *pdinfo, const int model_count)
+		const DATAINFO *pdinfo, int model_count)
 /* Adds specified independent variables to a specified
    list, forming newlist.  The first element of addvars
    is the number of variables to be added; the remaining
@@ -75,7 +75,7 @@ int _addtolist (const int *oldlist, const int *addvars, int **pnewlist,
 /* ........................................................... */
 
 int _omitfromlist (int *list, const int *omitvars, int newlist[],
-		   const DATAINFO *pdinfo, const int model_count)
+		   const DATAINFO *pdinfo, int model_count)
 /* Drops specified independent variables from a specified
    list, forming newlist.  The first element of omitvars
    is the number of variables to be omitted; the remaining
@@ -137,7 +137,7 @@ static void _difflist (int *biglist, int *smalist, int *targ)
 
 /* ........................................................... */
 
-static int _justreplaced (const int i, const DATAINFO *pdinfo, 
+static int _justreplaced (int i, const DATAINFO *pdinfo, 
 			  const int *list)
      /* check if any var in list has been replaced via genr since a
 	previous model (model_count i) was estimated.  Expects
@@ -243,7 +243,7 @@ static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
  */
 
 int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count, 
-	    double ***pZ, DATAINFO *pdinfo, const int aux_code, 
+	    double ***pZ, DATAINFO *pdinfo, int aux_code, 
 	    PRN *prn, GRETLTEST *test)
 {
     COMPARE add;             
@@ -539,7 +539,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     return err;
 }
 
-static int box_pierce (const int varno, const int order, double **Z, 
+static int box_pierce (int varno, int order, double **Z, 
 		       DATAINFO *pdinfo, double *bp, double *lb)
 {
     double *x, *y, *acf;
@@ -667,12 +667,13 @@ int autocorr_test (MODEL *pmod, int order,
 	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
 	    (aux.nobs - pmod->ncoeff - order)/order; 
 
-	pprintf(prn, _("\nTest statistic: LMF = %f,\n"), LMF);
+	pprintf(prn, "\n%s: LMF = %f,\n", _("Test statistic"), LMF);
 	pprintf(prn, _("with p-value = prob(F(%d,%d) > %g) = %.3g\n"), 
 		order, aux.nobs - pmod->ncoeff - order, LMF,
 		fdist(LMF, order, aux.nobs - pmod->ncoeff - order));
 
-	pprintf(prn, _("\nAlternative statistic: TR^2 = %f,\n"), trsq);
+	pprintf(prn, "\n%s: TR^2 = %f,\n", 
+		_("Alternative statistic"), trsq);
 	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %g) = %.3g\n\n"), 
 		order, trsq, chisq(trsq, order));
 
@@ -926,7 +927,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 
     if (!err) {
 	wbar /= T - K;
-	pprintf(prn, _("\nCUSUM test for stability of parameters\n\n"));
+	pprintf(prn, "\n%s\n\n",
+		_("CUSUM test for stability of parameters"));
 	pprintf(prn, _("mean of scaled residuals = %g\n"), wbar);
 	sigma = 0;
 	for (j=0; j<n_est; j++) {

@@ -1,5 +1,7 @@
 lib/src/calendar.c
+lib/src/center.c
 lib/src/compare.c
+lib/src/daily.c
 lib/src/dataio.c
 lib/src/describe.c
 lib/src/discrete.c
@@ -15,6 +17,7 @@ lib/src/pvalues.c
 lib/src/strutils.c
 lib/src/subsample.c
 lib/src/texprint.c
+lib/src/texprint_special.c
 lib/src/utils.c
 lib/src/var.c
 lib/src/win32.c
@@ -22,7 +25,6 @@ cli/common.c
 cli/complete.c
 cli/gretlcli.c
 gui/boxplots.c
-gui/buildpath.c
 gui/calculator.c
 gui/callbacks.c
 gui/database.c
@@ -45,6 +47,7 @@ gui/webget.c
 plugin/des_import.c
 plugin/excel_import.c
 plugin/gnumeric_import.c
+plugin/ignore.c
 plugin/import_common.c
 plugin/longname.c
 plugin/mp_ols.c

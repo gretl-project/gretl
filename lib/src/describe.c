@@ -373,7 +373,7 @@ int corrgram (int varno, int order, double ***pZ,
 
     sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
 	    pdinfo->varname[varno]);
-    pprintf(prn, _("\n%s\n\n"), gretl_tmp_str);
+    pprintf(prn, "\n%s\n\n", gretl_tmp_str);
 
     /* add Box-Pierce statistic */
     box = 0;
@@ -529,9 +529,9 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
 
     if (!tmp.errcode) {
 	tstat = tmp.coeff[1] / tmp.sderr[1];
-	pprintf(prn, _("\n%s\n"
+	pprintf(prn, "\n%s\n"
 		"  %s = %f\n"
-		"  %s: t(%d) = %f, %s %.4f\n"),
+		"  %s: t(%d) = %f, %s %.4f\n",
 		_("Test for fractional integration"),
 		_("Estimated degree of integration"), tmp.coeff[1], 
 		_("test statistic"), tmp.dfd, tstat, 
