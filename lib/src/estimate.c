@@ -2160,16 +2160,14 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
     /* form regression list for NLS */
     arlist[0] = arvars;
     arlist[1] = v; /* the first-numbered new variable */
-    for (i=2; i<list[0]; i++) {
+    for (i=2; i<=list[0]; i++) {
 	arlist[i] = v+i-1;
     }
-    if (ifc) {
-	arlist[arvars] = v + list[0];
-	arlist[arvars - 1] = v + list[0] - 1;
-    } else {
-	arlist[arvars] = v + list[0] - 1;
-	arlist[arvars - 1] = v + list[0];
-    }
+    arlist[arvars] = v + list[0];
+
+    pdinfo->t1 = 1; /* FIXME */
+
+    pprintf(prn, "\n%s\n\n", _("Nonlinear least squares"));
 
     j = 0;
     while (essdiff > .00001) {
@@ -2180,7 +2178,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 	    for (t=1; t<pdinfo->n; t++) {
 		if (na((*pZ)[list[i]][t]) || na((*pZ)[list[i]][t-1])) {
 		    (*pZ)[av][t] = NADBL;
-		} else {	
+		} else {
 		    (*pZ)[av][t] = 
 			(*pZ)[list[i]][t] - rho * (*pZ)[list[i]][t-1];
 		}
@@ -2198,7 +2196,6 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 		for (i=2; i<=list[0]; i++) {
 		    x -= armod.coeff[i-1] * (*pZ)[list[i]][t-1];
 		}
-		x *= rho;
 		(*pZ)[av][t] = x;
 	    }
 	}
@@ -2218,12 +2215,12 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 	}
 
 	if (j > 0) {
-	    rho = armod.coeff[(ifc)? arlist[0] - 1 : arlist[0]];
+	    rho = armod.coeff[list[0]];
 	    ess = armod.ess;
 	    clear_model(&armod, pdinfo);
 	} 
 
-	pprintf(prn, "iteration %d: SSR = %g, rho = %g\n", j, ess, rho);
+	pprintf(prn, " iteration %2d: SSR = %#g, rho = %#g\n", j, ess, rho);
 
 	/* (re-)estimate linearized model */
 	armod = lsq(arlist, pZ, pdinfo, OLS, 1, 0.0);
@@ -2232,7 +2229,8 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 	    break;
 	}
 
-	essdiff = fabs(ess - armod.ess) / ess;
+	/* essdiff = fabs(ess - armod.ess) / ess; */
+	essdiff = fabs(rho - armod.coeff[list[0]]) / rho;
 
 	if (++j > 20) break;
     }
@@ -2242,6 +2240,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
     for (i=0; i<=list[0]; i++) {
 	armod.list[i] = list[i];
     }
+    armod.ncoeff -= 1;
     armod.ifc = ifc;
     *model_count += 1;
     armod.ID = *model_count;
@@ -2250,12 +2249,10 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
     if (ar_info_init(&armod, 2)) {
 	armod.errcode = E_ALLOC;
     } else {
-	int rhonum = (ifc)? arlist[0] - 1 : arlist[0];
-
 	armod.arinfo->arlist[0] = 1;
 	armod.arinfo->arlist[1] = 1;
-	armod.arinfo->rho[1] = armod.coeff[rhonum];
-	armod.arinfo->sderr[1] = armod.sderr[rhonum];
+	armod.arinfo->rho[1] = armod.coeff[list[0]];
+	armod.arinfo->sderr[1] = armod.sderr[list[0]];
     }
 
     printmodel(&armod, pdinfo, prn);

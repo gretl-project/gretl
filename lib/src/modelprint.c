@@ -1159,9 +1159,9 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS
-	|| pmod->ci == HCCM || pmod->ci == POOLED  
+	|| pmod->ci == HCCM || pmod->ci == POOLED 
+	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
 	|| (pmod->ci == WLS && pmod->wt_dummy)) {
-
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	if (essline(pmod, prn, 0)) {
@@ -1514,12 +1514,20 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 
     if (PLAIN_FORMAT(prn->format)) {
 	sprintf(ustr, "u_%d", arinfo->arlist[c]);
-	pprintf(prn, "%14s ", ustr); 
+	pprintf(prn, "%14s", ustr); 
 	_bufspace(3, prn);
 	gretl_print_value (arinfo->rho[c], prn);
 	_bufspace(2, prn);
 	gretl_print_value (arinfo->sderr[c], prn); 
-	pprintf(prn, " %7.3f %11f\n", xx, tprob(xx, dfd));	
+	pprintf(prn, " %7.3f ", xx, tprob(xx, dfd));
+	if (1) {
+	    char pvalstr[16];
+	    double pval;
+
+	    pval = tprob(xx, dfd);
+	    print_pval_str(pval, pvalstr);
+	    pprintf(prn, "%*s\n", UTF_WIDTH(pvalstr, 12), pvalstr);
+	}
     }
 
     else if (TEX_FORMAT(prn->format)) {
