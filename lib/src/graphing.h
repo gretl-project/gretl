@@ -87,7 +87,7 @@ int graph (const LIST list,
 	   double **Z, const DATAINFO *pdinfo, 
 	   int oflag, PRN *prn);
 
-char *get_gretl_png_fontspec (void);
+const char *get_gretl_png_term_line (void);
 
 int gnuplot_init (PATHS *ppaths, FILE **fpp);
 

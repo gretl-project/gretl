@@ -928,7 +928,7 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     int (*show_progress) (long, long, int) = NULL;
     int show = 0;
 
-    if (gui_open_plugin("progress_bar-2", &handle) == 0) {
+    if (gui_open_plugin("progress_bar", &handle) == 0) {
 	show_progress = 
 	    get_plugin_function("show_progress", handle);
 	if (show_progress != NULL)

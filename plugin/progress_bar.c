@@ -20,7 +20,6 @@
 /* progress.c for gretl */
 
 #include <gtk/gtk.h>
-
 #include "libgretl.h"
 
 typedef struct _ProgressData {
@@ -52,13 +51,30 @@ static ProgressData *progress_window (int flag)
     if (pdata == NULL) return NULL;
 
     pdata->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+#if GTK_MAJOR_VERSION >= 2
+    gtk_window_set_resizable(GTK_WINDOW(pdata->window), FALSE);
+
+    g_signal_connect(G_OBJECT(pdata->window), "destroy",
+		     G_CALLBACK(destroy_progress),
+		     pdata);
+#else
     gtk_window_set_policy(GTK_WINDOW(pdata->window), FALSE, FALSE, TRUE);
 
     gtk_signal_connect(GTK_OBJECT(pdata->window), "destroy",
 		       GTK_SIGNAL_FUNC(destroy_progress),
 		       pdata);
-    gtk_window_set_title(GTK_WINDOW(pdata->window), (flag == SP_LOAD_INIT)?
-			 _("gretl: loading data") : _("gretl: storing data"));
+#endif
+
+    if (flag == SP_LOAD_INIT) {
+	gtk_window_set_title(GTK_WINDOW(pdata->window), _("gretl: loading data"));
+    } 
+    else if (flag == SP_SAVE_INIT) {
+	gtk_window_set_title(GTK_WINDOW(pdata->window), _("gretl: storing data"));
+    } 
+    else if (flag == SP_FONT_INIT) {
+	gtk_window_set_title(GTK_WINDOW(pdata->window), _("gretl: scanning fonts"));
+    }
+	
     gtk_container_set_border_width(GTK_CONTAINER(pdata->window), 0);
 
     vbox = gtk_vbox_new(FALSE, 5);
@@ -78,10 +94,11 @@ static ProgressData *progress_window (int flag)
 
     /* Create the GtkProgressBar */
     pdata->pbar = gtk_progress_bar_new();
-
-    gtk_progress_set_format_string(GTK_PROGRESS(pdata->pbar), "%p%%");
     gtk_container_add(GTK_CONTAINER(align), pdata->pbar);
+#if GTK_MAJOR_VERSION < 2
+    gtk_progress_set_format_string(GTK_PROGRESS(pdata->pbar), "%p%%");
     gtk_progress_set_show_text(GTK_PROGRESS(pdata->pbar), TRUE);
+#endif
     gtk_widget_show(pdata->pbar);
 
     separator = gtk_hseparator_new();
@@ -90,9 +107,15 @@ static ProgressData *progress_window (int flag)
 
     /* Add button to close progress bar window */
     button = gtk_button_new_with_label(_("Cancel"));
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect_swapped(G_OBJECT(button), "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     pdata->window);
+#else
     gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
 			      (GtkSignalFunc) gtk_widget_destroy,
 			      GTK_OBJECT(pdata->window));
+#endif
     gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
 
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
@@ -113,22 +136,36 @@ int show_progress (long res, long expected, int flag)
 
     if (expected == 0) return 0;
 
-    if (flag == SP_FINISH) {
-	if (pdata != NULL)
+    if (res < 0 || flag == SP_FINISH) {
+	if (pdata != NULL) {
 	    gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
+	}
 	return 0;
     }
 
-    if (flag == SP_LOAD_INIT || flag == SP_SAVE_INIT) {
-	char bytestr[64];
+    if (flag == SP_LOAD_INIT || flag == SP_SAVE_INIT || flag == SP_FONT_INIT) {
+	gchar *bytestr = NULL;
 
 	offs = 0L;
 	if ((pdata = progress_window(flag)) == NULL) return 0;
+#if GTK_MAJOR_VERSION >= 2
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), (gdouble) 0);
+#else
 	gtk_progress_bar_update(GTK_PROGRESS_BAR(pdata->pbar), (gfloat) 0);
-	sprintf(bytestr, "%s %ld Kbytes", 
-		(flag == SP_LOAD_INIT)? _("Retrieving") : _("Storing"),
-		expected / 1024);
+#endif
+	if (flag == SP_LOAD_INIT) {
+	    bytestr = g_strdup_printf("%s %ld Kbytes", _("Retrieving"),
+				      expected / 1024);
+	}
+	else if (flag == SP_SAVE_INIT) {
+	    bytestr = g_strdup_printf("%s %ld Kbytes", _("Storing"),
+				      expected / 1024);
+	}
+	else if (flag == SP_FONT_INIT) {
+	    bytestr = g_strdup_printf(_("Scanning %ld fonts"), expected);
+	}
 	gtk_label_set_text(GTK_LABEL(pdata->label), bytestr);
+	g_free(bytestr);
 	while (gtk_events_pending()) gtk_main_iteration();
     }
 
@@ -139,12 +176,18 @@ int show_progress (long res, long expected, int flag)
 	return 0;
     }
 
-    if (pdata != NULL) {
+    if (offs <= expected && pdata != NULL) {
+#if GTK_MAJOR_VERSION >= 2
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), 
+				      (gdouble) ((double) offs / expected));
+#else
 	gtk_progress_bar_update(GTK_PROGRESS_BAR(pdata->pbar), 
 				(gfloat) ((double) offs / expected));
+#endif
 	while (gtk_events_pending()) gtk_main_iteration();
-    } else
+    } else {
 	return -1;
+    }
 	
     return 0;
 }

@@ -55,11 +55,7 @@ char *errbuf;
 
 #define EXCEL_IMPORTER
 
-#ifdef USE_GTK2
-# include "import_common-2.c"
-#else
-# include "import_common.c"
-#endif
+#include "import_common.c"
 
 enum {
     VARNAMES_OK = 0,

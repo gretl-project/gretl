@@ -544,16 +544,12 @@ static void get_worksheet_data (const char *fname, int datatype,
     int (*sheet_get_data)(const char*, double ***, DATAINFO *, char *);
 
     if (datatype == GRETL_GNUMERIC) {
-	if (gui_open_plugin("gnumeric_import-2", &handle)) return;
+	if (gui_open_plugin("gnumeric_import", &handle)) return;
 	sheet_get_data = get_plugin_function("wbook_get_data", handle);
     }
     else if (datatype == GRETL_EXCEL) {
-	if (gui_open_plugin("excel_import-2", &handle)) return;
+	if (gui_open_plugin("excel_import", &handle)) return;
 	sheet_get_data = get_plugin_function("excel_get_data", handle);
-    }
-    else if (datatype == GRETL_DES_DATA) {
-        if (gui_open_plugin("des_import", &handle)) return;
-        sheet_get_data = get_plugin_function("des_get_data", handle);
     }
     else {
 	errbox(_("Unrecognized data type"));

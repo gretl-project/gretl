@@ -48,11 +48,7 @@ static int xmlfile (const char *fname);
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
 
-#ifdef USE_GTK2
-# define PROGRESS_BAR "progress_bar-2"
-#else
-# define PROGRESS_BAR "progress_bar"
-#endif
+#define PROGRESS_BAR "progress_bar"
 
 static double atod (char *s, const DATAINFO *pdinfo)
 {

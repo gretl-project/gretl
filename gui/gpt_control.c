@@ -227,45 +227,42 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
 
 static int add_or_remove_png_term (const char *fname, int add)
 {
-    FILE *fs, *fd;
+    FILE *fsrc, *ftmp;
     char tmp[MAXLEN], fline[MAXLEN];
 
     sprintf(tmp, "%sgpttmp.XXXXXX", paths.userdir);
     if (mktemp(tmp) == NULL) return 1;
 
-    fs = fopen(fname, "r");
-    if (!fs) {
+    fsrc = fopen(fname, "r");
+    if (!fsrc) {
 	sprintf(errtext, _("Couldn't open %s"), fname);
 	errbox(errtext);
 	return 1;
     }
 
-    fd = fopen(tmp, "w");
-    if (!fd) {
+    ftmp = fopen(tmp, "w");
+    if (!ftmp) {
 	sprintf(errtext, _("Couldn't write to %s"), tmp);
 	errbox(errtext);
-	fclose(fs);
+	fclose(fsrc);
 	return 1;
     }
 
     if (add) {
-	char *fontspec = get_gretl_png_fontspec();
-
-	fprintf(fd, "set term png%s\n", (fontspec != NULL)? fontspec : "");
-	fprintf(fd, "set output '%sgretltmp.png'\n", 
+	fprintf(ftmp, "%s\n", get_gretl_png_term_line());
+	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
 		paths.userdir);
-	free(fontspec);
     }
 
-    while (fgets(fline, MAXLEN-1, fs)) {
+    while (fgets(fline, MAXLEN-1, fsrc)) {
 	if (add || (strncmp(fline, "set term", 8) && 
 	    strncmp(fline, "set output", 10))) {
-	    fputs(fline, fd);
+	    fputs(fline, ftmp);
 	}
     }
 
-    fclose(fs);
-    fclose(fd);
+    fclose(fsrc);
+    fclose(ftmp);
 
     return rename(tmp, fname);
 }
@@ -295,7 +292,7 @@ static int gnuplot_png_init (const char *fname, FILE **fpp)
 	errbox(errtext);
 	return 1;
     }
-    fprintf(*fpp, "set term png\n");
+    fprintf(*fpp, "%s\n", get_gretl_png_term_line());
     fprintf(*fpp, "set output '%sgretltmp.png'\n", paths.userdir);
     return 0;
 }

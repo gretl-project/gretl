@@ -67,13 +67,11 @@ gui2/treeutils.c
 gui2/webget.c
 plugin/excel_import.c
 plugin/gnumeric_import.c
-plugin/import_common-2.c
 plugin/import_common.c
 plugin/lad.c
 plugin/longname.c
 plugin/mp_ols.c
 plugin/panel_data.c
-plugin/progress_bar-2.c
 plugin/progress_bar.c
 plugin/range-mean.c
 plugin/stats_tables.c

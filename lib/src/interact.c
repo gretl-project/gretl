@@ -482,9 +482,9 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    /* fprintf(stderr, "field: %s\n", field); */
 	    if (field[strlen(field)-1] == ';')
 		field[strlen(field)-1] = '\0';
-	    if ((v = varindex(pdinfo, field)) <= pdinfo->v - 1) 
+	    if ((v = varindex(pdinfo, field)) <= pdinfo->v - 1) {
 		command->list[j] = v;
-	    else {
+	    } else {
 		/* Automated lags:
 		   could be the string is like "varname(-2)", meaning
 		   the second lag of varname: in this case auto-
@@ -511,11 +511,26 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		    plotvar(pZ, pdinfo, field);
 		    command->list[j] = pdinfo->v - 1;
 		} else {
-		    command->errcode = 1;
-		    sprintf(gretl_errmsg, 
-			    _("'%s' is not the name of a variable"), field);
-		    free(remainder);
-		    return;
+		    int fail = 1;
+
+		    /* try abbreviating the word? */
+		    if (strlen(field) > 8) {
+			char test[9];
+
+			*test = 0;
+			strncat(test, field, 8);
+			if ((v = varindex(pdinfo, test)) <= pdinfo->v - 1) {
+			    command->list[j] = v;
+			    fail = 0;
+			}
+		    } 
+		    if (fail) {
+			command->errcode = 1;
+			sprintf(gretl_errmsg, 
+				_("'%s' is not the name of a variable"), field);
+			free(remainder);
+			return;
+		    }
 		}
 	    }
 	} /* end if isalpha(field[0]) */

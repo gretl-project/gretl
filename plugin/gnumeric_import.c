@@ -40,11 +40,7 @@ typedef enum {
 
 char *errbuf;
 
-#ifdef USE_GTK2
-# include "import_common-2.c"
-#else
-# include "import_common.c"
-#endif
+#include "import_common.c"
 
 static void wsheet_init (wsheet *sheet)
 {

@@ -108,7 +108,7 @@ static gboolean validate_font_family (const gchar *familyname,
 
 #ifdef SHOW_PROGRESS
 	if (show && handle == NULL) {
-	    int err = gui_open_plugin("progress_bar-2", &handle);
+	    int err = gui_open_plugin("progress_bar", &handle);
 
 	    if (err) show = 0;
 	    else {

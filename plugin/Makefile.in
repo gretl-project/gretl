@@ -40,20 +40,14 @@ GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl-1.0.la
 
 ifeq ($(have_gtk),2.0)
-  PROGRESS_PLUGIN = progress_bar-2.so
-  GNUMERIC_PLUGIN = gnumeric_import-2.so
-  EXCEL_PLUGIN = excel_import-2.so
   GTK_CFLAGS += -DGTK_DISABLE_DEPRECATED
   GRETL_LIBOLE2_CFLAGS := -I. $(shell pkg-config --cflags glib-2.0)
 else
-  PROGRESS_PLUGIN = progress_bar.so
-  GNUMERIC_PLUGIN = gnumeric_import.so
-  EXCEL_PLUGIN = excel_import.so
   GRETL_LIBOLE2_CFLAGS := -I. $(shell glib-config --cflags)
 endif  
 
 PLUGINS = lad.so stats_tables.so panel_data.so range-mean.so \
-	$(PROGRESS_PLUGIN) $(GNUMERIC_PLUGIN) $(EXCEL_PLUGIN) $(TXPLUGIN)
+	progress_bar.so gnumeric_import.so excel_import.so $(TXPLUGIN)
 
 ifdef GMP_LIBS
   PLUGINS += mp_ols.so
@@ -93,19 +87,10 @@ tramo-x12a.so: tramo-x12a.lo tramo_options.lo
 progress_bar.so: progress_bar.lo
 	$(LINK) -o $@ $< $(GTK_LIBS)
 
-progress_bar-2.so: progress_bar-2.lo
-	$(LINK) -o $@ $< $(GTK_LIBS)
-
 gnumeric_import.so: gnumeric_import.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
 
-gnumeric_import-2.so: gnumeric_import-2.lo
-	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
-
 excel_import.so: excel_import.lo workbook.lo $(query-ms-ole.lo)
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LIBOLE2_LIBS)
-
-excel_import-2.so: excel_import-2.lo workbook.lo $(query-ms-ole.lo)
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LIBOLE2_LIBS)
 
 mp_ols.so: mp_ols.lo
@@ -132,20 +117,11 @@ tramo_options.lo: tramo_options.c
 progress_bar.lo: progress_bar.c
 	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $< 
 
-progress_bar-2.lo: progress_bar-2.c
-	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $< 
-
 gnumeric_import.lo: gnumeric_import.c import_common.c
 	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $(XML_CFLAGS) $< 
 
-gnumeric_import-2.lo: gnumeric_import.c import_common-2.c
-	$(COMPILE) -o $@ $(GRETLINC) $(GTK_CFLAGS) $(XML_CFLAGS) $< 
-
 excel_import.lo: excel_import.c import_common.c xltypes.h
 	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $<
-
-excel_import-2.lo: excel_import.c import_common-2.c xltypes.h
-	$(COMPILE) -o $@ $(GRETLINC) $(GTK_CFLAGS) $<
 
 workbook.lo: workbook.c biff.h
 	$(COMPILE) $(GRETLINC) $(LIBOLE2_CFLAGS) $<

@@ -50,8 +50,8 @@ UPDATER = gretl_updater.exe
 CHECKER = nisttest.exe
 
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
-	plugins/progress_bar-2.dll plugins/gnumeric_import-2.dll \
-	plugins/excel_import-2.dll plugins/mp_ols.dll \
+	plugins/progress_bar.dll plugins/gnumeric_import.dll \
+	plugins/excel_import.dll plugins/mp_ols.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll
 
 WRES    = gretlw32_res.o
@@ -204,16 +204,16 @@ plugins/tramo-x12a.dll: tramo-x12a.o tramo_options.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS)
 
-plugins/progress_bar-2.dll: progress_bar-2.o dllinit.o
+plugins/progress_bar.dll: progress_bar.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GTKLIBS) -L$(imports) -lintl.dll
 
-plugins/gnumeric_import-2.dll: gnumeric_import.o dllinit.o
+plugins/gnumeric_import.dll: gnumeric_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml \
 	$(GRETLLIB) $(GTKLIBS)
 
-plugins/excel_import-2.dll: excel_import.o workbook.o ms-ole.o dllinit.o
+plugins/excel_import.dll: excel_import.o workbook.o ms-ole.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) -lmoldname
 
@@ -313,7 +313,7 @@ database.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 database.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 database.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 database.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
-database.o: ../gui2/treeutils.h
+database.o: ../gui2/treeutils.h ../gui2/boxplots.h
 datafiles.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
 datafiles.o: ../lib/src/commands.h ../lib/src/errors.h
 datafiles.o: ../lib/src/estimate.h ../lib/src/generate.h
@@ -345,7 +345,8 @@ dialogs.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 dialogs.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 dialogs.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 dialogs.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
-dialogs.o: ../gui2/ssheet.h ../lib/src/version.h ../gui2/selector.h
+dialogs.o: ../gui2/ssheet.h ../lib/src/version.h build.h
+dialogs.o: ../gui2/selector.h
 fileselect.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
 fileselect.o: ../lib/src/commands.h ../lib/src/errors.h
 fileselect.o: ../lib/src/estimate.h ../lib/src/generate.h

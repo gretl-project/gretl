@@ -268,12 +268,9 @@ static int add_or_remove_png_term (const char *fname, int add)
     }
 
     if (add) {
-	char *fontspec = get_gretl_png_fontspec();
-
-	fprintf(ftmp, "set term png%s\n", (fontspec != NULL)? fontspec : "");
+	fprintf(ftmp, "%s\n", get_gretl_png_term_line());
 	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
 		paths.userdir);
-	free(fontspec);
     }
 
     while (fgets(fline, MAXLEN-1, fsrc)) {
@@ -315,7 +312,7 @@ static int gnuplot_png_init (const char *fname, FILE **fpp)
 	errbox(errtext);
 	return 1;
     }
-    fprintf(*fpp, "set term png\n");
+    fprintf(*fpp, "%s\n", get_gretl_png_term_line());
     fprintf(*fpp, "set output '%sgretltmp.png'\n", paths.userdir);
     return 0;
 }
