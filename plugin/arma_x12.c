@@ -286,7 +286,7 @@ static int get_estimates (const char *fname, double *coeff, double *sderr,
 {
     FILE *fp;
     char line[128], word[16];
-    double b, se;
+    double b, se, arfac;
     int i, j, nc = p + q + 1;
     int err = 0;
 
@@ -314,12 +314,6 @@ static int get_estimates (const char *fname, double *coeff, double *sderr,
 		    sderr[i++] = se;
 		}
 	    }
-	    else if (!strcmp(word, "User-defined")) {
-		if (sscanf(line, "%*s %*s %lf %lf", &b, &se) == 2) {
-		    coeff[i] = b;
-		    sderr[i++] = se;
-		}
-	    }
 	    else if (!strcmp(word, "MA")) {
 		if (sscanf(line, "%*s %*s %*s %*s %lf %lf", &b, &se) == 2) {
 		    coeff[j] = -b;
@@ -331,8 +325,17 @@ static int get_estimates (const char *fname, double *coeff, double *sderr,
 
     fclose(fp);
 
+    arfac = 1.0;
     for (i=0; i<nc; i++) {
 	if (na(coeff[i]) || na(sderr[i])) err = 1;
+	else if (i >= 1 && i <= p) {
+	    arfac -= coeff[i];
+	}
+    }
+
+    if (!err) {
+	coeff[0] *= arfac;
+	sderr[0] *= arfac;
     }
 
     return err;
@@ -493,28 +496,8 @@ static int write_spc_file (const char *fname,
     output_series_to_spc(Z[v], pdinfo, fp, 0, offset);
     fputs("}\n", fp);
 
-    fputs("Regression {\n Variables = (const)\n", fp);
-#ifdef MANUAL_LAGS
-    if (p > 0) {
-	int i;
-
-	fputs(" user = (", fp);
-	for (i=0; i<p; i++) {
-	    fprintf(fp, "ylag%d", i + 1);
-	    if (i + 1 < p) fputc(' ', fp);
-	}
-	fputs(")\n", fp);
-	for (i=0; i<p; i++) {
-	    output_series_to_spc(Z[v], pdinfo, fp, i + 1, offset);
-	}
-    }
-#endif
-    fputs("}\n", fp);
-#ifdef MANUAL_LAGS
-    fprintf(fp, "arima {\n model = (0 0 %d)\n}\n", q); 
-#else
+    fputs("Regression {\n Variables = (const)\n}\n", fp);
     fprintf(fp, "arima {\n model = (%d 0 %d)\n}\n", p, q); 
-#endif
     if (verbose) {
 	fputs("estimate {\n print = (acm itr lkf lks mdl est rts rcm)\n", fp);
     } else {
