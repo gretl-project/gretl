@@ -6,8 +6,8 @@
 extern FILE *flg;
 extern int logit;
 
-int retrieve_url (int opt, char *fname, char **savebuf, char *localfile,
-		  char *errbuf, time_t filedate);
+int grab_url (int opt, char *fname, char **savebuf, char *localfile,
+	      char *errbuf, time_t filedate);
 void clear (char *str, const int len);
 int untgz (char *fname);
 void *mymalloc (size_t size);

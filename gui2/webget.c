@@ -21,7 +21,15 @@
 
 /* #define WDEBUG */
 
-#include "gretl.h"
+#ifdef UPDATER
+# include "version.h"
+# define I_(String) String
+# define _(String) String
+# define GRETL_BUFSIZE 8192
+# define MAXLEN         512
+#else
+# include "gretl.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,16 +41,20 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef G_OS_WIN32
+#ifdef WIN32
 # include <winsock.h>
 #else
 # include <sys/socket.h>
 # include <netdb.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
-#endif /* G_OS_WIN32 */
+#endif /* WIN32 */
 
 #include "webget.h"
+
+#ifdef UPDATER
+# include "updater.h"
+#endif
 
 #ifndef errno
 extern int errno;
@@ -51,7 +63,20 @@ extern int errno;
 extern int h_errno;
 #endif
 
+#ifndef UPDATER
 extern int use_proxy; /* gui_utils.c */
+#else
+const char *dbhost_ip = "152.17.150.2";
+static char dbproxy[21];
+static int use_proxy;
+enum {
+    SP_NONE, 
+    SP_LOAD_INIT,
+    SP_SAVE_INIT,
+    SP_FONT_INIT,
+    SP_FINISH 
+} progress_flags;
+#endif /* UPDATER */
 
 #define DEFAULT_HTTP_PORT 80
 #define MINVAL(x, y) ((x) < (y) ? (x) : (y))
@@ -141,13 +166,12 @@ static int iread (int fd, char *buf, int len);
 static int iwrite (int fd, char *buf, int len);
 static char *print_option (int opt);
 
-#ifdef G_OS_WIN32
+#ifdef WIN32
+
 static void ws_cleanup (void)
 {
     WSACleanup();
 }
-
-/* ........................................................... */
 
 int ws_startup (void)
 {
@@ -170,7 +194,8 @@ int ws_startup (void)
     atexit(ws_cleanup);
     return 0;
 }
-#endif
+
+#endif /* WIN32 */
 
 /* ........................................................... */
 
@@ -209,6 +234,64 @@ static int rbuf_peek (struct rbuf *rbuf, char *store)
     return 1;
 }
 
+#ifdef UPDATER
+
+extern void errbox (const char *msg);
+extern void infobox (const char *msg);
+
+enum cgi_options {
+    QUERY = 1,
+    GRAB_FILE
+};
+
+void clear (char *str, const int len)
+{
+    memset(str, 0, len);
+}
+
+void *mymalloc (size_t size) 
+{
+    void *mem;
+   
+    if((mem = malloc(size)) == NULL) 
+        errbox(_("Out of memory!"));
+    return mem;
+}
+
+static void *myrealloc (void *ptr, size_t size) 
+{
+    void *mem;
+   
+    if ((mem = realloc(ptr, size)) == NULL) 
+        errbox(_("Out of memory!"));
+    return mem;
+}
+
+static char *g_strdup (const char *s)
+{
+    char *ret = mymalloc(strlen(s) + 1);
+
+    if (ret != NULL) {
+	strcpy(ret, s);
+    }
+
+    return ret;
+}
+
+static int haschar (char c, const char *str)
+{
+    int i = 0;
+
+    while (*str) {
+        if (*str++ == c) return i;
+        i++;
+    }
+
+    return -1;
+}
+
+#endif /* UPDATER */
+
 /* ........................................................... */
 
 static int header_get (struct rbuf *rbuf, char **hdr, 
@@ -222,7 +305,7 @@ static int header_get (struct rbuf *rbuf, char **hdr,
     for (i = 0; 1; i++) {
 	int res;
 	if (i > bufsize - 1)
-	    *hdr = g_realloc(*hdr, (bufsize <<= 1));
+	    *hdr = myrealloc(*hdr, (bufsize <<= 1));
 	res = RBUF_READCHAR(rbuf, *hdr + i);
 	if (res == 1) {
 	    if ((*hdr)[i] == '\n') {
@@ -265,12 +348,15 @@ static int header_extract_number (const char *header, void *closure)
     const char *p = header;
     long result;
 
-    for (result = 0; isdigit((unsigned char) *p); p++)
+    for (result = 0; isdigit((unsigned char) *p); p++) {
 	result = 10 * result + (*p - '0');
-    if (*p)
+    }
+    if (*p) {
 	return 0;
+    }
 
-    *(long *)closure = result;
+    *(long *) closure = result;
+
     return 1;
 }
 
@@ -278,7 +364,7 @@ static int header_extract_number (const char *header, void *closure)
 
 static int header_strdup (const char *header, void *closure)
 {
-    *(char **)closure = g_strdup(header);
+    *(char **) closure = g_strdup(header);
     return 1;
 }
 
@@ -458,8 +544,9 @@ static int http_process_type (const char *hdr, void *arg)
 	*result = mymalloc(len + 1);
 	memcpy(*result, hdr, len);
 	(*result)[len] = '\0';
-    } else
+    } else {
 	*result = g_strdup(hdr);
+    }
     return 1;
 }
 
@@ -565,10 +652,16 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	fp = NULL; /* use local buffer instead */
 
     if (proxy) {
+#ifdef UPDATER
+	path = mymalloc(strlen(dbhost_ip) + strlen(u->path) + 8);
+	sprintf(path, "http://%s%s", dbhost_ip, u->path);
+#else
 	path = mymalloc(strlen(paths.dbhost_ip) + strlen(u->path) + 8);
 	sprintf(path, "http://%s%s", paths.dbhost_ip, u->path);
-    } else 
+#endif
+    } else {
 	path = u->path; 
+    }
 
     command = (*dt & HEAD_ONLY)? "HEAD" : "GET";
     if (*dt & SEND_NOCACHE)
@@ -578,7 +671,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
     range = NULL;
     sprintf(useragent, "gretl-%s", version_string);
-#ifdef G_OS_WIN32
+#ifdef WIN32
     strcat(useragent, "w");
 #endif
 
@@ -666,10 +759,11 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 		/* A common reason for "malformed response" error is the
 		   case when no data was actually received.  Handle this
 		   special case.  */
-		if (!*hdr)
+		if (!*hdr) {
 		    hs->error = g_strdup(_("No data received"));
-		else
+		} else {
 		    hs->error = g_strdup(_("Malformed status line"));
+		}
 		free(hdr);
 		break;
 	    }
@@ -927,18 +1021,23 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     static char cbuf[GRETL_BUFSIZE];
     size_t allocated;
     int nchunks;
+#ifndef UPDATER
     void *handle;
+#endif
     int (*show_progress) (long, long, int) = NULL;
     int show = 0;
 
+#ifndef UPDATER
     if (gui_open_plugin("progress_bar", &handle) == 0) {
 	show_progress = 
 	    get_plugin_function("show_progress", handle);
 	if (show_progress != NULL)
 	    show = 1;
     }
+#endif
 
     *len = 0L;
+
     if (show) (*show_progress)(res, expected, SP_LOAD_INIT);
 
     if (rbuf && RBUF_FD(rbuf) == fd) {
@@ -963,7 +1062,7 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 	    if (fp == NULL) {
 		if ((size_t) (*len + res) > allocated) {
 		    nchunks *= 2;
-		    *getbuf = realloc(*getbuf, nchunks * GRETL_BUFSIZE);
+		    *getbuf = myrealloc(*getbuf, nchunks * GRETL_BUFSIZE);
 		    if (*getbuf == NULL) {
 			return -2;
 		    }
@@ -984,10 +1083,12 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     if (res < -1)
 	res = -1;
 
+#ifndef UPDATER
     if (show) {
 	(*show_progress)(0, expected, SP_FINISH);
 	close_plugin(handle);
     }
+#endif
 
     return res;
 }
@@ -996,9 +1097,8 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 
 static int store_hostaddress (unsigned char *where, const char *hostname)
 {
-    unsigned long addr;
+    unsigned long addr = (unsigned long) inet_addr(hostname);
 
-    addr = (unsigned long) inet_addr(hostname);
 #ifdef WDEBUG
     fprintf(stderr, "store_hostaddress: hostname='%s', addr=%ld\n",
 	    hostname, addr);
@@ -1006,11 +1106,12 @@ static int store_hostaddress (unsigned char *where, const char *hostname)
     if ((int) addr != -1) {
 	memcpy(where, &addr, 4);
 	return 1;
-    } else
+    } else {
 	return 0;
+    }
 }
 
-#ifdef G_OS_WIN32
+#ifdef WIN32
 #define ECONNREFUSED WSAECONNREFUSED
 #endif
 
@@ -1079,6 +1180,8 @@ static int iwrite (int fd, char *buf, int len)
 
 /* ........................................................... */
 
+#ifndef UPDATER
+
 static char *print_option (int opt)
 {
     switch (opt) {
@@ -1096,6 +1199,24 @@ static char *print_option (int opt)
     return NULL;
 } 
 
+#else
+
+static char *print_option (int opt)
+{
+    switch (opt) {
+    case QUERY:
+        return "QUERY";
+    case GRAB_FILE:
+        return "GRAB_FILE";
+    default:
+        return NULL;
+    }
+    return NULL;
+} 
+
+#endif /* UPDATER */
+
+
 /* ........................................................... */
 
 static int get_update_info (char **saver, char *errbuf, time_t filedate,
@@ -1108,15 +1229,21 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
     const char *cgi = "/gretl/cgi-bin/gretl_update.cgi";
     struct urlinfo *proxy = NULL; 
 
-    if (use_proxy && gretlproxy.host != NULL)
+    if (use_proxy && gretlproxy.host != NULL) {
 	proxy = &gretlproxy;
+    }
 
     u = newurl();
     u->proto = URLHTTP;
     u->port = DEFAULT_HTTP_PORT;
     u->host = mymalloc(16);
+#ifdef UPDATER
+    strcpy(u->host, dbhost_ip);
+#else
     strcpy(u->host, paths.dbhost_ip);
+#endif
     u->path = mymalloc(strlen(cgi) + 64);
+
     if (manual) {
 	sprintf(u->path, "%s?opt=MANUAL_QUERY", cgi);
     } else {
@@ -1139,13 +1266,15 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
 	strcpy(errbuf, u->errbuf);
 	err = 1;
     }
+
     freeurl(u, 1);
+
     return err;
 }
 
 /* ........................................................... */
 
-#ifdef G_OS_WIN32
+#ifdef WIN32
 static size_t get_size (char *buf)
 {
     size_t i, newsize = 0L;
@@ -1162,7 +1291,7 @@ static size_t get_size (char *buf)
 
     return newsize;
 }
-#endif /* G_OS_WIN32 */
+#endif /* WIN32 */
 
 /* ........................................................... */
 
@@ -1209,17 +1338,19 @@ static time_t get_time_from_stamp_file (const char *fname)
 
 /* ........................................................... */
 
+#ifndef UPDATER
+
 int update_query (int verbose)
 {
     int err = 0;
     char *getbuf = NULL;
     char errbuf[80];
     char testfile[MAXLEN];
-#ifndef G_OS_WIN32
+# ifndef WIN32
     int admin = 0;
     char hometest[MAXLEN];
     FILE *fp;
-#endif
+# endif
     struct stat fbuf;
     time_t filedate = (time_t) 0;
 
@@ -1231,7 +1362,7 @@ int update_query (int verbose)
 	return 1;
     } else {
 	filedate = get_time_from_stamp_file(testfile);
-#ifndef G_OS_WIN32
+# ifndef WIN32
 	*hometest = '\0';
 	if (getuid() != fbuf.st_uid) { 
 	    /* user is not owner of gretl.stamp */
@@ -1242,7 +1373,7 @@ int update_query (int verbose)
 	} else {
 	    admin = 1;
 	}
-#endif
+# endif /* WIN32 */
     }
 
     if (filedate == (time_t) 0) {
@@ -1262,14 +1393,14 @@ int update_query (int verbose)
     } else if (strncmp(getbuf, "No new files", 12)) {
 	char infotxt[512];
 
-#ifdef G_OS_WIN32 
+# ifdef WIN32 
 	sprintf(infotxt, _("New files are available from the gretl web site.\n"
 		"These files have a combined size of %u bytes.\n\nIf you "
 		"would like to update your installation, please quit gretl\n"
 		"and run the program titled \"gretl updater\".\n\nOnce the "
 		"updater has completed you may restart gretl."),
 		get_size(getbuf));
-#else
+# else
 	if (admin) {
 	    strcpy(infotxt, _("New files are available from the gretl web site\n"
 		   "http://gretl.sourceforge.net/"));
@@ -1285,7 +1416,7 @@ int update_query (int verbose)
 		    "system\n"));
 	    fclose(fp);
 	}
-#endif /* G_OS_WIN32 */
+# endif /* WIN32 */
 	infobox(infotxt);
     } else if (verbose) {
 	infobox(_("No new files"));
@@ -1294,6 +1425,8 @@ int update_query (int verbose)
     free(getbuf);
     return err;
 }
+
+#endif /* UPDATER */
 
 /* ........................................................... */
 
@@ -1355,18 +1488,24 @@ int retrieve_url (int opt, const char *dbase, const char *series,
     const char *cgi = "/gretl/cgi-bin/gretldata.cgi";
     size_t dblen = 0L;
 
-    if (use_proxy && gretlproxy.host != NULL)
+    if (use_proxy && gretlproxy.host != NULL) {
 	proxy = &gretlproxy;
+    }
 
-    if (dbase != NULL)
+    if (dbase != NULL) {
 	dblen = strlen(dbase);
+    }
 
     u = newurl();
     u->proto = URLHTTP;
     u->port = DEFAULT_HTTP_PORT;
     u->host = mymalloc(16);
-    strcpy(u->host, paths.dbhost_ip);
     u->path = mymalloc(strlen(cgi) + dblen + 64);
+#ifdef UPDATER
+    strcpy(u->host, dbhost_ip);
+#else
+    strcpy(u->host, paths.dbhost_ip);
+#endif
     sprintf(u->path, "%s?opt=%s", cgi, print_option(opt));
 
     if (dblen) {
@@ -1400,11 +1539,10 @@ int retrieve_url (int opt, const char *dbase, const char *series,
     }
 }
 
-#ifdef G_OS_WIN32
+#ifdef WIN32
 
 #include <windows.h>
 #include <shellapi.h>
-#include <string.h>
 
 long GetRegKey (HKEY key, char *subkey, char *retdata)
 {
@@ -1426,38 +1564,103 @@ long GetRegKey (HKEY key, char *subkey, char *retdata)
     return err;
 }
 
+# ifdef UPDATER
+
+static void read_proxy_info (void);
+
+int grab_url (int opt, char *fname, char **savebuf, char *localfile,
+	      char *errbuf, time_t filedate)
+{
+    read_proxy_info();
+
+    return retrieve_url(opt, NULL, NULL, 1, savebuf, errbuf); /* FIXMEE!!! */
+}
+
+int read_reg_val (HKEY tree, char *keyname, char *keyval)
+{
+    unsigned long datalen = MAXLEN;
+    int error = 0;
+    HKEY regkey;
+
+    if (RegOpenKeyEx(
+                     tree,                        /* handle to open key */
+                     "Software\\gretl",           /* subkey name */
+                     0,                           /* reserved */
+                     KEY_READ,                    /* access mask */
+                     &regkey                      /* key handle */
+                     ) != ERROR_SUCCESS) {
+        fprintf(stderr, "couldn't open registry\n");
+        return 1;
+    }
+
+    if (RegQueryValueEx(
+                        regkey,
+                        keyname,
+                        NULL,
+                        NULL,
+                        keyval,
+                        &datalen
+                        ) != ERROR_SUCCESS) {
+        error = 1;
+    }
+
+    RegCloseKey(regkey);
+
+    return error;
+}
+
+static void read_proxy_info (void) 
+{
+    char val[128];
+
+    use_proxy = 0;
+    *dbproxy = '\0';
+
+    if (read_reg_val(HKEY_CURRENT_USER, "useproxy", val) == 0) {
+	if (!strcmp(val, "true") || !strcmp(val, "1")) {
+	    use_proxy = 1;
+	}
+    }
+
+    if (use_proxy && read_reg_val(HKEY_CURRENT_USER, "dbproxy", val) == 0) {
+        strncat(dbproxy, val, 20);
+    }
+}
+# endif /* UPDATER */
+
 int goto_url (const char *url)
 {
     char key[MAX_PATH + MAX_PATH];
     int err = 0;
 
     /* if the ShellExecute() fails */
-    if ((long)ShellExecute(NULL, "open", url, NULL, NULL, SW_SHOW) <= 32) {
+    if ((long) ShellExecute(NULL, "open", url, NULL, NULL, SW_SHOW) <= 32) {
 	/* get the .htm regkey and lookup the program */
 	if (GetRegKey(HKEY_CLASSES_ROOT, ".htm", key) == ERROR_SUCCESS) {
 	    lstrcat(key,"\\shell\\open\\command");
 	    if (GetRegKey(HKEY_CLASSES_ROOT, key, key) == ERROR_SUCCESS) {
-		char *pos;
-		pos = strstr(key,"\"%1\"");
-		if (pos == NULL) {    /* if no quotes */
-		    /* now check for %1, without the quotes */
-		    pos = strstr(key, "%1");
-		    if(pos == NULL) /* if no parameter */
-			pos = key + lstrlen(key) - 1;
-		    else
-			*pos = '\0';    /* remove the parameter */
-		}
-		else
-		    *pos = '\0';        /* remove the parameter */
+		char *p;
 
-		lstrcat(pos, " ");
-		lstrcat(pos, url);
+		p = strstr(key, "\"%1\"");
+		if (p == NULL) {    /* if no quotes */
+		    /* now check for %1, without the quotes */
+		    p = strstr(key, "%1");
+		    if (p == NULL) {
+			/* if no parameter */
+			p = key + lstrlen(key) - 1;
+		    } else {
+			*p = '\0';    /* remove the parameter */
+		    }
+		} else {
+		    *p = '\0';        /* remove the parameter */
+		}
+
+		lstrcat(p, " ");
+		lstrcat(p, url);
 		if (WinExec(key, SW_SHOW) < 32) err = 1;
 	    }
 	}
     }
-    else
-	err = 0;
 
     return err;
 }

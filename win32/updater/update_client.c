@@ -289,13 +289,13 @@ int main (int argc, char *argv[])
 	    fputs("getbuf allocated OK\n", flg);
 	}
 
-	err = retrieve_url(QUERY, NULL, &getbuf, NULL, errbuf, filedate);
+	err = grab_url(QUERY, NULL, &getbuf, NULL, errbuf, filedate);
 	if (err) {
 	   listerr(errbuf, fname);
 	   getout(1);
 	}
 
-	if (logit) fputs("first call to retrieve_url: success\n", flg);
+	if (logit) fputs("first call to grab_url: success\n", flg);
 
 	i = 0;
 	while ((line = strtok((i)? NULL: getbuf, "\n"))) {
@@ -325,13 +325,13 @@ int main (int argc, char *argv[])
 #ifdef OS_WIN32
 	    switch_cursor(OCR_WAIT);
 #endif
-	    err = retrieve_url(GRAB_FILE, fname, NULL, fname, errbuf, 0);
+	    err = grab_url(GRAB_FILE, fname, NULL, fname, errbuf, 0);
 #ifdef OS_WIN32
 	    switch_cursor(OCR_NORMAL);
 #endif
 
 	    if (logit) {
-		fprintf(flg, "retrieve_url() returned %d\n", err);
+		fprintf(flg, "grab_url() returned %d\n", err);
 	    }	    
 	    if (err) {
 		listerr(errbuf, fname);
@@ -360,7 +360,7 @@ int main (int argc, char *argv[])
     else if (strcmp(argv[1], "-l") == 0) { /* get listing */
 	getbuf = malloc(8192); 
 	clear(getbuf, 8192);
-	err = retrieve_url(QUERY, NULL, &getbuf, NULL, errbuf, filedate);
+	err = grab_url(QUERY, NULL, &getbuf, NULL, errbuf, filedate);
 	if (err) {
 	    listerr(errbuf, NULL);
 	    free(getbuf);
@@ -374,7 +374,7 @@ int main (int argc, char *argv[])
     
     else if (strcmp(argv[1], "-f") == 0) { /* get a specified file */
 	strncpy(fname, argv[2], 47);
-	err = retrieve_url(GRAB_FILE, fname, NULL, fname, errbuf, 0);
+	err = grab_url(GRAB_FILE, fname, NULL, fname, errbuf, 0);
 	if (err) {
 	    listerr(errbuf, fname);
 	    getout(1);
