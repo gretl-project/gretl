@@ -57,7 +57,6 @@ extern void open_named_db_clist (char *dbname);
 extern void open_named_remote_clist (char *dbname);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
-extern void do_mp_ols (void);
 
 /* functions private to gretl.c */
 static void make_toolbar (GtkWidget *w, GtkWidget *box);
@@ -312,7 +311,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Utilities/Statistical tables"), NULL, stats_calculator, 1, NULL },
     { N_("/Utilities/p-value finder"), NULL, stats_calculator, 0, NULL },
     { N_("/Utilities/Test statistic calculator"), NULL, stats_calculator, 2, NULL },
-    { N_("/Utilities/MPOLS"), NULL, do_mp_ols, 0, NULL },
     { N_("/Utilities/sep"), NULL, NULL, 0, "<Separator>" },
     { N_("/Utilities/Gretl console"), NULL, console, 0, NULL },
     { N_("/Utilities/sep2"), NULL, NULL, 0, "<Separator>" },
@@ -348,9 +346,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/Graph specified vars/X-Y with factor separation..."), 
       NULL, selector_callback, GR_DUMMY, NULL },
     { N_("/Data/Graph specified vars/Boxplots..."), 
-      NULL, selector_callback, GR_BOX, NULL },
+      NULL, gretl_callback, GR_BOX, NULL },
     { N_("/Data/Graph specified vars/Notched boxplots..."), 
-      NULL, selector_callback, GR_NBOX, NULL },
+      NULL, gretl_callback, GR_NBOX, NULL },
     { N_("/Data/_Multiple scatterplots..."), 
       NULL, selector_callback, SCATTERS, NULL},
     { N_("/Data/sep2"), NULL, NULL, 0, "<Separator>" },
@@ -466,6 +464,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/_Probit..."), NULL, model_callback, PROBIT, NULL },
     { N_("/Model/_Rank correlation..."), NULL, gretl_callback, SPEARMAN, NULL },
     { N_("/Model/_Pooled OLS (panel)..."), NULL, model_callback, POOLED, NULL },
+#ifdef ENABLE_GMP
+    { N_("/Model/High precision OLS..."), NULL, mp_ols_callback, MPOLS, NULL },
+#endif
     { N_("/_Help"), NULL, NULL, 0, "<LastBranch>" },
     { N_("/Help/_GUI commands"), NULL, do_gui_help, 0, NULL },
     { N_("/Help/_Script commands syntax"), NULL, do_script_help, 1, NULL },

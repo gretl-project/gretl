@@ -257,6 +257,16 @@ void model_callback (gpointer data, guint model_code, GtkWidget *widget)
 
 /* ........................................................... */
 
+#ifdef ENABLE_GMP
+void mp_ols_callback (gpointer data, guint model_code, GtkWidget *widget)
+{
+    selection_dialog (_("gretl: specify model"), _("Estimate"), 
+		      do_mp_ols, model_code);
+}
+#endif /* ENABLE_GMP */
+
+/* ........................................................... */
+
 #ifdef notdef
 static int model_dates_check (windata_t *mydata)
 {

@@ -84,6 +84,10 @@ void set_storelist (GtkWidget *widget, dialog_t *ddata);
 
 void do_model (GtkWidget *widget, gpointer p);
 
+#ifdef ENABLE_GMP
+void do_mp_ols (GtkWidget *widget, gpointer p);
+#endif
+
 /* variable-related functions */
 
 void do_sim (GtkWidget *widget, dialog_t *ddata);

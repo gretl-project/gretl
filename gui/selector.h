@@ -17,10 +17,17 @@
  *
  */
 
+#ifdef ENABLE_GMP
+#define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
+                       c == POOLED || c == HCCM || c == HSK || \
+                       c == TSLS || c == LOGIT || c == PROBIT || \
+                       c == AR || c == VAR || c == COINT || c == MPOLS)
+#else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == POOLED || c == HCCM || c == HSK || \
                        c == TSLS || c == LOGIT || c == PROBIT || \
                        c == AR || c == VAR || c == COINT)
+#endif
 
 #define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE || \
                         c == DIFF || c == LDIFF)

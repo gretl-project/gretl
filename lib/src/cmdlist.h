@@ -67,7 +67,7 @@ char *commands[] = {
     "logs",
     "loop",
     "meantest",
-#ifdef HAVE_GMP
+#ifdef ENABLE_GMP
     "mpols",
 #endif
     "multiply",

@@ -29,6 +29,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Location of shared gretl files */
 #define GRETL "/usr/local/share/gretl"
 
+/* Multiple precision arithmetic? */
+#undef ENABLE_GMP
+
 /* Define if you want GNU readline support */
 #undef HAVE_READLINE
 

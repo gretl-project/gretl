@@ -410,6 +410,10 @@ static char *est_str (int cmdnum)
 	return N_("VAR");
     case COINT:
 	return N_("Cointegration");
+#ifdef ENABLE_GMP
+    case MPOLS:
+	return N_("High precision OLS");
+#endif
     default:
 	return "";
     }

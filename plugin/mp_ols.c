@@ -22,6 +22,8 @@
 #include "libgretl.h"
 #include <gmp.h>
 
+#define MP_DIGITS 14
+
 static mpf_t MPF_ONE;
 static mpf_t MPF_ZERO;
 static mpf_t MPF_MINUS_ONE;
@@ -33,8 +35,8 @@ typedef struct {
                                     observation, and number of obs */
     int ncoeff, dfn, dfd;        /* number of coefficents; degrees of
                                     freedom in numerator and denominator */
-    int *list;                   /* list of variables by ID number */
-    char **varname;              /* names of variables */
+    int *list;                   /* list of variables by (translated) ID number */
+    int *varlist;                /* counterpart of list, using "real" ID #s */
     int ifc;                     /* = 1 if the equation includes a constant,
 				    else = 0 */
     mpf_t *coeff;                /* array of coefficient estimates */
@@ -88,39 +90,95 @@ static void mpf_constants_clear (void)
     mpf_clear (MPF_MINUS_ONE);
 }
 
-static int data_problems (const int *list, double **Z, DATAINFO *pdinfo)
+#ifdef notdef
+static int dec (double x)
 {
-    return 0;  /* ha! */
+    int i, dec = 0;
+    char numstr[24];
+
+    sprintf(numstr, "%14g", x);
+    for (i=strlen(numstr)-1; i>0; i--) {
+	if (numstr[i] != '.' && numstr[i] != ',') dec++;
+	else break;
+    }
+    return dec;
+}
+#endif
+
+#ifdef notdef
+static void mpf_print (char *s, mpf_t x)
+{
+    mp_exp_t e;
+    char numstr[16];
+
+    mpf_get_str (numstr, &e, 10, MP_DIGITS, x);
+    sprintf(s, "%se%3d", numstr, (int) e);
+}
+#endif
+
+static int data_problems (const int *list, double **Z, DATAINFO *pdinfo,
+			  char *errbuf)
+{
+    /* reject (a) if any values are missing, (b) if any vars are all
+       zero */
+    int i, t, allzero;
+
+    for (i=1; i<=list[0]; i++) {
+	allzero = 1;
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
+	    if (na(Z[list[i]][t])) {
+		sprintf(errbuf, _("Missing observations for variable '%s'"), 
+			pdinfo->varname[list[i]]);	
+		return 1;
+	    }
+	    if (!floateq(Z[list[i]][t], 0.0)) allzero = 0;
+	}
+	if (allzero) {
+	    sprintf(errbuf, _("Variable '%s' is all zeros"), 
+		    pdinfo->varname[list[i]]);
+	    return 1;
+	}
+    }
+    return 0;
 }
 
 static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo)
 {
     int i, j, t, n = pmod->t2 - pmod->t1 + 1;
+    int l0 = pmod->list[0];
     mpf_t **mpZ = NULL;
 
     if (n <= 0) return NULL;
 
-    pmod->varname = malloc (pmod->list[0] * sizeof (char *));
-    if (pmod->varname == NULL) return NULL;
+    pmod->varlist = malloc ((l0 + 1) * sizeof *pmod->varlist);
+    if (pmod->varlist == NULL) return NULL;
+    pmod->varlist[0] = l0;
 
-    for (i=0; i<pmod->list[0]; i++) {
-	pmod->varname[i] = malloc(9);
-	if (pmod->varname[i] == NULL) return NULL;
-    }
-
-    mpZ = malloc(pmod->list[0] * sizeof *mpZ);
+    mpZ = malloc(l0 * sizeof *mpZ);
     if (mpZ == NULL) return NULL;
 
-    for (i=0; i<pmod->list[0]; i++) {
-	mpZ[i] = malloc(n * sizeof **mpZ);
-	if (mpZ[i] != NULL) {
-	    j = 0;
-	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		mpf_init_set_d (mpZ[i][j++], Z[pmod->list[i+1]][t]);
-	    }
-	    strcpy (pmod->varname[i], pdinfo->varname[pmod->list[i+1]]);
-	    pmod->list[i+1] = i;
-	} else return NULL;
+    if (pmod->ifc) {
+	mpZ[0] = malloc(n * sizeof **mpZ);
+	j = 0;
+	for (t=pmod->t1; t<=pmod->t2; t++) mpf_init_set_d (mpZ[0][j++], 1.0);
+    }
+
+    for (i=0; i<l0; i++) {
+	int k = i + pmod->ifc;
+
+	if (pmod->list[i+1] == 0) {
+	    pmod->varlist[i+1] = 0;
+	} else {
+	    mpZ[k] = malloc(n * sizeof **mpZ);
+	    if (mpZ[k] != NULL) {
+		j = 0;
+		for (t=pmod->t1; t<=pmod->t2; t++) {
+		    mpf_init_set_d (mpZ[k][j++], Z[pmod->list[i+1]][t]);
+		}
+		pmod->varlist[i+1] = pmod->list[i+1];
+		pmod->list[i+1] = k;
+	    } else return NULL;
+	}
     }
     return mpZ;
 }
@@ -141,8 +199,7 @@ static void mp_model_free (MPMODEL *pmod)
     int i, l0 = pmod->list[0];
 
     free (pmod->list);
-    for (i=0; i<l0; i++) free (pmod->varname[i]);
-    free (pmod->varname);
+    free (pmod->varlist);
 
     for (i=0; i<=pmod->ncoeff; i++) 
 	mpf_clear (pmod->coeff[i]);
@@ -181,7 +238,7 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
     pmod->t1 = pdinfo->t1;
     pmod->t2 = pdinfo->t2;
     pmod->list = NULL;
-    pmod->varname = NULL;
+    pmod->varlist = NULL;
     pmod->ifc = 1;
     pmod->coeff = NULL;
     pmod->sderr = NULL;
@@ -198,6 +255,83 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
     pmod->errcode = 0;
 }
 
+static void print_mp_coeff_1 (const MPMODEL *pmod, const DATAINFO *pdinfo,
+			    int c, PRN *prn)
+{
+    double xx = mpf_get_d (pmod->coeff[c-1]);
+    double yy = mpf_get_d (pmod->sderr[c-1]);
+
+    pprintf(prn, " %3d) %8s %17.12g %17.12g\n", pmod->varlist[c], 
+	    pdinfo->varname[pmod->varlist[c]], xx, yy);
+}
+
+#ifdef notdef
+static void print_mp_coeff_2 (const MPMODEL *pmod, const DATAINFO *pdinfo,
+			    int c, PRN *prn)
+{
+    char numstr1[24], numstr2[24];
+
+    mpf_print(numstr1, pmod->coeff[c-1]);
+    mpf_print(numstr2, pmod->sderr[c-1]);
+    pprintf(prn, " %3d) %8s %s %s\n", pmod->varlist[c], numstr1, numstr2);
+}
+#endif
+
+
+static void other_stats (const MPMODEL *pmod, PRN *prn)
+{
+    double xx;
+    
+    xx = mpf_get_d (pmod->sigma);
+    pprintf(prn, _("Standard error        %17.12g\n"), xx);
+    xx = mpf_get_d (pmod->ess);
+    pprintf(prn, _("Error Sum of Squares  %17.12g\n"), xx);
+    xx = mpf_get_d (pmod->rsq);
+    pprintf(prn, _("Unadjusted R-squared  %17.12g\n"), xx);
+    xx = mpf_get_d (pmod->adjrsq);
+    pprintf(prn, _("Adjusted R-squared    %17.12g\n"), xx);
+    xx = mpf_get_d (pmod->fstt);
+    pprintf(prn, _("F(%d, %d)             %17.12g\n"), pmod->dfn, pmod->dfd, xx);
+    
+}
+
+static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+{
+    int i, ncoeff;
+    char startdate[9], enddate[9];
+    int t1 = pmod->t1, t2 = pmod->t2;
+
+    ncoeff = pmod->list[0];
+    ntodate(startdate, t1, pdinfo);
+    ntodate(enddate, t2, pdinfo);
+
+    pprintf(prn, _("High-precision OLS estimates using the %d observations %s-%s\n"),
+	    pmod->nobs, startdate, enddate);
+    pprintf(prn, _("Dependent variable: %s\n\n"), 
+		 pdinfo->varname[pmod->varlist[1]]);
+
+    pprintf(prn, _("      VARIABLE      COEFFICIENT      STD. ERROR       \n"));
+
+    if (pmod->ifc) {
+	print_mp_coeff_1(pmod, pdinfo, ncoeff, prn);
+	ncoeff--;
+    }
+    for (i=2; i<=ncoeff; i++) {
+	print_mp_coeff_1(pmod, pdinfo, i, prn);
+    }
+    pprintf(prn, "\n");
+
+    other_stats (pmod, prn);
+
+#ifdef notdef
+    depvarstats(pmod, prn);
+    if (essline(pmod, prn, 0)) return gotnan;
+    if (Fline(pmod, prn)) gotnan = 1;
+#endif
+
+    return 0;
+}
+
 /**
  * mplsq:
  * @list: dependent variable plus list of regressors.
@@ -211,14 +345,17 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
  * Returns: 0 on success, error code on failure.
  */
 
-int mplsq (const LIST list, double **Z, DATAINFO *pdinfo) 
+int mplsq (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
+	   char *errbuf) 
 {
     int l0, i;
     mpf_t **mpZ = NULL;
     XPXXPY xpxxpy;
     MPMODEL model;
 
-    if (list == NULL || Z == NULL || pdinfo == NULL ||
+    *errbuf = 0;
+
+    if (list == NULL || pZ == NULL || *pZ == NULL || pdinfo == NULL ||
 	list[0] == 1 || pdinfo->v == 1) return E_DATA;
 
     mp_model_init (&model, pdinfo);
@@ -228,13 +365,13 @@ int mplsq (const LIST list, double **Z, DATAINFO *pdinfo)
     if (model.list == NULL) return E_ALLOC;
 
     /* check for missing obs in sample */
-    if (data_problems(model.list, Z, pdinfo)) return E_DATA;
+    if (data_problems(model.list, *pZ, pdinfo, errbuf)) return E_DATA;
 
     /* see if the regressor list contains a constant */
     model.ifc = rearrange(model.list);
 
     /* construct multiple-precision data matrix */
-    mpZ = make_mpZ(&model, Z, pdinfo);
+    mpZ = make_mpZ(&model, *pZ, pdinfo);
 
     if (mpZ == NULL) return 1;
 
@@ -246,8 +383,8 @@ int mplsq (const LIST list, double **Z, DATAINFO *pdinfo)
 
     /* check degrees of freedom */
     if (model.nobs < model.ncoeff) { 
-        sprintf(gretl_errmsg, _("No. of obs (%d) is less than no. "
-				"of parameters (%d)"), model.nobs, model.ncoeff);
+        sprintf(errbuf, _("No. of obs (%d) is less than no. "
+			  "of parameters (%d)"), model.nobs, model.ncoeff);
         return E_DF; 
     }
 
@@ -260,12 +397,7 @@ int mplsq (const LIST list, double **Z, DATAINFO *pdinfo)
     free(xpxxpy.xpy);
     if (model.errcode) return model.errcode;
 
-    /* now print the results */
-    for (i=1; i<=model.ncoeff; i++) {
-	printf("%-8s ", model.varname[i]);
-	mpf_out_str (NULL, 10, 12, model.coeff[i]);
-	fputc('\n', stdout);
-    }
+    print_mp_ols (&model, pdinfo, prn);
 
     /* and free all the mpf stuff */
     free_mpZ(mpZ, l0, model.nobs);
@@ -435,7 +567,7 @@ static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n)
     } else {
 	mpf_set_d (tmp, (double) pmod->dfd);
 	mpf_div (sgmasq, pmod->ess, tmp);
-	mpf_sqrt(pmod->sigma, sgmasq);
+	mpf_sqrt (pmod->sigma, sgmasq);
 	mpf_mul (den, tss, tmp);
     }
 

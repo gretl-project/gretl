@@ -1522,33 +1522,7 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 		PANEL, view_items);
 }
 
-/* ........................................................... */
 
-/* testing */
-void do_mp_ols (void)
-{
-    void *handle;
-    int (*mplsq)(const int *, double **, DATAINFO *);
-    int err;
-
-    if (gui_open_plugin("mp_ols", &handle)) return;
-    mplsq = get_plugin_function("mplsq", handle);
-
-    if (mplsq == NULL) {
-	errbox(_("Couldn't load plugin function"));
-	close_plugin(handle);
-	return;
-    } else {
-	int *mylist = malloc(4 * sizeof *mylist);
-	
-	mylist[0] = 3;
-	mylist[1] = 1;
-	mylist[2] = 0;
-	mylist[2] = 2;
-	err = mplsq (mylist, Z, datainfo);
-	free(mylist);
-    }
-}
 
 /* ........................................................... */
 
@@ -1767,6 +1741,71 @@ static gint check_model_cmd (char *line, char *modelgenr)
     gretl_print_destroy(getgenr);
     return 0;
 }
+
+/* ........................................................... */
+
+#ifdef ENABLE_GMP
+
+void do_mp_ols (GtkWidget *widget, gpointer p)
+{
+    char *edttext, estimator[9];
+    void *handle;
+    int (*mplsq)(const int *, double ***, DATAINFO *, PRN *, char *);
+    int err, action;
+    selector *sr = (selector *) p;
+    PRN *prn;
+
+    action = sr->code;
+    strcpy(estimator, commands[action]);
+
+    edttext = sr->cmdlist;    
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "%s %s", estimator, edttext);
+
+    if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
+
+    if (gui_open_plugin("mp_ols", &handle)) return;
+    mplsq = get_plugin_function("mplsq", handle);
+
+    if (mplsq == NULL) {
+	errbox(_("Couldn't load plugin function"));
+	close_plugin(handle);
+	return;
+    }
+
+    err = (*mplsq)(command.list, &Z, datainfo, prn, errtext);
+
+    if (err) {
+	if (errtext[0] != 0) errbox(errtext);
+	else errbox(get_errmsg(err, NULL, NULL));
+	gretl_print_destroy(prn);
+	return;
+    }
+
+    view_buffer(prn, 78, 400, _("gretl: high precision estimates"), 
+                MPOLS, view_items);
+}
+
+static int mp_ols_cmdline (const int *list, PRN *prn)
+{
+    void *handle;
+    int (*mplsq)(const int *, double ***, DATAINFO *, PRN *, char *);
+
+    if (gui_open_plugin("mp_ols", &handle)) return 1;
+    mplsq = get_plugin_function("mplsq", handle);
+
+    if (mplsq == NULL) {
+	pprintf(prn, _("Couldn't load plugin function"));
+	close_plugin(handle);
+	return 1;
+    }
+
+    return (*mplsq)(list, &Z, datainfo, prn, errtext);
+}
+
+#endif /* ENABLE_GMP */
 
 /* ........................................................... */
 
@@ -2798,6 +2837,28 @@ void do_scatters (GtkWidget *widget, gpointer p)
 			 datainfo, &paths);
     if (err < 0) errbox(_("gnuplot command failed"));
     else register_graph();
+}
+
+/* ........................................................... */
+
+void do_box_graph_trad (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext;
+    gint err, code = ddata->code; 
+
+    edttext = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
+    if (edttext == NULL || *edttext == 0) return;
+
+    if (strchr(edttext, '('))
+	err = boolean_boxplots(edttext, &Z, datainfo, (code == GR_NBOX));
+    else {
+	clear(line, MAXLEN);
+	sprintf(line, "boxplot %s%s", (code == GR_NBOX)? "-o " : "", edttext);
+
+	if (check_cmd(line) || cmd_init(line)) return;
+	err = boxplots(command.list, NULL, &Z, datainfo, (code == GR_NBOX));
+    }
+    if (err) errbox(_("boxplot command failed"));
 }
 
 /* ........................................................... */
@@ -4101,6 +4162,10 @@ static int gui_exec_line (char *line,
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
 	if (oflag) outcovmx(models[0], datainfo, 0, prn); 
+	break;
+
+    case MPOLS:
+	err = mp_ols_cmdline(command.list, prn);
 	break;
 
     case PANEL:
