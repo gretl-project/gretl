@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
 "POT-Creation-Date: 2004-02-16 14:08-0500\n"
-"PO-Revision-Date: 2004-01-31 13:54-0500\n"
+"PO-Revision-Date: 2004-02-18 13:10-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -462,11 +462,13 @@ msgstr ""
 "Lecture du fichier de données %s\n"
 
 #: lib/src/dataio.c:1700 lib/src/dataio.c:1823 lib/src/dataio.c:1923
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "periodicity: %d, maxobs: %d,\n"
 "observations range: %s-%s\n"
-msgstr "périodicité: %d, obs. max: %d, étendue des observations: %s-%s\n"
+msgstr ""
+"périodicité: %d, obs. max: %d,\n"
+"étendue des observations: %s-%s\n"
 
 #: lib/src/dataio.c:1787
 #, c-format
@@ -1769,9 +1771,8 @@ msgid "hourly plotting variable"
 msgstr "variable du traçage horaire"
 
 #: lib/src/generate.c:2845
-#, fuzzy
 msgid "daily plotting variable"
-msgstr "variable du traçage annuel"
+msgstr "variable du traçage quotidien"
 
 #: lib/src/generate.c:2949
 #, c-format
@@ -2726,9 +2727,8 @@ msgid "Logit"
 msgstr "Logit"
 
 #: lib/src/modelprint.c:499 gui/selector.c:486 gui2/selector.c:731
-#, fuzzy
 msgid "Tobit"
-msgstr "Probit"
+msgstr "Tobit"
 
 #: lib/src/modelprint.c:500 gui/selector.c:490 gui2/selector.c:735
 msgid "Pooled OLS"
@@ -2816,12 +2816,12 @@ msgstr "Variable dépendante"
 #: lib/src/modelprint.c:885 lib/src/modelprint.c:890
 #, c-format
 msgid "Serial correlation-robust standard errors, lag order %d\n"
-msgstr "Erreurs standard de corrélation-robuste sérielle, ordre de délai %d\n"
+msgstr "Erreurs standard robustes, ordre de délai %d\n"
 
 #: lib/src/modelprint.c:897
-#, fuzzy, c-format
+#, c-format
 msgid "Heteroskedasticity-robust standard errors, variant HC%d\n"
-msgstr "Erreurs standard de corrélation-robuste sérielle, ordre de délai %d\n"
+msgstr "Erreurs standard robustes, variante HC%d\n"
 
 #: lib/src/modelprint.c:906
 msgid "Variable used as weight"
@@ -2962,14 +2962,12 @@ msgstr "MA"
 
 #: lib/src/modelprint.c:1909 lib/src/modelprint.c:1914
 #: lib/src/modelprint.c:1922
-#, fuzzy
 msgid "Censored observations"
-msgstr "somme des observations"
+msgstr "Observations censurées"
 
 #: lib/src/modelprint.c:1910 lib/src/modelprint.c:1915
-#, fuzzy
 msgid "sigma"
-msgstr "Estimer"
+msgstr "sigma"
 
 #: lib/src/modelprint.c:1911 lib/src/modelprint.c:1916
 #: lib/src/modelprint.c:1926 lib/src/modelprint.c:1933
@@ -3592,13 +3590,11 @@ msgstr ""
 "échec du calcul de la valeur de P\n"
 
 #: lib/src/pvalues.c:241
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Standard normal: area to the %s of %g = %.4g\n"
-msgstr ""
-"\n"
-"Normale standard: aire à la %s de %f = %.4g\n"
+msgstr "\nNormale standard: aire à la %s de %g = %.4g\n"
 
 #: lib/src/pvalues.c:244 lib/src/pvalues.c:262
 #, c-format
@@ -3614,13 +3610,11 @@ msgstr ""
 "valeur de P pour t: paramètre manquan\n"
 
 #: lib/src/pvalues.c:259
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "t(%d): area to the %s of %g = %.4g\n"
-msgstr ""
-"\n"
-"t (%d): aire à la %s de %f = %.4g\n"
+msgstr "\nt (%d): aire à la %s de %g = %.4g\n"
 
 #: lib/src/pvalues.c:271
 msgid ""
@@ -3631,13 +3625,11 @@ msgstr ""
 "valeur de P pour Khi-deux: paramètre manquant\n"
 
 #: lib/src/pvalues.c:279
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Chi-square(%d): area to the right of %g = %.4g\n"
-msgstr ""
-"\n"
-"Khi-deux(%d): aire à la droite de %f = %.4g\n"
+msgstr "\nKhi-deux(%d): aire à la droite de %g = %.4g\n"
 
 #: lib/src/pvalues.c:281 lib/src/pvalues.c:298
 #, c-format
@@ -3653,13 +3645,11 @@ msgstr ""
 "valeur de P pour F: paramètre manquant\n"
 
 #: lib/src/pvalues.c:296
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "F(%d, %d): area to the right of %g = %.4g\n"
-msgstr ""
-"\n"
-"F (%d, %d): aira à la droite de %f = %.4g\n"
+msgstr "\nF (%d, %d): aira à la droite de %g = %.4g\n"
 
 #: lib/src/pvalues.c:306
 msgid ""
@@ -6495,9 +6485,8 @@ msgid "TrueType font"
 msgstr "fonte TrueType"
 
 #: gui/gpt_control.c:988 gui2/gpt_control.c:988
-#, fuzzy
 msgid "Fill color"
-msgstr "couleur"
+msgstr "couleur de remplissage"
 
 #: gui/gpt_control.c:990 gui2/gpt_control.c:990
 #, c-format
@@ -6718,7 +6707,7 @@ msgstr "Pour coller, utiliser Editer/_Coller spécial.../metafichier rehaussé"
 
 #: gui/graph_page.c:260 gui2/graph_page.c:260
 msgid "The graph page is full"
-msgstr ""
+msgstr "La page du graphe est pleine"
 
 #: gui/graph_page.c:397 gui/library.c:4370 gui/library.c:4417
 #: gui/library.c:4514 gui2/graph_page.c:397 gui2/library.c:4370
@@ -6727,9 +6716,8 @@ msgid "Failed to process TeX file"
 msgstr "Échec de traitement du fichier TeX"
 
 #: gui/graph_page.c:551 gui2/graph_page.c:551
-#, fuzzy
 msgid "The graph page is empty"
-msgstr "La table des modèles est vide"
+msgstr "La page du graphe est vide"
 
 #: gui/gretl.c:105 gui2/gretl.c:116
 msgid "open a script file on startup"
@@ -6784,9 +6772,8 @@ msgid "/File/_Append data"
 msgstr "/Fichier/_Accoler les données"
 
 #: gui/gretl.c:199 gui2/gretl.c:237
-#, fuzzy
 msgid "/File/Append data/standard format..."
-msgstr "/Fichier/_Sauvegarder les données/format _standard..."
+msgstr "/Fichier/_Accoler les données/format _standard..."
 
 #: gui/gretl.c:200 gui2/gretl.c:238
 msgid "/File/Append data/from CSV..."
@@ -7523,14 +7510,12 @@ msgid "/Model/_Probit..."
 msgstr "/Modèle/_Probit..."
 
 #: gui/gretl.c:463 gui2/gretl.c:536
-#, fuzzy
 msgid "/Model/To_bit..."
-msgstr "/Modèle/_Probit..."
+msgstr "/Modèle/To_bit..."
 
 #: gui/gretl.c:465 gui2/gretl.c:538
-#, fuzzy
 msgid "/Model/Lo_gistic..."
-msgstr "/Modèle/Logistique..."
+msgstr "/Modèle/Lo_gistique..."
 
 #: gui/gretl.c:466 gui2/gretl.c:539
 msgid "/Model/Least _Absolute Deviation..."
@@ -7851,9 +7836,8 @@ msgid "Save data file"
 msgstr "Sauvegarder le fichier de données"
 
 #: gui/guiprint.c:52 gui/guiprint.c:54 gui2/guiprint.c:144 gui2/guiprint.c:146
-#, fuzzy
 msgid "for"
-msgstr "ACF pour"
+msgstr "pour"
 
 #: gui/guiprint.c:67 gui/guiprint.c:71 gui/guiprint.c:106 gui/guiprint.c:123
 #: gui/guiprint.c:175 gui2/guiprint.c:163 gui2/guiprint.c:167
@@ -9429,9 +9413,8 @@ msgstr ""
 "Pour logit et probit, R{\\super 2} est le pseudo-R-{\\super 2} de McFadden"
 
 #: gui/model_table.c:929 gui2/model_table.c:929
-#, fuzzy
 msgid "No model is available"
-msgstr "Pas d'information disponible sur les données.\n"
+msgstr "Aucun modèle n'est disponible"
 
 #: gui/objectsave.c:78 gui2/objectsave.c:78
 #, c-format
@@ -9599,9 +9582,8 @@ msgid "Deterministic variables"
 msgstr "Variables déterministes"
 
 #: gui/selector.c:914 gui2/selector.c:1158
-#, fuzzy
 msgid "Robust standard errors"
-msgstr "erreur standard"
+msgstr "erreurs standard robustes"
 
 #: gui/selector.c:955 gui/session.c:138 gui/session.c:2143 gui2/session.c:138
 #: gui2/session.c:2143
@@ -9902,9 +9884,8 @@ msgid "Model table"
 msgstr "Table des modèles"
 
 #: gui/session.c:2329 gui2/session.c:2329
-#, fuzzy
 msgid "Graph page"
-msgstr "Sauvegarde du graphe"
+msgstr "Page du graphe"
 
 #: gui/session.c:2683 gui2/session.c:2683
 msgid "current session"
@@ -9953,12 +9934,11 @@ msgstr "Commande pour lancer GNU R"
 
 #: gui/settings.c:173 gui2/settings.c:173
 msgid "Command to view DVI files"
-msgstr "Commande pour visualiser les fichier DVI"
+msgstr "Commande pour visualiser les fichiers DVI"
 
 #: gui/settings.c:176 gui2/settings.c:176
-#, fuzzy
 msgid "Command to view postscript files"
-msgstr "Commande pour visualiser les fichier DVI"
+msgstr "Commande pour visualiser les fichiers PostScript"
 
 #: gui/settings.c:179 gui2/settings.c:179
 msgid "Calculator"
@@ -11266,830 +11246,3 @@ msgstr "Erreur inattendue durant la lecture du fichier\n"
 msgid "Unexpected error reading the file"
 msgstr "Erreur inattendue durant la lecture du fichier"
 
-#~ msgid "gretl output %s"
-#~ msgstr "sotie %s de gretl"
-
-#~ msgid "Clear table"
-#~ msgstr "Effacer la table"
-
-#~ msgid ""
-#~ "periodicity: %d, maxobs: %d, observations range: %s-%s\n"
-#~ "\n"
-#~ msgstr ""
-#~ "périodicité: %d, n max obs.: %d, étendue des observations: %s-%s\n"
-#~ "\n"
-
-#~ msgid "gretl: save graph"
-#~ msgstr "gretl: sauvegarde du graphe"
-
-#~ msgid "output type"
-#~ msgstr "type de sortie"
-
-#~ msgid "/File/Save last graph"
-#~ msgstr "/Fichier/Sauvegarder le dernier graphe"
-
-#~ msgid "/File/sep2"
-#~ msgstr "/Fichier/sep2"
-
-#~ msgid "/Session/_Add last graph"
-#~ msgstr "/Session/_Ajouter le dernier graphe"
-
-#~ msgid "Capture last graph for editing"
-#~ msgstr "Capturer le dernier graphe pour édition"
-
-#~ msgid "Add last graph"
-#~ msgstr "Ajouter un dernier graphe"
-
-#~ msgid "Edit using GUI"
-#~ msgstr "Editer en utilisant le GUI"
-
-#, fuzzy
-#~ msgid "missing values\n"
-#~ msgstr "Aucune valeur de donnée manquante"
-
-#, fuzzy
-#~ msgid "%4d missing data values\n"
-#~ msgstr "%d: %4d valeurs de données manquantes\n"
-
-#, fuzzy
-#~ msgid "gretl"
-#~ msgstr "gretl.hlp"
-
-#~ msgid "Open Wooldridge file"
-#~ msgstr "Ouvrir le fichier Wooldridge"
-
-#~ msgid "DES files (*.des)"
-#~ msgstr "fichiers DES (*.des)"
-
-#~ msgid "gretl: script"
-#~ msgstr "gretl: script"
-
-#, fuzzy
-#~ msgid "/Model data"
-#~ msgstr "/_Données du modèle"
-
-#, fuzzy
-#~ msgid "/Model data/x12sep"
-#~ msgstr "/Données du modèle/x12sep"
-
-#~ msgid "MA roots"
-#~ msgstr "racines MA"
-
-#~ msgid "Native code (experimental)"
-#~ msgstr "Code natif (expérimental)"
-
-#~ msgid "data range: %s - %s\n"
-#~ msgstr "étendue des données %s - %s\n"
-
-#~ msgid "This command only available for OLS models at present\n"
-#~ msgstr ""
-#~ "Cette commande est disponible seulement pour les modèles MCO pour le "
-#~ "moment\n"
-
-#~ msgid ""
-#~ "Sorry, can't do: the sample has been reset\n"
-#~ "since this model was estimated"
-#~ msgstr ""
-#~ "Désolé, ne peut faire cela: l'échantillon a été modifié\n"
-#~ "depuis que ce modèle a été estimé"
-
-#~ msgid " Apply "
-#~ msgstr " Appliquer "
-
-#~ msgid "gretl: time-series plot"
-#~ msgstr "gretl: traçage de série temporelle"
-
-#~ msgid "Frequency and dates"
-#~ msgstr "Fréquence et dates"
-
-#~ msgid "Couldn't open descriptions file"
-#~ msgstr "Ne peut ouvrir le fichier de descriptions"
-
-#~ msgid ""
-#~ "Couldn't open data descriptions file\n"
-#~ "%s"
-#~ msgstr ""
-#~ "Ne peut ouvrir le fichier des descriptions des données\n"
-#~ "%s"
-
-#~ msgid "  Cancel  "
-#~ msgstr "  Annuler "
-
-#~ msgid "/Edit/Copy all/as _RTF"
-#~ msgstr "/Editer/Copier tout/comme du _RTF"
-
-#~ msgid "Data appended OK"
-#~ msgstr "Ajout de données complété"
-
-#~ msgid "%s"
-#~ msgstr "%s"
-
-#~ msgid "Show Wooldridge data first"
-#~ msgstr "Afficher le fichier Wooldridge de données d'abord"
-
-#~ msgid "Show Ramanathan data first"
-#~ msgstr "Afficher le fichier Ramanathan de données d'abord"
-
-#~ msgid "Approximate critical values"
-#~ msgstr "Valeurs critiques approximées"
-
-#~ msgid "percent"
-#~ msgstr "pourcent"
-
-#~ msgid "Ordered eigenvalues for trace test:"
-#~ msgstr "Valeurs ordonnées de Eigen pour le test de trace:"
-
-#~ msgid "Null hypothesis: No cointegrating relations\n"
-#~ msgstr "Hypothèse nulle: pas de relation co-intégrée\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Alternative hypothesis: %d cointegrating relations\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Hypothèse alternative: %d relations co-intégrées\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Alternative hypothesis: one cointegrating relation\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Hypothèse alternative: une relation co-intégrante\n"
-#~ "\n"
-
-#~ msgid "Couldn't access panel plugin\n"
-#~ msgstr "Ne peut accéder au plugin de panel\n"
-
-#~ msgid "Couldn't access GMP plugin\n"
-#~ msgstr "Ne peut accéder au plugin GMP\n"
-
-#~ msgid "/Variable/Delete last variable"
-#~ msgstr "/Variable/Supprimer la dernière variable"
-
-#~ msgid "Can't delete last variable"
-#~ msgstr "Ne peut supprimer la dernière variable"
-
-#~ msgid "   label strings too long for dates?\n"
-#~ msgstr "   chaînes des étiquettes trop longues pour les dates?\n"
-
-#~ msgid "%s is not a variable or function"
-#~ msgstr "%s n'est pas une variable ou une fonction"
-
-#~ msgid "Scientific notation not allowed for numbers"
-#~ msgstr "La notation scientifique n'est pas permise dans les nombres"
-
-#~ msgid "The store command is not available in this sort of loop.\n"
-#~ msgstr "La commande 'store' n'est pas disponible dans cet sorte de boucle\n"
-
-#~ msgid "Test"
-#~ msgstr "Tester"
-
-#~ msgid ""
-#~ "New starting obs (min = %s)\n"
-#~ "and ending obs (max = %s):"
-#~ msgstr ""
-#~ "Nouvelles observations de départ (min = %s)\n"
-#~ "et de fin (max =%s):"
-
-#~ msgid "gretl: define sample"
-#~ msgstr "gretl: définir l'échantillon"
-
-#~ msgid "/File/Save _As..."
-#~ msgstr "/Fichier/Sauvegarder _tel que..."
-
-#~ msgid "/Edit/_Paste"
-#~ msgstr "/Editer/_Coller"
-
-#~ msgid "/Edit/_Replace..."
-#~ msgstr "/Editer/_Remplacer..."
-
-#~ msgid "/Edit/_Undo"
-#~ msgstr "/Editer/_Annuler"
-
-#~ msgid "Copy selection"
-#~ msgstr "Copier la sélection"
-
-#~ msgid "/File/_Save As..."
-#~ msgstr "/Fichier/_Sauvegarder sous..."
-
-#~ msgid "/File/_Run"
-#~ msgstr "/Fichier/_Executer"
-
-#~ msgid "Couldn't make backup of data file"
-#~ msgstr "Ne peut archiver le fichier de données"
-
-#~ msgid "Out of memory loading command line"
-#~ msgstr "Mémoire épuisée lors du chargement de la ligne de commande"
-
-#~ msgid "Please restart gretl to ensure consistent results"
-#~ msgstr ""
-#~ "SVP relancer gretl pour vous être d'obtenir des résultats consistents"
-
-#, fuzzy
-#~ msgid "std error"
-#~ msgstr "erreur std."
-
-#~ msgid ""
-#~ "Error:\n"
-#~ "%s\n"
-#~ msgstr ""
-#~ "Erreur:\n"
-#~ "%s\n"
-
-#~ msgid ""
-#~ "Info:\n"
-#~ "%s\n"
-#~ msgstr ""
-#~ "Info:\n"
-#~ "%s\n"
-
-#~ msgid "/File/_Save"
-#~ msgstr "/Fichier/_Sauvegader"
-
-#~ msgid "/File/Send to _gnuplot"
-#~ msgstr "/Fichier/Relayer à _gnuplot"
-
-#~ msgid "Durbin's h stat. %g  First-order autocorr. coeff %g"
-#~ msgstr "Stat. h de Durbin %g  Coeff. d'autocorrélation du 1er ordre %g"
-
-#~ msgid "/_LaTeX/_View"
-#~ msgstr "/_LaTeX/_Visualiser"
-
-#~ msgid "'%s' -- no numeric conversion performed!\n"
-#~ msgstr "« %s » -- aucune conversion numérique exécutée!\n"
-
-#~ msgid "Extraneous character '%c' in data\n"
-#~ msgstr "Caractère superflu « %c » dans la donnée\n"
-
-#~ msgid "Extraneous character (0x%x) in data\n"
-#~ msgstr "Caractère superflu (0x%x) dans la donnée\n"
-
-#~ msgid "'%s' -- number out of range!\n"
-#~ msgstr "« %s » -- nombre hors limite!\n"
-
-#~ msgid "forecasting model failed in fcast_with_errs()\n"
-#~ msgstr "échec du modèle de prédiction dans fcast_with_errs()\n"
-
-#~ msgid "Observation ranges do not overlap\n"
-#~ msgstr "Les échantillons ne recouvrent pas\n"
-
-#~ msgid "Number of common variables = %d\n"
-#~ msgstr "Nombre de variables en commun = %d\n"
-
-#~ msgid "Starting observation does not match"
-#~ msgstr "Le début des observations ne concorde pas"
-
-#~ msgid "Ending observation does not match"
-#~ msgstr "La fin des observations ne concorde pas"
-
-#~ msgid "read %d chars from pos %d: '%s' -> %g\n"
-#~ msgstr "lecture de %d caractères de la position %d: « %s » -> %g\n"
-
-#~ msgid ""
-#~ "Created user directory %s\n"
-#~ "If you prefer to use a different directory for gretl user files, please "
-#~ "make changes under\n"
-#~ "File, Preferences, General...\n"
-#~ msgstr ""
-#~ "Répertoire usager créé %s\n"
-#~ "Si vous préférer utiliser un répertoire différent pour les fichiers "
-#~ "usagers de gretl,\n"
-#~ "SVP faire les modifications sous File, Preference, General...\n"
-
-#~ msgid "scatters command not available in batch mode\n"
-#~ msgstr "la commande de dispersion n'est pas disponible en mode par lot\n"
-
-#~ msgid "shell command not implemented in win32\n"
-#~ msgstr "commande de shell non implanté dans Win32\n"
-
-#~ msgid "shell command not implemented in script mode\n"
-#~ msgstr "commande de shell n'est pas implantée en mode script\n"
-
-#~ msgid "gretl: rename var"
-#~ msgstr "gretl: renommer la variable"
-
-#~ msgid ""
-#~ "Enter new name for variable\n"
-#~ "(max. 8 characters):"
-#~ msgstr ""
-#~ "Enter un nouveau nom pour la variable\n"
-#~ "(max 8 caractères):"
-
-#~ msgid "gretl: edit label"
-#~ msgstr "gretl: éditer l'étiquette"
-
-#~ msgid "Edit label for variable number %d (%s):"
-#~ msgstr "Éditer l'étiquette pour le numéro de variable %d (%s):"
-
-#~ msgid "/Variable/_Rename"
-#~ msgstr "/Variable/_Renommmer"
-
-#~ msgid "Rename"
-#~ msgstr "Renommer"
-
-#~ msgid "Couldn't copy graph file"
-#~ msgstr "Ne peut copier le fichier de graphe"
-
-#~ msgid "script mode: gnuplot command ignored\n"
-#~ msgstr "mode script: commande gnuplot ignorée\n"
-
-#~ msgid " constant: %14.5g %15s\n"
-#~ msgstr " constant: %14.5g %15s\n"
-
-#~ msgid "   empty first line!\n"
-#~ msgstr "   première ligne vide!\n"
-
-#~ msgid "   first field is blank (dates?)\n"
-#~ msgstr "   premier champ vide (dates?)\n"
-
-#~ msgid "   file has trailing commas (lame)\n"
-#~ msgstr "   fichier contient des virgules en suffixe (lame)\n"
-
-#~ msgid "   variable %d: '%s'\n"
-#~ msgstr "   variable %d: « %s »\n"
-
-#~ msgid "Failed to copy boxplot file"
-#~ msgstr "Échec de copie du fichier BoxPlot"
-
-#~ msgid "/Session/Add last graph"
-#~ msgstr "/Session/Ajouter le dernier graphe"
-
-#~ msgid "Corrmat"
-#~ msgstr "Mat. de corr."
-
-#~ msgid "Failed to reconstruct boxplot"
-#~ msgstr "Échec de reconstruction du BoxPlot"
-
-#~ msgid "/Session/Open"
-#~ msgstr "/Session/Ouvrir"
-
-#~ msgid "Couldn't move existing .Rprofile out of the way"
-#~ msgstr "Ne peut déplacer le fichier .Rprofile existant"
-
-#~ msgid ""
-#~ "Error restoring .Rprofile from\n"
-#~ "the temporary copy, .Rprofile.gretltmp"
-#~ msgstr ""
-#~ "Erreur de restauration du .Rprofile à partir\n"
-#~ "d'une copie temporatire .Rprofile.gretltmp"
-
-#~ msgid "OLS estimates using the %d observations %s-%s\n"
-#~ msgstr "OLS estime utiliser les %d observations %s-%s\n"
-
-#~ msgid "printing data header info to %s\n"
-#~ msgstr "affichage des infos de l'en-tête des données vers %s\n"
-
-#~ msgid ""
-#~ "Five-number summar%s\n"
-#~ "\n"
-#~ "%20s%10s%10s%10s%10s\n"
-#~ msgstr ""
-#~ "Sommaire de 5 nombres%s\n"
-#~ "\n"
-#~ "%20s%10s%10s%10s%10s\n"
-
-#~ msgid "ies"
-#~ msgstr "ies"
-
-#~ msgid "Box-Pierce Q statistic = %.4f\n"
-#~ msgstr "Statistique Q Box-Pierce = %.4f\n"
-
-#~ msgid "Correlogram for"
-#~ msgstr "Corrélogramme de"
-
-#~ msgid "autocorrelations"
-#~ msgstr "autocorrélation"
-
-#~ msgid "partial autocorrelations"
-#~ msgstr "auto-corrélations partielles"
-
-#~ msgid "Sorry, can't edit multiple scatterplots"
-#~ msgstr "Désolé, ne peut éditer de multiples traçés de dispersion"
-
-#~ msgid "Sorry, can't edit CUSUM plots"
-#~ msgstr "Désolé, ne peut éditer des traçés CUSUM"
-
-#~ msgid "Sorry, can't edit sampling distribution plots"
-#~ msgstr "Désolé, ne peut éditer de traçés d'ééchantillon de distribution"
-
-#~ msgid "Sorry, can't edit this plot"
-#~ msgstr "Désolé, ne peut éditer ce traçé"
-
-#~ msgid "/File/Open data/sample file/Ramanathan..."
-#~ msgstr "/Fichier/Ouvrir les données/fichier échantillon/Ramanathan..."
-
-#~ msgid "/File/Open data/sample file/Greene..."
-#~ msgstr "/Fichier/Ouvrir les données/fichier échantillon/Greene..."
-
-#~ msgid "/File/Open data/sample file/Wooldridge..."
-#~ msgstr "/Fichier/Ouvrir les données/fichier échantillon/Wooldrige..."
-
-#~ msgid "/File/Open data/sample file/Penn World Table..."
-#~ msgstr ""
-#~ "/Fichier/Ouvrir les données/fichier échantillon/Table Penn mondiale..."
-
-#~ msgid "/File/Open command file/practice file/Ramanathan..."
-#~ msgstr "/Fichier/Ouvrir le fichier des commandes/Ramanathan..."
-
-#~ msgid "/File/Open command file/practice file/Greene..."
-#~ msgstr "/Fichier/Ouvrir le fichier des commandes/Greene..."
-
-#~ msgid "/File/Open command file/practice file/Penn World Table..."
-#~ msgstr "/Fichier/Ouvrir le fichier des commandes/table Penn mondiale..."
-
-#~ msgid "Toolbar folder icon opens Wooldridge data"
-#~ msgstr "Icône du dossier de la barre d'outils ouvre les données Wooldridge"
-
-#~ msgid "Toolbar folder icon opens Ramanathan data"
-#~ msgstr "Icône du dossier de la barre d'outils ouvre les données Ramanathan"
-
-#~ msgid "gretl: display vars"
-#~ msgstr "gretl: afficher les variables"
-
-#~ msgid "Redraw"
-#~ msgstr "Redessiner"
-
-#~ msgid "save graph"
-#~ msgstr "sauvegarde du graphe"
-
-#~ msgid "/Model/sep4"
-#~ msgstr "/Modèle/sep4"
-
-#~ msgid "/Data/Graph specified vars/Time-series plot..."
-#~ msgstr "/Données/Graphe spécifié par variables/Traçe de série temporelle..."
-
-#~ msgid "gretl: export data"
-#~ msgstr "gretl: exporter les données"
-
-#~ msgid "gretl: store data"
-#~ msgstr "gretl: stocker les données"
-
-#~ msgid "Enter ID numbers of variables to save: "
-#~ msgstr "Entrer les nombres d'identificateurs des variables à sauvegarder: "
-
-#~ msgid "Toolbar"
-#~ msgstr "Barre d'outils"
-
-#~ msgid "logs"
-#~ msgstr "logarithmes"
-
-#~ msgid "LM test for autocorrelation"
-#~ msgstr "test LM pour l'autocorrélation"
-
-#~ msgid "Slope at mean"
-#~ msgstr "Pente à la moyenne"
-
-#~ msgid "%s: contains non-numeric entries"
-#~ msgstr "%s: contient des entrées non numériques"
-
-#~ msgid "%s: found non-numeric data in column %d"
-#~ msgstr "%s: des données non numériques repérés dans la colonne %d"
-
-#~ msgid "Heteroskedasticity"
-#~ msgstr "Hétéroskédasticité"
-
-#~ msgid "gretl client, for library version %s,\n"
-#~ msgstr "client gretl, pour la librairie de version %s,\n"
-
-#~ msgid "/Graphs/Separation/none"
-#~ msgstr "/Graphes/Séparation/aucune"
-
-#~ msgid "/Graphs/Separation/by %s"
-#~ msgstr "/Graphes/Séparation/by %s"
-
-#~ msgid "prob(Chi-square(%d) > %f) = %f"
-#~ msgstr "prob(Khi-deux(%d) > %f) = %f"
-
-#~ msgid ""
-#~ "\n"
-#~ "Test statistic: LMF = %f,\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Test statistique: LMF = %f,\n"
-
-#~ msgid "with p-value = prob(F(%d,%d) > %g) = %.3g\n"
-#~ msgstr "avec une valeur de P = prob(F(%d,%d) > %g) = %.3g\n"
-
-#~ msgid ""
-#~ "with p-value = prob(Chi-square(%d) > %g) = %.3g\n"
-#~ "\n"
-#~ msgstr "avec une valeur de P = prob(Chi carré(%d > %g) = %.3g\n"
-
-#~ msgid "prob(F(%d,%d) > %g) = %.3g"
-#~ msgstr "prob(F(%d,%d) > %g) = %.3g"
-
-#~ msgid " time-series"
-#~ msgstr " séries temporelles"
-
-#~ msgid ""
-#~ "Description:\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Description:\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "%s data, %s - %s (n = %d)\n"
-#~ "\n"
-#~ msgstr ""
-#~ "%s données, %s - %s (n = %d)\n"
-#~ "\n"
-
-#~ msgid "%s %ld bytes of data...\n"
-#~ msgstr "%s %ld octets de données...\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Correlogram\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Corrélogramme\n"
-#~ "\n"
-
-#~ msgid ""
-#~ " (to lag %d):\n"
-#~ "\n"
-#~ msgstr ""
-#~ " (à 'lagger' %d):\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Test for fractional integration\n"
-#~ "  Estimated degree of integration = %f\n"
-#~ "  test statistic: t(%d) = %f, with p-value %.4f\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Test de l'intégration fractionnelle\n"
-#~ "  Degré estimé d'intégration = %f\n"
-#~ "  test statistique: t(%d) = %f, avec valeur de P %.4f\n"
-
-#~ msgid "      undefined"
-#~ msgstr "      indéfini"
-
-#~ msgid ""
-#~ "\n"
-#~ "Variable    "
-#~ msgstr ""
-#~ "\n"
-#~ "Variable    "
-
-#~ msgid "   Test statistic: F(%d,%d) = %g\n"
-#~ msgstr "   Test statistique: F(%d,%d) = %g\n"
-
-#~ msgid "      undefined\n"
-#~ msgstr "      undéfini\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "ARCH effect is insignificant at the 10 percent level.\n"
-#~ "Weighted estimation not done.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "L'effet d'ARCHE n'est pas significatif au niveau de 10 pourcent.\n"
-#~ "L'estimation par poids n'a pas été effectuée.\n"
-
-#~ msgid "set label 'Test statistic for normality:' at graph .05, graph .9\n"
-#~ msgstr ""
-#~ "utilise l'étiquette 'Test statistique pour la normalité:' pour le "
-#~ "graphe .05, graphe .9\n"
-
-#~ msgid ""
-#~ "set label 'Chi-squared(2) = %.3f, pvalue %.5f' at graph .05, graph .85\n"
-#~ msgstr ""
-#~ "utilise l'étiquette 'Khi-deux(2) = %.3f, valeur de P %.5f' pour le "
-#~ "graphe .05, graphe .85\n"
-
-#~ msgid "Mean of dep. var. %17.3f  S.D. of dep. variable %17.3f\n"
-#~ msgstr "Moyenne de var. dép. %17.3f  D.S. de variable dépendante %17.3f\n"
-
-#~ msgid ""
-#~ "Error sum of squares (%g) is not > 0\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Erreur de la somme des carrés (%g) n'est pas > 0 \n"
-#~ "\n"
-
-#~ msgid "undefined\n"
-#~ msgstr "indéfini\n"
-
-#~ msgid "F-statistic (%d, %d)"
-#~ msgstr "Statistique F (%d, %d)"
-
-#~ msgid "         undefined"
-#~ msgstr "         indéfini"
-
-#~ msgid "Current session: %s"
-#~ msgstr "Session courante: %s"
-
-#~ msgid ""
-#~ "%s -\n"
-#~ "  Null hypothesis: %s\n"
-#~ "  Test statistic: %s\n"
-#~ "  with p-value = %s\n"
-#~ "\n"
-#~ msgstr ""
-#~ "%s -\n"
-#~ "  Hypothèse nulle: %s\n"
-#~ "  Test statistique: %s\n"
-#~ "  avec valeur de P = %s\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Test for "
-#~ msgstr ""
-#~ "\n"
-#~ "Test pour "
-
-#~ msgid ""
-#~ "\n"
-#~ "Test for ARCH of order %d\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Test pour l'ARCH d'ordre %d\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "MODEL %d: "
-#~ msgstr ""
-#~ "\n"
-#~ "MODÈLE %d: "
-
-#~ msgid "Dependent variable: uhat"
-#~ msgstr "Variable dépendante: 'uhat'"
-
-#~ msgid ""
-#~ "\n"
-#~ "Test statistic: TR^2 = %f,\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Test statistique: TR^2 = %f,\n"
-
-#~ msgid ""
-#~ "Statistics based on the weighted data:\n"
-#~ "\n"
-#~ "R-squared is suppressed as it is not meaningful.  The F-statistic tests\n"
-#~ "the hypothesis that all parameters including the constant term are zero.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Statistiques basées sur le poids des données:\n"
-#~ "\n"
-#~ "R-carré est suprimé puisqu'il n'est pas significatif. La la statistique "
-#~ "F\n"
-#~ "teste l'hypothèse que tous les paramètres incluant le terme constant sont "
-#~ "zéro.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Statistics based on the original data:\n"
-#~ "\n"
-#~ "R-squared is computed as the square of the correlation between observed "
-#~ "and\n"
-#~ "fitted values of the dependent variable.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Statistiques basées sur les données originelles:\n"
-#~ "\n"
-#~ "R-carré est calculé comme le carré de la corrélation entre les valeurs "
-#~ "observées et\n"
-#~ "les valeurs fitted de la variable dépendante.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "Statistics based on the rho-differenced data:\n"
-#~ "\n"
-#~ "R-squared is computed as the square of the correlation between observed "
-#~ "and\n"
-#~ "fitted values of the dependent variable.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Statistiques basées sur les différences de rho des données:\n"
-#~ "\n"
-#~ "R-carré est calculé comme le carré de la corrélation entre les valeurs "
-#~ "observées et\n"
-#~ "les valeurs fitted de la variable dépendante.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "  Test statistic: F(%d, %d) = %f, "
-#~ msgstr ""
-#~ "\n"
-#~ "  Test statistique: F(%d, %d) = %f, "
-
-#~ msgid ""
-#~ "\n"
-#~ "  Test statistic: Chi-square(%d) = %f, "
-#~ msgstr ""
-#~ "\n"
-#~ "  Test statistique: Khi-deux(%d) = %f, "
-
-#~ msgid ""
-#~ "SGMASQ    %13g     AIC       %13g     FPE       %12g\n"
-#~ "HQ        %13g     SCHWARZ   %13g     SHIBATA   %12g\n"
-#~ "GCV       %13g"
-#~ msgstr ""
-#~ "SGMASQ    %13g     AIC       %13g     FPE       %12g\n"
-#~ "HQ        %13g     SCHWARZ   %13g     SHIBATA   %12g\n"
-#~ "GCV       %13g"
-
-#~ msgid "     RICE      %13g\n"
-#~ msgstr "     RICE      %13g\n"
-
-#~ msgid "     RICE          undefined\n"
-#~ msgstr "     RICE          indéfini\n"
-
-#~ msgid "  %-24s is undefined\n"
-#~ msgstr "  %-24s est indéfini\n"
-
-#~ msgid ""
-#~ "Statistics based on the rho-differenced data\n"
-#~ "(R-squared is computed as the square of the correlation between observed "
-#~ "and\n"
-#~ "fitted values of the dependent variable):\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Statistiques basées sur les différences de rho des données:\n"
-#~ "\n"
-#~ "R-carré est calculé comme le carré de la corrélation entre les valeurs "
-#~ "observées et\n"
-#~ "les valeurs fitted de la variable dépendante.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "                                                               (at mean)\n"
-#~ msgstr ""
-#~ "                                                              (à la moy)\n"
-
-#~ msgid "Mean of %s = %.3f\n"
-#~ msgstr "Moyenne de %s = %.3f\n"
-
-#~ msgid "f(beta'x) at mean of independent vars = %.3f\n"
-#~ msgstr "f(beta x) à la moyenne des variables dépendantes = %.3f\n"
-
-#~ msgid ""
-#~ "Likelihood ratio test: Chi-square(%d) = %.3f (p-value %f)\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Test du taux de similarité: Khi-deux(%d) = %.3f (valeur de P %f)\n"
-#~ "\n"
-
-#~ msgid "Out of memory loading command line\n"
-#~ msgstr "Mémoire épuisée lors du chargement de la ligne de commande\n"
-
-#~ msgid "set xlabel \"standard errors\"\n"
-#~ msgstr "initialisé xlabel \"erreurs standards\"\n"
-
-#~ msgid ""
-#~ "(1/(sqrt(2*pi))*exp(-(x)**2/2)) title 'Gaussian sampling distribution' w "
-#~ "lines , \\\n"
-#~ msgstr ""
-#~ "(1/(sqrt(2*pi))*exp(-(x)**2/2)) titre 'Distribution gaussienne de "
-#~ "l'échantillon' w lignes , \\\n"
-
-#~ msgid ""
-#~ "Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)**(-0.5*(df1+1.0)) title 't(%"
-#~ "d) sampling distribution' w lines , \\\n"
-#~ msgstr ""
-#~ "Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)**(-0.5*(df1+1.0)) titre 't(%"
-#~ "d) distribution de l'échantilon' w lignes , \\\n"
-
-#~ msgid "'-' using 1:($2) title 'test statistic' w impulses\n"
-#~ msgstr "'-' utilise 1:($2) titre 'test statistique' w pulsations\n"
-
-#~ msgid "Save HTML file"
-#~ msgstr "Sauvegarder le fichier HTML"
-
-#~ msgid " (unequal var)"
-#~ msgstr " (variables inégales)"
-
-#~ msgid "gretl: missing code for variable"
-#~ msgstr "gretl: code manquant pour la variable"
-
-#~ msgid "/Edit/Copy all/as _HTML"
-#~ msgstr "/Edit/Copy all/as _HTML"
-
-#~ msgid "notches show bootstrapped 90% confidence intervals for medians"
-#~ msgstr ""
-#~ "fentes montrant l'amorce d'un 90% confidence intervalles pour les médianes"
-
-#~ msgid "Test for "
-#~ msgstr "Test pour "
-
-#~ msgid "Test for ARCH of order %d\n"
-#~ msgstr "Test d'ordre %d pour l'ARCHE\n"
-
-#~ msgid "MODEL %d: "
-#~ msgstr "MODÈLE %d: "
-
-#~ msgid "Chi-squared(2) = %.3f"
-#~ msgstr "Khi-deux(2) = %.3f"
