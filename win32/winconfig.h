@@ -92,4 +92,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Define if you have the <string.h> header file.  */
 #define HAVE_STRING_H 1
 
+/* Audio graph support */
+#define HAVE_AUDIO 1
+
 #endif /* WINCONFIG_H */
