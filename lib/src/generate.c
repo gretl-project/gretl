@@ -2721,6 +2721,7 @@ static double *get_model_series (const DATAINFO *pdinfo,
 	t2 = pmod->t2;
     }
 
+#ifdef OUT_OF_SAMPLE_OK
     if (v == HNUM) {
 	for (t=0; t<n; t++) {
 	    if (t < pmod->t1 || t > pmod->t2) {
@@ -2738,6 +2739,17 @@ static double *get_model_series (const DATAINFO *pdinfo,
 	    }
 	}
     }
+#else
+    for (t=0; t<n; t++) {
+	if (t < pmod->t1 || t > pmod->t2) {
+	    x[t] = NADBL;
+	} else {
+	    if (v == UHATNUM) x[t] = pmod->uhat[t];
+	    else if (v == YHATNUM) x[t] = pmod->yhat[t];
+	    else if (v == HNUM) x[t] = garch_h[t];
+	}
+    }
+#endif
 	    
     return x;
 }

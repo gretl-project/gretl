@@ -942,7 +942,7 @@ char *iso_to_ascii (char *s)
     while (*q) {
 	unsigned char c = *q;
 
-	if (c >= 32 && c <= 126) {
+	if (c == '\t' || (c >= 32 && c <= 126)) {
 	    *p++ = c;
 	} else if (c >= 192 && c <= 198) {
 	    *p++ = 'A';

@@ -2854,7 +2854,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	if (string_is_blank(line)) continue;
 	else break;
     }
-    compress_csv_line(line, delim, trail);    
+    compress_csv_line(line, delim, trail);   
 
     p = line;
     if (delim == ' ' && *p == ' ') p++;

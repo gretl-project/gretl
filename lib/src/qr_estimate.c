@@ -119,12 +119,16 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 				gretl_matrix *yhat, double ypy, 
 				int fulln)
 {
-    int t, j, i = 0;
+    int t, i = 0;
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
     int qdiff = (pmod->rho != 0.0);
     int pwe = gretl_model_get_int(pmod, "pwe");
     int yvar = pmod->list[1];
-    double u, x, y;
+    double u, y;
+#ifdef OUT_OF_SAMPLE_OK
+    int j;
+    double x;
+#endif
 
     if (dwt) dwt = pmod->nwt;
 
@@ -165,12 +169,13 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 	    }
 	}
     } else {
+#ifdef OUT_OF_SAMPLE_OK
 	for (t=0; t<fulln; t++) {
 	    if (t < pmod->t1 || t > pmod->t2) {
 		y = Z[yvar][t];
 		if (na(y)) {
 		    pmod->yhat[t] = pmod->uhat[t] = NADBL;
-		    break;
+		    continue;
 		}
 		pmod->yhat[t] = 0.0;
 		for (j=0; j<pmod->ncoeff; j++) {
@@ -179,7 +184,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 		    x = Z[xno][t];
 		    if (na(x)) {
 			pmod->yhat[t] = pmod->uhat[t] = NADBL;
-			break;
+			continue;
 		    }
 		    pmod->yhat[t] += pmod->coeff[j] * x;
 		}
@@ -191,6 +196,18 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 		i++;
 	    }
 	}
+#else
+	for (t=0; t<fulln; t++) {
+	    if (t < pmod->t1 || t > pmod->t2) {
+		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+	    } else {
+		pmod->yhat[t] = yhat->val[i];
+		pmod->uhat[t] = Z[yvar][t] - yhat->val[i];
+		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+		i++;
+	    }
+	}
+#endif
     }
 
     /* if SSR is small enough, treat it as zero */

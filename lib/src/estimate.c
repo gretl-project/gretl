@@ -1275,13 +1275,16 @@ static int hatvar (MODEL *pmod, int n, double **Z)
 {
     int xno, i, t;
     int yno = pmod->list[1];
-    double y, x;
+    double x;
+
+#ifdef OUT_OF_SAMPLE_OK
+    double y;
 
     for (t=0; t<n; t++) {
 	y = Z[yno][t];
 	if (na(y)) {
 	    pmod->yhat[t] = pmod->uhat[t] = NADBL;
-	    break;
+	    continue;
 	}
 	pmod->yhat[t] = 0.0;
         for (i=0; i<pmod->ncoeff; i++) {
@@ -1289,12 +1292,12 @@ static int hatvar (MODEL *pmod, int n, double **Z)
 	    x = Z[xno][t];
 	    if (na(x)) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
-		break;
+		continue;
 	    }
 	    if (pmod->nwt) {
 		if (na(Z[pmod->nwt][t])) {
 		    pmod->yhat[t] = pmod->uhat[t] = NADBL;
-		    break;
+		    continue;
 		}
 		x *= Z[pmod->nwt][t];
 	    }
@@ -1305,6 +1308,23 @@ static int hatvar (MODEL *pmod, int n, double **Z)
 	}
 	pmod->uhat[t] = y - pmod->yhat[t];                
     }
+#else
+    for (t=0; t<n; t++) {
+	pmod->yhat[t] = pmod->uhat[t] = NADBL;
+    }
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	pmod->yhat[t] = 0.0;
+        for (i=0; i<pmod->ncoeff; i++) {
+            xno = pmod->list[i+2];
+	    x = Z[xno][t];
+	    if (pmod->nwt) x *= Z[pmod->nwt][t];
+            pmod->yhat[t] += pmod->coeff[i] * x;
+        }
+	x = Z[yno][t];
+	if (pmod->nwt) x *= Z[pmod->nwt][t];
+        pmod->uhat[t] = x - pmod->yhat[t];                
+    }
+#endif
 
     return 0;
 }
