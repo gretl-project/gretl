@@ -21,23 +21,16 @@
 
 #include "libgretl.h"
 #include <gtk/gtk.h>
+#include "tramo_x12a.h"
 
 #ifdef OS_WIN32
 # include <windows.h>
 #endif
 
-typedef enum {
+enum opt_codes {
     TRAMO,
     X12A
-} opt_codes;
-
-typedef enum {
-    D11,      /* seasonally adjusted series */
-    D12,      /* trend/cycle */
-    D13,      /* irregular component */
-    TRIGRAPH, /* graph showing all of the above */
-    XAXIS     /* x-axis (time) variable for graphing */
-} tx_objects;
+};
 
 const char *x12a_series_strings[] = {
     "d11", "d12", "d13"
@@ -62,21 +55,6 @@ const char *default_mdl = {
     "(2 1 2)(0 1 1)\n"
 };  
 
-typedef struct {
-    GtkWidget *check;
-    char save;
-    unsigned short v;
-} opt_info;
-
-typedef struct {
-    GtkWidget *dialog;
-    opt_info opt[4];
-    int savevars;
-#if GTK_MAJOR_VERSION == 1
-    int ret;
-#endif
-} tx_request;
-
 #if GTK_MAJOR_VERSION == 1
 static void tx_dialog_ok (GtkWidget *w, tx_request *request)
 {
@@ -92,7 +70,7 @@ static void tx_dialog_cancel (GtkWidget *w, tx_request *request)
 }
 #endif
 
-static int tx_dialog (tx_request *request, int opt)
+static int tx_dialog (tx_request *request)
 {
     GtkWidget *hbox, *vbox, *tmp;
 #if GTK_MAJOR_VERSION >= 2
@@ -100,7 +78,7 @@ static int tx_dialog (tx_request *request, int opt)
 
     request->dialog = 
 	gtk_dialog_new_with_buttons (
-				     (opt == TRAMO)?
+				     (request->code == TRAMO)?
 				     "TRAMO/SEATS" : "X-12-ARIMA",
 				     NULL,
 				     GTK_DIALOG_MODAL | 
@@ -113,41 +91,47 @@ static int tx_dialog (tx_request *request, int opt)
 #else
     request->dialog = gtk_dialog_new();
     gtk_window_set_title (GTK_WINDOW(request->dialog), 
-			  (opt == TRAMO)? "TRAMO/SEATS" : "X-12-ARIMA");
+			  (request->code == TRAMO)? "TRAMO/SEATS" : "X-12-ARIMA");
 #endif
 
-    tmp = gtk_label_new (_("Save data"));
-    gtk_widget_show(tmp);
-    vbox = gtk_vbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+    vbox = gtk_vbox_new(FALSE, 0);    
 
-    tmp = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
-    gtk_widget_show(tmp);
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-    request->opt[D11].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+    if (request->code == TRAMO) {
+	show_tramo_options(request, vbox);
+    } else {
+	/* X-12-ARIMA */
+	tmp = gtk_label_new (_("Save data"));
+	gtk_widget_show(tmp);
+	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
 
-    tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
-    gtk_widget_show(tmp);
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-    request->opt[D12].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+	tmp = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
+	gtk_widget_show(tmp);
+	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+	request->opt[D11].check = tmp;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
 
-    tmp = gtk_check_button_new_with_label(_("Irregular"));
-    gtk_widget_show(tmp);
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-    request->opt[D13].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+	tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
+	gtk_widget_show(tmp);
+	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+	request->opt[D12].check = tmp;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
 
-    tmp = gtk_hseparator_new();
-    gtk_widget_show(tmp);
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+	tmp = gtk_check_button_new_with_label(_("Irregular"));
+	gtk_widget_show(tmp);
+	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+	request->opt[D13].check = tmp;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+
+	tmp = gtk_hseparator_new();
+	gtk_widget_show(tmp);
+	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
     
-    tmp = gtk_check_button_new_with_label(_("Generate graph"));
-    gtk_widget_show(tmp);
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-    request->opt[TRIGRAPH].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+	tmp = gtk_check_button_new_with_label(_("Generate graph"));
+	gtk_widget_show(tmp);
+	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+	request->opt[TRIGRAPH].check = tmp;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+    }
 
     gtk_widget_show(vbox);
     hbox = gtk_hbox_new(FALSE, 5);
@@ -420,11 +404,12 @@ static void set_opts (tx_request *request)
 	    request->opt[i].save = 0;
 	} 
     }
+    
 }
 
 static int write_tramo_file (const char *fname, 
 			     double **Z, DATAINFO *pdinfo,
-			     int varnum) 
+			     int varnum, tx_request *request) 
 {
     double x;
     FILE *fp;
@@ -464,8 +449,7 @@ static int write_tramo_file (const char *fname,
 	fputc('\n', fp);
     }
 
-    /* FIXME: make these values configurable */
-    fputs("$INPUT lam=-1,iatip=1,aio=2,va=3.3,noadmiss=1,seats=2,$\n", fp);
+    print_tramo_options(request, fp);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
@@ -637,17 +621,27 @@ int write_tx_data (char *fname, int varnum,
     }
 
     /* figure out which program we're using */
-    if (strstr(prog, "tramo") != NULL) opt = TRAMO;
-    else opt = X12A;
+    if (strstr(prog, "tramo") != NULL) {
+	request.code = opt = TRAMO;
+    } else {
+	request.code = opt = X12A;
+    }
 
     /* show dialog and get option settings */
-    doit = tx_dialog(&request, opt); 
+    doit = tx_dialog(&request); 
     if (!doit) {
 	gtk_widget_destroy(request.dialog);
 	return 0;
     }
     set_opts(&request);
     gtk_widget_destroy(request.dialog);
+
+#if 0
+    if (opt == TRAMO) {
+	print_tramo_options(&request, stderr);
+	return 1;
+    }
+#endif
 
     /* create little temporary dataset */
     tmpinfo = create_new_dataset(&tmpZ, 4, pdinfo->n, 0);
@@ -678,7 +672,7 @@ int write_tx_data (char *fname, int varnum,
     } else { /* TRAMO */
 	lower(varname);
 	sprintf(fname, "%s%c%s", workdir, SLASH, varname);
-	write_tramo_file(fname, *pZ, pdinfo, varnum);
+	write_tramo_file(fname, *pZ, pdinfo, varnum, & request);
     }
 
     /* run the program */
