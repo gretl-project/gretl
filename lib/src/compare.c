@@ -980,6 +980,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	    fprintf(fq, "set xlabel \"%s\"\n", I_("Observation"));
 	    fprintf(fq, "set xzeroaxis\n");
 	    fprintf(fq, "set title \"%s\"\n",
+		    /* xgettext:no-c-format */
 		    I_("CUSUM plot with 95% confidence band"));
 	    fprintf(fq, "set nokey\n");
 	    fprintf(fq, "plot %f+%f*x w l 1, \\\n", xx - K*yy, yy);

@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 
 #include "libgretl.h"
 
@@ -433,10 +434,14 @@ void print_result_error (int digits,
 
 int doubles_differ (const char *v1, const char *v2)
 {
-    if (strcmp(v1, "inf") == 0 && strncmp(v2, "-999", 4) == 0) {
+    if ((!strcmp(v1, "inf") || !strcmp(v1, "nan")) && 
+	!strncmp(v2, "-999", 4)) {
 	return 0;
+    } else {
+	double diff = fabs(fabs(atof(v1)) - fabs(atof(v2)));
+    
+	return diff > DBL_EPSILON;
     }
-    return (atof(v1) - atof(v2) != 0.0);
 }
 
 int results_agree (MODEL *pmod, mp_results *certvals, DATAINFO *dinfo,
