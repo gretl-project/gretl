@@ -814,23 +814,12 @@ new variable sq_x = x squared.
 #
 store
 
-Save a gretl dataset.  There are four options for the format of the saved
+Save a gretl dataset.  There are two options for the format of the saved
 data.  
 
-(1) "Standard": the data are saved in columns, spreadsheet-style, as an ASCII
-    (plain text) file.
+(1) "Standard": the data are saved gretl xml format.
 (2) As above, but using gzip compression.  This saves disk space; it may be
     useful for large datasets.  
-(3) Binary, single-precision: the data are stored in binary format, as
-    single-precision floating point numbers.  A compact storage format.
-(4) Binary, double-precision: the data are stored in binary format, as
-    double-precision floating point numbers.  It is unlikely that economic
-    data require this degree of precision.  
-
-Please note if a dataset contains "case markers" (short strings identifying
-the observations, such as might be used if the observations represent
-countries or states) you should NOT store the data in binary format since
-these markers will not be saved.  Use "standard" or gzipped format instead.
 
 #
 tsls

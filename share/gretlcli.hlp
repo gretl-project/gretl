@@ -860,7 +860,7 @@ only those variables specified will be written to file.
 
 Possible values of the optional "flag" are as follows:
 
-  none: data are saved in columns, spreadsheet-style, as an ASCII file
+  none: data are saved in gretl xml format
   -z  : as above, but using gzip data compression
   -o  : data saved as binary, in double precision
   -s  : data saved as binary, in single precision
@@ -872,6 +872,8 @@ Possible values of the optional "flag" are as follows:
         variable cited is taken to be the dependent variable, and is written 
         out as a column vector; the remaining data are written as a matrix 
         named 'X', with one variable per column.
+  -t  : data saved in "traditional" gretl format, as in Ramanathan's ESL,
+        with an ascii data file plus a "header" file.
 
 #
 summary
