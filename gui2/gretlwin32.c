@@ -70,6 +70,73 @@ int create_child_process (char *prog, char *env)
     return ret;
 }
 
+#ifndef G_OS_WIN32
+
+void startR (const char *Rcommand)
+{
+    char Rprofile[MAXLEN], Rdata[MAXLEN], line[MAXLEN];
+    const char *supp1 = "--no-init-file";
+    const char *supp2 = "--no-restore-data";
+    FILE *fp;
+    int enverr;
+
+    if (!data_status) {
+	errbox(_("Please open a data file first"));
+	return;
+    }
+
+    build_path(paths.userdir, "gretl.Rprofile", Rprofile, NULL);
+    fp = fopen(Rprofile, "w");
+    if (fp == NULL) {
+	errbox(_("Couldn't write R startup file"));
+	return;
+    }
+
+    enverr = ! SetEnvironmentVariable("R_PROFILE", Rprofile);
+    if (enverr) {
+	errbox(_("Couldn't set R_PROFILE environment variable"));
+	fclose(fp);
+	return;
+    } 	
+
+    build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
+    sprintf(line, "store \"%s\" -r", Rdata); 
+    if (verify_and_record_command(line) ||
+	write_data(Rdata, get_cmd_list(), (const double **) Z, datainfo, 
+		   OPT_R, NULL)) {
+	errbox(_("Write of R data file failed"));
+	fclose(fp);
+	return; 
+    }
+
+    if (dataset_is_time_series(datainfo)) {
+	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
+	fputs("if (vnum > 1.89) library(stats) else library(ts)\n", fp);
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", 
+		slash_convert(Rdata, FROM_BACKSLASH));
+    } else {
+	char Rtmp[MAXLEN];
+	FILE *fq;
+
+	build_path(paths.userdir, "Rtmp", Rtmp, NULL);
+	fq = fopen(Rtmp, "w");
+	fprintf(fq, "gretldata <- read.table(\"%s\")\n", 
+		slash_convert(Rdata, FROM_BACKSLASH));
+	fprintf(fq, "attach(gretldata)\n");
+	fclose(fq);
+
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", 
+		slash_convert(Rtmp, FROM_BACKSLASH));
+    }
+
+    fclose(fp);
+
+    sprintf(line, "\"%s\" %s %s", Rcommand, supp1, supp2);
+    create_child_process(line, NULL);
+}
+
+#endif /* ! G_OS_WIN32 */
+
 char *slash_convert (char *str, int which)
 {
     char *p;

@@ -3190,4 +3190,106 @@ gchar *my_locale_to_utf8 (const gchar *src)
     return trstr;
 }
 
-#endif
+#endif /* ! OLD_GTK */
+
+#ifndef G_OS_WIN32
+
+#include <signal.h>
+
+void startR (const char *Rcommand)
+{
+    char Rprofile[MAXLEN], Rdata[MAXLEN], line[MAXLEN];
+    const char *supp1 = "--no-init-file";
+    const char *supp2 = "--no-restore-data";
+    FILE *fp;
+    int enverr;
+    int i;
+    char *s0, *s1, *s2;
+    pid_t pid;
+
+    if (!data_status) {
+	errbox(_("Please open a data file first"));
+	return;
+    }
+
+    build_path(paths.userdir, "gretl.Rprofile", Rprofile, NULL);
+    fp = fopen(Rprofile, "w");
+    if (fp == NULL) {
+	errbox(_("Couldn't write R startup file"));
+	return;
+    }
+
+    enverr = setenv("R_PROFILE", Rprofile, 1);
+    if (enverr) {
+	errbox(_("Couldn't set R_PROFILE environment variable"));
+	fclose(fp);
+	return;
+    } 	
+
+    build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
+    sprintf(line, "store \"%s\" -r", Rdata); 
+    if (verify_and_record_command(line) ||
+	write_data(Rdata, get_cmd_list(), (const double **) Z, datainfo, 
+		   OPT_R, NULL)) {
+	errbox(_("Write of R data file failed"));
+	fclose(fp);
+	return; 
+    }
+
+    if (dataset_is_time_series(datainfo)) {
+	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
+	fputs("if (vnum > 1.89) library(stats) else library(ts)\n", fp);
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rdata);
+    } else {
+	char Rtmp[MAXLEN];
+	FILE *fq;
+
+	build_path(paths.userdir, "Rtmp", Rtmp, NULL);
+	fq = fopen(Rtmp, "w");
+	fprintf(fq, "gretldata <- read.table(\"%s\")\n", Rdata);
+	fprintf(fq, "attach(gretldata)\n");
+	fclose(fq);
+
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rtmp);
+    }
+
+    fclose(fp);
+
+    s0 = mymalloc(64);
+    s1 = mymalloc(32);
+    s2 = mymalloc(32);
+    if (s0 == NULL || s1 == NULL || s2 == NULL) return;
+
+    *s0 = *s1 = *s2 = '\0';
+    i = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);
+    if (i == 0) {
+	errbox(_("No command was supplied to start R"));
+	free(s0); free(s1); free(s2);
+	return;
+    }
+
+    signal(SIGCHLD, SIG_IGN); 
+    pid = fork();
+
+    if (pid == -1) {
+	errbox(_("Couldn't fork"));
+	perror("fork");
+	return;
+    } else if (pid == 0) {  
+	if (i == 1) {
+	    execlp(s0, s0, supp1, supp2, NULL);
+	} else if (i == 2) {
+	    execlp(s0, s0, s1, supp1, supp2, NULL);
+	} else if (i == 3) {
+	    execlp(s0, s0, s1, s2, supp1, supp2, NULL);
+	}
+	perror("execlp");
+	_exit(EXIT_FAILURE);
+    }
+
+    free(s0); 
+    free(s1); 
+    free(s2);
+}
+
+#endif /* ! G_OS_WIN32 */

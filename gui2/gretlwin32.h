@@ -27,6 +27,8 @@ enum {
 
 int create_child_process (char *prog, char *env);
 
+void startR (const char *Rcommand);
+
 char *slash_convert (char *str, int which);
 
 int unmangle (const char *dosname, char *longname);

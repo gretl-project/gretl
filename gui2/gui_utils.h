@@ -123,6 +123,10 @@ int get_worksheet_data (char *fname, int datatype, int append,
 
 char *double_underscores (char *targ, const char *src);
 
+#ifndef G_OS_WIN32
+void startR (const char *Rcommand);
+#endif
+
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
 enum {
     AUDIO_TEXT = 0,
