@@ -433,7 +433,7 @@ pps_get_text (guint8 *ptr, int length)
 	return 0;
     }
 
-    ans = (char *) g_malloc (sizeof (char) * length + 1);
+    ans = g_malloc(length + 1);
 
     inb = ptr;
     for (lp = 0; lp < length; lp++) {
@@ -779,8 +779,10 @@ read_sb (MsOle *f)
     ptr = GET_SBD_STARTBLOCK (f);
 
     if (f->sbf->len == 0 && ptr != END_OF_CHAIN) {
+#if 0
 	g_warning ("No small block file, but small block depot start block exists!: "
 		   "ignore depot, since there's no small block files after all.\n");
+#endif
 	ptr = END_OF_CHAIN;
     }
 
@@ -993,9 +995,11 @@ ms_ole_open_vfs (MsOle **fs, const char *name,
 	    g_warning ("Small-block-size mismatch [%d] -- expect trouble.", sbs);
     }
 
+#if 0
     if (f->length % BB_BLOCK_SIZE)
 	g_warning ("Warning file '%s': %d bytes, non-integer number of blocks\n",
 		   name, f->length);
+#endif
 
     if (!ms_ole_setup (f)) {
 	g_warning ("'%s' : duff file !\n", name);

@@ -1236,13 +1236,12 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 		i+1, i, loop->lines[i]);
 #endif
 	if (!loop->progressive && loop->ci[i] == OLS) {
-	    gretlopt opt;
+	    gretlopt opt = get_gretl_options(loop->lines[i], NULL);
 	    
-	    catchflags(loop->lines[i], &opt);
 	    if (opt & OPT_P) {
+		/* deferred printing of model was requested */
 		MODEL *pmod = loop->models[loop->next_model];
 
-		catchflags(loop->lines[i], &opt);
 		set_model_id(pmod);
 		printmodel(pmod, pdinfo, opt, prn);
 		loop->next_model += 1;
@@ -1445,6 +1444,7 @@ static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
     ntodate(startdate, lmod->t1, pdinfo);
     ntodate(enddate, lmod->t2, pdinfo);
 
+    pputc(prn, '\n');
     pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
 	    _(estimator_string(lmod->ci, prn->format)), lmod->t2 - lmod->t1 + 1, 
 	    startdate, enddate);
@@ -1593,9 +1593,6 @@ static int print_loop_store (LOOPSET *loop, PRN *prn, PATHS *ppaths)
     /* organize filename */
     if (loop->storefile[0] == '\0') {
 	sprintf(gdtfile, "%sloopdata.gdt", ppaths->userdir);	
-    } else if (slashpos(loop->storefile) == 0) { 
-	/* no path given (FIXME) */
-	sprintf(gdtfile, "%s%s", ppaths->userdir, loop->storefile);
     } else {
 	strcpy(gdtfile, loop->storefile);
     }
@@ -1811,7 +1808,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	       int *echo_off, PRN *prn)
 {
     CMD cmd;
-    MODEL *lastmod = NULL;
+    MODEL *lastmod = models[0];
     int m = 0, lround = 0, ignore = 0;
     int err = 0;
 
@@ -1860,7 +1857,7 @@ int loop_exec (LOOPSET *loop, char *line,
 #endif
 	    strcpy(linecpy, loop->lines[j]);
 
-	    err = catchflags(linecpy, &cmd.opt);
+	    cmd.opt = get_gretl_options(linecpy, &err);
 	    if (err) {
 		break;
 	    }

@@ -20,7 +20,7 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-int catchflags (char *line, gretlopt *oflags);
+gretlopt get_gretl_options (char *line, int *err);
 
 const char *print_flags (gretlopt oflags, int ci);
 

@@ -409,7 +409,7 @@ gint check_cmd (char *line)
 
     *cmd.param = '\0';
 
-    err = catchflags(line, &cmd.opt);
+    cmd.opt = get_gretl_options(line, &err);
     if (err) {
 	gui_errmsg(err);
 	return 1;
@@ -1752,7 +1752,7 @@ static gint check_model_cmd (char *line, char *modelgenr)
 
     *cmd.param = '\0';
 
-    err = catchflags(line, &cmd.opt);
+    cmd.opt = get_gretl_options(line, &err);
     if (err) {
 	gui_errmsg(err);
 	return 1;
@@ -4846,7 +4846,7 @@ int gui_exec_line (char *line,
     *linecopy = 0;
     strncat(linecopy, line, sizeof linecopy - 1);
 
-    err = catchflags(line, &cmd.opt);
+    cmd.opt = get_gretl_options(line, &err);
     if (err) {
         errmsg(err, prn);
         return 1;

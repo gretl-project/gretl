@@ -699,7 +699,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	return;
     }
 
-    err = catchflags(line, &cmd.opt);
+    cmd.opt = get_gretl_options(line, &err);
     if (err) {
 	errmsg(err, prn);
 	return;
@@ -751,7 +751,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	} else {
 	    if (!echo_off) {
 		echo_cmd(&cmd, datainfo, line, (batch || runit)? 1 : 0, 
-			 0, 1, cmdprn);
+			 0, loopstack, cmdprn);
 	    }
 	    loop = add_to_loop(line, cmd.ci, cmd.opt,
 			       datainfo, &Z, loop, 

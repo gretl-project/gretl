@@ -3107,6 +3107,10 @@
 	  <flag>--no-df-corr</flag>
 	  <effect>suppress degrees of freedom correction</effect>
         </option>
+        <option>
+	  <flag>--print-final</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
       <examples>
         <example>ols 1 0 2 4 6 7</example>
@@ -3143,6 +3147,12 @@
 	degrees of freedom correction is not applied when calculating
 	the estimated error variance (and hence also the standard
 	errors of the parameter estimates).</para>
+
+      <para>The option <lit>--print-final</lit> is applicable only in
+	the context of a <cmdref targ="loop"/>.  It arranges for the
+	regression to be run silently on all but the final iteration
+	of the loop. See <manref targ="loop-examples"/> for details.
+      </para>
 
       <para context="cli">Various internal variables may be retrieved
 	using the <cmdref targ="genr"/> command, provided

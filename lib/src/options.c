@@ -319,28 +319,33 @@ static void tail_strip (char *s)
 }
 
 /**
- * catchflags:
+ * get_gretl_options:
  * @line: command line to parse.
- * @oflags: pointer to options.
+ * @err: address for error code, which is set to 1 in case any 
+ * invalid options are found, else set to 0.
  * 
- * Check for option flags in @line: if found, chop them out
- * and set @oflags value accordingly. Strip any trailing semicolon 
- * from @line while we're at it.
+ * Check for option flags in @line: if found, chop them out and set
+ * the return value accordingly. Strip any trailing semicolon from
+ * @line while we're at it.
  *
- * Returns: 0 on success, 1 if an invalid option is found.
+ * Returns: the options found in the line.
  */
 
-int catchflags (char *line, gretlopt *oflags)
+gretlopt get_gretl_options (char *line, int *err)
 {
+    gretlopt oflags = 0L;
     int n = strlen(line);
     gretlopt opt;
     char cmdword[9] = {0};
-    int ci, err = 0;
+    int ci, myerr = 0;
 
-    *oflags = 0L;
     *gretl_errmsg = '\0';
 
-    if (n < 2 || *line == '#') return 0;
+    if (err != NULL) {
+	*err = 0;
+    }
+
+    if (n < 2 || *line == '#') return oflags;
 
     /* to enable reading of trad. esl input files */
     if (line[n-2] == ';' && isspace(line[n-1])) {
@@ -354,7 +359,7 @@ int catchflags (char *line, gretlopt *oflags)
     get_cmdword(line, cmdword);
 
     if (!strcmp(cmdword, "genr") || !strcmp(cmdword, "sim") ||
-	!strcmp(cmdword, "label")) return 0;
+	!strcmp(cmdword, "label")) return oflags;
 
     if (strstr(line, "end nls")) {
 	ci = NLS;
@@ -362,26 +367,30 @@ int catchflags (char *line, gretlopt *oflags)
 	ci = gretl_command_number(cmdword);
     }
 
-    if (ci == 0) return 0;
+    if (ci == 0) return oflags;
 
     /* try for short-form options (e.g. "-o") */
-    opt = get_short_opts(line, ci, &err);
-    if (!err && opt) {
-	*oflags |= opt;
+    opt = get_short_opts(line, ci, &myerr);
+    if (!myerr && opt) {
+	oflags |= opt;
     }
 
     /* try for long-form options (e.g. "--vcv") */
-    if (!err) {
-	opt = get_long_opts(line, ci, &err);
-	if (!err && opt) {
-	    *oflags |= opt;
+    if (!myerr) {
+	opt = get_long_opts(line, ci, &myerr);
+	if (!myerr && opt) {
+	    oflags |= opt;
 	}
     }
 
     /* strip trailing whitespace after processing */
     tail_strip(line);
 
-    return err;
+    if (err != NULL) {
+	*err = myerr;
+    }
+
+    return oflags;
 }
 
 /**

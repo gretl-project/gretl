@@ -13,7 +13,7 @@
     
     <programlisting>
       loop <replaceable>control-expression</replaceable> [ --progressive ]
-      <replaceable>loop body</replaceable>
+         <replaceable>loop body</replaceable>
       endloop</programlisting>
 
     <para>Four forms of <replaceable>control-expression</replaceable>
@@ -93,6 +93,11 @@
       linkend="loop-panel-script"/>) or you can use its string
 	representation, <literal>$i</literal> (see <xref
 	  linkend="loop-string-script"/>).</para>
+
+      <para>The starting and ending values for the index can be given
+	in numerical form, or by reference to predefined variables.
+	In the latter case the variables are evaluated once, when the
+	loop is set up.</para>
 
     </sect2>
 
@@ -190,44 +195,42 @@
 
       <example id="mc-loop"><title>Simple Monte Carlo loop</title>
 	<programlisting>
-	  # create a blank data set with series length 50
-	  nulldata 50 
-	  genr x = 100 * uniform() 
-	  # start a loop, to be repeated 100 times
+	  nulldata 50
+	  seed 547
+	  genr x = 100 * uniform()
+	  # open a "progressive" loop, to be repeated 100 times
 	  loop 100 --progressive
-	    genr u = normal()
-	    # construct the dependent variable
-	    genr y = 10*x + 20*u 
-	    # run OLS regression
-	    ols y const x 
-	    # grab the R-squared value from the regression
-	    genr r2 = $rsq 
-	    # arrange for statistics on R-squared to be printed
-	    print r2 
-	    # grab the individual coefficient estimates
-	    genr a = coeff(const) 
-	    genr b = coeff(x)
-	    # and save them to file
-	    store foo.gdt a b 
+	     genr u = 10 * normal()
+	     # construct the dependent variable
+	     genr y = 10*x + u
+	     # run OLS regression
+	     ols y const x
+	     # grab the coefficient estimates and R-squared
+	     genr a = coeff(const)
+	     genr b = coeff(x)
+	     genr r2 = $rsq
+	     # arrange for printing of stats on these
+	     print a b r2
+	     # and save the coefficients to file
+	     store coeffs.gdt a b
 	  endloop</programlisting>
       </example>
 
       <para>This loop will print out summary statistics for the `a'
-	and `b' estimates across the 100 repetitions, and also for the
-	&rsqu; values for the 100 regressions.  After running the
-	loop, <filename>foo.gdt</filename>, which contains the
-	individual coefficient estimates from all the runs, can be
-	opened in <application>gretl</application> to examine the
-	frequency distribution of the estimates in detail. Please note
-	that while comment lines are permitted in a loop (as shown in
-	the example), they cannot run over more than one line.</para>
+	and `b' estimates and &rsqu; across the 100 repetitions.
+	After running the loop, <filename>coeffs.gdt</filename>, which
+	contains the individual coefficient estimates from all the
+	runs, can be opened in <application>gretl</application> to
+	examine the frequency distribution of the estimates in
+	detail.</para>
 
       <para>The command <command>nulldata</command> is useful for
 	Monte Carlo work.  Instead of opening a <quote>real</quote>
 	data set, <command>nulldata 50</command> (for instance) opens
-	an empty data set, with only a constant, with a series length
-	of 50. Constructed variables can then be added using the
-	<command>genr</command> command.</para>  
+	a dummy data set, containing just a constant and an index
+	variable, with a series length of 50. Constructed variables
+	can then be added using the <command>genr</command>
+	command.</para>  
 
       <para>See the <command>seed</command> command in 
       <xref linkend="cmdref"/> for information on generating
@@ -258,6 +261,12 @@
 	<quote>File, Open command file, practice file,
 	  Greene...</quote>.</para>
 
+      <para>The option <literal>--print-final</literal> for the
+      <command>ols</command> command arranges matters so that the
+      regression results will not be printed each time round the loop,
+      but the results from the regression on the last iteration will be
+      printed when the loop terminates.</para>
+
       <example id="greene-ils-script"><title>Nonlinear consumption
 	  function</title>
 	<programlisting>
@@ -266,27 +275,27 @@
 	  ols C 0 Y
 	  genr essbak = $ess
 	  genr essdiff = 1
-	  genr b0 = coeff(Y)
-	  genr gamma0 = 1
+	  genr beta = coeff(Y)
+	  genr gamma = 1
 	  # iterate OLS till the error sum of squares converges
 	  loop while essdiff > .00001
 	     # form the linearized variables
-	     genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y)
-	     genr x1 = Y^gamma0
-	     genr x2 = b0 * Y^gamma0 * log(Y)
-	     # run the OLS regression
-	     ols C0 0 x1 x2 --print-final --no-df-corr
-	     genr b0 = coeff(x1)
-	     genr gamma0 = coeff(x2)
-	     genr ess = $ess genr
-	     essdiff = abs(ess - essbak)/essbak
+	     genr C0 = C + gamma * beta * Y^gamma * log(Y)
+	     genr x1 = Y^gamma
+	     genr x2 = beta * Y^gamma * log(Y)
+	     # run OLS 
+	     ols C0 0 x1 x2 --print-final --no-df-corr --vcv
+	     genr beta = coeff(x1)
+	     genr gamma = coeff(x2)
+	     genr ess = $ess
+	     genr essdiff = abs(ess - essbak)/essbak
 	     genr essbak = ess
-	  endloop
+	  endloop 
 	  # print parameter estimates using their "proper names"
 	  noecho
 	  printf "alpha = %g\n", coeff(0)
-	  printf "beta  = %g\n", coeff(x1)
-	  printf "gamma = %g\n", coeff(x2)</programlisting>
+	  printf "beta  = %g\n", beta
+	  printf "gamma = %g\n", gamma</programlisting>
       </example>
 
       <para><xref linkend="jack-arma"/> (kindly contributed by
@@ -295,16 +304,11 @@
 	exploiting the <quote>outer product of the gradient</quote>
 	(OPG) regression discussed by Davidson and MacKinnon in their
 	<citetitle>Estimation and Inference in
-	  Econometrics</citetitle>.  The options to the
-	<command>ols</command> command in this context should be
-	noted: <literal>--print-final</literal> indicates that the
-	regression results should not be printed each time round the
-	loop, but that the final set of results should be printed when
-	the loop terminates.  </para>
+	  Econometrics</citetitle>.</para>
 
       <example id="jack-arma"><title>ARMA 1, 1</title>
 	<programlisting>
-	open arma.gdt
+	open armaloop.gdt
 
 	genr c = 0
 	genr a = 0.1
@@ -336,7 +340,7 @@
 	   genr sc_m = -de_m * e
    
 	   # OPG regression
-	   ols const sc_c sc_a sc_m --print-final --no-df-corr
+	   ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
 
 	   # Update the parameters
 	   genr dc = coeff(sc_c) 
