@@ -452,7 +452,7 @@ static void make_userdir (PATHS *ppaths)
 
 static void gui_usage (void)
 {
-    gui_logo();
+    gui_logo(stdout);
     printf("You may supply the name of a data file on the command line.\n");
     printf("Or you may do \"gretl -r script_file\" to open a script.\n");
     printf("Or you may do \"gretl -d database\" to open a gretl database.\n");
@@ -563,7 +563,7 @@ int main (int argc, char *argv[])
 	    gui_usage();
 	    break;
 	case OPT_VERSION:
-	    gui_logo();
+	    gui_logo(stdout);
 	    exit(EXIT_SUCCESS);
 	    break;
 	case OPT_RUNIT:

@@ -250,7 +250,7 @@ int main (int argc, char *argv[])
     } else cli_get_data = 1;
 
     logo();     /* print version info */
-    session_time();
+    session_time(stdout);
     fb = stdin; /* may be reset later wth "run" command */
     prn.fp = stdout;
     line = malloc(MAXLINE);

@@ -21,11 +21,11 @@
 
 /* functions follow */
  
-void session_time (void);
+void session_time (FILE *fp);
 
 void logo (void);
 
-void gui_logo (void);
+void gui_logo (FILE *fp);
 
 void printmodel (const MODEL *pmod, 
 		 const DATAINFO *pdinfo, 

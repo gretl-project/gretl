@@ -674,6 +674,10 @@ void save_session (char *fname)
 	errbox("Couldn't open output file for writing");
 	return;
     }
+
+    gui_logo(prn->fp);
+    session_time(prn->fp);
+    pprintf(prn, "Output from %s\n", fname);
     execute_script(fname, NULL, NULL, prn, SAVE_SESSION_EXEC); 
     gretl_print_destroy(prn);
 

@@ -262,14 +262,14 @@ void _putxx (const double xx)
 /**
  * session_time:
  *
- * Print to stdout the current time.
+ * Print the current time to the specified stream.
  */
 
-void session_time (void)
+void session_time (FILE *fp)
 {
     time_t runtime = time(NULL);
 
-    printf("Current session: %s", ctime(&runtime));
+    fprintf(fp, "Current session: %s", ctime(&runtime));
 }
 
 /**
@@ -288,14 +288,14 @@ void logo (void)
 /**
  * gui_logo:
  *
- * Print to stdout gretl GUI version information.
+ * Print gretl GUI version information to the specified stream.
  */
 
-void gui_logo (void)
+void gui_logo (FILE *fp)
 {
-    printf("gretl: gui client for gretl version %s,\n", version_string);
-    puts("copyright Allin Cottrell.");
-    puts("This is free software with ABSOLUTELY NO WARRANTY.");
+    fprintf(fp, "gretl: gui client for gretl version %s,\n", version_string);
+    fputs("copyright Allin Cottrell.\n", fp);
+    fputs("This is free software with ABSOLUTELY NO WARRANTY.\n", fp);
 }
 
 /**
