@@ -2360,7 +2360,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot_t *plot)
 }
 
 static void set_approx_pixel_bounds (png_plot_t *plot, 
-				     int max_num_width.
+				     int max_num_width,
 				     int max_num2_width)
 {
     if (PLOTSPEC_DETAILS_IN_MEMORY(plot->spec)) {
