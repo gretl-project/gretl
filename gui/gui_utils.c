@@ -1416,8 +1416,8 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 	gtk_editable_delete_text(GTK_EDITABLE(vwin->w), 0, -1);
     }
 
-    g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
-		     G_CALLBACK(catch_edit_key), vwin);	
+    gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
+		       GTK_SIGNAL_FUNC(catch_edit_key), vwin);	
 
     /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
