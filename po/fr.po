@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
 "POT-Creation-Date: 2004-01-25 22:11-0500\n"
-"PO-Revision-Date: 2004-01-21 15:30-0500\n"
+"PO-Revision-Date: 2004-01-25 22:32-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -8551,9 +8551,8 @@ msgid "x12sep"
 msgstr ""
 
 #: gui/gui_utils.c:2630 gui2/gui_utils.c:2630
-#, fuzzy
 msgid "view X-12-ARIMA output"
-msgstr "/Données du modèle/afficher les sorties de X-12-ARIMA"
+msgstr "afficher les sorties de X-12-ARIMA"
 
 #: gui/gui_utils.c:2661 gui2/gui_utils.c:2661
 msgid "/Graphs"

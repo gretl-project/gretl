@@ -2608,11 +2608,7 @@ static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
 static void add_x12_output_menu_item (windata_t *vwin)
 {
     GtkItemFactoryEntry x12item;
-    MODEL *pmod = vwin->data;
     const gchar *mpath = "/Model data";
-
-    if (pmod->params == NULL || pmod->params[0] == NULL)
-	return;
 
     x12item.accelerator = NULL; 
     x12item.callback_action = 0;
