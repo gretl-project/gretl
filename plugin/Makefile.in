@@ -149,7 +149,7 @@ tobit.la: tobit.lo
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) 
 
 garch.la: garch.lo fcp.lo
-	$(LINK) -o $@ $^ $(GRETLLIB) $(FLIB)
+	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib

@@ -10,7 +10,18 @@
     Allin Cottrell, Wake Forest University, March 2004.
 */
 
+/* Gabriele FIORENTINI, Giorgio CALZOLARI, Lorenzo PANATTONI
+   Journal of APPLIED ECONOMETRICS, 1996 
+
+   mixed gradient algorithm
+
+   garch(p,q) estimates of a linear equation 
+
+   SEE BOLLERSLEV, JOE 31(1986),307-327. 
+*/
+
 #include "libgretl.h"
+#include "libset.h"
 #include "fcp.h"
 
 /* #define FDEBUG  */
@@ -20,12 +31,6 @@
 
 #define LOG_SQRT_2_PI 0.9189385332056725
 #define SMALL_HT      1.0e-7 
-
-enum {
-    OP_MATRIX,
-    INFO_MATRIX,
-    HESSIAN
-} vcv_codes;
 
 int global_np;
 
@@ -38,7 +43,7 @@ static int invert (double *g, int dim);
 static  
 double garch_ll (double *c, int nc, double *res2, 
 		 double *res, double *yhat, 
-		 double *ystoc, const double **X, 
+		 const double *ystoc, const double **X, 
 		 int nexo, int t1, int t2, double *param, 
 		 double *b, double *alfa0, 
 		 double *alfa, double *beta, int nalfa, 
@@ -57,7 +62,7 @@ static int
 garch_info_matrix (int t1, int t2, 
 		   const double **X, int nexo, 
 		   double *yhat, double *c, int nc, double *res2,
-		   double *res, double *ystoc, double toler, 
+		   double *res, const double *ystoc, double toler, 
 		   int *ivolta, double *vc5, const double **g,
 		   double *aux3, double *param, int nparam,
 		   double *b, double *alfa0, double *alfa,
@@ -68,37 +73,12 @@ static int
 garch_full_hessian (int t1, int t2, 
 		    const double **X, int nexo, 
 		    double *yhat, double *c, int nc, double *res2,
-		    double *res, double *ystoc, double toler, 
+		    double *res, const double *ystoc, double toler, 
 		    int *ivolta, double *vc5, const double **g,
 		    double *aux3, double *param, int nparam,
 		    double *b, double *alfa0, double *alfa,
 		    double *beta, int nalfa, int nbeta, double *h,
 		    double **dhdp, double *zt);
-
-/* Gabriele FIORENTINI, Giorgio CALZOLARI, Lorenzo PANATTONI
-   Journal of APPLIED ECONOMETRICS, 1996 
-
-   mixed gradient algorithm
-
-   garch(p,q) estimates of a linear equation 
-   SEE BOLLERSLEV, JOE 31(1986),307-327. 
-
-   remember to put enough lagged observations in the data file 
-   (at least = max(p,q)) to have residuals at time 0, -1, etc. 
-*/
-
-/*
-  VC = matr di comodo che serve al calcolo --- inoltre si usa come
-       inversa della mat. di cov. dei soli coeff. per la mat. di inf.
-  VC5= matrice di informazione. 
-  VC8= inversa della mat. di cov. dei soli coeff. per l'fulhessiano 
-  VC9= fulhessian of unconcentrated log-lik. (nparam,nparam). 
-  VC10=matrix as in white (1982,p.....), computed using the complete 
-       inverse of VC9 and the full VC6 matrix. 
-       consistent and robust. 
-
-       dhtdp sono le derivate di ht rispetto a tutti i parametri 
-*/
 
 static void free_2d_array (double **A, int k)
 {
@@ -264,7 +244,7 @@ static void copy_coeff (const double *c, int nc, double *b)
 } 
 
 int ols_ (int t1, int t2, const double **X, int nx, 
-	  double *c, int nc, double *ystoc, 
+	  double *c, int nc, const double *ystoc, 
 	  double *amax, double *aux, double *b, double **g)
 {
     int i, j, k, t, err;
@@ -392,11 +372,124 @@ static double *robust_vcv (const double *vci, const double *vco,
     return vcr;
 }
 
+static int 
+make_garch_vcv (int t1, int t2, 
+		const double **X, int nx,
+		double *yhat, const double *ystoc,
+		double *c, int nc, 
+		double *res2, double *res, 
+		const double **g, double *aux3,
+		double *param, int nparam,
+		double *b, double *alfa0, 
+		double *alfa, double *beta, int nalfa, int nbeta, 
+		double *h, double **dhdp, double *zt,
+		const double *vch, double *vcv,
+		int robust)
+{
+    double *vco = NULL, *vcr = NULL, *vci = NULL;
+    int np2 = nparam * nparam;
+    int k, vopt;
+    int err = 0;
+
+    vopt = get_garch_vcv_version();
+
+    /* The defaults: QML if "robust" option is in force,
+       otherwise negative Hessian */
+    if (vopt == VCV_UNSET) {
+	if (robust) {
+	    vopt = VCV_QML;
+	} else {
+	    vopt = VCV_HESSIAN;
+	}
+    }
+
+    /* OP and robust variants need OP matrix */
+    if (vopt == VCV_OP || vopt == VCV_QML || vopt == VCV_BW) {
+	vco = malloc(nparam * nparam * sizeof *vco);
+	if (vco == NULL) {
+	    err = 1;
+	    goto bailout;
+	}
+
+	vcv_setup(t1, t2, c, nc, 
+		  res2, res, 
+		  NULL, g, aux3, 
+		  param, nparam, 
+		  alfa0, alfa, beta, nalfa, nbeta, h,
+		  dhdp, zt, NULL, vco, 
+		  VCV_OP);
+
+	if (vopt == VCV_OP) {
+	    err = invert(vco, nparam);
+	    for (k=0; k<np2; k++) {
+		vcv[k] = vco[k];
+	    }
+	}
+    }
+
+    /* IM and BW variants need the info matrix */
+    if (vopt == VCV_IM || vopt == VCV_BW) {
+	vci = malloc(nparam * nparam * sizeof *vci);
+	if (vci == NULL) {
+	    err = 1;
+	    goto bailout;
+	}
+
+	garch_info_matrix(t1, t2, X, nx, yhat, c, 
+			  nc, res2, res, ystoc,
+			  0.0, NULL, vci, g, 
+			  aux3, param, nparam, b, 
+			  alfa0, alfa, beta, nalfa,
+			  nbeta, h, dhdp, zt);
+
+	if (vopt == VCV_IM) {
+	    for (k=0; k<np2; k++) {
+		vcv[k] = vci[k];
+	    }
+	} else {
+	    /* Bollerslev-Wooldridge */
+            vcr = robust_vcv(vci, vco, nparam);
+	    if (vcr == NULL) {
+		err = 1;
+		goto bailout;
+	    }
+	    for (k=0; k<np2; k++) {
+		vcv[k] = vcr[k];
+	    }
+	}
+    }
+
+    else if (vopt == VCV_QML) {
+	vcr = robust_vcv(vch, vco, nparam);
+	if (vcr == NULL) {
+	    err = 1;
+	    goto bailout;
+	}
+	for (k=0; k<np2; k++) {
+	    vcv[k] = vcr[k];
+	}	
+    }	
+	
+    else if (vopt == VCV_HESSIAN) {
+	for (k=0; k<np2; k++) {
+	    vcv[k] = vch[k];
+	}
+    }	
+
+ bailout:
+
+    free(vco);
+    free(vci);
+    free(vcr);
+
+    return err;
+}
+
 int garch_estimate (int t1, int t2, int nobs, 
 		    const double **X, int nx, double *yhat, 
 		    double *coeff, int nc, double *vcv, 
 		    double *res2, double *res,
-		    double *ystoc, double *amax, double *b, 
+		    const double *ystoc, double *amax, double *b, 
 		    int *iters, PRN *prn, int robust)
 {
     int i, j;
@@ -434,24 +527,12 @@ int garch_estimate (int t1, int t2, int nobs,
 	return E_ALLOC;
     }
 
-#if FFDEBUG
-    fprintf(stderr, "read nalfa=%d, nbeta=%d\n", nalfa, nbeta);
-#endif
-
     for (i = 0; i < nalfa; ++i) {
 	param[nc + i + 1] = amax[3 + i];
-#if FFDEBUG
-	fprintf(stderr, "read initial alpha[%d] = %.9g\n", i, 
-		param[nc + i + 1]);
-#endif
     }
 
     for (i = 0; i < nbeta; ++i) {
 	param[nc + nalfa + i + 1] = amax[3 + nalfa + i];
-#if FFDEBUG
-	fprintf(stderr, "read initial beta[%d] = %.9g\n", i, 
-		param[nc + nalfa + i + 1]);
-#endif
     }
 
     param[nc] = amax[0];
@@ -476,7 +557,7 @@ int garch_estimate (int t1, int t2, int nobs,
     ols_(t1, t2, X, nx, c, nc, ystoc, amax, aux, b, g);
 
 #ifdef FFDEBUG
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < nc; i++) {
 	fprintf(stderr, "after ols g[%d] = %.9g\n", i, g[i]);
     } 
 #endif    
@@ -502,11 +583,7 @@ int garch_estimate (int t1, int t2, int nobs,
 	for (i = 0; i < nparam; ++i) {
 	    parpre[i] = param[i];
 	    partrc[i][nzo-1] = param[i];
-#ifdef FDEBUG
-	    fprintf(stderr, "param[%d] = %.9g\n", i, param[i]);	    
-#endif
 	}
-
 
 #ifdef FDEBUG
 	fprintf(stderr, "*** Calling garch_info_matrix, ivolta=%d\n", ivolta);	    
@@ -641,57 +718,34 @@ int garch_estimate (int t1, int t2, int nobs,
     err = E_NOCONV;
     goto L999;
 
-L6766:
+ L6766:
     if (!err) {
 	double sderr;
 
-	if (robust) {
-	    /* for now we'll use QML: B-W could be an option too */
-	    double *vco = malloc(nparam * nparam * sizeof *vco);
-	    double *vcr = NULL;
+	err = make_garch_vcv(t1, t2, 
+			     X, nx,
+			     yhat, ystoc,
+			     c, nc, 
+			     res2, res, 
+			     (const double **) g, aux3,
+			     param, nparam,
+			     b, &alfa0, 
+			     alfa, beta, nalfa, nbeta, 
+			     h, dhdp, zt,
+			     (const double *) vc5, vcv,
+			     robust);
 
-	    /* calculate OP matrix, for robust vcv */
-	    vcv_setup(t1, t2, c, nc, res2, res, 
-		      NULL, (const double **) g, aux3, 
-		      param, nparam, 
-		      &alfa0, alfa, beta, nalfa, nbeta, h,
-		      dhdp, zt, NULL, vco, 
-		      OP_MATRIX);
-
-	    /* QML variant */
-	    vcr = robust_vcv(vc5, vco, nparam);
-	    fprintf(stderr, "QML standard errors:\n");
-	    for (i=0; i<nparam; i++) {
-		fprintf(stderr, "sderr[%d] = %g\n", i, 
-			sqrt(vcr[vix(i,i)]));
-	    }
-
+	if (!err) {
 	    for (i = 0; i < nparam; ++i) {
-		for (j = 0; j < nparam; ++j) {
-		    vcv[vix(i,i)] = vcr[vix(i,i)];
+		if (vcv[vix(i,i)] > 0.0) {
+		    sderr = sqrt(vcv[vix(i,i)]);
+		} else {
+		    sderr = 0.0;
 		}
-	    }
-
-	    free(vcr);
-	    free(vco);
-	} else {
-	    /* not "robust": regular standard errors, from Hessian */
-	    for (i = 0; i < nparam; ++i) {
-		for (j = 0; j < nparam; ++j) {
-		    vcv[vix(i,i)] = vc5[vix(i,i)];
-		}
+		amax[i+1] = param[i];
+		amax[i+1+nparam] = sderr;
 	    }
 	}
-
-	for (i = 0; i < nparam; ++i) {
-	    if (vcv[vix(i,i)] > 0.0) {
-		sderr = sqrt(vcv[vix(i,i)]);
-	    } else {
-		sderr = 0.0;
-	    }
-	    amax[i+1] = param[i];
-	    amax[i+1+nparam] = sderr;
-	}	
     }
 
  L999:
@@ -711,7 +765,7 @@ L6766:
 static double 
 garch_ll (double *c, int nc, double *res2, 
 	  double *res, double *yhat, 
-	  double *ystoc, const double **X, int nx,
+	  const double *ystoc, const double **X, int nx,
 	  int t1, int t2, double *param, double *b,  
 	  double *alfa0, double *alfa, double *beta, int nalfa,
 	  int nbeta, double *h)
@@ -1022,7 +1076,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	for (i = 0; i < nc; ++i) {
 	    aa = rsuh * g[i][t] + .5 / h[t] * dhdp[i][t] * (r2suh - 1.0);
 	    aux3[i] += aa;
-	    if (code == OP_MATRIX) {
+	    if (code == VCV_OP) {
 		for (j=0; j<=i; j++) {
 		    bb = rsuh * g[j][t] + .5 / h[t] * dhdp[j][t] * (r2suh - 1.0);
 		    vcv[vix(i,j)] += aa * bb;
@@ -1043,7 +1097,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 
 	    aa = .5 / h[t] * dhdp[nci][t] * (r2suh - 1.0);
 	    aux3[nci] += aa;
-	    if (code == OP_MATRIX) {
+	    if (code == VCV_OP) {
 		for (j=0; j<=i; j++) {
 		    int ncj = nc + j;
 
@@ -1054,7 +1108,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	}
     }
 
-    if (code == INFO_MATRIX) {
+    if (code == VCV_IM) {
 	for (t = t1; t <= t2; ++t) {
 	    /* parte relativa ai coefficienti (eq. 23 pag. 316) 
 	       si ricorda che si prende il valore atteso e restano solo i primi
@@ -1081,7 +1135,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	}
     }
 
-    if (code != HESSIAN) {
+    if (code != VCV_HESSIAN) {
 	free(asum2);
 	return 0;
     }
@@ -1253,7 +1307,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 static int 
 garch_info_matrix (int t1, int t2, 
 		   const double **X, int nx, double *yhat, double *c, 
-		   int nc, double *res2, double *res, double *ystoc,
+		   int nc, double *res2, double *res, const double *ystoc,
 		   double toler, int *ivolta, double *vcv, 
 		   const double **g, double *aux3, 
 		   double *param, int nparam, double *b,  
@@ -1301,7 +1355,7 @@ garch_info_matrix (int t1, int t2,
 	      ivolta, g, aux3, param, nparam, 
 	      alfa0, alfa, beta, nalfa, nbeta, h,
 	      dhdp, zt, NULL, vcv, 
-	      INFO_MATRIX);
+	      VCV_IM);
 
     /* invert the information matrix */
     ier5 = invert(vcv, nparam);
@@ -1681,7 +1735,7 @@ static double ***allocate_dhdpdp (int np, int nvp)
 static int 
 garch_full_hessian (int t1, int t2, 
 		    const double **X, int nx, double *yhat, double *c, 
-		    int nc, double *res2, double *res, double *ystoc,
+		    int nc, double *res2, double *res, const double *ystoc,
 		    double toler, int *ivolta, double *vcv, 
 		    const double **g, double *aux3, 
 		    double *param, int nparam, double *b, 
@@ -1736,7 +1790,7 @@ garch_full_hessian (int t1, int t2,
 	      ivolta, g, aux3, param, nparam, 
 	      alfa0, alfa, beta, nalfa, nbeta, h,
 	      dhdp, zt, H, vcv, 
-	      HESSIAN);
+	      VCV_HESSIAN);
 
     /*  il do 25 sul tempo e' finito e allora si riempie la parte 
 	mista in basso a sinistra 
@@ -2065,20 +2119,18 @@ static int invert (double *g, int dim)
     double *work;
 
 #ifdef FDEBUG
-    if (1) {
-	int i, j;
-	static int k;
+    int i, j;
+    static int k;
 
-	fprintf(stderr, "Mat invert[%d], got n=%d\n", k, dim);
+    fprintf(stderr, "Matrix inversion %d, dim=%d\n", k, dim);
 
-	for (i=0; i<dim; i++) {
-	    for (j=0; j<dim; j++) {
-		fprintf(stderr, "%14.9g ", g[i + dim * j]);
-	    }
-	    fputc('\n', stderr);
+    for (i=0; i<dim; i++) {
+	for (j=0; j<dim; j++) {
+	    fprintf(stderr, "%14.9g ", g[i + dim * j]);
 	}
-	k++;
+	fputc('\n', stderr);
     }
+    k++;
 #endif
 
     ipiv = malloc(m * sizeof *ipiv);

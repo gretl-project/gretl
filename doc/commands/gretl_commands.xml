@@ -209,6 +209,9 @@
 	least squares estimation is then performed on the original
 	model.
       </para>
+      <para>
+	See also <cmdref targ="garch"/>.
+      </para>
     </description>
 
     <gui-access>
@@ -246,7 +249,7 @@
       </options>
       <examples>
         <example>arma 1 2 ; y</example>
-	<example>arma 2 2 ; y --verbose</example>
+	<example>arma 2 2 ; y 0 x1 x2 --verbose</example>
       </examples>
     </usage>
 
@@ -1165,6 +1168,70 @@
 
     <gui-access>
       <menu-path>/Variable/Frequency distribution</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="garch" section="Estimation" label="GARCH model">
+
+    <usage>
+      <arguments>
+        <argument>p</argument>
+	<argument>q</argument>
+	<argument separated="true">depvar</argument>
+	<argument optional="true">indepvars</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print details of iterations</effect>
+        </option>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+        </option>
+      </options>
+      <examples>
+        <example>garch 1 1 ; y</example>
+	<example>garch 1 1 ; y 0 x1 x2 --robust</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Estimates a GARCH model (GARCH = Generalized Autoregressive
+	Conditional Heteroskedasticity), either a univariate model or,
+	if <repl>indepvars</repl> are specified, including the given
+	exogenous variables.  The integer values <repl>p</repl> and
+	<repl>q</repl> represent the lag orders in the conditional
+	variance equation.
+	<equation status="display"
+	  tex="\[h_t = \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
+	  \sum_{j=1}^p \beta_i h_{t-j}\]"
+	  ascii="h(t) = sum(i=1 to q) a(i)*u(t-i) + sum(j=1 to p) b(j)*h(t-j)"
+	  graphic="garch_h"/>
+      </para>
+
+      <para>The gretl GARCH algorithm is basically that of Fiorentini,
+	Calzolari and Panattoni (1996), used by kind permission of
+	Professor Fiorentini.</para>
+
+      <para>Several variant estimates of the coefficient covariance
+	matrix are available with this command.  By default, the
+	Hessian is used unless the <lit>--robust</lit> option is
+	given, in which case the QML (White) covariance matrix is
+	used.  Other possibilities (e.g. the information matrix, or
+	the Bollerslev&ndash;Wooldridge estimator) can be specified
+	using the <cmdref targ="set"/> command.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/GARCH model</menu-path>
     </gui-access>
 
   </command>
@@ -3950,6 +4017,18 @@
 	      Methods</book>, chapter 5.  HC0 produces what are
 	    usually called <quote>White's standard
 	      errors</quote>.</cell>
+	</row>
+	<row>
+	  <cell><lit>garch_vcv</lit></cell>
+	  <cell>values: <lit>unset</lit>, <lit>hessian</lit>,
+	    <lit>im</lit> (information matrix) , <lit>op</lit> (outer
+	    product matrix), <lit>qml</lit> (QML estimator),
+	    <lit>bw</lit> (Bollerlev&ndash;Wooldridge). Specifies the
+	    variant that will be used for estimating the coefficient
+	    covariance matrix, for GARCH models.  If <lit>unset</lit>
+	    is given (the default) then the Hessian is used unless the
+	    <quote>robust</quote> option is given for the garch
+	    command, in which case QML is used.</cell>
 	</row>
       </table>
 

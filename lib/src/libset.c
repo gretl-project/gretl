@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "internal.h"
+#include "libset.h"
 
 static int use_qr;
 
@@ -38,6 +39,32 @@ static struct {
 int get_hc_version (void)
 {
     return robust_opts.hc_version;
+}
+
+static int get_or_set_garch_vcv (int v)
+{
+    static int variant;
+
+    if (v >= 0) variant = v;
+    return variant;
+}
+
+static void set_garch_vcv_variant (const char *s)
+{
+    int vopt = VCV_UNSET;
+
+    if (!strcmp(s, "hessian"))    vopt = VCV_HESSIAN;
+    else if (!strcmp(s, "im"))    vopt = VCV_IM;
+    else if (!strcmp(s, "op"))    vopt = VCV_OP;
+    else if (!strcmp(s, "qml"))   vopt = VCV_QML;
+    else if (!strcmp(s, "bw"))    vopt = VCV_BW;
+
+    get_or_set_garch_vcv(vopt);
+}
+
+int get_garch_vcv_version (void)
+{
+    return get_or_set_garch_vcv(-1);
 }
 
 int get_hac_lag (int m)
@@ -109,6 +136,15 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 	    if (!strcmp(setarg, "0") || !strcmp(setarg, "1") ||
 		!strcmp(setarg, "2") || !strcmp(setarg, "3")) {
 		robust_opts.hc_version = atoi(setarg);
+		err = 0;
+	    }
+	}
+	else if (!strcmp(setobj, "garch_vcv")) {
+	    /* set GARCH VCV variant */
+	    if (!strcmp(setarg, "hessian") || !strcmp(setarg, "im") ||
+		!strcmp(setarg, "op") || !strcmp(setarg, "qml") ||
+		!strcmp(setarg, "bw") || !strcmp(setarg, "unset")) {
+		set_garch_vcv_variant(setarg);
 		err = 0;
 	    }
 	}

@@ -15,6 +15,14 @@
   </bibliomixed>
 
   <bibliomixed>
+    <bibliomset relation='article'>Berndt, E., Hall, B., Hall, R. and
+      Hausman, J. (1974) <title>Estimation and Inference in Nonlinear
+	Structural Models</title>, </bibliomset> <bibliomset
+      relation='journal'><title>Annals of Economic and Social
+	Measurement</title>, 3/4, pp. 653&ndash;65.</bibliomset>
+  </bibliomixed>
+
+  <bibliomixed>
     <bibliomset relation='article'>Box, G. E. P. and Muller, M. E.
       (1958) <title>A Note on the Generation of Random Normal
 	Deviates</title>,</bibliomset> <bibliomset relation='journal'>
@@ -48,6 +56,14 @@
       12, pp. 573&ndash;93.</bibliomset>  Reprinted with corrections
     in M. McAleer and L. Oxley (1999) <title>Practical Issues in
       Cointegration Analysis</title>, Oxford: Blackwell.
+  </bibliomixed>
+
+  <bibliomixed>
+    <bibliomset relation='article'>Fiorentini, G., Calzolari, G. and
+      Panattoni, L. (1996) <title>Analytic Derivatives and the
+	Computation of GARCH Etimates</title>,</bibliomset>
+    <bibliomset relation='journal'> <title>Journal of Applied
+	Econometrics</title>, 11, pp. 399&ndash;417.</bibliomset>
   </bibliomixed>
 
   <bibliomixed>
