@@ -1269,7 +1269,39 @@ int write_data (const char *fname, const int *list,
 	}
 	fputc('\n', fp);
     }
-    else if (opt == GRETL_DATA_R_ALT) { /* export GNU R (structure) */
+    else if (opt == GRETL_DATA_R_ALT && pdinfo->time_series == TIME_SERIES) {
+	/* new (October, 2003) attempt at R time-series structure */
+	char *p, datestr[9];
+
+	fprintf(fp, "\"%s\" <- ts (t (matrix (data = c(\n", "gretldata");
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    for (i=1; i<=l0; i++) {
+		xx = (pdinfo->vector[list[i]])? Z[list[i]][t] : Z[list[i]][0];
+		if (na(xx)) fputs("NA", fp);
+		else fprintf(fp, "%g", xx);
+		if (i == l0) {
+		    if (t == pdinfo->t2) fputs("),\n", fp);
+		    else fputs(" ,\n", fp);
+		} else {
+		    fputs(" , ", fp);
+		}
+	    }
+	}
+	ntodate(datestr, pdinfo->t1, pdinfo);
+	p = strchr(datestr, ':');
+	fprintf(fp, "nrow = %d, ncol = %d)), start = c(%d,%s), frequency = %d)\n",
+		l0, pdinfo->t2 - pdinfo->t1 + 1, 
+		atoi(datestr), (p != NULL)? (p + 1) : "1",
+		pdinfo->pd);
+	fprintf(fp, "colnames(%s) <- c(", "gretldata");
+	for (i=1; i<=l0; i++) {
+	    fprintf(fp, "\"%s\"", pdinfo->varname[list[i]]);
+	    if (i < l0) fputs(", ", fp);
+	    else fputs(")\n", fp);
+	}
+    }
+    else if (opt == GRETL_DATA_R_ALT) { 
+	/* export GNU R (structure) */
 	for (i=1; i<=l0; i++) {
 	    fprintf(fp, "\"%s\" <-\n", pdinfo->varname[list[i]]);
 	    fprintf(fp, "structure(c(");
