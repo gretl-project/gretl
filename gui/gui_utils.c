@@ -185,10 +185,15 @@ GtkItemFactoryEntry model_items[] = {
     { "/_Model data/Define new variable...", NULL, gretl_callback, 
       MODEL_GENR, NULL },
     { "/_LaTeX", NULL, NULL, 0, "<Branch>" },
-    { "/LaTeX/view tabular", NULL, view_latex, 0, NULL },
-    { "/LaTeX/view equation", NULL, view_latex, 1, NULL },
-    { "/LaTeX/save tabular", NULL, file_save, SAVE_TEX_TAB, NULL },
-    { "/LaTeX/save equation", NULL, file_save, SAVE_TEX_EQ, NULL },
+    { "/LaTeX/_View", NULL, NULL, 0, "<Branch>" },
+    { "/LaTeX/View/_Tabular", NULL, view_latex, 0, NULL },
+    { "/LaTeX/View/_Equation", NULL, view_latex, 1, NULL },
+    { "/LaTeX/_Save", NULL, NULL, 0, "<Branch>" },
+    { "/LaTeX/Save/_Tabular", NULL, file_save, SAVE_TEX_TAB, NULL },
+    { "/LaTeX/Save/_Equation", NULL, file_save, SAVE_TEX_EQ, NULL },
+    { "/LaTeX/_Copy", NULL, NULL, 0, "<Branch>" },
+    { "/LaTeX/Copy/_Tabular", NULL, text_copy, COPY_LATEX, NULL },
+    { "/LaTeX/Copy/_Equation", NULL, text_copy, COPY_LATEX_EQUATION, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2246,6 +2251,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     /* mydata->action code says what sort of thing is displayed in
        the window in question */
 
+    /* descriptive statistics */
     if ((mydata->action == SUMMARY || mydata->action == VAR_SUMMARY)
 	&& (how == COPY_LATEX || how == COPY_RTF)) {
 	GRETLSUMMARY *summ = (GRETLSUMMARY *) mydata->data;
@@ -2266,6 +2272,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	return;
     }
 
+    /* correlation matrix */
     if (mydata->action == CORR 
 	&& (how == COPY_LATEX || how == COPY_RTF)) {
 	CORRMAT *corr = (CORRMAT *) mydata->data;
@@ -2286,18 +2293,13 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	return;
     }
 
-    if (mydata->action == CORR && how == COPY_RTF) {
-	dummy_call();
-	return;
-    }
-
+    /* or it's a model window we're copying from? */
     if (how == COPY_RTF) {
 	MODEL *pmod = (MODEL *) mydata->data;
 
 	model_to_rtf(pmod);	
 	return;
     }
-
     else if (how == COPY_LATEX || how == COPY_HTML) {
 	MODEL *pmod = (MODEL *) mydata->data;
 
@@ -2306,6 +2308,15 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    tex_print_model(pmod, datainfo, 0, prn);
 	else
 	    h_printmodel(pmod, datainfo, prn);
+	prn_to_clipboard(prn);
+	gretl_print_destroy(prn);
+	return;
+    }
+    else if (how == COPY_LATEX_EQUATION) {
+	MODEL *pmod = (MODEL *) mydata->data;
+
+	if (bufopen(&prn)) return;
+	tex_print_equation(pmod, datainfo, 0, prn);
 	prn_to_clipboard(prn);
 	gretl_print_destroy(prn);
 	return;

@@ -142,8 +142,8 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     char tmp[16];
 
     if (standalone) {
-	pprintf(prn, "\\documentclass{article}\n\\begin{document}\n"
-		"\\setlength{\\tabcolsep}{4pt}\n\n");
+	pprintf(prn, "\\documentclass[11pt]{article}\n\\begin{document}\n"
+		"\\thispagestyle{empty}\n\n");
     }
     pprintf(prn, "\\begin{center}\n");
 
@@ -156,7 +156,9 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     /* tabular header */
-    pprintf(prn, "\\begin{tabular}{rc"
+    pprintf(prn, "{\\setlength{\\tabcolsep}{.5ex}\n"
+	    "\\renewcommand{\\arraystretch}{1}\n"
+	    "\\begin{tabular}{rc"
 	    "%s", (pmod->ifc)? "c" : "c@{\\,}l");
     start = (pmod->ifc)? 1 : 2;
     for (i=start; i<ncoeff; i++) pprintf(prn, "cc@{\\,}l");
@@ -185,24 +187,24 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     /* t-stats in row beneath */
     if (pmod->ifc) {
 	pprintf(prn, "& ");
-	pprintf(prn, "& $(%.3f)$ ", const_tstat);
+	pprintf(prn, "& {\\small $(%.2f)$} ", const_tstat);
     } 
     for (i=2; i<=ncoeff; i++) {
         tstat = pmod->coeff[i-1]/pmod->sderr[i-1];
-	if (i == 2) pprintf(prn, "& & $(%.3f)$ ", tstat);
-	else pprintf(prn, "& & & $(%.3f)$ ", tstat);
+	if (i == 2) pprintf(prn, "& & \\small{$(%.2f)$} ", tstat);
+	else pprintf(prn, "& & & \\small{$(%.2f)$} ", tstat);
     }
-    pprintf(prn, "\n\\end{tabular}\n\n");
+    pprintf(prn, "\n\\end{tabular}}\n\n");
 
     /* additional info (R^2 etc) */
-    pprintf(prn, "\\vspace{8pt}\n");
-    pprintf(prn, "$T = %d,\\, R^2 = %.3f,\\, F(%d,%d) = %.3f,\\, "
+    pprintf(prn, "\\vspace{.8ex}\n");
+    pprintf(prn, "$T = %d,\\, \\bar{R}^2 = %.3f,\\, F(%d,%d) = %.3f,\\, "
 	    "\\hat{\\sigma} = %f$\n",
-	   pmod->nobs, pmod->rsq, pmod->dfn, 
+	   pmod->nobs, pmod->adjrsq, pmod->dfn, 
 	   pmod->dfd, pmod->fstt, pmod->sigma);
 
     pprintf(prn, "\n($t$-statistics in parentheses)\n"
-	    "\n\\end{center}\n");
+	    "\\end{center}\n");
 
     if (standalone) 
 	pprintf(prn, "\n\\end{document}\n");

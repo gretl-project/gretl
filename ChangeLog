@@ -5,6 +5,8 @@ version 0.98
 - better handling of empty data header info
 - substantial code cleanups in the interest of adding API
   documentation
+- allow copying LaTeX equation representation of models 
+  to clipboard; also improve the typsetting of these
 
 version 0.97
 - fix breakage of var command in GUI
