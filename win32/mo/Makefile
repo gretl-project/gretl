@@ -2,7 +2,7 @@ include ../config.mk
 
 PODIR = ../../po
 
-all: es.mo fr.mo it.mo
+all: es.mo fr.mo it.mo ja.mo
 
 es.mo: $(PODIR)/es.po
 	$(WIN32_MSGFMT) $<
@@ -16,5 +16,9 @@ it.mo: $(PODIR)/it.po
 	$(WIN32_MSGFMT) $<
 	mv messages $@
 
+ja.mo: $(PODIR)/ja.po
+	$(WIN32_MSGFMT) $<
+	mv messages $@
+
 clean:
-	rm -f es.mo fr.mo it.mo
+	rm -f es.mo fr.mo it.mo ja.mo

@@ -554,6 +554,34 @@ is obtained and the result stored in a new variable with the prefix "ld_".
 Thus for instance the new variable ld_x = ln[x(t)] - ln[x(t-1)].
 
 #
+logistic
+@Estimation
+Logistic regression
+
+Carries out an OLS regression using the logistic transformation of the
+dependent variable, log(y/(ymax-y)).
+
+The dependent variable must be strictly positive.  If it is a decimal
+fraction, between 0 and 1, the default is to use a ymax value (the asymptotic
+maximum of the dependent variable) of 1.  If the dependent variable is a
+percentage, between 0 and 100, the default ymax value is 100.  You are
+presented with a dialog box that allows you to specify a different maximum if
+you wish.  The supplied ymax value must be greater than all of the observed
+values of the dependent variable.
+
+The fitted values and residuals from the regression are automatically
+transformed using
+
+                     y = ymax / (1 + exp(-x))
+
+where x represents either a fitted value or a residual from the OLS regression
+using the transformed dependent variable.  The reported values are therefore
+comparable with the original dependent variable.
+
+Note that if the dependent variable is binary, you should use the logit
+command instead.
+
+#
 logit
 @Estimation
 Logit regression

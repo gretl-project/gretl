@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "internal.h"
+
 #include "../cephes/polrt.c"
 
 #define DEFAULT_MAX_ITER 1000
@@ -108,7 +109,7 @@ static double update_fcast_errs (double *e, const double *y,
 
     for (t=0; t<n; t++) {
 
-	if (na(y[t])){
+	if (na(y[t])) {
 	  e[t] = NADBL;
 	  continue;
 	}
@@ -127,7 +128,7 @@ static double update_fcast_errs (double *e, const double *y,
 	    e[t] -= coeff[i+p+1] * e[k];
 	}
 
-	if(t>=maxlag){
+	if(t>=maxlag) {
 	  s2 += e[t] * e[t];
 	  SampleSize++;
 	}

@@ -1170,7 +1170,7 @@ void exec_line (char *line, PRN *prn)
 
     case LOGISTIC:
 	clear_model(models[0], NULL);
-	*models[0] = logistic_model(cmd.list, &Z, datainfo);
+	*models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;

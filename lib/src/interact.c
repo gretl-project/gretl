@@ -348,7 +348,6 @@ static void parse_outfile_cmd (char *line, CMD *cmd)
 	cmd->param = malloc(n);
 	if (cmd->param == NULL) {
 	    cmd->errcode = E_ALLOC;
-	    cmd->param = NULL;
 	} else {
 	    char *p = line + 7 + 1;
 
@@ -363,6 +362,28 @@ static void parse_outfile_cmd (char *line, CMD *cmd)
 		    break;
 		}
 	    }
+	}
+    }
+}
+
+static void parse_logistic_ymax (char *line, CMD *cmd)
+{
+    char *p;
+
+    p = strstr(line, "ymax");
+    if (p != NULL) {
+	char *q = p + 4;
+	char numstr[12];
+
+	while (*q == ' ' || *q == '=') q++;
+	if (sscanf(q, "%11s", numstr)) {
+	    cmd->param = realloc(cmd->param, 6 + strlen(numstr));
+	    if (cmd->param == NULL) {
+		cmd->errcode = E_ALLOC;
+	    } else {
+		sprintf(cmd->param, "ymax=%s", numstr);
+	    }
+	    *p = '\0';
 	}
     }
 }
@@ -464,7 +485,12 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
        new name */
     else if (command->ci == RENAME) {
 	parse_rename_cmd(line, command, pdinfo);
-    }    
+    }  
+
+    /* "logistic" can have a special parameter */
+    else if (command->ci == LOGISTIC) {
+	parse_logistic_ymax(line, command);
+    }      
 
     /* commands that never take a list of variables */
     if (NO_VARLIST(command->ci)) {
@@ -589,7 +615,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
        lag order, "adf" takes a lag order, "arch" takes a lag 
        order, "multiply" takes a multiplier.  "omitfrom" and
        "addto" take the ID of a previous model. "setmiss" takes
-       a value to be interpreted as "missing"
+       a value to be interpreted as "missing". 
     */
     if ((command->ci == STORE && !spacename) ||
 	command->ci == ADF ||
@@ -599,7 +625,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == ADDTO ||
 	command->ci == OMITFROM ||
 	command->ci == MULTIPLY ||
-	command->ci == SETMISS ||	
+	command->ci == SETMISS ||
 	command->ci == VAR) {
 	if (nf) {
 	    command->param = realloc(command->param, linelen - n + 1);
@@ -1132,7 +1158,6 @@ int shell (const char *arg)
  * @line: "raw" command line to be echoed.
  * @batch: set to 1 for batch mode, 0 for interactive.
  * @gui: 1 for the gretl GUI, 0 for command-line program.
- * @oflag:
  * @prn: pointer to gretl printing struct.
  *
  * Echoes the user command represented by @pcmd and @line.
@@ -1140,7 +1165,8 @@ int shell (const char *arg)
  */
 
 #define hold_param(c) (c == TSLS || c == AR || c == ARMA || c == CORRGM || \
-                       c == MPOLS || c == SCATTERS || c == GNUPLOT)
+                       c == MPOLS || c == SCATTERS || c == GNUPLOT || \
+                       c == LOGISTIC)
 
 void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line, 
 	       int batch, int gui, PRN *prn)
@@ -1154,9 +1180,10 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     if (line == NULL) return;
 
 #if 0
-    fprintf(stderr, "echo_cmd: line='%s', gui=%d, cmd->opt='%c', batch=%d "
+    fprintf(stderr, "echo_cmd: line='%s', gui=%d, cmd->opt='%c', batch=%d, "
 	    "param='%s', nolist=%d\n", line, gui, cmd->opt, batch, cmd->param,
 	    cmd->nolist);
+    fprintf(stderr, "cmd->cmd='%s'\n", cmd->cmd);
 #endif
 
     /* special case: gui "store" command, which could overflow the
@@ -1164,17 +1191,17 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
        gui "store" in the command script; we'll record it, but
        commented out.
     */
-    if (gui && !batch && cmd->ci == STORE) {  /* FIXME monte carlo loop */
+    if (gui && !batch && cmd->ci == STORE) {  /* FIXME monte carlo loop? */
 	pprintf(prn, "# store '%s'", cmd->param);
 	if (cmd->opt) { 
 	    pprintf(prn, " -%c", cmd->opt);
 	}
-	pputs(prn, "\n");
+	pputc(prn, '\n');
 	return;
     }
 
-    if (strcmp(line, "quit") == 0 || line[0] == '!' ||
-	strlen(line) == 0) return;
+    if (*line == '\0' || *line == '!' || !strcmp(line, "quit"))
+	return;
 
     if (cmd->ci == AR || cmd->ci == ARMA) gotsep = 0;
 
@@ -1193,14 +1220,14 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 		printf(" %s", cmd->cmd);
 	    }
 	    if (cmd->ci == RHODIFF) printf(" %s;", cmd->param);
-	    else if (strlen(cmd->param) && !hold_param(cmd->ci)) {
+	    else if (*cmd->param && !hold_param(cmd->ci)) {
 		printf(" %s", cmd->param);
 	    }
 	}
 	if (!batch) {
-	    pputs(prn, cmd->cmd);
+	    pprintf(prn, "%s", cmd->cmd);
 	    if (cmd->ci == RHODIFF) pprintf(prn, " %s;", cmd->param);
-	    else if (strlen(cmd->param) && !hold_param(cmd->ci)) {
+	    else if (*cmd->param && !hold_param(cmd->ci)) {
 		pprintf(prn, " %s", cmd->param);
 	    }
 	}
@@ -1240,8 +1267,8 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	}
 
 	/* corrgm and gnuplot: param comes last */
-	if ((cmd->ci == CORRGM || cmd->ci == GNUPLOT)
-	    && strlen(cmd->param)) { 
+	if ((cmd->ci == CORRGM || cmd->ci == GNUPLOT || cmd->ci == LOGISTIC)
+	    && *cmd->param) { 
 	    if (cli) printf(" %s", cmd->param);
 	    if (!batch) pprintf(prn, " %s", cmd->param);
 	}
@@ -1255,7 +1282,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	}
     } /* end if !cmd->nolist */
 
-    else if (strcmp (cmd->cmd, "quit")) {
+    else if (strcmp(cmd->cmd, "quit")) {
 	if (cli) {
 	    if (batch) printf("? %s", line);
 	    else printf(" %s", line);
@@ -1271,8 +1298,10 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     if (cli) putchar('\n');
 
     if (!batch) {
-	pputs(prn, "\n");
-	if (prn != NULL && prn->fp) fflush(prn->fp);
+	pputc(prn, '\n');
+	if (prn != NULL && prn->fp) {
+	    fflush(prn->fp);
+	}
     }
 }
 

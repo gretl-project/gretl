@@ -3061,6 +3061,7 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 
     arma_model = get_plugin_function("arma_model", &handle);
     if (arma_model == NULL) {
+	gretl_model_init(&armod, NULL);
 	armod.errcode = E_FOPEN;
 	return armod;
     }
@@ -3084,6 +3085,7 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
 
     arma_x12_model = get_plugin_function("arma_x12_model", &handle);
     if (arma_x12_model == NULL) {
+	gretl_model_init(&armod, NULL);
 	armod.errcode = E_FOPEN;
 	return armod;
     }
@@ -3096,22 +3098,23 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
     return armod;
 }  
 
-MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo)
+MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
+		      const char *param)
 {
     MODEL lmod;
     void *handle;
-    MODEL (*logistic_estimate) (int *, double ***, DATAINFO *);
+    MODEL (*logistic_estimate) (int *, double ***, DATAINFO *, const char *);
 
     *gretl_errmsg = '\0';
 
     logistic_estimate = get_plugin_function("logistic_estimate", &handle);
     if (logistic_estimate == NULL) {
-	gretl_model_init(&lmod, pdinfo);
+	gretl_model_init(&lmod, NULL);
 	lmod.errcode = E_FOPEN;
 	return lmod;
     }
 
-    lmod = (*logistic_estimate) (list, pZ, pdinfo);
+    lmod = (*logistic_estimate) (list, pZ, pdinfo, param);
 
     close_plugin(handle);
 

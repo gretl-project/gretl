@@ -1316,6 +1316,8 @@ static void destroy_all_data_items (MODEL *pmod)
     model_data_item *item;
     int i;
 
+    if (pmod->n_data_items == 0) return;
+
     for (i=0; i<pmod->n_data_items; i++) {
 	item = pmod->data_items[i];
 	free_item_data(item->key, item->ptr);

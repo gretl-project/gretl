@@ -40,7 +40,8 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo,
 MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, 
 		PRN *prn, const PATHS *ppaths);
 
-MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo);
+MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
+		      const char *param);
 
 MODEL tsls_func (LIST list, const int pos, 
 		 double ***pZ, DATAINFO *pdinfo);

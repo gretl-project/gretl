@@ -524,7 +524,7 @@ void file_selector (const char *msg, int action, gpointer data)
 
     /* special case: default save of data */
     if ((action == SAVE_DATA || action == SAVE_GZDATA) && 
-	paths.datfile[0])) {
+	paths.datfile[0]) {
 	char *tmp = paths.datfile + slashpos(paths.datfile) + 1;
 	char *savename = suggested_savename(tmp);
 	

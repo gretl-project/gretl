@@ -47,6 +47,8 @@ static void lmax_opt_finalize (GtkWidget *w, struct lmax_opt *opt)
     numstr = gtk_entry_get_text(GTK_ENTRY(opt->entry));
     x = strtod(numstr, &test);
     if (*test != 0 || x < 0.0) {
+	gretl_errmsg_set(_("Invalid value for the maximum of the "
+			   "dependent variable"));
 	*opt->lmax = NADBL;
     } else {
 	*opt->lmax = x;
@@ -153,13 +155,16 @@ static void lmax_dialog (double *lmax)
     gtk_main();
 }
 
-static double get_lmax (const double *y, const DATAINFO *pdinfo)
+static double get_lmax (const double *y, const DATAINFO *pdinfo,
+			const char *lmstr)
 {
     double lmax, ymax = 0.0;
-    int t;
+    int t, lmax_auto = 1;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (y[t] <= 0.0) {
+	    gretl_errmsg_set(_("Illegal non-positive value of the "
+			       "dependent variable"));
 	    return NADBL;
 	}
 	if (y[t] > ymax) {
@@ -167,11 +172,24 @@ static double get_lmax (const double *y, const DATAINFO *pdinfo)
 	}
     }
 
-    if (ymax < 1.0) lmax = 1.0;
-    else if (ymax < 100.0) lmax = 100.0;
-    else lmax = 1.1 * ymax;
+    if (lmstr != NULL && *lmstr != '\0') {
+	lmax = atof(lmstr + 5);
+	lmax_auto = 0;
+    }	
 
-    lmax_dialog(&lmax);
+    if (lmax_auto) {
+	if (ymax < 1.0) lmax = 1.0;
+	else if (ymax < 100.0) lmax = 100.0;
+	else lmax = 1.1 * ymax;
+    } else if (lmax <= ymax) {
+	gretl_errmsg_set(_("Invalid value for the maximum of the "
+			   "dependent variable"));
+	lmax = NADBL;
+    }
+
+    if (lmstr == NULL) {
+	lmax_dialog(&lmax);
+    }
 	    
     return lmax;
 }
@@ -244,7 +262,8 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-MODEL logistic_estimate (int *list, double ***pZ, DATAINFO *pdinfo) 
+MODEL logistic_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
+			 const char *param) 
 {
     double lmax;
     int dv = list[1];
@@ -252,8 +271,8 @@ MODEL logistic_estimate (int *list, double ***pZ, DATAINFO *pdinfo)
 
     gretl_model_init(&lmod, pdinfo); 
 
-    lmax = get_lmax((*pZ)[dv], pdinfo);
- 
+    lmax = get_lmax((*pZ)[dv], pdinfo, param);
+
     if (na(lmax)) {
 	lmod.errcode = E_DATA;
 	return lmod;
@@ -276,6 +295,7 @@ MODEL logistic_estimate (int *list, double ***pZ, DATAINFO *pdinfo)
     }
 
     dataset_drop_vars(1, pZ, pdinfo);
+    list[1] = dv;
     
     return lmod;
 }

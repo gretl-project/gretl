@@ -105,7 +105,6 @@ add_file ${TOPDIR}/gui2/gretl.lang \
 add_file ${TOPDIR}/gui2/gnuplot.lang \
   gretl/share/gtksourceview-1.0/language-specs/gnuplot.lang
 
-
 # help files, license, logo
 add_file ${TOPDIR}/share/gretlcli.hlp gretl/gretlcli_hlp.txt
 for lang in es ; do
@@ -154,7 +153,7 @@ add_file ${TOPDIR}/share/bcih/bcih.idx gretl/db/bcih.idx
 
 # translations (make sure they're up to date first)
 make -C mo
-for lang in es fr ; do
+for lang in es fr it ja ; do
   add_file mo/$lang.mo gretl/locale/$lang/LC_MESSAGES/gretl.mo
 done
 

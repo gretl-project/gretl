@@ -572,14 +572,17 @@ static gint record_model_genr (char *line)
 {
     size_t len = strlen(line);
 
-    if (n_cmds == 0) 
+    if (n_cmds == 0) {
 	cmd_stack = mymalloc(sizeof *cmd_stack);
-    else 
+    } else { 
 	cmd_stack = myrealloc(cmd_stack, (n_cmds + 1) * sizeof *cmd_stack);
+    }
     if (cmd_stack == NULL) return 1;
 
-    if ((cmd_stack[n_cmds] = mymalloc(len + 1)) == NULL)
+    if ((cmd_stack[n_cmds] = mymalloc(len + 1)) == NULL) {
 	return 1;
+    }
+
     strncpy(cmd_stack[n_cmds], line, len);
     n_cmds++;
 
@@ -2281,7 +2284,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	break;
 
     case LOGISTIC:
-	*pmod = logistic_model(cmd.list, &Z, datainfo);
+	*pmod = logistic_model(cmd.list, &Z, datainfo, NULL);
 	err = model_output(pmod, prn);
 	break;	
 
@@ -2300,10 +2303,20 @@ void do_model (GtkWidget *widget, gpointer p)
 	return;
     }
 
+    if (action == LOGISTIC) {
+	double lmax = gretl_model_get_double(pmod, "lmax");
+
+	free(cmd.param);
+	cmd.param = g_strdup_printf("ymax=%g", lmax);
+	strcat(line, " ");
+	strcat(line, cmd.param);
+    }
+
     if (*modelgenr && record_model_genr(modelgenr)) {
 	errbox(_("Error saving model information"));
 	return;
     }
+
     if (cmd_init(line) || stack_model(1)) {
 	errbox(_("Error saving model information"));
 	return;
@@ -2323,7 +2336,6 @@ void do_model (GtkWidget *widget, gpointer p)
     /* record the fact that the last model was estimated via GUI */
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
-    /* fprintf(stderr, "do_model: calling view_model\n"); */
     view_model(prn, pmod, 78, 400, title); 
 }
 
@@ -5451,7 +5463,7 @@ int gui_exec_line (char *line,
 
     case LOGISTIC:
 	clear_or_save_model(&models[0], datainfo, rebuild);
-	*models[0] = logistic_model(cmd.list, &Z, datainfo);
+	*models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
