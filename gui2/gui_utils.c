@@ -571,7 +571,7 @@ void register_data (const char *fname, const char *user_fname,
 
 #define APPENDING(action) (action == APPEND_CSV || \
                            action == APPEND_GNUMERIC || \
-                           action == APPEND_EXCEL ||
+                           action == APPEND_EXCEL || \
                            action == APPEND_ASCII)
 
 /* ........................................................... */

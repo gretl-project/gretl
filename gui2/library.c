@@ -3277,8 +3277,31 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
 /* ........................................................... */
 
 #ifndef G_OS_WIN32
-# include <signal.h>
-#endif
+
+#include <signal.h>
+
+static int get_terminal (char *s)
+{
+    if (system("which xterm >/dev/null") == 0) {
+	strcpy(s, "xterm");
+	return 0;
+    }
+
+    if (system("which rxvt >/dev/null") == 0) {
+	strcpy(s, "rxvt");
+	return 0;
+    }
+
+    if (system("which gnome-terminal >/dev/null") == 0) {
+	strcpy(s, "gnome-terminal");
+	return 0;
+    }    
+    
+    errbox(_("Couldn't find a usable terminal program"));
+    return 1;
+}
+
+#endif /* not G_OS_WIN32 */
 
 void do_splot_from_selector (GtkWidget *widget, gpointer p)
 {
@@ -3313,11 +3336,9 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 	g_free(cmdline);
 #else
 	pid_t pid;
-	char term[6] = "xterm";
+	char term[16];
 
-	if (system("which xterm >/dev/null")) {
-	    strcpy(term, "rxvt");
-	}	
+	if (get_terminal(term)) return;
 
 	signal(SIGCHLD, SIG_IGN);
 	pid = fork();
@@ -3326,11 +3347,24 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 	    perror("fork");
 	    return;
 	} else if (pid == 0) {
-	    execlp(term, term, "+sb", "+ls",
-		   "-geometry", "40x4", "-title",
-		   "gnuplot: type q to quit",
-		   "-e", paths.gnuplot, paths.plotfile, "-", 
-		   NULL);
+	    if (!strcmp(term, "xterm") || !strcmp(term, "rxvt")) {
+		execlp(term, term, "+sb", "+ls",
+		       "-geometry", "40x4", "-title",
+		       "gnuplot: type q to quit",
+		       "-e", paths.gnuplot, paths.plotfile, "-", 
+		       NULL);
+	    }
+	    else if (!strcmp(term, "gnome-terminal")) {
+		gchar *gpt = g_strdup_printf("%s %s -", 
+					     paths.gnuplot,
+					     paths.plotfile);
+		execlp(term, term, "--nologin", 
+		       "--geometry", "40x4", "--title",
+		       "gnuplot: type q to quit",
+		       "--command", gpt, 
+		       NULL);
+		g_free(gpt);
+	    }
 	    perror("execlp");
 	    _exit(EXIT_FAILURE);
 	}
