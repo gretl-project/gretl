@@ -366,7 +366,7 @@
      <title>Main window, with a practice data file open</title>
      <screenshot>
 	<screeninfo>Main window</screeninfo>
-	<graphic fileref="figures/mainwin" align="center"/>
+	<graphic fileref="figures/mainwin.png" align="center"/>
      </screenshot>
     </figure>
 
@@ -1274,7 +1274,7 @@
     </para>
 
     <para>you can produce a series <command>foo</command> which is
-      identical to <command>bar</command> except that any &minus;-999
+      identical to <command>bar</command> except that any &minus;999
       values become zeros.  Then you can use carefully constructed
       dummy variables to, in effect, drop the missing observations
       from the regression while retaining the surrounding sample
@@ -3349,7 +3349,7 @@
 	    <literal>max(x,y)</literal> do
 
 	   <programlisting>
-	      genr d = x&gt;>y
+	      genr d = x&gt;y
 	      genr z = (x*d)+(y*(1-d))
 	    </programlisting>
 	  </para>
@@ -3670,9 +3670,10 @@
 	  variables in varlist.  The number of lagged variables equals
 	  the periodicity. For example, if the periodicity is 4
 	  (quarterly), the command <command>lags x y</command> creates
-	  <varname>x_1</varname> = x_{t-1}, <varname>x_2</varname> $=
-	  x_{t-2}$, <varname>x_3</varname> $= x_{t-3}$ and
-	  <varname>x_4</varname> $= x_{t-4}$. Similarly for
+	  <varname>x_1</varname> = <varname>x(t-1)</varname>, 
+	  <varname>x_2</varname> = <varname>x(t-2)</varname>,
+	  <varname>x_3</varname> = <varname>x(t-3)</varname> and
+	  <varname>x_4</varname> <varname>x(t-4)</varname>. Similarly for
 	  <varname>y</varname>. These variables must be referred to in
 	  the exact form, that is, with the underscore.
       </para>
@@ -4909,13 +4910,15 @@
       </informaltable>
 
       <para>
-	Generates new variables which are squares and cross products
-	of selected variables (<literal>-o</literal> will create the
-	cross products).  For the above example, new variables created
-	will be <varname>sq_x</varname> = $x^2$,
-	<varname>sq_y</varname> = $y^2$ and <varname>x_y</varname> =
-	$xy$.  If a particular variable is a dummy variable it is not
-	squared because we will get the same variable.  
+	  Generates new variables which are squares and cross products
+	  of selected variables (<literal>-o</literal> will create the
+	  cross products).  For the above example, new variables
+	  created will be <varname>sq_x</varname> =
+	  <varname>x</varname> squared, <varname>sq_y</varname> =
+	  <varname>y</varname> squared and <varname>x_y</varname> =
+	  <varname>x</varname> times <varname>y</varname>.  If a
+	  particular variable is a dummy variable it is not squared
+	  because we will get the same variable.  
       </para>
 
     </sect2>
@@ -5907,7 +5910,7 @@
       gives the correlation coefficient between 
       <emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript>
       and
-      <emphasis>y</emphasis><subscript><emphasis>t</emphasis>&minus; 1</subscript>.
+      <emphasis>y</emphasis><subscript><emphasis>t</emphasis>&minus;1</subscript>.
       For the purposes of comparison, the NIST figure was computed
       within <application>gretl</application> as follows:</para>
 
@@ -6149,30 +6152,12 @@
 	or similar:
 
 	<informalequation>
-	<graphic fileref="figures/nonlin1.png"/>
+	<graphic fileref="figures/nonlin.png"/>
 	<texmath>
-	  $y_t = \alpha + \beta(1/x_t) + \epsilon_t$
-	</texmath>
-	</informalequation>
-
-	<informalequation>
-	<graphic fileref="figures/nonlin2.png"/>
-	  <texmath>
-	  $y_t = \alpha + \beta x_t + \gamma x^2_t + \epsilon_t$
-	  </texmath>
-	</informalequation>
-
-	<informalequation>
-	<graphic fileref="figures/nonlin3.png"/>
-	<texmath>
-	  $y_t = \alpha + \beta \log x_t + \epsilon_t$
-	</texmath>
-	</informalequation>
-
-	<informalequation>
-	<graphic fileref="figures/nonlin4.png"/>
-	<texmath>
-	  $\log y_t = \alpha + \beta \log x_t + \epsilon_t$
+	  $$y_t = \alpha + \beta(1/x_t) + \epsilon_t$$
+	  $$y_t = \alpha + \beta x_t + \gamma x^2_t + \epsilon_t$$
+	  $$y_t = \alpha + \beta \log x_t + \epsilon_t$$
+	  $$\log y_t = \alpha + \beta \log x_t + \epsilon_t$$
 	</texmath>
 	</informalequation>
 
