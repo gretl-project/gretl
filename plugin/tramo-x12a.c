@@ -167,7 +167,7 @@ static int tx_dialog (tx_request *request, int opt)
 			  (opt == TRAMO)? "TRAMO/SEATS" : "X-12-ARIMA");
 #endif
 
-    tmp = gtk_label_new ("Save to data set");
+    tmp = gtk_label_new (_("Save data"));
     gtk_widget_show(tmp);
     vbox = gtk_vbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);

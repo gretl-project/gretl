@@ -1645,7 +1645,7 @@ static char *slash_convert (char *str)
     char *p = str;
 
     while (*p) {
-	if (*p == '\\') p = '/';
+	if (*p == '\\') *p = '/';
 	p++;
     }
 

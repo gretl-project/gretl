@@ -203,11 +203,13 @@ void set_x12a_ok (int set)
 static int check_for_prog (const char *prog)
 {
     char tmp[MAXLEN];
+    int ret;
 
     if (prog == NULL || *prog == 0) return 0;
 
     sprintf(tmp, "%s > /dev/null 2>&1", prog);
-    return (system(tmp) == 0);
+    ret = system(tmp);
+    return (ret == 0);
 }
 
 static void set_tramo_x12a_dirs (void)
@@ -561,7 +563,7 @@ static void boolvar_to_str (void *b, char *s)
 
 /* .................................................................. */
 
-#if defined(USE_GNOME)
+#ifdef USE_GNOME
 
 void write_rc (void) 
 {
@@ -638,9 +640,11 @@ static void read_rc (void)
     }
 
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
+
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
 #endif
+
 #ifdef ENABLE_NLS
     set_lcnumeric();
 #endif
@@ -748,6 +752,11 @@ static void read_rc (void)
     }
     fclose(rc);
     set_paths(&paths, 0, 1);
+
+#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
+    set_tramo_x12a_dirs();
+#endif
+
 #ifdef ENABLE_NLS
     set_lcnumeric();
 #endif

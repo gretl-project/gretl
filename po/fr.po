@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.0.2\n"
-"POT-Creation-Date: 2002-12-09 13:03-0500\n"
-"PO-Revision-Date: 2002-12-06 16:00-0500\n"
+"POT-Creation-Date: 2002-12-09 14:18-0500\n"
+"PO-Revision-Date: 2002-12-09 14:19-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -4850,7 +4850,7 @@ msgid "gretl: time-series plot"
 msgstr "gretl: traçage de série temporelle"
 
 #: gui/callbacks.c:410 gui/dialogs.c:100 gui/dialogs.c:106 gui/dialogs.c:323
-#: gui/dialogs.c:342 gui/dialogs.c:351 gui/settings.c:324 gui/ssheet.c:137
+#: gui/dialogs.c:342 gui/dialogs.c:351 gui/settings.c:326 gui/ssheet.c:137
 #: gui/ssheet.c:149 gui2/gui_utils.c:2461
 msgid "Apply"
 msgstr "Appliquer"
@@ -5435,7 +5435,7 @@ msgstr ""
 "Entrer le nom pour la variable et les\n"
 "valeurs minimum et maximum:"
 
-#: gui/dialogs.c:101 gui/dialogs.c:107 gui/settings.c:314
+#: gui/dialogs.c:101 gui/dialogs.c:107 gui/settings.c:316
 msgid "  Cancel  "
 msgstr "  Annuler "
 
@@ -6127,7 +6127,7 @@ msgstr "/Fichier/_Voir le journal des commandes"
 msgid "/File/sep2a"
 msgstr "/Fichier/sep2a"
 
-#: gui/gretl.c:276 gui/settings.c:839 gui/settings.c:1070 gui2/gretl.c:321
+#: gui/gretl.c:276 gui/settings.c:848 gui/settings.c:1079 gui2/gretl.c:321
 #: gui2/settings.c:1095 gui2/settings.c:1370
 msgid "/File/Open command file"
 msgstr "/Fichier/Ouvrir le fichier des commandes"
@@ -8763,64 +8763,64 @@ msgstr "Icône du dossier de la barre d'outils ouvre les données Ramanathan"
 msgid "Fixed font"
 msgstr "Fonte fixe"
 
-#: gui/settings.c:278 gui2/settings.c:400
+#: gui/settings.c:280 gui2/settings.c:400
 msgid "gretl: options"
 msgstr "gretl: options"
 
-#: gui/settings.c:359 gui2/settings.c:481
+#: gui/settings.c:361 gui2/settings.c:481
 msgid "General"
 msgstr "Général"
 
-#: gui/settings.c:361 gui2/settings.c:483
+#: gui/settings.c:363 gui2/settings.c:483
 msgid "Databases"
 msgstr "Base de données"
 
-#: gui/settings.c:363 gui2/settings.c:485
+#: gui/settings.c:365 gui2/settings.c:485
 msgid "Programs"
 msgstr "Programmes"
 
-#: gui/settings.c:365 gui2/settings.c:487
+#: gui/settings.c:367 gui2/settings.c:487
 msgid "Open/Save path"
 msgstr "Open/Save path"
 
-#: gui/settings.c:367 gui2/settings.c:489
+#: gui/settings.c:369 gui2/settings.c:489
 msgid "Data files"
 msgstr "Data files"
 
-#: gui/settings.c:534 gui2/settings.c:659
+#: gui/settings.c:536 gui2/settings.c:659
 msgid "Please restart gretl to ensure consistent results"
 msgstr "SVP relancer gretl pour vous être d'obtenir des résultats consistents"
 
-#: gui/settings.c:659 gui2/settings.c:890
+#: gui/settings.c:663 gui2/settings.c:890
 msgid "Couldn't open config file for writing"
 msgstr "Couldn't open config file for writing"
 
-#: gui/settings.c:783 gui2/settings.c:1028
+#: gui/settings.c:792 gui2/settings.c:1028
 msgid "Font for gretl output windows"
 msgstr "Fonte pour gretl pour la sortie dans les fenêtres"
 
-#: gui/settings.c:837 gui/settings.c:1068 gui2/settings.c:1093
+#: gui/settings.c:846 gui/settings.c:1077 gui2/settings.c:1093
 #: gui2/settings.c:1368
 msgid "/File/Open data"
 msgstr "/Fichier/Oouvrir les données"
 
-#: gui/settings.c:838 gui2/settings.c:1094
+#: gui/settings.c:847 gui2/settings.c:1094
 msgid "/Session/Open"
 msgstr "/Session/Ouvrir"
 
-#: gui/settings.c:1063 gui2/settings.c:1363
+#: gui/settings.c:1072 gui2/settings.c:1363
 msgid "/File/Open data/sep"
 msgstr "/Fichier/Ouvrir les données/sep"
 
-#: gui/settings.c:1064 gui2/settings.c:1364
+#: gui/settings.c:1073 gui2/settings.c:1364
 msgid "/Session/sep"
 msgstr "/Session/sep"
 
-#: gui/settings.c:1065 gui2/settings.c:1365
+#: gui/settings.c:1074 gui2/settings.c:1365
 msgid "/File/Open command file/sep"
 msgstr "/Fichier/Ouvrir le fichier de commandes/sep"
 
-#: gui/settings.c:1069 gui2/settings.c:1369
+#: gui/settings.c:1078 gui2/settings.c:1369
 msgid "/Session"
 msgstr "/Session"
 
@@ -9840,6 +9840,10 @@ msgstr "tendance/cycle pour %s"
 msgid "irregular component of %s"
 msgstr "composant irrégulier de %s"
 
+#: plugin/tramo-x12a.c:170
+msgid "Save data"
+msgstr "Sauvegarder les données"
+
 #: plugin/tramo-x12a.c:175
 msgid "Seasonally adjusted series"
 msgstr "Séries saisonnières ajustées"
@@ -9899,6 +9903,10 @@ msgstr "Erreur inattendue durant la lecture du fichier\n"
 #: plugin/workbook.c:663
 msgid "Unexpected error reading the file"
 msgstr "Erreur inattendue durant la lecture du fichier"
+
+#, fuzzy
+#~ msgid "Save to data set"
+#~ msgstr "Sauvegarder le fichier de données R"
 
 #~ msgid "Toolbar"
 #~ msgstr "Barre d'outils"
