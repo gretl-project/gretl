@@ -79,6 +79,8 @@ char response[3];
 char linebak[MAXLEN];      /* for storing comments */
 char *line_read;
 
+gretl_equation_system *sys;
+
 void exec_line (char *line, PRN *prn); 
 extern int loop_exec_line (LOOPSET *plp, const int round, 
 			   const int cmdnum, PRN *prn);
@@ -569,6 +571,14 @@ void exec_line (char *line, PRN *prn)
     }
 
     if (command.ci < 0) return; /* there's nothing there */ 
+
+    if (sys != NULL && command.ci != END && command.ci != EQUATION) {
+	printf(_("Command '%s' ignored; not valid within equation system\n"), 
+	       line);
+	gretl_equation_system_destroy(sys);
+	sys = NULL;
+	return;
+    }
    
     if (loopstack) {  
 	/* accumulating loop commands */
@@ -763,6 +773,16 @@ void exec_line (char *line, PRN *prn)
 	else varlist(datainfo, prn);
 	break;
 
+    case END:
+	if (!strcmp(command.param, "system")) {
+	    err = gretl_equation_system_print(sys, prn);
+	    if (err) errmsg(err, prn);
+	    sys = NULL;
+	} else {
+	    err = 1;
+	}
+	break;
+
     case ENDLOOP:
 	if (!loopstack) {
 	    pputs(prn, _("You can't end a loop here, "
@@ -771,6 +791,15 @@ void exec_line (char *line, PRN *prn)
 	}
 	loopstack = 0;
 	looprun = 1;
+	break;
+
+    case EQUATION:
+	err = gretl_equation_system_expand(sys, command.list);
+	if (err) {
+	    gretl_equation_system_destroy(sys);
+	    sys = NULL;
+	    errmsg(err, prn);
+	}
 	break;
 
     case EQNPRINT:
@@ -1276,6 +1305,15 @@ void exec_line (char *line, PRN *prn)
 	pputs(prn, _("Data written OK\n"));
 	if ((oflag == OPT_O || oflag == OPT_S) && datainfo->markers) { 
 	    pputs(prn, _("Warning: case markers not saved in binary datafile\n"));
+	}
+	break;
+
+    case SYSTEM:
+	/* system of equations */
+	sys = parse_system_start_line(line);
+	if (sys == NULL) {
+	    err = 1;
+	    errmsg(err, prn);
 	}
 	break;
 

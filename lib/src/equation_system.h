@@ -30,4 +30,12 @@ struct _gretl_equation_system {
 
 gretl_equation_system *parse_system_start_line (const char *line);
 
+int gretl_equation_system_expand (gretl_equation_system *sys, 
+				  int *list);
+
+int gretl_equation_system_print (gretl_equation_system *sys, PRN *prn);
+
+void gretl_equation_system_destroy (gretl_equation_system *sys);
+
+
 #endif /* GRETL_EQUATION_SYSTEM_H */

@@ -147,6 +147,7 @@ static int n_cmds;
 static MODELSPEC *modelspec;
 static char *model_origin;
 static char last_model = 's';
+static gretl_equation_system *sys;
 
 /* ........................................................... */
 
@@ -4015,6 +4016,14 @@ static int gui_exec_line (char *line,
         return 1;
     }
 
+    if (sys != NULL && command.ci != END && command.ci != EQUATION) {
+	pprintf(prn, _("Command '%s' ignored; not valid within "
+		       "equation system\n"), line);
+	gretl_equation_system_destroy(sys);
+	sys = NULL;
+	return 1;
+    }
+
     if (*plstack) {  /* accumulating loop commands */
 	if (!ok_in_loop(command.ci)) {
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
@@ -4238,6 +4247,16 @@ static int gui_exec_line (char *line,
 	else varlist(datainfo, prn);
 	break;
 
+    case END:
+	if (!strcmp(command.param, "system")) {
+	    err = gretl_equation_system_print(sys, prn);
+	    if (err) errmsg(err, prn);
+	    sys = NULL;
+	} else {
+	    err = 1;
+	}
+	break;
+
     case ENDLOOP:
 	if (*plstack != 1) {
 	    pprintf(prn, _("You can't end a loop here, "
@@ -4246,6 +4265,15 @@ static int gui_exec_line (char *line,
 	}
 	*plstack = 0;
 	*plrun = 1;
+	break;
+
+    case EQUATION:
+	err = gretl_equation_system_expand(sys, command.list);
+	if (err) {
+	    gretl_equation_system_destroy(sys);
+	    sys = NULL;
+	    errmsg(err, prn);
+	}
 	break;
 
     case EQNPRINT:
@@ -4734,6 +4762,15 @@ static int gui_exec_line (char *line,
 	if ((oflag == OPT_O || oflag == OPT_S) && datainfo->markers) 
 	    pprintf(prn, _("Warning: case markers not saved in "
 		    "binary datafile\n"));
+	break;
+
+    case SYSTEM:
+	/* system of equations */
+	sys = parse_system_start_line(line);
+	if (sys == NULL) {
+	    err = 1;
+	    errmsg(err, prn);
+	}
 	break;
 
     case TESTUHAT:

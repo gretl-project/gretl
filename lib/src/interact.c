@@ -198,6 +198,7 @@ static int aliased (char *cmd)
 	               c == DELEET || \
 	               c == TESTUHAT || \
                        c == RESET || \
+                       c == SYSTEM || \
 	               c == GENR)
 
 /* ........................................................... */
@@ -326,6 +327,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     /* unless it's on a short list of specials */
     if (command->ci == HELP ||
 	command->ci == LOOP ||
+	command->ci == END ||
 	command->ci == SEED ||
 	command->ci == LMTEST ||
 	command->ci == NULLDATA ||
@@ -334,10 +336,11 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	if (!strncmp(line, "man ", 4)) n--;
 	if (nf) {
 	    command->param = realloc(command->param, linelen - n + 1);
-	    if (command->ci == PRINT)
+	    if (command->ci == PRINT) {
 		strcpy(command->param, line + n + 1);
-	    else
+	    } else {
 		sscanf(line + n + 1, "%s", command->param);
+	    }
 	}
 	return;
     }

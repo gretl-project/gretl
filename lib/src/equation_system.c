@@ -17,6 +17,11 @@
  *
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "libgretl.h"
+
 enum {
     SUR = 0
 } gretl_system_types;
@@ -68,16 +73,23 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
     sys->lists = NULL;
 }
 
-static int gretl_equation_system_expand (gretl_equation_system *sys, 
-					 int *list)
+int gretl_equation_system_expand (gretl_equation_system *sys, 
+				  int *list)
 {
-    int i, neq = sys->n_equations;
+    int i, neq;
+
+    if (sys == NULL) {
+	strcpy(gretl_errmsg, _("No system of equations has been defined"));
+	return 1;
+    }
+
+    neq = sys->n_equations;
 
     sys->lists = realloc(sys->lists, (neq + 1) * sizeof *sys->lists);
-    if (sys->lists == NULL) return 1;
+    if (sys->lists == NULL) return E_ALLOC;
 
     sys->lists[neq] = malloc((list[0] + 1) * sizeof *list);
-    if (sys->lists[neq] == NULL) return 1;
+    if (sys->lists[neq] == NULL) return E_ALLOC;
 
     for (i=0; i<=list[0]; i++) {
 	sys->lists[neq][i] = list[i];
@@ -95,12 +107,43 @@ gretl_equation_system *parse_system_start_line (const char *line)
     int systype = -1;
 
     if (sscanf(line, "system type=%8s\n", sysstr) == 1) {
+	lower(sysstr);
 	systype = gretl_system_type_from_string(sysstr);
     } 
 
     if (systype >= 0) {
 	sys = gretl_equation_system_new(systype);
+    } else {
+	strcpy(gretl_errmsg, _("Unrecognized equation system type"));
     }
 
     return sys;
+}
+
+int gretl_equation_system_print (gretl_equation_system *sys, PRN *prn)
+{
+    int i;
+
+    if (sys == NULL) {
+	strcpy(gretl_errmsg, _("No system of equations has been defined"));
+	return 1;
+    }
+    
+    pprintf(prn, _("Equation system, type = %s\n\n"),
+	    gretl_system_type_strings[sys->type]);
+
+    for (i=0; i<sys->n_equations; i++) {
+	int j;
+
+	pprintf(prn, "Model %d: ", i);
+	for (j=1; j<=sys->lists[i][0]; j++) {
+	    pprintf(prn, "%d ", sys->lists[i][j]);
+	}
+	pputs(prn, "\n");
+    }
+
+    /* for now, we'll free the system after printing */
+    gretl_equation_system_destroy(sys);
+
+    return 0;
 }
