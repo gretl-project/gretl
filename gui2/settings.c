@@ -1192,7 +1192,7 @@ static int get_network_settings (void)
     inifile = get_network_cfg_filename();
 
     if (*inifile && (fp = fopen(inifile, "r"))) {
-	int j;
+	int j, calldrive = inifile[0];
 	char line[MAXLEN], key[32], linevar[MAXLEN];
 
 	while (fgets(line, MAXLEN, fp)) {
@@ -1211,10 +1211,16 @@ static int get_network_settings (void)
 			if (rc_vars[j].type == BOOLSET) {
 			    str_to_boolvar(linevar, rc_vars[j].var);
 			} else {
-			    char *var = (char *) rc_vars[j].var;
+			    if (!strcmp(key, "gretldir") && 
+				*linevar != calldrive) {
+				gotini = 0;
+				goto network_quit;
+			    } else {
+				char *var = (char *) rc_vars[j].var;
 
-			    *var = '\0';
-			    strncat(var, linevar, rc_vars[j].len - 1);
+				*var = '\0';
+				strncat(var, linevar, rc_vars[j].len - 1);
+			    }
 			}
 			rc_vars[j].type |= FIXSET;
 			gotvar = gotini = 1;
@@ -1223,6 +1229,7 @@ static int get_network_settings (void)
 		}
 	    }
 	}
+    network_quit:
 	fclose(fp);
     }
 
