@@ -99,11 +99,11 @@ static int filter_comments (char *line, int *ignore)
 		*ignore = 0;  /* FIXME ? */
 		return 0;
 	    }
-	}
-	else if (line[i] == '*' && line [i+1] == ')') {
+	} else if (line[i] == '*' && line [i+1] == ')') {
 	    *ignore = 0; i += 2;
 	    while (isspace((unsigned char) line[i]) && i < n) i++;
 	}
+
 	if (!(*ignore) && line[i] != '\r') {
 	    tmpstr[j] = line[i];
 	    j++;
@@ -1306,8 +1306,6 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
     return 0;
 }
 
-/* ........................................................... */
-
 static int parse_criteria (const char *line, const double **Z,
 			   const DATAINFO *pdinfo, PRN *prn)
 {
@@ -1688,8 +1686,8 @@ pprint_maybe_quoted_str (PRN *prn, const char *s)
                        c == LOGISTIC || c == GARCH || c == EQUATION || \
 		       c == POISSON)
 
-/* The following may appear to be absurdly complicated.  Nonetheless,
-   I _think_ it is only as complex as it has to be, given the several 
+/* The following may appear to be insanely complicated.  Nonetheless,
+   I _think_ it is only as complex as it has to be, given the several
    dimensions in play:
 
    * batch mode vs interactive mode ("batch" param)
@@ -1760,6 +1758,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 		print_maybe_quoted_str(cmd->param);
 	    }
 	}
+
 	if (!batch) {
 	    pprintf(prn, "%s", cmd->word);
 	    if (cmd->ci == RHODIFF) {
@@ -1778,6 +1777,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 		pputs(prn, " \\\n");
 	    }
 	}
+
 	for (i=1; i<=cmd->list[0]; i++) {
 	    if (cmd->list[i] == LISTSEP) {
 		if (cli) {
@@ -1789,6 +1789,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 		gotsep = (cmd->ci != MPOLS)? 1 : 0;
 		continue;
 	    }
+
 	    if (cli) {
 		if (gotsep) {
 		    printf(" %s", pdinfo->varname[cmd->list[i]]);
@@ -1799,6 +1800,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 		    printf(" \\\n"); /* line continuation */
 		}
 	    }
+
 	    if (!batch) {
 		if (gotsep) {
 		    pprintf(prn, " %s", pdinfo->varname[cmd->list[i]]);
@@ -1878,10 +1880,9 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     }
 }
 
-/* .......................................................... */
-
-/* Look for a flag of the form "-x".  Make sure it's outside of
-   any quotes.  Return pointer to flag. */
+/* Look for a flag of the form "-x" which occurs outside of any
+   quotes: if found, return a pointer to the flag.
+*/
 
 static const char *flag_present (const char *s, char f, int *quoted)
 {
@@ -1889,7 +1890,9 @@ static const char *flag_present (const char *s, char f, int *quoted)
     int gotdash = 0;
 
     while (*s) {
-	if (*s == '"') inquote = !inquote;
+	if (*s == '"') {
+	    inquote = !inquote;
+	}
 	if (!inquote) {
 	    if (*s == '-') {
 		gotdash = 1;
@@ -1935,6 +1938,7 @@ static char *get_flag_field  (const char *s, char f)
 	}
 
 	ret = malloc(len + 1);
+
 	if (ret != NULL) {
 	    *ret = 0;
 	    strncat(ret, p, len);
@@ -2021,7 +2025,9 @@ static void do_print_string (char *str, PRN *prn)
     size_t len;
 
     if (*str == '"') str++;
+
     len = strlen(str);
+
     if (str[len-1] == '"') {
 	str[len-1] = 0;
     }
@@ -2412,6 +2418,10 @@ int simple_commands (CMD *cmd, const char *line,
 
     return err;
 }
+
+/* which commands can we run without having first opened 
+   a data file?
+*/
 
 int ready_for_command (const char *line)
 {

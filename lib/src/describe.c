@@ -1764,6 +1764,38 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
+static int n_string_digits (int k)
+{
+    int n = 1;
+
+    while ((k = k / 10)) {
+	n++;
+    }
+
+    return n;
+}
+
+char *unique_savename (char *vname, DATAINFO *pdinfo, int vmax)
+{
+    int i, k = 0;
+
+    for (i=1; i<vmax; i++) {
+	if (!strcmp(pdinfo->varname[i], vname)) {
+	    k++;
+	}
+    }
+	
+    if (k > 0) {
+	char tmp[VNAMELEN];
+	int n = n_string_digits(k);
+
+	sprintf(tmp, "%.*s", 8 - n, vname);
+	sprintf(vname, "%s%d", tmp, k);
+    } 
+
+    return vname;
+}
+
 static int mdist_saver (double ***pZ, DATAINFO *pdinfo)
 {
     int sv = 0;
@@ -1772,25 +1804,15 @@ static int mdist_saver (double ***pZ, DATAINFO *pdinfo)
     err = dataset_add_vars(1, pZ, pdinfo);
 
     if (!err) {
-	int i, j, t;
+	int t;
 
 	sv = pdinfo->v - 1;
 	for (t=0; t<pdinfo->n; t++) {
 	    (*pZ)[sv][t] = NADBL;
 	}
 
-	j = 0;
-	for (i=1; i<sv; i++) {
-	    if (!strncmp(pdinfo->varname[i], "mdist", 5)) {
-		j++;
-	    }
-	}
-	
-	if (j > 0) {
-	    sprintf(pdinfo->varname[sv], "mdist%d", j);
-	} else {
-	    strcpy(pdinfo->varname[sv], "mdist");
-	}
+	strcpy(pdinfo->varname[sv], "mdist");
+	unique_savename(pdinfo->varname[sv], pdinfo, sv);
 
 	strcpy(VARLABEL(pdinfo, sv), "Mahalanobis distances");	
     }

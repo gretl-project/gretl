@@ -485,18 +485,14 @@ int main (int argc, char *argv[])
 	if (err == GRETL_NATIVE_DATA) {
 	    err = gretl_get_data(&Z, &datainfo, paths.datfile, &paths, 
 				 DATA_NONE, prn);
-	} 
-	else if (err == GRETL_XML_DATA) {
+	} else if (err == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, &datainfo, paths.datfile, &paths, 
 			      DATA_NONE, prn, 0);
-	} 
-	else if (err == GRETL_CSV_DATA) {
+	} else if (err == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, &datainfo, paths.datfile, &paths, prn);
-	} 
-	else if (err == GRETL_BOX_DATA) {
+	} else if (err == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, paths.datfile, prn);
-	} 
-	else if (err == GRETL_SCRIPT) { /* maybe it's a script file? */
+	} else if (err == GRETL_SCRIPT) { /* maybe it's a script file? */
 	    runit = 1;
 	    strcpy(runfile, paths.datfile); 
 	    clear(paths.datfile, MAXLEN);
@@ -650,13 +646,11 @@ static int handle_user_defined_function (char *line, int *fncall)
     int ufunc = gretl_is_user_function(line);
     int err = 0;
 
-    /* allow for nested function calls */
     if (ufunc && gretl_compiling_function()) {
-	return 0;
-    }
-
-    /* an actual function call */
-    else if (ufunc) {
+	/* allow for nested function calls */
+	;
+    } else if (ufunc) {
+	/* an actual function call */
 	err = gretl_function_start_exec(line);
 	*fncall = 1;
     } 
@@ -773,17 +767,41 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     switch (cmd.ci) {
 
-    case ADF: case COINT: case COINT2: case KPSS:
-    case CORR: case ESTIMATE:
-    case CRITERIA: case CRITICAL: case DATA:
-    case DIFF: case LDIFF: case LAGS: case LOGS:
-    case MULTIPLY: case SQUARE: case RHODIFF:
-    case GRAPH: case PLOT: case LABEL:
-    case INFO: case LABELS: case VARLIST:
-    case PRINT: case MAHAL:
-    case SIM: case SUMMARY: case RMPLOT: case HURST:
-    case MEANTEST: case VARTEST: case STORE:
-    case RUNS: case SPEARMAN: case OUTFILE: case PCA:
+    case ADF: 
+    case COINT2: 
+    case COINT: 
+    case CORR: 
+    case CRITERIA: 
+    case CRITICAL: 
+    case DATA:
+    case DIFF: 
+    case ESTIMATE:
+    case GRAPH: 
+    case HURST:
+    case INFO: 
+    case KPSS:
+    case LABEL:
+    case LABELS: 
+    case LAGS: 
+    case LDIFF: 
+    case LOGS:
+    case MAHAL:
+    case MEANTEST: 
+    case MULTIPLY: 
+    case OUTFILE: 
+    case PCA:
+    case PLOT: 
+    case PRINT: 
+    case RHODIFF:
+    case RMPLOT: 
+    case RUNS: 
+    case SIM: 
+    case SPEARMAN:
+    case SQUARE: 
+    case STORE:
+    case SUMMARY: 
+    case VARLIST:
+    case VARTEST: 
 	err = simple_commands(&cmd, line, &Z, datainfo, prn);
 	if (err) errmsg(err, prn);
 	break;
@@ -1274,15 +1292,15 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	break;
 
+    case GARCH:
     case HSK:
+    case LAD:
     case LOGISTIC:
     case LOGIT:
+    case POISSON:
     case PROBIT:
     case TOBIT:
-    case POISSON:
     case TSLS:
-    case LAD:
-    case GARCH:
 	clear_model(models[0]);
 	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
 	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
@@ -1301,8 +1319,12 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 				   &Z, datainfo, cmd.opt);
 	} else if (cmd.ci == LAD) {
 	    *models[0] = lad(cmd.list, &Z, datainfo);
-	} else {
+	} else if (cmd.ci == GARCH) {
 	    *models[0] = garch(cmd.list, &Z, datainfo, cmd.opt, prn);
+	} else {
+	    /* can't happen */
+	    err = 1;
+	    break;
 	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);

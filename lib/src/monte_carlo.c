@@ -233,43 +233,75 @@ static double loop_incrval (LOOPSET *loop, const double **Z)
 
 int ok_in_loop (int ci, const LOOPSET *loop)
 {
-    if (ci == OLS || 
-	ci == GENR ||
+    int ok = 0;
+
+    if (ci == GENR ||
 	ci == LOOP ||
 	ci == STORE ||
 	ci == PRINT ||
 	ci == PRINTF ||
 	ci == PVALUE ||
-	ci == SIM ||
 	ci == SMPL ||
-	ci == SUMMARY ||
 	ci == IF ||
 	ci == ELSE ||
 	ci == ENDIF ||
 	ci == BREAK ||
 	ci == ENDLOOP) { 
+	ok = 1;
+    }
+
+    /* "simple_commands" */
+    else if (ci == ADF || 
+	     ci == COINT || 
+	     ci == COINT2 || 
+	     ci == CORR ||
+	     ci == CRITERIA || 
+	     ci == CRITICAL || 
+	     ci == DIFF || 
+	     ci == HURST ||	
+	     ci == KPSS ||
+	     ci == LABEL ||
+	     ci == LAGS || 
+	     ci == LDIFF || 
+	     ci == LOGS ||
+	     ci == MEANTEST || 
+	     ci == MULTIPLY || 
+	     ci == OUTFILE ||
+	     ci == PCA ||
+	     ci == RHODIFF ||
+	     ci == RUNS || 
+	     ci == SIM ||
+	     ci == SPEARMAN || 
+	     ci == SQUARE || 
+	     ci == SUMMARY ||
+	     ci == VARTEST) {
+	ok = 1;
+    }
+
+    /* modeling commands */
+
+    else if (ci == ARMA ||
+	     ci == CORC ||
+	     ci == GARCH ||
+	     ci == HCCM ||
+	     ci == HILU ||
+	     ci == HSK ||
+	     ci == LAD ||
+	     ci == OLS ||
+	     ci == PWE ||
+	     ci == WLS) {
 	return 1;
     }
 
-    if (ci == LAD || ci == HSK || ci == HCCM || ci == WLS ||
-	ci == GARCH || ci == ARMA || ci == CORC || 
-	ci == HILU || ci == PWE) {
-	return 1;
+    else if (ci == NLS || ci == END) {
+	ok = 1;
     }
 
-    if (ci == NLS || ci == END) {
-	return 1;
+    else if (ci == ADD || ci == OMIT) {
+	ok = 1;
     }
 
-    if (ci == ADF || ci == KPSS || ci == HURST) {
-	return 1;
-    }
-
-    if (ci == ADD || ci == OMIT) {
-	return 1;
-    }
-
-    return 0;
+    return ok;
 }
 
 /* ......................................................  */
@@ -902,7 +934,8 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	strcpy(gretl_errmsg, _("No valid loop condition was given."));
 	return NULL;
     }
-    line += 4;
+
+    line += 4; /* "loop" */
     while (isspace((unsigned char) *line)) line++;
 
     if (ploop == NULL) {
@@ -929,6 +962,8 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	/* shouldn't happen: need error message? */
 	loop = ploop;
     }
+
+    /* try parsing the loop line in various ways */
 
     if (sscanf(line, "while %8[^ <>=]%8[ <>=] %8s", lvar, op, rvar) == 3) {
 	err = parse_as_while_loop(loop, pdinfo, lvar, rvar, op);
@@ -2117,7 +2152,9 @@ void get_cmd_ci (const char *line, CMD *cmd)
 	return;
     }
 
+#if 0
     fprintf(stderr, "get_cmd_ci: line = '%s'\n", line);
+#endif
 
     if (sscanf(line, "%s", cmd->word) != 1 || 
 	*line == '(' || *line == '#') {
@@ -2443,11 +2480,30 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    switch (cmd.ci) {
 
-	    case SUMMARY:
-	    case SIM:
-	    case ADF:
+	    case ADF: 
+	    case COINT2: 
+	    case COINT: 
+	    case CORR:
+	    case CRITERIA: 
+	    case CRITICAL: 
+	    case DIFF: 
+	    case HURST:	
 	    case KPSS:
-	    case HURST:
+	    case LABEL:
+	    case LAGS: 
+	    case LDIFF: 
+	    case LOGS:
+	    case MEANTEST: 
+	    case MULTIPLY: 
+	    case OUTFILE:
+	    case PCA:
+	    case RHODIFF:
+	    case RUNS: 
+	    case SIM:
+	    case SPEARMAN: 
+	    case SQUARE: 
+	    case SUMMARY:
+	    case VARTEST: 
 		err = simple_commands(&cmd, linecpy, pZ, *ppdinfo, prn);
 		break;
 
@@ -2471,16 +2527,16 @@ int loop_exec (LOOPSET *loop, char *line,
 		}
 		break;
 
-	    case OLS:
-	    case WLS:
-	    case LAD:
-	    case HSK:
-	    case CORC:
-	    case HILU:
-	    case PWE:
-	    case HCCM:
-	    case GARCH:
 	    case ARMA:
+	    case CORC:
+	    case GARCH:
+	    case HCCM:
+	    case HILU:
+	    case HSK:
+	    case LAD:
+	    case OLS:
+	    case PWE:
+	    case WLS:
 		/* if this is the first time round, allocate space
 		   for each loop model */
 		if (loop->iter == 0) {
@@ -2503,6 +2559,9 @@ int loop_exec (LOOPSET *loop, char *line,
 		    *models[0] = lad(cmd.list, pZ, *ppdinfo);
 		} else if (cmd.ci == HSK) {
 		    *models[0] = hsk_func(cmd.list, pZ, *ppdinfo);
+		} else if (cmd.ci == ARMA) {
+		    *models[0] = arma(cmd.list, (const double **) *pZ, *ppdinfo, 
+				      (cmd.opt & OPT_V)? prn : NULL);
 		} else if (cmd.ci == GARCH) {
 		    *models[0] = garch(cmd.list, pZ, *ppdinfo, cmd.opt, prn);
 		} else if (cmd.ci == CORC || cmd.ci == HILU || cmd.ci == PWE) {

@@ -509,9 +509,21 @@ static gint stack_model (MODEL *pmod)
 void add_mahalanobis_data (windata_t *vwin)
 {
     char *liststr = (char *) vwin->data;
-    int err;
+    char tmpname[VNAMELEN] = "mdist";
+    gchar *msg;
+    int resp, err;
 
     if (liststr == NULL || *liststr == '\0') {
+	return;
+    }
+
+    unique_savename(tmpname, datainfo, datainfo->v);  
+
+    msg = g_strdup_printf("Save Mahalanobis distances as '%s'?", tmpname);
+    resp = yes_no_dialog("gretl", msg, 0);
+    g_free(msg);
+
+    if (resp == GRETL_NO) {
 	return;
     }
 
@@ -5376,19 +5388,39 @@ int gui_exec_line (char *line,
     switch (cmd.ci) {
 
     case ADF: 
-    case COINT: case COINT2:
-    case CORR: case ESTIMATE:
-    case CRITERIA: case CRITICAL: 
+    case COINT2:
+    case COINT: 
+    case CORR: 
+    case CRITERIA: 
+    case CRITICAL: 
     case DATA:
-    case DIFF: case LDIFF: 
-    case LAGS: case LOGS:
-    case MULTIPLY: case SQUARE: case RHODIFF:
-    case GRAPH: case PLOT: case LABEL:
-    case INFO: case LABELS: case VARLIST:
-    case PRINT: case SIM: case SUMMARY:
-    case MEANTEST: case VARTEST: case STORE:
-    case RUNS: case SPEARMAN: case PCA:
-    case OUTFILE: case RMPLOT: case HURST: case MAHAL:
+    case DIFF: 
+    case ESTIMATE:
+    case GRAPH: 
+    case HURST: 
+    case INFO: 
+    case LABEL:
+    case LABELS: 
+    case LAGS: 
+    case LDIFF: 
+    case LOGS:
+    case MAHAL:
+    case MEANTEST: 
+    case MULTIPLY: 
+    case OUTFILE: 
+    case PCA:
+    case PLOT: 
+    case PRINT: 
+    case RHODIFF:
+    case RMPLOT: 
+    case RUNS: 
+    case SIM: 
+    case SPEARMAN: 
+    case SQUARE: 
+    case STORE:
+    case SUMMARY:
+    case VARLIST:
+    case VARTEST: 
 	err = simple_commands(&cmd, line, &Z, datainfo, outprn);
 	if (err) {
 	    errmsg(err, prn);
@@ -5925,15 +5957,15 @@ int gui_exec_line (char *line,
 	}
 	break;
 
-    case LOGISTIC:
-    case LOGIT:
-    case PROBIT:
-    case TOBIT:
-    case POISSON:
-    case TSLS:
+    case GARCH:
     case HSK:
     case LAD:
-    case GARCH:
+    case LOGISTIC:
+    case LOGIT:
+    case POISSON:
+    case PROBIT:
+    case TOBIT:
+    case TSLS:
 	clear_or_save_model(&models[0], datainfo, rebuild);
 	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
 	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
@@ -5952,8 +5984,12 @@ int gui_exec_line (char *line,
 	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
 	} else if (cmd.ci == LAD) {
 	    *models[0] = lad(cmd.list, &Z, datainfo);
-	} else {
+	} else if (cmd.ci == GARCH) {
 	    *models[0] = garch(cmd.list, &Z, datainfo, cmd.opt, outprn);
+	} else {
+	    /* can't happen */
+	    err = 1;
+	    break;
 	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);

@@ -1638,12 +1638,14 @@
 	    from the mean), <func>sum</func>, <func>cov</func>
 	    (covariance), <func>corr</func> (correlation coefficient),
 	    <func>pvalue</func>, <func>sort</func>, <func>cum</func>
-	    (cumulate, or running sum), <func>resample</func>
-	    (resample a series with replacement, for bootstrap
-	    purposes), <func>hpfilt</func> (Hodrick&ndash;Prescott
-	    filter: this function returns the <quote>cycle</quote>
-	    component of the series), <func>bkfilt</func>
-	    (Baxter&ndash;King bandpass filter).</para>
+	    (cumulate, or running sum), <func>cnorm</func> (standard
+	    normal CDF), <func>dnorm</func> (standard normal PDF),
+	    <func>resample</func> (resample a series with replacement,
+	    for bootstrap purposes), <func>hpfilt</func>
+	    (Hodrick&ndash;Prescott filter: this function returns the
+	    <quote>cycle</quote> component of the series),
+	    <func>bkfilt</func> (Baxter&ndash;King bandpass
+	    filter).</para>
 	</li>
 	<li><para>Time-series functions: <func>diff</func> (first
 	    difference), <func>ldiff</func> (log-difference, or first

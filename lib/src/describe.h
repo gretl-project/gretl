@@ -109,4 +109,5 @@ int mahalanobis_distance (const int *list, double ***pZ,
 			  DATAINFO *pdinfo, gretlopt opt,
 			  PRN *prn);
 
+char *unique_savename (char *vname, DATAINFO *pdinfo, int vmax);
 
