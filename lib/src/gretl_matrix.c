@@ -493,6 +493,29 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
     return GRETL_MATRIX_OK;
 }
 
+double gretl_matrix_dot_product (const gretl_matrix *a, int aflag,
+				 const gretl_matrix *b, int bflag,
+				 int *err)
+{
+    gretl_matrix *c;
+    double ret = NADBL;
+
+    c = gretl_matrix_alloc(1, 1);
+    if (c == NULL) {
+	*err = GRETL_MATRIX_ERR;
+	return ret;
+    }
+
+    *err = gretl_matrix_multiply_mod(a, aflag, b, bflag, c);
+    if (*err == GRETL_MATRIX_OK) {
+	ret = c->val[0];
+    }
+	
+    gretl_matrix_free(c);
+
+    return ret;
+}
+
 static double 
 gretl_matrix_column_mean (const gretl_matrix *m, int col)
 {

@@ -87,6 +87,10 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 			   gretl_matrix *c);
 
+double gretl_matrix_dot_product (const gretl_matrix *a, int aflag,
+				 const gretl_matrix *b, int bflag,
+				 int *err);
+
 gretl_matrix *gretl_matrix_vcv (gretl_matrix *m);
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);

@@ -22,6 +22,8 @@
 #include "gretl_matrix.h"
 #include "gretl_matrix_private.h"
 
+#define COINT_VEC
+
 /* 
    Critical values for Johansen's likelihood ratio tests
    are computed using J. Doornik's gamma approximation
@@ -161,12 +163,10 @@ gamma_par_asymp (double tracetest, double lmaxtest, int det,
     return 0;
 }
 
-#if 1
 struct eigval {
     double v;
     int idx;
 };
-#endif
 
 static int inverse_compare_doubles (const void *a, const void *b)
 {
@@ -195,27 +195,79 @@ static gretl_matrix *j_matrix_from_array (const double **X,
     return m;
 }
 
-static void print_eigvals_and_eigvecs (struct eigval *evals, gretl_matrix *vr, 
-				       int k, PRN *prn)
+static int 
+johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv, int j)
 {
-    int i, j;
+    gretl_matrix *a = NULL, *b = NULL;
+    double den;
+    int i, err = 0;
+    int k = Svv->rows;
+
+    a = gretl_matrix_alloc(k, 1);
+    b = gretl_matrix_alloc(k, 1);
+
+    if (a == NULL || b == NULL) {
+	gretl_matrix_free(a);
+	gretl_matrix_free(b);
+	return E_ALLOC;
+    }
+
+    for (i=0; i<k; i++) {
+	double x = gretl_matrix_get(A, i, j);
+
+	gretl_matrix_set(a, i, 0, x);
+    }
+
+    gretl_matrix_multiply(Svv, a, b);
+
+    den = gretl_matrix_dot_product(a, GRETL_MOD_TRANSPOSE,
+				   b, GRETL_MOD_NONE, &err);
+
+    if (!err) {
+	den = sqrt(den);
+	for (i=0; i<k; i++) {
+	    double x = gretl_matrix_get(A, i, j);
+
+	    gretl_matrix_set(A, i, j, x / den);
+	}
+    } 
+    
+    gretl_matrix_free(a);
+    gretl_matrix_free(b);
+
+    return err;
+}
+
+static void 
+print_coint_vecs (struct eigval *evals, const gretl_matrix *vr, 
+		  int k, PRN *prn)
+{
+    int i, j, rows = vr->rows;
 
     for (i=0; i<k; i++) {
 	double ev, x = 0.0;
 	int col = evals[i].idx;
 
 	pprintf(prn, "%s: %g\n", _("Eigenvalue"), evals[i].v);
-	pprintf(prn, " normalized eigenvector = [ ");
-	for (j=0; j<k; j++) {
+
+	pprintf(prn, " %s: [ ", _("cointegrating vector"));
+	for (j=0; j<rows; j++) {
+	    pprintf(prn, "%10.5g ", gretl_matrix_get(vr, j, col));
+	}
+	pputs(prn, "]\n");
+
+	pprintf(prn, " %s:         [ ", _("renormalized"));
+	for (j=0; j<rows; j++) {
 	    if (j == 0) {
 		x = gretl_matrix_get(vr, j, col);
-		pputs(prn, "1.0 ");
+		pprintf(prn, "%10.5g ", 1.0);
 	    } else {
 		ev = gretl_matrix_get(vr, j, col) / x;
-		pprintf(prn, "%12.5g ", ev);
+		pprintf(prn, "%10.5g ", ev);
 	    }
 	}
 	pputs(prn, "]\n");
+
     }
     pputc(prn, '\n');
 }
@@ -266,7 +318,7 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 
     if (err) goto eigenvals_bailout;
 
-#if 1
+#ifdef COINT_VEC
     eigvals = gretl_general_matrix_eigenvals(M, TmpR);
 #else
     eigvals = gretl_general_matrix_eigenvals(M, NULL);
@@ -316,8 +368,13 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 	}
 	pputc(prn, '\n');
 
-#if 1
-	print_eigvals_and_eigvecs(evals, TmpR, k, prn);
+#ifdef COINT_VEC
+	gretl_matrix_free(Svv);
+	Svv = j_matrix_from_array(Y, k, k);
+	if (Svv != NULL) {
+	    johansen_normalize(TmpR, Svv, 0);
+	}
+	print_coint_vecs(evals, TmpR, 1, prn);
 #endif
 
 	free(eigvals);
