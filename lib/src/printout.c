@@ -29,16 +29,16 @@
 #endif
 
 static void print_float_10 (const double x, PRN *prn);
-static void print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			 const int c, PRN *prn);
+static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
+			const int c, PRN *prn);
 static void _depvarstats (const MODEL *pmod, PRN *prn);
 static int _essline (const MODEL *pmod, PRN *prn, int wt);
 static void _rsqline (const MODEL *pmod, PRN *prn);
-static void _Fline (const MODEL *pmod, PRN *prn);
+static int _Fline (const MODEL *pmod, PRN *prn);
 static void _dwline (const MODEL *pmod, PRN *prn);
-static void print_discrete_stats (const MODEL *pmod, 
-				  const DATAINFO *pdinfo, 
-				  PRN *prn);
+static int print_discrete_stats (const MODEL *pmod, 
+				 const DATAINFO *pdinfo, 
+				 PRN *prn);
 static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod, 
 				  const int c, const double t, PRN *prn);
 static void print_aicetc (const MODEL *pmod, PRN *prn);
@@ -165,17 +165,21 @@ static void _rsqline (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */ 
 
-static void _Fline (const MODEL *pmod, PRN *prn)
+static int _Fline (const MODEL *pmod, PRN *prn)
 {
     char tmp[32];
 
     sprintf(tmp, _("F-statistic (%d, %d)"), pmod->dfn, pmod->dfd);
     pprintf(prn, "%s", tmp);
     _bufspace(24 - strlen(tmp), prn);
-    if (na(pmod->fstt))
-	pprintf(prn, _("%11s  p-value for F() %23s\n"), _("undefined"), _("undefined"));
+    if (na(pmod->fstt)) {
+	pprintf(prn, _("%11s  p-value for F() %23s\n"), _("undefined"), 
+		_("undefined"));
+	return 1;
+    }
     else pprintf(prn, _("%11g  p-value for F() %23f\n"), pmod->fstt,
 	   fdist(pmod->fstt, pmod->dfn, pmod->dfd));
+    return 0;
 }
 
 /* ......................................................... */ 
@@ -353,13 +357,15 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
  *
  * Print to @prn the estimates in @pmod plus associated statistics.
  * 
+ * Returns: 0 on success, 1 if some of the values to print were NAN.
  */
 
-void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, ncoeff;
     char startdate[9], enddate[9];
     int t1 = pmod->t1, t2 = pmod->t2;
+    int gotnan = 0;
 
     if (pmod->ci == CORC || pmod->ci == HILU) t1 += 1;
 
@@ -439,25 +445,29 @@ void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     else pprintf(prn, "\n");
 
     if (pmod->ci == PROBIT || pmod->ci == LOGIT) {
-	print_discrete_stats(pmod, pdinfo, prn);
-	return;
+	if (print_discrete_stats(pmod, pdinfo, prn))
+	return 1;
     }
 
     pprintf(prn, _("      VARIABLE      COEFFICIENT      STDERROR       "
 	    "T STAT    2Prob(t > |T|)\n\n"));
 
     if (pmod->ifc) {
-	print_coeff(pdinfo, pmod, ncoeff, prn);
+	if (print_coeff(pdinfo, pmod, ncoeff, prn))
+	    gotnan = 1;
 	ncoeff--;
     }
-    for (i=2; i<=ncoeff; i++) print_coeff(pdinfo, pmod, i, prn);
+    for (i=2; i<=ncoeff; i++) {
+	if (print_coeff(pdinfo, pmod, i, prn))
+	    gotnan = 1;
+    }
     pprintf(prn, "\n");
 
     if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF)
-	return;
+	return gotnan;
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG) {
 	_rsqline(pmod, prn);
-	return;
+	return gotnan;
     }
 
     if (!pmod->ifc) noconst(prn);
@@ -469,21 +479,21 @@ void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %f) = %f\n\n"), 
 		pmod->ncoeff - 1, pmod->rsq * pmod->nobs,
 		chisq(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
-	return;
+	return gotnan;
     }
 
     if (pmod->aux == AUX_AR) {
 	_rsqline(pmod, prn);
-	return;
+	return gotnan;
     }
 
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS
 	|| pmod->ci == HCCM || pmod->ci == POOLED ||
 	(pmod->ci == WLS && pmod->wt_dummy)) {
 	_depvarstats(pmod, prn);
-	if (_essline(pmod, prn, 0)) return;
+	if (_essline(pmod, prn, 0)) return gotnan;
 	_rsqline(pmod, prn);
-	_Fline(pmod, prn);
+	if (_Fline(pmod, prn)) gotnan = 1;
 	if (pmod->ci == OLS || (pmod->ci == WLS && pmod->wt_dummy)) {
 	    if (pmod->ldepvar) dhline(pmod, prn);
 	    else _dwline(pmod, prn);
@@ -503,15 +513,15 @@ void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	       "R-squared is suppressed as it is not meaningful.  The "
 	       "F-statistic tests\nthe hypothesis that all parameters "
 	       "including the constant term are zero.\n\n"));
-	if (_essline(pmod, prn, 1)) return;
-	_Fline(pmod, prn);
+	if (_essline(pmod, prn, 1)) return gotnan;
+	if (_Fline(pmod, prn)) gotnan = 1;
 	_dwline(pmod, prn);
 	pprintf(prn, _("\nStatistics based on the original data:\n\n"
 	       "R-squared is computed as the square of the correlation "
 	       "between observed and\nfitted values of the dependent "
 	       "variable.\n\n"));
 	_depvarstats(pmod, prn);
-	if (_essline(pmod, prn, 0)) return;
+	if (_essline(pmod, prn, 0)) return gotnan;
 	_rsqline(pmod, prn); 
 	print_aicetc(pmod, prn);
 	_pmax_line(pmod, pdinfo, prn);
@@ -521,14 +531,16 @@ void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	       "R-squared is computed as the square of the correlation "
 	       "between observed and\nfitted values of the dependent "
 	       "variable.\n\n"));	
-	if (_essline(pmod, prn, 0)) return;
+	if (_essline(pmod, prn, 0)) return gotnan;
 	_rsqline(pmod, prn);
-	_Fline(pmod, prn);
+	if (_Fline(pmod, prn)) gotnan = 1;
 	_dwline(pmod, prn);
 	print_aicetc(pmod, prn);
 	_pmax_line(pmod, pdinfo, prn);
     }
     print_model_tests(pmod, prn);
+
+    return gotnan;
 }
 
 /* ........................................................... */
@@ -871,16 +883,19 @@ static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod,
 
 /* ......................................................... */ 
 
-static void print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
+static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			 const int c, PRN *prn)
 {
     double t, pvalue;
+    int gotnan = 0;
 
     pprintf(prn, " %3d) %8s ", pmod->list[c], 
 	   pdinfo->varname[pmod->list[c]]);
     _bufspace(6, prn);
-    if (isnan(pmod->coeff[c-1]))
+    if (isnan(pmod->coeff[c-1])) {
 	pprintf(prn, "%10s", _("undefined"));
+	gotnan = 1;
+    }
     else print_float_10 (pmod->coeff[c-1], prn);
     _bufspace(4, prn);
     if (isnan(pmod->sderr[c-1])) {
@@ -888,6 +903,7 @@ static void print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	pprintf(prn, "%12s", _("undefined"));
 	pprintf(prn, "%14s", _("undefined"));
 	pvalue = 999.0;
+	gotnan = 1;
     } else {
 	print_float_10 (pmod->sderr[c-1], prn); 
 	if (pmod->sderr[c-1] > 0.) {
@@ -909,6 +925,8 @@ static void print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     else if (pvalue < 0.05) pprintf(prn, " **");
     else if (pvalue < 0.10) pprintf(prn, " *");
     pprintf(prn, "\n");
+
+    return gotnan;
 }
 
 /* ......................................................... */ 
@@ -1728,34 +1746,44 @@ void _print_ar (MODEL *pmod, PRN *prn)
 
 /* ........................................................... */
 
-static void print_discrete_coeff (const DATAINFO *pdinfo, 
+static int print_discrete_coeff (const DATAINFO *pdinfo, 
 				  const MODEL *pmod, 
 				  const int c, PRN *prn)
 {
     double tstat;
+    int gotnan = 0;
 
     pprintf(prn, " %3d) %8s ", pmod->list[c], 
 	   pdinfo->varname[pmod->list[c]]);
     _bufspace(6, prn);
-    if (isnan(pmod->coeff[c-1]))
+    if (isnan(pmod->coeff[c-1])) {
 	pprintf(prn, "%10s", _("undefined"));
-    else print_float_10 (pmod->coeff[c-1], prn);
+	gotnan = 1;
+    } else
+	print_float_10 (pmod->coeff[c-1], prn);
     _bufspace(4, prn);
-    print_float_10 (pmod->sderr[c-1], prn);
+    if (isnan(pmod->sderr[c-1])) {
+	pprintf(prn, "%10s", _("undefined"));
+	gotnan = 1;
+    } else 
+	print_float_10 (pmod->sderr[c-1], prn);
     tstat = pmod->coeff[c-1]/pmod->sderr[c-1];
     pprintf(prn, " %12.3f  ", tstat);
     if (pmod->list[c] != 0)
 	print_float_10 (pmod->slope[c-1], prn); 
     pprintf(prn, "\n");
+
+    return gotnan;
 }
 
 /* ........................................................... */
 
-static void print_discrete_stats (const MODEL *pmod, 
-				  const DATAINFO *pdinfo, 
-				  PRN *prn)
+static int print_discrete_stats (const MODEL *pmod, 
+				 const DATAINFO *pdinfo, 
+				 PRN *prn)
 {
     int i, ncoeff = pmod->list[0];
+    int ret, gotnan = 0;
 
     pprintf(prn, _("      VARIABLE      COEFFICIENT      STDERROR       "
 	    "T STAT       SLOPE\n"));
@@ -1763,11 +1791,14 @@ static void print_discrete_stats (const MODEL *pmod,
 	    "           (at mean)\n"));
 
     if (pmod->ifc) {
-	print_discrete_coeff(pdinfo, pmod, ncoeff, prn);
+	ret = print_discrete_coeff(pdinfo, pmod, ncoeff, prn);
+	if (ret) gotnan = 1;
 	ncoeff--;
     }
-    for (i=2; i<=ncoeff; i++) 
-	print_discrete_coeff(pdinfo, pmod, i, prn);
+    for (i=2; i<=ncoeff; i++) {
+	ret = print_discrete_coeff(pdinfo, pmod, i, prn);
+	if (ret) gotnan = 1;
+    }
     pprintf(prn, "\n");
     pprintf(prn, _("Mean of %s = %.3f\n"), 
 	    pdinfo->varname[pmod->list[1]], pmod->ybar);
@@ -1781,6 +1812,8 @@ static void print_discrete_stats (const MODEL *pmod,
 		"Chi-square(%d) = %.3f (p-value %f)\n\n"),
 		i, pmod->chisq, chisq(pmod->chisq, i));
     } else pprintf(prn, "\n");
+
+    return gotnan;
 }
 
 /**

@@ -76,6 +76,7 @@ typedef enum {
     E_MISS,
     E_BADSTAT,
     E_NOMERGE,
+    E_NAN,
     E_MAX
 } error_codes; 
 

@@ -134,7 +134,8 @@ enum stat_codes {
     R2,
     TR2,
     DF,
-    SIGMA
+    SIGMA,
+    LNL
 };
 
 enum browser_codes {

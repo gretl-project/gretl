@@ -797,7 +797,7 @@ read_sb (MsOle *f)
 	    f->sb = 0;
 	    return 0;
 	}
-	for (lp = 0;lp<BB_LOCK_SIZE/4;lp++) {
+	for (lp = 0;lp<BB_BLOCK_SIZE/4;lp++) {
 	    BLP p = MS_OLE_GET_GUINT32 (BB_R_PTR(f, ptr) + lp*4);
 	    g_array_append_val (f->sb, p);
 

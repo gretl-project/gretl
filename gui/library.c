@@ -367,6 +367,12 @@ gint cmd_init (char *line)
     size_t len;
     PRN *echo;
 
+#ifdef CMD_DEBUG
+    fprintf(stderr, "cmd_init: got line: '%s'\n", line);
+    fprintf(stderr, "command.cmd: '%s'\n", command.cmd);
+    fprintf(stderr, "command.param: '%s'\n", command.param);
+#endif
+
     if (n_cmds == 0) 
 	cmd_stack = mymalloc(sizeof *cmd_stack);
     else 
@@ -1643,7 +1649,8 @@ static int model_output (MODEL *pmod, PRN *prn)
 
     ++model_count;
     pmod->ID = model_count;
-    printmodel(pmod, datainfo, prn);
+    if (printmodel(pmod, datainfo, prn))
+	pmod->errcode = E_NAN; /* some statistics were NAN */
 
     return 0;
 }
@@ -2438,6 +2445,13 @@ void add_model_stat (MODEL *pmod, const int which)
 	Z[i][0] = pmod->sigma;
 	sprintf(cmdstr, "genr sgma_%d = $sigma", pmod->ID);
 	break;
+    case LNL:
+	sprintf(vname, "lnl_%d", pmod->ID);
+	sprintf(vlabel, _("log likelihood from model %d"), 
+		pmod->ID);
+	Z[i][0] = pmod->lnL;
+	sprintf(cmdstr, "genr lnl_%d = $lnl", pmod->ID);
+	break;	
     }
 
     strcpy(datainfo->varname[i], vname);
@@ -2993,6 +3007,11 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
 
+    if (pmod->errcode == E_NAN) {
+	errbox("Sorry, can't format this model");
+	return;
+    }
+
     if (prn_code)
 	err = eqnprint(pmod, datainfo, &paths, texfile, model_count, 1);
     else 
@@ -3004,7 +3023,8 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
     }
 
     dot = dotpos(texfile);
-    strncpy(texbase, texfile, dot);     
+    *texbase = 0;
+    strncat(texbase, texfile, dot);     
 
 #ifdef G_OS_WIN32
     {
@@ -3539,7 +3559,8 @@ static int gui_exec_line (char *line,
 	}
 	++model_count;
 	(models[0])->ID = model_count;
-	printmodel(models[0], datainfo, prn); 
+	if (printmodel(models[0], datainfo, prn))
+	    (models[0])->errcode = E_NAN;
 	if (oflag) outcovmx(models[0], datainfo, 0, prn);
 	break;
 
@@ -3573,6 +3594,10 @@ static int gui_exec_line (char *line,
 
     case EQNPRINT:
     case TABPRINT:
+	if ((models[0])->errcode == E_NAN) {
+	    pprintf(prn, _("Couldn't format model\n"));
+	    break;
+	}
 	if ((err = script_model_test(0, prn, 1))) break;
 	if (command.ci == EQNPRINT)
 	    err = eqnprint(models[0], datainfo, &paths, 
@@ -3705,7 +3730,8 @@ static int gui_exec_line (char *line,
 	}
 	++model_count;
 	(models[0])->ID = model_count;
-	printmodel(models[0], datainfo, prn);
+	if (printmodel(models[0], datainfo, prn))
+	    (models[0])->errcode = E_NAN;
 	if (!oflag) break;
 	if (command.ci == HCCM) 
 	    print_white_vcv(models[0], prn);
@@ -3823,7 +3849,8 @@ static int gui_exec_line (char *line,
 	}
 	++model_count;
 	(models[0])->ID = model_count;
-	printmodel(models[0], datainfo, prn);
+	if (printmodel(models[0], datainfo, prn))
+	    (models[0])->errcode = E_NAN;
 	if (oflag) outcovmx(models[0], datainfo, 0, prn); 
 	break;
 
@@ -3887,7 +3914,8 @@ static int gui_exec_line (char *line,
 	}
 	++model_count;
 	(models[0])->ID = model_count;
-	printmodel(models[0], datainfo, prn);
+	if (printmodel(models[0], datainfo, prn))
+	    (models[0])->errcode = E_NAN;
 	if (oflag) outcovmx(models[0], datainfo, 0, prn); 
 	break;
 
@@ -4078,7 +4106,8 @@ static int gui_exec_line (char *line,
 	}
 	++model_count;
 	(models[0])->ID = model_count;
-	printmodel(models[0], datainfo, prn);
+	if (printmodel(models[0], datainfo, prn))
+	    (models[0])->errcode = E_NAN;
 	/* is this OK? */
 	if (oflag) outcovmx(models[0], datainfo, 0, prn); 
 	break;		

@@ -218,6 +218,8 @@ GtkItemFactoryEntry model_items[] = {
       model_stat_callback, R2, NULL },
     { _("/_Model data/Add to data set/T*R-squared"), NULL, 
       model_stat_callback, TR2, NULL },
+    { _("/_Model data/Add to data set/log likelihood"), NULL, 
+      model_stat_callback, LNL, NULL },
     { _("/_Model data/Add to data set/degrees of freedom"), NULL, 
       model_stat_callback, DF, NULL },
     { _("/_Model data/coefficient covariance matrix"), NULL, 
@@ -1934,9 +1936,25 @@ void flip (GtkItemFactory *ifac, char *path, gboolean s)
 
 /* ........................................................... */
 
+static void model_copy_menu_state (GtkItemFactory *ifac, gboolean s)
+{
+    flip(ifac, "/Edit/Copy all/as HTML", s);
+    flip(ifac, "/Edit/Copy all/as LaTeX", s);
+    flip(ifac, "/Edit/Copy all/as RTF", s);
+}
+
+/* ........................................................... */
+
 static void model_panel_menu_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, _("/Tests/panel diagnostics"), s);
+}
+
+/* ........................................................... */
+
+static void model_ml_menu_state (GtkItemFactory *ifac, gboolean s)
+{
+    flip(ifac, _("/Model data/Add to data set/log likelihood"), s);
 }
 
 /* ........................................................... */
@@ -1955,9 +1973,11 @@ static void model_menu_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, _("/Model data/Display actual, fitted, residual"), s);
     flip(ifac, _("/Model data/Forecasts with standard errors"), s);
     flip(ifac, _("/Model data/Add to data set/residuals"), s);
+    flip(ifac, _("/Model data/Add to data set/squared residuals"), s);
     flip(ifac, _("/Model data/Add to data set/error sum of squares"), s);
     flip(ifac, _("/Model data/Add to data set/standard error of residuals"), s);
     flip(ifac, _("/Model data/Add to data set/R-squared"), s);
+    flip(ifac, _("/Model data/Add to data set/T*R-squared"), s);    
 }
 
 /* ........................................................... */
@@ -2014,16 +2034,19 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     if (vwin->role == VIEW_MODEL && vwin->data != NULL) { 
 	MODEL *pmod = (MODEL *) vwin->data;
 
-	if (pmod->ci == POOLED) 
-	    model_panel_menu_state(vwin->ifac, TRUE);
-	else model_panel_menu_state(vwin->ifac, FALSE);
+	model_copy_menu_state(vwin->ifac, pmod->ci == OLS);
+	model_panel_menu_state(vwin->ifac, pmod->ci == POOLED);
+
 	if (pmod->ci != OLS && pmod->ci != POOLED) { 
 	    lmmenu_state(vwin->ifac, FALSE);
 	    latex_menu_state(vwin->ifac, FALSE);
-	}
+	} else
+	    latex_menu_state(vwin->ifac, !pmod->errcode);
 	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
 	    model_menu_state(vwin->ifac, FALSE);
-	}
+	    model_ml_menu_state(vwin->ifac, TRUE);
+	} else
+	    model_ml_menu_state(vwin->ifac, FALSE);
 	if (pmod->name)
 	    model_save_state(vwin->ifac, FALSE);
     }
@@ -3217,7 +3240,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     if (how == COPY_RTF) {
 	MODEL *pmod = (MODEL *) mydata->data;
 
-	model_to_rtf(pmod);	
+	if (pmod->errcode) 
+	    errbox("Couldn't format model");
+	else
+	    model_to_rtf(pmod);	
 	return;
     }
     else if (how == COPY_LATEX || how == COPY_HTML) {
