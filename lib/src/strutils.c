@@ -316,6 +316,25 @@ void lower (char *str)
 }
 
 /**
+ * gretl_strdup:
+ * @src: the string to duplicate.
+ *
+ * Returns: an allocated copy of @src, or NULL on error.
+ */
+
+char *gretl_strdup (const char *src)
+{
+    char *targ = malloc(strlen(src) + 1);
+
+    if (src != NULL) {
+        strcpy(targ, src);
+    }
+
+    return targ;
+}
+
+
+/**
  * gretl_trunc:
  * @str: the string to truncate.
  * @n: the desired length of the truncated string.

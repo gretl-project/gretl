@@ -55,6 +55,8 @@ int lastchar (char c, const char *s);
 
 int ends_with_backslash (const char *s);
 
+char *gretl_strdup (const char *src);
+
 char *charsub (char *str, char find, char repl);
 
 void lower (char *str);

@@ -967,9 +967,11 @@ int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo)
     if (newobs <= 0) return 0;
 
     for (i=0; i<v; i++) {
-	x = realloc((*pZ)[i], (n + newobs) * sizeof *x);
-	if (x == NULL) return E_ALLOC;
-	else (*pZ)[i] = x;
+	if (pdinfo->vector[i]) {
+	    x = realloc((*pZ)[i], (n + newobs) * sizeof *x);
+	    if (x == NULL) return E_ALLOC;
+	    else (*pZ)[i] = x;
+	}
     }
     
     if (pdinfo->markers && pdinfo->S != NULL) {
@@ -983,8 +985,10 @@ int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo)
     ntodate(endobs, pdinfo->t2, pdinfo);
     strcpy(pdinfo->endobs, endobs);
 
-    for (t=n; t<pdinfo->n; t++) {
-	(*pZ)[0][t] = 1.0;
+    for (i=0; i<pdinfo->v; i++) {
+	for (t=n; t<pdinfo->n; t++) {
+	    (*pZ)[i][t] = (i == 0)? 1.0 : NADBL;
+	}
     }
 
     return 0;
@@ -1029,11 +1033,16 @@ static int real_dataset_add_vars (int newvars, double *x,
 
     if (pdinfo->varinfo != NULL) {
 	varinfo = realloc(pdinfo->varinfo, (v + newvars) * sizeof *varinfo);
-	if (varinfo == NULL) return E_ALLOC;
-	else pdinfo->varinfo = varinfo;
+	if (varinfo == NULL) {
+	    return E_ALLOC;
+	} else {
+	    pdinfo->varinfo = varinfo;
+	}
 	for (i=0; i<newvars; i++) {
 	    pdinfo->varinfo[v+i] = malloc(sizeof **varinfo);
-	    if (pdinfo->varinfo[v+i] == NULL) return E_ALLOC;
+	    if (pdinfo->varinfo[v+i] == NULL) {
+		return E_ALLOC;
+	    }
 	    gretl_varinfo_init(pdinfo->varinfo[v+i]);
 	}
     }
@@ -1047,6 +1056,7 @@ static int real_dataset_add_vars (int newvars, double *x,
     }
 
     pdinfo->v += newvars;
+
     return 0;
 }
 
@@ -1243,6 +1253,205 @@ int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
     pdinfo->v -= delvars;
 
     return 0;
+}
+
+/* ........................................................... */
+
+static int missing_tail (const double *x, int n)
+{
+    int i, nmiss = 0;
+
+    for (i=n-1; i>=0; i--) {
+	if (na(x[i])) nmiss++;
+	else break;
+    }
+
+    return nmiss;
+}
+
+/* ........................................................... */
+
+int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo, 
+			char *newvar, char *s)
+{
+    char vn1[VNAMELEN], vn2[VNAMELEN];
+    char format[16];
+    char *scpy;
+    int *vnum = NULL;
+    double *bigx = NULL;
+    int i, v1 = 0, v2 = 0, nv = 0;
+    int maxok, bign, genv;
+    int err = 0;
+
+    scpy = gretl_strdup(s);
+    if (scpy == NULL) return E_ALLOC;
+
+    genv = varindex(pdinfo, newvar);
+
+    s += 6;
+    if (*s == ',') return E_SYNTAX;
+    s[strlen(s) - 1] = '\0';
+
+    /* do we have a range of vars? */
+    sprintf(format, "%%%d[^.]..%%%ds", VNAMELEN-1, VNAMELEN-1);
+    if (sscanf(s, format, vn1, vn2) == 2) {
+	if (isdigit(*vn1) && isdigit(*vn2)) {
+	    v1 = atoi(vn1);
+	    v2 = atoi(vn2);
+	} else {
+	    v1 = varindex(pdinfo, vn1);
+	    v2 = varindex(pdinfo, vn2);
+	}
+
+	printf("v1 is #%d, v2 is #%d\n", v1, v2);
+	if (v1 >= 0 && v2 > v1 && v2 < pdinfo->v) {
+	    nv = v2 - v1 + 1;
+	} else {
+	    fputs("stack vars: range is invalid\n", stderr);
+	    err = E_DATA;
+	}
+    } else {
+	/* or do we have a comma separated list of vars? */
+	char *p = s;
+
+	while (*p) {
+	    if (*p == ',') nv++;
+	    p++;
+	}
+	nv++;
+
+	if (nv < 2) return E_SYNTAX;
+
+	vnum = malloc(nv * sizeof *vnum);
+	if (vnum == NULL) {
+	    err = E_ALLOC;
+	}
+
+	for (i=0; i<nv && !err; i++) {
+	    p = strtok((i == 0)? s : NULL, ",");
+	    if (isdigit(*p)) {
+		v1 = atoi(p);
+	    } else {
+		v1 = varindex(pdinfo, p);
+	    }
+	    if (v1 < 0 || v1 >= pdinfo->v) {
+		err = E_UNKVAR;
+	    } else {
+		vnum[i] = v1;
+	    }
+	}
+    }
+
+    if (err) {
+	goto bailout;
+    }
+
+    /* calculate required series length */
+    maxok = 0;
+    for (i=0; i<nv; i++) {
+	int j, ok;
+
+	j = (vnum == NULL)? i + v1 : vnum[i];
+
+	if (pdinfo->vector[j]) {
+	    ok = pdinfo->n - missing_tail((*pZ)[j], pdinfo->n);
+	} else {
+	    ok = 1;
+	}
+	if (ok > maxok) maxok = ok;
+    }
+
+    /* TODO? play with the condition below for optimal results? */
+
+    if (maxok * nv <= pdinfo->n && pdinfo->n % maxok == 0) {
+	/* suggests that at least one var has already been stacked */
+	bign = pdinfo->n;
+    } else {
+	/* no stacking done: need to expand series length */
+	bign = nv * pdinfo->n;
+    }
+
+    /* allocate stacked series */
+    bigx = malloc(bign * sizeof *bigx);
+    if (bigx == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* construct stacked series */
+    for (i=0; i<nv; i++) {
+	int j, t, bigt, tmax;
+
+	j = (vnum == NULL)? i + v1 : vnum[i];
+
+	if (bign > pdinfo->n) {
+	    bigt = pdinfo->n * i;
+	    tmax = pdinfo->n;
+	} else {
+	    bigt = maxok * i;
+	    tmax = maxok;
+	}
+
+	for (t=0; t<tmax; t++) {
+	    if (pdinfo->vector[j]) {
+		bigx[bigt++] = (*pZ)[j][t];
+	    } else {
+		bigx[bigt++] = (*pZ)[j][0];
+	    }	
+	}
+
+	if (i == nv - 1) {
+	    for (t=bigt; t<bign; t++) {
+		bigx[bigt++] = NADBL;
+	    }	
+	}    
+    }
+
+    /* extend length of all series? */
+    if (bign > pdinfo->n) {
+	err = grow_nobs(bign - pdinfo->n, pZ, pdinfo);
+	if (err) {
+	    free(bigx);
+	    goto bailout;
+	}
+    }
+
+    /* add stacked series to dataset */
+    if (genv == pdinfo->v) {
+	/* add as new variable */
+	err = dataset_add_allocated_var(bigx, pZ, pdinfo);
+	if (err) {
+	    free(bigx);
+	    goto bailout;
+	}
+    } else {
+	/* replace existing variable of same name */
+	free((*pZ)[genv]);
+	(*pZ)[genv] = bigx;
+	gretl_varinfo_init(pdinfo->varinfo[genv]);
+    }
+    
+    /* complete the details */
+    if (!err) {
+	int len = strlen(scpy);
+
+	strcpy(pdinfo->varname[genv], newvar);
+	if (len > MAXLABEL - 1) {
+	    strncat(VARLABEL(pdinfo, genv), scpy, MAXLABEL - 4);
+	    strcat(VARLABEL(pdinfo, genv), "...");
+	} else {
+	    strcat(VARLABEL(pdinfo, genv), scpy);
+	}
+	sprintf(gretl_msg, "%s %s %s (ID %d)", 
+		(genv == pdinfo->v - 1)? _("Generated") : _("Replaced"),
+		_("vector"), newvar, i);
+    }
+
+ bailout:
+
+    free(vnum);
+
+    return err;
 }
 
 /* ........................................................... */

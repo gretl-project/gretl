@@ -22,6 +22,9 @@
 #ifndef GRETL_PRIVATE_H
 #define GRETL_PRIVATE_H
 
+int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo, 
+			char *newvar, char *s);
+
 int laggenr (int parent, int lag, int opt, double ***pZ, 
 	     DATAINFO *pdinfo);
 

@@ -1813,7 +1813,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	fix_decimal_commas(s);
 #endif
 
-    /* special cases which do not involve "lhs=rhs" */
+    /* special cases which are not of the form "lhs=rhs" */
     if (strcmp(s, "dummy") == 0) {
 	genr.err = dummy(pZ, pdinfo);
 	if (!genr.err)
@@ -1864,6 +1864,12 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    genr.err = E_SYNTAX;
 	    goto genr_return;
 	}
+    }
+
+    /* special case of stacking a group of series */
+    if (!strncmp(s, "stack(", 6)) {
+	genr.err = dataset_stack_vars(pZ, pdinfo, newvar, s);
+	return genr.err;
     }
 
     /* pre-process special operators */

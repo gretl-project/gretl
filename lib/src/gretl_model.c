@@ -536,17 +536,6 @@ static ARINFO *copy_ar_info (const ARINFO *src)
     return targ;
 }
 
-static char *my_strdup (const char *src)
-{
-    char *targ = malloc(strlen(src) + 1);
-
-    if (src != NULL) {
-	strcpy(targ, src);
-    }
-
-    return targ;
-}
-
 static int copy_model_params (MODEL *targ, const MODEL *src)
 {
     int i, j, n = src->nparams;
@@ -557,7 +546,7 @@ static int copy_model_params (MODEL *targ, const MODEL *src)
     targ->nparams = n;
 
     for (i=0; i<n; i++) {
-	targ->params[i] = my_strdup(src->params[i]);
+	targ->params[i] = gretl_strdup(src->params[i]);
 	if (targ->params[i] == NULL) {
 	    for (j=0; j<i; j++) {
 		free(targ->params[j]);
@@ -596,7 +585,7 @@ static int copy_model_data_items (MODEL *targ, const MODEL *src)
 	srcitem = src->data_items[i];
 	targ->data_items[i] = targitem;
 	
-	targitem->key = my_strdup(srcitem->key);
+	targitem->key = gretl_strdup(srcitem->key);
 	if (targitem->key == NULL) {
 	    err = 1;
 	    break;
