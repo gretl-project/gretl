@@ -1,26 +1,44 @@
-#!/bin/sh
+Making a gretl update package (9/26/03)
+=======================================
 
-DATADIR=www-home/gretl/cgi-bin/updater
-TGZ=update_files.tgz
+1. If GTK needs updating, this is not on.  The oldest gretl version
+   that can be updated incrementally will the be the first-released
+   version that uses the same GTK as the current gretl build.
 
-mkdir -p ./updates
+Example, 9/26/03: gretl 1.1.2 updated to GTK 2.2.4 (and pango 1.2.5),
+so we can't make an updater for anything earlier than 1.1.2.
 
-IFS='
-'
-for f in `cat update.files | grep -v ^#` ; do
-   fname=`echo $f | awk '{ print $1 }'`
-   dest=`echo $f | awk '{ print $2 }'`
-   if [ "$dest" != "root" ] ; then
-       mkdir -p ./updates/$dest
-       cp $fname ./updates/$dest
-   else
-       cp $fname ./updates
-   fi
-done   
+2. How to determine which files need updating?  windist/MANIFEST gives
+   a listing of all files installed by gretl_install.exe.  Take this
+   as a basis and remove all the files that _don't_ need updating.
 
-tar cvfz $TGZ ./updates && tar tvfz $TGZ
-scp $TGZ cottrell@ricardo:./$DATADIR
+To help see which files do in fact need updating:
 
-rm -rf ./updates
-rm $TGZ
+From Changelog: "09/09/03 version 1.1.2".  OK, let's make a stamp
+with 
 
+touch -t 200309030000 ~/gretl_marker 
+
+test share:
+
+find ~/src/share -newer ~/gretl_marker | grep -v CVS > update.files
+
+test misc dlls:
+
+find ~/stats/esl/win32/runtime/misc-dll -newer ~/gretl_marker >> update.files
+
+3. The list based on MANIFEST, but with extraneous stuff deleted: trim
+   the leading "gretl/" from filenames and make a tar listing, e.g.
+
+   cat MANIFEST.copy | sed s+'^gretl/'++ > update.tarlist
+
+4. Make a new dist, to get all updated files into windist/gretl.
+
+5. Make an update tar package:
+
+   cd windist/gretl
+   tar cvzfT wgretl_update.tgz /path/to/update.tarlist
+
+6. Ship to ricardo:
+
+   scp wgretl_update.tgz cottrell@ricardo:./www-home/gretl/cgi-bin/updater
