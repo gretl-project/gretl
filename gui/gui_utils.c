@@ -927,9 +927,9 @@ static void edit_script_help (GtkWidget *widget, gpointer data)
 
 	p = q = text + pt;
 	if (pt > 0)
-	    while (!isspace(*(p-1))) p--;
+	    while (p - text && !isspace(*(p-1))) p--;
 	if (pt < strlen(text))
-	    while (!isspace(*q)) q++;
+	    while (*q && !isspace(*q)) q++;
 	*word = '\0';
 	strncat(word, p, (q - p > 8)? 8 : q - p);
 	pos = help_index(word, 1);
@@ -1480,8 +1480,9 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize, char *title)
     make_editbar(vwin, dialog);    
 
     /* insert the buffer text */
-    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-		    NULL, NULL, *pbuf, strlen(*pbuf));
+    if (pbuf)
+	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+			NULL, NULL, *pbuf, strlen(*pbuf));
 
     /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 

@@ -1,2 +1,2 @@
-set args data9-7 
+set args  
 run
