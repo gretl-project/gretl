@@ -26,9 +26,11 @@ int write_var_len (long val, FILE *fp)
     return wrote;
 }
 
-int delta_time (int beat, int nticks, FILE *fp)
+int delta_time (double beat, int nticks, FILE *fp)
 {
-    return write_var_len(beat * nticks, fp); 
+    long val = beat * nticks;
+
+    return write_var_len(val, fp); 
 }
 
 int write_be_long (unsigned long val, FILE *fp)

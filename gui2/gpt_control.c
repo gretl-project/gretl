@@ -3263,11 +3263,32 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 }
 
 static gboolean 
-plot_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
+plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot_t *plot)
 {
-    if (key->keyval == GDK_q) {
-        gtk_widget_destroy(w);
+    switch (key->keyval) {
+    case GDK_q:
+    case GDK_Q:
+	gtk_widget_destroy(w);
+	break;
+    case GDK_s:
+    case GDK_S:
+	add_graph_to_session(plot->spec, GRETL_GNUPLOT_GRAPH, NULL);
+	break;
+#ifdef G_OS_WIN32
+    case GDK_c:
+	win32_process_graph(plot->spec, color, WIN32_TO_CLIPBOARD);
+	break;
+#endif
+#ifdef HAVE_AUDIO
+    case GDK_a:
+    case GDK_A:
+	audio_render_plot(plot);
+	break;
+#endif
+    default:
+	break;
     }
+
     return TRUE;
 }
 

@@ -2,7 +2,7 @@
 #define UTIL_H
 
 int write_var_len (long val, FILE *fp);
-int delta_time (int beat, int nticks, FILE *fp);
+int delta_time (double beat, int nticks, FILE *fp);
 int write_be_long (unsigned long val, FILE *fp);
 int write_be_24 (int val, FILE *fp);
 int write_be_short (unsigned short val, FILE *fp);

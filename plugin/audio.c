@@ -1,3 +1,22 @@
+/* gretl - The Gnu Regression, Econometrics and Time-series Library
+ * Copyright (C) 2004 Allin Cottrell
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License 
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this software; if not, write to the 
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
+ */
+
 /* gretl audio graph plugin */
 
 #include <stdio.h>
@@ -14,8 +33,12 @@
 
 #if GLIB_CHECK_VERSION(2,0,0)
 # define GLIB2
+#else
+# include <unistd.h>
 # include <signal.h>
-#endif /* GLIB_CHECK_VERSION */
+# include <wait.h>
+# include <errno.h>
+#endif
 
 #undef DEBUG
 
@@ -28,8 +51,14 @@ extern cst_voice *register_cmu_us_kal (void);
 
 const char *track_hdr = "MTrk";
 
-#define N_COMMENTS 3
-
+enum dataset_comments {
+    TS_COMMENT = 0,
+    YLABEL_COMMENT,
+    XLABEL_COMMENT,
+    XRANGE_COMMENT,
+    N_COMMENTS
+};
+    
 typedef struct _dataset dataset;
 typedef struct _midi_spec midi_spec;
 typedef struct _midi_track midi_track;
@@ -38,6 +67,9 @@ typedef struct _note_event note_event;
 struct _dataset {
     int pd;
     int n;
+    int series2;
+    double intercept;
+    double slope;
     double *x;
     double *y;
     double *y2;
@@ -60,8 +92,8 @@ struct _midi_track {
 };
 
 struct _note_event {
-    int dtime;
-    int duration;
+    double dtime;
+    double duration;
     unsigned char pitch;
     unsigned char force;
     unsigned char channel;
@@ -228,6 +260,10 @@ static void dataset_init (dataset *dset)
 
     dset->n = 0;
     dset->pd = 0;
+    dset->series2 = 0;
+
+    dset->intercept = NADBL;
+    dset->slope = NADBL;
 
     for (i=0; i<N_COMMENTS; i++) {
 	dset->comments[i] = NULL;
@@ -275,7 +311,8 @@ static int make_xrange_comment (const char *line, dataset *dset)
     }
 
     if (dset->pd == 0) {
-	dset->comments[2] = g_strdup_printf("%.4g to %.4g", x1, x2);
+	dset->comments[XRANGE_COMMENT] = 
+	    g_strdup_printf("x range %.4g to %.4g", x1, x2);
     } else {
 	char tmp1[64], tmp2[64];
 	int ix1 = x1;
@@ -290,19 +327,33 @@ static int make_xrange_comment (const char *line, dataset *dset)
 	yr = ix2 - 100 * cent;
 	sprintf(tmp2, "%s %d", cent_str(cent), yr);
 
-	dset->comments[2] = g_strdup_printf("%s to %s", tmp1, tmp2);
+	dset->comments[XRANGE_COMMENT] = 
+	    g_strdup_printf("%s to %s", tmp1, tmp2);
     }
 
     return 1;
 }
 
-static int make_ylabel_comment (const char *line, dataset *dset)
+static int make_axis_label_comment (const char *line, dataset *dset)
 {
     char tmp[16];
     int ret = 0;
 
     if (sscanf(line, "set ylabel '%15[^\']", tmp) == 1) {
-	dset->comments[1] = g_strdup(tmp);
+	if (dset->pd > 0) {
+	    dset->comments[YLABEL_COMMENT] = g_strdup(tmp);
+	} else {
+	    dset->comments[YLABEL_COMMENT] =
+		g_strdup_printf("y variable %s", tmp);
+	}
+	ret = 1;
+    } else if (sscanf(line, "set xlabel '%15[^\']", tmp) == 1) {
+	if (dset->pd > 0) {
+	    dset->comments[XLABEL_COMMENT] = g_strdup(tmp);
+	} else {
+	    dset->comments[XLABEL_COMMENT] =
+		g_strdup_printf("x variable %s", tmp);
+	}
 	ret = 1;
     }
 
@@ -330,9 +381,10 @@ static void make_ts_comment (const char *line, dataset *dset)
     }
 
     if (pdstr != NULL) {
-	dset->comments[0] = g_strdup_printf("%s time series", pdstr);
+	dset->comments[TS_COMMENT] = 
+	    g_strdup_printf("%s time series", pdstr);
     } else {
-	dset->comments[0] = g_strdup("time series");
+	dset->comments[TS_COMMENT] = g_strdup("time series");
     }
 }
 
@@ -345,8 +397,9 @@ static int get_comment (const char *line, dataset *dset)
 	ret = 1;
     }
 
-    else if (!strncmp(line, "set ylabel", 10)) {
-	make_ylabel_comment(line, dset);
+    else if (!strncmp(line, "set ylabel", 10) ||
+	     !strncmp(line, "set xlabel", 10)) {
+	make_axis_label_comment(line, dset);
 	ret = 1;
     }
     
@@ -356,6 +409,23 @@ static int get_comment (const char *line, dataset *dset)
     }
 
     return ret;
+}
+
+static int get_fit_params (char *line, dataset *dset)
+{
+    double a, b;
+    char *p = strchr(line, '*');
+
+    if (p != NULL) *p = '\0';
+
+    if (sscanf(line, "%lf + %lf", &a, &b) == 2) {
+	dset->intercept = a;
+	dset->slope = b;
+	dset->series2 = 1;
+	return 1;
+    }
+
+    return 0;
 }
 
 static void tail_strip_line (char *line)
@@ -374,7 +444,7 @@ static int read_datafile (const char *fname, dataset *dset)
 {
     char line[256];
     int i, err = 0;
-    int got_e = 0, y2data = 0;
+    int got_e = 0, y2data = 0, fitline = 0;
     FILE *fdat;
 
     dataset_init(dset);
@@ -397,8 +467,15 @@ static int read_datafile (const char *fname, dataset *dset)
 		/* can't handle more than two series! */
 		break;
 	    }
+	} else if (strstr(line, "automatic OLS")) {
+	    fitline = 1;
 	} else if (isdigit((unsigned char) line[0])) {
-	    if (strstr(line, "title")) continue;
+	    if (strstr(line, "title")) {
+		if (fitline) {
+		    get_fit_params(line, dset);
+		}
+		continue;
+	    }
 	    if (!got_e) {
 		dset->n += 1;
 	    } else if (!y2data) {
@@ -427,7 +504,8 @@ static int read_datafile (const char *fname, dataset *dset)
 	    err = 1;
 	    fputs("Out of memory\n", stderr);
 	    goto bailout;
-	}	
+	}
+	dset->series2 = 1;
     }
 
     rewind(fdat);
@@ -444,7 +522,9 @@ static int read_datafile (const char *fname, dataset *dset)
 	} else if (isdigit((unsigned char) line[0])) {
 	    double x, y;
 
-	    if (strstr(line, "title")) continue;
+	    if (strstr(line, "title")) {
+		continue;
+	    }
 
 	    if (sscanf(line, "%lf %lf", &x, &y) != 2) {
 		fprintf(stderr, "Couldn't read data on line %d\n", i + 1);
@@ -600,7 +680,7 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 		dset->x[i], dset->y[i]);
 	fprintf(stderr, " ypos = %g, dtx = %g, dux = %g\n",
 		ypos, dtx, dux);
-	fprintf(stderr, " dtime=%d, duration=%d, pitch=%d\n",
+	fprintf(stderr, " dtime=%g, duration=%g, pitch=%d\n",
 		track->notes[i].dtime, track->notes[i].duration,
 		track->notes[i].pitch);
 #endif
@@ -608,16 +688,26 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 
     write_midi_track(track, spec);
 
-    if (dset->y2 != NULL) {
-	for (i=0; i<dset->n; i++) {
-	    double ypos = (dset->y2[i] - ymin) * yscale;
+    fprintf(stderr, "checking for series2: dset->y2=%p,\n"
+	    "dset->intercept=%g, dset->slope=%g\n",
+	    (void *) dset->y2, dset->intercept, dset->slope);
 
+    if (dset->series2) {
+	for (i=0; i<dset->n; i++) {
+	    double yi, ypos;
+
+	    if (dset->y2 != NULL) {
+		yi = dset->y2[i];
+	    } else {
+		yi = dset->intercept + dset->slope * dset->x[i];
+	    }
+	    ypos = (yi - ymin) * yscale;
 	    track->notes[i].pitch = 36 + (int) (ypos + 0.5);
 	}
 	track->channel = 1;
 	track->patch = PC_MARIMBA; 
 	write_midi_track(track, spec);
-    }
+    }	
 
     free(track->notes);
 
@@ -652,14 +742,48 @@ static int audio_fork (const char *prog, const char *fname)
     return !run;
 }
 
+#else
+
+static volatile int fork_err;
+
+static void fork_err_set (int signum)
+{
+    fork_err = 1;
+}
+
+static int audio_fork (const char *prog, const char *fname)
+{
+    pid_t pid;
+
+    fork_err = 0;
+
+    signal(SIGUSR1, fork_err_set);
+
+    pid = fork();
+    if (pid == -1) {
+	perror("fork");
+	return 1;
+    } else if (pid == 0) {
+	execlp(prog, prog, "-A", "600", fname, NULL);
+	perror("execlp");
+	kill(getppid(), SIGUSR1);
+	_exit(EXIT_FAILURE);
+    }
+    
+    sleep(1);
+
+    if (fork_err) {
+	fprintf(stderr, "%s: %s", _("Command failed"), prog);
+    }
+
+    return fork_err;
+}
+
 #endif /* GLIB2 */
 
 int midi_play_graph (const char *fname, const char *userdir)
 {
     char outname[FILENAME_MAX];
-#ifndef GLIB2
-    char syscmd[1024];
-#endif
     midi_spec spec;
     midi_track track;
     dataset dset;
@@ -678,7 +802,7 @@ int midi_play_graph (const char *fname, const char *userdir)
 	return 1;
     }
 
-    spec.ntracks = (dset.y2 == NULL)? 1 : 2;
+    spec.ntracks = 1 + dset.series2;
     spec.nticks = 96;
     spec.dset = &dset;
     spec.nsecs = 16;
@@ -689,12 +813,7 @@ int midi_play_graph (const char *fname, const char *userdir)
 
     fclose(spec.fp);
 
-#ifdef GLIB2
     audio_fork("timidity", outname);
-#else
-    sprintf(syscmd, "timidity -A 600 %s", outname);
-    gretl_spawn(syscmd);
-#endif
 
 #ifdef DEBUG
     fprintf(stderr, "midi_play_graph, returning\n");
