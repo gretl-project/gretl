@@ -103,7 +103,8 @@ PROBOBJ = $(PROBSRC:.c=.o)
 MO = mo/es.mo
 
 # targets begin
-all: buildstamp dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO)
+all: buildstamp dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) \
+	$(CKECKER) $(MO)
 
 $(CLIPROG): $(CLIOBJ) 
 	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB)
