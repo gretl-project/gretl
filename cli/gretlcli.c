@@ -778,6 +778,9 @@ void exec_line (char *line, PRN *prn)
 	} else {	
 	    (models[0])->ID = ++model_count;
 	    printmodel(models[0], datainfo, prn);
+	    if (want_vcv(cmd.opt)) {
+		outcovmx(models[0], datainfo, !batch, prn);
+	    }	    
 	}	
 	break;
 

@@ -197,7 +197,10 @@ int restrict_sample (const char *line,
     *gretl_errmsg = '\0';
     *dumv = '\0';
 
-    if ((oflag & OPT_O) && (line == NULL || sscanf(line, "%*s %s", dumv) <= 0)) {
+    if (oflag & OPT_M) {
+	opt = SUBSAMPLE_DROP_MISSING;
+    } else if ((oflag & OPT_O) && 
+	       (line == NULL || sscanf(line, "%*s %s", dumv) <= 0)) {
 	opt = SUBSAMPLE_DROP_MISSING;
     } else if (oflag & OPT_O) {
 	opt = SUBSAMPLE_USE_DUMMY;

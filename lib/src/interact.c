@@ -1298,9 +1298,14 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	if (!batch) pputs(prn, line);
     }
 
-    if (cmd->opt) { 
-	const char *flagstr = print_flags(cmd->opt, cmd->ci);
+    if (cmd->opt) {
+	const char *flagstr;
+	int ci = cmd->ci;
 
+	if (ci == END && !strcmp(cmd->param, "nls")) {
+	    ci = NLS;
+	}
+	flagstr = print_flags(cmd->opt, ci);
 	if (cli) fputs(flagstr, stdout);
 	if (!batch) pputs(prn, flagstr);
     }
@@ -1509,7 +1514,7 @@ static int do_outfile_command (unsigned long flag, char *fname,
 		pprintf(prn, _("Couldn't open %s for writing\n"), fname);
 		return 1;
 	    } else {
-		if (flag == 'w') {
+		if (flag == OPT_W) {
 		    pprintf(prn, _("Now writing output to '%s'\n"), fname);
 		} else {
 		    pprintf(prn, _("Now appending output to '%s'\n"), fname);

@@ -1243,7 +1243,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
 	if (sscanf(buf, "%8s", dumv) != 1) return TRUE;
 
-	sprintf(line, "smpl %s -o", dumv);
+	sprintf(line, "smpl %s --dummy", dumv);
 	if (verify_and_record_command(line)) return TRUE;
 	err = bool_subsample(OPT_O);
 	if (!err) {

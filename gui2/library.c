@@ -1237,9 +1237,9 @@ void gui_errmsg (const int errcode)
 /* ........................................................... */
 
 int bool_subsample (unsigned long opt)
-     /* opt = 0       -- drop all obs with missing data values 
-	opt = OPT_O   -- sample using dummy variable
-	opt = OPT_R   -- sample using boolean expression
+     /* opt = OPT_M  drop all obs with missing data values 
+	opt = OPT_O  sample using dummy variable
+	opt = OPT_R  sample using boolean expression
      */
 {
     int err = 0;
@@ -1249,8 +1249,8 @@ int bool_subsample (unsigned long opt)
     if ((subinfo = mymalloc(sizeof *subinfo)) == NULL) 
 	return 1;
 
-    if (opt == 0L) {
-	err = restrict_sample(NULL, &Z, &subZ, datainfo, subinfo, OPT_O);
+    if (opt == OPT_M) {
+	err = restrict_sample(NULL, &Z, &subZ, datainfo, subinfo, opt);
     } else {
 	err = restrict_sample(line, &Z, &subZ, datainfo, subinfo, opt);
     }
@@ -1268,6 +1268,7 @@ int bool_subsample (unsigned long opt)
 
     set_sample_label_special();
     restore_sample_state(TRUE);
+
     if (opt == 0) {
 	infobox(_("Sample now includes only complete observations"));
     } else {
@@ -1281,7 +1282,7 @@ int bool_subsample (unsigned long opt)
 
 void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
 {
-    bool_subsample((unsigned long) opt);
+    bool_subsample(OPT_M);
 }
 
 /* ........................................................... */
@@ -1295,7 +1296,7 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
     if (blank_entry(buf, ddata)) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "smpl %s -r", buf); 
+    sprintf(line, "smpl %s --restrict", buf); 
     if (verify_and_record_command(line)) return;
 
     err = bool_subsample(OPT_R);
@@ -5134,7 +5135,10 @@ int gui_exec_line (char *line,
 	    break;
 	}	
 	(models[0])->ID = ++model_count;
-	printmodel(models[0], datainfo, outprn);	
+	printmodel(models[0], datainfo, outprn);
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, 0, outprn);
+	}	
 	break;
 
     case BXPLOT:

@@ -1,5 +1,5 @@
 /* gretl - The Gnu Regression, Econometrics and Time-series Library
- * Copyright (C) 1999-2000 Ramu Ramanathan and Allin Cottrell
+ * Copyright (C) 1999-2004 Ramu Ramanathan and Allin Cottrell
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License 
@@ -115,11 +115,6 @@ int set_obs (char *line, DATAINFO *pdinfo, unsigned long opt);
 void set_miss (LIST list, const char *param, double **Z,
 	       DATAINFO *pdinfo, PRN *prn);
 
-char *addpath (char *fname, PATHS *ppaths, int script);
-
-int getopenfile (const char *line, char *fname, PATHS *ppaths,
-		 int setpath, int script);
-
 int catchflags (char *line, unsigned long *oflag);
 
 const char *print_flags (unsigned long flags, int ci);
@@ -147,12 +142,6 @@ int gretl_model_get_int (const MODEL *pmod, const char *key);
 double gretl_model_get_double (const MODEL *pmod, const char *key);
 
 void debug_print_model_info (const MODEL *pmod, const char *msg);
-
-void show_paths (PATHS *ppaths);
-
-int set_paths (PATHS *ppaths, int defaults, int gui);
-
-const char *fetch_gretl_lib_path (void);
 
 int copylist (int **target, const int *src);
 

@@ -336,14 +336,14 @@ eqnprint
 @Printing
 Usage:          eqnprint
                 eqnprint --complete
-                eqnprint --outfile filename
+                eqnprint -f filename
 
 Must follow the estimation of a model via OLS.  Prints the estimated model in
-the form of a LaTeX equation.  If a filename is specified using the --outfile
-option output goes to that file, otherwise it goes to a file with a name of
-the form "equation_N.tex", where N is the number of models estimated to date
-in the current session.  This can be incorporated in a LaTeX document.  See
-also the tabprint command.
+the form of a LaTeX equation.  If a filename is specified using the -f flag
+output goes to that file, otherwise it goes to a file with a name of the form
+"equation_N.tex", where N is the number of models estimated to date in the
+current session.  This can be incorporated in a LaTeX document.  See also the
+tabprint command.
 
 If the --complete option is given the LaTeX file is a complete document, ready
 for processing; otherwise it is a "fragment" that must be included in a
@@ -925,6 +925,18 @@ are equal for the variables x1 and x2, and shows its p-value.  Without the
 variances are equal for the two variables; with this option the variances are
 assumed to be unequal.  (The option will make a difference only if there are
 different numbers of non-missing observations for the two variables.)
+
+#
+modeltab
+@Utilities
+Usage:          modeltab command
+
+Manipulate the gretl "model table" (see chapter 3 of the manual for
+details).  "command" should be one of the following:
+
+add    add the last model estimated to the model table, if possible
+show   display the model table in a window
+free   clear the table  
 
 #
 mpols
@@ -1621,14 +1633,14 @@ tabprint
 @Printing
 Usage:          tabprint
                 tabprint --complete
-                tabprint --outfile filename
+                tabprint -f filename
 
 Must follow the estimation of a model via OLS.  Prints the estimated model in
 the form of a LaTeX tabular environment.  If a filename is specified using the
---outfile flag output goes to that file, otherwise it goes to a file with a
-name of the form "model_N.tex", where N is the number of models estimated to
-date in the current session.  This can be incorporated in a LaTeX document.
-See also the eqnprint command.
+-f flag output goes to that file, otherwise it goes to a file with a name of
+the form "model_N.tex", where N is the number of models estimated to date in
+the current session.  This can be incorporated in a LaTeX document.  See also
+the eqnprint command.
 
 If the --complete flag is given the LaTeX file is a complete document, ready
 for processing; otherwise it must be included in a document.

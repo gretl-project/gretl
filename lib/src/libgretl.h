@@ -396,6 +396,7 @@ struct _VCV {
 #include "gretl_errors.h"
 #include "estimate.h"
 #include "generate.h"
+#include "gretl_paths.h"
 #include "gretl_utils.h"
 #include "compare.h"
 #include "pvalues.h"
