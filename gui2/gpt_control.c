@@ -721,12 +721,13 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
     gretl_print_destroy(prn);
     fclose(fq);
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
-			      plottmp);
-
 #ifdef G_OS_WIN32
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.pgnuplot, 
+			      plottmp);
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
 #else
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
+			      plottmp);
     err = system(plotcmd);
 #endif
 
@@ -783,12 +784,13 @@ void do_save_graph (const char *fname, char *savestr)
     gretl_print_destroy(prn);
     fclose(fq);
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
-			      plottmp);
-
 #ifdef G_OS_WIN32
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.pgnuplot, 
+			      plottmp);
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
 #else
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
+			      plottmp);
     err = system(plotcmd);
 #endif
 
@@ -1587,11 +1589,21 @@ static int make_new_png (png_plot_t *plot, int view)
 	fclose(fpout);
 	fclose(fpin);
 
+#ifdef G_OS_WIN32
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.pgnuplot, 
+				  fullname);
+#else
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
-				 fullname);
+				  fullname);
+#endif
     } else { /* PNG_UNZOOM */
+#ifdef G_OS_WIN32
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.pgnuplot, 
+				  plot->spec->fname);
+#else
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
-				 plot->spec->fname);
+				  plot->spec->fname);
+#endif
     }
 
 #ifdef G_OS_WIN32
@@ -1778,11 +1790,13 @@ static int get_plot_yrange (png_plot_t *plot)
     fclose(fpin);
     fclose(fpout);
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot,
-			      dumbgp);
 #ifdef G_OS_WIN32
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.pgnuplot,
+			      dumbgp);
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
 #else
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot,
+			      dumbgp);
     err = system(plotcmd);
 #endif
     
@@ -2083,7 +2097,7 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
     gretl_print_destroy(prn);
     fclose(fq);
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.pgnuplot, 
 			      plottmp);
 
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
