@@ -1001,7 +1001,11 @@ int get_modnum_by_cmdnum (LOOPSET *ploop, int cmdnum)
 
 void get_cmd_ci (const char *line, CMD *command)
 {
-    if (sscanf(line, "%s", command->cmd) != 1 || line[0] == '(') {
+    /* allow for leading spaces */
+    while (isspace(*line)) line++;
+
+    if (sscanf(line, "%s", command->cmd) != 1 || 
+	*line == '(' || *line == '#') {
 	command->nolist = 1;
 	command->ci = -1;
 	return;

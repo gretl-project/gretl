@@ -102,7 +102,7 @@ static int filter_comments (char *line, int *ignore)
     tmpstr[j] = '\0';
     strcpy(line, tmpstr);
 
-    if (strlen(line)) return 0;
+    if (*line) return 0;
     else return 1;
 }
 
