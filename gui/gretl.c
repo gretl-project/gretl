@@ -835,8 +835,10 @@ void main_menubar_state (gboolean s)
     flip(mdata->ifac, "/Variable", s);
     flip(mdata->ifac, "/Model", s);
 
-    if (s && (data_status & BOOK_DATA))
-	flip(mdata->ifac, "/Data/Edit info", 0);
+    if (s) {
+	flip(mdata->ifac, "/Data/Edit info", 
+	     !(data_status & BOOK_DATA));
+    }
 }
 
 /* ........................................................... */
