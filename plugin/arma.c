@@ -366,11 +366,7 @@ static void rewrite_arma_model_stats (MODEL *pmod, model_info *arma,
 	}
     }
 
-    /* AIC, as per X-12-ARIMA */
-    pmod->criterion[C_AIC] = -2.0 * pmod->lnL + 2.0 * (pmod->ncoeff + 1);
-
-    /* BIC, as per X-12-ARIMA */
-    pmod->criterion[C_BIC] = -2.0 * pmod->lnL + (pmod->ncoeff + 1) * log(pmod->nobs);
+    mle_aic_bic(pmod, 1);
 }
 
 static void remove_const (int *list)

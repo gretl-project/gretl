@@ -319,7 +319,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 
     /* Iterated least squares: see Ruud, "An Introduction to Classical 
        Econometric Theory", chapter 27 */
-    Lbak = -9999.0;
+    Lbak = -1.0e8;
     for (i=0; i<itermax; i++) {
 	for (t=dmod.t1; t<=dmod.t2; t++) {
 	    xx = dmod.yhat[t];
@@ -345,7 +345,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	    break; 
 	}
 
-	/*  printf("Log likelihood = %f\n", dmod.lnL); */
+	/*  printf("Log likelihood = %g\n", dmod.lnL); */
 	Lbak = dmod.lnL;
 	clear_model(&dmod);
 	dmod = lsq(dmodlist, pZ, pdinfo, OLS, OPT_A, 0);
@@ -437,6 +437,8 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     dmod.ybar = xx;
     dmod.sdy = fbx;
     gretl_model_set_int(&dmod, "correct", n_correct);
+
+    mle_aic_bic(&dmod, 1); /* FIXME: check the "1" here */
 
     dmod.ID = model_count_plus();
 

@@ -681,7 +681,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* Generate model selection statistics */
-    gretl_aic_bic(&mdl);
+    ls_aic_bic(&mdl);
 
  lsq_abort:
 
@@ -2127,7 +2127,7 @@ MODEL tsls_func (int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     tsls.adjrsq = 
 	1.0 - ((1.0 - tsls.rsq) * (tsls.nobs - 1.0) / tsls.dfd);
     tsls.fstt = tsls.rsq * tsls.dfd / (tsls.dfn * (1.0 - tsls.rsq));
-    gretl_aic_bic(&tsls);
+    ls_aic_bic(&tsls);
 
     if (tsls.missmask == NULL) {
 	/* no missing obs within sample range */
@@ -2892,7 +2892,7 @@ MODEL ar_func (int *list, int pos, double ***pZ,
 	tss += ((*pZ)[ryno][t] - xx) * ((*pZ)[ryno][t] - xx);
     }
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
-    gretl_aic_bic(&ar);
+    ls_aic_bic(&ar);
     ar.dw = dwstat(maxlag, &ar, *pZ);
     ar.rho = rhohat(maxlag, ar.t1, ar.t2, ar.uhat);
 

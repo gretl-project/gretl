@@ -486,7 +486,7 @@ static MODEL GNR (double *fvec, double *fjac)
     }
 
     if (gnr.errcode == 0) {
-	gretl_aic_bic(&gnr);
+	ls_aic_bic(&gnr);
 	gnr.ci = NLS;
 	add_coeffs_to_model(&gnr, nlspec.coeff);
 	add_param_names_to_model(&gnr);

@@ -563,23 +563,18 @@ int print_list_to_buffer (const int *list, char *buf, size_t len)
 
 /* ....................................................... */
 
-static int calculate_criteria (double *x, double ll, double ess, 
+static int calculate_criteria (double *x, double ess, 
 			       int nobs, int ncoeff)
 {
-    if ((na(ll) && na(ess)) ||
-	(na(ll) && ess < 0.0) ||
-	ncoeff < 1 || nobs <= ncoeff) {
+    if (na(ess) || ess < 0.0 || ncoeff < 1 || nobs <= ncoeff) {
 	x[C_AIC] = NADBL;
 	x[C_BIC] = NADBL;
 
 	return 1;
     } else {
-	if (na(ll)) {
-	    const double ln2pi1 = 2.837877066409345;
-	    double ll1 = -.5 * nobs * log(ess);
-
-	    ll = (-.5 * nobs) * (ln2pi1 - log((double) nobs)) + ll1;
-	}
+	const double ln2pi1 = 2.837877066409345;
+	double ll1 = -.5 * nobs * log(ess);
+	double ll = (-.5 * nobs) * (ln2pi1 - log((double) nobs)) + ll1;
 
 	x[C_AIC] = -2.0 * ll + 2 * ncoeff;
 	x[C_BIC] = -2.0 * ll + ncoeff * log(nobs);
@@ -590,9 +585,9 @@ static int calculate_criteria (double *x, double ll, double ess,
 
 /* Compute model selection criteria */
 
-int gretl_aic_bic (MODEL *pmod)
+int ls_aic_bic (MODEL *pmod)
 {
-    return calculate_criteria(pmod->criterion, pmod->lnL, 
+    return calculate_criteria(pmod->criterion, 
 			      pmod->ess, pmod->nobs,
 			      pmod->ncoeff);
 }
@@ -602,7 +597,7 @@ int gretl_criteria (double ess, int nobs, int ncoeff, PRN *prn)
     double x[2];
     int err;
 
-    err = calculate_criteria(x, NADBL, ess, nobs, ncoeff);
+    err = calculate_criteria(x, ess, nobs, ncoeff);
 
     if (err) {
 	pputs(prn, _("Error calculating model selection criteria\n"));

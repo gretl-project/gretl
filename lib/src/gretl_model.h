@@ -86,4 +86,6 @@ void model_list_to_string (int *list, char *buf);
 int highest_numbered_var_in_model (const MODEL *pmod, 
 				   const DATAINFO *pdinfo);
 
+int mle_aic_bic (MODEL *pmod, int addk);
+
 #endif /* GRETL_MODEL_H */

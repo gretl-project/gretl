@@ -157,8 +157,7 @@ static int write_garch_stats (MODEL *pmod, const double **Z,
     pmod->adjrsq = NADBL; 
     pmod->fstt = NADBL;
 
-    pmod->criterion[C_AIC] = -2.0 * pmod->lnL + 2.0 * (pmod->ncoeff + 1);
-    pmod->criterion[C_BIC] = -2.0 * pmod->lnL + (pmod->ncoeff + 1) * log(pmod->nobs);
+    mle_aic_bic(pmod, 1);
 
     pmod->ci = GARCH;
     
