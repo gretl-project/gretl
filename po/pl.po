@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-10-26 13:22-0400\n"
-"PO-Revision-Date: 2004-11-06 22:00+0100\n"
+"PO-Revision-Date: 2004-11-11 23:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -122,7 +122,7 @@ msgstr "Test CUSUM na stabilno¶æ parametrów"
 #: lib/src/compare.c:1307
 #, c-format
 msgid "mean of scaled residuals = %g\n"
-msgstr ""
+msgstr "¶rednia arytmentyczna dla przeskalowanych reszt  = %g\n"
 
 #: lib/src/compare.c:1315
 #, c-format
@@ -130,7 +130,7 @@ msgid ""
 "sigmahat                 = %g\n"
 "\n"
 msgstr ""
-"sigmahat                 = %g\n"
+"odchylenie standardowe dla przeskalowanych reszt = %g\n"
 "\n"
 
 #: lib/src/compare.c:1320
@@ -140,6 +140,9 @@ msgid ""
 "('*' indicates a value outside of 95%% confidence band):\n"
 "\n"
 msgstr ""
+"Skumulowana suma przeskalowanych reszt\n"
+"('*' oznacza warto¶æ przekraczaj±c± 95%% przedzia³ ufno¶ci):\n"
+"\n"
 
 #: lib/src/compare.c:1334
 #, c-format
@@ -149,7 +152,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Harvey-Collier t(%d) = %g  z  p-value %.4g\n"
+"Statystyka testu Harvey-Collier t(%d) = %g  z  p-value %.4g\n"
 "\n"
 
 #: lib/src/compare.c:1339
@@ -2655,7 +2658,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:280 lib/src/modelprint.c:283 lib/src/modelprint.c:286
 msgid "Degrees of freedom"
-msgstr ""
+msgstr "Stopnie swobody"
 
 #: lib/src/modelprint.c:294 lib/src/modelprint.c:319
 msgid "F-statistic"
@@ -2676,7 +2679,7 @@ msgstr ""
 #: lib/src/modelprint.c:379 lib/src/modelprint.c:390
 #, c-format
 msgid "Durbin's h stat. %g"
-msgstr ""
+msgstr "Statystyka Durbin h %g"
 
 #: lib/src/modelprint.c:382 lib/src/modelprint.c:393
 #, c-format
@@ -2685,7 +2688,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:403
 msgid "Durbin's $h$ statistic"
-msgstr ""
+msgstr "Statystyka testu Durbin - $h$"
 
 #: lib/src/modelprint.c:441
 #, c-format
@@ -2694,15 +2697,15 @@ msgstr ""
 
 #: lib/src/modelprint.c:452
 msgid "Auxiliary regression for non-linearity test (squared terms)"
-msgstr ""
+msgstr "Pomocnicze rónanie regresji dla testu nieliniow¶ci (kwadraty zmiennych)"
 
 #: lib/src/modelprint.c:456
 msgid "Auxiliary regression for non-linearity test (log terms)"
-msgstr ""
+msgstr "Pomocnicze rónanie regresji dla testu nieliniow¶ci (logarytmy zmiennych)"
 
 #: lib/src/modelprint.c:463
 msgid "Augmented regression for Chow test"
-msgstr ""
+msgstr "Pomocnicze równanie regresji dla testu Chowa"
 
 #: lib/src/modelprint.c:466
 msgid "Cointegrating regression -- "
@@ -2730,7 +2733,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:478
 msgid "Auxiliary regression for RESET specification test"
-msgstr ""
+msgstr "Pomocnicze równanie regresji dla testu specyfikacji RESET"
 
 #: lib/src/modelprint.c:487 gui/selector.c:514 gui2/model_table.c:356
 #: gui2/selector.c:755
@@ -2784,7 +2787,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:499
 msgid "NLS"
-msgstr ""
+msgstr "NLS"
 
 #: lib/src/modelprint.c:500 gui/selector.c:532 gui2/selector.c:773
 msgid "Logistic"
@@ -2867,11 +2870,11 @@ msgstr ""
 
 #: lib/src/modelprint.c:872 lib/src/modelprint.c:874
 msgid "Breusch-Godfrey test for"
-msgstr ""
+msgstr "Test Breuscha-Godfreya na"
 
 #: lib/src/modelprint.c:877 lib/src/modelprint.c:878
 msgid "autocorrelation up to order"
-msgstr ""
+msgstr "autokorelacjê do rzêdu"
 
 #: lib/src/modelprint.c:881 lib/src/modelprint.c:882
 msgid "first-order autocorrelation"
@@ -3349,7 +3352,7 @@ msgstr ""
 #: lib/src/nonparam.c:247 lib/src/printout.c:948 gui2/guiprint_common.c:748
 #: gui2/guiprint_common.c:800
 msgid "Obs"
-msgstr ""
+msgstr "Obs"
 
 #: lib/src/nonparam.c:248 lib/src/nonparam.c:249
 msgid "rank"
@@ -3403,7 +3406,7 @@ msgstr ""
 
 #: lib/src/printout.c:78 lib/src/printout.c:130
 msgid "Current session"
-msgstr ""
+msgstr "Bie¿±ca sesja"
 
 #: lib/src/printout.c:89 lib/src/printout.c:129
 #, c-format
@@ -3412,7 +3415,7 @@ msgstr "gretl wersja %s\n"
 
 #: lib/src/printout.c:90
 msgid "Copyright Ramu Ramanathan and Allin Cottrell"
-msgstr ""
+msgstr "Copyright Ramu Ramanathan and Allin Cottrell"
 
 #: lib/src/printout.c:91
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -3421,11 +3424,11 @@ msgstr ""
 #: lib/src/printout.c:103
 #, c-format
 msgid "gretl: gui client for gretl version %s,\n"
-msgstr ""
+msgstr "GRETL: klient GUI dla wersji %s,\n"
 
 #: lib/src/printout.c:104
 msgid "copyright Allin Cottrell.\n"
-msgstr "copyright Allin Cottrell, t³umaczenie: Tadeusz Kufel i Pawe³ Kufel.\n"
+msgstr "Copyright Allin Cottrell, t³umaczenie: Tadeusz Kufel i Pawe³ Kufel.\n"
 
 #: lib/src/printout.c:105
 msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
@@ -3459,6 +3462,8 @@ msgid ""
 "with p-value = %g\n"
 "\n"
 msgstr ""
+"z p-value = %g\n"
+"\n"
 
 #: lib/src/printout.c:202
 #, c-format
@@ -3986,7 +3991,7 @@ msgstr ""
 #: lib/src/subsample.c:1098
 #, c-format
 msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr "Liczba b³êdnych danych = %d (%.2f%% z ogólnej liczby danych)\n"
+msgstr "Liczba brakuj±cych danych = %d (%.2f%% z ogólnej liczby danych)\n"
 
 #: lib/src/system.c:70
 msgid "SUR"
@@ -4182,7 +4187,7 @@ msgstr "liczebno¶æ próby %d\n"
 
 #: lib/src/var.c:1745
 msgid "unit-root null hypothesis: a = 1"
-msgstr "Hipoteza zerowa: wystêpuje pierwiastek jednostkowy I(1); a = 1"
+msgstr "Hipoteza zerowa: wystêpuje pierwiastek jednostkowy a = 1; proces I(1)"
 
 #: lib/src/var.c:1752
 msgid "model"
@@ -4280,6 +4285,8 @@ msgid ""
 "\n"
 "gretlcli: error executing script: halting\n"
 msgstr ""
+"\n"
+"B³±d skryptu; przerwano wykonanie zadania\n"
 
 #: cli/gretlcli.c:139 gui/gretl.c:485 gui2/gretl.c:570
 #, c-format
@@ -4361,7 +4368,7 @@ msgstr "B³±d w wyznaczaniu korelogramu\n"
 
 #: cli/gretlcli.c:961 gui2/library.c:3580 gui2/library.c:5258
 msgid "Can't delete a variable when in sub-sample mode\n"
-msgstr ""
+msgstr "Niemo¿liwe usuniêcie zmiennej, je¿eli utworzono podpróbê\n"
 
 #: cli/gretlcli.c:968 gui2/library.c:5270
 msgid "Failed to shrink the data set"
@@ -6962,7 +6969,7 @@ msgstr "gret: generowanie zmiennej z rozk³adu normalnego"
 
 #: gui2/callbacks.c:717
 msgid "Enter name, mean and standard deviation:"
-msgstr "Wprowad¿ nazwê zmiennej, ¶redni± i odchylenie standardowe:"
+msgstr "Wprowad¼ nazwê zmiennej, ¶redni± i odchylenie standardowe:"
 
 #: gui2/callbacks.c:759
 msgid "Insufficient dataset information supplied"
@@ -6981,12 +6988,12 @@ msgstr "B³êdna koñcowa obserwacja '%s'"
 #: gui2/callbacks.c:801
 #, c-format
 msgid "Empty data range '%s - %s'"
-msgstr ""
+msgstr "Brak danych dla zakresu '%s - %s'"
 
 #: gui2/callbacks.c:815
 #, c-format
 msgid "Setting data frequency = %d\n"
-msgstr ""
+msgstr "Dane o okresowo¶ci = %d\n"
 
 #: gui2/callbacks.c:829
 #, c-format
@@ -6994,6 +7001,8 @@ msgid ""
 "Invalid starting observation '%s'\n"
 "for data frequency 1"
 msgstr ""
+"B³êdna startowa obserwacja '%s'\n"
+"dla danych o okresowo¶ci 1"
 
 #: gui2/callbacks.c:838
 #, c-format
@@ -7001,6 +7010,8 @@ msgid ""
 "Invalid ending observation '%s'\n"
 "for data frequency 1"
 msgstr ""
+"B³êdna koñcowa obserwacja '%s'\n"
+"dla danych o okresowo¶ci 1"
 
 #: gui2/callbacks.c:852
 #, c-format
@@ -7008,6 +7019,8 @@ msgid ""
 "Invalid starting observation '%s'\n"
 "for data frequency %d"
 msgstr ""
+"B³êdna startowa obserwacja '%s'\n"
+"dla danych o okresowo¶ci %d"
 
 #: gui2/callbacks.c:861
 #, c-format
@@ -7015,6 +7028,8 @@ msgid ""
 "Invalid ending observation '%s'\n"
 "for data frequency %d"
 msgstr ""
+"B³êdna koñcowa obserwacja '%s'\n"
+"dla danych o okresowo¶ci %d"
 
 #: gui2/callbacks.c:908 gui2/callbacks.c:911 gui2/callbacks.c:914
 #: gui2/callbacks.c:917 gui2/callbacks.c:920 gui2/callbacks.c:923
@@ -7036,7 +7051,7 @@ msgstr ""
 
 #: gui2/callbacks.c:950
 msgid "gretl: create panel data set"
-msgstr ""
+msgstr "gretl: tworzenie zbioru danych panelowych"
 
 #: gui2/callbacks.c:951
 msgid ""
@@ -7067,6 +7082,8 @@ msgid ""
 "gretl console: type 'help' for a list of commands\n"
 "? "
 msgstr ""
+"konsola gretl: napisz 'help' a uzyskasz listê komend\n"
+"? "
 
 #: gui2/database.c:103 gui2/database.c:105
 msgid "Error retrieving data from server"
@@ -7324,6 +7341,8 @@ msgid ""
 "Do you want to restructure the current panel data set\n"
 "as stacked time series?"
 msgstr ""
+"Czy chcesz restrukturyzowaæ bie¿±cy panel danych\n"
+"jako stos szeregów czasowych?"
 
 #: gui2/datafiles.c:1291 gui2/dialogs.c:2095
 msgid "gretl: panel structure"
@@ -7381,6 +7400,8 @@ msgid ""
 "The current data frequency, %d, is not recognized\n"
 "as a valid time-series frequency"
 msgstr ""
+"Bie¿±ca okresowo¶æ danych wynosi %d, i nie mo¿e zostaæ\n"
+"przyjêta jako okresowo¶æ szeregu czasowego"
 
 #: gui2/dialogs.c:274
 msgid "add to current restriction"
@@ -9023,7 +9044,7 @@ msgstr ""
 
 #: gui2/library.c:1093
 msgid "gretl: forecasts"
-msgstr ""
+msgstr "gretl: prognozy"
 
 #: gui2/library.c:1179 gui2/library.c:2045 gui2/library.c:2218
 #: gui2/library.c:2223 gui2/library.c:2287
@@ -9039,11 +9060,11 @@ msgstr ""
 #: gui2/library.c:2299 gui2/objectsave.c:103
 #, c-format
 msgid "gretl: model %d"
-msgstr ""
+msgstr "gretl: model %d"
 
 #: gui2/library.c:1309
 msgid "gretl: LM test "
-msgstr ""
+msgstr "gretl: test LM"
 
 #: gui2/library.c:1320
 msgid "(heteroskedasticity)"
@@ -9055,7 +9076,7 @@ msgstr ""
 
 #: gui2/library.c:1399
 msgid "gretl: panel model diagnostics"
-msgstr ""
+msgstr "gretl: diagnostyka modelu panelowego"
 
 #: gui2/library.c:1489
 msgid "gretl: leverage and influence"
@@ -10506,28 +10527,28 @@ msgstr "Wektory warto¶ci w³asnych (³adunki sk³adowej)"
 
 #: plugin/progress_bar.c:77
 msgid "gretl: loading data"
-msgstr ""
+msgstr "gretl: wczytywanie pliku danych"
 
 #: plugin/progress_bar.c:80
 msgid "gretl: storing data"
-msgstr ""
+msgstr "gretl: zapisywanie pliku danych"
 
 #: plugin/progress_bar.c:83
 msgid "gretl: scanning fonts"
-msgstr ""
+msgstr "gretl: skanowanie czcionek"
 
 #: plugin/progress_bar.c:161
 msgid "Retrieving"
-msgstr ""
+msgstr "Odbieranie"
 
 #: plugin/progress_bar.c:165
 msgid "Storing"
-msgstr ""
+msgstr "Zapisywanie"
 
 #: plugin/progress_bar.c:169
 #, c-format
 msgid "Scanning %ld fonts"
-msgstr ""
+msgstr "Skanowanie %ld czcionek"
 
 #: plugin/range-mean.c:58
 msgid "range-mean plot for"
