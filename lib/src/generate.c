@@ -63,10 +63,13 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 			MODEL *pmod);
 static int genr_mpow (const char *str, double *xvec, double **pZ, 
 		      DATAINFO *pdinfo);
+static int obs_num (const char *ss, const DATAINFO *pdinfo);
+
 #ifdef HAVE_MPFR
 static int genr_mlog (const char *str, double *xvec, double **pZ, 
 		      DATAINFO *pdinfo);
 #endif
+
 static void genr_msg (GENERATE *pgenr, int nv);
 static int ismatch (int lv, const int *list);
 static void varerror (const char *ss);
@@ -128,7 +131,8 @@ enum retrieve {
     R_NUMERIC,
     R_MATH,
     R_VARNAME,
-    R_OBS,
+    R_VAROBS,
+    R_OBSNUM,
     R_UNKNOWN
 };
 
@@ -1293,9 +1297,14 @@ static int cstack (double *mstack, double *xvec, char op,
             else mstack[t] = 0.0;
 	break;
     case '>':
-	for (t=t1; t<=t2; t++) 
+	for (t=t1; t<=t2; t++) { 
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "comparing mstack[%d]=%g with xvec[%d]=%g\n",
+		    t, mstack[t], t, xvec[t]);
+#endif
             if (mstack[t] > xvec[t]) mstack[t] = 1.0;
             else mstack[t] = 0.0;
+	}
 	break;
     case '=':
 	for (t=t1; t<=t2; t++) 
@@ -1673,6 +1682,10 @@ static void getvar (char *str, char *word, char *c)
 
     /* don't pick apart valid floating-point numbers */
     if (_isnumber(str)) {
+#ifdef GENR_DEBUG
+	fprintf(stderr, " is_number returned non-zero: set word='%s'\n", 
+		word);
+#endif
 	strcpy(word, str);
 	*str = '\0';
 	*c = '\0';
@@ -1686,15 +1699,22 @@ static void getvar (char *str, char *word, char *c)
 	    *c = str[i];
 	    copy(str, 0, i, word);
 #ifdef GENR_DEBUG
-	    fprintf(stderr, "genr: getvar: word='%s'\n", word);
+	    fprintf(stderr, " word='%s', returning\n", word);
 #endif
 	    _delete(str, 0, i + 1);
 	    return;
 	}
     }
+
     strcpy(word, str);
+
+#ifdef GENR_DEBUG
+    fprintf(stderr, " word='%s', returning\n", word);
+#endif
+
     *str = '\0';
     *c = '\0';
+
     return;
 }
 
@@ -1781,7 +1801,7 @@ static int getxvec (char *s, double *xvec,
     double value;
 
 #ifdef GENR_DEBUG
-    fprintf(stderr, "in getxvec() with s='%s'\n", s);
+    fprintf(stderr, "in getxvec() with s='%s', type1=%d\n", s, type1);
 #endif
 
     if (check_modelstat(pmod, type1)) return 1;
@@ -1893,21 +1913,27 @@ static int getxvec (char *s, double *xvec,
 	    for (t=0; t<n; t++) xvec[t] = (double) k;
 	    if (scalar != NULL) *scalar = 0;
 	}
-	else if (v == TNUM) { /* auto trend/index */
-	    if (pdinfo->time_series && pdinfo->pd == 1) /* annual */ 
+	else if (v == TNUM) { /* auto trend/index variable */
+	    if (pdinfo->time_series && pdinfo->pd == 1) {
+		/* annual data: let 't' be the year */ 
 		for (t=0; t<n; t++) xvec[t] = pdinfo->sd0 + t;
+	    }
+#ifdef BROKEN
 	    else if (pdinfo->time_series == TIME_SERIES && 
 		     (pdinfo->pd == 4 || pdinfo->pd == 12)) {
 		char obsstr[9];
 		
 		for (t=0; t<n; t++) {
 		    ntodate(obsstr, t, pdinfo);
-		    xvec[t] = dot_atof(obsstr);
+		    xvec[t] = dot_atof(obsstr); /* FIXME !!! */
 		}
-	    } else {
+	    } 
+#endif /* BROKEN */
+	    else {
 		for (t=0; t<n; t++) xvec[t] = (double) (t + 1);
 	    }
 	    *scalar = 0;
+
 	}
 	else if (v == OBSBOOLNUM) { /* auto-boolean based on obs label */
 	    make_obs_dummy(xvec, pdinfo);
@@ -1927,8 +1953,15 @@ static int getxvec (char *s, double *xvec,
 	}
 	break;
 
-    case R_OBS:
+    case R_VAROBS:
 	value = get_obs_value(s, Z, pdinfo);
+	for (t=0; t<n; t++) {
+	    xvec[t] = value;
+	}
+	break;
+
+    case R_OBSNUM:
+	value = obs_num(s, pdinfo);
 	for (t=0; t<n; t++) {
 	    xvec[t] = value;
 	}
@@ -1943,6 +1976,7 @@ static int getxvec (char *s, double *xvec,
 	}
 	break;
     } 
+
     return 0;
 }
 
@@ -2034,6 +2068,26 @@ static int scanb (const char *ss, char *word)
 
 /* ......................................................   */
 
+static int obs_num (const char *ss, const DATAINFO *pdinfo)
+{
+    int t;
+
+    if (pdinfo->markers && pdinfo->S != NULL) {
+	for (t=0; t<pdinfo->n; t++) {
+	    if (!strcmp(ss, pdinfo->S[t])) return t + 1;
+	}
+    }
+
+    if (pdinfo->time_series == TIME_SERIES) {
+	t = dateton(ss, pdinfo);
+	if (t >= 0) return t + 1;
+    }
+
+    return 0;
+}
+
+/* ......................................................   */
+
 static int varname_plus_obs (const char *ss, const DATAINFO *pdinfo)
 {
     if (strchr(ss, '[') == NULL || strchr(ss, ']') == NULL) {
@@ -2117,8 +2171,12 @@ static int strtype (char *ss, const DATAINFO *pdinfo)
     }
 
     if (varname_plus_obs(ss, pdinfo)) {
-	return R_OBS;
+	return R_VAROBS;
     }
+
+    if (obs_num(ss, pdinfo)) {
+	return R_OBSNUM;
+    }    
 
     return 0;
 }
@@ -2470,8 +2528,9 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     if (!strcmp(varname, "uhat")) return UHATNUM; 
     if (!strcmp(varname, "yhat")) return YHATNUM; 
     if (!strcmp(varname, "i"))    return INDEXNUM;
-    if (!strcmp(varname, "t") || !strcmp(varname, "obs"))
-	return TNUM;
+    if (!strcmp(varname, "t"))    return TNUM;
+    if (!strcmp(varname, "obs"))  return TNUM;
+
     if (!strcmp(varname, "const") || !strcmp(varname, "CONST"))
         return 0;
 
@@ -2765,14 +2824,18 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
     char s[64], parmbit[9];
     double xx, *rhot;
 
-    /*  printf("rhodiff: param = %s\n", param); */
+#ifdef GENR_DEBUG
+    fprintf(stderr, "rhodiff: param = '%s'\n", param);
+#endif
     maxlag = _count_fields(param);
     rhot = malloc(maxlag * sizeof *rhot);
     if (rhot == NULL) return E_ALLOC;
     if (maxlag > pdinfo->t1) t1 = maxlag;
     else t1 = pdinfo->t1;
 
-    /*  printf("rhodiff: maxlag = %d, t1 = %d\n", maxlag, t1); */
+#ifdef GENR_DEBUG
+    fprintf(stderr, "rhodiff: maxlag = %d, t1 = %d\n", maxlag, t1);
+#endif
 
     /* parse "param" string */
     j = strlen(param);
@@ -2780,7 +2843,9 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
     for (i=0; i<j; i++) {
 	if ((i == 0 || param[i] == ' ') && i < (j - 1)) {
 	    sscanf(param + i + (i? 1: 0), "%8s", parmbit); 
-	    /*  printf("rhodiff: parmbit = %s\n", parmbit); */
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "rhodiff: parmbit = '%s'\n", parmbit);
+#endif
 	    if (isalpha((unsigned char) parmbit[0])) {
 		nv = varindex(pdinfo, parmbit);
 		if (nv == v) {
@@ -2799,7 +2864,9 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 
     for (i=1; i<=list[0]; i++) {
 	j = list[i];
-	/*  printf("rhodiff: doing list[%d] = %d\n", i, list[i]); */
+#ifdef GENR_DEBUG
+	fprintf(stderr, "rhodiff: doing list[%d] = %d\n", i, list[i]);
+#endif
 	/* make name and label */
 	strcpy(s, pdinfo->varname[j]);
 	_esl_trunc(s, 7);
@@ -2921,15 +2988,20 @@ static double genr_cov (const char *str, double ***pZ,
 
     n = strlen(str);
     if (n > 17) return NADBL;
+
     p = haschar(',', str);
     if (p < 0 || p > 8) return NADBL;
+
     n2 = n - p - 1;
+
     /* get first var name */
     for (i=0; i<p; i++) v1str[i] = str[i];
     v1str[p] = '\0';
+
     /* get second var name */
     for (i=0; i<n2; i++) v2str[i] = str[p+1+i];
     v2str[i] = '\0';
+
     /* and look up the two */
     v1 = varindex(pdinfo, v1str);
     v2 = varindex(pdinfo, v2str);
@@ -2952,15 +3024,20 @@ static double genr_corr (const char *str, double ***pZ,
 
     n = strlen(str);
     if (n > 17) return NADBL;
+
     p = haschar(',', str);
     if (p < 0 || p > 8) return NADBL;
+
     n2 = n - p - 1;
+
     /* get first var name */
     for (i=0; i<p; i++) v1str[i] = str[i];
     v1str[p] = '\0';
+
     /* get second var name */
     for (i=0; i<n2; i++) v2str[i] = str[p+1+i];
     v2str[i] = '\0';
+
     /* and look up the two */
     v1 = varindex(pdinfo, v1str);
     v2 = varindex(pdinfo, v2str);
@@ -3000,19 +3077,25 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 
     n = strlen(str);
     if (n > 17) return NADBL;
+
     p = haschar(',', str);
     if (p < 0 || p > 8) return NADBL;
+
     n2 = n - p - 1;
+
     /* get first var name */
     for (i=0; i<p; i++) v1str[i] = str[i];
     v1str[p] = '\0';
+
     /* get second var name */
     for (i=0; i<n2; i++) v2str[i] = str[p+1+i];
     v2str[i] = '\0';
+
     /* are they valid? */
     v1 = varindex(pdinfo, v1str);
     v2 = varindex(pdinfo, v2str);
     if (v1 >= pdinfo->v || v2 >= pdinfo->v) return NADBL;
+
     /* check model list */
     if (pmod->ci == NLS) {
 	v1l = get_nls_param_number(pmod, v1str);
@@ -3022,8 +3105,10 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 	v2l = ismatch(v2, pmod->list);
     }
     if (!v1l || !v2l) return NADBL;
-    /* model vcv matrix */
+
+    /* make model vcv matrix if need be */
     if (pmod->vcv == NULL && makevcv(pmod)) return NADBL;
+
     /* now find the right entry */
     nv = pmod->list[0];
     if (v1l > v2l) {
@@ -3039,6 +3124,7 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 	    k++;
 	}
     }
+
     return NADBL;
 }
 

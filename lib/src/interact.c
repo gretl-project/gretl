@@ -711,6 +711,11 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		if (command->ci == MPOLS) poly = 1;
 		continue;
 	    }
+	    else if (command->ci == VAR) {
+		n += strlen(field) + 1;
+		command->list[j] = LISTSEP;
+		continue;
+	    }
 	    else {
 		command->list[0] -= 1;
 		break;

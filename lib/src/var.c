@@ -23,7 +23,7 @@
 #include "var.h"  
 #include "internal.h"
 
-/* #define VAR_DEBUG */
+#define VAR_DEBUG
 
 struct var_resids {
     int *levels_list;
@@ -160,8 +160,8 @@ static int gretl_var_do_error_decomp (GRETL_VAR *var)
 	err = 1;
     }
 
-    /* divide by df to get sigma-hat */
-    gretl_matrix_divide_by_scalar(tmp, (double) (var->models[0])->dfd);
+    /* divide by T (or use df correction?) to get sigma-hat */
+    gretl_matrix_divide_by_scalar(tmp, (double) var->n);
 
 #ifdef VAR_DEBUG
     if (1) {
@@ -205,7 +205,7 @@ static int gretl_var_do_error_decomp (GRETL_VAR *var)
 
 /* ......................................................  */
 
-#define VARS_IN_ROW 2
+#define VARS_IN_ROW 4
 
 int 
 gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
@@ -215,7 +215,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
     int i, t;
     int vsrc;
     int rows = var->neqns * var->order;
-    gretl_matrix *rtmp, *stmp, *cc;
+    gretl_matrix *rtmp, *ctmp;
     int block, blockmax;
     int err = 0;
 
@@ -227,31 +227,22 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
     rtmp = gretl_matrix_alloc(rows, var->neqns);
     if (rtmp == NULL) return E_ALLOC;
 
-    stmp = gretl_matrix_alloc(rows, rows);
-    if (stmp == NULL) {
+    ctmp = gretl_matrix_alloc(rows, var->neqns);
+    if (ctmp == NULL) {
 	gretl_matrix_free(rtmp);
-	return E_ALLOC;
-    }
-
-    cc = gretl_matrix_alloc(rows, rows);
-    if (cc == NULL) {
-	gretl_matrix_free(rtmp);
-	gretl_matrix_free(stmp);
 	return E_ALLOC;
     }
 
     vsrc = (var->models[shock])->list[1];
 
-    /* FIXME: formatting below not very good */
-
-    /* TODO: check and fix forecast standard errors */
+    /* FIXME: formatting below not very good? */
 
     blockmax = var->neqns / VARS_IN_ROW;
     if (var->neqns % VARS_IN_ROW) blockmax++;
 
     for (block=0; block<blockmax && !err; block++) {
 	int vtarg, k;
-	double r, s;
+	double r;
 
 	pprintf(prn, "Responses to a one-standard error shock in %s", 
 		pdinfo->varname[vsrc]);
@@ -268,7 +259,6 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 	    if (k >= var->neqns) break;
 	    vtarg = (var->models[k])->list[1];
 	    pprintf(prn, "  %8s  ", pdinfo->varname[vtarg]);
-	    pprintf(prn, "  %8s  ", "std. err.");
 	}
 	pputs(prn, "\n\n");
 
@@ -277,23 +267,10 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 	    if (t == 0) {
 		/* calculate initial estimated responses */
 		err = gretl_matrix_copy_values(rtmp, var->C);
-		if (!err) {
-		    /* and initial standard errors: is this right? */
-		    err = gretl_matrix_multiply_mod(var->C, GRETL_MOD_NONE,
-						    var->C, GRETL_MOD_TRANSPOSE,
-						    cc);
-		    gretl_matrix_copy_values(stmp, cc);
-		}
 	    } else {
-		/* calculate estimated responses */
-		err = gretl_matrix_multiply(var->A, rtmp, rtmp);
-		if (!err) {
-		    /* and standard errors */
-		    err = gretl_matrix_multiply(var->A, stmp, stmp);
-		    err = gretl_matrix_multiply_mod(stmp, GRETL_MOD_NONE,
-						    var->A, GRETL_MOD_TRANSPOSE,
-						    stmp);
-		}
+		/* calculate further estimated responses */
+		err = gretl_matrix_multiply(var->A, rtmp, ctmp);
+		gretl_matrix_copy_values(rtmp, ctmp);
 	    }
 
 	    if (err) break;
@@ -302,9 +279,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 		k = VARS_IN_ROW * block + i;
 		if (k >= var->neqns) break;
 		r = gretl_matrix_get(rtmp, k, shock);
-		/* FIXME: is the indexing right below? */
-		s = gretl_matrix_get(stmp, k, k) + gretl_matrix_get(cc, k, k);
-		pprintf(prn, "%#12.5g%#12.5g ", r, sqrt(s));
+		pprintf(prn, "%#12.5g ", r);
 	    }
 	    pputs(prn, "\n");
 	}
@@ -312,8 +287,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
     }
 
     if (rtmp != NULL) gretl_matrix_free(rtmp);
-    if (stmp != NULL) gretl_matrix_free(stmp);
-    if (cc != NULL) gretl_matrix_free(cc);
+    if (ctmp != NULL) gretl_matrix_free(ctmp);
 
     return err;
 }
@@ -523,19 +497,35 @@ static void reset_list (int *list1, int *list2)
 
 /* ...................................................................  */
 
-static int get_listlen (const int *varlist, int order, double **Z, 
-			const DATAINFO *pdinfo)
+static int get_listlen (int *varlist, char *detlist, int order, 
+			double **Z, const DATAINFO *pdinfo)
      /* parse varlist (for a VAR) and determine how long the augmented 
 	list will be, once all the appropriate lag terms are inserted */
 {
-    int i, v = 1;
-    
+    int i, j = 1, v = 1;
+    int gotsep = 0;
+
     for (i=1; i<=varlist[0]; i++) {
-	if (strcmp(pdinfo->varname[varlist[i]], "time") == 0 ||
+	if (varlist[i] == LISTSEP) {
+	    gotsep = 1;
+	    continue;
+	}
+	if (gotsep || 
+	    strcmp(pdinfo->varname[varlist[i]], "time") == 0 ||
 	    strcmp(pdinfo->varname[varlist[i]], "const") == 0 ||
-	    isdummy(Z[varlist[i]], pdinfo->t1, pdinfo->t2)) v++;
-	else v += order;
+	    isdummy(Z[varlist[i]], pdinfo->t1, pdinfo->t2)) {
+	    v++;
+	    detlist[j] = 1;
+	} else {
+	    v += order;
+	    detlist[j] = 0;
+	}
+	varlist[j++] = varlist[i];
     }
+
+    if (gotsep) varlist[0] -= 1;
+    detlist[0] = varlist[0];
+
     return v;
 }
 
@@ -600,6 +590,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
     int i, j, index, l, listlen, end, neqns = 0;
     int *varlist = NULL, *depvars = NULL, *shortlist = NULL;
+    char *detlist = NULL;
     int t1, t2, oldt1, oldt2, dfd = 0;
     int missv = 0, misst = 0;
     double essu = 0.0, F = 0.0;
@@ -615,8 +606,11 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
+    detlist = malloc(list[0] + 1);
+    if (detlist == NULL) return E_ALLOC;
+
     /* how long will our list have to be? */
-    listlen = get_listlen(list, order, *pZ, pdinfo);
+    listlen = get_listlen(list, detlist, order, *pZ, pdinfo);
 
     varlist = malloc((listlen + 1) * sizeof *varlist);
     depvars = malloc((listlen + 1) * sizeof *depvars);
@@ -633,11 +627,8 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
     /* now fill out the list */
     for (i=1; i<=list[0]; i++) {
-	/* if we're looking at a dummy variable (or time trend) just include 
-	   it unmodified -- at the end of the list */
-	if (strcmp(pdinfo->varname[list[i]], "time") == 0 || 
-	    strcmp(pdinfo->varname[list[i]], "const") == 0 || 
-	    isdummy((*pZ)[list[i]], pdinfo->t1, pdinfo->t2)) { 
+	if (detlist[i]) {
+	    /* deterministic var: put at end of list */
 	    varlist[end] = list[i];
 	    end--;
 	    continue;	    
@@ -814,6 +805,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     free(varlist);
     free(shortlist);
     free(depvars);
+    free(detlist);
 
     /* reset sample range to what it was before */
     pdinfo->t1 = oldt1;
