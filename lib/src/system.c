@@ -253,7 +253,6 @@ int system_n_indep_vars (const gretl_equation_system *sys)
     return nv;
 }
 
-
 const char *gretl_system_short_string (const MODEL *pmod)
 {
     int i = gretl_model_get_int(pmod, "systype");
@@ -272,7 +271,6 @@ int system_adjust_t1t2 (const gretl_equation_system *sys,
 
     return err;
 }
-
 
 /* simple accessor functions */
 
