@@ -1867,6 +1867,28 @@ static void copy_compress (char *targ, const char *src, int len)
 
 /* ........................................................... */
 
+static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
+{
+    char *test;
+    int t;
+
+    errno = 0;
+
+    strtol(obs, &test, 10);
+    if (*test != '\0' || !strcmp(obs, test) || errno == ERANGE) {
+        return -1;
+    }
+
+    t = atoi(obs);
+    if (t < 0 || t >= pdinfo->n) {
+        return -1;
+    } 
+    
+    return t;
+}
+
+/* ........................................................... */
+
 static void get_genr_formula (char *formula, const char *line,
 			      GENERATE *genr)
 {
@@ -1891,7 +1913,7 @@ static void get_genr_formula (char *formula, const char *line,
 	genr->obs = dateton(obs, genr->pdinfo);
 
 	if (genr->obs < 0 || genr->obs >= genr->pdinfo->n) {
-	    genr->obs = -1;
+	    genr->obs = plain_obs_number(obs, genr->pdinfo);
 	}
     }
 
