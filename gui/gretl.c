@@ -1057,11 +1057,14 @@ void populate_varlist (void)
 {
     char id[4];
     char *row[3];
-    gint i;
+    gint i, j;
     static gint check_connected;
+
+    gtk_clist_freeze(GTK_CLIST(mdata->listbox));
 
     gtk_clist_clear(GTK_CLIST(mdata->listbox));
 
+    j = 0;
     for (i=0; i<datainfo->v; i++) {
 	if (hidden_var(i, datainfo)) continue;
 	sprintf(id, "%d", i);
@@ -1069,21 +1072,26 @@ void populate_varlist (void)
 	row[1] = datainfo->varname[i];
 	row[2] = VARLABEL(datainfo, i);
 	gtk_clist_append(GTK_CLIST(mdata->listbox), row);
-	if (i % 2) {
-	    gtk_clist_set_background(GTK_CLIST(mdata->listbox), i, &gray);
+	if (j % 2) {
+	    gtk_clist_set_background(GTK_CLIST(mdata->listbox), j, &gray);
 	}
+	j++;
     }
 
-    mdata->active_var = 1;
-    if (mdata->active_var > datainfo->v - 1) {
-	mdata->active_var -= 1;
+    if (j >= 2) {
+	mdata->active_var = 1;	
+	/* both select and focus the first real variable */
+	gtk_clist_select_row 
+	    (GTK_CLIST(mdata->listbox), mdata->active_var, 1); 
+	(GTK_CLIST(mdata->listbox))->focus_row = mdata->active_var;
+    } else {
+	mdata->active_var = 0;
     }
 
     gtk_clist_set_selectable(GTK_CLIST(mdata->listbox), 
 			     0, FALSE);
 
-    gtk_clist_select_row 
-	(GTK_CLIST(mdata->listbox), mdata->active_var, 1);  
+    gtk_clist_thaw(GTK_CLIST(mdata->listbox));
 
     if (!check_connected) {
 	gtk_signal_connect(GTK_OBJECT(GTK_CLIST(mdata->listbox)),

@@ -1389,7 +1389,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 			      G_CALLBACK(label_pos_click), spec);
 	    icon = gdk_pixbuf_new_from_xpm_data((const char **) mini_mouse_xpm);
 	    image = gtk_image_new_from_pixbuf(icon);
-	    gtk_widget_set_size_request(button, 32, 24);
+	    gtk_widget_set_size_request(button, 32, 26);
 #endif
 	    gtk_container_add (GTK_CONTAINER(button), image);
 	    gtk_container_add(GTK_CONTAINER(hbox), button);
