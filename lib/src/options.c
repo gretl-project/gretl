@@ -146,6 +146,7 @@ struct flag_match flag_matches[] = {
     { OPT_M, 'm' },
     { OPT_N, 'n' },
     { OPT_O, 'o' },
+    { OPT_P, 'p' },
     { OPT_Q, 'q' },
     { OPT_R, 'r' },
     { OPT_S, 's' },
@@ -160,7 +161,7 @@ struct flag_match flag_matches[] = {
 /* note: 'f' is not treated as an option flag for now */
 
 #define isflag(c) (c == 'a' || c == 'b' || c == 'c' || c == 'd' || \
-                   c == 'i' || c == 'l' || c == 'm' || \
+                   c == 'i' || c == 'l' || c == 'm' || c == 'p' || \
                    c == 'n' || c == 'o' || c == 'q' || c == 'r' || \
                    c == 's' || c == 't' || c == 'v' || c == 'w' || \
                    c == 'x' || c == 'z')

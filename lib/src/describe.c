@@ -474,21 +474,7 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 
 /* ...................................................... */
 
-double get_pacf_from_resids (const MODEL *m1, const MODEL *m2)
-{
-    double num = 0.0, d1 = 0.0, d2 = 0.0;
-    int t;
-
-    for (t=m1->t1; t<=m1->t2; t++) {
-	num += m1->uhat[t] * m2->uhat[t];
-	d1 += m1->uhat[t] * m1->uhat[t];
-	d2 += m2->uhat[t] * m2->uhat[t];
-    }
-
-    return num / sqrt(d1 * d2);
-}
-
-#if 1
+#ifdef PACF_BY_OLS
 
 static int get_pacf (double *pacf, int m, int varnum, 
 		     double ***pZ, DATAINFO *pdinfo, PRN *prn)
@@ -521,26 +507,25 @@ static int get_pacf (double *pacf, int m, int varnum,
     }
 
     gretl_model_init(&tmp, pdinfo);
-    /* pdinfo->t1 = t1; */
-    /* force same sample period for all regressions? */
-    pdinfo->t1 = t1 + m;
+
+    pdinfo->t1 = t1;
 
     list[1] = varnum;
-    for (i=1; i<=m; i++) {
+    for (i=2; i<=m; i++) {
 	list[0] = i + 2;
 	list[2] = 0;
-	for (j=0; j<i; j++) list[j+3] = laglist[j];
+	for (j=0; j<i; j++) {
+	    list[j+3] = laglist[j];
+	}
 	tmp = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
 	if ((err = tmp.errcode)) {
 	    fprintf(stderr, "error estimating model for pacf\n");
 	    break;
 	}
-	printmodel(&tmp, pdinfo, prn);
 	pacf[i-1] = tmp.coeff[i];
-	if (i < m) clear_model(&tmp, pdinfo);
+	clear_model(&tmp, pdinfo);
     }
 
-    clear_model(&tmp, pdinfo);
     dataset_drop_vars(pdinfo->v - v, pZ, pdinfo);
     free(laglist);
     free(list);
@@ -552,75 +537,67 @@ static int get_pacf (double *pacf, int m, int varnum,
 
 #else
 
-static int get_pacf (double *pacf, int m, int varnum, 
-		     double ***pZ, DATAINFO *pdinfo, PRN *prn)
+/* Durbin-Levinson algorithm */
+
+static int get_pacf (double *pacf, const double *acf, int m)
 {
-    int k, j, err = 0;
-    int *laglist, *list;
-    int t1 = pdinfo->t1;
-    int v = pdinfo->v;
-    MODEL tmp1, tmp2;
+    int i, j;
+    gretl_matrix *phi;
+    double x, num, den;
 
-    pdinfo->t1 = 0; 
+    phi = gretl_matrix_alloc(m, m);
+    if (phi == NULL) return 1;
 
-    list = malloc((m + 3) * sizeof *list);
-    laglist = malloc(m * sizeof *laglist);
-    if (list == NULL || laglist == NULL) {
-	pdinfo->t1 = t1;
-	return 1;
+    pacf[0] = acf[0];
+    gretl_matrix_set(phi, 0, 0, acf[0]);
+
+    for (i=1; i<m; i++) {
+	num = acf[i];
+	for (j=0; j<i; j++) {
+	    num -= gretl_matrix_get(phi, i-1, j) * acf[i-j-1];
+	}
+	den = 1.0;
+	for (j=0; j<i; j++) {
+	    den -= gretl_matrix_get(phi, i-1, j) * acf[j];
+	}
+	pacf[i] = num / den;
+	gretl_matrix_set(phi, i, i, pacf[i]);
+	for (j=0; j<i; j++) {
+	    x = gretl_matrix_get(phi, i-1, j);
+	    x -= pacf[i] * gretl_matrix_get(phi, i-1, i-j-1);
+	    gretl_matrix_set(phi, i, j, x);
+	}
     }
+	
+    gretl_matrix_free(phi);
 
-    /* add appropriate number of lags to data set */
-    for (k=1; k<=m; k++) {
-	int lnum = laggenr(varnum, k, 0, pZ, pdinfo);
-
-	if (lnum < 0) {
-	    free(list);
-	    free(laglist);
-	    return 1;
-	}
-	laglist[k-1] = lnum; 
-    }
-
-    gretl_model_init(&tmp1, pdinfo);
-    gretl_model_init(&tmp2, pdinfo);
-    pdinfo->t1 = t1;
-
-    for (k=2; k<=m; k++) {
-	list[0] = k + 1;
-	list[2] = 0;
-	for (j=0; j<k; j++) {
-	    list[j+3] = laglist[j];
-	}
-	list[1] = varnum;
-	tmp1 = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
-	if ((err = tmp1.errcode)) {
-	    clear_model(&tmp1, pdinfo);
-	    fprintf(stderr, "error estimating model for pacf\n");
-	    break;
-	}
-	printmodel(&tmp1, pdinfo, prn);
-	list[1] = laglist[k-1];
-	tmp2 = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
-	if ((err = tmp2.errcode)) {
-	    clear_model(&tmp2, pdinfo);
-	    fprintf(stderr, "error estimating model for pacf\n");
-	    break;
-	}
-	printmodel(&tmp2, pdinfo, prn);
-	pacf[k-1] = get_pacf_from_resids(&tmp1, &tmp2);
-	clear_model(&tmp1, pdinfo);
-	clear_model(&tmp2, pdinfo);
-    }
-
-    dataset_drop_vars(pdinfo->v - v, pZ, pdinfo);
-    free(laglist);
-    free(list);
-
-    return err;
+    return 0;
 }
 
 #endif
+
+static int auto_acf_order (int pd, int nobs)
+{
+    int acf_m;
+
+    switch (pd) {
+    case 4: 
+	acf_m = (nobs <= 20)? nobs - 5 : 14; 
+	break;
+    case 12: 
+    case 52: 
+	acf_m = (nobs <= 40)? nobs - 13 : 28;
+	break;
+    case 24: 
+	acf_m = (nobs <= 100)? nobs - 25 : 96;
+	break;
+    default:  
+	acf_m = (nobs <= 18)? nobs - 5 : 14;
+	break;
+    }
+
+    return acf_m;
+}
 
 static double gretl_acf (int n, int k, const double *y)
 {
@@ -695,25 +672,12 @@ int corrgram (int varno, int order, double ***pZ,
 	return 1;
     }
 
-    /* determine the automatic setting of the lag order, acf_m */
-    switch (pdinfo->pd) {
-    case 4: 
-	acf_m = (nobs <= 20)? nobs - 5 : 22; /* 14 */
-	break;
-    case 12: 
-    case 52: 
-	acf_m = (nobs <= 40)? nobs - 13 : 28;
-	break;
-    case 24: 
-	acf_m = (nobs <= 100)? nobs - 25 : 96;
-	break;
-    default:  
-	acf_m = (nobs <= 18)? nobs - 5 : 14;
-	break;
+    acf_m = order;
+    if (acf_m == 0) {
+	acf_m = auto_acf_order(pdinfo->pd, nobs);
+    } else if (acf_m > nobs - pdinfo->pd) {
+	acf_m = nobs - 1;
     }
-
-    /* If the user wanted a shorter order than acf_m, respect this choice */
-    if (order != 0 && order < acf_m) acf_m = order;
 
     acf = malloc(acf_m * sizeof *acf);
     if (acf == NULL) {
@@ -721,19 +685,9 @@ int corrgram (int varno, int order, double ***pZ,
     }
 
     /* calculate acf, with lag order m */
-#if 0
-    for (l=1; l<=acf_m; l++) {
-	const double *z1, *z2;
-
-	z1 = &(*pZ)[varno][t1+l];
-	z2 = &(*pZ)[varno][t1];
-	acf[l-1] = gretl_corr(nobs - l, z1, z2);
-    }
-#else
     for (l=1; l<=acf_m; l++) {
 	acf[l-1] = gretl_acf(nobs, l, &(*pZ)[varno][t1]);
     }
-#endif
 
     sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
 	    pdinfo->varname[varno]);
@@ -787,7 +741,11 @@ int corrgram (int varno, int order, double ***pZ,
 	goto acf_getout;
     }
 
+#ifdef PACF_BY_OLS
     err = pacf_err = get_pacf(pacf, pacf_m, varno, pZ, pdinfo, prn);
+#else
+    err = pacf_err = get_pacf(pacf, acf, pacf_m);
+#endif
 
     if (!err) {
 	pacf[0] = acf[0];

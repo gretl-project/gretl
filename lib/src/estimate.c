@@ -334,6 +334,7 @@ static void model_stats_init (MODEL *pmod)
  *                      if & OPT_C force use of Cholesky decomp;
  *                      if & OPT_D calculate dw stat and rhohat;
  *                      if & OPT_A treat as auxiliary regression
+ *                      if & OPT_P use Prais-Winsten for first obs
  * @rho: coefficient for rho-differencing the data (0.0 for no
  * differencing)
  *
@@ -490,8 +491,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	for (i=0; i<nxpx; i++) mdl.xpx[i] = 0.0;
 
 	/* calculate regression results, Cholesky style */
-	form_xpxxpy(mdl.list, mdl.t1, mdl.t2, *pZ, mdl.nwt, rho, (ci == PWE),
-		    mdl.xpx, xpy);
+	form_xpxxpy(mdl.list, mdl.t1, mdl.t2, *pZ, mdl.nwt, rho, 
+		    (ci == PWE || (opts & OPT_P)), mdl.xpx, xpy);
 
 	regress(&mdl, xpy, *pZ, pdinfo->n, rho);
 	free(xpy);
@@ -1388,7 +1389,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     double rho = 0.0, rho0 = 0.0, diff = 1.0, *uhat;
     double finalrho = 0, ess = 0, essmin = 0, ssr[199], rh[199]; 
     int step, iter = 0, nn = 0, err = 0;
-    int lsq_ci = OLS;
+    unsigned long lsqopt = OPT_D;
     MODEL corc_model;
 
     *gretl_errmsg = '\0';
@@ -1398,7 +1399,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     uhat = malloc(pdinfo->n * sizeof *uhat);
     if (uhat == NULL) return E_ALLOC;
 
-    /* if (opt == PWE) lsq_ci = PWE; */
+    if (opt == PWE) lsqopt |= OPT_P;
 
     if (opt == HILU) { /* Do Hildreth-Lu first */
 	step = 1;
@@ -1452,7 +1453,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n")); 
     } else { /* Go straight to Cochrane-Orcutt (or Prais-Winsten) */
-	corc_model = lsq(list, pZ, pdinfo, lsq_ci, OPT_D, 0.0);
+	corc_model = lsq(list, pZ, pdinfo, OLS, lsqopt, 0.0);
 	if (!corc_model.errcode && corc_model.dfd == 0) {
 	    corc_model.errcode = E_DF;
 	}
@@ -1472,7 +1473,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	iter++;
 	pprintf(prn, "          %10d %12.5f", iter, rho);
 	clear_model(&corc_model, pdinfo);
-	corc_model = lsq(list, pZ, pdinfo, lsq_ci, OPT_D, rho);
+	corc_model = lsq(list, pZ, pdinfo, OLS, lsqopt, rho);
 	if ((err = corc_model.errcode)) {
 	    free(uhat);
 	    clear_model(&corc_model, pdinfo);

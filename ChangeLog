@@ -1,3 +1,6 @@
+version 1.2.5
+- fix problem with acf and pacf calculations
+
 3/30/2004 version 1.2.4
 - Add ARMAX models: ARMA with exogenous variables
 - Add GARCH models, using Fiorentini-Calzolari-Panattoni approach

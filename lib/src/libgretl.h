@@ -146,14 +146,15 @@ enum {
     OPT_M = 1 <<  7,
     OPT_N = 1 <<  8,
     OPT_O = 1 <<  9,
-    OPT_Q = 1 << 10,
-    OPT_R = 1 << 11,
-    OPT_S = 1 << 12,
-    OPT_T = 1 << 13,
-    OPT_V = 1 << 14,
-    OPT_W = 1 << 15,
-    OPT_X = 1 << 16,
-    OPT_Z = 1 << 17
+    OPT_P = 1 << 10,
+    OPT_Q = 1 << 11,
+    OPT_R = 1 << 12,
+    OPT_S = 1 << 13,
+    OPT_T = 1 << 14,
+    OPT_V = 1 << 15,
+    OPT_W = 1 << 16,
+    OPT_X = 1 << 17,
+    OPT_Z = 1 << 18
 } gretl_opt_flags;
 
 typedef int *LIST; 
