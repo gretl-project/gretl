@@ -1159,9 +1159,16 @@
         <argument>nome_sistema</argument>
         <argument>stimatore</argument>
       </arguments>
+      <options>
+       <option>
+         <flag>--iterate</flag>
+         <effect>itera fino alla convergenza</effect>
+       </option>
+      </options>
       <examples>
         <example>estimate "Klein Model 1" method=fiml</example>
 	<example>estimate Sys1 method=sur</example>
+        <example>estimate Sys1 method=sur --iterate</example>
       </examples>
     </usage>
 
@@ -1173,6 +1180,14 @@
         virgolette se contiene spazi, quindi il tipo di stimatore, preceduto
         dalla stringa <lit>method=</lit>. Gli stimatori disponibili sono:
 	<cmd>sur</cmd>, <cmd>3sls</cmd>, <cmd>fiml</cmd> o <cmd>liml</cmd>.
+      </para>
+      <para>
+       Se il metodo di stima è <cmd>sur</cmd> o <cmd>3sls</cmd>
+       e viene usata l'opzione <lit>--iterate</lit>, lo stimatore verrà
+       iterato. Nel caso di SUR, se la procedura converge, i risultati
+       saranno stime di massima verosimiglianza. Invece l'iterazione della
+       procedura dei minimi quadrati a tre stadi non produce in genere
+       risultati di massima verosimiglianza a informazione completa.
       </para>
     </description>
 
