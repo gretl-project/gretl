@@ -504,7 +504,7 @@ int main (int argc, char *argv[])
 		if (batch || runit) {
 		    fgets(tmp, MAXLEN-1, fb);
 		} else {
-		    rl_gets(&line_read, (loopstack)? 1 : 0);
+		    rl_gets(&line_read, (loopstack || cont)? 1 : 0);
 		    strcpy(tmp, line_read);
 		}
 #else

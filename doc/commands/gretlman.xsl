@@ -23,6 +23,12 @@
 
 <xsl:template match="command[@context and @context!=$hlp]"/>
 
+<xsl:template match="description[not(@context) or @context=$hlp]">
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="description[@context and @context!=$hlp]"/>
+
 <xsl:template match="usage">
   <xsl:text>&#xa;</xsl:text>
   <informaltable role="cmd" frame="none">
@@ -284,7 +290,7 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="table[@context and @context='gui']"/>
+<xsl:template match="table[@context and @context!=$hlp]"/>
 
 <xsl:template match="row">
   <row><xsl:apply-templates/></row>
@@ -294,7 +300,7 @@
   <entry><xsl:apply-templates/></entry>
 </xsl:template>
 
-<xsl:template match="blurb"/>
+<xsl:template match="label"/>
 
 <xsl:template name="nl">
   <xsl:text>&#10;</xsl:text>  

@@ -1172,6 +1172,65 @@ int shell (const char *arg)
 
 #endif /* ! WIN32 */
 
+static void trim_to_length (char *s, int oklen)
+{
+    int i, n = strlen(s);
+
+    if (n < oklen - 1) return;
+
+    for (i=n-1; i>0; i--) {
+	if (s[i] == ' ') {
+	    s[i] = '\0';
+	    break;
+	}
+    }
+}
+
+#define SAFELEN 78
+
+static void 
+real_safe_print_line (const char *line, int cli, int batch, 
+		      int script, PRN *prn)
+{
+    char tmp[SAFELEN];
+    const char *split = " \\";
+    const char *p, *q;
+    int n, out, rem;
+
+    if (!cli && batch) return;
+
+    if (cli) {
+	printf("%s", (batch)? "? " : " ");
+    } else if (script) {
+	pprintf(prn, "\n? ");
+    }	
+
+    rem = n = strlen(line);
+
+    p = line;
+    out = 0;
+    while (out < n) {
+	*tmp = 0;
+	q = p;
+	strncat(tmp, p, SAFELEN - 1);
+	trim_to_length(tmp, SAFELEN);
+	out += strlen(tmp);
+	rem = n - out;
+	p = q + strlen(tmp);
+	if (cli) {
+	    printf("%s%s\n", tmp, (rem > 0)? split : "");
+	}
+	if (!batch) {
+	    pprintf(prn, "%s%s\n", tmp, (rem > 0)? split : "");
+	}
+    }
+}
+
+void safe_print_line (const char *line, PRN *prn)
+{
+    real_safe_print_line(line, 0, 0, 1, prn);
+}
+
 /**
  * echo_cmd:
  * @pcmd: pointer to #CMD struct.
@@ -1304,6 +1363,11 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	    cmd->ci = VARDUP;
 	}
     } /* end if !cmd->nolist */
+
+    else if ((cmd->ci == GENR || cmd->ci == SMPL) && 
+	     strlen(line) > SAFELEN - 2) {
+	real_safe_print_line(line, cli, batch, 0, prn);
+    }
 
     else if (strcmp(cmd->cmd, "quit")) {
 	if (cli) {

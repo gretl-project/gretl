@@ -12,10 +12,17 @@
 #include <string.h>
 #include <ctype.h>
 
-#define MAXLEN 78     /* length at which lines will wrap */
-#define INDENT  2     /* indent for list items, table rows */
-#define COLSEP  2     /* separation between table columns */
+#define MAXLEN  78     /* length at which lines will wrap */
+#define LINDENT  2     /* indent for itemized list items, table rows */
+#define NINDENT  3     /* indent for numbered list items */
+#define COLSEP   2     /* separation between table columns */
 
+enum {
+    PARA,
+    ILISTPAR,
+    NLISTPAR,
+    TABLE
+} para_types;
 
 struct table_row {
     char *cells[2];
@@ -35,7 +42,7 @@ struct utf_stuff replacers[] = {
     { "&#0955;", "lambda" }, /* &lgr; */
     { "&#0956;", "mu" },     /* &mu; */
     { "&#0963;", "sigma" },  /* &sigma; */    
-    { "&#8320;", "..." },    /* &hellip; */
+    { "&#8230;", "..." },    /* &hellip; */
     { NULL, NULL }
 };
 
@@ -131,12 +138,15 @@ static void trim_to_length (char *s)
 
 /* Reflow a paragraph buffer, with max line length MAXLEN */
 
-static int format_buf (char *buf, int inlist)
+static int format_buf (char *buf, int ptype)
 {
     char *p, *q, line[80];
-    int i, n, out, maxline = MAXLEN;
+    int i, n, out, indent = 0, maxline = MAXLEN;
 
-    if (inlist) maxline -= INDENT;
+    if (ptype == ILISTPAR) {
+	maxline -= LINDENT;
+	indent = LINDENT;
+    } 
 
     compress_spaces(buf);
 
@@ -154,10 +164,12 @@ static int format_buf (char *buf, int inlist)
 	out += strlen(line);
 	p = q + strlen(line);
 	if (!blank_string(line)) {
-	    if (inlist) {
-		for (i=0; i<INDENT; i++) putchar(' ');
-	    } 
+	    for (i=0; i<indent; i++) putchar(' ');
 	    printf("%s\n", (*line == ' ')? line + 1 : line);
+	}
+	if (ptype == NLISTPAR) {
+	    maxline = MAXLEN - NINDENT;
+	    indent = NINDENT;
 	}
     }
 
@@ -249,7 +261,7 @@ static void print_table (struct table_row *rows, int nrows,
     int startcol, rcellwid;
     char *cp0, *cp1;
 
-    startcol = INDENT + wl + COLSEP;
+    startcol = LINDENT + wl + COLSEP;
     rcellwid = MAXLEN - startcol;
 
     for (i=0; i<nrows; i++) {
@@ -266,7 +278,7 @@ static void print_table (struct table_row *rows, int nrows,
 	if (isspace(*cp0)) cp0++;
 	if (isspace(*cp1)) cp1++;
 
-	for (j=0; j<INDENT; j++) putchar(' ');
+	for (j=0; j<LINDENT; j++) putchar(' ');
 
 	printf("%-*s", wl, cp0);
 	for (j=0; j<COLSEP; j++) putchar(' ');
@@ -332,39 +344,49 @@ void strip_marker (char *s, const char *targ)
     }
 }
 
-int process_para (char *s, char *inbuf, int k)
+int process_para (char *s, char *inbuf, int ptype)
 {
     char line[128];
-    const char *starts[] = { "[PARA]", "[LISTPARA]", "[TABLE]" };
-    const char *stops[] = { "[/PARA]", "[/LISTPARA]", "[/TABLE]" };
+    const char *starts[] = { 
+	"[PARA]", 
+	"[ILISTPAR]", 
+	"[NLISTPAR]", 
+	"[TABLE]" 
+    };
+    const char *stops[] = { 
+	"[/PARA]", 
+	"[/ILISTPAR]",
+	"[/NLISTPAR]",
+	"[/TABLE]" 
+    };
     char *p, *buf;
     int done = 0;
 
     buf = inbuf;
     *buf = 0;
 
-    p = strstr(s, starts[k]);
-    strip_marker(p, starts[k]);
+    p = strstr(s, starts[ptype]);
+    strip_marker(p, starts[ptype]);
     strcpy(line, s);
     strcat(buf, line);
 
     /* one-liner? */
-    if ((p = strstr(buf, stops[k]))) {
-	strip_marker(p, stops[k]);
+    if ((p = strstr(buf, stops[ptype]))) {
+	strip_marker(p, stops[ptype]);
     } else {	
 	while (!done && fgets(line, sizeof line, stdin)) {
-	    if ((p = strstr(line, stops[k]))) {
-		strip_marker(p, stops[k]);
+	    if ((p = strstr(line, stops[ptype]))) {
+		strip_marker(p, stops[ptype]);
 		done = 1;
 	    }
 	    strcat(buf, line);
 	}
     }
 
-    if (k < 2) {
-	format_buf(buf, k);
+    if (ptype != TABLE) {
+	format_buf(buf, ptype);
     } else {
-	process_table(buf, k);
+	process_table(buf, ptype);
     }
 
     return 0;
@@ -379,17 +401,22 @@ int main (void)
     while (fgets(line, sizeof line, stdin)) {
 
 	if (strstr(line, "[PARA]")) {
-	    process_para(line, buf, 0);
+	    process_para(line, buf, PARA);
 	    blank++;
 	}
 
-	else if (strstr(line, "[LISTPARA]")) {
-	    process_para(line, buf, 1);
+	else if (strstr(line, "[ILISTPAR]")) {
+	    process_para(line, buf, ILISTPAR);
+	    blank++;
+	}
+
+	else if (strstr(line, "[NLISTPAR]")) {
+	    process_para(line, buf, NLISTPAR);
 	    blank++;
 	}
 
 	else if (strstr(line, "[TABLE]")) {
-	    process_para(line, buf, 2);
+	    process_para(line, buf, TABLE);
 	    blank++;
 	}
 

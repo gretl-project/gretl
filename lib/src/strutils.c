@@ -272,6 +272,30 @@ int _isnumber (const char *str)
 }
 
 /**
+ * ends_with_backslash:
+ * @s: the string to examine.
+ *
+ * Returns: 1 if the last non-space character in @s is a backslash,
+ * otherwise 0.
+ *
+ */
+
+int ends_with_backslash (const char *s)
+{
+    int i, n = strlen(s);
+    int bs = 0;
+
+    for (i=n-1; i>=0; i--) {
+	if (!isspace((unsigned char) s[i])) {
+	    if (s[i] == '\\') bs = 1;
+	    break;
+	}
+    }
+
+    return bs;
+}
+
+/**
  * lower:
  * @str: the string to transform.
  *

@@ -4780,7 +4780,7 @@ int execute_script (const char *runfile, const char *buf,
 			 line[strlen(line)-2] == '*')) {
 			pprintf(prn, "\n%s\n", line);
 		    } else if (!string_is_blank(line)) {
-			pprintf(prn, "\n? %s\n", line);	
+			safe_print_line(line, prn);
 		    }
 		}
 		strcpy(tmp, line);

@@ -43,6 +43,8 @@ version 1.2.3
   "vcv()" work to retrieve statistics from ARMA models
 - Fix bug: when appending CSV data to an existing dataset,
   could get uninitialized values at the end of the series
+- Allow backslash-continuation of long commands in the gui
+  console
 
 2/2/2004 version 1.2.2
 - Make AIC retrievable via genr ("genr foo = $aic")

@@ -113,7 +113,7 @@ static struct gui_help_item gui_help_items[] = {
     { VSETMISS,   "missing" },
     { GSETMISS,   "missing" },
     { GUI_HELP,   "dialog" },
-    { MODELTABLE, "model" },
+    { MODELTABLE, "modeltab" },
     { GRAPHPAGE , "graphpag" },
     { SETSEED,    "seed" },
     { 0,          NULL },
@@ -160,11 +160,31 @@ static char *help_string_from_cmd (int cmd)
     return NULL;    
 }
 
+static int new_style_gui_help (FILE *fp)
+{
+    char s[128];
+    int newhelp = 0;
+
+    while (fgets(line, sizeof s, fp)) {
+	if (*s == '@') {
+	    if (!strncmp(s, "@new-style", 10)) {
+		newhelp = 1;
+	    }
+	    break;
+	}
+    }
+
+    if (!newhelp) rewind(fp);
+
+    return newhelp;
+}
+
 #ifdef ENABLE_NLS
 static void set_english_help_file (int script)
 {
     char *helpfile, *tmp, *p;
     FILE *fp;
+    int newhelp = 0;
 
     if (script) helpfile = paths.cmd_helpfile;
     else helpfile = paths.helpfile;
@@ -187,14 +207,22 @@ static void set_english_help_file (int script)
 	}
 	fp = fopen(tmp, "r");
 	if (fp != NULL) {
-	    char testline[MAXLEN];
-	    int len;
+	    char test[128];
+	    int len = 0;
 
-	    len = 0;
-	    while (fgets(testline, MAXLEN-1, fp)) {
-		if (*testline != '@') len++;
+	    if (!script) {
+		newhelp = new_style_gui_help(fp);
+	    }
+
+	    while (fgets(test, sizeof test, fp)) {
+		if (*test == '@') {
+		    if (newhelp) len -= 2;
+		} else {
+		    len++;
+		}
 	    }
 	    fclose(fp);
+
 	    if (script) english_script_help_length = len;
 	    else english_gui_help_length = len;
 	}
@@ -235,9 +263,9 @@ static int real_helpfile_init (int cli)
     FILE *fp;
     char *helpfile, *headstr;
     struct help_head_t **heads = NULL;
-    char testline[MAXLEN], topicword[32];
-    int i, g, pos, match, nheads = 0, topic = 0;
-    int length = 0, memfail = 0;
+    char test[MAXLEN], topicword[32];
+    int i, g, pos, match, nh = 0, topic = 0;
+    int length = 0, memfail = 0, newhelp = 0;
 
     helpfile = (cli)? paths.cmd_helpfile : paths.helpfile;
 
@@ -253,40 +281,48 @@ static int real_helpfile_init (int cli)
 	return -1;
     }
 
-    while (!memfail && fgets(testline, MAXLEN-1, fp)) {
-	if (*testline == '@') {
-	    chopstr(testline);
-	    if (!strcmp(testline, "@Obsolete")) continue;
+    if (!cli) {
+	newhelp = new_style_gui_help(fp);
+    }
+
+    while (!memfail && fgets(test, MAXLEN-1, fp)) {
+	if (*test == '@') {
+	    chopstr(test);
+	    if (!strcmp(test, "@Obsolete")) continue;
 	    match = 0;
-	    for (i=0; i<nheads; i++) {
-		if (!strcmp(testline + 1, (heads[i])->name)) {
+	    for (i=0; i<nh; i++) {
+		if (!strcmp(test + 1, (heads[i])->name)) {
 		    match = 1;
 		    (heads[i])->ntopics += 1;
 		    break;
 		}
 	    }
 	    if (!match) {
-		heads = realloc(heads, (nheads + 2) * sizeof *heads);
+		heads = realloc(heads, (nh + 2) * sizeof *heads);
 		if (heads != NULL) { 
-		    heads[nheads] = malloc(sizeof **heads);
-		    if (heads[nheads] != NULL) {
-			headstr = testline + 1;
-			(heads[nheads])->name = malloc(strlen(headstr) + 1);
-			if ((heads[nheads])->name != NULL) {
-			    strcpy((heads[nheads])->name, headstr);
-			    (heads[nheads])->ntopics = 1;
-			    nheads++;
+		    heads[nh] = malloc(sizeof **heads);
+		    if (heads[nh] != NULL) {
+			headstr = test + 1;
+			(heads[nh])->name = malloc(strlen(headstr) + 1);
+			if ((heads[nh])->name != NULL) {
+			    strcpy((heads[nh])->name, headstr);
+			    (heads[nh])->ntopics = 1;
+			    nh++;
 			} else memfail = 1;
 		    } else memfail = 1;
 		} else memfail = 1;
 	    }
-	} else length++;
+	    if (newhelp) length -= 2;
+	} else {
+	    length++;
+	}
     }
+
     fclose(fp);
 
     if (memfail) return -1;
 
-    for (i=0; i<nheads; i++) {
+    for (i=0; i<nh; i++) {
 	(heads[i])->topics = malloc((heads[i])->ntopics * sizeof(int));
 	if ((heads[i])->topics == NULL) memfail = 1;
 	(heads[i])->pos = malloc((heads[i])->ntopics * sizeof(int));
@@ -297,20 +333,24 @@ static int real_helpfile_init (int cli)
 
     if (memfail) return -1;
 
+    /* calculating length of help file: need to drop
+       2 lines for every heading */
+
     /* second pass, assemble the topic list */
     fp = fopen(helpfile, "r");
     i = 0;
     pos = 0;
     g = 0;
-    while (!memfail && fgets(testline, MAXLEN-1, fp)) {
+    while (!memfail && fgets(test, MAXLEN-1, fp)) {
 	if (topic == 1) 
-	    sscanf(testline, "%31s", topicword);
-	if (*testline == '@') {
-	    chopstr(testline);
-	    if (!strcmp(testline, "@Obsolete")) continue;
+	    sscanf(test, "%31s", topicword);
+
+	if (*test == '@') {
+	    chopstr(test);
+	    if (!strcmp(test, "@Obsolete")) continue;
 	    match = -1;
-	    for (i=0; i<nheads; i++) {
-		if (!strcmp(testline + 1, (heads[i])->name)) {
+	    for (i=0; i<nh; i++) {
+		if (!strcmp(test + 1, (heads[i])->name)) {
 		    match = i;
 		    break;
 		}
@@ -324,9 +364,15 @@ static int real_helpfile_init (int cli)
 			 extra_command_number(topicword);
 		(heads[match])->pos[m] = pos - 1;
 		(heads[match])->ntopics += 1;
-	    }		
-	} else pos++;
-	if (*testline == '#') topic = 1;
+	    }
+	    if (newhelp) {
+		pos -= 2;
+	    }
+	} else {
+	    pos++;
+	}
+
+	if (*test == '#') topic = 1;
 	else topic = 0;
     }
     fclose(fp);
@@ -400,12 +446,14 @@ static void add_help_topics (windata_t *hwin, int script)
     for (i=0; heads[i] != NULL; i++) {
 	if (helpitem.path == NULL)
 	    helpitem.path = mymalloc(80);
+
 	helpitem.accelerator = NULL;
 	helpitem.callback_action = 0; 
 	helpitem.item_type = "<Branch>";
 	sprintf(helpitem.path, "%s/%s", mpath, _((heads[i])->name));
 	helpitem.callback = NULL; 
 	gtk_item_factory_create_item(hwin->ifac, &helpitem, NULL, 1);
+
 	for (j=0; j<(heads[i])->ntopics; j++) {
 	    helpitem.accelerator = NULL;
 	    helpitem.callback_action = (heads[i])->pos[j]; 

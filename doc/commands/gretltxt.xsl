@@ -6,25 +6,37 @@
 
 <xsl:output method="text" encoding="us-ascii"/>
 
-<xsl:template match="commandlist"> 
+<xsl:template match="commandlist">
+  <xsl:if test="$hlp='gui'">
+    <xsl:text>@new-style gretl.hlp&#10;</xsl:text>     
+  </xsl:if>
 <xsl:apply-templates/> 
 </xsl:template>
 
-<xsl:template match="command">
-  <xsl:if test="(not(@context) or @context=$hlp)">
-    <xsl:text>&#xa;#&#xa;</xsl:text>
-    <xsl:value-of select="@name"/>
-    <xsl:text>&#xa;@</xsl:text>
-    <xsl:value-of select="@section"/>
-    <xsl:apply-templates/>
-    <xsl:call-template name="dnl"/>
+<xsl:template match="command[not(@context) or @context=$hlp]">
+  <xsl:if test="position() > 1">
+    <xsl:call-template name="nl"/>
   </xsl:if>
+  <xsl:text>#&#10;</xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text>&#10;@</xsl:text>
+  <xsl:value-of select="@section"/>
+  <xsl:apply-templates/>
+  <xsl:call-template name="dnl"/>
   <xsl:if test="(not(@context) and $hlp='gui')">
     <xsl:text>Script command: </xsl:text>
     <xsl:value-of select="@name"></xsl:value-of>
     <xsl:call-template name="nl"/>
   </xsl:if>
 </xsl:template>
+
+<xsl:template match="command[@context and @context!=$hlp]"/>
+
+<xsl:template match="description[not(@context) or @context=$hlp]">
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="description[@context and @context!=$hlp]"/>
 
 <xsl:template match="usage">
   <xsl:if test="$hlp='cli'">
@@ -179,9 +191,13 @@
 
 <xsl:template match="para[not(@context) or @context=$hlp]">
   <xsl:choose>
-    <xsl:when test="parent::li">
-      <xsl:text>&#xa;[LISTPARA]</xsl:text>
-      <xsl:apply-templates/>[/LISTPARA]
+    <xsl:when test="parent::li and ancestor::ilist">
+      <xsl:text>&#xa;[ILISTPAR]</xsl:text>
+      <xsl:apply-templates/>[/ILISTPAR]
+    </xsl:when>
+    <xsl:when test="parent::li and ancestor::nlist">
+      <xsl:text>&#xa;[NLISTPAR]</xsl:text>
+      <xsl:apply-templates/>[/NLISTPAR]
     </xsl:when>
     <xsl:otherwise>
       <xsl:text>&#xa;[PARA]</xsl:text>
@@ -203,6 +219,12 @@
 </xsl:template>
 
 <xsl:template match="ilist[@context and @context!=$hlp]"/>
+
+<xsl:template match="nlist[not(@context) or @context=$hlp]">
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="nlist[@context and @context!=$hlp]"/>
 
 <xsl:template match="li">
   <xsl:apply-templates/>
@@ -266,7 +288,7 @@ Other access: <xsl:apply-templates/>
 
 <xsl:template match="footnote"/>
 
-<xsl:template match="blurb">
+<xsl:template match="label">
   <xsl:if test="$hlp='gui'">
     <xsl:call-template name="nl"/>
     <xsl:apply-templates/>

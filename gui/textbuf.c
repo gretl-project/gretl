@@ -107,33 +107,61 @@ void text_table_setup (windata_t *vwin)
 int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 {
     void *colptr = NULL, *nextcolor = NULL;
-    char tempstr[MAXSTR];
+    char buf[MAXSTR];
     FILE *fp;
+    int started = 0;
+    int newhelp = 0;
 
     fp = fopen(filename, "r");
     if (fp == NULL) return 1;
 
-    memset(tempstr, 0, sizeof tempstr);
+    memset(buf, 0, sizeof buf);
 
-    while (fgets(tempstr, sizeof tempstr, fp)) {
-	if (tempstr[0] == '@') continue;
-	if (tempstr[0] == '?') 
+    while (fgets(buf, sizeof buf, fp)) {
+
+	nextcolor = NULL;
+
+	if (role == GUI_HELP && newhelp && *buf == '#') {
+	    fgets(buf, sizeof buf, fp); /* discard line */
+	    fgets(buf, sizeof buf, fp); /* discard line */
+	    fgets(buf, sizeof buf, fp); /* get label */
+	    if (!started) {
+		gtk_text_insert(GTK_TEXT(w), fixed_font, 
+				NULL, NULL, "\n", 1);
+		started = 1;
+	    }
+	    colptr = &red;
+	}
+
+	if (*buf == '@') {
+	    if (!started && !strncmp(buf, "@new-style", 10)) {
+		newhelp = 1;
+	    }
+	    continue;
+	}
+
+	if (role == SCRIPT_OUT && ends_with_backslash(buf)) {
+	    nextcolor = &blue;
+	}	
+
+	if (*buf == '?') {
 	    colptr = (role == CONSOLE)? &red : &blue;
-	if (tempstr[0] == '#') {
+	}
+	else if (*buf == '#') {
 	    if (help_role(role)) {
-		tempstr[0] = ' ';
+		buf[0] = ' ';
 		nextcolor = &red;
 	    } else {
 		colptr = &blue;
 	    }
-	} else {
-	    nextcolor = NULL;
-	}
+	} 
+
 	gtk_text_insert(GTK_TEXT(w), fixed_font, 
-			colptr, NULL, tempstr, 
-			strlen(tempstr));
+			colptr, NULL, buf, 
+			strlen(buf));
+
 	colptr = nextcolor;
-	memset(tempstr, 0, sizeof tempstr);
+	memset(buf, 0, sizeof buf);
     }
 
     fclose(fp);

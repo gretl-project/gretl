@@ -351,6 +351,8 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
     GtkTextIter iter;    
     int thiscolor, nextcolor;
     char readbuf[MAXSTR], *chunk;
+    int started = 0;
+    int newhelp = 0;
 
     fp = fopen(fname, "r");
     if (fp == NULL) return;
@@ -367,19 +369,47 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 #else
 	chunk = readbuf;
 #endif
-	if (*chunk == '@') continue;
-	if (*chunk == '?') 
+
+	nextcolor = PLAIN_TEXT;
+	
+	if (role == GUI_HELP && newhelp && *chunk == '#') {
+	    fgets(readbuf, sizeof readbuf, fp); /* discard line */
+	    fgets(readbuf, sizeof readbuf, fp); /* discard line */
+	    fgets(readbuf, sizeof readbuf, fp); /* get label */
+#ifdef ENABLE_NLS
+	    chunk = my_utf_string(readbuf);
+#else
+	    chunk = readbuf;
+#endif
+	    if (!started) {
+		gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
+		started = 1;
+	    }
+	    thiscolor = RED_TEXT;
+	}
+
+	if (*chunk == '@') {
+	    if (!started && !strncmp(chunk, "@new-style", 10)) {
+		newhelp = 1;
+	    }
+	    continue;
+	}
+
+	if (role == SCRIPT_OUT && ends_with_backslash(chunk)) {
+	    nextcolor = BLUE_TEXT;
+	}
+
+	if (*chunk == '?') {
 	    thiscolor = (role == CONSOLE)? RED_TEXT : BLUE_TEXT;
-	if (*chunk == '#') {
+	} 
+	else if (*chunk == '#') {
 	    if (help_role(role)) {
 		*chunk = ' ';
 		nextcolor = RED_TEXT;
 	    } else {
 		thiscolor = BLUE_TEXT;
 	    }
-	} else {
-	    nextcolor = PLAIN_TEXT;
-	}
+	} 
 
 	switch (thiscolor) {
 	case PLAIN_TEXT:

@@ -52,6 +52,8 @@ int haschar (char c, const char *str);
 
 int lastchar (char c, const char *s);
 
+int ends_with_backslash (const char *s);
+
 char *charsub (char *str, char find, char repl);
 
 void lower (char *str);

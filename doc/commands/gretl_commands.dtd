@@ -20,24 +20,29 @@
 <!-- The description is the only element that is absolutely
      required of a command -->
 
-<!ELEMENT command (blurb?, usage?, description, gui-access?)>
+<!ELEMENT command (label?, usage?, description+, gui-access?)>
 
 <!ATTLIST command
    name         CDATA #REQUIRED
    section      (Dataset | Estimation | Graphs | Prediction |
                  Printing | Programming | Statistics | Tests |
-                 Transformations | Utilities | Unknown) "Unknown"
+                 Obsolete | Transformations | Utilities | 
+                 Unknown) "Unknown"
    context      (cli | gui | both) "both"
+>
+
+<!ATTLIST description
+   context (cli | gui | both) "both"
 >
 
 <!ELEMENT usage (arguments?, altforms?, options?, examples?)>
 
-<!ELEMENT blurb        (#PCDATA)>
+<!ELEMENT label        (#PCDATA)>
 <!ELEMENT arguments    (argument)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example)+>
 <!ELEMENT altforms     (altform)+>
-<!ELEMENT description  (para | code | ilist | table)*>
+<!ELEMENT description  (para | code | ilist | nlist | table)*>
 <!ELEMENT gui-access   (menu-path, other-access?)>
 
 <!ELEMENT argument (#PCDATA)>
@@ -71,6 +76,11 @@
 
 <!ELEMENT ilist (li)+>
 <!ATTLIST ilist 
+   context (cli | gui | both) "both"
+>
+
+<!ELEMENT nlist (li)+>
+<!ATTLIST nlist 
    context (cli | gui | both) "both"
 >
 
