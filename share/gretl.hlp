@@ -477,8 +477,8 @@ Thus for instance the new variable ld_x = ln[x(t)] - ln[x(t-1)].
 
 #
 logit
-Logit regression
 @Estimation
+Logit regression
 
 The dependent variable should be a binary variable.  Maximum likelihood
 estimates of the coefficients on indepvars are obtained via iterated least
@@ -610,6 +610,51 @@ coded such that a value of -1 indicates "not applicable", you can select "Set
 missing value code" under the Variable menu and type in the value "-1"
 (without the quotes).  Gretl will then read the -1s as missing
 observations.
+
+#
+model table
+@Printing
+
+In econometric research it is common to estimate several models with a common
+dependent variable -- the models differing in respect of which independent
+variables are included, or perhaps in respect of the estimator used.  In this
+situation it is convenient to present the regression results in the form of a
+table, where each column contains the results (coefficient estimates and
+standard errors) for a given model, and each row contains the estimates for a
+given variable across the models.
+
+Gretl provides a means of constructing such a table (and copying it in plain
+text, LaTeX or Rich Text Format).  Here is how to do it:
+
+1. Estimate a model which you wish to include in the table, and in the model
+   display window, under the File menu, select "Save to session as icon" or
+   "Save as icon and close".
+
+2. Repeat step 1 for the other models to be included in the table (up to a
+   total of six models).
+
+3. When you are done estimating the models, open the icon view of your gretl
+   session (by selecting "icon view" under the Session menu in the main gretl
+   window, or by clicking the "session icon view" icon on the gretl toolbar.
+
+4. In session icon view, there is an icon labeled "Model table". Decide which
+   model you wish to appear in the left-most column of the model table and add
+   it to the table, either by dragging its icon onto the Model table icon, or
+   by right-clicking on the model icon and selecting "Add to model table" from
+   the pop-up menu.
+
+5. Repeat step 4 for the other models you wish to include in the table.  The
+   second model selected will appear in the second column from the left, and
+   so on.
+
+6. When you are finished composing the model table, display it by
+   double-clicking on its icon.  Under the Edit menu in the window which
+   appears, you have the option of copying the table to the clipboard in
+   various formats.
+
+7. If the ordering of the models in the table is not what you wanted,
+   right-click on the model table icon and select "Clear table".  Then go back
+   to step 4 above and try again.
 
 #
 mpols

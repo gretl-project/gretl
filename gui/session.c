@@ -89,7 +89,8 @@ static char *model_items[] = {
 
 static char *model_table_items[] = {
     N_("Display"),
-    N_("Clear table")
+    N_("Clear table"),
+    N_("Help")
 };
 
 static char *graph_items[] = {
@@ -166,7 +167,7 @@ static gui_obj *active_object;
 static void session_build_popups (void);
 static void global_popup_activated (GtkWidget *widget, gpointer data);
 static void session_popup_activated (GtkWidget *widget, gpointer data);
-static void object_popup_activated (GtkWidget *widget, gpointer data);
+static gint object_popup_activated (GtkWidget *widget, gpointer data);
 static void data_popup_activated (GtkWidget *widget, gpointer data);
 static void info_popup_activated (GtkWidget *widget, gpointer data);
 static gui_obj *gui_object_new (gchar *name, int sort);
@@ -1381,8 +1382,10 @@ void view_session (void)
     gtk_container_set_border_width(GTK_CONTAINER(scroller), 0);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
 				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+#if 0
     gtk_signal_connect(GTK_OBJECT(scroller), "button_press_event",
-		     GTK_SIGNAL_FUNC(session_icon_click), NULL);
+		       GTK_SIGNAL_FUNC(session_icon_click), NULL);
+#endif
 
     gtk_box_pack_start(GTK_BOX(hbox), scroller, TRUE, TRUE, 0); 
 
@@ -1458,7 +1461,7 @@ static gboolean session_icon_click (GtkWidget *widget,
     gdk_window_get_pointer(widget->window, NULL, NULL, &mods);
 
     if (data == NULL) { /* click on window background */
-	if (mods & GDK_BUTTON3_MASK) {
+	if ((mods & GDK_BUTTON1_MASK) && event->type != GDK_2BUTTON_PRESS) {
 	    gtk_menu_popup(GTK_MENU(global_popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
 	}
@@ -1490,7 +1493,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 	case 'x':
 	    do_menu_op(NULL, SUMMARY, NULL); break;
 	}
-	return FALSE;
+	return TRUE;
     }
 
     if (mods & GDK_BUTTON3_MASK) {
@@ -1503,7 +1506,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 	return TRUE;
     }
 
-    return FALSE;
+    return TRUE;
 }
 
 /* ........................................................... */
@@ -1518,7 +1521,7 @@ static void session_build_popups (void)
 	for (i=0; i<sizeof(global_items) / sizeof(global_items[0]); i++) {
 	    item = gtk_menu_item_new_with_label(_(global_items[i]));
 	    gtk_signal_connect(GTK_OBJECT(item), "activate",
-			     GTK_SIGNAL_FUNC(global_popup_activated),
+			       GTK_SIGNAL_FUNC(global_popup_activated),
 			     _(global_items[i]));
 	    gtk_widget_show(item);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(global_popup), item);
@@ -1684,7 +1687,7 @@ static void data_popup_activated (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
-static void object_popup_activated (GtkWidget *widget, gpointer data)
+static gint object_popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
     gui_obj *obj;
@@ -1747,6 +1750,11 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	    free_model_list();
 	}
     }
+    else if (obj->sort == 't' && strcmp(item, _("Help")) == 0) {
+	context_help(NULL, GINT_TO_POINTER(MODELTABLE));
+    }
+
+    return TRUE;
 }
 
 /* ........................................................... */

@@ -90,7 +90,8 @@ static char *model_items[] = {
 
 static char *model_table_items[] = {
     N_("Display"),
-    N_("Clear table")
+    N_("Clear table"),
+    N_("Help")
 };
 
 static char *graph_items[] = {
@@ -1513,7 +1514,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 	case 'x':
 	    do_menu_op(NULL, SUMMARY, NULL); break;
 	}
-	return FALSE;
+	return TRUE;
     }
 
     if (mods & GDK_BUTTON3_MASK) {
@@ -1526,7 +1527,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 	return TRUE;
     }
 
-    return FALSE;
+    return TRUE;
 }
 
 /* ........................................................... */
@@ -1769,6 +1770,9 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	if (obj->sort == 't') {
 	    free_model_list();
 	}
+    }
+    else if (obj->sort == 't' && strcmp(item, _("Help")) == 0) {
+	context_help(NULL, GINT_TO_POINTER(MODELTABLE));
     }
 }
 

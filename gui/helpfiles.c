@@ -74,6 +74,7 @@ static struct gui_help_item gui_help_items[] = {
     { VSETMISS,   "missing" },
     { GSETMISS,   "missing" },
     { GUI_HELP,   "dialog" },
+    { MODELTABLE, "model" },
     { 0,          NULL },
 };
 
@@ -200,7 +201,7 @@ static int real_helpfile_init (int cli)
 		int t, m = (heads[match])->ntopics;
 
 		t = command_number(topicword);
-		if (t) (heads[match])->topics[m] = t;
+		if (t > 0) (heads[match])->topics[m] = t;
 		else (heads[match])->topics[m] = 
 			 extra_command_number(topicword);
 		(heads[match])->pos[m] = pos - 1;

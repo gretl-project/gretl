@@ -27,6 +27,9 @@ static int model_list_len;
 static int *grand_list;
 
 static void tex_print_model_table (void);
+static void rtf_print_model_table (void);
+
+#define MAX_TABLE_MODELS 6
 
 GtkItemFactoryEntry model_table_items[] = {
 #ifdef USE_GNOME
@@ -38,12 +41,29 @@ GtkItemFactoryEntry model_table_items[] = {
     { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
     { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
     { N_("/Edit/Copy all/as _LaTeX"), NULL, tex_print_model_table, 0, NULL },
-#if 0
-    { N_("/Edit/Copy all/as _RTF"), NULL, text_copy, COPY_RTF, NULL },
-#endif
+    { N_("/Edit/Copy all/as _RTF"), NULL, rtf_print_model_table, 0, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
+static int real_model_list_length (void)
+{
+    int i, len = 0;
+
+    for (i=0; i<model_list_len; i++) {
+	if (model_list[i] != NULL) len++;
+    }
+
+    return len;    
+}
+
+static int model_too_many (void)
+{
+    if (real_model_list_length() == MAX_TABLE_MODELS) {
+	errbox(_("Model table is full"));
+	return 1;
+    }
+    return 0;
+}
 
 static int model_already_listed (const MODEL *pmod)
 {
@@ -106,6 +126,9 @@ int add_to_model_list (const MODEL *pmod, int add_mode)
 	errbox(_("Model is already included in the table"));
 	return 0;
     }
+
+    /* check that the model table is not already full */
+    if (model_too_many()) return 1;
 
     model_list_len++;
     tmp = myrealloc(model_list, model_list_len * sizeof *model_list);
@@ -275,14 +298,158 @@ static const char *short_estimator_string (int ci, int format)
     else return estimator_string (ci, format);
 }
 
+static const char *get_asts (double pval)
+{
+    return (pval >= 0.1)? "  " : (pval >= 0.05)? "* " : "**";
+}
+
+static void print_model_table_coeffs (PRN *prn)
+{
+    int i, j, k;
+    const MODEL *pmod;
+    char se[16];
+    int tex = (prn->format == GRETL_PRINT_FORMAT_TEX);
+    int rtf = (prn->format == GRETL_PRINT_FORMAT_RTF);
+
+    for (i=2; i<=grand_list[0]; i++) {
+	int v = grand_list[i];
+	int f = 1;
+	
+	if (rtf) {
+	    pprintf(prn, "\\intbl \\qc %s\\cell ", datainfo->varname[v]);
+	} else {
+	    pprintf(prn, "%8s ", datainfo->varname[v]);
+	}
+	for (j=0; j<model_list_len; j++) {
+	    pmod = model_list[j];
+	    if (pmod == NULL) continue;
+	    if ((k = var_is_in_model(v, pmod))) {
+		double x = pmod->coeff[k-1];
+		double t = x / pmod->sderr[k-1];
+		double pval = tprob(t, pmod->dfd);
+
+		if (tex) {
+		    if (x < 0) {
+			pprintf(prn, "& $-$%#.4g%s ", fabs(x), get_asts(pval));
+		    } else {
+			pprintf(prn, "& %#.4g%s ", x, get_asts(pval));
+		    }
+		} else if (rtf) {
+		    pprintf(prn, "\\qc %#.4g%s\\cell ", x, get_asts(pval));
+		} else {
+		    pprintf(prn, "%#*.4g%s", (f == 1)? 12 : 10,
+			    x, get_asts(pval));
+		}
+		f = 0;
+	    } else {
+		if (tex) pputs(prn, "& ");
+		else if (rtf) pputs(prn, "\\qc \\cell ");
+		else pputs(prn, "            ");
+	    }
+	}
+	if (tex) {
+	    pputs(prn, "\\\\\n");
+	} else if (rtf) {
+	    pputs(prn, "\\intbl \\row\n\\intbl ");
+	} else {
+	    pputs(prn, "\n          ");
+	}
+	f = 1;
+	for (j=0; j<model_list_len; j++) {
+	    pmod = model_list[j];
+	    if (pmod == NULL) continue;
+	    if ((k = var_is_in_model(v, pmod))) {
+		if (tex) {
+		    pprintf(prn, "& (%#.4g) ", pmod->sderr[k-1]);
+		} else if (rtf) {
+		    if (f == 1) pputs(prn, "\\qc \\cell ");
+		    pprintf(prn, "\\qc (%#.4g)\\cell ", pmod->sderr[k-1]);
+		    f = 0;
+		} else {
+		    sprintf(se, "(%#.4g)", pmod->sderr[k-1]);
+		    pprintf(prn, "%12s", se);
+		}
+	    } else {
+		if (tex) pputs(prn, "& ");
+		else if (rtf) pputs(prn, "\\qc \\cell ");
+		else pputs(prn, "            ");
+	    }
+	}
+	if (tex) pputs(prn, "\\\\ [4pt] \n");
+	else if (rtf) pputs(prn, "\\intbl \\row\n");
+	else pputs(prn, "\n\n");
+    }
+}
+
+static void print_n_r_squared (PRN *prn, int *binary)
+{
+    int j;
+    int same_df;
+    const MODEL *pmod;
+    int tex = (prn->format == GRETL_PRINT_FORMAT_TEX);
+    int rtf = (prn->format == GRETL_PRINT_FORMAT_RTF);
+
+    if (tex) pprintf(prn, "$%s$ ", _("n"));
+    else if (rtf) pprintf(prn, "\\intbl \\qc %s\\cell ", _("n"));
+    else pprintf(prn, "%8s ", _("n"));
+
+    for (j=0; j<model_list_len; j++) {
+	pmod = model_list[j];
+	if (pmod == NULL) continue;
+	if (tex) pprintf(prn, "& %d ", pmod->nobs);
+	else if (rtf) pprintf(prn, "\\qc %d\\cell ", pmod->nobs);
+	else pprintf(prn, "%12d", pmod->nobs);
+    }
+
+    if (tex) pputs(prn, "\\\\\n");
+    else if (rtf) pputs(prn, "\\intbl \\row\n\\intbl ");
+    else pputs(prn, "\n");
+
+    same_df = common_df();
+    if (tex) {
+	pputs(prn, (same_df)? "$R^2$" : "$\\bar R^2$ ");
+    } else if (rtf) {
+	pprintf(prn, "\\qc %s\\cell ", 
+		(same_df)? _("R\\super 2") : _("Adj. R\\super 2"));
+    } else {
+	pprintf(prn, "%9s", (same_df)? _("R-squared") : _("Adj. R**2"));
+    }
+
+    for (j=0; j<model_list_len; j++) {
+	pmod = model_list[j];
+	if (pmod == NULL) continue;
+	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+	    *binary = 1;
+	    /* McFadden */
+	    if (tex) {
+		pprintf(prn, "& %.4f ", pmod->rsq);
+	    } else if (rtf) {
+		pprintf(prn, "\\qc %.4f\\cell ", pmod->rsq);
+	    } else {
+		pprintf(prn, "%#12.4g", pmod->rsq);
+	    }
+	} else {
+	    double rsq = (same_df)? pmod->rsq : pmod->adjrsq;
+
+	    if (tex) {
+		pprintf(prn, "& %.4f ", rsq);
+	    } else if (rtf) {
+		pprintf(prn, "\\qc %.4f\\cell ", rsq);
+	    } else {
+		pprintf(prn, "%#12.4g", rsq);
+	    }
+	}
+    }
+    if (rtf) pputs(prn, "\\intbl \\row\n\n");
+    pputs(prn, "\n\n");
+}
+
 int display_model_table (void)
 {
-    int i, j, gl0, ci;
-    int same_df;
+    int j, ci;
     int binary = 0;
-    const MODEL *pmod;
+    int winwidth = 78;
     PRN *prn;
-    char se[16];
 
     if (model_list_empty()) {
 	errbox(_("The model table is empty"));
@@ -298,8 +465,6 @@ int display_model_table (void)
 
     ci = common_estimator();
 
-    gl0 = grand_list[0];
-
     if (ci > 0) {
 	/* all models use same estimation procedure */
 	pprintf(prn, _("%s estimates"), 
@@ -310,9 +475,7 @@ int display_model_table (void)
     pprintf(prn, _("Dependent variable: %s\n"),
 	    datainfo->varname[grand_list[1]]);
 
-    pputs(prn, _("Standard errors in parentheses\n\n"));
-
-    pputs(prn, "            ");
+    pputs(prn, "\n            ");
     for (j=0; j<model_list_len; j++) {
 	char modhd[16];
 
@@ -336,67 +499,23 @@ int display_model_table (void)
 	pputs(prn, "\n");
     }
 
-    pputs(prn, "\n");    
+    pputs(prn, "\n"); 
 
-    /* print coefficients, standard errors */
-    for (i=2; i<=gl0; i++) {
-	int k, v = grand_list[i];
+    print_model_table_coeffs(prn);
+    print_n_r_squared(prn, &binary);
 
-	pprintf(prn, "%8s ", datainfo->varname[v]);
-	for (j=0; j<model_list_len; j++) {
-	    pmod = model_list[j];
-	    if (pmod == NULL) continue;
-	    if ((k = var_is_in_model(v, pmod))) {
-		pprintf(prn, "%#12.5g", pmod->coeff[k-1]);
-	    } else {
-		pputs(prn, "            ");
-	    }
-	}
-	pputs(prn, "\n          ");
-	for (j=0; j<model_list_len; j++) {
-	    pmod = model_list[j];
-	    if (pmod == NULL) continue;
-	    if ((k = var_is_in_model(v, pmod))) {
-		sprintf(se, "(%#.5g)", pmod->sderr[k-1]);
-		pprintf(prn, "%12s", se);
-	    } else {
-		pputs(prn, "            ");
-	    }
-	}
-	pputs(prn, "\n\n");
-    }
-
-    /* print sample sizes, R-squared */
-    pprintf(prn, "%8s ", _("n"));
-    for (j=0; j<model_list_len; j++) {
-	pmod = model_list[j];
-	if (pmod == NULL) continue;
-	pprintf(prn, "%12d", pmod->nobs);
-    }
-    pputs(prn, "\n");
-
-    same_df = common_df();
-    pprintf(prn, "%9s", (same_df)? _("R-squared") : _("Adj. R**2"));
-
-    for (j=0; j<model_list_len; j++) {
-	pmod = model_list[j];
-	if (pmod == NULL) continue;
-	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
-	    binary = 1;
-	    /* McFadden */
-	    pprintf(prn, "%#12.4g", pmod->rsq);
-	} else {
-	    pprintf(prn, "%#12.4g", (same_df)? pmod->rsq : pmod->adjrsq);
-	}
-    }
-    pputs(prn, "\n");
-
+    pprintf(prn, "%s\n", _("Standard errors in parentheses"));
+    pprintf(prn, "%s\n", _("* indicates significance at the 10 percent level"));
+    pprintf(prn, "%s\n", _("** indicates significance at the 5 percent level"));
+   
     if (binary) {
-	pprintf(prn, "\n%s\n", _("For logit and probit, R-squared is "
+	pprintf(prn, "%s\n", _("For logit and probit, R-squared is "
 				 "McFadden's pseudo-R-squared"));
     }
 
-    view_buffer(prn, 78, 450, _("gretl: model table"), PRINT, 
+    if (real_model_list_length() > 5) winwidth = 90;
+
+    view_buffer(prn, winwidth, 450, _("gretl: model table"), PRINT, 
 		model_table_items);
 
     return 0;
@@ -404,10 +523,8 @@ int display_model_table (void)
 
 static void tex_print_model_table (void)
 {
-    int i, j, gl0, ci;
-    int same_df;
+    int j, ci;
     int binary = 0;
-    const MODEL *pmod;
     PRN *prn;
 
     if (model_list_empty()) {
@@ -418,10 +535,9 @@ static void tex_print_model_table (void)
     if (make_grand_varlist()) return;
 
     if (bufopen(&prn)) return;
+    prn->format = GRETL_PRINT_FORMAT_TEX;
 
     ci = common_estimator();
-
-    gl0 = grand_list[0];
 
     pputs(prn, "\\begin{center}\n");
 
@@ -434,8 +550,6 @@ static void tex_print_model_table (void)
 
     pprintf(prn, "%s: %s \\\\\n", I_("Dependent variable"),
 	    datainfo->varname[grand_list[1]]);
-
-    pputs(prn, I_("Standard errors in parentheses\n\n"));
 
     pputs(prn, "\\vspace{1em}\n\n");
     pputs(prn, "\\begin{tabular}{l");
@@ -468,72 +582,105 @@ static void tex_print_model_table (void)
 	pputs(prn, "\\\\ ");
     }
 
-    pputs(prn, " [6pt] \n");    
+    pputs(prn, " [6pt] \n");   
 
-    /* print coefficients, standard errors */
-    for (i=2; i<=gl0; i++) {
-	int k, v = grand_list[i];
+    print_model_table_coeffs(prn);
+    print_n_r_squared(prn, &binary);
 
-	pprintf(prn, "%s ", datainfo->varname[v]);
-	for (j=0; j<model_list_len; j++) {
-	    pmod = model_list[j];
-	    if (pmod == NULL) continue;
-	    if ((k = var_is_in_model(v, pmod))) {
-		double x = pmod->coeff[k-1];
+    pputs(prn, "\\end{tabular}\n\n");
+    pputs(prn, "\\vspace{1em}\n");
 
-		if (x < 0) {
-		    pprintf(prn, "& $-$%#.5g ", fabs(x));
-		} else {
-		    pprintf(prn, "& %#.5g ", x);
-		}
-	    } else {
-		pputs(prn, "& ");
-	    }
-	}
-	pputs(prn, "\\\\\n");
-	for (j=0; j<model_list_len; j++) {
-	    pmod = model_list[j];
-	    if (pmod == NULL) continue;
-	    if ((k = var_is_in_model(v, pmod))) {
-		pprintf(prn, "& (%#.5g) ", pmod->sderr[k-1]);
-	    } else {
-		pputs(prn, "& ");
-	    }
-	}
-	pputs(prn, "\\\\ [4pt] \n");
-    }
+    pprintf(prn, "%s\\\\\n", I_("Standard errors in parentheses"));
+    pprintf(prn, "{}%s\\\\\n", 
+	    I_("* indicates significance at the 10 percent level"));
+    pprintf(prn, "{}%s\\\\\n", 
+	    I_("** indicates significance at the 5 percent level"));
 
-    /* print sample sizes, R-squared */
-    pprintf(prn, "$%s$ ", _("n"));
-    for (j=0; j<model_list_len; j++) {
-	pmod = model_list[j];
-	if (pmod == NULL) continue;
-	pprintf(prn, "& %d ", pmod->nobs);
-    }
-    pputs(prn, "\\\\\n");
-
-    same_df = common_df();
-    pputs(prn, (same_df)? "$R^2$" : "$\\bar R^2$ ");
-
-    for (j=0; j<model_list_len; j++) {
-	pmod = model_list[j];
-	if (pmod == NULL) continue;
-	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
-	    binary = 1;
-	    /* McFadden */
-	    pprintf(prn, "& %.4f ", pmod->rsq);
-	} else {
-	    pprintf(prn, "& %.4f ", (same_df)? pmod->rsq : pmod->adjrsq);
-	}
-    }
-    pputs(prn, "\n");
-
-    pputs(prn, "\\end{tabular}\n");
     if (binary) {
-	pprintf(prn, "\n%s\n", I_("For logit and probit, $R^2$ is "
-				  "McFadden's pseudo-$R^2$"));
+	pprintf(prn, "%s\\\\\n", I_("For logit and probit, $R^2$ is "
+				    "McFadden's pseudo-$R^2$"));
     }
-    pputs(prn, "\\end{center}");
+
+    pputs(prn, "\\end{center}\n");
 
     prn_to_clipboard(prn, COPY_LATEX);
+}
+
+static void rtf_print_model_table (void)
+{
+    int j, ci;
+    int binary = 0;
+    PRN *prn;
+
+    if (model_list_empty()) {
+	errbox(_("The model table is empty"));
+	return;
+    }
+
+    if (make_grand_varlist()) return;
+
+    if (bufopen(&prn)) return;
+    prn->format = GRETL_PRINT_FORMAT_RTF;
+
+    ci = common_estimator();
+
+    pputs(prn, "{rtf1\n\\par \\qc ");
+
+    if (ci > 0) {
+	/* all models use same estimation procedure */
+	pprintf(prn, I_("%s estimates"), 
+		I_(estimator_string(ci, prn->format)));
+	pputs(prn, "\n");
+    }
+
+    pprintf(prn, "\\par \\qc %s: %s\n", I_("Dependent variable"),
+	    datainfo->varname[grand_list[1]]);
+
+    /* RTF row stuff */
+
+
+    pputs(prn, "\\intbl ");
+    for (j=0; j<model_list_len; j++) {
+	char modhd[16];
+
+	if (model_list[j] == NULL) continue;
+	sprintf(modhd, I_("Model %d"), (model_list[j])->ID);
+	pprintf(prn, "\\qc %s\\cell ", modhd);
+    }
+    pputs(prn, "\\intbl \\row\n");
+    
+    if (ci == 0) {
+	char est[12];
+
+	pputs(prn, "\\intbl ");
+
+	for (j=0; j<model_list_len; j++) {
+	    if (model_list[j] == NULL) continue;
+	    strcpy(est, 
+		   I_(short_estimator_string((model_list[j])->ci,
+					    prn->format)));
+	    pprintf(prn, "\\qc %s\\cell ", est);
+	}
+	pputs(prn, "\\intbl \\row\n");
+    }
+
+    print_model_table_coeffs(prn);
+    print_n_r_squared(prn, &binary);
+
+    pputs(prn, "}\n\n");
+
+    pprintf(prn, "\\par \\qc %s\n", I_("Standard errors in parentheses"));
+    pprintf(prn, "\\par \\qc %s\n", 
+	    I_("* indicates significance at the 10 percent level"));
+    pprintf(prn, "\\par \\qc %s\n", 
+	    I_("** indicates significance at the 5 percent level"));
+
+    if (binary) {
+	pprintf(prn, "\\par \\qc %s\n", I_("For logit and probit, $R^2$ is "
+					   "McFadden's pseudo-$R^2$"));
+    }
+
+    pputs(prn, "}\n");
+
+    prn_to_clipboard(prn, COPY_RTF);
 }

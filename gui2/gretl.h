@@ -143,6 +143,7 @@ enum extra_cmds {
     EDIT_NOTES,
     CLI_HELP,
     GUI_HELP,
+    MODELTABLE,
     GUI_CMD_MAX
 };
 
