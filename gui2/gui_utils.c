@@ -1960,19 +1960,11 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 
     if (quiet_sample_check(pmod)) ok = 0;
     s = GTK_WIDGET_IS_SENSITIVE
-	(gtk_item_factory_get_item(mwin->ifac, "/Tests/omit variables"));
+	(gtk_item_factory_get_item(mwin->ifac, "/Tests"));
     if ((s && ok) || (!s && !ok)) return FALSE;
     s = !s;
 
-    flip(mwin->ifac, "/Tests/omit variables", s);
-    flip(mwin->ifac, "/Tests/add variables", s);
-    flip(mwin->ifac, "/Tests/non-linearity (squares)", s);
-    flip(mwin->ifac, "/Tests/non-linearity (logs)", s);
-    flip(mwin->ifac, "/Tests/autocorrelation", s);
-    flip(mwin->ifac, "/Tests/heteroskedasticity", s);
-    flip(mwin->ifac, "/Tests/Chow test", s);
-    flip(mwin->ifac, "/Tests/CUSUM test", s);
-    flip(mwin->ifac, "/Tests/ARCH", s);
+    flip(mwin->ifac, "/Tests", s);
     flip(mwin->ifac, "/Graphs", s);
     flip(mwin->ifac, "/Model data/Display actual, fitted, residual", s);
     if (pmod->ci != LAD) {

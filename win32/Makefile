@@ -7,6 +7,7 @@ include config.mk
 topsrc = ..
 libdir  = $(topsrc)/lib/src
 extradir = ../gui2/gtkextra-lite
+plugindir = ../plugin
 imports = ./import-libs
 
 # tools
@@ -27,7 +28,7 @@ LIBS = -lm $(GRETLLIB) -ladvapi32
 
 # flags/defines
 LDFLAGS = -s 
-CFLAGS := -DOS_WIN32 -I. -I$(libdir) -I$(extradir) \
+CFLAGS := -DOS_WIN32 -I. -I$(libdir) -I$(extradir) -I$(plugindir) \
 $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
 # source paths
@@ -51,7 +52,7 @@ CHECKER = nisttest.exe
 
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/progress_bar.dll plugins/gnumeric_import.dll \
-	plugins/excel_import.dll plugins/mp_ols.dll plugins/gretl_gsl.dll \
+	plugins/excel_import.dll plugins/mp_ols.dll plugins/sur.dll plugins/johansen.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll
 
 WRES    = gretlw32_res.o
@@ -225,17 +226,19 @@ plugins/mp_ols.dll: mp_ols.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp.dll
 
-plugins/gretl_gsl.dll: gretl_gsl.o dllinit.o 
+plugins/sur.dll: sur.o gretl_matrix.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgsl -lcblas 
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -llapack -lblas -lf2c
 
-OLEFLAGS = -I$(topsrc)/plugin
+plugins/johansen.dll: johansen.o gretl_matrix.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -llapack -lblas -lf2c
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
-	$(CC) -c $(CFLAGS) $(OLEFLAGS) $(GLIBINC) $<
+	$(CC) -c $(CFLAGS) $(GLIBINC) $<
 
 workbook.o: workbook.c $(topsrc)/plugin/libole2/ms-ole.h
-	$(CC) -c $(CFLAGS) $(OLEFLAGS) $(GLIBINC) $<
+	$(CC) -c $(CFLAGS) $(GLIBINC) $<
 
 # DO NOT DELETE
 

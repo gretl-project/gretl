@@ -81,7 +81,7 @@ cd $THISDIR
 
 # auxiliary dlls
 for f in \
-    libgmp.dll libxml.dll readline.dll zlib.dll
+    libgmp-3.dll libxml.dll readline.dll zlib.dll
 do
     add_file ../../gretl/win32/dlls/$f gretl/$f
 done

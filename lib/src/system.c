@@ -157,7 +157,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 				    PRN *prn)
 {
     int i, err = 0;
-    void *handle;
+    void *handle = NULL;
     int (*system_est) (gretl_equation_system *, 
 		       double ***, DATAINFO *, PRN *);
 
@@ -180,11 +180,11 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
     }
 
     for (i=1; i<sys->n_equations; i++) {
-	err = 1;
 	if (sys->lists[i][0] != sys->lists[0][0]) {
+	    err = 1;
 	    strcpy(gretl_errmsg, _(sursquare));
 	}
-        goto system_bailout;
+	if (err) goto system_bailout;
     }
 
     if (open_plugin("sur", &handle)) {

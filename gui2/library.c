@@ -177,7 +177,8 @@ int quiet_sample_check (MODEL *pmod)
     if (checkZ == NULL || pdinfo == NULL) return 1;
 
     if (model_sample_issue(pmod, NULL, checkZ, pdinfo)) return 1;
-    else return 0;
+    
+    return 0;
 }
 
 /* ......................................................... */
@@ -2690,8 +2691,8 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 
     plot_list[0] = 2;
     plot_list[1] = datainfo->v - 1; /* last var added */
-    strcpy(datainfo->varname[plot_list[1]], 
-	   datainfo->varname[pmod->list[1]]);
+
+    strcpy(datainfo->varname[plot_list[1]], _("residual"));
 
     if (xvar) { /* plot against specified xvar */
 	plot_list[2] = xvar;
@@ -3460,7 +3461,7 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 #endif
 
     remove(texfile);
-#ifndef G_OS_WIN32
+#ifdef KILL_DVI_FILE
     sleep(2); /* let forked xdvi get the DVI file */
     sprintf(tmp, "%s.dvi", texbase);
     remove(tmp);
@@ -4056,7 +4057,9 @@ int gui_exec_line (char *line,
     case END:
 	if (!strcmp(command.param, "system")) {
 	    err = gretl_equation_system_finalize(sys, &Z, datainfo, prn);
-	    if (err) errmsg(err, prn);
+	    if (err) {
+		errmsg(err, prn);
+	    }
 	    sys = NULL;
 	} else {
 	    err = 1;

@@ -351,7 +351,7 @@
 	doublereal *wi, doublereal *z__, integer *ldz, doublereal *work, 
 	integer *lwork, integer *info);
  
-/* Subroutine */ int dlabad_(doublereal *small, doublereal *large);
+/* Subroutine */ int dlabad_(doublereal *smal, doublereal *lrge);
  
 /* Subroutine */ int dlabrd_(integer *m, integer *n, integer *nb, doublereal *
 	a, integer *lda, doublereal *d__, doublereal *e, doublereal *tauq, 
