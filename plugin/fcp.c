@@ -7,8 +7,8 @@
 
 #define FDEBUG
 
-#define TMAX 3009
-#define NPMAX  5   /* was 13 */
+#define TMAX 3009  /* should be dynamic */
+#define NPMAX  5   /* was 13: should be dynamic */
 #define RCMAX  7
 #define NLL   50
 #define ABNUM  4
@@ -388,9 +388,6 @@ L6766:
     return 0;
 } 
 
-
-/* subroutine for ols estimation */
-
 int ols_ (int t1, int t2, double *yobs, int nobs, const double **X, int nx, 
 	  double *yy, double *c, int nc, double *oldc, 
 	  double *vc, double *ystoc, double *amax, double *aux, double *b, 
@@ -565,10 +562,6 @@ garch_ll (double *c, int nc, double *res2,
 
     ll = 0.0;
     for (t = t1; t <= t2; ++t) {
-#ifdef FDEBUG
-	if (t < 5) fprintf(stderr, "h[%d] = %.9g, res2[%d] = %.9g\n",
-			   t, ht[t], t, res2[t]);
-#endif
 	ll = ll - log(ht[t]) * .5 - res2[t] * .5 / ht[t] - .9189385332056725;
     }
 
@@ -2031,10 +2024,7 @@ static void la_gj_invert (double *g, int m_int, int n_int, double *aux, int *ier
     integer lwork;
     double *work;
     integer *ipiv;
-    int lipiv;
-
-    if (m <= n) lipiv = m;
-    else lipiv = n;
+    int lipiv = (m <= n)? m : n;
 
     ipiv = malloc(lipiv * sizeof *ipiv);
     if (ipiv == NULL) {
@@ -2053,6 +2043,7 @@ static void la_gj_invert (double *g, int m_int, int n_int, double *aux, int *ier
 
     if (info != 0) {
 	free(ipiv);
+	free(work);
 	*ier = info;
 	return;
     }
@@ -2062,15 +2053,12 @@ static void la_gj_invert (double *g, int m_int, int n_int, double *aux, int *ier
 
     if (info != 0 || work[0] <= 0.0) {
 	free(ipiv);
+	free(work);
 	*ier = 1;
 	return;
     }
 
     lwork = (integer) work[0];
-
-#ifdef LAPACK_DEBUG
-    printf("dgetri: workspace = %d\n", (int) lwork);
-#endif
 
     work = realloc(work, lwork * sizeof *work);
     if (work == NULL) {
@@ -2081,9 +2069,7 @@ static void la_gj_invert (double *g, int m_int, int n_int, double *aux, int *ier
 
     dgetri_(&n, g, &n, ipiv, work, &lwork, &info);
 
-#ifdef LAPACK_DEBUG
-    printf("dgetri: info = %d\n", (int) info);
-#endif
+    *ier = info;
 
     free(work);
     free(ipiv);

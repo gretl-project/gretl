@@ -61,7 +61,6 @@ int do_fcp (const int *list, const double **Z,
     q = list[2];
     ynum = list[4];
     maxlag = (p > q)? p : q; 
-    /* maxlag = 0; */
 
     t1 = 0; 
     t2 = pdinfo->t2;
@@ -115,15 +114,13 @@ int do_fcp (const int *list, const double **Z,
     }
 
     /* initialize at unconditional mean of y */
-    coeff[0] = _esl_mean(0, nobs - 1, Z[ynum]);
-    coeff[0] = -0.0164268;
+    coeff[0] = _esl_mean(t1, t2, Z[ynum]);
 
     /* initialize elements of alpha, beta such that 
        alpha_0/(1 - alpha_1 - beta_1) = unconditional
        variance of y (?)
     */
-    amax[0] = _esl_variance(0, nobs - 1, Z[ynum]);
-    amax[0] = .22113; /* test */
+    amax[0] = _esl_variance(t1, t2, Z[ynum]);
     amax[1] = p;
     amax[2] = q; 
     for (i=0; i<p+q; i++) {
@@ -157,31 +154,9 @@ int do_fcp (const int *list, const double **Z,
 	pprintf(prn, "Convergence reached, with tolerance = %g\n", 
 	       amax[0]);
 
-#if 1
 	for (i=1; i<=nparam; i++) {
 	    pprintf(prn, "param[%d]: %#14.6g (%#.6g)\n", i, amax[i], amax[i+nparam]);
 	}
-
-#else
-	pputs(prn, "\nRegression coefficient estimates:\n");
-	for (i=0; i<=nx; i++) {
-	    pprintf(prn, "    A[%d]: %#14.6g (%#.6g)\n", i, amax[k],
-		   amax[k+nparam]);
-	    k++;
-	}
-
-	pputs(prn, "\nGARCH coefficient estimates:\n");
-	for (i=0; i<=p+q; i++) {
-	    if (i==0) {
-		pputs(prn, "alpha[0]: ");
-	    } else if (i <= p) {
-		pprintf(prn, "alpha[%d]: ", i-k);
-	    } else {
-		pprintf(prn, " beta[%d]: ", i-k-p);
-	    }
-	    pprintf(prn, "%#14.6g (%#.6g)\n", amax[i], amax[i+nparam]);
-	}
-#endif
 
 	pputs(prn, "\n(Standard errors in parentheses)\n");
     }
