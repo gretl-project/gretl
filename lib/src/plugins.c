@@ -44,7 +44,6 @@ enum {
     P_TRAMO_X12A,
     P_NISTCHECK,
     P_ARMA,
-    P_ARMAX,
     P_ARMA_X12,
     P_LOGISTIC,
     P_TOBIT
@@ -80,7 +79,6 @@ struct plugin_info plugins[] = {
     { P_TRAMO_X12A,      "tramo-x12a" },
     { P_NISTCHECK,       "nistcheck" },
     { P_ARMA,            "arma" },
-    { P_ARMAX,           "armax" },
     { P_ARMA_X12,        "arma_x12" },
     { P_LOGISTIC,        "logistic" },
     { P_TOBIT,           "tobit" }
@@ -143,7 +141,6 @@ struct plugin_function plugin_functions[] = {
     
     /* modeling */
     { "arma_model",        P_ARMA },
-    { "armax_model",       P_ARMAX },    
     { "arma_x12_model",    P_ARMA_X12 },
     { "logistic_estimate", P_LOGISTIC },
     { "tobit_estimate",    P_TOBIT },

@@ -3016,11 +3016,7 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 
     *gretl_errmsg = '\0';
 
-    if (list[0] > 4) {
-	arma_model = get_plugin_function("armax_model", &handle);
-    } else {
-	arma_model = get_plugin_function("arma_model", &handle);
-    }
+    arma_model = get_plugin_function("arma_model", &handle);
 
     if (arma_model == NULL) {
 	gretl_model_init(&armod, NULL);
