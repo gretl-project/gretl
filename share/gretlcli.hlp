@@ -664,11 +664,11 @@ Examples:       loop 1000
 This (script) command opens a special mode in which the program accepts
 commands to be repeated either a specified number of times, or so long as a
 specified condition holds true, or for successive integer values of the
-(internal) index variable i.  Within a loop, only six commands can be used:
-genr, ols, print, smpl, store and summary (store can't be used in a "while"
-loop).  With genr and ols it is possible to do quite a lot.  You exit the mode
-of entering loop commands with "endloop": at this point the stacked commands
-are executed.  Loops cannot be nested.
+(internal) index variable i.  Within a loop, only 7 commands can be used:
+genr, ols, print, sim, smpl, store and summary (store can't be used in a
+"while" loop).  With genr and ols it is possible to do quite a lot.  You exit
+the mode of entering loop commands with "endloop": at this point the stacked
+commands are executed.  Loops cannot be nested.
 
 The ols command gives special output, depending on the sort of loop.  If a
 number of times is specified the results from each individual regression are
