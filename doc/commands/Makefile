@@ -32,7 +32,7 @@ test: skeleton.xml formatter gretlman.xsl gretltxt.xsl
 # work in progress: format and reflow the English command reference
 sample: formatter reflow inprogress.xml gretlman.xsl gretltxt.xsl
 	./formatter inprogress.xml
-	./reflow < commands.txt > commands.hlp && rm commands.txt
+	./reflow < commands.txt > commands.hlp # && rm commands.txt
 
 clean:
 	rm -f formatter skeleton reflow skeleton.xml *~

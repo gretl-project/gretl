@@ -893,7 +893,7 @@ struct gretl_opt gretl_opts[] = {
     { GNUPLOT,  OPT_M, "with-impulses" },
     { GNUPLOT,  OPT_S, "suppress-fitted" },
     { GNUPLOT,  OPT_Z, "dummy" },
-    { GRAPH,    OPT_O, "wide" },
+    { GRAPH,    OPT_O, "tall" },
     { IMPORT,   OPT_O, "box1" },
     { LEVERAGE, OPT_O, "save" },
     { LMTEST,   OPT_L, "logs" },

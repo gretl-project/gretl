@@ -12,33 +12,47 @@
 #include <string.h>
 #include <ctype.h>
 
-#define MAXLEN 78 /* length at which lines will wrap */
+#define MAXLEN 78     /* length at which lines will wrap */
+#define LISTINDENT 2  /* indent for list items */
+
+struct utf_stuff {
+    char *targ;
+    char *sub;
+};
+
+struct utf_stuff replacers[] = {
+    { "&#x2013;", "-" },     /* &ndash; */
+    { "&#x2014;", " -- " },  /* &ndash; */
+    { "&gt;", ">" }, 
+    { "&lt;", "<" }, 
+    { "&#x3BB;", "lambda" }, /* &lgr; */
+    { "&#x2026;", "..." },    /* &hellip; */
+    { NULL, NULL }
+};
+
+static void trash_utf (char *s, int i)
+{
+    char *p;
+    int slen = strlen(replacers[i].sub);
+    int tlen = strlen(replacers[i].targ);
+    int j, r = tlen - slen;
+
+    while (1) {
+	p = strstr(s, replacers[i].targ); 
+	if (p == NULL) break;
+	for (j=0; j<slen; j++) {
+	    *p++ = replacers[i].sub[j];
+	}
+	memmove(p, p + r, strlen(p + r) + 1);
+    }
+}
 
 static void utf_replace (char *s)
 {
-    char *p;
-    
-    /* ugh, there has to be a better way of doing this: learn
-       properly about entities in context of xslt? 
-    */
+    int i;
 
-    while (1) {
-	p = strstr(s, "&#x2013;"); /* &ndash; */
-	if (p == NULL) break;
-	*p = '-';
-	memmove(p+1, p+8, strlen(p+8) + 1);
-    }
-
-    while (1) {
-	p = strstr(s, "&#x3BB;"); /* &lgr; */
-	if (p == NULL) break;
-	*p++ = 'l';
-	*p++ = 'a';
-	*p++ = 'm';
-	*p++ = 'b';
-	*p++ = 'd';
-	*p++ = 'a';
-	memmove(p, p+1, strlen(p+1) + 1);
+    for (i=0; replacers[i].targ != NULL; i++) {
+	trash_utf(s, i);
     }
 }
 
@@ -99,10 +113,12 @@ static void trim (char *s)
    This function needs some work.
 */
 
-static int format_buf (char *buf)
+static int format_buf (char *buf, int listpara)
 {
     char *p, *q, line[80];
-    int n, out;
+    int i, n, out, maxline = MAXLEN;
+
+    if (listpara) maxline -= LISTINDENT;
 
     compress_spaces(buf);
     n = strlen(buf);
@@ -112,11 +128,14 @@ static int format_buf (char *buf)
     while (out < n - 1) {
 	*line = 0;
 	q = p;
-	strncat(line, p, MAXLEN);
+	strncat(line, p, maxline);
 	trim(line);
 	out += strlen(line);
 	p = q + strlen(line);
 	if (!blank_string(line)) {
+	    if (listpara) {
+		for (i=0; i<LISTINDENT; i++) putchar(' ');
+	    } 
 	    printf("%s\n", (*line == ' ')? line + 1 : line);
 	}
     }
@@ -141,7 +160,7 @@ int main (void)
 { 
     char buf[8096]; /* can't handle paragraphs > 8Kb */
     char line[128];
-    int blank = 0, inpara = 0, last = 0;
+    int blank = 0, inpara = 0, last = 0, listpara = 0;
     char *p;
 
     while (fgets(line, sizeof line, stdin)) {
@@ -154,13 +173,25 @@ int main (void)
 	    strip_marker(p, "[PARA]");
 	    *buf = 0;
 	    inpara = 1;
+	    listpara = 0;
+	} else if ((p = strstr(line, "[LISTPARA]"))) {
+	    strip_marker(p, "[LISTPARA]");
+	    *buf = 0;
+	    inpara = 1;
+	    listpara = 1;
 	}
 
 	/* also end-of-para markers */
 	if ((p = strstr(line, "[/PARA]"))) {
 	    strip_marker(p, "[/PARA]");
 	    strcat(buf, line);
-	    format_buf(buf);
+	    format_buf(buf, listpara);
+	    blank = inpara = 0;
+	    last = 1;
+	} else if ((p = strstr(line, "[/LISTPARA]"))) {
+	    strip_marker(p, "[/LISTPARA]");
+	    strcat(buf, line);
+	    format_buf(buf, listpara);
 	    blank = inpara = 0;
 	    last = 1;
 	} else {
@@ -181,6 +212,7 @@ int main (void)
 	    if (blank == 2) {
 		blank = 0;
 	    } else {
+		utf_replace(line);
 		fputs(line, stdout);
 	    }
 	}

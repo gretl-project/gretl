@@ -18,6 +18,7 @@
 <!ENTITY looping SYSTEM "chapters/looping.xml">
 <!ENTITY optarg SYSTEM "chapters/optarg.xml">
 <!ENTITY cmdref SYSTEM "chapters/cmdref.xml">
+<!ENTITY cmdlist SYSTEM "chapters/cmdlist.xml">
 <!ENTITY trouble SYSTEM "chapters/trouble.xml">
 <!ENTITY cli SYSTEM "chapters/cli.xml">
 <!ENTITY appendices SYSTEM "chapters/appendices.xml">

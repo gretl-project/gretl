@@ -30,56 +30,74 @@
  <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
-<xsl:template match="option">
+<xsl:template match="arguments">
  <row>
    <xsl:choose>
-     <xsl:when test="position() = 1">
-        <entry>Options:</entry>
+     <xsl:when test="count(argument) > 1">
+       <entry>Arguments:</entry>
      </xsl:when>
      <xsl:otherwise>
-        <entry/>
+       <entry>Argument:</entry>
      </xsl:otherwise>
+   </xsl:choose>
+  <entry><xsl:apply-templates/></entry>
+ </row> 
+ <xsl:text>&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="argument">
+<xsl:if test="(@separated)">; </xsl:if>
+<xsl:if test="(@optional)"><literal>[ </literal></xsl:if>
+  <xsl:if test="@flag">
+    <literal><xsl:value-of select="@flag"/></literal>
+  </xsl:if> 
+  <replaceable><xsl:apply-templates/></replaceable>
+  <xsl:text> </xsl:text>
+<xsl:if test="(@optional)"><literal>] </literal></xsl:if>
+</xsl:template>
+
+<xsl:template match="option">
+  <row>
+    <xsl:choose>
+      <xsl:when test="position() = 1">
+        <xsl:choose>
+          <xsl:when test="count(../option) > 1">
+            <entry>Options:</entry>
+          </xsl:when>
+          <xsl:otherwise>
+            <entry>Option:</entry>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+      <xsl:otherwise>
+        <entry/>
+      </xsl:otherwise>
     </xsl:choose>
     <entry><xsl:apply-templates/></entry>
   </row>
   <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
-<xsl:template match="arguments">
+<xsl:template match="example">
   <row>
-<xsl:choose>
- <xsl:when test="count(argument) > 1">
-  <entry>Arguments:</entry>
- </xsl:when>
- <xsl:otherwise>
-  <entry>Argument:</entry>
- </xsl:otherwise> 
-</xsl:choose>
-    <entry><replaceable><xsl:apply-templates/></replaceable></entry>
+    <xsl:choose>
+      <xsl:when test="position() = 1">
+        <xsl:choose>
+          <xsl:when test="count(../example) > 1">
+            <entry>Examples:</entry>
+          </xsl:when>
+          <xsl:otherwise>
+            <entry>Example:</entry>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+      <xsl:otherwise>
+        <entry/>
+      </xsl:otherwise>
+    </xsl:choose>
+    <entry><literal><xsl:apply-templates/></literal></entry>
   </row>
   <xsl:text>&#xa;</xsl:text>
-</xsl:template>
-
-<xsl:template match="argument">
-<xsl:if test="(@separated)">; </xsl:if>
-<xsl:if test="(@optional)"><literal>[ </literal></xsl:if>
-  <xsl:apply-templates/><xsl:text> </xsl:text>
-<xsl:if test="(@optional)"><literal>] </literal></xsl:if>
-</xsl:template>
-
-<xsl:template match="example">
- <row>
- <xsl:choose>
-   <xsl:when test="position() = 1">
-     <entry>Examples:</entry>
-    </xsl:when>
-    <xsl:otherwise>
-      <entry></entry>
-    </xsl:otherwise>
- </xsl:choose>
- <entry><literal><xsl:apply-templates/></literal></entry>
- </row>
- <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="flag">
@@ -108,6 +126,14 @@
 
 <xsl:template match="mathvar">
   <emphasis><xsl:apply-templates/></emphasis>
+</xsl:template>
+
+<xsl:template match="super">
+  <superscript><xsl:apply-templates/></superscript>
+</xsl:template>
+
+<xsl:template match="sub">
+  <subscript><xsl:apply-templates/></subscript>
 </xsl:template>
 
 <xsl:template match="book">
@@ -147,6 +173,16 @@
  </xsl:choose>
 </xsl:template>
 
+<xsl:template match="ilist">
+  <itemizedlist><xsl:apply-templates/></itemizedlist>
+  <xsl:text>&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="li">
+  <listitem><xsl:apply-templates/></listitem>
+  <xsl:text>&#xa;</xsl:text>
+</xsl:template>
+
 <xsl:template match="para">
   <xsl:text>&#xa;</xsl:text>
   <para>
@@ -161,7 +197,7 @@
 </xsl:template>
 
 <xsl:template match="cmdref">
-<xref linkend="cmd-{@targ}"/>
+  <xref linkend="cmd-{@targ}"/>
 </xsl:template>
 
 <xsl:template match="manref">
@@ -170,8 +206,12 @@
 <xsl:text> </xsl:text><xsl:value-of select="@after"/>
 </xsl:template>
 
+<xsl:template match="tabref">
+  <xref linkend="{@targ}"/>
+</xsl:template>
+
 <xsl:template match="menu-path">
- <para>Menu path: <xsl:apply-templates/></para>
+  <para>Menu path: <xsl:apply-templates/></para>
 </xsl:template>
 
 <xsl:template match="other-access">

@@ -2,9 +2,13 @@
   DTD for gretl command reference. Allin Cottrell 2004
  -->
 
-<!ENTITY ndash "&#8211;">
-<!ENTITY lgr   "&#0955;">
-<!ENTITY latex "LaTeX">
+<!ENTITY ndash  "&#8211;">
+<!ENTITY lgr    "&#0955;">
+<!ENTITY hellip "&#8230;">
+<!ENTITY mdash  "&#8212;">
+<!ENTITY latex  "LaTeX">
+<!ENTITY minus  "-">
+
 
 <!ELEMENT commandlist (command)+>
 <!ATTLIST commandlist
@@ -29,7 +33,7 @@
 <!ELEMENT arguments    (argument)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example)+>
-<!ELEMENT description  (para | code)*>
+<!ELEMENT description  (para | code | ilist)*>
 <!ELEMENT option-notes (para)+>
 <!ELEMENT addendum     (para)+>
 <!ELEMENT gui-access   (menu-path, other-access?)>
@@ -38,6 +42,7 @@
 <!ATTLIST argument 
     separated (true | false) "false"
     optional (true | false) "false"
+    flag CDATA #IMPLIED
 >
 
 <!ELEMENT option   (flag, effect)>
@@ -51,9 +56,12 @@
 
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 literal | emphasis | book | quote | filename |
-                function | manref | cmdref| cmd)*>
+                function | manref | cmdref| tabref | cmd)*>
 
 <!ELEMENT code (#PCDATA)>
+
+<!ELEMENT ilist (li)+>
+<!ELEMENT li (para | code)*>
 
 <!-- stuff that can go into paras -->
 
@@ -74,6 +82,11 @@
 
 <!ELEMENT cmdref EMPTY>
 <!ATTLIST cmdref
+   targ    CDATA #REQUIRED
+>
+
+<!ELEMENT tabref EMPTY>
+<!ATTLIST tabref
    targ    CDATA #REQUIRED
 >
 
