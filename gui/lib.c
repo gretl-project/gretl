@@ -2763,14 +2763,11 @@ int do_store (char *mydatfile, const int opt, int overwrite)
     char f = getflag(opt);
     gchar *msg;
     FILE *fp;
-    size_t len;
     int showlist = 1;
 
     line[0] = '\0';
 
-    len = strlen(storelist);
-    if (len >= MAXLEN)  /* too many variables */
-	showlist = 0;
+    if (storelist == NULL) showlist = 0;
 
     if (f) { /* not a standard native save */
 	sprintf(line, "store '%s' %s -%c", mydatfile, 

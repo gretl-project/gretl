@@ -48,16 +48,22 @@ int make_default_storelist (void)
     char numstr[5];
 
     if (storelist != NULL) free(storelist);
-    storelist = mymalloc(datainfo->v * 4);
-    if (storelist == NULL) return 1;
+    storelist = NULL;
 
-    strcpy(storelist, "1 ");
-    for (i=2; i<datainfo->v; i++) {
-	if (hidden_var(i, datainfo)) continue;
-	sprintf(numstr, "%d ", i);
-	strcat(storelist, numstr);
+    /* if there are very many variables, we won't offer
+       a selection, but just save them all */
+    if (datainfo->v < 50) {
+	storelist = mymalloc(datainfo->v * 4);
+	if (storelist == NULL) return 1;
+
+	strcpy(storelist, "1 ");
+	for (i=2; i<datainfo->v; i++) {
+	    if (hidden_var(i, datainfo)) continue;
+	    sprintf(numstr, "%d ", i);
+	    strcat(storelist, numstr);
+	}
+	storelist[strlen(storelist) - 1] = '\0';
     }
-    storelist[strlen(storelist) - 1] = '\0';
 
     return 0;
 }
@@ -78,6 +84,7 @@ int storevars_dialog (int code)
     int cancel = 0;
 
     if (make_default_storelist()) return 1;
+    if (storelist == NULL) return 0;
 
     edit_dialog ((code == EXPORT)? 
 		 "gretl: export data": "gretl: store data",
