@@ -1180,7 +1180,7 @@ void gz_switch_ext (char *targ, char *src, char *ext)
  * @pZ: pointer to data set.
  * @pdinfo: data information struct.
  * @ppaths: path information struct.
- * @data_file_open: indicator for whether a data file is currently open
+ * @data_status: indicator for whether a data file is currently open
  * in gretl's work space (1) or not (0).
  * @fp: file pointer from which data may be read.
  * 
@@ -1192,7 +1192,7 @@ void gz_switch_ext (char *targ, char *src, char *ext)
  */
 
 int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths, 
-	      const int data_file_open, FILE *fp) 
+	      const int data_status, FILE *fp) 
 {
 
     FILE *dat = NULL;
@@ -1221,7 +1221,7 @@ int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths,
     }
 
     /* clear any existing data info */
-    if (data_file_open) clear_datainfo(pdinfo, 0);
+    if (data_status) clear_datainfo(pdinfo, 0);
 
     /* read data header file */
     err = readhdr(ppaths->hdrfile, pdinfo);
@@ -1284,7 +1284,7 @@ int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths,
  * open_nulldata:
  * @pZ: pointer to data set.
  * @pdinfo: data information struct.
- * @data_file_open: indicator for whether a data file is currently open
+ * @data_status: indicator for whether a data file is currently open
  * in gretl's work space (1) or not (0).
  * @length: desired length of data series.
  * @prn: gretl printing struct.
@@ -1296,11 +1296,11 @@ int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths,
  */
 
 int open_nulldata (double **pZ, DATAINFO *pdinfo, 
-		   const int data_file_open, const int length,
+		   const int data_status, const int length,
 		   PRN *prn) 
 {
     /* clear any existing data info */
-    if (data_file_open) clear_datainfo(pdinfo, 0);
+    if (data_status) clear_datainfo(pdinfo, 0);
 
     /* dummy up the data info */
     pdinfo->n = length;

@@ -5,6 +5,8 @@
 
 /* functions follow */
 
+int make_default_storelist (void);
+
 int storevars_dialog (int export); 
 
 void random_dialog (gpointer data, guint uni, GtkWidget *widget);

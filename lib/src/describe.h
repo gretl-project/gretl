@@ -35,8 +35,7 @@ typedef struct {
 void free_freq (FREQDIST *freq);
 
 FREQDIST *freqdist (double **pZ, const DATAINFO *pdinfo, 
-		    double *zz, const int nzz, 
-		    const char *varname, const int params);
+		    int varno, int params);
 
 int corrgram (const int varno, const int order, 
 	      double **pZ, DATAINFO *pdinfo, 

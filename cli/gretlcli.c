@@ -735,8 +735,7 @@ void exec_line (char *line, PRN *prn)
 	break;
 		
     case FREQ:
-	freq = freqdist(&Z, datainfo, NULL, 0,
-			datainfo->varname[command.list[1]], 1);
+	freq = freqdist(&Z, datainfo, command.list[1], 1);
 	if (freq == NULL) {
 	    err = E_ALLOC;
 	    break;
@@ -1146,9 +1145,13 @@ void exec_line (char *line, PRN *prn)
 
     case TESTUHAT:
 	if ((err = model_test_start(0, prn, 0))) break;
-	freq = freqdist(NULL, NULL, (models[0])->uhat, 
-			(models[0])->t2 - (models[0])->t1 + 1, 
-			"uhat", (models[0])->ncoeff);
+	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
+	    pprintf(prn, "Out of memory attempting to add variable.\n");
+	    err = 1;
+	    break;
+	}
+	freq = freqdist(&Z, datainfo, datainfo->v - 1, (models[0])->ncoeff);	
+	dataset_drop_vars(1, &Z, datainfo);
 	if (freq == NULL) {
 	    err = E_ALLOC;
 	    break;

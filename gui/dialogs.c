@@ -42,13 +42,13 @@ int session_saved;
 
 /* ........................................................... */
 
-static int make_default_storelist (void)
+int make_default_storelist (void)
 {
     int i;
     char numstr[5];
 
     if (storelist != NULL) free(storelist);
-    storelist = malloc(datainfo->v * 4);
+    storelist = mymalloc(datainfo->v * 4);
     if (storelist == NULL) return 1;
 
     strcpy(storelist, "1 ");
@@ -77,10 +77,8 @@ int storevars_dialog (int code)
 {
     int cancel = 0;
 
-    if (make_default_storelist()) {
-        errbox("Out of memory");
-        return 1;
-    }
+    if (make_default_storelist()) return 1;
+
     edit_dialog ((code == EXPORT)? 
 		 "gretl: export data": "gretl: store data",
 		 "Enter ID numbers of variables to save: ", 
@@ -696,7 +694,8 @@ int work_done (void)
 static void save_data_callback (void)
 {
     file_save(NULL, SAVE_DATA, NULL);
-    if (data_status == DATA_MODIFIED) data_status = DATA_OPEN;
+    data_status ^= MODIFIED_DATA;
+    /* FIXME: need to do more here */
 }
 
 #ifdef USE_GNOME
@@ -866,7 +865,7 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 	/* else button = 1, NO: so fall through */
     }
 
-    if (data_status == DATA_MODIFIED) {
+    if (data_status & MODIFIED_DATA) {
 	button = yes_no_dialog ("gretl", 
 				"Do you want to save changes you have\n"
 				"made to the current data set?", 1);

@@ -2518,19 +2518,19 @@ int genr_fit_resid (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     for (t=0; t<t1; t++) (*pZ)[n*i + t] = NADBL;
     for (t=t2+1; t<n; t++) (*pZ)[n*i + t] = NADBL;
 
-    if (code == 0) { /* residuals */
+    if (code == GENR_RESID) { /* residuals */
 	sprintf(vname, "uhat%d", pmod->ID);
 	sprintf(vlabel, "residual from model %d", pmod->ID);
 	for (t=t1; t<=t2; t++) 
 	    (*pZ)[n*i + t] = pmod->uhat[t];
     }
-    else if (code == 1) { /* fitted values */
+    else if (code == GENR_FITTED) { /* fitted values */
 	sprintf(vname, "yhat%d", pmod->ID);
 	sprintf(vlabel, "fitted value from model %d", pmod->ID);
 	for (t=t1; t<=t2; t++) 
 	    (*pZ)[n*i + t] = pmod->yhat[t];
     }
-    else if (code == 2) { /* squared residuals */
+    else if (code == GENR_RESID2) { /* squared residuals */
 	sprintf(vname, "usq%d", pmod->ID);
 	sprintf(vlabel, "squared residual from model %d", pmod->ID);
 	for (t=t1; t<=t2; t++) 

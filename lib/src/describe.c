@@ -120,22 +120,20 @@ void free_freq (FREQDIST *freq)
 
 /**
  * freqdist:
- * @pZ: pointer to data matrix (or NULL)
+ * @pZ: pointer to data matrix
  * @pdinfo: information on the data set.
- * @zz: if pZ is NULL, data vector.
- * @nzz: if pZ is NULL, length of vector zz.
- * @varname: name of variable to process.
+ * @varno: ID number of variable to process.
  * @params: degrees of freedom loss (generally = 1 unless we're dealing
  * with the residual from a regression)
  *
- * Calculates the frequency distribution for the named variable.
+ * Calculates the frequency distribution for the specified variable.
  *
  * Returns: struct containing the distribution.
  *
  */
 
-FREQDIST *freqdist (double **pZ, const DATAINFO *pdinfo, double *zz,
-		     const int nzz, const char *varname, const int params)
+FREQDIST *freqdist (double **pZ, const DATAINFO *pdinfo, 
+		    int varno, int params)
 {
     FREQDIST *freq;
     double *x = NULL;
@@ -147,42 +145,30 @@ FREQDIST *freqdist (double **pZ, const DATAINFO *pdinfo, double *zz,
     freq = malloc(sizeof *freq);
     if (freq == NULL) return NULL;
 
-    x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x);
-    if (x == NULL) {
-	free(freq);
-	return NULL;
-    }
-
     gretl_errno = 0;
     gretl_errmsg[0] = '\0';
     freq->midpt = NULL;
     freq->endpt = NULL;
     freq->f = NULL;
 
-    if (pZ != NULL) {
-	i = varindex(pdinfo, varname);
-	if (i > pdinfo->v - 1) {
-	    gretl_errno = E_DATA;
-	    sprintf(gretl_errmsg, "'%s' is not in the data set", varname);
-	    free(x);
-	    return freq;
-	}	
-	n = ztox(i, x, *pZ, pdinfo);
-	if (n < 3) {
-	    gretl_errno = E_DATA;
-	    sprintf(gretl_errmsg, "Insufficient data to build frequency "
-		    "distribution for variable %s", varname);
-	    free(x);
-	    return freq;
-	}
-    } else {
-	n = nzz;
-	x = zz;
+    x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x);
+    if (x == NULL) {
+	sprintf(gretl_errmsg, "Out of memory in frequency distribution");
+	free(freq);
+	return NULL;
     }
-
-    strcpy(freq->varname, varname);
+    n = ztox(varno, x, *pZ, pdinfo);
+    if (n < 3) {
+	gretl_errno = E_DATA;
+	sprintf(gretl_errmsg, "Insufficient data to build frequency "
+		"distribution for variable %s", pdinfo->varname[varno]);
+	free(x);
+	return freq;
+    }
     freq->t1 = pdinfo->t1; 
     freq->t2 = pdinfo->t2;
+
+    strcpy(freq->varname, pdinfo->varname[varno]);
 
     if (_isconst(0, n-1, x)) {
 	gretl_errno = 1;

@@ -68,11 +68,11 @@ void gz_switch_ext (char *targ, char *src, char *ext);
 
 int get_data (double **pZ, DATAINFO *pdinfo, 
 	      PATHS *ppaths, 
-	      const int data_file_open,
+	      const int data_status,
 	      FILE *fp);
 
 int open_nulldata (double **pZ, DATAINFO *pdinfo, 
-		   const int data_file_open, const int length,
+		   const int data_status, const int length,
 		   PRN *prn);
 
 int import_csv (double **pZ, DATAINFO *pdinfo, 

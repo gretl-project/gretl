@@ -182,10 +182,13 @@ enum copy_variants {
     COPY_RTF
 };
 
-enum data_status_codes {
-    DATA_NONE,
-    DATA_OPEN,
-    DATA_MODIFIED
+enum data_status {
+    HAVE_DATA     = 1 << 0,
+    BOOK_DATA     = 1 << 1,
+    USER_DATA     = 1 << 2,
+    IMPORT_DATA   = 1 << 3,
+    GUI_DATA      = 1 << 4,
+    MODIFIED_DATA = 1 << 5
 };
 
 /* functions follow */

@@ -1,4 +1,7 @@
 version 0.98
+- fig bug affecting frequency distributions and the test for
+  normality of residuals
+- improve functionality relating to saving of data files
 - fix some build problems
 - add more functionality to boxplots
 - several fixes and enhancements to "session" mechanism

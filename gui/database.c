@@ -281,7 +281,7 @@ static void add_dbdata (windata_t *dbdat, double **dbZ, SERIESINFO *sinfo)
     int n, v, t, start, stop, pad1 = 0, pad2 = 0;
     guint compact_method = 1;
 
-    if (data_status) {
+    if (data_status) { /* data already in gretl's workspace */
 	err = check_import(sinfo, datainfo);
 	if (err) return;
 	if (dataset_add_vars(1, &Z, datainfo)) {
@@ -358,14 +358,11 @@ static void add_dbdata (windata_t *dbdat, double **dbZ, SERIESINFO *sinfo)
 	} else {
 	    strcpy(datainfo->varname[1], sinfo->varname);
 	    strcpy(datainfo->label[1], sinfo->descrip);	
-	    set_sample_label(datainfo);
-	    data_status = DATA_MODIFIED;
-	    menubar_state(TRUE);
+	    data_status |= (GUI_DATA|MODIFIED_DATA);
 	}
     }
 
-    populate_clist(mdata->listbox, datainfo);
-    orig_vars = datainfo->v;
+    register_data(NULL, 0);
     infobox("Series imported OK"); 
 }
 

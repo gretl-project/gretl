@@ -45,12 +45,8 @@ static void sheet_add_obs (void);
 static void sheet_insert_obs (void);
 static void sheet_clear (gpointer *data, guint all, GtkWidget *w);
 static void get_data_from_sheet (void);
-static void close_sheet (void);
 
 static GtkItemFactoryEntry sheet_items[] = {
-    { "/_File", NULL, NULL, 0, "<Branch>" },    
-    { "/File/_Apply changes", NULL, get_data_from_sheet, 0, NULL },
-    { "/File/_Close", NULL, close_sheet, 0, NULL },
     { "/_Observation", NULL, NULL, 0, "<Branch>" },
     { "/Observation/_Append obs", NULL, sheet_add_obs, 0, NULL },
     { "/Observation/_Insert obs", NULL, sheet_insert_obs, 0, NULL },
@@ -60,13 +56,6 @@ static GtkItemFactoryEntry sheet_items[] = {
     { "/_Clear/_Selected cells", NULL, sheet_clear, 0, NULL },
     { "/_Clear/_All data", NULL, sheet_clear, 1, NULL }
 };
-
-/* ........................................................... */
-
-static void close_sheet (void)
-{
-    gtk_widget_destroy(sheetwin);
-}
 
 /* ........................................................... */
 
@@ -481,7 +470,8 @@ static void get_data_from_sheet (void)
 	for (t=0; t<n; t++)
 	    strcpy(datainfo->S[t], sheet->row[t].button.label); 
     }
-    register_data(NULL, 1);
+    data_status |= (GUI_DATA|MODIFIED_DATA);
+    register_data(NULL, 0);
     if (missobs)
 	infobox("Warning: there were missing observations");
     else
@@ -562,7 +552,7 @@ static void free_spreadsheet (GtkWidget *widget, gpointer data)
 
 void show_spreadsheet (DATAINFO *pdinfo) 
 {
-    GtkWidget *close, *button_box;
+    GtkWidget *tmp, *button_box;
     GtkWidget *scroller, *main_vbox;
     GtkWidget *status_box, *mbar;
     GtkItemFactory *ifac;
@@ -616,7 +606,7 @@ void show_spreadsheet (DATAINFO *pdinfo)
     gtk_container_add(GTK_CONTAINER(scroller), gretlsheet);
     gtk_widget_show(gretlsheet);
 
-    /* close button */
+    /* apply and close buttons */
     button_box = gtk_hbox_new (FALSE, 5);
     gtk_box_set_homogeneous (GTK_BOX (button_box), TRUE);
     gtk_box_pack_start (GTK_BOX (main_vbox), button_box, FALSE, FALSE, 0);
@@ -625,11 +615,17 @@ void show_spreadsheet (DATAINFO *pdinfo)
     gtk_signal_connect(GTK_OBJECT(sheetwin), "destroy",
 		       GTK_SIGNAL_FUNC(free_spreadsheet), NULL);
 
-    close = gtk_button_new_with_label("Close");
-    gtk_box_pack_start (GTK_BOX (button_box), close, FALSE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(close), "clicked",
+    tmp = gtk_button_new_with_label("Apply Changes");
+    gtk_box_pack_start (GTK_BOX (button_box), tmp, FALSE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(get_data_from_sheet), NULL);
+    gtk_widget_show(tmp);
+
+    tmp = gtk_button_new_with_label("Close");
+    gtk_box_pack_start (GTK_BOX (button_box), tmp, FALSE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
 		       GTK_SIGNAL_FUNC(delete_widget), sheetwin);
-    gtk_widget_show(close);
+    gtk_widget_show(tmp);
 
     gtk_signal_connect(GTK_OBJECT(gtk_sheet_get_entry(GTK_SHEET(gretlsheet))),
 		       "changed", (GtkSignalFunc) show_entry, 

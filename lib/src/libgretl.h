@@ -47,6 +47,12 @@ typedef enum {
     STACKED_CROSS_SECTION
 } ts_codes;
 
+typedef enum {
+    GENR_RESID,
+    GENR_FITTED,
+    GENR_RESID2
+} auto_genr;
+
 typedef int *LIST;  
 
 /* information on data set */

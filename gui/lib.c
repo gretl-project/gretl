@@ -227,7 +227,7 @@ void clear_data (int full)
     fullZ = NULL;
     clear_clist(mdata->listbox);
     clear_sample_label();
-    data_status = DATA_NONE;
+    data_status = 0;
     orig_vars = 0;
     menubar_state(FALSE);
 
@@ -617,8 +617,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	matrix_print_corr(obj, datainfo, 1, prn);
 	break;
     case FREQ:
-	obj = freqdist(&Z, datainfo, NULL, 0,
-		       datainfo->varname[mdata->active_var], 1);
+	obj = freqdist(&Z, datainfo, mdata->active_var, 1);
 	if (freq_error(obj, NULL)) {
 	    gretl_print_destroy(prn);
 	    return;
@@ -1102,7 +1101,7 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata)
 	errbox("Failed to add case markers");
     else {
 	infobox("Case markers added");
-	data_status = DATA_MODIFIED; 
+	data_status |= MODIFIED_DATA; 
     }
 }
 
@@ -1226,7 +1225,7 @@ static gint add_test_to_model (GRETLTEST *test, MODEL *pmod)
 
 /* ........................................................... */
 
-static void PRNest_to_window (GRETLTEST *test, GtkWidget *w)
+static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 {
     gchar *tempstr;
 
@@ -1271,7 +1270,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 	} else {
 	    strcat(title, "(heteroskedasticity)");
 	    if (add_test_to_model(&test, pmod) == 0)
-		PRNest_to_window(&test, mydata->w);
+		print_test_to_window(&test, mydata->w);
 	}
     } 
     else if (aux_code == AUX_AR) {
@@ -1284,7 +1283,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 	} else {
 	    strcat(title, "(autocorrelation)");
 	    if (add_test_to_model(&test, pmod) == 0)
-		PRNest_to_window(&test, mydata->w);
+		print_test_to_window(&test, mydata->w);
 	}
     } 
     else {
@@ -1305,7 +1304,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 	    model_count--;
 	    strcat(title, "(non-linearity)");
 	    if (add_test_to_model(&test, pmod) == 0)
-		PRNest_to_window(&test, mydata->w);
+		print_test_to_window(&test, mydata->w);
 	} 
     }
 
@@ -1408,7 +1407,7 @@ static void do_chow_cusum (gpointer data, int code)
     } 
 
     if (add_test_to_model(&test, pmod) == 0)
-	PRNest_to_window(&test, mydata->w);
+	print_test_to_window(&test, mydata->w);
 
     if (check_cmd(line) || model_cmd_init(line, pmod->ID))
 	return;
@@ -1471,7 +1470,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 	errmsg(err, prn);
     else {
 	if (add_test_to_model(&test, pmod) == 0)
-	    PRNest_to_window(&test, mydata->w);
+	    print_test_to_window(&test, mydata->w);
 	if (oflag) outcovmx(models[1], datainfo, 0, prn);
     }
     clear_model(models[1], NULL, NULL);
@@ -1726,7 +1725,7 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
     gretl_print_destroy(prn);
     populate_clist(mdata->listbox, datainfo);
     set_sample_label(datainfo);
-    data_status = DATA_OPEN;
+    data_status = HAVE_DATA | GUI_DATA;
     orig_vars = datainfo->v;
     menubar_state(TRUE);
 }
@@ -1856,7 +1855,7 @@ static void finish_genr (MODEL *pmod)
 	    errbox("Failed to add new variable");
 	else {
 	    populate_clist(mdata->listbox, datainfo);
-	    data_status = DATA_MODIFIED;
+	    data_status |= MODIFIED_DATA;
 	}
     }
 }
@@ -1873,7 +1872,7 @@ void do_rename_var (GtkWidget *widget, dialog_t *ddata)
     if (validate_varname(edttext)) return;
     strcpy(datainfo->varname[mdata->active_var], edttext);
     populate_clist(mdata->listbox, datainfo);
-    data_status = DATA_MODIFIED; 
+    data_status |= MODIFIED_DATA; 
 }
 
 /* ........................................................... */
@@ -1889,7 +1888,7 @@ void delete_var (void)
 	return;
     }
     populate_clist(mdata->listbox, datainfo);
-    data_status = DATA_MODIFIED; 
+    data_status |= MODIFIED_DATA; 
 }
 
 /* ........................................................... */
@@ -1904,7 +1903,7 @@ void do_edit_label (GtkWidget *widget, dialog_t *ddata)
     strncpy(datainfo->label[mdata->active_var], edttext, MAXLABEL-1);
     datainfo->label[mdata->active_var][MAXLABEL-1] = '\0';
     populate_clist(mdata->listbox, datainfo);
-    data_status = DATA_MODIFIED; 
+    data_status |= MODIFIED_DATA; 
 }
 
 /* ........................................................... */
@@ -1929,8 +1928,13 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 
     if (bufopen(&prn)) return;
 
-    freq = freqdist(NULL, NULL, pmod->uhat, pmod->t2 - pmod->t1 + 1, 
-		    "uhat", pmod->ncoeff);
+    if (genr_fit_resid(pmod, &Z, datainfo, GENR_RESID, 1)) {
+	errbox("Out of memory attempting to add variable");
+	return;
+    }
+
+    freq = freqdist(&Z, datainfo, datainfo->v - 1, pmod->ncoeff);
+    dataset_drop_vars(1, &Z, datainfo);
     if (freq_error(freq, NULL)) {
 	gretl_print_destroy(prn);
 	return;
@@ -1939,7 +1943,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     normal_test(&test, freq);
 
     if (add_test_to_model(&test, pmod) == 0)
-	PRNest_to_window(&test, mydata->w);
+	print_test_to_window(&test, mydata->w);
 
     clear(line, MAXLEN);
     strcpy(line, "testuhat");
@@ -1968,8 +1972,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
     sprintf(line, "freq %s", datainfo->varname[mdata->active_var]);
     if (check_cmd(line) || cmd_init(line)) return;
 
-    freq = freqdist(&Z, datainfo, NULL, 0,
-		    datainfo->varname[mdata->active_var], 1);
+    freq = freqdist(&Z, datainfo, mdata->active_var, 1);
 
     if (!freq_error(freq, NULL)) { 
 	if (dist == GAMMA && freq->midpt[0] < 0.0 && freq->f[0] > 0) {
@@ -2691,12 +2694,14 @@ void do_open_csv_box (char *fname, int code)
 
     if (err) return;
 
+    data_status |= IMPORT_DATA;
+
     register_data(fname, 1);
 }
 
 /* ........................................................... */
 
-void do_store (char *mydatfile, const int opt)
+int do_store (char *mydatfile, const int opt)
 {
     char f = getflag(opt);
     gchar *msg;
@@ -2709,10 +2714,9 @@ void do_store (char *mydatfile, const int opt)
     else {
 	sprintf(line, "store '%s' %s", mydatfile, storelist);   
 	strcpy(paths.datfile, mydatfile);
-	set_sample_label(datainfo);
     }
 
-    if (check_cmd(line) || cmd_init(line)) return; 
+    if (check_cmd(line) || cmd_init(line)) return 1; 
 
     /* back up existing datafile if need be */
     if ((fp = fopen(mydatfile, "r")) && fgetc(fp) != EOF &&
@@ -2722,13 +2726,13 @@ void do_store (char *mydatfile, const int opt)
 	sprintf(backup, "%s~", mydatfile);
 	if (copyfile(mydatfile, backup)) {
 	    errbox("Couldn't make backup of data file");
-	    return;
+	    return 1;
 	}
     }
 
     if (write_data(mydatfile, command.list, Z, datainfo, data_option(opt))) {
 	errbox("Write of data file failed");
-	return;
+	return 1;
     }
 
     if (opt != OPT_M && opt != OPT_R && opt != OPT_R_ALT)
@@ -2746,9 +2750,12 @@ void do_store (char *mydatfile, const int opt)
     g_free(msg);
 
     /* record that data have been saved */
-    if (data_status == DATA_MODIFIED) data_status = DATA_OPEN;
+    if (!f) {
+	data_status = (HAVE_DATA|USER_DATA);
+	set_sample_label(datainfo);
+    }
 
-    return;
+    return 0;
 }
 
 /* ........................................................... */
@@ -3296,8 +3303,7 @@ static int gui_exec_line (char *line,
 	break;
 		
     case FREQ:
-	freq = freqdist(&Z, datainfo, NULL, 0,
-			datainfo->varname[command.list[1]], 1);
+	freq = freqdist(&Z, datainfo, command.list[1], 1);
 	if ((err = freq_error(freq, prn))) {
 	    break;
 	}
@@ -3387,6 +3393,7 @@ static int gui_exec_line (char *line,
         else
             err = import_csv(&Z, datainfo, datfile, prn);
         if (!err) { 
+	    data_status |= IMPORT_DATA;
 	    register_data(datfile, 1);
             print_smpl(datainfo, 0, prn);
             varlist(datainfo, prn);
@@ -3415,6 +3422,8 @@ static int gui_exec_line (char *line,
 	    gui_errmsg(err);
 	    break;
 	}
+	if (check == GRETL_CSV_DATA || check == GRETL_BOX_DATA)
+	    data_status |= IMPORT_DATA;
 	register_data(paths.datfile, (exec_code != REBUILD_EXEC));
 	varlist(datainfo, prn);
 	paths.currdir[0] = '\0'; 
@@ -3505,7 +3514,7 @@ static int gui_exec_line (char *line,
 	}
 	populate_clist(mdata->listbox, datainfo);
 	set_sample_label(datainfo);
-	data_status = DATA_OPEN;
+	data_status = HAVE_DATA | GUI_DATA;
 	orig_vars = datainfo->v;
 	menubar_state(TRUE);
 	break;
@@ -3676,10 +3685,13 @@ static int gui_exec_line (char *line,
 
     case TESTUHAT:
 	if ((err = script_model_test(0, prn, 0))) break;
-	freq = freqdist(NULL, NULL, (models[0])->uhat, 
-			(models[0])->t2 - (models[0])->t1 + 1, 
-			"uhat", (models[0])->ncoeff);
-
+	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
+	    pprintf(prn, "Out of memory attempting to add variable.\n");
+	    err = 1;
+	    break;
+	}
+	freq = freqdist(&Z, datainfo, datainfo->v - 1, (models[0])->ncoeff);
+	dataset_drop_vars(1, &Z, datainfo);
 	if (!(err = freq_error(freq, prn))) {
 	    if (rebuild) {
 		normal_test(ptest, freq);

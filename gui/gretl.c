@@ -63,6 +63,7 @@ static void check_for_pwt (void);
 static void set_up_main_menu (void);
 static void startR (gpointer p, guint opt, GtkWidget *w);
 static void Rcleanup (void);
+static void auto_store (void);
 
 GtkWidget *toolbar_box = NULL; /* shared with gui_utils.c */
 
@@ -170,7 +171,7 @@ GtkItemFactoryEntry data_items[] = {
     { "/File/_Open data/sep1", NULL, NULL, 0, "<Separator>" },    
     { "/File/_Open data/import CSV...", NULL, open_data, OPEN_CSV, NULL },
     { "/File/_Open data/import BOX...", NULL, open_data, OPEN_BOX, NULL },
-    { "/File/_Save data", NULL, dummy_call, 0, NULL },
+    { "/File/_Save data", NULL, auto_store, 0, NULL },
     { "/File/Save data _as/_standard format...", NULL, file_save, 
       SAVE_DATA, NULL },
     { "/File/Save data _as/_alternative formats/_gzipped ASCII...", NULL, 
@@ -619,12 +620,13 @@ int main (int argc, char *argv[])
 	    get_runfile(paths.datfile);
 	    break;
 	}
-	if (ftype != 4) {
+	if (ftype != GRETL_SCRIPT) {
 	    if (err) {
 		errmsg(err, &prn);
 		return EXIT_FAILURE;
 	    }
-	    data_status = DATA_OPEN;
+	    data_status = HAVE_DATA;
+	    /* FIXME need more here? */
 	    orig_vars = datainfo->v;
 	    /* record the data file in command log */
 	    sprintf(line, "open %s", paths.datfile);
@@ -726,7 +728,6 @@ void menubar_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/File/Clear data set", s);
-	flip(mdata->ifac, "/File/Save data", s);
 	flip(mdata->ifac, "/File/Save data as", s);
 	flip(mdata->ifac, "/File/Export data", s);
 	flip(mdata->ifac, "/File/Create data set", !s);
@@ -734,6 +735,10 @@ void menubar_state (gboolean s)
 	flip(mdata->ifac, "/Sample", s);
 	flip(mdata->ifac, "/Variable", s);
 	flip(mdata->ifac, "/Model", s);
+	if (s && (data_status & USER_DATA))
+	    flip(mdata->ifac, "/File/Save data", s);
+	if (!s) 
+	    flip(mdata->ifac, "/File/Save data", s);
     }
 }
 
@@ -857,7 +862,7 @@ void clear_sample_label (void)
 void set_sample_label (DATAINFO *pdinfo)
 {
     char startdate[8], enddate[8], pdstr[10];
-    char labeltxt[80], datalabel[64];
+    char labeltxt[80];
 
     ntodate(startdate, pdinfo->t1, pdinfo);
     ntodate(enddate, pdinfo->t2, pdinfo);
@@ -885,12 +890,18 @@ void set_sample_label (DATAINFO *pdinfo)
 
     if (strlen(paths.datfile) > 2) {
 	if (strrchr(paths.datfile, SLASH) == NULL)
-	    sprintf(datalabel, " %s ", paths.datfile);
+	    sprintf(labeltxt, " %s ", paths.datfile);
 	else
-	    sprintf(datalabel, " %s ", 
+	    sprintf(labeltxt, " %s ", 
 		    strrchr(paths.datfile, SLASH) + 1);
+	if (data_status & MODIFIED_DATA) 
+	    strcat(labeltxt, "* ");
 	if (dataframe != NULL)
-	    gtk_frame_set_label(GTK_FRAME(dataframe), datalabel);
+	    gtk_frame_set_label(GTK_FRAME(dataframe), labeltxt);
+    } 
+    else if (data_status & MODIFIED_DATA) {
+	strcpy(labeltxt, " Unsaved data ");
+	gtk_frame_set_label(GTK_FRAME(dataframe), labeltxt);
     }
 }
 
@@ -1672,5 +1683,14 @@ static void clip_init (GtkWidget *w)
 			      targets, n_targets);
     gtk_signal_connect (GTK_OBJECT(mdata->w), "selection_get",
 			GTK_SIGNAL_FUNC(special_selection_get), NULL);    
+}
+
+/* ........................................................... */
+
+static void auto_store (void)
+{
+    if (make_default_storelist()) return;
+    
+    do_store(paths.datfile, 0);
 }
 

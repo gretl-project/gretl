@@ -401,25 +401,34 @@ void register_data (const char *fname, int record)
     char datacmd[MAXLEN];
 
     /* basic accounting */
-    data_status = DATA_OPEN;
+    data_status |= HAVE_DATA;
     orig_vars = datainfo->v;
+
+    /* set appropriate data_status bits */
+    if (fname == NULL)
+	data_status |= (GUI_DATA|MODIFIED_DATA);
+    else if (!(data_status & IMPORT_DATA)) {
+	if (strstr(paths.datfile, paths.datadir) != NULL) 
+	    data_status |= BOOK_DATA;
+	else
+	    data_status |= USER_DATA; 
+    }
 
     /* sync main window with datafile */
     populate_clist(mdata->listbox, datainfo);
     set_sample_label(datainfo);
     menubar_state(TRUE);
-    session_state(TRUE);    
+    session_state(TRUE);
 
     if (!record) return;
+
     /* record opening of data file in command log */
     if (fname != NULL) {
 	mkfilelist(1, fname);
 	sprintf(datacmd, "open %s", fname);
 	check_cmd(datacmd);
 	cmd_init(datacmd); 
-    } else { /* created using spreadsheet */
-	data_status = DATA_MODIFIED;
-    }
+    } 
 }
 
 /* ........................................................... */
@@ -469,7 +478,7 @@ void do_open_data (GtkWidget *w, gpointer data)
 	return;
     }	
     /* trash the practice files window that launched the query? */
-    if (fwin) gtk_widget_destroy(fwin->w);    
+    if (fwin) gtk_widget_destroy(fwin->w); 
 
     register_data(paths.datfile, 1);
 }
