@@ -20,8 +20,6 @@
 #ifndef GENSTACK_H
 #define GENSTACK_H
 
-#define GENR_DEBUG
-
 #ifdef GENR_DEBUG
 void dprintf (const char *format, ...);
 # define DPRINTF(x) dprintf x
@@ -91,10 +89,6 @@ enum transformations {
     T_IDENTITY
 };
 
-int push_paren_term (char *term);
-char *get_paren_term (int i);
-void destroy_paren_term_stack (void);
-
 int push_atom (genatom *atom);
 genatom *pop_atom (void);
 genatom *pop_child_atom (genatom *atom);
@@ -106,7 +100,7 @@ void atom_stack_bookmark (void);
 void atom_stack_resume (void);
 int atom_stack_check_for_scalar (void);
 
-void calc_push (double x);
+int calc_push (double x);
 double calc_pop (void);
 void reset_calc_stack (void);
 

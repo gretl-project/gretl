@@ -215,48 +215,6 @@ static genatom *atom_stack (genatom *atom, int op)
     return ret;
 }
 
-static char *paren_term_stack (char *term, int op, int i)
-{
-    static char **terms;
-    static int n_terms;
-    char *ret = NULL;
-    int j;
-
-    if (op == STACK_PUSH) {
-	terms = realloc(terms, (n_terms + 1) * sizeof *terms);
-	if (terms != NULL) {
-	    terms[n_terms++] = term;
-	    ret = term;
-	}
-    } else if (op == STACK_GET) {
-	if (i >= 0 && i < n_terms) {
-	    ret = terms[i];
-	}
-    } else if (op == STACK_DESTROY) {
-	for (j=0; j<n_terms; j++) free(terms[j]);
-	free(terms);
-	terms = NULL;
-	n_terms = 0;
-    }
-
-    return ret;
-}
-
-int push_paren_term (char *term)
-{
-    return (paren_term_stack(term, STACK_PUSH, 0) == NULL);
-}
-
-char *get_paren_term (int i)
-{
-    return paren_term_stack(NULL, STACK_GET, i);
-}
-
-void destroy_paren_term_stack (void)
-{
-    paren_term_stack(NULL, STACK_DESTROY, 0);
-}
-
 int push_atom (genatom *atom)
 {
     return (atom_stack(atom, STACK_PUSH) == NULL);
@@ -309,7 +267,7 @@ int atom_stack_check_for_scalar (void)
 
 #define STACKSIZE 32
 
-static double calc_stack (double val, int op)
+static double calc_stack (double val, int op, int *err)
 {
     static double valstack[STACKSIZE]; /* how big should this be? */
     static int nvals;
@@ -319,6 +277,7 @@ static double calc_stack (double val, int op)
     if (op == STACK_PUSH) {
 	if (nvals == STACKSIZE - 1) {
 	    fprintf(stderr, "genr: stack depth exceeded\n");
+	    *err = 1;
 	    return x;
 	} else {
 	    for (i=nvals; i>0; i--) {
@@ -345,19 +304,22 @@ static double calc_stack (double val, int op)
     return x;
 }
 
-void calc_push (double x)
+int calc_push (double x)
 {
-    calc_stack(x, STACK_PUSH);
+    int err = 0;
+
+    calc_stack(x, STACK_PUSH, &err);
+    return err;
 }
 
 double calc_pop (void)
 {
-    return calc_stack(0., STACK_POP);
+    return calc_stack(0., STACK_POP, NULL);
 }
 
 void reset_calc_stack (void)
 {
-    calc_stack(0., STACK_RESET);
+    calc_stack(0., STACK_RESET, NULL);
 }
 
 #ifdef GENR_DEBUG

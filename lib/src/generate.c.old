@@ -19,34 +19,43 @@
 
 /* generate.c for gretl */
 
-#define GENR_DEBUG
+/* #define GENR_DEBUG */
 
 #include "libgretl.h"
 #include "internal.h"
-#include "genstack.h"
 
 #include <errno.h>
 
 typedef struct _GENERATE GENERATE;
 
 struct _GENERATE {
-    int err;
-    char save;
-    char scalar; 
     double *xvec;
     int varnum;
     char varname[VNAMELEN];
     char label[MAXLABEL];
-    int tmpv;
-    double **tmpZ;
-    DATAINFO *pdinfo;
-    double ***pZ;
-    MODEL *pmod;
+    int scalar; 
+    double scalval;
 };
 
-static double calc_xy (double x, double y, char op, int t);
-
-static void genrfree (GENERATE *genr);
+static int cstack (double *xstack, double *xvec, char op, 
+		   const DATAINFO *pdinfo, int expand);
+static int domath (double *xvec, const double *mvec, int nt, 
+		   const DATAINFO *pdinfo, int *scalar);
+static int evalexp (char *ss, int nt, double *mvec, double *xvec, 
+		    double **Z, const DATAINFO *pdinfo, 
+		    const MODEL *pmod, GENERATE *genr);
+static void getvar (char *str, char *word, char *c);
+static int getxvec (char *s, double *xvec, 
+		    double **Z, const DATAINFO *pdinfo, 
+		    const MODEL *pmod, int *scalar);
+static int scanb (const char *ss, char *word);
+static int strtype (char *ss, const DATAINFO *pdinfo);
+static int whichtrans (const char *ss);
+static int createvar (double *xvec, char *snew, char *sleft, 
+		      char *sright, int ssnum, double ***pZ, 
+		      DATAINFO *pdinfo, int scalar);
+static void genrfree (double ***pZ, DATAINFO *pdinfo, GENERATE *pgenr,
+		      double *mstack, double *mvec, int nv);
 static void get_lag (int v, int lag, double *lagvec, double **Z, 
 		     const DATAINFO *pdinfo);
 static double genr_cov (const char *str, double ***pZ,
@@ -57,57 +66,80 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 			MODEL *pmod);
 static int genr_mpow (const char *str, double *xvec, double **pZ, 
 		      DATAINFO *pdinfo);
-static int obs_num (const char *s, const DATAINFO *pdinfo);
+static int obs_num (const char *ss, const DATAINFO *pdinfo);
+static int has_lhs_lags (const char *str, const char *vname);
+static char *genr_to_sim (const char *s, int nlags, const char *vname,
+			  const DATAINFO *pdinfo);
 
 #ifdef HAVE_MPFR
 static int genr_mlog (const char *str, double *xvec, double **pZ, 
 		      DATAINFO *pdinfo);
 #endif
 
-static void genr_msg (GENERATE *genr, int oldv);
-static void varerror (const char *s);
+static void genr_msg (GENERATE *pgenr, int nv);
 static int ismatch (int lv, const int *list);
+static void varerror (const char *ss);
 static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr, int time);
-static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr);
+static int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr);
 
-static int math_tokenize (char *s, GENERATE *genr, int level);
-static double get_obs_value (const char *s, double **Z, 
-			     const DATAINFO *pdinfo);
-static int model_variable_index (const char *s);
-static int dataset_var_index (const char *s);
-
-static double *get_model_series (double **Z, const DATAINFO *pdinfo,
-				 const MODEL *pmod, int v);
-static double *get_random_series (DATAINFO *pdinfo, int fn);
-static double *get_mp_series (const char *s, GENERATE *genr,
-			      int fn, int *err);
-static double *get_tmp_series (double *x, const DATAINFO *pdinfo, 
-			       int fn, int *err);
-
-static double get_tnum (const DATAINFO *pdinfo, int t);
-static double evaluate_statistic (double *z, GENERATE *genr, int fn);
-static double get_model_data_element (const char *s, GENERATE *genr,
-				      MODEL *pmod, int idx);
-static double get_model_statistic (const MODEL *pmod, int idx, int *err);
-static double get_dataset_statistic (DATAINFO *pdinfo, int idx);
-static double evaluate_math_function (double arg, int fn, int *err);
-static double evaluate_missval_func (double arg, int fn);
-static double evaluate_bivariate_statistic (const char *s, 
-					    GENERATE *genr, 
-					    int fn);
-static double evaluate_pvalue (const char *s, double **Z,
-			       const DATAINFO *pdinfo, int *err);
+enum transformations {
+    T_LOG = 1, 
+    T_EXP, 
+    T_SIN, 
+    T_COS,
+    T_TAN,
+    T_ATAN,
+    T_DIFF,
+    T_LDIFF, 
+    T_MEAN, 
+    T_SD, 
+    T_MIN,
+    T_MAX,
+    T_SORT, 
+    T_INT, 
+    T_LN, 
+    T_COEFF,
+    T_ABS, 
+    T_RHO, 
+    T_SQRT, 
+    T_SUM, 
+    T_NOBS,
+    T_NORMAL, 
+    T_UNIFORM, 
+    T_STDERR,
+    T_CUM, 
+    T_MISSING,
+    T_MISSZERO,
+    T_CORR,
+    T_VCV,
+    T_VAR,
+    T_COV,
+    T_MEDIAN,
+    T_ZEROMISS,
+    T_PVALUE,
+    T_MPOW,
+#ifdef HAVE_MPFR
+    T_MLOG,
+#endif
+    T_SST
+};
 
 enum retrieve {
     R_ESS = 1,
+    R_NOBS,
     R_T,
     R_RSQ,
     R_SIGMA,
     R_DF,
     R_LNL,
     R_TRSQ,
-    R_NOBS,
-    R_PD
+    R_PD,
+    R_NUMERIC,
+    R_MATH,
+    R_VARNAME,
+    R_VAROBS,
+    R_OBSNUM,
+    R_UNKNOWN
 };
 
 enum composites {
@@ -116,711 +148,109 @@ enum composites {
     LEQ
 };
 
-struct genr_func {
-    int fnum;
-    const char *fword;
+enum set_or_get {
+    OBS_SET,
+    OBS_GET
 };
 
-struct genr_func funcs[] = {
-    { T_LOG, "log" }, 
-    { T_EXP,     "exp" }, 
-    { T_SIN,     "sin" }, 
-    { T_COS,     "cos" }, 
-    { T_TAN,     "tan" },
-    { T_ATAN,    "atan" },
-    { T_DIFF,    "diff" },
-    { T_LDIFF,   "ldiff" }, 
-    { T_MEAN,    "mean" }, 
-    { T_SD,      "sd" }, 
-    { T_MIN,     "min" },
-    { T_MAX,     "max" },
-    { T_SORT,    "sort" }, 
-    { T_INT,     "int" }, 
-    { T_LN,      "ln" }, 
-    { T_COEFF,   "coeff" },
-    { T_ABS,     "abs" }, 
-    { T_RHO,     "rho" }, 
-    { T_SQRT,    "sqrt" }, 
-    { T_SUM,     "sum" }, 
-    { T_NOBS,    "nobs" },
-    { T_NORMAL,  "normal" }, 
-    { T_UNIFORM, "uniform" }, 
-    { T_STDERR,  "stderr" },
-    { T_CUM,     "cum" }, 
-    { T_MISSING, "missing" },
-    { T_MISSZERO, "misszero" },
-    { T_CORR,    "corr" },
-    { T_VCV,     "vcv" },
-    { T_VAR,     "var" },
-    { T_SST,     "sst" },
-    { T_COV,     "cov" },
-    { T_MEDIAN,  "median" },
-    { T_ZEROMISS, "zeromiss" },
-    { T_PVALUE,  "pvalue" },
-    { T_MPOW,    "mpow" },
+static char *math[] = {
+    "log", 
+    "exp", 
+    "sin", 
+    "cos", 
+    "tan",
+    "atan",
+    "diff",
+    "ldiff", 
+    "mean", 
+    "sd", 
+    "min",
+    "max",
+    "sort", 
+    "int", 
+    "ln", 
+    "coeff",
+    "abs", 
+    "rho", 
+    "sqrt", 
+    "sum", 
+    "nobs",
+    "normal", 
+    "uniform", 
+    "stderr",
+    "cum", 
+    "missing",
+    "misszero",
+    "corr",
+    "vcv",
+    "var",
+    "cov",
+    "median",
+    "zeromiss",
+    "pvalue",
+    "mpow",
 #ifdef HAVE_MPFR
-    { T_MLOG,    "mlog" },
+    "mlog",
 #endif
-    { T_IDENTITY, "identity" },
-    { 0, NULL }
+    "sst",
+    NULL
+};
+
+static char operators[] = {
+    '+', '-', '|',
+    '*', '/', '%', '&',
+    '^', '<', '>', '=', '!', NEQ, GEQ, LEQ, 0
 };
 
 #define LEVELS 7
 
-#define STANDARD_MATH(f) (f == T_LOG || f == T_LN || f == T_EXP || \
-                          f == T_SIN || f == T_COS || f == T_TAN || \
-                          f == T_ATAN || f == T_INT || f == T_ABS || \
-                          f == T_SQRT)
+#define SCALAR_SCOPE(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
+                         t == T_CORR || t == T_COV || \
+                         t == T_VAR || t == T_MEDIAN || t == T_MIN || \
+                         t == T_SST || t == T_MAX || t == T_NOBS)
 
-#define UNIVARIATE_STAT(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
-                            t == T_VAR || t == T_MEDIAN || t == T_MIN || \
-                            t == T_SST || t == T_MAX || t == T_NOBS)
-
-#define BIVARIATE_STAT(t) (t == T_CORR || t == T_COV)
-
-#define MODEL_DATA_ELEMENT(f) (f == T_COEFF || f == T_STDERR || \
-                               f == T_RHO || f == T_VCV)
-
-#define MISSVAL_FUNC(f) (f == T_MISSING || f == T_MISSZERO || \
-                         f == T_ZEROMISS)
-
-#ifdef HAVE_MPFR
-# define MP_MATH(f) (f == T_MPOW || f == T_MLOG)
-#else
-# define MP_MATH(f) (f == T_MPOW)
-#endif
-
-#ifdef GENR_DEBUG
-static const char *get_func_word (int fnum);
-#endif
-
-#define MAXTERMS  64
-#define TOKLEN   128
+#define MAXTERMS 64
+#define _VSMALL 1.0e-14
 
 /* ...................................................... */
 
-static genatom *make_atom (int scalar, int varnum,
-			   int lag, double val,
-			   int func, char op, char *str,
-			   int level)
+static int is_operator (char c)
 {
-    genatom *atom;
+    int i;
 
-    atom = malloc(sizeof *atom);
-    if (atom == NULL) return NULL;
-
-    atom->scalar = scalar;
-    atom->varnum = varnum;
-    atom->tmpvar = -1;
-    atom->lag = lag;
-    atom->val = val;
-    atom->func = func;
-    atom->op = op;
-    atom->level = level;
-
-    *atom->str = '\0';
-    strncat(atom->str, str, ATOMLEN - 1);
-
-    atom->parent = NULL;
-    atom->popped = 0;
-
-    return atom;
-}
-
-#ifdef GENR_DEBUG
-static int print_atom (genatom *atom)
-{
-    if (atom == NULL) return 1;
-
-    fprintf(stderr, " atom->level = %d\n", atom->level);
-
-    fprintf(stderr, " atom->scalar = %d\n", atom->scalar);
-
-    if (atom->varnum >= 0) {
-	fprintf(stderr, " atom->varnum = %d\n", atom->varnum);
-    }
-    if (atom->tmpvar >= 0) {
-	fprintf(stderr, " atom->tmpvar = %d\n", atom->tmpvar);
-    }
-    if (atom->lag > 0) {
-	fprintf(stderr, " atom->lag = %d\n", atom->lag);
-    }
-    if (atom->scalar) {
-	fprintf(stderr, " atom->val = %g\n", atom->val);
-    }
-    if (atom->func > 0) {
-	const char *fword = get_func_word(atom->func);
-
-	if (fword != NULL) {
-	    fprintf(stderr, " atom->func = %d (%s)\n", 
-		    atom->func, get_func_word(atom->func));
-	} else {
-	    fprintf(stderr, " atom->func = %d (UNKNOWN!)\n", 
-		    atom->func);
-	}
-    }
-
-    if (*atom->str) {
-	fprintf(stderr, " atom->str = '%s'\n", atom->str);
-    }    
-
-    if (isprint(atom->op)) {
-	fprintf(stderr, " atom->op = '%c'\n", atom->op);
-    } else {
-	fprintf(stderr, " atom->op = %d\n", atom->op);
-    }
-
+    for (i=0; operators[i] != 0; i++) 
+	if (c == operators[i]) return 1;
     return 0;
-}
-#endif
-
-static int get_lagvar (const char *s, int *lag, GENERATE *genr)
-{
-    char vname[VNAMELEN];
-    char format[16];
-    int m, v = 0;
-
-    sprintf(format, "%%%d[^(](%%d)", VNAMELEN - 1);
-
-    if (sscanf(s, format, vname, &m) == 2) {
-	v = varindex(genr->pdinfo, vname);
-	if (v >= genr->pdinfo->v) {
-	    v = m = 0;
-	} else if (genr->pdinfo->vector[v] == 0) {
-	    sprintf(gretl_errmsg, _("Variable %s is a scalar; "
-				    "can't do lags/leads"), 
-		    genr->pdinfo->varname[v]);
-	    genr->err = E_DATA;
-	    v = m = 0;
-	}
-    }
-
-    if (lag != NULL) *lag = -m;
-
-    return v;
-}
-
-static int get_arg_string (char *str, const char *s)
-{
-    const char *p = strchr(s, '(');
-    int n = strlen(p) - 2;
-    int err = 0;
-
-    *str = '\0';
-
-    DPRINTF(("get_arg_string: looking at '%s'\n", s));
-
-    if (n < 0 || n > ATOMLEN - 1) err = 1;
-    else strncat(str, p + 1, n);
-
-    DPRINTF(("get_arg_string: got '%s'\n", str));
-
-    return err;
-}
-
-static genatom *parse_token (const char *s, char op,
-			     GENERATE *genr, int level)
-{
-    int v = -1;
-    int scalar = 0, lag = 0, func = 0;
-    double val = 0.0;
-    char str[ATOMLEN] = {0};
-
-    if (isalpha(*s)) {
-	if (!strchr(s, '(') && !strchr(s, '[')) {
-	    if (!strcmp(s, "pi")) {
-		val = M_PI;
-		scalar = 1;
-	    }
-	    v = varindex(genr->pdinfo, s);
-	    if (v == genr->pdinfo->v) { 
-		sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"),
-			s);
-		genr->err = E_UNKVAR;
-	    } else {
-		DPRINTF(("recognized var '%s' (#%d)\n", s, v));
-	    }
-
-	    if (v == INDEXNUM) { /* internal index variable */
-		int k = genr_scalar_index(0, 0);
-
-		val = k;
-		scalar = 1;
-	    }
-
-	    /* handle scalar vars here */
-	    if (v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
-		val = (*genr->pZ)[v][0];
-		scalar = 1;
-	    }
-	}
-	else if (strchr(s, '(')) {
-	    /* try for lag variable first */
-	    v = get_lagvar(s, &lag, genr);
-	    if (v != 0) {
-		DPRINTF(("recognized var #%d lag %d\n", v, lag));
-	    } else {
-		/* try for a function */
-		lag = 0;
-		v = -1;
-		func = get_function(s);
-		if (func) {
-		    DPRINTF(("recognized function #%d (%s)\n", func, 
-			     get_func_word(func)));
-		    if (MP_MATH(func) || func == T_PVALUE ||
-			BIVARIATE_STAT(func) || MODEL_DATA_ELEMENT(func)) {
-			genr->err = get_arg_string(str, s);
-		    } 
-		    if (func == T_PVALUE) {
-			if (!genr->err) {
-			    val = evaluate_pvalue(str, *genr->pZ,
-						  genr->pdinfo,
-						  &genr->err);
-			    scalar = 1;
-			}
-		    }
-		    else if (MODEL_DATA_ELEMENT(func)) {
-			val = get_model_data_element(str, genr,
-						     genr->pmod, 
-						     func);
-			scalar = 1;
-		    }
-		    else if (BIVARIATE_STAT(func)) {
-			val = evaluate_bivariate_statistic(str, genr,
-							   func);
-			scalar = 1;
-		    }
-		} else {
-		    /* not a variable or function: dead end? */
-		    DPRINTF(("dead end in parse_token, s='%s'\n", s));
-		    genr->err = E_SYNTAX; 
-		}
-	    } 
-	}
-	else if (strchr(s, '[')) {
-	    val = get_obs_value(s, *genr->pZ, genr->pdinfo);
-	    if (val == NADBL) {
-		DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
-		genr->err = E_SYNTAX; 
-	    } else {
-		scalar = 1;
-	    }
-	}
-	else if (*s == '"') {
-	    /* observation label: basis for dummy series */
-	    val = obs_num(s, genr->pdinfo);
-	}
-    }
-
-    else if (*s == '$') {
-	int i = model_variable_index(s);
-
-	if (i > 0) {
-	    DPRINTF(("recognized '%s' as model variable, index #%d\n", 
-		    s, i));
-	    val = get_model_statistic(genr->pmod, i, &genr->err);
-	    scalar = 1;
-	} else {
-	    i = dataset_var_index(s);
-	    if (i > 0) {
-		DPRINTF(("recognized '%s' as dataset var, index #%d\n", 
-			s, i));
-		val = get_dataset_statistic(genr->pdinfo, i);
-		scalar = 1;
-	    } else {
-		genr->err = E_UNKVAR;
-	    }
-	}
-    }
-
-    else if (*s == '#') {
-	/* dummy token for parenthetical term */
-	func = T_IDENTITY;
-    }
-
-    else if (_isnumber(s)) {
-	val = dot_atof(s);
-	scalar = 1;
-    } else {
-	char numstr[16];
-
-	/* number wrapped in parens?  odd but legit */
-	if (sscanf(s, "(%15[^)])", numstr) == 1 &&
-	    _isnumber(numstr)) {
-	    val = dot_atof(numstr);
-	    scalar = 1;
-	} else {
-	    DPRINTF(("dead end after _isnumber, s='%s'\n", s));
-	    genr->err = E_SYNTAX;
-	}
-    }
-
-    if (genr->err) return NULL;
-
-    return make_atom(scalar, v, lag, val, func, op, str, level);
-}
-
-static double get_lag_at_obs (int v, int lag, double **Z, 
-			      const DATAINFO *pdinfo, int t)
-{
-    int lt;
-    double x = NADBL;
-
-    /* stacked X-section needs rather special handling */
-    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
-	lt = t - lag * pdinfo->pd;
-	if (lt >= 0 && lt < pdinfo->n) {
-	    x = Z[v][lt];
-	}
-    }
-    else if (dated_daily_data(pdinfo)) {
-	lt = t - lag;
-	while (lt >= 0 && na(Z[v][lt])) lt--;
-	x = Z[v][lt];
-    } 
-    else { /* the "standard" time-series case */
-	lt = t - lag;
-	if (lt >= 0 && lt < pdinfo->n) {
-	    x = Z[v][lt];
-	}
-    }
-
-    /* post-process missing panel values */
-    if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	char *p, obs[OBSLEN];
-	int j;
-
-	ntodate(obs, t, pdinfo);
-	p = strchr(obs, ':');
-	j = atoi(p + 1);
-	if (j <= lag) x = NADBL;
-    }
-
-    return x;
-}
-
-static double eval_atom (genatom *atom, GENERATE *genr, int t, 
-			 double a)
-{
-    double x = NADBL;
-
-    /* constant, scalar variable, or specific obs from a series */
-    if (atom->scalar) {
-	x = atom->val;
-	DPRINTF(("eval_atom: got scalar = %g\n", x));
-    } 
-
-    /* temporary variable */
-    else if (atom->tmpvar >= 0) {
-	x = genr->tmpZ[atom->tmpvar][t];
-	DPRINTF(("eval_atom: got temp obs = %g\n", x));
-    }
-
-    /* trend/index variable */
-    else if (atom->varnum == TNUM) {
-	x = get_tnum(genr->pdinfo, t);
-    }
-
-    /* regular variable or lagged term */
-    else if (atom->varnum >= 0) {
-	if (!atom->lag) {
-	    x = (*genr->pZ)[atom->varnum][t];
-	    DPRINTF(("eval_atom: got data obs (var %d) = %g\n", 
-		    atom->varnum, x));
-	} else {
-	    x = get_lag_at_obs(atom->varnum, atom->lag, (*genr->pZ),
-			       genr->pdinfo, t);
-	    DPRINTF(("eval_atom: got lagged data obs (var %d, "
-		    "lag %d) = %g\n", atom->varnum, atom->lag, x));
-	}
-    }
-
-    /* function */
-    else if (atom->func) {
-	if (STANDARD_MATH(atom->func)) {
-	    x = evaluate_math_function(a, atom->func, &genr->err);
-	    DPRINTF(("evaluated math func %d: %g -> %g\n", 
-		     atom->func, a, x));
-	}
-	else if (MISSVAL_FUNC(atom->func)) {
-	    x = evaluate_missval_func(a, atom->func);
-	    DPRINTF(("evaluated missval func %d: %g -> %g\n", 
-		     atom->func, a, x));
-	}
-	else if (atom->func == T_IDENTITY) {
-	    DPRINTF(("identity func: passed along %g\n", a));
-	    x = a;
-	}
-    }
-
-    return x;
-}
-
-static int genr_add_var (GENERATE *genr, double *x)
-{
-    double **gZ;    
-    int v = genr->tmpv; 
-  
-    gZ = realloc(genr->tmpZ, (v + 1) * sizeof *gZ);
-    if (gZ == NULL) {
-	genr->err = E_ALLOC;
-	return 1;
-    }
-
-    gZ[v] = x;
-    genr->tmpZ = gZ;
-    genr->tmpv += 1;
-
-    return 0;
-}
-
-static int add_random_series_to_genr (GENERATE *genr, genatom *atom)
-{
-    double *x;
-
-    x = get_random_series(genr->pdinfo, atom->func);
-    if (x == NULL) return 1;
-
-    if (genr_add_var(genr, x)) {
-	free(x);
-	return E_ALLOC;
-    }
-
-    atom->tmpvar = genr->tmpv - 1;
-
-    return 0;
-}
-
-static int add_model_series_to_genr (GENERATE *genr, genatom *atom)
-{
-    double *x;
-
-    x = get_model_series(*genr->pZ, (const DATAINFO *) genr->pdinfo, 
-			 genr->pmod, atom->varnum);
-    if (x == NULL) return 1;
-
-    if (genr_add_var(genr, x)) {
-	free(x);
-	return E_ALLOC;
-    }
-
-    atom->tmpvar = genr->tmpv - 1;
-
-    return genr->err;
-}
-
-static int add_mp_series_to_genr (GENERATE *genr, genatom *atom)
-{
-    double *x;
-
-    x = get_mp_series(atom->str, genr, atom->func, &genr->err);
-    if (x == NULL) return 1;
-
-    if (genr_add_var(genr, x)) {
-	free(x);
-	return E_ALLOC;
-    }
-
-    atom->tmpvar = genr->tmpv - 1;
-
-    return genr->err;
-}
-
-static double *eval_compound_arg (GENERATE *genr,
-				  genatom *this_atom)
-{
-    int t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
-    genatom *atom;
-    double *xtmp;
-
-    xtmp = malloc(genr->pdinfo->n * sizeof *xtmp);
-    if (xtmp == NULL) {
-	genr->err = E_ALLOC;
-	return NULL;
-    }
-
-    for (t=t1; t<=t2; t++) {
-	double xbak = 0.0, x = 0.0;
-	int level = 0;
-
-	reset_atom_stack();
-	while ((atom = pop_child_atom(this_atom))) {
-	    double y = eval_atom(atom, genr, t, x);
-
-	    if (genr->err) break;
-	    if (y == NADBL) {
-		x = NADBL;
-	    } else {
-		if (atom->level < level) {
-		    x = calc_pop();
-		}
-		x = calc_xy(x, y, atom->op, t);
-	    }
-	    if (atom->level > level) { 
-		calc_push(xbak);
-	    }
-	    level = atom->level;
-	    xbak = x;
-	}
-	if (genr->err) break;
-	xtmp[t] = x;
-    }
-
-    return xtmp;
-}
-
-static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
-{
-    double *x, *y;
-
-    atom_stack_set_parentage();
-
-    /* evaluate possibly compound arg */
-    x = eval_compound_arg(genr, atom);
-    if (x == NULL) return genr->err;
-
-    y = get_tmp_series(x, (const DATAINFO *) genr->pdinfo, 
-		       atom->func, &genr->err);
-    if (y == NULL) return genr->err;
-    free(x);
-
-    if (genr_add_var(genr, y)) {
-	free(y);
-	return E_ALLOC;
-    }
-
-    atom->tmpvar = genr->tmpv - 1;
-    atom_eat_children(atom);
-
-    return genr->err;
-}
-
-static int add_statistic_to_genr (GENERATE *genr, genatom *atom)
-{
-    double *x, y;
-
-    atom_stack_set_parentage();
-
-    x = eval_compound_arg(genr, atom);
-    if (x == NULL) return genr->err;
-
-    y = evaluate_statistic(x, genr, atom->func);
-    free(x);
-
-    if (genr->err) return genr->err;
-
-    atom->val = y;
-    atom->scalar = 1;
-    atom_eat_children(atom);
-
-    return genr->err;
 }
 
 /* ...................................................... */
 
-static int evaluate_genr (GENERATE *genr)
+static void catch_double_symbols (char *str)
 {
-    int t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
-    genatom *atom;
+    int i, n = strlen(str);
 
-    reset_atom_stack();
-    while (!genr->err && (atom = pop_atom())) {
-	if (atom->varnum == UHATNUM || atom->varnum == YHATNUM) {
-	    genr->err = add_model_series_to_genr(genr, atom);
-	}
-	else if (atom->func == T_UNIFORM || atom->func == T_NORMAL) {
-	    genr->err = add_random_series_to_genr(genr, atom);
-	}
-	else if (atom->func == T_DIFF || atom->func == T_LDIFF ||
-		 atom->func == T_CUM || atom->func == T_SORT) {
-	    atom_stack_bookmark();
-	    genr->err = add_tmp_series_to_genr(genr, atom);
-	    atom_stack_resume();
-	}
-	else if (UNIVARIATE_STAT(atom->func)) {
-	    atom_stack_bookmark();
-	    genr->err = add_statistic_to_genr(genr, atom);
-	    atom_stack_resume();
-	}
-	else if (MP_MATH(atom->func)) {
-	    genr->err = add_mp_series_to_genr(genr, atom);
-	}	
-    }
-
-    if (genr->err) return genr->err;
-
-    genr->scalar = atom_stack_check_for_scalar();
-    DPRINTF(("evaluate_genr: check for scalar, result = %d\n", genr->scalar));
-
-    if (genr->scalar) t2 = t1;
-
-    for (t=t1; t<=t2; t++) {
-	double xbak = 0.0, x = 0.0;
-	int level = 0, npush = 0, npop = 0;
-
-	reset_atom_stack();
-	while ((atom = pop_atom())) {
-	    double y = eval_atom(atom, genr, t, x);
-	    int pushlevel = 0;
-
-	    if (genr->err) break;
-	    if (y == NADBL) {
-		x = NADBL;
-	    } else {
-		/* was: if (atom->level < level) */
-		if (atom->level < level && atom->level == pushlevel) { /* ? */
-		    x = calc_pop();
-		    npop++;
-		    DPRINTF(("popped %g\n", x));
-		}
-		x = calc_xy(x, y, atom->op, t);
+    for (i=1; i<n; i++) {
+	if (str[i] == '=') {
+	    if (str[i-1] == '!') {
+		str[i-1] = NEQ;
+		str[i] = ' ';
 	    }
-	    if (atom->level > level) {
-		calc_push(xbak);
-		pushlevel = level;
-		npush++;
-		DPRINTF(("pushed %g at level %d\n", xbak, level));
+	    else if (str[i-1] == '>') {
+		str[i-1] = GEQ;	
+		str[i] = ' ';
 	    }
-	    level = atom->level;
-	    xbak = x;
+	    else if (str[i-1] == '<') {
+		str[i-1] = LEQ;	
+		str[i] = ' ';
+	    }	    
 	}
-	if (!genr->err && npop != npush) {
-	    if (npush == npop + 1) calc_pop(); /* harmless? */
-	    else {
-		fprintf(stderr, "genr error: npush = %d, npop = %d\n",
-			npush, npop);
-		genr->err = 1;
+	/* recognize "**" as well as "^" for power */
+	else if (str[i] == '*') {
+	    if (str[i-1] == '*') {
+		str[i-1] = '^';
+		str[i] = ' ';
 	    }
 	}
-	if (genr->err) break;
-	genr->xvec[t] = x;
-    }
-
-    return genr->err;
-}
-
-/* ...................................................... */
-
-static void catch_double_symbols (char *s)
-{
-    while (*s) {
-	if (*s == '!' && *(s+1) == '=') {
-	    *s = NEQ;
-	    *(++s) = ' ';
-	}
-	else if (*s == '>' && *(s+1) == '=') {
-	    *s = GEQ;
-	    *(++s) = ' ';
-	}
-	else if (*s == '<' && *(s+1) == '=') {
-	    *s = LEQ;
-	    *(++s) = ' ';
-	}
-	else if (*s == '*' && *(s+1) == '*') {
-	    *s = '^';
-	    *(++s) = ' ';
-	}
-	s++;
     }
 }
 
@@ -845,224 +275,6 @@ static int op_level (int c)
     return 0;
 }
 
-static int token_is_atomic (const char *s, GENERATE *genr)
-{
-    int count = 0;
-    const char *p = s;
-
-    DPRINTF(("token_is_atomic: looking at '%s'\n", s));
-
-    /* treat lag variable as atom */
-    if (get_lagvar(s, NULL, genr)) return 1;
-
-    while (*p++) {
-	/* token is non-atomic if it contains an operator,
-	   or parentheses */
-	if (op_level(*p) || *p == '(') count++;
-	if (count > 0) break;
-    }
-
-    return (count == 0);
-}
-
-static int string_arg_function (const char *s)
-{
-    if (!strncmp(s, "coeff", 5) ||
-	!strncmp(s, "stderr", 6) ||
-	!strncmp(s, "rho", 3) ||
-	!strncmp(s, "vcv", 3) ||
-	!strncmp(s, "corr", 4) ||
-	!strncmp(s, "cov", 3) ||
-	!strncmp(s, "pvalue", 6) ||
-	!strncmp(s, "mpow", 4) ||
-	!strncmp(s, "mlog", 4)) {
-	return 1;
-    }
-
-    return 0;
-}
-
-static int token_is_function (char *s, GENERATE *genr, int level)
-{
-    int wlen = 0;
-    int ret;
-    const char *p = s;
-
-    while (*p) {
-	if (isalpha(*p)) wlen++;
-	else break;
-	p++;
-    }
-
-#if 0
-    ret = (wlen > 0 && *p == '(' && p[strlen(p)-1] == ')'); 
-#else
-    ret = (*p == '(' && p[strlen(p)-1] == ')'); 
-#endif
-
-    if (ret) {
-	DPRINTF(("token is function...\n"));
-	if (string_arg_function(s)) {
-	    return ret;
-	} else {
-	    char subtok[TOKLEN];
-
-	    strcpy(subtok, strchr(s, '(') + 1);
-	    subtok[strlen(subtok)-1] = '\0';
-
-	    if (wlen == 0) strcpy(s, "identity(#)");
-	    else strcpy(strchr(s, '(') + 1, "#)");
-
-	    if (*subtok) {
-		math_tokenize(subtok, genr, ++level);
-	    }
-	}
-    }
-
-    return ret;
-}	
-
-static int stack_op_and_token (const char *s, GENERATE *genr, int level)
-{
-    char tok[TOKLEN];
-    int wrapped = 0;
-    char op = 0, last = 0;
-    size_t n = strlen(s);
-
-    *tok = '\0';
-
-    DPRINTF(("stack_op_and_token: looking at '%s'\n", s));
-
-    if (n > 0) last = s[n-1];
-
-    if (op_level(*s)) {
-	/* leading character is an operator */
-	op = *s;
-	s++;
-    } 
-
-#ifdef GENR_DEBUG
-    if (isprint(op)) fprintf(stderr, "op = '%c'\n", op);
-    else fprintf(stderr, "op = %d\n", op);
-#endif
-
-    if (*s == '#') {
-	char *term = get_paren_term(atoi(s + 1));
-
-	if (term == NULL) genr->err = 1;
-	else {
-	    if (op) sprintf(tok, "%c", op);
-	    strcat(tok, term);
-	}
-    } else {
-	if (*s == '(') {
-	    if (last == ')') {
-		/* s++; */
-		wrapped = 1;
-		DPRINTF(("term is wrapped in parens\n"));
-	    } else {
-		genr->err = E_UNBAL;
-	    }
-	}
-	if (!genr->err) strcpy(tok, s);
-    }
-
-    if (!genr->err) {
-	if (!token_is_atomic(tok, genr) &&
-	    !token_is_function(tok, genr, level)) {
-	    DPRINTF(("token is not atomic...\n"));
-	    genr->err = math_tokenize(tok, genr, ++level);
-	} else {
-	    genatom *atom;
-
-	    if (*tok == '\0') fprintf(stderr, "genr: got a blank token\n");
-	    DPRINTF(("token = '%s'\n", tok));
-	    atom = parse_token(tok, op, genr, level);
-	    if (atom != NULL) {
-		genr->err = push_atom(atom);
-#ifdef GENR_DEBUG
-		if (!genr->err) fprintf(stderr, "pushed atom OK\n");
-#endif
-	    }
-	}
-    }
-
-    return genr->err;
-}
-
-static int strip_wrapper_parens (char *s)
-{
-    int n = strlen(s);
-    int strip = 0;
-
-    if (*s == '(' && s[n-1] == ')') {
-	int i, pcount = 1;
-
-	strip = 1;
-	for (i=1; i<n-1; i++) {
-	    if (s[i] == '(') pcount++;
-	    else if (s[i] == ')') pcount--;
-	    if (pcount == 0) { 
-		/* opening paren matched before end */
-		strip = 0;
-		break;
-	    }
-	}
-	if (strip) s[n-1] = '\0';
-    }    
-
-    return strip;
-}
-
-static int math_tokenize (char *s, GENERATE *genr, int level)
-{
-    char tok[TOKLEN];
-    const char *q, *p;
-    int inparen = 0;
-    int strip = strip_wrapper_parens(s);
-
-    if (strip) {
-	DPRINTF(("math_tokenize: stripped wrapper parens\n"));
-	s++;
-    }
-
-    q = p = s;
-
-    while (*p) {
-	if (*p == '(') inparen++;
-	else if (*p == ')') inparen--;
-	if (inparen < 0) {
-	    DPRINTF(("error: inparen < 0: '%s'\n", s));
-	    return E_UNBAL;
-	}
-
-	if (!inparen && op_level(*p)) {
-	    if (p - q > TOKLEN - 1) {
-		fprintf(stderr, "genr error: token too long: '%s'\n", q);
-		return 1;
-	    }
-	    if (p - q > 0) {
-		*tok = '\0';
-		strncat(tok, q, p - q);
-		stack_op_and_token(tok, genr, level);
-		q = p;
-	    }
-	}
-	p++;
-    }
-
-    if (*q) {
-	if (strlen(q) > TOKLEN - 1) {
-	    fprintf(stderr, "genr error: remainder too long: '%s'\n", q);
-	    return 1;
-	}
-	strcpy(tok, q);
-	genr->err = stack_op_and_token(tok, genr, level);
-    }
-
-    return genr->err;
-}
-
 /* ...................................................... */
 
 static int count_ops (char *s, int *opcount)
@@ -1080,58 +292,14 @@ static int count_ops (char *s, int *opcount)
 
 /* ...................................................... */
 
-static char *cutstr (const char *s, int l, int r)
+static int insert_paren (char *s, int pos, char lr)
 {
-    char *cut = malloc(r - l);
-
-    if (cut == NULL) return NULL;
-
-    *cut = '\0';
-    strncat(cut, s + l + 1, r - l - 1);
-    return cut;
-}
-
-static int pterm_sub (char *orig, int termnum, size_t repl)
-{
-    char *tmp, termstr[8];
-
-    tmp = malloc(strlen(orig) - repl + 1);
-    if (tmp == NULL) return 1;
-
-    strcpy(tmp, orig + repl);
-    sprintf(termstr, "#%d", termnum);
-    strcpy(orig, termstr);
-    strcat(orig, tmp);
-    free(tmp);
-
-    return 0;
-}
-
-/* ...................................................... */
-
-int insert_paren (char *s, int pos, char lr)
-{
-    static int lpos;
-    static int termnum;
-    int i, rpos, n = strlen(s);
-    char *cut = NULL;
+    int i, n = strlen(s);
 
     if (n + 1 >= MAXLEN) return 1;
-    /* move material right */
     for (i=n+1; i>=pos+1; i--) s[i] = s[i - 1];
-
-    if (lr == 'L') {
-	lpos = pos + 1;
-	s[lpos] = '(';
-    } else {
-	rpos = pos + 1;
-	s[rpos] = ')';
-	cut = cutstr(s, lpos, rpos);
-	if (cut == NULL) return 1;
-	DPRINTF(("Made atom: '%s'\n", cut));
-	push_paren_term(cut);
-	pterm_sub(s + lpos, termnum++, rpos - lpos + 1);
-    }
+    if (lr == 'L') s[pos + 1] = '(';
+    else s[pos + 1] = ')';
 
     return 0;
 }
@@ -1161,7 +329,7 @@ static int paren_state (char c, int *state, char lr)
 
 static int parenthesize (char *str)
 {
-    int i, k, oppos, n;
+    int i, k, oppos, n = strlen(str);
     int level1 = 0, level2;  
     int priority, start, lpins, inparens;
     int rpar, pbak, maxlevel;
@@ -1174,7 +342,6 @@ static int parenthesize (char *str)
     k = 0;
     oppos = 0;
     while (priority <= maxlevel) {
-	n = strlen(str);
 	if (opcount[priority] == 0) {
 	    priority++;
 	    continue;
@@ -1249,13 +416,11 @@ static int parenthesize (char *str)
 int vars_identical (const double *x, const double *y, int n)
      /* check whether two vars are identical or not */
 {
-    int t;
+    register int t;
 
-    for (t=0; t<n; t++) {
-	if (floatneq(x[t], y[t])) {
+    for (t=0; t<n; t++) 
+	if (floatneq(x[t], y[t])) 
 	    return 0;
-	}
-    }
     return 1;
 }
 
@@ -1269,48 +434,14 @@ static void otheruse (const char *str1, const char *str2)
 
 /* .......................................................... */
 
-#ifdef GENR_DEBUG
-
-static const char *get_func_word (int fnum)
-{
-    int i;
-
-    for (i=0; funcs[i].fnum != 0; i++) {
-	if (fnum == funcs[i].fnum) {
-	    return funcs[i].fword;
-	}
-    }
-
-    if (fnum == T_IDENTITY) return "identity";
-
-    return NULL;
-}
-
-#endif
-
-/* not static because used in nls.c */
-
 int get_function (const char *s)
 {
-    char word[9];
-    const char *p;
     int i;
 
-    *word = 0;
-
-    p = strchr(s, '(');
-    if (p != NULL && p - s <= 8) {
-	strncat(word, s, p - s);
-    } else {
-	strncat(word, s, 8);
+    for (i=0; ; i++) {
+	if (math[i] == NULL) break;
+        if (strcmp(s, math[i]) == 0) return 1;
     }
-
-    for (i=0; funcs[i].fnum != 0; i++) {
-	if (!strcmp(word, funcs[i].fword)) {
-	    return funcs[i].fnum;
-	}
-    }
-
     return 0;
 }
 
@@ -1329,8 +460,8 @@ int _reserved (const char *str)
     int i = 0;
 
     while (resword[i] != NULL) {
-	if (strcmp(str, resword[i]) == 0) {
-	    switch (i) {
+        if (strcmp(str, resword[i]) == 0) {
+            switch (i) {
 	    case 0: 
 		otheruse(str, _("residual vector"));
 		break;
@@ -1364,9 +495,9 @@ int _reserved (const char *str)
 	    default:
 		otheruse(str, _("math function"));
 		break;
-	    }
-	    return 1;
-	}
+            }
+            return 1;
+        }
 	i++; 
     } 
 
@@ -1378,9 +509,70 @@ int _reserved (const char *str)
     return 0;
 }
 
+/* .......................................................... */
+
+static const char *set_or_get_obs_marker (const char *s, int opt)
+{
+    static char obsstr[OBSLEN];
+
+    if (opt == OBS_SET) {
+	size_t n;
+
+	*obsstr = 0;
+	strncat(obsstr, s + 1, 8);
+	n = strlen(obsstr);
+	if (obsstr[n - 1] == '"') obsstr[n - 1] = 0;
+#ifdef GENR_DEBUG
+	fprintf(stderr, "set_or_get_obs_marker: obsstr='%s'\n", obsstr);
+#endif
+	return NULL;
+    } else {
+	return obsstr;
+    }
+}
+
+static void make_obs_dummy (double *x, const DATAINFO *pdinfo)
+{
+    const char *obs;
+    int t, gotit = 0;
+
+    if (pdinfo->S == NULL) return;
+
+    obs = set_or_get_obs_marker(NULL, OBS_GET);
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (gotit) x[t] = 0.0;
+	else {
+	    if (!strcmp(pdinfo->S[t], obs)) {
+		x[t] = t + 1.0;
+		gotit = 1;
+	    } else {
+		x[t] = 0.0;
+	    }
+	}
+#ifdef GENR_DEBUG
+	fprintf(stderr, "obs_dummy: x[%d] = %g\n", t, x[t]);
+#endif
+    }
+}
+
+/* .......................................................... */
+
+static void copy (const char *str, int indx, 
+		  int count, char *dest)
+     /* copies count chars from indx in str to dest */
+{
+    int i;
+
+    *dest = '\0';
+    for (i=0; i<count; ++i) dest[i] = str[indx + i];
+    dest[count] = '\0';
+}
+
 /* .........................................................    */
 
-static int getword (char *word, char *str, char c, unsigned char oflag)
+static int getword (char c, char *str, char *word, unsigned char oflag)
+
      /* Scans string str for char c, gets word to the left of it as
 	"word" and deletes word from str.
 	Returns number of chars deleted, or -1 if no occurrence of c, 
@@ -1389,17 +581,21 @@ static int getword (char *word, char *str, char c, unsigned char oflag)
 {
     int i;
 
+    *word = '\0';
+
     i = haschar(c, str);
     if (i == -1) return -1;
 
-    *word = '\0';
-    strncat(word, str, i);
-    _delete(str, 0, ++i);
+    copy(str, 0, i, word);
+    _delete(str, 0, i + 1);
 
-    if (oflag && !strcmp(word, "subdum")) ;
-    else if (_reserved(word)) i = 0;
+    /* special case for auto sub-sampling dummy */
+    if (oflag && strcmp(word, "subdum") == 0)
+	return i + 1;
 
-    return i;
+    if (_reserved(word)) return 0;
+
+    return i + 1;
 }
 
 /* ........................................................... */
@@ -1420,20 +616,16 @@ static void fix_decimal_commas (char *str)
 
 /* ........................................................... */
 
-static void get_genr_formula (char *formula, const char *line,
-			      GENERATE *genr)
+static void get_genr_formula (char *formula, const char *line)
 {
     if (line == NULL || *line == 0) return;
 
-    /* skip over " genr " (or "eval") */
+    /* skip over " genr " */
     while (isspace((unsigned char) *line)) line++;
-
-    if (!strncmp(line, "eval", 4)) genr->save = 0;
-    if (!strncmp(line, "genr", 4) || !genr->save) {
+    if (!strncmp(line, "genr", 4)) {
 	line += 4;
 	while (isspace((unsigned char) *line)) line++;
     }
-
     *formula = '\0';
     strncat(formula, line, MAXLEN - 10);
 }
@@ -1482,41 +674,177 @@ static int gentoler (const char *s)
     return ret;
 }
 
-static void make_genr_label (int replmsg, char *genrs, 
-			     int model_count,
-			     GENERATE *genr)
+static int handle_type2 (int type2, char *word, char *sexpr, 
+			 GENERATE *genr, double *mvec,
+			 double ***pZ, DATAINFO *pdinfo, 
+			 MODEL *pmod) 
 {
-    if (replmsg) {
-	sprintf(genr->label, _("Replaced after model %d: "), 
-		model_count);
-    }	
-    if (strlen(genrs) > MAXLABEL - 1) {
-	strncat(genr->label, genrs, MAXLABEL - 4);
-	strcat(genr->label, "...");
-    } else {
-	strncat(genr->label, genrs, MAXLABEL - 1);
-    }
-}
+    int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
+    int i, vi, nt, lv;
+    double xx;
+    int err = 0;
 
-static void wrap_leading_unary_operator (char *s)
-{
-    char t[MAXLEN];
-    size_t i, j, n = strlen(s);
-    int match = 0;
+    switch (type2) {
 
-    t[0] = '(';
-    t[1] = s[0];
-
-    j = 2;
-    for (i=1; i<=n; i++) {
-	if (!match && op_level(s[i])) {
-	    t[j++] = ')';
-	    match = 1;
+    case R_VARNAME:    
+	if (!(_isnumber(sexpr)))  {
+	    err = E_NOTINTG;
+	} else {
+	    vi = varindex(pdinfo, word);
+	    if (!pdinfo->vector[vi]) {
+		sprintf(gretl_errmsg, _("Variable %s is a scalar; "
+					"can't do lags/leads"), 
+			pdinfo->varname[vi]);
+		err = 1;
+	    } else {
+		genr->scalar = 0;
+		get_lag(vi, -atoi(sexpr), mvec, *pZ, pdinfo);
+		for (i=t1; i<=t2; i++) {
+		    genr->xvec[i] = mvec[i];
+		}
+	    }
 	}
-	t[j++] = s[i];
-    }
-    if (!match) strcat(t, ")");
-    strcpy(s, t);
+	break;
+
+    case R_MATH:  
+	nt = whichtrans(word);
+#ifdef GENR_DEBUG
+	fprintf(stderr, "R_MATH: nt=%d\n", nt);
+#endif  
+	if (nt == T_RHO) {
+	    if (!(_isnumber(sexpr))) {
+		return E_INVARG;
+	    }
+	    if (dot_atof(sexpr) == 1 && (pmod->ci == CORC ||
+					 pmod->ci == HILU)) {
+		for (i=t1; i<=t2; i++)
+		    genr->xvec[i] = pmod->rho_in;
+	    }
+	    else if (pmod->ci != AR && dot_atof(sexpr) == 1) {
+		for (i=t1; i<=t2; i++)
+		    genr->xvec[i] = pmod->rho;
+	    }
+	    else if (pmod->arinfo == NULL || 
+		pmod->arinfo->arlist == NULL || pmod->arinfo->rho == NULL) {
+		err = E_INVARG;
+	    }
+	    else if (!(vi = ismatch(atoi(sexpr), pmod->arinfo->arlist))) {
+		err = E_INVARG;
+	    }
+	    else {
+		for (i=0; i<n; i++) 
+		    genr->xvec[i] = pmod->arinfo->rho[vi];
+	    }
+	}
+	else if (nt == T_NORMAL) {
+	    genr->scalar = 0;
+	    gretl_normal_dist(genr->xvec, t1, t2);
+	}   
+	else if (nt == T_UNIFORM) {
+	    genr->scalar = 0;
+	    gretl_uniform_dist(genr->xvec, t1, t2);
+	}
+	else if (nt == T_COV) {
+	    xx = genr_cov(sexpr, pZ, pdinfo);
+	    if (na(xx)) {
+		err = E_INVARG;
+	    } else {
+		for (i=0; i<n; i++) 
+		    genr->xvec[i] = xx;
+	    }
+	}
+	else if (nt == T_CORR) {
+	    xx = genr_corr(sexpr, pZ, pdinfo);
+	    if (na(xx)) {
+		err = E_INVARG;
+	    } else {
+		for (i=0; i<n; i++) 
+		    genr->xvec[i] = xx;
+	    }
+	}
+	else if (nt == T_VCV) {
+	    xx = genr_vcv(sexpr, pdinfo, pmod);
+	    if (na(xx)) {
+		err = E_INVARG;
+	    } else {
+		for (i=0; i<n; i++) 
+		    genr->xvec[i] = xx;
+	    }
+	}
+	else if (nt == T_PVALUE) {
+	    xx = batch_pvalue(sexpr, *pZ, pdinfo, NULL);
+	    if (na(xx) || xx == -1.0) {
+		err = E_INVARG;
+	    } else {
+		for (i=0; i<n; i++) 
+		    genr->xvec[i] = xx;
+	    }
+	}
+	else if (nt == T_MPOW) {
+	    genr->scalar = 0;
+	    err = genr_mpow(sexpr, genr->xvec, *pZ, pdinfo);
+	    if (err) err = E_INVARG;
+	}
+#ifdef HAVE_MPFR
+	else if (nt == T_MLOG) {
+	    genr->scalar = 0;
+	    err = genr_mlog(sexpr, genr->xvec, *pZ, pdinfo);
+	    if (err) err = E_INVARG;
+	}
+#endif
+	else if (nt == T_COEFF || nt == T_STDERR) {
+	    if (pmod == NULL || pmod->list == NULL) {
+		return E_INVARG;
+	    }
+	    lv = _isnumber(sexpr)? atoi(sexpr) : 
+		varindex(pdinfo, sexpr);
+	    vi = ismatch(lv, pmod->list);
+	    if (vi == 1) vi = 0;
+	    if (!vi) {
+		return E_INVARG;
+	    }
+	    if (nt == T_COEFF && pmod->coeff != NULL) { 
+		for (i=0; i<n; i++) {
+		    genr->xvec[i] = pmod->coeff[vi-2];
+		}
+#ifdef GENR_DEBUG
+		fprintf(stderr, "got coeff=%g\n", pmod->coeff[vi-2]);
+#endif
+	    } else if (pmod->sderr != NULL) {
+		for (i=0; i<n; i++) {
+		    genr->xvec[i] = pmod->sderr[vi-2];
+		}
+	    } else {
+		return E_INVARG;
+	    }
+	} 
+	else {
+	    err = evalexp(sexpr, nt, mvec, genr->xvec, 
+			 *pZ, pdinfo, pmod, genr);
+	    if (err) {  
+		err = E_IGNONZERO;
+	    } else {
+		for (i=t1; i<=t2; i++) mvec[i] = genr->xvec[i];
+		err = domath(genr->xvec, mvec, nt, pdinfo, &genr->scalar);
+	    }
+	}
+	break;
+
+    case R_UNKNOWN: 
+	err = E_CASEU;
+	break;
+
+    default:
+	if (*word != '\0') { 
+	    sprintf(gretl_errmsg, 
+		    _("%s is not a variable or function"), word);
+	}
+	err = E_UNSPEC;
+	break;
+
+    }  /* end of switch on type2 */
+
+    return err;
 }
 
 /**
@@ -1539,31 +867,32 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	      const char *line, int model_count, 
 	      MODEL *pmod, unsigned char oflag)
 {
-    int i, v = 0;
-    char s[MAXLEN], genrs[MAXLEN];
-    char newvar[32];
-    int oldv = pdinfo->v;
+    int nt, v, ls, nv1, type2, nvtmp = 0;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
+    char s[MAXLEN], sright[MAXLEN], sleft[MAXLEN];
+    char snew[MAXLEN], word[16], s1[MAXLEN];
+    char newvar[32], genrs[MAXLEN];
+    int err = 0;
+    char op0, op1;
+    register int i;
+    double *mstack = NULL, *mvec = NULL;
+    int nv = pdinfo->v;
     GENERATE genr;
-#ifdef GENR_DEBUG
-    genatom *atom;
-#endif
 
-    *gretl_errmsg = '\0';
+    /* mstack cumulates value of expression
+       genr.xvec cumulates value of expression inside ()
+       mvec gets values for each variable or function
+    */
 
-    genr.err = 0;
     genr.scalar = 1;
-    genr.save = 1;
+    genr.scalval = NADBL;
+    *gretl_errmsg = '\0';
     *genr.label = '\0';
-    genr.pdinfo = pdinfo;
-    genr.pZ = pZ;
-    genr.pmod = pmod;
-    genr.tmpZ = NULL;
-    genr.tmpv = 0;
 
-    *s = *genrs = '\0';
-    get_genr_formula(s, line, &genr);
+    *s = *genrs = *snew = *sleft = '\0';
+    get_genr_formula(s, line);
     delchar('\n', s);
-    strcpy(genrs, s);
+    strcpy(genrs, s); 
     catch_double_symbols(s);
     delchar(' ', s);
 
@@ -1572,135 +901,277 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	fix_decimal_commas(s);
 #endif
 
-    DPRINTF(("\n*** starting genr, s='%s'\n", s));
+#ifdef GENR_DEBUG
+    fprintf(stderr, "\n*** starting genr, s='%s'\n", s);
+#endif
  
     if (strcmp(s, "dummy") == 0) {
-	genr.err = dummy(pZ, pdinfo);
-	if (!genr.err)
+	err = dummy(pZ, pdinfo);
+	if (!err)
 	    strcpy(gretl_msg, _("Periodic dummy variables generated.\n"));
-	return genr.err;
+	return err;
     }
     else if (strcmp(s, "paneldum") == 0) {
-	genr.err = paneldum(pZ, pdinfo, oflag);
-	if (!genr.err)
+	err = paneldum(pZ, pdinfo, oflag);
+	if (!err)
 	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
-	return genr.err;
+	return err;
     }
     else if (strcmp(s, "index") == 0) { 
-	genr.err = genrtime(pZ, pdinfo, &genr, 0);
-	if (!genr.err) genr_msg(&genr, oldv);
-	return genr.err;
+	err = genrtime(pZ, pdinfo, &genr, 0);
+	if (!err) genr_msg(&genr, nv);
+	return err;
     }
     else if (strcmp(s, "time") == 0) {
-	genr.err = genrtime(pZ, pdinfo, &genr, 1);
-	if (!genr.err) genr_msg(&genr, oldv);
-	return genr.err;
+	err = genrtime(pZ, pdinfo, &genr, 1);
+	if (!err) genr_msg(&genr, nv);
+	return err;
     }
     else if (strncmp(s, "toler=", 6) == 0) {
-	genr.err = gentoler(s + 6);
-	return genr.err;
+	err = gentoler(s + 6);
+	return err;
     }
 
     *newvar = '\0';
+    op0 = '\0';
     
     /* get equation newvar = s, where s is expression */
-    i = getword(newvar, s, '=', oflag);
+    i = getword('=', s, newvar, oflag);
 
     if (i > 0) {
 	if (*newvar == '\0') {
-	    genr.err = E_NOVAR;
+	    err = E_NOVAR;
 	    goto genr_return;
 	}
 	_esl_trunc(newvar, VNAMELEN - 1);
 	if (!isalpha((unsigned char) *newvar) &&
 	    strncmp(newvar, "$nls", 4)) {
-	    genr.err = E_NOTALPH;
+	    err = E_NOTALPH;
 	    goto genr_return;
 	}
 	v = varindex(pdinfo, newvar);
 	if (v == 0) { 
-	    genr.err = E_CONST;
+	    err = E_CONST;
 	    goto genr_return;
 	}
 	if (lastchar('=', s)) {
-	    genr.err = E_EQN;
+	    err = E_EQN;
 	    goto genr_return;
 	}
     } else {
-	if (!genr.save) {
-	    strcpy(newvar, "$eval");
-	} else {
-	    genr.err = E_NOEQ;
-	    goto genr_return;
+	err = E_NOEQ;
+	goto genr_return;
+    }
+
+    /* trap recursive formulae that need to be run though "simulate" */
+    if ((nt = has_lhs_lags(s, newvar))) {
+	char *simstr = genr_to_sim(s, nt, newvar, pdinfo);
+
+#ifdef GENR_DEBUG
+	fprintf(stderr, "genr: has_lhs_lags = %d\n", nt);
+#endif
+	
+	if (simstr != NULL) {
+	    int simerr;
+
+	    simerr = simulate(simstr, pZ, pdinfo);
+	    free(simstr);
+	    return simerr;
 	}
     }
 
     /* basic memory allocation */
-    if ((genr.xvec = malloc(pdinfo->n * sizeof *genr.xvec)) == NULL) {
-	genr.err = E_ALLOC;
+    if ((genr.xvec = malloc(n * sizeof *genr.xvec)) == NULL) {
+	err = E_ALLOC;
 	goto genr_return;
     }
 
-    for (i=0; i<pdinfo->n; i++) {
-	genr.xvec[i] = 0.0;
+    if ((mstack = malloc(n * sizeof *mstack)) == NULL) {
+	err = E_ALLOC;
+	goto genr_return;
+    } 
+    if ((mvec = malloc(n * sizeof *mvec)) == NULL) {
+	err = E_ALLOC;
+	goto genr_return;
+    } 
+
+    for (i=0; i<n; i++) {
+	genr.xvec[i] = mstack[i] = mvec[i] = 0.0;
     }
 
-#if 1
-    if (*s == '-' || *s == '+') {
-	wrap_leading_unary_operator(s);
+    /* deal with leading (unary) minus */
+    if (*s == '-') {
+	strcpy(s1, "0");
+	strcat(s1, s);
+	strcpy(s, s1);
     }
-#endif
 
     /* impose operator hierarchy */
     if (parenthesize(s)) { 
 	fprintf(stderr, "genr: parenthesize failed\n");
-	genr.err = E_ALLOC;
+	err = E_ALLOC;
 	goto genr_return;
     }
-
-    DPRINTF(("after parenthesize: s='%s'\n", s));
-
-    genr.err = math_tokenize(s, &genr, 0);
-
-    destroy_paren_term_stack();
-
 #ifdef GENR_DEBUG
-    i = 0;
-    while ((atom = pop_atom())) {
-	fprintf(stderr, "*** atom %d ***\n", i++);
-	print_atom(atom);
-    }
+    fprintf(stderr, "after parenthesize: s='%s'\n", s);
 #endif
 
-    if (!genr.err) {
-	evaluate_genr(&genr);
-    }
+    while ((ls = strlen(s)) > 0) {
+	char *indx1, *indx2;
 
-    destroy_atom_stack();
-    reset_calc_stack();
+#ifdef GENR_DEBUG
+	fprintf(stderr, "s='%s', zeroing mvec, xvec\n", s);
+	if (_isnumber(s)) {
+	    fprintf(stderr, "Got valid floating point number, '%s'\n", s);
+	}
+#endif
+	for (i=0; i<pdinfo->n; i++) mvec[i] = genr.xvec[i] = 0.0;
+
+	indx1 = strrchr(s, '('); /* point to last '(' */
+	if (indx1 == NULL) { /* no left parenthesis */
+	    indx2 = strchr(s, ')');
+	    if (indx2 != NULL) {
+		err = E_UNBAL;
+		goto genr_return;
+	    }
+            getvar(s, s1, &op1);
+
+#ifdef GENR_DEBUG
+	    if (isprint((unsigned char) op1)) 
+		fprintf(stderr, "after getvar: s='%s', s1='%s', op1='%c'\n",
+			s, s1, op1);
+	    else
+		fprintf(stderr, "after getvar: s='%s', s1='%s', op1=%d\n",
+			s, s1, op1);
+#endif 
+
+	    if (is_operator(op1) && strlen(s) == 0) {
+		err = E_SYNTAX;
+		goto genr_return;
+	    } 
+	    else if (op1 == '\0' || is_operator(op1)) {
+		err = getxvec(s1, genr.xvec, *pZ, pdinfo, pmod, &genr.scalar);
+		if (err == E_BADSTAT) {
+		    err = E_BADSTAT;
+		    goto genr_return;
+		}
+		if (err != 0) {
+		    err = E_UNKVAR;
+		    goto genr_return;
+		}
+	    } else {
+		err = E_BADOP;
+		goto genr_return;
+            }
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "scalar=%d, genr.xvec[1] = %f\n", 
+		    genr.scalar, genr.xvec[1]);
+#endif
+            if (cstack(mstack, genr.xvec, op0, pdinfo, genr.scalar)) {
+		err = E_UNSPEC;
+		goto genr_return;
+	    }
+            op0 = op1;
+            if (strlen(s) == 0) {
+		/* add or replace transformed variable */
+                if (v < nv && !oflag && model_count > 0) 
+		    sprintf(genr.label, _("Replaced after model %d: "), 
+			    model_count);
+		if (strlen(genrs) > MAXLABEL - 1) {
+		    strncat(genr.label, genrs, MAXLABEL - 4);
+		    strcat(genr.label, "...");
+		} else {
+		    strncat(genr.label, genrs, MAXLABEL - 1);
+		}
+                for (i=t1; i<=t2; i++) genr.xvec[i] = mstack[i];
+                strcpy(genr.varname, newvar);
+		genr.varnum = v;
+		if (genr.scalar) genr.scalval = genr.xvec[pdinfo->t1];
+		genr_msg(&genr, nv);
+		goto genr_return;
+            }
+        } else { /* indx1 != NULL: left paren was found */
+	    int iw, nright1, nright2;
+	    int nleft1, nleft2;
+	    char sexpr[MAXLEN];
+
+            nright1 = strlen(indx1);    /* no. of characters to right of ( */
+            nleft1 = ls - nright1;      /* no. of characters before ( */
+	    *sleft = '\0';
+	    strncat(sleft, s, nleft1);  /* string to left of (  */
+            /* calculate equation inside parenthesis */
+            strcpy(sright, indx1);         /* string to right of ( */
+            indx2 = strchr(sright, ')');  /* point to first ) */
+            if (indx2 == NULL) {
+                err = E_UNBAL;
+		goto genr_return;
+            }
+            nright2 = strlen(indx2);        /* no chars at end of string */
+            nleft2 = nright1 - nright2 - 1; /* no of character inside the (),
+					       including */
+            indx1++;
+            strcpy(sright, indx1);
+	    *sexpr = '\0';
+	    strncat(sexpr, sright, nleft2);   /* sexpr is expr inside ()  */
+            iw = scanb(sleft, word);  /* scan backwards for word in
+					 front of ( */
+
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "genr: scanb gave word = '%s'\n", word);
+#endif
+
+	    if (++nvtmp > MAXTERMS) {
+		err = E_NEST;
+		goto genr_return;   
+	    }
+
+	    nv1 = nv + nvtmp;	    
+
+            if (iw == 0) {
+		/* there is an operator in front of (  */
+                err = evalexp(sexpr, 0, mvec, genr.xvec, 
+			     *pZ, pdinfo, pmod, &genr);
+                if (err) {
+		    err = E_IGNONZERO;
+		    goto genr_return;  
+                }
+            } else {
+		/* there is a math function or lag/lead */
+                type2 = strtype(word, pdinfo);
+		err = handle_type2(type2, word, sexpr, &genr, mvec,
+				   pZ, pdinfo, pmod);
+		if (err) goto genr_return; 
+
+		*(sleft + nleft1 - strlen(word)) = '\0';
+            } /* end of if (iw == 0) */
+
+	    memmove(sright, indx2, strlen(indx2) + 1);
+	    /* create temp var */
+	    err = createvar(genr.xvec, snew, sleft, sright, 
+			   nv + nvtmp, pZ, pdinfo, genr.scalar);
+	    if (err) {
+		err = E_UNSPEC; 
+		goto genr_return; 
+	    }
+	    strcpy(s, snew);	    
+
+        }  /* end of if (indx1 == '\0') loop */
+    }  /* end of while loop */
 
  genr_return:
-    if (genr.err) {
-	genrfree(&genr);
+    if (err) {
+	genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
     } else {
-	strcpy(genr.varname, newvar);
-	genr.varnum = v;
-	genr_msg(&genr, oldv);
-	if (genr.save) {
-	    make_genr_label(v < oldv && !oflag && model_count > 0,
-			    genrs, model_count, &genr);
-	    genr.err = add_new_var(pZ, pdinfo, &genr);
-	} else {
-	    genrfree(&genr);
-	}
+	genrfree(pZ, pdinfo, NULL, mstack, mvec, nv);
+	err = add_new_var(pdinfo, pZ, &genr);
     }
 
-    return genr.err;
+    return err;
 }
 
 /* ........................................................... */
     
-static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
+static int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
 {
     int t, n = pdinfo->n, v = genr->varnum;
     int modify = 0, old_scalar = 0;
@@ -1735,107 +1206,169 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	    (*pZ)[v][t] = genr->xvec[t];
     }
 
-    genrfree(genr);
+    if (genr->xvec != NULL) free(genr->xvec);
 
     return 0;
 }
 
+/* ........................................................  */
+
+static void expand_vec (double *xx, const DATAINFO *pdinfo)
+{
+    int t, j;
+
+    for (t=0; t<pdinfo->n; t++) {
+#ifdef GENR_DEBUG
+	fprintf(stderr, "   expand_vec: vec[%d]=%g\n", t, xx[t]);
+#endif	
+	if (na(xx[t])) continue;
+	else {
+	    for (j=0; j<=t; j++) xx[j] = xx[t];
+	    break;
+	}
+    }
+}
+
 /* ............................................................ */
 
-static double calc_xy (double x, double y, char op, int t) 
+static int cstack (double *mstack, double *xvec, char op, 
+		   const DATAINFO *pdinfo, int expand)
+     /* calculate stack vector */
 {
+    register int t;
     long int ny;
-    double xx, yy;
+    double xx, yy, *st2;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+
+    st2 = malloc(pdinfo->n * sizeof *st2);
+    if (st2 == NULL) return E_ALLOC;
 
 #ifdef GENR_DEBUG
-    fprintf(stderr, "calc_xy: in: x=%g, y=%g, ", x, y);
-    if (isprint(op)) fprintf(stderr, "op='%c'\n", op);
-    else fprintf(stderr, "op=%d\n", op);
+    fprintf(stderr, "in cstack() with op='%c', expand=%d\n", op, expand);
 #endif
+
+    if (expand) {
+	for (t=0; t<t1; t++) mstack[t] = NADBL;
+	for (t=t2+1; t<pdinfo->n; t++) mstack[t] = NADBL;
+    }
+
+    for (t=t1; t<=t2; t++) st2[t] = mstack[t];
 
     switch (op) {
     case '\0':
-	x = y;
+	for (t=t1; t<=t2; t++) mstack[t] = xvec[t];
 	break;
     case '+':
-	x += y;
+	for (t=t1; t<=t2; t++) mstack[t] += xvec[t];
 	break;
     case '|':
-	if (floatneq(x, 0.) || floatneq(y, 0.))
-	    x = 1.0;
-	else
-	    x = 0.0;
+	for (t=t1; t<=t2; t++) {
+	    mstack[t] = mstack[t] + xvec[t];
+	    if (floatneq(mstack[t], 0.)) mstack[t] = 1.0;
+	}
 	break;
     case '-':
-	x -= y;
+	for (t=t1; t<=t2; t++) mstack[t] -= xvec[t];
 	break;
     case '*':
-	x *= y;
+	for (t=t1; t<=t2; t++) mstack[t] *= xvec[t];
 	break;
     case '&':
-	x *= y;
-	if (x != 0.) x = 1.0;
+	for (t=t1; t<=t2; t++) {
+	    mstack[t] = mstack[t] * xvec[t];
+	    if (mstack[t] != 0.) mstack[t] = 1.0;
+	}
 	break;
     case '%':
-	x = (double) ((int) x % (int) y);
+	for (t=t1; t<=t2; t++) 
+	    mstack[t] = (double) ((int) mstack[t] % (int) xvec[t]);
 	break;
     case '/':
-	xx = y;
-	if (floateq(xx, 0.0)) {  
-	    sprintf(gretl_errmsg, _("Zero denominator for obs %d"), t+1);
-	    return 1;
+	for (t=t1; t<=t2; t++)  {
+	    xx = xvec[t];
+	    if (floateq(xx, 0.0)) {  
+		sprintf(gretl_errmsg, _("Zero denominator for obs %d"), t+1);
+		free(st2);
+		return 1;
+	    }
+	    mstack[t] /= xx;
 	}
-	x /= xx;
 	break;
     case '^':
-	xx = x;
-	yy = y;
-	ny = (long) yy;
-	if ((floateq(xx, 0.0) && yy <= 0.0) || 
-	    (xx < 0.0 && (double) ny != yy)) {
-	    sprintf(gretl_errmsg, 
-		    _("Invalid power function args for obs. %d"
-		      "\nbase value = %f, exponent = %f"), t, xx, yy);
-	    return 1;
+	for (t=t1; t<=t2; t++) {
+	    xx = mstack[t];
+	    yy = xvec[t];
+	    ny = (long) yy;
+	    if ((floateq(xx, 0.0) && yy <= 0.0) || 
+		(xx < 0.0 && (double) ny != yy)) {
+		sprintf(gretl_errmsg, 
+			_("Invalid power function args for obs. %d"
+			  "\nbase value = %f, exponent = %f"), t, xx, yy);
+		free(st2);
+		return 1;
+	    }
+	    if (floateq(xx, 0.0)) mstack[t] = 0.0;
+	    else mstack[t] = pow(xx, yy);
 	}
-	if (floateq(xx, 0.0)) x = 0.0;
-	else x = pow(xx, yy);
 	break;
     case '<':
-	if (x < y) x = 1.0;
-	else x = 0.0;
+	for (t=t1; t<=t2; t++) 
+            if (mstack[t] < xvec[t]) mstack[t] = 1.0;
+            else mstack[t] = 0.0;
 	break;
     case '>':
-	if (x > y) x = 1.0;
-	else x = 0.0;
+	for (t=t1; t<=t2; t++) { 
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "comparing mstack[%d]=%g with xvec[%d]=%g\n",
+		    t, mstack[t], t, xvec[t]);
+#endif
+            if (mstack[t] > xvec[t]) mstack[t] = 1.0;
+            else mstack[t] = 0.0;
+	}
 	break;
     case '=':
-	if (floateq(x, y)) x = 1.0;
-	else x = 0.0;
+	for (t=t1; t<=t2; t++) 
+            if (floateq(mstack[t], xvec[t])) mstack[t] = 1.0;
+            else mstack[t] = 0.0;
 	break;
     case NEQ: /* not equals */
-	if (floateq(x, y)) x = 0.0;
-	else x = 1.0;
+	for (t=t1; t<=t2; t++) 
+            if (floateq(mstack[t], xvec[t])) mstack[t] = 0.0;
+            else mstack[t] = 1.0;
 	break;
     case GEQ: /* greater than or equal */
-	if (floateq(x, y)) x = 1.0;
-	else if (x > y) x = 1.0;
-	else x = 0.0;
+	for (t=t1; t<=t2; t++) {
+            if (floateq(mstack[t], xvec[t])) mstack[t] = 1.0;
+            else if (mstack[t] > xvec[t]) mstack[t] = 1.0;
+	    else mstack[t] = 0.0;
+	}
 	break;
     case LEQ: /* less than or equal */
-	if (floateq(x, y)) x = 1.0;
-	else if (x < y) x = 1.0;
-	else x = 0.0;
+	for (t=t1; t<=t2; t++) {
+            if (floateq(mstack[t], xvec[t])) mstack[t] = 1.0;
+	    else if (mstack[t] < xvec[t]) mstack[t] = 1.0;
+            else mstack[t] = 0.0;
+	}
 	break;
     case '!':
-	if (floatneq(y, 0.0)) x = 0.0;
-	else x = 1.0;
+	for (t=t1; t<=t2; t++)
+	    if (floatneq(xvec[t], 0.0)) mstack[t] = 0.0;
+	    else mstack[t] = 1.0;
 	break;
-    } 
+    } /* end of operator switch */
 
-    DPRINTF(("calc_xy: out: x=%g\n", x));
+    for (t=t1; t<=t2; t++) 
+        if (na(xvec[t]) || na(st2[t])) mstack[t] = NADBL;
 
-    return x;
+    if (expand) {
+#ifdef GENR_DEBUG
+	fprintf(stderr, "cstack: calling expand_vec() on mstack\n");
+#endif
+	expand_vec(mstack, pdinfo);
+    }
+
+    free(st2);
+    return 0;
 }
 
 /* ........................................................  */
@@ -1850,315 +1383,368 @@ int panel_unit_first_obs (int t, const DATAINFO *pdinfo)
     return 0;
 }
 
-/* below: math functions taking scalar arg and returning scalar */
+/* ........................................................  */
 
-static double evaluate_math_function (double arg, int fn, int *err)
+static int domath (double *xvec, const double *mvec, int nt,
+		   const DATAINFO *pdinfo, int *scalar)
+     /* do math transformations and return result in xvec */
 {
-    double x = NADBL;
+    register int i, t;
+    long int xint; 
+    double xx = 0.0, yy = 0.0, *x = NULL;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
 
-    if (na(arg)) return x;
+    /* mvec contains vector of data to be transformed, result
+       returned in xvec */
 
-    *err = 0;
+#ifdef GENR_DEBUG
+    fprintf(stderr, "in domath with nt=%d, scalar=%d\n", nt, *scalar);
+#endif
 
-    switch (fn) {
+    if (*scalar) {
+	for (t=0; t<t1; t++) xvec[t] = NADBL;
+	for (t=t2+1; t<pdinfo->n; t++) xvec[t] = NADBL;
+    }
+
+    switch (nt) {
 
     case T_LOG:
     case T_LN:
-	if (arg <= 0.0) {
-	    *err = E_LOGS;
-	} else {
-	    x = log(arg);
-	}
-	break;	
-    case T_EXP:
-	if (exp(arg) == HUGE_VAL) {
-	    fprintf(stderr, "genr: exponent = %g\n", arg);
-	    *err = E_HIGH;
-	} else {
-	    x = exp(arg);
-	}
-	break;
-    case T_SIN:
-	x = sin(arg);
-	break;
-    case T_COS:
-	x = cos(arg);
-	break;
-    case T_TAN:
-	x = tan(arg);
-	break;
-    case T_ATAN:
-	x = atan(arg);
-	break;
-    case T_INT:
-	x = (double) (int) arg;
-	break;
-    case T_ABS:
-	x = (arg < 0.0)? -arg : arg;
-	break;
-    case T_SQRT:
-	if (arg < 0.0) {
-	    *err = E_SQRT;
-	} else {
-	    x = sqrt(arg);
-	}
-	break;
-    default:
-	break;
-
-    }
-
-    return x;
-}
-
-static double *get_mp_series (const char *s, GENERATE *genr,
-			      int fn, int *err)
-{
-    double *x;
-
-    x = malloc(genr->pdinfo->n * sizeof *x);
-    if (x == NULL) return NULL;
-
-    if (fn == T_MPOW) {
-	*err = genr_mpow(s, x, *genr->pZ, genr->pdinfo);
-	if (*err) *err = E_INVARG;
-    }
-#ifdef HAVE_MPFR
-    else if (fn == T_MLOG) {
-	*err = genr_mlog(s, x, *genr->pZ, genr->pdinfo);
-	if (*err) *err = E_INVARG;
-    }
-#endif
-
-    return x;
-}
-
-static double *get_random_series (DATAINFO *pdinfo, int fn)
-{
-    double *x;
-
-    x = malloc(pdinfo->n * sizeof *x);
-    if (x == NULL) return NULL;
-
-    if (fn == T_NORMAL) {
-	gretl_normal_dist(x, pdinfo->t1, pdinfo->t2);
-    }   
-    else if (fn == T_UNIFORM) {
-	gretl_uniform_dist(x, pdinfo->t1, pdinfo->t2);
-    }
-
-    return x;
-}
-
-/* below: functions taking series (z) as input and returning a 
-   scalar statistic.  The whole series must be evaluated before
-   these stats can be calculated.
-*/
-
-static double evaluate_statistic (double *z, GENERATE *genr, int fn)
-{
-    double x = NADBL;
-    double *tmp = NULL;
-    int i, t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
-
-    if (fn == T_NOBS) {
-	/* doesn't need a series allocated */
-	i = 0;
 	for (t=t1; t<=t2; t++) {
-	    if (!na(z[t])) i++;
+	    xx = mvec[t];
+	    if (na(xx)) {
+		xvec[t] = NADBL;
+		continue;
+	    }
+	    else if (xx <= 0.0) return E_LOGS;
+	    xvec[t] = log(xx);
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "T_LN: set xvec[%d]=%g\n", t, xvec[t]);
+#endif
 	}
-	return (double) i;
-    }	
+	break;
 
-    tmp = malloc((t2 - t1 + 1) * sizeof *tmp);
-    if (tmp == NULL) {
-	genr->err = E_ALLOC;
-	return x;
-    }
+    case T_EXP:
+	for (t=t1; t<=t2; t++) {
+	    xx = mvec[t];
+	    if (na(xx)) {
+                xvec[t] = NADBL;
+                continue;
+	    }
+	    if (exp(xx) == HUGE_VAL) {
+		fprintf(stderr, "genr: T_EXP: exponent = %g\n", xx);
+		return E_HIGH;
+	    }
+	    xvec[t] = exp(xx);
+	}
+	break;
 
-    i = -1;
-    for (t=t1; t<=t2; t++) {
-	x = z[t];
-	if (na(x)) continue;
-	tmp[++i] = x;
-    }
+    case T_SIN:
+	for (t=t1; t<=t2; t++) {
+	    xx = mvec[t];
+	    xvec[t] = (na(xx))? NADBL: sin(xx);
+	}
+	break;
 
-    if (fn == T_MEAN) {
-	x = _esl_mean(0, i, tmp);
-    }
-    else if (fn == T_SUM) {
-	x = _esl_mean(0, i, tmp);
-	x *= (i + 1);
-    }
-    else if (fn == T_SD) {
-	x = _esl_stddev(0, i, tmp);
-    }
-    else if (fn == T_VAR) {
-	x = _esl_variance(0, i, tmp);
-    }
-    else if (fn == T_SST) {
-	x = _esl_sst(0, i, tmp);
-    }
-    else if (fn == T_MEDIAN) {
-	x = gretl_median(tmp, i + 1);
-    }
-    else if (fn == T_MIN || fn == T_MAX) {
-	double min, max;
+    case T_COS:
+	for (t=t1; t<=t2; t++) {
+	    xx = mvec[t];
+	    xvec[t] = (na(xx))? NADBL: cos(xx);
+	}
+	break;
 
-	_minmax(0, i, tmp, &min, &max);
-	x = (fn == T_MIN)? min : max;
-    }
+    case T_TAN:
+	for (t=t1; t<=t2; t++) {
+	    xx = mvec[t];
+	    xvec[t] = (na(xx))? NADBL: tan(xx);
+	}
+	break;
 
-    free(tmp);
-    
-    return x;
-}
+    case T_ATAN:
+	for (t=t1; t<=t2; t++) {
+	    xx = mvec[t];
+	    xvec[t] = (na(xx))? NADBL: atan(xx);
+	}
+	break;
 
-static double evaluate_pvalue (const char *s, double **Z,
-			       const DATAINFO *pdinfo, int *err)
-{
-    double x;
-
-    x = batch_pvalue(s, Z, pdinfo, NULL);
-    if (na(x) || x == -1.0) *err = E_INVARG;
-    return x;
-}
-
-static double 
-evaluate_bivariate_statistic (const char *s, GENERATE *genr, 
-			      int fn)
-{
-    double x = NADBL;
-
-    if (fn == T_COV) {
-	x = genr_cov(s, genr->pZ, genr->pdinfo);
-	if (na(x)) genr->err = E_INVARG;
-    }
-    else if (fn == T_CORR) {
-	x = genr_corr(s, genr->pZ, genr->pdinfo);
-	if (na(x)) genr->err = E_INVARG;
-    }
-
-    return x;
-}
-
-/* below: functions pertaining to "missing" status of data values */
-
-static double evaluate_missval_func (double arg, int fn)
-{
-    double x = NADBL;
-
-    if (fn == T_MISSING) {
-	/* check whether obs is missing or not */
-	x = (na(arg))? 1.0 : 0.0;
-    }
-    else if (fn == T_MISSZERO) {
-	/* change missing obs to zero */
-	x = (na(arg))? 0.0 : arg;
-    }
-    else if (fn == T_ZEROMISS) {
-	/* change zero to missing obs */
-	x = (floateq(arg, 0.0))? NADBL : arg;
-    }
-
-    return x;
-}
-
-/* below: create a temporary series after evaluating the full-
-   length argument. 
-*/
-
-static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo, 
-			       int fn, int *err)
-{
-    int t, t1 = pdinfo->t1, t2 = pdinfo->t2; 
-    double *x;
-    double xx, yy;
-
-    x = malloc(pdinfo->n * sizeof *x); 
-    if (x == NULL) return NULL;
-
-    if (fn == T_DIFF) {
+    case T_DIFF:
 	for (t=t1+1; t<=t2; t++) {
 	    if (pdinfo->time_series == STACKED_TIME_SERIES &&
 		panel_unit_first_obs(t, pdinfo)) {
-		x[t] = NADBL;
+		xvec[t] = NADBL;
 		continue;
 	    }
 	    xx = mvec[t];
-	    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	    if (pdinfo->time_series == STACKED_CROSS_SECTION) 
 		yy = (t - pdinfo->pd >= 0)? mvec[t-pdinfo->pd] : NADBL;
-	    } else {
+	    else 
 		yy = mvec[t-1];
-	    }
-	    x[t] = (na(xx) || na(yy))? NADBL : xx - yy;
+	    xvec[t] = (na(xx) || na(yy))? NADBL : xx - yy;
 	}
-	x[t1] = NADBL;
-    }
+	xvec[t1] = NADBL;
+	break;
 
-    else if (fn == T_LDIFF) {
+    case T_LDIFF:
 	for (t=t1+1; t<=t2; t++) {
 	    if (pdinfo->time_series == STACKED_TIME_SERIES &&
 		panel_unit_first_obs(t, pdinfo)) {
-		x[t] = NADBL;
+		xvec[t] = NADBL;
 		continue;
 	    }
 	    xx = mvec[t];
-	    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	    if (pdinfo->time_series == STACKED_CROSS_SECTION) 
 		yy = (t - pdinfo->pd >= 0)? mvec[t-pdinfo->pd] : NADBL;
-	    } else {
+	    else 
 		yy = mvec[t-1];
-	    }
 	    if (na(xx) || na(yy)) {
-		x[t] = NADBL;
+		xvec[t] = NADBL;
 		continue;
 	    }   
-	    else if (xx <= 0.0 || yy <= 0.0) *err = E_LOGS;
-	    else x[t] = log(xx) - log(yy);
+	    else if (xx <= 0.0 || yy <= 0.0) return E_LOGS;
+	    xvec[t] = log(xx) - log(yy);
 	}
-	x[t1] = NADBL;
-    }
+	xvec[t1] = NADBL;
+	break;
 
-    else if (fn == T_CUM) {
-	x[t1] = (na(mvec[t1])) ? 0.0 : mvec[t1];
+    case T_NOBS:
+	i = 0;
 	for (t=t1; t<=t2; t++) {
-	    if (na(mvec[t])) x[t] = x[t-1];
-	    else x[t] = x[t-1] + mvec[t];
+	    if (!na(mvec[t])) i++;
 	}
-    }
+	for (t=0; t<pdinfo->n; t++) xvec[t] = (double) i;
+	break;
 
-    else if (fn == T_SORT) {
-	double *tmp = malloc((t2 - t1 + 1) * sizeof *tmp);
-	int i;
-
-	if (tmp == NULL) {
-	    free(x);
-	    return NULL;
-	}
+    case T_MEAN: 
+    case T_SUM:
+    case T_SD:
+    case T_VAR:
+    case T_SST:
+    case T_MEDIAN:
+    case T_MIN:
+    case T_MAX:
+    case T_SORT:
+	x = malloc((t2 - t1 + 1) * sizeof *x);
+	if (x == NULL) return E_ALLOC;
 
 	i = -1;
 	for (t=t1; t<=t2; t++) {
-	    if (na(mvec[t])) continue;
-	    tmp[++i] = mvec[t];
+	    xx = mvec[t];
+	    if (na(xx)) continue;
+	    x[++i] = xx;
 	}
 
-	qsort(tmp, i + 1, sizeof *tmp, _compare_doubles);
+	if (nt == T_MEAN) {
+	    xx = _esl_mean(0, i, x);
+	}
+	else if (nt == T_SUM) {
+	    xx = _esl_mean(0, i, x);
+	    xx *= (i + 1);
+	}
+	else if (nt == T_SD) {
+	    xx = _esl_stddev(0, i, x);
+	}
+	else if (nt == T_VAR) {
+	    xx = _esl_variance(0, i, x);
+	}
+	else if (nt == T_SST) {
+	    xx = _esl_sst(0, i, x);
+	}
+	else if (nt == T_MEDIAN) {
+	    xx = gretl_median(x, i+1);
+	}
+	else if (nt == T_MIN || nt == T_MAX) {
+	    double min, max;
 
+	    _minmax(0, i, x, &min, &max);
+	    xx = (nt == T_MIN)? min : max;
+	}
+
+	if (nt == T_SORT) {
+	    qsort(x, i+1, sizeof(double), _compare_doubles);
+	    for (t=t1; t<=t2; t++) xvec[t] = x[t-t1];
+	} else {
+	    for (t=0; t<pdinfo->n; t++) xvec[t] = xx;
+	}
+
+	free(x);
+	break;
+
+    case T_INT:
 	for (t=t1; t<=t2; t++) {
-	    x[t] = tmp[t-t1];
+	    xint = (int) (mvec[t] + _VSMALL);
+	    if (xint == -999) {
+		xvec[t] = NADBL;
+		continue;
+	    }
+	    xvec[t] = (double) xint;
 	}
-	free(tmp);
+	break;
+
+    case T_ABS:
+	for (t=t1; t<=t2; t++) {
+	    xx = mvec[t];
+	    if (na(xx)) {
+		xvec[t] = NADBL;
+		continue;
+	    }
+	    xvec[t] = (xx < 0.0)? -xx : xx;
+	}
+	break;
+
+    case T_SQRT:
+	for (t=t1; t<=t2; t++) {
+	    xx = mvec[t];
+	    if (na(xx)) {
+		xvec[t] = NADBL;
+		continue;
+	    }
+	    else if (xx < 0.0) return E_SQRT;
+	    xvec[t] = sqrt(xx);
+	}
+	break;
+
+    case T_CUM:  /* cumulate, with "cum" function */
+	xvec[t1] = (na(mvec[t1])) ? 0.0 : mvec[t1];
+	for (t=t1+1; t<=t2; t++) {
+	    if (na(mvec[t])) xvec[t] = xvec[t-1];
+	    else xvec[t] = xvec[t-1] + mvec[t];
+	}
+	break;
+
+    case T_MISSING:  /* check whether obs is missing or not */
+	for (t=t1; t<=t2; t++) 
+	    xvec[t] = (na(mvec[t])) ? 1.0 : 0.0;
+	break;
+
+    case T_MISSZERO:  /* change missing obs to zero */
+	for (t=t1; t<=t2; t++) 
+	    xvec[t] = (na(mvec[t])) ? 0.0 : mvec[t];
+	break;
+
+    case T_ZEROMISS:  /* change zero to missing obs */
+	for (t=t1; t<=t2; t++) 
+	    xvec[t] = (floateq(mvec[t], 0.0)) ? NADBL : mvec[t];
+	break;
+
     }
 
-    return x;
+    if (*scalar) {
+#ifdef GENR_DEBUG
+	fprintf(stderr, "domath: calling expand_vec() on xvec\n");
+#endif
+	expand_vec(xvec, pdinfo);
+    }
+
+    return 0;
+}
+
+/* .....................................................*/
+
+static int evalexp (char *ss, int nt, double *mvec, double *xvec, 
+		    double **Z, const DATAINFO *pdinfo, 
+		    const MODEL *pmod, GENERATE *genr)
+{
+    char s3[MAXLEN], op2, op3;
+    int v, expand;
+    int *pscalar = &(genr->scalar);
+    int err = 0;
+
+    if (SCALAR_SCOPE(nt)) {
+	pscalar = NULL;
+	genr->scalar = 1;
+    }
+
+#ifdef GENR_DEBUG
+    fprintf(stderr, "evalexp: ss='%s'\n", ss);
+    fprintf(stderr, "         nt = %d, scalar_scope? %s\n", nt,
+	   SCALAR_SCOPE(nt)? "Yes" : "No" );
+#endif
+
+    /* evaluate expression inside parentheses and value in xvec */
+
+    op3 = '\0';
+    do {
+	/* don't expand real, vector variables */
+	expand = genr->scalar;
+	v = varindex(pdinfo, ss);
+	if (v == UHATNUM || v == YHATNUM || v == TNUM || v == INDEXNUM ||
+	    v == OBSBOOLNUM || (v < pdinfo->v && pdinfo->vector[v])) {
+	    expand = 0;
+	}
+	getvar(ss, s3, &op2);
+	if (op2 == '\0' || is_operator(op2)) {
+	    err = getxvec(s3, mvec, Z, pdinfo, pmod, pscalar);
+	    if (!err) {
+#ifdef GENR_DEBUG
+		fprintf(stderr, "evalexp, about to do cstack: ss='%s'\n", ss);
+#endif	    
+		cstack(xvec, mvec, op3, pdinfo, expand);
+		op3 = op2;
+	    }
+        }
+    } while (*ss != '\0' && !err);
+
+    return err;
+}
+
+/* ........................................................ */
+
+static void getvar (char *str, char *word, char *c)
+     /*   
+	  Scans str for the first occurrence of { } ( ) or math
+	  operator. If found, copies the character into c; copies
+	  string to the left into word; and deletes word from str. 
+	  If no occurrence, sets word = str, str = '\0', and c = '\0'.
+     */
+{
+    size_t i;
+
+#ifdef GENR_DEBUG
+    fprintf(stderr, "genr: getvar: working on '%s'\n", str);
+#endif
+
+    /* don't pick apart valid floating-point numbers */
+    if (_isnumber(str)) {
+#ifdef GENR_DEBUG
+	fprintf(stderr, " is_number returned non-zero: set word='%s'\n", 
+		word);
+#endif
+	strcpy(word, str);
+	*str = '\0';
+	*c = '\0';
+	return;
+    }	
+
+    *word = '\0';
+    for (i=0; i<strlen(str); i++)  { 
+	if (str[i] == '{' || str[i] == '}' || str[i] == '(' ||
+	    str[i] == ')' || is_operator(str[i])) {
+	    *c = str[i];
+	    copy(str, 0, i, word);
+#ifdef GENR_DEBUG
+	    fprintf(stderr, " word='%s', returning\n", word);
+#endif
+	    _delete(str, 0, i + 1);
+	    return;
+	}
+    }
+
+    strcpy(word, str);
+
+#ifdef GENR_DEBUG
+    fprintf(stderr, " word='%s', returning\n", word);
+#endif
+
+    *str = '\0';
+    *c = '\0';
 }
 
 /* ...........................................................*/
 
-static int check_modelstat (const MODEL *pmod, int idx)
+static int check_modelstat (const MODEL *pmod, int type1)
 {
     if (pmod == NULL || pmod->list == NULL) {
-	switch (idx) {
+	switch (type1) {
 	case R_T:
 	    strcpy(gretl_errmsg, 
 		   _("No $T (number of obs for model) value is available"));
@@ -2193,151 +1779,13 @@ static int check_modelstat (const MODEL *pmod, int idx)
     }
 
     if (pmod != NULL && pmod->ci != LOGIT && pmod->ci != PROBIT &&
-	idx == R_LNL) {
+	type1 == R_LNL) {
 	strcpy(gretl_errmsg, 
 	       _("$lnl (log-likelihood) is not available for the last model"));
 	return 1;
     }
 
     return 0;
-}
-
-static double 
-get_model_data_element (const char *s, GENERATE *genr,
-			MODEL *pmod, int idx)
-{
-    int lv, vi;
-    double x = NADBL;
-
-    if (pmod == NULL) return x;
-
-    if (idx == T_RHO) {
-	if (!(_isnumber(s))) {
-	    genr->err = E_INVARG;
-	}
-	else if (dot_atof(s) == 1 && 
-		 (pmod->ci == CORC || pmod->ci == HILU)) {
-	    x = pmod->rho_in;
-	}
-	else if (pmod->ci != AR && dot_atof(s) == 1) {
-	    x = pmod->rho;
-	}
-	else if (pmod->arinfo == NULL || 
-		 pmod->arinfo->arlist == NULL || 
-		 pmod->arinfo->rho == NULL) {
-	    genr->err = E_INVARG;
-	}
-	else if (!(vi = ismatch(atoi(s), pmod->arinfo->arlist))) {
-	    genr->err = E_INVARG;
-	} else {
-	    x = pmod->arinfo->rho[vi];
-	}
-    }
-
-    else if (idx == T_VCV) {
-	x = genr_vcv(s, genr->pdinfo, pmod);
-	if (na(x)) genr->err = E_INVARG;
-    }
-
-    else if (idx == T_COEFF || idx == T_STDERR) {
-	if (pmod == NULL || pmod->list == NULL) {
-	    genr->err = E_INVARG;
-	    return NADBL;
-	}
-
-	lv = _isnumber(s)? atoi(s) : varindex(genr->pdinfo, s);
-	vi = ismatch(lv, pmod->list);
-
-	if (vi == 1) vi = 0;
-	if (!vi) {
-	    genr->err = E_INVARG;
-	    return NADBL;
-	}
-
-	if (idx == T_COEFF && pmod->coeff != NULL) { 
-	    x = pmod->coeff[vi-2];
-	} else if (pmod->sderr != NULL) {
-	    x = pmod->sderr[vi-2];
-	} else {
-	    genr->err = E_INVARG;
-	}
-    } 
-
-    return x;
-}
-
-/* retrieve scalar statistic from model */
-
-static double 
-get_model_statistic (const MODEL *pmod, int idx, int *err)
-{
-    double x = NADBL;
-
-    if (pmod == NULL) {
-	*err = 1;
-    }
-    else if (check_modelstat(pmod, idx)) {
-	*err = 1;
-    }
-    else if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
-	(idx == R_RSQ || idx == R_ESS || idx == R_SIGMA || 
-	 idx == R_TRSQ)) {
-	*err = E_BADSTAT;
-    }
-    else if (pmod->ci == LAD && (idx == R_RSQ || idx == R_TRSQ)) {
-	*err = E_BADSTAT;
-    }
-
-    if (*err) return x;
-
-    switch (idx) {  
-    case R_ESS:
-	x = pmod->ess;
-	break;
-    case R_RSQ:
-	x = pmod->rsq;
-	break;
-    case R_LNL:
-	x = pmod->lnL;
-	break;
-    case R_SIGMA:
-	if (pmod->nwt) x = pmod->sigma_wt;
-	else x = pmod->sigma;
-	break;
-    case R_TRSQ:
-	x = pmod->nobs * pmod->rsq;
-	break;
-    case R_DF:
-	x = (double) pmod->dfd;
-	break;
-    case R_T:
-	x = (double) pmod->nobs;
-	break;	
-    }
-
-    return x;
-}
-
-/* ...........................................................*/
-
-static double get_dataset_statistic (DATAINFO *pdinfo, int idx)
-{
-    double x = NADBL;
-
-    if (pdinfo == NULL) return x;
-
-    switch (idx) {
-    case R_NOBS:
-	x = (double) (pdinfo->t2 - pdinfo->t1 + 1);
-	break;
-    case R_PD:
-	x = (double) pdinfo->pd;
-	break;
-    default:
-	break;
-    }
-
-    return x;
 }
 
 /* ...........................................................*/
@@ -2363,58 +1811,187 @@ static double get_obs_value (const char *s, double **Z,
 
 /* ...........................................................*/
 
-static double *get_model_series (double **Z, const DATAINFO *pdinfo,
-				 const MODEL *pmod, int v)
+static int getxvec (char *s, double *xvec, 
+		    double **Z, const DATAINFO *pdinfo, 
+		    const MODEL *pmod, int *scalar)
+     /* calculate and return the xvec vector of values */
 {
-    int t, t2, n = pdinfo->n;
-    double *x;
+    int type1 = strtype(s, pdinfo);
+    int v, n = pdinfo->n;
+    register int t;
+    double value;
 
-    if (pmod == NULL || (v != UHATNUM && v != YHATNUM))
-	return NULL;
+#ifdef GENR_DEBUG
+    fprintf(stderr, "in getxvec() with s='%s', type1=%d\n", s, type1);
+#endif
 
-    if (pmod->t2 - pmod->t1 + 1 > n ||
-	model_sample_issue(pmod, NULL, Z, pdinfo)) {
-	strcpy(gretl_errmsg, (v == UHATNUM)? 
-	       _("Can't retrieve uhat: data set has changed") :
-	       _("Can't retrieve yhat: data set has changed"));
-	return NULL;
-    }   
+    if (check_modelstat(pmod, type1)) return 1;
 
-    if ((v == UHATNUM && pmod->uhat == NULL) ||
-	(v == YHATNUM && pmod->yhat == NULL)) {
-	return NULL;
-    }
+    if (pmod && (pmod->ci == LOGIT || pmod->ci == PROBIT) &&
+	(type1 == R_RSQ || type1 == R_ESS || type1 == R_SIGMA || 
+	 type1 == R_TRSQ)) 
+	return E_BADSTAT;
 
-    x = malloc(pdinfo->n * sizeof *x);
-    if (x == NULL) return NULL;
+    if (pmod && pmod->ci == LAD && (type1 == R_RSQ || type1 == R_TRSQ))
+	return E_BADSTAT;
 
-    if (pmod->data != NULL) {
-	t2 = pmod->t2 + get_misscount(pmod);
-    } else {
-	t2 = pmod->t2;
-    }    
+    switch (type1) {  
 
-    for (t=0; t<pmod->t1; t++) x[t] = NADBL;
-    for (t=pmod->t1; t<=t2; t++) {
-	x[t] = (v == UHATNUM)? pmod->uhat[t] : pmod->yhat[t];
-    }
-    for (t=t2+1; t<n; t++) x[t] = NADBL;
-	    
-	    
-    return x;
-}
+    case R_ESS:
+	for (t=0; t<n; t++) xvec[t] = pmod->ess;
+	break;
 
-/* ...........................................................*/
+    case R_NOBS:
+	for (t=0; t<n; t++) 
+	    xvec[t] = (double) (pdinfo->t2 - pdinfo->t1 + 1);
+	break;
 
-static double get_tnum (const DATAINFO *pdinfo, int t)
-{
-    if (pdinfo->time_series && pdinfo->pd == 1) {
-	/* annual data: let 't' be the year */ 
-	return pdinfo->sd0 + t;
-    } else {
-	/* let 't' be the 1-based observation number */
-	return (double) (t + 1);
-    }
+    case R_PD:
+	for (t=0; t<n; t++) xvec[t] = (double) pdinfo->pd;
+	break;
+
+    case R_T:
+	for (t=0; t<n; t++) xvec[t] = (double) pmod->nobs;
+	break;	
+
+    case R_RSQ:
+	for (t=0; t<n; t++) xvec[t] = pmod->rsq;
+	break;
+
+    case R_LNL:
+	for (t=0; t<n; t++) xvec[t] = pmod->lnL;
+	break;
+
+    case R_SIGMA:
+	if (pmod->nwt) 
+	    for (t=0; t<n; t++) xvec[t] = pmod->sigma_wt;
+	else 
+	    for (t=0; t<n; t++) xvec[t] = pmod->sigma;
+	break;
+
+    case R_TRSQ:
+	for (t=0; t<n; t++) xvec[t] = pmod->nobs * pmod->rsq;
+	break;
+
+    case R_DF:
+	for (t=0; t<n; t++) xvec[t] = (double) pmod->dfd;
+	break;
+
+    case R_NUMERIC:
+	if (strcmp(s, "pi") == 0) {
+	    value = M_PI;
+	} else {
+	    value = dot_atof(s);
+	}
+	for (t=0; t<n; t++) xvec[t] = value; 
+	break;
+
+    case R_VARNAME:
+	v = varindex(pdinfo, s);
+	if (v == UHATNUM) { /* model residual */
+	    if (pmod->uhat == NULL) return 1;
+	    if (pmod->t2 - pmod->t1 + 1 > n ||
+		model_sample_issue(pmod, NULL, Z, pdinfo)) {
+		strcpy(gretl_errmsg, 
+		       _("Can't retrieve uhat: data set has changed"));
+		return 1;
+	    }	    
+	    for (t=0; t<pmod->t1; t++) xvec[t] = NADBL;
+	    if (pmod->data != NULL) {
+		int t2 = pmod->t2 + get_misscount(pmod);
+
+		for (t=pmod->t1; t<=t2; t++) xvec[t] = pmod->uhat[t]; 
+		for (t=t2+1; t<n; t++) xvec[t] = NADBL;
+	    } else {
+		for (t=pmod->t1; t<=pmod->t2; t++) xvec[t] = pmod->uhat[t]; 
+		for (t=pmod->t2 + 1; t<n; t++) xvec[t] = NADBL;
+	    }
+	    if (scalar != NULL) *scalar = 0;
+	}
+	else if (v == YHATNUM) { /* model fitted values */
+	    if (pmod->yhat == NULL) return 1;
+	    if (pmod->t2 - pmod->t1 + 1 > n ||
+		model_sample_issue(pmod, NULL, Z, pdinfo)) {
+		strcpy(gretl_errmsg, 
+		       _("Can't retrieve yhat: data set has changed"));
+		return 1;
+	    }	    
+	    for (t=0; t<pmod->t1; t++) xvec[t] = NADBL;
+	    if (pmod->data != NULL) {
+		int t2 = pmod->t2 + get_misscount(pmod);
+
+		for (t=pmod->t1; t<=t2; t++) xvec[t] = pmod->yhat[t]; 
+		for (t=t2+1; t<n; t++) xvec[t] = NADBL;
+	    } else {
+		for (t=pmod->t1; t<=pmod->t2; t++) xvec[t] = pmod->yhat[t]; 
+		for (t=pmod->t2 + 1; t<n; t++) xvec[t] = NADBL;
+	    }
+	    if (scalar != NULL) *scalar = 0;
+	}
+	else if (v == INDEXNUM) { /* internal index variable */
+	    int k = genr_scalar_index(0, 0);
+
+	    for (t=0; t<n; t++) xvec[t] = (double) k;
+	    if (scalar != NULL) *scalar = 0;
+	}
+	else if (v == TNUM) { /* auto trend/index variable */
+	    if (pdinfo->time_series && pdinfo->pd == 1) {
+		/* annual data: let 't' be the year */ 
+		for (t=0; t<n; t++) xvec[t] = pdinfo->sd0 + t;
+	    } else {
+		/* let 't' be the 1-based observation number */
+		for (t=0; t<n; t++) xvec[t] = (double) (t + 1);
+	    }
+	    *scalar = 0;
+
+	}
+	else if (v == OBSBOOLNUM) { /* auto-boolean based on obs label */
+	    make_obs_dummy(xvec, pdinfo);
+	    break;
+	}
+	else { /* a regular variable */
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "get_xvec: R_VARNAME: v=%d, name=%s\n",
+		    v, pdinfo->varname[v]);
+#endif
+	    for (t=0; t<n; t++) {
+		xvec[t] = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
+	    }
+	    if (pdinfo->vector[v]) {
+		if (scalar != NULL) *scalar = 0;
+	    }
+	}
+	break;
+
+    case R_VAROBS:
+	value = get_obs_value(s, Z, pdinfo);
+	for (t=0; t<n; t++) {
+	    xvec[t] = value;
+	}
+	break;
+
+    case R_OBSNUM:
+	value = obs_num(s, pdinfo);
+	for (t=0; t<n; t++) {
+	    xvec[t] = value;
+	}
+	break;
+
+    case R_UNKNOWN:  return 1;
+
+    default:
+	if (*s != '\0') {
+	    if (strncmp(s, "q#$", 3)) {
+		sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
+	    } else {
+		sprintf(gretl_errmsg, _("Syntax error in genr formula"));
+	    }
+	    return 1;
+	}
+	break;
+    } 
+
+    return 0;
 }
 
 /* ..................................................................*/
@@ -2466,28 +2043,57 @@ static void get_lag (int v, int lag, double *lagvec, double **Z,
     }
 }
 
+/* ......................................................  */
+
+static int scanb (const char *s, char *word)
+     /*  scan string right to left for + - * / ^ ( 
+	 s is string, n is no. of chars in string, return word to
+	 left of operator 
+     */
+{
+    int n = strlen(s);
+    int i = n - 1;
+
+    *word = '\0';
+
+    if (i < 0) return 0;
+
+    if (s[i] == '(' || s[i] == '\0' || is_operator(s[i])) {
+	word[0] = s[n-1];
+	word[1] = '\0';
+	return 0;
+    }
+
+    for (i=n-1; i>=0; i--) {
+	if (s[i] == '(' || s[i] == '\0' || is_operator(s[i])) {
+	    strcpy(word, s + i + 1);
+	    return 1;
+	}
+    }
+
+    if (i == -1) {
+        strcpy(word, s);
+        if (*s == '\0') return 0;
+        else return 1;
+    }
+
+    return 0;
+}
 
 /* ......................................................   */
 
 static int obs_num (const char *s, const DATAINFO *pdinfo)
 {
-    char test[OBSLEN];
-    size_t n;
     int t;
-
-    *test = 0;
-    strncat(test, (*s == '"')? s + 1 : s, OBSLEN - 1);
-    n = strlen(test);
-    if (test[n-1] == '"') test[n-1] = '\0';
 
     if (pdinfo->markers && pdinfo->S != NULL) {
 	for (t=0; t<pdinfo->n; t++) {
-	    if (!strcmp(test, pdinfo->S[t])) return t + 1;
+	    if (!strcmp(s, pdinfo->S[t])) return t + 1;
 	}
     }
 
     if (pdinfo->time_series == TIME_SERIES) {
-	t = dateton(test, pdinfo);
+	t = dateton(s, pdinfo);
 	if (t >= 0) return t + 1;
     }
 
@@ -2496,46 +2102,109 @@ static int obs_num (const char *s, const DATAINFO *pdinfo)
 
 /* ......................................................   */
 
-static int dataset_var_index (const char *s)
+static int varname_plus_obs (const char *ss, const DATAINFO *pdinfo)
 {
-    char test[9];
+    if (strchr(ss, '[') == NULL || strchr(ss, ']') == NULL) {
+	return 0;
+    } else {
+	char vname[VNAMELEN], obs[OBSLEN];
 
-    *test = '\0';
-    strncat(test, s, 8);
-    lower(test);
+	if (sscanf(ss, "%8[^[][%8[^]]]", vname, obs) != 2) {
+	    return 0;
+	} else {
+	    int i = varindex(pdinfo, vname);
 
-    if (!strcmp(test, "$nobs")) 
-	return R_NOBS;
-    if (!strcmp(test, "$pd")) 
-	return R_PD;
+	    if (i == pdinfo->v || !pdinfo->vector[i]) {
+		/* invalid varname or scalar */
+		return 0; 
+	    }
+	    if (dateton(obs, pdinfo) < 0) {
+		/* invalid observation string */
+		return 0;
+	    }
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+/* ......................................................   */
+
+static int strtype (char *ss, const DATAINFO *pdinfo)
+     /*  checks whether ss is a number, variable name or transformation */
+{
+    int i;
+
+#ifdef GENR_DEBUG
+    fprintf(stderr, "genr: strtype: working on '%s'\n", ss);
+#endif
+
+    if (ss[0] == '$') {
+        lower(ss);
+        if (strcmp(ss, "$ess") == 0)  
+	    return R_ESS;
+        if (strcmp(ss, "$nobs") == 0) 
+	    return R_NOBS;
+        if (strcmp(ss, "$t") == 0) 
+	    return R_T;
+        if (strcmp(ss, "$rsq") == 0)  
+	    return R_RSQ;
+	if (strcmp(ss, "$sigma") == 0)  
+	    return R_SIGMA;
+        if (strcmp(ss, "$df") == 0)   
+	    return R_DF;
+        if (strcmp(ss, "$lnl") == 0)   
+	    return R_LNL;
+        if (strcmp(ss, "$nrsq") == 0 || strcmp(ss, "$trsq") == 0) 
+	    return R_TRSQ;
+	if (strcmp(ss, "$pd") == 0)
+	    return R_PD;
+    }
+
+    if (_isnumber(ss)) {
+#ifdef GENR_DEBUG
+	fprintf(stderr, "genr: numeric string = '%s'\n", ss);
+#endif
+        i = strlen(ss) - 1;
+        if (ss[i] == 'e') { 
+	    sprintf(gretl_errmsg, 
+		    _("Scientific notation not allowed for numbers"));
+            return R_UNKNOWN;
+        }
+        else return R_NUMERIC;
+    }
+
+    if (strcmp(ss, "pi") == 0) return R_NUMERIC;
+
+    if (get_function(ss)) return R_MATH;
+
+    i = varindex(pdinfo, ss);
+    if (i < pdinfo->v || i == UHATNUM || i == YHATNUM ||
+	i == TNUM || i == INDEXNUM || i == OBSBOOLNUM) {
+	return R_VARNAME; 
+    }
+
+    if (varname_plus_obs(ss, pdinfo)) {
+	return R_VAROBS;
+    }
+
+    if (obs_num(ss, pdinfo)) {
+	return R_OBSNUM;
+    }    
 
     return 0;
 }
 
-static int model_variable_index (const char *s)
+/* ........................................................  */
+
+static int whichtrans (const char *ss)
 {
-    char test[9];
+    register int i;
 
-    *test = '\0';
-    strncat(test, s, 8);
-    lower(test);
-
-    if (!strcmp(test, "$ess"))  
-	return R_ESS;
-    if (!strcmp(test, "$t")) 
-	return R_T;
-    if (!strcmp(test, "$rsq"))  
-	return R_RSQ;
-    if (!strcmp(test, "$sigma"))  
-	return R_SIGMA;
-    if (!strcmp(test, "$df"))   
-	return R_DF;
-    if (!strcmp(test, "$lnl"))   
-	return R_LNL;
-    if (!strcmp(test, "$nrsq") || 
-	!strcmp(test, "$trsq")) 
-	return R_TRSQ;
-
+    for (i=0; ; i++) {
+	if (math[i] == NULL) break;
+        if (strcmp(ss, math[i]) == 0) return i+1;
+    }
     return 0;
 }
 
@@ -2599,12 +2268,12 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
 	}
 	strcpy(pdinfo->varname[nvar+vi-1], word);
 
-	for (t=0; t<pdinfo->n; t++) {
-	    xx = date(t, pdinfo->pd, pdinfo->sd0);
-	    yy = (int) xx;
-	    pp = (int) (mm * (xx - yy) + 0.5);
-	    (*pZ)[nvar+vi-1][t] = (pp == vi)? 1.0 : 0.0;
-	}
+        for (t=0; t<pdinfo->n; t++) {
+            xx = date(t, pdinfo->pd, pdinfo->sd0);
+            yy = (int) xx;
+            pp = (int) (mm * (xx - yy) + 0.5);
+            (*pZ)[nvar+vi-1][t] = (pp == vi)? 1.0 : 0.0;
+        }
     }
     return 0;
 }
@@ -2646,28 +2315,28 @@ int paneldum (double ***pZ, DATAINFO *pdinfo, unsigned char opt)
     mm = (pdinfo->pd < 10)? 10 : 100;
     for (vi=1; vi<=ntdum; vi++) {
 	if (opt) sprintf(word, "du_%d", vi);
-	else sprintf(word, "dt_%d", vi);
+        else sprintf(word, "dt_%d", vi);
 	strcpy(pdinfo->varname[nvar+vi-1], word);
 	sprintf(VARLABEL(pdinfo, nvar+vi-1), _("%s = 1 if %s is %d, "
 					       "0 otherwise"), word, 
 		(opt)? _("unit"): _("period"), vi);
-	for (t=0; t<pdinfo->n; t++) {
-	    xx = date(t, pdinfo->pd, pdinfo->sd0);
-	    yy = (int) xx;
-	    pp = (int) (mm*(xx - yy) + 0.5);
-	    (*pZ)[nvar+vi-1][t] = (pp == vi)? 1.0 : 0.0;
-	}
+        for (t=0; t<pdinfo->n; t++) {
+            xx = date(t, pdinfo->pd, pdinfo->sd0);
+            yy = (int) xx;
+            pp = (int) (mm*(xx - yy) + 0.5);
+            (*pZ)[nvar+vi-1][t] = (pp == vi)? 1.0 : 0.0;
+        }
     }
 
     /* and then the block-based ones */
     for (vi=1; vi<=nudum; vi++) {
 	if (opt) sprintf(word, "dt_%d", vi);
-	else sprintf(word, "du_%d", vi);
+        else sprintf(word, "du_%d", vi);
 	strcpy(pdinfo->varname[nvar+ntdum+vi-1], word);
 	sprintf(VARLABEL(pdinfo, nvar+ntdum+vi-1), _("%s = 1 if %s is %d, "
 						     "0 otherwise"), word, 
 		(opt)? _("period"): _("unit"), vi);
-	for (t=0; t<pdinfo->n; t++) 
+        for (t=0; t<pdinfo->n; t++) 
 	    (*pZ)[nvar+ntdum+vi-1][t] = 0.0;
 	for (t=(vi-1)*pdinfo->pd; t<vi*pdinfo->pd; t++) 
 	    (*pZ)[nvar+ntdum+vi-1][t] = 1.0;
@@ -2879,12 +2548,17 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     if (!strcmp(varname, "obs"))  return TNUM;
 
     if (!strcmp(varname, "const") || !strcmp(varname, "CONST"))
-	return 0;
+        return 0;
 
     for (i=0; i<pdinfo->v; i++) { 
-	if (!strcmp(pdinfo->varname[i], varname)) { 
+        if (!strcmp(pdinfo->varname[i], varname)) { 
 	    return i;
 	}
+    }
+
+    if (pdinfo->markers && *varname == '"') {
+	set_or_get_obs_marker(varname, OBS_SET);
+	return OBSBOOLNUM;
     }
 
     return pdinfo->v;
@@ -2892,18 +2566,57 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 
 /* ........................................................ */
 
-static void genrfree (GENERATE *genr)
+static int createvar (double *xvec, char *snew, char *sleft, 
+		      char *sright, int ssnum, double ***pZ, 
+		      DATAINFO *pdinfo, int scalar)
 {
-    int i;
+    static char ss[10];
+    int mv, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    register int t;
 
-    if (genr == NULL) return;
+    sprintf(ss, "q#$%d", ssnum); 
+    mv = varindex(pdinfo, ss);
 
-    if (genr->tmpv > 0) {
-	for (i=0; i<genr->tmpv; i++) free(genr->tmpZ[i]);
-	free(genr->tmpZ);
+    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
+
+    strcpy(pdinfo->varname[mv], ss);
+    if (scalar) {
+#ifdef GENR_DEBUG
+	fprintf(stderr, "createvar: added %s\n", ss);
+#endif
+	pdinfo->vector[mv] = 0;
+	for (t=0; t<pdinfo->n; t++) { 
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "   putting xvec[%d]=%g into pos %d\n", t, xvec[t], t);
+#endif
+	    (*pZ)[mv][t] = xvec[t];
+	}
+    } else {
+	for (t=0; t<t1; t++) (*pZ)[mv][t] = NADBL;
+	for (t=t1; t<=t2; t++) (*pZ)[mv][t] = xvec[t];
+	for (t=t2+1; t<pdinfo->n; t++) (*pZ)[mv][t] = NADBL;
     }
 
-    free(genr->xvec);
+    /* return a new string with the temporary variable name in
+       place of the calculated expression */
+    strcpy(snew, sleft);
+    strcat(snew, ss);
+    strcat(snew, sright);
+
+    return 0;
+}
+
+/* ........................................................ */
+
+static void genrfree (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
+		      double *mstack, double *mvec, int nv)
+{
+    int s = pdinfo->v - nv;
+
+    if (s > 0) dataset_drop_vars(s, pZ, pdinfo);
+    if (mstack != NULL) free(mstack);
+    if (mvec != NULL) free(mvec);
+    if (genr != NULL) free(genr->xvec);
 }
 
 /**
@@ -3131,16 +2844,18 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
     char s[64], parmbit[VNAMELEN];
     double xx, *rhot;
 
-
-    DPRINTF(("rhodiff: param = '%s'\n", param));
-
+#ifdef GENR_DEBUG
+    fprintf(stderr, "rhodiff: param = '%s'\n", param);
+#endif
     maxlag = _count_fields(param);
     rhot = malloc(maxlag * sizeof *rhot);
     if (rhot == NULL) return E_ALLOC;
     if (maxlag > pdinfo->t1) t1 = maxlag;
     else t1 = pdinfo->t1;
 
-    DPRINTF(("rhodiff: maxlag = %d, t1 = %d\n", maxlag, t1));
+#ifdef GENR_DEBUG
+    fprintf(stderr, "rhodiff: maxlag = %d, t1 = %d\n", maxlag, t1);
+#endif
 
     /* parse "param" string */
     j = strlen(param);
@@ -3148,7 +2863,9 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
     for (i=0; i<j; i++) {
 	if ((i == 0 || param[i] == ' ') && i < (j - 1)) {
 	    sscanf(param + i + (i? 1: 0), "%8s", parmbit); 
-	    DPRINTF(("rhodiff: parmbit = '%s'\n", parmbit));
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "rhodiff: parmbit = '%s'\n", parmbit);
+#endif
 	    if (isalpha((unsigned char) parmbit[0])) {
 		nv = varindex(pdinfo, parmbit);
 		if (nv == v) {
@@ -3167,7 +2884,9 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 
     for (i=1; i<=list[0]; i++) {
 	j = list[i];
-	DPRINTF(("rhodiff: doing list[%d] = %d\n", i, list[i]));
+#ifdef GENR_DEBUG
+	fprintf(stderr, "rhodiff: doing list[%d] = %d\n", i, list[i]);
+#endif
 	/* make name and label */
 	strcpy(s, pdinfo->varname[j]);
 	_esl_trunc(s, 7);
@@ -3220,20 +2939,20 @@ static int genr_mpow (const char *str, double *xvec, double **Z,
     } 
 
     if (open_plugin("mp_ols", &handle)) {
-	fprintf(stderr, I_("Couldn't access GMP plugin\n"));
-	return 1;
+        fprintf(stderr, I_("Couldn't access GMP plugin\n"));
+        return 1;
     }
 
     mp_raise = 
 	get_plugin_function("mp_vector_raise_to_power", handle);
 
     if (mp_raise == NULL) {
-	fprintf(stderr, I_("Couldn't load plugin function\n"));
-	close_plugin(handle);
-	return 1;
+        fprintf(stderr, I_("Couldn't load plugin function\n"));
+        close_plugin(handle);
+        return 1;
     }
 
-    err = mp_raise(Z[v], xvec, pdinfo->n, pwr);
+    err = mp_raise (Z[v], xvec, pdinfo->n, pwr);
 
     close_plugin(handle);
     
@@ -3260,16 +2979,16 @@ static int genr_mlog (const char *str, double *xvec, double **Z,
     } 
 
     if (open_plugin("mp_ols", &handle)) {
-	fprintf(stderr, I_("Couldn't access GMP plugin\n"));
-	return 1;
+        fprintf(stderr, I_("Couldn't access GMP plugin\n"));
+        return 1;
     }
 
     mp_log = get_plugin_function("mp_vector_ln", handle);
 
     if (mp_log == NULL) {
-	fprintf(stderr, I_("Couldn't load plugin function\n"));
-	close_plugin(handle);
-	return 1;
+        fprintf(stderr, I_("Couldn't load plugin function\n"));
+        close_plugin(handle);
+        return 1;
     }
 
     err = mp_log(Z[v], xvec, pdinfo->n);
@@ -3428,21 +3147,16 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 
 /* ...................................................... */
 
-static void genr_msg (GENERATE *genr, int oldv)
+static void genr_msg (GENERATE *genr, int nv)
 {
-    if (!genr->save) {
-	sprintf(gretl_msg, " %g", genr->xvec[genr->pdinfo->t1]);
-	return;
-    }
-
     sprintf(gretl_msg, "%s %s %s (ID %d)", 
-	    (genr->varnum < oldv)? _("Replaced") : _("Generated"), 
+	    (genr->varnum < nv)? _("Replaced") : _("Generated"), 
 	    (genr->scalar)? _("scalar") : _("vector"),
 	    genr->varname, genr->varnum);
-    if (genr->scalar) {
+    if (genr->scalar && !na(genr->scalval)) {
 	char numstr[24];
 
-	sprintf(numstr, " = %g", genr->xvec[genr->pdinfo->t1]);
+	sprintf(numstr, " = %g", genr->scalval);
 	strcat(gretl_msg, numstr);
     }
 }
@@ -3453,30 +3167,27 @@ static int ismatch (int lv, const int *list)
 {
     int i;
 
-    for (i=list[0]; i>=1; i--) {
-	if (lv == list[i]) return i;
-    }
+    for (i=list[0]; i>=1; i--)
+        if (lv == list[i]) return i;
     return 0;
 }
 
 /* .......................................................... */
 
-static void varerror (const char *s)
+static void varerror (const char *ss)
      /* print error message for variable not in name list */
 {
-    sprintf(gretl_errmsg, _("Undefined variable name '%s'"), s);
-
-    if (!strcmp(s, "const")) {
-	sprintf(gretl_errmsg, _("const cannot be used to store values"));
-    } else if (!strcmp(s, "uhat")) {
-	sprintf(gretl_errmsg,
+    sprintf(gretl_errmsg, _("Undefined variable name '%s'"), ss);
+    if (!strcmp(ss, "const")) 
+        sprintf(gretl_errmsg, _("const cannot be used to store values"));
+    else if (!strcmp(ss, "uhat")) 
+        sprintf(gretl_errmsg,
 		_("uhat can be used only in genr.  First use the command: "
 		  "genr newname = uhat"));
-    } else if (*s == '$') {
+    else if (*ss == '$') 
 	sprintf(gretl_errmsg, _("Reserved var. names starting with "
 				"$ can be used only in genr.\nFirst use the "
-				"command:  genr newname = %s"), s);
-    }
+				"command:  genr newname = %s"), ss);
 }
 
 /* .......................................................... */
@@ -3809,5 +3520,247 @@ int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
+/* handle lags of the LHS variable in a genr formula */
 
-    
+#define COEFFLEN 16
+#define CHUNKLEN 32
+
+struct sim_term {
+    int lag;
+    char coeff[COEFFLEN];
+};
+
+static int has_lhs_lags (const char *str, const char *vname)
+{
+    char finder[VNAMELEN + 1];
+    const char *p = str;
+    int c, lag, nlags = 0;
+    size_t n;
+
+    sprintf(finder, "%s(", vname);
+    n = strlen(finder);
+    while ((p = strstr(p, finder))) {
+	c = *(p - 1);
+	p += n;
+	if (c == '+' || c == '-' || c == '*' || c == ' ') {
+	    if (sscanf(p, "-%d)", &lag)) nlags++;
+	    else break;
+	} 
+    }
+
+    return nlags;
+}
+
+static int is_lagvar_string (const char *s, const char *vname)
+{
+    char finder[VNAMELEN + 1];
+    const char *p;
+    size_t n;
+    int lag = 0;
+
+    sprintf(finder, "%s(", vname);
+    n = strlen(finder);
+
+    if (!strncmp(finder, s, n)) {
+	sscanf(s + n, "-%d)", &lag);
+    }
+
+    /* check for unwanted remainder */
+    p = strchr(s + n, ')');
+    if (p == NULL || *(p + 1) != '\0') lag = 0;
+
+    return lag;
+}
+
+static int is_numeric (const char *s)
+{
+    char *test;
+    extern int errno;
+
+    errno = 0;
+
+    if (*s == '\0') return 0;
+
+    strtod(s, &test);
+
+    if (*test != '\0' || errno == ERANGE) {
+	return 0;
+    }
+
+    return 1;
+}
+
+static int process_simterm (char *s, const char *vname, 
+			    struct sim_term *term, 
+			    const DATAINFO *pdinfo)
+{
+    char *p = s;
+    int lag, mult = 0;
+    int numcoeff = 0;
+    int err = 0;
+
+    term->lag = 0;
+    *term->coeff = '\0';
+
+#ifdef GENR_DEBUG
+    fprintf(stderr, "process_simterm: looking at '%s'\n", s);
+#endif
+
+    while (*p && !mult) {  
+	if (*p == '*') {
+	    mult = 1;
+	    *p = '\0';
+	} else p++;
+    }
+
+    if ((lag = is_lagvar_string(s, vname))) {
+	term->lag = lag;
+    } else {
+	numcoeff = is_numeric(s);
+	strncat(term->coeff, s, COEFFLEN - 1);
+    }   
+
+    if (mult) {
+	if ((lag = is_lagvar_string(p + 1, vname))) {
+	    term->lag = lag;
+	} else {
+	    numcoeff = is_numeric(p + 1);
+	    strncat(term->coeff, p + 1, COEFFLEN - 1);
+	}
+    }	
+
+    if (*term->coeff == '+') {
+	memmove(term->coeff, term->coeff + 1, strlen(term->coeff));
+    }
+
+    if (*term->coeff && !numcoeff) { /* is this a valid varname? */
+	const char *test = term->coeff;
+
+	if (*test == '-') test++;
+	if (varindex(pdinfo, test) == pdinfo->v) {
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "process_simterm: bad coeff '%s'\n", test);
+#endif
+	    err = 1;
+	}
+    }
+
+    return err;
+}
+
+static int build_sim_string (const char *vname,
+			     struct sim_term *terms, int nt,
+			     char **psim)
+{
+    int i, j;
+    int maxlag = 0, err = 0;
+    char *sim = NULL;
+    size_t simlen = 5;
+
+    if (terms == NULL || nt == 0) return 1;
+
+    /* check for max lag, and for duplicate lags */
+    for (i=0; i<nt && !err; i++) {
+	simlen += strlen(terms[i].coeff) + 1;
+	if (terms[i].lag > maxlag) {
+	    maxlag = terms[i].lag;
+	}
+	for (j=i+1; j<nt && !err; j++) {
+	    if (terms[j].lag == terms[i].lag) {
+		err = 1;
+	    }
+	}
+    }
+
+    if (err) {
+	fprintf(stderr, "build_sim_string: lag %d is duplicated\n",
+		terms[j-1].lag);
+	return err;
+    }
+
+#ifdef GENR_DEBUG
+    fprintf(stderr, "build_sim_string: nt = %d, maxlag = %d\n", nt, maxlag);
+#endif
+
+    simlen += strlen(vname);
+    if (maxlag > nt) simlen += (maxlag - nt) * 2;
+
+#ifdef GENR_DEBUG
+    fprintf(stderr, "simlen = %d\n", (int) simlen);
+#endif
+
+    sim = malloc(simlen);
+    if (sim == NULL) return 1;
+
+    sprintf(sim, "sim %s", vname);
+    for (i=0; i<=maxlag; i++) {
+	int done = 0;
+
+	for (j=0; j<nt; j++) {
+	    if (terms[j].lag == i) {
+		strcat(sim, " ");
+		strcat(sim, terms[j].coeff);
+		done = 1;
+		break;
+	    }
+	}
+	if (!done) strcat(sim, " 0");
+    }
+
+    *psim = sim;
+
+    return 0;
+}
+
+static char *genr_to_sim (const char *s, int nlags, const char *vname,
+			  const DATAINFO *pdinfo)
+{
+    int inparen = 0, err = 0, nt = 0;
+    const char *q = s, *p = s;
+    char chunk[CHUNKLEN];
+    struct sim_term *terms = NULL;
+    char *sim = NULL;
+
+    terms = malloc((nlags + 1) * sizeof *terms);
+    if (terms == NULL) return NULL;
+
+    while (*p && !err) {
+	if (*p == '(') inparen++;
+	else if (*p == ')') inparen--;
+	if (inparen < 0) err = 1;
+
+	if (!err && !inparen && (p != s) && (*p == '+' || *p == '-')) {
+	    if (p - q >= CHUNKLEN || nt > nlags) err = 1;
+	    else {
+		*chunk = '\0';
+		strncat(chunk, q, p - q);
+		err = process_simterm(chunk, vname, &terms[nt++], pdinfo);
+		q = p;
+	    }
+	}
+	p++;
+    }
+
+    if (!err && *q != '\0') {
+	if (nt > nlags) err = 1;
+	else {
+	    *chunk = '\0';
+	    strncat(chunk, q, CHUNKLEN - 1);
+	    err = process_simterm(chunk, vname, &terms[nt++], pdinfo);
+	}
+    }
+
+    if (nt != nlags && nt != nlags + 1) {
+	fprintf(stderr, "genr_to_sim error: lags = %d but numbers of "
+		"terms = %d\n", nlags, nt);
+	err = 1;
+    }
+
+    if (!err) {
+	build_sim_string(vname, terms, nt, &sim);
+    } 
+
+    free(terms);
+
+    return sim;
+}
