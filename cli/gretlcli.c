@@ -578,7 +578,7 @@ void exec_line (char *line, PRN *prn)
     case CRITERIA: case CRITICAL:
     case DIFF: case LDIFF: case LAGS: case LOGS:
     case MULTIPLY:
-    case GRAPH: case PLOT: case RMPLOT:
+    case GRAPH: case PLOT:
     case INFO: case LABELS: case VARLIST:
     case PRINT:
     case SUMMARY:
@@ -706,7 +706,7 @@ void exec_line (char *line, PRN *prn)
 	}
 	++model_count;
 	(models[0])->ID = model_count;
-	printmodel(models[0], datainfo, prn); 
+	printmodel(models[0], datainfo, prn);
 	if (oflag) outcovmx(models[0], datainfo, !batch, prn);
 	break;
 
