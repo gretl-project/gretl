@@ -13,11 +13,9 @@
       <application>gretl</application>'s online help), except that you
       should <emphasis>not</emphasis> type the initial command word
       &mdash; it is implicit from the context. One other difference is
-      that you cannot enter the <command>-o</command> flag for
-      regression commands in GUI dialog boxes: there is a menu item
-      for displaying the coefficient variance&ndash;covariance matrix
-      (which is the effect of <command>-o</command> in regression
-      commands).
+      that some commands support option flags, but you cannot enter
+      these in GUI dialog boxes; generally there are menu items which
+      achieve the same effect.
     </para>
 
     <para>
@@ -38,18 +36,17 @@
 	  the generic <replaceable>xvar</replaceable>.
 	</para></listitem>
 
-      <listitem><para><literal>[ -o ]</literal> means that the flag
-	  <command>-o</command> is optional: you may type it or not
-	  (but in any case don't type the brackets).
+      <listitem><para><literal>The construction [</literal>
+	  <replaceable>arg</replaceable> <literal>]</literal> means
+	  that the argument <replaceable>arg</replaceable> is
+	  optional: you may supply it or not (but in any case don't
+	  type the brackets).
 	</para></listitem>
 
       <listitem><para>The phrase <quote>estimation command</quote>
-	  means any one of <command>ols</command>,
-	  <command>hilu</command>, <command>corc</command>,
-	  <command>ar</command>, <command>arch</command>,
-	  <command>hsk</command>, <command>tsls</command>,
-	  <command>wls</command>, <command>hccm</command>,
-	  <command>add</command>, <command>omit</command>.
+	  means a command that generates estimates for a given model,
+	  for example <command>ols</command>, <command>ar</command> or
+	  <command>wls</command>.
 	</para></listitem>
 
     </itemizedlist>
@@ -70,7 +67,12 @@
 	  <tbody>
 	    <row>
 	      <entry>Argument:</entry>
-	      <entry><replaceable>varlist</replaceable> &opto;
+	      <entry><replaceable>varlist</replaceable>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Option:</entry>
+	      <entry><literal>--vcv</literal> (print covariance matrix)
 	      </entry>
 	    </row>
 	    <row>
@@ -98,8 +100,7 @@
 	number of internal variables may be retrieved using the
 	<command>genr</command> command, provided
 	<command>genr</command> is invoked directly after this
-	command. The <literal>-o</literal> flag causes the coefficient
-	variance&ndash;covariance matrix to be printed.
+	command.
       </para>
 
     </sect2>
@@ -192,7 +193,13 @@
 	      <entry>Arguments:</entry>
 	      <entry><replaceable>lags</replaceable>
 		<literal>;</literal> <replaceable>depvar
-		  indepvars</replaceable> &opto; 
+		  indepvars</replaceable>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Option:</entry>
+	      <entry><literal>--vcv</literal> (print covariance
+	      matrix)
 	      </entry>
 	    </row>
 	    <row>
@@ -218,9 +225,7 @@
 	  <graphic fileref="figures/corc"/>
 	</informalequation> <replaceable>depvar</replaceable> is the
 	dependent variable and <replaceable>indepvars</replaceable> is
-	the list of independent variables.  If the
-	<literal>-o</literal> flag is given, the covariance matrix of
-	regression coefficients is printed. Residuals of the
+	the list of independent variables.  Residuals of the
 	transformed regression are stored under the name
 	<varname>uhat</varname>, which can be retrieved by
 	<command>genr</command>.  A number of other internal variables
@@ -239,7 +244,12 @@
 	    <row>
 	      <entry>Arguments:</entry>
 	      <entry><replaceable>order depvar indepvars</replaceable>
-		&opto;
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Option:</entry>
+	      <entry><literal>--vcv</literal> (print covariance
+	      matrix)
 	      </entry>
 	    </row>
 	    <row>
@@ -260,8 +270,7 @@
 	any observation in the auxiliary regression is not positive,
 	then the corresponding squared residual is used instead.
 	Weighted least square estimation is then performed on the
-	original model. The flag <literal>-o</literal> calls for the
-	coefficient covariance matrix.
+	original model.
       </para>
 
     </sect2>
@@ -275,7 +284,23 @@
 	      <entry>Arguments:</entry>
 	      <entry><replaceable>p q</replaceable>
 		<literal>;</literal> <replaceable>depvar</replaceable>
-		<literal>[ -v | -x ]</literal>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Options:</entry>
+	      <entry><literal>--vcv</literal> (print covariance matrix)
+	      </entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry><literal>--verbose</literal> (print details of
+		iterations)
+	      </entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry><literal>--x-12-arima</literal> (use X-12-ARIMA
+		for estimation)
 	      </entry>
 	    </row>
 	    <row>
@@ -285,7 +310,7 @@
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry><command>arma 2 2 ; y -v</command>
+	      <entry><command>arma 2 2 ; y --verbose</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -296,17 +321,20 @@
 	Estimates a univariate ARMA (Autoregressive, Moving Average)
 	model.  The integer values <replaceable>p</replaceable> and
 	<replaceable>q</replaceable> represent the AR and MA orders
-	respectively.  If the <literal>-v</literal>
-	(<quote>verbose</quote>) flag is given, details of the
-	iterative estimation procedure are shown.
+	respectively. 
       </para>
 
       <para>The default is to use the <quote>native</quote> gretl ARMA
-	function; the <literal>-x</literal> flag calls for use of the
-	<application>X-12-ARIMA</application> program instead (this
-	will work only if the <application>X-12-ARIMA</application>
-	package for gretl is installed).
+	function; the <literal>--x-12-arima</literal> flag calls for
+	use of the <application>X-12-ARIMA</application> program
+	instead (this will work only if the
+	<application>X-12-ARIMA</application> package for gretl is
+	installed).  
       </para>
+
+      <para>The options given above may be combined, except that the
+	covariance matrix is not available when estimation is by
+	<application>X-12-ARIMA</application>.</para>
 
       <para>The native gretl ARMA algorithm is largely due to Riccardo
 	<quote>Jack</quote> Lucchetti.  It uses a conditional maximum
@@ -452,6 +480,12 @@
 	      <entry><replaceable>order depvar indepvar</replaceable>
 	      </entry>
 	    </row>
+	    <row>
+	      <entry>Option:</entry>
+	      <entry><literal>--verbose</literal> (print details
+	      of auxiliary regressions)
+	      </entry>
+	    </row>
 	    <row><entry>Examples:</entry>
 	      <entry><command>coint2 2 y x</command>
 	      </entry>
@@ -469,9 +503,7 @@
 	Carries out the Johansen trace test for cointegration among
 	the listed variables for the given order. Critical values are
 	computed via J. Doornik's gamma approximation (Doornik, 1998).
-	For details of this test see Hamilton (1994, Chapter 20).  If
-	the <literal>-v</literal> flag is given the results of the
-	various auxiliary regressions are printed.
+	For details of this test see Hamilton (1994, Chapter 20).
       </para>
 
     </sect2>
@@ -484,7 +516,12 @@
 	    <row>
 	      <entry>Arguments:</entry>
 	      <entry><replaceable>depvar indepvars</replaceable>
-		&opto;
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Option:</entry>
+	      <entry><literal>--vcv</literal> (print covariance
+		matrix)
 	      </entry>
 	    </row>
 	    <row>
@@ -493,15 +530,7 @@
 	      </entry>
 	    </row>
 	    <row><entry></entry>
-	      <entry><command>corc -o 1 0 2 4 6 7</command>
-	      </entry>
-	    </row>
-	    <row><entry></entry>
-	      <entry><command>corc y 0 x1 x2 x3</command>
-	      </entry>
-	    </row>
-	    <row><entry></entry>
-	      <entry><command>corc -o y 0 x1 x2 x3</command>
+	      <entry><command>corc y 0 x1 x2 x3 --vcv</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -515,10 +544,8 @@
 	and <replaceable>indepvars</replaceable> as the list of
 	independent variables.  Iteration is terminated when
 	successive estimates of the autocorrelation coefficient do not
-	differ by more than 0.001 or after 20 iterations.  If the
-	<literal>-o</literal> flag is given, the covariance matrix of
-	regression coefficients is printed.  Residuals of this
-	transformed regression are stored under the name
+	differ by more than 0.001 or after 20 iterations.  Residuals
+	of this transformed regression are stored under the name
 	<varname>uhat</varname>.  Various internal variables may be
 	retrieved using the <command>genr</command> command, provided
 	<command>genr</command> is invoked immediately after this
@@ -875,9 +902,15 @@
 	  <tbody>
 	    <row>
 	      <entry>Options:</entry>
-	      <entry>&opto; <literal>[ -f</literal>
+	      <entry><literal>--complete</literal> (create a complete
+		document)
+	      </entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry><literal>-f</literal>
 		<replaceable>filename</replaceable>
-		<literal>]</literal>
+		<literal></literal>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -895,9 +928,9 @@
 	<command>tabprint</command> command.</para>
 
       <para>
-	If the <literal>-o</literal> flag is given the &latex; file is
-	a complete document, ready for processing; otherwise it must
-	be included in a document.
+	If the <literal>--complete</literal> flag is given the &latex;
+	file is a complete document, ready for processing; otherwise
+	it must be included in a document.
       </para>
 
     </sect2>
@@ -951,7 +984,12 @@
 	  <tbody>
 	    <row>
 	      <entry>Arguments:</entry>
-	      <entry><replaceable>startobs endobs</replaceable> &opto;
+	      <entry><replaceable>startobs endobs</replaceable>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Option:</entry>
+	      <entry><literal>--plot</literal> (display graph)
 	      </entry>
 	    </row>
 	  </tbody>
@@ -964,10 +1002,9 @@
 	relaxed at some point) you can use this command to print out
 	fitted values over the specified observation range, along with
 	the estimated standard errors of those predictions and 95
-	percent confidence intervals.  If the <literal>-o</literal>
-	flag is given the results will also be displayed using
-	gnuplot.  The augmented regression method of Salkever (1976)
-	is used to generate the forecast standard errors.
+	percent confidence intervals.  The augmented regression method
+	of Salkever (1976) is used to generate the forecast standard
+	errors.
       </para>
 
     </sect2>
@@ -1432,8 +1469,23 @@
 	  <tbody>
 	    <row>
 	      <entry>Arguments:</entry>
-	      <entry><replaceable>yvars xvar</replaceable> <literal>[
-		  -o | -m ]</literal>
+	      <entry><replaceable>yvars xvar</replaceable>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Options:</entry>
+	      <entry><literal>--with-lines</literal> (use lines, not points)
+	      </entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry><literal>--with-impulses</literal> (use vertial lines)
+	      </entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry><literal>--suppress-fitted</literal> (don't show
+		least squares fit)
 	      </entry>
 	    </row>
 	    <row>
@@ -1444,8 +1496,8 @@
 	    </row>
 	    <row>
 	      <entry>Alternate form:</entry>
-	      <entry><literal>-z</literal> <replaceable>yvar xvar
-		  dummy</replaceable>
+	      <entry><literal>--dummy</literal> <replaceable>yvar xvar
+		  dumvar</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -1454,18 +1506,15 @@
 
       <para>
 	In the first case the <replaceable>yvars</replaceable> are
-	graphed against <replaceable>xvar</replaceable>.  If the flag
-	<literal>-o</literal> is supplied the plot will use lines; if
-	the flag <literal>-m</literal> is given the plot uses impulses
-	(vertical lines); otherwise points will be used.
+	graphed against <replaceable>xvar</replaceable>.
       </para>
 
       <para>
 	In the <quote>alternate form</quote> (with
-	<literal>-z</literal>) <replaceable>yvar</replaceable> is
+	<literal>--dummy</literal>) <replaceable>yvar</replaceable> is
 	graphed against <replaceable>xvar</replaceable> with the
 	points shown in different colors depending on whether the
-	value of <replaceable>dummy</replaceable> is 1 or 0.
+	value of <replaceable>dumvar</replaceable> is 1 or 0.
       </para>
 
       <para>
@@ -1513,7 +1562,12 @@
 	  <tbody>
 	    <row>
 	      <entry>Arguments:</entry>
-	      <entry><replaceable>yvars xvar</replaceable> &opto;
+	      <entry><replaceable>yvars xvar</replaceable>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Option:</entry>
+	      <entry><literal>--wide</literal>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -1524,9 +1578,10 @@
 	ASCII graphics.  The <replaceable>yvars</replaceable> (which
 	may be given by name or number) are  graphed against
 	<replaceable>xvar</replaceable> using ASCII symbols. The
-	<literal>-o</literal> flag will graph with 40 rows and 60
-	columns. Without it, the graph will be 20 by 60 (for screen
-	output). See also the <command>gnuplot</command> command.
+	<literal>--wide</literal> flag will produce a graph with 40
+	rows and 60 columns. Without it, the graph will be 20 by 60
+	(for screen output). See also the <command>gnuplot</command>
+	command.
       </para>
 
     </sect2>
@@ -1579,7 +1634,12 @@
 	    <row>
 	      <entry>Arguments:</entry>
 	      <entry><replaceable>depvar indepvars</replaceable>
-		&opto;
+	      </entry>  
+	    </row>
+	    <row>
+	      <entry>Option:</entry>
+	      <entry><literal>--vcv</literal> (print covariance
+		matrix)
 	      </entry>  
 	    </row>
 	  </tbody>
@@ -1591,8 +1651,7 @@
 	covariance matrix estimates for the standard errors of
 	regression coefficients using MacKinnon and White (1985)
 	<quote>jackknife</quote> estimates (see Ramanathan, Section
-	8.3).  The coefficient covariance matrix is printed if the
-	<literal>-o</literal> flag is given.
+	8.3).
       </para>
 
     </sect2>
@@ -1617,8 +1676,13 @@
 	    <row>
 	      <entry>Arguments:</entry>
 	      <entry><replaceable>depvar indepvars</replaceable>
-		&opto;
 	      </entry>
+	    </row>
+	    <row>
+	      <entry>Option:</entry>
+	      <entry><literal>--vcv</literal> (print covariance
+		matrix)
+	      </entry>  
 	    </row>
 	    <row>
 	      <entry>Examples:</entry>
@@ -1640,10 +1704,8 @@
 	and <replaceable>indepvars</replaceable> as the list of
 	independent variables. The error sum of squares of the
 	transformed model is graphed against the value of rho from
-	&minus;0.99 to 0.99.  If the <literal>-o</literal> flag is
-	present, the covariance matrix of regression coefficients will
-	be printed. Residuals of this transformed regression are
-	stored under the name <varname>uhat</varname>.
+	&minus;0.99 to 0.99.  Residuals of this transformed regression
+	are stored under the name <varname>uhat</varname>.
       </para>
 
     </sect2>
@@ -1656,8 +1718,13 @@
 	    <row>
 	      <entry>Arguments:</entry>
 	      <entry><replaceable>depvar indepvars</replaceable>
-		&opto;
 	      </entry>
+	    </row>
+	    <row>
+	      <entry>Option:</entry>
+	      <entry><literal>--vcv</literal> (print covariance
+		matrix)
+	      </entry>  
 	    </row>
 	  </tbody>
 	</tgroup>
@@ -1720,7 +1787,12 @@
 	  <tbody>
 	    <row>
 	      <entry>Argument:</entry>
-	      <entry><replaceable>filename</replaceable> &opto;
+	      <entry><replaceable>filename</replaceable>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Option:</entry>
+	      <entry><literal>--box1</literal> (BOX1 data)
 	      </entry>
 	    </row>
 	  </tbody>
@@ -1728,20 +1800,20 @@
       </informaltable> 
 
       <para>
-	  Without the <literal>-o</literal> flag, brings in data from
-	a comma-separated values (CSV) format file, such as can easily
-	be written from a spreadsheet program.  The file should have
-	variable names on the first line and a rectangular data matrix
-	on the remaining lines.  Variables should be arranged
-	<quote>by observation</quote> (one column per variable; each
-	row represents an observation).  See <xref
+	Brings in data from a comma-separated values (CSV) format
+	file, such as can easily be written from a spreadsheet
+	program.  The file should have variable names on the first
+	line and a rectangular data matrix on the remaining lines.
+	Variables should be arranged <quote>by observation</quote>
+	(one column per variable; each row represents an observation).
+	See <xref
 	    linkend="datafiles"/> for details.
       </para>
 
       <para>
-	With the <literal>-o</literal> flag, reads a data file in BOX1
-	format, as can be obtained using the Data Extraction Service
-	of the US Bureau of the Census.
+	With the <literal>--box1</literal> flag, reads a data file in
+	BOX1 format, as can be obtained using the Data Extraction
+	Service of the US Bureau of the Census.
       </para>
 
     </sect2>
@@ -1937,7 +2009,7 @@
 	alone has been added); the studentized residual is obtained by
 	dividing the predicted residual by its standard error.</para>
 
-      <para>If the <literal>-o</literal> flag is given with this
+      <para>If the <literal>--save</literal> flag is given with this
 	command, then the leverage, influence and DFFITS values are
 	added to the current data set.</para>
 
