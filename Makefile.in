@@ -55,7 +55,7 @@ install-man:
 	$(tooldir)/install_man $(tooldir) $(prefix) gretl-config.1
 
 tags:
-	etags lib/src/*.c cli/*.c gui/*.c plugin/*.c
+	etags lib/src/*.[hc] cli/*.[hc] gui/*.[hc] plugin/*.[hc]
 
 depend:
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d depend; done
