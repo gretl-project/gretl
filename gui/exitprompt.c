@@ -86,17 +86,24 @@ static void save_data_callback (void)
 
 /* ......................................................... */
 
-int gnome_yes_no (char *title, char *message)
+int yes_no_dialog (char *title, char *message, int cancel)
 {
     GtkWidget *dialog, *label;
     int button;
 
-    dialog = gnome_dialog_new (
-			       title,
-			       GNOME_STOCK_BUTTON_YES,
-			       GNOME_STOCK_BUTTON_NO,
-			       GNOME_STOCK_BUTTON_CANCEL,
-			       NULL);
+    if (cancel)
+	dialog = gnome_dialog_new (
+				   title,
+				   GNOME_STOCK_BUTTON_YES,
+				   GNOME_STOCK_BUTTON_NO,
+				   GNOME_STOCK_BUTTON_CANCEL,
+				   NULL);
+    else
+	dialog = gnome_dialog_new (
+				   title,
+				   GNOME_STOCK_BUTTON_YES,
+				   GNOME_STOCK_BUTTON_NO,
+				   NULL);
 
     gnome_dialog_set_parent (GNOME_DIALOG (dialog), 
 			     GTK_WINDOW(mdata->w));
@@ -111,111 +118,26 @@ int gnome_yes_no (char *title, char *message)
     return button;
 }
 
-#endif /* USE_GNOME */
-
-/* ......................................................... */
-
-static gint save_data_dlg (void) 
-{
-    int ret;
-
-#ifdef USE_GNOMEB
-    ret = gnome_yes_no ("gretl", 
-			"Do you want to save changes you have\n"
-			"made to the current data set?");
-#else
+#else /* USE_GNOME */
 #ifdef G_OS_WIN32
-    ret = MessageBox (NULL, 
-		      "Do you want to save changes you have\n"
-		      "made to the current data set?",
-		      "gretl", 
-		      MB_YESNOCANCEL | MB_ICONQUESTION);
-    if (ret == IDYES) ret = 0;
-    else if (ret == IDNO) ret = 1;
-    else ret = -1;
-#endif
-    ret = yes_no_dialog ("gretl", 
-			 "Do you want to save changes you have\n"
-			 "made to the current data set?", 1);
-#endif
-    return ret;
-}
 
-/* ......................................................... */
-
-static gint save_session_dlg (void) 
+int yes_no_dialog (char *title, char *message, int cancel)
 {
-    int ret;
-
-#ifdef USE_GNOMEB
-    ret = gnome_yes_no ("gretl", 
-			"Do you want to save the commands and\n"
-			"output from this gretl session?");
-#else
-#ifdef G_OS_WIN32
-    ret = MessageBox (NULL, 
-		      "Do you want to save the commands and\n"
-		      "output from this gretl session?",
-		      "gretl", 
-		      MB_YESNOCANCEL | MB_ICONQUESTION);
-    if (ret == IDYES) ret = 0;
-    else if (ret == IDNO) ret = 1;
-    else ret = -1;
-#endif
-    ret = yes_no_dialog ("gretl", 		      
-			 "Do you want to save the commands and\n"
-			 "output from this gretl session?",
-			 "gretl", 1);
-#endif
-    return ret;
-}
-
-/* ........................................................... */
-
-gint exit_check (GtkWidget *widget, gpointer data) 
-{
-    char fname[MAXLEN];
     int button;
 
-    strcpy(fname, paths.userdir);
-    strcat(fname, "session.inp");
-    dump_cmd_stack(fname);
+    if (cancel)
+	button = MessageBox (NULL, message, title, 
+			     MB_YESNOCANCEL | MB_ICONQUESTION);
+    else
+	button = MessageBox (NULL, message, title, 
+			     MB_YESNO | MB_ICONQUESTION);	
 
-    /* FIXME: should make both save_session_callback() and
-       save_data_callback() blocking functions */
-
-    if (expert[0] == 'f' && work_done() && !session_saved) {
-	button = save_session_dlg();
-	/* button 0 = YES */
-	if (button == 0) {
-	    save_session_callback();
-	    return TRUE;
-	}
-	/* button 2 = CANCEL; -1 = wm close */
-	else if (button == 2 || button == -1) return TRUE;
-	/* else button = 1, NO: so fall through */
-    }
-
-    if (expert[0] == 'f' && data_work_done()) {
-	button = save_data_dlg();
-	/* button 0 = YES */
-	if (button == 0) {
-	    save_data_callback();
-	    return TRUE; 
-	}
-	/* button 2 = CANCEL; -1 = wm close */
-	else if (button == 2 || button == -1) return TRUE;
-	/* else button = 1, NO: so fall through */	
-    }    
-
-    write_rc();
-    gtk_main_quit();
-    return FALSE;
+    if (button == IDYES) return 0;
+    else if (button == IDNO) return 1;
+    else return -1;
 }
 
-/* functions specific to plain GTK */
-
-#if !defined(USE_GNOMEB) && !defined(G_OS_WIN32)
+#endif /* G_OS_WIN32 */
 
 static void yes_button (GtkWidget *w, gpointer data)
 {
@@ -223,6 +145,7 @@ static void yes_button (GtkWidget *w, gpointer data)
 
     *ret = 0;
     gtk_main_quit();
+    gtk_widget_destroy(w->parent);
 }
 
 static void no_button (GtkWidget *w, gpointer data)
@@ -231,6 +154,7 @@ static void no_button (GtkWidget *w, gpointer data)
 
     *ret = 1;
     gtk_main_quit();
+    gtk_widget_destroy(w->parent);
 }
 
 static void cancel_button (GtkWidget *w, gpointer data)
@@ -239,6 +163,7 @@ static void cancel_button (GtkWidget *w, gpointer data)
 
     *ret = -1;
     gtk_main_quit();
+    gtk_widget_destroy(w->parent);
 }
 
 /* ......................................................... */
@@ -274,9 +199,6 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 		       tempwid, TRUE, TRUE, TRUE);  
    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
 		       GTK_SIGNAL_FUNC (yes_button), (gpointer) &ret);
-   gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
-			      GTK_SIGNAL_FUNC (gtk_widget_destroy), 
-			      GTK_OBJECT (dialog));
    gtk_widget_grab_default (tempwid);
    gtk_widget_show (tempwid);
 
@@ -286,9 +208,6 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 		       tempwid, TRUE, TRUE, TRUE); 
    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
 		       GTK_SIGNAL_FUNC (no_button), (gpointer) &ret);
-   gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
-			      GTK_SIGNAL_FUNC (gtk_widget_destroy), 
-			      GTK_OBJECT (dialog));
    gtk_widget_show (tempwid);
 
    /* Cancel button -- if wanted */
@@ -298,9 +217,6 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 			   tempwid, TRUE, TRUE, TRUE); 
        gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
 			   GTK_SIGNAL_FUNC (cancel_button), (gpointer) &ret);
-       gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
-				  GTK_SIGNAL_FUNC (gtk_widget_destroy), 
-				  GTK_OBJECT (dialog));
        gtk_widget_show (tempwid);
    }
 
@@ -310,5 +226,72 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 }
 
 #endif /* plain GTK */
+
+/* ......................................................... */
+
+static gint save_data_dlg (void) 
+{
+    int ret;
+
+    ret = yes_no_dialog ("gretl", 
+			 "Do you want to save changes you have\n"
+			 "made to the current data set?", 1);
+    return ret;
+}
+
+/* ......................................................... */
+
+static gint save_session_dlg (void) 
+{
+    int ret;
+
+    ret = yes_no_dialog ("gretl", 		      
+			 "Do you want to save the commands and\n"
+			 "output from this gretl session?", 1);
+    return ret;
+}
+
+/* ........................................................... */
+
+gint exit_check (GtkWidget *widget, gpointer data) 
+{
+    char fname[MAXLEN];
+    int button;
+
+    strcpy(fname, paths.userdir);
+    strcat(fname, "session.inp");
+    dump_cmd_stack(fname);
+
+    /* FIXME: should make both save_session_callback() and
+       save_data_callback() blocking functions */
+
+    if (expert[0] == 'f' && work_done() && !session_saved) {
+	button = save_session_dlg();
+	/* button 0 = YES */
+	if (button == 0) {
+	    save_session_callback();
+	    return TRUE;
+	}
+	/* button 2 = CANCEL; -1 = wm close */
+	else if (button == 2 || button == -1) return TRUE;
+	/* else button = 1, NO: so fall through */
+    }
+
+    if (expert[0] == 'f' && data_work_done()) {
+	button = save_data_dlg();
+	if (button == 0) {
+	    save_data_callback();
+	    return TRUE; 
+	}
+	else if (button == 2 || button == -1) return TRUE;
+    }    
+
+    write_rc();
+    gtk_main_quit();
+    return FALSE;
+}
+
+
+
 
 
