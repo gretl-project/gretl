@@ -42,7 +42,7 @@ typedef enum {
     AUX_ADF,   /* aux. regression for augmented Dickey-Fuller test */
     AUX_OMIT,  /* aux. regression for omitting variables */
     AUX_RESET, /* aux. regression for Ramsey's RESET */
-    AUX_SUR,   /* single equation from SUR system */
+    AUX_SYS,   /* single equation from multivariate system */
     AUX_AUX    /* auxiliary regression not otherwise specified */
 } aux_codes;
 

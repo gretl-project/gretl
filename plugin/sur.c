@@ -70,7 +70,7 @@ static void make_Xi_from_Z (gretl_matrix *X, double **Z, int *list, int T)
 {
     int i, t;
 
-    for (i=2; i<=list[0]; i++) {
+    for (i=2; i<=list[0] && list[i] != LISTSEP; i++) {
 	for (t=0; t<T; t++) {
 	    gretl_matrix_set(X, t, i-2, Z[list[i]][t]);
 	}
@@ -115,7 +115,7 @@ gls_sigma_inverse_from_uhat (const gretl_matrix *e, int m, int T)
    k = number of indep vars per equation 
 */
 
-static void sur_resids (MODEL *pmod, double **Z, gretl_matrix *uhat)
+static void sys_resids (MODEL *pmod, double **Z, gretl_matrix *uhat)
 {
     int i, t;
     int k = pmod->ncoeff, T = pmod->nobs;
@@ -142,7 +142,7 @@ static void sur_resids (MODEL *pmod, double **Z, gretl_matrix *uhat)
 }
 
 static int 
-calculate_sur_coefficients (MODEL **models, double **Z,
+calculate_sys_coefficients (MODEL **models, double **Z,
 			    gretl_matrix *X, gretl_matrix *uhat,
 			    double *tmp_y, int m, int k)
 {
@@ -168,7 +168,7 @@ calculate_sur_coefficients (MODEL **models, double **Z,
 	    (models[i])->sderr[j] = 
 		sqrt(gretl_matrix_get(vcv, i * k + j, i * k + j));
 	}
-	sur_resids(models[i], Z, uhat);
+	sys_resids(models[i], Z, uhat);
     }
 
     gretl_vector_free (coeff);
@@ -203,8 +203,7 @@ static void add_results_to_dataset (gretl_equation_system *sys,
     }
 }
 
-int sur (gretl_equation_system *sys, 
-	 double ***pZ, DATAINFO *pdinfo, 
+int sur (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo, 
 	 PRN *prn)
 {
     int i, j, k, m, T, t, l;
@@ -212,6 +211,7 @@ int sur (gretl_equation_system *sys,
     gretl_matrix *uhat, *sigma;
     double *tmp_y, *y;
     int v, bigrows;
+    int systype = system_get_type(sys);
     MODEL **models;
     int err = 0;
 
@@ -240,16 +240,25 @@ int sur (gretl_equation_system *sys,
     M = gretl_matrix_alloc(k, k);
     uhat = gretl_matrix_alloc(m, T);
 
-    /* first grab the OLS residuals */
+    gretl_matrix_zero(X);
+
+    /* first grab the single-equation residuals */
     for (i=0; i<m; i++) {
-	*models[i] = lsq(system_get_list(sys, i), pZ, pdinfo, OLS, OPT_A, 0.0);
+	if (systype == SUR) {
+	    *models[i] = lsq(system_get_list(sys, i), pZ, pdinfo, OLS, OPT_A, 0.0);
+	} else if (systype == THREESLS) {
+	    *models[i] = tsls_func(system_get_list(sys, i), 0, pZ, pdinfo, 0L);
+	}
 	if ((models[i])->errcode) {
 	    fprintf(stderr, "model failed on lists[%d], code=%d\n",
 		    i, (models[i])->errcode);
 	    return 1;
 	}
+
 	(models[i])->ID = i;
-	(models[i])->aux = AUX_SUR;
+	(models[i])->aux = AUX_SYS;
+	gretl_model_set_int(models[i], "systype", systype);
+
 	for (t=0; t<T; t++) {
 	    gretl_matrix_set(uhat, i, t, (models[i])->uhat[t]);
 	}
@@ -345,7 +354,7 @@ int sur (gretl_equation_system *sys,
 #endif	
     }
 
-    calculate_sur_coefficients (models, *pZ, X, uhat, tmp_y, m, k);
+    calculate_sys_coefficients (models, *pZ, X, uhat, tmp_y, m, k);
     gls_sigma_from_uhat (sigma, uhat, m, T);
 
     j = 0;

@@ -1463,10 +1463,23 @@ static void autores (int i, double **Z, const MODEL *pmod, double *uhat)
     }
 }
 
+/* .......................................................... */
+
+static int get_pos (const int *list)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) return i;
+    }
+
+    return -1;
+}
+
 /**
  * tsls_func:
  * @list: dependent variable plus list of regressors.
- * @pos: position in the list for the separator between list
+ * @pos_in: position in the list for the separator between list
  *   of variables and list of instruments.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
@@ -1478,17 +1491,23 @@ static void autores (int i, double **Z, const MODEL *pmod, double *uhat)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo,
+MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 		 unsigned long opt)
 {
     int i, j, t, v, ncoeff;
     int *list1 = NULL, *list2 = NULL, *newlist = NULL;
     int *s1list = NULL, *s2list = NULL;
     int yno, n = pdinfo->n, orig_nvar = pdinfo->v;
-    int nv, nxpx, addvars = 0;
+    int nv, nxpx, pos, addvars = 0;
     MODEL tsls;
     double xx;
     double *yhat = NULL;
+
+    if (pos_in > 0) {
+	pos = pos_in;
+    } else {
+	pos = get_pos(list);
+    }
 
     *gretl_errmsg = '\0';
 

@@ -30,20 +30,21 @@ struct _gretl_equation_system {
     int **lists;
 };
 
-enum {
-    SUR = 0,
-    THREESLS
-} gretl_system_types;
-
 const char *gretl_system_type_strings[] = {
     "sur",
     "3sls",
     NULL
 };
 
+const char *gretl_system_short_strings[] = {
+    N_("SUR"),
+    N_("3SLS"),
+    NULL
+};
+
 const char *gretl_system_long_strings[] = {
-    "Seemingly Unrelated Regressions",
-    "Three-Stage Least Squares",
+    N_("Seemingly Unrelated Regressions"),
+    N_("Three-Stage Least Squares"),
     NULL
 };
 
@@ -127,7 +128,9 @@ int gretl_equation_system_append (gretl_equation_system *sys,
 	sys->lists[neq][i] = list[i];
     }
 
-    rearrange_list(sys->lists[neq]);
+    if (sys->type == SUR) {
+	rearrange_list(sys->lists[neq]);
+    }
 
     sys->n_equations += 1;
 
@@ -201,9 +204,9 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	    }
 	    if (err) goto system_bailout;
 	}
-
-	system_est = get_plugin_function("sur", &handle);
     }
+
+    system_est = get_plugin_function("sur", &handle);
 
     if (system_est == NULL) {
 	err = 1;
@@ -238,6 +241,13 @@ int system_n_indep_vars (const gretl_equation_system *sys)
     return nv;
 }
 
+const char *gretl_system_short_string (const MODEL *pmod)
+{
+    int i = gretl_model_get_int(pmod, "systype");
+
+    return gretl_system_short_strings[i];
+}
+
 /* simple accessor functions */
 
 int system_save_uhat (const gretl_equation_system *sys)
@@ -267,4 +277,9 @@ int system_get_depvar (const gretl_equation_system *sys, int i)
     if (i >= sys->n_equations) return 0;
 
     return sys->lists[i][1];
+}
+
+int system_get_type (const gretl_equation_system *sys)
+{
+    return sys->type;
 }

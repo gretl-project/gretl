@@ -885,7 +885,7 @@ static void print_model_heading (const MODEL *pmod,
 		I_("Test for ARCH of order"), 
 		pmod->order);
 	break;	
-    case AUX_SUR:
+    case AUX_SYS:
 	pprintf(prn, "\n%s %d: ", 
 		(utf)? _("Equation") : I_("Equation"), pmod->ID + 1);
 	break;	
@@ -904,11 +904,11 @@ static void print_model_heading (const MODEL *pmod,
 	break;
     }
 
-    if (pmod->aux == AUX_SUR) {
+    if (pmod->aux == AUX_SYS) {
 	pprintf(prn, (utf)?
 		_("%s estimates using the %d observations %s%s%s") :
 		I_("%s estimates using the %d observations %s%s%s"),
-		_("SUR"), 
+		_(gretl_system_short_string(pmod)),
 		pmod->nobs, startdate, (tex)? "--" : "-", enddate);
     } else if (!dataset_is_panel(pdinfo)) {
 	pprintf(prn, (utf)?
@@ -1380,7 +1380,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	goto close_format;
     }    
 
-    if (pmod->aux == AUX_SUR) {
+    if (pmod->aux == AUX_SYS) {
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	print_middle_table_end(prn);

@@ -800,7 +800,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    /* could be the separator between two sub-lists */
 	    if (command->ci == TSLS || command->ci == AR ||
 		command->ci == MPOLS || command->ci == SCATTERS ||
-		command->ci == ARMA || command->ci == GARCH) {
+		command->ci == ARMA || command->ci == GARCH ||
+		command->ci == EQUATION) {
 		command->param = realloc(command->param, 4);
 		sprintf(command->param, "%d", j);
 		n += strlen(field) + 1;
@@ -1246,7 +1247,7 @@ void safe_print_line (const char *line, PRN *prn)
 
 #define hold_param(c) (c == TSLS || c == AR || c == ARMA || c == CORRGM || \
                        c == MPOLS || c == SCATTERS || c == GNUPLOT || \
-                       c == LOGISTIC || c == GARCH)
+                       c == LOGISTIC || c == GARCH || c == EQUATION)
 
 void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line, 
 	       int batch, int gui, PRN *prn)
