@@ -23,15 +23,53 @@
 #include "f2c.h"
 #include "clapack_double.h"
 
-typedef struct {
+typedef struct hausman_t_ hausman_t;
+
+struct hausman_t_ {
     int ns;
     double sigma_e;
     double H;
     double *bdiff;
     double *sigma;
-} hausman_t;
+};
 
 #undef PDEBUG
+
+/* .................................................................. */
+
+static void haus_init (hausman_t *haus)
+{
+    haus->ns = 0;
+    haus->sigma_e = NADBL;
+    haus->H = NADBL;
+    haus->bdiff = NULL;
+    haus->sigma = NULL;
+}
+
+static void haus_free (hausman_t *haus)
+{
+    free(haus->bdiff);
+    free(haus->sigma);
+}
+
+static int haus_alloc (hausman_t *haus, int ns)
+{
+    haus->ns = ns;
+
+    haus->bdiff = malloc(ns * sizeof *haus->bdiff);
+    if (haus->bdiff == NULL) {
+	return E_ALLOC;
+    }
+
+    haus->sigma = malloc(((ns * ns + ns) / 2) * sizeof *haus->sigma);
+    if (haus->sigma == NULL) {
+	free(haus->bdiff);
+	haus->bdiff = NULL;
+	return E_ALLOC; 
+    }
+
+    return 0;
+}   
 
 /* .................................................................. */
 
@@ -94,7 +132,7 @@ static double group_means_variance (MODEL *pmod,
 	s = 0;
 	for (i=0; i<nunits; i++) { 
 	    /* the observations */
-	    if (unit_obs != NULL && unit_obs[i] == 0) {
+	    if (unit_obs[i] == 0) {
 		if (pdinfo->time_series == STACKED_TIME_SERIES) {
 		    start += T;
 		} else {
@@ -235,22 +273,18 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    hausman_t *haus, PRN *prn) 
 {
     int i, t, start, oldv = pdinfo->v;
-    int ndum = nunits - 1;
-    int dvlen = pmod->list[0] + nunits;
+    int dvlen, ndum = 0;
     int *dvlist;
     double var, F;
     MODEL lsdv;
 
-    if (unit_obs != NULL) {
-	ndum = 0;
-	for (i=0; i<nunits; i++) {
-	    if (unit_obs[i] > 1) {
-		ndum++;
-	    }
+    for (i=0; i<nunits; i++) {
+	if (unit_obs[i] > 1) {
+	    ndum++;
 	}
-	dvlen = pmod->list[0] + ndum;
-	ndum--; 
     }
+    dvlen = pmod->list[0] + ndum;
+    ndum--; 
 
     /* We can be assured there's an intercept in the original
        regression */
@@ -267,7 +301,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     start = 0;
     for (i=0; i<ndum; i++) {
-	if (unit_obs != NULL && unit_obs[i] < 2) {
+	if (unit_obs[i] < 2) {
 	    continue;
 	}
 	for (t=0; t<pdinfo->n; t++) {
@@ -344,6 +378,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	pputs(prn, _("(A low p-value counts against the null hypothesis that "
 		     "the pooled OLS model\nis adequate, in favor of the fixed "
 		     "effects alternative.)\n\n"));
+
 	makevcv(&lsdv);
 	vcv_slopes(haus, &lsdv, nunits, 0);
     }
@@ -359,63 +394,107 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo, 
 			   double **groupZ, double theta, 
-			   int nunits, int T, 
+			   int nunits, int effn, int *unit_obs, int T, 
 			   hausman_t *haus, PRN *prn)
 {
     double **reZ;
     DATAINFO *reinfo;
     MODEL remod;
     int *relist;
-    int i, j, k, t, err = 0;
+    int re_n = T * effn;
+    int i, j, k, t, bigt;
+    int err = 0;
 
-    /* FIXME: this does not work with missing obs in middle of
-       sample range, even if a balanced panel is preserved
-    */
-
-    reinfo = create_new_dataset(&reZ, pmod->list[0], pdinfo->n, 0);
-    if (reinfo == NULL) {
-	return E_ALLOC;
-    }
-
+    /* regression list */
     relist = malloc((pmod->list[0] + 1) * sizeof *relist);
     if (relist == NULL) {
-	free_Z(reZ, reinfo);
-	clear_datainfo(reinfo, CLEAR_FULL);
-	free(reinfo);
 	return E_ALLOC;
     }
+
+    reinfo = create_new_dataset(&reZ, pmod->list[0], re_n, 0);
+    if (reinfo == NULL) {
+	free(relist);
+	return E_ALLOC;
+    }
+
+#ifdef PDEBUG
+    fprintf(stderr, "reZ: series length = T * effn = %d * %d = %d\n",
+	    T, effn, T * effn);
+#endif
 
     relist[0] = pmod->list[0];
 
-    /* create transformed variables */
+    /* create transformed variables: original data minus theta
+       times the appropriate group or unit mean 
+    */
+
     k = 1;
     for (i=1; i<=relist[0]; i++) {
+	const double *xi = Z[pmod->list[i]];
+	double *gm = groupZ[k];
+	int u = 0;
+
 	if (pmod->list[i] == 0) {
 	    relist[i] = 0;
 	    continue;
 	}
+
 	relist[i] = k;
-	j = 0;
-	if (pdinfo->time_series == STACKED_TIME_SERIES) { 
-	    for (t=0; t<pdinfo->n; t++) {
-		if (t && (t % T == 0)) j++; 
-		reZ[k][t] = Z[pmod->list[i]][t] 
-		    - theta * groupZ[k][j];
+
+	if (pdinfo->time_series == STACKED_TIME_SERIES) {
+	    for (j=0; j<nunits; j++) {
+		if (unit_obs[j] == 0) {
+		    continue;
+		}
+		for (t=0; t<T; t++) {
+		    int rt = u * T + t;
+
+		    bigt = j * T + t;
+		    if (na(pmod->uhat[bigt])) {
+			reZ[k][rt] = NADBL;
+		    } else {
+			reZ[k][rt] = xi[bigt] - theta * gm[u];
+		    }
+#ifdef PDEBUG
+		    fprintf(stderr, "set reZ[%d][%d]=Z[%d][%d]-theta*"
+			    "groupZ[%d][%d]=%g\n", k, rt, 
+			    pmod->list[i], bigt,
+			    k, u, reZ[k][rt]);
+#endif
+		}
+		u++;
 	    }
-	} else { 
-	    /* stacked cross sections */
-	    for (t=0; t<pdinfo->n; t++) {
-		if (t && (t % nunits == 0)) j = 0; /* FIXME ?? */
-		reZ[k][t] = Z[pmod->list[i]][t] 
-		    - theta * groupZ[k][j];
-		j++;
+	} else {
+	    int rt = 0;
+
+	    for (t=0; t<T; t++) {
+		u = 0;
+		for (j=0; j<nunits; j++) {
+		    bigt = t * nunits + j;
+		    if (unit_obs[j] == 0) {
+			continue;
+		    }
+		    if (na(pmod->uhat[bigt])) {
+			reZ[k][rt] = NADBL;
+		    } else {
+			reZ[k][rt] = xi[bigt] - theta * gm[u];
+		    }
+#ifdef PDEBUG
+		    fprintf(stderr, "set reZ[%d][%d]=Z[%d][%d]-theta*"
+			    "groupZ[%d][%d]=%g\n", k, rt, 
+			    pmod->list[i], bigt,
+			    k, u, reZ[k][rt]);
+#endif
+		    u++;
+		    rt++;
+		}
 	    }
 	}
 	k++;
     }
 
-    for (t=0; t<pdinfo->n; t++) {
-	reZ[0][t] = 1.0 - theta;
+    for (t=0; t<re_n; t++) {
+	reZ[0][t] -= theta;
     }
 
 #ifdef PDEBUG
@@ -443,9 +522,11 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     }
 
     clear_model(&remod);
+
     free_Z(reZ, reinfo);
     clear_datainfo(reinfo, CLEAR_FULL);
     free(reinfo);
+
     free(relist);    
 
     return err;
@@ -494,7 +575,7 @@ static int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo,
 		 "units:\n\n"));
 
     for (i=0; i<nunits; i++) {
-	if (unit_obs != NULL && unit_obs[i] == 0) {
+	if (unit_obs[i] == 0) {
 	    continue;
 	}
 	pprintf(prn, _(" unit %2d: %13.5g\n"), i + 1, ubar[i]);
@@ -554,56 +635,23 @@ static int do_hausman_test (hausman_t *haus, PRN *prn)
     return 0;
 }
 
-/* .................................................................. */
-
-static void effective_panel_structure (const MODEL *pmod,
-				       const DATAINFO *pdinfo,
-				       int nunits, int T,
-				       int *effn, int *effT)
+int get_maj_min (const DATAINFO *pdinfo, int *maj, int *min)
 {
-    *effn = nunits;
-    *effT = T;
+    int startmaj, startmin;
+    int endmaj, endmin;
 
-    if (pmod->missmask != NULL) {
-	int t, ok_slices = 0, ok_blocks = 0;
-	int block, blockmin = -1, blockbak = -1;
-	int pd = (pdinfo->time_series == STACKED_TIME_SERIES)? T : nunits;
+    if (sscanf(pdinfo->stobs, "%d:%d", &startmaj, &startmin) != 2) {
+	return 1;
+    }
 
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (!model_missing(pmod, t)) {
-		block = t / pd;
-		if (blockbak == -1) {
-		    blockmin = block;
-		}
-		if (block != blockbak) {
-		    ok_blocks++;
-		    blockbak = block;
-		}
-	    }
-	}
+    if (sscanf(pdinfo->endobs, "%d:%d", &endmaj, &endmin) != 2) {
+	return 1;
+    } 
 
-	for (t=0; t<pd; t++) {
-	    int ttest = t + pd * blockmin;
+    *maj = endmaj - startmaj + 1;
+    *min = endmin - startmin + 1;
 
-	    if (!model_missing(pmod, ttest + pmod->t1)) {
-		ok_slices++;
-	    }
-	}
-
-	if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	    *effn = ok_blocks;
-	    *effT = ok_slices;
-	} else {
-	    *effn = ok_slices;
-	    *effT = ok_blocks;
-	}	    
-    } else if (pmod->t1 > 0) {
-	if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	    *effn -= pmod->t1 / T;
-	} else {
-	    *effT -= pmod->t1 / nunits;
-	}
-    }	
+    return 0;
 }
 
 int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
@@ -611,8 +659,8 @@ int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
 {
     int nmaj, nmin;
     int k, ninc = 0;
-    
-    if (sscanf(pdinfo->endobs, "%d:%d", &nmaj, &nmin) != 2) {
+
+    if (get_maj_min(pdinfo, &nmaj, &nmin)) {
 	return -1;
     }
 
@@ -677,10 +725,9 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     int nunits, ns, T;
     int effn, effT;
     int *unit_obs = NULL;
-    double var1, var2, theta;
-    double **groupZ = NULL;
-    DATAINFO *ginfo = NULL;
+    double var1, var2;
     hausman_t haus;
+    int err = 0;
 
 #ifdef PDEBUG
     fputs("\n*** Starting panel_diagnostics ***\n", stderr);
@@ -691,26 +738,19 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (get_panel_structure(pdinfo, &nunits, &T)) {
-	return 1;
+	return E_DATA;
     }
 
-#if 1 || defined(ALLOW_UNBALANCED)
-    if (pmod->missmask != NULL) {
-	unit_obs = malloc(nunits * sizeof *unit_obs);
-	if (unit_obs == NULL) {
-	    return E_ALLOC;
-	}
-	effn = n_included_units(pmod, pdinfo, unit_obs);
-	fprintf(stderr, "number of units included = %d\n", effn);
-	effT = effective_T(unit_obs, nunits);
-    } else {
-	effn = nunits;
-	effT = T;
+    haus_init(&haus);
+
+    unit_obs = malloc(nunits * sizeof *unit_obs);
+    if (unit_obs == NULL) {
+	return E_ALLOC;
     }
-#else
-    effective_panel_structure(pmod, pdinfo, nunits, T,
-			      &effn, &effT);
-#endif
+
+    effn = n_included_units(pmod, pdinfo, unit_obs);
+    fprintf(stderr, "number of units included = %d\n", effn);
+    effT = effective_T(unit_obs, nunits);
 
 #ifdef PDEBUG
     fprintf(stderr, "nunits=%d, T=%d, effn=%d, effT=%d\n",
@@ -718,15 +758,10 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     if (effn > pmod->ncoeff) {
-	ns = haus.ns = pmod->ncoeff - 1;
-	haus.bdiff = malloc(haus.ns * sizeof *haus.bdiff);
-	if (haus.bdiff == NULL) {
-	    return E_ALLOC;
-	}
-	haus.sigma = malloc(((ns * ns + ns) / 2) * sizeof *haus.sigma);
-	if (haus.sigma == NULL) {
-	    free(haus.bdiff);
-	    return E_ALLOC; 
+	ns = pmod->ncoeff - 1;
+	err = haus_alloc(&haus, ns);
+	if (err) {
+	    goto bailout;
 	}
     }   
     
@@ -748,30 +783,35 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 #endif
     
     if (effn > pmod->ncoeff && !na(var2)) {
+	double **groupZ = NULL;
+	DATAINFO *ginfo = NULL;
+	double theta;
+	
 	var1 = group_means_variance(pmod, *pZ, pdinfo, &groupZ, &ginfo, 
 				    nunits, effn, unit_obs, T, effT);
+
 	if (na(var1)) { 
 	    pputs(prn, _("Couldn't estimate group means regression\n"));
 	} else {
 	    pprintf(prn, _("Residual variance for group means "
 			   "regression: %g\n\n"), var1);    
 	    theta = 1.0 - sqrt(var2 / (effT * var1));
-	    random_effects(pmod, *pZ, pdinfo, groupZ, theta, nunits, T, 
-			   &haus, prn);
+	    random_effects(pmod, *pZ, pdinfo, groupZ, theta, nunits, 
+			   effn, unit_obs, T, &haus, prn);
 	    do_hausman_test(&haus, prn);
 	}
+
 	free_Z(groupZ, ginfo);
 	clear_datainfo(ginfo, CLEAR_FULL);
 	free(ginfo);
-	free(haus.bdiff);
-	free(haus.sigma);
     }
 
-    if (unit_obs != NULL) {
-	free(unit_obs);
-    }
+ bailout:
 
-    return 0;
+    free(unit_obs);
+    haus_free(&haus);
+
+    return err;
 }
 
 /* .................................................................. */
