@@ -46,8 +46,6 @@ static int getxvec (char *s, double *xvec,
 static int scanb (const char *ss, char *word);
 static int strtype (char *ss, const DATAINFO *pdinfo);
 static int whichtrans (const char *ss);
-static int normal_dist (double *a, int t1, int t2); 
-static void uniform (double *a, int t1, int t2);
 static int createvar (double *xvec, char *snew, char *sleft, 
 		      char *sright, int ssnum, double ***pZ, 
 		      DATAINFO *pdinfo, int scalar);
@@ -866,16 +864,12 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		    }
 		    if (nt == T_NORMAL) {
 			genr.scalar = 0;
-			err = normal_dist(genr.xvec, t1, t2);
-			if (err) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return err;
-			}
+			gretl_normal_dist(genr.xvec, t1, t2);
 			break;
 		    }   
 		    if (nt == T_UNIFORM) {
 			genr.scalar = 0;
-			uniform(genr.xvec, t1, t2);
+			gretl_uniform_dist(genr.xvec, t1, t2);
 			break;
 		    }
 		    if (nt == T_COV) {
@@ -2188,38 +2182,6 @@ int _laggenr (int iv, int lag, int opt, double ***pZ,
     }
 
     return 0;
-}
-
-/* ........................................................  */
-
-static int normal_dist (double *a, int t1, int t2) 
-     /* Box and Muller method */
-{
-    int i;
-    double xx, yy, zz, scale = 1.0 / RAND_MAX;
-
-    for (i=t1; i<=t2; i++) {
-    tryagain:
-	xx = (double) rand() * scale;
-	yy = (double) rand() * scale;
-	zz = sqrt(-2. * log(xx));
-	if (isnan(zz) || isinf(zz)) goto tryagain;
-	a[i] = zz * cos(2. * M_PI * yy);
-    }
-    return 0;
-}
-
-/* ........................................................  */
-
-static void uniform (double *a, int t1, int t2) 
-{
-    int i;
-    double scale = 100.0/RAND_MAX;
-
-    for (i=t1; i<=t2; i++) 
-	a[i] = (double) rand(); 
-    for (i=t1; i<=t2; i++) 
-	a[i] *= scale; 
 }
 
 /**

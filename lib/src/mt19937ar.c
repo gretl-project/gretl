@@ -41,7 +41,13 @@
    email: matumoto@math.keio.ac.jp
 */
 
+/* slightly modified (not in computational substance) for use with
+   gretl by Allin Cottrell, cottrell@wfu.edu, March 2003
+*/
+
+#if 0
 #include <stdio.h>
+#endif
 
 /* Period parameters */  
 #define N 624
@@ -54,7 +60,7 @@ static unsigned long mt[N]; /* the array for the state vector  */
 static int mti=N+1; /* mti==N+1 means mt[N] is not initialized */
 
 /* initializes mt[N] with a seed */
-void init_genrand(unsigned long s)
+static void init_genrand(unsigned long s)
 {
     mt[0]= s & 0xffffffffUL;
     for (mti=1; mti<N; mti++) {
@@ -69,6 +75,7 @@ void init_genrand(unsigned long s)
     }
 }
 
+#if 0
 /* initialize by an array with array-length */
 /* init_key is the array for initializing keys */
 /* key_length is its length */
@@ -97,9 +104,10 @@ unsigned long init_key[], key_length;
 
     mt[0] = 0x80000000UL; /* MSB is 1; assuring non-zero initial array */ 
 }
+#endif
 
 /* generates a random number on [0,0xffffffff]-interval */
-unsigned long genrand_int32(void)
+static unsigned long genrand_int32(void)
 {
     unsigned long y;
     static unsigned long mag01[2]={0x0UL, MATRIX_A};
@@ -142,12 +150,14 @@ long genrand_int31(void)
     return (long)(genrand_int32()>>1);
 }
 
+#if 0
 /* generates a random number on [0,1]-real-interval */
 double genrand_real1(void)
 {
     return genrand_int32()*(1.0/4294967295.0); 
     /* divided by 2^32-1 */ 
 }
+#endif
 
 /* generates a random number on [0,1)-real-interval */
 double genrand_real2(void)
@@ -156,21 +166,26 @@ double genrand_real2(void)
     /* divided by 2^32 */
 }
 
+#if 0
 /* generates a random number on (0,1)-real-interval */
 double genrand_real3(void)
 {
     return (((double)genrand_int32()) + 0.5)*(1.0/4294967296.0); 
     /* divided by 2^32 */
 }
+#endif
 
+#if 0
 /* generates a random number on [0,1) with 53-bit resolution*/
 double genrand_res53(void) 
 { 
     unsigned long a=genrand_int32()>>5, b=genrand_int32()>>6; 
     return(a*67108864.0+b)*(1.0/9007199254740992.0); 
 } 
+#endif
 /* These real versions are due to Isaku Wada, 2002/01/09 added */
 
+#if 0
 int main(void)
 {
     int i;
@@ -188,3 +203,4 @@ int main(void)
     }
     return 0;
 }
+#endif

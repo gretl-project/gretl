@@ -556,7 +556,7 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 	
 	/* create random sample index array */
 	for (i=0; i<m; i++) {
-	    sample[i] = rand() / (RAND_MAX / m + 1);
+	    sample[i] = gretl_rand_int_max(m);
 	}
 
 	/* populate data array using the sample */

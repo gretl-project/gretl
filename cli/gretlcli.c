@@ -368,7 +368,7 @@ int main (int argc, char *argv[])
     loop.storeval = NULL;
 
     /* initialize random number generator */
-    srand((unsigned int) time(NULL));
+    gretl_rand_init();
 
     if (data_status) varlist(datainfo, prn);
     /* check for help file */
@@ -510,8 +510,8 @@ int main (int argc, char *argv[])
     }
 
     remove(paths.plotfile);
-
     gretl_print_destroy(prn);
+    gretl_rand_free();
 
     return 0;
 }
@@ -1192,7 +1192,7 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case SEED:
-	srand((unsigned) atoi(command.param));
+	gretl_rand_set_seed(atoi(command.param));
 	pprintf(prn, _("Pseudo-random number generator seeded with %d\n"),
 	       atoi(command.param));
 	break;

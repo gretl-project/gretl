@@ -190,10 +190,10 @@ excel_import.lo: ../lib/src/dataio.h ../lib/src/strutils.h
 excel_import.lo: ../lib/src/describe.h ../lib/src/printout.h
 excel_import.lo: ../lib/src/modelprint.h ../lib/src/texprint.h
 excel_import.lo: ../lib/src/var.h ../lib/src/interact.h ../lib/src/graphing.h
-excel_import.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-excel_import.lo: ../lib/src/discrete.h ../lib/src/subsample.h
-excel_import.lo: ../lib/src/calendar.h ../lib/src/system.h xltypes.h
-excel_import.lo: importer.h import_common.c
+excel_import.lo: ../lib/src/random.h ../lib/src/monte_carlo.h
+excel_import.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
+excel_import.lo: ../lib/src/subsample.h ../lib/src/calendar.h
+excel_import.lo: ../lib/src/system.h xltypes.h importer.h import_common.c
 gnumeric_import.lo: ../lib/src/libgretl.h ../lib/src/commands.h
 gnumeric_import.lo: ../lib/src/errors.h ../lib/src/estimate.h
 gnumeric_import.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h
@@ -202,10 +202,11 @@ gnumeric_import.lo: ../lib/src/dataio.h ../lib/src/strutils.h
 gnumeric_import.lo: ../lib/src/describe.h ../lib/src/printout.h
 gnumeric_import.lo: ../lib/src/modelprint.h ../lib/src/texprint.h
 gnumeric_import.lo: ../lib/src/var.h ../lib/src/interact.h
-gnumeric_import.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
-gnumeric_import.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
-gnumeric_import.lo: ../lib/src/subsample.h ../lib/src/calendar.h
-gnumeric_import.lo: ../lib/src/system.h importer.h import_common.c
+gnumeric_import.lo: ../lib/src/graphing.h ../lib/src/random.h
+gnumeric_import.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
+gnumeric_import.lo: ../lib/src/discrete.h ../lib/src/subsample.h
+gnumeric_import.lo: ../lib/src/calendar.h ../lib/src/system.h importer.h
+gnumeric_import.lo: import_common.c
 gretl_matrix.lo: ../lib/src/libgretl.h ../lib/src/commands.h
 gretl_matrix.lo: ../lib/src/errors.h ../lib/src/estimate.h
 gretl_matrix.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h
@@ -214,17 +215,17 @@ gretl_matrix.lo: ../lib/src/dataio.h ../lib/src/strutils.h
 gretl_matrix.lo: ../lib/src/describe.h ../lib/src/printout.h
 gretl_matrix.lo: ../lib/src/modelprint.h ../lib/src/texprint.h
 gretl_matrix.lo: ../lib/src/var.h ../lib/src/interact.h ../lib/src/graphing.h
-gretl_matrix.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-gretl_matrix.lo: ../lib/src/discrete.h ../lib/src/subsample.h
-gretl_matrix.lo: ../lib/src/calendar.h ../lib/src/system.h gretl_matrix.h
-gretl_matrix.lo: f2c.h clapack_double.h
+gretl_matrix.lo: ../lib/src/random.h ../lib/src/monte_carlo.h
+gretl_matrix.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
+gretl_matrix.lo: ../lib/src/subsample.h ../lib/src/calendar.h
+gretl_matrix.lo: ../lib/src/system.h gretl_matrix.h f2c.h clapack_double.h
 johansen.lo: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h
 johansen.lo: ../lib/src/estimate.h ../lib/src/generate.h
 johansen.lo: ../lib/src/gretl_utils.h ../lib/src/compare.h
 johansen.lo: ../lib/src/pvalues.h ../lib/src/dataio.h ../lib/src/strutils.h
 johansen.lo: ../lib/src/describe.h ../lib/src/printout.h
 johansen.lo: ../lib/src/modelprint.h ../lib/src/texprint.h ../lib/src/var.h
-johansen.lo: ../lib/src/interact.h ../lib/src/graphing.h
+johansen.lo: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/random.h
 johansen.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 johansen.lo: ../lib/src/discrete.h ../lib/src/subsample.h
 johansen.lo: ../lib/src/calendar.h ../lib/src/system.h gretl_matrix.h f2c.h
@@ -234,16 +235,16 @@ lad.lo: ../lib/src/estimate.h ../lib/src/generate.h ../lib/src/gretl_utils.h
 lad.lo: ../lib/src/compare.h ../lib/src/pvalues.h ../lib/src/dataio.h
 lad.lo: ../lib/src/strutils.h ../lib/src/describe.h ../lib/src/printout.h
 lad.lo: ../lib/src/modelprint.h ../lib/src/texprint.h ../lib/src/var.h
-lad.lo: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/monte_carlo.h
-lad.lo: ../lib/src/nonparam.h ../lib/src/discrete.h ../lib/src/subsample.h
-lad.lo: ../lib/src/calendar.h ../lib/src/system.h
+lad.lo: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/random.h
+lad.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h ../lib/src/discrete.h
+lad.lo: ../lib/src/subsample.h ../lib/src/calendar.h ../lib/src/system.h
 mp_ols.lo: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h
 mp_ols.lo: ../lib/src/estimate.h ../lib/src/generate.h
 mp_ols.lo: ../lib/src/gretl_utils.h ../lib/src/compare.h ../lib/src/pvalues.h
 mp_ols.lo: ../lib/src/dataio.h ../lib/src/strutils.h ../lib/src/describe.h
 mp_ols.lo: ../lib/src/printout.h ../lib/src/modelprint.h
 mp_ols.lo: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
-mp_ols.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
+mp_ols.lo: ../lib/src/graphing.h ../lib/src/random.h ../lib/src/monte_carlo.h
 mp_ols.lo: ../lib/src/nonparam.h ../lib/src/discrete.h ../lib/src/subsample.h
 mp_ols.lo: ../lib/src/calendar.h ../lib/src/system.h
 panel_data.lo: ../lib/src/libgretl.h ../lib/src/commands.h
@@ -253,10 +254,10 @@ panel_data.lo: ../lib/src/compare.h ../lib/src/pvalues.h ../lib/src/dataio.h
 panel_data.lo: ../lib/src/strutils.h ../lib/src/describe.h
 panel_data.lo: ../lib/src/printout.h ../lib/src/modelprint.h
 panel_data.lo: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
-panel_data.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
-panel_data.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
-panel_data.lo: ../lib/src/subsample.h ../lib/src/calendar.h
-panel_data.lo: ../lib/src/system.h
+panel_data.lo: ../lib/src/graphing.h ../lib/src/random.h
+panel_data.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
+panel_data.lo: ../lib/src/discrete.h ../lib/src/subsample.h
+panel_data.lo: ../lib/src/calendar.h ../lib/src/system.h
 progress_bar.lo: ../lib/src/libgretl.h ../lib/src/commands.h
 progress_bar.lo: ../lib/src/errors.h ../lib/src/estimate.h
 progress_bar.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h
@@ -265,9 +266,10 @@ progress_bar.lo: ../lib/src/dataio.h ../lib/src/strutils.h
 progress_bar.lo: ../lib/src/describe.h ../lib/src/printout.h
 progress_bar.lo: ../lib/src/modelprint.h ../lib/src/texprint.h
 progress_bar.lo: ../lib/src/var.h ../lib/src/interact.h ../lib/src/graphing.h
-progress_bar.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-progress_bar.lo: ../lib/src/discrete.h ../lib/src/subsample.h
-progress_bar.lo: ../lib/src/calendar.h ../lib/src/system.h
+progress_bar.lo: ../lib/src/random.h ../lib/src/monte_carlo.h
+progress_bar.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
+progress_bar.lo: ../lib/src/subsample.h ../lib/src/calendar.h
+progress_bar.lo: ../lib/src/system.h
 range-mean.lo: ../lib/src/libgretl.h ../lib/src/commands.h
 range-mean.lo: ../lib/src/errors.h ../lib/src/estimate.h
 range-mean.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h
@@ -275,10 +277,10 @@ range-mean.lo: ../lib/src/compare.h ../lib/src/pvalues.h ../lib/src/dataio.h
 range-mean.lo: ../lib/src/strutils.h ../lib/src/describe.h
 range-mean.lo: ../lib/src/printout.h ../lib/src/modelprint.h
 range-mean.lo: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
-range-mean.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
-range-mean.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
-range-mean.lo: ../lib/src/subsample.h ../lib/src/calendar.h
-range-mean.lo: ../lib/src/system.h
+range-mean.lo: ../lib/src/graphing.h ../lib/src/random.h
+range-mean.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
+range-mean.lo: ../lib/src/discrete.h ../lib/src/subsample.h
+range-mean.lo: ../lib/src/calendar.h ../lib/src/system.h
 stats_tables.lo: ../lib/src/libgretl.h ../lib/src/commands.h
 stats_tables.lo: ../lib/src/errors.h ../lib/src/estimate.h
 stats_tables.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h
@@ -287,18 +289,19 @@ stats_tables.lo: ../lib/src/dataio.h ../lib/src/strutils.h
 stats_tables.lo: ../lib/src/describe.h ../lib/src/printout.h
 stats_tables.lo: ../lib/src/modelprint.h ../lib/src/texprint.h
 stats_tables.lo: ../lib/src/var.h ../lib/src/interact.h ../lib/src/graphing.h
-stats_tables.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-stats_tables.lo: ../lib/src/discrete.h ../lib/src/subsample.h
-stats_tables.lo: ../lib/src/calendar.h ../lib/src/system.h
+stats_tables.lo: ../lib/src/random.h ../lib/src/monte_carlo.h
+stats_tables.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
+stats_tables.lo: ../lib/src/subsample.h ../lib/src/calendar.h
+stats_tables.lo: ../lib/src/system.h
 sur.lo: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h
 sur.lo: ../lib/src/estimate.h ../lib/src/generate.h ../lib/src/gretl_utils.h
 sur.lo: ../lib/src/compare.h ../lib/src/pvalues.h ../lib/src/dataio.h
 sur.lo: ../lib/src/strutils.h ../lib/src/describe.h ../lib/src/printout.h
 sur.lo: ../lib/src/modelprint.h ../lib/src/texprint.h ../lib/src/var.h
-sur.lo: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/monte_carlo.h
-sur.lo: ../lib/src/nonparam.h ../lib/src/discrete.h ../lib/src/subsample.h
-sur.lo: ../lib/src/calendar.h ../lib/src/system.h gretl_matrix.h f2c.h
-sur.lo: clapack_double.h
+sur.lo: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/random.h
+sur.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h ../lib/src/discrete.h
+sur.lo: ../lib/src/subsample.h ../lib/src/calendar.h ../lib/src/system.h
+sur.lo: gretl_matrix.h f2c.h clapack_double.h
 tramo_options.lo: ../lib/src/libgretl.h ../lib/src/commands.h
 tramo_options.lo: ../lib/src/errors.h ../lib/src/estimate.h
 tramo_options.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h
@@ -307,10 +310,10 @@ tramo_options.lo: ../lib/src/dataio.h ../lib/src/strutils.h
 tramo_options.lo: ../lib/src/describe.h ../lib/src/printout.h
 tramo_options.lo: ../lib/src/modelprint.h ../lib/src/texprint.h
 tramo_options.lo: ../lib/src/var.h ../lib/src/interact.h
-tramo_options.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
-tramo_options.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
-tramo_options.lo: ../lib/src/subsample.h ../lib/src/calendar.h
-tramo_options.lo: ../lib/src/system.h tramo_x12a.h
+tramo_options.lo: ../lib/src/graphing.h ../lib/src/random.h
+tramo_options.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
+tramo_options.lo: ../lib/src/discrete.h ../lib/src/subsample.h
+tramo_options.lo: ../lib/src/calendar.h ../lib/src/system.h tramo_x12a.h
 tramo-x12a.lo: ../lib/src/libgretl.h ../lib/src/commands.h
 tramo-x12a.lo: ../lib/src/errors.h ../lib/src/estimate.h
 tramo-x12a.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h
@@ -318,17 +321,17 @@ tramo-x12a.lo: ../lib/src/compare.h ../lib/src/pvalues.h ../lib/src/dataio.h
 tramo-x12a.lo: ../lib/src/strutils.h ../lib/src/describe.h
 tramo-x12a.lo: ../lib/src/printout.h ../lib/src/modelprint.h
 tramo-x12a.lo: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
-tramo-x12a.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
-tramo-x12a.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
-tramo-x12a.lo: ../lib/src/subsample.h ../lib/src/calendar.h
-tramo-x12a.lo: ../lib/src/system.h tramo_x12a.h
+tramo-x12a.lo: ../lib/src/graphing.h ../lib/src/random.h
+tramo-x12a.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
+tramo-x12a.lo: ../lib/src/discrete.h ../lib/src/subsample.h
+tramo-x12a.lo: ../lib/src/calendar.h ../lib/src/system.h tramo_x12a.h
 workbook.lo: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h
 workbook.lo: ../lib/src/estimate.h ../lib/src/generate.h
 workbook.lo: ../lib/src/gretl_utils.h ../lib/src/compare.h
 workbook.lo: ../lib/src/pvalues.h ../lib/src/dataio.h ../lib/src/strutils.h
 workbook.lo: ../lib/src/describe.h ../lib/src/printout.h
 workbook.lo: ../lib/src/modelprint.h ../lib/src/texprint.h ../lib/src/var.h
-workbook.lo: ../lib/src/interact.h ../lib/src/graphing.h
+workbook.lo: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/random.h
 workbook.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 workbook.lo: ../lib/src/discrete.h ../lib/src/subsample.h
 workbook.lo: ../lib/src/calendar.h ../lib/src/system.h biff.h importer.h

@@ -65,10 +65,10 @@ RES2COFF = echo gretlw32_res.o
 LIBSRC = estimate.c compare.c gretl_utils.c errors.c pvalues.c dataio.c \
        generate.c strutils.c describe.c printout.c modelprint.c texprint.c var.c \
        interact.c graphing.c gretl_win32.c monte_carlo.c nonparam.c discrete.c \
-       subsample.c calendar.c system.c
+       subsample.c calendar.c system.c random.c
 LIBHDR = libgretl.h commands.h estimate.h gretl_utils.h errors.h pvalues.h \
        compare.h dataio.h generate.h strutils.h describe.h printout.h modelprint.h \
-       version.h texprint.h var.h interact.h graphing.h monte_carlo.h \
+       version.h texprint.h var.h interact.h graphing.h monte_carlo.h random.h \
        nonparam.h discrete.h subsample.h calendar.h system.h gretl_win32.h
 LIBOBJ = $(LIBSRC:.c=.o)
 

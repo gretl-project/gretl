@@ -652,9 +652,7 @@ int main (int argc, char *argv[])
     if (command.list == NULL || command.param == NULL)  
 	noalloc(_("command list")); 
 
-    /* initialize random number generator */
-    srand((unsigned) time(NULL));
-
+    gretl_rand_init();
     helpfile_init();
     session_init();
 

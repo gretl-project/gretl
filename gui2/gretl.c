@@ -33,6 +33,7 @@
 # include "../pixmaps/gretl.xpm"  /* program icon for X */
 #else
 # include <windows.h>
+# define HUSH_RUNTIME_WARNINGS
 #endif
 
 /* pixmaps for gretl toolbar */
@@ -623,9 +624,11 @@ static void destroy (GtkWidget *widget, gpointer data)
     gtk_main_quit();
 }
 
-#ifdef HUSH_RUNTIME_WARNINGS
+#ifdef G_OS_WIN32
 extern int ws_startup (void);
+#endif
 
+#ifdef HUSH_RUNTIME_WARNINGS
 void dummy_output_handler (const gchar *log_domain,
                            GLogLevelFlags log_level,
                            const gchar *message,
@@ -781,9 +784,7 @@ int main (int argc, char *argv[])
     if (command.list == NULL || command.param == NULL)  
 	noalloc(_("command list")); 
 
-    /* initialize random number generator */
-    srand((unsigned) time(NULL));
-
+    gretl_rand_init();
     helpfile_init();
     session_init();
 
@@ -911,6 +912,8 @@ int main (int argc, char *argv[])
 
     remove(paths.plotfile);
     Rcleanup();
+
+    gretl_rand_free();
 
     return EXIT_SUCCESS;
 }

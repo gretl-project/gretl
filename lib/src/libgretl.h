@@ -335,6 +335,7 @@ typedef struct {
 #include "var.h"
 #include "interact.h"
 #include "graphing.h"
+#include "random.h"
 #include "monte_carlo.h"
 #include "nonparam.h"
 #include "discrete.h"

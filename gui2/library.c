@@ -2033,7 +2033,7 @@ void do_seed (GtkWidget *widget, dialog_t *ddata)
     sprintf(line, "seed %s", tmp); 
     if (check_cmd(line) || cmd_init(line)) return;
 
-    srand((unsigned) atoi(tmp));
+    gretl_rand_set_seed(atoi(tmp));
 }
 
 /* ........................................................... */
@@ -4481,7 +4481,7 @@ int gui_exec_line (char *line,
         break;
 
     case SEED:
-	srand((unsigned) atoi(command.param));
+	gretl_rand_set_seed(atoi(command.param));
 	pprintf(prn, _("Pseudo-random number generator seeded with %d\n"),
 		atoi(command.param));
 	break;

@@ -16,6 +16,7 @@ version 1.0.6
 - add robust LM test for use with add/omit variables in relation
   to a model estimated using hccm
 - permit comments starting with '#' on first line of script
+- change to Mersenne Twister for gretl's PRNG
 
 02/20/03 version 1.0.5
 - fix missing translations; fix build of rpm

@@ -769,7 +769,7 @@ median_interval (double *x, int n, double *low, double *high)
     for (i=0; i<ITERS; i++) {
 	/* sample with replacement from x */
 	for (j=0; j<n; j++) {
-	    t = rand() / (RAND_MAX / n + 1);
+	    t = gretl_rand_int_max(n);
 	    samp[j] = x[t];
 	}
 	/* find the median of the sample */
