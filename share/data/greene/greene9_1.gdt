@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="greene9_1" frequency="1" startobs="1" endobs="25" type="cross-section">
+<description>
+Cross-sectional data on manufacturing of transportation equipment.
+By state.  From Zellner and Revankar.  Presented as Table 9.1
+in Greene, Econometric Analysis, 4e.
+</description>
+<variables count="4">
+<variable name="valadd"/>
+<variable name="capital"/>
+<variable name="labor"/>
+<variable name="nfirm"/>
+</variables>
+<observations count="25" labels="true">
+<obs label="AL">126.148 3.804 31.551 68 </obs>
+<obs label="CA">3201.486 185.446 452.844 1372 </obs>
+<obs label="CT">690.670 39.712 124.074 154 </obs>
+<obs label="FL">56.296 6.547 19.181 292 </obs>
+<obs label="GA">304.531 11.530 45.534 71 </obs>
+<obs label="IL">723.028 58.987 88.391 275 </obs>
+<obs label="IN">992.169 112.884 148.530 260 </obs>
+<obs label="IA">35.796 2.698 8.017 75 </obs>
+<obs label="KS">494.515 10.360 86.189 76 </obs>
+<obs label="KY">124.948 5.213 12.000 31 </obs>
+<obs label="LA">73.328 3.763 15.900 115 </obs>
+<obs label="ME">29.467 1.967 6.470 81 </obs>
+<obs label="MD">415.262 17.546 69.342 129 </obs>
+<obs label="MA">241.530 15.347 39.416 172 </obs>
+<obs label="MI">4079.554 435.105 490.384 568 </obs>
+<obs label="MO">652.085 32.840 84.831 125 </obs>
+<obs label="NJ">667.113 33.292 83.033 247 </obs>
+<obs label="NY">940.430 72.974 190.094 461 </obs>
+<obs label="OH">1611.899 157.978 259.916 363 </obs>
+<obs label="PA">617.579 34.324 98.152 233 </obs>
+<obs label="TX">527.413 22.736 109.728 308 </obs>
+<obs label="VA">174.394 7.173 31.301 85 </obs>
+<obs label="WA">636.948 30.807 87.963 179 </obs>
+<obs label="WV">22.700 1.543 4.063 15 </obs>
+<obs label="WI">349.711 22.001 52.818 142 </obs>
+</observations>
+</gretldata>
