@@ -1455,7 +1455,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 
 int text_print_fcast_with_errs (const FITRESID *fr, 
 				double ***pZ, DATAINFO *pdinfo, PRN *prn,
-				PATHS *ppaths, int plot)
+				int plot)
 {
     int pv, err = 0;
     int t;
@@ -1520,8 +1520,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 	    err = plot_fcast_errs(fr->nobs, &(*pZ)[pv][fr->t1], 
 				  fr->actual, fr->fitted, maxerr, 
 				  fr->depvar, 
-				  (time_series)? pdinfo->pd : 0,
-				  ppaths);
+				  (time_series)? pdinfo->pd : 0);
 	}
     }
 

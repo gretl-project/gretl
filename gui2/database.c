@@ -204,7 +204,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
     lines[0] = 1;
     list[0] = 2; list[1] = 1; list[2] = 2;
     err = gnuplot(list, lines, NULL, dbZ, dbdinfo,
-		  &paths, &plot_count, GP_GUI);
+		  &plot_count, GP_GUI);
 
     if (err < 0) {
 	errbox(_("gnuplot command failed"));
@@ -1622,7 +1622,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     fp = fopen(ggzname, "w");
     if (fp == NULL) {
 	if (errno == EACCES) { /* write to user dir instead */
-	    build_path(paths.userdir, dbname, ggzname, ".ggz");
+	    build_path(gretl_user_dir(), dbname, ggzname, ".ggz");
 	} else {
 	    gchar *msg;
 
@@ -1804,8 +1804,10 @@ gint populate_dbfilelist (windata_t *win)
 
 #ifndef G_OS_WIN32
     /* pick up any databases in the user's personal dir */
-    dbdir = paths.userdir;
-    if ((dir = opendir(dbdir)) != NULL) {
+    dir = opendir(gretl_user_dir());
+    if (dir != NULL) {
+	const char *ddir = gretl_user_dir();
+
 	while ((dirent = readdir(dir)) != NULL) {
 	    fname = dirent->d_name;
 	    n = strlen(fname);
@@ -1814,12 +1816,12 @@ gint populate_dbfilelist (windata_t *win)
 		row[0] = fname;
 		gtk_list_store_append(store, &iter);
 		if (win->role == NATIVE_DB) {
-		    row[1] = get_descrip(fname, dbdir);
+		    row[1] = get_descrip(fname, ddir);
 		    gtk_list_store_set (store, &iter, 0, row[0], 1, row[1], 
-					2, dbdir, -1);
+					2, ddir, -1);
 		    g_free(row[1]);
 		} else { /* RATS */
-		    gtk_list_store_set (store, &iter, 0, row[0], 1, dbdir, -1);
+		    gtk_list_store_set (store, &iter, 0, row[0], 1, ddir, -1);
 		}	
 		i++;
 	    }
@@ -1828,10 +1830,10 @@ gint populate_dbfilelist (windata_t *win)
 		row[0] = fname;
 		row[1] = NULL;
 		if (win->role == NATIVE_DB) {
-		    row[1] = get_descrip(fname, dbdir);
+		    row[1] = get_descrip(fname, ddir);
 		}
 		gtk_clist_append(GTK_CLIST (win->listbox), row);
-		gtk_clist_set_row_data(GTK_CLIST (win->listbox), i, dbdir);
+		gtk_clist_set_row_data(GTK_CLIST (win->listbox), i, ddir);
 		if (row[1]) g_free(row[1]);
 		if (i % 2) {
 		    gtk_clist_set_background(GTK_CLIST(win->listbox), 

@@ -291,14 +291,13 @@ static void truncate (char *str, int n)
     if (len > n) str[n] = 0;
 }
 
-static int graph_series (double **Z, DATAINFO *pdinfo, 
-			 PATHS *paths, int opt)
+static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
 {
     FILE *fp = NULL;
     char title[32];
     int t;
 
-    if (gnuplot_init(paths, PLOT_TRI_GRAPH, &fp)) return E_FOPEN;
+    if (gnuplot_init(PLOT_TRI_GRAPH, &fp)) return E_FOPEN;
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -740,8 +739,7 @@ static int make_x_axis_var (double ***pZ, DATAINFO *pdinfo)
 }
 
 int write_tx_data (char *fname, int varnum, 
-		   double ***pZ, DATAINFO *pdinfo, 
-		   PATHS *paths, int *graph,
+		   double ***pZ, DATAINFO *pdinfo, int *graph, 
 		   const char *prog, const char *workdir,
 		   char *errmsg)
 {
@@ -798,7 +796,10 @@ int write_tx_data (char *fname, int varnum,
 
     /* create little temporary dataset */
     tmpinfo = create_new_dataset(&tmpZ, 4, pdinfo->n, 0);
-    if (tmpinfo == NULL) return E_ALLOC;
+    if (tmpinfo == NULL) {
+	return E_ALLOC;
+    }
+
     copy_basic_data_info(tmpinfo, pdinfo);
 
     if (request.code == X12A) { 
@@ -904,7 +905,7 @@ int write_tx_data (char *fname, int varnum,
 
 		if (pv < 0) err = 1;
 		if (!err) {
-		    err = graph_series(tmpZ, tmpinfo, paths, request.code);
+		    err = graph_series(tmpZ, tmpinfo, request.code);
 		    if (err) {
 			fprintf(stderr, "graph_series() failed\n");
 		    }

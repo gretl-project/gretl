@@ -137,7 +137,7 @@ static void print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *lmod,
 			      int c, int n, PRN *prn);
 static void print_loop_prn (LOOP_PRINT *lprn, int n,
 			    const DATAINFO *pdinfo, PRN *prn);
-static int print_loop_store (LOOPSET *loop, PRN *prn, PATHS *ppaths);
+static int print_loop_store (LOOPSET *loop, PRN *prn);
 static int get_prnnum_by_id (LOOPSET *loop, int id);
 static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum);
 
@@ -1332,14 +1332,13 @@ static int update_loop_print (LOOPSET *loop, int cmdnum,
  * @loop: pointer to loop struct.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
- * @ppaths: path information struct.
  *
  * Print out the results after completion of the loop @loop.
  *
  */
 
 static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo, 
-				PRN *prn, PATHS *ppaths)
+				PRN *prn)
 {
     char linecpy[MAXLINE];
     int i;
@@ -1381,7 +1380,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 			       loop->ntimes, pdinfo, prn);
 		loop->next_print += 1;
 	    } else if (loop->ci[i] == STORE) {
-		print_loop_store(loop, prn, ppaths);
+		print_loop_store(loop, prn);
 	    }
 	}
     }
@@ -1706,7 +1705,7 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
 
 /* ......................................................... */ 
 
-static int print_loop_store (LOOPSET *loop, PRN *prn, PATHS *ppaths)
+static int print_loop_store (LOOPSET *loop, PRN *prn)
 {
     int i, t;
     FILE *fp;
@@ -1716,7 +1715,7 @@ static int print_loop_store (LOOPSET *loop, PRN *prn, PATHS *ppaths)
 
     /* organize filename */
     if (loop->storefile[0] == '\0') {
-	sprintf(gdtfile, "%sloopdata.gdt", ppaths->userdir);	
+	sprintf(gdtfile, "%sloopdata.gdt", gretl_user_dir());	
     } else {
 	strcpy(gdtfile, loop->storefile);
     }
@@ -1957,8 +1956,8 @@ print_loop_progress (const LOOPSET *loop, const DATAINFO *pdinfo,
 
 int loop_exec (LOOPSET *loop, char *line,
 	       double ***pZ, DATAINFO **ppdinfo, 
-	       MODEL **models, PATHS *paths, 
-	       int *echo_off, PRN *prn)
+	       MODEL **models, int *echo_off, 
+	       PRN *prn)
 {
     CMD cmd;
     MODEL *lastmod = models[0];
@@ -2048,13 +2047,12 @@ int loop_exec (LOOPSET *loop, char *line,
 	    switch (cmd.ci) {
 
 	    case SUMMARY:
-		err = simple_commands(&cmd, linecpy, pZ, pdinfo, paths, prn);
+		err = simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
 		break;
 
 	    case LOOP:
 		err = loop_exec(loop->children[childnum++], NULL,
-				pZ, ppdinfo, models, paths,
-				echo_off, prn);
+				pZ, ppdinfo, models, echo_off, prn);
 		break;
 
 	    case ENDLOOP:
@@ -2135,7 +2133,7 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    case PRINT:
 		if (cmd.param[0] != '\0') {
-		    err = simple_commands(&cmd, linecpy, pZ, pdinfo, paths, prn);
+		    err = simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
 		} else if (loop_is_progressive(loop)) {
 		    if (lround == 0) {
 			if ((err = add_loop_print(loop, cmd.list, j))) {
@@ -2192,7 +2190,7 @@ int loop_exec (LOOPSET *loop, char *line,
 					   (const double **) *pZ, pdinfo);
 		    }
 		} else {
-		    simple_commands(&cmd, linecpy, pZ, pdinfo, paths, prn);
+		    simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
 		}
 		break;
 
@@ -2222,7 +2220,7 @@ int loop_exec (LOOPSET *loop, char *line,
     }
 
     if (!err && lround > 0) {
-	print_loop_results(loop, *ppdinfo, prn, paths); 
+	print_loop_results(loop, *ppdinfo, prn); 
     }
 
     if (lastmod != models[0]) {

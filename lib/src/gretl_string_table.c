@@ -171,7 +171,7 @@ void gretl_string_table_destroy (gretl_string_table *st)
 }
 
 int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
-			      PATHS *ppaths, PRN *prn)
+			      PRN *prn)
 {
     int i, j;
     const col_table *ct;
@@ -182,7 +182,7 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
     if (st == NULL) return 1;
 
     strcpy(stname, "string_table.txt");
-    path_append(stname, ppaths->userdir);
+    path_append(stname, gretl_user_dir());
     fp = fopen(stname, "w");
     if (fp == NULL) err = 1;
 
@@ -207,7 +207,7 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
     if (fp != NULL) {
 	pprintf(prn, M_("String code table written to\n %s\n"), stname);
 	fclose(fp);
-	set_string_table_written(ppaths);
+	set_string_table_written();
     }
 
     gretl_string_table_destroy(st);

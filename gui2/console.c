@@ -281,8 +281,7 @@ static void console_exec (void)
 
     if (looprun) { 
 	if (loop_exec(loop, execline, 
-		      &Z, &datainfo,
-		      models, &paths, 
+		      &Z, &datainfo, models,
 		      &echo_off, console_prn)) {
 	    return;
 	}

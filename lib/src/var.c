@@ -1449,7 +1449,7 @@ static double df_pvalue_from_plugin (double tau, int n, int niv, int itv)
         return pval;
     }
 
-    strcpy(datapath, fetch_gretl_lib_path());
+    strcpy(datapath, gretl_lib_path());
 #ifdef WIN32
     append_dir(datapath, "plugins");
 #endif

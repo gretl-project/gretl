@@ -680,7 +680,6 @@ static char *label_front (void)
 
 /**
  * get_gretl_png_term_line:
- * @ppaths: paths information.
  * @plottype: 
  *
  * Constructs a suitable line for sending to gnuplot to invoke
@@ -691,7 +690,7 @@ static char *label_front (void)
  * Returns: the term string, "set term png ..."
  */
 
-const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype)
+const char *get_gretl_png_term_line (int plottype)
 {
     static char png_term_line[256];
     char font_string[128];
@@ -709,9 +708,8 @@ const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype)
 
     /* plot font setup */
     if (gpttf) {
-	if (*ppaths->pngfont != 0) {
-	    grfont = ppaths->pngfont;
-	} else {
+	grfont = gretl_png_font();
+	if (*grfont == 0) {
 	    grfont = getenv("GRETL_PNG_GRAPH_FONT");
 	}
 	if (grfont != NULL && *grfont != 0) {
@@ -787,38 +785,45 @@ const char *get_gretl_emf_term_line (int plottype, int color)
 
 /**
  * gnuplot_init:
- * @ppaths: pointer to path information struct.
  * @plottype: code for the type of plot.
  * @fpp: pointer to stream to be opened.
  *
- * If we're in GUI mode, writes a unique temporary filename into the
- * plotfile member of @ppaths; opens plotfile for writing as @fpp; if
+ * If we're in GUI mode, writes a unique temporary filename into
+ * gretl_plotfile; opens plotfile for writing as @fpp; if
  * we're in GUI mode, writes PNG terminal type into plotfile.
  *
  * Returns: 0 on success, 1 on failure
  */
 
-int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp)
+int gnuplot_init (int plottype, FILE **fpp)
 {
-    int gui = gretl_using_gui(ppaths);
+    int gui = gretl_using_gui();
+    char plotfile[MAXLEN];
 
+    /* gnuplot_path is file-scope statis var */
     if (*gnuplot_path == 0) {
-	strcpy(gnuplot_path, ppaths->gnuplot);
+	strcpy(gnuplot_path, gretl_gnuplot_path());
     }
 
     if (gui) {
-	sprintf(ppaths->plotfile, "%sgpttmp.XXXXXX", ppaths->userdir);
-	if (mktemp(ppaths->plotfile) == NULL) return 1;
+	sprintf(plotfile, "%sgpttmp.XXXXXX", gretl_user_dir());
+	if (mktemp(plotfile) == NULL) {
+	    return 1;
+	}
     } else {
-	sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
+	sprintf(plotfile, "%sgpttmp.plt", gretl_user_dir());
     }
 
-    *fpp = fopen(ppaths->plotfile, "w");
-    if (*fpp == NULL) return 1;
+    set_gretl_plotfile(plotfile);
+
+    *fpp = fopen(plotfile, "w");
+    if (*fpp == NULL) {
+	return 1;
+    }
 
     if (gui) {
-	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ppaths, plottype));
-	fprintf(*fpp, "set output '%sgretltmp.png'\n", ppaths->userdir);
+	fprintf(*fpp, "%s\n", get_gretl_png_term_line(plottype));
+	fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_user_dir());
     }
 
     return 0;
@@ -826,24 +831,23 @@ int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp)
 
 /**
  * gnuplot_make_graph:
- * @ppaths: pointer to path information struct.
  *
- * Executes gnuplot, passing as an argument ppaths->plotfile.
+ * Executes gnuplot, passing as an argument the gretl plotfile.
  *
  * Returns: the return value from the system command.
  */
 
-int gnuplot_make_graph (const PATHS *ppaths)
+int gnuplot_make_graph (void)
 {
     int err = 0;
     char plotcmd[MAXLEN];
 
 # ifdef WIN32
-    sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
+    sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), gretl_plotfile());
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 # else
-    sprintf(plotcmd, "%s%s \"%s\"", ppaths->gnuplot, 
-	    (gretl_using_gui(ppaths))? "" : " -persist", ppaths->plotfile);
+    sprintf(plotcmd, "%s%s \"%s\"", gretl_gnuplot_path(), 
+	    (gretl_using_gui())? "" : " -persist", gretl_plotfile());
     err = gretl_spawn(plotcmd);  
 # endif /* WIN32 */
 
@@ -946,6 +950,37 @@ static const char *get_series_name (const DATAINFO *pdinfo, int v)
     }
 }
 
+static int
+get_gnuplot_output_file (FILE **fpp, unsigned char flags, 
+			 int *plot_count, int code)
+{
+    const char *plotfile = gretl_plotfile();
+    int err = 0;
+
+    *fpp = NULL;
+
+    if ((flags & GP_FILE) && *plotfile != '\0') {
+	*fpp = fopen(plotfile, "w");
+    } else if ((flags & GP_BATCH) && plot_count != NULL) {  
+	char fname[MAXLEN];
+
+	if (*plotfile == '\0' || strstr(plotfile, "gpttmp") != NULL) {
+	    *plot_count += 1; 
+	    sprintf(fname, "%sgpttmp%02d.plt", gretl_user_dir(), *plot_count);
+	}
+	set_gretl_plotfile(fname);
+	*fpp = fopen(fname, "w");
+    } else {
+	gnuplot_init(code, fpp);
+    }
+
+    if (*fpp == NULL) {
+	err = E_FOPEN;
+    }
+
+    return err;
+}
+
 /**
  * gnuplot:
  * @list: list of variables to plot, by ID number.
@@ -954,7 +989,6 @@ static const char *get_series_name (const DATAINFO *pdinfo, int v)
  * @literal: commands to be passed to gnuplot.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @ppaths: path information struct.
  * @plot_count: pointer to count of graphs drawn so far.
  * @flags: bitwise OR of zero or more options from #gnuplot_flags
  *
@@ -966,7 +1000,7 @@ static const char *get_series_name (const DATAINFO *pdinfo, int v)
  */
 
 int gnuplot (LIST list, const int *lines, const char *literal,
-	     double ***pZ, DATAINFO *pdinfo, PATHS *ppaths, 
+	     double ***pZ, DATAINFO *pdinfo, 
 	     int *plot_count, unsigned char flags)
 {
     FILE *fq = NULL;
@@ -1007,20 +1041,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	lo--;
     }
 
-    /* organize the output */
-    if ((flags & GP_FILE) && *ppaths->plotfile) {
-	fq = fopen(ppaths->plotfile, "w");
-    } else if ((flags & GP_BATCH) && plot_count != NULL) {  
-	if (*ppaths->plotfile == '\0' || 
-	    strstr(ppaths->plotfile, "gpttmp") != NULL) {
-	    *plot_count += 1; 
-	    sprintf(ppaths->plotfile, "%sgpttmp%02d.plt", ppaths->userdir, 
-		    *plot_count);
-	}
-	fq = fopen(ppaths->plotfile, "w");
-	if (fq == NULL) return E_FOPEN;
-    } else {
-	if (gnuplot_init(ppaths, PLOT_REGULAR, &fq)) return E_FOPEN;
+    if (get_gnuplot_output_file(&fq, flags, plot_count, PLOT_REGULAR)) {
+	return E_FOPEN;
     }
 
     /* setting yscale at this point is not a commitment, we will
@@ -1338,7 +1360,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     fclose(fq);
 
     if (!(flags & GP_BATCH)) {
-	if (gnuplot_make_graph(ppaths)) miss = -1;
+	if (gnuplot_make_graph()) miss = -1;
     }
     return miss;
 }
@@ -1349,7 +1371,6 @@ int gnuplot (LIST list, const int *lines, const char *literal,
  * @pos: 
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @ppaths: path information struct.
  * @plot_count: count of graphs shown to date.
  * @flags: option flags.
  *
@@ -1360,8 +1381,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
  */
 
 int multi_scatters (const LIST list, int pos, double ***pZ, 
-		    const DATAINFO *pdinfo, PATHS *ppaths,
-		    int *plot_count, unsigned char flags)
+		    const DATAINFO *pdinfo, int *plot_count, 
+		    unsigned char flags)
 {
     int i, t, err = 0, xvar, yvar, *plotlist;
     int nplots, m;
@@ -1396,19 +1417,8 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
     if (plotlist[0] > 6) plotlist[0] = 6;
     nplots = plotlist[0];
 
-    /* organize the output */
-    if ((flags & GP_FILE) && *ppaths->plotfile) {
-	fp = fopen(ppaths->plotfile, "w");
-    } else if ((flags & GP_BATCH) && plot_count != NULL) {  
-	if (*ppaths->plotfile == 0) {
-	    *plot_count += 1; 
-	    sprintf(ppaths->plotfile, "%sgpttmp%02d.plt", ppaths->userdir, 
-		    *plot_count);
-	}
-	fp = fopen(ppaths->plotfile, "w");
-	if (fp == NULL) return E_FOPEN;
-    } else {
-	if (gnuplot_init(ppaths, PLOT_MULTI_SCATTER, &fp)) return E_FOPEN;
+    if (get_gnuplot_output_file(&fp, flags, plot_count, PLOT_MULTI_SCATTER)) {
+	return E_FOPEN;
     }
 
     fputs("# multiple scatterplots\n", fp);
@@ -1465,10 +1475,26 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
     fclose(fp);
 
     if (!(flags & GP_BATCH)) {
-	err = gnuplot_make_graph(ppaths);
+	err = gnuplot_make_graph();
     }
 
     free(plotlist);
+
+    return err;
+}
+
+static int get_3d_output_file (FILE **fpp)
+{
+    char fname[MAXLEN];
+    int err = 0;
+
+    sprintf(fname, "%sgpttmp.plt", gretl_user_dir());
+    *fpp = fopen(fname, "w");
+    if (*fpp == NULL) {
+	err = E_FOPEN;
+    } else {
+	set_gretl_plotfile(fname);
+    }
 
     return err;
 }
@@ -1479,7 +1505,6 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
  * @literal: literal command(s) to pass to gnuplot (or NULL)
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @ppaths: path information struct.
  * @plot_count: pointer to counter variable for plots (unused)
  * @flags: unused at present.
  *
@@ -1490,7 +1515,7 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
  */
 
 int gnuplot_3d (LIST list, const char *literal,
-		double ***pZ, DATAINFO *pdinfo, PATHS *ppaths, 
+		double ***pZ, DATAINFO *pdinfo,  
 		int *plot_count, unsigned char flags)
 {
     FILE *fq = NULL;
@@ -1503,15 +1528,16 @@ int gnuplot_3d (LIST list, const char *literal,
 	return -1;
     }
 
-    sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
-    fq = fopen(ppaths->plotfile, "w");
-    if (fq == NULL) {
+    if (get_3d_output_file(&fq)) {
 	return E_FOPEN;
     }
 
     adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
     /* if resulting sample range is empty, complain */
-    if (t2 == t1) return GRAPH_NO_DATA;
+    if (t2 == t1) {
+	fclose(fq);
+	return GRAPH_NO_DATA;
+    }
 
     *surface = 0;
 
@@ -1572,7 +1598,9 @@ int gnuplot_3d (LIST list, const char *literal,
     for (t=t1; t<=t2; t++) {
 	const char *label = NULL;
 
-	if (pdinfo->markers) label = pdinfo->S[t];
+	if (pdinfo->markers) {
+	    label = pdinfo->S[t];
+	}
 	printvars(fq, t, tmplist, *pZ, label, 0.0);
     }	
     fputs("e\n", fq);
@@ -1589,7 +1617,6 @@ int gnuplot_3d (LIST list, const char *literal,
 /**
  * plot_freq:
  * @freq: frequency distribution struct.
- * @ppaths: path information struct.
  * @dist: distribution code (see #dist_codes).
  *
  * Plot the actual frequency distribution for a variable versus a
@@ -1598,7 +1625,7 @@ int gnuplot_3d (LIST list, const char *literal,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
+int plot_freq (FREQDIST *freq, int dist)
 {
     double alpha = 0.0, beta = 0.0, lambda = 1.0;
     FILE *fp = NULL;
@@ -1615,7 +1642,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     if (dist == NORMAL) plottype = PLOT_FREQ_NORMAL;
     else if (dist == GAMMA) plottype = PLOT_FREQ_GAMMA;
 
-    if (gnuplot_init(ppaths, plottype, &fp)) return E_FOPEN;
+    if (gnuplot_init(plottype, &fp)) return E_FOPEN;
 
     *withstring = 0;
 
@@ -1752,7 +1779,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 
     if (fp) fclose(fp);
 
-    return gnuplot_make_graph(ppaths);
+    return gnuplot_make_graph();
 }
 
 /* ......................................................... */ 
@@ -1760,13 +1787,13 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 int plot_fcast_errs (int n, const double *obs, 
 		     const double *depvar, const double *yhat, 
 		     const double *maxerr, const char *varname, 
-		     int time_series, PATHS *ppaths)
+		     int time_series)
 {
     FILE *fp = NULL;
     double xmin, xmax, xrange;
     int t;
 
-    if (gnuplot_init(ppaths, PLOT_FORECAST, &fp)) {
+    if (gnuplot_init(PLOT_FORECAST, &fp)) {
 	return E_FOPEN;
     }
 
@@ -1824,11 +1851,10 @@ int plot_fcast_errs (int n, const double *obs,
 
     fclose(fp);
 
-    return gnuplot_make_graph(ppaths);
+    return gnuplot_make_graph();
 }
 
-int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
-		      PATHS *ppaths)
+int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 {
     FILE *fp = NULL;
     double *h, *obs;
@@ -1840,7 +1866,7 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    if (gnuplot_init(ppaths, PLOT_FORECAST, &fp)) {
+    if (gnuplot_init(PLOT_FORECAST, &fp)) {
 	return E_FOPEN;
     }
 
@@ -1883,7 +1909,7 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     fclose(fp);
 
-    return gnuplot_make_graph(ppaths);
+    return gnuplot_make_graph();
 }
 
 /* ........................................................... */
@@ -1915,8 +1941,7 @@ void free_plotspec (GPT_SPEC *spec)
 
 /* ........................................................... */
 
-int get_termstr (const GPT_SPEC *spec, char *termstr,
-		 const PATHS *ppaths)
+int get_termstr (const GPT_SPEC *spec, char *termstr)
 {
     int cmds = 0;
 
@@ -1930,7 +1955,7 @@ int get_termstr (const GPT_SPEC *spec, char *termstr,
 	strcpy(termstr, "latex");
     } else if (!strcmp(spec->termtype, "png")) { 
 	const char *png_str = 
-	    get_gretl_png_term_line(ppaths, spec->code);
+	    get_gretl_png_term_line(spec->code);
 
 	strcpy(termstr, png_str + 9);
     } else if (!strcmp(spec->termtype, "emf color")) {
@@ -2184,7 +2209,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
 /* ........................................................... */
 
-int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
+int go_gnuplot (GPT_SPEC *spec, char *fname)
      /* ship out a plot struct, to gnuplot or file */
 {
     FILE *fp = NULL;
@@ -2192,7 +2217,7 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
     int err = 0, miss;
     char termstr[72];
 
-    dump = get_termstr(spec, termstr, ppaths);
+    dump = get_termstr(spec, termstr);
 
     if (dump) {  
 	/* dump of gnuplot commands to named file */
@@ -2202,7 +2227,7 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
     } else {     
 	/* output to gnuplot, for screen or other "term" */
 	if (spec->fp == NULL) {
-	    fp = fopen(ppaths->plotfile, "w");
+	    fp = fopen(gretl_plotfile(), "w");
 	}
 	if (fp == NULL) return 1;
 
@@ -2240,7 +2265,7 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
 #endif
 	fclose(fp);
 	spec->fp = NULL;
-	sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
+	sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), gretl_plotfile());
 #ifdef WIN32
 	if (winshow) {
 	    err = (WinExec(plotcmd, SW_SHOWNORMAL) < 32);
@@ -2261,25 +2286,23 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
 
 /* ........................................................... */
 
-int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
-	    PATHS *ppaths)
+int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn)
 {
     int err;
     void *handle;
-    int (*range_mean_graph) (int, double **, const DATAINFO *, 
-                             PRN *, PATHS *);
+    int (*range_mean_graph) (int, double **, const DATAINFO *, PRN *);
 
     range_mean_graph = get_plugin_function("range_mean_graph", &handle);
     if (range_mean_graph == NULL) {
         return 1;
     }
 
-    err = range_mean_graph (list[1], Z, pdinfo, prn, ppaths);
+    err = range_mean_graph (list[1], Z, pdinfo, prn);
 
     close_plugin(handle);
 
     if (!err) {
-        return gnuplot_make_graph(ppaths);
+        return gnuplot_make_graph();
     } else {
 	return err;
     }
@@ -2290,8 +2313,7 @@ int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
 int 
 gretl_var_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
-				 const DATAINFO *pdinfo,
-				 PATHS *ppaths)
+				 const DATAINFO *pdinfo)
 {
     FILE *fp = NULL;
     int vtarg, vshock;
@@ -2308,7 +2330,7 @@ gretl_var_plot_impulse_response (GRETL_VAR *var,
     resp = gretl_var_get_impulse_responses(var, targ, shock, periods);
     if (resp == NULL) return E_ALLOC;
 
-    if (gnuplot_init(ppaths, PLOT_REGULAR, &fp)) return E_FOPEN;
+    if (gnuplot_init(PLOT_REGULAR, &fp)) return E_FOPEN;
 
     vtarg = gretl_var_get_variable_number(var, targ);
     vshock = gretl_var_get_variable_number(var, shock);
@@ -2340,7 +2362,7 @@ gretl_var_plot_impulse_response (GRETL_VAR *var,
 
     fclose(fp);
 
-    return gnuplot_make_graph(ppaths);
+    return gnuplot_make_graph();
 }
 
 /* ........................................................... */

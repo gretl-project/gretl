@@ -42,6 +42,8 @@ enum {
     USER_SEARCH
 };
 
+static void ensure_slash (char *str);
+
 /* .......................................................... */
 
 static int add_gdt_suffix (char *fname)
@@ -380,7 +382,7 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     /* or try looking in user's dir (and subdirs) */
     fname = tmp;
     strcpy(fname, orig);
-    if ((fname = search_dir(fname, ppaths->userdir, USER_SEARCH))) { 
+    if ((fname = search_dir(fname, gretl_user_dir(), USER_SEARCH))) { 
 	return fname;
     }
 
@@ -495,83 +497,121 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 
 /* .......................................................... */
 
-enum path_ops {
-    SET_GRETL_LIB_PATH,
-    SET_GRETL_USER_DIR,
-    GET_GRETL_LIB_PATH,
-    GET_GRETL_USER_DIR
+enum paths_status_flags {
+    GRETL_USING_GUI      = 1 << 0,
+    STRING_TABLE_WRITTEN = 1 << 1
 };
 
-static const char *internal_path_stuff (int code, const char *path)
-{
-    static char gretl_lib_path[MAXLEN];
-    static char gretl_user_dir[MAXLEN];
-    const char *ret = NULL;
+struct INTERNAL_PATHS {
+    char userdir[MAXLEN];
+    char gnuplot[MAXLEN];
+    char plotfile[MAXLEN];
+    char libpath[MAXLEN];
+    char pngfont[32];
+    unsigned char status;
+};
 
-    if (code == SET_GRETL_LIB_PATH) {
+static struct INTERNAL_PATHS gretl_paths;
+
+static void set_gretl_libpath (const char *path)
+{
 #ifdef WIN32
-	strcpy(gretl_lib_path, path);
+    strcpy(gretl_paths.libpath, path);
 #else
 # ifdef GLIB2 
-	const char *sfx = "-gtk2/";
+    const char *sfx = "-gtk2/";
 # else
-	const char *sfx = "-gtk1/";
+    const char *sfx = "-gtk1/";
 # endif
-	char *p = strstr(path, "/share");
+    char *p = strstr(path, "/share");
 
-	if (p) {
-	    size_t len = p - path;
+    if (p) {
+	size_t len = p - path;
 
-	    *gretl_lib_path = 0;
-	    strncat(gretl_lib_path, path, len);
-	    strcat(gretl_lib_path, "/lib/gretl");
-	    strcat(gretl_lib_path, sfx);
-	} else {
-	    sprintf(gretl_lib_path, "%s/lib/gretl%s", path, sfx);
-	}
-#endif /* WIN32 */
-    } else if (code == SET_GRETL_USER_DIR) {
-	strcpy(gretl_user_dir, path);
-    } else if (code == GET_GRETL_LIB_PATH) {
-	ret = gretl_lib_path;
-    } else if (code == GET_GRETL_USER_DIR) {
-	ret = gretl_user_dir;
+	*gretl_paths.libpath = 0;
+	strncat(gretl_paths.libpath, path, len);
+	strcat(gretl_paths.libpath, "/lib/gretl");
+	strcat(gretl_paths.libpath, sfx);
+    } else {
+	sprintf(gretl_paths.libpath, "%s/lib/gretl%s", path, sfx);
     }
-
-    return ret;
+#endif /* WIN32 */
 }
 
 /* .......................................................... */
 
-const char *fetch_gretl_lib_path (void)
+static void copy_paths_to_internal (const PATHS *paths)
 {
-    return internal_path_stuff(GET_GRETL_LIB_PATH, NULL);
+    strcpy(gretl_paths.userdir, paths->userdir);
+    strcpy(gretl_paths.gnuplot, paths->gnuplot);
+    strcpy(gretl_paths.pngfont, paths->pngfont);
 }
 
-const char *fetch_gretl_user_dir (void)
+/* .......................................................... */
+
+const char *gretl_lib_path (void)
 {
-    return internal_path_stuff(GET_GRETL_USER_DIR, NULL);
+    return gretl_paths.libpath;
 }
 
-void set_string_table_written (PATHS *ppaths)
+const char *gretl_user_dir (void)
 {
-    ppaths->status |= STRING_TABLE_WRITTEN;
+    return gretl_paths.userdir;
 }
 
-int gretl_string_table_written (PATHS *ppaths)
+void set_gretl_user_dir (const char *path, PATHS *ppaths)
+{
+    strcpy(gretl_paths.userdir, path);
+    ensure_slash(gretl_paths.userdir);
+    strcpy(ppaths->userdir, path);
+    ensure_slash(ppaths->userdir);
+}
+
+const char *gretl_gnuplot_path (void)
+{
+    return gretl_paths.gnuplot;
+}
+
+const char *gretl_plotfile (void)
+{
+    return gretl_paths.plotfile;
+}
+
+void set_gretl_plotfile (const char *fname)
+{
+    strcpy(gretl_paths.plotfile, fname);
+}
+
+const char *gretl_png_font (void)
+{
+    return gretl_paths.pngfont;
+}
+
+void set_gretl_png_font (const char *s, PATHS *ppaths)
+{
+    strcpy(gretl_paths.pngfont, s);
+    strcpy(ppaths->pngfont, s);
+}
+
+void set_string_table_written (void)
+{
+    gretl_paths.status |= STRING_TABLE_WRITTEN;
+}
+
+int gretl_string_table_written (void)
 {
     int ret = 0;
 
-    if (ppaths->status & STRING_TABLE_WRITTEN) ret = 1;
+    if (gretl_paths.status & STRING_TABLE_WRITTEN) ret = 1;
 
-    ppaths->status &= ~STRING_TABLE_WRITTEN;
+    gretl_paths.status &= ~STRING_TABLE_WRITTEN;
 
     return ret;
 }
 
-int gretl_using_gui (const PATHS *ppaths)
+int gretl_using_gui (void)
 {
-    return ppaths->status & GRETL_USING_GUI;
+    return (gretl_paths.status & GRETL_USING_GUI);
 }
 
 static void ensure_slash (char *str)
@@ -583,7 +623,7 @@ static void ensure_slash (char *str)
 
 /* .......................................................... */
 
-void show_paths (PATHS *ppaths)
+void show_paths (const PATHS *ppaths)
 {
     printf(_("gretl: using these basic search paths:\n"));
     printf("gretldir: %s\n", ppaths->gretldir);
@@ -623,7 +663,10 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	} else {
 	    ppaths->dbhost[0] = '\0';
 	}
+
 	ppaths->currdir[0] = '\0';
+
+	*gretl_paths.plotfile = '\0';
 
 	strcpy(ppaths->pngfont, "verdana 8");
     } else {
@@ -638,23 +681,22 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 		_("gretl_hlp.txt"));
 	sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir,
 		_("gretlcli_hlp.txt"));
-	ppaths->status = GRETL_USING_GUI;
+	gretl_paths.status |= GRETL_USING_GUI;
     } else { 
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
 		_("gretlcli_hlp.txt"));
-	ppaths->status = 0;
+	gretl_paths.status = 0;
     }
-
-    ensure_slash(ppaths->userdir);
-
-    *ppaths->plotfile = '\0';
 
     sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%sshare\\gtksourceview-1.0"
 	    "\\language-specs", ppaths->gretldir);
     putenv(envstr);
 
-    internal_path_stuff(SET_GRETL_LIB_PATH, ppaths->gretldir);
-    internal_path_stuff(SET_GRETL_USER_DIR, ppaths->userdir);
+    ensure_slash(ppaths->userdir);
+
+    set_gretl_libpath(ppaths->gretldir);
+
+    copy_paths_to_internal(ppaths);
 
     return 0;
 }
@@ -702,6 +744,8 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	strcpy(ppaths->x12a, "x12a");
 	sprintf(ppaths->x12adir, "%sx12arima", ppaths->userdir);
 #endif
+
+	*gretl_paths.plotfile = '\0';
     } else {
 	ensure_slash(ppaths->gretldir);
     }
@@ -714,19 +758,18 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 		_("gretl.hlp"));
 	sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir,
 		_("gretlcli.hlp"));
-	ppaths->status = GRETL_USING_GUI;
+	gretl_paths.status |= GRETL_USING_GUI;
     } else {
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
 		_("gretlcli.hlp"));
-	ppaths->status = 0;
+	gretl_paths.status = 0;
     }
 
     ensure_slash(ppaths->userdir);
 
-    *ppaths->plotfile = '\0';
+    set_gretl_libpath(ppaths->gretldir);
 
-    internal_path_stuff(SET_GRETL_LIB_PATH, ppaths->gretldir);
-    internal_path_stuff(SET_GRETL_USER_DIR, ppaths->userdir);
+    copy_paths_to_internal(ppaths);
 
     return 0;
 }

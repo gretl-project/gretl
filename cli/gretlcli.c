@@ -104,18 +104,19 @@ void usage(void)
 
 #ifndef WIN32
 
-int make_userdir (PATHS *ppaths) 
+int make_userdir (void) 
 {
+    const char *userdir = gretl_user_dir();
     DIR *dir = NULL;
     int err = 0;
     
-    if ((dir = opendir(ppaths->userdir)) == NULL) {
-	err = mkdir(ppaths->userdir, 0755);
+    if ((dir = opendir(userdir)) == NULL) {
+	err = mkdir(userdir, 0755);
 	if (err) {
 	    fprintf(stderr, _("Couldn't create user directory %s\n"), 
-		    ppaths->userdir);
+		    userdir);
 	} else {
-	    fprintf(stderr, _("Created user directory %s\n"), ppaths->userdir);
+	    fprintf(stderr, _("Created user directory %s\n"), userdir);
 	}
     } else {
 	closedir(dir);
@@ -452,11 +453,11 @@ int main (int argc, char *argv[])
     cli_read_registry(tmp, &paths);
     set_paths(&paths, 0, 0); /* not defaults; use registry info */
 #else
-    make_userdir(&paths);
+    make_userdir();
 #endif /* WIN32 */
 
     if (!batch) {
-	strcpy(cmdfile, paths.userdir);
+	strcpy(cmdfile, gretl_user_dir());
 	strcat(cmdfile, "session.inp");
 	cmdprn = gretl_print_new(GRETL_PRINT_FILE, cmdfile);
 	if (cmdprn == NULL) {
@@ -571,8 +572,7 @@ int main (int argc, char *argv[])
 
 	if (looprun) { 
 	    if (loop_exec(loop, line, &Z, &datainfo,
-			  models, &paths, 
-			  &echo_off, prn)) {
+			  models, &echo_off, prn)) {
 		return 1;
 	    }
 	    gretl_loop_destroy(loop);
@@ -613,10 +613,6 @@ int main (int argc, char *argv[])
 
     if (modelspec != NULL) {
 	free_modelspec(modelspec);
-    }
-
-    if (!batch) {
-	remove(paths.plotfile);
     }
 
     gretl_print_destroy(prn);
@@ -785,8 +781,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case SUMMARY:
     case MEANTEST: case VARTEST: case STORE:
     case RUNS: case SPEARMAN: case OUTFILE: case PCA:
-	err = simple_commands(&cmd, line, &Z, datainfo, &paths,
-			      prn);
+	err = simple_commands(&cmd, line, &Z, datainfo, prn);
 	if (err) errmsg(err, prn);
 	break;
 
@@ -917,7 +912,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case CUSUM:
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = cusum_test(models[0], &Z, datainfo, prn, &paths, NULL);
+	err = cusum_test(models[0], &Z, datainfo, prn, NULL);
 	if (err) errmsg(err, prn);
 	break;
 
@@ -930,7 +925,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case CORC:
     case HILU:
     case PWE:
-	rho = estimate_rho(cmd.list, &Z, datainfo, NULL, 1, cmd.ci,
+	rho = estimate_rho(cmd.list, &Z, datainfo, 1, cmd.ci,
 			   &err, prn);
 	if (err) {
 	    errmsg(err, prn);
@@ -957,8 +952,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case CORRGM:
 	order = atoi(cmd.param);
-	err = corrgram(cmd.list[1], order, &Z, datainfo, &paths,
-		       batch, prn);
+	err = corrgram(cmd.list[1], order, &Z, datainfo, batch, prn);
 	if (err) pputs(prn, _("Failed to generate correlogram\n"));
 	break;
 
@@ -1063,8 +1057,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case FCASTERR:
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = fcast_with_errs(line, models[0], &Z, datainfo, prn,
-			      &paths, cmd.opt); 
+	err = fcast_with_errs(line, models[0], &Z, datainfo, prn, cmd.opt); 
 	if (err) errmsg(err, prn);
 	break;
 
@@ -1093,7 +1086,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    cmd.list[3] = varindex(datainfo, "time");
 	    lines[0] = 1;
 	    err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
-			  &paths, &plot_count, gp_flags(batch, 0));
+			  &plot_count, gp_flags(batch, 0));
 	    if (err) {
 		pputs(prn, _("gnuplot command failed\n"));
 	    }
@@ -1111,8 +1104,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	else {
 	    printfreq(freq, prn); 
 	    if (!batch) {
-		if (plot_freq(freq, &paths, NORMAL))
+		if (plot_freq(freq, NORMAL)) {
 		    pputs(prn, _("gnuplot command failed\n"));
+		}
 	    }
 	    free_freq(freq);
 	}
@@ -1144,28 +1138,28 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_Z) || (cmd.opt & OPT_S)) { 
 	    err = gnuplot(cmd.list, NULL, NULL, &Z, datainfo,
-			  &paths, &plot_count, gp_flags(batch, cmd.opt));
+			  &plot_count, gp_flags(batch, cmd.opt));
 	} else {
 	    lines[0] = (cmd.opt != 0);
 	    err = gnuplot(cmd.list, lines, cmd.param, 
-			  &Z, datainfo, &paths, &plot_count, 
+			  &Z, datainfo, &plot_count, 
 			  gp_flags(batch, 0));
 	}
 	if (err < 0) {
 	    pputs(prn, _("gnuplot command failed\n"));
 	} else if (batch) {
-	    pprintf(prn, _("wrote %s\n"), paths.plotfile);
+	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());
 	}
 	break;
 
     case SCATTERS:
 	err = multi_scatters(cmd.list, atoi(cmd.param), &Z, 
-			     datainfo, &paths, &plot_count, 
+			     datainfo, &plot_count, 
 			     gp_flags(batch, cmd.opt));
 	if (err) {
 	    pputs(prn, _("scatters command failed\n"));
 	} else if (batch) {
-	    pprintf(prn, _("wrote %s\n"), paths.plotfile);
+	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());
 	}
 	break;
 
@@ -1277,7 +1271,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case LEVERAGE:
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;	
-	err = leverage_test(models[0], &Z, datainfo, prn, NULL, cmd.opt);
+	err = leverage_test(models[0], &Z, datainfo, prn, cmd.opt);
 	if (err > 1) {
 	    errmsg(err, prn);
 	} else if (cmd.opt) {
@@ -1406,8 +1400,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case PERGM:
-	err = periodogram(cmd.list[1], &Z, datainfo, &paths,
-			  batch, cmd.opt, prn);
+	err = periodogram(cmd.list[1], &Z, datainfo, batch, cmd.opt, prn);
 	if (err) pputs(prn, _("Failed to generate periodogram\n"));
 	break;
 
@@ -1447,16 +1440,17 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	top_n_tail(outfile);
 
 	if (*outfile != '\n' && *outfile != '\r' && strcmp(outfile, "q")) {
-	    printf(_("writing session output to %s%s\n"), 
-		   paths.userdir, outfile);
+	    const char *udir = gretl_user_dir();
+
+	    printf(_("writing session output to %s%s\n"), udir, outfile);
 #ifdef WIN32
 	    sprintf(syscmd, "\"%s\\gretlcli\" -b \"%s\" > \"%s%s\"", 
-		    paths.gretldir, cmdfile, paths.userdir, outfile);
+		    paths.gretldir, cmdfile, udir, outfile);
 	    /* WinExec(syscmd, SW_SHOWMINIMIZED); */
 	    system(syscmd);
 #else
 	    sprintf(syscmd, "gretlcli -b \"%s\" > \"%s%s\"", 
-		    cmdfile, paths.userdir, outfile);
+		    cmdfile, udir, outfile);
 	    gretl_spawn(syscmd);
 #endif
 	    printf("%s\n", syscmd);

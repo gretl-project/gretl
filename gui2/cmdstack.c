@@ -302,7 +302,7 @@ void view_command_log (void)
 	return;
     }
 
-    strcpy(fname, paths.userdir);
+    strcpy(fname, gretl_user_dir());
     strcat(fname, "session.inp");
 
     if (dump_command_stack(fname, 0)) return;

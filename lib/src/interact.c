@@ -1924,7 +1924,7 @@ int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
 /* ........................................................ */
 
 int simple_commands (CMD *cmd, const char *line, 
-		     double ***pZ, DATAINFO *datainfo, PATHS *paths,
+		     double ***pZ, DATAINFO *datainfo,
 		     PRN *prn)
      /* common code for command-line and GUI client programs, where
 	the command doesn't require special handling on the client
@@ -2047,7 +2047,7 @@ int simple_commands (CMD *cmd, const char *line,
 	    pputs(prn, _("This command requires one variable.\n"));
 	    err = 1;
 	} else {
-	    err = rmplot(cmd->list, *pZ, datainfo, prn, paths);
+	    err = rmplot(cmd->list, *pZ, datainfo, prn);
 	}
 	break;
 

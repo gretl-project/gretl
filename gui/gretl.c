@@ -806,8 +806,6 @@ int main (int argc, char *argv[])
     free_command_stack();
     exit_free_modelspec();
 
-    remove(paths.plotfile);
-
     return EXIT_SUCCESS;
 }
 

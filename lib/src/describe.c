@@ -511,7 +511,6 @@ static double gretl_acf (int n, int k, const double *y)
  * @order: integer order for autocorrelation function.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @ppaths: struct containing path information.
  * @batch: if = 1, use ASCII graphic rather than gnuplot graph.
  * @prn: gretl printing struct.
  *
@@ -523,8 +522,7 @@ static double gretl_acf (int n, int k, const double *y)
  */
 
 int corrgram (int varno, int order, double ***pZ, 
-	      DATAINFO *pdinfo, PATHS *ppaths, 
-	      int batch, PRN *prn)
+	      DATAINFO *pdinfo, int batch, PRN *prn)
 {
     double *acf, box, pm;
     double *pacf = NULL;
@@ -650,7 +648,7 @@ int corrgram (int varno, int order, double ***pZ,
 
     if (batch) {
 	goto acf_getout;
-    } else if (gnuplot_init(ppaths, PLOT_CORRELOGRAM, &fq)) {
+    } else if (gnuplot_init(PLOT_CORRELOGRAM, &fq)) {
 	err = E_FOPEN;
 	goto acf_getout;
     }
@@ -721,7 +719,7 @@ int corrgram (int varno, int order, double ***pZ,
 
     fclose(fq);
 
-    err = gnuplot_make_graph(ppaths);
+    err = gnuplot_make_graph();
 
  acf_getout:
     free(acf);
@@ -800,7 +798,6 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
  * @varno: ID number of variable to process.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @ppaths: struct containing path information.
  * @batch: if non-zero, don't show gnuplot graph.
  * @opt: if non-zero, use Bartlett lag window for periodogram.
  * @prn: gretl printing struct.
@@ -812,8 +809,7 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
  */
 
 int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo, 
-		 PATHS *ppaths, int batch, 
-		 int opt, PRN *prn)
+		 int batch, int opt, PRN *prn)
 {
     double *autocov, *omega, *hhat, *savexx = NULL;
     double xx, yy, varx, w;
@@ -877,7 +873,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
     xmax = roundup_mod(nobs, 2.0);
 
-    if (do_graph && gnuplot_init(ppaths, PLOT_PERIODOGRAM, &fq) == 0) {
+    if (do_graph && gnuplot_init(PLOT_PERIODOGRAM, &fq) == 0) {
 	char titlestr[80];
 
 	fprintf(fq, "# periodogram\n");
@@ -969,7 +965,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
 	fclose(fq);
 	free(savexx);
-	err = gnuplot_make_graph(ppaths);
+	err = gnuplot_make_graph();
     }
 
     if (opt == 0 && fract_int(nT, hhat, omega, prn)) {

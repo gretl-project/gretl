@@ -90,7 +90,6 @@ int chow_test (const char *line, MODEL *pmod,
 int cusum_test (MODEL *pmod, 
 		double ***pZ, DATAINFO *pdinfo, 
 		PRN *prn, 
-		PATHS *ppaths, 
 		GRETLTEST *test);
 
 int hausman_test (MODEL *pmod, 
@@ -103,8 +102,7 @@ int vif_test (MODEL *pmod,
 
 int leverage_test (MODEL *pmod, 
 		   double ***pZ, DATAINFO *pdinfo, 
-		   PRN *prn, PATHS *ppaths, 
-		   gretlopt oflag);
+		   PRN *prn, gretlopt oflag);
 
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 				    gretl_matrix *m, unsigned char opt);

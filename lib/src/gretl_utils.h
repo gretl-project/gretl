@@ -162,7 +162,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 
 int fcast_with_errs (const char *str, const MODEL *pmod, 
 		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
-		     PATHS *ppaths, int plot);
+		     int plot);
 
 int is_model_cmd (const char *line);
 

@@ -72,7 +72,7 @@ int print_fit_resid (const MODEL *pmod,
 
 int text_print_fcast_with_errs (const FITRESID *fr, 
 				double ***pZ, DATAINFO *pdinfo, PRN *prn,
-				PATHS *ppaths, int plot);
+				int plot);
 
 void text_print_matrix (const double *rr, const int *list, 
 			MODEL *pmod, const DATAINFO *pdinfo, 

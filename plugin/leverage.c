@@ -204,13 +204,12 @@ unsigned char leverage_data_dialog (void)
 }
 
 static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
-			  double ***pZ, DATAINFO *pdinfo, 
-			  PATHS *ppaths)
+			  double ***pZ, DATAINFO *pdinfo)
 {
     FILE *fp = NULL;
     int t, xvar = 0;
 
-    if (gnuplot_init(ppaths, PLOT_LEVERAGE, &fp)) {
+    if (gnuplot_init(PLOT_LEVERAGE, &fp)) {
 	return E_FOPEN;
     }
 
@@ -386,8 +385,7 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 */
 
 gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ, 
-			      DATAINFO *pdinfo, PRN *prn,
-			      PATHS *ppaths)
+			      DATAINFO *pdinfo, PRN *prn, int plot)
 {
     integer info, lwork;
     integer m, n, lda;
@@ -546,8 +544,8 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 	pprintf(prn, "\n%s\n\n", _("No leverage points were found"));
     }
 
-    if (ppaths != NULL) {
-	leverage_plot(pmod, S, pZ, pdinfo, ppaths);
+    if (plot) {
+	leverage_plot(pmod, S, pZ, pdinfo);
     }
 
  qr_cleanup:

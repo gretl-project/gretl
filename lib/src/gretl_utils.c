@@ -1899,7 +1899,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 
 int fcast_with_errs (const char *str, const MODEL *pmod, 
 		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
-		     PATHS *ppaths, int plot)
+		     int plot)
 {
     FITRESID *fr;
     int err;
@@ -1914,8 +1914,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	return err;
     }
 
-    err = text_print_fcast_with_errs(fr, pZ, pdinfo, prn,
-				     ppaths, plot);
+    err = text_print_fcast_with_errs(fr, pZ, pdinfo, prn, plot);
 
     free_fit_resid(fr);
     
@@ -1952,7 +1951,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     case CORC:
     case HILU:
     case PWE:
-	rho = estimate_rho(cmd.list, pZ, pdinfo, NULL, 1, cmd.ci, 
+	rho = estimate_rho(cmd.list, pZ, pdinfo, 1, cmd.ci, 
 			   &err, &prn);
 	if (!err) {
 	    *tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, 0, rho);
@@ -2467,10 +2466,21 @@ void libgretl_init (CMD *cmd)
 
 void libgretl_cleanup (CMD *cmd)
 {
+    const char *p;
+
     if (cmd != NULL) {
 	gretl_cmd_free(cmd);
     }
 
     gretl_rand_free();
     gretl_functions_cleanup();
+
+    p = strstr(gretl_plotfile(), "gpttmp");
+    if (p != NULL) {
+	int pnum;
+
+	if (!sscanf(p, "gpttmp%d.plt", &pnum)) {
+	    remove(gretl_plotfile());
+	}
+    }
 }

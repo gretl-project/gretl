@@ -2818,8 +2818,8 @@ static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
     targ = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "targ"));
 #endif
 
-    err = gretl_var_plot_impulse_response(var, targ, shock, 0, datainfo, 
-					  &paths);
+    err = gretl_var_plot_impulse_response(var, targ, shock, 0, datainfo);
+
     if (!err) {
 	register_graph();
     }

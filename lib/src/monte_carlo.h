@@ -47,8 +47,7 @@ void get_cmd_ci (const char *line, CMD *command);
 
 int loop_exec (LOOPSET *loop, char *line,
 	       double ***pZ, DATAINFO **ppdinfo, 
-	       MODEL **models, PATHS *paths, 
-	       int *echo_off, PRN *prn);
+	       MODEL **models, int *echo_off, PRN *prn);
 
 int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo);
 

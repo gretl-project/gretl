@@ -149,7 +149,7 @@ void register_graph (void)
 {
     const char *msg;
 
-    gnuplot_show_png(paths.plotfile, NULL, 0);
+    gnuplot_show_png(gretl_plotfile(), NULL, 0);
 
     msg = get_gretl_errmsg();
     if (msg != NULL && *msg != '\0') {
@@ -202,7 +202,7 @@ static void launch_gnuplot_interactive (void)
 	       "+sb", "+ls",
 	       "-geometry", "40x4", 
 	       "-title", "gnuplot: type q to quit",
-	       "-e", paths.gnuplot, paths.plotfile, "-", 
+	       "-e", gretl_gnuplot_path(), gretl_plotfile(), "-", 
 	       NULL);
 	fprintf(stderr, "execlp: %s: %s\n", term, strerror(errno));
 	_exit(EXIT_FAILURE);
@@ -218,21 +218,27 @@ static void launch_gnuplot_interactive (void)
 # ifdef G_OS_WIN32
     gchar *cmdline;
 
-    cmdline = g_strdup_printf("\"%s\" \"%s\" -", paths.gnuplot,
-			      paths.plotfile);
+    cmdline = g_strdup_printf("\"%s\" \"%s\" -", gretl_gnuplot_path(),
+			      gretl_plotfile());
     create_child_process(cmdline, NULL);
     g_free(cmdline);
 # else
     char term[8];
+    char gnuplot[MAXLEN];
+    char plotfile[MAXLEN];
 
-    if (get_terminal(term)) return;
-    else {
+    strcpy(gnuplot, gretl_gnuplot_path());
+    strcpy(plotfile, gretl_plotfile());
+
+    if (get_terminal(term)) {
+	return;
+    } else {
 	GError *error = NULL;
 	gchar *argv[] = { 
 	    term, "+sb", "+ls", 
 	    "-geometry", "40x4",
 	    "-title", "gnuplot: type q to quit",
-	    "-e", paths.gnuplot, paths.plotfile, "-",
+	    "-e", gnuplot, plotfile, "-",
 	    NULL 
 	};
 	int ok;
@@ -325,7 +331,7 @@ void clear_data (void)
 
 char *user_fopen (const char *fname, char *fullname, PRN **pprn)
 {
-    strcpy(fullname, paths.userdir);
+    strcpy(fullname, gretl_user_dir());
     strcat(fullname, fname);
 
     *pprn = gretl_print_new(GRETL_PRINT_FILE, fullname);
@@ -826,7 +832,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	err = vars_test(cmd.list, Z, datainfo, prn);
 	break;	
     case CORRGM:
-	err = corrgram(cmd.list[1], order, &Z, datainfo, &paths, 0, prn);
+	err = corrgram(cmd.list[1], order, &Z, datainfo, 0, prn);
 	break;
     default:
 	dummy_call();
@@ -1082,7 +1088,7 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
     } else {
 	err = text_print_fcast_with_errs (fr, 
 					  &Z, datainfo, prn,
-					  &paths, 1);
+					  1);
 	if (!err) {
 	    register_graph();
 	}
@@ -1413,7 +1419,7 @@ static int get_model_id_from_window (GtkWidget *w)
 
 static int make_and_display_graph (void)
 {
-    if (gnuplot_make_graph(&paths)) {
+    if (gnuplot_make_graph()) {
 	errbox(_("gnuplot command failed"));
 	return 1;
     } 
@@ -1461,7 +1467,7 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
     MODEL *pmod = (MODEL *) mydata->data;
     void *handle;
     gretl_matrix *(*model_leverage) (const MODEL *, double ***, 
-				     DATAINFO *, PRN *, PATHS *);
+				     DATAINFO *, PRN *, int);
     PRN *prn;
     gretl_matrix *m;
 
@@ -1476,7 +1482,7 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 	return;
     }	
 	
-    m = (*model_leverage)(pmod, &Z, datainfo, prn, &paths);
+    m = (*model_leverage)(pmod, &Z, datainfo, prn, 1);
     close_plugin(handle);
 
     if (m != NULL) {
@@ -1571,7 +1577,7 @@ static void do_chow_cusum (gpointer data, int code)
     if (code == CHOW) {
 	err = chow_test(line, pmod, &Z, datainfo, prn, &test);
     } else {
-	err = cusum_test(pmod, &Z, datainfo, prn, &paths, &test);
+	err = cusum_test(pmod, &Z, datainfo, prn, &test);
     }
 
     if (err) {
@@ -2104,10 +2110,10 @@ void do_model (GtkWidget *widget, gpointer p)
     case CORC:
     case HILU:
     case PWE: 
-	rho = estimate_rho(cmd.list, &Z, datainfo, &paths, 0, action, 
+	rho = estimate_rho(cmd.list, &Z, datainfo, 0, action, 
 			   &err, prn);
 	if (err) {
-	    errmsg(err, prn);
+	    gui_errmsg(err);
 	    break;
 	}
 	*pmod = lsq(cmd.list, &Z, datainfo, action, OPT_NONE, rho);
@@ -2640,7 +2646,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 		NULL);
 
     /* show the graph too */
-    if (plot_freq(freq, &paths, NORMAL) == 0) {
+    if (plot_freq(freq, NORMAL) == 0) {
 	register_graph();
     }
 
@@ -2670,7 +2676,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 	    errbox(_("Data contain negative values: gamma distribution not "
 		   "appropriate"));
 	} else {
-	    if (plot_freq(freq, &paths, dist)) {
+	    if (plot_freq(freq, dist)) {
 		errbox(_("gnuplot command failed"));
 	    } else {
 		register_graph();
@@ -2728,8 +2734,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     gchar *databuf;
     void *handle;
     int (*write_tx_data) (char *, int, 
-			  double ***, DATAINFO *, 
-			  PATHS *, int *,
+			  double ***, DATAINFO *, int *,
 			  const char *, const char *, char *);
     PRN *prn;
     char fname[MAXLEN] = {0};
@@ -2776,7 +2781,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     }
 
     err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
-			 &paths, &graph, prog, workdir, errtext);
+			 &graph, prog, workdir, errtext);
     
     close_plugin(handle);
 
@@ -2875,7 +2880,7 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 	return;
     }
 
-    err = periodogram(cmd.list[1], &Z, datainfo, &paths, 0, opt, prn);
+    err = periodogram(cmd.list[1], &Z, datainfo, 0, opt, prn);
     if (err) {
 	gretl_errmsg_set(_("Periodogram command failed"));
 	gui_errmsg(1);
@@ -3228,7 +3233,7 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 
     /* special case: GARCH model (show fitted variance) */
     if (pmod->ci == GARCH && xvar == 0) {
-	err = garch_resid_plot(pmod, &Z, datainfo, &paths);
+	err = garch_resid_plot(pmod, &Z, datainfo);
 	if (err) {
 	    errbox(_("gnuplot command failed"));
 	} else {
@@ -3284,8 +3289,7 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
     }
 
     /* generate graph */
-    err = gnuplot(plot_list, lines, NULL, gZ, ginfo,
-		  &paths, &plot_count, 
+    err = gnuplot(plot_list, lines, NULL, gZ, ginfo, &plot_count, 
 		  (pdum)? (GP_GUI | GP_RESIDS | GP_DUMMY) :
 		  (GP_GUI | GP_RESIDS)); 
     if (err < 0) {
@@ -3359,7 +3363,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     } 
 
     err = gnuplot(plot_list, lines, NULL, gZ, ginfo,
-		  &paths, &plot_count, GP_GUI | GP_FA);
+		  &plot_count, GP_GUI | GP_FA);
 
     if (err < 0) {
 	errbox(_("gnuplot command failed"));
@@ -3398,7 +3402,7 @@ void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
     list[3] = pmod->list[1];
 
     err = gnuplot_3d(list, NULL, gZ, ginfo,
-		     &paths, &plot_count, GP_GUI | GP_FA);
+		     &plot_count, GP_GUI | GP_FA);
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
@@ -3668,7 +3672,7 @@ void do_graph_var (int varnum)
 
     lines[0] = 1;
     err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
-		  &paths, &plot_count, GP_GUI);
+		  &plot_count, GP_GUI);
 
     gui_graph_handler(err);
 }
@@ -3709,7 +3713,7 @@ void do_scatters (GtkWidget *widget, gpointer p)
     if (verify_and_record_command(line)) return;
 
     err = multi_scatters(cmd.list, atoi(cmd.param), &Z, 
-			 datainfo, &paths, NULL, 0);
+			 datainfo, NULL, 0);
 
     if (err < 0) {
 	errbox(_("gnuplot command failed"));
@@ -3770,7 +3774,7 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
     }
 
     err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
-		  &paths, &plot_count, GP_GUI | GP_DUMMY);
+		  &plot_count, GP_GUI | GP_DUMMY);
 
     if (err < 0) {
 	errbox(_("gnuplot command failed"));
@@ -3810,10 +3814,10 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
 
     if (imp) {
         err = gnuplot(cmd.list, NULL, NULL, &Z, datainfo,
-                      &paths, &plot_count, GP_GUI | GP_IMPULSES);
+                      &plot_count, GP_GUI | GP_IMPULSES);
     } else {
         err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
-                      &paths, &plot_count, GP_GUI);
+                      &plot_count, GP_GUI);
     }
 
     gui_graph_handler(err);
@@ -3913,7 +3917,7 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
     }
 
     err = gnuplot_3d(cmd.list, NULL, &Z, datainfo,
-		     &paths, &plot_count, GP_GUI);
+		     &plot_count, GP_GUI);
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
@@ -3949,7 +3953,7 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
     }
 
     err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
-		  &paths, &plot_count, GP_GUI);
+		  &plot_count, GP_GUI);
 
     gui_graph_handler(err);
 
@@ -4143,10 +4147,10 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
 
 static void maybe_display_string_table (void)
 {
-    if (gretl_string_table_written(&paths)) {
+    if (gretl_string_table_written()) {
 	char stname[MAXLEN];
 
-	build_path(paths.userdir, "string_table.txt", stname, NULL);
+	build_path(gretl_user_dir(), "string_table.txt", stname, NULL);
 	view_file(stname, 0, 0, 78, 350, VIEW_FILE);
     }
 }
@@ -4384,9 +4388,9 @@ static int spawn_latex (char *texsrc)
     int ret = LATEX_OK;
 
     sprintf(tmp, "cd %s && latex \\\\batchmode \\\\input %s", 
-	    paths.userdir, texsrc);
+	    gretl_user_dir(), texsrc);
     system(tmp);
-    sprintf(tmp, "%s%s.dvi", paths.userdir, texsrc);
+    sprintf(tmp, "%s%s.dvi", gretl_user_dir(), texsrc);
     if (stat(tmp, &sbuf)) {
 	errbox(_("Failed to process TeX file"));
 	ret = LATEX_EXEC_FAILED;
@@ -4413,7 +4417,7 @@ static int spawn_latex (char *texsrc)
 
     signal(SIGCHLD, SIG_DFL);
 
-    ok = g_spawn_sync (paths.userdir, /* working dir */
+    ok = g_spawn_sync (gretl_user_dir(), /* working dir */
 		       argv,
 		       NULL,    /* envp */
 		       G_SPAWN_SEARCH_PATH,
@@ -4466,7 +4470,7 @@ int latex_compile (char *texshort)
     }
 
     sprintf(tmp, "\"%s\" %s", latex_path, texshort);
-    if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
+    if (winfork(tmp, gretl_user_dir(), SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
 	return LATEX_EXEC_FAILED;
     }
 #else
@@ -4508,7 +4512,7 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 	FILE *fp;
 
 	prn = (PRN *) data;
-	sprintf(texfile, "%smodeltable.tex", paths.userdir);
+	sprintf(texfile, "%smodeltable.tex", gretl_user_dir());
 	fp = fopen(texfile, "w");
 	if (fp == NULL) {
 	    sprintf(errtext, _("Couldn't write to %s"), texfile);
@@ -4719,7 +4723,7 @@ int execute_script (const char *runfile, const char *buf,
     while (strcmp(cmd.cmd, "quit")) {
 	if (looprun) { 
 	    exec_err = loop_exec(loop, line, &Z, &datainfo,
-				 models, &paths, &echo_off, prn);
+				 models, &echo_off, prn);
 	    gretl_loop_destroy(loop);
 	    loop = NULL;
 	    looprun = 0;
@@ -5056,8 +5060,7 @@ int gui_exec_line (char *line,
     case MEANTEST: case VARTEST: case STORE:
     case RUNS: case SPEARMAN: case PCA:
     case OUTFILE:
-	err = simple_commands(&cmd, line, &Z, datainfo, &paths,
-			      outprn);
+	err = simple_commands(&cmd, line, &Z, datainfo, outprn);
 	if (err) errmsg(err, prn);
 	else if (cmd.ci == DATA) {
 	    register_data(NULL, NULL, 0);
@@ -5204,8 +5207,7 @@ int gui_exec_line (char *line,
 
     case CUSUM:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = cusum_test(models[0], &Z, datainfo, outprn, 
-			 &paths, ptest);
+	err = cusum_test(models[0], &Z, datainfo, outprn, ptest);
 	if (err) errmsg(err, prn);
 	else if (rebuild) 
 	    add_test_to_model(ptest, models[0]);
@@ -5222,7 +5224,7 @@ int gui_exec_line (char *line,
     case CORC:
     case HILU:
     case PWE:
-	rho = estimate_rho(cmd.list, &Z, datainfo, NULL, 1, cmd.ci,
+	rho = estimate_rho(cmd.list, &Z, datainfo, 1, cmd.ci,
 			   &err, outprn);
 	if (err) {
 	    errmsg(err, prn);
@@ -5249,8 +5251,7 @@ int gui_exec_line (char *line,
 
     case CORRGM:
 	order = atoi(cmd.param);
-	err = corrgram(cmd.list[1], order, &Z, datainfo, &paths,
-		       1, outprn);
+	err = corrgram(cmd.list[1], order, &Z, datainfo, 1, outprn);
 	if (err) pprintf(prn, _("Failed to generate correlogram\n"));
 	break;
 
@@ -5369,7 +5370,7 @@ int gui_exec_line (char *line,
     case FCASTERR:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = fcast_with_errs(line, models[0], &Z, datainfo, outprn,
-			      &paths, (cmd.opt != 0)); 
+			      (cmd.opt != 0)); 
 	if (err) errmsg(err, prn);
 	break;
 
@@ -5399,7 +5400,7 @@ int gui_exec_line (char *line,
 	    cmd.list[3] = varindex(datainfo, "time");
 	    lines[0] = (cmd.opt != 0); 
 	    err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
-			  &paths, &plot_count, 0); 
+			  &plot_count, 0); 
 	    if (err < 0) {
 		pprintf(prn, _("gnuplot command failed\n"));
 	    } else {
@@ -5415,7 +5416,7 @@ int gui_exec_line (char *line,
 	}
 	printfreq(freq, outprn);
 	if (exec_code == CONSOLE_EXEC) {
-	    if (plot_freq(freq, &paths, NORMAL)) {
+	    if (plot_freq(freq, NORMAL)) {
 		pprintf(prn, _("gnuplot command failed\n"));
 	    }
 	}
@@ -5447,15 +5448,15 @@ int gui_exec_line (char *line,
 	if (cmd.ci == GNUPLOT) {
 	    if ((cmd.opt & OPT_M) || (cmd.opt & OPT_Z) || (cmd.opt & OPT_S)) { 
 		err = gnuplot(cmd.list, NULL, NULL, &Z, datainfo,
-			      &paths, &plot_count, plotflags); 
+			      &plot_count, plotflags); 
 	    } else {
 		lines[0] = (cmd.opt != 0);
 		err = gnuplot(cmd.list, lines, cmd.param, 
-			      &Z, datainfo, &paths, &plot_count, plotflags);
+			      &Z, datainfo, &plot_count, plotflags);
 	    }
 	} else {
 	    err = multi_scatters(cmd.list, atoi(cmd.param), &Z, 
-				 datainfo, &paths, &plot_count, plotflags);
+				 datainfo, &plot_count, plotflags);
 	}
 
 	if (err < 0) {
@@ -5466,9 +5467,9 @@ int gui_exec_line (char *line,
 	    if (exec_code == CONSOLE_EXEC && *cmd.savename == '\0') {
 		register_graph();
 	    } else if (exec_code == SCRIPT_EXEC) {
-		pprintf(prn, _("wrote %s\n"), paths.plotfile);
+		pprintf(prn, _("wrote %s\n"), gretl_plotfile());
 	    }
-	    err = maybe_save_graph(&cmd, paths.plotfile,
+	    err = maybe_save_graph(&cmd, gretl_plotfile(),
 				   GRETL_GNUPLOT_GRAPH, prn);
 	}
 	break;
@@ -5580,7 +5581,7 @@ int gui_exec_line (char *line,
 
     case LEVERAGE:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = leverage_test(models[0], &Z, datainfo, outprn, NULL, cmd.opt);
+	err = leverage_test(models[0], &Z, datainfo, outprn, cmd.opt);
 	if (err > 1) errmsg(err, prn);
 	else if (cmd.opt) varlist(datainfo, prn);
 	break;
@@ -5701,8 +5702,7 @@ int gui_exec_line (char *line,
 	break;
 
     case PERGM:
-	err = periodogram(cmd.list[1], &Z, datainfo, &paths,
-			  1, cmd.opt, outprn);
+	err = periodogram(cmd.list[1], &Z, datainfo, 1, cmd.opt, outprn);
 	if (err) pprintf(prn, _("Failed to generate periodogram\n"));
 	break;
 

@@ -231,7 +231,6 @@ struct _PATHS {
     char helpfile[MAXLEN];
     char cmd_helpfile[MAXLEN];
     char datfile[MAXLEN];
-    char plotfile[MAXLEN];
     char binbase[MAXLEN];
     char ratsbase[MAXLEN];
     char gnuplot[MAXLEN];
@@ -240,8 +239,7 @@ struct _PATHS {
     char x12adir[MAXLEN];
 #endif
     char dbhost[32];
-    char pngfont[16];
-    unsigned char status;
+    char pngfont[32];
 };
 
 struct _GRETLTEST {

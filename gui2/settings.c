@@ -237,7 +237,7 @@ RCVARS rc_vars[] = {
     { "ScriptPage", "Default script page", NULL, scriptpage, 
       INVISET, sizeof scriptpage, 0, NULL },    
     { "Png_font", N_("PNG graph font"), NULL, paths.pngfont, 
-      INVISET, 16, 0, NULL },
+      INVISET, 32, 0, NULL },
     { "Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 
       INVISET, sizeof gpcolors, 0, NULL },
     { NULL, NULL, NULL, NULL, 0, 0, 0, NULL }
@@ -340,10 +340,10 @@ void get_default_dir (char *s)
 	char *test = getcwd(s, MAXLEN);
 
 	if (test == NULL) {
-	    strcpy(s, paths.userdir);
+	    strcpy(s, gretl_user_dir());
 	} 
     } else {
-	strcpy(s, paths.userdir);   
+	strcpy(s, gretl_user_dir());   
     } 
     
     slash_terminate(s);
@@ -422,18 +422,18 @@ static void set_tramo_x12a_dirs (void)
 #  ifdef HAVE_TRAMO 
     set_tramo_ok(check_for_prog(tramo));
     if (*tramodir == '\0') {
-	build_path(paths.userdir, "tramo", tramodir, NULL);
+	build_path(gretl_user_dir(), "tramo", tramodir, NULL);
     }
 #  endif
 #  ifdef HAVE_X12A
     set_x12a_ok(check_for_prog(paths.x12a));
     if (*paths.x12adir == '\0') {
-	build_path(paths.userdir, "x12arima", paths.x12adir, NULL);
+	build_path(gretl_user_dir(), "x12arima", paths.x12adir, NULL);
     }
 #  endif
 
     /* don't make dir structure (yet) if userdir doesn't exist */
-    test = opendir(paths.userdir);
+    test = opendir(gretl_user_dir());
     if (test == NULL) {
 	return;
     } else {
@@ -2052,12 +2052,7 @@ static void real_set_userdir (GtkWidget *widget, dialog_t *ddata)
     if (validate_dir(dirname)) {
 	return;
     } else {
-	size_t n = strlen(dirname);
-
-	strcpy(paths.userdir, dirname);
-	if (dirname[n - 1] != '/') {
-	    strcat(paths.userdir, "/");
-	}
+	set_gretl_user_dir(dirname, &paths);
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
 	set_tramo_x12a_dirs();
 #endif
@@ -2067,11 +2062,12 @@ static void real_set_userdir (GtkWidget *widget, dialog_t *ddata)
 
 void first_time_set_user_dir (void)
 {
+    const char *userdir = gretl_user_dir();
     DIR *test;
 
     /* see if the already-specified userdir exists */
-    if (*paths.userdir != '\0') {
-	test = opendir(paths.userdir);
+    if (*userdir != '\0') {
+	test = opendir(userdir);
 	if (test != NULL) {
 	    closedir(test);
 	    return;
@@ -2082,7 +2078,7 @@ void first_time_set_user_dir (void)
     edit_dialog (_("gretl: working directory"), 
                  _("You seem to be using gretl for the first time.\n"
 		   "Please enter a directory for gretl user files."),
-                 paths.userdir, 
+                 userdir, 
                  real_set_userdir, NULL, 
                  CREATE_USERDIR, 0);
 }
@@ -2096,8 +2092,8 @@ void dump_rc (void)
     char val[6];
     int i;
 
-    if (dir_exists(paths.userdir, NULL)) {
-	dumper = g_strdup_printf("%sconfig-dump.txt", paths.userdir);
+    if (dir_exists(gretl_user_dir(), NULL)) {
+	dumper = g_strdup_printf("%sconfig-dump.txt", gretl_user_dir());
     } else {
 	dumper = tempnam(NULL, "gretl");
     }
@@ -2135,7 +2131,7 @@ void dump_rc (void)
 	}
     }
 
-    dir_exists(paths.userdir, fp);
+    dir_exists(gretl_user_dir(), fp);
     dir_exists(paths.gretldir, fp);
 
     printf("Config info written to %s\n", dumper);

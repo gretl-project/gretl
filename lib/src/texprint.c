@@ -298,7 +298,7 @@ static int make_texfile (int ID, int equation,
     FILE *fp;
 
     if (*texfile == 0) {
-	sprintf(texfile, "%s%s_%d.tex", fetch_gretl_user_dir(),
+	sprintf(texfile, "%s%s_%d.tex", gretl_user_dir(),
 		(equation)? "equation" : "model", ID);
     }
 
@@ -338,7 +338,7 @@ void set_gretl_tex_preamble (void)
     const char *localtex = get_gretltex_local();
 
     /* first choice: localized preamble file */
-    sprintf(tex_preamble_file, "%s%s", fetch_gretl_user_dir(), localtex);
+    sprintf(tex_preamble_file, "%s%s", gretl_user_dir(), localtex);
     fp = fopen(tex_preamble_file, "r");
     if (fp == NULL) {
 	tex_preamble_file[0] = '\0';
@@ -349,7 +349,7 @@ void set_gretl_tex_preamble (void)
 #endif
 
     /* preamble file on disk */
-    sprintf(tex_preamble_file, "%s%s", fetch_gretl_user_dir(), gretltex);
+    sprintf(tex_preamble_file, "%s%s", gretl_user_dir(), gretltex);
     fp = fopen(tex_preamble_file, "r");
     if (fp == NULL) {
 	tex_preamble_file[0] = '\0';

@@ -1421,15 +1421,12 @@ static void dropwt (int *list)
     }
 }
 
-static int hilu_plot (double *ssr, double *rho, int n, 
-		      PATHS *ppaths)
+static int hilu_plot (double *ssr, double *rho, int n)
 {
     FILE *fp;
     int i;
 
-    if (ppaths == NULL) return 1;
-
-    if (gnuplot_init(ppaths, PLOT_REGULAR, &fp)) return E_FOPEN; 
+    if (gnuplot_init(PLOT_REGULAR, &fp)) return E_FOPEN; 
 
     fputs("# hildreth-lu\n", fp);
     fputs("set xlabel 'rho'\n", fp);
@@ -1450,7 +1447,7 @@ static int hilu_plot (double *ssr, double *rho, int n,
 #endif
 
     fclose(fp);
-    gnuplot_make_graph(ppaths);
+    gnuplot_make_graph();
 
     return 0;
 }
@@ -1501,7 +1498,6 @@ static double autores (MODEL *pmod, const double **Z, int opt)
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @ppaths: pointer to gretl paths info struct.
  * @batch: = 1 if in batch mode
  * @opt: option flag: CORC for Cochrane-Orcutt, HILU for Hildreth-Lu,
  *                    PWE for Prais-Winsten estimator.
@@ -1517,8 +1513,7 @@ static double autores (MODEL *pmod, const double **Z, int opt)
  */
 
 double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
-		     PATHS *ppaths, int batch, int opt, int *err,
-		     PRN *prn)
+		     int batch, int opt, int *err, PRN *prn)
 {
     double rho = 0.0, rho0 = 0.0, diff;
     double finalrho = 0.0, essmin = 1.0e8;
@@ -1627,7 +1622,7 @@ double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
 	    graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
 	    pputs(prn, "\n");
 	} else {
-	    hilu_plot(ssr, rh, nn, ppaths);
+	    hilu_plot(ssr, rh, nn);
 	}
 	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n")); 
     } else { 
@@ -1672,6 +1667,13 @@ double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
 	printmodel(&corc_model, pdinfo, OPT_NONE, prn);
 #endif
 	rho = autores(&corc_model, (const double **) *pZ, opt);
+
+	if (rho > .99999 || rho < -.99999) {
+	    *err = E_NOCONV;
+	    clear_model(&corc_model);
+	    goto bailout;
+	}
+
 	diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
 	rho0 = rho;
 	if (iter == 30) break;
@@ -2703,7 +2705,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
-	xx = estimate_rho(reglist, pZ, pdinfo, NULL, 1, CORC, &err, prn);
+	xx = estimate_rho(reglist, pZ, pdinfo, 1, CORC, &err, prn);
 	if (err) {
 	    ar.errcode = err;
 	} else {
@@ -3270,7 +3272,7 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
     void *handle;
     MODEL (*arma_x12_model) (int *, const double **, DATAINFO *, PRN *, 
 			     const char *, const char *, int);
-    int gui = gretl_using_gui(ppaths);
+    int gui = gretl_using_gui();
 
     *gretl_errmsg = '\0';
 

@@ -173,7 +173,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     gretl_model_init(&rep);
 
     if (orig->ci == CORC || orig->ci == HILU || orig->ci == PWE) {
-	rho = estimate_rho(list, pZ, pdinfo, NULL, 1, orig->ci, 
+	rho = estimate_rho(list, pZ, pdinfo, 1, orig->ci, 
 			   &rep.errcode, prn);
     } else if (orig->ci == WLS || orig->ci == AR) {
 	int *full_list = full_model_list(orig, list, &pos);
@@ -1229,7 +1229,6 @@ static double vprime_M_v (double *v, double *M, int n)
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
- * @ppaths: path information struct.
  * @test: hypothesis test results struct.
  *
  * Tests the given model for parameter stability (CUSUM test).
@@ -1238,7 +1237,7 @@ static double vprime_M_v (double *v, double *M, int n)
  */
 
 int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn, 
-		PATHS *ppaths, GRETLTEST *test)
+		GRETLTEST *test)
 {
     int n_est, i, j, t;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -1349,7 +1348,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
         setlocale(LC_NUMERIC, "C");
 #endif
 	/* plot with 95% confidence bands, if not batch mode */
-	if (prn->fp == NULL && gnuplot_init(ppaths, PLOT_CUSUM, &fq) == 0) {
+	if (prn->fp == NULL && gnuplot_init(PLOT_CUSUM, &fq) == 0) {
 	    fputs("# CUSUM test\n", fq);
 	    fprintf(fq, "set xlabel \"%s\"\n", I_("Observation"));
 	    fputs("set xzeroaxis\n", fq);
@@ -1368,7 +1367,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 
 	    fclose(fq);
 
-	    err = gnuplot_make_graph(ppaths);
+	    err = gnuplot_make_graph();
 	}
 
 #ifdef ENABLE_NLS
@@ -1535,8 +1534,6 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
- * @ppaths: path information struct (should be NULL if a graph
- * is not wanted).
  * @oflag: if non-zero, add calculated series to data set.
  *
  * Tests the data used in the given model for points with
@@ -1547,11 +1544,11 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
  */
 
 int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
-		   PRN *prn, PATHS *ppaths, gretlopt oflag)
+		   PRN *prn, gretlopt oflag)
 {
     void *handle;
     gretl_matrix *(*model_leverage) (const MODEL *, double ***, 
-				     const DATAINFO *, PRN *, PATHS *);
+				     const DATAINFO *, PRN *, int);
     gretl_matrix *m;
     int err = 0;
 
@@ -1562,7 +1559,7 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    m = (*model_leverage)(pmod, pZ, pdinfo, prn, ppaths);
+    m = (*model_leverage)(pmod, pZ, pdinfo, prn, 0);
     if (m == NULL) {
 	err = 1;
     } else {

@@ -807,7 +807,7 @@ int main (int argc, char *argv[])
 	gui_get_data = 1;
     }
 
-    strcpy(cmdfile, paths.userdir);
+    strcpy(cmdfile, gretl_user_dir());
     strcat(cmdfile, "session.inp");
 
     /* allocate data information struct */
@@ -990,8 +990,6 @@ int main (int argc, char *argv[])
 
     free_command_stack();
     exit_free_modelspec();
-
-    remove(paths.plotfile);
 
     destroy_file_collections();
 
@@ -1857,7 +1855,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	return;
     }
 
-    build_path(paths.userdir, "gretl.Rprofile", Rprofile, NULL);
+    build_path(gretl_user_dir(), "gretl.Rprofile", Rprofile, NULL);
     fp = fopen(Rprofile, "w");
     if (fp == NULL) {
 	errbox(_("Couldn't write R startup file"));
@@ -1875,7 +1873,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	return;
     } 	
 
-    build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
+    build_path(gretl_user_dir(), "Rdata.tmp", Rdata, NULL);
     sprintf(line, "store \"%s\" -r", Rdata); 
     if (verify_and_record_command(line) ||
 	write_data(Rdata, get_cmd_list(), Z, datainfo, OPT_R, NULL)) {
@@ -1897,7 +1895,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	char Rtmp[MAXLEN];
 	FILE *fq;
 
-	build_path(paths.userdir, "Rtmp", Rtmp, NULL);
+	build_path(gretl_user_dir(), "Rtmp", Rtmp, NULL);
 	fq = fopen(Rtmp, "w");
 #ifdef G_OS_WIN32
 	fprintf(fq, "gretldata <- read.table(\"%s\")\n", 

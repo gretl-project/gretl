@@ -480,7 +480,7 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	int err = 0;
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
-	err = go_gnuplot(plot, fname, &paths);
+	err = go_gnuplot(plot, fname);
 	if (err == 0) {
 	    infobox(_("graph saved"));
 	} else if (err == 1) {

@@ -127,56 +127,51 @@ int graph (const LIST list,
 	   double **Z, const DATAINFO *pdinfo, 
 	   gretlopt oflag, PRN *prn);
 
-const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype);
+const char *get_gretl_png_term_line (int plottype);
 
 const char *get_gretl_emf_term_line (int plottype, int color);
 
 const char *get_timevar_name (DATAINFO *pdinfo);
 
-int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp);
+int gnuplot_init (int plottype, FILE **fpp);
 
-int gnuplot_make_graph (const PATHS *ppaths);
+int gnuplot_make_graph (void);
 
 int gnuplot (LIST list, const int *lines, const char *literal,
-	     double ***pZ, DATAINFO *pdinfo, PATHS *ppaths, 
+	     double ***pZ, DATAINFO *pdinfo, 
 	     int *plot_count, unsigned char flags);
 
 int multi_scatters (const LIST list, int pos, 
 		    double ***pZ, const DATAINFO *pdinfo, 
-		    PATHS *ppaths, int *plot_count, 
-		    unsigned char flags);
+		    int *plot_count, unsigned char flags);
 
 int gnuplot_3d (LIST list, const char *literal,
-		double ***pZ, DATAINFO *pdinfo, PATHS *ppaths, 
+		double ***pZ, DATAINFO *pdinfo, 
 		int *plot_count, unsigned char flags);
 
-int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist);
+int plot_freq (FREQDIST *freq, int dist);
 
-int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
-		      PATHS *ppaths);
+int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo); 
 
 int print_plotspec_details (const GPT_SPEC *spec, FILE *fp);
 
-int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths);
+int go_gnuplot (GPT_SPEC *spec, char *fname);
 
 void free_plotspec (GPT_SPEC *spec);
 
-int get_termstr (const GPT_SPEC *spec, char *termstr,
-		 const PATHS *ppaths);
+int get_termstr (const GPT_SPEC *spec, char *termstr);
 
-int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
-	    PATHS *ppaths);
+int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn);
 
 int plot_fcast_errs (int n, const double *obs, 
 		     const double *depvar, const double *yhat, 
 		     const double *maxerr, const char *varname, 
-		     int time_series, PATHS *ppaths);
+		     int time_series);
 
 int 
 gretl_var_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
-				 const DATAINFO *pdinfo,
-				 PATHS *ppaths);
+				 const DATAINFO *pdinfo);
 
 int is_auto_ols_string (const char *s);
 

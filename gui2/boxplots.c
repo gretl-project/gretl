@@ -1341,12 +1341,9 @@ static void read_boxrc (PLOTGROUP *grp)
 
     fp = fopen(".boxplotrc", "r");
     if (fp == NULL) {
-	char *homedir, boxrc[MAXLEN];
+	char boxrc[MAXLEN];
 
-	homedir = getenv("HOME");
-	if (homedir == NULL) homedir = paths.userdir;
-	sprintf(boxrc, "%s%s.boxplotrc", homedir,
-		(homedir[strlen(homedir)-1] != SLASH)? SLASHSTR : "");
+	sprintf(boxrc, "%s.boxplotrc", gretl_user_dir());
 	fp = fopen(boxrc, "r");
     }
 
@@ -1400,7 +1397,7 @@ static int dump_boxplot (PLOTGROUP *grp)
     int i;
     BOXPLOT *plt;
 
-    build_path(paths.userdir, "boxdump.tmp", boxplottmp, NULL);
+    build_path(gretl_user_dir(), "boxdump.tmp", boxplottmp, NULL);
 
     fp = fopen(boxplottmp, "w");
     if (fp == NULL) {

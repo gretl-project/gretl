@@ -475,7 +475,7 @@ static int build_file_collections (void)
     if (!built) {
 	err = seek_file_collections(paths.datadir);
 	if (!err) err = seek_file_collections(paths.scriptdir);
-	if (!err) err = seek_file_collections(paths.userdir);
+	if (!err) err = seek_file_collections(gretl_user_dir());
 	built = 1;
     }
 
@@ -733,7 +733,7 @@ static void get_local_status (char *fname, char *status, time_t remtime)
 	    strcpy(status, _("Not installed"));
 #else
 	    /* try user dir too if not on Windows */
-	    build_path(paths.userdir, fname, fullname, NULL);
+	    build_path(gretl_user_dir(), fname, fullname, NULL);
 	    if ((err = stat(fullname, &fbuf)) == -1) {
 		strcpy(status, _("Not installed"));
 	    } 

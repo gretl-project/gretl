@@ -39,13 +39,11 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 
 int corrgram (int varno, int order, 
 	      double ***pZ, DATAINFO *pdinfo, 
-	      PATHS *ppaths, int batch, 
-	      PRN *prn);
+	      int batch, PRN *prn);
 
 int periodogram (int varno, 
 		 double ***pZ, const DATAINFO *pdinfo, 
-		 PATHS *ppaths, int batch, 
-		 int opt, PRN *prn);
+		 int batch, int opt, PRN *prn);
 
 GRETLSUMMARY *summary (LIST list, 
 		       double ***pZ, const DATAINFO *pdinfo,

@@ -28,8 +28,7 @@ MODEL lsq (LIST list,
 	   int ci, gretlopt opts, double rho);
 
 double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
-		     PATHS *ppaths, int batch, int opt, int *err,
-		     PRN *prn);
+		     int batch, int opt, int *err, PRN *prn);
 
 int hilu_corc (double *toprho, LIST list, 
 	       double ***pZ, DATAINFO *pdinfo,

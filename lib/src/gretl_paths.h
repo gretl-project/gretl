@@ -20,28 +20,35 @@
 #ifndef GRETL_PATHS_H
 #define GRETL_PATHS_H
 
-enum paths_status {
-    GRETL_USING_GUI      = 1 << 0,
-    STRING_TABLE_WRITTEN = 1 << 1
-};
+void set_string_table_written (void);
 
-void set_string_table_written (PATHS *ppaths);
+int gretl_string_table_written (void);
 
-int gretl_string_table_written (PATHS *ppaths);
-
-int gretl_using_gui (const PATHS *ppaths);
+int gretl_using_gui (void);
 
 char *addpath (char *fname, PATHS *ppaths, int script);
 
 int getopenfile (const char *line, char *fname, PATHS *ppaths,
 		 int setpath, int script);
 
-void show_paths (PATHS *ppaths);
+void show_paths (const PATHS *ppaths);
 
 int set_paths (PATHS *ppaths, int defaults, int gui);
 
-const char *fetch_gretl_lib_path (void);
+const char *gretl_lib_path (void);
 
-const char *fetch_gretl_user_dir (void);
+const char *gretl_user_dir (void);
+
+void set_gretl_user_dir (const char *path, PATHS *ppaths);
+
+const char *gretl_gnuplot_path (void);
+
+const char *gretl_plotfile (void);
+
+const char *gretl_png_font (void);
+
+void set_gretl_png_font (const char *s, PATHS *ppaths);
+
+void set_gretl_plotfile (const char *fname);
 
 #endif /* GRETL_PATHS_H */

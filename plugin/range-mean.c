@@ -42,13 +42,13 @@ static void get_range_and_mean (int t1, int t2, double *x,
     }
 }
 
-static int do_range_mean_plot (int n, double **Z, double *yhat,
-			       const char *varname, PATHS *ppaths)
+static int 
+do_range_mean_plot (int n, double **Z, double *yhat, const char *varname)
 {
     FILE *fp = NULL;
     int t;
 
-    if (gnuplot_init(ppaths, PLOT_RANGE_MEAN, &fp)) {
+    if (gnuplot_init(PLOT_RANGE_MEAN, &fp)) {
 	return E_FOPEN;
     }
 
@@ -114,8 +114,7 @@ static int rm_adjust_t1t2 (int varnum, double **Z, int *t1, int *t2)
     return 0;
 }
 
-int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo, 
-		      PRN *prn, PATHS *ppaths)
+int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo, PRN *prn)
 {
     double **rmZ;
     DATAINFO *rminfo;
@@ -207,8 +206,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
 	} 
     }
 
-    err = do_range_mean_plot(m, rmZ, yhat, pdinfo->varname[varnum], 
-			     ppaths);
+    err = do_range_mean_plot(m, rmZ, yhat, pdinfo->varname[varnum]);
 
     clear_model(&rmmod);
     free_Z(rmZ, rminfo);

@@ -6,7 +6,7 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
     char cmd[MAXLEN], temp[MAXLEN], fline[MAXLEN];
     GdkPixbuf *pbuf = NULL;
 
-    sprintf(temp, "%sgpttmp.XXXXXX", paths.userdir);
+    sprintf(temp, "%sgpttmp.XXXXXX", gretl_user_dir());
     if (mktemp(temp) == NULL) return NULL;
 
     ftmp = fopen(temp, "w");
@@ -21,7 +21,7 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
 
     fprintf(ftmp, "set term pbm mono\n"
 	    "set output '%s%s'\n", 
-	    paths.userdir, GRETL_PBM_TMP);
+	    gretl_user_dir(), GRETL_PBM_TMP);
 
     while (fgets(fline, MAXLEN-1, fsrc)) {
 	if (strncmp(fline, "set term", 8) && 
@@ -34,7 +34,7 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
     fclose(ftmp);
 
     /* run gnuplot on the temp plotfile */
-    sprintf(cmd, "\"%s\" \"%s\"", paths.gnuplot, temp);
+    sprintf(cmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), temp);
     if (system(cmd)) {
 	remove(temp);
 	return NULL;
@@ -42,7 +42,7 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
 
     remove(temp);
 
-    build_path(paths.userdir, GRETL_PBM_TMP, temp, NULL);
+    build_path(gretl_user_dir(), GRETL_PBM_TMP, temp, NULL);
 #if GTK_MAJOR_VERSION >= 2
     pbuf = gdk_pixbuf_new_from_file(temp, NULL);
 #else
