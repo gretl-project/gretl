@@ -828,15 +828,17 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
     }
 
     gdk_window_get_pointer(view->window, NULL, NULL, &mods);
-    GdkEventButton *bevent = (GdkEventButton *) event;
 
     if (mods & GDK_BUTTON3_MASK) {
+	GdkEventButton *bevent = (GdkEventButton *) event;
+
 	gtk_menu_popup (GTK_MENU(sheet->popup), NULL, NULL, NULL, NULL,
 			bevent->button, bevent->time);
 	return TRUE;
     }	    
 	
     if (mods & GDK_BUTTON1_MASK) {
+	GdkEventButton *bevent = (GdkEventButton *) event;
 	GtkTreePath *path;
 	GtkTreeViewColumn *column;
 
