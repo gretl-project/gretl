@@ -616,7 +616,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 	/* print block header */
 	if (TEX_PRN(prn)) {
 	    pputs(prn, "\\vspace{1em}\n\n");
-	    pprintf(prn, I_("Forecast variance decomposition for %s"), 
+	    pprintf(prn, I_("Decomposition of variance for %s"), 
 		    tex_escape(vname, pdinfo->varname[vtarg]));
 
 	    if (block == 0) {
@@ -627,7 +627,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 	    pputs(prn, "\\vspace{1em}\n\n"
 		  "\\begin{tabular}{rccccc}\n");
 	} else {
-	    pprintf(prn, _("Forecast variance decomposition for %s"), 
+	    pprintf(prn, _("Decomposition of variance for %s"), 
 		    pdinfo->varname[vtarg]);
 
 	    if (block == 0) {
@@ -1033,9 +1033,6 @@ static int real_var (int order, const LIST inlist,
 	return 1;
     }
 
-    fprintf(stderr, "real_var: prn=%p, ppvar=%p\n", (void *) prn, (void *) pvar);
-    printlist(inlist, "incoming var list");
-
     detlist = malloc(inlist[0] + 1);
     if (detlist == NULL) return E_ALLOC;
 
@@ -1046,8 +1043,6 @@ static int real_var (int order, const LIST inlist,
 
     /* how long will our list have to be? */
     listlen = get_listlen(list, detlist, order, *pZ, pdinfo);
-
-    fprintf(stderr, "listlen = %d\n", listlen);
 
     varlist = malloc((listlen + 1) * sizeof *varlist);
     depvars = malloc((listlen + 1) * sizeof *depvars);
@@ -1130,8 +1125,6 @@ static int real_var (int order, const LIST inlist,
 	    goto var_bailout;
 	}
     }
-
-    fprintf(stderr, "starting real_var loop, neqns = %d\n", neqns);
 
     /* run the several regressions */
     k = 0;
@@ -1285,8 +1278,6 @@ static int real_var (int order, const LIST inlist,
 	    gretl_var_free(var);
 	}
     }
-
-    fprintf(stderr, "leaving real_var: var->neqns = %d\n", var->neqns);
 
     return err;
 }

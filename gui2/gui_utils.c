@@ -180,7 +180,8 @@ GtkItemFactoryEntry var_items[] = {
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
-    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL, GNULL }
+    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
@@ -3106,8 +3107,3 @@ char *double_underscores (char *targ, const char *src)
 
     return targ;
 }
-
-
-
-
-

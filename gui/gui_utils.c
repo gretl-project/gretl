@@ -155,7 +155,8 @@ GtkItemFactoryEntry var_items[] = {
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
     { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
     { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
-    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL }
+    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
+    { NULL, NULL, NULL, 0, NULL}
 };
 
 GtkItemFactoryEntry edit_items[] = {
