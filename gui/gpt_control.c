@@ -1328,7 +1328,8 @@ int read_plotfile (const char *fname)
 
     if (open_gnuplot_pipe(&paths, plot)) {
 	errbox(_("gnuplot command failed"));
-	goto plot_bailout;
+	free_plot(plot);
+	return 1;
     } else {
 	strcpy(plot->fname, fname); 
 	gnuplot_dialog(plot);
@@ -1337,12 +1338,7 @@ int read_plotfile (const char *fname)
     return 0;
 
  plot_bailout:
-    free(plot->lines);
-    for (i=1; i<4; i++) {
-	if (plot->literal[i] != NULL) {
-	    free(plot->literal[i]);
-	}
-    }
+    free_plot(plot);
     fclose(fp);
     return 1;
 }
