@@ -2,9 +2,6 @@
 
 #include "libgretl.h"
 
-#define TRUE_ 1
-#define FALSE_ 0
-
 static double toler = 1.0e-9;
 
 static int l1_ (int m, int n, 
@@ -239,7 +236,7 @@ L30:
 /* L60: */
     }
 
-    stage = TRUE_;
+    stage = 1;
     kount = 0;
     kr = 1;
     kl = 1;
@@ -279,7 +276,7 @@ L100:
 	++k;
 	b[k] = a[i + n1 * nrows] / d;
 	ls[k - 1] = i;
-	test = TRUE_;
+	test = 1;
 L110:
 	;
     }
@@ -287,7 +284,7 @@ L120:
     if (k > 0) {
 	goto L130;
     }
-    test = FALSE_;
+    test = 0;
     goto L150;
 L130:
     amin = big;
@@ -390,7 +387,7 @@ L260:
 	goto L70;
     }
 
-    stage = FALSE_;
+    stage = 0;
 
 L270:
     amax = -big;
@@ -606,9 +603,11 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
     }
 
     free(sample);
+
     for (i=0; i<pmod->ncoeff; i++) {
 	free(coeffs[i]);
     }
+
     free(coeffs);
 
     return 0;
