@@ -1758,7 +1758,12 @@ compiler."
 
 	  if test "$installed" = no; then
 	    notinst_deplibs="$notinst_deplibs $lib"
-	    need_relink=yes
+		case $host in
+		  *darwin*) need_relink=no
+		  ;;
+		  *) need_relink=yes
+	      ;;
+		esac
 	  fi
 
 	  if test -n "$old_archive_from_expsyms_cmds"; then
