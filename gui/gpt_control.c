@@ -1524,13 +1524,10 @@ static void render_pngfile (const char *fname, png_plot_t *plot,
 	return;
     }
 
-    fprintf(stderr, "About to draw to pixmap at %p\n", 
-	    (void *) plot->pixmap);
-
     gdk_pixbuf_render_to_drawable(pbuf, plot->pixmap, 
 				  plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
 				  0, 0, 0, 0, width, height,
-				  GDK_RGB_DITHER_NORMAL, 0, 0);
+				  GDK_RGB_DITHER_NONE, 0, 0);
 
     gdk_pixbuf_unref(pbuf);
     remove(fname);
