@@ -2263,7 +2263,8 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     if (pmod->ci != NLS && pmod->ci != ARMA && pmod->ci != TSLS
 	&& pmod->ci != GARCH) {
-	copylist(&default_list, pmod->list);
+	free(default_list);
+	default_list = copylist(pmod->list);
     }
 
     /* attach shortcuts */

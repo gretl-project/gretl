@@ -369,7 +369,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* preserve a copy of the list supplied, for future reference */
-    copylist(&(mdl.list), list);
+    /* should mdl.list be freed first?? */
+    mdl.list = copylist(list);
     if (mdl.list == NULL) {
         mdl.errcode = E_ALLOC;
         return mdl;
@@ -1929,7 +1930,7 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 	tmplist[i] = i + v;
     }
 
-    check = addtolist(pmod->list, tmplist, &list, pdinfo, -1);
+    list = big_list(pmod->list, tmplist, pdinfo, -1, &check);
     if (check && check != E_VARCHANGE) {
 	free(tmplist);
 	return check;
@@ -2299,7 +2300,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = addtolist(pmod->list, tmplist, &list, pdinfo, -1);
+	list = big_list(pmod->list, tmplist, pdinfo, -1, &err);
 	if (err) {
 	    if (err != E_VARCHANGE) 
 		fprintf(stderr, I_("didn't add to list\n"));

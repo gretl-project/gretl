@@ -471,25 +471,26 @@ static int poly_check (MPMODEL *pmod, const int *list)
     return 0;
 }
 
-static int poly_copy_list (int **targ, const int *list, const int *poly)
+static int *poly_copy_list (const int *list, const int *poly)
 {
+    int *targ;
     int i;
 
-    *targ = malloc((list[0] + poly[0] + 1) * sizeof **targ);
+    targ = malloc((list[0] + poly[0] + 1) * sizeof *targ);
     
-    if (*targ == NULL) return 1;
+    if (targ == NULL) return NULL;
 
-    (*targ)[0] = list[0] + poly[0];
+    targ[0] = list[0] + poly[0];
 
     for (i=1; i<=list[0]; i++) {
-	(*targ)[i] = list[i];
+	targ[i] = list[i];
     }
 
     for (i=1; i<=poly[0]; i++) {
-	(*targ)[list[0] + i] = list[0] + i - 1; 
+	targ[list[0] + i] = list[0] + i - 1; 
     }  
 
-    return 0;
+    return targ;
 }
 
 static void set_gretl_mp_bits (void)
@@ -539,7 +540,8 @@ static int copy_mp_results (MPMODEL *pmod, DATAINFO *pdinfo,
 	results->dfn = pmod->dfn;
 	results->dfd = pmod->dfd;
 	results->adjrsq = mpf_get_d (pmod->adjrsq);
-	if (copylist(&results->varlist, pmod->varlist)) {
+	results->varlist = copylist(pmod->varlist);
+	if (results->varlist == NULL) {
 	    err = 1;
 	}
     }
@@ -584,9 +586,9 @@ int mplsq (const int *list, const int *polylist,
 
     /* preserve a copy of the list supplied, for future reference */
     if (polylist == NULL) {
-	copylist(&(model.list), list);
+	model.list = copylist(list);
     } else {
-	poly_copy_list(&(model.list), list, polylist);
+	model.list = poly_copy_list(list, polylist);
     }
 
     if (model.list == NULL) return E_ALLOC;

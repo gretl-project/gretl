@@ -92,8 +92,6 @@ int list_dups (const int *list, int ci);
 int gretl_forecast (int t1, int t2, int nv, 
 		    const MODEL *pmod, double ***pZ);
 
-int full_model_list (MODEL *pmod, int **plist);
-
 int z_to_xy (int v1, int v2, double *px, double *py, 
 	     const DATAINFO *pdinfo, double **Z);
 
@@ -111,8 +109,8 @@ void gretl_varinfo_init (VARINFO *vinfo);
 
 double corrrsq (int nobs, const double *y, const double *yhat);
 
-int addtolist (const int *oldlist, const int *addvars, int **plist,
-	       const DATAINFO *pdinfo, int model_count);
+int *big_list (const int *orig, const int *add, const DATAINFO *pdinfo, 
+	       int model_count, int *err);
 
 int get_hac_lag (int m);
 
@@ -123,9 +121,6 @@ int get_use_qr (void);
 char *copy_subdum (const char *src, int n);
 
 int get_vcv_index (MODEL *pmod, int i, int j, int n);
-
-int omit_from_list (int *list, const int *omitvars, int *newlist,
-		    const DATAINFO *pdinfo, int model_count);
 
 int path_append (char *file, const char *path);
 

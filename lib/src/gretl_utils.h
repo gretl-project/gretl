@@ -102,7 +102,7 @@ int set_obs (const char *line, DATAINFO *pdinfo, unsigned long opt);
 void set_miss (LIST list, const char *param, double **Z,
 	       DATAINFO *pdinfo, PRN *prn);
 
-int copylist (int **target, const int *src);
+int *copylist (const int *src);
 
 int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo);
 

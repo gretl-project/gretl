@@ -902,20 +902,22 @@ int list_dups (const int *list, int ci)
 
 /* ........................................................... */
 
-int copylist (int **target, const int *src)
+int *copylist (const int *src)
 {
+    int *targ;
     int i, n;
 
-    if (src == NULL) return 1;
+    if (src == NULL) return NULL;
     n = src[0];
 
-    if (*target != NULL) free(*target);
-    *target = malloc((n + 2) * sizeof *target);
-    if (*target == NULL) return 1;
+    targ = malloc((n + 1) * sizeof *targ);
+    if (targ == NULL) return NULL;
 
-    for (i=0; i<=n; i++) (*target)[i] = src[i];
+    for (i=0; i<=n; i++) {
+	targ[i] = src[i];
+    }
 
-    return 0;
+    return targ;
 }
 
 /* ......................................................  */
@@ -1328,46 +1330,6 @@ int gretl_forecast (int t1, int t2, int nv,
     }
 
     return 0;
-}
-
-/* ........................................................... */
-
-int full_model_list (MODEL *pmod, int **plist)
-/* reconstitute full varlist for WLS and AR models */
-{
-    int i, pos = 0, len, *mylist = NULL;
-
-    if (pmod->ci != WLS && pmod->ci != AR) return 0;
-
-    if (pmod->ci == WLS) { 
-	mylist = malloc(((*plist)[0] + 2) * sizeof *mylist);
-	if (mylist == NULL) return -1;
-
-	for (i=1; i<=(*plist)[0]; i++) {
-	    mylist[i+1] = (*plist)[i];
-	}
-	mylist[0] = (*plist)[0] + 1;
-	mylist[1] = pmod->nwt;
-    }
-    else if (pmod->ci == AR) {
-	pos = pmod->arinfo->arlist[0] + 1;
-	len = pos + (*plist)[0] + 2;
-
-	mylist = malloc(len * sizeof *mylist);
-	if (mylist == NULL) return -1;
-
-	mylist[0] = len - 2;
-	for (i=1; i<pos; i++) mylist[i] = pmod->arinfo->arlist[i];
-	mylist[pos] = LISTSEP;
-	for (i=1; i<=(*plist)[0]; i++) {
-	    mylist[pos+i] = (*plist)[i];
-	}
-    }
-
-    copylist(plist, mylist);
-    free(mylist);
-
-    return pos;
 }
 
 /* ........................................................... */

@@ -1037,10 +1037,11 @@ static int real_var (int order, const LIST inlist,
 	return 1;
     }
 
-    detlist = malloc(inlist[0] + 1);
+    detlist = malloc((inlist[0] + 1) * sizeof *detlist);
     if (detlist == NULL) return E_ALLOC;
 
-    if (copylist(&list, inlist)) {
+    list = copylist(inlist);
+    if (list == NULL) {
 	free(detlist);
 	return E_ALLOC;
     }
@@ -1373,11 +1374,14 @@ int coint (int order, const LIST list, double ***pZ,
     if (gretl_hasconst(list) == 0) {
 	cointlist = malloc((l0 + 2) * sizeof *cointlist);
 	if (cointlist == NULL) return E_ALLOC;
-	for (i=0; i<=l0; i++) cointlist[i] = list[i];
+	for (i=0; i<=l0; i++) {
+	    cointlist[i] = list[i];
+	}
 	cointlist[l0 + 1] = 0;
 	cointlist[0] += 1;
     } else {
-	copylist(&cointlist, list);
+	cointlist = copylist(list);
+	if (cointlist == NULL) return E_ALLOC;
     }
 
     pputc(prn, '\n');

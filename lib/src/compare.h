@@ -69,7 +69,7 @@ int auxreg (LIST addvars,
 	    int aux_code, 
 	    PRN *prn, GRETLTEST *test, unsigned long opt);
 
-double robust_omit_F (LIST list, MODEL *pmod);
+double robust_omit_F (const int *list, MODEL *pmod);
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
 	       int *model_count, 

@@ -5211,7 +5211,7 @@ int gui_exec_line (char *line,
 	break;
 
     case COEFFSUM:
-        if ((err = script_model_test(0, prn, 1))) break;
+        if ((err = script_model_test(0, prn, 0))) break;
 	err = sum_test(cmd.list, models[0], &Z, datainfo, outprn);
 	if (err) errmsg(err, prn);
 	break;

@@ -854,7 +854,7 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case COEFFSUM:
-        if ((err = model_test_start(0, prn, 1))) break;
+        if ((err = model_test_start(0, prn, 0))) break;
 	err = sum_test(cmd.list, models[0], &Z, datainfo, prn);
 	if (err) errmsg(err, prn);
 	break;

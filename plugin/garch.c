@@ -35,8 +35,7 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     int i, j, np = 3 + p + q + r;
 
     free(pmod->list);
-    pmod->list = NULL;
-    copylist(&pmod->list, list);
+    pmod->list = copylist(list);
 
     pmod->params = malloc(np * sizeof pmod->params);
     if (pmod->params == NULL) {

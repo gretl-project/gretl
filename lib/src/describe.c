@@ -1262,7 +1262,7 @@ GRETLSUMMARY *summary (LIST list,
 	}
     } /* end loop over variables in list */
 
-    copylist(&tmp, list);
+    tmp = copylist(list);
     summ->list = tmp;
     free(x);
 
@@ -1309,7 +1309,7 @@ CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
     corrmat = malloc(sizeof *corrmat);
     if (corrmat == NULL) return NULL;
 
-    copylist(&p, list);
+    p = copylist(list);
     if (p == NULL) {
 	free(corrmat);
 	return NULL;

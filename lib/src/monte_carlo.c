@@ -399,8 +399,7 @@ int loop_model_init (LOOP_MODEL *plmod, const MODEL *pmod,
     plmod->ssq_sderr = malloc(ncoeff * sizeof *plmod->ssq_sderr);
     if (plmod->ssq_sderr == NULL) goto cleanup;
 
-    plmod->list = NULL;
-    copylist(&plmod->list, pmod->list);
+    plmod->list = copylist(pmod->list);
     if (plmod->list == NULL) goto cleanup;
 
     for (i=0; i<ncoeff; i++) {
@@ -446,9 +445,7 @@ int loop_print_init (LOOP_PRINT *pprn, const LIST list, int id)
 {
     int i;
 
-    pprn->list = NULL;
-
-    copylist(&pprn->list, list);
+    pprn->list = copylist(list);
     if (pprn->list == NULL) return 1;
 
     pprn->sum = malloc(list[0] * sizeof *pprn->sum);

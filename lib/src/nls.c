@@ -539,7 +539,7 @@ static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
 	p = nlfunc;
     }
 
-    if (sscanf(p, "%8s = %*s", depvarname) != 1) {
+    if (strchr(p, '=') == NULL || sscanf(p, "%8s = %*s", depvarname) != 1) {
 	sprintf(gretl_errmsg, _("parse error in '%s'\n"), p);
 	return E_PARSE;
     }
@@ -555,6 +555,7 @@ static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
 
     p = strchr(p, '=') + 1;
     while (isspace(*p)) p++;
+
     sprintf(nlspec.nlfunc, "%s - (%s)", depvarname, p);
 
     nlspec.depvar = v;

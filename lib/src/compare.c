@@ -30,65 +30,95 @@
 #endif
 
 static int just_replaced (int i, const DATAINFO *pdinfo, 
-			  const int *list);
+			  const int *list)
+     /* check if any var in list has been replaced via genr since a
+	previous model (model_count i) was estimated.  Expects
+	the "label" in datainfo to be of the form "Replaced
+	after model <count>" */
+{
+    int j, repl = 0;
 
-/* ........................................................... */
+    for (j=1; j<=list[0]; j++) {
+	if (strncmp(VARLABEL(pdinfo, list[j]), _("Replaced"), 8) == 0 &&
+	    sscanf(VARLABEL(pdinfo, list[j]), "%*s %*s %*s %d", &repl) == 1) {
+	    if (repl >= i) return 1;
+	}
+    }
+    return 0; 
+}
 
-int addtolist (const int *oldlist, const int *addvars, int **plist,
-	       const DATAINFO *pdinfo, int model_count)
-/* Adds specified independent variables to a specified
-   list, forming newlist.  The first element of addvars
-   is the number of variables to be added; the remaining
-   elements are the ID numbers of the variables to be added.
-*/
+/* augment orig with add, return resulting big list (private) */
+
+int *big_list (const int *orig, const int *add, const DATAINFO *pdinfo, 
+	       int model_count, int *err)
 {
     int i, j, k, match;
-    const int nadd = addvars[0];
+    int *biglist;
+    const int nadd = add[0];
 
-    *plist = malloc((oldlist[0] + nadd + 1) * sizeof **plist);
-    if (*plist == NULL) return E_ALLOC;
+    *err = 0;
 
-    for (i=0; i<=oldlist[0]; i++) {
-	(*plist)[i] = oldlist[i];
+    biglist = malloc((orig[0] + nadd + 1) * sizeof *biglist);
+    if (biglist == NULL) {
+	*err = E_ALLOC;
+	return NULL;
     }
-    k = oldlist[0];
 
-    for (i=1; i<=addvars[0]; i++) {
+    for (i=0; i<=orig[0]; i++) {
+	biglist[i] = orig[i];
+    }
+    k = orig[0];
+
+    for (i=1; i<=add[0]; i++) {
 	match = 0;
-	for (j=1; j<=oldlist[0]; j++) {
-	    if (addvars[i] == oldlist[j]) {
+	for (j=1; j<=orig[0]; j++) {
+	    if (add[i] == orig[j]) {
 		/* a "new" var was already present */
-		free(*plist);
-		return E_ADDDUP;
+		free(biglist);
+		*err = E_ADDDUP;
+		return NULL;
 	    }
 	}
 	if (!match) {
-	    (*plist)[0] += 1;
+	    biglist[0] += 1;
 	    k++;
-	    (*plist)[k] = addvars[i];
+	    biglist[k] = add[i];
 	}
     }
 
-    if ((*plist)[0] == oldlist[0]) {
-	return E_NOADD;
+    if (biglist[0] == orig[0]) {
+	free(biglist);
+	*err = E_NOADD;
+	return NULL;
     }
 
-    if (model_count >= 0 && just_replaced(model_count, pdinfo, oldlist)) {
-	return E_VARCHANGE;
+    if (model_count >= 0 && just_replaced(model_count, pdinfo, orig)) {
+	free(biglist);
+	*err = E_VARCHANGE;
+	return NULL;
     }
 
-    return 0;
+    return biglist;
 }
 
-/* ........................................................... */
+/**
+ * omit_from_list:
+ * @list: original list (not modified)
+ * @omitvars: list of variables to drop (by ID number).
+ * @newlist: target list.
+ * @pdinfo: dataset information.
+ * @model_count: count of models estimated to date.
+ *
+ * fills @newlist with the elements of @list that are not also
+ * present in @omitvars. 
+ *
+ * Returns: 0 on success, else non-zero error code.  
+ * 
+ */
 
-int omit_from_list (int *list, const int *omitvars, int *newlist,
-		    const DATAINFO *pdinfo, int model_count)
-/* Drops specified independent variables from a specified
-   list, forming newlist.  The first element of omitvars
-   is the number of variables to be omitted; the remaining
-   elements are the ID numbers of the variables to be dropped.
-*/
+static int 
+omit_from_list (int *list, const int *omitvars, int *newlist,
+		const DATAINFO *pdinfo, int model_count)
 {
     int i, j, k, nomit = omitvars[0], l0 = list[0], match; 
 
@@ -152,26 +182,6 @@ static void difflist (int *biglist, int *smalist, int *targ)
 
 /* ........................................................... */
 
-static int just_replaced (int i, const DATAINFO *pdinfo, 
-			  const int *list)
-     /* check if any var in list has been replaced via genr since a
-	previous model (model_count i) was estimated.  Expects
-	the "label" in datainfo to be of the form "Replaced
-	after model <count>" */
-{
-    int j, repl = 0;
-
-    for (j=1; j<=list[0]; j++) {
-	if (strncmp(VARLABEL(pdinfo, list[j]), _("Replaced"), 8) == 0 &&
-	    sscanf(VARLABEL(pdinfo, list[j]), "%*s %*s %*s %d", &repl) == 1) {
-	    if (repl >= i) return 1;
-	}
-    }
-    return 0; 
-}
-
-/* ........................................................... */
-
 static COMPARE 
 add_or_omit_compare (const MODEL *pmodA, const MODEL *pmodB, int add)
 {
@@ -221,6 +231,119 @@ add_or_omit_compare (const MODEL *pmodA, const MODEL *pmodB, int add)
     return cmp;
 }
 
+/* ........................................................... */
+
+static int *
+full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
+/* reconstitute full varlist for WLS and AR models */
+{
+    int i, len, pos = 0;
+    int *flist = NULL;
+
+    if (pmod->ci != WLS && pmod->ci != AR) 
+	return NULL;
+
+    if (pmod->ci == WLS) { 
+	len = inlist[0] + 2;
+    } else {
+	pos = pmod->arinfo->arlist[0] + 1;
+	len = pos + inlist[0] + 2;
+    }
+
+    flist = malloc(len * sizeof *flist);
+    if (flist == NULL) return NULL;
+
+    if (pmod->ci == WLS) { 
+	flist[0] = len - 1;
+	flist[1] = pmod->nwt;
+	for (i=1; i<=inlist[0]; i++) {
+	    flist[i+1] = inlist[i];
+	}
+    }
+    else if (pmod->ci == AR) {
+	flist[0] = len - 2;
+	for (i=1; i<pos; i++) {
+	    flist[i] = pmod->arinfo->arlist[i];
+	}
+	flist[pos] = LISTSEP;
+	for (i=1; i<=inlist[0]; i++) {
+	    flist[pos+i] = inlist[i];
+	}
+    }
+
+    *ppos = pos;
+
+    return flist;
+}
+
+/* ........................................................... */
+
+static MODEL replicate_estimator (const MODEL *orig, int **plist,
+				  double ***pZ, DATAINFO *pdinfo,
+				  int *model_count, unsigned long lsqopt, 
+				  PRN *prn)
+{
+    MODEL rep;
+    double rho = 0.0;
+    int *list = *plist;
+    int pos;
+
+    gretl_model_init(&rep, NULL);
+
+    if (orig->ci == CORC || orig->ci == HILU || orig->ci == PWE) {
+	rep.errcode = hilu_corc(&rho, list, pZ, pdinfo, NULL, 1, orig->ci, prn);
+    }
+    else if (orig->ci == WLS || orig->ci == AR) {
+	int *full_list = full_model_list(orig, list, &pos);
+
+	free(list);
+	if (full_list == NULL) {
+	    rep.errcode = E_ALLOC;
+	} else {
+	    list = *plist = full_list;
+	}
+    }
+
+    if (rep.errcode) return rep;
+
+    if (orig->ci == AR) {
+	rep = ar_func(list, pos, pZ, pdinfo, model_count, prn);
+    }
+    else if (orig->ci == ARCH) {
+	rep = arch(orig->order, list, pZ, pdinfo, model_count, 
+		   prn, NULL);
+    } 
+    else if (orig->ci == LOGIT || orig->ci == PROBIT) {
+	rep = logit_probit(list, pZ, pdinfo, orig->ci);
+    }
+    else if (orig->ci == TOBIT) {
+	rep = tobit_model(list, pZ, pdinfo, NULL);
+    }
+    else if (orig->ci == LAD) {
+	rep = lad(list, pZ, pdinfo);
+    }
+    else if (orig->ci == LOGISTIC) {
+	char lmaxstr[32];
+	double lmax;
+
+	lmax = gretl_model_get_double(orig, "lmax");
+	sprintf(lmaxstr, "lmax=%g", lmax);
+	rep = logistic_model(list, pZ, pdinfo, lmaxstr);
+    }
+    else {
+	/* handles OLS, WLS, HSK, HCCM */
+	if (gretl_model_get_int(orig, "robust")) lsqopt |= OPT_R;
+	rep = lsq(list, pZ, pdinfo, orig->ci, lsqopt, rho);
+    }
+
+    /* check that we got the same sample as the original */
+    if (!rep.errcode && rep.nobs < orig->nobs) {
+	rep.errcode = E_MISS;
+    }
+
+    return rep;
+}
+
 /**
  * auxreg:
  * @addvars: list of variables to add to original model (or NULL)
@@ -246,10 +369,10 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 {
     COMPARE add;  
     MODEL aux;
-    int *newlist, *tmplist = NULL;
-    int i, j, t, listlen, pos = 0, m = *model_count;
+    int *newlist = NULL, *tmplist = NULL;
+    int i, j, t, listlen, m = *model_count;
     const int n = pdinfo->n, orig_nvar = pdinfo->v; 
-    double trsq = 0.0, rho = 0.0; 
+    double trsq = 0.0;
     int newvars = 0, err = 0;
 
     if (orig->ci == TSLS || orig->ci == NLS || orig->ci == ARMA) 
@@ -269,7 +392,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 
     if (addvars != NULL) {
 	/* specific list was given */
-	err = addtolist(orig->list, addvars, &newlist, pdinfo, m);
+	newlist = big_list(orig->list, addvars, pdinfo, m, &err);
     } else {
 	/* we should concoct one */
 	listlen = orig->list[0] - orig->ifc;
@@ -312,8 +435,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		    for (i=1; i<=tmplist[0]; i++) { 
 			tmplist[i] = i + orig_nvar - 1;
 		    }
-		    err = addtolist(orig->list, tmplist, &newlist,
-				    pdinfo, m);
+		    newlist = big_list(orig->list, tmplist, pdinfo, m, &err);
 		}
 	    }
 	} /* tmplist != NULL */
@@ -322,61 +444,17 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     /* ADD: run an augmented regression, matching the original
        estimation method */
     if (!err && aux_code == AUX_ADD) {
-	if (orig->ci == CORC || orig->ci == HILU || orig->ci == PWE) {
-	    err = hilu_corc(&rho, newlist, pZ, pdinfo, 
-			    NULL, 1, orig->ci, prn);
-	}
-	else if (orig->ci == WLS || orig->ci == AR) {
-	    pos = full_model_list(orig, &newlist);
-	    if (pos < 0) err = E_ALLOC;
-	}
+	*new = replicate_estimator(orig, &newlist, pZ, pdinfo, model_count, 
+				   OPT_D, prn);
 
-	if (!err) {
-	    /* select sort of model to estimate */
-	    if (orig->ci == AR) {
-		*new = ar_func(newlist, pos, pZ, pdinfo, model_count, prn);
-	    }
-	    else if (orig->ci == ARCH) {
-		*new = arch(orig->order, newlist, pZ, pdinfo, model_count, 
-			    prn, NULL);
-	    } 
-	    else if (orig->ci == LOGIT || orig->ci == PROBIT) {
-		*new = logit_probit(newlist, pZ, pdinfo, orig->ci);
-	    }
-	    else if (orig->ci == TOBIT) {
-		*new = tobit_model(newlist, pZ, pdinfo, NULL);
-	    }
-	    else if (orig->ci == LAD) {
-		*new = lad(newlist, pZ, pdinfo);
-	    }
-	    else if (orig->ci == LOGISTIC) {
-		char lmaxstr[32];
-		double lmax;
-
-		lmax = gretl_model_get_double(orig, "lmax");
-		sprintf(lmaxstr, "lmax=%g", lmax);
-		*new = logistic_model(newlist, pZ, pdinfo, lmaxstr);
-	    }
-	    else {
-		unsigned long lsqopt = OPT_D;
-
-		if (gretl_model_get_int(orig, "robust")) {
-		    lsqopt |= OPT_R;
-		}
-		*new = lsq(newlist, pZ, pdinfo, orig->ci, lsqopt, rho);
-	    }
-
-	    if (new->nobs < orig->nobs) 
-		new->errcode = E_MISS;
-	    if (new->errcode) {
-		err = new->errcode;
-		free(newlist);
-		if (addvars == NULL) free(tmplist); 
-		clear_model(new, pdinfo);
-	    } else {
-		++m;
-		new->ID = m;
-	    }
+	if (new->errcode) {
+	    err = new->errcode;
+	    free(newlist);
+	    if (addvars == NULL) free(tmplist); 
+	    clear_model(new, pdinfo);
+	} else {
+	    ++m;
+	    new->ID = m;
 	}
     } /* end if AUX_ADD */
 
@@ -397,7 +475,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    }
 	    newlist[1] = pdinfo->v - 1;
 
-	    aux = lsq(newlist, pZ, pdinfo, OLS, OPT_D | OPT_A, rho);
+	    aux = lsq(newlist, pZ, pdinfo, OLS, OPT_D | OPT_A, 0.0);
 	    if (aux.errcode) {
 		err = aux.errcode;
 		fprintf(stderr, "auxiliary regression failed\n");
@@ -478,7 +556,7 @@ static int in_omit_list (int k, const int *list)
     return 0;
 }
 
-int omit_index (int i, const int *list, const MODEL *pmod)
+static int omit_index (int i, const int *list, const MODEL *pmod)
 {
     /* return pos. in model coeff array of ith var to omit */
     int k = 0;
@@ -506,10 +584,21 @@ int omit_index (int i, const int *list, const MODEL *pmod)
 
 #undef FDEBUG
 
-/* below: simple form of Wald test for omission of variables:
-   could be generalized */
+/**
+ * robust_omit_F:
+ * @list: list of variables to omit (or NULL).
+ * @pmod: model to be tested.
+ *
+ * Simple form of Wald F-test for omission of variables.  If @list
+ * is non-NULL, do the test for the omission of the variables in
+ * @list from the model @pmod.  Otherwise test for omission of
+ * all variables in @pmod except for the constant.
+ *
+ * Returns: Calculated F-value, or #NADBL on failure.
+ * 
+ */
 
-double robust_omit_F (LIST list, MODEL *pmod)
+double robust_omit_F (const int *list, MODEL *pmod)
 {
     int q, err = 0;
     gretl_matrix *sigma = NULL;
@@ -600,9 +689,8 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	       PRN *prn, unsigned long opt)
 {
     COMPARE omit;             /* Comparison struct for two models */
-    int *tmplist, m = *model_count, pos = 0;
+    int *tmplist, m = *model_count;
     int maxlag = 0, t1 = pdinfo->t1;
-    double rho = 0.0;
     int err = 0;
 
     if (orig->ci == TSLS || orig->ci == NLS || orig->ci == ARMA) 
@@ -635,62 +723,17 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     }
 
     if (!err) {
-	if (orig->ci == CORC || orig->ci == HILU || orig->ci == PWE) {
-	    err = hilu_corc(&rho, tmplist, pZ, pdinfo, 
-			    NULL, 1, orig->ci, prn);
-	    if (err) {
-		free(tmplist);
-	    }
-	}
-	else if (orig->ci == WLS || orig->ci == AR) {
-	    pos = full_model_list(orig, &tmplist);
-	    if (pos < 0) {
-		free(tmplist);
-		err = E_ALLOC;
-	    }
-	}
-    }
-
-    if (!err) {
-	if (orig->ci == AR) {
-	    *new = ar_func(tmplist, pos, pZ, pdinfo, model_count, prn);
-	}
-	else if (orig->ci == ARCH) {
-	    *new = arch(orig->order, tmplist, pZ, pdinfo, model_count, 
-			prn, NULL);
-	} 
-	else if (orig->ci == LOGIT || orig->ci == PROBIT) {
-	    *new = logit_probit(tmplist, pZ, pdinfo, orig->ci);
-	    new->aux = AUX_OMIT;
-	}
-	else if (orig->ci == TOBIT) {
-	    *new = tobit_model(tmplist, pZ, pdinfo, NULL);
-	}
-	else if (orig->ci == LAD) {
-	    *new = lad(tmplist, pZ, pdinfo);
-	}
-	else if (orig->ci == LOGISTIC) {
-	    char lmaxstr[32];
-	    double lmax;
-
-	    lmax = gretl_model_get_double(orig, "lmax");
-	    sprintf(lmaxstr, "lmax=%g", lmax);
-	    *new = logistic_model(tmplist, pZ, pdinfo, lmaxstr);
-	}
-	else {
-	    /* re-establish any robust estimation variant of OLS */
-	    unsigned long lsqopt = OPT_D;
-
-	    if (gretl_model_get_int(orig, "robust")) {
-		lsqopt |= OPT_R;
-	    }
-	    *new = lsq(tmplist, pZ, pdinfo, orig->ci, lsqopt, rho);
-	}
+	*new = replicate_estimator(orig, &tmplist, pZ, pdinfo, model_count, 
+				   OPT_D, prn);
 
 	if (new->errcode) {
 	    pprintf(prn, "%s\n", gretl_errmsg);
 	    free(tmplist);
 	    err = new->errcode; 
+	}
+
+	if (orig->ci == LOGIT || orig->ci == PROBIT) {
+	    new->aux = AUX_OMIT;
 	}
     }
 
@@ -811,7 +854,9 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	err = E_ALLOC;
     } else {
 	newlist[0] = pmod->list[0] + 2;
-	for (i=1; i<=pmod->list[0]; i++) newlist[i] = pmod->list[i];
+	for (i=1; i<=pmod->list[0]; i++) {
+	    newlist[i] = pmod->list[i];
+	}
 	if (dataset_add_vars(2, pZ, pdinfo)) {
 	    err = E_ALLOC;
 	}
@@ -1465,6 +1510,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
  * Tests the given pooled model for fixed and random effects.
  * 
  * Returns: 0 on successful completion, error code on error.
+ *
  */
 
 int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
@@ -1498,6 +1544,21 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
     return 0;
 }
+
+/**
+ * add_leverage_values_to_dataset:
+ * @pZ: pointer to data array.
+ * @pdnfo: dataset information.
+ * @m: matrix containing leverage values.
+ * @opt: option flag: combination of SAVE_LEVERAGE, SAVE_INFLUENCE,
+ * and SAVE_DFFITS.
+ *
+ * Adds to the working dataset one or more series calculated by
+ * the gretl test for leverage/influence of data points.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ *
+ */
 
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 				    gretl_matrix *m, unsigned char opt)
@@ -1788,18 +1849,18 @@ int sum_test (LIST sumvars, MODEL *pmod,
     int *tmplist;
     int add = sumvars[0] - 1;
     int v = pdinfo->v;
-    double rho = 0.0;
-    int pos = 0, err = 0;
     int testcoeff;
     MODEL summod;
     PRN *nullprn;
+    int err = 0;
 
     if (sumvars[0] < 2) {
 	pprintf(prn, _("Invalid input\n"));
 	return E_DATA;
     }
 
-    if (pmod->ci == TSLS || pmod->ci == NLS || pmod->ci == ARMA) 
+    if (pmod->ci == TSLS || pmod->ci == NLS || pmod->ci == ARMA ||
+	pmod->ci == GARCH) 
 	return E_NOTIMP;
 
     tmplist = malloc((pmod->list[0] + 1) * sizeof *tmplist);
@@ -1827,36 +1888,9 @@ int sum_test (LIST sumvars, MODEL *pmod,
 
     gretl_model_init(&summod, pdinfo);
 
-    if (pmod->ci == CORC || pmod->ci == HILU || pmod->ci == PWE) {
-	err = hilu_corc(&rho, tmplist, pZ, pdinfo, 
-			NULL, 1, pmod->ci, prn);
-    } else if (pmod->ci == WLS || pmod->ci == AR) {
-	pos = full_model_list(pmod, &tmplist);
-	if (pos < 0) err = E_ALLOC;
-    }
-
     if (!err) {
-	if (pmod->ci == AR) {
-	    summod = ar_func(tmplist, pos, pZ, pdinfo, NULL, nullprn);
-	}
-	else if (pmod->ci == ARCH) {
-	    summod = arch(pmod->order, tmplist, pZ, pdinfo, NULL, 
-			  nullprn, NULL);
-	} 
-	else if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
-	    summod = logit_probit(tmplist, pZ, pdinfo, pmod->ci);
-	}
-	else if (pmod->ci == LOGISTIC) {
-	    char lmaxstr[32];
-	    double lmax;
-
-	    lmax = gretl_model_get_double(pmod, "lmax");
-	    sprintf(lmaxstr, "lmax=%g", lmax);
-	    summod = logistic_model(tmplist, pZ, pdinfo, lmaxstr);
-	}
-	else {
-	    summod = lsq(tmplist, pZ, pdinfo, pmod->ci, OPT_A, rho);
-	}
+	summod = replicate_estimator(pmod, &tmplist, pZ, pdinfo, NULL, 
+				     OPT_A, nullprn);
 
 	if (summod.errcode) {
 	    pprintf(prn, "%s\n", gretl_errmsg);
