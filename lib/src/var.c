@@ -489,7 +489,9 @@ int coint (int order, const LIST list, double ***pZ,
 
     /* step 1: test all the vars for unit root */
     for (i=1; i<=l0; i++) {
-	pputs(prn, "\n");
+	if (i > 1) pputs(prn, "\n");
+	pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
+		i, pdinfo->varname[list[i]]);
 	adf_test(order, list[i], pZ, pdinfo, prn);
     }
 
@@ -502,6 +504,9 @@ int coint (int order, const LIST list, double ***pZ,
 	cointlist[0] += 1;
     } else 
 	copylist(&cointlist, list);
+
+    pputs(prn, "\n");
+    pprintf(prn, _("Step %d: cointegration\n"), l0 + 1);
     
     coint_model = lsq(cointlist, pZ, pdinfo, OLS, 1, 0.0); 
     coint_model.aux = AUX_COINT;

@@ -1133,6 +1133,15 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	goto close_format;
     }
 
+    if (pmod->aux == AUX_COINT) {
+	rsqline(pmod, prn);
+	dwline(pmod, prn);
+	if (!PLAIN_FORMAT(prn->format)) {
+	    print_middle_table_end(prn);
+	}
+	goto close_format;
+    }
+
     if (!pmod->ifc && PLAIN_FORMAT(prn->format)) noconst(prn);
     
     if (pmod->aux == AUX_WHITE) { 
