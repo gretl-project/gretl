@@ -142,6 +142,8 @@ void display_var (void);
 
 void do_open_script (GtkWidget *w, GtkFileSelection *fs);
 
+void open_info (gpointer data, guint edit, GtkWidget *widget);
+
 void view_script_default (void);
 
 void do_new_script (gpointer data, guint action, GtkWidget *widget);

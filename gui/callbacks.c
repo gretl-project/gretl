@@ -189,28 +189,6 @@ void dummy_call (void)
 
 /* ........................................................... */
 
-void open_info (gpointer data, guint edit, GtkWidget *widget)
-{
-    if (datainfo->descrip == NULL) {
-	if (!yes_no_dialog("gretl: add info", 
-			   "The data file contains no informative comments.\n"
-			   "Would you like to add some now?", 0)) {
-	    edit_header(NULL, 0, NULL);
-	}
-    } else {
-	PRN *prn;
-	size_t sz = strlen(datainfo->descrip);
-
-	prn = bufopen_with_size(sz + 1);
-	if (prn != NULL) { 
-	    strcpy(prn->buf, datainfo->descrip);
-	    view_buffer(prn, 80, 400, "gretl: data info", INFO, NULL);
-	}
-    }
-}
-
-/* ........................................................... */
-
 void edit_header (gpointer data, guint unused, GtkWidget *widget)
 {
     if (data_status & BOOK_DATA)

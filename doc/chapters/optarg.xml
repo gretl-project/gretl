@@ -105,6 +105,11 @@
       <listitem><para>The IP number of the
 	  <application>gretl</application> database server to
 	  access.</para></listitem>
+      <listitem><para>The IP number and port number of the HTTP proxy
+	  server to use when contacting the gretl database server, if
+	  applicable (if you're behind a firewall).</para></listitem>
+	  <application>gretl</application> database server to
+	  access.</para></listitem>
       <listitem><para>The calculator and editor programs to launch
 	  from the toolbar.</para></listitem>
       <listitem><para>The monospaced font to be used in
