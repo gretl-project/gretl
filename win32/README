@@ -9,18 +9,18 @@ setup.
 
 1. Additional files:
 
-* GTK+ for win32 (with iconv and libintl)
-  See http://www.gimp.org/~tml/gimp/win32/
+* GTK+ for win32 (with iconv and libintl), glib version 2.0 and
+  gdk/gtk version 1.3.  See http://www.gimp.org/~tml/gimp/win32/
 
-* libxml
-
-* libreadline
-
-* zlib
+* libxml, libreadline, zlib and gtkextra
 
 For all of the above, you need DLLs, import libraries (.a) and
 headers.  See http://mingwrep.sourceforge.net/ for a repository of
-such packages.
+such packages.  For convenience, I have assembled a zip archive,
+gretl-win32-build.zip, which contains all that is needed in regard
+to libxml, libreadline, zlib and gtkextra. See
+
+  ftp://ricardo.ecn.wfu.edu/pub/gretl/winbuild/
 
 * The Inno Setup compiler for making a self-installing executable
   See http://www.jrsoftware.org/
@@ -32,8 +32,10 @@ such packages.
 2. Modifications to scripts:
 
 * At the top of the shell script, mkwindist, you will need to enter
-correct settings for (a) the location of the zipfile containing gnuplot
-for win32 and (b) the path to the Inno Setup compiler.
+correct settings for (a) the location of the zipfile containing
+gnuplot for win32 and (b) the path to the Inno Setup compiler.  If ou
+are building on win32 you will have to make further changes to this
+script (e.g., as it stands, the Inno compiler is called using wine).
 
 * Near the top of the Makefile in this directory, enter the correct
 path for the glib-2.0 headers on your system.
