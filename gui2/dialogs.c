@@ -1722,6 +1722,9 @@ static GList *get_dummy_list (int *thisdum)
     int i;
 
     for (i=1; i<datainfo->v; i++) {
+	if (!strcmp(datainfo->varname[i], "subdum")) {
+	    continue;
+	} 
 	if (isdummy(Z[i], datainfo->t1, datainfo->t2)) {
 	    dumlist = g_list_append(dumlist, datainfo->varname[i]);
 	    if (i == mdata->active_var) *thisdum = 1;

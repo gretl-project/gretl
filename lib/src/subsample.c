@@ -731,7 +731,7 @@ static int make_smpl_mask (double ***pZ, DATAINFO *pdinfo)
 
 /* ........................................................... */
 
-/* OPT_C -> replace (do not cumulate) sample restrictions */
+/* OPT_C -> replaCe sample restrictions */
 
 int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 			 DATAINFO **subinfo, DATAINFO **fullinfo,

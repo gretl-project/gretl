@@ -1752,7 +1752,7 @@ void restore_sample (gretlopt opt)
 
 static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 {
-    restore_sample(OPT_NONE);
+    restore_sample(OPT_C); 
 
     if (verbose) {
 	infobox(_("Full sample range restored"));
