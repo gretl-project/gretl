@@ -1178,11 +1178,36 @@ void write_rc (void)
     set_paths(&paths, 0, 1);
 }
 
+static int get_network_settings (void)
+{
+    LPWSTR *args;
+    int nargs;
+    gchar *msg;
+
+    args = CommandLineToArgvW("", &nargs);
+    if (args == NULL) {
+	errbox("get_network_settings: args = NULL");
+    } else {
+	gchar *msg;
+    
+	msg = g_strdup_printf("get_network_settings: args[0] = '%s',"
+			  "nargs = %d", args[0], nargs);
+	infobox(msg);
+	g_free(msg);
+	GlobalFree(args);
+    }
+
+    return 0;
+}
+
 void read_rc (void) 
 {
     int i = 0;
     char rpath[MAXSTR], value[MAXSTR];
     int err;
+
+    /* experiment*/
+    get_network_settings();
 
     while (rc_vars[i].key != NULL) {
 	err = 0;
