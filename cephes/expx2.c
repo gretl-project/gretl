@@ -45,9 +45,6 @@ Copyright 2000 by Stephen L. Moshier
 #define MINV .0078125
 #endif
 
-extern double MAXLOG;
-extern double INFINITY;
-
 double expx2 (double x, int sign)
 {
   double u, u1, m, f;

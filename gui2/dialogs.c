@@ -2851,27 +2851,33 @@ void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
 	dwinfo->n = 400;
 	dwinfo->t1 = 250;
     } else if (dwinfo->pd == 4) {
-	strcpy(dwinfo->stobs, "1900:1");
-	dwinfo->n = 500;
-	dwinfo->t1 = 200;
+	strcpy(dwinfo->stobs, "1700:1");
+	dwinfo->n = 1300;
+	dwinfo->t1 = 1000;
     } else if (dwinfo->pd == 12) {
-	strcpy(dwinfo->stobs, "1900:01");
-	dwinfo->n = 1500;
-	dwinfo->t1 = 960;
+	strcpy(dwinfo->stobs, "1700:01");
+	dwinfo->n = 3900;
+	dwinfo->t1 = 3360;
     } else if (dwinfo->pd == 24) {
 	strcpy(dwinfo->stobs, "1:01");
 	dwinfo->n = 1500;
 	dwinfo->t1 = 0;
     } else if (dwinfo->pd == 52) {
-	strcpy(dwinfo->stobs, "1950/01/02");
-	dwinfo->n = 12000;
-	dwinfo->t1 = 2087;
+	strcpy(dwinfo->stobs, "1800/01/06");
+	dwinfo->n = 13000;
+	dwinfo->t1 = 7826;
     } else if (dwinfo->pd == 5 ||
 	       dwinfo->pd == 6 ||
 	       dwinfo->pd == 7) {
-	strcpy(dwinfo->stobs, "1950/01/01");
-	dwinfo->n = 24000;
-	dwinfo->t1 = 12000;
+	strcpy(dwinfo->stobs, "1900/01/01");
+	dwinfo->n = 40000;
+	if (dwinfo->pd == 5) {
+	    dwinfo->t1 = 13046;
+	} else if (dwinfo->pd == 6) {
+	    dwinfo->t1 = 15654;
+	} else {
+	    dwinfo->t1 = 18263;
+	}
     }
 
     if (newdata) {
