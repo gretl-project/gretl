@@ -260,8 +260,8 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     } else {
 	tex_dcolumn_double(pmod->sderr[v], sderr);
 	sprintf(tratio, "%.4f", pmod->coeff[v] / pmod->sderr[v]);
-	sprintf(pval, "%.4f", tprob(pmod->coeff[v] / pmod->sderr[v], 
-				    pmod->dfd));
+	sprintf(pval, "%.4f", coeff_pval(pmod, pmod->coeff[v] / pmod->sderr[v], 
+					 pmod->dfd));
     }    
 
     *tmp = 0;

@@ -410,7 +410,7 @@ static void print_model_table_coeffs (PRN *prn)
 		    if (floateq(x, 0.0)) pval = 1.0;
 		    else pval = 0.0001;
 		} else {
-		    pval = tprob(x / s, pmod->dfd);
+		    pval = coeff_pval(pmod, x / s, pmod->dfd);
 		}
 
 		if (!tex) {

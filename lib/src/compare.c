@@ -1977,7 +1977,7 @@ int sum_test (const int *sumvars, MODEL *pmod,
 			summod.sderr[testcoeff - 2]);
 		tval = summod.coeff[testcoeff - 2] / 
 		    summod.sderr[testcoeff - 2];
-		pval = tprob(tval, summod.dfd);
+		pval = coeff_pval(&summod, tval, summod.dfd);
 		pprintf(prn, "   t(%d) = %g ", summod.dfd, tval);
 		pprintf(prn, _("with p-value = %g\n"), pval);
 		record_test_result(tval, pval, "sum");

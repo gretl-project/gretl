@@ -21,6 +21,8 @@
 
 double x_factorial (double x);
 
+double gaussprob (double x);
+
 double tprob (double x, int df);
 
 double fdist (double x, int dfn, int dfd);

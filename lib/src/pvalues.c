@@ -97,22 +97,36 @@ double rhocrit95 (int n)
 }
 
 /**
+ * gaussprob:
+ * @x: the cutoff point in the distribution.
+ * 
+ * Returns: the probability that z is greater than @x
+ * (two-sided, using absolute values).
+ */
+
+double gaussprob (double x)
+{
+    return 2.0 * (1.0 - ndtr(fabs(x)));
+}
+
+/**
  * tprob:
  * @x: the cutoff point in the distribution.
  * @df: degrees of freedom.
  * 
- * Returns: the probability that t(@df) is greater than @x.
- *
+ * Returns: the probability that t(@df) is greater than @x
+ * (two-sided, using absolute values).
  */
 
 double tprob (double x, int df)
 {
-    double xx;
+    if (df <= 0) {
+	return -1.0;
+    } else if (df >= 300) {
+	return 2.0 * (1.0 - ndtr(fabs(x)));
+    }
 
-    if (df <= 0) return -1.0;
-    xx = x*x;
-    return fdist(xx, 1, df);
-    /* return 1.0 - stdtr(df, x); */
+    return fdist(x * x, 1, df);
 }
 
 /**

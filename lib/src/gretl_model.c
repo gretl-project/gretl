@@ -997,5 +997,18 @@ int mle_aic_bic (MODEL *pmod, int addk)
     return err;
 }
 
+/* As of 2005-02-19, not ready for this yet: need to adjust
+   the text in the model printout.
+*/
+
+double coeff_pval (const MODEL *pmod, double x, int df)
+{
+    if (0 && ML_ESTIMATOR(pmod->ci)) {
+	return gaussprob(x);
+    } else {
+	return tprob(x, df);
+    }
+}
+
 
 

@@ -494,7 +494,7 @@ static int least_signif_coeff (const MODEL *pmod)
 	}
     }
 
-    if (tprob(tmin, pmod->dfd) > .10) {
+    if (coeff_pval(pmod, tmin, pmod->dfd) > .10) {
 	return pmod->list[k+2];
     }
 
@@ -1866,7 +1866,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	if (do_pval) {
 	    char pvalstr[16];
 
-	    pvalue = tprob(t, pmod->dfd);
+	    pvalue = coeff_pval(pmod, t, pmod->dfd);
 	    print_pval_str(pvalue, pvalstr);
 	    pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 12), pvalstr);
 	}
@@ -1958,7 +1958,7 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	if (do_pval) {
 	    char pvalstr[16];
 
-	    pvalue = tprob(t, pmod->dfd);
+	    pvalue = coeff_pval(pmod, t, pmod->dfd);
 	    print_pval_str(pvalue, pvalstr);
 	    pprintf(prn, " \\qc %s\\cell", pvalstr);
 	}	

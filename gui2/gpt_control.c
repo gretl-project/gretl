@@ -2017,6 +2017,34 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 			 event->area.width, event->area.height);
 }
 
+#ifdef OLD_GTK
+
+#include <errno.h>
+
+static int test_file_open (const char *fname)
+{
+    FILE *fp;
+    int err = 0;
+
+    errno = 0;
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) {
+	char *errstr = strerror(errno);
+
+	sprintf(errtext, _("Couldn't open %s"), fname);
+	strcat(errtext, ": ");
+	strcat(errtext, errstr);
+	errbox(errtext);
+	err = 1;
+    } else {
+	fclose(fp);
+    }
+
+    return err;
+}
+#endif
+
 static void render_pngfile (png_plot *plot, int view)
 {
     gint width;
@@ -2030,6 +2058,9 @@ static void render_pngfile (png_plot *plot, int view)
     build_path(paths.userdir, "gretltmp.png", pngname, NULL);
 
 #ifdef OLD_GTK
+    if (test_file_open(pngname)) {
+	return;
+    }
     pbuf = gdk_pixbuf_new_from_file(pngname);
     if (pbuf == NULL) {
 	errbox(_("Failed to create pixbuf from file"));

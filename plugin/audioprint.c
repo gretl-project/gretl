@@ -29,7 +29,7 @@ static int audioprint_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	double t, pval;
 
 	t = pmod->coeff[c-2] / pmod->sderr[c-2];
-	pval = tprob(t, pmod->dfd);
+	pval = coeff_pval(pmod, t, pmod->dfd);
 	pprintf(prn, "P-value %.3g.\n", pval);
     } else { /* zero standard error */
 	pputs(prn, "Standard error is zero.\n");

@@ -97,4 +97,6 @@ int highest_numbered_var_in_model (const MODEL *pmod,
 
 int mle_aic_bic (MODEL *pmod, int addk);
 
+double coeff_pval (const MODEL *pmod, double x, int df);
+
 #endif /* GRETL_MODEL_H */
