@@ -1527,17 +1527,8 @@ static int getxvec (char *s, double *xvec,
 	    for (t=0; t<n; t++) 
 		xvec[t] = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
 	    if (pdinfo->vector[v]) {
-#ifdef GENR_DEBUG
-		fprintf(stderr, " %s is a vector\n", pdinfo->varname[v]);
-#endif
 		*scalar = 0;
-	    } else {
-		;
-#ifdef GENR_DEBUG
-		fprintf(stderr, "var %d: scalar: set all entries to "
-			"Z[%d][0]=%g\n", v, v, Z[v][0]);
 	    }
-#endif
 	}
 	break;
 
