@@ -24,6 +24,7 @@
 #include "libset.h"
 
 static int use_qr;
+static double hp_lambda;
 
 enum {
     AUTO_LAG_STOCK_WATSON,
@@ -39,6 +40,11 @@ static struct {
 int get_hc_version (void)
 {
     return robust_opts.hc_version;
+}
+
+double get_hp_lambda (void)
+{
+    return hp_lambda;
 }
 
 static int get_or_set_garch_vcv (int v)
@@ -170,6 +176,11 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 		err = 0;
 
 	    }
+	}
+	else if (!strcmp(setobj, "hp_lambda")) {
+	    /* Hodrick-Prescott filter parameter */
+	    hp_lambda = atof(setarg);
+	    err = 0;
 	}	
     }
 		    
