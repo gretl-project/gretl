@@ -198,7 +198,7 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 
 	gtk_tree_view_get_cursor(view, NULL, &column);
 	colnum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "colnum"));
-	path = gtk_tree_path_new_from_string (path_string);
+	path = gtk_tree_path_new_from_string(path_string);
 	gtk_tree_model_get_iter(model, &iter, path);
 	gtk_tree_model_get(model, &iter, colnum, &old_text, -1);
 
