@@ -1,4 +1,4 @@
-version 1.0.8
+05/02/03 version 1.0.8
 - Require lapack
 - Fixes to build for Mac OS X
 - Avoid duplication of "against time" in model graph menus, when 
