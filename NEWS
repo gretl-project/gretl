@@ -1,3 +1,71 @@
+June 2003
+
+New features:
+
+1. Saving, display and freeing of "objects" (models or graphs) in
+   script mode.  This applies when you're running a script via the GUI
+   program, or working from the console in the GUI program.
+
+   A model command (e.g. "ols") or a "gnuplot" command can be prefaced
+   with a "save to object" specifier, e.g.
+
+   MyGraph <- gnuplot yvar xvar
+   model_a <- ols Ct 0 Yt
+
+   Such saved objects are added to the list of icons that can be seen
+   in the "session icon view" window.
+
+   Thereafter, the saved object can be displayed using the syntax
+   "object_name.show", e.g.
+
+   MyGraph.show
+   model_a.show
+
+   "Showing" a model means displaying it in its own window, as if it
+   had been estimated using the GUI controls.  Showing a graph just
+   means diplaying it in a window.
+
+   To delete or free a saved object, used "object_name.free", e.g.
+
+   model_a.free
+
+   The "Name <- " object-saving strings are ignored in the command
+   line program.  Object names may have embedded spaces (if you
+   must!), but then they must be put in double quotes in all contexts:
+
+   "My Graph" <- gnuplot yvar xvar
+   "My Graph".show
+   "My Graph".free
+
+2. Access to databases via script and command line. Up till now the
+   only way of accessing a database (native gretl or RATS 4.0 being
+   the two supported formats) has been via the gretl GUI.  Version
+   1.1.0 adds a scriptable way of getting data series out of a
+   database into gretl's workspace.
+
+   The new command "data" is used, followed by a list of series to
+   extract.  The data command must be prefaced by an "open" command
+   that opens the database in question.  It must also be prefaced by
+   "setobs" and "smpl" commands that establish the frequency and range
+   of the working data set.  For example:
+
+   open /path/to/foo.bin
+   setobs 4 1959.1
+   smpl ; 2000.4
+   data (compact=average) cpiu unemp
+
+   In the above example the "setobs" command establishes a quarterly
+   dataset starting in the first quarter of 1959.  The "smpl" command
+   says the data set will run till the 4th quarter of 2000.  The
+   "data" command then imports two series, "cpiu" and "unemp", from
+   the previously opened foo.bin.  The "(compact=average)" option is
+   used in this case to specify that the series should be compacted to
+   quarterly format by averaging.  A compaction method should be
+   specified if the series in the database are of higher frequency
+   that the working data set.  (In the example, the series to be
+   imported are monthly.)  If the data series are of the same
+   frequency as the dataset, no "compact" option is needed.
+
 March 2003
 
 As of version 1.0.6, gretl offers support for LAPACK.  Routines from
