@@ -1806,7 +1806,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     }
 
     /* parse dates */
-    if (sscanf(str, "%*s %8s %8s", t1str, t2str) != 2) {
+    if (sscanf(str, "%*s %10s %10s", t1str, t2str) != 2) {
 	fr->err = E_OBS;
 	return fr;
     }
