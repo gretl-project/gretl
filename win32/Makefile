@@ -1,12 +1,14 @@
 # Makefile for cross-compiling gretl for win32 on Linux,
 # using mingw compiler
 
-# Directories
+# glib includes: adjust to match your system
+glibinc = /usr/local/cross-tools/mingw32/include/glib-2.0
+
+# directories
 topsrc = ..
 libdir  = $(topsrc)/lib/src
 extradir = ./gtkextra-lib
 imports = ./import-libs
-glibinc = /usr/local/cross-tools/mingw32/include/glib-2.0
 
 # tools
 CC = mingw32-gcc -fnative-struct -Wall
@@ -125,8 +127,7 @@ clean:
 	rm -f gretl.stamp build.h
 	rm -f windist/MANIFEST windist/gretl.iss 
 	rm -rf windist/gretl windist/gnuplot windist/Output
-
-# make a dll of libgretl...
+	make -C updater clean
 
 dll: dlls/libgretl.dll
 extra-dll: dlls/libgtkextra-lite.dll
