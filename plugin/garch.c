@@ -26,13 +26,6 @@
 
 #include "fcp.h"
 
-/* vsanal error codes (in "info"):
-   0 OK
-   1 Insufficient dimensions in FORTRAN arrays
-   2 No convergence due to bad gradient
-   3 ML iteration did not converge
-*/
-
 int do_fcp (const int *list, const double **Z, 
 	    const DATAINFO *pdinfo, PRN *prn)
 {
@@ -46,8 +39,8 @@ int do_fcp (const int *list, const double **Z,
     double *ystoc;
     double *amax;
     double *b;
-    double oldc, yy, sigma;
-    int info, iters = 0;
+    double oldc, yy;
+    int err = 0, iters = 0;
     int maxlag;
     int nobsmod;
     
@@ -72,19 +65,19 @@ int do_fcp (const int *list, const double **Z,
     ystoc = malloc(nobsmod * sizeof *ystoc);
 
     res2 = malloc(nobsmod * sizeof *res2);
-    for (i=0; i<nobs; i++) {
+    for (i=0; i<nobsmod; i++) {
 	res2[i] = 0.0;
     }
 
     res = malloc(nobsmod * sizeof *res);
-    for (i=0; i<nobs; i++) {
+    for (i=0; i<nobsmod; i++) {
 	res[i] = 0.0;
     }    
 
-    sigma = oldc = yy = 0.0;
+    oldc = yy = 0.0;
 
     amax = malloc(nobsmod * sizeof *amax);
-    for (i=0; i<nobs; i++) {
+    for (i=0; i<nobsmod; i++) {
 	amax[i] = 0.0;
     }
 
@@ -130,26 +123,25 @@ int do_fcp (const int *list, const double **Z,
 
     /* Need to set t1 high enough to allow for lags? */
 
-    vsanal_(t1, t2, 
-	    yobs + maxlag, nobs, 
+    err = vsanal_(t1 + maxlag, t2 + maxlag, 
+	    yobs, nobsmod, 
 	    (const double **) X, nx, 
-	    ydet + maxlag, &yy, 
+	    ydet, &yy, 
 	    coeff, ncoeff, 
 	    &oldc, vc, 
-	    res2 + maxlag, 
-	    res + maxlag, 
-	    &sigma, 
-	    ystoc + maxlag, 
-	    amax, b, &iters, &info, prn);
+	    res2, 
+	    res, 
+	    ystoc, 
+	    amax, b, &iters, prn);
 
-    if (info != 0) {
-	fprintf(stderr, "vsanal returned with info = %d\n", info);
+    if (err != 0) {
+	fprintf(stderr, "vsanal returned %d\n", err);
     }
 
     pprintf(prn, "Number of iterations = %d\n", iters);
 
-    if (info == 0) {
-	int k = 1, nparam = ncoeff + p + q + 1;
+    if (err == 0) {
+	int nparam = ncoeff + p + q + 1;
 
 	pprintf(prn, "Convergence reached, with tolerance = %g\n", 
 	       amax[0]);
