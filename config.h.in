@@ -38,6 +38,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Is gnuplot available? */
 #undef HAVE_GNUPLOT
 
+/* Does gnuplot support PNG output? */
+#undef GNUPLOT_PNG
+
 /* Is LaTeX available? */
 #undef HAVE_LATEX
 

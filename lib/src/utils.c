@@ -1219,7 +1219,6 @@ int set_paths (PATHS *ppaths, const int defaults, const int gui)
 	sprintf(ppaths->binbase, "%s\\db\\", ppaths->gretldir);
 	strcpy(ppaths->ratsbase, "f:\\"); 
 	strcpy(ppaths->dbhost_ip, "152.17.150.2");
-	ppaths->hdrfile[0] = '\0';
 	ppaths->currdir[0] = '\0';
     }
 
@@ -1262,7 +1261,6 @@ int set_paths (PATHS *ppaths, const int defaults, const int gui)
 	strcpy(ppaths->ratsbase, "/mnt/dosc/userdata/rats/oecd/");
 	strcpy(ppaths->dbhost_ip, "152.17.150.2");
 	strcpy(ppaths->gnuplot, "gnuplot");
-	ppaths->hdrfile[0] = '\0';
 	ppaths->currdir[0] = '\0';
 
 	/* figure out user's home gretl directory */

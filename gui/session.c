@@ -1227,7 +1227,7 @@ static gui_obj *session_add_object (gpointer data, int sort)
 	}
     }
     else if (sort == 'd') gobj->data = paths.datfile;
-    else if (sort == 'i') gobj->data = paths.hdrfile;
+    else if (sort == 'i') gobj->data = NULL;
     else if (sort == 's') gobj->data = cmdfile;
     else if (sort == 'n') gobj->data = NULL;
     else if (sort == 'x') gobj->data = NULL;

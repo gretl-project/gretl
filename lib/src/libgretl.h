@@ -94,9 +94,7 @@ typedef struct {
     char scriptdir[MAXLEN];
     char helpfile[MAXLEN];
     char cmd_helpfile[MAXLEN];
-    char hdrfile[MAXLEN];
     char datfile[MAXLEN];
-    char lblfile[MAXLEN];
     char plotfile[MAXLEN];
     char binbase[MAXLEN];
     char ratsbase[MAXLEN];

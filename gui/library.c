@@ -30,6 +30,7 @@ extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
 extern double **subZ;
 extern double **fullZ;
+extern char *viewdvi;
 
 /* ../cli/common.c */
 static int data_option (int flag);
@@ -235,10 +236,8 @@ void clear_data (int full)
 {
     extern void clear_clist (GtkWidget *widget);
 
-    if (full) {
-	clear(paths.hdrfile, MAXLEN); 
+    if (full) 
 	clear(paths.datfile, MAXLEN);
-    }
     restore_sample(NULL, 0, NULL);
     if (Z != NULL) free_Z(Z, datainfo); 
     clear_datainfo(datainfo, CLEAR_FULL);
@@ -2704,6 +2703,10 @@ void do_dummy_graph (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
+#ifdef GNUPLOT_PNG
+extern int gnuplot_show_png (char *fname); /* gpt_control.c */
+#endif
+
 void do_graph (GtkWidget *widget, dialog_t *ddata)
 {
     char *edttext;
@@ -2737,7 +2740,12 @@ void do_graph (GtkWidget *widget, dialog_t *ddata)
     if (err == -999)
 	errbox(_("No data were available to graph"));
     else if (err < 0) errbox(_("gnuplot command failed"));
-    else graphmenu_state(TRUE);
+    else {
+#ifdef GNUPLOT_PNG
+	gnuplot_show_png(paths.plotfile);
+#endif
+	graphmenu_state(TRUE);
+    }
     free(lines);
 }
 
@@ -2957,14 +2965,7 @@ int do_store (char *mydatfile, const int opt, int overwrite)
 
     if (opt != OPT_M && opt != OPT_R && opt != OPT_R_ALT)
 	mkfilelist(1, mydatfile);
-    if (opt != OPT_M && opt != OPT_C && opt != OPT_R && opt != OPT_R_ALT) {
-	if (strlen(paths.hdrfile) == 0) {
-	    if (has_gz_suffix(mydatfile))
-		gz_switch_ext(paths.hdrfile, mydatfile, "hdr");
-	    else
-		switch_ext(paths.hdrfile, mydatfile, "hdr");
-	}
-    } 
+
     msg = g_strdup_printf(_("%s written OK"), mydatfile);
     infobox(msg);
     g_free(msg);
@@ -3000,9 +3001,17 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
     dot = dotpos(texfile);
     clear(texbase, MAXLEN);
     strncpy(texbase, texfile, dot);
-    sprintf(tmp, "cd %s && latex %s && xdvi %s", paths.userdir,
-	    texbase, texbase);
+#ifdef G_OS_WIN32
+    chdir(paths.userdir);
+    sprintf(tmp, "latex %s", texbase);
+    WinExec(tmp, SW_SHOWMINIMIZED);
+    sprintf(tmp, "%s %s", viewdvi, texbase);
+    WinExec(tmp, SW_SHOWNORMAL);
+#else
+    sprintf(tmp, "cd %s && latex %s && %s %s", paths.userdir,
+	    texbase, viewdvi, texbase);
     err = system(tmp);
+#endif
 
     remove(texfile);
     sprintf(tmp, "%s.dvi", texbase);

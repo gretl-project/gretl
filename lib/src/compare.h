@@ -72,7 +72,7 @@ int chow_test (const char *line, MODEL *pmod,
 int cusum_test (MODEL *pmod, 
 		double ***pZ, DATAINFO *pdinfo, 
 		PRN *prn, 
-		const PATHS *ppaths, 
+		PATHS *ppaths, 
 		GRETLTEST *test);
 
 int hausman_test (MODEL *pmod, 

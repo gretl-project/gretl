@@ -464,8 +464,6 @@ int main (int argc, char *argv[])
 	free(modelspec);
     }
 
-    /*  remove(paths.plotfile); */
-
     return 0;
 }
 
@@ -629,6 +627,7 @@ void exec_line (char *line, PRN *prn)
 	if ((err = model_test_start(0, prn, 1))) break;
 	err = cusum_test(models[0], &Z, datainfo, prn, &paths, NULL);
 	if (err) errmsg(err, prn);
+	remove(paths.plotfile);
 	break;
 
     case CORC:
@@ -655,6 +654,7 @@ void exec_line (char *line, PRN *prn)
 	err = corrgram(command.list[1], order, &Z, datainfo, &paths,
 		       batch, prn);
 	if (err) pprintf(prn, _("Failed to generate correlogram\n"));
+	if (!batch) remove(paths.plotfile);
 	break;
 
     case DELEET:
@@ -735,6 +735,7 @@ void exec_line (char *line, PRN *prn)
 	    lines[0] = 1;
 	    err = gnuplot(command.list, lines, &Z, datainfo,
 			  &paths, &plot_count, batch, 0, 0);
+	    if (!batch) remove(paths.plotfile);
 	    if (err) pprintf(prn, _("gnuplot command failed\n"));
 	}
 	break;
@@ -752,6 +753,7 @@ void exec_line (char *line, PRN *prn)
 	    if (!batch) {
 		if (plot_freq(freq, &paths, NORMAL))
 		    pprintf(prn, _("gnuplot command failed\n"));
+		remove(paths.plotfile);
 	    }
 	    free_freq(freq);
 	}
@@ -790,6 +792,7 @@ void exec_line (char *line, PRN *prn)
 			  &paths, &plot_count, batch, 0, 0);
 	}
 	if (err < 0) pprintf(prn, _("gnuplot command failed\n"));
+	if (!batch) remove(paths.plotfile);
 	break;
 
     case HAUSMAN:
@@ -991,6 +994,7 @@ void exec_line (char *line, PRN *prn)
 	err = periodogram(command.list[1], &Z, datainfo, &paths,
 			  batch, oflag, prn);
 	if (err) pprintf(prn, _("Failed to generate periodogram\n"));
+	remove(paths.plotfile);
 	break;
 
     case PVALUE:
@@ -1071,6 +1075,7 @@ void exec_line (char *line, PRN *prn)
 	    err = multi_scatters(command.list, atoi(command.param), &Z, 
 				 datainfo, &paths);
 	    if (err) pprintf(prn, _("scatters command failed\n"));
+	    remove(paths.plotfile);
 	}		
 	break;
 

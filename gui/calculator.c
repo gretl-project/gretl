@@ -344,6 +344,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
     FILE *fp;
     char plotcmd[MAXLEN];
 
+    gnuplot_tmpname(&paths);
     fp = fopen(paths.plotfile, "w");
     if (fp == NULL) return;
     fprintf(fp, "# sampling distribution\n");

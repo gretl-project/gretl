@@ -807,7 +807,7 @@ static double vprime_M_v (double *v, double *M, int n)
  */
 
 int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn, 
-		const PATHS *ppaths, GRETLTEST *test)
+		PATHS *ppaths, GRETLTEST *test)
 {
     int n_est, i, j, t;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -905,7 +905,9 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	}
 
 	/* plot with 95% confidence bands, if not batch mode */
-	if (prn->fp == NULL && (fq = fopen(ppaths->plotfile, "w"))) { 
+	if (prn->fp == NULL &&
+	    gnuplot_tmpname(ppaths) == 0 && 
+	    (fq = fopen(ppaths->plotfile, "w"))) { 
 	    fprintf(fq, "# CUSUM test\n");
 	    fprintf(fq, "set xlabel \"observation\"\n");
 	    fprintf(fq, "set xzeroaxis\n");

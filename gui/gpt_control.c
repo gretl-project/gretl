@@ -648,6 +648,55 @@ void gnuplot_dialog (GPT_SPEC *plot)
     gtk_widget_show (gpt_control);
 }
 
+#ifdef GNUPLOT_PNG
+
+void png_save_graph (GPT_SPEC *plot, const char *fname)
+{
+    FILE *fq;
+    PRN *prn;
+    char plottmp[MAXLEN], plotline[MAXLEN], plotcmd[MAXLEN];
+    char termstr[MAXLEN];
+    int cmds;
+
+    if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
+
+    fq = fopen(plot->fname, "r");
+    if (fq == NULL) {
+	errbox(_("Couldn't access graph info"));
+	gretl_print_destroy(prn);
+	return;
+    }
+ 
+    cmds = termtype_to_termstr(plot->termtype, termstr);  
+    if (cmds) {
+	if (copyfile(plot->fname, fname)) 
+	    errbox(_("Failed to copy graph file"));
+	return;
+    } else {
+	pprintf(prn, "set term %s\n", termstr);
+	pprintf(prn, "set output '%s'\n", fname);
+	while (fgets(plotline, MAXLEN-1, fq)) {
+	    if (strncmp(plotline, "set term", 8) && 
+		strncmp(plotline, "set output", 10))
+		pprintf(prn, "%s", plotline);
+	}
+    }
+    gretl_print_destroy(prn);
+    fclose(fq);
+    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
+#ifdef G_OS_WIN32
+    if (WinExec(plotcmd, SW_SHOWMINIMIZED) < 32)
+	errbox(_("Gnuplot error creating graph"));
+#else
+    if (system(plotcmd))
+	errbox(_("Gnuplot error creating graph"));
+#endif
+    remove(plottmp);
+    infobox(_("Graph saved"));
+}
+
+#endif
+
 /* Below: functions for saving last auto-generated graph */
 
 void do_save_graph (const char *fname, char *savestr)
@@ -1062,4 +1111,193 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     
     return 0;
 }
+
+/* gnuplot PNG material */
+
+#ifdef GNUPLOT_PNG
+
+#include <gdk-pixbuf/gdk-pixbuf.h>
+
+typedef struct png_plot_t {
+    GtkWidget *window, *area, *popup;
+    GPT_SPEC *spec;
+} png_plot_t;
+
+/* Size of drawing area */
+#define WIDTH 640 /* 576 */
+#define HEIGHT 480 /* 432 */
+
+static gint plot_popup_activated (GtkWidget *w, gpointer data)
+{
+    gchar *item = (gchar *) data;
+    gpointer ptr = gtk_object_get_data(GTK_OBJECT(w), "plot");
+    png_plot_t *plot = (png_plot_t *) ptr;
+
+    if (!strcmp(item, "Save as postscript (EPS)...")) {
+	strcpy(plot->spec->termtype, "postscript");
+	file_selector("Save graph as postscript file", SAVE_GNUPLOT_PNG, plot->spec);
+    }
+    else if (!strcmp(item, "Save as PNG...")) {
+	strcpy(plot->spec->termtype, "png");
+        file_selector("Save graph as PNG", SAVE_GNUPLOT_PNG, plot->spec);
+    }
+    else if (!strcmp(item, "Close")) { 
+        gtk_widget_destroy(plot->window);
+    } 
+
+    gtk_widget_destroy(plot->popup);
+    plot->popup = NULL;
+    return TRUE;
+}
+
+static GtkWidget *build_plot_menu (png_plot_t *plot)
+{
+    GtkWidget *menu, *item;    
+    static char *plot_items[] = {
+        "Save as postscript (EPS)...",
+	"Save as PNG...",
+        "Close",
+        NULL
+    };
+    int i = 0;
+
+    menu = gtk_menu_new();
+
+    while (plot_items[i]) {
+        item = gtk_menu_item_new_with_label(plot_items[i]);
+        gtk_signal_connect(GTK_OBJECT(item), "activate",
+                           (GtkSignalFunc) plot_popup_activated,
+                           plot_items[i]);
+        gtk_object_set_data(GTK_OBJECT(item), "plot", plot);
+        GTK_WIDGET_SET_FLAGS (item, GTK_SENSITIVE | GTK_CAN_FOCUS);
+        gtk_widget_show(item);
+        gtk_menu_append(GTK_MENU(menu), item);
+        i++;
+    }
+
+    return menu;
+}
+
+static gint plot_popup (GtkWidget *widget, GdkEventButton *event, 
+			png_plot_t *plot)
+{
+    if (plot->popup) g_free(plot->popup);
+    plot->popup = build_plot_menu(plot);
+    gtk_menu_popup(GTK_MENU(plot->popup), NULL, NULL, NULL, NULL,
+                   event->button, event->time);
+    return TRUE;
+}
+
+#include <gdk/gdkkeysyms.h>
+
+static gboolean 
+plot_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
+{
+    if (key->keyval == GDK_q) {
+        gtk_widget_destroy(w);
+    }
+    return TRUE;
+}
+
+static void render_pngfile (const char *fname, GdkPixmap *dbuf_pixmap)
+{
+    gint width;
+    gint height;
+    GdkPixbuf *pbuf;
+
+    pbuf = gdk_pixbuf_new_from_file(fname);
+    width = gdk_pixbuf_get_width(pbuf);
+    height = gdk_pixbuf_get_height(pbuf);
+
+    gdk_pixbuf_render_to_drawable_alpha(pbuf, dbuf_pixmap,
+					0, 0, 0, 0, width, height,
+					GDK_PIXBUF_ALPHA_BILEVEL, 128,
+					GDK_RGB_DITHER_NORMAL, 0, 0);
+    gdk_pixbuf_unref(pbuf);
+    remove(fname);
+}
+
+static 
+void plot_expose (GtkWidget *widget, GdkEventExpose *event,
+		  GdkPixmap *dbuf_pixmap)
+{
+    /* Don't repaint entire window on each exposure */
+    gdk_window_set_back_pixmap(widget->window, NULL, FALSE);
+
+    /* Refresh double buffer, then copy the "dirtied" area to
+       the on-screen GdkWindow */
+    gdk_window_copy_area(widget->window,
+			 widget->style->fg_gc[GTK_STATE_NORMAL],
+			 event->area.x, event->area.y,
+			 dbuf_pixmap,
+			 event->area.x, event->area.y,
+			 event->area.width, event->area.height);
+}
+
+static void plot_quit (GtkWidget *w, png_plot_t *plot)
+{
+    gtk_widget_destroy(w);
+    w = NULL;
+    remove(plot->spec->fname);
+    free(plot->spec);
+    if (plot->popup) g_free(plot->popup);
+    free(plot);
+}
+
+int gnuplot_show_png (char *plotfile)
+{
+    GtkWidget *w;
+    GdkPixmap *dbuf_pixmap = NULL; 
+    GtkWidget *drawing_area;
+    png_plot_t *plot;
+
+    plot = mymalloc(sizeof *plot);
+    if (plot == NULL) return 1;
+    plot->spec = mymalloc(sizeof(GPT_SPEC));
+    if (plot->spec == NULL) return 1;
+
+    plot->popup = NULL;
+
+    /* record name of tmp file containing plot commands */
+    strcpy(plot->spec->fname, plotfile);
+
+    w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(w), "gretl: gnuplot graph"); 
+    plot->window = w;
+
+    /* Restrict window resizing to size of drawing buffer */
+    gtk_widget_set_usize(GTK_WIDGET(w), WIDTH, HEIGHT);
+    gtk_window_set_policy(GTK_WINDOW(w), TRUE, FALSE, FALSE);
+
+    gtk_signal_connect(GTK_OBJECT(w), "delete_event",
+		       GTK_SIGNAL_FUNC(plot_quit), plot);
+    gtk_signal_connect(GTK_OBJECT(w), "key_press_event", 
+                       GTK_SIGNAL_FUNC(plot_key_handler), plot);
+
+    /* Create drawing-area widget */
+    drawing_area = gtk_drawing_area_new();
+    plot->area = drawing_area;
+    gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK
+                           | GDK_LEAVE_NOTIFY_MASK
+                           | GDK_BUTTON_PRESS_MASK);
+    gtk_widget_set_sensitive(drawing_area, TRUE);
+    gtk_signal_connect(GTK_OBJECT(drawing_area), "button_press_event", 
+                       GTK_SIGNAL_FUNC(plot_popup), plot);
+
+    gtk_container_add(GTK_CONTAINER(w), drawing_area);
+
+    gtk_widget_show_all(w);
+
+    dbuf_pixmap = gdk_pixmap_new(w->window, WIDTH, HEIGHT, -1);
+
+    gtk_signal_connect(GTK_OBJECT(drawing_area), "expose_event",
+		       GTK_SIGNAL_FUNC(plot_expose), dbuf_pixmap);
+
+    render_pngfile("gretltmp.png", dbuf_pixmap);
+
+    return 0;
+}
+
+#endif
+
 

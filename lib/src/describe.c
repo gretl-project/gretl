@@ -306,7 +306,7 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
  */
 
 int corrgram (const int varno, const int order, double ***pZ, 
-	      DATAINFO *pdinfo, const PATHS *ppaths, 
+	      DATAINFO *pdinfo, PATHS *ppaths, 
 	      const int batch, PRN *prn)
 {
     double *x, *y, *acf, *xl, box;
@@ -420,6 +420,7 @@ int corrgram (const int varno, const int order, double ***pZ,
     pprintf(prn, "\n");
     if (maxlag%5 > 0) pprintf(prn, "\n");
 
+    gnuplot_tmpname(ppaths);
     fq = fopen(ppaths->plotfile, "w");
     /*  fq = popen("gnuplot -persist", "w"); */
     if (fq == NULL) return E_FOPEN;
@@ -452,7 +453,6 @@ int corrgram (const int varno, const int order, double ***pZ,
 #endif
     fclose(fq);
     err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
-    /*  pclose(fq); */
 
  getout:
     free(x);
@@ -540,7 +540,7 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
  */
 
 int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo, 
-		 const PATHS *ppaths, const int batch, 
+		 PATHS *ppaths, const int batch, 
 		 const int opt, PRN *prn)
 {
     double *autocov, *omega, *hhat;
@@ -598,6 +598,7 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
     xmax = roundup_half(nobs);
 
     if (!batch) {
+	gnuplot_tmpname(ppaths);
 	fq = fopen(ppaths->plotfile, "w");
 	fprintf(fq, "# periodogram\n");
 	fprintf(fq, "set xtics nomirror\n"); 

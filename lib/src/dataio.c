@@ -1449,8 +1449,6 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     pdinfo->t2 = pdinfo->n - 1;
 
     strcpy(ppaths->datfile, datfile);
-    strcpy(ppaths->hdrfile, hdrfile);
-    strcpy(ppaths->lblfile, lblfile);
 
     err = readlbl(lblfile, pdinfo);
     if (err) return err;    
@@ -3188,8 +3186,6 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     }
 
     strcpy(ppaths->datfile, fname);
-    ppaths->hdrfile[0] = '\0';
-    ppaths->lblfile[0] = '\0';
 
     pprintf(prn, _("\nRead datafile %s\n"), fname);
     pprintf(prn, _("periodicity: %d, maxobs: %d, "

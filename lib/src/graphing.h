@@ -67,18 +67,20 @@ int graph (const LIST list,
 	   double **Z, const DATAINFO *pdinfo, 
 	   const int oflag, PRN *prn);
 
+int gnuplot_tmpname (PATHS *ppaths);
+
 int gnuplot_display (const char *gpt, const char *fname);
 
 int gnuplot (LIST list, const int *lines, 
 	     double ***pZ, DATAINFO *pdinfo, 
-	     const PATHS *ppaths, int *plot_count, 
+	     PATHS *ppaths, int *plot_count, 
 	     const int batch, const int gui, const int opt);
 
 int multi_scatters (const LIST list, const int pos, 
 		    double ***pZ, const DATAINFO *pdinfo, 
-		    const PATHS *ppaths);
+		    PATHS *ppaths);
 
-int plot_freq (FREQDIST *freq, const PATHS *ppaths, int dist);
+int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist);
 
 int open_gnuplot_pipe (const PATHS *ppaths, GPT_SPEC *plot);
 
