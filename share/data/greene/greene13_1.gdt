@@ -25,11 +25,11 @@ Survey of Current Business.
 <variable name="C_GM"
  label="Value of plant &amp; equipment, GM, end previous year"/>
 <variable name="I_CH"
- label="Gross investment, Chrsyler"/>
+ label="Gross investment, Chrysler"/>
 <variable name="F_CH"
- label="Market value of Chrsyler, end of previous year"/>
+ label="Market value of Chrysler, end of previous year"/>
 <variable name="C_CH"
- label="Value of plant &amp; equipment, Chrsyler, end previous year"/>
+ label="Value of plant &amp; equipment, Chrysler, end previous year"/>
 <variable name="I_GE"
  label="Gross investment, GE"/>
 <variable name="F_GE"
