@@ -49,7 +49,7 @@ enum {
                                f == T_SD || f == T_VAR || f == T_SST || \
                                f == T_MEDIAN || f == T_MIN || f == T_MAX || \
                                f == T_DIFF || f == T_LDIFF || \
-                               f == T_CUM || f == T_SORT)
+                               f == T_CUM || f == T_SORT || f == T_RESAMPLE)
 
 static int all_children_scalar (genatom **atoms, int n,
 				int pos, int level)

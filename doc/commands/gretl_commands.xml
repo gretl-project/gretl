@@ -1293,7 +1293,9 @@
 	    from the mean), <func>sum</func>, <func>cov</func>
 	    (covariance), <func>corr</func> (correlation coefficient),
 	    <func>pvalue</func>, <func>sort</func>, <func>cum</func>
-	    (cumulate, or running sum).</para>
+	    (cumulate, or running sum), <func>resample</func>
+	    (resample a series with replacement, for bootstrap
+	    purposes).</para>
 	</li>
 	<li><para>Time-series functions: <func>diff</func> (first
 	    difference), <func>ldiff</func> (log-difference, or first

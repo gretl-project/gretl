@@ -1,10 +1,17 @@
 version 1.2.4
+- Add ARMAX models: ARMA with exogenous variables
+- Add GARCH models, using Fiorentini-Calzolari-Panattoni approach
+  (Journal of Applied Econometrics, 1996)
+- Add "resample" function to genr, for bootstrapping test
+  statistics
 - Fix genr bug: problem with an undefined varname in a lag
   context 
 - Fix bug: when saved via the objectname mechanism, arma models
   were appearing both as saved models and as saved text
 - Fix bug: autocorrelation test from model window Tests menu
   was broken by new options mechanism
+- Fix curious Windows bug: line-endings in scripts were not
+  recognized in some cases
 
 2/24/2004 version 1.2.3
 - Add Tobit model command, with a new plugin (thanks to Jack

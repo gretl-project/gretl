@@ -31,6 +31,27 @@
 # endif /* GLIB_CHECK_VERSION */
 #endif /* ! WIN32 */
 
+enum {
+    CURRENT_DIR,
+    DATA_SEARCH,
+    SCRIPT_SEARCH,
+    USER_SEARCH
+};
+
+/* .......................................................... */
+
+static int add_gdt_suffix (char *fname)
+{
+    int added = 0;
+
+    if (strrchr(fname, '.') == NULL) {
+	strcat(fname, ".gdt");
+	added = 1;
+    }
+
+    return added;
+}
+
 /* .......................................................... */
 
 static int path_append (char *file, const char *path)
@@ -67,7 +88,7 @@ static char *unslash (const char *src)
 
 /* .......................................................... */
 
-static int find_in_subdir (const char *topdir, char *fname)
+static int find_in_subdir (const char *topdir, char *fname, int code)
 {
     DIR *sub, *dir = NULL;
     struct dirent *dirent;
@@ -101,7 +122,14 @@ static int find_in_subdir (const char *topdir, char *fname)
 		if (fp != NULL) {
 		    fclose(fp);
 		    found = 1;
-		} else {
+		} else if (code == DATA_SEARCH && add_gdt_suffix(fname)) {
+		    fp = fopen(fname, "r");
+		    if (fp != NULL) {
+			fclose(fp);
+			found = 1;
+		    }
+		}
+		if (!found) {
 		    /* failed: drop back to original filename */
 		    strcpy(fname, orig);
 		}
@@ -119,7 +147,7 @@ static int find_in_subdir (const char *topdir, char *fname)
 
 /* .......................................................... */
 
-static char *search_dir (char *fname, const char *topdir, int trysub)
+static char *search_dir (char *fname, const char *topdir, int code)
 {
     FILE *test;
     char orig[MAXLEN];
@@ -127,21 +155,65 @@ static char *search_dir (char *fname, const char *topdir, int trysub)
     strcpy(orig, fname);
 
     if (path_append(fname, topdir) == 0) {
-#ifdef PATH_DEBUG
-	fprintf(stderr, I_("Trying %s\n"), fname);
-#endif
 	test = fopen(fname, "r");
 	if (test != NULL) {
 	    fclose(test);
 	    return fname;
 	}
+	if (code == DATA_SEARCH && add_gdt_suffix(fname)) {
+	    test = fopen(fname, "r");
+	    if (test != NULL) {
+		fclose(test);
+		return fname;
+	    }
+	}	    
 	strcpy(fname, orig);
-	if (trysub && find_in_subdir(topdir, fname)) {
+	if (code != CURRENT_DIR && find_in_subdir(topdir, fname, code)) {
 	    return fname;
 	}
     }
 
     return NULL;
+}
+
+/* .......................................................... */
+
+static int path_is_absolute (const char *fname)
+{
+    int ret = 0;
+
+#ifdef WIN32
+    if (fname[1] == ':') ret = 1; /* drive letter? */
+#endif
+
+    /* we'll count as absolute paths specified using "." */
+    if (*fname == '.' || *fname == SLASH) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
+/* .......................................................... */
+
+static void make_path_absolute (char *fname, const char *orig)
+{
+    char thisdir[MAXLEN];
+    int offset = 0;
+
+    if (getcwd(thisdir, MAXLEN-1) != NULL) {
+#ifdef WIN32		
+	lower(thisdir); /* hmmm */
+#endif
+	if (strstr(fname, thisdir) == NULL) {
+	    strcpy(fname, thisdir);
+	    strcat(fname, SLASHSTR);
+	    if (*orig == '.' && orig[1] == SLASH && strlen(orig) > 2) {
+		offset = 2;
+	    }
+	    strcat(fname, orig + offset);
+	}
+    }
 }
 
 /**
@@ -169,42 +241,18 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     test = fopen(fname, "r");
     if (test != NULL) { 
 	fclose(test); 
-	/* if a relative path was given, convert it to absolute */
-#ifdef WIN32
-	if (fname[1] == ':') return fname;
-#endif
-	if (*fname != SLASH) {
-	    char thisdir[MAXLEN];
-	    int offset = 0;
-
-	    if (getcwd(thisdir, MAXLEN-1) != NULL) {
-#ifdef WIN32		
-		lower(thisdir); /* hmmm */
-#endif
-		if (strstr(fname, thisdir) == NULL) {
-		    strcpy(fname, thisdir);
-		    strcat(fname, SLASHSTR);
-		    if (*orig == '.' && orig[1] == SLASH && strlen(orig) > 2) {
-			offset = 2;
-		    }
-		    strcat(fname, orig + offset);
-		}
-	    }
-	} /* end conversion to absolute path */
-	return fname;
-    } else {  
-	/* not able to open file as given: if the path was absolute, fail */
-	if (*fname == '.' || *fname == SLASH) {
-	    return NULL;
+	if (!path_is_absolute(fname)) {
+	    make_path_absolute(fname, orig);
 	}
-#ifdef WIN32
-	if (fname[1] == ':') return NULL;
-#endif
+	return fname;
+    } else if (path_is_absolute(fname)) {  
+	/* unable to open file as given: if the path was absolute, fail */
+	return NULL;
     }
 
     /* try looking where script was found */
     if (*ppaths->currdir) {
-	if ((fname = search_dir(fname, ppaths->currdir, 0))) {
+	if ((fname = search_dir(fname, ppaths->currdir, CURRENT_DIR))) {
 	    return fname;
 	}
     }
@@ -214,12 +262,12 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 
     if (script) {
 	/* for a script, try system script dir (and subdirs) */
-	if ((fname = search_dir(fname, ppaths->scriptdir, 1))) { 
+	if ((fname = search_dir(fname, ppaths->scriptdir, SCRIPT_SEARCH))) { 
 	    return fname;
 	}
     } else {
 	/* for a data file, try system data dir (and subdirs) */
-	if ((fname = search_dir(fname, ppaths->datadir, 1))) { 
+	if ((fname = search_dir(fname, ppaths->datadir, DATA_SEARCH))) { 
 	    return fname;
 	}
     } 
@@ -227,7 +275,7 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     /* or try looking in user's dir (and subdirs) */
     fname = tmp;
     strcpy(fname, orig);
-    if ((fname = search_dir(fname, ppaths->userdir, 1))) { 
+    if ((fname = search_dir(fname, ppaths->userdir, USER_SEARCH))) { 
 	return fname;
     }
 

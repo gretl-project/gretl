@@ -121,47 +121,48 @@ struct genr_func {
 };
 
 struct genr_func funcs[] = {
-    { T_LOG,     "log" }, 
-    { T_EXP,     "exp" }, 
-    { T_SIN,     "sin" }, 
-    { T_COS,     "cos" }, 
-    { T_TAN,     "tan" },
-    { T_ATAN,    "atan" },
-    { T_DIFF,    "diff" },
-    { T_LDIFF,   "ldiff" }, 
-    { T_MEAN,    "mean" }, 
-    { T_SD,      "sd" }, 
-    { T_MIN,     "min" },
-    { T_MAX,     "max" },
-    { T_SORT,    "sort" }, 
-    { T_INT,     "int" }, 
-    { T_LN,      "ln" }, 
-    { T_COEFF,   "coeff" },
-    { T_ABS,     "abs" }, 
-    { T_RHO,     "rho" }, 
-    { T_SQRT,    "sqrt" }, 
-    { T_SUM,     "sum" }, 
-    { T_NOBS,    "nobs" },
-    { T_NORMAL,  "normal" }, 
-    { T_UNIFORM, "uniform" }, 
-    { T_STDERR,  "stderr" },
-    { T_CUM,     "cum" }, 
-    { T_MISSING, "missing" },
+    { T_LOG,      "log" }, 
+    { T_EXP,      "exp" }, 
+    { T_SIN,      "sin" }, 
+    { T_COS,      "cos" }, 
+    { T_TAN,      "tan" },
+    { T_ATAN,     "atan" },
+    { T_DIFF,     "diff" },
+    { T_LDIFF,    "ldiff" }, 
+    { T_MEAN,     "mean" }, 
+    { T_SD,       "sd" }, 
+    { T_MIN,      "min" },
+    { T_MAX,      "max" },
+    { T_SORT,     "sort" }, 
+    { T_INT,      "int" }, 
+    { T_LN,       "ln" }, 
+    { T_COEFF,    "coeff" },
+    { T_ABS,      "abs" }, 
+    { T_RHO,      "rho" }, 
+    { T_SQRT,     "sqrt" }, 
+    { T_SUM,      "sum" }, 
+    { T_NOBS,     "nobs" },
+    { T_NORMAL,   "normal" }, 
+    { T_UNIFORM,  "uniform" }, 
+    { T_STDERR,   "stderr" },
+    { T_CUM,      "cum" }, 
+    { T_MISSING,  "missing" },
     { T_MISSZERO, "misszero" },
-    { T_CORR,    "corr" },
-    { T_VCV,     "vcv" },
-    { T_VAR,     "var" },
-    { T_SST,     "sst" },
-    { T_COV,     "cov" },
-    { T_MEDIAN,  "median" },
+    { T_CORR,     "corr" },
+    { T_VCV,      "vcv" },
+    { T_VAR,      "var" },
+    { T_SST,      "sst" },
+    { T_COV,      "cov" },
+    { T_MEDIAN,   "median" },
     { T_ZEROMISS, "zeromiss" },
-    { T_PVALUE,  "pvalue" },
-    { T_OBSNUM,  "obsnum" },
-    { T_MPOW,    "mpow" },
-    { T_DNORM,   "dnorm" },
-    { T_CNORM,   "cnorm" },
+    { T_PVALUE,   "pvalue" },
+    { T_OBSNUM,   "obsnum" },
+    { T_MPOW,     "mpow" },
+    { T_DNORM,    "dnorm" },
+    { T_CNORM,    "cnorm" },
+    { T_RESAMPLE, "resample" },
 #ifdef HAVE_MPFR
-    { T_MLOG,    "mlog" },
+    { T_MLOG,     "mlog" },
 #endif
     { T_IDENTITY, "ident" },
     { 0, NULL }
@@ -787,7 +788,8 @@ static int evaluate_genr (GENERATE *genr)
 	    genr->err = add_random_series_to_genr(genr, atom);
 	}
 	else if (atom->func == T_DIFF || atom->func == T_LDIFF ||
-		 atom->func == T_CUM || atom->func == T_SORT) {
+		 atom->func == T_CUM || atom->func == T_SORT ||
+		 atom->func == T_RESAMPLE) {
 	    atom_stack_bookmark();
 	    genr->err = add_tmp_series_to_genr(genr, atom);
 	    atom_stack_resume();
@@ -2094,6 +2096,10 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
     double *x;
     double xx, yy;
 
+#ifdef GENR_DEBUG
+    fprintf(stderr, "*** Doing get_tmp_series, fn = %d ***\n", fn);
+#endif
+
     x = malloc(pdinfo->n * sizeof *x); 
     if (x == NULL) return NULL;
 
@@ -2166,6 +2172,29 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
 	for (t=t1; t<=t2; t++) {
 	    x[t] = tmp[t-t1];
 	}
+
+	free(tmp);
+    }
+
+    else if (fn == T_RESAMPLE) {
+	int i, n = t2 - t1 + 1;
+	double *tmp = malloc(n * sizeof *tmp);
+
+	if (tmp == NULL) {
+	    free(x);
+	    return NULL;
+	}
+
+	/* generate uniform random series */
+	gretl_uniform_dist(tmp, 0, n - 1);
+
+	/* sample from source series based on indices */
+	for (t=t1; t<=t2; t++) {
+	    i = t1 + n * tmp[t-t1];
+	    if (i > t2) i = t2;
+	    x[t] = mvec[i];
+	}
+
 	free(tmp);
     }
 

@@ -47,7 +47,7 @@ struct _genatom {
     genatom *parent;
 };
 
-/* below: matches char *math[] in genrnew.c */
+/* below: matches funcs[] in generate.c */
 enum transformations {
     T_LOG = 1, 
     T_EXP, 
@@ -88,6 +88,7 @@ enum transformations {
     T_MPOW,
     T_DNORM,
     T_CNORM,
+    T_RESAMPLE,
 #ifdef HAVE_MPFR
     T_MLOG,
 #endif

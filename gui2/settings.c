@@ -855,17 +855,30 @@ static void set_lcnumeric (void)
     if (lcnumeric) {
 #ifdef G_OS_WIN32
 	char *lang = getenv("LANG");
+	char *set = NULL;
 
 	if (lang != NULL && !strcmp(lang, "es")) {
-	    setlocale(LC_NUMERIC, "Spanish");
+	    set = setlocale(LC_NUMERIC, "Spanish");
+	    if (set == NULL) {
+		set = setlocale(LC_NUMERIC, "es");
+	    }
 	}
 	else if (lang != NULL && !strcmp(lang, "fr")) {
-	    setlocale(LC_NUMERIC, "French");
+	    set = setlocale(LC_NUMERIC, "French");
+	    if (set == NULL) {
+		set = setlocale(LC_NUMERIC, "fr");
+	    }	    
 	}
 	else if (lang != NULL && !strcmp(lang, "it")) {
-	    setlocale(LC_NUMERIC, "Italian");
+	    set = setlocale(LC_NUMERIC, "Italian");
+	    if (set == NULL) {
+		set = setlocale(LC_NUMERIC, "it");
+	    }
 	}
-	else setlocale(LC_NUMERIC, "");
+
+	if (set == NULL) {
+	    setlocale(LC_NUMERIC, "");
+	}
 	putenv("LC_NUMERIC=");
 #else
 	putenv("LC_NUMERIC=");
@@ -875,6 +888,7 @@ static void set_lcnumeric (void)
 	putenv("LC_NUMERIC=C");
 	setlocale(LC_NUMERIC, "C");
     }
+
     reset_local_decpoint();
 }
 #endif

@@ -1,4 +1,4 @@
 # Bollerslev and Ghysels GARCH example
-open b-g.dat
+open b-g.gdt
 garch 1 1 ; Y --vcv
 
