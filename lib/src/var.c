@@ -1422,6 +1422,42 @@ GRETL_VAR *full_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 }
 
+static double df_pvalue_from_plugin (double tau, int n)
+{
+    char datapath[FILENAME_MAX];
+    void *handle;
+    double (*mackinnon_pvalue)(double, int, char *);
+    double pval = NADBL;
+    static int nodata;
+    
+    if (nodata) {
+	/* don't waste time on this if the MacKinnon datafiles
+	   are not available */
+	return pval;
+    }
+
+    mackinnon_pvalue = get_plugin_function("mackinnon_pvalue", &handle);
+    if (mackinnon_pvalue == NULL) {
+	nodata = 1;
+        return pval;
+    }
+
+    strcpy(datapath, fetch_gretl_lib_path());
+#ifdef WIN32
+    append_dir(datapath, "plugins");
+#endif
+
+    pval = (*mackinnon_pvalue)(tau, n, datapath);
+
+    close_plugin(handle);
+
+    if (*datapath == '\0') {
+	nodata = 1;
+    } 
+
+    return pval;
+}
+
 /**
  * coint:
  * @order: lag order for the test.
@@ -1533,7 +1569,7 @@ int adf_test (int order, int varno, double ***pZ,
     int *adflist = NULL;
     int *shortlist = NULL;
     MODEL adf_model;
-    double essu, F, DFt;
+    double essu, F, DFt, pv;
     char pval[40];
 
                                  /* 1%    2.5%    5%    10% */
@@ -1592,26 +1628,32 @@ int adf_test (int order, int varno, double ***pZ,
     DFt = adf_model.coeff[1] / adf_model.sderr[1];
     T = adf_model.nobs;
 
-    row = (T > 500)? 5 : 
-	(T > 450)? 4 : 
-	(T > 240)? 3 : 
-	(T > 90)? 2 : 
-	(T > 40)? 1 : 
-	(T > 24)? 0 : -1;
+    pv = df_pvalue_from_plugin(DFt, T);
 
-    if (row < 0) {
-	sprintf(pval, _("significance level unknown"));
+    if (!na(pv)) {
+	sprintf(pval, "%s %.4g", _("p-value"), pv);
     } else {
-	if (DFt < t_crit_vals[row][0])
-	    sprintf(pval, _("significant at the 1 percent level"));
-	else if (DFt < t_crit_vals[row][1])
-	    sprintf(pval, _("significant at the 2.5 percent level"));
-	else if (DFt < t_crit_vals[row][2])
-	    sprintf(pval, _("significant at the 5 percent level"));
-	else if (DFt < t_crit_vals[row][3])
-	    sprintf(pval, _("significant at the 10 percent level"));
-	else
-	    sprintf(pval, _("not significant at the 10 percent level"));
+	row = (T > 500)? 5 : 
+	    (T > 450)? 4 : 
+	    (T > 240)? 3 : 
+	    (T > 90)? 2 : 
+	    (T > 40)? 1 : 
+	    (T > 24)? 0 : -1;
+
+	if (row < 0) {
+	    sprintf(pval, _("significance level unknown"));
+	} else {
+	    if (DFt < t_crit_vals[row][0])
+		sprintf(pval, _("significant at the 1 percent level"));
+	    else if (DFt < t_crit_vals[row][1])
+		sprintf(pval, _("significant at the 2.5 percent level"));
+	    else if (DFt < t_crit_vals[row][2])
+		sprintf(pval, _("significant at the 5 percent level"));
+	    else if (DFt < t_crit_vals[row][3])
+		sprintf(pval, _("significant at the 10 percent level"));
+	    else
+		sprintf(pval, _("not significant at the 10 percent level"));
+	}
     }
     
     pprintf(prn, _("\nDickey-Fuller test with constant\n\n"
@@ -1677,8 +1719,9 @@ int adf_test (int order, int varno, double ***pZ,
     else if (T > 25) row = 1;
     else if (T > 23) row = 0;
 
-    if (row == -1) strcpy(pval, _("unknown pvalue"));
-    else {
+    if (row == -1) {
+	strcpy(pval, _("unknown pvalue"));
+    } else {
 	if (F > f_crit_vals[row][3]) strcpy(pval, _("pvalue < .01"));
 	else if (F > f_crit_vals[row][2]) strcpy(pval, _(".025 > pvalue > .01"));
 	else if (F > f_crit_vals[row][1]) strcpy(pval, _(".05 > pvalue > .025"));

@@ -49,7 +49,8 @@ enum {
     P_LOGISTIC,
     P_TOBIT,
     P_GARCH,
-    P_AUDIO
+    P_AUDIO,
+    P_URCDIST
 } plugin_codes;
 
 struct plugin_info {
@@ -87,7 +88,8 @@ struct plugin_info plugins[] = {
     { P_LOGISTIC,        "logistic" },
     { P_TOBIT,           "tobit" },
     { P_GARCH,           "garch" },
-    { P_AUDIO,           "audio" }
+    { P_AUDIO,           "audio" },
+    { P_URCDIST,         "urcdist" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -158,6 +160,9 @@ struct plugin_function plugin_functions[] = {
     /* audio graphs etc */
     { "midi_play_graph",   P_AUDIO },
     { "read_window_text",  P_AUDIO },
+
+    /* MacKinnon Dickey-Fuller p-values */
+    { "mackinnon_pvalue",  P_URCDIST },
 
     /* sentinel */
     { NULL, 0 }

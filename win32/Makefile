@@ -76,7 +76,8 @@ PLUGINSRC = \
 	tobit.c \
 	fcp.c \
 	garch.c \
-        audio.c
+        audio.c \
+	urcdist.c 
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
@@ -87,7 +88,7 @@ PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll \
 	plugins/leverage.dll plugins/pca.dll plugins/nistcheck.dll \
 	plugins/logistic.dll plugins/tobit.dll plugins/garch.dll \
-        plugins/audio.dll plugins/vif.dll
+        plugins/audio.dll plugins/vif.dll plugins/urcdist.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
@@ -250,6 +251,10 @@ plugins/lad.dll: lad.o dllinit.o
 plugins/vif.dll: vif.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) 
+
+plugins/urcdist.dll: urcdist.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ -lf2c -lm -lintl 
 
 plugins/panel_data.dll: panel_data.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

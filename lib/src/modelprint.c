@@ -920,11 +920,25 @@ static void print_model_heading (const MODEL *pmod,
 		_(gretl_system_short_string(pmod)),
 		pmod->nobs, startdate, (tex)? "--" : "-", enddate);
     } else if (!dataset_is_panel(pdinfo)) {
-	pprintf(prn, (utf)?
-		_("%s estimates using the %d observations %s%s%s") :
-		I_("%s estimates using the %d observations %s%s%s"),
-		_(my_estimator_string(pmod, prn->format)), 
-		pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+	if (pmod->missmask != NULL) {
+	    int mc = model_missval_count(pmod);
+
+	    pprintf(prn, (utf)?
+		    _("%s estimates using %d observations from %s%s%s") :
+		    I_("%s estimates using %d observations from %s%s%s"),
+		    _(my_estimator_string(pmod, prn->format)), 
+		    pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+	    model_print_newline(prn);
+	    pprintf(prn, "%s: %d",
+		    (utf)? _("Missing or incomplete observations dropped") :
+		    I_("Missing or incomplete observations dropped"), mc);
+	} else {
+	    pprintf(prn, (utf)?
+		    _("%s estimates using the %d observations %s%s%s") :
+		    I_("%s estimates using the %d observations %s%s%s"),
+		    _(my_estimator_string(pmod, prn->format)), 
+		    pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+	}
     } else {
 	pprintf(prn, (utf)?
 		_("%s estimates using %d observations") :
@@ -1014,15 +1028,19 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, "%s\n", gretl_msg);
     }
 
-    if (gretl_model_get_int(pmod, "wt_dummy")) { /* FIXME alt formats */
+    if (pmod->missmask == NULL && gretl_model_get_int(pmod, "wt_dummy")) { 
+	/* FIXME alt formats */
 	pprintf(prn, "%s %d\n", 
 		(utf)? _("Weight var is a dummy variable, effective obs =") :
 		I_("Weight var is a dummy variable, effective obs ="),
 		pmod->nobs);
-    }
+    } 
 
-    if (RTF_FORMAT(prn->format)) pputs(prn, "\\par\n");
-    else pputc(prn, '\n');
+    if (RTF_FORMAT(prn->format)) {
+	pputs(prn, "\\par\n");
+    } else {
+	pputc(prn, '\n');
+    }
 }
 
 static void model_format_start (PRN *prn)

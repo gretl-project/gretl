@@ -633,6 +633,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	    break;
 	}
     }
+
     return filter;
 }
 
@@ -669,6 +670,9 @@ void file_selector (const char *msg, int action, gpointer data)
     char fname[MAXLEN], endname[64], startdir[MAXLEN];
     char *filter = NULL;
     gchar *trmsg = NULL;
+#ifdef ENABLE_NLS
+    gchar *trfname;
+#endif
 
     *fname = '\0';
     *endname = '\0';
@@ -749,6 +753,14 @@ void file_selector (const char *msg, int action, gpointer data)
 	}
 	return;
     }
+
+#ifdef ENABLE_NLS
+    trfname = my_locale_to_utf8(fname);
+    if (trfname != NULL) {
+	strcpy(fname, trfname);
+	g_free(trfname);
+    }
+#endif
 
     file_selector_process_result(fname, action, data);
 }

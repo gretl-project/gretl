@@ -1,4 +1,3 @@
-/*
 /* Driver plugin for James MacKinnons's "urcval" function, to calculate
    p-values for Dickey-Fuller tests.
 
@@ -1248,7 +1247,7 @@ L10:
     return 0;
 } /* innorz_ */
 
-double mackinnon_pvalue (double tval, int n, const char *path)
+double mackinnon_pvalue (double tval, int n, char *path)
 {
     integer niv = 1; /* number of variables */
     integer itt = 1; /* tau test (2 for z test) */
@@ -1261,6 +1260,10 @@ double mackinnon_pvalue (double tval, int n, const char *path)
     int check;
 
     check = urcval_(&niv, &itt, &itv, &nobs, &arg, &val, path);
+
+    if (check == URC_NOT_FOUND) {
+	*path = '\0';
+    }
 
     if (check != URC_OK && check != URC_SMALL_SAMPLE) {
 	val = NADBL;
