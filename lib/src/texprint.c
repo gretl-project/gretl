@@ -91,14 +91,14 @@ static void dcol_float (double xx, char *numstr)
 static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			     const int c, PRN *prn)
 {
-    char tmp[16], coeff[32], stderr[32];
+    char tmp[16], coeff[32], sderr[32];
     double t_ratio = pmod->coeff[c-1] / pmod->sderr[c-1];
     
     tmp[0] = '\0';
     tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
 
     dcol_float(pmod->coeff[c-1], coeff);
-    dcol_float(pmod->sderr[c-1], stderr);
+    dcol_float(pmod->sderr[c-1], sderr);
 
     pprintf(prn, "%s &\n"
 	    "  %s &\n"
@@ -107,7 +107,7 @@ static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	    "        %.4f \\\\\n",  
 	    tmp,
 	    coeff,
-	    stderr,
+	    sderr,
 	    t_ratio,
 	    tprob(t_ratio, pmod->dfd));	
 }
@@ -376,7 +376,7 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
 	    "{@{\\extracolsep{\\fill}}\n"
 	    "l%% col 1: varname\n"
 	    "  D{%c}{%c}{-1}%% col 2: coeff\n"
-	    "    D{%c}{%c}{-1}%% col 3: stderr\n"
+	    "    D{%c}{%c}{-1}%% col 3: sderr\n"
 	    "      D{%c}{%c}{-1}%% col 4: t-stat\n"
 	    "        D{%c}{%c}{4}}%% col 5: p-value\n"
 	    "Variable &\n"
