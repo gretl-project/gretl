@@ -167,21 +167,40 @@
       Specifically, the following <application>minpack</application>
       functions are called:</para>
 
-    <itemizedlist>
-      <listitem><para><filename>lmder</filename>: 
-	  Levenberg&ndash;Marquandt algorithm with analytical
-	  derivatives.</para></listitem>
-      <listitem><para><filename>chkder</filename>: For checking the
-	  supplied analytical derivatives.</para></listitem>
-      <listitem><para><filename>lmdif</filename>: 
-	  Levenberg&ndash;Marquandt algorithm with numerical
-	  derivatives.</para></listitem>
-      <listitem><para><filename>fdjac2</filename>: Compute the
-	  final approximate Jacobian when using numerical
-	  derivatives.</para></listitem>
-      <listitem><para><filename>dpmpar</filename>: Determine the
-	  machine precision.</para></listitem>
-      </itemizedlist>
+    <informaltable>
+      <tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	<tbody>
+	  <row>
+	    <entry><filename>lmder</filename></entry>
+	    <entry>Levenberg&ndash;Marquandt algorithm with analytical
+	      derivatives
+	    </entry>
+	  </row>
+	  <row>
+	    <entry><filename>chkder</filename></entry>
+	    <entry>Check the supplied analytical derivatives
+	    </entry>
+	  </row>
+	  <row>
+	    <entry><filename>lmdif</filename></entry>
+	    <entry>Levenberg&ndash;Marquandt algorithm with numerical
+	      derivatives
+	    </entry>
+	  </row>
+	  <row>
+	    <entry><filename>fdjac2</filename></entry>
+	    <entry>Compute final approximate Jacobian when using
+	      numerical derivatives
+	    </entry>
+	  </row>
+	  <row>
+	    <entry><filename>dpmpar</filename></entry>
+	    <entry>Determine the machine precision
+	    </entry>
+	  </row>
+	</tbody>
+      </tgroup>
+      </informaltable>
 
     <para>On successful completion of the Levenberg&ndash;Marquandt
 	iteration, a Gauss&ndash;Newton regression is used to
@@ -223,7 +242,7 @@
 
     <para>Out of the 54 runs, <application>gretl</application> failed
       to produce a solution in 4 cases when using analytical
-      derivatives, and in 7 cases when using numeric approximation. Of
+      derivatives, and in 5 cases when using numeric approximation. Of
       the four failures in analytical derivatives mode, two were due
       to non-convergence of the Levenberg&ndash;Marquandt algorithm
       after the maximum number of iterations (on
@@ -234,13 +253,9 @@
       <filename>BoxBOD</filename> and <filename>MGH17</filename>,
       described as of <quote>Higher difficulty</quote> and
       <quote>Average difficulty</quote> respectively).  The additional
-      failures in numerical approximation mode were on
+      failure in numerical approximation mode was on
       <filename>MGH10</filename> (<quote>Higher difficulty</quote>,
-      maximum number of iterations reached) and
-      <filename>Lanczos1</filename> (<quote>Average
-	difficulty</quote>, excessive collinearity in the
-      Gauss&ndash;Newton regression for computing the standard
-      errors).</para>
+      maximum number of iterations reached).</para>
 
     <para>The table gives information on several aspects of the tests:
       the number of outright failures, the average number of
@@ -282,17 +297,17 @@
           <row>
 	    <entry>Failures in 54 tests</entry>
 	    <entry>4</entry>
-	    <entry>7</entry>
+	    <entry>5</entry>
 	  </row>
           <row>
 	    <entry>Average iterations</entry>
 	    <entry>32</entry>
-	    <entry>120</entry>
+	    <entry>127</entry>
 	  </row>
           <row>
 	    <entry>Avg. of min. correct figures, parameters</entry>
 	    <entry>7.960</entry>
-	    <entry>6.809</entry>
+	    <entry>6.939</entry>
 	  </row>
           <row>
 	    <entry>Worst of min. correct figures, parameters</entry>
@@ -302,8 +317,8 @@
           <row>
 	    <entry>Avg. of min. correct figures, standard
 	      errors</entry>
-	    <entry>7.760</entry>
-	    <entry>5.702</entry>
+	    <entry>8.080</entry>
+	    <entry>6.000</entry>
 	  </row>
           <row>
 	    <entry>Worst of min. correct figures, standard
@@ -315,35 +330,25 @@
 	    <entry>Percent correct to at least 6 figures,
 	      parameters</entry>
 	    <entry>96.5</entry>
-	    <entry>91.5</entry>
+	    <entry>91.9</entry>
 	  </row>
           <row>
 	    <entry>Percent correct to at least 6 figures, standard
 	      errors</entry>
-	    <entry>92.5</entry>
-	    <entry>77.3</entry>
+	    <entry>97.8</entry>
+	    <entry>78.5</entry>
 	  </row>
 	</tbody>
       </tgroup>
     </table>
 
-    <para>The worst case parameter estimate using analytical
-      derivatives occurred on the <filename>ENSO</filename> dataset.
-      On the test machine this estimate was improved from 4 to 6
-      correct figures by tightening the convergence tolerance to
-      1.0e&minus;14.  The worst case parameter estimate using
-      numerical derivatives (3 digits correct for one of the
-      <filename>Bennett5</filename> parameters) could not be improved
-      in this way.</para>
-
-    <para>As regards the worst case standard error estimates, the
-      poorest figure using analytical derivatives (on the
-      <filename>ENSO</filename> dataset again) was improved from 5 to
-      6 correct figures by setting a tolerance of 1.0e&minus;13.  The
-      worst standard error estimate using numerical derivatives (on
-      the <filename>Lanczos3</filename> dataset) was improved from 2
-      to 3 figures at a tolerance of 1.0e&minus;13.
-      </para>
+    <para>Using analytical derivatives, the worst case values for both
+      parameters and standard errors were improved to 6 correct
+      figures on the test machine when the tolerance was tightened to
+      1.0e&minus;14.  Using numerical derivatives, the same tightening
+      of the tolerance raised the worst values to 5 correct figures
+      for the parameters and 3 figures for standard errors, at a cost
+      of one additional failure of convergence.</para>
 
     <para>Note the overall superiority of analytical derivatives: on
       average solutions to the test problems were obtained with

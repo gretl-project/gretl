@@ -1018,6 +1018,7 @@ void exec_line (char *line, PRN *prn)
     case LEVERAGE:
 	if ((err = model_test_start(0, prn, 1))) break;	
 	err = leverage_test(models[0], &Z, datainfo, prn, NULL);
+	if (err > 1) errmsg(err, prn);
 	break;
 
     case LMTEST:
@@ -1030,7 +1031,8 @@ void exec_line (char *line, PRN *prn)
 	    clear_model(models[1], NULL);
 	    model_count--;
 	    if (err) errmsg(err, prn);
-	    if (oflag == OPT_S || (!batch && page_break(0, NULL, 1))) break;
+	    if (oflag == OPT_S) break;
+	    if (!err && !batch && page_break(0, NULL, 1)) break; 
 	}
 	/* non-linearity (logs) */
 	if (oflag == OPT_L || oflag == OPT_O || !oflag) {
@@ -1039,7 +1041,8 @@ void exec_line (char *line, PRN *prn)
 	    clear_model(models[1], NULL); 
 	    model_count--;
 	    if (err) errmsg(err, prn);
-	    if (oflag == OPT_L || (!batch && page_break(0, NULL, 1))) break;
+	    if (oflag == OPT_L) break;
+	    if (!err && !batch && page_break(0, NULL, 1)) break;
 	}
 	/* autocorrelation */
 	if (oflag == OPT_M || oflag == OPT_O) {

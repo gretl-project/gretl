@@ -334,7 +334,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     double trsq = 0.0, rho = 0.0; 
     int newvars = 0, err = 0;
 
-    if (orig->ci == TSLS) return E_NOTIMP;
+    if (orig->ci == TSLS || orig->ci == NLS) return E_NOTIMP;
 
     /* temporarily impose the sample that was in force when the
        original model was estimated */
@@ -543,7 +543,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     double rho = 0.0;
     int err = 0;
 
-    if (orig->ci == TSLS) return E_NOTIMP;
+    if (orig->ci == TSLS || orig->ci == NLS) return E_NOTIMP;
 
     /* temporarily impose the sample that was in force when the
        original model was estimated */
@@ -704,6 +704,8 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     int i, t, v = pdinfo->v; 
     double RF;
     int err = 0;
+
+    if (pmod->ci != OLS) return E_OLSONLY;
 
     _init_model(&aux, pdinfo);
 
@@ -916,6 +918,8 @@ int autocorr_test (MODEL *pmod, int order,
     int i, k, t, n = pdinfo->n, v = pdinfo->v; 
     double trsq, LMF, lb, pval = 1.0;
     int err = 0;
+
+    if (pmod->ci == NLS) return E_NOTIMP;
 
     if (dataset_is_panel(pdinfo)) {
 	void *handle;
@@ -1420,6 +1424,8 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     int (*model_leverage) (const MODEL *, double ***, 
 			   const DATAINFO *, PRN *, PATHS *);
     int err;
+
+    if (pmod->ci != OLS) return E_OLSONLY;
 
     if (open_plugin("leverage", &handle)) return 1;
 

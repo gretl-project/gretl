@@ -4467,7 +4467,10 @@ static int gui_exec_line (char *line,
 	    sys = NULL;
 	} 
 	else if (!strcmp(command.param, "nls")) {
-	    clear_model(models[0], NULL);
+	    if (rebuilding)
+		save_model_copy(&models[0], psession, rebuild, datainfo);
+	    else
+		clear_model(models[0], datainfo); 
 	    *models[0] = nls(&Z, datainfo, prn);
 	    if ((err = (models[0])->errcode)) {
 		errmsg(err, prn);
@@ -4710,6 +4713,7 @@ static int gui_exec_line (char *line,
     case LEVERAGE:
 	if ((err = script_model_test(0, prn, 1))) break;
 	err = leverage_test(models[0], &Z, datainfo, prn, NULL);
+	if (err > 1) errmsg(err, prn);
 	break;
 
     case LMTEST:

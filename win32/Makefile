@@ -114,7 +114,7 @@ PROBSRC = bdtr.c btdtr.c chdtr.c drand.c expx2.c fdtr.c gamma.c gdtr.c \
 PROBOBJ = $(PROBSRC:.c=.o)
 
 MINSRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder1.c lmder.c lmdif.c lmpar.c \
-	qrfac.c qrsolv.c
+	qrfac.c qrsolv.c dlog10.c
 MINOBJ = $(MINSRC:.c=.o)
 
 OBJS = $(LIBOBJ) $(CLIOBJ) $(GUIOBJ) $(PLUGINOBJ)

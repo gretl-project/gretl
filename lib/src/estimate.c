@@ -2035,6 +2035,8 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     MODEL white;
     int err = 0;
 
+    if (pmod->ci == NLS) return E_NOTIMP;
+
     _init_model(&white, pdinfo);
 
     lo = pmod->list[0];
