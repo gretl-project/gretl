@@ -2392,6 +2392,66 @@
 
   </command>
 
+  <command name="hurst" section="Statistics"
+    label="Esponente di Hurst">
+  
+    <usage>
+      <arguments>
+        <argument>nome-variabile</argument>
+      </arguments>
+    </usage>
+  
+    <description>
+      <para>
+       Calcolate l'esponente di Hurst (una misura di persistenza, o di memoria
+       lunga) per una serie storica con almeno 128 osservazioni.
+      </para>
+  
+      <para>
+       L'esponente di Hurst è discusso da Mandelbrot. In termini teorici è
+       l'esponente <mathvar>H</mathvar> nella relazione
+       <equation status="display"
+         tex="\[mathrm{RS}(x) = an^H\]"
+         ascii="RS(x) = an^H"
+         graphic="hurst"/>dove RS è l'<quote>intervallo riscalato</quote>
+         della variabile <mathvar>x</mathvar> in un campione dell'ampiezza
+       <mathvar>n</mathvar>, mentre <mathvar>a</mathvar> è una
+       costante. L'intervallo riscalato è l'intervallo (valore massimo
+       meno valore minimo) del valore cumulato, o somma parziale, di
+       <mathvar>x</mathvar> sul periodo del campione (dopo aver sottratto la
+       media campionaria), diviso per la deviazione standard campionaria.
+      </para>
+  
+      <para>
+       Come punto di riferimento, se <mathvar>x</mathvar> è un rumore bianco
+       (media zero, persistenza zero) l'intervallo dei suoi valori cumulati
+       (che forma una passeggiata casuale), scalato per la deviazione standard,
+       cresce come la radice quadrata dell'ampiezza campionaria, ossia ha un
+       esponente di Hurst atteso pari a 0.5. Valori dell'esponente sensibilmente
+       maggiori di 0.5 indicano persistenza della serie, mentre valori minori di
+       0.5 indicano anti-persistenza (autocorrelazione negativa). In teoria
+       l'esponente deve essere compreso tra 0 e 1, ma in campioni finiti è
+       possibile ottenere delle stime per l'esponente maggiorni di 1.
+      </para>
+
+      <para>
+       In gretl, l'esponente è stimato usando il sotto-campionamento binario:
+       si inizia dall'intero intervallo dei dati, quindi si usano le due metà
+       dell'intervallo, poi i quattro quarti, e così via. Il valore RS è la
+       media presa sui vari campioni. L'esponente è quindi stimato come il
+       coefficiente di pendenza della regressione del logaritmo di RS sul
+       logaritmo dell'ampiezza del campione.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/FIXME</menu-path>
+    </gui-access>
+
+  </command>
+
+
   <command name="if" section="Programming" context="cli">
 
     <description>
@@ -3069,9 +3129,9 @@
       <para>Lo spazio in cui vengono calcolate le distanze è definito dalle
       variabili selezionate; per ogni osservazione nell'intervallo attuale
       viene calcolata la distanza tra l'osservazione e il centroide delle
-      variabili selezionate. La distanza è simile a uno
-      <mathvar>z</mathvar>-score e può essere usata per giudicare se una certa
-      osservazione <quote>appartiene</quote> aun gruppo di altre osservazioni.
+      variabili selezionate. La distanza è la controparte multidimensionale di uno
+      <mathvar>z</mathvar>-score standard e può essere usata per giudicare se una certa
+      osservazione <quote>appartiene</quote> a un gruppo di altre osservazioni.
       </para>
 
       <para context="cli">Se si usa l'opzione <lit>--vcv</lit>, vengono mostrate
@@ -3079,6 +3139,12 @@
       <lit>--save</lit>, le distanze vengono salvate nel dataset con il nome
       <lit>mdist</lit> (o <lit>mdist1</lit>, <lit>mdist2</lit> e così via, se
       esiste già una variabile con quel nome).
+      </para>
+
+      <para context="gui">Se il numero delle variabili selezionate è minore o
+       uguale a 4, vengono mostrate la matrice di covarianza e la sua inversa.
+       Facendo clic sul pulsante "+" in cima alla finestra che mostra le
+       distanze è possibile aggiungerle al dataset come nuova variabile.
       </para>
 
     </description>
@@ -3983,8 +4049,9 @@
        il numero di occorrenze dell'evento in questione sia proporzionale a
        qualche fattore noto, a parità di altre condizioni. Ad esempio, il numero
        di incidenti stradali può essere ipotizzato proporzionale al volume del
-       traffico, che potrebbe essere specificato come una variabile di offset in
-       un modello di Poisson per il tasso di incidenti.
+       traffico, che potrebbe essere specificato come una variabile di
+       <quote>offset</quote> in un modello di Poisson per il tasso di incidenti.
+       La variabile di offset dev'essere strettamente positiva.
       </para>
 
     </description>
