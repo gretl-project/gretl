@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="nasty" frequency="1" startobs="1" endobs="9" type="cross-section">
+<description>
+Wilkinson's (1985) test data
+</description>
+<variables count="7">
+<variable name="X"/>
+<variable name="ZERO"/>
+<variable name="BIG"/>
+<variable name="LITTLE"/>
+<variable name="HUGE"/>
+<variable name="TINY"/>
+<variable name="ROUND"/>
+</variables>
+<observations count="9" labels="false">
+<obs>1 0 99999991 0.99999991 1e+12 1e-12 0.5 </obs>
+<obs>2 0 99999992 0.99999992 2e+12 2e-12 1.5 </obs>
+<obs>3 0 99999993 0.99999993 3e+12 3e-12 2.5 </obs>
+<obs>4 0 99999994 0.99999994 4e+12 4e-12 3.5 </obs>
+<obs>5 0 99999995 0.99999995 5e+12 5e-12 4.5 </obs>
+<obs>6 0 99999996 0.99999996 6e+12 6e-12 5.5 </obs>
+<obs>7 0 99999997 0.99999997 7e+12 7e-12 6.5 </obs>
+<obs>8 0 99999998 0.99999998 8e+12 8e-12 7.5 </obs>
+<obs>9 0 99999999 0.99999999 9e+12 9e-12 8.5 </obs>
+</observations>
+</gretldata>

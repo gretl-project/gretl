@@ -1,0 +1,543 @@
+                        STATISTICS QUIZ                         
+                        by Leland Wilkinson
+
+
+                  Statistical Package Test Problems
+
+     Here are some problems which reviewers should consider in
+evaluating statistical packages.  Now that comparisons of microcomputer
+programs are being made, it is important to go beyond running the
+"Longley" data and tallying the number of statistical procedures
+a package contains.
+
+It is easy to select a set of problems to "show off" a particular
+package.  Just pick several esoteric statsitics contained in only that
+package.  The following problems are different.  They involve basic,
+widely encountered statistical issues.  A package which cannot solve one
+of the problems or solves it incorrectly doesn't "lack a feature."  It 
+has a serious defect.  You might want to try these problems on mainframe 
+packages as well.  You may be surprised by the results.
+
+I. READING AN ASCII FILE
+
+     Many programs claim to import data files directly.  The problem is
+that many other programs do not create "ASCII" files in the same way.
+Here is a file called ASCII.DAT which contains various formats for
+character and numeric data from programs like dBase, Lotus, Supercalc,
+FORTRAN, and BASIC.  If a program cannot read every record in this file
+without preprocessing, then there are some ASCII files on microcomputers
+and mainframes which it cannot read.
+
+ 1 2 3 4 5 "ONE"
+ 1 2 3 
+       4 5 "TWO"
+ 1,2,3,4,5,'THREE'
+         1         2         3         4         .          FOUR
+1.0E0 2.E0 .3E1 4.00000000E+0 5D-0 FIVE
+        1       2       3       4       5       SIX
+
+     The case labeled ONE is the most common form of ASCII data:
+numerals separated by blanks and character strings surrounded by quotes.
+Most programs can handle this case.
+
+     The case laveled TWO spans two records (there is a carriage return
+and linefeed after the 3).  Some spreadsheets and word processors do this
+when they impose margins on a page.  A statistical package ought to be
+able to read these two records as a single case without special 
+instructions.  If, on the other hand, this is considered an error, then
+the program should be able to flag it.
+
+     The case labeled THREE has comma delimters (as in BASIC).  It also
+uses apostrophes rather than quotes for character stringss (PL/I and
+other mainframe packages do this).
+
+     The case laveled FOUR has a missing value (on variable E).  SAS,
+SPSS, and other packages put missing values in a file this way.  It also 
+lacks quotes around the character variable, a common occurrence.
+
+
+
+                                page one
+
+
+
+
+     The case laveled FIVE has various forms of exponential notation.
+FORTRAN uses a "D" instead of E for double precision exponents.  The
+other forms were taken from various microcomputer and mainframe 
+packages.
+
+     The case labeled SIX does not belong in an ASCII file.  It is so 
+common, however, that statistical packages should not be bothered by it.
+Namely, there are tab characters in the record.
+
+     You can create this file on a word processor (be sure to use the
+ASCII, or "non-document" mode) or with an editor.  For the last line, 
+use the tab key to separate the number (the way most secretaries do 
+when told to enter data this way) and be sure to hit the Return (Enter)
+key after yping SIX so that the last record ends in a carriage return.
+Since you can use an editor to create the file, you could correct some
+of the problems with an editor as well before using a statistical 
+program.  What yould you do with a file containing 30,000 records on 100
+variables?
+
+     A. Read this file into 6 variables: A, B, C, D, E, and NAME$ (or
+     whatever the package uses to name a character variable).  Print the
+     file so that 6 cases appear, with A=1, B=2, C=3, D=4, E=5, and
+     NAME$=<label>.
+
+     B. Read this file so that the program will flag the second case as
+     an error.  In other words, the program should accept as valid 
+     records only cases with all six data items on a record.
+
+II. REAL NUMBERS
+
+     Every statistical package is capable of computing basic statistics
+or simple numbers such as relatively small integers.  Scientific work,
+financial analysis, and other serious applications require more, 
+however.  The following dataset called NASTY.DAT has been designed to 
+test the limits of packages.  These are not unreasonable numers.  The
+ability to deal with data like these should be regarded as a minimum.
+For example, the values on BIG are less than the U.S. population.  HUGE
+has values in  the same order of magnitude as the U.S. deficit. TINY is
+comparable to many measurements in engineering and physics.
+
+
+LABEL$  X  ZERO MISS  BIG       LITTLE       HUGE     TINY    ROUND
+ONE     1   0    .  99999991   0.99999991   1.0E12   1.0E-12   0.5  
+TWO     2   0    .  99999992   0.99999992   2.0E12   2.0E-12   1.5  
+THREE   3   0    .  99999993   0.99999993   3.0E12   3.0E-12   2.5  
+FOUR    4   0    .  99999994   0.99999994   4.0E12   4.0E-12   3.5  
+FIVE    5   0    .  99999995   0.99999995   5.0E12   5.0E-12   4.5  
+SIX     6   0    .  99999996   0.99999996   6.0E12   6.0E-12   5.5  
+SEVEN   7   0    .  99999997   0.99999997   7.0E12   7.0E-12   6.5  
+EIGHT   8   0    .  99999998   0.99999998   8.0E12   8.0E-12   7.5  
+NINE    9   0    .  99999999   0.99999999   9.0E12   9.0E-12   8.5  
+
+
+
+
+                                page two
+     
+     
+     
+     A. Print ROUND with only one digit.  You should get the 
+numbers 1 to 9.  Many language compilers, such as Turbo Pascal and
+Lattice C, fail this test (they round numbers inconsistently).
+Needless to say, statical packages written in these languages
+may fail the test as well.  You can also check the following
+expressions:
+
+     Y = INT(2.6*7 -0.2)                   (Y should be 18)
+     Y = 2-INT(EXP(LOG(SQR(2)*SQR(2))))    (Y should be 0)
+     Y = INT(3-EXP(LOG(SQR(2)*SQR(2))))    (Y should be 1)
+
+INT is the integer function.  It converts decimal numbers to
+integers by throwing away numbers after the decimal point.  EXP
+is exponential, LOG is logarithm, and SQR is suqare root.  You may
+have to substitute similar names for these functions for different
+packages.  Since the square of a square root should return the same
+number, and the exponential of a log should return the same number,
+we should get back a 2 from this function of functions.  By taking
+the integer result and subtracting from 2, we are exposing the 
+roundoff errors.  These simple functions are at the heart of  
+statistical calculations.
+
+IBM and Microsoft BASIC (any any statiscal packages written in
+them) fail these tests.  If a statistical package fails these 
+tests, you cannot trust it to compute any functions accurately.  It
+might even fail on simple arithmetic.
+
+B. Plot HUGE against TINY in a scatterplot.  The values should fall 
+on a line.  Plot BIG against LITTLE.  Again, the values should fall
+on a line.  Plot X against ZERO.  Some programs cannot produce this
+last plot because they cannot scale an axis for a constant.
+
+C. Compute basic statistic on all the variables.  The means should 
+be the fifth value of all the variables (case FIVE).  The standard
+deviations should be "undefined" or missing for MISS, 0 for ZERO,
+and 2.738612788 (times 10 to a power) for all the other variables.
+
+D. Compute a correlation matrix on all the variables.  All the
+correlations, except for ZERO and MISS, shoud be exactly 1.  ZERO
+and MISS should have undefined or missing correlations with the
+other variables.  The same should go for SPEARMAN corelations, if
+your program has them.
+
+E.  Tabulate X against X, using BIG as a case weight.  The values 
+should appear on the diagonal and the total should be 899999955.
+If the table cannot hold these values, forget about working with 
+census data.  You can also tabulate HUGE against TINY.  There is no
+reason a tabulation program should not be able to digtinguish 
+different values regardless of their magnitude.
+
+F.  Regress BIG on X.  The constant should be 99999990 and the
+regression coefficient should be 1.
+
+
+
+
+                                page three
+
+
+
+III. MISSING DATA
+
+     Many programs claim to process missing data.  This usally means
+that they delete missing values before computing statistics.  Missing
+data processing goes considerably beyond this, however.  Most social
+science research requires consistent processing of missing values in
+logical and arithmetic expressions.  Here are some simple tests.
+
+     A.  Use the NASTY dataset above on the following transformation:
+
+     IF MISS = 3 THEN TEST = 1
+     ELSE TEST = 2
+
+     If a package does not have an else statement (a serious omission if
+     you are doing a lot of IF-THEN transformations), you can code the
+     second statement as "IF MISS <> 3 THEN TEST = 2" where <> is "not
+     equal".  TEST should have the value 2 for all cases because MISS
+     does not anywhere equal 3 (i.e. missing values do not equal 3).
+     Some packages have an "indeterminate" value if MISS=<missing> and
+     assign neither 1 or 2 to TEST.  That is OK provided they assign
+     a missing value to TEST.  IF the package assigns any other value to
+     TEST (say, 1), don't trust it for any logical comparisons.
+
+     B. Use the NASTY dataset on the following calculation:
+
+     IF MISS = <missing> THEN MISS = MISS + 1
+
+     This transformation should leave the values of MISS as missing (you
+     cannot add 1 to something that is missing).
+
+     C. Use the NASTY dataset and tabulate MISS against ZERO.  You
+     should have one cell with 9 cases in it.  This ability to tabulate
+     missing values against other variables is essential for analyzing
+     patterns of missing data in a file.  Now tabulate MISS against ZERO
+     excluding missing values from the tablulation.  You should be 
+     notified that there are no non-missing values to tabulate.
+
+IV. REGRESSION
+
+     Regression is one of the most widely used statistical procedures.
+By now, almost every regression program can compute most of the digits
+of the Longley data.  This particular dataset measures only one kind of 
+ill-conditioning, however.  Here are some additional problems designed 
+to expose whether the programmer thought about boundary conditions. If 
+a program blows up on these problems, you should worry about the times 
+it might not blow up and give you an innocuous looking wrong answer.
+
+          A. Take the NASTY dataset above.  Use the variable X as a
+     basis for computing polynomials.  Namely, compute X1=X, X2=X*X,
+     X3=X*X*X, and so on up to 9 products.  Use the algebraic
+     transformation language within the statistical package itself.  You
+     will end up with 9 variables.  Now regress X1 on X2-X9 (a perfect
+     fit).  If the package balks (singular or roundoff error messages),
+     try X1 on X2-X8, and so on.  Most packages cannot handle more than
+     a few polynomials.
+
+                                page four
+
+
+
+     B.  Regress X on X.  The constant should be exactly 0 and the
+     regression coefficient should be 1.  This is a perfectly valid
+     regression.  The program should not complain.
+
+     C. Regress X on BIG and LITTLE (two predictors).  The program
+     should tell you that this model is "singular" because BIG and
+     LITTLE are linear combinations of each other.  Cryptic error
+     messages are unacceptable here.  Singularity is the most
+     fundamental regression error.
+
+     D. Regress ZERO on X.  The program should inform you that ZERO has
+     no variance or it should go ahead and compute the regression
+     and report a correlation and total sum of squares of exactly 0.
+
+V. ANALYSIS OF VARIANCE
+
+     Every statistical package has some sort of ANOVA routine.  Only a 
+few have least squares ANOVA, which is the only widely used method for 
+dealing with unequal cell sizes.  These few packages all offer a variety
+of factorial, repeated measures ANOVA, MANOVA, and analysis of 
+coavariance.  There are major differences in the way least squares is
+implemented, however.  Here are some simple examples which exploit the
+differences and involve widely needed features.  If you cannot set these
+examples up with the help of the user manual, call technical suport.
+That is a test in itself.
+
+     A.  Simple contrasts.  The following data contain an unbalanced
+     design with a significant interaction.  A least squares analysis
+     shows the main efefct for A is not significant, but this test is
+     not particularlrly meaningful because of the interaction.  Test,
+     therefore, the simple constrast between A1 and A2 within B1.  Then
+     test A1 vs. A2 within B2.  Both tests should use the same residual
+     error term (separate t-tests are unacceptable).  Several widely
+     used mainframe programs fail this test.  Unless the program can
+     constrast any terms in a model (not just main effects), it cannot
+     handle this frequently encountered type of problem.
+
+                   
+                    B1        B2
+               ---------------------
+               |    2     |   3    |
+     A1        |    1     |   4    |
+               |    3     |   5    |
+               |    2     |        |
+               ---------------------
+               |    4     |   2    |
+     A2        |    6     |   4    |
+               |    5     |   5    |
+               |          |        |
+               ---------------------
+
+
+
+
+
+
+                                page five
+
+
+
+     B. Random effects. Now assume that factor B in the above design is
+     a random factor (and A is fixed).  This means that the A*B
+     interaction is the appropriate error term for testing A.  Calculate
+     the F statistic for this hypothesis using the sum of squares for
+     A*B as the error term.  You could do this with a calculator, since
+     all the sums of squares are on the same printout.  If this were a 
+     MANOVA, however, you would need a command to specify an error term
+     other than residual (within cell) error.  Otherwise, mixed model
+     analyses are impossible.  You can save yourself some trouble by
+     checking the index or table of contents before trying this problem.
+     If there is no listing for mixed models or random factors, forget
+     it.  These models are widely used in biology, accounting,
+     marketing, psuchology, linguistics, education, and the physical
+     sciences.
+
+     C. Diagnostics.  Statisticians have demonstrated recently the 
+     importance of diagnostics in linear models.  It has long been
+     believed, for example, that ANOVA is robust to outliers and other
+     unusual cases.  This is generally false, however.  A single
+     observation can cause an interaction to become significant in a
+     two-way design.  That is the case with the data above, for example.
+     Your assignment is to identify that case.  The best way to identify
+     influential observatitions is to plot certain "influence statistics."
+     One of the most widely used is called "Cook's D."  It is output in 
+     all the better regression packages.  Try to find it in your ANOVA 
+     package, where it is needed just as much, if not more.  In fact,
+     see if you can save into a file all the other reiduals and
+     diagnostic information you get from a good regression package.
+     These same tools, as well as graphical displays of statistics like
+     residuals and Cook's D and least squares means, are required in any
+     professional ANOVA package.  Otherwise, you will never know if you
+     have a rotten apple in the barrel.  Incidentally, the main effect
+     for A becomes highly significant when one case is dropped from the
+     analysis above.
+
+VI.  OPERATING ON A DATABASE
+
+     Every statistical package of any worth can transform columns of
+numbers.  What distinghishes some packages for research and business 
+applications if the abilitiy to manipulate a database which may not be
+rectangular.  This means more than being able to sort, append, and merge  
+(join) files.  Here are a few problems which frequently arise in various
+fields.
+
+     A.  The following problem was encountered by the National Park
+     Service.  There are two files.  One (BOATS) has names of boats
+     (NAME$), the day they left port (DEPART), and the day they returned
+     home (RETURN).  The other file (WEATHER) has the daily temperature
+     (TEMP) for each day (DAY) of the year, numbered from 1 to 365
+     during the year the boats were out.  Here are the files:
+
+
+
+
+
+
+                                page six
+
+
+
+                      BOATS                      WEATHER
+             -----------------------            ---------
+             NAME$   DEPART   RETURN            DAY  TEMP
+             Nellie     1      10                1    48
+             Ajax       4       6                2    40
+             Queen      3       3                3    45
+             Ajax       2       3                4    52
+                                                 6    44
+                                                 7    48
+                                                 8    49
+                                                 9    50
+                                                10    52
+                                                11    50
+                                                12    49
+                                                
+     Now, neither file has the same number of records, of course, but
+     the BOATS file may have multiple records for each boat, since each
+     went on one or more cruises during the year.  Your task is to
+     create a file (CRUISE) with a separate record for each boat and the
+     average temperature (AVGTEMP) during its cruise.  Warning: the
+     weather for day 5 is missing.  Ignore it in computing the average
+     temperature.
+
+     B. The following file contains sales on various dates during the
+     year (MONTH, DAY, YEAR, SALES).
+
+     1/12/84    400
+     1/15/84    131
+     1/16/84    211
+     1/18/84    312
+     1/15/84    220
+     1/12/84    200
+     2/1/84     312
+     1/12/84    350
+     11/5/83    200
+     1/15/84    400
+
+     Some dates are duplicated in the file.  This is because the sales
+     were recorded several times in the day before closing.
+
+     1) Read this file exactly as given.  This is an additional test of
+     the package's ability to deal with unusual ASCII files.
+
+     2) Print a new file sorted by date.  For days having two or more
+     sales records, print only the record with the highest (closing)
+     sales.
+
+
+
+
+
+
+
+
+
+
+                                page seven
+
+
+======================================================================
+
+The above seven pages are verbatim from Wilkinson's "Statistics
+Quiz".  The remaining 20 pages presented computer output showing
+the (correct) solutions obtained by the software package SYSTAT.
+Since the correct solution frequently is given in the problem, 
+here we include only the SYSTAT solutions to those problems for 
+which the solution was not given.
+
+II. C. Basic Statistics
+
+variable        mean            standard deviation
+       X        5.000000000     2.738612788
+    ZERO        0.000000000     0.000000000
+    MISS        .               .
+     BIG        99999995.00     2.738612788
+  LITTLE        0.999999950     2.73861E-08
+    HUGE        5.00000E+12     0.22739E+13
+    TINY        0.000000000     0.000000000
+   ROUND        4.500000000     2.738612788
+
+II.D. Correlation
+
+        X      ZERO   BIG    LITTLE    HUGE    TINY    ROUND
+X       1.0
+ZERO     .      .
+BIG     1.0     .     1.0
+LITTLE  1.0     .     1.0     1.0
+HUGE    1.0     .     1.0     1.0      1.0
+TINY    1.0     .     1.0     1.0      1.0     1.0
+ROUND   1.0     .     1.0     1.0      1.0     1.0      1.0
+
+
+IV. A. Determining these coefficients will stress most any
+least-squares package, so do not be alarmed if your coefficients
+are different than these.  However, your package should 
+provide an R**2 close to unity. Theoretically, the integrated
+square error (ISE) of the estimated polynomial should be zero,
+but in practice it will not be.  However, the ISE should be 
+close to the value provided below; if yours is much large 
+your package has a problem.  See Sawitizki (1994) for
+more details on these matters.  
+ 
+variable    coefficient      
+constant    0.353486          
+X**2        1.14234          
+X**3       -0.70495         
+X**4        0.262353        
+X**5       -0.061635        
+X**6        0.00920536      
+X**7       -0.000847477     
+X**8        0.000043835     
+X**9       -0.000000974112  
+
+ISE = 0.0393
+
+To check the calculation of the ISE with your coefficients,
+first use Sawitizki's coefficients and obtain his answer 
+to make sure your ISE program works, before trying to obtain
+the ISE with your coefficients.
+
+V. A.  Simple Contrasts
+
+DEP VAR: X       N: 13    MULTIPLE R: 0.780   SQUARED MULTIPLE R:  0.608
+
+                     ANALYSIS OF VARIANCE
+
+SOURCE     SUM-OF-SQUARES   DF  MEAN-SQUARE  F-RATIO  
+  A             5.689        1     5.689      4.800 
+  B             0.356        1     0.356      0.300
+ A*B            8.889        1     8.889      7.500 
+ERROR          10.667        9     1.185
+
+
+                    TEST A WITHIN B1
+
+A MATRIX
+                1       2       3       4
+                0.000   1.000   0.000   1.000
+
+TEST OF HYPOTHESIS
+          SOURCE        SS    DF     MS      F
+
+          HYPOTHESIS  15.429   1   15.429  13.018
+          ERROR       10.667   9    1.185
+                    
+                    TEST A WITHIN B2
+
+A MATRIX
+                1       2       3       4
+                0.000   1.000   0.000   -1.000
+
+TEST OF HYPOTHESIS
+          SOURCE        SS    DF     MS      F
+
+          HYPOTHESIS   0.167   1   0.167   0.141 
+          ERROR       10.667   9    1.185
+
+V.B.  RANDOM EFFECTS
+
+TEST OF HYPOTHESIS
+          SOURCE        SS    DF     MS      F
+
+          HYPOTHESIS   5.689   1   5.689   0.640 
+          ERROR        8.889   1   8.889 
+
+V.C. DIAGNOSTICS
+
+The large Cook's distance for Case 11 stands out.
+
+----------
+References
+----------
+
+Sawitzki, G. (1994) "Testing Numerical Reliability of Data
+Analysis Systems", Computational Statistics and Data
+Analysis 18, 269-286
+
+Sawitzki, G. (1994) "Report on the Numerical Reliability
+of Data Analysis Systems", Computational Statistics and
+Data Analysis 18, 289-301
