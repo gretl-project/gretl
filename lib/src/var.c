@@ -268,6 +268,18 @@ int gretl_var_get_n_equations (const GRETL_VAR *var)
 #define TEX_PRN(p)   (p->format == GRETL_PRINT_FORMAT_TEX || \
                       p->format == GRETL_PRINT_FORMAT_TEX_DOC)
 
+static void tex_print_double (double x, PRN *prn)
+{
+    char number[16];
+
+    x = screen_zero(x);
+
+    sprintf(number, "%#.*g", GRETL_DIGITS, x);
+
+    if (x < 0.) pprintf(prn, "$-$%s", number + 1);
+    else pputs(prn, number);
+}
+
 int 
 gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATAINFO *pdinfo, 
@@ -323,7 +335,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 		pprintf(prn, " (%s)\n\n", I_("continued"));
 	    }
 	    pputs(prn, "\\vspace{1em}\n\n"
-		  "\\begin{tabular}{rcc}\n");
+		  "\\begin{tabular}{rcccc}\n");
 	} else {
 	    pprintf(prn, _("Responses to a one-standard error shock in %s"), 
 		    pdinfo->varname[vsrc]);
@@ -375,7 +387,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 		if (k >= var->neqns) break;
 		r = gretl_matrix_get(rtmp, k, shock);
 		if (TEX_PRN(prn)) {
-		    pprintf(prn, "$%g$", r);
+		    tex_print_double(r, prn);
 		    if (i < VARS_IN_ROW - 1 && k < var->neqns - 1) {
 			pputs(prn, " & ");
 		    }
@@ -613,7 +625,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 		pprintf(prn, " (%s)\n\n", I_("continued"));
 	    }
 	    pputs(prn, "\\vspace{1em}\n\n"
-		  "\\begin{tabular}{rcc}\n");
+		  "\\begin{tabular}{rccccc}\n");
 	} else {
 	    pprintf(prn, _("Forecast variance decomposition for %s"), 
 		    pdinfo->varname[vtarg]);
@@ -979,7 +991,7 @@ static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
 
 /* ...................................................................  */
 
-static int real_var (int order, const LIST list, 
+static int real_var (int order, const LIST inlist, 
 		     double ***pZ, DATAINFO *pdinfo,
 		     GRETL_VAR **pvar, struct var_resids *resids, 
 		     PRN *prn, char flags)
@@ -1002,7 +1014,7 @@ static int real_var (int order, const LIST list,
     */
 
     int i, j, index, k, l, listlen, end, neqns = 0;
-    int *varlist = NULL, *depvars = NULL, *shortlist = NULL;
+    int *list = NULL, *varlist = NULL, *depvars = NULL, *shortlist = NULL;
     char *detlist = NULL;
     int t1, t2, oldt1, oldt2, dfd = 0;
     int missv = 0, misst = 0;
@@ -1021,11 +1033,21 @@ static int real_var (int order, const LIST list,
 	return 1;
     }
 
-    detlist = malloc(list[0] + 1);
+    fprintf(stderr, "real_var: prn=%p, ppvar=%p\n", (void *) prn, (void *) pvar);
+    printlist(inlist, "incoming var list");
+
+    detlist = malloc(inlist[0] + 1);
     if (detlist == NULL) return E_ALLOC;
+
+    if (copylist(&list, inlist)) {
+	free(detlist);
+	return E_ALLOC;
+    }
 
     /* how long will our list have to be? */
     listlen = get_listlen(list, detlist, order, *pZ, pdinfo);
+
+    fprintf(stderr, "listlen = %d\n", listlen);
 
     varlist = malloc((listlen + 1) * sizeof *varlist);
     depvars = malloc((listlen + 1) * sizeof *depvars);
@@ -1108,6 +1130,8 @@ static int real_var (int order, const LIST list,
 	    goto var_bailout;
 	}
     }
+
+    fprintf(stderr, "starting real_var loop, neqns = %d\n", neqns);
 
     /* run the several regressions */
     k = 0;
@@ -1224,6 +1248,7 @@ static int real_var (int order, const LIST list,
 
  var_bailout:
 
+    free(list);
     free(varlist);
     free(shortlist);
     free(depvars);
@@ -1260,6 +1285,8 @@ static int real_var (int order, const LIST list,
 	    gretl_var_free(var);
 	}
     }
+
+    fprintf(stderr, "leaving real_var: var->neqns = %d\n", var->neqns);
 
     return err;
 }
@@ -2079,6 +2106,7 @@ int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 
     for (i=0; i<var->neqns; i++) {
 	gretl_var_print_impulse_response(var, i, 0, pdinfo, 0, prn);
+	gretl_var_print_fcast_decomp(var, i, 0, pdinfo, 0, prn);
     }
 
     return 0;
