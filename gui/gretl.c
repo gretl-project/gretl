@@ -954,7 +954,7 @@ gint populate_main_varlist (void)
 	row[0] = id;
 	row[1] = datainfo->varname[i];
 	row[2] = datainfo->label[i];
-	gtk_clist_append(GTK_CLIST(wmdata->listbox), row);
+	gtk_clist_append(GTK_CLIST(mdata->listbox), row);
 	if (i % 2) {
 	    gtk_clist_set_background(GTK_LIST(mdata->listbox), i, &gray);
 	}
