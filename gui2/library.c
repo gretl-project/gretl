@@ -1435,8 +1435,8 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     void *handle;
-    int (*model_leverage) (const MODEL *, const double **, 
-			   const DATAINFO *, PRN *, PATHS *);
+    int (*model_leverage) (const MODEL *, double ***, 
+			   DATAINFO *, PRN *, PATHS *);
     PRN *prn;
     int err;
 
@@ -1454,8 +1454,7 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 	return;
     }	
 	
-    err = (*model_leverage)(pmod, (const double **) Z, datainfo, 
-			    prn, &paths);
+    err = (*model_leverage)(pmod, &Z, datainfo, prn, &paths);
     close_plugin(handle);
 
     if (!err) {

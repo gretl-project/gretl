@@ -997,8 +997,7 @@ void exec_line (char *line, PRN *prn)
 
     case LEVERAGE:
 	if ((err = model_test_start(0, prn, 1))) break;	
-	err = leverage_test(models[0], (const double **) Z, 
-			    datainfo, prn, NULL);
+	err = leverage_test(models[0], &Z, datainfo, prn, NULL);
 	break;
 
     case LMTEST:
