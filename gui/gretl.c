@@ -105,8 +105,8 @@ static GtkWidget *build_var_menu (void);
 static gint popup_activated (GtkWidget *widget, gpointer data);
 static void check_for_pwt (void);
 static void set_up_main_menu (void);
-extern gint exit_check (GtkWidget *widget, gpointer data);
-extern void menu_exit (GtkWidget *widget, gpointer data);
+extern void menu_exit_check (GtkWidget *widget, gpointer data);
+extern gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
 static void startR (gpointer p, guint opt, GtkWidget *w);
 static void Rcleanup (void);
 void refresh_data (void);
@@ -244,7 +244,7 @@ GtkItemFactoryEntry data_items[] = {
     { "/File/_Preferences/_General...", NULL, options_dialog, 0, NULL },
     { "/File/_Preferences/_Fixed font...", NULL, font_selector, 0, NULL },
     { "/File/sep5", NULL, NULL, 0, "<Separator>" },
-    { "/File/E_xit", NULL, menu_exit, 0, NULL },
+    { "/File/E_xit", NULL, menu_exit_check, 0, NULL },
     { "/_Session", NULL, NULL, 0, "<Branch>" },
     { "/Session/_Icon view", NULL, view_session, 0, NULL },
     { "/Session/_Add last graph", NULL, add_last_graph, 0, NULL },
@@ -466,6 +466,11 @@ static void fix_dbname (char *db)
 	sprintf(db, "%s%s", paths.binbase, tmp);
     }
     if (fp != NULL) fclose(fp);
+}
+
+static void destroy (GtkWidget *widget, gpointer data)
+{
+    gtk_main_quit();
 }
 
 #ifdef G_OS_WIN32
@@ -973,6 +978,9 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_signal_connect (GTK_OBJECT (mdata->w), "delete_event",
 			GTK_SIGNAL_FUNC (exit_check),
 			NULL);
+    gtk_signal_connect (GTK_OBJECT (mdata->w), "destroy",
+			GTK_SIGNAL_FUNC (destroy), NULL);
+
 
     gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
     gtk_window_set_policy(GTK_WINDOW (mdata->w), TRUE, TRUE, FALSE);

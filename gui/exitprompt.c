@@ -23,13 +23,13 @@
 
 int session_saved;
 
-gint exit_check (GtkWidget *widget, gpointer data);
+gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
 
-/* ........................................................... */
-
-void menu_exit (GtkWidget *widget, gpointer data)
+void menu_exit_check (GtkWidget *w, gpointer data)
 {
-    (void) exit_check(widget, data);
+    int ret = exit_check(w, NULL, data);
+
+    if (ret == FALSE) gtk_main_quit();
 }
 
 /* ........................................................... */
@@ -82,7 +82,7 @@ static void save_data_callback (void)
     if (data_file_open == 2) data_file_open = 1;
 }
 
-#ifdef USE_GNOMEB
+#ifdef USE_GNOME
 
 /* ......................................................... */
 
@@ -225,7 +225,7 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 
 /* ........................................................... */
 
-gint exit_check (GtkWidget *widget, gpointer data) 
+gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data) 
 {
     char fname[MAXLEN];
     int button;
@@ -263,11 +263,5 @@ gint exit_check (GtkWidget *widget, gpointer data)
     }    
 
     write_rc();
-    gtk_main_quit();
     return FALSE;
 }
-
-
-
-
-
