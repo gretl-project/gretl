@@ -5994,15 +5994,18 @@
 	      </mml:msub>
 	    </mml:mrow>
 	  </mml:math>
-	</informalequation>
+      </informalequation>
 	      
 	<para>This model represents the <emphasis>dependent
 	  variable</emphasis>, <emphasis>y</emphasis>, at observation
 	<emphasis>t</emphasis>, as a linear function (with intercept
 	&alpha; and slope &beta;) of a single <emphasis>independent
-	  variable</emphasis>, $x_t$, plus a random
+	  variable</emphasis>, 
+	<emphasis>x</emphasis><subscript><emphasis>t</emphasis></subscript>,
+	plus a random
 	<quote>error</quote> or <quote>disturbance</quote> term
-	$\epsilon_t$.  The random term may be thought of as summing up
+	&egr;<subscript><emphasis>t</emphasis></subscript>.
+	The random term may be thought of as summing up
 	various influences on $y_t$ not specified in the equation, or
 	as reflecting inherently stochastic behavior in $y_t$, or in
 	various other ways. The task of econometric estimation is to
@@ -6089,13 +6092,14 @@
 	given a certain non-zero value for a least-squares regression
 	coefficient, how confident can we be that the corresponding
 	unknown parameter is non-zero? It's always possible that even
-	if <emphasis>x</emphasis> and <emphasis>y</emphasis> are <quote>truly</quote> statistically
-	independent, one derives a non-zero correlation between
-	observations of these variables in a finite sample by the
-	<quote>luck of the draw.</quote> The larger the sample, and
-	the larger the (absolute value of the) sample correlation,
-	presumably the smaller the probability that this correlation
-	could be a <quote>luck of the draw</quote> phenomenon.
+	if <emphasis>x</emphasis> and <emphasis>y</emphasis> are
+	<quote>truly</quote> statistically independent, one derives a
+	non-zero correlation between observations of these variables
+	in a finite sample by the <quote>luck of the draw.</quote> The
+	larger the sample, and the larger the (absolute value of the)
+	sample correlation, presumably the smaller the probability
+	that this correlation could be a <quote>luck of the
+	draw</quote> phenomenon.
       </para>
 
       <para>
