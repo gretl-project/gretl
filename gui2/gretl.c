@@ -175,6 +175,11 @@ static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w)
     show_spreadsheet(NULL);
 }
 
+static void manual_update_query (gpointer p, guint u, GtkWidget *w)
+{
+    update_query(1);
+}
+
 #if defined(USE_GNOME)
 
 static void gnome_help (void)
@@ -537,6 +542,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Help/Manual in HTML"), NULL, win_help, 0, NULL },
     { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>" },
 #endif
+    { N_("/Help/_Check for updates"), NULL, manual_update_query, 0, NULL },
+    { N_("/Help/sep3"), NULL, NULL, 0, "<Separator>" },
     { N_("/Help/_About gretl"), NULL, about_dialog, 0, NULL }
 };
 
@@ -861,7 +868,7 @@ int main (int argc, char *argv[])
 
     /* check for program updates? */
     proxy_init(dbproxy);
-    if (updater) update_query(); 
+    if (updater) update_query(0); 
 
     /* try opening specified database */
     if (gui_get_data == OPT_DBOPEN)

@@ -1082,7 +1082,8 @@ static char *print_option (int opt)
 
 /* ........................................................... */
 
-static int get_update_info (char **saver, char *errbuf, time_t filedate)
+static int get_update_info (char **saver, char *errbuf, time_t filedate,
+			    int manual)
 {
     uerr_t result;
     struct urlinfo *u;
@@ -1100,7 +1101,11 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate)
     u->host = mymalloc(16);
     strcpy(u->host, paths.dbhost_ip);
     u->path = mymalloc(strlen(cgi) + 64);
-    sprintf(u->path, "%s?opt=QUERY", cgi);
+    if (manual) {
+	sprintf(u->path, "%s?opt=MANUAL_QUERY", cgi);
+    } else {
+	sprintf(u->path, "%s?opt=QUERY", cgi);
+    }
 
     strcat(u->path, "&date=");
     sprintf(datestr, "%lu", filedate);
@@ -1144,7 +1149,7 @@ static size_t get_size (char *buf)
 
 /* ........................................................... */
 
-int update_query (void)
+int update_query (int verbose)
 {
     int err = 0;
     char *getbuf = NULL;
@@ -1180,15 +1185,15 @@ int update_query (void)
     }
 
     getbuf = malloc(2048); 
-    if (getbuf == NULL)
-	return E_ALLOC;
+    if (getbuf == NULL) return E_ALLOC;
     clear(getbuf, 2048);
-    err = get_update_info(&getbuf, errbuf, filedate);
-    
-    if (err) 
-	return 1;
+    err = get_update_info(&getbuf, errbuf, filedate, verbose);
 
-    if (getbuf && strncmp(getbuf, _("No new files"), 12)) {
+    if (err || getbuf == NULL) return 1;
+
+    if (strncmp(getbuf, "message:", 8) == 0) {
+	infobox(getbuf + 9);
+    } else if (strncmp(getbuf, "No new files", 12)) {
 	char infotxt[512];
 
 #ifdef G_OS_WIN32 
@@ -1198,7 +1203,6 @@ int update_query (void)
 		"and run the program titled \"gretl updater\".\n\nOnce the "
 		"updater has completed you may restart gretl."),
 		get_size(getbuf));
-
 #else
 	if (admin) {
 	    strcpy(infotxt, _("New files are available from the gretl web site\n"
@@ -1217,6 +1221,8 @@ int update_query (void)
 	}
 #endif /* G_OS_WIN32 */
 	infobox(infotxt);
+    } else if (verbose) {
+	infobox(_("No new files"));
     }
 
     free(getbuf);

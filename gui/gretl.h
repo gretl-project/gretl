@@ -281,7 +281,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget);
 void gpt_save_dialog (void);
 
 /* webget.c */
-int update_query (void); 
+int update_query (int verbose); 
 int retrieve_url (int opt, const char *dbase, const char *series, 
 		  int filesave, char **saver, char *errbuf);
 int proxy_init (const char *dbproxy);
