@@ -1,0 +1,18 @@
+CC = @CC@
+prefix = @prefix@
+
+gretldir = $(prefix)/share/gretl
+INSTALL_DATA = cp -fp
+
+mkbin: mkbin.c
+	$(CC) -o $@ $<
+
+bcih.bin: mkbin bcih.dat
+	./mkbin 
+
+install: bcih.bin
+	$(INSTALL_DATA) bcih.bin $(gretldir)/db/bcih.bin
+	$(INSTALL_DATA) bcih.idx $(gretldir)/db/bcih.idx
+
+clean:
+	rm -f mkbin bcih.bin

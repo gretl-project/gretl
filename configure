@@ -10858,6 +10858,7 @@ lib/Makefile
 plugin/Makefile
 po/Makefile.in 
 share/Makefile
+share/bcih/Makefile
 tests/Makefile
 extra/Makefile
 redhat/gretl.spec
@@ -11038,6 +11039,7 @@ lib/Makefile
 plugin/Makefile
 po/Makefile.in 
 share/Makefile
+share/bcih/Makefile
 tests/Makefile
 extra/Makefile
 redhat/gretl.spec
