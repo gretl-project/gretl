@@ -837,11 +837,11 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 			       const gretl_matrix *b, int bflag,
 			       gretl_matrix *c)
 {
-    int i, j, k;
+    register int i, j, k;
     int lrows, lcols;
     int rrows, rcols;
-    int atr = (aflag == GRETL_MOD_TRANSPOSE);
-    int btr = (bflag == GRETL_MOD_TRANSPOSE);
+    const int atr = (aflag == GRETL_MOD_TRANSPOSE);
+    const int btr = (bflag == GRETL_MOD_TRANSPOSE);
     const double *a_row, *a_col;
     const double *b_row, *b_col;
     double *c_row, *c_col;
@@ -910,10 +910,11 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 	c_row++;
     }
 #else
-    /* This is a fuller optimization: it uses pointer addition
-       to avoid multiplications wherever possible.  It is rather
-       hard to follow, but should be much faster for large
-       matrices, I think.
+    /* This is a fuller optimization: it uses pointer addition to
+       avoid multiplications wherever possible, in the course of
+       finding the addresses of the terms to be multiplied.  It is
+       rather hard to follow, but should be faster for large matrices,
+       I think.
     */
 
     /* initialize row and column pointers */
