@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "treeutils.h"
 #include "database.h"
+#include "webget.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -407,10 +408,11 @@ static gint populate_remote_db_list (windata_t *win)
 
     if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL)
 	return 1;
+
     memset(getbuf, 0, GRETL_BUFSIZE);
 
     *errbuf = 0;
-    err = retrieve_url(LIST_DBS, NULL, NULL, 0, &getbuf, errbuf);
+    err = list_remote_dbs(&getbuf, errbuf);
 
     if (err) {
         if (strlen(errbuf)) {

@@ -23,6 +23,7 @@
 #include "treeutils.h"
 #include "boxplots.h"
 #include "database.h"
+#include "webget.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -105,17 +106,17 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
 
     update_statusline(dbwin, _("Retrieving data..."));
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-    err = retrieve_url(GRAB_NBO_DATA, dbbase, sinfo->varname, 0, &getbuf, 
-		       errbuf);
+    err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
+				  errbuf, GRAB_NBO_DATA);
 #else
-    err = retrieve_url(GRAB_DATA, dbbase, sinfo->varname, 0, &getbuf, 
-		       errbuf);
+    err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
+				  errbuf, GRAB_DATA);
 #endif
 
     if (err) {
         if (strlen(errbuf)) {
-	    if (errbuf[strlen(errbuf)-1] == '\n') {
-		errbuf[strlen(errbuf)-1] = 0;
+	    if (errbuf[strlen(errbuf) - 1] == '\n') {
+		errbuf[strlen(errbuf) - 1] = 0;
 	    }
 	    update_statusline(dbwin, errbuf);
 	} else {
@@ -1051,12 +1052,13 @@ void open_named_remote_db_list (char *dbname)
 
     if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL) return;
     memset(getbuf, 0, GRETL_BUFSIZE);
-    err = retrieve_url(GRAB_IDX, dbname, NULL, 0, &getbuf, errbuf);
+    err = retrieve_remote_db_list(dbname, &getbuf, errbuf);
 
     if (err) {
         if (strlen(errbuf)) {
-	    if (errbuf[strlen(errbuf)-1] == '\n')
-		errbuf[strlen(errbuf)-1] = 0;
+	    if (errbuf[strlen(errbuf) - 1] == '\n') {
+		errbuf[strlen(errbuf) - 1] = 0;
+	    }
 	    errbox(errbuf);
 	} else {
 	    fprintf(stderr, "retrieve_url() returned %d\n", err);
@@ -1087,13 +1089,14 @@ void open_remote_db_list (GtkWidget *w, gpointer data)
     if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL) return;
     memset(getbuf, 0, GRETL_BUFSIZE);
     update_statusline(win, _("Retrieving data..."));
-    errbuf[0] = '\0';
-    err = retrieve_url(GRAB_IDX, fname, NULL, 0, &getbuf, errbuf);
+    *errbuf = '\0';
+    err = retrieve_remote_db_list(fname, &getbuf, errbuf);
 
     if (err) {
         if (strlen(errbuf)) {
-	    if (errbuf[strlen(errbuf)-1] == '\n')
-		errbuf[strlen(errbuf)-1] = 0;
+	    if (errbuf[strlen(errbuf) - 1] == '\n') {
+		errbuf[strlen(errbuf) - 1] = 0;
+	    }
 	    update_statusline(win, errbuf);
 	} else { 
 	    update_statusline(win, _("Error retrieving data from server"));
@@ -1293,10 +1296,11 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     }
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-    err = retrieve_url(GRAB_NBO_DATA, dbname, NULL, 1, &ggzname, errbuf);
+    err = retrieve_remote_db(dbname, ggzname, errbuf, GRAB_NBO_DATA);
 #else
-    err = retrieve_url(GRAB_DATA, dbname, NULL, 1, &ggzname, errbuf);
+    err = retrieve_remote_db(dbname, ggzname, errbuf, GRAB_DATA);
 #endif
+
     if (err) {
         if (strlen(errbuf)) errbox(errbuf);
 	else {
@@ -1355,8 +1359,8 @@ static gchar *get_descrip (char *fname, const char *dbdir)
     fclose(fp);
     if (tmp[0] == '#') {
 	strcpy(line, tmp + 2);
-	/* the following line was ifdefd with G_OS_WIN32 */
-	line[strlen(line)-1] = 0;
+	/* the following line was ifdef'd with G_OS_WIN32 */
+	line[strlen(line) - 1] = 0;
 	return line;
     }
     return NULL;

@@ -19,7 +19,10 @@
 
 /* webget.c for gretl -- based on parts of GNU Wget */
 
-/* #define WDEBUG */
+/* Note: UPDATER is defined if we're building the stand-alone updater
+   program for Windows.  This program does not depend on glib or
+   libgretl.
+*/
 
 #ifdef UPDATER
 # include "version.h"
@@ -78,6 +81,154 @@ enum {
 } progress_flags;
 #endif /* UPDATER */
 
+/* header-type info, private to webget.c */
+
+#ifdef WIN32
+/*  #define REALCLOSE(x) closesocket (x) */
+#define EWOULDBLOCK             WSAEWOULDBLOCK
+#define EINPROGRESS             WSAEINPROGRESS
+#define EALREADY                WSAEALREADY
+#define ENOTSOCK                WSAENOTSOCK
+#define EDESTADDRREQ            WSAEDESTADDRREQ
+#define EMSGSIZE                WSAEMSGSIZE
+#define EPROTOTYPE              WSAEPROTOTYPE
+#define ENOPROTOOPT             WSAENOPROTOOPT
+#define EPROTONOSUPPORT         WSAEPROTONOSUPPORT
+#define ESOCKTNOSUPPORT         WSAESOCKTNOSUPPORT
+#define EOPNOTSUPP              WSAEOPNOTSUPP
+#define EPFNOSUPPORT            WSAEPFNOSUPPORT
+#define EAFNOSUPPORT            WSAEAFNOSUPPORT
+#define EADDRINUSE              WSAEADDRINUSE
+#define EADDRNOTAVAIL           WSAEADDRNOTAVAIL
+#define ENETDOWN                WSAENETDOWN
+#define ENETUNREACH             WSAENETUNREACH
+#define ENETRESET               WSAENETRESET
+#define ECONNABORTED            WSAECONNABORTED
+#define ECONNRESET              WSAECONNRESET
+#define ENOBUFS                 WSAENOBUFS
+#define EISCONN                 WSAEISCONN
+#define ENOTCONN                WSAENOTCONN
+#define ESHUTDOWN               WSAESHUTDOWN
+#define ETOOMANYREFS            WSAETOOMANYREFS
+#define ETIMEDOUT               WSAETIMEDOUT
+#define ECONNREFUSED            WSAECONNREFUSED
+#define ELOOP                   WSAELOOP
+#define EHOSTDOWN               WSAEHOSTDOWN
+#define EHOSTUNREACH            WSAEHOSTUNREACH
+#define EPROCLIM                WSAEPROCLIM
+#define EUSERS                  WSAEUSERS
+#define EDQUOT                  WSAEDQUOT
+#define ESTALE                  WSAESTALE
+#define EREMOTE                 WSAEREMOTE
+#endif /* WIN32 */
+
+/* Document-type flags */
+enum {
+    TEXTHTML      = 0x0001,	/* document is of type text/html */
+    RETROKF       = 0x0002,	/* retrieval was OK */
+    HEAD_ONLY     = 0x0004,	/* only send the HEAD request */
+    SEND_NOCACHE  = 0x0008,	/* send Pragma: no-cache directive */
+    ACCEPTRANGES  = 0x0010	/* Accept-ranges header was found */
+};
+
+typedef enum {
+    NOCONERROR, HOSTERR, CONSOCKERR, CONERROR,
+    CONREFUSED, NEWLOCATION, NOTENOUGHMEM, CONPORTERR,
+    BINDERR, BINDOK, LISTENERR, ACCEPTERR, ACCEPTOK,
+    CONCLOSED, FTPOK, FTPLOGINC, FTPLOGREFUSED, FTPPORTERR,
+    FTPNSFOD, FTPRETROK, FTPUNKNOWNTYPE, FTPRERR,
+    FTPREXC, FTPSRVERR, FTPRETRINT, FTPRESTFAIL,
+    URLOK, URLHTTP, URLFTP, URLFILE, URLUNKNOWN, URLBADPORT,
+    URLBADHOST, FOPENERR, FWRITEERR, HOK, HLEXC, HEOF,
+    HERR, RETROK, RECLEVELEXC, FTPACCDENIED, WRONGCODE,
+    FTPINVPASV, FTPNOPASV,
+    RETRFINISHED, READERR, TRYLIMEXC, URLBADPATTERN,
+    FILEBADFILE, RANGEERR, RETRBADPATTERN, RETNOTSUP,
+    ROBOTSOK, NOROBOTS, PROXERR, AUTHFAILED, QUOTEXC, WRITEFAILED
+} uerr_t;
+
+/* Read a character from RBUF.  If there is anything in the buffer,
+   the character is returned from the buffer.  Otherwise, refill the
+   buffer and return the first character.
+
+   The return value is the same as with read(2).  On buffered read,
+   the function returns 1.
+
+   #### That return value is totally screwed up, and is a direct
+   result of historical implementation of header code.  The macro
+   should return the character or EOF, and in case of error store it
+   to rbuf->err or something.  */
+
+#define RBUF_READCHAR(rbuf, store)					\
+((rbuf)->buffer_left							\
+ ? (--(rbuf)->buffer_left,						\
+    *((char *) (store)) = *(rbuf)->buffer_pos++, 1)			\
+ : ((rbuf)->buffer_pos = (rbuf)->buffer,				\
+    ((((rbuf)->internal_dont_touch_this					\
+       = iread ((rbuf)->fd, (rbuf)->buffer,				\
+		sizeof ((rbuf)->buffer))) <= 0)				\
+     ? (rbuf)->internal_dont_touch_this					\
+     : ((rbuf)->buffer_left = (rbuf)->internal_dont_touch_this - 1,	\
+	*((char *) (store)) = *(rbuf)->buffer_pos++,			\
+	1))))
+
+/* Return the file descriptor of RBUF.  */
+
+#define RBUF_FD(rbuf) ((rbuf)->fd)
+
+/* read & write don't work with sockets on Windows 95. */
+#ifdef WIN32
+# define READ(fd, buf, cnt) recv ((fd), (buf), (cnt), 0)
+# define WRITE(fd, buf, cnt) send ((fd), (buf), (cnt), 0)
+#else
+# ifndef READ
+#  define READ(fd, buf, cnt) read((fd), (buf), (cnt))
+# endif
+# ifndef WRITE
+#  define WRITE(fd, buf, cnt) write((fd), (buf), (cnt))
+# endif
+#endif /* WIN32 */
+
+struct proto {
+    char *name;
+    uerr_t ind;
+    unsigned short port;
+};
+
+struct urlinfo
+{
+    char *url;                    /* the URL */
+    uerr_t proto;                 /* URL protocol */
+    char *host;                   /* hostname */
+    unsigned short port;
+    unsigned short filesave;      /* 1 for file, 0 for buffer */
+    char *path; 
+    char *localfile;
+    char **savebuf;
+    char errbuf[80];
+};
+
+struct http_stat {
+    long len;			/* received length */
+    long contlen;		/* expected length */
+    int res;			/* the result of last read */
+    char *newloc;		/* new location (redirection) */
+    char *remote_time;		/* remote time-stamp string */
+    char *error;		/* textual HTTP error */
+    int statcode;		/* status code */
+    long dltime;		/* time of the download */
+};
+
+struct rbuf
+{
+    int fd;
+    char buffer[4096];		/* the input buffer */
+    char *buffer_pos;		/* current position in the buffer */
+    size_t buffer_left;		/* number of bytes left in the buffer:
+				   buffer_left = buffer_end - buffer_pos */
+    int internal_dont_touch_this;	/* used by RBUF_READCHAR macro */
+};
+
 #define DEFAULT_HTTP_PORT 80
 #define MINVAL(x, y) ((x) < (y) ? (x) : (y))
 
@@ -126,6 +277,8 @@ enum header_get_flags {
     HG_NONE = 0,
     HG_NO_CONTINUATIONS = 0x2 
 };
+
+/* end of header-type info, private to webget.c */
 
 extern const char *version_string;
 
@@ -244,26 +397,28 @@ enum cgi_options {
     GRAB_FILE
 };
 
-void clear (char *str, const int len)
+static void clear (char *str, const int len)
 {
     memset(str, 0, len);
 }
 
 void *mymalloc (size_t size) 
 {
-    void *mem;
+    void *mem = malloc(size);
    
-    if((mem = malloc(size)) == NULL) 
+    if (mem == NULL) {
         errbox(_("Out of memory!"));
+    }
     return mem;
 }
 
 static void *myrealloc (void *ptr, size_t size) 
 {
-    void *mem;
+    void *mem = realloc(ptr, size);
    
-    if ((mem = realloc(ptr, size)) == NULL) 
+    if (mem == NULL) {
         errbox(_("Out of memory!"));
+    }
     return mem;
 }
 
@@ -302,42 +457,53 @@ static int header_get (struct rbuf *rbuf, char **hdr,
 
     *hdr = mymalloc(bufsize);
     if (*hdr == NULL) return HG_ERROR;
-    for (i = 0; 1; i++) {
+
+    for (i=0; 1; i++) {
 	int res;
-	if (i > bufsize - 1)
+
+	if (i > bufsize - 1) {
 	    *hdr = myrealloc(*hdr, (bufsize <<= 1));
+	}
+
 	res = RBUF_READCHAR(rbuf, *hdr + i);
+
 	if (res == 1) {
 	    if ((*hdr)[i] == '\n') {
 		if (!((flags & HG_NO_CONTINUATIONS)
 		      || i == 0
 		      || (i == 1 && (*hdr)[0] == '\r'))) {
 		    char next;
+
 		    /* If the header is non-empty, we need to check if
 		       it continues on to the other line.  We do that by
-		       peeking at the next character.  */
+		       peeking at the next character. */
 		    res = rbuf_peek (rbuf, &next);
-		    if (res == 0)
+		    if (res == 0) {
 			return HG_EOF;
-		    else if (res == -1)
+		    } else if (res == -1) {
 			return HG_ERROR;
-		    /*  If the next character is HT or SP, just continue.  */
-		    if (next == '\t' || next == ' ')
+		    }
+		    /*  If the next character is HT or SP, just continue */
+		    if (next == '\t' || next == ' ') {
 			continue;
+		    }
 		}
-		/* The header ends.  */
+		/* The header ends */
 		(*hdr)[i] = '\0';
-		/* Get rid of '\r'.  */
-		if (i > 0 && (*hdr)[i - 1] == '\r')
+		/* Get rid of '\r' */
+		if (i > 0 && (*hdr)[i - 1] == '\r') {
 		    (*hdr)[i - 1] = '\0';
+		}
 		break;
 	    }
 	}
-	else if (res == 0)
+	else if (res == 0) {
 	    return HG_EOF;
-	else
+	} else {
 	    return HG_ERROR;
+	}
     }
+
     return HG_OK;
 }
 
@@ -348,7 +514,7 @@ static int header_extract_number (const char *header, void *closure)
     const char *p = header;
     long result;
 
-    for (result = 0; isdigit((unsigned char) *p); p++) {
+    for (result=0; isdigit((unsigned char) *p); p++) {
 	result = 10 * result + (*p - '0');
     }
     if (*p) {
@@ -374,8 +540,10 @@ static int skip_lws (const char *string)
 {
     const char *p = string;
 
-    while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n')
+    while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') {
 	++p;
+    }
+
     return p - string;
 }
 
@@ -385,10 +553,13 @@ static int header_process (const char *header, const char *name,
 			   int (*procfun) (const char *, void *),
 			   void *arg)
 {
-    while (*name && (tolower (*name) == tolower (*header)))
+    while (*name && (tolower (*name) == tolower (*header))) {
 	++name, ++header;
-    if (*name || *header++ != ':')
+    }
+
+    if (*name || *header++ != ':') {
 	return 0;
+    }
 
     header += skip_lws (header);
 
@@ -425,11 +596,13 @@ static int parse_http_status_line (const char *line,
 
     *reason_phrase_ptr = NULL;
 
-    if (strncmp (line, "HTTP/", 5) != 0)
+    if (strncmp (line, "HTTP/", 5) != 0) {
 	return -1;
+    }
+
     line += 5;
 
-    /* Calculate major HTTP version.  */
+    /* Calculate major HTTP version */
     p = line;
     for (mjr = 0; isdigit((unsigned char) *line); line++)
 	mjr = 10 * mjr + (*line - '0');
@@ -437,37 +610,44 @@ static int parse_http_status_line (const char *line,
 	return -1;
     ++line;
 
-    /* Calculate minor HTTP version.  */
+    /* Calculate minor HTTP version */
     p = line;
-    for (mnr = 0; isdigit((unsigned char) *line); line++)
+    for (mnr = 0; isdigit((unsigned char) *line); line++) {
 	mnr = 10 * mnr + (*line - '0');
-    if (*line != ' ' || p == line)
+    }
+    if (*line != ' ' || p == line) {
 	return -1;
+    }
     /* Will accept only 1.0 and higher HTTP-versions.  The value of
-       minor version can be safely ignored.  */
-    if (mjr < 1)
+       minor version can be safely ignored. */
+    if (mjr < 1) {
 	return -1;
+    }
     ++line;
 
-    /* Calculate status code.  */
+    /* Calculate status code */
     if (!(isdigit((unsigned char) *line) && 
 	  isdigit((unsigned char) line[1]) && 
-	  isdigit((unsigned char) line[2])))
+	  isdigit((unsigned char) line[2]))) {
 	return -1;
+    }
+
     statcode = 100 * (*line - '0') + 10 * (line[1] - '0') + (line[2] - '0');
 
-    /* Set up the reason phrase pointer.  */
+    /* Set up the reason phrase pointer */
     line += 3;
     /* RFC2068 requires SPC here, but we allow the string to finish
-     here, in case no reason-phrase is present.  */
+     here, in case no reason-phrase is present. */
     if (*line != ' ') {
-	if (!*line)
+	if (!*line) {
 	    *reason_phrase_ptr = line;
-	else
+	} else {
 	    return -1;
+	}
     }
-    else
+    else {
 	*reason_phrase_ptr = line + 1;
+    }
 
     return statcode;
 }
@@ -491,26 +671,43 @@ static int http_process_range (const char *hdr, void *arg)
     if (!strncasecmp (hdr, "bytes", 5)) {
 	hdr += 5;
 	hdr += skip_lws (hdr);
-	if (!*hdr)
+	if (!*hdr) {
 	    return 0;
+	}
     }
-    if (!isdigit((unsigned char) *hdr))
+
+    if (!isdigit((unsigned char) *hdr)) {
 	return 0;
-    for (num = 0; isdigit((unsigned char) *hdr); hdr++)
+    }
+
+    for (num = 0; isdigit((unsigned char) *hdr); hdr++) {
 	num = 10 * num + (*hdr - '0');
-    if (*hdr != '-' || !isdigit((unsigned char) *(hdr + 1)))
+    }
+
+    if (*hdr != '-' || !isdigit((unsigned char) *(hdr + 1))) {
 	return 0;
+    }
+
     closure->first_byte_pos = num;
     ++hdr;
-    for (num = 0; isdigit((unsigned char) *hdr); hdr++)
+
+    for (num = 0; isdigit((unsigned char) *hdr); hdr++) {
 	num = 10 * num + (*hdr - '0');
-    if (*hdr != '/' || !isdigit((unsigned char) *(hdr + 1)))
+    }
+
+    if (*hdr != '/' || !isdigit((unsigned char) *(hdr + 1))) {
 	return 0;
+    }
+
     closure->last_byte_pos = num;
     ++hdr;
-    for (num = 0; isdigit((unsigned char) *hdr); hdr++)
+
+    for (num = 0; isdigit((unsigned char) *hdr); hdr++) {
 	num = 10 * num + (*hdr - '0');
+    }
+
     closure->entity_length = num;
+
     return 1;
 }
 
@@ -520,12 +717,14 @@ static int http_process_none (const char *hdr, void *arg)
 /* Place 1 to ARG if the HDR contains the word "none", 0 otherwise.
    Used for `Accept-Ranges'.  */
 {
-    int *where = (int *)arg;
+    int *where = (int *) arg;
 
-    if (strstr (hdr, "none"))
+    if (strstr (hdr, "none")) {
 	*where = 1;
-    else
+    } else {
 	*where = 0;
+    }
+
     return 1;
 }
 
@@ -534,7 +733,7 @@ static int http_process_none (const char *hdr, void *arg)
 static int http_process_type (const char *hdr, void *arg)
 /* Place the malloc-ed copy of HDR hdr, to the first `;' to ARG.  */
 {
-    char **result = (char **)arg;
+    char **result = (char **) arg;
     char *p;
 
     p = strrchr (hdr, ';');
@@ -547,6 +746,7 @@ static int http_process_type (const char *hdr, void *arg)
     } else {
 	*result = g_strdup(hdr);
     }
+
     return 1;
 }
 
@@ -576,10 +776,11 @@ static char *herrmsg (int error)
 	|| error == NO_RECOVERY
 	|| error == NO_DATA
 	|| error == NO_ADDRESS
-	|| error == TRY_AGAIN)
+	|| error == TRY_AGAIN) {
 	return _("Host not found");
-    else
+    } else {
 	return _("Unknown error");
+    }
 }
 
 /* ........................................................... */
@@ -594,7 +795,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     int sock, hcount, num_written, all_length, statcode;
     long contlen, contrange;
     uerr_t err;
-    FILE *fp;
+    FILE *fp = NULL;
     struct rbuf rbuf;
 
     hs->len = 0L;
@@ -641,15 +842,14 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 #endif   
 
     if (u->filesave) { /* save output to file */
-	fp = fopen(*(u->local), "wb");
+	fp = fopen(u->localfile, "wb");
 	if (fp == NULL) {
 	    close(sock);
 	    free(all_headers);
 	    fprintf(stderr, "Couldn't open local file\n");
 	    return FOPENERR;
 	}
-    } else 
-	fp = NULL; /* use local buffer instead */
+    } 
 
     if (proxy) {
 #ifdef UPDATER
@@ -664,10 +864,12 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     }
 
     command = (*dt & HEAD_ONLY)? "HEAD" : "GET";
-    if (*dt & SEND_NOCACHE)
+
+    if (*dt & SEND_NOCACHE) {
 	pragma_h = "Pragma: no-cache\r\n";
-    else
+    } else {
 	pragma_h = "";
+    }
 
     range = NULL;
     sprintf(useragent, "gretl-%s", version_string);
@@ -704,6 +906,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 #endif
 	return WRITEFAILED;
     }
+
     contlen = contrange = -1;
     type = NULL;
     statcode = -1;
@@ -720,11 +923,11 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	int status;
 
 	++hcount;
-	/* Get the header.  */
+	/* Get the header */
 	status = header_get(&rbuf, &hdr,
-			    /* Disallow continuations for status line.  */
+			    /* Disallow continuations for status line */
 			    (hcount == 1 ? HG_NO_CONTINUATIONS : HG_NONE));
-	/* Check for errors.  */
+	/* Check for errors */
 	if (status == HG_EOF && *hdr) {
 #ifdef WDEBUG
 	    fprintf(stderr, "Got status = HG_EOF\n");
@@ -747,18 +950,18 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	    return HERR;
 	}
 
-	/* Check for status line.  */
+	/* Check for status line */
 	if (hcount == 1) {
 	    const char *error;
 
-	    /* Parse the first line of server response.  */
+	    /* Parse the first line of server response */
 	    statcode = parse_http_status_line (hdr, &error);
 	    hs->statcode = statcode;
 	    /* Store the descriptive response */
 	    if (statcode == -1) { /* malformed response */
 		/* A common reason for "malformed response" error is the
 		   case when no data was actually received.  Handle this
-		   special case.  */
+		   special case. */
 		if (!*hdr) {
 		    hs->error = g_strdup(_("No data received"));
 		} else {
@@ -784,31 +987,36 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	    break;
 	}
 	/* Try getting content-length */
-	if (contlen == -1)
+	if (contlen == -1) {
 	    if (header_process(hdr, "Content-Length", header_extract_number,
 			       &contlen))
 		goto done_header;
+	}
 	/* Try getting content-type */
-	if (!type)
+	if (!type) {
 	    if (header_process (hdr, "Content-Type", http_process_type, &type))
 		goto done_header;
+	}
 	/* Try getting location */
-	if (!hs->newloc)
+	if (!hs->newloc) {
 	    if (header_process (hdr, "Location", header_strdup, &hs->newloc))
 		goto done_header;
+	}
 	/* Try getting last-modified */
-	if (!hs->remote_time)
+	if (!hs->remote_time) {
 	    if (header_process (hdr, "Last-Modified", header_strdup,
 				&hs->remote_time))
 		goto done_header;
+	}
 	/* Check for accept-ranges header.  If it contains the word
 	   `none', disable the ranges */
 	if (*dt & ACCEPTRANGES) {
 	    int nonep;
 	    if (header_process (hdr, "Accept-Ranges", 
 				http_process_none, &nonep)) {
-		if (nonep)
+		if (nonep) {
 		    *dt &= ~ACCEPTRANGES;
+		}
 		goto done_header;
 	    }
 	}
@@ -826,14 +1034,16 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     }
 
     /* 20x responses are counted among successful by default */
-    if (H_20X (statcode))
+    if (H_20X (statcode)) {
 	*dt |= RETROKF;
+    }
 
-    if (type && !strncasecmp (type, TEXTHTML_S, strlen (TEXTHTML_S)))
+    if (type && !strncasecmp (type, TEXTHTML_S, strlen (TEXTHTML_S))) {
 	*dt |= TEXTHTML;
-    else
+    } else {
 	/* We don't assume text/html by default */
 	*dt &= ~TEXTHTML;
+    }
 
     hs->contlen = contlen;
 
@@ -844,9 +1054,9 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	   `Location' header; otherwise, the request should be treated
 	   like GET.  So, if the location is set, it will be a
 	   redirection; otherwise, just proceed normally.  */
-	if (statcode == HTTP_STATUS_MULTIPLE_CHOICES && !hs->newloc)
+	if (statcode == HTTP_STATUS_MULTIPLE_CHOICES && !hs->newloc) {
 	    *dt |= RETROKF;
-	else {
+	} else {
 	    close(sock);
 	    free(type);
 	    free(all_headers);
@@ -868,7 +1078,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     }
 
     /* Get the contents of the document */
-    hs->res = get_contents(sock, fp, u->local, &hs->len, 
+    hs->res = get_contents(sock, fp, u->savebuf, &hs->len, 
 			   (contlen != -1 ? contlen : 0), &rbuf);
 
     if (fp != NULL) fclose(fp);
@@ -876,8 +1086,10 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     free(all_headers);
     close(sock);
 
-    if (hs->res == -2)
+    if (hs->res == -2) {
 	return FWRITEERR;
+    }
+
     return RETRFINISHED;
 }
 
@@ -902,9 +1114,9 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 	*dt &= ~HEAD_ONLY;
 	*dt &= ~SEND_NOCACHE;
 
-	/* Try fetching the document, or at least its head.  :-) */
+	/* Try fetching the document, or at least its head :-) */
 	err = gethttp(u, &hstat, dt, proxy);
-	/* Time?  */
+	/* Time? */
 	tms = time_str(NULL);
 
 #ifdef WDEBUG
@@ -932,6 +1144,7 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 	default:
 	    abort();
 	}
+
 	if (!(*dt & RETROKF)) {
 	    FREEHSTAT(hstat);
 	    return WRONGCODE;
@@ -939,22 +1152,22 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 
 	FREEHSTAT(hstat);
 
-	if (hstat.len == hstat.contlen)
+	if (hstat.len == hstat.contlen) {
 	    return RETROK;
-	else if (hstat.res == 0) { 
+	} else if (hstat.res == 0) { 
 	    /* No read error */
 	    if (hstat.contlen == -1)  
 		return RETROK;
 	    else	
 		continue;
-	}
-	else {		          
+	} else {		          
 	    /* now hstat.res can only be -1 */
 	    if (hstat.contlen == -1)
 		continue;
 	}
 	break;
     } while (count < MAXTRY);
+
     return TRYLIMEXC;
 }
 
@@ -967,13 +1180,14 @@ static size_t rbuf_flush (struct rbuf *rbuf, char *where, int maxsize)
    Returns the number of bytes actually copied.  If the buffer is
    empty, 0 is returned.  */
 {
-    if (!rbuf->buffer_left)
+    if (!rbuf->buffer_left) {
 	return 0;
-    else {
-	size_t howmuch = MINVAL(rbuf->buffer_left, (unsigned)maxsize);
+    } else {
+	size_t howmuch = MINVAL(rbuf->buffer_left, (unsigned) maxsize);
 
-	if (where)
+	if (where) {
 	    memcpy(where, rbuf->buffer_pos, howmuch);
+	}
 	rbuf->buffer_left -= howmuch;
 	rbuf->buffer_pos += howmuch;
 	return howmuch;
@@ -1002,6 +1216,7 @@ static void freeurl (struct urlinfo *u, int complete)
    If complete is non-0, free the pointer itself.  */
 {
     if (u == NULL) return;
+
     free(u->url);
     free(u->host);
     free(u->path);
@@ -1009,7 +1224,6 @@ static void freeurl (struct urlinfo *u, int complete)
 	free(u);
 	u = NULL;
     }
-    return;
 }
 
 /* ........................................................... */
@@ -1029,10 +1243,10 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 
 #ifndef UPDATER
     if (gui_open_plugin("progress_bar", &handle) == 0) {
-	show_progress = 
-	    get_plugin_function("show_progress", handle);
-	if (show_progress != NULL)
+	show_progress = get_plugin_function("show_progress", handle);
+	if (show_progress != NULL) {
 	    show = 1;
+	}
     }
 #endif
 
@@ -1045,11 +1259,14 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 	    if (fp == NULL) {
 		memcpy(*getbuf, cbuf, res);
 	    } else {
-		if (fwrite(cbuf, 1, res, fp) < (unsigned) res)
+		if (fwrite(cbuf, 1, res, fp) < (unsigned) res) {
 		    return -2;
+		}
 	    }
 	    *len += res;
-	    if (show) (*show_progress)(res, expected, SP_NONE);
+	    if (show) {
+		(*show_progress)(res, expected, SP_NONE);
+	    }
 	}
     }
 
@@ -1070,13 +1287,15 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 		}
 		memcpy(*getbuf + *len, cbuf, res);
 	    } else {
-		if (fwrite(cbuf, 1, res, fp) < (unsigned) res)
+		if (fwrite(cbuf, 1, res, fp) < (unsigned) res) {
 		    return -2;
+		}
 	    }
 	    *len += res;
 	    
-	    if (show && (*show_progress)(res, expected, SP_NONE) < 0)
+	    if (show && (*show_progress)(res, expected, SP_NONE) < 0) {
 		break;
+	    }
 	}
     } while (res > 0);
 
@@ -1112,7 +1331,7 @@ static int store_hostaddress (unsigned char *where, const char *hostname)
 }
 
 #ifdef WIN32
-#define ECONNREFUSED WSAECONNREFUSED
+# define ECONNREFUSED WSAECONNREFUSED
 #endif
 
 /* ........................................................... */
@@ -1123,21 +1342,25 @@ static uerr_t make_connection (int *sock, char *hostname, unsigned short port)
 {
     struct sockaddr_in sock_name;
 
-    if (!store_hostaddress((unsigned char *)&sock_name.sin_addr, hostname))
+    if (!store_hostaddress((unsigned char *)&sock_name.sin_addr, hostname)) {
 	return HOSTERR;
+    }
 
     sock_name.sin_family = AF_INET;
     sock_name.sin_port = htons(port); /* was g_htons */
 
-    if ((*sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    if ((*sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 	return CONSOCKERR;
+    }
 
     if (connect (*sock, (struct sockaddr *) &sock_name, sizeof sock_name)) {
-	if (errno == ECONNREFUSED)
+	if (errno == ECONNREFUSED) {
 	    return CONREFUSED;
-	else
+	} else {
 	    return CONERROR;
+	}
     }
+
     return NOCONERROR;
 }
 
@@ -1170,11 +1393,13 @@ static int iwrite (int fd, char *buf, int len)
 	do {
 	    res = WRITE(fd, buf, len);
 	} while (res == -1 && errno == EINTR);
+
 	if (res <= 0)
 	    break;
 	buf += res;
 	len -= res;
     }
+
     return res;
 }
 
@@ -1256,7 +1481,7 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
 
     /* hook u->local to buffer */
     u->filesave = 0;
-    u->local = saver;
+    u->savebuf = saver;
 
     result = http_loop(u, &dt, proxy); 
 
@@ -1440,9 +1665,11 @@ int proxy_init (const char *dbproxy)
     gretlproxy.port = 0;
     gretlproxy.filesave = 0;
     gretlproxy.path = NULL; 
-    gretlproxy.local = NULL;
-    if (gretlproxy.host)
+    gretlproxy.localfile = NULL;
+    gretlproxy.savebuf = NULL;
+    if (gretlproxy.host) {
 	free(gretlproxy.host);
+    }
     gretlproxy.host = NULL;
 
     if (!use_proxy || !strlen(dbproxy)) return 0;
@@ -1473,12 +1700,14 @@ int proxy_init (const char *dbproxy)
 
 /* ........................................................... */
 
-int retrieve_url (int opt, const char *dbase, const char *series, 
-		  int filesave, char **saver, char *errbuf)
+static int 
+retrieve_url (int opt, const char *dbase, const char *series, 
+	      int filesave, const char *savefile, char **savebuf,
+	      char *errbuf)
 /* grab data from URL.  If filesave = 1 then data is stored to
-   a local file whose name is given by "saver".  If filesave = 0
-   then "saver" is presumed to be a char buffer to which the data
-   should be printed
+   a local file whose name is given by "savefile".  If filesave = 0
+   then "savebuf" is presumed to point to a char buffer to which the data
+   should be written.
 */
 {
     uerr_t result;
@@ -1519,19 +1748,18 @@ int retrieve_url (int opt, const char *dbase, const char *series,
 
     if (filesave) {
 	u->filesave = 1;
-	u->local = mymalloc(sizeof *u->local);
-	*(u->local) = mymalloc(strlen(*saver) + 1);
-	strcpy(*(u->local), *saver);
+	u->localfile = g_strdup(savefile);
     } else {
 	u->filesave = 0;
-	u->local = saver;
+	u->localfile = NULL;
+	u->savebuf = savebuf;
     }
 
     result = http_loop(u, &dt, proxy);
     freeurl(u, 1);
 
     if (result == RETROK) {
-	errbuf[0] = 0;
+	*errbuf = 0;
 	return 0;
     } else {
 	strcpy(errbuf, u->errbuf);
@@ -1544,7 +1772,7 @@ int retrieve_url (int opt, const char *dbase, const char *series,
 #include <windows.h>
 #include <shellapi.h>
 
-long GetRegKey (HKEY key, char *subkey, char *retdata)
+static long GetRegKey (HKEY key, char *subkey, char *retdata)
 {
     long err;
     HKEY hkey;
@@ -1576,7 +1804,7 @@ int grab_url (int opt, char *fname, char **savebuf, char *localfile,
     return retrieve_url(opt, NULL, NULL, 1, savebuf, errbuf); /* FIXMEE!!! */
 }
 
-int read_reg_val (HKEY tree, char *keyname, char *keyval)
+static int read_reg_val (HKEY tree, char *keyname, char *keyval)
 {
     unsigned long datalen = MAXLEN;
     int error = 0;
@@ -1633,26 +1861,26 @@ int goto_url (const char *url)
     char key[MAX_PATH + MAX_PATH];
     int err = 0;
 
-    /* if the ShellExecute() fails */
     if ((long) ShellExecute(NULL, "open", url, NULL, NULL, SW_SHOW) <= 32) {
-	/* get the .htm regkey and lookup the program */
+	/* if the above failes, get the .htm regkey and 
+	   look up the program */
 	if (GetRegKey(HKEY_CLASSES_ROOT, ".htm", key) == ERROR_SUCCESS) {
 	    lstrcat(key,"\\shell\\open\\command");
 	    if (GetRegKey(HKEY_CLASSES_ROOT, key, key) == ERROR_SUCCESS) {
 		char *p;
 
 		p = strstr(key, "\"%1\"");
-		if (p == NULL) {    /* if no quotes */
-		    /* now check for %1, without the quotes */
+		if (p == NULL) {    
+		    /* so check for %1 without the quotes */
 		    p = strstr(key, "%1");
 		    if (p == NULL) {
 			/* if no parameter */
 			p = key + lstrlen(key) - 1;
 		    } else {
-			*p = '\0';    /* remove the parameter */
+			*p = '\0';    /* remove the param */
 		    }
 		} else {
-		    *p = '\0';        /* remove the parameter */
+		    *p = '\0';        /* remove the param */
 		}
 
 		lstrcat(p, " ");
@@ -1663,6 +1891,41 @@ int goto_url (const char *url)
     }
 
     return err;
+}
+
+#endif /* WIN32 */
+
+/* public interfaces to some of the above */
+
+#ifndef UPDATER
+
+int list_remote_dbs (char **getbuf, char *errbuf)
+{
+    return retrieve_url (LIST_DBS, NULL, NULL, 0, NULL, getbuf, errbuf);
+}
+
+int retrieve_remote_db_list (const char *dbname, 
+			     char **getbuf, 
+			     char *errbuf)
+{
+    return retrieve_url (GRAB_IDX, dbname, NULL, 0, NULL, getbuf, errbuf);
+}
+
+int retrieve_remote_db (const char *dbname, 
+			const char *localname,
+			char *errbuf, 
+			int opt)
+{
+    return retrieve_url (opt, dbname, NULL, 1, localname, NULL, errbuf);
+}
+
+int retrieve_remote_db_data (const char *dbname,
+			     const char *varname,
+			     char **getbuf,
+			     char *errbuf,
+			     int opt)
+{
+    return retrieve_url (opt, dbname, varname, 0, NULL, getbuf, errbuf);
 }
 
 #endif

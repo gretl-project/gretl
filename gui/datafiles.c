@@ -20,6 +20,8 @@
 /* datafiles.c : for gretl */
 
 #include "gretl.h"
+#include "webget.h"
+
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
@@ -382,17 +384,19 @@ static gint populate_remote_dblist (windata_t *ddata)
     gint i;
     time_t remtime;
 
-    if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL)
+    if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL) {
 	return 1;
+    }
     clear(getbuf, GRETL_BUFSIZE);
 
     errbuf[0] = '\0';
-    err = retrieve_url(LIST_DBS, NULL, NULL, 0, &getbuf, errbuf);
+    err = list_remote_dbs(&getbuf, errbuf);
 
     if (err) {
         if (strlen(errbuf)) {
-	    if (errbuf[strlen(errbuf)-1] == '\n')
+	    if (errbuf[strlen(errbuf)-1] == '\n') {
 		errbuf[strlen(errbuf)-1] = '\0';
+	    }
 	    errbox(errbuf);
 	} else 
 	    errbox(_("Error retrieving data from server"));

@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "boxplots.h"
+#include "webget.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -103,11 +104,11 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
 
     update_statusline(dbwin, _("Retrieving data..."));
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-    err = retrieve_url(GRAB_NBO_DATA, dbbase, sinfo->varname, 0, &getbuf, 
-		       errbuf);
+    err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
+				  errbuf, GRAB_NBO_DATA);
 #else
-    err = retrieve_url(GRAB_DATA, dbbase, sinfo->varname, 0, &getbuf, 
-		       errbuf);
+    err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
+				  errbuf, GRAB_DATA);
 #endif
 
     if (err) {
@@ -1040,7 +1041,7 @@ void open_named_remote_clist (char *dbname)
 
     if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL) return;
     memset(getbuf, 0, GRETL_BUFSIZE);
-    err = retrieve_url(GRAB_IDX, dbname, NULL, 0, &getbuf, errbuf);
+    err = retrieve_remote_db_list(dbname, &getbuf, errbuf);    
 
     if (err) {
         if (strlen(errbuf)) {
@@ -1074,16 +1075,18 @@ void open_remote_clist (GtkWidget *w, gpointer data)
     if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL) return;
     memset(getbuf, 0, GRETL_BUFSIZE);
     update_statusline(mydata, _("Retrieving data..."));
-    errbuf[0] = '\0';
-    err = retrieve_url(GRAB_IDX, fname, NULL, 0, &getbuf, errbuf);
+    *errbuf = '\0';
+    err = retrieve_remote_db_list(fname, &getbuf, errbuf);
 
     if (err) {
         if (strlen(errbuf)) {
-	    if (errbuf[strlen(errbuf)-1] == '\n')
+	    if (errbuf[strlen(errbuf)-1] == '\n') {
 		errbuf[strlen(errbuf)-1] = 0;
+	    }
 	    update_statusline(mydata, errbuf);
-	} else 
+	} else {
 	    update_statusline(mydata, _("Error retrieving data from server"));
+	}
     } else {
 	update_statusline(mydata, "OK");
 	display_db_series_list(REMOTE_SERIES, fname, getbuf);
@@ -1283,10 +1286,11 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     }
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-    err = retrieve_url(GRAB_NBO_DATA, dbname, NULL, 1, &ggzname, errbuf);
+    err = retrieve_remote_db(dbname, ggzname, errbuf, GRAB_NBO_DATA);
 #else
-    err = retrieve_url(GRAB_DATA, dbname, NULL, 1, &ggzname, errbuf);
+    err = retrieve_remote_db(dbname, ggzname, errbuf, GRAB_DATA);
 #endif
+
     if (err) {
         if (strlen(errbuf)) errbox(errbuf);
 	else {

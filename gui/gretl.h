@@ -322,8 +322,6 @@ void compact_data_set (void);
 
 /* webget.c */
 int update_query (int verbose); 
-int retrieve_url (int opt, const char *dbase, const char *series, 
-		  int filesave, char **saver, char *errbuf);
 int proxy_init (const char *dbproxy);
 
 void set_wm_icon (GtkWidget *w, gpointer data);
