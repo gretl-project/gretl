@@ -1360,6 +1360,7 @@ void exec_line (char *line, PRN *prn)
     case VAR:
 	order = atoi(command.param);
 	err = var(order, command.list, &Z, datainfo, !batch, prn);
+	/* err = johansen_test(order, command.list, &Z, datainfo, prn); */
 	break;
 
     case 999:

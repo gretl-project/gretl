@@ -385,6 +385,8 @@ static void add_dbdata (windata_t *dbwin, double ***dbZ, SERIESINFO *sinfo)
 	datainfo->pd = sinfo->pd;
 	strcpy(datainfo->stobs, sinfo->stobs);
 	strcpy(datainfo->endobs, sinfo->endobs);
+	colonize_obs(datainfo->stobs);
+	colonize_obs(datainfo->endobs);
 	datainfo->sd0 = get_date_x(datainfo->pd, datainfo->stobs);
 	datainfo->n = sinfo->nobs;
 	datainfo->v = 2;
@@ -449,8 +451,12 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     }
 
     dbdinfo->pd = sinfo->pd;
+
     strcpy(dbdinfo->stobs, sinfo->stobs);
     strcpy(dbdinfo->endobs, sinfo->endobs);
+
+    colonize_obs(dbdinfo->stobs);
+    colonize_obs(dbdinfo->endobs);
 
     dbdinfo->sd0 = get_date_x(dbdinfo->pd, dbdinfo->stobs);
     set_time_series(dbdinfo);

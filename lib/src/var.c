@@ -22,6 +22,13 @@
 #include "libgretl.h"   
 #include "internal.h"
 
+struct var_resids {
+    int *levels_list;
+    double **uhat;
+    int m;
+    int t1, t2;
+};
+
 /* ......................................................  */
 
 static int gettrend (double ***pZ, DATAINFO *pdinfo)
@@ -228,23 +235,8 @@ static int get_listlen (const int *varlist, int order, double **Z,
     return v;
 }
 
-/**
- * var:
- * @order: lag order for the VAR
- * @list: specification for the first model in the set.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- * @pause: if = 1, pause after showing each model.
- * @prn: gretl printing struct.
- *
- * Estimate a vector auto-regression (VAR) and print the results.
- *
- * Returns: 0 on successful completion, 1 on error.
- *
- */
-
-int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
-	 int pause, PRN *prn)
+static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
+		     int pause, PRN *prn, struct var_resids *resids)
 {
     /* construct the respective lists by adding the appropriate
        number of lags ("order") to the variables in list 
@@ -262,11 +254,12 @@ int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
        Run the regressions and print the results.
     */
+
     int i, j, index, l, listlen, end, neqns = 0;
-    int *varlist, *depvars, *shortlist;
-    int t1, t2, oldt1, oldt2, dfd;
+    int *varlist = NULL, *depvars = NULL, *shortlist = NULL;
+    int t1, t2, oldt1, oldt2, dfd = 0;
     int missv = 0, misst = 0;
-    double essu, F;
+    double essu = 0.0, F = 0.0;
     MODEL var_model;
 
     _init_model(&var_model, pdinfo);
@@ -331,65 +324,89 @@ int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     /* run and print out the several regressions */
     pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
     shortlist[0] = listlen - order;
+
+    /* apparatus for saving the residuals */
+    if (resids != NULL) {
+	resids->m = 2 * neqns;
+	resids->uhat = malloc(2 * neqns * sizeof(double *));
+	if (resids->uhat == NULL) return E_ALLOC;
+    }
     
     for (i=0; i<neqns; i++) {
 	varlist[1] = depvars[i];
 	/* run an OLS regression for the current dep var */
 	var_model = lsq(varlist, pZ, pdinfo, VAR, 0, 0.0);
 	var_model.aux = VAR;
-	printmodel(&var_model, pdinfo, prn);
-	/* keep some results for hypothesis testing */
-	essu = var_model.ess;
-	dfd = var_model.dfd;
+	/* save the residuals if required */
+	if (resids != NULL) {
+	    resids->t1 = var_model.t1;
+	    resids->t2 = var_model.t2;
+	    resids->uhat[i] = var_model.uhat;
+	    var_model.uhat = NULL;
+	} else {
+	    printmodel(&var_model, pdinfo, prn);
+	    /* keep some results for hypothesis testing */
+	    essu = var_model.ess;
+	    dfd = var_model.dfd;	    
+	}
 	clear_model(&var_model, pdinfo);
-	/* now build truncated lists for hyp. tests */
-	shortlist[1] = varlist[1];
-	pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
-	for (j=0; j<neqns; j++) {
-	    reset_list(shortlist, varlist);
-	    for (l=1; l<=order; l++) {
-		index = l + 1 + j * order;
-		if (index > shortlist[0]) break;
-		shortlist[index] = varlist[index+order];
-	    }
-	    end = 0;
-	    for (l=shortlist[0]; l>index; l--) {
-		shortlist[l] = varlist[varlist[0]-end];
-		end++;
-	    }
-	    pprintf(prn, _("All lags of %-8s "), 
-		   pdinfo->varname[depvars[j]]);
-	    /*  printlist(shortlist); */
-	    var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
-	    F = ((var_model.ess - essu)/order)/(essu/dfd);
+	if (resids != NULL) {
+	    /* do modified equations for Johansen test too */
+	    varlist[1] = resids->levels_list[i + 1]; 
+	    var_model = lsq(varlist, pZ, pdinfo, VAR, 0, 0.0);
+	    resids->uhat[i + neqns] = var_model.uhat;
+	    var_model.uhat = NULL;
 	    clear_model(&var_model, pdinfo);
-	    pprintf(prn, "F(%d, %d) = %f, ", order, dfd, F);
-	    pprintf(prn, _("p-value %f\n"), fdist(F, order, dfd));
-	}
-	if (order > 1) {
-	    pprintf(prn, _("All vars, lag %-6d "), order);
-	    reset_list(shortlist, varlist);
-	    index = 2;
-	    for (j=1; j<=neqns*(order); j++) {
-		if (j % order) {
-		    shortlist[index] = varlist[j+1];
-		    index++;
+	} else {
+	    /* now build truncated lists for hyp. tests */
+	    shortlist[1] = varlist[1];
+	    pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
+	    for (j=0; j<neqns; j++) {
+		reset_list(shortlist, varlist);
+		for (l=1; l<=order; l++) {
+		    index = l + 1 + j * order;
+		    if (index > shortlist[0]) break;
+		    shortlist[index] = varlist[index+order];
 		}
+		end = 0;
+		for (l=shortlist[0]; l>index; l--) {
+		    shortlist[l] = varlist[varlist[0]-end];
+		    end++;
+		}
+		pprintf(prn, _("All lags of %-8s "), 
+			pdinfo->varname[depvars[j]]);
+		/*  printlist(shortlist); */
+		var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
+		F = ((var_model.ess - essu)/order)/(essu/dfd);
+		clear_model(&var_model, pdinfo);
+		pprintf(prn, "F(%d, %d) = %f, ", order, dfd, F);
+		pprintf(prn, _("p-value %f\n"), fdist(F, order, dfd));
 	    }
-	    end = 0;
-	    for (l=shortlist[0]; l>=index; l--) {
-		shortlist[l] = varlist[varlist[0]-end];
-		end++;
+	    if (order > 1) {
+		pprintf(prn, _("All vars, lag %-6d "), order);
+		reset_list(shortlist, varlist);
+		index = 2;
+		for (j=1; j<=neqns*(order); j++) {
+		    if (j % order) {
+			shortlist[index] = varlist[j+1];
+			index++;
+		    }
+		}
+		end = 0;
+		for (l=shortlist[0]; l>=index; l--) {
+		    shortlist[l] = varlist[varlist[0]-end];
+		    end++;
+		}
+		/*  printlist(shortlist); */
+		var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
+		F = ((var_model.ess - essu)/neqns)/(essu/dfd);
+		clear_model(&var_model, pdinfo);
+		pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
+		pprintf(prn, _("p-value %f\n"), fdist(F, neqns, dfd)); 
 	    }
-	    /*  printlist(shortlist); */
-	    var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
-	    F = ((var_model.ess - essu)/neqns)/(essu/dfd);
-	    clear_model(&var_model, pdinfo);
-	    pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
-	    pprintf(prn, _("p-value %f\n"), fdist(F, neqns, dfd)); 
+	    pputs(prn, "\n");
+	    if (pause) page_break(0, NULL, 0);
 	}
-	pputs(prn, "\n");
-	if (pause) page_break(0, NULL, 0);
     }
     pputs(prn, "\n");
 
@@ -401,6 +418,28 @@ int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     pdinfo->t1 = oldt1;
     pdinfo->t2 = oldt2;
     return 0;
+}
+
+
+/**
+ * var:
+ * @order: lag order for the VAR
+ * @list: specification for the first model in the set.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @pause: if = 1, pause after showing each model.
+ * @prn: gretl printing struct.
+ *
+ * Estimate a vector auto-regression (VAR) and print the results.
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ *
+ */
+
+int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
+	 int pause, PRN *prn)
+{
+    return real_var(order, list, pZ, pdinfo, pause, prn, NULL);
 }
 
 /**
@@ -735,4 +774,60 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     dataset_drop_vars(1, pZ, pdinfo);
 
     return 0;
+}
+
+int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
+		   PRN *prn)
+{
+    PRN *varprn;
+    struct var_resids resids;
+    int err = 0;
+    int i, j, t;
+
+    /* we're assuming that the list we are fed is in levels */
+    resids.levels_list = malloc(list[0] * sizeof *list);
+    if (resids.levels_list == NULL) return E_ALLOC;
+
+    resids.levels_list[0] = list[0];
+    j = 1;
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == 0) {
+	    resids.levels_list[0] -= 1;
+	    continue;
+	}
+	resids.levels_list[j++] = list[i];
+    }
+
+    /* now get differences and put them into list */
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == 0) continue;
+	diffgenr(list[i], pZ, pdinfo);
+	list[i] = diffvarnum(list[i], pdinfo);
+    }
+
+    /* estimate VAR and other equations silently */
+    varprn = gretl_print_new(GRETL_PRINT_NULL, NULL);
+    err = real_var(order, list, pZ, pdinfo, 0, varprn, &resids);
+    gretl_print_destroy(varprn);
+
+    if (!err) {
+	char date[9];
+
+	for (i=0; i<resids.m; i++) {
+	    pprintf(prn, "Residuals from VAR model %d\n", i);
+	    for (t=resids.t1; t<=resids.t2; t++) {
+		ntodate(date, t, pdinfo);
+		pprintf(prn, "%8s %#.*g\n", date, GRETL_DIGITS, resids.uhat[i][t]);
+	    }
+	}
+
+	for (i=0; i<resids.m; i++) {
+	    free(resids.uhat[i]);
+	}
+	free(resids.uhat);
+    } 
+
+    free(resids.levels_list);
+
+    return err;
 }

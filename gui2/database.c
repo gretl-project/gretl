@@ -350,15 +350,18 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 		dataset_drop_vars(1, &Z, datainfo);
 		return;
 	    }
-	    if (sinfo->pd == 12 && datainfo->pd == 4) 
+	    if (sinfo->pd == 12 && datainfo->pd == 4) {
 		mon_to_quart(&xvec, (*dbZ)[1], sinfo, compact_method);
-	    else if (datainfo->pd == 1) 
+	    }
+	    else if (datainfo->pd == 1) {
 		to_annual(&xvec, (*dbZ)[1], sinfo, compact_method);
+	    }
 	} else {  /* series does not need compacting */
 	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
 	    for (t=0; t<sinfo->nobs; t++) 
 		xvec[t] = (*dbZ)[1][t];
 	}
+
 	/* common stuff for adding a var */
 	strcpy(datainfo->varname[v-1], sinfo->varname);
 	strcpy(datainfo->label[v-1], sinfo->descrip);
@@ -388,6 +391,8 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 	datainfo->pd = sinfo->pd;
 	strcpy(datainfo->stobs, sinfo->stobs);
 	strcpy(datainfo->endobs, sinfo->endobs);
+	colonize_obs(datainfo->stobs);
+	colonize_obs(datainfo->endobs);
 	datainfo->sd0 = get_date_x(datainfo->pd, datainfo->stobs);
 	datainfo->n = sinfo->nobs;
 	datainfo->v = 2;
@@ -452,8 +457,12 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     }
 
     dbdinfo->pd = sinfo->pd;
+
     strcpy(dbdinfo->stobs, sinfo->stobs);
     strcpy(dbdinfo->endobs, sinfo->endobs);
+
+    colonize_obs(dbdinfo->stobs);
+    colonize_obs(dbdinfo->endobs);
 
     dbdinfo->sd0 = get_date_x(dbdinfo->pd, dbdinfo->stobs);
     set_time_series(dbdinfo);

@@ -357,4 +357,39 @@ int sur (gretl_equation_system *sys, double ***pZ,
     return 0;
 }
 
+#if 0
+int johansen_eigenvals (double **uhat, int k, int t1, int t2)
+{
+    int i, t, T = t2 - t1 + 1;
+    gsl_matrix *D, *L, *R;
+    gsl_matrix *Svv, *Suu, *Suv;
+    int err = 0;
 
+    D = gsl_matrix_alloc(T, k);
+    L = gsl_matrix_alloc(T, k);
+    R = gsl_matrix_alloc(T, k);
+
+    for (i=0; i<k; i++) {
+	for (t=0; t<T; t++) {
+	    gsl_matrix_set(D, i, t, uhat[i][t + t1]);
+	    gsl_matrix_set(L, i, t, uhat[i + k][t + t1]);
+	}
+    }
+
+    /* construct VCV matrices of residuals */
+
+    /* find and sort eigenvalues of ... */
+
+
+    /* free stuff */
+
+    gsl_matrix_free(D);
+    gsl_matrix_free(L);
+    gsl_matrix_free(R);
+    gsl_matrix_free(Svv);
+    gsl_matrix_free(Suu);
+    gsl_matrix_free(Suv);
+    
+    return err;
+}
+#endif

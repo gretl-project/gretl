@@ -869,6 +869,10 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
 	axis_range[i].isauto = NULL;
     }
 
+    for (i=0; i<NTITLES; i++) {
+	gpt_titles[i].widget = NULL;
+    }
+
     gpt_control = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(gpt_control), _("gretl plot controls"));
     gtk_container_set_border_width 
