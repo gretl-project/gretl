@@ -27,9 +27,6 @@
 #define QR_RCOND_MIN 1e-15 /* experiment with this? */
 #define ESSZERO      1e-22 /* SSR < this counts as zero */
 
-#define model_missing(m,t)     (m->missmask != NULL && \
-                                m->missmask[t - m->t1] != 0)
-
 /* In fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.
    So in a fortran array, entries for a given variable are

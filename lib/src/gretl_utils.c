@@ -2006,13 +2006,11 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     }
 
     /* create new list */
-
     list = malloc((finfo->v + 1) * sizeof *list);
     if (list == NULL) {
 	fr->err = E_ALLOC;
 	goto fcast_bailout;
     }
-
     list[0] = finfo->v;
     list[1] = 1;
     list[2] = 0;
@@ -2030,14 +2028,23 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	   ft1, ft2, pmod->t1, pmod->t2);
 #endif
 
+    /* FIXME: case of missing obs within model range */
+
     for (k=0; k<nfcast; k++) {
+
+	if (model_missing(pmod, k + ft1)) {
+	    fr->sderr[k] = fr->fitted[k] = NADBL;
+	    fr->actual[k] = (*pZ)[pmod->list[1]][k + ft1];
+	    continue;
+	}
+
 	/* form modified indep vars: original data minus the values
 	   to be used for the forecast */
 	for (i=3; i<=list[0]; i++) {
 	    j = (pmod->ifc)? pmod->list[i] : pmod->list[i-1];
 	    for (t=0; t<finfo->n; t++) {
 		fZ[i-1][t] = (*pZ)[j][t + pmod->t1] 
-		    - (*pZ)[j][k + ft1]; 
+		    - (*pZ)[j][k + ft1];
 	    }
 	}
 	clear_model(&fmod);

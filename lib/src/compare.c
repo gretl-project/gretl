@@ -1451,8 +1451,11 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 	int j = 0;
 
 	for (t=0; t<pdinfo->n; t++) {
-	    if (t < t1 || t >= t2) (*pZ)[v][t] = NADBL;
-	    else (*pZ)[v][t] = gretl_matrix_get(m, j++, 0);
+	    if (t < t1 || t >= t2) {
+		(*pZ)[v][t] = NADBL;
+	    } else {
+		(*pZ)[v][t] = gretl_matrix_get(m, j++, 0);
+	    }
 	}
 	strcpy(pdinfo->varname[v], "lever");
 	make_varname_unique(pdinfo->varname[v], v, pdinfo);
@@ -1465,8 +1468,11 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 	int j = 0;
 
 	for (t=0; t<pdinfo->n; t++) {
-	    if (t < t1 || t >= t2) (*pZ)[v][t] = NADBL;
-	    else (*pZ)[v][t] = gretl_matrix_get(m, j++, 1);
+	    if (t < t1 || t >= t2) {
+		(*pZ)[v][t] = NADBL;
+	    } else {
+		(*pZ)[v][t] = gretl_matrix_get(m, j++, 1);
+	    }
 	}	
 	strcpy(pdinfo->varname[v], "influ");
 	make_varname_unique(pdinfo->varname[v], v, pdinfo);
@@ -1481,12 +1487,17 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 	for (t=0; t<pdinfo->n; t++) {
 	    double s, h;
 
-	    if (t < t1 || t >= t2) (*pZ)[v][t] = NADBL;
-	    else {
+	    if (t < t1 || t >= t2) {
+		(*pZ)[v][t] = NADBL;
+	    } else {
 		/* s = studentized residuals */
 		h = gretl_matrix_get(m, j, 0);
 		s = gretl_matrix_get(m, j, 2);
-		(*pZ)[v][t] = s * sqrt(h / (1.0 - h));
+		if (na(h) || na(s)) {
+		    (*pZ)[v][t] = NADBL;
+		} else {
+		    (*pZ)[v][t] = s * sqrt(h / (1.0 - h));
+		}
 		j++;
 	    }
 	}	

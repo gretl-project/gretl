@@ -72,11 +72,6 @@ static int lagdepvar (const int *list, const DATAINFO *pdinfo,
 static int tsls_match (const int *list1, const int *list2, int *newlist);
 /* end private protos */
 
-#define missing_masked(m,t,t1) (m != NULL && m[t-t1] != 0)
-#define model_missing(m,t)     (m->missmask != NULL && \
-                                m->missmask[t - m->t1] != 0)
-
-
 static void model_depvar_stats (MODEL *pmod, const double **Z)
 {
     double xx, sum = 0.0;

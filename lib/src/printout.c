@@ -1498,6 +1498,10 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 
     for (t=0; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
+	if (na(fr->actual[t]) || na(fr->fitted[t])) {
+	    pputc(prn, '\n');
+	    continue;
+	}
 	gretl_printxs(fr->actual[t], 15, PRINT, prn);
 	gretl_printxs(fr->fitted[t], 15, PRINT, prn);
 	gretl_printxs(fr->sderr[t], 15, PRINT, prn);

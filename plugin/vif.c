@@ -25,6 +25,7 @@ static double get_vif (const MODEL *pmod, double ***pZ,
     MODEL tmpmod;
     int *vlist;
     double x = NADBL;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int i, j;
 
     vlist = malloc(pmod->list[0] * sizeof *vlist);
@@ -42,11 +43,19 @@ static double get_vif (const MODEL *pmod, double ***pZ,
 	}
     }
 
+    /* impose original model sample */
+    pdinfo->t1 = pmod->t1;
+    pdinfo->t2 = pmod->t2;
+
     tmpmod = lsq(vlist, pZ, pdinfo, OLS, OPT_A, 0.0); 
 
     if (tmpmod.errcode == 0 && !na(tmpmod.rsq) && tmpmod.rsq != 1.0) {
 	x = 1.0 / (1.0 - tmpmod.rsq);
     }
+
+    /* reinstate sample */
+    pdinfo->t1 = t1;
+    pdinfo->t2 = t2;
 
     clear_model(&tmpmod);
 

@@ -31,11 +31,6 @@ struct flag_info {
     unsigned char *flag;
 };
 
-#define missing_masked(m,t,t1) (m != NULL && m[t-t1] != 0)
-#define model_missing(m,t)     (m->missmask != NULL && \
-                                m->missmask[t - m->t1] != 0)
-
-
 static gboolean destroy_save_dialog (GtkWidget *w, struct flag_info *finfo)
 {
     free(finfo);
@@ -213,7 +208,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 			  PATHS *ppaths)
 {
     FILE *fp = NULL;
-    int t, ts;
+    int t;
     int timeplot = 0;
 
     if (gnuplot_init(ppaths, PLOT_LEVERAGE, &fp)) return 1;
@@ -237,7 +232,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     fputs("set xzeroaxis\n", fp);
     if (!timeplot) { 
 	fprintf(fp, "set xrange [%g:%g]\n", 
-		pmod->t1 + 0.5, pmod->t2 + 0.5); /* FIXME? */
+		pmod->t1 + 0.5, pmod->t2 + 1.5);
     }
     fputs("set nokey\n", fp); 
 
@@ -252,13 +247,9 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     fprintf(fp, "set title '%s'\n", I_("leverage"));
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
 
-    ts = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	double h = NADBL;
+	double h = gretl_matrix_get(S, t - pmod->t1, 0);
 
-	if (!model_missing(pmod, t)) {
-	    h = gretl_matrix_get(S, ts++, 0);
-	}
 	if (na(h)) {
 	    if (timeplot) {
 		fprintf(fp, "%g ?\n", (*pZ)[timeplot][t]);
@@ -282,13 +273,9 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     fprintf(fp, "set title '%s'\n", I_("influence")); 
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
 
-    ts = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	double f = NADBL;
+	double f = gretl_matrix_get(S, t - pmod->t1, 1);
 
-	if (!model_missing(pmod, t)) {
-	    f = gretl_matrix_get(S, ts++, 1);
-	}
 	if (na(f)) {
 	    if (timeplot) {
 		fprintf(fp, "%g ?\n", (*pZ)[timeplot][t]);
@@ -356,9 +343,11 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
     slist[slist[0]] = pdinfo->v - 1; /* last var added */  
     k = slist[0] - 2;
 
-    ts = 0;
     for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
+	ts = t - pmod->t1;
+
 	if (model_missing(pmod, t)) {
+	    gretl_matrix_set(S, ts, 2, NADBL);
 	    dum[t-1] = 0.0;
 	    continue;
 	}	
@@ -370,13 +359,15 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 	if (smod.errcode) {
 	    err = smod.errcode;
 	} else {
-	    gretl_matrix_set(S, ts++, 2, smod.coeff[k] / smod.sderr[k]);
+	    gretl_matrix_set(S, ts, 2, smod.coeff[k] / smod.sderr[k]);
 	}
 	clear_model(&smod);
     }
 
     if (err) {
-	for (t=0; t<pmod->nobs; t++) {
+	int modn = pmod->t2 - pmod->t1 + 1;
+
+	for (t=0; t<modn; t++) {
 	    gretl_matrix_set(S, t, 2, NADBL);
 	}
     }
@@ -403,8 +394,10 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     gretl_matrix *Q, *S = NULL;
     doublereal *tau, *work;
     double lp;
-    int i, j, t, tmod;
+    int i, j, t, tq, tmod;
     int err = 0, serr = 0, gotlp = 0;
+    /* allow for missing obs in model range */
+    int modn = pmod->t2 - pmod->t1 + 1;
 
     m = pmod->nobs;              /* # of rows = # of observations */
     lda = m;                     /* leading dimension of Q */
@@ -468,7 +461,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     free(work);
     work = NULL;
 
-    S = gretl_matrix_alloc(m, 3);
+    S = gretl_matrix_alloc(modn, 3);
     if (S == NULL) {
 	err = 1;
 	goto qr_cleanup;
@@ -483,14 +476,20 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     pputs(prn, "            u          0<=h<=1         u*h/(1-h)\n\n");
 
     /* do the "h" calculations */
-    for (t=0; t<m; t++) {
+    tq = 0;
+    for (t=0; t<modn; t++) {
 	double q, h = 0.0;
 
-	for (i=0; i<n; i++) {
-	    q = gretl_matrix_get(Q, t, i);
-	    h += q * q;
+	if (model_missing(pmod, t + pmod->t1)) {
+	    gretl_matrix_set(S, t, 0, NADBL);
+	} else {
+	    for (i=0; i<n; i++) {
+		q = gretl_matrix_get(Q, tq, i);
+		h += q * q;
+	    }
+	    tq++;
+	    gretl_matrix_set(S, t, 0, h);
 	}
-	gretl_matrix_set(S, t, 0, h);
     }
 
     /* put studentized resids into S[2] */
@@ -499,16 +498,16 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     lp = 2.0 * n / m;
 
     /* print the results */
-    t = 0;
-    tmod = pmod->t1;
-    while (t < m) {
-	double h, s, d, f = 0.0;
+    for (t=0; t<modn; t++) {
+	double h, s, d, f = NADBL;
 	char fstr[24];
 
-	if (na(pmod->uhat[tmod])) {
+	tmod = t + pmod->t1;
+
+	if (model_missing(pmod, tmod)) {
 	    print_obs_marker(tmod, pdinfo, prn);
+	    gretl_matrix_set(S, t, 1, f);
 	    pputc(prn, '\n');
-	    tmod++;
 	    continue;
 	}
 
@@ -538,8 +537,6 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 		    (h > lp)? "*" : " ", fstr);
 	}
 	gretl_matrix_set(S, t, 1, f);
-	t++;
-	tmod++;
     }
 
     if (gotlp) {

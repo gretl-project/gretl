@@ -22,6 +22,10 @@
 #include <stdio.h>
 
 /* functions follow */
+
+#define missing_masked(m,t,t1) (m != NULL && m[t-t1] != 0)
+#define model_missing(m,t)     (m->missmask != NULL && \
+                                m->missmask[t - m->t1] != 0)
  
 MODEL lsq (LIST list, 
 	   double ***pZ, DATAINFO *pdinfo, 
