@@ -994,6 +994,104 @@ void free_windata (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
+#include "pixmaps/save.xpm"
+#include "pixmaps/saveas.xpm"
+#include "pixmaps/exec_small.xpm"
+#include "pixmaps/copy.xpm"
+#include "pixmaps/paste.xpm"
+#include "pixmaps/replace.xpm"
+#include "pixmaps/undo.xpm"
+#include "pixmaps/close.xpm"
+
+static void make_editbar (windata_t *vwin, GtkWidget *dialog)
+{
+    GtkWidget *iconw, *button, *editbar;
+    GdkPixmap *icon;
+    GdkBitmap *mask;
+    GdkColormap *colormap;
+    gpointer ptr = vwin;
+    int i;
+    static char *editstrings[] = {"Save",
+				  "Save as...",
+				  "Run",
+				  "Copy selection", 
+				  "Paste", 
+				  "Replace...",
+				  "Undo",
+				  "Close",
+				  NULL};
+    gchar **toolxpm = NULL;
+    void (*toolfunc)() = NULL;
+
+    colormap = gdk_colormap_get_system();
+    editbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL, GTK_TOOLBAR_ICONS);
+    gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), editbar);
+
+    colorize_tooltips(GTK_TOOLBAR(editbar)->tooltips);
+
+    for (i=0; editstrings[i] != NULL; i++) {
+	switch (i) {
+	case 0:
+	    toolxpm = save_xpm;	    
+	    if (vwin->action == EDIT_BUFFER) 
+		toolfunc = buf_edit_save;
+	    else
+		toolfunc = file_viewer_save;
+	    break;
+	case 1:
+	    if (vwin->action != EDIT_NOTES && vwin->action != EDIT_BUFFER) {
+		toolxpm = save_as_xpm;
+		toolfunc = file_save_callback;
+	    } else
+		toolfunc = NULL;
+	    break;
+	case 2:
+	    if (vwin->action == EDIT_SCRIPT) {
+		toolxpm = exec_xpm;
+		toolfunc = run_script_callback;
+	    } else
+		toolfunc = NULL;
+	    break;
+	case 3:
+	    toolxpm = copy_xpm;
+	    toolfunc = text_copy_callback;
+	    break;
+	case 4:
+	    toolxpm = paste_xpm;
+	    toolfunc = text_paste_callback;
+	    break;
+	case 5:
+	    toolxpm = replace_xpm;
+	    toolfunc = text_replace_callback;
+	    break;
+	case 6:
+	    toolxpm = undo_xpm;
+	    toolfunc = text_undo_callback;
+	    break;
+	case 7:
+	    toolxpm = close_xpm;
+	    toolfunc = delete_file_viewer;
+	    ptr = dialog;
+	    break;
+	default:
+	    break;
+	}
+
+	if (toolfunc == NULL) continue;
+
+	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, colormap, &mask, NULL, 
+						     toolxpm);
+	iconw = gtk_pixmap_new(icon, mask);
+	button = gtk_toolbar_append_item(GTK_TOOLBAR(editbar),
+					 NULL, editstrings[i], NULL,
+					 iconw,
+					 toolfunc, ptr);
+    }
+    gtk_widget_show(editbar);
+}
+
+/* ........................................................... */
+
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			char *title, int action,
 			GtkItemFactoryEntry menu_items[]) 
@@ -1081,18 +1179,32 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
 /* ........................................................... */
 
+static int file_suffix (const char *fname, const char *suff)
+{
+    char *p;
+
+    if (fname == NULL || suff == NULL) return 0;
+    if ((p = rindex(fname, *suff)) && 
+	!strcmp(p, suff))
+	return 1;
+    else
+	return 0;
+}
+
+/* ........................................................... */
+
 windata_t *view_file (char *filename, int editable, int del_file, 
 		      int hsize, int vsize, char *title, 
 		      GtkItemFactoryEntry menu_items[]) 
 {
-    GtkWidget *dialog, *close, *save = NULL, *table;
+    GtkWidget *dialog, *table;
     GtkWidget *vscrollbar; 
     extern GdkColor red, blue;
     void *colptr = NULL, *nextcolor = NULL;
     char tempstr[MAXSTR], *fle = NULL;
     FILE *fd = NULL;
     windata_t *vwin;
-    int console = 0;
+    int console = 0, show_editbar = 0;
     static GtkStyle *style;
 
     fd = fopen(filename, "r");
@@ -1145,7 +1257,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     }
     gtk_widget_set_style(GTK_WIDGET(vwin->w), style);
 
-    if (editable) 
+    if (editable)  
 	gtk_text_set_editable(GTK_TEXT(vwin->w), TRUE);
     else 
 	gtk_text_set_editable(GTK_TEXT(vwin->w), FALSE);
@@ -1155,6 +1267,11 @@ windata_t *view_file (char *filename, int editable, int del_file,
     if (console) {
 	gtk_signal_connect(GTK_OBJECT(vwin->w), "key_press_event",
 			   (GtkSignalFunc) console_handler, NULL);
+    } else {
+	/* editable windows other than the console get an
+	   edit toolbar */
+	if (editable)
+	    show_editbar = 1;
     }
 
     gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
@@ -1179,25 +1296,26 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	strcpy(fle, filename);
     }
 
-    /* add a "save" button for editable files */
-    if (editable && !console)  {
-	save = gtk_button_new_with_label("Save");
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-			   save, FALSE, TRUE, 0);
-	gtk_signal_connect(GTK_OBJECT(save), "clicked", 
-			   GTK_SIGNAL_FUNC(file_viewer_save), 
-			   vwin);
-	gtk_widget_show(save);
-    }
+    /* should we show an editing toolbar? */
+    if (strstr(title, "command script") || file_suffix(filename, ".inp")) 
+	vwin->action = EDIT_SCRIPT; 
+    else if (strstr(title, "session notes")) 
+	vwin->action = EDIT_NOTES; 
+    if (show_editbar) 
+	make_editbar(vwin, dialog);
 
-    /* close button for all uses */
-    close = gtk_button_new_with_label("Close");
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       close, FALSE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
-		       GTK_SIGNAL_FUNC(delete_file_viewer), 
-		       (gpointer) dialog);
-    gtk_widget_show(close);
+    /* close button for non-editable windows and console */
+    if (console || !editable) {
+	GtkWidget *close = 
+	    gtk_button_new_with_label("Close");
+
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
+			   close, FALSE, TRUE, 0);
+	gtk_signal_connect(GTK_OBJECT(close), "clicked", 
+			   GTK_SIGNAL_FUNC(delete_file_viewer), 
+			   (gpointer) dialog);
+	gtk_widget_show(close);
+    }
 
     /* insert the file text */
     memset(tempstr, 0, sizeof tempstr);
@@ -1242,7 +1360,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
 windata_t *edit_buffer (char **pbuf, int hsize, int vsize, char *title) 
 {
-    GtkWidget *dialog, *close, *save, *table;
+    GtkWidget *dialog, *table;
     GtkWidget *vscrollbar; 
     windata_t *vwin;
 
@@ -1298,23 +1416,8 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize, char *title)
 
     gtk_widget_show(table);
 
-    /* add a "save" button */
-    save = gtk_button_new_with_label("Save");
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       save, FALSE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(save), "clicked", 
-		       GTK_SIGNAL_FUNC(buf_edit_save), 
-		       vwin);
-    gtk_widget_show(save);
-
-    /* and a close button */
-    close = gtk_button_new_with_label("Close");
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       close, FALSE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
-		       GTK_SIGNAL_FUNC(delete_file_viewer), 
-		       (gpointer) dialog);
-    gtk_widget_show(close);
+    /* add an editing bar */
+    make_editbar(vwin, dialog);    
 
     /* insert the buffer text */
     gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 

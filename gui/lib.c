@@ -50,7 +50,6 @@ static int gui_exec_line (char *line,
 			  const char *myname); 
 static void console_exec (void);
 static void finish_genr (MODEL *pmod);
-static void do_run_script (gpointer data, guint code, GtkWidget *w);
 static void auto_save_script (gpointer data, guint action, GtkWidget *w);
 static gint stack_model (int gui);
 
@@ -2714,7 +2713,7 @@ static void auto_save_script (gpointer data, guint quiet, GtkWidget *w)
 
 /* ........................................................... */
 
-static void do_run_script (gpointer data, guint code, GtkWidget *w)
+void do_run_script (gpointer data, guint code, GtkWidget *w)
 {
     PRN *prn;
     char *runfile = NULL, fname[MAXLEN];
@@ -2730,7 +2729,7 @@ static void do_run_script (gpointer data, guint code, GtkWidget *w)
     gretl_print_destroy(prn);
     refresh_data();
 
-    view_file(fname, 1, 1, 77, 450, "gretl: script output", script_out_items);
+    view_file(fname, 0, 1, 77, 450, "gretl: script output", script_out_items);
 }
 
 /* ........................................................... */

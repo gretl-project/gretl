@@ -44,6 +44,8 @@ void view_log (void);
 
 void console (void);
 
+void do_run_script (gpointer data, guint code, GtkWidget *w);
+
 void gui_errmsg (const int errcode);
 
 /* sample-related functions */

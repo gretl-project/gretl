@@ -48,6 +48,8 @@ enum extra_cmds {
     H_TEST,
     VIEW_MODEL,
     EDIT_BUFFER,
+    EDIT_SCRIPT,
+    EDIT_NOTES,
     CMD_LAST
 };
 

@@ -30,4 +30,16 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget);
 
 void model_test_callback (gpointer data, guint action, GtkWidget *widget);
 
+void text_copy_callback (GtkWidget *w, gpointer data);
+
+void text_paste_callback (GtkWidget *w, gpointer data);
+
+void text_replace_callback (GtkWidget *w, gpointer data);
+
+void text_undo_callback (GtkWidget *w, gpointer data);
+
+void run_script_callback (GtkWidget *w, gpointer data);
+
+void file_save_callback (GtkWidget *w, gpointer data);
+
 #endif /* CALLBACKS_H */

@@ -200,6 +200,8 @@ void menubar_state (gboolean s);
 
 void graphmenu_state (gboolean s);
 
+void colorize_tooltips (GtkTooltips *tip);
+
 gint populate_clist (GtkWidget *widget, DATAINFO *pdatainfo);
 
 void clear_sample_label (void);

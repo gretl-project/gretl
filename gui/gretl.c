@@ -58,7 +58,6 @@ extern void set_panel_structure (gpointer data, guint u, GtkWidget *w);
 
 /* functions private to gretl.c */
 static void make_toolbar (GtkWidget *w, GtkWidget *box);
-static void colorize_tooltips (GtkTooltips *tip);
 static void clip_init (GtkWidget *w);
 static GtkWidget *make_main_window (int gui_get_data);
 static GtkWidget *build_var_menu (void);
@@ -1487,7 +1486,7 @@ static void open_ramudata (void)
 
 /* ........................................................... */
 
-static void colorize_tooltips (GtkTooltips *tip)
+void colorize_tooltips (GtkTooltips *tip)
 {
     GdkColor t_back;
     GtkStyle *style;
@@ -1579,8 +1578,6 @@ static void go_session (void)
 
 /* ........................................................... */
 
-#define TOOLS 10
-
 static void make_toolbar (GtkWidget *w, GtkWidget *box)
 {
     GtkWidget *iconw, *button;
@@ -1597,7 +1594,9 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 				  "show help", 
 				  "X-Y graph", 
 				  "Capture last graph for editing",
-				  "open dataset"};
+				  "open dataset",
+				  NULL
+    };
     gchar **toolxpm = NULL;
     void (*toolfunc)() = NULL;
 
@@ -1614,7 +1613,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 
     colorize_tooltips(GTK_TOOLBAR(gretl_toolbar)->tooltips);
 
-    for (i=0; i<TOOLS; i++) {
+    for (i=0; toolstrings[i] != NULL; i++) {
 	switch (i) {
 	case 0:
 	    toolxpm = mini_calc_xpm;

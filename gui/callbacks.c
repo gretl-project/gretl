@@ -506,3 +506,56 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 		" Cancel ", NULL, NULL, action, varclick);   
 }
 
+/* ........................................................... */
+
+void text_copy_callback (GtkWidget *w, gpointer data)
+{
+    text_copy(data, COPY_SELECTION, w);
+}
+
+/* ........................................................... */
+
+void text_paste_callback (GtkWidget *w, gpointer data)
+{
+    text_paste(data, 0, w);
+}
+
+/* ........................................................... */
+
+void text_replace_callback (GtkWidget *w, gpointer data)
+{
+    text_replace(data, 0, w);
+}
+
+/* ........................................................... */
+
+void text_undo_callback (GtkWidget *w, gpointer data)
+{
+    text_undo(data, 0, w);
+}
+
+/* ........................................................... */
+
+void run_script_callback (GtkWidget *w, gpointer data)
+{
+    do_run_script(data, SCRIPT_EXEC, w);
+}
+
+/* ........................................................... */
+
+void file_save_callback (GtkWidget *w, gpointer data)
+{
+    guint u = 0;
+    windata_t *mydata = (windata_t *) data;
+
+    switch (mydata->action) {
+    case EDIT_SCRIPT:
+	u = SAVE_SCRIPT;
+	break;
+    default:
+	errbox("Sorry, not yet implemented");
+	return;
+    }
+
+    file_save(data, u, w);
+}
