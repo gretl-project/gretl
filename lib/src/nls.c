@@ -391,6 +391,61 @@ static void clear_nls_spec (void)
     nlspec.iters = 0;
 }
 
+static int check_derivs (integer m, integer n, double *x,
+			 double *fvec, double *fjac,
+			 integer ldfjac)
+{
+    integer mode = 1;
+    integer iflag;
+    doublereal *xp;
+    doublereal *err;
+    doublereal *fvecp;
+    int i, badcount = 0;
+
+    xp = malloc(m * sizeof *xp);
+    err = malloc(m * sizeof *err);
+    fvecp = malloc(m * sizeof *fvecp);
+    if (xp == NULL || err == NULL || fvecp == NULL) {
+	free(err);
+	free(xp);
+	free(fvecp);
+	return 1;
+    }
+
+    iflag = 1;
+    nls_calc(&m, &n, x, fvec, fjac, &ldfjac, &iflag);
+    if (iflag == -1) goto chkderiv_abort;
+    chkder_(&m, &n, x, fvec, fjac, &ldfjac, xp, fvecp, &mode, err);
+
+    iflag = 2;
+    nls_calc(&m, &n, x, fvec, fjac, &ldfjac, &iflag);
+    if (iflag == -1) goto chkderiv_abort;
+    iflag = 1;
+    nls_calc(&m, &n, xp, fvecp, fjac, &ldfjac, &iflag);
+    if (iflag == -1) goto chkderiv_abort; 
+    mode = 2;
+    chkder_(&m, &n, x, fvec, fjac, &ldfjac, xp, fvecp, &mode, err);
+
+    /* examine err vector */
+    for (i=0; i<m; i++) {
+	if (err[i] < 0.35) badcount++;
+    }
+
+    if (badcount > 0) {
+	pputs(prn, "Warning: The supplied derivatives may be incorrect,\n"
+	      "or perhaps the data matrix is ill-conditioned.\n");
+	pprintf(prn, "%d out of %d gradients looked suspicious.\n\n",
+		badcount, (int) m);
+    }
+
+ chkderiv_abort:
+    free(xp);
+    free(err);
+    free(fvecp);
+
+    return 0;
+}
+
 static int lm_calculate (int nobs, int nparam, double *x, double *fvec,
 			 double toler)
 {
@@ -415,6 +470,8 @@ static int lm_calculate (int nobs, int nparam, double *x, double *fvec,
 	err = 1;
 	goto nls_cleanup;
     }
+
+    check_derivs(m, n, x, fvec, fjac, ldfjac);
 
     /* run levenberg-marquandt from minpack */
     lmder1_(nls_calc, &m, &n, x, fvec, fjac, &ldfjac, &tol, 

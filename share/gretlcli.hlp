@@ -100,7 +100,7 @@ coeffsum
 Usage:         coeffsum indepvars
 Examples:      coeffsum xt xt_1 xt_2
 
-Must follow an regression.  Calculates the sum of the coefficients on the
+Must follow a regression.  Calculates the sum of the coefficients on the
 variables in the "indepvars" list.  Prints this sum along with its standard
 error and the p-value for the null hypothesis that the sum is zero.
 
