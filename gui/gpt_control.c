@@ -1695,8 +1695,13 @@ identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
 
     plot_n = plot->spec->t2 - plot->spec->t1 + 1;
 
-    min_xdist = xrange = plot->xmax - plot->xmin;
-    min_ydist = yrange = plot->ymax - plot->ymin;
+    if (plot_is_zoomed(plot)) {
+	min_xdist = xrange = plot->zoom->xmax - plot->zoom->xmin;
+	min_ydist = yrange = plot->zoom->ymax - plot->zoom->ymin;
+    } else {
+	min_xdist = xrange = plot->xmax - plot->xmin;
+	min_ydist = yrange = plot->ymax - plot->ymin;
+    }
 
     data_x = &plot->spec->data[0];
     data_y = &plot->spec->data[plot_n];
@@ -2303,13 +2308,7 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot,
 			      dumbgp);
-
-#ifdef G_OS_WIN32
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-#else
     err = system(plotcmd);
-#endif
-    
     g_free(plotcmd);
     remove(dumbgp);
 
