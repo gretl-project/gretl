@@ -25,6 +25,14 @@
 #include <dirent.h>
 #include <unistd.h>
 
+#ifndef WIN32
+# include <glib.h>
+# if GLIB_CHECK_VERSION(2,0,0)
+#  define GLIB_SPAWN
+#  include <signal.h>
+# endif /* GLIB_CHECK_VERSION */
+#endif /* ! WIN32 */
+
 static DIR *dir;
 
 static int _pdton (int pd);
@@ -788,7 +796,7 @@ int set_obs (char *line, DATAINFO *pdinfo, unsigned char opt)
     return 0;
 }
 
-#ifdef OS_WIN32
+#ifdef WIN32
 char *unslash (const char *src)
 {
     size_t n = strlen(src);
@@ -805,14 +813,14 @@ static int get_subdir (const char *topdir, int first, char *fname)
 {
     DIR *try;
     struct dirent *dirent;
-#ifdef OS_WIN32
+#ifdef WIN32
     char *tmp = unslash(topdir);
 
     if (tmp == NULL) return -1;
 #endif
 
     if (first) {
-#ifdef OS_WIN32
+#ifdef WIN32
 	if ((dir = opendir(tmp)) == NULL) {
 	    free(tmp);
 	    return -1;
@@ -906,14 +914,14 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     if (test != NULL) { 
 	fclose(test); 
 	/* if a relative path was given, convert it to absolute */
-#ifdef OS_WIN32
+#ifdef WIN32
 	if (fname[1] == ':') return fname;
 #endif
 	if (fname[0] != SLASH && (thisdir = malloc(MAXLEN)) != NULL) {
 	    int i = 0;
 
 	    if (getcwd(thisdir, MAXLEN-1) != NULL) {
-#ifdef OS_WIN32		
+#ifdef WIN32		
 		lower(thisdir); /* hmmm */
 #endif
 		if (strstr(fname, thisdir) == NULL) {
@@ -1267,7 +1275,7 @@ static char *internal_path_stuff (int code, const char *path)
     static char gretl_lib_path[MAXLEN];
 
     if (code == 1) {
-#ifdef OS_WIN32
+#ifdef WIN32
 	strcpy(gretl_lib_path, path);
 #else
 	char *p = strstr(path, "/share");
@@ -1308,7 +1316,7 @@ void show_paths (PATHS *ppaths)
 
 /* .......................................................... */
 
-#ifdef OS_WIN32
+#ifdef WIN32
 
 int set_paths (PATHS *ppaths, int defaults, int gui)
 {
@@ -2623,3 +2631,64 @@ void free_confint (CONFINT *cf)
     free(cf->list);
     free(cf);
 }
+
+/* ........................................................... */
+
+#ifdef GLIB_SPAWN
+
+int gretl_spawn (const char *cmdline)
+{
+    GError *error = NULL;
+    gchar *errout = NULL, *sout = NULL;
+    int ok, status;
+    int ret = 0;
+
+    signal(SIGCHLD, SIG_DFL);
+
+    ok = g_spawn_command_line_sync (cmdline,
+				    &sout,   /* standard output */
+				    &errout, /* standard error */
+				    &status, /* exit status */
+				    &error);
+
+    if (!ok) {
+	strcpy(gretl_errmsg, error->message);
+	fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
+	g_error_free(error);
+	ret = 1;
+    } else if (errout && *errout) {
+	strcpy(gretl_errmsg, errout);
+	fprintf(stderr, "stderr: '%s'\n", errout);
+	ret = 1;
+    } else if (status != 0) {
+	sprintf(gretl_errmsg, "%s\n%s", 
+		_("Command failed"),
+		sout);
+	fprintf(stderr, "status=%d: '%s'\n", status, sout);
+	ret = 1;
+    }
+
+    if (errout != NULL) g_free(errout);
+    if (sout != NULL) g_free(sout);
+
+    if (ret) {
+	fprintf(stderr, "Failed command: '%s'\n", cmdline);
+    } 
+
+    return ret;
+}
+
+#elif !defined(WIN32)
+
+int gretl_spawn (const char *cmdline)
+{
+    int err;
+
+    err = system(cmdline);
+    if (err) {
+	fprintf(stderr, "Failed command: '%s'\n", cmdline);
+    }
+    return err;
+}
+
+#endif

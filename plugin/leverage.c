@@ -108,7 +108,7 @@ static int leverage_plot (int n, int tstart, const double *uhat,
     setlocale(LC_NUMERIC, "");
 #endif
 
-#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+#if defined(WIN32) && !defined(GNUPLOT_PNG)
     fprintf(fp, "pause -1\n");
 #endif
     fclose(fp);

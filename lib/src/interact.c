@@ -23,7 +23,7 @@
 #include "internal.h"
 
 /* equipment for the "shell" command */
-#ifndef OS_WIN32
+#ifndef WIN32
 # include <sys/wait.h>
 # include <signal.h>
 # include <errno.h>
@@ -1027,9 +1027,7 @@ int parseopt (const char *s)
     return 0;
 }
 
-#ifndef OS_WIN32
-
-/* ........................................................ */
+#ifndef WIN32
 
 int shell (const char *arg)
 {
@@ -1082,7 +1080,7 @@ int shell (const char *arg)
     return 0;
 }
 
-#endif
+#endif /* ! WIN32 */
 
 /**
  * echo_cmd:

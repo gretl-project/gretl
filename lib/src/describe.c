@@ -24,7 +24,7 @@
 #include "gretl_matrix.h"
 #include <unistd.h>
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # include <windows.h>
 #endif
 
@@ -751,7 +751,7 @@ int corrgram (int varno, int order, double ***pZ,
     setlocale(LC_NUMERIC, "");
 #endif
 
-#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+#if defined(WIN32) && !defined(GNUPLOT_PNG)
     fputs("pause -1\n", fq);
 #endif
 
@@ -999,7 +999,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	setlocale(LC_NUMERIC, "");
 #endif
 	fprintf(fq, "e\n");
-#ifdef OS_WIN32
+#ifdef WIN32
 	fprintf(fq, "pause -1\n");
 #endif
 	fclose(fq);

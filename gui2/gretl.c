@@ -2028,7 +2028,7 @@ static void netscape_open (const char *url)
     char ns_cmd[128];
 
     sprintf(ns_cmd, "netscape -remote \"openURLNewWindow(%s)\"", url);
-    err = system(ns_cmd);
+    err = gretl_spawn(ns_cmd);
     if (err) gretl_fork("netscape", url);
 # endif /* USE_GNOME */
 }

@@ -1144,7 +1144,7 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
     }
 #else
     buf = g_strdup_printf("gnuplot -persist \"%s\"", mydata->fname);
-    err = system(buf);
+    err = gretl_spawn(buf);
 #endif
 
     if (err) errbox(_("gnuplot command failed"));
@@ -1190,7 +1190,7 @@ static void open_gui_graph (gui_obj *gobj)
     err = (WinExec(buf, SW_SHOWNORMAL) < 32);
 #else
     buf = g_strdup_printf("\"%s\" -persist \"%s\"", paths.gnuplot, graph->fname);
-    err = system(buf);
+    err = gretl_spawn(buf);
 #endif
     g_free(buf);
 

@@ -259,7 +259,7 @@ int read_nist_file (const char *fname,
     int i, t, npoly = 0;
     char fullname[128];
 
-#ifdef OS_WIN32
+#ifdef WIN32
     sprintf(fullname, "nist\\%s", fname);
     fp = fopen(fullname, "r");
 #else
@@ -545,7 +545,7 @@ void print_nist_summary (int ntests, int missing, int modelerrs,
 
 #ifdef USE_GMP
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # include <windows.h>
 #else
 # include <dlfcn.h>
@@ -553,7 +553,7 @@ void print_nist_summary (int ntests, int missing, int modelerrs,
 
 int open_mpols_plugin (void **handle)
 {
-#ifdef OS_WIN32
+#ifdef WIN32
     *handle = LoadLibrary("plugins\\mp_ols.dll");
     if (*handle == NULL) return 1;
 #else 
@@ -562,7 +562,7 @@ int open_mpols_plugin (void **handle)
 	fprintf(stderr, "%s\n", dlerror());
 	return 1;
     }
-#endif /* OS_WIN32 */
+#endif /* WIN32 */
     return 0;
 }
 

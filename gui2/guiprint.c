@@ -605,7 +605,7 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
 
     /* run gnuplot on the temp plotfile */
     sprintf(cmd, "\"%s\" \"%s\"", paths.gnuplot, temp);
-    if (system(cmd)) {
+    if (gretl_spawn(cmd)) {
 	remove(temp);
 	return NULL;
     }

@@ -29,7 +29,7 @@ LAPACK_LIBS = -llapack -lblas -lf2c
 
 # flags/defines
 LDFLAGS = -s 
-CFLAGS = -DOS_WIN32 -I. -I$(libdir) -I$(extradir) -I$(plugindir)
+CFLAGS = -I. -I$(libdir) -I$(extradir) -I$(plugindir)
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
 # source paths
@@ -140,7 +140,7 @@ $(GUIPROG): $(GUIOBJ) $(WRES)
 	$(CC) -mwindows -s -o $@ $^ $(LIBS) $(GUI_LIBS) -lpng $(ZLIB_LIB) -lmingwex
 
 $(CHECKER): $(CHECKSRC)
-	$(CC) -s -I. -I../lib/src -DOS_WIN32 -DUSE_GMP -o $@ $^ $(LIBS) $(ZLIB_LIB)
+	$(CC) -s -I. -I../lib/src -DUSE_GMP -o $@ $^ $(LIBS) $(ZLIB_LIB)
 
 buildstamp:
 	./builddate.pl

@@ -82,7 +82,7 @@ static int do_range_mean_plot (int n, double **Z, double *yhat,
     setlocale(LC_NUMERIC, "");
 #endif
 
-#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+#if defined(WIN32) && !defined(GNUPLOT_PNG)
     fputs("pause -1\n", fp);
 #endif
     fclose(fp);

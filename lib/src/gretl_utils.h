@@ -188,4 +188,8 @@ CONFINT *get_model_confints (const MODEL *pmod);
 
 void free_confint (CONFINT *cf);
 
+#ifndef WIN32
+int gretl_spawn (const char *cmdline);
+#endif
+
 #endif /* UTILS_H */

@@ -25,7 +25,7 @@
 
 #include <unistd.h>
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # include <windows.h>
 #else
 # include <glib.h>
@@ -48,48 +48,6 @@ static const char *get_gnuplot_pallette (int i, int plottype);
 /* ........................................................ */
 
 #ifdef GLIB_SPAWN
-
-static int gretl_spawn (const char *cmd)
-{
-    GError *error = NULL;
-    gchar *errout = NULL, *sout = NULL;
-    int ok, status;
-    int ret = 0;
-
-    signal(SIGCHLD, SIG_DFL);
-
-    ok = g_spawn_command_line_sync (cmd,
-				    &sout,   /* standard output */
-				    &errout, /* standard error */
-				    &status, /* exit status */
-				    &error);
-
-    if (!ok) {
-	strcpy(gretl_errmsg, error->message);
-	fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
-	g_error_free(error);
-	ret = 1;
-    } else if (errout && *errout) {
-	strcpy(gretl_errmsg, errout);
-	fprintf(stderr, "stderr: '%s'\n", errout);
-	ret = 1;
-    } else if (status != 0) {
-	sprintf(gretl_errmsg, "%s\n%s", 
-		_("gnuplot command failed"),
-		sout);
-	fprintf(stderr, "status=%d: '%s'\n", status, sout);
-	ret = 1;
-    }
-
-    if (errout != NULL) g_free(errout);
-    if (sout != NULL) g_free(sout);
-
-    if (ret) {
-	fprintf(stderr, "Failed command: '%s'\n", cmd);
-    } 
-
-    return ret;
-}
 
 static int gnuplot_test_command (const char *cmd)
 {
@@ -139,9 +97,7 @@ static int gnuplot_test_command (const char *cmd)
     return ret;
 }
 
-#elif !defined(OS_WIN32)
-
-# define gretl_spawn(s) system(s)
+#elif !defined(WIN32)
 
 static int gnuplot_test_command (const char *cmd)
 {
@@ -567,7 +523,7 @@ static int factorized_vars (double ***pZ,
     return 0;
 }
 
-#ifdef OS_WIN32
+#ifdef WIN32
 
 int gnuplot_has_ttf (void)
 {
@@ -615,7 +571,7 @@ static int gnuplot_has_filledcurve (void)
     return !t;
 }
 
-#endif /* OS_WIN32 */
+#endif /* WIN32 */
 
 /**
  * get_gretl_png_term_line:
@@ -638,7 +594,7 @@ const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype)
 
     *font_string = 0;
     *color_string = 0;
-#ifndef OS_WIN32
+#ifndef WIN32
     oldgp = old_gnuplot_png();
     gpttf = gnuplot_has_ttf();
 #endif
@@ -736,14 +692,14 @@ int gnuplot_display (const PATHS *ppaths)
     int err = 0;
     char plotcmd[MAXLEN];
 
-# ifdef OS_WIN32
+# ifdef WIN32
     sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 # else
     sprintf(plotcmd, "%s%s \"%s\"", ppaths->gnuplot, 
 	    (GRETL_GUI(ppaths))? "" : " -persist", ppaths->plotfile);
     err = gretl_spawn(plotcmd);  
-# endif /* OS_WIN32 */
+# endif /* WIN32 */
 
     return err;
 }
@@ -755,13 +711,13 @@ int gnuplot_display (PATHS *ppaths)
     int err = 0;
     char plotcmd[MAXLEN];
 
-# ifdef OS_WIN32
+# ifdef WIN32
     sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
     if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
 # else
     sprintf(plotcmd, "%s -persist \"%s\"", ppaths->gnuplot, ppaths->plotfile);
     if (gretl_spawn(plotcmd)) err = 1;
-# endif /* OS_WIN32 */
+# endif /* WIN32 */
 
     return err;
 }
@@ -899,7 +855,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     double *yvar1 = NULL, *yvar2 = NULL;
     int xvar, miss = 0, ols_ok = 0, tmplist[4];
     int npoints;
-#ifdef OS_WIN32
+#ifdef WIN32
     /* gnuplot 3.7.3 won't accept "height" here */
     const char *keystring = 
 	"set key left top height 1 width 1 box\n";
@@ -1245,7 +1201,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     setlocale(LC_NUMERIC, "");
 #endif
 
-#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+#if defined(WIN32) && !defined(GNUPLOT_PNG)
     fputs("pause -1\n", fq);
 #endif
     fclose(fq);
@@ -1372,7 +1328,7 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
 #endif
     } 
     fputs("set nomultiplot\n", fp);
-#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+#if defined(WIN32) && !defined(GNUPLOT_PNG)
     fputs("\npause -1\n", fp);
 #endif
     fclose(fp);
@@ -1472,7 +1428,7 @@ int gnuplot_3d (LIST list, const char *literal,
 	print_gnuplot_literal_lines(literal, fq);
     }
 
-#ifdef OS_WIN32
+#ifdef WIN32
     fprintf(fq, "splot %s'-' title '' w p lt 3\n", surface);
 #else
     fprintf(fq, "splot %s'-' title ''\n", surface);
@@ -1733,7 +1689,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     setlocale(LC_NUMERIC, "");
 #endif
 
-#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+#if defined(WIN32) && !defined(GNUPLOT_PNG)
     fputs("pause -1\n", fp);
 #endif
     if (fp) fclose(fp);
@@ -1805,7 +1761,7 @@ int plot_fcast_errs (int n, const double *obs,
     setlocale(LC_NUMERIC, "");
 #endif
 
-#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+#if defined(WIN32) && !defined(GNUPLOT_PNG)
     fputs("pause -1\n", fp);
 #endif
     fclose(fp);
@@ -2113,7 +2069,7 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
 #ifndef GNUPLOT_PIPE
     if (!dump) {
 	char plotcmd[MAXLEN];
-# ifdef OS_WIN32
+# ifdef WIN32
 	int winshow = 0;
 
 	if (fname == NULL) { /* sending plot to screen */
@@ -2124,7 +2080,7 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
 	fclose(fp);
 	spec->fp = NULL;
 	sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
-# ifdef OS_WIN32
+# ifdef WIN32
 	if (winshow) {
 	    err = (WinExec(plotcmd, SW_SHOWNORMAL) < 32);
 	} else {

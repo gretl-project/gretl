@@ -434,7 +434,7 @@ void display_session_graph_png (const char *fname)
 #ifdef G_OS_WIN32
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
-    err = system(plotcmd);
+    err = gretl_spawn(plotcmd);
 #endif
     g_free(plotcmd);
 
@@ -1443,7 +1443,7 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 #ifdef G_OS_WIN32
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
-    err = system(plotcmd);
+    err = gretl_spawn(plotcmd);
 #endif /* G_OS_WIN32 */
 
     remove(plottmp);
@@ -1506,7 +1506,7 @@ void do_save_graph (const char *fname, char *savestr)
 #ifdef G_OS_WIN32
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
-    err = system(plotcmd);
+    err = gretl_spawn(plotcmd);
 #endif /* G_OS_WIN32 */
 
     g_free(plotcmd);
@@ -1963,7 +1963,7 @@ static int parse_set_line (GPT_SPEC *spec, const char *line,
 static int open_gnuplot_pipe (const PATHS *ppaths, GPT_SPEC *plot)
      /* add file or pipe to plot struct */
 {
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
     plot->fp = NULL; /* will be opened later as needed */
 #else
     plot->fp = popen(ppaths->gnuplot, "w");
@@ -2806,7 +2806,7 @@ static int redisplay_edited_png (png_plot_t *plot)
 #ifdef G_OS_WIN32
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else    
-    err = system(plotcmd);
+    err = gretl_spawn(plotcmd);
 #endif
     g_free(plotcmd);
 
@@ -2875,7 +2875,7 @@ static int zoom_unzoom_png (png_plot_t *plot, int view)
 #ifdef G_OS_WIN32
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
-    err = system(plotcmd);
+    err = gretl_spawn(plotcmd);
 #endif
     g_free(plotcmd);  
 
@@ -3166,7 +3166,7 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 #ifdef G_OS_WIN32
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
-    err = system(plotcmd);
+    err = gretl_spawn(plotcmd);
 #endif
     
     g_free(plotcmd);

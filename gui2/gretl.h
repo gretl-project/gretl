@@ -22,7 +22,7 @@
 #ifndef GRETL_H
 #define GRETL_H
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # include "winconfig.h"
 #else
 # include "config.h"
@@ -299,7 +299,7 @@ enum latex_views {
 
 /* functions follow */
 
-#ifndef G_OS_WIN32
+#ifndef WIN32
 void gretl_fork (const char *prog, const char *arg);
 #endif
  
@@ -333,7 +333,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget);
 void gpt_save_dialog (void);
 void compact_data_set (void);
 
-#ifndef G_OS_WIN32
+#ifndef WIN32
 void set_wm_icon (GtkWidget *w, gpointer data);
 #else
 int create_child_process (char *prog, char *env);

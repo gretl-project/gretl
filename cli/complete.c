@@ -17,7 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef OS_WIN32
+#ifndef WIN32
 # include "config.h"
 #endif
 
@@ -30,7 +30,7 @@
 #include <readline/readline.h>
 #include <readline/history.h> 
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # ifndef CLI
 #  include "gretl_cmdlist.h"
 # endif

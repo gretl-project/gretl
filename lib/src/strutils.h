@@ -24,7 +24,7 @@
 
 #include "libgretl.h"
 
-#ifdef OS_WIN32
+#ifdef WIN32
 #define SLASH '\\'
 #define SLASHSTR "\\"
 #else

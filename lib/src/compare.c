@@ -24,7 +24,7 @@
 #include "libgretl.h"
 #include "internal.h"
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # include <windows.h>
 #endif
 
@@ -1365,7 +1365,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	    }
 	    fputs("e\n", fq);
 
-#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+#if defined(WIN32) && !defined(GNUPLOT_PNG)
 	    fputs("pause -1\n", fq);
 #endif
 	    fclose(fq);

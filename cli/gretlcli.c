@@ -27,7 +27,7 @@
 
 #include "libgretl.h"
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # include <windows.h>
 #else
 # include <sys/stat.h>
@@ -108,7 +108,7 @@ void usage(void)
     exit(EXIT_SUCCESS);
 }
 
-#ifndef OS_WIN32
+#ifndef WIN32
 
 int make_userdir (PATHS *ppaths) 
 {
@@ -224,17 +224,17 @@ unsigned char gp_flags (int batch, unsigned char opt)
 #ifdef ENABLE_NLS
 void nls_init (void)
 {
-# ifdef OS_WIN32
+# ifdef WIN32
     char gretldir[MAXLEN], localedir[MAXLEN];
 
     if (read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", gretldir)) {
         return;
     }
     sprintf(localedir, "%s\\locale", gretldir);
-# endif /* OS_WIN32 */
+# endif /* WIN32 */
 
     setlocale (LC_ALL, "");
-# ifdef OS_WIN32
+# ifdef WIN32
     bindtextdomain (PACKAGE, localedir);
 # else
     bindtextdomain (PACKAGE, LOCALEDIR);
@@ -258,7 +258,7 @@ int main (int argc, char *argv[])
     char tmp[MAXLINE];
     PRN *prn;
 
-#ifdef OS_WIN32
+#ifdef WIN32
     strcpy(tmp, argv[0]);
 #endif
 
@@ -313,12 +313,12 @@ int main (int argc, char *argv[])
     if (line == NULL) noalloc(_("command line")); 
 
     set_paths(&paths, 1, 0); /* 1 = defaults, 0 = not gui */
-#ifdef OS_WIN32
+#ifdef WIN32
     cli_read_registry(tmp, &paths);
     set_paths(&paths, 0, 0); /* not defaults; use registry info */
 #else
     make_userdir(&paths);
-#endif /* OS_WIN32 */
+#endif /* WIN32 */
 
     if (!batch) {
 	strcpy(cmdfile, paths.userdir);
@@ -1245,7 +1245,7 @@ void exec_line (char *line, PRN *prn)
 	if (*outfile != '\n' && *outfile != '\r' && strcmp(outfile, "q")) {
 	    printf(_("writing session output to %s%s\n"), 
 		   paths.userdir, outfile);
-#ifdef OS_WIN32
+#ifdef WIN32
 	    sprintf(syscmd, "\"%s\\gretlcli\" -b \"%s\" > \"%s%s\"", 
 		    paths.gretldir, cmdfile, paths.userdir, outfile);
 #else
@@ -1253,7 +1253,7 @@ void exec_line (char *line, PRN *prn)
 		    cmdfile, paths.userdir, outfile);
 #endif
 	    printf("%s\n", syscmd);
-	    system(syscmd);
+	    gretl_spawn(syscmd);
 	} 
 	break;
 
@@ -1314,7 +1314,7 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case SHELL:
-#ifdef OS_WIN32
+#ifdef WIN32
 	WinExec(line + 1, SW_SHOWNORMAL);
 #else		
 	shell(line + 1);

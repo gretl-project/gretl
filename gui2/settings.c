@@ -32,6 +32,9 @@
 # include <windows.h>
 #else
 # include <dirent.h>
+# include <sys/stat.h>
+# include <sys/types.h>
+# include <fcntl.h>
 # include "gtkfontselhack.h"
 #endif
 
@@ -335,7 +338,7 @@ static int check_for_prog (const char *prog)
 
 static void set_tramo_x12a_dirs (void)
 {
-    char cmd[MAXLEN];
+    char dirname[MAXLEN];
     DIR *test;
 
 #  ifdef HAVE_TRAMO 
@@ -359,22 +362,23 @@ static void set_tramo_x12a_dirs (void)
 	closedir(test);
     }
 #  ifdef HAVE_X12A
-    sprintf(cmd, "mkdir -p %s", x12adir);
-    system(cmd);
+    mkdir(x12adir, 0755);
 #  endif
 #  ifdef HAVE_TRAMO
-    sprintf(cmd, "mkdir -p %s/output", tramodir);
-    system(cmd);
-    sprintf(cmd, "mkdir -p %s/graph/acf", tramodir);
-    system(cmd);
-    sprintf(cmd, "mkdir -p %s/graph/filters", tramodir);
-    system(cmd);
-    sprintf(cmd, "mkdir -p %s/graph/forecast", tramodir);
-    system(cmd);
-    sprintf(cmd, "mkdir -p %s/graph/series", tramodir);
-    system(cmd);
-    sprintf(cmd, "mkdir -p %s/graph/spectra", tramodir);
-    system(cmd);
+    sprintf(dirname, "%s/output", tramodir);
+    mkdir(dirname, 0755);
+    sprintf(dirname, "%s/graph", tramodir);
+    mkdir(dirname, 0755);
+    sprintf(dirname, "%s/graph/acf", tramodir);
+    mkdir(dirname, 0755);
+    sprintf(dirname, "%s/graph/filters", tramodir);
+    mkdir(dirname, 0755);
+    sprintf(dirname, "%s/graph/forecast", tramodir);
+    mkdir(dirname, 0755);
+    sprintf(dirname, "%s/graph/series", tramodir);
+    mkdir(dirname, 0755);
+    sprintf(dirname, "%s/graph/spectra", tramodir);
+    mkdir(dirname, 0755);
 #  endif /* HAVE_TRAMO */
 }
 
@@ -1724,18 +1728,13 @@ static int validate_dir (const char *dirname)
 	fprintf(stderr, "Working dir already exists, OK\n");
 	closedir(test);
     } else {
-	gchar *sysbuf = g_strdup_printf("mkdir -p %s", dirname);
-
-	/* FIXME: use mkdir() function? */
-	
-	err = system(sysbuf);
+	err = mkdir(dirname, 0755);
 	if (err) {
 	    sprintf(errtext, _("Couldn't create directory '%s'"), dirname);
 	    errbox(errtext);
 	} else {
 	    infobox(_("Working directory created OK"));
 	}
-	g_free(sysbuf);
     }
 
     return err;

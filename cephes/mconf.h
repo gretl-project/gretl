@@ -62,7 +62,7 @@ Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 */
 
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # include "winconfig.h"
 #else
 # include "config.h"
@@ -149,7 +149,7 @@ typedef struct
 
 /* Define to ask for support of numbers that are Not-a-Number,
    else undefine.  This may automatically define INFINITIES in some files. */
-#ifndef OS_WIN32
+#ifndef WIN32
 /* # define NANS 1 */
 #endif
 

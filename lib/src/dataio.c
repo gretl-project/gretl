@@ -991,7 +991,7 @@ int get_info (const char *hdrfile, PRN *prn)
     if (fgets(s, MAXLEN-1, hdr) != NULL && strncmp(s, STARTCOMMENT, 2) == 0) {
 	do {
 	    if (fgets(s, MAXLEN-1, hdr) != NULL && strncmp(s, "*)", 2)) {
-#ifndef OS_WIN32
+#ifndef WIN32
 		delchar('\r', s);
 #endif
 		pputs(prn, s);
@@ -2879,7 +2879,7 @@ static int xmlfile (const char *fname)
     return ret;
 } 
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # include <windows.h>
 #else
 # include <dlfcn.h>
@@ -2889,7 +2889,7 @@ int open_plugin (const char *plugin, void **handle)
 {
     char pluginpath[MAXLEN];
 
-#ifdef OS_WIN32
+#ifdef WIN32
     sprintf(pluginpath, "%s\\plugins\\%s.dll", fetch_gretl_lib_path(), plugin);
     *handle = LoadLibrary(pluginpath);
     if (*handle == NULL) return 1;
@@ -2908,7 +2908,7 @@ void *get_plugin_function (const char *funcname, void *handle)
 {
     void *funp;
 
-#ifdef OS_WIN32
+#ifdef WIN32
     funp = GetProcAddress(handle, funcname);
 #else
     funp = dlsym(handle, funcname);
@@ -2925,7 +2925,7 @@ void *get_plugin_function (const char *funcname, void *handle)
 
 void close_plugin (void *handle)
 {
-#ifdef OS_WIN32
+#ifdef WIN32
     FreeLibrary(handle);
 #else
     dlclose(handle);

@@ -23,7 +23,7 @@
 #include <gtk/gtk.h>
 #include "tramo_x12a.h"
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # include <windows.h>
 #endif
 
@@ -275,7 +275,7 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
     fputs("e\n", fp);
 
     fputs("set nomultiplot\n", fp);
-#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+#if defined(WIN32) && !defined(GNUPLOT_PNG)
     fputs("pause -1\n", fp);
 #endif
 
@@ -736,14 +736,14 @@ int write_tx_data (char *fname, int varnum,
 
     /* run the program */
     if (request.code == X12A) {
-#ifdef G_OS_WIN32
+#ifdef WIN32
 	sprintf(cmd, "\"%s\" %s -r -p -q", prog, varname);
 	err = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
 		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
 #else
 	sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", 
 		workdir, prog, varname);
-	err = system(cmd);
+	err = gretl_spawn(cmd);
 #endif
     } else { /* TRAMO_SEATS */
 	char seats[MAXLEN];
@@ -751,7 +751,7 @@ int write_tx_data (char *fname, int varnum,
 	/* ensure any stale files get deleted first, just in case */
 	clear_tramo_files(workdir, varname);
 
-#ifdef OS_WIN32 
+#ifdef WIN32 
 	sprintf(cmd, "\"%s\" -i %s -k serie", prog, varname);
 	err = winfork(cmd, workdir, SW_SHOWMINIMIZED,
 		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
@@ -764,16 +764,11 @@ int write_tx_data (char *fname, int varnum,
 #else
 	sprintf(cmd, "cd \"%s\" && \"%s\" -i %s -k serie >/dev/null", workdir, prog, 
 		varname);
-	err = system(cmd);
+	err = gretl_spawn(cmd);
 	if (!err && request.code == TRAMO_SEATS) {
 	    get_seats_command(seats, prog);
 	    sprintf(cmd, "cd \"%s\" && \"%s\" -OF %s", workdir, seats, varname);
-	    err = system(cmd);
-	    if (err) {
-		fprintf(stderr, "This command failed:\n%s\n", cmd);
-	    }
-	} else {
-	    fprintf(stderr, "This command failed:\n%s\n", cmd);
+	    err = gretl_spawn(cmd);
 	}
 #endif
     }

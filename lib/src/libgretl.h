@@ -29,11 +29,11 @@
 # include "config.h"
 #endif
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # include "winconfig.h"
 #endif
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # ifndef isnan
 #  define isnan(x) ((x) != (x))
 # endif
@@ -386,7 +386,7 @@ struct _VCV {
 #include "calendar.h"
 #include "system.h"
 #include "nls.h"
-#ifdef OS_WIN32
+#ifdef WIN32
 # include "gretl_win32.h"
 #endif
 

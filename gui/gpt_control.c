@@ -403,12 +403,7 @@ void display_session_graph_png (const char *fname)
     if (add_png_term_to_plotfile(fname)) return;
 
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, fname);
-
-#ifdef G_OS_WIN32
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-#else
     err = system(plotcmd);
-#endif
     g_free(plotcmd);
 
     if (err) {
