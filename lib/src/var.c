@@ -1638,22 +1638,30 @@ static int auto_adjust_order (int *list, int order_max,
     double tstat, pval = 1.0;
     int i, k = order_max;
 
-    for (k=order_max; k>=0; k--) {
+    for (k=order_max; k>0; k--) {
 	kmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+
 	if (kmod.errcode) {
 	    clear_model(&kmod);
 	    fprintf(stderr, "adf: model failed in auto_adjust_order()\n");
 	    k = -1;
 	    break;
 	}
+
 	tstat = kmod.coeff[k] / kmod.sderr[k];
 	clear_model(&kmod);
 	pval = 2.0 * normal(tstat);
+
 	if (pval > 0.10) {
-	    for (i=k+2; i<list[0]; i++) {
-		list[i] = list[i+1];
+	    if (k == 1) {
+		k = 0;
+		break;
+	    } else {
+		for (i=k+2; i<list[0]; i++) {
+		    list[i] = list[i+1];
+		}
+		list[0] -= 1;
 	    }
-	    list[0] -= 1;
 	} else {
 	    break;
 	}
@@ -1778,7 +1786,7 @@ static int real_adf_test (int varno, int order, int niv,
 	if (i >= 2) {
 	    list[3 + order] = gettrend(pZ, pdinfo, 0);
 	    if (list[3 + order] == TREND_FAILED) {
-		err = 1;
+		err = E_ALLOC;
 		goto bailout;
 	    }
 	}
@@ -1786,7 +1794,7 @@ static int real_adf_test (int varno, int order, int niv,
 	if (i > 2) {
 	    list[4 + order] = gettrend(pZ, pdinfo, 1);
 	    if (list[4 + order] == TREND_FAILED) {
-		err = 1;
+		err = E_ALLOC;
 		goto bailout;
 	    }
 	}
@@ -1802,6 +1810,8 @@ static int real_adf_test (int varno, int order, int niv,
 
 	dfmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (dfmod.errcode) {
+	    fprintf(stderr, "adf_test: dfmod.errcode = %d\n", 
+		    dfmod.errcode);
 	    err = dfmod.errcode;
 	    clear_model(&dfmod);
 	    goto bailout;
@@ -1846,10 +1856,12 @@ static int real_adf_test (int varno, int order, int niv,
 	}
 
 	pprintf(prn, "   %s\n", _(teststrs[i]));
+
 	if (cointcode == 0) {
 	    pprintf(prn, "   %s: %s\n", _("model"), 
 		    (order > 0)? aug_models[i] : models[i]);
 	}
+
 	pprintf(prn, "   %s: %g\n"
 		"   %s: t = %g\n"
 		"   %s\n",

@@ -273,6 +273,13 @@
 
 <xsl:template match="ilist[@context and @context!=$hlp]"/>
 
+<xsl:template match="nlist[not(@context) or @context=$hlp]">
+  <orderedlist><xsl:apply-templates/></orderedlist>
+  <xsl:call-template name="nl"/>
+</xsl:template>
+
+<xsl:template match="nlist[@context and @context!=$hlp]"/>
+
 <xsl:template match="li">
   <listitem><xsl:apply-templates/></listitem>
   <xsl:call-template name="nl"/>

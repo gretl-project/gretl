@@ -257,6 +257,10 @@
     </xsl:when>
     <xsl:when test="parent::li and ancestor::nlist">
       <xsl:text>&#xa;[NLISTPAR]</xsl:text>
+      <xsl:if test="count(../*)=1">
+        <xsl:value-of select="1 + count(../preceding-sibling::*)"/>
+        <xsl:text>. </xsl:text>
+      </xsl:if>
       <xsl:apply-templates/>[/NLISTPAR]
     </xsl:when>
     <xsl:otherwise>

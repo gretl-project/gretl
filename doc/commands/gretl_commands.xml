@@ -131,19 +131,19 @@
 
     <description>
       <para context="gui">This command needs an integer lag order; if
-      the order is zero a standard (not augmented) Dickey&ndash;Fuller
-      test is run.</para>
+	the order is zero a standard (not augmented)
+	Dickey&ndash;Fuller test is run.</para>
 
       <para>
 	Computes statistics for a set of Dickey&ndash;Fuller tests on
-	  the specified variable, the null hypothesis being that the
-	  variable has a unit root.</para>
+	the specified variable, the null hypothesis being that the
+	variable has a unit root.</para>
 
       <para>By default, three variants of the test are shown: one
-	  based on a regression containing a constant, one using a
-	  constant and linear trend, and one using a constant and a
-	  quadratic trend.  You can control the variants that are
-	  presented by specifying one or more of the option flags.
+	based on a regression containing a constant, one using a
+	constant and linear trend, and one using a constant and a
+	quadratic trend.  You can control the variants that are
+	presented by specifying one or more of the option flags.
       </para>
 
       <para>In all cases the dependent variable is the first
@@ -155,17 +155,43 @@
 	be written as <equation status="display"
 	tex="\[(1-L)y_t=\beta_0+(1-\alpha)y_{t-1}+\epsilon_t\]"
 	ascii="(1 - L)y(t) = b0 + (1-a)y(t-1) + e(t)"
-	graphic="adf1"/></para>
+	  graphic="adf1"/></para>
 
       <para>
-	If the lag order, <mathvar>p</mathvar>, is greater than 0,
-	then <mathvar>p</mathvar> lags of the dependent variable are
+	If the lag order, <mathvar>k</mathvar>, is greater than 0,
+	then <mathvar>k</mathvar> lags of the dependent variable are
 	included on the right-hand side of each test
 	regression.</para>
 
-      <para><emphasis>P-</emphasis>values for this test are based on
-	MacKinnon (1996).  The relevant code is included by kind
-	permission of the author.</para>
+      <para>
+	If the given lag order is prefaced with a minus sign, it is
+	taken as the maximum lag and the actual lag order used is
+	obtained by testing down.  Let the given order be
+	&minus;<mathvar>k</mathvar>: the testing-down algorithm is
+	then:</para>
+
+      <nlist>
+	<li><para>Estimate the Dickey&ndash;Fuller regression with
+	    <mathvar>k</mathvar> lags of the dependent variable.
+	  </para>
+	</li>
+	<li><para>Is the last lag significant?  If so, execute the
+	    test with lag order <mathvar>k</mathvar>.  Otherwise, let
+	    <mathvar>k</mathvar> = <mathvar>k</mathvar> &minus; 1; if
+	    <mathvar>k</mathvar> = 0, execute the test with lag order
+	    0, else go to step 1.
+	  </para>
+	</li>
+      </nlist>
+
+      <para>In the context of step 2 above, <quote>significant</quote>
+	means that the <mathvar>t</mathvar>-statistic for the last lag
+	has an asymptotic two-sided <emphasis>p</emphasis>-value,
+	against the normal distribution, of 0.10 or less.</para> 
+
+      <para><emphasis>P</emphasis>-values for the Dickey&ndash;Fuller
+	tests are based on MacKinnon (1996).  The relevant code is
+	included by kind permission of the author.</para>
 
     </description>
 
@@ -450,6 +476,19 @@
     <gui-access>
       <menu-path>/Data/Graph specified vars/Boxplots</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="break" section="Programming" context="cli">
+
+    <description>
+
+      <para>Break out of a loop.  This command can be used only within
+	a loop; it causes command execution to break out of the
+	current (innermost) loop.  See also <cmdref targ="loop"/>.
+      </para> 
+
+    </description>
 
   </command>
 
@@ -3126,24 +3165,24 @@
 	how to do it:</para>
 
       <nlist>
-	<li><para>1. Estimate a model which you wish to include in the
+	<li><para>Estimate a model which you wish to include in the
 	    table, and in the model display window, under the File
 	    menu, select <quote>Save to session as icon</quote> or
 	    <quote>Save as icon and close</quote>.</para>
 	</li>
 
-	<li><para>2. Repeat step 1 for the other models to be included in
+	<li><para>Repeat step 1 for the other models to be included in
 	    the table (up to a total of six models).</para>
 	</li>
 
-	<li><para>3. When you are done estimating the models, open the
+	<li><para>When you are done estimating the models, open the
 	    icon view of your gretl session (by selecting <quote>icon
 	      view</quote> under the Session menu in the main gretl
 	    window, or by clicking the <quote>session icon
 	      view</quote> icon on the gretl toolbar).</para>
 	</li>
 
-	<li><para>4. In session icon view, there is an icon labeled
+	<li><para>In session icon view, there is an icon labeled
 	    <quote>Model table</quote>. Decide which model you wish to
 	    appear in the left-most column of the model table and add
 	    it to the table, either by dragging its icon onto the
@@ -3152,20 +3191,20 @@
 	    pop-up menu.</para>
 	</li>
 
-	<li><para>5. Repeat step 4 for the other models you wish to
+	<li><para>Repeat step 4 for the other models you wish to
 	    include in the table.  The second model selected will
 	    appear in the second column from the left, and so
 	    on.</para>
 	</li>
 
-	<li><para>6. When you are finished composing the model table,
+	<li><para>When you are finished composing the model table,
 	    display it by double-clicking on its icon.  Under the Edit
 	    menu in the window which appears, you have the option of
 	    copying the table to the clipboard in various
 	    formats.</para>
 	</li>
 
-	<li><para>7. If the ordering of the models in the table is not
+	<li><para>If the ordering of the models in the table is not
 	    what you wanted, right-click on the model table icon and
 	    select <quote>Clear table</quote>.  Then go back to step 4
 	    above and try again.</para>
