@@ -1,0 +1,66 @@
+topsrc = @top_srcdir@
+
+CC = @CC@
+CFLAGS = @CFLAGS@
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+XML_CFLAGS = @XML_CFLAGS@
+XML_LIBS = @XML_LIBS@
+XSLT_CFLAGS = @XSLT_CFLAGS@
+XSLT_LIBS = @XSLT_LIBS@
+
+GRETLINC = -I$(topsrc)/lib/src
+GRETLLIB = ../../lib/libgretl-1.0.la
+
+VPATH = $(topsrc)/doc/commands
+
+LIBTOOL = ../../libtool
+
+progs: xsltrans skeleton reflow validate
+
+xsltrans: xsltrans.c 
+	$(CC) $(CFLAGS) $(XSLT_CFLAGS) -o $@ $^ $(XSLT_LIBS)
+
+reflow: reflow.c
+	$(CC) $(CFLAGS) -o $@ $^ 
+
+skeleton: skeleton.o
+	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB)
+
+validate: validate.o
+	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB)
+
+skeleton.o: skeleton.c
+	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
+
+validate.o: validate.c
+	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
+
+
+# test generation of XML skeleton from libgretl info:
+# the skeleton could be used as a template for translation
+skeleton.xml: skeleton gretl_commands.dtd
+	./skeleton > $@
+
+# test validity of skeleton.xml, and ability of xsltrans
+# to generate formatted output (text and XML)
+test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
+	xmllint --valid --noout $< && ./xsltrans skeleton.xml
+
+# Generate docbook XML for the command-reference section of the 
+# full manual, cmdlist.xml
+docbook: xsltrans gretl_commands.xml gretlman.xsl gretltxt.xsl
+	./xsltrans --docbook $(topsrc)/doc/commands/gretl_commands.xml && \
+	cp cmdlist.xml $(topsrc)/doc/chapters/cmdlist.xml
+
+# Generate "online" help file, gretlcli.hlp and gretl.hlp
+hlp: xsltrans reflow gretl_commands.xml gretlman.xsl gretltxt.xsl
+	./xsltrans --hlp $(topsrc)/doc/commands/gretl_commands.xml && \
+	./reflow < cmdlist.txt > $(topsrc)/share/gretlcli.hlp
+	./reflow < guilist.txt > $(topsrc)/share/gretl.hlp
+
+docclean:
+	 rm -f skeleton.xml cmdlist.* guilist.txt
+
+clean: docclean
+	rm -f xsltrans skeleton reflow validate *.o
