@@ -1,7 +1,0 @@
-#!/bin/sh
-
-grep -v 'xml version' $1 > $1.tmp
-sed s+' xmlns="http://www.w3.org/1998/Math/MathML"'++ < $1.tmp > $1
-sed s/\<m/\<mml:m/g < $1 > $1.tmp
-sed s+\</m+\</mml:m+g < $1.tmp > $1
-rm $1.tmp
