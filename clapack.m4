@@ -13,9 +13,9 @@ AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is i
      lapack_config_args="$lapack_config_args --prefix=$lapack_config_prefix"
   fi
 
-  AC_CHECK_LIB(f2c,c_sqrt,FLIB="f2c",FLIB="none")
+  AC_CHECK_LIB(f2c,c_sqrt,FLIB="-lf2c",FLIB="none")
   if test $FLIB = "none" ; then
-    AC_CHECK_LIB(g2c,c_sqrt,FLIB="g2c",FLIB="none")
+    AC_CHECK_LIB(g2c,c_sqrt,FLIB="-lg2c",FLIB="none")
   fi
   if test $FLIB = "none" ; then
      echo "*** Couldn't find either libf2c or libg2c"
@@ -24,7 +24,7 @@ AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is i
   AC_MSG_CHECKING(for LAPACK)
 
   LAPACK_CFLAGS="-I$lapack_config_prefix/include -I./plugin"
-  LAPACK_LIBS="-L$lapack_config_prefix/lib -llapack -lblas -l$FLIB"
+  LAPACK_LIBS="-L$lapack_config_prefix/lib -llapack -lblas $FLIB"
 
   ac_save_LIBS="$LIBS"
   CFLAGS="$CFLAGS $LAPACK_CFLAGS"
@@ -87,5 +87,6 @@ main ()
   fi
   AC_SUBST(LAPACK_CFLAGS)
   AC_SUBST(LAPACK_LIBS)
+  AC_SUBST(FLIB)
   rm -f conf.lapacktest
 ])
