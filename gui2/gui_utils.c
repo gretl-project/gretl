@@ -3099,4 +3099,58 @@ char *double_underscores (char *targ, const char *src)
     return targ;
 }
 
+#ifndef OLD_GTK
 
+gchar *my_locale_from_utf8 (const gchar *src)
+{
+    gchar *trstr;
+    gsize bytes;
+    GError *err = NULL;
+
+    trstr = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
+
+    if (err != NULL) {
+	const gchar *cset = NULL;
+
+	g_get_charset(&cset);
+	if (cset != NULL) {
+	    sprintf(errtext, "g_locale_from_utf8 failed for charset '%s'",
+		    cset);
+	} else {
+	    strcpy(errtext, "g_locale_from_utf8 failed; "
+		   "so did g_get_charset");
+	}
+	errbox(errtext);
+	g_error_free(err);
+    }
+
+    return trstr;
+}
+
+gchar *my_locale_to_utf8 (const gchar *src)
+{
+    gchar *trstr;
+    gsize bytes;
+    GError *err = NULL;
+
+    trstr = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
+
+    if (err != NULL) {
+	const gchar *cset = NULL;
+
+	g_get_charset(&cset);
+	if (cset != NULL) {
+	    sprintf(errtext, "g_locale_to_utf8 failed for charset '%s'",
+		    cset);
+	} else {
+	    strcpy(errtext, "g_locale_to_utf8 failed; "
+		   "so did g_get_charset");
+	}
+	errbox(errtext);
+	g_error_free(err);
+    }
+
+    return trstr;
+}
+
+#endif

@@ -435,28 +435,28 @@ int prn_to_clipboard (PRN *prn, int copycode)
     if (copycode == COPY_TEXT || copycode == COPY_TEXT_AS_RTF) { 
 	/* need to convert from utf8 */
 	gchar *trbuf;
-	gsize bytes;
 	
-	trbuf = g_locale_from_utf8(prn->buf, -1, NULL, &bytes, NULL);
-	if (bytes > 0) {
+	trbuf = my_locale_from_utf8(prn->buf);
+	if (trbuf != NULL) {
+	    size_t len = strlen(trbuf);
+
 	    if (copycode == COPY_TEXT_AS_RTF) {
 		clipboard_buf = dosify_buffer(trbuf, copycode);
 	    } else {
-		clipboard_buf = mymalloc(bytes + 1);
+		clipboard_buf = mymalloc(len + 1);
 	    }
 	    if (clipboard_buf == NULL) {
 		g_free(trbuf);
 		return 1;
 	    }
 	    if (copycode != COPY_TEXT_AS_RTF) {
-		memcpy(clipboard_buf, trbuf, bytes + 1);
+		memcpy(clipboard_buf, trbuf, len + 1);
 	    }
 	    g_free(trbuf);
 	}
     } else { /* copying TeX, RTF or CSV */
-	size_t len;
+	size_t len = strlen(prn->buf);
 
-	len = strlen(prn->buf);
 	fprintf(stderr, "Copying to clipboard, %d bytes\n", (int) len);
 	clipboard_buf = mymalloc(len + 1);
 	if (clipboard_buf == NULL) return 1;

@@ -265,18 +265,18 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
 {
     const gchar *p;
     
-    *str = 0;
+    *str = '\0';
     g_return_if_fail(GTK_IS_ENTRY(w));
     p = gtk_entry_get_text(GTK_ENTRY(w));
 
     if (p != NULL && *p != '\0') {
 #if defined(ENABLE_NLS) && !defined(OLD_GTK)
-	gchar *trstr;
-	gsize bytes;
+	gchar *trstr = my_locale_from_utf8(str);
 
-	trstr = g_locale_from_utf8(p, -1, NULL, &bytes, NULL);
-	strncat(str, trstr, n-1);
-	g_free(trstr);
+	if (trstr != NULL) {
+	    strncat(str, trstr, n-1);
+	    g_free(trstr);
+	}
 #else
 	strncat(str, p, n-1);
 #endif
@@ -786,6 +786,34 @@ static int get_point_size (const char *font)
     }
 }
 
+static void set_gp_entry_string (GtkWidget *w, const char *str)
+{
+#ifndef OLD_GTK
+# ifdef ENABLE_NLS
+    int l2 = doing_iso_latin_2();
+# else
+    int l2 = 0;
+# endif
+    gchar *trstr;
+
+    if (l2) {
+	char lstr[MAXTITLE];
+	
+	sprint_html_to_l2(lstr, str);
+	trstr = my_locale_to_utf8(lstr);
+    } else {
+	trstr = my_locale_to_utf8(str);
+    }
+
+    if (trstr != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(w), trstr);
+	g_free(trstr);
+    }    
+#else
+    gtk_entry_set_text(GTK_ENTRY(w), str);
+#endif
+}
+
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     GtkWidget *tempwid, *box, *tbl;
@@ -822,11 +850,6 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
    
     for (i=0; i<NTITLES; i++) {
 	if (gpt_titles[i].tab == 0) {
-#ifndef OLD_GTK
-	    gsize bytes;
-	    gchar *titlestr;
-#endif
-
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, TAB_MAIN_COLS);
 	    tempwid = gtk_label_new(_(gpt_titles[i].description));
@@ -838,15 +861,8 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 				      tempwid, 1, TAB_MAIN_COLS, 
 				      tbl_len-1, tbl_len);
 				      
-            if (spec->titles[i] != NULL && *spec->titles[i] != '\0') {		      
-#ifdef OLD_GTK
-	        gtk_entry_set_text(GTK_ENTRY(tempwid), spec->titles[i]);
-#else		
-	        titlestr = g_locale_to_utf8(spec->titles[i], -1, NULL,
-					    &bytes, NULL);
-	        gtk_entry_set_text(GTK_ENTRY(tempwid), titlestr);
-	        g_free(titlestr);
-#endif
+            if (spec->titles[i] != NULL && *spec->titles[i] != '\0') {
+		set_gp_entry_string(tempwid, spec->titles[i]);
             }		
 
 #ifdef OLD_GTK		
@@ -939,12 +955,6 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
 	tbl_len++;
 	ebox = gtk_event_box_new();
-#if 0
-	gretl_tooltips_add(ebox, _("This box may contain the name of a "
-				   "TrueType font, such as arial or verdana, "
-				   "and a size in points.  Leave blank to "
-				   "use the default graph font."));
-#endif
 	tempwid = gtk_label_new (_("TrueType font"));
 	gtk_container_add(GTK_CONTAINER(ebox), tempwid);
 	gtk_table_attach_defaults(GTK_TABLE (tbl), 
@@ -1154,11 +1164,6 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     tbl_num = tbl_col = 0;
 
     for (i=0; i<spec->nlines; i++) {
-#ifndef OLD_GTK
-	gsize bytes;
-	gchar *titlestr;
-#endif
-
 	/* identifier and key or legend text */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
@@ -1177,8 +1182,8 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	linetitle[i] = gtk_entry_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  linetitle[i], 2, 3, tbl_len-1, tbl_len);
+	set_gp_entry_string(linetitle[i], spec->lines[i].title);
 #ifdef OLD_GTK
-	gtk_entry_set_text (GTK_ENTRY(linetitle[i]), spec->lines[i].title);
 	gtk_signal_connect (GTK_OBJECT(linetitle[i]), "changed", 
 			    GTK_SIGNAL_FUNC(linetitle_callback), 
 			    spec);
@@ -1186,10 +1191,6 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 			    GTK_SIGNAL_FUNC(apply_gpt_changes), 
 			    spec);
 #else
-	titlestr = g_locale_to_utf8(spec->lines[i].title, -1, NULL,
-				    &bytes, NULL);
-	gtk_entry_set_text (GTK_ENTRY(linetitle[i]), titlestr);
-	g_free(titlestr);
 	g_signal_connect (G_OBJECT(linetitle[i]), "changed", 
 			  G_CALLBACK(linetitle_callback), 
 			  spec);
@@ -1313,8 +1314,6 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	GdkPixmap *pixmap;
 	GdkBitmap *mask;	
 #else
-	gsize bytes;
-	gchar *titlestr;
 	GdkPixbuf *icon;
 #endif
 
@@ -1335,16 +1334,12 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 
 	labeltext[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
+	set_gp_entry_string(labeltext[i], spec->text_labels[i].text);
 #ifdef OLD_GTK
-	gtk_entry_set_text (GTK_ENTRY(labeltext[i]), spec->text_labels[i].text );
 	gtk_signal_connect (GTK_OBJECT(labeltext[i]), "activate", 
 			    GTK_SIGNAL_FUNC(apply_gpt_changes), 
 			    spec);
 #else
-	titlestr = g_locale_to_utf8(spec->text_labels[i].text, -1, NULL,
-				    &bytes, NULL);
-	gtk_entry_set_text (GTK_ENTRY(labeltext[i]), titlestr);
-	g_free(titlestr);
 	gtk_entry_set_width_chars(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
 	g_signal_connect (G_OBJECT(labeltext[i]), "activate", 
 			  G_CALLBACK(apply_gpt_changes), 
@@ -1472,11 +1467,6 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
    
     for (i=0; i<NTITLES; i++) {
 	if (gpt_titles[i].tab == 1 + axis) {
-#ifndef OLD_GTK
-	    gsize bytes;
-	    gchar *titlestr;
-#endif
-
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
             
@@ -1489,16 +1479,12 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 	    tempwid = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      tempwid, 1, 2, tbl_len-1, tbl_len);
+	    set_gp_entry_string(tempwid, spec->titles[i]);
 #ifdef OLD_GTK
-	    gtk_entry_set_text(GTK_ENTRY(tempwid), spec->titles[i]);
 	    gtk_signal_connect(GTK_OBJECT (tempwid), "activate", 
 			       GTK_SIGNAL_FUNC(apply_gpt_changes), 
 			       spec);
 #else
-	    titlestr = g_locale_to_utf8(spec->titles[i], -1, NULL,
-					&bytes, NULL);
-	    gtk_entry_set_text(GTK_ENTRY(tempwid), titlestr);
-	    g_free(titlestr);
 	    g_signal_connect(G_OBJECT (tempwid), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     spec);

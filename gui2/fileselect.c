@@ -146,6 +146,7 @@ static const char *get_gp_ext (const char *termtype)
     else if (!strcmp(termtype, "fig"))           return ".fig";
     else if (!strcmp(termtype, "latex"))         return ".tex";
     else if (!strcmp(termtype, "png"))           return ".png";
+    else if (!strcmp(termtype, "emf"))           return ".emf";
     else if (!strcmp(termtype, "plot commands")) return ".plt";
     else return "*";
 }
@@ -261,7 +262,6 @@ static void save_editable_content (int action, const char *fname,
     FILE *fp;
     gchar *buf;
 #if defined(ENABLE_NLS) && !defined(OLD_GTK)
-    gsize bytes;
     gchar *trbuf;
 #endif
 
@@ -283,9 +283,11 @@ static void save_editable_content (int action, const char *fname,
     }
 
 #if defined(ENABLE_NLS) && !defined(OLD_GTK)
-    trbuf = g_locale_from_utf8(buf, -1, NULL, &bytes, NULL);
-    system_print_buf(trbuf, fp);
-    g_free(trbuf);
+    trbuf = my_locale_from_utf8(buf);
+    if (trbuf != NULL) {
+	system_print_buf(trbuf, fp);
+	g_free(trbuf);
+    }
 #else
     system_print_buf(buf, fp);
 #endif
@@ -545,6 +547,7 @@ static struct winfilter get_gp_filter (const char *termtype)
 	{ N_("xfig files (*.fig)"), "*.fig" },
 	{ N_("LaTeX files (*.tex)"), "*.tex" },
 	{ N_("PNG files (*.png)"), "*.png" },
+	{ N_("Windows metafiles (*.emf)"), "*.emf" },
 	{ N_("gnuplot files (*.plt)"), "*.plt" },
 	{ N_("all files (*.*)"), "*.*" }
     };
@@ -557,10 +560,12 @@ static struct winfilter get_gp_filter (const char *termtype)
 	return gpfilters[2];
     else if (!strcmp(termtype, "png")) 
 	return gpfilters[3];
-    else if (!strcmp(termtype, "plot commands")) 
+    else if (!strcmp(termtype, "emf")) 
 	return gpfilters[4];
-    else 
+    else if (!strcmp(termtype, "plot commands")) 
 	return gpfilters[5];
+    else 
+	return gpfilters[6];
 }
 
 static struct winfilter get_filter (int action, gpointer data)
@@ -700,9 +705,7 @@ void file_selector (const char *msg, int action, gpointer data)
     }	
 
     if (doing_nls()) {
-	gint wrote;
-
-	trmsg = g_locale_from_utf8 (msg, -1, NULL, &wrote, NULL);
+	trmsg = my_locale_from_utf8(msg);
     } else {
 	trmsg = g_strdup(msg);
     }
@@ -736,7 +739,9 @@ void file_selector (const char *msg, int action, gpointer data)
     }
 
     free(filter);
-    g_free(trmsg);
+    if (trmsg != NULL) {
+	g_free(trmsg);
+    }
 
     if (!retval) {
 	if (CommDlgExtendedError()) {

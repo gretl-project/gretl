@@ -784,15 +784,18 @@ static char *start_trim (char *s)
 static int my_utf_validate (char *s)
 {
     if (!g_utf8_validate(s, -1, NULL)) {
-	gsize wrote;
 	gchar *new;
 
 # if 0
 	fprintf(stderr, "database: string '%s' does not utf-8 validate\n", s);
 # endif
-	new = g_locale_to_utf8(s, -1, NULL, &wrote, NULL);
-	strcpy(s, new);
-	g_free(new);
+	new = my_locale_to_utf8(s);
+	if (new != NULL) {
+	    strcpy(s, new);
+	    g_free(new);
+	} else {
+	    *s = '\0';
+	}
 	return 1;
     }
     return 0;
@@ -989,7 +992,6 @@ static void insert_and_free_db_table (db_table *tbl, GtkCList *clist)
     gchar *comment;
     GtkTreeIter iter;
     GtkListStore *store;
-    gsize bytes;
 #else
     gchar *row[3];
 #endif
@@ -1001,7 +1003,7 @@ static void insert_and_free_db_table (db_table *tbl, GtkCList *clist)
 
     for (i=0; i<tbl->nrows; i++) {    
 #ifndef OLD_GTK
-	comment = g_locale_to_utf8(tbl->rows[i].comment, -1, NULL, &bytes, NULL);
+	comment = my_locale_to_utf8(tbl->rows[i].comment);
 
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 
@@ -1009,7 +1011,9 @@ static void insert_and_free_db_table (db_table *tbl, GtkCList *clist)
 			   1, comment,
 			   2, tbl->rows[i].obsinfo, 
 			   -1);
-	g_free(comment);
+	if (comment != NULL) {
+	    g_free(comment);
+	}
 #else
 	row[0] = tbl->rows[i].varname;
 	row[1] = tbl->rows[i].comment;

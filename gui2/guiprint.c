@@ -111,9 +111,11 @@ int win_copy_buf (char *buf, int format, size_t buflen)
     EmptyClipboard();
 
     if (doing_nls() && format == COPY_TEXT) { 
-	gsize bytes;
-
-	tr = g_locale_from_utf8 (buf, -1, NULL, &bytes, NULL);
+	tr = my_locale_from_utf8(buf);
+	if (tr == NULL) {
+	    CloseClipboard();
+	    return 1;
+	}
 	winbuf = dosify_buffer(tr, format);
     } else {
 	winbuf = dosify_buffer(buf, format);
@@ -181,7 +183,6 @@ static char *header_string (void)
     gchar *hdr, *ustr;
 #if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
     gchar *trans;
-    gsize wrote;
 #endif
     time_t prntime = time(NULL);
 
@@ -195,9 +196,11 @@ static char *header_string (void)
     }
 
 #if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
-    trans = g_locale_to_utf8(hdr, -1, NULL, &wrote, NULL);
-    g_free(hdr);
-    hdr = trans;
+    trans = my_locale_to_utf8(hdr);
+    if (trans != NULL) {
+	g_free(hdr);
+	hdr = trans;
+    }
 #endif  
 
     return hdr;
@@ -280,9 +283,9 @@ void winprint (char *fullbuf, char *selbuf)
 
 #ifdef ENABLE_NLS
     if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) {
-	printbuf = g_locale_from_utf8(selbuf, -1, NULL, &bytes, NULL);
+	printbuf = my_locale_from_utf8(selbuf);
     } else {
-	printbuf = g_locale_from_utf8(fullbuf, -1, NULL, &bytes, NULL);
+	printbuf = my_locale_from_utf8(fullbuf);
     }
 #else
     if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) {
@@ -292,6 +295,11 @@ void winprint (char *fullbuf, char *selbuf)
     }
 #endif
 
+    if (printbuf == NULL) {
+	printok = 0;
+	goto bailout;
+    }
+
     page = 1;
     x = px / 2; /* attempt at left margin */
     hdrstart = header_string();
@@ -300,7 +308,11 @@ void winprint (char *fullbuf, char *selbuf)
 	SelectObject(dc, fixed_font);
 	SetMapMode(dc, MM_TEXT);
 	/* make simple header */
-	sprintf(hdr, I_("%s, page %d"), hdrstart, page++);
+	if (hdrstart != NULL) {
+	    sprintf(hdr, I_("%s, page %d"), hdrstart, page++);
+	} else {
+	    sprintf(hdr, "%d", page++);
+	}
 	TextOut(dc, x, px / 8, hdr, strlen(hdr));
 	line = 0;
 	y = px/2;
@@ -314,7 +326,11 @@ void winprint (char *fullbuf, char *selbuf)
 	printok = (EndPage(dc) > 0);
     }
 
-    g_free(hdrstart);
+    if (hdrstart != NULL) {
+	g_free(hdrstart);
+    }
+
+ bailout:
     
     if (printok) {
         EndDoc(dc);
@@ -328,7 +344,9 @@ void winprint (char *fullbuf, char *selbuf)
     GlobalFree(pdlg.hDevNames);
 
 #ifdef ENABLE_NLS
-    g_free(printbuf);
+    if (printbuf != NULL) {
+	g_free(printbuf);
+    }
 #endif
 
     free(fullbuf); /* was allocated by gtk_editable_get_chars() */
@@ -416,7 +434,7 @@ int winprint_graph (char *emfname)
 
 	printok = (EndPage(dc) > 0);
     }
-    
+
     if (printok) {
         EndDoc(dc);
     } else {

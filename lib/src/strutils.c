@@ -1226,6 +1226,27 @@ char *sprint_l2_to_html (char *targ, const char *s, size_t len)
     return targ;
 }
 
+char *sprint_html_to_l2 (char *targ, const char *s)
+{
+    int u;
+    char *p = targ;
+
+    *p = '\0';
+
+    while (*s) {
+	if (sscanf(s, "&#%d;", &u)) {
+	    *p++ = ucs_lookup(u);
+	    s = strchr(s, ';') + 1;
+	} else {
+	    *p++ = *s++;
+	}
+    }
+
+    *p = '\0';
+
+    return targ;
+}
+
 int print_as_html (const char *s, FILE *fp)
 {
     unsigned char c;

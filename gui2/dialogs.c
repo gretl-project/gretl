@@ -2827,21 +2827,19 @@ static void msgbox (const char *msg, int err)
     gchar *trmsg = NULL;
     int nls_on = doing_nls();
 
-    if (nls_on) {
-	gint wrote;
-
-	trmsg = g_locale_from_utf8 (msg, -1, NULL, &wrote, NULL);
+    if (nls_on && !g_utf8_validate(msg, -1, NULL)) {
+	trmsg = my_locale_from_utf8(msg);
+	if (trmsg == NULL) {
+	    return;
+	}
     } 
 
-    if (err) {
-	MessageBox(NULL, (nls_on)? trmsg : msg, "gretl", 
-		   MB_OK | MB_ICONERROR);
-    } else {
-	MessageBox(NULL, (nls_on)? trmsg : msg, "gretl", 
-		   MB_OK | MB_ICONINFORMATION);
-    }
+    MessageBox(NULL, (trmsg != NULL)? trmsg : msg, "gretl", 
+	       MB_OK | ((err)? MB_ICONERROR : MB_ICONINFORMATION));
 
-    if (nls_on) g_free(trmsg);
+    if (trmsg != NULL) {
+	g_free(trmsg);
+    }
 }
 
 #else /* gtk 2 native */

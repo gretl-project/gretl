@@ -1972,19 +1972,11 @@ static void
 gp_string (FILE *fp, const char *fmt, const char *s, int png)
 {
 #ifdef ENABLE_NLS    
-    if (png) {
-	static int l2 = -1;
+    if (png && doing_iso_latin_2()) {
+	char htmlstr[128];
 
-	if (l2 < 0) {
-	    l2 = doing_iso_latin_2();
-	}
-
-	if (l2) {
-	    char htmlstr[128];
-
-	    sprint_l2_to_html(htmlstr, s, sizeof htmlstr);
-	    fprintf(fp, fmt, htmlstr);
-	}
+	sprint_l2_to_html(htmlstr, s, sizeof htmlstr);
+	fprintf(fp, fmt, htmlstr);
     } else {
 	fprintf(fp, fmt, s); 
     }

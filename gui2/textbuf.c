@@ -181,9 +181,10 @@ gtk_source_buffer_load_file (GtkSourceBuffer *sbuf,
     while (fgets(readbuf, sizeof readbuf, fp)) {
 # ifdef ENABLE_NLS
 	if (!g_utf8_validate(readbuf, -1, NULL)) {
-	    gsize bytes;
-
-	    chunk = g_locale_to_utf8(readbuf, -1, NULL, &bytes, NULL);
+	    chunk = my_locale_to_utf8(readbuf);
+	    if (chunk == NULL) {
+		continue;
+	    }
 	} else {
 	    chunk = readbuf;
 	}
@@ -197,6 +198,7 @@ gtk_source_buffer_load_file (GtkSourceBuffer *sbuf,
 	    chunk = NULL;
 	}
     }
+
     fclose(fp);
 	
     gtk_source_buffer_end_not_undoable_action(sbuf);

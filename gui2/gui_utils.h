@@ -20,7 +20,7 @@
 #ifndef GUI_UTILS_H
 #define GUI_UTILS_H
 
-#if GTK_MAJOR_VERSION < 2
+#ifdef OLD_GTK
 
 enum {
     GTK_STOCK_OK,
@@ -39,7 +39,10 @@ enum {
 
 # define standard_button(s) gtk_button_new_from_stock(s)
 
-#endif
+gchar *my_locale_from_utf8 (const gchar *src);
+gchar *my_locale_to_utf8 (const gchar *src);
+
+#endif /* OLD_GTK */
 
 #ifdef ENABLE_NLS
 gchar *menu_translate (const gchar *path, gpointer p);

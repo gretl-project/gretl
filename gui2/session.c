@@ -1175,17 +1175,17 @@ static gchar *graph_str (GRAPHT *graph)
 	    buf = g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
 #else
 	    char *str = malloc(64);
-	    gsize bytes;
 
 	    if (str != NULL) {
 		sprintf(str, "%s %s %s", ylabel, _("versus"), xlabel);
-		buf = g_locale_to_utf8(str, -1, NULL, &bytes, NULL);
+		buf = my_locale_to_utf8(str);
 		free(str);
 	    }
 #endif /* OLD_GTK */
 	}
 	fclose(fp);
     }
+
     return buf;
 }
 
@@ -3001,7 +3001,6 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     gchar *msg, *savestuff;
     windata_t *mydata = (windata_t *) data;
 # ifdef ENABLE_NLS
-    gsize bytes;
     gchar *trbuf;
 # endif
 
@@ -3018,16 +3017,23 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     }
 
 # ifdef ENABLE_NLS
-    trbuf = g_locale_from_utf8(savestuff, -1, NULL, &bytes, NULL);
-    fprintf(fp, "%s", trbuf);
-    g_free(trbuf);
+    trbuf = my_locale_from_utf8(savestuff);
+    if (trbuf != NULL) {
+	fprintf(fp, "%s", trbuf);
+	g_free(trbuf);
+    } else {
+	fprintf(fp, "%s", savestuff);
+    }
 # else
     fprintf(fp, "%s", savestuff);
 # endif
 
     g_free(savestuff); 
     fclose(fp);
-    if (!quiet) infobox(_("plot commands saved"));
+
+    if (!quiet) {
+	infobox(_("plot commands saved"));
+    }
 }
 
 #endif /* gtk-2.0 branch */

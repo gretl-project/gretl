@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-09-08 12:33-0400\n"
-"PO-Revision-Date: 2004-09-18 17:00+0100\n"
+"PO-Revision-Date: 2004-09-20 10:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -2203,7 +2203,7 @@ msgstr ""
 
 #: lib/src/gretl_restrict.c:571 lib/src/printout.c:185 lib/src/printout.c:245
 msgid "Robust F"
-msgstr ""
+msgstr "Robust F"
 
 #: lib/src/gretl_string_table.c:135
 #, c-format
@@ -2311,7 +2311,7 @@ msgstr ""
 #: lib/src/gretl_utils.c:2472 gui/gretl.c:1610 gui2/gretl.c:1802
 #: gui2/library.c:1460 plugin/audio.c:1039
 msgid "Command failed"
-msgstr ""
+msgstr "B³êdne polecenie"
 
 #: lib/src/gretl_win32.c:44
 #, c-format
@@ -3531,12 +3531,12 @@ msgid ""
 "Standard normal: area to the %s of %g = %g\n"
 msgstr ""
 "\n"
-"Standaryzowany rozk³ad normalny: ogon %s dla %g = %g\n"
+"Standaryzowany rozk³ad normalny: %s obszar krytyczny dla %g = %g\n"
 
 #: lib/src/pvalues.c:281 lib/src/pvalues.c:299
 #, c-format
 msgid "(two-tailed value = %g; complement = %g)\n"
-msgstr "(obszar dwóch ogonów = %g; dope³nienie = %g)\n"
+msgstr "(dwustrony obszar krytyczny = %g; dope³nienie = %g)\n"
 
 #: lib/src/pvalues.c:288
 msgid ""
@@ -3553,7 +3553,7 @@ msgid ""
 "t(%d): area to the %s of %g = %g\n"
 msgstr ""
 "\n"
-"t(%d): ogon %s dla %g = %g\n"
+"t(%d): %s obszar krytyczny dla %g = %g\n"
 
 #: lib/src/pvalues.c:308
 msgid ""
@@ -3570,12 +3570,12 @@ msgid ""
 "Chi-square(%d): area to the right of %g = %g\n"
 msgstr ""
 "\n"
-"Chi-kwadrat(%d): ogon prawy dla %g = %g\n"
+"Chi-kwadrat(%d): prawostrony obszar krytyczny dla %g = %g\n"
 
 #: lib/src/pvalues.c:318 lib/src/pvalues.c:335
 #, c-format
 msgid "(to the left: %g)\n"
-msgstr "(lewy obszar: %g)\n"
+msgstr "(lewostronny obszar krytyczny: %g)\n"
 
 #: lib/src/pvalues.c:325
 msgid ""
@@ -3592,7 +3592,7 @@ msgid ""
 "F(%d, %d): area to the right of %g = %g\n"
 msgstr ""
 "\n"
-"F(%d, %d): ogon prawy dla %g = %g\n"
+"F(%d, %d): prawostronny obszar krytyczny dla %g = %g\n"
 
 #: lib/src/pvalues.c:343
 msgid ""
@@ -3611,7 +3611,7 @@ msgid ""
 msgstr ""
 "\n"
 "Gamma (¶rednia %g, wariancja %g, shape %g, scale %g):\n"
-" ogon prawy dla %g = %g\n"
+" prawostronny obszar krytyczny dla %g = %g\n"
 
 #: lib/src/pvalues.c:352
 msgid ""
@@ -3670,7 +3670,7 @@ msgid ""
 "For the standard normal, area (one-tail) to the right of %g is "
 msgstr ""
 "\n"
-"Dla standaryzowanego rozk³adu normalnego, obszar (ogon) z prawej dla %g wynosi "
+"Dla standaryzowanego rozk³adu normalnego, prawostronny obszar krytyczny dla %g wynosi "
 
 #: lib/src/pvalues.c:451
 #, c-format
@@ -3679,7 +3679,7 @@ msgid ""
 "For Student's t(%d), area (one-tail) to the right of %g is "
 msgstr ""
 "\n"
-"Dla rozk³adu t-Studenta t(%d), obszar (ogon) z prawej dla %g wynosi "
+"Dla rozk³adu t-Studenta t(%d), prawostronny obszar krytyczny dla %g wynosi "
 
 #: lib/src/pvalues.c:470
 #, c-format
@@ -3688,7 +3688,7 @@ msgid ""
 "For Chi-square(%d), area to the right of %g is "
 msgstr ""
 "\n"
-"Dla rozk³adu Chi-kwadrat(%d), obszar (ogon) z prawej dla %g wynosi "
+"Dla rozk³adu Chi-kwadrat(%d), prawostronny obszar krytyczny dla %g wynosi "
 
 #: lib/src/pvalues.c:482
 msgid " for the numerator "
@@ -3705,7 +3705,7 @@ msgid ""
 "For F(%d, %d), area to the right of %g is "
 msgstr ""
 "\n"
-"Dla rozk³adu F(%d, %d), obszar (ogon) z prawej dla %g wynosi "
+"Dla rozk³adu F(%d, %d), prawostronny obszar krytyczny dla %g wynosi "
 
 #: lib/src/pvalues.c:504
 #, c-format
@@ -3732,7 +3732,7 @@ msgid ""
 "For Gamma (mean %g, variance %g), area to the right of %g is "
 msgstr ""
 "\n"
-"Dla rozk³adu Gamma (¶rednia %g, wariancja %g), obszar (ogon) z prawej dla %g wynosi "
+"Dla rozk³adu Gamma (¶rednia %g, wariancja %g), prawostronny obszar krytyczny dla %g wynosi "
 
 #: lib/src/pvalues.c:535
 #, c-format
@@ -3763,7 +3763,7 @@ msgstr ""
 #: lib/src/pvalues.c:655 gui2/calculator.c:251
 #, c-format
 msgid " 10%% in right tail %.2f\n"
-msgstr " 10%% ogon z prawej %.2f\n"
+msgstr " 10%% obszar z prawej %.2f\n"
 
 #: lib/src/strutils.c:632 gui/gretl.c:192 gui2/gretl.c:233
 msgid "/File/_Open data"
@@ -3845,15 +3845,15 @@ msgstr ""
 
 #: lib/src/system.c:71
 msgid "SUR"
-msgstr ""
+msgstr "SUR"
 
 #: lib/src/system.c:72
 msgid "3SLS"
-msgstr ""
+msgstr "3SLS"
 
 #: lib/src/system.c:73
 msgid "FIML"
-msgstr ""
+msgstr "FIML"
 
 #: lib/src/system.c:78
 msgid "Seemingly Unrelated Regressions"
@@ -3935,7 +3935,7 @@ msgstr ""
 #: lib/src/var.c:2072
 #, c-format
 msgid "p-value %f\n"
-msgstr ""
+msgstr "p-value %f\n"
 
 #: lib/src/var.c:1065 lib/src/var.c:2065 lib/src/var.c:2070
 #, c-format
@@ -4025,23 +4025,23 @@ msgstr ""
 
 #: lib/src/var.c:1669
 msgid "pvalue < .01"
-msgstr ""
+msgstr "pvalue < .01"
 
 #: lib/src/var.c:1670
 msgid ".025 > pvalue > .01"
-msgstr ""
+msgstr ".025 > pvalue > .01"
 
 #: lib/src/var.c:1671
 msgid ".05 > pvalue > .025"
-msgstr ""
+msgstr ".05 > pvalue > .025"
 
 #: lib/src/var.c:1672
 msgid ".10 > pvalue > .05"
-msgstr ""
+msgstr ".10 > pvalue > .05"
 
 #: lib/src/var.c:1673
 msgid "pvalue > .10"
-msgstr ""
+msgstr "pvalue > .10"
 
 #: lib/src/var.c:1676
 #, c-format
@@ -6455,15 +6455,15 @@ msgstr ""
 #: gui2/calculator.c:843 gui2/calculator.c:847 gui2/calculator.c:904
 #: gui2/calculator.c:913 plugin/stats_tables.c:383 plugin/stats_tables.c:410
 msgid "df"
-msgstr "st. swobody"
+msgstr "stopnie swobody"
 
 #: gui2/calculator.c:851 gui2/calculator.c:918
 msgid "dfn"
-msgstr "st. swobody licznika"
+msgstr "stopnie swobody licznika"
 
 #: gui2/calculator.c:852 gui2/calculator.c:919
 msgid "dfd"
-msgstr "st. swobody mianownika"
+msgstr "stopnie swobody mianownika"
 
 #: gui2/calculator.c:856 gui2/model_table.c:521 gui2/model_table.c:522
 #: gui2/model_table.c:523
@@ -6489,7 +6489,7 @@ msgstr "odchylenie std."
 
 #: gui2/calculator.c:914 gui2/calculator.c:926
 msgid "x-value"
-msgstr "warto¶æ Chi"
+msgstr "warto¶æ x"
 
 #: gui2/calculator.c:920
 msgid "F-value"
@@ -6533,7 +6533,7 @@ msgstr "Odchylenie standardowe jest warto¶cia z populacji"
 
 #: gui2/calculator.c:1059
 msgid "sample variance"
-msgstr "Wariancja z próby"
+msgstr "wariancja z próby"
 
 #: gui2/calculator.c:1061
 msgid "H0: variance ="
@@ -6553,7 +6553,7 @@ msgstr "¶rednia z próby 1"
 
 #: gui2/calculator.c:1072
 msgid "std. deviation, sample 1"
-msgstr "Odchylenie std. z próby 1"
+msgstr "odchylenie std. z próby 1"
 
 #: gui2/calculator.c:1073 gui2/calculator.c:1085 gui2/calculator.c:1093
 msgid "size of sample 1"
@@ -6565,7 +6565,7 @@ msgstr "¶rednia z próby 2"
 
 #: gui2/calculator.c:1075
 msgid "std. deviation, sample 2"
-msgstr "Odchylenie std. z próby 2"
+msgstr "odchylenie std. z próby 2"
 
 #: gui2/calculator.c:1076 gui2/calculator.c:1087 gui2/calculator.c:1095
 msgid "size of sample 2"
@@ -9376,7 +9376,7 @@ msgstr "ARCH"
 
 #: gui2/model_table.c:548
 msgid "Adj. R{\\super 2}"
-msgstr "Skr. R{\\super 2}"
+msgstr "Skoryg. R{\\super 2}"
 
 #: gui2/model_table.c:550
 msgid "R-squared"
@@ -9394,7 +9394,7 @@ msgstr "Tabela modeli jest pusta"
 #: gui2/model_table.c:658 gui2/model_table.c:748 gui2/model_table.c:858
 #, c-format
 msgid "%s estimates"
-msgstr "%s estymowany"
+msgstr "Metoda estymacji: %s"
 
 #: gui2/model_table.c:663
 #, c-format
@@ -9412,11 +9412,11 @@ msgstr "B³êdy ocen w nawiasach"
 
 #: gui2/model_table.c:697 gui2/model_table.c:797 gui2/model_table.c:902
 msgid "* indicates significance at the 10 percent level"
-msgstr "* oznacza istotno¶æ przy poziomie istotno¶ci 10 procent"
+msgstr "*  oznacza istotno¶æ przy poziomie 10 procent"
 
 #: gui2/model_table.c:698 gui2/model_table.c:799 gui2/model_table.c:904
 msgid "** indicates significance at the 5 percent level"
-msgstr "** oznacza istotno¶æ przy poziomie istotno¶ci 5 procent"
+msgstr "** oznacza istotno¶æ przy poziomie  5 procent"
 
 #: gui2/model_table.c:701
 msgid "For logit and probit, R-squared is McFadden's pseudo-R-squared"

@@ -106,6 +106,8 @@ int doing_iso_latin_2 (void);
 
 char *sprint_l2_to_html (char *targ, const char *s, size_t len);
 
+char *sprint_html_to_l2 (char *targ, const char *s);
+
 int print_as_html (const char *s, FILE *fp);
 
 int print_as_locale (const char *s, FILE *fp);
