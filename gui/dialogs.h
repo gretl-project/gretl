@@ -23,8 +23,7 @@ void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget);
 
 void edit_dialog (char *diagtxt, char *infotxt, char *deftext, 
 		  char *oktxt, void (*okfunc)(), void *okptr,
-		  char *canceltxt, void (*cancelfunc)(), 
-		  void *cancelptr, guint hlpcode, guint varclick);
+		  char *canceltxt, guint hlpcode, guint varclick);
 
 void about_dialog (gpointer data);
 
@@ -37,6 +36,8 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
 void menu_exit_check (GtkWidget *w, gpointer data);
 
 void delimiter_dialog (void);
+
+void copy_format_dialog (windata_t *vwin);
 
 void varinfo_dialog (int varnum);
 

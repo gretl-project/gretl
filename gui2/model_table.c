@@ -30,26 +30,6 @@ static void print_rtf_row_spec (PRN *prn, int tall);
 
 #define MAX_TABLE_MODELS 6
 
-#ifndef GNULL
-
-GtkItemFactoryEntry model_table_items[] = {
-# ifdef USE_GNOME
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" },     
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
-# endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
-    { N_("/Edit/Copy all/as _LaTeX"), NULL, tex_print_model_table, 0, NULL },
-    { N_("/Edit/Copy all/as _RTF"), NULL, rtf_print_model_table, 0, NULL },
-    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/_View"), NULL, tex_print_model_table, 1, NULL, },
-    { NULL, NULL, NULL, 0, NULL }
-};
-
-#endif /* GNULL */
-
 static int real_model_table_list_length (void)
 {
     int i, len = 0;
@@ -590,14 +570,8 @@ int display_model_table (void)
 
     if (real_model_table_list_length() > 5) winwidth = 90;
 
-#ifdef GNULL
-    /* gtk2: use a "viewbar" instead of a regular menu */
     view_buffer(prn, winwidth, 450, _("gretl: model table"), VIEW_MODELTABLE, 
 		NULL);
-#else
-    view_buffer(prn, winwidth, 450, _("gretl: model table"), PRINT, 
-		model_table_items);
-#endif
 
     return 0;
 }

@@ -59,71 +59,6 @@ int replay;                 /* shared, to indicate whether we're just
 			       replaying old session commands or not */
 int echo_off;               /* don't echo commands */
 
-GtkItemFactoryEntry log_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" },    
-    { N_("/File/_Save As..."), NULL, file_save, SAVE_CMDS, NULL },
-    { N_("/File/_Run"), NULL, do_run_script, SESSION_EXEC, NULL },
-#ifdef USE_GNOME
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
-#endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
-};
-
-GtkItemFactoryEntry script_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" }, 
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_SCRIPT, NULL },
-    { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL },
-#ifdef USE_GNOME
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
-#endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { N_("/Edit/_Paste"), NULL, text_paste, 0, NULL },
-    { N_("/Edit/_Replace..."), NULL, text_replace, 0, NULL },
-    { N_("/Edit/_Undo"), NULL, text_undo, 0, NULL },
-    { NULL, NULL, NULL, 0, NULL }
-};
-
-GtkItemFactoryEntry sample_script_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" },    
-    { N_("/File/_Save As..."), NULL, file_save, SAVE_SCRIPT, NULL },
-    { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL },
-#ifdef USE_GNOME
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
-#endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
-};
-
-GtkItemFactoryEntry script_out_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" },    
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_OUTPUT, NULL },
-#ifdef USE_GNOME
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
-#endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
-};
-
-GtkItemFactoryEntry view_items[] = {
-#ifdef USE_GNOME
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" },     
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
-#endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
-};
-
 const char *CANTDO = N_("Can't do this: no model has been estimated yet\n");
 
 #define OPT_O 'o'
@@ -1106,7 +1041,7 @@ void view_log (void)
 
     if (dump_cmd_stack(fname, 0)) return;
 
-    view_file(fname, 0, 0, 78, 370, VIEW_LOG, log_items);
+    view_file(fname, 0, 0, 78, 370, VIEW_LOG);
 }
 
 /* ........................................................... */
@@ -3327,7 +3262,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 
 	err = printdata(NULL, &Z, datainfo, 0, OPT_O, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 78, 350, VIEW_DATA, NULL);
+	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
     } else { /* use buffer */
 	if (bufopen(&prn)) return;
 
@@ -3392,7 +3327,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 
 	printdata(prcmd.list, &Z, datainfo, 0, OPT_O, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, width, 350, VIEW_DATA, view_items);
+	view_file(fname, 0, 1, width, 350, VIEW_DATA);
     } else { /* use buffer */
 	int err;
 
@@ -3780,7 +3715,7 @@ void display_var (void)
 
 	printdata(list, &Z, datainfo, 0, OPT_O, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 28, height, VIEW_DATA, view_items);
+	view_file(fname, 0, 1, 28, height, VIEW_DATA);
     } else { /* use buffer */
 	int err;
 
@@ -3792,8 +3727,9 @@ void display_var (void)
 	    return;
 	}
 	vwin = view_buffer(prn, 28, height, 
-			   datainfo->varname[list[1]], VIEW_SERIES, 
-			   (vec)? series_view_items : scalar_view_items); 
+			   datainfo->varname[list[1]], 
+			   (vec)? VIEW_SERIES : VIEW_SCALAR,
+			   NULL);
 	series_view_connect(vwin, list[1]);
     }
 }
@@ -3854,7 +3790,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
     refresh_data();
 
-    view_file(fname, 1, 1, 77, 450, SCRIPT_OUT, script_out_items);
+    view_file(fname, 1, 1, 77, 450, SCRIPT_OUT);
 }
 
 /* ........................................................... */
@@ -3883,9 +3819,9 @@ void do_open_script (void)
     mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 
     if (strncmp(scriptfile, paths.scriptdir, n)) 
-	view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT, script_items);
+	view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
     else 
-	view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT, sample_script_items);
+	view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 }
 
 /* ........................................................... */
@@ -3900,7 +3836,7 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
     gretl_print_destroy(prn);
     strcpy(scriptfile, fname);
     
-    view_file(scriptfile, 1, 0, 77, 350, EDIT_SCRIPT, script_items);
+    view_file(scriptfile, 1, 0, 77, 350, EDIT_SCRIPT);
 }
 
 /* ........................................................... */
@@ -5379,7 +5315,7 @@ void view_script_default (void)
 {
     if (dump_cmd_stack(cmdfile, 0)) return;
 
-    view_file(cmdfile, 0, 0, 77, 350, EDIT_SCRIPT, NULL);
+    view_file(cmdfile, 0, 0, 77, 350, EDIT_SCRIPT);
 }
 
 /* .................................................................. */

@@ -50,6 +50,8 @@ void text_undo_callback (GtkWidget *w, gpointer data);
 
 void run_script_callback (GtkWidget *w, gpointer data);
 
+void gp_send_callback (GtkWidget *w, gpointer data);
+
 void file_save_callback (GtkWidget *w, gpointer data);
 
 #endif /* CALLBACKS_H */

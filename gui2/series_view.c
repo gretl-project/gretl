@@ -60,6 +60,12 @@ GtkItemFactoryEntry scalar_view_items[] = {
 };
 
 
+GtkItemFactoryEntry *get_series_view_menu_items (int code)
+{
+    if (code == VIEW_SERIES) return series_view_items;
+    else return scalar_view_items;
+}
+
 #ifdef G_OS_WIN32
 
 int win_buf_to_clipboard (const char *buf)
@@ -120,7 +126,6 @@ void free_series_view (gpointer p)
 
     free(sview->points);
     free(sview);
-    sview = NULL;
 }
 
 static int series_view_allocate (series_view_t *sview)
@@ -266,6 +271,7 @@ void series_view_connect (windata_t *vwin, int varnum)
     series_view_t *sview;
 
     sview = malloc(sizeof *sview);
+
     if (sview == NULL) {
 	vwin->data = NULL;
     } else {

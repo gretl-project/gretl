@@ -21,6 +21,8 @@
 
 #include "gretl.h"
 #include "selector.h"
+#include "session.h"
+
 #include <gtkextra/gtkiconfilesel.h>
 
 extern void browser_open_data (GtkWidget *w, gpointer data);
@@ -346,7 +348,7 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 
     edit_dialog(title, query, defstr, 
 		_(" Apply "), okfunc, mydata, 
-		_(" Cancel "), NULL, NULL, action, varclick);   
+		_(" Cancel "), action, varclick);   
 }
 
 /* ........................................................... */
@@ -583,7 +585,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 
     edit_dialog(title, query, defstr, 
 		_(" Apply "), okfunc, mydata, 
-		_(" Cancel "), NULL, NULL, action, varclick);   
+		_(" Cancel "), action, varclick);   
 }
 
 /* ........................................................... */
@@ -636,28 +638,36 @@ void run_script_callback (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
+void gp_send_callback (GtkWidget *w, gpointer data)
+{
+    gp_to_gnuplot(data, 0, w);
+}
+
+/* ........................................................... */
+
 void file_save_callback (GtkWidget *w, gpointer data)
 {
     guint u = 0;
-    windata_t *mydata = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
 
-    switch (mydata->role) {
-    case EDIT_SCRIPT:
-    case VIEW_SCRIPT:
-	u = SAVE_SCRIPT;
-	break;
-    case SCRIPT_OUT:
+    if (gtk_object_get_data(GTK_OBJECT(vwin->dialog), "text_out")) {
 	u = SAVE_OUTPUT;
-	break;
-    case VIEW_LOG:
-	u = SAVE_CMDS;
-	break;
-    case GR_PLOT:
-	u = SAVE_GP_CMDS;
-	break;
-    default:
-	errbox(_("Sorry, not yet implemented"));
-	return;
+    } else {    
+	switch (vwin->role) {
+	case EDIT_SCRIPT:
+	case VIEW_SCRIPT:
+	    u = SAVE_SCRIPT;
+	    break;
+	case VIEW_LOG:
+	    u = SAVE_CMDS;
+	    break;
+	case GR_PLOT:
+	    u = SAVE_GP_CMDS;
+	    break;
+	default:
+	    errbox(_("Sorry, not yet implemented"));
+	    return;
+	}
     }
 
     file_save(data, u, w);

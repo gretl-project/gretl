@@ -443,7 +443,7 @@ static void db_view_codebook (GtkWidget *w, windata_t *dbwin)
     strcpy(cbname, dbwin->fname);
     strcat(cbname, ".cb");
     
-    view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK, NULL);
+    view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK);
 }
 
 /* ........................................................... */
@@ -1527,7 +1527,7 @@ static void pd_buttons (dialog_t *d, int *target_pd)
 static void data_compact_dialog (int spd, int *target_pd, 
 				 gint *compact_method)
 {
-    dialog_t *d, *cancel_d;
+    dialog_t *d;
     GtkWidget *button;
     GtkWidget *tempwid;
     GSList *group;
@@ -1538,14 +1538,7 @@ static void data_compact_dialog (int spd, int *target_pd,
     d = malloc(sizeof *d);
     if (d == NULL) return;
 
-    cancel_d = malloc(sizeof *cancel_d);
-    if (cancel_d == NULL) {
-	free(d);
-	return;
-    }
-    
-    d->data = cancel_d->data = NULL;
-    cancel_d->all_buttons = d->all_buttons = NULL;
+    d->data = NULL;
 
     d->dialog = gtk_dialog_new();
 
@@ -1582,7 +1575,7 @@ static void data_compact_dialog (int spd, int *target_pd,
 
     gtk_signal_connect (GTK_OBJECT (d->dialog), "destroy", 
 			GTK_SIGNAL_FUNC (destroy_dialog_data), 
-			cancel_d);
+			d);
 
     tempwid = gtk_label_new(labelstr);
     g_free(labelstr);

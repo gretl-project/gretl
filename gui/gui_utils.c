@@ -27,6 +27,7 @@
 #include <dlfcn.h>
 
 #include "guiprint.h"
+#include "model_table.h"
 #include "series_view.h"
 #include "console.h"
 #include "session.h"
@@ -36,11 +37,16 @@ char *storelist = NULL;
 extern int session_saved;
 extern GtkWidget *mysheet;
 extern GdkColor red, blue;
-extern GtkItemFactoryEntry view_items[];
 
-#define SCRIPT_CHANGED(w) w->active_var = 1
-#define SCRIPT_SAVED(w) w->active_var = 0
-#define SCRIPT_IS_CHANGED(w) w->active_var == 1
+#define SCRIPT_CHANGED(w) (w->active_var = 1)
+#define SCRIPT_SAVED(w) (w->active_var = 0)
+#define SCRIPT_IS_CHANGED(w) (w->active_var == 1)
+
+#define MULTI_COPY_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY \
+	                      || c == CORR || c == FCASTERR \
+	                      || c == FCAST || c == COEFFINT \
+	                      || c == COVAR || c == VIEW_MODEL \
+                              || c == VIEW_MODELTABLE || c == VAR)
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
@@ -157,19 +163,6 @@ GtkItemFactoryEntry var_items[] = {
     { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
     { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
     { NULL, NULL, NULL, 0, NULL}
-};
-
-GtkItemFactoryEntry edit_items[] = {
-#if defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
-#endif    
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { N_("/Edit/_Paste"), NULL, text_paste, 0, NULL },
-    { N_("/Edit/_Replace..."), NULL, text_replace, 0, NULL },
-    { N_("/Edit/_Undo"), NULL, text_undo, 0, NULL },
-    { NULL, NULL, NULL, 0, NULL }
 };
 
 #ifdef ENABLE_NLS
@@ -938,6 +931,11 @@ void free_windata (GtkWidget *w, gpointer data)
     }
 }
 
+static void modeltable_tex_view (void)
+{
+    tex_print_model_table (NULL, 1, NULL);
+}
+
 #if defined(USE_GNOME) 
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
@@ -965,21 +963,27 @@ static void script_changed (GtkWidget *w, windata_t *vwin)
 
 /* ........................................................... */
 
-#include "../pixmaps/stock_save_24.xpm"
-#include "../pixmaps/stock_save_as_24.xpm"
-#include "../pixmaps/stock_exec_24.xpm"
-#include "../pixmaps/stock_copy_24.xpm"
-#include "../pixmaps/stock_paste_24.xpm"
-#include "../pixmaps/stock_search_24.xpm"
-#include "../pixmaps/stock_search_replace_24.xpm"
-#include "../pixmaps/stock_undo_24.xpm"
-#include "../pixmaps/stock_help_24.xpm"
-#include "../pixmaps/stock_close_24.xpm"
+#include "../pixmaps/stock_save_16.xpm"
+#include "../pixmaps/stock_save_as_16.xpm"
+#include "../pixmaps/stock_exec_16.xpm"
+#include "../pixmaps/stock_copy_16.xpm"
+#include "../pixmaps/stock_paste_16.xpm"
+#include "../pixmaps/stock_search_16.xpm"
+#include "../pixmaps/stock_search_replace_16.xpm"
+#include "../pixmaps/stock_undo_16.xpm"
+#include "../pixmaps/stock_help_16.xpm"
+#include "../pixmaps/stock_close_16.xpm"
+#include "../pixmaps/mini.tex.xpm"
 #if defined(USE_GNOME)
-# include "../pixmaps/stock_print_24.xpm"
+# include "../pixmaps/stock_print_16.xpm"
 #endif
 
-static void make_viewbar (windata_t *vwin)
+static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
+{
+    copy_format_dialog(vwin);
+}
+
+static void make_viewbar (windata_t *vwin, int text_out)
 {
     GtkWidget *iconw, *button, *viewbar, *hbox;
     GdkPixmap *icon;
@@ -989,14 +993,16 @@ static void make_viewbar (windata_t *vwin)
     static char *viewstrings[] = {
 	N_("Save"),
 	N_("Save as..."),
+	N_("Send to gnuplot"),
 	N_("Print..."),
 	N_("Run"),
-	N_("Copy selection"), 
+	N_("Copy"), 
 	N_("Paste"),
 	N_("Find..."),
 	N_("Replace..."),
 	N_("Undo"),
 	N_("Help on command"),
+	N_("LaTeX"),
 	N_("Close"),
 	NULL
     };
@@ -1011,6 +1017,8 @@ static void make_viewbar (windata_t *vwin)
     int edit_ok = (vwin->role == EDIT_SCRIPT ||
 		   vwin->role == EDIT_HEADER ||
 		   vwin->role == EDIT_NOTES ||
+		   vwin->role == GR_PLOT || 
+		   vwin->role == GR_BOX ||
 		   vwin->role == SCRIPT_OUT);
 
     int save_as_ok = (vwin->role != EDIT_HEADER && 
@@ -1022,10 +1030,15 @@ static void make_viewbar (windata_t *vwin)
     int print_ok = 0;
 #endif
 
+    if (text_out || vwin->role == SCRIPT_OUT) {
+	gtk_object_set_data(GTK_OBJECT(vwin->dialog), "text_out", GINT_TO_POINTER(1));
+    }
+
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
     viewbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL, GTK_TOOLBAR_ICONS);
+    gtk_toolbar_set_button_relief(GTK_TOOLBAR(viewbar), GTK_RELIEF_NONE);
     gtk_box_pack_start(GTK_BOX(hbox), viewbar, FALSE, FALSE, 0);
 
     cmap = gdk_colormap_get_system();
@@ -1036,7 +1049,7 @@ static void make_viewbar (windata_t *vwin)
 	switch (i) {
 	case 0:
 	    if (edit_ok && vwin->role != SCRIPT_OUT) {
-		toolxpm = stock_save_24_xpm;	    
+		toolxpm = stock_save_16_xpm;	    
 		if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) 
 		    toolfunc = buf_edit_save;
 		else
@@ -1046,65 +1059,83 @@ static void make_viewbar (windata_t *vwin)
 	    break;
 	case 1:
 	    if (save_as_ok) {
-		toolxpm = stock_save_as_24_xpm;
+		toolxpm = stock_save_as_16_xpm;
 		toolfunc = file_save_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
 	case 2:
+	    if (vwin->role == GR_PLOT) {
+		toolxpm = stock_exec_16_xpm;
+		toolfunc = gp_send_callback;
+	    } else
+		toolfunc = NULL;
+	    break;
+	case 3:
 	    if (print_ok) {
 #if defined(USE_GNOME)
-		toolxpm = stock_print_24_xpm;
+		toolxpm = stock_print_16_xpm;
 		toolfunc = window_print_callback;
 #endif
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 3:
+	case 4:
 	    if (run_ok) {
-		toolxpm = stock_exec_24_xpm;
+		toolxpm = stock_exec_16_xpm;
 		toolfunc = run_script_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 4:
-	    toolxpm = stock_copy_24_xpm;
-	    toolfunc = text_copy_callback;
-	    break;
 	case 5:
+	    toolxpm = stock_copy_16_xpm;
+	    if (MULTI_COPY_ENABLED(vwin->role)) {
+		toolfunc = choose_copy_format_callback;
+	    } else {
+		toolfunc = text_copy_callback;
+	    }
+	    break;
+	case 6:
 	    if (edit_ok) {
-		toolxpm = stock_paste_24_xpm;
+		toolxpm = stock_paste_16_xpm;
 		toolfunc = text_paste_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 6:
-	    toolxpm = stock_search_24_xpm;
+	case 7:
+	    toolxpm = stock_search_16_xpm;
 	    toolfunc = text_find_callback;
 	    break;
-	case 7:
+	case 8:
 	    if (edit_ok) {
-		toolxpm = stock_search_replace_24_xpm;
+		toolxpm = stock_search_replace_16_xpm;
 		toolfunc = text_replace_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 8:
+	case 9:
 	    if (edit_ok) {
-		toolxpm = stock_undo_24_xpm;
+		toolxpm = stock_undo_16_xpm;
 		toolfunc = text_undo_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 9:
+	case 10:
 	    if (run_ok) {
-		toolxpm = stock_help_24_xpm;
+		toolxpm = stock_help_16_xpm;
 		toolfunc = activate_script_help;
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 10:
-	    toolxpm = stock_close_24_xpm;
+	case 11:
+	    if (vwin->role == VIEW_MODELTABLE) {
+		toolxpm = mini_tex_xpm;
+		toolfunc = modeltable_tex_view;
+	    } else
+		toolfunc = NULL;
+	    break;
+	case 12:
+	    toolxpm = stock_close_16_xpm;
 	    toolfunc = delete_file_viewer;
 	    break;
 	default:
@@ -1121,6 +1152,7 @@ static void make_viewbar (windata_t *vwin)
 					 NULL, toolstr, NULL,
 					 iconw, toolfunc, vwin);
     }
+
     gtk_widget_show(viewbar);
     gtk_widget_show(hbox);
 }
@@ -1254,20 +1286,9 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 			gpointer data) 
 {
     GtkWidget *dialog, *close;
-    GtkItemFactoryEntry *menu_items = view_items;
-    gpointer mydata;
     windata_t *vwin;
 
-    if (role == VIEW_SERIES || role == VIEW_MODELTABLE) {
-	menu_items = data;
-	mydata = NULL;
-    } else {
-	mydata = data;
-    }
-
-    if (role == VAR) menu_items = var_items;
-
-    vwin = common_viewer_new(role, title, mydata, 1);
+    vwin = common_viewer_new(role, title, data, 1);
     if (vwin == NULL) return NULL;   
 
     create_text(vwin, hsize, vsize, FALSE);
@@ -1275,14 +1296,25 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     dialog = vwin->dialog;
     viewer_box_config(vwin);
 
-    if (menu_items != NULL) {
-	set_up_viewer_menu(dialog, vwin, menu_items);
+    /* in a few special cases, add a text-based menu bar */
+    if (role == VAR || role == VIEW_SERIES || role == VIEW_SCALAR) {
+	GtkItemFactoryEntry *menu_items;
+
+	if (role == VAR) {
+	    menu_items = var_items;
+	} else {
+	    menu_items = get_series_view_menu_items(role);
+	}
+	set_up_viewer_menu(vwin->dialog, vwin, menu_items);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
-    }
+    } else if (role != IMPORT) {
+	make_viewbar(vwin, 1);
+    }    
 
     if (role == VAR) {
+	/* model-specific additions to menus */
 	add_var_menu_items(vwin);
     }    
 
@@ -1321,23 +1353,20 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
                       r == GUI_HELP_ENGLISH)
 
 windata_t *view_file (char *filename, int editable, int del_file, 
-		      int hsize, int vsize, int role, 
-		      GtkItemFactoryEntry menu_items[]) 
+		      int hsize, int vsize, int role) 
 {
-    GtkWidget *dialog; 
+    GtkWidget *dialog, *close; 
     void *colptr = NULL, *nextcolor = NULL;
     char tempstr[MAXSTR], *fle = NULL;
     FILE *fd = NULL;
     windata_t *vwin;
-    gchar *title;
+    gchar *title = NULL;
     static GtkStyle *style;
-    int show_viewbar = (role != CONSOLE &&
-			role != VIEW_DATA &&
-			!help_role(role));
     int doing_script = (role == EDIT_SCRIPT ||
 			role == VIEW_SCRIPT ||
 			role == VIEW_LOG);
 
+    /* first check that we can open the specified file */
     fd = fopen(filename, "r");
     if (fd == NULL) {
 	sprintf(errtext, _("Can't open %s for reading"), filename);
@@ -1345,6 +1374,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	return NULL;
     }
 
+    /* then start building the file viewer */
     title = make_viewer_title(role, filename);
     vwin = common_viewer_new(role, (title != NULL)? title : filename, 
 			     NULL, !doing_script && role != CONSOLE);
@@ -1358,11 +1388,16 @@ windata_t *view_file (char *filename, int editable, int del_file,
    
     strcpy(vwin->fname, filename);
 
-    if (menu_items != NULL) {
-	set_up_viewer_menu(dialog, vwin, menu_items);
+    if (help_role(role)) {
+	GtkItemFactoryEntry *menu_items;
+
+	menu_items = get_help_menu_items(role);
+	set_up_viewer_menu(vwin->dialog, vwin, menu_items);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
+    } else { 
+	make_viewbar(vwin, (role == VIEW_DATA || role == CONSOLE));
     }
 
     dialog_table_setup(vwin);
@@ -1394,19 +1429,13 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	strcpy(fle, filename);
     }
 
-    /* should we show a toolbar? */
-    if (show_viewbar) { 
-	make_viewbar(vwin);
-    } else { /* make a simple Close button instead */
-	GtkWidget *close = 
-	    gtk_button_new_with_label(_("Close"));
-
-	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
-			   close, FALSE, TRUE, 0);
-	gtk_signal_connect(GTK_OBJECT(close), "clicked", 
-			   GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
-	gtk_widget_show(close);
-    }
+    /* Close button */
+    close = gtk_button_new_with_label(_("Close"));
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
+		       close, FALSE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
+		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
+    gtk_widget_show(close);
 
     /* insert the file text */
     memset(tempstr, 0, sizeof tempstr);
@@ -1476,7 +1505,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 windata_t *edit_buffer (char **pbuf, int hsize, int vsize, 
 			char *title, int role) 
 {
-    GtkWidget *dialog;
+    GtkWidget *dialog, *close;
     windata_t *vwin;
 
     vwin = common_viewer_new(role, title, pbuf, 1);
@@ -1488,15 +1517,16 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     viewer_box_config(vwin);
 
     /* add a menu bar */
+#if 0
     set_up_viewer_menu(dialog, vwin, edit_items);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 		       vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
+#else
+    make_viewbar(vwin, 0);
+#endif
 
     dialog_table_setup(vwin);
-
-    /* add an editing bar */
-    make_viewbar(vwin);    
 
     /* insert the buffer text */
     if (*pbuf) {
@@ -1514,6 +1544,14 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(free_windata), vwin);
+
+    /* close button */
+    close = gtk_button_new_with_label(_("Close"));
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
+		       close, FALSE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
+		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
+    gtk_widget_show(close);
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(dialog);
@@ -2206,6 +2244,10 @@ static void msgbox (const char *msg, int err)
 
     hsep = gtk_hseparator_new();
     gtk_container_add(GTK_CONTAINER(vbox), hsep);
+
+    /* button */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
     
     if (err) {
 	button = gtk_button_new_with_label(_("Close"));
@@ -2213,7 +2255,7 @@ static void msgbox (const char *msg, int err)
 	button = gtk_button_new_with_label(_("OK"));
     }
 
-    gtk_box_pack_end(GTK_BOX(vbox), button, FALSE, FALSE, 5);
+    gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
 
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(delete_widget), w);

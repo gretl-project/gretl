@@ -22,12 +22,11 @@
 
 #include "gretl.h"
 
-extern GtkItemFactoryEntry series_view_items[];
-extern GtkItemFactoryEntry scalar_view_items[];
-
-void free_series_view (gpointer *p);
+void free_series_view (gpointer p);
 
 void series_view_connect (windata_t *vwin, int varnum);
+
+GtkItemFactoryEntry *get_series_view_menu_items (int code);
 
 #endif
 

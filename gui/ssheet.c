@@ -117,7 +117,7 @@ static void name_var_dialog (void)
 		 "(max. 8 characters)"),
 		 NULL, 
 		 _("Apply"), name_new_var, mdata, 
-		 _("Cancel"), NULL, NULL, 0, 0);
+		 _("Cancel"), 0, 0);
 }
 
 /* ........................................................... */
@@ -129,7 +129,7 @@ static void new_case_dialog (void)
 		 "(max. 8 characters)"),
 		 NULL, 
 		 _("Apply"), name_new_obs, mdata, 
-		 _("Cancel"), NULL, NULL, 0, 0);
+		 _("Cancel"), 0, 0);
 }
 
 /* ........................................................... */

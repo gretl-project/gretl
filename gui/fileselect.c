@@ -23,8 +23,6 @@
 #include "gretl.h"
 #include "session.h"
 
-extern GtkItemFactoryEntry script_items[];
-extern GtkItemFactoryEntry sample_script_items[];
 extern void do_save_graph (const char *fname, const char *savestr);
 extern int ps_print_plots (const char *fname, int flag, gpointer data);
 extern int plot_to_xpm (const char *fname, gpointer data);
@@ -298,8 +296,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 
 	strcpy(tryscript, fname);
 
-	if (view_file(tryscript, 1, 0, 78, 370, 
-		      EDIT_SCRIPT, script_items) != NULL) {
+	if (view_file(tryscript, 1, 0, 78, 370, EDIT_SCRIPT) != NULL) {
 	    strcpy(scriptfile, tryscript);
 	    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	    spos = slashpos(scriptfile);
@@ -321,9 +318,8 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	    return;
 	} 
 	if (view_file(tryscript, 1, 0, 78, 370, 
-		      pub ? VIEW_SCRIPT : EDIT_SCRIPT, 
-		      pub ? sample_script_items : script_items))
-		strcpy(scriptfile, tryscript);
+		      pub ? VIEW_SCRIPT : EDIT_SCRIPT))
+	    strcpy(scriptfile, tryscript);
     }
 
     if (action < END_OPEN) {

@@ -471,9 +471,6 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	gtk_widget_show (tempwid);
     }
 
-#if 0
-    gtk_window_set_transient_for(GTK_WINDOW(d->dialog), GTK_WINDOW(mdata->w));
-#endif
     gtk_window_set_destroy_with_parent(GTK_WINDOW(d->dialog), TRUE);
     gtk_widget_show(d->dialog); 
 } 

@@ -1874,8 +1874,8 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 #ifdef GNUPLOT_PNG
 	    remove_png_term_from_plotfile(graph->fname, NULL);
 #endif
-	    view_file(graph->fname, 1, 0, 78, 400, (obj->sort == 'g')? GR_PLOT :
-		      GR_BOX);
+	    view_file(graph->fname, 1, 0, 78, 400, 
+		      (obj->sort == 'g')? GR_PLOT : GR_BOX);
 	}
     }   
     else if (strcmp(item, _("Delete")) == 0) {

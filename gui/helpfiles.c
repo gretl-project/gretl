@@ -385,10 +385,20 @@ static void add_help_topics (windata_t *hwin, int script)
 
 /* ........................................................... */
 
+GtkItemFactoryEntry *get_help_menu_items (int code)
+{
+    if (code == CLI_HELP_ENGLISH || GUI_HELP_ENGLISH) {
+	return english_help_items;
+    } else {
+	return help_items;
+    }
+}
+
+/* ........................................................... */
+
 static windata_t *helpwin (int script, int english) 
 {
     windata_t *vwin = NULL;
-    GtkItemFactoryEntry *items = help_items;
     char *helpfile;
     int helpcode;
 
@@ -411,11 +421,10 @@ static windata_t *helpwin (int script, int english)
 	    helpcode = GUI_HELP_ENGLISH;
 	    helpfile = english_gui_helpfile;
 	}
-	items = english_help_items;
     }
 #endif
 
-    vwin = view_file(helpfile, 0, 0, 77, 400, helpcode, items);
+    vwin = view_file(helpfile, 0, 0, 77, 400, helpcode);
 
     if (!english) 
 	add_help_topics(vwin, script);

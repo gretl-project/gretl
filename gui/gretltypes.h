@@ -26,7 +26,6 @@ typedef struct _windata_t windata_t;
 struct _dialog_t {
     GtkWidget *dialog;
     GtkWidget *edit;
-    GList *all_buttons;
     gpointer data;
     gint code;
 };

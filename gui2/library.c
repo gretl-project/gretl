@@ -3703,8 +3703,9 @@ void display_var (void)
 	    return;
 	}
 	vwin = view_buffer(prn, 28, height, 
-			   datainfo->varname[list[1]], VIEW_SERIES, 
-			   (vec)? series_view_items : scalar_view_items); 
+			   datainfo->varname[list[1]], 
+			   (vec)? VIEW_SERIES : VIEW_SCALAR, 
+			   NULL);
 	series_view_connect(vwin, list[1]);
     }
 }

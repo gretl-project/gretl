@@ -24,4 +24,6 @@ void gretl_tooltips_init (void);
 
 void gretl_tooltips_add (GtkWidget *w, const gchar *str);
 
+GtkItemFactoryEntry *get_help_menu_items (int code);
+
 #endif /* HELPFILES_H */

@@ -36,7 +36,6 @@ extern void open_remote_clist (GtkWidget *w, gpointer data);
 extern void grab_remote_db (GtkWidget *w, gpointer data);
 extern gint populate_dbfilelist (windata_t *ddata);
 
-extern GtkItemFactoryEntry sample_script_items[];
 extern GdkColor gray;
 
 char pwtpath[MAXLEN];
@@ -272,7 +271,7 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 
     mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 
-    view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT, sample_script_items);
+    view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 }
 
 /* ........................................................... */
@@ -766,22 +765,15 @@ static void set_panel_code (GtkWidget *w, dialog_t *d)
 void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
 			     void (*cleanfun)(), void (*helpfun)())
 {
-    dialog_t *d, *cancel_d;
+    dialog_t *d;
     GtkWidget *button;
     GtkWidget *tempwid;
     GSList *group;
 
     d = malloc(sizeof *d);
     if (d == NULL) return;
-    cancel_d = malloc(sizeof *cancel_d);
-    if (cancel_d == NULL) {
-	free(d);
-	return;
-    }
     
     d->data = pdinfo;
-    cancel_d->data = NULL;
-    cancel_d->all_buttons = d->all_buttons = NULL;
 
     d->dialog = gtk_dialog_new();
     w = d->dialog;
@@ -802,7 +794,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
 
     gtk_signal_connect (GTK_OBJECT (d->dialog), "destroy", 
 			GTK_SIGNAL_FUNC (cleanfun), 
-			cancel_d);
+			d);
 
     button = gtk_radio_button_new_with_label (NULL, _("Stacked time series"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 

@@ -49,7 +49,6 @@ GtkWidget *active_edit_name = NULL;
 GtkWidget *active_edit_text = NULL;
 
 extern int session_saved;
-extern GtkWidget *mysheet;
 
 #define MARK_SCRIPT_CHANGED(w) (w->active_var = 1)
 #define MARK_SCRIPT_SAVED(w) (w->active_var = 0)
@@ -83,6 +82,7 @@ extern void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
 extern void do_leverage (gpointer data, guint u, GtkWidget *w);
 
 
+static
 GtkItemFactoryEntry model_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, 
@@ -168,6 +168,7 @@ GtkItemFactoryEntry model_items[] = {
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
+static 
 GtkItemFactoryEntry var_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, "<StockItem>", 
@@ -1225,6 +1226,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 				NULL, toolstr, NULL,
 				button, toolfunc, vwin);
     }
+
     gtk_widget_show(viewbar);
     gtk_widget_show(hbox);
 }
@@ -1535,25 +1537,19 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 {
     GtkWidget *close;
     GtkTextBuffer *tbuf;
-    GtkItemFactoryEntry *menu_items = NULL;
     windata_t *vwin;
-    gpointer mydata;
 
-    if (role == VIEW_SERIES) {
-	menu_items = data;
-	mydata = NULL;
-    } else {
-	mydata = data;
-    }
-
-    if (role == VAR) menu_items = var_items;
-
-    vwin = common_viewer_new(role, title, mydata, 1);
+    vwin = common_viewer_new(role, title, data, 1);
     if (vwin == NULL) return NULL;
 
     viewer_box_config(vwin);
 
-    if (menu_items != NULL) {
+    /* in a few special cases, add a text-based menu bar */
+    if (role == VAR || role == VIEW_SERIES || role == VIEW_SCALAR) {
+	GtkItemFactoryEntry *menu_items;
+
+	if (role == VAR) menu_items = var_items;
+	else menu_items = get_series_view_menu_items(role);
 	set_up_viewer_menu(vwin->dialog, vwin, menu_items);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
@@ -1563,12 +1559,13 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     }
 
     if (role == VAR) {
+	/* model-specific additions to menus */
 	add_var_menu_items(vwin);
     }
 
-    create_text (vwin, &tbuf, hsize, vsize, FALSE);
+    create_text(vwin, &tbuf, hsize, vsize, FALSE);
     
-    dialog_table_setup (vwin);
+    dialog_table_setup(vwin);
 
     /* arrange for clean-up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
@@ -1757,6 +1754,7 @@ static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 windata_t *view_file (char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role)
 {
+    GtkWidget *close;
     GtkTextBuffer *tbuf = NULL;
 #ifdef USE_GTKSOURCEVIEW
     GtkSourceBuffer *sbuf = NULL;
@@ -1764,13 +1762,12 @@ windata_t *view_file (char *filename, int editable, int del_file,
     char *fname = NULL;
     FILE *fp = NULL;
     windata_t *vwin;
-    gchar *title;
-    int show_viewbar = (role != VIEW_FILE &&
-			!help_role(role));
+    gchar *title = NULL;
     int doing_script = (role == EDIT_SCRIPT ||
 			role == VIEW_SCRIPT ||
 			role == VIEW_LOG);
 
+    /* first check that we can open the specified file */
     fp = fopen(filename, "r");
     if (fp == NULL) {
 	sprintf(errtext, _("Can't open %s for reading"), filename);
@@ -1780,11 +1777,12 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	fclose(fp);
     }
 
+    /* then start building the file viewer */
     title = make_viewer_title(role, filename);
     vwin = common_viewer_new(role, (title != NULL)? title : filename, 
 			     NULL, !doing_script && role != CONSOLE);
 
-    if (title != NULL) g_free(title);
+    g_free(title);
     if (vwin == NULL) return NULL;
 
     strcpy(vwin->fname, filename);
@@ -1799,9 +1797,8 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
-    } else if (show_viewbar) { 
+    } else if (role != VIEW_FILE) { 
 	make_viewbar(vwin, (role == VIEW_DATA || role == CONSOLE));
-	show_viewbar = 0;
     }
 
 #ifdef USE_GTKSOURCEVIEW
@@ -1836,19 +1833,13 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	fname = g_strdup(filename);
     }
 
-    /* should we show a toolbar? */
-    if (show_viewbar) { 
-	make_viewbar(vwin, 0);
-    } else { 
-	/* make a simple Close button instead */
-	GtkWidget *close = gtk_button_new_with_label(_("Close"));
-
-	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
-			   close, FALSE, TRUE, 0);
-	g_signal_connect(G_OBJECT(close), "clicked", 
-			 G_CALLBACK(delete_file_viewer), vwin);
-	gtk_widget_show(close);
-    }
+    /* make a Close button */
+    close = gtk_button_new_with_label(_("Close"));
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
+		       close, FALSE, TRUE, 0);
+    g_signal_connect(G_OBJECT(close), "clicked", 
+		     G_CALLBACK(delete_file_viewer), vwin);
+    gtk_widget_show(close);
 
 #ifdef USE_GTKSOURCEVIEW
     if (doing_script || role == GR_PLOT) {

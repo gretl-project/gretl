@@ -138,6 +138,7 @@ enum extra_cmds {
     X12A,
     RANGE_MEAN,
     VIEW_SERIES,
+    VIEW_SCALAR,
     VIEW_MODEL,
     VIEW_LOG,
     VIEW_DATA,

@@ -58,6 +58,12 @@ GtkItemFactoryEntry scalar_view_items[] = {
     { NULL, NULL, NULL, 0, NULL }
 };
 
+GtkItemFactoryEntry *get_series_view_menu_items (int code)
+{
+    if (code == VIEW_SERIES) return series_view_items;
+    else return scalar_view_items;
+}
+
 static int buf_to_clipboard (const char *buf)
 {
     size_t len;
@@ -85,7 +91,6 @@ void free_series_view (gpointer p)
 
     free(sview->points);
     free(sview);
-    sview = NULL;
 }
 
 static int series_view_allocate (series_view_t *sview)
