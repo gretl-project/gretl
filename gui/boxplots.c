@@ -872,7 +872,8 @@ static int cb_copy_image (gpointer data)
     GdkImage *image;
     int i, j;
     guint32 pixel, white_pixel;
-    size_t image_bytes, dibsize, palsize = sizeof(RGBQUAD) * 2;
+    size_t image_bytes, dibsize, linelen;
+    size_t palsize = sizeof(RGBQUAD) * 2;
     HANDLE hDIB;
     BOOL ret;
     BITMAPINFOHEADER *hdr;
@@ -881,7 +882,8 @@ static int cb_copy_image (gpointer data)
 			  grp->width, grp->height);
 
     white_pixel = pow(2, image->depth) - 1;
-    image_bytes = grp->height * grp->width / 8;
+    linelen = ((grp->width/8 - 1)/4 + 1) * 4;
+    image_bytes = grp->height * linelen;
 
     /* allocate room for DIB */
     dibsize = sizeof(BITMAPINFOHEADER) + palsize + image_bytes;
@@ -894,6 +896,7 @@ static int cb_copy_image (gpointer data)
 
     {
 	char infostr[128];
+
 	sprintf(infostr, "sizeof BITMAPINFOHEADER = %d\n"
 		"palsize = %d\n", sizeof(BITMAPINFOHEADER), palsize);
 	infobox(infostr);
@@ -905,7 +908,7 @@ static int cb_copy_image (gpointer data)
     if (hdr) {
 	hdr->biSize = sizeof(BITMAPINFOHEADER);
 	hdr->biWidth = grp->width;
-	hdr->biHeight = -1 * grp->height; 
+	hdr->biHeight = grp->height; 
 	hdr->biPlanes = 1;
 	hdr->biBitCount = 1;
 	hdr->biCompression = BI_RGB; /* none */
@@ -947,13 +950,13 @@ static int cb_copy_image (gpointer data)
       
 	ret = FALSE;
 	if (data) {
-	    int x, y;
 	    unsigned char c;
+	    int x, y;
+	    int pad = linelen - grp->width/8 - (grp->width % 8 > 0);
 	    
-	    /* calculate offset */
 	    data += (sizeof(BITMAPINFOHEADER) + palsize);
 
-	    for (y=0; y<grp->height; y++) {
+	    for (y=grp->height-1; y>=0; y--) {
 		i = 0; c = 0;
 		for (x=0; x<grp->width; x++) {
 		    pixel = gdk_image_get_pixel(image, x, y);
@@ -965,6 +968,7 @@ static int cb_copy_image (gpointer data)
 			c = 0;
 		    }
 		}
+		for (i=0; i<pad; i++) *data++ = 0;
 	    }
 	    ret = TRUE;
 	    GlobalUnlock (hDIB);
