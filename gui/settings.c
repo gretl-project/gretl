@@ -230,9 +230,9 @@ static void set_tramo_x12a_dirs (void)
     /* make directory structure */
 # ifdef HAVE_X12A
     sprintf(cmd, "mkdir -p %s", x12adir);
+    system(cmd);
 # endif
 # ifdef HAVE_TRAMO
-    system(cmd);
     sprintf(cmd, "mkdir -p %s/output", tramodir);
     system(cmd);
     sprintf(cmd, "mkdir -p %s/graph/acf", tramodir);

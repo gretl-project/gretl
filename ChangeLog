@@ -1,6 +1,8 @@
 version 1.0.2
 - generalize support for X-12-ARIMA to gtk-1.2 version, and 
   win32 version.  TRAMO/SEATS is more difficult
+- make x-12-arima support the configure default, if the x12a
+  binary is found
 - add installation script for tramo program
 - make range-mean graph editable via gui
 - fix utf8/character encoding issue with editing gnuplot
