@@ -317,7 +317,8 @@ int poisson_estimate (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
 {
     int err = 0;
 
-    if (!is_count_variable(Z[pmod->list[1]], pmod->t1, pmod->t2)) {
+    if (0 && !is_count_variable(Z[pmod->list[1]], pmod->t1, pmod->t2)) {
+	/* do we want/need this restriction? */
 	gretl_errmsg_set(_("poisson: the dependent variable must be count data"));
 	err = pmod->errcode = E_DATA;
     } else {
