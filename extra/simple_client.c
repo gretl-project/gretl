@@ -17,7 +17,7 @@
  *
  */
 
-/* Trivial sample client program for libesl */
+/* Trivial sample client program for libgretl */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -93,7 +93,7 @@ int main (void)
        set Z) counting from one (zero being reserved for the
        constant).  The third entry (and there can be more) is the ID
        number of the first independent variable.  "list" should be
-       malloc'ed: it will be realloc'ed by libesl.  
+       malloc'ed: it will be realloc'ed by libgretl.  
     */
     list = malloc(4 * sizeof *list);
     if (list == NULL) noalloc(); 
@@ -102,7 +102,7 @@ int main (void)
     list[2] = 0;   /* we include a constant (ID# 0) */
     list[3] = 2;   /* the independent variable has ID# 2 */
 
-    /* Now we call the lsq function from libesl to get least squares 
+    /* Now we call the lsq function from libgretl to get least squares 
        estimates and associated statistics. */
     model = gretl_model_new();
     if (model == NULL) noalloc();

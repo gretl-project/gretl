@@ -31,14 +31,14 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
 # include <winsock.h>
 #else
 # include <sys/socket.h>
 # include <netdb.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
-#endif /* OS_WIN32 */
+#endif /* G_OS_WIN32 */
 
 #include "webget.h"
 
@@ -151,7 +151,7 @@ static char *print_option (int opt);
 static void destroy_progress (GtkWidget *widget, ProgressData *pdata);
 static ProgressData *progress_window (void);
 
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
 static void ws_cleanup (void)
 {
     WSACleanup();
@@ -574,7 +574,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, int *dt)
     range = NULL;
     useragent = mymalloc(16); 
     sprintf(useragent, "gretl-%s", version_string);
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
     strcat(useragent, "w");
 #endif
     remhost = u->host;
@@ -994,7 +994,7 @@ static int store_hostaddress (unsigned char *where, const char *hostname)
 	return 0;
 }
 
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
 #define ECONNREFUSED WSAECONNREFUSED
 #endif
 
@@ -1146,7 +1146,7 @@ int update_query (void)
     char *getbuf = NULL;
     char errbuf[80];
     char testfile[MAXLEN];
-#ifndef OS_WIN32
+#ifndef G_OS_WIN32
     char hometest[MAXLEN];
     FILE *fp;
 #endif
@@ -1161,7 +1161,7 @@ int update_query (void)
 	return 1;
     } else {
 	filedate = fbuf.st_mtime;
-#ifndef OS_WIN32
+#ifndef G_OS_WIN32
 	hometest[0] = '\0';
 	if (getuid() != fbuf.st_uid) { 
 	    /* user is not owner of gretl.stamp */
@@ -1352,7 +1352,7 @@ static ProgressData *progress_window (void)
     return pdata;
 }
 
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
 
 #include <windows.h>
 #include <shellapi.h>

@@ -26,7 +26,7 @@
 
 #include "gretl.h"
 #include <ctype.h>
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
 # include <windows.h>
 #endif
 
@@ -381,11 +381,11 @@ static void htest_graph (int dist, double x, int df1, int df2)
     fprintf(fp, "%f %f\n", x, spike);
     fprintf(fp, "e\n");
 
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
     fprintf(fp, "pause -1\n");
 #endif
     if (fp) fclose(fp);
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
     sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, paths.plotfile);
     WinExec(plotcmd, SW_SHOWNORMAL);
 #else

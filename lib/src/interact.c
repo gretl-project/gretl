@@ -24,13 +24,13 @@
 
 /* equipment for the "shell" command */
 #ifndef OS_WIN32
-#include <sys/wait.h>
-#include <signal.h>
-#include <errno.h>
-#include <unistd.h>
-#ifdef HAVE_PATHS_H
-#include <paths.h>
-#endif
+# include <sys/wait.h>
+# include <signal.h>
+# include <errno.h>
+# include <unistd.h>
+# ifdef HAVE_PATHS_H
+#  include <paths.h>
+# endif
 #endif
 
 #include "cmdlist.h"

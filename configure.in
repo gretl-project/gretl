@@ -21,7 +21,6 @@ have_zlib="no"
 have_gtk="no"
 have_gtkextra="no"
 have_gnome="no"
-dnl have_gtkhtml="no"
 need_libbind="no"
 MAKE="make"
 
@@ -55,6 +54,14 @@ else
 trygnome=yes
 fi,
 trygnome=yes)
+
+gnome_install_prefix="NA"
+AC_ARG_WITH(gnome_install,
+[  --with-gnome-install=DIR  where to install gnome-specific files [default=auto]],
+if test -n "${withval}"
+then
+gnome_install_prefix=${withval}
+fi,)
 
 AC_PROG_CC
 AC_CANONICAL_HOST
@@ -149,13 +156,16 @@ AC_PROG_GNOME
 test x"${GNOME}" = xyes && AC_DEFINE(USE_GNOME)
 if test x"${GNOME}" = xyes
 then
-	have_gnome=yes
-	dnl AC_CHECK_LIB(gtkhtml, gtk_html_new,have_gtkhtml="yes" ; \
-	dnl HTMLLIB="-lgtkhtml" ; AC_DEFINE(USE_GTKHTML),,`gnome-config --libs gtkhtml`)
-	dnl AC_SUBST(have_gtkhtml)
+have_gnome=yes
+if test "${gnome_install_prefix}" = "NA"
+  then
+    gnome_install_prefix="auto"
+  fi
 fi
 AC_SUBST(have_gnome)
 fi
+
+AC_SUBST(gnome_install_prefix)
 
 AC_DEFUN(AC_CHECK_ARCH, )
 
@@ -508,7 +518,16 @@ dnl Create output
 dnl
 CFLAGS="$ac_save_CFLAGS"
 LIBS="$ac_save_LIBS"
-AC_OUTPUT(Makefile gretl_sh gretl-config)
+AC_OUTPUT([
+Makefile 
+gretl_sh 
+gretl-config 
+gui/Makefile 
+cli/Makefile 
+lib/Makefile 
+plugin/Makefile
+share/Makefile
+])
 
 if test "${have_zlib}" = "no" ; then
 echo "
@@ -526,9 +545,9 @@ Configuration:
   Use gnuplot for graphs:               ${have_gnuplot}
   Use LaTeX for typesetting output:     ${have_latex}
   Build with gnome support:             ${have_gnome}
+  Gnome installation prefix:            ${gnome_install_prefix}
 
 Now type '$MAKE' to build gretl.
 "
 fi
 
-dnl Build with gtkhtml support:           ${have_gtkhtml}

@@ -1,5 +1,12 @@
 top_builddir = ..
 
+prefix = @prefix@
+CC = @CC@
+CFLAGS = @CFLAGS@
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+LN = @LN_S@
+
 ifeq ($(prefix),)
   prefix = /opt/esl
 endif

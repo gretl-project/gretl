@@ -43,7 +43,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define GETDOMAINNAME 1
 
 /* Do we have paths.h? */
-#define HAVE_PATHS_H 1
+/* #define HAVE_PATHS_H 1 */
 
 /* Is the host architecture other than ix86? */
 /* #undef OTHER_ARCH */

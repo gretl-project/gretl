@@ -1,5 +1,22 @@
 top_builddir = ..
 
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libdir = @libdir@
+CC = @CC@
+CFLAGS = @CFLAGS@
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+LN = @LN_S@
+have_readline = @have_readline@
+have_zlib = @have_zlib@
+need_libbind = @need_libbind@
+have_gtk = @have_gtk@
+have_gtkextra = @have_gtkextra@
+have_gnome = @have_gnome@
+gnome_install_prefix = @gnome_install_prefix@
+
 ifeq ($(prefix),)
   prefix = /opt/esl
 endif
@@ -30,10 +47,14 @@ endif
 ifeq ($(have_gnome),)
   have_gnome = yes
 endif
+ifeq ($(gnome_install_prefix),"auto")
+  gnome_prefix = `gnome-config --prefix`
+else
+  gnome_prefix = $(gnome_install_prefix)
+endif
 ifeq ($(have_gnome),yes)
   LIBS = `gnome-config --libs gnomeui` `gtkextra-config --libs` ../lib/libgretl.la 
   GUI_CFLAGS = `gnome-config --cflags gnomeui` `gtkextra-config --cflags`
-  gnome_prefix = `gnome-config --prefix`
   desktopdir = $(gnome_prefix)/share/gnome/apps/Applications
   gpixmaps = $(gnome_prefix)/share/pixmaps
   ghelpdir = $(gnome_prefix)/share/gnome/help/gretl
@@ -88,9 +109,11 @@ install-strip: $(PROG) installdirs $(query_install_gnome)
 	$(INSTALL_DATA) ../COPYING $(gretldir)
 
 install-gnome: $(PROG) installdirs
+	$(tooldir)/mkinstalldirs $(gpixmaps)
 	$(INSTALL_DATA) gnome/gretl-gnome-logo.xpm $(gpixmaps)
-	$(INSTALL_DATA) gnome/gretl.desktop $(desktopdir)
 	$(INSTALL_DATA) gnome/gretl.png $(gpixmaps)
+	$(tooldir)/mkinstalldirs $(desktopdir)
+	$(INSTALL_DATA) gnome/gretl.desktop $(desktopdir)
 	$(tooldir)/mkinstalldirs $(ghelpdir)
 	$(tooldir)/mkinstalldirs $(ghelpdir)/C
 	$(tooldir)/mkinstalldirs $(ghelpdir)/C/figures

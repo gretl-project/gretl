@@ -1,9 +1,24 @@
 top_builddir = ..
 
+prefix = @prefix@
+bindir = @bindir@
+CC = @CC@
+CFLAGS = @CFLAGS@
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+LN = @LN_S@
+have_readline = @have_readline@
+have_zlib = @have_zlib@
+CLI_LIBS = @CLI_LIBS@
+RL_OBJ = @RL_OBJ@
+
 ifeq ($(prefix),)
   prefix = /opt/esl
   CLI_LIBS = -lreadline -ltermcap
   RL_OBJ = complete.o
+endif
+ifeq ($(bindir),)
+  bindir = $(prefix)/bin
 endif
 ifeq ($(CC),)
   CC = gcc
@@ -32,7 +47,6 @@ INCLUDES = -I.
 srcdir  = .
 VPATH   = .
 tooldir = ../tools
-bindir = $(prefix)/bin
 
 #### End of system configuration section. ####
 

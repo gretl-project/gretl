@@ -546,10 +546,6 @@ static void _enterdf (const char *str)
    Draws upon the pascal code specialf.pas by Bent Nielsen.
 */
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 static const double tolerance = 1e-7;
 
 /* internal functions */

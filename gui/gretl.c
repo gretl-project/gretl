@@ -488,14 +488,6 @@ void dummy_output_handler (const gchar *log_domain,
 }
 #endif 
 
-#ifdef OLD_G_OS_WIN32
-int _stdcall
-WinMain (int hInstance, int hPrevInstance, char *lpszCmdLine, int nCmdShow)
-{
-    return main (__argc, __argv);
-}
-#endif
-
 int main (int argc, char *argv[])
 {
     int opt, err = 0, gui_get_data = 0;
@@ -1445,7 +1437,7 @@ static void netscape_open (const char *url)
 
 static void gretl_website (void)
 {
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
     if (goto_url("http://gretl.sourceforge.net/"))
 	errbox("Failed to open URL");
 #else
@@ -1455,7 +1447,7 @@ static void gretl_website (void)
 
 static void gretl_pdf (void)
 {
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
     if (goto_url("http://gretl.sourceforge.net/manual.pdf"))
 	errbox("Failed to open URL");
 #else

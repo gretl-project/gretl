@@ -596,7 +596,7 @@ GENERATE genr_func (double **pZ, DATAINFO *pdinfo,
 		_genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 		return genr;
             }
-#ifdef DEBUG
+#ifdef GENR_DEBUG
 	    printf("_getvar: op1 = %d, s = \"%s\"\n", op1, s);
 	    printf("genr.xvec[1] = %f\n", genr.xvec[1]);
 #endif
@@ -1703,9 +1703,6 @@ int laggenr (const int iv, const int lag, const int opt, double **pZ,
 
 static int _normal_dist (double *a, const int t1, const int t2) 
      /* Box and Muller method */
-#ifndef PI
-#define PI 3.14159265358979323846
-#endif
 {
     int i;
     double xx, yy, scale = 1.0/RAND_MAX;
@@ -1713,7 +1710,7 @@ static int _normal_dist (double *a, const int t1, const int t2)
     for (i=t1; i<=t2; i++) {
 	xx = (double) rand() * scale;
 	yy = (double) rand() * scale;
-	a[i] = sqrt(-2. * log(xx)) * cos(2. * PI * yy);
+	a[i] = sqrt(-2. * log(xx)) * cos(2. * M_PI * yy);
     }
     return 0;
 }
@@ -1843,7 +1840,7 @@ int logs (const int *list, double **pZ, DATAINFO *pdinfo, char *msg)
 			    sprintf(msg, "Log error: Variable '%s', obs %d,"
 				    " value = %g\n", pdinfo->varname[v],
 				    t+1, xx);
-#ifdef DEBUG
+#ifdef GENR_DEBUG
 			fprintf(stderr, "Log error: Variable '%s', obs %d,"
 				" value = %g\n", pdinfo->varname[v], t+1, xx);
 #endif

@@ -8,7 +8,8 @@ Gretl uses GNU autoconf.  Here's the quick way to get going:
 available.  
 
 * By default the installation goes under /usr/local.  To install elsewhere
-use "./configure --prefix=/your/prefix". 
+use "./configure --prefix=/your/prefix".  See also the notes on gnome
+below.
 
 * On systems where GNU make is not the default you may need to use the
 "--with-gmake" option to ./configure.
@@ -16,14 +17,22 @@ use "./configure --prefix=/your/prefix".
 * To build the gui client you'll need a working installation of GTK+ 1.2.3 
 or higher.  See http://www.gtk.org.
 
+* The gretl configure script looks for the gnome desktop, and arranges for
+gretl to be built with gnome support if gnome is found on your system.
+If you want to disable this, add the option "--without-gnome" when
+running ./configure.  
+
+By default, gnome-specific gretl files (e.g. pixmaps, help files, the
+gretl.desktop file) are installed under the prefix that is returned by the
+command "gnome-config --prefix".  This will generally be correct, but if
+you want to override this behavior you may use the option
+"--with-gnome-install=DIR" when running configure. Substitute for "DIR"
+the prefix you want to use.
+
 * The programs here call on gnuplot to generate graphs.  As of this
 writing the latest gnuplot can be obtained from:
 
 ftp://ftp.gnuplot.vt.edu/pub/gnuplot/gnuplot-3.7.1.tar.gz
 
-* The gretl configure script looks for the gnome desktop, and arranges for
-gretl to be built with gnome support if gnome is found on your system.
-If you want to disable thus, add the option "--without-gnome" when
-running ./configure.
 
 Allin Cottrell, December 2001.

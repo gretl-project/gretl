@@ -22,9 +22,6 @@
 #include "libgretl.h"
 #include "internal.h"
 #include <unistd.h>
-#ifndef PI
-#define PI 3.14159265358979323846
-#endif
 
 #ifdef OS_WIN32
 # include <windows.h>
@@ -809,7 +806,7 @@ int plot_freq (FREQDIST *freq, const PATHS *ppaths, int dist)
     if (dist == NORMAL) {
 	propn = normal((freq->endpt[k-1] - freq->xbar)/freq->sdx) -
 	    normal((freq->endpt[k] - freq->xbar)/freq->sdx);
-	lambda = 1.0 / (propn * freq->n * sqrt(2 * PI) * freq->sdx);
+	lambda = 1.0 / (propn * freq->n * sqrt(2 * M_PI) * freq->sdx);
 	fprintf(fp, "sigma = %f\n", freq->sdx);
 	fprintf(fp, "mu = %f\n", freq->xbar);
 	plotmin = freq->xbar - 3.3 * freq->sdx;

@@ -35,11 +35,7 @@ static int choleski (double *xpx, int nv);
 
 static double _norm_pdf (const double xx)
 {
-#ifndef PI
-#define PI 3.14159265358979323846
-#endif
-
-    return (1.0/sqrt(2.0 * PI)) * exp(-0.5 * xx * xx);
+    return (1.0/sqrt(2.0 * M_PI)) * exp(-0.5 * xx * xx);
 }
 
 /* .......................................................... */

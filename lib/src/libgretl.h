@@ -29,6 +29,10 @@
 #define MAXLEN 512
 #define ERRLEN 256
 
+#ifndef M_PI
+# define M_PI 3.14159265358979323846
+#endif
+
 enum format_codes {
     TEXT,
     LATEX,

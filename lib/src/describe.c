@@ -27,10 +27,6 @@
 # include <windows.h>
 #endif
 
-#ifndef PI
-#define PI 3.14159265358979323846
-#endif
-
 extern void _mxout (const double *rr, const int *list, const int ci,
 		    const DATAINFO *pdinfo, const int batch, print_t *prn);
 
@@ -603,14 +599,14 @@ int periodogram (const int *list, double **pZ, const DATAINFO *pdinfo,
     varx = esl_variance(t1, t2, &(*pZ)[v*n]);
     varx *= (double) (nobs - 1) / nobs;
     for (t=1; t<=nobs/2; t++) {
-	yy = 2 * PI * t / (double) nobs;
+	yy = 2 * M_PI * t / (double) nobs;
 	xx = varx; 
 	for (k=1; k<=L; k++) {
 	    if (opt) w = 1 - (double) k/(L + 1);
 	    else w = 1.0;
 	    xx += 2.0 * w * autocov[k] * cos(yy * k);
 	}
-	xx /= 2 * PI;
+	xx /= 2 * M_PI;
 	pprintf(prn, " %.4f%9d%16.2f%14.4f\n", yy, t, 
 		(double) (nobs / 2) / (2 * t), xx);
 	if (!batch) fprintf(fq, "%d %f\n", t, xx);

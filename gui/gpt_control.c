@@ -21,7 +21,7 @@
 
 #include "gretl.h"
 
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
 # include <windows.h>
 #endif
 
@@ -111,7 +111,7 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
     int i, save = 0, k, numlines;
     GPT_SPEC *plot = (GPT_SPEC *) data;
 
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
     plot->fp = fopen(paths.plotfile, "w");
     if (plot->fp == NULL) {
 	errbox("Couldn't open plot file");
@@ -174,7 +174,7 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
     }
 
     if (save) { /* do something other than a screen graph? */
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
 	fclose(plot->fp);
 #endif
 	file_selector("Save gnuplot graph", paths.userdir,
@@ -682,7 +682,7 @@ void do_save_graph (const char *fname, char *savestr)
     prnclose(&prn);
     fclose(fq);
     sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
-#ifdef OS_WIN32
+#ifdef G_OS_WIN32
     if (WinExec(plotcmd, SW_SHOWMINIMIZED) < 32)
 	errbox("Gnuplot error creating graph");
 #else
