@@ -2,36 +2,35 @@
 
   <sect1 id="cmd-intro"><title>Introduzione</title>
     <para>
-      I comandi definiti di seguito possono essere eseguiti usando la
-      versione a riga di comando del programma, ma anche usando la
-      versione con interfaccia grafica (GUI), inserendoli in un file di
-      <quote>script</quote> da eseguire, o inserendoli nel
-      <quote>terminale di gretl</quote>.  Nella maggior parte dei casi,
-      la sintassi mostrata di seguito è valida anche se inserita nei
-      campi testuali delle finestre di dialogo dell'interfaccia grafica
-      (ma si veda anche l'aiuto online di
-      <application>gretl</application>), ricordandosi che in questo caso
-      <emphasis>non</emphasis> occorre inserire anche il nome del
-      comando all'inizio della riga di comando &mdash; è implicito nel
-      contesto.  Un'altra differenza è che alcuni comandi supportano
-      delle opzioni che non possono essere inserite nei campi delle
-      finestre di dialogo: di solito, comunque, esse sono sostituite da
-      voci di menù che ne replicano l'effetto.</para>
+      I comandi descritti in questa guida possono essere eseguiti nella
+      versione a riga di comando del programma, ma anche in quella con
+      con interfaccia grafica (GUI): possono essere inseriti in un file
+      <quote>script</quote> da eseguire o nel <quote>terminale di gretl</quote>.
+      Nella maggior parte dei casi, la sintassi presentata nella guida è 
+      valida anche per inserire i comandi nei campi testuali delle finestre di
+      dialogo dell'interfaccia grafica (si veda anche l'aiuto online di
+      <application>gretl</application>), ricordandosi che in quest'ultimo
+      caso <emphasis>non</emphasis> occorre inserire anche il nome del
+      comando nella finestra di dialogo: esso è già sottointeso dal
+      contesto.  Un'altra differenza è che le opzioni di alcuni comandi
+      non possono essere inserite nei campi delle finestre di dialogo: di
+      solito, comunque, sono disponibili delle voci di menù che ne replicano
+      l'effetto.</para>
 
-    <para>Le opzioni mostrate di seguito sono in <quote>formato
-    lungo</quote>, costituito da una parola facilmente memorizzabile
-    preceduto da due trattini, ma esistono anche delle forme abbreviate,
-    elencate in <xref linkend="tab-options"/>.
+    <para>La guida mostra le opzioni in <quote>formato lungo</quote>,
+    costituito da una parola facilmente memorizzabile preceduta da due
+    trattini, ma esiste anche un formato abbreviato, mostrato nella <xref
+    linkend="tab-options"/>.
     </para>
 
     <para>
-      Di seguito vengono usate le seguenti convenzioni:
+      La guida utilizza le seguenti convenzioni:
     </para>
 
     <itemizedlist>
 
       <listitem><para>
-	  Un <literal>carattere a larghezza fissa</literal> viene usato
+	  Il <literal>carattere a larghezza fissa</literal> viene usato
           per indicare ciò che l'utente deve scrivere e per i nomi delle
           variabili.
 	</para></listitem>
@@ -42,9 +41,9 @@
           del generico <replaceable>variabile-x</replaceable>.
 	</para></listitem>
 
-      <listitem><para><literal>Il costrutto [</literal>
+      <listitem><para>Il costrutto <literal>[</literal>
 	  <replaceable>arg</replaceable> <literal>]</literal>
-          significa che l'argomento <replaceable>arg</replaceable> è
+          indica che l'argomento <replaceable>arg</replaceable> è
           opzionale: è possibile fornirlo oppure no (in ogni caso, le
           parentesi quadre non vanno scritte).
 	</para></listitem>
@@ -64,7 +63,7 @@
   </sect1>
 
   <sect1 id="cmd-cmd">
-    <title>comandi di gretl</title>
+    <title>Comandi di gretl</title>
 
   &cmdlist;
   
@@ -72,11 +71,11 @@
 
   <sect1 id="estimators"><title>Stimatori e test: sommario</title>
 
-    <para><xref linkend="tab-estim"/> mostra gli stimatori disponibili
+    <para>La <xref linkend="tab-estim"/> mostra gli stimatori disponibili
       nel menù Modello nella finestra principale di
       <application>gretl</application>. I corrispondenti comandi (se
       esistono) sono mostrati tra parentesi. Per i dettagli, consultare
-      la voce corrispondente ad ogni comando in 
+      la voce corrispondente ad ogni comando nella 
       <xref linkend="cmd-cmd"/>.</para>
 
     <table id="tab-estim" frame="none">
@@ -181,8 +180,8 @@
     <para role="bodge">&nbsp;</para>
     <para role="bodge">&nbsp;</para>
 
-    <para><xref linkend="tab-tests"/> mostra i test disponibili nel menù
-    Test della finestra di un modello, dopo la sua stima.</para>
+    <para>La <xref linkend="tab-tests"/> mostra i test disponibili nel menù
+    Test della finestra dei modelli stimati.</para>
 
     <table id="tab-tests" frame="none">
       <title>Test per i modelli</title>
@@ -223,7 +222,7 @@
 	    <entry><command>leverage</command></entry>
 	  </row>
 	  <row>
-	    <entry>Autocorrelazione fino alla frequenza dei dati</entry>
+	    <entry>Autocorrelazione (ordine pari alla frequenza)</entry>
 	    <entry><command>lmtest -o</command></entry>
 	  </row>
 	  <row>
@@ -250,9 +249,9 @@
       </tgroup>
     </table>
 
-    <para><xref linkend="tab-options"/> mostra la corrispondenza tra le
-      opzioni in forma lunga usate nella guida comandi e le
-      corrispondenti versioni in forma corta.</para>
+    <para>La <xref linkend="tab-options"/> mostra la corrispondenza tra le
+      opzioni dei comandi in formato lungo e quelle in formato corto.
+    </para>
 
     <table id="tab-options" frame="none">
       <title>Opzioni in forma lunga e corta</title>
