@@ -52,8 +52,6 @@ static int populate_notebook_filelists (windata_t *fdata,
 					GtkWidget *notebook,
 					int code);
 
-extern int jwdata;  /* settings.c */
-
 typedef struct _file_collection file_collection;
 
 struct _file_collection {
@@ -592,6 +590,8 @@ void browser_open_data (GtkWidget *w, gpointer data)
     g_free(datname);
 #endif
 
+    set_datapage(coll->title);
+
     verify_open_data(vwin, OPEN_DATA);
 } 
 
@@ -622,6 +622,8 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     gtk_widget_destroy(GTK_WIDGET(vwin->w));
 
     mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+
+    set_scriptpage(coll->title);
 
     view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 } 
@@ -1628,6 +1630,7 @@ static int populate_notebook_filelists (windata_t *win,
 					int code)
 {
     file_collection *coll;
+    const char *title;
     int j;
 
     while (1) {
@@ -1643,32 +1646,33 @@ static int populate_notebook_filelists (windata_t *win,
 	populate_filelist(win, coll);
     }
 
-    if (code == TEXTBOOK_DATA) {
-	reset_data_stack();
-    } else {
-	reset_ps_stack();
-    }
+    if (code == TEXTBOOK_DATA) 	reset_data_stack();
+    else reset_ps_stack();
 
     j = 0;
 
     if (code == TEXTBOOK_DATA) {
-	if (jwdata) {
+	title = get_datapage();
+	if (*title != '\0') {
 	    while ((coll = pop_data_collection())) {
-		if (!strncmp(coll->title, "Wool", 4)) {
-		    break;
-		}
+		if (!strcmp(coll->title, title)) break;
 		j++;
 	    }
-	} else {
-	    coll = pop_data_collection();
-	}
-	win->listbox = coll->page;
-	reset_data_stack();
+	} else coll = pop_data_collection();
     } else {
-	coll = pop_data_collection();
-	win->listbox = coll->page;
-	reset_ps_stack();
+	title = get_scriptpage();
+	if (*title != '\0') {
+	    while ((coll = pop_ps_collection())) {
+		if (!strcmp(coll->title, title)) break;
+		j++;
+	    }
+	} else coll = pop_ps_collection();
     }
+
+    win->listbox = coll->page;
+
+    if (code == TEXTBOOK_DATA) 	reset_data_stack();
+    else reset_ps_stack();
 
 #ifndef OLD_GTK
     gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), j);

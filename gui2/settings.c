@@ -95,9 +95,10 @@ PangoFontDescription *fixed_font;
 
 static int usecwd;
 int olddat;
-int jwdata;
 int useqr;
 char gpcolors[24];
+static char datapage[24];
+static char scriptpage[24];
 
 #ifdef ENABLE_NLS
 static int lcnumeric = 1;
@@ -185,18 +186,40 @@ RCVARS rc_vars[] = {
      N_("Use gretl user directory as default"), &usecwd, 'B', 0, 4, NULL},
     {"olddat", N_("Use \".dat\" as default datafile suffix"), 
      N_("Use \".gdt\" as default suffix"), &olddat, 'B', 0, 5, NULL},
-    {"jwdata", N_("Show Wooldridge data first"), 
-     N_("Show Ramanathan data first"), &jwdata, 'B', 0, 5, NULL},
     {"useqr", N_("Use QR decomposition"), 
      N_("Use Cholesky decomposition"), &useqr, 'B', 0, 1, NULL},
     {"Fixed_font", N_("Fixed font"), NULL, fixedfontname, 'U', MAXLEN, 0, NULL},
 #ifndef USE_GNOME
     {"App_font", N_("Menu font"), NULL, appfontname, 'U', MAXLEN, 0, NULL},
 #endif
+    {"DataPage", NULL, NULL, datapage, 'I', 24, 0, NULL},
+    {"ScriptPage", NULL, NULL, scriptpage, 'I', 24, 0, NULL},    
     {"Png_font", N_("PNG graph font"), NULL, paths.pngfont, 'I', 16, 0, NULL},
     {"Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 'I', 24, 0, NULL},
     {NULL, NULL, NULL, NULL, 0, 0, 0, NULL}
 };
+
+/* ........................................................... */
+
+void set_datapage (const char *str)
+{
+    strcpy(datapage, str);
+}
+
+void set_scriptpage (const char *str)
+{
+    strcpy(scriptpage, str);
+}
+
+const char *get_datapage (void)
+{
+    return datapage;
+}
+
+const char *get_scriptpage (void)
+{
+    return scriptpage;
+}
 
 /* ........................................................... */
 
