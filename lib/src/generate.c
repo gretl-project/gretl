@@ -1646,9 +1646,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 
 	_esl_trunc(newvar, VNAMELEN - 1);
 
-	if (!isalpha((unsigned char) *newvar) &&
-	    strncmp(newvar, "$nls", 4)) {
-	    genr.err = E_NOTALPH;
+	if (strncmp(newvar, "$nls", 4) && check_varname(newvar)) {
+	    genr.err = E_SYNTAX;
 	    goto genr_return;
 	}
 
