@@ -114,6 +114,12 @@ char *append_dir (char *fname, const char *dir);
 int build_path (const char *dir, const char *fname, char *path, 
 		const char *ext);
 
+#ifndef USE_GTK2
+int
+utf8_to_iso_latin_1 (unsigned char* out, int outlen, 
+		     unsigned char* in, int inlen);
+#endif
+
 #if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
 int *varname_match_list (const DATAINFO *pdinfo, const char *pattern);
 #endif

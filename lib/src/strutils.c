@@ -896,6 +896,34 @@ void unescape_url (char *url)
     url[x] = '\0';
 }
 
+#ifndef USE_GTK2
+
+int
+utf8_to_iso_latin_1 (unsigned char* out, int outlen, unsigned char* in, int inlen)
+{
+    unsigned char* outstart = out;
+    unsigned char* outend = out + outlen;
+    unsigned char* inend = in + inlen;
+    unsigned char c;
+
+    while (in < inend) {
+        c= *in++;
+        if (c < 0x80) {
+            if (out >= outend) return -1;
+            *out++= c;
+        }
+        else if (((c & 0xFE) == 0xC2) && in<inend) {
+            if (out >= outend) return -1;
+            *out++= ((c & 0x03) << 6) | (*in++ & 0x3F);
+        }
+        else return -2;
+    }
+
+    return out - outstart;
+}
+
+#endif
+
 char *iso_to_ascii (char *s)
 {
     char *tmp, *p, *q;

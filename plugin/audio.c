@@ -612,7 +612,7 @@ static void speak_dataset_comments (const dataset *dset)
 
 #elif defined(G_OS_WIN32)
 
-static wchar_t *wide_string (const char *s)
+static WCHAR *wide_string (const char *s)
 {
     unsigned char *ret;
     int i, j, n = strlen(s);
@@ -626,7 +626,7 @@ static wchar_t *wide_string (const char *s)
 	ret[j++] = '\0';
     }
 
-    return (wchar_t *) ret;
+    return (WCHAR *) ret;
 }
 
 static void speak_dataset_comments (const dataset *dset)
