@@ -97,6 +97,7 @@ static int usecwd;
 int olddat;
 int jwdata;
 int useqr;
+char gpcolors[24];
 
 #ifdef ENABLE_NLS
 static int lcnumeric = 1;
@@ -193,7 +194,8 @@ RCVARS rc_vars[] = {
     {"App_font", N_("Menu font"), NULL, appfontname, 'U', MAXLEN, 0, NULL},
 #endif
     {"Png_font", N_("PNG graph font"), NULL, paths.pngfont, 'I', 16, 0, NULL},
-    {NULL, NULL, NULL, NULL, 0, 0, 0, NULL}   
+    {"Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 'I', 24, 0, NULL},
+    {NULL, NULL, NULL, NULL, 0, 0, 0, NULL}
 };
 
 /* ........................................................... */
@@ -753,6 +755,19 @@ static void set_lcnumeric (void)
 
 /* .................................................................. */
 
+static void set_gp_colors (void)
+{
+    char col1[8], col2[8], col3[8];
+
+    if (sscanf(gpcolors, "%7s %7s %7s", col1, col2, col3) == 3) {
+	set_gnuplot_pallette(0, col1);
+	set_gnuplot_pallette(1, col2);
+	set_gnuplot_pallette(2, col3);
+    }
+}
+
+/* .................................................................. */
+
 static void apply_changes (GtkWidget *widget, gpointer data) 
 {
     const gchar *tempstr;
@@ -775,7 +790,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	}
 	i++;
     }
-
+    
     write_rc();
 
     if (toolbar_box == NULL && want_toolbar)
@@ -919,6 +934,7 @@ static void read_rc (void)
     g_object_unref(G_OBJECT(client));
 
     set_use_qr(useqr);
+    set_gp_colors();
 
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
@@ -1010,6 +1026,7 @@ void read_rc (void)
     }
 
     set_use_qr(useqr);
+    set_gp_colors();
 
     set_paths(&paths, 0, 1);
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
@@ -1136,6 +1153,7 @@ static void read_rc (void)
     fclose(rc);
 
     set_use_qr(useqr);
+    set_gp_colors();
 
     set_paths(&paths, 0, 1);
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
@@ -1705,17 +1723,22 @@ static double scale_round (double val)
     return val * 255.0 / 65535.0;
 }
 
-static void color_ok (GtkWidget *button, GtkWidget *w)
+static GtkWidget *get_image_for_color (const char *colstr);
+
+static void color_select_callback (GtkWidget *button, GtkWidget *w)
 {
     GtkWidget *csel;
+    GtkWidget *color_button, *image;
     GdkColor color;
     char color_string[12];
     gint i;
 
+    color_button = g_object_get_data(G_OBJECT(w), "color_button");
+
     csel = GTK_COLOR_SELECTION_DIALOG(w)->colorsel;
     gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &color);
 
-    sprintf(color_string, "x%2x%2x%2x",
+    sprintf(color_string, "x%02x%02x%02x",
 	    (guint) (scale_round (color.red)),
 	    (guint) (scale_round (color.green)),
 	    (guint) (scale_round (color.blue)));
@@ -1723,6 +1746,17 @@ static void color_ok (GtkWidget *button, GtkWidget *w)
     i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "colnum"));
 
     set_gnuplot_pallette(i, color_string);
+
+    sprintf(gpcolors, "%s %s %s", 
+	    get_gnuplot_pallette(0, 0),
+	    get_gnuplot_pallette(1, 0),
+	    get_gnuplot_pallette(2, 0));
+
+    image = g_object_get_data(G_OBJECT(color_button), "image");
+    gtk_widget_destroy(image);
+    image = get_image_for_color(color_string);
+    gtk_widget_show(image);
+    gtk_container_add(GTK_CONTAINER(color_button), image);
   
     gtk_widget_destroy(w);
 }
@@ -1735,50 +1769,67 @@ static void color_cancel (GtkWidget *button, GtkWidget *w)
 #define XPMROWS 19
 #define XPMCOLS 17
 
-GtkWidget *color_patch_button (int colnum)
+static GtkWidget *get_image_for_color (const char *colstr)
 {
-    GtkWidget *image, *button;
     GdkPixbuf *icon;
-    const char *colstr;
+    GtkWidget *image;
     static char **xpm = NULL;
     int i;
 
     if (xpm == NULL) {
 	xpm = malloc(XPMROWS * sizeof *xpm);
-	if (xpm == NULL) return NULL;
-	for (i=0; i<XPMROWS; i++) {
-	    xpm[i] = malloc(XPMCOLS * sizeof **xpm);
-	    if (xpm[i] == NULL) {
-		int j;
+	if (xpm != NULL) {
+	    for (i=0; i<XPMROWS; i++) {
+		xpm[i] = malloc(XPMCOLS * sizeof **xpm);
+		if (xpm[i] == NULL) {
+		    int j;
 
-		for (j=0; j<i; j++) free(xpm[j]);
-		free(xpm);
-		return NULL;
-	    }
-	    if (i == 0) {
-		strcpy(xpm[i], "16 16 2 1");
-	    } else if (i == 1) {
-		strcpy(xpm[i], "X      c #000000");
-	    } else if (i == 2) {
-		strcpy(xpm[i], ".      c #000000");
-	    } else if (i == 3 || i == XPMROWS - 1) {
-		strcpy(xpm[i], "................");
-	    } else {
-		strcpy(xpm[i], ".XXXXXXXXXXXXXX.");
+		    for (j=0; j<i; j++) free(xpm[j]);
+		    free(xpm);
+		    xpm = NULL;
+		}
+		if (i == 0) {
+		    strcpy(xpm[i], "16 16 2 1");
+		} else if (i == 1) {
+		    strcpy(xpm[i], "X      c #000000");
+		} else if (i == 2) {
+		    strcpy(xpm[i], ".      c #000000");
+		} else if (i == 3 || i == XPMROWS - 1) {
+		    strcpy(xpm[i], "................");
+		} else {
+		    strcpy(xpm[i], ".XXXXXXXXXXXXXX.");
+		}
 	    }
 	}
     }
 
-    colstr = get_gnuplot_pallette(colnum, 0);
+    if (xpm == NULL) return NULL;
 
     for (i=0; i<6; i++) {
 	xpm[1][10+i] = colstr[1+i];
-    }
+    }    
 
     icon = gdk_pixbuf_new_from_xpm_data((const char **) xpm);
     image = gtk_image_new_from_pixbuf(icon);
-    button = gtk_button_new();
-    gtk_container_add(GTK_CONTAINER(button), image);
+    
+    return image;
+}
+
+GtkWidget *color_patch_button (int colnum)
+{
+    GtkWidget *image, *button;
+    const char *colstr;
+
+    colstr = get_gnuplot_pallette(colnum, 0);
+    image = get_image_for_color(colstr);
+
+    if (image == NULL) {
+	button = gtk_button_new_with_label(_("Select color"));
+    } else {
+	button = gtk_button_new();
+	gtk_container_add(GTK_CONTAINER(button), image);
+	g_object_set_data(G_OBJECT(button), "image", image);
+    }	
 
     return button;
 }
@@ -1798,6 +1849,7 @@ void gnuplot_color_selector (GtkWidget *w, gpointer p)
     cdlg = gtk_color_selection_dialog_new("gretl color selection");
 
     g_object_set_data(G_OBJECT(cdlg), "colnum", GINT_TO_POINTER(i));
+    g_object_set_data(G_OBJECT(cdlg), "color_button", w);
 
     gtk_color_selection_set_current_color(GTK_COLOR_SELECTION
 					  (GTK_COLOR_SELECTION_DIALOG(cdlg)->colorsel),
@@ -1805,7 +1857,7 @@ void gnuplot_color_selector (GtkWidget *w, gpointer p)
 
     button = GTK_COLOR_SELECTION_DIALOG(cdlg)->ok_button;
     g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(color_ok), cdlg);
+		     G_CALLBACK(color_select_callback), cdlg);
 
     button = GTK_COLOR_SELECTION_DIALOG(cdlg)->cancel_button;
     g_signal_connect(G_OBJECT(button), "clicked", 
