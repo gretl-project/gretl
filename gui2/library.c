@@ -2111,6 +2111,10 @@ void do_model (GtkWidget *widget, gpointer p)
     clear(line, MAXLEN);
     sprintf(line, "%s %s%s", estimator, buf, print_flags(cmd.opt, action));
 
+#if 0
+    fprintf(stderr, "do_model: line = '%s'\n", line);
+#endif
+
     *modelgenr = '\0';
     if (check_model_cmd(line, modelgenr)) return;
 
@@ -2180,17 +2184,18 @@ void do_model (GtkWidget *widget, gpointer p)
 	break;
 
     case VAR:
-	/* requires special treatment: doesn't return model */
+	/* Note: requires special treatment: doesn't return model */
 	/* FIXME: allow "robust" option via GUI? */
 	sscanf(buf, "%d", &order);
 	var = full_var(order, cmd.list, &Z, datainfo, OPT_NONE, prn);
 	if (var == NULL) {
-	    ; /* error message */
+	    errbox(_("Command failed"));
+	    gretl_print_destroy(prn);
 	} else {
 	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
 			VAR, var);
 	}
-	return;
+	return; /* special */
 
     case LOGIT:
     case PROBIT:
@@ -2256,8 +2261,9 @@ void do_model (GtkWidget *widget, gpointer p)
     }
 
     /* make copy of most recent model */
-    if (copy_model(models[2], pmod, datainfo))
+    if (copy_model(models[2], pmod, datainfo)) {
 	errbox(_("Out of memory copying model"));
+    }
 
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);

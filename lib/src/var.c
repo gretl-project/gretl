@@ -138,13 +138,15 @@ gretl_var_init (GRETL_VAR *var, int neqns, int order, const DATAINFO *pdinfo,
     } 
 
     if (!err && (flags & VAR_SAVE)) {
-	int m = neqns * neqns;
+	int m = neqns * neqns + neqns;
 	
-	if (order > 1) m += neqns;
 #if VAR_DEBUG
 	fprintf(stderr, "var->Fvals: allocating %d terms\n", m);
 #endif
 	var->Fvals = malloc(m  * sizeof *var->Fvals);
+	if (var->Fvals == NULL) {
+	    err = 1;
+	}
     }
 
     return err;
@@ -1047,6 +1049,7 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 		pdinfo->varname[vl->stochvars[j + 1]]);
 	pprintf(prn, "F(%d, %d) = %10g  ", order, varmod->dfd, F);
 	pprintf(prn, "%s %g\n", _("p-value"), fdist(F, order, varmod->dfd));
+
 	if (var != NULL) {
 	    var->Fvals[*k] = F;
 	    *k += 1;

@@ -153,7 +153,7 @@ static void get_word_and_command (const char *s, char *word,
     }
 
 #if 0
-    fprintf(stderr, "s='%s', len=%d\n", s, len);
+    fprintf(stderr, "remaining s ='%s', len=%d\n", s, len);
 #endif
 
     /* is an object command embedded? */
@@ -163,11 +163,19 @@ static void get_word_and_command (const char *s, char *word,
 	len -= (len - d);
     }
 
-    if (len > MAXSAVENAME - 1) len = MAXSAVENAME - 1;
+    if (len == 0) {
+	return;
+    }
+
+    if (len > MAXSAVENAME - 1) {
+	len = MAXSAVENAME - 1;
+    }
+
     strncat(word, p, len);
 
-    if (word[strlen(word) - 1] == '"') 
+    if (word[strlen(word) - 1] == '"') {
 	word[strlen(word) - 1] = 0;
+    }
 
 #if 0
     fprintf(stderr, "word='%s', cmd='%s'\n", word, cmd);
@@ -178,7 +186,7 @@ static int parse_object_request (const char *line,
 				 char *objname, char *param,
 				 void **pptr, PRN *prn)
 {
-    char word[MAXSAVENAME];
+    char word[MAXSAVENAME] = {0};
     char sort = 0;
     int action;
 
@@ -335,9 +343,10 @@ int saved_object_action (const char *line,
 			 const DATAINFO *pdinfo,
 			 PRN *prn)
 {
+    char savename[MAXSAVENAME] = {0};
+    char param[9] = {0};
+    void *ptr = NULL;
     int code;
-    char savename[MAXSAVENAME], param[9];
-    void *ptr;
 
     if (*line == '!' || *line == '#') { 
 	/* shell command or comment */

@@ -37,6 +37,7 @@ static void time_series_setup (const char *s, DATAINFO *newinfo, int pd,
 			       int *label_strings)
 {
     if (*s == '"' || *s == '\'') s++;
+
     newinfo->pd = pd;
     newinfo->structure = TIME_SERIES;
 
@@ -46,7 +47,10 @@ static void time_series_setup (const char *s, DATAINFO *newinfo, int pd,
 
     newinfo->sd0 = get_date_x(newinfo->pd, newinfo->stobs);
 
-    if (text_cols != NULL) *text_cols = 1;
+    if (text_cols != NULL) {
+	*text_cols = 1;
+    }
+
     *time_series = 1;
     *label_strings = 0;
 }
@@ -97,7 +101,7 @@ static int label_is_date (char *str)
     return pd;
 }
 
-static int obs_column_heading (char *label)
+static int obs_column_heading (const char *label)
 {
     int ret = 0;
 
@@ -113,12 +117,15 @@ static int obs_column_heading (char *label)
 	if (*label == '\0') {
 	    ret = 1;    
 	} else {
-	    lower(label);
-	    if (strncmp(label, "obs", 3) == 0 ||
-		strcmp(label, "date") == 0 ||
-		strcmp(label, "year") == 0) {
+	    gchar *test = g_strdup(label);
+
+	    lower(test);
+	    if (strncmp(test, "obs", 3) == 0 ||
+		strcmp(test, "date") == 0 ||
+		strcmp(test, "year") == 0) {
 		ret = 1;
 	    }
+	    g_free(test);
 	}
     }
 
@@ -163,6 +170,24 @@ static void wbook_init (wbook *book)
     book->selected = 0;
 }
 
+static const char *column_label (int col)
+{
+    const char *abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static char label[5];
+    char a1, a2;
+
+    if (col < 26) {
+	a2 = abc[col];
+	sprintf(label, "(%c)", a2);
+    } else {
+	a1 = abc[col / 26 - 1];
+	a2 = abc[col % 26];
+	sprintf(label, "(%c%c)", a1, a2);
+    }
+
+    return label;
+}
+
 #if GTK_MAJOR_VERSION >= 2
 
 static
@@ -204,6 +229,14 @@ static
 void wsheet_menu_cancel (GtkWidget *w, wbook *book)
 {
     book->selected = -1;
+}
+
+static 
+void update_column_label (GtkAdjustment *a, GtkWidget *w)
+{
+    int col = gtk_adjustment_get_value(a);
+
+    gtk_label_set_text(GTK_LABEL(w), column_label(col - 1));
 }
 
 static 
@@ -273,41 +306,56 @@ static void wsheet_menu (wbook *book, int multisheet)
 {
     GtkWidget *w, *tmp, *label;
     GtkWidget *vbox, *hbox;
-    GtkObject *adj;
+    GtkObject *c_adj, *r_adj;
 
     w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
     gtk_window_set_title(GTK_WINDOW(w), _("gretl: spreadsheet import"));
+
     g_signal_connect(G_OBJECT(w), "destroy",  
 		     G_CALLBACK(gtk_main_quit), NULL);
 
     vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
 
-    /* choose starting column and row */
+    /* selection of starting column and row */
     label = gtk_label_new(_("Start import at:"));
     gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 5);
 
     hbox = gtk_hbox_new (FALSE, 5);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 5);
 
+    /* starting column spinner */
     tmp = gtk_label_new(_("column:"));
-    adj = gtk_adjustment_new(1, 1, 25, 1, 1, 1);
-    book->colspin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
-    g_signal_connect (adj, "value_changed",
+    c_adj = gtk_adjustment_new(1, 1, 256, 1, 1, 1);
+    book->colspin = gtk_spin_button_new (GTK_ADJUSTMENT(c_adj), 1, 0);
+    g_signal_connect (c_adj, "value_changed",
 		      G_CALLBACK (wbook_get_col_offset), book);
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), book->colspin, FALSE, FALSE, 5);
 
+    /* starting row spinner */
     tmp = gtk_label_new(_("row:"));
-    adj = gtk_adjustment_new(1, 1, 25, 1, 1, 1);
-    book->rowspin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
-    g_signal_connect (adj, "value_changed",
+    r_adj = gtk_adjustment_new(1, 1, 256, 1, 1, 1);
+    book->rowspin = gtk_spin_button_new (GTK_ADJUSTMENT(r_adj), 1, 0);
+    g_signal_connect (r_adj, "value_changed",
 		      G_CALLBACK (wbook_get_row_offset), book);
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), book->rowspin, FALSE, FALSE, 5);
 
+    /* column label feedback */
+    hbox = gtk_hbox_new (FALSE, 5);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
+    label = gtk_label_new("(A)");
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 5);
+    g_signal_connect (c_adj, "value_changed",
+		      G_CALLBACK (update_column_label), label);
+
+
     /* choose the worksheet (if applicable) */
-    if (multisheet) add_sheets_list(vbox, book);
+    if (multisheet) {
+	add_sheets_list(vbox, book);
+    }
 
     hbox = gtk_hbox_new (TRUE, 5);
     tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
@@ -369,6 +417,15 @@ void wsheet_menu_cancel (GtkWidget *w, wbook *book)
 }
 
 static 
+void update_column_label (GtkAdjustment *a, GtkWidget *w)
+{
+    int col = a->value;
+
+    gtk_label_set_text(GTK_LABEL(w), column_label(col - 1));
+}
+
+
+static 
 void wbook_get_col_offset (GtkWidget *w, wbook *book)
 {
     book->col_offset = gtk_spin_button_get_value_as_int
@@ -386,39 +443,50 @@ static void wsheet_menu (wbook *book, int multisheet)
 {
     GtkWidget *w, *tmp, *frame;
     GtkWidget *vbox, *hbox, *list;
-    GtkObject *adj;
+    GtkObject *c_adj, *r_adj;
 
     w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
     gtk_window_set_title(GTK_WINDOW(w), "gretl: spreadsheet import");
+
     gtk_signal_connect(GTK_OBJECT(w), "destroy",  
 		       GTK_SIGNAL_FUNC(gtk_main_quit), NULL);
 
     vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
 
-    /* choose starting column and row */
-    frame = gtk_frame_new("Start import at");
-    gtk_box_pack_start (GTK_BOX (vbox), frame, TRUE, TRUE, 5);
+    /* selection of starting column and row */
+    tmp = gtk_label_new(_("Start import at:"));
+    gtk_box_pack_start (GTK_BOX (vbox), tmp, FALSE, FALSE, 5);
 
     hbox = gtk_hbox_new (FALSE, 5);
-    gtk_container_set_border_width (GTK_CONTAINER (hbox), 10);
-    gtk_container_add(GTK_CONTAINER (frame), hbox);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 5);
 
+    /* starting column spinner */
     tmp = gtk_label_new("column:");
-    adj = gtk_adjustment_new(1, 1, 25, 1, 1, 1);
-    book->colspin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
-    gtk_signal_connect (adj, "value_changed",
+    c_adj = gtk_adjustment_new(1, 1, 256, 1, 1, 1);
+    book->colspin = gtk_spin_button_new (GTK_ADJUSTMENT(c_adj), 1, 0);
+    gtk_signal_connect (c_adj, "value_changed",
 			GTK_SIGNAL_FUNC (wbook_get_col_offset), book);
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), book->colspin, FALSE, FALSE, 5);
 
+    /* starting row spinner */
     tmp = gtk_label_new("row:");
-    adj = gtk_adjustment_new(1, 1, 25, 1, 1, 1);
-    book->rowspin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
-    gtk_signal_connect (adj, "value_changed",
+    r_adj = gtk_adjustment_new(1, 1, 25, 1, 1, 1);
+    book->rowspin = gtk_spin_button_new (GTK_ADJUSTMENT(r_adj), 1, 0);
+    gtk_signal_connect (r_adj, "value_changed",
 			GTK_SIGNAL_FUNC (wbook_get_row_offset), book);
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), book->rowspin, FALSE, FALSE, 5);
+
+    /* column label feedback */
+    hbox = gtk_hbox_new (FALSE, 5);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
+    tmp = gtk_label_new("(A)");
+    gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
+    gtk_signal_connect (c_adj, "value_changed",
+			GTK_SIGNAL_FUNC (update_column_label), tmp);
 
     /* choose the worksheet (if applicable) */
     if (multisheet) {

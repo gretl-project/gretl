@@ -25,6 +25,8 @@
 #include <libxml/parser.h>
 #include "importer.h"
 
+#undef IDEBUG
+
 #define UTF const xmlChar *
 
 /* from gnumeric's value.h */
@@ -58,31 +60,34 @@ static void wsheet_free (wsheet *sheet)
     int cols = sheet->maxcol + 1 - sheet->col_offset;
 
     for (i=0; i<cols; i++) {
-	if (sheet->varname) 
+	if (sheet->varname != NULL) {
 	    free(sheet->varname[i]);
-	if (sheet->Z)
+	}
+	if (sheet->Z != NULL) {
 	    free(sheet->Z[i]);
-    }
-
-    if (sheet->label) { 
-	for (i=0; i<rows; i++) 
-	    free(sheet->label[i]);
-	free(sheet->label);
+	}
     }
 
     free(sheet->varname);
     free(sheet->Z);
 
-    wsheet_init(sheet);
+    if (sheet->label != NULL) { 
+	for (i=0; i<rows; i++) {
+	    free(sheet->label[i]);
+	}
+	free(sheet->label);
+    }
 
     free(sheet->name);
-    sheet->name = NULL;
+
+    wsheet_init(sheet);
 }
 
 static void wsheet_print_info (wsheet *sheet)
 {
-    int i;
-#ifdef notdef 
+    int startcol = sheet->text_cols + sheet->col_offset;
+    int i, j;
+#ifdef IDEBUG
     int t;
 #endif
 
@@ -93,15 +98,18 @@ static void wsheet_print_info (wsheet *sheet)
     fprintf(stderr, "col_offset = %d\n", sheet->col_offset);
     fprintf(stderr, "row_offset = %d\n", sheet->row_offset);
 
-    for (i=sheet->text_cols; i<=sheet->maxcol; i++) 
-	fprintf(stderr, "%s%s", sheet->varname[i],
-		    (i == sheet->maxcol)? "\n" : " ");	
+    j = 0;
+    for (i=startcol; i<=sheet->maxcol; i++) {
+	fprintf(stderr, "variable %d: %s\n", j + 1, sheet->varname[j]);
+	j++;
+    }	
 
-#ifdef notdef
+#ifdef IDEBUG /* FIXME */
     for (t=sheet->text_rows; t<=sheet->maxrow; t++) {
-	if (sheet->text_cols)
+	if (sheet->text_cols) {
 	    fprintf(stderr, "%s ", sheet->label[t]);
-	for (i=sheet->text_cols; i<=sheet->maxcol; i++) {
+	}
+	for (i=startcol; i<=sheet->maxcol; i++) {
 	    fprintf(stderr, "%g%s", sheet->Z[i][t],
 		    (i == sheet->maxcol)? "\n" : " ");
 	}
@@ -116,28 +124,52 @@ static void wsheet_print_info (wsheet *sheet)
 
 static int wsheet_allocate (wsheet *sheet, int cols, int rows)
 {
-    int i, t;
+    int i, j, t;
 
     sheet->Z = malloc(cols * sizeof *(sheet->Z));
     if (sheet->Z == NULL) return 1;
+
     for (i=0; i<cols; i++) {
 	sheet->Z[i] = malloc(rows * sizeof **(sheet->Z));
-	if (sheet->Z[i] == NULL) return 1;
-	for (t=0; t<rows; t++)
+	if (sheet->Z[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(sheet->Z[j]);
+		sheet->Z[j] = NULL;
+	    }
+	    return 1;
+	}
+	for (t=0; t<rows; t++) {
 	    sheet->Z[i][t] = NADBL;
+	}
     }
 
-    sheet->varname = malloc(cols * sizeof *(sheet->varname));
+    sheet->varname = malloc(cols * sizeof *sheet->varname);
+    if (sheet->varname == NULL) return 1;
+
     for (i=0; i<cols; i++) {
 	sheet->varname[i] = malloc(VNAMELEN * sizeof **(sheet->varname));
-	if (sheet->varname[i] == NULL) return 1;
+	if (sheet->varname[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(sheet->varname[j]);
+		sheet->varname[j] = NULL;
+	    }	    
+	    return 1;
+	}
 	sheet->varname[i][0] = '\0';
     }
 
-    sheet->label = malloc(rows * sizeof *(sheet->label));
+    sheet->label = malloc(rows * sizeof *sheet->label);
+    if (sheet->label == NULL) return 1;
+
     for (t=0; t<rows; t++) {
-	sheet->label[t] = malloc(VNAMELEN * sizeof **(sheet->label));
-	if (sheet->label[t] == NULL) return 1;
+	sheet->label[t] = malloc(VNAMELEN * sizeof *sheet->label[t]);
+	if (sheet->label[t] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(sheet->label[j]);
+		sheet->label[j] = NULL;
+	    }	   
+	    return 1;
+	}
 	sheet->label[t][0] = '\0';
     }
 
@@ -147,8 +179,10 @@ static int wsheet_allocate (wsheet *sheet, int cols, int rows)
 static int wsheet_get_real_size (xmlNodePtr node, wsheet *sheet)
 {
     xmlNodePtr p = node->xmlChildrenNode;
-    int maxrow = 0, maxcol = 0;
     char *tmp;
+
+    sheet->maxrow = 0;
+    sheet->maxcol = 0;
 
     while (p) {
 	if (!xmlStrcmp(p->name, (UTF) "Cell")) {
@@ -158,23 +192,24 @@ static int wsheet_get_real_size (xmlNodePtr node, wsheet *sheet)
 	    if (tmp) {
 		i = atoi(tmp);
 		free(tmp);
-		if (i > maxrow) maxrow = i;
+		if (i > sheet->maxrow) {
+		    sheet->maxrow = i;
+		}
 	    }
 	    tmp = xmlGetProp(p, (UTF) "Col");
 	    if (tmp) {
 		j = atoi(tmp);
 		free(tmp);
-		if (j > maxcol) maxcol = j;
+		if (j > sheet->maxcol) {
+		    sheet->maxcol = j;
+		}
 	    }
 	}
 	p = p->next;
     }
 
     fprintf(stderr, "wsheet_get_real_size: maxrow=%d, maxcol=%d\n",
-	    maxrow, maxcol);
-
-    sheet->maxcol = maxcol;
-    sheet->maxrow = maxrow;
+	    sheet->maxrow, sheet->maxcol);
 
     return 0;
 }
@@ -193,7 +228,19 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
     cols = sheet->maxcol + 1 - sheet->col_offset;
     rows = sheet->maxrow + 1 - sheet->row_offset;
 
-    if (wsheet_allocate(sheet, cols, rows)) return 1;
+    if (rows < 1) {
+	pputs(prn, _("Starting row is out of bounds.\n"));
+	return 1;
+    }
+    
+    if (cols < 1) {
+	pputs(prn, _("Starting column is out of bounds.\n"));
+	return 1;
+    }	
+
+    if (wsheet_allocate(sheet, cols, rows)) {
+	return 1;
+    }
 
     leftcols = calloc(cols, 1);
     toprows = calloc(rows, 1);
@@ -281,10 +328,14 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 
     if (!err) {
 	for (i=0; i<cols; i++) {
-	    if (leftcols[i]) sheet->text_cols += 1;
+	    if (leftcols[i]) {
+		sheet->text_cols += 1;
+	    }
 	}
 	for (t=0; t<rows; t++) {
-	    if (toprows[t]) sheet->text_rows += 1;
+	    if (toprows[t]) {
+		sheet->text_rows += 1;
+	    }
 	}
 
 	if (sheet->text_rows > 1) {
@@ -341,11 +392,12 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
 	    int sheetcount = 0;
 
 	    sub = cur->xmlChildrenNode;
-	    while (sub != NULL && !got_sheet) {
+
+	    while (sub != NULL && !got_sheet && !err) {
 		if (!xmlStrcmp(sub->name, (UTF) "Sheet")) {
 		    xmlNodePtr snode = sub->xmlChildrenNode;
 
-		    while (snode != NULL) {
+		    while (snode != NULL && !err) {
 			if (!xmlStrcmp(snode->name, (UTF) "Name")) {
 			    sheetcount++;
 			    tmp = xmlNodeGetContent(snode);
@@ -356,24 +408,21 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
 				}
 				free(tmp);
 			    }
-			}
-			else if (got_sheet &&
+			} else if (got_sheet &&
 				 !xmlStrcmp(snode->name, (UTF) "MaxCol")) {
 			    tmp = xmlNodeGetContent(snode);
 			    if (tmp) {
 				sheet->maxcol = atoi(tmp);
 				free(tmp);
 			    }
-			}
-			else if (got_sheet &&
+			} else if (got_sheet &&
 				 !xmlStrcmp(snode->name, (UTF) "MaxRow")) {
 			    tmp = xmlNodeGetContent(snode);
 			    if (tmp) {
 				sheet->maxrow = atoi(tmp);
 				free(tmp);
 			    }
-			}
-			else if (got_sheet &&
+			} else if (got_sheet &&
 				 !xmlStrcmp(snode->name, (UTF) "Cells")) {
 			    wsheet_get_real_size(snode, sheet);
 			    err = wsheet_parse_cells(snode, sheet, prn);
@@ -390,19 +439,28 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
     xmlFreeDoc(doc);
     xmlCleanupParser();
 
-    if (!got_sheet) err = 1;
+    if (!got_sheet) {
+	err = 1;
+    }
 
     return err;
 }
 
 static int wbook_record_name (char *name, wbook *book)
 {
-    book->nsheets += 1;
-    book->sheetnames = realloc(book->sheetnames, 
-			       book->nsheets * sizeof (char *));
-    if (book->sheetnames == NULL) 
+    char **sheetnames;
+    int ns = book->nsheets + 1;
+
+    sheetnames = realloc(book->sheetnames, ns * sizeof *sheetnames);
+
+    if (sheetnames == NULL) {
 	return 1;
-    book->sheetnames[book->nsheets - 1] = name;
+    }
+
+    book->sheetnames = sheetnames;
+    book->nsheets = ns;
+    book->sheetnames[ns - 1] = name;
+
     return 0;
 }
 
@@ -446,7 +504,7 @@ static int wbook_get_info (const char *fname, wbook *book, PRN *prn)
 	    while (sub != NULL && !err) {
 		if (!xmlStrcmp(sub->name, (UTF) "SheetName")) {
 		    tmp = xmlNodeGetContent(sub);
-		    if (tmp) {
+		    if (tmp != NULL) {
 			if (wbook_record_name(tmp, book)) {
 			    err = 1;
 			    free(tmp);
@@ -467,13 +525,13 @@ static int wbook_get_info (const char *fname, wbook *book, PRN *prn)
 
 static int wsheet_setup (wsheet *sheet, wbook *book, int n)
 {
-    size_t len = strlen(book->sheetnames[n]) + 1;
-    
-    sheet->name = malloc(len);
-    if (sheet->name == NULL) return 1;
+    sheet->name = gretl_strdup(book->sheetnames[n]);
+
+    if (sheet->name == NULL) {
+	return 1;
+    }
 
     sheet->ID = n;
-    strcpy(sheet->name, book->sheetnames[n]);
 
     sheet->col_offset = book->col_offset;
     sheet->row_offset = book->row_offset;    
@@ -484,12 +542,16 @@ static int wsheet_setup (wsheet *sheet, wbook *book, int n)
 static int wsheet_labels_complete (wsheet *sheet)
 {
     int t, rows = sheet->maxrow + 1 - sheet->row_offset;
+    int complete = 1;
     
     for (t=1; t<rows; t++) {
-	if (sheet->label[t][0] == '\0')
-	    return 0;
+	if (sheet->label[t][0] == '\0') {
+	    complete = 0;
+	    break;
+	}
     }
-    return 1;
+
+    return complete;
 }
 
 static int consistent_date_labels (wsheet *sheet)
@@ -524,7 +586,9 @@ static int consistent_date_labels (wsheet *sheet)
 			pdbak, pd);
 		return 0;
 	    }		
-	    if (x <= xbak) return 0;
+	    if (x <= xbak) {
+		return 0;
+	    }
 	}
 	xbak = x;
     }
@@ -535,17 +599,17 @@ static int consistent_date_labels (wsheet *sheet)
 static int rigorous_dates_check (wsheet *sheet, DATAINFO *pdinfo)
 {
     int t, rows = sheet->maxrow + 1 - sheet->row_offset;
-    int tstart = 1 + sheet->row_offset;
+    int startrow = 1 + sheet->row_offset;
     int n, nbak = 0, err = 0;
 
     fputs("Doing rigorous dates check\n", stderr);
 
-    for (t=tstart; t<rows; t++) {
+    for (t=startrow; t<rows; t++) {
 	n = dateton(sheet->label[t], pdinfo);
-	if (t > tstart && n != nbak + 1) {
+	if (t > startrow && n != nbak + 1) {
 	    fprintf(stderr, "problem: date[%d]='%s' but date[%d]='%s'\n",
-		    t - tstart + 1, sheet->label[t],
-		    t - tstart, sheet->label[t-1]);
+		    t - startrow + 1, sheet->label[t],
+		    t - startrow, sheet->label[t-1]);
 	    err = 1;
 	    break;
 	}
@@ -633,6 +697,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
 	newinfo->v = sheet.maxcol + 2 - sheet.col_offset - sheet.text_cols;
 	newinfo->n = sheet.maxrow - sheet.row_offset;
+
 	fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
 		newinfo->v, newinfo->n);
 
