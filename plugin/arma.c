@@ -256,7 +256,6 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 {
     int i, t;
     int p = list[1], q = list[2];
-    int maxlag = (p > q)? p : q;
     int realt1 = pmod->t1 + pdinfo->t1;
     int realt2 = pmod->t2 + pdinfo->t1;
 
