@@ -44,6 +44,8 @@
 #include "dialogs.h"
 #include "library.h"
 #include "session.h"
+#include "settings.h"
+#include "helpfiles.h"
 
 #define MAXSTR 255
 

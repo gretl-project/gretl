@@ -49,7 +49,7 @@
 
 /* functions from other gretl GUI files */
 extern void free_modelspec (void);    /* lib.c */
-extern void allocate_fileptrs (void); /* gui_utils.c */
+extern void allocate_fileptrs (void); /* settings.c */
 extern void stats_calculator (gpointer data, guint ttest, GtkWidget *widget);
 extern void bool_subsample (gpointer data, guint dropmiss, GtkWidget *w);
 extern void free_command_stack (void);
@@ -70,7 +70,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w);
 static void Rcleanup (void);
 static void auto_store (void);
 
-GtkWidget *toolbar_box = NULL; /* shared with gui_utils.c */
+GtkWidget *toolbar_box = NULL; /* shared with settings.c */
 
 static GtkWidget *dataframe;
 static GtkWidget *main_vbox;
