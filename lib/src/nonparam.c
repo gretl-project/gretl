@@ -22,6 +22,12 @@
 #include "libgretl.h"
 #include "gretl_private.h"
 
+enum {
+    RUN_FIRST,
+    RUN_REPEAT,
+    RUN_CLEANUP
+};
+
 static int inverse_compare_doubles (const void *a, const void *b)
 {
     const double *da = (const double *) a;
@@ -67,38 +73,53 @@ static double spearman_signif (double rho, int n)
 
 static int spearman_rho (const double *x, const double *y, int n, 
 			 double *rho, double *sd, double *pval,
-			 double **rxout, double **ryout, int *m)
+			 double **rxout, double **ryout, int *m,
+			 int code)
 {
-    double *sx = NULL, *sy = NULL;
-    double *rx = NULL, *ry = NULL;
-    double *tmp = NULL;
-    double xx, yy;
-    int nn, i, j, t;
+    static double *sx = NULL;
+    static double *sy = NULL;
+    static double *rx = NULL;
+    static double *ry = NULL;
+    static int nn;
+
+    double xx, yy, r;
+    int i, j, t;
+
+    if (code == RUN_CLEANUP) {
+	free(sx); sx = NULL;
+	free(sy); sy = NULL;
+	free(rx); rx = NULL;
+	free(ry); ry = NULL;
+	nn = 0;
+	return 0;
+    }
 
     *rho = NADBL;
     *sd = NADBL;
-    *pval = NADBL;
+    if (pval != NULL) {
+	*pval = NADBL;
+    }
 
-    sx = malloc(n * sizeof *sx);
-    sy = malloc(n * sizeof *sy);
-    rx = malloc(n * sizeof *rx);
-    ry = malloc(n * sizeof *ry);
-    tmp = malloc(n * sizeof *tmp);
+    if (code == RUN_FIRST) {
+	sx = malloc(n * sizeof *sx);
+	sy = malloc(n * sizeof *sy);
+	rx = malloc(n * sizeof *rx);
+	ry = malloc(n * sizeof *ry);
 
-    if (sx == NULL || sy == NULL || rx == NULL || ry == NULL || tmp == NULL) {
-	return E_ALLOC;
+	if (sx == NULL || sy == NULL || 
+	    rx == NULL || ry == NULL) { 
+	    return E_ALLOC;
+	}
     }
 
     /* copy non-missing x and y into sx, sy */
     nn = 0;
     for (t=0; t<n; t++) {
-	xx = x[t];
-	yy = y[t];
-	if (na(xx) || na(yy)) {
+	if (na(x[t]) || na(y[t])) {
 	    continue;
 	}
-	sx[nn] = xx;
-	sy[nn] = yy;
+	sx[nn] = x[t];
+	sy[nn] = y[t];
 	nn++;
     }
 
@@ -106,89 +127,76 @@ static int spearman_rho (const double *x, const double *y, int n,
     qsort(sx, nn, sizeof *sx, inverse_compare_doubles);
     qsort(sy, nn, sizeof *sy, inverse_compare_doubles);
 
-    /* make rankings by comparing "raw" with sorted */
-    i = 0;
     for (t=0; t<n; t++) {
-	xx = x[t];
-	yy = y[t];
-	if (na(xx) || na(yy)) {
+	rx[t] = ry[t] = 0.0;
+    }
+
+    /* make rankings by comparing "raw" x, y with sorted */
+
+    r = 1.0;
+    for (i=0; i<nn; i++) {
+	/* scan sorted x */
+	int cases = 0, k = 0;
+
+	if (i > 0 && sx[i] == sx[i-1]) {
 	    continue;
 	}
-	for (j=0; j<nn; j++) {
-	    if (floateq(xx, sx[j])) {
-		rx[i] = (double) j + 1;
-		break;
+
+	for (j=0; j<n; j++) {
+	    /* scan raw x for matches */
+	    if (na(x[j])) {
+		continue;
 	    }
-	}
-	for (j=0; j<nn; j++) {
-	    if (floateq(yy, sy[j])) {
-		ry[i] = (double) j + 1;
-		break;
+	    if (x[j] == sx[i]) {
+		rx[k] = r;
+		cases++;
 	    }
+	    k++;
 	}
-	i++;
-    }
+	if (cases > 1) {
+	    double avg = (r + r + cases - 1.0) / 2.0;
 
-    /* fix up duplicated ranks */
-
-    for (t=0; t<nn; t++) {
-	tmp[t] = rx[t];
-    }
-
-    qsort(tmp, nn, sizeof *tmp, gretl_compare_doubles);
-
-    for (t=0; t<nn; ) {
-	int rcount = 1;
-	double avg, rsum = xx = tmp[t];
-
-	for (j=t+1; j<nn; j++) {
-	    if (floateq(tmp[j], xx)) {
-		rsum += (xx + j - t);
-		rcount++;
-	    } else {
-		break;
-	    }
-	}
-	t += rcount;
-	if (rcount > 1) {
-	    avg = rsum / rcount;
-	    for (i=0; i<nn; i++) { 
-		if (floateq(rx[i], xx)) {
-		    rx[i] = avg;
+	    for (t=0; t<nn; t++) {
+		if (rx[t] == r) {
+		    rx[t] = avg;
 		}
 	    }
+	} 
+	r += cases;
+    }
+		
+    r = 1.0;
+    for (i=0; i<nn; i++) {
+	/* scan sorted y */
+	int cases = 0, k = 0;
+
+	if (i > 0 && sy[i] == sy[i-1]) {
+	    continue;
 	}
-    }
 
-    for (t=0; t<nn; t++) {
-	tmp[t] = ry[t];
-    }
-
-    qsort(tmp, nn, sizeof *tmp, gretl_compare_doubles);
-
-    for (t=0; t<nn; ) {
-	int rcount = 1;
-	double avg, rsum = yy = tmp[t];
-
-	for (j=t+1; j<nn; j++) {
-	    if (floateq(tmp[j], yy)) {
-		rsum += (yy + j - t);
-		rcount++;
-	    } else {
-		break;
+	for (j=0; j<n; j++) {
+	    /* scan raw y for matches */
+	    if (na(y[j])) {
+		continue;
 	    }
+	    if (y[j] == sy[i]) {
+		ry[k] = r;
+		cases++;
+	    }
+	    k++;
 	}
-	t += rcount;
-	if (rcount > 1) {
-	    avg = rsum / rcount;
-	    for (i=0; i<nn; i++) { 
-		if (floateq(ry[i], yy)) {
-		    ry[i] = avg;
+	if (cases > 1) {
+	    double avg = (r + r + cases - 1.0) / 2.0;
+
+	    for (t=0; t<nn; t++) {
+		if (ry[t] == r) {
+		    ry[t] = avg;
 		}
 	    }
-	}
-    }	
-
+	} 
+	r += cases;
+    }	    
+	    
     /* calculate rho and standard error */
     xx = 0.0;
     for (i=0; i<nn; i++) { 
@@ -200,26 +208,17 @@ static int spearman_rho (const double *x, const double *y, int n,
     *rho = yy;
     *sd = xx;
 
-    if (nn >= 20) {
+    if (nn >= 20 && pval != NULL) {
 	*pval = normal(fabs(yy / xx)); 
     } 
-
-    free(sx);
-    free(sy);
-    free(tmp);    
 
     /* save the ranks, if wanted */
     if (rxout != NULL) {
 	*rxout = rx;
-    } else {
-	free(rx);
-    }
-
+    } 
     if (ryout != NULL) {
 	*ryout = ry;
-    } else {
-	free(ry);
-    }
+    } 
 
     if (m != NULL) {
 	*m = nn;
@@ -263,7 +262,7 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 		     &rho, &sd, &pval,
 		     (opt)? &rx : NULL,
 		     (opt)? &ry : NULL,
-		     &m)) {
+		     &m, RUN_FIRST)) {
 	return E_ALLOC;
     }
 
@@ -305,9 +304,10 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    }
 	    pputc(prn, '\n');
 	}
-	free(rx);
-	free(ry);
     }
+
+    spearman_rho(NULL, NULL, 0, NULL, NULL, NULL, 
+		 NULL, NULL, NULL, RUN_CLEANUP);
 
     return 0;
 }
@@ -321,43 +321,57 @@ static int randomize_doubles (const void *a, const void *b)
 
 /* put sample into random order */
 
-static double *locke_shuffle (const double *x, int *n)
+static double *locke_shuffle (const double *x, int *n, int code)
 {
-    double *sx;
-    int i, m = *n;
+    static double *sx;
+    static int m;
+    int i;
 
-    sx = malloc(m * sizeof *sx);
-    if (sx == NULL) {
-	return NULL;
-    }
-
-    /* check for missing and negative values as we go */
-
-    m = 0;
-    for (i=0; i<*n; i++) {
-	if (na(x[i])) {
-	    continue;
-	} else if (x[i] < 0.0) {
-	    m = 0;
-	    break;
-	} else {
-	    sx[m++] = x[i];
-	}
-    }
-
-    if (m == 0) {
+    if (code == RUN_CLEANUP) {
 	free(sx);
+	sx = NULL;
+	m = 0;
 	return NULL;
-    }
+    }	
 
-    m = 2 * m / 2;
+    if (code == RUN_FIRST) {
+	m = *n;
+	
+	sx = malloc(m * sizeof *sx);
+	if (sx == NULL) {
+	    return NULL;
+	}
+
+	/* check for missing and negative values as we go */
+
+	m = 0;
+	for (i=0; i<*n; i++) {
+	    if (na(x[i])) {
+		continue;
+	    } else if (x[i] < 0.0) {
+		m = 0;
+		break;
+	    } else {
+		sx[m++] = x[i];
+	    }
+	}
+
+	if (m == 0) {
+	    free(sx);
+	    return NULL;
+	}
+
+	m = 2 * m / 2;
+
+	*n = m;
+    } 
 
     qsort(sx, m, sizeof *sx, randomize_doubles);
 
-    *n = m;
-
     return sx;
 }
+
+#define NREPEAT 100
 
 /* Charles Locke's nonparametric test for whether an empirical
    distribution is gamma.  See C. Locke, "A Test for the Composite
@@ -370,11 +384,11 @@ static double *locke_shuffle (const double *x, int *n)
 
 double lockes_test (const double *x, int t1, int t2)
 {
-    double rho, sd, pval;
+    double rho, sd, z;
     double *sx, *u = NULL, *v = NULL;
-    int i, t, m = t2 - t1 + 1;
+    int i, j, t, m = t2 - t1 + 1;
 
-    sx = locke_shuffle(x + t1, &m);
+    sx = locke_shuffle(x + t1, &m, RUN_FIRST);
 
     if (sx == NULL) {
 	return NADBL;
@@ -384,39 +398,53 @@ double lockes_test (const double *x, int t1, int t2)
 	
     u = malloc(m * sizeof *u);
     v = malloc(m * sizeof *v);
+
     if (u == NULL || v == NULL) {
 	free(u);
 	free(v);
-	free(sx);
+	locke_shuffle(NULL, NULL, RUN_CLEANUP);
 	return NADBL;
     }
 
-    t = 0;
-    for (i=0; i<m; i++) {
-	u[i] = sx[t] + sx[t+1];
-	v[i] = sx[t] / sx[t+1];
-	if (sx[t+1] / sx[t] > v[i]) {
-	    v[i] = sx[t+1] / sx[t];
+    z = 0.0;
+
+    /* repeat the shuffling of the series NREPEAT times, since the
+       test statistic is sensitive to the ordering under the null
+    */
+
+    for (j=0; j<NREPEAT; j++) {
+	t = 0;
+	for (i=0; i<m; i++) {
+	    u[i] = sx[t] + sx[t+1];
+	    v[i] = sx[t] / sx[t+1];
+	    if (sx[t+1] / sx[t] > v[i]) {
+		v[i] = sx[t+1] / sx[t];
+	    }
+	    t += 2;
 	}
+	spearman_rho(u, v, m, &rho, &sd, NULL, NULL, NULL, NULL,
+		     (j == 0)? RUN_FIRST : RUN_REPEAT);
+	z += rho / sd;
 #if LOCKE_DEBUG
-	fprintf(stderr, "u[%d] = %g, v[%d] = %g, using sx[%d] and sx[%d]\n",
-		i, u[i], i, v[i], t, t + 1);
+	printf("z[%d] = %g/%g = %g\n", j, rho, sd, rho / sd);
 #endif
-	t += 2;
-    }
-
-    spearman_rho(u, v, m, &rho, &sd, &pval, NULL, NULL, NULL);
-
-#if LOCKE_DEBUG
-    fprintf(stderr, "Spearman's rho = %f, sd = %g, z = %g, pval = %g\n",
-	    rho, sd, rho / sd, pval);
-#endif    
+	locke_shuffle(NULL, NULL, RUN_REPEAT);
+    }   
 
     free(u);
     free(v);
-    free(sx);
 
-    return rho / sd;
+    z /= (double) NREPEAT;
+
+#if LOCKE_DEBUG
+    fprintf(stderr, "Spearman's rho: z = %g\n", z);
+#endif 
+
+    locke_shuffle(NULL, NULL, RUN_CLEANUP);
+    spearman_rho(NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL,
+		 RUN_CLEANUP);
+
+    return z;
 }
 
 /**
