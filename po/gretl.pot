@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2003-02-01 15:53-0500\n"
+"POT-Creation-Date: 2003-02-03 08:41-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3922,12 +3922,12 @@ msgstr ""
 msgid "F(%d, %d) sampling distribution"
 msgstr ""
 
-#: gui/calculator.c:447 gui/database.c:297 gui/fileselect.c:354
+#: gui/calculator.c:447 gui/database.c:297 gui/fileselect.c:356
 #: gui/gpt_control.c:1533 gui/library.c:2416 gui/library.c:2926
 #: gui/library.c:2978 gui/library.c:3129 gui/library.c:3169 gui/library.c:3245
 #: gui/library.c:3289 gui/library.c:3321 gui/session.c:1304 gui/session.c:1386
-#: gui2/calculator.c:457 gui2/database.c:301 gui2/fileselect.c:532
-#: gui2/fileselect.c:649 gui2/gpt_control.c:1611 gui2/library.c:2231
+#: gui2/calculator.c:457 gui2/database.c:301 gui2/fileselect.c:546
+#: gui2/fileselect.c:670 gui2/gpt_control.c:1611 gui2/library.c:2231
 #: gui2/library.c:2718 gui2/library.c:2771 gui2/library.c:2923
 #: gui2/library.c:2963 gui2/library.c:3016 gui2/library.c:3060
 #: gui2/library.c:3092 gui2/session.c:955 gui2/session.c:959
@@ -4453,7 +4453,7 @@ msgstr ""
 
 #: gui/callbacks.c:400 gui/dialogs.c:44 gui/dialogs.c:50 gui/dialogs.c:267
 #: gui/dialogs.c:286 gui/dialogs.c:295 gui/gpt_control.c:847
-#: gui/selector.c:1221 gui/settings.c:326 gui/ssheet.c:137 gui/ssheet.c:149
+#: gui/selector.c:1221 gui/settings.c:331 gui/ssheet.c:137 gui/ssheet.c:149
 #: gui2/gui_utils.c:2576
 msgid "Apply"
 msgstr ""
@@ -4649,8 +4649,8 @@ msgstr ""
 msgid "gretl: display database series"
 msgstr ""
 
-#: gui/database.c:302 gui/fileselect.c:355 gui2/database.c:306
-#: gui2/fileselect.c:533 gui2/fileselect.c:650
+#: gui/database.c:302 gui/fileselect.c:357 gui2/database.c:306
+#: gui2/fileselect.c:547 gui2/fileselect.c:671
 msgid "There were missing observations"
 msgstr ""
 
@@ -4999,7 +4999,7 @@ msgid ""
 "minimum and maximum values:"
 msgstr ""
 
-#: gui/dialogs.c:45 gui/dialogs.c:51 gui/settings.c:316
+#: gui/dialogs.c:45 gui/dialogs.c:51 gui/settings.c:321
 msgid "  Cancel  "
 msgstr ""
 
@@ -5198,21 +5198,21 @@ msgstr ""
 msgid "File saved OK"
 msgstr ""
 
-#: gui/fileselect.c:269 gui2/fileselect.c:592
+#: gui/fileselect.c:269 gui2/fileselect.c:611
 msgid "Couldn't open the specified file"
 msgstr ""
 
-#: gui/fileselect.c:353 gui2/fileselect.c:531 gui2/fileselect.c:648
+#: gui/fileselect.c:355 gui2/fileselect.c:545 gui2/fileselect.c:669
 msgid "graph saved"
 msgstr ""
 
-#: gui/fileselect.c:375 gui/fileselect.c:382 gui2/fileselect.c:552
-#: gui2/fileselect.c:670 gui2/fileselect.c:677
+#: gui/fileselect.c:377 gui/fileselect.c:384 gui2/fileselect.c:566
+#: gui2/fileselect.c:691 gui2/fileselect.c:698
 msgid "boxplots saved"
 msgstr ""
 
-#: gui/fileselect.c:376 gui/fileselect.c:383 gui2/fileselect.c:553
-#: gui2/fileselect.c:671 gui2/fileselect.c:678
+#: gui/fileselect.c:378 gui/fileselect.c:385 gui2/fileselect.c:567
+#: gui2/fileselect.c:692 gui2/fileselect.c:699
 msgid "boxplot save failed"
 msgstr ""
 
@@ -5680,8 +5680,8 @@ msgstr ""
 msgid "/File/sep2a"
 msgstr ""
 
-#: gui/gretl.c:281 gui/settings.c:848 gui/settings.c:1079 gui2/gretl.c:323
-#: gui2/settings.c:1089 gui2/settings.c:1364
+#: gui/gretl.c:281 gui/settings.c:897 gui/settings.c:1128 gui2/gretl.c:323
+#: gui2/settings.c:1139 gui2/settings.c:1414
 msgid "/File/Open command file"
 msgstr ""
 
@@ -8353,124 +8353,128 @@ msgstr ""
 msgid "path to x12arima"
 msgstr ""
 
-#: gui/settings.c:120 gui2/settings.c:141
-msgid "X-12-ARIMA working directory"
-msgstr ""
-
-#: gui/settings.c:124 gui2/settings.c:145
+#: gui/settings.c:122 gui2/settings.c:143
 msgid "path to tramo"
 msgstr ""
 
 #: gui/settings.c:126 gui2/settings.c:147
+msgid "X-12-ARIMA working directory"
+msgstr ""
+
+#: gui/settings.c:130 gui2/settings.c:151
 msgid "TRAMO working directory"
 msgstr ""
 
-#: gui/settings.c:129 gui2/settings.c:150
+#: gui/settings.c:133 gui2/settings.c:154
 msgid "gretl database directory"
 msgstr ""
 
-#: gui/settings.c:131 gui2/settings.c:152
+#: gui/settings.c:135 gui2/settings.c:156
 msgid "RATS data directory"
 msgstr ""
 
-#: gui/settings.c:133 gui2/settings.c:154
+#: gui/settings.c:137 gui2/settings.c:158
 msgid "Database server IP"
 msgstr ""
 
-#: gui/settings.c:135 gui2/settings.c:156
+#: gui/settings.c:139 gui2/settings.c:160
 msgid "HTTP proxy (ipnumber:port)"
 msgstr ""
 
-#: gui/settings.c:137 gui2/settings.c:158
+#: gui/settings.c:141 gui2/settings.c:162
 msgid "Use HTTP proxy"
 msgstr ""
 
-#: gui/settings.c:139 gui2/settings.c:160
+#: gui/settings.c:143 gui2/settings.c:164
 msgid "Use current working directory as default"
 msgstr ""
 
-#: gui/settings.c:140 gui2/settings.c:161
+#: gui/settings.c:144 gui2/settings.c:165
 msgid "Use gretl user directory as default"
 msgstr ""
 
-#: gui/settings.c:141 gui2/settings.c:162
+#: gui/settings.c:145 gui2/settings.c:166
 msgid "Use \".dat\" as default datafile suffix"
 msgstr ""
 
-#: gui/settings.c:142 gui2/settings.c:163
+#: gui/settings.c:146 gui2/settings.c:167
 msgid "Use \".gdt\" as default suffix"
 msgstr ""
 
-#: gui/settings.c:143 gui2/settings.c:164
+#: gui/settings.c:147 gui2/settings.c:168
 msgid "Toolbar folder icon opens Wooldridge data"
 msgstr ""
 
-#: gui/settings.c:144 gui2/settings.c:165
+#: gui/settings.c:148 gui2/settings.c:169
 msgid "Toolbar folder icon opens Ramanathan data"
 msgstr ""
 
-#: gui/settings.c:146 gui2/settings.c:167
+#: gui/settings.c:150 gui2/settings.c:171
 msgid "Fixed font"
 msgstr ""
 
-#: gui/settings.c:280 gui2/settings.c:381
+#: gui/settings.c:285 gui2/settings.c:385
 msgid "gretl: options"
 msgstr ""
 
-#: gui/settings.c:361 gui2/settings.c:462
+#: gui/settings.c:381 gui2/settings.c:483
+msgid "Browse..."
+msgstr ""
+
+#: gui/settings.c:402 gui2/settings.c:504
 msgid "General"
 msgstr ""
 
-#: gui/settings.c:363 gui2/settings.c:464
+#: gui/settings.c:404 gui2/settings.c:506
 msgid "Databases"
 msgstr ""
 
-#: gui/settings.c:365 gui2/settings.c:466
+#: gui/settings.c:406 gui2/settings.c:508
 msgid "Programs"
 msgstr ""
 
-#: gui/settings.c:367 gui2/settings.c:468
+#: gui/settings.c:408 gui2/settings.c:510
 msgid "Open/Save path"
 msgstr ""
 
-#: gui/settings.c:369 gui2/settings.c:470
+#: gui/settings.c:410 gui2/settings.c:512
 msgid "Data files"
 msgstr ""
 
-#: gui/settings.c:536 gui2/settings.c:640
+#: gui/settings.c:585 gui2/settings.c:690
 msgid "Please restart gretl to ensure consistent results"
 msgstr ""
 
-#: gui/settings.c:663 gui2/settings.c:884
+#: gui/settings.c:712 gui2/settings.c:934
 msgid "Couldn't open config file for writing"
 msgstr ""
 
-#: gui/settings.c:792 gui2/settings.c:1022
+#: gui/settings.c:841 gui2/settings.c:1072
 msgid "Font for gretl output windows"
 msgstr ""
 
-#: gui/settings.c:846 gui/settings.c:1077 gui2/settings.c:1087
-#: gui2/settings.c:1362
+#: gui/settings.c:895 gui/settings.c:1126 gui2/settings.c:1137
+#: gui2/settings.c:1412
 msgid "/File/Open data"
 msgstr ""
 
-#: gui/settings.c:847 gui2/settings.c:1088
+#: gui/settings.c:896 gui2/settings.c:1138
 msgid "/Session/Open"
 msgstr ""
 
-#: gui/settings.c:1072 gui2/settings.c:1357
+#: gui/settings.c:1121 gui2/settings.c:1407
 msgid "/File/Open data/sep"
 msgstr ""
 
-#: gui/settings.c:1073 gui2/settings.c:1358
+#: gui/settings.c:1122 gui2/settings.c:1408
 msgid "/Session/sep"
 msgstr ""
 
-#: gui/settings.c:1074 gui2/settings.c:1359
+#: gui/settings.c:1123 gui2/settings.c:1409
 msgid "/File/Open command file/sep"
 msgstr ""
 
-#: gui/settings.c:1078 gui2/settings.c:1363
+#: gui/settings.c:1127 gui2/settings.c:1413
 msgid "/Session"
 msgstr ""
 
@@ -8692,7 +8696,7 @@ msgstr ""
 msgid "gnuplot files (*.plt)"
 msgstr ""
 
-#: gui2/fileselect.c:323 gui2/fileselect.c:419
+#: gui2/fileselect.c:323 gui2/fileselect.c:420
 msgid "all files (*.*)"
 msgstr ""
 
@@ -8754,11 +8758,15 @@ msgstr ""
 msgid "DES files (*.des)"
 msgstr ""
 
-#: gui2/fileselect.c:380
+#: gui2/fileselect.c:378
+msgid "program files (*.exe)"
+msgstr ""
+
+#: gui2/fileselect.c:381
 msgid "gretl data files (*.dat)"
 msgstr ""
 
-#: gui2/fileselect.c:490
+#: gui2/fileselect.c:502
 msgid "File dialog box error"
 msgstr ""
 
@@ -8948,11 +8956,11 @@ msgstr ""
 msgid "Correlations"
 msgstr ""
 
-#: gui2/settings.c:169
+#: gui2/settings.c:173
 msgid "Menu font"
 msgstr ""
 
-#: gui2/settings.c:1034
+#: gui2/settings.c:1084
 msgid "Font for menus and labels"
 msgstr ""
 

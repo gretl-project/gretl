@@ -2955,7 +2955,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	    /* plot against specified xvar */
 	    plot_list[3] = xvar;
 	    /* is it a simple regression? */
-	    lines[0] = (pmod->list[0] == 3)? 1 : 0;
+	    lines[0] = (pmod->list[0] <= 3)? 1 : 0;
 	    lines[1] = 0;
 	} else { 
 	    /* plot against obs */

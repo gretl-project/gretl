@@ -531,7 +531,7 @@ static int parse_critical_input (const char *str, int *i,
 
 /**
  * print_critical:
- * @str: the command line, which should be of one of the following forms:
+ * @line: the command line, which should be of one of the following forms:
  * critical t df (student's t)
  * critical X df (chi-square)
  * critical F dfn dfd (F distribution)

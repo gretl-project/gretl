@@ -84,6 +84,6 @@ int hausman_test (MODEL *pmod,
 		  double ***pZ, DATAINFO *pdinfo, 
 		  PRN *prn);
 
-int mp_ols (const LIST list, const char *param,
+int mp_ols (const LIST list, const char *pos,
 	    double ***pZ, DATAINFO *pdinfo, 
 	    PRN *prn); 

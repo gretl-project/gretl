@@ -14,6 +14,7 @@ aux_codes
 COMPARE
 auxreg
 omit_test
+reset_test
 autocorr_test
 chow_test
 cusum_test
@@ -72,13 +73,7 @@ esl_corrmx
 means_test
 vars_test
 matrix_print_corr
-</SECTION>
-
-<SECTION>
-<FILE>win32</FILE>
-read_reg_val
-write_reg_val
-cli_read_registry
+gretl_median
 </SECTION>
 
 <SECTION>
@@ -101,13 +96,17 @@ get_gretl_msg
 <FILE>estimate</FILE>
 lsq
 hilu_corc
+lad
 tsls_func
 hsk_func
 hccm_func
 whites_test
 ar_func
 arch
+cholbeta
 makevcv
+get_vcv
+free_vcv
 </SECTION>
 
 <SECTION>
@@ -142,10 +141,12 @@ gnuplot_display
 gnuplot
 multi_scatters
 plot_freq
-open_gnuplot_pipe
+print_plotspec_details
 go_gnuplot
-free_plot
+free_plotspec
 termtype_to_termstr
+rmplot
+plot_fcast_errs
 </SECTION>
 
 <SECTION>
@@ -165,10 +166,12 @@ simple_commands
 <FILE>internal</FILE>
 gretl_print_add
 gretl_print_omit
+gretl_test_init
 </SECTION>
 
 <SECTION>
 <FILE>libgretl</FILE>
+isnan
 I_
 gettext_noop
 _
@@ -178,9 +181,11 @@ MAXLEN
 ERRLEN
 M_PI
 prn_codes
+gretl_print_formats
 ts_codes
 auto_genr
 progress_flags
+test_stats
 LIST
 DATAINFO
 PATHS
@@ -188,6 +193,7 @@ GRETLTEST
 GRETLSUMMARY
 CORRMAT
 SAMPLE
+ARINFO
 MODEL
 MODELSPEC
 GRAPHT
@@ -195,6 +201,9 @@ SESSION
 SESSIONBUILD
 PRN
 mp_results
+FITRESID
+CONFINT
+VCV
 </SECTION>
 
 <SECTION>
@@ -230,14 +239,12 @@ runs_test
 
 <SECTION>
 <FILE>printout</FILE>
+GRETL_DIGITS
+GRETL_MP_DIGITS
 session_time
 logo
 gui_logo
-aux_string
-estimator_string
-modelprint_setup_obs
-printmodel
-print_model_confints
+text_print_model_confints
 printfreq
 printcorr
 print_smpl
@@ -246,7 +253,10 @@ print_white_vcv
 page_break
 print_obs_marker
 printdata
+text_print_fit_resid
 print_fit_resid
+text_print_fcast_with_errs
+text_print_matrix
 printxx
 gretl_print_fullwidth_double
 gretl_print_value
@@ -260,6 +270,7 @@ tprob
 fdist
 chisq
 normal
+tcrit95
 rhocrit95
 batch_pvalue
 interact_pvalue
@@ -284,6 +295,7 @@ get_base
 top_n_tail
 compress_spaces
 pprintf
+pputs
 safecpy
 doing_nls
 reset_local_decpoint
@@ -291,6 +303,9 @@ get_local_decpoint
 obs_str_to_double
 colonize_obs
 iso_gettext
+get_utf_width
+UTF_WIDTH
+print_time
 </SECTION>
 
 <SECTION>
@@ -305,12 +320,23 @@ allocate_case_markers
 </SECTION>
 
 <SECTION>
+<FILE>modelprint</FILE>
+printmodel
+get_test_type_string
+get_test_stat_string
+get_test_pval_string
+print_mpols_results
+</SECTION>
+
+<SECTION>
 <FILE>texprint</FILE>
 tex_print_equation
 tex_print_model
+tex_print_coeff
 tabprint
 eqnprint
 tex_escape
+tex_dcolumn_double
 </SECTION>
 
 <SECTION>
@@ -371,7 +397,7 @@ save_model_copy
 clear_model
 show_paths
 set_paths
-fetch_gretl_path
+fetch_gretl_lib_path
 copylist
 grow_nobs
 dataset_add_vars
@@ -381,6 +407,8 @@ dataset_drop_vars
 hidden_var
 copy_model
 swap_models
+get_fit_resid
+get_fcast_with_errs
 fcast_with_errs
 is_model_cmd
 is_model_ref_cmd
@@ -395,5 +423,19 @@ balanced_panel
 get_xvalue
 free_gretl_mp_results
 gretl_mp_results_new
+allocate_mp_varnames
+fit_resid_new
+free_fit_resid
+get_model_confints
+free_confint
+</SECTION>
+
+<SECTION>
+<FILE>gretl_win32</FILE>
+read_reg_val
+write_reg_val
+cli_read_registry
+win_show_error
+winfork
 </SECTION>
 

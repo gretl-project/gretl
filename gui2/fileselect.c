@@ -821,10 +821,13 @@ void file_selector (const char *msg, int action, gpointer data)
     else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 
-	if (strvar != NULL && *strvar != 0) {
+	if (strvar != NULL && slashpos(strvar) > 0) {
 	    gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
 					    strvar);
-	}
+	} else {
+	    gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
+					    "/usr/bin/");
+	}	    
 	do_glob = 0;
     }	
 

@@ -41,6 +41,7 @@ cp -ap gretl/doc/figures gretl-$version/doc
 find gretl-$version/doc -name "*CVS" | xargs rm -rf
 
 echo "removing various unwanted files..."
+rm -rf gretl-$version/lib/src/lapack
 find gretl-$version -name "*CVS" | xargs rm -rf
 find gretl-$version -name "*.bak" | xargs rm -f
 find gretl-$version -name "*.old" | xargs rm -f

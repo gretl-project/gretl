@@ -2465,6 +2465,8 @@ void free_fit_resid (FITRESID *fr)
  *
  * Save the 95 percent confidence intervals for the parameter
  * estimates in @pmod.
+ * 
+ * Returns: pointer to #CONFINT struct containing the results.
  */
 
 CONFINT *get_model_confints (const MODEL *pmod)
