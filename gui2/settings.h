@@ -11,6 +11,8 @@ void set_rcfile (void);
 
 void write_rc (void);
 
+void dump_rc (void);
+
 void mkfilelist (int filetype, char *newfile);
 
 void init_fileptrs (void);

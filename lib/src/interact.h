@@ -46,7 +46,8 @@ enum option_codes {
     OPT_VERSION,
     OPT_RUNIT,
     OPT_DBOPEN,
-    OPT_WEBDB
+    OPT_WEBDB,
+    OPT_DUMP
 };
     
 /* functions follow */

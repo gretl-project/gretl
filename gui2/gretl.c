@@ -110,7 +110,7 @@ drag_data_received  (GtkWidget          *widget,
 
 #ifdef USE_GNOME
 static char *optrun, *optdb;
-static int opteng;
+static int opteng, optdump;
 
 static const struct poptOption options[] = {
     { "run", 'r', POPT_ARG_STRING, &optrun, 0, 
@@ -121,6 +121,8 @@ static const struct poptOption options[] = {
       N_("open a remote (web) database on startup"), "REMOTE_DB" },
     { "english", 'e', POPT_ARG_NONE, &opteng, 0, 
       N_("force use of English"), NULL },
+    { "dump", 'c', POPT_ARG_NONE, &optdump, 0, 
+      N_("dump gretl configuration to file"), NULL },
     { NULL, '\0', 0, NULL, 0, NULL, NULL },
 };
 #endif /* USE_GNOME */
@@ -705,7 +707,7 @@ static void force_english (void)
 
 int main (int argc, char *argv[])
 {
-    int err = 0, gui_get_data = 0;
+    int err = 0, gui_get_data = 0, dump = 0;
     char dbname[MAXLEN];
     char filearg[MAXLEN];
 #ifdef USE_GNOME
@@ -784,6 +786,10 @@ int main (int argc, char *argv[])
 #endif
 	    if (opt == OPT_DBOPEN) fix_dbname(dbname);
 	    gui_get_data = opt;
+	    break;
+	case OPT_DUMP:
+	    dump_rc();
+	    exit(EXIT_SUCCESS);
 	    break;
 	default:
 	    /* let's suppose the argument is a data file */

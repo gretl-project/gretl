@@ -1172,6 +1172,8 @@ int parseopt (const char **argv, int argc, char *fname,
 	opt = OPT_DBOPEN;
     else if (strcmp(s, "-w") == 0 || strncmp(s, "--webdb", 7) == 0) 
 	opt = OPT_WEBDB;
+    else if (strcmp(s, "-c") == 0 || strncmp(s, "--dump", 6) == 0) 
+	opt = OPT_DUMP;
 
     if (opt != 0) {
 	argv++;

@@ -46,6 +46,13 @@
 # endif
 #endif
 
+#ifdef G_OS_WIN32 
+# include "../lib/src/version.h"
+# include "build.h"
+#else 
+extern const char *version_string;
+#endif
+
 #if !defined(G_OS_WIN32) && !defined(USE_GNOME)
 char rcfile[MAXLEN];
 #endif
@@ -2534,3 +2541,44 @@ void first_time_set_user_dir (void)
 }
 
 #endif /* G_OS_WIN32 */
+
+void dump_rc (void) 
+{
+    FILE *fp;
+    char dumper[MAXLEN], val[6];
+    char *tmp;
+    int i;
+
+    sprintf(dumper, "%sconfig-dump.txt", paths.userdir);
+
+    fp = fopen(dumper, "w");
+    if (fp == NULL) {
+	errbox(_("Couldn't open config file for writing"));
+	return;
+    }
+
+    fprintf(fp, "gretl version %s\n", version_string);
+    fprintf(fp, "built with GTK %d.%d.%d\n", GTK_MAJOR_VERSION, GTK_MINOR_VERSION,
+	    GTK_MICRO_VERSION);
+
+    tmp = getenv("HOME");
+    if (tmp != NULL) {
+	fprintf(fp, "HOME='%s'\n", tmp);
+    } else {
+	fputs("HOME not set\n", fp);
+    }
+
+    for (i=0; rc_vars[i].var != NULL; i++) {
+	fprintf(fp, "# %s\n", rc_vars[i].description);
+	if (rc_vars[i].type == BOOLSET) {
+	    boolvar_to_str(rc_vars[i].var, val);
+	    fprintf(fp, "%s = %s\n", rc_vars[i].key, val);
+	} else {
+	    fprintf(fp, "%s = %s\n", rc_vars[i].key, (char *) rc_vars[i].var);
+	}
+    }
+
+    fprintf(stderr, "Config info written to %s\n", dumper);
+
+    fclose(fp);
+}
