@@ -186,7 +186,7 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 			       const gchar *user_text,
 			       spreadsheet *sheet)
 {
-    const gchar *new_text;
+    const gchar *new_text = NULL;
     int err = 0;
 
     if (!strcmp(user_text, "na") || !strcmp(user_text, "NA")) {
@@ -201,7 +201,7 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 	}
     }
 
-    if (!err) {
+    if (!err && new_text != NULL) {
 	GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
 	GtkTreeModel *model = gtk_tree_view_get_model(view);
 	GtkTreeViewColumn *column;
