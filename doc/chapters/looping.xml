@@ -445,12 +445,12 @@
       <example id="loop-string-script"><title>String
 	  substitution</title>
 	<programlisting>
-	open bea.dat
-	loop i=1987..2001
-	  genr V = COMP$i
-	  genr TC = GOC$i - PBT$i
-	  genr C = TC - V
-	  ols PBT$i const TC V
+	  open bea.dat
+	  loop i=1987..2001
+	    genr V = COMP$i
+	    genr TC = GOC$i - PBT$i
+	    genr C = TC - V
+	    ols PBT$i const TC V
 	  endloop</programlisting>
       </example>
 

@@ -964,13 +964,16 @@ int db_set_sample (const char *line, DATAINFO *pdinfo)
 
     if (strcmp(start, ";")) {
 	t1 = dateton(start, pdinfo);
-	if (t1 < 0 || strlen(gretl_errmsg)) {
+	if (t1 < 0 || *gretl_errmsg != '\0') {
 	    return 1;
 	}
     }
 
     t2 = dateton(stop, pdinfo);
-    if (strlen(gretl_errmsg)) return 1;
+
+    if (*gretl_errmsg != '\0') {
+	return 1;
+    }
 
     if (t1 > t2) {
 	sprintf(gretl_errmsg, _("Invalid null sample"));

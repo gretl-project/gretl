@@ -3091,8 +3091,13 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
 
 	qsort(tmp, i + 1, sizeof *tmp, gretl_compare_doubles);
 
+	i = 0;
 	for (t=t1; t<=t2; t++) {
-	    x[t] = tmp[t-t1];
+	    if (na(mvec[t])) {
+		x[t] = NADBL;
+	    } else {
+		x[t] = tmp[i++];
+	    }
 	}
 
 	free(tmp);
@@ -3408,27 +3413,38 @@ static double get_obs_value (const char *s, double **Z,
 			     const DATAINFO *pdinfo)
 {
     char vname[USER_VLEN], obs[OBSLEN];
+    double val = NADBL;
 
-    if (sscanf(s, "%8[^[][%10[^]]]", vname, obs) != 2) {
-	return NADBL;
-    } else {
+    if (sscanf(s, "%8[^[][%10[^]]]", vname, obs) == 2) {
 	int i = varindex(pdinfo, vname);
+	int t = -1;
 
 	if (i < pdinfo->v && pdinfo->vector[i]) {
-	    int t;
-
 	    if (calendar_data(pdinfo)) {
 		fix_calendar_date(obs);
+	    } else if (dataset_is_time_series(pdinfo)) {
+		if (pdinfo->pd == 1 || strchr(obs, ':') == NULL) {
+		    int tryt = atoi(obs);
+
+		    if (pdinfo->pd == 1 && tryt >= 0 && tryt < pdinfo->sd0) {
+			t = tryt;
+		    } else if (pdinfo->pd > 1) {
+			t = tryt;
+		    }
+		}
 	    }
 
-	    t = dateton(obs, pdinfo);
+	    if (t < 0) {
+		t = dateton(obs, pdinfo);
+	    }
 
 	    if (t >= 0 && t < pdinfo->n) {
-		return Z[i][t];
+		val = Z[i][t];
 	    }
 	}
     }
-    return NADBL;
+
+    return val;
 }
 
 /* ...........................................................*/

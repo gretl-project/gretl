@@ -926,8 +926,7 @@
 	below:</para>
 
       <code>
-	data (compact=average) 
-	LHUR PUNEW</code>
+	data (compact=average) LHUR PUNEW</code>
 
       <para>The four available compaction methods are
 	<quote>average</quote> (takes the mean of the high frequency

@@ -1880,7 +1880,42 @@ void get_cmd_ci (const char *line, CMD *cmd)
     if (!strcmp(line, "end loop")) {
 	cmd->ci = ENDLOOP;
     }
-} 
+}
+
+static int 
+substitute_dollar_lvar (char *str, const LOOPSET *loop,
+			const double **Z, const DATAINFO *pdinfo)
+{
+    char targ[VNAMELEN + 1];
+    int targlen;
+    char *p;
+    int err = 0;
+
+    if (loop->type != FOR_LOOP) {
+	return 1;
+    }
+
+    sprintf(targ, "$%s", pdinfo->varname[loop->lvar]);
+    targlen = strlen(targ);
+
+    while ((p = strstr(str, targ)) != NULL) {
+	char ins[32];
+	char *q;
+
+	q = malloc(strlen(p));
+	if (q == NULL) {
+	    err = 1;
+	    break;
+	}
+	strcpy(q, p + targlen);
+	sprintf(ins, "%g", Z[loop->lvar][0]); /* scalar */
+	strcpy(p, ins);
+	strcpy(p + strlen(ins), q);
+	free(q);	
+    }
+
+    return err;
+}
 
 static int substitute_dollar_i (char *str, const LOOPSET *loop,
 				const DATAINFO *pdinfo)
@@ -2021,10 +2056,13 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    if (indexed_loop(loop)) {
 		err = substitute_dollar_i(linecpy, loop, *ppdinfo);
-		if (err) {
-		    break;
-		}
-	    } 	
+	    } else if (loop->type == FOR_LOOP) {
+		err = substitute_dollar_lvar(linecpy, loop,
+					     (const double **) *pZ,
+					     *ppdinfo);
+	    }
+
+	    if (err) break;
 
 	    /* We already have the "ci" index recorded, but this line
 	       will do some checking that hasn't been done earlier.

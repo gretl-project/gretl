@@ -316,6 +316,7 @@ static int dataset_allocate_markers (DATAINFO *pdinfo)
 	return 1;
     } else {
 	pdinfo->S = S;
+	pdinfo->markers = REGULAR_MARKERS;
     }
 
     return 0;
@@ -1084,7 +1085,7 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 
     if (!dotpos1 && !dotpos2) {
 	n = atoi(date) - atoi(pdinfo->stobs);
-	if (pdinfo->n != -1 && n > pdinfo->n) { 
+	if (pdinfo->n > 0 && n > pdinfo->n) { 
 	    /* n = -1 in case of establishing a new dataset */
 	    sprintf(gretl_errmsg, _("Observation number out of bounds"));
 	    return -1; 
@@ -3166,6 +3167,18 @@ static char *get_csv_descrip (FILE *fp)
     return desc;
 }
 
+static int 
+csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
+{
+    if (dataset_allocate_markers(pdinfo)) {
+	return 1;
+    }
+
+    return dataset_drop_vars(1, pZ, pdinfo);
+}
+
+#define obs_labels_no_varnames(o,c,n)  (!o && c->v > 3 && n == c->v - 2)
+
 /**
  * import_csv:
  * @pZ: pointer to data set.
@@ -3321,7 +3334,6 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     }
 
     if (blank_1 || obs_1) {
-	csvinfo->markers = REGULAR_MARKERS;
 	if (dataset_allocate_markers(csvinfo)) {
 	    pputs(prn, M_("Out of memory\n"));
 	    goto csv_bailout;
@@ -3342,6 +3354,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	    break;
 	}
     }
+
     compress_csv_line(line, delim, trail);   
 
     p = line;
@@ -3355,12 +3368,15 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
 	i = 0;
 	while (*p && *p != delim) {
-	    if (i < CSVSTRLEN - 1) csvstr[i++] = *p;
+	    if (i < CSVSTRLEN - 1) {
+		csvstr[i++] = *p;
+	    }
 	    p++;
 	}
 	if (*p == delim) p++;
 
 	csvstr[i] = 0;
+
 	if (k == 0 && (blank_1 || obs_1)) {
 	    ;
 	} else {
@@ -3374,7 +3390,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		csvinfo->varname[nv][0] = 0;
 		/* was VNAMELEN below */
 		strncat(csvinfo->varname[nv], csvstr, USER_VLEN - 1);
-		if (isdigit(*csvstr)) {
+		if (isdigit((unsigned char) *csvstr)) {
 		    numcount++;
 		} else {
 		    iso_to_ascii(csvinfo->varname[nv]);
@@ -3389,7 +3405,8 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	if (nv == csvinfo->v - 1) break;
     }
 
-    if (numcount == csvinfo->v - 1) {
+    if (numcount == csvinfo->v - 1 || 
+	obs_labels_no_varnames(obs_1, csvinfo, numcount)) {
 	pputs(prn, M_("it seems there are no variable names\n"));
 	/* then we undercounted the observations by one */
 	if (dataset_add_obs(&csvZ, csvinfo)) {
@@ -3398,8 +3415,16 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	}
 	auto_name_vars = 1;
 	rewind(fp);
+	if (obs_labels_no_varnames(obs_1, csvinfo, numcount)) {
+	    if (csv_reconfigure_for_markers(&csvZ, csvinfo)) {
+		pputs(prn, _("Out of memory\n"));
+		goto csv_bailout;
+	    } else {
+		obs_1 = 1;
+	    }
+	}
     } else if (numcount > 0) {
-	for (i=0; i<csvinfo->v; i++) {
+	for (i=1; i<csvinfo->v; i++) {
 	    if (check_varname(csvinfo->varname[i])) {
 		pprintf(prn, "%s\n", gretl_errmsg);
 		*gretl_errmsg = '\0';
@@ -3424,6 +3449,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	if (*line == '#' || string_is_blank(line)) {
 	    continue;
 	}
+
 	compress_csv_line(line, delim, trail);
 	p = line;
 	if (delim == ' ' && *p == ' ') p++;
@@ -4587,7 +4613,6 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     tmp = xmlGetProp(node, (UTF) "labels");
     if (tmp) {
 	if (!strcmp(tmp, "true")) {
-	    pdinfo->markers = REGULAR_MARKERS;
 	    if (dataset_allocate_markers(pdinfo)) {
 		sprintf(gretl_errmsg, "Out of memory");
 		return 1;
