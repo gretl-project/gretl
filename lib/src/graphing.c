@@ -1754,7 +1754,7 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    fputs("# GARCH residual plot\n", fp);
+    fputs("# GARCH residual plot (no auto-parse)\n", fp);
 
     fprintf(fp, "set key left top\n"
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
@@ -1762,7 +1762,6 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    "'-' using 1:2 notitle w lines lt 2\n", 
 	    I_("residual"), I_("+- sqrt(h(t))"));
 
-    /* send data inline */
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
