@@ -844,6 +844,15 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 
     nf = count_fields(line);
 
+#if SUBDEBUG
+    fprintf(stderr, "set_sample: line='%s', nf=%d, pdinfo=%p\n", 
+	    line, nf, (void *) pdinfo);
+    if (pdinfo != NULL) {
+	fprintf(stderr, "pdinfo->v = %d, pdinfo->n = %d\n",
+		pdinfo->v, pdinfo->n);
+    }
+#endif
+
     if (nf == 3 && pdinfo->n == 0) {
 	/* database special */
 	return db_set_sample(line, pdinfo);

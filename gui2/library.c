@@ -46,6 +46,8 @@
 #include "cmdstack.h"
 #include "filelists.h"
 
+#undef CMD_DEBUG
+
 #ifdef HAVE_TRAMO
 extern char tramo[];
 extern char tramodir[];
@@ -287,6 +289,7 @@ void clear_data (void)
     if (Z != NULL) {
 	free_Z(Z, datainfo);
     } 
+
     clear_datainfo(datainfo, CLEAR_FULL);
 
     Z = NULL;

@@ -1086,6 +1086,11 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
     double **dbZ;
     int err = 0;
 
+#ifdef DB_DEBUG
+    fprintf(stderr, "db_get_series: line='%s', pZ=%p, pdinfo=%p\n", 
+	    line, (void *) pZ, (void *) pdinfo);
+#endif
+
     if (*db_name == 0) {
 	strcpy(gretl_errmsg, _("No database has been opened"));
 	return 1;
@@ -1109,9 +1114,9 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 	/* find the series information in the database */
 	if (db_type == GRETL_RATS_DB) {
-	    err = get_rats_series_info_by_name (series, &sinfo);
+	    err = get_rats_series_info_by_name(series, &sinfo);
 	} else {	
-	    err = get_native_series_info (series, &sinfo);
+	    err = get_native_series_info(series, &sinfo);
 	} 
 
 	if (err) {
@@ -1126,9 +1131,9 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (db_type == GRETL_RATS_DB) {
-	    err = get_rats_data_by_offset (db_name, &sinfo, dbZ);
+	    err = get_rats_data_by_offset(db_name, &sinfo, dbZ);
 	} else {
-	    get_native_db_data (db_name, &sinfo, dbZ);
+	    get_native_db_data(db_name, &sinfo, dbZ);
 	}
 
 	if (!err) {

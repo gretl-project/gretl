@@ -152,6 +152,9 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	}
 
 	maybe_free_full_dataset(pdinfo);
+
+	/* added Sat Dec  4 12:19:26 EST 2004 */
+	pdinfo->v = pdinfo->n = 0;
     } 
 }
 
