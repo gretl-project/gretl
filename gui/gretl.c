@@ -1822,10 +1822,9 @@ drag_data_received  (GtkWidget *widget,
     char *suff = NULL, tmp[MAXLEN];
     int pos, skip = 5;
 
-    fprintf(stderr, "drag data received\n");
-
-    if (data != NULL && data->type == GDK_SELECTION_TYPE_STRING) {
+    if (data != NULL && data->type == GDK_SELECTION_TYPE_INTEGER) {
 	import_db_series(*(void **) data->data);
+	return;
     }
 
     /* ignore the wrong sort of data */

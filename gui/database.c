@@ -706,9 +706,7 @@ static void db_drag_series (GtkWidget *w, GdkDragContext *context,
 			    GtkSelectionData *sel, guint info, guint t,
 			    windata_t *dbwin)
 {
-    fprintf(stderr, "drag_series: dbwin at %p\n", (void *) dbwin);
-
-    gtk_selection_data_set(sel, GDK_SELECTION_TYPE_STRING, 8, 
+    gtk_selection_data_set(sel, GDK_SELECTION_TYPE_INTEGER, 8, 
 			   (void *) &dbwin, sizeof dbwin);
 }
 
@@ -764,8 +762,6 @@ static int populate_series_list (windata_t *dbwin, PATHS *ppaths)
     dbwin->active_var = 0;
     gtk_clist_select_row 
 	(GTK_CLIST (dbwin->listbox), dbwin->active_var, 1); 
-
-    fprintf(stderr, "dbwin is at %p\n", (void *) dbwin);
 
     gtk_drag_source_set(dbwin->listbox, GDK_BUTTON1_MASK,
 			gretl_drag_targets, 2, GDK_ACTION_COPY);
