@@ -1,0 +1,5 @@
+open greene9_1.dat
+logs
+ols 5 0 6 7
+lad 5 0 6 7
+
