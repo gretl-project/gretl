@@ -198,7 +198,7 @@ static void gnome_help (void)
 }
 #endif 
 
-#ifdef OSX_BUILD
+#ifdef OSX_PKG
 static void osx_help (void)
 {
     char *prefix, *syscmd;
@@ -553,7 +553,7 @@ GtkItemFactoryEntry data_items[] = {
 #elif defined(G_OS_WIN32)
     { N_("/Help/Manual in HTML"), NULL, win_help, 0, NULL, GNULL },
     { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
-#elif defined(OSX_BUILD)
+#elif defined(OSX_PKG)
     { N_("/Help/Manual in PDF"), NULL, osx_help, 0, NULL, GNULL },
     { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
 #endif
@@ -630,6 +630,52 @@ static void destroy (GtkWidget *widget, gpointer data)
 
 #ifdef ENABLE_NLS
 
+# if defined(G_OS_WIN32)
+
+static void real_nls_init (void)
+{
+    char gretldir[MAXSTR], localedir[MAXSTR];
+
+    if (read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", gretldir)) {
+	return;
+    }
+
+    build_path(gretldir, "locale", localedir, NULL);
+    setlocale (LC_ALL, "");
+    bindtextdomain (PACKAGE, localedir);
+    textdomain (PACKAGE);
+    bind_textdomain_codeset (PACKAGE, "UTF-8");
+}
+
+# elif defined(OSX_PKG)
+
+static void real_nls_init (void)
+{
+    char prefix = getenv("GTK_EXE_PREFIX");
+    char *localedir;
+
+    if (prefix == NULL) return;
+    
+    localedir = g_strdup_printf("%s/share/locale", prefix);
+    setlocale (LC_ALL, "");
+    bindtextdomain (PACKAGE, localedir);
+    textdomain (PACKAGE);
+    bind_textdomain_codeset (PACKAGE, "UTF-8");
+    g_free(localedir);
+}
+
+# else /* regular *nix treatment */
+
+static void real_nls_init (void)
+{
+    setlocale (LC_ALL, "");
+    bindtextdomain (PACKAGE, LOCALEDIR);
+    textdomain (PACKAGE);
+    bind_textdomain_codeset (PACKAGE, "UTF-8");
+}
+
+# endif
+
 void nls_init (void)
 {
     char *mylang = getenv("GRETL_LANG");
@@ -637,21 +683,9 @@ void nls_init (void)
     if (mylang != NULL) {
 	if (!g_ascii_strcasecmp(mylang, "english") ||
 	    !g_ascii_strcasecmp(mylang, "C")) return;
-    }
+    } 
 
-# ifdef G_OS_WIN32
-    char gretldir[MAXSTR], LOCALEDIR[MAXSTR];
-
-    if (read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", gretldir)) {
-	return;
-    }
-    build_path(gretldir, "locale", LOCALEDIR, NULL);
-# endif /* G_OS_WIN32 */
-
-    setlocale (LC_ALL, "");
-    bindtextdomain (PACKAGE, LOCALEDIR);
-    textdomain (PACKAGE);
-    bind_textdomain_codeset (PACKAGE, "UTF-8");
+    real_nls_init();
 }
 
 static void force_english (void)
