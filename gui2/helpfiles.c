@@ -51,8 +51,6 @@ static struct help_head_t **cli_heads, **gui_heads;
 static windata_t *helpwin (int script, int english);
 
 /* searching stuff */
-static int look_for_string (const char *haystack, const char *needle, 
-			    int start);
 static void find_in_text (GtkWidget *widget, gpointer data);
 static void find_in_listbox (GtkWidget *widget, gpointer data);
 static void find_string_dialog (void (*findfunc)(), gpointer data);
@@ -1017,6 +1015,26 @@ static gint close_find_dialog (GtkWidget *widget, gpointer data)
     return FALSE;
 }
 
+/* .................................................................. */
+
+static int look_for_string (const char *haystack, const char *needle, 
+			    int start)
+{
+    int hlen = strlen(haystack);
+    int nlen = strlen(needle);
+    int pos;
+
+    for (pos = start; pos < hlen; pos++) {
+        if (strncmp(&haystack[pos], needle, nlen) == 0) { 
+             return pos;
+	}
+    }
+
+    return -1;
+}
+
+/* .................................................................. */
+
 #ifdef OLD_GTK
 
 static int is_all_lower (const char *s)
@@ -1336,22 +1354,6 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 	infobox(_("String was not found."));
     }
 #endif /* OLD_GTK */
-}
-
-/* .................................................................. */
-
-static int look_for_string (const char *haystack, const char *needle, 
-			    int start)
-{
-    int pos;
-    int hlen = strlen(haystack);
-    int nlen = strlen(needle);
-
-    for (pos = start; pos < hlen; pos++) {
-        if (strncmp(&haystack[pos], needle, nlen) == 0) 
-             return pos;
-    }
-    return -1;
 }
 
 /* .................................................................. */

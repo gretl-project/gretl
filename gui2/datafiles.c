@@ -1218,6 +1218,7 @@ static GtkWidget *files_window (windata_t *fdata)
 	gtk_clist_set_column_justification (GTK_CLIST (fdata->listbox), i, 
 					    GTK_JUSTIFY_LEFT);
     }
+
     gtk_box_pack_start (GTK_BOX (box), scroller, TRUE, TRUE, TRUE);
     gtk_signal_connect_after (GTK_OBJECT (fdata->listbox), "select_row", 
 			      GTK_SIGNAL_FUNC (selectrow), fdata);
@@ -1333,8 +1334,11 @@ static GtkWidget *files_notebook (windata_t *fdata, int code)
 	j++;
     }
     
-    if (code == TEXTBOOK_DATA) reset_data_stack();
-    else reset_ps_stack();
+    if (code == TEXTBOOK_DATA) {
+	reset_data_stack();
+    } else {
+	reset_ps_stack();
+    }
 
     g_object_set_data(G_OBJECT(GTK_NOTEBOOK(notebook)), "browse_ptr",
 		      get_browser_ptr(fdata->role));
@@ -1372,8 +1376,11 @@ static int populate_notebook_filelists (windata_t *win,
 	populate_filelist(win, coll);
     }
 
-    if (code == TEXTBOOK_DATA) reset_data_stack();
-    else reset_ps_stack();
+    if (code == TEXTBOOK_DATA) {
+	reset_data_stack();
+    } else {
+	reset_ps_stack();
+    }
 
     j = 0;
 
@@ -1401,10 +1408,15 @@ static int populate_notebook_filelists (windata_t *win,
 
     win->listbox = coll->page;
 
-    if (code == TEXTBOOK_DATA) reset_data_stack();
-    else reset_ps_stack();
+    if (code == TEXTBOOK_DATA) {
+	reset_data_stack();
+    } else {
+	reset_ps_stack();
+    }
 
     gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), j);
+
+    gtk_widget_grab_focus(win->listbox);
 
     return 0;
 } 

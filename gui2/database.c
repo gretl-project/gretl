@@ -600,27 +600,6 @@ static void test_db_book (const char *fname, int *cb)
 
 /* ........................................................... */
 
-#ifdef OLD_GTK
-static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
-{
-    if (key->keyval == GDK_q) { 
-	gtk_widget_destroy(vwin->w);
-    }
-    else if (key->keyval == GDK_f) {
-	GdkModifierType mods;
-
-	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
-	if (mods & GDK_CONTROL_MASK) {
-	    menu_find(vwin, 1, NULL);
-	    return TRUE;
-	}	
-    }
-    return FALSE;
-}
-#endif
-
-/* ........................................................... */
-
 static int display_db_series_list (int action, char *fname, char *buf)
 {
     GtkWidget *listbox, *closebutton;
@@ -720,9 +699,9 @@ static int display_db_series_list (int action, char *fname, char *buf)
 static int check_serinfo (char *str, char *sername)
 {
     char pdc;
-    char stobs[11], endobs[11];
-    int n;
+    char stobs[OBSLEN], endobs[OBSLEN];
     char msg[64];
+    int n, err = 0;
 
     if (!isalpha((unsigned char) sername[0]) || 
 	sscanf(str, "%c %10s - %10s %*s = %d", 
@@ -733,9 +712,10 @@ static int check_serinfo (char *str, char *sername)
 	 pdc != 'D' && pdc != 'B')) {
 	sprintf(msg, _("Database parse error at variable '%s'"), sername);
 	errbox(msg);
-	return 1;
+	err = 1;
     }
-    return 0;
+
+    return err;
 }
 
 /* ........................................................... */

@@ -116,6 +116,9 @@ void file_view_set_editable (windata_t *vwin);
 
 int validate_varname (const char *varname);
 
+gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, 
+			windata_t *vwin);
+
 gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 			 gpointer data);
 

@@ -126,25 +126,6 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 
 /* .................................................................. */
 
-static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
-{
-    if (key->keyval == GDK_q) { 
-	gtk_widget_destroy(vwin->w);
-    }
-    else if (key->keyval == GDK_f) {
-	GdkModifierType mods;
-
-	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
-	if (mods & GDK_CONTROL_MASK) {
-	    menu_find(vwin, 1, NULL);
-	    return TRUE;
-	}	
-    }
-    return FALSE;
-}
-
-/* .................................................................. */
-
 GtkWidget *list_box_create (windata_t *win, GtkBox *box, 
 			    gint ncols, int hidden_col, 
 			    const char *titles[]) 
@@ -188,6 +169,7 @@ GtkWidget *list_box_create (windata_t *win, GtkBox *box,
 	    g_object_set (G_OBJECT (column), "resizable", TRUE, NULL);
 	}	
     }
+
     if (hidden_col) {
 	column = gtk_tree_view_column_new_with_attributes (NULL,
 							   renderer,

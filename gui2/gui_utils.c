@@ -731,6 +731,24 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
 /* ........................................................... */
 
+gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+{
+    if (key->keyval == GDK_q) { 
+	gtk_widget_destroy(vwin->w);
+    } else if (key->keyval == GDK_f) {
+	GdkModifierType mods;
+
+	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
+	if (mods & GDK_CONTROL_MASK) {
+	    menu_find(vwin, 1, NULL);
+	    return TRUE;
+	}	
+    }
+    return FALSE;
+}
+
+/* ........................................................... */
+
 void *mymalloc (size_t size) 
 {
     void *mem;
