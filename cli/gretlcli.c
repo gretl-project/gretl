@@ -547,15 +547,18 @@ void exec_line (char *line, PRN *prn)
 	err = 1;
 	return;
     }
-    /* parse the command line */
+
+    /* parse the command line... */
     catchflag(line, &oflag);
     compress_spaces(line);
-    /* but if we're stacking commands for a loop, parse lightly */
+
+    /* ...but if we're stacking commands for a loop, parse lightly */
     if (loopstack) {
 	get_cmd_ci(line, &command);
     } else {
 	getcmd(line, datainfo, &command, &ignore, &Z, cmds);
     }
+
     /* if in batch mode, echo comments in input */
     if (batch && command.ci == -2 && !echo_off) {
 	printf("%s", linebak);
@@ -564,8 +567,11 @@ void exec_line (char *line, PRN *prn)
 	errmsg(err, prn);
 	return;
     }
-    if (command.ci < 0) return; /* there's nothing there */    
-    if (loopstack) {  /* accumulating loop commands */
+
+    if (command.ci < 0) return; /* there's nothing there */ 
+   
+    if (loopstack) {  
+	/* accumulating loop commands */
 	if (!ok_in_loop(command.ci)) {
 	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
 	    return;
@@ -585,12 +591,13 @@ void exec_line (char *line, PRN *prn)
 	echo_cmd(&command, datainfo, line, (batch || runit)? 1: 0, 0, 
 		 oflag, cmds);
 
-    /* FIXME ?? */
-/*      if (is_model_ref_cmd(command.ci) &&  */
-/*  	model_sample_issue(NULL, &modelspec[0], &Z, datainfo)) { */
-/*  	nosub(prn); */
-/*  	return; */
-/*      } */
+#ifdef notdef
+     if (is_model_ref_cmd(command.ci) &&
+ 	model_sample_issue(NULL, &modelspec[0], &Z, datainfo)) {
+ 	nosub(prn);
+ 	return;
+     }
+#endif
 
     switch (command.ci) {
 
@@ -614,12 +621,13 @@ void exec_line (char *line, PRN *prn)
 	if ((err = model_test_start(0, prn, 0))) break;
     plain_add_omit:
 	clear_model(models[1], NULL);
-	if (command.ci == ADD || command.ci == ADDTO)
+	if (command.ci == ADD || command.ci == ADDTO) {
 	    err = auxreg(command.list, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_ADD, prn, NULL);
-	else
+	} else {
 	    err = omit_test(command.list, models[0], models[1],
 			    &model_count, &Z, datainfo, prn);
+	}
 	if (err) {
 	    errmsg(err, prn);
 	    clear_model(models[1], NULL);

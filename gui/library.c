@@ -3766,7 +3766,8 @@ int execute_script (const char *runfile, const char *buf,
 	    errbox(_("No commands to execute"));
 	    return -1;
 	}
-    } else { /* no runfile, commands from buffer */
+    } else { 
+	/* no runfile, commands from buffer */
 	if (buf == NULL || !strlen(buf)) {
 	    errbox(_("No commands to execute"));
 	    return -1;	
@@ -3985,11 +3986,14 @@ static int gui_exec_line (char *line,
     strncpy(linecopy, line, 1023);
     linecopy[1023] = '\0';
     catchflag(line, &oflag);
+
     /* but if we're stacking commands for a loop, parse "lightly" */
-    if (*plstack) 
+    if (*plstack) { 
 	get_cmd_ci(line, &command);
-    else 
+    } else {
 	getcmd(line, datainfo, &command, &ignore, &Z, cmds);
+    }
+
     if (command.ci == -2) { /* line was a comment, pass */
 #ifdef notdef
  	cmds->fp = fopen(cmdfile, "a");
@@ -4000,7 +4004,9 @@ static int gui_exec_line (char *line,
 #endif
 	return 0;
     }
+
     if (command.ci < 0) return 0; /* nothing there */
+
     if (command.errcode) {
         errmsg(command.errcode, prn);
 	if (exec_code == CONSOLE_EXEC) {
@@ -4008,6 +4014,7 @@ static int gui_exec_line (char *line,
 	}
         return 1;
     }
+
     if (*plstack) {  /* accumulating loop commands */
 	if (!ok_in_loop(command.ci)) {
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
@@ -4031,7 +4038,7 @@ static int gui_exec_line (char *line,
     /* if rebuilding a session, put the commands onto the stack */
     if (rebuild) cmd_init(line);
 
-#ifdef notdef /* ??? */
+#ifdef notdef
      if (is_model_ref_cmd(command.ci)) {
  	if (model_sample_issue(models[0], &Z, datainfo)) {
  	    pprintf(prn, _("Can't do: the current data set is different from "
