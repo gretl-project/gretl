@@ -3139,7 +3139,9 @@ datawiz_make_changes (DATAINFO *dwinfo)
     } else if (dwinfo->pd == 24) {
 	/* hourly data */
 	strcpy(dwinfo->stobs, "1.1");
-	/* fixme weekly data */
+    } else if (dwinfo->pd == 52) {
+	/* weekly data */
+	strcpy(dwinfo->stobs, "1");
     }
 
     /* handle conversion to cross-section */
