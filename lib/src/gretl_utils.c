@@ -931,6 +931,33 @@ int *copylist (const int *src)
 
 /* ......................................................  */
 
+static int reallocate_markers (DATAINFO *pdinfo, int n)
+{
+    char **S;
+    int t;
+
+    S = realloc(pdinfo->S, n * sizeof *S);
+    if (S == NULL) return 1;
+
+    for (t=pdinfo->n; t<n; t++) {
+	S[t] = malloc(OBSLEN);
+	if (S[t] == NULL) {
+	    int j;
+
+	    for (j=pdinfo->n; j<t; j++) {
+		free(S[j]);
+	    }
+	    free(S);
+	    return 1;
+	}
+	S[t][0] = '\0';	    
+    }
+
+    pdinfo->S = S;
+
+    return 0;
+}
+
 int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo)
 {
     double *x;
@@ -946,10 +973,9 @@ int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo)
     }
     
     if (pdinfo->markers && pdinfo->S != NULL) {
-	char **S;
-
-	if (allocate_case_markers(&S, n + newobs)) return E_ALLOC;
-	else pdinfo->S = S;
+	if (reallocate_markers(pdinfo, n + newobs)) {
+	    return E_ALLOC;
+	}
     }
 
     pdinfo->n += newobs;
@@ -957,7 +983,7 @@ int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo)
     ntodate(endobs, pdinfo->t2, pdinfo);
     strcpy(pdinfo->endobs, endobs);
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=n; t<pdinfo->n; t++) {
 	(*pZ)[0][t] = 1.0;
     }
 

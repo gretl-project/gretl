@@ -306,7 +306,7 @@ static void tail_strip (char *s)
     int i, n = strlen(s);
 
     for (i=n-1; i>0; i--) {
-	if (s[i] == '\n' || s[i] == ' ') {
+	if (s[i] == ' ') {
 	    s[i] = '\0';
 	}
 	else break;

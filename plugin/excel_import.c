@@ -1109,20 +1109,21 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (!err && label_strings) {
-	    char **S = NULL;
+	    char **S;
 
-	    newinfo->markers = 1;
-	    if (allocate_case_markers(&S, newinfo->n) == 0) {
+	    S = allocate_case_markers(newinfo->n);
+	    
+	    if (S != NULL) {
 		newinfo->markers = 1;
 		i = book.col_offset;
 		for (t=0; t<newinfo->n; t++) {
 		    t_sheet = t + 1 + book.row_offset;
-		    S[t][0] = 0;
 		    strncat(S[t], rowptr[t_sheet].cells[i] + 1, OBSLEN - 1);
 		}
 		newinfo->S = S;
 	    }
 	}
+
 	if (*pZ == NULL) {
 	    *pZ = newZ;
 	    *pdinfo = *newinfo;

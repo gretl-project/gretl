@@ -668,16 +668,18 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (label_strings && wsheet_labels_complete(&sheet)) {
-	    char **S = NULL;
+	    char **S;
 
-	    newinfo->markers = 1;
-	    if (allocate_case_markers(&S, newinfo->n) == 0) {
+	    S = allocate_case_markers(newinfo->n);
+	    if (S != NULL) {
 		newinfo->markers = 1;
-		for (t=0; t<newinfo->n; t++)
+		for (t=0; t<newinfo->n; t++) {
 		    strcpy(S[t], sheet.label[t+1]);
+		}
 		newinfo->S = S;
 	    }
 	}
+
 	if (*pZ == NULL) {
 	    *pZ = newZ;
 	    *pdinfo = *newinfo;

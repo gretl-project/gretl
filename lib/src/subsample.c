@@ -24,7 +24,7 @@
 
 #undef SUBDEBUG
 
-/* .......................................................... */
+/* private to libgretl */
 
 char *copy_subdum (const char *src, int n)
 {
@@ -67,12 +67,22 @@ attach_subsample_to_dataset (DATAINFO *pdinfo, double ***fullZ,
     return 0;
 }
 
+/* attach_subsample_to_model:
+ * @pmod: model to which subsample should be attached.
+ * @pdinfo: pointer to current dataset info.
+ * @n: 
+ *
+ * If the dataset is currently subsampled, record the subsample
+ * information with the model so that it can be retrieved later.
+ * 
+ * Returns: 0 if the recording is not needed, or on success; non-zero
+ * error code failure.
+ */
+
 int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo, int n)
-     /* if the data set is currently subsampled, record the
-	subsample info in pmod->subdum */
 {
-    /* no subsample currently in force */
     if (pdinfo == NULL || pdinfo->subdum == NULL) {
+	/* no subsample currently in force */
 	return 0;
     }
 
@@ -82,24 +92,36 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo, int n)
     return 0;
 }
 
-/* .......................................................... */
+/* allocate_case_markers:
+ * @n: number of observations.
+ *
+ * Allocate storage for a set of @n case markers or observation
+ * labels.
+ * 
+ * Returns: pointer to storage, or %NULL if allocation fails.
+ */
 
-int allocate_case_markers (char ***S, int n)
+char **allocate_case_markers (int n)
 {
+    char **S;
     int t;
 
-    *S = malloc(n * sizeof **S);
-    if (*S == NULL) {
-	return E_ALLOC;
-    }
+    S = malloc(n * sizeof *S);
+    if (S == NULL) return NULL;
+
     for (t=0; t<n; t++) {
-	(*S)[t] = malloc(OBSLEN);
-	if ((*S)[t] == NULL) {
-	    free(*S);
-	    return E_ALLOC;
+	S[t] = malloc(OBSLEN);
+	if (S[t] == NULL) {
+	    int j;
+
+	    for (j=0; j<t; j++) free(S[j]);
+	    free(S);
+	    return NULL;
 	}
+	S[t][0] = '\0';
     }
-    return 0;
+
+    return S;
 }
 
 /* .......................................................... */
@@ -319,11 +341,24 @@ enum {
 } subsample_options;
 
 /* restrict_sample: 
+ * @line: command line (or %NULL).  
+ * @oldZ: pointer to original data array.  
+ * @newZ: pointer to post-sampling data array.
+ * @oldinfo: original dataset information.  
+ * @newinfo: post-sampling dataset information.  
+ * @list: list of variables in case of OPT_M (or %NULL).  
+ * @oflag: option flag.
+ *
  * sub-sample the data set, based on the criterion of skipping all
- * observations with missing data values; or using as a mask a
- * specified dummy variable; or masking with a specified boolean
- * condition; or selecting at random.
-*/
+ * observations with missing data values (OPT_M); or using as a mask a
+ * specified dummy variable (OPT_O); or masking with a specified
+ * boolean condition (OPT_R); or selecting at random (OPT_N).
+ *
+ * In case OPT_M a @list of variables may be supplied; in cases
+ * OPT_O, OPT_R and OPT_N, @line must contain specifics.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
 
 int restrict_sample (const char *line, 
 		     double ***oldZ, double ***newZ,
@@ -460,10 +495,13 @@ int restrict_sample (const char *line,
     newinfo->vector = oldinfo->vector;
 
     /* case markers */
-    if (oldinfo->markers && allocate_case_markers(&S, sn)) {
-	free_Z(*newZ, newinfo);
-	free(tmpdum);
-	return E_ALLOC;
+    if (oldinfo->markers) {
+	S = allocate_case_markers(sn);
+	if (S == NULL) {
+	    free_Z(*newZ, newinfo);
+	    free(tmpdum);
+	    return E_ALLOC;
+	}
     }
 
     /* copy across data and case markers, if any */
@@ -937,12 +975,15 @@ int add_subsampled_dataset_to_model (MODEL *pmod,
     copy_series_info(pmod->dataset->dinfo, fullinfo);
 
     /* case markers */
-    if (fullinfo->markers && allocate_case_markers(&S, sn)) {
-	free_Z(modZ, pmod->dataset->dinfo);
-	free(pmod->dataset->dinfo);
-	free(pmod->dataset);
-	pmod->dataset = NULL;
-	return E_ALLOC;
+    if (fullinfo->markers) {
+	S = allocate_case_markers(sn);
+	if (S == NULL) {
+	    free_Z(modZ, pmod->dataset->dinfo);
+	    free(pmod->dataset->dinfo);
+	    free(pmod->dataset);
+	    pmod->dataset = NULL;
+	    return E_ALLOC;
+	}
     }
 
     /* copy across data and case markers, if any */

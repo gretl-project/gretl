@@ -2143,6 +2143,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	icon = gdk_pixbuf_new_from_xpm_data((const char **) toolxpm);
 	button = image_button_new(icon, toolfunc);
 	gretl_toolbar_append_tool(gretl_toolbar, button, toolstr);
+	gdk_pixbuf_unref(icon);
     }
 
     gtk_widget_show_all (hbox);

@@ -39,7 +39,7 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 
-int allocate_case_markers (char ***S, int n);
+char **allocate_case_markers (int n);
 
 int add_subsampled_dataset_to_model (MODEL *pmod, 
 				     const double **fullZ, 

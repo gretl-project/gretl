@@ -901,6 +901,9 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
     if (mods & GDK_BUTTON3_MASK) {
 	GdkEventButton *bevent = (GdkEventButton *) event;
 
+	if (sheet->popup == NULL) 
+	    build_sheet_popup(sheet);
+
 	gtk_menu_popup (GTK_MENU(sheet->popup), NULL, NULL, NULL, NULL,
 			bevent->button, bevent->time);
 	return TRUE;
@@ -1001,6 +1004,9 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 
     if (mods & GDK_BUTTON3_MASK) {
 	GdkEventButton *bevent = (GdkEventButton *) event;
+
+	if (sheet->popup == NULL)
+	    build_sheet_popup(sheet);
 
 	gtk_menu_popup (GTK_MENU(sheet->popup), NULL, NULL, NULL, NULL,
 			bevent->button, bevent->time);
@@ -1173,7 +1179,10 @@ static void free_spreadsheet (GtkWidget *widget, spreadsheet **psheet)
 {
     spreadsheet *sheet = *psheet;
 
-    gtk_widget_destroy(sheet->popup);
+    if (sheet->popup != NULL) {
+	gtk_widget_destroy(sheet->popup);
+    }
+
     free(sheet);
     *psheet = NULL;
 }
@@ -1294,8 +1303,6 @@ void show_spreadsheet (DATAINFO *pdinfo)
     mbar = gtk_item_factory_get_widget(ifac, "<main>");
     gtk_box_pack_start(GTK_BOX(main_vbox), mbar, FALSE, FALSE, 0);
     gtk_widget_show(mbar);
-
-    build_sheet_popup(sheet);
 
     status_box = gtk_hbox_new(FALSE, 1);
     gtk_container_set_border_width(GTK_CONTAINER(status_box), 0);
