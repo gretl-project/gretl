@@ -26,6 +26,7 @@
 #include <zlib.h>
 
 /* #define VERBOSE 1 */
+/* #define VVERBOSE 1 */
 
 #define MAXIGNORE 4
 #define DESLINE 1024
@@ -33,6 +34,7 @@
 typedef struct {
     int ts;
     int pd;
+    int markers;
     double sd0;
     int ignore[MAXIGNORE+1];
 } DESINFO;
@@ -86,6 +88,7 @@ static void desinfo_init (DESINFO *des)
 {
     des->ts = 0;
     des->pd = 0;
+    des->markers = 0;
     des->sd0 = 0.0;
     des->ignore[0] = 0;
 }
@@ -96,6 +99,13 @@ static void parse_ignore (DESINFO *des, const char *ignore)
     char numstr[4];
     const char *p = ignore;
     size_t sz, len = strlen(ignore);
+
+    if (strstr(p, "markers=")) {
+	des->markers = 1;
+	des->ignore[0] = 1;
+	des->ignore[1] = 1;
+	return;
+    }
 
     if (strstr(p, "ignore=") == NULL) return;
     p += strlen("ignore=");
@@ -258,7 +268,7 @@ static int read_des (const char *fname, DESINFO *des, double ***pZ,
 
 #ifdef VERBOSE
 		printf("got variable #%d: name='%s'", i, varname);
-		if (*p) printf("comment='%s'\n", p);
+		if (*p) printf(" comment='%s'\n", p);
 		else printf("\n");
 #endif
 		if (!des_ignore(i, des)) {
@@ -266,16 +276,18 @@ static int read_des (const char *fname, DESINFO *des, double ***pZ,
 		    strcpy(dinfo->varname[v2], varname);
 		    dinfo->label[v2][0] = 0;
 		    strncat(dinfo->label[v2], p, MAXLABEL - 1);
-		} else 
+		} else {
 		    fprintf(stderr, "ignoring variable '%s'\n", varname);
+		}
 	    }
 	}
 	else break;
     }
 
-    if (!err)
+    if (!err) {
 	fprintf(stderr, "Read %s:\ngot %d real variables, %d observations\n", 
 	       fname, dinfo->v, dinfo->n);
+    }
 
     fclose(fp);
     return err;
@@ -329,6 +341,33 @@ static int check_atof (char *numstr, char *errbuf)
     return 0;
 }
 
+static double literal_to_x (const char *str)
+{
+    static int x;
+    static char test[16];
+
+    if (str == NULL) {
+	x = 0;
+	*test = 0;
+	return 0;
+    }
+
+    if (strcmp(str, test)) x++;
+    *test = 0;
+    strncat(test, str, 15);
+    
+    return (double) x;
+}
+
+static void grab_marker (const char *value, DATAINFO *pdinfo, int t)
+{
+    char *p;
+
+    pdinfo->S[t][0] = 0;
+    strncat(pdinfo->S[t], value + 1, 8);
+    p = strrchr(pdinfo->S[t], '"');
+    if (p != NULL) *p = 0;
+}
 
 static int read_gz_raw (const char *fname, DESINFO *des,
 			DATAINFO *pdinfo, double **Z,
@@ -346,16 +385,17 @@ static int read_gz_raw (const char *fname, DESINFO *des,
 	return 1;
     }
 
+    literal_to_x(NULL);
+
     for (t=0; t<pdinfo->n; t++) {
 	des_i = 1;
 	for (i=1; i<pdinfo->v; i++) {
 	    while (1) {
 		if (des_ignore(des_i, des)) {
 		    gz_get_value(fz, value);
-#ifdef VVERBOSE
-		    fprintf(stderr, "ignoring data(%d,%d) '%s'\n", 
-			    des_i, t, value);
-#endif	
+		    if (pdinfo->markers && i == 1) {
+			grab_marker(value, pdinfo, t);
+		    }
 		    des_i++;
 		} else break;
 	    }
@@ -369,6 +409,9 @@ static int read_gz_raw (const char *fname, DESINFO *des,
 		if (*value == '"') {
 		    literal = 1;
 		    if (i > litcol) litcol = i;
+		    if (i == 1) {
+			Z[i][t] = literal_to_x(value);
+		    }
 		}
 		else {
 		    if (strcmp(value, ".") == 0) {
@@ -388,12 +431,14 @@ static int read_gz_raw (const char *fname, DESINFO *des,
 	if (err) break;
     }
 
-    if (literal)
+    if (literal) {
 	sprintf(errbuf, _("%s: contains non-numeric entries"), fname);
+    }
 
-    if (litcol)
+    if (litcol) {
 	sprintf(errbuf, _("%s: found non-numeric data in column %d"),
 		fname, litcol + 1);
+    }
 
     gzclose(fz);
     return err;
@@ -417,13 +462,18 @@ int des_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     /* read des file for number of obs, varnames and descriptions */
     err = read_des (fname, &des, &newZ, &newinfo, errbuf);
 
-    /* modify datainfo based on time-series info gathered */
+    /* modify datainfo based on special info gathered */
     if (!err && des.pd) {
 	newinfo->pd = des.pd;
 	newinfo->sd0 = des.sd0;
 	ntodate(newinfo->stobs, newinfo->t1, newinfo);
 	ntodate(newinfo->endobs, newinfo->t2, newinfo);
 	newinfo->time_series = des.ts;
+	newinfo->markers = des.markers;
+    }
+
+    if (newinfo->markers) {
+	err = allocate_case_markers(&newinfo->S, newinfo->n);
     }
 
     if (!err) {

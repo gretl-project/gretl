@@ -1069,6 +1069,8 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup(_("gretl: edit plot commands")); break;
     case SCRIPT_OUT:
 	title = g_strdup(_("gretl: script output")); break;
+    case VIEW_DATA:
+	title = g_strdup(_("gretl: display data")); break;
     default:
 	break;
     }
@@ -1321,7 +1323,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     gchar *title;
     int show_viewbar = (role != CONSOLE &&
 			role != HELP &&
-			role != CLI_HELP);
+			role != CLI_HELP && role != VIEW_DATA);
     int doing_script = (role == EDIT_SCRIPT ||
 			role == VIEW_SCRIPT ||
 			role == VIEW_LOG);

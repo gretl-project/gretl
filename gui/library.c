@@ -2802,7 +2802,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 
 	err = printdata(NULL, &Z, datainfo, 0, 1, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 77, 350, VIEW_DATA, NULL);
+	view_file(fname, 0, 1, 78, 350, VIEW_DATA, NULL);
     } else { /* use buffer */
 	if (bufopen(&prn)) return;
 
@@ -2812,7 +2812,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	view_buffer(prn, 77, 350, _("gretl: display data"), PRINT, NULL);
+	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, NULL);
     }
 }
 

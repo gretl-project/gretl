@@ -50,8 +50,8 @@ static char *mark_string (char *instr);
 
 char *errbuf;
 
-#define EDEBUG 1
-#define FULL_EDEBUG 1
+/* #define EDEBUG 1 */
+/* #define FULL_EDEBUG 1 */
 
 #define EXCEL_IMPORTER
 
