@@ -47,7 +47,16 @@ static void tex_print_float (const double x, const int tab, print_t *prn)
     } else pprintf(prn, "$%s$", number);
 }
 
-/* ......................................................... */ 
+/**
+ * tex_escape:
+ * @targ: target string (must be pre-allocated)
+ * @src: source string.
+ *
+ * Copies from @src to @targ, escaping any characters in @src that are 
+ * special to TeX (by inserting a leading backslash).
+ * 
+ * Returns: the transformed copy of the string
+ */
 
 char *tex_escape (char *targ, const char *src)
 {
@@ -119,9 +128,9 @@ static int make_texfile (const PATHS *ppaths, const int model_count,
  *
  * Prints a gretl model in the form of a LaTeX equation, either as
  * a stand-alone document or as a fragment of LaTeX source for
- * insertion into document.
+ * insertion into a document.
  * 
- * Returns: an integer.
+ * Returns: 0 on successful completion.
  */
 
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
@@ -201,7 +210,19 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* ......................................................... */
+/**
+ * tex_print_model:
+ * @pmod:  pointer to gretl MODEL struct.
+ * @pdinfo:  information regarding the data set.
+ * @standalone: indicator variable.
+ * @prn: gretl printing struct.
+ *
+ * Prints a gretl model in the form of a LaTeX table, either as
+ * a stand-alone document or as a fragment of LaTeX source for
+ * insertion into a document.
+ * 
+ * Returns: 0 on successful completion.
+ */
 
 int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
 		     const int standalone, print_t *prn)
@@ -292,7 +313,21 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* ......................................................... */
+/**
+ * tabprint:
+ * @pmod: pointer to gretl MODEL struct.
+ * @pdinfo: information regarding the data set.
+ * @ppaths: struct containing information on paths.
+ * @texfile: name of file to save.
+ * @model_count: count of models estimated so far.
+ * @oflag: option: standalone or not.
+ *
+ * Prints to file a gretl model in the form of a LaTeX table, either as
+ * a stand-alone document or as a fragment of LaTeX source for
+ * insertion into a document.
+ * 
+ * Returns: 0 on successful completion, 1 on error.
+ */
 
 int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
@@ -308,7 +343,21 @@ int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* ......................................................... */
+/**
+ * eqnprint:
+ * @pmod: pointer to gretl MODEL struct.
+ * @pdinfo: information regarding the data set.
+ * @ppaths: struct containing information on paths.
+ * @texfile: name of file to save.
+ * @model_count: count of models estimated so far.
+ * @oflag: option: standalone or not.
+ *
+ * Prints to file a gretl model in the form of a LaTeX equation, either as
+ * a stand-alone document or as a fragment of LaTeX source for
+ * insertion into a document.
+ * 
+ * Returns: 0 on successful completion, 1 on error.
+ */
 
 int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,

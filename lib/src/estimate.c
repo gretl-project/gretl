@@ -84,25 +84,23 @@ extern int _addtolist (const int *oldlist, const int *addvars,
 		       int **pnewlist, const DATAINFO *pdinfo, 
 		       const int model_count);
 
-/* .......................................................  */
+/**
+ * lsq:
+ * @list: dependent variable plus list of regressors.
+ * @Z: data matrix.
+ * @pdinfo: information on the data set.
+ * @ci: command index (see commands.h)
+ * @opt: option flag: If = 1, then residuals, dw stat and rhohat are obtained.
+ * @rho: coefficient for rho-differencing the data.
+ *
+ * Computes least squares estimates of the model specified by @list,
+ * using an estimator determined by the value of @ci.
+ * 
+ * Returns: a MODEL struct, containing the estimates.
+ */
 
 MODEL lsq (int *list, double *Z, DATAINFO *pdinfo, 
 	   const int ci, const int opt, const double rho)
-/*
-    Arguments --
-    
-    list: list[0] = length of list; list[1] = ID number of
-            dependent variable; list[2] = ID number of first
-            independent variable, ... and so on for the other
-            indep vars.
-    Z:      Data matrix.
-    ci:     Command index.  See commands.h.
-    opt:    If = 1, then residuals, dw stat and rhohat are obtained.
-    pdinfo: struct containing information on the data (sample
-            range, variable names and so on -- see libgretl.h)
-    rho:    Coefficient for rho-differencing the data (as in the
-            Cochrane-Orcutt procedure).
-*/
 {
     int l0, ifc, nwt, yno, i, n;
     int t, t1, t2, v, order, effobs = 0;
@@ -680,11 +678,17 @@ static void _diaginv (XPXXPY xpxxpy, double *diag)
     diag[nv] = xpxxpy.xpx[nstop] * xpxxpy.xpx[nstop];
 }
 
-/* ............................................................... */
+/**
+ * makevcv:
+ * @pmod: gretl MODEL.
+ *
+ * Inverts the Choleski-decomposed stacked vector xpx and
+ * computes the coefficient variance-covariance matrix.
+ * 
+ * Returns: 0 on successful completion, error code on error
+ */
 
 int makevcv (MODEL *pmod)
-/* Inverts the Choleski-decomposed stacked vector xpx and
-   computes coefficient VCV matrix. */
 {
     int nv, dec, nm1, mst, kk, i, j, kj, icnt, m, k, l = 0;
     int idxpx;
