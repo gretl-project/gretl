@@ -788,8 +788,12 @@ static int evaluate_genr (GENERATE *genr)
 	    xbak = x;
 	}
 	if (!genr->err && npop != npush) {
-	    if (npush == npop + 1) calc_pop(); /* harmless? */
-	    else {
+	    int expush = npush - npop;
+
+	    /* excess pushes are harmless? */
+	    if (expush > 0) {
+		while (expush--) calc_pop(); 
+	    } else {
 		fprintf(stderr, "genr error: npush = %d, npop = %d\n",
 			npush, npop);
 		genr->err = 1;
