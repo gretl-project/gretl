@@ -23,6 +23,7 @@
 #include "session.h"
 #include "selector.h"
 #include "ssheet.h"
+#include "obsbutton.h"
 
 extern const char *version_string;
 
@@ -1431,4 +1432,240 @@ void varinfo_dialog (int varnum, int full)
     gtk_widget_show (vset->dlg);
 
     if (!full) gtk_main();
+}
+
+/* apparatus for setting sample range */
+
+enum {
+    GET_WIDTH,
+    GET_HEIGHT
+};
+
+static int char_size (int which)
+{
+    static int cw = 0;
+    static int ch = 0;
+    int *k;
+
+    k = (which == GET_WIDTH)? &cw : &ch;
+
+    if (*k == 0) {
+	GtkStyle *style = gtk_rc_get_style(mdata->w);
+
+	if (style != NULL && style->font != NULL) {
+	    if (which == GET_WIDTH) {
+		cw = gdk_char_width(style->font, 'x');
+	    } else {
+		ch = gdk_char_height(style->font, 'X');
+	    }
+	} else {
+	    *k = (which == GET_WIDTH)? 10 : 20;
+	}
+    }
+
+    return *k;
+}
+
+struct range_setting {
+    GtkWidget *dlg;
+    GtkWidget *startspin;
+    GtkWidget *endspin;
+    GtkWidget *combo;
+};
+
+static void free_rsetting (GtkWidget *w, struct range_setting *rset)
+{
+    free(rset);
+}
+
+static gboolean destroy_rset (GtkWidget *w, GtkWidget *dlg)
+{
+    gtk_widget_destroy(dlg);
+    return TRUE;
+}
+
+static gboolean
+set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
+{
+    int err;
+
+    if (rset->combo != NULL) {
+	/* setting from dummy variable */
+	const gchar *buf;
+	char dumv[9];
+
+	buf = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(rset->combo)->entry));
+
+	if (sscanf(buf, "%8s", dumv) != 1) return TRUE;
+
+	sprintf(line, "smpl %s -o", dumv);
+	if (verify_and_record_command(line)) return TRUE;
+	err = bool_subsample(NULL, 'o', NULL);
+	if (!err) {
+	    gtk_widget_destroy(rset->dlg);
+	} 
+    } else {
+	ObsButton *button;
+	const gchar *s1, *s2;
+	int t1, t2;	
+
+	button = OBS_BUTTON(rset->startspin);
+	s1 = gtk_entry_get_text(GTK_ENTRY(button));
+	t1 = (int) obs_button_get_value(button);
+
+	button = OBS_BUTTON(rset->endspin);
+	s2 = gtk_entry_get_text(GTK_ENTRY(button));
+	t2 = (int) obs_button_get_value(button); 
+
+	if (t1 != datainfo->t1 || t2 != datainfo->t2) {
+	    sprintf(line, "smpl %s %s", s1, s2);
+	    if (verify_and_record_command(line)) {
+		return TRUE;
+	    }
+	    err = set_sample(line, datainfo);
+	    if (err) gui_errmsg(err);
+	    else {
+		gtk_widget_destroy(rset->dlg);
+		set_sample_label(datainfo);
+		restore_sample_state(TRUE);
+	    }
+	} else {
+	    /* no change */
+	    gtk_widget_destroy(rset->dlg);
+	}
+    }
+
+    return TRUE;
+}
+
+static GList *get_dummy_list (int *thisdum)
+{
+    GList *dumlist = NULL;
+    int i;
+
+    for (i=1; i<datainfo->v; i++) {
+	if (isdummy(Z[i], datainfo->t1, datainfo->t2)) {
+	    dumlist = g_list_append(dumlist, datainfo->varname[i]);
+	    if (i == mdata->active_var) *thisdum = 1;
+	}
+    }
+
+    return dumlist;
+}
+
+void set_sample_dialog (gpointer p, guint u, GtkWidget *w)
+{
+    GtkWidget *tempwid, *hbox;
+    struct range_setting *rset;
+
+    rset = mymalloc(sizeof *rset);
+    if (rset == NULL) return;
+
+    rset->dlg = gtk_dialog_new();
+
+    gtk_signal_connect (GTK_OBJECT(rset->dlg), "destroy", 
+			GTK_SIGNAL_FUNC(free_rsetting), rset);
+
+    gtk_window_set_title(GTK_WINDOW(rset->dlg), _("gretl: set sample"));
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (rset->dlg)->vbox), 10);
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (rset->dlg)->action_area), 5); 
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (rset->dlg)->vbox), 5);
+    gtk_window_set_position (GTK_WINDOW (rset->dlg), GTK_WIN_POS_MOUSE);
+
+    if (u == SMPLDUM) {
+	GList *dumlist;
+	int thisdum = 0;
+
+	rset->startspin = rset->endspin = NULL;
+
+	dumlist = get_dummy_list(&thisdum);
+
+	if (dumlist == NULL) {
+	    errbox(_("There are no dummy variables in the dataset"));
+	    gtk_widget_destroy(rset->dlg);
+	    return;
+	}
+
+	tempwid = gtk_label_new(_("Name of dummy variable to use:"));
+	hbox = gtk_hbox_new(TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 5);
+	
+	rset->combo = gtk_combo_new();
+	gtk_combo_set_popdown_strings(GTK_COMBO(rset->combo), dumlist); 
+	if (thisdum) {
+	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rset->combo)->entry), 
+			       datainfo->varname[mdata->active_var]);
+	}
+	gtk_widget_set_usize(GTK_COMBO(rset->combo)->entry, 
+			     8 * char_size(GET_WIDTH), 2 + char_size(GET_HEIGHT));
+	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rset->combo)->entry), FALSE);
+	hbox = gtk_hbox_new(TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), rset->combo, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 5);
+    } else { /* plain SMPL */
+	GtkWidget *vbox;
+	GtkObject *adj;
+
+	rset->combo = NULL;
+
+	hbox = gtk_hbox_new(TRUE, 5);
+
+	tempwid = gtk_label_new(_("Set sample range"));
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   tempwid, FALSE, FALSE, 5);
+
+	/* spinner for starting obs */
+	vbox = gtk_vbox_new(FALSE, 5);
+	tempwid = gtk_label_new(_("Start:"));
+	gtk_box_pack_start(GTK_BOX(vbox), tempwid, FALSE, FALSE, 0);
+	adj = gtk_adjustment_new(datainfo->t1, 
+				 0, datainfo->n - 1,
+				 1, 1, 1);
+	rset->startspin = obs_button_new(GTK_ADJUSTMENT(adj));
+	gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
+
+	/* spinner for ending obs */
+	vbox = gtk_vbox_new(FALSE, 5);
+	tempwid = gtk_label_new(_("End:"));
+	gtk_box_pack_start(GTK_BOX(vbox), tempwid, FALSE, FALSE, 0);
+	adj = gtk_adjustment_new(datainfo->t2, 
+				 0, datainfo->n - 1, 
+				 1, 1, 1);
+	rset->endspin = obs_button_new(GTK_ADJUSTMENT(adj));
+	gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
+
+	/* inter-connect the two spinners */
+	gtk_object_set_data(GTK_OBJECT(rset->startspin), "endspin", rset->endspin);
+	gtk_object_set_data(GTK_OBJECT(rset->endspin), "startspin", rset->startspin);
+
+	/* pack the spinner apparatus */
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 5);
+    }
+    
+    /* Create the "OK" button */
+    tempwid = gtk_button_new_with_label (_("OK"));
+    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (rset->dlg)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+		       GTK_SIGNAL_FUNC(set_sample_from_dialog), rset);
+    gtk_widget_grab_default (tempwid);
+
+    /* And a Cancel button */
+    tempwid = gtk_button_new_with_label (_("Cancel"));
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(rset->dlg)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			GTK_SIGNAL_FUNC(destroy_rset), rset->dlg);
+
+    gtk_widget_show_all(rset->dlg);
 }

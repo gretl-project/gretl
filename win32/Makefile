@@ -103,7 +103,7 @@ GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c gpt_control.c session.c webget.c \
 	calculator.c fileselect.c guiprint.c boxplots.c series_view.c \
 	selector.c settings.c helpfiles.c treeutils.c console.c model_table.c \
-	objectsave.c
+	objectsave.c obsbutton.c
 GUIOBJ = $(GUISRC:.c=.o)
 
 EXTRASRC = gtkpsfont.c gtkplotpc.c gtkplotps.c

@@ -17,6 +17,10 @@ void font_selector (void);
 
 void load_fixed_font (void);
 
+void gnuplot_color_selector (GtkWidget *w, gpointer p);
+
+GtkWidget *color_patch_button (int colnum);
+
 char *endbit (char *dest, char *src, int addscore);
 
 void get_default_dir (char *s);

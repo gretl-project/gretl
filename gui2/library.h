@@ -61,12 +61,7 @@ void clear_data (void);
 
 /* sample-related functions */
 
-#ifdef OLD_GTK
-void change_sample (GtkWidget *widget, dialog_t *ddata);
-void do_sampledum (GtkWidget *widget, dialog_t *ddata);
-#else
 int bool_subsample (gpointer data, guint opt, GtkWidget *w);
-#endif
 
 void do_setobs (GtkWidget *widget, dialog_t *ddata);
 

@@ -216,7 +216,6 @@ obs_button_class_init (ObsButtonClass *class)
 								     GTK_SHADOW_IN,
 								     G_PARAM_READABLE),
 						  gtk_rc_property_parse_enum);
-
 }
 
 static void
@@ -265,9 +264,7 @@ obs_button_init (ObsButton *obs_button)
     obs_button->button = 0;
     obs_button->need_timer = FALSE;
     obs_button->timer_calls = 0;
-
-    obs_button_set_adjustment (obs_button,
-			       (GtkAdjustment*) gtk_adjustment_new (0, 0, 0, 0, 0, 0));
+    obs_button->adjustment = NULL;
 }
 
 static void
@@ -1084,7 +1081,6 @@ obs_button_new (GtkAdjustment *adjustment)
     spin = g_object_new (GTK_TYPE_OBS_BUTTON, NULL);
 
     obs_button_set_adjustment (spin, adjustment);
-
     gtk_adjustment_value_changed (adjustment);
 
     return GTK_WIDGET (spin);
@@ -1171,9 +1167,9 @@ obs_button_set_value (ObsButton *obs_button,
 {
     g_return_if_fail (GTK_IS_OBS_BUTTON (obs_button));
 
-    if (fabs (value - obs_button->adjustment->value) > EPSILON)
+    if (fabs (value - obs_button->adjustment->value) > EPSILON) {
 	gtk_adjustment_set_value (obs_button->adjustment, value);
-    else {
+    } else {
 	obs_button_default_output (obs_button);
     }
 }

@@ -740,7 +740,41 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show (ttfentry);
     } else {
 	ttfentry = NULL;
-    }    
+    } 
+
+    /* set graph colors, if supported by gnuplot */
+    if (gnuplot_has_specified_colors()) { 
+	tbl_len++;
+	tempwid = gtk_hseparator_new();
+	gtk_table_attach_defaults 
+	    (GTK_TABLE (tbl), tempwid, 0, 2, tbl_len-1, tbl_len);  
+	gtk_widget_show (tempwid);	
+
+	for (i=0; i<3; i++) {
+	    char labstr[16];
+
+	    tbl_len++;
+	    box = gtk_hbox_new(FALSE, 2);
+	    sprintf(labstr, _("Color %d"), i + 1);
+	    tempwid = gtk_label_new (labstr);
+	    gtk_container_add(GTK_CONTAINER(box), tempwid);
+	    gtk_table_attach_defaults(GTK_TABLE (tbl), 
+				      box, 0, 1, tbl_len-1, tbl_len);
+	    gtk_widget_show(tempwid);
+	    gtk_widget_show(box);
+
+	    box = gtk_hbox_new(FALSE, 2);
+	    tempwid = color_patch_button(i);
+	    gtk_box_pack_start(GTK_BOX(box), tempwid, FALSE, FALSE, 0);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				      box, 1, 2, tbl_len-1, tbl_len);
+	    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked", 
+			       GTK_SIGNAL_FUNC(gnuplot_color_selector), 
+			       GINT_TO_POINTER(i));
+	    gtk_widget_show_all(tempwid);
+	    gtk_widget_show(box);
+	}
+    }
 }
 
 /* ........................................................... */

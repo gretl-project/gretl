@@ -1159,33 +1159,6 @@ void gui_errmsg (const int errcode)
 
 /* ........................................................... */
 
-#ifdef OLD_GTK
-
-void change_sample (GtkWidget *widget, dialog_t *ddata) 
-{
-    const gchar *buf;
-    int err;
-
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
-
-    clear(line, MAXLEN);
-    sprintf(line, "smpl %s", buf);
-    if (verify_and_record_command(line)) return;
-
-    err = set_sample(line, datainfo);
-    if (err) gui_errmsg(err);
-    else {
-	close_dialog(ddata);
-	set_sample_label(datainfo);
-	restore_sample_state(TRUE);
-    }
-}
-
-#endif
-
-/* ........................................................... */
-
 int bool_subsample (gpointer data, guint opt, GtkWidget *w)
      /* opt = 0     -- drop all obs with missing data values 
 	opt = 'o'   -- sample using dummy variable
@@ -1253,34 +1226,6 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 	close_dialog(ddata);
     }
 }
-
-/* ........................................................... */
-
-#ifdef OLD_GTK
-
-void do_sampledum (GtkWidget *widget, dialog_t *ddata)
-{
-    const gchar *buf = NULL;
-    char dumv[9];
-    int err;
-
-    buf = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
-
-    sscanf(buf, "%8s", dumv);
-    dumv[8] = '\0';
-	
-    clear(line, MAXLEN);
-    sprintf(line, "smpl %s -o", dumv);
-    if (verify_and_record_command(line)) return;
-
-    err = bool_subsample(NULL, 'o', NULL);
-    if (!err) {
-	close_dialog(ddata); 
-    }   
-}
-
-#endif
 
 /* ........................................................... */
 

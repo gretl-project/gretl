@@ -167,6 +167,8 @@ int is_auto_ols_string (const char *s);
 
 int gnuplot_has_ttf (void);
 
+int gnuplot_has_specified_colors (void);
+
 void set_gnuplot_pallette (int i, const char *colstr);
 
 const char *get_gnuplot_pallette (int i, int plottype);

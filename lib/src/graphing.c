@@ -403,12 +403,12 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	if (na(xxx) || na(yy)) continue;
 	prntdate(t, n, pdinfo, prn);
 	if (oflag == 'o') {
-	    ix = (floatneq(xyrange, 0.0))? ((xxx-xymin)/xyrange)*ncols : nc2;
-	    iy = (floatneq(xyrange, 0.0))? ((yy-xymin)/xyrange)*ncols : nc2;
+	    ix = (floatneq(xyrange, 0.0))? ((xxx-xymin)/xyrange) * ncols : nc2;
+	    iy = (floatneq(xyrange, 0.0))? ((yy-xymin)/xyrange) * ncols : nc2;
 	}
 	else {
-	    ix = (floatneq(xrange, 0.0))? ((xxx-xmin)/xrange)*ncols : nc2;
-	    iy = (floatneq(yrange, 0.0))? ((yy-ymin)/yrange)*ncols : nc2;
+	    ix = (floatneq(xrange, 0.0))? ((xxx-xmin)/xrange) * ncols : nc2;
+	    iy = (floatneq(yrange, 0.0))? ((yy-ymin)/yrange) * ncols : nc2;
 	}
 	initpx(ncols, px);
 	if (iz) px[iz+1] = '|';
@@ -426,6 +426,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
     pputs(prn, "\n\n");
     free(x);
     free(y);
+
     return 0;
 }
 
@@ -500,7 +501,9 @@ int graph (const LIST list, double **Z, const DATAINFO *pdinfo,
 		  pdinfo->varname[vx], pdinfo, oflag, prn);
     }
     pputc(prn, '\n');
+
     free(x); free(y); free(uhat);
+
     return 0;
 }
 
@@ -536,6 +539,7 @@ static int factorized_vars (double ***pZ,
 	}
 	i++;
     }
+
     return 0;
 }
 
@@ -548,24 +552,19 @@ int gnuplot_has_ttf (void)
     return 1;
 }
 
+int gnuplot_has_specified_colors (void)
+{
+    /* ... and we know it does specified colors */
+    return 1;
+}
+
 static int gnuplot_has_filledcurve (void)
 {
-    /* and we know it does filledcurve */
+    /* ... and that it does filledcurve */
     return 1;
 }
 
 #else
-
-static int old_gnuplot_png (void)
-{
-    /* "color" is wanted for gnuplot 3.7, but not 3.8 */
-    static int c = -1; 
-
-    if (c == -1) {
-	c = gnuplot_test_command("set term png color");
-    }
-    return !c;
-}
 
 int gnuplot_has_ttf (void)
 {
@@ -575,6 +574,17 @@ int gnuplot_has_ttf (void)
 	t = gnuplot_test_command("set term png font arial 8");
     }
     return !t;
+}
+
+int gnuplot_has_specified_colors (void)
+{
+    static int c = -1; 
+
+    if (c == -1) {
+	/* try the old-style command: if it fails, we have the new driver */
+	c = gnuplot_test_command("set term png color");
+    }
+    return c;
 }
 
 static int gnuplot_has_filledcurve (void)
@@ -605,13 +615,14 @@ const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype)
     static char png_term_line[256];
     char font_string[128];
     char color_string[64];
-    int oldgp = 0, gpttf = 1;
+    int gpcolors = 1, gpttf = 1;
     const char *grfont = NULL;
 
     *font_string = 0;
     *color_string = 0;
+
 #ifndef WIN32
-    oldgp = old_gnuplot_png();
+    gpcolors = gnuplot_has_specified_colors();
     gpttf = gnuplot_has_ttf();
 #endif
 
@@ -628,9 +639,7 @@ const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype)
     }
 
     /* plot color setup */
-    if (oldgp) {
-	strcpy(color_string, " color");
-    } else {
+    if (gpcolors) {
 	int i;
 
 	strcpy(color_string, " xffffff x000000 x202020");
@@ -638,7 +647,9 @@ const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype)
 	    strcat(color_string, " ");
 	    strcat(color_string, get_gnuplot_pallette(i, plottype));
 	}
-    }	
+    } else {
+	strcpy(color_string, " color"); /* old PNG driver */
+    }
 
     sprintf(png_term_line, "set term png%s%s",
 	    font_string, color_string);

@@ -25,7 +25,6 @@
 #include "../pixmaps/mouse.xpm"
 
 /* #define POINTS_DEBUG 1 */
-#define GNUPLOT_COLOR_SELECTION
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -803,8 +802,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	ttfentry = NULL;
     }
 
-#ifdef GNUPLOT_COLOR_SELECTION
-    if (1) { /* fix conditional */
+    if (gnuplot_has_specified_colors()) { 
 	tbl_len++;
 	tempwid = gtk_hseparator_new();
 	gtk_table_attach_defaults 
@@ -836,7 +834,6 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	    gtk_widget_show(box);
 	}
     }
-#endif /* GNUPLOT_COLOR_SELECTION */
 }
 
 /* ........................................................... */

@@ -450,23 +450,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
     defstr[0] = '\0';
 
     switch (action) {
-    case SMPL:
-	strcpy(title, _("gretl: set sample"));
-	sprintf(query, _("New starting obs (min = %s)\n"
-		"and ending obs (max = %s):"), 
-		datainfo->stobs, datainfo->endobs);
-	ntodate(startdate, datainfo->t1, datainfo);
-	ntodate(enddate, datainfo->t2, datainfo);
-	sprintf(defstr, "%s %s", startdate, enddate);
-	okfunc = change_sample;
-	break;
-    case SMPLDUM:
-	strcpy(title, _("gretl: define sample"));
-	strcpy(query, _("Name of dummy variable to use:"));
-	maybe_insert_varname(defstr);
-	okfunc = do_sampledum;
-	varclick = VARCLICK_INSERT_NAME;
-	break;
     case SMPLBOOL:
 	strcpy(title, _("gretl: restrict sample"));
 	strcpy(query, _("Enter boolean condition for selecting cases:"));
