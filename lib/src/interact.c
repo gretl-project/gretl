@@ -1687,6 +1687,8 @@ int ready_for_command (const char *line)
     };
     const char **p = ok_cmds;
 
+    if (string_is_blank(line)) return 1;
+
     if (*line == 'q' || *line == 'x' || 
 	*line == '\0' || *line == '#') return 1;
 
