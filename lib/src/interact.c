@@ -1149,6 +1149,10 @@ int parseopt (const char *s)
 	return OPT_DBOPEN;
     if (strcmp(s, "-w") == 0 || strncmp(s, "--webdb", 7) == 0) 
 	return OPT_WEBDB;
+#ifdef ENABLE_NLS
+    if (strcmp(s, "-e") == 0 || strncmp(s, "--english", 9) == 0) 
+	return OPT_ENGLISH;
+#endif
     return 0;
 }
 

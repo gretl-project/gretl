@@ -609,6 +609,13 @@ static void destroy (GtkWidget *widget, gpointer data)
 #ifdef ENABLE_NLS
 void nls_init (void)
 {
+    char *mylang = getenv("GRETL_LANG");
+
+    if (mylang != NULL) {
+	if (!g_ascii_strcasecmp(mylang, "english") ||
+	    !g_ascii_strcasecmp(mylang, "C")) return;
+    }
+
 # ifdef G_OS_WIN32
     char gretldir[MAXSTR], LOCALEDIR[MAXSTR];
 
@@ -707,6 +714,13 @@ int main (int argc, char *argv[])
 	    if (opt == OPT_DBOPEN) fix_dbname(dbname);
 	    gui_get_data = opt;
 	    break;
+#ifdef ENABLE_NLS
+	case OPT_ENGLISH:
+	    setlocale (LC_ALL, "C");
+	    nls_on = doing_nls();
+	    gui_get_data = 1;
+	    break;
+#endif
 	default:
 	    /* let's suppose the argument is a data file */
 	    break;

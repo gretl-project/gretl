@@ -1,3 +1,9 @@
+version 1.2.7
+- add start-up option "-e" or "--english" to force use of
+  English strings when LANG would indicate translation;
+  also recognize environment variable GRETL_LANG: if this
+  is "english" or "C", run in English
+
 5/25/2004 version 1.2.6
 - add Hodrick-Prescott filter, as "hpfilt" function in the
   genr command

@@ -549,6 +549,13 @@ static void destroy (GtkWidget *widget, gpointer data)
 #ifdef ENABLE_NLS
 void nls_init (void)
 {
+    char *mylang = getenv("GRETL_LANG");
+
+    if (mylang != NULL) {
+	if (!g_strcasecmp(mylang, "english") ||
+	    !g_strcasecmp(mylang, "C")) return;
+    }
+
     setlocale (LC_ALL, "");
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
