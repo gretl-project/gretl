@@ -924,6 +924,20 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	    pcmd->nolist);
 #endif
 
+    /* special case: gui "store" command, which could overflow the
+       "line" length; also I'm not sure whether we should record
+       gui "store" in the command script; we'll record it, but
+       commented out.
+    */
+    if (gui && pcmd->ci == STORE) {
+	pprintf(prn, "# store '%s'", pcmd->param);
+	if (oflag) { 
+	    pprintf(prn, " -%c", getflag(oflag));
+	}
+	pprintf(prn, "\n");
+	return;
+    }
+
     if (strcmp(line, "quit") == 0 || line[0] == '!' ||
 	strlen(line) == 0) return;
 
