@@ -7,6 +7,8 @@
 ;; Version:    0.1
 ;; Keywords:   gretl, econometrics
 
+;; With hefty borrowings from octave-mod.el
+
 ;; This file is not part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -80,8 +82,10 @@ All Gretl abbrevs start with a grave accent (`).")
 
 (defvar gretl-begin-keywords
   '("loop" "function" "if" "system"))
+
 (defvar gretl-else-keywords
   '("else"))
+
 (defvar gretl-end-keywords
   '("end" "endif" "endloop"))
 
@@ -219,8 +223,7 @@ parenthetical grouping.")
 	      ["Mark Function"		gretl-mark-defun t]
 	      ["Indent Function"	gretl-indent-defun t])
 	"-"
-	(list "Execute"
-	      ["Run Current Buffer"	gretl-run-buffer t])
+	[ "Run Current Buffer"          gretl-run-buffer t]
 	"-"
 	["Indent Line"			indent-according-to-mode t]
 	["Complete Symbol"		gretl-complete-symbol t]
@@ -276,27 +279,48 @@ Non-nil means show matching begin of block when inserting a space,
 newline or semicolon after an else or end keyword."
   :type 'boolean
   :group 'gretl)
+
 (defcustom gretl-block-offset 4
   "*Extra indentation applied to statements in Gretl block structures."
   :type 'integer
+  :group 'gretl)
+
+(defcustom gretl-program "gretlcli"
+  "*The program to use for running gretl scripts."
+  :type 'string
+  :group 'gretl)
+
+(defcustom gretl-remove-file "rm"
+  "*The command to use for deleting a temporary file."
+  :type 'string
+  :group 'gretl)
+
+(defcustom gretl-output-in-new-frame nil
+  "*Non-nil means send gretl script output to a separate frame."
+  :type 'boolean
   :group 'gretl)
 
 (defvar gretl-block-begin-regexp
   (concat "\\<\\("
 	  (mapconcat 'identity gretl-begin-keywords "\\|")
 	  "\\)\\>"))
+
 (defvar gretl-block-else-regexp
   (concat "\\<\\("
 	  (mapconcat 'identity gretl-else-keywords "\\|")
 	  "\\)\\>"))
+
 (defvar gretl-block-end-regexp
   (concat "\\<\\("
 	  (mapconcat 'identity gretl-end-keywords "\\|")
 	  "\\)\\>"))
+
 (defvar gretl-block-begin-or-end-regexp
   (concat gretl-block-begin-regexp "\\|" gretl-block-end-regexp))
+
 (defvar gretl-block-else-or-end-regexp
   (concat gretl-block-else-regexp "\\|" gretl-block-end-regexp))
+
 (defvar gretl-block-match-alist
   '(("loop" . ("endloop"))
     ("if" . ("else" "endif"))
@@ -331,11 +355,6 @@ Currently, only builtin variables can be completed.")
    ;; Functions
    (list nil gretl-function-header-regexp 3))
   "Imenu expression for Gretl mode.  See `imenu-generic-expression'.")
-
-(defcustom gretl-mode-startup-message t
-  "*Nil means do not display the Gretl mode startup message."
-  :type 'boolean
-  :group 'gretl)
 
 (defcustom gretl-mode-hook nil
   "*Hook to be run when Gretl mode is started."
@@ -389,10 +408,6 @@ gretl-continuation-offset
 gretl-continuation-string
   String used for Gretl continuation lines.
   Default is a backslash.
-
-gretl-mode-startup-message
-  Nil means do not display the Gretl mode startup message.
-  Default is t.
 
 Turning on Gretl mode runs the hook `gretl-mode-hook'.
 
@@ -1275,36 +1290,17 @@ Note that all Gretl mode abbrevs start with a grave accent."
 ;;; Execution
 
 (defun gretl-run-buffer ()
-  "Will run the current gretl script and put the results "
-"in a buffer."
-(message "Sorry, not implemented yet!"))
-;;; write-region(start end filename &optional nil visit lockname t)
-;;; (require 'comint)
-;;; make-frame 
-;;; insert-file-contents filename
-
- 	
-
-;;; (defun keep-output (process output)
-;;;    (setq kept (cons output kept)))
-;;;      => keep-output
-;;; (setq kept nil)
-;;;      => nil
-;;; (set-process-filter (get-process "shell") 'keep-output)
-;;;      => keep-output
-;;; (process-send-string "shell" "ls ~/other\n")
-;;;      => nil
-;;; kept
-;;;      => ("lewis@slug[8] % "
-;;; "FINAL-W87-SHORT.MSS    backup.otl              kolstad.mss~
-;;; address.txt             backup.psf              kolstad.psf
-;;; backup.bib~             david.mss               resume-Dec-86.mss~
-;;; backup.err              david.psf               resume-Dec.psf
-;;; backup.mss              dland                   syllabus.mss
-;;; "
-;;; "#backups.mss#          backup.mss~             kolstad.mss
-;;; ")
-
+  "Run the current gretl script, sending the results to a buffer."
+  (interactive)
+  (let (save-pop-frames pop-up-frames)
+  (setq pop-up-frames gretl-output-in-new-frame)
+  (write-region (point-min) (point-max) ".#gretltmp.inp" nil 1 nil nil)
+  (get-buffer-create "gretl_output")
+  (call-process gretl-program nil "gretl_output" nil "-b" ".#gretltmp.inp")
+  (pop-to-buffer "gretl_output" nil nil)
+  (goto-char (point-min))
+  (call-process gretl-remove-file nil nil nil ".#gretltmp.inp")
+  (setq pop-up-frames save-pop-frames)))
 
 ;;; Bug reporting
 
@@ -1324,8 +1320,7 @@ Note that all Gretl mode abbrevs start with a grave accent."
      'gretl-block-offset
      'gretl-comment-char
      'gretl-continuation-offset
-     'gretl-continuation-string
-     'gretl-mode-startup-message))))
+     'gretl-continuation-string))))
 
 ;;; provide ourself
 

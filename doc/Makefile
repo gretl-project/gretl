@@ -123,7 +123,7 @@ chmfigs_it: $(topdoc)/figures/*.png $(topdoc)/figures_it/*.png
 
 chm_it: $(topdoc)/manual_it.xml $(topdoc)/chapters_it/*.xml $(CMDLIST_IT) chmfigs_it
 	cd manual_it.chm && \
-	$(SAXON) ../$(topdoc)/manual_it.xml ../$(topdoc)/gretlhlp.xsl \
+	saxon ../$(topdoc)/manual_it.xml ../$(topdoc)/gretlhlp.xsl \
 	"tex.math.in.alt=latex" "lang=it" "htmlhelp.hhp=gretl_it.hhp" \
 	"htmlhelp.chm=gretl_it.chm" && \
 	../fixfigs.sh && ../fixtoc.sh && $(HHC) gretl_it.hhp

@@ -377,10 +377,6 @@ int liml_driver (gretl_equation_system *sys, double ***pZ,
     int g = system_n_equations(sys);
     int i, err = 0;
 
-    if (!(opt & OPT_Q)) {
-	pputs(prn, "\n*** LIML: experimental, work in progress ***\n");
-    }
-
     for (i=0; i<g && !err; i++) {
 #if LDEBUG > 1
 	printmodel(system_get_model(sys, i), pdinfo, OPT_NONE, prn);

@@ -24,11 +24,20 @@ double-click on it to open it, then drag the folder named Gretl_Folder, which
 you'll find inside, to somewhere suitable for installation (e.g. your
 Applications folder).</p>
 
-<p>I have tested this on OS X v10.2.4.  I hear it also works on OS X 10.3 "Panther,"
-although there may be a problem with fonts.
+<p>I have tested this on OS X v10.2.4.  I hear it also works (for some people, at least)
+on OS X 10.3 "Panther," although there may be a problem with fonts.
 The disk image is briefly documented in 
 <a href="./README.pdf">README.pdf</a>, which contains a suggestion for what to do
-if the fonts do not appear properly.</p>
+if the fonts do not appear properly.  If you want to debug a non-functioning
+gretl on Panther, please try this: open an X11 terminal window; change directory
+(<kbd>cd</kbd>) to <kbd>Gretl_Folder</kbd> (where you installed the package); 
+change directory to <kbd>bin</kbd> and run the command</p>
+
+<pre>
+./gretl.sh
+</pre>
+
+<p>This should give you some feedback on what is going wrong.</p>
 
 <p>Please note that this package depends upon Apple's X11 (their port to the Mac of the
 X Window system).</p>

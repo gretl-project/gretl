@@ -909,10 +909,6 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	return E_ALLOC;
     }
 
-    if (verbose) {
-	pputs(prn, "\n*** FIML: experimental, work in progress ***\n\n");
-    }
-
 #if FDEBUG
     /* check uhat calculation: set intial uhat based from 3SLS */
     fiml_uhat_init(fsys);
