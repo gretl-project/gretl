@@ -24,7 +24,7 @@
 #include "gretl_private.h"
 
 #define QR_RCOND_MIN 1e-15 /* experiment with this? */
-#define QR_SMALL     1e-15 /* SSR < this counts as zero */
+#define ESSZERO      1e-22 /* SSR < this counts as zero */
 
 /* In fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.
@@ -179,7 +179,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
     }
 
     /* if SSR is small enough, treat it as zero */
-    if (pmod->ess < QR_SMALL && pmod->ess > (-QR_SMALL)) {
+    if (pmod->ess < ESSZERO && pmod->ess > (-ESSZERO)) {
 	pmod->ess = 0.0;
     } 
 }

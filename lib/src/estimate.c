@@ -38,6 +38,7 @@
 #define TINY     4.75e-09 
 #define SMALL     1.0e-08 /* threshold for printing a warning for collinearity */
 #define STATZERO  0.5e-14
+#define ESSZERO   1.0e-22
 
 extern void _print_rho (int *arlist, const MODEL *pmod, 
 			int c, PRN *prn);
@@ -800,7 +801,8 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	rss = ypy - pmod->ess;
     }
 
-    if (pmod->ess < STATZERO && pmod->ess > (-STATZERO)) {
+    /* the idea below was broken */
+    if (pmod->ess < ESSZERO && pmod->ess > (-ESSZERO)) {
 	pmod->ess = 0.0;
     } else if (pmod->ess < 0.0) { 
         /*  pmod->errcode = E_ESS; */ 
