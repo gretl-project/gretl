@@ -144,6 +144,12 @@ lib/src/compare.h,289
 } aux_codes;aux_codes36,1595
 } COMPARE;COMPARE49,2138
 
+lib/src/daily.c,105
+char *missobs_vector 3,29
+int undo_repack_missing 25,481
+int repack_missing 60,1322
+int main 97,2162
+
 lib/src/dataio.c,1949
 #define QUOTE 32,1022
 static char STARTCOMMENT[45,1539
@@ -156,56 +162,56 @@ static int comment_lines 144,3719
 static int dataset_allocate_markers 173,4426
 static int dataset_allocate_varnames 191,4796
 DATAINFO *datainfo_new 224,5659
-DATAINFO *create_new_dataset 266,6557
-int start_new_Z 309,7465
-static int prepZ 333,7919
-static void eatspace 352,8389
-static int readdata 367,8606
-static int gz_readdata 420,9943
-int check_varname 508,11928
-static int readhdr 539,12861
-static int check_date 672,16369
-int dateton 706,17179
-void ntodate 774,18857
-static int blank_check 798,19402
-int get_info 825,20051
-static int writehdr 869,21115
-int get_precision 935,22807
-int write_data 968,23561
-static void pd_string 1156,29097
-int data_report 1197,30160
-static double obs_float 1229,31025
-static int readlbl 1252,31566
-static int writelbl 1290,32539
-int is_gzipped 1330,33402
-int has_gz_suffix 1353,33796
-void gz_switch_ext 1374,34243
-static void try_gdt 1389,34591
-int get_data 1419,35285
-int open_nulldata 1549,38689
-static int test_label 1587,39672
-#define MSG(MSG1677,42296
-int merge_data 1699,42974
-static void trim_csv_line 1825,46104
-int import_csv 1856,46781
-int add_case_markers 2137,54162
-static char *unspace 2178,54992
-int import_box 2207,55551
-static int xmlfile 2410,60925
-int open_plugin 2433,61279
-void *get_plugin_function 2452,61766
-void close_plugin 2466,62032
-int detect_filetype 2488,62487
-#define UTF 2558,64353
-static char *simple_fname 2562,64407
-static char *xml_encode 2580,64767
-static int write_xmldata 2646,66144
-static int process_varlist 2845,71681
-static int process_values 2935,73684
-static int process_observations 2954,74136
-static long get_filesize 3073,76915
-int get_xmldata 3101,77614
-char *get_xml_description 3282,81992
+DATAINFO *create_new_dataset 267,6579
+int start_new_Z 310,7495
+static int prepZ 335,7974
+static void eatspace 354,8444
+static int readdata 369,8661
+static int gz_readdata 422,9998
+int check_varname 510,11983
+static int readhdr 541,12916
+static int check_date 674,16424
+int dateton 708,17234
+void ntodate 776,18912
+static int blank_check 800,19457
+int get_info 827,20106
+static int writehdr 871,21170
+int get_precision 937,22862
+int write_data 970,23616
+static void pd_string 1158,29131
+int data_report 1199,30194
+static double obs_float 1231,31074
+static int readlbl 1254,31615
+static int writelbl 1292,32588
+int is_gzipped 1332,33451
+int has_gz_suffix 1355,33845
+void gz_switch_ext 1376,34292
+static void try_gdt 1391,34640
+int get_data 1421,35334
+int open_nulldata 1551,38738
+static int test_label 1589,39721
+#define MSG(MSG1679,42345
+int merge_data 1701,43023
+static void trim_csv_line 1827,46153
+int import_csv 1858,46830
+int add_case_markers 2140,54297
+static char *unspace 2181,55127
+int import_box 2210,55686
+static int xmlfile 2413,61060
+int open_plugin 2436,61414
+void *get_plugin_function 2455,61901
+void close_plugin 2469,62167
+int detect_filetype 2491,62622
+#define UTF 2557,64404
+static char *simple_fname 2561,64458
+static char *xml_encode 2579,64818
+static int write_xmldata 2645,66195
+static int process_varlist 2844,71732
+static int process_values 2934,73735
+static int process_observations 2953,74187
+static long get_filesize 3072,76966
+int get_xmldata 3100,77665
+char *get_xml_description 3281,82043
 
 lib/src/dataio.h,673
     GRETL_DATA_FLOAT 24,915
@@ -505,7 +511,7 @@ lib/src/gettext.h,449
 # define bind_textdomain_codeset(bind_textdomain_codeset46,2011
 #define gettext_noop(gettext_noop57,2556
 
-lib/src/graphing.c,540
+lib/src/graphing.c,576
 static int printv 41,1249
 static void prntdate 66,1739
 static int get_timevar 85,2222
@@ -517,14 +523,15 @@ int graph 340,9208
 static int factorized_vars 402,10741
 int gnuplot_init 448,11807
 int gnuplot_display 477,12518
-int gnuplot 524,14055
-int multi_scatters 802,21780
-int plot_freq 903,24713
-int plot_fcast_errs 1003,27995
-void free_plot 1039,29073
-int open_gnuplot_pipe 1053,29351
-int termtype_to_termstr 1068,29727
-int go_gnuplot 1088,30277
+static void print_xrange 503,13288
+int gnuplot 537,14383
+int multi_scatters 815,22089
+int plot_freq 916,25022
+int plot_fcast_errs 1016,28281
+void free_plot 1052,29359
+int open_gnuplot_pipe 1066,29637
+int termtype_to_termstr 1081,30013
+int go_gnuplot 1101,30563
 
 lib/src/graphing.h,191
 #define MAXTITLE 24,908
@@ -599,18 +606,18 @@ lib/src/libgretl.h,1093
     SP_FINISH 71,1805
 } progress_flags;progress_flags72,1820
 typedef int *LIST;LIST74,1839
-} DATAINFO;DATAINFO94,2773
-} PATHS;PATHS113,3200
-} GRETLTEST;GRETLTEST120,3308
-} GRETLSUMMARY;GRETLSUMMARY126,3430
-} CORRMAT;CORRMAT132,3515
-} SAMPLE;SAMPLE137,3568
-} MODEL;MODEL192,6633
-} MODELSPEC;MODELSPEC197,6695
-} GRAPHT;GRAPHT203,6781
-} SESSION;SESSION212,6921
-} SESSIONBUILD;SESSIONBUILD218,7010
-} PRN;PRN224,7093
+} DATAINFO;DATAINFO96,2916
+} PATHS;PATHS115,3343
+} GRETLTEST;GRETLTEST122,3451
+} GRETLSUMMARY;GRETLSUMMARY128,3573
+} CORRMAT;CORRMAT134,3658
+} SAMPLE;SAMPLE139,3711
+} MODEL;MODEL194,6776
+} MODELSPEC;MODELSPEC199,6838
+} GRAPHT;GRAPHT205,6924
+} SESSION;SESSION214,7064
+} SESSIONBUILD;SESSIONBUILD220,7153
+} PRN;PRN226,7236
 
 lib/src/monte_carlo.c,826
 enum inequalities inequalities27,908
@@ -1095,26 +1102,26 @@ GtkWidget *active_edit_id 34,1205
 GtkWidget *active_edit_name 35,1239
 void selectrow 39,1341
 void open_data 98,2931
-void open_script 127,3608
-void file_save 137,3921
-void dummy_call 198,5607
-void print_report 205,5758
-void edit_header 218,6064
-void fit_resid_callback 229,6387
-void model_stat_callback 239,6642
-void model_callback 249,6898
-static int model_dates_check 258,7154
-void model_test_callback 274,7532
-void add_omit_callback 329,9081
-void selector_callback 338,9349
-void gretl_callback 396,10637
-void delete_var_by_id 546,15135
-void text_copy_callback 559,15456
-void text_paste_callback 566,15622
-void text_replace_callback 573,15777
-void text_undo_callback 580,15936
-void run_script_callback 587,16089
-void file_save_callback 594,16257
+void open_script 128,3629
+void file_save 138,3942
+void dummy_call 199,5628
+void print_report 206,5779
+void edit_header 219,6085
+void fit_resid_callback 230,6408
+void model_stat_callback 240,6663
+void model_callback 250,6919
+static int model_dates_check 259,7175
+void model_test_callback 275,7553
+void add_omit_callback 330,9102
+void selector_callback 339,9370
+void gretl_callback 397,10658
+void delete_var_by_id 547,15156
+void text_copy_callback 560,15477
+void text_paste_callback 567,15643
+void text_replace_callback 574,15798
+void text_undo_callback 581,15957
+void run_script_callback 588,16110
+void file_save_callback 595,16278
 
 gui/callbacks.h,25
 #define CALLBACKS_H4,39
@@ -1213,7 +1220,7 @@ void panel_structure_dialog 588,16281
 struct ts_pd ts_pd691,20285
 void time_series_dialog 696,20333
 
-gui/dialogs.c,770
+gui/dialogs.c,920
 GtkWidget *open_dialog;36,1080
 int session_saved;37,1104
 int make_default_storelist 41,1191
@@ -1238,6 +1245,10 @@ struct yes_no_data yes_no_data742,21536
 static void yes_no_callback 748,21614
 gint yes_no_dialog 759,21880
 gint exit_check 829,24312
+static void set_delim 871,25491
+static void really_set_delim 881,25702
+static void destroy_delim_dialog 890,25922
+void delimiter_dialog 896,26018
 
 gui/dialogs.h,105
 #define DIALOGS_H4,35
@@ -1280,57 +1291,57 @@ GtkWidget *filesavebutton;48,1392
 GPT_RANGE axis_range[50,1420
 #define NTITLES 52,1446
 struct gpt_titles_t gpt_titles[54,1465
-static void close_plot 63,1720
-static void flip_manual_range 78,2016
-static void widget_to_str 93,2545
-static void apply_gpt_changes 105,2819
-static void save_session_graph 175,4898
-static void gpt_tab_main 191,5347
-static void gpt_tab_output 260,7540
-static void gpt_tab_lines 319,9414
-static void gpt_tab_XY 435,13441
-void gnuplot_dialog 563,18084
-void save_this_graph 641,21106
-void do_save_graph 685,22227
-static void plot_save_filesel 727,23377
-static void kill_gpt_save_dialog 740,23797
-void gpt_save_dialog 750,24032
-static void charsub 825,26644
-static int chop_comma 839,26894
-static void get_gpt_data 855,27187
-int read_plotfile 878,27655
-    PNG_START,1109,33678
-    PNG_ZOOM,1110,33693
-    PNG_UNZOOM1111,33707
-} png_zoom;png_zoom1112,33722
-typedef struct zoom_t zoom_t1114,33735
-} zoom_t;zoom_t1119,33863
-typedef struct png_plot_t png_plot_t1121,33874
-} png_plot_t;png_plot_t1138,34246
-#define WIDTH 1144,34419
-#define HEIGHT 1145,34455
-#define PLOTXMIN 1152,34634
-#define PLOTXMAX 1153,34656
-#define PLOTYMIN 1154,34679
-#define PLOTYMAX 1155,34701
-#define NOTITLE_YMIN 1156,34724
-static void get_data_xy 1158,34751
-static double x_to_date 1188,35460
-static void create_selection_gc 1196,35593
-static void draw_selection_rectangle 1204,35794
-motion_notify_event 1236,36693
-static gint plot_popup_activated 1274,37696
-static GtkWidget *build_plot_menu 1321,39122
-static int make_new_png 1370,40264
-static gint plot_button_release 1420,41273
-static gint plot_button_press 1449,42034
-plot_key_handler 1470,42611
-void plot_expose 1479,42775
-static void render_pngfile 1495,43295
-static void plot_quit 1539,44314
-static int get_plot_yrange 1549,44540
-static int get_plot_ranges 1613,45836
-int gnuplot_show_png 1652,46798
+static void close_plot 63,1729
+static void flip_manual_range 78,2047
+static void widget_to_str 93,2576
+static void apply_gpt_changes 105,2850
+static void save_session_graph 175,4929
+static void gpt_tab_main 191,5378
+static void gpt_tab_output 260,7571
+static void gpt_tab_lines 318,9444
+static void gpt_tab_XY 434,13472
+void gnuplot_dialog 562,18127
+void save_this_graph 640,21149
+void do_save_graph 684,22270
+static void plot_save_filesel 726,23420
+static void kill_gpt_save_dialog 739,23840
+void gpt_save_dialog 749,24075
+static void charsub 826,26670
+static int chop_comma 840,26920
+static void get_gpt_data 856,27213
+int read_plotfile 879,27681
+    PNG_START,1125,34056
+    PNG_ZOOM,1126,34071
+    PNG_UNZOOM1127,34085
+} png_zoom;png_zoom1128,34100
+typedef struct zoom_t zoom_t1130,34113
+} zoom_t;zoom_t1135,34241
+typedef struct png_plot_t png_plot_t1137,34252
+} png_plot_t;png_plot_t1154,34624
+#define WIDTH 1160,34797
+#define HEIGHT 1161,34833
+#define PLOTXMIN 1168,35012
+#define PLOTXMAX 1169,35034
+#define PLOTYMIN 1170,35057
+#define PLOTYMAX 1171,35079
+#define NOTITLE_YMIN 1172,35102
+static void get_data_xy 1174,35129
+static double x_to_date 1204,35838
+static void create_selection_gc 1212,35971
+static void draw_selection_rectangle 1220,36172
+motion_notify_event 1252,37071
+static gint plot_popup_activated 1290,38074
+static GtkWidget *build_plot_menu 1337,39500
+static int make_new_png 1386,40642
+static gint plot_button_release 1436,41651
+static gint plot_button_press 1465,42412
+plot_key_handler 1486,42989
+void plot_expose 1495,43153
+static void render_pngfile 1511,43673
+static void plot_quit 1555,44692
+static int get_plot_yrange 1565,44918
+static int get_plot_ranges 1629,46214
+int gnuplot_show_png 1668,47176
 
 gui/gretl.c,3263
 GtkWidget *toolbar_box 73,2529

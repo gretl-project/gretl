@@ -1075,7 +1075,7 @@ int write_data (const char *fname, const int *list,
 	else delim = ' ';
 
 	/* variable names */
-	if (opt == GRETL_DATA_CSV) fprintf(fp, "obs,");
+	if (opt == GRETL_DATA_CSV) fprintf(fp, "obs%c", delim);
 	for (i=1; i<l0; i++) 
 	    fprintf(fp, "%s%c", pdinfo->varname[list[i]], delim);
 	fprintf(fp, "%s\n", pdinfo->varname[list[l0]]);

@@ -164,8 +164,10 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 	    file_selector(_("Save data file"), file_code, NULL);
 	break;
     case EXPORT_CSV:
-	if (!storevars_dialog(EXPORT)) 
+	if (!storevars_dialog(EXPORT)) {
+	    delimiter_dialog();
 	    file_selector(_("Save CSV data file"), file_code, NULL);
+	}
 	break;
     case EXPORT_R:
     case EXPORT_R_ALT:

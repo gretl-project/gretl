@@ -945,6 +945,21 @@ static struct gui_help_item gui_help_items[] = {
     { 0,          NULL },
 };
 
+/* state the topic headings from the help files so they 
+   can be translated */
+const char *intl_topics[] = {
+    N_("Dataset"),
+    N_("Estimation"),
+    N_("Graphs"),
+    N_("Prediction"),
+    N_("Printing"),
+    N_("Programming"),
+    N_("Statistics"),
+    N_("Tests"),
+    N_("Transformations"),
+    N_("Utilities")
+};
+
 /* ......................................................... */
 
 static int extra_command_number (const char *s)
@@ -974,7 +989,7 @@ static char *help_string_from_cmd (int cmd)
 static int real_helpfile_init (int cli)
 {
     FILE *fp;
-    char *helpfile;
+    char *helpfile, *headstr;
     struct help_head_t **heads = NULL;
     char testline[MAXLEN], topicword[32];
     int i, g, pos, match, nheads = 0, topic = 0;
@@ -1005,9 +1020,10 @@ static int real_helpfile_init (int cli)
 		if (heads != NULL) { 
 		    heads[nheads] = malloc(sizeof **heads);
 		    if (heads[nheads] != NULL) {
-			(heads[nheads])->name = malloc(strlen(testline));
+			headstr = _(testline + 1);
+			(heads[nheads])->name = malloc(strlen(headstr) + 1);
 			if ((heads[nheads])->name != NULL) {
-			    strcpy((heads[nheads])->name, testline + 1);
+			    strcpy((heads[nheads])->name, headstr);
 			    (heads[nheads])->ntopics = 1;
 			    nheads++;
 			} else memfail = 1;
@@ -1043,7 +1059,7 @@ static int real_helpfile_init (int cli)
 	    chopstr(testline);
 	    match = -1;
 	    for (i=0; i<nheads; i++) {
-		if (!strcmp(testline + 1, (heads[i])->name)) {
+		if (!strcmp(_(testline + 1), (heads[i])->name)) {
 		    match = i;
 		    break;
 		}

@@ -883,8 +883,6 @@ static void really_set_delim (GtkWidget *w, gpointer p)
     gint *delim = (gint *) p;
 
     datainfo->delim = *delim;
-    fprintf(stderr, "datainfo->delim now = '%c' (%d)\n", 
-	    datainfo->delim, datainfo->delim);
 }
 
 static void destroy_delim_dialog (GtkWidget *w, gint *p)
@@ -919,6 +917,11 @@ void delimiter_dialog (void)
 
     gtk_signal_connect (GTK_OBJECT (dialog), "destroy", 
 			destroy_delim_dialog, delptr);
+
+    tempwid = gtk_label_new (_("separator for data columns:"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			tempwid, TRUE, TRUE, FALSE);
+    gtk_widget_show(tempwid);
 
     /* comma separator */
     button = gtk_radio_button_new_with_label (NULL, _("comma (,)"));
@@ -969,16 +972,6 @@ void delimiter_dialog (void)
 			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
 			       GTK_OBJECT (dialog));
     gtk_widget_grab_default (tempwid);
-    gtk_widget_show (tempwid);
-
-    /* Create the "Cancel" button */
-    tempwid = gtk_button_new_with_label (_("Cancel"));
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
-			tempwid, TRUE, TRUE, FALSE);
-    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
-			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
-			       GTK_OBJECT (dialog));
     gtk_widget_show (tempwid);
 
     gtk_widget_show (dialog);

@@ -234,10 +234,8 @@ GtkItemFactoryEntry data_items[] = {
 #endif 
     /* File, Export data */
     { N_("/File/_Export data"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/Export data/_CSV..."), NULL, file_save, 
-      EXPORT_CSV, NULL },
-    { N_("/File/Export data/GNU _R..."), NULL, file_save, 
-      EXPORT_R, NULL },
+    { N_("/File/Export data/_CSV..."), NULL, file_save, EXPORT_CSV, NULL },
+    { N_("/File/Export data/GNU _R..."), NULL, file_save, EXPORT_R, NULL },
     { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
       EXPORT_OCTAVE, NULL },
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, NULL },

@@ -1,5 +1,7 @@
 version 0.995
 - numerous small updates to facilitate internationalization
+- give the user a choice of delimiters (comma, space or tab)
+  when importing or exporting "CSV" data
 - fix bug in Create Dataset: undated data appeared as "annual"
 - add descriptive report on dataset to Data menu
 - fix bug in writing Utilities/R session: R data set was being
@@ -8,7 +10,7 @@ version 0.995
 - refinements to Makefiles: don't expand CFLAGS multiple times
 - handle spaces in filenames when stacking the "open" command
 - fix bug with editing gnuplot graphs
-- try to get win32 LaTeX view working properly
+- get win32 LaTeX view working properly
 - bugfixes for gnumeric and excel spreadsheet importers
 - bugfix: unitialized data in cointegration test with constant
 - add new, improved dialog box for specifying models, etc.

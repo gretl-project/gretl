@@ -197,16 +197,16 @@ dialog box for models
 @Estimation
 
 To select the dependent variable, highlight a variable in the list on the left
-and press the "Choose" button pointing to the Dependent variable slot.  A
-shortcut is to double-click a variable on the left.  If you check the "Set as
-default" box, the selected variable will be pre-selected as dependent when
-the model dialog is next opened.  
+and press the "Choose" button pointing to the Dependent variable slot.  If you
+check the "Set as default" box, the selected variable will be pre-selected as
+dependent when the model dialog is next opened.  Short cut: double-click on a
+variable on the left to select it as the dependent variable and set it as the
+default.
 
 To select independent variables, highlight them on the left and press the
-"Add" button.  A shortcut for adding a single independent variable is to
-highlight it and right-click.  You can highlight several contiguous variables
-by dragging with the mouse.  You can highlight a group of non-contiguous
-variables by clicking on them with the Ctrl key pressed.
+"Add" button (or click the right mouse button).  You can highlight several
+contiguous variables by dragging with the mouse.  You can highlight a group of
+non-contiguous variables by clicking on them with the Ctrl key pressed.
 
 #
 diff
