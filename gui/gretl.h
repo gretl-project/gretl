@@ -259,11 +259,13 @@ void gretl_fork (const char *prog, const char *arg);
  
 void menubar_state (gboolean s);
 
+#ifndef GNUPLOT_PNG
 void graphmenu_state (gboolean s);
+#endif
 
 void colorize_tooltips (GtkTooltips *tip);
 
-gint populate_clist (GtkWidget *widget, DATAINFO *pdatainfo);
+gint populate_main_varlist (void);
 
 void clear_sample_label (void);
 

@@ -292,9 +292,9 @@ dfstat_t chi_vals[NCHI] = {{1,{2.706,3.841,5.024,6.635,10.828}},
 
 static void other_tables (PRN *prn)
 {
-    pprintf(prn, _("\nFor more comprehensive statistical tables, please consult "
-	    "a statistics or\neconometrics text, e.g. Ramanathan's "
-	    "Introductory Econometrics.\n"));
+    pputs(prn, _("\nFor more comprehensive statistical tables, please consult "
+		 "a statistics or\neconometrics text, e.g. Ramanathan's "
+		 "Introductory Econometrics.\n"));
 }
 
 /* .................................................................. */
@@ -316,19 +316,19 @@ void dw_lookup (int n, PRN *prn)
 	}
     }
 
-    pprintf(prn, _("5%% critical values for Durbin-Watson statistic\n\n"));
-    pprintf(prn, _("              Number of explanatory variables (excluding the "
-	    "constant):\n\n"));
-    pprintf(prn, "               1             2             3             4"
-	    "             5\n");
-    pprintf(prn, "           dL     dU     dL     dU     dL     dU     dL     dU"
-	    "     dL     dU\n\n");
+    pputs(prn, _("5%% critical values for Durbin-Watson statistic\n\n"));
+    pputs(prn, _("              Number of explanatory variables (excluding the "
+		 "constant):\n\n"));
+    pputs(prn, "               1             2             3             4"
+	  "             5\n");
+    pputs(prn, "           dL     dU     dL     dU     dL     dU     dL     dU"
+	  "     dL     dU\n\n");
     for (i=0; i<NDW; i++) {
 	if (dw_vals[i].n >= nlo && dw_vals[i].n <= nhi) {
 	    pprintf(prn, "n = %3d ", dw_vals[i].n);
 	    for (j=0; j<10; j++)
 		pprintf(prn, "%6.2f ", dw_vals[i].dval[j]);
-	    pprintf(prn, "\n");
+	    pputs(prn, "\n");
 	}
     }
     other_tables(prn);
@@ -338,14 +338,14 @@ void dw_lookup (int n, PRN *prn)
 
 void norm_lookup (PRN *prn, int gui)
 {
-    pprintf(prn, _("Critical values for standard normal distribution\n\n"));
-    pprintf(prn, _("Column headings show alpha (significance level) for "
-	    "a one-tailed test.\n"));
-    pprintf(prn, _("For a two-tailed test, select the column heading "
-	    "showing half the desired\nalpha level.  "));
-    pprintf(prn, _("(For example, for a two-tailed test using the 10%% "
-	    "significance\nlevel, use the 0.05 column.)\n\n"));
-    pprintf(prn, "      0.10     0.05    0.025     0.01    0.001\n\n"); 
+    pputs(prn, _("Critical values for standard normal distribution\n\n"));
+    pputs(prn, _("Column headings show alpha (significance level) for "
+		 "a one-tailed test.\n"));
+    pputs(prn, _("For a two-tailed test, select the column heading "
+		 "showing half the desired\nalpha level.  "));
+    pputs(prn, _("(For example, for a two-tailed test using the 10%% "
+		 "significance\nlevel, use the 0.05 column.)\n\n"));
+    pputs(prn, "      0.10     0.05    0.025     0.01    0.001\n\n"); 
     pprintf(prn, "  %8.3f %8.3f %8.3f %8.3f %8.3f\n",
 	    1.282, 1.645, 1.960, 2.326, 3.090);
     if (gui) other_tables(prn);
@@ -367,24 +367,24 @@ void t_lookup (int df, PRN *prn, int gui)
 	}
     }
 
-    pprintf(prn, _("Critical values for Student's t distribution\n\n"));
-    pprintf(prn, _("Column headings show alpha (significance level) for "
-	    "a one-tailed test.\n"));
-    pprintf(prn, _("For a two-tailed test, select the column heading "
-	    "showing half the desired\nalpha level.  "));
-    pprintf(prn, _("(For example, for a two-tailed test using the 10%% "
-	    "significance\nlevel, use the 0.05 column.)\n\n"));
-    pprintf(prn, "             0.10     0.05    0.025     0.01    0.001\n\n"); 
+    pputs(prn, _("Critical values for Student's t distribution\n\n"));
+    pputs(prn, _("Column headings show alpha (significance level) for "
+		 "a one-tailed test.\n"));
+    pputs(prn, _("For a two-tailed test, select the column heading "
+		 "showing half the desired\nalpha level.  "));
+    pputs(prn, _("(For example, for a two-tailed test using the 10%% "
+		 "significance\nlevel, use the 0.05 column.)\n\n"));
+    pputs(prn, "             0.10     0.05    0.025     0.01    0.001\n\n"); 
     for (i=0; i<NTSTAT; i++) {
 	if (t_vals[i].df >= dflo && t_vals[i].df <= dfhi) {
 	    pprintf(prn, "%s = ", _("df"));
 	    if (t_vals[i].df == 999)
-		pprintf(prn, _("inf."));
+		pputs(prn, _("inf."));
 	    else
 		pprintf(prn, "%3d ", t_vals[i].df);
 	    for (j=0; j<5; j++)
 		pprintf(prn, "%8.3f ", t_vals[i].crit[j]);
-	    pprintf(prn, "\n");
+	    pputs(prn, "\n");
 	}
     }
     if (gui) other_tables(prn);
@@ -398,16 +398,16 @@ void chisq_lookup (int df, PRN *prn, int gui)
 
     if (df > 100) df = 100;
 
-    pprintf(prn, _("Critical values for Chi-square distribution\n\n"));
-    pprintf(prn, _("Column headings show alpha (significance level) for "
-	    "a one-tailed test.\n\n"));
-    pprintf(prn, "             0.10     0.05    0.025     0.01    0.001\n\n"); 
+    pputs(prn, _("Critical values for Chi-square distribution\n\n"));
+    pputs(prn, _("Column headings show alpha (significance level) for "
+		 "a one-tailed test.\n\n"));
+    pputs(prn, "             0.10     0.05    0.025     0.01    0.001\n\n"); 
     for (i=0; i<NCHI; i++) {
 	if (chi_vals[i].df == df) {
 	    pprintf(prn, "%s = %3d ", _("df"), df);
 	    for (j=0; j<5; j++)
 		pprintf(prn, "%8.3f ", chi_vals[i].crit[j]);
-	    pprintf(prn, "\n");
+	    pputs(prn, "\n");
 	}
     }
     if (gui) other_tables(prn);

@@ -968,7 +968,7 @@ void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     if (fr->nobs == pdinfo->n) pputs(prn, "\\\\\n");
     else pprintf(prn, " ($n$ = %d)\\\\\n", fr->nobs); 
 
-    pputs(prn, I_("Standard error of residuals = %g"), fr->sigma);
+    pprintf(prn, I_("Standard error of residuals = %g"), fr->sigma);
     pputs(prn, "\n\\end{raggedright}\n");
 }
 

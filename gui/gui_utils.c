@@ -475,7 +475,7 @@ void register_data (const char *fname, int record)
     }
 
     /* sync main window with datafile */
-    populate_clist(mdata->listbox, datainfo);
+    populate_main_varlist();
     set_sample_label(datainfo);
     menubar_state(TRUE);
     session_state(TRUE);

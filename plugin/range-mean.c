@@ -104,7 +104,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
     nsamp = pdinfo->t2 - pdinfo->t1 + 1;
 
     if (nsamp < 16) {
-	pprintf(prn, _("Sample is too small for range-mean graph\n"));
+	pputs(prn, _("Sample is too small for range-mean graph\n"));
 	errmsg(err, prn);
 	return 1;
     } 	
@@ -151,7 +151,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
 	pprintf(prn, "%s - %s  ", startdate, enddate);
 	gretl_print_fullwidth_double(rmZ[1][t], GRETL_DIGITS, prn);
 	gretl_print_fullwidth_double(rmZ[2][t], GRETL_DIGITS, prn);
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     }
 
     strcpy(rminfo->varname[1], "range");
@@ -160,10 +160,10 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
     rmmod = lsq(rmlist, &rmZ, rminfo, OLS, 0, 0.0);
 
     if ((err = rmmod.errcode)) {
-	pprintf(prn, _("Error estimating range-mean model\n"));
+	pputs(prn, _("Error estimating range-mean model\n"));
 	errmsg(err, prn);
     } else {
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
 	pprintf(prn, _("slope of range against mean = %g\n"),
 		rmmod.coeff[1]);
 	if (rmmod.sderr[1] > 0) {

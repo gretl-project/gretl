@@ -807,8 +807,9 @@ int main (int argc, char *argv[])
 
 void refresh_data (void)
 {
-    if (data_status)
-	populate_clist(mdata->listbox, datainfo);
+    if (data_status) {
+	populate_main_varlist();
+    }
 }
 
 /* ........................................................... */
@@ -834,6 +835,7 @@ void menubar_state (gboolean s)
 
 /* ........................................................... */
 
+#ifndef GNUPLOT_PNG
 void graphmenu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
@@ -841,6 +843,7 @@ void graphmenu_state (gboolean s)
 	flip(mdata->ifac, "/Session/Add last graph", s);
     }
 }
+#endif
 
 /* ........................................................... */
 
@@ -925,13 +928,25 @@ gint main_popup (GtkWidget *widget, GdkEventButton *event,
 
 /* ........................................................... */
 
-gint populate_clist (GtkWidget *widget, DATAINFO *datainfo)
+void check_varmenu_state (GtkList *list, gpointer p)
+{
+    if (mdata->ifac != NULL) {
+	gint selcount = get_mdata_selection();
+
+	flip(mdata->ifac, "/Variable", (selcount == 1));
+    }
+}
+
+/* ........................................................... */
+
+gint populate_main_varlist (void)
 {
     char id[4];
     char *row[3];
     gint i;
+    static gint check_connected;
 
-    gtk_clist_clear(GTK_CLIST (widget));
+    gtk_clist_clear(GTK_CLIST(mdata->listbox));
 
     for (i=0; i<datainfo->v; i++) {
 	if (hidden_var(i, datainfo)) continue;
@@ -939,9 +954,9 @@ gint populate_clist (GtkWidget *widget, DATAINFO *datainfo)
 	row[0] = id;
 	row[1] = datainfo->varname[i];
 	row[2] = datainfo->label[i];
-	gtk_clist_append(GTK_CLIST(widget), row);
+	gtk_clist_append(GTK_CLIST(wmdata->listbox), row);
 	if (i % 2) {
-	    gtk_clist_set_background(GTK_CLIST(widget), i, &gray);
+	    gtk_clist_set_background(GTK_LIST(mdata->listbox), i, &gray);
 	}
     }
 
@@ -956,10 +971,17 @@ gint populate_clist (GtkWidget *widget, DATAINFO *datainfo)
     gtk_clist_select_row 
 	(GTK_CLIST(mdata->listbox), mdata->active_var, 1);  
 
+    if (!check_connected) {
+	gtk_signal_connect(GTK_CLIST(mdata->listbox),
+			   "selection-changed",
+			   main_popup, NULL);
+	check_connected = 1;
+    }
+
     if (!popup_connected) {
 	gtk_signal_connect(GTK_OBJECT(mdata->listbox),
 			   "button_press_event",
-			   (GtkSignalFunc) main_popup, NULL);
+			   GTK_SIGNAL_FUNC(main_popup), NULL);
 	popup_connected = 1;
     }
 
@@ -1073,8 +1095,6 @@ static float get_gui_scale (void)
     
     return scale;
 }
-
-
 
 /* .................................................................. */
 
@@ -1196,7 +1216,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_box_pack_start (GTK_BOX (main_vbox), mdata->status, FALSE, TRUE, 0);
 
     /* put stuff into list box, activate menus */
-    if (!gui_get_data) populate_clist(mdata->listbox, datainfo);
+    if (!gui_get_data) populate_main_varlist();
 
     /* create gretl toolbar */
     if (want_toolbar) make_toolbar(mdata->w, main_vbox);

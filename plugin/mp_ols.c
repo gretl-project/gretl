@@ -350,7 +350,7 @@ static void print_mp_coeff (const MPMODEL *pmod, const DATAINFO *pdinfo,
     gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
     gretl_print_fullwidth_double(yy, GRETL_MP_DIGITS, prn); 
 
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 }
 
 static void other_stats (const MPMODEL *pmod, PRN *prn)
@@ -364,28 +364,28 @@ static void other_stats (const MPMODEL *pmod, PRN *prn)
     xx = mpf_get_d (pmod->sigma);
     pprintf(prn, "%-*s", len, _("Standard error"));
     gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     xx = mpf_get_d (pmod->ess);
     pprintf(prn, "%-*s", len, _("Error Sum of Squares"));
     gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     xx = mpf_get_d (pmod->rsq);
     pprintf(prn, "%-*s", len, _("Unadjusted R-squared"));
     gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     xx = mpf_get_d (pmod->adjrsq);
     pprintf(prn, "%-*s", len, _("Adjusted R-squared"));
     gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     xx = mpf_get_d (pmod->fstt);
     sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
     pprintf(prn, "%-*s", len, fstr);
     gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 }
 
 static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
@@ -402,10 +402,10 @@ static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 		   "the %d observations %s-%s\n"),
 	    pmod->nobs, startdate, enddate);
     pprintf(prn, "%s: %s\n\n", _("Dependent variable"),
-		 pdinfo->varname[pmod->varlist[1]]);
+	    pdinfo->varname[pmod->varlist[1]]);
 
-    pprintf(prn, _("      VARIABLE         COEFFICIENT          "
-		   "        STD. ERROR\n"));
+    pputs(prn, _("      VARIABLE         COEFFICIENT          "
+		 "        STD. ERROR\n"));
 
     if (pmod->ifc) {
 	print_mp_coeff(pmod, pdinfo, ncoeff, prn);
@@ -414,7 +414,7 @@ static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     for (i=2; i<=ncoeff; i++) {
 	print_mp_coeff(pmod, pdinfo, i, prn);
     }
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     other_stats (pmod, prn);
 

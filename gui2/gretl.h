@@ -267,7 +267,9 @@ void gretl_fork (const char *prog, const char *arg);
  
 void main_menubar_state (gboolean s);
 
+#ifndef GNUPLOT_PNG
 void graphmenu_state (gboolean s);
+#endif
 
 void colorize_tooltips (GtkTooltips *tip);
 

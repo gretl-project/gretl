@@ -63,7 +63,6 @@ extern void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
 
 /* functions private to gretl.c */
 
-static void populate_list (GtkWidget *widget, DATAINFO *datainfo);
 static void sort_varlist (gpointer p, guint col, GtkWidget *w);
 static void make_toolbar (GtkWidget *w, GtkWidget *box);
 static GtkWidget *make_main_window (int gui_get_data);
@@ -77,6 +76,7 @@ static gint var_popup_click (GtkWidget *widget, gpointer data);
 static gboolean main_popup_handler (GtkWidget *widget, GdkEvent *event,
 				    gpointer data);
 static void mdata_edit (gpointer data, guint colnum, GtkWidget *w);
+static int tree_view_selection_count (GtkTreeSelection *select);
 
 static void check_for_extra_data (void);
 static void set_up_main_menu (void);
@@ -931,8 +931,9 @@ int main (int argc, char *argv[])
 
 void refresh_data (void)
 {
-    if (data_status)
-	populate_list(mdata->listbox, datainfo);
+    if (data_status) {
+	populate_varlist();
+    }
 }
 
 /* ........................................................... */
@@ -958,6 +959,7 @@ void main_menubar_state (gboolean s)
 
 /* ........................................................... */
 
+#ifndef GNUPLOT_PNG
 void graphmenu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
@@ -965,6 +967,7 @@ void graphmenu_state (gboolean s)
 	flip(mdata->ifac, "/Session/Add last graph", s);
     }
 }
+#endif
 
 /* ........................................................... */
 
@@ -999,17 +1002,29 @@ void restore_sample_state (gboolean s)
 
 /* ........................................................... */
 
-static void populate_list (GtkWidget *widget, DATAINFO *datainfo)
+static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
+{
+    if (mdata->ifac != NULL) {
+	int selcount = tree_view_selection_count(select);
+
+	flip(mdata->ifac, "/Variable", (selcount == 1));
+    }
+}
+
+/* ........................................................... */
+
+void populate_varlist (void)
 {
     GtkListStore *store;
     GtkTreeSelection *select;
     GtkTreeIter iter;    
     char id[4];
     gint i;
+    static gint check_connected;
 
     /* find and clear the existing list */
-    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(widget)));
-    gtk_list_store_clear (store);
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox)));
+    gtk_list_store_clear(store);
 
     gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
 
@@ -1026,10 +1041,17 @@ static void populate_list (GtkWidget *widget, DATAINFO *datainfo)
     }    
 
     mdata->active_var = 1;
-    gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
-    gtk_tree_model_iter_next (GTK_TREE_MODEL(store), &iter);
-    select = gtk_tree_view_get_selection (GTK_TREE_VIEW(widget));
-    gtk_tree_selection_select_iter (select, &iter);
+
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+    select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
+    gtk_tree_selection_select_iter(select, &iter);
+    if (!check_connected) {
+	g_signal_connect (G_OBJECT(select), "changed",
+			  G_CALLBACK(check_varmenu_state),
+			  mdata);
+	check_connected = 1;
+    }
 
     if (mdata->popup == NULL) {
 	build_var_popup(mdata);
@@ -1052,13 +1074,6 @@ static void sort_varlist (gpointer p, guint col, GtkWidget *w)
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
     gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(model), 
 					  col, GTK_SORT_ASCENDING);
-}
-
-/* ......................................................... */
-
-void populate_varlist (void)
-{
-    populate_list (mdata->listbox, datainfo);
 }
 
 /* ......................................................... */
@@ -1319,14 +1334,14 @@ static GtkWidget *make_main_window (int gui_get_data)
 		      G_CALLBACK(drag_data_received),
 		      NULL);
 
-    gtk_box_pack_start(GTK_BOX (main_vbox), box, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(main_vbox), box, TRUE, TRUE, 0);
 
     mdata->status = gtk_label_new("");
     
-    gtk_box_pack_start (GTK_BOX (main_vbox), mdata->status, FALSE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX(main_vbox), mdata->status, FALSE, TRUE, 0);
 
     /* put stuff into list box, activate menus */
-    if (!gui_get_data) populate_list(mdata->listbox, datainfo);
+    if (!gui_get_data) populate_varlist();
 
     /* create gretl toolbar */
     if (want_toolbar) make_toolbar(mdata->w, main_vbox);
@@ -2172,7 +2187,6 @@ static void auto_store (void)
 /* ........................................................... */
 
 #ifdef G_OS_WIN32
-
 static int old_windows (void) {
     OSVERSIONINFO *winver;
     static int old = 1;
@@ -2217,8 +2231,7 @@ static int unmangle (const char *dosname, char *longname)
 	return err;
     }
 }
-
-#endif
+#endif /* G_OS_WIN32 */
 
 static void count_selections (GtkTreeModel *model, GtkTreePath *path,
 			      GtkTreeIter *iter, int *selcount)
@@ -2226,21 +2239,29 @@ static void count_selections (GtkTreeModel *model, GtkTreePath *path,
     *selcount += 1;
 }
 
+static int tree_view_selection_count (GtkTreeSelection *select)
+{
+    int selcount = 0;
+
+    if (select != NULL) {
+	gtk_tree_selection_selected_foreach (select, 
+					     (GtkTreeSelectionForeachFunc) 
+					     count_selections,
+					     &selcount);
+    }
+    return selcount;
+}
+
 static gboolean main_popup_handler (GtkWidget *widget, GdkEvent *event,
 				    gpointer data)
 {
     GdkModifierType mods;
-    GtkTreeSelection *select; 
     GtkMenu *menu = GTK_MENU(data);
-    int selcount = 0;
+    int selcount;
 
-    /* if no selection, don't do anything special */
-    select = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
-    if (select == NULL) return FALSE;
-    gtk_tree_selection_selected_foreach (select, 
-                                         (GtkTreeSelectionForeachFunc) 
-                                         count_selections,
-                                         &selcount);
+    selcount = 
+	tree_view_selection_count(gtk_tree_view_get_selection(GTK_TREE_VIEW(widget)));
+
     if (selcount == 0) return FALSE;
 
     /* ignore all but right-clicks */

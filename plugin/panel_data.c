@@ -278,7 +278,7 @@ static int haus_invert (hausman_t *haus)
 	for (j=i; j<=n; j++) {
 	    a[i][j] = haus->sigma[k];
             if (i != j) 
-	       a[j][i] = haus->sigma[k];
+		a[j][i] = haus->sigma[k];
             k++;
 	}
     }
@@ -350,13 +350,13 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     lsdv = lsq(dvlist, pZ, pdinfo, OLS, 0, 0.0);
     if (lsdv.errcode) {
 	var = NADBL;
-	pprintf(prn, _("Error estimating fixed effects model\n"));
+	pputs(prn, _("Error estimating fixed effects model\n"));
 	errmsg(lsdv.errcode, prn);
     } else {
 	haus->sigma_e = lsdv.sigma;
 	var = lsdv.sigma * lsdv.sigma;
-	pprintf(prn, 
-		_("                          Fixed effects estimator\n"
+	pputs(prn, 
+	      _("                          Fixed effects estimator\n"
 		"          allows for differing intercepts by cross-sectional "
 		"unit\n"
 		"         (slope standard errors in parentheses, a_i = "
@@ -377,11 +377,11 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	F = (pmod->ess - lsdv.ess) * lsdv.dfd /
 	    (lsdv.ess * (nunits - 1.0));
 	pprintf(prn, _("Joint significance of unit dummy variables:\n"
-		" F(%d, %d) = %g with p-value %g\n"), nunits - 1,
+		       " F(%d, %d) = %g with p-value %g\n"), nunits - 1,
 		lsdv.dfd, F, fdist(F, nunits - 1, lsdv.dfd));
-	pprintf(prn, _("(A low p-value counts against the null hypothesis that "
-		"the pooled OLS model\nis adequate, in favor of the fixed "
-		"effects alternative.)\n\n"));
+	pputs(prn, _("(A low p-value counts against the null hypothesis that "
+		     "the pooled OLS model\nis adequate, in favor of the fixed "
+		     "effects alternative.)\n\n"));
 	makevcv(&lsdv);
 	vcv_slopes(haus, &lsdv, nunits, 0);
     }
@@ -446,11 +446,11 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 
     remod = lsq(relist, &reZ, reinfo, OLS, 0, 0.0);
     if ((err = remod.errcode)) {
-	pprintf(prn, _("Error estimating random effects model\n"));
+	pputs(prn, _("Error estimating random effects model\n"));
 	errmsg(err, prn);
     } else {
-	pprintf(prn,
-		_("                         Random effects estimator\n"
+	pputs(prn,
+	      _("                         Random effects estimator\n"
 		"           allows for a unit-specific component to the "
 		"error term\n"
 		"                     (standard errors in parentheses)\n\n"));
@@ -501,8 +501,8 @@ int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo,
     fprintf(stderr,  "breusch_pagan: found ubars\n");
 #endif
 
-    pprintf(prn, _("\nMeans of pooled OLS residuals for cross-sectional "
-	    "units:\n\n"));
+    pputs(prn, _("\nMeans of pooled OLS residuals for cross-sectional "
+		 "units:\n\n"));
     for (i=0; i<nunits; i++) {
 	pprintf(prn, _(" unit %2d: %13.5g\n"), 
 		i + 1, ubar[i]);
@@ -512,11 +512,11 @@ int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo,
     LM = (double) pdinfo->n/(2.0*(T - 1.0)) * 
 	pow((T * T * eprime/pmod->ess) - 1.0, 2);
     pprintf(prn, _("\nBreusch-Pagan test statistic:\n"
-	    " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"), 
+		   " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"), 
 	    LM, LM, chisq(LM, 1));
-    pprintf(prn, _("(A low p-value counts against the null hypothesis that "
-	    "the pooled OLS model\nis adequate, in favor of the random "
-	    "effects alternative.)\n\n"));
+    pputs(prn, _("(A low p-value counts against the null hypothesis that "
+		 "the pooled OLS model\nis adequate, in favor of the random "
+		 "effects alternative.)\n\n"));
     return 0;
 }
 
@@ -537,20 +537,20 @@ static int do_hausman_test (hausman_t *haus, PRN *prn)
 #endif
 
     if (haus_invert(haus)) { 
-	pprintf(prn, _("Error attempting to invert vcv difference matrix\n"));
+	pputs(prn, _("Error attempting to invert vcv difference matrix\n"));
 	return 1;
     }
     if (haus->H < 0) 
-	pprintf(prn, _("\nHausman test matrix is not positive definite (this "
-		"result may be treated as\n\"fail to reject\" the random effects "
-		"specification).\n"));
+	pputs(prn, _("\nHausman test matrix is not positive definite (this "
+		     "result may be treated as\n\"fail to reject\" the random effects "
+		     "specification).\n"));
     else {
 	pprintf(prn, _("\nHausman test statistic:\n"
-		" H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"),
+		       " H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"),
 		haus->H, haus->ns, haus->H, chisq(haus->H, haus->ns));
-	pprintf(prn, _("(A low p-value counts against the null hypothesis that "
-		"the random effects\nmodel is consistent, in favor of the fixed "
-		"effects model.)\n"));
+	pputs(prn, _("(A low p-value counts against the null hypothesis that "
+		     "the random effects\nmodel is consistent, in favor of the fixed "
+		     "effects model.)\n"));
     }
 
     return 0;
@@ -579,8 +579,8 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }   
     
     pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
-	    "cross-sectional units\n "
-	    "                        observed over %d periods\n\n"), 
+		   "cross-sectional units\n "
+		   "                        observed over %d periods\n\n"), 
 	    nunits, T);
 
     var2 = LSDV(pmod, pZ, pdinfo, nunits, T, &haus, prn);
@@ -599,10 +599,10 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	var1 = group_means_variance(pmod, *pZ, pdinfo, 
 				    &groupZ, &ginfo, nunits, T);
 	if (var1 < 0) 
-	    pprintf(prn, _("Couldn't estimate group means regression\n"));
+	    pputs(prn, _("Couldn't estimate group means regression\n"));
 	else {
 	    pprintf(prn, _("Residual variance for group means "
-		    "regression: %g\n\n"), var1);    
+			   "regression: %g\n\n"), var1);    
 	    theta = 1.0 - sqrt(var2 / (T * var1));
 	    random_effects(pmod, *pZ, pdinfo, groupZ, theta, nunits, T, 
 			   &haus, prn);
@@ -667,7 +667,7 @@ static void panel_lag (double **tmpZ, DATAINFO *tmpinfo,
 
 /* - do some sanity checks
    - create a local copy of the required portion of the data set,
-     skipping the obs that will be missing
+   skipping the obs that will be missing
    - copy in the lags of uhat
    - estimate the aux model
    - destroy the temporary data set

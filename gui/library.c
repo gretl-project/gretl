@@ -2083,7 +2083,7 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
     infobox(prn->buf);
     gretl_print_destroy(prn);
     paths.datfile[0] = '\0';
-    populate_clist(mdata->listbox, datainfo);
+    populate_main_varlist();
     data_status = HAVE_DATA | GUI_DATA | MODIFIED_DATA;
     set_sample_label(datainfo);
     orig_vars = datainfo->v;
@@ -2210,7 +2210,7 @@ static void finish_genr (MODEL *pmod)
 	free(cmd_stack[n_cmds-1]);
 	n_cmds--;
     } else {
-	populate_clist(mdata->listbox, datainfo);
+	populate_main_varlist();
 	data_status |= MODIFIED_DATA;
     }
 }
@@ -2226,7 +2226,7 @@ void do_rename_var (GtkWidget *widget, dialog_t *ddata)
     
     if (validate_varname(edttext)) return;
     strcpy(datainfo->varname[mdata->active_var], edttext);
-    populate_clist(mdata->listbox, datainfo);
+    populate_main_varlist();
     data_status |= MODIFIED_DATA; 
 }
 
@@ -2311,7 +2311,7 @@ void delete_var (void)
 	errbox(_("Failed to shrink the data set"));
 	return;
     }
-    populate_clist(mdata->listbox, datainfo);
+    populate_main_varlist();
     data_status |= MODIFIED_DATA; 
 }
 
@@ -2326,7 +2326,7 @@ void do_edit_label (GtkWidget *widget, dialog_t *ddata)
     
     strncpy(datainfo->label[mdata->active_var], edttext, MAXLABEL-1);
     datainfo->label[mdata->active_var][MAXLABEL-1] = '\0';
-    populate_clist(mdata->listbox, datainfo);
+    populate_main_varlist();
     data_status |= MODIFIED_DATA; 
 }
 
@@ -2562,7 +2562,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     }
 
     if (datainfo->v > oldv) {
-	populate_clist(mdata->listbox, datainfo);
+	populate_main_varlist();
 	data_status |= MODIFIED_DATA;
 	set_sample_label(datainfo);
     }
@@ -2721,7 +2721,7 @@ void add_dummies (gpointer data, guint panel, GtkWidget *widget)
 	err = dummy(&Z, datainfo);
 
     if (err) gui_errmsg(err);
-    else populate_clist(mdata->listbox, datainfo);
+    else populate_main_varlist();
 }
 
 /* ......................................................... */
@@ -2739,7 +2739,7 @@ void add_time (gpointer data, guint index, GtkWidget *widget)
     if (err) 
 	errbox((index)? _("Error generating index variable") : 
 	       _("Error generating time trend"));
-    else populate_clist(mdata->listbox, datainfo);
+    else populate_main_varlist();
 }
 
 /* ......................................................... */
@@ -2782,7 +2782,7 @@ void add_logs_etc (GtkWidget *widget, gpointer p)
 	if (msg[0]) errbox(msg);
 	else errbox(_("Error adding variables"));
     }
-    else populate_clist(mdata->listbox, datainfo);
+    else populate_main_varlist();
 }
 
 /* ......................................................... */
@@ -2802,7 +2802,7 @@ int add_fit_resid (MODEL *pmod, const int code, const int undo)
 	char line[32];
 
 	v = datainfo->v - 1;
-	populate_clist(mdata->listbox, datainfo);
+	populate_main_varlist();
 	if (code == 0)
 	    sprintf(line, "genr %s = uhat", datainfo->varname[v]);
 	else if (code == 1)
@@ -2875,7 +2875,7 @@ void add_model_stat (MODEL *pmod, const int which)
 
     strcpy(datainfo->varname[i], vname);
     strcpy(datainfo->label[i], vlabel);
-    populate_clist(mdata->listbox, datainfo);
+    populate_main_varlist();
     check_cmd(cmdstr);
     model_cmd_init(cmdstr, pmod->ID);
     infobox(_("variable added"));
@@ -4279,7 +4279,7 @@ static int gui_exec_line (char *line,
 	else {
 	    pprintf(prn, "%s\n", get_gretl_msg()); 
 	    if (exec_code == CONSOLE_EXEC)
-		populate_clist(mdata->listbox, datainfo);
+		populate_main_varlist();
 	}
 	break;
 
@@ -4488,7 +4488,7 @@ static int gui_exec_line (char *line,
 	    break;
 	}
 	paths.datfile[0] = '\0';
-	populate_clist(mdata->listbox, datainfo);
+	populate_main_varlist();
 	data_status = HAVE_DATA | GUI_DATA | MODIFIED_DATA;
 	set_sample_label(datainfo);
 	orig_vars = datainfo->v;
