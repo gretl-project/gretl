@@ -19,7 +19,7 @@
 
 /* generate.c for gretl */
 
-#define GENR_DEBUG
+/* #define GENR_DEBUG */
 
 #include "libgretl.h"
 #include "internal.h"
@@ -516,12 +516,15 @@ static void make_obs_dummy (double *x, const DATAINFO *pdinfo)
 	if (gotit) x[t] = 0.0;
 	else {
 	    if (!strcmp(pdinfo->S[t], obs)) {
-		x[t] = 1.0;
+		x[t] = t + 1.0;
 		gotit = 1;
 	    } else {
 		x[t] = 0.0;
 	    }
-	} 
+	}
+#ifdef GENR_DEBUG
+	fprintf(stderr, "obs_dummy: x[%d] = %g\n", t, x[t]);
+#endif
     }
 }
 
@@ -1891,8 +1894,9 @@ static int getxvec (char *s, double *xvec,
 		    ntodate(obsstr, t, pdinfo);
 		    xvec[t] = dot_atof(obsstr);
 		}
-	    } else
+	    } else {
 		for (t=0; t<n; t++) xvec[t] = (double) (t + 1);
+	    }
 	    *scalar = 0;
 	}
 	else if (v == OBSBOOLNUM) { /* auto-boolean based on obs label */

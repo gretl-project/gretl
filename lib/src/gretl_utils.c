@@ -265,11 +265,14 @@ int isdummy (double *x, int t1, int t2)
 
     for (t=t1; t<=t2; t++) {
 	xx = x[t];
-	if (floatneq(xx, 0.0) && floatneq(xx, 1.0)) 
+	if (floatneq(xx, 0.0) && floatneq(xx, 1.0)) {
 	    return 0;
+	}
 	if (floateq(xx, 1.0)) m++;
     }
+
     if (m < t2 - t1 + 1) return m;
+
     return 0;
 } 
 
