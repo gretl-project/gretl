@@ -1211,7 +1211,7 @@ void exec_line (char *line, PRN *prn)
 	    strcpy(command.cmd, "endrun"); /* overwrite "quit" */
 	    break;
 	}
-	pprintf(prn, _("commands saved as %s\n"), cmdfile);
+	printf(_("commands saved as %s\n"), cmdfile);
 	gretl_print_destroy(cmdprn);
 	if (command.param[0] == 'x') break;
 	printf(_("type a filename to store output (enter to quit): "));

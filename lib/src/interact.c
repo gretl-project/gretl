@@ -1375,12 +1375,16 @@ static void do_print_string (char *str, PRN *prn)
 static int do_outfile_command (unsigned char flag, char *fname,
 			       PRN *prn)
 {
-    static int output_diverted;
     static char outname[MAXLEN];
-    static FILE *fp_orig;
+    int output_diverted = 0;
 
     if (flag != 'w' && flag != 'a' && flag != 'c') {
 	return E_ARGS;
+    }
+
+    if (prn->fpaux != NULL ||
+	(prn->fp != NULL && prn->buf != NULL)) {
+	output_diverted = 1;
     }
 
     /* command to close outfile */
@@ -1390,13 +1394,9 @@ static int do_outfile_command (unsigned char flag, char *fname,
 	    return 1;
 	} else {
 	    fclose(prn->fp);
-	    if (fp_orig != NULL) {
-		prn->fp = fp_orig;
-	    } else {
-		prn->fp = NULL;
-	    }
+	    prn->fp = prn->fpaux;
+	    prn->fpaux = NULL;
 	    pprintf(prn, "Closed output file '%s'\n", outname);
-	    output_diverted = 0;
 	    return 0;
 	}
     }
@@ -1430,11 +1430,10 @@ static int do_outfile_command (unsigned char flag, char *fname,
 	    }
 
 	    /* save the prn stream */
-	    fp_orig = prn->fp;
+	    prn->fpaux = prn->fp;
 	    /* hook output to specified file */
 	    prn->fp = fp;
 	    strcpy(outname, fname);
-	    output_diverted = 1;
 	    return 0;
 	}
     }

@@ -639,7 +639,8 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }    
     else { /* native data */
 	PRN prn;
-	prn.buf = NULL; prn.fp = stderr;
+
+	gretl_print_attach_file(&prn, stderr);
 	if (datatype == GRETL_XML_DATA)
 	    err = get_xmldata(&Z, datainfo, trydatfile, &paths, 
 			      data_status, &prn, 1);
@@ -2212,8 +2213,9 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     if (how == COPY_TEXT) {
 	PRN textprn;
 
-	textprn.fp = NULL;
-	textprn.buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
+	gretl_print_attach_buffer(&textprn, 
+				  gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 
+							 0, -1));
 	prn_to_clipboard(&textprn, 0);
 	g_free(textprn.buf);
     } else { /* COPY_SELECTION */

@@ -38,6 +38,7 @@ GtkItemFactoryEntry console_items[] = {
 };
 
 static GtkWidget *console_view;
+static PRN *console_prn;
 
 #define DEFAULT_HLINES 32
 
@@ -81,6 +82,12 @@ static void gretl_console_free (GtkWidget *w, gpointer p)
 
     hlines = hlmax = 0;
     hl = -1;
+
+    if (console_prn != NULL) {
+	infobox(_("Closing redirected output file"));
+	gretl_print_destroy(console_prn);
+	console_prn = NULL;
+    }
 }
 
 static int push_history_line (const char *line)
@@ -153,7 +160,6 @@ static int last_console_line_len (int len)
 
 static void console_exec (void)
 {
-    static PRN *prn;
     static int redirected;
     int len, loopstack = 0, looprun = 0;
     gchar *c_line; 
@@ -171,7 +177,7 @@ static void console_exec (void)
 	return;
     }
 
-    if (prn == NULL && bufopen(&prn)) {
+    if (console_prn == NULL && bufopen(&console_prn)) {
 	g_free(c_line);
 	return;
     }
@@ -180,9 +186,9 @@ static void console_exec (void)
     g_free(c_line);
     push_history_line(execline);
     gui_exec_line(execline, NULL, &loopstack, &looprun, 
-		  prn, CONSOLE_EXEC, NULL);
+		  console_prn, CONSOLE_EXEC, NULL);
 
-    if (prn->fp == NULL) redirected = 0;
+    if (console_prn->fp == NULL) redirected = 0;
 
     gtk_text_freeze(GTK_TEXT(console_view));
     gtk_editable_insert_text(GTK_EDITABLE(console_view), 
@@ -191,16 +197,17 @@ static void console_exec (void)
     if (!redirected) {
 	/* put results into console window */
 	gtk_text_insert(GTK_TEXT(console_view), fixed_font, 
-			NULL, NULL, prn->buf, strlen(prn->buf));
+			NULL, NULL, console_prn->buf, 
+			strlen(console_prn->buf));
     }  
 
-    if (prn->fp == NULL) {
-	gretl_print_destroy(prn);
-	prn = NULL;
+    if (console_prn->fp == NULL) {
+	gretl_print_destroy(console_prn);
+	console_prn = NULL;
     } else {
 	/* user has redirected console output to file */
 	redirected = 1;
-	*prn->buf = 0;
+	*console_prn->buf = 0;
     }  
 
     gtk_text_insert(GTK_TEXT(console_view), fixed_font,

@@ -221,16 +221,18 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 static int make_texfile (const PATHS *ppaths, int model_count,
 			 int equation, char *texfile, PRN *prn)
 {
-    prn->buf = NULL;
+    FILE *fp;
 
     if (*texfile == 0) {
 	sprintf(texfile, "%s%s_%d.tex", ppaths->userdir,
 		(equation)? "equation" : "model", model_count);
     }
 
-    prn->fp = fopen(texfile, "w");
-    if (prn->fp == NULL) return 1;
-    else return 0;
+    fp = fopen(texfile, "w");
+    if (fp == NULL) return 1;
+
+    gretl_print_attach_file(prn, fp);
+    return 0;
 }
 
 /**

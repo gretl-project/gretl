@@ -84,3 +84,6 @@ void gretl_print_destroy (PRN *prn);
 
 PRN *gretl_print_new (int prncode, const char *fname);
 
+void gretl_print_attach_buffer (PRN *prn, char *buf);
+
+void gretl_print_attach_file (PRN *prn, FILE *fp);

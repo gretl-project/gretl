@@ -296,6 +296,7 @@ struct _GRAPHT {
 
 struct _PRN {
     FILE *fp;
+    FILE *fpaux;    
     char *buf;
     size_t bufsize;
     int format;

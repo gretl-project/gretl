@@ -1007,8 +1007,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    PRN prn;
 
-	    prn.fp = NULL;
-	    prn.buf = errtext;
+	    gretl_print_attach_buffer(&prn, errtext);
 	    err = merge_data(pZ, pdinfo, newZ, newinfo, &prn, 1);
 	}
     }

@@ -1401,18 +1401,23 @@ void gretl_print_destroy (PRN *prn)
 {
     if (prn == NULL) return;
 
-    if (prn->fp != stdout && prn->fp != stderr && prn->fp != NULL)
+    if (prn->fp != NULL &&
+	prn->fp != stdout && prn->fp != stderr)
 	fclose(prn->fp);
-    prn->fp = NULL;
+
+    if (prn->fpaux != NULL && 
+	prn->fpaux != stdout && prn->fpaux != stderr && 
+	prn->fpaux != prn->fp)
+	fclose(prn->fpaux);
+
     if (prn->buf != NULL) {
 #ifdef PRN_DEBUG
   	fprintf(stderr, "freeing buffer at %p\n", (void *) prn->buf); 
 #endif
 	free(prn->buf);
     }
-    prn->buf = NULL;
+
     free(prn);
-    prn = NULL;
 }
 
 /**
@@ -1441,6 +1446,8 @@ PRN *gretl_print_new (int prncode, const char *fname)
 	fprintf(stderr, _("gretl_prn_new: out of memory\n"));
 	return NULL;
     }
+
+    prn->fpaux = NULL;
 
     if (prncode == GRETL_PRINT_NULL) {
 	prn->fp = NULL;
@@ -1479,4 +1486,21 @@ PRN *gretl_print_new (int prncode, const char *fname)
     prn->format = GRETL_PRINT_FORMAT_PLAIN;
 
     return prn;
+}
+
+void gretl_print_attach_buffer (PRN *prn, char *buf)
+{
+    prn->buf = buf;
+    prn->fp = NULL;
+    prn->fpaux = NULL;
+    prn->format = GRETL_PRINT_FORMAT_PLAIN;
+    prn->bufsize = MAXLEN;
+}
+
+void gretl_print_attach_file (PRN *prn, FILE *fp)
+{
+    prn->buf = NULL;
+    prn->fp = fp;
+    prn->fpaux = NULL;
+    prn->format = GRETL_PRINT_FORMAT_PLAIN;
 }
