@@ -2510,10 +2510,14 @@ static int obs_num (const char *s, const DATAINFO *pdinfo)
 	for (t=0; t<pdinfo->n; t++) {
 	    if (!strcmp(test, pdinfo->S[t])) return t + 1;
 	}
-	/* for daily date strings */
-	charsub(test, ':', '/');
-	for (t=0; t<pdinfo->n; t++) {
-	    if (!strcmp(test, pdinfo->S[t])) return t + 1;
+	if (dated_daily_data(pdinfo)) {
+	    charsub(test, ':', '/');
+	    for (t=0; t<pdinfo->n; t++) {
+		if (!strcmp(test, pdinfo->S[t]) ||
+		    !strcmp(test, pdinfo->S[t] + 2)) {
+		    return t + 1;
+		}
+	    }
 	}
     }
 
