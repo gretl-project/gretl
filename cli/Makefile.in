@@ -43,22 +43,21 @@ VPATH = $(topsrc)/cli
 #### End of system configuration section. ####
 
 SRCS = gretlcli.c common.c complete.c
+OBJS = gretlcli.o $(RL_OBJ)
 
 override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(DEFS)
 
 CLI = gretlcli
 LIBTOOL = ../libtool
 
-%.d: %.c
-	set -e; $(CC) -MM -I.. -I$(topsrc) -I$(libsrc) $(DEFS) $< \
-	| sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@; \
-	[ -s $@ ] || rm -f $@
+%.o: %.c
+	$(CC) -c $(CFLAGS) $<
+	$(CC) -MM -MG -I.. -I$(topsrc) -I$(libsrc) $(DEFS) $< >$*.d 2>/dev/null
 
-$(CLI): gretlcli.o $(RL_OBJ)
-	../libtool --mode=link $(CC) -o $@ $< \
-	$(RL_OBJ) $(GRETLLIB) $(CLI_LIBS) 
+$(CLI): $(OBJS)
+	../libtool --mode=link $(CC) -o $@ $^ $(GRETLLIB) $(CLI_LIBS) 
 
-include $(SRCS:.c=.d)
+-include gretlcli.d
 
 .PHONY :
 
@@ -75,4 +74,5 @@ clean:
 	rm -f *.o *.d $(CLI) core 
 	rm -rf ./.libs
 
-
+distclean: clean
+	rm -f Makefile debug

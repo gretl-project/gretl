@@ -82,14 +82,14 @@ ifeq ($(LIBOLE2_LIBS),)
   LIBOLE2_CFLAGS = $(GRETL_LIBOLE2_CFLAGS)
 endif
 
-%.d: %.c
-	set -e; $(CC) -MM -MG $(GRETLINC) $< 2>/dev/null \
-	| sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@ ; \
-	[ -s $@ ] || rm -f $@
+%.lo: %.c
+	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(XML_CFLAGS) \
+	$(LIBOLE2_CFLAGS) $(LAPACK_CFLAGS) $< 
+	$(CC) -MM -MG $(GRETLINC) $< >$*.d 2>/dev/null
 
 all: $(PLUGINS)
 
-include $(SRCS:.c=.d)
+-include $(SRCS:.c=.d)
 
 stats_tables.la: stats_tables.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
@@ -124,51 +124,6 @@ johansen.la: johansen.lo gretl_matrix.lo
 sur.la: sur.lo gretl_matrix.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-stats_tables.lo: stats_tables.c
-	$(COMPILE) $(GRETLINC) $< 
-
-panel_data.lo: panel_data.c
-	$(COMPILE) $(GRETLINC) $< 
-
-range-mean.lo: range-mean.c
-	$(COMPILE) $(GRETLINC) $< 
-
-lad.lo: lad.c
-	$(COMPILE) $(GRETLINC) $< 
-
-tramo-x12a.lo: tramo-x12a.c
-	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $< 
-
-tramo_options.lo: tramo_options.c
-	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $< 
-
-progress_bar.lo: progress_bar.c
-	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $< 
-
-gnumeric_import.lo: gnumeric_import.c import_common.c
-	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $(XML_CFLAGS) $< 
-
-excel_import.lo: excel_import.c import_common.c xltypes.h
-	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $<
-
-workbook.lo: workbook.c biff.h
-	$(COMPILE) $(GRETLINC) $(LIBOLE2_CFLAGS) $<
-
-ms-ole.lo: ms-ole.c ms-ole.h
-	$(COMPILE) $(LIBOLE2_CFLAGS) $<
-
-mp_ols.lo: mp_ols.c
-	$(COMPILE) $(GRETLINC) $(GMP_CFLAGS) $<
-
-gretl_matrix.lo: gretl_matrix.c
-	$(COMPILE) $(GRETLINC) $(LAPACK_CFLAGS) $<
-
-johansen.lo: johansen.c
-	$(COMPILE) $(GRETLINC) $<
-
-sur.lo: sur.c
-	$(COMPILE) $(GRETLINC) $<
-
 $(GRETLLIB):
 	$(MAKE) -C ../lib
 
@@ -190,6 +145,9 @@ installdirs:
 	$(topsrc)/tools/mkinstalldirs $(plugindir)
 
 clean:
-	rm -f *.o *.lo *.la *.d core 
+	rm -f *.o *.d *.lo *.la core 
 	rm -rf .libs
+
+distclean: clean
+	rm -f Makefile
 

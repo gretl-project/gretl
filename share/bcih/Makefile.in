@@ -20,3 +20,6 @@ install: bcih.bin
 
 clean:
 	rm -f mkbin bcih.bin
+
+distclean: clean
+	rm -f Makefile

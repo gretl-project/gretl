@@ -6,30 +6,20 @@ WWW='allin@gretl.sourceforge.net:~/www/'
 version=$(cat ${parent}/gretl/lib/src/version.h | grep version_ | \
      awk '{ print $NF}' | sed s/[\"\;]//g)
 tarfile="gretl-${version}.tar.bz2"
-topdir=/home/cottrell/stats/esl/gretl-${version}
+topdir=/home/cottrell/stats/esl/gretl
 
 echo "making dist file for gretl $version using filename $tarfile"
 
 # clean Windows version first; make time stamp
 cd ${topdir} && make -C win32 clean && date > share/gretl.stamp
 
-# create tar exclusion list
-rm -f ../tar_exclude
-for f in autom4te.cache build clapack.m4 gmp.m4 doc/htmlhelp \
-  doc/*.log doc/*.out doc/*.aux doc/*.tpt doc/manual*.tex \
-  doc/reference ; do
-  echo $f >> ../tar_exclude
-done
-find -name "CVS" -print | sed s+^\./++ >> ../tar_exclude
-find -name "*~" -print | sed s+^\./++ >> ../tar_exclude
-find -name ".#*" -print | sed s+^\./++ >> ../tar_exclude
-find -name ".xvpics" -print | sed s+^\./++ >> ../tar_exclude
-
 # make the archive and remove the dist dir
-cd $parent
-echo "making archive..."
-rm -f $tarfile
-tar cvfyX $tarfile tar_exclude gretl-$version
+cd $parent 
+echo "making archive..." 
+mv gretl gretl-${version}
+rm -f $tarfile 
+tar cvyfX $tarfile tar_exclude gretl-${version}
+mv gretl-${version} gretl
 
 # scp gretl/doc/manual.pdf allin@gretl.sourceforge.net:~/www/
 # scp gretl/doc/manual-a4.pdf allin@gretl.sourceforge.net:~/www/

@@ -36,6 +36,9 @@ nistcheck: nistcheck.o
 	../libtool --mode=link $(CC) -o $@ $< $(LIBGRETL)
 
 randcheck: diehard mtrand
+	if [ `pwd` != "$(topsrc)/tests" ] ; then \
+	cp $(topsrc)/tests/operm5.data . ; \
+	cp $(topsrc)/tests/randtests.txt . ; fi
 	./mtrand && ./diehard
 
 diehard: diehard.c
@@ -52,6 +55,11 @@ check: nistcheck
 clean:
 	rm -f nistcheck diehard mtrand *.o test.out
 	rm -f gretl.32 gretl_rand.txt
+	if [ `pwd` != "$(topsrc)/tests" ] ; then \
+	rm -f operm5.data randtests.txt ; fi
 	rm -rf .libs
+
+distclean: clean
+	rm -f Makefile
 
 

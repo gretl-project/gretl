@@ -65,3 +65,7 @@ clean:
 
 textclean: 
 	rm -f *.txt *.utf8
+
+distclean: clean
+	rm -f Makefile
+	make -C bcih distclean

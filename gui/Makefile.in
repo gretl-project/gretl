@@ -80,7 +80,7 @@ SHELL = /bin/sh
 LIBTOOL = ../libtool
 PROG  = gretl_x11
 
-VPATH = $(topsrc)/gui:$(topsrc)/cli
+VPATH = $(topsrc)/gui:$(topsrc)/cli:..
 
 SRCS = boxplots.c calculator.c callbacks.c database.c datafiles.c \
 	dialogs.c fileselect.c gpt_control.c gretl.c guiprint.c \
@@ -88,15 +88,15 @@ SRCS = boxplots.c calculator.c callbacks.c database.c datafiles.c \
 	session.c settings.c ssheet.c webget.c 
 OBJS = $(SRCS:.c=.o)
 
-%.d: %.c
-	set -e; $(CC) -MM -MG -I.. -I$(libsrc) $(GTK_EXTRA_CFLAGS) $(DEFS) $< 2>/dev/null \
-	| sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@ ; \
-	[ -s $@ ] || rm -f $@
+%.o: %.c
+	$(CC) -c $(CFLAGS) $<
+	$(CC) -MM -MG -I.. -I$(libsrc) $(GTK_EXTRA_CFLAGS) $(DEFS) $< \
+	> $*.d 2>/dev/null
 
 $(PROG): $(query_gtkextra_lib) $(OBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)
 
-include $(SRCS:.c=.d)
+-include $(OBJS:.o=.d)
 
 .PHONY:
 
@@ -130,3 +130,5 @@ clean:
 	rm -rf .libs
 	make -C gtkextra-lite clean
 
+distclean: clean
+	rm -f Makefile debug

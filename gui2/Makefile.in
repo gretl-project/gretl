@@ -76,7 +76,7 @@ SHELL = /bin/sh
 LIBTOOL = ../libtool
 PROG  = gretl_x11
 
-VPATH = $(topsrc)/gui2:$(topsrc)/cli
+VPATH = $(topsrc)/gui2:$(topsrc)/cli:..
 
 SRCS = boxplots.c calculator.c callbacks.c console.c database.c \
 	datafiles.c dialogs.c fileselect.c gpt_control.c gretl.c \
@@ -91,10 +91,9 @@ HACK_OBJ = gtkfontselhack.o
 
 GTKEXTRA_LITE = gtkextra-lite/libgtkextra-lite.a
 
-%.d: %.c
-	set -e; $(CC) -MM -MG -I.. -I$(libsrc) $(GTK_EXTRA_CFLAGS) $(DEFS) $< 2>/dev/null \
-	| sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@ ; \
-	[ -s $@ ] || rm -f $@
+%.o: %.c
+	$(CC) -c $(CFLAGS) $<
+	$(CC) -MM -MG -I$(libsrc) $(GTK_EXTRA_CFLAGS) $(DEFS) $< > $*.d 2>/dev/null
 
 $(PROG): $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(HACK_OBJ) $(LIBS) $(INETLIB)
@@ -105,7 +104,7 @@ $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 $(GTKEXTRA_LITE): 
 	make -C gtkextra-lite
 
-include $(SRCS:.c=.d)
+-include $(OBJS:.o=.d)
 
 .PHONY:
 
@@ -134,4 +133,7 @@ clean:
 	rm -f *.o *.d $(PROG) core
 	rm -rf .libs
 	make -C gtkextra-lite clean
+
+distclean: clean
+	rm -f Makefile debug
 

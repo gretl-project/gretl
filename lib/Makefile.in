@@ -83,19 +83,15 @@ override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) $(G
 
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
-.c.o:        
+%.o: %.c
 	$(COMPILE) $<
-
-%.d: %.c
-	set -e; $(CC) -MM -MG -I$(libsrc) $< 2>/dev/null \
-	| sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@ ; \
-	[ -s $@ ] || rm -f $@
+	$(CC) -MM -MG -I$(libsrc) $< > $*.d 2>/dev/null
 
 $(LIBGRETL): $(OBJS) $(LOBJS) $(CEPHES_OBJ) $(CEPHES_LOBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(CEPHES_LOBJ) \
 	-rpath $(prefix)/lib $(LIBS) -version-info 0:6:0
 
-include $(SRCS:.c=.d)
+-include $(OBJS:.o=.d)
 
 .PHONY: 
 
@@ -120,8 +116,11 @@ installdirs:
 	$(topsrc)/tools/mkinstalldirs $(INSTALLDIRS)
 
 clean:
-	rm -f *.o *.lo *.d $(LIBGRETL) core 
+	rm -f *.o *.lo $(LIBGRETL) core 
 	rm -rf ./.libs
+
+distclean: clean
+	rm -f Makefile *.d
 
 tags:
 	$(MAKE) -C $(topsrc) tags

@@ -16,3 +16,6 @@ all: simple_client
 
 clean:
 	rm -f ./simple_client core 
+
+distclean: clean
+	rm -f Makefile
