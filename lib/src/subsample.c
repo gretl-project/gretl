@@ -316,13 +316,21 @@ static int count_selected_cases (double *x, int n)
 
 static int make_random_mask (double *dum, double *oldmask, int fulln, int subn)
 {
-    int i, cases = 0;
+    int i, cases = 0, err = 0;
     unsigned u;
 
     if (subn <= 0 || subn >= fulln) {
+	err = 1;
+    } else if (oldmask != NULL) {
+	int oldn = count_selected_cases(oldmask, fulln);
+
+	if (subn >= oldn) err = 1;
+    }	
+
+    if (err) {
 	sprintf(gretl_errmsg, _("Invalid number of cases %d"), subn);
 	return 0;
-    }
+    }	
 
     for (i=0; i<fulln; i++) dum[i] = 0.0;
 
