@@ -59,7 +59,9 @@ print_system_vcv (const gretl_matrix *m, int triangle, PRN *prn)
 	    pprintf(prn, "%11s", numstr);
 	}
 	pputc(prn, '\n');
-	if (triangle && jmax < m->cols) jmax++;
+	if (triangle && jmax < m->cols) {
+	    jmax++;
+	}
     }
 }
 
@@ -490,10 +492,10 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	system_attach_uhat(sys, uhat);
 	system_attach_models(sys, models);
 	uhat = NULL;
-	fiml_driver(sys, (const double **) *pZ, pdinfo, prn);
+	fiml_driver(sys, (const double **) *pZ, sigma, pdinfo, prn);
 #else
 	pputs(prn, "Sorry, FIML is not implemented yet.\n"
-	      "The following are just 3SLS estimates.\n");
+	      "The following are really just 3SLS estimates.\n");
 #endif
     }
 
@@ -503,7 +505,9 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	err = dataset_add_vars(m, pZ, pdinfo);
     }
     if (system_save_yhat(sys)) {
-	if (j == 0) j = pdinfo->v;
+	if (j == 0) {
+	    j = pdinfo->v;
+	}
 	err = dataset_add_vars(m, pZ, pdinfo);
     }
 

@@ -229,13 +229,32 @@ fiml_form_sigma_and_psi (fiml_system *fsys, const double **Z, int t1)
     return err;
 }
 
-static int fiml_transcribe_results (fiml_system *fsys)
+static void 
+fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
+			 gretl_matrix *sigma)
 {
-    int err = 0;
+    MODEL *pmod;
+    const double *y;
+    double u;
+    int i, t;
 
-    /* to be written */
+    /* correct uhat and yhat; also correct ESS/SSR and standard error,
+       per equation, FWIW */
 
-    return err;
+    for (i=0; i<fsys->g; i++) {
+	pmod = system_get_model(fsys->sys, i);
+	y = Z[pmod->list[1]];
+	pmod->ess = 0.0;
+	for (t=0; t<fsys->n; t++) {
+	    u = gretl_matrix_get(fsys->uhat, t, i);
+	    pmod->uhat[t + t1] = u;
+	    pmod->yhat[t + t1] = y[t + t1] - u;
+	    pmod->ess += u * u;
+	}
+	pmod->sigma = sqrt(pmod->ess / pmod->nobs); /* df correction?? */
+    }
+
+    gretl_matrix_copy_values(sigma, fsys->sigma);
 }
 
 /* form the LHS stacked vector for the artificial regression */
@@ -366,9 +385,9 @@ static void klein_MLE_init (fiml_system *fsys)
     MODEL *pmod;
     int i, j, k = 0;
     const double klein_params[] = {
-	18.34327218344233, -.2323887662328997, .3856730901020590, .8018443391624640,
+	18.34327218344233, -.2323887662328997,  .3856730901020590, .8018443391624640,
 	27.26386576310186, -.8010060259538374, 1.051852141335067, -.1480990630401963,
-	5.794287580524262, .2341176397831136, .2846766802287325, .2348346571073103
+	5.794287580524262,  .2341176397831136,  .2846766802287325, .2348346571073103
     };
 
     for (i=0; i<fsys->g; i++) {
@@ -536,7 +555,7 @@ static void fiml_B_update (fiml_system *fsys)
 
 #define LN_2_PI 1.837877066409345
 
-/* calculate loglikelihood for FIML system */
+/* calculate log-likelihood for FIML system */
 
 static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
 {
@@ -548,8 +567,9 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
 
     fsys->ll = 0.0;
 
-    /* form \hat{\Sigma} (ETM, equation 12.81), invert, 
-       and Cholesky-decompose to get \Psi */
+    /* form \hat{\Sigma} (ETM, equation 12.81); invert and
+       Cholesky-decompose to get \Psi while we're at it 
+    */
     err = fiml_form_sigma_and_psi(fsys, Z, t1);
     if (err) {
 	fprintf(stderr, "fiml_form_sigma_and_psi: failed\n");
@@ -739,14 +759,15 @@ static int fiml_get_std_errs (fiml_system *fsys)
     return err;
 }
 
-/* Beginnings of a driver function for FIML as described in Davidson
-   and MacKinnon, ETM, chap 12, sect 5.  Near to ready now.
+/* Driver function for FIML as described in Davidson and MacKinnon,
+   ETM, chap 12, section 5.  Near to ready now.
 */
 
 #define FIML_ITER_MAX 250
 
 int fiml_driver (gretl_equation_system *sys, const double **Z, 
-		 const DATAINFO *pdinfo, PRN *prn)
+		 gretl_matrix *sigma, const DATAINFO *pdinfo, 
+		 PRN *prn)
 {
     fiml_system *fsys;
     double llbak;
@@ -837,10 +858,8 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
 	err = fiml_get_std_errs(fsys);
     }
 
-#if notyet
     /* write the results into the parent system */
-    fiml_transcribe_results(fsys);
-#endif
+    fiml_transcribe_results(fsys, Z, pdinfo->t1, sigma);
 
  bailout:
     
