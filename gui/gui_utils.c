@@ -552,6 +552,7 @@ void do_open_data (GtkWidget *w, gpointer data)
 
     if (err) {
 	gui_errmsg(err);
+	delete_from_filelist(1, trydatfile);
 	return;
     }	
 
@@ -2922,6 +2923,27 @@ void allocate_fileptrs (void)
 
 /* .................................................................. */
 
+static void clear_files_list (int filetype, char **filep)
+{
+    GtkWidget *w;
+    char tmpname[MAXSTR];
+    gchar itempath[80];
+    int i;
+    gchar *pathstart[] = {"/File/Open data", 
+			  "/Session/Open",
+			  "/File/Open command file"};
+
+    for (i=0; i<MAXRECENT; i++) {
+	sprintf(itempath, "%s/%d. %s", pathstart[filetype - 1],
+		i+1, endbit(tmpname, filep[i], -1));
+	w = gtk_item_factory_get_widget(mdata->ifac, itempath);
+	if (w != NULL) 
+	    gtk_item_factory_delete_item(mdata->ifac, itempath);
+    }
+}
+
+/* .................................................................. */
+
 void mkfilelist (int filetype, const char *fname)
 {
     char *tmp[MAXRECENT-1];
@@ -2940,23 +2962,11 @@ void mkfilelist (int filetype, const char *fname)
             break;
         }
     }
-    if (match == 0) return; /* no change in list */
-    else  { /* clear menu files list before rebuilding */
-	GtkWidget *w;
-	char tmpname[MAXSTR];
-	gchar itempath[80];
-	gchar *pathstart[] = {"/File/Open data", 
-			      "/Session/Open",
-			      "/File/Open command file"};
+    if (match == 0) 
+	return; /* file is on top: no change in list */
 
-	for (i=0; i<MAXRECENT; i++) {
-	    sprintf(itempath, "%s/%d. %s", pathstart[filetype - 1],
-		    i+1, endbit(tmpname, filep[i], -1));
-	    w = gtk_item_factory_get_widget(mdata->ifac, itempath);
-	    if (w != NULL) 
-		gtk_item_factory_delete_item(mdata->ifac, itempath);
-	}
-    }
+    /* clear menu files list before rebuilding */
+    clear_files_list(filetype, filep);
     
     /* save pointers to current order */
     for (i=0; i<MAXRECENT-1; i++) tmp[i] = filep[i];
@@ -2981,6 +2991,38 @@ void mkfilelist (int filetype, const char *fname)
 
     /* rearrange other pointers */
     for (i=1; i<=match; i++) filep[i] = tmp[i-1];
+
+    add_files_to_menu(filetype);
+}
+
+/* .................................................................. */
+
+void delete_from_filelist (int filetype, const char *fname)
+{
+    char *tmp[MAXRECENT-1];
+    char **filep;
+    int i, match = -1;
+
+    if (filetype == 1) filep = datap;
+    else if (filetype == 2) filep = sessionp;
+    else if (filetype == 3) filep = scriptp;
+    else return;
+
+    /* save pointers to current order */
+    for (i=0; i<MAXRECENT-1; i++) {
+	tmp[i] = filep[i];
+	if (!strcmp(filep[i], fname)) match = i;
+    }
+
+    if (match == -1) return;
+
+    /* clear menu files list before rebuilding */
+    clear_files_list(filetype, filep);
+
+    for (i=match; i<MAXRECENT-1; i++)
+	filep[i] = tmp[i+1];
+
+    filep[MAXRECENT-1][0] = '\0';
 
     add_files_to_menu(filetype);
 }

@@ -2736,7 +2736,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
 void do_open_script (GtkWidget *w, GtkFileSelection *fs)
 {
-    int n = strlen(paths.scriptdir);
+    int ret, n = strlen(paths.scriptdir);
 
     if (fs) {
 	if (isdir(gtk_file_selection_get_filename(GTK_FILE_SELECTION(fs))))
@@ -2751,7 +2751,13 @@ void do_open_script (GtkWidget *w, GtkFileSelection *fs)
     }
 
     /* is this a "session" file? */
-    if (saved_objects(scriptfile)) {
+    ret = saved_objects(scriptfile);
+    if (ret == -1) {
+	errbox("Couldn't open file");
+	delete_from_filelist(2, tryscript);
+	delete_from_filelist(3, tryscript);
+    }
+    else if (ret > 0) {
 	verify_open_session(NULL);
 	return;
     }

@@ -322,6 +322,8 @@ void do_open_session (GtkWidget *w, gpointer data)
 
 	sprintf(errbuf, "Couldn't open %s\n", tryscript);
 	errbox(errbuf);
+	delete_from_filelist(2, tryscript);
+	delete_from_filelist(3, tryscript);
 	return;
     }
 

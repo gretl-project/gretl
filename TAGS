@@ -149,10 +149,6 @@ static double _wt_dummy_mean 1963,54690
 static double _wt_dummy_stddev 1986,55249
 MODEL arch 2028,56495
 
-lib/src/foo.c,48
-static void fix_exponent 4,40
-int main 15,237
-
 lib/src/generate.c,2139
 enum transformations transformations61,2625
 	T_LOG 62,2648
@@ -593,39 +589,39 @@ gui/boxplots.c,1044
 } PLOTGROUP;PLOTGROUP59,1428
 double headroom 61,1442
 double scalepos 62,1466
-char boxfont[63,1490
-int boxfontsize 64,1522
-configure_event 80,1971
-expose_event 106,2562
-box_key_handler 123,3004
-static gint popup_activated 148,3607
-static GtkWidget *build_menu 187,4825
-static gint box_popup 224,5731
-setup_text 239,6140
-draw_line 284,7242
-draw_outlier 304,7787
-place_plots 325,8310
-gtk_boxplot_yscale 351,9174
-gtk_area_boxplot 404,11049
-destroy_boxplots 594,16594
-make_area 610,16950
-compare_doubles 651,18212
-median 662,18478
-quartiles 677,18755
-add_outliers 701,19256
-#define ITERS 743,20241
-#define CONFIDENCE 744,20259
-median_interval 747,20294
-int ps_print_plots 796,21550
-five_numbers 844,22588
-int boxplots 895,24048
-static int cb_copy_image 1004,26703
-int plot_to_xpm 1136,29897
-static void read_boxrc 1183,30935
-int dump_boxplot 1239,32384
-int retrieve_boxplot 1280,33701
-static int special_varcount 1405,36811
-int boolean_boxplots 1418,37024
+char boxfont[63,1503
+int boxfontsize 64,1535
+configure_event 80,1984
+expose_event 106,2575
+box_key_handler 123,3017
+static gint popup_activated 148,3620
+static GtkWidget *build_menu 187,4838
+static gint box_popup 224,5744
+setup_text 239,6153
+draw_line 284,7255
+draw_outlier 304,7800
+place_plots 325,8323
+gtk_boxplot_yscale 351,9187
+gtk_area_boxplot 404,11059
+destroy_boxplots 594,16604
+make_area 610,16960
+compare_doubles 651,18222
+median 662,18488
+quartiles 677,18765
+add_outliers 701,19266
+#define ITERS 743,20251
+#define CONFIDENCE 744,20269
+median_interval 747,20304
+int ps_print_plots 796,21560
+five_numbers 844,22598
+int boxplots 895,24058
+static int cb_copy_image 1004,26713
+int plot_to_xpm 1136,29907
+static void read_boxrc 1183,30945
+int dump_boxplot 1239,32394
+int retrieve_boxplot 1280,33711
+static int special_varcount 1405,36821
+int boolean_boxplots 1418,37034
 
 gui/calculator.c,873
 #define NTESTS 22,797

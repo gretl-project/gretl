@@ -345,6 +345,19 @@ place_plots (PLOTGROUP *plotgrp)
     }
 }
 
+/* ......................................................... */ 
+
+static void fix_exponent (char *s)
+{
+    char *p;
+    int k;
+
+    if ((p = strstr(s, "+00")) || (p = strstr(s, "-00"))) {
+	if (sscanf(p + 1, "%d", &k) == 1)
+	    sprintf(p + 1, "0%d", k);
+    }
+}
+
 /* ............................................................. */
 
 static void 
@@ -378,12 +391,15 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
     
     /* mark max and min values on scale */
     sprintf(numstr, "%.4g", grp->gmax);
+    fix_exponent(numstr);
     setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 8, top, 
 		GTK_JUSTIFY_RIGHT);
     sprintf(numstr, "%.4g", grp->gmin);
+    fix_exponent(numstr);
     setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 8, bottom, 
 		GTK_JUSTIFY_RIGHT);
     sprintf(numstr, "%.4g", (grp->gmax + grp->gmin) / 2.0);
+    fix_exponent(numstr);
     setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 8, 
 		top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
 

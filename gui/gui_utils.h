@@ -21,6 +21,8 @@ void flip (GtkItemFactory *ifac, char *path, gboolean s);
 
 void mkfilelist (int filetype, const char *newfile);
 
+void delete_from_filelist (int filetype, const char *fname);
+
 void add_files_to_menu (int filetype);
 
 int copyfile (const char *src, const char *dest);
