@@ -733,7 +733,9 @@ static int my_utf_validate (char *s)
 	gsize wrote;
 	gchar *new;
 
+#if 0
 	fprintf(stderr, "database: string '%s' does not utf-8 validate\n", s);
+#endif
 	new = g_locale_to_utf8(s, -1, NULL, &wrote, NULL);
 	strcpy(s, new);
 	g_free(new);

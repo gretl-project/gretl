@@ -15,7 +15,7 @@
 #ifdef OS_WIN32
 # include <sys/utime.h>
 #else
-# include <sys/utime.h>
+# include <utime.h>
 #endif
 
 #ifndef strdup

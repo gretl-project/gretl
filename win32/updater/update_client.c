@@ -5,28 +5,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#include <dirent.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
-#include <windows.h>
-#include <winsock.h>
+#ifdef OS_WIN32
+# include <windows.h>
+# include <winsock.h>
+#endif
 
 #define MAXLEN 512
 
 extern int retrieve_url (int opt, char *fname, char **savebuf, char *localfile,
 			 char *errbuf, time_t filedate);
-extern int read_reg_val (HKEY tree, char *keyname, char *keyval);
 extern void clear (char *str, const int len);
 extern int untgz (char *fname);
 extern void *mymalloc (size_t size);
+#ifdef OS_WIN32
+extern int read_reg_val (HKEY tree, char *keyname, char *keyval);
+#endif
 
 enum cgi_options {
     QUERY = 1,
     GRAB_FILE
 };
 
+#ifdef OS_WIN32
 static void msgbox (const char *msg, int err)
 {
     if (err) 
@@ -34,7 +36,15 @@ static void msgbox (const char *msg, int err)
     else
         MessageBox(NULL, msg, "gretl updater", MB_OK | MB_ICONINFORMATION);
 }
-
+#else
+static void msgbox (const char *msg, int err)
+{
+    if (err) 
+	fprintf(stderr, "%s\n", msg);
+    else
+	printf("%s\n", msg);
+}
+#endif
 
 void errbox (const char *msg) 
 {
@@ -46,7 +56,7 @@ void infobox (const char *msg)
     msgbox(msg, 0);
 }
 
-
+#ifdef OS_WIN32
 static void ws_cleanup (void)
 {
     WSACleanup();
@@ -73,6 +83,7 @@ static int ws_startup (void)
     atexit(ws_cleanup);
     return 0;
 }
+#endif
 
 void listerr (char *buf, char *fname)
 {
@@ -101,16 +112,56 @@ void usage (char *prog)
     exit(0);
 }
 
+time_t get_time_from_stamp_file (const char *fname)
+     /* E.g. Sun Mar 16 13:50:52 EST 2003 */
+{
+    FILE *fp;
+    struct tm stime;
+    char wday[4], mon[4];
+    int i;
+    const char *months[] = {
+	"Jan", "Feb", "Mar",
+	"Apr", "May", "Jun",
+	"Jul", "Aug", "Sep",
+	"Oct", "Nov", "Dec"
+    };
+
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) return (time_t) 0;
+    if (fscanf(fp, "%3s %3s %d %d:%d:%d %*s %d", 
+	       wday, mon, &stime.tm_mday, &stime.tm_hour,
+	       &stime.tm_min, &stime.tm_sec, &stime.tm_year) != 7) 
+	return (time_t) 0;
+    fclose(fp);
+    
+    stime.tm_mon = 20;
+    for (i=0; i<12; i++) {
+	if (!strcmp(mon, months[i])) {
+	    stime.tm_mon = i;
+	    break;
+	}
+    }
+
+    if (stime.tm_mon == 20) return (time_t) 0;
+
+    stime.tm_year -= 1900;
+
+    return mktime(&stime);
+}
+
 int main (int argc, char *argv[])
 {
     int i, err = 0;
     char *getbuf = NULL;
     char *line, fname[48], errbuf[256], infobuf[80];
     const char *testfile = "gretl.stamp";
+#ifdef OS_WIN32
     char gretldir[MAXLEN];
-    struct stat fbuf;
-    long filedate = 0L;
+#endif
+    time_t filedate;
 
+#ifdef OS_WIN32
     if (ws_startup())
 	exit(EXIT_FAILURE);
 
@@ -123,14 +174,15 @@ int main (int argc, char *argv[])
     if (chdir(gretldir)) {
 	errbox("Couldn't move to the gretl folder");
 	exit(EXIT_FAILURE);
-    }	
+    }
+#endif
 
-    if (stat(testfile, &fbuf)) {
-	sprintf(errbuf, "Couldn't find test file '%s'", testfile);
+    filedate = get_time_from_stamp_file(testfile);
+    if (filedate == 0) {
+	sprintf(errbuf, "Couldn't get time-stamp from file '%s'", testfile);
 	errbox(errbuf);
 	exit(EXIT_FAILURE);
-    } else 
-	filedate = fbuf.st_mtime;
+    } 
 
     if (argc > 1 && strcmp(argv[1], "-f") == 0 && argc != 3) 
 	usage(argv[0]);

@@ -1151,6 +1151,46 @@ static size_t get_size (char *buf)
 
 /* ........................................................... */
 
+static time_t get_time_from_stamp_file (const char *fname)
+     /* E.g. Sun Mar 16 13:50:52 EST 2003 */
+{
+    FILE *fp;
+    struct tm stime;
+    char wday[4], mon[4];
+    int i;
+    const char *months[] = {
+        "Jan", "Feb", "Mar",
+        "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep",
+        "Oct", "Nov", "Dec"
+    };
+
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) return (time_t) 0;
+    if (fscanf(fp, "%3s %3s %d %d:%d:%d %*s %d", 
+               wday, mon, &stime.tm_mday, &stime.tm_hour,
+               &stime.tm_min, &stime.tm_sec, &stime.tm_year) != 7) 
+        return (time_t) 0;
+    fclose(fp);
+
+    stime.tm_mon = 20;
+    for (i=0; i<12; i++) {
+        if (!strcmp(mon, months[i])) {
+            stime.tm_mon = i;
+            break;
+        }
+    }
+
+    if (stime.tm_mon == 20) return (time_t) 0;
+
+    stime.tm_year -= 1900;
+
+    return mktime(&stime);
+}
+
+/* ........................................................... */
+
 int update_query (int verbose)
 {
     int err = 0;
@@ -1163,7 +1203,7 @@ int update_query (int verbose)
     FILE *fp;
 #endif
     struct stat fbuf;
-    long filedate = 0L;
+    time_t filedate = (time_t) 0;
 
     build_path(paths.gretldir, "gretl.stamp", testfile, NULL);
 
@@ -1172,18 +1212,24 @@ int update_query (int verbose)
 		testfile);
 	return 1;
     } else {
-	filedate = fbuf.st_mtime;
+	filedate = get_time_from_stamp_file(testfile);
 #ifndef G_OS_WIN32
-	hometest[0] = '\0';
+	*hometest = '\0';
 	if (getuid() != fbuf.st_uid) { 
 	    /* user is not owner of gretl.stamp */
 	    build_path(paths.userdir, "gretl.stamp", hometest, NULL);
 	    if (!stat(hometest, &fbuf)) {
-		filedate = fbuf.st_mtime;
+		filedate = get_time_from_stamp_file(hometest);
 	    }
-	} else 
+	} else {
 	    admin = 1;
+	}
 #endif
+    }
+
+    if (filedate == (time_t) 0) {
+	fprintf(stderr, "update_query: couldn't get time from stamp file\n"); 
+	return 1;
     }
 
     getbuf = malloc(2048); 

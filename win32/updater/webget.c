@@ -528,9 +528,8 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
     range = NULL;
     sprintf(useragent, "gretl-%s", version_string);
-#ifdef G_OS_WIN32
+    /* this is actually win32-specific */
     strcat(useragent, "w");
-#endif
 
     request = mymalloc(strlen(command) + strlen(path)
 		       + strlen(useragent)
@@ -977,6 +976,7 @@ static char *print_option (int opt)
 
 #define MAXLEN 512
 
+#ifdef OS_WIN32
 int read_reg_val (HKEY tree, char *keyname, char *keyval)
 {
     unsigned long datalen = MAXLEN;
@@ -1031,6 +1031,7 @@ void read_registry (int *use_proxy, char *dbproxy)
     if (use_proxy && read_reg_val(HKEY_CURRENT_USER, "dbproxy", value) == 0)
 	strncat(dbproxy, value, 20);
 }
+#endif /* OS_WIN32 */
 
 struct urlinfo *proxy_init (void)
 {
@@ -1039,7 +1040,9 @@ struct urlinfo *proxy_init (void)
     size_t iplen;
     static struct urlinfo gretlproxy;
 
+#ifdef OS_WIN32
     read_registry(&use_proxy, dbproxy);
+#endif
 
     if (!use_proxy || !strlen(dbproxy))
 	return NULL;
