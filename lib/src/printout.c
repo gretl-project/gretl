@@ -414,25 +414,32 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN];
 
-    if (fulln) {
-	pprintf(prn, _("Full data set: %d observations\n"
-		       "Current sample: %d observations\n"), 
-		fulln, pdinfo->n);
+    if (fulln && !dataset_is_panel(pdinfo)) {
+	pprintf(prn, _("Full data set: %d observations\n"),
+		fulln);
+	pprintf(prn, _("Current sample: %d observations\n"),
+		pdinfo->n);
 	return;
     }
 
     ntodate_full(date1, pdinfo->t1, pdinfo);
     ntodate_full(date2, pdinfo->t2, pdinfo);
 
-    pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
-	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
+    if (fulln) {
+	pprintf(prn, _("Full data set: %d observations\n"), fulln);
+    } else {
+	pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
+		pdinfo->stobs, pdinfo->endobs, pdinfo->n);
+    }
+
     pprintf(prn, "%s:  %s - %s", _("Current sample"), date1, date2);
 
-    if (pdinfo->t1 == 0 && pdinfo->t2 == pdinfo->n - 1) {
-	pputc(prn, '\n');
+    if (pdinfo->t1 > 0 || pdinfo->t2 < pdinfo->n - 1 ||
+	(fulln && dataset_is_panel(pdinfo))) {
+	pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);
     } else {
-	pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);  
-    }
+	pputc(prn, '\n');
+    } 
 }
 
 /**

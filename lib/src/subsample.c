@@ -47,7 +47,7 @@
 
 static double **fullZ;
 static DATAINFO *fullinfo;
-static DATAINFO *peerinfo;
+static const DATAINFO *peerinfo;
 
 /* .......................................................... */
 
@@ -253,8 +253,9 @@ static int make_boolean_mask (double ***pZ, DATAINFO *pdinfo,
     /* + 4 to skip the command word "smpl" */
     sprintf(formula, "__subdum=%s", line + 4);
 
-    if (generate(pZ, pdinfo, formula, NULL))
+    if (generate(pZ, pdinfo, formula, NULL)) {
 	return -1;
+    }
 
     if (subv == 0) {
 	subv = varindex(pdinfo, "subdum");
@@ -388,7 +389,7 @@ enum {
 } subsample_options;
 
 static void backup_full_dataset (double ***pZ, DATAINFO **ppdinfo,
-				 DATAINFO *newinfo)
+				 const DATAINFO *newinfo)
 {
     fullZ = *pZ;
     fullinfo = *ppdinfo;
@@ -418,6 +419,93 @@ int get_full_length_n (void)
     } else {
 	return 0;
     }
+}
+
+static int block_retained (const char *s)
+{
+    int nrows = 0;
+
+    while (*s) {
+	if (*s == '1') nrows++;
+	if (nrows > 1) return 1;
+	s++;
+    }
+
+    return 0;
+}
+
+static char *make_panel_sig (const DATAINFO *pdinfo,
+			     const double *mask)
+{
+    char *sig;
+    size_t sz = pdinfo->n + pdinfo->n / pdinfo->pd;
+
+    sig = calloc(sz, 1);
+
+    if (sig != NULL) {
+	int t, i = 0;
+
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t > 0 && t % pdinfo->pd == 0) {
+		i++;
+	    } 
+	    sig[i++] = (mask[t] != 0.0)? '1' : '0';
+	}
+    }
+
+    return sig;
+}
+
+static void
+maybe_reconstitute_panel (const DATAINFO *pdinfo,
+			  const double *mask,
+			  DATAINFO *subinfo)
+{
+    int i;
+    int ok_blocks = 0, unbal = 0;
+    int nblocks = pdinfo->n / pdinfo->pd;
+    char *sig = make_panel_sig(pdinfo, mask);
+    char *sig_0 = NULL;
+
+    /* FIXME: allow for possibility that starting obs is not 1:1 */
+
+    if (sig == NULL) {
+	return;
+    }
+
+    for (i=0; i<nblocks; i++) {
+	char *sig_n = sig + i * (pdinfo->pd + 1);
+
+	if (block_retained(sig_n)) {
+	    if (ok_blocks == 0) {
+		sig_0 = sig_n;
+	    } else {
+		if (strcmp(sig_n, sig_0)) {
+		    unbal = 1;
+		}
+	    }
+	    if (!unbal) {
+		ok_blocks++;
+	    }
+	}
+	if (unbal) {
+	    break;
+	}
+    }
+
+    free(sig);
+	
+    if (!unbal && ok_blocks > 1) {
+	char line[32];
+	int pd = subinfo->n / ok_blocks;
+	gretlopt opt = OPT_C;
+
+	sprintf(line, "setobs %d 1.1", pd);
+	if (pdinfo->time_series == STACKED_TIME_SERIES) {
+	    opt = OPT_S;
+	} 
+	set_obs(line, subinfo, opt);
+    } 
 }
 
 /* restrict_sample: 
@@ -497,14 +585,20 @@ int restrict_sample (const char *line,
 
 	if (opt == SUBSAMPLE_USE_DUMMY) {
 	    sn = sn_from_dummy((const double **) *pZ, *ppdinfo, dname, &dnum);
+	    if (sn < 0) {
+		return 1;
+	    }
 	    mask = (*pZ)[dnum];
 	} else {
 	    sn = make_boolean_mask(pZ, *ppdinfo, line, tmpdum, &dnum);
+	    if (sn < 0) {
+		if (tmpdum != NULL) {
+		    free(tmpdum);
+		}
+		return 1;
+	    }
 	    mask = (*pZ)[dnum];
 	    oldmask = tmpdum;
-	}
-	if (sn < 0) {
-	    return 1;
 	}
     } 
 
@@ -623,7 +717,14 @@ int restrict_sample (const char *line,
 
     attach_subsample_to_dataset(subinfo, pZ, *ppdinfo);
 
-    if (tmpdum != NULL) free(tmpdum);
+    if (dataset_is_panel((*ppdinfo)) &&
+	(opt == SUBSAMPLE_USE_DUMMY || opt == SUBSAMPLE_BOOLEAN)) {
+	maybe_reconstitute_panel(*ppdinfo, mask, subinfo);
+    } 
+
+    if (tmpdum != NULL) {
+	free(tmpdum);
+    }
 
     /* save state */
     backup_full_dataset(pZ, ppdinfo, subinfo);

@@ -839,8 +839,12 @@ int bool_subsample (gretlopt opt)
 	return 1;
     }
 
-    /* special for undated data */
-    set_sample_label_special();
+    if (dataset_is_panel(datainfo)) {
+	set_sample_label(datainfo);
+    } else {
+	/* special for undated data */
+	set_sample_label_special();
+    }
 
     restore_sample_state(TRUE);
 
