@@ -41,10 +41,10 @@ cli/gretlcli.c
 gui/dialogs.c
 gui/gretl.c
 gui/guiprint.c
+gui/obsbutton.c
 gui/plotps.c
 gui/selector.c
 gui/ssheet.c
-gui/obsbutton.c
 gui/textbuf.c
 gui2/boxplots.c
 gui2/calculator.c
@@ -82,6 +82,7 @@ plugin/audio.c
 plugin/audioprint.c
 plugin/excel_import.c
 plugin/fcp.c
+plugin/fiml.c
 plugin/garch.c
 plugin/gnumeric_import.c
 plugin/import_common.c
@@ -96,7 +97,7 @@ plugin/pca.c
 plugin/progress_bar.c
 plugin/range-mean.c
 plugin/stats_tables.c
-plugin/sur.c
+plugin/sysest.c
 plugin/tobit.c
 plugin/tramo_options.c
 plugin/tramo-x12a.c

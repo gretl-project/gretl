@@ -5,7 +5,9 @@ version 1.2.8
 - add option to export data to PcGive .dat format (thanks to
   Michal Kurcewicz)
 - enable TRAMO analysis of annual time-series data
-- Windows version: ensure user directory gets created!
+- Windows version: ensure user directory gets created!  This
+  was broken in gretl 1.2.6 and 1.2.7, which could produce
+  strange-seeming problems
 - hccm command: ensure that the F-stat shown for the model
   is based on the robust covariance matrix; also ensure
   the robust F-stat is used when robust standard errors are

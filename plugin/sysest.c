@@ -351,6 +351,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     /* just testing for now */
     if (systype == FIML) {
 	print_fiml_sys_info(sys, pdinfo, prn);
+	pprintf(prn, "Sorry, FIML is not really implmented yet.\n");
     }
 
     /* first grab the single-equation residuals */
@@ -480,7 +481,8 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     /* FIXME: implement FIML here, after getting 3SLS starting values */
     if (systype == FIML) {
-	;
+	pprintf(prn, "Sorry, FIML is not implmented yet.\n"
+		"The following are just 3SLS estimates.\n");
     }
 
     j = 0;
