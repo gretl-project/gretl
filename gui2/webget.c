@@ -204,12 +204,12 @@ struct urlinfo
 {
     char *url;                    /* the URL */
     uerr_t proto;                 /* URL protocol */
-    char *host;                   /* hostname */
     unsigned short port;
     unsigned short saveopt;       /* save to buffer or file? */   
     char *path; 
     char *localfile;
     char **savebuf;
+    char host[32];
     char errbuf[80];
 };
 
@@ -871,6 +871,13 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	path = u->path; 
     }
 
+    if (path == NULL) {
+	close(sock);
+	free(all_headers);
+	return NOTENOUGHMEM;
+    }
+	
+
     command = (*dt & HEAD_ONLY)? "HEAD" : "GET";
 
     if (*dt & SEND_NOCACHE) {
@@ -892,6 +899,13 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 		       + strlen(HTTP_ACCEPT)
 		       + strlen(pragma_h)
 		       + 64);
+
+    if (request == NULL) {
+	close(sock);
+	free(all_headers);
+	return NOTENOUGHMEM;
+    }
+
     sprintf(request, "%s %s HTTP/1.0\r\n"
 	    "User-Agent: %s\r\n"
 	    "Host: %s:%d\r\n"
@@ -1213,6 +1227,21 @@ static size_t rbuf_flush (struct rbuf *rbuf, char *where, int maxsize)
 
 /* ........................................................... */
 
+static void url_init (struct urlinfo *u)
+{
+    u->url = NULL;
+    u->path = NULL;
+    u->localfile = NULL;
+    u->savebuf = NULL;
+
+    u->proto = URLHTTP;
+    u->port = DEFAULT_HTTP_PORT;
+    
+    u->host[0] = '\0';
+    u->errbuf[0] = '\0';
+    u->saveopt = 0;
+}
+
 static struct urlinfo *newurl (void)
 /* Allocate a new urlinfo structure, fill it with default values and
    return a pointer to it.  */
@@ -1220,7 +1249,9 @@ static struct urlinfo *newurl (void)
     struct urlinfo *u;
 
     u = mymalloc(sizeof *u);
-    memset(u, 0, sizeof *u);
+    if (u == NULL) return NULL;
+
+    url_init(u);
     
     return u;
 }
@@ -1235,11 +1266,11 @@ static void freeurl (struct urlinfo *u, int complete)
     if (u == NULL) return;
 
     free(u->url);
-    free(u->host);
     free(u->path);
     if (u->localfile) {
 	free(u->localfile);
     }
+
     if (complete) {
 	free(u);
     }
@@ -1470,22 +1501,32 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
     const char *cgi = "/gretl/cgi-bin/gretl_update.cgi";
     struct urlinfo *proxy = NULL; 
 
-    if (use_proxy && gretlproxy.host != NULL) {
+    if (use_proxy) {
 	proxy = &gretlproxy;
     }
 
     u = newurl();
-    u->proto = URLHTTP;
-    u->port = DEFAULT_HTTP_PORT;
-    u->host = mymalloc(20);
-
-#ifdef UPDATER
-    get_db_host_ip(u->host, dbhost);
-#else
-    get_db_host_ip(u->host, paths.dbhost);
-#endif
+    if (u == NULL) {
+	return E_ALLOC;
+    }
 
     u->path = mymalloc(strlen(cgi) + 64);
+
+    if (u->path == NULL) {
+	freeurl(u, 1);
+	return E_ALLOC;
+    }
+
+#ifdef UPDATER
+    err = get_db_host_ip(u->host, dbhost);
+#else
+    err = get_db_host_ip(u->host, paths.dbhost);
+#endif
+
+    if (err) {
+	freeurl(u, 1);
+	return err;
+    }
 
     if (queryopt == QUERY_VERBOSE) {
 	sprintf(u->path, "%s?opt=MANUAL_QUERY", cgi);
@@ -1711,17 +1752,9 @@ int proxy_init (const char *dbproxy)
     char *p;
     size_t iplen;
 
-    gretlproxy.url = NULL;
-    gretlproxy.proto = URLHTTP;
-    gretlproxy.port = 0;
+    url_init(&gretlproxy);
+
     gretlproxy.saveopt = SAVE_TO_BUFFER;
-    gretlproxy.path = NULL; 
-    gretlproxy.localfile = NULL;
-    gretlproxy.savebuf = NULL;
-    if (gretlproxy.host) {
-	free(gretlproxy.host);
-    }
-    gretlproxy.host = NULL;
 
     if (!use_proxy || !strlen(dbproxy)) return 0;
 
@@ -1733,9 +1766,6 @@ int proxy_init (const char *dbproxy)
     }
 
     gretlproxy.port = atoi(p + 1);
-    gretlproxy.host = mymalloc(20);
-
-    if (gretlproxy.host == NULL) return 1;
 
     iplen = p - dbproxy;
     if (iplen > 15) {
@@ -1743,7 +1773,6 @@ int proxy_init (const char *dbproxy)
 	return 1;	
     }
 
-    gretlproxy.host[0] = '\0';
     strncat(gretlproxy.host, dbproxy, iplen);
 
 #ifdef UPDATER
@@ -1777,7 +1806,7 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
     int dt, err = 0;
     size_t fnlen = 0L;
 
-    if (use_proxy && gretlproxy.host != NULL) {
+    if (use_proxy) {
 	proxy = &gretlproxy;
     }
 
@@ -1789,16 +1818,26 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
     else cgi = datacgi;
 
     u = newurl();
-    u->proto = URLHTTP;
-    u->port = DEFAULT_HTTP_PORT;
-    u->host = mymalloc(20);
+    if (u == NULL) {
+	return E_ALLOC;
+    }
+
     u->path = mymalloc(strlen(cgi) + fnlen + 64);
+    if (u->path == NULL) {
+	freeurl(u, 1);
+	return E_ALLOC;
+    }
 
 #ifdef UPDATER
-    get_db_host_ip(u->host, dbhost);
+    err = get_db_host_ip(u->host, dbhost);
 #else
-    get_db_host_ip(u->host, paths.dbhost);
+    err = get_db_host_ip(u->host, paths.dbhost);
 #endif
+
+    if (err) {
+	freeurl(u, 1);
+	return err;
+    }
 
     sprintf(u->path, "%s?opt=%s", cgi, print_option(opt));
     u->saveopt = saveopt;

@@ -458,15 +458,21 @@ if test ${try_ole} = yes && test ${have_gtk} = "1.2" ; then
 fi
 
 dnl
-dnl Check for libpng
+dnl Check for libpng (first with pkg-config, then fallback)
 dnl
-if test ${png_comments} = yes && test ${have_gtk} = "2.0" ; then
+if test ${png_comments} = yes ; then
     PKG_CHECK_MODULES(PNG, libpng,
         png_failed="no",
 	png_failed="yes"
    )
 fi
-if test ${png_comments} = yes && test ${have_gtk} = "1.2" ; then
+if test ${png_comments} = yes && test ${png_failed} = "yes" ; then
+    PKG_CHECK_MODULES(PNG, libpng12,
+        png_failed="no",
+	png_failed="yes"
+   )
+fi
+if test ${png_comments} = yes && test ${png_failed} = "yes" ; then
    AC_CHECK_LIB(png, png_init_io,png_failed="no",png_failed="yes",-lz)
    PNG_CFLAGS=
    PNG_LIBS="-lz -lpng"

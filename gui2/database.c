@@ -220,6 +220,21 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 
 /* ........................................................... */
 
+static void 
+init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
+{
+    pdinfo->pd = sinfo->pd;
+    strcpy(pdinfo->stobs, sinfo->stobs);
+    strcpy(pdinfo->endobs, sinfo->endobs);
+    colonize_obs(pdinfo->stobs);
+    colonize_obs(pdinfo->endobs);
+    pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
+    pdinfo->n = sinfo->nobs;
+    pdinfo->v = 2;
+}
+
+/* ........................................................... */
+
 static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 {
     gint err = 0;
@@ -324,14 +339,7 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 	free(xvec);
     } else {  
 	/* no data open: start new data set with this db series */
-	datainfo->pd = sinfo->pd;
-	strcpy(datainfo->stobs, sinfo->stobs);
-	strcpy(datainfo->endobs, sinfo->endobs);
-	colonize_obs(datainfo->stobs);
-	colonize_obs(datainfo->endobs);
-	datainfo->sd0 = get_date_x(datainfo->pd, datainfo->stobs);
-	datainfo->n = sinfo->nobs;
-	datainfo->v = 2;
+	init_datainfo_from_sinfo(datainfo, sinfo);
 
 	/* time series data? */
 	set_time_series(datainfo);
@@ -1454,16 +1462,16 @@ static int parse_db_header (const char *buf, size_t *idxlen,
 
 static int ggz_extract (char *errbuf, char *ggzname)
 {
-    FILE *fidx, *fbin, *fcb;
+    gzFile fgz = NULL;
+    FILE *fidx = NULL, *fbin = NULL, *fcbk = NULL;
     size_t idxlen, datalen, cblen, bytesleft, bgot;
     char idxname[MAXLEN], binname[MAXLEN], cbname[MAXLEN];
     char gzbuf[GRETL_BUFSIZE];
-    gzFile fgz;
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-    size_t offset;
     netfloat nf;
     float val;
 #endif
+    int err = 0;
 
     switch_ext(idxname, ggzname, "idx");
     switch_ext(binname, ggzname, "bin");
@@ -1477,26 +1485,23 @@ static int ggz_extract (char *errbuf, char *ggzname)
 
     fidx = fopen(idxname, "wb");
     if (fidx == NULL) {
-        gzclose(fgz);
         sprintf(errbuf, _("Couldn't open %s for writing\n"), idxname);
-        return 1;
+	err = 1;
+	goto bailout;
     }
 
     fbin = fopen(binname, "wb");
     if (fbin == NULL) {
-        gzclose(fgz);
-        fclose(fidx);
         sprintf(errbuf, _("Couldn't open %s for writing\n"), binname);
-        return 1;
+	err = 1;
+	goto bailout;
     }
 
-    fcb = fopen(cbname, "wb");
-    if (fcb == NULL) {
-	gzclose(fgz);
-	fclose(fidx);
-	fclose(fbin);
+    fcbk = fopen(cbname, "wb");
+    if (fcbk == NULL) {
 	sprintf(errbuf, _("Couldn't open %s for writing\n"), cbname);
-	return 1;
+	err = 1;
+	goto bailout;
     } 
 
     memset(gzbuf, GRETL_BUFSIZE, 0);
@@ -1505,15 +1510,11 @@ static int ggz_extract (char *errbuf, char *ggzname)
     if (parse_db_header(gzbuf, &idxlen, &datalen, &cblen)) {
 	fputs("Error reading info buffer: failed to get byte counts\n",
 	      stderr);
-	gzclose(fgz);
-	fclose(fidx);
-	fclose(fbin);
-	fclose(fcb);
-	return 1;
+	err = 1;
+	goto bailout;
     }
 
     bytesleft = idxlen;
-
     while (bytesleft > 0) {
 	memset(gzbuf, 0, GRETL_BUFSIZE);
 	bgot = gzread(fgz, gzbuf, (bytesleft > GRETL_BUFSIZE)? 
@@ -1523,17 +1524,19 @@ static int ggz_extract (char *errbuf, char *ggzname)
 	fwrite(gzbuf, 1, bgot, fidx);
     }
 
-    fclose(fidx);
+    if (bytesleft > 0) {
+	fputs("Error reading database info buffer\n", stderr);
+	err = 1;
+	goto bailout;
+    }
 
     bytesleft = datalen;
-
     while (bytesleft > 0) {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
         if ((bgot = gzread(fgz, gzbuf, sizeof(long) + sizeof(short))) > 0) {
 	    /* read "netfloats" and write floats */
 	    memcpy(&(nf.frac), gzbuf, sizeof(long));
-	    offset = sizeof(long);
-	    memcpy(&(nf.exp), gzbuf + offset, sizeof(short));
+	    memcpy(&(nf.exp), gzbuf + sizeof(long), sizeof(short));
 	    val = retrieve_float(nf);
 	    fwrite(&val, sizeof(float), 1, fbin);
 	    bytesleft -= sizeof(dbnumber);
@@ -1548,6 +1551,12 @@ static int ggz_extract (char *errbuf, char *ggzname)
 #endif
     }
 
+    if (bytesleft > 0) {
+	fputs("Error reading database data\n", stderr);
+	err = 1;
+	goto bailout;
+    }
+
     bytesleft = cblen;
     while (bytesleft > 0) {
 	memset(gzbuf, 0, GRETL_BUFSIZE);
@@ -1555,12 +1564,20 @@ static int ggz_extract (char *errbuf, char *ggzname)
 		      GRETL_BUFSIZE : bytesleft);
 	if (bgot <= 0) break;
 	bytesleft -= bgot;
-	fwrite(gzbuf, 1, bgot, fcb);
+	fwrite(gzbuf, 1, bgot, fcbk);
     }
 
-    gzclose(fgz);
-    fclose(fbin);
-    fclose(fcb);
+    if (bytesleft > 0) {
+	fputs("Error reading database codebook\n", stderr);
+	err = 1;
+    }    
+
+ bailout:
+
+    if (fgz != NULL) gzclose(fgz);
+    if (fidx != NULL) fclose(fidx);
+    if (fbin != NULL) fclose(fbin);
+    if (fcbk != NULL) fclose(fcbk);
 
     if (cblen == 0) {
 	remove(cbname);
@@ -1568,7 +1585,7 @@ static int ggz_extract (char *errbuf, char *ggzname)
 
     remove(ggzname);
 
-    return 0;
+    return err;
 }
 
 /* ........................................................... */
@@ -1596,6 +1613,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 
     build_path(paths.binbase, dbname, ggzname, ".ggz");
 
+    /* test write to gzipped file */
     errno = 0;
     fp = fopen(ggzname, "w");
     if (fp == NULL) {
