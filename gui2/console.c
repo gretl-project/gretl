@@ -50,6 +50,7 @@ static void console_exec (void)
     char execline[MAXLEN];
     GtkTextBuffer *buf;
     GtkTextIter start, end;
+    GtkTextMark *mark;
 
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(console_view));
     gtk_text_buffer_get_end_iter(buf, &end);
@@ -84,6 +85,12 @@ static void console_exec (void)
     gtk_text_buffer_insert_with_tags_by_name(buf, &start, 
 					     "\n? ", 3,
 					     "redtext", NULL);
+
+    /* go to end */
+    gtk_text_buffer_place_cursor(buf, &start);
+    mark = gtk_text_buffer_create_mark(buf, NULL, &start, FALSE);
+    gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW(console_view),
+					mark);
 }
 
 void console (void)
