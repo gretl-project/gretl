@@ -2147,12 +2147,13 @@ gretl_var_plot_impulse_response (GRETL_VAR *var,
     FILE *fp = NULL;
     int vtarg, vshock;
     double *resp;
+    char title[128];
     int t;
 
     if (periods == 0) {
-	if (pdinfo->pd == 4) periods = 20;
-	else if (pdinfo->pd == 12) periods = 24;
-	else periods = 10;
+	if (pdinfo->pd == 4) periods = 24;
+	else if (pdinfo->pd == 12) periods = 36;
+	else periods = 12;
     }
 
     resp = gretl_var_get_impulse_responses(var, targ, shock, periods);
@@ -2165,12 +2166,12 @@ gretl_var_plot_impulse_response (GRETL_VAR *var,
 
     fputs("# impulse response plot\n", fp);
 
-    fputs("set xtics 1\n", fp);
     fputs("set nokey\n", fp);
     fprintf(fp, "set xlabel '%s'\n", _("periods"));
-    fprintf(fp, "set title 'response of %s to a shock in %s'\n",
+    sprintf(title, I_("response of %s to a shock in %s"), 
 	    pdinfo->varname[vtarg], pdinfo->varname[vshock]);
-	  
+    fprintf(fp, "set title '%s'\n", title);
+
     fputs("plot \\\n'-' using 1:2 w lines\n", fp);
 
 #ifdef ENABLE_NLS

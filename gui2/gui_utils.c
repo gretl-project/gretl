@@ -59,7 +59,7 @@ extern GtkWidget *mysheet;
 	                      || c == CORR || c == FCASTERR \
 	                      || c == FCAST || c == COEFFINT \
 	                      || c == COVAR || c == VIEW_MODEL \
-                              || c == VIEW_MODELTABLE)
+                              || c == VIEW_MODELTABLE || c == VAR)
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
@@ -67,7 +67,7 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
 static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
-static void add_impulse_responses_to_plot_menu (windata_t *vwin);
+static void add_var_menu_items (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
 static void buf_edit_save (GtkWidget *widget, gpointer data);
@@ -178,8 +178,9 @@ GtkItemFactoryEntry var_items[] = {
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy"), "", text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY },
-    { N_("/_Graphs"), NULL, NULL, 0, "<Branch>", GNULL }   
+    { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL, GNULL }
 };
 
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
@@ -1561,7 +1562,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     }
 
     if (role == VAR) {
-	add_impulse_responses_to_plot_menu(vwin);
+	add_var_menu_items(vwin);
     }
 
     create_text (vwin, &tbuf, hsize, vsize, FALSE);
@@ -2285,26 +2286,24 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 
 	if (!dums) { /* add separator, branch and "none" */
 	    dumitem.path = mymalloc(64);
-	    sprintf(dumitem.path, _("%s"), mpath[0]);
+
+	    /* separator */
 	    dumitem.callback = NULL;
 	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<Separator>";
-	    dumitem.accelerator = NULL;
+	    sprintf(dumitem.path, _("%s"), mpath[0]);
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+
 	    /* menu branch */
-	    sprintf(dumitem.path, _("%s"), mpath[1]);
-	    dumitem.callback = NULL;
-	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<Branch>";
-	    dumitem.accelerator = NULL;
+	    sprintf(dumitem.path, _("%s"), mpath[1]);
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+
 	    /* "none" option */
+	    dumitem.callback = plot_dummy_call;
+	    dumitem.item_type = "<RadioItem>";
 	    sprintf(dumitem.path, _("%s/none"), mpath[1]);
 	    radiopath = g_strdup(dumitem.path);
-	    dumitem.callback = plot_dummy_call;
-	    dumitem.callback_action = 0;
-	    dumitem.item_type = "<RadioItem>";
-	    dumitem.accelerator = NULL;
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	    dums = 1;
 	} 
@@ -2313,7 +2312,6 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	double_underscores(tmp, datainfo->varname[pmod->list[i]]);
 	sprintf(dumitem.path, _("%s/by %s"), mpath[1], tmp);
 	dumitem.callback = plot_dummy_call;	    
-	dumitem.accelerator = NULL;
 	dumitem.item_type = radiopath;
 	gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 
@@ -2341,24 +2339,44 @@ static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
     }
 }
 
-static void add_impulse_responses_to_plot_menu (windata_t *vwin)
+static void add_var_menu_items (windata_t *vwin)
 {
     int i, j;
     GtkItemFactoryEntry varitem;
     const gchar *gpath = N_("/Graphs");
+    const gchar *dpath = N_("/Model data/Add to data set");
     GRETL_VAR *var = vwin->data;
-    int neqns, vtarg, vshock;
+    int neqns = gretl_var_get_n_equations(var);
+    int vtarg, vshock;
     char tmp[16];
 
     varitem.accelerator = NULL;
+    varitem.callback = NULL;
+    varitem.callback_action = 0;
+    varitem.item_type = "<Branch>";
 
-    neqns = gretl_var_get_n_equations(var);
+    varitem.path = g_strdup(_("/_Graphs"));
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
+
+    varitem.path = g_strdup(_("/_Model data/Add to data set"));
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
 
     for (i=0; i<neqns; i++) {
 	char maj[32], min[16];
 
-	/* make branch for target */
-	vtarg = gretl_var_get_variable_number (var, i);
+	/* save resids items */
+	varitem.path = g_strdup_printf("%s/%s %d", _(dpath), 
+				       _("residuals from equation"), i + 1);
+	varitem.callback = var_resid_callback;
+	varitem.callback_action = i;
+	varitem.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	g_free(varitem.path);	
+
+	/* impulse responses: make branch for target */
+	vtarg = gretl_var_get_variable_number(var, i);
 	double_underscores(tmp, datainfo->varname[vtarg]);
 	sprintf(maj, _("response of %s"), tmp);
 	varitem.path = g_strdup_printf("%s/%s", _(gpath), maj);
@@ -2373,6 +2391,7 @@ static void add_impulse_responses_to_plot_menu (windata_t *vwin)
 	for (j=0; j<neqns; j++) {
 	    GtkWidget *w;
 
+	    /* impulse responses: subitems for shocks */
 	    vshock = gretl_var_get_variable_number(var, j);
 	    varitem.callback_action = j;
 	    double_underscores(tmp, datainfo->varname[vshock]);
@@ -2750,6 +2769,25 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	gretl_print_destroy(prn);
     }
 
+    /* VAR system */
+    else if (vwin->role == VAR && SPECIAL_COPY(how)) {
+	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+
+	if (bufopen(&prn)) return;
+
+	if (how == COPY_LATEX) { 
+	    prn->format = GRETL_PRINT_FORMAT_TEX;
+	    gretl_var_print(var, datainfo, prn);
+	} 
+	else if (how == COPY_RTF) { 
+	    prn->format = GRETL_PRINT_FORMAT_RTF;
+	    gretl_var_print(var, datainfo, prn);
+	}
+
+	prn_to_clipboard(prn, how);
+	gretl_print_destroy(prn);
+    }    
+
     /* or it's a model window we're copying from? */
     else if (vwin->role == VIEW_MODEL &&
 	(how == COPY_RTF || how == COPY_LATEX ||
@@ -2779,7 +2817,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	gretl_print_destroy(prn);
     }
 
-    /* or from the  model table? */
+    /* or from the model table? */
     else if (vwin->role == VIEW_MODELTABLE && SPECIAL_COPY(how)) {
 	if (how == COPY_LATEX) {
 	    tex_print_model_table(NULL, 0, NULL);

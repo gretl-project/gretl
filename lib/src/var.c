@@ -261,10 +261,15 @@ int gretl_var_get_n_equations (const GRETL_VAR *var)
 
 #define VARS_IN_ROW 4
 
+#define PLAIN_PRN(p) (p->format == GRETL_PRINT_FORMAT_PLAIN)
+#define RTF_PRN(p)   (p->format == GRETL_PRINT_FORMAT_RTF)
+#define TEX_PRN(p)   (p->format == GRETL_PRINT_FORMAT_TEX || \
+                      p->format == GRETL_PRINT_FORMAT_TEX_DOC)
+
 int 
 gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATAINFO *pdinfo, 
-				  PRN *prn)
+				  int pause, PRN *prn)
 {
     int i, t;
     int vsrc;
@@ -272,6 +277,8 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
     gretl_matrix *rtmp, *ctmp;
     int block, blockmax;
     int err = 0;
+
+    if (prn == NULL) return 0;
 
     if (shock >= var->neqns) {
 	fprintf(stderr, "Shock variable out of bounds\n");
@@ -300,30 +307,56 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 
     for (block=0; block<blockmax && !err; block++) {
 	int vtarg, k;
+	char vname[16];
 	double r;
 
-	pprintf(prn, "Responses to a one-standard error shock in %s", 
-		pdinfo->varname[vsrc]);
+	if (TEX_PRN(prn)) {
+	    pputs(prn, "\\vspace{1em}\n\n");
+	    pprintf(prn, I_("Responses to a one-standard error shock in %s"), 
+		    tex_escape(vname, pdinfo->varname[vsrc]));
 
-	if (block == 0) {
-	    pputs(prn, "\n\n");
+	    if (block == 0) {
+		pputs(prn, "\n\n");
+	    } else {
+		pprintf(prn, " (%s)\n\n", I_("continued"));
+	    }
+	    pputs(prn, "\\vspace{1em}\n\n"
+		  "\\begin{tabular}{rcc}\n");
 	} else {
-	    pprintf(prn, " %s\n\n", "(continued)");
+	    pprintf(prn, _("Responses to a one-standard error shock in %s"), 
+		    pdinfo->varname[vsrc]);
+
+	    if (block == 0) {
+		pputs(prn, "\n\n");
+	    } else {
+		pprintf(prn, " (%s)\n\n", _("continued"));
+	    }
 	}
 
-	pputs(prn, "period ");
+	if (TEX_PRN(prn)) {
+	    pprintf(prn, "%s & ", I_("period"));
+	} else {
+	    pprintf(prn, "%s ", _("period"));
+	}
 
 	for (i=0; i<VARS_IN_ROW; i++) {
 	    k = VARS_IN_ROW * block + i;
 	    if (k >= var->neqns) break;
 	    vtarg = (var->models[k])->list[1];
-	    pprintf(prn, "  %8s  ", pdinfo->varname[vtarg]);
+	    if (TEX_PRN(prn)) {
+		pprintf(prn, " %s ", tex_escape(vname, pdinfo->varname[vtarg]));
+		if (i < VARS_IN_ROW - 1 && k < var->neqns - 1) pputs(prn, "& ");
+		else pputs(prn, "\\\\");
+	    } else {
+		pprintf(prn, "  %8s  ", pdinfo->varname[vtarg]);
+	    }
 	}
 
 	pputs(prn, "\n\n");
 
 	for (t=0; t<periods && !err; t++) {
 	    pprintf(prn, "  %-3d  ", t + 1);
+	    if (TEX_PRN(prn)) pputs(prn, "& ");
 	    if (t == 0) {
 		/* calculate initial estimated responses */
 		err = gretl_matrix_copy_values(rtmp, var->C);
@@ -339,11 +372,28 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 		k = VARS_IN_ROW * block + i;
 		if (k >= var->neqns) break;
 		r = gretl_matrix_get(rtmp, k, shock);
-		pprintf(prn, "%#12.5g ", r);
+		if (TEX_PRN(prn)) {
+		    pprintf(prn, "$%g$", r);
+		    if (i < VARS_IN_ROW - 1 && k < var->neqns - 1) {
+			pputs(prn, " & ");
+		    }
+		} else {
+		    pprintf(prn, "%#12.5g ", r);
+		}
 	    }
+	    if (TEX_PRN(prn)) pputs(prn, "\\\\\n");
+	    else pputs(prn, "\n");
+	}
+
+	if (TEX_PRN(prn)) {
+	    pputs(prn, "\\end{tabular}\n\n");
+	} else {
 	    pputs(prn, "\n");
 	}
-	pputs(prn, "\n");
+
+	if (pause && block < blockmax - 1) {
+	    page_break(0, NULL, 0);
+	}
     }
 
     if (rtmp != NULL) gretl_matrix_free(rtmp);
@@ -721,6 +771,7 @@ static int real_var (int order, const LIST list,
     MODEL var_model;
     GRETL_VAR *var = NULL;
     int save = (flags & VAR_SAVE);
+    int pause = (flags & VAR_PRINT_PAUSE);
     int err = 0;
 
     oldt1 = pdinfo->t1;
@@ -926,7 +977,7 @@ static int real_var (int order, const LIST list,
 	    }
 
 	    pputs(prn, "\n");
-	    if (flags & VAR_PRINT_PAUSE) page_break(0, NULL, 0);
+	    if (pause) page_break(0, NULL, 0);
 	}
     }
     pputs(prn, "\n");
@@ -954,7 +1005,8 @@ static int real_var (int order, const LIST list,
 #endif
 		for (i=0; i<var->neqns; i++) {
 		    /* FIXME: make horizon configurable, or at least smarter */
-		    gretl_var_print_impulse_response(var, i, 0, pdinfo, prn);
+		    gretl_var_print_impulse_response(var, i, 0, pdinfo, 
+						     pause, prn);
 		}
 	    } else {
 		fprintf(stderr, "failed: gretl_var_do_error_decomp\n");
@@ -1713,6 +1765,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+
 int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, j, k, v;
@@ -1720,38 +1773,70 @@ int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 
     if (prn == NULL) return 0;
 
-    pprintf(prn, _("\nVAR system, lag order %d\n\n"), var->order);
+    if (TEX_PRN(prn)) {
+	pputs(prn, "\\noindent");
+	pprintf(prn, I_("\nVAR system, lag order %d\n\n"), var->order);
+    } else {
+	pprintf(prn, _("\nVAR system, lag order %d\n\n"), var->order);
+    }
 
     k = 0;
     for (i=0; i<var->neqns; i++) {
+
 	printmodel(var->models[i], pdinfo, prn);
 
 	if (var->Fvals == NULL) continue;
 
-	pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
+	if (TEX_PRN(prn)) {
+	    pputs(prn, "\n\\begin{center}\n");
+	    pprintf(prn, "%s\\\\[1em]\n", I_("F-tests of zero restrictions"));
+	    pputs(prn, "\\begin{tabular}{lll}\n");
+	} else {
+	    pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
+	}
 
 	for (j=0; j<var->neqns; j++) {
 	    v = (var->models[j])->list[1];
-	    pprintf(prn, _("All lags of %-8s "), pdinfo->varname[v]);
-	    pprintf(prn, "F(%d, %d) = %f, ", var->order, dfd, var->Fvals[k]);
-	    pprintf(prn, _("p-value %f\n"), fdist(var->Fvals[k], var->order, dfd));
+	    if (TEX_PRN(prn)) {
+		pprintf(prn, I_("All lags of %-8s "), pdinfo->varname[v]);
+		pputs(prn, "& ");
+		pprintf(prn, "$F(%d, %d) = %g$ & ", var->order, dfd, var->Fvals[k]);
+		pprintf(prn, I_("p-value %f"), fdist(var->Fvals[k], var->order, dfd));
+		pputs(prn, "\\\\\n");
+	    } else {
+		pprintf(prn, _("All lags of %-8s "), pdinfo->varname[v]);
+		pprintf(prn, "F(%d, %d) = %g, ", var->order, dfd, var->Fvals[k]);
+		pprintf(prn, _("p-value %f\n"), fdist(var->Fvals[k], var->order, dfd));
+	    }
 	    k++;
 	}
 
 	if (var->order > 1) {
-	    pprintf(prn, _("All vars, lag %-6d "), var->order);
-	    pprintf(prn, "F(%d, %d) = %f, ", var->neqns, dfd, var->Fvals[k]);
-	    pprintf(prn, _("p-value %f\n"), fdist(var->Fvals[k], var->neqns, dfd)); 
+	    if (TEX_PRN(prn)) {
+		pprintf(prn, I_("All vars, lag %-6d "), var->order);
+		pputs(prn, "& ");
+		pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, var->Fvals[k]);
+		pprintf(prn, _("p-value %f\n"), fdist(var->Fvals[k], var->neqns, dfd));
+	    } else {
+		pprintf(prn, _("All vars, lag %-6d "), var->order);
+		pprintf(prn, "F(%d, %d) = %g, ", var->neqns, dfd, var->Fvals[k]);
+		pprintf(prn, _("p-value %f\n"), fdist(var->Fvals[k], var->neqns, dfd));
+	    } 
 	    k++;
 	}
-
-	pputs(prn, "\n");
+	if (TEX_PRN(prn)) {
+	    pputs(prn, "\\end{tabular}\n"
+		  "\\end{center}\n\n"
+		  "\\clearpage\n\n");
+	} else {
+	    pputs(prn, "\n");
+	}
     }
 
     pputs(prn, "\n");
 
     for (i=0; i<var->neqns; i++) {
-	gretl_var_print_impulse_response(var, i, 0, pdinfo, prn);
+	gretl_var_print_impulse_response(var, i, 0, pdinfo, 0, prn);
     }
 
     return 0;
@@ -1780,4 +1865,35 @@ void gretl_var_assign_specific_name (GRETL_VAR *var, const char *name)
 const char *gretl_var_get_name (const GRETL_VAR *var)
 {
     return var->name;
+}
+
+int gretl_var_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
+				     double ***pZ, DATAINFO *pdinfo)
+{
+    char vname[9], vlabel[MAXLABEL];
+    MODEL *pmod = var->models[eqnum];
+    int i, n, t, t1 = pmod->t1, t2 = pmod->t2;
+
+    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
+
+    i = pdinfo->v - 1;
+    n = pdinfo->n;
+
+    if (pmod->data != NULL) t2 += get_misscount(pmod);
+
+    for (t=0; t<t1; t++) (*pZ)[i][t] = NADBL;
+    for (t=t2+1; t<n; t++) (*pZ)[i][t] = NADBL;
+
+    sprintf(vname, "uhat%d", eqnum + 1);
+    sprintf(vlabel, _("residual from VAR system, equation %d"), eqnum + 1);
+
+    for (t=t1; t<=t2; t++) {
+	(*pZ)[i][t] = pmod->uhat[t];
+    }
+
+    strcpy(pdinfo->varname[i], vname);
+
+    strcpy(VARLABEL(pdinfo, i), vlabel);
+
+    return 0;
 }

@@ -57,6 +57,8 @@ static void tex_print_float (double x, int tab, PRN *prn)
 
 char *tex_escape (char *targ, const char *src)
 {
+    char *p = targ;
+
     while (*src) {
 	if (*src == '$' || *src == '&' || *src == '_' || 
 	    *src == '%' || *src == '#')
@@ -64,7 +66,8 @@ char *tex_escape (char *targ, const char *src)
 	*targ++ = *src++;
     }
     *targ = '\0';
-    return targ;
+
+    return p;
 }
 
 #define UPPER_F_LIMIT (pow(10, GRETL_DIGITS))

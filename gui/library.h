@@ -144,6 +144,8 @@ void add_logs_etc (GtkWidget *widget, gpointer p);
 
 int add_fit_resid (MODEL *pmod, const int code, const int undo);
 
+int add_var_resid (GRETL_VAR *var, int eqnum);
+
 void add_model_stat (MODEL *pmod, const int which);
 
 void resid_plot (gpointer data, guint xvar, GtkWidget *widget);

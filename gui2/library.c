@@ -2964,17 +2964,42 @@ int add_fit_resid (MODEL *pmod, const int code, const int undo)
 
 	v = datainfo->v - 1;
 	populate_varlist();
-	if (code == 0)
+
+	if (code == 0) {
 	    sprintf(line, "genr %s = uhat", datainfo->varname[v]);
-	else if (code == 1)
+	} else if (code == 1) {
 	    sprintf(line, "genr %s = yhat", datainfo->varname[v]);
-	else if (code == 2)
+	} else if (code == 2) {
 	    sprintf(line, "genr %s = uhat*uhat", datainfo->varname[v]);
+	}
+
 	check_cmd(line);
 	model_cmd_init(line, pmod->ID);
+
 	infobox(_("variable added"));
 	mark_dataset_as_modified();
     }
+
+    return 0;
+}
+
+/* ......................................................... */
+
+int add_var_resid (GRETL_VAR *var, int eqnum)
+{
+    int err;
+
+    err = gretl_var_add_resids_to_dataset(var, eqnum,
+					  &Z, datainfo);
+
+    if (err) {
+	errbox(_("Out of memory attempting to add variable"));
+	return 1;
+    }
+
+    populate_varlist();
+    infobox(_("variable added"));
+    mark_dataset_as_modified();
 
     return 0;
 }
@@ -4399,7 +4424,7 @@ int execute_script (const char *runfile, const char *buf,
 			(line[strlen(line)-1] == ')' && 
 			 line[strlen(line)-2] == '*')) {
 			pprintf(prn, "\n%s\n", line);
-		    } else {
+		    } else if (!string_is_blank(line)) {
 			pprintf(prn, "\n? %s\n", line);	
 		    }
 		}
@@ -5399,7 +5424,8 @@ int gui_exec_line (char *line,
 
     case VAR:
 	order = atoi(command.param);
-	err = simple_var(order, command.list, &Z, datainfo, 0, prn);
+	err = simple_var(order, command.list, &Z, datainfo, 0, 
+			 (oflag == 'q')? NULL : prn);
 	if (!err) {
 	    err = maybe_save_var(&command, &Z, datainfo, prn);
 	}

@@ -46,6 +46,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 				GtkItemFactoryEntry items[]);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
+static void add_var_menu_items (windata_t *vwin);
 static void check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
@@ -152,7 +153,9 @@ GtkItemFactoryEntry var_items[] = {
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy"), "", text_copy, COPY_TEXT, NULL }
+    { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL }
 };
 
 GtkItemFactoryEntry edit_items[] = {
@@ -961,19 +964,19 @@ static void script_changed (GtkWidget *w, windata_t *vwin)
 
 /* ........................................................... */
 
-#include "../pixmaps/save.xpm"
-#include "../pixmaps/saveas.xpm"
+#include "../pixmaps/stock_save_24.xpm"
+#include "../pixmaps/stock_save_as_24.xpm"
+#include "../pixmaps/stock_exec_24.xpm"
+#include "../pixmaps/stock_copy_24.xpm"
+#include "../pixmaps/stock_paste_24.xpm"
+#include "../pixmaps/stock_search_24.xpm"
+#include "../pixmaps/stock_search_replace_24.xpm"
+#include "../pixmaps/stock_undo_24.xpm"
+#include "../pixmaps/stock_help_24.xpm"
+#include "../pixmaps/stock_close_24.xpm"
 #if defined(USE_GNOME)
-# include "../pixmaps/print.xpm"
+# include "../pixmaps/stock_print_24.xpm"
 #endif
-#include "../pixmaps/exec_small.xpm"
-#include "../pixmaps/copy.xpm"
-#include "../pixmaps/paste.xpm"
-#include "../pixmaps/search.xpm"
-#include "../pixmaps/replace.xpm"
-#include "../pixmaps/undo.xpm"
-#include "../pixmaps/question.xpm"
-#include "../pixmaps/close.xpm"
 
 static void make_viewbar (windata_t *vwin)
 {
@@ -1032,7 +1035,7 @@ static void make_viewbar (windata_t *vwin)
 	switch (i) {
 	case 0:
 	    if (edit_ok && vwin->role != SCRIPT_OUT) {
-		toolxpm = save_xpm;	    
+		toolxpm = stock_save_24_xpm;	    
 		if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) 
 		    toolfunc = buf_edit_save;
 		else
@@ -1042,7 +1045,7 @@ static void make_viewbar (windata_t *vwin)
 	    break;
 	case 1:
 	    if (save_as_ok) {
-		toolxpm = save_as_xpm;
+		toolxpm = stock_save_as_24_xpm;
 		toolfunc = file_save_callback;
 	    } else
 		toolfunc = NULL;
@@ -1050,7 +1053,7 @@ static void make_viewbar (windata_t *vwin)
 	case 2:
 	    if (print_ok) {
 #if defined(USE_GNOME)
-		toolxpm = print_xpm;
+		toolxpm = stock_print_24_xpm;
 		toolfunc = window_print_callback;
 #endif
 	    } else
@@ -1058,49 +1061,49 @@ static void make_viewbar (windata_t *vwin)
 	    break;
 	case 3:
 	    if (run_ok) {
-		toolxpm = exec_xpm;
+		toolxpm = stock_exec_24_xpm;
 		toolfunc = run_script_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
 	case 4:
-	    toolxpm = copy_xpm;
+	    toolxpm = stock_copy_24_xpm;
 	    toolfunc = text_copy_callback;
 	    break;
 	case 5:
 	    if (edit_ok) {
-		toolxpm = paste_xpm;
+		toolxpm = stock_paste_24_xpm;
 		toolfunc = text_paste_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
 	case 6:
-	    toolxpm = search_xpm;
+	    toolxpm = stock_search_24_xpm;
 	    toolfunc = text_find_callback;
 	    break;
 	case 7:
 	    if (edit_ok) {
-		toolxpm = replace_xpm;
+		toolxpm = stock_search_replace_24_xpm;
 		toolfunc = text_replace_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
 	case 8:
 	    if (edit_ok) {
-		toolxpm = undo_xpm;
+		toolxpm = stock_undo_24_xpm;
 		toolfunc = text_undo_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
 	case 9:
 	    if (run_ok) {
-		toolxpm = question_xpm;
+		toolxpm = stock_help_24_xpm;
 		toolfunc = activate_script_help;
 	    } else
 		toolfunc = NULL;
 	    break;
 	case 10:
-	    toolxpm = close_xpm;
+	    toolxpm = stock_close_24_xpm;
 	    toolfunc = delete_file_viewer;
 	    break;
 	default:
@@ -1277,6 +1280,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
     }
+
+    if (role == VAR) {
+	add_var_menu_items(vwin);
+    }    
 
     dialog_table_setup(vwin);
 
@@ -1928,6 +1935,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
     char tmp[16];
 
     dumitem.path = NULL;
+    dumitem.accelerator = NULL; 
 
     /* put the dummy independent vars on the menu list */
     for (i=2; i<pmod->list[0]; i++) {
@@ -1941,26 +1949,24 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 
 	if (!dums) { /* add separator, branch and "none" */
 	    dumitem.path = mymalloc(64);
-	    sprintf(dumitem.path, _("%s"), mpath[0]);
+
+	    /* separator */
 	    dumitem.callback = NULL;
 	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<Separator>";
-	    dumitem.accelerator = NULL;
+	    sprintf(dumitem.path, _("%s"), mpath[0]);
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+
 	    /* menu branch */
-	    sprintf(dumitem.path, _("%s"), mpath[1]);
-	    dumitem.callback = NULL;
-	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<Branch>";
-	    dumitem.accelerator = NULL;
+	    sprintf(dumitem.path, _("%s"), mpath[1]);
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+
 	    /* "none" option */
+	    dumitem.callback = plot_dummy_call;
+	    dumitem.item_type = "<RadioItem>";
 	    sprintf(dumitem.path, _("%s/none"), mpath[1]);
 	    radiopath = g_strdup(dumitem.path);
-	    dumitem.callback = plot_dummy_call;
-	    dumitem.callback_action = 0;
-	    dumitem.item_type = "<RadioItem>";
-	    dumitem.accelerator = NULL;
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	    dums = 1;
 	} 
@@ -1969,7 +1975,6 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	double_underscores(tmp, datainfo->varname[pmod->list[i]]);
 	sprintf(dumitem.path, _("%s/by %s"), mpath[1], tmp);
 	dumitem.callback = plot_dummy_call;	    
-	dumitem.accelerator = NULL;
 	dumitem.item_type = radiopath;
 	gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 
@@ -1977,6 +1982,93 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 
     free(dumitem.path);
     free(radiopath);
+}
+
+/* ........................................................... */
+
+static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    gint targ;
+    int err;
+
+    targ = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "targ"));
+
+    err = gretl_var_plot_impulse_response(var, targ, shock, 0, datainfo, 
+					  &paths);
+    if (!err) {
+	register_graph();
+    }
+}
+
+static void add_var_menu_items (windata_t *vwin)
+{
+    int i, j;
+    GtkItemFactoryEntry varitem;
+    const gchar *gpath = N_("/Graphs");
+    const gchar *dpath = N_("/Model data/Add to data set");
+    GRETL_VAR *var = vwin->data;
+    int neqns = gretl_var_get_n_equations(var);
+    int vtarg, vshock;
+    char tmp[16];
+
+    varitem.accelerator = NULL;
+    varitem.callback = NULL;
+    varitem.callback_action = 0;
+    varitem.item_type = "<Branch>";
+
+    varitem.path = g_strdup(_("/_Graphs"));
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
+
+    varitem.path = g_strdup(_("/_Model data/Add to data set"));
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
+
+    for (i=0; i<neqns; i++) {
+	char maj[32], min[16];
+
+	/* save resids items */
+	varitem.path = g_strdup_printf("%s/%s %d", _(dpath), 
+				       _("residuals from equation"), i + 1);
+	varitem.callback = var_resid_callback;
+	varitem.callback_action = i;
+	varitem.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	g_free(varitem.path);	
+
+	/* impulse responses: make branch for target */
+	vtarg = gretl_var_get_variable_number(var, i);
+	double_underscores(tmp, datainfo->varname[vtarg]);
+	sprintf(maj, _("response of %s"), tmp);
+	varitem.path = g_strdup_printf("%s/%s", _(gpath), maj);
+	varitem.callback = NULL;
+	varitem.callback_action = 0;
+	varitem.item_type = "<Branch>";
+	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	g_free(varitem.path);
+
+	varitem.item_type = NULL;
+	
+	for (j=0; j<neqns; j++) {
+	    GtkWidget *w;
+
+	    /* impulse responses: subitems for shocks */
+	    vshock = gretl_var_get_variable_number(var, j);
+	    varitem.callback_action = j;
+	    double_underscores(tmp, datainfo->varname[vshock]);
+	    sprintf(min, _("to %s"), tmp);
+	    varitem.path = g_strdup_printf("%s/%s/%s", _(gpath), maj, min);
+	    varitem.callback = impulse_response_call;
+	    varitem.callback_action = j;
+	    varitem.item_type = NULL;
+	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	    w = gtk_item_factory_get_widget(vwin->ifac, varitem.path);
+	    gtk_object_set_data(GTK_OBJECT(w), "targ", GINT_TO_POINTER(i));
+	    g_free(varitem.path);
+	}
+    }
 }
 
 /* ........................................................... */
@@ -2060,54 +2152,73 @@ void setup_column (GtkWidget *listbox, int column, int width)
 
 /* ........................................................... */
 
-#if defined(USE_GNOME)
+#include "../pixmaps/stock_dialog_error_48.xpm"
+#include "../pixmaps/stock_dialog_info_48.xpm"
 
-static void msgbox (const char *msg, int err)
+static GtkWidget *get_msgbox_icon (int err)
 {
-    if (err) gnome_app_warning(GNOME_APP(mdata->w),
-	msg);
-    else gnome_app_message(GNOME_APP(mdata->w),
-	msg);
-}
+    static GdkColormap *cmap;
+    GtkWidget *iconw;
+    GdkPixmap *icon;
+    GdkBitmap *mask;
+    gchar **msgxpm;
 
-#else /* plain GTK */
+    if (err) {
+	msgxpm = stock_dialog_error_48_xpm;
+    } else {
+	msgxpm = stock_dialog_info_48_xpm;
+    }
+
+    if (cmap == NULL) {
+	cmap = gdk_colormap_get_system();
+    }
+    icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, NULL, 
+						 msgxpm);
+    iconw = gtk_pixmap_new(icon, mask);
+
+    return iconw;
+}
 
 static void msgbox (const char *msg, int err) 
 {
-    GtkWidget *w, *label, *button, *table;
-    char labeltext[MAXLEN];
+    GtkWidget *w, *label, *button, *vbox, *hbox, *hsep, *iconw;
 
-    if (err)
-	sprintf(labeltext, _("Error:\n%s\n"), msg);
-    else
-	sprintf(labeltext, _("Info:\n%s\n"), msg);
     w = gtk_window_new(GTK_WINDOW_DIALOG);
     gtk_container_border_width(GTK_CONTAINER(w), 5);
     gtk_window_position (GTK_WINDOW(w), GTK_WIN_POS_MOUSE);
     gtk_window_set_title (GTK_WINDOW (w), (err)? _("gretl error") : 
-			  _("gretl info"));  
-  
-    table = gtk_table_new(2, 3, FALSE);
-    gtk_container_add(GTK_CONTAINER(w), table);
-  
-    label = gtk_label_new(labeltext);
-    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 3, 0, 1);
+			  _("gretl info")); 
 
-    if (err)
+    vbox = gtk_vbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(w), vbox);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+
+    /* icon */
+    iconw = get_msgbox_icon(err);
+    gtk_box_pack_start(GTK_BOX(hbox), iconw, FALSE, FALSE, 5);
+
+    /* text of message */
+    label = gtk_label_new(msg);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+
+    hsep = gtk_hseparator_new();
+    gtk_container_add(GTK_CONTAINER(vbox), hsep);
+    
+    if (err) {
 	button = gtk_button_new_with_label(_("Close"));
-    else
+    } else {
 	button = gtk_button_new_with_label(_("OK"));
-    gtk_table_attach_defaults(GTK_TABLE(table), button, 1, 2, 1, 2);
-  
+    }
+
+    gtk_box_pack_end(GTK_BOX(vbox), button, FALSE, FALSE, 5);
+
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(delete_widget), w);
-    gtk_widget_show(button);
-    gtk_widget_show(label);
-    gtk_widget_show(table);
-    gtk_widget_show(w);  
-}
 
-#endif
+    gtk_widget_show_all(w);
+}
 
 /* ........................................................... */
 
@@ -2185,6 +2296,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 {
     windata_t *vwin = (windata_t *) data;
     PRN *prn;
+    gchar *msg;
 
     /* descriptive statistics */
     if ((vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
@@ -2200,11 +2312,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
-	return;
     }
 
     /* correlation matrix */
-    if (vwin->role == CORR && SPECIAL_COPY(how)) {
+    else if (vwin->role == CORR && SPECIAL_COPY(how)) {
 	CORRMAT *corr = (CORRMAT *) vwin->data;
 
 	if (bufopen(&prn)) return;
@@ -2217,11 +2328,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
-	return;
     }
 
     /* display for fitted, actual, resid */
-    if (vwin->role == FCAST && SPECIAL_COPY(how)) {
+    else if (vwin->role == FCAST && SPECIAL_COPY(how)) {
 	FITRESID *fr = (FITRESID *) vwin->data;
 
 	if (bufopen(&prn)) return;
@@ -2235,11 +2345,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
-	return;
     }   
 
     /* forecasts with standard errors */
-    if (vwin->role == FCASTERR && SPECIAL_COPY(how)) {
+    else if (vwin->role == FCASTERR && SPECIAL_COPY(how)) {
 	FITRESID *fr = (FITRESID *) vwin->data;
 
 	if (bufopen(&prn)) return;
@@ -2253,11 +2362,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
-	return;
     } 
 
     /* coefficient confidence intervals */
-    if (vwin->role == COEFFINT && SPECIAL_COPY(how)) {
+    else if (vwin->role == COEFFINT && SPECIAL_COPY(how)) {
 	CONFINT *cf = (CONFINT *) vwin->data;
 
 	if (bufopen(&prn)) return;
@@ -2271,11 +2379,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
-	return;
     } 
 
     /* coefficient covariance matrix */
-    if (vwin->role == COVAR && SPECIAL_COPY(how)) {
+    else if (vwin->role == COVAR && SPECIAL_COPY(how)) {
 	VCV *vcv = (VCV *) vwin->data;
 
 	if (bufopen(&prn)) return;
@@ -2289,11 +2396,29 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
-	return;
     }     
+
+    /* VAR system */
+    else if (vwin->role == VAR && SPECIAL_COPY(how)) {
+	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+
+	if (bufopen(&prn)) return;
+
+	if (how == COPY_LATEX) { 
+	    prn->format = GRETL_PRINT_FORMAT_TEX;
+	    gretl_var_print(var, datainfo, prn);
+	} 
+	else if (how == COPY_RTF) { 
+	    prn->format = GRETL_PRINT_FORMAT_RTF;
+	    gretl_var_print(var, datainfo, prn);
+	}
+
+	prn_to_clipboard(prn, how);
+	gretl_print_destroy(prn);
+    }    
   
     /* or it's a model window we're copying from? */
-    if (vwin->role == VIEW_MODEL &&
+    else if (vwin->role == VIEW_MODEL &&
 	(how == COPY_RTF || how == COPY_LATEX ||
 	 how == COPY_LATEX_EQUATION)) {
 	MODEL *pmod = (MODEL *) vwin->data;
@@ -2318,11 +2443,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
-	return;
     }
 
     /* otherwise copying plain text from window */
-    if (how == COPY_TEXT) {
+    else if (how == COPY_TEXT) {
 	PRN textprn;
 
 	gretl_print_attach_buffer(&textprn, 
@@ -2332,7 +2456,14 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	g_free(textprn.buf);
     } else { /* COPY_SELECTION */
 	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
+	return;
     }
+
+    msg = g_strdup_printf(_("Copied contents of window as %s"),
+			  (how == COPY_LATEX)? "LaTeX" :
+			  (how == COPY_RTF)? "RTF" : _("plain text"));
+    infobox(msg);
+    g_free(msg);
 }
 
 /* .................................................................. */

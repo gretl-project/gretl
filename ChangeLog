@@ -20,8 +20,8 @@
   printouts
 - Improvements to data-editing spreadsheet in gtk-2.0 version
 - minor fixes to the build process
-- minor updates to gtk-1.2 GUI (make more consistent with the
-  gtk-2.0 version)
+- updates to gtk-1.2 GUI (make more consistent with the gtk-2.0 
+  version)
 
 10/24/2003 version 1.1.5
 - Updates to manual

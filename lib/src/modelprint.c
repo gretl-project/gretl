@@ -1235,7 +1235,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
 	|| (pmod->ci == WLS && pmod->wt_dummy)) {
 	print_middle_table_start(prn);
-	depvarstats(pmod, prn);
+	if (pmod->ci != VAR) depvarstats(pmod, prn);
 	if (essline(pmod, prn, 0)) {
 	    print_middle_table_end(prn);
 	    goto close_format;
