@@ -493,9 +493,6 @@ static int make_gp_output (void)
 static int real_display_gpage (void)
 {
     char *fname, *viewer;
-#ifdef G_OS_WIN32
-    char tmp[MAXLEN];
-#endif
     int err = 0;
 
     if (gpage.output == PDF_OUTPUT) {
@@ -507,7 +504,7 @@ static int real_display_gpage (void)
     }
 
 #ifdef G_OS_WIN32
-    if (ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
+    if ((int) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
 	DWORD dw = GetLastError();
 	win_show_error(dw);
 	err = 1;

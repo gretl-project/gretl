@@ -101,6 +101,10 @@
       </listitem>
     </itemizedlist>
 
+  </sect1>
+
+  <sect1 id="sect-script-objects"><title>Saving script objects</title>
+
     <para>When you estimate a model using point-and-click, the model
       results are displayed in a separate window, offering menus which
       let you perform tests, draw graphs, save data from the model,
@@ -135,13 +139,29 @@
     <programlisting>
       "Model 1".show</programlisting>
 
-    <para>The same commands can be used for graphs.  For example the
-    following will create a plot of <varname>Ct</varname> against
-    <varname>Yt</varname>, save it under the name
-    <quote>CrossPlot</quote>, and have it displayed:</para>
+    <para>The same facility can be used for graphs.  For example the
+      following will create a plot of <varname>Ct</varname> against
+      <varname>Yt</varname>, save it under the name
+      <quote>CrossPlot</quote> (it will appear under this name in the
+      session icon window), and have it displayed:</para>
     <programlisting>
       CrossPlot &lt;- gnuplot Ct Yt
       CrossPlot.show</programlisting>
+
+    <para>You can also save the output from selected commands as named
+    pieces of text (again, these will appear in the session icon
+    window, from where you can open them later).  For example this
+    command sends the output from an augmented Dickey&ndash;Fuller
+    test to a <quote>text object</quote> named
+    <literal>ADF1</literal> and displays it in a window:</para>
+    <programlisting>
+      ADF1 &lt;- adf 2 x1
+      ADF1.show</programlisting>
+
+    <para>Objects saved in this way (whether models, graphs or pieces
+      of text output) can be destroyed using the command
+      <literal>.free</literal> appended to the name of the object, as
+      in <literal>ADF1.free</literal>.</para>
 
   </sect1>
 
@@ -166,6 +186,9 @@
       that is, you can use the up and down arrow keys to navigate the
       list of command you have entered to date.  You can retrieve,
       edit and then re-enter a previous command.</para>
+
+    <para>In console mode, you can create, display and free objects
+    (models, graphs or text) aa described above for script mode.</para>
 
   </sect1>
 
@@ -253,50 +276,54 @@
       <para>
 	In the Icon View window <application>gretl</application>
 	provides a means of constructing such a table (and copying it
-	in plain text, &latex; or Rich Text Format).  Here is how to do
-	it:</para>
+	in plain text, &latex; or Rich Text Format).  Here is how to
+	do it:<footnote><para>The model table can also be built
+	    non-interactively, in script mode.  For details on how to
+	    do this, see the <xref linkend="cmd-modeltab"/>
+	    command.</para></footnote>
+      </para>
 
-	<orderedlist>
-	  <listitem><para>Estimate a model which you wish to include
-	      in the table, and in the model display window, under the
-	      File menu, select <quote>Save to session as icon</quote>
-	      or <quote>Save as icon and close</quote>.</para>
-	  </listitem>
-	  <listitem><para>Repeat step 1 for the other models to be
-	      included in the table (up to a total of six
-	      models).</para>
-	  </listitem>
-	  <listitem><para>When you are done estimating the models,
-	      open the icon view of your gretl session, by selecting
-	      <quote>Icon view</quote> under the Session menu in the
-	      main gretl window, or by clicking the <quote>session
-		icon view</quote> icon on the gretl toolbar.</para>
-	  </listitem>
-	  <listitem><para>In session icon view, there is an icon
-	      labeled <quote>Model table</quote>. Decide which model
-	      you wish to appear in the left-most column of the model
-	      table and add it to the table, either by dragging its
-	      icon onto the Model table icon, or by right-clicking on
-	      the model icon and selecting <quote>Add to model
-		table</quote> from the pop-up menu.</para>
-	  </listitem>
-	  <listitem><para>Repeat step 4 for the other models you wish
-	      to include in the table.  The second model selected will
-	      appear in the second column from the left, and so
-	      on.</para>
-	  </listitem>
-	  <listitem><para>When you are finished composing the model
-	      table, display it by double-clicking on its icon.  Under
-	      the Edit menu in the window which appears, you have the
-	      option of copying the table to the clipboard in various
-	      formats.</para>
-	  </listitem>
-	  <listitem><para>If the ordering of the models in the table
-	      is not what you wanted, right-click on the model table
-	      icon and select <quote>Clear table</quote>.  Then go
-	      back to step 4 above and try again.</para>
-	  </listitem>
-	</orderedlist>
+      <orderedlist>
+	<listitem><para>Estimate a model which you wish to include in
+	    the table, and in the model display window, under the File
+	    menu, select <quote>Save to session as icon</quote> or
+	    <quote>Save as icon and close</quote>.</para>
+	</listitem>
+	<listitem><para>Repeat step 1 for the other models to be
+	    included in the table (up to a total of six
+	    models).</para>
+	</listitem>
+	<listitem><para>When you are done estimating the models, open
+	    the icon view of your gretl session, by selecting
+	    <quote>Icon view</quote> under the Session menu in the
+	    main gretl window, or by clicking the <quote>session icon
+	      view</quote> icon on the gretl toolbar.</para>
+	</listitem>
+	<listitem><para>In session icon view, there is an icon labeled
+	    <quote>Model table</quote>. Decide which model you wish to
+	    appear in the left-most column of the model table and add
+	    it to the table, either by dragging its icon onto the
+	    Model table icon, or by right-clicking on the model icon
+	    and selecting <quote>Add to model table</quote> from the
+	    pop-up menu.</para>
+	</listitem>
+	<listitem><para>Repeat step 4 for the other models you wish to
+	    include in the table.  The second model selected will
+	    appear in the second column from the left, and so
+	    on.</para>
+	</listitem>
+	<listitem><para>When you are finished composing the model
+	    table, display it by double-clicking on its icon.  Under
+	    the Edit menu in the window which appears, you have the
+	    option of copying the table to the clipboard in various
+	    formats.</para>
+	</listitem>
+	<listitem><para>If the ordering of the models in the table is
+	    not what you wanted, right-click on the model table icon
+	    and select <quote>Clear table</quote>.  Then go back to
+	    step 4 above and try again.</para>
+	</listitem>
+      </orderedlist>
 
       <para>A simple instance of <application>gretl</application>'s
 	model table is shown in <xref
@@ -305,9 +332,49 @@
       <figure id="fig-model-table" float="1" pgwide="1">
 	<title>Example of model table</title>
 	<graphic fileref="figures/model_table" align="center"/>
-      </figure>      
+      </figure> 
 
     </sect2>
+
+    <sect2 id="sect-graphpage"><title>The graph page</title> 
+
+      <para>The <quote>graph page</quote> icon in the session window
+	offers a means of putting together several graphs for
+	printing on a single page.  This facility will work only if
+	you have the &latex; typsetting system installed, and are able
+	to generate and view PostScript
+	output.<footnote><para>Specifically, you must have
+	    <application>dvips</application> and
+	    <application>ghostscript</application> installed, along
+	    with a viewer such as <application>gv</application>,
+	    <application>ggv</application> or
+	    <application>kghostview</application>. The default viewer
+	    for systems other than MS Windows is
+	    <application>gv</application>.</para>
+	</footnote>
+      </para>
+
+      <para>In the Icon View window, you can drag up to eight graphs
+	onto the graph page icon.  When you double-click on the icon
+	(or right-click and select <quote>Display</quote>), a page
+	containing the selected graphs (in EPS format) will be
+	composed and opened in your postscript viewer.  From there you
+	should be able to print the page.</para>
+
+      <para>To clear the graph page, right-click on its icon and
+	select <quote>Clear</quote>.</para>
+
+      <para>On systems other than MS Windows, you may have to adjust
+	the setting for the program used to view postscript.  Find
+	that under the <quote>Programs</quote> tab in the Preferences
+	dialog box (under the <quote>File</quote> menu in the main
+	window).  On Windows, you may need to adjust your file
+	associations so that the appropriate viewer is called for the
+	<quote>Open</quote> action on files with the
+	<literal>.ps</literal> extension.</para>
+
+    </sect2>
+      
 
     <sect2 id="session-save"><title>Saving and re-opening
 	sessions</title>    

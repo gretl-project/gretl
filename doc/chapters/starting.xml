@@ -221,7 +221,9 @@
 		linkend="datafiles"/>.</para></listitem>
 	  <listitem><para><guimenuitem>Append data</guimenuitem>: Add
 	      data to the current working data set, from a
-	      comma-separated or spreadsheet file.</para></listitem>
+	      <application>gretl</application> data file, a
+	      comma-separated values file or a spreadsheet
+	      file.</para></listitem>
 	  <listitem><para><guimenuitem>Save data</guimenuitem>: Save
 	      the currently open native
 	      <application>gretl</application> data
@@ -314,6 +316,12 @@
 	      currently open in <application>gretl</application>.  See
 	  <xref linkend="app-advanced"/>.
 	    </para></listitem>
+	  <listitem><para><guimenuitem>NIST test suite</guimenuitem>:
+	      Check the numerical accuracy of
+	      <application>gretl</application> against the reference
+	      results for linear regression made available by the (US)
+	      National Institute of Standards and Technology.</para>
+	  </listitem>
 	</itemizedlist>
       </listitem>
 
@@ -357,10 +365,11 @@
 	      X&ndash;Y plot using impulses (vertical bars), an
 	      X&ndash;Y plot <quote>with factor separation</quote>
 	      (i.e. with the points colored differently depending to
-	      the value of a given dummy variable) and boxplots.
-	      Serves up a dialog box where you specify the variables
-	      to graph. Gnuplot is used to render the graph (except
-	      for the boxplots option).</para></listitem>
+	      the value of a given dummy variable), boxplots, and a
+	      3-D graph. Serves up a dialog box where you specify the
+	      variables to graph. See <xref linkend="chap-graphs"/>
+	      for details.</para>
+	  </listitem>
 	  <listitem><para><guimenuitem>Multiple
 		scatterplots</guimenuitem>: Show a collection of (at
 	      most six) pairwise plots, with either a given variable
@@ -372,10 +381,16 @@
 	      data analysis.</para></listitem>
 	  <listitem><para><guimenuitem>Read info</guimenuitem>,
 	      <guimenuitem>Edit info</guimenuitem>: <quote>Read
-		info</quote> just displays the header file information
+		info</quote> just displays the summary information
 	      for the current data file; <quote>Edit info</quote>
 	      allows you to make changes to it (if you have permission
 	      to do so).</para></listitem>
+	  <listitem><para><guimenuitem>Print
+		description</guimenuitem>: opens a window containing a
+		full account of the current dataset, including the
+		summary information and any specific information on
+		each of the variables.</para>
+	  </listitem>
 	  <listitem><para><guimenuitem>Summary
 		statistics</guimenuitem>: shows a fairly full set of
 	      descriptive statistics for all variables in the data
@@ -488,7 +503,7 @@
 		panel</guimenuitem>: Allows the conversion of a panel
 		data set in stacked cross-section form into stacked
 		time series.  (Unlike the previous item, this one
-		changes the organization of the data.)
+		actually changes the organization of the data.)
 	    </para></listitem>
 	</itemizedlist>
       </listitem>
