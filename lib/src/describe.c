@@ -656,6 +656,7 @@ int periodogram (const int varno, double **pZ, const DATAINFO *pdinfo,
     pprintf(prn, "\n");
 
     if (!batch) {
+	fprintf(fq, "e\n");
 #ifdef OS_WIN32
 	fprintf(fq, "pause -1\n");
 #endif
