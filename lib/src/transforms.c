@@ -86,6 +86,10 @@ make_transform_label (char *label, const char *parent,
     }
 }
 
+/* array into which to write a generated variable, prior
+   to testing whether or not the same var already exists
+*/
+
 static double *testvec (int n)
 {
     static double *x;
@@ -320,7 +324,6 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 	return -1;
     }
 
-    /* vector into which to write lag values */
     lx = testvec(pdinfo->n);
     if (lx == NULL) {
 	return -1;
@@ -341,7 +344,6 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 	lno = varindex(pdinfo, vname);
 
 	check = check_add_transform(lno, lx, vname, label, pdinfo, pZ);
-
 	if (check == VAR_EXISTS_OK) {
 	    newlag = 0;
 	} else if (check != VAR_ADDED_OK) {
@@ -368,7 +370,6 @@ int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
     int lno, len;
     double *lx;
 
-    /* vector into which to write logs */
     lx = testvec(pdinfo->n);
     if (lx == NULL) {
 	return -1;
@@ -389,7 +390,6 @@ int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
 	lno = varindex(pdinfo, vname);
 
 	check = check_add_transform(lno, lx, vname, label, pdinfo, pZ);
-
 	if (check != VAR_EXISTS_OK && check != VAR_ADDED_OK) {
 	    lno = -1;
 	}
@@ -418,7 +418,6 @@ int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff)
 	return -1;
     }
 
-    /* vector into which to write differences */
     dx = testvec(pdinfo->n);
     if (dx == NULL) {
 	return -1;
@@ -439,7 +438,6 @@ int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff)
 	dno = varindex(pdinfo, vname);
 
 	check = check_add_transform(dno, dx, vname, label, pdinfo, pZ);
-
 	if (check != VAR_EXISTS_OK && check != VAR_ADDED_OK) {
 	    dno = -1;
 	}
@@ -482,7 +480,6 @@ int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    /* vector into which to write results */
     xx = testvec(pdinfo->n);
     if (xx == NULL) {
 	return -1;
@@ -513,7 +510,6 @@ int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo)
 	xno = varindex(pdinfo, vname);
 
 	check = check_add_transform(xno, xx, vname, label, pdinfo, pZ);
-
 	if (check != VAR_EXISTS_OK && check != VAR_ADDED_OK) {
 	    xno = -1;
 	}
@@ -708,7 +704,7 @@ int list_xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 
 #undef RHODEBUG
 
-/* the following: an unholy mess */
+/* rhodiff: a "legacy" function */
 
 /**
  * rhodiff:
