@@ -1096,7 +1096,9 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
     strcpy(pdinfo->varname[vi], varname);
     strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
 
-    for (t=0; t<pdinfo->n; t++) (*pZ)[vi][t] = NADBL;
+    for (t=0; t<pdinfo->n; t++) {
+	(*pZ)[vi][t] = NADBL;
+    }
 
     gretl_forecast(t1, t2, vi, pmod, pZ);
 

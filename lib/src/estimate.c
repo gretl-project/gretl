@@ -56,7 +56,7 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 static double dwstat (int order, MODEL *pmod, double **Z);
 static double rhohat (int order, int t1, int t2, const double *uhat);
 static double altrho (int order, int t1, int t2, const double *uhat);
-static int hatvar (MODEL *pmod, double **Z);
+static int hatvar (MODEL *pmod, int n, double **Z);
 static void dropwt (int *list);
 static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ, 
 			 DATAINFO *pdinfo);
@@ -823,7 +823,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
        pmod->rsq = pmod->adjrsq = NADBL;
     } 
 
-    hatvar(pmod, Z); 
+    hatvar(pmod, n, Z); 
     if (pmod->errcode) return;
 
     if (pmod->tss > 0.0) {
@@ -1269,24 +1269,41 @@ double corrrsq (int nobs, const double *y, const double *yhat)
 
 /* ........................................................... */
 
-static int hatvar (MODEL *pmod, double **Z)
-/* finds fitted values and residuals */
+/* compute fitted values and residuals */
+
+static int hatvar (MODEL *pmod, int n, double **Z)
 {
     int xno, i, t;
     int yno = pmod->list[1];
-    double x;
+    double y, x;
 
-    for (t=pmod->t1; t<=pmod->t2; t++) {
+    for (t=0; t<n; t++) {
+	y = Z[yno][t];
+	if (na(y)) {
+	    pmod->yhat[t] = pmod->uhat[t] = NADBL;
+	    break;
+	}
 	pmod->yhat[t] = 0.0;
         for (i=0; i<pmod->ncoeff; i++) {
             xno = pmod->list[i+2];
 	    x = Z[xno][t];
-	    if (pmod->nwt) x *= Z[pmod->nwt][t];
+	    if (na(x)) {
+		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+		break;
+	    }
+	    if (pmod->nwt) {
+		if (na(Z[pmod->nwt][t])) {
+		    pmod->yhat[t] = pmod->uhat[t] = NADBL;
+		    break;
+		}
+		x *= Z[pmod->nwt][t];
+	    }
             pmod->yhat[t] += pmod->coeff[i] * x;
         }
-	x = Z[yno][t];
-	if (pmod->nwt) x *= Z[pmod->nwt][t];
-        pmod->uhat[t] = x - pmod->yhat[t];                
+	if (pmod->nwt) { 
+	    y *= Z[pmod->nwt][t];
+	}
+	pmod->uhat[t] = y - pmod->yhat[t];                
     }
 
     return 0;

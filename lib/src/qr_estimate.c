@@ -116,14 +116,15 @@ static int qr_make_vcv (MODEL *pmod, gretl_matrix *v, int robust)
 }
 
 static void get_resids_and_SSR (MODEL *pmod, const double **Z,
-				gretl_matrix *y, double ypy, 
+				gretl_matrix *yhat, double ypy, 
 				int fulln)
 {
-    int t, i = 0;
+    int t, j, i = 0;
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
     int qdiff = (pmod->rho != 0.0);
     int pwe = gretl_model_get_int(pmod, "pwe");
     int yvar = pmod->list[1];
+    double u, x, y;
 
     if (dwt) dwt = pmod->nwt;
 
@@ -134,16 +135,15 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 	    if (t < pmod->t1 || t > pmod->t2) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
 	    } else {
-		double x = Z[yvar][t];
-
+		y = Z[yvar][t];
 		if (t == pmod->t1 && pwe) {
-		    x *= sqrt(1.0 - pmod->rho * pmod->rho);
+		    y *= sqrt(1.0 - pmod->rho * pmod->rho);
 		} else {
-		    x -= pmod->rho * Z[yvar][t-1];
+		    y -= pmod->rho * Z[yvar][t-1];
 		}
-		x -= y->val[i];
-		pmod->uhat[t] = x;
-		pmod->ess += x * x;
+		u = y - yhat->val[i];
+		pmod->uhat[t] = u;
+		pmod->ess += u * u;
 		i++;
 	    }
 	}
@@ -152,14 +152,13 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 	    if (t < pmod->t1 || t > pmod->t2) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
 	    } else {
-		double x = Z[yvar][t];
-
+		y = Z[yvar][t];
 		if (dwt && Z[dwt][t] == 0.0) {
 		    pmod->yhat[t] = NADBL;
 		} else {
-		    if (!dwt) x *= Z[pmod->nwt][t];
-		    pmod->yhat[t] = y->val[i];
-		    pmod->uhat[t] = x - y->val[i];
+		    if (!dwt) y *= Z[pmod->nwt][t];
+		    pmod->yhat[t] = yhat->val[i];
+		    pmod->uhat[t] = y - yhat->val[i];
 		    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 		    i++;
 		}
@@ -168,10 +167,26 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
     } else {
 	for (t=0; t<fulln; t++) {
 	    if (t < pmod->t1 || t > pmod->t2) {
-		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+		y = Z[yvar][t];
+		if (na(y)) {
+		    pmod->yhat[t] = pmod->uhat[t] = NADBL;
+		    break;
+		}
+		pmod->yhat[t] = 0.0;
+		for (j=0; j<pmod->ncoeff; j++) {
+		    int xno = pmod->list[j+2];
+
+		    x = Z[xno][t];
+		    if (na(x)) {
+			pmod->yhat[t] = pmod->uhat[t] = NADBL;
+			break;
+		    }
+		    pmod->yhat[t] += pmod->coeff[j] * x;
+		}
+		pmod->uhat[t] = y - pmod->yhat[t];  
 	    } else {
-		pmod->yhat[t] = y->val[i];
-		pmod->uhat[t] = Z[yvar][t] - y->val[i];
+		pmod->yhat[t] = yhat->val[i];
+		pmod->uhat[t] = Z[yvar][t] - pmod->yhat[t];
 		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 		i++;
 	    }

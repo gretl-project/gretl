@@ -25,6 +25,8 @@
 #include "textbuf.h"
 #endif
 
+#define HDEBUG 1
+
 #ifdef ENABLE_NLS
 static int translated_helpfile = -1;
 static char *english_gui_helpfile;
@@ -98,6 +100,7 @@ struct gui_help_item {
 };
 
 static struct gui_help_item gui_help_items[] = {
+    { 0,          "nothing" },
     { GR_PLOT,    "graphing" },
     { GR_XY,      "graphing" },
     { GR_DUMMY,   "factorized" },
@@ -117,7 +120,7 @@ static struct gui_help_item gui_help_items[] = {
     { MODELTABLE, "modeltab" },
     { GRAPHPAGE , "graphpag" },
     { SETSEED,    "seed" },
-    { 0,          NULL },
+    { -1,          NULL },
 };
 
 /* state the topic headings from the help files so they 
@@ -141,11 +144,11 @@ static int extra_command_number (const char *s)
 {
     int i;
 
-    for (i=0; gui_help_items[i].code; i++)
+    for (i=1; gui_help_items[i].code > 0; i++)
 	if (!strcmp(s, gui_help_items[i].string))
 	    return gui_help_items[i].code;
 
-    return 0;
+    return -1;
 }
 
 /* ......................................................... */
@@ -154,7 +157,7 @@ static char *help_string_from_cmd (int cmd)
 {
     int i;
 
-    for (i=0; gui_help_items[i].code; i++)
+    for (i=1; gui_help_items[i].code > 0; i++)
 	if (cmd == gui_help_items[i].code)
 	    return gui_help_items[i].string;
 
@@ -276,6 +279,10 @@ int match_heading (struct help_head_t **heads, int nh,
 
     for (i=0; i<nh; i++) {
 	if (!strcmp(str, (heads[i])->name)) {
+#ifdef HDEBUG
+	    fprintf(stderr, "str='%s', heads[%d].nname='%s', matched\n",
+		    str, i, (heads[i])->name);
+#endif
 	    match = i;
 	    break;
 	}
@@ -356,15 +363,22 @@ static int add_topic_to_heading (struct help_head_t **heads, int i,
     int n, m = (heads[i])->ntopics;
 
     n = gretl_command_number(word);
-
+    if (n <= 0) {
+	n = extra_command_number(word);
+    }
     if (n > 0) {
 	(heads[i])->topics[m] = n;
     } else {
-	(heads[i])->topics[m] = extra_command_number(word);
+	return 1;
     }
 
     (heads[i])->pos[m] = pos - 1;
     (heads[i])->ntopics += 1;
+
+#ifdef HDEBUG
+    fprintf(stderr, "add_topic_to_hdg: word='%s', heads[%d].topics[%d]=%d\n",
+	    word, i, m, n);
+#endif
 
     return 0;
 }
@@ -398,20 +412,27 @@ static int new_add_topic_to_heading (struct help_head_t **heads,
     nt = (heads[m])->ntopics;
 
     n = gretl_command_number(word);
+    if (n <= 0) {
+	n = extra_command_number(word);
+    }
     if (n > 0) {
 	(heads[m])->topics[nt] = n;
     } else {
-	(heads[m])->topics[nt] = extra_command_number(word);
+	return 1;
     }
 
     (heads[m])->topicnames[nt] = quoted_help_string(str);
+#ifdef HDEBUG
+    fprintf(stderr, "Set (heads[%d])->topicnames[%d] = \n"
+	    "  quoted_help_string(%s) = '%s'\n",
+	    m, nt, str, (heads[m])->topicnames[nt]);
+#endif
 
     (heads[m])->pos[nt] = pos;
     (heads[m])->ntopics += 1;
 
     return 0;
 }
-
 
 static int assemble_topic_list (struct help_head_t **heads, int nh,
 				int newhelp, FILE *fp)
@@ -514,8 +535,9 @@ static int real_helpfile_init (int cli)
     helpfile = (cli)? paths.cmd_helpfile : paths.helpfile;
 
 #ifdef ENABLE_NLS
-    if (translated_helpfile < 0) 
+    if (translated_helpfile < 0) { 
 	set_translated_helpfile();
+    }
 #endif
 
     fp = fopen(helpfile, "r");
@@ -531,7 +553,7 @@ static int real_helpfile_init (int cli)
     /* first pass: find length and number of topics */
     err = get_help_length(&heads, &nh, &length, newhelp, fp);
 
-#if 0
+#if HDEBUG
     fprintf(stderr, "got help length = %d, nh = %d\n", length, nh);
 #endif
 
@@ -634,18 +656,33 @@ static void add_help_topics (windata_t *hwin, int script)
 		hitem.path = 
 		    g_strdup_printf("%s/%s/%s", 
 				    mpath, _((hds[i])->name), 
-				    (hds[i])->topicnames[j]);		
+				    (hds[i])->topicnames[j]);
+#ifdef HDEBUG
+		    fprintf(stderr, "(1) Built help topic path from\n"
+			    " '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
+			    (hds[i])->topicnames[j]);
+#endif
 	    } else {
 		if ((hds[i])->topics[j] < NC) {
 		    hitem.path = 
 			g_strdup_printf("%s/%s/%s", 
 					mpath, _((hds[i])->name), 
 					gretl_command_word((hds[i])->topics[j]));
+#ifdef HDEBUG
+		    fprintf(stderr, "(2) Built help topic path from\n"
+			    " '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
+			    gretl_command_word((hds[i])->topics[j]));
+#endif
 		} else {
 		    hitem.path = 
 			g_strdup_printf("%s/%s/%s", 
 					mpath, _((hds[i])->name), 
 					get_gui_help_string((hds[i])->pos[j]));
+#ifdef HDEBUG
+		    fprintf(stderr, "(3) Built help topic path from\n"
+			    " '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
+			    get_gui_help_string((hds[i])->pos[j]));
+#endif
 		}
 	    }
 	    hitem.callback = (script)? do_script_help : do_gui_help; 
