@@ -2104,7 +2104,11 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     if (vwin->role == VIEW_MODEL && vwin->data != NULL) { 
 	MODEL *pmod = (MODEL *) vwin->data;
 
-	model_copy_menu_state(vwin->ifac, pmod->ci == OLS);
+	/* FIXME: allow some more latitude here */
+	model_copy_menu_state(vwin->ifac, 
+			      pmod->ci == OLS || pmod->ci == CORC ||
+			      pmod->ci == HILU);
+
 	model_panel_menu_state(vwin->ifac, pmod->ci == POOLED);
 
 	latex_menu_state(vwin->ifac, !pmod->errcode && (pmod->ci == OLS || 
