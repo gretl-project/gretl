@@ -1765,7 +1765,6 @@ static void session_add_icon (gpointer data, int sort, int mode)
     gchar *name = NULL;
     MODEL *pmod = NULL;
     GRAPHT *graph = NULL;
-    extern GtkTooltips *gretl_tips;
 
     switch (sort) {
     case 'm':
@@ -1806,8 +1805,7 @@ static void session_add_icon (gpointer data, int sort, int mode)
 
 	gobj->data = pmod;
 	if (str != NULL) {
-	    gtk_tooltips_set_tip(gretl_tips, GTK_WIDGET(gobj->icon), 
-				 str, NULL);
+	    gretl_tooltips_add(GTK_WIDGET(gobj->icon), str);
 	    free(str);
 	}
     }
@@ -1816,8 +1814,7 @@ static void session_add_icon (gpointer data, int sort, int mode)
 
 	gobj->data = graph;
 	if (str != NULL) {
-	    gtk_tooltips_set_tip(gretl_tips, GTK_WIDGET(gobj->icon), 
-				 str, NULL);
+	    gretl_tooltips_add(GTK_WIDGET(gobj->icon), str);
 	    free(str);
 	}
     }    
@@ -1826,8 +1823,7 @@ static void session_add_icon (gpointer data, int sort, int mode)
 
 	gobj->data = graph;
 	if (str != NULL) {
-	    gtk_tooltips_set_tip(gretl_tips, GTK_WIDGET(gobj->icon), 
-				 str, NULL);
+	    gretl_tooltips_add(GTK_WIDGET(gobj->icon), str);
 	    free(str);
 	}
     }

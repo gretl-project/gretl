@@ -2196,12 +2196,15 @@ static int normal_dist (double *a, int t1, int t2)
      /* Box and Muller method */
 {
     int i;
-    double xx, yy, scale = 1.0/RAND_MAX;
+    double xx, yy, zz, scale = 1.0 / RAND_MAX;
 
     for (i=t1; i<=t2; i++) {
+    tryagain:
 	xx = (double) rand() * scale;
 	yy = (double) rand() * scale;
-	a[i] = sqrt(-2. * log(xx)) * cos(2. * M_PI * yy);
+	zz = sqrt(-2. * log(xx));
+	if (isnan(zz) || isinf(zz)) goto tryagain;
+	a[i] = zz * cos(2. * M_PI * yy);
     }
     return 0;
 }

@@ -20,8 +20,34 @@
 
 /* common.c -- material in common between cli and gui clients */
 
-int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum, 
-		    PRN *prn) 
+#ifdef WIN32_DEBUG
+int numeric_check_model (MODEL *pmod, 
+			 double **Z, const DATAINFO *pdinfo, 
+			 int lround, PRN *prn)
+{
+    int j;
+
+    for (j=1; j<=pmod->ncoeff; j++) {
+	if (isnan(pmod->coeff[j])) {
+	    int i, t;
+
+	    pprintf(prn, "Round %d: got NaN in loop model coeff\n", lround);
+	    pputs(prn, "Data:\n");
+	    for (t=0; t<pdinfo->n; t++) {
+                pprintf(prn, "obs %d: ", t);
+		for (i=0; i<4; i++) {
+		    pprintf(prn, "Z[%d]=%g ", i, Z[i][t]);
+		}
+		pputs(prn, "\n");
+	    }
+	    return 1;
+	}
+    }
+    return 0;
+}
+#endif
+
+int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn) 
      /* special version of command executor for loop construct */
 {
     int i, err, m, oflag = 0;
@@ -74,7 +100,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     case HCCM:
 	/* if this is the first time round the loop, allocate space
 	   for each loop model */
-	if (round == 0) {
+	if (lround == 0) {
 	    plp->nmod += 1;
 	    if (plp->type != COUNT_LOOP) { /* a conditional loop */
 		if (plp->models == NULL) {
@@ -122,6 +148,11 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    return 1;
 	}
 
+#ifdef WIN32_DEBUG
+	if (numeric_check_model(models[0], Z, datainfo, lround + 1, prn))
+	    return 1;
+#endif
+
 	if (plp->type != COUNT_LOOP) { /* conditional loop */
 	    /* deal with model estimate for "while" loop */
 	    m = get_modnum_by_cmdnum(plp, cmdnum);
@@ -130,8 +161,9 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    /* "correct" is being borrowed here, to mark the '-o' */
 	    if (oflag) (plp->models[m])->correct = 1;
 	    tmpmodel = plp->models[m];
-	} else { /* fixed number of times */
-	    if (round == 0 && loop_model_init(&plp->lmodels[plp->nmod - 1], 
+	} else { 
+	    /* looping a fixed number of times */
+	    if (lround == 0 && loop_model_init(&plp->lmodels[plp->nmod - 1], 
 					      models[0], cmdnum)) { 
 		pputs(prn, _("Failed to initialize model for loop\n"));
 		return 1;
@@ -153,7 +185,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    printdata(command.list, &Z, datainfo, 0, oflag, prn);
 	    break;
 	}
-	if (round == 0) {
+	if (lround == 0) {
 	    plp->nprn += 1;
 	    if (plp->prns == NULL) 
 		plp->prns = malloc(sizeof(LOOP_PRINT));
@@ -207,7 +239,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    return 1;
 	}
 #endif
-	if (round == 0) {
+	if (lround == 0) {
 	    plp->nstore = command.list[0];
 	    strcpy(loopstorefile, command.param);
 	    if (loop_store_init(plp, command.list, datainfo))
@@ -215,10 +247,10 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	}
 	for (i=0; i<command.list[0]; i++) {
 	    if (datainfo->vector[command.list[i+1]]) { 
-		plp->storeval[i*plp->ntimes + round] = 
+		plp->storeval[i*plp->ntimes + lround] = 
 		    Z[command.list[i+1]][datainfo->t1 + 1];
 	    } else {
-		plp->storeval[i*plp->ntimes + round] = 
+		plp->storeval[i*plp->ntimes + lround] = 
 		    Z[command.list[i+1]][0];
 	    }
 	}	

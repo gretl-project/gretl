@@ -116,6 +116,7 @@ int ready_for_command (char *line)
 	strncmp(line, "(*", 2) == 0 ||
 	strncmp(line, "man", 3) == 0 ||
 	strncmp(line, "exit", 4) == 0 ||
+	strncmp(line, "seed", 4) == 0 ||
 	strncmp(line, "noecho", 6) == 0 ||
 	strncmp(line, "help", 4) == 0)
 	return 1;

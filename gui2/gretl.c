@@ -89,7 +89,6 @@ static GtkWidget *datalabel;
 static GtkWidget *main_vbox;
 static GtkWidget *gretl_toolbar;
 static GtkWidget *selection_popup;
-GtkTooltips *gretl_tips;
 
 int *default_list = NULL;
 
@@ -836,7 +835,7 @@ int main (int argc, char *argv[])
     }
 
     /* create the GUI */
-    gretl_tips = gtk_tooltips_new();
+    gretl_tooltips_init();
 
     /* create main window */
     if ((mdata = mymalloc(sizeof(windata_t))) == NULL)

@@ -3152,7 +3152,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	/* get commands from file view buffer */
 	windata_t *mydata = (windata_t *) data;
 	gchar *buf = textview_get_text(GTK_TEXT_VIEW(mydata->w));
-	GdkCursor *cursor;
+	GdkCursor *plswait; 
 
 	if (buf == NULL || !strlen(buf)) {
 	    errbox("No commands to execute");
@@ -3161,16 +3161,21 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	    return;
 	}
 
-	cursor = gdk_cursor_new(GDK_WATCH);
+	plswait = gdk_cursor_new(GDK_WATCH);
 	gdk_pointer_grab(mydata->dialog->window, TRUE,
 			 GDK_POINTER_MOTION_MASK,
-			 NULL, cursor,
+			 NULL, plswait,
 			 GDK_CURRENT_TIME);
-	gdk_cursor_destroy(cursor);
+
+#ifdef G_OS_WIN32
+	while (gtk_events_pending())
+	    gtk_main_iteration();
+#endif
 
 	err = execute_script(NULL, buf, NULL, NULL, prn, code);
 	g_free(buf);
 
+	gdk_cursor_destroy(plswait);
 	gdk_pointer_ungrab(GDK_CURRENT_TIME);
     } else {
 	/* get commands from file */
@@ -3726,7 +3731,7 @@ static int ready_for_command (char *line)
 {
     const char *ok_cmds[] = {
 	"open", "run", "nulldata", "import", "pvalue", "!",
-	"(*", "man ", "help", "noecho", "critical", NULL };
+	"(*", "man ", "help", "noecho", "critical", "seed", NULL };
     const char **p = ok_cmds;
 
     if (*line == 'q' || *line == 'x' || *line == '\0') return 1;

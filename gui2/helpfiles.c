@@ -709,3 +709,18 @@ void text_find_callback (GtkWidget *w, gpointer data)
 {
     find_string_dialog(find_in_text, cancel_find, data);
 }
+
+/* ........................................................... */
+
+static GtkTooltips *gretl_tips;
+
+void gretl_tooltips_init (void)
+{
+    gretl_tips = gtk_tooltips_new();
+    gtk_tooltips_enable(gretl_tips); /* redundant? */
+}
+
+void gretl_tooltips_add (GtkWidget *w, const gchar *str)
+{
+    gtk_tooltips_set_tip(gretl_tips, w, str, NULL);
+}
