@@ -1057,7 +1057,9 @@ static void print_model_heading (const MODEL *pmod,
 
     /* list of instruments for TSLS */
     if (pmod->ci == TSLS) {
-	if (gretl_model_get_int(pmod, "systype") != FIML) {
+	int systype = gretl_model_get_int(pmod, "systype");
+
+	if (systype != FIML && systype != LIML) {
 	    print_tsls_instruments (pmod->list, pdinfo, prn);
 	}
     }

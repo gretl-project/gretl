@@ -2070,20 +2070,24 @@ MODEL tsls_func (int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
     tsls.ess = 0.0;
     for (t=tsls.t1; t<=tsls.t2; t++) {
-	double xx = 0.0;
+	double yh = 0.0;
 
 	if (model_missing(&tsls, t)) {
 	    continue;
 	}
 	for (i=0; i<tsls.ncoeff; i++) {
-	    xx += tsls.coeff[i] * (*pZ)[reglist[i+2]][t];
+	    yh += tsls.coeff[i] * (*pZ)[reglist[i+2]][t];
 	}
-	tsls.yhat[t] = xx; 
-	tsls.uhat[t] = (*pZ)[tsls.list[1]][t] - xx;
+	tsls.yhat[t] = yh; 
+	tsls.uhat[t] = (*pZ)[tsls.list[1]][t] - yh;
 	tsls.ess += tsls.uhat[t] * tsls.uhat[t];
     }
 
-    tsls.sigma = (tsls.ess >= 0.0) ? sqrt(tsls.ess / tsls.dfd) : 0.0;
+    if (tsls.ess <= 0.0) {
+	tsls.sigma = 0.0;
+    } else {
+	tsls.sigma = sqrt(tsls.ess / ((opt & OPT_N)? tsls.nobs : tsls.dfd));
+    }
 
     /* computation of covariance matrix of parameter estimates */
 

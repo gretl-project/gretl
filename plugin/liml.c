@@ -22,7 +22,7 @@
 #include "gretl_matrix_private.h"
 #include "system.h"
 
-#define LDEBUG 1
+#define LDEBUG 0
 
 static int on_exo_list (const int *exlist, int v)
 {
@@ -190,14 +190,14 @@ liml_get_gamma_hat (const gretl_matrix *W0, const gretl_matrix *W1,
 */
 
 static int 
-liml_get_betahat (MODEL *olsmod, int *list, const int *exlist,
-		  const gretl_matrix *g, double ***pZ, 
-		  DATAINFO *pdinfo)
+liml_get_betahat (MODEL *olsmod, int *reglist, const int *list,
+		  const int *exlist, const gretl_matrix *g, 
+		  double ***pZ, DATAINFO *pdinfo)
 {
     MODEL bmod;
     double *y;
     double gj;
-    int depvar = olsmod->list[1];
+    int depvar = list[1];
     int oldv = pdinfo->v;
     int i, j, t;
     int err = 0;
@@ -217,10 +217,10 @@ liml_get_betahat (MODEL *olsmod, int *list, const int *exlist,
 	} else {
 	    y[t] = (*pZ)[depvar][t];
 	    j = 0;
-	    for (i=2; i<=olsmod->list[0]; i++) {
-		if (!on_exo_list(exlist, olsmod->list[i])) {
+	    for (i=2; i<=list[0]; i++) {
+		if (!on_exo_list(exlist, list[i])) {
 		    gj = gretl_vector_get(g, j++);
-		    y[t] -= (*pZ)[olsmod->list[i]][t] * gj;
+		    y[t] -= (*pZ)[list[i]][t] * gj;
 		}
 	    }
 	}
@@ -231,18 +231,18 @@ liml_get_betahat (MODEL *olsmod, int *list, const int *exlist,
 	return E_ALLOC;
     }
     
-    list[0] = 1;
-    list[1] = oldv; /* dep var is the newly added var */
+    reglist[0] = 1;
+    reglist[1] = oldv; /* dep var is the newly added var */
     j = 2;
     /* put all included exog vars on the RHS */
-    for (i=2; i<=olsmod->list[0]; i++) {
-	if (on_exo_list(exlist, olsmod->list[i])) {
-	    list[0] += 1;
-	    list[j++] = olsmod->list[i];
+    for (i=2; i<=list[0]; i++) {
+	if (on_exo_list(exlist, list[i])) {
+	    reglist[0] += 1;
+	    reglist[j++] = list[i];
 	} 
     }
 
-    bmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    bmod = lsq(reglist, pZ, pdinfo, OLS, OPT_A, 0.0);
     err = bmod.errcode;
 
     if (!err) {
@@ -251,7 +251,7 @@ liml_get_betahat (MODEL *olsmod, int *list, const int *exlist,
 
 	k = j = 0;
 	for (i=0; i<olsmod->ncoeff; i++) {
-	    if (on_exo_list(exlist, olsmod->list[i+2])) {
+	    if (on_exo_list(exlist, list[i+2])) {
 		bi = bmod.coeff[j++];
 	    } else {
 		bi = gretl_vector_get(g, k++);
@@ -266,10 +266,13 @@ liml_get_betahat (MODEL *olsmod, int *list, const int *exlist,
     return err;
 }
 
-static void liml_set_residuals_etc (MODEL *pmod, const double **Z)
+static void 
+liml_set_residuals_etc (MODEL *pmod, const int *list, 
+			const gretl_matrix *XTX, 
+			const double **Z)
 {
     double yhat;
-    int depvar = pmod->list[1];
+    int depvar = list[1];
     int i, t;
 
     pmod->ess = 0.0;
@@ -277,14 +280,74 @@ static void liml_set_residuals_etc (MODEL *pmod, const double **Z)
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	yhat = 0.0;
 	for (i=0; i<pmod->ncoeff; i++) {
-	    yhat += pmod->coeff[i] * Z[pmod->list[i+2]][t];
+	    yhat += pmod->coeff[i] * Z[list[i+2]][t];
 	}
 	pmod->yhat[t] = yhat;
 	pmod->uhat[t] = Z[depvar][t] - yhat;
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
-    pmod->sigma = pmod->ess / pmod->nobs;
+    pmod->sigma = sqrt(pmod->ess / pmod->nobs);
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	double xii = gretl_matrix_get(XTX, i, i);
+
+	pmod->sderr[i] = pmod->sigma * sqrt(xii);
+    } 
+}
+
+static gretl_matrix *
+liml_get_XTX (const gretl_matrix *E, const int *exlist, 
+	      const int *list, int T, int t1, double lmin, 
+	      const double **Z)
+{
+    gretl_matrix *X = NULL;
+    gretl_matrix *Xmod = NULL;
+    gretl_matrix *XTX = NULL;
+    double xit, eit;
+    int m = list[0] - 1;
+    int i, j, t;
+    int err = 0;
+
+    X = gretl_matrix_alloc(T, m);
+    Xmod = gretl_matrix_alloc(T, m);
+    XTX = gretl_matrix_alloc(m, m);
+
+    if (X == NULL || Xmod == NULL || XTX == NULL) {
+	err = 1;
+	goto bailout;
+    }
+
+    for (t=0; t<T; t++) {
+	j = 1;
+	for (i=2; i<=list[0]; i++) {
+	    xit = Z[list[i]][t + t1];
+	    gretl_matrix_set(X, t, i-2, xit);
+	    if (on_exo_list(exlist, list[i])) {
+		gretl_matrix_set(Xmod, t, i-2, xit);
+	    } else {
+		eit = gretl_matrix_get(E, t, j++);
+		gretl_matrix_set(Xmod, t, i-2, xit - lmin * eit);
+	    } 
+	}
+    }
+
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      Xmod, GRETL_MOD_NONE,
+			      XTX);
+    err = gretl_invert_general_matrix(XTX);
+
+ bailout:
+
+    gretl_matrix_free(X);
+    gretl_matrix_free(Xmod);
+
+    if (err) {
+	gretl_matrix_free(XTX);
+	XTX = NULL;
+    }
+
+    return XTX;
 }
 
 static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
@@ -299,8 +362,10 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     gretl_matrix *W2 = NULL;
     gretl_matrix *Inv = NULL;
     gretl_matrix *g = NULL;
+    gretl_matrix *XTX = NULL;
 
     double *lambda, lmin = 1.0;
+    double ll = 0.0;
     MODEL *olsmod;
     MODEL lmod;
     int *reglist;
@@ -315,11 +380,11 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     olsmod = system_get_model(sys, eq);
 
 #if LDEBUG
-    printlist(olsmod->list, "OLS model list");
+    printlist(list, "original model list");
 #endif
 
     /* make regression list using included exogenous vars */
-    reglist = liml_make_reglist(exlist, olsmod->list, &k);
+    reglist = liml_make_reglist(exlist, list, &k);
     if (reglist == NULL) {
 	return E_ALLOC;
     }
@@ -390,6 +455,9 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     printf("smallest eigenvalue: %g\n\n", lmin);
     free(lambda);
 
+    ll = -(T / 2.0) * LN_2_PI * system_n_equations(sys);
+    ll -= -(T / 2.0) * log(lmin);
+
     /* estimates of coeffs on included endogenous vars */
     g = liml_get_gamma_hat(W0, W1, lmin);
     if (g == NULL) {
@@ -398,16 +466,32 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     }
 
     /* estimates of coeffs on included exogenous vars */
-    err = liml_get_betahat(olsmod, reglist, exlist, g, pZ, pdinfo);
+    err = liml_get_betahat(olsmod, reglist, list, exlist, g, 
+			   pZ, pdinfo);
     if (err) {
 	goto bailout;
     }
 
-    /* correct yhat, uhat, ESS, sigma */
-    liml_set_residuals_etc(olsmod, (const double **) *pZ);
+    /* covariance matrix of coefficient estimates */
+    XTX = liml_get_XTX(E, exlist, list, T, pdinfo->t1, lmin,
+		       (const double **) *pZ);
+    if (XTX == NULL) {
+	err = 1;
+	goto bailout;
+    }
 
-    /* FIXME: need to compute correct standard errors (full VCV?)
-       also need to compute log-likelihood, AIC, BIC, and 
+    /* correct yhat, uhat, ESS, sigma, standard errors */
+    liml_set_residuals_etc(olsmod, list, XTX, (const double **) *pZ);
+
+    ll = system_n_equations(sys) * LN_2_PI;
+    ll += log(lmin);
+    ll += gretl_matrix_log_determinant(W1);
+    ll *= -(T / 2.0);
+
+    printf("log-likelihood = %g\n", ll);
+    printf("LR test stat = %g\n", T * log(lmin));
+
+    /* FIXME: need to compute AIC, BIC, and 
        LR test for overidentification 
     */
 
@@ -420,6 +504,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     gretl_matrix_free(W2);
     gretl_matrix_free(Inv);
     gretl_matrix_free(g);
+    gretl_matrix_free(XTX);
 
     return err;
 }
@@ -436,6 +521,9 @@ int liml_driver (gretl_equation_system *sys, double ***pZ,
     pputs(prn, "\n*** LIML: experimental, work in progress ***\n\n");
 
     for (i=0; i<g; i++) {
+#if LDEBUG
+	printmodel(system_get_model(sys, i), pdinfo, OPT_NONE, prn);
+#endif
 	liml_do_equation(sys, i, pZ, pdinfo, prn);
     }
 

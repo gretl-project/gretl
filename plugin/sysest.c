@@ -287,7 +287,7 @@ system_model_list (gretl_equation_system *sys, int i, int *freeit)
 {
     int systype = system_get_type(sys);
 
-    if (systype == SUR || systype == LIML) {
+    if (systype == SUR) {
 	*freeit = 0;
 	return system_get_list(sys, i);
     } 
@@ -301,7 +301,7 @@ system_model_list (gretl_equation_system *sys, int i, int *freeit)
 	}
     }
 
-    if (systype == THREESLS || systype == FIML) {
+    if (systype == THREESLS || systype == FIML || systype == LIML) {
 	*freeit = 1;
 	return compose_tsls_list(sys, i);
     }
@@ -418,10 +418,12 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    goto bailout;
 	}
 
-	if (systype == SUR || systype == LIML) {
+	if (systype == SUR) {
 	    *models[i] = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	} else if (systype == THREESLS || systype == FIML) {
 	    *models[i] = tsls_func(list, 0, pZ, pdinfo, OPT_S);
+	} else if (systype == LIML) {
+	    *models[i] = tsls_func(list, 0, pZ, pdinfo, OPT_N);
 	}
 
 	if (freeit) free(list);
