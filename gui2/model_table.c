@@ -99,7 +99,19 @@ int add_to_model_table_list (const MODEL *pmod, int add_mode)
     if (pmod->ci == NLS) {
 	errbox(_("Sorry, NLS models can't be put in the model table"));
 	return 1;
-    }	
+    }
+
+    /* nor will ARMA */
+    if (pmod->ci == ARMA) {
+	errbox(_("Sorry, ARMA models can't be put in the model table"));
+	return 1;
+    }
+
+    /* nor TSLS */
+    if (pmod->ci == TSLS) {
+	errbox(_("Sorry, TSLS models can't be put in the model table"));
+	return 1;
+    }    
 
     /* check that list is really started */
     if (model_list_len == 0) {
@@ -407,7 +419,7 @@ static void print_model_table_coeffs (PRN *prn)
 	    if (pmod == NULL) continue;
 	    if ((k = var_is_in_model(v, pmod))) {
 		if (tex) {
-		    pprintf(prn, "& (%#.4g) ", pmod->sderr[k-2]);
+		    pprintf(prn, "& \\small{(%#.4g)} ", pmod->sderr[k-2]);
 		} else {
 		    char numstr[32];
 

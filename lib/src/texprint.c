@@ -314,6 +314,8 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
 	pputs(prn, "\\begin{document}\n\n"
 		"\\thispagestyle{empty}\n\n");
+    } else{
+	pputs(prn, "%%% the following needs the amsmath LaTeX package\n\n");
     }
 
     /* initial setup */
