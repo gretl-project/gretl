@@ -275,7 +275,7 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
 
     pmod->ci = LOGISTIC;
 
-    gretl_aic_bic(pmod);
+    ls_aic_bic(pmod);
 
     return 0;
 }

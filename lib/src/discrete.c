@@ -78,7 +78,8 @@ static void Lr_chisq (MODEL *pmod, double **Z)
 
 /* .......................................................... */
 
-static double _logit_probit_llhood (double *y, MODEL *pmod, int opt)
+static double 
+logit_probit_llhood (const double *y, const MODEL *pmod, int opt)
 {
     double q, lnL = 0.0;
     int t;
@@ -340,7 +341,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	    (*pZ)[v][t] = xx;
 	}
 
-	dmod.lnL = _logit_probit_llhood(&(*pZ)[v][0], &dmod, opt);
+	dmod.lnL = logit_probit_llhood(&(*pZ)[v][0], &dmod, opt);
 	if (fabs(dmod.lnL - Lbak) < .000005) {
 	    break; 
 	}
@@ -360,7 +361,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 
     dataset_drop_vars(1, pZ, pdinfo);
     dmod.list[1] = depvar;
-    dmod.lnL = _logit_probit_llhood((*pZ)[depvar], &dmod, opt);
+    dmod.lnL = logit_probit_llhood((*pZ)[depvar], &dmod, opt);
     Lr_chisq(&dmod, *pZ);
     dmod.ci = opt;
     free(dmodlist);
