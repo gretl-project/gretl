@@ -3,7 +3,7 @@
 
 <xsl:import href="/usr/share/sgml/docbook-xsl/htmlhelp/htmlhelp.xsl"/>
 
-
+<xsl:param name="lang" select="'en'"/>
 
 <xsl:template match="command">
   <xsl:call-template name="inline.monoseq"/>

@@ -69,7 +69,7 @@
 	example,</para>
 
       <para>
-	<command>loop while essdiff > .00001</command>
+	<command>loop while essdiff &gt; .00001</command>
       </para>
 
       <para>Execution of the commands within the loop will continue so
@@ -117,15 +117,15 @@
 	applied each time round the loop.  The entire expression is
 	enclosed in parentheses.  For example:</para>
 
-      <para><command>loop for (r=0.01; r<.991; r+=.01)</command></para>
+      <para><command>loop for (r=0.01; r&lt;.991; r+=.01)</command></para>
 
       <para>In this example the variable <varname>r</varname> will
 	take on the values 0.01, 0.02, &hellip;, 0.99 across the 99
 	iterations.  Note that due to the finite precision of floating
 	point arithmetic on computers it may be necessary to use a
 	continuation condition such as the above,
-	<literal>r<.991</literal>, rather than the more
-	<quote>natural</quote> <literal>r<=.99</literal>.  (Using
+	<literal>r&lt;.991</literal>, rather than the more
+	<quote>natural</quote> <literal>r&lt;=.99</literal>.  (Using
 	double-precision numbers on an x86 processor, at the point
 	where you would expect <varname>r</varname> to equal 0.99 it
 	may in fact have value 0.990000000000001.)</para>

@@ -117,15 +117,15 @@
         eseguito. L'intera espressione deve essere racchiusa tra parentesi.
         Ad esempio:</para>
 
-      <para><command>loop for (r=0.01; r<.991; r+=.01)</command></para>
+      <para><command>loop for (r=0.01; r&lt;.991; r+=.01)</command></para>
 
       <para>La variable <varname>r</varname> assumerà i valori 0.01, 0.02,
         &hellip;, 0.99 nel giro di 100 iterazioni. Si noti che a causa della
         precisione limitata dell'aritmetica in virgola mobile usata dal
         computer, può dover essere necessario usare una condizione di
         continuazione come quella mostrata sopra,
-	<literal>r<.991</literal>, invece della più
-	<quote>naturale</quote> <literal>r<=.99</literal> (usando numeri in
+	<literal>r&lt;.991</literal>, invece della più
+	<quote>naturale</quote> <literal>r&lt;=.99</literal> (usando numeri in
         doppia precisione su un processore x86, quando ci si aspetta che
 	<varname>r</varname> valga 0.99, potrebbe in realtà valere
 	0.990000000000001).</para>

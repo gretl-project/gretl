@@ -12,6 +12,7 @@ DSL = manual-both.dsl
 ALTDSL = manual-a4.dsl
 MATHSS = TeXMath.dsl
 HMATHSS = HTMLMath.dsl
+TITLESS = titlepage.dsl
 
 CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/panel.xml chapters/appendices.xml chapters/datafiles.xml \
@@ -60,15 +61,15 @@ thumbs_it: manual_it.pdf
 	thumbpdf manual_it
 	pdfjadetex manual_it
 
-manual.tex: manual.xml $(CHAPTERS) $(DSL) $(MATHSS) $(CMDLIST)
+manual.tex: manual.xml $(CHAPTERS) $(DSL) $(MATHSS) $(TITLESS) $(CMDLIST)
 	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
-manual-a4.tex: manual-a4.xml $(CHAPTERS) $(ALTDSL) $(MATHSS) $(CMDLIST)
+manual-a4.tex: manual-a4.xml $(CHAPTERS) $(ALTDSL) $(MATHSS) $(TITLESS) $(CMDLIST)
 	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
-manual_it.tex: manual_it.xml $(CHAPTERS_IT) $(ALTDSL) $(MATHSS) $(CMDLIST_IT)
+manual_it.tex: manual_it.xml $(CHAPTERS_IT) $(ALTDSL) $(MATHSS) $(TITLESS) $(CMDLIST_IT)
 	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
@@ -109,7 +110,8 @@ chm_it: $(topdoc)/manual_it.xml $(topdoc)/chapters_it/*.xml
 	for f in manual_it.chm/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
 	cd manual_it.chm && \
 	$(SAXON) ../$(topdoc)/manual_it.xml ../$(topdoc)/gretlhlp.xsl \
-	tex.math.in.alt=latex && $(HHC) gretl_it.hhp
+	tex.math.in.alt=latex lang=it htmlhelp.hhp="gretl_it.hhp" \
+	htmlhelp.chm="gretl_it.chm" && $(HHC) gretl_it.hhp
 
 clean:
 	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex manual_it.tex

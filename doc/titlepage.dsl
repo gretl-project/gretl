@@ -179,10 +179,19 @@
       (process-children)))
 
   (element othercredit
-    (make paragraph
-      use: book-titlepage-recto-style
-      quadding: %division-title-quadding%
-      (process-children)))
+    (let ((othercredit-name  (author-string))
+	  (othercredit-contrib (select-elements (children (current-node)) 
+					 (normalize "contrib"))))
+      (make sequence      
+	(make paragraph
+	  use: book-titlepage-recto-style
+	  font-size: (HSIZE 3)
+	  line-spacing: (* (HSIZE 3) %line-spacing-factor%)
+	  space-before: (* (HSIZE 6) %head-before-factor%)
+	  quadding: %division-title-quadding%
+	  keep-with-next?: #t
+	  (literal othercredit-name))
+	(process-node-list othercredit-contrib))))
 
   (element othername
     (make paragraph

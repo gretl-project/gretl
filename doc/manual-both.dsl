@@ -133,6 +133,7 @@
         (normalize "graphic")
         (normalize "subtitle")
         (normalize "author")
+	(normalize "othercredit")
         (normalize "date")))
         
 (define %footnote-size-factor% 
