@@ -101,7 +101,7 @@ extern int wimp;
 #endif
 extern char viewdvi[MAXSTR];
 extern char viewps[MAXSTR];
-#ifdef HAVE_AUDIO
+#if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
 extern char midiplayer[MAXSTR];
 #endif
 

@@ -2831,7 +2831,11 @@ static void audio_render_plot (png_plot_t *plot)
         return;
     }
 
+# ifdef G_OS_WIN32
+    (*midi_play_graph) (plot->spec->fname, paths.userdir, NULL);
+# else
     (*midi_play_graph) (plot->spec->fname, paths.userdir, midiplayer);
+# endif
 
     close_plugin(handle);
 }

@@ -119,7 +119,7 @@ int wimp;
 static int lcnumeric = 1;
 #endif
 
-#ifdef HAVE_AUDIO
+#if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
 char midiplayer[MAXSTR];
 #endif
 
@@ -180,7 +180,7 @@ RCVARS rc_vars[] = {
     {"viewps", N_("Command to view postscript files"), NULL, viewps, 
      ROOTSET, MAXSTR, 3, NULL},
 #endif
-#ifdef HAVE_AUDIO
+#if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
     {"midiplayer", N_("Program to play MIDI files"), NULL, midiplayer, 
      USERSET, MAXSTR, 3, NULL},
 #endif
