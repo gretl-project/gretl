@@ -2274,7 +2274,10 @@ int open_plugin (const PATHS *ppaths, const char *plugin, void **handle)
 #else
     sprintf(pluginpath, "%splugins/%s.so", ppaths->gretldir, plugin);
     *handle = dlopen(pluginpath, RTLD_LAZY);
-    if (*handle == NULL) return 1;
+    if (*handle == NULL) {
+	fprintf(stderr, "%s\n", dlerror());
+	return 1;
+    }
 #endif 
     return 0;
 }
@@ -2287,6 +2290,8 @@ void *get_plugin_function (const char *funcname, void *handle)
     funp = GetProcAddress(handle, funcname);
 #else
     funp = dlsym(handle, funcname);
+    if (funp == NULL) 
+	fprintf(stderr, "%s\n", dlerror());
 #endif   
     return funp;
 }
@@ -2296,7 +2301,8 @@ void close_plugin (void *handle)
 #ifdef OS_WIN32
     FreeLibrary(handle);
 #else
-    dlclose(handle);
+    if (dlclose(handle)) 
+	fprintf(stderr, "%s\n", dlerror());
 #endif
 }
 

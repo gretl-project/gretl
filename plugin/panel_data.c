@@ -80,13 +80,13 @@ static double group_means_variance (MODEL *pmod,
 
     list = malloc((pmod->list[0] + 1) * sizeof *list);
     if (list == NULL) {
-	clear_datainfo(*ginfo, 1);
+	clear_datainfo(*ginfo, 0);
 	free(*ginfo);
 	return NADBL;
     }
 
 #ifdef PDEBUG
-    fprintf(stderr, "gmv: *groupZ=%p\n", (void *)*groupZ);
+    fprintf(stderr, "gmv: *groupZ=%p\n", (void *) *groupZ);
 #endif
 
     list[0] = pmod->list[0];
@@ -385,9 +385,11 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	makevcv(&lsdv);
 	vcv_slopes(haus, &lsdv, nunits, 0);
     }
+
     clear_model(&lsdv, NULL, NULL, NULL);
     dataset_drop_vars(nunits - 1, pZ, pdinfo);
     free(dvlist);
+
     return var;
 }
 
@@ -410,7 +412,7 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     relist = malloc((pmod->list[0] + 1) * sizeof *relist);
     if (relist == NULL) {
 	free_Z(reZ, reinfo);
-	clear_datainfo(reinfo, 1);
+	clear_datainfo(reinfo, 0);
 	free(reinfo);
 	return E_ALLOC;
     }
@@ -460,9 +462,10 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 	makevcv(&remod);
 	vcv_slopes(haus, &remod, nunits, 1);
     }
+
     clear_model(&remod, NULL, NULL, NULL);
     free_Z(reZ, reinfo);
-    clear_datainfo(reinfo, 1);
+    clear_datainfo(reinfo, 0);
     free(reinfo);
     free(relist);    
 
@@ -606,7 +609,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    do_hausman_test(&haus, prn);
 	}
 	free_Z(groupZ, ginfo);
-	clear_datainfo(ginfo, 1);
+	clear_datainfo(ginfo, 0);
 	free(ginfo);
 	free(haus.bdiff);
 	free(haus.sigma);
