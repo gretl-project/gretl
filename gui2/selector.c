@@ -60,8 +60,8 @@ static GtkWidget *scatters_menu;
 
 static gint dblclick_varlist_row (GtkWidget *w, GdkEventButton *event, 
 				  selector *sr); 
-static gint remove_right_click (GtkWidget *widget, GdkEventButton *event, 
-				gpointer data);
+static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
+				   gpointer data);
 static gint add_right_click (GtkWidget *widget, GdkEventButton *event, 
 			     selector *sr);
 
@@ -113,6 +113,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int which)
 						       1, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);	
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
+    gtk_tree_view_set_reorderable(GTK_TREE_VIEW(view), FALSE);
 
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
     gtk_tree_selection_set_mode (select, GTK_SELECTION_EXTENDED);
@@ -141,7 +142,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int which)
 			  NULL);
 	
 	g_signal_connect (G_OBJECT(view), "button_press_event",
-			  G_CALLBACK(remove_right_click),
+			  G_CALLBACK(listvar_special_click),
 			  view);
     } 
 
@@ -394,18 +395,26 @@ static gint dblclick_varlist_row (GtkWidget *w, GdkEventButton *event,
     return FALSE;
 }
 
-static gint remove_right_click (GtkWidget *widget, GdkEventButton *event, 
-				gpointer data)
+static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
+				   gpointer data)
 {
     GdkWindow *topwin;
     GdkModifierType mods;
 
     topwin = gtk_widget_get_parent_window(GTK_WIDGET(data));
     gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
+
+    if (mods & GDK_BUTTON2_MASK) {
+	gtk_tree_view_set_reorderable(GTK_TREE_VIEW(data), TRUE);
+    } else {
+	gtk_tree_view_set_reorderable(GTK_TREE_VIEW(data), FALSE);
+    }
+
     if (mods & GDK_BUTTON3_MASK) {
 	remove_from_right_callback (NULL, data);
 	return TRUE;
-    }
+    } 
+
     return FALSE;
 }
 

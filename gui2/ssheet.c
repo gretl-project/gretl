@@ -216,7 +216,7 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 	gtk_tree_model_get_iter(model, &iter, path);
 	gtk_tree_model_get(model, &iter, colnum, &old_text, -1);
 
-	if (strcmp(old_text, new_text)) {
+	if (old_text != NULL && strcmp(old_text, new_text)) {
 	    gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
 			       colnum, new_text, -1);
 	    sheet_modified = 1;
@@ -315,11 +315,10 @@ static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
 	gtk_list_store_append(store, &iter);
     } else if (sheet->point == SHEET_AT_POINT) {
 	GtkTreePath *path;
-	GtkTreeViewColumn *column;
 
-	gtk_tree_view_get_cursor(view, &path, &column);
-	gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
+	gtk_tree_view_get_cursor(view, &path, NULL);
 	pointpath = gtk_tree_path_get_indices(path)[0];
+	gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
 	gtk_list_store_insert(store, &iter, pointpath);
 	gtk_tree_path_free(path);
     } else {
@@ -359,11 +358,20 @@ static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
 	column = gtk_tree_view_get_column(view, 1);
 	gtk_tree_view_set_cursor(view, path, column, FALSE);
 	adj = 
-	    gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(gtk_widget_get_ancestor
-								    (GTK_WIDGET(view),
-								     GTK_TYPE_BIN)));
+	    gtk_viewport_get_vadjustment(GTK_VIEWPORT(gtk_widget_get_ancestor
+						      (GTK_WIDGET(view),
+						       GTK_TYPE_BIN)));
 	adjval = gtk_adjustment_get_value(adj);
 	gtk_adjustment_set_value (adj, adjval + 30); /* why is this hack needed? */
+	gtk_tree_path_free(path);
+	g_free(pathstr);
+    } else {
+	gchar *pathstr = g_strdup_printf("%d", pointpath);
+	GtkTreePath *path = gtk_tree_path_new_from_string(pathstr);
+	GtkTreeIter insiter;
+
+	gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &insiter, path);
+	gtk_list_store_set(store, &insiter, 1, "", -1);
 	gtk_tree_path_free(path);
 	g_free(pathstr);
     }

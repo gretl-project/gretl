@@ -1745,13 +1745,15 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     const gchar *buf;
     PRN *prn;
     char tmpstr[26];
-    int order, err, i;
+    int i, order;
+    int err = 0;
 
     buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
 
     clear(line, MAXLEN);
     sprintf(line, "arch %s ", buf);
+
     for (i=1; i<=pmod->list[0]; i++) {
 	sprintf(tmpstr, "%d ", pmod->list[i]);
 	strcat(line, tmpstr);
@@ -1774,7 +1776,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     *models[1] = arch(order, pmod->list, &Z, datainfo, 
 		      &test, cmd.opt, prn);
     if ((err = (models[1])->errcode)) { 
-	errmsg(err, prn);
+	gui_errmsg(err);
     } else if (add_test_to_model(pmod, &test) == 0) {
 	print_test_to_window(&test, mydata->w);
     }
@@ -1782,7 +1784,11 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     clear_model(models[1]);
     exchange_smpl(pmod, datainfo);
 
-    view_buffer(prn, 78, 400, _("gretl: ARCH test"), ARCH, NULL);
+    if (err) {
+	gretl_print_destroy(prn);
+    } else {
+	view_buffer(prn, 78, 400, _("gretl: ARCH test"), ARCH, NULL);
+    }
 }
 
 /* ........................................................... */

@@ -188,6 +188,19 @@ static const char *column_label (int col)
     return label;
 }
 
+static void colspin_changed (GtkEditable *ed, GtkWidget *w)
+{
+    const gchar *text = gtk_entry_get_text(GTK_ENTRY(ed));
+
+    if (text != NULL && isdigit((unsigned char) *text)) {
+	int col = atoi(text);
+
+	if (col > 0 && col < 257) {
+	    gtk_label_set_text(GTK_LABEL(w), column_label(col - 1));
+	}
+    }
+}
+
 #if GTK_MAJOR_VERSION >= 2
 
 static
@@ -229,14 +242,6 @@ static
 void wsheet_menu_cancel (GtkWidget *w, wbook *book)
 {
     book->selected = -1;
-}
-
-static 
-void update_column_label (GtkAdjustment *a, GtkWidget *w)
-{
-    int col = gtk_adjustment_get_value(a);
-
-    gtk_label_set_text(GTK_LABEL(w), column_label(col - 1));
 }
 
 static 
@@ -332,6 +337,8 @@ static void wsheet_menu (wbook *book, int multisheet)
     book->colspin = gtk_spin_button_new (GTK_ADJUSTMENT(c_adj), 1, 0);
     g_signal_connect (c_adj, "value_changed",
 		      G_CALLBACK (wbook_get_col_offset), book);
+    gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(book->colspin),
+				      GTK_UPDATE_IF_VALID);
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), book->colspin, FALSE, FALSE, 5);
 
@@ -341,6 +348,8 @@ static void wsheet_menu (wbook *book, int multisheet)
     book->rowspin = gtk_spin_button_new (GTK_ADJUSTMENT(r_adj), 1, 0);
     g_signal_connect (r_adj, "value_changed",
 		      G_CALLBACK (wbook_get_row_offset), book);
+    gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(book->rowspin),
+				      GTK_UPDATE_IF_VALID);
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), book->rowspin, FALSE, FALSE, 5);
 
@@ -349,8 +358,8 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
     label = gtk_label_new("(A)");
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 5);
-    g_signal_connect (c_adj, "value_changed",
-		      G_CALLBACK (update_column_label), label);
+    g_signal_connect (GTK_EDITABLE(book->colspin), "changed",
+		      G_CALLBACK (colspin_changed), label);
 
     /* choose the worksheet (if applicable) */
     if (multisheet) {
@@ -419,15 +428,6 @@ void wsheet_menu_cancel (GtkWidget *w, wbook *book)
 }
 
 static 
-void update_column_label (GtkAdjustment *a, GtkWidget *w)
-{
-    int col = a->value;
-
-    gtk_label_set_text(GTK_LABEL(w), column_label(col - 1));
-}
-
-
-static 
 void wbook_get_col_offset (GtkWidget *w, wbook *book)
 {
     book->col_offset = gtk_spin_button_get_value_as_int
@@ -482,6 +482,8 @@ static void wsheet_menu (wbook *book, int multisheet)
 			GTK_SIGNAL_FUNC (wbook_get_col_offset), book);
     gtk_signal_connect(GTK_OBJECT(book->colspin), "activate", 
 		       GTK_SIGNAL_FUNC(entry_activate), NULL);
+    gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(book->colspin),
+				      GTK_UPDATE_IF_VALID);
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), book->colspin, FALSE, FALSE, 5);
 
@@ -493,6 +495,8 @@ static void wsheet_menu (wbook *book, int multisheet)
 			GTK_SIGNAL_FUNC (wbook_get_row_offset), book);
     gtk_signal_connect(GTK_OBJECT(book->rowspin), "activate", 
 		       GTK_SIGNAL_FUNC(entry_activate), NULL);
+    gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(book->rowspin),
+				      GTK_UPDATE_IF_VALID);
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), book->rowspin, FALSE, FALSE, 5);
 
@@ -501,8 +505,8 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
     tmp = gtk_label_new("(A)");
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
-    gtk_signal_connect (c_adj, "value_changed",
-			GTK_SIGNAL_FUNC (update_column_label), tmp);
+    gtk_signal_connect (GTK_OBJECT(GTK_EDITABLE(book->colspin)), "changed",
+			GTK_SIGNAL_FUNC (colspin_changed), tmp);
 
     /* choose the worksheet (if applicable) */
     if (multisheet) {

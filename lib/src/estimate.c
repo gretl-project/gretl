@@ -3085,6 +3085,8 @@ MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 {
     MODEL archmod;
     int *wlist = NULL, *arlist = NULL;
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int oldv = pdinfo->v;
     int i, t, nwt, nv, n = pdinfo->n;
     double LM, xx;
     int err = 0;
@@ -3094,7 +3096,7 @@ MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_model_init(&archmod);
 
     /* assess the lag order */
-    if (order < 1) {
+    if (order < 1 || order > T - list[0]) {
 	archmod.errcode = E_UNSPEC;
 	sprintf(gretl_errmsg, _("Invalid lag order for arch (%d)"), order);
 	err = 1;
@@ -3212,7 +3214,7 @@ MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo,
     if (arlist != NULL) free(arlist);
     if (wlist != NULL) free(wlist);
 
-    dataset_drop_vars(order + 1, pZ, pdinfo); 
+    dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo); 
 
     return archmod;
 }

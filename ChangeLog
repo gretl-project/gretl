@@ -13,6 +13,8 @@ version 1.3.1
 - Purge the lesser-used model selection statistics, and use
   the original formulae for AIC and Schwarz's BIC
 - Improve feel of data editing spreadsheet, gtk2 version
+- Model dialog box: allow shifting of regressors with middle-
+  click of mouse
 - Add groupwise heteroskasticity test for panel data
 - Extend handling of missing observations in panel context,
   including case of unbalanced panels (to some degree)
