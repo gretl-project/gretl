@@ -22,6 +22,8 @@ version 1.2.3
 - Add an OLS option, "-r" or "--robust", which calls for
   the use of White's robust standard errors (HC0) in the
   case of cross-sectional data
+- Fix bug: latent problems when adding an observation to
+  the working dataset
 
 2/2/2004 version 1.2.2
 - Make AIC retrievable via genr ("genr foo = $aic")

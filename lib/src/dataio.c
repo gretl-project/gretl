@@ -438,7 +438,10 @@ static int prepZ (double ***pZ, const DATAINFO *pdinfo)
 	if (*pZ == NULL) return 1;
     }
 
-    for (t=0; t<pdinfo->n; t++) (*pZ)[0][t] = 1.0; 
+    for (t=0; t<pdinfo->n; t++) {
+	(*pZ)[0][t] = 1.0; 
+    }
+
     return 0;
 }
 
@@ -2522,16 +2525,26 @@ static int dataset_add_obs (double ***pZ, DATAINFO *pdinfo)
     int i;
 
     for (i=0; i<pdinfo->v; i++) {
-	double *tmp = realloc((*pZ)[i], (pdinfo->n + 1) * sizeof ***pZ);
+	if (pdinfo->vector[i]) {
+	    double *tmp = realloc((*pZ)[i], (pdinfo->n + 1) * sizeof ***pZ);
 
-	if (tmp != NULL) {
-	    (*pZ)[i] = tmp;
-	} else {
-	    return 1;
+	    if (tmp != NULL) {
+		(*pZ)[i] = tmp;
+	    } else {
+		return 1;
+	    }
 	}
     }
 
     pdinfo->n += 1;
+
+    (*pZ)[0][pdinfo->n - 1] = 1.0;
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (pdinfo->vector[i]) {
+	    (*pZ)[i][pdinfo->n - 1] = NADBL;
+	}
+    }
 
     return 0;
 }
@@ -2575,7 +2588,9 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     if (*ppdinfo != NULL) delim = (*ppdinfo)->delim;
 
-    check_for_console(prn);
+    if (prn != NULL) {
+	check_for_console(prn);
+    }
 
     fp = fopen(fname, "r");
     if (fp == NULL) {

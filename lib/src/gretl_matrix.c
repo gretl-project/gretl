@@ -268,11 +268,14 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
     return GRETL_MATRIX_OK;
 }
 
-/* ....................................................... */
+/* On input, general matrix M; on output, the symmetric matrix
+   S = M + M'
+*/
 
 int gretl_matrix_add_self_transpose (gretl_matrix *m)
 {
-    gretl_matrix *tmp;
+    int i, j;
+    double x1, x2;
 
     if (m->rows != m->cols) {
 	fputs("gretl_matrix_add_self_transpose: matrix must be square\n", 
@@ -280,14 +283,19 @@ int gretl_matrix_add_self_transpose (gretl_matrix *m)
 	return GRETL_MATRIX_ERR;
     }
 
-    tmp = gretl_matrix_copy_mod(m, GRETL_MOD_TRANSPOSE);
-    if (tmp == NULL) {
-	return GRETL_MATRIX_ERR;
+    for (i=0; i<m->rows; i++) {
+	for (j=i; j<m->rows; j++) {
+	    if (j == i) {
+		m->val[mdx(m, i, j)] *= 2.0;
+	    } else {
+		x1 = m->val[mdx(m, i, j)];
+		x2 = m->val[mdx(m, j, i)];
+		m->val[mdx(m, i, j)] = 
+		    m->val[mdx(m, j, i)] = x1 + x2;
+	    }
+	}
     }
-    
-    gretl_matrix_add_to(m, tmp);
-    gretl_matrix_free(tmp);
-    
+
     return GRETL_MATRIX_OK;
 }
 
