@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-10-17 09:51-0400\n"
-"PO-Revision-Date: 2004-10-05 00:09+0200\n"
+"PO-Revision-Date: 2004-10-19 00:38+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2832,14 +2832,12 @@ msgid "Augmented Dickey-Fuller regression"
 msgstr "Regressione aumentata Dickey-Fuller"
 
 #: lib/src/modelprint.c:474
-#, fuzzy
 msgid "Dickey--Fuller regression"
-msgstr "Regressione aumentata Dickey--Fuller"
+msgstr "Regressione Dickey--Fuller"
 
 #: lib/src/modelprint.c:475
-#, fuzzy
 msgid "Dickey-Fuller regression"
-msgstr "Regressione aumentata Dickey-Fuller"
+msgstr "Regressione Dickey-Fuller"
 
 #: lib/src/modelprint.c:478
 msgid "Auxiliary regression for RESET specification test"
@@ -3012,14 +3010,13 @@ msgid "%s estimates using the %d observations %s%s%s"
 msgstr "Stime %s usando le %d osservazioni %s%s%s"
 
 #: lib/src/modelprint.c:921 lib/src/modelprint.c:922
-#, fuzzy, c-format
+#, c-format
 msgid "%s estimates using %d observations from %s%s%s"
-msgstr "Stime %s usando le %d osservazioni %s%s%s"
+msgstr "Stime %s usando %d osservazioni da  %s%s%s"
 
 #: lib/src/modelprint.c:927 lib/src/modelprint.c:928
-#, fuzzy
 msgid "Missing or incomplete observations dropped"
-msgstr "Non è stata scartata alcuna osservazione!"
+msgstr "Sono state scartate osservazioni mancanti o incomplete"
 
 #: lib/src/modelprint.c:938 lib/src/modelprint.c:939
 #, c-format
@@ -4253,9 +4250,8 @@ msgid "std. error"
 msgstr "errore std."
 
 #: lib/src/var.c:767
-#, fuzzy
 msgid "squared time trend variable"
-msgstr "Trend temporale"
+msgstr "variabile per il trend temporale quadratico"
 
 #: lib/src/var.c:852
 #, c-format
@@ -4314,17 +4310,16 @@ msgid "Step %d: testing for a unit root in %s\n"
 msgstr "Passo %d: test per una radice unitaria in %s\n"
 
 #: lib/src/var.c:1520
-#, fuzzy, c-format
+#, c-format
 msgid "Step %d: cointegrating regression\n"
-msgstr "Passo %d: cointegrazione\n"
+msgstr "Passo %d: regressione di cointegrazione\n"
 
 #: lib/src/var.c:1546
-#, fuzzy, c-format
+#, c-format
 msgid "Step %d: Dickey-Fuller test on residuals\n"
-msgstr "Regressione aumentata Dickey-Fuller"
+msgstr "Passo %d: test Dickey-Fuller sui residui\n"
 
 #: lib/src/var.c:1552
-#, fuzzy
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -4337,71 +4332,65 @@ msgstr ""
 "(a) L'ipotesi di radice unitaria non è rifiutata per le singole variabili.\n"
 "(b) L'ipotesi di radice unitaria è rifiutata per i residui (uhat) della \n"
 "    regressione di cointegrazione.\n"
-"\n"
-"(si noti che in questo caso i livelli di significatività per le "
-"statistiche \n"
-"D-W e F non possono essere letti dalle solite tavole statistiche)\n"
 
 #: lib/src/var.c:1638 gui2/library.c:696
-#, fuzzy
 msgid "test without constant"
-msgstr "%s è una costante"
+msgstr "test senza costante"
 
 #: lib/src/var.c:1639
-#, fuzzy
 msgid "test with constant"
-msgstr "%s è una costante"
+msgstr "test con costante"
 
 #: lib/src/var.c:1640 gui2/library.c:698
 msgid "with constant and trend"
-msgstr ""
+msgstr "con costante e trend"
 
 #: lib/src/var.c:1641
 msgid "with constant and quadratic trend"
-msgstr ""
+msgstr "con costante e trend quadratico"
 
 #: lib/src/var.c:1732
-#, fuzzy
 msgid "asymptotic p-value"
-msgstr "con p-value"
+msgstr "p-value asintotico"
 
 #: lib/src/var.c:1738
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Augmented Dickey-Fuller tests, order %d, for %s\n"
 msgstr ""
-"Test Dickey-Fuller aumentato su %s:\n"
-"   F(2, %d) = %f, con %s\n"
+"\n"
+"Test Dickey-Fuller aumentati, ordine %d, per %s\n"
 
 #: lib/src/var.c:1741
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Dickey-Fuller tests for %s\n"
-msgstr "Test Dickey-Fuller"
+msgstr ""
+"\n"
+"Test Dickey-Fuller per %s\n"
 
 #: lib/src/var.c:1744
-#, fuzzy, c-format
+#, c-format
 msgid "sample size %d\n"
-msgstr "Ampiezza campionaria"
+msgstr "Ampiezza campionaria %d\n"
 
 #: lib/src/var.c:1745
 msgid "unit-root null hypothesis: a = 1"
-msgstr ""
+msgstr "ipotesi nulla di radice unitaria: a = 1"
 
 #: lib/src/var.c:1752
-#, fuzzy
 msgid "model"
-msgstr "modelli"
+msgstr "modello"
 
 #: lib/src/var.c:1758
 msgid "estimated value of (a - 1)"
-msgstr ""
+msgstr "valore stimato di (a - 1)"
 
 #: lib/src/var.c:1778
 msgid "P-values based on MacKinnon (JAE, 1996)\n"
-msgstr ""
+msgstr "P-value basati su MacKinnon (JAE, 1996)\n"
 
 #: lib/src/var.c:1932
 msgid "Sample variance-covariance matrices for residuals"
@@ -5246,9 +5235,8 @@ msgid "/Data/Add variables/periodic dummies"
 msgstr "/Dati/Aggiungi variabili/_Dummy periodiche"
 
 #: gui/gretl.c:359 gui2/gretl.c:434
-#, fuzzy
 msgid "/Data/Add variables/unit dummies"
-msgstr "/Dati/Aggiungi variabili/Dummy _panel"
+msgstr "/Dati/Aggiungi variabili/Dummy p_eriodiche"
 
 #: gui/gretl.c:360 gui2/gretl.c:435
 msgid "/Data/Add variables/panel dummies"
@@ -8656,7 +8644,6 @@ msgstr "/Test/LEVERAGE - Osservazioni influenti"
 
 #  Comando???
 #: gui2/gui_utils.c:140 gui2/gui_utils.c:209
-#, fuzzy
 msgid "/Tests/collinearity"
 msgstr "/Test/Collinearità"
 
@@ -9246,18 +9233,16 @@ msgid "Couldn't read cointegration order"
 msgstr "Impossibile leggere l'ordine di cointegrazione"
 
 #: gui2/library.c:697
-#, fuzzy
 msgid "with constant"
-msgstr "la costante"
+msgstr "con costante"
 
 #: gui2/library.c:699
 msgid "with constant, trend and trend squared"
-msgstr ""
+msgstr "con costante, trend e trend quadratico"
 
 #: gui2/library.c:700
-#, fuzzy
 msgid "show regression results"
-msgstr "Mostra i dettagli delle regressioni"
+msgstr "Mostra i risultati delle regressioni"
 
 #: gui2/library.c:702
 msgid "gretl: ADF test"
@@ -9851,9 +9836,8 @@ msgid "Model %d"
 msgstr "Modello %d"
 
 #: gui2/model_table.c:706 gui2/model_table.c:968
-#, fuzzy
 msgid "t-statistics in parentheses"
-msgstr "statistiche $t$ tra parentesi"
+msgstr "statistiche t tra parentesi"
 
 #: gui2/model_table.c:708 gui2/model_table.c:804 gui2/model_table.c:911
 msgid "Standard errors in parentheses"
@@ -9888,14 +9872,12 @@ msgid "No model is available"
 msgstr "Non è disponibile alcun modello"
 
 #: gui2/model_table.c:967
-#, fuzzy
 msgid "standard errors in parentheses"
-msgstr "Errori standard tra parentesi"
+msgstr "errori standard tra parentesi"
 
 #: gui2/model_table.c:973
-#, fuzzy
 msgid "model table options"
-msgstr "La tabella modelli è piena"
+msgstr "opzioni tabella modelli"
 
 #  Error sum of squares
 #: gui2/objectsave.c:78
@@ -10018,9 +10000,8 @@ msgid "Add to model table"
 msgstr "Aggiungi alla tabella modelli"
 
 #: gui2/session.c:141 gui2/session.c:2174
-#, fuzzy
 msgid "Options"
-msgstr "Osservazioni"
+msgstr "Opzioni"
 
 #: gui2/session.c:158 gui2/session.c:2139
 msgid "Edit plot commands"
@@ -10622,12 +10603,12 @@ msgstr "Test Lmax"
 #: plugin/johansen.c:383
 #, c-format
 msgid "Cointegrating vectors (trace test, 5%% significance level):"
-msgstr ""
+msgstr "Vettori di cointegrazione (test traccia, livello di significatività al 5%%):"
 
 #: plugin/johansen.c:388
 #, c-format
 msgid "No cointegrating vectors (trace test, 5%% significance level)"
-msgstr ""
+msgstr "Nessun vettore di cointegrazione (test traccia, livello di significatività al 5%%)"
 
 #: plugin/johansen.c:399
 msgid "Failed to find eigenvalues\n"
