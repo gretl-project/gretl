@@ -608,7 +608,7 @@ make_area (PLOTGROUP *grp)
     gtk_signal_connect(GTK_OBJECT(grp->area), "expose_event",
 		       GTK_SIGNAL_FUNC(expose_event), grp);
 
-    gtk_signal_connect(GTK_OBJECT(grp->area), "button_press_event", 
+    gtk_signal_connect(GTK_OBJECT(grp->window), "button_press_event", 
 		       GTK_SIGNAL_FUNC(box_popup), grp);
 
     gtk_signal_connect(GTK_OBJECT(grp->window), "key_press_event", 
