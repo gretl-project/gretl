@@ -427,7 +427,7 @@ static int xpxxpy_func (const int *list, int t1, int t2,
     i = l0 - 1;
     m = i * (i + 1) / 2;
 
-    xpy[0] = xpy[l0] = 0;
+    xpy[0] = xpy[l0] = 0.0;
 
     if (rho) {
 	for (t=t1+1; t<=t2; t++) {
@@ -471,9 +471,9 @@ static int xpxxpy_func (const int *list, int t1, int t2,
 		}
 		xpx[++m] = xx;
 	    }
-	    xx = 0;
+	    xx = 0.0;
 	    for (t=t1+1; t<=t2; t++) {
-		xx = xx + (Z[yno][t] - rho * Z[yno][t-1]) *
+		xx += (Z[yno][t] - rho * Z[yno][t-1]) *
 		    (Z[li][t] - z1 * Z[li][t-1]);
 	    }
 	    xpy[i-1] = xx;
@@ -516,7 +516,7 @@ static int xpxxpy_func (const int *list, int t1, int t2,
 		}
 		xpx[++m] = xx;
 	    }
-	    xx = 0;
+	    xx = 0.0;
 	    for (t=t1; t<=t2; t++) {
 		xx += Z[yno][t] * Z[li][t];
 	    }
@@ -573,7 +573,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
     pmod->dfn = nv - pmod->ifc;
     ysum = xpy[0];
-    ypy = xpy[nv+1];
+    ypy = xpy[nv + 1];
     if (floateq(ypy, 0.0)) { 
         pmod->errcode = E_YPY;
         return; 
@@ -719,7 +719,7 @@ int cholbeta (double *xpx, double *xpy,
     }
 
     nm1 = nv - 1;
-    e = 1 / sqrt(xpx[1]);
+    e = 1.0 / sqrt(xpx[1]);
     xpx[1] = e;
     xpy[1] *= e;
     for (i=2; i<=nv; i++) {
@@ -770,7 +770,7 @@ int cholbeta (double *xpx, double *xpy,
 
     if (rss != NULL) *rss = d;
 
-    if (coeff != NULL) {
+    if (coeff != NULL ) {
 	coeff[nv] = xpy[nv] * xpx[kk];
 	for (j=nm1; j>=1; j--) {
 	    d = xpy[j];
@@ -856,8 +856,9 @@ int makevcv (MODEL *pmod)
 	/* find diagonal element */
 	d = pmod->xpx[kk];
 	if (i > 0) {
-	    for (j=kk+1; j<=kk+i; j++) 
-		d = d - pmod->xpx[j] * pmod->vcv[j];
+	    for (j=kk+1; j<=kk+i; j++) {
+		d -= pmod->xpx[j] * pmod->vcv[j];
+	    }
 	}
 	pmod->vcv[kk] = d * pmod->xpx[kk];
 	/* find off-diagonal elements indexed by kj */
@@ -894,12 +895,15 @@ int makevcv (MODEL *pmod)
 
     /* some estimators need special treatment */
     if (pmod->ci != HCCM && pmod->ci != LOGIT && pmod->ci != PROBIT) {
-	for (k=0; k<idxpx; k++) pmod->vcv[k] = 
-				    pmod->vcv[k+1] * sigma * sigma;
+	for (k=0; k<idxpx; k++) {
+	    pmod->vcv[k] = pmod->vcv[k+1] * sigma * sigma;
+	}
     }
 
     if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
-	for (k=0; k<idxpx; k++) pmod->vcv[k] = pmod->vcv[k+1];
+	for (k=0; k<idxpx; k++) {
+	    pmod->vcv[k] = pmod->vcv[k+1];
+	}
     }
 
     if ((pmod->ci == CORC || pmod->ci == HILU) && pmod->ifc) {
@@ -960,6 +964,7 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
 
     xx = uu = 0.0;
     if (order) order -= 1;
+
     for (t=t1+order+1; t<=t2; t++) { 
         ut = uhat[t];
         ut1 = uhat[t-1];
@@ -967,7 +972,9 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
         uu += ut * ut1;
         xx += ut1 * ut1;
     }
+
     if (floateq(xx, 0.0)) return NADBL;
+
     rho = uu/xx;
     if (rho > 1.0 || rho < -1.0) {
 	rho = altrho(order, t1, t2, uhat);
