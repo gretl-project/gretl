@@ -293,8 +293,7 @@ static void gretl_model_init_pointers (MODEL *pmod)
  * @pmod: pointer to #MODEL.
  *
  * Initializes a gretl #MODEL, including setting its pointer members
- * to %NULL.  If @pdinfo is not %NULL, sets the start and end of the
- * model's sample to the current dataset values.
+ * to %NULL.
  */
 
 void gretl_model_init (MODEL *pmod)
@@ -323,7 +322,7 @@ void gretl_model_init (MODEL *pmod)
 }
 
 /**
- * gretl_model_init:
+ * gretl_model_smpl_init:
  * @pmod: pointer to #MODEL.
  * @pdinfo: dataset information.
  *

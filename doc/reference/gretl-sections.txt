@@ -482,6 +482,7 @@ runs_test
 <FILE>printout</FILE>
 GRETL_DIGITS
 GRETL_MP_DIGITS
+PAGELINES
 session_time
 logo
 lib_logo
@@ -491,7 +492,7 @@ printfreq
 printcorr
 print_smpl
 outcovmx
-page_break
+page_pause
 print_obs_marker
 printdata
 text_print_fit_resid
@@ -697,6 +698,7 @@ free_model
 AR_MODEL
 gretl_model_new
 gretl_model_init
+gretl_model_smpl_init
 gretl_model_set_auxiliary
 exchange_smpl
 clear_model
@@ -710,6 +712,11 @@ debug_print_model_info
 copy_model
 swap_models
 command_ok_for_model
+get_model_count
+reset_model_count
+model_count_plus
+model_count_minus
+set_model_id
 </SECTION>
 
 <SECTION>
@@ -717,6 +724,8 @@ command_ok_for_model
 get_garch_vcv_version
 get_force_hc
 get_hp_lambda
+gretl_set_text_pause
+gretl_get_text_pause
 </SECTION>
 
 <SECTION>
@@ -733,6 +742,16 @@ gretl_string_table_new
 gretl_string_table_index
 gretl_string_table_print
 gretl_string_table_destroy
+</SECTION>
+
+<SECTION>
+<FILE>gretl_list</FILE>
+gretl_list_new
+in_gretl_list
+gretl_list_add
+gretl_list_omit
+rearrange_list
+list_members_replaced
 </SECTION>
 
 <SECTION>
