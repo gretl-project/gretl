@@ -468,13 +468,11 @@ static int read_listbox_content (windata_t *vwin, int (*should_stop)())
 {
     gchar *line;
     gchar *tmpstr[3];
-    int i, j, err = 0;
+    int i, err = 0;
 
     err = speak_line("Contents of list box.\n");
 
     for (i=0; !err; i++) {
-	tmpstr[0] = tmpstr[1] = tmpstr[2] = NULL;
-
 	if (!gtk_clist_get_text(GTK_CLIST(vwin->listbox), i, 0, &tmpstr[0]) ||
 	    !gtk_clist_get_text(GTK_CLIST(vwin->listbox), i, 1, &tmpstr[1]) ||
 	    !gtk_clist_get_text(GTK_CLIST(vwin->listbox), i, 2, &tmpstr[2])) {
@@ -486,10 +484,6 @@ static int read_listbox_content (windata_t *vwin, int (*should_stop)())
 	    err = speak_line(line);
 	    g_free(line);
 	}
-
-	for (j=0; j<3; j++) {
-	    g_free(tmpstr[j]); 
-	}	
 
 	if (!err && should_stop()) {
 	    break;
