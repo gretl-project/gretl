@@ -1659,10 +1659,15 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
 	if (sscanf(buf, "%8s", dumv) != 1) return TRUE;
 
-	sprintf(line, "smpl %s --dummy", dumv);
+	/* add the "cumulate" option here, since the reckoning of
+	   what is a dummy var, and the number of 1s for a dummy,
+	   is based on the current sub-sample, if any.
+	*/
+
+	sprintf(line, "smpl %s --dummy --cumulate", dumv);
 	if (verify_and_record_command(line)) return TRUE;
 
-	err = bool_subsample(rset->opt);
+	err = bool_subsample(rset->opt | OPT_C);
 	if (!err) {
 	    gtk_widget_destroy(rset->dlg);
 	} 
@@ -1675,9 +1680,10 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	subn = gtk_spin_button_get_value(GTK_SPIN_BUTTON(rset->startspin));
 #endif
 
-	/* We'll add the "cumulate" option here, since in the dialog box
+	/* add the "cumulate" option here, since in the dialog box
 	   we use the "n" corresponding to the current sub-sample, 
-	   (if any) as the basis for the sugested sub-sample size. */
+	   (if any) as the basis for the suggested sub-sample size. 
+	*/
 
 	sprintf(line, "smpl %d --random --cumulate", subn);
 	if (verify_and_record_command(line)) return TRUE;
