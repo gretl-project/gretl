@@ -2217,7 +2217,7 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     int ts = dataset_is_time_series(datainfo);
-    int pdum = mydata->active_var;
+    int pdum = mydata->active_var; 
 
     /* add residuals to data set temporarily */
     if (add_fit_resid(pmod, 0, 1)) return;

@@ -809,6 +809,7 @@ void windata_init (windata_t *mydata)
     mydata->data = NULL;
     mydata->fname[0] = '\0';
     mydata->action = -1;
+    mydata->active_var = 0;
 }
 
 /* .................................................................. */
