@@ -20,6 +20,8 @@
 /* panel data plugin for gretl */
 
 #include "libgretl.h"
+#include "f2c.h"
+#include "clapack_double.h"
 
 typedef struct {
     int ns;
@@ -147,174 +149,54 @@ static void vcv_slopes (hausman_t *haus, MODEL *pmod, int nunits,
     }
 }
 
-/* .......................................................... */
-
-#define TINY 1.0e-20
-
-static int lu_decomp (double **a, int n, int *idx)
-{
-    int i, j, k, imax = 0;
-    double big, dum, sum, tmp;
-    double *xx;
-
-    xx = malloc((n + 1) * sizeof *xx);
-    if (xx == NULL) return 1;
-    for (i=0; i<=n; i++) xx[i] = 1.0;
-
-    for (i=1; i<=n; i++) {
-	big = 0.0;
-	for (j=1; j<=n; j++) 
-	    if ((tmp = fabs(a[i][j])) > big) big = tmp;
-	if (floateq(big, 0.0)) {
-	    free(xx);
-	    return 1;
-	}
-	xx[i] = 1.0/big;
-    }
-    for (j=1; j<=n; j++) {
-	for (i=1; i<j; i++) {
-	    sum = a[i][j];
-	    for (k=1; k<i; k++) sum -= a[i][k] * a[k][j];
-	    a[i][j] = sum;
-	}
-	big = 0.0;
-	for (i=j; i<=n; i++) {
-	    sum = a[i][j];
-	    for (k=1; k<j; k++) sum -= a[i][k] * a[k][j];
-	    a[i][j] = sum;
-	    if ((dum = xx[i] * fabs(sum)) >= big) {
-		big = dum;
-		imax = i;
-	    }
-	}
-	if (j != imax) {
-	    for (k=1; k<=n; k++) {
-		dum = a[imax][k];
-		a[imax][k] = a[j][k];
-		a[j][k] = dum;
-	    }
-	    xx[imax] = xx[j];
-	}
-	idx[j] = imax;
-	if (floateq(a[j][j], 0.0)) a[j][j] = TINY;
-	if (j != n) {
-	    dum = 1.0/a[j][j];
-	    for (i=j+1; i<=n; i++) a[i][j] *= dum;
-	}
-    }
-    free(xx);
-    return 0;
-}
-
 /* .................................................................. */
 
-static void lu_backsub (double **a, int n, int *idx, double *b)
+static int bXb (hausman_t *haus)
 {
-    int i, k = 0, ip, j;
-    double sum;
+    char uplo = 'L'; 
+    integer nrhs = 1;
+    integer n = haus->ns;
+    integer ldb = n;
+    integer info = 0;
+    integer *ipiv;
+    double *x;
+    int i;
 
-    for (i=1; i<=n; i++) {
-	ip = idx[i];
-	sum = b[ip];
-	b[ip] = b[i];
-	if (k) 
-	    for (j=k; j<=i-1; j++) sum -= a[i][j] * b[j];
-	else if (floatneq(sum, 0.0)) k = i;
-	b[i] = sum;
-    }
-    for (i=n; i>=1; i--) {
-	sum = b[i];
-	for (j=i+1; j<=n; j++) sum -= a[i][j] * b[j];
-	b[i] = sum / a[i][i];
-    }
-}
+    /* make a copy of haus->bdiff first */
+    x = malloc(n * sizeof *x);
+    if (x == NULL) return E_ALLOC;
 
-/* .................................................................. */
-
-static double bXb (double *b, double **X, int n)
-{
-    int i, j;
-    double row, xx = 0.0;
-
-    for (i=1; i<=n; i++) {
-	row = 0.0;
-	for (j=1; j<=n; j++) row += b[j] * X[j][i];
-	xx += b[i] * row;
-    }
-    return xx;
-}
-
-/* .................................................................. */
-
-static int haus_invert (hausman_t *haus)
-{
-    double **a, **y, *col;
-    int i, j, k, *idx;
-    int err = 0, n = haus->ns;
-
-#ifdef notyet
-    /* lapack: invert triangular matrix */
-    int dtrtri_(char *uplo, char *diag, integer *n, doublereal *
-		a, integer *lda, integer *info);
-
-    /* packed storage version */
-    int dtptri_(char *uplo, char *diag, integer *n, doublereal *
-		ap, integer *info);
-#endif
-
-    a = malloc((n + 1) * sizeof *a);
-    if (a == NULL) return 1;
-
-    for (i=1; i<=n; i++) {
-	a[i] = malloc((n + 1) * sizeof **a);
-	if (a[i] == NULL) return 1;
+    ipiv = malloc(n * sizeof *ipiv);
+    if (ipiv == NULL) {
+	free(x);
+	return E_ALLOC;
     }
 
-    y = malloc((n + 1) * sizeof *y);
-    if (y == NULL) return 1;
-
-    for (i=1; i<=n; i++) {
-	y[i] = malloc((n + 1) * sizeof **y);
-	if (y[i] == NULL) return 1;
+    for (i=0; i<haus->ns; i++) {
+	x[i] = haus->bdiff[i];
     }
 
-    col = malloc((n + 1) * sizeof *col);
-    if (col == NULL) return 1;
+    /* factorize (LU) first */
+    dsptrf_(&uplo, &n, haus->sigma, ipiv, &info);
+    if (info > 0) {
+	fprintf(stderr, "Hausman sigma matrix is singular\n");
+    } else if (info < 0) {
+	fprintf(stderr, "Illegal entry in Hausman sigma matrix\n");
+    }
 
-    idx = malloc((n + 1) * sizeof *idx);
-    if (idx == NULL) return 1;
-
-    k = 0;
-    for (i=1; i<=n; i++) {
-	for (j=i; j<=n; j++) {
-	    a[i][j] = haus->sigma[k];
-            if (i != j) 
-		a[j][i] = haus->sigma[k];
-            k++;
+    /* then solve */
+    if (info == 0) {
+	dsptrs_(&uplo, &n, &nrhs, haus->sigma, ipiv, x, &ldb, &info);
+	haus->H = 0.0;
+	for (i=0; i<haus->ns; i++) {
+	    haus->H += x[i] * haus->bdiff[i];
 	}
     }
 
-    err = lu_decomp(a, n, idx);
+    free(x);
+    free(ipiv);
 
-    if (!err) {
-	for (j=1; j<=n; j++) {
-	    for (i=1; i<=n; i++) col[i] = 0.0;
-	    col[j] = 1.0;
-	    lu_backsub(a, n, idx, col);
-	    for (i=1; i<=n; i++) y[i][j] = col[i];
-	}
-	haus->H = bXb(haus->bdiff, y, n);
-    }
-
-    for (i=1; i<=n; i++) {
-	free(a[i]);
-	free(y[i]);
-    }
-    free(a);
-    free(y);
-    free(col);
-    free(idx);
-    return err;
+    return info;
 }
 
 /* .................................................................. */
@@ -388,7 +270,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	/* skip the constant in this printing */
 	for (i=1; i<pmod->list[0] - 1; i++) {
 	    print_panel_coeff(&lsdv, &lsdv, pdinfo, i, prn);
-	    haus->bdiff[i] = lsdv.coeff[i];
+	    haus->bdiff[i-1] = lsdv.coeff[i];
 	}
 
 	for (i=0; i<nunits; i++) {
@@ -493,7 +375,7 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 		"                     (standard errors in parentheses)\n\n"));
 	for (i=0; i<relist[0] - 1; i++) {
 	    print_panel_coeff(pmod, &remod, pdinfo, i, prn);
-	    if (i > 0) haus->bdiff[i] -= remod.coeff[i];
+	    if (i > 0) haus->bdiff[i-1] -= remod.coeff[i];
 	}
 	makevcv(&remod);
 	vcv_slopes(haus, &remod, nunits, 1);
@@ -564,7 +446,7 @@ static int do_hausman_test (hausman_t *haus, PRN *prn)
     int i, ns = haus->ns;
     int nterms = (ns * ns + ns) / 2;
 
-    for (i=1; i<=ns; i++)
+    for (i=0; i<ns; i++)
  	pprintf(prn, "b%d_FE - beta%d_RE = %g\n", i, i, haus->bdiff[i]);
     pprintf(prn, "\n");
 
@@ -572,7 +454,7 @@ static int do_hausman_test (hausman_t *haus, PRN *prn)
  	pprintf(prn, "vcv_diff[%d] = %g\n", i, haus->sigma[i]);
 #endif
 
-    if (haus_invert(haus)) { 
+    if (bXb(haus)) { 
 	pputs(prn, _("Error attempting to invert vcv difference matrix\n"));
 	return 1;
     }
@@ -610,7 +492,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (nunits > pmod->ncoeff) {
 	ns = haus.ns = pmod->ncoeff - 1;
-	haus.bdiff = malloc(pmod->ncoeff * sizeof *haus.bdiff);
+	haus.bdiff = malloc(haus.ns * sizeof *haus.bdiff);
 	if (haus.bdiff == NULL) return E_ALLOC;
 	haus.sigma = malloc(((ns * ns + ns) / 2) * sizeof *haus.sigma);
 	if (haus.sigma == NULL) return E_ALLOC; 
@@ -705,7 +587,7 @@ static void panel_lag (double **tmpZ, DATAINFO *tmpinfo,
 
 /* - do some sanity checks
    - create a local copy of the required portion of the data set,
-   skipping the obs that will be missing
+     skipping the obs that will be missing
    - copy in the lags of uhat
    - estimate the aux model
    - destroy the temporary data set
@@ -745,6 +627,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     /* create temporary reduced dataset */
     tmpinfo = create_new_dataset(&tmpZ, nv, nobs, 0);
     if (tmpinfo == NULL) return E_ALLOC;
+
     make_reduced_data_info(tmpinfo, pdinfo, order);
 
 #ifdef PDEBUG
@@ -759,6 +642,8 @@ int panel_autocorr_test (MODEL *pmod, int order,
     } 
 
     if (!err) {
+	int k;
+
 	aclist[0] = pmod->list[0] + order;
 	/* copy model uhat to position 1 in temp data set */
 	aclist[1] = 1;
@@ -767,18 +652,20 @@ int panel_autocorr_test (MODEL *pmod, int order,
 		       order);
 	/* copy across the original indep vars, making
 	   the new regression list while we're at it */
+	k = 2;
 	for (i=2; i<=pmod->list[0]; i++) {
 	    if (pmod->list[i] == 0) { /* the constant */
 		aclist[i] = 0;
 	    } else {
-		aclist[i] = i;
-		panel_copy_var(tmpZ, tmpinfo, i, 
+		aclist[i] = k;
+		panel_copy_var(tmpZ, tmpinfo, k, 
 			       &Z[pmod->list[i]][0], pdinfo, pmod->list[i], 
 			       order);
+		k++;
 	    }
 	}
     }
-	
+
     if (!err) {
 	int v = pmod->list[0] - 1;
 

@@ -681,8 +681,8 @@ int find_coeff_number (const MODEL *pmod, const char *param)
 
     if (pmod->params == NULL) return -1;
 
-    for (i=1; i<=pmod->ncoeff; i++) {
-	if (strcmp(param, pmod->params[i]) == 0) return i;
+    for (i=0; i<pmod->ncoeff; i++) {
+	if (strcmp(param, pmod->params[i+1]) == 0) return i;
     }
     
     return -1;
@@ -971,6 +971,7 @@ static void print_nls_summary (void)
 {
     printf("\nConvergence tolerance = %g\n", print_tol);
     printf("Number of 'OK' runs = %d\n", n_ok);
+    if (n_ok == 0) return;
     printf("Cases using analytical derivatives = %d\n", n_analytic);
     printf("Number of estimation failures = %d\n", n_fail);
     printf("Avg. min. correct figures, coeffs, OK runs = %.3f\n",

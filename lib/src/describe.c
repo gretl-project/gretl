@@ -389,7 +389,7 @@ int corrgram (int varno, int order, double ***pZ,
 	      DATAINFO *pdinfo, PATHS *ppaths, 
 	      int batch, PRN *prn)
 {
-    double *x, *y, *acf, *xl, box, pm;
+    double *x, *y, *acf, box, pm;
     double *pacf = NULL;
     int k, l, acf_m, pacf_m, nobs; 
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -443,8 +443,11 @@ int corrgram (int varno, int order, double ***pZ,
     x = malloc(pdinfo->n * sizeof *x);
     y = malloc(pdinfo->n * sizeof *y);
     acf = malloc(acf_m * sizeof *acf);
-    if (x == NULL || y == NULL || acf == NULL)
+    if (x == NULL || y == NULL || acf == NULL) {
+	free(x);
+	free(y);
 	return E_ALLOC;    
+    }
 
     /* calculate acf, with lag order m */
     for (l=1; l<=acf_m; l++) {
@@ -480,28 +483,30 @@ int corrgram (int varno, int order, double ***pZ,
 
     if (batch) { 
 	/* batch mode: use ASCII graphics, not gnuplot */
-	xl = malloc(acf_m * sizeof *xl);
-	if (xl == NULL) return E_ALLOC;
+	double *xl = malloc(acf_m * sizeof *xl);
+
+	if (xl == NULL) {
+	    err = E_ALLOC;
+	    goto acf_getout;
+	}
 	for (l=0; l<acf_m; l++) xl[l] = l + 1.0;
         pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
 	_graphyzx(NULL, acf, NULL, xl, acf_m, pdinfo->varname[varno], 
 		  _("lag"), NULL, 0, prn);
-	free(x);
 	free(xl);
-	free(y);
-	free(acf);
-	return 0;	
     } 
 
     /* determine lag order for pacf (may have to be shorter than acf_m) */
     if (acf_m > nobs / 2 - 1) pacf_m = nobs / 2 - 1;
     else pacf_m = acf_m;
 
-    /* generate and plot partial autocorrelation function */
+    /* generate (and if not in batch mode) plot partial 
+       autocorrelation function */
+
     pacf = malloc(pacf_m * sizeof *pacf); 
     if (pacf == NULL) {
 	err = E_ALLOC;
-	goto getout;
+	goto acf_getout;
     }
 
     err = pacf_err = get_pacf(pacf, pacf_m, varno, pZ, pdinfo);
@@ -522,9 +527,11 @@ int corrgram (int varno, int order, double ***pZ,
     pputs(prn, "\n");
     if (pacf_m % 5 > 0) pputs(prn, "\n");
 
-    if (gnuplot_init(ppaths, &fq)) {
-	fprintf(stderr, "gnuplot_init failed\n");
-	return E_FOPEN;
+    if (batch) {
+	goto acf_getout;
+    } else if (gnuplot_init(ppaths, &fq)) {
+	err = E_FOPEN;
+	goto acf_getout;
     }
 
     /* for confidence bands */
@@ -594,11 +601,11 @@ int corrgram (int varno, int order, double ***pZ,
     fclose(fq);
     err = gnuplot_display(ppaths);
 
- getout:
+ acf_getout:
     free(x);
     free(y);
     free(acf);
-    if (pacf) free(pacf);
+    free(pacf);
 
     return err;
 }

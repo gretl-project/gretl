@@ -907,9 +907,11 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
+	int code = ddata->code;
+
 	close_dialog(ddata);
-	view_buffer(prn, hsize, vsize, title, ddata->code, view_items);
-	if (ddata->code == CORRGM) register_graph();
+	view_buffer(prn, hsize, vsize, title, code, view_items);
+	if (code == CORRGM) register_graph();
     }
 }
 

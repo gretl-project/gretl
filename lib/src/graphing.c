@@ -563,12 +563,13 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
  * Returns: the return value from the system command.
  */
 
+#ifdef GNUPLOT_PNG
+
 int gnuplot_display (const PATHS *ppaths)
 {
     int err = 0;
     char plotcmd[MAXLEN];
 
-#ifdef GNUPLOT_PNG
 # ifdef OS_WIN32
     sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
@@ -577,7 +578,17 @@ int gnuplot_display (const PATHS *ppaths)
 	    (GRETL_GUI(ppaths))? "" : " -persist", ppaths->plotfile);
     if (system(plotcmd)) err = 1;
 # endif /* OS_WIN32 */
-#else  
+
+    return err;
+}
+
+#else /* following: old non-GNUPLOT_PNG version */
+
+int gnuplot_display (const PATHS *ppaths)
+{
+    int err = 0;
+    char plotcmd[MAXLEN];
+
 # ifdef OS_WIN32
     sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
     if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
@@ -585,9 +596,11 @@ int gnuplot_display (const PATHS *ppaths)
     sprintf(plotcmd, "%s -persist \"%s\"", ppaths->gnuplot, ppaths->plotfile);
     if (system(plotcmd)) err = 1;
 # endif /* OS_WIN32 */
-#endif /* GNUPLOT_PNG */
+
     return err;
 }
+
+#endif /* GNUPLOT_PNG alternation */
 
 enum {
     GTITLE_VLS,
