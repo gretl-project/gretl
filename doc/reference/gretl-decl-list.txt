@@ -1,18 +1,4 @@
 <SECTION>
-<FILE>gettext</FILE>
-gettext
-dgettext
-dcgettext
-ngettext
-dngettext
-dcngettext
-textdomain
-bindtextdomain
-bind_textdomain_codeset
-gettext_noop
-</SECTION>
-
-<SECTION>
 <FILE>cmdlist</FILE>
 </SECTION>
 
@@ -32,6 +18,7 @@ autocorr_test
 chow_test
 cusum_test
 hausman_test
+mp_ols
 </SECTION>
 
 <SECTION>
@@ -92,11 +79,6 @@ matrix_print_corr
 read_reg_val
 write_reg_val
 cli_read_registry
-</SECTION>
-
-<SECTION>
-<FILE>discrete</FILE>
-logit_probit
 </SECTION>
 
 <SECTION>
@@ -162,6 +144,11 @@ termtype_to_termstr
 </SECTION>
 
 <SECTION>
+<FILE>discrete</FILE>
+logit_probit
+</SECTION>
+
+<SECTION>
 <FILE>interact</FILE>
 CMD
 getcmd
@@ -182,6 +169,8 @@ gretl_print_omit
 
 <SECTION>
 <FILE>libgretl</FILE>
+I_
+gettext_noop
 _
 N_
 MAXLABEL
@@ -205,10 +194,12 @@ GRAPHT
 SESSION
 SESSIONBUILD
 PRN
+mp_results
 </SECTION>
 
 <SECTION>
 <FILE>monte_carlo</FILE>
+MAXLOOP
 loop_types
 ifcodes
 LOOP_PRINT
@@ -253,9 +244,12 @@ print_smpl
 outcovmx
 print_white_vcv
 page_break
+print_obs_marker
 printdata
 print_fit_resid
 printxx
+gretl_print_fullwidth_double
+gretl_print_value
 gretl_print_destroy
 gretl_print_new
 </SECTION>
@@ -281,6 +275,7 @@ dotpos
 slashpos
 delchar
 haschar
+charsub
 lower
 clear
 chopstr
@@ -291,6 +286,11 @@ compress_spaces
 pprintf
 safecpy
 doing_nls
+reset_local_decpoint
+get_local_decpoint
+obs_str_to_double
+colonize_obs
+iso_gettext
 </SECTION>
 
 <SECTION>
@@ -314,7 +314,24 @@ tex_escape
 </SECTION>
 
 <SECTION>
-<FILE>utils</FILE>
+<FILE>var</FILE>
+list_diffgenr
+list_ldiffgenr
+var
+coint
+adf_test
+ma_model
+</SECTION>
+
+<SECTION>
+<FILE>version</FILE>
+LIBGRETL_CURRENT
+LIBGRETL_REVISION
+LIBGRETL_AGE
+</SECTION>
+
+<SECTION>
+<FILE>gretl_utils</FILE>
 free_model
 dataset_is_time_series
 dataset_is_daily
@@ -338,9 +355,11 @@ getflag
 catchflag
 gretl_model_new
 exchange_smpl
+save_model_copy
 clear_model
 show_paths
 set_paths
+fetch_gretl_path
 copylist
 grow_nobs
 dataset_add_vars
@@ -362,20 +381,8 @@ get_panel_structure
 set_panel_structure
 balanced_panel
 get_xvalue
-</SECTION>
-
-<SECTION>
-<FILE>var</FILE>
-list_diffgenr
-list_ldiffgenr
-var
-coint
-adf_test
-ma_model
-</SECTION>
-
-<SECTION>
-<FILE>version</FILE>
+free_gretl_mp_results
+gretl_mp_results_new
 </SECTION>
 
 <SECTION>
