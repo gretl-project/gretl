@@ -347,6 +347,9 @@ fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
     system_attach_sigma(fsys->sys, fsys->sigma);
     fsys->sigma = NULL;
 
+    system_attach_uhat(fsys->sys, fsys->uhat);
+    fsys->uhat = NULL;
+
     /* record restricted and unrestricted log-likelihood */
     system_set_ll(fsys->sys, fsys->ll);
     system_set_llu(fsys->sys, fsys->llu);
@@ -459,7 +462,7 @@ fiml_form_indepvars (fiml_system *fsys, const double **Z, int t1)
 
 static void fiml_uhat_init (fiml_system *fsys)
 {
-    const gretl_matrix *uhat = system_get_uhat(fsys->sys);
+    gretl_matrix *uhat = system_get_uhat(fsys->sys);
     double x;
     int i, t;
 

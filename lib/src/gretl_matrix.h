@@ -122,6 +122,8 @@ int gretl_invert_general_matrix (gretl_matrix *a);
 
 int gretl_invert_symmetric_matrix (gretl_matrix *a);
 
+int gretl_invert_diagonal_matrix (gretl_matrix *a);
+
 double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev);
 
 double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretll-1.3.0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-04 15:11-0500\n"
-"PO-Revision-Date: 2005-01-05 08:07+0100\n"
+"PO-Revision-Date: 2005-01-05 09:03-0500\n"
 "Last-Translator: Markus Hahn <markus.hahn@rub.de>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -5121,7 +5121,7 @@ msgstr "/Datei/Öffne Daten/importiere Excel..."
 #: gui/gretl.c:172
 #: gui2/gretl.c:219
 msgid "/File/_Append data"
-msgstr "/Datei/Daten an_hängen"
+msgstr "/Datei/Daten anhängen"
 
 #: gui/gretl.c:173
 #: gui2/gretl.c:220

@@ -1336,6 +1336,36 @@ gretl_symmetric_matrix_expand (gretl_matrix *m, char uplo)
 }
 
 /**
+ * gretl_invert_diagonal_matrix:
+ * @a: matrix to invert.
+ * 
+ * Computes the inverse of a diagonal matrix.
+ * On exit @a is overwritten with the inverse. 
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ * 
+ */
+
+int gretl_invert_diagonal_matrix (gretl_matrix *a)
+{
+    double x;
+    int i;
+
+    if (a->cols != a->rows) {
+	fputs("gretl_invert_diagonal_matrix: input is not square\n",
+	      stderr);
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    for (i=0; i<a->rows; i++) {
+	x = a->val[mdx(a,i,i)];
+	a->val[mdx(a,i,i)] = 1.0 / x;
+    }
+
+    return 0;
+}
+
+/**
  * gretl_invert_symmetric_matrix:
  * @a: matrix to invert.
  * 

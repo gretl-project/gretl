@@ -22,9 +22,7 @@
 #include "libgretl.h"
 #include "gretl_private.h"
 #include "system.h"
-
-typedef struct id_atom_ id_atom;
-typedef struct identity_ identity;
+#include "system_private.h"
 
 enum {
     OP_PLUS,
@@ -43,15 +41,6 @@ enum {
     SYS_TEST_NOTIMP
 } system_test_types;
 
-enum {
-    GRETL_SYSTEM_SAVE_UHAT = 1 << 0,
-    GRETL_SYSTEM_SAVE_YHAT = 1 << 1,
-    GRETL_SYSTEM_DFCORR    = 1 << 2,
-    GRETL_SYS_VCV_GEOMEAN  = 1 << 3,
-    GRETL_SYS_SAVE_VCV     = 1 << 4,
-    GRETL_SYS_RESTRICT     = 1 << 5
-} equation_system_flags;
-
 struct id_atom_ {
     int op;         /* operator (plus or miinus) */
     int varnum;     /* ID number of variable to right of operator */
@@ -63,37 +52,6 @@ struct identity_ {
     id_atom *atoms; /* pointer to RHS "atoms" */
 };
 
-struct _gretl_equation_system {
-    char *name;                 /* user-specified name for system, or NULL */
-    int method;                 /* estimation method */
-    int n_equations;            /* number of stochastic equations */
-    int n_identities;           /* number of identities */
-    int n_obs;                  /* number of observations per equation */
-    int iters;                  /* number of iterations taken */
-    char flags;                 /* to record options (e.g. save residuals) */
-    double ll;                  /* log-likelihood (restricted) */
-    double llu;                 /* unrestricted log-likelihood */
-    double X2;                  /* chi-square test value */
-    double ess;                 /* total error sum of squares */
-    double diag;                /* test stat for diagonal covariance matrix */
-    double bdiff;               /* summary stat for change in coefficients */
-    int **lists;                /* regression lists for stochastic equations */
-    int *endog_vars;            /* list of endogenous variables */
-    int *instr_vars;            /* list of instruments (exogenous vars) */
-    identity **idents;          /* set of identities */
-    gretl_matrix *b;            /* coefficient estimates */
-    gretl_matrix *vcv;          /* covariance matrix of coefficients */
-    gretl_matrix *sigma;        /* cross-equation covariance matrix */
-    gretl_matrix *R;            /* LHS of any linear restrictions */
-    gretl_matrix *q;            /* RHS of any linear restrictions */  
-    const gretl_matrix *uhat;   /* residuals, all equations: convenience pointer,
-                                   not to be freed */
-    MODEL **models;             /* set of pointers to per-equation models: just
-				   convenience pointers -- these should NOT be
-				   freed as part of sys cleanup
-				*/
-};
-
 const char *gretl_system_method_strings[] = {
     "sur",
     "3sls",
@@ -101,6 +59,7 @@ const char *gretl_system_method_strings[] = {
     "liml",
     "ols",
     "tsls",
+    "wls",
     NULL
 };
 
@@ -111,6 +70,7 @@ const char *gretl_system_short_strings[] = {
     N_("LIML"),
     N_("OLS"),
     N_("TSLS"),
+    N_("WLS"),
     NULL
 };
 
@@ -121,6 +81,7 @@ const char *gretl_system_long_strings[] = {
     N_("Limited Information Maximum Likelihood"),
     N_("Ordinary Least Squares"),
     N_("Two-Stage Least Squares"),
+    N_("Weighted Least Squares"),
     NULL
 };
 
@@ -289,6 +250,8 @@ gretl_equation_system_new (int method, const char *name)
 
     sys->method = method;
 
+    sys->t1 = sys->t2 = 0;
+
     sys->n_equations = 0;
     sys->n_identities = 0;
 
@@ -308,12 +271,13 @@ gretl_equation_system_new (int method, const char *name)
     sys->b = NULL;
     sys->vcv = NULL;
     sys->sigma = NULL;
+    sys->uhat = NULL;
 
     sys->lists = NULL;
     sys->endog_vars = NULL;
     sys->instr_vars = NULL;
     sys->idents = NULL;
-    sys->uhat = NULL;
+
     sys->models = NULL;
 
     return sys;
@@ -338,6 +302,8 @@ static void system_clear_results (gretl_equation_system *sys)
 {
     sys->iters = 0;
 
+    sys->t1 = sys->t2 = 0;
+
     sys->ll = 0.0;
     sys->llu = 0.0;
     sys->X2 = 0.0;
@@ -358,6 +324,11 @@ static void system_clear_results (gretl_equation_system *sys)
     if (sys->sigma != NULL) {
 	gretl_matrix_free(sys->sigma);
 	sys->sigma = NULL;
+    }
+
+    if (sys->uhat != NULL) {
+	gretl_matrix_free(sys->uhat);
+	sys->uhat = NULL;
     }
 }
 
@@ -406,17 +377,7 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
 	gretl_matrix_free(sys->q);
     }
 
-    if (sys->vcv != NULL) {
-	gretl_matrix_free(sys->vcv);
-    }
-
-    if (sys->b != NULL) {
-	gretl_matrix_free(sys->b);
-    }
-
-    if (sys->sigma != NULL) {
-	gretl_matrix_free(sys->sigma);
-    }
+    system_clear_results(sys);
 
     free(sys);
 }
@@ -730,7 +691,7 @@ static int sys_test_type (gretl_equation_system *sys, gretlopt opt)
     int ret = SYS_NO_TEST;
 
     if (system_n_restrictions(sys) > 0) {
-	if (sys->method == SYS_SUR) {
+	if (sys->method == SYS_SUR || sys->method == SYS_WLS) {
 	    if (opt & OPT_T) {
 		ret = SYS_LR_TEST;
 	    } else {
@@ -952,13 +913,15 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
     sys->method = method;
 
     if (opt & OPT_T) {
-	/* the iterate option is available only for SUR or 3SLS */
-	if (sys->method != SYS_SUR && sys->method != SYS_3SLS) {
+	/* the iterate option is available for WLS, SUR or 3SLS */
+	if (method != SYS_WLS && method != SYS_SUR && method != SYS_3SLS) {
 	    opt ^= OPT_T;
 	}
     }
 
-    if (method == SYS_OLS || method == SYS_TSLS || method == SYS_LIML) {
+    /* by default, apply a df correction for single-equation methods */
+    if (method == SYS_OLS || method == SYS_WLS ||
+	method == SYS_TSLS || method == SYS_LIML) {
 	if (!(opt & OPT_N)) {
 	    sys->flags |= GRETL_SYSTEM_DFCORR;
 	}
@@ -1021,13 +984,19 @@ const char *gretl_system_get_name (const gretl_equation_system *sys)
     return sys->name;
 }
 
-int system_adjust_t1t2 (const gretl_equation_system *sys,
+int system_adjust_t1t2 (gretl_equation_system *sys,
 			int *t1, int *t2, const double **Z)
 {
     int i, misst, err = 0;
 
     for (i=0; i<sys->n_equations && !err; i++) {
 	err = adjust_t1t2(NULL, sys->lists[i], t1, t2, Z, &misst);
+    }
+
+    if (!err) {
+	sys->t1 = *t1;
+	sys->t2 = *t2;
+	sys->n_obs = *t2 - *t1 + 1;
     }
 
     return err;
@@ -1188,17 +1157,7 @@ int *system_get_instr_vars (const gretl_equation_system *sys)
     return sys->instr_vars;
 }
 
-void system_attach_uhat (gretl_equation_system *sys, gretl_matrix *u)
-{
-    sys->uhat = u;
-}
-
-void system_unattach_uhat (gretl_equation_system *sys)
-{
-    sys->uhat = NULL;
-}
-
-const gretl_matrix *system_get_uhat (const gretl_equation_system *sys)
+gretl_matrix *system_get_uhat (const gretl_equation_system *sys)
 {
     return sys->uhat;
 }
@@ -1230,20 +1189,21 @@ void system_attach_sigma (gretl_equation_system *sys, gretl_matrix *sigma)
     sys->sigma = sigma;
 }
 
+void system_attach_uhat (gretl_equation_system *sys, gretl_matrix *uhat)
+{
+    if (sys->uhat != NULL) {
+	gretl_matrix_free(sys->uhat);
+    }
+
+    sys->uhat = uhat;
+}
+
 gretl_matrix *system_get_sigma (const gretl_equation_system *sys)
 {
     return sys->sigma;
 }
 
-void system_attach_models (gretl_equation_system *sys, MODEL **models)
-{
-    sys->models = models;
-}
 
-void system_unattach_models (gretl_equation_system *sys)
-{
-    sys->models = NULL;
-}
 
 MODEL *system_get_model (const gretl_equation_system *sys, int i)
 {
@@ -1274,11 +1234,6 @@ double system_get_diag_stat (const gretl_equation_system *sys)
     return sys->diag;
 }
 
-double system_get_bdiff (const gretl_equation_system *sys)
-{
-    return sys->bdiff;
-}
-
 void system_set_ll (gretl_equation_system *sys, double ll)
 {
     sys->ll = ll;
@@ -1302,11 +1257,6 @@ void system_set_ess (gretl_equation_system *sys, double ess)
 void system_set_diag_stat (gretl_equation_system *sys, double s)
 {
     sys->diag = s;
-}
-
-void system_set_bdiff (gretl_equation_system *sys, double d)
-{
-    sys->bdiff = d;
 }
 
 /* for case of applying df correction to cross-equation 
@@ -1658,7 +1608,10 @@ static int make_instrument_list (gretl_equation_system *sys)
 	return 0;
     }
 
-    if (sys->method != SYS_SUR && sys->method != SYS_OLS && elist == NULL) {
+    if (sys->method != SYS_SUR && 
+	sys->method != SYS_OLS && 
+	sys->method != SYS_WLS &&
+	elist == NULL) {
 	/* no list of endog vars: can't proceed */
 	return 1;
     }
