@@ -134,6 +134,18 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 
     ppaths->ratsbase[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "ratsbase", ppaths->ratsbase);
+
+    ppaths->x12a[0] = '\0';
+    read_reg_val(HKEY_CLASSES_ROOT, "x12arima", "x12a", ppaths->x12a);
+    if (ppaths->x12a[0] == '\0') {
+	sprintf(ppaths->x12a, "%c:\\userdata\\x12arima\\x12a.exe", drive);
+    }
+
+    ppaths->x12adir[0] = '\0';
+    read_reg_val(HKEY_CLASSES_ROOT, "x12arima", "x12adir", ppaths->x12adir);
+    if (ppaths->x12adir[0] == '\0') {
+	sprintf(ppaths->x12a, "%c:\\userdata\\x12arima", drive);
+    }
 }
 
 /* ............................................................ */

@@ -1391,9 +1391,8 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	sprintf(ppaths->binbase, "%s\\db\\", ppaths->gretldir);
 	strcpy(ppaths->ratsbase, "f:\\"); 
 
-	/* FIXME: check this */
-	strcpy(ppaths->x12a, "x12arima.exe");
-	sprintf(ppaths->x12adir, "%s\\user\\x12arima", ppaths->gretldir);
+	strcpy(ppaths->x12a, "c:\\userdata\\x12arima\\x12a.exe");
+	strcpy(ppaths->x12adir, "c:\\userdata\\x12arima");
 
 	if (gui) {
 	    strcpy(ppaths->dbhost_ip, "152.17.150.2");
