@@ -17,8 +17,8 @@
  *
  */
 
-#include <f2c.h>
-#include <clapack_double.h>
+#include "f2c.h"
+#include "clapack_double.h"
 
 /* #define LDEBUG 1 */
 
