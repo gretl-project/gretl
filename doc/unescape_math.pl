@@ -3,11 +3,26 @@
 use strict;
 
 my $line;
-my $manual = "./manual.tex";
-my $textmp = "./mantmp.tex";
+my $textmp = "./tmp.tex";
 my $inmath = 0;
 
-open (MAN, "<$manual") || die "Can't read $manual";
+sub usage
+{
+    die <<"EndUsage";
+usage: unescape_math.pl texfile
+
+unescape_math.pl -- A program for unescaping TeX math in a TeX file
+                    produced by openjade, which must be named on the
+                    command line.
+
+EndUsage
+}
+
+
+if (@ARGV == 0) { &usage; }
+my $doc = $ARGV[0];
+
+open (MAN, "<$doc") || die "Can't read $doc";
 open (TMP, ">$textmp") || die "Can't write to $textmp";
 
 sub unescape {
@@ -36,7 +51,7 @@ while ($line = <MAN>) {
 
 close (MAN);
 close (TMP);
-system("cp $textmp $manual");
+system("cp $textmp $doc");
 system("rm -f $textmp");
 
 

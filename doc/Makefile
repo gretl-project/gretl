@@ -1,24 +1,24 @@
-MANUAL = manual
+DOC = manual
 DSL = gretl-both.dsl
 MATHSS = TeXMath.dsl
 HMATHSS = HTMLMath.dsl
 
-pdf: $(MANUAL).tex jadetex.cfg lucidabr.tex
-	pdfjadetex $(MANUAL)
-	pdfjadetex $(MANUAL)
-	pdfjadetex $(MANUAL)
+pdf: $(DOC).tex jadetex.cfg lucidabr.tex
+	pdfjadetex $(DOC)
+	pdfjadetex $(DOC)
+	pdfjadetex $(DOC)
 
-$(MANUAL).tex: $(MANUAL).sgml $(DSL) $(MATHSS) titlepage.dsl
-	jade -t tex -d $(DSL)\#print $(MANUAL).sgml
-	./unescape_math.pl
+$(DOC).tex: $(DOC).sgml $(DSL) $(MATHSS) titlepage.dsl
+	jade -t tex -d $(DSL)\#print $(DOC).sgml
+	./unescape_math.pl $(DOC).tex
 
-html: manual.sgml db2html $(HDSL) $(HMATHSS) pix
-	./db2html $(MANUAL).sgml
+html: $(DOC).sgml db2html $(HDSL) $(HMATHSS) pix
+	./db2html $(DOC).sgml
 
 clean:
-	rm -rf manual manual.junk manual.tex *.log *.out *.aux
+	rm -rf $(DOC) $(DOC).junk $(DOC).tex *.log *.out *.aux
 
-pix: manual.sgml
+pix: $(DOC).sgml
 	./grab_equations.pl
 
 
