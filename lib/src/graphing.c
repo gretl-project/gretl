@@ -474,6 +474,7 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
     }
     *fpp = fopen(ppaths->plotfile, "w");
     if (*fpp == NULL) return 1;
+
     if (GRETL_GUI(ppaths)) {
 #ifdef OS_WIN32
 	fprintf(*fpp, "set term png color\n");
@@ -1127,14 +1128,17 @@ int plot_fcast_errs (int n, const double *obs,
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
-    for (t=0; t<n; t++)
+    for (t=0; t<n; t++) {
 	fprintf(fp, "%f %f\n", obs[t], depvar[t]);
+    }
     fprintf(fp, "e\n");
-    for (t=0; t<n; t++)
+    for (t=0; t<n; t++) {
 	fprintf(fp, "%f %f\n", obs[t], yhat[t]);
+    }
     fprintf(fp, "e\n");
-    for (t=0; t<n; t++)
+    for (t=0; t<n; t++) {
 	fprintf(fp, "%f %f %f\n", obs[t], yhat[t], maxerr[t]);
+    }
     fprintf(fp, "e\n");
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
@@ -1144,6 +1148,7 @@ int plot_fcast_errs (int n, const double *obs,
     fprintf(fp, "pause -1\n");
 #endif
     fclose(fp);
+
     return gnuplot_display(ppaths);
 }
 
@@ -1156,29 +1161,15 @@ void free_plot (GPT_SPEC *plot)
     if (plot->lines) free(plot->lines);
     if (plot->data) free(plot->data);
     if (plot->literal[0]) {
-	for (i=0; i<4; i++)
+	for (i=0; i<4; i++) {
 	    free(plot->literal[i]);
+	}
     }
 }
 
 /* ........................................................... */
 
-int open_gnuplot_pipe (const PATHS *ppaths, GPT_SPEC *plot)
-     /* add file or pipe to plot struct */
-{
-#ifdef OS_WIN32
-    plot->fp = NULL; /* will be opened later as needed */
-#else
-    plot->fp = popen(ppaths->gnuplot, "w");
-    if (plot->fp == NULL) return 1;
-#endif
-    plot->edit = 1;
-    return 0;
-}
-
-/* ........................................................... */
-
-int termtype_to_termstr (char *termtype, char *termstr)
+int termtype_to_termstr (const char *termtype, char *termstr)
 {
     int cmds = 0;
 
@@ -1189,7 +1180,7 @@ int termtype_to_termstr (char *termtype, char *termstr)
     else if (!strcmp(termtype, "latex")) 
 	strcpy(termstr, "latex");
     else if (!strcmp(termtype, "png")) { 
-	strcpy(termstr, "png small");
+	strcpy(termstr, "png small"); /* FIXME "small" ?? */
 #ifndef OS_WIN32
 	if (gp_png_wants_color()) {
 	    strcat(termstr, " color");
@@ -1204,51 +1195,27 @@ int termtype_to_termstr (char *termtype, char *termstr)
 
 /* ........................................................... */
 
-int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
-     /* ship out a plot struct, to gnuplot or file.  
-	N.B. under unix plot->fp will be a pipe */
+int print_plot_details (const GPT_SPEC *plot, FILE *fp)
 {
-    FILE *fp = NULL;
-    int i, k, t, dump = 0, plotn, lo = plot->list[0];
-    int err = 0, miss, datlines;
-    char termstr[72];
+    int i, k, t, datlines;
+    int plotn, lo = plot->list[0];
+    int miss = 0;
     double xx;
-
-    dump = termtype_to_termstr(plot->termtype, termstr);
-    if (dump) {  /* dump of gnuplot commands to named file */
-	if (fname == NULL) return 1;  /* impossible */
-	fp = fopen(fname, "w");
-	if (fp == NULL) return 1;
-    } else {     /* output to gnuplot, for screen or other "term" */
-#ifdef OS_WIN32
-	if (plot->fp == NULL) fp = fopen(ppaths->plotfile, "w");
-	if (fp == NULL) return 1;
-#else
-	fp = plot->fp; /* pipe */
-#endif
-	if (fname != NULL) { /* not a screen display */
-	    fprintf(fp, "set term %s\n", termstr);
-#ifdef ENABLE_NLS
-	    if (strstr(termstr, "postscript")) {
-		fprintf(fp, "set encoding iso_8859_1\n");
-	    }
-#endif
-	    fprintf(fp, "set output '%s'\n", fname);
-	}
-    }
 
     fprintf(fp, "set title '%s'\n", plot->titles[0]);
     fprintf(fp, "set xlabel '%s'\n", plot->titles[1]);
     fprintf(fp, "set ylabel '%s'\n", plot->titles[2]);
-    if (plot->y2axis)
+    if (plot->y2axis) {
 	fprintf(fp, "set y2label '%s'\n", plot->titles[3]);
+    }
 
     fprintf(fp, "set xzeroaxis\n");
     fprintf(fp, "set missing \"?\"\n");
-    if (strcmp(plot->keyspec, "none") == 0)
+    if (strcmp(plot->keyspec, "none") == 0) {
 	fprintf(fp, "set nokey\n");
-    else
+    } else {
 	fprintf(fp, "set key %s\n", plot->keyspec);
+    }
 
     k = (plot->y2axis)? 3: 2;
     for (i=0; i<k; i++) {
@@ -1258,10 +1225,12 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
     }
 
     /* customized xtics? */
-    if (strlen(plot->xtics))
+    if (strlen(plot->xtics)) {
 	fprintf(fp, "set xtics %s\n", plot->xtics);
-    if (strlen(plot->mxtics))
+    }
+    if (strlen(plot->mxtics)) {
 	fprintf(fp, "set mxtics %s\n", plot->mxtics);
+    }
 
     /* using two y axes? */
     if (plot->y2axis) {
@@ -1270,13 +1239,16 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
     }
 
     if (plot->code == FREQ || plot->code == PERGM) { 
-	if (plot->code == FREQ)
+	if (plot->code == FREQ) {
 	    fprintf(fp, "# frequency plot\n");
-	else
+	} else {
 	    fprintf(fp, "# periodogram\n");
-	for (i=0; i<4; i++)
+	}
+	for (i=0; i<4; i++) {
 	    fprintf(fp, "%s\n", plot->literal[i]);
+	}
     } 
+
     fputs("plot \\\n", fp);
 
     datlines = lo - 1;
@@ -1292,8 +1264,11 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 		plot->lines[i-1].yaxis,
 		plot->lines[i-1].title,
 		plot->lines[i-1].style);
-	if (i == lo - 1) fprintf(fp, "\n");
-	else fprintf(fp, ", \\\n");
+	if (i == lo - 1) {
+	    fprintf(fp, "\n");
+	} else {
+	    fprintf(fp, ", \\\n");
+	}
     } 
 
     /* supply the data to gnuplot inline */
@@ -1308,12 +1283,16 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	    if (na(xx)) {
 		fprintf(fp, "? ");
 		miss = 1;
-	    } else fprintf(fp, "%f ", xx);
+	    } else {
+		fprintf(fp, "%f ", xx);
+	    }
 	    xx = plot->data[plotn * i + t - plot->t1];
 	    if (na(xx)) {
 		fprintf(fp, "?\n");
 		miss = 1;
-	    } else fprintf(fp, "%f\n", xx);
+	    } else {
+		fprintf(fp, "%f\n", xx);
+	    }
 	}
 	fprintf(fp, "e\n");
     }
@@ -1321,8 +1300,51 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
     setlocale(LC_NUMERIC, "");
 #endif
 
+    return miss;
+}
+
+/* ........................................................... */
+
+int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
+     /* ship out a plot struct, to gnuplot or file.  
+	N.B. under unix plot->fp will be a pipe */
+{
+    FILE *fp = NULL;
+    int dump = 0;
+    int err = 0, miss;
+    char termstr[72];
+
+    dump = termtype_to_termstr(plot->termtype, termstr);
+
+    if (dump) {  /* dump of gnuplot commands to named file */
+	if (fname == NULL) return 1;  /* impossible */
+	fp = fopen(fname, "w");
+	if (fp == NULL) return 1;
+    } else {     /* output to gnuplot, for screen or other "term" */
+#ifdef OS_WIN32
+	if (plot->fp == NULL) fp = fopen(ppaths->plotfile, "w");
+	if (fp == NULL) return 1;
+#else
+	fp = plot->fp; /* pipe */
+#endif
+	if (fname != NULL) { /* file, not screen display */
+	    fprintf(fp, "set term %s\n", termstr);
+#ifdef ENABLE_NLS
+	    if (strstr(termstr, "postscript")) {
+		fprintf(fp, "set encoding iso_8859_1\n");
+	    }
+#endif
+	    fprintf(fp, "set output '%s'\n", fname);
+	}
+    }
+
+    miss = print_plot_details(plot, fp);
     fflush(fp);
-    if (dump) fclose(fp);
+
+    if (dump) {
+	/* we're finished */
+	fclose(fp);
+    }
     
 #ifdef OS_WIN32
     if (!dump) {

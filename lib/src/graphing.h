@@ -50,6 +50,7 @@ typedef struct {
     GPT_LINE *lines;           /* details on individual lines */
     char *literal[4];          /* additional commands */
     double *data;              /* data to plot */
+    void *ptr;                 /* for GUI use */
 } GPT_SPEC;
 
 typedef enum {
@@ -84,13 +85,13 @@ int multi_scatters (const LIST list, int pos,
 
 int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist);
 
-int open_gnuplot_pipe (const PATHS *ppaths, GPT_SPEC *plot);
+int print_plot_details (const GPT_SPEC *plot, FILE *fp);
 
 int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths);
 
 void free_plot (GPT_SPEC *plot);
 
-int termtype_to_termstr (char *termtype, char *termstr);
+int termtype_to_termstr (const char *termtype, char *termstr);
 
 int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
 	    PATHS *ppaths);

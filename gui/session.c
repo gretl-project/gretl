@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "selector.h"
+#include "gpt_control.h"
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -104,7 +105,6 @@ static GList *gobjects;
 static GtkIconListItem *active_icon;
 static GtkWidget *addgraph;
 
-extern int read_plotfile (GPT_SPEC *plot, char *fname);
 extern void show_spreadsheet (char *dataspec);
 
 /* private functions */
@@ -245,11 +245,12 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
     }	
 
     /* write graph into session struct */
-    if (session.ngraphs)
+    if (session.ngraphs) {
 	session.graphs = myrealloc(session.graphs, 
 				   (i + 1) * sizeof(GRAPHT *));
-    else
+    } else {
 	session.graphs = mymalloc(sizeof(GRAPHT *));
+    }
 
     if (session.graphs == NULL) return;
 
@@ -265,10 +266,11 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
     
     session_changed(1);
 
-    if (iconview == NULL)
+    if (iconview == NULL) {
 	infobox(_("Graph saved"));
-    else
+    } else {
 	session_add_object(session.graphs[i], (code == 0)? 'g' : 'b');
+    }
 }
 
 /* ........................................................... */
@@ -1101,10 +1103,8 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     else if (strcmp(item, _("Edit using GUI")) == 0) {
 	if (myobject->sort == 'g') {
 	    GRAPHT *graph = (GRAPHT *) myobject->data;
-	    GPT_SPEC *plot = mymalloc(sizeof *plot);
 
-	    if (plot == NULL) return;
-	    read_plotfile(plot, graph->fname);
+	    read_plotfile(graph->fname);
 	}
     } 
     else if (strcmp(item, _("Edit plot commands")) == 0) {
@@ -1312,7 +1312,6 @@ static void open_gui_graph (gui_obj *gobj)
     GRAPHT *graph = (GRAPHT *) gobj->data;
 #ifdef GNUPLOT_PNG
     FILE *fp, *fq;
-    extern int gnuplot_show_png(const char *fname, int saved);
 #else
     gchar *buf = NULL;
 #endif
@@ -1336,7 +1335,7 @@ static void open_gui_graph (gui_obj *gobj)
 	fclose(fp);
 	fclose(fq);
 	gnuplot_display(&paths);
-	gnuplot_show_png(paths.plotfile, 1);
+	gnuplot_show_png(paths.plotfile, NULL, 1);
     }
 #else
     buf = g_strdup_printf("gnuplot -persist \"%s\"", graph->fname);

@@ -1346,12 +1346,6 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 
     sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
 
-    if (get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH)) {
-	strcat(ppaths->pgnuplot, "pgnuplot.exe");
-    } else {
-	strcpy(ppaths->pgnuplot, "pgnuplot.exe");
-    }
-
     internal_path_stuff (1, ppaths->gretldir);
 
     return 0;

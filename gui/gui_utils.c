@@ -1344,10 +1344,12 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	    if (role == HELP || role == CLI_HELP) {
 		tempstr[0] = ' ';
 		nextcolor = &red;
-	    } else
+	    } else {
 		colptr = &blue;
-	} else
+	    }
+	} else {
 	    nextcolor = NULL;
+	}
 	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
 			colptr, NULL, tempstr, 
 			strlen(tempstr));

@@ -685,7 +685,6 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	windata_t *vwin = g_object_get_data(G_OBJECT(fs), "text");
 
 	save_editable_content(action, fname, vwin);
-
     }
 
     gtk_widget_destroy(GTK_WIDGET(fs));    

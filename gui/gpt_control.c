@@ -20,6 +20,11 @@
 /* gpt_control.c for gretl -- GUI gnuplot controller */
 
 #include "gretl.h"
+#include "gpt_control.h"
+
+#ifdef GNUPLOT_PNG
+# include <gdk-pixbuf/gdk-pixbuf.h>
+#endif
 
 struct gpt_titles_t {
     char *description; /* How the field will show up in the options dialog */
@@ -38,12 +43,16 @@ GtkWidget *linetitle[6];
 GtkWidget *stylecombo[6];
 GtkWidget *yaxiscombo[6];
 GtkWidget *linescale[6];
+
 static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
 static GtkWidget *termcombo;
+
 GtkWidget *filesavebutton;
 
 GPT_RANGE axis_range[3];
+
+static GPT_SPEC *editspec;
 
 #define NTITLES 4
 
@@ -54,6 +63,49 @@ struct gpt_titles_t gpt_titles[] = {
     { N_("Title for axis"), 3, NULL },
 };
 
+#ifdef GNUPLOT_PNG
+
+typedef enum {
+    PNG_START,
+    PNG_ZOOM,
+    PNG_UNZOOM
+} png_zoom;
+
+typedef struct zoom_t {
+    int active, zoomed;
+    double xmin, xmax;
+    double ymin, ymax;
+    int screen_xmin, screen_ymin;
+} zoom_t;
+
+typedef struct png_plot_t {
+    GtkWidget *shell;
+    GtkWidget *canvas;
+    GtkWidget *popup;
+    GtkWidget *statusarea;    
+    GtkWidget *statusbar;
+    GtkWidget *cursor_label;
+    GdkPixmap *pixmap;
+    GdkGC *invert_gc;
+    GPT_SPEC *spec;
+    double xmin, xmax;
+    double ymin, ymax;
+    int xint, yint;
+    int pd;
+    int title;
+    guint cid;
+    int range_mean;
+    int saved;
+    zoom_t *zoom;
+} png_plot_t;
+
+static void render_pngfile (const char *fname, png_plot_t *plot, int view);
+static int make_new_png (png_plot_t *plot, int view);
+static int show_edited_png (png_plot_t *plot);
+
+#endif /* GNUPLOT_PNG */
+
+
 /* ........................................................... */
 
 static void close_plot (GtkWidget *widget, gpointer data) 
@@ -61,8 +113,14 @@ static void close_plot (GtkWidget *widget, gpointer data)
     GPT_SPEC *plot = (GPT_SPEC *) data;
 
     gpt_control = NULL;
+#ifndef GNUPLOT_PNG
     pclose(plot->fp);
+#endif
+    if (plot == editspec) {
+	editspec = NULL;
+    }
     free_plot(plot);
+    
 }    
 
 /* ........................................................... */
@@ -86,11 +144,92 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
 {
     char *tmp;
 
-    str[0] = '\0';
+    *str = 0;
     tmp = gtk_entry_get_text(GTK_ENTRY(w));
-    if (tmp != NULL && strlen(tmp))
-	safecpy(str, tmp, n-1);
+    if (tmp != NULL && strlen(tmp)) {
+	strncat(str, tmp, n - 1);
+    }
 }
+
+/* ........................................................... */
+
+#ifdef GNUPLOT_PNG
+
+static int gnuplot_png_init (const char *fname, FILE **fpp)
+{
+    *fpp = fopen(fname, "w");
+    if (*fpp == NULL) {
+	sprintf(errtext, _("Couldn't write to %s"), fname);
+	errbox(errtext);
+	return 1;
+    }
+    fprintf(*fpp, "set term png\n");
+    fprintf(*fpp, "set output '%sgretltmp.png'\n", paths.userdir);
+    return 0;
+}
+
+/* ........................................................... */
+
+static int do_gnuplot (GPT_SPEC *plot, const char *gpout) 
+{
+    FILE *fp = NULL;
+    int dump = 0;
+    int err = 0, miss;
+    char termstr[72];
+
+    dump = termtype_to_termstr(plot->termtype, termstr);
+
+    fprintf(stderr, "do_gnuplot: plot=%p, gpout='%s', dump=%d\n"
+	    "plot->fname='%s', termtype='%s'\n", 
+	    (void *) plot, gpout, dump, plot->fname, plot->termtype);
+
+    if (dump) {  /* dump of gnuplot commands to named file */
+	if (gpout == NULL) return 1;  /* impossible */
+	fp = fopen(gpout, "w");
+	if (fp == NULL) return 1;
+    } else {     /* output to gnuplot, for screen or other "term" */
+	if (gpout != NULL) {
+	    fp = fopen(paths.plotfile, "w");
+	} else {
+	    gnuplot_png_init(plot->fname, &fp);
+	}
+	if (fp == NULL) return 1;
+	if (gpout != NULL) { /* file, not screen display */
+	    fprintf(fp, "set term %s\n", termstr);
+#ifdef ENABLE_NLS
+	    if (strstr(termstr, "postscript")) {
+		fprintf(fp, "set encoding iso_8859_1\n");
+	    }
+#endif
+	    fprintf(fp, "set output '%s'\n", gpout);
+	}
+    }
+
+    miss = print_plot_details(plot, fp);
+    fclose(fp);    
+
+    if (!dump) {
+	char plotcmd[MAXLEN];
+
+	if (gpout != NULL) {
+	    sprintf(plotcmd, "\"%s\" \"%s\"", 
+		    paths.gnuplot, paths.plotfile);
+	    if (system(plotcmd)) err = 1;
+	} else { /* screen display: make png file first */
+	    sprintf(plotcmd, "\"%s\" \"%s\"",
+		    paths.gnuplot, plot->fname);
+	    if (system(plotcmd)) err = 1;
+	    else {
+		gnuplot_show_png(NULL, plot, 1);
+	    }
+	}
+    }
+
+    if (miss) err = 2;
+    return err;
+}
+
+#endif /* GNUPLOT_PNG */
 
 /* ........................................................... */
 
@@ -101,6 +240,7 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
     GPT_SPEC *plot = (GPT_SPEC *) data;
 
     numlines = plot->list[0] - 1;
+
     if (widget == filesavebutton) {
 	widget_to_str(GTK_COMBO(termcombo)->entry, plot->termtype, 
 		      sizeof plot->termtype);
@@ -126,6 +266,7 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
 	    plot->lines[i].yaxis = 2;	
 	if (plot->lines[i].yaxis == 2) plot->y2axis = 1;
     }
+
     k = (plot->y2axis)? 3 : 2;
     for (i=0; i<k; i++) {
 	if (axis_range[i].isauto != NULL) {
@@ -140,6 +281,7 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
 	    }
 	}
     }
+
     for (i=0; i<numlines; i++) {
 	widget_to_str(GTK_COMBO(stylecombo[i])->entry, 
 		      plot->lines[i].style, sizeof plot->lines[0].style);
@@ -154,10 +296,20 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
 	return;
     }
 
-    if (save)  /* do something other than a screen graph? */
+    if (save) {  /* do something other than a screen graph? */
 	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, plot);
-    else 
+    } else {
+#ifdef GNUPLOT_PNG
+	if (plot == editspec && plot->ptr != NULL) {
+	    show_edited_png(plot->ptr);
+	} else {
+	    editspec = plot;
+	    do_gnuplot(plot, NULL);
+	}
+#else
 	go_gnuplot(plot, NULL, &paths);
+#endif /* GNUPLOT_PNG */
+    }
 
     session_changed(1);
 }
@@ -195,8 +347,9 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *plot)
 	"none"
     };
 
-    for (i=0; i<6; i++)
+    for (i=0; i<6; i++) {
 	keypos = g_list_append(keypos, key_positions[i]);
+    }
    
     box = gtk_vbox_new (FALSE, 0);
     gtk_container_border_width (GTK_CONTAINER (box), 10);
@@ -262,8 +415,9 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *plot)
 	"plot commands"
     };  
 
-    for (i=0; i<5; i++)
+    for (i=0; i<5; i++) {
 	termtype = g_list_append(termtype, terminal_types[i]);
+    }
    
     box = gtk_vbox_new (FALSE, 0);
     gtk_container_border_width (GTK_CONTAINER (box), 10);
@@ -635,7 +789,7 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
     PRN *prn;
     char plottmp[MAXLEN], plotline[MAXLEN], plotcmd[MAXLEN];
     char termstr[MAXLEN];
-    int cmds;
+    int err, cmds;
 
     if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
 
@@ -646,7 +800,8 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 	return;
     }
  
-    cmds = termtype_to_termstr(plot->termtype, termstr);  
+    cmds = termtype_to_termstr(plot->termtype, termstr);
+  
     if (cmds) {
 	if (copyfile(plot->fname, fname)) 
 	    errbox(_("Failed to copy graph file"));
@@ -665,13 +820,19 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 		pprintf(prn, "%s", plotline);
 	}
     }
+
     gretl_print_destroy(prn);
     fclose(fq);
+
     sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
-    if (system(plotcmd))
-	errbox(_("Gnuplot error creating graph"));
+    err = system(plotcmd);
     remove(plottmp);
-    infobox(_("Graph saved"));
+
+    if (err) {
+	errbox(_("Gnuplot error creating graph"));
+    } else {	
+	infobox(_("Graph saved"));
+    }
 }
 
 #endif
@@ -687,13 +848,16 @@ void do_save_graph (const char *fname, char *savestr)
     int cmds, err = 0;
 
     if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
+
     fq = fopen(paths.plotfile, "r");
     if (fq == NULL) {
 	errbox(_("Couldn't access graph info"));
 	gretl_print_destroy(prn);
 	return;
     } 
+
     cmds = termtype_to_termstr(savestr, termstr);  
+
     if (cmds) {
 	if (copyfile(paths.plotfile, fname)) 
 	    errbox(_("Failed to copy graph file"));
@@ -705,17 +869,19 @@ void do_save_graph (const char *fname, char *savestr)
 	    if (strncmp(plotline, "pause", 5)) pprintf(prn, "%s", plotline);
 	}
     }
+
     gretl_print_destroy(prn);
     fclose(fq);
+
     sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
-
-    if (system(plotcmd)) {
-	err = 1;
-	errbox(_("Gnuplot error creating graph"));
-    }
-
+    err = system(plotcmd);
     remove(plottmp);
-    if (!err) infobox(_("Graph saved"));
+
+    if (err) {
+	errbox(_("Gnuplot error creating graph"));
+    } else {
+	infobox(_("Graph saved"));
+    }
 }
 
 /* ........................................................... */
@@ -905,6 +1071,10 @@ static int plotspec_init (GPT_SPEC *plot)
     plot->ts = 0;
     plot->fp = NULL;
     plot->data = NULL;
+    plot->ptr = NULL;
+
+    plot->termtype[0] = 0;
+
     return 0;
 }
 
@@ -956,7 +1126,7 @@ static int parse_set_line (GPT_SPEC *plot, const char *line,
     else if (strcmp(set_thing, "key") == 0)
 	strcpy(plot->keyspec, setting);
     else if (strcmp(set_thing, "nokey") == 0)
-	strcpy(plot->keyspec, setting);
+	strcpy(plot->keyspec, "none");
     else if (strcmp(set_thing, "xtics") == 0) 
 	safecpy(plot->xtics, setting, 15);
     else if (strcmp(set_thing, "mxtics") == 0) 
@@ -967,7 +1137,22 @@ static int parse_set_line (GPT_SPEC *plot, const char *line,
 
 /* ........................................................... */
 
-int read_plotfile (GPT_SPEC *plot, char *fname)
+static int open_gnuplot_pipe (const PATHS *ppaths, GPT_SPEC *plot)
+     /* add pipe to plot struct */
+{
+#ifdef GNUPLOT_PNG
+    plot->fp = NULL;
+#else
+    plot->fp = popen(ppaths->gnuplot, "w");
+    if (plot->fp == NULL) return 1;
+#endif
+    plot->edit = 1;
+    return 0;
+}
+
+/* ........................................................... */
+
+int read_plotfile (const char *fname)
     /* read in plot struct from gnuplot command file.
        This is _not_ a general parser for gnuplot files; it is
        designed specifically for files auto-generated by gretl. */
@@ -977,6 +1162,10 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     double *tmpy = NULL;
     size_t diff;
     FILE *fp;
+    GPT_SPEC *plot;
+
+    plot = mymalloc(sizeof *plot);
+    if (plot == NULL) return 1;
 
     if (plotspec_init(plot)) return 1;
 
@@ -1100,8 +1289,9 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     if (got == NULL) goto plot_bailout;
 
     /* free any unused lines */
-    if (i < 5)
+    if (i < 5) {
 	plot->lines = myrealloc(plot->lines, (i + 1) * sizeof(GPT_LINE));
+    }
 
     /* finally, get the plot data */
     plot->data = mymalloc(datainfo->n * (i + 2) * sizeof(double));
@@ -1157,48 +1347,7 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     return 1;
 }
 
-/* gnuplot PNG material */
-
 #ifdef GNUPLOT_PNG
-
-#include <gdk-pixbuf/gdk-pixbuf.h>
-
-typedef enum {
-    PNG_START,
-    PNG_ZOOM,
-    PNG_UNZOOM
-} png_zoom;
-
-typedef struct zoom_t {
-    int active, zoomed;
-    double xmin, xmax;
-    double ymin, ymax;
-    int screen_xmin, screen_ymin;
-} zoom_t;
-
-typedef struct png_plot_t {
-    GtkWidget *shell;
-    GtkWidget *canvas;
-    GtkWidget *popup;
-    GtkWidget *statusarea;    
-    GtkWidget *statusbar;
-    GtkWidget *cursor_label;
-    GdkPixmap *pixmap;
-    GdkGC *invert_gc;
-    GPT_SPEC *spec;
-    double xmin, xmax;
-    double ymin, ymax;
-    int xint, yint;
-    int pd;
-    int title;
-    guint cid;
-    int range_mean;
-    int saved;
-    zoom_t *zoom;
-} png_plot_t;
-
-static void render_pngfile (const char *fname, png_plot_t *plot, int view);
-static int make_new_png (png_plot_t *plot, int view);
 
 /* Size of drawing area */
 #define WIDTH 640    /* try 576? */
@@ -1330,8 +1479,10 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	if (plot->zoom->active && (state & GDK_BUTTON1_MASK)) {
 	    draw_selection_rectangle(plot, x, y);
 	}
-    } else
+    } else {
 	*label = 0;
+    }
+
     gtk_label_set_text(GTK_LABEL(plot->cursor_label), label);
   
     return TRUE;
@@ -1412,10 +1563,11 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 
     menu = gtk_menu_new();
 
-    if (plot->zoom->zoomed)
+    if (plot->zoom->zoomed) {
 	plot_items = zoomed_items;
-    else
+    } else {
 	plot_items = regular_items;
+    }
 
     while (plot_items[i]) {
 	if (plot->statusbar == NULL &&
@@ -1447,10 +1599,36 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
     return menu;
 }
 
+static int show_edited_png (png_plot_t *plot)
+{
+    int err = 0;
+    char fullname[MAXLEN], syscmd[MAXLEN];
+    FILE *fp;
+
+    gnuplot_png_init(plot->spec->fname, &fp);
+    if (fp == NULL) return 1;
+
+    print_plot_details(plot->spec, fp);
+    fclose(fp);
+
+    sprintf(syscmd, "\"%s\" %s", paths.gnuplot, plot->spec->fname);
+    err = system(syscmd);
+
+    if (err) {
+	errbox(_("Failed to generate PNG file"));
+	return 1;
+    }
+
+    build_path(paths.userdir, "gretltmp.png", fullname, NULL);
+    render_pngfile(fullname, plot, PNG_UNZOOM);
+
+    return 0;
+}
+
 static int make_new_png (png_plot_t *plot, int view)
 {
     int err = 0;
-    char fullname[MAXLEN], sysline[MAXLEN];
+    char fullname[MAXLEN], syscmd[MAXLEN];
 
     if (view == PNG_ZOOM) {
 	FILE *fpin, *fpout;
@@ -1487,13 +1665,11 @@ static int make_new_png (png_plot_t *plot, int view)
 	fclose(fpout);
 	fclose(fpin);
 
-	sprintf(sysline, "gnuplot %s", fullname);
-	err = system(sysline);
-	/* remove(fullname); */
+	sprintf(syscmd, "\"%s\" \"%s\"", paths.gnuplot, fullname);
+	err = system(syscmd);
+	remove(fullname);
     } else { /* PNG_UNZOOM */
-	char syscmd[36];
-
-	sprintf(syscmd, "gnuplot %s", plot->spec->fname);
+	sprintf(syscmd, "\"%s\" \"%s\"", paths.gnuplot, plot->spec->fname);
 	err = system(syscmd);
     }
 
@@ -1628,13 +1804,20 @@ static void render_pngfile (const char *fname, png_plot_t *plot,
     }
 }
 
-static void plot_quit (GtkWidget *w, png_plot_t *plot)
+static void png_plot_quit (GtkWidget *w, png_plot_t *plot)
 {
-    remove(plot->spec->fname);
-    free(plot->spec);
+    if (!plot->saved) {
+	remove(plot->spec->fname);
+    }
+
+    if (plot->spec != editspec) {
+	free_plot(plot->spec);
+    }
+
     if (plot->zoom) free(plot->zoom);
-    if (plot->invert_gc)
+    if (plot->invert_gc) {
 	gdk_gc_destroy(plot->invert_gc);
+    }
     free(plot);
 }
 
@@ -1763,7 +1946,7 @@ static int get_plot_ranges (png_plot_t *plot)
     return got_x;
 }
 
-int gnuplot_show_png (char *plotfile, int saved)
+int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 {
     png_plot_t *plot;
     int plot_has_xrange;
@@ -1776,8 +1959,17 @@ int gnuplot_show_png (char *plotfile, int saved)
 
     plot = mymalloc(sizeof *plot);
     if (plot == NULL) return 1;
-    plot->spec = mymalloc(sizeof(GPT_SPEC));
-    if (plot->spec == NULL) return 1;
+
+    if (spec != NULL) {
+	plot->spec = spec;
+    } else {
+	plot->spec = mymalloc(sizeof(GPT_SPEC));
+	if (plot->spec == NULL) return 1;
+	strcpy(plot->spec->fname, plotfile);
+    }
+
+    /* make png plot stuct accessible via GPT_SPEC */
+    plot->spec->ptr = plot;
 
     plot->popup = NULL;
     plot->invert_gc = NULL;        
@@ -1789,9 +1981,6 @@ int gnuplot_show_png (char *plotfile, int saved)
 
     plot->range_mean = 0;
     plot->saved = saved;
-
-    /* record name of tmp file containing plot commands */
-    strcpy(plot->spec->fname, plotfile);
 
     /* parse this file for x range */
     plot_has_xrange = get_plot_ranges(plot);
@@ -1809,7 +1998,7 @@ int gnuplot_show_png (char *plotfile, int saved)
     gtk_container_add(GTK_CONTAINER(plot->shell), vbox);
 
     gtk_signal_connect(GTK_OBJECT(plot->shell), "destroy",
-		       GTK_SIGNAL_FUNC(plot_quit), plot);
+		       GTK_SIGNAL_FUNC(png_plot_quit), plot);
     gtk_signal_connect(GTK_OBJECT(plot->shell), "key_press_event", 
                        GTK_SIGNAL_FUNC(plot_key_handler), plot);
 

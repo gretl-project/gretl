@@ -24,6 +24,7 @@
 
 #include "selector.h"
 #include "series_view.h"
+#include "gpt_control.h"
 
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
@@ -154,12 +155,12 @@ static char last_model = 's';
 
 /* ........................................................... */
 
+
+
 void register_graph (void)
 {
 #ifdef GNUPLOT_PNG
-    extern int gnuplot_show_png(const char *fname, int saved);
-
-    gnuplot_show_png(paths.plotfile, 0);
+    gnuplot_show_png(paths.plotfile, NULL, 0);
 #else
     graphmenu_state(TRUE);
 #endif    
@@ -3204,10 +3205,6 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
 }
 
 /* ........................................................... */
-
-#ifdef GNUPLOT_PNG
-extern int gnuplot_show_png (char *fname); /* gpt_control.c */
-#endif
 
 void do_graph_from_selector (GtkWidget *widget, gpointer p)
 {

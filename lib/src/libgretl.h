@@ -154,9 +154,6 @@ typedef struct {
     char binbase[MAXLEN];
     char ratsbase[MAXLEN];
     char gnuplot[MAXLEN];
-#ifdef OS_WIN32
-    char pgnuplot[MAXLEN];
-#endif
     char dbhost_ip[16];
 } PATHS;
 

@@ -1022,17 +1022,19 @@ static void open_gui_graph (gui_obj *gobj)
 	fclose(fp);
 	fclose(fq);
 	gnuplot_display(&paths);
-	gnuplot_show_png(paths.plotfile, 1);
+	gnuplot_show_png(paths.plotfile, NULL, 1);
     }
 #else
 # ifdef G_OS_WIN32
     buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, graph->fname);
-    if (WinExec(buf, SW_SHOWNORMAL) < 32)
+    if (WinExec(buf, SW_SHOWNORMAL) < 32) {
 	errbox(_("gnuplot command failed"));
+    }
 # else
-    buf = g_strdup_printf("gnuplot -persist \"%s\"", graph->fname);
-    if (system(buf))
+    buf = g_strdup_printf("\"%s\" -persist \"%s\"", paths.gnuplot, graph->fname);
+    if (system(buf)) {
 	errbox(_("gnuplot command failed"));
+    }
 # endif
     g_free(buf);
 #endif /* GNUPLOT_PNG */
@@ -1677,10 +1679,8 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     else if (strcmp(item, _("Edit using GUI")) == 0) {
 	if (obj->sort == 'g') {
 	    GRAPHT *graph = (GRAPHT *) obj->data;
-	    GPT_SPEC *plot = mymalloc(sizeof *plot);
 
-	    if (plot == NULL) return;
-	    read_plotfile(plot, graph->fname);
+	    read_plotfile(graph->fname);
 	}
     } 
     else if (strcmp(item, _("Edit plot commands")) == 0) {

@@ -117,7 +117,7 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gnuplot", ppaths->gnuplot);
     if (ppaths->gnuplot[0] == '\0') {
 	sprintf(ppaths->gnuplot, 
-		"%c:\\userdata\\gnuplot\\pgnuplot.exe", drive);
+		"%c:\\userdata\\gnuplot\\wgnuplot.exe", drive);
     }
 
     ppaths->userdir[0] = '\0';
