@@ -815,7 +815,8 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
 	GtkWidget *hbox, *button, *image;
-	GdkPixbuf *icon;
+	GdkPixmap *pixmap;
+	GdkBitmap *mask;
 
 	/* label text */
 	tbl_len++;
@@ -866,10 +867,10 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(labelpos[i]);
 
 	/* button to invoke mouse-assisted placement */
-	icon = gdk_pixbuf_new_from_xpm_data((const char **) mini_mouse_xpm);
-	image = gtk_image_new_from_pixbuf(icon);
+	pixmap = gdk_pixmap_create_from_xpm_d(mdata->w->window,
+					      &mask, NULL, mini_mouse_xpm);
+	image = gtk_pixmap_new(pixmap, mask);
 	button = gtk_button_new();
-	gtk_widget_set_size_request(button, 32, 24);
 	gtk_container_add (GTK_CONTAINER(button), image);
 	gtk_object_set_data(GTK_OBJECT(button), "labelpos_entry",
 			    labelpos[i]);
