@@ -1,3 +1,10 @@
+version 1.3.0
+- update Windows version to gtk 2.4.7
+- add facility for extra information file for a database
+  (sources, expension of abbreviations, etc) TODO
+- fix for SUR systems with differing numbers of regressors
+  across equations (thanks to Jack Lucchetti)
+
 7/23/2004 version 1.2.9
 - fixes for LaTeX printing of autoregressive models
 - correct Spanish help strings
