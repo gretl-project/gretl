@@ -1,4 +1,4 @@
-#!/bin/sh
+# !/bin/sh
 
 # Shell script to make gretl2 win32 distribution
 
@@ -7,7 +7,6 @@ GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp400w32.zip
 HOME_WIN32=/home/cottrell/stats/esl/win32/runtime
 GTK2RT=$HOME_WIN32/gtk-2.0-runtime.tar.gz
 
-INNO_EXE="c:/Program Files/Inno Setup 4/ISCC.exe"
 RECODE=recode
 THISDIR=`pwd`
 
@@ -15,13 +14,6 @@ THISDIR=`pwd`
 function process_gnuplot {
     unzip -X $GNUPLOT_ZIPFILE | grep gretl | egrep -v /$\|\.zip \
 	| awk '{ print $NF }' >> MANIFEST
-}
-
-# create the gretl installer
-function inno_compile {
-    echo "Building gretl installer executable in `pwd`"
-    wine "$INNO_EXE" ./gretl.iss 2>errlog
-    mv Output/setup.exe Output/gretl_install.exe
 }
 
 # Shouldn't have to make changes below here...
@@ -45,8 +37,8 @@ rm -rf windist/gretl windist/gnuplot
 mkdir -p windist
 mkdir -p windist/gretl
 mkdir -p windist/gretl/data
-mkdir -p windist/gretl/data/greene
 mkdir -p windist/gretl/data/misc
+mkdir -p windist/gretl/data/greene
 mkdir -p windist/gretl/data/nist
 mkdir -p windist/gretl/scripts
 mkdir -p windist/gretl/scripts/misc
@@ -60,6 +52,9 @@ mkdir -p windist/gretl/locale/fr/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/fr/LC_MESSAGES
 mkdir -p windist/gretl/share/locale/fr/LC_MESSAGES
 mkdir -p windist/gretl/locale/it/LC_MESSAGES
+mkdir -p windist/gretl/lib/locale/it/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/it/LC_MESSAGES
+
 mkdir -p windist/gretl/locale/ja/LC_MESSAGES
 
 mkdir -p windist/gretl/share/gtksourceview-1.0/language-specs
@@ -88,7 +83,7 @@ cd $THISDIR
 
 # auxiliary dlls
 for f in \
-    libgmp-3.dll libxml2.dll readline.dll zlib.dll libpng.dll \
+    libgmp-3.dll libxml2.dll readline.dll zlib1.dll libpng12.dll \
     libblas.dll libf2c.dll liblapack.dll libgtksourceview.dll
 do
     add_file $HOME_WIN32/misc-dll/$f gretl/$f
@@ -100,6 +95,8 @@ for f in gettext-runtime.mo libiconv.mo ; do
     gretl/share/locale/es/LC_MESSAGES/$f
   add_file $HOME_WIN32/locale/fr/LC_MESSAGES/$f \
     gretl/share/locale/fr/LC_MESSAGES/$f
+  add_file $HOME_WIN32/locale/it/LC_MESSAGES/$f \
+    gretl/share/locale/it/LC_MESSAGES/$f
 done
 
 # gretl lang files for gtksourceview
@@ -176,7 +173,7 @@ cat MANIFEST | ./make_iss.pl $VERSION | todos > gretl.iss
 
 # make Inno installer
 echo "Building gretl installer executable..."
-wine "c:/Program Files/Inno Setup 4/ISCC.exe" ./gretl.iss 2>errlog && \
+nice wine "c:/Program Files/Inno Setup 4/ISCC.exe" ./gretl.iss 2>errlog && \
 mv Output/setup.exe Output/gretl_install.exe && \
 ls -l Output/gretl_install.exe
 

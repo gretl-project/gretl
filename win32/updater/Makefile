@@ -10,7 +10,7 @@ OBJ = update_client.o webget.o untgz.o progress_bar.o
 
 GTKLIBS = $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
 	pkg-config --libs gtk+-win32-2.0)
-LIBS = -lz.dll -lwsock32 $(GTKLIBS)
+LIBS = -lz -lwsock32 $(GTKLIBS)
 
 CFLAGS += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
 	pkg-config --cflags gtk+-win32-2.0)

@@ -46,7 +46,7 @@ print "Name: \"{app}\\data\\greene\"\n";
 print "Name: \"{app}\\data\\misc\"\n";
 print "Name: \"{app}\\data\\nist\"\n";
 print "Name: \"{app}\\scripts\"\n";
-print "Name: \"{app}\\misc\"\n";
+print "Name: \"{app}\\scripts\\misc\"\n";
 print "Name: \"{app}\\db\"\n";
 print "Name: \"{app}\\plugins\"\n";
 print "Name: \"{app}\\locale\"\n";
@@ -78,6 +78,8 @@ print "Name: \"{app}\\lib\\locale\\es\"\n";
 print "Name: \"{app}\\lib\\locale\\es\\LC_MESSAGES\"\n";
 print "Name: \"{app}\\lib\\locale\\fr\"\n";
 print "Name: \"{app}\\lib\\locale\\fr\\LC_MESSAGES\"\n";
+print "Name: \"{app}\\lib\\locale\\it\"\n";
+print "Name: \"{app}\\lib\\locale\\it\\LC_MESSAGES\"\n";
 
 # module catalogs
 print "Name: \"{app}\\etc\"\n";
@@ -91,6 +93,8 @@ print "Name: \"{app}\\share\\locale\\es\"\n";
 print "Name: \"{app}\\share\\locale\\es\\LC_MESSAGES\"\n";
 print "Name: \"{app}\\share\\locale\\fr\"\n";
 print "Name: \"{app}\\share\\locale\\fr\\LC_MESSAGES\"\n";
+print "Name: \"{app}\\share\\locale\\it\"\n";
+print "Name: \"{app}\\share\\locale\\it\\LC_MESSAGES\"\n";
 
 print "\n[Files]\n";
 

@@ -741,8 +741,10 @@ char *colonize_obs (char *obs)
     return obs;
 }
 
-/* fudges for strings that should not be in utf8 under some 
-   conditions */
+/* fudges for strings that should not be in utf-8 under some 
+   conditions: under gtk2, translations usually come out in
+   utf-8 in the GUI, but when we're sending stuff to stderr,
+   it should be in ISO-8859-1. */
 
 #ifdef ENABLE_NLS
 
@@ -751,20 +753,22 @@ char *iso_gettext (const char *msgid)
    char *ret;
    static int cli;
 
-   /* when running command-line client, ensure that translated
-      messages will not appear in utf8 */
+   /* the command-line program is "special": it doesn't emit
+      utf-8 at all, so we omit the redundant switching of
+      codesets */
    if (!strcmp(msgid, "@CLI_INIT")) {
        cli = 1;
        return NULL;
    }
 
-   if (cli) { /* command line program */
+   if (cli) { /* command line program: switch not required */
        return gettext(msgid);
    }
 
    bind_textdomain_codeset(PACKAGE, "ISO-8859-1");
    ret = gettext(msgid);
    bind_textdomain_codeset(PACKAGE, "UTF-8");
+
    return ret;
 } 
 

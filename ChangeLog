@@ -10,6 +10,8 @@ version 1.2.6
 - GNU Octave data export: write all data as single matrix
 - fix printing of "periods" in periodogram output (thanks to
   Tadeusz Kufel)
+- with gtk >= 2.4.0 on Linux, use the new gtk file chooser
+- update the Windows gtk version to 2.4.1
 
 5/04/2004 version 1.2.5
 - fix problem with acf and pacf calculations

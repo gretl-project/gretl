@@ -225,17 +225,16 @@ void nls_init (void)
     setlocale (LC_ALL, "");
 # ifdef WIN32
     bindtextdomain (PACKAGE, localedir);
+    /* bind_textdomain_codeset(PACKAGE, "CP1252"); */
 # else
     bindtextdomain (PACKAGE, LOCALEDIR);
 # endif
     textdomain (PACKAGE); 
-    /* arrange that translations will not come out in utf8 */
     iso_gettext("@CLI_INIT");
-#if 1
+
     putenv("LC_NUMERIC=");
     setlocale(LC_NUMERIC, "");
     reset_local_decpoint();
-#endif
 }
 #endif /* ENABLE_NLS */
 

@@ -230,6 +230,11 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
 
 	audioprint_vcv(vcv, pdinfo, prn);
     }
+    else if (role == COEFFINT) {
+	CONFINT *cf = (CONFINT *) data;
+
+	audioprint_confints(cf, pdinfo, prn);
+    }
     else if (role == VIEW_MODEL) {
 	MODEL *pmod = (MODEL *) data;
 
@@ -253,6 +258,7 @@ int read_window_text (windata_t *vwin, const DATAINFO *pdinfo,
 	vwin->role == VAR_SUMMARY ||
 	vwin->role == CORR ||
 	vwin->role == COVAR ||
+	vwin->role == COEFFINT ||
 	vwin->role == VIEW_MODEL) {
 	err = audio_print_special(vwin->role, vwin->data, pdinfo, should_stop);
     } else {

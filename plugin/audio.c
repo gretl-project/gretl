@@ -71,8 +71,8 @@ enum dataset_comments {
 #define DEFAULT_FORCE 96 /* volume of MIDI notes */
 
 #ifndef G_OS_WIN32
-# define MIDI_PROG "timidity" /* MIDI player to be used */
-# define MIDI_OPT  "-A500"    /* option to pass to MIDI player */
+# define DEFAULT_MIDI_PROG "timidity" /* MIDI player to be used */
+# define DEFAULT_MIDI_OPT  "-A500"    /* option to pass to MIDI player */
 #endif
     
 typedef struct _datapoint datapoint;
@@ -867,7 +867,7 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 
 #if defined(G_OS_WIN32)
 
-static int audio_fork (const char *fname)
+static int midi_fork (const char *fname)
 {
     int err = 0; 
     
@@ -877,30 +877,68 @@ static int audio_fork (const char *fname)
     return err;
 }
 
-#elif defined(GLIB2)
+#else /* non-Windows versions */
 
-static int audio_fork (const char *fname)
+static char **get_midi_args (int *argc, const char *fname)
 {
-    gchar *argv[4];
+    char **argv = NULL;
+    char *midi_env;
+
+    midi_env = getenv("GRETL_MIDI_PLAYER");
+
+    if (midi_env == NULL) {
+	*argc = 3;
+
+	argv = malloc((*argc + 1) * sizeof *argv);
+	if (argv == NULL) return NULL;
+
+	argv[0] = g_strdup(DEFAULT_MIDI_PROG);
+	argv[1] = g_strdup(DEFAULT_MIDI_OPT);
+	argv[2] = g_strdup(fname);
+	argv[3] = NULL;
+    } else {
+	char *tmp = g_strdup(midi_env);
+	char *s = tmp;
+	int i, ntoks = 1;
+
+	while (*s) {
+	    if (*s == ' ') ntoks++;
+	    s++;
+	}
+
+	*argc = ntoks + 1;
+
+	argv = malloc((*argc + 1) * sizeof *argv); 
+	if (argv == NULL) {
+	    g_free(tmp);
+	    return NULL;
+	}
+
+	argv[0] = g_strdup(strtok(tmp, " "));
+	for (i=1; i<ntoks; i++) {
+	    argv[i] = g_strdup(strtok(NULL, " "));
+	}
+	argv[i++] = g_strdup(fname);
+	argv[i] = NULL;
+	g_free(tmp);
+    }
+
+    return argv;
+}
+
+# ifdef GLIB2
+
+static int real_midi_fork (char **argv)
+{
     gboolean run;
-    int i;
-    
-    argv[0] = g_strdup(MIDI_PROG);
-    argv[1] = g_strdup(MIDI_OPT);
-    argv[2] = g_strdup(fname);
-    argv[3] = NULL;
 
     run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, 
                         NULL, NULL, NULL, NULL);
 
-    for (i=0; i<4; i++) {
-	g_free(argv[i]);
-    }
-
     return !run;
 }
 
-#else
+# else
 
 static volatile int fork_err;
 
@@ -909,7 +947,7 @@ static void fork_err_set (int signum)
     fork_err = 1;
 }
 
-static int audio_fork (const char *fname)
+static int real_midi_fork (char **argv)
 {
     pid_t pid;
 
@@ -922,7 +960,7 @@ static int audio_fork (const char *fname)
 	perror("fork");
 	return 1;
     } else if (pid == 0) {
-	execlp(MIDI_PROG, MIDI_PROG, MIDI_OPT, fname, NULL);
+	execvp(argv[0], argv);
 	perror("execlp");
 	kill(getppid(), SIGUSR1);
 	_exit(EXIT_FAILURE);
@@ -931,13 +969,33 @@ static int audio_fork (const char *fname)
     sleep(1);
 
     if (fork_err) {
-	fprintf(stderr, "%s: %s", _("Command failed"), MIDI_PROG);
+	fprintf(stderr, "%s: %s", _("Command failed"), argv[0]);
     }
 
     return fork_err;
 }
 
-#endif /* GLIB2 */
+# endif
+
+static int midi_fork (const char *fname)
+{
+    int i, err, argc;
+    char **argv;
+
+    argv = get_midi_args(&argc, fname);
+    if (argv == NULL) return 1;
+
+    err = real_midi_fork(argv);
+
+    for (i=0; i<argc; i++) {
+	g_free(argv[i]);
+    }
+    free(argv);  
+
+    return err;
+}
+
+#endif
 
 int midi_play_graph (const char *fname, const char *userdir)
 {
@@ -971,7 +1029,7 @@ int midi_play_graph (const char *fname, const char *userdir)
 
     fclose(spec.fp);
 
-    audio_fork(outname);
+    midi_fork(outname);
 
     return 0;
 }
