@@ -219,6 +219,28 @@ static void tex_arma_coeff_name (char *targ, const char *src,
     }
 }
 
+static void tex_lagname (char *s, const DATAINFO *pdinfo, int v)
+{
+    const char *lbl = VARLABEL(pdinfo, v);
+    int gotit = 0;
+
+    if (strlen(lbl) > 2) {
+	char myvar[24], tmp[9];
+	int lag;
+
+	lbl += 2;
+	if (sscanf(lbl, "%8[^(](t - %d)", tmp, &lag) == 2) {
+	    tex_escape(myvar, tmp);
+	    sprintf(s, "%s$_{t-%d}$", myvar, lag);
+	    gotit = 1;
+	}
+    }
+	
+    if (!gotit) {
+	tex_escape(s, pdinfo->varname[v]); 
+    }
+}
+
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 		     int c, PRN *prn)
 {
@@ -253,6 +275,8 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	tex_arma_coeff_name(tmp, pmod->params[c-1], 0);
     } else if (pmod->ci == GARCH) {
 	tex_garch_coeff_name(tmp, pmod->params[c-1], 0);
+    } else if (pmod->ci == VAR) {
+	tex_lagname(tmp, pdinfo, pmod->list[c]);
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
     }

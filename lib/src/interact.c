@@ -351,7 +351,6 @@ int auto_lag_ok (const char *s, int *lnum,
 		 double ***pZ, DATAINFO *pdinfo,
 		 CMD *cmd, PRN *prn)
 {
-    extern int newlag; /* lines in generate.c */
     LAGVAR lagvar;
     int nlags, i;
     int llen = *lnum;
@@ -382,12 +381,15 @@ int auto_lag_ok (const char *s, int *lnum,
 	} else {
 	    cmd->list[llen++] = vnum;
 	    if (newlag) {
+		/* newlag lives in transforms. c */
 		pprintf(prn, "genr %s\n", VARLABEL(pdinfo, vnum));
 	    }
 	}
     }
 
-    if (ok) *lnum = llen;
+    if (ok) {
+	*lnum = llen;
+    }
 
     return ok;
 } 

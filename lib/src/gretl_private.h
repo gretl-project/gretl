@@ -22,6 +22,8 @@
 #ifndef GRETL_PRIVATE_H
 #define GRETL_PRIVATE_H
 
+extern int newlag; /* transforms. c */
+
 int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo, 
 			char *newvar, char *s);
 

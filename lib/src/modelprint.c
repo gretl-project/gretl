@@ -1678,6 +1678,28 @@ static void print_pval_str (double pval, char *str)
 
 /* ......................................................... */ 
 
+static void 
+make_lagname (char *vname, const DATAINFO *pdinfo, int v)
+{
+    const char *lbl = VARLABEL(pdinfo, v);
+    int gotit = 0;
+
+    if (strlen(lbl) > 2) {
+	char tmp[9];
+	int lag;
+
+	lbl += 2;
+	if (sscanf(lbl, "%8[^(](t - %d)", tmp, &lag) == 2) {
+	    sprintf(vname, "%s_%d", tmp, lag);
+	    gotit = 1;
+	}
+    }
+	
+    if (!gotit) {
+	strcpy(vname, pdinfo->varname[v]);
+    }
+}
+
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			int c, int longnames, PRN *prn)
 {
@@ -1686,11 +1708,14 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
     char varname[24];
 
-    /* special treatment for ARCH model coefficients, NLS, ARMA */
+    /* special treatment for ARCH model coefficients, NLS, ARMA, VAR */
     if (pmod->aux == AUX_ARCH) {
 	make_cname(pdinfo->varname[pmod->list[c]], varname);
     } else if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
 	strcpy(varname, pmod->params[c-1]);
+    } else if (pmod->ci == VAR) {
+	make_lagname(varname, pdinfo, pmod->list[c]);
+	longnames = 1;
     } else {
 	strcpy(varname, pdinfo->varname[pmod->list[c]]);
     }
@@ -1800,11 +1825,13 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     char varname[12];
 
 
-    /* special treatment for ARCH model coefficients, NLS, ARMA */
+    /* special treatment for ARCH model coefficients, NLS, ARMA, VAR */
     if (pmod->aux == AUX_ARCH) {
 	make_cname(pdinfo->varname[pmod->list[c]], varname);
     } else if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
 	strcpy(varname, pmod->params[c-1]);
+    } else if (pmod->ci == VAR) {
+	make_lagname(varname, pdinfo, pmod->list[c]);
     } else {
 	strcpy(varname, pdinfo->varname[pmod->list[c]]);
     }

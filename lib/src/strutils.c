@@ -1663,36 +1663,15 @@ int print_as_locale (const char *s, FILE *fp)
 
 #endif /* ENABLE_NLS */
 
-int min_unique_length (int v, const DATAINFO *pdinfo, int start)
-{
-    int i, len, match, maxlen;
-    const char *targ = pdinfo->varname[v];
-
-    maxlen = strlen(targ);
-
-    for (len=start; len<=maxlen; len++) {
-	match = 0;
-	for (i=1; i<pdinfo->v; i++) {
-	    if (i != v && !strncmp(targ, pdinfo->varname[i], len)) {
-		match = 1;
-		break;
-	    }
-	}
-	if (match == 0) {
-	    break;
-	}
-    }
-
-    return len;
-}
-
 char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo) 
 {
     int i, j, conflict;
     size_t n = strlen(vname);
     const char *add = "abcdefghijklmnopqrstuvwxyz";
 
-    if (n > 7) n = 7;
+    if (n > 7) {
+	n = 7;
+    }
 
     for (j=0; j<26; j++) {
 	conflict = 0;
@@ -1702,7 +1681,9 @@ char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo)
 		break;
 	    }
 	}
-	if (!conflict) break;
+	if (!conflict) {
+	    break;
+	}
 	vname[n] = add[j];
 	vname[n+1] = '\0';
     }

@@ -2153,7 +2153,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
 static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 {
-    int i, k, t, nxpx;
+    int i, k, t;
     int oldv = pdinfo->v;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int *list = NULL;
@@ -2199,7 +2199,7 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 	    continue;
 	}
 	sqnum = xpxgenr(vi, vi, pZ, pdinfo);
-	if (sqnum > 0 && !var_already_there(pmod, *pZ, sqnum)) {
+	if (sqnum > 0) {
 	    list[++k] = sqnum;
 	}
     }
@@ -2480,25 +2480,6 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     return hccm;
 }
 
-static int var_already_there (MODEL *pmod, double **Z, int testv)
-{
-    int i;
-    int n = pmod->t2 - pmod->t1 + 1;
-    int ret = 0;
-
-    for (i=2; i<=pmod->list[0]; i++) {
-	if (pmod->list[i] == 0) {
-	    continue;
-	}
-	if (vars_identical(Z[pmod->list[i]], Z[testv], n)) {
-	    ret = 1;
-	    break;
-	}
-    }
-
-    return ret;
-}
-
 /**
  * whites_test:
  * @pmod: #MODEL struct.
@@ -2516,7 +2497,7 @@ static int var_already_there (MODEL *pmod, double **Z, int testv)
 int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		 PRN *prn, GRETLTEST *test)
 {
-    int lo, ncoeff, yno, i, k, t, check = 0;
+    int lo, ncoeff, yno, i, k, t;
     int shrink, v = pdinfo->v;
     int *list = NULL;
     double zz;
@@ -2577,7 +2558,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		continue;
 	    }
 	    sqnum = xpxgenr(vi, vi, pZ, pdinfo);
-	    if (sqnum > 0 && !var_already_there(pmod, *pZ, sqnum)) {
+	    if (sqnum > 0) {
 		list[++k] = sqnum;
 	    }
 	}
