@@ -54,7 +54,7 @@ check: nistcheck
 
 clean:
 	rm -f nistcheck diehard mtrand *.o test.out
-	rm -f gretl.32 gretl_rand.txt
+	rm -f gretl_output.32 gretl_rand.txt
 	if [ `pwd` != "$(topsrc)/tests" ] ; then \
 	rm -f operm5.data randtests.txt ; fi
 	rm -rf .libs
