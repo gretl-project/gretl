@@ -483,10 +483,14 @@ int gnuplot_display (const PATHS *ppaths)
     sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
     if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
 #else
+# ifdef GNUPLOT_PNG
     sprintf(plotcmd, "%s%s \"%s\"", ppaths->gnuplot, 
 	    (GRETL_GUI(ppaths))? "" : " -persist", ppaths->plotfile);
+# else
+    sprintf(plotcmd, "%s -persist \"%s\"", ppaths->gnuplot, ppaths->plotfile);
+# endif /* GNUPLOT_PNG */
     if (system(plotcmd)) err = 1;
-#endif
+#endif /* OS_WIN32 */
     return err;
 }
 
