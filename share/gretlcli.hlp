@@ -469,10 +469,6 @@ Thus "ldiff x y" creates the new variables
                ld_y = ln[y(t)] - ln[y(t-1)].
 
 #
-list
-Prints a complete list of variables currently defined. "ls" is a synonym.
-
-#
 lmtest
 Usage:          lmtest
                 lmtest -o 
@@ -934,6 +930,12 @@ regression will be run for each variable in the list, excluding the
 constant, the time trend and any dummy variables.  Output for each
 equation includes F-tests for zero restrictions on all lags of each of the
 variables, and an F-test for the maximum lag.
+
+# 
+varlist
+Usage:          varlist
+Prints a complete list of variables currently defined. "list" and "ls" are
+synonyms.
 
 #
 vartest

@@ -57,7 +57,6 @@ char *commands[] = {
     "labels",  
     "lags",    
     "ldiff",
-    "list",    
     "lmtest", 
     "logit",
     "logs",
@@ -94,6 +93,7 @@ char *commands[] = {
     "testuhat",
     "tsls",    
     "var",
+    "varlist",
     "vartest",
     "wls"
 }; 

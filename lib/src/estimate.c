@@ -99,7 +99,7 @@ extern int _addtolist (const int *oldlist, const int *addvars,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL lsq (int *list, double **pZ, DATAINFO *pdinfo, 
+MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo, 
 	   const int ci, const int opt, const double rho)
 {
     int l0, ifc, nwt, yno, i, n;
@@ -912,7 +912,7 @@ static void _dropwt (int *list)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int hilu_corc (double *toprho, int *list, double **pZ, DATAINFO *pdinfo, 
+int hilu_corc (double *toprho, LIST list, double **pZ, DATAINFO *pdinfo, 
 	       const int opt, print_t *prn)
 {
     double rho = 0.0, rho0 = 0.0, diff = 1.0, *uhat;
@@ -1030,7 +1030,7 @@ static void _autores (const int i, double *Z, const int n,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tsls_func (const int *list, const int pos, double **pZ, 
+MODEL tsls_func (LIST list, const int pos, double **pZ, 
 		 DATAINFO *pdinfo)
 {
     int i, j, t, v, ncoeff, *list1, *list2, *newlist, *s1list, *s2list;
@@ -1292,7 +1292,7 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double **pZ,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL hsk_func (int *list, double **pZ, DATAINFO *pdinfo)
+MODEL hsk_func (LIST list, double **pZ, DATAINFO *pdinfo)
 {
     int err, lo, ncoeff, yno, t, nwt, v, n = pdinfo->n;
     int shrink, orig_nvar = pdinfo->v;
@@ -1373,7 +1373,7 @@ MODEL hsk_func (int *list, double **pZ, DATAINFO *pdinfo)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL hccm_func (int *list, double **pZ, DATAINFO *pdinfo)
+MODEL hccm_func (LIST list, double **pZ, DATAINFO *pdinfo)
 {
     int nobs, m3, lo, index, ncoeff, i, j, n, t, t1, t2;
     double xx, *st, *uhat1, **p;
@@ -1587,7 +1587,7 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
  * Returns: #MODEL struct containing the results.
  */
 
-MODEL ar_func (int *list, const int pos, double **pZ, 
+MODEL ar_func (LIST list, const int pos, double **pZ, 
 	       DATAINFO *pdinfo, int *model_count, print_t *prn)
 {
     double diff = 100.0, ess = 0, tss = 0, xx;
@@ -2007,7 +2007,7 @@ static double _wt_dummy_stddev (const MODEL *pmod, const double *Z,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arch (int order, int *list, double **pZ, DATAINFO *pdinfo, 
+MODEL arch (int order, LIST list, double **pZ, DATAINFO *pdinfo, 
 	    int *model_count, print_t *prn, GRETLTEST *test)
 {
     MODEL archmod;

@@ -41,6 +41,8 @@ typedef enum {
     GRETL_PRINT_NULL
 } prn_codes;
 
+typedef int *LIST;  
+
 /* information on data set */
 typedef struct { 
     int v;              /* number of variables */

@@ -525,7 +525,7 @@ void exec_line (char *line, print_t *prn)
     case DIFF: case LDIFF: case LAGS: case LOGS:
     case MULTIPLY:
     case GRAPH: case PLOT:
-    case INFO: case LABELS: case LIST:
+    case INFO: case LABELS: case VARLIST:
     case PRINT:
     case SUMMARY:
     case MEANTEST: case VARTEST:

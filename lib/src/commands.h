@@ -55,7 +55,6 @@ typedef enum {
     LABELS,  
     LAGS,    
     LDIFF,
-    LIST,    
     LMTEST, 
     LOGIT,
     LOGS,
@@ -92,6 +91,7 @@ typedef enum {
     TESTUHAT,
     TSLS,    
     VAR,
+    VARLIST,
     VARTEST,
     WLS,
     NC

@@ -132,6 +132,49 @@ int _command_number (const char *cmd)
 
 /* ........................................................... */
 
+static int aliased (char *cmd)
+{
+    if (!strcmp(cmd, "q")) {
+	strcpy(cmd, "quit");
+	return 1;
+    }
+    else if (!strcmp(cmd, "x")) {
+	strcpy(cmd, "quit");
+	return 2;
+    }
+    else if (!strcmp(cmd, "let")) {
+	strcpy(cmd, "genr");
+	return 1;
+    }
+    else if (!strcmp(cmd, "ls")) {
+	strcpy(cmd, "varlist");
+	return 1;
+    }
+    else if (!strcmp(cmd, "list")) {
+	strcpy(cmd, "varlist");
+	return 1;
+    }
+    else if (!strcmp(cmd, "boxplots")) { 
+	strcpy(cmd, "boxplot");
+	return 1;
+    }
+    else if (!strcmp(cmd, "man")) {
+	strcpy(cmd, "help");
+	return 1;
+    }
+    else if (!strcmp(cmd, "sample")) {
+	strcpy(cmd, "smpl");
+	return 1;
+    }
+    else if (cmd[0] == '!') {
+	strcpy(cmd, "shell");
+	return 1;
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
 void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
 	     int *ignore, double **pZ, print_t *cmds)
 {
@@ -168,25 +211,10 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     }
 
     /* command aliases */
-    if (strcmp(command->cmd, "q") == 0) 
-	strcpy(command->cmd, "quit");
-    if (strcmp(command->cmd, "x") == 0) {
-	strcpy(command->cmd, "quit");
+    if (aliased(command->cmd) == 2) {
 	command->param = realloc(command->param, 2);
 	strcpy(command->param, "x");
     }
-    if (strcmp(command->cmd, "let") == 0) 
-	strcpy(command->cmd, "genr");
-    if (strcmp(command->cmd, "ls") == 0) 
-	strcpy(command->cmd, "list");
-    if (strcmp(command->cmd, "boxplots") == 0) 
-	strcpy(command->cmd, "boxplot");
-    if (strcmp(command->cmd, "man") == 0) 
-	strcpy(command->cmd, "help");
-    if (strcmp(command->cmd, "sample") == 0) 
-	strcpy(command->cmd, "smpl");
-    if (command->cmd[0] == '!') 
-	strcpy(command->cmd, "shell");
 
     /* trap bogus commands */    
     if ((command->ci = _command_number(command->cmd)) == 0) {
@@ -197,7 +225,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     }
 
     /* commands that never take a list of variables */
-    if (command->ci == LIST ||
+    if (command->ci == VARLIST ||
 	command->ci == QUIT || 
 	command->ci == SMPL ||
 	command->ci == EQNPRINT ||
@@ -488,8 +516,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 int help (const char *cmd, const char *helpfile, print_t *prn)
 {
     FILE *fq;
-    char line[MAXLEN], tmp[MAXLEN];
-    int ls, i, ok;
+    char line[MAXLEN], tmp[MAXLEN], cmdcopy[9];
+    int i, ok;
 
     if (cmd == NULL) {
 	pprintf(prn, "\nValid gretl commands are:\n");
@@ -504,11 +532,22 @@ int help (const char *cmd, const char *helpfile, print_t *prn)
 	return 0;
     }
 
+    strncpy(cmdcopy, cmd, 8);
+    cmdcopy[8] = '\0';
+
     ok = 0;
     for (i=1; i<NC; i++) {
-	if (strcmp(commands[i], cmd) == 0) {
+	if (!strcmp(commands[i], cmd)) {
 	    ok = 1;
 	    break;
+	}
+    }
+    if (!ok && aliased(cmdcopy)) {
+	for (i=1; i<NC; i++) {
+	    if (!strcmp(commands[i], cmdcopy)) {
+		ok = 1;
+		break;
+	    }
 	}
     }
     if (!ok) {
@@ -523,8 +562,8 @@ int help (const char *cmd, const char *helpfile, print_t *prn)
 
     while (fgets(line, MAXLEN, fq) != NULL) {
 	delchar('\n', line);
-	ls = strcmp(cmd, line);
-	if (ls) continue;
+	ok = !strcmp(cmdcopy, line);
+	if (!ok) continue;
 	pprintf(prn, "\n");
 	do {
 	    if (fgets(tmp, MAXLEN, fq) == NULL) {
@@ -539,7 +578,7 @@ int help (const char *cmd, const char *helpfile, print_t *prn)
 	    }
 	    pprintf(prn, "%s\n", tmp);
 	} while (i);
-	if (!ls) {
+	if (ok) {
 	    fclose(fq);
 	    return 0;
 	}
@@ -976,7 +1015,7 @@ int simple_commands (CMD *cmd, const char *line,
 	showlabels(datainfo);
 	break;
 
-    case LIST:
+    case VARLIST:
 	varlist(datainfo, prn);
 	break;
 
