@@ -1777,29 +1777,32 @@ static void print_ll_stats (const MODEL *pmod, PRN *prn)
 	    int p = pmod->list[1];
 	    int q = pmod->list[2];
 	    int i;
-	    
-	    pprintf(prn,"\n  %s:\t", _("AR roots"));
 
-	    for (i=0; i<p; i++) {
-		pprintf(prn, "%7.4f", roots[i].r);
-		if (roots[i].i != 0) {
-		    pputs(prn, (roots[i].i > 0) ? "+" : "");
-		    pprintf(prn, "%6.4fi", roots[i].i);
+	    if (p > 0) {
+		pprintf(prn,"\n  %s:\t", _("AR roots"));
+		for (i=0; i<p; i++) {
+		    pprintf(prn, "%7.4f", roots[i].r);
+		    if (roots[i].i != 0) {
+			pputs(prn, (roots[i].i > 0) ? "+" : "");
+			pprintf(prn, "%6.4fi", roots[i].i);
+		    }
+		    pputc(prn, '\t');
 		}
-		pputc(prn, '\t');
+		pputc(prn, '\n');
 	    }
-	    pputc(prn, '\n');
-	
-	    pprintf(prn,"  %s:\t", _("MA roots"));
-	    for (i=p; i<p+q; i++) {
-		pprintf(prn,"%7.4f", roots[i].r);
-		if (roots[i].i != 0) {
-		    pprintf(prn, (roots[i].i > 0) ? "+" : "");
-		    pprintf(prn, "%6.4fi", roots[i].i);
+
+	    if (q > 0) {
+		pprintf(prn,"  %s:\t", _("MA roots"));
+		for (i=p; i<p+q; i++) {
+		    pprintf(prn,"%7.4f", roots[i].r);
+		    if (roots[i].i != 0) {
+			pprintf(prn, (roots[i].i > 0) ? "+" : "");
+			pprintf(prn, "%6.4fi", roots[i].i);
+		    }
+		    pputc(prn, '\t');
 		}
-		pputc(prn, '\t');
+		pputc(prn, '\n');	
 	    }
-	    pputc(prn, '\n');	
 	}
     }
 }
