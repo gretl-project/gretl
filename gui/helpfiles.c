@@ -664,9 +664,11 @@ static void find_in_text (GtkWidget *widget, gpointer data)
 
 /* .................................................................. */
 
+static int clist_start_row;
+
 static void find_in_clist (GtkWidget *w, gpointer data)
 {
-    int start, end, i;
+    int end, i;
     int found = 0, wrapped = 0, minvar = 0;
     gchar *tmp; 
     char haystack[MAXLEN];
@@ -682,12 +684,11 @@ static void find_in_clist (GtkWidget *w, gpointer data)
     needle = gtk_editable_get_chars(GTK_EDITABLE (find_entry), 0, -1);
     lower(needle);
 
-    start = win->active_var;
     end = GTK_CLIST(win->listbox)->rows;
 
  search_wrap: 
 
-    for (i=start; i<end; i++) {  
+    for (i=clist_start_row; i<end; i++) {  
 	/* try looking in column 1 first */
 	gtk_clist_get_text(GTK_CLIST(win->listbox), i, 1, &tmp);
 	strcpy(haystack, tmp);
@@ -705,7 +706,7 @@ static void find_in_clist (GtkWidget *w, gpointer data)
     if (found < 0 && win->active_var > minvar && !wrapped) {
 	/* try wrapping to start */
 	end = win->active_var;
-	start = minvar;
+	clist_start_row = minvar;
 	wrapped = 1;
 	goto search_wrap;
     }    
@@ -715,6 +716,7 @@ static void find_in_clist (GtkWidget *w, gpointer data)
 	gtk_clist_moveto(GTK_CLIST(win->listbox), i, 0, 0, .1);
 	gtk_clist_select_row(GTK_CLIST(win->listbox), i, 0);
 	win->active_var = i;
+	clist_start_row = i + 1;
     } else {
 	gtk_clist_select_row(GTK_CLIST(win->listbox), 0, 0);
 	win->active_var = 0;
@@ -779,6 +781,8 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
     GtkWidget *button;
     GtkWidget *hbox;
     windata_t *mydat = (windata_t *) data;
+
+    clist_start_row = 0;
 
     if (find_window) {
 	gtk_object_set_data(GTK_OBJECT(find_window), "windat", mydat); 
