@@ -71,7 +71,7 @@ typedef struct _GRETL_TEXT GRETL_TEXT;
 typedef struct _gui_obj gui_obj;
 
 struct _SESSION {
-    char name[OBJNAMLEN];
+    char name[MAXLEN];
     int nmodels;
     int ngraphs;
     int nvars;
@@ -212,6 +212,10 @@ static gboolean session_icon_click (GtkWidget *widget,
 				    GdkEventButton *event,
 				    gpointer data);
 static void gretl_text_free (GRETL_TEXT *text);
+
+#ifdef SESSION_DEBUG
+static void print_session (void);
+#endif
 
 /* ........................................................... */
 
@@ -680,7 +684,23 @@ void session_init (void)
     session_file_manager(CLEAR_DELFILES, NULL);
 }
 
-/* ........................................................... */
+static void
+session_name_from_session_file (char *sname, const char *fname)
+{
+    const char *p = strrchr(fname, SLASH);
+    char *q;
+
+    if (p != NULL) {
+	strcpy(sname, p + 1);
+    } else {
+	strcpy(sname, fname);
+    }
+
+    q = strstr(sname, ".gretl");
+    if (q != NULL) {
+	*q = '\0';
+    }
+}
 
 void do_open_session (GtkWidget *w, gpointer data)
 {
@@ -733,9 +753,14 @@ void do_open_session (GtkWidget *w, gpointer data)
 	return;
     }
 
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "after recreate_session():\n");
+    print_session();
+#endif
+
     mkfilelist(FILE_LIST_SESSION, scriptfile);
 
-    endbit(session.name, scriptfile, 0);
+    session_name_from_session_file(session.name, scriptfile);
 
     /* pick up session notes, if any */
     if (status == SAVEFILE_SESSION) {
@@ -768,6 +793,11 @@ void do_open_session (GtkWidget *w, gpointer data)
     /* sync gui with session */
     session_file_open = 1;
     session_menu_state(TRUE);
+
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "about to view_session():\n");
+    print_session();
+#endif
 
     view_session();
 }
@@ -900,7 +930,7 @@ void close_session (void)
 /* ........................................................... */
 
 #ifdef SESSION_DEBUG
-void print_session (void)
+static void print_session (void)
 {
     int i;
 

@@ -215,9 +215,7 @@ void save_file_lists (FILE *fp)
 
 #endif 
 
-/* .................................................................. */
-
-char *endbit (char *dest, char *src, int addscore)
+static char *endbit (char *dest, const char *src, int addscore)
 {
     /* take last part of src filename */
     if (strrchr(src, SLASH)) {
