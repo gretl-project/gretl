@@ -3136,6 +3136,10 @@ datawiz_make_changes (DATAINFO *dwinfo)
 	dwinfo->pd = (dwinfo->structure == STACKED_TIME_SERIES)? 
 	    nperiods : nunits;
 	strcpy(dwinfo->stobs, "1.1");
+    } else if (dwinfo->pd == 24) {
+	/* hourly data */
+	strcpy(dwinfo->stobs, "1.1");
+	/* fixme weekly data */
     }
 
     sprintf(setline, "setobs %d %s", dwinfo->pd, dwinfo->stobs);
@@ -3298,11 +3302,15 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 	    tslabel = N_("time-series data");
 	}
 
-	if (dwinfo->pd != 52 && dwinfo->pd != 24) {
+	if (dwinfo->pd != 52) {
 	    int lastobs = dwinfo->t1 + datainfo->n - 1;
 
 	    if (lastobs > dwinfo->n - 1) {
 		dwinfo->n = lastobs + 1;
+	    }
+
+	    if (dwinfo->pd == 24) {
+		dwinfo->sd0 = 1.01;
 	    }
 
 	    ntodate_full(stobs, dwinfo->t1, dwinfo);
@@ -3642,9 +3650,12 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 	    } else if (step == DW_PANEL_SIZE) {
 		step = DW_PANEL_MODE;
 	    } else if (step == DW_CONFIRM) {
-		if (dwinfo->structure == TIME_SERIES &&
-		    dwinfo->pd != 52 && dwinfo->pd != 24) {
-		    step = DW_STARTING_OBS;
+		if (dwinfo->structure == TIME_SERIES) {
+		    if (dwinfo->pd != 52 && dwinfo->pd != 24) {
+			step = DW_STARTING_OBS;
+		    } else {
+			step = DW_TS_FREQUENCY;
+		    }
 		} else if (dwinfo->structure == STACKED_TIME_SERIES ||
 			   dwinfo->structure == STACKED_CROSS_SECTION) {
 		    step = DW_PANEL_SIZE;

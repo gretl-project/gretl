@@ -662,7 +662,7 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
     }
 
     /* does frequency make sense? */
-    if (pd < 1 || (pdinfo->n > 0 && pd > pdinfo->n)) {
+    if (pd < 1 || (pdinfo->n > 0 && pd > pdinfo->n && opt != OPT_T)) {
 	sprintf(gretl_errmsg, 
 		_("frequency (%d) does not make seem to make sense"), pd);
 	return 1;
