@@ -117,12 +117,16 @@ RCVARS rc_vars[] = {
 #ifdef HAVE_X12A
     {"x12a", N_("path to x12arima"), NULL, x12a, 
      'R', MAXSTR, 3, NULL},
-    {"x12adir", N_("X-12-ARIMA working directory"), NULL, x12adir, 
-     'R', MAXSTR, 3, NULL},
 #endif
 #ifdef HAVE_TRAMO
     {"tramo", N_("path to tramo"), NULL, tramo, 
      'R', MAXSTR, 3, NULL},
+#endif
+#ifdef HAVE_X12A
+    {"x12adir", N_("X-12-ARIMA working directory"), NULL, x12adir, 
+     'R', MAXSTR, 3, NULL},
+#endif
+#ifdef HAVE_TRAMO
     {"tramodir", N_("TRAMO working directory"), NULL, tramodir, 
      'R', MAXSTR, 3, NULL},
 #endif
@@ -163,13 +167,14 @@ void get_default_dir (char *s)
 
     if (usecwd) {
 	test = getcwd(s, MAXLEN);
-	if (test == NULL) 
+	if (test == NULL) {
 	    strcpy(s, paths.userdir);
-	else
+	} else {
 	    strcat(s, SLASHSTR);
-    }
-    else
-	strcpy(s, paths.userdir);    
+	}
+    } else {
+	strcpy(s, paths.userdir); 
+    }   
 }
 
 /* ........................................................... */
@@ -346,6 +351,44 @@ static void flip_sensitive (GtkWidget *w, gpointer data)
 
 /* .................................................................. */
 
+void filesel_set_path_callback (const char *setting, char *strvar)
+{
+    int i = 0;
+
+    strcpy(strvar, setting);
+
+    while (rc_vars[i].key != NULL) {
+	if (rc_vars[i].var == (void *) strvar) {
+	    gtk_entry_set_text(GTK_ENTRY(rc_vars[i].widget), 
+			       strvar);
+	    break;
+	}
+	i++;
+    }
+}
+
+/* .................................................................. */
+
+static void browse_button_callback (GtkWidget *w, RCVARS *rc)
+{
+    file_selector(_(rc->description), SET_PATH, rc->var);
+}
+
+/* .................................................................. */
+
+static GtkWidget *make_path_browse_button (RCVARS *rc)
+{
+    GtkWidget *b;
+
+    b = gtk_button_new_with_label(_("Browse..."));
+    gtk_signal_connect(GTK_OBJECT(b), "clicked",
+                       GTK_SIGNAL_FUNC(browse_button_callback), 
+		       rc);
+    return b;
+}
+
+/* .................................................................. */
+
 static void make_prefs_tab (GtkWidget *notebook, int tab) 
 {
     GtkWidget *box, *b_table, *s_table, *tempwid = NULL;
@@ -457,19 +500,27 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    } else { /* string variable */
 		s_count++;
 		s_len++;
-		gtk_table_resize (GTK_TABLE (s_table), s_len, 2);
+		gtk_table_resize (GTK_TABLE (s_table), s_len, 
+				  (tab == 3)? 3 : 2);
 		tempwid = gtk_label_new (_(rc->description));
 		gtk_misc_set_alignment (GTK_MISC (tempwid), 1, 0.5);
 		gtk_table_attach_defaults (GTK_TABLE (s_table), 
 					   tempwid, 0, 1, s_len-1, s_len);
-		gtk_widget_show (tempwid);
+		gtk_widget_show(tempwid);
 
-		tempwid = gtk_entry_new ();
+		tempwid = gtk_entry_new();
 		gtk_table_attach_defaults (GTK_TABLE (s_table), 
 					   tempwid, 1, 2, s_len-1, s_len);
-		gtk_entry_set_text (GTK_ENTRY (tempwid), rc->var);
-		gtk_widget_show (tempwid);
+		gtk_entry_set_text(GTK_ENTRY(tempwid), rc->var);
+		gtk_widget_show(tempwid);
 		rc->widget = tempwid;
+		/* program browse button */
+		if (tab == 3 && strstr(rc->description, "directory") == NULL) {
+		    tempwid = make_path_browse_button(rc);
+		    gtk_table_attach_defaults(GTK_TABLE(s_table), 
+					      tempwid, 2, 3, s_len-1, s_len);
+		    gtk_widget_show(tempwid);
+		}
 	    } 
 	}
 	i++;

@@ -271,7 +271,9 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	} else fclose(fp);
     } 
 
-    strcpy(remember_dir, path);
+    if (action != SET_PATH) {
+	strcpy(remember_dir, path);
+    }
 
     if (action == OPEN_DATA || action == OPEN_CSV || 
 	action == OPEN_BOX || action == OPEN_GNUMERIC || 
@@ -391,6 +393,11 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	pmod = (MODEL *) gtk_object_get_data(GTK_OBJECT(fs), "model");
 	do_save_tex(fname, action, pmod); 
     }
+    else if (action == SET_PATH) {
+	char *strvar = gtk_object_get_data(GTK_OBJECT(fs), "text");
+
+	filesel_set_path_callback(fname, strvar);
+    }
     else {
 	windata_t *vwin = gtk_object_get_data(GTK_OBJECT(fs), "text");
 
@@ -426,10 +433,11 @@ void file_selector (const char *msg, int action, gpointer data)
 
     filesel = gtk_icon_file_selection_new(msg);
 
-    if (strstr(startdir, "/."))
+    if (strstr(startdir, "/.")) {
 	gtk_icon_file_selection_show_hidden(GTK_ICON_FILESEL(filesel), TRUE);
-    else 
+    } else {
 	gtk_icon_file_selection_show_hidden(GTK_ICON_FILESEL(filesel), FALSE);
+    }
 
     gtk_object_set_data(GTK_OBJECT(filesel), "action", GINT_TO_POINTER(action));
 
@@ -440,8 +448,10 @@ void file_selector (const char *msg, int action, gpointer data)
 		       "clicked", 
 		       GTK_SIGNAL_FUNC(filesel_callback), filesel);
 
-    if (action > END_OPEN) /* a file save action */
+    if (action > END_OPEN) {
+	/* a file save action */
 	gtk_object_set_data(GTK_OBJECT(filesel), "text", data);
+    }
 
     /* special cases */
 
@@ -466,6 +476,22 @@ void file_selector (const char *msg, int action, gpointer data)
 	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
 	    gotdir = 1;
 	}
+    }
+
+    else if (action == SET_PATH) {
+	char *strvar = (char *) data;
+	char *fname;
+	char startd[MAXLEN];
+
+	if (get_base(startd, strvar, SLASH) == 1) {
+	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
+	    gotdir = 1;
+	    fname = strvar + slashpos(strvar) + 1; 
+	} else {
+	    fname = strvar;
+	}
+	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
+			   fname);
     }
 
     if (!gotdir)

@@ -182,6 +182,7 @@ enum file_ops {
     SAVE_THIS_GRAPH,
     SAVE_GP_CMDS,
     SAVE_CONSOLE,
+    SET_PATH,
     OP_MAX
 };
 

@@ -374,7 +374,8 @@ static struct winfilter get_filter (int action, gpointer data)
 	{APPEND_GNUMERIC, { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
 	{OPEN_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
 	{APPEND_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
-	{OPEN_DES, { N_("DES files (*.des)"), "*.des" }}
+	{OPEN_DES, { N_("DES files (*.des)"), "*.des" }},
+	{SET_PATH, { N_("program files (*.exe)"), "*.exe" }}
     };
     static struct winfilter olddat_filter = {
 	N_("gretl data files (*.dat)"), "*.dat"
@@ -448,6 +449,19 @@ void file_selector (const char *msg, int action, gpointer data)
 	get_base(startdir, paths.datfile, SLASH);
     }
 
+    /* special case: setting program path */
+    if (action == SET_PATH) {
+	char *strvar = (char *) data;
+
+	if (strvar != NULL && *strvar != 0) {
+	    if (get_base(startdir, strvar, SLASH)) {
+		strcpy(fname, strvar + slashpos(strvar) + 1);
+	    } else {
+		strcpy(fname, strvar);
+	    }
+	}
+    }	
+
     if (nls_on) {
 	gint wrote;
 
@@ -490,8 +504,10 @@ void file_selector (const char *msg, int action, gpointer data)
 	    errbox(_("File dialog box error"));
 	return;
     }
-	
-    strncpy(remember_dir, fname, slashpos(fname));
+
+    if (action != SET_PATH) {
+	strncpy(remember_dir, fname, slashpos(fname));
+    }
 
     if (OPEN_DATA_ACTION(action)) {
 	strcpy(trydatfile, fname);
@@ -560,6 +576,11 @@ void file_selector (const char *msg, int action, gpointer data)
 
 	do_save_tex(fname, action, pmod); 
     }
+    else if (action == SET_PATH) {
+	char *strvar = (char *) data;
+
+	filesel_set_path_callback(fname, strvar);
+    }
     else {
 	windata_t *vwin = (windata_t *) data;
 
@@ -593,8 +614,10 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	    return;
 	} else fclose(fp);
     } 
-
-    strncpy(remember_dir, fname, slashpos(fname));
+    
+    if (action != SET_PATH) {
+	strncpy(remember_dir, fname, slashpos(fname));
+    }
 
     if (OPEN_DATA_ACTION(action)) {
 	strcpy(trydatfile, fname);
@@ -684,6 +707,11 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	MODEL *pmod;
 	pmod = (MODEL *) g_object_get_data(G_OBJECT(fs), "model");
 	do_save_tex(fname, action, pmod); 
+    }
+    else if (action == SET_PATH) {
+	char *strvar = g_object_get_data(G_OBJECT(fs), "text");
+
+	filesel_set_path_callback(fname, strvar);
     }
     else {
 	windata_t *vwin = g_object_get_data(G_OBJECT(fs), "text");
@@ -791,6 +819,16 @@ void file_selector (const char *msg, int action, gpointer data)
 					scriptfile);
 	if (!strstr(scriptfile, startdir)) do_glob = 0;
     }
+
+    else if (action == SET_PATH) {
+	char *strvar = (char *) data;
+
+	if (strvar != NULL && *strvar != 0) {
+	    gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
+					    strvar);
+	}
+	do_glob = 0;
+    }	
 
     /* end special cases */
 

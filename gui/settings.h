@@ -21,6 +21,8 @@ char *endbit (char *dest, char *src, int addscore);
 
 void get_default_dir (char *s);
 
+void filesel_set_path_callback (const char *setting, char *strvar);
+
 #ifdef HAVE_TRAMO
 void set_tramo_ok (int set);
 #endif
