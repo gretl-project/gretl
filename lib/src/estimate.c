@@ -1695,7 +1695,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		 PRN *prn, GRETLTEST *test)
 {
-    int lo, ncoeff, yno, i, t, check;
+    int lo, ncoeff, yno, i, t, check = 0;
     int shrink, v = pdinfo->v, listlen;
     int *tmplist = NULL, *list = NULL;
     double zz;

@@ -983,7 +983,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     int T = pmod->t2 - pmod->t1 + 1, K = pmod->ncoeff;
     MODEL cum_mod;
     char cumdate[9];
-    double wbar, xx, yy, sigma, hct;
+    double xx, yy, sigma, hct, wbar = 0.0;
     double *cresid = NULL, *W = NULL, *xvec = NULL;
     FILE *fq = NULL;
     int err = 0;
@@ -1003,7 +1003,6 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 
     if (!err) {
 	_init_model(&cum_mod, pdinfo);
-	wbar = 0.0;
 	for (j=0; j<n_est; j++) {
 	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, 1, 0.0);
 	    err = cum_mod.errcode;

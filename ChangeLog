@@ -3,6 +3,7 @@ version 1.0
 - improve sizing of some windows
 - incorporate new translations
 - update appearance of gtk-1.2 version of gui
+- fix the stats available in connection with a LAD model
 
 11/06/02 version 1.0pre4 (for translators)
 - fix bug in progress bar when loading large data set
