@@ -1,8 +1,8 @@
-/* dolines.c -- in text file, reflow paragraphs that have been 
+/* reflow.c -- in text file, reflow paragraphs that have been 
    tagged with "[PARA]" and "[/PARA]".  Implemented as a filter.
    Designed for post-processing of text help files generated via
    xsl.  Some of what's here can probably be done more efficiently
-   within xsl -- if we can figure out how to use it properly!
+   within xsl -- if we could figure out how to use it properly!
 
    Allin Cottrell, Feb 2004.
 */
@@ -56,9 +56,7 @@ static void trash_utf (char *s, int i)
     int tlen = strlen(replacers[i].targ);
     int j, r = tlen - slen;
 
-    while (1) {
-	p = strstr(s, replacers[i].targ); 
-	if (p == NULL) break;
+    while ((p = strstr(s, replacers[i].targ))) {
 	for (j=0; j<slen; j++) {
 	    *p++ = replacers[i].sub[j];
 	}
@@ -98,13 +96,16 @@ static void compress_spaces (char *s)
             p = s + 1;
             if (*p == 0) break;
             while (*p == ' ') p++;
-            if (p - s > 1) memmove(s + 1, p, strlen(p) + 1);
+            if (p - s > 1) {
+		memmove(s + 1, p, strlen(p) + 1);
+	    }
         }
         s++;
     }
 }
 
 /* test whether a string is nothing but whitespace */
+
 static int blank_string (const char *s)
 {
     while (*s) {
@@ -115,7 +116,8 @@ static int blank_string (const char *s)
     return 1;
 }
 
-/* remove white space from the end of a string */
+/* remove all spaces from the end of a string */
+
 static void trim_trailing_space (char *s)
 {
     int i, n = strlen(s);
@@ -123,9 +125,13 @@ static void trim_trailing_space (char *s)
     for (i=n-1; i>0; i--) {
 	if (s[i] == ' ') {
 	    s[i] = '\0';
-	} else break;
+	} else {
+	    break;
+	}
     }
 }
+
+/* back up along a string and terminate at the first space */
 
 static void trim_to_length (char *s)
 {
@@ -139,7 +145,7 @@ static void trim_to_length (char *s)
     }
 }
 
-/* Reflow a paragraph buffer, with max line length MAXLEN */
+/* reflow a paragraph buffer, with max line length MAXLEN */
 
 static int format_buf (char *buf, int ptype)
 {
@@ -167,7 +173,9 @@ static int format_buf (char *buf, int ptype)
 	out += strlen(line);
 	p = q + strlen(line);
 	if (!blank_string(line)) {
-	    for (i=0; i<indent; i++) putchar(' ');
+	    for (i=0; i<indent; i++) {
+		putchar(' ');
+	    }
 	    printf("%s\n", (*line == ' ')? line + 1 : line);
 	}
 	if (ptype == NLISTPAR) {
@@ -191,13 +199,21 @@ static int analyse_row (struct table_row *trow, char *row,
     p = row;
     for (j=0; j<2; j++) {
 	p = strstr(p, "[CELL]");
-	if (p == NULL) return 1;
+	if (p == NULL) {
+	    return 1;
+	}
+
 	cell = p + strlen("[CELL]");
 	trow->cells[j] = cell;
+
 	p = strstr(cell, "[/CELL]");
-	if (p == NULL) return 1;
+	if (p == NULL) {
+	    return 1;
+	}
+
 	len = p - cell - 1;
 	*p++ = 0;
+
 	if (j == 0) {
 	    if (len > *lmax) *lmax = len;
 	} else {
@@ -212,7 +228,9 @@ static int back_up (char *s, int maxwid)
 {
     int i, n = strlen(s);
 
-    if (n <= maxwid) return n;
+    if (n <= maxwid) {
+	return n;
+    }
 
     for (i=n-1; i>0; i--) {
 	if (isspace(s[i])) {
@@ -281,10 +299,16 @@ static void print_table (struct table_row *rows, int nrows,
 	if (isspace(*cp0)) cp0++;
 	if (isspace(*cp1)) cp1++;
 
-	for (j=0; j<LINDENT; j++) putchar(' ');
+	for (j=0; j<LINDENT; j++) {
+	    putchar(' ');
+	}
 
 	printf("%-*s", wl, cp0);
-	for (j=0; j<COLSEP; j++) putchar(' ');
+
+	for (j=0; j<COLSEP; j++) {
+	    putchar(' ');
+	}
+
 	print_right_cell(cp1, startcol, rcellwid);
     }
 
@@ -397,7 +421,7 @@ int process_para (char *s, char *inbuf, int ptype)
 
 int main (void)
 { 
-    char buf[8096]; /* can't handle paragraphs > 8Kb */
+    char buf[8096]; /* won't handle paragraphs > 8Kb */
     char line[128];
     int blank = 0;
 
@@ -406,27 +430,21 @@ int main (void)
 	if (strstr(line, "[PARA]")) {
 	    process_para(line, buf, PARA);
 	    blank++;
-	}
-
-	else if (strstr(line, "[ILISTPAR]")) {
+	} else if (strstr(line, "[ILISTPAR]")) {
 	    process_para(line, buf, ILISTPAR);
 	    blank++;
-	}
-
-	else if (strstr(line, "[NLISTPAR]")) {
+	} else if (strstr(line, "[NLISTPAR]")) {
 	    process_para(line, buf, NLISTPAR);
 	    blank++;
-	}
-
-	else if (strstr(line, "[TABLE]")) {
+	} else if (strstr(line, "[TABLE]")) {
 	    process_para(line, buf, TABLE);
 	    blank++;
-	}
-
-	else {
+	} else {
 	    if (blank_string(line)) {
 		blank++;
-		if (blank < 2) putchar('\n');
+		if (blank < 2) {
+		    putchar('\n');
+		}
 	    } else {
 		utf_replace(line);
 		fputs(line, stdout);
