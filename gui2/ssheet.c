@@ -567,19 +567,19 @@ static void popup_sheet_add_var (GtkWidget *w, spreadsheet *sheet)
 
 /* ........................................................... */
 
-static void build_sheet_popup (GtkWidget **popup, spreadsheet *sheet)
+static void build_sheet_popup (spreadsheet *sheet)
 {
-    if (*popup != NULL) return;
+    if (sheet->popup != NULL) return;
 
-    *popup = gtk_menu_new();
+    sheet->popup = gtk_menu_new();
 
-    add_popup_item(_("Add Variable"), *popup, 
+    add_popup_item(_("Add Variable"), sheet->popup, 
 		   G_CALLBACK(popup_sheet_add_var),
 		   sheet);
-    add_popup_item(_("Add Observation"), *popup,
+    add_popup_item(_("Add Observation"), sheet->popup,
 		   G_CALLBACK(popup_sheet_add_obs),
 		   sheet);
-    add_popup_item(_("Insert Observation"), *popup,
+    add_popup_item(_("Insert Observation"), sheet->popup,
 		   G_CALLBACK(popup_sheet_insert_obs),
 		   sheet);
 }
@@ -588,7 +588,7 @@ static void build_sheet_popup (GtkWidget **popup, spreadsheet *sheet)
 
 static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
 {
-    GtkTreePath *path;
+    GtkTreePath *path = NULL;
     GtkTreeViewColumn *column;
     static gint oldrow, oldcol;
 
@@ -619,8 +619,9 @@ static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
 	   fprintf(stderr, " still in cell(%d, %d)\n", oldrow, oldcol); 
 #endif
 	}
-	gtk_tree_path_free(path);
     }
+
+    if (path != NULL) gtk_tree_path_free(path);
 
     return TRUE;
 }
@@ -1194,7 +1195,7 @@ void show_spreadsheet (DATAINFO *pdinfo)
     gtk_box_pack_start(GTK_BOX(main_vbox), mbar, FALSE, FALSE, 0);
     gtk_widget_show(mbar);
 
-    build_sheet_popup(&sheet->popup, sheet);
+    build_sheet_popup(sheet);
 
     status_box = gtk_hbox_new(FALSE, 1);
     gtk_container_set_border_width(GTK_CONTAINER(status_box), 0);

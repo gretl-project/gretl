@@ -119,7 +119,8 @@ void *gui_get_plugin_function (const char *funcname,
 
 int prn_to_clipboard (PRN *prn, int copycode);
 
-int get_worksheet_data (char *fname, int datatype, int append);
+int get_worksheet_data (char *fname, int datatype, int append,
+			int *gui_get_data);
 
 char *double_underscores (char *targ, const char *src);
 

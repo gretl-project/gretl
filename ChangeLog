@@ -15,6 +15,10 @@ version 1.2.2
   strings
 - Fix bug: adding a variable to the built-in spreadsheet
   (GTK 2 version) when there are already 6 variables shown
+- Fix bug: handle quotation marks within descriptions of
+  variables (XML encoding)
+- Fix bug: bad behavior when youput an Excel file to open on
+  the gretl command line, then cancel the import
 
 1/22/2004 version 1.2.1
 - Add Cristian Rigamonti's Italian translation

@@ -38,8 +38,7 @@
                               i == OPEN_ASCII || \
 	                      i == OPEN_BOX || \
                               i == OPEN_GNUMERIC || \
-	                      i == OPEN_EXCEL || \
-                              i == OPEN_DES) 
+	                      i == OPEN_EXCEL)
 
 #define APPEND_DATA_ACTION(i) (i == APPEND_CSV || \
                                i == APPEND_GNUMERIC || \
@@ -104,7 +103,6 @@ static struct extmap action_map[] = {
     {APPEND_GNUMERIC, ".gnumeric"},
     {OPEN_EXCEL, ".xls"},
     {APPEND_EXCEL, ".xls"},
-    {OPEN_DES, ".des"},
     {FILE_OP_MAX, NULL}
 };
 
@@ -441,7 +439,6 @@ static struct winfilter get_filter (int action, gpointer data)
 	{APPEND_GNUMERIC, { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
 	{OPEN_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
 	{APPEND_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
-	{OPEN_DES, { N_("DES files (*.des)"), "*.des" }},
 	{SET_PATH, { N_("program files (*.exe)"), "*.exe" }}
     };
     static struct winfilter olddat_filter = {

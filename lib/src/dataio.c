@@ -3210,8 +3210,6 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	return GRETL_GNUMERIC;
     if (file_has_suffix(fname, "xls"))
 	return GRETL_EXCEL;
-    if (file_has_suffix(fname, "des"))
-	return GRETL_DES_DATA;
     if (file_has_suffix(fname, "bin"))
 	return GRETL_NATIVE_DB;
     if (file_has_suffix(fname, "rat"))
@@ -3417,12 +3415,12 @@ static int write_xmldata (const char *fname, const int *list,
 	if (xmlbuf == NULL) return 1;
 	else {
 	    if (opt) {
-		gzputs(fz, "<description>\n");
+		gzputs(fz, "<description>");
 		gzputs(fz, xmlbuf);
 		gzputs(fz, "</description>\n");
 	    }
 	    else {
-		fprintf(fp, "<description>\n%s</description>\n", xmlbuf);
+		fprintf(fp, "<description>%s</description>\n", xmlbuf);
 	    }
 	    free(xmlbuf);
 #ifdef XML_DEBUG

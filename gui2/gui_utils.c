@@ -64,9 +64,9 @@ extern int session_saved;
 #include "../pixmaps/mini.tex.xpm"
 #endif
 
-#define MARK_SCRIPT_CHANGED(w) (w->active_var = 1)
-#define MARK_SCRIPT_SAVED(w) (w->active_var = 0)
-#define SCRIPT_IS_CHANGED(w) (w->active_var == 1)
+#define MARK_CONTENT_CHANGED(w) (w->active_var = 1)
+#define MARK_CONTENT_SAVED(w) (w->active_var = 0)
+#define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
 #define MULTI_COPY_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY \
 	                      || c == CORR || c == FCASTERR \
@@ -78,6 +78,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 				GtkItemFactoryEntry items[]);
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
 static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin);
+static gint query_save_info (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
 static void add_var_menu_items (windata_t *vwin);
@@ -521,15 +522,15 @@ static void delete_file (GtkWidget *widget, char *fname)
 static void delete_file_viewer (GtkWidget *widget, gpointer data) 
 {
     windata_t *vwin = (windata_t *) data;
+    gint resp = 0;
 
-    if (vwin->role == EDIT_SCRIPT && SCRIPT_IS_CHANGED(vwin)) {
-	gint resp;
-
+    if (vwin->role == EDIT_SCRIPT && CONTENT_IS_CHANGED(vwin)) {
 	resp = query_save_script(NULL, NULL, vwin);
-	if (!resp) gtk_widget_destroy(vwin->dialog);
-    } else {
-	gtk_widget_destroy(vwin->dialog);
-    }
+    } else if (vwin->role == EDIT_HEADER && CONTENT_IS_CHANGED(vwin)) {
+	resp = query_save_info(NULL, NULL, vwin);
+    } 
+
+    if (!resp) gtk_widget_destroy(vwin->dialog); 
 }
 
 /* ........................................................... */
@@ -617,7 +618,7 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    }
 	} 
 	else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
-	    if (vwin->role == EDIT_SCRIPT && SCRIPT_IS_CHANGED(vwin)) {
+	    if (vwin->role == EDIT_SCRIPT && CONTENT_IS_CHANGED(vwin)) {
 		gint resp;
 
 		resp = query_save_script(NULL, NULL, vwin);
@@ -753,7 +754,8 @@ void register_data (char *fname, const char *user_fname,
 
 /* ........................................................... */
 
-int get_worksheet_data (char *fname, int datatype, int append)
+int get_worksheet_data (char *fname, int datatype, int append,
+			int *gui_get_data)
 {
     int err;
     void *handle;
@@ -785,8 +787,11 @@ int get_worksheet_data (char *fname, int datatype, int append)
     err = (*sheet_get_data)(fname, &Z, datainfo, errprn);
     close_plugin(handle);
 
-    if (err == -1) /* the user canceled the import */
+    if (err == -1) { /* the user canceled the import */
+	fprintf(stderr, "data import canceled\n");
+	if (gui_get_data != NULL) *gui_get_data = 1;
 	return 0;
+    }
 
     if (err) {
 	if (*errprn->buf != '\0') {
@@ -849,9 +854,6 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }
     else if (code == OPEN_BOX) {
 	datatype = GRETL_BOX_DATA;
-    }
-    else if (code == OPEN_DES) {
-        datatype = GRETL_DES_DATA;
     } else {
 	/* no filetype specified: have to guess */
 	PRN *prn;	
@@ -865,7 +867,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     if (!append) close_session();
 
     if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL) {
-	get_worksheet_data(trydatfile, datatype, append);
+	get_worksheet_data(trydatfile, datatype, append, NULL);
 	return;
     }
     else if (datatype == GRETL_CSV_DATA) {
@@ -876,10 +878,6 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	do_open_csv_box(trydatfile, OPEN_BOX, 0);
 	return;
     }
-    else if (datatype == GRETL_DES_DATA) {
-        get_worksheet_data(trydatfile, datatype, 0);
-        return;
-    }    
     else { /* native data */
 	PRN prn;
 
@@ -1102,7 +1100,7 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 	    sprintf(buf, _("Saved %s\n"), vwin->fname);
 	    infobox(buf);
 	    if (vwin->role == EDIT_SCRIPT) { 
-		MARK_SCRIPT_SAVED(vwin);
+		MARK_CONTENT_SAVED(vwin);
 	    }
 	}
     }
@@ -1579,9 +1577,9 @@ static gchar *make_viewer_title (int role, const char *fname)
 
 /* ........................................................... */
 
-static void script_changed (GtkWidget *w, windata_t *vwin)
+static void content_changed (GtkWidget *w, windata_t *vwin)
 {
-    MARK_SCRIPT_CHANGED(vwin);
+    MARK_CONTENT_CHANGED(vwin);
 }
 
 /* ........................................................... */
@@ -1886,10 +1884,10 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     if (role == EDIT_SCRIPT) {
 #ifndef OLD_GTK
 	g_signal_connect(G_OBJECT(tbuf), "changed", 
-			 G_CALLBACK(script_changed), vwin);
+			 G_CALLBACK(content_changed), vwin);
 #else
 	gtk_signal_connect(GTK_OBJECT(vwin->w), "changed", 
-			   GTK_SIGNAL_FUNC(script_changed), vwin);
+			   GTK_SIGNAL_FUNC(content_changed), vwin);
 #endif
     }
 
@@ -1970,16 +1968,36 @@ void file_view_set_editable (windata_t *vwin)
 
     tbuf = GTK_TEXT_BUFFER(g_object_get_data(G_OBJECT(vwin->w), "tbuf"));
     g_signal_connect(G_OBJECT(tbuf), "changed", 
-		     G_CALLBACK(script_changed), vwin);
+		     G_CALLBACK(content_changed), vwin);
 #else
     gtk_text_set_editable(GTK_TEXT(vwin->w), TRUE);
     gtk_object_set_data(GTK_OBJECT(vwin->dialog), "vwin", vwin);
     gtk_signal_connect(GTK_OBJECT(vwin->w), "changed", 
-		       GTK_SIGNAL_FUNC(script_changed), vwin);
+		       GTK_SIGNAL_FUNC(content_changed), vwin);
 #endif
 
     vwin->role = EDIT_SCRIPT;
     add_edit_items_to_viewbar(vwin);
+}
+
+/* ........................................................... */
+
+static gint query_save_info (GtkWidget *w, GdkEvent *event, 
+			     windata_t *vwin)
+{
+    if (CONTENT_IS_CHANGED(vwin)) {
+	int resp = yes_no_dialog(_("gretl"), 
+				 _("Save changes?"), 1);
+
+	if (resp == GRETL_CANCEL) {
+	    return TRUE;
+	}
+	if (resp == GRETL_YES) {
+	    buf_edit_save(NULL, vwin);
+	    MARK_CONTENT_SAVED(vwin); 
+	}
+    }
+    return FALSE;
 }
 
 /* ........................................................... */
@@ -2032,6 +2050,19 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     gtk_signal_connect(GTK_OBJECT(vwin->dialog), "key_press_event", 
 		       GTK_SIGNAL_FUNC(catch_edit_key), vwin);	
 #endif	
+
+    /* check on delete event? */
+#ifndef OLD_GTK
+    g_signal_connect(G_OBJECT(tbuf), "changed", 
+		     G_CALLBACK(content_changed), vwin);
+    g_signal_connect(G_OBJECT(vwin->dialog), "delete_event",
+		     G_CALLBACK(query_save_info), vwin);
+#else
+    gtk_signal_connect(GTK_OBJECT(vwin->w), "changed", 
+		       GTK_SIGNAL_FUNC(content_changed), vwin);
+    gtk_signal_connect(GTK_OBJECT(vwin->dialog), "delete_event",
+		       GTK_SIGNAL_FUNC(query_save_info), vwin);
+#endif   
 
     /* clean up when dialog is destroyed */
 #ifndef OLD_GTK
@@ -2201,17 +2232,16 @@ static void auto_save_script (windata_t *vwin)
     fclose(fp);
 
     infobox(_("script saved"));
-    MARK_SCRIPT_SAVED(vwin);
+    MARK_CONTENT_SAVED(vwin);
 }
 
 /* ........................................................... */
 
 static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 {
-    if (SCRIPT_IS_CHANGED(vwin)) {
-	int resp = 
-	    yes_no_dialog(_("gretl: script"), 
-			  _("Save changes?"), 1);
+    if (CONTENT_IS_CHANGED(vwin)) {
+	int resp = yes_no_dialog(_("gretl: script"), 
+				 _("Save changes?"), 1);
 
 	if (resp == GRETL_CANCEL) {
 	    return TRUE;

@@ -726,10 +726,12 @@ char *gretl_xml_encode (char *buf)
 #endif
 
     p = buf;
-    while (*buf++) {
+    while (*buf) {
 	if (*buf == '&') sz += 4;
 	else if (*buf == '<') sz += 3;
 	else if (*buf == '>') sz += 3;
+	else if (*buf == '"') sz += 5;
+	buf++;
     }
     buf = p;
 
@@ -752,6 +754,9 @@ char *gretl_xml_encode (char *buf)
 	} else if (*buf == '>') {
 	    strcpy(p, "&gt;");
 	    p += 4;
+	} else if (*buf == '"') {
+	    strcpy(p, "&quot;");
+	    p += 6;
 	} else {
 	    *p++ = *buf;
 	}
