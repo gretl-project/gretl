@@ -172,6 +172,7 @@ static int comment_lines (FILE *fp, char **pbuf)
     int count = 0, bigger = 1, bufsize;
 
     if (fgets(s, MAXLEN-1, fp) == NULL) return 0;
+
     if (!strncmp(s, STARTCOMMENT, 2)) {
 	*pbuf = malloc(20 * MAXLEN);
 	if (*pbuf == NULL) return -1;
@@ -190,6 +191,7 @@ static int comment_lines (FILE *fp, char **pbuf)
 	    strcat(*pbuf, s);
 	} while (s != NULL);
     }
+
     return count;
 }
 
@@ -200,7 +202,9 @@ static int dataset_allocate_markers (DATAINFO *pdinfo)
     int i;
 
     pdinfo->S = malloc(pdinfo->n * sizeof(char *));
+
     if (pdinfo->S == NULL) return 1; 
+
     for (i=0; i<pdinfo->n; i++) {
 	pdinfo->S[i] = malloc(9);
 	if (pdinfo->S[i] == NULL) {
@@ -208,6 +212,7 @@ static int dataset_allocate_markers (DATAINFO *pdinfo)
 	    return 1; 
 	}
     }
+
     return 0;
 }
 
@@ -330,10 +335,12 @@ DATAINFO *create_new_dataset (double ***pZ,
     pdinfo->v = nvar;
     pdinfo->n = nobs;
     *pZ = NULL;
+
     if (start_new_Z(pZ, pdinfo, 0)) {
 	free(pdinfo);
 	return NULL;
     }
+
     pdinfo->markers = (unsigned char) markers;
     if (pdinfo->markers) {
 	if (dataset_allocate_markers(pdinfo)) {
@@ -341,8 +348,10 @@ DATAINFO *create_new_dataset (double ***pZ,
 	    return NULL;
 	}
     } 
+
     dataset_dates_defaults(pdinfo);
     pdinfo->descrip = NULL;
+
     return pdinfo;
 }
 
@@ -393,6 +402,7 @@ static int prepZ (double ***pZ, const DATAINFO *pdinfo)
     if (*pZ != NULL) free(*pZ);
     *pZ = malloc(pdinfo->v * sizeof **pZ);
     if (*pZ == NULL) return 1;
+
     for (i=0; i<pdinfo->v; i++) {
 	(*pZ)[i] = malloc(pdinfo->n * sizeof ***pZ);
 	if (*pZ == NULL) return 1;
@@ -591,6 +601,7 @@ int check_varname (const char *varname)
                "(first must be alphabetical)"), varname[0]);
         return 1;
     }
+
     for (i=1; i<n; i++) {
         if (!(isalpha((unsigned char) varname[i]))  
             && !(isdigit((unsigned char) varname[i]))
@@ -606,6 +617,7 @@ int check_varname (const char *varname)
             return 1;
         }
     }
+
     return 0;
 }   
 
@@ -760,7 +772,7 @@ static int check_date (const char *date)
 {
     int i, n = strlen(date);
 
-    gretl_errmsg[0] = 0;
+    *gretl_errmsg = 0;
 
     for (i=0; i<n; i++) {
 	if (!isdigit((unsigned char) date[i]) && !IS_DATE_SEP(date[i])) {
@@ -902,7 +914,9 @@ static int blank_check (FILE *fp)
 	else if (i == 1 && strncmp(s, _("space for comments"), 18)) deflt = 0;
 	else if (i == 2 && strncmp(s, "*)", 2)) deflt = 0;
     }
+
     fclose(fp);
+
     return deflt;
 }
 
@@ -943,6 +957,7 @@ int get_info (const char *hdrfile, PRN *prn)
     }    
 
     pprintf(prn, _("Data info in file %s:\n\n"), hdrfile);
+
     if (fgets(s, MAXLEN-1, hdr) != NULL && strncmp(s, STARTCOMMENT, 2) == 0) {
 	do {
 	    if (fgets(s, MAXLEN-1, hdr) != NULL && strncmp(s, "*)", 2)) {
@@ -954,6 +969,7 @@ int get_info (const char *hdrfile, PRN *prn)
 	    }
 	} while (s != NULL && strncmp(s, ENDCOMMENT, 2));
     }
+
     if (i == 0) pputs(prn, _(" (none)\n"));
     pputs(prn, "\n");
 
@@ -1543,8 +1559,9 @@ static void try_gdt (char *fname)
 	suff = strrchr(fname, '.');
 	if (suff != NULL && !strcmp(suff, ".dat")) {
 	    strcpy(suff, ".gdt");
-	} else 
+	} else {
 	    strcat(fname, ".gdt");
+	}
     }
 }
 

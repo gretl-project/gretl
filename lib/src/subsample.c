@@ -296,12 +296,23 @@ int set_sample_dummy (const char *line,
 
 /* .......................................................... */
 
+static int get_sample_increment (const char *str)
+{
+    if ((*str == '-' || *str == '+') && isdigit((unsigned char) str[1])) {
+	return atoi(str);
+    }
+
+    return 0;
+}
+
+/* .......................................................... */
+
 int set_sample (const char *line, DATAINFO *pdinfo)
 {
     int nf, new_t1 = 0, new_t2 = 0;
     char cmd[5], newstart[9], newstop[9];
 
-    gretl_errmsg[0] = '\0';
+    *gretl_errmsg = '\0';
 
     nf = _count_fields(line);
 
@@ -314,45 +325,70 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	
     if (nf == 2) {
 	if (sscanf(line, "%4s %8s", cmd, newstart) != 2) {
-	    sprintf(gretl_errmsg, _("error reading smpl line"));
+	    strcpy(gretl_errmsg, _("error reading smpl line"));
 	    return 1;
 	} else {
-	    new_t1 = dateton(newstart, pdinfo);
-	    if (new_t1 < 0 || strlen(gretl_errmsg)) return 1;
+	    new_t1 = get_sample_increment(newstart);
+	    if (new_t1) {
+		new_t1 = pdinfo->t1 + new_t1;
+		if (new_t1 < 0) {
+		   strcpy(gretl_errmsg, _("Observation number out of bounds"));
+		} 
+	    } else {
+		new_t1 = dateton(newstart, pdinfo);
+	    }
+	    if (*gretl_errmsg) return 1;
 	    if (new_t1 > pdinfo->n) {
-		sprintf(gretl_errmsg, _("error in new starting obs"));
+		strcpy(gretl_errmsg, _("error in new starting obs"));
 		return 1;
 	    }
 	    pdinfo->t1 = new_t1;
 	    return 0;
 	}
     }
+
     if (sscanf(line, "%4s %8s %8s", cmd, newstart, newstop) != 3) {
-	sprintf(gretl_errmsg, _("error reading smpl line"));
+	strcpy(gretl_errmsg, _("error reading smpl line"));
 	return 1;
     }
+
     if (strcmp(newstart, ";")) {
-	new_t1 = dateton(newstart, pdinfo);
-	if (new_t1 < 0 || strlen(gretl_errmsg)) {
+	new_t1 = get_sample_increment(newstart);
+	if (new_t1) {
+	    new_t1 = pdinfo->t1 + new_t1;
+	    if (new_t1 < 0) {
+		strcpy(gretl_errmsg, _("Observation number out of bounds"));
+	    }	
+	} else {
+	    new_t1 = dateton(newstart, pdinfo);
+	}
+	if (*gretl_errmsg) {
 	    return 1;
 	}
     }
+
     if (strcmp(newstop, ";")) {
-	new_t2 = dateton(newstop, pdinfo);
-	if (strlen(gretl_errmsg)) return 1;
+	new_t2 = get_sample_increment(newstop);
+	if (new_t2) {
+	    new_t2 = pdinfo->t2 + new_t2;
+	} else {
+	    new_t2 = dateton(newstop, pdinfo);
+	}
+	if (*gretl_errmsg) return 1;
 	if (new_t2 >= pdinfo->n) {
-	    sprintf(gretl_errmsg, _("error in new ending obs"));
+	    strcpy(gretl_errmsg, _("error in new ending obs"));
 	    return 1;
 	}
     }
 
     if (new_t1 > new_t2) {
-	sprintf(gretl_errmsg, _("Invalid null sample"));
+	strcpy(gretl_errmsg, _("Invalid null sample"));
 	return 1;
     }
 
     pdinfo->t1 = new_t1;
     pdinfo->t2 = new_t2;
+
     return 0;
 }
 

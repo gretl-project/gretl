@@ -68,6 +68,13 @@ New features:
    in each quarter.  Other valid compaction options are "sum" and
    "first".
 
+3. New details of "smpl" command.  If the "new starting obs" or
+"new ending obs" have the form plus or minus integer, these are
+read as offsets relative to the existing sample range.  Thus for
+instance, "smpl +1 -1" moves the start of the current sample for-
+ward one observation, and the end of the sample back one observation.
+
+
 March 2003
 
 As of version 1.0.6, gretl offers support for LAPACK.  Routines from

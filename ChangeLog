@@ -5,6 +5,7 @@ version 1.1.0
   display name for a variable
 - Add script commands for saving and displaying models and
   graphs 
+- Fix effect of sample range on the "genr" command
 - Improvements to the gretl console (command history, etc.)
 - Add the Johansen cointegration test to the gui menus
 - Add option to use QR decomposition instead of Cholesky for
@@ -17,6 +18,7 @@ version 1.1.0
 - Allow access to RATS databases via command line and scripts
 - Clean-up: remove all wasted array elements
 - Update to libtool 1.5
+- Update win32 version to gtk version 2.2.2
 
 05/26/03 version 1.0.9
 - Add non-linear least squares ("nls" command, Levenberg-

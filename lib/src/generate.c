@@ -3029,19 +3029,23 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
      /* for "sim" command */
 {
     int f, i, t, t1, t2, m, nv, pv, *isconst;
-    char varname[32], tmpstr[128], parm[9], **toks;
+    char varname[32], tmpstr[MAXLEN], parm[9], **toks;
     double xx, yy, *a;
 
     f = _count_fields(cmd);
     m = f - 4;
 
-    a = malloc(m * sizeof(double));
-    isconst = malloc(m * sizeof(int));
+    a = malloc(m * sizeof *a);
+    isconst = malloc(m * sizeof *isconst);
     toks = malloc(f * 9);
+
     if (a == NULL || isconst == NULL || toks == NULL) return E_ALLOC;
+
     for (i=0; i<m; i++) isconst[i] = 1;
 
-    strncpy(tmpstr, cmd, 127);
+    *tmpstr = 0;
+    strncat(tmpstr, cmd, MAXLEN - 1);
+    
     strtok(tmpstr, " ");
     for (i=0; i<f-1; i++) {
 	toks[i] = strtok(NULL, " ");
@@ -3050,8 +3054,9 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
     /* try getting valid obs from stobs and endobs */
     t1 = dateton(toks[0], pdinfo);
     t2 = dateton(toks[1], pdinfo);
-    if (strlen(gretl_errmsg) || t1 < 0 || t1 >= t2 || t2 > pdinfo->n) {
+    if (strlen(gretl_errmsg) || t1 < 0 || t1 > t2 || t2 > pdinfo->n) {
 	free(a);
+	free(isconst);
 	free(toks);
 	return 1;
     }
@@ -3074,6 +3079,7 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 				      "exist") :
 		_("You can't use the constant for this purpose"));
 	free(a);
+	free(isconst);
 	free(toks);
 	return 1;
     }
@@ -3086,6 +3092,7 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 	    if (pv == 0 || pv >= pdinfo->v) {
 		sprintf(gretl_errmsg, _("Bad varname '%s' in sim"), parm);
 		free(a);
+		free(isconst);
 		free(toks);
 		return 1;
 	    } else {
@@ -3124,6 +3131,7 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
     free(a);
     free(isconst);
     free(toks);
+
     return 0;
 }
 
