@@ -715,6 +715,10 @@ gtk_font_selection_hack_show_available_fonts (GtkFontSelectionHack *fontsel)
 
   gtk_list_store_clear (model);
 
+  if (fontsel->filter != GTK_FONT_HACK_NONE) {
+      if (create_font_test_rig()) fontsel->filter = GTK_FONT_HACK_NONE;
+  }
+
   got_ok = FALSE;
   for (i=0; i<n_families; i++)
     {
@@ -769,6 +773,10 @@ gtk_font_selection_hack_show_available_fonts (GtkFontSelectionHack *fontsel)
 			  pango_font_family_get_name (match_family));
 #endif /* INCLUDE_FONT_ENTRIES */
     }
+
+  if (fontsel->filter != GTK_FONT_HACK_NONE) {
+      destroy_font_test_rig();
+  }
 
   g_free (families);
 }

@@ -1,34 +1,47 @@
+static GtkWidget *font_test_widget;
+static PangoContext *font_test_context;
+static PangoLayout *font_test_layout;
+static PangoLanguage *font_test_lang;
+
+static int create_font_test_rig (void)
+{
+    font_test_widget = gtk_label_new(NULL);  
+    font_test_context = gtk_widget_get_pango_context(font_test_widget); 
+
+    if (font_test_context == NULL) {
+	gtk_widget_destroy(font_test_widget);
+	return 1;
+    }    
+
+    font_test_layout = pango_layout_new(font_test_context); 
+    if (font_test_layout == NULL) {
+	g_object_unref(G_OBJECT(font_test_context));
+	gtk_widget_destroy(font_test_widget);
+	return 1;
+    }	
+
+    font_test_lang = pango_language_from_string("en_US");
+
+    return 0;
+}
+
+static void destroy_font_test_rig (void)
+{
+    g_object_unref(G_OBJECT(font_test_layout));
+    g_object_unref(G_OBJECT(font_test_context));
+    gtk_widget_destroy(font_test_widget);    
+}
+
 static gboolean font_is_latin_monospaced (PangoFontDescription *desc)
 {
-    PangoLayout *layout;
-    PangoContext *context;
-    GtkWidget *wdg;
     int x1, x2;
 
-    wdg = gtk_label_new(NULL);
+    pango_context_set_font_description(font_test_context, desc);
 
-    context = gtk_widget_get_pango_context(wdg);
-    if (context == NULL) {
-	gtk_widget_destroy(wdg);
-	return FALSE;
-    }
-
-    pango_context_set_font_description(context, desc);
-
-    layout = pango_layout_new(context);
-    if (layout == NULL) {
-	gtk_widget_destroy(wdg);
-	return FALSE;
-    }
-
-    pango_layout_set_text(layout, "i", 1);
-    pango_layout_get_pixel_size(layout, &x1, NULL);
-    pango_layout_set_text(layout, "W", 1);
-    pango_layout_get_pixel_size(layout, &x2, NULL);
-
-    g_object_unref(G_OBJECT(layout));
-    g_object_unref(G_OBJECT(context));
-    gtk_widget_destroy(wdg);
+    pango_layout_set_text(font_test_layout, "i", 1);
+    pango_layout_get_pixel_size(font_test_layout, &x1, NULL);
+    pango_layout_set_text(font_test_layout, "W", 1);
+    pango_layout_get_pixel_size(font_test_layout, &x2, NULL);
 
     return (x1 == x2);
 }
@@ -37,17 +50,13 @@ static gboolean font_is_latin_text_font (PangoFontDescription *desc,
 					 PangoContext *context) 
 {
     PangoCoverage *coverage;
-    PangoLanguage *lang;
     PangoFont *pfont;
     gboolean ok = FALSE;
 
     pfont = pango_context_load_font(context, desc);
     if (pfont == NULL) return FALSE;
 
-    lang = pango_language_from_string("en_US");
-    if (lang == NULL) return FALSE;
-
-    coverage = pango_font_get_coverage(pfont, lang);
+    coverage = pango_font_get_coverage(pfont, font_test_lang);
     if (coverage == NULL) return FALSE;
 
     if (pango_coverage_get(coverage, 'A') == PANGO_COVERAGE_EXACT) {
