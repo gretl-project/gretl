@@ -393,11 +393,19 @@ void print_session (void)
 
 int delete_session_model (GtkWidget *w, gpointer data)
 {
-    dialog_t *myd = (dialog_t *) data;
-    gui_obj *myobject = (gui_obj *) myd->data;
+    dialog_t *myd;
+    gui_obj *myobject;
     MODEL *junk, **ppmod;
     int i, j;
 
+    gtk_main_quit(); /* release yes_no_dialog() */
+
+    if (data == NULL) {
+	return 0;
+    }
+
+    myd = (dialog_t *) data;
+    myobject = (gui_obj *) myd->data;
     junk = (MODEL *) myobject->data;
     ppmod = mymalloc((session.nmodels - 1) * sizeof(MODEL *));
     if (session.nmodels > 1 && ppmod == NULL) {
@@ -911,7 +919,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	yes_no_dialog ("gretl: delete", 
 		       text, 1, 2,
 		       "Yes", delete_session_model, myobject, 
-		       "No", NULL, NULL);
+		       "No", delete_session_model, NULL);
 	}
     }
     else if (strcmp(item, "Rename") == 0) {

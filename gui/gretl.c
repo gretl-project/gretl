@@ -1257,9 +1257,8 @@ static void ready_to_go (GtkWidget *widget, dialog_t *ddata)
 {
     int *getout = (int *) ddata->data;
 
-    fprintf(stderr, "ready_to_go: setting getout = 1\n");
     *getout = 1;
-    gtk_main_quit(); /* release from yes_no_dialog() */
+    gtk_main_quit(); /* release from modal yes_no_dialog() */
 }
 
 /* ......................................................... */
