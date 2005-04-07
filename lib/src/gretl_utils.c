@@ -277,7 +277,7 @@ int isdummy (const double *x, int t1, int t2)
     int t, m = 0;
 
     for (t=t1; t<=t2; t++) {
-#if 1
+#if 1 /* allow missing values */
 	if (floatneq(x[t], 0.0) && floatneq(x[t], 1.0) && !na(x[t])) {
 	    return 0;
 	}

@@ -976,19 +976,26 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     }
 
     /* Chatfield (1996); Greene 4ed, p. 772 */
-    if (opt) L = (int) 2.0 * sqrt((double) nobs);
-    else L = nobs - 1; 
+    if (opt) {
+	L = (int) 2.0 * sqrt((double) nobs);
+    } else {
+	L = nobs - 1; 
+    }
 
     /* prepare for fractional integration test */
-    nT = (int) sqrt((double) nobs);
     xx = sqrt((double) nobs);
-    if ((double) nT < xx) nT += 1;
+    nT = (int) xx;
+    if ((double) nT < xx) {
+	nT++;
+    }
     
     autocov = malloc((L + 1) * sizeof *autocov);
     omega = malloc(nT * sizeof *omega);
     hhat = malloc(nT * sizeof *hhat);
-    if (autocov == NULL || omega == NULL || hhat == NULL) 
+
+    if (autocov == NULL || omega == NULL || hhat == NULL) {
 	return E_ALLOC;
+    }
 
     xx = gretl_mean(t1, t2, (*pZ)[varno]);
 
@@ -1007,8 +1014,9 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     if (do_graph && gnuplot_init(PLOT_PERIODOGRAM, &fq) == 0) {
 	char titlestr[80];
 
-	fprintf(fq, "# periodogram\n");
-	fprintf(fq, "set xtics nomirror\n"); 
+	fputs("# periodogram\n", fq);
+	fputs("set xtics nomirror\n", fq); 
+
 	if (pdinfo->pd == 4) {
 	    fprintf(fq, "set x2label '%s'\n", I_("quarters"));
 	} else if (pdinfo->pd == 12) {
@@ -1018,28 +1026,30 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	} else {
 	    fprintf(fq, "set x2label '%s'\n", I_("periods"));
 	}
+
 	fprintf(fq, "set x2range [0:%d]\n", xmax);
-	fprintf(fq, "set x2tics(");
+	fputs("set x2tics(", fq);
 	k = (nobs / 2) / 6;
-	for (t=1; t<=nobs/2; t += k) {
-	    fprintf(fq, "\"%.1f\" %d, ", 
-		    (double) nobs / t, 4 * t);
+	for (t = 1; t <= nobs/2; t += k) {
+	    fprintf(fq, "\"%.1f\" %d, ", (double) nobs / t, 4 * t);
 	}
 	fprintf(fq, "\"\" %d)\n", 2 * nobs);
 	fprintf(fq, "set xlabel '%s'\n", I_("scaled frequency"));
-	fprintf(fq, "set xzeroaxis\n");
-	fprintf(fq, "set nokey\n");
+	fputs("set xzeroaxis\n", fq);
+	fputs("set nokey\n", fq);
+
 	sprintf(titlestr, I_("Spectrum of %s"), pdinfo->varname[varno]);
 	fprintf(fq, "set title '%s", titlestr);
+
 	if (opt) {
 	    sprintf(titlestr, I_("Bartlett window, length %d"), L);
 	    fprintf(fq, " (%s)'\n", titlestr);
+	} else {
+	    fputs("'\n", fq);
 	}
-	else {
-	    fprintf(fq, "'\n");
-	}
+
 	fprintf(fq, "set xrange [0:%d]\n", roundup_mod(nobs, 0.5));
-	fprintf(fq, "plot '-' using 1:2 w lines\n");
+	fputs("plot '-' using 1:2 w lines\n", fq);
     }
 
     if (do_graph && fq == NULL) {
@@ -1049,8 +1059,9 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
     pprintf(prn, _("\nPeriodogram for %s\n"), pdinfo->varname[varno]);
     pprintf(prn, _("Number of observations = %d\n"), nobs);
-    if (opt) 
+    if (opt) {
 	pprintf(prn, _("Using Bartlett lag window, length %d\n\n"), L);
+    }
     pputs(prn, _(" omega  scaled frequency  periods  spectral density\n\n"));
 
     if (do_graph) { 
@@ -1069,30 +1080,38 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	yy = 2 * M_PI * t / (double) nobs;
 	xx = varx; 
 	for (k=1; k<=L; k++) {
-	    if (opt) w = 1 - (double) k/(L + 1);
-	    else w = 1.0;
+	    if (opt) {
+		w = 1 - (double) k/(L + 1);
+	    } else {
+		w = 1.0;
+	    }
 	    xx += 2.0 * w * autocov[k] * cos(yy * k);
 	}
 	xx /= 2 * M_PI;
 	pprintf(prn, " %.4f%9d%16.2f%16.5f\n", yy, t, 
 		(double) nobs / t, xx);
-	if (savexx != NULL) savexx[t] = xx;
+	if (savexx != NULL) {
+	    savexx[t] = xx;
+	}
 	if (t <= nT) {
 	    omega[t-1] = yy;
 	    hhat[t-1] = xx;
 	}
     }
+
     pputc(prn, '\n');
 
     if (do_graph) {
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "C");
 #endif
-	for (t=1; t<=nobs/2; t++) fprintf(fq, "%d %f\n", t, savexx[t]);
+	for (t=1; t<=nobs/2; t++) {
+	    fprintf(fq, "%d %f\n", t, savexx[t]);
+	}
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "");
 #endif
-	fprintf(fq, "e\n");
+	fputs("e\n", fq);
 
 	fclose(fq);
 	free(savexx);

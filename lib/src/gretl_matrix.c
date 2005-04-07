@@ -270,7 +270,7 @@ void gretl_matrix_log (gretl_matrix *m)
 double gretl_vector_mean (const gretl_vector *v)
 {
     double ret = 0.0;
-    int i, n;
+    int i, n, den;
 
     if (v == NULL || v->val == NULL) {
 	return NADBL;
@@ -281,18 +281,58 @@ double gretl_vector_mean (const gretl_vector *v)
     }
     
     if (v->rows > 1) {
-	n = v->rows;
+	den = n = v->rows;
     } else {
-	n = v->cols;
+	den = n = v->cols;
     }
 
     for (i=0; i<n; i++) {
-	ret += v->val[i];
+	if (!na(v->val[i])) {
+	    ret += v->val[i];
+	} else {
+	    den--;
+	}
     }
 
-    ret /= n;
+    if (den > 0) {
+	ret /= den;
+    } else {
+	ret = NADBL;
+    }
 
     return ret;
+}
+
+double gretl_vector_variance (const gretl_matrix *x)
+{
+    double v = 0.0;
+    double xx, xbar;
+    int i, n, den;
+
+    if (x == NULL || x->val == NULL) {
+	return NADBL;
+    }
+
+    den = n = gretl_vector_get_length(x);
+    xbar = gretl_vector_mean(x);
+
+    for (i=0; i<n; i++) {
+	xx = x->val[i];
+	if (!na(xx)) {
+	    xx -= xbar;
+	    v += xx * xx;
+	} else {
+	    den--;
+	}
+    }
+
+    if (den > 0) {
+	v /= den;
+    } else {
+	v = NADBL;
+    }
+
+    return v;
 }
 
 static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)

@@ -3343,8 +3343,7 @@ csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
  * @pZ: pointer to data set.
  * @ppdinfo: pointer to data information struct.
  * @fname: name of CSV file.
- * @ppaths: pointer to paths struct.
- * @prn: gretl printing struct.
+ * @prn: gretl printing struct (can be NULL).
  * 
  * Open a Comma-Separated Values data file and read the data into
  * the current work space.
@@ -3354,7 +3353,7 @@ csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
  */
 
 int import_csv (double ***pZ, DATAINFO **ppdinfo, 
-		const char *fname, PATHS *ppaths, PRN *prn)
+		const char *fname, PRN *prn)
 {
     int ncols, chkcols, nrows;
     int gotdata = 0, gotdelim = 0, gottab = 0, markertest = -1;

@@ -4468,7 +4468,7 @@ void do_open_csv_box (char *fname, int code, int append)
     if (code == OPEN_BOX) {
 	err = import_box(&Z, &datainfo, fname, prn);
     } else {
-	err = import_csv(&Z, &datainfo, fname, &paths, prn); 
+	err = import_csv(&Z, &datainfo, fname, prn); 
     }
 
     sprintf(buf, _("gretl: import %s data"), 
@@ -5838,7 +5838,7 @@ int gui_exec_line (char *line,
         if (cmd.opt) {
             err = import_box(&Z, &datainfo, datfile, prn);
         } else {
-            err = import_csv(&Z, &datainfo, datfile, &paths, prn);
+            err = import_csv(&Z, &datainfo, datfile, prn);
 	}
         if (!err) { 
 	    maybe_display_string_table();
@@ -5872,7 +5872,7 @@ int gui_exec_line (char *line,
 	}
 
 	if (chk == GRETL_CSV_DATA) {
-	    err = import_csv(&Z, &datainfo, datfile, &paths, prn);
+	    err = import_csv(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_XML_DATA) {

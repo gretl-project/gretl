@@ -65,6 +65,8 @@ void gretl_matrix_log (gretl_matrix *m);
 
 double gretl_vector_mean (const gretl_vector *v);
 
+double gretl_vector_variance (const gretl_vector *v);
+
 void gretl_matrix_zero (gretl_matrix *m);
 
 int gretl_matrix_zero_upper (gretl_matrix *m);
