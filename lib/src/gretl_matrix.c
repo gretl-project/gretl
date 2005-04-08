@@ -128,6 +128,42 @@ gretl_column_vector_from_array (const double *x, int n, int mod)
     return v;
 }
 
+/**
+ * gretl_data_series_to_vector:
+ * @Z: data array.
+ * @varno: ID number of variable
+ * @t1: starting observation.
+ * @t2: ending observation.
+ *
+ * Returns: a newly allocated gretl_vector containing the values
+ * of the given variable (data series) for the given range,
+ * or %NULL on failure.  
+ *
+ */
+
+gretl_vector *gretl_data_series_to_vector (const double **Z, int varno, 
+					   int t1, int t2)
+{
+    gretl_matrix *v;
+    int t, n = t2 - t1 + 1;
+
+    if (n <= 0) {
+	return NULL;
+    }
+
+    v = gretl_column_vector_alloc(n);
+    if (v == NULL) {
+	return NULL;
+    }
+
+    for (t=0; t<n; t++) {
+	v->val[t] = Z[varno][t + t1];
+    }
+
+    return v;
+}
+
+
 /* ....................................................... */
 
 static gretl_matrix *

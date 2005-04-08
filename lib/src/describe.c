@@ -868,7 +868,7 @@ static int roundup_mod (int i, double x)
 
 /* ...................................................... */
 
-static int fract_int (int n, double *hhat, double *omega, PRN *prn)
+static int fract_int_GPH (int n, double *hhat, double *omega, PRN *prn)
 {
     double xx, tstat, **tmpZ = NULL;
     DATAINFO *tmpdinfo;
@@ -905,11 +905,11 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
 
     if (!tmp.errcode) {
 	tstat = -tmp.coeff[1] / tmp.sderr[1];
-	pprintf(prn, "\n%s\n"
-		"  %s = %g\n"
+	pprintf(prn, "\n%s (Geweke, Porter-Hudak)\n"
+		"  %s = %g (%g)\n"
 		"  %s: t(%d) = %g, %s %.4f\n",
 		_("Test for fractional integration"),
-		_("Estimated degree of integration"), -tmp.coeff[1], 
+		_("Estimated degree of integration"), -tmp.coeff[1], tmp.sderr[1],
 		_("test statistic"), tmp.dfd, tstat, 
 		_("with p-value"), tprob(tstat, tmp.dfd));
     } else {
@@ -922,6 +922,230 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     free(tmpdinfo);
 
     return err;
+}
+
+/* Fractional integration via Local Whittle Estimator */
+
+gretl_matrix *gretl_matrix_periodogram (const gretl_matrix *x, int m)
+{
+    gretl_matrix *p;
+    double *autocov;
+    double xbar, varx;
+    double xx, yy;
+    int k, T, t; 
+
+    T = gretl_vector_get_length(x);
+
+    p = gretl_column_vector_alloc(m);
+    if (p == NULL) {
+	return NULL;
+    }
+
+    autocov = malloc(T * sizeof *autocov);
+    if (autocov == NULL) {
+	gretl_matrix_free(p);
+	return NULL;
+    }
+
+    xbar = gretl_vector_mean(x);
+    varx = gretl_vector_variance(x);
+
+#if LWE_DEBUG
+    fprintf(stderr, "gretl_matrix_periodogram: T = %d, m = %d\n"
+	    "  xbar = %g, varx = %g\n", T, m, xbar, varx);
+#endif
+
+    /* find autocovariances */
+    for (k=1; k<=T-1; k++) {
+	double xt, xtk;
+
+	autocov[k] = 0.0;
+	for (t=k; t<T; t++) {
+	    xt = gretl_vector_get(x, t);
+	    xtk = gretl_vector_get(x, t - k);
+	    autocov[k] += (xt - xbar) * (xtk - xbar);
+	}
+	autocov[k] /= T;
+
+#if LWE_DEBUG > 1
+	fprintf(stderr, "autocov[%d] = %g\n", k, autocov[k]);
+#endif
+    }
+
+    for (t=1; t<=m; t++) {
+	yy = 2 * M_PI * t / (double) T;
+	xx = varx; 
+	for (k=1; k<=T-1; k++) {
+	    xx += 2.0 * autocov[k] * cos(yy * k);
+	}
+	xx /= 2 * M_PI;
+	xx *= T;
+	gretl_vector_set(p, t-1, xx);
+#if LWE_DEBUG
+	fprintf(stderr, "periodogram[%d] = %g\n", t, xx);
+#endif
+    }
+
+    free(autocov);
+
+    return p;
+}
+
+gretl_matrix *LWE_lambda (const gretl_matrix *I, int n, double *lcm)
+{
+    int m = gretl_vector_get_length(I);
+    gretl_matrix *lambda, *llambda;
+    int i;
+
+    lambda = gretl_column_vector_alloc(m);
+
+    for (i=0; i<m; i++) {
+	gretl_vector_set(lambda, i, (2.0 * M_PI / n) * (i + 1));
+#if LWE_DEBUG
+	fprintf(stderr, "LWE_obj_func: lambda[%d] = %g\n",
+		i, gretl_vector_get(lambda, i));
+#endif
+    }
+
+    llambda = gretl_matrix_copy(lambda);
+    gretl_matrix_log(llambda);
+    *lcm = gretl_vector_mean(llambda);
+
+#if LWE_DEBUG
+    fprintf(stderr, "LWE_lambda: col mean of log lambda = %g\n", *lcm);
+#endif
+
+    gretl_matrix_free(llambda);
+
+    return lambda;
+}
+
+double LWE_obj_func (const gretl_matrix *I, double d,
+		     const gretl_matrix *lambda, double lcm)
+{
+    gretl_matrix *lambda2, *Itmp;
+    double dd = 2.0 * d;
+    double ret;
+
+    lambda2 = gretl_matrix_copy(lambda);
+    if (lambda2 == NULL) {
+	return NADBL;
+    }
+
+    gretl_matrix_dot_pow(lambda2, dd);
+
+    Itmp = gretl_matrix_dot_multiply(I, lambda2);
+    if (Itmp == NULL) {
+	gretl_matrix_free(lambda2);
+	return NADBL;
+    }
+
+    ret = -(log(gretl_vector_mean(Itmp)) - dd * lcm);
+    
+    gretl_matrix_free(lambda2);
+    gretl_matrix_free(Itmp);
+
+    return ret;
+}
+
+double LWE (const gretl_matrix *X, int m)
+{
+    gretl_matrix *I;
+    gretl_matrix *lambda;
+    int n = gretl_matrix_rows(X);
+    double maxOJ = -1.0e+9;
+    double d, tmp, ret = -0.45;
+    double Inf = -0.5, Sup = 0.5;
+    double lcm, step;
+
+    I = gretl_matrix_periodogram(X, m);
+    if (I == NULL) {
+	return NADBL;
+    }
+
+    lambda = LWE_lambda(I, n, &lcm);
+    if (lambda == NULL) {
+	gretl_matrix_free(I);
+	return NADBL;
+    }    
+
+    for (step = 0.1; step > 1.0e-8; step /= 10.0) {
+
+#if LWE_DEBUG
+	fprintf(stderr, "LWE: step = %g\n", step);
+#endif
+
+	for (d = Inf; d <= Sup; d += step) {
+	    tmp = LWE_obj_func(I, d, lambda, lcm);
+	    if (na(tmp)) {
+		break;
+	    }
+#if LWE_DEBUG
+	    fprintf(stderr, "LWE: d = %g, tmp = %g\n", d, tmp);
+#endif
+	    if (tmp > maxOJ) {
+		maxOJ = tmp;
+		ret = d;
+	    }
+	}
+
+	if (na(tmp)) break;
+
+	if (ret == Inf || floateq(ret, Sup)) {
+	    step *= 10.0;
+	}
+
+	Inf = ret - step;
+	Sup = ret + step;
+    }
+
+    gretl_matrix_free(I);
+    gretl_matrix_free(lambda);
+
+    return ret;
+}
+
+int fract_int_LWE (const double **Z, int varno, int t1, int t2,
+		   PRN *prn)
+{
+    gretl_matrix *X;
+    double m1, m2;
+    double d, se;
+    int T, m;
+
+    X = gretl_data_series_to_vector(Z, varno, t1, t2);
+    if (X == NULL) {
+	return 1;
+    }
+
+    T = gretl_vector_get_length(X);
+
+    m1 = floor((double) T / 2.0);
+    m2 = 10.0 * floor(pow((double) T, 0.4));
+
+    if (m1 < m2) {
+	m = m1;
+    } else {
+	m = m2;
+    }
+
+    m--;
+
+    d = LWE(X, m);
+    if (na(d)) {
+	gretl_matrix_free(X);
+	return 1;
+    }
+
+    se = 1 / (2.0 * sqrt((double) m));
+
+    pprintf(prn, "\nLocal Whittle Estimator (T = %d, m = %d)\n"
+	    "  Estimated degree of integration = %g (%g)\n", T, m, d, se);
+    pprintf(prn, "  test statistic: %g\n\n", d / se);
+
+    gretl_matrix_free(X);
+
+    return 0;
 }
 
 /**
@@ -1118,9 +1342,12 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	err = gnuplot_make_graph();
     }
 
-    if (opt == 0 && fract_int(nT, hhat, omega, prn)) {
-	pprintf(prn, "\n%s\n",
-		_("Fractional integration test failed"));
+    if (opt == 0) {
+	if (fract_int_GPH(nT, hhat, omega, prn)) {
+	    pprintf(prn, "\n%s\n",
+		    _("Fractional integration test failed"));
+	}
+	fract_int_LWE((const double **) *pZ, varno, t1, t2, prn);
     }
 
     free(autocov);
