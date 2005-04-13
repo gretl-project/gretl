@@ -2332,6 +2332,10 @@
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
 	</option>
+        <option>
+          <flag>--no-corc</flag>
+          <effect>non affina i risultati con Cochrane-Orcutt</effect>
+        </option>
       </options>
     </usage>
 
