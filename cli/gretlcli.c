@@ -95,6 +95,7 @@ void usage(void)
 	     " -h or --help      Print this info and exit.\n"
 	     " -v or --version   Print version info and exit.\n"
 	     " -e or --english   Force use of English rather than translation.\n"
+	     " -q or --basque    Force use of Basque translation.\n"
 	     "Example of batch mode usage:\n"
 	     " gretlcli -b myfile.inp >myfile.out\n"
 	     "Example of run mode usage:\n"
@@ -256,13 +257,26 @@ void nls_init (void)
     reset_local_decpoint();
 }
 
-static void force_english (void)
+static void force_language (int f)
 {
-    setlocale (LC_ALL, "C");
+    if (f == ENGLISH) {
+	setlocale(LC_ALL, "C");
+    } else {
+# ifdef WIN32
+	setlocale(LC_ALL, "eu");
+# else
+	setlocale(LC_ALL, "eu_ES");
+# endif
+    }
 
 # ifdef WIN32
-    SetEnvironmentVariable("LC_ALL", "C");
-    putenv("LC_ALL=C");
+    if (f == ENGLISH) { 
+	SetEnvironmentVariable("LC_ALL", "C");
+	putenv("LC_ALL=C");
+    } else {
+	SetEnvironmentVariable("LC_ALL", "eu");
+	putenv("LC_ALL=eu");
+    }	
 # endif
 }
 
@@ -389,8 +403,8 @@ int main (int argc, char *argv[])
     }
     
     if (argc > 1) {
-	int english = 0;
-	int opt = parseopt((const char **) argv, argc, filearg, &english);
+	int force_lang = 0;
+	int opt = parseopt((const char **) argv, argc, filearg, &force_lang);
 
 	switch (opt) {
 	case OPT_BATCH:
@@ -423,8 +437,8 @@ int main (int argc, char *argv[])
 	}
 
 #ifdef ENABLE_NLS
-	if (english) {
-	    force_english();
+	if (force_lang) {
+	    force_language(force_lang);
 	    if (argc == 2) {
 		cli_get_data = 1;
 	    }
@@ -934,7 +948,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case HILU:
     case PWE:
 	rho = estimate_rho(cmd.list, &Z, datainfo, 1, cmd.ci,
-			   &err, prn);
+			   &err, cmd.opt, prn);
 	if (err) {
 	    errmsg(err, prn);
 	    break;

@@ -1470,7 +1470,7 @@ static int make_full_list (const DATAINFO *pdinfo, CMD *cmd)
  */
 
 int parseopt (const char **argv, int argc, char *fname,
-	      int *english)
+	      int *force_lang)
 {
     int opt = 0;
     const char *s = argv[1];
@@ -1479,7 +1479,15 @@ int parseopt (const char **argv, int argc, char *fname,
 
 #ifdef ENABLE_NLS
     if (strcmp(s, "-e") == 0 || strncmp(s, "--english", 9) == 0) { 
-	*english = 1;
+	*force_lang = ENGLISH;
+	if (--argc < 2) {
+	    return 0;
+	}
+	argv++;
+	s = argv[1];
+    }
+    if (strcmp(s, "-q") == 0 || strncmp(s, "--basque", 8) == 0) { 
+	*force_lang = BASQUE;
 	if (--argc < 2) {
 	    return 0;
 	}

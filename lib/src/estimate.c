@@ -715,7 +715,7 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @ci: command index (see gretl_commands.h)
- * @opts: option flags: 
+ * @opt: option flags: zero or more of the following --
  *   OPT_R compute robust standard errors;
  *   OPT_C force use of Cholesky decomp;
  *   OPT_A treat as auxiliary regression (don't bother checking
@@ -736,14 +736,14 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
  */
 
 MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo, 
-	   int ci, gretlopt opts, double rho)
+	   int ci, gretlopt opt, double rho)
 {
     int l0, yno, i;
     int effobs = 0;
     int missv = 0, misst = 0;
     int jackknife = 0;
     int use_qr = get_use_qr();
-    int pwe = (ci == PWE || (opts & OPT_P));
+    int pwe = (ci == PWE || (opt & OPT_P));
     double *xpy;
     MODEL mdl;
 
@@ -809,7 +809,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* adjust sample range and check for missing obs */
-    missv = lsq_check_for_missing_obs(&mdl, opts, pdinfo,
+    missv = lsq_check_for_missing_obs(&mdl, opt, pdinfo,
 				      (const double **) *pZ,
 				      &misst);
 
@@ -859,7 +859,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* Check for presence of lagged dependent variable? 
        (Don't bother if this is an auxiliary regression.) */
-    if (!(opts & OPT_A)) {
+    if (!(opt & OPT_A)) {
 	lagged_depvar_check(&mdl, (const double **) *pZ, pdinfo);
     }
 
@@ -885,21 +885,21 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* if df correction is not wanted, record this fact */
-    if (opts & OPT_N) {
+    if (opt & OPT_N) {
 	gretl_model_set_int(&mdl, "no-df-corr", 1);
     }
 
     if (dataset_is_time_series(pdinfo)) {
-	opts |= OPT_T;
+	opt |= OPT_T;
     }
 
-    if (mdl.ci == HCCM || ((opts & OPT_R) && get_hc_version() == 4)) {
+    if (mdl.ci == HCCM || ((opt & OPT_R) && get_hc_version() == 4)) {
 	jackknife = 1;
     }
 
-    if (((opts & OPT_R) && !jackknife) || (use_qr && !(opts & OPT_C))) { 
+    if (((opt & OPT_R) && !jackknife) || (use_qr && !(opt & OPT_C))) { 
 	mdl.rho = rho;
-	gretl_qr_regress(&mdl, pZ, pdinfo, opts);
+	gretl_qr_regress(&mdl, pZ, pdinfo, opt);
     } else {
 	int trim = 0;
 	int l, nxpx;
@@ -959,7 +959,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 	regress(&mdl, xpy, *pZ, pdinfo->n, rho);
 	free(xpy);
 
-	if (mdl.errcode == E_SINGULAR && !(opts & OPT_Z) &&
+	if (mdl.errcode == E_SINGULAR && !(opt & OPT_Z) &&
 	    redundant_var(&mdl, pZ, pdinfo, trim++)) {
 	    goto trim_var;
 	}
@@ -982,6 +982,9 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 		goto lsq_abort;
 	    }
 	}
+	if (ci == HILU && (opt & OPT_B)) {
+	    gretl_model_set_int(&mdl, "no-corc", 1);
+	}
     }
 
     /* weighted least squares: fix fitted values, ESS, sigma */
@@ -990,7 +993,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 	fix_wls_values(&mdl, *pZ);
     }
 
-    if ((opts & OPT_T) && mdl.missmask == NULL) {
+    if ((opt & OPT_T) && mdl.missmask == NULL) {
 	mdl.rho = rhohat(0, mdl.t1, mdl.t2, mdl.uhat);
 	mdl.dw = dwstat(0, &mdl, *pZ);
     } else {
@@ -1021,7 +1024,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 	undo_daily_repack(&mdl, *pZ, pdinfo);
     }
 
-    if (!(opts & OPT_A)) {
+    if (!(opt & OPT_A)) {
 	/* if it's not an auxiliary regression, set an ID number
 	   on the model */
 	set_model_id(&mdl);
@@ -1841,13 +1844,13 @@ static int hilu_plot (double *ssr, double *rho, int n)
 
 #undef USE_DW /* base rho-hat on the D-W statistic */
 
-static double autores (MODEL *pmod, const double **Z, int opt)
+static double autores (MODEL *pmod, const double **Z, int ci)
 {
     int t, v, t1 = pmod->t1;
     double x, num = 0.0, den = 0.0;
     double rhohat;
 
-    if (opt == CORC || opt == HILU) {
+    if (ci == CORC || ci == HILU) {
 	t1--;
     }
 
@@ -1878,7 +1881,7 @@ static double autores (MODEL *pmod, const double **Z, int opt)
     return rhohat;
 }
 
-#undef AR_DEBUG
+#define AR_DEBUG 0
 
 /**
  * estimate_rho:
@@ -1886,9 +1889,11 @@ static double autores (MODEL *pmod, const double **Z, int opt)
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @batch: = 1 if in batch mode
- * @opt: option flag: CORC for Cochrane-Orcutt, HILU for Hildreth-Lu,
- *                    PWE for Prais-Winsten estimator.
+ * @ci: command index: CORC for Cochrane-Orcutt, HILU for Hildreth-Lu,
+ *                     PWE for Prais-Winsten estimator.
  * @err: pointer for error code.
+ * @opt: option flag: may include OPT_B to suppress Cochrane-Orcutt
+ *       fine-tuning of Hildreth-Lu results.
  * @prn: gretl printing struct.
  *
  * Estimate the quasi-differencing coefficient for use with the
@@ -1900,7 +1905,8 @@ static double autores (MODEL *pmod, const double **Z, int opt)
  */
 
 double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
-		     int batch, int opt, int *err, PRN *prn)
+		     int batch, int ci, int *err, gretlopt opt, 
+		     PRN *prn)
 {
     double rho = 0.0, rho0 = 0.0, diff;
     double finalrho = 0.0, essmin = 1.0e8;
@@ -1925,11 +1931,13 @@ double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&corc_model);
 
-    if (opt == PWE) {
+    if (ci == PWE) {
+	/* Prais-Winsten treatment of first observation */
 	lsqopt |= OPT_P;
-    }
+    } 
 
-    if (opt == HILU) { /* Do Hildreth-Lu first */
+    if (ci == HILU) { 
+	/* Do Hildreth-Lu first */
 	for (rho = -0.990, iter = 0; rho < 1.0; rho += .01, iter++) {
 	    clear_model(&corc_model);
 	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
@@ -2011,7 +2019,6 @@ double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    hilu_plot(ssr, rh, nn);
 	}
-	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n")); 
     } else { 
 	/* Go straight to Cochrane-Orcutt (or Prais-Winsten) */
 	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
@@ -2027,46 +2034,65 @@ double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
 #else
 	rho0 = rho = corc_model.rho;
 #endif
-	pputs(prn, _("\nPerforming iterative calculation of rho...\n\n"));
     }
 
-    pprintf(prn, "                 %s       RHO        %s\n",
-	    _("ITER"), _("ESS"));
+    if (ci != HILU || !(opt & OPT_B)) {
 
-    iter = 0;
-    diff = 1.0;
-    while (diff > 0.001) {
-	pprintf(prn, "          %10d %12.5f", ++iter, rho);
-	clear_model(&corc_model);
-	corc_model = lsq(list, pZ, pdinfo, OLS, lsqopt, rho);
-#ifdef AR_DEBUG
-	fprintf(stderr, "corc_model: t1=%d, first two uhats: %g, %g\n",
-		corc_model.t1, 
-		corc_model.uhat[corc_model.t1],
-		corc_model.uhat[corc_model.t1+1]);
-#endif
-	if ((*err = corc_model.errcode)) {
-	    clear_model(&corc_model);
-	    goto bailout;
-	}
-	pprintf(prn, "   %g\n", corc_model.ess);
-#ifdef AR_DEBUG
-	printmodel(&corc_model, pdinfo, OPT_NONE, prn);
-#endif
-	rho = autores(&corc_model, (const double **) *pZ, opt);
-
-	if (rho > .99999 || rho < -.99999) {
-	    *err = E_NOCONV;
-	    clear_model(&corc_model);
-	    goto bailout;
+	if (ci == HILU) {
+	    pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n"));
+	} else {
+	    pputs(prn, _("\nPerforming iterative calculation of rho...\n\n"));
 	}
 
-	diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
-	rho0 = rho;
-	if (iter == 30) break;
+#if 0
+	pprintf(prn, "                 %s       RHO        %s\n",
+		_("ITER"), _("ESS"));
+#else
+	pputs(prn, _("                 ITER       RHO        ESS"));
+	pputc(prn, '\n');
+#endif
+
+	iter = 0;
+	diff = 1.0;
+
+	while (diff > 0.001) {
+	    pprintf(prn, "          %10d %12.5f", ++iter, rho);
+	    clear_model(&corc_model);
+	    corc_model = lsq(list, pZ, pdinfo, OLS, lsqopt, rho);
+#if AR_DEBUG
+	    fprintf(stderr, "corc_model: t1=%d, first two uhats: %g, %g\n",
+		    corc_model.t1, 
+		    corc_model.uhat[corc_model.t1],
+		    corc_model.uhat[corc_model.t1+1]);
+#endif
+	    if ((*err = corc_model.errcode)) {
+		clear_model(&corc_model);
+		goto bailout;
+	    }
+	    pprintf(prn, "   %g\n", corc_model.ess);
+
+	    rho = autores(&corc_model, (const double **) *pZ, ci);
+
+#if AR_DEBUG
+	    pputs(prn, "CORC model (using rho-transformed data)\n");
+	    printmodel(&corc_model, pdinfo, OPT_NONE, prn);
+	    pprintf(prn, "autores gives rho = %g\n", rho);
+#endif
+
+	    if (rho > .99999 || rho < -.99999) {
+		*err = E_NOCONV;
+		clear_model(&corc_model);
+		goto bailout;
+	    }
+
+	    diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
+	    rho0 = rho;
+	    if (iter == 30) break;
+	}
+
+	pprintf(prn, _("                final %11.5f\n\n"), rho);
+
     }
-
-    pprintf(prn, _("                final %11.5f\n\n"), rho);
 
     clear_model(&corc_model);
 
@@ -2086,13 +2112,16 @@ double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
 
 static int get_pos (const int *list)
 {
-    int i;
+    int i, ret = -1;
 
     for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) return i;
+	if (list[i] == LISTSEP) {
+	    ret = i;
+	    break;
+	}
     }
 
-    return -1;
+    return ret;
 }
 
 /* .......................................................... */
@@ -3096,7 +3125,7 @@ MODEL ar_func (int *list, int pos, double ***pZ,
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
-	xx = estimate_rho(reglist, pZ, pdinfo, 1, CORC, &err, prn);
+	xx = estimate_rho(reglist, pZ, pdinfo, 1, CORC, &err, OPT_NONE, prn);
 	if (err) {
 	    ar.errcode = err;
 	} else {

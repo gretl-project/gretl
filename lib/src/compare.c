@@ -289,8 +289,13 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     gretl_model_init(&rep);
 
     if (orig->ci == CORC || orig->ci == HILU || orig->ci == PWE) {
+	gretlopt hlopt = OPT_NONE;
+
+	if (orig->ci == HILU && gretl_model_get_int(orig, "no-corc")) {
+	    hlopt = OPT_B;
+	}
 	rho = estimate_rho(list, pZ, pdinfo, 1, orig->ci, 
-			   &rep.errcode, prn);
+			   &rep.errcode, hlopt, prn);
     } else if (gretl_model_get_int(orig, "unit_weights")) {
 	/* panel model with per-unit weights */
 	lsqopt |= OPT_W;

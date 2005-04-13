@@ -52,7 +52,7 @@ struct _selector {
 
 #define WANT_TOGGLES(c) (c == OLS || c == TOBIT || c == ARMA || \
                          c == GARCH || c == COINT2 || c == TSLS || \
-                         c == VAR)
+                         c == VAR || c == HILU)
 
 static int default_var;
 static int *xlist;
@@ -1263,6 +1263,15 @@ static void verbose_callback (GtkWidget *w,  selector *sr)
     }
 }
 
+static void corc_callback (GtkWidget *w,  selector *sr)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	sr->opts &= ~OPT_B;
+    } else {
+	sr->opts |= OPT_B;
+    }
+}
+
 static void build_pq_spinners (selector *sr)
 {
     GtkWidget *hbox, *tmp;
@@ -1362,6 +1371,20 @@ build_selector_switches (selector *sr)
 	hbox = gtk_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
 	gtk_widget_show(tmp);
+
+	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+	gtk_widget_show(hbox);
+    } else if (sr->code == HILU) {
+	tmp = gtk_check_button_new_with_label
+	    (_("Fine-tune using Cochrane-Orcutt"));
+	g_signal_connect(G_OBJECT(tmp), "toggled",
+			 G_CALLBACK(corc_callback), sr);
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
+	gtk_widget_show(tmp);
+
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
 
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 	gtk_widget_show(hbox);

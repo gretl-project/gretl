@@ -172,6 +172,7 @@ struct genr_func funcs[] = {
     { T_RESAMPLE, "resample" },
     { T_HPFILT,   "hpfilt" },    /* Hodrick-Prescott filter */
     { T_BKFILT,   "bkfilt" },    /* Baxter-King filter */
+    { T_FRACDIFF, "fracdiff" },  /* fractional difference */
     { T_VARNUM,   "varnum" },    /* variable's ID number from its name */
 #ifdef HAVE_MPFR
     { T_MLOG,     "mlog" },
@@ -993,6 +994,10 @@ static int evaluate_genr (GENERATE *genr)
 	    atom_stack_bookmark(genr);
 	    genr->err = add_tmp_series_to_genr(genr, atom);
 	    atom_stack_resume(genr);
+	}
+	else if (atom->func == T_FRACDIFF) {
+	    fprintf(stderr, "got fracdiff function\n");
+	    /* genr->err = add_fracdiff_to_genr(genr, atom); */
 	}
 	else if (UNIVARIATE_STAT(atom->func)) {
 	    atom_stack_bookmark(genr);
@@ -3103,8 +3108,7 @@ static double *get_random_series (DATAINFO *pdinfo, int fn)
 
     if (fn == T_NORMAL) {
 	gretl_normal_dist(x, pdinfo->t1, pdinfo->t2);
-    }   
-    else if (fn == T_UNIFORM) {
+    } else if (fn == T_UNIFORM) {
 	gretl_uniform_dist(x, pdinfo->t1, pdinfo->t2);
     }
 

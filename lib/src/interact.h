@@ -52,6 +52,11 @@ enum option_codes {
     OPT_WEBDB,
     OPT_DUMP
 };
+
+enum forced_langs {
+    ENGLISH = 1,
+    BASQUE
+};
     
 /* functions follow */
 
@@ -71,7 +76,8 @@ int help (const char *cmd, const char *helpfile, PRN *prn);
 int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 
 	   double ***pZ);
 
-int parseopt (const char **argv, int argc, char *fname, int *english);
+int parseopt (const char **argv, int argc, char *fname, 
+	      int *force_lang);
 
 int shell (const char *arg);
 

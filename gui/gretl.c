@@ -69,7 +69,7 @@ drag_data_received  (GtkWidget          *widget,
 
 #ifdef USE_GNOME
 static char *optrun, *optdb;
-static int opteng, optdump;
+static int opteng, optbasque, optdump;
 
 static const struct poptOption options[] = {
     { "run", 'r', POPT_ARG_STRING, &optrun, 0, 
@@ -80,6 +80,8 @@ static const struct poptOption options[] = {
       N_("open a remote (web) database on startup"), "REMOTE_DB" },
     { "english", 'e', POPT_ARG_NONE, &opteng, 0, 
       N_("force use of English"), NULL },
+    { "basque", 'q', POPT_ARG_NONE, &optbasque, 0, 
+      N_("force use of Basque"), NULL },
     { "dump", 'c', POPT_ARG_NONE, &optdump, 0, 
       N_("dump gretl configuration to file"), NULL },
     { NULL, '\0', 0, NULL, 0, NULL, NULL },
@@ -472,6 +474,7 @@ static void gui_usage (void)
     printf(I_("Or you may do \"gretl -r script_file\" to open a script.\n"));
     printf(I_("Or you may do \"gretl -d database\" to open a gretl database.\n"));
     printf(I_("You may do \"gretl -e\" to force use of English.\n"));
+    printf(I_("You may do \"gretl -q\" to force use of Basque.\n"));
     exit(0);
 }
 
@@ -571,11 +574,14 @@ static void root_check (void)
     }
 }
 
-static void force_english (void)
+static void force_language (int f)
 {
-    setlocale (LC_ALL, "C");
-
-    force_english_help();
+    if (f == ENGLISH) {
+	setlocale(LC_ALL, "C");
+	force_english_help();
+    } else {
+	setlocale(LC_ALL, "XXX");
+    }
 }
 
 #endif /* ENABLE_NLS */
@@ -611,8 +617,8 @@ int main (int argc, char *argv[])
     init_fileptrs();
 
     if (argc > 1) {
-	int english = 0;
-	int opt = parseopt((const char **) argv, argc, filearg, &english);
+	int force_lang = 0;
+	int opt = parseopt((const char **) argv, argc, filearg, &force_lang);
 
 	switch (opt) {
 	case OPT_HELP:
@@ -652,15 +658,16 @@ int main (int argc, char *argv[])
 	}
 
 #ifdef ENABLE_NLS
-	if (english) {
-	    force_english();
+	if (force_lang) {
+	    force_language(force_lang);
 	    if (argc == 2) {
 		gui_get_data = 1;
 	    }
 	}
 #endif
-    } else 
+    } else {
 	gui_get_data = 1;
+    }
 
     strcpy(cmdfile, paths.userdir);
     strcat(cmdfile, "session.inp");

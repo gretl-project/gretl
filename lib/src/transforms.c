@@ -291,6 +291,36 @@ static int get_diff (int v, double *diffvec, int ci,
     return 0;
 }
 
+/* write fractional difference of variable v into diffvec */
+
+static int get_fracdiff (int v, double *diffvec, double d,
+			 const double **Z, const DATAINFO *pdinfo)
+{
+    int dd, t, t1, T;
+    const double TOL = 1.0E-07;
+    double phi = -d;
+
+    t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
+    T = pdinfo->t2 - t1 + 1;
+
+    for (t=t1; t<=pdinfo->t2; t++) {
+	diffvec[t] = Z[v][t];
+    }
+
+    dd = 1;
+
+    while ((dd < T) && fabs(phi) > TOL) {
+        for (t = dd; t < T; t++) {
+	    diffvec[t] += phi * Z[v][t - dd];
+	}
+        phi *= (dd - d) / (dd + 1);
+	dd++;
+    }
+
+
+    return 0;
+}
+
 /* write square or cross-product into xvec */
 
 static int get_xpx (int vi, int vj, double *xvec, const double **Z, 
@@ -407,6 +437,12 @@ static int get_transform (int ci, int v, int aux,
 	/* "aux" = second variable number */
 	err = get_xpx(v, aux, vx, (const double **) *pZ, pdinfo);
     }
+
+#if 0
+    } else if (ci == FRACDIFF) {
+	err = get_fracdiff(v, vx, d, (const double **) *pZ, pdinfo);
+    }
+#endif
 
     if (err) {
 	return -1;

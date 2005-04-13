@@ -25,15 +25,11 @@
 
 MODEL lsq (int *list, 
 	   double ***pZ, DATAINFO *pdinfo, 
-	   int ci, gretlopt opts, double rho);
+	   int ci, gretlopt opt, double rho);
 
 double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
-		     int batch, int opt, int *err, PRN *prn);
-
-int hilu_corc (double *toprho, int *list, 
-	       double ***pZ, DATAINFO *pdinfo,
-	       PATHS *ppaths, int batch,
-	       int opt, PRN *prn);
+		     int batch, int ci, int *err, 
+		     gretlopt opt, PRN *prn);
 
 MODEL lad (int *list, double ***pZ, DATAINFO *pdinfo); 
 

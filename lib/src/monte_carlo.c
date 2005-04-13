@@ -2567,7 +2567,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		    *models[0] = garch(cmd.list, pZ, *ppdinfo, cmd.opt, prn);
 		} else if (cmd.ci == CORC || cmd.ci == HILU || cmd.ci == PWE) {
 		    double rho = estimate_rho(cmd.list, pZ, *ppdinfo, 1, cmd.ci,
-					      &err, prn);
+					      &err, cmd.opt, prn);
 		    if (err) {
 			break;
 		    }

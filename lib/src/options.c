@@ -76,6 +76,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_Z, "dummy" },
     { GRAPH,    OPT_O, "tall" },
     { HAUSMAN,  OPT_T, "time-effects" },
+    { HILU,     OPT_B, "no-corc" },
     { IMPORT,   OPT_O, "box1" },
     { KPSS,     OPT_T, "trend" },
     { KPSS,     OPT_V, "verbose" },
@@ -266,7 +267,9 @@ static gretlopt get_short_opts (char *line, int ci, int *err)
 	    gretl_delete(p, 0, 2);
 	    match = 1;
 	}
-	if (!match) p++;
+	if (!match) {
+	    p++;
+	}
 	p = strchr(p, '-');
     }
 

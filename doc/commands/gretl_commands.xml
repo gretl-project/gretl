@@ -2373,6 +2373,10 @@
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
+	<option>
+	  <flag>--no-corc</flag>
+	  <effect>do not fine-tune results with Cochrane-Orcutt</effect>
+	</option>
       </options>
     </usage>
 

@@ -2248,7 +2248,7 @@ void do_model (GtkWidget *widget, gpointer p)
     case HILU:
     case PWE: 
 	rho = estimate_rho(cmd.list, &Z, datainfo, 0, action, 
-			   &err, prn);
+			   &err, cmd.opt, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    break;
@@ -5575,7 +5575,7 @@ int gui_exec_line (char *line,
     case HILU:
     case PWE:
 	rho = estimate_rho(cmd.list, &Z, datainfo, 1, cmd.ci,
-			   &err, outprn);
+			   &err, cmd.opt, outprn);
 	if (err) {
 	    errmsg(err, prn);
 	    break;
