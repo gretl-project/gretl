@@ -689,7 +689,8 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 
     if (err) {
 	gui_errmsg(err);
-    }
+    } 
+
 
     view_buffer(prn, hsize, vsize, title, action, obj);
 }

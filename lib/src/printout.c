@@ -266,6 +266,10 @@ void print_freq (const FREQDIST *freq, PRN *prn)
     int i, k, nlw, K = freq->numbins - 1;
     char word[64];
 
+    if (freq == NULL) {
+	return;
+    }
+
     pprintf(prn, _("\nFrequency distribution for %s, obs %d-%d "
 		   "(%d valid observations)\n"),
 	    freq->varname, freq->t1 + 1, freq->t2 + 1, freq->n);

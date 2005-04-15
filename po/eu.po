@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.2.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-04-13 18:11+0200\n"
-"PO-Revision-Date: 2005-03-04 23:52+0100\n"
+"PO-Revision-Date: 2005-04-15 18:28+0200\n"
 "Last-Translator: Susan-Orbe <etpormas@bs.ehu.es>\n"
 "Language-Team: basque <eu@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -181,7 +181,7 @@ msgstr "Behaketa"
 #: lib/src/compare.c:1555
 #, no-c-format
 msgid "CUSUM plot with 95% confidence band"
-msgstr ""
+msgstr "XXX XXX XXX %95 XXX XXX"
 
 #: lib/src/compare.c:1605
 msgid "This test is only relevant for pooled models\n"
@@ -685,7 +685,7 @@ msgstr ""
 #: lib/src/dataio.c:3197
 #, c-format
 msgid "   warning: missing value for variable %d, obs %d\n"
-msgstr ""
+msgstr "   oharra: galdutako balioai %drentzat, beh. %d\n"
 
 #: lib/src/dataio.c:3276
 #, c-format
@@ -1097,7 +1097,7 @@ msgstr ""
 #: lib/src/describe.c:324
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
-msgstr ""
+msgstr "XXX XXX variable %s-XXX"
 
 #: lib/src/describe.c:337 lib/src/describe.c:682
 #, c-format
@@ -3574,14 +3574,14 @@ msgid "z-score = %f, with one-tailed p-value %f\n"
 msgstr ""
 
 #: lib/src/nonparam.c:281
-#, fuzzy, c-format
+#, c-format
 msgid "significant at the %g%% level (one-tailed)\n"
-msgstr "ehuneko 1eko esangura mailarekin"
+msgstr "ehuneko %%%geko esangura mailarekin\n"
 
 #: lib/src/nonparam.c:284
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "not significant at the 10% level\n"
-msgstr "ez esanguratsua ehuneko 10eko eangura mailarekin"
+msgstr "ez esanguratsua ehuneko 10eko eangura mailarekin\n"
 
 #: lib/src/nonparam.c:287
 msgid ""
@@ -11045,7 +11045,7 @@ msgid ""
 "level, use the 0.05 column.)\n"
 "\n"
 msgstr ""
-"(Adbidez, alde biko testarentzat 10% esangura\n"
+"(Adbidez, alde biko testarentzat %10 esangura\n"
 "lmailarentzat, erabili 0.05 zutabea.)\n"
 "\n"
 

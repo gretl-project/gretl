@@ -311,7 +311,9 @@ FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     int t, k, n;
 
     freq = freq_new();
-    if (freq == NULL) return NULL;
+    if (freq == NULL) {
+	return NULL;
+    }
 
     gretl_errno = 0;
     gretl_errmsg[0] = '\0';
@@ -323,7 +325,8 @@ FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	gretl_errno = E_DATA;
 	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
 		"distribution for variable %s"), pdinfo->varname[varno]);
-	return freq;
+	free_freq(freq);
+	return NULL;
     }
 
     freq->t1 = pdinfo->t1; 
@@ -335,7 +338,8 @@ FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     if (gretl_isconst(pdinfo->t1, pdinfo->t2, x)) {
 	gretl_errno = 1;
 	sprintf(gretl_errmsg, _("%s is a constant"), freq->varname);
-	return freq;
+	free_freq(freq);
+	return NULL;
     }    
     
     moments(pdinfo->t1, pdinfo->t2, x, 
@@ -1054,8 +1058,9 @@ double LWE (const gretl_matrix *X, int m)
     gretl_matrix *lambda;
     int n = gretl_matrix_rows(X);
     double maxOJ = -1.0e+9;
-    double d, tmp, ret = -0.45;
+    double d, ret = -0.45;
     double Inf = -0.5, Sup = 0.5;
+    double tmp = NADBL;
     double lcm, step;
 
     I = gretl_matrix_periodogram(X, m);

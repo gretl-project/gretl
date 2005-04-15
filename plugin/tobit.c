@@ -188,9 +188,12 @@ static int make_vcv (MODEL *pmod, gretl_matrix *v, double scale)
 static int add_norm_test_to_model (MODEL *pmod, double chi2)
 {
     pmod->tests = malloc(sizeof *pmod->tests);
-    if (pmod->tests == NULL) return 1;
+    if (pmod->tests == NULL) {
+	return 1;
+    }
 
     gretl_test_init(&pmod->tests[0], GRETL_TEST_NORMAL);
+
     pmod->tests[0].teststat = GRETL_STAT_NORMAL_CHISQ;
     pmod->tests[0].value = chi2;
     pmod->tests[0].dfn = 2;

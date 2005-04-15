@@ -65,7 +65,7 @@ const char *default_mdl = {
 
 #ifdef GLIB2
 
-/* #define SP_DEBUG */
+#undef SP_DEBUG
 
 static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
 {
@@ -85,6 +85,7 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
     i = nargs = 1;
 
     va_start(ap, fmt);
+
     while ((s = va_arg(ap, char *))) {
 	i++;
 	argv = realloc(argv, (i+1) * sizeof *argv);
@@ -95,6 +96,7 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
 	argv[i-1] = g_strdup(s);
 	argv[i] = NULL;
     }
+
     va_end(ap);
 
     if (status == 1) return 1;
@@ -113,7 +115,7 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
     ok = g_spawn_sync (workdir,
 		       argv,
 		       NULL,
-		       0,
+		       G_SPAWN_SEARCH_PATH,
 		       NULL,
 		       NULL,
 		       &sout,
@@ -139,12 +141,16 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
     if (ret != 0) fputc(' ', stderr);
 
     for (i=0; i<nargs; i++) {
-	if (ret != 0) fprintf(stderr, "%s ", argv[i]);
+	if (ret != 0) {
+	    fprintf(stderr, "%s ", argv[i]);
+	}
 	free(argv[i]);
     }
     free(argv);
 
-    if (ret != 0) fputc('\n', stderr);
+    if (ret != 0) {
+	fputc('\n', stderr);
+    }
     
     return ret;
 }
@@ -710,6 +716,7 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
     }
 
     j = pdinfo->v - addvars;
+
     for (i=1; i<=varlist[0]; i++) {
 	if (request->opt[varlist[i]].save) {
 	    v = varindex(pdinfo, tmpinfo->varname[i]);

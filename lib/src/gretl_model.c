@@ -545,7 +545,13 @@ void clear_model (MODEL *pmod)
 static void copy_test (GRETLTEST *targ, const GRETLTEST *src)
 {
     targ->type = src->type;
-    targ->param = gretl_strdup(src->param);
+    
+    if (src->param != NULL) {
+	targ->param = gretl_strdup(src->param);
+    } else {
+	targ->param = NULL;
+    }
+
     targ->teststat = src->teststat;
     targ->dfn = src->dfn;
     targ->dfd = src->dfd;
@@ -557,7 +563,9 @@ static int copy_model_tests (MODEL *targ, const MODEL *src)
 {
     int i, n = src->ntests;
 
-    if (n <= 0 || src->tests == NULL) return 0;
+    if (n <= 0 || src->tests == NULL) {
+	return 0;
+    }
 
     targ->tests = malloc(n * sizeof *targ->tests);
     if (targ->tests == NULL) return 1;
