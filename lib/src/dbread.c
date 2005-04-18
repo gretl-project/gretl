@@ -111,6 +111,9 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
 	fread(&val, sizeof val, 1, fp);
 	sprintf(numstr, "%g", val);
 	Z[1][t] = atof(numstr);
+	if (Z[1][t] == -999.0) {
+	    Z[1][t] = NADBL;
+	}
     }
 
     fclose(fp);
@@ -135,11 +138,13 @@ static void get_native_series_comment (SERIESINFO *sinfo, const char *s)
     n = strlen(sinfo->descrip) - 1;
     
     for (i=n; i>0; i--) {
-	if (isspace(sinfo->descrip[i])) sinfo->descrip[i] = 0;
-	else if (sinfo->descrip[i] == '\r' || sinfo->descrip[i] == '\n') {
+	if (isspace(sinfo->descrip[i])) {
 	    sinfo->descrip[i] = 0;
+	} else if (sinfo->descrip[i] == '\r' || sinfo->descrip[i] == '\n') {
+	    sinfo->descrip[i] = 0;
+	} else {
+	    break;
 	}
-	else break;
     }
 }
 

@@ -1299,7 +1299,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 	pputc(prn, '\n');
     }
 
-    if (plot && fr->nobs > 3) {
+    if (plot && fr->nobs > 0) {
 	if (time_series) {
 	    switch (pdinfo->pd) {
 	    case 1:

@@ -158,7 +158,11 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
 	memcpy(&val, getbuf + offset, sizeof val);
 	offset += sizeof val;
 #endif
-	Z[1][t] = val;
+	if (val == -999.0) {
+	    Z[1][t] = NADBL;
+	} else {
+	    Z[1][t] = val;
+	}
     }
 
     update_statusline(dbwin, "OK");
@@ -197,9 +201,14 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 	return;
     }
 
-    if (dbdinfo->pd == 12) strcpy(pd, "months");
-    else if (dbdinfo->pd == 4) strcpy(pd, "qtrs");
-    else strcpy(pd, "time");
+    if (dbdinfo->pd == 12) {
+	strcpy(pd, "months");
+    } else if (dbdinfo->pd == 4) {
+	strcpy(pd, "qtrs");
+    } else {
+	strcpy(pd, "time");
+    }
+
     plotvar(dbZ, dbdinfo, pd);
 
     lines[0] = 1;
@@ -345,7 +354,11 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 	/* fill in actual data values */
 	fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
 	for (t=start; t<stop; t++) {
-	    Z[dbv][t] = xvec[t - pad1];
+	    if (xvec[t - pad1] == -999.0) {
+		Z[dbv][t] = NADBL;
+	    } else {
+		Z[dbv][t] = xvec[t - pad1];
+	    }
 	}
 	free(xvec);
     } else {  
@@ -456,12 +469,13 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     strcpy(dbdinfo->varname[1], sinfo->varname);
     strcpy(VARLABEL(dbdinfo, 1), sinfo->descrip);
 
-    if (action == DB_DISPLAY) 
+    if (action == DB_DISPLAY) {
 	display_dbdata(&dbZ, dbdinfo);
-    else if (action == DB_GRAPH) 
+    } else if (action == DB_GRAPH) {
 	graph_dbdata(&dbZ, dbdinfo);
-    else if (action == DB_IMPORT) 
+    } else if (action == DB_IMPORT) { 
 	add_dbdata(dbwin, dbZ, sinfo);
+    }
 
     free_Z(dbZ, dbdinfo);
     free_datainfo(dbdinfo);
