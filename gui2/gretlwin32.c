@@ -366,11 +366,45 @@ static int set_network_cfg_filename (const char *prog)
     return 0;
 }
 
+static int set_gd_fontpath (void)
+{
+    char fpath[MAX_PATH];
+    char *envstr, *s;
+    UINT usz;
+
+    usz = GetWindowsDirectory(fpath, MAX_PATH);
+    if (usz == 0 || usz > MAX_PATH - 6) {
+        return 1;
+    }
+
+    s = fpath;
+    while (*s) {
+	if (*s == '\\') {
+	    *s == '/';
+	}
+	s++;
+    }
+
+    strcat(fpath, "/fonts");
+
+    SetEnvironmentVariable("GDFONTPATH", fpath);
+
+    envstr = malloc(strlen(fpath) + 12);
+    if (envstr != NULL) {
+	sprintf(envstr, "GDFONTPATH=%s", fpath);
+	putenv(envstr);
+	free(envstr);
+    }
+
+    return 0;        
+}
+
 void gretl_win32_init (const char *progname)
 {
     set_network_cfg_filename(progname);
 
     read_rc(); /* get config info from registry */
+    set_gd_fontpath();
 
 # ifdef HUSH_RUNTIME_WARNINGS
     hush_warnings();
