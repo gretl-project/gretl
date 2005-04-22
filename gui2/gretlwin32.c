@@ -369,7 +369,7 @@ static int set_network_cfg_filename (const char *prog)
 static int set_gd_fontpath (void)
 {
     char fpath[MAX_PATH];
-    char *envstr, *s;
+    char *envstr;
     UINT usz;
 
     usz = GetWindowsDirectory(fpath, MAX_PATH);
@@ -377,14 +377,7 @@ static int set_gd_fontpath (void)
         return 1;
     }
 
-    s = fpath;
-    while (*s) {
-	if (*s == '\\') {
-	    *s == '/';
-	}
-	s++;
-    }
-
+    fpath[2] = '/';
     strcat(fpath, "/fonts");
 
     SetEnvironmentVariable("GDFONTPATH", fpath);

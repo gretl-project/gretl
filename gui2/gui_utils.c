@@ -135,14 +135,16 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/non-linearity (logs)"), NULL, do_lmtest, LMTEST_LOGS, NULL, GNULL },
     { N_("/Tests/Ramsey's RESET"), NULL, do_reset, RESET, NULL, GNULL },
     { N_("/Tests/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL, GNULL },
     { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL, GNULL },
+    { N_("/Tests/normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL, GNULL },
     { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL, GNULL },
     { N_("/Tests/collinearity"), NULL, do_vif, VIF, NULL, GNULL },
     { N_("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL, GNULL },
-    { N_("/Tests/CUSUM test"), NULL, do_cusum, CUSUM, NULL, GNULL },
+    { N_("/Tests/sep3"), NULL, NULL, 0, "<Separator>", GNULL },
+    { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL, GNULL },
     { N_("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL, GNULL },
-    { N_("/Tests/normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL, GNULL },
+    { N_("/Tests/CUSUM test"), NULL, do_cusum, CUSUM, NULL, GNULL },
+    { N_("/Tests/sep4"), NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL, GNULL },
     { N_("/_Graphs"), NULL, NULL, 0, "<Branch>", GNULL }, 
     { N_("/Graphs/residual plot"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -204,14 +206,16 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/non-linearity (logs)"), NULL, do_lmtest, LMTEST_LOGS, NULL },
     { N_("/Tests/Ramsey's RESET"), NULL, do_reset, RESET, NULL },
     { N_("/Tests/sep2"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL },
     { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL },
+    { N_("/Tests/normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL },
     { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL },
     { N_("/Tests/collinearity"), NULL, do_vif, VIF, NULL },
     { N_("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL },
-    { N_("/Tests/CUSUM test"), NULL, do_cusum, CUSUM, NULL },
+    { N_("/Tests/sep3"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL },
     { N_("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL },
-    { N_("/Tests/normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL },
+    { N_("/Tests/CUSUM test"), NULL, do_cusum, CUSUM, NULL },
+    { N_("/Tests/sep4"), NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL },
     { N_("/_Graphs"), NULL, NULL, 0, "<Branch>" }, 
     { N_("/Graphs/residual plot"), NULL, NULL, 0, "<Branch>" },
@@ -2383,6 +2387,16 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 	    ok = command_ok_for_model(cmd_ci, pmod->ci);
 	    flip(ifac, model_items[i].path, ok);
 	}
+    }
+
+    /* cross-sectional data: disallow time-series tests */
+    if (!dataset_is_time_series(datainfo)) {
+	flip(ifac, "/Tests/CUSUM test", FALSE);
+	flip(ifac, "/Tests/ARCH", FALSE);
+    }
+
+    if (!dataset_is_time_series(datainfo) && !dataset_is_panel(datainfo)) {
+	flip(ifac, "/Tests/autocorrelation", FALSE);
     }
 
     minimal_model_check(ifac, pmod);

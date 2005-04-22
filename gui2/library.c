@@ -841,7 +841,7 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
     err = checks_dialog(_(title), 
 			opts, actmax,
 			active,
-			&order, spintext,
+			&order, _(spintext),
 			omax, action);
 
     if (err < 0) return;

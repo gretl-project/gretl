@@ -104,44 +104,47 @@ static GtkItemFactoryEntry time_series_model_items[] = {
 
 void time_series_menu_state (gboolean s)
 {
-    if (mdata->ifac != NULL) {
-	/* Data menu */
-	flip(mdata->ifac, "/Data/Graph specified vars/Time series plot...", s);
-	/* Variable menu */
-	flip(mdata->ifac, "/Variable/Time series plot", s);
-	flip(mdata->ifac, "/Variable/Correlogram", s);
-	flip(mdata->ifac, "/Variable/Spectrum", s);
-	flip(mdata->ifac, "/Variable/Runs test", s);
-	flip(mdata->ifac, "/Variable/Augmented Dickey-Fuller test", s);
-	flip(mdata->ifac, "/Variable/KPSS test", s);
-	flip(mdata->ifac, "/Variable/ARMA model", s);
+    if (mdata->ifac == NULL) {
+	return;
+    }
+
+    /* Data menu */
+    flip(mdata->ifac, "/Data/Graph specified vars/Time series plot...", s);
+
+    /* Variable menu */
+    flip(mdata->ifac, "/Variable/Time series plot", s);
+    flip(mdata->ifac, "/Variable/Correlogram", s);
+    flip(mdata->ifac, "/Variable/Spectrum", s);
+    flip(mdata->ifac, "/Variable/Runs test", s);
+    flip(mdata->ifac, "/Variable/Augmented Dickey-Fuller test", s);
+    flip(mdata->ifac, "/Variable/KPSS test", s);
+    flip(mdata->ifac, "/Variable/ARMA model", s);
 #ifdef HAVE_X12A
-	flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", s);
+    flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", s);
 #endif
 #ifdef HAVE_TRAMO
-	flip(mdata->ifac, "/Variable/TRAMO analysis", s);
+    flip(mdata->ifac, "/Variable/TRAMO analysis", s);
 #endif
-	flip(mdata->ifac, "/Variable/Hurst exponent", s);
-	/* Model menu */
-	flip(mdata->ifac, "/Model/Time series", s);
-	/* Sample menu */
-	flip(mdata->ifac, "/Sample/Compact data...", 
-	     s && DATASET_COMPACTABLE(datainfo));
+    flip(mdata->ifac, "/Variable/Hurst exponent", s);
+    /* Model menu */
+    flip(mdata->ifac, "/Model/Time series", s);
+    /* Sample menu */
+    flip(mdata->ifac, "/Sample/Compact data...", 
+	 s && DATASET_COMPACTABLE(datainfo));
 
-	if (s) {
-	    GtkWidget *w =  
-		gtk_item_factory_get_widget(mdata->ifac, 
-					    "/Model/Time series/Cochrane-Orcutt...");
+    if (s) {
+	GtkWidget *w =  
+	    gtk_item_factory_get_widget(mdata->ifac, 
+					"/Model/Time series/Cochrane-Orcutt...");
 
-	    if (w == NULL) {
-		int i, n = sizeof time_series_model_items / 
-		    sizeof time_series_model_items[0];
+	if (w == NULL) {
+	    int i, n = sizeof time_series_model_items / 
+		sizeof time_series_model_items[0];
 
-		for (i=0; i<n; i++) {
-		    gtk_item_factory_create_item(mdata->ifac, 
-						 &time_series_model_items[i], 
-						 mdata, 1);
-		}
+	    for (i=0; i<n; i++) {
+		gtk_item_factory_create_item(mdata->ifac, 
+					     &time_series_model_items[i], 
+					     mdata, 1);
 	    }
 	}
     }
