@@ -51,7 +51,7 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget);
 
 void gretl_callback (gpointer data, guint action, GtkWidget *widget);
 
-void model_test_callback (gpointer data, guint action, GtkWidget *widget);
+void model_genr_callback (gpointer data, guint u, GtkWidget *widget);
 
 void text_copy_callback (GtkWidget *w, gpointer data);
 

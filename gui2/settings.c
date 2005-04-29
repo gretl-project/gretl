@@ -184,6 +184,8 @@ RCVAR rc_vars[] = {
       ROOTSET, MAXLEN, 3, NULL },
     { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
       ROOTSET, MAXSTR, 3, NULL },
+    { "latex", N_("Command to compile TeX files"), NULL, latex, 
+      ROOTSET, MAXSTR, 3, NULL },
     { "viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
       ROOTSET, MAXSTR, 3, NULL },
 #ifndef G_OS_WIN32

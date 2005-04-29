@@ -27,6 +27,8 @@
 
 #include <unistd.h>
 
+#undef GNUPLOT_DEBUG
+
 #ifdef _WIN32
 # include <windows.h>
 # define EMF_USER_COLORS
@@ -297,6 +299,7 @@ int gnuplot_has_ttf (void)
 	    err = gnuplot_test_command("set term png font arial 8");
 	}
     }
+
     return !err;
 }
 
@@ -309,6 +312,7 @@ int gnuplot_has_specified_colors (void)
 	   if it fails, we have the new driver, we hope */
 	err = gnuplot_test_command("set term png color");
     }
+
     return err;
 }
 
@@ -319,6 +323,7 @@ static int gnuplot_has_style_fill (void)
     if (err == -1) {
 	err = gnuplot_test_command("set style fill solid");
     }
+
     return !err;
 }
 
@@ -330,8 +335,11 @@ static char *label_front (void)
 	err = gnuplot_test_command("set label 'foo' at 0,0 front");
     }
 
-    if (err) return "";
-    else return " front";
+    if (err) {
+	return "";
+    } else {
+	return " front";
+    }
 }
 
 
@@ -392,7 +400,7 @@ const char *get_gretl_png_term_line (int plottype)
     sprintf(png_term_line, "set term png%s%s",
 	    font_string, color_string);
 
-#ifdef GNUPLOT_DEBUG
+#if GNUPLOT_DEBUG
     fprintf(stderr, "png term line:\n'%s'\n", png_term_line);
 #endif
 
@@ -492,6 +500,48 @@ int gnuplot_init (int plottype, FILE **fpp)
     return 0;
 }
 
+#ifdef ENABLE_NLS
+
+static int recode_gnuplot_file (const char *fname)
+{
+    FILE *fp, *fq;
+    char oldline[512], newline[1024];
+    char rname[FILENAME_MAX];
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) {
+	return 1;
+    }
+
+    strcpy(rname, fname);
+    strcat(rname, "l2");
+
+    fq = fopen(rname, "w");
+    if (fq == NULL) {
+	fclose(fp);
+	return 1;
+    }
+
+    while (fgets(oldline, sizeof oldline, fp)) {
+	if (isdigit((unsigned char) oldline[0])) {
+	    fputs(oldline, fq);
+	} else {
+	    sprint_l2_to_html(newline, oldline, sizeof newline);
+	    fputs(newline, fq);
+	}
+    }
+
+    fclose(fp);
+    fclose(fq);
+	    
+    remove(fname);
+    rename(rname, fname);
+
+    return 0;
+}
+
+#endif
+
 /**
  * gnuplot_make_graph:
  *
@@ -505,6 +555,12 @@ int gnuplot_make_graph (void)
     int err = 0;
     char plotcmd[MAXLEN];
 
+#ifdef ENABLE_NLS  
+    if (use_latin_2()) {
+	recode_gnuplot_file(gretl_plotfile());
+    } 
+#endif
+
 #ifdef WIN32
     sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), gretl_plotfile());
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
@@ -514,7 +570,7 @@ int gnuplot_make_graph (void)
     err = gretl_spawn(plotcmd);  
 #endif
 
-#if 0
+#if GNUPLOT_DEBUG
     fprintf(stderr, "gnuplot_make_graph:\n"
 	    " plotcmd='%s', err = %d\n", plotcmd, err);
 #endif
@@ -867,6 +923,38 @@ gp_info_init (struct gnuplot_info *gpinfo, unsigned char flags,
     gpinfo->yvar1 = gpinfo->yvar2 = NULL;
 }
 
+#if GNUPLOT_DEBUG
+static void print_gnuplot_flags (unsigned char flags)
+{
+    fprintf(stderr, "gnuplot flags:\n");
+
+    if (flags & GP_IMPULSES) {
+	fprintf(stderr, " GP_IMPULSES\n");
+    }
+    if (flags & GP_RESIDS) {
+	fprintf(stderr, " GP_RESIDS\n");
+    }	
+    if (flags & GP_FA) {
+	fprintf(stderr, " GP_FA\n");
+    }
+    if (flags & GP_DUMMY) {
+	fprintf(stderr, " GP_DUMMY\n");
+    }
+    if (flags & GP_BATCH) {
+	fprintf(stderr, " GP_BATCH\n");
+    }
+    if (flags & GP_GUI) {
+	fprintf(stderr, " GP_GUI\n");
+    }
+    if (flags & GP_OLS_OMIT) {
+	fprintf(stderr, " GP_OLS_OMIT\n");
+    }
+    if (flags & GP_FILE) {
+	fprintf(stderr, " GP_FILE\n");
+    }
+}
+#endif
+
 /**
  * gnuplot:
  * @list: list of variables to plot, by ID number.
@@ -902,6 +990,10 @@ int gnuplot (int *list, const int *lines, const char *literal,
     struct gnuplot_info gpinfo;
 
     *gretl_errmsg = '\0';
+
+#if GNUPLOT_DEBUG
+    print_gnuplot_flags(flags);
+#endif
 
 #ifdef WIN32
     /* only gnuplot 3.8 or higher will accept "height" here */
@@ -1290,6 +1382,7 @@ static int get_3d_output_file (FILE **fpp)
 
     sprintf(fname, "%sgpttmp.plt", gretl_user_dir());
     *fpp = gretl_fopen(fname, "w");
+
     if (*fpp == NULL) {
 	err = E_FOPEN;
     } else {
@@ -1370,6 +1463,7 @@ int gnuplot_3d (int *list, const char *literal,
     }
 
     adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
+
     /* if resulting sample range is empty, complain */
     if (t2 == t1) {
 	fclose(fq);
@@ -1688,6 +1782,7 @@ int plot_fcast_errs (int n, const double *obs,
     xmax += xrange * .025;
     fprintf(fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
     fputs("set missing \"?\"\n", fp);
+
     if (!time_series) {
 	fputs("set xtics 1\n", fp);
     } else {
@@ -1700,10 +1795,10 @@ int plot_fcast_errs (int n, const double *obs,
 	    "'-' using 1:2:3 title '%s' w errorbars\n", 
 	    varname, I_("fitted"), I_("95 percent confidence interval"));
 
-    /* send data inline */
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
+
     for (t=0; t<n; t++) {
 	if (na(depvar[t])) {
 	    fprintf(fp, "%.8g ?\n", obs[t]);
@@ -1712,6 +1807,7 @@ int plot_fcast_errs (int n, const double *obs,
 	}
     }
     fputs("e\n", fp);
+
     for (t=0; t<n; t++) {
 	if (na(yhat[t])) {
 	    fprintf(fp, "%.8g ?\n", obs[t]);
@@ -1720,6 +1816,7 @@ int plot_fcast_errs (int n, const double *obs,
 	}
     }
     fputs("e\n", fp);
+
     for (t=0; t<n; t++) {
 	if (na(yhat[t]) || na(maxerr[t])) {
 	    fprintf(fp, "%.8g ? ?\n", obs[t]);
@@ -1728,6 +1825,7 @@ int plot_fcast_errs (int n, const double *obs,
 	}
     }
     fputs("e\n", fp);
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
@@ -1773,20 +1871,24 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
+
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	fprintf(fp, "%.8g %.8g\n", obs[t], pmod->uhat[t]);
     }
     fputs("e\n", fp);
+
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	sd2 = -sqrt(h[t]);
 	fprintf(fp, "%.8g %.8g\n", obs[t], sd2);
     }
     fputs("e\n", fp);
+
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	sd2 = sqrt(h[t]);
 	fprintf(fp, "%.8g %.8g\n", obs[t], sd2);
     }
     fputs("e\n", fp);
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
@@ -1914,10 +2016,15 @@ gp_string (FILE *fp, const char *fmt, const char *s, int png)
 
 const char *gp_justification_string (int j)
 {
-    if (j == GP_JUST_LEFT) return "left";
-    else if (j == GP_JUST_CENTER) return "center";
-    else if (j == GP_JUST_RIGHT) return "right";
-    else return "left";
+    if (j == GP_JUST_LEFT) {
+	return "left";
+    } else if (j == GP_JUST_CENTER) {
+	return "center";
+    } else if (j == GP_JUST_RIGHT) {
+	return "right";
+    } else {
+	return "left";
+    }
 }
 
 static void 
@@ -2155,10 +2262,9 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     return miss;
 }
 
-/* ........................................................... */
+/* ship out a plot struct, to gnuplot or file */
 
 int go_gnuplot (GPT_SPEC *spec, char *fname)
-     /* ship out a plot struct, to gnuplot or file */
 {
     FILE *fp = NULL;
     int dump = 0;
@@ -2169,15 +2275,21 @@ int go_gnuplot (GPT_SPEC *spec, char *fname)
 
     if (dump) {  
 	/* dump of gnuplot commands to named file */
-	if (fname == NULL) return 1;  /* impossible */
+	if (fname == NULL) {
+	    return 1;  /* impossible */
+	}
 	fp = gretl_fopen(fname, "w");
-	if (fp == NULL) return 1;
+	if (fp == NULL) {
+	    return 1;
+	}
     } else {     
 	/* output to gnuplot, for screen or other "term" */
 	if (spec->fp == NULL) {
 	    fp = gretl_fopen(gretl_plotfile(), "w");
 	}
-	if (fp == NULL) return 1;
+	if (fp == NULL) {
+	    return 1;
+	}
 
 	if (fname != NULL) { 
 #ifdef ENABLE_NLS
@@ -2365,7 +2477,7 @@ static char gnuplot_pallette[4][8] = {
 
 const char *get_gnuplot_pallette (int i, int ptype)
 {
-#ifdef GNUPLOT_DEBUG
+#if GNUPLOT_DEBUG
     fprintf(stderr, "get_gnuplot_pallette: i=%d, ptype=%d\n",
 	    i, ptype);
 #endif

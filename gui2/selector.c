@@ -42,6 +42,7 @@ struct _selector {
     GtkWidget *default_check;
     GtkWidget *extra;
     GtkWidget *extra2;
+    GtkWidget *add_button;
     int code;
     int active_var;
     int error;
@@ -262,6 +263,62 @@ static void set_dependent_var_callback (GtkWidget *w, selector *sr)
 					 sr);
 }
 
+static void set_right_var_from_main (GtkTreeModel *model, GtkTreePath *path,
+				     GtkTreeIter *iter, selector *sr)
+{
+    GtkTreeModel *rightmod;
+    GtkTreeIter r_iter;
+    gchar *vname = NULL;
+    gchar *vnum = NULL;
+    int v;
+
+    gtk_tree_model_get(model, iter, 0, &vnum, 1, &vname, -1);
+
+    rightmod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rightvars));
+    if (rightmod == NULL) {
+	g_free(vname);
+	g_free(vnum);
+	return;
+    }
+
+    v = atoi(vnum);
+
+    if (gtk_tree_model_get_iter_first(rightmod, &r_iter)) {
+	while (gtk_tree_model_iter_next(rightmod, &r_iter)) {
+	    ;
+	}
+    }
+
+    gtk_list_store_append(GTK_LIST_STORE(rightmod), &r_iter);
+    gtk_list_store_set(GTK_LIST_STORE(rightmod), &r_iter, 
+		       0, v, 1, vname, -1);
+
+    g_free(vname);
+    g_free(vnum);
+}
+
+static void set_vars_from_main (selector *sr)
+{
+    GtkTreeSelection *selection;
+
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
+    gtk_tree_selection_selected_foreach(selection, 
+					(GtkTreeSelectionForeachFunc) 
+					set_right_var_from_main,
+					sr);
+}
+
+static int selection_at_max (selector *sr, int nsel)
+{
+    int ret = 0;
+
+    if (TWO_VARS_CODE(sr->code) && nsel == 2) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
 static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter, 
 			      selector *sr, int which)
 {
@@ -271,8 +328,9 @@ static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter,
     gint vnum, test;
     gchar *vname = NULL;
     gint already_there = 0;
+    gint at_max = 0;
 
-    gtk_tree_model_get (model, iter, 0, &vnum, 1, &vname, -1);
+    gtk_tree_model_get(model, iter, 0, &vnum, 1, &vname, -1);
 
     if (which == SR_AUXVARS) {
 	list = sr->auxvars;
@@ -289,21 +347,35 @@ static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter,
     }
 
     if (gtk_tree_model_get_iter_first(orig_model, &orig_iter)) {
+	int j = 1;
+
 	while (1) {
+	    if (selection_at_max(sr, j)) {
+		at_max = 1;
+		break;
+	    }
 	    gtk_tree_model_get(orig_model, &orig_iter, 0, &test, -1);
 	    if (test == vnum) {
 		already_there = 1; 
 		break;
 	    }
-	    if (!gtk_tree_model_iter_next(orig_model, &orig_iter)) break;
+	    if (!gtk_tree_model_iter_next(orig_model, &orig_iter)) {
+		break;
+	    }
+	    j++;
 	}
     }
 
-    if (!already_there) {
+    if (!already_there && !at_max) {
         gtk_list_store_append(GTK_LIST_STORE(orig_model), &orig_iter);
         gtk_list_store_set(GTK_LIST_STORE(orig_model), &orig_iter, 
 			   0, vnum, 1, vname, -1);
     }
+
+    if (sr->add_button != NULL && at_max) {
+	gtk_widget_set_sensitive(sr->add_button, FALSE);
+    }
+
     g_free(vname);
 }
 
@@ -364,24 +436,44 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
     GtkTreeSelection *selection = gtk_tree_view_get_selection (view);
     GtkTreePath *path;
     GtkTreeIter iter, last;
+    selector *sr;
+    int nsel = 0;
 
-    if (model == NULL || selection == NULL) return;
+    if (model == NULL || selection == NULL) {
+	return;
+    }
 
     /* get to the last row */
     if (gtk_tree_model_get_iter_first(model, &iter)) {
 	last = iter;
-	while (gtk_tree_model_iter_next(model, &iter)) last = iter;
-    } else return;
+	nsel = 1;
+	while (gtk_tree_model_iter_next(model, &iter)) {
+	    last = iter;
+	    nsel++;
+	}
+    } else {
+	return;
+    }
     
     /* work back up, deleting selected rows */
     path = gtk_tree_model_get_path (model, &last);
     while (1) {
-	if (gtk_tree_model_get_iter (model, &last, path) &&
-	    gtk_tree_selection_iter_is_selected (selection, &last)) {
-	    gtk_list_store_remove (GTK_LIST_STORE(model), &last);
+	if (gtk_tree_model_get_iter(model, &last, path) &&
+	    gtk_tree_selection_iter_is_selected(selection, &last)) {
+	    gtk_list_store_remove(GTK_LIST_STORE(model), &last);
+	    nsel--;
 	}
-	if (!gtk_tree_path_prev(path)) break;
-    }    
+	if (!gtk_tree_path_prev(path)) {
+	    break;
+	}
+    } 
+
+    sr = g_object_get_data(G_OBJECT(data), "selector");
+    if (sr != NULL && sr->add_button != NULL &&
+	!GTK_WIDGET_SENSITIVE(sr->add_button) &&
+	!selection_at_max(sr, nsel)) {
+	gtk_widget_set_sensitive(sr->add_button, TRUE);
+    }
 }
 
 /* callbacks from button presses in list boxes: double and right
@@ -415,7 +507,7 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
     }
 
     if (mods & GDK_BUTTON3_MASK) {
-	remove_from_right_callback (NULL, data);
+	remove_from_right_callback(NULL, data);
 	return TRUE;
     } 
 
@@ -454,6 +546,9 @@ static void clear_vars (GtkWidget *w, selector *sr)
 	gtk_entry_set_text(GTK_ENTRY(sr->rightvars), "");
     } else {
 	clear_varlist(sr->rightvars);
+	if (sr->add_button != NULL) {
+	    gtk_widget_set_sensitive(sr->add_button, TRUE);
+	}
     }
 
     if (MODEL_CODE(sr->code)) {
@@ -1189,6 +1284,8 @@ static void selector_init (selector *sr, guint code, const char *title)
     sr->auxvars = NULL;
     sr->default_check = NULL;
     sr->extra = NULL;
+    sr->extra2 = NULL;
+    sr->add_button = NULL;
     sr->cmdlist = NULL;
     sr->data = NULL;
     sr->active_var = 0;
@@ -1638,6 +1735,11 @@ static char *get_topstr (int cmdnum)
 	return N_("Select variables to omit");
     case COEFFSUM:
 	return N_("Select coefficients to sum");
+    case SPEARMAN:
+    case MEANTEST:
+    case MEANTEST2:
+    case VARTEST:
+	return N_("Select two variables");
     case PRINT:
 	return N_("Select variables to display");
     case GR_PLOT: 
@@ -1791,13 +1893,13 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     /* middle: vertical holder for push/pull buttons */
     mid_vbox = gtk_vbox_new(FALSE, 5);
 
-    tmp = gtk_button_new_with_label (_("Select ->"));
-    gtk_box_pack_start(GTK_BOX(mid_vbox), tmp, TRUE, FALSE, 0);
-    g_signal_connect (G_OBJECT(tmp), "clicked", 
+    sr->add_button = gtk_button_new_with_label (_("Select ->"));
+    gtk_box_pack_start(GTK_BOX(mid_vbox), sr->add_button, TRUE, FALSE, 0);
+    g_signal_connect (G_OBJECT(sr->add_button), "clicked", 
 		      G_CALLBACK(add_to_right_callback), sr);
-    gtk_widget_show(tmp);
+    gtk_widget_show(sr->add_button);
 
-    if (p == NULL) {
+    if (p == NULL && !TWO_VARS_CODE(sr->code)) {
 	/* data save action */
 	tmp = gtk_button_new_with_label (_("All ->"));
 	gtk_box_pack_start(GTK_BOX(mid_vbox), tmp, TRUE, FALSE, 0);
@@ -1817,6 +1919,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     right_vbox = gtk_vbox_new(FALSE, 5);
 
     sr->rightvars = var_list_box_new(GTK_BOX(right_vbox), sr, SR_RIGHTVARS);
+    g_object_set_data(G_OBJECT(sr->rightvars), "selector", sr);
 
     gtk_box_pack_start(GTK_BOX(big_hbox), right_vbox, TRUE, TRUE, 0);
     gtk_widget_show(right_vbox);
@@ -1832,6 +1935,10 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 
     /* buttons: "OK", Clear, Cancel, Help */
     build_selector_buttons(sr, okfunc);
+
+    if (TWO_VARS_CODE(sr->code) && mdata_selection_count() == 2) {
+	set_vars_from_main(sr);
+    }
 
     gtk_widget_show(sr->dlg);
     

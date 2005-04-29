@@ -39,6 +39,7 @@ struct _selector {
     GtkWidget *default_check;
     GtkWidget *extra;
     GtkWidget *extra2;
+    GtkWidget *add_button;
     int code;
     int error;
     gretlopt opts;
@@ -167,29 +168,51 @@ static void add_auxvar_callback (GtkWidget *w, selector *sr)
 	g_list_foreach(mylist, (GFunc) add_auxvar, sr);
 }
 
+static int selection_at_max (selector *sr, int nsel)
+{
+    int ret = 0;
+
+    if (TWO_VARS_CODE(sr->code) && nsel == 2) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
 static void add_var_on_right (gint i, selector *sr)
 {
     gchar *row[2];
     gint j, rows;
     gint already_there = 0;
+    gint at_max = 0;
 
     if (!GTK_IS_CLIST(sr->rightvars)) return;
 
     rows = GTK_CLIST(sr->rightvars)->rows;
 
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &row[0]);
+
     for (j=0; j<rows; j++) {
 	gchar *test;
 
+	if (selection_at_max(sr, j + 1)) {
+	    at_max = 1; 
+	    break;
+	}	    
 	gtk_clist_get_text(GTK_CLIST(sr->rightvars), j, 0, &test);
 	if (!strcmp(test, row[0])) {
 	    already_there = 1; 
 	    break;
 	}
     }
-    if (!already_there) {
+
+    if (!already_there && !at_max) {
 	gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 1, &row[1]);
 	gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+    }
+
+    if (sr->add_button != NULL && at_max) {
+	gtk_widget_set_sensitive(sr->add_button, FALSE);
     }
 }
 
@@ -203,8 +226,9 @@ static void add_all_to_right_callback (GtkWidget *w, selector *sr)
     gtk_clist_select_all(GTK_CLIST(sr->varlist));
     mylist = GTK_CLIST(sr->varlist)->selection;
 
-    if (mylist != NULL) 
+    if (mylist != NULL) {
 	g_list_foreach(mylist, (GFunc) add_var_on_right, sr);
+    }
 }
 
 static void add_to_right_callback (GtkWidget *w, selector *sr)
@@ -216,8 +240,9 @@ static void add_to_right_callback (GtkWidget *w, selector *sr)
 
     mylist = GTK_CLIST(sr->varlist)->selection;
 
-    if (mylist != NULL) 
+    if (mylist != NULL) {
 	g_list_foreach(mylist, (GFunc) add_var_on_right, sr);
+    }
 }
 
 static void remove_right_var (gint i, selector *sr)
@@ -231,6 +256,14 @@ static void remove_from_right_callback (GtkWidget *w, selector *sr)
     mylist = g_list_sort(mylist, list_sorter);
 
     g_list_foreach(mylist, (GFunc) remove_right_var, sr);
+
+    if (sr->add_button != NULL && !GTK_WIDGET_SENSITIVE(sr->add_button)) {
+	int nsel = GTK_CLIST(sr->rightvars)->rows;
+
+	if (!selection_at_max(sr, nsel)) {
+	    gtk_widget_set_sensitive(sr->add_button, TRUE);
+	}
+    }
 }
 
 static void remove_auxvar (gint i, selector *sr)
@@ -260,6 +293,9 @@ static void clear_vars (GtkWidget *w, selector *sr)
 	gtk_entry_set_text(GTK_ENTRY(sr->rightvars), "");
     } else {
 	gtk_clist_clear(GTK_CLIST(sr->rightvars));
+	if (sr->add_button != NULL) {
+	    gtk_widget_set_sensitive(sr->add_button, TRUE);
+	}
     }
 
     if (MODEL_CODE(sr->code)) {
@@ -952,6 +988,7 @@ static void selector_init (selector *sr, guint code, const char *title)
     sr->auxvars = NULL;
     sr->default_check = NULL;
     sr->extra = NULL;
+    sr->add_button = NULL;
     sr->cmdlist = NULL;
     sr->data = NULL;
 
@@ -1132,7 +1169,8 @@ build_selector_switches (selector *sr)
 	
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
 
-	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox),
+			   hbox, FALSE, FALSE, 0);
 	gtk_widget_show(hbox);
     }
 } 
@@ -1420,6 +1458,11 @@ static char *get_topstr (int cmdnum)
 	return N_("Select variables to omit");
     case COEFFSUM:
 	return N_("Select coefficients to sum");
+    case SPEARMAN:
+    case MEANTEST:
+    case MEANTEST2:
+    case VARTEST:
+	return N_("Select two variables");
     case PRINT:
 	return N_("Select variables to display");
     case GR_PLOT: 
@@ -1576,13 +1619,13 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     /* middle: vertical holder for push/pull buttons */
     mid_vbox = gtk_vbox_new(FALSE, 5);
 
-    tmp = gtk_button_new_with_label (_("Select ->"));
-    gtk_box_pack_start(GTK_BOX(mid_vbox), tmp, TRUE, FALSE, 0);
-    gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
+    sr->add_button = gtk_button_new_with_label (_("Select ->"));
+    gtk_box_pack_start(GTK_BOX(mid_vbox), sr->add_button, TRUE, FALSE, 0);
+    gtk_signal_connect (GTK_OBJECT(sr->add_button), "clicked", 
                         GTK_SIGNAL_FUNC(add_to_right_callback), sr);
-    gtk_widget_show(tmp);
+    gtk_widget_show(sr->add_button);
 
-    if (p == NULL) {
+    if (p == NULL && !TWO_VARS_CODE(sr->code)) {
 	tmp = gtk_button_new_with_label (_("All ->"));
 	gtk_box_pack_start(GTK_BOX(mid_vbox), tmp, TRUE, FALSE, 0);
 	gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
@@ -1629,6 +1672,10 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 
     /* buttons: "OK", Clear, Cancel, Help */
     build_selector_buttons(sr, okfunc);
+
+    if (TWO_VARS_CODE(sr->code) && mdata_selection_count() == 2) {
+	fprintf(stderr, "FIXME: handle two vars case\n");
+    }
 
     gtk_widget_show(sr->dlg);
 

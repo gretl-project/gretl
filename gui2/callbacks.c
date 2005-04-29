@@ -347,8 +347,6 @@ void fit_resid_callback (gpointer data, guint code, GtkWidget *widget)
     add_fit_resid(pmod, code, 0);
 }
 
-/* ........................................................... */
-
 void var_resid_callback (gpointer data, guint eqnum, GtkWidget *widget)
 {
     windata_t *mydata = (windata_t *) data; 
@@ -356,8 +354,6 @@ void var_resid_callback (gpointer data, guint eqnum, GtkWidget *widget)
 
     add_var_resid(var, eqnum);
 }
-
-/* ........................................................... */
 
 void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
 {
@@ -367,14 +363,10 @@ void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
     add_model_stat(pmod, which);
 }
 
-/* ........................................................... */
-
 void model_callback (gpointer data, guint model_code, GtkWidget *widget) 
 {
     selection_dialog (_("gretl: specify model"), do_model, model_code);
 }
-
-/* ........................................................... */
 
 #ifdef ENABLE_GMP
 void mp_ols_callback (gpointer data, guint model_code, GtkWidget *widget)
@@ -383,69 +375,21 @@ void mp_ols_callback (gpointer data, guint model_code, GtkWidget *widget)
 }
 #endif /* ENABLE_GMP */
 
-/* ........................................................... */
-
-void model_test_callback (gpointer data, guint action, GtkWidget *widget)
+void model_genr_callback (gpointer data, guint u, GtkWidget *widget)
 {
-    char title[36], query[MAXLABEL], defstr[MAXLEN];
-    char startdate[OBSLEN], enddate[OBSLEN];
-    void (*okfunc)() = NULL;
-    guint varclick = VARCLICK_NONE;
     windata_t *mydata = (windata_t *) data;
 
-    *defstr = '\0';
-
-    switch (action) {
-    case ARCH:
-	strcpy(title, _("gretl: ARCH test"));
-	strcpy(query, _("Lag order for ARCH test:"));
-	strcpy(defstr, "1");
-	okfunc = do_arch;
-	break;
-    case LMTEST: 
-	strcpy(title, _("gretl: autocorrelation"));
-	strcpy(query, _("Lag order for test:"));
-	if (dataset_is_panel(datainfo)) {
-	    strcpy(defstr, "1");
-	} else {
-	    sprintf(defstr, "%d", datainfo->pd);
-	}
-	okfunc = do_autocorr;
-	break;
-    case CHOW:
-	ntodate(startdate, datainfo->t1, datainfo);
-	ntodate(enddate, datainfo->t2, datainfo);
-	strcpy(title, _("gretl: Chow test"));
-	sprintf(query, _("Enter observation at which\n"
-		"to split the sample\n"
-		"(between %s and %s):"), startdate, enddate);
-	okfunc = do_chow;
-	break;
-    case FCASTERR: 
-	strcpy(title, _("gretl: forecast"));
-	sprintf(query, _("Starting obs (min = %s)\n"
-		"and ending obs (max = %s)?"), 
-		datainfo->stobs, datainfo->endobs);
-	sprintf(defstr, "%s %s", datainfo->stobs, datainfo->endobs);
-	okfunc = do_forecast;
-	break;
-    case MODEL_GENR:
-	strcpy(title, _("gretl: add var"));
-	strcpy(query, _("Enter formula for new variable:"));
-	okfunc = do_model_genr;
-	varclick = VARCLICK_INSERT_NAME;
-	break;
-    }
-
-    edit_dialog(title, query, defstr, okfunc, mydata, 
-		action, varclick);   
+    edit_dialog(_("gretl: add var"), _("Enter formula for new variable:"),
+		"", do_model_genr, mydata, 
+		MODEL_GENR, VARCLICK_INSERT_NAME);   
 }
-
-/* ........................................................... */
 
 void selector_callback (gpointer data, guint action, GtkWidget *widget)
 {
     windata_t *vwin = (windata_t *) data;
+    char title[64];
+
+    strcpy(title, "gretl: ");
 
     if (action == COINT) {
 	selection_dialog(_("gretl: cointegration test"), do_coint, action);
@@ -479,6 +423,15 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	simple_selection(_("gretl: model tests"), do_coeff_sum, action, vwin);
     } else if (action == GR_PLOT) {
 	simple_selection(_("gretl: model tests"), do_graph_from_selector, action, vwin);
+    } else if (action == SPEARMAN) {
+	strcat(title, _("rank correlation"));
+	simple_selection(title, do_spearman, action, vwin);
+    } else if (action == MEANTEST || action == MEANTEST2) {
+	strcpy(title, _("gretl: means test"));
+	simple_selection(title, do_two_var_test, action, vwin);
+    } else if (action == VARTEST) {
+	strcpy(title, _("gretl: variances test"));
+	simple_selection(title, do_two_var_test, action, vwin);
     } else {
 	errbox("selector_callback: code was not recognized");
     }
@@ -514,25 +467,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(defstr, "100");
 	okfunc = do_simdata;
 	break;         
-    case SPEARMAN:
-	strcpy(title, _("gretl: rank correlation"));
-	strcpy(query, _("Enter two variables by name or number:"));
-	okfunc = do_dialog_cmd;
-	varclick = VARCLICK_INSERT_ID;
-	break;
-    case MEANTEST:
-    case MEANTEST2:
-	strcpy(title, _("gretl: means test"));
-	strcpy(query, _("Enter two variables by name or number:"));
-	okfunc = do_dialog_cmd;
-	varclick = VARCLICK_INSERT_ID;
-	break;
-    case VARTEST:
-	strcpy(title, _("gretl: variances test"));
-	strcpy(query, _("Enter two variables by name or number:"));
-	okfunc = do_dialog_cmd;
-	varclick = VARCLICK_INSERT_ID;
-	break;
     case GENR:
 	strcpy(title, _("gretl: add var"));
 	strcpy(query, _("Enter formula for new variable:"));
@@ -554,12 +488,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(query, _("Supply full path to file with markers:"));
 	strcpy(defstr, paths.userdir);
 	okfunc = do_add_markers; 
-	break;
-    case CORRGM:
-	strcpy(title, _("gretl: correlogram"));
-	strcpy(query, _("Max lag length?\n(0 for automatic):"));
-	strcpy(defstr, "0");
-	okfunc = do_dialog_cmd;
 	break;
     case GR_BOX:
     case GR_NBOX:
@@ -596,21 +524,15 @@ void text_copy_callback (GtkWidget *w, gpointer data)
     text_copy(data, COPY_SELECTION, w);
 }
 
-/* ........................................................... */
-
 void text_paste_callback (GtkWidget *w, gpointer data)
 {
     text_paste(data, 0, w);
 }
 
-/* ........................................................... */
-
 void text_replace_callback (GtkWidget *w, gpointer data)
 {
     text_replace(data, 0, w);
 }
-
-/* ........................................................... */
 
 void text_undo_callback (GtkWidget *w, gpointer data)
 {

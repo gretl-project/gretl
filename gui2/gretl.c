@@ -120,10 +120,12 @@ char dbproxy[21];
 #ifdef G_OS_WIN32
 char Rcommand[MAXSTR] = "RGui.exe";
 char calculator[MAXSTR] = "calc.exe";
+char latex[MAXSTR] = "latex.exe";
 char viewdvi[MAXSTR] = "windvi.exe";
 char viewps[MAXSTR] = "gsview.exe";
 #else
 char calculator[MAXSTR] = "xcalc";
+char latex[MAXSTR] = "latex";
 char viewdvi[MAXSTR] = "xdvi";
 char viewps[MAXSTR] = "gv";
 # ifdef USE_GNOME
@@ -404,10 +406,11 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/sep4"), NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Data/Difference of means"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Data/Difference of means/assuming equal variances..."), NULL, 
-      gretl_callback, MEANTEST, NULL, GNULL },
+      selector_callback, MEANTEST, NULL, GNULL },
     { N_("/Data/Difference of means/assuming unequal variances..."), NULL, 
-      gretl_callback, MEANTEST2, NULL, GNULL },
-    { N_("/Data/Difference of variances..."), NULL, gretl_callback, VARTEST, NULL, GNULL },
+      selector_callback, MEANTEST2, NULL, GNULL },
+    { N_("/Data/Difference of variances..."), NULL, selector_callback, VARTEST, NULL, 
+      GNULL },
     { N_("/Data/sep5"), NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Data/Add variables"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Data/Add variables/time trend"), NULL, add_index, 1, NULL, GNULL },
@@ -481,7 +484,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL, GNULL }, 
     { N_("/Variable/sep1"), NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Variable/_Time series plot"), NULL, ts_plot_var, 0, NULL, GNULL },
-    { N_("/Variable/Correlogram"), NULL, gretl_callback, CORRGM, NULL, GNULL },
+    { N_("/Variable/Correlogram"), NULL, do_corrgm, CORRGM, NULL, GNULL },
     { N_("/Variable/Spectrum"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Variable/Spectrum/sample periodogram"), NULL, do_pergm, 0, NULL, GNULL }, 
     { N_("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL, GNULL }, 
@@ -525,7 +528,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/Poi_sson..."), NULL, model_callback, POISSON, NULL, GNULL },
     { N_("/Model/Lo_gistic..."), NULL, model_callback, LOGISTIC, NULL, GNULL },
     { N_("/Model/Least _Absolute Deviation..."), NULL, model_callback, LAD, NULL, GNULL },
-    { N_("/Model/_Rank correlation..."), NULL, gretl_callback, SPEARMAN, NULL, GNULL },
+    { N_("/Model/_Rank correlation..."), NULL, selector_callback, SPEARMAN, NULL, GNULL },
     { N_("/Model/_Pooled OLS (panel)..."), NULL, model_callback, POOLED, NULL, GNULL },
     { N_("/Model/Nonlinear Least Squares..."), NULL, gretl_callback, NLS, NULL, GNULL },
 #ifdef ENABLE_GMP
@@ -1079,7 +1082,7 @@ void populate_varlist (void)
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox)));
     gtk_list_store_clear(store);
 
-    gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     for (i=0; i<datainfo->v; i++) {
 	if (hidden_var(i, datainfo)) continue;

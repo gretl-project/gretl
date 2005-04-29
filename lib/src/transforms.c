@@ -291,36 +291,6 @@ static int get_diff (int v, double *diffvec, int ci,
     return 0;
 }
 
-/* write fractional difference of variable v into diffvec */
-
-static int get_fracdiff (int v, double *diffvec, double d,
-			 const double **Z, const DATAINFO *pdinfo)
-{
-    int dd, t, t1, T;
-    const double TOL = 1.0E-07;
-    double phi = -d;
-
-    t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
-    T = pdinfo->t2 - t1 + 1;
-
-    for (t=t1; t<=pdinfo->t2; t++) {
-	diffvec[t] = Z[v][t];
-    }
-
-    dd = 1;
-
-    while ((dd < T) && fabs(phi) > TOL) {
-        for (t = dd; t < T; t++) {
-	    diffvec[t] += phi * Z[v][t - dd];
-	}
-        phi *= (dd - d) / (dd + 1);
-	dd++;
-    }
-
-
-    return 0;
-}
-
 /* write square or cross-product into xvec */
 
 static int get_xpx (int vi, int vj, double *xvec, const double **Z, 
@@ -437,12 +407,6 @@ static int get_transform (int ci, int v, int aux,
 	/* "aux" = second variable number */
 	err = get_xpx(v, aux, vx, (const double **) *pZ, pdinfo);
     }
-
-#if 0
-    } else if (ci == FRACDIFF) {
-	err = get_fracdiff(v, vx, d, (const double **) *pZ, pdinfo);
-    }
-#endif
 
     if (err) {
 	return -1;
@@ -686,7 +650,28 @@ real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
 }
 
 /**
+ * default_lag_order:
+ * @pdinfo: data information struct.
+ *
+ * Returns: default lag order for generating lags, performing
+ * autocorrelation test, and so on.
+ *
+ */
+
+int default_lag_order (const DATAINFO *pdinfo)
+{
+    int order = 1;
+
+    if (!dataset_is_panel(pdinfo)) {
+	order = (pdinfo->pd < 52)? pdinfo->pd : 14;
+    }
+
+    return order;
+}
+
+/**
  * list_laggenr:
+ * @order: number of lags to generate (0 for automatic)
  * @list: list of variables to process.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
@@ -697,22 +682,13 @@ real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo)
+int list_laggenr (int order, const int *list, double ***pZ, DATAINFO *pdinfo)
 {
-    int maxlag;
-
-    if (pdinfo->pd < 52) {
-	maxlag = pdinfo->pd;
-    } else {
-	maxlag = 14;
+    if (order == 0) {
+	order = default_lag_order(pdinfo);
     } 
 
-    /* play safe with panel data */
-    if (dataset_is_panel(pdinfo)) {
-	maxlag = 1;
-    }
-
-    return real_list_laggenr(list, pZ, pdinfo, maxlag, NULL);  
+    return real_list_laggenr(list, pZ, pdinfo, order, NULL);  
 }
 
 /**

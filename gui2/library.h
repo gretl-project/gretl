@@ -61,7 +61,7 @@ gint cmd_init (char *line);
 
 void do_menu_op (gpointer data, guint action, GtkWidget *widget);
 
-void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata);
+void do_two_var_test (GtkWidget *widget, gpointer p);
 
 void do_run_script (gpointer data, guint code, GtkWidget *w);
 
@@ -99,7 +99,7 @@ void do_coint (GtkWidget *widget, gpointer p);
 
 void do_coint2 (GtkWidget *widget, gpointer p);
 
-void do_forecast (GtkWidget *widget, dialog_t *ddata);
+void do_forecast (gpointer data, guint u, GtkWidget *w);
 
 void do_coeff_sum (GtkWidget *widget, gpointer p);
 
@@ -107,17 +107,15 @@ void do_add_omit (GtkWidget *widget, gpointer p);
 
 void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget);
 
-void do_autocorr (GtkWidget *widget, dialog_t *ddata);
+void do_autocorr (gpointer data, guint u, GtkWidget *widget);
 
-void do_chow (GtkWidget *widget, dialog_t *ddata);
-
-void do_cusum (gpointer data, guint u, GtkWidget *widget);
+void do_chow_cusum (gpointer data, guint action, GtkWidget *w);
 
 void do_reset (gpointer data, guint u, GtkWidget *widget);
 
 void unit_root_test (gpointer data, guint u, GtkWidget *widget);
 
-void do_arch (GtkWidget *widget, dialog_t *ddata);
+void do_arch (gpointer data, guint u, GtkWidget *widget);
 
 void do_restrict (GtkWidget *widget, dialog_t *ddata);
 
@@ -138,6 +136,8 @@ void add_leverage_data (windata_t *vwin);
 void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
 
 void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
+
+void do_spearman (GtkWidget *widget, gpointer p);
 
 #ifdef ENABLE_GMP
 void do_mp_ols (GtkWidget *widget, gpointer p);
@@ -164,6 +164,8 @@ void do_edit_label (GtkWidget *widget, dialog_t *ddata);
 void do_resid_freq (gpointer data, guint action, GtkWidget *widget);
 
 void do_freqplot (gpointer data, guint gamma, GtkWidget *widget);
+
+void do_corrgm (gpointer data, guint u, GtkWidget *widget);
 
 void do_pergm (gpointer data, guint opt, GtkWidget *widget);
 

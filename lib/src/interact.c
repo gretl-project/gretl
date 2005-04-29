@@ -119,25 +119,23 @@ static int filter_comments (char *line, int *ignore)
 
 /* ........................................................... */
 
-static int get_rhodiff_param (char *str, CMD *cmd)
+static int get_rhodiff_or_lags_param (char *str, CMD *cmd)
 {
     int k;
 
     if ((k = haschar(';', str)) < 0) {
-	return 1;
+	return 0;
     }
 
     cmd->param = realloc(cmd->param, k+1);
-    if (cmd->param == NULL) {
-	return E_ALLOC;
+    if (cmd->param != NULL) {
+	*cmd->param = 0;
+	strncat(cmd->param, str, k);
     }
-
-    *cmd->param = 0;
-    strncat(cmd->param, str, k);
 
     shift_left(str, k + 1);
 
-    return 0;
+    return 1;
 }
 
 /* ........................................................... */
@@ -964,7 +962,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd,
        "param", for processing later */
     if (cmd->ci == RHODIFF) {  /* FIXME */
 	strcpy(remainder, line + n + 1);
-	if (get_rhodiff_param(remainder, cmd)) {
+	if (!get_rhodiff_or_lags_param(remainder, cmd)) {
 	    cmd->errcode = E_SYNTAX;
 	    goto bailout;
 	}
@@ -973,6 +971,19 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd,
 	nf = count_fields(line);
 	n = 0;
     }
+
+    if (cmd->ci == LAGS) {
+	/* optional initial lags field */
+	strcpy(remainder, line + n + 1);
+	if (get_rhodiff_or_lags_param(remainder, cmd)) {
+	    strcpy(line, remainder);
+	    linelen = strlen(line);
+	    nf = count_fields(line);
+	    n = 0;
+	} else {
+	    *remainder = '\0';
+	}
+    }	
 
     /* "store" is a special case since the filename that comes
        before the list may be quoted, and have spaces in it.  Groan */
@@ -1762,6 +1773,8 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	    }
 	    if (cmd->ci == RHODIFF) {
 		printf(" %s;", cmd->param);
+	    } else if (cmd->ci == LAGS && cmd->param[0] != '\0') {
+		printf(" %s;", cmd->param);
 	    } else if (*cmd->param && !hold_param(cmd->ci)) {
 		print_maybe_quoted_str(cmd->param);
 	    }
@@ -2247,7 +2260,8 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case LAGS:
-	err = list_laggenr(cmd->list, pZ, datainfo); 
+	order = atoi(cmd->param);
+	err = list_laggenr(order, cmd->list, pZ, datainfo); 
 	if (err) {
 	    pputs(prn, _("Error adding lags of variables.\n"));
 	} else {

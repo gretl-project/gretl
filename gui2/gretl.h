@@ -97,6 +97,7 @@ extern int updater;
 extern int wimp;
 #endif
 extern char calculator[MAXSTR];
+extern char latex[MAXSTR];
 extern char viewdvi[MAXSTR];
 extern char viewps[MAXSTR];
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)

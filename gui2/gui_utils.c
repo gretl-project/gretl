@@ -139,11 +139,11 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL, GNULL },
     { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL, GNULL },
     { N_("/Tests/collinearity"), NULL, do_vif, VIF, NULL, GNULL },
-    { N_("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL, GNULL },
+    { N_("/Tests/Chow test"), NULL, do_chow_cusum, CHOW, NULL, GNULL },
     { N_("/Tests/sep3"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL, GNULL },
-    { N_("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL, GNULL },
-    { N_("/Tests/CUSUM test"), NULL, do_cusum, CUSUM, NULL, GNULL },
+    { N_("/Tests/autocorrelation"), NULL, do_autocorr, LMTEST, NULL, GNULL },
+    { N_("/Tests/ARCH"), NULL, do_arch, ARCH, NULL, GNULL },
+    { N_("/Tests/CUSUM test"), NULL, do_chow_cusum, CUSUM, NULL, GNULL },
     { N_("/Tests/sep4"), NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL, GNULL },
     { N_("/_Graphs"), NULL, NULL, 0, "<Branch>", GNULL }, 
@@ -153,7 +153,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Model data/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL, GNULL },
     { N_("/Model data/Forecasts with standard errors"), NULL, 
-      model_test_callback, FCASTERR, NULL, GNULL },
+      do_forecast, FCASTERR, NULL, GNULL },
     { N_("/Model data/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL, GNULL },
     { N_("/Model data/coefficient covariance matrix"), NULL, 
@@ -210,11 +210,11 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL },
     { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL },
     { N_("/Tests/collinearity"), NULL, do_vif, VIF, NULL },
-    { N_("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL },
+    { N_("/Tests/Chow test"), NULL, do_chow_cusum, CHOW, NULL },
     { N_("/Tests/sep3"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL },
-    { N_("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL },
-    { N_("/Tests/CUSUM test"), NULL, do_cusum, CUSUM, NULL },
+    { N_("/Tests/autocorrelation"), NULL, do_autocorr, LMTEST, NULL },
+    { N_("/Tests/ARCH"), NULL, do_arch, ARCH, NULL },
+    { N_("/Tests/CUSUM test"), NULL, do_chow_cusum, CUSUM, NULL },
     { N_("/Tests/sep4"), NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL },
     { N_("/_Graphs"), NULL, NULL, 0, "<Branch>" }, 
@@ -224,7 +224,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Model data/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL },
     { N_("/Model data/Forecasts with standard errors"), NULL, 
-      model_test_callback, FCASTERR, NULL },
+      do_forecast, FCASTERR, NULL },
     { N_("/Model data/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL },
     { N_("/Model data/coefficient covariance matrix"), NULL, 
@@ -733,12 +733,13 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     return FALSE;
 }
 
-/* ........................................................... */
-
 gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     if (key->keyval == GDK_q) { 
-	gtk_widget_destroy(vwin->w);
+	if (vwin != mdata) {
+	    gtk_widget_destroy(vwin->w);
+	}
+	return TRUE;
     } else if (key->keyval == GDK_f) {
 	GdkModifierType mods;
 
@@ -752,6 +753,7 @@ gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    return TRUE;
 	}	
     }
+
     return FALSE;
 }
 
@@ -765,8 +767,6 @@ void *mymalloc (size_t size)
 	errbox(_("Out of memory!"));
     return mem;
 }
-
-/* ........................................................... */
 
 void *myrealloc (void *ptr, size_t size) 
 {
@@ -784,8 +784,6 @@ void mark_dataset_as_modified (void)
     data_status |= MODIFIED_DATA;
     set_sample_label(datainfo);
 }
-
-/* ........................................................... */
 
 void register_data (char *fname, const char *user_fname,
 		    int record)
@@ -1189,8 +1187,7 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 	infobox(_("Data info saved"));
 	MARK_CONTENT_SAVED(vwin);
 	mark_dataset_as_modified();
-    } 
-    else if (vwin->role == EDIT_NOTES) {
+    } else if (vwin->role == EDIT_NOTES) {
 	infobox(_("Notes saved"));
 	MARK_CONTENT_SAVED(vwin);
 	session_changed(1);
@@ -1252,8 +1249,6 @@ void windata_init (windata_t *vwin)
     vwin->sbuf = NULL;
 #endif
 }
-
-/* .................................................................. */
 
 void free_windata (GtkWidget *w, gpointer data)
 {
@@ -1379,8 +1374,6 @@ static void add_pca_data (windata_t *vwin)
 	}
     }
 }
-
-/* ........................................................... */
 
 static void add_data_callback (GtkWidget *w, windata_t *vwin)
 {
@@ -2103,6 +2096,7 @@ static gint query_save_text (GtkWidget *w, GdkEvent *event,
 	    }
 	}
     }
+
     return FALSE;
 }
 
@@ -2334,16 +2328,12 @@ void flip (GtkItemFactory *ifac, const char *path, gboolean s)
     }
 }
 
-/* ........................................................... */
-
 static void model_equation_copy_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/LaTeX/View/Equation", s);
     flip(ifac, "/LaTeX/Save/Equation", s);
     flip(ifac, "/LaTeX/Copy/Equation", s);
 }
-
-/* ........................................................... */
 
 static void minimal_model_check (GtkItemFactory *ifac, const MODEL *pmod)
 {
@@ -2368,8 +2358,6 @@ static void minimal_model_check (GtkItemFactory *ifac, const MODEL *pmod)
 	flip(ifac, "/Tests/ARCH", FALSE);
     }
 }
-
-/* ........................................................... */
 
 static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 {
@@ -2402,14 +2390,10 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
     minimal_model_check(ifac, pmod);
 }
 
-/* ........................................................... */
-
 static void arch_menu_off (GtkItemFactory *ifac)
 {
     flip(ifac, "/Tests/ARCH", FALSE);
 }
-
-/* ........................................................... */
 
 static void fit_resid_menu_off (GtkItemFactory *ifac)
 {
@@ -2433,8 +2417,6 @@ static void confint_menu_off (GtkItemFactory *ifac)
     flip(ifac, "/Model data/Confidence intervals for coefficients", FALSE);
 }
 
-/* ........................................................... */
-
 static void latex_menu_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/LaTeX", s);
@@ -2451,8 +2433,6 @@ static void arma_x12_menu_mod (windata_t *vwin)
     flip(vwin->ifac, "/Model data/coefficient covariance matrix", FALSE);
     add_x12_output_menu_item(vwin);
 }
-
-/* ........................................................... */
 
 static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 {
@@ -2580,7 +2560,7 @@ static GtkItemFactoryEntry garch_data_item = {
 
 static GtkItemFactoryEntry define_var_items[] = {
     { N_("/Model data/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Model data/Define new variable..."), NULL, model_test_callback,
+    { N_("/Model data/Define new variable..."), NULL, model_genr_callback,
       MODEL_GENR, NULL, GNULL }
 };
 
@@ -2630,7 +2610,7 @@ static GtkItemFactoryEntry garch_data_item = {
 
 static GtkItemFactoryEntry define_var_items[] = {
     { N_("/Model data/sep1"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Model data/Define new variable..."), NULL, model_test_callback,
+    { N_("/Model data/Define new variable..."), NULL, model_genr_callback,
       MODEL_GENR, NULL }
 };
 
@@ -2762,8 +2742,6 @@ static void plot_dummy_call (gpointer data, guint v, GtkWidget *widget)
     if (item->active) vwin->active_var = v; 
 }
 
-/* .................................................................. */
-
 static void add_dummies_to_plot_menu (windata_t *vwin)
 {
     GtkItemFactoryEntry dumitem;
@@ -2876,8 +2854,6 @@ static void panel_heteroskedasticity_menu (windata_t *vwin)
     gtk_item_factory_create_item(vwin->ifac, &hitem, vwin, 1);
     g_free(hitem.path);
 }
-
-/* ........................................................... */
 
 static void add_x12_output_menu_item (windata_t *vwin)
 {

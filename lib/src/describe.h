@@ -62,6 +62,8 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 int model_error_dist (const MODEL *pmod, double ***pZ,
 		      DATAINFO *pdinfo, PRN *prn);
 
+int auto_acf_order (int pd, int nobs);
+
 int corrgram (int varno, int order, 
 	      double ***pZ, DATAINFO *pdinfo, 
 	      int batch, PRN *prn);

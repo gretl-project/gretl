@@ -93,7 +93,7 @@ DATAINFO *datainfo;
 char *errtext;
 char cmdfile[MAXLEN], scriptfile[MAXLEN];
 char trydatfile[MAXLEN], tryscript[MAXLEN];
-char line[1024];
+char line[MAXLINE];
 PATHS paths;                /* useful paths */
 double **Z;                 /* data set */
 MODEL **models;             /* gretl models structs */
@@ -110,6 +110,7 @@ char dbproxy[21];
 
 char editor[MAXSTR] = "emacs";
 char calculator[MAXSTR] = "xcalc";
+char latex[MAXSTR] = "latex";
 char viewdvi[MAXSTR] = "xdvi";
 char viewps[MAXSTR] = "gv";
 
@@ -330,10 +331,10 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/sep4"), NULL, NULL, 0, "<Separator>" },
     { N_("/Data/Difference of means"), NULL, NULL, 0, "<Branch>" },
     { N_("/Data/Difference of means/assuming equal variances..."), NULL, 
-      gretl_callback, MEANTEST, NULL },
+      selector_callback, MEANTEST, NULL },
     { N_("/Data/Difference of means/assuming unequal variances..."), NULL, 
-      gretl_callback, MEANTEST2, NULL },
-    { N_("/Data/Difference of variances..."), NULL, gretl_callback, VARTEST, NULL },
+      selector_callback, MEANTEST2, NULL },
+    { N_("/Data/Difference of variances..."), NULL, selector_callback, VARTEST, NULL },
     { N_("/Data/sep5"), NULL, NULL, 0, "<Separator>" },
     { N_("/Data/Add variables"), NULL, NULL, 0, "<Branch>", },
     { N_("/Data/Add variables/time trend"), NULL, add_index, 1, NULL },
@@ -406,7 +407,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL }, 
     { N_("/Variable/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/Variable/_Time series plot"), NULL, ts_plot_var, 0, NULL },
-    { N_("/Variable/Correlogram"), NULL, gretl_callback, CORRGM, NULL },
+    { N_("/Variable/Correlogram"), NULL, do_corrgm, CORRGM, NULL },
     { N_("/Variable/Spectrum"), NULL, NULL, 0, "<Branch>" },
     { N_("/Variable/Spectrum/sample periodogram"), NULL, do_pergm, 0, NULL }, 
     { N_("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL }, 
@@ -448,7 +449,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/Poi_sson..."), NULL, model_callback, POISSON, NULL },
     { N_("/Model/Lo_gistic..."), NULL, model_callback, LOGISTIC, NULL },
     { N_("/Model/Least _Absolute Deviation..."), NULL, model_callback, LAD, NULL },
-    { N_("/Model/_Rank correlation..."), NULL, gretl_callback, SPEARMAN, NULL },
+    { N_("/Model/_Rank correlation..."), NULL, selector_callback, SPEARMAN, NULL },
     { N_("/Model/_Pooled OLS (panel)..."), NULL, model_callback, POOLED, NULL },
     { N_("/Model/Nonlinear Least Squares..."), NULL, gretl_callback, NLS, NULL },
 #ifdef ENABLE_GMP
@@ -719,7 +720,7 @@ int main (int argc, char *argv[])
 			      prn, 0);
 	    break;
 	case GRETL_CSV_DATA:
-	    err = import_csv(&Z, &datainfo, paths.datfile, &paths, prn);
+	    err = import_csv(&Z, &datainfo, paths.datfile, prn);
 	    break;
 	case GRETL_BOX_DATA:
 	    err = import_box(&Z, &datainfo, paths.datfile, prn);

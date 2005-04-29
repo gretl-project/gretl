@@ -23,11 +23,12 @@
 #include "gretl_private.h"
 #include "libset.h"
 
-static int use_qr = -1;
-static int halt_on_error = -1;
-static double hp_lambda;
-static int bkbp_k = 8;
-static int bkbp_periods[2] = { 8, 32 };
+static int use_qr = -1;           /* use QR decomposition? */
+static int halt_on_error = -1;    /* halt cli program on script error? */
+static double hp_lambda;          /* for Hodrick-Prescott filter */
+static int bkbp_k = 8;            /* for Baxter-King filter */
+static int bkbp_periods[2] = { 8, 32 }; /* for Baxter-King filter */
+static int horizon = 0;           /* for VAR impulse responses */ 
 
 enum {
     AUTO_LAG_STOCK_WATSON,
@@ -59,6 +60,11 @@ void get_bkbp_periods (int *periods)
 {
     periods[0] = bkbp_periods[0];
     periods[1] = bkbp_periods[1];
+}
+
+int get_VAR_horizon (void)
+{
+    return horizon;
 }
 
 static int get_or_set_force_hc (int f)
@@ -312,7 +318,20 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 			_("Baxter-King approximation = %d\n"), bkbp_k);
 		err = 0;
 	    }
-	}	
+	} else if (!strcmp(setobj, "horizon")) {
+	    /* horizon for VAR impulse responses */
+	    if (!strcmp(setarg, "auto")) {
+		horizon = 0;
+		err = 0;
+	    } else {
+		horizon = atoi(setarg);
+		if (horizon >= 0) {
+		    err = 0;
+		} else {
+		    horizon = 0;
+		}
+	    }	    
+	}
     } else if (nw == 3) {
 	if (!strcmp(setobj, "bkbp_limits")) {
 	    /* Baxter-King threshold periodicities */

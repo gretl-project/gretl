@@ -4938,6 +4938,14 @@
 	    filter.
 	  </cell>
 	</row>
+	<row>
+	  <cell><lit>horizon</lit></cell>
+	  <cell>value: one integer (the default is based on the
+	    frequency of the data).  Sets the horizon for impulse
+	    responses and forecast variance decompositions in the
+	    context of vector autoregressions.
+	  </cell>
+	</row>
       </table>
 
     </description>
@@ -5758,7 +5766,10 @@
 	covariance matrix, and in this context the order in which the
 	(stochastic) variables are given matters.  The first variable
 	in the list is assumed to be <quote>most exogenous</quote>
-	within-period.</para>
+	within-period. The horizon for variance decompositions and
+	impulse responses can be set using the <cmdref targ="set"/> 
+	command.
+      </para>
 
       <para context="cli">
 	The <lit>--quiet</lit> flag suppresses the printing of

@@ -20,6 +20,8 @@
 #ifndef TRANSFORMS_H
 #define TRANSFORMS_H
 
+int default_lag_order (const DATAINFO *pdinfo);
+
 int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff);
 
 int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo);
@@ -32,7 +34,7 @@ int list_diffgenr (const int *list, double ***pZ, DATAINFO *pdinfo);
 
 int list_ldiffgenr (const int *list, double ***pZ, DATAINFO *pdinfo);
 
-int list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo);
+int list_laggenr (int order, const int *list, double ***pZ, DATAINFO *pdinfo);
 
 int list_loggenr (const int *list, double ***pZ, DATAINFO *pdinfo);
 

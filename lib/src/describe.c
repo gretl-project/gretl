@@ -594,27 +594,32 @@ static int get_pacf (double *pacf, const double *acf, int m)
 
 #endif
 
-static int auto_acf_order (int pd, int nobs)
+int auto_acf_order (int pd, int nobs)
 {
-    int acf_m;
+    int m;
 
     switch (pd) {
     case 4: 
-	acf_m = (nobs <= 20)? nobs - 5 : 14; 
+	m = (nobs <= 20)? nobs - 5 : 14; 
 	break;
     case 12: 
     case 52: 
-	acf_m = (nobs <= 40)? nobs - 13 : 28;
+	m = (nobs <= 40)? nobs - 13 : 28;
 	break;
     case 24: 
-	acf_m = (nobs <= 100)? nobs - 25 : 96;
+	m = (nobs <= 100)? nobs - 25 : 96;
 	break;
     default:  
-	acf_m = (nobs <= 18)? nobs - 5 : 14;
+	m = (nobs <= 18)? nobs - 5 : 14;
 	break;
     }
 
-    return acf_m;
+    if (m > nobs / 5) {
+	/* restrict to 20 percent of data (Tadeusz) */
+	m = nobs / 5;
+    }
+
+    return m;
 }
 
 static double gretl_acf (int n, int k, const double *y)
@@ -693,7 +698,7 @@ int corrgram (int varno, int order, double ***pZ,
     if (acf_m == 0) {
 	acf_m = auto_acf_order(pdinfo->pd, nobs);
     } else if (acf_m > nobs - pdinfo->pd) {
-	acf_m = nobs - 1;
+	acf_m = nobs - 1; /* ?? */
     }
 
     acf = malloc(acf_m * sizeof *acf);
@@ -724,7 +729,9 @@ int corrgram (int varno, int order, double ***pZ,
     /* print acf */
     for (t=0; t<acf_m; t++) {
 	pprintf(prn, "%5d)%8.4f", t + 1, acf[t]);
-	if ((t + 1) % 5 == 0) pputc(prn, '\n');
+	if ((t + 1) % 5 == 0) {
+	    pputc(prn, '\n');
+	}
     }
     pputc(prn, '\n');
 
@@ -761,6 +768,9 @@ int corrgram (int varno, int order, double ***pZ,
 	goto acf_getout;
     }
 
+    /* for confidence bands */
+    pm = 1.96 / sqrt((double) nobs);
+
 #ifdef PACF_BY_OLS
     err = pacf_err = get_pacf(pacf, pacf_m, varno, pZ, pdinfo, prn);
 #else
@@ -785,15 +795,15 @@ int corrgram (int varno, int order, double ***pZ,
 	pputc(prn, '\n');
     }
 
+    pprintf(prn, "%s: 1.96 / T^0.5 = %g\n", _("5% critical value"),
+	    pm);
+
     if (batch) {
 	goto acf_getout;
     } else if (gnuplot_init(PLOT_CORRELOGRAM, &fq)) {
 	err = E_FOPEN;
 	goto acf_getout;
     }
-
-    /* for confidence bands */
-    pm = 1.96 / sqrt((double) nobs);
 
     fprintf(fq, "# correlogram\n");
 
@@ -1970,11 +1980,13 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     n1 = ztox(list[1], x, Z, pdinfo);
     n2 = ztox(list[2], y, Z, pdinfo);
+
     if (n1 == 0 || n2 == 0) {
 	pputs(prn, _("Sample range has no valid observations."));
 	free(x); free(y);
 	return 1;
     }
+
     if (n1 == 1 || n2 == 1) {
 	pputs(prn, _("Sample range has only one observation."));
 	free(x); free(y);
@@ -1999,6 +2011,10 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     pval = fdist(F, dfn, dfd);
 
     pputs(prn, _("\nEquality of variances test\n\n"));
+    pprintf(prn, "   %s: ", pdinfo->varname[list[1]]);
+    pprintf(prn, _("Number of observations = %d\n"), n1);
+    pprintf(prn, "   %s: ", pdinfo->varname[list[2]]);
+    pprintf(prn, _("Number of observations = %d\n"), n2);
     pprintf(prn, _("   Ratio of sample variances = %g\n"), F);
     pprintf(prn, "   %s: %s\n", _("Null hypothesis"), 
 	    _("The two population variances are equal"));

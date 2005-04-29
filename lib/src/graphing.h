@@ -126,7 +126,7 @@ enum plot_type_codes {
 #define get_png_output(p) (p->flags & GPTSPEC_PNG_OUTPUT) 
     
 /* functions follow */
- 
+
 const char *get_gretl_png_term_line (int plottype);
 
 const char *get_gretl_emf_term_line (int plottype, int color);

@@ -1154,6 +1154,8 @@ struct range_setting {
     GtkWidget *endspin;
     GtkWidget *combo;
     gpointer p;
+    int *t1;
+    int *t2;
 };
 
 static void free_rsetting (GtkWidget *w, struct range_setting *rset)
@@ -1246,6 +1248,29 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
     return TRUE;
 }
 
+static gboolean
+set_obs_from_dialog (GtkWidget *w, struct range_setting *rset)
+{
+    ObsButton *button;
+    const gchar *s;
+
+    if (rset->startspin != NULL && rset->t1 != NULL) {
+	button = OBS_BUTTON(rset->startspin);
+	s = gtk_entry_get_text(GTK_ENTRY(button));
+	*rset->t1 = (int) obs_button_get_value(button);
+    }
+
+    if (rset->endspin != NULL && rset->t2 != NULL) {
+	button = OBS_BUTTON(rset->endspin);
+	s = gtk_entry_get_text(GTK_ENTRY(button));
+	*rset->t2 = (int) obs_button_get_value(button); 
+    }
+
+    gtk_widget_destroy(rset->dlg);
+
+    return TRUE;
+}
+
 static GList *get_dummy_list (int *thisdum)
 {
     GList *dumlist = NULL;
@@ -1304,7 +1329,8 @@ static int default_randsize (void)
     }
 }
 
-static struct range_setting *rset_new (guint code, gpointer p)
+static struct range_setting *rset_new (guint code, gpointer p,
+				       int *t1, int *t2)
 {
     struct range_setting *rset;
 
@@ -1328,7 +1354,60 @@ static struct range_setting *rset_new (guint code, gpointer p)
 
     rset->p = p;
 
+    rset->t1 = t1;
+    rset->t2 = t2;
+
     return rset;
+}
+
+static GtkWidget *
+obs_spinbox (struct range_setting *rset, const char *label, 
+	     const char *t1str, const char *t2str,
+	     int t1min, int t1max, int *t1,
+	     int t2min, int t2max, int *t2)
+{
+    GtkWidget *lbl;
+    GtkWidget *vbox;
+    GtkWidget *hbox;
+    GtkObject *adj;
+
+    if (label != NULL) {
+	lbl = gtk_label_new(label);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   lbl, FALSE, FALSE, 5);
+    }
+
+    hbox = gtk_hbox_new(TRUE, 5);
+
+    /* spinner for t1 */
+    vbox = gtk_vbox_new(FALSE, 5);
+    if (t1str != NULL) {
+	lbl = gtk_label_new(t1str);
+	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
+    }
+    adj = gtk_adjustment_new(*t1, t1min, t1max, 1, 1, 1);
+    rset->startspin = obs_button_new(GTK_ADJUSTMENT(adj), datainfo);
+    gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
+
+    /* spinner for t2, if wanted */
+    if (t2 != NULL) {
+	vbox = gtk_vbox_new(FALSE, 5);
+	if (t2str != NULL) {
+	    lbl = gtk_label_new(t2str);
+	    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
+	}
+	adj = gtk_adjustment_new(*t2, t2min, t2max, 1, 1, 1);
+	rset->endspin = obs_button_new(GTK_ADJUSTMENT(adj), datainfo);
+	gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
+
+	/* inter-connect the two spinners */
+	g_object_set_data(G_OBJECT(rset->startspin), "endspin", rset->endspin);
+	g_object_set_data(G_OBJECT(rset->endspin), "startspin", rset->startspin);
+    }
+
+    return hbox;
 }
 
 void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
@@ -1337,7 +1416,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     struct range_setting *rset;
     char obstext[32];
 
-    rset = rset_new(u, p);
+    rset = rset_new(u, p, NULL, NULL);
     if (rset == NULL) return;
 
     gtk_window_set_title(GTK_WINDOW(rset->dlg), _("gretl: set sample"));
@@ -1406,41 +1485,11 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);
     } else { 
-	/* either plain SMPL, CREATE_DATASET */
-	GtkWidget *vbox;
-	GtkObject *adj;
-
-	hbox = gtk_hbox_new(TRUE, 5);
-
-	tempwid = gtk_label_new(_("Set sample range"));
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-			   tempwid, FALSE, FALSE, 5);
-
-	/* spinner for starting obs */
-	vbox = gtk_vbox_new(FALSE, 5);
-	tempwid = gtk_label_new(_("Start:"));
-	gtk_box_pack_start(GTK_BOX(vbox), tempwid, FALSE, FALSE, 0);
-	adj = gtk_adjustment_new(datainfo->t1, 
-				 0, datainfo->n - 1,
-				 1, 1, 1);
-	rset->startspin = obs_button_new(GTK_ADJUSTMENT(adj), datainfo);
-	gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
-
-	/* spinner for ending obs */
-	vbox = gtk_vbox_new(FALSE, 5);
-	tempwid = gtk_label_new(_("End:"));
-	gtk_box_pack_start(GTK_BOX(vbox), tempwid, FALSE, FALSE, 0);
-	adj = gtk_adjustment_new(datainfo->t2, 
-				 0, datainfo->n - 1, 
-				 1, 1, 1);
-	rset->endspin = obs_button_new(GTK_ADJUSTMENT(adj), datainfo);
-	gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
-
-	/* inter-connect the two spinners */
-	g_object_set_data(G_OBJECT(rset->startspin), "endspin", rset->endspin);
-	g_object_set_data(G_OBJECT(rset->endspin), "startspin", rset->startspin);
+	/* either plain SMPL or CREATE_DATASET */
+	hbox = obs_spinbox(rset, _("Set sample range"), 
+			   _("Start:"), _("End:"),
+			   0, datainfo->n - 1, &datainfo->t1,
+			   0, datainfo->n - 1, &datainfo->t2);
 
 	/* pack the spinner apparatus */
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
@@ -1480,6 +1529,51 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_widget_show_all(rset->dlg);
 
     gtk_main();
+}
+
+int get_obs_dialog (const char *title, const char *text,
+		    const char *t1str, const char *t2str,
+		    int t1min, int t1max, int *t1, 
+		    int t2min, int t2max, int *t2)
+{
+    GtkWidget *tempwid;
+    struct range_setting *rset;
+    int ret = 0;
+
+    rset = rset_new(0, NULL, t1, t2);
+    if (rset == NULL) {
+	return -1;
+    }
+
+    gtk_window_set_title(GTK_WINDOW(rset->dlg), title);
+    set_dialog_border_widths(rset->dlg);
+    gtk_window_set_position(GTK_WINDOW(rset->dlg), GTK_WIN_POS_MOUSE);
+    dialog_set_no_resize(rset->dlg);
+
+    tempwid = obs_spinbox(rset, text, t1str, t2str, 
+			  t1min, t1max, t1, 
+			  t2min, t2max, t2);
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG (rset->dlg)->vbox), 
+		       tempwid, TRUE, TRUE, 0);
+
+    /* Create the "OK" button */
+    tempwid = ok_button(GTK_DIALOG (rset->dlg)->action_area);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(set_obs_from_dialog), rset);
+    gtk_widget_grab_default(tempwid);
+
+    /* And a Cancel button */
+    cancel_options_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, &ret);
+
+    g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
+		     G_CALLBACK(free_rsetting), rset);
+
+    gtk_widget_show_all(rset->dlg);
+
+    gtk_main();
+
+    return ret;
 }
 
 static GList *compose_var_selection_list (const int *list)
@@ -2131,7 +2225,7 @@ int radio_dialog (const char *title, const char **opts,
     return ret;
 }
 
-/* selections in relation to kernel desnity estimation */
+/* selections in relation to kernel density estimation */
 
 static void bw_set (GtkWidget *w, gpointer p)
 {
@@ -2247,7 +2341,8 @@ static void option_spin_set (GtkWidget *w, int *val)
 }
 
 static GtkWidget *option_spinbox (const char *spintext,
-				  int spinmax, int *spinval)
+				  int spinmin, int spinmax, 
+				  int *spinval)
 {
     GtkWidget *hbox;
     GtkWidget *label;
@@ -2258,7 +2353,7 @@ static GtkWidget *option_spinbox (const char *spintext,
     label = gtk_label_new(spintext);
     gtk_widget_show(label);
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-    adj = gtk_adjustment_new(*spinval, 0, spinmax, 1, 1, 1);
+    adj = gtk_adjustment_new(*spinval, spinmin, spinmax, 1, 1, 1);
     button = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_widget_show(button);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
@@ -2281,10 +2376,9 @@ static void set_checks_opt (GtkWidget *w, int *active)
     active[i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 }
 
-int checks_dialog (const char *title, const char **opts, 
-		   int nopts, int *active, int *spinval,
-		   const char *spintext, int spinmax,
-		   int helpcode)
+int checks_dialog (const char *title, const char **opts, int nopts, 
+		   int *active, int *spinval, const char *spintext, 
+		   int spinmin, int spinmax, int helpcode)
 {
     GtkWidget *dialog;
     GtkWidget *button;
@@ -2299,7 +2393,7 @@ int checks_dialog (const char *title, const char **opts,
 		     G_CALLBACK(dialog_unblock), NULL);
 
     if (spinval != NULL) {
-	tempwid = option_spinbox(spintext, spinmax, spinval);
+	tempwid = option_spinbox(spintext, spinmin, spinmax, spinval);
 	gtk_widget_show(tempwid);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
 			   tempwid, TRUE, TRUE, 0);

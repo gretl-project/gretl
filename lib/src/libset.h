@@ -51,6 +51,8 @@ int gretl_get_text_pause (void);
 
 void get_bkbp_periods (int *periods);
 
+int get_VAR_horizon (void);
+
 void set_loop_on (void);
 
 void set_loop_off (void);

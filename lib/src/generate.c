@@ -76,7 +76,7 @@ static double *get_random_series (DATAINFO *pdinfo, int fn);
 static double *get_mp_series (const char *s, GENERATE *genr,
 			      int fn, int *err);
 static double *get_tmp_series (double *x, const DATAINFO *pdinfo, 
-			       int fn, int *err);
+			       int fn, double param, int *err);
 
 static double get_tnum (const DATAINFO *pdinfo, int t);
 static double evaluate_statistic (double *z, GENERATE *genr, int fn);
@@ -473,6 +473,11 @@ static int get_arg_string (char *str, const char *s, int func, GENERATE *genr)
 
     if (func == T_PVALUE || func == T_CRIT) {
 	err = evaluate_function_args(str, genr);
+    } else if (func == T_FRACDIFF) {
+	char vname[9];
+	double param;
+
+	err = sscanf(str, "%8[^,],%lf", vname, &param) != 2;
     }
 
     DPRINTF(("get_arg_string: got '%s'\n", str));
@@ -527,7 +532,8 @@ static genatom *parse_token (const char *s, char op,
 	    if (func) {
 		DPRINTF(("recognized function #%d (%s)\n", func, 
 			 get_func_word(func)));
-		if (MP_MATH(func) || func == T_PVALUE || func == T_CRIT || 
+		if (MP_MATH(func) || func == T_PVALUE || 
+		    func == T_CRIT || func == T_FRACDIFF ||
 		    BIVARIATE_STAT(func) || MODEL_DATA_ELEMENT(func)) {
 		    genr->err = get_arg_string(str, s, func, genr);
 		} 
@@ -553,8 +559,7 @@ static genatom *parse_token (const char *s, char op,
 						 func);
 		    scalar = 1;
 		} else if (BIVARIATE_STAT(func)) {
-		    val = evaluate_bivariate_statistic(str, genr,
-						       func);
+		    val = evaluate_bivariate_statistic(str, genr, func);
 		    scalar = 1;
 		}
 	    } else {
@@ -885,20 +890,81 @@ static double *eval_compound_arg (GENERATE *genr,
     return xtmp;
 }
 
+static double *
+get_target_fracdiff_series (GENERATE *genr, genatom *atom,
+			    double *param)
+{
+    char vname[9];
+    double *x = NULL;
+    int v, t;
+
+    if (*atom->str == '\0') {
+	genr->err = 1;
+	return NULL;
+    }
+
+#if GENR_DEBUG
+    fprintf(stderr, "fracdiff_series: atom->str = '%s'\n", atom->str);
+#endif
+
+    if (sscanf(atom->str, "%8[^,],%lf", vname, param) != 2) {
+	genr->err = 1;
+	return NULL;
+    }
+
+    if (*param < 0.0) { /* ?? */
+	genr->err = 1;
+	return NULL;
+    }
+
+    v = varindex(genr->pdinfo, vname);
+    if (v == 0 || v >= genr->pdinfo->v) {
+	genr->err = 1;
+	return NULL;
+    }
+
+    x = malloc(genr->pdinfo->n * sizeof *x);
+    if (x != NULL) {
+	for (t=0; t<genr->pdinfo->n; t++) {
+	    x[t] = (*genr->pZ)[v][t];
+	}
+    }
+
+#if GENR_DEBUG
+    fprintf(stderr, "fracdiff_series: v = %d, frac = %g, x = %p\n", 
+	    v, *param, (void *) x);
+#endif
+
+    return x;
+}
+
 static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
 {
-    double *x, *y;
+    double param = 0.0;
+    double *x = NULL;
+    double *y = NULL;
 
     atom_stack_set_parentage(genr);
 
-    /* evaluate possibly compound arg */
-    x = eval_compound_arg(genr, atom);
-    if (x == NULL) return genr->err;
+    if (atom->func == T_FRACDIFF) {
+	x = get_target_fracdiff_series(genr, atom, &param);
+    } else {
+	/* evaluate possibly compound arg */
+	x = eval_compound_arg(genr, atom);
+    }
+
+    if (x == NULL) {
+	return genr->err;
+    }
 
     y = get_tmp_series(x, (const DATAINFO *) genr->pdinfo, 
-		       atom->func, &genr->err);
-    if (y == NULL) return genr->err;
+		       atom->func, param, &genr->err);
+
     free(x);
+
+    if (y == NULL) {
+	return genr->err;
+    }
 
     if (genr_add_temp_var(genr, y)) {
 	free(y);
@@ -990,14 +1056,10 @@ static int evaluate_genr (GENERATE *genr)
 	else if (atom->func == T_DIFF || atom->func == T_LDIFF ||
 		 atom->func == T_CUM || atom->func == T_SORT ||
 		 atom->func == T_RESAMPLE || atom->func == T_HPFILT ||
-		 atom->func == T_BKFILT) {
+		 atom->func == T_BKFILT || atom->func == T_FRACDIFF) {
 	    atom_stack_bookmark(genr);
 	    genr->err = add_tmp_series_to_genr(genr, atom);
 	    atom_stack_resume(genr);
-	}
-	else if (atom->func == T_FRACDIFF) {
-	    fprintf(stderr, "got fracdiff function\n");
-	    /* genr->err = add_fracdiff_to_genr(genr, atom); */
 	}
 	else if (UNIVARIATE_STAT(atom->func)) {
 	    atom_stack_bookmark(genr);
@@ -1318,6 +1380,7 @@ static int string_arg_function (const char *s)
 	!strncmp(s, "cov", 3) ||
 	!strncmp(s, "pvalue", 6) ||
 	!strncmp(s, "critical", 8) ||
+	!strncmp(s, "fracdiff", 8) ||
 	!strncmp(s, "mpow", 4) ||
 	!strncmp(s, "mlog", 4)) {
 	return 1;
@@ -3077,6 +3140,49 @@ static int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
     return err;
 }
 
+static int get_fracdiff (const double *y, double *diffvec, double d,
+			 const DATAINFO *pdinfo)
+{
+    int dd, t, T;
+    const double TOL = 1.0E-07;
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    double phi = -d;
+    int err;
+
+#if GENR_DEBUG
+    fprintf(stderr, "Doing get_fracdiff, with d = %g\n", d);
+#endif
+
+    if (t1 == 0) t1 = 1;
+
+    err = series_adjust_t1t2(y, &t1, &t2);
+    if (err) {
+	return E_DATA;
+    } 
+
+    T = t2 - t1 + 1;
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (t >= t1 && t <= t2) {
+	    diffvec[t] = y[t];
+	} else {
+	    diffvec[t] = NADBL;
+	}
+    }   
+
+    for (dd=1; dd<T && fabs(phi)>TOL; dd++) {
+	for (t=dd; t<=t2; t++) {
+	    if (t >= t1) {
+		diffvec[t] += phi * y[t - dd];
+	    }
+	}
+	phi *= (dd - d)/(dd + 1);
+    }
+
+    return 0;
+}
+
 static double *get_mp_series (const char *s, GENERATE *genr,
 			      int fn, int *err)
 {
@@ -3202,8 +3308,7 @@ evaluate_bivariate_statistic (const char *s, GENERATE *genr,
     if (fn == T_COV) {
 	x = genr_cov(s, genr->pZ, genr->pdinfo);
 	if (na(x)) genr->err = E_INVARG;
-    }
-    else if (fn == T_CORR) {
+    } else if (fn == T_CORR) {
 	x = genr_corr(s, genr->pZ, genr->pdinfo);
 	if (na(x)) genr->err = E_INVARG;
     }
@@ -3220,16 +3325,13 @@ static double evaluate_missval_func (double arg, int fn)
     if (fn == T_MISSING) {
 	/* check whether obs is missing or not */
 	x = (na(arg))? 1.0 : 0.0;
-    }
-    if (fn == T_OK) {
+    } else if (fn == T_OK) {
 	/* check whether obs is present or not */
 	x = (na(arg))? 0.0 : 1.0;
-    }
-    else if (fn == T_MISSZERO) {
+    } else if (fn == T_MISSZERO) {
 	/* change missing obs to zero */
 	x = (na(arg))? 0.0 : arg;
-    }
-    else if (fn == T_ZEROMISS) {
+    } else if (fn == T_ZEROMISS) {
 	/* change zero to missing obs */
 	x = (floateq(arg, 0.0))? NADBL : arg;
     }
@@ -3242,7 +3344,7 @@ static double evaluate_missval_func (double arg, int fn)
 */
 
 static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo, 
-			       int fn, int *err)
+			       int fn, double param, int *err)
 {
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2; 
     double *x;
@@ -3253,7 +3355,9 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
 #endif
 
     x = malloc(pdinfo->n * sizeof *x); 
-    if (x == NULL) return NULL;
+    if (x == NULL) {
+	return NULL;
+    }
 
     if (fn == T_DIFF || fn == T_LDIFF) {
 	for (t=t1+1; t<=t2; t++) {
@@ -3375,6 +3479,10 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
 
     else if (fn == T_BKFILT) { 
 	*err = bkbp_filter(mvec, x, pdinfo);	
+    }
+
+    else if (fn == T_FRACDIFF) {
+	*err = get_fracdiff(mvec, x, param, pdinfo);
     }
 
     return x;

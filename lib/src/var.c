@@ -21,6 +21,7 @@
 
 #include "libgretl.h" 
 #include "var.h"  
+#include "libset.h"
 #include "gretl_private.h"
 
 #define VAR_DEBUG 0
@@ -1373,14 +1374,15 @@ static int real_var (int order, const int *inlist,
     }
 
     if (impulses && !err) {
+	int horizon = get_VAR_horizon();
+
 #if VAR_DEBUG
 	gretl_matrix_print(var->C, "var->C", prn);
 #endif
 	for (i=0; i<var->neqns; i++) {
-	    /* FIXME: make horizon configurable */
-	    gretl_var_print_impulse_response(var, i, 0, pdinfo, 
+	    gretl_var_print_impulse_response(var, i, horizon, pdinfo, 
 					     pause, prn);
-	    gretl_var_print_fcast_decomp(var, i, 0, pdinfo, 
+	    gretl_var_print_fcast_decomp(var, i, horizon, pdinfo, 
 					 pause, prn);
 	}
     } 
