@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-04-29 13:33-0400\n"
-"PO-Revision-Date: 2005-04-13 23:08+0200\n"
+"PO-Revision-Date: 2005-04-30 01:02+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1233,9 +1233,9 @@ msgid "to lag"
 msgstr "al ritardo"
 
 #: lib/src/describe.c:800
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "5% critical value"
-msgstr "Valori critici"
+msgstr "Valori critici al 5%"
 
 #: lib/src/describe.c:829
 msgid "ACF for"
@@ -1260,7 +1260,7 @@ msgstr "Statistica test"
 
 #: lib/src/describe.c:1163
 msgid "Local Whittle Estimator"
-msgstr ""
+msgstr "Stimatore locale di Whittle"
 
 #: lib/src/describe.c:1208
 msgid "Missing values within sample -- can't do periodogram"
@@ -6190,9 +6190,8 @@ msgid "Select coefficients to sum"
 msgstr "Selezionare i coefficienti da sommare"
 
 #: gui/selector.c:1465 gui2/selector.c:1742
-#, fuzzy
 msgid "Select two variables"
-msgstr "Selezionare le variabili da aggiungere"
+msgstr "Selezionare due variabili"
 
 #: gui/selector.c:1467 gui2/selector.c:1744
 msgid "Select variables to display"
@@ -8681,9 +8680,8 @@ msgid "/Tests/Chow test"
 msgstr "/Test/CHOW - Break strutturale"
 
 #: gui2/gui_utils.c:143 gui2/gui_utils.c:214
-#, fuzzy
 msgid "/Tests/sep3"
-msgstr "/Test/sep2"
+msgstr "/Test/sep3"
 
 #: gui2/gui_utils.c:144 gui2/gui_utils.c:215
 msgid "/Tests/autocorrelation"
@@ -8698,9 +8696,8 @@ msgid "/Tests/CUSUM test"
 msgstr "/Test/CUSUM - Stabilità parametri"
 
 #: gui2/gui_utils.c:147 gui2/gui_utils.c:218
-#, fuzzy
 msgid "/Tests/sep4"
-msgstr "/Test/sep2"
+msgstr "/Test/sep4"
 
 #: gui2/gui_utils.c:148 gui2/gui_utils.c:219
 msgid "/Tests/panel diagnostics"
@@ -9393,9 +9390,8 @@ msgid "gretl: forecast"
 msgstr "gretl: previsione"
 
 #: gui2/library.c:1163
-#, fuzzy
 msgid "Forecast period"
-msgstr "gretl: periodogramma"
+msgstr "Periodo di previsione"
 
 #: gui2/library.c:1181 gui2/library.c:3785
 msgid "Failed to generate fitted values"
@@ -9459,12 +9455,8 @@ msgid "gretl: Chow test"
 msgstr "gretl: test Chow"
 
 #: gui2/library.c:1662
-#, fuzzy
 msgid "Observation at which to split the sample:"
-msgstr ""
-"Indicare l'osservazione in cui\n"
-"suddividere il campione\n"
-"(tra %s e %s):"
+msgstr "Osservazione in cui suddividere il campione:"
 
 #: gui2/library.c:1700
 msgid "gretl: Chow test output"
@@ -9630,9 +9622,8 @@ msgid "correlogram"
 msgstr "Correlogramma"
 
 #: gui2/library.c:3051
-#, fuzzy
 msgid "Maximum lag:"
-msgstr "Massimo"
+msgstr "Ritardo massimo:"
 
 #: gui2/library.c:3103
 msgid "Periodogram command failed"
@@ -9675,14 +9666,12 @@ msgid "Error generating index variable"
 msgstr "Errore nella generazione della variabile indice"
 
 #: gui2/library.c:3244
-#, fuzzy
 msgid "gretl: generate lags"
-msgstr "gretl: file di esempio"
+msgstr "gretl: genera ritardi"
 
 #: gui2/library.c:3246
-#, fuzzy
 msgid "Number of lags to create:"
-msgstr "Numero di osservazioni:"
+msgstr "Numero di ritardi da creare:"
 
 #: gui2/library.c:3282
 msgid "Error adding variables"
@@ -10472,9 +10461,8 @@ msgid "Command to launch GNU R"
 msgstr "Comando per eseguire GNU R"
 
 #: gui2/settings.c:187
-#, fuzzy
 msgid "Command to compile TeX files"
-msgstr "Comando per visualizzare i file DVI"
+msgstr "Comando per compilare i file TeX"
 
 #: gui2/settings.c:189
 msgid "Command to view DVI files"
