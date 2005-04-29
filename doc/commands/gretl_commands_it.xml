@@ -4861,6 +4861,14 @@
             Baxter&ndash;King.
           </cell>
         </row>
+	<row>
+	  <cell><lit>horizon</lit></cell>
+	  <cell>Valori: un intero (il valore predefinito dipende dalla
+          frequenza dei dati). Imposta l'orizzonte per le funzioni impulso-risposta
+          e per la decomposizione della varianza nel contesto delle autoregressioni
+          vettoriali.
+	  </cell>
+	</row>
       </table>
 
     </description>
@@ -5680,7 +5688,10 @@
         della matrice di covarianza contemporanea, e in questo contesto
         l'ordine in cui vengono date le variabili stocastiche conta.
 	La prima variabile nella lista viene considerata come la
-	<quote>più esogena</quote> all'interno del periodo.</para> 
+	<quote>più esogena</quote> all'interno del periodo. L'orizzonte
+        per le decomposizioni della varianza e le funzioni di impulso-risposta
+        può essere impostato usando il comando <cmdref targ="set"/>.
+      </para> 
 
       <para context="cli">
 	L'opzione <lit>--quiet</lit> disabilita la visualizzazione dei
