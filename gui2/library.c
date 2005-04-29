@@ -799,7 +799,7 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
     static int order = 1;
 
     int actmax = (action == ADF)? 6 : 2;
-    int omax, err;
+    int okT, omax, err;
 
     if (order < 0) {
 	order = -order;
@@ -809,23 +809,14 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	title = adf_title;
 	spintext = adf_spintext;
 	opts = adf_opts;
-	if (datainfo->pd == 1) {
-	    omax = 10;
-	} else {
-	    omax = 3 * datainfo->pd;
-	}
-	if (omax > datainfo->n - 6) {
-	    omax = datainfo->n - 6;
-	    if (omax < 0) {
-		return;
-	    }
-	}
-    } else {
-	int okT;
 
+	okT = ok_obs_in_series(mdata->active_var);
+	omax = okT / 2;
+    } else {
 	title = kpss_title;
 	spintext = kpss_spintext;
 	opts = kpss_opts;
+
 	active[0] = 1;
 	active[1] = 0;
 
