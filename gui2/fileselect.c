@@ -698,17 +698,13 @@ void file_selector (const char *msg, int action, gpointer data)
 	if (!(data_status & BOOK_DATA)) {
 	    get_base(startdir, paths.datfile, SLASH);
 	}
-    }
-
-    else if (EXPORT_ACTION(action) && paths.datfile[0]) {
+    } else if (EXPORT_ACTION(action) && paths.datfile[0]) {
 	char *savename = suggested_exportname(paths.datfile, action);
 
 	strcpy(fname, savename);
 	g_free(savename);
 	get_base(startdir, paths.datfile, SLASH);
-    }	
-
-    else if (action == SET_PATH) {
+    } else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 
 	if (strvar != NULL && *strvar != '\0') {
@@ -866,6 +862,7 @@ void file_selector (const char *msg, int action, gpointer data)
 
     filter = get_file_filter(action, data);
     gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
 
     /* special cases */
 
@@ -894,10 +891,7 @@ void file_selector (const char *msg, int action, gpointer data)
 	    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), 
 						"/usr/bin");
 	}	    
-    } else {
-	/* opening something */
-	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
-    }
+    } 
 
     if (gtk_dialog_run(GTK_DIALOG(filesel)) == GTK_RESPONSE_ACCEPT) {
 	char *fname;

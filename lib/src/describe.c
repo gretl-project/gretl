@@ -795,7 +795,9 @@ int corrgram (int varno, int order, double ***pZ,
 	pputc(prn, '\n');
     }
 
-    pprintf(prn, "%s: 1.96 / T^0.5 = %g\n", _("5% critical value"),
+    pprintf(prn, "%s: 1.96 / T^0.5 = %g\n", 
+	    /* xgettext:no-c-format */
+	    _("5% critical value"),
 	    pm);
 
     if (batch) {
@@ -1125,7 +1127,7 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
 {
     gretl_matrix *X;
     double m1, m2;
-    double d, se;
+    double d, se, z;
     int T, m;
 
     X = gretl_data_series_to_vector(Z, varno, t1, t2);
@@ -1153,10 +1155,15 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
     }
 
     se = 1 / (2.0 * sqrt((double) m));
+    z = d / se;
 
-    pprintf(prn, "\nLocal Whittle Estimator (T = %d, m = %d)\n"
-	    "  Estimated degree of integration = %g (%g)\n", T, m, d, se);
-    pprintf(prn, "  test statistic: %g\n\n", d / se);
+    pprintf(prn, "\n%s (T = %d, m = %d)\n"
+	    "  %s = %g (%g)\n"
+	    "  %s: z = %g, %s %.4f\n\n",
+	    _("Local Whittle Estimator"), T, m,
+	    _("Estimated degree of integration"), d, se,
+	    _("test statistic"), z, 
+	    _("with p-value"), gaussprob(z));    
 
     gretl_matrix_free(X);
 

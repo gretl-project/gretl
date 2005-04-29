@@ -123,15 +123,11 @@ double tprob (double x, int df)
     if (df <= 0) {
 	return -1.0;
     } else {
-#if 0
-	return fdist(x * x, 1, df);
-#else
 	double s = stdtr(df, fabs(x));
 	double ret = 2.0 * (1.0 - s);
 
 	if (ret < 0.0) ret = 0.0;
 	return ret;
-#endif
     }
 }
 

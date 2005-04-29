@@ -1,13 +1,20 @@
 version 1.3.4
+- Increase max length of gretl script command line to 4095 bytes
 - Add support for decennial data
 - Fix for finding TrueType graph fonts on Windows 2000
-- Fixes for various translation problems
 - Add new "set" option: "horizon", to configure horizon for impulse
   responses in context of VARs
 - Disable autocorrelation and ARCH tests in gui model test menu,
   in case of cross-sectional data
 - Add Local Whittle Estimator for fractional integration, in context
   of periodogram command
+- Add fracdiff function (fractional differencing) to the genr
+  command
+- In correlogram output, show calculated 5% critical value
+- Correlogram: acf calculations should not use more than 20 percent
+  of the available data by default (Tadeusz Kufel)
+- Fix bug in Tobit command in the gretl GUI
+- Improvements to formatting in Spanish translation
 - Improvements to several dialog boxes
 
 03/14/2005 version 1.3.3
