@@ -192,13 +192,15 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
     GRETLTEST test;
     GRETLTEST *ptest = NULL;
     double pval = NADBL;
-    int i;
+    int stat_ok, i;
 
     if (cmp->ci == LAD) {
 	return;
     }
 
-    if (opt & OPT_S) {
+    stat_ok = !na(cmp->F) || !na(cmp->chisq);
+
+    if (stat_ok && (opt & OPT_S)) {
 	gretl_test_init(&test, (cmp->cmd == OMIT)? 
 			GRETL_TEST_OMIT : GRETL_TEST_ADD);
 	ptest = &test;
@@ -209,7 +211,7 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 		cmp->m1, cmp->m2);
     } 
 
-    if (!na(cmp->F) || !na(cmp->chisq)) {
+    if (stat_ok) {
 	pputs(prn, _("\n  Null hypothesis: the regression parameters are "
 		     "zero for the variables\n\n"));
 	for (i=1; i<=diffvars[0]; i++) {
@@ -236,7 +238,7 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 	pprintf(prn, "\n  %s:%s%s(%d) = %g, ",  
 		(LIMDEP(cmp->ci))? _("Test statistic") : 
 		_("Asymptotic test statistic"),
-		(LIMDEP(cmp->ci))? "\n    " : " ",
+		(LIMDEP(cmp->ci))? " " : "\n    ",
 		_("Chi-square"), cmp->dfn, cmp->chisq);
 	pval = chisq(cmp->chisq, cmp->dfn);
 	pprintf(prn, _("with p-value = %g\n\n"), pval);
@@ -300,7 +302,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int add,
     cmp.dfn = umod->ncoeff - rmod->ncoeff;
     cmp.dfd = umod->dfd;
 
-    /* FIXME TSLS?? (F or chi-square?) */
+    /* FIXME TSLS (F or chi-square?) */
 
     if (gretl_model_get_int(pmodA, "robust") || pmodA->ci == HCCM) {
 	cmp.F = robust_omit_F(testvars, umod);

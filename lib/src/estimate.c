@@ -2050,6 +2050,12 @@ double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
 #endif
     }
 
+    if (na(rho)) {
+	*err = E_NOCONV;
+	clear_model(&corc_model);
+	goto bailout;
+    }
+
     if (ci != HILU || !(opt & OPT_B)) {
 
 	if (ci == HILU) {
@@ -2058,13 +2064,8 @@ double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
 	    pputs(prn, _("\nPerforming iterative calculation of rho...\n\n"));
 	}
 
-#if 0
-	pprintf(prn, "                 %s       RHO        %s\n",
-		_("ITER"), _("ESS"));
-#else
 	pputs(prn, _("                 ITER       RHO        ESS"));
 	pputc(prn, '\n');
-#endif
 
 	iter = 0;
 	diff = 1.0;
@@ -2105,7 +2106,6 @@ double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	pprintf(prn, _("                final %11.5f\n\n"), rho);
-
     }
 
     clear_model(&corc_model);
