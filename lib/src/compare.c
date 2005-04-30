@@ -218,7 +218,7 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
     }
 
     if (!na(cmp->F)) {
-	pprintf(prn, "\n  %s:\n    %s(%d, %d) = %g, ", _("Test statistic"), 
+	pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
 		(cmp->robust)? _("Robust F") : "F",
 		cmp->dfn, cmp->dfd, cmp->F);
 	pval = fdist(cmp->F, cmp->dfn, cmp->dfd);
@@ -233,9 +233,10 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 	    ptest->pvalue = pval;
 	}
     } else if (!na(cmp->chisq)) {
-	pprintf(prn, "\n  %s:\n    %s(%d) = %g, ",  
+	pprintf(prn, "\n  %s:%s%s(%d) = %g, ",  
 		(LIMDEP(cmp->ci))? _("Test statistic") : 
 		_("Asymptotic test statistic"),
+		(LIMDEP(cmp->ci))? "\n    " : " ",
 		_("Chi-square"), cmp->dfn, cmp->chisq);
 	pval = chisq(cmp->chisq, cmp->dfn);
 	pprintf(prn, _("with p-value = %g\n\n"), pval);
@@ -308,7 +309,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int add,
 	cmp.chisq = 2.0 * (umod->lnL - rmod->lnL);
     } else if (cmp.ci == OLS) {
 	cmp.F = ((rmod->ess - umod->ess) / umod->ess) * cmp.dfd / cmp.dfn;
-    } else {
+    } else if (cmp.dfn > 1) {
 	cmp.chisq = wald_test(testvars, umod, CHI_SQUARE_FORM);
     }
 
