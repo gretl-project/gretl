@@ -208,6 +208,21 @@ int *gretl_list_omit_last (const int *orig, int *err)
     return list;
 }
 
+static int list_count (const int *list)
+{
+    int i, k = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    break;
+	} else {
+	    k++;
+	}
+    }
+
+    return k;
+}
+
 /**
  * gretl_list_omit:
  * @orig: original list.
@@ -226,7 +241,7 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err)
     int i, j, k;
     int *smal;
     const int nomit = omit[0];
-    const int norig = orig[0];
+    const int norig = list_count(orig);
 
     *err = 0;
 
@@ -307,7 +322,6 @@ void gretl_list_diff (int *targ, const int *biglist, const int *sublist)
     }
 }
 
-
 /* Check if any var in list has been replaced via genr since a
    previous model (ref_id) was estimated.  Expects the "label"
    in datainfo to be of the form "Replaced after model <count>".
@@ -327,6 +341,9 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
     }
 
     for (j=1; j<=list[0]; j++) {
+	if (list[j] == LISTSEP) {
+	    continue;
+	}
 	label = VARLABEL(pdinfo, list[j]);
 	*rword = '\0';
 	sscanf(label, "%15s", rword);

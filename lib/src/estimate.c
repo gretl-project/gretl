@@ -1517,14 +1517,21 @@ int makevcv (MODEL *pmod)
     const int nxpx = (nv * nv + nv) / 2; 
     double d;
 
-    if (pmod->vcv != NULL) return 0;
-    if (pmod->xpx == NULL) return 1;
+    if (pmod->vcv != NULL) {
+	return 0;
+    }
+
+    if (pmod->xpx == NULL) {
+	return 1;
+    }
 
     mst = nxpx;
     kk = nxpx - 1;
 
     pmod->vcv = malloc(nxpx * sizeof *pmod->vcv);
-    if (pmod->vcv == NULL) return E_ALLOC;
+    if (pmod->vcv == NULL) {
+	return E_ALLOC;
+    }
 
     for (i=0; i<nv; i++) {
 	mst -= i;
@@ -1539,27 +1546,32 @@ int makevcv (MODEL *pmod)
 	/* find off-diagonal elements indexed by kj */
 	kj = kk;
 	kk = kk - i - 2;
-	if (i > nv - 2) continue;
+	if (i > nv - 2) {
+	    continue;
+	}
 	for (j=i+1; j<nv; j++) {
 	    icnt = i+1;
 	    kj -= j;
 	    d = 0.0;
 	    m = mst + 1;
 	    for (k=0; k<=j-1; k++) {
-		if(icnt > 0) {
+		if (icnt > 0) {
 		    dec = 1;
 		    icnt--;
+		} else {
+		    dec = k;
 		}
-		else dec = k;
 		m -= dec;
 		l = kj + i - k;
 		d += pmod->vcv[m-1] * pmod->xpx[l];
 	    }
-	    pmod->vcv[kj] = (-1.0) * d * pmod->xpx[l-1];
+	    pmod->vcv[kj] = -d * pmod->xpx[l-1];
 	}
     }
 
-    if (pmod->ci == CUSUM) return 0;
+    if (pmod->ci == CUSUM) {
+	return 0;
+    }
 
     /* some estimators need special treatment */
 
@@ -1817,10 +1829,12 @@ static int hilu_plot (double *ssr, double *rho, int n)
 
     fputs("# hildreth-lu\n", fp);
     fputs("set xlabel 'rho'\n", fp);
-    fprintf(fp, "set ylabel '%s'\n", _("ESS"));
+
+    fprintf(fp, "set ylabel '%s'\n", I_("ESS"));
+
     fputs("set nokey\n", fp);
     fputs("set xrange [-1.0:1.0]\n", fp);
-    fprintf(fp, "plot '-' using 1:2 w impulses\n");
+    fputs("plot '-' using 1:2 w impulses\n", fp);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -2123,8 +2137,6 @@ static int get_pos (const int *list)
 
     return ret;
 }
-
-/* .......................................................... */
 
 void tsls_free_data (const MODEL *pmod)
 {
@@ -2474,8 +2486,8 @@ MODEL tsls_func (int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
     /* computation of covariance matrix of parameter estimates */
 
-    if (opt & OPT_R) {
-	/* robust standard errors called for */
+    if ((opt & OPT_R) || get_use_qr()) {
+	/* QR decomp in force, or robust standard errors called for */
 	qr_tsls_vcv(&tsls, (const double **) *pZ, opt);
     } else {
 	double *xpx = NULL, *xpy = NULL, *diag = NULL;

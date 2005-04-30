@@ -2293,6 +2293,10 @@ double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
 
     gretl_matrix_free(tmp);
 
+    if (*errp) {
+	ret = NADBL;
+    }
+
     return ret;
 }
 
@@ -2391,7 +2395,9 @@ gretl_vcv_matrix_from_model (MODEL *pmod, const char *select)
     int k = pmod->ncoeff;
 
     /* first ensure the model _has_ a vcv */
-    if (makevcv(pmod)) return NULL;
+    if (makevcv(pmod)) {
+	return NULL;
+    }
 
     if (select == NULL) {
 	nc = k;
@@ -2399,17 +2405,25 @@ gretl_vcv_matrix_from_model (MODEL *pmod, const char *select)
 	nc = count_selection(select, k);
     }
     
-    if (nc == 0) return NULL;
+    if (nc == 0) {
+	return NULL;
+    }
 
     vcv = gretl_matrix_alloc(nc, nc);
-    if (vcv == NULL) return NULL;
+    if (vcv == NULL) {
+	return NULL;
+    }
 
     ii = 0;
     for (i=0; i<k; i++) {
-	if (select != NULL && !select[i]) continue;
+	if (select != NULL && !select[i]) {
+	    continue;
+	}
 	jj = 0;
 	for (j=0; j<=i; j++) {
-	    if (select != NULL && !select[j]) continue;
+	    if (select != NULL && !select[j]) {
+		continue;
+	    }
 	    idx = ijton(i, j, pmod->ncoeff);
 	    gretl_matrix_set(vcv, ii, jj, pmod->vcv[idx]);
 	    if (jj != ii) {
@@ -2443,7 +2457,7 @@ gretl_vector *
 gretl_coeff_vector_from_model (const MODEL *pmod, const char *select)
 {
     gretl_vector *b;
-    int i, ii, nc;
+    int i, j, nc;
     int k = pmod->ncoeff;
 
     if (select == NULL) {
@@ -2452,15 +2466,21 @@ gretl_coeff_vector_from_model (const MODEL *pmod, const char *select)
 	nc = count_selection(select, k);
     }
     
-    if (nc == 0) return NULL;
+    if (nc == 0) {
+	return NULL;
+    }
 
     b = gretl_column_vector_alloc(nc);
-    if (b == NULL) return NULL;
+    if (b == NULL) {
+	return NULL;
+    }
 
-    ii = 0;
+    j = 0;
     for (i=0; i<k; i++) {
-	if (select != NULL && !select[i]) continue;
-	gretl_vector_set(b, ii++, pmod->coeff[i]);
+	if (select != NULL && !select[i]) {
+	    continue;
+	}
+	b->val[j++] = pmod->coeff[i];
     }
 
     return b;

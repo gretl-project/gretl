@@ -1237,6 +1237,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     }
     
     clear_line();
+
     if (selector_code(sr) == ADD) {
         sprintf(line, "addto %d %s", orig->ID, buf);
     } else {

@@ -706,7 +706,9 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     *gretl_errmsg = '\0';
 
     err = restriction_set_form_matrices(rset, &R, &q);
-    if (err) return err;
+    if (err) {
+	return err;
+    }
 
 #if RDEBUG
     gretl_matrix_print(R, "R matrix", prn);

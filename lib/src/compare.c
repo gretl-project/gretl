@@ -25,6 +25,8 @@
 #include "gretl_private.h"
 #include "gretl_matrix.h"
 
+#undef WDEBUG
+
 struct COMPARE {
     int cmd;       /* ADD or OMIT */
     int m1;        /* ID for first model */
@@ -38,6 +40,121 @@ struct COMPARE {
     int score;     /* "cases correct" for discrete models */
     int robust;    /* = 1 when robust vcv is in use, else 0 */
 };
+
+/* given a list of variables, check them against the independent
+   variables included in a model, and construct a mask with 1s in
+   positions where there is a match, 0s otherwise
+*/
+
+static char *
+mask_from_test_list (const int *test, const MODEL *pmod)
+{
+    char *mask;
+    int i, j;
+
+    mask = calloc(pmod->ncoeff, 1);
+    if (mask == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	if (test != NULL) {
+	    for (j=1; j<=test[0]; j++) {
+		if (pmod->list[i+2] == test[j]) {
+		    mask[i] = 1;
+		}
+	    }
+	} else {
+	    if (pmod->list[i+2] != 0) {
+		mask[i] = 1;
+	    }
+	}
+    }
+
+    return mask;
+}
+
+enum {
+    CHI_SQUARE_FORM,
+    F_FORM
+};
+
+/* Wald (chi-square or F) test for a set of zero restrictions on the
+   parameters of a given model, based on the covariance matrix of the
+   unrestricted model. Suitable for use where the original model is
+   estimated by FGLS or IV.
+*/
+
+static double wald_test (const int *list, MODEL *pmod, int form)
+{
+    char *mask = NULL;
+    gretl_matrix *C = NULL;
+    gretl_vector *b = NULL;
+    double w = NADBL;
+    int err = 0;
+
+    mask = mask_from_test_list(list, pmod);
+    if (mask == NULL) {
+	err = 1;
+    } 
+
+    if (!err) {
+	C = gretl_vcv_matrix_from_model(pmod, mask);
+	if (C == NULL) {
+	    err = 1;
+	} 
+    }
+
+    if (!err) {
+	b = gretl_coeff_vector_from_model(pmod, mask);
+	if (b == NULL) {
+	    err = 1;
+	} 
+    }  
+
+    if (!err) {
+#if WDEBUG
+	gretl_matrix_print(C, "Wald VCV matrix", NULL);
+	gretl_matrix_print(b, "Wald coeff vector", NULL);
+#endif
+	err = gretl_invert_symmetric_matrix(C);
+    }
+
+    if (!err) {
+	w = gretl_scalar_b_prime_X_b(b, C, &err);
+    }
+
+    if (form == F_FORM && !err) {
+	w /= gretl_vector_get_length(b);
+    }
+
+    free(mask);
+    gretl_matrix_free(C);
+    gretl_matrix_free(b);
+
+    return w;
+}
+
+/**
+ * robust_omit_F:
+ * @list: list of variables to omit (or NULL).
+ * @pmod: model to be tested.
+ *
+ * Simple form of Wald F-test for omission of variables.  If @list
+ * is non-NULL, do the test for the omission of the variables in
+ * @list from the model @pmod.  Otherwise test for omission of
+ * all variables in @pmod except for the constant.
+ *
+ * Returns: Calculated F-value, or #NADBL on failure.
+ * 
+ */
+
+double robust_omit_F (const int *list, MODEL *pmod)
+{
+    return wald_test(list, pmod, F_FORM);
+}
+
+/* ----------------------------------------------------- */
 
 static int 
 add_diffvars_to_test (GRETLTEST *test, const int *list, 
@@ -92,21 +209,21 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 		cmp->m1, cmp->m2);
     } 
 
-    if ((cmp->ci == OLS || cmp->ci == HCCM) && 
-	cmp->dfn > 0 && (diffvars[0] > 1 || cmp->cmd == OMIT)) {
+    if (!na(cmp->F) || !na(cmp->chisq)) {
 	pputs(prn, _("\n  Null hypothesis: the regression parameters are "
 		     "zero for the variables\n\n"));
 	for (i=1; i<=diffvars[0]; i++) {
 	    pprintf(prn, "    %s\n", pdinfo->varname[diffvars[i]]);	
 	}
-	if (!na(cmp->F)) {
-	    pval = fdist(cmp->F, cmp->dfn, cmp->dfd);
-	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
-		    (cmp->robust)? _("Robust F") : "F",
-		    cmp->dfn, cmp->dfd, cmp->F);
-	    pprintf(prn, _("with p-value = %g\n"), pval);
-	    record_test_result(cmp->F, pval, (cmp->cmd == OMIT)? "omit" : "add");
-	} 
+    }
+
+    if (!na(cmp->F)) {
+	pprintf(prn, "\n  %s:\n    %s(%d, %d) = %g, ", _("Test statistic"), 
+		(cmp->robust)? _("Robust F") : "F",
+		cmp->dfn, cmp->dfd, cmp->F);
+	pval = fdist(cmp->F, cmp->dfn, cmp->dfd);
+	pprintf(prn, _("with p-value = %g\n"), pval);
+	record_test_result(cmp->F, pval, (cmp->cmd == OMIT)? "omit" : "add");
 
 	if (ptest != NULL) {
 	    ptest->teststat = GRETL_STAT_F;
@@ -115,25 +232,23 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 	    ptest->value = cmp->F;
 	    ptest->pvalue = pval;
 	}
-    } else if (LIMDEP(cmp->ci) && cmp->dfn > 0 && diffvars[0] > 0) {
-        pputs(prn, _("\n  Null hypothesis: the regression parameters are "
-		     "zero for the variables\n\n"));
-        for (i=1; i<=diffvars[0]; i++) { 
-            pprintf(prn, "    %s\n", pdinfo->varname[diffvars[i]]); 
-        }
-	pprintf(prn, "\n  %s: %s(%d) = %g, ",  _("Test statistic"),
+    } else if (!na(cmp->chisq)) {
+	pprintf(prn, "\n  %s:\n    %s(%d) = %g, ",  
+		(LIMDEP(cmp->ci))? _("Test statistic") : 
+		_("Asymptotic test statistic"),
 		_("Chi-square"), cmp->dfn, cmp->chisq);
 	pval = chisq(cmp->chisq, cmp->dfn);
 	pprintf(prn, _("with p-value = %g\n\n"), pval);
 	record_test_result(cmp->chisq, pval, (cmp->cmd == OMIT)? "omit" : "add");
 
 	if (ptest != NULL) {
-	    ptest->teststat = GRETL_STAT_LR;
+	    ptest->teststat = (LIMDEP(cmp->ci))? 
+		GRETL_STAT_LR : GRETL_STAT_WALD_CHISQ;
 	    ptest->dfn = cmp->dfn;
 	    ptest->value = cmp->chisq;
 	    ptest->pvalue = pval;
 	}	
-    } 
+    } 	
 
     if (ptest != NULL) {
 	int err;
@@ -156,10 +271,11 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 }
 
 static struct COMPARE 
-add_or_omit_compare (const MODEL *pmodA, const MODEL *pmodB, int add)
+add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int add,
+		     const int *testvars)
 {
     struct COMPARE cmp;
-    const MODEL *umod, *rmod;
+    MODEL *umod, *rmod;
     int i;	
 
     if (add) {
@@ -176,25 +292,24 @@ add_or_omit_compare (const MODEL *pmodA, const MODEL *pmodB, int add)
     cmp.m2 = pmodB->ID;
     cmp.ci = pmodA->ci;
 
-    cmp.F = cmp.chisq = cmp.trsq = 0.0;
+    cmp.F = cmp.chisq = cmp.trsq = NADBL;
     cmp.score = 0;
-
-    if (gretl_model_get_int(pmodA, "robust") || pmodA->ci == HCCM) {
-	cmp.robust = 1;
-    } else {
-	cmp.robust = 0;
-    }
-
+    cmp.robust = 0;
+    
     cmp.dfn = umod->ncoeff - rmod->ncoeff;
     cmp.dfd = umod->dfd;
 
-    if (LIMDEP(cmp.ci)) {
-	cmp.chisq = 2.0 * (umod->lnL - rmod->lnL);
-	return cmp;
-    }
+    /* FIXME TSLS?? (F or chi-square?) */
 
-    if (cmp.ci == OLS && !cmp.robust) {
+    if (gretl_model_get_int(pmodA, "robust") || pmodA->ci == HCCM) {
+	cmp.F = robust_omit_F(testvars, umod);
+	cmp.robust = 1;
+    } else if (LIMDEP(cmp.ci)) {
+	cmp.chisq = 2.0 * (umod->lnL - rmod->lnL);
+    } else if (cmp.ci == OLS) {
 	cmp.F = ((rmod->ess - umod->ess) / umod->ess) * cmp.dfd / cmp.dfn;
+    } else {
+	cmp.chisq = wald_test(testvars, umod, CHI_SQUARE_FORM);
     }
 
     for (i=0; i<C_MAX; i++) { 
@@ -209,7 +324,21 @@ add_or_omit_compare (const MODEL *pmodA, const MODEL *pmodB, int add)
     return cmp;
 }
 
-/* reconstitute full varlist for WLS, POISSON and AR models */
+static int get_tsls_pos (const int *list)
+{
+    int i, pos = 0;
+    
+    for (i=2; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    pos = i;
+	    break;
+	}
+    }
+
+    return pos;
+}
+
+/* reconstitute full varlist for WLS, POISSON, AR and TSLS models */
 
 static int *
 full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
@@ -217,7 +346,8 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
     int i, len, pos = 0;
     int *flist = NULL;
 
-    if (pmod->ci != WLS && pmod->ci != POISSON && pmod->ci != AR) {
+    if (pmod->ci != WLS && pmod->ci != POISSON && 
+	pmod->ci != AR && pmod->ci != TSLS) {
 	return NULL;
     }
 
@@ -225,6 +355,9 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
 	len = inlist[0] + 2;
     } else if (pmod->ci == POISSON) {
 	len = inlist[0] + 3;
+    } else if (pmod->ci == TSLS) {
+	pos = get_tsls_pos(pmod->list);
+	len = inlist[0] + 2 + pmod->list[0] - pos; 
     } else {
 	pos = pmod->arinfo->arlist[0] + 1;
 	len = pos + inlist[0] + 2;
@@ -250,6 +383,17 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
 	}
 	flist[flist[0] - 1] = LISTSEP;
 	flist[flist[0]] = offvar;
+    } else if (pmod->ci == TSLS) {
+	int j = 1;
+
+	flist[0] = len - 1;
+	for (i=1; i<=inlist[0]; i++) {
+	    flist[j++] = inlist[i];
+	}
+	for (i=pos; i<=pmod->list[0]; i++) {
+	    flist[j++] = pmod->list[i];
+	}
+	pos = get_tsls_pos(flist);
     } else if (pmod->ci == AR) {
 	flist[0] = len - 2;
 	for (i=1; i<pos; i++) {
@@ -266,15 +410,7 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
     return flist;
 }
 
-/* ........................................................... */
-
-static int be_quiet (gretlopt opt)
-{
-    if ((opt & OPT_A) || (opt & OPT_Q)) return 1;
-    else return 0;
-}
-
-/* ........................................................... */
+#define be_quiet(o) ((o & OPT_A) || (o & OPT_Q))
 
 static MODEL replicate_estimator (const MODEL *orig, int **plist,
 				  double ***pZ, DATAINFO *pdinfo,
@@ -300,7 +436,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	/* panel model with per-unit weights */
 	lsqopt |= OPT_W;
 	repci = POOLED;
-    } else if (orig->ci == WLS || orig->ci == AR || 
+    } else if (orig->ci == WLS || orig->ci == AR || orig->ci == TSLS ||
 	       (orig->ci == POISSON && gretl_model_get_int(orig, "offset_var"))) {
 	int *full_list = full_model_list(orig, list, &pos);
 
@@ -312,7 +448,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	}
     }
 
-    if (rep.errcode) return rep;
+    if (rep.errcode) {
+	return rep;
+    }
 
     switch (orig->ci) {
 
@@ -334,6 +472,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	break;
     case POISSON:
 	rep = poisson_model(list, pZ, pdinfo, NULL);
+	break;
+    case TSLS:
+	rep = tsls_func(list, pos, pZ, pdinfo, lsqopt);
 	break;
     case LOGISTIC: 
 	{
@@ -452,6 +593,7 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (!command_ok_for_model(ADD, pmod->ci)) {
 	return E_NOTIMP;
     }
+
     if (pmod->ci == LOGISTIC || pmod->ci == LAD) {
 	return E_NOTIMP;
     }
@@ -572,13 +714,8 @@ int add_test (int *addvars, MODEL *orig, MODEL *new,
 	if (new->nobs == orig->nobs) {
 	    struct COMPARE cmp;
 
-	    cmp = add_or_omit_compare(orig, new, 1);
-
 	    gretl_list_diff(addvars, new->list, orig->list);
-
-	    if (gretl_model_get_int(orig, "robust") || orig->ci == HCCM) {
-		cmp.F = robust_omit_F(addvars, new);
-	    }
+	    cmp = add_or_omit_compare(orig, new, 1, addvars);
 
 	    if (save_test) {
 		opt |= OPT_S;
@@ -597,117 +734,6 @@ int add_test (int *addvars, MODEL *orig, MODEL *new,
     free(tmplist);
 
     return err;
-}
-
-static int omit_index (int i, const int *list, const MODEL *pmod)
-{
-    /* return pos. in model coeff array of ith var to omit */
-    int k = 0;
-
-    if (list != NULL) {
-	/* omitting a specific list of vars */
-	int j, match = 0;
-
-	for (j=2; j<=pmod->list[0]; j++) {
-	    if (in_gretl_list(list, pmod->list[j])) {
-		if (match == i) {
-		    k = j - 2;
-		    break;
-		}
-		match++;
-	    }
-	}
-    } else {
-	/* omitting all but the constant */
-	k = i + pmod->ifc;
-    }
-
-    return k;
-}
-
-#undef FDEBUG
-
-/**
- * robust_omit_F:
- * @list: list of variables to omit (or NULL).
- * @pmod: model to be tested.
- *
- * Simple form of Wald F-test for omission of variables.  If @list
- * is non-NULL, do the test for the omission of the variables in
- * @list from the model @pmod.  Otherwise test for omission of
- * all variables in @pmod except for the constant.
- *
- * Returns: Calculated F-value, or #NADBL on failure.
- * 
- */
-
-double robust_omit_F (const int *list, MODEL *pmod)
-{
-    int q, err = 0;
-    gretl_matrix *sigma = NULL;
-    gretl_vector *br = NULL;
-    double F;
-    int i, j, ii, jj, idx;
-#ifdef FDEBUG
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-#endif
-
-    if (list != NULL) {
-	q = list[0];
-    } else {
-	q = pmod->list[0] - 1 - pmod->ifc;
-    } 
-    
-    sigma = gretl_matrix_alloc(q, q);
-    br = gretl_column_vector_alloc(q);
-
-    if (sigma == NULL || br == NULL) {
-	gretl_matrix_free(sigma);
-	gretl_matrix_free(br);
-	return NADBL;
-    }
-
-    for (i=0; i<q; i++) {
-	ii = omit_index(i, list, pmod);
-	gretl_vector_set(br, i, pmod->coeff[ii]);
-	for (j=0; j<=i; j++) {
-	    jj = omit_index(j, list, pmod);
-	    idx = ijton(ii, jj, pmod->ncoeff);
-	    gretl_matrix_set(sigma, i, j, pmod->vcv[idx]);
-	    if (i != j) {
-		gretl_matrix_set(sigma, j, i, pmod->vcv[idx]);
-	    }
-	}
-    }
-
-#ifdef FDEBUG
-    gretl_matrix_print(sigma, "sigma", prn);
-#endif
-
-    err = gretl_invert_symmetric_matrix(sigma);
-
-#ifdef FDEBUG
-    pprintf(prn, "invert returned %d\n", err);
-#endif
-
-    if (!err) {
-	F = gretl_scalar_b_prime_X_b(br, sigma, &err);
-    }
-
-    if (err) {
-	F = NADBL;
-    } else {
-	F /= q;
-    }
-
-    gretl_matrix_free(sigma);
-    gretl_matrix_free(br);
-
-#ifdef FDEBUG
-    gretl_print_destroy(prn);
-#endif
-
-    return F;
 }
 
 /**
@@ -770,7 +796,8 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
     } else if (orig->ci == ARCH) {
 	maxlag = orig->order;
     }
-    pdinfo->t1 = orig->t1 - maxlag; /* FIXME: problem */
+
+    pdinfo->t1 = orig->t1 - maxlag; /* FIXME: problem? */
 
     if (orig->ci == CORC || orig->ci == HILU) {
 	pdinfo->t1 -= 1;
@@ -800,13 +827,8 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
 	if (new->nobs == orig->nobs && omitvars != NULL) {
 	    struct COMPARE cmp;
 
-	    cmp = add_or_omit_compare(orig, new, 0);
-
 	    gretl_list_diff(omitvars, orig->list, new->list);
-
-	    if (gretl_model_get_int(orig, "robust")) {
-		cmp.F = robust_omit_F(omitvars, orig);
-	    }
+	    cmp = add_or_omit_compare(orig, new, 0, omitvars);
 
 	    if (save_test) {
 		opt |= OPT_S;

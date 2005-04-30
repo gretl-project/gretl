@@ -1485,7 +1485,12 @@ static void add_omit_list (gpointer p, selector *sr)
 	    gchar *row[2];
 	    gchar id[5];
 
-	    if (pmod->list[i] == 0) continue;
+	    if (pmod->list[i] == 0) {
+		continue;
+	    }
+	    if (pmod->list[i] == LISTSEP) {
+		break;
+	    }
 	    sprintf(id, "%d", pmod->list[i]);
 	    row[0] = id;
 	    row[1] = datainfo->varname[pmod->list[i]];

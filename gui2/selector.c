@@ -1774,7 +1774,12 @@ static void add_omit_list (gpointer p, selector *sr)
     
     if (sr->code == OMIT || sr->code == COEFFSUM) {
 	for (i=2; i<=pmod->list[0]; i++) {
-	    if (pmod->list[i] == 0) continue;
+	    if (pmod->list[i] == 0) {
+		continue;
+	    }
+	    if (pmod->list[i] == LISTSEP) {
+		break;
+	    }
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter, 
 			       0, pmod->list[i], 

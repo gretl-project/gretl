@@ -781,6 +781,7 @@ get_test_stat_string (const GRETLTEST *test, char *str, int format)
 	}
 	break;
     case GRETL_STAT_LR:
+    case GRETL_STAT_WALD_CHISQ:
 	if (tex) {
 	    sprintf(str, "$\\chi^2_%d$ = %g", test->dfn, test->value); 
 	} else {
@@ -834,6 +835,7 @@ get_test_pval_string (const GRETLTEST *test, char *str, int format)
 	break;
     case GRETL_STAT_NORMAL_CHISQ:
     case GRETL_STAT_LR:
+    case GRETL_STAT_WALD_CHISQ:
 	sprintf(str, "%g", test->pvalue);
 	break;
     default:
@@ -844,6 +846,13 @@ get_test_pval_string (const GRETLTEST *test, char *str, int format)
 void gretl_model_test_print (GRETLTEST *test, PRN *prn)
 {
     char test_str[128], pval_str[128];
+    const char *tstat;
+
+    if (test->teststat == GRETL_STAT_WALD_CHISQ) {
+	tstat = N_("Asymptotic test statistic");
+    } else {
+	tstat = N_("Test statistic");
+    }
 
     get_test_stat_string(test, test_str, prn->format);
     get_test_pval_string(test, pval_str, prn->format);
@@ -854,7 +863,7 @@ void gretl_model_test_print (GRETLTEST *test, PRN *prn)
 	gretl_test_print_h_0(test, prn);
 	pprintf(prn, "\n  %s: %s\n"
 		"  %s = %s\n\n",
-		_("Test statistic"), test_str, 
+		_(tstat), test_str, 
 		_("with p-value"), pval_str);
     } else if (tex_format(prn)) {
 	gretl_test_print_string(test, prn);
@@ -862,7 +871,7 @@ void gretl_model_test_print (GRETLTEST *test, PRN *prn)
 	gretl_test_print_h_0(test, prn);
 	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n"
 		"\\quad %s = %s\\\\\n",
-		I_("Test statistic"), test_str, 
+		I_(tstat), test_str, 
 		I_("with p-value"), pval_str);
     } else if (rtf_format(prn)) {
 	pputs(prn, "\\par \\ql ");
@@ -871,7 +880,7 @@ void gretl_model_test_print (GRETLTEST *test, PRN *prn)
 	gretl_test_print_h_0(test, prn);
 	pprintf(prn, "\\par\n %s: %s\\par\n"
 		" %s = %s\\par\n\n",
-		I_("Test statistic"), test_str, 
+		I_(tstat), test_str, 
 		I_("with p-value"), pval_str);
     }
 }
@@ -1124,12 +1133,16 @@ int command_ok_for_model (int test_ci, int model_ci)
     switch (test_ci) {
     case ADD:
     case ADDTO:
-    case OMIT:
-    case OMITFROM:
     case COEFFSUM:
     case VIF:
-	if (model_ci == TSLS || model_ci == NLS || 
+	if (model_ci == NLS || model_ci == TSLS ||
 	    model_ci == ARMA || model_ci == GARCH) ok = 0;
+	break;
+
+    case OMIT:
+    case OMITFROM:
+	if (model_ci == NLS || model_ci == ARMA || 
+	    model_ci == GARCH) ok = 0;
 	break;
 
     case EQNPRINT:

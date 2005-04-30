@@ -533,7 +533,7 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	if (makevcv(pmod)) {
 	    return E_ALLOC;
 	}
-    }
+    } 
 
     text_print_matrix(pmod->vcv, tmplist, pmod, pdinfo, prn);  
 

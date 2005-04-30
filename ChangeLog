@@ -10,10 +10,13 @@ version 1.3.4
   of periodogram command
 - Add fracdiff function (fractional differencing) to the genr
   command
-- In correlogram output, show calculated 5% critical value
+- In correlogram (acf) output, show calculated 5% critical value
 - Correlogram: acf calculations should not use more than 20 percent
   of the available data by default (Tadeusz Kufel)
 - Fix bug in Tobit command in the gretl GUI
+- "omit" command: add asymptotic Wald test for joint significance
+  of omitted variables, for estimators other than OLS
+- ADF test: allow greater lag length if the data permit
 - Improvements to formatting in Spanish translation
 - Improvements to several dialog boxes
 
