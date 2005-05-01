@@ -644,6 +644,15 @@ static double gretl_acf (int n, int k, const double *y)
     return num / den;
 }
 
+static char *corrgm_crit_string (void)
+{
+    if (get_local_decpoint() == ',') {
+	return "1,96/T^0,5";
+    } else {
+	return "1.96/T^0.5";
+    }
+}
+
 /**
  * corrgram:
  * @varno: ID number of variable to process.
@@ -787,7 +796,9 @@ int corrgram (int varno, int order, double ***pZ,
 	}
 	for (k=0; k<pacf_m; k++) {
 	    pprintf(prn, "%5d)%8.4f", k+1, pacf[k]);
-	    if ((k + 1) % 5 == 0) pputc(prn, '\n');
+	    if ((k + 1) % 5 == 0) {
+		pputc(prn, '\n');
+	    }
 	}
     }
     pputc(prn, '\n');
@@ -795,9 +806,10 @@ int corrgram (int varno, int order, double ***pZ,
 	pputc(prn, '\n');
     }
 
-    pprintf(prn, "%s: 1.96 / T^0.5 = %g\n", 
+    pprintf(prn, "%s: %s = %g\n", 
 	    /* xgettext:no-c-format */
 	    _("5% critical value"),
+	    corrgm_crit_string(),
 	    pm);
 
     if (batch) {
@@ -819,22 +831,20 @@ int corrgram (int varno, int order, double ***pZ,
     }
     fputs("set xzeroaxis\n", fq);
     fputs("set key top right\n", fq); 
-    fprintf(fq, "set xlabel \"%s\"\n", _("lag"));
+    fprintf(fq, "set xlabel '%s'\n", I_("lag"));
     fputs("set yrange [-1.1:1.1]\n", fq);
 
     /* upper plot: Autocorrelation Function or ACF */
     if (!pacf_err) {
 	fputs("set origin 0.0,0.50\n", fq);
     }
-    fprintf(fq, "set title \"%s %s\"\n", I_("ACF for"), 
+    fprintf(fq, "set title '%s %s'\n", I_("ACF for"), 
 	    pdinfo->varname[varno]);
     fprintf(fq, "set xrange [0:%d]\n", acf_m + 1);
     fprintf(fq, "plot \\\n"
 	    "'-' using 1:2 notitle w impulses, \\\n"
-	    "%g title '%s' lt 2, \\\n"
-	    "%g notitle lt 2\n", pm, 
-	    "+- 1.96/T^0.5",
-	    -pm);
+	    "%g title '+- %s' lt 2, \\\n"
+	    "%g notitle lt 2\n", pm, corrgm_crit_string(), -pm);
     for (k=0; k<acf_m; k++) {
 	fprintf(fq, "%d %g\n", k + 1, acf[k]);
     }
@@ -843,22 +853,22 @@ int corrgram (int varno, int order, double ***pZ,
     if (!pacf_err) {
 	/* lower plot: Partial Autocorrelation Function or PACF */
 	fputs("set origin 0.0,0.0\n", fq);
-	fprintf(fq, "set title \"%s %s\"\n", I_("PACF for"), 
+	fprintf(fq, "set title '%s %s'\n", I_("PACF for"), 
 		pdinfo->varname[varno]);
 	fprintf(fq, "set xrange [0:%d]\n", pacf_m + 1);
 	fprintf(fq, "plot \\\n"
 		"'-' using 1:2 notitle w impulses, \\\n"
-		"%g title '%s' lt 2, \\\n"
-		"%g notitle lt 2\n", pm,
-		"+- 1.96/T^0.5",
-		-pm);
+		"%g title '+- %s' lt 2, \\\n"
+		"%g notitle lt 2\n", pm, corrgm_crit_string(), -pm);
 	for (k=0; k<pacf_m; k++) {
 	    fprintf(fq, "%d %g\n", k + 1, pacf[k]);
 	}
 	fputs("e\n", fq);
     }
 
-    if (!pacf_err) fputs("set nomultiplot\n", fq);
+    if (!pacf_err) {
+	fputs("set nomultiplot\n", fq);
+    }
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
@@ -869,6 +879,7 @@ int corrgram (int varno, int order, double ***pZ,
     err = gnuplot_make_graph();
 
  acf_getout:
+
     free(acf);
     free(pacf);
 
@@ -881,8 +892,6 @@ static int roundup_mod (int i, double x)
 {
     return (int) ceil((double) x * i);
 }
-
-/* ...................................................... */
 
 static int fract_int_GPH (int n, double *hhat, double *omega, PRN *prn)
 {

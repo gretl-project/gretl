@@ -3049,7 +3049,6 @@ void do_corrgm (gpointer data, guint u, GtkWidget *widget)
     if (bufopen(&prn)) return;
 
     clear_line();
-
     sprintf(line, "corrgm %s %d", datainfo->varname[mdata->active_var], 
 	    order);
 
@@ -3097,6 +3096,7 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 	gretl_print_destroy(prn);
 	return;
     }
+
     register_graph();
 
     view_buffer(prn, 60, 400, _("gretl: periodogram"), PERGM, 

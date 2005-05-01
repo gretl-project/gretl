@@ -209,8 +209,8 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
 	do_freqplot(NULL, 0, NULL);
     else if (!strcmp(item, _("Boxplot")))
 	do_boxplot_var(mdata->active_var);
-    else if (!strcmp(item, _("Correlogram"))) 
-	gretl_callback(NULL, CORRGM, NULL);
+    else if (!strcmp(item, _("Correlogram")))
+	do_corrgm(NULL, CORRGM, NULL);
     else if (!strcmp(item, _("Spectrum"))) 
 	do_pergm(NULL, 0, NULL);
     else if (!strcmp(item, _("Spectrum (Bartlett)"))) 

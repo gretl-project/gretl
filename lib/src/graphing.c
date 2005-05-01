@@ -27,7 +27,7 @@
 
 #include <unistd.h>
 
-#undef GNUPLOT_DEBUG
+#undef GP_DEBUG
 
 #ifdef _WIN32
 # include <windows.h>
@@ -400,7 +400,7 @@ const char *get_gretl_png_term_line (int plottype)
     sprintf(png_term_line, "set term png%s%s",
 	    font_string, color_string);
 
-#if GNUPLOT_DEBUG
+#if GP_DEBUG
     fprintf(stderr, "png term line:\n'%s'\n", png_term_line);
 #endif
 
@@ -525,9 +525,17 @@ static int recode_gnuplot_file (const char *fname)
     while (fgets(oldline, sizeof oldline, fp)) {
 	if (isdigit((unsigned char) oldline[0])) {
 	    fputs(oldline, fq);
+#if GP_DEBUG
+	    fprintf(stderr, "recode: passed line unaltered:\n"
+		    " '%s'\n", oldline);
+#endif
 	} else {
 	    sprint_l2_to_html(newline, oldline, sizeof newline);
 	    fputs(newline, fq);
+#if GP_DEBUG
+	    fprintf(stderr, "recode: modified line:\n"
+		    " '%s'\n", newline);
+#endif
 	}
     }
 
@@ -557,6 +565,9 @@ int gnuplot_make_graph (void)
 
 #ifdef ENABLE_NLS  
     if (use_latin_2()) {
+# if GP_DEBUG
+	fprintf(stderr, "gnuplot_make_graph: calling recode_gnuplot_file()\n");
+# endif
 	recode_gnuplot_file(gretl_plotfile());
     } 
 #endif
@@ -570,7 +581,7 @@ int gnuplot_make_graph (void)
     err = gretl_spawn(plotcmd);  
 #endif
 
-#if GNUPLOT_DEBUG
+#if GP_DEBUG
     fprintf(stderr, "gnuplot_make_graph:\n"
 	    " plotcmd='%s', err = %d\n", plotcmd, err);
 #endif
@@ -923,7 +934,7 @@ gp_info_init (struct gnuplot_info *gpinfo, unsigned char flags,
     gpinfo->yvar1 = gpinfo->yvar2 = NULL;
 }
 
-#if GNUPLOT_DEBUG
+#if GP_DEBUG
 static void print_gnuplot_flags (unsigned char flags)
 {
     fprintf(stderr, "gnuplot flags:\n");
@@ -991,7 +1002,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     *gretl_errmsg = '\0';
 
-#if GNUPLOT_DEBUG
+#if GP_DEBUG
     print_gnuplot_flags(flags);
 #endif
 
@@ -2477,7 +2488,7 @@ static char gnuplot_pallette[4][8] = {
 
 const char *get_gnuplot_pallette (int i, int ptype)
 {
-#if GNUPLOT_DEBUG
+#if GP_DEBUG
     fprintf(stderr, "get_gnuplot_pallette: i=%d, ptype=%d\n",
 	    i, ptype);
 #endif
