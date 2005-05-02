@@ -3910,7 +3910,9 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 		if (sscanf(line, "# rows: %d", &brows) == 1) {
 		    if (!got_name || !got_type || brows <= 0) {
 			err = 1;
-		    } else if (brows > nrows) {
+		    } else if (nrows > 0 && brows != nrows) {
+			err = 1;
+		    } else {
 			nrows = brows;
 		    }
 		    continue;
@@ -3922,7 +3924,7 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 			err = 1;
 		    } else {
 			ncols += bcols;
-			pprintf(prn, M_("   Found name '%s', type matrix, "
+			pprintf(prn, M_("   Found matrix '%s' with "
 					"%d rows, %d columns\n"), name, brows, bcols);
 		    }
 		    continue;
@@ -3963,7 +3965,7 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
     rewind(fp);
 
     pprintf(prn, M_("   number of variables: %d\n"), ncols);
-    pprintf(prn, M_("   number of non-blank lines: %d\n"), nrows);
+    pprintf(prn, M_("   number of observations: %d\n"), nrows);
     pprintf(prn, M_("   number of data blocks: %d\n"), nblocks); 
 
     i = 1;
