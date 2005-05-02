@@ -912,7 +912,7 @@ get_target_fracdiff_series (GENERATE *genr, genatom *atom,
 	return NULL;
     }
 
-    if (*param < 0.0) { /* ?? */
+    if (fabs(*param) > 1.0) {
 	genr->err = 1;
 	return NULL;
     }
