@@ -28,31 +28,25 @@
 
 /* ASCII graphics */
 
-static void initpx (int nn, char *pp)
+static void initpx (int n, char *pp)
 {
     int i;
 
     pp[0] = '|';
-    for (i=1; i<=nn; i++) {
+    for (i=1; i<=n; i++) {
 	pp[i] = ' ';
     }
-    pp[nn+1] = '\n';
+    pp[n + 1] = '\n';
 }
 
-static void drawline (int nn, PRN *prn)
+static void drawline (int n, PRN *prn)
 {
     int t;
 
     pputs(prn, "       |+");
-
-    for (t=1; t<=nn; t++) {
-	if (t % 10 == 0) {
-	    pputc(prn, '+');
-	} else {
-	    pputc(prn, '-');
-	}
+    for (t=1; t<=n; t++) {
+	pputc(prn, (t % 10)? '-' : '+');
     }
-
     pputc(prn, '\n');
 }
 
@@ -74,53 +68,68 @@ prntdate (int nt, int n, const DATAINFO *pdinfo, PRN *prn)
     }
 }
 
-static void printgx (const double xx, PRN *prn)
+static void printgx (double x, PRN *prn)
 {
-    static char word[32];
+    char word[32];
     int lw;
 
-    sprintf(word, "%11g", xx);
+    sprintf(word, "%11g", x);
     lw = strlen(word);
     pputs(prn, word);
     bufspace(13 - lw, prn);
 } 
 
-static int z_to_xy (int v1, int v2, double *px, double *py, 
+static int z_to_xy (int v1, int v2, double *x, double *y, 
 		    const double **Z, const DATAINFO *pdinfo)
 {
-    double x1, x2;
     int t, m = 0;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++)  {
-	x1 = Z[v1][t];
-	x2 = Z[v2][t];
-	if (na(x1) || na(x2)) {
+	if (na(Z[v1][t]) || na(Z[v2][t])) {
 	    continue;
 	}
-	px[m] = x1;
-	py[m++] = x2;
+	x[m] = Z[v1][t];
+	y[m] = Z[v2][t];
+	m++;
     }
 
     return m;
 }
 
-void graphyzx (const int *list, const double *zy1, const double *zy2, 
-	       const double *zx, int n, const char *yname, 
+static int z_to_xyz (int v1, int v2, int v3, 
+		     double *x, double *y, double *z,
+		     const double **Z, const DATAINFO *pdinfo)
+{
+    int t, m = 0;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++)  {
+	if (na(Z[v1][t]) || na(Z[v2][t]) || na(Z[v3][t])) {
+	    continue;
+	}
+	x[m] = Z[v1][t];
+	y[m] = Z[v2][t];
+	z[m] = Z[v3][t];
+	m++;
+    }
+
+    return m;
+}
+
+/* graph one or two y variables against a given x variable */
+
+void graphyzx (const int *list, const double *y1, const double *y2, 
+	       const double *x, int n, const char *yname, 
 	       const char *xname, const DATAINFO *pdinfo, 
 	       gretlopt oflag, PRN *prn)
-/*
-  if n > 0 graphs zy1 against zx, otherwise
-  graphs zy1[i] and zy2[i] against zx[i] for i = 1, 2, .... n
-  no of rows = 40 if oflag = OPT_O, else it is = 18 or 16
-*/
 {
-    register int i, j;
-    int ix, iy1, iy2, lx, ly, xzero, yzero, nrows, nr2, ncols, nc2,
-	ls, lw, t1, t2, option = 0;
-    double xmin, xmax, xrange, ymin, ymax, yrange, y1min, y1max; 
-    double xx, y2min, y2max;
+    int ix, iy1, iy2, lx, ly, xzero, yzero;
+    int nrows, nr2, nc2, ls, lw, t1, t2;
+    double xx, xmin, xmax, xrange;
+    double ymin, ymax, yrange;
+    int ncols = 60;
     char p[41][132];
-    static char word[32];
+    char word[32];
+    int i, j;
 
     if (pdinfo != NULL) {
 	t1 = pdinfo->t1;
@@ -130,90 +139,101 @@ void graphyzx (const int *list, const double *zy1, const double *zy2,
 	t2 = (n < 0)? -n - 1 : n - 1;
     }
 
-    if (n < 0) {
-	n = -n;
-	option = 1;
-	gretl_minmax(t1, t2, zy1, &y1min, &y1max);
-	gretl_minmax(t1, t2, zy2, &y2min, &y2max);
+    if (y2 != NULL) {
+	double y1min, y1max;
+	double y2min, y2max;
+
+	gretl_minmax(t1, t2, y1, &y1min, &y1max);
+	gretl_minmax(t1, t2, y2, &y2min, &y2max);
 	ymin = (y1min < y2min)? y1min : y2min;
 	ymax = (y1max > y2max)? y1max : y2max;
     } else {
-	gretl_minmax(t1, t2, zy1, &ymin, &ymax);
+	gretl_minmax(t1, t2, y1, &ymin, &ymax);
     }
 
     yrange = ymax - ymin;
     xzero = yzero = 0;
 
-    /* set the number of columns and rows to be used */
-    ncols = 60;
-    if (oflag & OPT_O) nrows = 40;
-    else nrows = option ? 16 : 18 ;
-    nr2 = nrows/2;
-    nc2 = ncols/2;
+    /* set the number of rows to be used */
+    if (oflag & OPT_O) {
+	nrows = 40;
+    } else {
+	nrows = (y2 != NULL)? 16 : 18;
+    }
 
-    gretl_minmax(t1, t2, zx, &xmin, &xmax);
+    nr2 = nrows / 2;
+    nc2 = ncols / 2;
+
+    gretl_minmax(t1, t2, x, &xmin, &xmax);
     xrange = xmax - xmin;
 
     /* Initialize picture matrix */
-    for (i=0; i<=nrows; ++i) {
-	p[i][0] = (i%5 == 0)? '+' : '|'; 
-	for (j=1; j<=ncols+1; j++) p[i][j] = ' ';
+
+    for (i=0; i<=nrows; i++) {
+	p[i][0] = (i % 5 == 0)? '+' : '|'; 
+	for (j=1; j<=ncols+1; j++) {
+	    p[i][j] = ' ';
+	}
     }
 
     if (xmin < 0 && xmax > 0) {
 	xzero = 0.5 - xmin * ncols / xrange;
-	for (i=0; i<=nrows; i++) p[i][xzero+1] = '|';
-    }
-    if (ymin < 0 && ymax > 0) {
-	yzero = 0.5 - ymin * nrows / yrange;
-	for (j=0; j<=ncols; j++) p[yzero][j+1] = '-';
+	for (i=0; i<=nrows; i++) {
+	    p[i][xzero+1] = '|';
+	}
     }
 
-    /*  loop replaces blanks in PICTURE with o's that correspond to the
+    if (ymin < 0 && ymax > 0) {
+	yzero = 0.5 - ymin * nrows / yrange;
+	for (j=0; j<=ncols; j++) {
+	    p[yzero][j+1] = '-';
+	}
+    }
+
+    /*  replace blanks in PICTURE with o's that correspond to the
 	scaled values of the specified variables */
-    if (option) {
-	for (i=0; i<n; ++i) {
-	    ix = (floatneq(xrange, 0.0))? 
-		((zx[i] - xmin)/xrange)*ncols : nc2;
-	    iy1 = (floatneq(yrange, 0.0))? 
-		((zy1[i] - ymin)/yrange)*nrows : nr2;
-	    iy2 = (floatneq(yrange, 0.0))? 
-		((zy2[i] - ymin)/yrange)*nrows : nr2;
+
+    if (y2 != NULL) {
+	for (i=0; i<n; i++) {
+	    ix = (floatneq(xrange, 0.0))? ((x[i] - xmin)/xrange) * ncols : nc2;
+	    iy1 = (floatneq(yrange, 0.0))? ((y1[i] - ymin)/yrange) * nrows : nr2;
+	    iy2 = (floatneq(yrange, 0.0))? ((y2[i] - ymin)/yrange) * nrows : nr2;
 	    if (iy1 != iy2) {
 		p[iy1][ix+1] = 'o';
 		p[iy2][ix+1] = 'x';
+	    } else {
+		p[iy1][ix+1] = '+';
 	    }
-	    else p[iy1][ix+1] = '+';
 	}
-    } else for (i=0; i<n; ++i) {
-	ix = (floatneq(xrange, 0.0))? 
-	    ((zx[i] - xmin)/xrange)*ncols : nc2;
-	iy1 = (floatneq(yrange, 0.0))? 
-	    ((zy1[i] - ymin)/yrange)*nrows : nr2;
-	p[iy1][ix+1] = 'o';
+    } else {
+	for (i=0; i<n; i++) {
+	    ix = (floatneq(xrange, 0.0))? ((x[i] - xmin)/xrange) * ncols : nc2;
+	    iy1 = (floatneq(yrange, 0.0))? ((y1[i] - ymin)/yrange) * nrows : nr2;
+	    p[iy1][ix+1] = 'o';
+	}
     }
 
-    /* loop prints out the matrix PICTURE that is stored in the
-       2-dimensional p matrix. */
-    if (!option) {
+    /* print out the 2-dimensional picture matrix */
+
+    if (y2 == NULL) {
 	pprintf(prn, "%14s\n", yname);
-    } else if (list) {
+    } else if (list != NULL) {
 	pprintf(prn, _("%7co stands for %s and x stands for %s (+ means they "
 		"are equal)\n\n%9s, %s\n"), ' ', 
 		yname, pdinfo->varname[list[2]], yname, 
 		pdinfo->varname[list[2]]);
     }
 
-    for (i=nrows; i>=0; --i) {
+    for (i=nrows; i>=0; i--) {
 	if (i && i == yzero) {
 	    pputs(prn, "        0.0  ");
-	} else if (i == nrows || i%5 == 0) {
-	    xx = ymin + ((ymax-ymin) * i/nrows);
+	} else if (i == nrows || i % 5 == 0) {
+	    xx = ymin + ((ymax - ymin) * i/nrows);
 	    printgx(xx, prn);
 	} else {
 	    bufspace(13, prn);
 	}
-	for (j=0; j<=ncols+1; ++j) {
+	for (j=0; j<=ncols+1; j++) {
 	    pprintf(prn, "%c", p[i][j]);
 	}
 	pputc(prn, '\n');
@@ -222,27 +242,30 @@ void graphyzx (const int *list, const double *zy1, const double *zy2,
     bufspace(13, prn);
     pputc(prn, '|');
     for (j=0; j<=ncols; j++) {
-	if (j%10 == 0) pputc(prn, '+');
-	else pputc(prn, '-');
+	pputc(prn, (j % 10)? '-' : '+');
     }
-    pputc(prn, '\n');
 
+    pputc(prn, '\n');
     bufspace(14, prn);
+
     sprintf(word, "%g", xmin);
     lx = strlen(word);
     lw = 13 + lx;
     pputs(prn, word);
+
     sprintf(word, "%s", xname);
     ly = strlen(word);
-    ls = 30 - lx - ly/2;
+    ls = 30 - lx - ly / 2;
     bufspace(ls, prn);
     pputs(prn, word);
-    lw = lw + ls + ly; 
-    sprintf(word, "%g", xmax);
 
+    lw = lw + ls + ly; 
+
+    sprintf(word, "%g", xmax);
     ls = strlen(word);
-    if (ls < 7) bufspace(73 - lw, prn);
-    else { 
+    if (ls < 7) {
+	bufspace(73 - lw, prn);
+    } else { 
 	lw = lw + ls;
 	bufspace(79 - lw, prn);
     }
@@ -266,22 +289,15 @@ void graphyzx (const int *list, const double *zy1, const double *zy2,
 
 int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo, 
 		gretlopt oflag, PRN *prn)
-/*
-	plot var1 ;		plots var1 values
-	plot var1 var2 ;	plots var1 and var2 values
-	plot -o var1 var2 ;	plots var1 and var2 on same scale
-				this is useful to plot observed and
-				predicted values
-	each row is an observation; the values are scaled horizontally
-*/
 {
-    int  i, n, ix, iy=0, iz=0, ncols, nc2, l0, vy, vz, cntrline;
+    int i, nc2, vy, vz, cntrline;
+    int ix = 0, iy = 0, iz = 0, n = 0;
+    int ncols = 70;
     int ls, lineno, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
-    char px[132];
-    static char word[32];
+    char word[32], px[132];
     char s1[10], s2[10];
     double xmin, xmax, xrange, ymin, ymax, yrange, xymin, xymax; 
-    double xyrange, xxx, yy;
+    double xyrange, xx, yy;
     double *x, *y;
 
     int pause = gretl_get_text_pause();
@@ -293,15 +309,13 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    l0 = list[0];
     pputc(prn, '\n');
-    ncols = 70;
+
     nc2 = ncols/2;
     vy = list[1];
     strcpy(s1, pdinfo->varname[vy]);
-    n = 0;
 
-    if (l0 == 1) {
+    if (list[0] == 1) {
 	/* only one variable is to be plotted */
 	n = ztox(vy, x, Z, pdinfo);
 	gretl_minmax(t1, t2, x, &xmin, &xmax);
@@ -310,19 +324,22 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 
 	/* print headings */
 	pprintf(prn, _("%25cNOTE: o stands for %s\n\n%8c"), ' ', s1, ' ');
+
 	sprintf(word, "x-min = %g", xmin);
 	ls = 8 + strlen(word);
 	pputs(prn, word);
+
 	sprintf(word, "x-max = %g", xmax);
-	ls = 78-ls-strlen(word);
+	ls = 78 - ls - strlen(word);
 	bufspace(ls, prn);
 	pprintf(prn, "%s\n", word); 
 
 	if (cntrline) {
 	    iy = -(xmin / xrange) * ncols;
-	    bufspace(iy+7, prn);
+	    bufspace(iy + 7, prn);
 	    pputs(prn, "0.0\n"); 
 	}
+
 	drawline(ncols, prn);
 
 #ifdef ENABLE_NLS
@@ -331,8 +348,8 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 
 	lineno = 1;
 	for (t=t1; t<=t2; ++t) {
-	    xxx = Z[vy][t];
-	    if (na(xxx)) {
+	    xx = Z[vy][t];
+	    if (na(xx)) {
 		continue;
 	    }
 	    if (pause && (lineno % PAGELINES == 0)) {
@@ -340,7 +357,7 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 		lineno = 1;
 	    }
 	    prntdate(t, n, pdinfo, prn);
-	    ix = (floatneq(xrange, 0.0))? ((xxx-xmin)/xrange) * ncols : nc2;
+	    ix = (floatneq(xrange, 0.0))? ((xx-xmin)/xrange) * ncols : nc2;
 	    initpx(ncols, px);
 	    if (cntrline) {
 		px[iy+1] = '|';
@@ -358,7 +375,9 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "");
 #endif
+
 	pputs(prn, "\n\n");
+
 	free(x);
 	free(y);
 
@@ -369,6 +388,7 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
     vz = list[2];
     strcpy(s2, pdinfo->varname[vz]);
     n = z_to_xy(vy, vz, x, y, Z, pdinfo);
+
     /* find maximum and minimum using all values from both arrays */
     gretl_minmax(t1, t2, x, &xmin, &xmax);
     xrange = xmax - xmin;
@@ -377,6 +397,7 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
     xymin = (xmin <= ymin) ? xmin : ymin;
     xymax = (xmax >= ymax) ? xmax : ymax;
     xyrange = xymax - xymin;
+
     /* print headings for the two variables */
     pprintf(prn, _("%17cNOTE: o stands for %s,   x stands for %s\n%17c+ means %s "
 	   "and %s are equal when scaled\n"), ' ', s1, s2, ' ', s1, s2);
@@ -385,27 +406,33 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (oflag & OPT_O) {
 	pprintf(prn, _("%20c%s and %s are plotted on same scale\n\n%8c"),
 	       ' ', s1, s2, ' ');
+
 	sprintf(word, "xy-min = %g", xymin);
 	ls = 8 + strlen(word);
 	pputs(prn, word);
+
 	sprintf(word, "xy-max = %g", xymax);
-	ls = 78-ls-strlen(word);
+	ls = 78 - ls - strlen(word);
 	bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
     } else {
 	pputc(prn, '\n');
+
 	sprintf(word, "        o-min = %g", ymin);
 	ls = strlen(word);
 	pputs(prn, word);
+
 	sprintf(word, "o-max = %g", ymax);
-	ls = 78-ls-strlen(word);
+	ls = 78 - ls - strlen(word);
 	bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
+
 	sprintf(word, "        x-min = %g", xmin);
 	ls = strlen(word);
 	pputs(prn, word);
+
 	sprintf(word, "x-max = %g", xmax);
-	ls = 78-ls-strlen(word);
+	ls = 78 - ls - strlen(word);
 	bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
     }
@@ -418,12 +445,14 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
     */
 
     pputc(prn, '\n');
+
     cntrline = (floatgt(xymax, 0) && floatlt(xymin, 0))? 1 : 0;
     if (cntrline) {
 	iz = (-xymin / xyrange) * ncols;
-	bufspace(iz+7, prn);
+	bufspace(iz + 7, prn);
 	pputs(prn, "0.0\n");
     }
+
     drawline(ncols, prn);
 
 #ifdef ENABLE_NLS
@@ -431,30 +460,36 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 #endif
 
     lineno = 1;
+
     for (t=t1; t<=t2; ++t) {
 	if (pause && (lineno % PAGELINES == 0)) {
 	    takenotes(0);
 	    lineno = 1;
 	}
 
-	xxx = Z[vy][t];
+	xx = Z[vy][t];
 	yy = Z[vz][t];
 
-	if (na(xxx) || na(yy)) continue;
+	if (na(xx) || na(yy)) {
+	    continue;
+	}
 
 	prntdate(t, n, pdinfo, prn);
+
 	if (oflag & OPT_O) {
-	    ix = (floatneq(xyrange, 0.0))? ((xxx-xymin)/xyrange) * ncols : nc2;
+	    ix = (floatneq(xyrange, 0.0))? ((xx-xymin)/xyrange) * ncols : nc2;
 	    iy = (floatneq(xyrange, 0.0))? ((yy-xymin)/xyrange) * ncols : nc2;
-	}
-	else {
-	    ix = (floatneq(xrange, 0.0))? ((xxx-xmin)/xrange) * ncols : nc2;
+	} else {
+	    ix = (floatneq(xrange, 0.0))? ((xx-xmin)/xrange) * ncols : nc2;
 	    iy = (floatneq(yrange, 0.0))? ((yy-ymin)/yrange) * ncols : nc2;
 	}
+
 	initpx(ncols, px);
+
 	if (iz) {
 	    px[iz+1] = '|';
 	}
+
 	if (ix == iy) {
 	    px[ix+1] = '+';
 	} else {
@@ -466,7 +501,9 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    pprintf(prn, "%c", px[i]);
 	}
 
-	if (ix == ncols || iy == ncols) pputc(prn, '\n');
+	if (ix == ncols || iy == ncols) {
+	    pputc(prn, '\n');
+	}
 
 	lineno++;
     }
@@ -476,6 +513,7 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 #endif
 
     pputs(prn, "\n\n");
+
     free(x);
     free(y);
 
@@ -499,17 +537,16 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 
 int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo, 
 		 gretlopt oflag, PRN *prn)
-/*
-  graph var1 var2 ;	graphs var1 (y-axis) against var2 (x-axis)
-			in 20 rows and 60 columns
-  graph -o var1 var2 ;	graphs var1 against var2 in 40 rows, 60 cols.
-*/
 {
-    int m, vx, vy, vz, l0, t;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    double *x, *y, xx, xy, xz, *uhat;
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int m, vx, vy1;
+    double *x = NULL;
+    double *y1 = NULL;
+    double *y2 = NULL;
 
-    if (list[0] < 2) return E_ARGS; 
+    if (list[0] < 2) {
+	return E_ARGS; 
+    }
 
     m = list_dups(list, GRAPH);
     if (m) {
@@ -517,52 +554,50 @@ int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo,
 	return 1;
     }
 
-    pputc(prn, '\n');
-    l0 = list[0];
-    vy = list[1];
+    x = malloc(T * sizeof *x);
+    y1 = malloc(T * sizeof *y1);
 
-    x = malloc(pdinfo->n * sizeof *x);
-    y = malloc(pdinfo->n * sizeof *y);
-    uhat = malloc(pdinfo->n * sizeof *uhat);
-    if (x == NULL || y == NULL || uhat == NULL) {
+    if (x == NULL || y1 == NULL) {
+	free(x);
+	free(y1);
 	return E_ALLOC;    
     }
 
-    /* Put values from z matrix into x and y arrays */
-    m = 0;
-    if (l0 == 2) {
-	vx = list[2];
-	m = z_to_xy(vx, vy, x, y, Z, pdinfo);
-	graphyzx(list, y, uhat, x, m, pdinfo->varname[vy], 
-		 pdinfo->varname[vx], pdinfo, oflag, prn);
-    }
-    else {
-	vz = list[2];
-	vx = list[3];
-	for(t=t1; t<=t2; t++) {
-	    xx = Z[vx][t];
-	    xy = Z[vy][t];
-	    xz = Z[vz][t];
-	    if (na(xx) || na(xy) || na(xz)) continue;
-	    else {
-		x[m] = xx;
-		y[m] = xy;
-		uhat[m] = xz;
-		m++;
-	    }
+    if (list[0] > 2) {
+	y2 = malloc(T * sizeof *y2);
+	if (y2 == NULL) {
+	    free(x);
+	    free(y1);
+	    return E_ALLOC;    
 	}
-	graphyzx(list, y, uhat, x, -m, pdinfo->varname[vy], 
-		 pdinfo->varname[vx], pdinfo, oflag, prn);
     }
+
+    vy1 = list[1];
+
+    /* Put values from z matrix into x and y arrays */
+    if (list[0] == 2) {
+	vx = list[2];
+	m = z_to_xy(vx, vy1, x, y1, Z, pdinfo);
+    } else {
+	int vy2 = list[2];
+
+	vx = list[3];
+	m = z_to_xyz(vx, vy1, vy2, x, y1, y2, Z, pdinfo);
+    }
+
     pputc(prn, '\n');
 
-    free(x); free(y); free(uhat);
+    graphyzx(list, y1, y2, x, m, pdinfo->varname[vy1], 
+	     pdinfo->varname[vx], pdinfo, oflag, prn);
+
+    pputc(prn, '\n');
+
+    free(x); 
+    free(y1); 
+    free(y2);
 
     return 0;
 }
-
-/* end ASCII graphics */
-
 
 #undef RHODEBUG
 

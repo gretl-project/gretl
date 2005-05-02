@@ -951,6 +951,8 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	datatype = GRETL_GNUMERIC;
     } else if (code == OPEN_EXCEL || code == APPEND_EXCEL) {
 	datatype = GRETL_EXCEL;
+    } else if (code == OPEN_OCTAVE || code == APPEND_OCTAVE) {
+	datatype = GRETL_OCTAVE;
     } else if (code == OPEN_BOX) {
 	datatype = GRETL_BOX_DATA;
     } else {
@@ -972,6 +974,9 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	return;
     } else if (datatype == GRETL_CSV_DATA) {
 	do_open_csv_box(trydatfile, OPEN_CSV, append);
+	return;
+    } else if (datatype == GRETL_OCTAVE) {
+	do_open_csv_box(trydatfile, OPEN_OCTAVE, append);
 	return;
     } else if (datatype == GRETL_BOX_DATA) {
 	do_open_csv_box(trydatfile, OPEN_BOX, 0);

@@ -226,6 +226,10 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
 	delimiter_dialog();
 	file_selector(_("Open CSV file"), code, NULL);
 	break;
+    case OPEN_OCTAVE:
+    case APPEND_OCTAVE:
+	file_selector(_("Open Octave file"), code, NULL);
+	break;
     case OPEN_BOX:
 	file_selector(_("Open BOX file"), code, NULL);
 	break;

@@ -44,12 +44,14 @@
 #define OPEN_DATA_ACTION(i)  (i == OPEN_DATA || \
                               i == OPEN_CSV || \
                               i == OPEN_ASCII || \
+                              i == OPEN_OCTAVE || \
 	                      i == OPEN_BOX || \
                               i == OPEN_GNUMERIC || \
 	                      i == OPEN_EXCEL)
 
 #define APPEND_DATA_ACTION(i) (i == APPEND_DATA || \
                                i == APPEND_CSV || \
+                               i == APPEND_OCTAVE || \
                                i == APPEND_GNUMERIC || \
                                i == APPEND_EXCEL || \
                                i == APPEND_ASCII)
@@ -72,7 +74,9 @@
                           i == EXPORT_CSV || \
                           i == EXPORT_DAT)
 
+#ifdef REMEMBER_DIR
 static char remember_dir[MAXLEN];
+#endif
 
 struct extmap {
     int action;
@@ -97,6 +101,8 @@ static struct extmap action_map[] = {
     { EXPORT_CSV,        ".csv" },
     { EXPORT_R,          ".R" },
     { EXPORT_R_ALT,      ".R" },
+    { OPEN_OCTAVE,       ".m" },
+    { APPEND_OCTAVE,     ".m" },
     { EXPORT_OCTAVE,     ".m" },
     { EXPORT_DAT,        ".dat" },
     { SAVE_OUTPUT,       ".txt" },
@@ -312,11 +318,15 @@ static void save_editable_content (int action, const char *fname,
 
 static void set_startdir (char *startdir)
 {
+#ifdef REMEMBER_DIR
     if (*remember_dir != '\0') {
 	strcpy(startdir, remember_dir);
     } else {
 	get_default_dir(startdir);
     }
+#else
+    get_default_dir(startdir);
+#endif
 
 #ifndef G_OS_WIN32
     if (startdir[strlen(startdir) - 1] != '/') {
@@ -429,6 +439,7 @@ static char *suggested_exportname (const char *fname, int action)
     return s;
 }
 
+#ifdef REMEMBER_DIR
 static void remember_this_dir (const char *fname)
 {
     int spos = slashpos(fname);
@@ -438,6 +449,7 @@ static void remember_this_dir (const char *fname)
 	strncat(remember_dir, fname, spos);
     }
 }
+#endif
 
 static void
 file_selector_process_result (const char *in_fname, int action, gpointer data)
@@ -459,9 +471,11 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	}
     } 
 
+#ifdef REMEMBER_DIR
     if (action != SET_PATH) {
 	remember_this_dir(fname);
     }
+#endif
 
     if (OPEN_DATA_ACTION(action)) {
 	strcpy(trydatfile, fname);
@@ -475,7 +489,9 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	filesel_open_session(fname);
     }
 
-    if (action < END_OPEN) return;
+    if (action < END_OPEN) {
+	return;
+    }
 
     /* now for the save options */
 
@@ -603,6 +619,8 @@ static struct winfilter get_filter (int action, gpointer data)
 	{EXPORT_R,     { N_("GNU R files (*.R)"), "*.R" }},
 	{EXPORT_R_ALT, { N_("GNU R files (*.R)"), "*.R" }},
 	{EXPORT_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},
+	{OPEN_OCTAVE,  { N_("GNU Octave files (*.m)"), "*.m" }},
+	{APPEND_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},
 	{EXPORT_DAT  , { N_("PcGive files (*.dat)"), "*.dat" }},
 	{SAVE_OUTPUT,  { N_("text files (*.txt)"), "*.txt" }},
 	{SAVE_TEX_TAB, { N_("TeX files (*.tex)"), "*.tex" }},

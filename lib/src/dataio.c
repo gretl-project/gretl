@@ -3022,7 +3022,9 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
     int c, cbak = 0, cc = 0;
     int comment = 0, maxlen = 0;
 
-    *trail = 1;
+    if (trail != NULL) {
+	*trail = 1;
+    }
 
     while ((c = fgetc(fp)) != EOF) {
 	if (c == '\n') {
@@ -3030,7 +3032,7 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
 		maxlen = cc;
 	    }
 	    cc = 0;
-	    if (cbak != 0 && cbak != ',') {
+	    if (trail != NULL && cbak != 0 && cbak != ',') {
 		*trail = 0;
 	    }
 	    continue;
@@ -3046,10 +3048,10 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
 	    comment = (c == '#');
 	}
 	if (!comment) {
-	    if (*gottab == 0 && c == '\t') {
+	    if (gottab != NULL && *gottab == 0 && c == '\t') {
 		*gottab = 1;
 	    }
-	    if (*gotdelim == 0 && c == delim) {
+	    if (gotdelim != NULL && *gotdelim == 0 && c == delim) {
 		*gotdelim = 1;
 	    }
 	}
@@ -3058,7 +3060,7 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
 
     if (maxlen == 0) {
 	pprintf(prn, M_("Data file is empty\n"));
-    } else if (*trail) {
+    } else if (trail != NULL && *trail) {
 	pprintf(prn, M_("Data file has trailing commas\n"));
     }
 
@@ -3807,6 +3809,253 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
     return 0;
 }
 
+static void 
+octave_varname (char *name, const char *s, int nnum, int v)
+{
+    char nstr[8];
+    int len, tr;
+
+    if (nnum == 0) {
+	strcpy(name, s);
+    } else {
+	sprintf(nstr, "%d", nnum);
+	len = strlen(nstr);
+	tr = VNAMELEN - len;
+
+	if (tr > 0) {
+	    strncat(name, s, tr);
+	    strcat(name, nstr);
+	} else {
+	    sprintf(name, "v%d", v);
+	}
+    }
+}
+
+/**
+ * import_octave:
+ * @pZ: pointer to data set.
+ * @ppdinfo: pointer to data information struct.
+ * @fname: name of GNU octave ascii data file.
+ * @prn: gretl printing struct (can be NULL).
+ * 
+ * Open a GNU octave ascii data file (matrix type) and read the data into
+ * the current work space.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ *
+ */
+
+int import_octave (double ***pZ, DATAINFO **ppdinfo, 
+		   const char *fname, PRN *prn)
+{
+    DATAINFO *octinfo = NULL;
+    double **octZ = NULL;
+    
+    FILE *fp = NULL;
+    char *line = NULL;
+
+    char tmp[8], name[32];
+    int nrows = 0, ncols = 0, nblocks = 0;
+    int brows = 0, bcols = 0, oldbcols = 0;
+    int maxlen, got_type = 0, got_name = 0;
+    int err = 0;
+
+    int i, t;
+
+    if (prn != NULL) {
+	check_for_console(prn);
+    }
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	goto oct_bailout;
+    }   
+
+    pprintf(prn, "%s %s...\n", M_("parsing"), fname);
+
+    maxlen = get_max_line_length(fp, 0, NULL, NULL, NULL, prn);
+    if (maxlen <= 0) {
+	goto oct_bailout;
+    }
+ 
+    line = malloc(maxlen);
+    if (line == NULL) {
+	goto oct_bailout;
+    }
+
+    pprintf(prn, M_("   longest line: %d characters\n"), maxlen - 1);
+
+    rewind(fp);
+
+    while (fgets(line, maxlen, fp) && !err) {
+	if (*line == '#') {
+	    if (!got_name) {
+		if (sscanf(line, "# name: %31s", name) == 1) {
+		    got_name = 1;
+		    nblocks++;
+		    continue;
+		}
+	    }
+	    if (!got_type) {
+		if (sscanf(line, "# type: %7s", tmp) == 1) {
+		    if (!got_name || strcmp(tmp, "matrix")) {
+			err = 1;
+		    } else {
+			got_type = 1;
+		    }
+		    continue;
+		}
+	    }
+	    if (brows == 0) {
+		if (sscanf(line, "# rows: %d", &brows) == 1) {
+		    if (!got_name || !got_type || brows <= 0) {
+			err = 1;
+		    } else if (brows > nrows) {
+			nrows = brows;
+		    }
+		    continue;
+		}	    
+	    } 
+	    if (bcols == 0) {
+		if (sscanf(line, "# columns: %d", &bcols) == 1) {
+		    if (!got_name || !got_type || bcols <= 0) {
+			err = 1;
+		    } else {
+			ncols += bcols;
+			pprintf(prn, M_("   Found name '%s', type matrix, "
+					"%d rows, %d columns\n"), name, brows, bcols);
+		    }
+		    continue;
+		}
+	    }
+	} else if (string_is_blank(line)) {
+	    continue;
+	} else {
+	    got_name = 0;
+	    got_type = 0;
+	    brows = 0;
+	    bcols = 0;
+	}
+    }
+
+    if (err || nrows == 0 || ncols == 0) {
+	pputs(prn, M_("Invalid data file\n"));
+	goto oct_bailout;
+    } 
+
+    /* initialize datainfo and Z */
+
+    octinfo = datainfo_new();
+    if (octinfo == NULL) {
+	fclose(fp);
+	pputs(prn, M_("Out of memory\n"));
+	goto oct_bailout;
+    }
+
+    octinfo->n = nrows;
+    octinfo->v = ncols + 1;
+
+    if (start_new_Z(&octZ, octinfo, 0)) {
+	pputs(prn, M_("Out of memory\n"));
+	goto oct_bailout;
+    }  
+
+    rewind(fp);
+
+    pprintf(prn, M_("   number of variables: %d\n"), ncols);
+    pprintf(prn, M_("   number of non-blank lines: %d\n"), nrows);
+    pprintf(prn, M_("   number of data blocks: %d\n"), nblocks); 
+
+    i = 1;
+    t = 0;
+
+    while (fgets(line, maxlen, fp) && !err) {
+	char *s = line;
+	int j;
+
+	if (*s == '#') {
+	    if (sscanf(line, "# name: %8s", name) == 1) {
+		;
+	    } else if (sscanf(line, "# rows: %d", &brows) == 1) {
+		t = 0;
+	    } else if (sscanf(line, "# columns: %d", &bcols) == 1) {
+		i += oldbcols;
+		oldbcols = bcols;
+	    }
+	} 
+
+	if (*s == '#' || string_is_blank(s)) {
+	    continue;
+	}
+
+	if (t >= octinfo->n) {
+	    err = 1;
+	}
+
+	for (j=0; j<bcols && !err; j++) {
+	    double x;
+	    int v = i + j;
+
+	    if (t == 0) {
+		int nnum = (bcols > 1)? j + 1 : 0;
+
+		octave_varname(octinfo->varname[i+j], name, nnum, v);
+	    }
+
+	    while (isspace(*s)) s++;
+	    if (sscanf(s, "%lf", &x) != 1) {
+		fprintf(stderr, "error: '%s', didn't get double\n", s);
+		err = 1;
+	    } else {
+		octZ[v][t] = x;
+		while (!isspace(*s)) s++;
+	    }	
+	}
+	t++;
+    }
+
+    if (err) {
+	pputs(prn, M_("Invalid data file\n"));
+	goto oct_bailout;
+    } 
+    
+    if (*pZ == NULL) {
+	/* no dataset currently in place */
+	*pZ = octZ;
+	if (*ppdinfo != NULL) {
+	    free(*ppdinfo);
+	}
+	*ppdinfo = octinfo;
+    } else if (merge_data(pZ, *ppdinfo, octZ, octinfo, prn)) {
+	goto oct_bailout;
+    }
+
+    fclose(fp); 
+    free(line);
+
+    console_off();
+
+    return 0;
+
+ oct_bailout:
+
+    if (fp != NULL) {
+	fclose(fp);
+    }
+
+    if (line != NULL) {
+	free(line);
+    }
+
+    if (octinfo != NULL) {
+	clear_datainfo(octinfo, CLEAR_FULL);
+    }
+
+    console_off();
+
+    return 1;
+}
+
 /* ................................................. */
 
 static char *unspace (char *s)
@@ -4164,6 +4413,8 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	return GRETL_CSV_DATA;
     if (file_has_suffix(fname, "txt"))
 	return GRETL_CSV_DATA;
+    if (file_has_suffix(fname, "m"))
+	return GRETL_OCTAVE;
 
     addpath(fname, ppaths, 0); 
 
@@ -4184,12 +4435,16 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     /* take a peek at content */
     for (i=0; i<80; i++) {
 	c = getc(fp);
-	if (c == EOF || c == '\n') break;
+	if (c == EOF || c == '\n') {
+	    break;
+	}
 	if (!isprint(c) && c != '\r' && c != '\t') {
 	    ftype = GRETL_NATIVE_DATA; /* native binary data? */
 	    break;
 	}
-	if (i < 4) teststr[i] = c;
+	if (i < 4) {
+	    teststr[i] = c;
+	}
     }
 
     fclose(fp);

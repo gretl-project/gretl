@@ -78,6 +78,8 @@ enum file_ops {
     OPEN_ASCII,
     APPEND_ASCII,
     OPEN_BOX,
+    OPEN_OCTAVE,
+    APPEND_OCTAVE,
     OPEN_GNUMERIC,
     APPEND_GNUMERIC,
     OPEN_EXCEL,

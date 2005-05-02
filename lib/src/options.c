@@ -77,7 +77,8 @@ struct gretl_option gretl_opts[] = {
     { GRAPH,    OPT_O, "tall" },
     { HAUSMAN,  OPT_T, "time-effects" },
     { HILU,     OPT_B, "no-corc" },
-    { IMPORT,   OPT_O, "box1" },
+    { IMPORT,   OPT_B, "box1" },
+    { IMPORT,   OPT_O, "octave" },
     { KPSS,     OPT_T, "trend" },
     { KPSS,     OPT_V, "verbose" },
     { KPSS,     OPT_Q, "quiet" },
@@ -489,14 +490,16 @@ const char *print_flags (gretlopt oflags, int ci)
 
 int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn)
 {
+    int ret = 0;
+
     if (ci == OLS && (opt & OPT_P)) {
 	const char *flagstr = print_flags(OPT_P, OLS);
 
 	pprintf(prn, _("Warning: option%s ignored outside of loop"), 
 		flagstr);
 	pputc(prn, '\n');
-	return 1;
+	ret = 1;
     }
 
-    return 0;
+    return ret;
 }

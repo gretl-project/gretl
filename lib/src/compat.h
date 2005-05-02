@@ -20,8 +20,8 @@
 #ifndef COMPAT_H
 #define COMPAT_H
 
-void graphyzx (const int *list, const double *zy1, const double *zy2, 
-	       const double *zx, int n, const char *yname, 
+void graphyzx (const int *list, const double *y1, const double *y2, 
+	       const double *x, int n, const char *yname, 
 	       const char *xname, const DATAINFO *pdinfo, 
 	       gretlopt oflag, PRN *prn);
 

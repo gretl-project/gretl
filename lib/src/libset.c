@@ -23,12 +23,12 @@
 #include "gretl_private.h"
 #include "libset.h"
 
-static int use_qr = -1;           /* use QR decomposition? */
-static int halt_on_error = -1;    /* halt cli program on script error? */
-static double hp_lambda;          /* for Hodrick-Prescott filter */
-static int bkbp_k = 8;            /* for Baxter-King filter */
+static int use_qr = -1;                 /* use QR decomposition? */
+static int halt_on_error = -1;          /* halt cli program on script error? */
+static double hp_lambda;                /* for Hodrick-Prescott filter */
+static int bkbp_k = 8;                  /* for Baxter-King filter */
 static int bkbp_periods[2] = { 8, 32 }; /* for Baxter-King filter */
-static int horizon = 0;           /* for VAR impulse responses */ 
+static int horizon = 0;                 /* for VAR impulse responses */ 
 
 enum {
     AUTO_LAG_STOCK_WATSON,

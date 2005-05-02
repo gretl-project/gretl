@@ -245,6 +245,30 @@ static void add_to_right_callback (GtkWidget *w, selector *sr)
     }
 }
 
+static void set_vars_from_main (selector *sr)
+{
+    GList *mylist = GTK_CLIST(mdata->listbox)->selection;
+
+    if (mylist != NULL) {
+	g_list_foreach(mylist, (GFunc) add_var_on_right, sr);
+    }
+}
+
+static void set_single_var (selector *sr, int v)
+{
+    gchar *row[2];
+    gchar *vstr;
+
+    vstr = g_strdup_printf("%d", v);
+
+    row[0] = vstr;
+    row[1] = datainfo->varname[v];
+
+    gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+    
+    g_free(vstr);
+}
+
 static void remove_right_var (gint i, selector *sr)
 {
     gtk_clist_remove(GTK_CLIST(sr->rightvars), i);
@@ -1536,7 +1560,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     GtkWidget *left_vbox, *mid_vbox, *right_vbox, *tmp;
     GtkWidget *top_hbox, *big_hbox, *scroller;
     selector *sr;
-    int i;
+    int i, vnum = 0;
 
     open_dialog = get_open_dialog();
     if (open_dialog != NULL) {
@@ -1594,17 +1618,25 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     if (cmdcode == OMIT || cmdcode == ADD || cmdcode == COEFFSUM) {
         add_omit_list(p, sr);
     } else {
+	int nleft = 0;
+
 	for (i=1; i<datainfo->v; i++) {
 	    gchar *row[2];
 	    gchar id[5];
 
-	    if (hidden_var(i, datainfo)) continue;
-	    if (screen_scalar(i, cmdcode)) continue;
+	    if (hidden_var(i, datainfo) || screen_scalar(i, cmdcode)) {
+		continue;
+	    }
 	    sprintf(id, "%d", i);
 	    row[0] = id;
 	    row[1] = datainfo->varname[i];
 	    gtk_clist_append(GTK_CLIST(sr->varlist), row);
+	    vnum = i;
+	    nleft++;
 	}
+	if (nleft != 1) {
+	    vnum = 0;
+	}	
     }
 
     gtk_clist_set_column_width (GTK_CLIST(sr->varlist), 1, 80 * gui_scale);
@@ -1679,7 +1711,9 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     build_selector_buttons(sr, okfunc);
 
     if (TWO_VARS_CODE(sr->code) && mdata_selection_count() == 2) {
-	fprintf(stderr, "FIXME: handle two vars case\n");
+	set_vars_from_main(sr);
+    } else if (SAVE_DATA_ACTION(sr->code) && vnum > 0) {
+	set_single_var(sr, vnum);
     }
 
     gtk_widget_show(sr->dlg);

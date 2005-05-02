@@ -504,6 +504,8 @@ int main (int argc, char *argv[])
 			      DATA_NONE, prn, 0);
 	} else if (err == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, &datainfo, paths.datfile, prn);
+	} else if (err == GRETL_OCTAVE) {
+	    err = import_octave(&Z, &datainfo, paths.datfile, prn);
 	} else if (err == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, paths.datfile, prn);
 	} else if (err == GRETL_SCRIPT) { /* maybe it's a script file? */
@@ -1187,8 +1189,10 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if (data_status) {
 	    clear_data();
 	}
-	if (cmd.opt) {
+	if (cmd.opt & OPT_B) {
 	    err = import_box(&Z, &datainfo, datfile, prn);
+	} else if (cmd.opt & OPT_O) {
+	    err = import_octave(&Z, &datainfo, datfile, prn);
 	} else {
 	    err = import_csv(&Z, &datainfo, datfile, prn);
 	}
@@ -1232,6 +1236,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
 	if (chk == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, &datainfo, datfile, prn);
+	} else if (chk == GRETL_OCTAVE) {
+	    err = import_octave(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_XML_DATA) {

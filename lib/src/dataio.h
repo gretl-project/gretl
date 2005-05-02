@@ -37,6 +37,7 @@ typedef enum {
     GRETL_XML_DATA,       /* gretl xml format data file */
     GRETL_CSV_DATA,       /* comma-separated data file */
     GRETL_BOX_DATA,       /* BOX1 format data file */
+    GRETL_OCTAVE,         /* GNU octave ascii data file */
     GRETL_GNUMERIC,       /* gnumeric workbook data */
     GRETL_EXCEL,          /* MS Excel spreadsheet data */
     GRETL_SCRIPT,         /* file containing gretl commands */
@@ -124,6 +125,9 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
 
 int import_csv (double ***pZ, DATAINFO **ppdinfo, 
                 const char *fname, PRN *prn);
+
+int import_octave (double ***pZ, DATAINFO **ppdinfo, 
+		   const char *fname, PRN *prn);
 
 int import_box (double ***pZ, DATAINFO **ppdinfo, 
 		const char *fname, PRN *prn);

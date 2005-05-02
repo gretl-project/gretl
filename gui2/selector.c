@@ -308,6 +308,22 @@ static void set_vars_from_main (selector *sr)
 					sr);
 }
 
+static void set_single_var (selector *sr, int v)
+{
+    GtkTreeModel *mod;
+    GtkTreeIter iter;
+
+    mod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rightvars));
+    if (mod == NULL) {
+	return;
+    }
+
+    gtk_tree_model_get_iter_first(mod, &iter);
+    gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
+    gtk_list_store_set(GTK_LIST_STORE(mod), &iter, 
+		       0, v, 1, datainfo->varname[v], -1);
+}
+
 static int selection_at_max (selector *sr, int nsel)
 {
     int ret = 0;
@@ -1828,7 +1844,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     GtkListStore *store;
     GtkTreeIter iter;
     selector *sr;
-    int i;
+    int i, vnum = 0;
 
     open_dialog = get_open_dialog();
     if (open_dialog != NULL) {
@@ -1882,13 +1898,21 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     if (cmdcode == OMIT || cmdcode == ADD || cmdcode == COEFFSUM) {
         add_omit_list(p, sr);
     } else {
+	int nleft = 0;
+
 	for (i=1; i<datainfo->v; i++) {
-	    if (hidden_var(i, datainfo)) continue;
-	    if (screen_scalar(i, cmdcode)) continue;
+	    if (hidden_var(i, datainfo) || screen_scalar(i, cmdcode)) {
+		continue;
+	    }
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter, 0, i, 
 			       1, datainfo->varname[i], 
 			       -1);
+	    vnum = i;
+	    nleft++;
+	}
+	if (nleft != 1) {
+	    vnum = 0;
 	}
     }
 
@@ -1943,6 +1967,8 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 
     if (TWO_VARS_CODE(sr->code) && mdata_selection_count() == 2) {
 	set_vars_from_main(sr);
+    } else if (SAVE_DATA_ACTION(sr->code) && vnum > 0) {
+	set_single_var(sr, vnum);
     }
 
     gtk_widget_show(sr->dlg);

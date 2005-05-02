@@ -167,7 +167,9 @@ static int get_params_from_nlfunc (void)
 	    while (isalnum(*p) || *p == '_') {
 		p++; n++;
 	    }
-	    if (n > 8) return 1;
+	    if (n > 8) {
+		return 1;
+	    }
 	    *vname = 0;
 	    strncat(vname, s, n);
 	    if (np > 0) {

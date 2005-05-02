@@ -4518,17 +4518,22 @@ void do_open_csv_box (char *fname, int code, int append)
     int err;
     PRN *prn;
     char buf[32];
+    char dtype[8];
 
     if (bufopen(&prn)) return;
 
     if (code == OPEN_BOX) {
 	err = import_box(&Z, &datainfo, fname, prn);
+	strcpy(dtype, "BOX");
+    } else if (code == OPEN_OCTAVE) {
+	err = import_octave(&Z, &datainfo, fname, prn);
+	strcpy(dtype, "Octave");
     } else {
 	err = import_csv(&Z, &datainfo, fname, prn); 
+	strcpy(dtype, "CSV");
     }
 
-    sprintf(buf, _("gretl: import %s data"), 
-	    (code == OPEN_BOX)? "BOX" : "CSV");
+    sprintf(buf, _("gretl: import %s data"), dtype);
 
     view_buffer(prn, 78, 350, buf, IMPORT, NULL); 
 
@@ -5893,8 +5898,10 @@ int gui_exec_line (char *line,
 	if (data_status & HAVE_DATA) {
 	    close_session();
 	}
-        if (cmd.opt) {
+        if (cmd.opt & OPT_B) {
             err = import_box(&Z, &datainfo, datfile, prn);
+	} else if (cmd.opt & OPT_O) {
+	    err = import_octave(&Z, &datainfo, datfile, prn);
         } else {
             err = import_csv(&Z, &datainfo, datfile, prn);
 	}
@@ -5931,6 +5938,8 @@ int gui_exec_line (char *line,
 
 	if (chk == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, &datainfo, datfile, prn);
+	} else if (chk == GRETL_OCTAVE) {
+	    err = import_octave(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_XML_DATA) {

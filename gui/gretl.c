@@ -163,6 +163,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>" },    
     { N_("/File/Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL },
     { N_("/File/Open data/import ASCII..."), NULL, open_data, OPEN_ASCII, NULL },
+    { N_("/File/Open data/import Octave..."), NULL, open_data, OPEN_OCTAVE, NULL },
     { N_("/File/Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL },
     { N_("/File/Open data/import Gnumeric..."), NULL, open_data, 
       OPEN_GNUMERIC, NULL },
@@ -174,6 +175,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Append data/standard format..."), NULL, open_data, APPEND_DATA, NULL },
     { N_("/File/Append data/from CSV..."), NULL, open_data, APPEND_CSV, NULL },
     { N_("/File/Append data/from ASCII..."), NULL, open_data, APPEND_ASCII, NULL },
+    { N_("/File/Append data/from Octave..."), NULL, open_data, APPEND_OCTAVE, NULL },
     { N_("/File/Append data/from Gnumeric..."), NULL, open_data, 
       APPEND_GNUMERIC, NULL },
     { N_("/File/Append data/from Excel..."), NULL, open_data, 
@@ -721,6 +723,9 @@ int main (int argc, char *argv[])
 	    break;
 	case GRETL_CSV_DATA:
 	    err = import_csv(&Z, &datainfo, paths.datfile, prn);
+	    break;
+	case GRETL_OCTAVE:
+	    err = import_octave(&Z, &datainfo, paths.datfile, prn);
 	    break;
 	case GRETL_BOX_DATA:
 	    err = import_box(&Z, &datainfo, paths.datfile, prn);
