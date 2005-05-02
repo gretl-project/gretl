@@ -5448,6 +5448,7 @@ int gui_exec_line (char *line,
     case GRAPH: 
     case HURST: 
     case INFO: 
+    case KPSS:
     case LABEL:
     case LABELS: 
     case LAGS: 
@@ -5554,8 +5555,9 @@ int gui_exec_line (char *line,
 	clear_model(models[1]);
 	*models[1] = arch(order, cmd.list, &Z, datainfo, 
 			  ptest, cmd.opt, outprn);
-	if ((err = (models[1])->errcode)) 
+	if ((err = (models[1])->errcode)) {
 	    errmsg(err, prn);
+	}
 	if ((models[1])->ci == ARCH) {
 	    do_arch = 1;
 	    swap_models(&models[0], &models[1]);
