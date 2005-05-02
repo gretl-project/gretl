@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-05-01 11:02-0400\n"
-"PO-Revision-Date: 2005-04-30 01:02+0200\n"
+"PO-Revision-Date: 2005-05-02 11:20+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -58,9 +58,8 @@ msgid "with p-value = %g\n"
 msgstr "con p-value = %g\n"
 
 #: lib/src/compare.c:240 lib/src/gretl_model.c:852
-#, fuzzy
 msgid "Asymptotic test statistic"
-msgstr "Statistica test"
+msgstr "Statistica test asintotica"
 
 #: lib/src/compare.c:242 lib/src/compare.c:1240 lib/src/compare.c:1245
 #: lib/src/gretl_model.c:780 lib/src/gretl_model.c:788
