@@ -1253,19 +1253,29 @@ static int insert_ghost_zero (char *start, char *p, int *np)
     return err;
 }
 
+/* check if there's a genr function name to the left of point:
+   have to take care in case there's a variable name which 
+   includes a substring equal to a function word.
+*/
+
+#define VNCHAR(c) (isalnum(c) || c == '_')
+
 static int function_word_to_left (const char *s, int n)
 {
     int i, ret = 0;
 
-    for (i=1; i<n; i++) {
+    DPRINTF(("function_word_to_left: s='%s', n=%d\n", s, n));
+
+    for (i=1; i<=n; i++) {
 	const char *p = s + n - i;
 
 	if (!isalpha(*p)) {
 	    break;
-	} else if (get_genr_function(p)) {
+	} else if ((i == n || !VNCHAR(*(p-1))) && 
+		   get_genr_function(p)) {
 	    ret = 1;
 	    break;
-	} 
+	}
     }
 
     return ret;
@@ -1279,6 +1289,9 @@ static int unary_op_context (char *start, char *p)
 {
     int pos = p - start;
     int ret = 0;
+
+    DPRINTF(("unary_op_context: start='%s', *p='%s', pos=%d\n", 
+	     start, p, pos)); 
 
     /* plus/minus at very start of formula, or directly preceded
        by another operator: must be plain unary */
@@ -1300,6 +1313,8 @@ static int unary_op_context (char *start, char *p)
 	    ret = 1;
 	}
     }
+
+    DPRINTF(("unary_op_context: ret=%d\n", ret));
 
     return ret;
 }
@@ -3150,9 +3165,7 @@ static int get_fracdiff (const double *y, double *diffvec, double d,
     double phi = -d;
     int err;
 
-#if GENR_DEBUG
-    fprintf(stderr, "Doing get_fracdiff, with d = %g\n", d);
-#endif
+    DPRINTF(("Doing get_fracdiff, with d = %g\n", d));
 
     if (t1 == 0) t1 = 1;
 
@@ -3171,7 +3184,7 @@ static int get_fracdiff (const double *y, double *diffvec, double d,
 	}
     }   
 
-    for (dd=1; dd<T && fabs(phi)>TOL; dd++) {
+    for (dd=1; dd<=T && fabs(phi)>TOL; dd++) {
 	for (t=dd; t<=t2; t++) {
 	    if (t >= t1) {
 		diffvec[t] += phi * y[t - dd];
