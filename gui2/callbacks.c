@@ -385,7 +385,7 @@ void model_genr_callback (gpointer data, guint u, GtkWidget *widget)
 
     edit_dialog(_("gretl: add var"), _("Enter formula for new variable:"),
 		"", do_model_genr, mydata, 
-		MODEL_GENR, VARCLICK_INSERT_NAME);   
+		MODEL_GENR, VARCLICK_INSERT_NAME, 0);   
 }
 
 void selector_callback (gpointer data, guint action, GtkWidget *widget)
@@ -518,7 +518,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
     }
 
     edit_dialog(title, query, defstr, okfunc, mydata, 
-		action, varclick);   
+		action, varclick, 0);   
 }
 
 /* ........................................................... */
@@ -597,13 +597,13 @@ void add_random_callback (gpointer data, guint code, GtkWidget *widget)
 		       "minimum and maximum values:"), 
 		     "unif 0 1",  
 		     do_random, NULL, 
-		     GENR_UNIFORM, GENR);
+		     GENR_UNIFORM, GENR, 0);
     } else if (code == GENR_NORMAL) {
 	edit_dialog (_("gretl: normal variable"), 
 		     _("Enter name, mean and standard deviation:"), 
 		     "norm 0 1", 
 		     do_random, NULL, 
-		     GENR_NORMAL, GENR);
+		     GENR_NORMAL, GENR, 0);
     }
 }
 
@@ -632,7 +632,7 @@ static void first_var_dialog (DATAINFO *pdinfo)
 		 _("Enter name for new variable\n"
 		   "(max. 8 characters)"),
 		 NULL, name_first_var, pdinfo, 
-		 0, 0);
+		 0, 0, 0);
 }
 
 static int prep_spreadsheet (const char *dataspec)
@@ -699,7 +699,7 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget)
 	strcpy(datainfo->stobs, "1");
 	edit_dialog (_("gretl: create data set"), 
 		     _("Number of observations:"), "50",
-		     n_obs_callback, NULL, 0, 0);
+		     n_obs_callback, NULL, 0, 0, 0);
 	return;
     } else {
 	datainfo->structure = TIME_SERIES;

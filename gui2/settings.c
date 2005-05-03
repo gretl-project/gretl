@@ -2303,7 +2303,7 @@ void first_time_set_user_dir (void)
 		   "Please enter a directory for gretl user files."),
                  paths.userdir, 
                  real_set_userdir, NULL, 
-                 CREATE_USERDIR, 0);
+                 CREATE_USERDIR, 0, 0);
 }
 
 #endif /* G_OS_WIN32 */

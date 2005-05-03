@@ -90,7 +90,9 @@ static void name_new_var (GtkWidget *widget, dialog_t *ddata)
 {
     const char *buf = dialog_data_get_text(ddata);
 
-    if (buf == NULL || validate_varname(buf)) return;
+    if (buf == NULL || validate_varname(buf)) {
+	return;
+    }
 
     *newvarname = '\0';
     strncat(newvarname, buf, 8);
@@ -120,10 +122,8 @@ static void name_var_dialog (void)
 		 _("Enter name for new variable\n"
 		 "(max. 8 characters)"),
 		 NULL, name_new_var, mdata, 
-		 0, 0);
+		 0, 0, 1);
 }
-
-/* ........................................................... */
 
 static void new_case_dialog (void) 
 {
@@ -131,7 +131,7 @@ static void new_case_dialog (void)
 		 _("Enter case marker for new obs\n"
 		 "(max. 8 characters)"),
 		 NULL, name_new_obs, mdata, 
-		 0, 0);
+		 0, 0, 1);
 }
 
 /* ........................................................... */
@@ -141,7 +141,7 @@ static void sheet_add_var (void)
     GtkSheet *sheet = GTK_SHEET(gretlsheet); 
 
     *newvarname = '\0';
-
+    
     name_var_dialog();
 
     if (*newvarname != '\0') {
@@ -164,7 +164,9 @@ static void sheet_add_obs (void)
 
     *newobsmarker = '\0';
 
-    if (datainfo->markers) new_case_dialog();
+    if (datainfo->markers) {
+	new_case_dialog();
+    }
 
     if (!datainfo->markers || *newobsmarker != '\0') {
 	gtk_sheet_add_row(sheet, 1);
@@ -188,7 +190,9 @@ static void sheet_insert_obs (void)
 
     newobsmarker[0] = '\0';
 
-    if (datainfo->markers) new_case_dialog();
+    if (datainfo->markers) {
+	new_case_dialog();
+    }
 
     if (!datainfo->markers || *newobsmarker != '\0') {
 	gtk_sheet_insert_rows(sheet, sheet->active_cell.row, 1);

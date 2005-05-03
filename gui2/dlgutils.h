@@ -47,7 +47,7 @@ void set_open_dialog (GtkWidget *w);
 
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
-		  guint hlpcode, guint varclick);
+		  guint hlpcode, guint varclick, int blocking);
 
 const gchar *dialog_data_get_text (dialog_t *ddata);
 

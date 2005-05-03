@@ -207,13 +207,18 @@ struct dialog_t_ {
     gpointer data;
     gint code;
     gretlopt opt;
+    int blocking;
 };
 
 static void destroy_dialog_data (GtkWidget *w, gpointer data) 
 {
-    dialog_t *ddata = (dialog_t *) data;
+    dialog_t *d = (dialog_t *) data;
 
-    g_free (ddata); 
+    if (d->blocking) {
+	gtk_main_quit();
+    }
+
+    g_free(d); 
 
     open_dialog = NULL;
 
@@ -223,16 +228,20 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
 }
 
 static dialog_t *
-dialog_data_new (gpointer data, gint code, const char *title)
+dialog_data_new (gpointer data, gint code, const char *title,
+		 int blocking)
 {
     dialog_t *d = mymalloc(sizeof *d);
 
-    if (d == NULL) return NULL;
+    if (d == NULL) {
+	return NULL;
+    }
 
     d->data = data;
     d->code = code;
     d->opt = OPT_NONE;
     d->dialog = gtk_dialog_new();
+    d->blocking = blocking;
 
     gtk_window_set_title(GTK_WINDOW(d->dialog), title);
 
@@ -412,7 +421,7 @@ static void sample_replace_buttons (GtkWidget *box, gpointer data)
 
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
-		  guint cmdcode, guint varclick)
+		  guint cmdcode, guint varclick, int blocking)
 {
     dialog_t *d;
     GtkWidget *tempwid;
@@ -424,7 +433,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	return;
     }
 
-    d = dialog_data_new(okptr, cmdcode, diagtxt);
+    d = dialog_data_new(okptr, cmdcode, diagtxt, blocking);
     if (d == NULL) return;
 
     open_dialog = d->dialog;
@@ -516,5 +525,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     if (modal) {
 	gtk_window_set_modal(GTK_WINDOW(d->dialog), TRUE);
+    }
+
+    if (d->blocking) {
+	gtk_main();
     }
 } 
