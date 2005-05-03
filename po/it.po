@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-05-02 22:16-0400\n"
-"PO-Revision-Date: 2005-05-02 11:20+0200\n"
+"PO-Revision-Date: 2005-05-03 12:12+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -863,17 +863,17 @@ msgstr "attenzione: alcuni nomi di variabile sono stati duplicati\n"
 #: lib/src/dataio.c:3927
 #, c-format
 msgid "   Found matrix '%s' with %d rows, %d columns\n"
-msgstr ""
+msgstr "   Trovata matrice '%s' con %d righe e %d colonne\n"
 
 #: lib/src/dataio.c:3968
-#, fuzzy, c-format
+#, c-format
 msgid "   number of observations: %d\n"
-msgstr "Numero di osservazioni = %d\n"
+msgstr "   numero di osservazioni: %d\n"
 
 #: lib/src/dataio.c:3969
-#, fuzzy, c-format
+#, c-format
 msgid "   number of data blocks: %d\n"
-msgstr "   Numero di variabili: %d\n"
+msgstr "   numero di blocchi di dati: %d\n"
 
 #: lib/src/dataio.c:4130
 #, c-format
@@ -5012,9 +5012,8 @@ msgid "/File/Open data/import ASCII..."
 msgstr "/File/Apri dati/Importa _ASCII..."
 
 #: gui/gretl.c:166 gui2/gretl.c:222
-#, fuzzy
 msgid "/File/Open data/import Octave..."
-msgstr "/File/Apri dati/Importa _Excel..."
+msgstr "/File/Apri dati/Importa _Octave..."
 
 #: gui/gretl.c:167 gui2/gretl.c:223
 msgid "/File/Open data/import BOX..."
@@ -5045,9 +5044,8 @@ msgid "/File/Append data/from ASCII..."
 msgstr "/File/Aggiungi dati/Da _ASCII..."
 
 #: gui/gretl.c:178 gui2/gretl.c:241
-#, fuzzy
 msgid "/File/Append data/from Octave..."
-msgstr "/File/Aggiungi dati/Da _Excel..."
+msgstr "/File/Aggiungi dati/Da _Octave..."
 
 #: gui/gretl.c:179 gui2/gretl.c:242
 msgid "/File/Append data/from Gnumeric..."
@@ -7010,9 +7008,8 @@ msgid "Open CSV file"
 msgstr "Apri file CSV"
 
 #: gui2/callbacks.c:231
-#, fuzzy
 msgid "Open Octave file"
-msgstr "Apri file dati"
+msgstr "Apri file Octave"
 
 #: gui2/callbacks.c:234
 msgid "Open BOX file"
@@ -11745,29 +11742,3 @@ msgstr ""
 #: plugin/workbook.c:585
 msgid "Unexpected error reading the file\n"
 msgstr "Errore inatteso durante la lettura del file\n"
-
-#~ msgid "ITER"
-#~ msgstr "ITER"
-
-#~ msgid ""
-#~ "Starting obs (min = %s)\n"
-#~ "and ending obs (max = %s)?"
-#~ msgstr ""
-#~ "Oss. iniziale (min = %s)\n"
-#~ "e oss. finale (max = %s)?"
-
-#~ msgid "gretl: rank correlation"
-#~ msgstr "gretl: correlazione di rango"
-
-#~ msgid "Enter two variables by name or number:"
-#~ msgstr "Indicare due variabili con nome o ID:"
-
-#~ msgid "gretl: correlogram"
-#~ msgstr "gretl: correlogramma"
-
-#~ msgid ""
-#~ "Max lag length?\n"
-#~ "(0 for automatic):"
-#~ msgstr ""
-#~ "Numero massimo di ritardi\n"
-#~ "(0 per automatico):"
