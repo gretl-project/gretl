@@ -27,8 +27,6 @@
 #include "menustate.h"
 #include "dlgutils.h"
 
-/* ........................................................... */
-
 void menu_exit_check (GtkWidget *w, gpointer data)
 {
     int ret = exit_check(w, NULL, data);
@@ -37,8 +35,6 @@ void menu_exit_check (GtkWidget *w, gpointer data)
 	gtk_main_quit();
     }
 }
-
-/* ......................................................... */
 
 static void save_data_callback (void)
 {
@@ -237,9 +233,6 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
     dump_cmd_stack(fname, 0);
 #endif
 
-    /* FIXME: should make both save_session_callback() and
-       save_data_callback() blocking functions */
-
     if (!expert && !replaying() && 
 	(session_changed(0) || (work_done() && !session_is_saved()))) {
 
@@ -312,8 +305,8 @@ static void set_dec (GtkWidget *w, gpointer p)
 
 static void set_delim (GtkWidget *w, gpointer p)
 {
-    gint i;
     csv_stuff *csv = (csv_stuff *) p;
+    gint i;
 
     if (GTK_TOGGLE_BUTTON(w)->active) {
 	i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
@@ -321,8 +314,8 @@ static void set_delim (GtkWidget *w, gpointer p)
 	if (csv->point_button != NULL && 
 	    csv->delim == ',' && csv->decpoint == ',') {
 	    csv->decpoint = '.';
-	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (csv->point_button), 
-					  TRUE);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(csv->point_button), 
+					 TRUE);
 	}
     }
 }
@@ -490,7 +483,7 @@ static void destroy_format_dialog (GtkWidget *w, struct format_info *finfo)
 static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
 {
     gtk_widget_hide(finfo->dialog);
-#ifdef OLD_GTK /* is there a real difference? */
+#ifdef OLD_GTK
     text_copy(finfo->vwin, finfo->format, NULL);
 #else
     text_copy(finfo->vwin, finfo->format, w);
@@ -795,6 +788,7 @@ static void show_varinfo_changes (int v)
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
 
     gtk_tree_model_get_iter_first(model, &iter);
+
     for (i=1; i<datainfo->v; i++) {
 	gtk_tree_model_iter_next(model, &iter);
 	gtk_tree_model_get(model, &iter, 0, &idstr, -1);
@@ -1530,6 +1524,11 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 
     gtk_main();
 }
+
+/* general purpose dialog box for getting from the user either one or
+   two observations (e.g. for setting the break point in a Chow test,
+   or setting the start and end of a forecast range)
+*/
 
 int get_obs_dialog (const char *title, const char *text,
 		    const char *t1str, const char *t2str,
@@ -2376,6 +2375,9 @@ static void set_checks_opt (GtkWidget *w, int *active)
     active[i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 }
 
+/* general purpose dialog offering check-button options and/or
+   a spinner with numerical values */
+
 int checks_dialog (const char *title, const char **opts, int nopts, 
 		   int *active, int *spinval, const char *spintext, 
 		   int spinmin, int spinmax, int helpcode)
@@ -2392,6 +2394,7 @@ int checks_dialog (const char *title, const char **opts, int nopts,
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(dialog_unblock), NULL);
 
+    /* create spinner if wanted */
     if (spinval != NULL) {
 	tempwid = option_spinbox(spintext, spinmin, spinmax, spinval);
 	gtk_widget_show(tempwid);
@@ -2399,6 +2402,7 @@ int checks_dialog (const char *title, const char **opts, int nopts,
 			   tempwid, TRUE, TRUE, 0);
     }
 
+    /* create check buttons, if any */
     for (i=0; i<nopts; i++) {
 	button = gtk_check_button_new_with_label(_(opts[i]));
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
@@ -2424,19 +2428,26 @@ int checks_dialog (const char *title, const char **opts, int nopts,
     /* Create the "Cancel" button */
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 
-    /* Create a "Help" button? */
+    /* Create a "Help" button if wanted */
     if (helpcode) {
 	context_help_button(GTK_DIALOG(dialog)->action_area, helpcode);
     }
 
     gtk_widget_show(dialog);
 
+    /* block */
     gtk_main();
 
     return ret;
 }
 
-/* ........................................................... */
+spin_dialog (const char *title, int *spinval, const char *spintext, 
+	     int spinmin, int spinmax, int helpcode)
+{
+    return checks_dialog(title, NULL, 0, NULL,
+			 spinval, spintext,
+			 spinmin, spinmax, helpcode);
+}
 
 #if defined(OLD_GTK)
 

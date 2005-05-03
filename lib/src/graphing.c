@@ -2416,16 +2416,6 @@ gretl_var_plot_impulse_response (GRETL_VAR *var,
     char title[128];
     int t, err;
 
-    if (periods == 0) {
-	if (pdinfo->pd == 4) {
-	    periods = 24;
-	} else if (pdinfo->pd == 12) {
-	    periods = 36;
-	} else {
-	    periods = 12;
-	}
-    }
-
     if ((err = gnuplot_init(PLOT_REGULAR, &fp))) {
 	return err;
     }

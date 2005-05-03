@@ -320,7 +320,18 @@ static int periods_from_pd (int pd)
     return periods;
 }
 
-int 
+int default_VAR_horizon (const DATAINFO *pdinfo)
+{
+    int h = get_VAR_horizon();
+
+    if (h == 0) {
+	h = periods_from_pd(pdinfo->pd);
+    }
+
+    return h;
+}
+
+static int 
 gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATAINFO *pdinfo, 
 				  int pause, PRN *prn)
@@ -338,10 +349,6 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 	fprintf(stderr, "Shock variable out of bounds\n");
 	return 1;
     }  
-
-    if (periods == 0) {
-	periods = periods_from_pd(pdinfo->pd);
-    }
 
     rtmp = gretl_matrix_alloc(rows, var->neqns);
     if (rtmp == NULL) return E_ALLOC;
@@ -619,7 +626,7 @@ gretl_var_get_fcast_decomp (GRETL_VAR *var, int targ, int periods)
 
 #define VDROWMAX 5
 
-int 
+static int 
 gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 			      int periods, const DATAINFO *pdinfo, 
 			      int pause, PRN *prn)
@@ -635,10 +642,6 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
     if (targ >= var->neqns) {
 	fprintf(stderr, "Target variable out of bounds\n");
 	return 1;
-    } 
-
-    if (periods == 0) {
-	periods = periods_from_pd(pdinfo->pd);
     } 
 
     vd = gretl_var_get_fcast_decomp(var, targ, periods);
@@ -1374,7 +1377,7 @@ static int real_var (int order, const int *inlist,
     }
 
     if (impulses && !err) {
-	int horizon = get_VAR_horizon();
+	int horizon = default_VAR_horizon(pdinfo);
 
 #if VAR_DEBUG
 	gretl_matrix_print(var->C, "var->C", prn);
@@ -2477,8 +2480,11 @@ int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, j, k, v;
     int dfd = (var->models[0])->dfd;
+    int horizon;
 
-    if (prn == NULL) return 0;
+    if (prn == NULL) {
+	return 0;
+    }
 
     if (TEX_PRN(prn)) {
 	pputs(prn, "\\noindent");
@@ -2542,9 +2548,11 @@ int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 
     pputc(prn, '\n');
 
+    horizon = default_VAR_horizon(pdinfo);
+
     for (i=0; i<var->neqns; i++) {
-	gretl_var_print_impulse_response(var, i, 0, pdinfo, 0, prn);
-	gretl_var_print_fcast_decomp(var, i, 0, pdinfo, 0, prn);
+	gretl_var_print_impulse_response(var, i, horizon, pdinfo, 0, prn);
+	gretl_var_print_fcast_decomp(var, i, horizon, pdinfo, 0, prn);
     }
 
     return 0;

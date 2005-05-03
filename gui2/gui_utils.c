@@ -2889,16 +2889,24 @@ static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    gchar *title;
+    int h = default_VAR_horizon(datainfo);
     gint targ;
     int err;
 
-#ifndef OLD_GTK
     targ = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "targ"));
-#else
-    targ = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "targ"));
-#endif
 
-    err = gretl_var_plot_impulse_response(var, targ, shock, 0, datainfo);
+    title = g_strdup_printf("gretl: %s", _("impulse responses"));
+
+    err = spin_dialog(title, &h, _("forecast horizon (periods):"),
+		      2, datainfo->n / 2, 0);
+    g_free(title);
+
+    if (err < 0) {
+	return;
+    }    
+
+    err = gretl_var_plot_impulse_response(var, targ, shock, h, datainfo);
 
     if (!err) {
 	register_graph();

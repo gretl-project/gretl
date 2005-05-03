@@ -834,8 +834,9 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 			active,
 			&order, _(spintext),
 			0, omax, action);
-
-    if (err < 0) return;
+    if (err < 0) {
+	return;
+    }
 
     if (action == ADF) {
 	if (active[0] == 0 &&
@@ -1739,10 +1740,9 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
 
     order = default_lag_order(datainfo);
 
-    err = checks_dialog(_("gretl: autocorrelation"), 
-			NULL, 0, NULL, &order, 
-			_("Lag order for test:"),
-			1, datainfo->n / 2, LMTEST);
+    err = spin_dialog(_("gretl: autocorrelation"), 
+		      &order, _("Lag order for test:"),
+		      1, datainfo->n / 2, LMTEST);
     if (err < 0) {
 	return;
     }
@@ -1801,10 +1801,9 @@ void do_arch (gpointer data, guint u, GtkWidget *widget)
 
     order = default_lag_order(datainfo);
 
-    err = checks_dialog(_("gretl: ARCH test"),
-			NULL, 0, NULL, &order, 
-			_("Lag order for ARCH test:"),
-			1, datainfo->n / 2, ARCH);
+    err = spin_dialog(_("gretl: ARCH test"),
+		      &order, _("Lag order for ARCH test:"),
+		      1, datainfo->n / 2, ARCH);
     if (err < 0) {
 	return;
     }
@@ -3039,9 +3038,8 @@ void do_corrgm (gpointer data, guint u, GtkWidget *widget)
 
     order = auto_acf_order(datainfo->pd, T);
 
-    err = checks_dialog(title, NULL, 0, NULL, &order, 
-			_("Maximum lag:"),
-			1, T - 1, CORRGM);
+    err = spin_dialog(title, &order, _("Maximum lag:"),
+		      1, T - 1, CORRGM);
     if (err < 0) {
 	return;
     }    
@@ -3233,10 +3231,9 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 
 	order = default_lag_order(datainfo);
 
-	resp = checks_dialog(_("gretl: generate lags"), 
-			     NULL, 0, NULL, &order,
-			     _("Number of lags to create:"), 
-			     1, datainfo->n - 1, 0);
+	resp = spin_dialog(_("gretl: generate lags"), 
+			   &order, _("Number of lags to create:"), 
+			   1, datainfo->n - 1, 0);
 	if (resp < 0) {
 	    free(liststr);
 	    return;

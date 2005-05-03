@@ -3167,8 +3167,6 @@ static int get_fracdiff (const double *y, double *diffvec, double d,
 
     DPRINTF(("Doing get_fracdiff, with d = %g\n", d));
 
-    if (t1 == 0) t1 = 1;
-
     err = series_adjust_t1t2(y, &t1, &t2);
     if (err) {
 	return E_DATA;
@@ -3185,10 +3183,8 @@ static int get_fracdiff (const double *y, double *diffvec, double d,
     }   
 
     for (dd=1; dd<=T && fabs(phi)>TOL; dd++) {
-	for (t=dd; t<=t2; t++) {
-	    if (t >= t1) {
-		diffvec[t] += phi * y[t - dd];
-	    }
+	for (t=t1+dd; t<=t2; t++) {
+	    diffvec[t] += phi * y[t - dd];
 	}
 	phi *= (dd - d)/(dd + 1);
     }

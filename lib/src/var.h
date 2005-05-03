@@ -58,14 +58,11 @@ int johansen_test (int order, const int *list,
 		   double ***pZ, DATAINFO *pdinfo,
 		   gretlopt opt, PRN *prn);
 
+int default_VAR_horizon (const DATAINFO *pdinfo);
+
 double *
 gretl_var_get_impulse_responses (GRETL_VAR *var, int targ, int shock,
 				 int periods);
-
-int 
-gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
-				  int periods, const DATAINFO *pdinfo, 
-				  int pause, PRN *prn);
 
 int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn);
 
