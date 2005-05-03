@@ -30,11 +30,15 @@ int *gretl_list_new (int nterms)
     int i;
 
     list = malloc((nterms + 1) * sizeof *list);
-    if (list == NULL) return NULL;
+    if (list == NULL) {
+	return NULL;
+    }
 
     list[0] = nterms;
 
-    for (i=1; i<=nterms; i++) list[i] = 0;
+    for (i=1; i<=nterms; i++) {
+	list[i] = 0;
+    }
 
     return list;
 }

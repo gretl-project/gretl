@@ -40,6 +40,7 @@ static GtkWidget *sheet_popup;
 static char newvarname[9], newobsmarker[9];
 static int numcolumns, numrows;
 static int sheet_modified;
+static int n_hidden;
 
 static void sheet_add_var (void);
 static void sheet_add_obs (void);
@@ -57,6 +58,26 @@ static GtkItemFactoryEntry sheet_items[] = {
     { N_("/_Clear/_Selected cells"), NULL, sheet_clear, 0, NULL },
     { N_("/_Clear/_All data"), NULL, sheet_clear, 1, NULL }
 };
+
+static void disable_obs_menu (GtkItemFactory *ifac)
+{
+    GtkWidget *w = gtk_item_factory_get_item(ifac, "/Observation");
+
+    gtk_widget_set_sensitive(w, FALSE);
+}
+
+static int spreadsheet_hide (int i, const DATAINFO *pdinfo)
+{
+    int ret = 0;
+
+    if (pdinfo->vector[i] == 0) {
+	ret = 1;
+    } else if (hidden_var(i, pdinfo)) {
+	ret = 1;
+    }
+
+    return ret;
+}
 
 /* ........................................................... */
 
@@ -146,11 +167,11 @@ static void sheet_add_var (void)
 
     if (*newvarname != '\0') {
 	gtk_sheet_add_column(sheet, 1);
+	gtk_sheet_column_button_add_label(sheet, numcolumns, newvarname);
+	gtk_sheet_set_column_title(sheet, numcolumns, newvarname);
+	gtk_sheet_set_active_cell(sheet, 0, numcolumns);
+	gtk_sheet_moveto(sheet, 0, numcolumns, 0.0, 0.8);
 	numcolumns++;
-	gtk_sheet_column_button_add_label(sheet, numcolumns-1, newvarname);
-	gtk_sheet_set_column_title(sheet, numcolumns-1, newvarname);
-	gtk_sheet_set_active_cell(sheet, 0, numcolumns-1);
-	gtk_sheet_moveto(sheet, 0, numcolumns-1, 0.0, 0.8);
 	sheet_modified = 1;
     }
 }
@@ -170,12 +191,12 @@ static void sheet_add_obs (void)
 
     if (!datainfo->markers || *newobsmarker != '\0') {
 	gtk_sheet_add_row(sheet, 1);
+	get_full_obs_string(rowlabel, numrows, datainfo);
+	gtk_sheet_row_button_add_label(sheet, numrows, rowlabel);
+	gtk_sheet_set_row_title(sheet, numrows, rowlabel);
+	gtk_sheet_set_active_cell(sheet, numrows, 0);
+	gtk_sheet_moveto(sheet, numrows, 0, 0.8, 0.0);
 	numrows++;
-	get_full_obs_string(rowlabel, numrows-1, datainfo);
-	gtk_sheet_row_button_add_label(sheet, numrows-1, rowlabel);
-	gtk_sheet_set_row_title(sheet, numrows-1, rowlabel);
-	gtk_sheet_set_active_cell(sheet, numrows-1, 0);
-	gtk_sheet_moveto(sheet, numrows-1, 0, 0.8, 0.0);
 	sheet_modified = 1;
     }
 }
@@ -416,20 +437,25 @@ static gint activate_sheet_cell (GtkWidget *w, gint row, gint column,
 
 static void get_data_from_sheet (void)
 {
-    int i, t, n = datainfo->n, oldv = datainfo->v; 
-    int newvars = numcolumns - oldv + 1, newobs = numrows - n;
+    int oldv = datainfo->v; 
+    int oldcols = oldv - 1 - n_hidden;
+    int newvars = numcolumns - oldcols;
+    int newobs = numrows - datainfo->n;
     int missobs = 0;
     gchar *celltext;
     GtkSheet *sheet = GTK_SHEET(gretlsheet);
+    int i, j, t;
 
-    if (check_data_in_sheet()) return;
+    if (check_data_in_sheet()) {
+	return;
+    }
 
     if (newobs > 0) {
-	if (grow_nobs(newobs, &Z, datainfo)) {
+	if (grow_nobs(newobs, &Z, datainfo) ||
+	    dataset_destroy_hidden_vars(&Z, datainfo)) {
 	    errbox(_("Failed to allocate memory for new data"));
 	    return;
 	}
-	n = datainfo->n;
     }
 
     if (newvars > 0) {
@@ -438,29 +464,30 @@ static void get_data_from_sheet (void)
 	    return;
 	}
 	for (i=0; i<newvars; i++) { 
-	    strcpy(datainfo->varname[i+oldv], 
-		   sheet->column[i+oldv-1].button.label);
-	    strcpy(VARLABEL(datainfo, i + oldv), "");
+	    strcpy(datainfo->varname[i + oldv], 
+		   sheet->column[i + oldcols].button.label);
 	}
     }
 
-    for (i=0; i<datainfo->v-1; i++) {
-	for (t=0; t<n; t++) {
-	    if (datainfo->vector[i+1] == 0 && t > 0) {
-		continue;
-	    }
-	    celltext = gtk_sheet_cell_get_text(sheet, t, i);
+    j = 0;
+    for (i=1; i<datainfo->v; i++) {
+	if (spreadsheet_hide(i, datainfo)) {
+	    continue;
+	}
+	for (t=0; t<datainfo->n; t++) {
+	    celltext = gtk_sheet_cell_get_text(sheet, t, j);
 	    if (celltext != NULL && *celltext != 0) {
-		Z[i+1][t] = atof(celltext);
+		Z[i][t] = atof(celltext);
 	    } else {
-		Z[i+1][t] = NADBL;
+		Z[i][t] = NADBL;
 		missobs = 1;
 	    }
 	}
+	j++;
     }
 
     if (datainfo->markers && datainfo->S != NULL) {
-	for (t=0; t<n; t++) {
+	for (t=0; t<datainfo->n; t++) {
 	    strcpy(datainfo->S[t], sheet->row[t].button.label); 
 	}
     }
@@ -482,38 +509,47 @@ static void get_data_from_sheet (void)
 static void add_data_to_sheet (GtkWidget *w)
 {
     gchar label[32], rowlabel[10];
-    gint i, t, n = datainfo->n;
     GtkSheet *sheet = GTK_SHEET(w);
-    double xx;
+    int i, j, t;
 
-    /* row and column buttons */
-    for (i=0; i<datainfo->v-1; i++) {
-	gtk_sheet_column_button_add_label(sheet, i, datainfo->varname[i+1]);
-	gtk_sheet_set_column_title(sheet, i, datainfo->varname[i+1]);
+    n_hidden = 0;
+    numrows = datainfo->n;
+
+    j = 0;
+    for (i=1; i<datainfo->v; i++) {
+	if (spreadsheet_hide(i, datainfo)) {
+	    n_hidden++;
+	    continue;
+	}
+	gtk_sheet_column_button_add_label(sheet, j, datainfo->varname[i]);
+	gtk_sheet_set_column_title(sheet, j, datainfo->varname[i]);
+	j++;
     }
-    numcolumns = i;
 
-    for (t=0; t<n; t++) {
+    numcolumns = j;
+
+    for (t=0; t<datainfo->n; t++) {
 	get_full_obs_string(rowlabel, t, datainfo);
 	gtk_sheet_row_button_add_label(sheet, t, rowlabel);
 	gtk_sheet_set_row_title(sheet, t, rowlabel);
     }
-    numrows = t;
 
-    /* enter the data values */
-    for (t=0; t<n; t++) {
-	for (i=0; i<datainfo->v-1; i++) {
-	    if (datainfo->vector[i+1] == 0 && t > 0) continue;
-	    xx = Z[i+1][t];
-	    if (!na(xx)) {
-		sprintf(label, "%.*f", DEFAULT_PRECISION, Z[i+1][t]);
+    j = 0;
+    for (i=1; i<datainfo->v; i++) {
+	if (spreadsheet_hide(i, datainfo)) {
+	    continue;
+	}
+	for (t=0; t<datainfo->n; t++) {
+	    if (!na(Z[i][t])) {
+		sprintf(label, "%.*f", DEFAULT_PRECISION, Z[i][t]);
 	    } else {
 		*label = 0;
 	    }
-	    gtk_sheet_set_cell(sheet, t, i, GTK_JUSTIFY_RIGHT, label); 
+	    gtk_sheet_set_cell(sheet, t, j, GTK_JUSTIFY_RIGHT, label); 
 	}
+	j++;
     }
-
+    
     sheet_modified = 0;
 }
 
@@ -523,25 +559,40 @@ static void add_skel_to_sheet (GtkWidget *w)
 {
     GtkSheet *sheet = GTK_SHEET(w);
     gchar rowlabel[10];
-    gint i, t, n = datainfo->n;
+    int i, j, t;
 
-    for (i=0; i<datainfo->v-1; i++) {
-	gtk_sheet_column_button_add_label(sheet, i, datainfo->varname[i+1]);
-	gtk_sheet_set_column_title(sheet, i, datainfo->varname[i+1]);
+    numrows = datainfo->n;
+    numcolumns = 0;
+    n_hidden = 0;
+
+    j = 0;
+    for (i=1; i<datainfo->v; i++) {
+	if (spreadsheet_hide(i, datainfo)) {
+	    n_hidden++;
+	    continue;
+	}
+	gtk_sheet_column_button_add_label(sheet, j, datainfo->varname[i]);
+	gtk_sheet_set_column_title(sheet, j, datainfo->varname[i]);
+	j++;
     }
-    numcolumns = i;
 
-    for (t=0; t<n; t++) {
+    numcolumns = j;
+
+    for (t=0; t<datainfo->n; t++) {
 	get_full_obs_string(rowlabel, t, datainfo);
 	gtk_sheet_row_button_add_label(sheet, t, rowlabel);
 	gtk_sheet_set_row_title(sheet, t, rowlabel);
     }
-    numrows = t;
 
-    for (i=0; i<datainfo->v-1; i++) {
-	for (t=0; t<n; t++) {
-	    gtk_sheet_set_cell(sheet, t, i, GTK_JUSTIFY_RIGHT, ""); 
+    j = 0;
+    for (i=1; i<datainfo->v; i++) {
+	if (spreadsheet_hide(i, datainfo)) {
+	    continue;
 	}
+	for (t=0; t<datainfo->n; t++) {
+	    gtk_sheet_set_cell(sheet, t, j, GTK_JUSTIFY_RIGHT, ""); 
+	}
+	j++;
     }
 
     sheet_modified = 0;
@@ -612,6 +663,9 @@ void show_spreadsheet (DATAINFO *pdinfo)
     gtk_item_factory_create_items(ifac, 
 				  sizeof sheet_items / sizeof sheet_items[0],
 				  sheet_items, sheetwin);
+    if (dataset_is_subsampled()) {
+	disable_obs_menu(ifac);
+    }
     mbar = gtk_item_factory_get_widget(ifac, "<main>");
     gtk_accel_group_attach(accel, GTK_OBJECT (sheetwin));
     gtk_box_pack_start(GTK_BOX(main_vbox), mbar, FALSE, TRUE, 0);

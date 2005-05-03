@@ -185,6 +185,8 @@ int varnum_from_string (const char *str, DATAINFO *pdinfo);
 int dataset_drop_listed_vars (const int *list, double ***pZ, 
 			      DATAINFO *pdinfo, int *renumber);
 
+int dataset_destroy_hidden_vars (double ***pZ, DATAINFO *pdinfo);
+
 int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo);
 
 int rename_var_by_id (const char *str, const char *vname, 

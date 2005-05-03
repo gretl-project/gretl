@@ -1599,9 +1599,15 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
     
     for (i=0; i<datainfo->v; i++) {
-	if (i == 0 && !MODEL_CODE(cmdcode)) continue;
-        if (hidden_var(i, datainfo)) continue;
-	if (screen_scalar(i, cmdcode)) continue;
+	if (i == 0 && !MODEL_CODE(cmdcode)) {
+	    continue;
+	}
+        if (hidden_var(i, datainfo)) {
+	    continue;
+	}
+	if (screen_scalar(i, cmdcode)) {
+	    continue;
+	}
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, i, 1, datainfo->varname[i], -1);
     }

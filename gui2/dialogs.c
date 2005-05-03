@@ -2441,8 +2441,8 @@ int checks_dialog (const char *title, const char **opts, int nopts,
     return ret;
 }
 
-spin_dialog (const char *title, int *spinval, const char *spintext, 
-	     int spinmin, int spinmax, int helpcode)
+int spin_dialog (const char *title, int *spinval, const char *spintext, 
+		 int spinmin, int spinmax, int helpcode)
 {
     return checks_dialog(title, NULL, 0, NULL,
 			 spinval, spintext,

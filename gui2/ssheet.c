@@ -42,7 +42,7 @@ typedef struct {
     gchar location[20];
     gint datacols, datarows;
     gint totcols;
-    gint n_scalars;
+    gint n_hidden;
     guint cid;
     guint point;
 } spreadsheet;
@@ -67,10 +67,31 @@ static GtkItemFactoryEntry sheet_items[] = {
       NULL, GNULL },
     { N_("/Observation/_Insert obs"), NULL, sheet_add_obs_callback, SHEET_AT_POINT, 
       NULL, GNULL },
-    { N_("/Add _Variable"), NULL, sheet_add_var_callback, 0, NULL, GNULL }
+    { N_("/_Variable"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Variable/_Add"), NULL, sheet_add_var_callback, 0, NULL, GNULL }
 };
 
 static int sheet_modified;
+
+static void disable_obs_menu (GtkItemFactory *ifac)
+{
+    GtkWidget *w = gtk_item_factory_get_item(ifac, "/Observation");
+
+    gtk_widget_set_sensitive(w, FALSE);
+}
+
+static int spreadsheet_hide (int i, const DATAINFO *pdinfo)
+{
+    int ret = 0;
+
+    if (pdinfo->vector[i] == 0) {
+	ret = 1;
+    } else if (hidden_var(i, pdinfo)) {
+	ret = 1;
+    }
+
+    return ret;
+}
 
 /* .................................................................. */
 
@@ -516,8 +537,6 @@ static void sheet_add_var_callback (gpointer data, guint u, GtkWidget *w)
     name_var_dialog(sheet);
 }
 
-/* ........................................................... */
-
 static void sheet_add_obs_callback (gpointer data, guint where, GtkWidget *w)
 {
     spreadsheet *sheet = (spreadsheet *) data;
@@ -530,8 +549,6 @@ static void sheet_add_obs_callback (gpointer data, guint where, GtkWidget *w)
 	real_add_new_obs(sheet, NULL);
     }
 }
-
-/* ........................................................... */
 
 static void popup_sheet_add_obs (GtkWidget *w, spreadsheet *sheet)
 {
@@ -623,27 +640,25 @@ static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
 
 static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 {
-    int n = datainfo->n, oldv = datainfo->v;
-    int i, t;
-    int orig_cols, newvars, newobs, missobs = 0;
+    int oldv = datainfo->v;
+    int oldcols = oldv - 1 - sheet->n_hidden;
+    int newvars = sheet->datacols - oldcols;
+    int newobs = sheet->datarows - datainfo->n;
+    int missobs = 0;
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     GtkTreeIter iter;
     GtkTreeViewColumn *column;
     GtkTreeModel *model;
-    gint colnum;
-
-    newobs = sheet->datarows - n;
-    orig_cols = datainfo->v - 1 - sheet->n_scalars;
-    newvars = sheet->datacols - orig_cols;
+    int i, j, t;
 
     model = gtk_tree_view_get_model(view);
 
     if (newobs > 0) {
-	if (grow_nobs(newobs, &Z, datainfo)) {
+	if (grow_nobs(newobs, &Z, datainfo) ||
+	    dataset_destroy_hidden_vars(&Z, datainfo)) {
 	    errbox(_("Failed to allocate memory for new data"));
 	    return;
 	}
-	n = datainfo->n;
     }
 
     if (newvars > 0) {
@@ -654,24 +669,24 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 	for (i=0; i<newvars; i++) { 
 	    const gchar *newname;
 
-	    column = gtk_tree_view_get_column(view, orig_cols + 1 + i);
+	    column = gtk_tree_view_get_column(view, oldcols + 1 + i);
 	    newname = gtk_tree_view_column_get_title(column);
 	    strcpy(datainfo->varname[i + oldv], newname);
-	    strcpy(VARLABEL(datainfo, i + oldv), "");
 	}
     }
 
-    colnum = 0;
+    j = 1;
     for (i=1; i<datainfo->v; i++) {
-	if (datainfo->vector[i] == 0) {
+	if (spreadsheet_hide(i, datainfo)) {
 	    continue;
 	}
-	colnum++;
-	gtk_tree_model_get_iter_first(model, &iter);	
-	for (t=0; t<n; t++) {
+
+	gtk_tree_model_get_iter_first(model, &iter);
+	
+	for (t=0; t<datainfo->n; t++) {
 	    gchar *numstr;
 
-	    gtk_tree_model_get(model, &iter, colnum, &numstr, -1);
+	    gtk_tree_model_get(model, &iter, j, &numstr, -1);
 	    if (*numstr) {
 		Z[i][t] = atof(numstr); 
 	    } else {
@@ -681,13 +696,15 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 	    g_free(numstr);
 	    gtk_tree_model_iter_next(model, &iter);
 	}
+	j++;
     }
 
     if (datainfo->markers && datainfo->S != NULL) {
-	gtk_tree_model_get_iter_first(model, &iter);
-	for (t=0; t<n; t++) {
-	    gchar *marker;
+	gchar *marker;
 
+	gtk_tree_model_get_iter_first(model, &iter);
+
+	for (t=0; t<datainfo->n; t++) {
 	    gtk_tree_model_get(model, &iter, 0, &marker, -1);
 	    strcpy(datainfo->S[t], marker);
 	    g_free(marker);
@@ -761,8 +778,10 @@ static int add_data_to_sheet (spreadsheet *sheet, int new)
 
 	    colnum = 0;
 	    for (i=1; i<datainfo->v; i++) {
-		/* don't put scalars into the spreadsheet */
-		if (datainfo->vector[i] == 0) continue;
+		/* don't put scalars or hidden variables into the spreadsheet */
+		if (spreadsheet_hide(i, datainfo)) {
+		    continue;
+		}
 		if (na(Z[i][t])) {
 		    *numstr = '\0';
 		} else {
@@ -1068,8 +1087,6 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 
 #endif /* end of gtk >= 2.2 code */
 
-/* ........................................................... */
-
 static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
 {
     GtkListStore *store; 
@@ -1081,11 +1098,11 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
 
     sheet->datacols = nvars - 1; /* don't show the constant */
 
-    /* we'll drop any scalar variables from the spreadsheet */
+    /* we'll drop any scalar or hidden variables from the spreadsheet */
     for (i=1; i<datainfo->v; i++) {
-	if (datainfo->vector[i] == 0) {
+	if (spreadsheet_hide(i, datainfo)) {
 	    sheet->datacols -= 1;
-	    sheet->n_scalars += 1;
+	    sheet->n_hidden += 1;
 	}
     }
 
@@ -1127,7 +1144,9 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
     for (i=1; i<nvars; i++) {
 	char tmp[16];
 
-	if (datainfo->vector[i] == 0) continue;
+	if (spreadsheet_hide(i, datainfo)) {
+	    continue;
+	}
 	colnum++;
 	double_underscores(tmp, datainfo->varname[i]);
 	column = gtk_tree_view_column_new_with_attributes (tmp,
@@ -1190,7 +1209,7 @@ static spreadsheet *sheet_new (void)
     sheet->datacell = NULL;
     sheet->datacols = sheet->datarows = 0;
     sheet->totcols = 0;
-    sheet->n_scalars = 0;
+    sheet->n_hidden = 0;
     sheet->cid = 0;
 
     return sheet;
@@ -1264,7 +1283,9 @@ void show_spreadsheet (DATAINFO *pdinfo)
     }
 
     sheet = sheet_new();
-    if (sheet == NULL) return;
+    if (sheet == NULL) {
+	return;
+    }
 
     if (pdinfo == NULL && datainfo->v == 1) {
 	errbox(_("Please add a variable to the dataset first"));
@@ -1294,6 +1315,9 @@ void show_spreadsheet (DATAINFO *pdinfo)
     gtk_item_factory_create_items(ifac, 
 				  sizeof sheet_items / sizeof sheet_items[0],
 				  sheet_items, sheet);
+    if (dataset_is_subsampled()) {
+	disable_obs_menu(ifac);
+    }
     mbar = gtk_item_factory_get_widget(ifac, "<main>");
     gtk_box_pack_start(GTK_BOX(main_vbox), mbar, FALSE, FALSE, 0);
     gtk_widget_show(mbar);

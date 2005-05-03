@@ -640,9 +640,9 @@ static void real_nls_init (void)
     build_path(gretldir, "locale", localedir, NULL);
     loc = setlocale (LC_ALL, "");
     set_gretl_charset(loc);
-    bindtextdomain (PACKAGE, localedir);
-    textdomain (PACKAGE);
-    bind_textdomain_codeset (PACKAGE, "UTF-8");
+    bindtextdomain(PACKAGE, localedir);
+    textdomain(PACKAGE);
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
 # elif defined(OSX_PKG)
@@ -656,11 +656,11 @@ static void real_nls_init (void)
     if (prefix == NULL) return;
     
     localedir = g_strdup_printf("%s/share/locale", prefix);
-    loc = setlocale (LC_ALL, "");
+    loc = setlocale(LC_ALL, "");
     set_gretl_charset(loc);
-    bindtextdomain (PACKAGE, localedir);
-    textdomain (PACKAGE);
-    bind_textdomain_codeset (PACKAGE, "UTF-8");
+    bindtextdomain(PACKAGE, localedir);
+    textdomain(PACKAGE);
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
     g_free(localedir);
 }
 

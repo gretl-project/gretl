@@ -1191,6 +1191,8 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
     return 0;
 }
 
+
+
 /* ......................................................  */
 
 int positive_int_from_string (const char *s)
@@ -1318,6 +1320,40 @@ int dataset_drop_listed_vars (const int *list, double ***pZ,
     }
 
     return shrink_dataset_to_size(pZ, pdinfo, oldv - ndel);
+}
+
+/* drop all hidden (automatic) variables from the dataset */
+
+int dataset_destroy_hidden_vars (double ***pZ, DATAINFO *pdinfo)
+{
+    int i, nhid = 0;
+    int err = 0;
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (hidden_var(i, pdinfo)) {
+	    nhid++;
+	}
+    }
+
+    if (nhid > 0) {
+	int *hidlist = gretl_list_new(nhid);
+
+	if (hidlist == NULL) {
+	    err = 1;
+	} else {
+	    int j = 1;
+
+	    for (i=1; i<pdinfo->v; i++) {
+		if (hidden_var(i, pdinfo)) {
+		    hidlist[j++] = i;
+		}
+	    }	    
+	    err = dataset_drop_listed_vars(hidlist, pZ, pdinfo, NULL);
+	    free(hidlist);
+	}
+    }
+
+    return err;
 }
 
 /* drop specified number of variables at the end of the dataset */

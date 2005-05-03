@@ -4566,7 +4566,7 @@ static int dat_suffix (const char *fname)
 
 /* ........................................................... */
 
-static int dataset_is_subsampled (void)
+int dataset_is_subsampled (void)
 {
     int ret = 0;
 
