@@ -1649,9 +1649,10 @@
 	</li>
 	<li><para>Time-series functions: <func>diff</func> (first
 	    difference), <func>ldiff</func> (log-difference, or first
-	    difference of natural logs).  To generate lags of a
-	    variable <lit>x</lit>, use the syntax <cmd>x(-N)</cmd>,
-	    where <lit>N</lit> represents the desired lag length; to
+	    difference of natural logs), <func>fracdiff</func>
+	    (fractional difference).  To generate lags of a variable
+	    <lit>x</lit>, use the syntax <cmd>x(-N)</cmd>, where
+	    <lit>N</lit> represents the desired lag length; to
 	    generate leads, use <cmd>x(+N)</cmd>.</para>
 	</li>
 	<li><para>Dataset functions: <func>misszero</func> (replace
@@ -1672,11 +1673,12 @@
       <para>
 	All of the above functions with the exception of
 	<func>cov</func>, <func>corr</func>, <func>pvalue</func>,
-	<func>uniform</func> and <func>normal</func> take as their
-	single argument either the name of a variable (note that you
-	can't refer to variables by their ID numbers in a
-	<cmd>genr</cmd> formula) or an expression that evaluates to a
-	variable (e.g. <lit>ln((x1+x2)/2)</lit>). <func>cov</func> and
+	<func>fracdiff</func>, <func>uniform</func> and
+	<func>normal</func> take as their single argument either the
+	name of a variable (note that you can't refer to variables by
+	their ID numbers in a <cmd>genr</cmd> formula) or an
+	expression that evaluates to a variable (e.g.
+	<lit>ln((x1+x2)/2)</lit>). <func>cov</func> and
 	<func>corr</func> both require two arguments, and return
 	respectively the covariance and the correlation coefficient
 	between the arguments. The <func>pvalue</func> function takes
@@ -1685,7 +1687,9 @@
 	This function returns a one-tailed p-value, and in the case of
 	the normal and <emphasis>t</emphasis> distributions, it is for
 	the <quote>short tail</quote>.  With the normal, for example,
-	both 1.96 and -1.96 will give a result of around 0.025.
+	both 1.96 and -1.96 will give a result of around 0.025. The
+	<func>fracdiff</func> takes two arguments: the name of the
+	series and a fraction, in the range &minus;1 to 1.
 	</para>
 
       <para>
