@@ -771,7 +771,7 @@ static void
 print_x_range (struct gnuplot_info *gpinfo, const double *x, FILE *fp)
 {
     if (isdummy(x, gpinfo->t1, gpinfo->t2)) {
-	fputs("set xrange[-1:2]\n", fp);	
+	fputs("set xrange [-1:2]\n", fp);	
 	fputs("set xtics (\"0\" 0, \"1\" 1)\n", fp);
 	gpinfo->xrange = 3;
     } else {

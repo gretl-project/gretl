@@ -2773,29 +2773,39 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
+static int 
+series_has_negative_vals (const double *x)
+{
+    int t;
+
+    for (t=datainfo->t1; t<=datainfo->t2; t++) {
+	if (x[t] < 0.0) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 {
     FREQDIST *freq;
     gretlopt opt = (dist == GAMMA)? OPT_O : OPT_NONE;
+    int v = mdata->active_var;
 
-    if (mdata->active_var < 0) return;
+    clear_line();
 
-    if (mdata->active_var == 0) {
-	errbox(_("This command is not applicable to the constant"));
+    sprintf(line, "freq %s%s", datainfo->varname[v],
+	    (dist == GAMMA)? " --gamma" : "");
+
+    if (verify_and_record_command(line)) {
 	return;
     }
 
-    clear_line();
-    sprintf(line, "freq %s%s", datainfo->varname[mdata->active_var],
-	    (dist == GAMMA)? " --gamma" : "");
-
-    if (verify_and_record_command(line)) return;
-
-    freq = get_freq(mdata->active_var, (const double **) Z, datainfo, 
-		    1, opt);
+    freq = get_freq(v, (const double **) Z, datainfo, 1, opt);
 
     if (!freq_error(freq, NULL)) { 
-	if (dist == GAMMA && freq->midpt[0] < 0.0 && freq->f[0] > 0) {
+	if (dist == GAMMA && series_has_negative_vals(Z[v])) {
 	    errbox(_("Data contain negative values: gamma distribution not "
 		   "appropriate"));
 	} else {
