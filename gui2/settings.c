@@ -1818,17 +1818,17 @@ static void font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
 {
     gchar *fstring = gtk_font_selection_dialog_get_font_name(fs);
 
-    if (strlen(fstring)) {
+    if (fstring != NULL && *fstring != '\0') {
+	fprintf(stderr, "fstring = '%s'\n", fstring);
         strcpy(fixedfontname, fstring);
         gdk_font_unref(fixed_font);
         fixed_font = gdk_font_load(fixedfontname);
         write_rc();
     }
-    g_free(fstring);
-    gtk_widget_destroy(GTK_WIDGET (fs));
-}
 
-/* .................................................................. */
+    g_free(fstring);
+    gtk_widget_destroy(GTK_WIDGET(fs));
+}
 
 void font_selector (gpointer data, guint u, GtkWidget *w)
 {
@@ -1839,15 +1839,15 @@ void font_selector (gpointer data, guint u, GtkWidget *w)
 	fontsel = gtk_font_selection_dialog_new 
 	    (_("Font for gretl output windows"));
 
-	gtk_window_set_position (GTK_WINDOW (fontsel), GTK_WIN_POS_MOUSE);
+	gtk_window_set_position(GTK_WINDOW(fontsel), GTK_WIN_POS_MOUSE);
 
-	gtk_font_selection_dialog_set_filter(GTK_FONT_SELECTION_DIALOG (fontsel),
+	gtk_font_selection_dialog_set_filter(GTK_FONT_SELECTION_DIALOG(fontsel),
 					     GTK_FONT_FILTER_BASE, GTK_FONT_ALL,
 					     NULL, NULL, NULL, NULL, 
 					     spacings, NULL);
 
 	gtk_font_selection_dialog_set_font_name 
-	    (GTK_FONT_SELECTION_DIALOG (fontsel), fixedfontname);
+	    (GTK_FONT_SELECTION_DIALOG(fontsel), fixedfontname);
 
 	gtk_signal_connect (GTK_OBJECT(fontsel), "destroy",
 			    GTK_SIGNAL_FUNC(gtk_widget_destroyed),
@@ -1864,7 +1864,7 @@ void font_selector (gpointer data, guint u, GtkWidget *w)
 				    (fontsel)->cancel_button),
 				   "clicked", 
 				   GTK_SIGNAL_FUNC(gtk_widget_destroy),
-				   GTK_OBJECT (fontsel));
+				   GTK_OBJECT(fontsel));
     }
 
     if (!GTK_WIDGET_VISIBLE(fontsel)) {
@@ -1880,9 +1880,15 @@ void font_selector (gpointer data, guint u, GtkWidget *w)
 
 static const char *font_weight_string (int weight)
 {
-    if (weight >= FW_THIN && weight <= FW_LIGHT) return " Light";
-    if (weight >= FW_NORMAL && weight <= FW_DEMIBOLD) return "";
-    if (weight >= FW_BOLD) return " Bold";
+    if (weight >= FW_THIN && weight <= FW_LIGHT) {
+	return " Light";
+    }
+    if (weight >= FW_NORMAL && weight <= FW_DEMIBOLD) {
+	return "";
+    }
+    if (weight >= FW_BOLD) {
+	return " Bold";
+    }
     return "";
 }
 
