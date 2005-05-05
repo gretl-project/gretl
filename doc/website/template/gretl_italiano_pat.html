@@ -9,7 +9,7 @@
 <META name="keywords" 
       content="econometria, software libero, GNU, statistica, analisi statistica,
                linux, win32, open source, programmi econometrici liberi">
-<META NAME="GENERATOR" CONTENT="GNU Emacs">
+<META name="generator" content="GNU Emacs">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </head>
 <body>
@@ -29,6 +29,8 @@
 	  <tr><td class="menu-item"><a href="./gretl_data_it.html">Dati per gretl</a></td></tr>
 	  <tr><td class="menu-item"><a href="#man">Manuale di gretl</a></td></tr>
 	  <tr><td class="menu-item"><a href="#use">Usate gretl?</a></td></tr>
+	  <tr><td class="menu-item"><a href="#contrib">Contribuire a gretl</a></td></tr>
+	  <tr><td class="menu-item"><a href="./tour/index.html">comunità di gretl</a></td></tr>
 	  <tr><td class="menu-item"><a href="./x12a/x12a.html">gretl e X-12-ARIMA</a></td></tr>
 	  <tr><td class="menu-item"><a href="./tramo/tramo-seats.html">gretl e TRAMO/SEATS</a></td></tr>
 	  <tr><td class="menu-item"><a href="./gretl_and_R_it.html">gretl e GNU R</a></td></tr>
@@ -38,7 +40,7 @@
 	  <tr><td class="menu-item"><a href="./ChangeLog.html">Changelog</a></td></tr>
 	  <tr><td class="menu-item"><a href="#cvs">Ultimi sorgenti da CVS</a></td></tr>
 	  <tr><td class="menu-item"><a href="./API/">Documentazione sull'API libgretl</a></td></tr>
-	  <tr><td class="menu-item"><a href="http://ricardo.ecn.wfu.edu/gretl_announce.html">Mailing list</a></td></tr>
+	  <tr><td class="menu-item"><a href="./lists_it.html">Mailing list</a></td></tr>
 	  <tr><td class="menu-item"><a href="#ack">Ringraziamenti</a></td></tr>
 	  <tr><td>&nbsp;</td></tr>
 	  <tr><td class="menu-item"><i>Ultima versione: 
@@ -94,7 +96,7 @@
     </center>
 
 <p>è un pacchetto software multi-piattaforma per l'analisi econometrica, 
-scritto in linguaggio C.  È software libero: è possibile redistribuirlo
+scritto in linguaggio C.  È software libero (o open source): è possibile redistribuirlo
 e/o modificarlo secondo i termini della Licenza Pubblica Generica GNU
 (<a href="http://www.gnu.org/copyleft/gpl.html">GPL</a>) pubblicata dalla
 <a href="http://www.gnu.org">Free Software Foundation</a>.</p>
@@ -234,6 +236,28 @@ da parte delle persone che trovano utile il programma è importante per
 giustificare il tempo speso a migliorarlo. Ringrazio tutti coloro che
 hanno già manifestato il loro interesse per gretl.</p>
 
+<h2><a name="contrib">Contribuire a gretl</h2>
+
+<p>
+Avete idee per migliorare ed estendere il codice di gretl? Saremo lieti di
+accettare qualunque contributo: l'unico requisito è che il codice dovrà essere
+rilasciato secondo la <a href="http://www.gnu.org/copyleft/gpl.html">Licenza
+Pubblica Generica GNU</a> (GPL), ossia, dovete accettare che il codice
+sorgente sia reso pubblico.
+</p>
+
+<p>
+Come accennato in precedenza, gretl è (per lo più) scritto in linguaggio C, il
+linguaggio più diffuso nel mondo del software libero (o open source). Tuttavia,
+non tutti sono abituati a scrivere in C, e questo non deve rappresentare un
+ostacolo alla contribuzione di codice o algoritmi. Se potete fornire un
+algoritmo ben specificato per realizzare qualche procedura econometrica
+interessante, probabilmente potremo interfacciarci ad esso o implementarlo in C
+senza troppa difficoltà. Ad esempio, è possibile fornire codice in Fortran, C++,
+codice scritto in linguaggi matriciali di alto livello, come Ox, Gauss, Octave,
+Matlab o R (ma persino pseudo-codice, ossia la descrizione rigorosa di un
+algoritmo, senza usare alcun linguaggio di programmazione particolare).
+</p>
 
 <h2><a name="cvs">Accesso al CVS</a></h2>
 
@@ -246,8 +270,8 @@ href="http://cvs1.sourceforge.net/cgi-bin/viewcvs.cgi/gretl/">qui</a>.</p>
 <h2><a name="ack">Ringraziamenti</a></h2>
 
 <p>Per prima cosa, grazie a Ramu Ramanathan, Professore Emerito della University of
-California, San Diego, per avermi dato accesso al codice sorgente del
-suo programma "ESL", senza il quale non avrei mai potuto iniziare gretl.
+California, San Diego, per aver reso open source il codice del
+suo programma "ESL", che è stato il punto di partenza per lo sviluppo di gretl.
 Il Professor Ramanathan è l'autore di <a
 href="http://econ.ucsd.edu/~rramanat/embook5.htm"> <i>Introductory
 Econometrics</i></a> (Dryden, al momento alla 5a edizione).  Ramu ha
@@ -259,7 +283,7 @@ speciale nello sviluppo di gretl negli ultimi anni, contribuendo con varie
 patch che hanno aggiunto funzionalità nel campo dell'analisi ARMA, dei modelli
 Tobit e dei filtri per serie storiche.</p>
 
-<p>Molte persone mi hanno spedito segnalazioni di errori e suggerimenti
+<p>Molte persone hanno spedito segnalazioni di errori e suggerimenti
 utili per lo sviluppo di gretl; oltre alle persone già nominate, sono particolarmente
 grato a Ignacio Díaz-Emparanza, Tadeusz Kufel e +Dirk Eddelbuettel.</p>
 
@@ -281,8 +305,7 @@ gretl nel sistema GNU.</p>
 <hr noshade>
 
 <address>
-Allin Cottrell <a
-href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a></address>
+<p>Allin Cottrell, Wake Forest University</p>
 <p>Ultima modifica: LONGDATE
 </p>
 
