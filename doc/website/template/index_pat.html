@@ -9,7 +9,7 @@
 <META name="keywords" 
       content="econometrics, free software, GNU, statistics, statistical analysis,
                linux, win32, open source, free econometric software">
-<META NAME="GENERATOR" CONTENT="GNU Emacs">
+<META name="generator" content="GNU Emacs">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </head>
 <body>
@@ -29,6 +29,8 @@
 	  <tr><td class="menu-item"><a href="./gretl_data.html">data for gretl</a></td></tr>
 	  <tr><td class="menu-item"><a href="#man">gretl manual</a></td></tr>
 	  <tr><td class="menu-item"><a href="#use">Do you use gretl?</a></td></tr>
+	  <tr><td class="menu-item"><a href="#contrib">Contributing to gretl</a></td></tr>
+	  <tr><td class="menu-item"><a href="./tour/index.html">gretl community</a></td></tr>
 	  <tr><td class="menu-item"><a href="./x12a/x12a.html">gretl and X-12-ARIMA</a></td></tr>
 	  <tr><td class="menu-item"><a href="./tramo/tramo-seats.html">gretl and TRAMO/SEATS</a></td></tr>
 	  <tr><td class="menu-item"><a href="./gretl_and_R.html">gretl and GNU R</a></td></tr>
@@ -38,7 +40,7 @@
 	  <tr><td class="menu-item"><a href="./ChangeLog.html">Change log</a></td></tr>
 	  <tr><td class="menu-item"><a href="#cvs">Latest source via CVS</a></td></tr>
 	  <tr><td class="menu-item"><a href="./API/">Libgretl API docs</a></td></tr>
-	  <tr><td class="menu-item"><a href="http://ricardo.ecn.wfu.edu/gretl_announce.html">Mailing list</a></td></tr>
+	  <tr><td class="menu-item"><a href="./lists.html">Mailing lists</a></td></tr>
 	  <tr><td class="menu-item"><a href="#ack">Acknowledgements</a></td></tr>
 	  <tr><td>&nbsp;</td></tr>
 	  <tr><td class="menu-item"><i>Latest release: 
@@ -95,7 +97,7 @@
     </center>
 
 <p>Is a cross-platform software package for econometric analysis,
-   written in the C programming language.  It is is free software.
+   written in the C programming language.  It is is free, open-source software.
 You may redistribute it and/or modify it under the terms of the GNU
 General Public License (<a
 href="http://www.gnu.org/copyleft/gpl.html">GPL</a>) as published by
@@ -218,17 +220,15 @@ release of gnuplot is version 4.0 (dated April 2004), which is available via
 
 <h2><a name="man">Manual</a></h2>
 
-<p>A comprehensive manual
-is available in PDF format (c. 1.5Mb, 100+ pages),  
-in both US letter size (<a href="./manual.pdf">manual.pdf</a>)
-and A4 size (<a href="./manual-a4.pdf">manual-a4.pdf</a>).
-An Italian translation of the manual
-is also available (<a href="./manual_it.pdf">manual_it.pdf</a>),
-thanks to Cristian Rigamonti.
-If you don't have the
-software to read PDF files you can download it from
-<a href="http://www.adobe.com/products/acrobat/readstep2.html">the Adobe
-website</a>.</p>
+<p>A comprehensive manual is available in PDF format (c. 1.5Mb, 100+ pages), in both
+	    US letter size (<a href="./manual.pdf">manual.pdf</a>) and A4 size (<a
+	      href="./manual-a4.pdf">manual-a4.pdf</a>). An Italian translation of
+	    the manual is also available (<a
+	      href="./manual_it.pdf">manual_it.pdf</a>), thanks to Cristian
+	    Rigamonti. If you don't have the software to read PDF files you can
+	    download it from <a
+	      href="http://www.adobe.com/products/acrobat/readstep2.html">the Adobe
+	      website</a>.</p>
 
 <h2><a name="use">Do you use gretl?</a></h2>
 
@@ -238,6 +238,31 @@ href="mailto:cottrell@wfu.edu">email</a>.  The more evidence I have
 that people find the program useful, the better able I am to justify
 spending time on improving it.  Thanks to the many people who have
 already told me they find gretl useful.</p>
+
+<h2><a name="contrib">Contributing to gretl</h2>
+
+<p>
+      Do you have ideas or code that you'd like to contribute to gretl?  If so,
+      we'd be very pleased to hear from you.  The only requirement on code
+      that can be contributed to gretl is that you must be willing to have
+      it appear under the <a href="http://www.gnu.org/copyleft/gpl.html">GNU General
+	Public License</a> (GPL), that is, you must be comfortable with having the
+	source released.
+    </p>
+
+    <p>
+	    As mentioned above, gretl is (mostly) written in the C programming
+	    language, the most common language in the realm of free, open-source
+	    software.  However, not everyone is comfortable writing in C.  So you
+	    should be aware that this need not be a barrier to contributing code or
+	    algorithms.  If you can supply a well specified algorithm to accomplish
+	    some interesting econometric task, we can probably either interface with
+	    it or rewrite it in C without too much difficulty.  Possibilities
+	    include code in Fortran or C++; code written in a high-level matrix
+	    manipulation language such as Ox, Gauss, Octave, Matlab or R; and even
+	    pseudo-code, that is an algorithm spelled out explicitly, step by step,
+	    but not in any particular programming language.
+    </p>
 
 
 <h2><a name="cvs">CVS access and browsing</a></h2>
@@ -251,10 +276,10 @@ href="http://cvs1.sourceforge.net/cgi-bin/viewcvs.cgi/gretl/">here</a>.</p>
 
 <h2><a name="ack">Acknowledgements</a></h2>
 
-<p>First and foremost, thanks to Ramu Ramanathan, Professor Emeritus
-of the University of California, San Diego, for giving me access to
-his "ESL" econometric source code, without which I would never have
-got started on gretl.  Professor Ramanathan is author of <a
+<p>First of all, thanks to Ramu Ramanathan, Professor Emeritus
+of the University of California, San Diego, for open-sourcing
+his "ESL" econometric code, which was the starting point for
+the development of gretl.  Professor Ramanathan is author of <a
 href="http://econ.ucsd.edu/~rramanat/embook5.htm"> <i>Introductory
 Econometrics</i></a> (Dryden, currently in its 5th edition).  Ramu has
 also been a very helpful critic over the course of gretl's
@@ -265,7 +290,7 @@ a special role in the development of gretl over the last few years,
 contributing several patches to add functionality in the areas of ARMA
 analysis, Tobit modeling, and time-series filters.</p>
 
-<p>Many people have sent me useful bug reports and suggestions for
+<p>Many people have sent in useful bug reports and suggestions for
 gretl's development; besides those already mentioned, I am
 particularly indebted to Ignacio Díaz-Emparanza, Tadeusz Kufel and
 Dirk Eddelbuettel.</p>
@@ -287,9 +312,7 @@ specifically for agreeing to "adopt" gretl as a GNU program.</p>
 
 <hr noshade>
 
-<address>
-Allin Cottrell <a
-href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a></address>
+<p>Allin Cottrell, Wake Forest University</p>
 <p>Last modified: LONGDATE
 </p>
 

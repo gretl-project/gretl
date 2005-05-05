@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <locale.h>
 
 #define WEBDIR "/home/cottrell/stats/esl/website"
 #define SRCDIR "/home/cottrell/src"
@@ -17,6 +19,8 @@ enum {
     ES,
     IT
 };
+
+char substfile[FILENAME_MAX];
 
 const char *lang_names[] = {
     "en_US",
@@ -82,16 +86,19 @@ int read_lang_info (const char *s, int i)
     return err;
 }
 
+/* read info with which to perform substitutions, from the
+   little file "subst" */
+
 int read_subst_file (void)
 {
     FILE *fp;
-    char fname[MYLEN];
     char line[MYLEN];
     int err = 0;
 
-    sprintf(fname, "%s/subst", WEBDIR);
-    fp = fopen(fname, "r");
-    if (fp == NULL) return 1;
+    fp = fopen(substfile, "r");
+    if (fp == NULL) {
+	return 1;
+    }
 
     while (!err && fgets(line, sizeof line, fp)) {
 	if (!strncmp(line, "lang = ", 7)) {
@@ -103,25 +110,29 @@ int read_subst_file (void)
 		if (!strcmp(lang, lang_strings[i].lang)) {
 		    err = read_lang_info(line + 13, i);
 		}
-		if (err) break;
+		if (err) {
+		    break;
+		}
 	    }
 	}
     }
 
     fclose(fp);
 
-    return 0;
+    return err;
 }
+
+/* print out version and date info to the file "subst" */
 
 int print_subst (const char *verstr)
 {
     FILE *fp;
-    char fname[MYLEN];
     int i;
 
-    sprintf(fname, "%s/subst", WEBDIR);
-    fp = fopen(fname, "w");
-    if (fp == NULL) return 1;
+    fp = fopen(substfile, "w");
+    if (fp == NULL) {
+	return 1;
+    }
 
     fprintf(fp, "VERSION %s\n", verstr);
 
@@ -137,13 +148,70 @@ int print_subst (const char *verstr)
     return 0;
 }
 
-int make_subst_file (const char *verstr)
+/* convert an input date of the form YY.MM.DD to an appropriately
+   internationalized string like "Mar 14, 2005" */
+
+int get_intl_progdate (const char *s, int i)
+{
+    int yr, mon, day;
+    int err = 0;
+
+    if (sscanf(s, "%d.%d.%d", &yr, &mon, &day) != 3) {
+	err = 1;
+    } else {
+	char pdate[32];
+	struct tm tm = {0};
+
+	tm.tm_year = yr - 1900;
+	tm.tm_mon = mon - 1;
+	tm.tm_mday = day;
+
+	setlocale(LC_TIME, lang_strings[i].lang);
+	strftime(pdate, sizeof pdate, "%b %e, %Y\n", &tm);
+	setlocale(LC_TIME, "C");
+
+	strcpy(lang_strings[i].shortdate, pdate);
+    }
+
+    return err;
+}
+
+int syscmd_to_string (const char *syscmd, char *targ, const char *tmpfile)
 {
     FILE *fp;
+    char line[64];
+    int err = 0;
+
+    system(syscmd);
+
+    /* open tmpfile and retrieve the result */
+
+    fp = fopen(tmpfile, "r");
+
+    if (fp == NULL) {
+	err = 1;
+    } else {
+	if (fgets(line, sizeof line, fp) == NULL) {
+	    err = 1;
+	} else {
+	    strcpy(targ, line);
+	}
+
+	fclose(fp);
+	remove(tmpfile);
+    }    
+
+    return err;
+}
+
+/* get version and data info organized, and call for this info
+   to be written to file */
+
+int make_subst_file (const char *verstr, const char *progdate)
+{
     char syscmd[32];
-    char line[48];
     const char *tmpfile = "tmp.txt";
-    int i;
+    int i, err = 0;
 
     for (i=0; i<NLANGS; i++) {
 	char langbit[16];
@@ -155,33 +223,21 @@ int make_subst_file (const char *verstr)
 	}
 
 	sprintf(syscmd, "%sdate > %s", langbit, tmpfile);
-	system(syscmd);
-	fp = fopen(tmpfile, "r");
-	if (fp == NULL) return 1;
-	if (fgets(line, sizeof line, fp) == NULL) {
-	    fclose(fp);
-	    return 1;
-	} else {
-	    strcpy(lang_strings[i].longdate, line);
-	}
-	fclose(fp);
-	remove(tmpfile);
+	err = syscmd_to_string(syscmd, lang_strings[i].longdate, tmpfile);
 
-	sprintf(syscmd, "%sdate +\"%%b %%e, %%Y\" > %s", langbit, tmpfile);
-	system(syscmd);
-	fp = fopen(tmpfile, "r");
-	if (fp == NULL) return 1;
-	if (fgets(line, sizeof line, fp) == NULL) {
-	    fclose(fp);
-	    return 1;
+	if (progdate != NULL) {
+	    get_intl_progdate(progdate, i);
 	} else {
-	    strcpy(lang_strings[i].shortdate, line);
+	    sprintf(syscmd, "%sdate +\"%%b %%e, %%Y\" > %s", langbit, tmpfile);
+	    err = syscmd_to_string(syscmd, lang_strings[i].shortdate, tmpfile);
 	}
-	fclose(fp);
-	remove(tmpfile);
     }
 
-    return print_subst(verstr);
+    if (!err) {
+	err = print_subst(verstr);
+    }
+
+    return err;
 }
 
 int copyfile (const char *src, const char *dest, int append) 
@@ -219,17 +275,20 @@ int copyfile (const char *src, const char *dest, int append)
     return 0;
 }
 
-char *get_html_version (void)
+/* read the little "subst" file for a version number */
+
+int get_version_from_subst_file (char *verstr)
 {
     FILE *fp;
-    char fname[MYLEN];
     char line[MYLEN];
-    static char verstr[8];
     int err = 1;
 
-    sprintf(fname, "%s/subst", WEBDIR);
-    fp = fopen(fname, "r");
-    if (fp == NULL) return NULL;
+    *verstr = '\0';
+
+    fp = fopen(substfile, "r");
+    if (fp == NULL) {
+	return 1;
+    }
 
     while (fgets(line, sizeof line, fp)) {
 	if (!strncmp(line, "VERSION", 7)) {
@@ -242,7 +301,7 @@ char *get_html_version (void)
 
     fclose(fp);
 
-    return (err)? NULL : verstr;
+    return err;
 }
 
 char *get_src_version (void)
@@ -367,7 +426,10 @@ int process_templates (char *verstr)
     char fulltarg[MYLEN];
     int err = 0;
 
-    while (ptr->src && !err) {
+    while (ptr->src != NULL && !err) {
+
+	/* take source from CVS-controlled directory; write 
+	   output to web directory */
 
 	sprintf(fullsrc, "%s/template/%s", WEBSRC, ptr->src);
 	sprintf(fulltarg, "%s/%s", WEBDIR, ptr->targ);
@@ -409,23 +471,45 @@ int make_html_changelog (void)
     return err;
 }
 
-int main (void)
+int main (int argc, char **argv)
 {
-    char *html_version;
+    char *progdate;
     char *src_version;
+    char html_version[8];
     int up_to_date;
     int err = 0;
 
-    src_version = get_src_version();
+    if (argc < 2) {
+	fprintf(stderr, "%s: Please give a gretl version number,\n"
+		"or say \"auto\" to read version info from the source tree.\n",
+		argv[0]);
+	fputs("You can specify a program date, YY.MM.DD, as a second arg\n", stderr);
+	exit(EXIT_FAILURE);
+    }
+
+    if (strcmp(argv[1], "auto")) {
+	src_version = argv[1];
+    } else {
+	src_version = get_src_version();
+    }
+
+    if (argc == 3) {
+	progdate = argv[2];
+    } else {
+	progdate = NULL;
+    }
+
     if (src_version == NULL) {
 	fputs("Couldn't find source version\n", stderr);
 	exit(EXIT_FAILURE);
     }
 
-    html_version = get_html_version();
-    if (html_version == NULL) {
-	fputs("Couldn't find html version\n", stderr);
-	exit(EXIT_FAILURE);
+    sprintf(substfile, "%s/subst", WEBDIR);
+
+    get_version_from_subst_file(html_version);
+    if (*html_version == '\0') {
+	fprintf(stderr, "Couldn't get html version from %s\n", substfile);
+	strcpy(html_version, "unknown");
     }
 
     fprintf(stderr, "source version is %s\n", src_version);
@@ -433,10 +517,10 @@ int main (void)
 
     if (strcmp(src_version, html_version)) {
 	up_to_date = 0;
-	fputs("version needs updating\n", stderr);
+	fputs("version number needs updating\n", stderr);
     } else {
 	up_to_date = 1;
-	fputs("version is current\n", stderr);
+	fputs("version number is current\n", stderr);
     }
 
     lang_strings_init();
@@ -444,7 +528,7 @@ int main (void)
     if (up_to_date) {
 	err = read_subst_file();
     } else {
-	err = make_subst_file(src_version);
+	err = make_subst_file(src_version, progdate);
     }
 
     if (err) {
@@ -453,7 +537,7 @@ int main (void)
 	err = process_templates(src_version);
     }
 
-    if (!err && !up_to_date) {
+    if (!err) {
 	err = make_html_changelog();
     }
 

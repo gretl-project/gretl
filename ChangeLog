@@ -1,4 +1,4 @@
-version 1.3.4
+version 1.3.4 (in progress)
 - Increase max length of gretl script command line to 4095 bytes
 - Add support for decennial data
 - Fix for finding TrueType graph fonts on Windows 2000
