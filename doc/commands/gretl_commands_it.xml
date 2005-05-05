@@ -1611,7 +1611,8 @@
 	</li>
 	<li><para>Funzioni per serie storiche: <func>diff</func>
             (differenza prima), <func>ldiff</func> (log-differenza,
-            ossia la differenza prima dei logaritmi naturali).
+            ossia la differenza prima dei logaritmi naturali),
+            <func>fracdiff</func> (differenza frazionale).
 	    Per generare ritardi della variabile <lit>x</lit>, si può usare
             la sintassi <cmd>x(-N)</cmd>, dove <lit>N</lit> rappresenta
             la lunghezza del ritardo desiderato; per generare anticipi
@@ -1631,8 +1632,8 @@
       </ilist> 
 
       <para>
-	Tutte le funzioni viste sopra, con l'eccezione di
-	<func>cov</func>, <func>corr</func>, <func>pvalue</func>,
+        Tutte le funzioni viste sopra, con l'eccezione di <func>cov</func>,
+        <func>corr</func>, <func>pvalue</func>, <func>fracdiff</func>,
 	<func>uniform</func> e <func>normal</func> hanno come unico argomento
 	il nome di una variabile (attenzione: non è possibile
 	indicare le variabili con il loro numero identificativo in una
@@ -1646,6 +1647,8 @@
         a una coda, che nel caso delle distribuzioni normale e
         <emphasis>t</emphasis> è la <quote>coda corta</quote>. Con la normale,
         ad esempio, sia 1.96 sia -1.96 daranno un risultato di circa 0.025.
+        La funzione <func>fracdiff</func> richiede due argomenti: il nome della
+        serie e una frazione nell'intervallo da &minus;1 a 1.
       </para>
       
       <para>
