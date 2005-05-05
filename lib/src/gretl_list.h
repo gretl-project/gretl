@@ -22,6 +22,8 @@
 
 int *gretl_list_new (int nterms);
 
+int *gretl_list_copy (const int *src);
+
 int in_gretl_list (const int *list, int k);
 
 int gretl_list_delete_at_pos (int *list, int pos);
@@ -36,5 +38,7 @@ void rearrange_list (int *list);
 
 int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 			   int ref_id);
+
+int gretl_list_has_const (const int *list);
 
 #endif /* GRETL_LIST_H */

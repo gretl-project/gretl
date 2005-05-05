@@ -27,6 +27,7 @@
 #include "gretl_restrict.h"
 #include "gretl_func.h"
 #include "modelspec.h"
+#include "forecast.h"
 #include "menustate.h"
 #include "dlgutils.h"
 
@@ -1863,8 +1864,6 @@ static int model_error (MODEL *pmod)
     return err;
 }
 
-/* ........................................................... */
-
 static int model_output (MODEL *pmod, PRN *prn)
 {
     if (model_error(pmod)) return 1;
@@ -2080,8 +2079,6 @@ static int do_nls_genr (void)
     }
     return finish_genr(NULL, NULL);
 }
-
-/* ........................................................... */
 
 void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 {
@@ -2490,8 +2487,6 @@ void do_genr (GtkWidget *widget, dialog_t *ddata)
 
     finish_genr(NULL, ddata);
 }
-
-/* ........................................................... */
 
 void do_model_genr (GtkWidget *widget, dialog_t *ddata) 
 {
@@ -2996,8 +2991,6 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 		NULL);
 }
 
-/* ........................................................... */
-
 void do_hurst (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
@@ -3033,8 +3026,6 @@ void do_hurst (gpointer data, guint opt, GtkWidget *widget)
     view_buffer(prn, 60, 350, _("gretl: Hurst exponent"), RMPLOT, 
 		NULL);
 }
-
-/* ........................................................... */
 
 void do_corrgm (gpointer data, guint u, GtkWidget *widget)
 {
@@ -3111,8 +3102,6 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 		NULL);
 }
 
-/* ........................................................... */
-
 void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
 {
     PRN *prn;
@@ -3131,8 +3120,6 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
 		    COEFFINT, cf);
     }
 }
-
-/* ........................................................... */
 
 void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 {
@@ -3204,8 +3191,6 @@ void add_dummies (gpointer data, guint u, GtkWidget *widget)
     }
 }
 
-/* ......................................................... */
-
 void add_index (gpointer data, guint tm, GtkWidget *widget)
 {
     clear_line();
@@ -3220,8 +3205,6 @@ void add_index (gpointer data, guint tm, GtkWidget *widget)
 	populate_varlist();
     }
 }
-
-/* ......................................................... */
 
 void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 {
@@ -3285,8 +3268,6 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
     }
 }
 
-/* ......................................................... */
-
 int add_fit_resid (MODEL *pmod, int code, int undo)
    /* 
       If undo = 1, don't bother with the label, don't update
@@ -3346,8 +3327,6 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
 
     return 0;
 }
-
-/* ......................................................... */
 
 int add_var_resid (GRETL_VAR *var, int eqnum)
 {
@@ -3556,8 +3535,6 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
     dataset_drop_vars(ginfo->v - origv, gZ, ginfo);
 }
 
-/* ........................................................... */
-
 void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 {
     int err, origv, plot_list[4], lines[2];
@@ -3629,8 +3606,6 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     dataset_drop_vars(ginfo->v - origv, gZ, ginfo);
 }
 
-/* ........................................................... */
-
 void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
 {
     windata_t *mydata = (windata_t *) data;
@@ -3701,8 +3676,6 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
     }
 }
 
-/* ........................................................... */
-
 void display_selected (gpointer data, guint action, GtkWidget *widget)
 {
     char *liststr; 
@@ -3767,8 +3740,6 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
     free(prcmd.list);
     free(prcmd.param);
 }
-
-/* ........................................................... */
 
 void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 {
@@ -3932,14 +3903,10 @@ void do_graph_var (int varnum)
     gui_graph_handler(err);
 }
 
-/* ........................................................... */
-
 void ts_plot_var (gpointer data, guint opt, GtkWidget *widget)
 {
     do_graph_var(mdata->active_var);
 }
-
-/* ........................................................... */
 
 void do_boxplot_var (int varnum)
 {
@@ -3951,8 +3918,6 @@ void do_boxplot_var (int varnum)
     if (boxplots(cmd.list, NULL, &Z, datainfo, 0)) 
 	errbox (_("boxplot command failed"));
 }
-
-/* ........................................................... */
 
 void do_scatters (GtkWidget *widget, gpointer p)
 {
@@ -4004,10 +3969,9 @@ void do_box_graph (GtkWidget *widget, dialog_t *ddata)
     }
 }
 
-/* ........................................................... */
+/* X, Y scatter with separation by dummy (factor) */
 
 void do_dummy_graph (GtkWidget *widget, gpointer p)
-     /* X, Y scatter with separation by dummy (factor) */
 {
     selector *sr = (selector *) p;
     const char *buf;
@@ -4022,7 +3986,7 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
     if (verify_and_record_command(line)) return;
 
     if (cmd.list[0] != 3 || 
-	!isdummy(Z[cmd.list[3]], datainfo->t1, datainfo->t2)) {
+	!gretl_isdummy(Z[cmd.list[3]], datainfo->t1, datainfo->t2)) {
 	errbox(_("You must supply three variables, the last\nof which "
 	       "is a dummy variable (values 1 or 0)"));
 	return;
@@ -4037,8 +4001,6 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
 	register_graph();
     }
 }
-
-/* ........................................................... */
 
 void do_graph_from_selector (GtkWidget *widget, gpointer p)
 {

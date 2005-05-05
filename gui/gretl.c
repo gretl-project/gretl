@@ -561,10 +561,6 @@ void nls_init (void)
     set_gretl_charset(loc);
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
-
-    if (0 && !strncmp(loc, "pl", 2)) { 
-	bind_textdomain_codeset(PACKAGE, "ISO-8859-2");
-    }
 }
 
 static void root_check (void)

@@ -156,19 +156,15 @@ void libgretl_cleanup (CMD *cmd);
  
 double date (int nt, int pd, const double sd0);
 
-int isdummy (const double *x, int t1, int t2);
+int gretl_isdummy (const double *x, int t1, int t2);
 
 void printlist (const int *list, const char *msg);
 
 int print_list_to_buffer (const int *list, char *buf, size_t len);
 
-void list_exclude (int n, int *list);
-
 char *format_obs (char *obs, int maj, int min, int pd);
 
 int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt);
-
-int *copylist (const int *src);
 
 int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo);
 
@@ -194,22 +190,6 @@ int rename_var_by_id (const char *str, const char *vname,
 
 int hidden_var (int i, const DATAINFO *pdinfo);
 
-FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
-			 DATAINFO *pdinfo);
-
-FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod, 
-			       double ***pZ, DATAINFO *pdinfo, PRN *prn);
-
-int fcast_with_errs (const char *str, const MODEL *pmod, 
-		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
-		     int plot);
-
-int is_model_cmd (const char *line);
-
-int is_model_ref_cmd (int ci);
-
-int is_quiet_model_test (int ci, gretlopt opt);
-
 int re_estimate (char *model_spec, MODEL *tmpmod, 
 		 double ***pZ, DATAINFO *pdinfo);
 
@@ -232,10 +212,6 @@ void free_gretl_mp_results (mp_results *mpvals);
 mp_results *gretl_mp_results_new (int totvar);
 
 int allocate_mp_varnames (mp_results *mpvals);
-
-FITRESID *fit_resid_new (int n, int errs);
-
-void free_fit_resid (FITRESID *fr);
 
 CONFINT *get_model_confints (const MODEL *pmod);
 

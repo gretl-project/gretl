@@ -130,6 +130,7 @@ struct _GENERATE {
     atomset *aset;
     double valstack[VALSTACK_SIZE];
     int nvals;
+    char **S;
 };
 
 int attach_atomset (GENERATE *genr);

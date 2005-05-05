@@ -1115,6 +1115,74 @@ int swap_models (MODEL **targ, MODEL **src)
     return 0;
 }
 
+int is_model_cmd (const char *s)
+{
+    int ret = 0;
+
+    if (s != NULL && *s != '\0') {
+	if (!strncmp(s, "ols", 3)  ||
+	    !strncmp(s, "corc", 4) ||
+	    !strncmp(s, "hilu", 4) ||
+	    !strncmp(s, "wls", 3)  ||
+	    !strncmp(s, "pwe", 3)  ||
+	    !strncmp(s, "pooled", 6)  ||
+	    !strncmp(s, "hccm", 4) ||
+	    !strncmp(s, "hsk", 3)  ||
+	    !strncmp(s, "add", 3)  ||
+	    !strncmp(s, "lad", 3)  ||
+	    !strncmp(s, "omit", 4) ||
+	    !strncmp(s, "tsls", 4) ||
+	    !strncmp(s, "logit", 5)  ||
+	    !strncmp(s, "probit", 6) ||
+	    !strncmp(s, "tobit", 5) ||
+	    !strncmp(s, "poisson", 7) ||
+	    !strncmp(s, "garch", 5) ||
+	    !strncmp(s, "logistic", 8) ||
+	    !strncmp(s, "end nls", 7) ||
+	    !strncmp(s, "arma", 4) ||
+	    !strncmp(s, "ar ", 3) ||
+	    !strcmp(s, "ar")) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
+int is_model_ref_cmd (int ci)
+{
+    int ret = 0;
+
+    if (ci == ADD ||
+	ci == OMIT ||
+	ci == ARCH ||
+	ci == CHOW ||
+	ci == CUSUM ||
+	ci == LMTEST ||
+	ci == LEVERAGE ||
+	ci == VIF ||
+	ci == RESTRICT ||
+	ci == FCAST ||
+	ci == FCASTERR ||
+	ci == FIT) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
+int is_quiet_model_test (int ci, gretlopt opt)
+{
+    int ret = 0;
+
+    if ((opt & OPT_Q) && (ci == OMIT || ci == ADD ||
+			  ci == OMITFROM || ci == ADDTO)) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
 /**
  * command_ok_for_model:
  * @test_ci:  index of command to be tested.

@@ -23,6 +23,7 @@
 #include "gretl_private.h" 
 #include "version.h"
 #include "libset.h"
+#include "forecast.h"
 
 #include <stdarg.h>
 #include <time.h>
@@ -1034,6 +1035,46 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
     }
 }
 
+/* See if there is a variable that is an outcome of sorting,
+   and has sorted case-markers attached to it.  If so,
+   we'll arrange to print the case-markers in the correct
+   sequence, provided the variable in question is being
+   printed by itself, or as the last in a short list of
+   variables.
+*/
+
+static int 
+check_for_sorted_var (const int *list, const DATAINFO *pdinfo,
+		      int *sortpos)
+{
+    int i, v, ret = 0;
+
+    *sortpos = 0;
+
+    if (list[0] < 5) {
+	for (i=1; i<=list[0]; i++) {
+	    v = list[i];
+	    if (pdinfo->varinfo[v]->sorted_markers != NULL) {
+		if (ret == 0) {
+		    ret = v;
+		    *sortpos = i;
+		} else {
+		    ret = 0;
+		    *sortpos = 0;
+		    break;
+		}
+	    }
+	}
+    }
+
+    if (ret && *sortpos != list[0]) {
+	/* sorted var should be by itself or last */
+	ret = 0;
+    }
+
+    return ret;
+}
+
 /**
  * printdata:
  * @list: list of variables to print.
@@ -1054,6 +1095,7 @@ int printdata (int *list, const double **Z, const DATAINFO *pdinfo,
 {
     int j, v, v1, v2, j5, nvj5, lineno, ncol;
     int allconst, scalars = 0, freelist = 0;
+    int sortvar = 0, sortpos = 0;
     int *pmax = NULL; 
     int t, nsamp;
     char line[96];
@@ -1088,7 +1130,7 @@ int printdata (int *list, const double **Z, const DATAINFO *pdinfo,
 			Z[list[j]][0]);
 	    }
 	    scalars = 1;
-	    list_exclude(j, list);
+	    gretl_list_delete_at_pos(list, j);
 	    j--;
 	} 
     }
@@ -1150,9 +1192,13 @@ int printdata (int *list, const double **Z, const DATAINFO *pdinfo,
 	pmax[j-1] = get_signif(Z[list[j]] + pdinfo->t1, nsamp);
     }
 
+    sortvar = check_for_sorted_var(list, pdinfo, &sortpos);
+
     /* print data by observations */
     ncol = 5;
     for (j=0; j<=list[0]/ncol; j++) {
+	char obs_string[OBSLEN];
+
 	j5 = j * ncol;
 	nvj5 = list[0] - j5;
 	v1 = j5 +1;
@@ -1167,11 +1213,17 @@ int printdata (int *list, const double **Z, const DATAINFO *pdinfo,
 	    }
 
 	    lineno = 1;
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		char obs_string[OBSLEN];
 
-		get_obs_string(obs_string, t, pdinfo);
+	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+
+		if (sortvar && sortpos == 1) {
+		    strcpy(obs_string, SORTED_MARKER(pdinfo, sortvar, t));
+		} else {
+		    get_obs_string(obs_string, t, pdinfo);
+		}
+		
 		sprintf(line, "%8s ", obs_string);
+		
 		for (v=v1; v<=v2; v++) {
 		    double xx = Z[list[v]][t];
 
@@ -1181,17 +1233,26 @@ int printdata (int *list, const double **Z, const DATAINFO *pdinfo,
 			bufprintnum(line, xx, pmax[v-1], 13);
 		    }
 		}
+
+		if (sortvar && sortpos > 1) {
+		    sprintf(obs_string, "%8s", SORTED_MARKER(pdinfo, sortvar, t));
+		    strcat(line, obs_string);
+		}
+
 		strcat(line, "\n");
+
 		if (pputs(prn, line) < 0) {
 		    err = E_ALLOC;
 		    goto endprint;
 		}
+
 		if (pause && (lineno % PAGELINES == 0)) {
 		    if (takenotes(1)) {
 			goto endprint;
 		    }
 		    lineno = 1;
 		}
+
 		lineno++;
 	    } /* end of printing obs (t) loop */
 	} /* end if nvj5 */
@@ -1209,8 +1270,6 @@ int printdata (int *list, const double **Z, const DATAINFO *pdinfo,
 
     return err;
 }
-
-/* ........................................................... */
 
 int
 text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)

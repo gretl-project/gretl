@@ -42,7 +42,7 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     int i, j, np = 3 + p + q + r;
 
     free(pmod->list);
-    pmod->list = copylist(list);
+    pmod->list = gretl_list_copy(list);
 
     pmod->params = malloc(np * sizeof pmod->params);
     if (pmod->params == NULL) {
@@ -531,7 +531,7 @@ garch_init_by_arma (const MODEL *pmod, const int *garchlist,
 	return E_ALLOC;
     }
 
-    list = copylist(garchlist);
+    list = gretl_list_copy(garchlist);
     if (list == NULL) {
 	err = E_ALLOC;
 	goto bailout;

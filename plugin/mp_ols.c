@@ -544,7 +544,7 @@ static int copy_mp_results (MPMODEL *pmod, DATAINFO *pdinfo,
 	results->dfn = pmod->dfn;
 	results->dfd = pmod->dfd;
 	results->adjrsq = mpf_get_d (pmod->adjrsq);
-	results->varlist = copylist(pmod->varlist);
+	results->varlist = gretl_list_copy(pmod->varlist);
 	if (results->varlist == NULL) {
 	    err = 1;
 	}
@@ -590,7 +590,7 @@ int mplsq (const int *list, const int *polylist,
 
     /* preserve a copy of the list supplied, for future reference */
     if (polylist == NULL) {
-	model.list = copylist(list);
+	model.list = gretl_list_copy(list);
     } else {
 	model.list = poly_copy_list(list, polylist);
     }

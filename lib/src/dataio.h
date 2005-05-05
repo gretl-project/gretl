@@ -85,6 +85,8 @@ char **allocate_case_markers (int n);
 
 void destroy_dataset_markers (DATAINFO *pdinfo);
 
+void free_varinfo (DATAINFO *pdinfo, int v);
+
 int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);
 
 int dateton (const char *date, const DATAINFO *pdinfo);

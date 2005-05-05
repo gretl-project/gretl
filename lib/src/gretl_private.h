@@ -22,7 +22,7 @@
 #ifndef GRETL_PRIVATE_H
 #define GRETL_PRIVATE_H
 
-extern int newlag; /* transforms. c */
+extern int newlag; /* transforms.c */
 
 int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo, 
 			char *newvar, char *s);
@@ -54,8 +54,6 @@ int gretl_isconst (int t1, int t2, const double *x);
 void gretl_minmax (int t1, int t2, const double *x, 
 		   double *min, double *max);
 
-int gretl_hasconst (const int *list);
-
 int gretl_compare_doubles (const void *a, const void *b);
 
 int gretl_criteria (double ess, int nobs, int ncoeff, PRN *prn);
@@ -79,7 +77,7 @@ void set_reference_mask (const MODEL *pmod);
 int model_mask_leaves_balanced_panel (const MODEL *pmod,
 				      const DATAINFO *pdinfo);
 
-int list_dups (const int *list, int ci);
+int gretl_list_duplicates (const int *list, int ci);
 
 int *augment_regression_list (const int *orig, int aux, 
 			      double ***pZ, DATAINFO *pdinfo);

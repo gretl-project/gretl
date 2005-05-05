@@ -1058,7 +1058,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	    sprintf(errtext, _("Dropping %s: insufficient observations"),
 		    pdinfo->varname[list[i+1]]);
 	    errbox(errtext);
-	    list_exclude(i+1, list);
+	    gretl_list_delete_at_pos(list, i+1);
 	    if (list[0] == 0) {
 		free(plotgrp->plots);
 		free(plotgrp);

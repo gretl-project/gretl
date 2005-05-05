@@ -378,7 +378,7 @@ static void rewrite_arma_model_stats (MODEL *pmod, model_info *arma,
     }
 
     free(pmod->list);
-    pmod->list = copylist(list);
+    pmod->list = gretl_list_copy(list);
 
     pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
     pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);

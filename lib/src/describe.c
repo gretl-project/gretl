@@ -1620,7 +1620,7 @@ static GRETLSUMMARY *summary_new (const int *list)
 	return NULL;
     }
 
-    summ->list = copylist(list);
+    summ->list = gretl_list_copy(list);
     if (summ->list == NULL) {
 	free(summ);
 	return NULL;
@@ -1698,7 +1698,7 @@ GRETLSUMMARY *summary (const int *list,
 		pprintf(prn, _("Dropping %s: sample range has only one "
 			"obs, namely %g\n"), pdinfo->varname[vi], x0);
 	    }
-	    list_exclude(i + 1, summ->list);
+	    gretl_list_delete_at_pos(summ->list, i + 1);
 	    if (summ->list[0] == 0) {
 		free_summary(summ);
 		return NULL;
@@ -1773,7 +1773,7 @@ CORRMAT *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
 	return NULL;
     }
 
-    p = copylist(list);
+    p = gretl_list_copy(list);
     if (p == NULL) {
 	free(corrmat);
 	return NULL;
@@ -1782,17 +1782,18 @@ CORRMAT *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
     /* drop any constants from list */
     for (i=1; i<=p[0]; i++) {
 	if (gretl_isconst(t1, t2, Z[p[i]])) {
-	    list_exclude(i, p);
+	    gretl_list_delete_at_pos(p, i);
 	    i--;
 	}
     }
+
     corrmat->list = p;
 
     lo = corrmat->list[0];  
     corrmat->n = t2 - t1 + 1;
-    mm = (lo * (lo + 1))/2;
+    mm = (lo * (lo + 1)) / 2;
 
-    corrmat->xpx = malloc(mm * sizeof(double));
+    corrmat->xpx = malloc(mm * sizeof *corrmat->xpx);
     if (corrmat->xpx == NULL) {
 	free_corrmat(corrmat);
 	return NULL;

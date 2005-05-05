@@ -43,6 +43,31 @@ int *gretl_list_new (int nterms)
     return list;
 }
 
+/* gretl_list_copy:
+ *
+ */
+
+int *gretl_list_copy (const int *src)
+{
+    int *targ;
+    int i;
+
+    if (src == NULL) {
+	return NULL;
+    }
+
+    targ = malloc((src[0] + 1) * sizeof *targ);
+    if (targ == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<=src[0]; i++) {
+	targ[i] = src[i];
+    }
+
+    return targ;
+}
+
 /* in_gretl_list:
  *
  */
@@ -90,16 +115,18 @@ void rearrange_list (int *list)
 
 int gretl_list_delete_at_pos (int *list, int pos)
 {
-    int i;
+    int i, err = 0;
 
-    if (pos < 1) return 1;
+    if (pos < 1 || pos > list[0]) {
+	err = 1;
+    } else {
+	for (i=pos; i<list[0]; i++) {
+	    list[i] = list[i + 1];
+	}
 
-    for (i=pos; i<list[0]; i++) {
-	list[i] = list[i + 1];
+	list[list[0]] = 0;
+	list[0] -= 1;
     }
-
-    list[list[0]] = 0;
-    list[0] -= 1;
 
     return 0;
 }
@@ -362,4 +389,50 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
     }
 
     return err;
+}
+
+/* check if a var list contains a constant (variable with ID
+   number 0) in position 2 or higher */
+
+int gretl_list_has_const (const int *list)
+{
+    int i;
+
+    for (i=2; i<=list[0]; i++) {
+        if (list[i] == 0) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+int gretl_list_duplicates (const int *list, int ci)
+{
+    int i, j, start = 2;
+    int ret = 0;
+
+    if (ci == ARCH) {
+	start = 3;
+    }
+
+    if (ci == TSLS || ci == AR || ci == ARMA || 
+	ci == SCATTERS || ci == MPOLS || ci == GARCH) {
+	for (i=2; i<list[0]; i++) {
+	    if (list[i] == LISTSEP) {
+		start = i+1;
+		break;
+	    }
+	}
+    }
+    
+    for (i=start; i<list[0] && !ret; i++) {
+	for (j=start+1; j<=list[0] && !ret; j++) {
+	    if (i != j && list[i] == list[j]) {
+		ret = list[i];
+	    }
+	}
+    }
+
+    return ret;
 }

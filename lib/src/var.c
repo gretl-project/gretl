@@ -948,7 +948,7 @@ static int organize_var_lists (const int *list, const double **Z,
 	if (gotsep || 
 	    !strcmp(pdinfo->varname[li], "const") ||	   
 	    !strcmp(pdinfo->varname[li], "time") ||
-	    isdummy(Z[li], pdinfo->t1, pdinfo->t2)) {
+	    gretl_isdummy(Z[li], pdinfo->t1, pdinfo->t2)) {
 	    d[i] = 1;
 	    ndet++;
 	} else {
@@ -1518,7 +1518,7 @@ int coint (int order, const int *list, double ***pZ,
 	   DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     int i, t, n, nv, l0 = list[0];
-    int hasconst = gretl_hasconst(list);
+    int hasconst = gretl_list_has_const(list);
     MODEL cmod;
     int *cointlist = NULL;
     int adfcode = UR_CONST;
@@ -1554,7 +1554,7 @@ int coint (int order, const int *list, double ***pZ,
 	cointlist[l0 + 1] = 0;
 	cointlist[0] += 1;
     } else {
-	cointlist = copylist(list);
+	cointlist = gretl_list_copy(list);
 	if (cointlist == NULL) {
 	    return E_ALLOC;
 	}
@@ -1783,7 +1783,7 @@ static int real_adf_test (int varno, int order, int niv,
 	int tmp = list[0];
 
 	list[0] = order + 5;
-	biglist = copylist(list);
+	biglist = gretl_list_copy(list);
 	if (biglist == NULL) {
 	    free(list);
 	    return E_ALLOC;

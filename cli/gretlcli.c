@@ -32,6 +32,7 @@
 #include "gretl_func.h"
 #include "modelspec.h"
 #include "libset.h"
+#include "forecast.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -1137,7 +1138,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case GNUPLOT:
 	if ((cmd.opt & OPT_Z) && 
 	    (cmd.list[0] != 3 || 
-	     !isdummy(Z[cmd.list[3]], datainfo->t1, datainfo->t2))) { 
+	     !gretl_isdummy(Z[cmd.list[3]], datainfo->t1, datainfo->t2))) { 
 	    pputs(prn, _("You must supply three variables, the last of "
 			 "which is a dummy variable\n(with values 1 or 0)\n"));
 	    break;

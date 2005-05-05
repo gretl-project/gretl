@@ -120,6 +120,7 @@ LIBSRC = bhhh_max.c \
 	describe.c \
         discrete.c \
 	estimate.c \
+	forecast.c \
 	generate.c \
 	genstack.c \
 	graphing.c \

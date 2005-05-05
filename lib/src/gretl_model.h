@@ -90,6 +90,12 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo);
 
 int swap_models (MODEL **targ, MODEL **src);
 
+int is_model_cmd (const char *line);
+
+int is_model_ref_cmd (int ci);
+
+int is_quiet_model_test (int ci, gretlopt opt);
+
 int command_ok_for_model (int test_ci, int model_ci);
 
 int get_model_count (void);

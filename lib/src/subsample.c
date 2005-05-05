@@ -153,7 +153,7 @@ static double *get_old_mask (double **Z, const DATAINFO *pdinfo)
     double *mask = NULL;
     int v = varindex(pdinfo, "subdum");
 
-    if (v < pdinfo->v && isdummy(Z[v], 0, pdinfo->n - 1)) {
+    if (v < pdinfo->v && gretl_isdummy(Z[v], 0, pdinfo->n - 1)) {
 	mask = Z[v];
     }    
 
@@ -234,7 +234,7 @@ static int sn_from_tmp_dummy (double ***pZ, DATAINFO *pdinfo,
 
     dnum = varindex(pdinfo, "tmpmsk");
 
-    isdum = isdummy((*pZ)[dnum], pdinfo->t1, pdinfo->t2);
+    isdum = gretl_isdummy((*pZ)[dnum], pdinfo->t1, pdinfo->t2);
 
     copy_to_mask(mask, (*pZ)[dnum], pdinfo->n);
 
@@ -256,7 +256,7 @@ static int sn_from_dummy (const double **Z, const DATAINFO *pdinfo,
 	return -1;
     } 
 
-    isdum = isdummy(Z[dnum], pdinfo->t1, pdinfo->t2);
+    isdum = gretl_isdummy(Z[dnum], pdinfo->t1, pdinfo->t2);
 
     copy_to_mask(mask, Z[dnum], pdinfo->n);
 

@@ -548,12 +548,6 @@ int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo,
 	return E_ARGS; 
     }
 
-    m = list_dups(list, GRAPH);
-    if (m) {
-	fprintf(stderr, _("var no. %d duplicated in command list.\n"), m);
-	return 1;
-    }
-
     x = malloc(T * sizeof *x);
     y1 = malloc(T * sizeof *y1);
 

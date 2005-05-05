@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "var.h"
 #include "modelspec.h"
+#include "forecast.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -2770,7 +2771,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	}
 
 	if (pmod->list[i] == 0 ||
-	    !isdummy(Z[pmod->list[i]], datainfo->t1, datainfo->t2)) {
+	    !gretl_isdummy(Z[pmod->list[i]], datainfo->t1, datainfo->t2)) {
 	    continue;
 	}
 

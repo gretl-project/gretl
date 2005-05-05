@@ -105,6 +105,21 @@ void destroy_dataset_markers (DATAINFO *pdinfo)
     } 
 }
 
+void free_varinfo (DATAINFO *pdinfo, int v)
+{
+    VARINFO *vinfo = pdinfo->varinfo[v];
+    int i;
+
+    if (vinfo->sorted_markers != NULL) {
+	for (i=0; i<pdinfo->n; i++) {
+	    free(vinfo->sorted_markers[i]);
+	}
+	free(vinfo->sorted_markers);
+    }
+
+    free(vinfo);
+}
+
 /**
  * clear_datainfo:
  * @pdinfo: data information struct.
@@ -140,7 +155,7 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	}
 	if (pdinfo->varinfo != NULL) {
 	    for (i=0; i<pdinfo->v; i++) {
-		free(pdinfo->varinfo[i]); 
+		free_varinfo(pdinfo, i);
 	    }
 	    free(pdinfo->varinfo);
 	    pdinfo->varinfo = NULL;
@@ -329,6 +344,7 @@ void gretl_varinfo_init (VARINFO *vinfo)
     *vinfo->display_name = '\0';
     vinfo->compact_method = COMPACT_NONE;
     vinfo->stack_level = 0;
+    vinfo->sorted_markers = NULL;
 }
 
 /* ................................................. */

@@ -75,8 +75,8 @@ static double *get_model_series (const DATAINFO *pdinfo,
 static double *get_random_series (DATAINFO *pdinfo, int fn);
 static double *get_mp_series (const char *s, GENERATE *genr,
 			      int fn, int *err);
-static double *get_tmp_series (double *x, const DATAINFO *pdinfo, 
-			       int fn, double param, int *err);
+static double *get_tmp_series (double *x, GENERATE *genr,
+			       int fn, double param);
 
 static double get_tnum (const DATAINFO *pdinfo, int t);
 static double evaluate_statistic (double *z, GENERATE *genr, int fn);
@@ -249,6 +249,7 @@ static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
     genr->pZ = pZ;
     genr->pmod = pmod;
     genr->aset = NULL;
+    genr->S = NULL;
 
     reset_calc_stack(genr);
 }
@@ -957,8 +958,7 @@ static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
 	return genr->err;
     }
 
-    y = get_tmp_series(x, (const DATAINFO *) genr->pdinfo, 
-		       atom->func, param, &genr->err);
+    y = get_tmp_series(x, genr, atom->func, param);
 
     free(x);
 
@@ -2637,6 +2637,10 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
 	    (*pZ)[v][t] = genr->xvec[t];
 	}
+	if (genr->S != NULL) {
+	    pdinfo->varinfo[v]->sorted_markers = genr->S;
+	    genr->S = NULL;
+	}
     }
 
     genrfree(genr);
@@ -3348,13 +3352,139 @@ static double evaluate_missval_func (double arg, int fn)
     return x;
 }
 
+struct val_mark {
+    double x;
+    char mark[OBSLEN];
+};
+
+static int compare_vms (const void *a, const void *b)
+{
+    const struct val_mark *va = (const struct val_mark *) a;
+    const struct val_mark *vb = (const struct val_mark *) b;
+     
+    return (va->x > vb->x) - (va->x < vb->x);
+}
+
+static void free_genr_S (GENERATE *genr)
+{
+    if (genr->S != NULL) {
+	int i, n = genr->pdinfo->n;
+
+	for (i=0; i<n; i++) {
+	    if (genr->S[i] != NULL) {
+		free(genr->S[i]);
+	    }
+	}
+	free(genr->S);
+	genr->S = NULL;
+    }
+}
+
+static int allocate_genr_S (GENERATE *genr)
+{
+    int i, n = genr->pdinfo->n;
+    int err = 0;
+
+    genr->S = malloc(n * sizeof *genr->S);
+
+    if (genr->S == NULL) {
+	err = 1;
+    } else {
+	for (i=0; i<n; i++) {
+	    genr->S[i] = NULL;
+	}
+	for (i=0; i<n; i++) {
+	    genr->S[i] = malloc(OBSLEN);
+	    if (genr->S[i] == NULL) {
+		err = 1;
+		free_genr_S(genr);
+	    }
+	}
+    }
+
+    return err;
+}
+
+static int 
+sort_series (const double *mvec, double *x, GENERATE *genr)
+{
+    DATAINFO *pdinfo = genr->pdinfo;
+    double *tmp = NULL;
+    struct val_mark *vm = NULL;
+    int markers = (pdinfo->S != NULL);
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int i, t;
+
+    if (markers) {
+	allocate_genr_S(genr);
+	if (genr->S == NULL) {
+	    return 1;
+	}
+	vm = malloc(T * sizeof *vm);
+	if (vm == NULL) {
+	    free_genr_S(genr);
+	    return 1;
+	}
+    } else {
+	tmp = malloc(T * sizeof *tmp);
+	if (tmp == NULL) {
+	    return 1;
+	}
+    }
+
+    i = -1;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (na(mvec[t])) {
+	    continue;
+	}
+	++i;
+	if (markers) {
+	    vm[i].x = mvec[t];
+	    strcpy(vm[i].mark, pdinfo->S[t]);
+	} else {
+	    tmp[i] = mvec[t];
+	}
+    }
+
+    if (markers) {
+	qsort(vm, i + 1, sizeof *vm, compare_vms);
+    } else {
+	qsort(tmp, i + 1, sizeof *tmp, gretl_compare_doubles);
+    }
+
+    i = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (na(mvec[t])) {
+	    x[t] = NADBL;
+	    continue;
+	} else if (markers) {
+	    x[t] = vm[i].x;
+	    strcpy(genr->S[t], vm[i].mark);
+	} else {
+	    x[t] = tmp[i];
+	}
+	i++;
+    }
+
+    if (tmp != NULL) {
+	free(tmp);
+    }
+
+    if (vm != NULL) {
+	free(vm);
+    }
+
+    return 0;
+}
+
 /* below: create a temporary series after evaluating the full-
    length argument. 
 */
 
-static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo, 
-			       int fn, double param, int *err)
+static double *get_tmp_series (double *mvec, GENERATE *genr, 
+			       int fn, double param)
 {
+    DATAINFO *pdinfo = genr->pdinfo;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2; 
     double *x;
     double xx, yy;
@@ -3396,7 +3526,7 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
 	    } else {
 		/* log difference */
 		if (xx <= 0.0 || yy <= 0.0) {
-		    *err = E_LOGS;
+		    genr->err = E_LOGS;
 		    x[t] = NADBL;
 		} else {
 		    x[t] = log(xx) - log(yy);
@@ -3415,32 +3545,11 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
     }
 
     else if (fn == T_SORT) {
-	double *tmp = malloc((t2 - t1 + 1) * sizeof *tmp);
-	int i;
-
-	if (tmp == NULL) {
+	genr->err = sort_series(mvec, x, genr);
+	if (genr->err) {
 	    free(x);
-	    return NULL;
+	    x = NULL;
 	}
-
-	i = -1;
-	for (t=t1; t<=t2; t++) {
-	    if (na(mvec[t])) continue;
-	    tmp[++i] = mvec[t];
-	}
-
-	qsort(tmp, i + 1, sizeof *tmp, gretl_compare_doubles);
-
-	i = 0;
-	for (t=t1; t<=t2; t++) {
-	    if (na(mvec[t])) {
-		x[t] = NADBL;
-	    } else {
-		x[t] = tmp[i++];
-	    }
-	}
-
-	free(tmp);
     }
 
     else if (fn == T_RESAMPLE) {
@@ -3451,7 +3560,7 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
 
 	n = rt2 - rt1 + 1;
 	if (n <= 1) {
-	    *err = E_DATA;
+	    genr->err = E_DATA;
 	    free(x);
 	    return NULL;
 	}
@@ -3483,15 +3592,15 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
     }
 
     else if (fn == T_HPFILT) { 
-	*err = hp_filter(mvec, x, pdinfo);	
+	genr->err = hp_filter(mvec, x, pdinfo);	
     }
 
     else if (fn == T_BKFILT) { 
-	*err = bkbp_filter(mvec, x, pdinfo);	
+	genr->err = bkbp_filter(mvec, x, pdinfo);	
     }
 
     else if (fn == T_FRACDIFF) {
-	*err = get_fracdiff(mvec, x, param, pdinfo);
+	genr->err = get_fracdiff(mvec, x, param, pdinfo);
     }
 
     return x;

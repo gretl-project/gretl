@@ -511,7 +511,7 @@ int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff)
 int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo)
 {
     if (vi == vj) {
-	if (isdummy((*pZ)[vi], pdinfo->t1, pdinfo->t2)) {
+	if (gretl_isdummy((*pZ)[vi], pdinfo->t1, pdinfo->t2)) {
 	    return -1;
 	}
     }
@@ -596,7 +596,7 @@ int list_loggenr (const int *list, double ***pZ, DATAINFO *pdinfo)
 	if (v == 0 || !pdinfo->vector[v]) {
 	    continue; 
 	}
-	if (isdummy((*pZ)[v], pdinfo->t1, pdinfo->t2)) {
+	if (gretl_isdummy((*pZ)[v], pdinfo->t1, pdinfo->t2)) {
 	    continue;
 	}
 
@@ -778,7 +778,7 @@ int list_xpxgenr (const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (vi == 0 || !pdinfo->vector[vi]) {
 	    continue; 
 	}
-	if (isdummy((*pZ)[vi], pdinfo->t1, pdinfo->t2)) {
+	if (gretl_isdummy((*pZ)[vi], pdinfo->t1, pdinfo->t2)) {
 	    continue;
 	}
 

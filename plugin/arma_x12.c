@@ -189,7 +189,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
     pmod->dfd = pmod->nobs - pmod->dfn;
     pmod->ncoeff = p + q + 1;
 
-    pmod->list = copylist(list);
+    pmod->list = gretl_list_copy(list);
 
     pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
     pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);

@@ -17,8 +17,6 @@
  *
  */
 
-/* utils.c for gretl  */
-
 #include "libgretl.h"
 #include "gretl_private.h"
 #include "system.h"
@@ -33,12 +31,151 @@
 # endif /* GLIB_CHECK_VERSION */
 #endif /* ! WIN32 */
 
-static int allocate_fit_resid_arrays (FITRESID *fr, int n, int errs);
+/* returns min and max of array zx for sample t1 through t2 */
+
+void gretl_minmax (int t1, int t2, const double *x, 
+		   double *min, double *max)
+{
+    int t;
+
+    while (na(x[t1]) && t1 <= t2) {
+	t1++;
+    }
+
+    if (t1 >= t2) {
+        *min = *max = NADBL;
+        return;
+    }
+
+    *min = x[t1];
+    *max = x[t1];
+
+    for (t=t1; t<=t2; t++) {
+	if (!(na(x[t]))) {
+	    *max = x[t] > *max ? x[t] : *max;
+	    *min = x[t] < *min ? x[t] : *min;
+	}
+    }
+}
+
+/* returns mean of array x from obs t1 through t2 */
+
+double gretl_mean (int t1, int t2, const double *x)
+{
+    int n;
+    register int t;
+    double xbar, sum = 0.0;
+
+    n = t2 - t1 + 1;
+    if (n <= 0) {
+	return NADBL;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	if (!(na(x[t]))) {
+	    sum += x[t];
+	} else {
+	    n--;
+	}
+    }
+
+    xbar = sum / n;
+    sum = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!(na(x[t]))) {
+	    sum += (x[t] - xbar); 
+	}
+    }
+
+    return xbar + sum / n;
+}
+
+/*  returns standard deviation of array x from t1 through t2,
+    or NADBL if square root argument is invalid
+    or there are no observations
+*/
+
+double gretl_stddev (int t1, int t2, const double *x)
+{
+    double xx;
+
+    xx = gretl_variance(t1, t2, x);
+
+    return (na(xx))? xx : sqrt(xx);
+}
+
+/*  returns variance of array x from t1 through t2,
+    or NADBL if square root argument is invalid
+    or there are no observations
+*/
+
+double gretl_variance (int t1, int t2, const double *x)
+{
+    int i, n;
+    double sumsq, xx, xbar;
+
+    n = t2 - t1 + 1;
+
+    if (n == 0) {
+	return NADBL;
+    }
+
+    xbar = gretl_mean(t1, t2, x);
+    if (na(xbar)) {
+	return NADBL;
+    }
+
+    sumsq = 0.0;
+
+    for (i=t1; i<=t2; i++) {
+	if (!na(x[i])) {
+	    xx = x[i] - xbar;
+	    sumsq += xx*xx;
+	} else {
+	    n--;
+	}
+    }
+
+    sumsq = (n > 1)? sumsq / (n - 1) : 0.0;
+
+    return (sumsq >= 0)? sumsq : NADBL;
+}
+
+/*  returns sum of squared deviations from the mean of array x from t1,
+    through t2, or NADBL on error
+*/
+
+double gretl_sst (int t1, int t2, const double *x)
+{
+    int i;
+    double sumsq, xx, xbar;
+
+    if (t2 - t1 + 1 == 0) {
+	return NADBL;
+    }
+
+    xbar = gretl_mean(t1, t2, x);
+    if (na(xbar)) {
+	return NADBL;
+    }
+
+    sumsq = 0.0;
+
+    for (i=t1; i<=t2; i++) {
+	if (!na(x[i])) {
+	    xx = x[i] - xbar;
+	    sumsq += xx * xx;
+	} 
+    }
+
+    return sumsq;
+}
 
 /*
-  returns the simple correlation coefficient between the the arrays zx
-  and zy, for the n observations 0 to n-1.  returns NADBL if square
-  root argument is invalid or no of observations is zero
+  Returns the simple correlation coefficient between the the arrays zx
+  and zy, for the n observations 0 to n - 1.  Returns NADBL if square
+  root argument is invalid or no of observations is zero.
 */
 
 double gretl_corr (int n, const double *x, const double *y)
@@ -97,7 +234,9 @@ double gretl_corr (int n, const double *x, const double *y)
     return cval;
 }
 
-/* .......................................................  */
+/* returns covariance between x and y from observations 0 tp
+   n - 1, or NADBL on error
+*/
 
 double gretl_covar (int n, const double *x, const double *y)
 {
@@ -227,10 +366,6 @@ int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo)
     int t, m = 0;
     double xx;
 
-#if 0
-    fprintf(stderr, "ztox: working on %s\n", pdinfo->varname[i]);
-#endif
-
     if (!pdinfo->vector[i]) {
 	px[0] = Z[i][0];
 	return 1;
@@ -249,18 +384,11 @@ int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo)
 		pdinfo->varname[i]);
     } 
 
-#if 0
-    else if (m < pdinfo->t2 - pdinfo->t1 + 1) {
-	fprintf(stderr, "\nztox: Dropped missing obs for var %s\n",
-		pdinfo->varname[i]);
-    }
-#endif
-
     return m;
 }
 
 /**
- * isdummy:
+ * gretl_isdummy:
  * @x: data series to examine.
  * @t1: starting observation.
  * @t2: ending observation. 
@@ -272,20 +400,14 @@ int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo)
  * number of 1s in the series.
  */
 
-int isdummy (const double *x, int t1, int t2)
+int gretl_isdummy (const double *x, int t1, int t2)
 {
     int t, m = 0;
 
     for (t=t1; t<=t2; t++) {
-#if 1 /* allow missing values */
 	if (floatneq(x[t], 0.0) && floatneq(x[t], 1.0) && !na(x[t])) {
 	    return 0;
 	}
-#else
-	if (floatneq(x[t], 0.0) && floatneq(x[t], 1.0)) {
-	    return 0;
-	}
-#endif
 	if (floateq(x[t], 1.0)) m++;
     }
 
@@ -296,46 +418,47 @@ int isdummy (const double *x, int t1, int t2)
     return 0;
 } 
 
-/* ........................................................  */
+/**
+ * gretl_iszero:
+ * @x: data series to examine.
+ * @t1: starting observation.
+ * @t2: ending observation. 
+ * 
+ * Check whether variable @x has only zero values over the
+ * given sample range (or possibly missing values).
+ *
+ * Returns: 1 if the variable is all zeros, otherwise 0.
+ */
 
 int gretl_iszero (int t1, int t2, const double *x)
-/*  checks whether all obs are zero for variable x from t1 to t2 */
 {
     double sum = 0.0;
     int t;
 
     for (t=t1; t<=t2; t++) {
-        sum += x[t] * x[t];
+	if (!na(x[t])) {
+	    sum += x[t] * x[t];
+	}
     }
 
     return floateq(sum, 0.0);
 }
 
 /**
- * list_exclude:
- * @n: position of element to be removed (zero-based). 
- * @list: array of integers.
+ * gretl_isconst:
+ * @x: data series to examine.
+ * @t1: starting observation.
+ * @t2: ending observation. 
  * 
- * Removes the element at position @n within @list.
+ * Check whether variable @x is constant over the
+ * given sample range (aside from any missing values).
+ *
+ * Returns: 1 if the variable is constant, otherwise 0.
  */
-
-void list_exclude (int n, int *list)
-{
-    int i;
-
-    for (i=n; i<list[0]; i++) {
-	list[i] = list[i+1];
-    }
-
-    list[0] = list[0] - 1;
-}
-
-/* ........................................................  */
 
 int gretl_isconst (int t1, int t2, const double *x)
 {
-    
-    int t;
+    int t, ret = 1;
 
     while (na(x[t1]) && t1 <= t2) {
 	t1++;
@@ -346,90 +469,13 @@ int gretl_isconst (int t1, int t2, const double *x)
 	    continue;
 	}
 	if (floatneq(x[t], x[t1])) {
-	    return 0;
+	    ret = 0;
+	    break;
 	}
     }
 
-    return 1;
+    return ret;
 }
-
-/* returns mean of array x from obs t1 through t2 */
-
-double gretl_mean (int t1, int t2, const double *x)
-{
-    int n;
-    register int t;
-    double xbar, sum = 0.0;
-
-    n = t2 - t1 + 1;
-    if (n <= 0) {
-	return NADBL;
-    }
-
-    for (t=t1; t<=t2; t++) {
-	if (!(na(x[t]))) {
-	    sum += x[t];
-	} else {
-	    n--;
-	}
-    }
-
-    xbar = sum / n;
-    sum = 0.0;
-
-    for (t=t1; t<=t2; t++) {
-	if (!(na(x[t]))) {
-	    sum += (x[t] - xbar); 
-	}
-    }
-
-    return xbar + sum / n;
-}
-
-/*  returns min and max of array zx for sample t1 through t2  */
-
-void gretl_minmax (int t1, int t2, const double *x, 
-		   double *min, double *max)
-{
-    int t;
-
-    while (na(x[t1]) && t1 <= t2) {
-	t1++;
-    }
-
-    if (t1 >= t2) {
-        *min = *max = NADBL;
-        return;
-    }
-
-    *min = x[t1];
-    *max = x[t1];
-
-    for (t=t1; t<=t2; t++) {
-	if (!(na(x[t]))) {
-	    *max = x[t] > *max ? x[t] : *max;
-	    *min = x[t] < *min ? x[t] : *min;
-	}
-    }
-}
-
-/* check if a var list contains a constant (variable with ID
-   number 0) */
-
-int gretl_hasconst (const int *list)
-{
-    int i;
-
-    for (i=2; i<=list[0]; i++) {
-        if (list[i] == 0) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-/* ...................................................... */
 
 int gretl_compare_doubles (const void *a, const void *b)
 {
@@ -437,78 +483,6 @@ int gretl_compare_doubles (const void *a, const void *b)
     const double *db = (const double *) b;
      
     return (*da > *db) - (*da < *db);
-}
-
-/*  returns standard deviation of array x from t1 through t2
-    return NADBL if square root argument is invalid
-    or there are no observations
-*/
-
-double gretl_stddev (int t1, int t2, const double *x)
-{
-    double xx;
-
-    xx = gretl_variance(t1, t2, x);
-
-    return (na(xx))? xx : sqrt(xx);
-}
-
-double gretl_variance (int t1, int t2, const double *x)
-{
-    int i, n;
-    double sumsq, xx, xbar;
-
-    n = t2 - t1 + 1;
-
-    if (n == 0) {
-	return NADBL;
-    }
-
-    xbar = gretl_mean(t1, t2, x);
-    if (na(xbar)) {
-	return NADBL;
-    }
-
-    sumsq = 0.0;
-
-    for (i=t1; i<=t2; i++) {
-	if (!na(x[i])) {
-	    xx = x[i] - xbar;
-	    sumsq += xx*xx;
-	} else {
-	    n--;
-	}
-    }
-
-    sumsq = (n > 1)? sumsq / (n - 1) : 0.0;
-
-    return (sumsq >= 0)? sumsq : NADBL;
-}
-
-double gretl_sst (int t1, int t2, const double *x)
-{
-    int i;
-    double sumsq, xx, xbar;
-
-    if (t2 - t1 + 1 == 0) {
-	return NADBL;
-    }
-
-    xbar = gretl_mean(t1, t2, x);
-    if (na(xbar)) {
-	return NADBL;
-    }
-
-    sumsq = 0.0;
-
-    for (i=t1; i<=t2; i++) {
-	if (!na(x[i])) {
-	    xx = x[i] - xbar;
-	    sumsq += xx * xx;
-	} 
-    }
-
-    return sumsq;
 }
 
 /**
@@ -573,7 +547,7 @@ int print_list_to_buffer (const int *list, char *buf, size_t len)
     return 0;
 }
 
-/* ....................................................... */
+/* Compute model selection criteria */
 
 int calculate_criteria (double *x, double ess, int nobs, int ncoeff)
 {
@@ -601,8 +575,6 @@ int calculate_criteria (double *x, double ess, int nobs, int ncoeff)
 	return 0;
     }
 }
-
-/* Compute model selection criteria */
 
 int ls_aic_bic (MODEL *pmod)
 {
@@ -868,122 +840,6 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
     return 0;
 }
 
-/* ........................................................... */
-
-int is_model_cmd (const char *s)
-{
-    if (s == NULL || *s == '\0') return 0;
-
-    if (!strncmp(s, "ols", 3)  ||
-	!strncmp(s, "corc", 4) ||
-	!strncmp(s, "hilu", 4) ||
-	!strncmp(s, "wls", 3)  ||
-	!strncmp(s, "pwe", 3)  ||
-	!strncmp(s, "pooled", 6)  ||
-	!strncmp(s, "hccm", 4) ||
-	!strncmp(s, "hsk", 3)  ||
-	!strncmp(s, "add", 3)  ||
-	!strncmp(s, "lad", 3)  ||
-	!strncmp(s, "omit", 4) ||
-	!strncmp(s, "tsls", 4) ||
-	!strncmp(s, "logit", 5)  ||
-	!strncmp(s, "probit", 6) ||
-	!strncmp(s, "tobit", 5) ||
-	!strncmp(s, "poisson", 7) ||
-	!strncmp(s, "garch", 5) ||
-	!strncmp(s, "logistic", 8) ||
-	!strncmp(s, "end nls", 7) ||
-	!strncmp(s, "arma", 4) ||
-	!strncmp(s, "ar ", 3) ||
-	!strcmp(s, "ar")) {
-	return 1;
-    }
-
-    return 0;
-}
-
-int is_model_ref_cmd (int ci)
-{
-    if (ci == ADD ||
-	ci == OMIT ||
-	ci == ARCH ||
-	ci == CHOW ||
-	ci == CUSUM ||
-	ci == LMTEST ||
-	ci == LEVERAGE ||
-	ci == VIF ||
-	ci == RESTRICT ||
-	ci == FCAST ||
-	ci == FCASTERR ||
-	ci == FIT) {
-	return 1;
-    }
-
-    return 0;
-}
-
-int is_quiet_model_test (int ci, gretlopt opt)
-{
-    if ((opt & OPT_Q) && (ci == OMIT || ci == ADD ||
-			  ci == OMITFROM || ci == ADDTO)) {
-	return 1;
-    }
-
-    return 0;
-}
-
-/* .......................................................... */
-
-int list_dups (const int *list, int ci)
-{
-    int i, j, start = 2;
-
-    if (ci == ARCH) start = 3;
-
-    if (ci == TSLS || ci == AR || ci == ARMA || 
-	ci == SCATTERS || ci == MPOLS || ci == GARCH) {
-	for (i=2; i<list[0]; i++) {
-	    if (list[i] == LISTSEP) {
-		start = i+1;
-		break;
-	    }
-	}
-    }
-    
-    for (i=start; i<list[0]; i++) {
-	for (j=start+1; j<=list[0]; j++) {
-	    if (i != j && list[i] == list[j]) {
-		return list[i];
-	    }
-	}
-    }
-
-    return 0;
-}
-
-/* ........................................................... */
-
-int *copylist (const int *src)
-{
-    int *targ;
-    int i;
-
-    if (src == NULL) {
-	return NULL;
-    }
-
-    targ = malloc((src[0] + 1) * sizeof *targ);
-    if (targ == NULL) {
-	return NULL;
-    }
-
-    for (i=0; i<=src[0]; i++) {
-	targ[i] = src[i];
-    }
-
-    return targ;
-}
-
 /* ......................................................  */
 
 static int reallocate_markers (DATAINFO *pdinfo, int n)
@@ -1067,7 +923,10 @@ static int real_dataset_add_vars (int newvars, double *x,
     int i, n = pdinfo->n, v = pdinfo->v;    
 
     newZ = realloc(*pZ, (v + newvars) * sizeof *newZ);  
-    if (newZ == NULL) return E_ALLOC;
+
+    if (newZ == NULL) {
+	return E_ALLOC;
+    }
 
     if (newvars == 1 && x != NULL) {
 	/* new var is pre-allocated */
@@ -1075,7 +934,9 @@ static int real_dataset_add_vars (int newvars, double *x,
     } else {
 	for (i=0; i<newvars; i++) {
 	    newZ[v+i] = malloc(n * sizeof **newZ);
-	    if (newZ[v+i] == NULL) return E_ALLOC;
+	    if (newZ[v+i] == NULL) {
+		return E_ALLOC;
+	    }
 	}
     }
 
@@ -1151,19 +1012,30 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
     int n = pdinfo->n, v = pdinfo->v;    
 
     newZ = realloc(*pZ, (v + 1) * sizeof *newZ);  
-    if (newZ == NULL) return E_ALLOC;
+
+    if (newZ == NULL) {
+	return E_ALLOC;
+    }
 
     newZ[v] = malloc(n * sizeof **newZ);
-    if (newZ[v] == NULL) return E_ALLOC;
+
+    if (newZ[v] == NULL) {
+	return E_ALLOC;
+    }
 
     *pZ = newZ;
 
     varname = realloc(pdinfo->varname, (v + 1) * sizeof *varname);
-    if (varname == NULL) return E_ALLOC;
+
+    if (varname == NULL) {
+	return E_ALLOC;
+    }
     pdinfo->varname = varname;
 
     pdinfo->varname[v] = malloc(VNAMELEN);
-    if (pdinfo->varname[v] == NULL) return E_ALLOC;
+    if (pdinfo->varname[v] == NULL) {
+	return E_ALLOC;
+    }
 
     pdinfo->varname[v][0] = '\0';
 
@@ -1181,7 +1053,9 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
     }
 
     vector = realloc(pdinfo->vector, (v + 1));
-    if (vector == NULL) return E_ALLOC;
+    if (vector == NULL) {
+	return E_ALLOC;
+    }
     pdinfo->vector = vector;
 
     pdinfo->vector[v] = 0;
@@ -1190,8 +1064,6 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
 
     return 0;
 }
-
-
 
 /* ......................................................  */
 
@@ -1211,8 +1083,6 @@ int positive_int_from_string (const char *s)
     return ret;
 }
 
-/* ......................................................  */
-
 int varnum_from_string (const char *str, DATAINFO *pdinfo)
 {
     int varno = positive_int_from_string(str);
@@ -1226,9 +1096,8 @@ int varnum_from_string (const char *str, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-static int shrink_dataset_to_size (double ***pZ,
-				   DATAINFO *pdinfo,
-				   int nv)
+static int 
+shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv)
 {
     char **varname;
     char *vector;
@@ -1236,19 +1105,27 @@ static int shrink_dataset_to_size (double ***pZ,
     double **newZ;
     
     varname = realloc(pdinfo->varname, nv * sizeof *varname);
-    if (varname == NULL) return E_ALLOC;
+    if (varname == NULL) {
+	return E_ALLOC;
+    }
     pdinfo->varname = varname;
 
     vector = realloc(pdinfo->vector, nv * sizeof *vector);
-    if (vector == NULL) return E_ALLOC;
+    if (vector == NULL) {
+	return E_ALLOC;
+    }
     pdinfo->vector = vector;
 
     varinfo = realloc(pdinfo->varinfo, nv * sizeof *varinfo);
-    if (varinfo == NULL) return E_ALLOC;
+    if (varinfo == NULL) {
+	return E_ALLOC;
+    }
     pdinfo->varinfo = varinfo;
 
     newZ = realloc(*pZ, nv * sizeof *newZ); 
-    if (newZ == NULL) return E_ALLOC;
+    if (newZ == NULL) {
+	return E_ALLOC;
+    }
     *pZ = newZ;
 
     pdinfo->v = nv;
@@ -1375,7 +1252,7 @@ int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
 	    free(pdinfo->varname[i]);
 	}
 	if (pdinfo->varinfo[i] != NULL) {
-	    free(pdinfo->varinfo[i]);
+	    free_varinfo(pdinfo, i);
 	}
 	if ((*pZ)[i] != NULL) {
 	    free((*pZ)[i]);
@@ -1496,14 +1373,15 @@ static int missing_tail (const double *x, int n)
     int i, nmiss = 0;
 
     for (i=n-1; i>=0; i--) {
-	if (na(x[i])) nmiss++;
-	else break;
+	if (na(x[i])) {
+	    nmiss++;
+	} else {
+	    break;
+	}
     }
 
     return nmiss;
 }
-
-/* ........................................................... */
 
 int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo, 
 			char *newvar, char *s)
@@ -1722,7 +1600,9 @@ int rename_var_by_id (const char *str, const char *vname,
 {
     int varno = varnum_from_string(str, pdinfo);
 
-    if (varno < 0) return E_DATA;
+    if (varno < 0) {
+	return E_DATA;
+    }
 
     /* should be pre-checked for validity of varname and
        non-duplication (see interact.c under RENAME)
@@ -1770,363 +1650,6 @@ double *copyvec (const double *src, int n)
     }
 
     return targ;
-}
-
-/* ........................................................... */
-
-int gretl_forecast (int t1, int t2, int nv, 
-		    const MODEL *pmod, double ***pZ)
-{
-    double xx, zz, zr;
-    int i, k, maxlag = 0, yno;
-    int v, t, miss;
-    const int *arlist = NULL;
-    int ar = AR_MODEL(pmod->ci);
-
-    if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
-	for (t=t1; t<=t2; t++) {
-	    (*pZ)[nv][t] = pmod->yhat[t];
-	}
-	return 0;
-    }
-
-    yno = pmod->list[1];
-
-    if (ar) {
-	arlist = pmod->arinfo->arlist;
-	maxlag = arlist[arlist[0]];
-	if (t1 < maxlag) {
-	    t1 = maxlag; 
-	}
-    }
-
-    for (t=t1; t<=t2; t++) {
-	miss = 0;
-	zz = 0.0;
-	if (ar) 
-	    for (k=1; k<=arlist[0]; k++) {
-	    xx = (*pZ)[yno][t - arlist[k]];
-	    zr = pmod->arinfo->rho[k];
-	    if (na(xx)) {
-		if (zr == 0) {
-		    continue;
-		}
-		xx = (*pZ)[nv][t - arlist[k]];
-		if (na(xx)) {
-		    (*pZ)[nv][t] = NADBL;
-		    miss = 1;
-		}
-	    }
-	    zz = zz + xx * zr;
-	} /* end if ar */
-	for (v=0; !miss && v<pmod->ncoeff; v++) {
-	    k = pmod->list[v+2];
-	    xx = (*pZ)[k][t];
-	    if (na(xx)) {
-		zz = NADBL;
-		miss = 1;
-	    }
-	    if (!miss && ar) {
-		xx = (*pZ)[k][t];
-		for (i=1; i<=arlist[0]; i++) {
-		    xx -= pmod->arinfo->rho[i] * (*pZ)[k][t - arlist[i]];
-		}
-	    }
-	    if (!miss) {
-		zz = zz + xx * pmod->coeff[v];
-	    }
-	}
-
-	if (pmod->ci == LOGISTIC) {
-	    double lmax = gretl_model_get_double(pmod, "lmax");
-
-	    zz = lmax / (1.0 + exp(-zz));
-	}
-
-	(*pZ)[nv][t] = zz;
-    }
-
-    return 0;
-}
-
-/* ........................................................... */
-
-FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
-			 DATAINFO *pdinfo)
-{
-    int depvar, t, ft;
-    FITRESID *fr;
-
-    if (pmod->ci == ARMA || pmod->ci == GARCH) {
-	depvar = pmod->list[4];
-    } else {
-	depvar = pmod->list[1];
-    }
-
-    fr = fit_resid_new(pmod->t2 - pmod->t1 + 1, 0);
-    if (fr == NULL) {
-	return NULL;
-    }
-
-    fr->sigma = pmod->sigma;
-
-    fr->t1 = pmod->t1;
-    fr->t2 = pmod->t2;
-    fr->real_nobs = pmod->nobs;
-
-    for (t=fr->t1; t<=fr->t2; t++) {
-	ft = t - fr->t1;
-	fr->actual[ft] = (*pZ)[depvar][t];
-	fr->fitted[ft] = pmod->yhat[t];
-    }
-
-    if (isdummy(fr->actual, 0, fr->nobs) > 0) {
-	fr->pmax = get_precision(fr->fitted, fr->nobs, 8);
-    } else {
-	fr->pmax = get_precision(fr->actual, fr->nobs, 8);
-    }
-    
-    strcpy(fr->depvar, pdinfo->varname[depvar]);
-    
-    return fr;
-}
-
-/* ........................................................... */
-
-static void fcast_adjust_t1_t2 (const MODEL *pmod,
-				const double **Z,
-				int *t1, int *t2)
-{
-    int i, t;
-    int my_t1 = *t1, my_t2 = *t2;
-    int imin = (pmod->ifc)? 3 : 2;
-    int miss;
-
-    for (t=*t1; t<=*t2; t++) {
-	miss = 0;
-	for (i=imin; i<=pmod->list[0]; i++) {
-	    if (na(Z[pmod->list[i]][t])) {
-		miss = 1;
-		break;
-	    }
-	}
-	if (miss) my_t1++;
-	else break;
-    }
-
-    for (t=*t2; t>0; t--) {
-	miss = 0;
-	for (i=imin; i<=pmod->list[0]; i++) {
-	    if (na(Z[pmod->list[i]][t])) {
-		miss = 1;
-		break;
-	    }
-	}
-	if (miss) my_t2--;
-	else break;
-    }
-
-    *t1 = my_t1;
-    *t2 = my_t2;
-}
-
-static int 
-fcast_x_missing (const int *list, const double **Z, int t)
-{
-    int i;
-
-    for (i=2; i<=list[0]; i++) {
-	if (na(Z[list[i]][t])) return 1;
-    }
-
-    return 0;
-}
-
-/* 
-   Below: the method for generating forecasts and prediction errors
-   that is presented in Wooldridge's Introductory Econometrics,
-   Chapter 6.
-*/
-
-FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod, 
-			       double ***pZ, DATAINFO *pdinfo, 
-			       PRN *prn)
-{
-    double **fZ = NULL;
-    DATAINFO *finfo = NULL;
-    MODEL fmod; 
-    FITRESID *fr;
-    int *flist = NULL;
-    int i, k, t, n_est, nv;
-    int yno = pmod->list[1];
-    char t1str[OBSLEN], t2str[OBSLEN];
-
-    fr = fit_resid_new(0, 1); 
-    if (fr == NULL) {
-	return NULL;
-    }
-
-    if (pmod->ci != OLS) {
-	fr->err = E_OLSONLY;
-	return fr;
-    }
-
-    /* bodge (reject in case of subsampled data) */
-    if (gretl_model_get_int(pmod, "daily_repack")) {
-	fr->err = E_DATA;
-	return fr;
-    }
-
-    /* parse dates */
-    if (sscanf(str, "%*s %10s %10s", t1str, t2str) != 2) {
-	fr->err = E_OBS;
-	return fr;
-    }
-
-    fr->t1 = dateton(t1str, pdinfo);
-    fr->t2 = dateton(t2str, pdinfo);
-
-    if (fr->t1 < 0 || fr->t2 < 0 || fr->t2 <= fr->t1) {
-	fr->err = E_OBS;
-	return fr;
-    }
-
-    /* move endpoints if there are missing vals for the
-       independent variables */
-    fcast_adjust_t1_t2(pmod, (const double **) *pZ, &fr->t1, &fr->t2);
-
-    /* number of obs for which forecasts will be generated */
-    fr->nobs = fr->t2 - fr->t1 + 1;
-
-    if (allocate_fit_resid_arrays(fr, fr->nobs, 1)) {
-	fr->err = E_ALLOC;
-	return fr;
-    }
-
-    nv = pmod->list[0];
-    if (!pmod->ifc) nv++;
-
-    n_est = pmod->t2 - pmod->t1 + 1;
-
-    finfo = create_new_dataset(&fZ, nv, n_est, 0);
-    if (finfo == NULL) {
-	fr->err = E_ALLOC;
-	return fr;
-    }
-
-    /* insert depvar at position 1 */
-    for (t=0; t<finfo->n; t++) {
-	fZ[1][t] = (*pZ)[yno][t + pmod->t1];
-    }
-
-    /* create new list */
-    flist = malloc((finfo->v + 1) * sizeof *flist);
-    if (flist == NULL) {
-	fr->err = E_ALLOC;
-	goto fcast_bailout;
-    }
-
-    flist[0] = finfo->v;
-    flist[1] = 1;
-    flist[2] = 0;
-    for (i=3; i<=flist[0]; i++) {
-	flist[i] = i - 1;
-    }
-
-    gretl_model_init(&fmod);
-
-    /* loop across the observations for which we want forecasts
-       and standard errors */
-
-#ifdef FCAST_DEBUG
-    printf("get_fcast_with_errs: ft1=%d, ft2=%d, pmod->t1=%d, pmod->t2=%d\n",
-	   fr->t1, fr->t2, pmod->t1, pmod->t2);
-#endif
-
-    for (k=0; k<fr->nobs; k++) {
-	int tk = k + fr->t1;
-
-	fr->actual[k] = (*pZ)[yno][tk];
-
-	if (fcast_x_missing(pmod->list, (const double **) *pZ, tk)) {
-	    fr->sderr[k] = fr->fitted[k] = NADBL;
-	    continue;
-	}
-
-	/* form modified indep vars: original data minus the values
-	   to be used for the forecast 
-	*/
-	for (i=3; i<=flist[0]; i++) {
-	    int v = (pmod->ifc)? pmod->list[i] : pmod->list[i-1];
-	    const double *xv = (*pZ)[v];
-
-	    for (t=0; t<finfo->n; t++) {
-		int tp = t + pmod->t1;
-
-		if (na(xv[tp])) {
-		    fZ[i-1][t] = NADBL;
-		} else {
-		    fZ[i-1][t] = xv[tp] - xv[tk];
-		}
-	    }
-	}
-
-	fmod = lsq(flist, &fZ, finfo, OLS, OPT_A, 0.0);
-
-	if (fmod.errcode) {
-	    fr->err = fmod.errcode;
-	    clear_model(&fmod);
-	    goto fcast_bailout;
-	}
-
-	fr->fitted[k] = fmod.coeff[0];
-
-	/* what exactly do we want here? */
-#ifdef GIVE_SDERR_OF_EXPECTED_Y
-	fr->sderr[k] = fmod.sderr[0];
-#else
-	fr->sderr[k] = sqrt(fmod.sderr[0] * fmod.sderr[0] + 
-			    fmod.sigma * fmod.sigma);
-#endif
-	clear_model(&fmod);
-    }
-
-    fr->tval = tcrit95(pmod->dfd);
-    strcpy(fr->depvar, pdinfo->varname[yno]);
-    fr->df = pmod->dfd;
-
- fcast_bailout:
-
-    free_Z(fZ, finfo);
-    free(flist);
-    clear_datainfo(finfo, CLEAR_FULL);
-    free(finfo);
-
-    return fr;
-}
-
-/* ........................................................... */
-
-int fcast_with_errs (const char *str, const MODEL *pmod, 
-		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
-		     int plot)
-{
-    FITRESID *fr;
-    int err;
-
-    fr = get_fcast_with_errs(str, pmod, pZ, pdinfo, prn);
-
-    if (fr == NULL) {
-	return E_ALLOC;
-    }
-
-    if ((err = fr->err) == 0) {
-	err = text_print_fcast_with_errs(fr, pZ, pdinfo, prn, plot);
-    }
-
-    free_fit_resid(fr);
-    
-    return err;
 }
 
 /* ........................................................... */
@@ -2252,8 +1775,6 @@ int get_panel_structure (const DATAINFO *pdinfo, int *nunits, int *T)
     return err;
 }
 
-/* ........................................................... */
-
 int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 {
     int nunits, T;
@@ -2286,8 +1807,6 @@ int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 
     return 0;
 }
-
-/* ........................................................... */
 
 int balanced_panel (const DATAINFO *pdinfo)
 {
@@ -2331,8 +1850,6 @@ static void free_mp_varnames (mp_results *mpvals)
     }
 }
 
-/* ........................................................... */
-
 int allocate_mp_varnames (mp_results *mpvals)
 {
     int i, j, n = mpvals->ncoeff + 1;
@@ -2358,8 +1875,6 @@ int allocate_mp_varnames (mp_results *mpvals)
     return 0;
 }
 
-/* ........................................................... */
-
 void free_gretl_mp_results (mp_results *mpvals)
 {
     if (mpvals != NULL) {
@@ -2374,8 +1889,6 @@ void free_gretl_mp_results (mp_results *mpvals)
 	free(mpvals);
     }
 }
-
-/* ........................................................... */
 
 mp_results *gretl_mp_results_new (int nc)
 {
@@ -2413,80 +1926,6 @@ mp_results *gretl_mp_results_new (int nc)
 
 /* ........................................................... */
 
-static int allocate_fit_resid_arrays (FITRESID *fr, int n, int errs)
-{
-    fr->actual = malloc(n * sizeof *fr->actual);
-    if (fr->actual == NULL) {
-	return 1;
-    }
-
-    fr->fitted = malloc(n * sizeof *fr->fitted);
-    if (fr->fitted == NULL) {
-	free(fr->actual);
-	fr->actual = NULL;
-	return 1;
-    }
-
-    if (errs) {
-	fr->sderr = malloc(n * sizeof *fr->sderr);
-	if (fr->sderr == NULL) {
-	    free(fr->actual);
-	    fr->actual = NULL;
-	    free(fr->fitted);
-	    fr->fitted = NULL;
-	    return 1;
-	}
-    } else {
-	fr->sderr = NULL;
-    }
-
-    return 0;
-}
-
-/* ........................................................... */
-
-FITRESID *fit_resid_new (int n, int errs)
-{
-    FITRESID *fr;
-
-    fr = malloc(sizeof *fr);
-    if (fr == NULL) {
-	return NULL;
-    }
-
-    fr->err = 0;
-    fr->t1 = 0;
-    fr->t2 = 0;
-    fr->nobs = 0;
-    fr->real_nobs = 0;
-
-    if (n == 0) {
-	fr->actual = NULL;
-	fr->fitted = NULL;
-	fr->sderr = NULL;
-	return fr;
-    }
-
-    if (allocate_fit_resid_arrays(fr, n, errs)) {
-	free(fr);
-	return NULL;
-    }
-
-    fr->nobs = n;
-    
-    return fr;
-}
-
-/* ........................................................... */
-
-void free_fit_resid (FITRESID *fr)
-{
-    free(fr->actual);
-    free(fr->fitted);
-    free(fr->sderr);
-    free(fr);
-}
-
 static int copy_main_list (int **targ, const int *src)
 {
     int i, n = 0;
@@ -2509,8 +1948,6 @@ static int copy_main_list (int **targ, const int *src)
 
     return 0;
 }
-
-/* ........................................................... */
 
 /**
  * get_model_confints:
@@ -2562,8 +1999,6 @@ CONFINT *get_model_confints (const MODEL *pmod)
 
     return cf;
 }
-
-/* ........................................................... */
 
 void free_confint (CONFINT *cf)
 {

@@ -776,7 +776,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* preserve a copy of the list supplied, for future reference */
-    mdl.list = copylist(list);
+    mdl.list = gretl_list_copy(list);
     if (mdl.list == NULL) {
         mdl.errcode = E_ALLOC;
         return mdl;
@@ -793,7 +793,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 	    mdl.errcode = E_WTZERO;
 	    return mdl;
 	}
-	effobs = isdummy((*pZ)[mdl.nwt], mdl.t1, mdl.t2);
+	effobs = gretl_isdummy((*pZ)[mdl.nwt], mdl.t1, mdl.t2);
 	if (effobs) {
 	    /* the weight var is a dummy, with effobs 1s */
 	    gretl_model_set_int(&mdl, "wt_dummy", 1);
@@ -2604,7 +2604,7 @@ int *augment_regression_list (const int *orig, int aux,
     int i, k;
 
     if (aux == AUX_WHITE) {
-	int trv = orig[0] - 1 - gretl_hasconst(orig);
+	int trv = orig[0] - 1 - gretl_list_has_const(orig);
 	int nt = (trv * trv + trv) / 2;
 
 	listlen = orig[0] + nt + 1;
@@ -3249,7 +3249,7 @@ MODEL ar_func (int *list, int pos, double ***pZ,
     for (i=0; i<=reglist[0]; i++) {
 	ar.list[i] = reglist[i];
     }
-    if (gretl_hasconst(reglist)) {
+    if (gretl_list_has_const(reglist)) {
 	ar.ifc = 1;
     }
     if (ar.ifc) {
@@ -3334,7 +3334,7 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
     for (v=offset; v<=pmod->list[0]; v++) {
         lv = pmod->list[v];
         if (gretl_iszero(pmod->t1, pmod->t2, Z[lv])) {
-	    list_exclude(v, pmod->list);
+	    gretl_list_delete_at_pos(pmod->list, v);
 	    if (pdinfo->varname[lv][0] != 0) {
 		sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
 		strcat(gretl_msg, vnamebit);
@@ -3357,7 +3357,7 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
 		}
 	    }
 	    if (wtzero) {
-		list_exclude(v, pmod->list);
+		gretl_list_delete_at_pos(pmod->list, v);
 		sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
 		strcat(gretl_msg, vnamebit);
 		dropmsg = 1;
@@ -3377,7 +3377,7 @@ static void tsls_omitzero (int *list, const double **Z, int t1, int t2)
     for (i=2; i<=list[0]; i++) {
         v = list[i];
         if (gretl_iszero(t1, t2, Z[v])) {
-	    list_exclude(i, list);
+	    gretl_list_delete_at_pos(list, i);
 	    i--;
 	}
     }

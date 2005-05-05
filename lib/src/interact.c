@@ -1846,7 +1846,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	}
 
 	/* check for duplicated vars */
-	err = list_dups(cmd->list, cmd->ci);
+	err = gretl_list_duplicates(cmd->list, cmd->ci);
 	if (err) {
 	    printf(_("\nvar number %d duplicated in the command list.\n"),
 		   err);

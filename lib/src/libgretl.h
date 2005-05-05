@@ -182,6 +182,7 @@ struct VARINFO_ {
     char display_name[MAXDISP];
     char compact_method;
     char stack_level;
+    char **sorted_markers;
 };
 
 /* information on data set */
@@ -371,10 +372,12 @@ struct VCV_ {
     double *vec;
 };
 
-#define VARLABEL(p,i)  ((p->varinfo[i])->label)
-#define DISPLAYNAME(p,i)  ((p->varinfo[i])->display_name)
-#define COMPACT_METHOD(p,i) ((p->varinfo[i])->compact_method)
-#define STACK_LEVEL(p,i) ((p->varinfo[i])->stack_level)
+#define VARLABEL(p,i)        ((p->varinfo[i])->label)
+#define DISPLAYNAME(p,i)     ((p->varinfo[i])->display_name)
+#define COMPACT_METHOD(p,i)  ((p->varinfo[i])->compact_method)
+#define STACK_LEVEL(p,i)     ((p->varinfo[i])->stack_level)
+#define SORTED_MARKER(p,i,t) ((p->varinfo[i])->sorted_markers[t])
+
 
 #include "gretl_commands.h"
 #include "gretl_errors.h"
