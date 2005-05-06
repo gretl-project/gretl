@@ -97,6 +97,7 @@ static double evaluate_critval (const char *s, const double **Z,
 static int real_varindex (const DATAINFO *pdinfo, 
 			  const char *varname, 
 			  int local);
+static void free_genr_S (GENERATE *genr);
 
 
 enum retrieve {
@@ -230,6 +231,9 @@ static const char *get_func_word (int fnum);
 
 #define genr_warn(g) ((g)->flags & GENR_WARN)
 #define genr_set_warn(g) ((g)->flags |= GENR_WARN)
+
+#define genr_simple_sort(g) ((g)->flags & GENR_SIMPLE_SORT)
+#define genr_set_simple_sort(g) ((g)->flags |= GENR_SIMPLE_SORT)
 
 /* ...................................................... */
 
@@ -1037,42 +1041,54 @@ static int evaluate_genr (GENERATE *genr)
 {
     int t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
     int m = 0, tstart = t1;
+    int n_atoms = 0;
     genatom *atom;
 
-    /* pre-processing of certain sorts of terms */
     reset_atom_stack(genr);
 
+    DPRINTF(("Doing evaluate_genr\n"));
+
     while (!genr->err && (atom = pop_atom(genr))) {
+	n_atoms++;
+
+	DPRINTF((" looking at atom %d\n", n_atoms));
+
 	if (atom->varnum == genr->varnum && atom->lag > m) {
 	    m = atom->lag;
 	}
+
 	if (MODEL_VAR_INDEX(atom->varnum)) {
 	    genr->err = add_model_series_to_genr(genr, atom);
-	}
-	else if (atom->func == T_UNIFORM || 
-		 atom->func == T_NORMAL) {
+	} else if (atom->func == T_UNIFORM || atom->func == T_NORMAL) {
 	    genr->err = add_random_series_to_genr(genr, atom);
-	}
-	else if (atom->func == T_DIFF || atom->func == T_LDIFF ||
+	} else if (atom->func == T_DIFF || atom->func == T_LDIFF ||
 		 atom->func == T_CUM || atom->func == T_SORT ||
 		 atom->func == T_RESAMPLE || atom->func == T_HPFILT ||
 		 atom->func == T_BKFILT || atom->func == T_FRACDIFF) {
 	    atom_stack_bookmark(genr);
 	    genr->err = add_tmp_series_to_genr(genr, atom);
 	    atom_stack_resume(genr);
-	}
-	else if (UNIVARIATE_STAT(atom->func)) {
+	} else if (UNIVARIATE_STAT(atom->func)) {
 	    atom_stack_bookmark(genr);
 	    genr->err = add_statistic_to_genr(genr, atom);
 	    atom_stack_resume(genr);
-	}
-	else if (MP_MATH(atom->func)) {
+	} else if (MP_MATH(atom->func)) {
 	    genr->err = add_mp_series_to_genr(genr, atom);
 	}	
     }
 
+    DPRINTF(("evaluate_genr: n_atoms = %d\n", n_atoms));
+
     if (genr->err) {
 	return genr->err;
+    }
+
+    if (n_atoms == 2) {
+	reset_atom_stack(genr);
+	atom = pop_atom(genr);
+	if (atom->func == T_SORT) {
+	    genr_set_simple_sort(genr);
+	}
     }
 
     if (atom_stack_check_for_scalar(genr)) {
@@ -2638,8 +2654,12 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	    (*pZ)[v][t] = genr->xvec[t];
 	}
 	if (genr->S != NULL) {
-	    pdinfo->varinfo[v]->sorted_markers = genr->S;
-	    genr->S = NULL;
+	    if (genr_simple_sort(genr)) {
+		pdinfo->varinfo[v]->sorted_markers = genr->S;
+		genr->S = NULL;
+	    } else {
+		free_genr_S(genr);
+	    }
 	}
     }
 
@@ -3398,7 +3418,9 @@ static int allocate_genr_S (GENERATE *genr)
 	    if (genr->S[i] == NULL) {
 		err = 1;
 		free_genr_S(genr);
+		break;
 	    }
+	    genr->S[i][0] = '\0';
 	}
     }
 
@@ -3418,8 +3440,11 @@ sort_series (const double *mvec, double *x, GENERATE *genr)
     if (markers) {
 	allocate_genr_S(genr);
 	if (genr->S == NULL) {
-	    return 1;
+	    markers = 0;
 	}
+    }
+
+    if (markers) {
 	vm = malloc(T * sizeof *vm);
 	if (vm == NULL) {
 	    free_genr_S(genr);

@@ -83,7 +83,7 @@ void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
 
 void count_missing (void);
 
-void do_add_markers (GtkWidget *widget, dialog_t *ddata);
+void do_add_markers (const char *fname);
 
 void do_remove_markers (gpointer data, guint u, GtkWidget *w);
 

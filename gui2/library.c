@@ -1110,20 +1110,11 @@ void count_missing (void)
 
 /* ........................................................... */
 
-void do_add_markers (GtkWidget *widget, dialog_t *ddata) 
+void do_add_markers (const char *fname) 
 {
-    const gchar *buf;
-    char fname[MAXLEN];
-
-    buf = dialog_data_get_text(ddata);
-    if (buf == NULL) return;
-
-    strcpy(fname, buf);
-
     if (add_case_markers(datainfo, fname)) { 
 	errbox(_("Failed to add case markers"));
     } else {
-	close_dialog(ddata);
 	infobox(_("Case markers added"));
 	mark_dataset_as_modified();
 	add_remove_markers_state(TRUE);

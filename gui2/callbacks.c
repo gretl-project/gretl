@@ -241,6 +241,9 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     case APPEND_EXCEL:
 	file_selector(_("Open Excel file"), code, NULL);
 	break;
+    case OPEN_MARKERS:
+	file_selector(_("gretl: add markers"), code, NULL);
+	break;
     default:
 	errbox("Unrecognized data code");
 	break;
@@ -486,12 +489,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(title, _("gretl: missing code"));
 	strcpy(query, _("Enter value to be read as \"missing\":"));
 	okfunc = do_global_setmiss;
-	break;
-    case MARKERS:
-	strcpy(title, _("gretl: add markers"));
-	strcpy(query, _("Supply full path to file with markers:"));
-	strcpy(defstr, paths.userdir);
-	okfunc = do_add_markers; 
 	break;
     case GR_BOX:
     case GR_NBOX:

@@ -385,7 +385,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Sample/Set missing _value code..."), NULL, gretl_callback, 
       GSETMISS, NULL },
     { N_("/Sample/sep4"), NULL, NULL, 0, "<Separator>" },  
-    { N_("/Sample/_Add case markers..."), NULL, gretl_callback, MARKERS, NULL },
+    { N_("/Sample/_Add case markers..."), NULL, open_data, OPEN_MARKERS, NULL },
     { N_("/Sample/Remove case _markers"), NULL, do_remove_markers, 0, NULL },
     { N_("/Sample/sep5"), NULL, NULL, 0, "<Separator>" },
     { N_("/Sample/Restructure panel..."), NULL, panel_restructure_dialog, 0, NULL },
@@ -615,7 +615,9 @@ int main (int argc, char *argv[])
 #endif
 
     set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
-    root_check();
+    if (!expert) {
+	root_check();
+    }
     set_rcfile();
     init_fileptrs();
 

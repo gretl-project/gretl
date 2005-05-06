@@ -85,6 +85,7 @@ enum file_ops {
     OPEN_EXCEL,
     APPEND_EXCEL,
     OPEN_SESSION,
+    OPEN_MARKERS,
     END_OPEN,      /* marker for end of file open section */
     SAVE_DATA,
     SAVE_DATA_AS,

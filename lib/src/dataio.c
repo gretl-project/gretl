@@ -3792,6 +3792,7 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
 	    free(S);
 	    return E_ALLOC; 
 	}
+	S[i][0] = '\0';
     }
 
     sprintf(sformat, "%%%ds", OBSLEN - 1);
@@ -3807,7 +3808,7 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
 	    return 1;
 	}
 	marker[OBSLEN-1] = '\0';
-	strcpy(S[t], marker);
+	strcat(S[t], marker);
     }
 
     fclose(fp);

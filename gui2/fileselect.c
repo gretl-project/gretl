@@ -143,8 +143,6 @@ static gretlopt action_to_opt (const int action)
     }
 }
 
-/* ........................................................... */
-
 static const char *get_gp_ext (const char *termtype)
 {
     if (!strncmp(termtype, "postscript", 10))    return ".eps";
@@ -158,20 +156,26 @@ static const char *get_gp_ext (const char *termtype)
 
 /* ........................................................... */
 
-static int dat_ext (const char *str, int err)
+static int dat_ext (const char *str, int showerr)
 {
     const char *suff;
+    int err = 0;
 
-    if (str == NULL) return 0;
+    if (str == NULL) {
+	return 0;
+    }
+
     suff = strrchr(str, '.');
-    if (suff != NULL && 
-	(!strcmp(suff, ".dat") || !strcmp(suff, ".gdt"))) {
-	if (err) 
+
+    if (suff != NULL && (!strcmp(suff, ".dat") || !strcmp(suff, ".gdt"))) {
+	if (showerr) {
 	    errbox(_("The suffix you selected should be used\n"
 		   "only for gretl datafiles"));
-	return 1;
+	}
+	err = 1;
     }
-    return 0;
+
+    return err;
 }
 
 /* ........................................................... */
@@ -187,11 +191,9 @@ static const char *get_ext (int action, gpointer data)
     if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 	s = get_gp_ext(plot->termtype);
-    }
-    else if (action == SAVE_LAST_GRAPH) {
+    } else if (action == SAVE_LAST_GRAPH) {
 	s = get_gp_ext(data);
-    } 
-    else {
+    } else {
 	size_t i;
 
 	for (i=0; i < sizeof action_map / sizeof *action_map; i++) {
@@ -201,6 +203,7 @@ static const char *get_ext (int action, gpointer data)
 	    }
 	}
     }
+
     return s;
 }
 
@@ -211,10 +214,14 @@ static int check_maybe_add_ext (char *fname, int action, gpointer data)
     FILE *fp;
     const char *ext = NULL;
 
-    if (fname == NULL) return 1;
+    if (fname == NULL) {
+	return 1;
+    }
 
     /* don't mess if the fname is really a dir */
-    if (isdir(fname)) return 1;
+    if (isdir(fname)) {
+	return 1;
+    }
 
     /* don't mess with the name of a previously existing file */
     fp = gretl_fopen(fname, "r");
@@ -487,6 +494,8 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	filesel_open_script(fname);
     } else if (action == OPEN_SESSION) {
 	filesel_open_session(fname);
+    } else if (action == OPEN_MARKERS) {
+	do_add_markers(fname);
     }
 
     if (action < END_OPEN) {
@@ -642,8 +651,13 @@ static struct winfilter get_filter (int action, gpointer data)
 	{APPEND_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
 	{SET_PATH,     { N_("program files (*.exe)"), "*.exe" }}
     };
-    static struct winfilter olddat_filter = {
+
+    static struct winfilter default_filter = {
 	N_("gretl data files (*.dat)"), "*.dat"
+    };    
+
+    static struct winfilter default_filter = {
+	N_("all files (*.*)"), "*.*" 
     };
 
     if (using_olddat() && IS_DAT_ACTION(action)) {
@@ -655,9 +669,13 @@ static struct winfilter get_filter (int action, gpointer data)
 
 	return get_gp_filter(plot->termtype);
     }
+
     if (action == SAVE_LAST_GRAPH) {
 	return get_gp_filter(data);
     }
+
+    filter = default_filter;
+
     for (i=0; i< sizeof map / sizeof *map; i++) {
 	if (action == map[i].action) {
 	    filter = map[i].filter;
@@ -674,18 +692,23 @@ static char *make_winfilter (int action, gpointer data)
     char *start = p;
     struct winfilter filter;
 
-    if (p == NULL) return NULL;
+    if (p == NULL) {
+	return NULL;
+    }
 
     filter = get_filter(action, data);
 
     strcpy(p, I_(filter.descrip));
-
     p += strlen(p) + 1;
     strcpy(p, filter.pat);
-    p += strlen(p) + 1;
-    strcpy(p, I_("all files (*.*)"));
-    p += strlen(p) + 1;
-    strcpy(p, "*.*");
+
+    if (strncmp(filter.descrip, "all", 3)) {
+	p += strlen(p) + 1;
+	strcpy(p, I_("all files (*.*)"));
+	p += strlen(p) + 1;
+	strcpy(p, "*.*");
+    }
+
     p += strlen(p) + 1;
     *p = '\0';
 
@@ -806,11 +829,15 @@ static void filesel_callback (GtkWidget *w, struct fsinfo_t *fsinfo)
 
 # ifndef OLD_GTK
     path = gtk_file_selection_get_filename(GTK_FILE_SELECTION(fsinfo->w));
-    if (path == NULL || *path == '\0' || isdir(path)) return;
+    if (path == NULL || *path == '\0' || isdir(path)) {
+	return;
+    }
     strcpy(fsinfo->fname, path);
 # else
     test = gtk_entry_get_text(GTK_ENTRY(fsel->file_entry));
-    if (test == NULL || *test == '\0') return;    
+    if (test == NULL || *test == '\0') {
+	return;
+    }
     path = gtk_file_list_get_path(GTK_FILE_LIST(fsel->file_list));
     sprintf(fsinfo->fname, "%s%s", path, test);
 # endif

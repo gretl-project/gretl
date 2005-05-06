@@ -462,7 +462,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Sample/Set missing _value code..."), NULL, gretl_callback, 
       GSETMISS, NULL, GNULL },
     { N_("/Sample/sep4"), NULL, NULL, 0, "<Separator>", NULL },  
-    { N_("/Sample/_Add case markers..."), NULL, gretl_callback, MARKERS, NULL, GNULL },
+    { N_("/Sample/_Add case markers..."), NULL, open_data, OPEN_MARKERS, NULL, GNULL },
     { N_("/Sample/Remove case _markers"), NULL, do_remove_markers, 0, NULL, GNULL },
     { N_("/Sample/sep5"), NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Sample/Restructure panel..."), NULL, panel_restructure_dialog, 0, NULL, GNULL },
@@ -771,7 +771,9 @@ int main (int argc, char *argv[])
 #ifdef G_OS_WIN32
     gretl_win32_init(argv[0]);
 #else 
-    root_check();
+    if (!expert) {
+	root_check();
+    }
     set_rcfile(); /* also calls read_rc() */
 #endif/* G_OS_WIN32 */
 
