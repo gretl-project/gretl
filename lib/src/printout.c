@@ -1044,32 +1044,34 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
 */
 
 static int 
-check_for_sorted_var (const int *list, const DATAINFO *pdinfo,
-		      int *sortpos)
+check_for_sorted_var (int *list, const DATAINFO *pdinfo)
 {
     int i, v, ret = 0;
+    int l0 = list[0];
+    int pos = 0;
 
-    *sortpos = 0;
-
-    if (list[0] < 5) {
-	for (i=1; i<=list[0]; i++) {
+    if (l0 < 5 && !complex_subsampled()) {
+	for (i=1; i<=l0; i++) {
 	    v = list[i];
 	    if (pdinfo->varinfo[v]->sorted_markers != NULL) {
 		if (ret == 0) {
 		    ret = v;
-		    *sortpos = i;
+		    pos = i;
 		} else {
 		    ret = 0;
-		    *sortpos = 0;
+		    pos = 0;
 		    break;
 		}
 	    }
 	}
     }
 
-    if (ret && *sortpos != list[0]) {
-	/* sorted var should be by itself or last */
-	ret = 0;
+    if (ret && pos != list[0]) {
+	/* sorted var should be last in list */
+	int tmp = list[l0];
+
+	list[l0] = list[pos];
+	list[pos] = tmp;
     }
 
     return ret;
@@ -1095,7 +1097,7 @@ int printdata (int *list, const double **Z, const DATAINFO *pdinfo,
 {
     int j, v, v1, v2, j5, nvj5, lineno, ncol;
     int allconst, scalars = 0, freelist = 0;
-    int sortvar = 0, sortpos = 0;
+    int sortvar = 0;
     int *pmax = NULL; 
     int t, nsamp;
     char line[96];
@@ -1192,7 +1194,7 @@ int printdata (int *list, const double **Z, const DATAINFO *pdinfo,
 	pmax[j-1] = get_signif(Z[list[j]] + pdinfo->t1, nsamp);
     }
 
-    sortvar = check_for_sorted_var(list, pdinfo, &sortpos);
+    sortvar = check_for_sorted_var(list, pdinfo);
 
     /* print data by observations */
     ncol = 5;
@@ -1216,7 +1218,7 @@ int printdata (int *list, const double **Z, const DATAINFO *pdinfo,
 
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 
-		if (sortvar && sortpos == 1) {
+		if (sortvar && list[0] == 1) {
 		    strcpy(obs_string, SORTED_MARKER(pdinfo, sortvar, t));
 		} else {
 		    get_obs_string(obs_string, t, pdinfo);
@@ -1234,7 +1236,7 @@ int printdata (int *list, const double **Z, const DATAINFO *pdinfo,
 		    }
 		}
 
-		if (sortvar && sortpos > 1) {
+		if (sortvar && list[0] > 1) {
 		    sprintf(obs_string, "%8s", SORTED_MARKER(pdinfo, sortvar, t));
 		    strcat(line, obs_string);
 		}

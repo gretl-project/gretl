@@ -105,7 +105,7 @@ void destroy_dataset_markers (DATAINFO *pdinfo)
     } 
 }
 
-void free_varinfo (DATAINFO *pdinfo, int v)
+static void free_sorted_markers (DATAINFO *pdinfo, int v)
 {
     VARINFO *vinfo = pdinfo->varinfo[v];
     int i;
@@ -115,9 +115,20 @@ void free_varinfo (DATAINFO *pdinfo, int v)
 	    free(vinfo->sorted_markers[i]);
 	}
 	free(vinfo->sorted_markers);
-    }
+	vinfo->sorted_markers = NULL;
+    }    
+}
 
-    free(vinfo);
+void free_varinfo (DATAINFO *pdinfo, int v)
+{
+    free_sorted_markers(pdinfo, v);
+    free(pdinfo->varinfo[v]);
+}
+
+void set_sorted_markers (DATAINFO *pdinfo, int v, char **S)
+{
+    free_sorted_markers(pdinfo, v);
+    pdinfo->varinfo[v]->sorted_markers = S;
 }
 
 /**

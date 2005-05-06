@@ -1,5 +1,5 @@
 /* gretl - The Gnu Regression, Econometrics and Time-series Library
- * Copyright (C) 1999-2000 Ramu Ramanathan and Allin Cottrell
+ * Copyright (C) 1999-2005 Ramu Ramanathan and Allin Cottrell
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License 
@@ -84,6 +84,8 @@ void clear_datainfo (DATAINFO *pdinfo, int code);
 char **allocate_case_markers (int n);
 
 void destroy_dataset_markers (DATAINFO *pdinfo);
+
+void set_sorted_markers (DATAINFO *pdinfo, int v, char **S);
 
 void free_varinfo (DATAINFO *pdinfo, int v);
 

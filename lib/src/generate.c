@@ -2661,7 +2661,7 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	}
 	if (genr->S != NULL) {
 	    if (genr_simple_sort(genr)) {
-		pdinfo->varinfo[v]->sorted_markers = genr->S;
+		set_sorted_markers(pdinfo, v, genr->S);
 		genr->S = NULL;
 	    } else {
 		free_genr_S(genr);
@@ -3456,9 +3456,13 @@ sort_series (const double *mvec, double *x, GENERATE *genr)
     DATAINFO *pdinfo = genr->pdinfo;
     double *tmp = NULL;
     struct val_mark *vm = NULL;
-    int markers = (pdinfo->S != NULL);
+    int markers = 0;
     int T = pdinfo->t2 - pdinfo->t1 + 1;
     int i, t;
+
+    if (pdinfo->S != NULL && !complex_subsampled()) {
+	markers = 1;
+    }
 
     if (markers) {
 	allocate_genr_S(genr);
