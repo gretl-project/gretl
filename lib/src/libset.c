@@ -20,7 +20,6 @@
 /* libset.c for gretl */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 #include "libset.h"
 
 static int use_qr = -1;                 /* use QR decomposition? */

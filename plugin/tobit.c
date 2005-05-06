@@ -279,7 +279,8 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
     }
 
     /* run normality test on the untruncated uhat */
-    moments(pmod->t1, pmod->t2, pmod->uhat, &ubar, &udev, &skew, &kurt, pmod->ncoeff);
+    gretl_moments(pmod->t1, pmod->t2, pmod->uhat, &ubar, &udev, 
+		  &skew, &kurt, pmod->ncoeff);
     chi2 = doornik_chisq(skew, kurt, pmod->nobs); 
     add_norm_test_to_model(pmod, chi2);
 

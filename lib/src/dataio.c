@@ -139,9 +139,9 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	destroy_dataset_markers(pdinfo);
     } 
 
-    if (pdinfo->subdum != NULL) {
-	free(pdinfo->subdum);
-	pdinfo->subdum = NULL;
+    if (pdinfo->submask != NULL) {
+	free(pdinfo->submask);
+	pdinfo->submask = NULL;
     }
 
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
@@ -434,7 +434,7 @@ DATAINFO *datainfo_new (void)
     dinfo->S = NULL;
     dinfo->descrip = NULL;
     dinfo->vector = NULL;
-    dinfo->subdum = NULL;
+    dinfo->submask = NULL;
     dinfo->data = NULL;
 
     dinfo->structure = CROSS_SECTION;
@@ -520,7 +520,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     pdinfo->delim = ',';
     pdinfo->descrip = NULL;
     pdinfo->data = NULL;
-    pdinfo->subdum = NULL;
+    pdinfo->submask = NULL;
     
     return 0;
 }
@@ -5575,4 +5575,9 @@ int transpose_data (double ***pZ, DATAINFO *pdinfo)
     free(tinfo);
 
     return 0;
+}
+
+void dataset_set_regular_markers (DATAINFO *pdinfo)
+{
+    pdinfo->markers = REGULAR_MARKERS;
 }

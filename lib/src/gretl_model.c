@@ -328,7 +328,7 @@ void gretl_model_set_auxiliary (MODEL *pmod, int aux)
 static void gretl_model_init_pointers (MODEL *pmod)
 {
     pmod->list = NULL;
-    pmod->subdum = NULL;
+    pmod->submask = NULL;
     pmod->missmask = NULL;
     pmod->coeff = NULL;
     pmod->sderr = NULL;
@@ -456,7 +456,7 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
     fprintf(stderr, "%s:\n"
 	    " pmod = %p\n"
 	    " pmod->list = %p\n"
-	    " pmod->subdum = %p\n"
+	    " pmod->submask = %p\n"
 	    " pmod->missmask = %p\n"
 	    " pmod->coeff = %p\n"
 	    " pmod->sderr = %p\n"
@@ -470,7 +470,7 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    " pmod->tests = %p\n"
 	    " pmod->data = %p\n", msg,
 	    (void *) pmod, (void *) pmod->list, 
-	    (void *) pmod->subdum, (void *) pmod->missmask, 
+	    (void *) pmod->submask, (void *) pmod->missmask, 
 	    (void *) pmod->coeff, (void *) pmod->sderr, 
 	    (void *) pmod->yhat, (void *) pmod->uhat, 
 	    (void *) pmod->xpx, (void *) pmod->vcv, 
@@ -506,7 +506,7 @@ void clear_model (MODEL *pmod)
 	debug_print_model_info(pmod, "Doing clear_model");
 #endif
 	if (pmod->list) free(pmod->list);
-	if (pmod->subdum) free(pmod->subdum);
+	if (pmod->submask) free(pmod->submask);
 	if (pmod->missmask) free(pmod->missmask);
 	if (pmod->coeff) free(pmod->coeff);
 	if (pmod->sderr) free(pmod->sderr);
@@ -1049,8 +1049,8 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
 	return 1;
     if ((targ->yhat = copyvec(src->yhat, pdinfo->n)) == NULL) 
 	return 1;
-    if (src->subdum != NULL && 
-	(targ->subdum = copy_subdum(src->subdum, pdinfo->n)) == NULL) 
+    if (src->submask != NULL && 
+	(targ->submask = copy_submask(src->submask, pdinfo->n)) == NULL) 
 	return 1;
     if (src->missmask != NULL && 
 	(targ->missmask = copy_missmask(src)) == NULL) 

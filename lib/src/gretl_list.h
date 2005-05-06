@@ -34,11 +34,15 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err);
 
 int *gretl_list_omit_last (const int *orig, int *err);
 
+void gretl_list_diff (int *targ, const int *biglist, const int *sublist);
+
 void rearrange_list (int *list);
 
 int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 			   int ref_id);
 
 int gretl_list_has_const (const int *list);
+
+int gretl_list_duplicates (const int *list, int ci);
 
 #endif /* GRETL_LIST_H */

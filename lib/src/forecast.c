@@ -185,7 +185,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 	fr->fitted[ft] = pmod->yhat[t];
     }
 
-    if (gretl_isdummy(fr->actual, 0, fr->nobs) > 0) {
+    if (gretl_isdummy(0, fr->nobs, fr->actual) > 0) {
 	fr->pmax = get_precision(fr->fitted, fr->nobs, 8);
     } else {
 	fr->pmax = get_precision(fr->actual, fr->nobs, 8);

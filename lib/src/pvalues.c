@@ -22,7 +22,6 @@
 */  
 
 #include "libgretl.h" 
-#include "gretl_private.h"
 #include "../../cephes/libprob.h"
  
 static void putxx (double xx);

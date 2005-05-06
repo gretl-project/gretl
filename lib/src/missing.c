@@ -20,7 +20,6 @@
 /* mechanisms for handling missing observations */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 
 typedef struct {
     int misscount;
@@ -442,6 +441,45 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     return ret;
 }
 
+/* for handling the "omit" command, applied to a model
+   that has missing values within the sample range
+*/
+
+static const char *refmask;
+
+void set_reference_missmask (const MODEL *pmod)
+{
+    if (pmod != NULL) {
+	refmask = pmod->missmask;
+    } else {
+	refmask = NULL;
+    }
+}
+
+int apply_reference_missmask (MODEL *pmod)
+{
+    int err = 0;
+
+    if (refmask != NULL) {
+	int t, n = pmod->t2 - pmod->t1 + 1;
+
+	pmod->missmask = malloc(n);
+	if (pmod->missmask == NULL) {
+	    err = 1;
+	} else {
+	    for (t=0; t<n; t++) {
+		pmod->missmask[t] = refmask[t];
+	    }
+	}
+    }
+
+    return err;
+}
+
+int reference_missmask_present (void)
+{
+    return (refmask != NULL);
+}
 
 /* ........................................................... */
 

@@ -24,7 +24,7 @@
 struct MODELSPEC_ {
     int ID;
     char *cmd;
-    char *subdum;
+    char *submask;
 };
 
 /**
@@ -108,8 +108,8 @@ void free_modelspec (MODELSPEC *spec)
     if (spec != NULL) {
 	while (spec[i].cmd != NULL) {
 	    free(spec[i].cmd);
-	    if (spec[i].subdum != NULL) {
-		free(spec[i].subdum);
+	    if (spec[i].submask != NULL) {
+		free(spec[i].submask);
 	    }
 	    i++;
 	}
@@ -137,7 +137,7 @@ static int modelspec_expand (MODELSPEC **pmspec, int *idx)
     mspec[m].cmd = malloc(MAXLINE);
     if (mspec[m].cmd == NULL) return E_ALLOC;
 
-    mspec[m].subdum = NULL;
+    mspec[m].submask = NULL;
 
 #ifdef MSPEC_DEBUG
     fprintf(stderr, "malloced modelspec[%d].cmd\n", m);
@@ -145,7 +145,7 @@ static int modelspec_expand (MODELSPEC **pmspec, int *idx)
 
     /* sentinel */
     mspec[m+1].cmd = NULL;
-    mspec[m+1].subdum = NULL;
+    mspec[m+1].submask = NULL;
 
     *idx = m;
 
@@ -174,11 +174,11 @@ int modelspec_save (MODEL *pmod, MODELSPEC **pmspec)
 
     model_list_to_string(pmod->list, spec[i].cmd);
 
-    if (pmod->subdum != NULL) {
+    if (pmod->submask != NULL) {
 	int n = get_full_length_n();
 
-	spec[i].subdum = copy_subdum(pmod->subdum, n);
-	if (spec[i].subdum == NULL) return 1;
+	spec[i].submask = copy_submask(pmod->submask, n);
+	if (spec[i].submask == NULL) return 1;
     }
 
     spec[i].ID = pmod->ID;
@@ -191,7 +191,7 @@ int modelspec_save (MODEL *pmod, MODELSPEC **pmspec)
     return 0;
 }
 
-static int subdum_match (char *s1, char *s2, int n)
+static int submask_match (char *s1, char *s2, int n)
 {
     int t;
 
@@ -211,22 +211,22 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
 			const DATAINFO *pdinfo)
 {
     int n = pdinfo->n;
-    char *subdum;
+    char *submask;
 
     if (pmod == NULL && spec == NULL) {
 	return 0;
     }
 
     if (pmod != NULL) {
-	subdum = pmod->subdum;
+	submask = pmod->submask;
     } else {
-	subdum = spec[i].subdum;
+	submask = spec[i].submask;
     }
 
     /* case: model (or modelspec) has no sub-sampling info recorded */
-    if (subdum == NULL) {
+    if (submask == NULL) {
 	/* if data set is not sub-sampled either, we're OK */
-	if (pdinfo->subdum == NULL) {
+	if (pdinfo->submask == NULL) {
 	    return 0;
 	} else {
 	    fputs(I_("dataset is subsampled, model is not\n"), stderr);
@@ -236,13 +236,13 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
     }
 
     /* case: model (or modelspec) has sub-sampling info recorded */
-    if (pdinfo->subdum == NULL) {
+    if (pdinfo->submask == NULL) {
 	fputs(I_("model is subsampled, dataset is not\n"), stderr);
 	strcpy(gretl_errmsg, _("model is subsampled, dataset is not\n"));
 	return 1;
     } else { 
 	/* do the subsamples (model and current data set) agree? */
-	if (subdum_match(pdinfo->subdum, subdum, n)) {
+	if (submask_match(pdinfo->submask, submask, n)) {
 	    return 0;
 	} else {
 	    strcpy(gretl_errmsg, _("model and dataset subsamples not the same\n"));

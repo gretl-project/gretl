@@ -41,13 +41,17 @@ extern char gretl_tmp_str[MAXLEN];
 
 int string_is_blank (const char *s);
 
+int numeric_string (const char *str);
+
+int count_fields (const char *s);
+
 double dot_atof (const char *s);
  
-size_t dotpos (const char *str);
+int dotpos (const char *str);
 
 int slashpos (const char *str);
 
-void delchar (int c, char *str);
+char *delchar (int c, char *str);
 
 int haschar (char c, const char *s);
 
@@ -55,17 +59,23 @@ int lastchar (char c, const char *s);
 
 int ends_with_backslash (const char *s);
 
+char *gretl_trunc (char *str, size_t n);
+
+char *gretl_delete (char *str, int idx, int count);
+
 char *gretl_strdup (const char *src);
 
 char *gretl_strndup (const char *src, size_t n);
 
 char *charsub (char *str, char find, char repl);
 
-void lower (char *str);
+char *shift_string_left (char *str, size_t move);
+
+char *lower (char *str);
 
 void clear (char *str, int len);
 
-void chopstr (char *str);
+char *chopstr (char *str);
 
 char *switch_ext (char *targ, const char *src, char *ext);
 

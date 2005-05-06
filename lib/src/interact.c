@@ -133,7 +133,7 @@ static int get_rhodiff_or_lags_param (char *str, CMD *cmd)
 	strncat(cmd->param, str, k);
     }
 
-    shift_left(str, k + 1);
+    shift_string_left(str, k + 1);
 
     return 1;
 }
@@ -306,7 +306,7 @@ static void get_savename (char *s, CMD *cmd)
 	if (cmd->savename[n-1] == '"') {
 	    cmd->savename[n-1] = 0;
 	}
-	shift_left(s, len + 3);
+	shift_string_left(s, len + 3);
     }
 }
 
@@ -350,7 +350,7 @@ get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
 	}
     }
 
-    shift_left(s, len + 2 * quoted);
+    shift_string_left(s, len + 2 * quoted);
 
     return 0;
 } 
@@ -1032,7 +1032,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd,
 
 	sscanf(line, "%3s", suffix);
 	strcpy(cmd->str, suffix);
-	shift_left(line, strlen(suffix));
+	shift_string_left(line, strlen(suffix));
 	nf--;
 	n = 0;
 	linelen = strlen(line);

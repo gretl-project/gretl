@@ -30,11 +30,15 @@ static double *standardize (const double *x, int n)
     double xbar, sd;
     int i, err;
 
-    err = moments(0, n-1, x, &xbar, &sd, NULL, NULL, 1);
-    if (err) return NULL;
+    err = gretl_moments(0, n-1, x, &xbar, &sd, NULL, NULL, 1);
+    if (err) {
+	return NULL;
+    }
 
     sx = malloc(n * sizeof *sx);
-    if (sx == NULL) return NULL;
+    if (sx == NULL) {
+	return NULL;
+    }
 
     for (i=0; i<n; i++) {
 	if (na(x[i])) {

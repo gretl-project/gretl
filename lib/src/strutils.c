@@ -20,7 +20,6 @@
 /* strutils.c for gretl */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 
 #include <errno.h>
 #include <time.h>
@@ -43,14 +42,19 @@ char gretl_tmp_str[MAXLEN];
 
 int string_is_blank (const char *s)
 {
-    if (s == NULL) return 1;
+    int ret = 1;
 
-    while (*s) {
-        if (!isspace((unsigned char) *s) && *s != CTRLZ) return 0;
-        s++;
+    if (s != NULL) {
+	while (*s) {
+	    if (!isspace((unsigned char) *s) && *s != CTRLZ) {
+		ret = 0;
+		break;
+	    }
+	    s++;
+	}
     }
 
-    return 1;
+    return ret;
 }
 
 /**
@@ -86,15 +90,23 @@ double dot_atof (const char *s)
  *
  */
 
-size_t dotpos (const char *str)
+int dotpos (const char *str)
 { 
-    int i, n = strlen(str);
+    int i, p = 0;
 
-    for (i=n-1; i>0; i--) { 
-	if (str[i] == '/' || str[i] == '\\') return n;
-	if (str[i] == '.') return i;
+    if (str != NULL && *str != '\0') {
+	p = strlen(str);
+	for (i=p-1; i>0; i--) { 
+	    if (str[i] == '/' || str[i] == '\\') {
+		break;
+	    } else if (str[i] == '.') {
+		p = i;
+		break;
+	    }
+	}
     }
-    return n;    
+
+    return p;    
 }
 
 /**
@@ -103,41 +115,23 @@ size_t dotpos (const char *str)
  *
  * Returns: the integer position of the last #SLASH within @str,
  * or 0 in case a #SLASH is not found.
- *
  */
 
 int slashpos (const char *str)
 { 
-    size_t i, n;
+    int i, p = 0;
 
-    if (str == NULL || *str == '\0') return 0;
-
-    n = strlen(str);
-    for (i=n-1; i>0; i--) {
-	if (str[i] == SLASH) return i;
+    if (str != NULL && *str != '\0') {
+	p = strlen(str);
+	for (i=p-1; i>0; i--) {
+	    if (str[i] == SLASH) {
+		p = i;
+		break;
+	    }
+	}
     }
 
-    return 0;    
-}
-
-/**
- * copy:
- * @str: the source string.
- * @indx: position in @str from which to start the copying.
- * @count: number of characters to copy.
- * @dest: destination string (must be pre-allocated).
- *
- * Copies @count characters from @indx in @str to @dest.
- *
- */
-
-void copy (const char *str, int indx, int count, char *dest)
-{
-    int i;
-
-    dest[0] = '\0';
-    for (i=0; i<count; ++i) dest[i] = str[indx+i];
-    dest[count] = '\0';
+    return p;    
 }
 
 /**
@@ -147,9 +141,10 @@ void copy (const char *str, int indx, int count, char *dest)
  *
  * Deletes all instances of @c within @str.
  *
+ * Returns: the possibly modified string.
  */
 
-void delchar (int c, char *str)
+char *delchar (int c, char *str)
 {
     int i, j;
 
@@ -158,26 +153,32 @@ void delchar (int c, char *str)
 	    str[j++] = str[i];
 	}
     }
+
     str[j] = '\0';
+
+    return str;
 }
 
 /**
  * gretl_delete:
  * @str: the string to process.
- * @indx: the starting point for deleting characters.
+ * @idx: the starting point for deleting characters.
  * @count: the number of characters to delete.
  *
  * Deletes @count characters from @str, starting at position @indx.
  *
+ * Returns: the modified string.
  */
 
-void gretl_delete (char *str, int indx, int count)
+char *gretl_delete (char *str, int idx, int count)
 {
     size_t i, n = strlen(str);
 
-    for (i=indx; i<=n-count; ++i) {
+    for (i=idx; i<=n-count; ++i) {
 	str[i] = str[count+i];
     }
+
+    return str;
 }
 
 /**
@@ -305,14 +306,17 @@ int ends_with_backslash (const char *s)
  *
  * Converts any upper case characters in @str to lower case.
  *
+ * Returns: the possibly modified string.
  */
 
-void lower (char *str)
+char *lower (char *str)
 {
     while (*str) {
         if (isupper((unsigned char) *str)) *str = tolower(*str);
         str++;
     }
+
+    return str;
 }
 
 /**
@@ -367,11 +371,16 @@ char *gretl_strndup (const char *src, size_t n)
  *
  * Truncates the given @str to the specified length.
  *
+ * Returns: the possibly truncated string.
  */
 
-void gretl_trunc (char *str, size_t n)
+char *gretl_trunc (char *str, size_t n)
 {
-    if (n < strlen(str)) str[n] = 0;
+    if (n < strlen(str)) {
+	str[n] = 0;
+    }
+
+    return str;
 }
 
 /**
@@ -401,7 +410,9 @@ int count_fields (const char *s)
     int nf = 0;
     const char *p;
 
-    if (s == NULL || *s == '\0') return 0;
+    if (s == NULL || *s == '\0') {
+	return 0;
+    }
 
     /* step past any leading space */
     while (*s == ' ') {
@@ -427,25 +438,29 @@ int count_fields (const char *s)
 }
 
 /**
- * shift_left:
+ * shift_string_left:
  * @str: the string to process.
  * @move: the number of places to shift.
  *
  * Shifts the content of @str left by @move places, dropping
  * leading bytes as needed.
  *
+ * Returns: the modified string.
  */
 
-void shift_left (char *str, size_t move)
+char *shift_string_left (char *str, size_t move)
 {
     size_t n = strlen(str);
 
     if (move >= n) {
 	*str = '\0';
-	return;
+	return str;
     }
+
     memmove(str, str + move, n - move);
     str[n - move] = '\0';
+
+    return str;
 }
 
 /**
@@ -454,13 +469,14 @@ void shift_left (char *str, size_t move)
  *
  * Removes both leading and trailing space from a string.
  *
+ * Returns: the possibly modified string.
  */
 
-void chopstr (char *str)
+char *chopstr (char *str)
 {
     int i = strspn(str, " \t");
 
-    shift_left(str, i);
+    shift_string_left(str, i);
 
     for (i = strlen(str) - 1; i >= 0; i--) {
 	if (isspace((unsigned char) str[i]) || str[i] == '\r') {
@@ -468,6 +484,8 @@ void chopstr (char *str)
 	}
 	else break;
     }
+
+    return str;
 }
 
 /**
@@ -567,7 +585,7 @@ int top_n_tail (char *str)
 	    i++;
 	}
 	if (i) {
-	    shift_left(str, i);
+	    shift_string_left(str, i);
 	}
 
 	/* then replace backslash, if present */

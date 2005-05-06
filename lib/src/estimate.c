@@ -395,9 +395,8 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 	pmod->yhat[t] = Z[yno][t] - x;
     }
 
-    pmod->rsq = 
-	corrrsq(pmod->t2 - pmod->t1 + 1, &Z[yno][pmod->t1], 
-		pmod->yhat + pmod->t1);
+    pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, Z[yno], pmod->yhat);
+
     pmod->adjrsq = 
 	1.0 - ((1.0 - pmod->rsq) * (pmod->t2 - pmod->t1) / 
 	       (double) pmod->dfd);
@@ -494,37 +493,6 @@ static void model_stats_init (MODEL *pmod)
     pmod->rsq = pmod->adjrsq = NADBL;
 }
 
-/* for handling the "omit" command, applied to a model
-   that has missing values within the sample range
-*/
-
-static const char *refmask;
-
-void set_reference_mask (const MODEL *pmod)
-{
-    if (pmod != NULL) {
-	refmask = pmod->missmask;
-    } else {
-	refmask = NULL;
-    }
-}
-
-static int apply_reference_mask (MODEL *pmod)
-{
-    int t, n = pmod->t2 - pmod->t1 + 1;
-
-    pmod->missmask = malloc(n);
-    if (pmod->missmask == NULL) {
-	return 1;
-    }
-
-    for (t=0; t<n; t++) {
-	pmod->missmask[t] = refmask[t];
-    }
-
-    return 0;
-}
-
 static int 
 lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 			   DATAINFO *pdinfo, const double **Z, 
@@ -533,8 +501,8 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
     int missv = 0;
     int reject_missing = 0;
 
-    if (refmask != NULL) {
-	int err = apply_reference_mask(pmod);
+    if (reference_missmask_present()) {
+	int err = apply_reference_missmask(pmod);
 
 	if (!err) return 0;
     }
@@ -793,7 +761,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 	    mdl.errcode = E_WTZERO;
 	    return mdl;
 	}
-	effobs = gretl_isdummy((*pZ)[mdl.nwt], mdl.t1, mdl.t2);
+	effobs = gretl_isdummy(mdl.t1, mdl.t2, (*pZ)[mdl.nwt]);
 	if (effobs) {
 	    /* the weight var is a dummy, with effobs 1s */
 	    gretl_model_set_int(&mdl, "wt_dummy", 1);
@@ -897,7 +865,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 	jackknife = 1;
     }
 
-    if (((opt & OPT_R) && !jackknife) || (use_qr && !(opt & OPT_C))) { 
+    if (!jackknife && ((opt & OPT_R) || (use_qr && !(opt & OPT_C)))) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, pZ, pdinfo, opt);
     } else {
@@ -1217,11 +1185,9 @@ static int make_ess (MODEL *pmod, double **Z)
     return 0;
 }
 
-/* .......................................................... */
-
 static void compute_r_squared (MODEL *pmod, double *y)
 {
-    pmod->rsq = 1 - (pmod->ess / pmod->tss);
+    pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
 
     if (pmod->dfd > 0) {
 	double den = pmod->tss * pmod->dfd;
@@ -1229,7 +1195,7 @@ static void compute_r_squared (MODEL *pmod, double *y)
 	if (pmod->ifc) {
 	    pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1) / den);
 	} else {
-	    pmod->rsq = corrrsq(pmod->nobs, y, pmod->yhat + pmod->t1);
+	    pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, y, pmod->yhat);
 	    pmod->adjrsq = 
 		1 - ((1 - pmod->rsq) * (pmod->nobs - 1) / pmod->dfd);
 	} 
@@ -1321,7 +1287,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     if (pmod->errcode) return;
 
     if (pmod->tss > 0.0) {
-	compute_r_squared(pmod, &Z[yno][pmod->t1]);
+	compute_r_squared(pmod, Z[yno]);
     }
 
 #if 0
@@ -1522,6 +1488,7 @@ int makevcv (MODEL *pmod)
     }
 
     if (pmod->xpx == NULL) {
+	fprintf(stderr, "makevcv: pmod->xpx = NULL\n");
 	return 1;
     }
 
@@ -1701,6 +1668,7 @@ static double altrho (int order, int t1, int t2, const double *uhat)
     }
 
     n = 0;
+
     for (t=t1+order; t<=t2; t++) { 
         uh = uhat[t];
 	uh1 = (t > 0)? uhat[t-1] : NADBL;
@@ -1711,7 +1679,7 @@ static double altrho (int order, int t1, int t2, const double *uhat)
 	}
     }
 
-    rho = gretl_corr(n, ut, ut1);
+    rho = gretl_corr(0, n - 1, ut, ut1);
 
     free(ut);
     free(ut1);
@@ -1729,9 +1697,10 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
     double rho;
     int t;
 
-    if (order) order--;
+    if (order) {
+	order--;
+    }
 
-#if 1 /* the original */
     for (t=t1+order+1; t<=t2; t++) { 
         ut = uhat[t];
         ut1 = uhat[t-1];
@@ -1741,46 +1710,18 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
         uu += ut * ut1;
         xx += ut1 * ut1;
     }
-#else
-    for (t=t1; t<=t2; t++) { 
-        ut = uhat[t];
-	if (na(ut)) {
-	    continue;
-	}
-	if (t > t1) {
-	    ut1 = uhat[t-1];
-	    if (!na(ut1)) {
-		uu += ut * ut1;
-	    }
-	}
-        xx += ut * ut;
-    }
-#endif
 
     if (floateq(xx, 0.0)) {
 	return NADBL;
     }
 
     rho = uu / xx;
+
     if (rho > 1.0 || rho < -1.0) {
 	rho = altrho(order, t1, t2, uhat);
     }
 
     return rho;
-}
-
-/* corrrsq: compute alternative R^2 value when there's no intercept 
-*/
-
-double corrrsq (int nobs, const double *y, const double *yhat)
-{
-    double x = gretl_corr(nobs, y, yhat);
-
-    if (na(x)) {
-	return NADBL;
-    } else {
-	return x * x;
-    }
 }
 
 /* compute fitted values and residuals */
@@ -1856,7 +1797,7 @@ static int hilu_plot (double *ssr, double *rho, int n)
     return 0;
 }
 
-#undef USE_DW /* base rho-hat on the D-W statistic */
+#undef USE_DW /* base rho-hat on the D-W statistic? */
 
 static double autores (MODEL *pmod, const double **Z, int ci)
 {
@@ -2522,9 +2463,8 @@ MODEL tsls_func (int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
     /* computation of additional statistics (R^2, F, etc.) */
 
-    tsls.rsq = corrrsq(tsls.t2 - tsls.t1 + 1, 
-		       &(*pZ)[tsls.list[1]][tsls.t1], 
-		       tsls.yhat + tsls.t1);
+    tsls.rsq = gretl_corr_rsq(tsls.t1, tsls.t2, (*pZ)[tsls.list[1]],
+			      tsls.yhat);
     tsls.adjrsq = 
 	1.0 - ((1.0 - tsls.rsq) * (tsls.nobs - 1.0) / tsls.dfd);
     tsls.fstt = tsls.rsq * tsls.dfd / (tsls.dfn * (1.0 - tsls.rsq));
@@ -3276,8 +3216,8 @@ MODEL ar_func (int *list, int pos, double ***pZ,
 	ar.uhat[t] = (*pZ)[yno][t] - ar.yhat[t];
     }
 
-    ar.rsq = corrrsq(ar.nobs, &(*pZ)[reglist[1]][ar.t1], ar.yhat + ar.t1);
-    ar.adjrsq = 1 - ((1 - ar.rsq)*(ar.nobs - 1)/ar.dfd);
+    ar.rsq = gretl_corr_rsq(ar.t1, ar.t2, (*pZ)[reglist[1]], ar.yhat);
+    ar.adjrsq = 1.0 - ((1.0 - ar.rsq) * (ar.nobs - 1.0) / ar.dfd);
 
     /* special computation of TSS */
     xx = gretl_mean(ar.t1, ar.t2, (*pZ)[ryno]);

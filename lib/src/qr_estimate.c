@@ -79,7 +79,8 @@ static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
 	    pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
 	    pmod->adjrsq = 1.0 - (pmod->ess * (n - 1) / den);
 	} else {
-	    double alt = corrrsq(n, y + pmod->t1, pmod->yhat + pmod->t1);
+	    double alt = 
+		gretl_corr_rsq(pmod->t1, pmod->t2, y, pmod->yhat);
 
 	    if (na(alt)) {
 		pmod->rsq = pmod->adjrsq = NADBL;
@@ -800,7 +801,7 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	qr_make_regular_vcv(pmod, xpxinv);
     }
 
-    /* get R^2 */
+    /* get R^2, F */
     qr_compute_r_squared(pmod, (*pZ)[pmod->list[1]], T);
     qr_compute_f_stat(pmod, opts);
 

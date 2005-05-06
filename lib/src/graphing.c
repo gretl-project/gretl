@@ -770,7 +770,7 @@ get_ols_line (struct gnuplot_info *gpinfo, const int *list,
 static void 
 print_x_range (struct gnuplot_info *gpinfo, const double *x, FILE *fp)
 {
-    if (gretl_isdummy(x, gpinfo->t1, gpinfo->t2)) {
+    if (gretl_isdummy(gpinfo->t1, gpinfo->t2, x)) {
 	fputs("set xrange [-1:2]\n", fp);	
 	fputs("set xtics (\"0\" 0, \"1\" 1)\n", fp);
 	gpinfo->xrange = 3;

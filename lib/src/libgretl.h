@@ -204,7 +204,7 @@ struct DATAINFO_ {
     char **S;           /* to hold observation markers */
     char *descrip;      /* to hold info on data sources etc. */
     unsigned char *vector; /* hold info on vars: vector versus scalar */
-    char *subdum;       /* subsampling vector */
+    char *submask;      /* subsampling mask */
     void *data;         /* all-purpose pointer */
 };
 
@@ -266,7 +266,7 @@ struct MODEL_ {
     int ID;                      /* ID number for model */
     int t1, t2, nobs;            /* starting observation, ending
                                     observation, and number of obs */
-    char *subdum;                /* keep track of sub-sample in force
+    char *submask;               /* keep track of sub-sample in force
                                     when model was estimated */
     char *missmask;              /* missing observations mask */
     SAMPLE smpl;                 /* numeric start and end of current sample

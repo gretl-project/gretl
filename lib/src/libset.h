@@ -29,42 +29,38 @@ enum vcv_codes {
     VCV_BW
 };
 
-void set_xsect_hccme (const char *s);
+int get_use_qr (void);
 
+void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);
 
 void set_garch_robust_vcv (const char *s);
-
 int get_garch_vcv_version (void);
-
 int get_garch_robust_vcv_version (void);
 
 int get_force_hc (void);
+int get_hc_version (void);
+int get_hac_lag (int m);
 
 int get_halt_on_error (void);
 
 double get_hp_lambda (void);
 
 int get_bkbp_k (void);
+void get_bkbp_periods (int *periods);
 
 int gretl_get_text_pause (void);
-
-void get_bkbp_periods (int *periods);
 
 int get_VAR_horizon (void);
 
 void set_loop_on (void);
-
 void set_loop_off (void);
-
 int gretl_looping (void);
 
 void gretl_set_batch_mode (int b);
-
 int gretl_in_batch_mode (void);
 
 void gretl_set_gui_mode (int g);
-
 int gretl_in_gui_mode (void);
 
 #endif /* LIBSET_H */

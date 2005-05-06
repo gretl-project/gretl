@@ -30,5 +30,9 @@ unsigned int gretl_rand_int (void);
 
 unsigned int gretl_rand_int_max (unsigned int max);
 
+void gretl_rand_init (void);
+
+void gretl_rand_free (void);
+
 #endif /* RANDOM_H */
 

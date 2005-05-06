@@ -85,3 +85,7 @@ VCV *get_vcv (MODEL *pmod);
 
 void free_vcv (VCV *vcv);
 
+int *augment_regression_list (const int *orig, int aux, 
+			      double ***pZ, DATAINFO *pdinfo);
+
+

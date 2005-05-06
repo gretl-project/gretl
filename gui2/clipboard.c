@@ -36,7 +36,9 @@ GtkTargetEntry full_targets[] = {
     { "application/rtf", 0, TARGET_RTF }
 };
 
+#ifndef OLD_GTK
 static int n_basic = sizeof basic_targets / sizeof basic_targets[0];
+#endif
 static int n_full = sizeof full_targets / sizeof full_targets[0];
 
 static void gretl_clipboard_set (int copycode);

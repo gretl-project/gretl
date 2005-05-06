@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 
 #undef TRDEBUG
 
@@ -511,7 +510,7 @@ int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff)
 int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo)
 {
     if (vi == vj) {
-	if (gretl_isdummy((*pZ)[vi], pdinfo->t1, pdinfo->t2)) {
+	if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[vi])) {
 	    return -1;
 	}
     }
@@ -596,7 +595,7 @@ int list_loggenr (const int *list, double ***pZ, DATAINFO *pdinfo)
 	if (v == 0 || !pdinfo->vector[v]) {
 	    continue; 
 	}
-	if (gretl_isdummy((*pZ)[v], pdinfo->t1, pdinfo->t2)) {
+	if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[v])) {
 	    continue;
 	}
 
@@ -778,7 +777,7 @@ int list_xpxgenr (const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (vi == 0 || !pdinfo->vector[vi]) {
 	    continue; 
 	}
-	if (gretl_isdummy((*pZ)[vi], pdinfo->t1, pdinfo->t2)) {
+	if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[vi])) {
 	    continue;
 	}
 

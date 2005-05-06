@@ -1274,7 +1274,7 @@ static GList *get_dummy_list (int *thisdum)
 	if (!strcmp(datainfo->varname[i], "subdum")) {
 	    continue;
 	} 
-	if (gretl_isdummy(Z[i], datainfo->t1, datainfo->t2)) {
+	if (gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
 	    dumlist = g_list_append(dumlist, datainfo->varname[i]);
 	    if (i == mdata->active_var) *thisdum = 1;
 	}
@@ -1295,7 +1295,7 @@ gboolean update_obs_label (GtkEditable *entry, gpointer data)
 	if (*vname != '\0') {
 	    int v = varindex(datainfo, vname);
 
-	    nobs = gretl_isdummy(Z[v], 0, datainfo->n - 1);
+	    nobs = gretl_isdummy(0, datainfo->n - 1, Z[v]);
 	}
     } else {
 	int t1 = (int) obs_button_get_value(OBS_BUTTON(rset->startspin));

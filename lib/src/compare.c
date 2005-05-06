@@ -22,7 +22,7 @@
 */
 
 #include "libgretl.h"
-#include "gretl_private.h"
+#include "libset.h"
 #include "gretl_matrix.h"
 
 #undef WDEBUG
@@ -792,7 +792,7 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
     /* temporarily impose the sample that was in force when the
        original model was estimated */
     exchange_smpl(orig, pdinfo);
-    set_reference_mask(orig);
+    set_reference_missmask(orig);
 
     if (orig->ci == AR) { 
 	maxlag = orig->arinfo->arlist[orig->arinfo->arlist[0]];
@@ -849,7 +849,7 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
 
     /* put back into pdinfo what was there on input */
     exchange_smpl(orig, pdinfo);
-    set_reference_mask(NULL);
+    set_reference_missmask(NULL);
 
     free(tmplist);
 
@@ -860,12 +860,13 @@ static int ljung_box (int varno, int order, const double **Z,
 		      DATAINFO *pdinfo, double *lb)
 {
     double *x, *y, *acf;
-    int k, l, nobs, n = pdinfo->n; 
+    int k, m, nobs, n = pdinfo->n; 
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int list[2];
 
     list[0] = 1;
     list[1] = varno;
+
     adjust_t1t2(NULL, list, &t1, &t2, Z, NULL);
     nobs = t2 - t1 + 1;
 
@@ -873,16 +874,17 @@ static int ljung_box (int varno, int order, const double **Z,
     y = malloc(n * sizeof *y);
     acf = malloc((order + 1) * sizeof *acf);
 
-    if (x == NULL || y == NULL || acf == NULL)
-	return E_ALLOC;    
+    if (x == NULL || y == NULL || acf == NULL) {
+	return E_ALLOC;
+    }
 
-    for (l=1; l<=order; l++) {
-	for (t=t1+l; t<=t2; t++) {
-	    k = t - (t1+l);
+    for (m=1; m<=order; m++) {
+	for (t=t1+m; t<=t2; t++) {
+	    k = t - (t1 + m);
 	    x[k] = Z[varno][t];
-	    y[k] = Z[varno][t-l];
+	    y[k] = Z[varno][t-m];
 	}
-	acf[l] = gretl_corr(nobs-l, x, y);
+	acf[m] = gretl_corr(0, nobs - m - 1, x, y);
     }
 
     /* compute Ljung-Box statistic */

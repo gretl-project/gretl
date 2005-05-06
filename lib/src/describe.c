@@ -35,18 +35,25 @@
 #include <glib.h>
 #endif
 
+/* return 1 if series x has any missing observations, 0 if it does
+   not */
+
 static int missvals (double *x, int n)
 {
-    int t;
+    int t, ret = 0;
     
     for (t=0; t<n; t++) {
 	if (na(x[t])) {
-	    return 1;
+	    ret = 1;
+	    break;
 	}
     }
 	    
-    return 0;
+    return ret;
 }
+
+/* return the number of "good" (non-missing) observations in series x;
+   also (optionally) write to x0 the first non-missing value */
 
 static int good_obs (const double *x, int n, double *x0)
 {
@@ -68,27 +75,113 @@ static int good_obs (const double *x, int n, double *x0)
 }
 
 /**
- * gretl_median:
+ * gretl_minmax:
+ * @t1: starting observation.
+ * @t2: ending observation.
  * @x: data series.
- * @n: length of the series.
+ * @min: pointer to receive minimum value.
+ * @max: pointer to receive maximum value.
  *
- * Returns: the median value of the given series.
+ * Puts the minimum and maximum values of the series @x,
+ * from obs @t1 to obs @t2, into the variables @min and @max.
  *
+ * Returns: 0 on success, 1 on failure.
  */
 
-double gretl_median (const double *x, int n)
+int gretl_minmax (int t1, int t2, const double *x, 
+		  double *min, double *max)
 {
-    double *sx, med;
-    int t, n2, n2p;
+    int t;
 
-    sx = malloc(n * sizeof *sx);
+    while (na(x[t1]) && t1 <= t2) {
+	t1++;
+    }
+
+    if (t1 >= t2) {
+        *min = *max = NADBL;
+        return 1;
+    }
+
+    *min = x[t1];
+    *max = x[t1];
+
+    for (t=t1; t<=t2; t++) {
+	if (!(na(x[t]))) {
+	    *max = x[t] > *max ? x[t] : *max;
+	    *min = x[t] < *min ? x[t] : *min;
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_mean:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ *
+ * Returns: the arithmetic mean of the series @x from obs
+ * @t1 to obs @t2, skipping any missing values, or #NADBL 
+ * on failure.
+ */
+
+double gretl_mean (int t1, int t2, const double *x)
+{
+    int n;
+    register int t;
+    double xbar, sum = 0.0;
+
+    n = t2 - t1 + 1;
+    if (n <= 0) {
+	return NADBL;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	if (!(na(x[t]))) {
+	    sum += x[t];
+	} else {
+	    n--;
+	}
+    }
+
+    xbar = sum / n;
+    sum = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!(na(x[t]))) {
+	    sum += (x[t] - xbar); 
+	}
+    }
+
+    return xbar + sum / n;
+}
+
+/**
+ * gretl_median:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ *
+ * Returns: the median value of the series @x from obs
+ * @t1 to obs @t2, skipping any missing values, or #NADBL 
+ * on failure.
+ */
+
+double gretl_median (int t1, int t2, const double *x)
+{
+    int m = t2 - t1 + 1;
+    double *sx, med;
+    int t, n, n2p;
+
+    sx = malloc(m * sizeof *sx);
+
     if (sx == NULL) {
 	return NADBL;
     }
 
-    n2 = n;
     n = 0;
-    for (t=0; t<n2; t++) {
+    for (t=t1; t<=t2; t++) {
 	if (!na(x[t])) {
 	    sx[n++] = x[t];
 	}
@@ -96,21 +189,279 @@ double gretl_median (const double *x, int n)
 
     qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
 
-    n2p = (n2 = n / 2) + 1;
-    med = (n % 2)? sx[n2p - 1] : 0.5 * (sx[n2 - 1] + sx[n2p - 1]);
+    n2p = (m = n / 2) + 1;
+    med = (n % 2)? sx[n2p - 1] : 0.5 * (sx[m - 1] + sx[n2p - 1]);
 
     free(sx);
 
     return med;
 }
 
-/* k below is the "degrees of freedom loss": it will generally be one,
-   other than when dealing with a regression residual
-*/
+/**
+ * gretl_sst:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ *
+ * Returns: the sum of squared deviations from the mean for
+ * the series @x from obs @t1 to obs @t2, skipping any missing 
+ * values, or #NADBL on failure.
+ */
 
-int moments (int t1, int t2, const double *x, 
-	     double *xbar, double *std, 
-	     double *skew, double *kurt, int k)
+double gretl_sst (int t1, int t2, const double *x)
+{
+    int t, n = t2 - t1 + 1;
+    double sumsq, xx, xbar;
+
+    if (n == 0) {
+	return NADBL;
+    }
+
+    xbar = gretl_mean(t1, t2, x);
+    if (na(xbar)) {
+	return NADBL;
+    }
+
+    sumsq = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) {
+	    xx = x[t] - xbar;
+	    sumsq += xx * xx;
+	} 
+    }
+
+    return sumsq;
+}
+
+/**
+ * gretl_variance:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ *
+ * Returns: the variance of the series @x from obs
+ * @t1 to obs @t2, skipping any missing values, or #NADBL 
+ * on failure.
+ */
+
+double gretl_variance (int t1, int t2, const double *x)
+{
+    int t, n = t2 - t1 + 1;
+    double sumsq, xx, xbar;
+
+    if (n == 0) {
+	return NADBL;
+    }
+
+    xbar = gretl_mean(t1, t2, x);
+    if (na(xbar)) {
+	return NADBL;
+    }
+
+    sumsq = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) {
+	    xx = x[t] - xbar;
+	    sumsq += xx * xx;
+	} else {
+	    n--;
+	}
+    }
+
+    sumsq = (n > 1)? sumsq / (n - 1) : 0.0;
+
+    return (sumsq >= 0)? sumsq : NADBL;
+}
+
+/**
+ * gretl_stddev:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ *
+ * Returns: the standard deviation of the series @x from obs
+ * @t1 to obs @t2, skipping any missing values, or #NADBL 
+ * on failure.
+ */
+
+double gretl_stddev (int t1, int t2, const double *x)
+{
+    double xx = gretl_variance(t1, t2, x);
+
+    return (na(xx))? xx : sqrt(xx);
+}
+
+/**
+ * gretl_covar:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ * @y: data seties.
+ *
+ * Returns: the covariance of the series @x and @y from obs
+ * @t1 to obs @t2, skipping any missing values, or #NADBL 
+ * on failure.
+ */
+
+double gretl_covar (int t1, int t2, const double *x, const double *y)
+{
+    int t, nn, n = t2 - t1 + 1;
+    double sx, sy, sxy, xt, yt, xbar, ybar;
+
+    if (n == 0) {
+	return NADBL;
+    }
+
+    nn = n;
+    sx = sy = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+        xt = x[t];
+        yt = y[t];
+        if (na(xt) || na(yt)) {
+            nn--;
+            continue;
+        }
+        sx += xt;
+        sy += yt;
+    }
+
+    if (nn == 0) {
+	return NADBL;
+    }
+
+    xbar = sx / nn;
+    ybar = sy / nn;
+    sxy = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+        xt = x[t];
+        yt = y[t];
+        if (na(xt) || na(yt)) {
+	    continue;
+	}
+        sx = xt - xbar;
+        sy = yt - ybar;
+        sxy = sxy + (sx * sy);
+    }
+
+    return sxy / (nn - 1);
+}
+
+/**
+ * gretl_corr:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ * @y: data seties.
+ *
+ * Returns: the correlation coefficient for the series @x and @y 
+ * from obs @t1 to obs @t2, skipping any missing values, or #NADBL 
+ * on failure.
+ */
+
+double gretl_corr (int t1, int t2, const double *x, const double *y)
+{
+    int t, nn, n = t2 - t1 + 1;
+    double sx, sy, sxx, syy, sxy, den, xbar, ybar;
+    double cval = 0.0;
+
+    if (n == 0) {
+	return NADBL;
+    }
+
+    if (gretl_isconst(t1, t2, x) || gretl_isconst(t1, t2, y)) {
+	return NADBL;
+    }
+
+    nn = n;
+    sx = sy = 0.0;
+    for (t=t1; t<=t2; t++) {
+        if (na(x[t]) || na(y[t])) {
+            nn--;
+            continue;
+        }
+        sx += x[t];
+        sy += y[t];
+    }
+
+    if (nn == 0) {
+	return NADBL;
+    }
+
+    xbar = sx / nn;
+    ybar = sy / nn;
+    sxx = syy = sxy = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+        if (na(x[t]) || na(y[t])) {
+	    continue;
+	}
+        sx = x[t] - xbar;
+        sy = y[t] - ybar;
+	sxx += sx * sx;
+	syy += sy * sy;
+	sxy += sx * sy;
+    }
+
+    if (sxy != 0.0) {
+        den = sxx * syy;
+        if (den > 0.0) {
+	    cval = sxy / sqrt(den);
+        } else {
+	    cval = NADBL;
+	}
+    }
+
+    return cval;
+}
+
+/**
+ * gretl_corr_rsq:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ * @y: data seties.
+ *
+ * Returns: the square of the correlation coefficient for the series 
+ * @x and @y from obs @t1 to obs @t2, skipping any missing values, 
+ * or #NADBL on failure.  Used as alternative value for R^2 in a
+ * regression without an intercept.
+ */
+
+double gretl_corr_rsq (int t1, int t2, const double *x, const double *y)
+{
+    double r = gretl_corr(t1, t2, x, y);
+
+    if (na(r)) {
+	return NADBL;
+    } else {
+	return r * r;
+    }
+}
+
+/**
+ * gretl_moments:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ * @xbar: pointer to receive mean.
+ * @sd: pointer to receive standard deviation.
+ * @skew: pointer to receive skewness.
+ * @kurt: pointer to receive excess kurtosis.
+ * @k: degrees of freedom loss (generally 1).
+ *
+ * Calculates sample moments for series @x from obs @t1 to obs
+ * @t2.  
+ *
+ * Returns: 0 on success, 1 on error.
+ */
+
+int gretl_moments (int t1, int t2, const double *x, 
+		   double *xbar, double *std, 
+		   double *skew, double *kurt, int k)
 {
     int t, n;
     double dev, var;
@@ -342,9 +693,9 @@ FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	return NULL;
     }    
     
-    moments(pdinfo->t1, pdinfo->t2, x, 
-	    &freq->xbar, &freq->sdx, 
-	    &skew, &kurt, params);
+    gretl_moments(pdinfo->t1, pdinfo->t2, x, 
+		  &freq->xbar, &freq->sdx, 
+		  &skew, &kurt, params);
 
     gretl_minmax(pdinfo->t1, pdinfo->t2, x, &xmin, &xmax);
     range = xmax - xmin;
@@ -1712,11 +2063,11 @@ GRETLSUMMARY *summary (const int *list,
 		     &summ->low[i], 
 		     &summ->high[i]);
 	
-	moments(pdinfo->t1, pdinfo->t2, Z[vi], 
-		&summ->mean[i], 
-		&summ->sd[i], 
-		&summ->skew[i], 
-		&summ->xkurt[i], 1);
+	gretl_moments(pdinfo->t1, pdinfo->t2, Z[vi], 
+		      &summ->mean[i], 
+		      &summ->sd[i], 
+		      &summ->skew[i], 
+		      &summ->xkurt[i], 1);
 
 	if (!floateq(summ->mean[i], 0.0)) {
 	    summ->cv[i] = fabs(summ->sd[i] / summ->mean[i]);
@@ -1724,8 +2075,7 @@ GRETLSUMMARY *summary (const int *list,
 	    summ->cv[i] = NADBL;
 	}
 
-	summ->median[i] = gretl_median(Z[vi] + pdinfo->t1, 
-				       pdinfo->t2 - pdinfo->t1 + 1);
+	summ->median[i] = gretl_median(pdinfo->t1, pdinfo->t2, Z[vi]);
     } 
 
     return summ;
@@ -1764,7 +2114,7 @@ void free_corrmat (CORRMAT *corrmat)
 CORRMAT *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
 {
     CORRMAT *corrmat;
-    int *p = NULL;
+    int *clist = NULL;
     int i, j, lo, nij, mm;
     int t1 = pdinfo->t1, t2 = pdinfo->t2; 
 
@@ -1773,21 +2123,21 @@ CORRMAT *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
 	return NULL;
     }
 
-    p = gretl_list_copy(list);
-    if (p == NULL) {
+    clist = gretl_list_copy(list);
+    if (clist == NULL) {
 	free(corrmat);
 	return NULL;
     }	
 
     /* drop any constants from list */
-    for (i=1; i<=p[0]; i++) {
-	if (gretl_isconst(t1, t2, Z[p[i]])) {
-	    gretl_list_delete_at_pos(p, i);
+    for (i=1; i<=clist[0]; i++) {
+	if (gretl_isconst(t1, t2, Z[clist[i]])) {
+	    gretl_list_delete_at_pos(clist, i);
 	    i--;
 	}
     }
 
-    corrmat->list = p;
+    corrmat->list = clist;
 
     lo = corrmat->list[0];  
     corrmat->n = t2 - t1 + 1;
@@ -1810,9 +2160,7 @@ CORRMAT *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
 		corrmat->xpx[nij] = 1.0;
 		continue;
 	    }
-	    corrmat->xpx[nij] = gretl_corr(corrmat->n, 
-					   Z[vi] + t1,
-					   Z[vj] + t1);
+	    corrmat->xpx[nij] = gretl_corr(t1, t2, Z[vi], Z[vj]);
 	}
     }
 
@@ -1926,8 +2274,8 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     df = n1 + n2 - 2;
 
-    moments(0, n1-1, x, &m1, &s1, &skew, &kurt, 1);
-    moments(0, n2-1, y, &m2, &s2, &skew, &kurt, 1);
+    gretl_moments(0, n1-1, x, &m1, &s1, &skew, &kurt, 1);
+    gretl_moments(0, n2-1, y, &m2, &s2, &skew, &kurt, 1);
     mdiff = m1 - m2;
 
     v1 = s1 * s1;
@@ -2010,8 +2358,8 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 	return 1;
     }
     
-    moments(0, n1-1, x, &m, &s1, &skew, &kurt, 1);
-    moments(0, n2-1, y, &m, &s2, &skew, &kurt, 1);
+    gretl_moments(0, n1-1, x, &m, &s1, &skew, &kurt, 1);
+    gretl_moments(0, n2-1, y, &m, &s2, &skew, &kurt, 1);
 
     var1 = s1*s1;
     var2 = s2*s2;

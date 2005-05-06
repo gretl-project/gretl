@@ -18,8 +18,7 @@
  */
 
 #include "libgretl.h"
-#include "gretl_private.h"
-
+#include "libset.h"
 #include "bhhh_max.h"
 
 #undef BHHH_DEBUG

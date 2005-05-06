@@ -33,35 +33,9 @@ void bufspace (int n, PRN *prn);
 
 void gretl_print_ar (MODEL *pmod, PRN *prn);
 
-void gretl_delete (char *str, int indx, int count);
-
-int numeric_string (const char *str);
-
-void gretl_trunc (char *str, size_t n);
-
-int count_fields (const char *str);
-
-void shift_left (char *str, size_t move);
-
-double gretl_corr (int n, const double *x, const double *y);
-
-double gretl_covar (int n, const double *x, const double *y);
-
-int gretl_iszero (int t1, int t2, const double *x);
-
-int gretl_isconst (int t1, int t2, const double *x);
-
-void gretl_minmax (int t1, int t2, const double *x, 
-		   double *min, double *max);
-
-int gretl_compare_doubles (const void *a, const void *b);
-
 int gretl_criteria (double ess, int nobs, int ncoeff, PRN *prn);
 
 int calculate_criteria (double *x, double ess, int nobs, int ncoeff);
-
-int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		 const double **Z, int *misst);
 
 int get_t_from_obs_string (char *s, const double **Z, 
 			   const DATAINFO *pdinfo);
@@ -72,15 +46,8 @@ int undo_daily_repack (MODEL *pmod, double **Z,
 int repack_missing_daily_obs (MODEL *pmod, double **Z, 
 			      const DATAINFO *pdinfo);
 
-void set_reference_mask (const MODEL *pmod);
-
 int model_mask_leaves_balanced_panel (const MODEL *pmod,
 				      const DATAINFO *pdinfo);
-
-int gretl_list_duplicates (const int *list, int ci);
-
-int *augment_regression_list (const int *orig, int aux, 
-			      double ***pZ, DATAINFO *pdinfo);
 
 int gretl_forecast (int t1, int t2, int nv, 
 		    const MODEL *pmod, double ***pZ);
@@ -97,15 +64,7 @@ int get_genr_function (const char *s);
 
 void gretl_varinfo_init (VARINFO *vinfo);
 
-double corrrsq (int nobs, const double *y, const double *yhat);
-
-int get_hac_lag (int m);
-
-int get_hc_version (void);
-
-int get_use_qr (void);
-
-char *copy_subdum (const char *src, int n);
+char *copy_submask (const char *src, int n);
 
 void maybe_free_full_dataset (const DATAINFO *pdinfo);
 
@@ -113,29 +72,19 @@ int get_vcv_index (MODEL *pmod, int i, int j, int n);
 
 int path_append (char *file, const char *path);
 
-void gretl_list_diff (int *targ, const int *biglist, const int *sublist);
-
 int takenotes (int quit_opt);
 
 char *get_month_name (char *mname, int m);
 
 int gretl_function_stack_depth (void);
 
-void record_test_result (double teststat, double pval, char *blurb);
-
-double get_last_test_statistic (char *blurb);
-
-double get_last_pvalue (char *blurb);
+void dataset_set_regular_markers (DATAINFO *pdinfo);
 
 /* init and cleanup functions */
 
 void gretl_cmd_free (CMD *cmd);
 
 void gretl_functions_cleanup (void);
-
-void gretl_rand_init (void);
-
-void gretl_rand_free (void);
 
 double *testvec (int n);
 

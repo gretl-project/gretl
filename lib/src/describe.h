@@ -51,6 +51,29 @@ struct FREQDIST_ {
 
 /* functions follow */
 
+int gretl_minmax (int t1, int t2, const double *x, 
+		  double *min, double *max);
+
+double gretl_mean (int t1, int t2, const double *x);
+
+double gretl_median (int t1, int t2, const double *x);
+
+double gretl_sst (int t1, int t2, const double *x);
+
+double gretl_variance (int t1, int t2, const double *x);
+
+double gretl_stddev (int t1, int t2, const double *x);
+
+double gretl_covar (int t1, int t2, const double *x, const double *y);
+
+double gretl_corr (int t1, int t2, const double *x, const double *y);
+
+double gretl_corr_rsq (int t1, int t2, const double *x, const double *y);
+
+int gretl_moments (int t1, int t2, const double *zx, 
+		   double *xbar, double *std, 
+		   double *skew, double *kurt, int k);
+
 void free_freq (FREQDIST *freq);
 
 FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
@@ -98,12 +121,6 @@ int vars_test (const int *list, const double **Z,
 
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
 			PRN *prn);
-
-double gretl_median (const double *x, int n);
-
-int moments (int t1, int t2, const double *zx, 
-	     double *xbar, double *std, 
-	     double *skew, double *kurt, int k);
 
 double doornik_chisq (double skew, double kurt, int n);
 

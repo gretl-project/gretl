@@ -948,7 +948,7 @@ static int organize_var_lists (const int *list, const double **Z,
 	if (gotsep || 
 	    !strcmp(pdinfo->varname[li], "const") ||	   
 	    !strcmp(pdinfo->varname[li], "time") ||
-	    gretl_isdummy(Z[li], pdinfo->t1, pdinfo->t2)) {
+	    gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[li])) {
 	    d[i] = 1;
 	    ndet++;
 	} else {

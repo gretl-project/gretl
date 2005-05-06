@@ -139,30 +139,6 @@ static int add_slopes_to_model (MODEL *pmod, double fbx)
 
 /* .......................................................... */
 
-int dmod_isdummy (const double *x, int t1, int t2)
-{
-    int t, m = 0, goodobs = 0;
-
-    for (t=t1; t<=t2; t++) {
-	if (na(x[t])) {
-	    continue;
-	}
-	if (x[t] != 0.0 && x[t] != 1.0) {
-	    return 0;
-	}
-	if (x[t] == 1.0) {
-	    m++;
-	}
-	goodobs++;
-    }
-
-    if (m < goodobs) return m;
-
-    return 0;
-} 
-
-/* .......................................................... */
-
 static double *hess_wts (MODEL *pmod, const double **Z, int opt) 
 {
     int t, tw, n = pmod->t2 - pmod->t1 + 1;
@@ -279,7 +255,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     gretl_model_init(&dmod);
     
     /* check whether depvar is binary */
-    dummy = dmod_isdummy((*pZ)[depvar], pdinfo->t1, pdinfo->t2);
+    dummy = gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[depvar]);
     if (!dummy) {
 	dmod.errcode = E_UNSPEC;
 	sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "

@@ -42,10 +42,8 @@ enum {
 static double calc_xy (double x, double y, char op, int t, int *err);
 
 static void genrfree (GENERATE *genr);
-static double genr_cov (const char *str, double ***pZ,
-			const DATAINFO *pdinfo);
-static double genr_corr (const char *str, double ***pZ,
-			 const DATAINFO *pdinfo);
+static double genr_cov_corr (const char *str, double ***pZ,
+			     const DATAINFO *pdinfo, int fn);
 static double genr_vcv (const char *str, const DATAINFO *pdinfo, 
 			MODEL *pmod);
 static int genr_mpow (const char *str, double *xvec, double **pZ, 
@@ -1876,7 +1874,7 @@ static const char *get_func_word (int fnum)
 
 #endif
 
-/* not static because used in nls.c */
+/* not static because it's used in nls.c */
 
 int get_genr_function (const char *s)
 {
@@ -1974,19 +1972,20 @@ static int
 expand_operator_abbrev (char *s, const char *lhs, char op)
 {
     int llen = strlen(lhs);
-    int i;
+    int i, err = 0;
 
     /* do we have space to make the insertion? */
-    if (strlen(s) + llen + 2 >= MAXLEN) return 1;
-
-    memmove(s + llen + 1, s, strlen(s) + 1);
-
-    for (i=0; i<llen; i++) {
-	s[i] = lhs[i];
+    if (strlen(s) + llen + 2 >= MAXLEN) {
+	err = 1;
+    } else {
+	memmove(s + llen + 1, s, strlen(s) + 1);
+	for (i=0; i<llen; i++) {
+	    s[i] = lhs[i];
+	}
+	s[i] = op;
     }
-    s[i] = op;
 
-    return 0;
+    return err;
 }
 
 static void excise_obs (char *s)
@@ -2054,22 +2053,23 @@ static int split_genr_formula (char *lhs, char *s, int obs)
 
 static int fix_obs_in_brackets (char *s)
 {
-    if (s == NULL || *s == 0) {
-	return 0;
-    }
+    int err = 0;
 
-    while ((s = strchr(s, '['))) {
-	s++;
-	if (strchr(s, ']') == NULL) {
-	    return E_SYNTAX;
-	}
-	while (*s != ']') {
-	    if (*s == '/') *s = ':';
+    if (s != NULL && *s != 0) {
+	while ((s = strchr(s, '['))) {
 	    s++;
+	    if (strchr(s, ']') == NULL) {
+		err = E_SYNTAX;
+		break;
+	    }
+	    while (*s != ']') {
+		if (*s == '/') *s = ':';
+		s++;
+	    }
 	}
     }
 
-    return 0;
+    return err;
 }
 
 /* standardize on '.' for decimal point character with a
@@ -2080,17 +2080,15 @@ static void fix_decimal_commas (char *str)
 {
     char *p = str;
 
-    if (p == NULL || *p == 0) return;
-    p++;
-    
-    while (*p && *(p + 1)) {
-	if (*p == ',' && isdigit(*(p - 1)) && isdigit(*(p + 1)))
-	    *p = '.';
+    if (p != NULL && *p != 0) {
 	p++;
+	while (*p && *(p + 1)) {
+	    if (*p == ',' && isdigit(*(p - 1)) && isdigit(*(p + 1)))
+		*p = '.';
+	    p++;
+	}
     }
 }
-
-/* ........................................................... */
 
 static void copy_compress (char *targ, const char *src, int len)
 {
@@ -2594,6 +2592,14 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	}
     }
 
+    if (modify && complex_subsampled()) {
+	if (!genr_is_scalar(genr) && !pdinfo->vector[v]) {
+	    strcpy(gretl_errmsg, _("You cannot turn a scalar into a vector "
+		   "when the dataset is subsampled."));
+	    return 1;
+	} 
+    }
+
     strcpy(VARLABEL(pdinfo, v), genr->label);
 
     if (!vectorize) {
@@ -2826,7 +2832,9 @@ static double evaluate_math_function (double arg, int fn, int *err)
 {
     double x = NADBL;
 
-    if (na(arg)) return x;
+    if (na(arg)) {
+	return x;
+    }
 
     *err = 0;
 
@@ -3219,31 +3227,35 @@ static int get_fracdiff (const double *y, double *diffvec, double d,
 static double *get_mp_series (const char *s, GENERATE *genr,
 			      int fn, int *err)
 {
-    double *x;
+    double *x = malloc(genr->pdinfo->n * sizeof *x);
 
-    x = malloc(genr->pdinfo->n * sizeof *x);
-    if (x == NULL) return NULL;
+    if (x == NULL) {
+	return NULL;
+    }
 
     if (fn == T_MPOW) {
 	*err = genr_mpow(s, x, *genr->pZ, genr->pdinfo);
-	if (*err) *err = E_INVARG;
     }
 #ifdef HAVE_MPFR
     else if (fn == T_MLOG) {
 	*err = genr_mlog(s, x, *genr->pZ, genr->pdinfo);
-	if (*err) *err = E_INVARG;
     }
 #endif
+
+    if (*err) {
+	*err = E_INVARG;
+    }
 
     return x;
 }
 
 static double *get_random_series (DATAINFO *pdinfo, int fn)
 {
-    double *x;
+    double *x = malloc(pdinfo->n * sizeof *x);
 
-    x = malloc(pdinfo->n * sizeof *x);
-    if (x == NULL) return NULL;
+    if (x == NULL) {
+	return NULL;
+    }
 
     if (fn == T_NORMAL) {
 	gretl_normal_dist(x, pdinfo->t1, pdinfo->t2);
@@ -3266,7 +3278,7 @@ static double evaluate_statistic (double *z, GENERATE *genr, int fn)
     int i, t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
 
     if (fn == T_NOBS) {
-	/* doesn't need a series allocated */
+	/* special: doesn't need a series allocated */
 	i = 0;
 	for (t=t1; t<=t2; t++) {
 	    if (!na(z[t])) i++;
@@ -3282,9 +3294,9 @@ static double evaluate_statistic (double *z, GENERATE *genr, int fn)
 
     i = -1;
     for (t=t1; t<=t2; t++) {
-	x = z[t];
-	if (na(x)) continue;
-	tmp[++i] = x;
+	if (!na(z[t])) {
+	    tmp[++i] = z[t];
+	}
     }
 
     if (fn == T_MEAN) {
@@ -3299,7 +3311,7 @@ static double evaluate_statistic (double *z, GENERATE *genr, int fn)
     } else if (fn == T_SST) {
 	x = gretl_sst(0, i, tmp);
     } else if (fn == T_MEDIAN) {
-	x = gretl_median(tmp, i + 1);
+	x = gretl_median(0, i, tmp);
     } else if (fn == T_MIN || fn == T_MAX) {
 	double min, max;
 
@@ -3315,20 +3327,24 @@ static double evaluate_statistic (double *z, GENERATE *genr, int fn)
 static double evaluate_pvalue (const char *s, const double **Z,
 			       const DATAINFO *pdinfo, int *err)
 {
-    double x;
+    double x = batch_pvalue(s, Z, pdinfo, NULL);
 
-    x = batch_pvalue(s, Z, pdinfo, NULL);
-    if (na(x) || x == -1.0) *err = E_INVARG;
+    if (na(x) || x == -1.0) {
+	*err = E_INVARG;
+    }
+
     return x;
 }
 
 static double evaluate_critval (const char *s, const double **Z,
 				const DATAINFO *pdinfo, int *err)
 {
-    double x;
+    double x = genr_get_critical(s, Z, pdinfo);
 
-    x = genr_get_critical(s, Z, pdinfo);
-    if (na(x) || x == -1.0) *err = E_INVARG;
+    if (na(x) || x == -1.0) {
+	*err = E_INVARG;
+    }
+
     return x;
 }
 
@@ -3338,12 +3354,12 @@ evaluate_bivariate_statistic (const char *s, GENERATE *genr,
 {
     double x = NADBL;
 
-    if (fn == T_COV) {
-	x = genr_cov(s, genr->pZ, genr->pdinfo);
-	if (na(x)) genr->err = E_INVARG;
-    } else if (fn == T_CORR) {
-	x = genr_corr(s, genr->pZ, genr->pdinfo);
-	if (na(x)) genr->err = E_INVARG;
+    if (fn == T_COV || fn == T_CORR) {
+	x = genr_cov_corr(s, genr->pZ, genr->pdinfo, fn);
+    }
+
+    if (na(x)) {
+	genr->err = E_INVARG;
     }
 
     return x;
@@ -3371,6 +3387,8 @@ static double evaluate_missval_func (double arg, int fn)
 
     return x;
 }
+
+/* apparatus for saving sorted case markers */
 
 struct val_mark {
     double x;
@@ -3426,6 +3444,11 @@ static int allocate_genr_S (GENERATE *genr)
 
     return err;
 }
+
+/* do a simple sort if there are no case markers in the dataset,
+   but if there are case markers, keep a record of the sorted
+   markers and attach it to the newly generated variable
+*/
 
 static int 
 sort_series (const double *mvec, double *x, GENERATE *genr)
@@ -4526,8 +4549,8 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
 
     i = varindex(pdinfo, (tm)? "time" : "index");
 
-    if (i == pdinfo->v) {
-	if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
+    if (i == pdinfo->v && dataset_add_vars(1, pZ, pdinfo)) {
+	return E_ALLOC;
     }
 
     if (tm) {
@@ -4553,13 +4576,16 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
 
 static int plotvar_is_full_size (int v, int n, const double *x)
 {
-    int t;
+    int t, ret = 1;
 
     for (t=0; t<n; t++) {
-	if (na(x[t])) return 0;
+	if (na(x[t])) {
+	    ret = 0;
+	    break;
+	}
     }
 
-    return 1;
+    return ret;
 }
 
 /**
@@ -4891,121 +4917,105 @@ static int genr_mlog (const char *str, double *xvec, double **Z,
 
 #endif /* HAVE_MPFR */
 
-/* ...................................................... */
-
-static double genr_cov (const char *str, double ***pZ, 
-			const DATAINFO *pdinfo)
+static int varnames_from_arg (const char *s, char *v1str, char *v2str)
 {
-    int i, n, p, v1, v2;
-    char v1str[USER_VLEN], v2str[USER_VLEN];
+    int i, p, n = strlen(s);
 
-    n = strlen(str);
-    if (n > 17) return NADBL;
-
-    p = haschar(',', str);
-    if (p < 0 || p > 8) return NADBL;
-
-    /* get first var name */
-    for (i=0; i<p; i++) v1str[i] = str[i];
-    v1str[p] = '\0';
-
-    /* get second var name */
-    n = n - p - 1;
-    for (i=0; i<n; i++) v2str[i] = str[p+1+i];
-    v2str[i] = '\0';
-
-    /* and look up the two */
-    v1 = varindex(pdinfo, v1str);
-    v2 = varindex(pdinfo, v2str);
-    if (v1 >= pdinfo->v || v2 >= pdinfo->v)
-	return NADBL;
-
-    return gretl_covar(pdinfo->t2 - pdinfo->t1 + 1,
-		       &(*pZ)[v1][pdinfo->t1], 
-		       &(*pZ)[v2][pdinfo->t1]);
-}
-
-/* ...................................................... */
-
-static double genr_corr (const char *str, double ***pZ, 
-			 const DATAINFO *pdinfo)
-{
-    int i, n, p, v1, v2;
-    char v1str[USER_VLEN], v2str[USER_VLEN];
-
-    n = strlen(str);
-    if (n > 17) return NADBL;
-
-    p = haschar(',', str);
-    if (p < 0 || p > 8) return NADBL;
-
-    /* get first var name */
-    for (i=0; i<p; i++) v1str[i] = str[i];
-    v1str[p] = '\0';
-
-    /* get second var name */
-    n = n - p - 1;
-    for (i=0; i<n; i++) v2str[i] = str[p+1+i];
-    v2str[i] = '\0';
-
-    /* and look up the two */
-    v1 = varindex(pdinfo, v1str);
-    v2 = varindex(pdinfo, v2str);
-    if (v1 >= pdinfo->v || v2 >= pdinfo->v)
-	return NADBL;
-
-    return gretl_corr(pdinfo->t2 - pdinfo->t1 + 1,
-		      &(*pZ)[v1][pdinfo->t1], 
-		      &(*pZ)[v2][pdinfo->t1]);
-}
-
-/* ...................................................... */
-
-static int get_model_param_number (const MODEL *pmod, 
-				   const char *vname)
-{
-    int i;
-
-    if (pmod->params == NULL) return 0;
-
-    for (i=0; i<=pmod->ncoeff; i++) {
-	if (!strcmp(vname, pmod->params[i])) return i + 1;
+    if (n > 17) {
+	return 1;
     }
+
+    p = haschar(',', s);
+    if (p < 0 || p > 8) {
+	return 1;
+    }
+
+    /* get first var name */
+    for (i=0; i<p; i++) {
+	v1str[i] = s[i];
+    }
+    v1str[p] = '\0';
+
+    /* get second var name */
+    n = n - p - 1;
+    for (i=0; i<n; i++) {
+	v2str[i] = s[p+1+i];
+    }
+    v2str[i] = '\0';
 
     return 0;
 }
 
-/* ...................................................... */
+static double genr_cov_corr (const char *str, double ***pZ, 
+			     const DATAINFO *pdinfo, int fn)
+{
+    char v1str[USER_VLEN], v2str[USER_VLEN];
+    int v1, v2;
+    double ret = NADBL;
+
+    if (varnames_from_arg(str, v1str, v2str)) {
+	return NADBL;
+    }
+
+    v1 = varindex(pdinfo, v1str);
+    v2 = varindex(pdinfo, v2str);
+
+    if (v1 >= pdinfo->v || v2 >= pdinfo->v) {
+	return NADBL;
+    }
+
+    if (fn == T_COV) {
+	ret = gretl_covar(pdinfo->t1, pdinfo->t2, (*pZ)[v1], (*pZ)[v2]);
+    } else if (fn == T_CORR) {
+	ret = gretl_corr(pdinfo->t1, pdinfo->t2, (*pZ)[v1], (*pZ)[v2]);
+    }
+
+    return ret;
+}
+
+static int get_model_param_number (const MODEL *pmod, 
+				   const char *vname)
+{
+    int i, ret = 0;
+
+    if (pmod->params == NULL) {
+	return 0;
+    }
+
+    for (i=0; i<=pmod->ncoeff; i++) {
+	if (!strcmp(vname, pmod->params[i])) {
+	    ret = i + 1;
+	    break;
+	}
+    }
+
+    return ret;
+}
 
 static double genr_vcv (const char *str, const DATAINFO *pdinfo, 
 			MODEL *pmod)
 {
     int v1 = 0, v2 = 0;
-    int i, j, k, n, p, v1l, v2l;
+    int i, j, k, v1l, v2l;
     char v1str[USER_VLEN], v2str[USER_VLEN];
+    int gotit;
+    double ret = NADBL;
 
-    if (pmod == NULL || pmod->list == NULL) return NADBL;
+    if (pmod == NULL || pmod->list == NULL) {
+	return NADBL;
+    }
 
-    n = strlen(str);
-    if (n > 17) return NADBL;
+    if (varnames_from_arg(str, v1str, v2str)) {
+	return NADBL;
+    }
 
-    p = haschar(',', str);
-    if (p < 0 || p > 8) return NADBL;
-
-    /* get first var name */
-    for (i=0; i<p; i++) v1str[i] = str[i];
-    v1str[p] = '\0';
-
-    /* get second var name */
-    n = n - p - 1;
-    for (i=0; i<n; i++) v2str[i] = str[p+1+i];
-    v2str[i] = '\0';
-
-    /* are they valid? */
+    /* are the varnames valid? */
     if (pmod->ci != NLS && pmod->ci != ARMA) {
 	v1 = varindex(pdinfo, v1str);
 	v2 = varindex(pdinfo, v2str);
-	if (v1 >= pdinfo->v || v2 >= pdinfo->v) return NADBL;
+	if (v1 >= pdinfo->v || v2 >= pdinfo->v) {
+	    return NADBL;
+	}
     }
 
     /* check model list */
@@ -5017,13 +5027,17 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 	v2l = listpos(v2, pmod->list);
     }
 
-    if (v1l == 0 || v2l == 0) return NADBL;
+    if (v1l == 0 || v2l == 0) {
+	return NADBL;
+    }
 
     v1l -= 2;
     v2l -= 2;
 
     /* make model vcv matrix if need be */
-    if (pmod->vcv == NULL && makevcv(pmod)) return NADBL;
+    if (pmod->vcv == NULL && makevcv(pmod)) {
+	return NADBL;
+    }
 
     /* now find the right entry */
     if (v1l > v2l) {
@@ -5031,16 +5045,24 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 	v1l = v2l;
 	v2l = k;
     }
+
+    gotit = 0;
     k = 0;
-    for (i=0; i<pmod->ncoeff; i++) {
+    for (i=0; i<pmod->ncoeff && !gotit; i++) {
 	for (j=0; j<pmod->ncoeff; j++) {
-	    if (j < i) continue;
-	    if (i == v1l && j == v2l) return pmod->vcv[k];
+	    if (j < i) {
+		continue;
+	    }
+	    if (i == v1l && j == v2l) {
+		ret = pmod->vcv[k];
+		gotit = 1;
+		break;
+	    }
 	    k++;
 	}
     }
 
-    return NADBL;
+    return ret;
 }
 
 /* ...................................................... */

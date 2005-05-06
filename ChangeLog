@@ -11,6 +11,9 @@ version 1.3.4 (in progress)
   of periodogram command
 - Add fracdiff function (fractional differencing) to the genr
   command
+- sort function in genr: save sorted case markers if the dataset
+  has case markers
+- Bug fixes for data editing spreadsheet
 - In correlogram (acf) output, show calculated 5% critical value
 - Correlogram: acf calculations should not use more than 20 percent
   of the available data by default (Tadeusz Kufel)

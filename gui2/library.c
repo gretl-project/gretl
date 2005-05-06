@@ -3977,7 +3977,7 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
     if (verify_and_record_command(line)) return;
 
     if (cmd.list[0] != 3 || 
-	!gretl_isdummy(Z[cmd.list[3]], datainfo->t1, datainfo->t2)) {
+	!gretl_isdummy(datainfo->t1, datainfo->t2, Z[cmd.list[3]])) {
 	errbox(_("You must supply three variables, the last\nof which "
 	       "is a dummy variable (values 1 or 0)"));
 	return;

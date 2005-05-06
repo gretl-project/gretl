@@ -31,258 +31,6 @@
 # endif /* GLIB_CHECK_VERSION */
 #endif /* ! WIN32 */
 
-/* returns min and max of array zx for sample t1 through t2 */
-
-void gretl_minmax (int t1, int t2, const double *x, 
-		   double *min, double *max)
-{
-    int t;
-
-    while (na(x[t1]) && t1 <= t2) {
-	t1++;
-    }
-
-    if (t1 >= t2) {
-        *min = *max = NADBL;
-        return;
-    }
-
-    *min = x[t1];
-    *max = x[t1];
-
-    for (t=t1; t<=t2; t++) {
-	if (!(na(x[t]))) {
-	    *max = x[t] > *max ? x[t] : *max;
-	    *min = x[t] < *min ? x[t] : *min;
-	}
-    }
-}
-
-/* returns mean of array x from obs t1 through t2 */
-
-double gretl_mean (int t1, int t2, const double *x)
-{
-    int n;
-    register int t;
-    double xbar, sum = 0.0;
-
-    n = t2 - t1 + 1;
-    if (n <= 0) {
-	return NADBL;
-    }
-
-    for (t=t1; t<=t2; t++) {
-	if (!(na(x[t]))) {
-	    sum += x[t];
-	} else {
-	    n--;
-	}
-    }
-
-    xbar = sum / n;
-    sum = 0.0;
-
-    for (t=t1; t<=t2; t++) {
-	if (!(na(x[t]))) {
-	    sum += (x[t] - xbar); 
-	}
-    }
-
-    return xbar + sum / n;
-}
-
-/*  returns standard deviation of array x from t1 through t2,
-    or NADBL if square root argument is invalid
-    or there are no observations
-*/
-
-double gretl_stddev (int t1, int t2, const double *x)
-{
-    double xx;
-
-    xx = gretl_variance(t1, t2, x);
-
-    return (na(xx))? xx : sqrt(xx);
-}
-
-/*  returns variance of array x from t1 through t2,
-    or NADBL if square root argument is invalid
-    or there are no observations
-*/
-
-double gretl_variance (int t1, int t2, const double *x)
-{
-    int i, n;
-    double sumsq, xx, xbar;
-
-    n = t2 - t1 + 1;
-
-    if (n == 0) {
-	return NADBL;
-    }
-
-    xbar = gretl_mean(t1, t2, x);
-    if (na(xbar)) {
-	return NADBL;
-    }
-
-    sumsq = 0.0;
-
-    for (i=t1; i<=t2; i++) {
-	if (!na(x[i])) {
-	    xx = x[i] - xbar;
-	    sumsq += xx*xx;
-	} else {
-	    n--;
-	}
-    }
-
-    sumsq = (n > 1)? sumsq / (n - 1) : 0.0;
-
-    return (sumsq >= 0)? sumsq : NADBL;
-}
-
-/*  returns sum of squared deviations from the mean of array x from t1,
-    through t2, or NADBL on error
-*/
-
-double gretl_sst (int t1, int t2, const double *x)
-{
-    int i;
-    double sumsq, xx, xbar;
-
-    if (t2 - t1 + 1 == 0) {
-	return NADBL;
-    }
-
-    xbar = gretl_mean(t1, t2, x);
-    if (na(xbar)) {
-	return NADBL;
-    }
-
-    sumsq = 0.0;
-
-    for (i=t1; i<=t2; i++) {
-	if (!na(x[i])) {
-	    xx = x[i] - xbar;
-	    sumsq += xx * xx;
-	} 
-    }
-
-    return sumsq;
-}
-
-/*
-  Returns the simple correlation coefficient between the the arrays zx
-  and zy, for the n observations 0 to n - 1.  Returns NADBL if square
-  root argument is invalid or no of observations is zero.
-*/
-
-double gretl_corr (int n, const double *x, const double *y)
-{
-    int i, nn;
-    double sx, sy, sxx, syy, sxy, den, xbar, ybar;
-    double cval = 0.0;
-
-    if (n == 0) {
-	return NADBL;
-    }
-
-    if (gretl_isconst(0, n-1, x) || gretl_isconst(0, n-1, y)) {
-	return NADBL;
-    }
-
-    nn = n;
-    sx = sy = 0.0;
-    for (i=0; i<n; ++i) {
-        if (na(x[i]) || na(y[i])) {
-            nn--;
-            continue;
-        }
-        sx += x[i];
-        sy += y[i];
-    }
-
-    if (nn == 0) {
-	return NADBL;
-    }
-
-    xbar = sx / nn;
-    ybar = sy / nn;
-    sxx = syy = sxy = 0.0;
-
-    for (i=0; i<n; ++i) {
-        if (na(x[i]) || na(y[i])) {
-	    continue;
-	}
-        sx = x[i] - xbar;
-        sy = y[i] - ybar;
-	sxx += sx * sx;
-	syy += sy * sy;
-	sxy += sx * sy;
-    }
-
-    if (sxy != 0.0) {
-        den = sxx * syy;
-        if (den > 0.0) {
-	    cval = sxy / sqrt(den);
-        } else {
-	    cval = NADBL;
-	}
-    }
-
-    return cval;
-}
-
-/* returns covariance between x and y from observations 0 tp
-   n - 1, or NADBL on error
-*/
-
-double gretl_covar (int n, const double *x, const double *y)
-{
-    int i, nn;
-    double sx, sy, sxy, xi, yi, xbar, ybar;
-
-    if (n == 0) {
-	return NADBL;
-    }
-
-    nn = n;
-    sx = sy = 0.0;
-
-    for (i=0; i<n; ++i) {
-        xi = x[i];
-        yi = y[i];
-        if (na(xi) || na(yi)) {
-            nn--;
-            continue;
-        }
-        sx += xi;
-        sy += yi;
-    }
-
-    if (nn == 0) {
-	return NADBL;
-    }
-
-    xbar = sx / nn;
-    ybar = sy / nn;
-    sxy = 0.0;
-
-    for (i=0; i<n; i++) {
-        xi = x[i];
-        yi = y[i];
-        if (na(xi) || na(yi)) {
-	    continue;
-	}
-        sx = xi - xbar;
-        sy = yi - ybar;
-        sxy = sxy + (sx * sy);
-    }
-
-    return sxy / (nn - 1);
-}
-
 /**
  * date:
  * @nt: observation number (zero-based).
@@ -389,9 +137,9 @@ int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo)
 
 /**
  * gretl_isdummy:
- * @x: data series to examine.
  * @t1: starting observation.
  * @t2: ending observation. 
+ * @x: data series to examine.
  * 
  * Check whether variable @x has only 0 or 1 values over the
  * given sample range (or possibly missing values).
@@ -400,18 +148,24 @@ int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo)
  * number of 1s in the series.
  */
 
-int gretl_isdummy (const double *x, int t1, int t2)
+int gretl_isdummy (int t1, int t2, const double *x)
 {
-    int t, m = 0;
+    int t, m = 0, goodobs = 0;
 
     for (t=t1; t<=t2; t++) {
-	if (floatneq(x[t], 0.0) && floatneq(x[t], 1.0) && !na(x[t])) {
+	if (na(x[t])) {
+	    continue;
+	}
+	if (x[t] != 0.0 && x[t] != 1.0) {
 	    return 0;
 	}
-	if (floateq(x[t], 1.0)) m++;
+	if (x[t] == 1.0) {
+	    m++;
+	}
+	goodobs++;
     }
 
-    if (m < t2 - t1 + 1) {
+    if (m < goodobs) {
 	return m;
     }
 

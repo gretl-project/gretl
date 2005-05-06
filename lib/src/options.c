@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 
 #define is_model_ci(c) (c == OLS || c == CORC || c == HILU || \
                         c == WLS || c == PWE || c == POOLED || c == HCCM || \

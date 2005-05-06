@@ -143,10 +143,10 @@ enum model_selection_criteria {
 
 #include <float.h>
 
-#define floateq(x, y) (fabs((x) - (y)) < DBL_EPSILON)
+#define floateq(x, y)  (fabs((x) - (y)) < DBL_EPSILON)
 #define floatneq(x, y) (fabs((x) - (y)) > DBL_EPSILON)
-#define floatgt(x, y) ((x) - (y) > DBL_EPSILON)
-#define floatlt(x, y) ((y) - (x) > DBL_EPSILON)
+#define floatgt(x, y)  ((x) - (y) > DBL_EPSILON)
+#define floatlt(x, y)  ((y) - (x) > DBL_EPSILON)
 
 /* functions follow */
 
@@ -156,15 +156,27 @@ void libgretl_cleanup (CMD *cmd);
  
 double date (int nt, int pd, const double sd0);
 
-int gretl_isdummy (const double *x, int t1, int t2);
+/* checks on variables */
+
+int gretl_isdummy (int t1, int t2, const double *x);
+
+int gretl_iszero (int t1, int t2, const double *x);
+
+int gretl_isconst (int t1, int t2, const double *x);
+
+/* list printing utilities */
 
 void printlist (const int *list, const char *msg);
 
 int print_list_to_buffer (const int *list, char *buf, size_t len);
 
+/* setting observations */
+
 char *format_obs (char *obs, int maj, int min, int pd);
 
 int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt);
+
+/* changing the size of the dataset */
 
 int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo);
 
@@ -174,16 +186,18 @@ int dataset_add_allocated_var (double *x, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo);
 
-int positive_int_from_string (const char *s);
-
-int varnum_from_string (const char *str, DATAINFO *pdinfo);
-
 int dataset_drop_listed_vars (const int *list, double ***pZ, 
 			      DATAINFO *pdinfo, int *renumber);
 
 int dataset_destroy_hidden_vars (double ***pZ, DATAINFO *pdinfo);
 
 int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo);
+
+/* other */
+
+int positive_int_from_string (const char *s);
+
+int varnum_from_string (const char *str, DATAINFO *pdinfo);
 
 int rename_var_by_id (const char *str, const char *vname, 
 		      DATAINFO *pdinfo);
@@ -199,13 +213,19 @@ int ijton (int i, int j, int nrows);
 
 int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo);
 
+double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo);
+
+int gretl_compare_doubles (const void *a, const void *b);
+
+/* panel data utilities */
+
 int get_panel_structure (const DATAINFO *pdinfo, int *nunits, int *T);
 
 int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn); 
 
 int balanced_panel (const DATAINFO *pdinfo);
 
-double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo);
+/* multiple-precision utilities */
 
 void free_gretl_mp_results (mp_results *mpvals);
 
@@ -219,16 +239,17 @@ void free_confint (CONFINT *cf);
 
 int ls_aic_bic (MODEL *pmod);
 
-double gretl_mean (int t1, int t2, const double *x);
-
-double gretl_stddev (int t1, int t2, const double *x);
-
-double gretl_variance (int t1, int t2, const double *x);
-
-double gretl_sst (int t1, int t2, const double *x);
-
 #ifndef WIN32
 int gretl_spawn (const char *cmdline);
 #endif
+
+/* hypothesis tests mechanism */
+
+void record_test_result (double teststat, double pval, char *blurb);
+
+double get_last_test_statistic (char *blurb);
+
+double get_last_pvalue (char *blurb);
+
 
 #endif /* GRETL_UTILS_H */

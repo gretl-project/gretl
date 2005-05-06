@@ -35,4 +35,13 @@ int model_missval_count (const MODEL *pmod);
 void set_miss (const int *list, const char *param, double **Z,
 	       DATAINFO *pdinfo, PRN *prn);
 
+int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
+		 const double **Z, int *misst);
+
+void set_reference_missmask (const MODEL *pmod);
+
+int apply_reference_missmask (MODEL *pmod);
+
+int reference_missmask_present (void);
+
 #endif /* MISSING_H */
