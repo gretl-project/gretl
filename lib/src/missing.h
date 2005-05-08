@@ -44,4 +44,10 @@ int apply_reference_missmask (MODEL *pmod);
 
 int reference_missmask_present (void);
 
+int undo_daily_repack (MODEL *pmod, double **Z, 
+		       const DATAINFO *pdinfo);
+
+int repack_missing_daily_obs (MODEL *pmod, double **Z, 
+			      const DATAINFO *pdinfo);
+
 #endif /* MISSING_H */

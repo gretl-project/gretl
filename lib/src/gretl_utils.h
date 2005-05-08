@@ -153,6 +153,8 @@ enum model_selection_criteria {
 void libgretl_init (CMD *cmd);
 
 void libgretl_cleanup (CMD *cmd);
+
+void gretl_cmd_free (CMD *cmd);
  
 double date (int nt, int pd, const double sd0);
 

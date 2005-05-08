@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_private.h"
+#include "gretl_func.h"
 #include "system.h"
 
 #include <errno.h>

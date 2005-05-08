@@ -95,12 +95,14 @@ gzFile gretl_gzopen (const char *filename, const char *mode)
 
 /* .......................................................... */
 
-int path_append (char *file, const char *path)
+int gretl_path_prepend (char *file, const char *path)
 {
     char temp[MAXLEN];
     int n, pathlen = strlen(file) + strlen(path) + 1;
 
-    if (pathlen > MAXLEN) return 1;
+    if (pathlen > MAXLEN) {
+	return 1;
+    }
 
     strcpy(temp, path);
     n = strlen(temp);
@@ -296,7 +298,7 @@ static char *search_dir (char *fname, const char *topdir, int code)
 
     strcpy(orig, fname);
 
-    if (path_append(fname, topdir) == 0) {
+    if (gretl_path_prepend(fname, topdir) == 0) {
 	test = gretl_fopen(fname, "r");
 	if (test != NULL) {
 	    fclose(test);

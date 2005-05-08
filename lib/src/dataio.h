@@ -87,7 +87,11 @@ void destroy_dataset_markers (DATAINFO *pdinfo);
 
 void set_sorted_markers (DATAINFO *pdinfo, int v, char **S);
 
+void dataset_set_regular_markers (DATAINFO *pdinfo);
+
 void free_varinfo (DATAINFO *pdinfo, int v);
+
+void gretl_varinfo_init (VARINFO *vinfo);
 
 int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);
 

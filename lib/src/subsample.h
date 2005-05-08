@@ -44,4 +44,6 @@ int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo);
 
 void free_model_dataset (MODEL *pmod);
 
+void maybe_free_full_dataset (const DATAINFO *pdinfo);
+
 #endif /* SUBSAMPLE_H */

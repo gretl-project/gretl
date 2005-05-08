@@ -35,6 +35,10 @@ int gretl_function_start_exec (const char *line);
 char *gretl_function_get_line (char *line, int len,
 			       double ***pZ, DATAINFO *pdinfo);
 
+int gretl_function_stack_depth (void);
+
 void gretl_function_error (void);
+
+void gretl_functions_cleanup (void);
 
 #endif /* GRETL_FUNC_H */

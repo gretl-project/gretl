@@ -24,7 +24,7 @@ void set_string_table_written (void);
 
 int gretl_string_table_written (void);
 
-int gretl_using_gui (void);
+int gretl_path_prepend (char *file, const char *path);
 
 FILE *gretl_fopen (const char *filename, const char *mode);
 
@@ -42,17 +42,15 @@ int set_paths (PATHS *ppaths, gretlopt opt);
 const char *gretl_lib_path (void);
 
 const char *gretl_user_dir (void);
-
 void set_gretl_user_dir (const char *path, PATHS *ppaths);
 
 const char *gretl_gnuplot_path (void);
 
 const char *gretl_plotfile (void);
+void set_gretl_plotfile (const char *fname);
 
 const char *gretl_png_font (void);
 
 void set_gretl_png_font (const char *s, PATHS *ppaths);
-
-void set_gretl_plotfile (const char *fname);
 
 #endif /* GRETL_PATHS_H */

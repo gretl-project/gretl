@@ -40,12 +40,6 @@ int calculate_criteria (double *x, double ess, int nobs, int ncoeff);
 int get_t_from_obs_string (char *s, const double **Z, 
 			   const DATAINFO *pdinfo);
 
-int undo_daily_repack (MODEL *pmod, double **Z, 
-		       const DATAINFO *pdinfo);
-
-int repack_missing_daily_obs (MODEL *pmod, double **Z, 
-			      const DATAINFO *pdinfo);
-
 int model_mask_leaves_balanced_panel (const MODEL *pmod,
 				      const DATAINFO *pdinfo);
 
@@ -62,29 +56,13 @@ int lagvarnum (int v, int l, const DATAINFO *pdinfo);
 
 int get_genr_function (const char *s);
 
-void gretl_varinfo_init (VARINFO *vinfo);
-
 char *copy_submask (const char *src, int n);
 
-void maybe_free_full_dataset (const DATAINFO *pdinfo);
-
 int get_vcv_index (MODEL *pmod, int i, int j, int n);
-
-int path_append (char *file, const char *path);
 
 int takenotes (int quit_opt);
 
 char *get_month_name (char *mname, int m);
-
-int gretl_function_stack_depth (void);
-
-void dataset_set_regular_markers (DATAINFO *pdinfo);
-
-/* init and cleanup functions */
-
-void gretl_cmd_free (CMD *cmd);
-
-void gretl_functions_cleanup (void);
 
 double *testvec (int n);
 

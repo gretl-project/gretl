@@ -19,7 +19,6 @@
 
 #include "libgretl.h"
 #include "gretl_string_table.h"
-#include "gretl_private.h" 
 
 typedef struct _col_table col_table;
 
@@ -182,7 +181,7 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
     if (st == NULL) return 1;
 
     strcpy(stname, "string_table.txt");
-    path_append(stname, gretl_user_dir());
+    gretl_path_prepend(stname, gretl_user_dir());
 
     fp = fopen(stname, "w");
     if (fp == NULL) {
