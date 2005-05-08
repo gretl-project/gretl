@@ -20,7 +20,6 @@
 /* discrete.c for gretl: logit and probit models */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 
 #define TINY 1.0e-13
 

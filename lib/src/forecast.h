@@ -20,6 +20,9 @@
 #ifndef FORECAST_H
 #define FORECAST_H
 
+int gretl_forecast (int t1, int t2, int nv, 
+		    const MODEL *pmod, double ***pZ);
+
 FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
 			 DATAINFO *pdinfo);
 

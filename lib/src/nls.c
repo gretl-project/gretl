@@ -22,7 +22,6 @@
 #include <math.h>
 
 #include "libgretl.h" 
-#include "gretl_private.h"
 #include "f2c.h"
 #include "../../minpack/minpack.h"  
 
@@ -106,7 +105,7 @@ static int add_term_from_nlfunc (const char *vname)
     int i, v, nt = nlspec.nparam + 1; 
 
     /* if the term is a math function or constant, skip it */
-    if (get_genr_function(vname) || !strcmp(vname, "pi")) {
+    if (genr_function_from_string(vname) || !strcmp(vname, "pi")) {
 	return 0;
     }
 

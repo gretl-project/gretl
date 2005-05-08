@@ -41,4 +41,8 @@ int list_loggenr (const int *list, double ***pZ, DATAINFO *pdinfo);
 int list_xpxgenr (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt);
 
+int newly_created_lag (void);
+
+void gretl_transforms_cleanup (void);
+
 #endif /* TRANSFORMS_H */

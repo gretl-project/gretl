@@ -20,7 +20,6 @@
 /* non-parametric stats for gretl */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 
 enum {
     RUN_FIRST,
@@ -297,10 +296,10 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    print_obs_marker(t, pdinfo, prn);
 	    if (!(na(Z[vx][t])) && !(na(Z[vy][t]))) {
-		gretl_printxs(Z[vx][t], 15, PRINT, prn);
-		gretl_printxs(rx[i], 15, PRINT, prn);
-		gretl_printxs(Z[vy][t], 15, PRINT, prn);
-		gretl_printxs(ry[i], 15, PRINT, prn);
+		gretl_printxn(Z[vx][t], 15, prn);
+		gretl_printxn(rx[i], 15, prn);
+		gretl_printxn(Z[vy][t], 15, prn);
+		gretl_printxn(ry[i], 15, prn);
 		i++;
 	    }
 	    pputc(prn, '\n');

@@ -178,7 +178,7 @@ char *format_obs (char *obs, int maj, int min, int pd);
 
 int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt);
 
-/* changing the size of the dataset */
+/* changing the size or shape of the dataset */
 
 int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo);
 
@@ -194,6 +194,9 @@ int dataset_drop_listed_vars (const int *list, double ***pZ,
 int dataset_destroy_hidden_vars (double ***pZ, DATAINFO *pdinfo);
 
 int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo);
+
+int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo, 
+			char *newvar, char *s);
 
 /* other */
 
@@ -218,6 +221,12 @@ int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo);
 double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo);
 
 int gretl_compare_doubles (const void *a, const void *b);
+
+/* model selection criteria */
+
+int gretl_calculate_criteria (double *x, double ess, int nobs, int ncoeff);
+
+int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn);
 
 /* panel data utilities */
 

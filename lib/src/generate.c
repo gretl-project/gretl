@@ -21,7 +21,6 @@
 
 #include "libgretl.h"
 #include "gretl_func.h"
-#include "gretl_private.h"
 #include "loop_private.h"
 #include "genstack.h"
 #include "libset.h"
@@ -530,7 +529,7 @@ static genatom *parse_token (const char *s, char op,
 	    lag = 0;
 	    v = -1;
 
-	    func = get_genr_function(s);
+	    func = genr_function_from_string(s);
 
 	    if (func) {
 		DPRINTF(("recognized function #%d (%s)\n", func, 
@@ -1286,7 +1285,7 @@ static int function_word_to_left (const char *s, int n)
 	if (!isalpha(*p)) {
 	    break;
 	} else if ((i == n || !VNCHAR(*(p-1))) && 
-		   get_genr_function(p)) {
+		   genr_function_from_string(p)) {
 	    ret = 1;
 	    break;
 	}
@@ -1874,9 +1873,7 @@ static const char *get_func_word (int fnum)
 
 #endif
 
-/* not static because it's used in nls.c */
-
-int get_genr_function (const char *s)
+int genr_function_from_string (const char *s)
 {
     char word[USER_VLEN];
     const char *p;
@@ -1902,7 +1899,7 @@ int get_genr_function (const char *s)
 
 /* .......................................................... */
 
-int gretl_is_reserved (const char *str)
+int gretl_reserved_word (const char *str)
 {
     const char *resword[] = {"uhat", "yhat",
 			     "const", "CONST", "pi",
@@ -1956,7 +1953,7 @@ int gretl_is_reserved (const char *str)
 	i++; 
     } 
 
-    if (get_genr_function(str)) {
+    if (genr_function_from_string(str)) {
 	otheruse(str, _("math function"));
 	return 1;
     }
@@ -2031,7 +2028,7 @@ static int split_genr_formula (char *lhs, char *s, int obs)
 	    /* should we warn if lhs name is truncated? */
 	    strncat(lhs, s, USER_VLEN - 1);
 
-	    if (gretl_is_reserved(lhs)) {
+	    if (gretl_reserved_word(lhs)) {
 		err = 1;
 	    } else {
 		p++;

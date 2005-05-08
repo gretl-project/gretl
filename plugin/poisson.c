@@ -19,7 +19,6 @@
 
 
 #include "libgretl.h"
-#include "gretl_private.h"
 
 #undef PDEBUG 
 

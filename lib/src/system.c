@@ -20,7 +20,6 @@
 /* mechanisms for defining and handling systems of equations */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 #include "system.h"
 #include "system_private.h"
 

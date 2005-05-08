@@ -21,7 +21,6 @@
 */  
 
 #include "libgretl.h" 
-#include "gretl_private.h"
 #include "loop_private.h"
 #include "libset.h"
 #include "compat.h"

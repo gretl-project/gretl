@@ -19,7 +19,6 @@
 
 #include "libgretl.h"
 #include "modelspec.h"
-#include "gretl_private.h"
 
 struct MODELSPEC_ {
     int ID;
@@ -177,7 +176,7 @@ int modelspec_save (MODEL *pmod, MODELSPEC **pmspec)
     if (pmod->submask != NULL) {
 	int n = get_full_length_n();
 
-	spec[i].submask = copy_submask(pmod->submask, n);
+	spec[i].submask = copy_subsample_mask(pmod->submask, n);
 	if (spec[i].submask == NULL) return 1;
     }
 

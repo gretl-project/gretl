@@ -20,7 +20,6 @@
 /* graphing.c for gretl */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 #include "var.h"
 #include "libset.h"
 #include "../../cephes/libprob.h"

@@ -151,6 +151,8 @@ char *append_dir (char *fname, const char *dir);
 int build_path (const char *dir, const char *fname, char *path, 
 		const char *ext);
 
+char *get_month_name (char *mname, int m);
+
 #ifndef USE_GTK2
 int
 utf8_to_iso_latin_1 (unsigned char* out, int outlen, 

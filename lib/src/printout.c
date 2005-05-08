@@ -20,7 +20,6 @@
 /*  printout.c - simple text print routines for some gretl structs */ 
 
 #include "libgretl.h"
-#include "gretl_private.h" 
 #include "version.h"
 #include "libset.h"
 #include "forecast.h"
@@ -38,7 +37,9 @@ print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
   
 void bufspace (int n, PRN *prn)
 {
-    if (n > 0) while (n--) pputc(prn, ' ');
+    while (n-- > 0) {
+	pputc(prn, ' ');
+    }
 }
 
 /**
@@ -57,8 +58,6 @@ static void printxx (const double xx, char *str, int ci)
 
     sprintf(str, "%#*.*g", d, GRETL_DIGITS, xx);
 }
-
-/* ......................................................... */ 
 
 static void covhdr (PRN *prn)
 {
@@ -575,7 +574,7 @@ static void outxx (const double xx, int ci, PRN *prn)
 
 /* ......................................................... */ 
 
-int takenotes (int quit_opt)
+static int takenotes (int quit_opt)
 {
     char resp[4];
 
@@ -584,17 +583,31 @@ int takenotes (int quit_opt)
     } else {
 	puts(_("\nTake notes then press return key to continue"));
     }
+
     fflush(stdout);
 
     fgets(resp, sizeof resp, stdin);
 
-    if (quit_opt && *resp == 'q') return 1;
+    if (quit_opt && *resp == 'q') {
+	return 1;
+    }
 
     return 0;
 }
 
 /**
- * page_pause:
+ * scroll_pause:
+ * 
+ * Pause after a "page" of text at the console.
+ */
+
+void scroll_pause (void)
+{
+    takenotes(0);
+}
+
+/**
+ * scroll_pause_or_quit:
  * 
  * Pause after a "page" of text, and give the user the option of
  * breaking out of the printing routine.
@@ -602,7 +615,7 @@ int takenotes (int quit_opt)
  * Returns: 1 if the user chose to quit, otherwise 0.
  */
 
-int page_pause (void)
+int scroll_pause_or_quit (void)
 {
     return takenotes(1);
 }
@@ -731,13 +744,12 @@ static void fit_resid_head (const FITRESID *fr,
     pputs(prn, "\n\n");
 }
 
-/* ........................................................... */
+/*  skips to new page and prints names of variables
+    from v1 to v2 */
 
 static void varheading (int v1, int v2, 
 			const DATAINFO *pdinfo, const int *list,
 			PRN *prn)
-/*  skips to new page and prints names of variables
-    from v1 to v2 */
 {
     int i;
         
@@ -750,19 +762,29 @@ static void varheading (int v1, int v2,
     pputs(prn, "\n\n");
 }
 
-/* ........................................................... */
+/**
+ * gretl_printxn:
+ * @x: number to print.
+ * @n: controls width of output.
+ * @prn: gretl printing struct.
+ *
+ * Print a string representation of the double-precision value @x
+ * in a format that depends on @n.
+ */
 
-void gretl_printxs (double xx, int n, int ci, PRN *prn)
+void gretl_printxn (double x, int n, PRN *prn)
 {
-    int ls;
     char s[32];
+    int ls;
 
-    if (na(xx)) {
+    if (na(x)) {
 	*s = '\0';
     } else {
-	printxx(xx, s, ci);
+	printxx(x, s, PRINT);
     }
+
     ls = strlen(s);
+
     pputc(prn, ' ');
     bufspace(n - 3 - ls, prn);
     pputs(prn, s);
@@ -1346,17 +1368,17 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 
     for (t=0; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
-	gretl_printxs(fr->actual[t], 15, PRINT, prn);
+	gretl_printxn(fr->actual[t], 15, prn);
 	if (na(fr->fitted[t])) {
 	    pputc(prn, '\n');
 	    continue;
 	}
-	gretl_printxs(fr->fitted[t], 15, PRINT, prn);
-	gretl_printxs(fr->sderr[t], 15, PRINT, prn);
+	gretl_printxn(fr->fitted[t], 15, prn);
+	gretl_printxn(fr->sderr[t], 15, prn);
 	maxerr[t] = fr->tval * fr->sderr[t];
-	gretl_printxs(fr->fitted[t] - maxerr[t], 15, PRINT, prn);
+	gretl_printxn(fr->fitted[t] - maxerr[t], 15, prn);
 	pputs(prn, " -");
-	gretl_printxs(fr->fitted[t] + maxerr[t], 10, PRINT, prn);
+	gretl_printxn(fr->fitted[t] + maxerr[t], 10, prn);
 	pputc(prn, '\n');
     }
 

@@ -1747,12 +1747,15 @@ char *append_dir (char *fname, const char *dir)
 {
     size_t len;
 
-    if (dir == NULL) return fname;
+    if (dir == NULL) {
+	return fname;
+    }
 
     len = strlen(fname);
-    if (fname[len - 1] == '/' || fname[len - 1] == '\\')
+
+    if (fname[len - 1] == '/' || fname[len - 1] == '\\') {
         strcat(fname, dir);
-    else {
+    } else {
         strcat(fname, SLASHSTR);
         strcat(fname, dir);
     }

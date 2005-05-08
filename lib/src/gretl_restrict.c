@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 #include "system.h"
 #include "gretl_restrict.h"
 

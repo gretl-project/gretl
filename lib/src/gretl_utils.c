@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 #include "gretl_func.h"
 #include "system.h"
 
@@ -304,7 +303,7 @@ int print_list_to_buffer (const int *list, char *buf, size_t len)
 
 /* Compute model selection criteria */
 
-int calculate_criteria (double *x, double ess, int nobs, int ncoeff)
+int gretl_calculate_criteria (double *x, double ess, int nobs, int ncoeff)
 {
     if (na(ess) || ess <= 0.0 || ncoeff < 1 || nobs <= ncoeff) {
 	x[C_AIC] = NADBL;
@@ -333,17 +332,17 @@ int calculate_criteria (double *x, double ess, int nobs, int ncoeff)
 
 int ls_aic_bic (MODEL *pmod)
 {
-    return calculate_criteria(pmod->criterion, 
-			      pmod->ess, pmod->nobs,
-			      pmod->ncoeff);
+    return gretl_calculate_criteria(pmod->criterion, 
+				    pmod->ess, pmod->nobs,
+				    pmod->ncoeff);
 }
 
-int gretl_criteria (double ess, int nobs, int ncoeff, PRN *prn)
+int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn)
 {
     double x[2];
     int err;
 
-    err = calculate_criteria(x, ess, nobs, ncoeff);
+    err = gretl_calculate_criteria(x, ess, nobs, ncoeff);
 
     if (err) {
 	pputs(prn, _("Error calculating model selection criteria\n"));
@@ -1876,7 +1875,7 @@ void libgretl_cleanup (CMD *cmd)
     gretl_rand_free();
     gretl_functions_cleanup();
     gretl_equation_systems_cleanup();
-    testvec(0);
+    gretl_transforms_cleanup();
 
     p = strstr(gretl_plotfile(), "gpttmp");
     if (p != NULL) {

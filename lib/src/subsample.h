@@ -24,6 +24,8 @@
 
 /* functions follow */
 
+char *copy_subsample_mask (const char *src, int n);
+
 int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo);
 
 int restrict_sample (const char *line, 
@@ -45,5 +47,8 @@ int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo);
 void free_model_dataset (MODEL *pmod);
 
 void maybe_free_full_dataset (const DATAINFO *pdinfo);
+
+int model_mask_leaves_balanced_panel (const MODEL *pmod,
+				      const DATAINFO *pdinfo);
 
 #endif /* SUBSAMPLE_H */

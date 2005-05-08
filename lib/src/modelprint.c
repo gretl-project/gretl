@@ -20,7 +20,6 @@
 /*  modelprint.c */ 
 
 #include "libgretl.h"
-#include "gretl_private.h"
 #include "libset.h"
 #include "system.h"
 

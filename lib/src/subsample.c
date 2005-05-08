@@ -20,7 +20,6 @@
 /* subsample.c for gretl */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 
 #undef SUBDEBUG
 
@@ -49,7 +48,7 @@ static const DATAINFO *peerinfo;
 
 /* .......................................................... */
 
-char *copy_submask (const char *src, int n)
+char *copy_subsample_mask (const char *src, int n)
 {
     char *ret = NULL;
 
@@ -140,7 +139,7 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 	/* sync, in case anything has moved */
 	sync_dataset_elements(pdinfo);
 
-	pmod->submask = copy_submask(pdinfo->submask, fullinfo->n);
+	pmod->submask = copy_subsample_mask(pdinfo->submask, fullinfo->n);
 	if (pmod->submask == NULL) {
 	    err = E_ALLOC;
 	}

@@ -20,7 +20,6 @@
 /* describe.c - gretl descriptive statistics */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 #include "gretl_matrix.h"
 #include "libset.h"
 #include "compat.h"
@@ -1887,7 +1886,7 @@ void print_summary (const GRETLSUMMARY *summ,
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
 	if (pause && (lineno % PAGELINES == 0)) {
-	    takenotes(0);
+	    scroll_pause();
 	    lineno = 1;
 	}
 	pprintf(prn, "%-10s", pdinfo->varname[vi]);
@@ -1901,7 +1900,7 @@ void print_summary (const GRETLSUMMARY *summ,
     pputc(prn, '\n');
 
     if (pause) {
-	takenotes(0);
+	scroll_pause();
     }
 
     pprintf(prn, "\n%s  ", _("Variable"));
@@ -1915,7 +1914,7 @@ void print_summary (const GRETLSUMMARY *summ,
 	vi = summ->list[i + 1];
 
 	if (pause && (lineno % PAGELINES == 0)) {
-	    takenotes(0);
+	    scroll_pause();
 	    lineno = 1;
 	}
 

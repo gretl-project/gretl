@@ -21,7 +21,6 @@
 #include "qr_estimate.h"
 #include "gretl_matrix.h"
 #include "gretl_matrix_private.h"
-#include "gretl_private.h"
 #include "libset.h"
 
 #define QR_RCOND_MIN 1e-15 /* experiment with this? */
@@ -94,7 +93,7 @@ static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
     }
 }
 
-int get_vcv_index (MODEL *pmod, int i, int j, int n)
+static int get_vcv_index (MODEL *pmod, int i, int j, int n)
 {
     int k, vi, vj;
 

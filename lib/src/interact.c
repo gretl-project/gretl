@@ -22,10 +22,10 @@
 #include "libgretl.h"
 #include "var.h"
 #include "gretl_func.h"
-#include "gretl_private.h"
 #include "loop_private.h"
 #include "compat.h"
 #include "system.h"
+#include "forecast.h"
 
 /* equipment for the "shell" command */
 #ifndef WIN32
@@ -476,8 +476,7 @@ int auto_lag_ok (const char *s, int *lnum,
 	    ok = 0;
 	} else {
 	    cmd->list[llen++] = vnum;
-	    if (newlag) {
-		/* newlag lives in transforms. c */
+	    if (newly_created_lag()) {
 		pprintf(prn, "genr %s\n", VARLABEL(pdinfo, vnum));
 	    }
 	}
@@ -1370,7 +1369,7 @@ static int parse_criteria (const char *line, const double **Z,
 	return 1;
     }   
  
-    gretl_criteria(ess, T, k, prn);
+    gretl_print_criteria(ess, T, k, prn);
 
     return 0;
 }

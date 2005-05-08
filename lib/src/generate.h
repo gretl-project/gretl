@@ -50,5 +50,12 @@ int get_generated_value (const char *argv, double *val,
 			 double ***pZ, DATAINFO *pdinfo,
 			 MODEL *pmod, int t);
 
+int gretl_reserved_word (const char *str);
+
+int genr_function_from_string (const char *s);
+
+int get_t_from_obs_string (char *s, const double **Z, 
+			   const DATAINFO *pdinfo);
+
 #endif /* GENERATE_H */
 

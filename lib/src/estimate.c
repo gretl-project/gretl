@@ -21,7 +21,6 @@
 
 #include "libgretl.h"
 #include "qr_estimate.h"
-#include "gretl_private.h"
 #include "libset.h"
 #include "compat.h"
 
@@ -975,9 +974,9 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* Generate model selection statistics */
-    calculate_criteria(mdl.criterion, 
-		       (mdl.ci == WLS)? mdl.ess_wt : mdl.ess, 
-		       mdl.nobs, mdl.ncoeff);
+    gretl_calculate_criteria(mdl.criterion, 
+			     (mdl.ci == WLS)? mdl.ess_wt : mdl.ess, 
+			     mdl.nobs, mdl.ncoeff);
 
     /* hccm command or HC3a */
     if (jackknife) {

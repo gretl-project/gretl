@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 
 #include "../cephes/mconf.h"
 

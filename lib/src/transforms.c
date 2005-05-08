@@ -21,10 +21,16 @@
 
 #undef TRDEBUG
 
-/* newlag is a library global, used when auto-generating a lag in the
-   context of reading a regression list (interact.c)
+/* newlag is used when auto-generating a lag in the context of reading
+   a regression list (interact.c)
 */
-int newlag;
+
+static int newlag;
+
+int newly_created_lag (void)
+{
+    return newlag;
+}
 
 enum {
     VARS_IDENTICAL,
@@ -130,12 +136,10 @@ static void make_xp_varname (char *vname, const char *v1,
 }
 
 /* Array into which to write a generated variable, prior to testing
-   whether or not the same var already exists.  Declared as non-static
-   so that it can be called in context of library cleanup (with n =
-   0).
+   whether or not the same var already exists.  
 */
 
-double *testvec (int n)
+static double *testvec (int n)
 {
     static double *x;
     static int nx;
@@ -168,6 +172,11 @@ double *testvec (int n)
     }    
 
     return x;
+}
+
+void gretl_transforms_cleanup (void)
+{
+    testvec(0);
 }
 
 /* write lagged values of variable v into lagvec */
@@ -608,6 +617,8 @@ int list_loggenr (const int *list, double ***pZ, DATAINFO *pdinfo)
     return (n_ok > 0)? 0 : E_LOGS;
 }
 
+/* used in var.c */
+
 int 
 real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
 		   int maxlag, int **lagnums)
@@ -800,34 +811,3 @@ int list_xpxgenr (const int *list, double ***pZ, DATAINFO *pdinfo,
     return (n_ok > 0)? 0 : E_SQUARES;
 }
 
-int lagvarnum (int v, int l, const DATAINFO *pdinfo)
-{
-    char label[MAXLABEL];
-    int i;
-
-    make_transform_label(label, pdinfo->varname[v], LAGS, l);
-
-#if TRDEBUG
-    fprintf(stderr, "Looking for lag var with label '%s'...\n", label);
-#endif
-
-    for (i=1; i<pdinfo->v; i++) {
-	if (!strcmp(label, VARLABEL(pdinfo, i))) {
-	    return i;
-	}
-    }
-
-    /* second attempt? */
-    sprintf(label, "= %s(-%d)", pdinfo->varname[v], l);
-    for (i=1; i<pdinfo->v; i++) {
-	if (strstr(VARLABEL(pdinfo, i), label)) {
-	    return i;
-	}
-    }
-
-#if TRDEBUG
-    fputs("*** not found\n", stderr);
-#endif
-
-    return -1;
-}

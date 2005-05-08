@@ -1284,7 +1284,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 				    AUX_SQ, OPT_NONE, prn, NULL);
 	    if (err) errmsg(err, prn);
 	    if (cmd.opt == OPT_S) break;
-	    if (!err && !batch && page_pause()) break; 
+	    if (!err && !batch && scroll_pause_or_quit()) break; 
 	}
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
@@ -1292,7 +1292,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 				    AUX_LOG, OPT_NONE, prn, NULL);
 	    if (err) errmsg(err, prn);
 	    if (cmd.opt == OPT_L) break;
-	    if (!err && !batch && page_pause()) break;
+	    if (!err && !batch && scroll_pause_or_quit()) break;
 	}
 	/* autocorrelation */
 	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_O)) {

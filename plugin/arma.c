@@ -23,7 +23,6 @@
 */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 #include "bhhh_max.h"
 
 #include "../cephes/polrt.c"

@@ -18,8 +18,6 @@
  */
 
 #include "gretl.h"
-#include "gretl_private.h"
-
 #include "cmdstack.h"
 
 #undef CMD_DEBUG

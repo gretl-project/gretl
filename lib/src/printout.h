@@ -78,8 +78,6 @@ int outcovmx (MODEL *pmod,
 	      const DATAINFO *pdinfo, 
 	      PRN *prn);
 
-int page_pause (void);
-
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 
 int printdata (int *list, const double **Z, const DATAINFO *pdinfo, 
@@ -121,6 +119,10 @@ int pputs (PRN *prn, const char *s);
 
 int pputc (PRN *prn, int c);
 
+void bufspace (int n, PRN *prn);
+
+void gretl_printxn (double x, int n, PRN *prn);
+
 int do_printf (const char *line, double ***pZ, 
 	       DATAINFO *pdinfo, MODEL *pmod,
 	       PRN *prn);
@@ -130,3 +132,7 @@ int generate_obs_markers (double ***pZ, DATAINFO *pdinfo, char *s);
 int in_usa (void);
 
 char *bufgets (char *s, size_t size, const char *buf);
+
+void scroll_pause (void);
+
+int scroll_pause_or_quit (void);

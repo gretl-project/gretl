@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 
 #undef MODEL_DEBUG
 
@@ -1050,7 +1049,7 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
     if ((targ->yhat = copyvec(src->yhat, pdinfo->n)) == NULL) 
 	return 1;
     if (src->submask != NULL && 
-	(targ->submask = copy_submask(src->submask, pdinfo->n)) == NULL) 
+	(targ->submask = copy_subsample_mask(src->submask, pdinfo->n)) == NULL) 
 	return 1;
     if (src->missmask != NULL && 
 	(targ->missmask = copy_missmask(src)) == NULL) 

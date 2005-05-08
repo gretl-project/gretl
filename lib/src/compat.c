@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 #include "libset.h"
 #include "compat.h"
 
@@ -353,7 +352,7 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 		continue;
 	    }
 	    if (pause && (lineno % PAGELINES == 0)) {
-		takenotes(0);
+		scroll_pause();
 		lineno = 1;
 	    }
 	    prntdate(t, n, pdinfo, prn);
@@ -463,7 +462,7 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     for (t=t1; t<=t2; ++t) {
 	if (pause && (lineno % PAGELINES == 0)) {
-	    takenotes(0);
+	    scroll_pause();
 	    lineno = 1;
 	}
 

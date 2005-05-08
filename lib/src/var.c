@@ -22,7 +22,12 @@
 #include "libgretl.h" 
 #include "var.h"  
 #include "libset.h"
-#include "gretl_private.h"
+
+/* in transforms.c */
+extern int 
+real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
+		   int maxlag, int **lagnums);
+
 
 #define VAR_DEBUG 0
 
@@ -454,7 +459,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 	}
 
 	if (pause && block < blockmax - 1) {
-	    takenotes(0);
+	    scroll_pause();
 	}
     }
 
@@ -750,7 +755,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 	}
 
 	if (pause && block < blockmax - 1) {
-	    takenotes(0);
+	    scroll_pause();
 	}
     }
 
@@ -1166,7 +1171,7 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
     pputc(prn, '\n');
 
     if (!err && pause) {
-	takenotes(0);
+	scroll_pause();
     }
 
     if (outlist != NULL) {

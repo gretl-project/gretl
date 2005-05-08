@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "gretl_private.h"
 #include "gretl_string_table.h"
 
 #include <ctype.h>
@@ -792,7 +791,7 @@ int check_varname (const char *varname)
 
     *gretl_errmsg = '\0';
 
-    if (gretl_is_reserved(varname)) {
+    if (gretl_reserved_word(varname)) {
 	ret = VARNAME_RESERVED;
     } else if (!(isalpha((unsigned char) *varname))) {
 	testchar = *varname;
