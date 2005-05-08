@@ -2754,22 +2754,25 @@
   <command name="lags" section="Transformations" context="cli">
 
     <usage>
-      <arguments>
-        <argument>varlist</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>lags</lit> <repl>varlist</repl></altform>
+	<altform><lit>lags</lit> <repl>order</repl> <lit>;</lit> <repl>varlist</repl></altform>
+      </altforms>
+      <examples>
+	<example>lags x y</example>
+	<example>lags 12 ; x y</example>
+      </examples>
     </usage>
 
     <description>
       <para>
-	Creates new variables which are lagged values of each of the
-	variables in <repl>varlist</repl>.  The number of lagged
-	variables equals the periodicity. For example, if the
-	periodicity is 4 (quarterly), the command <cmd>lags x y</cmd>
-	creates <lit>x_1</lit> = <lit>x(t-1)</lit>, <lit>x_2</lit> =
-	<lit>x(t-2)</lit>, <lit>x_3</lit> = <lit>x(t-3)</lit> and
-	<lit>x_4</lit> <lit>x(t-4)</lit>. Similarly for <lit>y</lit>.
-	These variables must be referred to in the exact form, that
-	is, with the underscore.
+	Creates new variables which are lagged values of each of the variables in
+	<repl>varlist</repl>.  By default the number of lagged variables equals the
+	periodicity of the data. For example, if the periodicity is 4 (quarterly),
+	the command <cmd>lags x</cmd> creates <lit>x_1</lit> = <lit>x(t-1)</lit>,
+	<lit>x_2</lit> = <lit>x(t-2)</lit>, <lit>x_3</lit> = <lit>x(t-3)</lit> and
+	<lit>x_4</lit> = <lit>x(t-4)</lit>.  The number of lags created can be
+	controlled by the optional first parameter.
       </para>
     </description>
 

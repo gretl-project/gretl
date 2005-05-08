@@ -652,7 +652,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{SET_PATH,     { N_("program files (*.exe)"), "*.exe" }}
     };
 
-    static struct winfilter default_filter = {
+    static struct winfilter olddat_filter = {
 	N_("gretl data files (*.dat)"), "*.dat"
     };    
 
