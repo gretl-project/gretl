@@ -30,8 +30,6 @@
 # include <fnmatch.h>
 #endif
 
-char gretl_tmp_str[MAXLEN];
-
 /**
  * string_is_blank:
  * @s: the string to examine.
@@ -196,9 +194,12 @@ int haschar (char c, const char *s)
     int i = 0;
 
     while (*s) {
-	if (*s++ == c) return i;
+	if (*s++ == c) {
+	    return i;
+	}
 	i++;
     }
+
     return -1;
 }
 
@@ -213,9 +214,13 @@ int haschar (char c, const char *s)
 
 int lastchar (char c, const char *s)
 {
-    if (s == NULL || *s == 0) return 0;
-    if (s[strlen(s) - 1] == c) return 1;
-    return 0;
+    int ret = 0;
+
+    if (s != NULL && s[strlen(s) - 1] == c) {
+	ret = 1;
+    }
+
+    return ret;
 }
 
 /**
@@ -234,9 +239,12 @@ char *charsub (char *str, char find, char repl)
     char *p = str;
 
     while (*p) {
-	if (*p == find) *p = repl;
+	if (*p == find) {
+	    *p = repl;
+	}
 	p++;
     }
+
     return str;
 }
 
@@ -292,7 +300,9 @@ int ends_with_backslash (const char *s)
 
     for (i=n-1; i>=0; i--) {
 	if (!isspace((unsigned char) s[i])) {
-	    if (s[i] == '\\') bs = 1;
+	    if (s[i] == '\\') {
+		bs = 1;
+	    }
 	    break;
 	}
     }
@@ -311,9 +321,13 @@ int ends_with_backslash (const char *s)
 
 char *lower (char *str)
 {
-    while (*str) {
-        if (isupper((unsigned char) *str)) *str = tolower(*str);
-        str++;
+    char *p = str;
+
+    while (*p) {
+        if (isupper((unsigned char) *p)) {
+	    *p = tolower(*p);
+	}
+        p++;
     }
 
     return str;
@@ -408,29 +422,28 @@ void clear (char *str, int len)
 int count_fields (const char *s)
 {
     int nf = 0;
-    const char *p;
 
-    if (s == NULL || *s == '\0') {
-	return 0;
-    }
+    if (s != NULL && *s != '\0') {
+	const char *p;
 
-    /* step past any leading space */
-    while (*s == ' ') {
-	s++;
-    }
+	/* step past any leading space */
+	while (*s == ' ') {
+	    s++;
+	}
 
-    if (*s != '\0' && *s != ' ') {
-	s++;
-	nf++;
-    }
+	if (*s != '\0' && *s != ' ') {
+	    s++;
+	    nf++;
+	}
 
-    while (*s) {
-	p = strpbrk(s, " ");
-	if (p != NULL) {
-	    s = p + strspn(p, " ");
-	    if (*s) nf++;
-	} else {
-	    break;
+	while (*s) {
+	    p = strpbrk(s, " ");
+	    if (p != NULL) {
+		s = p + strspn(p, " ");
+		if (*s) nf++;
+	    } else {
+		break;
+	    }
 	}
     }
 	    
@@ -454,11 +467,10 @@ char *shift_string_left (char *str, size_t move)
 
     if (move >= n) {
 	*str = '\0';
-	return str;
+    } else {
+	memmove(str, str + move, n - move);
+	str[n - move] = '\0';
     }
-
-    memmove(str, str + move, n - move);
-    str[n - move] = '\0';
 
     return str;
 }
@@ -481,8 +493,9 @@ char *chopstr (char *str)
     for (i = strlen(str) - 1; i >= 0; i--) {
 	if (isspace((unsigned char) str[i]) || str[i] == '\r') {
 	    str[i] = '\0';
+	} else {
+	    break;
 	}
-	else break;
     }
 
     return str;
@@ -531,21 +544,22 @@ char *switch_ext (char *targ, const char *src, char *ext)
 
 int get_base (char *targ, const char *src, char c)
 {
-    int i, n;
+    int ret = 0;
 
-    if (src == NULL || *src == '\0') return 0;
+    if (src != NULL && *src != '\0') {
+	int i, n = strlen(src);
 
-    n = strlen(src);
-
-    for (i=n-1; i>=0; i--) {
-	if (src[i] == c) {
-	    *targ = '\0';
-	    strncat(targ, src, i+1);
-	    return 1;
+	for (i=n-1; i>=0; i--) {
+	    if (src[i] == c) {
+		*targ = '\0';
+		strncat(targ, src, i + 1);
+		ret = 1;
+		break;
+	    }
 	}
     }
 
-    return 0;
+    return ret;
 }
 
 /**
@@ -835,7 +849,9 @@ double obs_str_to_double (const char *obs)
     p = tmp;
 
     while (*p) {
-	if (*p == ':' || *p == ',') *p = '.';
+	if (*p == ':' || *p == ',') {
+	    *p = '.';
+	}
 	p++;
     }
 
@@ -856,7 +872,9 @@ char *colonize_obs (char *obs)
     char *p = obs;
 
     while (*p) {
-	if (*p == '.' || *p == ',') *p = ':';
+	if (*p == '.' || *p == ',') {
+	    *p = ':';
+	}
 	p++;
     }
 
@@ -1151,14 +1169,18 @@ utf8_to_iso_latin_1 (unsigned char *out, int outlen,
     while (in < inend) {
         c = *in++;
         if (c < 0x80) {
-            if (out >= outend) return -1;
+            if (out >= outend) {
+		return -1;
+	    }
             *out++ = c;
-        }
-        else if (((c & 0xFE) == 0xC2) && in < inend) {
-            if (out >= outend) return -1;
+        } else if (((c & 0xFE) == 0xC2) && in < inend) {
+            if (out >= outend) {
+		return -1;
+	    }
             *out++ = ((c & 0x03) << 6) | (*in++ & 0x3F);
-        }
-        else return -2;
+        } else {
+	    return -2;
+	}
     }
 
     return out - outstart;
@@ -1171,7 +1193,9 @@ static char *real_iso_to_ascii (char *s, int latin)
     char *tmp, *p, *q;
 
     tmp = malloc(strlen(s) + 1);
-    if (tmp == NULL) return NULL;
+    if (tmp == NULL) {
+	return NULL;
+    }
 
     p = tmp;
     q = s;

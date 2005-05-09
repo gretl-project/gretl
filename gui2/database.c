@@ -53,13 +53,25 @@ static int populate_series_list (windata_t *vwin);
 static int populate_remote_series_list (windata_t *vwin, char *buf);
 static int rats_populate_series_list (windata_t *vwin);
 static SERIESINFO *get_series_info (windata_t *vwin, int action);
-static void update_statusline (windata_t *vwin, const char *s);
 
 enum db_data_actions {
     DB_DISPLAY,
     DB_GRAPH,
     DB_IMPORT
 };
+
+static void update_statusline (windata_t *vwin, const char *s)
+{
+    gchar *tmp = g_strdup_printf(_("Network status: %s"), s);
+
+    gtk_label_set_text(GTK_LABEL(vwin->status), tmp);
+
+    while (gtk_events_pending()) {
+	gtk_main_iteration();
+    }
+
+    g_free(tmp);
+}
 
 static void set_time_series (DATAINFO *pdinfo)
 {
@@ -428,7 +440,9 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     double **dbZ = NULL;
 
     sinfo = get_series_info(vwin, dbcode);
-    if (sinfo == NULL) return;
+    if (sinfo == NULL) {
+	return;
+    }
 
     dbinfo = create_new_dataset(&dbZ, 2, sinfo->nobs, 0);
     if (dbinfo == NULL) {
@@ -1354,19 +1368,6 @@ void open_db_list (GtkWidget *w, gpointer data)
 	gtk_widget_destroy(GTK_WIDGET(vwin->w));
     }
 #endif
-}
-
-static void update_statusline (windata_t *vwin, const char *s)
-{
-    gchar *tmp = g_strdup_printf(_("Network status: %s"), s);
-
-    gtk_label_set_text(GTK_LABEL(vwin->status), tmp);
-
-    while (gtk_events_pending()) {
-	gtk_main_iteration();
-    }
-
-    g_free(tmp);
 }
 
 void open_named_remote_db_list (char *dbname)

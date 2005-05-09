@@ -87,7 +87,29 @@ enum {
     COLL_PS
 };
 
-static char *full_path (char *s1, const char *s2);
+static char *full_path (char *s1, const char *s2)
+{
+    static char fpath[FILENAME_MAX];
+    int n = strlen(s1);
+
+    if (s1[n-1] == '.') {
+	s1[n-1] = '\0';
+	n--;
+    }
+    
+    if (s1[n-1] == SLASH) {
+	sprintf(fpath, "%s%s", s1, s2);
+    } else {
+	sprintf(fpath, "%s%c%s", s1, SLASH, s2);
+    }
+
+#ifdef COLL_DEBUG
+    fprintf(stderr, "full_path: got '%s' from '%s' + '%s'\n",
+	    fpath, s1, s2);
+#endif
+
+    return fpath;
+}
 
 static char *unslash (const char *s)
 {
@@ -335,28 +357,6 @@ static void reset_ps_stack (void)
     collection_stack(NULL, STACK_RESET_PS);
 }
 
-static char *full_path (char *s1, const char *s2)
-{
-    static char fpath[FILENAME_MAX];
-
-    if (s1[strlen(s1) - 1] == '.') {
-	s1[strlen(s1) - 1] = '\0';
-    }
-    
-    if (s1[strlen(s1) - 1] == SLASH) {
-	sprintf(fpath, "%s%s", s1, s2);
-    } else {
-	sprintf(fpath, "%s%c%s", s1, SLASH, s2);
-    }
-
-#ifdef COLL_DEBUG
-    fprintf(stderr, "full_path: got '%s' from '%s' + '%s'\n",
-	    fpath, s1, s2);
-#endif
-
-    return fpath;
-}
-
 static int test_dir_for_file_collections (const char *dname, DIR *dir)
 {
     file_collection *coll;
@@ -520,7 +520,8 @@ static int read_file_descriptions (windata_t *win, gpointer p)
 #else
     gint i;    
 #endif
-    char line[MAXLEN], *index;
+    char line[MAXLEN];
+    char *index;
     file_collection *coll = (file_collection *) p;
 
     index = full_path(coll->path, coll->descfile);

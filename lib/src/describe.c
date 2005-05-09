@@ -34,6 +34,8 @@
 #include <glib.h>
 #endif
 
+static char gretl_tmp_str[MAXLEN];
+
 /* return 1 if series x has any missing observations, 0 if it does
    not */
 

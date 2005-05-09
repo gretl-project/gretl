@@ -35,8 +35,6 @@
 
 #define CTRLZ 26
 
-extern char gretl_tmp_str[MAXLEN];
-
 /* functions follow */
 
 int string_is_blank (const char *s);
