@@ -53,7 +53,7 @@ dw_t dw_vals[NDW] = {
     {29,{1.34,1.48,1.27,1.56,1.20,1.65,1.12,1.74,1.05,1.84}},
     {30,{1.35,1.49,1.28,1.57,1.21,1.65,1.14,1.74,1.07,1.83}},
     {31,{1.36,1.50,1.30,1.57,1.23,1.65,1.16,1.74,1.09,1.83}},
-    {32,{1.37,1.50,1.31,1.57,1.24,1.65,1.18,1.73,1.11l,1.82}},
+    {32,{1.37,1.50,1.31,1.57,1.24,1.65,1.18,1.73,1.11,1.82}},
     {33,{1.38,1.51,1.32,1.58,1.26,1.65,1.19,1.73,1.13,1.81}},
     {34,{1.39,1.51,1.33,1.58,1.27,1.65,1.21,1.73,1.15,1.81}},
     {35,{1.40,1.52,1.34,1.53,1.28,1.65,1.22,1.73,1.16,1.80}},
@@ -287,9 +287,6 @@ dfstat_t chi_vals[NCHI] = {{1,{2.706,3.841,5.024,6.635,10.828}},
 			   {100,{118.498,124.342,129.561,135.807,149.449}}};
 
 			  
-
-/* .................................................................. */
-
 static void other_tables (PRN *prn)
 {
     pputs(prn, _("\nFor more comprehensive statistical tables, please consult "
@@ -297,19 +294,24 @@ static void other_tables (PRN *prn)
 		 "Introductory Econometrics.\n"));
 }
 
-/* .................................................................. */
-
 void dw_lookup (int n, PRN *prn)
 {
     int i, j, nlo, nhi;
 
     nlo = 15;
     nhi = 100;
-    if (n < 15) n = 15;
-    if (n > 100) n = 100;
+
+    if (n < 15) {
+	n = 15;
+    }
+    if (n > 100) {
+	n = 100;
+    }
 
     for (i=0; i<NDW; i++) {
-	if (dw_vals[i].n <= n) nlo = dw_vals[i].n;
+	if (dw_vals[i].n <= n) {
+	    nlo = dw_vals[i].n;
+	}
 	if (dw_vals[i].n >= n) {
 	    nhi = dw_vals[i].n;
 	    break;
@@ -324,18 +326,20 @@ void dw_lookup (int n, PRN *prn)
 	  "             5\n");
     pputs(prn, "           dL     dU     dL     dU     dL     dU     dL     dU"
 	  "     dL     dU\n\n");
+
     for (i=0; i<NDW; i++) {
 	if (dw_vals[i].n >= nlo && dw_vals[i].n <= nhi) {
 	    pprintf(prn, "n = %3d ", dw_vals[i].n);
-	    for (j=0; j<10; j++)
+	    for (j=0; j<10; j++) {
 		pprintf(prn, "%6.2f ", dw_vals[i].dval[j]);
-	    pputs(prn, "\n");
+	    }
+	    pputc(prn, '\n');
+	    break;
 	}
     }
+
     other_tables(prn);
 }
-
-/* .................................................................. */
 
 void norm_lookup (PRN *prn, int gui)
 {
@@ -347,13 +351,22 @@ void norm_lookup (PRN *prn, int gui)
     /* xgettext:no-c-format */ 
     pputs(prn, _("(For example, for a two-tailed test using the 10% "
 		 "significance\nlevel, use the 0.05 column.)\n\n"));
-    pputs(prn, "      0.10     0.05    0.025     0.01    0.001\n\n"); 
+
+    pprintf(prn, "      %.2f     %.2f    %.3f     %.2f    %.3f\n\n",
+	    0.10, 0.05, 0.025, 0.01, 0.001); 
     pprintf(prn, "  %8.3f %8.3f %8.3f %8.3f %8.3f\n",
 	    1.282, 1.645, 1.960, 2.326, 3.090);
-    if (gui) other_tables(prn);
+
+    if (gui) {
+	other_tables(prn);
+    }
 }
 
-/* .................................................................. */
+static void t_chi_pvals (PRN *prn)
+{
+    pprintf(prn, "             %.2f     %.2f    %.3f     %.2f    %.3f\n\n",
+	    0.10, 0.05, 0.025, 0.01, 0.001); 
+}    
 
 void t_lookup (int df, PRN *prn, int gui)
 {
@@ -362,7 +375,9 @@ void t_lookup (int df, PRN *prn, int gui)
     dflo = dfhi = 999;
 
     for (i=0; i<NTSTAT; i++) {
-	if (t_vals[i].df <= df) dflo = t_vals[i].df;
+	if (t_vals[i].df <= df) {
+	    dflo = t_vals[i].df;
+	}
 	if (t_vals[i].df >= df) {
 	    dfhi = t_vals[i].df;
 	    break;
@@ -377,43 +392,58 @@ void t_lookup (int df, PRN *prn, int gui)
     /* xgettext:no-c-format */
     pputs(prn, _("(For example, for a two-tailed test using the 10% "
 		 "significance\nlevel, use the 0.05 column.)\n\n"));
-    pputs(prn, "             0.10     0.05    0.025     0.01    0.001\n\n"); 
+
+    t_chi_pvals(prn);
+
     for (i=0; i<NTSTAT; i++) {
 	if (t_vals[i].df >= dflo && t_vals[i].df <= dfhi) {
 	    pprintf(prn, "%s = ", _("df"));
-	    if (t_vals[i].df == 999)
+	    if (t_vals[i].df == 999) {
 		pputs(prn, _("inf."));
-	    else
+	    } else {
 		pprintf(prn, "%3d ", t_vals[i].df);
-	    for (j=0; j<5; j++)
+	    }
+	    for (j=0; j<5; j++) {
 		pprintf(prn, "%8.3f ", t_vals[i].crit[j]);
-	    pputs(prn, "\n");
+	    }
+	    pputc(prn, '\n');
+	    break;
 	}
     }
-    if (gui) other_tables(prn);
-}
 
-/* .................................................................. */
+    if (gui) {
+	other_tables(prn);
+    }
+}
 
 void chisq_lookup (int df, PRN *prn, int gui)
 {
     int i, j;
 
-    if (df > 100) df = 100;
+    if (df > 100) {
+	df = 100;
+    }
 
     pputs(prn, _("Critical values for Chi-square distribution\n\n"));
     pputs(prn, _("Column headings show alpha (significance level) for "
 		 "a one-tailed test.\n\n"));
-    pputs(prn, "             0.10     0.05    0.025     0.01    0.001\n\n"); 
+
+    t_chi_pvals(prn);
+
     for (i=0; i<NCHI; i++) {
 	if (chi_vals[i].df == df) {
 	    pprintf(prn, "%s = %3d ", _("df"), df);
-	    for (j=0; j<5; j++)
+	    for (j=0; j<5; j++) {
 		pprintf(prn, "%8.3f ", chi_vals[i].crit[j]);
-	    pputs(prn, "\n");
+	    }
+	    pputc(prn, '\n');
+	    break;
 	}
     }
-    if (gui) other_tables(prn);
+
+    if (gui) {
+	other_tables(prn);
+    }
 }
 
 
