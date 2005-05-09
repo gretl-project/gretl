@@ -1853,13 +1853,16 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     int i, vnum = 0;
 
     open_dialog = get_open_dialog();
+
     if (open_dialog != NULL) {
 	gdk_window_raise(open_dialog->window);
 	return;
     }
 
     sr = mymalloc(sizeof *sr);
-    if (sr == NULL) return;
+    if (sr == NULL) {
+	return;
+    }
 
     selector_init(sr, cmdcode, title);
 
@@ -1978,7 +1981,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     }
 
     gtk_widget_show(sr->dlg);
-    
+
     if (SAVE_DATA_ACTION(sr->code)) {
 	gtk_window_set_modal(GTK_WINDOW(sr->dlg), TRUE);
     }

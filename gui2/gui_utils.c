@@ -98,18 +98,24 @@ static void panel_heteroskedasticity_menu (windata_t *vwin);
 static int maybe_recode_file (const char *fname);
 #endif
 
-static void close_model (gpointer data, guint close, GtkWidget *widget)
+static void close_model (gpointer data, guint close, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) data;
 
-    gtk_widget_destroy(vwin->dialog);
+    if (!window_is_busy(vwin)) {
+	gtk_widget_destroy(vwin->dialog);
+    }
 }
 
 static int arma_by_x12a (const MODEL *pmod)
 {
-    if (pmod->ci != ARMA) return 0;
-    if (gretl_model_get_int(pmod, "arma_by_x12a")) return 1;
-    return 0;
+    int ret = 0;
+
+    if (pmod->ci == ARMA && gretl_model_get_int(pmod, "arma_by_x12a")) {
+	ret = 1;
+    }
+
+    return ret;
 }
 
 #ifndef OLD_GTK
@@ -513,12 +519,18 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
     windata_t *vwin = (windata_t *) data;
     gint resp = 0;
 
+    if (window_is_busy(vwin)) {
+	return;
+    }
+
     if ((vwin->role == EDIT_SCRIPT || vwin->role == EDIT_HEADER ||
 	 vwin->role == EDIT_NOTES) && CONTENT_IS_CHANGED(vwin)) {
 	resp = query_save_text(NULL, NULL, vwin);
     }
 
-    if (!resp) gtk_widget_destroy(vwin->dialog); 
+    if (!resp) {
+	gtk_widget_destroy(vwin->dialog); 
+    }
 }
 
 /* ........................................................... */
@@ -588,7 +600,7 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     gdk_window_get_pointer(w->window, NULL, NULL, &mods);
 
     if (key->keyval == GDK_F1 && vwin->role == EDIT_SCRIPT) { 
-	vwin->help_active = 1;
+	set_window_help_active(vwin);
 	edit_script_help(NULL, NULL, vwin);
     }
 
@@ -1162,7 +1174,7 @@ static void activate_script_help (GtkWidget *widget, windata_t *vwin)
     gdk_cursor_destroy(cursor);
 #endif
 
-    vwin->help_active = 1;
+    set_window_help_active(vwin);
 }
 
 /* ........................................................... */
@@ -1250,7 +1262,7 @@ void windata_init (windata_t *vwin)
     vwin->fname[0] = '\0';
     vwin->role = 0;
     vwin->active_var = 0;
-    vwin->help_active = 0;
+    vwin->flags = 0;
 #ifdef USE_GTKSOURCEVIEW
     vwin->sbuf = NULL;
 #endif
@@ -1261,21 +1273,23 @@ void free_windata (GtkWidget *w, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (vwin != NULL) {
-	if (vwin->w) { 
+	if (vwin->w != NULL) { 
 	    gchar *undo = g_object_get_data(G_OBJECT(vwin->w), "undo");
 	    
-	    if (undo) g_free(undo);
+	    if (undo != NULL) {
+		g_free(undo);
+	    }
 	}
 
 	/* menu stuff */
-	if (vwin->popup) {
+	if (vwin->popup != NULL) {
 #ifndef OLD_GTK 
 	    gtk_widget_destroy(GTK_WIDGET(vwin->popup));
 #else
 	    gtk_object_unref(GTK_OBJECT(vwin->popup));
 #endif
 	}
-	if (vwin->ifac) {
+	if (vwin->ifac != NULL) {
 #ifndef OLD_GTK 
 	    g_object_unref(G_OBJECT(vwin->ifac));
 #else
@@ -1305,8 +1319,10 @@ void free_windata (GtkWidget *w, gpointer data)
 	else if (vwin->role == MAHAL)
 	    free(vwin->data); /* string */
 
-	if (vwin->dialog)
+	if (vwin->dialog) {
 	    winstack_remove(vwin->dialog);
+	}
+
 	free(vwin);
     }
 }
@@ -2194,7 +2210,18 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     return vwin;
 }
 
-/* ........................................................... */
+static gint 
+check_delete_model_window (GtkWidget *w, GdkEvent *e, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    gint ret = FALSE;
+
+    if (window_is_busy(vwin)) {
+	ret = TRUE;
+    }
+
+    return ret;
+}
 
 int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title) 
@@ -2219,6 +2246,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     set_up_viewer_menu(vwin->dialog, vwin, model_items);
     add_vars_to_plot_menu(vwin);
     add_model_dataset_items(vwin);
+
     if (pmod->ci != ARMA && pmod->ci != GARCH && pmod->ci != NLS) {
 	add_dummies_to_plot_menu(vwin);
     }
@@ -2263,6 +2291,12 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 		       GTK_SIGNAL_FUNC(catch_viewer_key), 
 		       vwin);
 #endif
+
+    /* don't allow deletion of model window when a model
+       test dialog is active */
+    g_signal_connect(G_OBJECT(vwin->dialog), "delete_event", 
+		     G_CALLBACK(check_delete_model_window), 
+		     vwin);
 
     /* clean up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 

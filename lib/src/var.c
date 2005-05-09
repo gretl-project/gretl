@@ -72,8 +72,6 @@ static int real_adf_test (int varno, int order, int niv,
 			  double ***pZ, DATAINFO *pdinfo, 
 			  gretlopt opt, int cointcode, PRN *prn);
 
-/* ...................................................................  */
-
 static void pad_var_coeff_matrix (GRETL_VAR *var)
 {
     int i, j;
@@ -303,8 +301,11 @@ static void tex_print_double (double x, PRN *prn)
 
     sprintf(number, "%#.*g", GRETL_DIGITS, x);
 
-    if (x < 0.) pprintf(prn, "$-$%s", number + 1);
-    else pputs(prn, number);
+    if (x < 0.) {
+	pprintf(prn, "$-$%s", number + 1);
+    } else {
+	pputs(prn, number);
+    }
 }
 
 static int periods_from_pd (int pd)
@@ -348,7 +349,9 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
     int block, blockmax;
     int err = 0;
 
-    if (prn == NULL) return 0;
+    if (prn == NULL) {
+	return 0;
+    }
 
     if (shock >= var->neqns) {
 	fprintf(stderr, "Shock variable out of bounds\n");
@@ -356,7 +359,9 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
     }  
 
     rtmp = gretl_matrix_alloc(rows, var->neqns);
-    if (rtmp == NULL) return E_ALLOC;
+    if (rtmp == NULL) {
+	return E_ALLOC;
+    }
 
     ctmp = gretl_matrix_alloc(rows, var->neqns);
     if (ctmp == NULL) {
@@ -367,7 +372,9 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
     vsrc = (var->models[shock])->list[1];
 
     blockmax = var->neqns / VARS_IN_ROW;
-    if (var->neqns % VARS_IN_ROW) blockmax++;
+    if (var->neqns % VARS_IN_ROW) {
+	blockmax++;
+    }
 
     for (block=0; block<blockmax && !err; block++) {
 	int vtarg, k;
@@ -405,12 +412,17 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 
 	for (i=0; i<VARS_IN_ROW; i++) {
 	    k = VARS_IN_ROW * block + i;
-	    if (k >= var->neqns) break;
+	    if (k >= var->neqns) {
+		break;
+	    }
 	    vtarg = (var->models[k])->list[1];
 	    if (TEX_PRN(prn)) {
 		pprintf(prn, " %s ", tex_escape(vname, pdinfo->varname[vtarg]));
-		if (i < VARS_IN_ROW - 1 && k < var->neqns - 1) pputs(prn, "& ");
-		else pputs(prn, "\\\\");
+		if (i < VARS_IN_ROW - 1 && k < var->neqns - 1) {
+		    pputs(prn, "& ");
+		} else {
+		    pputs(prn, "\\\\");
+		}
 	    } else {
 		pprintf(prn, "  %8s  ", pdinfo->varname[vtarg]);
 	    }
@@ -420,7 +432,9 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 
 	for (t=0; t<periods && !err; t++) {
 	    pprintf(prn, " %3d  ", t + 1);
-	    if (TEX_PRN(prn)) pputs(prn, "& ");
+	    if (TEX_PRN(prn)) {
+		pputs(prn, "& ");
+	    }
 	    if (t == 0) {
 		/* calculate initial estimated responses */
 		err = gretl_matrix_copy_values(rtmp, var->C);
@@ -434,7 +448,9 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 
 	    for (i=0; i<VARS_IN_ROW; i++) {
 		k = VARS_IN_ROW * block + i;
-		if (k >= var->neqns) break;
+		if (k >= var->neqns) {
+		    break;
+		}
 		r = gretl_matrix_get(rtmp, k, shock);
 		if (TEX_PRN(prn)) {
 		    tex_print_double(r, prn);
@@ -642,7 +658,9 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
     int block, blockmax;
     int err = 0;
 
-    if (prn == NULL) return 0;
+    if (prn == NULL) {
+	return 0;
+    }
 
     if (targ >= var->neqns) {
 	fprintf(stderr, "Target variable out of bounds\n");
@@ -650,12 +668,16 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
     } 
 
     vd = gretl_var_get_fcast_decomp(var, targ, periods);
-    if (vd == NULL) return E_ALLOC;
+    if (vd == NULL) {
+	return E_ALLOC;
+    }
 
     vtarg = (var->models[targ])->list[1];
 
     blockmax = (var->neqns + 1) / VDROWMAX;
-    if ((var->neqns + 1) % VDROWMAX) blockmax++;
+    if ((var->neqns + 1) % VDROWMAX) {
+	blockmax++;
+    }
 
     for (block=0; block<blockmax; block++) {
 	int k, vsrc;
@@ -704,7 +726,9 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 		}
 		continue;
 	    }
-	    if (k >= var->neqns) break;
+	    if (k >= var->neqns) {
+		break;
+	    }
 	    vsrc = (var->models[k])->list[1];
 	    if (TEX_PRN(prn)) {
 		pprintf(prn, " %s ", tex_escape(vname, pdinfo->varname[vsrc]));
@@ -733,7 +757,9 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 		    }
 		    continue;
 		}
-		if (k >= var->neqns) break;
+		if (k >= var->neqns) {
+		    break;
+		}
 		r = gretl_matrix_get(vd, t, k);
 		if (TEX_PRN(prn)) {
 		    pprintf(prn, "$%.4f$", r);
@@ -744,8 +770,11 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 		    pprintf(prn, "%10.4f ", r);
 		}
 	    }
-	    if (TEX_PRN(prn)) pputs(prn, "\\\\\n");
-	    else pputc(prn, '\n');
+	    if (TEX_PRN(prn)) {
+		pputs(prn, "\\\\\n");
+	    } else {
+		pputc(prn, '\n');
+	    }
 	}
 
 	if (TEX_PRN(prn)) {
@@ -1056,33 +1085,41 @@ static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
     int v = 0, lag = 0;
     int start = pmod->ifc;
     int rowmax = var->neqns * var->order + start;
+    int err = 0;
 
     if (k == 0) {
 	/* first equation: set up storage for residuals */
 	var->n = pmod->t2 - pmod->t1 + 1;
 	var->E = gretl_matrix_alloc(var->n, var->neqns);
-	if (var->E == NULL) return 1;
-	var->ifc = pmod->ifc;
+	if (var->E == NULL) {
+	    err = 1;
+	} else {
+	    var->ifc = pmod->ifc;
+	}
     }
 
     /* save residuals */
-    for (i=0; i<var->n; i++) {
-	gretl_matrix_set(var->E, i, k, pmod->uhat[pmod->t1 + i]);
+    if (!err) {
+	for (i=0; i<var->n; i++) {
+	    gretl_matrix_set(var->E, i, k, pmod->uhat[pmod->t1 + i]);
+	}
     }	
 
     /* save coefficients */
-    for (i=start; i<rowmax; i++) {
-	if ((i - start) % var->order == 0) {
-	    v++;
-	    lag = 1;
-	} else {
-	    lag++;
+    if (!err) {
+	for (i=start; i<rowmax; i++) {
+	    if ((i - start) % var->order == 0) {
+		v++;
+		lag = 1;
+	    } else {
+		lag++;
+	    }
+	    j = (lag - 1) * var->neqns + v - 1;
+	    gretl_matrix_set(var->A, k, j, pmod->coeff[i]);
 	}
-	j = (lag - 1) * var->neqns + v - 1;
-	gretl_matrix_set(var->A, k, j, pmod->coeff[i]);
     }
 
-    return 0;
+    return err;
 }
 
 static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
@@ -1100,7 +1137,9 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 
     if (robust) {
 	outlist = malloc(varmod->list[0] * sizeof *outlist);
-	if (outlist == NULL) return E_ALLOC;
+	if (outlist == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
@@ -1112,7 +1151,9 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 	if (robust) {
 	    gretl_list_diff(outlist, varmod->list, vl->reglist);
 	    F = robust_omit_F(outlist, varmod);
-	    if (na(F)) err = 1;
+	    if (na(F)) {
+		err = 1;
+	    }
 	} else {
 	    testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
 	    err = testmod.errcode;
@@ -1730,10 +1771,10 @@ static void copy_list_values (int *targ, const int *src)
     }
 }
 
-static int real_adf_test (int varno, int order, int niv,
-			  double ***pZ, DATAINFO *pdinfo, 
-			  gretlopt opt, int cointcode,
-			  PRN *prn)
+static void 
+print_adf_results (int order, double DFt, double pv, const MODEL *dfmod,
+		   int dfnum, const char *vname, int *blurb_done,
+		   int coint, int i, PRN *prn)
 {
     const char *models[] = {
 	"(1 - L)y = (a-1)*y(-1) + e",
@@ -1754,6 +1795,51 @@ static int real_adf_test (int varno, int order, int niv,
 	N_("with constant and quadratic trend")
     };
 
+    char pvstr[48];
+
+    if (prn == NULL) return;
+
+    if (na(pv)) {
+	sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
+    } else {
+	sprintf(pvstr, "%s %.4g", 
+		(order > 0)? _("asymptotic p-value") : _("p-value"), 
+		pv);
+    } 
+
+    if (*blurb_done == 0) {
+	if (order > 0) {
+	    pprintf(prn, _("\nAugmented Dickey-Fuller tests, order %d, for %s\n"),
+		    order, vname);
+	} else {
+	    pprintf(prn, _("\nDickey-Fuller tests for %s\n"), vname);
+	}
+	pprintf(prn, _("sample size %d\n"), dfmod->nobs);
+	pputs(prn, _("unit-root null hypothesis: a = 1"));
+	pputs(prn, "\n\n");
+	*blurb_done = 1;
+    }
+
+    pprintf(prn, "   %s\n", _(teststrs[i]));
+
+    if (coint == 0) {
+	pprintf(prn, "   %s: %s\n", _("model"), 
+		(order > 0)? aug_models[i] : models[i]);
+    }
+
+    pprintf(prn, "   %s: %g\n"
+	    "   %s: t = %g\n"
+	    "   %s\n",
+	    _("estimated value of (a - 1)"), dfmod->coeff[dfnum],
+	    _("test statistic"), DFt,
+	    pvstr);	
+}
+
+static int real_adf_test (int varno, int order, int niv,
+			  double ***pZ, DATAINFO *pdinfo, 
+			  gretlopt opt, int cointcode,
+			  PRN *prn)
+{
     MODEL dfmod;
 
     int orig_nvars = pdinfo->v;
@@ -1889,43 +1975,8 @@ static int real_adf_test (int varno, int order, int niv,
 				   niv, itv);
 
 	if (!(opt & OPT_Q)) {
-	    char pvstr[48];
-
-	    if (na(pv)) {
-		sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
-	    } else {
-		sprintf(pvstr, "%s %.4g", 
-			(order > 0)? _("asymptotic p-value") : _("p-value"), 
-			pv);
-	    } 
-
-	    if (!blurb_done) {
-		if (order > 0) {
-		    pprintf(prn, _("\nAugmented Dickey-Fuller tests, order %d, for %s\n"),
-			    order, pdinfo->varname[varno]);
-		} else {
-		    pprintf(prn, _("\nDickey-Fuller tests for %s\n"),
-			    pdinfo->varname[varno]);
-		}
-		pprintf(prn, _("sample size %d\n"), dfmod.nobs);
-		pputs(prn, _("unit-root null hypothesis: a = 1"));
-		pputs(prn, "\n\n");
-		blurb_done = 1;
-	    }
-
-	    pprintf(prn, "   %s\n", _(teststrs[i]));
-
-	    if (cointcode == 0) {
-		pprintf(prn, "   %s: %s\n", _("model"), 
-			(order > 0)? aug_models[i] : models[i]);
-	    }
-
-	    pprintf(prn, "   %s: %g\n"
-		    "   %s: t = %g\n"
-		    "   %s\n",
-		    _("estimated value of (a - 1)"), dfmod.coeff[dfnum],
-		    _("test statistic"), DFt,
-		    pvstr);	
+	    print_adf_results(order, DFt, pv, &dfmod, dfnum, pdinfo->varname[varno],
+			      &blurb_done, cointcode, i, prn);
 	}
 
 	if (opt & OPT_V) {
@@ -2570,6 +2621,7 @@ void gretl_var_assign_name (GRETL_VAR *var)
     if (var->name != NULL) {
 	free(var->name);
     }
+
     var->name = malloc(8);
     if (var->name != NULL) {
 	sprintf(var->name, "%s %d", _("VAR"), ++n);
@@ -2581,10 +2633,8 @@ void gretl_var_assign_specific_name (GRETL_VAR *var, const char *name)
     if (var->name != NULL) {
 	free(var->name);
     }
-    var->name = malloc(strlen(name) + 1);
-    if (var->name != NULL) {
-	strcpy(var->name, name);
-    }    
+
+    var->name = gretl_strdup(name);
 }
 
 const char *gretl_var_get_name (const GRETL_VAR *var)

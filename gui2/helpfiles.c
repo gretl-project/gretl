@@ -906,7 +906,8 @@ static int pos_from_cmd (int cmd)
 gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 		       windata_t *vwin)
 {
-    if (!vwin->help_active) { /* command help not activated */
+    if (!window_help_is_active(vwin)) { 
+	/* command help not activated */
 	return FALSE;
     } else {
 	gchar *text = NULL;
@@ -974,7 +975,7 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 #else
 	gdk_window_set_cursor(GTK_TEXT(vwin->w)->text_area, NULL);
 #endif
-	vwin->help_active = 0;
+	unset_window_help_active(vwin);
     }
 
     return FALSE;

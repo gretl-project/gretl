@@ -24,6 +24,11 @@
 # include <gtksourceview/gtksourceview.h>
 #endif
 
+enum windata_flags {
+    VWIN_HELP_ACTIVE = 1 << 0,
+    VWIN_BUSY        = 1 << 1
+};
+
 typedef struct _windata_t windata_t;
 
 struct _windata_t {
@@ -38,11 +43,19 @@ struct _windata_t {
     gpointer data;
     int active_var; 
     int role;
-    int help_active;
+    unsigned char flags;
     char fname[MAXLEN];
 #ifdef USE_GTKSOURCEVIEW
     GtkSourceBuffer *sbuf;
 #endif
 };
+
+#define window_is_busy(w)    (w->flags & VWIN_BUSY)
+#define set_window_busy(w)   (w->flags |= VWIN_BUSY)
+#define unset_window_busy(w) (w->flags &= ~VWIN_BUSY)
+
+#define window_help_is_active(w)    (w->flags & VWIN_HELP_ACTIVE)
+#define set_window_help_active(w)   (w->flags |= VWIN_HELP_ACTIVE)
+#define unset_window_help_active(w) (w->flags &= ~VWIN_HELP_ACTIVE)
 
 #endif /* GRETLTYPES_H */

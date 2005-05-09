@@ -1188,14 +1188,20 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
     MODEL *pmod;
     gint err;
 
+    unset_window_busy(vwin);
+
     pmod = vwin->data;
     buf = selector_list(sr);
-    if (buf == NULL || *buf == 0) return;
+    if (buf == NULL || *buf == 0) {
+	return;
+    }
     
     clear_line();
     sprintf(line, "coeffsum %s", buf);
 
-    if (check_cmd(line) || bufopen(&prn)) return;
+    if (check_cmd(line) || bufopen(&prn)) {
+	return;
+    }
 
     err = sum_test(cmd.list, pmod, &Z, datainfo, prn);
 
@@ -1222,6 +1228,8 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     char title[48];
     MODEL *orig, *pmod;
     gint err;
+
+    unset_window_busy(vwin);
 
     orig = vwin->data;
     buf = selector_list(sr);
@@ -1624,12 +1632,10 @@ void do_kernel (gpointer data, guint u, GtkWidget *w)
     } 
 }
 
-/* ........................................................... */
-
 void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 {
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = vwin->data;
     GRETLTEST test;
     PRN *prn;
     int err = 0;
@@ -1643,11 +1649,16 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 	char brkstr[OBSLEN];
 	int resp, brk = (pmod->t2 - pmod->t1) / 2;
 
+	set_window_busy(vwin);
+
 	resp = get_obs_dialog(_("gretl: Chow test"), 
 			      _("Observation at which to split the sample:"),
 			      NULL, NULL, 
 			      1, datainfo->n - 1, &brk,
 			      0, 0, NULL);
+
+	unset_window_busy(vwin);
+
 	if (resp < 0) {
 	    return;
 	}
@@ -1657,7 +1668,9 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 	strcpy(line, "cusum");
     }
 
-    if (bufopen(&prn)) return;
+    if (bufopen(&prn)) {
+	return;
+    }
 
     if (action == CHOW) {
 	err = chow_test(line, pmod, &Z, datainfo, prn, &test);
@@ -1674,7 +1687,7 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
     }
 
     if (add_test_to_model(pmod, &test) == 0) {
-	print_test_to_window(&test, mydata->w);
+	print_test_to_window(&test, vwin->w);
     }
 
     if (model_command_init(line, &cmd, pmod->ID)) {
@@ -1686,8 +1699,6 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 		_("gretl: CUSUM test output"),
 		action, NULL);
 }
-
-/* ........................................................... */
 
 void do_reset (gpointer data, guint u, GtkWidget *widget)
 {
@@ -1719,12 +1730,10 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
     view_buffer(prn, 78, 400, title, RESET, NULL); 
 }
 
-/* ........................................................... */
-
 void do_autocorr (gpointer data, guint u, GtkWidget *widget)
 {
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = vwin->data;
     GRETLTEST test;
     PRN *prn;
     char title[40];
@@ -1732,14 +1741,19 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
 
     order = default_lag_order(datainfo);
 
+    set_window_busy(vwin);
     err = spin_dialog(_("gretl: autocorrelation"), 
 		      &order, _("Lag order for test:"),
 		      1, datainfo->n / 2, LMTEST);
+    unset_window_busy(vwin);
+
     if (err < 0) {
 	return;
     }
 
-    if (bufopen(&prn)) return;
+    if (bufopen(&prn)) {
+	return;
+    }
 
     strcpy(title, _("gretl: LM test (autocorrelation)"));
 
@@ -1771,7 +1785,7 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
 	gretl_print_destroy(prn);
 	return;
     } else if (add_test_to_model(pmod, &test) == 0) {
-	print_test_to_window(&test, mydata->w);
+	print_test_to_window(&test, vwin->w);
     }
 
     if (model_command_init(line, &cmd, pmod->ID)) return;
@@ -1779,12 +1793,10 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
     view_buffer(prn, 78, 400, title, LMTEST, NULL); 
 }
 
-/* ........................................................... */
-
 void do_arch (gpointer data, guint u, GtkWidget *widget)
 {
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = vwin->data;
     GRETLTEST test;
     PRN *prn;
     char tmpstr[26];
@@ -1793,9 +1805,11 @@ void do_arch (gpointer data, guint u, GtkWidget *widget)
 
     order = default_lag_order(datainfo);
 
+    set_window_busy(vwin);
     err = spin_dialog(_("gretl: ARCH test"),
 		      &order, _("Lag order for ARCH test:"),
 		      1, datainfo->n / 2, ARCH);
+    unset_window_busy(vwin);
     if (err < 0) {
 	return;
     }
@@ -1808,7 +1822,9 @@ void do_arch (gpointer data, guint u, GtkWidget *widget)
 	strcat(line, tmpstr);
     }
 
-    if (verify_and_record_command(line)) return;
+    if (verify_and_record_command(line)) {
+	return;
+    }
 
     order = atoi(cmd.param);
     if (!order) {
@@ -1825,7 +1841,7 @@ void do_arch (gpointer data, guint u, GtkWidget *widget)
     if ((err = (models[1])->errcode)) { 
 	gui_errmsg(err);
     } else if (add_test_to_model(pmod, &test) == 0) {
-	print_test_to_window(&test, mydata->w);
+	print_test_to_window(&test, vwin->w);
     }
 
     clear_model(models[1]);

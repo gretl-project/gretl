@@ -48,20 +48,18 @@ extern GdkColor gray;
 #endif
 
 /* private functions */
-static GtkWidget *database_window (windata_t *ddata);
-static int populate_series_list (windata_t *dbwin);
-static int populate_remote_series_list (windata_t *dbwin, char *buf);
-static int rats_populate_series_list (windata_t *dbwin);
-static SERIESINFO *get_series_info (windata_t *ddata, int action);
-static void update_statusline (windata_t *windat, char *str);
+static GtkWidget *database_window (windata_t *vwin);
+static int populate_series_list (windata_t *vwin);
+static int populate_remote_series_list (windata_t *vwin, char *buf);
+static int rats_populate_series_list (windata_t *vwin);
+static SERIESINFO *get_series_info (windata_t *vwin, int action);
+static void update_statusline (windata_t *vwin, const char *s);
 
 enum db_data_actions {
     DB_DISPLAY,
     DB_GRAPH,
     DB_IMPORT
 };
-
-/* ........................................................... */
 
 static void set_time_series (DATAINFO *pdinfo)
 {
@@ -86,35 +84,33 @@ float retrieve_float (netfloat nf)
 }
 #endif
 
-/* ........................................................... */
-
-void display_db_error (windata_t *dbwin, char *buf)
+void display_db_error (windata_t *vwin, char *buf)
 {
     if (*buf != '\0') {
 	size_t n = strlen(buf);
 
-	if (buf[n-1] == '\n') buf[n-1] = '\0';
-	if (dbwin != NULL) {
-	    update_statusline(dbwin, buf);
+	if (buf[n-1] == '\n') {
+	    buf[n-1] = '\0';
+	}
+	if (vwin != NULL) {
+	    update_statusline(vwin, buf);
 	} else {
 	    errbox(buf);
 	}
     } else {
-	if (dbwin != NULL) {
-	    update_statusline(dbwin, _("Error retrieving data from server"));
+	if (vwin != NULL) {
+	    update_statusline(vwin, _("Error retrieving data from server"));
 	} else {
 	    errbox(_("Error retrieving data from server"));
 	}
     }
 }
 
-/* ........................................................... */
-
-static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo, 
+static int get_remote_db_data (windata_t *vwin, SERIESINFO *sinfo, 
 			       double **Z)
 {
     char *getbuf, errbuf[80];
-    char *dbbase = dbwin->fname;
+    char *dbbase = vwin->fname;
     int t, err, n = sinfo->nobs;
     dbnumber val;
     size_t offset;
@@ -125,11 +121,13 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
     *errbuf = '\0';
 
     getbuf = mymalloc(GRETL_BUFSIZE);
-    if (getbuf == NULL) return DB_NOT_FOUND;
+    if (getbuf == NULL) {
+	return DB_NOT_FOUND;
+    }
 
     memset(getbuf, 0, GRETL_BUFSIZE);
 
-    update_statusline(dbwin, _("Retrieving data..."));
+    update_statusline(vwin, _("Retrieving data..."));
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
 				  errbuf, GRAB_NBO_DATA);
@@ -139,7 +137,7 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
 #endif
 
     if (err) {
-	display_db_error(dbwin, errbuf);
+	display_db_error(vwin, errbuf);
 	free(getbuf);
 	return DB_NOT_FOUND;
     } 
@@ -165,27 +163,25 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
 	}
     }
 
-    update_statusline(dbwin, "OK");
+    update_statusline(vwin, "OK");
     free(getbuf);
 
     return DB_OK;
 }
 
-/* ........................................................... */
-
-static void display_dbdata (double ***dbZ, DATAINFO *dbdinfo)
+static void display_dbdata (const double **dbZ, DATAINFO *dbdinfo)
 {
     PRN *prn;
 
-    if (bufopen(&prn)) return;
+    if (bufopen(&prn)) {
+	return;
+    }
 
-    printdata(NULL, (const double **) *dbZ, dbdinfo, OPT_O, prn);
+    printdata(NULL, dbZ, dbdinfo, OPT_O, prn);
 
     view_buffer(prn, 36, 350, _("gretl: display database series"), PRINT,
 		NULL); 
 }
-
-/* ........................................................... */
 
 static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 {
@@ -213,6 +209,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 
     lines[0] = 1;
     list[0] = 2; list[1] = 1; list[2] = 2;
+
     err = gnuplot(list, lines, NULL, dbZ, dbdinfo,
 		  &plot_count, GP_GUI);
 
@@ -227,8 +224,6 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 
     register_graph();
 }
-
-/* ........................................................... */
 
 static void 
 init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
@@ -245,18 +240,17 @@ init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
     pdinfo->v = 2;
 }
 
-/* ........................................................... */
-
-static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
+static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 {
-    gint err = 0;
     double *xvec = NULL;
     int n, t, start, stop, pad1 = 0, pad2 = 0;
     int compact_method = COMPACT_AVG;
     int overwrite = 0;
-    int dbv = 1;
+    int err = 0;
 
     if (data_status) { 
+	int dbv;
+
 	/* we already have data in gretl's workspace */
 	if (check_db_import(sinfo, datainfo)) {
 	    errbox(get_gretl_errmsg());
@@ -297,7 +291,7 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 		return;
 	    }
 
-	    data_compact_dialog(dbwin->w, sinfo->pd, &datainfo->pd, NULL, 
+	    data_compact_dialog(vwin->w, sinfo->pd, &datainfo->pd, NULL, 
 				&compact_method);
 
 	    if (compact_method == COMPACT_NONE) {
@@ -320,7 +314,9 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 
 	if (xvec == NULL) {
 	    errbox(_("Out of memory attempting to add variable"));
-	    if (!overwrite) dataset_drop_vars(1, &Z, datainfo);
+	    if (!overwrite) {
+		dataset_drop_vars(1, &Z, datainfo);
+	    }
 	    return;
 	}
 
@@ -370,13 +366,13 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 
 	start_new_Z(&Z, datainfo, 0);
 
-	if (dbwin->role == NATIVE_SERIES) {
-	    err = get_native_db_data(dbwin->fname, sinfo, Z);
-	} else if (dbwin->role == REMOTE_SERIES) {
-	    err = get_remote_db_data(dbwin, sinfo, Z);
-	} else if (dbwin->role == RATS_SERIES) {
-	    err = get_rats_data_by_series_number(dbwin->fname, 
-						 dbwin->active_var + 1,
+	if (vwin->role == NATIVE_SERIES) {
+	    err = get_native_db_data(vwin->fname, sinfo, Z);
+	} else if (vwin->role == REMOTE_SERIES) {
+	    err = get_remote_db_data(vwin, sinfo, Z);
+	} else if (vwin->role == RATS_SERIES) {
+	    err = get_rats_data_by_series_number(vwin->fname, 
+						 vwin->active_var + 1,
 						 sinfo, Z);
 	}
 
@@ -393,68 +389,71 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
     }
 
     register_data(NULL, NULL, 0);
-    infobox(_("Series imported OK")); 
+
+    if (!err) {
+	infobox(_("Series imported OK")); 
+    }
 }
 
 /* ........................................................... */
 
-static void gui_display_series (GtkWidget *w, windata_t *dbwin)
+static void gui_display_series (GtkWidget *w, windata_t *vwin)
 {
-    gui_get_series(dbwin, DB_DISPLAY, NULL);
+    gui_get_series(vwin, DB_DISPLAY, NULL);
 }
 
-static void gui_graph_series (GtkWidget *w, windata_t *dbwin)
+static void gui_graph_series (GtkWidget *w, windata_t *vwin)
 {
-    gui_get_series(dbwin, DB_GRAPH, NULL);
+    gui_get_series(vwin, DB_GRAPH, NULL);
 }
 
-static void gui_import_series (GtkWidget *w, windata_t *dbwin)
+static void gui_import_series (GtkWidget *w, windata_t *vwin)
 {
-    gui_get_series(dbwin, DB_IMPORT, NULL);
+    gui_get_series(vwin, DB_IMPORT, NULL);
 }
 
-void import_db_series (windata_t *dbwin)
+void import_db_series (windata_t *vwin)
 {
-    gui_get_series(dbwin, DB_IMPORT, NULL);
+    gui_get_series(vwin, DB_IMPORT, NULL);
 }
 
 /* ........................................................... */
 
 void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 {
-    windata_t *dbwin = (windata_t *) data;
-    int err = 0, dbcode = dbwin->role;
-    DATAINFO *dbdinfo;
+    windata_t *vwin = (windata_t *) data;
+    int err = 0, dbcode = vwin->role;
+    DATAINFO *dbinfo;
     SERIESINFO *sinfo;
     double **dbZ = NULL;
 
-    sinfo = get_series_info(dbwin, dbcode);
+    sinfo = get_series_info(vwin, dbcode);
     if (sinfo == NULL) return;
 
-    dbdinfo = create_new_dataset(&dbZ, 2, sinfo->nobs, 0);
-    if (dbdinfo == NULL) {
+    dbinfo = create_new_dataset(&dbZ, 2, sinfo->nobs, 0);
+    if (dbinfo == NULL) {
 	errbox(_("Out of memory"));
 	return;
     }
 
-    dbdinfo->pd = sinfo->pd;
+    dbinfo->pd = sinfo->pd;
 
-    strcpy(dbdinfo->stobs, sinfo->stobs);
-    strcpy(dbdinfo->endobs, sinfo->endobs);
+    strcpy(dbinfo->stobs, sinfo->stobs);
+    strcpy(dbinfo->endobs, sinfo->endobs);
 
-    colonize_obs(dbdinfo->stobs);
-    colonize_obs(dbdinfo->endobs);
+    colonize_obs(dbinfo->stobs);
+    colonize_obs(dbinfo->endobs);
 
-    dbdinfo->sd0 = get_date_x(dbdinfo->pd, dbdinfo->stobs);
-    set_time_series(dbdinfo);
+    dbinfo->sd0 = get_date_x(dbinfo->pd, dbinfo->stobs);
+    set_time_series(dbinfo);
 
     if (dbcode == NATIVE_SERIES) { 
-	err = get_native_db_data(dbwin->fname, sinfo, dbZ);
+	err = get_native_db_data(vwin->fname, sinfo, dbZ);
     } else if (dbcode == REMOTE_SERIES) {
-	err = get_remote_db_data(dbwin, sinfo, dbZ);
+	err = get_remote_db_data(vwin, sinfo, dbZ);
     } else if (dbcode == RATS_SERIES) {
-	err = get_rats_data_by_series_number(dbwin->fname, 
-					     dbwin->active_var + 1, 
+	err = get_rats_data_by_series_number(vwin->fname, 
+					     vwin->active_var + 1, 
 					     sinfo, dbZ);
     }
 
@@ -466,29 +465,29 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 	return;
     } 
 
-    strcpy(dbdinfo->varname[1], sinfo->varname);
-    strcpy(VARLABEL(dbdinfo, 1), sinfo->descrip);
+    strcpy(dbinfo->varname[1], sinfo->varname);
+    strcpy(VARLABEL(dbinfo, 1), sinfo->descrip);
 
     if (action == DB_DISPLAY) {
-	display_dbdata(&dbZ, dbdinfo);
+	display_dbdata((const double **) dbZ, dbinfo);
     } else if (action == DB_GRAPH) {
-	graph_dbdata(&dbZ, dbdinfo);
+	graph_dbdata(&dbZ, dbinfo);
     } else if (action == DB_IMPORT) { 
-	add_dbdata(dbwin, dbZ, sinfo);
+	add_dbdata(vwin, dbZ, sinfo);
     }
 
-    free_Z(dbZ, dbdinfo);
-    free_datainfo(dbdinfo);
+    free_Z(dbZ, dbinfo);
+    free_datainfo(dbinfo);
     free(sinfo);
 } 
 
 /* ........................................................... */
 
-static void db_view_codebook (GtkWidget *w, windata_t *dbwin)
+static void db_view_codebook (GtkWidget *w, windata_t *vwin)
 {
     char cbname[MAXLEN];
 
-    strcpy(cbname, dbwin->fname);
+    strcpy(cbname, vwin->fname);
     strcat(cbname, ".cb");
     
     view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK);
@@ -500,45 +499,41 @@ book_callback_wrapper (gpointer p, guint u, GtkWidget *w)
     db_view_codebook(w, p);
 }
 
-/* ........................................................... */
-
-static void db_menu_find (GtkWidget *w, windata_t *dbwin)
+static void db_menu_find (GtkWidget *w, windata_t *vwin)
 {
-    menu_find(dbwin, 1, NULL);
+    menu_find(vwin, 1, NULL);
 }
 
-/* ........................................................... */
-
-static void build_db_popup (windata_t *win, int cb)
+static void build_db_popup (windata_t *vwin, int cb)
 {
 #ifndef OLD_GTK /* ?? */    
-    if (win->popup != NULL) return;
+    if (vwin->popup != NULL) {
+	return;
+    }
 #endif
 
-    win->popup = gtk_menu_new();
+    vwin->popup = gtk_menu_new();
 
-    add_popup_item(_("Display"), win->popup, 
+    add_popup_item(_("Display"), vwin->popup, 
 		   G_CALLBACK(gui_display_series), 
-		   win);
-    add_popup_item(_("Graph"), win->popup, 
+		   vwin);
+    add_popup_item(_("Graph"), vwin->popup, 
 		   G_CALLBACK(gui_graph_series), 
-		   win);
-    add_popup_item(_("Import"), win->popup, 
+		   vwin);
+    add_popup_item(_("Import"), vwin->popup, 
 		   G_CALLBACK(gui_import_series), 
-		   win);
-    add_popup_item(_("Find..."), win->popup, 
+		   vwin);
+    add_popup_item(_("Find..."), vwin->popup, 
 		   G_CALLBACK(db_menu_find), 
-		   win);
+		   vwin);
     if (cb) {
-	add_popup_item(_("Codebook"), win->popup, 
+	add_popup_item(_("Codebook"), vwin->popup, 
 		       G_CALLBACK(db_view_codebook), 
-		       win);
+		       vwin);
     }
 }
 
-/* ........................................................... */
-
-static void set_up_db_menu (windata_t *win, int cb)
+static void set_up_db_menu (windata_t *vwin, int cb)
 {
 #ifndef OLD_GTK
     GtkItemFactoryEntry db_items[] = {
@@ -570,31 +565,29 @@ static void set_up_db_menu (windata_t *win, int cb)
 #endif
     }
 
-    win->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", NULL);
+    vwin->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", NULL);
 #ifdef ENABLE_NLS
-    gtk_item_factory_set_translate_func(win->ifac, menu_translate, NULL, NULL);
+    gtk_item_factory_set_translate_func(vwin->ifac, menu_translate, NULL, NULL);
 #endif
-    gtk_item_factory_create_items(win->ifac, n_items, db_items, win);
-    win->mbar = gtk_item_factory_get_widget(win->ifac, "<main>");
+    gtk_item_factory_create_items(vwin->ifac, n_items, db_items, vwin);
+    vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
 }
-
-/* ........................................................... */
 
 #ifndef OLD_GTK
 static void destroy_db_win (GtkWidget *w, gpointer data)
 {
-    windata_t *win = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
 
-    if (win) {
-	if (win->popup) gtk_widget_destroy(win->popup);
+    if (vwin != NULL) {
+	if (vwin->popup != NULL) {
+	    gtk_widget_destroy(vwin->popup);
+	}
 
-	free(win);
-	win = NULL;
+	free(vwin);
+	vwin = NULL;
     }
 }
 #endif
-
-/* ........................................................... */
 
 static void test_db_book (const char *fname, int *cb)
 {
@@ -603,7 +596,9 @@ static void test_db_book (const char *fname, int *cb)
 
     strcpy(testname, fname);
     strcat(testname, ".cb");
+
     fp = gretl_fopen(testname, "r");
+
     if (fp == NULL) {
 	*cb = 0;
     } else {
@@ -617,90 +612,96 @@ static int display_db_series_list (int action, char *fname, char *buf)
     GtkWidget *listbox, *closebutton;
     GtkWidget *main_vbox;
     char *titlestr;
-    windata_t *dbwin;
+    windata_t *vwin;
     int db_width = 700, db_height = 420;
     int cb = 0;
     int err = 0;
 
-    dbwin = mymalloc(sizeof *dbwin);
-    if (dbwin == NULL) return 1;
+    vwin = mymalloc(sizeof *vwin);
+    if (vwin == NULL) {
+	return 1;
+    }
 
-    windata_init(dbwin);
-    dbwin->role = action;
+    windata_init(vwin);
+    vwin->role = action;
 
-    dbwin->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    vwin->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
 #ifndef OLD_GTK
-    g_signal_connect(G_OBJECT(dbwin->w), "destroy", 
-		     G_CALLBACK(destroy_db_win), dbwin);
+    g_signal_connect(G_OBJECT(vwin->w), "destroy", 
+		     G_CALLBACK(destroy_db_win), vwin);
 #else
-    gtk_signal_connect (GTK_OBJECT (dbwin->w), "destroy",
+    gtk_signal_connect (GTK_OBJECT (vwin->w), "destroy",
 			GTK_SIGNAL_FUNC (free_windata),
-			dbwin);
+			vwin);
 #endif
 
     db_width *= gui_scale;
     db_height *= gui_scale;
-    gtk_window_set_default_size(GTK_WINDOW(dbwin->w), db_width, db_height);
+    gtk_window_set_default_size(GTK_WINDOW(vwin->w), db_width, db_height);
     
-    if (buf == NULL && strrchr(fname, SLASH)) {
+    if (buf == NULL && strrchr(fname, SLASH) != NULL) {
 	titlestr = strrchr(fname, SLASH) + 1;
     } else {
 	titlestr = fname;
     }
 
-    gtk_window_set_title(GTK_WINDOW(dbwin->w), titlestr);
+    gtk_window_set_title(GTK_WINDOW(vwin->w), titlestr);
 
-    if (action == NATIVE_SERIES) strip_extension(fname);
+    if (action == NATIVE_SERIES) {
+	strip_extension(fname);
+    }
 
-    strcpy(dbwin->fname, fname);
+    strcpy(vwin->fname, fname);
     
     /* set up grids */
-    main_vbox = gtk_vbox_new (FALSE, 5);
-    gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 10);
-    gtk_container_add (GTK_CONTAINER (dbwin->w), main_vbox);
+    main_vbox = gtk_vbox_new(FALSE, 5);
+    gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 10);
+    gtk_container_add(GTK_CONTAINER(vwin->w), main_vbox);
 
     test_db_book(fname, &cb);
-    set_up_db_menu(dbwin, cb);
-    build_db_popup(dbwin, cb);
+    set_up_db_menu(vwin, cb);
+    build_db_popup(vwin, cb);
 
-    gtk_box_pack_start (GTK_BOX (main_vbox), dbwin->mbar, FALSE, TRUE, 0);
-    gtk_widget_show (dbwin->mbar);
+    gtk_box_pack_start(GTK_BOX(main_vbox), vwin->mbar, FALSE, TRUE, 0);
+    gtk_widget_show(vwin->mbar);
 
-    listbox = database_window(dbwin);
-    gtk_box_pack_start (GTK_BOX (main_vbox), listbox, TRUE, TRUE, 0);
+    listbox = database_window(vwin);
+    gtk_box_pack_start(GTK_BOX(main_vbox), listbox, TRUE, TRUE, 0);
 
     if (action == REMOTE_SERIES) {
 	GtkWidget *hbox; 
 
 	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(main_vbox), hbox, FALSE, FALSE, 0);
-	dbwin->status = gtk_label_new(_("Network status: OK"));
-	gtk_label_set_justify(GTK_LABEL(dbwin->status), GTK_JUSTIFY_LEFT);
-	gtk_box_pack_start(GTK_BOX(hbox), dbwin->status, FALSE, FALSE, 0);
+	vwin->status = gtk_label_new(_("Network status: OK"));
+	gtk_label_set_justify(GTK_LABEL(vwin->status), GTK_JUSTIFY_LEFT);
+	gtk_box_pack_start(GTK_BOX(hbox), vwin->status, FALSE, FALSE, 0);
     }
 
     closebutton = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start (GTK_BOX (main_vbox), closebutton, FALSE, TRUE, 0);
     g_signal_connect (G_OBJECT(closebutton), "clicked", 
-		      G_CALLBACK(delete_widget), dbwin->w);
+		      G_CALLBACK(delete_widget), vwin->w);
+
 #ifdef OLD_GTK
-    gtk_signal_connect (GTK_OBJECT(dbwin->w), "key_press_event",
-			GTK_SIGNAL_FUNC(catch_listbox_key),
-			dbwin);
+    gtk_signal_connect(GTK_OBJECT(vwin->w), "key_press_event",
+		       GTK_SIGNAL_FUNC(catch_listbox_key),
+		       vwin);
 #endif
 
     if (action == NATIVE_SERIES) { 
-	err = populate_series_list(dbwin);
+	err = populate_series_list(vwin);
     } else if (action == REMOTE_SERIES) { 
-	err = populate_remote_series_list(dbwin, buf);
+	err = populate_remote_series_list(vwin, buf);
     } else {
-	err = rats_populate_series_list(dbwin);
+	err = rats_populate_series_list(vwin);
     } 
 
     if (err) {
-	gtk_widget_destroy(dbwin->w);
+	gtk_widget_destroy(vwin->w);
     } else {
-	gtk_widget_show_all(dbwin->w); 
+	gtk_widget_show_all(vwin->w); 
     }
 
     return err;
@@ -743,16 +744,18 @@ static char *end_trim (char *s)
 	    break;
 	}
     }
+
     return s;
 }
-
-/* ........................................................... */
 
 static char *start_trim (char *s)
 {
     char *p = s;
 
-    while (*p == ' ') p++;
+    while (*p == ' ') {
+	p++;
+    }
+
     return p;
 }
 
@@ -784,26 +787,26 @@ static int my_utf_validate (char *s)
 
 static void db_drag_series (GtkWidget *w, GdkDragContext *context,
 			    GtkSelectionData *sel, guint info, guint t,
-			    windata_t *dbwin)
+			    windata_t *vwin)
 {
     gtk_selection_data_set(sel, GDK_SELECTION_TYPE_INTEGER, 8, 
-			   (const guchar *) &dbwin, sizeof dbwin);
+			   (const guchar *) &vwin, sizeof vwin);
 }
 
-static void db_drag_connect (windata_t *dbwin)
+static void db_drag_connect (windata_t *vwin)
 {
-    gtk_drag_source_set(dbwin->listbox, GDK_BUTTON1_MASK,
+    gtk_drag_source_set(vwin->listbox, GDK_BUTTON1_MASK,
 			&gretl_drag_targets[GRETL_POINTER],
 			1, GDK_ACTION_COPY);
 
-    g_signal_connect(G_OBJECT(dbwin->listbox), "drag_data_get",
+    g_signal_connect(G_OBJECT(vwin->listbox), "drag_data_get",
 		     G_CALLBACK(db_drag_series),
-		     dbwin);
+		     vwin);
 }
 
 /* ........................................................... */
 
-static int populate_series_list (windata_t *dbwin)
+static int populate_series_list (windata_t *vwin)
 {
 #ifndef OLD_GTK
     GtkListStore *store;
@@ -817,9 +820,11 @@ static int populate_series_list (windata_t *dbwin)
     size_t n;
     int err = 0;
 
-    strcpy(dbidx, dbwin->fname);
+    strcpy(dbidx, vwin->fname);
     strcat(dbidx, ".idx");
+
     fp = gretl_fopen(dbidx, "r");
+
     if (fp == NULL) {
 	errbox(_("Couldn't open database index file"));
 	return 1;
@@ -827,7 +832,7 @@ static int populate_series_list (windata_t *dbwin)
 
 #ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model 
-			   (GTK_TREE_VIEW(dbwin->listbox)));
+			   (GTK_TREE_VIEW(vwin->listbox)));
     gtk_list_store_clear (store);
     gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
 #else
@@ -835,8 +840,12 @@ static int populate_series_list (windata_t *dbwin)
 #endif
 
     while (1) {
-	if (fgets(line1, sizeof line1, fp) == NULL) break;
-	if (*line1 == '#') continue;
+	if (fgets(line1, sizeof line1, fp) == NULL) {
+	    break;
+	}
+	if (*line1 == '#') {
+	    continue;
+	}
 
 #ifndef OLD_GTK
 	my_utf_validate(line1);
@@ -845,30 +854,35 @@ static int populate_series_list (windata_t *dbwin)
 	end_trim(line1);
 	charsub(line1, '\t', ' ');
 
-	if (sscanf(line1, "%8s", sername) != 1) break;
+	if (sscanf(line1, "%8s", sername) != 1) {
+	    break;
+	}
 
-	sername[8] = 0;
 	n = strlen(sername);
+
 	row[0] = sername;
 	row[1] = start_trim(line1 + n + 1);
 
-	fgets(line2, 71, fp);
-	line2[71] = 0;
+	fgets(line2, sizeof line2, fp);
 	end_trim(line2);
 	row[2] = line2;
 
-	if (!err) err = check_serinfo(line2, sername);
+	if (!err) {
+	    err = check_serinfo(line2, sername);
+	}
 
 #ifndef OLD_GTK
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set (store, &iter, 0, row[0], 1, row[1],
 			    2, row[2], -1);
 #else
-	gtk_clist_append(GTK_CLIST(dbwin->listbox), row);
+	gtk_clist_append(GTK_CLIST(vwin->listbox), row);
+
 	if (i % 2) {
-	    gtk_clist_set_background(GTK_CLIST(dbwin->listbox), 
+	    gtk_clist_set_background(GTK_CLIST(vwin->listbox), 
 				     i, &gray);
 	}
+
 	i++;
 #endif
     }
@@ -876,19 +890,16 @@ static int populate_series_list (windata_t *dbwin)
     fclose(fp);
 
 #ifdef OLD_GTK
-    dbwin->active_var = 0;
-    gtk_clist_select_row 
-	(GTK_CLIST (dbwin->listbox), dbwin->active_var, 1);
+    vwin->active_var = 0;
+    gtk_clist_select_row(GTK_CLIST(vwin->listbox), vwin->active_var, 1);
 #endif
 
-    db_drag_connect(dbwin);
+    db_drag_connect(vwin);
 
     return 0;
 }
 
-/* ........................................................... */
-
-static int populate_remote_series_list (windata_t *dbwin, char *buf)
+static int populate_remote_series_list (windata_t *vwin, char *buf)
 {
 #ifndef OLD_GTK
     GtkListStore *store;
@@ -902,7 +913,7 @@ static int populate_remote_series_list (windata_t *dbwin, char *buf)
 
 #ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model 
-			   (GTK_TREE_VIEW(dbwin->listbox)));
+			   (GTK_TREE_VIEW(vwin->listbox)));
     gtk_list_store_clear (store);
     gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
 #else
@@ -912,7 +923,10 @@ static int populate_remote_series_list (windata_t *dbwin, char *buf)
     bufgets(NULL, 0, buf);
 
     while (bufgets(line1, sizeof line1, buf)) {
-	if (line1[0] == '#') continue;
+
+	if (line1[0] == '#') {
+	    continue;
+	}
 
 	end_trim(line1);
 	charsub(line1, '\t', ' ');
@@ -921,7 +935,9 @@ static int populate_remote_series_list (windata_t *dbwin, char *buf)
 	my_utf_validate(line1);
 #endif
 
-	if (sscanf(line1, "%8s", sername) != 1) break;
+	if (sscanf(line1, "%8s", sername) != 1) {
+	    break;
+	}
 
 	n = strlen(sername);
 	row[0] = sername;
@@ -938,16 +954,16 @@ static int populate_remote_series_list (windata_t *dbwin, char *buf)
 	gtk_list_store_set (store, &iter, 0, row[0], 1, row[1],
 			    2, row[2], -1);
 #else
-	gtk_clist_append(GTK_CLIST(dbwin->listbox), row);
+	gtk_clist_append(GTK_CLIST(vwin->listbox), row);
 	if (i % 2) {
-	    gtk_clist_set_background(GTK_CLIST(dbwin->listbox), 
+	    gtk_clist_set_background(GTK_CLIST(vwin->listbox), 
 				     i, &gray);
 	}
 	i++;
 #endif
     }
 
-    db_drag_connect(dbwin);
+    db_drag_connect(vwin);
 
     return 0;
 }
@@ -1005,12 +1021,13 @@ static void insert_and_free_db_table (db_table *tbl, GtkCList *clist)
 
 /* ......................................................... */
 
-static int rats_populate_series_list (windata_t *dbwin)
+static int rats_populate_series_list (windata_t *vwin)
 {
     FILE *fp;
     db_table *tbl;
 
-    fp = gretl_fopen(dbwin->fname, "rb");
+    fp = gretl_fopen(vwin->fname, "rb");
+
     if (fp == NULL) {
 	errbox(_("Couldn't open RATS data file"));
 	return 1;
@@ -1026,19 +1043,18 @@ static int rats_populate_series_list (windata_t *dbwin)
     }
 
 #ifndef OLD_GTK
-    insert_and_free_db_table(tbl, GTK_TREE_VIEW(dbwin->listbox));
+    insert_and_free_db_table(tbl, GTK_TREE_VIEW(vwin->listbox));
 #else
-    insert_and_free_db_table(tbl, GTK_CLIST(dbwin->listbox));
+    insert_and_free_db_table(tbl, GTK_CLIST(vwin->listbox));
 #endif
 
-    dbwin->active_var = 0;
+    vwin->active_var = 0;
 
 #ifdef OLD_GTK
-    gtk_clist_select_row 
-	(GTK_CLIST (dbwin->listbox), dbwin->active_var, 1);  
+    gtk_clist_select_row(GTK_CLIST(vwin->listbox), vwin->active_var, 1);  
 #endif
 
-    db_drag_connect(dbwin);
+    db_drag_connect(vwin);
 
     return 0;
 }
@@ -1047,7 +1063,7 @@ static int rats_populate_series_list (windata_t *dbwin)
 
 #ifndef OLD_GTK
 
-static GtkWidget *database_window (windata_t *dbwin) 
+static GtkWidget *database_window (windata_t *vwin) 
 {
     const char *titles[] = {
 	_("Name"), 
@@ -1057,22 +1073,22 @@ static GtkWidget *database_window (windata_t *dbwin)
     GtkWidget *box;
     int cols = 3;
 
-    box = gtk_vbox_new (FALSE, 0);
+    box = gtk_vbox_new(FALSE, 0);
 
-    dbwin->listbox = list_box_create (dbwin, GTK_BOX(box), cols, 0, titles);
+    vwin->listbox = list_box_create(vwin, GTK_BOX(box), cols, 0, titles);
 
-    g_signal_connect (G_OBJECT(dbwin->listbox), "button_press_event",
-		      G_CALLBACK(popup_menu_handler), 
-		      (gpointer) dbwin->popup);
+    g_signal_connect(G_OBJECT(vwin->listbox), "button_press_event",
+		     G_CALLBACK(popup_menu_handler), 
+		     vwin->popup);
 
-    gtk_widget_show (box);
+    gtk_widget_show(box);
 
     return box;
 }
 
 #else /* now the old gtk version */
 
-static GtkWidget *database_window (windata_t *dbwin) 
+static GtkWidget *database_window (windata_t *vwin) 
 {
     char *titles[] = {
 	_("Name"), 
@@ -1084,7 +1100,7 @@ static GtkWidget *database_window (windata_t *dbwin)
     int col_width[] = {72, 450, 240};
     int db_width = 540, db_height = 320;
 
-    dbwin->active_var = 1; 
+    vwin->active_var = 1; 
 
     db_width *= gui_scale;
     db_height *= gui_scale;
@@ -1095,30 +1111,30 @@ static GtkWidget *database_window (windata_t *dbwin)
     scroller = gtk_scrolled_window_new (NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
 				    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    dbwin->listbox = gtk_clist_new_with_titles (cols, titles);
-    gtk_clist_column_titles_passive(GTK_CLIST(dbwin->listbox));
-    gtk_container_add (GTK_CONTAINER (scroller), dbwin->listbox);
-    gtk_clist_set_selection_mode (GTK_CLIST (dbwin->listbox), 
+    vwin->listbox = gtk_clist_new_with_titles (cols, titles);
+    gtk_clist_column_titles_passive(GTK_CLIST(vwin->listbox));
+    gtk_container_add (GTK_CONTAINER (scroller), vwin->listbox);
+    gtk_clist_set_selection_mode (GTK_CLIST (vwin->listbox), 
 				  GTK_SELECTION_BROWSE);
     for (i=0; i<cols; i++) {
 	col_width[i] *= gui_scale;
-	gtk_clist_set_column_width (GTK_CLIST (dbwin->listbox), i,
+	gtk_clist_set_column_width (GTK_CLIST (vwin->listbox), i,
 				    col_width[i]);
-	gtk_clist_set_column_justification (GTK_CLIST (dbwin->listbox), i, 
+	gtk_clist_set_column_justification (GTK_CLIST (vwin->listbox), i, 
 					    GTK_JUSTIFY_LEFT);
     }    
     gtk_box_pack_start (GTK_BOX (box), scroller, TRUE, TRUE, TRUE);
 
-    gtk_signal_connect (GTK_OBJECT(dbwin->listbox), 
+    gtk_signal_connect (GTK_OBJECT(vwin->listbox), 
 			"button_press_event",
 			GTK_SIGNAL_FUNC(popup_menu_handler), 
-			(gpointer) dbwin->popup);
+			(gpointer) vwin->popup);
 
-    gtk_signal_connect_after (GTK_OBJECT (dbwin->listbox), "select_row", 
+    gtk_signal_connect_after (GTK_OBJECT (vwin->listbox), "select_row", 
 			      GTK_SIGNAL_FUNC (selectrow), 
-			      (gpointer) dbwin);
+			      (gpointer) vwin);
 
-    gtk_widget_show (dbwin->listbox);
+    gtk_widget_show (vwin->listbox);
     gtk_widget_show (scroller);
     gtk_widget_show (box);
 
@@ -1127,9 +1143,7 @@ static GtkWidget *database_window (windata_t *dbwin)
 
 #endif /* old versus new gtk */
 
-/* ........................................................... */
-
-static SERIESINFO *get_series_info (windata_t *win, int action)
+static SERIESINFO *get_series_info (windata_t *vwin, int action)
 {
     char pdc;
     gchar *temp;
@@ -1137,19 +1151,22 @@ static SERIESINFO *get_series_info (windata_t *win, int action)
     char stobs[11], endobs[11];
 
     sinfo = mymalloc(sizeof *sinfo);
-    if (sinfo == NULL) return NULL;
+
+    if (sinfo == NULL) {
+	return NULL;
+    }
 
     if (action != RATS_SERIES) {
 	int i, n;
 
 	sinfo->offset = 0;
-	for (i=0; i<win->active_var; i++) {
+	for (i=0; i<vwin->active_var; i++) {
 	    n = 0;
 #ifndef OLD_GTK
-	    tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
+	    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 				 i, 2, &temp);
 #else
-	    gtk_clist_get_text(GTK_CLIST(win->listbox), 
+	    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
 			       i, 2, &temp);
 #endif
 	    sscanf(temp, "%*c %*s %*s %*s %*s %*s %d", &n);
@@ -1162,38 +1179,43 @@ static SERIESINFO *get_series_info (windata_t *win, int action)
     }
 
 #ifndef OLD_GTK
-    tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
-			 win->active_var, 0, &temp);
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
+			 vwin->active_var, 0, &temp);
 #else
-    gtk_clist_get_text(GTK_CLIST(win->listbox), 
-		       win->active_var, 0, &temp);
+    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
+		       vwin->active_var, 0, &temp);
 #endif    
+
     *sinfo->varname = 0;
     strncat(sinfo->varname, temp, 8);
+
 #ifndef OLD_GTK
     g_free(temp);
 #endif
 
 #ifndef OLD_GTK
-    tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
-			 win->active_var, 1, &temp);
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
+			 vwin->active_var, 1, &temp);
 #else
-    gtk_clist_get_text(GTK_CLIST(win->listbox), 
-		       win->active_var, 1, &temp);
+    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
+		       vwin->active_var, 1, &temp);
 #endif
+
     *sinfo->descrip = 0;
     strncat(sinfo->descrip, temp, MAXLABEL-1);
+
 #ifndef OLD_GTK
     g_free(temp);
 #endif
 
 #ifndef OLD_GTK
-    tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
-			 win->active_var, 2, &temp);
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
+			 vwin->active_var, 2, &temp);
 #else
-    gtk_clist_get_text(GTK_CLIST(win->listbox), 
-		       win->active_var, 2, &temp);
+    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
+		       vwin->active_var, 2, &temp);
 #endif
+
     if (sscanf(temp, "%c %10s %*s %10s %*s %*s %d", 
 	       &pdc, stobs, endobs, &(sinfo->nobs)) != 4) {
 	errbox(_("Failed to parse series information"));
@@ -1210,21 +1232,31 @@ static SERIESINFO *get_series_info (windata_t *win, int action)
 
     sinfo->pd = 1;
     sinfo->undated = 0;
-    if (pdc == 'M') sinfo->pd = 12;
-    else if (pdc == 'Q') sinfo->pd = 4;
-    else if (pdc == 'B') sinfo->pd = 5;
-    else if (pdc == 'S') sinfo->pd = 6;
-    else if (pdc == 'D') sinfo->pd = 7;
-    else if (pdc == 'U') sinfo->undated = 1;
+
+    if (pdc == 'M') {
+	sinfo->pd = 12;
+    } else if (pdc == 'Q') {
+	sinfo->pd = 4;
+    } else if (pdc == 'B') {
+	sinfo->pd = 5;
+    } else if (pdc == 'S') {
+	sinfo->pd = 6;
+    } else if (pdc == 'D') {
+	sinfo->pd = 7;
+    } else if (pdc == 'U') {
+	sinfo->undated = 1;
+    }
 
     if (strchr(stobs, '/')) { /* daily data */
 	char *q = stobs;
 	char *p = strchr(stobs, '/');
 
-	if (p - q == 4) strcpy(sinfo->stobs, q+2);
+	if (p - q == 4) strcpy(sinfo->stobs, q + 2);
 	q = endobs;
 	p = strchr(endobs, '/');
-	if (p && p - q == 4) strcpy(sinfo->endobs, q+2);
+	if (p && p - q == 4) {
+	    strcpy(sinfo->endobs, q + 2);
+	}
     } else {
 	sinfo->stobs[0] = 0;
 	sinfo->endobs[0] = 0;
@@ -1240,26 +1272,29 @@ static SERIESINFO *get_series_info (windata_t *win, int action)
 static int has_rats_suffix (const char *dbname)
 {
     const char *p = strrchr(dbname, '.');
+    int ret = 0;
 
-    if (p == NULL) return 0;
+    if (p != NULL) {
+	if (!strcmp(p, ".rat") || 
+	    !strcmp(p, ".Rat") || 
+	    !strcmp(p, ".RAT")) {
+	    ret = 1;
+	}
+    }
 
-    if (!strcmp(p, ".rat")) return 1;
-    if (!strcmp(p, ".Rat")) return 1;
-    if (!strcmp(p, ".RAT")) return 1;
-
-    return 0;
+    return ret;
 }
 
 /* ........................................................... */
 
 void open_named_db_list (char *dbname)
 {
-    int n, action = NATIVE_SERIES;
+    int action = NATIVE_SERIES;
     FILE *fp;
 
-    n = strlen(dbname);
-
-    if (has_rats_suffix(dbname)) action = RATS_SERIES;
+    if (has_rats_suffix(dbname)) {
+	action = RATS_SERIES;
+    }
 
     fp = gretl_fopen(dbname, "rb");
 
@@ -1277,35 +1312,34 @@ void open_named_db_list (char *dbname)
     } 
 }
 
-/* ........................................................... */
-
 void open_db_list (GtkWidget *w, gpointer data)
 {
     gchar *fname = NULL, *dbdir = NULL;
     char dbfile[MAXLEN];
-    int n, action = NATIVE_SERIES;
-    windata_t *win = (windata_t *) data;
+    int action = NATIVE_SERIES;
+    windata_t *vwin = (windata_t *) data;
 
 #ifndef OLD_GTK
-    tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
-			 win->active_var, 0, &fname);
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
+			 vwin->active_var, 0, &fname);
 #else
-    gtk_clist_get_text(GTK_CLIST(win->listbox), 
-		       win->active_var, 0, &fname);
+    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
+		       vwin->active_var, 0, &fname);
 #endif
 
-    n = strlen(fname);
-
-    if (has_rats_suffix(fname)) action = RATS_SERIES;
+    if (has_rats_suffix(fname)) {
+	action = RATS_SERIES;
+    }
 
 #ifndef OLD_GTK
-    tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
-			 win->active_var, (action == RATS_SERIES)? 1 : 2, 
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
+			 vwin->active_var, (action == RATS_SERIES)? 1 : 2, 
 			 &dbdir);
 #else
-    dbdir = gtk_clist_get_row_data(GTK_CLIST(win->listbox),
-				   win->active_var);
+    dbdir = gtk_clist_get_row_data(GTK_CLIST(vwin->listbox),
+				   vwin->active_var);
 #endif
+
     build_path(dbdir, fname, dbfile, NULL);
     
 #ifndef OLD_GTK
@@ -1314,21 +1348,19 @@ void open_db_list (GtkWidget *w, gpointer data)
 #endif
 
     display_db_series_list(action, dbfile, NULL); 
+
 #ifndef KEEP_BROWSER_OPEN
-    if (win != NULL && win->w != NULL && GTK_IS_WIDGET(win->w)) {
-	gtk_widget_destroy(GTK_WIDGET(win->w));
+    if (vwin != NULL && vwin->w != NULL && GTK_IS_WIDGET(vwin->w)) {
+	gtk_widget_destroy(GTK_WIDGET(vwin->w));
     }
 #endif
 }
 
-/* ........................................................... */
-
-static void update_statusline (windata_t *windat, char *str)
+static void update_statusline (windata_t *vwin, const char *s)
 {
-    gchar *tmp;
+    gchar *tmp = g_strdup_printf(_("Network status: %s"), s);
 
-    tmp = g_strdup_printf(_("Network status: %s"), str);
-    gtk_label_set_text(GTK_LABEL(windat->status), tmp);
+    gtk_label_set_text(GTK_LABEL(vwin->status), tmp);
 
     while (gtk_events_pending()) {
 	gtk_main_iteration();
@@ -1336,8 +1368,6 @@ static void update_statusline (windata_t *windat, char *str)
 
     g_free(tmp);
 }
-
-/* ........................................................... */
 
 void open_named_remote_db_list (char *dbname)
 {
@@ -1347,7 +1377,10 @@ void open_named_remote_db_list (char *dbname)
     *errbuf = '\0';
 
     getbuf = mymalloc(GRETL_BUFSIZE);
-    if (getbuf == NULL) return;
+
+    if (getbuf == NULL) {
+	return;
+    }
 
     memset(getbuf, 0, GRETL_BUFSIZE);
 
@@ -1365,37 +1398,37 @@ void open_named_remote_db_list (char *dbname)
     free(getbuf);
 }
 
-/* ........................................................... */
-
 void open_remote_db_list (GtkWidget *w, gpointer data)
 {
     gchar *fname;
-    windata_t *win = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
     char *getbuf, errbuf[80];
     int err;
 
     *errbuf = '\0';
 
     getbuf = mymalloc(GRETL_BUFSIZE);
-    if (getbuf == NULL) return;
+    if (getbuf == NULL) {
+	return;
+    }
 
     memset(getbuf, 0, GRETL_BUFSIZE);
 
 #ifndef OLD_GTK
-    tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
-			 win->active_var, 0, &fname);
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
+			 vwin->active_var, 0, &fname);
 #else
-    gtk_clist_get_text(GTK_CLIST(win->listbox), 
-		       win->active_var, 0, &fname);
+    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
+		       vwin->active_var, 0, &fname);
 #endif
 
-    update_statusline(win, _("Retrieving data..."));
+    update_statusline(vwin, _("Retrieving data..."));
     err = retrieve_remote_db_list(fname, &getbuf, errbuf);
 
     if (err) {
-	display_db_error(win, errbuf);
+	display_db_error(vwin, errbuf);
     } else {
-	update_statusline(win, "OK");
+	update_statusline(vwin, "OK");
 	display_db_series_list(REMOTE_SERIES, fname, getbuf);
 	/* check for error */
     }
@@ -1406,35 +1439,44 @@ void open_remote_db_list (GtkWidget *w, gpointer data)
     free(getbuf);
 }
 
-/* ........................................................... */
-
 #define INFOLEN 100
 
 static int parse_db_header (const char *buf, size_t *idxlen, 
 			    size_t *datalen, size_t *cblen)
 {
     char *p;
+    int err = 0;
 
     *cblen = 0;
 
     /* length of index file (required) */
-    if (sscanf(buf, "%u", idxlen) != 1) return 1;
-
-    /* length of data (required under "new" system) */
-    p = strchr(buf, '\n');
-    if (p == NULL) return 1;
-    p++; 
-    if (sscanf(p, "%u", datalen) != 1) return 1;
-
-    /* length of codebook (optional) */
-    p = strchr(p, '\n');
-    if (p == NULL) return 0;
-    p++;
-    if (sscanf(p, "%u", cblen) != 1) {
-	*cblen = 0;
+    if (sscanf(buf, "%u", idxlen) != 1) {
+	err = 1;
     }
 
-    return 0;
+    /* length of data (required under "new" system) */
+    if (!err) {
+	p = strchr(buf, '\n');
+	if (p == NULL) {
+	    err = 1;
+	} else if (sscanf(p + 1, "%u", datalen) != 1) {
+	    err = 1;
+	}
+    }
+
+    /* length of codebook (optional) */
+    if (!err) {
+	p = strchr(p + 1, '\n');
+	if (p != NULL) {
+	    int cbl;
+
+	    if (sscanf(p + 1, "%u", &cbl) == 1) {
+		*cblen = cbl;
+	    }
+	}
+    }
+
+    return err;
 }
 
 static int ggz_extract (char *errbuf, char *ggzname)
@@ -1570,23 +1612,25 @@ static int ggz_extract (char *errbuf, char *ggzname)
 void grab_remote_db (GtkWidget *w, gpointer data)
 {
     gchar *dbname;
-    windata_t *win = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
     char *ggzname, errbuf[80];
     FILE *fp;
     int err;
 
 #ifndef OLD_GTK
-    tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
-			 win->active_var, 0, &dbname);
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
+			 vwin->active_var, 0, &dbname);
 #else
-    gtk_clist_get_text(GTK_CLIST(win->listbox), 
-		       win->active_var, 0, &dbname);
+    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
+		       vwin->active_var, 0, &dbname);
 #endif
     
     fprintf(stderr, "grab_remote_db(): dbname = '%s'\n", dbname);
 
     ggzname = mymalloc(MAXLEN);
-    if (ggzname == NULL) return;
+    if (ggzname == NULL) {
+	return;
+    }
 
     build_path(paths.binbase, dbname, ggzname, ".ggz");
 
@@ -1630,8 +1674,11 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     err = ggz_extract(errbuf, ggzname);
 
     if (err) {
-	if (*errbuf != '\0') errbox(errbuf);
-	else errbox(_("Error unzipping compressed data"));
+	if (*errbuf != '\0') {
+	    errbox(errbuf);
+	} else {
+	    errbox(_("Error unzipping compressed data"));
+	}
     } else {
 	/* installed OK: give option of opening database now */
         int resp = yes_no_dialog ("gretl",                      
@@ -1645,7 +1692,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 	    strcpy(strrchr(dbpath, '.'), ".bin");
 	    open_named_db_list(dbpath);
         }
-	populate_filelist(win, NULL);
+	populate_filelist(vwin, NULL);
     }
 
 #ifndef OLD_GTK
@@ -1659,50 +1706,131 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 static gchar *get_descrip (char *fname, const char *dbdir)
 {
     FILE *fp;
-    gchar *line, *p;
-    char tmp[MAXLEN];
+    char idxname[MAXLEN];
+    char tmp[64];
+    char *p, *descrip = NULL;
 
-    if ((line = mymalloc(MAXLEN)) == NULL) return NULL;
+    build_path(dbdir, fname, idxname, NULL);
 
-    build_path(dbdir, fname, tmp, NULL);
-    if ((p = strrchr(tmp, '.'))) strcpy(p, ".idx");
-    
-    if ((fp = gretl_fopen(tmp, "r")) == NULL) {
-	g_free(line);
-	return NULL;
+    p = strrchr(idxname, '.');
+    if (p != NULL) {
+	strcpy(p, ".idx");
     }
 
-    fgets(tmp, 63, fp);
-    fclose(fp);
+    fp = gretl_fopen(idxname, "r");
 
-    if (tmp[0] == '#') {
-	strcpy(line, tmp + 2);
-	/* the following line was ifdef'd with G_OS_WIN32 */
-	line[strlen(line) - 1] = 0;
-	return line;
+    if (fp != NULL) {
+	fgets(tmp, sizeof tmp, fp);
+	fclose(fp);
+	if (tmp != NULL && *tmp == '#' && strlen(tmp) > 2) {
+	    descrip = g_strdup(tmp + 2);
+	    descrip[strlen(descrip) - 1] = 0;
+	}
     }
 
-    return NULL;
+    return descrip;
 }
 
-/* ........................................................... */
+#ifndef OLD_GTK
 
-gint populate_dbfilelist (windata_t *win)
+static int
+read_idx_files_in_dir (DIR *dir, int dbtype, const char *filter, 
+		       const char *dbdir, GtkListStore *store, 
+		       GtkTreeIter *iter)
+{
+    struct dirent *dirent;
+    char *fname, *descrip;
+    int n, ndb = 0;
+
+    while ((dirent = readdir(dir)) != NULL) {
+	fname = dirent->d_name;
+	n = strlen(fname);
+	if (g_ascii_strcasecmp(fname + n - 4, filter) == 0) {
+	    if (dbtype == NATIVE_DB) {
+		descrip = get_descrip(fname, dbdir);
+		if (descrip != NULL) {
+		    gtk_list_store_append(store, iter);
+		    gtk_list_store_set(store, iter, 0, fname, 1, descrip, 
+				       2, dbdir, -1);
+		    g_free(descrip);
+		    ndb++;
+		}
+	    } else { 
+		/* RATS database */
+		gtk_list_store_append(store, iter);
+		gtk_list_store_set(store, iter, 0, fname, 1, dbdir, -1);
+		ndb++;
+	    }
+	}
+    }
+
+    return ndb;
+}
+
+#else
+
+static int
+read_idx_files_in_dir (DIR *dir, const char *filter, 
+		       char *dbdir, windata_t *vwin)
+{
+    struct dirent *dirent;
+    char *fname, *descrip;
+    gchar *row[2];
+    int n, i = 0;
+
+    while ((dirent = readdir(dir)) != NULL) {
+	fname = dirent->d_name;
+	n = strlen(fname);
+	if (g_strcasecmp(fname + n - 4, filter) != 0) {
+	    continue;
+	}
+	row[0] = fname;
+	if (vwin->role == NATIVE_DB) {
+	    descrip = get_descrip(fname, dbdir);
+	    if (descrip != NULL) {
+		row[1] = descrip;
+		gtk_clist_append(GTK_CLIST(vwin->listbox), row);
+		gtk_clist_set_row_data(GTK_CLIST(vwin->listbox), i, dbdir);
+		g_free(descrip);
+	    } else {
+		continue;
+	    }
+	} else {
+	    /* RATS database */
+	    row[1] = NULL;
+	    gtk_clist_append(GTK_CLIST(vwin->listbox), row);
+	    gtk_clist_set_row_data(GTK_CLIST(vwin->listbox), i, dbdir);
+	}
+	if (i % 2) {
+	    gtk_clist_set_background(GTK_CLIST(vwin->listbox), i, &gray);
+	}
+	i++;
+    }
+
+    return i;
+}
+
+#endif
+
+gint populate_dbfilelist (windata_t *vwin)
 {
 #ifndef OLD_GTK
     GtkListStore *store;
     GtkTreeIter iter;
 #endif
-    gchar *fname, *dbdir, *row[2], filter[5];
-    gint i, n;
+    gchar *dbdir, *filter;
+    gchar *db_filters[] = {
+	".rat",
+	".bin"
+    };
     DIR *dir;
-    struct dirent *dirent;
+    int ndb = 0;
 
-    if (win->role == RATS_DB) {
-	strcpy(filter, ".rat");
+    if (vwin->role == RATS_DB) {
+	filter = db_filters[0];
 	dbdir = paths.ratsbase;
     } else {
-	strcpy(filter, ".bin");
+	filter = db_filters[1];
 	dbdir = paths.binbase;
     }
 
@@ -1717,115 +1845,58 @@ gint populate_dbfilelist (windata_t *win)
     }
 #endif
 
-    if ((dir = opendir(dbdir)) == NULL) {
+    dir = opendir(dbdir);
+
+    if (dir == NULL) {
 	sprintf(errtext, _("Can't open folder %s"), dbdir);
 	errbox(errtext);
 	return 1;
     }
 
 #ifndef OLD_GTK
-    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(win->listbox)));
-    gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 #endif
 
-    if (win->role == RATS_DB) {
+    if (vwin->role == RATS_DB) {
 #ifndef OLD_GTK
-	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(win->listbox),
+	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(vwin->listbox),
 					  FALSE);
 #else
-	gtk_clist_column_titles_hide(GTK_CLIST (win->listbox));
+	gtk_clist_column_titles_hide(GTK_CLIST(vwin->listbox));
 #endif
     }
 
-    i = 0;
-    while ((dirent = readdir(dir)) != NULL) {
-	fname = dirent->d_name;
-	n = strlen(fname);
 #ifndef OLD_GTK
-	if (g_ascii_strcasecmp(fname + n - 4, filter) == 0) {
-	    row[0] = fname;
-	    gtk_list_store_append(store, &iter);
-	    if (win->role == NATIVE_DB) {
-		row[1] = get_descrip(fname, dbdir);
-		gtk_list_store_set (store, &iter, 0, row[0], 1, row[1], 
-				    2, dbdir, -1);
-		g_free(row[1]);
-	    } else { /* RATS */
-		gtk_list_store_set (store, &iter, 0, row[0], 1, dbdir, -1);
-	    }
-	    i++;
-	}
+    ndb = read_idx_files_in_dir(dir, vwin->role, filter, dbdir, store, &iter);
 #else
-	if (g_strcasecmp(fname + n - 4, filter) == 0) {
-	    row[0] = fname;
-	    row[1] = NULL;
-	    if (win->role == NATIVE_DB) { 
-		row[1] = get_descrip(fname, dbdir);
-	    }
-	    gtk_clist_append(GTK_CLIST(win->listbox), row);
-	    gtk_clist_set_row_data(GTK_CLIST(win->listbox), i, dbdir);
-	    if (row[1]) g_free(row[1]);
-	    if (i % 2) {
-		gtk_clist_set_background(GTK_CLIST(win->listbox), 
-					 i, &gray);
-	    }
-	    i++;
-	}
-#endif 
-    }
+    ndb = read_idx_files_in_dir(dir, filter, dbdir, vwin);
+#endif
+
     closedir(dir);
 
 #ifndef G_OS_WIN32
     /* pick up any databases in the user's personal dir */
     dbdir = paths.userdir;
     dir = opendir(dbdir);
+
     if (dir != NULL) {
-	while ((dirent = readdir(dir)) != NULL) {
-	    fname = dirent->d_name;
-	    n = strlen(fname);
 # ifndef OLD_GTK
-	    if (strcmp(fname + n - 4, filter) == 0) {
-		row[0] = fname;
-		gtk_list_store_append(store, &iter);
-		if (win->role == NATIVE_DB) {
-		    row[1] = get_descrip(fname, dbdir);
-		    gtk_list_store_set (store, &iter, 0, row[0], 1, row[1], 
-					2, dbdir, -1);
-		    g_free(row[1]);
-		} else { /* RATS */
-		    gtk_list_store_set (store, &iter, 0, row[0], 1, dbdir, -1);
-		}	
-		i++;
-	    }
+	ndb += read_idx_files_in_dir(dir, vwin->role, filter, dbdir, store, &iter);
 # else
-	    if (strcmp(fname + n - 4, filter) == 0) {
-		row[0] = fname;
-		row[1] = NULL;
-		if (win->role == NATIVE_DB) {
-		    row[1] = get_descrip(fname, dbdir);
-		}
-		gtk_clist_append(GTK_CLIST (win->listbox), row);
-		gtk_clist_set_row_data(GTK_CLIST (win->listbox), i, dbdir);
-		if (row[1]) g_free(row[1]);
-		if (i % 2) {
-		    gtk_clist_set_background(GTK_CLIST(win->listbox), 
-					     i, &gray);
-		}
-		i++;
-	    }
-# endif /* gtk versions */
-	}
+	ndb += read_idx_files_in_dir(dir, filter, dbdir, vwin);
+# endif
 	closedir(dir);
     }
 #endif /* !G_OS_WIN32 */ 
 
-    if (i == 0) {
+    if (ndb == 0) {
 	errbox(_("No database files found"));
 	return 1;
     }
 
 #ifdef OLD_GTK
-    gtk_clist_select_row(GTK_CLIST (win->listbox), 0, 0);
+    gtk_clist_select_row(GTK_CLIST(vwin->listbox), 0, 0);
 #endif
 
     return 0;
@@ -1848,7 +1919,9 @@ void do_compact_data_set (void)
     int err, newpd = 0, monstart = 1;
     int *pmonstart = NULL;
 
-    if (maybe_restore_full_data(COMPACT)) return;
+    if (maybe_restore_full_data(COMPACT)) {
+	return;
+    }
 
     if (dated_seven_day_data(datainfo)) {
 	pmonstart = &monstart;

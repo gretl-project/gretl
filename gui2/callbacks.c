@@ -396,6 +396,10 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
     windata_t *vwin = (windata_t *) data;
     char title[64];
 
+    if (action == ADD || action == OMIT || action == COEFFSUM) {
+	set_window_busy(vwin);
+    }
+
     strcpy(title, "gretl: ");
 
     if (action == COINT) {

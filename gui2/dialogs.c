@@ -1570,6 +1570,8 @@ int get_obs_dialog (const char *title, const char *text,
 
     gtk_widget_show_all(rset->dlg);
 
+    gtk_window_set_modal(GTK_WINDOW(rset->dlg), TRUE);
+
     gtk_main();
 
     return ret;

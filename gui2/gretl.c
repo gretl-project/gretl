@@ -1262,10 +1262,10 @@ static GtkWidget *make_main_window (int gui_get_data)
     set_up_windows_look();
 #endif
 
-    g_signal_connect (G_OBJECT (mdata->w), "delete_event",
-		      G_CALLBACK (exit_check), NULL);
-    g_signal_connect (G_OBJECT (mdata->w), "destroy",
-		      G_CALLBACK (destroy), NULL);
+    g_signal_connect(G_OBJECT(mdata->w), "delete_event",
+		     G_CALLBACK(exit_check), NULL);
+    g_signal_connect(G_OBJECT(mdata->w), "destroy",
+		     G_CALLBACK(destroy), NULL);
 
     gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
     gtk_window_set_default_size(GTK_WINDOW (mdata->w), 

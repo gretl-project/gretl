@@ -672,11 +672,13 @@ int try_add_var_to_session (GRETL_VAR *var)
 
 void remember_model (gpointer data, guint close, GtkWidget *widget)
 {
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
     gchar *buf;
 
-    if (pmod == NULL) return;
+    if (pmod == NULL) {
+	return;
+    }
 
     if (model_already_saved(pmod)) {
 	infobox(_("Model is already saved"));
@@ -695,9 +697,9 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
 
     session_changed(1);
 
-    /* close model window */
-    if (close) {
-	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(mydata->w)));
+    /* close model window? */
+    if (close && !window_is_busy(vwin)) {
+	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
     } 
 }
 
@@ -705,8 +707,8 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
 
 void remember_var (gpointer data, guint close, GtkWidget *widget)
 {
-    windata_t *mydata = (windata_t *) data;
-    GRETL_VAR *var = (GRETL_VAR *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     gchar *buf;
 
     if (var == NULL) return;
@@ -730,7 +732,7 @@ void remember_var (gpointer data, guint close, GtkWidget *widget)
 
     /* close VAR window */
     if (close) {
-	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(mydata->w)));
+	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
     } 
 }
 
@@ -3218,15 +3220,15 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     FILE *fp;
     char msg[MAXLEN];
     gchar *savestuff;
-    windata_t *mydata = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
 
-    if ((fp = gretl_fopen(mydata->fname, "w")) == NULL) {
-	sprintf(msg, _("Couldn't write to %s"), mydata->fname);
+    if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
+	sprintf(msg, _("Couldn't write to %s"), vwin->fname);
 	errbox(msg); 
 	return;
     }
 
-    savestuff = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+    savestuff = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
     fprintf(fp, "%s", savestuff);
     g_free(savestuff); 
     fclose(fp);
@@ -3242,17 +3244,17 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
 {
     FILE *fp;
     gchar *msg, *savestuff;
-    windata_t *mydata = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
 # ifdef ENABLE_NLS
     gchar *trbuf;
 # endif
 
-    savestuff = textview_get_text(GTK_TEXT_VIEW(mydata->w));
+    savestuff = textview_get_text(GTK_TEXT_VIEW(vwin->w));
 
     if (savestuff == NULL) return;
 
-    if ((fp = gretl_fopen(mydata->fname, "w")) == NULL) {
-	msg = g_strdup_printf(_("Couldn't write to %s"), mydata->fname);
+    if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
+	msg = g_strdup_printf(_("Couldn't write to %s"), vwin->fname);
 	errbox(msg); 
 	g_free(msg);
 	g_free(savestuff);
@@ -3324,11 +3326,11 @@ static char *add_pause_to_plotfile (const char *fname)
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 {
     gchar *buf = NULL;
-    windata_t *mydata = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
 
     auto_save_gp(data, 1, NULL);
 
-    buf = g_strdup_printf("gnuplot -persist \"%s\"", mydata->fname);
+    buf = g_strdup_printf("gnuplot -persist \"%s\"", vwin->fname);
 
     if (system(buf)) {
         errbox(_("gnuplot command failed"));
@@ -3342,7 +3344,7 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 {
     gchar *buf = NULL;
-    windata_t *mydata = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
     int err = 0;
 # ifdef G_OS_WIN32
     gchar *tmpfile;
@@ -3351,7 +3353,7 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
     auto_save_gp(data, 1, NULL);
 
 # ifdef G_OS_WIN32
-    tmpfile = add_pause_to_plotfile(mydata->fname);
+    tmpfile = add_pause_to_plotfile(vwin->fname);
     if (tmpfile != NULL) {
 	buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, tmpfile);
 	err = (WinExec(buf, SW_SHOWNORMAL) < 32);
@@ -3361,7 +3363,7 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 	err = 1;
     }
 # else
-    buf = g_strdup_printf("gnuplot -persist \"%s\"", mydata->fname);
+    buf = g_strdup_printf("gnuplot -persist \"%s\"", vwin->fname);
     err = gretl_spawn(buf);
 # endif
 

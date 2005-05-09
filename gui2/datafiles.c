@@ -91,13 +91,14 @@ static char *full_path (char *s1, const char *s2);
 
 static char *unslash (const char *s)
 {
-    size_t n = strlen(s);
-    char *dest = malloc(n + 1);
+    char *dest = g_strdup(s);
 
-    if (dest != NULL) strcpy(dest, s);
+    if (dest != NULL) {
+	size_t n = strlen(dest);
 
-    if (dest[n-1] == '\\' || dest[n-1] == '/') {
-	dest[n-1] = '\0';
+	if (dest[n-1] == '\\' || dest[n-1] == '/') {
+	    dest[n-1] = '\0';
+	}
     }
 
     return dest;
@@ -151,30 +152,32 @@ static int get_title_from_descfile (file_collection *coll)
     FILE *fp;
     char *test;
     char line[64], title[24];
-    int err = 1;
+    int err = 0;
 
     test = full_path(coll->path, coll->descfile);
 
     fp = gretl_fopen(test, "r");
 
-    if (fp == NULL) return err;
+    if (fp == NULL) {
+	err = 1;
+    } else if (fgets(line, sizeof line, fp) == NULL) {
+	err = 1;
+    } else {
+	chopstr(line);
 
-    if (fgets(line, sizeof line, fp) == NULL) {
-	fclose(fp);
-	return err;
-    }
-
-    chopstr(line);
-    
-    if (sscanf(line, "# %23[^:]", title) == 1) {
-	coll->title = malloc(strlen(title) + 1);
-	if (coll->title != NULL) {
-	    strcpy(coll->title, title);
-	    err = 0;
+	if (sscanf(line, "# %23[^:]", title) != 1) {
+	    err = 1;
+	} else {
+	    coll->title = g_strdup(title);
+	    if (coll->title == NULL) {
+		err = 1;
+	    }
 	}
     } 
 
-    fclose(fp);
+    if (fp != NULL) {
+	fclose(fp);
+    }
 
     return err;
 }
@@ -381,12 +384,14 @@ static int test_dir_for_file_collections (const char *dname, DIR *dir)
 
 static int dont_go_there (const char *s)
 {
+    int ret = 0;
+
     if (!strcmp(s, "..") || strstr(s, ".inp") || strstr(s, ".gdt") || 
 	strstr(s, ".gretl") || strstr(s, ".hdr")) {
-	return 1;
+	ret = 1;
     }
 
-    return 0;
+    return ret;
 }
 
 static int seek_file_collections (const char *topdir)
@@ -492,8 +497,6 @@ static int build_file_collections (void)
     return err;
 }
 
-/* ........................................................... */
-
 char *strip_extension (char *s)
 {
     char *p = strrchr(s, '.');
@@ -596,8 +599,6 @@ static int read_file_descriptions (windata_t *win, gpointer p)
     return 0;
 }
 
-/* ........................................................... */
-
 static void display_datafile_info (GtkWidget *w, gpointer data)
 {
     char hdrname[MAXLEN];
@@ -634,8 +635,6 @@ static void display_datafile_info (GtkWidget *w, gpointer data)
     }
 }
 
-/* ........................................................... */
-
 void browser_open_data (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -662,8 +661,6 @@ void browser_open_data (GtkWidget *w, gpointer data)
 
     verify_open_data(vwin, OPEN_DATA);
 } 
-
-/* ........................................................... */
 
 void browser_open_ps (GtkWidget *w, gpointer data)
 {
@@ -698,16 +695,14 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-static void set_browser_status (windata_t *fdata, int status)
+static void set_browser_status (windata_t *vwin, int status)
 {
     if (status == BROWSER_BUSY) {
-	browsers[fdata->role - TEXTBOOK_DATA] = fdata->w;
+	browsers[vwin->role - TEXTBOOK_DATA] = vwin->w;
     } else {
-	browsers[fdata->role - TEXTBOOK_DATA] = NULL;
+	browsers[vwin->role - TEXTBOOK_DATA] = NULL;
     }
 } 
-
-/* ........................................................... */
 
 static void free_browser (GtkWidget *w, gpointer data)
 {
@@ -716,8 +711,6 @@ static void free_browser (GtkWidget *w, gpointer data)
     set_browser_status(vwin, BROWSER_OK);
     free_windata(NULL, data);
 }
-
-/* ........................................................... */
 
 static gpointer get_browser_ptr (int role)
 {
@@ -749,6 +742,7 @@ static void get_local_status (char *fname, char *status, time_t remtime)
 	    strcpy(status, _("Unknown: access error"));
 	}
     }
+
     if (!err) {
 	if (difftime(remtime, fbuf.st_ctime) > 360) {
 	    strcpy(status, _("Not up to date"));
@@ -788,6 +782,7 @@ static int parse_db_list_line (char *line, char *fname, time_t *date)
     mytime.tm_year = yr - 1900;
     mytime.tm_mday = day;
     mytime.tm_mon = 0;
+
     for (i=0; i<12; i++) {
 	if (strcmp(mon, months[i]) == 0) {
 	    mytime.tm_mon = i;
@@ -795,6 +790,7 @@ static int parse_db_list_line (char *line, char *fname, time_t *date)
     }
 
     *date = mktime(&mytime);
+
     return 0;
 }
 
@@ -884,101 +880,99 @@ static gint populate_remote_db_list (windata_t *win)
     return 0;
 }
 
-/* ........................................................... */
-
-static void build_datafiles_popup (windata_t *win)
+static void build_datafiles_popup (windata_t *vwin)
 {
-    if (win->popup != NULL) {
-	/* already done */
-	return;
+    if (vwin->popup == NULL) {
+	vwin->popup = gtk_menu_new();
+
+	add_popup_item(_("Info"), vwin->popup, 
+		       G_CALLBACK(display_datafile_info), 
+		       vwin);
+
+	add_popup_item(_("Open"), vwin->popup, 
+		       G_CALLBACK(browser_open_data), 
+		       vwin);
     }
-
-    win->popup = gtk_menu_new();
-
-    add_popup_item(_("Info"), win->popup, 
-		   G_CALLBACK(display_datafile_info), 
-		   win);
-
-    add_popup_item(_("Open"), win->popup, 
-		   G_CALLBACK(browser_open_data), 
-		   win);
 }
 
-/* ........................................................... */
-
-int browser_busy (guint code)
+static int browser_busy (guint code)
 {
+    int ret = 0;
+
     if (code >= TEXTBOOK_DATA && code <= REMOTE_DB) {
 	GtkWidget *w;
 
 	w = browsers[code - TEXTBOOK_DATA];
 	if (w != NULL) {
 	    gdk_window_raise(w->window);
-	    return 1;
+	    ret = 1;
 	}
     }
 
-    return 0;
+    return ret;
 }
-
-/* ........................................................... */
 
 void display_files (gpointer data, guint code, GtkWidget *widget)
 {
-    GtkWidget *filebox, *openbutton, *midbutton, *closebutton;
+    GtkWidget *filebox, *button;
     GtkWidget *main_vbox, *button_box;
-    windata_t *fdata;
-    int err = 0;
+    windata_t *vwin;
     void (*browse_func)() = NULL;
+    int err = 0;
 
-    if (browser_busy(code)) return;
+    if (browser_busy(code)) {
+	return;
+    }
 
-    fdata = mymalloc(sizeof *fdata);
-    if (fdata == NULL) return;
+    vwin = mymalloc(sizeof *vwin);
+    if (vwin == NULL) {
+	return;
+    }
 
-    windata_init(fdata);
+    windata_init(vwin);
 
-    fdata->role = code;
-    fdata->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    g_signal_connect (G_OBJECT (fdata->w), "destroy",
-		      G_CALLBACK (free_browser),
-		      fdata);
+    vwin->role = code;
+    vwin->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
-    set_browser_status(fdata, BROWSER_BUSY);
+    g_signal_connect(G_OBJECT(vwin->w), "destroy",
+		     G_CALLBACK(free_browser),
+		     vwin);
+
+    set_browser_status(vwin, BROWSER_BUSY);
 
     switch (code) {
     case PS_FILES:
-	gtk_window_set_title(GTK_WINDOW(fdata->w), 
+	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: practice files"));
 	browse_func = browser_open_ps;
 	break;
     case TEXTBOOK_DATA:
-	gtk_window_set_title(GTK_WINDOW(fdata->w), 
+	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: data files"));
 	browse_func = browser_open_data;
 	break;
     case NATIVE_DB:
     case RATS_DB:
-	gtk_window_set_title(GTK_WINDOW(fdata->w), 
+	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: database files"));
 	browse_func = open_db_list;
 	break;
     case REMOTE_DB:
-	gtk_window_set_title(GTK_WINDOW(fdata->w), 
+	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: databases on server"));
 	browse_func = open_remote_db_list;
 	break;
     }
 
     /* set up grids */
-    main_vbox = gtk_vbox_new (FALSE, 5);
-    gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 10);
-    gtk_container_add (GTK_CONTAINER (fdata->w), main_vbox);
+    main_vbox = gtk_vbox_new(FALSE, 5);
+    gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 10);
+    gtk_container_add(GTK_CONTAINER(vwin->w), main_vbox);
 
     if (code == TEXTBOOK_DATA || code == PS_FILES) {
-	filebox = files_notebook(fdata, code);
+	filebox = files_notebook(vwin, code);
     } else {
-	filebox = files_window(fdata);
+	filebox = files_window(vwin);
     }
 
     gtk_box_pack_start(GTK_BOX(main_vbox), filebox, TRUE, TRUE, 0);
@@ -987,12 +981,12 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 	file_collection *coll;
 
 	/* crate popup menu */
-	build_datafiles_popup(fdata);
+	build_datafiles_popup(vwin);
 
 	while ((coll = pop_data_collection())) {
-	    g_signal_connect (G_OBJECT(coll->page), "button_press_event",
-			      G_CALLBACK(popup_menu_handler), 
-			      (gpointer) fdata->popup);
+	    g_signal_connect(G_OBJECT(coll->page), "button_press_event",
+			     G_CALLBACK(popup_menu_handler), 
+			     vwin->popup);
 	}
 	reset_data_stack();
     } else if (code == REMOTE_DB) {
@@ -1000,82 +994,78 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 
 	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(main_vbox), hbox, FALSE, FALSE, 0);
-	fdata->status = gtk_label_new(_("Network status: OK"));
-	gtk_label_set_justify(GTK_LABEL(fdata->status), GTK_JUSTIFY_LEFT);
-	gtk_box_pack_start(GTK_BOX(hbox), fdata->status, FALSE, FALSE, 0);
+	vwin->status = gtk_label_new(_("Network status: OK"));
+	gtk_label_set_justify(GTK_LABEL(vwin->status), GTK_JUSTIFY_LEFT);
+	gtk_box_pack_start(GTK_BOX(hbox), vwin->status, FALSE, FALSE, 0);
     }
 
-    button_box = gtk_hbox_new (FALSE, 5);
-    gtk_box_set_homogeneous (GTK_BOX (button_box), TRUE);
-    gtk_box_pack_start (GTK_BOX (main_vbox), button_box, FALSE, FALSE, 0);
+    button_box = gtk_hbox_new(FALSE, 5);
+    gtk_box_set_homogeneous(GTK_BOX(button_box), TRUE);
+    gtk_box_pack_start(GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
 
-    openbutton = gtk_button_new_with_label 
+    button = gtk_button_new_with_label 
 	((code == REMOTE_DB)? _("Get series listing") : _("Open"));
-    gtk_box_pack_start (GTK_BOX (button_box), openbutton, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 
-    g_signal_connect(G_OBJECT(openbutton), "clicked",
-		     G_CALLBACK(browse_func), fdata);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(browse_func), vwin);
 
     if (code != NATIVE_DB && code != RATS_DB && code != REMOTE_DB) {
-       	g_signal_connect(G_OBJECT(openbutton), "clicked", 
-			 G_CALLBACK(delete_widget), fdata->w); 
+       	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(delete_widget), vwin->w); 
     }
 
     if (code == TEXTBOOK_DATA || code == REMOTE_DB) {
-	midbutton = gtk_button_new_with_label 
+	button = gtk_button_new_with_label 
 	    ((code == REMOTE_DB)? _("Install") : _("Info"));
-	gtk_box_pack_start (GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
-	g_signal_connect(G_OBJECT(midbutton), "clicked",
+	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
+	g_signal_connect(G_OBJECT(button), "clicked",
 			 (code == REMOTE_DB)?
 			 G_CALLBACK(grab_remote_db) :
-			 G_CALLBACK(display_datafile_info), fdata);
+			 G_CALLBACK(display_datafile_info), vwin);
     }
 
     if (code == TEXTBOOK_DATA) {
-	midbutton = gtk_button_new_with_label(_("Find"));
-	gtk_box_pack_start(GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
-	g_signal_connect(G_OBJECT(midbutton), "clicked",
-			 G_CALLBACK(datafile_find), fdata);
+	button = gtk_button_new_with_label(_("Find"));
+	gtk_box_pack_start(GTK_BOX (button_box), button, FALSE, TRUE, 0);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(datafile_find), vwin);
     }
 
-    closebutton = gtk_button_new_with_label(_("Close"));
-    gtk_box_pack_start (GTK_BOX (button_box), closebutton, FALSE, TRUE, 0);
-    g_signal_connect(G_OBJECT(closebutton), "clicked",
-		     G_CALLBACK(delete_widget), fdata->w);
+    button = gtk_button_new_with_label(_("Close"));
+    gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(delete_widget), vwin->w);
 
     /* put stuff into list box(es) */
     if (code == TEXTBOOK_DATA || code == PS_FILES) {
-	err = populate_notebook_filelists(fdata, filebox, code);
+	err = populate_notebook_filelists(vwin, filebox, code);
     } else {
-	err = populate_filelist(fdata, NULL);
+	err = populate_filelist(vwin, NULL);
     }
 
     if (err) {
 	errbox(_("Couldn't open database"));
-	gtk_widget_destroy(fdata->w);
+	gtk_widget_destroy(vwin->w);
     } else {
-	gtk_widget_show_all(fdata->w); 
+	gtk_widget_show_all(vwin->w); 
     }
 }
 
-/* ........................................................... */
-
-gint populate_filelist (windata_t *fdata, gpointer p)
+gint populate_filelist (windata_t *vwin, gpointer p)
 {
-    if (fdata->role == NATIVE_DB || fdata->role == RATS_DB) {
-	return populate_dbfilelist(fdata);
-    } else if (fdata->role == REMOTE_DB) {
-	return populate_remote_db_list(fdata);
+    if (vwin->role == NATIVE_DB || vwin->role == RATS_DB) {
+	return populate_dbfilelist(vwin);
+    } else if (vwin->role == REMOTE_DB) {
+	return populate_remote_db_list(vwin);
     } else {
-	return read_file_descriptions(fdata, p);
+	return read_file_descriptions(vwin, p);
     }
 }
-
-/* ......................................................... */
 
 #ifndef OLD_GTK
 
-static GtkWidget *files_window (windata_t *fdata) 
+static GtkWidget *files_window (windata_t *vwin) 
 {
     const char *data_titles[] = {
 	_("File"), 
@@ -1090,10 +1080,11 @@ static GtkWidget *files_window (windata_t *fdata)
 	_("Database"), 
 	_("Source")
     };
-    const char *remote_titles[] =
-	{_("Database"), 
-	 _("Source"), 
-	 _("Local status")};
+    const char *remote_titles[] = {
+	_("Database"), 
+	_("Source"), 
+	_("Local status")
+    };
 
     const char **titles = data_titles;
 
@@ -1103,7 +1094,7 @@ static GtkWidget *files_window (windata_t *fdata)
     GtkWidget *box;
     int cols = 2;
 
-    switch (fdata->role) {
+    switch (vwin->role) {
     case NATIVE_DB:
 	titles = db_titles;
 	hidden_col = 1;
@@ -1131,13 +1122,13 @@ static GtkWidget *files_window (windata_t *fdata)
     full_width *= gui_scale;
     file_height *= gui_scale;
 
-    box = gtk_vbox_new (FALSE, 0);
-    gtk_widget_set_size_request (box, full_width, file_height);
+    box = gtk_vbox_new(FALSE, 0);
+    gtk_widget_set_size_request(box, full_width, file_height);
 
-    fdata->listbox = list_box_create (fdata, GTK_BOX(box), cols, 
-				      hidden_col, titles);
+    vwin->listbox = list_box_create(vwin, GTK_BOX(box), cols, 
+				    hidden_col, titles);
 
-    gtk_widget_show (box);
+    gtk_widget_show(box);
 
     return box;
 }
@@ -1245,39 +1236,35 @@ static GtkWidget *files_window (windata_t *fdata)
 
 static void 
 switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
-			   guint page_num, windata_t *fdata)
+			   guint page_num, windata_t *vwin)
 {
-    char winnum[3];
-    gpointer p;
+    gpointer p = g_object_get_data(G_OBJECT(notebook), "browse_ptr");
 
-    p = g_object_get_data(G_OBJECT(notebook), "browse_ptr");
-
-    if (p == NULL) {
-	return;
-    } else {
+    if (p != NULL) {
 	GtkWidget *w = *(GtkWidget **) p;
 
-	if (w == NULL) return;
+	if (w != NULL) {
+	    char wnum[4];
+
+	    sprintf(wnum, "%d", (int) page_num);
+	    vwin->listbox = g_object_get_data(G_OBJECT(notebook), wnum);
+	}
     }
-
-    sprintf(winnum, "%d", (int) page_num);
-
-    fdata->listbox = g_object_get_data(G_OBJECT(notebook), winnum);
 }
 
-/* below: Construct a set of notebook pages for either
-   data files (Ramanathan, Wooldridge, etc.) or practice
-   scripts.  Creates the pages but does not yet fill them out.
+/* below: Construct a set of notebook pages for either data files
+   (Ramanathan, Wooldridge, etc.) or practice scripts.  Creates the
+   pages but does not yet fill them out.
 */
 
-static GtkWidget *files_notebook (windata_t *fdata, int code)
+static GtkWidget *files_notebook (windata_t *vwin, int code)
 {
     GtkWidget *notebook;
     GtkWidget *listpage;
     GtkWidget *label;
-    int j;
-    char winnum[3];
+    char wnum[4];
     file_collection *coll;
+    int j;
 
     if (code != TEXTBOOK_DATA && code != PS_FILES) {
 	return NULL;
@@ -1288,6 +1275,7 @@ static GtkWidget *files_notebook (windata_t *fdata, int code)
     notebook = gtk_notebook_new();
 
     j = 0;
+
     while (1) {
 	if (code == TEXTBOOK_DATA) {
 	    coll = pop_data_collection();
@@ -1297,13 +1285,13 @@ static GtkWidget *files_notebook (windata_t *fdata, int code)
 
 	if (coll == NULL) break;
 
-	listpage = files_window(fdata);
+	listpage = files_window(vwin);
 	label = gtk_label_new(coll->title);
 	gtk_widget_show(label);
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), listpage, label);
-	coll->page = fdata->listbox;
-	sprintf(winnum, "%d", j);
-	g_object_set_data(G_OBJECT(notebook), winnum, coll->page);
+	coll->page = vwin->listbox;
+	sprintf(wnum, "%d", j);
+	g_object_set_data(G_OBJECT(notebook), wnum, coll->page);
 	g_object_set_data(G_OBJECT(coll->page), "coll", coll);
 	j++;
     }
@@ -1315,10 +1303,10 @@ static GtkWidget *files_notebook (windata_t *fdata, int code)
     }
 
     g_object_set_data(G_OBJECT(GTK_NOTEBOOK(notebook)), "browse_ptr",
-		      get_browser_ptr(fdata->role));
+		      get_browser_ptr(vwin->role));
     g_signal_connect(G_OBJECT(GTK_NOTEBOOK(notebook)), "switch-page",
 		     G_CALLBACK(switch_file_page_callback),
-		     fdata);
+		     vwin);
 
     gtk_widget_show(notebook);
 
@@ -1329,7 +1317,7 @@ static GtkWidget *files_notebook (windata_t *fdata, int code)
    or scripts files), entering the details into the page.
 */
 
-static int populate_notebook_filelists (windata_t *win, 
+static int populate_notebook_filelists (windata_t *vwin, 
 					GtkWidget *notebook,
 					int code)
 {
@@ -1338,7 +1326,7 @@ static int populate_notebook_filelists (windata_t *win,
     int gotcol = 0;
     int j;
 
-    if (win == NULL) {
+    if (vwin == NULL) {
 	return 1;
     }
 
@@ -1355,8 +1343,8 @@ static int populate_notebook_filelists (windata_t *win,
 	    break;
 	}
 
-	win->listbox = coll->page;
-	populate_filelist(win, coll);
+	vwin->listbox = coll->page;
+	populate_filelist(vwin, coll);
     }
 
     if (!gotcol) {
@@ -1375,7 +1363,9 @@ static int populate_notebook_filelists (windata_t *win,
 	title = get_datapage();
 	if (*title != '\0') {
 	    while ((coll = pop_data_collection())) {
-		if (!strcmp(coll->title, title)) break;
+		if (!strcmp(coll->title, title)) {
+		    break;
+		}
 		j++;
 	    }
 	} else {
@@ -1385,7 +1375,9 @@ static int populate_notebook_filelists (windata_t *win,
 	title = get_scriptpage();
 	if (*title != '\0') {
 	    while ((coll = pop_ps_collection())) {
-		if (!strcmp(coll->title, title)) break;
+		if (!strcmp(coll->title, title)) {
+		    break;
+		}
 		j++;
 	    }
 	} else {
@@ -1393,7 +1385,7 @@ static int populate_notebook_filelists (windata_t *win,
 	}
     }
 
-    win->listbox = coll->page;
+    vwin->listbox = coll->page;
 
     if (code == TEXTBOOK_DATA) {
 	reset_data_stack();
@@ -1403,7 +1395,7 @@ static int populate_notebook_filelists (windata_t *win,
 
     gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), j);
 
-    gtk_widget_grab_focus(win->listbox);
+    gtk_widget_grab_focus(vwin->listbox);
 
     return 0;
 } 
