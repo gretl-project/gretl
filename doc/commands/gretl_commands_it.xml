@@ -2703,22 +2703,25 @@
   <command name="lags" section="Transformations" context="cli">
 
     <usage>
-      <arguments>
-        <argument>lista-variabili</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>lags</lit> <repl>lista-variabili</repl></altform>
+       <altform><lit>lags</lit> <repl>ordine</repl> <lit>;</lit> <repl>lista-variabili</repl></altform>
+      </altforms>
+      <examples>
+       <example>lags x y</example>
+       <example>lags 12 ; x y</example>
+      </examples>
     </usage>
 
     <description>
       <para>
 	Crea delle nuove variabili come valori ritardati di ognuna delle
-	variabili nella <repl>lista-variabili</repl>. Il numero delle
-        variabili create è pari alla periodicità del dataset.
-	Ad esempio, se la periodicità è 4 (trimestrale), il comando
-        <cmd>lags x y</cmd> crea <lit>x_1</lit> = <lit>x(t-1)</lit>,
-        <lit>x_2</lit> = <lit>x(t-2)</lit>, <lit>x_3</lit> = <lit>x(t-3)</lit>
-        e <lit>x_4</lit> = <lit>x(t-4)</lit> e così via per <lit>y</lit>.
-	Queste variabili devono essere indicate nei comandi successivi
-        con il loro nome preciso, che contiene il trattino basso.
+	variabili nella <repl>lista-variabili</repl>. Il numero dei ritardi può
+        essere indicato dal primo parametro opzionale, altrimenti sarà pari
+        alla periodicità del dataset.  Ad esempio, se la periodicità è 4
+        (trimestrale), il comando <cmd>lags x y</cmd> crea <lit>x_1</lit> =
+        <lit>x(t-1)</lit>, <lit>x_2</lit> = <lit>x(t-2)</lit>, <lit>x_3</lit> =
+        <lit>x(t-3)</lit> e <lit>x_4</lit> = <lit>x(t-4)</lit>.
       </para>
     </description>
 
