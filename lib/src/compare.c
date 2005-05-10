@@ -647,7 +647,7 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * add_test:
  * @addvars: list of variables to add to original model.
  * @orig: pointer to original model.
- * @new: pointer to new (modified) model.
+ * @new: pointer to receive new model, with vars added.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @opt: can contain option flags (--quiet, --vcv).
@@ -743,7 +743,7 @@ int add_test (int *addvars, MODEL *orig, MODEL *new,
  * omit_test:
  * @omitvars: list of variables to omit from original model.
  * @orig: pointer to original model.
- * @new: pointer to new (modified) model.
+ * @new: pointer to receive new model, with vars omitted.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @opt: can contain option flags (--quiet, --vcv).
