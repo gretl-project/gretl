@@ -22,7 +22,7 @@
 
 typedef struct _gretl_equation_system gretl_equation_system;
 
-enum gretl_system_methods {
+typedef enum {
     SYS_SUR = 0,
     SYS_3SLS,
     SYS_FIML,
@@ -31,7 +31,7 @@ enum gretl_system_methods {
     SYS_TSLS,
     SYS_WLS,
     SYS_MAX
-};
+} gretl_system_methods;
 
 gretl_equation_system *system_start (const char *line);
 

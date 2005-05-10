@@ -208,7 +208,7 @@ static int spearman_rho (const double *x, const double *y, int n,
     *sd = xx;
 
     if (nn >= 20 && pval != NULL) {
-	*pval = normal(fabs(yy / xx)); 
+	*pval = normal_pvalue_1(fabs(yy / xx)); 
     } 
 
     /* save the ranks, if wanted */
@@ -498,7 +498,7 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
     mean = (1 + nn / 2.0);
     sd = sqrt((double) n - 1) / 2.0;
     z = fabs((runs - mean) / sd);
-    pval = 2.0 * normal(z);
+    pval = normal_pvalue_2(z);
 
     pprintf(prn, _("\nNumber of runs (R) in the variable '%s' = %d\n"), 
 	    pdinfo->varname[varno], runs);

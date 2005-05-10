@@ -1734,7 +1734,7 @@ static int auto_adjust_order (int *list, int order_max,
 
 	tstat = kmod.coeff[j] / kmod.sderr[j];
 	clear_model(&kmod);
-	pval = 2.0 * normal(tstat);
+	pval = normal_pvalue_2(tstat);
 
 	if (pval > 0.10) {
 #if ADF_DEBUG
@@ -2210,7 +2210,7 @@ has_time_trend (const int *varlist, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	tstat = tmod.coeff[0] / tmod.sderr[0];
-	if (tprob(tstat, tmod.dfd) < 0.05) {
+	if (t_pvalue_2(tstat, tmod.dfd) < 0.05) {
 	    trends = 1;
 	}
 

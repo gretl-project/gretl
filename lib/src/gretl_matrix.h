@@ -25,26 +25,46 @@
 
 /* #define LDEBUG 1 */
 
-enum gretl_matrix_errors {
+typedef enum {
     GRETL_MATRIX_OK = 0,
     GRETL_MATRIX_NOMEM,
     GRETL_MATRIX_NON_CONFORM,
     GRETL_MATRIX_RANGE,
     GRETL_MATRIX_SINGULAR,
     GRETL_MATRIX_ERR 
-};
+} GretlMatrixError;
 
-enum gretl_matrix_mods {
+typedef enum gretl_matrix_mods {
     GRETL_MOD_NONE = 0,
     GRETL_MOD_TRANSPOSE,
     GRETL_MOD_SQUARE
-};
+} GretlMatrixMod;
 
 typedef struct _gretl_matrix gretl_matrix;
 typedef struct _gretl_matrix gretl_vector;
 
+/**
+ * gretl_vector_alloc:
+ * @i: number of columns.
+ *
+ * Allocates a new #gretl_vector with %i columns.
+ */
 #define gretl_vector_alloc(i) gretl_matrix_alloc(1,(i))
+
+/**
+ * gretl_column_vector_alloc:
+ * @i: number of rows.
+ *
+ * Allocates a new column gretl_vector with @i rows.
+ */
 #define gretl_column_vector_alloc(i) gretl_matrix_alloc((i),1)
+
+/**
+ * gretl_vector_free:
+ * @v: %gretl_vector to free.
+ *
+ * Frees the vector @v and its associated storage.
+ */
 #define gretl_vector_free(v) gretl_matrix_free(v)
 
 gretl_matrix *gretl_matrix_alloc (int rows, int cols);
@@ -56,7 +76,7 @@ gretl_matrix *gretl_matrix_copy (const gretl_matrix *m);
 gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m);
 
 gretl_vector *gretl_column_vector_from_array (const double *x, 
-					      int n, int mod);
+					      int n, GretlMatrixMod mod);
 
 gretl_vector *gretl_data_series_to_vector (const double **Z, int varno, 
 					   int t1, int t2);
@@ -106,15 +126,15 @@ int gretl_square_matrix_transpose (gretl_matrix *m);
 
 int gretl_matrix_add_self_transpose (gretl_matrix *m);
 
-int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
-			       const gretl_matrix *b, int bflag,
+int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
+			       const gretl_matrix *b, GretlMatrixMod bmod,
 			       gretl_matrix *c);
 
 int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 			   gretl_matrix *c);
 
-double gretl_matrix_dot_product (const gretl_matrix *a, int aflag,
-				 const gretl_matrix *b, int bflag,
+double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
+				 const gretl_matrix *b, GretlMatrixMod bmod,
 				 int *err);
 
 gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a, 

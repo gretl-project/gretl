@@ -1823,12 +1823,12 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 	gretl_print_value (arinfo->rho[c], prn);
 	bufspace(2, prn);
 	gretl_print_value (arinfo->sderr[c], prn); 
-	pprintf(prn, " %7.3f ", xx, tprob(xx, dfd));
+	pprintf(prn, " %7.3f ", xx, t_pvalue_2(xx, dfd));
 	if (1) {
 	    char pvalstr[16];
 	    double pval;
 
-	    pval = tprob(xx, dfd);
+	    pval = t_pvalue_2(xx, dfd);
 	    print_pval_str(pval, pvalstr);
 	    pprintf(prn, "%*s\n", UTF_WIDTH(pvalstr, 12), pvalstr);
 	}
@@ -1851,7 +1851,7 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 		coeff,
 		sderr,
 		arinfo->rho[c] / arinfo->sderr[c],
-		tprob(xx, dfd));
+		t_pvalue_2(xx, dfd));
     }
 }
 

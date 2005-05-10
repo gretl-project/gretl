@@ -639,7 +639,7 @@ double doornik_chisq (double skew, double kurt, int n)
 /**
  * get_freq:
  * @varno: ID number of variable to process.
- * @pZ: pointer to data matrix
+ * @Z: data array.
  * @pdinfo: information on the data set.
  * @params: degrees of freedom loss (generally = 1 unless we're dealing
  * with the residual from a regression)
@@ -1014,11 +1014,10 @@ static char *corrgm_crit_string (void)
  * @batch: if = 1, use ASCII graphic rather than gnuplot graph.
  * @prn: gretl printing struct.
  *
- * Computes autocorrelation function and plots the correlogram for
- * the variable specified in @list.
+ * Computes the autocorrelation function and plots the correlogram for
+ * the variable specified by @varno.
  *
  * Returns: 0 on successful completion, error code on error.
- *
  */
 
 int corrgram (int varno, int order, double ***pZ, 
@@ -1288,7 +1287,7 @@ static int fract_int_GPH (int n, double *hhat, double *omega, PRN *prn)
 		_("Test for fractional integration"),
 		_("Estimated degree of integration"), -tmp.coeff[1], tmp.sderr[1],
 		_("test statistic"), tmp.dfd, tstat, 
-		_("with p-value"), tprob(tstat, tmp.dfd));
+		_("with p-value"), t_pvalue_2(tstat, tmp.dfd));
     } else {
 	err = tmp.errcode;
     }
@@ -1524,7 +1523,7 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
 	    _("Local Whittle Estimator"), T, m,
 	    _("Estimated degree of integration"), d, se,
 	    _("test statistic"), z, 
-	    _("with p-value"), gaussprob(z));    
+	    _("with p-value"), normal_pvalue_2(z));    
 
     gretl_matrix_free(X);
 
@@ -1540,7 +1539,8 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
  * @opt: if non-zero, use Bartlett lag window for periodogram.
  * @prn: gretl printing struct.
  *
- * Computes and displays the periodogram for the variable specified in @list.
+ * Computes and displays the periodogram for the variable specified 
+ * by @varno.
  *
  * Returns: 0 on successful completion, error code on error.
  *
@@ -2196,7 +2196,7 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
 /**
  * gretl_corrmx:
  * @list: gives the ID numbers of the variables to process.
- * @pZ: pointer to the data matrix.
+ * @Z: data array.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  *
@@ -2293,7 +2293,7 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     t = mdiff / se;
-    pval = tprob(t, df);
+    pval = t_pvalue_2(t, df);
 
     pprintf(prn, _("\nEquality of means test "
 	    "(assuming %s variances)\n\n"), (vardiff)? _("unequal") : _("equal"));

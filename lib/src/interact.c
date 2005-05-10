@@ -1470,10 +1470,10 @@ static int make_full_list (const DATAINFO *pdinfo, CMD *cmd)
 
 /**
  * parseopt:
- * @argv: command-line argument array
- * @argc: argument count
- * @fname: optional filename argument
- * @english: pointer to "force english" option
+ * @argv: command-line argument array.
+ * @argc: argument count.
+ * @fname: optional filename argument.
+ * @force_lang: pointer to store result of "force language" option.
  *
  * Returns: the gretl option code corresponding to the first "real"
  * option flag, or 0 if the option flag is not recognized.

@@ -1358,9 +1358,9 @@ int mle_aic_bic (MODEL *pmod, int addk)
 double coeff_pval (const MODEL *pmod, double x, int df)
 {
     if (0 && ML_ESTIMATOR(pmod->ci)) {
-	return gaussprob(x);
+	return normal_pvalue_2(x);
     } else {
-	return tprob(x, df);
+	return t_pvalue_2(x, df);
     }
 }
 

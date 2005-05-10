@@ -17,19 +17,20 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/* functions follow */
+#ifndef PVALUES_H
+#define PVALUES_H
 
 double x_factorial (double x);
 
-double gaussprob (double x);
+double normal_pvalue_2 (double x);
 
-double tprob (double x, int df);
+double normal_pvalue_1 (double x);
+
+double t_pvalue_2 (double x, int df);
 
 double fdist (double x, int dfn, int dfd);
 
 double chisq (double x, int df);
-
-double normal (double x);
 
 double normal_cdf (double x);
 
@@ -55,5 +56,7 @@ int print_critical (const char *line, PRN *prn);
 
 double genr_get_critical (const char *line, const double **Z, 
 			  const DATAINFO *pdinfo);
+
+#endif /* PVALUES_H */
 
 

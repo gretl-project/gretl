@@ -33,8 +33,6 @@ static void
 print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
 		      int c, PRN *prn);
 
-/* ........................................................ */
-  
 void bufspace (int n, PRN *prn)
 {
     while (n-- > 0) {
@@ -238,7 +236,7 @@ static void print_freq_test (const FREQDIST *freq, PRN *prn)
 		_("Chi-square"), freq->test, 
 		_("with p-value"), pval);
     } else if (freq->dist == GAMMA) {
-	pval = 2.0 * normal(fabs(freq->test));
+	pval = normal_pvalue_2(freq->test);
 	pprintf(prn, "\n%s:\n", 
 		_("Test for null hypothesis of gamma distribution"));
 	pprintf(prn, "z = %.3f %s %.5f\n", freq->test, 

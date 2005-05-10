@@ -1,144 +1,176 @@
-<!doctype book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
-<!ENTITY gretl-bhhh-max SYSTEM "sgml/bhhh_max.sgml">
-<!ENTITY gretl-calendar SYSTEM "sgml/calendar.sgml">
-<!ENTITY gretl-compare SYSTEM "sgml/compare.sgml">
-<!ENTITY gretl-dataio SYSTEM "sgml/dataio.sgml">
-<!ENTITY gretl-dbread SYSTEM "sgml/dbread.sgml">
-<!ENTITY gretl-describe SYSTEM "sgml/describe.sgml">
-<!ENTITY gretl-discrete SYSTEM "sgml/discrete.sgml">
-<!ENTITY gretl-estimate SYSTEM "sgml/estimate.sgml">
-<!ENTITY gretl-generate SYSTEM "sgml/generate.sgml">
-<!ENTITY gretl-graphing SYSTEM "sgml/graphing.sgml">
-<!ENTITY gretl-gretl-commands SYSTEM "sgml/gretl_commands.sgml">
-<!ENTITY gretl-gretl-errors SYSTEM "sgml/gretl_errors.sgml">
-<!ENTITY gretl-gretl-matrix SYSTEM "sgml/gretl_matrix.sgml">
-<!ENTITY gretl-gretl-model SYSTEM "sgml/gretl_model.sgml">
-<!ENTITY gretl-gretl-paths SYSTEM "sgml/gretl_paths.sgml">
-<!ENTITY gretl-gretl-string-table SYSTEM "sgml/gretl_string_table.sgml">
-<!ENTITY gretl-gretl-utils SYSTEM "sgml/gretl_utils.sgml">
-<!ENTITY gretl-gretl-win32 SYSTEM "sgml/gretl_win32.sgml">
-<!ENTITY gretl-interact SYSTEM "sgml/interact.sgml">
-<!ENTITY gretl-libgretl SYSTEM "sgml/libgretl.sgml">
-<!ENTITY gretl-libset SYSTEM "sgml/libset.sgml">
-<!ENTITY gretl-modelprint SYSTEM "sgml/modelprint.sgml">
-<!ENTITY gretl-monte-carlo SYSTEM "sgml/monte_carlo.sgml">
-<!ENTITY gretl-nonparam SYSTEM "sgml/nonparam.sgml">
-<!ENTITY gretl-options SYSTEM "sgml/options.sgml">
-<!ENTITY gretl-plugins SYSTEM "sgml/plugins.sgml">
-<!ENTITY gretl-printout SYSTEM "sgml/printout.sgml">
-<!ENTITY gretl-pvalues SYSTEM "sgml/pvalues.sgml">
-<!ENTITY gretl-qr-estimate SYSTEM "sgml/qr_estimate.sgml">
-<!ENTITY gretl-random SYSTEM "sgml/random.sgml">
-<!ENTITY gretl-strutils SYSTEM "sgml/strutils.sgml">
-<!ENTITY gretl-subsample SYSTEM "sgml/subsample.sgml">
-<!ENTITY gretl-system SYSTEM "sgml/system.sgml">
-<!ENTITY gretl-texprint SYSTEM "sgml/texprint.sgml">
-<!ENTITY gretl-var SYSTEM "sgml/var.sgml">
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY bhhh-max SYSTEM "xml/bhhh_max.xml">
+<!ENTITY calendar SYSTEM "xml/calendar.xml">
+<!ENTITY compare  SYSTEM "xml/compare.xml">
+<!ENTITY compat   SYSTEM "xml/compat.xml">
+<!ENTITY dataio   SYSTEM "xml/dataio.xml">
+<!ENTITY dbread   SYSTEM "xml/dbread.xml">
+<!ENTITY describe SYSTEM "xml/describe.xml">
+<!ENTITY discrete SYSTEM "xml/discrete.xml">
+<!ENTITY estimate SYSTEM "xml/estimate.xml">
+<!ENTITY forecast SYSTEM "xml/forecast.xml">
+<!ENTITY generate SYSTEM "xml/generate.xml">
+<!ENTITY graphing SYSTEM "xml/graphing.xml">
+<!ENTITY gretl-commands SYSTEM "xml/gretl_commands.xml">
+<!ENTITY gretl-errors   SYSTEM "xml/gretl_errors.xml">
+<!ENTITY gretl-func     SYSTEM "xml/gretl_func.xml">
+<!ENTITY gretl-list     SYSTEM "xml/gretl_list.xml">
+<!ENTITY gretl-matrix   SYSTEM "xml/gretl_matrix.xml">
+<!ENTITY gretl-model    SYSTEM "xml/gretl_model.xml">
+<!ENTITY gretl-paths    SYSTEM "xml/gretl_paths.xml">
+<!ENTITY gretl-restrict SYSTEM "xml/gretl_restrict.xml">
+<!ENTITY gretl-string-table SYSTEM "xml/gretl_string_table.xml">
+<!ENTITY gretl-utils    SYSTEM "xml/gretl_utils.xml">
+<!ENTITY gretl-win32    SYSTEM "xml/gretl_win32.xml">
+<!ENTITY interact       SYSTEM "xml/interact.xml">
+<!ENTITY libgretl       SYSTEM "xml/libgretl.xml">
+<!ENTITY libset         SYSTEM "xml/libset.xml">
+<!ENTITY missing        SYSTEM "xml/missing.xml">
+<!ENTITY modelprint     SYSTEM "xml/modelprint.xml">
+<!ENTITY modelspec      SYSTEM "xml/modelspec.xml">
+<!ENTITY monte-carlo    SYSTEM "xml/monte_carlo.xml">
+<!ENTITY nls            SYSTEM "xml/nls.xml">
+<!ENTITY nonparam       SYSTEM "xml/nonparam.xml">
+<!ENTITY options        SYSTEM "xml/options.xml">
+<!ENTITY plugins        SYSTEM "xml/plugins.xml">
+<!ENTITY printout       SYSTEM "xml/printout.xml">
+<!ENTITY pvalues        SYSTEM "xml/pvalues.xml">
+<!ENTITY qr-estimate    SYSTEM "xml/qr_estimate.xml">
+<!ENTITY random         SYSTEM "xml/random.xml">
+<!ENTITY strutils       SYSTEM "xml/strutils.xml">
+<!ENTITY subsample      SYSTEM "xml/subsample.xml">
+<!ENTITY system         SYSTEM "xml/system.xml">
+<!ENTITY texprint       SYSTEM "xml/texprint.xml">
+<!ENTITY transforms     SYSTEM "xml/transforms.xml">
+<!ENTITY var            SYSTEM "xml/var.xml">
 ]>
+
 <book id="index">
+
   <bookinfo>
     <title>Libgretl Reference Manual</title>
-    <releaseinfo>for gretl 1.2.8</releaseinfo>
+    <releaseinfo>for gretl 1.3.4</releaseinfo>
   </bookinfo>
   
-  <chapter id="gretl">
+  <chapter id="ch-overview">
     <title>Gretl Overview</title>
 
     <para>Gretl stands for Gnu Regression, Econometrics and
       Time-Series Library.  The libgretl library is free software
       released under the GNU General Public License.  This document
       describes the libgretl API. It is at an early stage, and is
-      incomplete.</para>
+      incomplete.
+    </para>
+
   </chapter>
 
-  <chapter id="datastuff">
+  <chapter id="ch-dataset">
     <title>Data input and output</title>
-    &gretl-dataio;  
-    &gretl-dbread; 
-    &gretl-gretl-string-table;  
+    &dataio;  
+    &dbread; 
+    &gretl-string-table;  
   </chapter>
 
-  <chapter id="estimation">
+  <chapter id="ch-estimation">
     <title>Estimation</title>    
-    &gretl-estimate;
-    &gretl-discrete;   
-    &gretl-nonparam; 
-    &gretl-gretl-model;
-    &gretl-system;   
-    &gretl-var;   
-    &gretl-bhhh-max;
+    &estimate;
+    &discrete;   
+    &nonparam; 
+    &gretl-model;
+    &modelspec;
+    &system;   
+    &var;   
+    &bhhh-max;
   </chapter>
 
-  <chapter id="tests">
+  <chapter id="ch-tests">
     <title>Descriptive statistics and tests</title> 
-    &gretl-describe; 
-    &gretl-compare;
+    &describe; 
+    &compare;
+    &gretl-restrict;
   </chapter>
 
-  <chapter id="data-manipulation">
+  <chapter id="ch-data-manipulation">
     <title>Working with the data set</title>
-    &gretl-calendar;   
-    &gretl-generate;
-    &gretl-subsample;
+    &calendar;   
+    &generate;
+    &subsample;
   </chapter>
 
-  <chapter id="printing">
+  <chapter id="ch-missing-values">
+    <title>Handling missing data values</title>
+    &missing;   
+  </chapter>
+
+  <chapter id="ch-printing">
     <title>Printing</title>
-    &gretl-printout;  
-    &gretl-modelprint;
-    &gretl-texprint;
+    &printout;  
+    &modelprint;
+    &texprint;
   </chapter>
 
   <chapter id="ch-graphing">
     <title>Graphing and plotting</title>
-    &gretl-graphing;   
+    &graphing;   
   </chapter>
 
-  <chapter id="ch-gretl-matrix">
+  <chapter id="ch-list">
+    <title>Manipulating lists of variables</title>
+    &gretl-list;   
+  </chapter>
+
+  <chapter id="ch-matrix">
     <title>Matrix manipulation</title>
-    &gretl-gretl-matrix;   
+    &gretl-matrix;   
   </chapter>
 
-  <chapter id="ch-gretl-paths">
+  <chapter id="ch-func">
+    <title>Support for user-defined functions</title>
+    &gretl-func;   
+  </chapter>
+
+  <chapter id="ch-paths">
     <title>Handling paths</title>
-    &gretl-gretl-paths;   
+    &gretl-paths;   
   </chapter>
 
   <chapter id="ch-interact">
     <title>User interaction, options and errors</title>
-    &gretl-gretl-commands; 
-    &gretl-interact;   
-    &gretl-libset;
-    &gretl-options;
-    &gretl-gretl-errors; 
+    &gretl-commands; 
+    &interact;   
+    &libset;
+    &options;
+    &gretl-errors; 
   </chapter>
 
   <chapter id="ch-libgretl">
     <title>Main definitions and structs</title>
-    &gretl-libgretl;   
+    &libgretl;   
   </chapter>
 
   <chapter id="ch-monte-carlo">
     <title>Simulation and loops</title>
-    &gretl-monte-carlo; 
-    &gretl-random; 
+    &monte-carlo; 
+    &random; 
   </chapter>
 
   <chapter id="ch-plugins">
     <title>Driver for gretl plugins</title>
-    &gretl-plugins;   
+    &plugins;   
   </chapter>
 
   <chapter id="ch-pvalues">
     <title>P-values, probability distributions, etc.</title>
-    &gretl-pvalues;   
+    &pvalues;   
   </chapter>
 
   <chapter id="utils">
     <title>Utilities</title>
-    &gretl-gretl-utils;
-    &gretl-strutils; 
-    &gretl-gretl-win32;
+    &gretl-utils;
+    &strutils; 
+    &gretl-win32;
   </chapter>
 
 </book>

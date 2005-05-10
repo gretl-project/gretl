@@ -172,7 +172,7 @@ static void print_panel_coeff (const MODEL *pmod,
     char pvstr[18];
 
     sprintf(errstr, "(%.5g)", pmod->sderr[i]);
-    sprintf(pvstr, "[%.5f]", tprob(tstat, pmod->dfd));
+    sprintf(pvstr, "[%.5f]", t_pvalue_2(tstat, pmod->dfd));
     pprintf(prn, "%*s: %14.5g %15s %15s\n", VNAMELEN, vname,
 	    pmod->coeff[i], errstr, pvstr);
 }

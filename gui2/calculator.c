@@ -554,14 +554,13 @@ static void h_test (GtkWidget *w, gpointer data)
 	if (GTK_TOGGLE_BUTTON(test[i]->check)->active) {
 	    pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"), 
 		    x[0], x[2], sderr, ts);
-	    if (ts > 0) pv = normal(ts);
-	    else pv = normal(-ts);
-	    print_pv(prn, 2 * pv, pv);
+	    pv = normal_pvalue_2(ts);
+	    print_pv(prn, pv, pv / 2.0);
 	    if (grf) htest_graph(0, ts, 0, 0);
 	} else {
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"), n1-1,
 		    x[0], x[2], sderr, ts);
-	    pv = tprob(ts, n1 - 1);
+	    pv = t_pvalue_2(ts, n1 - 1);
 	    print_pv(prn, pv, 0.5 * pv);
 	    if (grf) htest_graph(1, ts, n1-1, 0);
 	}
@@ -612,11 +611,8 @@ static void h_test (GtkWidget *w, gpointer data)
 	pprintf(prn, _("Sample proportion = %g\n"), x[0]);
 	pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"), 
 		x[0], x[1], sderr, ts);
-	if (ts > 0)
-	    pv = normal(ts);
-	else
-	    pv = normal(-ts);
-	print_pv(prn, 2.0 * pv, pv);
+	pv = normal_pvalue_2(ts);
+	print_pv(prn, pv, pv / 2.0);
 	if (grf) htest_graph(0, ts, 0, 0);
 	break;
 
@@ -663,9 +659,9 @@ static void h_test (GtkWidget *w, gpointer data)
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"),
 		    n1+n2-2, x[0], x[2], sderr, ts);
 	    if (ts > 0) {
-		pv = tprob(ts, n1+n2-2);
+		pv = t_pvalue_2(ts, n1+n2-2);
 	    } else {
-		pv = tprob(-ts, n1+n2-2);
+		pv = t_pvalue_2(-ts, n1+n2-2);
 	    }
 	    print_pv(prn, pv, 0.5 * pv);
 	    if (grf) htest_graph(1, ts, n1+n2-2, 0);
@@ -680,12 +676,8 @@ static void h_test (GtkWidget *w, gpointer data)
 		pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"),
 			x[0], x[2], sderr, ts);
 	    }
-	    if (ts > 0) {
-		pv = normal(ts);
-	    } else {
-		pv = normal(-ts);
-	    }
-	    print_pv(prn, 2.0 * pv, pv);
+	    pv = normal_pvalue_2(ts);
+	    print_pv(prn, pv, pv / 2.0);
 	    if (grf) htest_graph(0, ts, 0, 0);
 	}
 	break;
@@ -743,11 +735,8 @@ static void h_test (GtkWidget *w, gpointer data)
 	ts = (x[0] - x[1]) / sderr;
 	pprintf(prn, _("Test statistic: z = (%g - %g) / %g = %g\n"),
 		x[0], x[1], sderr, ts);
-	if (ts > 0)
-	    pv = normal(ts);
-	else
-	    pv = normal(-ts);
-	print_pv(prn, 2.0 * pv, pv);
+	pv = normal_pvalue_2(ts);
+	print_pv(prn, pv, pv / 2.0);
 	if (grf) htest_graph(0, ts, 0, 0);
 	break;
 

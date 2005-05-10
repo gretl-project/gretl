@@ -1556,7 +1556,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	}
 
 	hct = (sqrt((double) (T-K)) * wbar) / sigma;
-	pval = tprob(hct, T-K-1);
+	pval = t_pvalue_2(hct, T-K-1);
 	pprintf(prn, _("\nHarvey-Collier t(%d) = %g with p-value %.4g\n\n"), 
 		T-K-1, hct, pval);
 

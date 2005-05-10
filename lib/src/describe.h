@@ -70,8 +70,8 @@ double gretl_corr (int t1, int t2, const double *x, const double *y);
 
 double gretl_corr_rsq (int t1, int t2, const double *x, const double *y);
 
-int gretl_moments (int t1, int t2, const double *zx, 
-		   double *xbar, double *std, 
+int gretl_moments (int t1, int t2, const double *x, 
+		   double *xbar, double *sd, 
 		   double *skew, double *kurt, int k);
 
 void free_freq (FREQDIST *freq);

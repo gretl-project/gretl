@@ -22,11 +22,11 @@
 
 #include "libgretl.h"
 
-enum model_selection_criteria {
+typedef enum {
     C_AIC,
     C_BIC,
     C_MAX
-};
+} model_selection_criteria;
 
 /**
  * dataset_is_time_series:

@@ -36,7 +36,7 @@
  *
  * Returns: 1 if the string is NULL, of length zero, or contains
  * nothing but space characters, otherwise returns 0.
- */
+ **/
 
 int string_is_blank (const char *s)
 {
@@ -59,10 +59,10 @@ int string_is_blank (const char *s)
  * dot_atof:
  * @s: the string to convert.
  *
- * Returns: the double-precision numeric interpretation of s,
+ * Returns: the double-precision numeric interpretation of @s,
  * where the decimal point character is forced to be '.', 
  * regardless of the current locale.
- */
+ **/
 
 double dot_atof (const char *s)
 {
@@ -413,9 +413,9 @@ void clear (char *str, int len)
 
 /**
  * count_fields:
- * @str: the string to process.
+ * @s: the string to process.
  *
- * Returns: the number of space-separated fields in @str.
+ * Returns: the number of space-separated fields in @s.
  *
  */
 

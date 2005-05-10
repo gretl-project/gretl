@@ -41,7 +41,6 @@ const char negval[] = N_("\nEnter x value (value < 0 will exit menu): ");
  * 
  * Returns: the factorial of int(x), cast to a double, or
  * NADBL on failure.
- *
  */
 
 double x_factorial (double x)
@@ -69,9 +68,8 @@ double x_factorial (double x)
  * tcrit95:
  * @df: degrees of freedom.
  * 
- * Returns: the 95 percent critical value for the t distribution
- * with @df degrees of freedom (two-sided)
- *
+ * Returns: the two-sided 95 percent critical value for the t 
+ * distribution with @df degrees of freedom.
  */
 
 double tcrit95 (int df)
@@ -83,9 +81,8 @@ double tcrit95 (int df)
  * rhocrit95:
  * @n: sample size.
  * 
- * Returns: the 95 percent critical value for the sample correlation
- * coefficient, sample size @n.
- *
+ * Returns: the two-sided 95 percent critical value for the sample
+ * correlation coefficient, sample size @n.
  */
 
 double rhocrit95 (int n)
@@ -96,38 +93,61 @@ double rhocrit95 (int n)
 }
 
 /**
- * gaussprob:
- * @x: the cutoff point in the distribution.
- * 
- * Returns: the probability that z is greater than @x
- * (two-sided, using absolute values).
+ * normal_pvalue_2:
+ * @x: double-precision value.
+ *
+ * Calculates the two-sided p-value for @x in relation to the
+ * standard normal distribution.
+ *
+ * Returns: 2 times (1 minus the value of the standard normal
+ * CDF evaluated at abs(@x)).
  */
 
-double gaussprob (double x)
+double normal_pvalue_2 (double x)
 {
     return 2.0 * (1.0 - ndtr(fabs(x)));
 }
 
 /**
- * tprob:
+ * normal_pvalue_1:
+ * @x: double-precision value.
+ * 
+ * Calculates the one-sided p-value for @x in relation to the
+ * standard normal distribution (that is, the probability that a 
+ * random variable distributed as N(0, 1) is greater than @x).
+ *
+ * Returns: 1 minus the value of the standard normal CDF
+ * evaluated at @x.
+ */
+
+double normal_pvalue_1 (double x)
+{
+    return 1.0 - ndtr(x);
+}
+
+/**
+ * t_pvalue_2:
  * @x: the cutoff point in the distribution.
  * @df: degrees of freedom.
  * 
  * Returns: the probability that t(@df) is greater than @x
- * (two-sided, using absolute values).
+ * (two-sided, using the absolute value of @x).
  */
 
-double tprob (double x, int df)
+double t_pvalue_2 (double x, int df)
 {
-    if (df <= 0) {
-	return -1.0;
-    } else {
-	double s = stdtr(df, fabs(x));
-	double ret = 2.0 * (1.0 - s);
+    double ret = -1.0;
 
-	if (ret < 0.0) ret = 0.0;
-	return ret;
+    if (df > 0) {
+	double s = stdtr(df, fabs(x));
+	
+	ret = 2.0 * (1.0 - s);
+	if (ret < 0.0) {
+	    ret = 0.0;
+	}
     }
+
+    return ret;
 }
 
 /**
@@ -182,28 +202,38 @@ double chisq (double x, int df)
 }
 
 /**
- * normal:
- * @x: the cutoff point in the distribution.
+ * normal_cdf:
+ * @x: double-precision value.
  * 
- * Returns: the probability that a random variable distributed as
- * N(0, 1) is greater than @x.
- *
+ * Returns: the value of the standard normal CDF evaluated
+ * at @x.
  */
-
-double normal (double x)
-{
-    return 1.0 - ndtr(x);
-}
 
 double normal_cdf (double x)
 {
     return ndtr(x);
 }
 
+/**
+ * normal_pdf:
+ * @x: double-precision value.
+ * 
+ * Returns: the value of the standard normal PDF evaluated
+ * at @x.
+ */
+
 double normal_pdf (double x)
 {
     return (1.0 / sqrt(2.0 * M_PI)) * exp(-0.5 * x * x);
 }
+
+/**
+ * log_normal_pdf:
+ * @x: double-precision value.
+ * 
+ * Returns: the value of the log-normal PDF evaluated
+ * at @x.
+ */
 
 double log_normal_pdf (double x)
 {
@@ -378,7 +408,7 @@ double batch_pvalue (const char *str,
 	    pputs(prn, _("\npvalue for t: missing parameter\n"));
 	    return -1;
 	}
-	xx = tprob(xval, df1); /* this is two-tailed */
+	xx = t_pvalue_2(xval, df1);
 	if (xx < 0) {
 	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
@@ -447,15 +477,17 @@ double batch_pvalue (const char *str,
 
 static void putxx (double xx)
 {
-    if (xx < 0.0001) puts("< 0.0001");
-    else printf("%g\n", xx);
+    if (xx < 0.0001) {
+	puts("< 0.0001");
+    } else {
+	printf("%g\n", xx);
+    }
 }
 
 /**
  * interact_pvalue:
  * 
  * P-value finder function for interactive use at the command prompt.
- *
  */
 
 void interact_pvalue (void)
@@ -518,13 +550,11 @@ static void pnormal (void)
     printf("%s", _(negval));
     zx = getx();
     if (zx < 0.0) return;
-    xx = normal(zx);
+    xx = normal_pvalue_1(zx);
     printf(_("\nFor the standard normal, area (one-tail) to the "
 	   "right of %g is "), zx);
     putxx(xx);
 }
-
-/* ........................................................ */
 
 static void ptvalue (void)
 {
@@ -544,8 +574,6 @@ static void ptvalue (void)
     putxx(xx);
 }
 
-/* ........................................................ */
-
 static void pchisq (void)
 {
     int n;
@@ -562,8 +590,6 @@ static void pchisq (void)
 	   n, zx);
     putxx(xx);
 }
-
-/* ........................................................ */
 
 static void pfvalue (void)
 {
@@ -585,8 +611,6 @@ static void pfvalue (void)
     putxx(xx);
 }
 
-/* ........................................................ */
-
 static void pgamma (void) 
 {
     double mean, variance;
@@ -607,8 +631,6 @@ static void pgamma (void)
     putxx(xx);
 }
 
-/* ........................................................ */
-
 static double getx (void)
 {
     double aa;
@@ -618,8 +640,6 @@ static double getx (void)
     }
     return -1;
 }
-
-/* ........................................................ */
 
 static void getdf (const char *str)
 {
@@ -632,8 +652,7 @@ static void getdf (const char *str)
  * @df1: numerator degrees of freedom.
  * @df2: denominator degrees of freedom.
  *
- * Returns the critical value for F(df1, df2, a).
- *
+ * Returns: the one-sided critical value for F(@df1, @df2, @a).
  */
 
 double f_crit_a (double a, int df1, int df2)
@@ -654,8 +673,6 @@ static double chi_crit_a (double a, int df)
     }
 }
 
-/* ........................................................ */
-
 static int parse_critical_input (const char *str, int *i, 
 				 int *df, int *n)
 {
@@ -673,16 +690,15 @@ static int parse_critical_input (const char *str, int *i,
 /**
  * print_critical:
  * @line: the command line, which should be of one of the following forms:
- * critical t df (student's t)
- * critical X df (chi-square)
- * critical F dfn dfd (F distribution)
+ * critical t df (student's t); or
+ * critical X df (chi-square); or
+ * critical F dfn dfd (F distribution).
  * @prn: gretl printing struct.
  *
  * Prints critical values for the specified distribution at the
  * commonly used significance levels.
  *
  * Returns: 0 if successful, 1 on error.
- *
  */
 
 int print_critical (const char *line, PRN *prn)
@@ -849,8 +865,6 @@ double genr_get_critical (const char *line, const double **Z,
     return ret;
 }
 
-/* ........................................................ */
-
 /* Functions relating to the gamma distribution.
    Allin Cottrell (cottrell@wfu.edu), October 2000.
    Draws upon the pascal code specialf.pas by Bent Nielsen.
@@ -981,7 +995,7 @@ static double gammadist_wilson_hilferty (double shape, double scale, double x)
     xscaled = x * 2/scale;
     xx = exp(log(xscaled/df)/3) - 1 + (double)(2)/9/df;
     xx *= sqrt(9*df/2);
-    return 1.0 - normal(xx);
+    return normal_cdf(xx);
 } 
 
 

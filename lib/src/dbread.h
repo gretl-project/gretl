@@ -20,22 +20,22 @@
 #ifndef DBREAD_H
 #define DBREAD_H
 
-enum db_error_codes {
+typedef enum {
     DB_OK = 0,
     DB_MISSING_DATA,
     DB_NO_SUCH_SERIES,
     DB_PARSE_ERROR,
     DB_NOT_FOUND
-};
+} db_error_codes;
 
-enum compaction_methods {
+typedef enum {
     COMPACT_NONE,
     COMPACT_SUM,
     COMPACT_AVG,
     COMPACT_SOP,
     COMPACT_EOP,
     COMPACT_MAX
-}; 
+} compaction_methods; 
 
 typedef float dbnumber;
 

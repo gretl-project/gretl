@@ -26,7 +26,7 @@
 
 #define GRAPH_NO_DATA -999
 
-enum gnuplot_flags {
+typedef enum {
     GP_IMPULSES = 1 << 0,  /* use impulses for plotting */
     GP_RESIDS   = 1 << 1,  /* doing residual plot */
     GP_FA       = 1 << 2,  /* doing fitted/actual plot */
@@ -35,16 +35,16 @@ enum gnuplot_flags {
     GP_GUI      = 1 << 5,  /* called from GUI context */
     GP_OLS_OMIT = 1 << 6,  /* Don't draw fitted line on graph */
     GP_FILE     = 1 << 7   /* send output to named file */
-};
+} gnuplot_flags;
 
-enum gptspec_flags {
+typedef enum {
     GPTSPEC_TS            = 1 << 0,
     GPTSPEC_Y2AXIS        = 1 << 1,
     GPTSPEC_AUTO_OLS      = 1 << 2,
     GPTSPEC_OLS_HIDDEN    = 1 << 3,
     GPTSPEC_BORDER_HIDDEN = 1 << 4,
     GPTSPEC_PNG_OUTPUT    = 1 << 5
-}; 
+} gptspec_flags; 
 
 #define MAXTITLE 128
 #define MAX_PLOT_LABELS 3
@@ -61,11 +61,11 @@ typedef struct {
 
 #define PLOT_LABEL_TEXT_LEN 31
 
-enum gp_just_codes {
+typedef enum {
     GP_JUST_LEFT,
     GP_JUST_CENTER,
     GP_JUST_RIGHT
-};
+} gp_just_codes;
 
 typedef struct {
     char text[PLOT_LABEL_TEXT_LEN + 1]; 
@@ -96,12 +96,12 @@ typedef struct {
     void *ptr;                 /* for GUI use */
 } GPT_SPEC;
 
-enum dist_codes {
+typedef enum {
     NORMAL = 1,
     GAMMA
-};
+} dist_codes;
 
-enum plot_type_codes {
+typedef enum {
     PLOT_REGULAR = 0,
     PLOT_SAMPLING_DIST,
     PLOT_FORECAST,
@@ -116,7 +116,7 @@ enum plot_type_codes {
     PLOT_RANGE_MEAN,
     PLOT_LEVERAGE,
     PLOT_TYPE_MAX
-};
+} plot_type_codes;
 
 #define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
 				c == PLOT_FREQ_NORMAL || \

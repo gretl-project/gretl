@@ -17,20 +17,27 @@ DOC_MAIN_SGML_FILE = $(DOC_MODULE)-docs.sgml
 DOC_SOURCE_DIR = ../../lib/src
 
 # Extra options to supply to gtkdoc-scan.
-SCAN_OPTIONS=
+SCAN_OPTIONS =
+
+# Header files to ignore when scanning.
+IGNORE_HFILES = \
+        f2c.h \
+	clapack_double.h \
+	genstack.h \
+	gretl_matrix_private.h \
+	loop_private.h \
+	system_private.h \
+	version.h
 
 # Extra options to supply to gtkdoc-mkdb.
-MKDB_OPTIONS=
+MKDB_OPTIONS = --sgml-mode --output-format=xml --ignore-files="$(IGNORE_HFILES)"
 
 # Extra options to supply to gtkdoc-fixref.
-FIXXREF_OPTIONS=
+FIXXREF_OPTIONS =
 
 # Used for dependencies.
 HFILE_GLOB=
 CFILE_GLOB=
-
-# Header files to ignore when scanning.
-IGNORE_HFILES = f2c.h clapack_double.h gretl_matrix_private.h gretl_private.h version.h
 
 # Extra SGML files that are included by $(DOC_MAIN_SGML_FILE).
 content_files =

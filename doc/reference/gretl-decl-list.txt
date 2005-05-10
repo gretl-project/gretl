@@ -39,6 +39,10 @@ create_new_dataset
 clear_datainfo
 allocate_case_markers
 destroy_dataset_markers
+set_sorted_markers
+dataset_set_regular_markers
+free_varinfo
+gretl_varinfo_init
 start_new_Z
 dateton
 ntodate
@@ -55,6 +59,7 @@ merge_data
 gretl_get_data
 open_nulldata
 import_csv
+import_octave
 import_box
 add_case_markers
 detect_filetype
@@ -81,7 +86,6 @@ set_nls_toler
 <FILE>estimate</FILE>
 lsq
 estimate_rho
-hilu_corc
 lad
 arma
 arma_x12
@@ -101,6 +105,7 @@ arch
 makevcv
 get_vcv
 free_vcv
+augment_regression_list
 </SECTION>
 
 <SECTION>
@@ -139,10 +144,25 @@ print_mpols_results
 
 <SECTION>
 <FILE>describe</FILE>
+GRETLSUMMARY
+FREQDIST
+GRETLSUMMARY_
+FREQDIST_
+gretl_minmax
+gretl_mean
+gretl_median
+gretl_sst
+gretl_variance
+gretl_stddev
+gretl_covar
+gretl_corr
+gretl_corr_rsq
+gretl_moments
 free_freq
 get_freq
 freqdist
 model_error_dist
+auto_acf_order
 corrgram
 periodogram
 summary
@@ -154,8 +174,6 @@ gretl_corrmx
 means_test
 vars_test
 matrix_print_corr
-gretl_median
-moments
 doornik_chisq
 mahalanobis_distance
 unique_savename
@@ -175,18 +193,26 @@ varlist
 varindex
 genr_fit_resid
 get_generated_value
+gretl_reserved_word
+genr_function_from_string
+get_t_from_obs_string
 </SECTION>
 
 <SECTION>
 <FILE>graphing</FILE>
 GRAPH_NO_DATA
+gnuplot_flags
+gptspec_flags
 MAXTITLE
 MAX_PLOT_LABELS
 MAX_PLOT_LINES
 GPT_LINE
 PLOT_LABEL_TEXT_LEN
+gp_just_codes
 GPT_LABEL
 GPT_SPEC
+dist_codes
+plot_type_codes
 frequency_plot_code
 set_png_output
 get_png_output
@@ -221,11 +247,13 @@ fprint_gnuplot_encoding
 
 <SECTION>
 <FILE>gretl_utils</FILE>
+model_selection_criteria
 dataset_is_time_series
 custom_time_series
 dataset_is_daily
 dataset_is_weekly
 dataset_is_hourly
+dataset_is_decennial
 dated_daily_data
 dated_seven_day_data
 dated_weekly_data
@@ -237,50 +265,48 @@ floatgt
 floatlt
 libgretl_init
 libgretl_cleanup
+gretl_cmd_free
 date
-isdummy
+gretl_isdummy
+gretl_iszero
+gretl_isconst
 printlist
 print_list_to_buffer
-list_exclude
 format_obs
 set_obs
-copylist
 grow_nobs
 dataset_add_vars
 dataset_add_allocated_var
 dataset_add_scalar
-varnum_from_string
 dataset_drop_listed_vars
+dataset_destroy_hidden_vars
 dataset_drop_vars
+dataset_stack_vars
+positive_int_from_string
+varnum_from_string
 rename_var_by_id
 hidden_var
-get_fit_resid
-get_fcast_with_errs
-fcast_with_errs
-is_model_cmd
-is_model_ref_cmd
-is_quiet_model_test
 re_estimate
 copyvec
 ijton
 ztox
+get_xvalue
+gretl_compare_doubles
+gretl_calculate_criteria
+gretl_print_criteria
 get_panel_structure
 set_panel_structure
 balanced_panel
-get_xvalue
 free_gretl_mp_results
 gretl_mp_results_new
 allocate_mp_varnames
-fit_resid_new
-free_fit_resid
 get_model_confints
 free_confint
 ls_aic_bic
-gretl_mean
-gretl_stddev
-gretl_variance
-gretl_sst
 gretl_spawn
+record_test_result
+get_last_test_statistic
+get_last_pvalue
 </SECTION>
 
 <SECTION>
@@ -317,8 +343,8 @@ coint
 adf_test
 kpss_test
 johansen_test
+default_VAR_horizon
 gretl_var_get_impulse_responses
-gretl_var_print_impulse_response
 gretl_var_print
 gretl_var_assign_name
 gretl_var_assign_specific_name
@@ -332,11 +358,11 @@ gretl_var_get_highest_variable
 <SECTION>
 <FILE>pvalues</FILE>
 x_factorial
-gaussprob
-tprob
+normal_pvalue_2
+normal_pvalue_1
+t_pvalue_2
 fdist
 chisq
-normal
 normal_cdf
 normal_pdf
 log_normal_pdf
@@ -357,6 +383,8 @@ gretl_uniform_dist
 gretl_normal_dist
 gretl_rand_int
 gretl_rand_int_max
+gretl_rand_init
+gretl_rand_free
 </SECTION>
 
 <SECTION>
@@ -365,6 +393,8 @@ SLASH
 SLASHSTR
 CTRLZ
 string_is_blank
+numeric_string
+count_fields
 dot_atof
 dotpos
 slashpos
@@ -372,9 +402,12 @@ delchar
 haschar
 lastchar
 ends_with_backslash
+gretl_trunc
+gretl_delete
 gretl_strdup
 gretl_strndup
 charsub
+shift_string_left
 lower
 clear
 chopstr
@@ -412,6 +445,7 @@ make_varname_unique
 fix_varname_duplicates
 append_dir
 build_path
+get_month_name
 utf8_to_iso_latin_1
 varname_match_list
 </SECTION>
@@ -440,10 +474,43 @@ PMAX_NOT_AVAILABLE
 OPT_NONE
 screen_zero
 gretlopt
+VARINFO
+DATAINFO
+PATHS
+GRETLTEST
+CORRMAT
+SAMPLE
+ARINFO
+MODEL
+GRAPHT
+PRN
+FITRESID
+CONFINT
+VCV
+DATASET
+GRETL_VAR
+mp_results
+model_data_item
+VARINFO_
+DATAINFO_
+DATASET_
+PATHS_
+GRETLTEST_
+CORRMAT_
+SAMPLE_
+ARINFO_
+MODEL_
+GRAPHT_
+PRN_
+mp_results_
+FITRESID_
+CONFINT_
+VCV_
 VARLABEL
 DISPLAYNAME
 COMPACT_METHOD
 STACK_LEVEL
+SORTED_MARKER
 parse_set_line
 set_use_qr
 </SECTION>
@@ -451,6 +518,7 @@ set_use_qr
 <SECTION>
 <FILE>system</FILE>
 gretl_equation_system
+gretl_system_methods
 system_start
 get_equation_system_by_name
 get_system_name_from_line
@@ -511,6 +579,7 @@ system_set_restriction_matrices
 
 <SECTION>
 <FILE>monte_carlo</FILE>
+LOOPSET
 ok_in_loop
 add_to_loop
 gretl_loop_destroy
@@ -546,7 +615,6 @@ print_freq
 printcorr
 print_smpl
 outcovmx
-page_pause
 print_obs_marker
 printdata
 text_print_fit_resid
@@ -563,10 +631,14 @@ gretl_print_attach_file
 pprintf
 pputs
 pputc
+bufspace
+gretl_printxn
 do_printf
 generate_obs_markers
 in_usa
 bufgets
+scroll_pause
+scroll_pause_or_quit
 </SECTION>
 
 <SECTION>
@@ -592,7 +664,10 @@ redundant_var
 
 <SECTION>
 <FILE>gretl_matrix</FILE>
+GretlMatrixError
+GretlMatrixMod
 gretl_matrix
+gretl_vector
 gretl_vector_alloc
 gretl_column_vector_alloc
 gretl_vector_free
@@ -601,12 +676,17 @@ gretl_packed_matrix_alloc
 gretl_matrix_copy
 gretl_matrix_copy_transpose
 gretl_column_vector_from_array
+gretl_data_series_to_vector
 gretl_matrix_from_2d_array
+gretl_matrix_log
+gretl_vector_mean
+gretl_vector_variance
 gretl_matrix_zero
 gretl_matrix_zero_upper
 gretl_matrix_zero_lower
 gretl_matrix_multiply_by_scalar
 gretl_matrix_divide_by_scalar
+gretl_matrix_dot_pow
 gretl_matrix_free
 gretl_matrix_steal_data
 gretl_matrix_copy_values
@@ -621,6 +701,7 @@ gretl_matrix_add_self_transpose
 gretl_matrix_multiply_mod
 gretl_matrix_multiply
 gretl_matrix_dot_product
+gretl_matrix_dot_multiply
 gretl_matrix_vcv
 gretl_matrix_determinant
 gretl_matrix_log_determinant
@@ -653,6 +734,8 @@ gretl_covariance_matrix_from_varlist
 
 <SECTION>
 <FILE>dbread</FILE>
+db_error_codes
+compaction_methods
 dbnumber
 db_table_row
 db_table
@@ -671,6 +754,7 @@ compact_data_set
 
 <SECTION>
 <FILE>subsample</FILE>
+copy_subsample_mask
 attach_subsample_to_model
 restrict_sample
 complex_subsampled
@@ -680,30 +764,8 @@ restore_full_sample
 count_missing_values
 add_dataset_to_model
 free_model_dataset
-</SECTION>
-
-<SECTION>
-<FILE>genstack</FILE>
-dprintf
-DPRINTF
-ATOMLEN
-VALSTACK_SIZE
-GENERATE
-attach_atomset
-push_atom
-pop_atom
-pop_child_atom
-peek_child_atom
-reset_atom_stack
-destroy_atom_stack
-atom_stack_set_parentage
-atom_eat_children
-atom_stack_bookmark
-atom_stack_resume
-atom_stack_check_for_scalar
-calc_push
-calc_pop
-reset_calc_stack
+maybe_free_full_dataset
+model_mask_leaves_balanced_panel
 </SECTION>
 
 <SECTION>
@@ -725,10 +787,10 @@ model_info_get_t1
 model_info_get_t2
 model_info_get_n
 model_info_get_iters
-model_info_get_pqr
+model_info_get_extra_info
 model_info_get_ll
 model_info_get_series
-model_info_set_pqr
+model_info_set_extra_info
 model_info_set_n_series
 model_info_set_k
 model_info_get_k
@@ -756,7 +818,7 @@ gretl_tex_preamble
 <FILE>gretl_paths</FILE>
 set_string_table_written
 gretl_string_table_written
-gretl_using_gui
+gretl_path_prepend
 gretl_fopen
 gretl_gzopen
 addpath
@@ -768,9 +830,9 @@ gretl_user_dir
 set_gretl_user_dir
 gretl_gnuplot_path
 gretl_plotfile
+set_gretl_plotfile
 gretl_png_font
 set_gretl_png_font
-set_gretl_plotfile
 </SECTION>
 
 <SECTION>
@@ -796,6 +858,9 @@ gretl_model_get_double
 debug_print_model_info
 copy_model
 swap_models
+is_model_cmd
+is_model_ref_cmd
+is_quiet_model_test
 command_ok_for_model
 get_model_count
 reset_model_count
@@ -813,17 +878,21 @@ coeff_pval
 
 <SECTION>
 <FILE>libset</FILE>
+get_use_qr
 set_xsect_hccme
 set_tseries_hccme
 set_garch_robust_vcv
 get_garch_vcv_version
 get_garch_robust_vcv_version
 get_force_hc
+get_hc_version
+get_hac_lag
 get_halt_on_error
 get_hp_lambda
 get_bkbp_k
-gretl_get_text_pause
 get_bkbp_periods
+gretl_get_text_pause
+get_VAR_horizon
 set_loop_on
 set_loop_off
 gretl_looping
@@ -851,24 +920,24 @@ gretl_string_table_destroy
 </SECTION>
 
 <SECTION>
-<FILE>system_private</FILE>
-gretl_equation_system
-</SECTION>
-
-<SECTION>
 <FILE>gretl_list</FILE>
 gretl_list_new
+gretl_list_copy
 in_gretl_list
 gretl_list_delete_at_pos
 gretl_list_add
 gretl_list_omit
 gretl_list_omit_last
+gretl_list_diff
 rearrange_list
 list_members_replaced
+gretl_list_has_const
+gretl_list_duplicates
 </SECTION>
 
 <SECTION>
 <FILE>gretl_restrict</FILE>
+gretl_restriction_set
 restriction_set_start
 cross_restriction_set_start
 restriction_set_parse_line
@@ -884,11 +953,14 @@ gretl_function_append_line
 gretl_is_user_function
 gretl_function_start_exec
 gretl_function_get_line
+gretl_function_stack_depth
 gretl_function_error
+gretl_functions_cleanup
 </SECTION>
 
 <SECTION>
 <FILE>modelspec</FILE>
+MODELSPEC
 model_ci_from_modelspec
 model_sample_issue
 modelspec_last_index
@@ -907,10 +979,17 @@ model_missing
 has_missing_obs
 model_missval_count
 set_miss
+adjust_t1t2
+set_reference_missmask
+apply_reference_missmask
+reference_missmask_present
+undo_daily_repack
+repack_missing_daily_obs
 </SECTION>
 
 <SECTION>
 <FILE>transforms</FILE>
+default_lag_order
 diffgenr
 laggenr
 loggenr
@@ -920,6 +999,8 @@ list_ldiffgenr
 list_laggenr
 list_loggenr
 list_xpxgenr
+newly_created_lag
+gretl_transforms_cleanup
 </SECTION>
 
 <SECTION>
@@ -933,10 +1014,12 @@ gretl_multiply
 </SECTION>
 
 <SECTION>
-<FILE>loop_private</FILE>
-loop_scalar_read
-is_active_index_loop_char
-if_eval
-ifstate
+<FILE>forecast</FILE>
+gretl_forecast
+get_fit_resid
+get_fcast_with_errs
+fcast_with_errs
+fit_resid_new
+free_fit_resid
 </SECTION>
 

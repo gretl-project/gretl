@@ -75,6 +75,17 @@ struct gnuplot_info {
 
 #undef SPAWN_DEBUG
 
+/**
+ * gnuplot_test_command:
+ * @cmd: gnuplot command string.
+ * 
+ * See if the installed version of gnuplot will accept a given
+ * command.
+ *
+ * Returns: 0 if gnuplot successfully handles the given command,
+ * 1 on error.
+ */
+
 int gnuplot_test_command (const char *cmd)
 {
     int ok, ret = 1;
@@ -137,6 +148,10 @@ int gnuplot_test_command (const char *cmd)
 	g_error_free(error);
     }
 
+#ifdef SPAWN_DEBUG
+    fprintf(stderr, "gnuplot test: ret = %d\n", ret);
+#endif
+
     return ret;
 }
 
@@ -159,8 +174,6 @@ int gnuplot_test_command (const char *cmd)
 }
 
 #endif /* ! GLIB2, ! WIN32 */
-
-/* ........................................................ */
 
 static int printvars (FILE *fp, int t, const int *list, const double **Z,
 		      const char *label, double offset)
@@ -190,7 +203,16 @@ static int printvars (FILE *fp, int t, const int *list, const double **Z,
     return miss;
 }
 
-/* ........................................................... */
+/**
+ * get_timevar_name:
+ * @pdinfo: information on dataset.
+ *
+ * Based on the properties and frequency of the dataset, 
+ * figure out the appropriate (internal) name for the variable 
+ * to be used on the x-axis in a time-series plot.
+ *
+ * Returns: the name.
+ */
 
 const char *get_timevar_name (DATAINFO *pdinfo)
 {
@@ -408,7 +430,8 @@ const char *get_gretl_png_term_line (int plottype)
 
 /**
  * get_gretl_emf_term_line:
- * @plottype: 
+ * @plottype: a type from among #plot_type_codes.
+ * @color: 1 if graph is to be in color, else 0.
  *
  * Constructs a suitable line for sending to gnuplot to invoke
  * the EMF "terminal".  
@@ -749,7 +772,7 @@ get_ols_line (struct gnuplot_info *gpinfo, const int *list,
 
     if (!err) {
 	/* is the fit significant? */
-	if (tprob(plotmod.coeff[1] / plotmod.sderr[1], plotmod.dfd) < .10) {
+	if (t_pvalue_2(plotmod.coeff[1] / plotmod.sderr[1], plotmod.dfd) < .10) {
 	    sprintf(ols_line, "%g + %g*x title '%s' w lines\n", 
 		    plotmod.coeff[0], plotmod.coeff[1], 
 		    I_("least squares fit"));
@@ -1638,8 +1661,8 @@ int plot_freq (FREQDIST *freq, int dist)
 	if (dist == NORMAL) {
 	    fputs("(against normal)\n", fp);
 
-	    propn = normal((freq->endpt[i-1] - freq->xbar)/freq->sdx) -
-		normal((freq->endpt[i] - freq->xbar)/freq->sdx);
+	    propn = normal_pvalue_1((freq->endpt[i-1] - freq->xbar)/freq->sdx) -
+		normal_pvalue_1((freq->endpt[i] - freq->xbar)/freq->sdx);
 	    lambda = 1.0 / (propn * freq->n * sqrt(2 * M_PI) * freq->sdx);
 	    fprintf(fp, "sigma = %g\n", freq->sdx);
 	    fprintf(fp, "mu = %g\n", freq->xbar);
@@ -1688,7 +1711,7 @@ int plot_freq (FREQDIST *freq, int dist)
 			I_("Test statistic for gamma"),
 			label_front());
 		print_freq_test_label(label, I_("z = %.3f pvalue = %.5f"), 
-				      freq->test, 2.0 * normal(fabs(freq->test)));
+				      freq->test, normal_pvalue_2(freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
 			label, label_front());
 	    }	
@@ -2497,10 +2520,16 @@ static int colstr_is_valid (const char *colstr)
     int i;
     const char *ok = "0123456789abcdef";
 
-    if (*colstr != 'x') return 0;
-    if (strlen(colstr) != 7) return 0;
+    if (*colstr != 'x') {
+	return 0;
+    }
+    if (strlen(colstr) != 7) {
+	return 0;
+    }
     for (i=1; i<7; i++) {
-	if (strchr(ok, colstr[i]) == NULL) return 0;
+	if (strchr(ok, colstr[i]) == NULL) {
+	    return 0;
+	}
     }
 
     return 1;
