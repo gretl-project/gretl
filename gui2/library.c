@@ -1650,18 +1650,17 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 	int resp, brk = (pmod->t2 - pmod->t1) / 2;
 
 	set_window_busy(vwin);
-
 	resp = get_obs_dialog(_("gretl: Chow test"), 
 			      _("Observation at which to split the sample:"),
 			      NULL, NULL, 
-			      1, datainfo->n - 1, &brk,
+			      pmod->t1 + 1, pmod->t2 - 1, &brk,
 			      0, 0, NULL);
-
 	unset_window_busy(vwin);
 
 	if (resp < 0) {
 	    return;
 	}
+
 	ntodate(brkstr, brk, datainfo);
 	sprintf(line, "chow %s", brkstr);
     } else {

@@ -1114,6 +1114,10 @@ real_dateton (const char *date, const DATAINFO *pdinfo,
 		return t;
 	    }
 	}
+	/* else maybe just a straight obs number */
+	if (sscanf(date, "%d", &t) && t > 0) {
+	    n = t - 1;
+	}
     }
 
     /* decennial data? */
@@ -1167,7 +1171,7 @@ real_dateton (const char *date, const DATAINFO *pdinfo,
 	sprintf(gretl_errmsg, _("Observation number out of bounds"));
 	n = -1; 
     }
-   
+
     return n;
 }
 
