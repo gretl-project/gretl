@@ -79,7 +79,6 @@ logit_probit
 <FILE>nls</FILE>
 nls_parse_line
 nls
-set_nls_toler
 </SECTION>
 
 <SECTION>
@@ -381,7 +380,6 @@ genr_get_critical
 gretl_rand_set_seed
 gretl_uniform_dist
 gretl_normal_dist
-gretl_rand_int
 gretl_rand_int_max
 gretl_rand_init
 gretl_rand_free
@@ -893,6 +891,8 @@ get_bkbp_k
 get_bkbp_periods
 gretl_get_text_pause
 get_VAR_horizon
+get_nls_toler
+set_nls_toler
 set_loop_on
 set_loop_off
 gretl_looping

@@ -28,6 +28,7 @@ static double hp_lambda;                /* for Hodrick-Prescott filter */
 static int bkbp_k = 8;                  /* for Baxter-King filter */
 static int bkbp_periods[2] = { 8, 32 }; /* for Baxter-King filter */
 static int horizon = 0;                 /* for VAR impulse responses */ 
+static double nls_toler;                /* NLS convergence criterion */
 
 enum {
     AUTO_LAG_STOCK_WATSON,
@@ -64,6 +65,24 @@ void get_bkbp_periods (int *periods)
 int get_VAR_horizon (void)
 {
     return horizon;
+}
+
+double get_nls_toler (void)
+{
+    return nls_toler;
+}
+
+int set_nls_toler (double tol)
+{
+    int err = 0;
+
+    if (tol <= 0.0) {
+	err = 1;
+    } else {
+	nls_toler = tol;
+    }
+
+    return err;
 }
 
 static int get_or_set_force_hc (int f)
@@ -330,6 +349,12 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 		    horizon = 0;
 		}
 	    }	    
+	} else if (!strcmp(setobj, "nls_toler")) {
+	    double tol;
+
+	    if (sscanf(setarg, "%lf", &tol)) {
+		err = set_nls_toler(tol);
+	    }
 	}
     } else if (nw == 3) {
 	if (!strcmp(setobj, "bkbp_limits")) {

@@ -2251,20 +2251,21 @@ static void get_genr_formula (char *formula, const char *line,
 
 static int gentoler (const char *s)
 {
-    int ret = 0;
-    double x;
+    int err = 0;
 
     if (numeric_string(s)) {
-	x = dot_atof(s);
-	set_nls_toler(x);
-	sprintf(gretl_msg, _("Set tolerance to %g"), x);
+	double x = dot_atof(s);
 
+	err = set_nls_toler(x);
+	if (!err) {
+	    sprintf(gretl_msg, _("Set tolerance to %g"), x);
+	}
     } else {
 	strcpy(gretl_errmsg, _("The setting for \"toler\" must be numeric"));
-	ret = 1;
+	err = 1;
     }
 
-    return ret;
+    return err;
 }
 
 static void 

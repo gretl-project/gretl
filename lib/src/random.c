@@ -41,7 +41,6 @@ static GRand *gretl_rand;
  * gretl_rand_init:
  *
  * Initialize gretl's PRNG, using the system time as seed.
- *
  */
 
 void gretl_rand_init (void)
@@ -56,10 +55,9 @@ void gretl_rand_init (void)
 
 /**
  * gretl_rand_set_seed:
- * @seed: the chosen seed value
+ * @seed: the chosen seed value.
  *
  * Set a specific (and hence reproducible) seed for gretl's PRNG.
- *
  */
 
 void gretl_rand_set_seed (unsigned int seed)
@@ -80,7 +78,6 @@ void gretl_rand_set_seed (unsigned int seed)
  * Fill the selected range of array @a with pseudo-random drawings
  * from the uniform distribution on 0-1, using the Mersenne
  * Twister.
- *
  */
 
 void gretl_uniform_dist (double *a, int t1, int t2) 
@@ -106,7 +103,6 @@ void gretl_uniform_dist (double *a, int t1, int t2)
  * from the standard distribution, using the Mersenne Twister for
  * uniform input and the Box-Muller method for converting to the
  * normal distribution.
- *
  */
 
 void gretl_normal_dist (double *a, int t1, int t2) 
@@ -129,22 +125,12 @@ void gretl_normal_dist (double *a, int t1, int t2)
     }
 }
 
-unsigned int gretl_rand_int (void)
-{
-#ifdef HAVE_G_RAND
-    return g_rand_int(gretl_rand);
-#else
-    return genrand_int32();
-#endif
-}
-
 /**
  * gretl_rand_int_max:
  * @max: the maximum value (open)
  *
  * Returns: a pseudo-random unsigned int in the interval [0, @max)
  * using the Mersenne Twister.
- *
  */
 
 unsigned int gretl_rand_int_max (unsigned int max)
@@ -159,8 +145,7 @@ unsigned int gretl_rand_int_max (unsigned int max)
 /**
  * gretl_rand_free:
  *
- * Free the gretl_rand structure.
- *
+ * Free the gretl_rand structure (may be called at program exit).
  */
 
 void gretl_rand_free (void)

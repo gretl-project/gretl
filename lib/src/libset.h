@@ -53,6 +53,9 @@ int gretl_get_text_pause (void);
 
 int get_VAR_horizon (void);
 
+double get_nls_toler (void);
+int set_nls_toler (double tol);
+
 void set_loop_on (void);
 void set_loop_off (void);
 int gretl_looping (void);

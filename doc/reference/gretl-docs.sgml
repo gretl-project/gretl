@@ -80,6 +80,7 @@
     &nonparam; 
     &gretl-model;
     &modelspec;
+    &nls;
     &system;   
     &var;   
     &bhhh-max;

@@ -17,11 +17,9 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-
 #include "libgretl.h" 
+#include "libset.h"
+
 #include "f2c.h"
 #include "../../minpack/minpack.h"  
 
@@ -33,18 +31,20 @@ enum {
 } nls_modes;
 
 typedef struct _nls_spec nls_spec;
-typedef struct _nls_term nls_term;
+typedef struct _nls_param nls_param;
 
-struct _nls_term {
-    char name[VNAMELEN]; /* name of parameter */
-    char *deriv;         /* string representation of derivative */
-    int varnum;          /* ID number of the temporary variable holding 
-			    the derivative */
+struct _nls_param {
+    char name[VNAMELEN]; /* name of parameter (scalar variable) */
+    char *deriv;         /* string representation of derivative of regression
+			    function with respect to param (or NULL) */
+    int varnum;          /* ID number of the scalar variable */
+    int dernum;          /* ID number of the variable holding the derivative */
 };
 
 struct _nls_spec {
     int mode;           /* derivatives: numeric or analytic */
     int depvar;         /* ID number of dependent variable */
+    int uhatnum;        /* ID number of variable holding residuals */
     char *nlfunc;       /* string representation of regression function */
     int nparam;         /* number of parameters to be estimated */
     int iters;          /* number of iterations performed */
@@ -52,127 +52,203 @@ struct _nls_spec {
     int t2;             /* ending observation */
     double ess;         /* error sum of squares */
     double tol;         /* tolerance for stopping iteration */
-    nls_term *terms;    /* array of information on terms in the function 
-			   (see the _nls_term struct above) */
+    nls_param *params;  /* array of information on function parameters
+			   (see the _nls_param struct above) */
     doublereal *coeff;  /* coefficient estimates */
 };
 
-/* file-scope global variables */
+/* file-scope global variables: we need to access these variables
+   in the context of the callback functions that we register with
+   the minpack routines.
+*/
 
-static double ***pZ;
-static DATAINFO *pdinfo;
-static PRN *prn;
+static double ***nZ;
+static DATAINFO *ndinfo;
+static PRN *nprn;
+
 static nls_spec nlspec;
-integer one = 1;
-double toler;
-int genr_err;
+static integer one = 1;
+static int genr_err;
 
-/* end of file-scope globals */
+/* Use the genr() function to create/update the values of the residual
+   from the regression function (if i = 0), or the derivatives of the
+   regression function with respect to the parameters.  The formulae
+   for generating these values are stored in string form in the nlspec
+   struct.
+*/
 
-static void print_iter_ess (void)
-{
-    nlspec.iters += 1;    
-#if NLS_DEBUG
-    pprintf(prn, "iteration %2d: SSR = %g\n", nlspec.iters, nlspec.ess);
-#endif
-}
-
-static int nls_auto_gen (int i)
+static int nls_auto_genr (int i)
 {
     char formula[MAXLEN];
 
     if (i == 0) {
+	/* note: $nl_y is the residual */
 	sprintf(formula, "$nl_y = %s", nlspec.nlfunc);
     } else {
-	sprintf(formula, "$nl_x%d = %s", i, nlspec.terms[i-1].deriv);
+	/* derivatives: artificial independent variables */
+	sprintf(formula, "$nl_x%d = %s", i, nlspec.params[i-1].deriv);
     }
 
-    genr_err = generate(pZ, pdinfo, formula, NULL);
+    /* note: using nZ and ndinfo pointers here */
+    genr_err = generate(nZ, ndinfo, formula, NULL);
 
 #if NLS_DEBUG
     if (genr_err) {
-	errmsg(genr_err, prn);
+	errmsg(genr_err, nprn);
+    } else {
+	fprintf(stderr, "nls_auto_genr: i=%d, formula='%s'\n", i, formula);
     }
 #endif
 
     return genr_err;
 }
 
-static int add_term_from_nlfunc (const char *vname)
+/* wrappers for the above to enhance comprehensibility below */
+
+static int nls_calculate_uhat (void)
 {
-    nls_term *terms;
+    return nls_auto_genr(0);
+}
+
+static int nls_calculate_deriv (int i)
+{
+    return nls_auto_genr(i + 1);
+}
+
+static int nlspec_allocate_param (nls_spec *nspec)
+{
+    nls_param *params;
     double *coeff;
-    int i, v, nt = nlspec.nparam + 1; 
+    int nt = nspec->nparam + 1;
 
-    /* if the term is a math function or constant, skip it */
-    if (genr_function_from_string(vname) || !strcmp(vname, "pi")) {
-	return 0;
+    params = realloc(nspec->params, nt * sizeof *nspec->params);
+    if (params == NULL) {
+	return 1;
     }
 
-    v = varindex(pdinfo, vname);
-    if (v >= pdinfo->v) {
-	sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
-	return E_UNKVAR;
-    }
+    nspec->params = params;
 
-    /* if term is not a scalar, skip it */
-    if (pdinfo->vector[v]) {
-	return 0;
-    }
-
-    /* if term is already present, skip it */
-    for (i=0; i<nlspec.nparam; i++) {
-	if (strcmp(vname, nlspec.terms[i].name) == 0) {
-	    return 0;
-	}
-    }
-
-    terms = realloc(nlspec.terms, nt * sizeof *nlspec.terms);
-    if (terms == NULL) {
-	return E_ALLOC;
-    }
-
-    coeff = realloc(nlspec.coeff, nt * sizeof *nlspec.coeff);
+    coeff = realloc(nspec->coeff, nt * sizeof *nspec->coeff);
     if (coeff == NULL) {
-	free(terms);
-	return E_ALLOC;
+	free(params);
+	return 1;
     }
 
-    nlspec.terms = terms;
-    nlspec.coeff = coeff;
+    nspec->coeff = coeff;
 
-    terms[nt-1].varnum = v;
-    strcpy(terms[nt-1].name, vname);
-    terms[nt-1].deriv = NULL;
-    nlspec.coeff[nt-1] = (*pZ)[v][0];
-    nlspec.nparam += 1;
+    nspec->nparam += 1;
 
     return 0;
 }
 
-static int get_params_from_nlfunc (void)
+/* allocate space for an additional regression parameter in the
+   nls_spec struct and add its info */
+
+static int 
+real_add_param_to_spec (const char *vname, int vnum, double initval,
+			nls_spec *nspec)
 {
-    const char *s = nlspec.nlfunc;
+    int i;
+
+#if NLS_DEBUG
+    fprintf(stderr, "real_add_param: adding '%s'\n", vname);
+#endif
+
+    if (nlspec_allocate_param(nspec)) {
+	return E_ALLOC;
+    }
+
+    i = nspec->nparam - 1;
+    
+    nspec->params[i].varnum = vnum;
+    nspec->params[i].dernum = 0;
+    strcpy(nspec->params[i].name, vname);
+    nspec->params[i].deriv = NULL;
+
+    nspec->coeff[i] = initval;
+
+    return 0;
+}
+
+/* scrutinize word and see if it's a new scalar that should
+   be added to the NLS specification; if so, add it */
+
+static int 
+maybe_add_param_to_spec (nls_spec *nspec, const char *word, 
+			const double **Z, const DATAINFO *pdinfo)
+{
+    int i, v;
+
+#if NLS_DEBUG
+    fprintf(stderr, "maybe_add_param: looking at '%s'\n", word);
+#endif
+
+    /* if word represents a math function or constant, skip it */
+    if (genr_function_from_string(word) || !strcmp(word, "pi")) {
+	return 0;
+    }
+
+    /* try looking up word as the name of a variable */
+    v = varindex(pdinfo, word);
+    if (v >= pdinfo->v) {
+	sprintf(gretl_errmsg, _("Unknown variable '%s'"), word);
+	return E_UNKVAR;
+    }
+
+    /* if term is not a scalar, skip it: only scalars can figure
+       as regression parameters */
+    if (pdinfo->vector[v]) {
+	return 0;
+    }
+
+    /* if this term is already present in the specification, skip it */
+    for (i=0; i<nspec->nparam; i++) {
+	if (strcmp(word, nspec->params[i].name) == 0) {
+	    return 0;
+	}
+    }
+
+    /* else: add this param to the NLS specification */
+    return real_add_param_to_spec(word, v, Z[v][0], nspec);
+}
+
+/* Parse NLS function specification string to find names of variables
+   that may figure as parameters of the regression function.  We need
+   to do this only if analytical derivatives have not been supplied.
+*/
+
+static int 
+get_params_from_nlfunc (nls_spec *nspec, const double **Z,
+			const DATAINFO *pdinfo)
+{
+    const char *s = nspec->nlfunc;
     const char *p;
     char vname[VNAMELEN];
     int n, np = 0;
     int err = 0;
 
+#if NLS_DEBUG
+    fprintf(stderr, "get_params: looking at '%s'\n", s);
+#endif
+
     while (*s && !err) {
 	p = s;
-	if (isalpha(*s) && *(s + 1)) {
+	if (isalpha(*s) && *(s + 1)) { 
+	    /* find a variable name */
 	    p++;
 	    n = 1;
 	    while (isalnum(*p) || *p == '_') {
 		p++; n++;
 	    }
 	    if (n > 8) {
+		/* variable name is too long */
 		return 1;
 	    }
 	    *vname = 0;
 	    strncat(vname, s, n);
 	    if (np > 0) {
-		err = add_term_from_nlfunc(vname);
+		/* right-hand side term */
+		err = maybe_add_param_to_spec(nspec, vname, Z, pdinfo);
 	    }
 	    np++;
 	} else {
@@ -184,33 +260,42 @@ static int get_params_from_nlfunc (void)
     return err;
 }
 
-static int check_for_missing_vals (void)
+/* Adjust starting and ending points of sample if need be, to avoid
+   missing values; abort if there are missing values within the
+   (possibly reduced) sample range. 
+*/
+
+static int 
+nls_missval_check (const double **Z, const DATAINFO *pdinfo,
+		   nls_spec *nspec)
 {
     int t, v, miss = 0;
-    int t1 = nlspec.t1, t2 = nlspec.t2;
-    int err;
-
-    err = nls_auto_gen(0);
-    if (err) return err;
+    int t1 = nspec->t1, t2 = nspec->t2;
 
     v = pdinfo->v - 1;
 
-    for (t=nlspec.t1; t<=nlspec.t2; t++) {
-	if (na((*pZ)[v][t])) t1++;
-	else break;
+    for (t=nspec->t1; t<=nspec->t2; t++) {
+	if (na(Z[v][t])) {
+	    t1++;
+	} else {
+	    break;
+	}
     }
 
-    for (t=nlspec.t2; t>=nlspec.t1; t--) {
-	if (na((*pZ)[v][t])) t2--;
-	else break;
+    for (t=nspec->t2; t>=nspec->t1; t--) {
+	if (na(Z[v][t])) {
+	    t2--;
+	} else {
+	    break;
+	}
     }
 
-    if (t2 - t1 + 1 < nlspec.nparam) {
+    if (t2 - t1 + 1 < nspec->nparam) {
 	return E_DF;
     }
 
     for (t=t1; t<=t2; t++) {
-	if (na((*pZ)[v][t])) {
+	if (na(Z[v][t])) {
 	    miss = 1;
 	    break;
 	}
@@ -221,71 +306,85 @@ static int check_for_missing_vals (void)
 	return 1;
     }
 
-    nlspec.t1 = t1;
-    nlspec.t2 = t2;
+    nspec->t1 = t1;
+    nspec->t2 = t2;
 
     return 0;
 }
 
-static void update_params (const double *x)
-{
-    int i, v;
-
-    for (i=0; i<nlspec.nparam; i++) {
-	v = nlspec.terms[i].varnum;
-	(*pZ)[v][0] = x[i];
-    }
-}
-
-static int get_resid (double *fvec)
+static int get_nls_resid (double *uhat)
 {
     int j, t, v;
 
-    if (nls_auto_gen(0)) {
+    /* calculate residual given current parameter estimates */
+    if (nls_calculate_uhat()) {
 	return 1;
     }
 
-    v = varindex(pdinfo, "$nl_y");
-    if (v == pdinfo->v) {
-	return 1;
+    if (nlspec.uhatnum == 0) {
+	/* look up ID number of the variable if we don't know
+	   it already */
+	v = varindex(ndinfo, "$nl_y");
+	if (v == ndinfo->v) {
+	    return 1;
+	}
+	nlspec.uhatnum = v;
+    } else {
+	v = nlspec.uhatnum;
     }
 
     nlspec.ess = 0.0;
     j = 0;
+
+    /* transcribe from dataset to uhat array */
     for (t=nlspec.t1; t<=nlspec.t2; t++) {
-	fvec[j] = (*pZ)[v][t];
-	nlspec.ess += fvec[j] * fvec[j];
+	uhat[j] = (*nZ)[v][t];
+	nlspec.ess += uhat[j] * uhat[j];
 	j++;
     }
 
-    print_iter_ess();
+    nlspec.iters += 1;
+
+#if NLS_DEBUG
+    fprintf(stderr, "iteration %2d: SSR = %.8g\n", nlspec.iters, nlspec.ess);
+#endif
 
     return 0;
 }
 
-static int get_deriv (int i, double *deriv)
+static int get_nls_deriv (int i, double *deriv)
 {
     int j, t, v, vec;
-    char varname[VNAMELEN];
 
-    if (nls_auto_gen(i + 1)) {
+    /* calculate value of deriv with respect to param */
+    if (nls_calculate_deriv(i)) {
 	return 1;
     }
 
-    sprintf(varname, "$nl_x%d", i + 1);
-    v = varindex(pdinfo, varname);
-    if (v == pdinfo->v) {
-	return 1;
+    if (nlspec.params[i].dernum == 0) {
+	char varname[VNAMELEN];
+
+	/* look up variable number if not known */
+	sprintf(varname, "$nl_x%d", i + 1);
+	v = varindex(ndinfo, varname);
+	if (v == ndinfo->v) {
+	    return 1;
+	}
+	nlspec.params[i].dernum = v;
+    } else {
+	v = nlspec.params[i].dernum;
     }
 
-    vec = pdinfo->vector[v];
+    /* derivative may be vector or scalar */
+    vec = ndinfo->vector[v];
 
     j = 0;
+    /* transcribe from dataset to deriv array */
     for (t=nlspec.t1; t<=nlspec.t2; t++) {
 	if (vec) {
-	    deriv[j] = - (*pZ)[v][t];
+	    deriv[j] = - (*nZ)[v][t];
 	} else {
-	    deriv[j] = - (*pZ)[v][0];
+	    deriv[j] = - (*nZ)[v][0];
 	}
 	j++;
     }
@@ -293,68 +392,32 @@ static int get_deriv (int i, double *deriv)
     return 0;
 }
 
-int nls_calc (integer *m, integer *n, double *x, double *fvec, 
-	      double *fjac, integer *ldfjac, integer *iflag)
+/* compute auxiliary statistics and add them to the NLS 
+   model struct */
+
+static void add_stats_to_model (MODEL *pmod, const double **Z)
 {
-    int T = *m;
-    int i;
-
-    /* get current x[] values into dataset Z */
-    update_params(x);
-
-    if (*iflag == 1) {
-	/* calculate functions at x and return results in fvec */
-	if (get_resid(fvec)) {
-	    *iflag = -1;
-	}
-    }
-    else if (*iflag == 2) {
-	/* calculate jacobian at x and return results in fjac */
-	for (i=0; i<*n; i++) {
-	    if (get_deriv(i, &fjac[i*T])) {
-		*iflag = -1; 
-	    }
-	}	
-    }
-
-    return 0;
-}
-
-int nls_calc_approx (integer *m, integer *n, double *x, double *fvec,
-		     integer *iflag)
-{
-    update_params(x);
-
-    if (get_resid(fvec)) {
-	*iflag = -1;
-    }
-
-    return 0;
-}
-
-static void add_stats_to_model (MODEL *pmod)
-{
+    int dv = nlspec.depvar;
     double d, tss;
-    int t, t1, t2;
-
-    t1 = pmod->t1;
-    t2 = pmod->t2;
+    int t;
 
     pmod->ess = nlspec.ess;
-    pmod->sigma = sqrt(nlspec.ess/(pmod->nobs - nlspec.nparam));
+    pmod->sigma = sqrt(nlspec.ess / (pmod->nobs - nlspec.nparam));
     
-    pmod->ybar = gretl_mean(t1, t2, (*pZ)[nlspec.depvar]);
-    pmod->sdy = gretl_stddev(t1, t2, (*pZ)[nlspec.depvar]);
+    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, Z[dv]);
+    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, Z[dv]);
 
     tss = 0.0;
-    for (t=t1; t<=t2; t++) {
-	d = (*pZ)[nlspec.depvar][t] - pmod->ybar;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	d = Z[dv][t] - pmod->ybar;
 	tss += d * d;
     }    
 
     pmod->rsq = 1.0 - nlspec.ess / tss;
     pmod->adjrsq = NADBL;
 }
+
+/* add coefficient covariance matrix and standard errors */
 
 static int add_std_errs_to_model (MODEL *pmod)
 {
@@ -378,6 +441,8 @@ static int add_std_errs_to_model (MODEL *pmod)
     return 0;
 }
 
+/* transcribe coefficient estimates into model struct */
+
 static void add_coeffs_to_model (MODEL *pmod, double *coeff)
 {
     int i;
@@ -387,7 +452,8 @@ static void add_coeffs_to_model (MODEL *pmod, double *coeff)
     }
 }
 
-static int add_param_names_to_model (MODEL *pmod)
+static int 
+add_param_names_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 {
     int i;
     int np = pmod->ncoeff + 1;
@@ -412,100 +478,108 @@ static int add_param_names_to_model (MODEL *pmod)
 	if (pmod->params[i] == NULL) {
 	    int j;
 
-	    for (j=0; j<i; j++) free(pmod->params[j]);
+	    for (j=0; j<i; j++) {
+		free(pmod->params[j]);
+	    }
 	    free(pmod->params);
 	    pmod->params = NULL;
 	    pmod->nparams = 0;
 	    return 1;
 	}
-	strcpy(pmod->params[i], nlspec.terms[i-1].name);
+	strcpy(pmod->params[i], nlspec.params[i-1].name);
     }
 
     return 0;
 }
 
-static void add_fit_resid_to_model (MODEL *pmod, double *fvec)
+static void 
+add_fit_resid_to_model (MODEL *pmod, double *uhat, const double **Z)
 {
-    int t, j;
+    int t, j = 0;
 
-    j = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	pmod->uhat[t] = fvec[j];
-	pmod->yhat[t] = (*pZ)[nlspec.depvar][t] - fvec[j];
+	pmod->uhat[t] = uhat[j];
+	pmod->yhat[t] = Z[nlspec.depvar][t] - uhat[j];
 	j++;
     }
 }
 
-static MODEL GNR (double *fvec, double *fjac)
+/* Gauss-Newton regression to calculate standard errors for the
+   NLS parameters (see Davidson and MacKinnon) */
+
+static MODEL GNR (double *uhat, double *jac, nls_spec *nspec,
+		  const double **Z, const DATAINFO *pdinfo, 
+		  PRN *prn)
 {
-    double **nZ = NULL;
-    DATAINFO *ninfo;
-    int *nlist;
+    double **gZ = NULL;
+    DATAINFO *gdinfo;
+    int *glist;
     MODEL gnr;
     int i, j, t;
-    int t1 = nlspec.t1, t2 = nlspec.t2;
+    int t1 = nspec->t1, t2 = nspec->t2;
     int T = t2 - t1 + 1;
-    int iters = nlspec.iters;
+    int iters = nspec->iters;
     int err = 0;
 
-    nlspec.t1 = 0;
-    nlspec.t2 = pdinfo->n - 1;
+    nspec->t1 = 0;
+    nspec->t2 = ndinfo->n - 1;
 
-    if (gretl_iszero(0, T-1, fvec)) {
+    if (gretl_iszero(0, T-1, uhat)) {
 	pputs(prn, _("Perfect fit achieved\n"));
 	for (t=0; t<T; t++) {
-	    fvec[t] = 1.0;
+	    uhat[t] = 1.0;
 	}
-	nlspec.ess = 0.0;
+	nspec->ess = 0.0;
     }
 
-    ninfo = create_new_dataset(&nZ, nlspec.nparam + 1, pdinfo->n, 0);
-    if (ninfo == NULL) {
+    gdinfo = create_new_dataset(&gZ, nspec->nparam + 1, ndinfo->n, 0);
+    if (gdinfo == NULL) {
 	gretl_model_init(&gnr);
 	gnr.errcode = E_ALLOC;
 	return gnr;
     }
 
-    nlist = malloc((nlspec.nparam + 2) * sizeof *nlist);
-    if (nlist == NULL) {
-	free_Z(nZ, ninfo);
-	free_datainfo(ninfo);
+    glist = malloc((nspec->nparam + 2) * sizeof *glist);
+    if (glist == NULL) {
+	free_Z(gZ, gdinfo);
+	free_datainfo(gdinfo);
 	gretl_model_init(&gnr);
 	gnr.errcode = E_ALLOC;
 	return gnr;
     }
     
-    nlist[0] = nlspec.nparam + 1;
+    glist[0] = nspec->nparam + 1;
 
-    for (i=0; i<=nlspec.nparam; i++) {
-	nlist[i+1] = i;
+    for (i=0; i<=nspec->nparam; i++) {
+	glist[i+1] = i;
 	if (i == 0) {
 	    /* dependent variable (NLS residual) */
 	    j = 0;
-	    for (t=0; t<pdinfo->n; t++) {
+	    for (t=0; t<ndinfo->n; t++) {
 		if (t < t1 || t > t2) {
-		    nZ[i][t] = NADBL;
+		    gZ[i][t] = NADBL;
 		} else {
-		    nZ[i][t] = fvec[j++];
+		    gZ[i][t] = uhat[j++];
 		}
 	    }
 	} else {
-	    if (nlspec.mode == ANALYTIC_DERIVS) {
-		get_deriv(i-1, nZ[i]);
+	    /* independent vars: derivatives wrt params */
+	    if (nspec->mode == ANALYTIC_DERIVS) {
+		get_nls_deriv(i-1, gZ[i]);
 	    } else {
 		j = T * (i - 1);
-		for (t=0; t<pdinfo->n; t++) {
+		for (t=0; t<ndinfo->n; t++) {
 		    if (t < t1 || t > t2) {
-			nZ[i][t] = NADBL;
+			gZ[i][t] = NADBL;
 		    } else {
-			nZ[i][t] = fjac[j++];
+			gZ[i][t] = jac[j++];
 		    }
 		}
 	    }
 	}
     }
 
-    gnr = lsq(nlist, &nZ, ninfo, OLS, OPT_A, 0.0);
+    gnr = lsq(glist, &gZ, gdinfo, OLS, OPT_A, 0.0);
 
     if (gnr.errcode) {
 	pputs(prn, _("In Gauss-Newton Regression:\n"));
@@ -513,13 +587,13 @@ static MODEL GNR (double *fvec, double *fjac)
 	err = 1;
     } 
 
-    if (gnr.list[0] != nlist[0]) {
+    if (gnr.list[0] != glist[0]) {
 	strcpy(gretl_errmsg, _("Failed to calculate Jacobian"));
 	gnr.errcode = E_DATA;
     }
 
     if (gnr.errcode == 0) {
-	add_stats_to_model(&gnr);
+	add_stats_to_model(&gnr, Z);
 	if (add_std_errs_to_model(&gnr)) {
 	    gnr.errcode = E_ALLOC;
 	}
@@ -528,64 +602,68 @@ static MODEL GNR (double *fvec, double *fjac)
     if (gnr.errcode == 0) {
 	ls_aic_bic(&gnr);
 	gnr.ci = NLS;
-	add_coeffs_to_model(&gnr, nlspec.coeff);
-	add_param_names_to_model(&gnr);
-	add_fit_resid_to_model(&gnr, fvec);
-	gnr.list[1] = nlspec.depvar;
+	add_coeffs_to_model(&gnr, nspec->coeff);
+	add_param_names_to_model(&gnr, pdinfo);
+	add_fit_resid_to_model(&gnr, uhat, Z);
+	gnr.list[1] = nspec->depvar;
 	gretl_model_set_int(&gnr, "iters", iters);
-	gretl_model_set_double(&gnr, "tol", nlspec.tol);
+	gretl_model_set_double(&gnr, "tol", nspec->tol);
     }
 
-    nlspec.t1 = t1;
-    nlspec.t2 = t2;
+    nspec->t1 = t1;
+    nspec->t2 = t2;
 
-    free_Z(nZ, ninfo); 
-    free_datainfo(ninfo);
-    free(nlist);
+    free_Z(gZ, gdinfo); 
+    free_datainfo(gdinfo);
+    free(glist);
 
     return gnr;
 }
 
-static void clear_nls_spec (void)
+/* free up resources associated with the nlspec struct */
+
+static void clear_nls_spec (nls_spec *nspec)
 {
     int i;
 
-    if (nlspec.terms != NULL) {
-	for (i=0; i<nlspec.nparam; i++) {
-	    free(nlspec.terms[i].deriv);
-	}
-	free(nlspec.terms);
-	nlspec.terms = NULL;
+    if (nspec == NULL) {
+	return;
     }
 
-    free(nlspec.nlfunc);
-    nlspec.nlfunc = NULL;
+    if (nspec->params != NULL) {
+	for (i=0; i<nspec->nparam; i++) {
+	    free(nspec->params[i].deriv);
+	}
+	free(nspec->params);
+	nspec->params = NULL;
+    }
 
-    free(nlspec.coeff);
-    nlspec.coeff = NULL;
+    free(nspec->nlfunc);
+    nspec->nlfunc = NULL;
 
-    nlspec.mode = NUMERIC_DERIVS;
-    nlspec.nparam = 0;
-    nlspec.depvar = 0;
-    nlspec.iters = 0;
-    nlspec.t1 = nlspec.t2 = 0;
+    free(nspec->coeff);
+    nspec->coeff = NULL;
+
+    nspec->mode = NUMERIC_DERIVS;
+    nspec->nparam = 0;
+    nspec->depvar = 0;
+    nspec->iters = 0;
+    nspec->t1 = nspec->t2 = 0;
 }
 
 static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
 {
     char depvarname[VNAMELEN];
-    const char *p;
+    const char *p = nlfunc;
     int v;
 
     /* do we already have an nls specification under way? */
     if (nlspec.nlfunc != NULL) {
-	clear_nls_spec();
+	clear_nls_spec(&nlspec);
     }
 
     if (strncmp(nlfunc, "nls ", 4) == 0) { 
-	p = nlfunc + 4;
-    } else {
-	p = nlfunc;
+	p += 4;
     }
 
     if (strchr(p, '=') == NULL || sscanf(p, "%8s = %*s", depvarname) != 1) {
@@ -607,12 +685,15 @@ static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
     p = strchr(p, '=') + 1;
     while (isspace(*p)) p++;
 
+    /* write nlfunc as 'depvar minus function', so that it calculates
+       the residuals */
     sprintf(nlspec.nlfunc, "%s - (%s)", depvarname, p);
 
     nlspec.depvar = v;
+    nlspec.uhatnum = 0;
     nlspec.nparam = 0;
     nlspec.iters = 0;
-    nlspec.terms = NULL;
+    nlspec.params = NULL;
 
     nlspec.t1 = dinfo->t1;
     nlspec.t2 = dinfo->t2;
@@ -620,130 +701,168 @@ static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
     return 0;
 }
 
-static int parse_deriv_line (const char *line, int i, nls_term *term,
-			     const double **Z, const DATAINFO *dinfo)
+static int 
+parse_deriv_line (const char *line, nls_spec *nspec, int i,
+		  const double **Z, const DATAINFO *pdinfo)
 {
+    nls_param *param = &nspec->params[i];
     const char *p;
     int v, err = 0;
 
-    term->deriv = malloc(strlen(line) - 10);
-    if (term->deriv == NULL) {
+    param->deriv = malloc(strlen(line) - 9);
+    if (param->deriv == NULL) {
 	return E_ALLOC;
     }
 
-    if (sscanf(line, "deriv %8s = %s", term->name, term->deriv) != 2) {
-	free(term->deriv);
-	term->deriv = NULL;
+    if (sscanf(line, "deriv %8s = %s", param->name, param->deriv) != 2) {
+	free(param->deriv);
+	param->deriv = NULL;
 	fprintf(stderr, "parse error in line: '%s'\n", line);
 	return E_PARSE;
     }
 
     p = strchr(line, '=') + 1;
+
     while (isspace(*p)) {
 	p++;
     }
-    strcpy(term->deriv, p);
 
-    v = varindex(dinfo, term->name);
-    if (v < dinfo->v) {
-	term->varnum = v;
-	nlspec.coeff[i] = Z[v][0];
+    strcpy(param->deriv, p);
+
+    v = varindex(pdinfo, param->name);
+    if (v < pdinfo->v) {
+	param->varnum = v;
+	param->dernum = 0;
+	nspec->coeff[i] = Z[v][0];
     } else {
-	free(term->deriv);
-	term->deriv = NULL;
-	sprintf(gretl_errmsg, _("Unknown variable '%s'"), term->name);
+	free(param->deriv);
+	param->deriv = NULL;
+	sprintf(gretl_errmsg, _("Unknown variable '%s'"), param->name);
 	err = E_UNKVAR;
-    }	
+    }
+
+#if NLS_DEBUG
+    if (param->deriv != NULL) {
+	fprintf(stderr, "parse_deriv_line: '%s'\n"
+		" set varnum = %d, init value = %g\n", line, param->varnum,
+		nspec->coeff[i]);
+    }
+#endif
 
     return err;
 }
 
-static int nls_spec_add_term (const char *line, const double **Z,
-			      const DATAINFO *datainfo)
+static int 
+nls_spec_add_deriv (const char *line, nls_spec *nspec,
+		    const double **Z, const DATAINFO *pdinfo)
 {
-    nls_term *terms;
-    double *coeff;
-    int nt = nlspec.nparam + 1; 
-    int err = 0;
+    int i, err = 0;
 
-    if (nlspec.nlfunc == NULL) {
+    if (nspec->nlfunc == NULL) {
 	strcpy(gretl_errmsg, _("No regression function has been specified"));
 	return E_PARSE;
     }
+
+    if (nlspec_allocate_param(nspec)) {
+	return E_ALLOC;
+    }
+
+    i = nspec->nparam - 1;
   
-    terms = realloc(nlspec.terms, nt * sizeof *nlspec.terms);
-    if (terms == NULL) {
-	return E_ALLOC;
-    }
-
-    nlspec.terms = terms;
-
-    coeff = realloc(nlspec.coeff, nt * sizeof *nlspec.coeff);
-    if (coeff == NULL) {
-	free(nlspec.terms);
-	nlspec.terms = NULL;
-	return E_ALLOC;
-    }
-
-    nlspec.coeff = coeff;
-
-    err = parse_deriv_line(line, nt-1, &terms[nt-1], Z, datainfo);
+    err = parse_deriv_line(line, nspec, i, Z, pdinfo);
     if (!err) {
-	nlspec.nparam += 1;
-	nlspec.mode = ANALYTIC_DERIVS;
+	nspec->mode = ANALYTIC_DERIVS;
     }
 	
     return err;
 }
 
-int nls_parse_line (const char *line, const double **Z,
-		    const DATAINFO *dinfo)
+/* next block: functions that interface with minpack */
+
+static void update_nls_param_values (const double *x)
 {
-    if (strncmp(line, "deriv", 5) == 0) {
-	return nls_spec_add_term(line, Z, dinfo);
-    } else {
-	return nls_spec_start(line, dinfo);
+    int i, v;
+
+    for (i=0; i<nlspec.nparam; i++) {
+	v = nlspec.params[i].varnum;
+	(*nZ)[v][0] = x[i];
     }
 }
 
-static int check_derivs (integer m, integer n, double *x,
-			 double *fvec, double *fjac,
-			 integer ldfjac)
+/* callback for lm_calculate (below) to be used by minpack */
+
+static int nls_calc (integer *m, integer *n, double *x, double *uhat, 
+		     double *jac, integer *ldjac, integer *iflag)
+{
+    int T = *m;
+    int i;
+
+#if NLS_DEBUG
+    fprintf(stderr, "nls_calc called by minpack with iflag = %d\n", 
+	    (int) *iflag);
+#endif
+
+    /* write current parameter values into dataset Z */
+    update_nls_param_values(x);
+
+    if (*iflag == 1) {
+	/* calculate regression function at x, results into uhat */
+	if (get_nls_resid(uhat)) {
+	    *iflag = -1;
+	}
+    } else if (*iflag == 2) {
+	/* calculate jacobian at x and put results in jac */
+	for (i=0; i<*n; i++) {
+	    if (get_nls_deriv(i, &jac[i*T])) {
+		*iflag = -1; 
+	    }
+	}	
+    }
+
+    return 0;
+}
+
+/* in case the user supplied analytical derivatives for the
+   NLS regression parameters, check them for sanity */
+
+static int check_nls_derivs (integer m, integer n, double *x,
+			     double *uhat, double *jac,
+			     integer ldjac, PRN *prn)
 {
     integer mode = 1;
     integer iflag;
     doublereal *xp = NULL;
     doublereal *err = NULL;
-    doublereal *fvecp = NULL;
+    doublereal *uhatp = NULL;
     int i, badcount = 0, zerocount = 0;
 
     xp = malloc(m * sizeof *xp);
     err = malloc(m * sizeof *err);
-    fvecp = malloc(m * sizeof *fvecp);
+    uhatp = malloc(m * sizeof *uhatp);
 
-    if (xp == NULL || err == NULL || fvecp == NULL) {
+    if (xp == NULL || err == NULL || uhatp == NULL) {
 	free(err);
 	free(xp);
-	free(fvecp);
+	free(uhatp);
 	return 1;
     }
 
     iflag = 1;
-    nls_calc(&m, &n, x, fvec, fjac, &ldfjac, &iflag);
+    nls_calc(&m, &n, x, uhat, jac, &ldjac, &iflag);
     if (iflag == -1) goto chkderiv_abort;
 
-    chkder_(&m, &n, x, fvec, fjac, &ldfjac, xp, fvecp, &mode, err);
+    chkder_(&m, &n, x, uhat, jac, &ldjac, xp, uhatp, &mode, err);
 
     iflag = 2;
-    nls_calc(&m, &n, x, fvec, fjac, &ldfjac, &iflag);
+    nls_calc(&m, &n, x, uhat, jac, &ldjac, &iflag);
     if (iflag == -1) goto chkderiv_abort;
 
     iflag = 1;
-    nls_calc(&m, &n, xp, fvecp, fjac, &ldfjac, &iflag);
+    nls_calc(&m, &n, xp, uhatp, jac, &ldjac, &iflag);
     if (iflag == -1) goto chkderiv_abort; 
 
     mode = 2;
-    chkder_(&m, &n, x, fvec, fjac, &ldfjac, xp, fvecp, &mode, err);
+    chkder_(&m, &n, x, uhat, jac, &ldjac, xp, uhatp, &mode, err);
 
     /* examine "err" vector */
     for (i=0; i<m; i++) {
@@ -768,18 +887,18 @@ static int check_derivs (integer m, integer n, double *x,
  chkderiv_abort:
     free(xp);
     free(err);
-    free(fvecp);
+    free(uhatp);
 
     return (zerocount > m/4);
 }
 
-/* Below: version of levenberg-marquandt code for use when analytical
+/* version of levenberg-marquandt code for use when analytical
    derivatives have been supplied */
 
-static int lm_calculate (double *fvec, double *fjac)
+static int lm_calculate (double *uhat, double *jac, PRN *prn)
 {
     integer info, lwa;
-    integer m, n, ldfjac;
+    integer m, n, ldjac;
     integer *ipvt;
     doublereal *wa;
     int err = 0;
@@ -787,7 +906,7 @@ static int lm_calculate (double *fvec, double *fjac)
     m = nlspec.t2 - nlspec.t1 + 1; /* number of observations */
     n = nlspec.nparam;             /* number of parameters */
     lwa = 5 * n + m;               /* work array size */
-    ldfjac = m;                    /* leading dimension of fjac array */
+    ldjac = m;                     /* leading dimension of jac array */
 
     wa = malloc(lwa * sizeof *wa);
     ipvt = malloc(n * sizeof *ipvt);
@@ -797,12 +916,13 @@ static int lm_calculate (double *fvec, double *fjac)
 	goto nls_cleanup;
     }
 
-    err = check_derivs(m, n, nlspec.coeff, fvec, fjac, ldfjac);
+    err = check_nls_derivs(m, n, nlspec.coeff, uhat, jac, ldjac, prn);
     if (err) {
 	goto nls_cleanup; 
     }
 
-    lmder1_(nls_calc, &m, &n, nlspec.coeff, fvec, fjac, &ldfjac, &nlspec.tol, 
+    /* call minpack */
+    lmder1_(nls_calc, &m, &n, nlspec.coeff, uhat, jac, &ldjac, &nlspec.tol, 
 	    &info, ipvt, wa, &lwa);
 
     switch ((int) info) {
@@ -840,12 +960,29 @@ static int lm_calculate (double *fvec, double *fjac)
     return err;    
 }
 
-/* Below: version of levenberg-marquandt code for use when the Jacobian
+/* callback for lm_approximate (below) to be used by minpack */
+
+static int 
+nls_calc_approx (integer *m, integer *n, double *x, double *uhat,
+		 integer *iflag)
+{
+    /* write current parameter values into dataset Z */
+    update_nls_param_values(x);
+
+    /* calculate regression function at x, results into uhat */    
+    if (get_nls_resid(uhat)) {
+	*iflag = -1;
+    }
+
+    return 0;
+}
+
+/* version of levenberg-marquandt code for use when the Jacobian
    must be approximated numerically */
 
-static int lm_approximate (double *fvec, double *fjac)
+static int lm_approximate (double *uhat, double *jac, PRN *prn)
 {
-    integer info, m, n, ldfjac;
+    integer info, m, n, ldjac;
     integer maxfev, mode = 1, nprint = 0, nfev = 0;
     integer iflag = 0;
     integer *ipvt;
@@ -857,7 +994,7 @@ static int lm_approximate (double *fvec, double *fjac)
     
     m = nlspec.t2 - nlspec.t1 + 1; /* number of observations */
     n = nlspec.nparam;             /* number of parameters */
-    ldfjac = m;                    /* leading dimension of fjac array */
+    ldjac = m;                     /* leading dimension of jac array */
 
     maxfev = 200 * (n + 1);
 
@@ -876,9 +1013,10 @@ static int lm_approximate (double *fvec, double *fjac)
 	goto nls_cleanup;
     }
 
-    lmdif_(nls_calc_approx, &m, &n, nlspec.coeff, fvec, 
+    /* call minpack */
+    lmdif_(nls_calc_approx, &m, &n, nlspec.coeff, uhat, 
 	   &nlspec.tol, &nlspec.tol, &gtol, &maxfev, &epsfcn, diag, &mode, &factor,
-	   &nprint, &info, &nfev, fjac, &ldfjac, 
+	   &nprint, &info, &nfev, jac, &ldjac, 
 	   ipvt, qtf, wa1, wa2, wa3, wa4);
 
     nlspec.iters = nfev;
@@ -915,8 +1053,9 @@ static int lm_approximate (double *fvec, double *fjac)
 	double ess = nlspec.ess;
 	int iters = nlspec.iters;
 
-	fdjac2_(nls_calc_approx, &m, &n, nlspec.coeff, fvec, fjac, 
-		&ldfjac, &iflag, &epsfcn, wa4);
+	/* call minpack */
+	fdjac2_(nls_calc_approx, &m, &n, nlspec.coeff, uhat, jac, 
+		&ldjac, &iflag, &epsfcn, wa4);
 	nlspec.ess = ess;
 	nlspec.iters = iters;
     }
@@ -934,82 +1073,153 @@ static int lm_approximate (double *fvec, double *fjac)
     return err;    
 }
 
-MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
+/* below: public functions */
+
+/**
+ * nls_parse_line:
+ * @line: specification of regression function or derivative
+ *        of this function with respect to a parameter.
+ * @Z: data array.
+ * @pdinfo: information on dataset.
+ *
+ * This function is used to create the specification of a
+ * nonlinear regression function, to be estimated via #nls.
+ * It should first be called with a @line containing a
+ * string specification of the regression function.  Optionally,
+ * it can then be called one or more times to specify 
+ * analytical derivatives for the parameters of the regression
+ * function.  
+ *
+ * The format of @line should be that used in the #genr function.
+ * When specifying the regression function, the formula may
+ * optionally be preceded by the string %nls.  When specifying
+ * a derivative, @line must start with the string %deriv.  See
+ * the gretl manual for details.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int nls_parse_line (const char *line, const double **Z,
+		    const DATAINFO *pdinfo)
 {
+    int err = 0;
+
+    if (strncmp(line, "deriv", 5) == 0) {
+	err = nls_spec_add_deriv(line, &nlspec, Z, pdinfo);
+    } else {
+	err = nls_spec_start(line, pdinfo);
+    }
+
+    return err;
+}
+
+/* Comment: The function below takes its NLS specification from the
+   private static variable nlspec, which is initialized via
+   appropriate calls to nls_parse_line().  It wouldn't be difficult to
+   modify stuff here so that one could fill out an nls_spec struct
+   more directly (programmatically), and then have the nls function
+   operate on it.
+*/
+
+/**
+ * nls:
+ * @pZ: pointer to dataset.
+ * @pdinfo: information on dataset.
+ * @prn: printing struct.
+ *
+ * Compute estimates of a model via nonlinear least squares.
+ * The model must have been specified previously, via calls to
+ * the function #nls_parse_line.  
+ *
+ * Returns: a model struct containing the parameter estimates
+ * and associated statistics.
+ */
+
+MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    nls_spec *nspec = NULL;
+    double *uhat = NULL;
+    double *jac = NULL;
     MODEL nlsmod;
-    double *fvec, *fjac;
-    int origv = maininfo->v;
+    double toler = get_nls_toler();
+    int origv = pdinfo->v;
     int err = 0;
 
     genr_err = 0;
 
-    gretl_model_init(&nlsmod);
-    gretl_model_smpl_init(&nlsmod, maininfo);
+    gretl_model_smpl_init(&nlsmod, pdinfo);
 
     if (nlspec.nlfunc == NULL) {
 	strcpy(gretl_errmsg, _("No regression function has been specified"));
 	nlsmod.errcode = E_PARSE;
-	return nlsmod;
-    }   
+	goto bailout;
+    } 
 
-    /* "export" these variables as file-scope globals */
-    pZ = mainZ;
-    pdinfo = maininfo;
-    prn = mainprn; 
+    nspec = &nlspec;
 
-    if (nlspec.mode == NUMERIC_DERIVS) {
-	err = get_params_from_nlfunc();
+    if (nspec->mode == NUMERIC_DERIVS) {
+	err = get_params_from_nlfunc(nspec, (const double **) *pZ, pdinfo);
 	if (err) {
-	    clear_nls_spec();
 	    if (err == 1) {
 		nlsmod.errcode = E_PARSE;
 	    } else {
 		nlsmod.errcode = err;
 	    }
-	    return nlsmod;
+	    goto bailout;
 	}
     }
 
-    if (nlspec.nparam == 0) {
+    if (nspec->nparam == 0) {
 	strcpy(gretl_errmsg, _("No regression function has been specified"));
-	clear_nls_spec();
 	nlsmod.errcode = E_PARSE;
-	return nlsmod;
-    }   
+	goto bailout;
+    } 
 
-    fvec = malloc(pdinfo->n * sizeof *fvec);
-    fjac = malloc(pdinfo->n * nlspec.nparam * sizeof *fvec);
+    err = nls_missval_check((const double **) *pZ, pdinfo, nspec);
+    if (err) {
+	nlsmod.errcode = err;
+	goto bailout;
+    }
 
-    if (fvec == NULL || fjac == NULL) {
-	free(fvec);
-	free(fjac);
-	clear_nls_spec();
+    uhat = malloc(pdinfo->n * sizeof *uhat);
+    jac = malloc(pdinfo->n * nspec->nparam * sizeof *jac);
+
+    if (uhat == NULL || jac == NULL) {
 	nlsmod.errcode = E_ALLOC;
-	return nlsmod;
+	goto bailout;
     }
 
-    nlsmod.errcode = err = check_for_missing_vals();
-
-    if (!err) {
-	if (toler > 0) {
-	    nlspec.tol = toler;
-	} else {
-	    nlspec.tol = pow(dpmpar_(&one), .75);
-	}
-
-	if (nlspec.mode == NUMERIC_DERIVS) {
-	    pputs(prn, _("Using numerical derivatives\n"));
-	    err = lm_approximate(fvec, fjac);
-	} else {
-	    pputs(prn, _("Using analytical derivatives\n"));
-	    err = lm_calculate(fvec, fjac);
-	}
-
-	pprintf(prn, _("Tolerance = %g\n"), nlspec.tol);
+    toler = get_nls_toler();
+    if (toler > 0) {
+	nspec->tol = toler;
+    } else {
+	nspec->tol = pow(dpmpar_(&one), .75);
     }
 
+    /* export vars for minpack's benefit */
+    nZ = pZ;
+    ndinfo = pdinfo;
+    nprn = prn;
+
+    /* invoke minpack driver function */
+    if (nlspec.mode == NUMERIC_DERIVS) {
+	pputs(prn, _("Using numerical derivatives\n"));
+	err = lm_approximate(uhat, jac, prn);
+    } else {
+	pputs(prn, _("Using analytical derivatives\n"));
+	err = lm_calculate(uhat, jac, prn);
+    }
+
+    /* re-attach data array pointer: may have moved! */
+    *pZ = *nZ;
+
+    pprintf(prn, _("Tolerance = %g\n"), nspec->tol);
+
     if (!err) {
-	nlsmod = GNR(fvec, fjac);
+	/* We have parameter estimates; now use a Gauss-Newton
+	   regression for covariance matrix, standard errors. */
+	nlsmod = GNR(uhat, jac, nspec, (const double **) *pZ, 
+		     pdinfo, prn);
     } else {
 	if (nlsmod.errcode == 0) { 
 	    if (genr_err != 0) {
@@ -1020,22 +1230,21 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 	}
     }
 
-    free(fvec);
-    free(fjac);
-    clear_nls_spec();
+ bailout:
+
+    free(uhat);
+    free(jac);
+    clear_nls_spec(nspec);
 
     dataset_drop_vars(pdinfo->v - origv, pZ, pdinfo);
 
-    *mainZ = *pZ;
-
-    set_model_id(&nlsmod);
+    if (nlsmod.errcode == 0) {
+	set_model_id(&nlsmod);
+    }
 
     return nlsmod;
 }
 
-void set_nls_toler (double x)
-{
-    toler = x;
-}
+
 
 
