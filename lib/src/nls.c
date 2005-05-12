@@ -45,7 +45,8 @@ struct _nls_spec {
     int mode;           /* derivatives: numeric or analytic */
     int depvar;         /* ID number of dependent variable */
     int uhatnum;        /* ID number of variable holding residuals */
-    char *nlfunc;       /* string representation of regression function */
+    char *nlfunc;       /* string representation of nonlinear function,
+			   expressed in terms of the residuals */
     int nparam;         /* number of parameters to be estimated */
     int iters;          /* number of iterations performed */
     int t1;             /* starting observation */
@@ -60,7 +61,7 @@ struct _nls_spec {
 /* file-scope global variables: we need to access these variables in
    the context of the callback functions that we register with the
    minpack routines, and there is no provision in minpack for passing
-   additional pointers to the callbacks.
+   additional pointers into the callbacks.
 */
 
 static double ***nZ;
@@ -314,6 +315,8 @@ nls_missval_check (const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
+/* this function is used in the context of the minpack callback */
+
 static int get_nls_resid (double *uhat)
 {
     int j, t, v;
@@ -353,6 +356,8 @@ static int get_nls_resid (double *uhat)
 
     return 0;
 }
+
+/* this function is used in the context of the minpack callback */
 
 static int get_nls_deriv (int i, double *deriv)
 {
@@ -897,7 +902,7 @@ static int check_nls_derivs (integer m, integer n, double *x,
     return (zerocount > m/4);
 }
 
-/* version of levenberg-marquandt code for use when analytical
+/* driver for minpack levenberg-marquandt code for use when analytical
    derivatives have been supplied */
 
 static int lm_calculate (nls_spec *spec, double *uhat, double *jac, PRN *prn)
@@ -982,8 +987,8 @@ nls_calc_approx (integer *m, integer *n, double *x, double *uhat,
     return 0;
 }
 
-/* version of levenberg-marquandt code for use when the Jacobian
-   must be approximated numerically */
+/* driver for minpack levenberg-marquandt code for use when the
+   Jacobian must be approximated numerically */
 
 static int 
 lm_approximate (nls_spec *spec, double *uhat, double *jac, PRN *prn)
@@ -1059,7 +1064,7 @@ lm_approximate (nls_spec *spec, double *uhat, double *jac, PRN *prn)
 	double ess = spec->ess;
 	int iters = spec->iters;
 
-	/* call minpack */
+	/* call minpack again */
 	fdjac2_(nls_calc_approx, &m, &n, spec->coeff, uhat, jac, 
 		&ldjac, &iflag, &epsfcn, wa4);
 	spec->ess = ess;
@@ -1145,11 +1150,10 @@ int nls_parse_line (const char *line, const double **Z,
 
 MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
-    nls_spec *spec = NULL;
+    MODEL nlsmod;
     double *uhat = NULL;
     double *jac = NULL;
-    MODEL nlsmod;
-    double toler = get_nls_toler();
+    double toler;
     int origv = pdinfo->v;
     int err = 0;
 
@@ -1163,11 +1167,11 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	goto bailout;
     } 
 
-    /* this needs to be generalized */
-    pspec = spec = &private_spec;
+    /* this could be modified if it's useful to do so */
+    pspec = &private_spec;
 
-    if (spec->mode == NUMERIC_DERIVS) {
-	err = get_params_from_nlfunc(spec, (const double **) *pZ, pdinfo);
+    if (pspec->mode == NUMERIC_DERIVS) {
+	err = get_params_from_nlfunc(pspec, (const double **) *pZ, pdinfo);
 	if (err) {
 	    if (err == 1) {
 		nlsmod.errcode = E_PARSE;
@@ -1178,31 +1182,33 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	}
     }
 
-    if (spec->nparam == 0) {
+    if (pspec->nparam == 0) {
 	strcpy(gretl_errmsg, _("No regression function has been specified"));
 	nlsmod.errcode = E_PARSE;
 	goto bailout;
     } 
 
-    err = nls_missval_check((const double **) *pZ, pdinfo, spec);
+    err = nls_missval_check((const double **) *pZ, pdinfo, pspec);
     if (err) {
 	nlsmod.errcode = err;
 	goto bailout;
     }
 
+    /* allocate arrays to be passed to minpack */
     uhat = malloc(pdinfo->n * sizeof *uhat);
-    jac = malloc(pdinfo->n * spec->nparam * sizeof *jac);
+    jac = malloc(pdinfo->n * pspec->nparam * sizeof *jac);
 
     if (uhat == NULL || jac == NULL) {
 	nlsmod.errcode = E_ALLOC;
 	goto bailout;
     }
 
+    /* get tolerance from user setting, or default */
     toler = get_nls_toler();
     if (toler > 0) {
-	spec->tol = toler;
+	pspec->tol = toler;
     } else {
-	spec->tol = pow(dpmpar_(&one), .75);
+	pspec->tol = pow(dpmpar_(&one), .75);
     }
 
     /* export vars for minpack's benefit */
@@ -1210,24 +1216,31 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
     ndinfo = pdinfo;
     nprn = prn;
 
+    /* intial check on calculation of function to be minimized */
+    err = nls_calculate_uhat();
+    if (err) {
+	nlsmod.errcode = err;
+	goto bailout;
+    }
+
     /* invoke minpack driver function */
-    if (spec->mode == NUMERIC_DERIVS) {
+    if (pspec->mode == NUMERIC_DERIVS) {
 	pputs(prn, _("Using numerical derivatives\n"));
-	err = lm_approximate(spec, uhat, jac, prn);
+	err = lm_approximate(pspec, uhat, jac, prn);
     } else {
 	pputs(prn, _("Using analytical derivatives\n"));
-	err = lm_calculate(spec, uhat, jac, prn);
+	err = lm_calculate(pspec, uhat, jac, prn);
     }
 
     /* re-attach data array pointer: may have moved! */
     *pZ = *nZ;
 
-    pprintf(prn, _("Tolerance = %g\n"), spec->tol);
+    pprintf(prn, _("Tolerance = %g\n"), pspec->tol);
 
     if (!err) {
 	/* We have parameter estimates; now use a Gauss-Newton
 	   regression for covariance matrix, standard errors. */
-	nlsmod = GNR(uhat, jac, spec, (const double **) *pZ, 
+	nlsmod = GNR(uhat, jac, pspec, (const double **) *pZ, 
 		     pdinfo, prn);
     } else {
 	if (nlsmod.errcode == 0) { 
@@ -1243,7 +1256,7 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     free(uhat);
     free(jac);
-    clear_nls_spec(spec);
+    clear_nls_spec(pspec);
 
     dataset_drop_vars(pdinfo->v - origv, pZ, pdinfo);
 
