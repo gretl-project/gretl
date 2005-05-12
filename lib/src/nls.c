@@ -456,7 +456,7 @@ static void add_coeffs_to_model (MODEL *pmod, double *coeff)
 }
 
 static int 
-add_param_names_to_model (MODEL *pmod, const DATAINFO *pdinfo)
+add_param_names_to_model (MODEL *pmod, nls_spec *spec, const DATAINFO *pdinfo)
 {
     int i;
     int np = pmod->ncoeff + 1;
@@ -474,7 +474,7 @@ add_param_names_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 	return 1;
     }
 
-    strcpy(pmod->params[0], pdinfo->varname[pspec->depvar]);
+    strcpy(pmod->params[0], pdinfo->varname[spec->depvar]);
 
     for (i=1; i<=pmod->ncoeff; i++) {
 	pmod->params[i] = malloc(VNAMELEN);
@@ -489,7 +489,7 @@ add_param_names_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 	    pmod->nparams = 0;
 	    return 1;
 	}
-	strcpy(pmod->params[i], pspec->params[i-1].name);
+	strcpy(pmod->params[i], spec->params[i-1].name);
     }
 
     return 0;
@@ -607,7 +607,7 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 	ls_aic_bic(&gnr);
 	gnr.ci = NLS;
 	add_coeffs_to_model(&gnr, spec->coeff);
-	add_param_names_to_model(&gnr, pdinfo);
+	add_param_names_to_model(&gnr, spec, pdinfo);
 	add_fit_resid_to_model(&gnr, spec, uhat, Z);
 	gnr.list[1] = spec->depvar;
 	gretl_model_set_int(&gnr, "iters", iters);
@@ -1145,7 +1145,7 @@ int nls_parse_line (const char *line, const double **Z,
 
 MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
-    nls_spec *nspec = NULL;
+    nls_spec *spec = NULL;
     double *uhat = NULL;
     double *jac = NULL;
     MODEL nlsmod;
@@ -1163,10 +1163,11 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	goto bailout;
     } 
 
-    pspec = nspec = &private_spec;
+    /* this needs to be generalized */
+    pspec = spec = &private_spec;
 
-    if (nspec->mode == NUMERIC_DERIVS) {
-	err = get_params_from_nlfunc(nspec, (const double **) *pZ, pdinfo);
+    if (spec->mode == NUMERIC_DERIVS) {
+	err = get_params_from_nlfunc(spec, (const double **) *pZ, pdinfo);
 	if (err) {
 	    if (err == 1) {
 		nlsmod.errcode = E_PARSE;
@@ -1177,20 +1178,20 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	}
     }
 
-    if (nspec->nparam == 0) {
+    if (spec->nparam == 0) {
 	strcpy(gretl_errmsg, _("No regression function has been specified"));
 	nlsmod.errcode = E_PARSE;
 	goto bailout;
     } 
 
-    err = nls_missval_check((const double **) *pZ, pdinfo, nspec);
+    err = nls_missval_check((const double **) *pZ, pdinfo, spec);
     if (err) {
 	nlsmod.errcode = err;
 	goto bailout;
     }
 
     uhat = malloc(pdinfo->n * sizeof *uhat);
-    jac = malloc(pdinfo->n * nspec->nparam * sizeof *jac);
+    jac = malloc(pdinfo->n * spec->nparam * sizeof *jac);
 
     if (uhat == NULL || jac == NULL) {
 	nlsmod.errcode = E_ALLOC;
@@ -1199,9 +1200,9 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     toler = get_nls_toler();
     if (toler > 0) {
-	nspec->tol = toler;
+	spec->tol = toler;
     } else {
-	nspec->tol = pow(dpmpar_(&one), .75);
+	spec->tol = pow(dpmpar_(&one), .75);
     }
 
     /* export vars for minpack's benefit */
@@ -1210,23 +1211,23 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
     nprn = prn;
 
     /* invoke minpack driver function */
-    if (nspec->mode == NUMERIC_DERIVS) {
+    if (spec->mode == NUMERIC_DERIVS) {
 	pputs(prn, _("Using numerical derivatives\n"));
-	err = lm_approximate(nspec, uhat, jac, prn);
+	err = lm_approximate(spec, uhat, jac, prn);
     } else {
 	pputs(prn, _("Using analytical derivatives\n"));
-	err = lm_calculate(nspec, uhat, jac, prn);
+	err = lm_calculate(spec, uhat, jac, prn);
     }
 
     /* re-attach data array pointer: may have moved! */
     *pZ = *nZ;
 
-    pprintf(prn, _("Tolerance = %g\n"), nspec->tol);
+    pprintf(prn, _("Tolerance = %g\n"), spec->tol);
 
     if (!err) {
 	/* We have parameter estimates; now use a Gauss-Newton
 	   regression for covariance matrix, standard errors. */
-	nlsmod = GNR(uhat, jac, nspec, (const double **) *pZ, 
+	nlsmod = GNR(uhat, jac, spec, (const double **) *pZ, 
 		     pdinfo, prn);
     } else {
 	if (nlsmod.errcode == 0) { 
@@ -1242,7 +1243,7 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     free(uhat);
     free(jac);
-    clear_nls_spec(nspec);
+    clear_nls_spec(spec);
 
     dataset_drop_vars(pdinfo->v - origv, pZ, pdinfo);
 
