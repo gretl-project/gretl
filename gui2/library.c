@@ -1133,8 +1133,8 @@ void do_remove_markers (gpointer data, guint u, GtkWidget *w)
 
 void do_forecast (gpointer data, guint u, GtkWidget *w) 
 {
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
     int t1 = 0, t2 = datainfo->n - 1;
     FITRESID *fr;
@@ -1294,9 +1294,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
 static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 {
-    if (w == NULL) {
-        return;
-    } else {
+    if (test != NULL && w != NULL) {
 	PRN *prn;
 
 	if (bufopen(&prn)) return;
@@ -1315,9 +1313,7 @@ static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 
 static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 {
-    if (w == NULL) {
-	return;
-    } else {
+    if (test != NULL && w != NULL) {
 	GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
 	GtkTextIter iter;
 	PRN *prn;
@@ -1334,13 +1330,23 @@ static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 
 #endif /* !OLD_GTK */
 
+static void 
+process_model_test (MODEL *pmod, GRETLTEST *test, windata_t *vwin)
+{
+    int err = add_test_to_model(pmod, test);
+
+    if (!err && vwin != NULL) {
+	print_test_to_window(last_test_on_model(pmod), vwin->w);
+    }
+}
+
 /* ........................................................... */
 
 void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 {
     int err;
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
     PRN *prn;
     char title[64];
     GRETLTEST test;
@@ -1359,9 +1365,7 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	    return;
 	} else {
 	    strcat(title, _("(heteroskedasticity)"));
-	    if (add_test_to_model(pmod, &test) == 0) {
-		print_test_to_window(&test, mydata->w);
-	    }
+	    process_model_test(pmod, &test, vwin);
 	}
     } else if (action == LMTEST_GROUPWISE) {
 	strcpy(line, "lmtest --panel");
@@ -1390,9 +1394,7 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	    return;
 	} else {
 	    strcat(title, _("(non-linearity)"));
-	    if (add_test_to_model(pmod, &test) == 0) {
-		print_test_to_window(&test, mydata->w);
-	    }
+	    process_model_test(pmod, &test, vwin);
 	} 
     }
 
@@ -1407,8 +1409,8 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 
 void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 {
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
     void *handle;
     int (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, 
 			     gretlopt, PRN *);
@@ -1508,8 +1510,8 @@ void add_leverage_data (windata_t *vwin)
 
 void do_leverage (gpointer data, guint u, GtkWidget *w)
 {
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
     void *handle;
     gretl_matrix *(*model_leverage) (const MODEL *, double ***, 
 				     DATAINFO *, PRN *, int);
@@ -1531,11 +1533,11 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
     close_plugin(handle);
 
     if (m != NULL) {
-	windata_t *vwin;
+	windata_t *levwin;
 
-	vwin = view_buffer(prn, 78, 400, _("gretl: leverage and influence"), 
-			   LEVERAGE, m); 
-	set_model_id_on_window(vwin->dialog, pmod->ID);
+	levwin = view_buffer(prn, 78, 400, _("gretl: leverage and influence"), 
+			     LEVERAGE, m); 
+	set_model_id_on_window(levwin->dialog, pmod->ID);
 
 	make_and_display_graph();
 
@@ -1548,8 +1550,8 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 
 void do_vif (gpointer data, guint u, GtkWidget *w)
 {
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
     int (*print_vifs) (MODEL *, double ***, DATAINFO *, PRN *);
     void *handle;
     int err;
@@ -1569,10 +1571,10 @@ void do_vif (gpointer data, guint u, GtkWidget *w)
     close_plugin(handle);
 
     if (!err) {
-	windata_t *vwin;
+	windata_t *vifwin;
 
-	vwin = view_buffer(prn, 78, 400, _("gretl: collinearity"), 
-			   PRINT, NULL); 
+	vifwin = view_buffer(prn, 78, 400, _("gretl: collinearity"), 
+			     PRINT, NULL); 
 
 	strcpy(line, "vif");
 	model_command_init(line, &cmd, pmod->ID);
@@ -1685,9 +1687,7 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 	register_graph();
     }
 
-    if (add_test_to_model(pmod, &test) == 0) {
-	print_test_to_window(&test, vwin->w);
-    }
+    process_model_test(pmod, &test, vwin);
 
     if (model_command_init(line, &cmd, pmod->ID)) {
 	return;
@@ -1701,8 +1701,8 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 
 void do_reset (gpointer data, guint u, GtkWidget *widget)
 {
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = vwin->data;
     GRETLTEST test;
     PRN *prn;
     char title[40];
@@ -1720,8 +1720,8 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
 	return;
-    } else if (add_test_to_model(pmod, &test) == 0) {
-	print_test_to_window(&test, mydata->w);
+    } else {
+	process_model_test(pmod, &test, vwin);
     }
 
     if (model_command_init(line, &cmd, pmod->ID)) return;
@@ -1783,8 +1783,8 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
 	return;
-    } else if (add_test_to_model(pmod, &test) == 0) {
-	print_test_to_window(&test, vwin->w);
+    } else {
+	process_model_test(pmod, &test, vwin);
     }
 
     if (model_command_init(line, &cmd, pmod->ID)) return;
@@ -1839,8 +1839,8 @@ void do_arch (gpointer data, guint u, GtkWidget *widget)
 		      &test, cmd.opt, prn);
     if ((err = (models[1])->errcode)) { 
 	gui_errmsg(err);
-    } else if (add_test_to_model(pmod, &test) == 0) {
-	print_test_to_window(&test, vwin->w);
+    } else {
+	process_model_test(pmod, &test, vwin);
     }
 
     clear_model(models[1]);
@@ -2497,8 +2497,8 @@ void do_genr (GtkWidget *widget, dialog_t *ddata)
 void do_model_genr (GtkWidget *widget, dialog_t *ddata) 
 {
     const gchar *buf;
-    windata_t *mydata = (windata_t *) dialog_data_get_data(ddata);
-    MODEL *pmod = mydata->data;
+    windata_t *vwin = (windata_t *) dialog_data_get_data(ddata);
+    MODEL *pmod = vwin->data;
 
     buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
@@ -2718,8 +2718,8 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 {
     FREQDIST *freq;
     PRN *prn;
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
     GRETLTEST test;
     double ***rZ;
     DATAINFO *rinfo;
@@ -2751,9 +2751,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     
     normal_test(&test, freq);
 
-    if (add_test_to_model(pmod, &test) == 0) {
-	print_test_to_window(&test, mydata->w);
-    }
+    process_model_test(pmod, &test, vwin);
 
     clear_line();
     strcpy(line, "testuhat");
@@ -3111,8 +3109,8 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
 {
     PRN *prn;
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
     CONFINT *cf;
 
     if (bufopen(&prn)) return;
@@ -3130,8 +3128,8 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
 void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 {
     PRN *prn;
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
     VCV *vcv = NULL;
 
     if (Z == NULL || datainfo == NULL) {
@@ -3614,8 +3612,8 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 
 void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
 {
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
     double ***gZ;
     DATAINFO *ginfo;
     int list[4];
@@ -3750,8 +3748,8 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 {
     PRN *prn;
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
     FITRESID *fr;
 
     if (bufopen(&prn)) return;
@@ -4373,13 +4371,13 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 #ifdef PGRAB
 	GdkCursor *plswait;
 #endif
-	windata_t *mydata = (windata_t *) data;
+	windata_t *vwin = (windata_t *) data;
 	gchar *buf;
 
 #ifdef OLD_GTK
-	buf = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+	buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
 #else
-	buf = textview_get_text(GTK_TEXT_VIEW(mydata->w));
+	buf = textview_get_text(GTK_TEXT_VIEW(vwin->w));
 #endif
 
 	if (buf == NULL || *buf == '\0') {
@@ -4391,7 +4389,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
 #ifdef PGRAB
 	plswait = gdk_cursor_new(GDK_WATCH);
-	gdk_pointer_grab(mydata->dialog->window, TRUE,
+	gdk_pointer_grab(vwin->dialog->window, TRUE,
 			 GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK |
 			 GDK_BUTTON_RELEASE_MASK,
 			 NULL, plswait,
@@ -4855,13 +4853,13 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 {
     char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
     int dot, err = LATEX_OK;
-    windata_t *mydata = NULL;
+    windata_t *vwin = NULL;
     MODEL *pmod = NULL;
     char *texshort = NULL;
 
     if (code != LATEX_VIEW_MODELTABLE) {
-	mydata = (windata_t *) data;
-	pmod = (MODEL *) mydata->data;
+	vwin = (windata_t *) data;
+	pmod = (MODEL *) vwin->data;
 	if (pmod->errcode == E_NAN) {
 	    errbox(_("Sorry, can't format this model"));
 	    return;
@@ -4872,11 +4870,9 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 
     if (code == LATEX_VIEW_EQUATION) {
 	err = eqnprint(pmod, datainfo, texfile, OPT_O);
-    } 
-    else if (code == LATEX_VIEW_TABULAR) {
+    } else if (code == LATEX_VIEW_TABULAR) {
 	err = tabprint(pmod, datainfo, texfile, OPT_O);
-    }
-    else if (code == LATEX_VIEW_MODELTABLE) {
+    } else if (code == LATEX_VIEW_MODELTABLE) {
 	PRN *prn;
 	FILE *fp;
 

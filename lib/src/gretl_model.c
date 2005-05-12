@@ -594,6 +594,8 @@ int add_test_to_model (MODEL *pmod, GRETLTEST *test)
     for (i=0; i<nt; i++) {
 	if (test->type == pmod->tests[i].type) {
 	    /* already done */
+	    free(test->param);
+	    test->param = NULL;
 	    return -1;
 	}
     }
@@ -606,19 +608,33 @@ int add_test_to_model (MODEL *pmod, GRETLTEST *test)
     pmod->tests = tests;
 
     pmod->tests[nt].type = test->type;
+    pmod->tests[nt].order = test->order;
 
     pmod->tests[nt].param = test->param;
     test->param = NULL;
 
     pmod->tests[nt].teststat = test->teststat;
-    pmod->tests[nt].value = test->value;
+
     pmod->tests[nt].dfn = test->dfn;
     pmod->tests[nt].dfd = test->dfd;
+
+    pmod->tests[nt].value = test->value;
     pmod->tests[nt].pvalue = test->pvalue;
 
     pmod->ntests += 1;
 
     return 0;
+}
+
+GRETLTEST *last_test_on_model (MODEL *pmod)
+{
+    GRETLTEST *ret = NULL;
+
+    if (pmod->ntests > 0) {
+	ret = &pmod->tests[pmod->ntests - 1];
+    }
+
+    return ret;
 }
 
 static int gretl_test_print_string (GRETLTEST *test, PRN *prn)
@@ -637,7 +653,7 @@ static int gretl_test_print_string (GRETLTEST *test, PRN *prn)
 	N_("Non-linearity test (squares)"),
 	N_("White's test for heteroskedasticity")
     };
-    char ord[16];
+    char ordstr[16];
     char *param = NULL;
 
     if (test->type >= GRETL_TEST_MAX) {
@@ -645,8 +661,8 @@ static int gretl_test_print_string (GRETLTEST *test, PRN *prn)
     }
 
     if (test->order > 0) {
-	sprintf(ord, "%d", test->order);
-	param = ord;
+	sprintf(ordstr, "%d", test->order);
+	param = ordstr;
     } else if (test->type == GRETL_TEST_CHOW) {
 	param = test->param;
     }

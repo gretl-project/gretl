@@ -112,6 +112,8 @@ void gretl_test_init (GRETLTEST *test, int which);
 
 int add_test_to_model (MODEL *pmod, GRETLTEST *test);
 
+GRETLTEST *last_test_on_model (MODEL *pmod);
+
 void gretl_model_test_print (GRETLTEST *test, PRN *prn);
 
 void model_list_to_string (int *list, char *buf);
