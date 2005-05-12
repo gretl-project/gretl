@@ -20,9 +20,31 @@
 #ifndef GRETL_NLS_H
 #define GRETL_NLS_H
 
+typedef struct _nls_spec nls_spec;
+
+nls_spec *nls_spec_new (const DATAINFO *pdinfo);
+
+void nls_spec_destroy (nls_spec *spec);
+
+int 
+nls_spec_add_param_with_deriv (nls_spec *spec, 
+			       const char *dstr,
+			       const double **Z, 
+			       const DATAINFO *pdinfo);
+
+int 
+nls_spec_set_regression_function (nls_spec *spec, 
+				  const char *fnstr, 
+				  const DATAINFO *pdinfo);
+
+void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2);
+
 int nls_parse_line (const char *line, const double **Z,
 		    const DATAINFO *pdinfo);
 
 MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn);
+
+MODEL model_from_nls_spec (nls_spec *spec, double ***pZ, 
+			   DATAINFO *pdinfo, PRN *prn);
 
 #endif /* GRETL_NLS_H */

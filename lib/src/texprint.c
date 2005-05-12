@@ -21,8 +21,6 @@
 
 #include "libgretl.h"
 
-/* ......................................................... */
-
 static void tex_modify_exponent (char *numstr)
 {
     char *p = strchr(numstr, 'e');
@@ -33,8 +31,6 @@ static void tex_modify_exponent (char *numstr)
 	sprintf(p, "\\times 10^{%d}", expon);
     }
 }
-
-/* ......................................................... */
 
 static void tex_print_float (double x, PRN *prn)
      /* prints a floating point number as a TeX math string.
@@ -314,23 +310,25 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     return 0;
 }
 
-/* ......................................................... */
-
 static int make_texfile (int ID, int equation, 
 			 char *texfile, PRN *prn)
 {
     FILE *fp;
+    int err = 0;
 
-    if (*texfile == 0) {
+    if (*texfile == '\0') {
 	sprintf(texfile, "%s%s_%d.tex", gretl_user_dir(),
 		(equation)? "equation" : "model", ID);
     }
 
     fp = gretl_fopen(texfile, "w");
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	err = 1;
+    } else {
+	gretl_print_attach_file(prn, fp);
+    }
 
-    gretl_print_attach_file(prn, fp);
-    return 0;
+    return err;
 }
 
 /* mechanism for customizing gretl's tex preamble */

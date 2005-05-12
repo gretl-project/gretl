@@ -3355,9 +3355,9 @@ static int depvar_zero (int t1, int t2, int yno, int nwt,
 static int 
 lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo) 
 {
-    int i, t;
     char depvar[VNAMELEN], othervar[VNAMELEN];
     char *p;
+    int i, t, ret = 0;
 
     strcpy(depvar, pdinfo->varname[list[1]]);
 
@@ -3381,12 +3381,15 @@ lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo)
 			break;
 		    }
 		}
-		if (gotlag) return i;
+		if (gotlag) {
+		    ret = i;
+		    break;
+		}
 	    }
 	}
     } 
 
-    return 0;
+    return ret;
 }
 
 /**

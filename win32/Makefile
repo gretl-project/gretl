@@ -127,6 +127,7 @@ LIBSRC = bhhh_max.c \
 	gretl_commands.c \
 	gretl_errors.c \
 	gretl_func.c \
+	gretl_intl.c \
 	gretl_list.c \
 	gretl_matrix.c \
 	gretl_model.c \

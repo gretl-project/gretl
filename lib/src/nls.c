@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2003 by Allin Cottrell
+ *  Copyright (c) 2003-2005 by Allin Cottrell
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
  *
  */
 
+/* Nonlinear least squares for libgretl, using minpack */
+
 #include "libgretl.h" 
 #include "libset.h"
 
@@ -30,7 +32,6 @@ enum {
     ANALYTIC_DERIVS
 } nls_modes;
 
-typedef struct _nls_spec nls_spec;
 typedef struct _nls_param nls_param;
 
 struct _nls_param {
@@ -80,7 +81,7 @@ static int genr_err;
    struct.
 */
 
-static int nls_auto_genr (int i)
+static int nls_auto_genr (int i, double ***pZ, DATAINFO *pdinfo)
 {
     char formula[MAXLEN];
 
@@ -92,8 +93,12 @@ static int nls_auto_genr (int i)
 	sprintf(formula, "$nl_x%d = %s", i, pspec->params[i-1].deriv);
     }
 
-    /* note: using nZ and ndinfo pointers here */
-    genr_err = generate(nZ, ndinfo, formula, NULL);
+    if (pZ != NULL && pdinfo != NULL) {
+	genr_err = generate(pZ, pdinfo, formula, NULL);
+    } else {
+	/* using "global" nZ and ndinfo pointers here */
+	genr_err = generate(nZ, ndinfo, formula, NULL);
+    }
 
 #if NLS_DEBUG
     if (genr_err) {
@@ -106,16 +111,21 @@ static int nls_auto_genr (int i)
     return genr_err;
 }
 
-/* wrappers for the above to enhance comprehensibility below */
+/* three wrappers for the above to enhance comprehensibility below */
 
 static int nls_calculate_uhat (void)
 {
-    return nls_auto_genr(0);
+    return nls_auto_genr(0, NULL, NULL);
+}
+
+static int nls_test_calculate_uhat (double ***pZ, DATAINFO *pdinfo)
+{
+    return nls_auto_genr(0, pZ, pdinfo);
 }
 
 static int nls_calculate_deriv (int i)
 {
-    return nls_auto_genr(i + 1);
+    return nls_auto_genr(i + 1, NULL, NULL);
 }
 
 static int nlspec_allocate_param (nls_spec *spec)
@@ -265,20 +275,28 @@ get_params_from_nlfunc (nls_spec *spec, const double **Z,
 
 /* Adjust starting and ending points of sample if need be, to avoid
    missing values; abort if there are missing values within the
-   (possibly reduced) sample range. 
+   (possibly reduced) sample range.  For this purpose we generate
+   the nls residual variable.
 */
 
 static int 
-nls_missval_check (const double **Z, const DATAINFO *pdinfo,
-		   nls_spec *spec)
+nls_missval_check (double ***pZ, DATAINFO *pdinfo, nls_spec *spec)
 {
     int t, v, miss = 0;
     int t1 = spec->t1, t2 = spec->t2;
+    int err = 0;
 
+    /* generate the nls residual variable */
+    err = nls_test_calculate_uhat(pZ, pdinfo);
+    if (err) {
+	return err;
+    }
+	
+    /* ID number of last variable generated, above */
     v = pdinfo->v - 1;
 
     for (t=spec->t1; t<=spec->t2; t++) {
-	if (na(Z[v][t])) {
+	if (na((*pZ)[v][t])) {
 	    t1++;
 	} else {
 	    break;
@@ -286,7 +304,7 @@ nls_missval_check (const double **Z, const DATAINFO *pdinfo,
     }
 
     for (t=spec->t2; t>=spec->t1; t--) {
-	if (na(Z[v][t])) {
+	if (na((*pZ)[v][t])) {
 	    t2--;
 	} else {
 	    break;
@@ -298,7 +316,7 @@ nls_missval_check (const double **Z, const DATAINFO *pdinfo,
     }
 
     for (t=t1; t<=t2; t++) {
-	if (na(Z[v][t])) {
+	if (na((*pZ)[v][t])) {
 	    miss = 1;
 	    break;
 	}
@@ -327,7 +345,7 @@ static int get_nls_resid (double *uhat)
     }
 
     if (pspec->uhatnum == 0) {
-	/* look up ID number of the variable if we don't know
+	/* look up ID number of the uhat variable if we don't know
 	   it already */
 	v = varindex(ndinfo, "$nl_y");
 	if (v == ndinfo->v) {
@@ -371,7 +389,7 @@ static int get_nls_deriv (int i, double *deriv)
     if (pspec->params[i].dernum == 0) {
 	char varname[VNAMELEN];
 
-	/* look up variable number if not known */
+	/* look up ID number of the derivative if not known */
 	sprintf(varname, "$nl_x%d", i + 1);
 	v = varindex(ndinfo, varname);
 	if (v == ndinfo->v) {
@@ -655,144 +673,44 @@ static void clear_nls_spec (nls_spec *spec)
 
     spec->mode = NUMERIC_DERIVS;
     spec->nparam = 0;
+
     spec->depvar = 0;
+    spec->uhatnum = 0;
+
     spec->iters = 0;
     spec->t1 = spec->t2 = 0;
 }
 
-static int 
-nls_spec_start (const char *nlfunc, nls_spec *spec, const DATAINFO *pdinfo)
-{
-    char depvar[VNAMELEN];
-    const char *p = nlfunc;
-    int v;
+/* 
+   Next block: functions that interface with minpack.
 
-    /* do we already have an nls specification under way? */
-    if (spec->nlfunc != NULL) {
-	clear_nls_spec(spec);
-    }
+   The details below may be obscure, but here's the basic idea: The
+   minpack functions are passed an array ("uhat") that holds the
+   calculated values of the function to be minimized, at a given value
+   of the parameters, and also (in the case of analytic derivatives)
+   an array holding the Jacobian ("jac").  Minpack is also passed a
+   callback function that will recompute the values in these arrays,
+   given a revised vector of parameter estimates.
 
-    if (strncmp(nlfunc, "nls ", 4) == 0) { 
-	p += 4;
-    }
+   As minpack does its iterative thing, at each step it invokes the
+   callback function, supplying its updated parameter estimates and
+   saying via a flag variable ("iflag") whether it wants the function
+   itself or the Jacobian re-evaluated.
 
-    if (strchr(p, '=') == NULL || sscanf(p, "%8s = %*s", depvar) != 1) {
-	sprintf(gretl_errmsg, _("parse error in '%s'\n"), p);
-	return E_PARSE;
-    }
-
-    v = varindex(pdinfo, depvar);
-    if (v == pdinfo->v) {
-	sprintf(gretl_errmsg, _("Unknown variable '%s'"), depvar);
-	return E_UNKVAR;
-    }
-
-    spec->nlfunc = malloc(strlen(p) + 4);
-    if (spec->nlfunc == NULL) {
-	return E_ALLOC;
-    }
-
-    p = strchr(p, '=') + 1;
-    while (isspace(*p)) p++;
-
-    /* write nlfunc as 'depvar minus function', so that it calculates
-       the residuals */
-    sprintf(spec->nlfunc, "%s - (%s)", depvar, p);
-
-    spec->depvar = v;
-    spec->uhatnum = 0;
-    spec->nparam = 0;
-    spec->iters = 0;
-    spec->params = NULL;
-
-    spec->t1 = pdinfo->t1;
-    spec->t2 = pdinfo->t2;
-
-    return 0;
-}
-
-static int 
-parse_deriv_line (const char *line, nls_spec *spec, int i,
-		  const double **Z, const DATAINFO *pdinfo)
-{
-    nls_param *param = &spec->params[i];
-    const char *p;
-    int v, err = 0;
-
-    param->deriv = malloc(strlen(line) - 9);
-    if (param->deriv == NULL) {
-	return E_ALLOC;
-    }
-
-    if (sscanf(line, "deriv %8s = %s", param->name, param->deriv) != 2) {
-	free(param->deriv);
-	param->deriv = NULL;
-	fprintf(stderr, "parse error in line: '%s'\n", line);
-	return E_PARSE;
-    }
-
-    p = strchr(line, '=') + 1;
-
-    while (isspace(*p)) {
-	p++;
-    }
-
-    strcpy(param->deriv, p);
-
-    v = varindex(pdinfo, param->name);
-    if (v < pdinfo->v) {
-	param->varnum = v;
-	param->dernum = 0;
-	spec->coeff[i] = Z[v][0];
-    } else {
-	free(param->deriv);
-	param->deriv = NULL;
-	sprintf(gretl_errmsg, _("Unknown variable '%s'"), param->name);
-	err = E_UNKVAR;
-    }
-
-#if NLS_DEBUG
-    if (param->deriv != NULL) {
-	fprintf(stderr, "parse_deriv_line: '%s'\n"
-		" set varnum = %d, init value = %g\n", line, param->varnum,
-		spec->coeff[i]);
-    }
-#endif
-
-    return err;
-}
-
-static int 
-nls_spec_add_deriv (const char *line, nls_spec *spec,
-		    const double **Z, const DATAINFO *pdinfo)
-{
-    int i, err = 0;
-
-    if (spec->nlfunc == NULL) {
-	strcpy(gretl_errmsg, _("No regression function has been specified"));
-	return E_PARSE;
-    }
-
-    if (nlspec_allocate_param(spec)) {
-	return E_ALLOC;
-    }
-
-    i = spec->nparam - 1;
-  
-    err = parse_deriv_line(line, spec, i, Z, pdinfo);
-    if (!err) {
-	spec->mode = ANALYTIC_DERIVS;
-    }
-	
-    return err;
-}
-
-/* next block: functions that interface with minpack */
+   The libgretl strategy involves holding all the relevant values (nls
+   residual, nls derivatives, and nls parameters) as variables in a
+   gretl dataset (Z-array and datainfo-struct pair).  The callback
+   function that we supply to minpack first transcribes the revised
+   parameter estimates into the dataset, then invokes genr() to
+   recalculate the residual and derivatives, then transcribes the
+   results back into the uhat and jac arrays.
+*/
 
 static void update_nls_param_values (const double *x)
 {
     int i, v;
 
+    /* write the values produced by minpack into the dataset */
     for (i=0; i<pspec->nparam; i++) {
 	v = pspec->params[i].varnum;
 	(*nZ)[v][0] = x[i];
@@ -1087,6 +1005,171 @@ lm_approximate (nls_spec *spec, double *uhat, double *jac, PRN *prn)
 /* below: public functions */
 
 /**
+ * nls_spec_add_param_with_deriv:
+ * @spec: pointer to nls specification.
+ * @dstr: string specifying a derivative with respect to a
+ *   parameter of the regression function.
+ * @Z: data array.
+ * @pdinfo: information on dataset.
+ *
+ * Adds an analytical derivative to @spec.  This pointer must
+ * have previously been obtained by a call to #nls_spec_new.
+ * The required format for @dstr is "%varname = %formula", where
+ * %varname is the name of the (scalar) variable holding the parameter
+ * in question, and %formula is an expression, of the sort that
+ * is fed to gretl's genr command, giving the derivative of the
+ * regression function in @spec with respect to the parameter.
+ * The variable holding the parameter must be already present in
+ * the dataset.
+ *
+ * Returns: 0 on success, non-zero error code on error.
+ */
+
+int 
+nls_spec_add_param_with_deriv (nls_spec *spec, const char *dstr,
+			       const double **Z, const DATAINFO *pdinfo)
+{
+    nls_param *param = NULL;
+    const char *p = dstr;
+    char *vname = NULL;
+    int i, v, err = 0;
+
+    if (nlspec_allocate_param(spec)) {
+	return E_ALLOC;
+    }
+
+    i = spec->nparam - 1;
+
+    param = &spec->params[i];
+
+    if (!strncmp(p, "deriv ", 6)) {
+	/* make starting with "deriv" optional */
+	p += 6;
+    }
+
+    err = equation_get_lhs_and_rhs(p, &vname, &param->deriv);
+    if (err) {
+	fprintf(stderr, "parse error in deriv string: '%s'\n", dstr);
+	return E_PARSE;
+    }
+
+    *param->name = '\0';
+    strncat(param->name, vname, 8);
+    free(vname);
+
+    v = varindex(pdinfo, param->name);
+    if (v < pdinfo->v) {
+	param->varnum = v;
+	param->dernum = 0;
+	spec->coeff[i] = Z[v][0];
+    } else {
+	free(param->deriv);
+	param->deriv = NULL;
+	sprintf(gretl_errmsg, _("Unknown variable '%s'"), param->name);
+	err = E_UNKVAR;
+    }
+
+    if (!err) {
+	spec->mode = ANALYTIC_DERIVS;
+    }
+
+#if NLS_DEBUG
+    if (param->deriv != NULL) {
+	fprintf(stderr, "add_param_with_deriv: '%s'\n"
+		" set varnum = %d, initial value = %g\n", dstr, 
+		param->varnum, spec->coeff[i]);
+    }
+#endif
+
+    return err;
+}
+
+/**
+ * nls_spec_set_regression_function:
+ * @spec: pointer to nls specification.
+ * @fnstr: string specifying nonlinear regression function.
+ * @pdinfo: information on dataset.
+ *
+ * Adds the regression function to @spec.  This pointer must
+ * have previously been obtained by a call to #nls_spec_new.
+ * The required format for @fnstr is "%varname = %formula", where
+ * %varname is the name of the dependent variable and %formula
+ * is an expression of the sort that is fed to gretl's genr command.
+ * The dependent variable must be already present in the
+ * dataset.
+ *
+ * Returns: 0 on success, non-zero error code on error.
+ */
+
+int 
+nls_spec_set_regression_function (nls_spec *spec, const char *fnstr, 
+				  const DATAINFO *pdinfo)
+{    
+    const char *p = fnstr;
+    char *vname = NULL;
+    char *rhs = NULL;
+    int err = 0;
+
+    if (spec->nlfunc != NULL) {
+	free(spec->nlfunc);
+	spec->nlfunc = NULL;
+    }
+
+    if (!strncmp(p, "nls ", 4)) {
+	/* starting with "nls" is optional here */
+	p += 4;
+    }    
+
+    if (equation_get_lhs_and_rhs(p, &vname, &rhs)) { 
+	sprintf(gretl_errmsg, _("parse error in '%s'\n"), fnstr);
+	err = E_PARSE;
+    }
+
+    if (!err) {
+	spec->depvar = varindex(pdinfo, vname);
+
+	if (spec->depvar == pdinfo->v) {
+	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
+	    err = E_UNKVAR;
+	}
+    }
+
+    if (!err) {
+	spec->nlfunc = malloc(strlen(vname) + strlen(rhs) + 6);
+	if (spec->nlfunc == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	sprintf(spec->nlfunc, "%s - (%s)", vname, rhs);
+    }
+
+    free(vname);
+    free(rhs);
+
+    return err;
+}
+
+/**
+ * nls_spec_set_t1_t2:
+ * @spec: pointer to nls specification.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ *
+ * Sets the sample range for estimation of @spec.  This pointer must
+ * have previously been obtained by a call to #nls_spec_new.
+ */
+
+void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2)
+{
+    if (spec != NULL) {
+	spec->t1 = t1;
+	spec->t2 = t2;
+    }
+}
+
+/**
  * nls_parse_line:
  * @line: specification of regression function or derivative
  *        of this function with respect to a parameter.
@@ -1118,37 +1201,31 @@ int nls_parse_line (const char *line, const double **Z,
     pspec = &private_spec;
 
     if (strncmp(line, "deriv", 5) == 0) {
-	err = nls_spec_add_deriv(line, pspec, Z, pdinfo);
+	if (pspec->nlfunc == NULL) {
+	    strcpy(gretl_errmsg, _("No regression function has been specified"));
+	    err = E_PARSE;
+	} else {
+	    err = nls_spec_add_param_with_deriv(pspec, line, Z, pdinfo);
+	}
     } else {
-	err = nls_spec_start(line, pspec, pdinfo);
+	/* do we already have an nls specification under way? */
+	if (pspec->nlfunc != NULL) {
+	    clear_nls_spec(pspec);
+	}
+	err = nls_spec_set_regression_function(pspec, line, pdinfo);
+	if (!err) {
+	    nls_spec_set_t1_t2(pspec, pdinfo->t1, pdinfo->t2);
+	}
     }
 
     return err;
 }
 
-/* Comment: The function below takes its NLS specification from the
-   private static variable nlspec, which is initialized via
-   appropriate calls to nls_parse_line().  It wouldn't be difficult to
-   modify stuff here so that one could fill out an nls_spec struct
-   more directly (programmatically), and then have the nls function
-   operate on it.
-*/
+/* static function, but we place it here because it gives the
+   content for the two public wrapper functions below */
 
-/**
- * nls:
- * @pZ: pointer to dataset.
- * @pdinfo: information on dataset.
- * @prn: printing struct.
- *
- * Compute estimates of a model via nonlinear least squares.
- * The model must have been specified previously, via calls to
- * the function #nls_parse_line.  
- *
- * Returns: a model struct containing the parameter estimates
- * and associated statistics.
- */
-
-MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
+static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo, 
+		       PRN *prn)
 {
     MODEL nlsmod;
     double *uhat = NULL;
@@ -1158,7 +1235,7 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
     int err = 0;
 
     genr_err = 0;
-
+    gretl_model_init(&nlsmod);
     gretl_model_smpl_init(&nlsmod, pdinfo);
 
     if (pspec->nlfunc == NULL) {
@@ -1167,8 +1244,17 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	goto bailout;
     } 
 
-    /* this could be modified if it's useful to do so */
-    pspec = &private_spec;
+    /* publish pdinfo and prn */
+    ndinfo = pdinfo;
+    nprn = prn;
+
+    if (spec != NULL) {
+	/* the caller supplied an nls specification directly */
+	pspec = spec;
+    } else {
+	/* we use the static spec composed via nls_parse_line() */
+	pspec = &private_spec;
+    }
 
     if (pspec->mode == NUMERIC_DERIVS) {
 	err = get_params_from_nlfunc(pspec, (const double **) *pZ, pdinfo);
@@ -1188,7 +1274,7 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	goto bailout;
     } 
 
-    err = nls_missval_check((const double **) *pZ, pdinfo, pspec);
+    err = nls_missval_check(pZ, pdinfo, pspec);
     if (err) {
 	nlsmod.errcode = err;
 	goto bailout;
@@ -1211,17 +1297,8 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	pspec->tol = pow(dpmpar_(&one), .75);
     }
 
-    /* export vars for minpack's benefit */
+    /* export Z pointer for minpack's benefit */
     nZ = pZ;
-    ndinfo = pdinfo;
-    nprn = prn;
-
-    /* intial check on calculation of function to be minimized */
-    err = nls_calculate_uhat();
-    if (err) {
-	nlsmod.errcode = err;
-	goto bailout;
-    }
 
     /* invoke minpack driver function */
     if (pspec->mode == NUMERIC_DERIVS) {
@@ -1256,7 +1333,10 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     free(uhat);
     free(jac);
-    clear_nls_spec(pspec);
+
+    if (spec == NULL) {
+	clear_nls_spec(pspec);
+    }
 
     dataset_drop_vars(pdinfo->v - origv, pZ, pdinfo);
 
@@ -1266,6 +1346,98 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     return nlsmod;
 }
+
+/**
+ * nls:
+ * @pZ: pointer to data array.
+ * @pdinfo: information on dataset.
+ * @prn: printing struct.
+ *
+ * Computes estimates of a model via nonlinear least squares.
+ * The model must have been specified previously, via calls to
+ * the function #nls_parse_line.  
+ *
+ * Returns: a model struct containing the parameter estimates
+ * and associated statistics.
+ */
+
+MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    return real_nls(NULL, pZ, pdinfo, prn);
+}
+
+/**
+ * model_from_nls_spec:
+ * @spec: nls specification.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on dataset.
+ * @prn: printing struct.
+ *
+ * Computes estimates of the model specified in @spec, via nonlinear 
+ * least squares.
+ *
+ * Returns: a model struct containing the parameter estimates
+ * and associated statistics.
+ */
+
+MODEL model_from_nls_spec (nls_spec *spec, double ***pZ, DATAINFO *pdinfo, 
+			   PRN *prn)
+{
+    return real_nls(spec, pZ, pdinfo, prn);
+}
+
+/**
+ * nls_spec_new:
+ * @pdinfo: information on dataset.
+ *
+ * Returns: a pointer to a newly allocated nls specification,
+ * or %NULL on failure.
+ */
+
+nls_spec *nls_spec_new (const DATAINFO *pdinfo)
+{
+    nls_spec *spec;
+
+    spec = malloc(sizeof *spec);
+    if (spec == NULL) {
+	return NULL;
+    }
+
+    spec->nlfunc = NULL;
+
+    spec->params = NULL;
+    spec->nparam = 0;
+    
+    spec->coeff = NULL;
+
+    spec->mode = NUMERIC_DERIVS;
+
+    spec->nparam = 0;
+    spec->depvar = 0;
+    spec->iters = 0;
+
+    spec->t1 = pdinfo->t1;
+    spec->t2 = pdinfo->t2;
+
+    return spec;
+}
+
+/**
+ * nls_spec_destroy:
+ * @spec: pointer to nls specification.
+ *
+ * Frees all resources associated with @spec, and frees the
+ * pointer itself.
+ */
+
+void nls_spec_destroy (nls_spec *spec)
+{
+    clear_nls_spec(spec);
+    free(spec);
+}
+
+
+
 
 
 

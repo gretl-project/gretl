@@ -79,6 +79,8 @@ char *switch_ext (char *targ, const char *src, char *ext);
 
 int get_base (char *targ, const char *src, char c);
 
+int equation_get_lhs_and_rhs (const char *s, char **plh, char **prh);
+
 int top_n_tail (char *str);
 
 char *tailstrip (char *str);
@@ -89,12 +91,6 @@ char *space_to_score (char *s);
 
 char *safecpy (char *targ, const char *src, int n);
 
-int doing_nls (void);
-
-int reset_local_decpoint (void);
-
-int get_local_decpoint (void);
-
 char *get_obs_string (char *obs, int t, const DATAINFO *pdinfo);
 
 char *get_full_obs_string (char *obs, int t, const DATAINFO *pdinfo);
@@ -103,42 +99,11 @@ double obs_str_to_double (const char *obs);
 
 char *colonize_obs (char *obs);
 
-#ifdef ENABLE_NLS
-char *iso_gettext (const char *msgid);
-
-char *maybe_iso_gettext (const char *msgid);
-
-void set_gretl_charset (const char *s);
-
-const char *get_gretl_charset (void);
-
-const char *get_gnuplot_charset (void);
-
-int use_latin_2 (void);
-
-char *sprint_l2_to_html (char *targ, const char *s, size_t len);
-
-char *sprint_html_to_l2 (char *targ, const char *s);
-
-int print_as_html (const char *s, FILE *fp);
-
-int print_as_locale (const char *s, FILE *fp);
-
-int get_utf_width (const char *str, int width);
-
-# define UTF_WIDTH(s, w) get_utf_width(s, w) 
-int get_utf_width (const char *str, int width);
-#else
-# define UTF_WIDTH(s, w)    w
-#endif  /* ENABLE_NLS */
-
 const char *print_time (const time_t *timep);
 
 char *gretl_xml_encode (char *buf);
 
 void unescape_url (char *url);
-
-char *iso_to_ascii (char *s);
 
 char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo);
 
@@ -148,14 +113,6 @@ char *append_dir (char *fname, const char *dir);
 
 int build_path (const char *dir, const char *fname, char *path, 
 		const char *ext);
-
-char *get_month_name (char *mname, int m);
-
-#ifndef USE_GTK2
-int
-utf8_to_iso_latin_1 (unsigned char* out, int outlen, 
-		     unsigned char* in, int inlen);
-#endif
 
 #if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
 int *varname_match_list (const DATAINFO *pdinfo, const char *pattern);

@@ -1006,6 +1006,8 @@ static void model_format_start (PRN *prn)
     if (tex_format(prn)) {
 	if (doc_format(prn)) {
 	    gretl_tex_preamble(prn, 0);
+	} else {
+	    pputs(prn, "%% You'll need to \\usepackage{dcolumn}\n\n");
 	}
 	pputs(prn, "\\begin{center}\n");
     } else if (rtf_format(prn)) {

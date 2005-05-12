@@ -107,17 +107,23 @@ const char *gretl_error_messages[] = {
 
 char *get_errmsg (const int errcode, char *errtext, PRN *prn)
 {
-    if (errcode > 0 && errcode < E_MAX && gretl_error_messages[errcode]) {
-	if (errtext == NULL) {
-	    pprintf(prn, "%s\n", _(gretl_error_messages[errcode]));
-	    return NULL;
-	} else {
-	    strcpy(errtext, _(gretl_error_messages[errcode]));
-	    return errtext;
+    char *msg = NULL;
+
+    if (errcode > 0 && errcode < E_MAX) {
+	if (gretl_error_messages[errcode] != NULL) {
+	    if (errtext != NULL) {
+		strcpy(errtext, _(gretl_error_messages[errcode]));
+		msg = errtext;
+	    } else {
+		pprintf(prn, "%s\n", _(gretl_error_messages[errcode]));
+	    }
 	}
     } else {
-	return NULL;
+	fprintf(stderr, "get_errmsg: out of bounds errcode %d\n", 
+		errcode);
     }
+
+    return msg;
 }
 
 /**
@@ -151,8 +157,13 @@ const char *get_gretl_errmsg (void)
 
 const char *get_gretl_msg (void)
 {
-    if (*gretl_msg == '\0') return NULL;
-    return gretl_msg;
+    const char *ret = NULL;
+
+    if (*gretl_msg != '\0') {
+	ret = gretl_msg;
+    }
+
+    return ret;
 }
 
 int print_gretl_errmsg (PRN *prn)
@@ -162,23 +173,23 @@ int print_gretl_errmsg (PRN *prn)
     if (*gretl_errmsg != '\0') {
 	pprintf(prn, "%s\n", gretl_errmsg);
 	ret = 1;
-    } else {
-	char *str = get_errmsg(gretl_errno, NULL, prn);
-
-	if (str != NULL) ret = 1;
-    } 
+    } else if (get_errmsg(gretl_errno, NULL, prn)) {
+	ret = 1;
+    }
 
     return ret;
 }
 
 int print_gretl_msg (PRN *prn)
 {
+    int ret = 0;
+
     if (*gretl_msg != '\0') {
 	pprintf(prn, "%s\n", gretl_msg);
-	return 1;
-    } else {
-	return 0;
+	ret = 1;
     }
+
+    return ret;
 }
 
 /**

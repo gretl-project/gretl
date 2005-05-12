@@ -16,6 +16,7 @@
 <!ENTITY gretl-commands SYSTEM "xml/gretl_commands.xml">
 <!ENTITY gretl-errors   SYSTEM "xml/gretl_errors.xml">
 <!ENTITY gretl-func     SYSTEM "xml/gretl_func.xml">
+<!ENTITY gretl-intl     SYSTEM "xml/gretl_intl.xml">
 <!ENTITY gretl-list     SYSTEM "xml/gretl_list.xml">
 <!ENTITY gretl-matrix   SYSTEM "xml/gretl_matrix.xml">
 <!ENTITY gretl-model    SYSTEM "xml/gretl_model.xml">
@@ -171,6 +172,7 @@
     <title>Utilities</title>
     &gretl-utils;
     &strutils; 
+    &gretl-intl;
     &gretl-win32;
   </chapter>
 

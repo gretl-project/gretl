@@ -7,12 +7,15 @@ lib/src/dbread.c
 lib/src/describe.c
 lib/src/discrete.c
 lib/src/estimate.c
+lib/src/foo.c
+lib/src/forecast.c
 lib/src/generate.c
 lib/src/genstack.c
 lib/src/graphing.c
 lib/src/gretl_commands.c
 lib/src/gretl_errors.c
 lib/src/gretl_func.c
+lib/src/gretl_intl.c
 lib/src/gretl_list.c
 lib/src/gretl_matrix.c
 lib/src/gretl_model.c
@@ -28,6 +31,7 @@ lib/src/modelprint.c
 lib/src/modelspec.c
 lib/src/monte_carlo.c
 lib/src/mt19937ar.c
+lib/src/nls2.c
 lib/src/nls.c
 lib/src/nonparam.c
 lib/src/options.c
