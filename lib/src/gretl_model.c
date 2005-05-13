@@ -27,6 +27,16 @@ struct model_data_item_ {
     size_t size;
 };
 
+struct ModelTest_ {
+    int type;
+    int order;
+    char *param;
+    unsigned char teststat;
+    int dfn, dfd;
+    double value;
+    double pvalue;
+};
+
 static void free_item_data (const char *key, void *ptr)
 {
     /* FIXME? (case of structs) */
@@ -480,7 +490,7 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 
 #endif /* MODEL_DEBUG */
 
-static void gretl_test_free (GRETLTEST *test)
+static void gretl_test_free (ModelTest *test)
 {
     if (test->param != NULL) {
 	free(test->param);
@@ -541,7 +551,7 @@ void clear_model (MODEL *pmod)
 
 /* ........................................................... */
 
-static void copy_test (GRETLTEST *targ, const GRETLTEST *src)
+static void copy_test (ModelTest *targ, const ModelTest *src)
 {
     targ->type = src->type;
     
@@ -576,9 +586,9 @@ static int copy_model_tests (MODEL *targ, const MODEL *src)
     return 0;
 }
 
-void gretl_test_init (GRETLTEST *test, int which)
+static void gretl_test_init (ModelTest *test, ModelTestType ttype)
 {
-    test->type = which;
+    test->type = ttype;
     test->order = 0;
     test->param = NULL;
     test->teststat = 0;
@@ -586,58 +596,87 @@ void gretl_test_init (GRETLTEST *test, int which)
     test->value = test->pvalue = NADBL;
 }
 
-int add_test_to_model (MODEL *pmod, GRETLTEST *test)
+/**
+ * new_test_on_model:
+ * @pmod: pointer to model.
+ * @ttype: type of test to add.
+ *
+ * Adds a #ModelTest to @pmod, if a test of the given type has
+ * not already been performed and recorded.
+ *
+ * Returns: model test pointer, or %NULL if the test is
+ * already present or on failure.
+ */
+
+ModelTest *new_test_on_model (MODEL *pmod, ModelTestType ttype)
 {
-    GRETLTEST *tests;
+    ModelTest *tests = NULL;
+    ModelTest *ret = NULL;
     int i, nt = pmod->ntests;
+    int done = 0;
 
     for (i=0; i<nt; i++) {
-	if (test->type == pmod->tests[i].type) {
+	if (ttype == pmod->tests[i].type) {
 	    /* already done */
-	    free(test->param);
-	    test->param = NULL;
-	    return -1;
+	    done = 1;
 	}
     }
 
-    tests = realloc(pmod->tests, (nt + 1) * sizeof *tests);
-    if (tests == NULL) {
-	return 1;
+    if (!done) {
+	tests = realloc(pmod->tests, (nt + 1) * sizeof *tests);
     }
 
-    pmod->tests = tests;
-
-    pmod->tests[nt].type = test->type;
-    pmod->tests[nt].order = test->order;
-
-    pmod->tests[nt].param = test->param;
-    test->param = NULL;
-
-    pmod->tests[nt].teststat = test->teststat;
-
-    pmod->tests[nt].dfn = test->dfn;
-    pmod->tests[nt].dfd = test->dfd;
-
-    pmod->tests[nt].value = test->value;
-    pmod->tests[nt].pvalue = test->pvalue;
-
-    pmod->ntests += 1;
-
-    return 0;
-}
-
-GRETLTEST *last_test_on_model (MODEL *pmod)
-{
-    GRETLTEST *ret = NULL;
-
-    if (pmod->ntests > 0) {
-	ret = &pmod->tests[pmod->ntests - 1];
+    if (tests != NULL) {
+	pmod->tests = tests;
+	pmod->ntests += 1;
+	ret = &pmod->tests[nt];
+	gretl_test_init(ret, ttype);
     }
 
     return ret;
 }
 
-static int gretl_test_print_string (GRETLTEST *test, PRN *prn)
+void model_test_set_teststat (ModelTest *test, unsigned char ts)
+{
+    test->teststat = ts;
+}
+
+void model_test_set_order (ModelTest *test, int order)
+{
+    test->order = order;
+}
+
+void model_test_set_dfn (ModelTest *test, int df)
+{
+    test->dfn = df;
+}
+
+void model_test_set_dfd (ModelTest *test, int df)
+{
+    test->dfd = df;
+}
+
+void model_test_set_value (ModelTest *test, double val)
+{
+    test->value = val;
+}
+
+void model_test_set_pvalue (ModelTest *test, double pval)
+{
+    test->pvalue = pval;
+}
+
+void model_test_set_param (ModelTest *test, const char *s)
+{
+    test->param = gretl_strdup(s);
+}
+
+void model_test_set_allocated_param (ModelTest *test, char *s)
+{
+    test->param = s;
+}
+
+static int gretl_test_print_string (const ModelTest *test, PRN *prn)
 {
     const char *test_strs[] = {
 	N_("Test for addition of variables"),
@@ -721,7 +760,7 @@ static int print_add_omit_varnames (const char *s, PRN *prn)
     return 0;
 }
 
-static int gretl_test_print_h_0 (GRETLTEST *test, PRN *prn)
+static int gretl_test_print_h_0 (const ModelTest *test, PRN *prn)
 {
     const char *h_0_strs[] = {
 	N_("parameters are zero for the variables"),
@@ -756,7 +795,7 @@ static int gretl_test_print_h_0 (GRETLTEST *test, PRN *prn)
 }
 
 static void 
-get_test_stat_string (const GRETLTEST *test, char *str, int format)
+get_test_stat_string (const ModelTest *test, char *str, int format)
 {
     int tex = is_tex(format);
 
@@ -809,7 +848,7 @@ get_test_stat_string (const GRETLTEST *test, char *str, int format)
 }
 
 static void 
-get_test_pval_string (const GRETLTEST *test, char *str, int format)
+get_test_pval_string (const ModelTest *test, char *str, int format)
 {
     int tex = is_tex(format);
 
@@ -858,10 +897,17 @@ get_test_pval_string (const GRETLTEST *test, char *str, int format)
     }
 }
 
-void gretl_model_test_print (GRETLTEST *test, PRN *prn)
+void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
 {
+    const ModelTest *test;
     char test_str[128], pval_str[128];
     const char *tstat;
+
+    if (i >= pmod->ntests) {
+	return;
+    }
+
+    test = &pmod->tests[i];
 
     if (test->teststat == GRETL_STAT_WALD_CHISQ) {
 	tstat = N_("Asymptotic test statistic");
@@ -898,6 +944,11 @@ void gretl_model_test_print (GRETLTEST *test, PRN *prn)
 		I_(tstat), test_str, 
 		I_("with p-value"), pval_str);
     }
+}
+
+void gretl_model_print_last_test (const MODEL *pmod, PRN *prn)
+{
+    gretl_model_test_print(pmod, pmod->ntests - 1, prn);
 }
 
 static ARINFO *copy_ar_info (const ARINFO *src)

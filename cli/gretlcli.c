@@ -893,10 +893,11 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case ARCH:
 	order = atoi(cmd.param);
 	clear_model(models[1]);
-	*models[1] = arch(order, cmd.list, &Z, datainfo, 
-			  NULL, cmd.opt, prn);
-	if ((err = (models[1])->errcode)) 
+	*models[1] = arch_model(cmd.list, order, &Z, datainfo, 
+				cmd.opt, prn);
+	if ((err = (models[1])->errcode)) { 
 	    errmsg(err, prn);
+	}
 	if ((models[1])->ci == ARCH) {
 	    do_arch = 1;
 	    swap_models(&models[0], &models[1]); 
@@ -934,11 +935,11 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if (cmd.ci == COEFFSUM) {
 	    err = sum_test(cmd.list, models[0], &Z, datainfo, prn);
 	} else if (cmd.ci == CUSUM) {
-	    err = cusum_test(models[0], &Z, datainfo, prn, NULL);
+	    err = cusum_test(models[0], &Z, datainfo, OPT_NONE, prn);
 	} else if (cmd.ci == RESET) {
-	    err = reset_test(models[0], &Z, datainfo, prn, NULL);
+	    err = reset_test(models[0], &Z, datainfo, OPT_NONE, prn);
 	} else if (cmd.ci == CHOW) {
-	    err = chow_test(line, models[0], &Z, datainfo, prn, NULL);
+	    err = chow_test(line, models[0], &Z, datainfo, OPT_NONE, prn);
 	} else {
 	    err = vif_test(models[0], &Z, datainfo, prn);
 	}
@@ -1281,7 +1282,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    clear_model(models[1]);
 	    err = nonlinearity_test(models[0], &Z, datainfo, 
-				    AUX_SQ, OPT_NONE, prn, NULL);
+				    AUX_SQ, OPT_NONE, prn);
 	    if (err) errmsg(err, prn);
 	    if (cmd.opt == OPT_S) break;
 	    if (!err && !batch && scroll_pause_or_quit()) break; 
@@ -1289,7 +1290,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = nonlinearity_test(models[0], &Z, datainfo, 
-				    AUX_LOG, OPT_NONE, prn, NULL);
+				    AUX_LOG, OPT_NONE, prn);
 	    if (err) errmsg(err, prn);
 	    if (cmd.opt == OPT_L) break;
 	    if (!err && !batch && scroll_pause_or_quit()) break;
@@ -1298,12 +1299,12 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_O)) {
 	    int order = atoi(cmd.param);
 
-	    err = autocorr_test(models[0], order, &Z, datainfo, prn, NULL);
+	    err = autocorr_test(models[0], order, &Z, datainfo, OPT_NONE, prn);
 	    if (err) errmsg(err, prn);
 	}
 	/* heteroskedasticity */
 	if ((cmd.opt & OPT_W) || !cmd.opt) {
-	    err = whites_test(models[0], &Z, datainfo, prn, NULL);
+	    err = whites_test(models[0], &Z, datainfo, OPT_NONE, prn);
 	    if (err) errmsg(err, prn);
 	}
 	/* groupwise heteroskedasticity */
@@ -1644,9 +1645,3 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     }
 
 }
-
-
-
-
-
-

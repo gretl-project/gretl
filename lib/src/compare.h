@@ -66,23 +66,22 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
 	       gretlopt opt, PRN *prn);
 
 int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		       int aux_code, gretlopt opt, PRN *prn, 
-		       GRETLTEST *test);
+		       int aux_code, gretlopt opt, PRN *prn); 
 
 int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
-		PRN *prn, GRETLTEST *test);
+		gretlopt opt, PRN *prn);
 
 int autocorr_test (MODEL *pmod, int order,
 		   double ***pZ, DATAINFO *pdinfo, 
-		   PRN *prn, GRETLTEST *test);
+		   gretlopt opt, PRN *prn);
 
 int chow_test (const char *line, MODEL *pmod, 
 	       double ***pZ, DATAINFO *pdinfo, 
-	       PRN *prn, GRETLTEST *test);
+	       gretlopt opt, PRN *prn);
 
 int cusum_test (MODEL *pmod, 
 		double ***pZ, DATAINFO *pdinfo, 
-		PRN *prn, GRETLTEST *test);
+		gretlopt opt, PRN *prn);
 
 int hausman_test (MODEL *pmod, 
 		  double ***pZ, DATAINFO *pdinfo, 

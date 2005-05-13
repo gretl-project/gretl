@@ -187,22 +187,20 @@ static int make_vcv (MODEL *pmod, gretl_matrix *v, double scale)
 
 static int add_norm_test_to_model (MODEL *pmod, double chi2)
 {
-    pmod->tests = malloc(sizeof *pmod->tests);
-    if (pmod->tests == NULL) {
-	return 1;
+    ModelTest *test;
+    int err = 0;
+
+    test = new_test_on_model(pmod, GRETL_TEST_NORMAL);
+    if (test != NULL) {
+	model_test_set_teststat(test, GRETL_STAT_NORMAL_CHISQ);
+	model_test_set_dfn(test, 2);
+	model_test_set_value(test, chi2);
+	model_test_set_pvalue(test, chisq(chi2, 2));
+    } else {
+	err = 1;
     }
 
-    gretl_test_init(&pmod->tests[0], GRETL_TEST_NORMAL);
-
-    pmod->tests[0].teststat = GRETL_STAT_NORMAL_CHISQ;
-    pmod->tests[0].value = chi2;
-    pmod->tests[0].dfn = 2;
-    pmod->tests[0].dfd = 0;
-    pmod->tests[0].pvalue = chisq(chi2, 2);
-
-    pmod->ntests = 1;
-
-    return 0;
+    return err;
 }
 
 static double recompute_tobit_ll (const MODEL *pmod, const double *y)

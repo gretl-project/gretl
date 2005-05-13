@@ -43,6 +43,7 @@ struct _windata_t {
     gpointer data;
     int active_var; 
     int role;
+    int n_model_tests;
     unsigned char flags;
     char fname[MAXLEN];
 #ifdef USE_GTKSOURCEVIEW

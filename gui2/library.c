@@ -56,6 +56,7 @@ extern char tramodir[];
 #endif
 
 /* private functions */
+static void update_model_tests (windata_t *vwin);
 static int finish_genr (MODEL *pmod, dialog_t *ddata);
 static gint stack_model (MODEL *pmod);
 #ifndef G_OS_WIN32
@@ -1257,11 +1258,9 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     }
 
     if (selector_code(sr) == ADD) { 
-        err = add_test(cmd.list, orig, pmod, 
-		       &Z, datainfo, OPT_S, prn);
+        err = add_test(cmd.list, orig, pmod, &Z, datainfo, OPT_S, prn);
     } else {
-        err = omit_test(cmd.list, orig, pmod,
-			&Z, datainfo, OPT_S, prn);
+        err = omit_test(cmd.list, orig, pmod, &Z, datainfo, OPT_S, prn);
     }
 
     if (err) {
@@ -1270,6 +1269,8 @@ void do_add_omit (GtkWidget *widget, gpointer p)
         clear_model(pmod); 
         return;
     }
+
+    update_model_tests(vwin);
 
     if (cmd_init(line) || stack_model(pmod)) {
 	errbox(_("Error saving model information"));
@@ -1292,14 +1293,14 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
 #ifdef OLD_GTK
 
-static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
+static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
 {
-    if (test != NULL && w != NULL) {
+    if (w != NULL) {
 	PRN *prn;
 
 	if (bufopen(&prn)) return;
 
-	gretl_model_test_print(test, prn);
+	gretl_model_print_last_test(pmod, prn);
 	
 	gtk_text_freeze(GTK_TEXT(w));
 	gtk_text_insert(GTK_TEXT(w), fixed_font, NULL, NULL, prn->buf, 
@@ -1311,16 +1312,16 @@ static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 
 #else
 
-static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
+static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
 {
-    if (test != NULL && w != NULL) {
+    if (w != NULL) {
 	GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
 	GtkTextIter iter;
 	PRN *prn;
 
 	if (bufopen(&prn)) return;
 
-	gretl_model_test_print(test, prn);
+	gretl_model_print_last_test(pmod, prn);
 
 	gtk_text_buffer_get_end_iter(buf, &iter);
 	gtk_text_buffer_insert(buf, &iter, prn->buf, -1);
@@ -1330,13 +1331,13 @@ static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 
 #endif /* !OLD_GTK */
 
-static void 
-process_model_test (MODEL *pmod, GRETLTEST *test, windata_t *vwin)
+static void update_model_tests (windata_t *vwin)
 {
-    int err = add_test_to_model(pmod, test);
+    MODEL *pmod = (MODEL *) vwin->data;
 
-    if (!err && vwin != NULL) {
-	print_test_to_window(last_test_on_model(pmod), vwin->w);
+    if (pmod->ntests > vwin->n_model_tests) {
+	print_test_to_window(pmod, vwin->w);
+	vwin->n_model_tests += 1;
     }
 }
 
@@ -1344,12 +1345,11 @@ process_model_test (MODEL *pmod, GRETLTEST *test, windata_t *vwin)
 
 void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 {
-    int err;
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
     PRN *prn;
     char title[64];
-    GRETLTEST test;
+    int err = 0;
 
     if (bufopen(&prn)) return;
 
@@ -1357,15 +1357,13 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
     clear_line();
 
     if (action == LMTEST_WHITE) {
-	strcpy(line, "lmtest -w");
-	err = whites_test(pmod, &Z, datainfo, prn, &test);
+	strcpy(line, "lmtest --white");
+	err = whites_test(pmod, &Z, datainfo, OPT_S, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
-	    return;
 	} else {
 	    strcat(title, _("(heteroskedasticity)"));
-	    process_model_test(pmod, &test, vwin);
 	}
     } else if (action == LMTEST_GROUPWISE) {
 	strcpy(line, "lmtest --panel");
@@ -1373,7 +1371,6 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
-	    return;
 	} else {
 	    strcpy(title, _("gretl: groupwise heteroskedasticity"));
 	}
@@ -1386,23 +1383,20 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	    strcpy(line, "lmtest --logs");
 	}
 	clear_model(models[0]);
-	err = nonlinearity_test(pmod, &Z, datainfo, aux, 
-				OPT_NONE, prn, &test);
+	err = nonlinearity_test(pmod, &Z, datainfo, aux, OPT_S, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
-	    return;
 	} else {
 	    strcat(title, _("(non-linearity)"));
-	    process_model_test(pmod, &test, vwin);
 	} 
     }
 
-    if (model_command_init(line, &cmd, pmod->ID)) {
-	return;
+    if (!err) {
+	update_model_tests(vwin);
+	model_command_init(line, &cmd, pmod->ID);
+	view_buffer(prn, 78, 400, title, LMTEST, NULL); 
     }
-
-    view_buffer(prn, 78, 400, title, LMTEST, NULL); 
 }
 
 /* ........................................................... */
@@ -1498,6 +1492,7 @@ void add_leverage_data (windata_t *vwin)
     if (opt == 0) return;
 
     err = add_leverage_values_to_dataset(&Z, datainfo, m, opt);
+
     if (err) {
 	gui_errmsg(err);
     } else {
@@ -1638,7 +1633,6 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = vwin->data;
-    GRETLTEST test;
     PRN *prn;
     int err = 0;
 
@@ -1674,39 +1668,36 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
     }
 
     if (action == CHOW) {
-	err = chow_test(line, pmod, &Z, datainfo, prn, &test);
+	err = chow_test(line, pmod, &Z, datainfo, OPT_S, prn);
     } else {
-	err = cusum_test(pmod, &Z, datainfo, prn, &test);
+	err = cusum_test(pmod, &Z, datainfo, OPT_S, prn);
     }
 
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
-	return;
-    } else if (action == CUSUM) {
-	register_graph();
+    } else {
+	if (action == CUSUM) {
+	    register_graph();
+	}
+
+	update_model_tests(vwin);
+	model_command_init(line, &cmd, pmod->ID);
+
+	view_buffer(prn, 78, 400, (action == CHOW)?
+		    _("gretl: Chow test output") : 
+		    _("gretl: CUSUM test output"),
+		    action, NULL);
     }
-
-    process_model_test(pmod, &test, vwin);
-
-    if (model_command_init(line, &cmd, pmod->ID)) {
-	return;
-    }
-
-    view_buffer(prn, 78, 400, (action == CHOW)?
-		_("gretl: Chow test output") : 
-		_("gretl: CUSUM test output"),
-		action, NULL);
 }
 
 void do_reset (gpointer data, guint u, GtkWidget *widget)
 {
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = vwin->data;
-    GRETLTEST test;
     PRN *prn;
     char title[40];
-    int err;
+    int err = 0;
 
     if (bufopen(&prn)) return;
 
@@ -1715,28 +1706,25 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
     clear_line();
     strcpy(line, "reset");
 
-    err = reset_test(pmod, &Z, datainfo, prn, &test);
+    err = reset_test(pmod, &Z, datainfo, OPT_S, prn);
+
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
-	return;
     } else {
-	process_model_test(pmod, &test, vwin);
+	update_model_tests(vwin);
+	model_command_init(line, &cmd, pmod->ID);
+	view_buffer(prn, 78, 400, title, RESET, NULL); 
     }
-
-    if (model_command_init(line, &cmd, pmod->ID)) return;
-
-    view_buffer(prn, 78, 400, title, RESET, NULL); 
 }
 
 void do_autocorr (gpointer data, guint u, GtkWidget *widget)
 {
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = vwin->data;
-    GRETLTEST test;
     PRN *prn;
     char title[40];
-    int order, err;
+    int order, err = 0;
 
     order = default_lag_order(datainfo);
 
@@ -1763,40 +1751,36 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
 	void *handle;
 	int (*panel_autocorr_test)(MODEL *, int, 
 				   double **, DATAINFO *, 
-				   PRN *, GRETLTEST *);
+				   gretlopt, PRN *);
 
 	panel_autocorr_test = gui_get_plugin_function("panel_autocorr_test", 
 						      &handle);
 	if (panel_autocorr_test == NULL) {
 	    gretl_print_destroy(prn);
-	    return;
+	    err = 1;
 	} else {
 	    err = panel_autocorr_test(pmod, order, Z, datainfo,
-				      prn, &test);
+				      OPT_S, prn);
 	    close_plugin(handle);
 	}
     } else {
-	err = autocorr_test(pmod, order, &Z, datainfo, prn, &test);
+	err = autocorr_test(pmod, order, &Z, datainfo, OPT_S, prn);
     }
 
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
-	return;
     } else {
-	process_model_test(pmod, &test, vwin);
+	update_model_tests(vwin);
+	model_command_init(line, &cmd, pmod->ID);
+	view_buffer(prn, 78, 400, title, LMTEST, NULL); 
     }
-
-    if (model_command_init(line, &cmd, pmod->ID)) return;
-
-    view_buffer(prn, 78, 400, title, LMTEST, NULL); 
 }
 
 void do_arch (gpointer data, guint u, GtkWidget *widget)
 {
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = vwin->data;
-    GRETLTEST test;
     PRN *prn;
     char tmpstr[26];
     int i, order;
@@ -1835,12 +1819,13 @@ void do_arch (gpointer data, guint u, GtkWidget *widget)
 
     clear_model(models[1]);
     exchange_smpl(pmod, datainfo);
-    *models[1] = arch(order, pmod->list, &Z, datainfo, 
-		      &test, cmd.opt, prn);
+
+    /* FIXME opt? */
+    *models[1] = arch_test(pmod, order, &Z, datainfo, OPT_S, prn);
     if ((err = (models[1])->errcode)) { 
 	gui_errmsg(err);
     } else {
-	process_model_test(pmod, &test, vwin);
+	update_model_tests(vwin);
     }
 
     clear_model(models[1]);
@@ -2371,9 +2356,7 @@ void do_model (GtkWidget *widget, gpointer p)
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
     
-    /* record the fact that the last model was estimated via GUI */
     sprintf(title, _("gretl: model %d"), pmod->ID);
-
     view_model(prn, pmod, 78, 420, title); 
 }
 
@@ -2435,9 +2418,7 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
     
-    /* record the fact that the last model was estimated via GUI */
     sprintf(title, _("gretl: model %d"), pmod->ID);
-
     view_model(prn, pmod, 78, 420, title); 
 }
 
@@ -2703,16 +2684,18 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
-static void normal_test (GRETLTEST *test, FREQDIST *freq)
+static void normal_test (MODEL *pmod, FREQDIST *freq)
 {
-    gretl_test_init(test, GRETL_TEST_NORMAL);
-    test->teststat = GRETL_STAT_NORMAL_CHISQ;
-    test->value = freq->test;
-    test->dfn = 2;
-    test->pvalue = chisq(freq->test, 2);
-}
+    ModelTest *test;
 
-/* ........................................................... */
+    test = new_test_on_model(pmod, GRETL_TEST_NORMAL);
+    if (test != NULL) {
+	model_test_set_teststat(test, GRETL_STAT_NORMAL_CHISQ);
+	model_test_set_dfn(test, 2);
+	model_test_set_value(test, freq->test);
+	model_test_set_pvalue(test, chisq(freq->test, 2));
+    }
+}
 
 void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 {
@@ -2720,7 +2703,6 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     PRN *prn;
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
-    GRETLTEST test;
     double ***rZ;
     DATAINFO *rinfo;
 
@@ -2749,9 +2731,9 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
     
-    normal_test(&test, freq);
+    normal_test(pmod, freq);
 
-    process_model_test(pmod, &test, vwin);
+    update_model_tests(vwin);
 
     clear_line();
     strcpy(line, "testuhat");
@@ -5284,9 +5266,8 @@ int gui_exec_line (char *line,
     char linecopy[1024];
     char texfile[MAXLEN];
     unsigned char plotflags = 0;
+    gretlopt testopt = OPT_NONE;
     MODEL tmpmod;
-    GRETLTEST test;             /* struct for model tests */
-    GRETLTEST *ptest;
     LOOPSET *loop = *plp;
     PRN *outprn = NULL;
 
@@ -5393,13 +5374,13 @@ int gui_exec_line (char *line,
 
     /* if rebuilding a session, add tests back to models */
     if (rebuild) {
-	ptest = &test;
-    } else {
-	ptest = NULL;
+	testopt |= OPT_S;
     }
 
     /* if rebuilding a session, put the commands onto the stack */
-    if (rebuild) cmd_init(line);
+    if (rebuild) {
+	cmd_init(line);
+    }
 
     /* Attach outprn to a specific buffer, if wanted */
     if (*cmd.savename != '\0' && TEXTSAVE_OK(cmd.ci)) {
@@ -5529,16 +5510,14 @@ int gui_exec_line (char *line,
     case ARCH:
 	order = atoi(cmd.param);
 	clear_model(models[1]);
-	*models[1] = arch(order, cmd.list, &Z, datainfo, 
-			  ptest, cmd.opt, outprn);
+	*models[1] = arch_model(cmd.list, order, &Z, datainfo, 
+				cmd.opt, outprn);
 	if ((err = (models[1])->errcode)) {
 	    errmsg(err, prn);
 	}
 	if ((models[1])->ci == ARCH) {
 	    do_arch = 1;
 	    swap_models(&models[0], &models[1]);
-	} else if (rebuild) {
-	    add_test_to_model(models[0], ptest);
 	}
 	clear_model(models[1]);
 	break;
@@ -5579,17 +5558,15 @@ int gui_exec_line (char *line,
     case RESET:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	if (cmd.ci == CHOW) {
-	    err = chow_test(line, models[0], &Z, datainfo, outprn, ptest);
+	    err = chow_test(line, models[0], &Z, datainfo, testopt, outprn);
 	} else if (cmd.ci == CUSUM) {
-	    err = cusum_test(models[0], &Z, datainfo, outprn, ptest);
+	    err = cusum_test(models[0], &Z, datainfo, testopt, outprn);
 	} else {
-	    err = reset_test(models[0], &Z, datainfo, outprn, ptest);
+	    err = reset_test(models[0], &Z, datainfo, testopt, outprn);
 	}
 	if (err) {
 	    errmsg(err, prn);
-	} else if (rebuild) {
-	    add_test_to_model(models[0], ptest);
-	}
+	} 
 	break;
 
     case COEFFSUM:
@@ -5957,34 +5934,31 @@ int gui_exec_line (char *line,
 	/* non-linearity (squares) */
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = nonlinearity_test(models[0], &Z, datainfo, AUX_SQ, 
-				    OPT_NONE, outprn, ptest);
+				    testopt, outprn);
 	    if (err) errmsg(err, prn);
 	}
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = nonlinearity_test(models[0], &Z, datainfo, AUX_LOG, 
-				    OPT_NONE, outprn, ptest);
+				    testopt, outprn);
 	    if (err) errmsg(err, prn);
 	}
 	/* autocorrelation or heteroskedasticity */
 	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_O)) {
 	    int order = atoi(cmd.param);
 
-	    err = autocorr_test(models[0], order, &Z, datainfo, outprn, ptest);
+	    err = autocorr_test(models[0], order, &Z, datainfo, testopt, outprn);
 	    if (err) errmsg(err, prn);
 	    /* FIXME: need to respond? */
 	} 
 	if ((cmd.opt & OPT_W) || !cmd.opt) {
-	    err = whites_test(models[0], &Z, datainfo, outprn, ptest);
+	    err = whites_test(models[0], &Z, datainfo, testopt, outprn);
 	    if (err) errmsg(err, prn);
 	}
 	/* groupwise heteroskedasticity */
 	if (cmd.opt & OPT_P) {
 	    err = groupwise_hetero_test(models[0], &Z, datainfo, outprn);
 	    if (err) errmsg(err, prn);
-	}
-	if (rebuild) {
-	    add_test_to_model(models[0], ptest);
 	}
 	break;
 
@@ -6256,8 +6230,7 @@ int gui_exec_line (char *line,
 	    dataset_drop_vars(1, &Z, datainfo);
 	    if (!(err = freq_error(freq, prn))) {
 		if (rebuild) {
-		    normal_test(ptest, freq);
-		    add_test_to_model(models[0], ptest);
+		    normal_test(models[0], freq);
 		}
 		print_freq(freq, outprn); 
 		free_freq(freq);

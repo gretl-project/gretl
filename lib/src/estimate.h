@@ -69,15 +69,19 @@ MODEL hsk_func (int *list, double ***pZ, DATAINFO *pdinfo);
 
 int whites_test (MODEL *pmod, 
 		 double ***pZ, DATAINFO *pdinfo, 
-		 PRN *prn, GRETLTEST *test);
+		 gretlopt opt, PRN *prn);
 
 MODEL ar_func (int *list, int pos, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 
-MODEL arch (int order, int *list, 
-	    double ***pZ, DATAINFO *pdinfo, 
-	    GRETLTEST *test, gretlopt opt, PRN *prn);
+MODEL arch_test (MODEL *pmod, int order, 
+		 double ***pZ, DATAINFO *pdinfo, 
+		 gretlopt opt, PRN *prn);
+
+MODEL arch_model (int *list, int order, 
+		  double ***pZ, DATAINFO *pdinfo, 
+		  gretlopt opt, PRN *prn);
 
 int makevcv (MODEL *pmod);
 

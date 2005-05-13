@@ -159,7 +159,6 @@ typedef unsigned long gretlopt;
 typedef struct VARINFO_ VARINFO;
 typedef struct DATAINFO_ DATAINFO;
 typedef struct PATHS_ PATHS;
-typedef struct GRETLTEST_ GRETLTEST;
 typedef struct CORRMAT_ CORRMAT;
 typedef struct SAMPLE_ SAMPLE;
 typedef struct ARINFO_ ARINFO;
@@ -174,7 +173,7 @@ typedef struct GRETL_VAR_ GRETL_VAR;
 
 typedef struct mp_results_ mp_results;
 typedef struct model_data_item_ model_data_item;
-
+typedef struct ModelTest_ ModelTest;
 
 /* information on individual variable */
 struct VARINFO_ {
@@ -230,16 +229,6 @@ struct PATHS_ {
     char x12adir[MAXLEN];
     char dbhost[32];
     char pngfont[32];
-};
-
-struct GRETLTEST_ {
-    int type;
-    int order;
-    char *param;
-    unsigned char teststat;
-    int dfn, dfd;
-    double value;
-    double pvalue;
 };
 
 struct CORRMAT_ {
@@ -304,7 +293,7 @@ struct MODEL_ {
     int nparams;                 /* number of named model parameters */
     char **params;               /* for named model parameters */
     int ntests;
-    GRETLTEST *tests;
+    ModelTest *tests;
     void *data;                  /* pointer for use in re. missing data */
     DATASET *dataset;            /* for handling models estimated on a
 				    sub-sampled portion of the dataset */

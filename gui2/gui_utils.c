@@ -1262,6 +1262,7 @@ void windata_init (windata_t *vwin)
     vwin->fname[0] = '\0';
     vwin->role = 0;
     vwin->active_var = 0;
+    vwin->n_model_tests = 0;
     vwin->flags = 0;
 #ifdef USE_GTKSOURCEVIEW
     vwin->sbuf = NULL;

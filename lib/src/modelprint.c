@@ -598,12 +598,12 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 	    if (i > 0) {
 		pputs(prn, "\\vspace{1ex}\n");
 	    }
-	    gretl_model_test_print(&pmod->tests[i], prn);
+	    gretl_model_test_print(pmod, i, prn);
 	}
 	pputs(prn, "\\end{raggedright}\n");
     } else {
 	for (i=0; i<pmod->ntests; i++) {
-	    gretl_model_test_print(&pmod->tests[i], prn);
+	    gretl_model_test_print(pmod, i, prn);
 	}
     }
 }

@@ -1302,9 +1302,10 @@ static int
 ml_hetero_test (MODEL *pmod, double s2, const double *uvar, 
 		int nunits, const int *unit_obs)
 {
-    GRETLTEST test;
+    ModelTest *test;
     double x2, s2h = 0.0;
     int i, Ti, df = 0;
+    int err = 0;
 
     for (i=0; i<nunits; i++) {
 	Ti = unit_obs[i];
@@ -1317,13 +1318,17 @@ ml_hetero_test (MODEL *pmod, double s2, const double *uvar,
     x2 = pmod->nobs * log(s2) - s2h;
     df--;
 
-    gretl_test_init(&test, GRETL_TEST_GROUPWISE);
-    test.teststat = GRETL_STAT_LR;
-    test.dfn = df;
-    test.value = x2;
-    test.pvalue = chisq(x2, df);
+    test = new_test_on_model(pmod, GRETL_TEST_GROUPWISE);
+    if (test != NULL) {
+	model_test_set_teststat(test, GRETL_STAT_LR);
+	model_test_set_dfn(test, df);
+	model_test_set_value(test, x2);
+	model_test_set_pvalue(test, chisq(x2, df));
+    } else {
+	err = 1;
+    }
 
-    return add_test_to_model(pmod, &test);
+    return err;
 }
 
 static double pooled_ll (const MODEL *pmod)
@@ -1621,7 +1626,7 @@ static void panel_lag (double **tmpZ, DATAINFO *tmpinfo,
 
 int panel_autocorr_test (MODEL *pmod, int order, 
 			 double **Z, DATAINFO *pdinfo, 
-			 PRN *prn, GRETLTEST *test)
+			 gretlopt opt, PRN *prn)
 {
     int *aclist;
     double **tmpZ;
@@ -1716,31 +1721,40 @@ int panel_autocorr_test (MODEL *pmod, int order,
     } 
 
     if (!err) {
+	int dfd = aux.nobs - pmod->ncoeff - order;
+	double pval;
+
 	aux.aux = AUX_AR;
 	aux.order = order;
 	printmodel(&aux, tmpinfo, OPT_NONE, prn);
 	trsq = aux.rsq * aux.nobs;
-	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
-	    (aux.nobs - pmod->ncoeff - order)/order; 
+	LMF = (aux.rsq / (1.0 - aux.rsq)) * dfd / order; 
+	pval = fdist(LMF, order, dfd);
 
 	pprintf(prn, "\n%s: LMF = %f,\n", _("Test statistic"), LMF);
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
-		order, aux.nobs - pmod->ncoeff - order, LMF,
-		fdist(LMF, order, aux.nobs - pmod->ncoeff - order));
+		order, dfd, LMF, pval);
 
 	pprintf(prn, "\n%s: TR^2 = %f,\n", 
 		_("Alternative statistic"), trsq);
 	pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", 	_("with p-value"), 
 		_("Chi-square"), order, trsq, chisq(trsq, order));
 
-	if (test != NULL) {
-	    gretl_test_init(test, GRETL_TEST_AUTOCORR);
-	    test->order = order;
-	    test->teststat = GRETL_STAT_LMF;
-	    test->dfn = order;
-	    test->dfd = aux.nobs - pmod->ncoeff - order;
-	    test->value = LMF;
-	    test->pvalue = fdist(LMF, test->dfn, test->dfd);
+	if (opt & OPT_S) {
+	    ModelTest *test;
+
+	    test = new_test_on_model(pmod, GRETL_TEST_AUTOCORR);
+
+	    if (test != NULL) {
+		int dfd = aux.nobs - pmod->ncoeff - order;
+
+		model_test_set_teststat(test, GRETL_STAT_LMF);
+		model_test_set_order(test, order);
+		model_test_set_dfn(test, order);
+		model_test_set_dfd(test, dfd);
+		model_test_set_value(test, LMF);
+		model_test_set_pvalue(test, pval);
+	    }	    
 	}
     }
 

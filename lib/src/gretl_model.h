@@ -39,7 +39,7 @@
 
 #define LIMDEP(c) (c == LOGIT || c == PROBIT || c == TOBIT)
 
-enum gretl_test_types {
+typedef enum {
     GRETL_TEST_ADD,
     GRETL_TEST_ARCH,
     GRETL_TEST_AUTOCORR,
@@ -53,7 +53,7 @@ enum gretl_test_types {
     GRETL_TEST_SQUARES,
     GRETL_TEST_WHITES,
     GRETL_TEST_MAX
-};
+} ModelTestType;
 
 MODEL *gretl_model_new (void);
 
@@ -108,13 +108,19 @@ void model_count_minus (void);
 
 void set_model_id (MODEL *pmod);
 
-void gretl_test_init (GRETLTEST *test, int which);
+ModelTest *new_test_on_model (MODEL *pmod, ModelTestType ttype);
 
-int add_test_to_model (MODEL *pmod, GRETLTEST *test);
+void model_test_set_teststat (ModelTest *test, unsigned char ts);
+void model_test_set_order (ModelTest *test, int order);
+void model_test_set_dfn (ModelTest *test, int df);
+void model_test_set_dfd (ModelTest *test, int df);
+void model_test_set_value (ModelTest *test, double val);
+void model_test_set_pvalue (ModelTest *test, double pval);
+void model_test_set_param (ModelTest *test, const char *s);
+void model_test_set_allocated_param (ModelTest *test, char *s);
 
-GRETLTEST *last_test_on_model (MODEL *pmod);
-
-void gretl_model_test_print (GRETLTEST *test, PRN *prn);
+void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn);
+void gretl_model_print_last_test (const MODEL *pmod, PRN *prn);
 
 void model_list_to_string (int *list, char *buf);
 

@@ -2905,8 +2905,8 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
  * @pmod: #MODEL struct.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
+ * @opt: if flags include OPT_S, save results to model.
  * @prn: gretl printing struct.
- * @test: hypothesis test results struct.
  *
  * Runs White's test for heteroskedasticity on the given model,
  * putting the results into @test.
@@ -2915,7 +2915,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
  */
 
 int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
-		 PRN *prn, GRETLTEST *test)
+		 gretlopt opt, PRN *prn)
 {
     int lo, ncoeff, yno, t;
     int v = pdinfo->v;
@@ -2982,12 +2982,16 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	TR2 = white.rsq * white.nobs;
 	pval = chisq(TR2, white.ncoeff - 1);
 
-	if (test != NULL) {
-	    gretl_test_init(test, GRETL_TEST_WHITES);
-	    test->teststat = GRETL_STAT_TR2;
-	    test->dfn = white.ncoeff - 1;
-	    test->value = TR2;
-	    test->pvalue = pval;
+	if (opt & OPT_S) {
+	    ModelTest *test;
+
+	    test = new_test_on_model(pmod, GRETL_TEST_WHITES);
+	    if (test != NULL) {
+		model_test_set_teststat(test, GRETL_STAT_TR2);
+		model_test_set_dfn(test, white.ncoeff - 1);
+		model_test_set_value(test, TR2);
+		model_test_set_pvalue(test, pval);
+	    }	  
 	}
 
 	record_test_result(TR2, pval, "White's");
@@ -3393,25 +3397,24 @@ lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo)
 }
 
 /**
- * arch:
+ * arch_test:
+ * @pmod: model to be tested.
  * @order: lag order for ARCH process.
- * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @test: hypothesis test results struct.
- * @opt: mat contain OPT_O to print covariance matrix.
+ * @opt: mat contain OPT_O to print covariance matrix, OPT_S
+ *       to save test results to model.
  * @prn: gretl printing struct.
  *
- * Estimate the model given in @list via OLS, and test for Auto-
- * Regressive Conditional Heteroskedasticity.  If the latter is
- * significant, re-restimate the model using weighted least
- * squares.
+ * Test @pmod for Auto-Regressive Conditional Heteroskedasticity.  
+ * If this effect is significant, re-restimate the model using 
+ * weighted least squares.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo, 
-	    GRETLTEST *test, gretlopt opt, PRN *prn)
+MODEL arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo, 
+		 gretlopt opt, PRN *prn)
 {
     MODEL archmod;
     int *wlist = NULL, *arlist = NULL;
@@ -3426,7 +3429,7 @@ MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_model_init(&archmod);
 
     /* assess the lag order */
-    if (order < 1 || order > T - list[0]) {
+    if (order < 1 || order > T - pmod->list[0]) {
 	archmod.errcode = E_UNSPEC;
 	sprintf(gretl_errmsg, _("Invalid lag order for arch (%d)"), order);
 	err = 1;
@@ -3447,7 +3450,7 @@ MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 	arlist[2] = 0;
 
 	/* run OLS and get squared residuals */
-	archmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
+	archmod = lsq(pmod->list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
 	err = archmod.errcode;
     }
 
@@ -3492,14 +3495,18 @@ MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 	LM = archmod.nobs * archmod.rsq;
 	xx = chisq(LM, order);
 
-	if (test != NULL) {
-	    gretl_test_init(test, GRETL_TEST_ARCH);
-	    test->order = order;
-	    test->teststat = GRETL_STAT_TR2;
-	    test->dfn = order;
-	    test->value = LM;
-	    test->pvalue = xx;
-	}
+	if (opt & OPT_S) {
+	    ModelTest *test;
+
+	    test = new_test_on_model(pmod, GRETL_TEST_ARCH);
+	    if (test != NULL) {
+		model_test_set_teststat(test, GRETL_STAT_TR2);
+		model_test_set_order(test, order);
+		model_test_set_dfn(test, order);
+		model_test_set_value(test, LM);
+		model_test_set_pvalue(test, xx);
+	    }	    
+	}	
 
 	record_test_result(LM, xx, "ARCH");
 
@@ -3513,14 +3520,14 @@ MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 	    pprintf(prn, "\n%s.\n",
 		    _("ARCH effect is significant at the 10 percent level"));
 	    /* weighted estimation */
-	    wlist = malloc((list[0] + 2) * sizeof *wlist);
+	    wlist = malloc((pmod->list[0] + 2) * sizeof *wlist);
 	    if (wlist == NULL) {
 		archmod.errcode = E_ALLOC;
 	    } else {
-		wlist[0] = list[0] + 1;
+		wlist[0] = pmod->list[0] + 1;
 		nwt = wlist[1] = pdinfo->v - 1; /* weight var */
 		for (i=2; i<=wlist[0]; i++) {
-		    wlist[i] = list[i-1];
+		    wlist[i] = pmod->list[i-1];
 		}
 		nv = pdinfo->v - order - 1;
 		for (t=archmod.t1; t<=archmod.t2; t++) {
@@ -3549,6 +3556,43 @@ MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo,
     dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo); 
 
     return archmod;
+}
+
+/**
+ * arch_model:
+ * @list: dependent variable plus list of regressors.
+ * @order: lag order for ARCH process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: may contain OPT_O to print covariance matrix. (?)
+ * @prn: gretl printing struct.
+ *
+ * Estimate the model given in @list via OLS, and test for Auto-
+ * Regressive Conditional Heteroskedasticity.  If the latter is
+ * significant, re-restimate the model using weighted least
+ * squares.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL arch_model (int *list, int order, double ***pZ, DATAINFO *pdinfo, 
+		  gretlopt opt, PRN *prn)
+{
+    MODEL lmod, amod;
+
+    gretl_model_init(&lmod);
+    lmod.list = gretl_list_copy(list);
+    if (lmod.list == NULL) {
+	lmod.errcode = E_ALLOC;
+	return lmod;
+    } 
+
+    /* FIXME: vcv option? */
+    amod = arch_test(&lmod, order, pZ, pdinfo, opt, prn);
+
+    free(lmod.list);
+
+    return amod;
 }
 
 /**
