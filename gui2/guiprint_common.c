@@ -418,7 +418,7 @@ rtfprint_matrix (const double *vec, const int *list,
 
 /* ........................................................... */
 
-void rtfprint_corrmat (CORRMAT *corr,
+void rtfprint_corrmat (CorrMat *corr,
 		       const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
@@ -539,7 +539,7 @@ texprint_matrix (const double *vec, const int *list,
 
 /* ........................................................... */
 
-void texprint_corrmat (CORRMAT *corr,
+void texprint_corrmat (CorrMat *corr,
 		       const DATAINFO *pdinfo, 
 		       PRN *prn)
 {

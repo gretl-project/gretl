@@ -88,7 +88,7 @@ int simple_commands (CMD *cmd, const char *line,
 		     double ***pZ, DATAINFO *datainfo,
 		     PRN *prn);
 
-int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
+int call_pca_plugin (CorrMat *corrmat, double ***pZ,
 		     DATAINFO *pdinfo, gretlopt *pflag,
 		     PRN *prn);
 

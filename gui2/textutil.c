@@ -415,7 +415,7 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 
     /* correlation matrix */
     else if (vwin->role == CORR && SPECIAL_COPY(how)) {
-	CORRMAT *corr = (CORRMAT *) vwin->data;
+	CorrMat *corr = (CorrMat *) vwin->data;
 
 	if (bufopen(&prn)) return;
 

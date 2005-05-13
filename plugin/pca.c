@@ -225,7 +225,7 @@ static gretlopt pca_flag_dialog (void)
     return 0L;
 }
 
-static void pca_print (CORRMAT *corrmat, gretl_matrix *m,
+static void pca_print (CorrMat *corrmat, gretl_matrix *m,
 		       double *evals, DATAINFO *pdinfo, 
 		       PRN *prn)
 {
@@ -279,7 +279,7 @@ static void pca_print (CORRMAT *corrmat, gretl_matrix *m,
     }
 }
 
-int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
+int pca_from_corrmat (CorrMat *corrmat, double ***pZ,
 		      DATAINFO *pdinfo, gretlopt *pflag,
 		      PRN *prn)
 {

@@ -629,7 +629,7 @@ void add_pca_data (windata_t *vwin)
 {
     int err, oldv = datainfo->v;
     gretlopt oflag = OPT_D;
-    CORRMAT *corrmat = (CORRMAT *) vwin->data;
+    CorrMat *corrmat = (CorrMat *) vwin->data;
 
     err = call_pca_plugin(corrmat, &Z, datainfo, &oflag, NULL);
 
@@ -767,7 +767,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	    gretl_print_destroy(prn);
 	    return;
 	} else {
-	    err = call_pca_plugin((CORRMAT *) obj, &Z, datainfo, NULL, prn);
+	    err = call_pca_plugin((CorrMat *) obj, &Z, datainfo, NULL, prn);
 	}
 	break;
 

@@ -2090,7 +2090,7 @@ GRETLSUMMARY *summary (const int *list,
  *
  */
 
-void free_corrmat (CORRMAT *corrmat)
+void free_corrmat (CorrMat *corrmat)
 {
     if (corrmat != NULL) {
 	free(corrmat->list);
@@ -2112,9 +2112,9 @@ void free_corrmat (CORRMAT *corrmat)
  * 
  */
 
-CORRMAT *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
+CorrMat *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
 {
-    CORRMAT *corrmat;
+    CorrMat *corrmat;
     int *clist = NULL;
     int i, j, lo, nij, mm;
     int t1 = pdinfo->t1, t2 = pdinfo->t2; 
@@ -2181,7 +2181,7 @@ CORRMAT *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
  *
  */
 
-void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
+void matrix_print_corr (CorrMat *corr, const DATAINFO *pdinfo,
 			PRN *prn)
 {
     char tmp[96];
@@ -2209,7 +2209,7 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
 int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo, 
 		  PRN *prn)
 {
-    CORRMAT *corr;
+    CorrMat *corr;
 
     corr = corrlist(list, Z, pdinfo);
     if (corr == NULL) {

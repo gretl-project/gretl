@@ -159,7 +159,7 @@ typedef unsigned long gretlopt;
 typedef struct VARINFO_ VARINFO;
 typedef struct DATAINFO_ DATAINFO;
 typedef struct PATHS_ PATHS;
-typedef struct CORRMAT_ CORRMAT;
+typedef struct CorrMat_ CorrMat;
 typedef struct SAMPLE_ SAMPLE;
 typedef struct ARINFO_ ARINFO;
 typedef struct MODEL_ MODEL;
@@ -231,7 +231,7 @@ struct PATHS_ {
     char pngfont[32];
 };
 
-struct CORRMAT_ {
+struct CorrMat_ {
     int n, t1, t2;
     int *list;
     double *xpx;

@@ -188,7 +188,7 @@ static int make_list (int **plist, const DATAINFO *pdinfo)
  * 
  */
 
-void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo, 
+void printcorr (const CorrMat *corrmat, const DATAINFO *pdinfo, 
 		PRN *prn)
 {
     int i = 1, j, k = 0, m, ncoeffs;

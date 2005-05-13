@@ -67,7 +67,7 @@ void text_print_model_confints (const CONFINT *cf,
 
 void print_freq (const FREQDIST *freq, PRN *prn);
 
-void printcorr (const CORRMAT *corrmat, 
+void printcorr (const CorrMat *corrmat, 
 		const DATAINFO *pdinfo, 
 		PRN *prn);
 

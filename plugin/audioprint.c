@@ -161,7 +161,7 @@ audioprint_matrix (const double *vec, const int *list,
 /* ........................................................... */
 
 static void 
-audioprint_corrmat (CORRMAT *corr,
+audioprint_corrmat (CorrMat *corr,
 		    const DATAINFO *pdinfo, 
 		    PRN *prn)
 {
@@ -348,7 +348,7 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
 	audioprint_summary(summ, pdinfo, prn);
     }
     else if (role == CORR) {
-	CORRMAT *corr = (CORRMAT *) data;
+	CorrMat *corr = (CorrMat *) data;
 
 	audioprint_corrmat(corr, pdinfo, prn);
     }

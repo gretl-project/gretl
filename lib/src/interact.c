@@ -2126,12 +2126,12 @@ static int do_outfile_command (gretlopt flag, char *fname,
 
 /* ........................................................ */
 
-int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
+int call_pca_plugin (CorrMat *corrmat, double ***pZ,
 		     DATAINFO *pdinfo, gretlopt *pflag,
 		     PRN *prn)
 {
     void *handle = NULL;
-    int (*pca_from_corrmat) (CORRMAT *, double ***, DATAINFO *,
+    int (*pca_from_corrmat) (CorrMat *, double ***, DATAINFO *,
 			     gretlopt *, PRN *);
     int err = 0;
 
@@ -2157,7 +2157,7 @@ int simple_commands (CMD *cmd, const char *line,
 		     PRN *prn)
 {
     int err = 0, order = 0;
-    CORRMAT *corrmat;
+    CorrMat *corrmat;
     GRETLSUMMARY *summ;
 
     switch (cmd->ci) {

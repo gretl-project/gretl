@@ -105,9 +105,9 @@ void print_summary (const GRETLSUMMARY *summ,
 
 void free_summary (GRETLSUMMARY *summ);
 
-CORRMAT *corrlist (int *list, const double **Z, const DATAINFO *pdinfo);
+CorrMat *corrlist (int *list, const double **Z, const DATAINFO *pdinfo);
 
-void free_corrmat (CORRMAT *corrmat);
+void free_corrmat (CorrMat *corrmat);
 
 int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo, 
 		  PRN *prn);
@@ -119,7 +119,7 @@ int means_test (const int *list, const double **Z,
 int vars_test (const int *list, const double **Z, 
 	       const DATAINFO *pdinfo, PRN *prn);
 
-void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
+void matrix_print_corr (CorrMat *corr, const DATAINFO *pdinfo,
 			PRN *prn);
 
 double doornik_chisq (double skew, double kurt, int n);
