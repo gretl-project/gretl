@@ -102,7 +102,6 @@ DATAINFO *datainfo;
 char *errtext;
 char cmdfile[MAXLEN], scriptfile[MAXLEN];
 char trydatfile[MAXLEN], tryscript[MAXLEN];
-char line[MAXLINE];
 PATHS paths;                /* useful paths */
 double **Z;                 /* data set */
 MODEL **models;             /* gretl models structs */
@@ -1378,14 +1377,13 @@ int restore_sample (gretlopt opt)
 
 static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 {
-    restore_sample(OPT_C); 
+    int err = restore_sample(OPT_C); 
 
-    if (verbose) {
+    if (verbose && !err) {
 	infobox(_("Full sample range restored"));
 	set_sample_label(datainfo);    
-	restore_sample_state(FALSE);
-	strcpy(line, "smpl full");
-	verify_and_record_command(line);
+	gretl_command_strcpy("smpl full");
+	check_and_record_command();
     }
 }
 

@@ -831,7 +831,7 @@ void do_open_session (GtkWidget *w, gpointer data)
 	    fwin = (windata_t *) data;
 	} else {
 	    d = (dialog_t *) data;
-	    fwin = (windata_t *) dialog_data_get_data(d);
+	    fwin = (windata_t *) edit_dialog_get_data(d);
 	}
     }
 

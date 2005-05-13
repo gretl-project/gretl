@@ -841,16 +841,10 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
     if (newstr != NULL && strcmp(datainfo->varname[v], newstr)) {
 	int err;
 
-	sprintf(line, "rename %d %s", v, newstr);
-	if (vset->full) {
-	    err = verify_and_record_command(line);
-	} else {
-	    err = check_cmd(line);
-	}
+	err = do_rename_variable(v, newstr, vset->full);
 	if (err) {
 	    return;
 	} else {
-	    strcpy(datainfo->varname[v], newstr);
 	    gui_changed = 1;
 	}
     }
@@ -905,9 +899,7 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 
     if (vset->full) {
 	if (changed) {
-	    sprintf(line, "label %s -d \"%s\" -n \"%s\"", datainfo->varname[v],
-		    VARLABEL(datainfo, v), DISPLAYNAME(datainfo, v));
-	    verify_and_record_command(line);
+	    record_varlabel_change(v);
 	}
 
 	if (gui_changed) {
@@ -1170,10 +1162,14 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
 	buf = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(rset->combo)->entry));
 
-	if (sscanf(buf, "%8s", dumv) != 1) return TRUE;
+	if (sscanf(buf, "%8s", dumv) != 1) {
+	    return TRUE;
+	}
 
-	sprintf(line, "smpl %s --dummy", dumv);
-	if (verify_and_record_command(line)) return TRUE;
+	gretl_command_sprintf("smpl %s --dummy", dumv);
+	if (check_and_record_command()) {
+	    return TRUE;
+	}
 
 	err = bool_subsample(rset->opt);
 	if (!err) {
@@ -1189,8 +1185,10 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	subn = gtk_spin_button_get_value(GTK_SPIN_BUTTON(rset->startspin));
 #endif
 
-	sprintf(line, "smpl %d --random", subn);
-	if (verify_and_record_command(line)) return TRUE;
+	gretl_command_sprintf("smpl %d --random", subn);
+	if (check_and_record_command()) {
+	    return TRUE;
+	}
 
 	err = bool_subsample(rset->opt);
 	if (!err) {
@@ -1221,11 +1219,11 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	} 
 
 	if (t1 != datainfo->t1 || t2 != datainfo->t2) {
-	    sprintf(line, "smpl %s %s", s1, s2);
-	    if (verify_and_record_command(line)) {
+	    gretl_command_sprintf("smpl %s %s", s1, s2);
+	    if (check_and_record_command()) {
 		return TRUE;
 	    }
-	    err = set_sample(line, (const double **) Z, datainfo);
+	    err = do_set_sample();
 	    if (err) {
 		gui_errmsg(err);
 	    } else {

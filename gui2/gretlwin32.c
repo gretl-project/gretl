@@ -74,9 +74,10 @@ int create_child_process (char *prog, char *env)
 
 void startR (const char *Rcommand)
 {
-    char Rprofile[MAXLEN], Rdata[MAXLEN], line[MAXLEN];
+    char Rprofile[MAXLEN], Rdata[MAXLEN], Rline[MAXLEN];
     const char *supp1 = "--no-init-file";
     const char *supp2 = "--no-restore-data";
+    int *list;
     FILE *fp;
     int enverr;
 
@@ -100,14 +101,19 @@ void startR (const char *Rcommand)
     } 	
 
     build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
-    sprintf(line, "store \"%s\" -r", Rdata); 
-    if (verify_and_record_command(line) ||
-	write_data(Rdata, get_cmd_list(), (const double **) Z, datainfo, 
+
+    sprintf(Rline, "store \"%s\" -r", Rdata);
+    list = command_list_from_string(Rline);
+
+    if (list == NULL ||
+	write_data(Rdata, list, (const double **) Z, datainfo, 
 		   OPT_R, NULL)) {
 	errbox(_("Write of R data file failed"));
 	fclose(fp);
 	return; 
     }
+
+    free(list);
 
     if (dataset_is_time_series(datainfo)) {
 	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
@@ -131,15 +137,17 @@ void startR (const char *Rcommand)
 
     fclose(fp);
 
-    sprintf(line, "\"%s\" %s %s", Rcommand, supp1, supp2);
-    create_child_process(line, NULL);
+    sprintf(Rline, "\"%s\" %s %s", Rcommand, supp1, supp2);
+    create_child_process(Rline, NULL);
 }
 
 char *slash_convert (char *str, int which)
 {
     char *p;
 
-    if (str == NULL) return NULL;
+    if (str == NULL) {
+	return NULL;
+    }
 
     p = str;
     while (*p) {

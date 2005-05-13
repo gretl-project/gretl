@@ -7,10 +7,14 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
     GdkPixbuf *pbuf = NULL;
 
     sprintf(temp, "%sgpttmp.XXXXXX", paths.userdir);
-    if (mktemp(temp) == NULL) return NULL;
+    if (mktemp(temp) == NULL) {
+	return NULL;
+    }
 
     ftmp = gretl_fopen(temp, "w");
-    if (ftmp == NULL) return NULL;
+    if (ftmp == NULL) {
+	return NULL;
+    }
 
     fsrc = gretl_fopen(fname, "r");
     if (fsrc == NULL) {
@@ -1026,6 +1030,32 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     return 0;
 }
 
+static int real_csv_to_clipboard (const char *liststr)
+{
+    char line[MAXLINE];
+    int *list = NULL;
+    PRN *prn = NULL;
+    int err = 0;
+
+    sprintf(line, "store csv %s", liststr);
+    list = command_list_from_string(line);
+
+    if (list != NULL) {
+	err = bufopen(&prn);
+	if (!err) {
+	    err = data_to_buf_as_csv(list, prn);
+	}
+	if (!err) {
+	    err = prn_to_clipboard(prn, COPY_CSV);
+	}
+    }
+
+    free(list);
+    gretl_print_destroy(prn);
+
+    return err;
+}
+
 int csv_to_clipboard (void)
 {
     int err = 0;
@@ -1034,23 +1064,7 @@ int csv_to_clipboard (void)
     data_save_selection_wrapper(COPY_CSV);
 
     if (storelist != NULL && *storelist != 0) {
-	PRN *prn;
-
-	*line = 0;
-	sprintf(line, "store csv %s", storelist);
-
-	err = check_cmd(line);
-	if (!err) {
-	    err = bufopen(&prn);
-	}
-	if (!err) {
-	    err = data_to_buf_as_csv(get_cmd_list(), prn);
-	}
-	if (!err) {
-	    err = prn_to_clipboard(prn, COPY_CSV);
-	}
-
-        gretl_print_destroy(prn);
+	err = real_csv_to_clipboard(storelist);
 	free(storelist);
 	storelist = NULL;
     }
@@ -1061,31 +1075,14 @@ int csv_to_clipboard (void)
 int csv_selected_to_clipboard (void)
 {
     char *liststr;
-    PRN *prn = NULL;
     int err = 0;
 
-    liststr = mdata_selection_to_string(0);
-    if (liststr == NULL) return 0;
+    liststr = main_window_selection_as_string();
 
-    delimiter_dialog();
-
-    *line = 0;
-    sprintf(line, "store csv %s", liststr);
-    free(liststr);
-
-    err = check_cmd(line);
-    if (!err) {
-	err = bufopen(&prn);
-    }
-    if (!err) {
-	err = data_to_buf_as_csv(get_cmd_list(), prn);
-    }
-    if (!err) {
-	err = prn_to_clipboard(prn, COPY_CSV);
-    }
-
-    if (prn != NULL) {
-	gretl_print_destroy(prn);
+    if (liststr != NULL) {
+	delimiter_dialog();
+	err = real_csv_to_clipboard(liststr);
+	free(liststr);
     }
 
     return err;

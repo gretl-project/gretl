@@ -249,6 +249,31 @@ char *charsub (char *str, char find, char repl)
 }
 
 /**
+ * has_suffix:
+ * @str: the string to check.
+ * @sfx: the suffix to check for.
+ *
+ * Returns: 1 if @str ends with $sfx, 0 otherwise.
+ */
+
+int has_suffix (const char *str, const char *sfx)
+{
+    int diff;
+
+    if (str == NULL || sfx == NULL) {
+	return 0;
+    }
+
+    diff = strlen(str) - strlen(sfx);
+
+    if (diff >= 0 && !strcmp(str + diff, sfx)) {
+	return 1;
+    }
+    
+    return 0;
+}
+
+/**
  * numeric_string:
  * @str: the string to examine.
  *

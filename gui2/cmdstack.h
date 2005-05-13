@@ -26,7 +26,7 @@ int add_command_to_stack (const char *str);
 
 void delete_last_command (void);
 
-int model_command_init (char *line, CMD *cmd, int ID);
+int model_command_init (int model_ID);
 
 int dump_command_stack (const char *fname, int insert_open_data);
 

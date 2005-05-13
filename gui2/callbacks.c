@@ -610,19 +610,19 @@ void add_random_callback (gpointer data, guint code, GtkWidget *widget)
 
 /* ........................................................... */
 
-static void name_first_var (GtkWidget *widget, dialog_t *ddata) 
+static void name_first_var (GtkWidget *widget, dialog_t *dlg) 
 {
-    DATAINFO *pdinfo = (DATAINFO *) dialog_data_get_data(ddata);
+    DATAINFO *pdinfo = (DATAINFO *) edit_dialog_get_data(dlg);
     const gchar *buf;
 
-    buf = dialog_data_get_text(ddata);
+    buf = edit_dialog_get_text(dlg);
 
     if (buf == NULL || validate_varname(buf)) return;
 
     pdinfo->varname[1][0] = 0;
     strncat(pdinfo->varname[1], buf, VNAMELEN - 1);
 
-    close_dialog(ddata);
+    close_dialog(dlg);
 
     show_spreadsheet(datainfo);
 }
@@ -667,13 +667,13 @@ static int prep_spreadsheet (const char *dataspec)
     return 0;
 }
 
-static void n_obs_callback (GtkWidget *w, dialog_t *ddata)
+static void n_obs_callback (GtkWidget *w, dialog_t *dlg)
 {
     const gchar *buf;
     char obsstr[32];
     int n;
 
-    buf = dialog_data_get_text(ddata);
+    buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
 
     n = atoi(buf);
@@ -682,7 +682,7 @@ static void n_obs_callback (GtkWidget *w, dialog_t *ddata)
 	return;
     }
 
-    close_dialog(ddata);
+    close_dialog(dlg);
 
     datainfo->n = n;
     sprintf(obsstr, "1 %d", n);

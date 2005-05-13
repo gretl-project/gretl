@@ -49,19 +49,17 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 		  void (*okfunc)(), void *okptr,
 		  guint hlpcode, guint varclick, int blocking);
 
-const gchar *dialog_data_get_text (dialog_t *ddata);
+const gchar *edit_dialog_get_text (dialog_t *dlg);
 
-gchar *dialog_data_special_get_text (dialog_t *ddata);
+gchar *edit_dialog_special_get_text (dialog_t *dlg);
 
-int dialog_data_get_action (const dialog_t *ddata);
+int edit_dialog_get_action (const dialog_t *dlg);
 
-gretlopt dialog_data_get_opt (const dialog_t *ddata);
+gretlopt edit_dialog_get_opt (const dialog_t *dlg);
 
-void dialog_data_set_opt (dialog_t *ddata, gretlopt opt);
+gpointer edit_dialog_get_data (dialog_t *dlg);
 
-gpointer dialog_data_get_data (dialog_t *ddata);
-
-void close_dialog (dialog_t *ddata);
+void close_dialog (dialog_t *dlg);
 
 #ifdef OLD_GTK
 GtkWidget *standard_button (int code);

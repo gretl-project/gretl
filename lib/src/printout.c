@@ -1458,9 +1458,13 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
 
 void gretl_print_destroy (PRN *prn)
 {
-    int fpdup = (prn->fp == prn->fpaux);
+    int fpdup;
 
-    if (prn == NULL) return;
+    if (prn == NULL) {
+	return;
+    }
+
+    fpdup = (prn->fp == prn->fpaux);
 
     if (prn->fp != NULL &&
 	prn->fp != stdout && prn->fp != stderr)

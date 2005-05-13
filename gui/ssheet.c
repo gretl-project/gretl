@@ -109,7 +109,7 @@ static int check_data_in_sheet (void)
 
 static void name_new_var (GtkWidget *widget, dialog_t *ddata) 
 {
-    const char *buf = dialog_data_get_text(ddata);
+    const char *buf = edit_dialog_get_text(ddata);
 
     if (buf == NULL || validate_varname(buf)) {
 	return;
@@ -121,11 +121,9 @@ static void name_new_var (GtkWidget *widget, dialog_t *ddata)
     close_dialog(ddata);
 }
 
-/* ........................................................... */
-
 static void name_new_obs (GtkWidget *widget, dialog_t *ddata) 
 {
-    const char *buf = dialog_data_get_text(ddata);
+    const char *buf = edit_dialog_get_text(ddata);
 
     if (buf == NULL) return;
 

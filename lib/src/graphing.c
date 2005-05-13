@@ -1041,11 +1041,16 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     gp_info_init(&gpinfo, flags, list[0], pdinfo->t1, pdinfo->t2);
 
-    /* special for probability distribution plot */
-    if ((flags & GP_IMPULSES) || lines == NULL) {
+    /* plot with impulses? */
+    if (lines == NULL) {
 	if (!(flags & ~GP_OLS_OMIT)) { 
 	    strcpy(withstr, "w i");
 	}
+	gpinfo.pdist = 1;
+    }
+
+    if (flags & GP_IMPULSES) {
+	strcpy(withstr, "w i");
 	gpinfo.pdist = 1;
     }
 

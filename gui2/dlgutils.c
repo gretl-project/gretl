@@ -255,39 +255,39 @@ dialog_data_new (gpointer data, gint code, const char *title,
     return d;
 }
 
-void close_dialog (dialog_t *ddata)
+void close_dialog (dialog_t *dlg)
 {
-    gtk_widget_destroy(ddata->dialog);
+    gtk_widget_destroy(dlg->dialog);
 }
 
-gchar *dialog_data_special_get_text (dialog_t *ddata)
+gchar *edit_dialog_special_get_text (dialog_t *dlg)
 {
     gchar *buf;
 
 #ifdef OLD_GTK
-    buf = gtk_editable_get_chars(GTK_EDITABLE(ddata->edit), 0, -1);
+    buf = gtk_editable_get_chars(GTK_EDITABLE(dlg->edit), 0, -1);
 #else
-    buf = textview_get_text(GTK_TEXT_VIEW(ddata->edit));
+    buf = textview_get_text(GTK_TEXT_VIEW(dlg->edit));
 #endif
 
     if (buf == NULL || *buf == '\0') {
 	g_free(buf);
-	gtk_widget_destroy(ddata->dialog);
+	gtk_widget_destroy(dlg->dialog);
 	return NULL;
     }
 
     return buf;
 }
 
-const gchar *dialog_data_get_text (dialog_t *ddata)
+const gchar *edit_dialog_get_text (dialog_t *dlg)
 {
     const gchar *buf;
 
-    buf = gtk_entry_get_text(GTK_ENTRY(ddata->edit));
+    buf = gtk_entry_get_text(GTK_ENTRY(dlg->edit));
 
     if (buf == NULL || *buf == '\0') {
-	if (ddata->code != CORRGM) {
-	    gtk_widget_destroy(ddata->dialog);
+	if (dlg->code != CORRGM) {
+	    gtk_widget_destroy(dlg->dialog);
 	}
 	return NULL;
     }
@@ -295,24 +295,19 @@ const gchar *dialog_data_get_text (dialog_t *ddata)
     return buf;
 }
 
-int dialog_data_get_action (const dialog_t *ddata)
+int edit_dialog_get_action (const dialog_t *dlg)
 {
-    return ddata->code;
+    return dlg->code;
 }
 
-gretlopt dialog_data_get_opt (const dialog_t *ddata)
+gretlopt edit_dialog_get_opt (const dialog_t *dlg)
 {
-    return ddata->opt;
+    return dlg->opt;
 }
 
-void dialog_data_set_opt (dialog_t *ddata, gretlopt opt)
+gpointer edit_dialog_get_data (dialog_t *dlg)
 {
-    ddata->opt = opt;
-}
-
-gpointer dialog_data_get_data (dialog_t *ddata)
-{
-    return ddata->data;
+    return dlg->data;
 }
 
 static void dialog_table_setup (dialog_t *dlg, int hsize)

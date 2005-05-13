@@ -55,7 +55,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode);
 void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 		       gpointer p);
 
-char *mdata_selection_to_string (int n_required);
+char *main_window_selection_as_string (void);
 
 void data_save_selection_wrapper (int file_code);
 

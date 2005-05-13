@@ -404,20 +404,20 @@ static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
 
 /* ........................................................... */
 
-static void name_new_var (GtkWidget *widget, dialog_t *ddata) 
+static void name_new_var (GtkWidget *widget, dialog_t *dlg) 
 {
-    spreadsheet *sheet = (spreadsheet *) dialog_data_get_data(ddata);
+    spreadsheet *sheet = (spreadsheet *) edit_dialog_get_data(dlg);
     const gchar *buf;
     char varname[VNAMELEN];
 
-    buf = dialog_data_get_text(ddata);
+    buf = edit_dialog_get_text(dlg);
 
     if (buf == NULL || validate_varname(buf)) return;
 
     *varname = 0;
     strncat(varname, buf, VNAMELEN - 1);
 
-    close_dialog(ddata);
+    close_dialog(dlg);
 
     if (real_add_new_var(sheet, varname)) {
 	errbox(_("Out of memory attempting to add variable"));
@@ -426,23 +426,21 @@ static void name_new_var (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
-static void name_new_obs (GtkWidget *widget, dialog_t *ddata) 
+static void name_new_obs (GtkWidget *widget, dialog_t *dlg) 
 {
-    spreadsheet *sheet = (spreadsheet *) dialog_data_get_data(ddata);
+    spreadsheet *sheet = (spreadsheet *) edit_dialog_get_data(dlg);
     const gchar *buf;
     char obsmarker[OBSLEN];
 
-    buf = dialog_data_get_text(ddata);
+    buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
 
     *obsmarker = 0;
     strncat(obsmarker, buf, OBSLEN - 1);
 
-    close_dialog(ddata);
+    close_dialog(dlg);
     real_add_new_obs(sheet, obsmarker);
 }
-
-/* ........................................................... */
 
 static void name_var_dialog (spreadsheet *sheet) 
 {

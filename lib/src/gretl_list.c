@@ -44,7 +44,9 @@ int *gretl_list_new (int nterms)
 }
 
 /* gretl_list_copy:
+ * @src: an array of integers.
  *
+ * Returns: an allocate copy @src.
  */
 
 int *gretl_list_copy (const int *src)
@@ -66,6 +68,56 @@ int *gretl_list_copy (const int *src)
     }
 
     return targ;
+}
+
+/* gretl_list_from_string:
+ * @liststr: string representation of list of integers.
+ *
+ * Reads a string containing a list of integers and constructs
+ * an array of these integers.  The first element is the number
+ * of integers that follow.
+ *
+ * Returns: the allocated array.
+ */
+
+int *gretl_list_from_string (const char *liststr)
+{
+    const char *s = liststr;
+    char numstr[8];
+    int *list;
+    int n = 0;
+
+    while (*s) {
+	while (*s == ' ') s++;
+	if (sscanf(s, "%7s", numstr)) {
+	    n++;
+	    s += strlen(numstr);
+	}
+    }
+
+    if (n == 0) {
+	return NULL;
+    }
+
+    list = malloc((n + 1) * sizeof *list);
+    if (list == NULL) {
+	return NULL;
+    }
+
+    list[0] = n;
+
+    s = liststr;
+    n = 1;
+    while (*s) {
+	while (*s == ' ') s++;
+	if (sscanf(s, "%7s", numstr)) {
+	    list[n++] = atoi(numstr);
+	    s += strlen(numstr);
+
+	}
+    }    
+
+    return list;
 }
 
 /* in_gretl_list:

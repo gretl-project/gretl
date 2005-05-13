@@ -1797,7 +1797,7 @@ static void selection_add_item (gint i, struct list_maker *lmkr)
     }
 }
 
-char *mdata_selection_to_string (int n_required)
+char *main_window_selection_as_string (void)
 {
     GList *mylist = GTK_CLIST(mdata->listbox)->selection;
     struct list_maker lmkr;    
@@ -1818,17 +1818,6 @@ char *mdata_selection_to_string (int n_required)
 	lmkr.liststr[0] = 0;
     }
 
-    if (n_required && lmkr.n_items != n_required) {
-	gchar *msg;
-
-	msg = g_strdup_printf(_("Please select %d variables first"),
-			      n_required);
-	errbox(msg);
-	g_free(msg);
-	free(lmkr.liststr);
-	lmkr.liststr = NULL;
-    }
-
     return lmkr.liststr;
 }
 
@@ -1841,7 +1830,13 @@ int selector_code (const selector *sr)
 
 const char *selector_list (const selector *sr)
 {
-    return sr->cmdlist;
+    const char *ret = NULL;
+
+    if (sr->cmdlist != NULL && *sr->cmdlist != '\0') {
+	ret = sr->cmdlist;
+    }
+
+    return ret;
 }
 
 int selector_list_hasconst (const selector *sr)

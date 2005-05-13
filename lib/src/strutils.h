@@ -39,6 +39,8 @@
 
 int string_is_blank (const char *s);
 
+int has_suffix (const char *str, const char *sfx);
+
 int numeric_string (const char *str);
 
 int count_fields (const char *s);

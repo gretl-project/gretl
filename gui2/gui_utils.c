@@ -801,8 +801,6 @@ void mark_dataset_as_modified (void)
 void register_data (char *fname, const char *user_fname,
 		    int record)
 {    
-    char datacmd[MAXLEN];
-
     /* basic accounting */
     data_status |= HAVE_DATA;
     orig_vars = datainfo->v;
@@ -835,9 +833,8 @@ void register_data (char *fname, const char *user_fname,
     /* record opening of data file in command log */
     if (record && fname != NULL) {
 	mkfilelist(FILE_LIST_DATA, fname);
-	sprintf(datacmd, "open %s", user_fname ? user_fname : fname);
-	check_cmd(datacmd);
-	cmd_init(datacmd); 
+	gretl_command_sprintf("open %s", user_fname ? user_fname : fname);
+	check_and_record_command();
     } 
 
     /* focus the data window */
@@ -944,7 +941,7 @@ static void copy_utf8_filename (char *targ, const char *src)
 void do_open_data (GtkWidget *w, gpointer data, int code)
 {
     gint datatype, err = 0;
-    dialog_t *d = NULL;
+    dialog_t *dlg = NULL;
     windata_t *fwin = NULL;
     int append = APPENDING(code);
 
@@ -952,8 +949,8 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	if (w == NULL) { /* not coming from edit_dialog */
 	    fwin = (windata_t *) data;
 	} else {
-	    d = (dialog_t *) data;
-	    fwin = (windata_t *) dialog_data_get_data(d);
+	    dlg = (dialog_t *) data;
+	    fwin = (windata_t *) edit_dialog_get_data(dlg);
 	}
     }
 
@@ -1360,42 +1357,9 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
 }
 #endif
 
-/* ........................................................... */
-
 static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 {
     copy_format_dialog(vwin, MULTI_COPY_ENABLED(vwin->role));
-}
-
-/* ........................................................... */
-
-static void add_pca_data (windata_t *vwin)
-{
-    int err, oldv = datainfo->v;
-    gretlopt oflag = OPT_D;
-    CORRMAT *corrmat = (CORRMAT *) vwin->data;
-
-    err = call_pca_plugin(corrmat, &Z, datainfo, &oflag, NULL);
-
-    if (err) {
-	gui_errmsg(err);
-	return;
-    }
-
-    if (datainfo->v > oldv) {
-	/* if data were added, register the command */
-	if (oflag == OPT_O || oflag == OPT_A) {
-	    char listbuf[MAXLEN - 8];
-	    
-	    err = print_list_to_buffer(corrmat->list, listbuf, sizeof listbuf);
-	    if (!err) {
-		const char *flagstr = print_flags(oflag, PCA); 
-
-		sprintf(line, "pca %s%s", listbuf, flagstr);
-		verify_and_record_command(line);
-	    }
-	}
-    }
 }
 
 static void add_data_callback (GtkWidget *w, windata_t *vwin)
@@ -1416,8 +1380,6 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
 	mark_dataset_as_modified();
     }	
 }
-
-/* ........................................................... */
 
 static void window_help (GtkWidget *w, windata_t *vwin)
 {
@@ -3405,9 +3367,10 @@ gchar *my_locale_to_utf8 (const gchar *src)
 
 void startR (const char *Rcommand)
 {
-    char Rprofile[MAXLEN], Rdata[MAXLEN], line[MAXLEN];
+    char Rprofile[MAXLEN], Rdata[MAXLEN], Rline[MAXLEN];
     const char *supp1 = "--no-init-file";
     const char *supp2 = "--no-restore-data";
+    int *list;
     FILE *fp;
     int enverr;
     int i;
@@ -3434,14 +3397,19 @@ void startR (const char *Rcommand)
     } 	
 
     build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
-    sprintf(line, "store \"%s\" -r", Rdata); 
-    if (verify_and_record_command(line) ||
-	write_data(Rdata, get_cmd_list(), (const double **) Z, datainfo, 
+
+    sprintf(Rline, "store \"%s\" -r", Rdata);
+    list = command_list_from_string(Rline);
+
+    if (list == NULL ||
+	write_data(Rdata, list, (const double **) Z, datainfo, 
 		   OPT_R, NULL)) {
 	errbox(_("Write of R data file failed"));
 	fclose(fp);
 	return; 
     }
+
+    free(list);
 
     if (dataset_is_time_series(datainfo)) {
 	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);

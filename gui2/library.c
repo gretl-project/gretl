@@ -30,6 +30,7 @@
 #include "forecast.h"
 #include "menustate.h"
 #include "dlgutils.h"
+#include "lib_private.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -57,7 +58,7 @@ extern char tramodir[];
 
 /* private functions */
 static void update_model_tests (windata_t *vwin);
-static int finish_genr (MODEL *pmod, dialog_t *ddata);
+static int finish_genr (MODEL *pmod, dialog_t *dlg);
 static gint stack_model (MODEL *pmod);
 #ifndef G_OS_WIN32
 static int get_terminal (char *s);
@@ -67,12 +68,25 @@ const char *CANTDO = N_("Can't do this: no model has been estimated yet\n");
 
 /* file scope state variables */
 static CMD cmd;
+static char cmdline[MAXLINE];
 static int ignore;
 static int echo_off;
 static int replay;
 static MODELSPEC *modelspec;
 static gretl_equation_system *sys;
 static gretl_restriction_set *rset;
+
+/* ........................................................... */
+
+char *get_lib_cmdline (void)
+{
+    return cmdline;
+}
+
+CMD *get_lib_cmd (void)
+{
+    return &cmd;
+}
 
 /* ........................................................... */
 
@@ -93,11 +107,6 @@ void library_command_init (void)
 void library_command_free (void)
 {
     libgretl_cleanup(&cmd);
-}
-
-const int *get_cmd_list (void)
-{
-    return cmd.list;
 }
 
 /* ........................................................... */
@@ -223,12 +232,12 @@ static void launch_gnuplot_interactive (void)
 static void launch_gnuplot_interactive (void)
 {
 # ifdef G_OS_WIN32
-    gchar *cmdline;
+    gchar *gpline;
 
-    cmdline = g_strdup_printf("\"%s\" \"%s\" -", paths.gnuplot,
-			      gretl_plotfile());
-    create_child_process(cmdline, NULL);
-    g_free(cmdline);
+    gpline = g_strdup_printf("\"%s\" \"%s\" -", paths.gnuplot,
+			     gretl_plotfile());
+    create_child_process(gpline, NULL);
+    g_free(gpline);
 # else
     char term[8];
     char plotfile[MAXLEN];
@@ -321,9 +330,33 @@ void clear_data (void)
 
 /* ........................................................... */
 
-static void clear_line (void)
+int gretl_command_sprintf (const char *template, ...)
 {
-    clear(line, MAXLINE);
+    va_list args;
+    int len;
+
+    memset(cmdline, 0, MAXLINE);
+
+    va_start(args, template);
+    len = vsprintf(cmdline, template, args);
+    va_end(args);
+
+    return len;
+}
+
+int gretl_command_strcpy (const char *s)
+{
+    memset(cmdline, 0, MAXLINE);
+    strcpy(cmdline, s);
+    
+    return 0;
+}
+
+static int gretl_command_strcat (const char *s)
+{
+    strcat(cmdline, s);
+
+    return 0;
 }
 
 /* ........................................................... */
@@ -343,11 +376,9 @@ char *user_fopen (const char *fname, char *fullname, PRN **pprn)
     return fullname;
 }
 
-/* ........................................................... */
-
 gint bufopen (PRN **pprn)
 {
-    *pprn = gretl_print_new (GRETL_PRINT_BUFFER, NULL);
+    *pprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
 
     if (*pprn == NULL) {
 	errbox(_("Out of memory allocating output buffer"));
@@ -356,8 +387,6 @@ gint bufopen (PRN **pprn)
 
     return 0;
 }
-
-/* ........................................................... */
 
 PRN *bufopen_with_size (size_t sz)
 {
@@ -408,87 +437,133 @@ static int freq_error (FREQDIST *freq, PRN *prn)
 
 /* ........................................................... */
 
-gint check_cmd (char *line)
-{
-    int err;
-
-    *cmd.param = '\0';
-
-    cmd.opt = get_gretl_options(line, &err);
-    if (err) {
-	gui_errmsg(err);
-	return 1;
-    } 
-
-    getcmd(line, datainfo, &cmd, &ignore, &Z, NULL); 
-
-    if (cmd.errcode) {
-	gui_errmsg(cmd.errcode);
-	return 1;
-    } 
-
-    /* At this point we're not just replaying 
-       saved session commands. 
-    */ 
-    set_replay_off();
-
-    return 0;
-}
-
-/* ........................................................... */
-
-static void maybe_quote_filename (char *line, char *cmd)
+static void maybe_quote_filename (char *s, char *cmd)
 {
     size_t len = strlen(cmd);
 
-    if (strlen(line) > len + 1) {
-	char *p = line + len + 1;
+    if (strlen(s) > len + 1) {
+	char *p = s + len + 1;
 
-	if (*p == '"' || *p == '\'') return;
+	if (*p == '"' || *p == '\'') {
+	    return;
+	}
 	
 	if (strchr(p, ' ')) {
 	    char tmp[MAXLEN];
 
 	    *tmp = 0;
 	    strcpy(tmp, p);
-	    sprintf(line, "%s \"%s\"", cmd, tmp);
+	    sprintf(s, "%s \"%s\"", cmd, tmp);
 	}
     }
 }
 
-/* ........................................................... */
-
-gint cmd_init (char *cmdstr)
+static int cmd_init (char *s)
 {
     PRN *echo;
-    int err;
+    int err = 0;
+
+    /* note "cmd.*" elements are filled out already, if
+       check_specific_command() has been called on the 
+       command string */
 
 #ifdef CMD_DEBUG
-    fprintf(stderr, "cmd_init: got cmdstr: '%s'\n", cmdstr);
+    fprintf(stderr, "cmd_init: got cmdstr: '%s'\n", s);
     fprintf(stderr, "cmd.word: '%s'\n", cmd.word);
     fprintf(stderr, "cmd.param: '%s'\n", cmd.param);
 #endif
 
     if (cmd.ci == OPEN || cmd.ci == RUN) {
-	maybe_quote_filename(cmdstr, cmd.word);
+	maybe_quote_filename(s, cmd.word);
     }
 
-    if (bufopen(&echo)) return 1;
-
-    echo_cmd(&cmd, datainfo, cmdstr, 0, 1, 0, echo);
-
-    err = add_command_to_stack(echo->buf);
-
-    gretl_print_destroy(echo);
+    /* arrange to have the command recorded on a stack */
+    if (bufopen(&echo)) {
+	err = 1;
+    } else {
+	echo_cmd(&cmd, datainfo, s, 0, 1, 0, echo);
+	err = add_command_to_stack(echo->buf);
+	gretl_print_destroy(echo);
+    }
 
     return err;
 }
 
-/* ........................................................... */
-
-int verify_and_record_command (char *line)
+static int lib_cmd_init (void)
 {
-    return (check_cmd(line) || cmd_init(line));
+    return cmd_init(cmdline);
+}
+
+/* checks command line s for validity, but does not
+   record the command */
+
+int check_specific_command (char *s)
+{
+    int err = 0;
+
+    /* cmd is global */
+    *cmd.param = '\0';
+    cmd.opt = get_gretl_options(s, &err);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	getcmd(s, datainfo, &cmd, &ignore, &Z, NULL); 
+	if (cmd.errcode) {
+	    gui_errmsg(cmd.errcode);
+	    err = 1;
+	} 
+    }
+
+    if (!err) {
+	/* At this point we're not just replaying 
+	   saved session commands. */
+	set_replay_off();
+    }
+
+    return err;
+}
+
+static int check_lib_command (void)
+{
+    return check_specific_command(cmdline);
+}
+
+int check_and_record_command (void)
+{
+    return (check_specific_command(cmdline) || cmd_init(cmdline));
+}
+
+/* checks command for errors, and if OK returns an allocated
+   copy of the command list */
+
+int *command_list_from_string (char *s)
+{
+    CMD mycmd;
+    int *list = NULL;
+    int myignore = 0;
+    int err = 0;
+
+    gretl_cmd_init(&mycmd);
+
+    mycmd.opt = get_gretl_options(s, &err);
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	getcmd(s, datainfo, &mycmd, &myignore, &Z, NULL); 
+	if (mycmd.errcode) {
+	    gui_errmsg(mycmd.errcode);
+	    err = 1;
+	} 
+    }
+
+    if (!err) {
+	list = gretl_list_copy(mycmd.list);
+    }
+
+    gretl_cmd_free(&mycmd);
+
+    return list;    
 }
 
 /* ........................................................... */
@@ -536,12 +611,9 @@ void add_mahalanobis_data (windata_t *vwin)
 	return;
     }
 
-    clear_line();
-    strcpy(line, "mahal");
-    strcat(line, liststr);
-    strcat(line, " --save");
+    gretl_command_sprintf("mahal%s --save", liststr);
 
-    if (verify_and_record_command(line)) {
+    if (check_and_record_command()) {
 	return;
     }    
 
@@ -553,7 +625,41 @@ void add_mahalanobis_data (windata_t *vwin)
     }
 }
 
+void add_pca_data (windata_t *vwin)
+{
+    int err, oldv = datainfo->v;
+    gretlopt oflag = OPT_D;
+    CORRMAT *corrmat = (CORRMAT *) vwin->data;
+
+    err = call_pca_plugin(corrmat, &Z, datainfo, &oflag, NULL);
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
+
+    if (datainfo->v > oldv) {
+	/* if data were added, register the command */
+	if (oflag == OPT_O || oflag == OPT_A) {
+	    char listbuf[MAXLEN - 8];
+	    
+	    err = print_list_to_buffer(corrmat->list, listbuf, sizeof listbuf);
+	    if (!err) {
+		const char *flagstr = print_flags(oflag, PCA); 
+
+		gretl_command_sprintf("pca %s%s", listbuf, flagstr);
+		check_and_record_command();
+	    }
+	}
+    }
+}
+
 /* ........................................................... */
+
+static const char *selected_varname (void)
+{
+    return datainfo->varname[mdata->active_var];
+}
 
 void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 {
@@ -565,63 +671,58 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     gretlopt opt = OPT_NONE;
     gint hsize = 78, vsize = 380;
 
-    clear_line();
     strcpy(title, "gretl: ");
 
     if (action == CORR_SELECTED || action == SUMMARY_SELECTED ||
 	action == PCA || action == MAHAL) {
-	liststr = mdata_selection_to_string(0);
+	liststr = main_window_selection_as_string();
 	if (liststr == NULL) return;
     }
 
     switch (action) {
     case CORR:
-	strcpy(line, "corr");
+	gretl_command_strcpy("corr");
 	strcat(title, _("correlation matrix"));
 	break;
     case CORR_SELECTED:
-	strcpy(line, "corr");
-	strcat(line, liststr);
+	gretl_command_sprintf("corr%s", liststr);
 	strcat(title, _("correlation matrix"));
 	action = CORR;
 	break;
     case PCA:
-	strcpy(line, "pca");
-	strcat(line, liststr);
+	gretl_command_sprintf("pca%s", liststr);
 	strcat(title, _("principal components"));
 	break;
     case MAHAL:
-	strcpy(line, "mahal");
-	strcat(line, liststr);
+	gretl_command_sprintf("mahal%s", liststr);
 	obj = liststr;
 	liststr = NULL;
 	hsize = 60;
 	strcat(title, _("Mahalanobis distances"));
 	break;
     case FREQ:
-	sprintf(line, "freq %s", datainfo->varname[mdata->active_var]);
+	gretl_command_sprintf("freq %s", selected_varname());
 	strcat(title, _("frequency distribution"));
 	vsize = 340;
 	break;
     case RUNS:
-	sprintf(line, "runs %s", datainfo->varname[mdata->active_var]);
+	gretl_command_sprintf("runs %s", selected_varname());
 	strcat(title, _("runs test"));
 	vsize = 200;
 	break;
     case SUMMARY:
-	strcpy(line, "summary");
+	gretl_command_strcpy("summary");
 	strcat(title, _("summary statistics"));
 	break;
     case SUMMARY_SELECTED:
-	strcpy(line, "summary");
-	strcat(line, liststr);
+	gretl_command_sprintf("summary%s", liststr);
 	strcat(title, _("summary statistics"));
 	action = SUMMARY;
 	break;
     case VAR_SUMMARY:
-	sprintf(line, "summary %s", datainfo->varname[mdata->active_var]);
+	gretl_command_sprintf("summary %s", selected_varname());
 	strcat(title, _("summary stats: "));
-	strcat(title, datainfo->varname[mdata->active_var]);
+	strcat(title, selected_varname());
 	vsize = 300;
 	break;
     default:
@@ -633,7 +734,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     }
 
     /* check the command and initialize output buffer */
-    if (verify_and_record_command(line) || bufopen(&prn)) {
+    if (check_and_record_command() || bufopen(&prn)) {
 	return;
     }
 
@@ -702,25 +803,23 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 static void real_do_coint (gpointer p, int action)
 {
     selector *sr = (selector *) p;
-    const char *buf;
+    const char *buf = selector_list(sr);
     PRN *prn;
     int err = 0, order = 0;
 
-    buf = selector_list(sr);
-    if (*buf == 0) return;
-
-    clear_line();
+    if (buf == NULL) return;
 
     if (action == COINT) {
 	cmd.opt = (selector_list_hasconst(sr))? OPT_NONE : OPT_N;
-	sprintf(line, "coint %s%s", buf, (cmd.opt)? " --nc" : "");
+	gretl_command_sprintf("coint %s%s", buf, (cmd.opt)? " --nc" : "");
     } else {
 	cmd.opt = selector_get_opts(sr);
-	sprintf(line, "coint2 %s%s", buf, (cmd.opt)? " --verbose" : "");
+	gretl_command_sprintf("coint2 %s%s", buf, (cmd.opt)? " --verbose" : "");
     }	
 
-    /* check the command and initialize output buffer */
-    if (verify_and_record_command(line) || bufopen(&prn)) return;
+    if (check_and_record_command() || bufopen(&prn)) {
+	return;
+    }
 
     order = atoi(cmd.param);
     if (!order) {
@@ -849,22 +948,22 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	}
     }
 
-    sprintf(line, "%s %d %s", (action == ADF)? "adf" : "kpss", order, 
-	    datainfo->varname[mdata->active_var]);
+    gretl_command_sprintf("%s %d %s", (action == ADF)? "adf" : "kpss", order, 
+			  selected_varname());
 
     if (action == ADF) {
-	if (active[0]) strcat(line, " --nc");
-	if (active[1]) strcat(line, " --c");
-	if (active[2]) strcat(line, " --ct");
-	if (active[3]) strcat(line, " --ctt");
-	if (active[4]) strcat(line, " --verbose");
+	if (active[0]) gretl_command_strcat(" --nc");
+	if (active[1]) gretl_command_strcat(" --c");
+	if (active[2]) gretl_command_strcat(" --ct");
+	if (active[3]) gretl_command_strcat(" --ctt");
+	if (active[4]) gretl_command_strcat(" --verbose");
 	if (active[5]) order = -order; /* auto-trim the lag order */
     } else {
-	if (active[0]) strcat(line, " --trend");
-	if (active[1]) strcat(line, " --verbose");
+	if (active[0]) gretl_command_strcat(" --trend");
+	if (active[1]) gretl_command_strcat(" --verbose");
     } 
 
-    if (verify_and_record_command(line) || bufopen(&prn)) {
+    if (check_and_record_command() || bufopen(&prn)) {
 	return;
     }
 
@@ -885,20 +984,16 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 void do_spearman (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
-    const char *buf;
+    const char *buf = selector_list(sr);
     PRN *prn;
     char title[64];
     gint err;
 
-    buf = selector_list(sr);
-    if (buf == NULL || *buf == 0) {
-	return;
-    }
+    if (buf == NULL) return;
     
-    clear_line();
-    sprintf(line, "spearman%s --verbose", buf);
+    gretl_command_sprintf("spearman%s --verbose", buf);
 
-    if (check_cmd(line) || bufopen(&prn)) {
+    if (check_and_record_command() || bufopen(&prn)) {
 	return;
     }
 
@@ -920,35 +1015,32 @@ void do_two_var_test (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
     int action = selector_code(sr);
+    const char *buf = selector_list(sr);
     PRN *prn;
-    const char *buf;
     char title[64];
     int err = 0;
 
-    buf = selector_list(sr);
-    if (buf == NULL || *buf == 0) {
-	return;
-    }
+    if (buf == NULL) return;
 
-    clear_line();
     strcpy(title, "gretl: ");
 
     if (action == MEANTEST) {
-	sprintf(line, "meantest %s", buf);
+	gretl_command_sprintf("meantest %s", buf);
 	strcat(title, _("means test"));
     } else if (action == MEANTEST2) {
-	sprintf(line, "meantest %s --unequal-vars", buf);
+	gretl_command_sprintf("meantest %s --unequal-vars", buf);
 	strcat(title, _("means test"));
     } else if (action == VARTEST) {
-	sprintf(line, "vartest %s", buf);
+	gretl_command_sprintf("vartest %s", buf);
 	strcat(title, _("variances test"));
     } else {
 	dummy_call();
 	return;
     }
 
-    /* check the command and initialize output buffer */
-    if (verify_and_record_command(line) || bufopen(&prn)) return;
+    if (check_and_record_command() || bufopen(&prn)) {
+	return;
+    }
 
     if (action == MEANTEST) {
 	err = means_test(cmd.list, (const double **) Z, datainfo, OPT_NONE, prn);
@@ -1024,7 +1116,7 @@ int bool_subsample (gretlopt opt)
     if (opt & OPT_M) {
 	err = restrict_sample(NULL, &Z, &datainfo, NULL, opt);
     } else {
-	err = restrict_sample(line, &Z, &datainfo, NULL, opt);
+	err = restrict_sample(cmdline, &Z, &datainfo, NULL, opt);
     }
 
     if (err) {
@@ -1057,40 +1149,43 @@ void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
     int err = bool_subsample(OPT_M);
 
     if (!err) {
-	clear_line();
-	strcpy(line, "smpl --no-missing");
-	verify_and_record_command(line);
+	gretl_command_strcpy("smpl --no-missing");
+	check_and_record_command();
     }
 }
 
 /* ........................................................... */
 
-void do_samplebool (GtkWidget *widget, dialog_t *ddata)
+void do_samplebool (GtkWidget *widget, dialog_t *dlg)
 {
-    const gchar *buf = NULL;
+    const gchar *buf = edit_dialog_get_text(dlg);
     gretlopt opt;
     int err;
 
-    buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
 
-    opt = dialog_data_get_opt(ddata);
-
-    clear_line();
+    opt = edit_dialog_get_opt(dlg);
 
     if (opt & OPT_C) { 
-	sprintf(line, "smpl %s --restrict --replace", buf); 
+	gretl_command_sprintf("smpl %s --restrict --replace", buf); 
     } else {
-	sprintf(line, "smpl %s --restrict", buf);
+	gretl_command_sprintf("smpl %s --restrict", buf);
     }
 
-    if (verify_and_record_command(line)) return;
+    if (check_and_record_command()) {
+	return;
+    }
 
     err = bool_subsample(opt | OPT_R);
 
     if (!err) {
-	close_dialog(ddata);
+	close_dialog(dlg);
     }
+}
+
+int do_set_sample (void)
+{
+    return set_sample(cmdline, (const double **) Z, datainfo);
 }
 
 /* ........................................................... */
@@ -1142,8 +1237,6 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     PRN *prn;
     int resp, err;
 
-    clear_line();
-
     resp = get_obs_dialog(_("gretl: forecast"), 
 			  _("Forecast period"),
 			  _("Start:"), _("End:"), 
@@ -1152,15 +1245,17 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     if (resp < 0) {
 	return;
     }
+
     ntodate(startobs, t1, datainfo);
     ntodate(endobs, t2, datainfo);
-    sprintf(line, "fcasterr %s %s", startobs, endobs);
 
-    if (verify_and_record_command(line) || bufopen(&prn)) {
+    gretl_command_sprintf("fcasterr %s %s", startobs, endobs);
+
+    if (check_and_record_command() || bufopen(&prn)) {
 	return;
     }
 
-    fr = get_fcast_with_errs(line, pmod, &Z, datainfo, prn);
+    fr = get_fcast_with_errs(cmdline, pmod, &Z, datainfo, prn);
 
     if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));
@@ -1183,7 +1278,7 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
     windata_t *vwin = selector_get_data(sr);
-    const char *buf;
+    const char *buf = selector_list(sr);
     PRN *prn;
     char title[48];
     MODEL *pmod;
@@ -1191,19 +1286,17 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
 
     unset_window_busy(vwin);
 
+    if (buf == NULL) {
+	return;
+    }
+
+    gretl_command_sprintf("coeffsum %s", buf);
+
+    if (check_lib_command() || bufopen(&prn)) {
+	return;
+    }
+
     pmod = vwin->data;
-    buf = selector_list(sr);
-    if (buf == NULL || *buf == 0) {
-	return;
-    }
-    
-    clear_line();
-    sprintf(line, "coeffsum %s", buf);
-
-    if (check_cmd(line) || bufopen(&prn)) {
-	return;
-    }
-
     err = sum_test(cmd.list, pmod, &Z, datainfo, prn);
 
     if (err) {
@@ -1211,6 +1304,8 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
         gretl_print_destroy(prn);
         return;
     }
+
+    model_command_init(pmod->ID);
 
     strcpy(title, "gretl: ");
     strcat(title, _("Sum of coefficients"));
@@ -1224,7 +1319,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
     windata_t *vwin = selector_get_data(sr);
-    const char *buf;
+    const char *buf = selector_list(sr);
     PRN *prn;
     char title[48];
     MODEL *orig, *pmod;
@@ -1232,21 +1327,19 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
     unset_window_busy(vwin);
 
-    orig = vwin->data;
-    buf = selector_list(sr);
-    if (*buf == 0) {
+    if (buf == NULL) {
 	return;
     }
-    
-    clear_line();
 
+    orig = vwin->data;
+    
     if (selector_code(sr) == ADD) {
-        sprintf(line, "addto %d %s", orig->ID, buf);
+        gretl_command_sprintf("addto %d %s", orig->ID, buf);
     } else {
-        sprintf(line, "omitfrom %d %s", orig->ID, buf);
+        gretl_command_sprintf("omitfrom %d %s", orig->ID, buf);
     }
 
-    if (check_cmd(line) || bufopen(&prn)) {
+    if (check_lib_command() || bufopen(&prn)) {
 	return;
     }
 
@@ -1272,7 +1365,9 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
     update_model_tests(vwin);
 
-    if (cmd_init(line) || stack_model(pmod)) {
+    /* FIXME: model_command_init ?? */
+
+    if (lib_cmd_init() || stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -1354,10 +1449,9 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
     if (bufopen(&prn)) return;
 
     strcpy(title, _("gretl: LM test "));
-    clear_line();
 
     if (action == LMTEST_WHITE) {
-	strcpy(line, "lmtest --white");
+	gretl_command_strcpy("lmtest --white");
 	err = whites_test(pmod, &Z, datainfo, OPT_S, prn);
 	if (err) {
 	    gui_errmsg(err);
@@ -1366,7 +1460,7 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	    strcat(title, _("(heteroskedasticity)"));
 	}
     } else if (action == LMTEST_GROUPWISE) {
-	strcpy(line, "lmtest --panel");
+	gretl_command_strcpy("lmtest --panel");
 	err = groupwise_hetero_test(pmod, &Z, datainfo, prn);
 	if (err) {
 	    gui_errmsg(err);
@@ -1378,9 +1472,9 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	int aux = (action == LMTEST_SQUARES)? AUX_SQ : AUX_LOG;
 
 	if (action == LMTEST_SQUARES) { 
-	    strcpy(line, "lmtest --squares");
+	    gretl_command_strcpy("lmtest --squares");
 	} else {
-	    strcpy(line, "lmtest --logs");
+	    gretl_command_strcpy("lmtest --logs");
 	}
 	clear_model(models[0]);
 	err = nonlinearity_test(pmod, &Z, datainfo, aux, OPT_S, prn);
@@ -1394,7 +1488,7 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 
     if (!err) {
 	update_model_tests(vwin);
-	model_command_init(line, &cmd, pmod->ID);
+	model_command_init(pmod->ID);
 	view_buffer(prn, 78, 400, title, LMTEST, NULL); 
     }
 }
@@ -1498,8 +1592,8 @@ void add_leverage_data (windata_t *vwin)
     } else {
 	int ID = get_model_id_from_window(vwin->dialog);
 
-	strcpy(line, "leverage --save");
-	model_command_init(line, &cmd, ID);
+	gretl_command_strcpy("leverage --save");
+	model_command_init(ID);
     }
 }
 
@@ -1536,8 +1630,8 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 
 	make_and_display_graph();
 
-	strcpy(line, "leverage");
-	model_command_init(line, &cmd, pmod->ID);
+	gretl_command_strcpy("leverage");
+	model_command_init(pmod->ID);
     } else {
 	errbox(_("Command failed"));
     }
@@ -1571,8 +1665,8 @@ void do_vif (gpointer data, guint u, GtkWidget *w)
 	vifwin = view_buffer(prn, 78, 400, _("gretl: collinearity"), 
 			     PRINT, NULL); 
 
-	strcpy(line, "vif");
-	model_command_init(line, &cmd, pmod->ID);
+	gretl_command_strcpy("vif");
+	model_command_init(pmod->ID);
     } else {
 	errbox(_("Command failed"));
     }
@@ -1658,9 +1752,9 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 	}
 
 	ntodate(brkstr, brk, datainfo);
-	sprintf(line, "chow %s", brkstr);
+	gretl_command_sprintf("chow %s", brkstr);
     } else {
-	strcpy(line, "cusum");
+	gretl_command_strcpy("cusum");
     }
 
     if (bufopen(&prn)) {
@@ -1668,7 +1762,7 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
     }
 
     if (action == CHOW) {
-	err = chow_test(line, pmod, &Z, datainfo, OPT_S, prn);
+	err = chow_test(cmdline, pmod, &Z, datainfo, OPT_S, prn);
     } else {
 	err = cusum_test(pmod, &Z, datainfo, OPT_S, prn);
     }
@@ -1682,7 +1776,7 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 	}
 
 	update_model_tests(vwin);
-	model_command_init(line, &cmd, pmod->ID);
+	model_command_init(pmod->ID);
 
 	view_buffer(prn, 78, 400, (action == CHOW)?
 		    _("gretl: Chow test output") : 
@@ -1703,9 +1797,6 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
 
     strcpy(title, _("gretl: RESET test"));
 
-    clear_line();
-    strcpy(line, "reset");
-
     err = reset_test(pmod, &Z, datainfo, OPT_S, prn);
 
     if (err) {
@@ -1713,7 +1804,8 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
 	gretl_print_destroy(prn);
     } else {
 	update_model_tests(vwin);
-	model_command_init(line, &cmd, pmod->ID);
+	gretl_command_strcpy("reset");
+	model_command_init(pmod->ID);
 	view_buffer(prn, 78, 400, title, RESET, NULL); 
     }
 }
@@ -1744,9 +1836,6 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
 
     strcpy(title, _("gretl: LM test (autocorrelation)"));
 
-    clear_line();
-    sprintf(line, "lmtest -m %d", order);
-
     if (dataset_is_panel(datainfo)) {
 	void *handle;
 	int (*panel_autocorr_test)(MODEL *, int, 
@@ -1772,7 +1861,8 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
 	gretl_print_destroy(prn);
     } else {
 	update_model_tests(vwin);
-	model_command_init(line, &cmd, pmod->ID);
+	gretl_command_sprintf("lmtest -m %d", order);
+	model_command_init(pmod->ID);
 	view_buffer(prn, 78, 400, title, LMTEST, NULL); 
     }
 }
@@ -1797,15 +1887,14 @@ void do_arch (gpointer data, guint u, GtkWidget *widget)
 	return;
     }
 
-    clear_line();
-    sprintf(line, "arch %d ", order);
+    gretl_command_sprintf("arch %d ", order);
 
     for (i=1; i<=pmod->list[0]; i++) {
 	sprintf(tmpstr, "%d ", pmod->list[i]);
-	strcat(line, tmpstr);
+	gretl_command_strcat(tmpstr);
     }
 
-    if (verify_and_record_command(line)) {
+    if (check_and_record_command()) {
 	return;
     }
 
@@ -1866,7 +1955,7 @@ static int model_output (MODEL *pmod, PRN *prn)
 
 /* ........................................................... */
 
-static gint check_model_cmd (char *line, char *modelgenr)
+static gint check_model_cmd (char *modelgenr)
 {
     int err;
     PRN *getgenr;
@@ -1875,20 +1964,21 @@ static gint check_model_cmd (char *line, char *modelgenr)
 
     *cmd.param = '\0';
 
-    cmd.opt = get_gretl_options(line, &err);
+    cmd.opt = get_gretl_options(cmdline, &err);
     if (err) {
 	gui_errmsg(err);
 	return 1;
     }	
 
-    getcmd(line, datainfo, &cmd, &ignore, &Z, getgenr); 
+    getcmd(cmdline, datainfo, &cmd, &ignore, &Z, getgenr); 
     if (cmd.errcode) {
 	gui_errmsg(cmd.errcode);
 	return 1;
     }
 
-    if (*getgenr->buf != '\0' && modelgenr != NULL) 
+    if (*getgenr->buf != '\0' && modelgenr != NULL) {
 	strcpy(modelgenr, getgenr->buf);
+    }
 
     gretl_print_destroy(getgenr);
 
@@ -1901,26 +1991,29 @@ static gint check_model_cmd (char *line, char *modelgenr)
 
 void do_mp_ols (GtkWidget *widget, gpointer p)
 {
-    const char *buf;
+    selector *sr = (selector *) p;
+    const char *buf = selector_list(sr);
+    int action = selector_code(sr);
+
+    PRN *prn;
     char estimator[9];
     void *handle;
+    mp_results *mpvals = NULL;
     int (*mplsq)(const int *, const int *,
 		 double ***, DATAINFO *, PRN *, char *, mp_results *);
-    int err, action;
-    selector *sr = (selector *) p;
-    PRN *prn;
-    mp_results *mpvals = NULL;
+    int err;
 
-    action = selector_code(sr);
+    if (buf == NULL) {
+	return;
+    }
+
     strcpy(estimator, gretl_command_word(action));
 
-    buf = selector_list(sr);    
-    if (*buf == 0) return;
+    gretl_command_sprintf("%s %s", estimator, buf);
 
-    clear_line();
-    sprintf(line, "%s %s", estimator, buf);
-
-    if (verify_and_record_command(line) || bufopen(&prn)) return;
+    if (check_and_record_command() || bufopen(&prn)) {
+	return;
+    }
 
     mplsq = gui_get_plugin_function("mplsq", &handle);
     if (mplsq == NULL) {
@@ -1948,7 +2041,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    print_mpols_results (mpvals, datainfo, prn);
+    print_mpols_results(mpvals, datainfo, prn);
 
     view_buffer(prn, 78, 400, _("gretl: high precision estimates"), 
 		MPOLS, mpvals);
@@ -1958,31 +2051,32 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
-static int record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
-					   int got_start, int got_end)
+static int 
+record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
+				int got_start, int got_end)
 {
     bufgets(NULL, 0, buf);
 
     if (!got_start) {
-	strcpy(line, "restrict");
-	model_command_init(line, &cmd, pmod->ID);
+	gretl_command_strcpy("restrict");
+	model_command_init(pmod->ID);
     }
 
     gretl_cmd_set_context(&cmd, RESTRICT);
 
-    while (bufgets(line, MAXLINE-1, buf)) {
-	if (string_is_blank(line)) {
+    while (bufgets(cmdline, MAXLINE, buf)) {
+	if (string_is_blank(cmdline)) {
 	    continue;
 	}
-	top_n_tail(line);
-	model_command_init(line, &cmd, pmod->ID);
+	top_n_tail(cmdline);
+	model_command_init(pmod->ID);
     }
 
     gretl_cmd_destroy_context(&cmd);
 
     if (!got_end) {
-	strcpy(line, "end restrict");
-	model_command_init(line, &cmd, pmod->ID);
+	gretl_command_strcpy("end restrict");
+	model_command_init(pmod->ID);
     }
 
     return 0;
@@ -1990,22 +2084,22 @@ static int record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 
 /* ........................................................... */
 
-void do_restrict (GtkWidget *widget, dialog_t *ddata)
+void do_restrict (GtkWidget *widget, dialog_t *dlg)
 {
     gchar *buf;
     PRN *prn;
-    char title[64];
-    windata_t *vwin = (windata_t *) dialog_data_get_data(ddata);
+    char title[64], line[MAXLINE];
+    windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
     MODEL *pmod = (MODEL *) vwin->data;
     int got_start_line = 0, got_end_line = 0;
     int err = 0;
 
-    buf = dialog_data_special_get_text(ddata);
+    buf = edit_dialog_special_get_text(dlg);
     if (buf == NULL) return;
 
     bufgets(NULL, 0, buf);
 
-    while (bufgets(line, MAXLINE-1, buf) && !err) {
+    while (bufgets(line, MAXLINE, buf) && !err) {
 	if (string_is_blank(line)) {
 	    continue;
 	}
@@ -2039,7 +2133,7 @@ void do_restrict (GtkWidget *widget, dialog_t *ddata)
 	return;
     }
 
-    close_dialog(ddata);
+    close_dialog(dlg);
 
     if (bufopen(&prn)) return; 
 
@@ -2065,59 +2159,76 @@ void do_restrict (GtkWidget *widget, dialog_t *ddata)
 
 static int do_nls_genr (void)
 {
-    if (verify_and_record_command(line)) {
-	return 1;
+    int err;
+
+    if (check_and_record_command()) {
+	err = 1;
+    } else {
+	err = finish_genr(NULL, NULL);
     }
-    return finish_genr(NULL, NULL);
+
+    return err;
 }
 
-void do_nls_model (GtkWidget *widget, dialog_t *ddata)
+void do_nls_model (GtkWidget *widget, dialog_t *dlg)
 {
     gchar *buf;
     PRN *prn;
+    char bufline[MAXLINE];
     char title[26];
     int err = 0, started = 0;
     MODEL *pmod = NULL;
 
-    buf = dialog_data_special_get_text(ddata);
-    if (buf == NULL) return;
+    buf = edit_dialog_special_get_text(dlg);
+    if (buf == NULL) {
+	return;
+    }
 
     bufgets(NULL, 0, buf);
 
-    while (bufgets(line, MAXLINE-1, buf) && !err) {
-	if (string_is_blank(line)) {
+    while (bufgets(bufline, MAXLINE-1, buf) && !err) {
+	if (string_is_blank(bufline)) {
 	    continue;
 	}
-	if (started && !strncmp(line, "end nls", 7)) {
+
+	if (started && !strncmp(bufline, "end nls", 7)) {
 	    break;
 	}
-	if (!started && !strncmp(line, "genr", 4)) {
+
+	if (!started && !strncmp(bufline, "genr", 4)) {
+	    gretl_command_strcpy(bufline);
 	    err = do_nls_genr();
 	    continue;
 	}
-	if (!started && strncmp(line, "nls", 3)) {
+
+	if (!started && strncmp(bufline, "nls", 3)) {
 	    char tmp[MAXLINE];
 	    
-	    strcpy(tmp, line);
-	    strcpy(line, "nls ");
-	    strcat(line, tmp);
+	    strcpy(tmp, bufline);
+	    strcpy(bufline, "nls ");
+	    strcat(bufline, tmp);
 	}
-	err = nls_parse_line(line, (const double **) Z, datainfo);
+
+	err = nls_parse_line(bufline, (const double **) Z, datainfo);
 	started = 1;
+
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    err = cmd_init(line);
+	    gretl_command_strcpy(bufline);
+	    err = lib_cmd_init();
 	}
     }
 
     g_free(buf);
-    if (err) return;
+    if (err) {
+	return;
+    }
 
     /* if the user didn't give "end nls", supply it */
-    if (strncmp(line, "end nls", 7)) {
-	strcpy(line, "end nls");
-	cmd_init(line);
+    if (strncmp(bufline, "end nls", 7)) {
+	gretl_command_strcpy("end nls");
+	lib_cmd_init();
     }
 
     if (bufopen(&prn)) return;
@@ -2136,7 +2247,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 	return;
     }
 
-    close_dialog(ddata);
+    close_dialog(dlg);
 
     if (stack_model(pmod)) {
 	errbox(_("Error saving model information"));
@@ -2160,6 +2271,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 
 void do_model (GtkWidget *widget, gpointer p) 
 {
+    selector *sr = (selector *) p; 
     const char *buf;
     PRN *prn;
     char title[26], estimator[9], modelgenr[80];
@@ -2167,9 +2279,13 @@ void do_model (GtkWidget *widget, gpointer p)
     double rho;
     MODEL *pmod = NULL;
     GRETL_VAR *var = NULL;
-    selector *sr = (selector *) p;  
 
     if (selector_error(sr)) {
+	return;
+    }
+
+    buf = selector_list(sr);
+    if (buf == NULL) {
 	return;
     }
 
@@ -2178,25 +2294,16 @@ void do_model (GtkWidget *widget, gpointer p)
 
     cmd.opt = selector_get_opts(sr);
 
-    buf = selector_list(sr);    
-    if (buf == NULL || *buf == 0) return;
-
-    clear_line();
-    sprintf(line, "%s %s%s", estimator, buf, print_flags(cmd.opt, action));
+    gretl_command_sprintf("%s %s%s", estimator, buf, 
+			  print_flags(cmd.opt, action));
 
 #if 0
-    fprintf(stderr, "do_model: line = '%s'\n", line);
+    fprintf(stderr, "do_model: line = '%s'\n", cmdline);
 #endif
 
     *modelgenr = '\0';
 
-    if (check_model_cmd(line, modelgenr)) {
-	return;
-    }
-
-    echo_cmd(&cmd, datainfo, line, 0, 1, 0, NULL);
-    if (cmd.ci == VARDUP) {
-	errbox(_("A variable was duplicated in the list of regressors"));
+    if (check_model_cmd(modelgenr)) {
 	return;
     }
 
@@ -2334,8 +2441,8 @@ void do_model (GtkWidget *widget, gpointer p)
 
 	free(cmd.param);
 	cmd.param = g_strdup_printf("ymax=%g", lmax);
-	strcat(line, " ");
-	strcat(line, cmd.param);
+	gretl_command_strcat(" ");
+	gretl_command_strcat(cmd.param);
     }
 
     if (*modelgenr && add_command_to_stack(modelgenr)) {
@@ -2343,7 +2450,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    if (cmd_init(line) || stack_model(pmod)) {
+    if (lib_cmd_init() || stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -2369,11 +2476,17 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
     MODEL *pmod;
     PRN *prn;
 
-    sprintf(line, "arma %d %d ; %d%s", ar, ma, v, print_flags(opts, ARMA));
+    gretl_command_sprintf("arma %d %d ; %d%s", ar, ma, v, 
+			  print_flags(opts, ARMA));
 
-    if (check_model_cmd(line, NULL)) return;
+    if (check_model_cmd(NULL)) {
+	return;
+    }
 
+#if 0
+    /* why were we doing this?? */
     echo_cmd(&cmd, datainfo, line, 0, 1, 0, NULL);
+#endif
 
     if (bufopen(&prn)) return;
 
@@ -2406,7 +2519,7 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
 	return;
     }
 
-    if (cmd_init(line) || stack_model(pmod)) {
+    if (lib_cmd_init() || stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -2424,17 +2537,18 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
 
 /* ........................................................... */
 
-void do_simdata (GtkWidget *widget, dialog_t *ddata) 
+void do_simdata (GtkWidget *widget, dialog_t *dlg) 
 {
     const gchar *buf;
     int err, nulldata_n;
 
-    buf = dialog_data_get_text(ddata);
+    buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
 
-    clear_line();
-    sprintf(line, "nulldata %s", buf);
-    if (verify_and_record_command(line)) return;
+    gretl_command_sprintf("nulldata %s", buf);
+    if (check_and_record_command()) {
+	return;
+    }
 
     nulldata_n = atoi(cmd.param);
     if (nulldata_n < 2) {
@@ -2446,7 +2560,7 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
 	return;
     }
 
-    close_dialog(ddata);
+    close_dialog(dlg);
     
     err = open_nulldata(&Z, datainfo, data_status, nulldata_n, NULL);
     if (err) { 
@@ -2460,47 +2574,47 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
-void do_genr (GtkWidget *widget, dialog_t *ddata) 
+void do_genr (GtkWidget *widget, dialog_t *dlg) 
 {
-    const gchar *buf;
+    const gchar *buf = edit_dialog_get_text(dlg);
 
-    buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
 
-    clear_line();
-    sprintf(line, "genr %s", buf);
+    gretl_command_sprintf("genr %s", buf);
 
-    if (verify_and_record_command(line)) return;
+    if (check_and_record_command()) {
+	return;
+    }
 
-    finish_genr(NULL, ddata);
+    finish_genr(NULL, dlg);
 }
 
-void do_model_genr (GtkWidget *widget, dialog_t *ddata) 
+void do_model_genr (GtkWidget *widget, dialog_t *dlg) 
 {
     const gchar *buf;
-    windata_t *vwin = (windata_t *) dialog_data_get_data(ddata);
+    windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
     MODEL *pmod = vwin->data;
 
-    buf = dialog_data_get_text(ddata);
+    buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
 
-    clear_line();
-    sprintf(line, "genr %s", buf);
+    gretl_command_sprintf("genr %s", buf);
 
-    if (model_command_init(line, &cmd, pmod->ID)) return;
+    if (model_command_init(pmod->ID)) {
+	return;
+    }
 
-    finish_genr(pmod, ddata);
+    finish_genr(pmod, dlg);
 }
-/* ........................................................... */
 
-void do_random (GtkWidget *widget, dialog_t *ddata) 
+void do_random (GtkWidget *widget, dialog_t *dlg) 
 {
     const gchar *buf;
     char tmp[32], vname[VNAMELEN];
-    int action = dialog_data_get_action(ddata);
+    int action = edit_dialog_get_action(dlg);
     double f1, f2;
 
-    buf = dialog_data_get_text(ddata);
+    buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
 
     if (sscanf(buf, "%31s %lf %lf", tmp, &f1, &f2) != 3) {
@@ -2524,69 +2638,67 @@ void do_random (GtkWidget *widget, dialog_t *ddata)
     strncat(vname, tmp, 8);
     if (validate_varname(vname)) return;
 
-    clear_line();
-
     if (action == GENR_NORMAL) {
 	if (f1 != 0. || f2 != 1.) {
-	    sprintf(line, "genr %s = %g * normal() + %g", 
-		    vname, f2, f1);
+	    gretl_command_sprintf("genr %s = %g * normal() + %g", 
+				  vname, f2, f1);
 	} else {
-	    sprintf(line, "genr %s = normal()", vname); 
+	    gretl_command_sprintf("genr %s = normal()", vname); 
 	}
     } else if (action == GENR_UNIFORM) {
 	if (f1 != 0. || f2 != 1.) {
-	    sprintf(line, "genr %s = %g + (uniform() * %g)", 
-		    vname, f1, (f2 - f1));
+	    gretl_command_sprintf("genr %s = %g + (uniform() * %g)", 
+				  vname, f1, (f2 - f1));
 	} else {
-	    sprintf(line, "genr %s = uniform()", vname); 
+	    gretl_command_sprintf("genr %s = uniform()", vname); 
 	}
     }
 
-    if (verify_and_record_command(line)) return;
+    if (check_and_record_command()) {
+	return;
+    }
 
-    finish_genr(NULL, ddata);
+    finish_genr(NULL, dlg);
 }
 
-/* ........................................................... */
-
-void do_seed (GtkWidget *widget, dialog_t *ddata)
+void do_seed (GtkWidget *widget, dialog_t *dlg)
 {
     const gchar *buf;
     char tmp[32];
 
-    buf = dialog_data_get_text(ddata);
+    buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
 
     sscanf(buf, "%31s", tmp);
 	
-    clear_line();
-    sprintf(line, "set seed %s", tmp); 
-
-    if (verify_and_record_command(line)) return;
+    gretl_command_sprintf("set seed %s", tmp); 
+    if (check_and_record_command()) {
+	return;
+    }
 
     gretl_rand_set_seed(atoi(tmp));
 
-    close_dialog(ddata);
+    close_dialog(dlg);
 }
 
 /* ........................................................... */
 
-static int finish_genr (MODEL *pmod, dialog_t *ddata)
+static int finish_genr (MODEL *pmod, dialog_t *dlg)
 {
     int err = 0;
 
     if (pmod != NULL) {
-	err = generate(&Z, datainfo, line, pmod); 
+	err = generate(&Z, datainfo, cmdline, pmod); 
     } else {
-	err = generate(&Z, datainfo, line, reference_model());
+	err = generate(&Z, datainfo, cmdline, reference_model());
     }
 
     if (err) {
 	gui_errmsg(err);
 	delete_last_command();
     } else {
-	if (ddata != NULL) {
-	    close_dialog(ddata);
+	if (dlg != NULL) {
+	    close_dialog(dlg);
 	}
 	populate_varlist();
 	mark_dataset_as_modified();
@@ -2620,13 +2732,13 @@ static int real_do_setmiss (double missval, int varno)
     return count;
 }
 
-void do_global_setmiss (GtkWidget *widget, dialog_t *ddata)
+void do_global_setmiss (GtkWidget *widget, dialog_t *dlg)
 {
     const gchar *buf;
     double missval;
     int count, err;
 
-    buf = dialog_data_get_text(ddata);
+    buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
 
     if ((err = check_atof(buf))) {
@@ -2637,7 +2749,7 @@ void do_global_setmiss (GtkWidget *widget, dialog_t *ddata)
     missval = atof(buf);
     count = real_do_setmiss(missval, 0);
 
-    close_dialog(ddata);
+    close_dialog(dlg);
 
     if (count) {
 	sprintf(errtext, _("Set %d values to \"missing\""), count);
@@ -2648,17 +2760,17 @@ void do_global_setmiss (GtkWidget *widget, dialog_t *ddata)
     }	
 }
 
-void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
+void do_variable_setmiss (GtkWidget *widget, dialog_t *dlg)
 {
     const gchar *buf;
     double missval;
     int count, err;
 
-    buf = dialog_data_get_text(ddata);
+    buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
 
     if (!datainfo->vector[mdata->active_var]) {
-	close_dialog(ddata);
+	close_dialog(dlg);
 	errbox(_("This variable is a scalar"));
 	return;
     }
@@ -2671,7 +2783,7 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
     missval = atof(buf);
     count = real_do_setmiss(missval, mdata->active_var);
 
-    close_dialog(ddata);
+    close_dialog(dlg);
 
     if (count) {
 	sprintf(errtext, _("Set %d observations to \"missing\""), count);
@@ -2680,6 +2792,35 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
     } else {
 	errbox(_("Didn't find any matching observations"));
     }
+}
+
+int do_rename_variable (int v, const char *newname, int full)
+{
+    int err = 0;
+
+    gretl_command_sprintf("rename %d %s", v, newname);
+
+    if (full) {
+	err = check_and_record_command();
+    } else {
+	err = check_lib_command();
+    }
+
+    if (!err) {
+	strcpy(datainfo->varname[v], newname);
+    }
+
+    return err;
+}
+
+int record_varlabel_change (int v)
+{
+    gretl_command_sprintf("label %s -d \"%s\" -n \"%s\"", 
+			  datainfo->varname[v],
+			  VARLABEL(datainfo, v), 
+			  DISPLAYNAME(datainfo, v));
+
+    return check_and_record_command();
 }
 
 /* ........................................................... */
@@ -2732,12 +2873,13 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     }
     
     normal_test(pmod, freq);
-
     update_model_tests(vwin);
 
-    clear_line();
-    strcpy(line, "testuhat");
-    if (model_command_init(line, &cmd, pmod->ID)) return;
+    gretl_command_strcpy("testuhat");
+
+    if (model_command_init(pmod->ID)) {
+	return;
+    }
  
     print_freq(freq, prn);
 
@@ -2774,12 +2916,10 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
     gretlopt opt = (dist == GAMMA)? OPT_O : OPT_NONE;
     int v = mdata->active_var;
 
-    clear_line();
+    gretl_command_sprintf("freq %s%s", datainfo->varname[v],
+			  (dist == GAMMA)? " --gamma" : "");
 
-    sprintf(line, "freq %s%s", datainfo->varname[v],
-	    (dist == GAMMA)? " --gamma" : "");
-
-    if (verify_and_record_command(line)) {
+    if (check_and_record_command()) {
 	return;
     }
 
@@ -3033,11 +3173,9 @@ void do_corrgm (gpointer data, guint u, GtkWidget *widget)
 
     if (bufopen(&prn)) return;
 
-    clear_line();
-    sprintf(line, "corrgm %s %d", datainfo->varname[mdata->active_var], 
-	    order);
+    gretl_command_sprintf("corrgm %s %d", selected_varname(), order);
 
-    if (verify_and_record_command(line)) {
+    if (check_and_record_command()) {
 	gretl_print_destroy(prn);
 	return;
     }
@@ -3062,14 +3200,13 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 
     if (bufopen(&prn)) return;
 
-    clear_line();
     if (opt) {
-	sprintf(line, "pergm %s -o", datainfo->varname[mdata->active_var]);
+	gretl_command_sprintf("pergm %s --bartlett", selected_varname());
     } else {
-	sprintf(line, "pergm %s", datainfo->varname[mdata->active_var]);
+	gretl_command_sprintf("pergm %s", selected_varname());
     }
 
-    if (verify_and_record_command(line)) {
+    if (check_and_record_command()) {
 	gretl_print_destroy(prn);
 	return;
     }
@@ -3139,15 +3276,13 @@ void add_dummies (gpointer data, guint u, GtkWidget *widget)
 {
     gint err;
 
-    clear_line();
-
     if (u > 0) {
 	if (datainfo->structure == STACKED_TIME_SERIES ||
 	    datainfo->structure == STACKED_CROSS_SECTION) {
 	    if (u == 1) {
-		sprintf(line, "genr unitdum");
+		gretl_command_strcpy("genr unitdum");
 	    } else {
-		sprintf(line, "genr paneldum");
+		gretl_command_strcpy("genr paneldum");
 	    }
 	} else {
 	    errbox(_("Data set is not recognized as a panel.\n"
@@ -3155,10 +3290,12 @@ void add_dummies (gpointer data, guint u, GtkWidget *widget)
 	    return;
 	}
     } else {
-	sprintf(line, "genr dummy");
+	gretl_command_strcpy("genr dummy");
     }
 
-    if (verify_and_record_command(line)) return;
+    if (check_and_record_command()) {
+	return;
+    }
 
     if (u == 0) {
 	err = dummy(&Z, datainfo);
@@ -3179,10 +3316,11 @@ void add_dummies (gpointer data, guint u, GtkWidget *widget)
 
 void add_index (gpointer data, guint tm, GtkWidget *widget)
 {
-    clear_line();
-    strcpy(line, (tm)? "genr time" : "genr index");
+    gretl_command_strcpy((tm)? "genr time" : "genr index");
 
-    if (verify_and_record_command(line)) return;
+    if (check_and_record_command()) {
+	return;
+    }
 
     if (genrtime(&Z, datainfo, tm)) {
 	errbox((tm)? _("Error generating time trend") :
@@ -3198,7 +3336,7 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
     char *liststr, msg[80];
     int order = 0;
 
-    liststr = mdata_selection_to_string(0);
+    liststr = main_window_selection_as_string();
     if (liststr == NULL) {
 	return;
     }
@@ -3219,17 +3357,19 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 	}
 
 	if (order > 0) {
-	    sprintf(line, "lags %d;%s", order, liststr);
+	    gretl_command_sprintf("lags %d;%s", order, liststr);
 	} else {
-	    sprintf(line, "lags%s", liststr);
+	    gretl_command_sprintf("lags%s", liststr);
 	}
     } else {
-	sprintf(line, "%s%s", gretl_command_word(action), liststr);
+	gretl_command_sprintf("%s%s", gretl_command_word(action), liststr);
     }
 
     free(liststr);
 
-    if (verify_and_record_command(line)) return;
+    if (check_and_record_command()) {
+	return;
+    }
 
     if (action == LAGS) {
 	err = list_laggenr(order, cmd.list, &Z, datainfo);
@@ -3282,7 +3422,6 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
 
     if (!undo) {
 	int v = datainfo->v - 1;
-	char line[32];
 
 	/* give the user a chance to choose a different name */
 	varinfo_dialog(v, 0);
@@ -3296,16 +3435,16 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
 	populate_varlist();
 
 	if (code == 0) {
-	    sprintf(line, "genr %s = $uhat", datainfo->varname[v]);
+	    gretl_command_sprintf("genr %s = $uhat", datainfo->varname[v]);
 	} else if (code == 1) {
-	    sprintf(line, "genr %s = $yhat", datainfo->varname[v]);
+	    gretl_command_sprintf("genr %s = $yhat", datainfo->varname[v]);
 	} else if (code == 2) {
-	    sprintf(line, "genr %s = $uhat*$uhat", datainfo->varname[v]);
+	    gretl_command_sprintf("genr %s = $uhat*$uhat", datainfo->varname[v]);
 	} else if (code == 3) {
-	    sprintf(line, "genr %s = $h", datainfo->varname[v]);
+	    gretl_command_sprintf("genr %s = $h", datainfo->varname[v]);
 	}
 
-	model_command_init(line, &cmd, pmod->ID);
+	model_command_init(pmod->ID);
 
 	infobox(_("variable added"));
 	mark_dataset_as_modified();
@@ -3348,7 +3487,7 @@ int add_var_resid (GRETL_VAR *var, int eqnum)
 
 void add_model_stat (MODEL *pmod, int which)
 {
-    char vname[VNAMELEN], vlabel[MAXLABEL], cmdstr[MAXLEN];
+    char vname[VNAMELEN], vlabel[MAXLABEL];
     char statname[8];
     int i, n;
 
@@ -3429,10 +3568,10 @@ void add_model_stat (MODEL *pmod, int which)
 	return;
     }
 
-    sprintf(cmdstr, "genr %s = %s", datainfo->varname[i], statname);
+    gretl_command_sprintf("genr %s = %s", datainfo->varname[i], statname);
 
     populate_varlist();
-    model_command_init(cmdstr, &cmd, pmod->ID);
+    model_command_init(pmod->ID);
     infobox(_("variable added"));
 
     /* note: since this is a scalar, which will not be saved by
@@ -3665,6 +3804,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 void display_selected (gpointer data, guint action, GtkWidget *widget)
 {
     char *liststr; 
+    char line[MAXLINE];
     PRN *prn;
     int ig = 0;
     CMD prcmd;
@@ -3682,12 +3822,14 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
-    liststr = mdata_selection_to_string(0);
-    if (liststr == NULL) return;
+    liststr = main_window_selection_as_string();
+    if (liststr == NULL) {
+	return;
+    }
 
-    clear_line();
     sprintf(line, "print%s", liststr);
     free(liststr);
+
     getcmd(line, datainfo, &prcmd, &ig, &Z, NULL);
     if (prcmd.errcode) {
 	gui_errmsg(prcmd.errcode);
@@ -3811,7 +3953,7 @@ void delete_selected_vars (int id)
 	}
     } else {
 	/* delete list of vars */
-	liststr = mdata_selection_to_string(0);
+	liststr = main_window_selection_as_string();
 	if (liststr == NULL) {
 	    return;
 	}
@@ -3827,16 +3969,17 @@ void delete_selected_vars (int id)
     }
 
     g_free(msg);
-    clear_line();
 
     if (id > 0) {
-	sprintf(line, "delete %d", id);
+	gretl_command_sprintf("delete %d", id);
     } else {
-	sprintf(line, "delete%s", liststr);
+	gretl_command_sprintf("delete%s", liststr);
 	free(liststr);  
     } 
 
-    if (verify_and_record_command(line)) return;
+    if (check_and_record_command()) {
+	return;
+    }
 
     if (id == 0) {
 	pruned = maybe_prune_delete_list(cmd.list);
@@ -3876,9 +4019,9 @@ void do_graph_var (int varnum)
 	return;
     }
 
-    clear_line();
-    sprintf(line, "gnuplot %s time", datainfo->varname[varnum]);
-    if (verify_and_record_command(line)) {
+    gretl_command_sprintf("gnuplot %s time", datainfo->varname[varnum]);
+
+    if (check_and_record_command()) {
 	return;
     }
 
@@ -3897,26 +4040,31 @@ void ts_plot_var (gpointer data, guint opt, GtkWidget *widget)
 void do_boxplot_var (int varnum)
 {
     if (varnum < 0) return;
-    clear_line();
-    sprintf(line, "boxplot %s", datainfo->varname[varnum]);
-    if (verify_and_record_command(line)) return;
 
-    if (boxplots(cmd.list, NULL, &Z, datainfo, 0)) 
+    gretl_command_sprintf("boxplot %s", datainfo->varname[varnum]);
+
+    if (check_and_record_command()) {
+	return;
+    }
+
+    if (boxplots(cmd.list, NULL, &Z, datainfo, 0)) {
 	errbox (_("boxplot command failed"));
+    }
 }
 
 void do_scatters (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
-    const char *buf;
-    gint err; 
+    const char *buf = selector_list(sr);
+    int err; 
 
-    buf = selector_list(sr);
-    if (*buf == 0) return;
+    if (buf == NULL) return;
 
-    clear_line();
-    sprintf(line, "scatters %s", buf);
-    if (verify_and_record_command(line)) return;
+    gretl_command_sprintf("scatters %s", buf);
+
+    if (check_and_record_command()) {
+	return;
+    }
 
     err = multi_scatters(cmd.list, atoi(cmd.param), &Z, 
 			 datainfo, NULL, 0);
@@ -3930,28 +4078,30 @@ void do_scatters (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
-void do_box_graph (GtkWidget *widget, dialog_t *ddata)
+void do_box_graph (GtkWidget *widget, dialog_t *dlg)
 {
-    const gchar *buf;
-    gint err, action = dialog_data_get_action(ddata);
+    int action = edit_dialog_get_action(dlg);
+    const char *buf = edit_dialog_get_text(dlg);
+    int err;
 
-    buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
 
     if (strchr(buf, '(')) {
 	err = boolean_boxplots(buf, &Z, datainfo, (action == GR_NBOX));
     } else {
-	clear_line();
-	sprintf(line, "boxplot %s%s", (action == GR_NBOX)? "-o " : "", buf);
+	gretl_command_sprintf("boxplot %s%s", 
+			      (action == GR_NBOX)? "--notches " : "", buf);
 
-	if (verify_and_record_command(line)) return;
+	if (check_and_record_command()) {
+	    return;
+	}
 	err = boxplots(cmd.list, NULL, &Z, datainfo, (action == GR_NBOX));
     }
 
     if (err) {
 	errbox(_("boxplot command failed"));
     } else {
-	close_dialog(ddata);
+	close_dialog(dlg);
     }
 }
 
@@ -3960,16 +4110,16 @@ void do_box_graph (GtkWidget *widget, dialog_t *ddata)
 void do_dummy_graph (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
-    const char *buf;
+    const char *buf = selector_list(sr);
     gint err, lines[1] = {0}; 
 
-    buf = selector_list(sr);
-    if (*buf == 0) return;
+    if (buf == NULL) return;
 
-    clear_line();
-    sprintf(line, "gnuplot -z %s", buf);
+    gretl_command_sprintf("gnuplot %s --dummy", buf);
 
-    if (verify_and_record_command(line)) return;
+    if (check_and_record_command()) {
+	return;
+    }
 
     if (cmd.list[0] != 3 || 
 	!gretl_isdummy(datainfo->t1, datainfo->t2, Z[cmd.list[3]])) {
@@ -3991,28 +4141,35 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
 void do_graph_from_selector (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
-    const char *buf;
+    const char *buf = selector_list(sr);
     gint i, err, *lines = NULL;
     gint imp = (selector_code(sr) == GR_IMP);
 
-    buf = selector_list(sr);
-    if (*buf == '\0') return;
+    if (buf == NULL) return;
 
-    clear_line();
-    sprintf(line, "gnuplot %s%s", buf, (imp)? " -m" : "");
+    gretl_command_sprintf("gnuplot %s%s", buf, 
+			 (imp)? " --with-impulses" : "");
 
     if (selector_code(sr) == GR_PLOT) { 
-        strcat(line, " time");
+        gretl_command_strcat(" time");
     }
 
-    if (verify_and_record_command(line)) return;
+    if (check_and_record_command()) {
+	return;
+    }
 
-    lines = mymalloc((cmd.list[0] - 1) * sizeof *lines);
-    if (lines == NULL) return;
-
-    for (i=0; i<cmd.list[0]-1 ; i++) {
-        if (selector_code(sr) == GR_PLOT) lines[i] = 1;
-        else lines[i] = 0;
+    if (!imp) {
+	lines = mymalloc((cmd.list[0] - 1) * sizeof *lines);
+	if (lines == NULL) {
+	    return;
+	}
+	for (i=0; i<cmd.list[0]-1 ; i++) {
+	    if (selector_code(sr) == GR_PLOT) {
+		lines[i] = 1;
+	    } else {
+		lines[i] = 0;
+	    }
+	}
     }
 
     if (imp) {
@@ -4025,7 +4182,9 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
 
     gui_graph_handler(err);
 
-    free(lines);
+    if (lines != NULL) {
+	free(lines);
+    }
 }
 
 /* ........................................................... */
@@ -4105,17 +4264,15 @@ static int get_terminal (char *s)
 
 void do_splot_from_selector (GtkWidget *widget, gpointer p)
 {
+    char line[MAXLINE];
     selector *sr = (selector *) p;
-    const char *buf;
-    gint err;
+    const char *buf = selector_list(sr);
+    int err;
 
-    buf = selector_list(sr);
-    if (*buf == '\0') return;
+    if (buf == NULL) return;
 
-    clear_line();
     sprintf(line, "gnuplot %s", buf);
-
-    if (check_cmd(line) || cmd.list[0] != 3) {
+    if (check_specific_command(line) || cmd.list[0] != 3) {
 	return;
     }
 
@@ -4133,46 +4290,6 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
-static int *str_to_list (const char *liststr)
-{
-    const char *s = liststr;
-    char numstr[8];
-    int *list;
-    int n = 0;
-
-    while (*s) {
-	while (*s == ' ') s++;
-	if (sscanf(s, "%7s", numstr)) {
-	    n++;
-	    s += strlen(numstr);
-	}
-    }
-
-    if (n == 0) {
-	return NULL;
-    }
-
-    list = malloc((n + 1) * sizeof *list);
-    if (list == NULL) {
-	return NULL;
-    }
-
-    list[0] = n;
-
-    s = liststr;
-    n = 1;
-    while (*s) {
-	while (*s == ' ') s++;
-	if (sscanf(s, "%7s", numstr)) {
-	    list[n++] = atoi(numstr);
-	    s += strlen(numstr);
-
-	}
-    }    
-
-    return list;
-}
-
 static int list_position (int v, const int *list)
 {
     int i;
@@ -4187,7 +4304,7 @@ static int list_position (int v, const int *list)
 static int maybe_reorder_list (char *liststr)
 {
     const char *query = _("X-axis variable");
-    int *list = str_to_list(liststr);
+    int *list = gretl_list_from_string(liststr);
 
     if (list == NULL) {
 	return 1;
@@ -4225,7 +4342,7 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
     char *liststr;
     gint i, err, *lines = NULL;
 
-    liststr = mdata_selection_to_string(0);
+    liststr = main_window_selection_as_string();
     if (liststr == NULL || *liststr == 0) {
 	return;
     }
@@ -4235,11 +4352,11 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
 	if (err) return;
     }
 
-    clear_line();
-    sprintf(line, "gnuplot%s%s", liststr, (action == GR_PLOT)? " time" : "");
+    gretl_command_sprintf("gnuplot%s%s", liststr, 
+			  (action == GR_PLOT)? " time" : "");
     free(liststr);
 
-    if (verify_and_record_command(line)) {
+    if (check_and_record_command()) {
 	return;
     }
 
@@ -4342,8 +4459,8 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
     if (code == SCRIPT_EXEC) {
 	runfile = scriptfile;
-	sprintf(line, "run %s", scriptfile);
-	verify_and_record_command(line);
+	gretl_command_sprintf("run %s", scriptfile);
+	check_and_record_command();
     } else if (code == SESSION_EXEC) {
 	runfile = cmdfile;
     }
@@ -4365,7 +4482,9 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	if (buf == NULL || *buf == '\0') {
 	    errbox("No commands to execute");
 	    gretl_print_destroy(prn);
-	    if (buf) g_free(buf);
+	    if (buf != NULL) {
+		g_free(buf);
+	    }
 	    return;
 	}
 
@@ -4443,12 +4562,16 @@ void do_open_script (void)
 
 void do_new_script (gpointer data, guint loop, GtkWidget *widget) 
 {
-    PRN *prn;
     char fname[MAXLEN];
+    PRN *prn;
 
-    if (!user_fopen("script_tmp", fname, &prn)) return;
+    if (!user_fopen("script_tmp", fname, &prn)) {
+	return;
+    }
 
-    if (loop) pprintf(prn, "loop 1000\n\nendloop\n");
+    if (loop) {
+	pprintf(prn, "loop 1000\n\nendloop\n");
+    }
 
     gretl_print_destroy(prn);
     strcpy(scriptfile, fname);
@@ -4503,23 +4626,6 @@ void do_open_csv_box (char *fname, int code, int append)
 	strcpy(paths.datfile, fname);
 	register_data(fname, NULL, 1);
     }
-}
-
-/* ........................................................... */
-
-static int dat_suffix (const char *fname)
-{
-    size_t len;
-
-    if (fname == NULL || (len = strlen(fname)) < 5) {
-	return 0;
-    }
-
-    if (strncmp(fname + len - 4, ".dat", 4) == 0) {
-	return 1;
-    }
-    
-    return 0;
 }
 
 /* ........................................................... */
@@ -4635,7 +4741,7 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
 
 	tmp = g_strdup_printf("store '%s' %s%s", savename, 
 			      (showlist)? storelist : "", flagstr);
-    } else if (dat_suffix(savename)) { 
+    } else if (has_suffix(savename, ".dat")) { 
 	/* saving in "tradtional" mode as ".dat" */
 	tmp = g_strdup_printf("store '%s' %s -t", savename, 
 			      (showlist)? storelist : "");
@@ -4659,7 +4765,7 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
 	}
     }
 
-    err = check_cmd(tmp);
+    err = check_specific_command(tmp);
     if (err) goto store_get_out;
 
     err = cmd_init(tmp);
@@ -5022,6 +5128,7 @@ int execute_script (const char *runfile, const char *buf,
 		    PRN *prn, int exec_code)
 {
     FILE *fb = NULL;
+    char line[MAXLEN];
     char tmp[MAXLINE];
     int loopstack = 0, looprun = 0;
     int exec_err = 0;
@@ -5050,17 +5157,6 @@ int execute_script (const char *runfile, const char *buf,
     if (exec_code == SESSION_EXEC || exec_code == REBUILD_EXEC ||
 	exec_code == SAVE_SESSION_EXEC) 
 	reset_model_count();
-
-#if 0
-    /* Put the action of running this script into the command log? */
-    if (exec_code == SCRIPT_EXEC && runfile != NULL) {
-	char runcmd[MAXLEN];
-
-	sprintf(runcmd, "run %s", runfile);
-	check_cmd(runcmd);
-	cmd_init(runcmd);
-    }
-#endif
 
     gui_script_logo(prn);
 
@@ -5100,12 +5196,11 @@ int execute_script (const char *runfile, const char *buf,
 		*tmp = '\0';
 
 		if (gretl_executing_function()) {
-		    gretl_function_get_line(tmp, MAXLINE - 1, 
-					    &Z, datainfo);
+		    gretl_function_get_line(tmp, MAXLINE, &Z, datainfo);
 		} else if (fb != NULL) {
-		    fgets(tmp, MAXLINE - 1, fb);
+		    fgets(tmp, MAXLINE, fb);
 		} else {
-		    bufgets(tmp, MAXLINE - 1, buf); 
+		    bufgets(tmp, MAXLINE, buf); 
 		}
 
 		if (*tmp != '\0') {
@@ -5220,10 +5315,17 @@ static unsigned char gp_flags (int batch, gretlopt opt)
 {
     unsigned char flags = 0;
 
-    if (batch) flags |= GP_BATCH;
-    if (opt & OPT_M) flags |= GP_IMPULSES;
-    else if (opt & OPT_Z) flags |= GP_DUMMY;
-    else if (opt & OPT_S) flags |= GP_OLS_OMIT;
+    if (batch) {
+	flags |= GP_BATCH;
+    }
+
+    if (opt & OPT_M) {
+	flags |= GP_IMPULSES;
+    } else if (opt & OPT_Z) {
+	flags |= GP_DUMMY;
+    } else if (opt & OPT_S) {
+	flags |= GP_OLS_OMIT;
+    }
 
     return flags;
 }
@@ -5372,13 +5474,10 @@ int gui_exec_line (char *line,
 	return 0;
     } 
 
-    /* if rebuilding a session, add tests back to models */
+    /* if rebuilding a session, add tests back to models, 
+       also put the commands onto the stack */
     if (rebuild) {
 	testopt |= OPT_S;
-    }
-
-    /* if rebuilding a session, put the commands onto the stack */
-    if (rebuild) {
 	cmd_init(line);
     }
 

@@ -77,7 +77,6 @@ extern int orig_vars;
 
 /* global state variables */
 extern int data_status;
-extern char line[MAXLINE];
 extern char *storelist;
 extern float gui_scale;
 

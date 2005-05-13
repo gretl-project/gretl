@@ -47,17 +47,17 @@ void set_replay_on (void);
 
 void set_replay_off (void);
 
-const int *get_cmd_list (void);
+int gretl_command_sprintf (const char *template, ...);
+
+int gretl_command_strcpy (const char *s);
+
+int *command_list_from_string (char *s);
 
 char *user_fopen (const char *fname, char *fullname, PRN **pprn);
 
 gint bufopen (PRN **pprn);
 
 PRN *bufopen_with_size (size_t sz);
-
-gint check_cmd (char *line);
- 
-gint cmd_init (char *line);
 
 void do_menu_op (gpointer data, guint action, GtkWidget *widget);
 
@@ -77,7 +77,9 @@ void exit_free_modelspec (void);
 
 int bool_subsample (gretlopt opt);
 
-void do_samplebool (GtkWidget *widget, dialog_t *ddata);
+void do_samplebool (GtkWidget *widget, dialog_t *dlg);
+
+int do_set_sample (void);
 
 void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
 
@@ -119,9 +121,9 @@ void unit_root_test (gpointer data, guint u, GtkWidget *widget);
 
 void do_arch (gpointer data, guint u, GtkWidget *widget);
 
-void do_restrict (GtkWidget *widget, dialog_t *ddata);
+void do_restrict (GtkWidget *widget, dialog_t *dlg);
 
-void do_nls_model (GtkWidget *widget, dialog_t *ddata);
+void do_nls_model (GtkWidget *widget, dialog_t *dlg);
 
 void do_model (GtkWidget *widget, gpointer p);
 
@@ -147,21 +149,25 @@ void do_mp_ols (GtkWidget *widget, gpointer p);
 
 /* variable-related functions */
 
-void do_simdata (GtkWidget *widget, dialog_t *ddata);
+void do_simdata (GtkWidget *widget, dialog_t *dlg);
 
-void do_genr (GtkWidget *widget, dialog_t *ddata);
+void do_genr (GtkWidget *widget, dialog_t *dlg);
 
-void do_model_genr (GtkWidget *widget, dialog_t *ddata);
+void do_model_genr (GtkWidget *widget, dialog_t *dlg);
 
-void do_random (GtkWidget *widget, dialog_t *ddata);
+void do_random (GtkWidget *widget, dialog_t *dlg);
 
-void do_seed (GtkWidget *widget, dialog_t *ddata);
+void do_seed (GtkWidget *widget, dialog_t *dlg);
 
-void do_global_setmiss (GtkWidget *widget, dialog_t *ddata);
+void do_global_setmiss (GtkWidget *widget, dialog_t *dlg);
 
-void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata);
+void do_variable_setmiss (GtkWidget *widget, dialog_t *dlg);
 
-void do_edit_label (GtkWidget *widget, dialog_t *ddata);
+void do_edit_label (GtkWidget *widget, dialog_t *dlg);
+
+int do_rename_variable (int v, const char *newname, int full);
+
+int record_varlabel_change (int v);
 
 void do_resid_freq (gpointer data, guint action, GtkWidget *widget);
 
@@ -217,7 +223,7 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p);
 
 void plot_from_selection (gpointer data, guint action, GtkWidget *widget);
 
-void do_box_graph (GtkWidget *widget, dialog_t *ddata);
+void do_box_graph (GtkWidget *widget, dialog_t *dlg);
 
 void do_dummy_graph (GtkWidget *widget, gpointer p);
 
@@ -253,13 +259,15 @@ int gui_exec_line (char *line,
 		   PRN *prn, int exec_code, 
 		   const char *myname); 
 
-int verify_and_record_command (char *line);
+int check_and_record_command (void);
 
 /* other */
 
 int latex_compile (char *texshort);
 
 void add_mahalanobis_data (windata_t *vwin);
+
+void add_pca_data (windata_t *vwin);
 
 #endif /* LIBRARY_H */
 

@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "cmdstack.h"
+#include "lib_private.h"
 
 #undef CMD_DEBUG
 
@@ -163,21 +164,26 @@ static model_stack *mstack_from_model_id (int ID)
    they may be reconstructed later as part of the session mechanism
 */
 
-int model_command_init (char *line, CMD *cmd, int ID)
+int model_command_init (int model_ID)
 {
+    char *line;
+    CMD *libcmd;
     model_stack *mstack;
     PRN *echo;
     int err = 0;
 
+    line = get_lib_cmdline();
+    libcmd = get_lib_cmd();
+
     /* pre-process the line */
-    if (check_cmd(line)) {
+    if (check_specific_command(line)) {
 	return 1;
     }
 
-    mstack = mstack_from_model_id(ID);
+    mstack = mstack_from_model_id(model_ID);
 
     if (mstack == NULL) {
-	mstack = add_model_stack(ID);
+	mstack = add_model_stack(model_ID);
 	if (mstack == NULL) {
 	    return 1;
 	}
@@ -187,7 +193,7 @@ int model_command_init (char *line, CMD *cmd, int ID)
 	return 1;
     }
 
-    echo_cmd(cmd, datainfo, line, 0, 1, 0, echo);
+    echo_cmd(libcmd, datainfo, line, 0, 1, 0, echo);
 
     if (add_command_to_mstack(mstack, echo->buf)) {
 	err = 1;

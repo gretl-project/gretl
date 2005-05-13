@@ -2273,11 +2273,11 @@ static int validate_dir (const char *dirname)
     return err;
 }
 
-static void real_set_userdir (GtkWidget *widget, dialog_t *ddata)
+static void real_set_userdir (GtkWidget *widget, dialog_t *dlg)
 {
     const gchar *dirname;
 
-    dirname = dialog_data_get_text(ddata);
+    dirname = edit_dialog_get_text(dlg);
 
     if (validate_dir(dirname)) {
 	return;
@@ -2286,7 +2286,7 @@ static void real_set_userdir (GtkWidget *widget, dialog_t *ddata)
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
 	set_tramo_x12a_dirs();
 #endif
-	close_dialog(ddata);
+	close_dialog(dlg);
     }
 }
 
