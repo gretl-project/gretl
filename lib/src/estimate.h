@@ -34,10 +34,10 @@ double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL lad (int *list, double ***pZ, DATAINFO *pdinfo); 
 
 MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, 
-	    PRN *prn);
+	    gretlopt opt, PRN *prn);
 
 MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, 
-		PRN *prn, const PATHS *ppaths);
+		const PATHS *ppaths, gretlopt opt, PRN *prn);
 
 MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
 		      const char *param);

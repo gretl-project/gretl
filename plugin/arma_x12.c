@@ -740,20 +740,24 @@ static int check_arma_list (const int *list)
     return err;
 }
 
-MODEL arma_x12_model (int *list, const double **Z, 
-		      const DATAINFO *pdinfo, PRN *prn, 
+MODEL arma_x12_model (int *list, const double **Z, const DATAINFO *pdinfo, 
 		      const char *prog, const char *workdir,
-		      int gui)
+		      gretlopt opt, int gui, PRN *prn)
 {
     int err = 0;
     int verbose = (prn != NULL);
     char varname[VNAMELEN], path[MAXLEN];
+    PRN *aprn = NULL;
 #ifndef GLIB2
     char cmd[MAXLEN];
 #endif
     int v, p, q;
     int t1, t2;
     MODEL armod;
+
+    if (opt & OPT_V) {
+	aprn = prn;
+    }
 
     gretl_model_init(&armod);  
     gretl_model_smpl_init(&armod, pdinfo);
@@ -811,7 +815,7 @@ MODEL arma_x12_model (int *list, const double **Z,
 	armod.t2 = t2;
 	populate_arma_model(&armod, list, path, y, pdinfo, p + q + 1);
 	if (verbose && !armod.errcode) {
-	    print_iterations(path, prn);
+	    print_iterations(path, aprn);
 	}
 	if (!armod.errcode && gui) {
 	    add_unique_output_file(&armod, path);

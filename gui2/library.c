@@ -2269,6 +2269,22 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg)
 
 /* ........................................................... */
 
+static void arma_maybe_suppress_const (void)
+{
+    int i, got0 = 0;
+
+    for (i=4; i<=cmd.list[0]; i++) {
+	if (cmd.list[i] == 0) {
+	    got0 = 1;
+	    break;
+	}
+    }
+
+    if (!got0) {
+	cmd.opt |= OPT_S;
+    }
+}
+
 void do_model (GtkWidget *widget, gpointer p) 
 {
     selector *sr = (selector *) p; 
@@ -2405,8 +2421,9 @@ void do_model (GtkWidget *widget, gpointer p)
 	break;
 
     case ARMA:
+	arma_maybe_suppress_const();
 	*pmod = arma(cmd.list, (const double **) Z, datainfo, 
-		     (cmd.opt & OPT_V)? prn : NULL); 
+		     cmd.opt, prn); 
 	err = model_output(pmod, prn);
 	break;
 
@@ -2499,14 +2516,14 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
 #ifdef HAVE_X12A
     if (opts & OPT_X) {
 	*pmod = arma_x12(cmd.list, (const double **) Z, datainfo,
-			 ((opts & OPT_V)? prn : NULL), &paths); 
+			 &paths, cmd.opt, prn);
     } else {
 	*pmod = arma(cmd.list, (const double **) Z, datainfo,
-		     (opts & OPT_V)? prn : NULL); 
+		     cmd.opt, prn); 
     }
 #else
     *pmod = arma(cmd.list, (const double **) Z, datainfo,
-		 (opts & OPT_V)? prn : NULL); 
+		 cmd.opt, prn); 
 #endif
     err = model_output(pmod, prn);
 
@@ -5626,14 +5643,14 @@ int gui_exec_line (char *line,
 #ifdef HAVE_X12A
 	if (cmd.opt & OPT_X) {
 	    *models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
-				  ((cmd.opt & OPT_V) ? outprn : NULL), &paths); 
+				  &paths, cmd.opt, prn);
 	} else {
 	    *models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			      (cmd.opt & OPT_V)? outprn : NULL);
+			      cmd.opt, outprn);
 	}
 #else
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			  (cmd.opt & OPT_V)? outprn : NULL);
+			  cmd.opt, (cmd.opt & OPT_V)? outprn : NULL);
 #endif
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 

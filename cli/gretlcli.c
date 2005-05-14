@@ -910,14 +910,14 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 #ifdef HAVE_X12A
 	if (cmd.opt & OPT_X) {
 	    *models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
-				  ((cmd.opt & OPT_V) ? prn : NULL), &paths); 
+				  &paths, cmd.opt, prn);
 	} else {
 	    *models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			      (cmd.opt & OPT_V)? prn : NULL);
+			      cmd.opt, prn);
 	}
 #else
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			  (cmd.opt & OPT_V)? prn : NULL);
+			  cmd.opt, prn);
 #endif
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 

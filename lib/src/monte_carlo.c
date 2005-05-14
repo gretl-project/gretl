@@ -2561,7 +2561,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		    *models[0] = hsk_func(cmd.list, pZ, *ppdinfo);
 		} else if (cmd.ci == ARMA) {
 		    *models[0] = arma(cmd.list, (const double **) *pZ, *ppdinfo, 
-				      (cmd.opt & OPT_V)? prn : NULL);
+				      cmd.opt, prn);
 		} else if (cmd.ci == GARCH) {
 		    *models[0] = garch(cmd.list, pZ, *ppdinfo, cmd.opt, prn);
 		} else if (cmd.ci == CORC || cmd.ci == HILU || cmd.ci == PWE) {

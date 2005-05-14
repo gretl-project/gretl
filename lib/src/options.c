@@ -53,6 +53,7 @@ struct gretl_option gretl_opts[] = {
     { ADF,      OPT_V, "verbose" },
     { ADF,      OPT_Q, "quiet" },
     { ARMA,     OPT_N, "native" },
+    { ARMA,     OPT_S, "suppress-const" },    
     { ARMA,     OPT_V, "verbose" },
     { ARMA,     OPT_X, "x-12-arima" },
     { BXPLOT,   OPT_O, "notches" },

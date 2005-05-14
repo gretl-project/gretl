@@ -3643,6 +3643,7 @@ MODEL lad (int *list, double ***pZ, DATAINFO *pdinfo)
  * @list: dependent variable plus AR and MA orders
  * @Z: data array.
  * @pdinfo: information on the data set.
+ * @opt: options: may include OPT_S to suppress intercept.
  * @PRN: for printing details of iterations (or NULL) 
  *
  * Calculate ARMA estimates.
@@ -3650,11 +3651,12 @@ MODEL lad (int *list, double ***pZ, DATAINFO *pdinfo)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
+MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, 
+	    gretlopt opt, PRN *prn)
 {
     MODEL armod;
     void *handle;
-    MODEL (*arma_model) (int *, const double **, DATAINFO *, PRN *);
+    MODEL (*arma_model) (int *, const double **, DATAINFO *, gretlopt, PRN *);
 
     *gretl_errmsg = '\0';
 
@@ -3666,7 +3668,7 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 	return armod;
     }
 
-    armod = (*arma_model) (list, Z, pdinfo, prn);
+    armod = (*arma_model) (list, Z, pdinfo, opt, prn);
 
     close_plugin(handle);
 
@@ -3682,21 +3684,23 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
  * @list: dependent variable plus AR and MA orders
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
+ * @ppaths: gretl path info struct (so we can find X-12-ARIMA).
+ * @opt: may include OPT_V for verbose results.
  * @PRN: for printing details of iterations (or NULL).
- * @ppaths: gretl path info struct (so we can find X-12-ARIMA)
  *
  * Calculate ARMA estimates, via a call to X-12-ARIMA.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
-		const PATHS *ppaths)
+MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, 
+		const PATHS *ppaths, gretlopt opt, PRN *prn)
 {
     MODEL armod;
     void *handle;
-    MODEL (*arma_x12_model) (int *, const double **, DATAINFO *, PRN *, 
-			     const char *, const char *, int);
+    MODEL (*arma_x12_model) (int *, const double **, DATAINFO *, 
+			     const char *, const char *,
+			     gretlopt, int, PRN *);
     int gui = gretl_in_gui_mode();
 
     *gretl_errmsg = '\0';
@@ -3708,8 +3712,8 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
 	return armod;
     }
 
-    armod = (*arma_x12_model) (list, Z, pdinfo, prn, ppaths->x12a, 
-			       ppaths->x12adir, gui);
+    armod = (*arma_x12_model) (list, Z, pdinfo, ppaths->x12a, 
+			       ppaths->x12adir, opt, gui, prn);
 
     close_plugin(handle);
 

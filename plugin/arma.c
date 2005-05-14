@@ -441,7 +441,8 @@ static int remove_const (int *list)
     return ret;
 }
 
-static int check_arma_list (int *list, struct arma_info *ainfo)
+static int 
+check_arma_list (int *list, gretlopt opt, struct arma_info *ainfo)
 {
     int err = 0;
 
@@ -455,13 +456,20 @@ static int check_arma_list (int *list, struct arma_info *ainfo)
 	err = 1;
     }
 
-    /* signal for adding a constant to the regression list, unless it
-       is deliberately omitted, in an ARMAX model 
+    /* If there's an explicit constant in the list here, we'll remove
+       it, since it is added implicitly later.  But if we're supplied
+       with OPT_S (suppress intercept) we'll flag this by setting 
+       ifc = 0.
     */
-    if (list[0] == 4 || remove_const(list)) {
-	ainfo->ifc = 1;
-    } else {
+
+    if (list[0] > 4) {
+	remove_const(list);
+    }
+
+    if (opt & OPT_S) {
 	ainfo->ifc = 0;
+    } else {
+	ainfo->ifc = 1;
     }
 
     if (err) {
@@ -697,20 +705,25 @@ set_up_arma_model_info (struct arma_info *ainfo)
 }
 
 MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo, 
-		  PRN *prn)
+		  gretlopt opt, PRN *prn)
 {
     int nc, yno;
     double *coeff = NULL;
     const double **X = NULL;
+    PRN *aprn = NULL;
     MODEL armod;
     model_info *arma;
     struct arma_info ainfo;
     int err = 0;
 
+    if (opt & OPT_V) {
+	aprn = prn;
+    } 
+
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
 
-    if (check_arma_list(list, &ainfo)) {
+    if (check_arma_list(list, opt, &ainfo)) {
 	armod.errcode = E_UNSPEC;
 	return armod;
     }
@@ -766,7 +779,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     }
 
     /* call BHHH conditional ML function (OPG regression) */
-    err = bhhh_max(arma_ll, X, coeff, arma, prn);
+    err = bhhh_max(arma_ll, X, coeff, arma, aprn);
 
     if (err) {
 	fprintf(stderr, "arma: bhhh_max returned %d\n", err);
