@@ -1587,7 +1587,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
         setlocale(LC_NUMERIC, "C");
 #endif
 	/* plot with 95% confidence bands, if not batch mode */
-	if (prn->fp == NULL && gnuplot_init(PLOT_CUSUM, &fq) == 0) {
+	if (!gretl_in_batch_mode() &&
+	    gnuplot_init(PLOT_CUSUM, &fq) == 0) {
 	    fputs("# CUSUM test\n", fq);
 	    fprintf(fq, "set xlabel \"%s\"\n", I_("Observation"));
 	    fputs("set xzeroaxis\n", fq);
@@ -2050,7 +2051,7 @@ int sum_test (const int *sumvars, MODEL *pmod,
 	return E_ALLOC;
     }
 
-    nullprn = gretl_print_new(GRETL_PRINT_NULL, NULL);
+    nullprn = gretl_print_new(GRETL_PRINT_NULL);
 
     testcoeff = make_sum_test_list(pmod, *pZ, pdinfo, tmplist, sumvars, oldv);
 

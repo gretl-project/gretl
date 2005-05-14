@@ -51,20 +51,6 @@ static void gretl_clipboard_free (void)
     clipboard_buf = NULL;
 }
 
-static int copy_to_clipboard_buf (const char *buf)
-{
-    size_t len = strlen(buf);
-
-    clipboard_buf = mymalloc(len + 1);
-    if (clipboard_buf == NULL) {
-	return 1;
-    }
-
-    memcpy(clipboard_buf, buf, len + 1);
-
-    return 0;
-}
-
 int buf_to_clipboard (const char *buf)
 {
     int err = 0;
@@ -74,10 +60,10 @@ int buf_to_clipboard (const char *buf)
     }
 
     gretl_clipboard_free();
-
-    err = copy_to_clipboard_buf(buf);
-
-    if (!err) {
+    clipboard_buf = gretl_strdup(buf);
+    if (clipboard_buf == NULL) {
+	err = 1;
+    } else {
 	gretl_clipboard_set(COPY_TEXT);
     }
 
@@ -251,9 +237,10 @@ static void gretl_clipboard_set (int copycode)
 
 int prn_to_clipboard (PRN *prn, int copycode)
 {
+    const char *buf = gretl_print_get_buffer(prn);
     int err = 0;
 
-    if (prn->buf == NULL || *prn->buf == '\0') {
+    if (buf == NULL || *buf == '\0') {
 	return 0;
     }
 
@@ -261,12 +248,13 @@ int prn_to_clipboard (PRN *prn, int copycode)
 
     if (copycode == COPY_TEXT || copycode == COPY_TEXT_AS_RTF) { 
 	/* need to convert from utf8 */
-	gchar *trbuf = my_locale_from_utf8(prn->buf);
+	gchar *trbuf = my_locale_from_utf8(buf);
 
 	if (trbuf == NULL) {
 	    err = 1;
 	} else if (copycode == COPY_TEXT) {
-	    err = copy_to_clipboard_buf(trbuf);
+	    clipboard_buf = gretl_strdup(trbuf);
+	    err = (clipboard_buf == NULL);
 	    g_free(trbuf);
 	} else if (copycode == COPY_TEXT_AS_RTF) {
 	    clipboard_buf = dosify_buffer(trbuf, copycode);
@@ -277,7 +265,8 @@ int prn_to_clipboard (PRN *prn, int copycode)
 	}
     } else { 
 	/* copying TeX, RTF or CSV */
-	err = copy_to_clipboard_buf(prn->buf);
+	clipboard_buf = gretl_strdup(buf);
+	err = (clipboard_buf == NULL);
     }
 
     if (!err) {
@@ -291,15 +280,18 @@ int prn_to_clipboard (PRN *prn, int copycode)
 
 int prn_to_clipboard (PRN *prn, int copycode)
 {
+    const char *buf;
     int err = 0;
 
-    if (prn->buf == NULL || *prn->buf == '\0') {
+    buf = gretl_print_get_buffer(prn);
+
+    if (buf == NULL || *buf == '\0') {
 	return 0;
     }
 
     gretl_clipboard_free();
-
-    err = copy_to_clipboard_buf(prn->buf);
+    clipboard_buf = gretl_strdup(buf);
+    err = (clipboard_buf == NULL);
 
     if (!err) {
 	gretl_clipboard_set(copycode);

@@ -26,7 +26,7 @@
 
 #include <unistd.h>
 
-#undef GP_DEBUG
+#define GP_DEBUG 1
 
 #ifdef _WIN32
 # include <windows.h>
@@ -57,7 +57,7 @@ struct gnuplot_info {
     unsigned char flags;
     int ts_plot;
     int yscale;
-    int pdist;
+    int impulses;
     int lo;
     int ols_ok;
     int t1;
@@ -487,7 +487,7 @@ const char *get_gretl_emf_term_line (int plottype, int color)
 int gnuplot_init (int plottype, FILE **fpp)
 {
     int gui = gretl_in_gui_mode();
-    char plotfile[MAXLEN];
+    char plotfile[MAXLEN] = {0};
 
     if (gretl_looping()) {
 	return E_OK;
@@ -518,6 +518,10 @@ int gnuplot_init (int plottype, FILE **fpp)
 	fprintf(*fpp, "%s\n", get_gretl_png_term_line(plottype));
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_user_dir());
     }
+
+#if GP_DEBUG
+    fprintf(stderr, "gnuplot_init: set plotfile = '%s'\n", plotfile);
+#endif
 
     return 0;
 }
@@ -758,6 +762,10 @@ get_ols_line (struct gnuplot_info *gpinfo, const int *list,
     int olslist[4];
     int err = 0;
 
+#if GP_DEBUG
+    fprintf(stderr, "gnuplot: doing get_ols_line\n");
+#endif
+
     olslist[0] = 3;
     olslist[1] = list[1];
     olslist[2] = 0;
@@ -818,6 +826,10 @@ check_for_yscale (struct gnuplot_info *gpinfo, const int *list,
     double ymin[6], ymax[6];
     double ratio;
     int i, j, oddcount;
+
+#if GP_DEBUG
+    fprintf(stderr, "gnuplot: doing check_for_yscale\n");
+#endif
 
     /* find minima, maxima of the y-axis vars */
     for (i=1; i<list[0]; i++) {
@@ -933,7 +945,7 @@ gp_info_init (struct gnuplot_info *gpinfo, unsigned char flags,
     gpinfo->flags = flags;
     gpinfo->ts_plot = 1;   /* plotting against time on x-axis? */
     gpinfo->yscale = 0;    /* two y axis scales needed? */
-    gpinfo->pdist = 0;     /* plotting probability dist? */
+    gpinfo->impulses = 0;  /* plotting with impulses? */
     gpinfo->lo = lo;
     gpinfo->ols_ok = 0;    /* plot automatic OLS line? */
     gpinfo->t1 = t1;
@@ -953,13 +965,17 @@ gp_info_init (struct gnuplot_info *gpinfo, unsigned char flags,
 	gpinfo->yscale = 1;
     } 
 
+    if (flags & GP_IMPULSES) {
+	gpinfo->impulses = 1;
+    }    
+
     gpinfo->yvar1 = gpinfo->yvar2 = NULL;
 }
 
 #if GP_DEBUG
 static void print_gnuplot_flags (unsigned char flags)
 {
-    fprintf(stderr, "gnuplot flags:\n");
+    fprintf(stderr, "*** gnuplot() called with flags:\n");
 
     if (flags & GP_IMPULSES) {
 	fprintf(stderr, " GP_IMPULSES\n");
@@ -1041,17 +1057,8 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     gp_info_init(&gpinfo, flags, list[0], pdinfo->t1, pdinfo->t2);
 
-    /* plot with impulses? */
-    if (lines == NULL) {
-	if (!(flags & ~GP_OLS_OMIT)) { 
-	    strcpy(withstr, "w i");
-	}
-	gpinfo.pdist = 1;
-    }
-
-    if (flags & GP_IMPULSES) {
+    if (gpinfo.impulses) {
 	strcpy(withstr, "w i");
-	gpinfo.pdist = 1;
     }
 
     /* hack to get the name of the dependent variable into the
@@ -1086,7 +1093,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
     }	
 
     /* add a simple regression line if appropriate */
-    if (!gpinfo.pdist && !(flags & GP_OLS_OMIT) && gpinfo.lo == 2 && 
+    if (!gpinfo.impulses && !(flags & GP_OLS_OMIT) && gpinfo.lo == 2 && 
 	!gpinfo.ts_plot && !(flags & GP_RESIDS)) {
 	get_ols_line(&gpinfo, list, pZ, pdinfo, ols_line);
     }
@@ -1201,7 +1208,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 		    (i == gpinfo.oddman)? "x1y2" : "x1y1",
 		    series_name(pdinfo, list[i]), 
 		    (i == gpinfo.oddman)? I_("right") : I_("left"),
-		    (gpinfo.pdist)? "w impulses" : 
+		    (gpinfo.impulses)? "w impulses" : 
 		    (gpinfo.ts_plot)? "w lines" : "w points",
 		    (i == gpinfo.lo - 1)? "\n" : " , \\\n");
 	}
@@ -1220,7 +1227,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	    } else {
 		strcpy(s1, series_name(pdinfo, list[i]));
 	    }
-	    if (!gpinfo.pdist) { 
+	    if (!gpinfo.impulses) { 
 		int ltest = lines[(flags & GP_GUI)? i - 1 : 0];
 
 		if (ltest) {
@@ -1585,10 +1592,10 @@ static void print_freq_dist_label (char *s, int dist, double x, double y)
     }
 #endif
 
-    if (dist == NORMAL) {
+    if (dist == DIST_NORMAL) {
 	sprintf(s, "N(%.5g%c%.5g)", x, 
 		((dcomma)? ' ' : ','), y);
-    } else if (dist == GAMMA) {
+    } else if (dist == DIST_GAMMA) {
 	sprintf(s, "gamma(%.5g%c%.5g)", x, 
 		((dcomma)? ' ' : ','), y);
     }
@@ -1600,16 +1607,16 @@ static void print_freq_dist_label (char *s, int dist, double x, double y)
 
 /**
  * plot_freq:
- * @freq: frequency distribution struct.
- * @dist: distribution code (see #dist_codes).
+ * @freq: pointer to frequency distribution struct.
+ * @dist: probability distribution code.
  *
  * Plot the actual frequency distribution for a variable versus a
- * theoretical distribution, Gaussian or gamma (or none).
+ * theoretical distribution: Gaussian, gamma or none.
  *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int plot_freq (FREQDIST *freq, int dist)
+int plot_freq (FREQDIST *freq, DistCode dist)
 {
     double alpha = 0.0, beta = 0.0, lambda = 1.0;
     FILE *fp = NULL;
@@ -1628,7 +1635,11 @@ int plot_freq (FREQDIST *freq, int dist)
 
     if ((err = gnuplot_init(plottype, &fp))) {
 	return err;
-    }    
+    }  
+
+#if GP_DEBUG
+    fprintf(stderr, "*** plot_freq called\n");
+#endif  
 
     barwidth = freq->endpt[K-1] - freq->endpt[K-2];
     barskip = 0.005 * (freq->endpt[K] - freq->endpt[0]);
@@ -1637,9 +1648,9 @@ int plot_freq (FREQDIST *freq, int dist)
 	barskip /= 2.0;
     }
 
-    if (dist == NORMAL) {
+    if (dist == DIST_NORMAL) {
 	plottype = PLOT_FREQ_NORMAL;
-    } else if (dist == GAMMA) {
+    } else if (dist == DIST_GAMMA) {
 	plottype = PLOT_FREQ_GAMMA;
     }
 
@@ -1663,7 +1674,7 @@ int plot_freq (FREQDIST *freq, int dist)
 	   theoretical distribution they enclose, and calculate a
 	   height adjustment factor for the impulses */
 
-	if (dist == NORMAL) {
+	if (dist == DIST_NORMAL) {
 	    fputs("(against normal)\n", fp);
 
 	    propn = normal_pvalue_1((freq->endpt[i-1] - freq->xbar)/freq->sdx) -
@@ -1690,7 +1701,7 @@ int plot_freq (FREQDIST *freq, int dist)
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
 			label, label_front());
 	    }	
-	} else if (dist == GAMMA) {
+	} else if (dist == DIST_GAMMA) {
 	    double xx, height, var = freq->sdx * freq->sdx;
 
 	    fputs("(against gamma)\n", fp);
@@ -1764,14 +1775,14 @@ int plot_freq (FREQDIST *freq, int dist)
 
     if (!dist) {
 	fprintf(fp, "plot '-' using 1:($2) %s\n", withstr);
-    } else if (dist == NORMAL) {
+    } else if (dist == DIST_NORMAL) {
 	print_freq_dist_label(label, dist, freq->xbar, freq->sdx);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:($2) title '%s' %s , \\\n"
 		"(1/(sqrt(2*pi)*sigma)*exp(-(x-mu)**2/(2*sigma**2))) "
 		"title '%s' w lines\n",
 		freq->varname, withstr, label);
-    } else if (dist == GAMMA) {
+    } else if (dist == DIST_GAMMA) {
 	print_freq_dist_label(label, dist, alpha, beta);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:($2) title '%s' %s ,\\\n"

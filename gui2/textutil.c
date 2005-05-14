@@ -505,11 +505,11 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 	if (bufopen(&prn)) return;
 
 	if (how == COPY_LATEX) { 
-	    prn->format = GRETL_PRINT_FORMAT_TEX;
+	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
 	    print_mpols_results (mpvals, datainfo, prn);
 	} 
 	else if (how == COPY_RTF) { 
-	    prn->format = GRETL_PRINT_FORMAT_RTF;
+	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
 	    print_mpols_results (mpvals, datainfo, prn);
 	}
 
@@ -524,11 +524,11 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 	if (bufopen(&prn)) return;
 
 	if (how == COPY_LATEX) { 
-	    prn->format = GRETL_PRINT_FORMAT_TEX;
+	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
 	    gretl_var_print(var, datainfo, prn);
 	} 
 	else if (how == COPY_RTF) { 
-	    prn->format = GRETL_PRINT_FORMAT_RTF;
+	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
 	    gretl_var_print(var, datainfo, prn);
 	}
 
@@ -549,11 +549,11 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 	if (bufopen(&prn)) return;
 
 	if (how == COPY_RTF) {
-	    prn->format = GRETL_PRINT_FORMAT_RTF;
+	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
 	    printmodel(pmod, datainfo, OPT_NONE, prn);
 	}
 	else if (how == COPY_LATEX) {
-	    prn->format = GRETL_PRINT_FORMAT_TEX;
+	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
 	    printmodel(pmod, datainfo, OPT_NONE, prn);
 	}
 	else if (how == COPY_LATEX_EQUATION) {
@@ -578,7 +578,7 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
     else if (how == COPY_TEXT || how == COPY_TEXT_AS_RTF || how == COPY_SELECTION) {
 	GtkTextBuffer *textbuf = 
 	    gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-	PRN textprn;
+	PRN *textprn;
 	int myhow = how;
 
 	if (myhow == COPY_SELECTION) myhow = COPY_TEXT;
@@ -590,30 +590,31 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 
 	    gtk_text_buffer_get_selection_bounds(textbuf, &selstart, &selend);
 	    selbuf = gtk_text_buffer_get_text(textbuf, &selstart, &selend, FALSE);
-	    gretl_print_attach_buffer(&textprn, selbuf);
-	    prn_to_clipboard(&textprn, myhow);
-	    g_free(selbuf);
+	    textprn = gretl_print_new_with_buffer(selbuf);
+	    prn_to_clipboard(textprn, myhow);
+	    gretl_print_destroy(textprn);
 	    if (w != NULL) {
 		infobox(_("Copied selection to clipboard"));
 	    }
 	    return;
 	} else {
 	    /* no selection: copy everything */
-	    gretl_print_attach_buffer(&textprn,
-				      textview_get_text(GTK_TEXT_VIEW(vwin->w))); 
-	    prn_to_clipboard(&textprn, myhow);
-	    g_free(textprn.buf);
+	    char *buf = textview_get_text(GTK_TEXT_VIEW(vwin->w)); 
+
+	    textprn = gretl_print_new_with_buffer(buf);
+	    prn_to_clipboard(textprn, myhow);
+	    gretl_print_destroy(textprn);
 	}
     }
 #else
     else if (how == COPY_TEXT) {
-	PRN textprn;
+	char *buf;
+	PRN *textprn;
 
-	gretl_print_attach_buffer(&textprn, 
-				  gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 
-							 0, -1));
-	prn_to_clipboard(&textprn, 0);
-	g_free(textprn.buf);
+	buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
+	textprn = gretl_print_new_with_buffer(buf);
+	prn_to_clipboard(textprn, 0);
+	gretl_print_destroy(textprn);
     } else { /* COPY_SELECTION */
 	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
 	return;

@@ -363,13 +363,16 @@ void text_buffer_insert_colorized_buffer (GtkTextBuffer *tbuf, PRN *prn)
 {
     GtkTextIter iter;    
     int thiscolor, nextcolor;
+    const char *pbuf;
     char readbuf[MAXSTR];
+
+    pbuf = gretl_print_get_buffer(prn);
 
     thiscolor = PLAIN_TEXT;
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
-    bufgets(NULL, 0, prn->buf);
+    bufgets(NULL, 0, pbuf);
 
-    while (bufgets(readbuf, sizeof readbuf, prn->buf)) {
+    while (bufgets(readbuf, sizeof readbuf, pbuf)) {
 
 	if (ends_with_backslash(readbuf)) {
 	    nextcolor = BLUE_TEXT;

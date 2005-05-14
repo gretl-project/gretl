@@ -308,14 +308,6 @@ struct GRAPHT_ {
     char fname[MAXLEN];
 }; 
 
-struct PRN_ {
-    FILE *fp;
-    FILE *fpaux;    
-    char *buf;
-    size_t bufsize;
-    int format;
-};
-
 struct mp_results_ {
     int ncoeff;
     int t1, t2, ifc;
@@ -376,6 +368,7 @@ struct VCV_ {
 #include "gretl_paths.h"
 #include "gretl_utils.h"
 #include "gretl_model.h"
+#include "gretl_prn.h"
 #include "compare.h"
 #include "pvalues.h"
 #include "dataio.h"

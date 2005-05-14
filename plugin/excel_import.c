@@ -1357,10 +1357,13 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     err = process_sheet(fname, &book, prn);
 
     if (err) {
-	if (*prn->buf == 0) {
+	const char *buf = gretl_print_get_buffer(prn);
+
+	if (*buf == 0) {
 	    pputs(prn, _("Failed to process Excel file"));
+	    buf = gretl_print_get_buffer(prn);
 	}
-	fprintf(stderr, "%s\n", prn->buf);
+	fprintf(stderr, "%s\n", buf);
 	goto getout;
     }
 

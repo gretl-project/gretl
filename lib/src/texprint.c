@@ -310,25 +310,14 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     return 0;
 }
 
-static int make_texfile (int ID, int equation, 
-			 char *texfile, PRN *prn)
+static PRN *make_texprn (int ID, int equation, char *texfile)
 {
-    FILE *fp;
-    int err = 0;
-
     if (*texfile == '\0') {
 	sprintf(texfile, "%s%s_%d.tex", gretl_user_dir(),
 		(equation)? "equation" : "model", ID);
     }
 
-    fp = gretl_fopen(texfile, "w");
-    if (fp == NULL) {
-	err = 1;
-    } else {
-	gretl_print_attach_file(prn, fp);
-    }
-
-    return err;
+    return gretl_print_new_with_filename(texfile);
 }
 
 /* mechanism for customizing gretl's tex preamble */
@@ -619,9 +608,9 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
 		     int standalone, PRN *prn)
 {
     if (standalone) {
-	prn->format = GRETL_PRINT_FORMAT_TEX_DOC;
+	gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX_DOC);
     } else {
-	prn->format = GRETL_PRINT_FORMAT_TEX;
+	gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
     }
     
     return printmodel (pmod, pdinfo, OPT_NONE, prn);
@@ -644,19 +633,18 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
 int tabprint (MODEL *pmod, const DATAINFO *pdinfo,
 	      char *texfile, gretlopt oflag)
 {
-    PRN prn;
+    PRN *prn;
+    int err = 0;
 
-    if (make_texfile(pmod->ID, 0, texfile, &prn)) {
-	return 1;
+    prn = make_texprn(pmod->ID, 0, texfile);
+    if (prn == NULL) {
+	err = 1;
+    } else {
+	tex_print_model(pmod, pdinfo, (oflag & OPT_O), prn);
+	gretl_print_destroy(prn);
     }
 
-    tex_print_model(pmod, pdinfo, (oflag & OPT_O), &prn);
-
-    if (prn.fp != NULL) {
-	fclose(prn.fp);
-    }
-
-    return 0;
+    return err;
 }
 
 /**
@@ -676,17 +664,16 @@ int tabprint (MODEL *pmod, const DATAINFO *pdinfo,
 int eqnprint (MODEL *pmod, const DATAINFO *pdinfo,
 	      char *texfile, gretlopt oflag)
 {
-    PRN prn;
+    PRN *prn;
+    int err = 0;
 
-    if (make_texfile(pmod->ID, 1, texfile, &prn)) {
-	return 1;
+    prn = make_texprn(pmod->ID, 1, texfile);
+    if (prn == NULL) {
+	err = 1;
+    } else {
+	tex_print_equation(pmod, pdinfo, (oflag & OPT_O), prn);
+	gretl_print_destroy(prn);
     }
 
-    tex_print_equation(pmod, pdinfo, (oflag & OPT_O), &prn);
-
-    if (prn.fp != NULL) {
-	fclose(prn.fp);
-    }
-
-    return 0;
+    return err;
 }

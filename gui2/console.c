@@ -285,11 +285,9 @@ static void console_exec (void)
 	gretl_loop_destroy(loop);
 	loop = NULL;
 	looprun = 0;
-    }    
-
-    if (console_prn->fp == NULL) {
-	redirected = 0;
     }
+
+    redirected = printing_is_redirected(console_prn);
 
 #ifndef OLD_GTK
     gtk_text_buffer_get_end_iter(buf, &start);
@@ -301,29 +299,24 @@ static void console_exec (void)
 #endif
 
     if (!redirected) {
-	/* put results into console window */
+	const char *cbuf = gretl_print_get_buffer(console_prn);
+
+        /* put results into console window */
 #ifndef OLD_GTK
-	if (!g_utf8_validate(console_prn->buf, -1, NULL)) {
+	if (!g_utf8_validate(cbuf, -1, NULL)) {
 	    fprintf(stderr, "text did not validate as utf8:\n'%s'\n", 
-		    console_prn->buf);
+		    cbuf);
 	} else {
-	    gtk_text_buffer_insert(buf, &start, console_prn->buf, 
-				   strlen(console_prn->buf));
+	    gtk_text_buffer_insert(buf, &start, cbuf, strlen(cbuf));
 	}
 #else
 	gtk_text_insert(GTK_TEXT(console_view), fixed_font, 
-			NULL, NULL, console_prn->buf, 
-			strlen(console_prn->buf));
+			NULL, NULL, cbuf, strlen(cbuf));
 #endif
-    }
-
-    if (console_prn->fp == NULL) {
 	gretl_print_destroy(console_prn);
 	console_prn = NULL;
     } else {
-	/* user has redirected console output to file */
-	redirected = 1;
-	*console_prn->buf = 0;
+	gretl_print_reset_buffer(console_prn);
     }
 
 #ifndef OLD_GTK

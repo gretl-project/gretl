@@ -401,9 +401,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Frequency plot"), NULL, NULL, 0, "<Branch>" },
     { N_("/Variable/Frequency plot/simple"), NULL, do_freqplot, 0, NULL },
     { N_("/Variable/Frequency plot/against Normal"), NULL, do_freqplot, 
-      NORMAL, NULL },
+      DIST_NORMAL, NULL },
     { N_("/Variable/Frequency plot/against Gamma"), NULL, do_freqplot, 
-      GAMMA, NULL },
+      DIST_GAMMA, NULL },
     { N_("/Variable/Estimated density plot..."), NULL, do_kernel, 0, NULL },
     { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL }, 
     { N_("/Variable/sep1"), NULL, NULL, 0, "<Separator>" },
@@ -471,7 +471,7 @@ GtkItemFactoryEntry data_items[] = {
 
 static void gui_usage (void)
 {
-    gui_logo(stdout);
+    gui_logo(NULL);
     printf(I_("You may supply the name of a data file on the command line.\n"));
     printf(I_("Or you may do \"gretl -r script_file\" to open a script.\n"));
     printf(I_("Or you may do \"gretl -d database\" to open a gretl database.\n"));
@@ -629,7 +629,7 @@ int main (int argc, char *argv[])
 	    gui_usage();
 	    break;
 	case OPT_VERSION:
-	    gui_logo(stdout);
+	    gui_logo(NULL);
 	    exit(EXIT_SUCCESS);
 	    break;
 	case OPT_RUNIT:
@@ -702,7 +702,7 @@ int main (int argc, char *argv[])
 	int ftype;
 	PRN *prn; 
 
-	prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+	prn = gretl_print_new(GRETL_PRINT_STDERR);
 	if (prn == NULL) 
 	    exit(EXIT_FAILURE);
 

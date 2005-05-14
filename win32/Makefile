@@ -132,6 +132,7 @@ LIBSRC = bhhh_max.c \
 	gretl_matrix.c \
 	gretl_model.c \
 	gretl_paths.c \
+	gretl_prn.c \
 	gretl_restrict.c \
 	gretl_string_table.c \
 	gretl_utils.c \

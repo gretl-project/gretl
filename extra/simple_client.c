@@ -38,7 +38,7 @@ int main (void)
     int model_count = 0;        /* keep a tally of models estimated */
 
     logo(); /* print version info and session time */
-    prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL); /* simple printing */
+    prn = gretl_print_new(GRETL_PRINT_STDOUT); /* simple printing */
 
     /* create the datainfo struct and data matrix -- pass in pointer
        to data array; specify the number of variables (allowing one

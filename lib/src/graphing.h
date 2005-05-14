@@ -97,9 +97,10 @@ typedef struct {
 } GPT_SPEC;
 
 typedef enum {
-    NORMAL = 1,
-    GAMMA
-} dist_codes;
+    DIST_NONE = 0,
+    DIST_NORMAL,
+    DIST_GAMMA
+} DistCode;
 
 typedef enum {
     PLOT_REGULAR = 0,
@@ -151,7 +152,7 @@ int gnuplot_3d (int *list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo, 
 		int *plot_count, unsigned char flags);
 
-int plot_freq (FREQDIST *freq, int dist);
+int plot_freq (FREQDIST *freq, DistCode dist);
 
 int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo); 
 

@@ -24,34 +24,9 @@
 
 #define PAGELINES 21
 
-enum prn_codes {
-    GRETL_PRINT_STDOUT,
-    GRETL_PRINT_STDERR,
-    GRETL_PRINT_FILE,
-    GRETL_PRINT_BUFFER,
-    GRETL_PRINT_NULL
-};
-
-enum gretl_print_formats {
-    GRETL_PRINT_FORMAT_PLAIN,
-    GRETL_PRINT_FORMAT_TEX,
-    GRETL_PRINT_FORMAT_TEX_DOC,
-    GRETL_PRINT_FORMAT_RTF,
-    GRETL_PRINT_FORMAT_FIXED
-};
-
-#define plain_format(p) (p->format == GRETL_PRINT_FORMAT_PLAIN)
-#define rtf_format(p)   (p->format == GRETL_PRINT_FORMAT_RTF)
-#define tex_format(p)   (p->format == GRETL_PRINT_FORMAT_TEX || \
-                         p->format == GRETL_PRINT_FORMAT_TEX_DOC)
-#define doc_format(p)   (p->format == GRETL_PRINT_FORMAT_TEX_DOC)
-#define is_tex(f)       (f == GRETL_PRINT_FORMAT_TEX || \
-                         f == GRETL_PRINT_FORMAT_TEX_DOC)
-#define is_rtf(f)       (f == GRETL_PRINT_FORMAT_RTF)
-
 /* functions follow */
  
-void session_time (FILE *fp);
+void session_time (PRN *prn);
 
 void logo (void);
 
@@ -59,7 +34,7 @@ void lib_logo (void);
 
 void gui_script_logo (PRN *prn);
 
-void gui_logo (FILE *fp);
+void gui_logo (PRN *prn);
 
 void text_print_model_confints (const CONFINT *cf,
 				const DATAINFO *pdinfo, 
@@ -104,20 +79,6 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn);
 void gretl_print_value (double x, PRN *prn);
 
 char *gretl_fix_exponent (char *s);
-
-void gretl_print_destroy (PRN *prn);
-
-PRN *gretl_print_new (int prncode, const char *fname);
-
-void gretl_print_attach_buffer (PRN *prn, char *buf);
-
-void gretl_print_attach_file (PRN *prn, FILE *fp);
-
-int pprintf (PRN *prn, const char *template, ...);
-
-int pputs (PRN *prn, const char *s);
-
-int pputc (PRN *prn, int c);
 
 void bufspace (int n, PRN *prn);
 

@@ -795,15 +795,15 @@ static int gretl_test_print_h_0 (const ModelTest *test, PRN *prn)
 }
 
 static void 
-get_test_stat_string (const ModelTest *test, char *str, int format)
+get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 {
-    int tex = is_tex(format);
+    int tex = tex_format(prn);
 
     switch (test->teststat) {
     case GRETL_STAT_TR2:
 	if (tex) {
 	    sprintf(str, "$TR^2$ = %g", test->value);
-	} else if (is_rtf(format)) {
+	} else if (rtf_format(prn)) {
 	    sprintf(str, "TR{\\super 2} = %g", test->value);
 	} else {
 	    sprintf(str, "TR^2 = %g", test->value);
@@ -848,9 +848,9 @@ get_test_stat_string (const ModelTest *test, char *str, int format)
 }
 
 static void 
-get_test_pval_string (const ModelTest *test, char *str, int format)
+get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
 {
-    int tex = is_tex(format);
+    int tex = tex_format(prn);
 
     switch (test->teststat) {
     case GRETL_STAT_TR2:
@@ -915,8 +915,8 @@ void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
 	tstat = N_("Test statistic");
     }
 
-    get_test_stat_string(test, test_str, prn->format);
-    get_test_pval_string(test, pval_str, prn->format);
+    get_test_stat_string(test, test_str, prn);
+    get_test_pval_string(test, pval_str, prn);
 
     if (plain_format(prn)) {
 	gretl_test_print_string(test, prn);

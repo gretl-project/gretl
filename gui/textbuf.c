@@ -107,11 +107,14 @@ void text_table_setup (windata_t *vwin)
 void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn)
 {
     void *colptr = NULL, *nextcolor = NULL;
+    const char *buf;
     char readbuf[MAXSTR];
 
-    bufgets(NULL, 0, prn->buf);
+    buf = gretl_print_get_buffer(prn);
 
-    while (bufgets(readbuf, sizeof readbuf, prn->buf)) {
+    bufgets(NULL, 0, buf);
+
+    while (bufgets(readbuf, sizeof readbuf, buf)) {
 
 	if (ends_with_backslash(readbuf)) {
 	    nextcolor = &blue;

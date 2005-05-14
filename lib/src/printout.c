@@ -24,7 +24,6 @@
 #include "libset.h"
 #include "forecast.h"
 
-#include <stdarg.h>
 #include <time.h>
 
 #undef PRN_DEBUG
@@ -64,16 +63,27 @@ static void covhdr (PRN *prn)
 
 /**
  * session_time:
- * @fp: stream onto which to print.
+ * @prn: where to print.
  *
- * Print the current time to the specified stream.
+ * Print the current time to the specified printing object,
+ * or to %stdout if @prn is %NULL.
  */
 
-void session_time (FILE *fp)
+void session_time (PRN *prn)
 {
     time_t runtime = time(NULL);
+    PRN *myprn = NULL;
 
-    fprintf(fp, "%s: %s\n", _("Current session"), print_time(&runtime));
+    if (prn == NULL) {
+	myprn = gretl_print_new(GRETL_PRINT_STDOUT);
+	prn = myprn;
+    }
+
+    pprintf(prn, "%s: %s\n", _("Current session"), print_time(&runtime));
+    
+    if (myprn != NULL) {
+	gretl_print_destroy(myprn);
+    }    
 }
 
 /**
@@ -91,16 +101,28 @@ void logo (void)
 
 /**
  * gui_logo:
- * @fp: stream onto which to print.
+ * @prn: where to print.
  *
- * Print gretl GUI version information to the specified stream.
+ * Print gretl GUI version information to the specified printing
+ * object, or to %stdout if @prn is %NULL.
  */
 
-void gui_logo (FILE *fp)
+void gui_logo (PRN *prn)
 {
-    fprintf(fp, _("gretl: gui client for gretl version %s,\n"), version_string);
-    fputs(_("copyright Allin Cottrell.\n"), fp);
-    fputs(_("This is free software with ABSOLUTELY NO WARRANTY.\n"), fp);
+    PRN *myprn = NULL;
+
+    if (prn == NULL) {
+	myprn = gretl_print_new(GRETL_PRINT_STDOUT);
+	prn = myprn;
+    }
+	
+    pprintf(prn, _("gretl: gui client for gretl version %s,\n"), version_string);
+    pputs(prn, _("copyright Allin Cottrell.\n"));
+    pputs(prn, _("This is free software with ABSOLUTELY NO WARRANTY.\n"));
+
+    if (myprn != NULL) {
+	gretl_print_destroy(myprn);
+    }
 }
 
 /**
@@ -228,14 +250,14 @@ static void print_freq_test (const FREQDIST *freq, PRN *prn)
 {
     double pval = NADBL;
 
-    if (freq->dist == NORMAL) {
+    if (freq->dist == DIST_NORMAL) {
 	pval = chisq(freq->test, 2);
 	pprintf(prn, "\n%s:\n", 
 		_("Test for null hypothesis of normal distribution"));
 	pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
 		_("Chi-square"), freq->test, 
 		_("with p-value"), pval);
-    } else if (freq->dist == GAMMA) {
+    } else if (freq->dist == DIST_GAMMA) {
 	pval = normal_pvalue_2(freq->test);
 	pprintf(prn, "\n%s:\n", 
 		_("Test for null hypothesis of gamma distribution"));
@@ -245,7 +267,7 @@ static void print_freq_test (const FREQDIST *freq, PRN *prn)
 
     if (!na(pval)) {
 	record_test_result(freq->test, pval, 
-			   (freq->dist == NORMAL)? 
+			   (freq->dist == DIST_NORMAL)? 
 			   "normality" : "gamma");
     }
 }
@@ -1448,298 +1470,6 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
     return 0;
 }
 
-/**
- * gretl_print_destroy:
- * @prn: pointer to gretl printing struct.
- *
- * Close a gretl printing struct and free any associated resources.
- *
- */
-
-void gretl_print_destroy (PRN *prn)
-{
-    int fpdup;
-
-    if (prn == NULL) {
-	return;
-    }
-
-    fpdup = (prn->fp == prn->fpaux);
-
-    if (prn->fp != NULL &&
-	prn->fp != stdout && prn->fp != stderr)
-	fclose(prn->fp);
-
-    if (!fpdup && prn->fpaux != NULL && 
-	prn->fpaux != stdout && prn->fpaux != stderr)
-	fclose(prn->fpaux);
-
-    if (prn->buf != NULL) {
-#ifdef PRN_DEBUG
-  	fprintf(stderr, "freeing buffer at %p\n", (void *) prn->buf); 
-#endif
-	free(prn->buf);
-    }
-
-    free(prn);
-}
-
-/**
- * gretl_print_new:
- * @prncode: code indicating the desired printing mode (see #prn_codes).
- * @fname: filename for opening in case of GRETL_PRINT_FILE, otherwise
- * NULL.
- * 
- * Create and initialize a gretl printing struct so that it is
- * ready for printing.
- *
- * Returns: pointer to newly created struct, or NULL on failure.
- */
-
-PRN *gretl_print_new (int prncode, const char *fname)
-{
-    PRN *prn = NULL;
-
-    if (prncode == GRETL_PRINT_FILE && fname == NULL) {
-	fprintf(stderr, _("gretl_prn_new: Must supply a filename\n"));
-	return NULL;
-    }
-
-    prn = malloc(sizeof *prn);
-    if (prn == NULL) {
-	fprintf(stderr, _("gretl_prn_new: out of memory\n"));
-	return NULL;
-    }
-
-    prn->fpaux = NULL;
-
-    if (prncode == GRETL_PRINT_NULL) {
-	prn->fp = NULL;
-	prn->buf = NULL;
-    }	
-	
-    else if (prncode == GRETL_PRINT_FILE) {
-	prn->buf = NULL;
-	prn->fp = gretl_fopen(fname, "w");
-	if (prn->fp == NULL) {
-	    fprintf(stderr, _("gretl_prn_new: couldn't open %s\n"), fname);
-	    free(prn);
-	    return NULL;
-	}
-    }
-
-    else if (prncode == GRETL_PRINT_STDOUT) {
-	prn->buf = NULL;
-	prn->fp = stdout;
-    }
-
-    else if (prncode == GRETL_PRINT_STDERR) {
-	prn->buf = NULL;
-	prn->fp = stderr;
-    }	    
-
-    else if (prncode == GRETL_PRINT_BUFFER) {
-	prn->fp = NULL;
-	if (pprintf(prn, "@init") < 0) {
-	    fprintf(stderr, _("gretl_prn_new: out of memory\n"));
-	    free(prn);
-	    return NULL;
-	}
-    }
-
-    prn->format = GRETL_PRINT_FORMAT_PLAIN;
-
-    return prn;
-}
-
-void gretl_print_attach_buffer (PRN *prn, char *buf)
-{
-    prn->buf = buf;
-    prn->fp = NULL;
-    prn->fpaux = NULL;
-    prn->format = GRETL_PRINT_FORMAT_FIXED;
-    prn->bufsize = MAXLEN;
-}
-
-void gretl_print_attach_file (PRN *prn, FILE *fp)
-{
-    prn->buf = NULL;
-    prn->fp = fp;
-    prn->fpaux = NULL;
-    prn->format = GRETL_PRINT_FORMAT_PLAIN;
-}
-
-static int realloc_prn_buffer (PRN *prn, size_t blen)
-{
-    char *tmp;
-    int err = 0;
-
-#ifdef PRN_DEBUG
-    fprintf(stderr, "%d bytes left\ndoing realloc(%p, %d)\n",
-	    prn->bufsize - blen, prn->buf, 2 * prn->bufsize);
-#endif
-    prn->bufsize *= 2; 
-
-    tmp = realloc(prn->buf, prn->bufsize); 
-
-    if (tmp == NULL) {
-	err = 1;
-    } else {
-	prn->buf = tmp;
-#ifdef PRN_DEBUG
-	fprintf(stderr, "realloc: prn->buf is %d bytes at %p\n",
-		prn->bufsize, (void *) prn->buf);
-#endif
-    }
-
-    memset(prn->buf + blen, 0, 1);
-
-    return err;
-}
-
-/**
- * pprintf:
- * @prn: gretl printing struct.
- * @template: as in printf().
- * @Varargs: arguments to be printed.
- *
- * Multi-purpose printing function: can output to stream, to buffer
- * or to nowhere (silently discarding the output), depending on
- * how @prn was initialized.
- * 
- * Returns: 0 on successful completion, 1 on memory allocation
- * failure.
- * 
- */
-
-int pprintf (PRN *prn, const char *template, ...)
-{
-    va_list args;
-    size_t blen;
-    int plen = 0;
-
-    if (prn == NULL) return 0;
-
-    if (prn->fp != NULL) {
-	va_start(args, template);
-	plen = vfprintf(prn->fp, template, args);
-	va_end(args);
-	return plen;
-    }
-
-    if (strncmp(template, "@init", 5) == 0) {
-	prn->bufsize = 2048;
-	prn->buf = malloc(prn->bufsize);
-#ifdef PRN_DEBUG
-  	fprintf(stderr, "pprintf: malloc'd %d bytes at %p\n", prn->bufsize,  
-		(void *) prn->buf); 
-#endif
-	if (prn->buf == NULL) return -1;
-	memset(prn->buf, 0, 1);
-	return 0;
-    }
-
-    if (prn->buf == NULL) return 0;
-
-    blen = strlen(prn->buf);
-
-    if (prn->format == GRETL_PRINT_FORMAT_FIXED) {
-	if (blen > MAXLEN - 32) return -1;
-    } else if (prn->bufsize - blen < 1024) {
-	if (realloc_prn_buffer(prn, blen)) {
-	    return -1;
-	}
-    }
-
-    va_start(args, template);
-#ifdef PRN_DEBUG
-    fprintf(stderr, "printing at %p\n", (void *) (prn->buf + blen));
-#endif
-    plen = vsprintf(prn->buf + blen, template, args);
-    va_end(args);
-#ifdef PRN_DEBUG
-    fprintf(stderr, "printed %d byte(s)\n", strlen(prn->buf) - blen);
-#endif
-
-    return plen;
-}
-
-/**
- * pputs:
- * @prn: gretl printing struct.
- * @s: constant string to print
- * 
- * Returns: 0 on successful completion, 1 on memory allocation
- * failure.
- */
-
-int pputs (PRN *prn, const char *s)
-{
-    size_t blen;
-    int slen = strlen(s);
-
-    if (prn == NULL) return 0;
-
-    if (prn->fp != NULL) {
-	fputs(s, prn->fp);
-	return slen;
-    }
-
-    if (prn->buf == NULL) return 0;
-
-    blen = strlen(prn->buf);
-
-    if (prn->format == GRETL_PRINT_FORMAT_FIXED) {
-	if (blen + slen > MAXLEN - 1) return -1;
-    } else if (prn->bufsize - blen < 1024) {
-	if (realloc_prn_buffer(prn, blen)) {
-	    return -1;
-	}
-    }
-
-    strcpy(prn->buf + blen, s);
-
-    return slen;
-}
-
-/**
- * pputc:
- * @prn: gretl printing struct.
- * @c: character to print
- * 
- * Returns: 0 on successful completion, 1 on memory allocation
- * failure.
- */
-
-int pputc (PRN *prn, int c)
-{
-    size_t blen;
-
-    if (prn == NULL) return 0;
-
-    if (prn->fp != NULL) {
-	fputc(c, prn->fp);
-	return 1;
-    }
-
-    if (prn->buf == NULL) return 0;
-
-    blen = strlen(prn->buf);
-
-    if (prn->format == GRETL_PRINT_FORMAT_FIXED) {
-	if (blen > MAXLEN - 2) return -1;
-    } else if (prn->bufsize - blen < 1024) {
-	if (realloc_prn_buffer(prn, blen)) {
-	    return -1;
-	}
-    }
-
-    prn->buf[blen] = c;
-    prn->buf[blen + 1] = '\0';
-
-    return 1;
-}
-
 /* apparatus for user-defined printf statements */
 
 #undef PRINTF_DEBUG
@@ -2053,31 +1783,40 @@ int do_printf (const char *line, double ***pZ,
 
 int generate_obs_markers (double ***pZ, DATAINFO *pdinfo, char *s)
 {
-    PRN prn;
-    char buf[MAXLEN];
+    PRN *prn;
     int t, err = 0;
 
-    if (pdinfo->S == NULL) {
+    prn = gretl_print_new(GRETL_PRINT_BUFFER);
+    if (prn == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!err && pdinfo->S == NULL) {
 	char **S = allocate_case_markers(pdinfo->n);
 
 	if (S == NULL) {
-	    return E_ALLOC;
+	    err = E_ALLOC;
 	} else {
 	    pdinfo->S = S;
 	    pdinfo->markers = 1;
 	}
     }
 
-    gretl_print_attach_buffer(&prn, buf);
-    
-    for (t=0; t<pdinfo->n && !err; t++) {
-	buf[0] = '\0';
-	err = real_do_printf(s, pZ, pdinfo, NULL, &prn, t);
-	if (!err) {
-	    pdinfo->S[t][0] = '\0';
-	    strncat(pdinfo->S[t], buf, OBSLEN - 1);
+    if (!err) {
+	const char *buf;
+
+	for (t=0; t<pdinfo->n && !err; t++) {
+	    gretl_print_reset_buffer(prn);
+	    err = real_do_printf(s, pZ, pdinfo, NULL, prn, t);
+	    if (!err) {
+		buf = gretl_print_get_buffer(prn);
+		pdinfo->S[t][0] = '\0';
+		strncat(pdinfo->S[t], buf, OBSLEN - 1);
+	    }
 	}
     }
+
+    gretl_print_destroy(prn);
 	
     return err;
 }

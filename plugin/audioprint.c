@@ -337,8 +337,9 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
 				int (*should_stop)())
 {
     PRN *prn;
+    const char *buf;
 
-    prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+    prn = gretl_print_new(GRETL_PRINT_BUFFER);
     if (prn == NULL) return 1;
     
     /* descriptive statistics */
@@ -346,29 +347,27 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
 	GRETLSUMMARY *summ = (GRETLSUMMARY *) data;
 
 	audioprint_summary(summ, pdinfo, prn);
-    }
-    else if (role == CORR) {
+    } else if (role == CORR) {
 	CorrMat *corr = (CorrMat *) data;
 
 	audioprint_corrmat(corr, pdinfo, prn);
-    }
-    else if (role == COVAR) {
+    } else if (role == COVAR) {
 	VCV *vcv = (VCV *) data;
 
 	audioprint_vcv(vcv, pdinfo, prn);
-    }
-    else if (role == COEFFINT) {
+    } else if (role == COEFFINT) {
 	CONFINT *cf = (CONFINT *) data;
 
 	audioprint_confints(cf, pdinfo, prn);
-    }
-    else if (role == VIEW_MODEL) {
+    } else if (role == VIEW_MODEL) {
 	MODEL *pmod = (MODEL *) data;
 
 	audioprint_model(pmod, pdinfo, prn);
     }
 
-    speak_buffer(prn->buf, should_stop);
+    buf = gretl_print_get_buffer(prn);
+
+    speak_buffer(buf, should_stop);
     gretl_print_destroy(prn);
 
     return 0;

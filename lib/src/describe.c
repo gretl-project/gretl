@@ -705,10 +705,10 @@ FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     if (freq->n > 7) {
 	if (opt & OPT_O) {
 	    freq->test = lockes_test(x, pdinfo->t1, pdinfo->t2);
-	    freq->dist = GAMMA;
+	    freq->dist = DIST_GAMMA;
 	} else {
 	    freq->test = doornik_chisq(skew, kurt, freq->n); 
-	    freq->dist = NORMAL;
+	    freq->dist = DIST_NORMAL;
 	}
     } else {
 	freq->test = NADBL;
@@ -804,7 +804,7 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
     print_freq(freq, prn); 
 
     if (graph && !(opt & OPT_Q)) {
-	if (plot_freq(freq, (opt)? GAMMA : NORMAL)) {
+	if (plot_freq(freq, (opt)? DIST_GAMMA : DIST_NORMAL)) {
 	    pputs(prn, _("gnuplot command failed\n"));
 	}
     }

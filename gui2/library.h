@@ -57,8 +57,6 @@ char *user_fopen (const char *fname, char *fullname, PRN **pprn);
 
 gint bufopen (PRN **pprn);
 
-PRN *bufopen_with_size (size_t sz);
-
 void do_menu_op (gpointer data, guint action, GtkWidget *widget);
 
 void do_two_var_test (GtkWidget *widget, gpointer p);

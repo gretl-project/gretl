@@ -1414,10 +1414,6 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     CMD cmd;
     int err = 0, ignore = 0;
     double rho = 0;
-    PRN prn;
-
-    prn.fp = NULL;
-    prn.buf = NULL;
 
     cmd.list = malloc(sizeof *cmd.list);
     cmd.param = malloc(1);
@@ -1433,13 +1429,13 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     switch(cmd.ci) {
     case AR:
 	*tmpmod = ar_func(cmd.list, atoi(cmd.param), pZ, 
-			  pdinfo, OPT_NONE, &prn);
+			  pdinfo, OPT_NONE, NULL);
 	break;
     case CORC:
     case HILU:
     case PWE:
 	rho = estimate_rho(cmd.list, pZ, pdinfo, 1, cmd.ci, 
-			   &err, cmd.opt, &prn);
+			   &err, cmd.opt, NULL);
 	if (!err) {
 	    *tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, 0, rho);
 	}

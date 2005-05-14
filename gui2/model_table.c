@@ -347,14 +347,14 @@ static void center_in_field (const char *s, int width, PRN *prn)
     }
 }
 
-static const char *short_estimator_string (int ci, int format)
+static const char *short_estimator_string (int ci, PRN *prn)
 {
     if (ci == HSK) return N_("HSK");
     else if (ci == CORC) return N_("CORC");
     else if (ci == HILU) return N_("HILU");
     else if (ci == ARCH) return N_("ARCH");
     else if (ci == POOLED) return N_("OLS");
-    else return estimator_string(ci, format);
+    else return estimator_string(ci, prn);
 }
 
 static const char *get_asts (double pval)
@@ -377,8 +377,8 @@ static void print_model_table_coeffs (PRN *prn)
     int i, j, k;
     const MODEL *pmod;
     char tmp[16];
-    int tex = (prn->format == GRETL_PRINT_FORMAT_TEX);
-    int rtf = (prn->format == GRETL_PRINT_FORMAT_RTF);
+    int tex = tex_format(prn);
+    int rtf = rtf_format(prn);
 
     /* loop across all variables that appear in any model */
     for (i=2; i<=grand_list[0]; i++) {
@@ -522,8 +522,8 @@ static void print_n_r_squared (PRN *prn, int *binary)
     int j;
     int same_df, any_R2, any_ll;
     const MODEL *pmod;
-    int tex = (prn->format == GRETL_PRINT_FORMAT_TEX);
-    int rtf = (prn->format == GRETL_PRINT_FORMAT_RTF);
+    int tex = tex_format(prn);
+    int rtf = rtf_format(prn);
 
     if (rtf) print_rtf_row_spec(prn, 0);
 
@@ -665,7 +665,7 @@ int display_model_table (int gui)
     if (ci > 0) {
 	/* all models use same estimation procedure */
 	pprintf(prn, _("%s estimates"), 
-		_(estimator_string(ci, prn->format)));
+		_(estimator_string(ci, prn)));
 	pputc(prn, '\n');
     }
 
@@ -691,7 +691,7 @@ int display_model_table (int gui)
 	    if (model_list[j] == NULL) continue;
 	    strcpy(est, 
 		   _(short_estimator_string((model_list[j])->ci,
-					    prn->format)));
+					    prn)));
 	    center_in_field(est, 12, prn);
 	}
 	pputc(prn, '\n');
@@ -739,7 +739,7 @@ int tex_print_model_table (int view)
 
     if (bufopen(&prn)) return 1;
 
-    prn->format = GRETL_PRINT_FORMAT_TEX;
+    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
 
     ci = common_estimator();
 
@@ -752,7 +752,7 @@ int tex_print_model_table (int view)
     if (ci > 0) {
 	/* all models use same estimation procedure */
 	pprintf(prn, I_("%s estimates"), 
-		I_(estimator_string(ci, prn->format)));
+		I_(estimator_string(ci, prn)));
 	pputs(prn, "\\\\\n");
     }
 
@@ -784,7 +784,7 @@ int tex_print_model_table (int view)
 	    if (model_list[j] == NULL) continue;
 	    strcpy(est, 
 		   I_(short_estimator_string((model_list[j])->ci,
-					     prn->format)));
+					     prn)));
 	    pprintf(prn, " & %s ", est);
 	}
 	pputs(prn, "\\\\ ");
@@ -857,7 +857,7 @@ int rtf_print_model_table (void)
 
     if (bufopen(&prn)) return 1;
 
-    prn->format = GRETL_PRINT_FORMAT_RTF;
+    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
 
     ci = common_estimator();
 
@@ -867,7 +867,7 @@ int rtf_print_model_table (void)
 	/* all models use same estimation procedure */
 	pputs(prn, "\\par \\qc ");
 	pprintf(prn, I_("%s estimates"), 
-		I_(estimator_string(ci, prn->format)));
+		I_(estimator_string(ci, prn)));
 	pputc(prn, '\n');
     }
 
@@ -897,7 +897,7 @@ int rtf_print_model_table (void)
 	    if (model_list[j] == NULL) continue;
 	    strcpy(est, 
 		   I_(short_estimator_string((model_list[j])->ci,
-					     prn->format)));
+					     prn)));
 	    pprintf(prn, "\\qc %s\\cell ", est);
 	}
 	pputs(prn, "\\intbl \\row\n");

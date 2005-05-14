@@ -82,9 +82,10 @@ SRCS = bhhh_max.c \
 	gretl_list.c \
 	gretl_matrix.c \
 	gretl_model.c \
+	gretl_paths.c \
+	gretl_prn.c \
 	gretl_restrict.c \
 	gretl_string_table.c \
-	gretl_paths.c \
 	gretl_utils.c \
 	interact.c \
 	libset.c \

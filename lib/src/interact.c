@@ -1896,9 +1896,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 
     if (!batch) {
 	pputc(prn, '\n');
-	if (prn != NULL && prn->fp != NULL) {
-	    fflush(prn->fp);
-	}
+	gretl_print_flush_stream(prn);
     }
 }
 
@@ -2057,42 +2055,41 @@ static void do_print_string (char *str, PRN *prn)
     pprintf(prn, "%s\n", str);
 }
 
-static int do_outfile_command (gretlopt flag, char *fname,
-			       PRN *prn)
+static int 
+do_outfile_command (gretlopt flag, char *fname, PRN *prn)
 {
     static char outname[MAXLEN];
-    int output_diverted = 0;
+    int diverted = 0;
+
+    if (prn == NULL) {
+	return 0;
+    }
 
     if (flag != OPT_W && flag != OPT_A && flag != OPT_C) {
 	return E_ARGS;
     }
 
-    if (prn->fpaux != NULL ||
-	(prn->fp != NULL && prn->buf != NULL)) {
-	output_diverted = 1;
-    }
+    diverted = printing_is_redirected(prn);
 
     /* command to close outfile */
     if (flag == OPT_C) {
-	if (!output_diverted) {
+	if (!diverted) {
 	    pputs(prn, _("Output is not currently diverted to file\n"));
 	    return 1;
 	} else {
-	    fclose(prn->fp);
-	    prn->fp = prn->fpaux;
-	    prn->fpaux = NULL;
+	    print_end_redirection(prn);
 	    pprintf(prn, "Closed output file '%s'\n", outname);
 	    return 0;
 	}
     }
 
     /* command to divert output to file */
-    if (output_diverted) {
+    if (diverted) {
 	fprintf(stderr, _("Output is already diverted to '%s'\n"),
 		outname);
 	return 1;
     } else {
-	if (*fname == 0) {
+	if (*fname == '\0') {
 	    return E_ARGS;
 	} else {
 	    FILE *fp;
@@ -2114,10 +2111,7 @@ static int do_outfile_command (gretlopt flag, char *fname,
 		}
 	    }
 
-	    /* save the prn stream */
-	    prn->fpaux = prn->fp;
-	    /* hook output to specified file */
-	    prn->fp = fp;
+	    print_start_redirection(prn, fp);
 	    strcpy(outname, fname);
 	    return 0;
 	}

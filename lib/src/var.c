@@ -288,11 +288,6 @@ int gretl_var_get_n_equations (const GRETL_VAR *var)
 
 #define VARS_IN_ROW 4
 
-#define PLAIN_PRN(p) (p->format == GRETL_PRINT_FORMAT_PLAIN)
-#define RTF_PRN(p)   (p->format == GRETL_PRINT_FORMAT_RTF)
-#define TEX_PRN(p)   (p->format == GRETL_PRINT_FORMAT_TEX || \
-                      p->format == GRETL_PRINT_FORMAT_TEX_DOC)
-
 static void tex_print_double (double x, PRN *prn)
 {
     char number[16];
@@ -381,7 +376,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 	char vname[16];
 	double r;
 
-	if (TEX_PRN(prn)) {
+	if (tex_format(prn)) {
 	    pputs(prn, "\\vspace{1em}\n\n");
 	    pprintf(prn, I_("Responses to a one-standard error shock in %s"), 
 		    tex_escape(vname, pdinfo->varname[vsrc]));
@@ -404,7 +399,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 	    }
 	}
 
-	if (TEX_PRN(prn)) {
+	if (tex_format(prn)) {
 	    pprintf(prn, "%s & ", I_("period"));
 	} else {
 	    pprintf(prn, "%s ", _("period"));
@@ -416,7 +411,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 		break;
 	    }
 	    vtarg = (var->models[k])->list[1];
-	    if (TEX_PRN(prn)) {
+	    if (tex_format(prn)) {
 		pprintf(prn, " %s ", tex_escape(vname, pdinfo->varname[vtarg]));
 		if (i < VARS_IN_ROW - 1 && k < var->neqns - 1) {
 		    pputs(prn, "& ");
@@ -432,7 +427,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 
 	for (t=0; t<periods && !err; t++) {
 	    pprintf(prn, " %3d  ", t + 1);
-	    if (TEX_PRN(prn)) {
+	    if (tex_format(prn)) {
 		pputs(prn, "& ");
 	    }
 	    if (t == 0) {
@@ -452,7 +447,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 		    break;
 		}
 		r = gretl_matrix_get(rtmp, k, shock);
-		if (TEX_PRN(prn)) {
+		if (tex_format(prn)) {
 		    tex_print_double(r, prn);
 		    if (i < VARS_IN_ROW - 1 && k < var->neqns - 1) {
 			pputs(prn, " & ");
@@ -461,14 +456,14 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 		    pprintf(prn, "%#12.5g ", r);
 		}
 	    }
-	    if (TEX_PRN(prn)) {
+	    if (tex_format(prn)) {
 		pputs(prn, "\\\\\n");
 	    } else {
 		pputc(prn, '\n');
 	    }
 	}
 
-	if (TEX_PRN(prn)) {
+	if (tex_format(prn)) {
 	    pputs(prn, "\\end{tabular}\n\n");
 	} else {
 	    pputc(prn, '\n');
@@ -685,7 +680,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 	double r;
 
 	/* print block header */
-	if (TEX_PRN(prn)) {
+	if (tex_format(prn)) {
 	    pputs(prn, "\\vspace{1em}\n\n");
 	    pprintf(prn, I_("Decomposition of variance for %s"), 
 		    tex_escape(vname, pdinfo->varname[vtarg]));
@@ -709,7 +704,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 	}
 
 	/* first column: print period/step label */
-	if (TEX_PRN(prn)) {
+	if (tex_format(prn)) {
 	    pprintf(prn, "%s & ", I_("period"));
 	} else {
 	    pprintf(prn, "%s ", _("period"));
@@ -719,7 +714,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 	for (i=0; i<VDROWMAX; i++) {
 	    k = VDROWMAX * block + i - 1;
 	    if (k < 0) {
-		if (TEX_PRN(prn)) {
+		if (tex_format(prn)) {
 		    pprintf(prn, " %s & ", I_("std. error"));
 		} else {
 		    pprintf(prn, " %12s ", _("std. error"));
@@ -730,7 +725,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 		break;
 	    }
 	    vsrc = (var->models[k])->list[1];
-	    if (TEX_PRN(prn)) {
+	    if (tex_format(prn)) {
 		pprintf(prn, " %s ", tex_escape(vname, pdinfo->varname[vsrc]));
 		if (i < VDROWMAX - 1 && k < var->neqns - 1) pputs(prn, "& ");
 		else pputs(prn, "\\\\");
@@ -744,13 +739,13 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 	/* print block of numbers */
 	for (t=0; t<periods && !err; t++) {
 	    pprintf(prn, " %3d  ", t + 1);
-	    if (TEX_PRN(prn)) pputs(prn, "& ");
+	    if (tex_format(prn)) pputs(prn, "& ");
 
 	    for (i=0; i<VDROWMAX; i++) {
 		k = VDROWMAX * block + i - 1;
 		if (k < 0) {
 		    r = gretl_matrix_get(vd, t, var->neqns);
-		    if (TEX_PRN(prn)) {
+		    if (tex_format(prn)) {
 			pprintf(prn, "%g & ", r);
 		    } else {
 			pprintf(prn, " %14g ", r);
@@ -761,7 +756,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 		    break;
 		}
 		r = gretl_matrix_get(vd, t, k);
-		if (TEX_PRN(prn)) {
+		if (tex_format(prn)) {
 		    pprintf(prn, "$%.4f$", r);
 		    if (i < VDROWMAX - 1 && k < var->neqns - 1) {
 			pputs(prn, " & ");
@@ -770,14 +765,14 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 		    pprintf(prn, "%10.4f ", r);
 		}
 	    }
-	    if (TEX_PRN(prn)) {
+	    if (tex_format(prn)) {
 		pputs(prn, "\\\\\n");
 	    } else {
 		pputc(prn, '\n');
 	    }
 	}
 
-	if (TEX_PRN(prn)) {
+	if (tex_format(prn)) {
 	    pputs(prn, "\\end{tabular}\n\n");
 	} else {
 	    pputc(prn, '\n');
@@ -2431,7 +2426,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	varprn = prn;
     } else {
 	flags = 0;
-	varprn = gretl_print_new(GRETL_PRINT_NULL, NULL);
+	varprn = gretl_print_new(GRETL_PRINT_NULL);
     }
 
     /* FIXME? */
@@ -2536,13 +2531,14 @@ int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, j, k, v;
     int dfd = (var->models[0])->dfd;
+    int tex = tex_format(prn);
     int horizon;
 
     if (prn == NULL) {
 	return 0;
     }
 
-    if (TEX_PRN(prn)) {
+    if (tex) {
 	pputs(prn, "\\noindent");
 	pprintf(prn, I_("\nVAR system, lag order %d\n\n"), var->order);
     } else {
@@ -2556,7 +2552,7 @@ int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 
 	if (var->Fvals == NULL) continue;
 
-	if (TEX_PRN(prn)) {
+	if (tex) {
 	    pputs(prn, "\n\\begin{center}\n");
 	    pprintf(prn, "%s\\\\[1em]\n", I_("F-tests of zero restrictions"));
 	    pputs(prn, "\\begin{tabular}{lll}\n");
@@ -2566,7 +2562,7 @@ int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 
 	for (j=0; j<var->neqns; j++) {
 	    v = (var->models[j])->list[1];
-	    if (TEX_PRN(prn)) {
+	    if (tex) {
 		pprintf(prn, I_("All lags of %-8s "), pdinfo->varname[v]);
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->order, dfd, var->Fvals[k]);
@@ -2581,7 +2577,7 @@ int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 	}
 
 	if (var->order > 1) {
-	    if (TEX_PRN(prn)) {
+	    if (tex) {
 		pprintf(prn, I_("All vars, lag %-6d "), var->order);
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, var->Fvals[k]);
@@ -2593,7 +2589,7 @@ int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 	    } 
 	    k++;
 	}
-	if (TEX_PRN(prn)) {
+	if (tex) {
 	    pputs(prn, "\\end{tabular}\n"
 		  "\\end{center}\n\n"
 		  "\\clearpage\n\n");

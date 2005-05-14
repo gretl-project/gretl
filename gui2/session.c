@@ -541,14 +541,15 @@ static int real_add_var_to_session (GRETL_VAR *var)
 
 int real_add_text_to_session (PRN *prn, const char *tname)
 {
+    const char *pbuf;
     int nt = look_up_text_by_name(tname);
     int replace = 0;
 
     if (nt >= 0) {
+	pbuf = gretl_print_get_buffer(prn);
+	free(session.texts[nt]->buf);
+	session.texts[nt]->buf = g_strdup(pbuf);
 	replace = 1;
-	free((session.texts[nt])->buf);
-	(session.texts[nt])->buf = prn->buf;  
-	prn->buf = NULL;
     } else {
 	GRETL_TEXT **texts;
 
@@ -566,8 +567,8 @@ int real_add_text_to_session (PRN *prn, const char *tname)
 	    return ADD_OBJECT_FAIL;
 	}
 
-	(session.texts[nt])->buf = prn->buf;
-	prn->buf = NULL;
+	pbuf = gretl_print_get_buffer(prn);
+	session.texts[nt]->buf = g_strdup(pbuf);
 
 	strcpy((session.texts[nt])->name, tname);
 
@@ -1323,7 +1324,7 @@ int parse_savefile (const char *fname)
 
 int recreate_session (const char *fname)
 {
-    PRN *prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
+    PRN *prn = gretl_print_new(GRETL_PRINT_NULL);
 
 #ifdef SESSION_DEBUG
     fprintf(stderr, "recreate_session: fname = %s\n", fname);
@@ -1499,13 +1500,11 @@ static void open_boxplot (gui_obj *gobj)
 static void open_gui_text (gui_obj *gobj)
 { 
     GRETL_TEXT *text = (GRETL_TEXT *) gobj->data;
-    size_t sz = strlen(text->buf);
     PRN *prn;
 
-    prn = bufopen_with_size(sz + 1);
+    prn = gretl_print_new_with_buffer(g_strdup(text->buf));
 
     if (prn != NULL) { 
-	strcpy(prn->buf, text->buf);
 	view_buffer(prn, 80, 400, gobj->name, INFO, NULL);
     }
 }
@@ -1883,15 +1882,12 @@ void display_text_by_name (const char *tname)
 {
     GRETL_TEXT *text;
     PRN *prn;
-    size_t sz;
 
     text = get_text_by_name(tname);
     if (text == NULL) return;
 
-    sz = strlen(text->buf);
-    prn = bufopen_with_size(sz + 1);
+    prn = gretl_print_new_with_buffer(g_strdup(text->buf));
     if (prn != NULL) { 
-	strcpy(prn->buf, text->buf);
 	view_buffer(prn, 80, 400, tname, INFO, NULL);
     }
 }

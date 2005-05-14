@@ -852,11 +852,12 @@ void register_data (char *fname, const char *user_fname,
 int get_worksheet_data (char *fname, int datatype, int append,
 			int *gui_get_data)
 {
-    int err;
     void *handle;
     PRN *errprn;
+    const char *errbuf;
     FILE *fp;
     int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *);
+    int err = 0;
     
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
@@ -892,19 +893,27 @@ int get_worksheet_data (char *fname, int datatype, int append,
 
     if (err == -1) {
 	fprintf(stderr, "data import canceled\n");
-	if (gui_get_data != NULL) *gui_get_data = 1;
+	if (gui_get_data != NULL) {
+	    *gui_get_data = 1;
+	}
+	gretl_print_destroy(errprn);
 	return 0;
     }
 
+    errbuf = gretl_print_get_buffer(errprn);
+
     if (err) {
-	if (*errprn->buf != '\0') {
-	    errbox(errprn->buf);
+	if (errbuf != NULL && *errbuf != '\0') {
+	    errbox(errbuf);
 	} else {
 	    errbox(_("Failed to import spreadsheet data"));
 	}
+	gretl_print_destroy(errprn);
 	return 1;
     } else {
-	if (*errprn->buf != '\0') infobox(errprn->buf);
+	if (errbuf != NULL && *errbuf != '\0') {
+	    infobox(errbuf);
+	}
     }
 
     gretl_print_destroy(errprn);
@@ -919,7 +928,7 @@ int get_worksheet_data (char *fname, int datatype, int append,
 	}
     }
 
-    return 0;
+    return err;
 }
 
 static void copy_utf8_filename (char *targ, const char *src)
@@ -992,8 +1001,10 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	do_open_csv_box(trydatfile, OPEN_BOX, 0);
 	return;
     } else { /* native data */
-	PRN prn;
 	int clear_code = DATA_NONE;
+	PRN *errprn;
+
+	errprn = gretl_print_new(GRETL_PRINT_STDERR);
 
 	if (append) {
 	    clear_code = DATA_APPEND;
@@ -1001,15 +1012,15 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	    clear_code = DATA_CLEAR;
 	}
 
-	gretl_print_attach_file(&prn, stderr);
-
 	if (datatype == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, &datainfo, trydatfile, &paths, 
-			      clear_code, &prn, 1);
+			      clear_code, errprn, 1);
 	} else {
 	    err = gretl_get_data(&Z, &datainfo, trydatfile, &paths, 
-				 clear_code, &prn);
+				 clear_code, errprn);
 	}
+
+	gretl_print_destroy(errprn);
     }
 
     if (err) {
@@ -1122,15 +1133,15 @@ void save_session (char *fname)
 
     /* save output */
     switch_ext(fname2, fname, "txt");
-    prn = gretl_print_new(GRETL_PRINT_FILE, fname2);
+    prn = gretl_print_new_with_filename(fname2);
     if (prn == NULL) {
 	errbox(_("Couldn't open output file for writing"));
 	return;
     }
 
     /* preamble */
-    gui_logo(prn->fp);
-    session_time(prn->fp);
+    gui_logo(prn);
+    session_time(prn);
     pprintf(prn, _("Output from %s\n"), fname);
 
     /* actual commands output */
@@ -1747,6 +1758,8 @@ static void viewer_box_config (windata_t *vwin)
 
 static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
+    const char *pbuf = gretl_print_get_buffer(prn);
+
 #ifndef OLD_GTK
     GtkTextBuffer *tbuf;
 
@@ -1754,15 +1767,14 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
     if (vwin->role == SCRIPT_OUT) {
 	text_buffer_insert_colorized_buffer(tbuf, prn);
     } else {
-	gtk_text_buffer_set_text(tbuf, prn->buf, -1);
+	gtk_text_buffer_set_text(tbuf, pbuf, -1);
     }
 #else
     if (vwin->role == SCRIPT_OUT) {
 	text_buffer_insert_colorized_buffer(vwin->w, prn);
     } else {
 	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-			NULL, NULL, prn->buf, 
-			strlen(prn->buf));
+			NULL, NULL, pbuf, strlen(pbuf));
     }
 #endif
 }
@@ -2191,6 +2203,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 {
     windata_t *vwin;
     GtkWidget *close;
+    const char *pbuf;
 #ifndef OLD_GTK
     GtkTextBuffer *tbuf;
 #endif
@@ -2233,13 +2246,14 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 		     G_CALLBACK(delete_file_viewer), vwin);
     gtk_widget_show(close);
 
+    pbuf = gretl_print_get_buffer(prn);
+
     /* insert and then free the model buffer */
 #ifndef OLD_GTK
-    gtk_text_buffer_set_text(tbuf, prn->buf, strlen(prn->buf));
+    gtk_text_buffer_set_text(tbuf, pbuf, strlen(pbuf));
 #else
     gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-		    NULL, NULL, prn->buf, 
-		    strlen(prn->buf));
+		    NULL, NULL, pbuf, strlen(pbuf));
 #endif
     gretl_print_destroy(prn);
 

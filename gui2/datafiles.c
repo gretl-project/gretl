@@ -604,6 +604,7 @@ static void display_datafile_info (GtkWidget *w, gpointer data)
 {
     char hdrname[MAXLEN];
     windata_t *vwin = (windata_t *) data;
+    char *descrip;
     PRN *prn;
     gchar *fname;
     file_collection *coll;
@@ -624,11 +625,10 @@ static void display_datafile_info (GtkWidget *w, gpointer data)
     g_free(fname);
 #endif
 
-    prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
+    descrip = get_xml_description(hdrname);
 
-    prn->buf = get_xml_description(hdrname);
-
-    if (prn->buf != NULL) {
+    if (descrip != NULL) {
+	prn = gretl_print_new_with_buffer(descrip);
 	view_buffer(prn, 80, 320, _("gretl: data header"), INFO, NULL);
     } else {
 	errbox(_("Failed to retrieve description of data"));

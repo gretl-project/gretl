@@ -366,7 +366,7 @@ char *user_fopen (const char *fname, char *fullname, PRN **pprn)
     strcpy(fullname, paths.userdir);
     strcat(fullname, fname);
 
-    *pprn = gretl_print_new(GRETL_PRINT_FILE, fullname);
+    *pprn = gretl_print_new_with_filename(fullname);
 
     if (*pprn == NULL) {
 	errbox(_("Couldn't open file for writing"));
@@ -378,7 +378,7 @@ char *user_fopen (const char *fname, char *fullname, PRN **pprn)
 
 gint bufopen (PRN **pprn)
 {
-    *pprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+    *pprn = gretl_print_new(GRETL_PRINT_BUFFER);
 
     if (*pprn == NULL) {
 	errbox(_("Out of memory allocating output buffer"));
@@ -386,27 +386,6 @@ gint bufopen (PRN **pprn)
     }
 
     return 0;
-}
-
-PRN *bufopen_with_size (size_t sz)
-{
-    PRN *prn;
-
-    prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
-    if (prn == NULL) {
-	errbox(_("Out of memory allocating output buffer"));
-	return NULL;
-    }
-
-    prn->buf = malloc(sz);
-
-    if (prn->buf == NULL) {
-	errbox(_("Out of memory allocating output buffer"));
-	free(prn);
-	return NULL;
-    }
-
-    return prn;
 }
 
 /* ........................................................... */
@@ -481,8 +460,11 @@ static int cmd_init (char *s)
     if (bufopen(&echo)) {
 	err = 1;
     } else {
+	const char *buf;
+
 	echo_cmd(&cmd, datainfo, s, 0, 1, 0, echo);
-	err = add_command_to_stack(echo->buf);
+	buf = gretl_print_get_buffer(echo);
+	err = add_command_to_stack(buf);
 	gretl_print_destroy(echo);
     }
 
@@ -1070,12 +1052,11 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
 	    edit_header(NULL, 0, NULL);
 	}
     } else {
+	char *buf = g_strdup(datainfo->descrip);
 	PRN *prn;
-	size_t sz = strlen(datainfo->descrip);
-
-	prn = bufopen_with_size(sz + 1);
-	if (prn != NULL) { 
-	    strcpy(prn->buf, datainfo->descrip);
+	
+	if (buf != NULL) {
+	    prn = gretl_print_new_with_buffer(buf);
 	    view_buffer(prn, 80, 400, _("gretl: data info"), INFO, NULL);
 	}
     }
@@ -1392,14 +1373,16 @@ static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
 {
     if (w != NULL) {
 	PRN *prn;
+	const char *txt;
 
 	if (bufopen(&prn)) return;
 
 	gretl_model_print_last_test(pmod, prn);
+	txt = gretl_print_get_buffer(prn);
 	
 	gtk_text_freeze(GTK_TEXT(w));
-	gtk_text_insert(GTK_TEXT(w), fixed_font, NULL, NULL, prn->buf, 
-			strlen(prn->buf));
+	gtk_text_insert(GTK_TEXT(w), fixed_font, NULL, NULL, txt, 
+			strlen(txt));
 	gtk_text_thaw(GTK_TEXT(w));
 	gretl_print_destroy(prn);
     }
@@ -1412,14 +1395,16 @@ static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
     if (w != NULL) {
 	GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
 	GtkTextIter iter;
+	const char *txt;
 	PRN *prn;
 
 	if (bufopen(&prn)) return;
 
 	gretl_model_print_last_test(pmod, prn);
+	txt = gretl_print_get_buffer(prn);
 
 	gtk_text_buffer_get_end_iter(buf, &iter);
-	gtk_text_buffer_insert(buf, &iter, prn->buf, -1);
+	gtk_text_buffer_insert(buf, &iter, txt, -1);
 	gretl_print_destroy(prn);
     }
 }
@@ -1957,10 +1942,11 @@ static int model_output (MODEL *pmod, PRN *prn)
 
 static gint check_model_cmd (char *modelgenr)
 {
+    PRN *gprn;
+    const char *genbuf;
     int err;
-    PRN *getgenr;
 
-    if (bufopen(&getgenr)) return 1;
+    if (bufopen(&gprn)) return 1;
 
     *cmd.param = '\0';
 
@@ -1970,17 +1956,19 @@ static gint check_model_cmd (char *modelgenr)
 	return 1;
     }	
 
-    getcmd(cmdline, datainfo, &cmd, &ignore, &Z, getgenr); 
+    getcmd(cmdline, datainfo, &cmd, &ignore, &Z, gprn); 
     if (cmd.errcode) {
 	gui_errmsg(cmd.errcode);
 	return 1;
     }
 
-    if (*getgenr->buf != '\0' && modelgenr != NULL) {
-	strcpy(modelgenr, getgenr->buf);
+    genbuf = gretl_print_get_buffer(gprn);
+
+    if (genbuf != NULL && *genbuf != '\0' && modelgenr != NULL) {
+	strcpy(modelgenr, genbuf);
     }
 
-    gretl_print_destroy(getgenr);
+    gretl_print_destroy(gprn);
 
     return 0;
 }
@@ -2904,7 +2892,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 		NULL);
 
     /* show the graph too */
-    if (plot_freq(freq, NORMAL) == 0) {
+    if (plot_freq(freq, DIST_NORMAL) == 0) {
 	register_graph();
     }
 
@@ -2930,11 +2918,11 @@ series_has_negative_vals (const double *x)
 void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 {
     FREQDIST *freq;
-    gretlopt opt = (dist == GAMMA)? OPT_O : OPT_NONE;
+    gretlopt opt = (dist == DIST_GAMMA)? OPT_O : OPT_NONE;
     int v = mdata->active_var;
 
     gretl_command_sprintf("freq %s%s", datainfo->varname[v],
-			  (dist == GAMMA)? " --gamma" : "");
+			  (dist == DIST_GAMMA)? " --gamma" : "");
 
     if (check_and_record_command()) {
 	return;
@@ -2943,7 +2931,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
     freq = get_freq(v, (const double **) Z, datainfo, 1, opt);
 
     if (!freq_error(freq, NULL)) { 
-	if (dist == GAMMA && series_has_negative_vals(Z[v])) {
+	if (dist == DIST_GAMMA && series_has_negative_vals(Z[v])) {
 	    errbox(_("Data contain negative values: gamma distribution not "
 		   "appropriate"));
 	} else {
@@ -3046,24 +3034,21 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	return;
     }
 
-    if (bufopen(&prn)) {
-	close_plugin(handle);
-	return; 
-    }
-
     err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
 			 &graph, prog, workdir, errtext);
     
     close_plugin(handle);
 
     if (err) {
-	if (*errtext != 0) errbox(errtext);
-	else errbox((opt == TRAMO)? _("TRAMO command failed") : 
+	if (*errtext != 0) {
+	    errbox(errtext);
+	} else {
+	    errbox((opt == TRAMO)? _("TRAMO command failed") : 
 		   _("X-12-ARIMA command failed"));
-	gretl_print_destroy(prn);
+	}
 	return;
-    } else {
-	if (*fname == 0) return;
+    } else if (*fname == '\0') {
+	return;
     }
 
 
@@ -3071,12 +3056,10 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     if (databuf == NULL) {
 	errbox((opt == TRAMO)? _("TRAMO command failed") : 
 	       _("X-12-ARIMA command failed"));
-	gretl_print_destroy(prn);
 	return;
     }
 
-    free(prn->buf);
-    prn->buf = databuf;
+    prn = gretl_print_new_with_buffer(databuf);
 
     view_buffer(prn, (opt == TRAMO)? 106 : 84, 500, 
 		(opt == TRAMO)? _("gretl: TRAMO analysis") :
@@ -4978,6 +4961,7 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
     } else if (code == LATEX_VIEW_TABULAR) {
 	err = tabprint(pmod, datainfo, texfile, OPT_O);
     } else if (code == LATEX_VIEW_MODELTABLE) {
+	const char *buf;
 	PRN *prn;
 	FILE *fp;
 
@@ -4990,7 +4974,8 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 	    gretl_print_destroy(prn);
 	    return;
 	} 
-	fputs(prn->buf, fp);
+	buf = gretl_print_get_buffer(prn);
+	fputs(buf, fp);
 	fclose(fp);
 	gretl_print_destroy(prn);
     }
@@ -5047,7 +5032,7 @@ void do_save_tex (char *fname, int code, MODEL *pmod)
 {
     PRN *texprn;
 
-    texprn = gretl_print_new(GRETL_PRINT_FILE, fname);
+    texprn = gretl_print_new_with_filename(fname);
     if (texprn == NULL) {
 	errbox(_("Couldn't open tex file for writing"));
 	return;
@@ -5441,11 +5426,13 @@ int gui_exec_line (char *line,
 	if (exec_code == CONSOLE_EXEC) {
 	    /* catch any model-related genr commands */
 	    PRN *genprn;
+	    const char *genbuf;
 
 	    bufopen(&genprn);
 	    getcmd(line, datainfo, &cmd, &ignore, &Z, genprn);
-	    if (genprn->buf[0] != '\0') {
-		add_command_to_stack(genprn->buf);
+	    genbuf = gretl_print_get_buffer(genprn);
+	    if (genbuf != NULL && *genbuf != '\0') {
+		add_command_to_stack(genbuf);
 	    }
 	    gretl_print_destroy(genprn);
 	} else {

@@ -150,6 +150,7 @@ static void series_view_print (windata_t *vwin)
 #ifndef OLD_GTK
     GtkTextBuffer *tbuf;
 #endif
+    const char *pbuf;
     PRN *prn;
     series_view_t *sview = (series_view_t *) vwin->data;
     int t;
@@ -185,16 +186,17 @@ static void series_view_print (windata_t *vwin)
 	}
     }
 
+    pbuf = gretl_print_get_buffer(prn);
+
     /* clear existing text buffer and insert data */
 #ifndef OLD_GTK
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-    gtk_text_buffer_set_text(tbuf, prn->buf, -1);
+    gtk_text_buffer_set_text(tbuf, pbuf, -1);
 #else
     gtk_text_freeze(GTK_TEXT(vwin->w));
     gtk_editable_delete_text(GTK_EDITABLE(vwin->w), 0, -1);
     gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-		    NULL, NULL, prn->buf, 
-		    strlen(prn->buf));
+		    NULL, NULL, pbuf, strlen(pbuf));
     gtk_text_thaw(GTK_TEXT(vwin->w));
 #endif
 

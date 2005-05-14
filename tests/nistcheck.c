@@ -984,7 +984,7 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 
     sprintf(datadir, "%snist", datapath);
 
-    prn = gretl_print_new(GRETL_PRINT_FILE, outfile); 
+    prn = gretl_print_new_with_filename(outfile); 
 
     nist_intro(prn);
 

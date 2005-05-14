@@ -240,7 +240,7 @@ void check_for_console (PRN *prn)
 {
     if (prn == NULL) return;
 
-    if (prn->fp == stdout || prn->fp == stderr) {
+    if (printing_to_standard_stream(prn)) {
 	printing_to_console = 1;
     } else {
 	printing_to_console = 0;

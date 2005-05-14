@@ -837,13 +837,11 @@ int gretl_vector_set (gretl_vector *v, int i, double x)
 void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
 {
     int i, j;
-    PRN myprn;
+    PRN *myprn = NULL;
 
     if (prn == NULL) {
-	myprn.fp = stdout;
-	myprn.fpaux = NULL;
-	myprn.buf = NULL;
-	prn = &myprn;
+	myprn = gretl_print_new(GRETL_PRINT_STDOUT);
+	prn = myprn;
     }
 
     if (msg != NULL && *msg != '\0') {
@@ -858,6 +856,10 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
     }
 
     pputc(prn, '\n');
+
+    if (myprn != NULL) {
+	gretl_print_destroy(myprn);
+    }
 }
 
 /**

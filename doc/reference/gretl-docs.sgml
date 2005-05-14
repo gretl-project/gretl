@@ -21,6 +21,7 @@
 <!ENTITY gretl-matrix   SYSTEM "xml/gretl_matrix.xml">
 <!ENTITY gretl-model    SYSTEM "xml/gretl_model.xml">
 <!ENTITY gretl-paths    SYSTEM "xml/gretl_paths.xml">
+<!ENTITY gretl-prn      SYSTEM "xml/gretl_prn.xml">
 <!ENTITY gretl-restrict SYSTEM "xml/gretl_restrict.xml">
 <!ENTITY gretl-string-table SYSTEM "xml/gretl_string_table.xml">
 <!ENTITY gretl-utils    SYSTEM "xml/gretl_utils.xml">
@@ -111,6 +112,7 @@
     &printout;  
     &modelprint;
     &texprint;
+    &gretl-prn;
   </chapter>
 
   <chapter id="ch-graphing">

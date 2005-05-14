@@ -533,7 +533,7 @@ static const char *aux_string (int aux, PRN *prn)
 
 /* ......................................................... */
 
-const char *estimator_string (int ci, int format)
+const char *estimator_string (int ci, PRN *prn)
 {
     if (ci == OLS || ci == VAR) return N_("OLS");
     else if (ci == WLS) return N_("WLS"); 
@@ -551,15 +551,13 @@ const char *estimator_string (int ci, int format)
     else if (ci == LOGISTIC) return N_("Logistic");
     else if (ci == GARCH) return N_("GARCH");
     else if (ci == CORC) {
-	if (is_tex(format)) return N_("Cochrane--Orcutt");
+	if (tex_format(prn)) return N_("Cochrane--Orcutt");
 	else return N_("Cochrane-Orcutt");
-    }
-    else if (ci == HILU) {
-	if (is_tex(format)) return N_("Hildreth--Lu");
+    } else if (ci == HILU) {
+	if (tex_format(prn)) return N_("Hildreth--Lu");
 	else return N_("Hildreth-Lu");
-    }
-    else if (ci == PWE) {
-	if (is_tex(format)) return N_("Prais--Winsten");
+    } else if (ci == PWE) {
+	if (tex_format(prn)) return N_("Prais--Winsten");
 	else return N_("Prais-Winsten");
     }
 
@@ -578,7 +576,7 @@ my_estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("WLS");
 	}
     } else {
-	return estimator_string(pmod->ci, prn->format);
+	return estimator_string(pmod->ci, prn);
     } 
 }
 
@@ -1004,7 +1002,7 @@ static void print_model_heading (const MODEL *pmod,
 static void model_format_start (PRN *prn)
 {
     if (tex_format(prn)) {
-	if (doc_format(prn)) {
+	if (tex_doc_format(prn)) {
 	    gretl_tex_preamble(prn, 0);
 	} else {
 	    pputs(prn, "%% You'll need to \\usepackage{dcolumn}\n\n");
@@ -1125,7 +1123,7 @@ static void model_format_end (PRN *prn)
 {
     if (tex_format(prn)) {
 	pputs(prn, "\n\\end{center}\n");
-	if (doc_format(prn)) {
+	if (tex_doc_format(prn)) {
 	    pputs(prn, "\n\\end{document}\n"); 
 	}
     } else if (rtf_format(prn)) {
