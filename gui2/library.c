@@ -3357,7 +3357,7 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 	}
 
 	if (order > 0) {
-	    gretl_command_sprintf("lags %d;%s", order, liststr);
+	    gretl_command_sprintf("lags %d ;%s", order, liststr);
 	} else {
 	    gretl_command_sprintf("lags%s", liststr);
 	}

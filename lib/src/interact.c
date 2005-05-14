@@ -1693,7 +1693,7 @@ pprint_maybe_quoted_str (PRN *prn, const char *s)
  * @batch: set to 1 for batch mode, 0 for interactive.
  * @gui: 1 for the gretl GUI, 0 for command-line program.
  * @loopstack: 1 if stacking commands for a loop, else 0.
- * @prn: pointer to gretl printing struct.
+ * @prn: pointer to gretl printing struct (or %NULL).
  *
  * Echoes the user command represented by @pcmd and @line.
  * 
@@ -1709,7 +1709,7 @@ pprint_maybe_quoted_str (PRN *prn, const char *s)
    dimensions in play:
 
    * batch mode vs interactive mode ("batch" param)
-   * command client program vs gui program ("gui" param)
+   * command-line client program vs gui program ("gui" param)
    * stacking loop commands or not ("loopstack" param)
    
    If you are tempted to optimize one or other aspect, please make
@@ -1748,8 +1748,9 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	return;
     }
 
-    if (*line == '\0' || *line == '!' || !strcmp(line, "quit"))
+    if (*line == '\0' || *line == '!' || !strcmp(line, "quit")) {
 	return;
+    }
 
     if (cmd->ci == AR || cmd->ci == ARMA || cmd->ci == GARCH) {
 	gotsep = 0;
@@ -1782,6 +1783,8 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	if (!batch) {
 	    pprintf(prn, "%s", cmd->word);
 	    if (cmd->ci == RHODIFF) {
+		pprintf(prn, " %s;", cmd->param);
+	    } else if (cmd->ci == LAGS && cmd->param[0] != '\0') {
 		pprintf(prn, " %s;", cmd->param);
 	    } else if (*cmd->param && !hold_param(cmd->ci)) {
 		pprint_maybe_quoted_str(prn, cmd->param);
@@ -1853,8 +1856,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	}
     } /* end if command has list of variables */
 
-    else if ((cmd->ci == GENR || cmd->ci == SMPL) && 
-	     strlen(line) > SAFELEN - 2) {
+    else if ((cmd->ci == GENR || cmd->ci == SMPL) && strlen(line) > SAFELEN - 2) {
 	real_safe_print_line(line, cli, batch, 0, loopstack, prn);
     }
 

@@ -466,10 +466,10 @@ int gretl_list_duplicates (const int *list, int ci)
 
     if (ci == ARCH) {
 	start = 3;
-    }
-
-    if (ci == TSLS || ci == AR || ci == ARMA || 
-	ci == SCATTERS || ci == MPOLS || ci == GARCH) {
+    } else if (ci == LAGS && list[2] == LISTSEP) {
+	start = 3;
+    } else if (ci == TSLS || ci == AR || ci == ARMA || 
+	       ci == SCATTERS || ci == MPOLS || ci == GARCH) {
 	for (i=2; i<list[0]; i++) {
 	    if (list[i] == LISTSEP) {
 		start = i+1;

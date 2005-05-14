@@ -30,7 +30,7 @@ for f in \
   gpt_dialog.c gpt_dialog.h \
   gui_utils.c gui_utils.h \
   helpfiles.c helpfiles.h \
-  library.c library.h \
+  library.c library.h lib_private.h \
   menustate.c menustate.h \
   model_table.c model_table.h \
   objectsave.c objectsave.h \
