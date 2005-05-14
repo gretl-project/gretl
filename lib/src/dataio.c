@@ -1896,9 +1896,10 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 
     pprintf(prn, "%s %s\n\n", tmp, print_time(&prntime));
 
-    if (pdinfo->descrip != NULL && strlen(pdinfo->descrip)) {
+    if (pdinfo->descrip != NULL && *pdinfo->descrip != '\0') {
 	pprintf(prn, "%s:\n\n", _("Description"));
-	pprintf(prn, "%s\n\n", pdinfo->descrip);
+	pputs(prn, pdinfo->descrip);
+	pputs(prn, "\n\n");
     }
 
     dataset_type_string(tmp, pdinfo);

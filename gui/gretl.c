@@ -703,8 +703,9 @@ int main (int argc, char *argv[])
 	PRN *prn; 
 
 	prn = gretl_print_new(GRETL_PRINT_STDERR);
-	if (prn == NULL) 
+	if (prn == NULL) {
 	    exit(EXIT_FAILURE);
+	}
 
 	strcpy(paths.datfile, filearg);
 

@@ -1759,7 +1759,6 @@ static void viewer_box_config (windata_t *vwin)
 static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
     const char *pbuf = gretl_print_get_buffer(prn);
-
 #ifndef OLD_GTK
     GtkTextBuffer *tbuf;
 

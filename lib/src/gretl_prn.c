@@ -29,6 +29,8 @@ struct PRN_ {
     int fixed;
 };
 
+#undef PRN_DEBUG
+
 /**
  * gretl_print_destroy:
  * @prn: pointer to gretl printing struct.
@@ -56,8 +58,9 @@ void gretl_print_destroy (PRN *prn)
     }
 
     if (prn->buf != NULL) {
-#ifdef PRN_DEBUG
-  	fprintf(stderr, "freeing buffer at %p\n", (void *) prn->buf); 
+#if PRN_DEBUG
+  	fprintf(stderr, "gretl_print_destroy: freeing buffer at %p\n", 
+		(void *) prn->buf); 
 #endif
 	free(prn->buf);
     }
@@ -75,6 +78,11 @@ static PRN *real_gretl_print_new (PrnType ptype,
 	fprintf(stderr, _("gretl_prn_new: out of memory\n"));
 	return NULL;
     }
+
+#if PRN_DEBUG
+    fprintf(stderr, "real_gretl_print_new: type=%d, fname='%s', buf=%p\n",
+	    ptype, fname, (void *) buf);
+#endif    
 
     prn->fp = NULL;
     prn->fpaux = NULL;
@@ -98,10 +106,20 @@ static PRN *real_gretl_print_new (PrnType ptype,
 	if (buf != NULL) {
 	    prn->buf = buf;
 	    prn->fixed = 1;
-	} else if (pprintf(prn, "@init") < 0) {
-	    fprintf(stderr, _("gretl_prn_new: out of memory\n"));
-	    free(prn);
-	    prn = NULL;
+#if PRN_DEBUG
+	    fprintf(stderr, "prn with fixed buffer\n");
+#endif
+	} else {
+	    int p = pprintf(prn, "@init");
+
+	    if (p < 0) {
+		fprintf(stderr, _("gretl_prn_new: out of memory\n"));
+		free(prn);
+		prn = NULL;
+	    }
+#if PRN_DEBUG
+	    fprintf(stderr, "new prn buffer, p = %d\n", p);
+#endif
 	}
     }
 
@@ -132,6 +150,10 @@ PRN *gretl_print_new (PrnType ptype)
 	fprintf(stderr, "gretl_print_new: needs a filename\n");
 	return NULL;
     }
+
+#if PRN_DEBUG
+    fprintf(stderr, "gretl_print_new() called, type = %d\n", ptype);
+#endif
 
     return real_gretl_print_new(ptype, NULL, NULL);
 }
@@ -243,7 +265,7 @@ static int realloc_prn_buffer (PRN *prn, size_t blen)
     char *tmp;
     int err = 0;
 
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
     fprintf(stderr, "%d bytes left\ndoing realloc(%p, %d)\n",
 	    prn->bufsize - blen, prn->buf, 2 * prn->bufsize);
 #endif
@@ -255,7 +277,7 @@ static int realloc_prn_buffer (PRN *prn, size_t blen)
 	err = 1;
     } else {
 	prn->buf = tmp;
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
 	fprintf(stderr, "realloc: prn->buf is %d bytes at %p\n",
 		prn->bufsize, (void *) prn->buf);
 #endif
@@ -274,7 +296,8 @@ static int realloc_prn_buffer (PRN *prn, size_t blen)
  *
  * Multi-purpose printing function: can output to stream, to buffer
  * or to nowhere (silently discarding the output), depending on
- * how @prn was initialized.
+ * how @prn was initialized.  It's not advisable to use this function
+ * for large chunks of text: use #pputs instead.
  * 
  * Returns: 0 on successful completion, 1 on memory allocation
  * failure.
@@ -299,7 +322,7 @@ int pprintf (PRN *prn, const char *template, ...)
     if (strncmp(template, "@init", 5) == 0) {
 	prn->bufsize = 2048;
 	prn->buf = malloc(prn->bufsize);
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
   	fprintf(stderr, "pprintf: malloc'd %d bytes at %p\n", prn->bufsize,  
 		(void *) prn->buf); 
 #endif
@@ -321,12 +344,12 @@ int pprintf (PRN *prn, const char *template, ...)
     }
 
     va_start(args, template);
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
     fprintf(stderr, "printing at %p\n", (void *) (prn->buf + blen));
 #endif
     plen = vsprintf(prn->buf + blen, template, args);
     va_end(args);
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
     fprintf(stderr, "printed %d byte(s)\n", strlen(prn->buf) - blen);
 #endif
 
@@ -345,7 +368,7 @@ int pprintf (PRN *prn, const char *template, ...)
 int pputs (PRN *prn, const char *s)
 {
     size_t blen;
-    int slen;
+    int slen, bytesleft;
 
     if (prn == NULL || prn->fixed) return 0;
 
@@ -360,11 +383,19 @@ int pputs (PRN *prn, const char *s)
 
     blen = strlen(prn->buf);
 
-    if (prn->bufsize - blen < 1024) {
+    bytesleft = prn->bufsize - blen;
+
+    while (prn->bufsize - blen < 1024 || bytesleft <= slen) {
 	if (realloc_prn_buffer(prn, blen)) {
 	    return -1;
 	}
-    }
+	bytesleft = prn->bufsize - blen;
+    }	
+
+#if PRN_DEBUG
+    fprintf(stderr, "pputs: bufsize=%d, blen=%d, bytesleft=%d, copying %d bytes\n", 
+	    (int) prn->bufsize, (int) blen, bytesleft, slen);
+#endif
 
     strcpy(prn->buf + blen, s);
 
@@ -401,6 +432,9 @@ int pputc (PRN *prn, int c)
 	}
     }
 
+#if PRN_DEBUG
+    fprintf(stderr, "pputc: adding char at %p\n", (void *) (prn->buf + blen));
+#endif
     prn->buf[blen] = c;
     prn->buf[blen + 1] = '\0';
 

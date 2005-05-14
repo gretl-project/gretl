@@ -327,7 +327,8 @@ void print_report (gpointer data, guint unused, GtkWidget *widget)
 
     if (bufopen(&prn)) return;
 
-    data_report (datainfo, &paths, prn);
+    data_report(datainfo, &paths, prn);
+
     view_buffer(prn, 77, 400, _("gretl: data summary"), 
 		DATA_REPORT, NULL);
 }
