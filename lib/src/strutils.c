@@ -253,7 +253,7 @@ char *charsub (char *str, char find, char repl)
  * @str: the string to check.
  * @sfx: the suffix to check for.
  *
- * Returns: 1 if @str ends with $sfx, 0 otherwise.
+ * Returns: 1 if @str ends with @sfx, 0 otherwise.
  */
 
 int has_suffix (const char *str, const char *sfx)
