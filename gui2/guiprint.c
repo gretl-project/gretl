@@ -95,7 +95,8 @@ void winprint (char *fullbuf, char *selbuf)
     DOCINFO di;
     TEXTMETRIC lptm;
     int px, x, y, incr, page_lines = 47;
-    gchar *printbuf, *hdrstart, hdr[90];
+    gchar *printbuf = NULL;
+    gchar *hdrstart, hdr[90];
     size_t len;
 
     memset(&pdlg, 0, sizeof pdlg);

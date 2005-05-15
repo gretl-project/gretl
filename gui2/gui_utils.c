@@ -3292,6 +3292,8 @@ real_locale_from_utf8 (const gchar *src, int force)
     const gchar *cset = NULL;
 
     if (!force && g_get_charset(&cset)) {
+	/* According to the glib manual, g_get_charset returns TRUE if 
+	   the returned charset is UTF-8 */ 
 	return g_strdup(src);
     }
 

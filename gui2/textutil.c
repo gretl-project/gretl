@@ -653,10 +653,11 @@ void window_print (windata_t *vwin, guint u, GtkWidget *widget)
     GtkEditable *gedit = GTK_EDITABLE(vwin->w);
 
     buf = gtk_editable_get_chars(gedit, 0, -1);
-    if (gedit->has_selection)
+    if (gedit->has_selection) {
 	selbuf = gtk_editable_get_chars(gedit, 
 					gedit->selection_start_pos,
 					gedit->selection_end_pos);
+    }
 # endif /* OLD_GTK */
 
     winprint(buf, selbuf);
