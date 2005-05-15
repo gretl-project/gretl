@@ -478,7 +478,7 @@ void win32_make_user_dirs (void)
     win_mkdir(dirname);
 }
 
-static int win_copy_buf (char *buf, int format, size_t buflen)
+static int win_copy_buf (const char *buf, int format, size_t buflen)
 {
     HGLOBAL winclip;
     LPTSTR ptr;

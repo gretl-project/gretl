@@ -891,7 +891,7 @@ int main (int argc, char *argv[])
 	strcpy(datadir, argv[2]);
     }
 
-    prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL); 
+    prn = gretl_print_new(GRETL_PRINT_STDOUT); 
 
     for (j=0; j<ntests; j++) {
 	if (read_nist_file(nist_files[j], &Z, &datainfo, &certvals,
