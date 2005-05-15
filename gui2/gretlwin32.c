@@ -550,7 +550,9 @@ static int win_copy_buf (char *buf, int format, size_t buflen)
 
 int prn_to_clipboard (PRN *prn, int copycode)
 {
-    return win_copy_buf(prn->buf, copycode, 0);
+    const char *buf = gretl_print_get_buffer(prn);
+
+    return win_copy_buf(buf, copycode, 0);
 }
 
 int win_buf_to_clipboard (const char *buf)
