@@ -115,8 +115,6 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn);
 
 int is_gzipped (const char *fname);
 
-int has_gz_suffix (const char *fname);
-
 void gz_switch_ext (char *targ, char *src, char *ext);
 
 int merge_data (double ***pZ, DATAINFO *pdinfo,

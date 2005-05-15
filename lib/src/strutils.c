@@ -253,24 +253,31 @@ char *charsub (char *str, char find, char repl)
  * @str: the string to check.
  * @sfx: the suffix to check for.
  *
- * Returns: 1 if @str ends with @sfx, 0 otherwise.
+ * Returns: 1 if @str ends with @sfx (on a case-insensitive
+ * comparison), 0 otherwise.
  */
 
 int has_suffix (const char *str, const char *sfx)
 {
-    int diff;
+    int diff, ret = 0;
 
-    if (str == NULL || sfx == NULL) {
-	return 0;
-    }
-
-    diff = strlen(str) - strlen(sfx);
-
-    if (diff >= 0 && !strcmp(str + diff, sfx)) {
-	return 1;
+    if (str != NULL && sfx != NULL) {
+	diff = strlen(str) - strlen(sfx);
+	if (diff >= 0) {
+	    ret = 1;
+	    str += diff;
+	    while (*str) {
+		if (*str != *sfx && *str != toupper(*sfx)) {
+		    ret = 0;
+		    break;
+		}
+		str++;
+		sfx++;
+	    }
+	}
     }
     
-    return 0;
+    return ret;
 }
 
 /**

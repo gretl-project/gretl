@@ -2403,7 +2403,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case STORE:
 	if (*cmd->param != '\0') {
-	    if ((cmd->opt & OPT_Z) && !has_gz_suffix(cmd->param)) {
+	    if ((cmd->opt & OPT_Z) && !has_suffix(cmd->param, ".gz")) {
 		pprintf(prn, _("store: using filename %s.gz\n"), cmd->param);
 	    } else {
 		pprintf(prn, _("store: using filename %s\n"), cmd->param);

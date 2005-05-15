@@ -1515,7 +1515,6 @@ static int data_option (gretlopt flag)
  * of variables.
  * 
  * Returns: 0 on successful completion, non-zero on error.
- * 
  */
 
 int write_data (const char *fname, const int *list, 
@@ -1561,7 +1560,7 @@ int write_data (const char *fname, const int *list,
     if (opt != GRETL_DATA_R && opt != GRETL_DATA_R_ALT && 
 	opt != GRETL_DATA_CSV && opt != GRETL_DATA_OCTAVE &&
 	opt != GRETL_DATA_DAT) {
-	if (!has_gz_suffix(datfile)) {
+	if (!has_suffix(datfile, ".gz")) {
 	    switch_ext(hdrfile, datfile, "hdr");
 	    switch_ext(lblfile, datfile, "lbl");
 	} else {
@@ -1786,12 +1785,14 @@ int write_data (const char *fname, const int *list,
 	fputc('\n', fp);
     } else if (opt == GRETL_DATA_DAT) { 
 	/* PcGive: data file with load info */
+	int pd = pdinfo->pd;
+
 	for (i=1; i<=list[0]; i++) {
 	    fprintf(fp, ">%s ", pdinfo->varname[list[i]]);
-	    if (pdinfo->structure == TIME_SERIES) {
+	    if (pdinfo->structure == TIME_SERIES &&
+		(pd == 1 || pd == 4 || pd == 12)) {
 		double ts = obs_float(pdinfo, 0);
 		double te = obs_float(pdinfo, 1);
-		int pd = pdinfo->pd;
 			   
 		fprintf(fp, "%d %d %d %d %d\n",
 			(int) (floor(ts)), (int) (ts - floor(ts)) * pd + 1,
@@ -2066,27 +2067,6 @@ int is_gzipped (const char *fname)
 }
 
 /**
- * has_gz_suffix:
- * @fname: filename to examine.
- * 
- * Determine if the given filename ends with ".gz".
- * 
- * Returns: 1 in case of a ".gz" suffix, otherwise 0.
- * 
- */
-
-int has_gz_suffix (const char *fname)
-{
-    size_t n = strlen(fname);
-	
-    if (n < 4 || strncmp(fname + n - 3, ".gz", 3)) {
-	return 0;
-    } else {
-	return 1;
-    }
-}
-
-/**
  * gz_switch_ext:
  * @targ: target or "output" filename (must be pre-allocated).
  * @src: "source or "input" filename.
@@ -2171,7 +2151,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
 
     /* get filenames organized */
     *hdrfile = '\0';
-    gzsuff = has_gz_suffix(datfile);
+    gzsuff = has_suffix(datfile, ".gz");
 
     if (addpath(datfile, ppaths, 0) == NULL) { /* not found yet */
 	char tryfile[MAXLEN];
@@ -4372,44 +4352,6 @@ static int xmlfile (const char *fname)
     return ret;
 } 
 
-#undef WDBG
-
-static int file_has_suffix (const char *fname, const char *sfx)
-{
-    const char *p = strrchr(fname, '.');
-    int ret = 1;
-
-#ifdef WDBG
- {
-    static int i;
-    char tmp[16];
-    FILE *fdg;
-
-    sprintf(tmp, "debug%d.txt", ++i);
-    fdg = gretl_fopen(tmp, "w");
-    fprintf(fdg, "file_has_suffix: testing '%s' for the suffix '%s'\n",
-	    fname, sfx);
-    fclose(fdg);
- }
-#endif
-
-    if (p == NULL) return 0;
-
-    p++;
-    while (*p && *sfx) {
-	int c = *sfx;
-
-	if (*p != c && *p != toupper(c)) {
-	    ret = 0;
-	    break;
-	}
-	p++;
-	sfx++;
-    }
-
-    return ret;
-}
-
 /**
  * detect_filetype:
  * @fname: name of file to examine.
@@ -4430,24 +4372,24 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     FILE *fp;
 
     /* might be a script file? (watch out for DOS-mangled names) */
-    if (file_has_suffix(fname, "inp") ||
-	file_has_suffix(fname, "gre"))
+    if (has_suffix(fname, ".inp") ||
+	has_suffix(fname, ".gre"))
 	return GRETL_SCRIPT;
-    if (file_has_suffix(fname, "gretl"))
+    if (has_suffix(fname, ".gretl"))
 	return GRETL_SCRIPT; 
-    if (file_has_suffix(fname, "gnumeric"))
+    if (has_suffix(fname, ".gnumeric"))
 	return GRETL_GNUMERIC;
-    if (file_has_suffix(fname, "xls"))
+    if (has_suffix(fname, ".xls"))
 	return GRETL_EXCEL;
-    if (file_has_suffix(fname, "bin"))
+    if (has_suffix(fname, ".bin"))
 	return GRETL_NATIVE_DB;
-    if (file_has_suffix(fname, "rat"))
+    if (has_suffix(fname, ".rat"))
 	return GRETL_RATS_DB;
-    if (file_has_suffix(fname, "csv"))
+    if (has_suffix(fname, ".csv"))
 	return GRETL_CSV_DATA;
-    if (file_has_suffix(fname, "txt"))
+    if (has_suffix(fname, ".txt"))
 	return GRETL_CSV_DATA;
-    if (file_has_suffix(fname, "m"))
+    if (has_suffix(fname, ".m"))
 	return GRETL_OCTAVE;
 
     addpath(fname, ppaths, 0); 
@@ -4462,7 +4404,7 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     }
 
     /* look at extension */
-    if (file_has_suffix(fname, "box")) {
+    if (has_suffix(fname, ".box")) {
 	ftype = GRETL_BOX_DATA;
     }
 

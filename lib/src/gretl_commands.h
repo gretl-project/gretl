@@ -178,6 +178,7 @@ enum gretl_cmd_codes {
                         c == RMPLOT || \
                         c == RUNS || \
                         c == SPEARMAN || \
+                        c == SUMMARY || \
                         c == TESTUHAT || \
                         c == VIF || \
                         c == VARTEST)

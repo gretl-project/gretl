@@ -94,6 +94,7 @@ void winprint (char *fullbuf, char *selbuf)
     HFONT fixed_font;
     DOCINFO di;
     TEXTMETRIC lptm;
+    BYTE charset;
     int px, x, y, incr, page_lines = 47;
     gchar *printbuf = NULL;
     gchar *hdrstart, hdr[90];
@@ -120,6 +121,13 @@ void winprint (char *fullbuf, char *selbuf)
 
     /* logical pixels per inch */
     px = GetDeviceCaps(dc, LOGPIXELSY);
+
+    /* select character set */
+    if (use_latin_2()) {
+	charset = EASTEUROPE_CHARSET;
+    } else {
+	charset = ANSI_CHARSET;
+    }
     
     /* setup font specifics */
     /* first param to MulDiv is supposed to be point size */
@@ -131,7 +139,7 @@ void winprint (char *fullbuf, char *selbuf)
     lfont.lfItalic = 0;
     lfont.lfUnderline = 0;
     lfont.lfStrikeOut = 0;
-    lfont.lfCharSet = ANSI_CHARSET;
+    lfont.lfCharSet = charset;
     lfont.lfOutPrecision = OUT_DEVICE_PRECIS;
     lfont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
     lfont.lfQuality = DEFAULT_QUALITY;
