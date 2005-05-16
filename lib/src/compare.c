@@ -202,8 +202,7 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
     stat_ok = !na(cmp->F) || !na(cmp->chisq);
 
     if (stat_ok && (opt & OPT_S)) {
-	test = new_test_on_model(new, /* ?? */
-				 (cmp->cmd == OMIT)? 
+	test = new_test_on_model(new, (cmp->cmd == OMIT)? 
 				 GRETL_TEST_OMIT : GRETL_TEST_ADD);
     }
 
@@ -572,14 +571,15 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 /**
  * nonlinearity_test:
  * @pmod: pointer to original model.
- * @pZ: pointer to data matrix.
+ * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
- * @aux_code: AUX_SQ for squares or AUX_LOG for logs
+ * @aux_code: %AUX_SQ for squares or %AUX_LOG for logs
  * @opt: if contains OPT_S, save test results to model.
  * @prn: gretl printing struct.
  *
- * Run an auxiliary regression to test the specified model
- * for non-linearity (squares or logs).
+ * Run an auxiliary regression to test @pmod for non-linearity,
+ * via the addition of either squares or logs of the original
+ * indepdendent variables.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
@@ -742,7 +742,7 @@ int add_test (int *addvars, MODEL *orig, MODEL *new,
  * @omitvars: list of variables to omit from original model.
  * @orig: pointer to original model.
  * @new: pointer to receive new model, with vars omitted.
- * @pZ: pointer to data matrix.
+ * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
  * @opt: can contain option flags (--quiet, --vcv).
  * @prn: gretl printing struct.
@@ -907,7 +907,7 @@ static int ljung_box (int varno, int order, const double **Z,
  * @opt: if contains OPT_S, save test results to model.
  * @prn: gretl printing struct.
  *
- * Ramsey's RESET test for model specification.
+ * Carries out Ramsey's RESET test for model specification.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
@@ -1375,6 +1375,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	}
 
 	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A, 0.0);
+
 	if (chow_mod.errcode) {
 	    err = chow_mod.errcode;
 	    errmsg(err, prn);
@@ -1678,8 +1679,8 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
  * @m: matrix containing leverage values.
- * @flags: option flags: combination of SAVE_LEVERAGE, SAVE_INFLUENCE,
- * and SAVE_DFFITS.
+ * @flags: option flags: combination of %SAVE_LEVERAGE, %SAVE_INFLUENCE,
+ * and %SAVE_DFFITS.
  *
  * Adds to the working dataset one or more series calculated by
  * the gretl test for leverage/influence of data points.
@@ -1779,7 +1780,7 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
  * @prn: gretl printing struct.
  *
  * Tests the data used in the given model for points with
- * high leverage and influence on the estimates
+ * high leverage and influence on the estimates.
  * 
  * Returns: 0 on successful completion, error code on error.
  *

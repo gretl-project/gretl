@@ -32,11 +32,12 @@ static void tex_modify_exponent (char *numstr)
     }
 }
 
+/* prints a floating point number as a TeX math string.  if tab != 0,
+   print the sign in front, separated by a tab symbol (for
+   equation-style regression printout).
+*/
+
 static void tex_print_float (double x, PRN *prn)
-     /* prints a floating point number as a TeX math string.
-	if tab != 0, print the sign in front, separated by a
-	tab symbol (for equation-style regression printout).
-     */
 {
     char number[48];
 
@@ -112,7 +113,7 @@ static void tex_make_cname (char *cname, const char *src)
     char *p;
     unsigned char c;
 
-    if (src == NULL || strlen(src) == 0) return;
+    if (src == NULL || *src == '\0') return;
 
     p = strrchr(src, '_');
     if (p == NULL) {
@@ -137,20 +138,15 @@ static int tex_greek_param (char *targ, const char *src)
 
     if (!strcmp(src, "alpha")) {
 	strcpy(targ, "$\\alpha$");
-    }
-    else if (!strcmp(src, "beta")) {
+    } else if (!strcmp(src, "beta")) {
 	strcpy(targ, "$\\beta$");
-    }
-    else if (!strcmp(src, "gamma")) {
+    } else if (!strcmp(src, "gamma")) {
 	strcpy(targ, "$\\gamma$");
-    }
-    else if (!strcmp(src, "delta")) {
+    } else if (!strcmp(src, "delta")) {
 	strcpy(targ, "$\\delta$");
-    }
-    else if (!strcmp(src, "pi")) {
+    } else if (!strcmp(src, "pi")) {
 	strcpy(targ, "$\\pi$");
-    }
-    else if (!strcmp(src, "lambda")) {
+    } else if (!strcmp(src, "lambda")) {
 	strcpy(targ, "$\\lambda$");
     }
 
@@ -288,7 +284,8 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 		sderr,
 		tratio,
 		pval);	
-    } else { /* LOGIT, PROBIT */
+    } else { 
+	/* LOGIT, PROBIT */
 	double *slopes = gretl_model_get_data(pmod, "slopes");
 	char slope[32];
 
@@ -514,6 +511,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     if (split) {
 	pputs(prn, "\\end{split}\n");
     }
+
     pputs(prn, " \\notag \\\\\n");
 
     if (pmod->ci == GARCH) {
@@ -522,6 +520,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	int r = pmod->list[0] - 4;
 
 	tstat = pmod->coeff[r] / pmod->sderr[r];
+
 	pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%.3f)}{%g} ", 
 		tstat, pmod->coeff[r]);
 
@@ -533,6 +532,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	    pputs(prn, "}\\,");
 	    pprintf(prn, "\\varepsilon^2_{t-%d}", i);
 	}
+
 	for (i=1; i<=p; i++) {
 	    tstat = pmod->coeff[q+r+i] / pmod->sderr[q+r+i];
 	    pprintf(prn, "%s\\underset{(%.3f)}{", 
@@ -541,6 +541,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	    pputs(prn, "}\\,");
 	    pprintf(prn, "\\sigma^2_{t-%d}", i);
 	}
+
 	pputs(prn, "\\notag \\\\\n");
     }	    
 
@@ -558,17 +559,20 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	    pprintf(prn, "T = %d \\quad \\mbox{ln}L = %.4f ",
 		    pmod->nobs, pmod->lnL);
 	}
+
 	if (pmod->ci != LOGIT && pmod->ci != PROBIT && !na(pmod->fstt)) {
 	    sprintf(tmp, "%.5g", pmod->fstt);
 	    tex_modify_exponent(tmp);
 	    pprintf(prn, "\\quad F(%d,%d) = %s ", 
 		    pmod->dfn, pmod->dfd, tmp);
 	}
+
 	if (!na(pmod->sigma)) {
 	    sprintf(tmp, "%.5g", pmod->sigma);
 	    tex_modify_exponent(tmp);
 	    pprintf(prn, "\\quad \\hat{\\sigma} = %s", tmp);
 	}
+
 	if (!na(gretl_model_get_double(pmod, "rho_in"))) {
 	    double r = gretl_model_get_double(pmod, "rho_in");
 
@@ -613,15 +617,15 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
 	gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
     }
     
-    return printmodel (pmod, pdinfo, OPT_NONE, prn);
+    return printmodel(pmod, pdinfo, OPT_NONE, prn);
 }
 
 /**
  * tabprint:
- * @pmod: pointer to gretl MODEL struct.
+ * @pmod: pointer to model.
  * @pdinfo: information regarding the data set.
  * @texfile: name of file to save.
- * @oflag: option: complete doc or fragment
+ * @oflag: if oflag & OPT_O, complete doc, else fragment
  *
  * Prints to file a gretl model in the form of a LaTeX table, either as
  * a stand-alone document or as a fragment of LaTeX source for
@@ -649,7 +653,7 @@ int tabprint (MODEL *pmod, const DATAINFO *pdinfo,
 
 /**
  * eqnprint:
- * @pmod: pointer to gretl MODEL struct.
+ * @pmod: pointer to model.
  * @pdinfo: information regarding the data set.
  * @texfile: name of file to save.
  * @oflag: if oflag & OPT_O, complete doc, else fragment

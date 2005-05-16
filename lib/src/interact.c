@@ -1077,8 +1077,12 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd,
 
 	if (isalpha((unsigned char) *field)) {
 	    /* should be the name of a variable */
-	    if (field[strlen(field) - 1] == ';')
+
+	    if (field[strlen(field) - 1] == ';') {
+		/* strip any trailing semicolon */
 		field[strlen(field) - 1] = '\0';
+	    }
+
 	    if ((v = varindex(pdinfo, field)) < pdinfo->v) {
 		/* yes, it's an existing variable */
 		cmd->list[lnum++] = v;
