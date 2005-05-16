@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-05-12 12:14-0400\n"
-"PO-Revision-Date: 2005-05-12 12:54-0400\n"
+"PO-Revision-Date: 2005-05-17 00:15+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -682,7 +682,7 @@ msgstr "Tentativo di leggere le etichette di riga come date...\n"
 
 #: lib/src/dataio.c:2736
 msgid "   definitely not a four-digit year\n"
-msgstr "   sicuramente non è un anno a quatro cifre\n"
+msgstr "   sicuramente non è un anno a quattro cifre\n"
 
 #: lib/src/dataio.c:2936
 msgid "Data frequency does not match\n"
@@ -1152,7 +1152,7 @@ msgid ""
 "You can't add a lower frequency series to a\n"
 "higher frequency working data set."
 msgstr ""
-"Impossibile aggiungere una serie con frequeza minore\n"
+"Impossibile aggiungere una serie con frequenza minore\n"
 "a un dataset con frequenza maggiore."
 
 #: lib/src/dbread.c:1185
@@ -1690,7 +1690,7 @@ msgstr "ITER             ESS           % DIFFER"
 
 #: lib/src/estimate.c:3308
 msgid "omitted because all obs are zero."
-msgstr "omesso perchè tutte le osservazioni sono zero"
+msgstr "omesso perché tutte le osservazioni sono zero"
 
 #: lib/src/estimate.c:3431
 #, c-format
@@ -1809,7 +1809,7 @@ msgstr "Sostituite dal modello %d: "
 
 #: lib/src/generate.c:2406
 msgid "Periodic dummy variables generated.\n"
-msgstr "Variabil dummy periodiche generate.\n"
+msgstr "Variabili dummy periodiche generate.\n"
 
 #: lib/src/generate.c:2412 lib/src/generate.c:2418
 msgid "Panel dummy variables generated.\n"
@@ -1880,7 +1880,7 @@ msgstr ""
 #: lib/src/generate.c:3709
 msgid "$lnl (log-likelihood) is not available for the last model"
 msgstr ""
-"$lnl (logaritmo della verosimiglianza) non è disponibil per l'ultimo modello"
+"$lnl (logaritmo della verosimiglianza) non è disponibile per l'ultimo modello"
 
 #: lib/src/generate.c:3955
 msgid "Can't retrieve uhat: data set has changed"
@@ -6386,7 +6386,7 @@ msgstr "Chiudi"
 
 #: gui/textbuf.c:47 gui2/textbuf.c:131 gui2/textbuf.c:140
 msgid "No undo information available"
-msgstr "Mancano informazioni per annulare"
+msgstr "Mancano informazioni per annullare"
 
 #: gui2/about.c:39
 msgid ""
@@ -9454,7 +9454,7 @@ msgstr "gretl: test LM"
 
 #: gui2/library.c:1361
 msgid "(heteroskedasticity)"
-msgstr "( eteroschedasticità)"
+msgstr "(eteroschedasticità)"
 
 #: gui2/library.c:1374
 msgid "gretl: groupwise heteroskedasticity"
@@ -10338,7 +10338,7 @@ msgstr "Opzioni"
 
 #: gui2/session.c:161 gui2/session.c:2369
 msgid "Edit plot commands"
-msgstr "Comandi per modifcare grafici"
+msgstr "Comandi per modificare grafici"
 
 #: gui2/session.c:167 gui2/session.c:2329
 msgid "Save..."
@@ -10785,7 +10785,7 @@ msgstr ""
 "Ci sono nuovi file disponibili sul sito web di gretl.\n"
 "Questi file hanno una dimensione totale di %u byte.\n"
 "\n"
-"Si desidera uscire da gretl e aggioranre l'installatione ora?\n"
+"Si desidera uscire da gretl e aggiornare l'installazione ora?\n"
 "(in alternativa, è possibile eseguire gretl_updater.exe più tardi)"
 
 #: gui2/webget.c:1726
@@ -11313,7 +11313,7 @@ msgstr "Tutte le componenti"
 
 #: plugin/pca.c:236
 msgid "Principal Components Analysis"
-msgstr "Analisi delle compontenti principali"
+msgstr "Analisi delle componenti principali"
 
 #: plugin/pca.c:237
 msgid "Eigenanalysis of the Correlation Matrix"
