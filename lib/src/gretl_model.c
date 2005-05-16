@@ -71,10 +71,10 @@ static model_data_item *create_data_item (const char *key, void *ptr, size_t siz
  * @size: size of data in bytes.
  *
  * Attaches data to a model: the data can be retrieved later using
- * gretl_model_get_data().  Note that the data are not "physically"
+ * #gretl_model_get_data.  Note that the data are not "physically"
  * copied to the model; simply, the pointer is recorded.  The 
  * size is needed in case the model is copied.  The data pointer
- * will be freed when the model is cleared, with clear_model().
+ * will be freed when the model is cleared, with #clear_model.
  *
  * Returns: 0 on success, 1 on failure.
  */

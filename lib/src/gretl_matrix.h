@@ -34,7 +34,7 @@ typedef enum {
     GRETL_MATRIX_ERR 
 } GretlMatrixError;
 
-typedef enum gretl_matrix_mods {
+typedef enum {
     GRETL_MOD_NONE = 0,
     GRETL_MOD_TRANSPOSE,
     GRETL_MOD_SQUARE

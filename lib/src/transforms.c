@@ -454,11 +454,18 @@ static int get_transform (int ci, int v, int aux,
     return vno;
 }
 
-/* laggenr: create specified lag of variable v if this variable does
-   not already exist.
-
-   Return the ID number of the lag var, or -1 on error.
-*/
+/**
+ * laggenr: 
+ * @v: ID number in dataset of source variable.
+ * @lag: the order of the lag to create.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on dataset.
+ *
+ * Creates the specified lag of variable @v if this variable does
+ * not already exist.
+ *
+ * Returns: the ID number of the lagged variable, or -1 on error.
+ */
 
 int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 {
@@ -484,22 +491,35 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
     return lno;
 }
 
-/* loggenr: create log of variable v if this variable does not
-   already exist.  
-
-   Return the ID number of the log var, or -1 on error.
-*/
+/**
+ * loggenr: 
+ * @v: ID number in dataset of source variable.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on dataset.
+ *
+ * Creates the natural log of variable @v if this variable does
+ * not already exist.
+ *
+ * Returns: the ID number of the log variable, or -1 on error.
+ */
 
 int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
 {
     return get_transform(LOGS, v, 0, pZ, pdinfo, 8);
 }
 
-/* diffgenr: create first difference (or log difference) of variable v,
-   if this variable does not already exist.
-
-   Return the ID number of the differenced var, or -1 on error.
-*/
+/**
+ * diffgenr: 
+ * @v: ID number in dataset of source variable.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on dataset.
+ * @ldiff: if non-zero, generate the log-difference.
+ *
+ * Creates the first difference (or log difference) of variable @v 
+ * if this variable does not already exist.
+ *
+ * Returns: the ID number of the differenced variable, or -1 on error.
+ */
 
 int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff)
 {
@@ -510,11 +530,19 @@ int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff)
     return get_transform((ldiff)? LDIFF : DIFF, v, 0, pZ, pdinfo, 8);
 }
 
-/* xpxgenr: create square or cross-product, if the target variable
-   does not already exist.
-
-   Return the ID number of the squared or cross var, or -1 on error.
-*/
+/**
+ * xpxgenr: 
+ * @vi: ID number in dataset of first source variable.
+ * @vj: ID number in dataset of second source variable.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on dataset.
+ *
+ * Creates the cross product of variables @vi and @vj if this 
+ * variable does not already exist.
+ *
+ * Returns: the ID number of the cross-product variable, 
+ * or -1 on error.
+ */
 
 int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo)
 {
@@ -581,7 +609,7 @@ get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
 /**
  * list_loggenr:
  * @list: list of variables to process.
- * @pZ: pointer to data matrix.
+ * @pZ: pointer to data array.
  * @pdinfo: data information struct.
  *
  * Generates and adds to the data set the natural logs of the
@@ -663,7 +691,7 @@ real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
  * default_lag_order:
  * @pdinfo: data information struct.
  *
- * Returns: default lag order for generating lags, performing
+ * Returns: the default lag order for generating lags, performing
  * autocorrelation test, and so on.
  *
  */
@@ -681,13 +709,13 @@ int default_lag_order (const DATAINFO *pdinfo)
 
 /**
  * list_laggenr:
- * @order: number of lags to generate (0 for automatic)
+ * @order: number of lags to generate (or 0 for automatic)
  * @list: list of variables to process.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  *
- * Generates and adds to the data set lagged values of the 
- * variables given in @list (up to the frequency of the data).
+ * Generates and adds to the data set @order lagged values of the 
+ * variables given in @list.
  *
  * Returns: 0 on successful completion, 1 on error.
  */

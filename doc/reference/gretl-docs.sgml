@@ -99,6 +99,7 @@
     <title>Working with the data set</title>
     &calendar;   
     &generate;
+	&transforms;
     &subsample;
   </chapter>
 
