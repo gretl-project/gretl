@@ -301,7 +301,9 @@ static void get_savename (char *s, CMD *cmd)
 	    return;
 	}
 	n = len - 1 - quote;
-	if (n > MAXSAVENAME - 1) n = MAXSAVENAME - 1;
+	if (n > MAXSAVENAME - 1) {
+	    n = MAXSAVENAME - 1;
+	}
 	strncat(cmd->savename, s + quote, n);
 	if (cmd->savename[n-1] == '"') {
 	    cmd->savename[n-1] = 0;
@@ -374,50 +376,68 @@ static void grab_gnuplot_literal_block (char *line, CMD *cmd)
 static int parse_lagvar (const char *s, LAGVAR *lv, 
 			 const double **Z, const DATAINFO *pdinfo)
 {
-    char l1str[9], l2str[9];
-    int v, ret = 1;
+    char l1str[10], l2str[10];
+    int lag, lsign;
+    int v, err = 1;
 
     *lv->varname = 0;
     lv->firstlag = 0;
     lv->lastlag = 0;
     lv->varnum = 0;
 
-    if (sscanf(s, "%8[^(](-%8s to -%8[^)])", lv->varname, 
+    if (sscanf(s, "%8[^(](%8s to %8[^)])", lv->varname, 
 	       l1str, l2str) == 3) {
 	lv->varnum = varindex(pdinfo, lv->varname);
 	if (lv->varnum < pdinfo->v) {
-	    ret = 0;
-	} 
-	if (isdigit(*l1str)) {
-	    lv->firstlag = atoi(l1str);
-	} else {
-	    v = varindex(pdinfo, l1str);
-	    if (v < pdinfo->v) {
-		lv->firstlag = Z[v][0];
-	    } else {
-		ret = 1;
+	    char *p;
+	    int i;
+
+	    err = 0;
+
+	    for (i=0; i<2 && !err; i++) {
+		p = (i == 0)? l1str : l2str;
+
+		if (*p == '-') {
+		    lsign = -1;
+		    p++;
+		} else if (*p == '+') {
+		    lsign = 1;
+		    p++;
+		} else {
+		    err = 1;
+		    break;
+		}
+
+		if (isdigit(*p)) {
+		    lag = atoi(p);
+		} else {
+		    v = varindex(pdinfo, p);
+		    if (v < pdinfo->v) {
+			lag = Z[v][0];
+		    } else {
+			err = 1;
+		    }
+		}
+
+		if (!err) {
+		    if (i == 0) {
+			lv->firstlag = lsign * lag;
+		    } else {
+			lv->lastlag = lsign * lag;
+		    }
+		}
+
 	    }
 	}
-	if (isdigit(*l2str)) {
-	    lv->lastlag = atoi(l2str);
-	} else {
-	    v = varindex(pdinfo, l2str);
-	    if (v < pdinfo->v) {
-		lv->lastlag = Z[v][0];
-	    } else {
-		ret = 1;
-	    }
-	}
-    } else if (sscanf(s, "%8[^(](-%d)", lv->varname, 
-		      &lv->firstlag) == 2) {
+    } else if (sscanf(s, "%8[^(](%d)", lv->varname, &lag) == 2) {
 	lv->varnum = varindex(pdinfo, lv->varname);
 	if (lv->varnum < pdinfo->v) {
-	    lv->lastlag = lv->firstlag;
-	    ret = 0;
+	    lv->firstlag = lv->lastlag = -lag;
+	    err = 0;
 	} 
     }
 
-    return ret;
+    return err;
 }
 
 static int expand_command_list (CMD *cmd, int add)

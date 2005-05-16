@@ -394,13 +394,11 @@ static int dinfo_to_tbl_row (const DATEINFO *dinfo, db_table_row *row,
 	else if (dinfo->month > 1 && dinfo->month <= 4) startfrac = 2;
 	else if (dinfo->month > 4 && dinfo->month <= 7) startfrac = 3;
 	else startfrac = 4;
-    }
-    else if (dinfo->info == 12) {
+    } else if (dinfo->info == 12) {
 	pd = 'M';
 	sprintf(pdstr, ".%02d", dinfo->month);
 	startfrac = dinfo->month;
-    }
-    else if (dinfo->info == 1) {
+    } else if (dinfo->info == 1) {
 	pd = 'A';
 	startfrac = 0;
     } else {

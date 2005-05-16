@@ -5105,7 +5105,7 @@ fi;
 # Check whether --with-x-12-arima or --without-x-12-arima was given.
 if test "${with_x_12_arima+set}" = set; then
   withval="$with_x_12_arima"
-  if test "${withval}" = "no"
+  if test "$withval" = "no"
 then
   have_x12a="no"
 else
@@ -5151,7 +5151,7 @@ fi;
 # Check whether --with-audio or --without-audio was given.
 if test "${with_audio+set}" = set; then
   withval="$with_audio"
-  if test "x${withval}" = "xyes"
+  if test "$withval" = "yes"
 then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_AUDIO 1
@@ -24144,7 +24144,7 @@ rm -f conftest.err conftest.$ac_objext \
   rm -f conf.lapacktest
 
 
-if test x"${have_audio}" = xyes ; then
+if test "$have_audio" = "yes" ; then
 
 # Check whether --with-flite-prefix or --without-flite-prefix was given.
 if test "${with_flite_prefix+set}" = set; then
@@ -24354,23 +24354,25 @@ if test x"${GNUPLOT}" = xyes ; then
 fi
 
 gnuplot_png=no
-echo "$as_me:$LINENO: checking for PNG support in gnuplot" >&5
+if test "$build_gui" = "yes" ; then
+  echo "$as_me:$LINENO: checking for PNG support in gnuplot" >&5
 echo $ECHO_N "checking for PNG support in gnuplot... $ECHO_C" >&6
-echo "set term png" | `which gnuplot` 2>/dev/null && gnuplot_png=yes
-if test x"${gnuplot_png}" = xyes ; then
-  echo "$as_me:$LINENO: result: yes" >&5
+  echo "set term png" | `which gnuplot` 2>/dev/null && gnuplot_png=yes
+  if test "$gnuplot_png" = yes ; then
+    echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-  cat >>confdefs.h <<\_ACEOF
+    cat >>confdefs.h <<\_ACEOF
 #define GNUPLOT_PNG 1
 _ACEOF
 
-else
-  echo "$as_me:$LINENO: result: no" >&5
+  else
+    echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-  echo
-  echo "* gretl needs PNG support in gnuplot."
-  echo "* The current version of gnuplot is available from www.gnuplot.info"
-  exit
+    echo
+    echo "* gretl needs PNG support in gnuplot."
+    echo "* The current version of gnuplot is available from www.gnuplot.info"
+    exit
+  fi
 fi
 
 
@@ -24465,12 +24467,12 @@ fi
    fi
    if test "$PKG_CONFIG" = "no" ; then
       echo "*** pkg-config not found, can't build with gtk 2.0"
-      $try_gtk2="no"
+      try_gtk2="no"
    fi
 fi
 
 orig_CFLAGS=$CFLAGS
-if test "$try_gtk2" = "yes" ; then
+if test "$build_gui" = "yes" && test "$try_gtk2" = "yes" ; then
 
   succeeded=no
 
@@ -25094,7 +25096,7 @@ done
 
 fi
 
-if test "$have_gtk" = "no" ; then
+if test "$build_gui" = "yes" && test "$have_gtk" = "no" ; then
 
 # Check whether --with-gtk-prefix or --without-gtk-prefix was given.
 if test "${with_gtk_prefix+set}" = set; then
@@ -25409,14 +25411,14 @@ rm -f conftest.err conftest.$ac_objext \
 
   rm -f conf.gtktest
 
-   if test "${have_gtk}" = "no" ; then
+   if test "$have_gtk" = "no" ; then
       exit
    fi
    CFLAGS="$CFLAGS $GTK_CFLAGS"
    LIBS="$LIBS $GTK_LIBS"
    GLIB_CFLAGS=`glib-config --cflags`
    GLIB_LIBS=`glib-config --libs`
-   if test ${try_gtkextra} = yes ; then
+   if test $try_gtkextra = yes ; then
 
 # Check whether --with-gtkextra-prefix or --without-gtkextra-prefix was given.
 if test "${with_gtkextra_prefix+set}" = set; then
@@ -25744,7 +25746,7 @@ fi
 
 
 
-if test ${try_ole} = yes && test ${have_gtk} = "1.2" ; then
+if test $try_ole = "yes" && test $have_gtk = "1.2" ; then
 
 # Check whether --with-libole2-prefix or --without-libole2-prefix was given.
 if test "${with_libole2_prefix+set}" = set; then
@@ -26074,7 +26076,11 @@ rm -f conftest.err conftest.$ac_objext \
 
 fi
 
-if test ${png_comments} = yes ; then
+if test $build_gui = "no" ; then
+   png_comments = "no"
+fi
+
+if test $png_comments = "yes" ; then
 
   succeeded=no
 
@@ -26173,7 +26179,7 @@ echo "${ECHO_T}$PNG_LIBS" >&6
   fi
 
 fi
-if test ${png_comments} = yes && test ${png_failed} = "yes" ; then
+if test $png_comments = "yes" && test $png_failed = "yes" ; then
 
   succeeded=no
 
@@ -26272,7 +26278,7 @@ echo "${ECHO_T}$PNG_LIBS" >&6
   fi
 
 fi
-if test ${png_comments} = yes && test ${png_failed} = "yes" ; then
+if test $png_comments = "yes" && test $png_failed = "yes" ; then
    echo "$as_me:$LINENO: checking for png_init_io in -lpng" >&5
 echo $ECHO_N "checking for png_init_io in -lpng... $ECHO_C" >&6
 if test "${ac_cv_lib_png_png_init_io+set}" = set; then
@@ -26349,18 +26355,18 @@ fi
 
 fi
 
-if test ${png_comments} = yes && test ${png_failed} = yes ; then
-    echo "* gretl wants but did not find libpng."
-    echo "* You can turn off this dependency by configuring with the option"
-    echo "* --disable-png-comments"
-    exit
-fi
-
-if test ${png_comments} = yes && test ${png_failed} = no ; then
-   cat >>confdefs.h <<\_ACEOF
+if test $png_comments = "yes" ; then
+  if test $png_failed = "yes" ; then
+     echo "* gretl wants but did not find libpng."
+     echo "* You can turn off this dependency by configuring with the option"
+     echo "* --disable-png-comments"
+     exit
+  else
+    cat >>confdefs.h <<\_ACEOF
 #define PNG_COMMENTS 1
 _ACEOF
 
+  fi
 fi
 
 if test ${have_gtk} = "2.0" ; then
@@ -26747,12 +26753,12 @@ rm -f conftest.err conftest.$ac_objext \
 
 fi
 
-if test ${pixbuf_failed} = yes ; then
+if test ${pixbuf_failed} = "yes" ; then
     echo "* gretl wants but did not find the gdk-pixbuf library for PNG graphs."
     exit
 fi
 
-if test "$try_gnome" = "yes" ; then
+if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
     if test "$have_gtk" = "2.0" ; then
 
   succeeded=no

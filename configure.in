@@ -198,7 +198,7 @@ try_gmp=yes)
 
 AC_ARG_WITH(x-12-arima,
 [  --with-x-12-arima     include X-12-ARIMA support [default=yes]],
-if test "${withval}" = "no"
+if test "$withval" = "no"
 then
   have_x12a="no"
 else
@@ -224,7 +224,7 @@ AC_SUBST(HAVE_TRAMO)
 
 AC_ARG_WITH(audio,
 [  --with-audio    include audio graph support (experimental)],
-if test "x${withval}" = "xyes"
+if test "$withval" = "yes"
 then
   AC_DEFINE(HAVE_AUDIO)
   HAVE_AUDIO=1
@@ -322,7 +322,7 @@ AM_PATH_LAPACK(, have_lapack="yes")
 dnl
 dnl Check for FLITE?
 dnl
-if test x"${have_audio}" = xyes ; then
+if test "$have_audio" = "yes" ; then
   AM_PATH_FLITE(, 
     have_flite="yes"
     AC_DEFINE(HAVE_FLITE)
@@ -342,17 +342,19 @@ if test x"${GNUPLOT}" = xyes ; then
 fi
 
 gnuplot_png=no
-AC_MSG_CHECKING(for PNG support in gnuplot)
-echo "set term png" | `which gnuplot` 2>/dev/null && gnuplot_png=yes
-if test x"${gnuplot_png}" = xyes ; then
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(GNUPLOT_PNG)
-else
-  AC_MSG_RESULT(no)
-  echo
-  echo "* gretl needs PNG support in gnuplot."
-  echo "* The current version of gnuplot is available from www.gnuplot.info"
-  exit
+if test "$build_gui" = "yes" ; then
+  AC_MSG_CHECKING(for PNG support in gnuplot)
+  echo "set term png" | `which gnuplot` 2>/dev/null && gnuplot_png=yes
+  if test "$gnuplot_png" = yes ; then
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(GNUPLOT_PNG)
+  else
+    AC_MSG_RESULT(no)
+    echo
+    echo "* gretl needs PNG support in gnuplot."
+    echo "* The current version of gnuplot is available from www.gnuplot.info"
+    exit
+  fi
 fi
 
 dnl
@@ -378,7 +380,7 @@ if test "$try_gtk2" = "yes" ; then
    fi
    if test "$PKG_CONFIG" = "no" ; then
       echo "*** pkg-config not found, can't build with gtk 2.0" 
-      $try_gtk2="no"
+      try_gtk2="no"
    fi
 fi
 
@@ -386,7 +388,7 @@ dnl
 dnl Check for GTK 2.0, if appropriate
 dnl
 orig_CFLAGS=$CFLAGS
-if test "$try_gtk2" = "yes" ; then
+if test "$build_gui" = "yes" && test "$try_gtk2" = "yes" ; then
     PKG_CHECK_MODULES(GTK, gtk+-2.0,
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
@@ -432,16 +434,16 @@ if test "$highlight" = "yes" && \
 fi
 
 dnl Or fall back on GTK 1.2
-if test "$have_gtk" = "no" ; then
+if test "$build_gui" = "yes" && test "$have_gtk" = "no" ; then
    AM_PATH_GTK(1.2.3,have_gtk="1.2",have_gtk="no")
-   if test "${have_gtk}" = "no" ; then
+   if test "$have_gtk" = "no" ; then
       exit
    fi
    CFLAGS="$CFLAGS $GTK_CFLAGS"
    LIBS="$LIBS $GTK_LIBS"
    GLIB_CFLAGS=`glib-config --cflags`
    GLIB_LIBS=`glib-config --libs`
-   if test ${try_gtkextra} = yes ; then
+   if test $try_gtkextra = yes ; then
       AM_PATH_GTK_EXTRA(0.99.15,have_gtkextra="yes",have_gtkextra="no")
    fi
 fi
@@ -460,7 +462,7 @@ AC_SUBST(GTKSOURCEVIEW_LIBS)
 dnl
 dnl Should we try to use an installed version of libole2?
 dnl
-if test ${try_ole} = yes && test ${have_gtk} = "1.2" ; then
+if test $try_ole = "yes" && test $have_gtk = "1.2" ; then
     AM_PATH_LIBOLE2(0.2.4,
         have_libole2="yes",
         have_libole2="no"
@@ -470,19 +472,23 @@ fi
 dnl
 dnl Check for libpng (first with pkg-config, then fallback)
 dnl
-if test ${png_comments} = yes ; then
+if test $build_gui = "no" ; then
+   png_comments = "no"
+fi
+
+if test $png_comments = "yes" ; then
     PKG_CHECK_MODULES(PNG, libpng,
         png_failed="no",
 	png_failed="yes"
    )
 fi
-if test ${png_comments} = yes && test ${png_failed} = "yes" ; then
+if test $png_comments = "yes" && test $png_failed = "yes" ; then
     PKG_CHECK_MODULES(PNG, libpng12,
         png_failed="no",
 	png_failed="yes"
    )
 fi
-if test ${png_comments} = yes && test ${png_failed} = "yes" ; then
+if test $png_comments = "yes" && test $png_failed = "yes" ; then
    AC_CHECK_LIB(png, png_init_io,png_failed="no",png_failed="yes",-lz)
    PNG_CFLAGS=
    PNG_LIBS="-lz -lpng"
@@ -490,15 +496,15 @@ if test ${png_comments} = yes && test ${png_failed} = "yes" ; then
    AC_SUBST(PNG_LIBS)
 fi
 
-if test ${png_comments} = yes && test ${png_failed} = yes ; then
-    echo "* gretl wants but did not find libpng."
-    echo "* You can turn off this dependency by configuring with the option"
-    echo "* --disable-png-comments"
-    exit
-fi
-
-if test ${png_comments} = yes && test ${png_failed} = no ; then
-   AC_DEFINE(PNG_COMMENTS)
+if test $png_comments = "yes" ; then
+  if test $png_failed = "yes" ; then
+     echo "* gretl wants but did not find libpng."
+     echo "* You can turn off this dependency by configuring with the option"
+     echo "* --disable-png-comments"
+     exit
+  else
+    AC_DEFINE(PNG_COMMENTS)
+  fi
 fi
 
 dnl
@@ -517,7 +523,7 @@ if test ${have_gtk} = "1.2" ; then
     )
 fi
 
-if test ${pixbuf_failed} = yes ; then
+if test ${pixbuf_failed} = "yes" ; then
     echo "* gretl wants but did not find the gdk-pixbuf library for PNG graphs."
     exit
 fi
@@ -525,7 +531,7 @@ fi
 dnl
 dnl Check for gnome, if we haven't been told not to
 dnl
-if test "$try_gnome" = "yes" ; then
+if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
 dnl If we have gtk 2.0, test for gnome 2.0
     if test "$have_gtk" = "2.0" ; then
         PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 libgnomeprint-2.2 libgnomeprintui-2.2 gconf-2.0,

@@ -18,7 +18,9 @@ endif
 ifeq ($(have_gtk),2.0)
   GUIDIR = gui2
 else
-  GUIDIR = gui
+  ifeq ($(have_gtk),1.2)
+    GUIDIR = gui
+  endif
 endif
 
 INSTALL_PROGRAM = ${INSTALL} -m 755
