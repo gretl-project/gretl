@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "selector.h"
 #include "dlgutils.h"
+#include "menustate.h"
 
 static int default_var;
 static int *xlist;
@@ -1722,7 +1723,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     gtk_widget_show(sr->dlg);
 
     if (SAVE_DATA_ACTION(sr->code)) {
-	gtk_window_set_modal(GTK_WINDOW(sr->dlg), TRUE);
+	gretl_set_window_modal(sr->dlg);
     }
 }
 

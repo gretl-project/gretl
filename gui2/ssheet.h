@@ -20,6 +20,11 @@
 #ifndef SSHEET_H
 #define SSHEET_H
 
-void show_spreadsheet (DATAINFO *pdinfo);
+typedef enum {
+    SHEET_EDIT_DATASET,
+    SHEET_NEW_DATASET
+} SheetCode;
+
+void show_spreadsheet (SheetCode code);
 
 #endif /* SSHEET_H */

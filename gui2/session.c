@@ -2247,7 +2247,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 	case 'x':
 	    open_gui_text(gobj); break;
 	case 'd':
-	    show_spreadsheet(NULL); break;
+	    show_spreadsheet(SHEET_EDIT_DATASET); break;
 	case 'i':
 	    open_info(NULL, 0, NULL); break;
 	case 'p':
@@ -2321,7 +2321,7 @@ static void data_popup_activated (GtkWidget *widget, gpointer data)
     gchar *item = (gchar *) data;
 
     if (strcmp(item, _("Edit")) == 0) 
-	show_spreadsheet(NULL);
+	show_spreadsheet(SHEET_EDIT_DATASET);
     else if (strcmp(item, _("Save...")) == 0) 
 	file_save(mdata, SAVE_DATA, NULL);
     else if (strcmp(item, _("Export as CSV...")) == 0) 

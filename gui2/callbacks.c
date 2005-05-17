@@ -611,30 +611,22 @@ void add_random_callback (gpointer data, guint code, GtkWidget *widget)
 
 /* ........................................................... */
 
-static void name_first_var (GtkWidget *widget, dialog_t *dlg) 
+static void name_first_ssheet_var (GtkWidget *widget, dialog_t *dlg) 
 {
-    DATAINFO *pdinfo = (DATAINFO *) edit_dialog_get_data(dlg);
     const gchar *buf;
 
     buf = edit_dialog_get_text(dlg);
 
-    if (buf == NULL || validate_varname(buf)) return;
+    if (buf == NULL || validate_varname(buf)) {
+	return;
+    }
 
-    pdinfo->varname[1][0] = 0;
-    strncat(pdinfo->varname[1], buf, VNAMELEN - 1);
+    datainfo->varname[1][0] = 0;
+    strncat(datainfo->varname[1], buf, VNAMELEN - 1);
 
     close_dialog(dlg);
 
-    show_spreadsheet(datainfo);
-}
-
-static void first_var_dialog (DATAINFO *pdinfo) 
-{
-    edit_dialog (_("gretl: name variable"), 
-		 _("Enter name for new variable\n"
-		   "(max. 8 characters)"),
-		 NULL, name_first_var, pdinfo, 
-		 0, 0, 0);
+    show_spreadsheet(SHEET_NEW_DATASET);
 }
 
 static int prep_spreadsheet (const char *dataspec)
@@ -663,7 +655,11 @@ static int prep_spreadsheet (const char *dataspec)
     start_new_Z(&Z, datainfo, 0);
     datainfo->markers = 0;
 
-    first_var_dialog(datainfo);
+    edit_dialog (_("gretl: name variable"), 
+		 _("Enter name for new variable\n"
+		   "(max. 8 characters)"),
+		 NULL, name_first_ssheet_var, NULL, 
+		 0, 0, 0);
 
     return 0;
 }
@@ -692,9 +688,8 @@ static void n_obs_callback (GtkWidget *w, dialog_t *dlg)
 
 void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget) 
 {
-    gchar *obsstr = NULL;
-
     if (pd_code == 0) {
+	/* cross-sectional dataset */
 	datainfo->structure = CROSS_SECTION;
 	datainfo->pd = 1;
 	datainfo->sd0 = 1.0;
@@ -702,19 +697,19 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget)
 	edit_dialog (_("gretl: create data set"), 
 		     _("Number of observations:"), "50",
 		     n_obs_callback, NULL, 0, 0, 0);
-	return;
     } else {
+	gchar *obsstr = NULL;
+
 	datainfo->structure = TIME_SERIES;
 	datainfo->pd = pd_code;
-    }
+	compute_default_ts_info(datainfo, 1);
 
-    compute_default_ts_info(datainfo, 1);
+	sample_range_dialog(&obsstr, CREATE_DATASET, NULL);
 
-    sample_range_dialog(&obsstr, CREATE_DATASET, NULL);
-
-    if (obsstr != NULL) {
-	prep_spreadsheet(obsstr);
-	g_free(obsstr);
+	if (obsstr != NULL) {
+	    prep_spreadsheet(obsstr);
+	    g_free(obsstr);
+	}
     }
 }
 

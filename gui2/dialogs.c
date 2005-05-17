@@ -1125,7 +1125,7 @@ void varinfo_dialog (int varnum, int full)
     gtk_widget_show(vset->dlg);
 
     if (!full) {
-	gtk_window_set_modal(GTK_WINDOW(vset->dlg), TRUE);
+	gretl_set_window_modal(vset->dlg);
 	gtk_main();
     }
 }
@@ -1568,7 +1568,7 @@ int get_obs_dialog (const char *title, const char *text,
 
     gtk_widget_show_all(rset->dlg);
 
-    gtk_window_set_modal(GTK_WINDOW(rset->dlg), TRUE);
+    gretl_set_window_modal(rset->dlg);
 
     gtk_main();
 
@@ -1658,7 +1658,7 @@ int select_var_from_list (const int *list, const char *query)
 
     gtk_widget_show_all(dlg);
 
-    gtk_window_set_modal(GTK_WINDOW(dlg), TRUE);
+    gretl_set_window_modal(dlg);
     gtk_main();
 
     return selvar;
@@ -2471,6 +2471,7 @@ static GtkWidget *get_msgbox_icon (int err)
     if (cmap == NULL) {
 	cmap = gdk_colormap_get_system();
     }
+
     icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, NULL, 
 						 msgxpm);
     iconw = gtk_pixmap_new(icon, mask);
@@ -2478,21 +2479,19 @@ static GtkWidget *get_msgbox_icon (int err)
     return iconw;
 }
 
-static void msgbox_close (GtkWidget *w, gpointer p)
-{
-    gtk_widget_destroy(GTK_WIDGET(p));
-    gtk_main_quit();
-}
-
 static void msgbox (const char *msg, int err) 
 {
     GtkWidget *w, *label, *button, *vbox, *hbox, *iconw;
 
     w = gtk_window_new(GTK_WINDOW_DIALOG);
+
     gtk_container_border_width(GTK_CONTAINER(w), 5);
     gtk_window_position (GTK_WINDOW(w), GTK_WIN_POS_MOUSE);
     gtk_window_set_title (GTK_WINDOW (w), (err)? _("gretl error") : 
 			  _("gretl info")); 
+
+    gtk_signal_connect(GTK_OBJECT(w), "destroy",
+		       GTK_SIGNAL_FUNC(gtk_main_quit), NULL);
 
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_add(GTK_CONTAINER(w), vbox);
@@ -2522,10 +2521,12 @@ static void msgbox (const char *msg, int err)
 
     gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
 
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		       GTK_SIGNAL_FUNC(msgbox_close), w);
+    gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
+			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
+			      (gpointer) w);
 
     gtk_widget_show_all(w);
+    gtk_window_set_modal(GTK_WINDOW(w), TRUE);
 
     gtk_main();
 }
@@ -3279,7 +3280,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 
     gtk_widget_show(dialog);
-    gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+    gretl_set_window_modal(dialog);
     gtk_main();
 
     return ret;

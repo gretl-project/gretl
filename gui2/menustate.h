@@ -3,6 +3,8 @@
 
 void refresh_data (void);
 
+void gretl_set_window_modal (GtkWidget *w);
+
 void edit_info_state (gboolean s);
 void add_remove_markers_state (gboolean s);
 void main_menubar_state (gboolean s);

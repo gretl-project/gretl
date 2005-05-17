@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "textutil.h"
 #include "dlgutils.h"
+#include "menustate.h"
 
 #ifdef G_OS_WIN32
 #include "gretlwin32.h"
@@ -433,7 +434,7 @@ series_view_format_dialog (windata_t *vwin, guint action, GtkWidget *src)
 				 GTK_WINDOW(vwin->dialog));
 #endif
 
-    gtk_window_set_modal(GTK_WINDOW(w), TRUE);
+    gretl_set_window_modal(w);
 
     gtk_main(); /* block */
 

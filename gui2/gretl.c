@@ -142,7 +142,7 @@ char tramodir[MAXSTR] = "";
 
 static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w) 
 {
-    show_spreadsheet(NULL);
+    show_spreadsheet(SHEET_EDIT_DATASET);
 }
 
 static void manual_update_query (gpointer p, guint u, GtkWidget *w)

@@ -25,6 +25,10 @@
 #include "model_table.h"
 #include "clipboard.h"
 
+#ifdef OLD_GTK
+# include "menustate.h"
+#endif
+
 /* find-and-replace related materials */
 
 struct search_replace {
@@ -121,7 +125,7 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_widget_grab_focus(s->f_entry);
     gtk_widget_show (s->w);
 #ifdef OLD_GTK /* ?? */
-    gtk_window_set_modal(GTK_WINDOW(s->w), TRUE);
+    gretl_set_window_modal(s->w);
 #endif
     gtk_main();
 }

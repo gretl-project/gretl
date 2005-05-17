@@ -27,6 +27,7 @@
 
 #include "ssheet.h"
 #include "dlgutils.h"
+#include "menustate.h"
 
 #define DEFAULT_PRECISION 6
 #define DEFAULT_SPACE 8
@@ -40,7 +41,7 @@ static GtkWidget *sheet_popup;
 static char newvarname[9], newobsmarker[9];
 static int numcolumns, numrows;
 static int sheet_modified;
-static int n_hidden;
+static int origvars;
 
 static void sheet_add_var (void);
 static void sheet_add_obs (void);
@@ -133,8 +134,6 @@ static void name_new_obs (GtkWidget *widget, dialog_t *ddata)
     close_dialog(ddata);
 }
 
-/* ........................................................... */
-
 static void name_var_dialog (void) 
 {
     edit_dialog (_("gretl: name variable"), 
@@ -174,8 +173,6 @@ static void sheet_add_var (void)
     }
 }
 
-/* ........................................................... */
-
 static void sheet_add_obs (void)
 {
     GtkSheet *sheet = GTK_SHEET(gretlsheet);
@@ -198,8 +195,6 @@ static void sheet_add_obs (void)
 	sheet_modified = 1;
     }
 }
-
-/* ........................................................... */
 
 static void sheet_insert_obs (void)
 {
@@ -435,16 +430,22 @@ static gint activate_sheet_cell (GtkWidget *w, gint row, gint column,
 
 static void get_data_from_sheet (void)
 {
-    int oldv = datainfo->v; 
-    int oldcols = oldv - 1 - n_hidden;
-    int newvars = numcolumns - oldcols;
+    int oldv = datainfo->v;
+    int newvars = numcolumns - origvars;
     int newobs = numrows - datainfo->n;
     int missobs = 0;
+
     gchar *celltext;
     GtkSheet *sheet = GTK_SHEET(gretlsheet);
-    int i, j, t;
+
+    int i, colnum, t;
 
     if (check_data_in_sheet()) {
+	return;
+    }
+
+    if (!sheet_modified) {
+	infobox(_("No changes were made"));
 	return;
     }
 
@@ -462,18 +463,18 @@ static void get_data_from_sheet (void)
 	    return;
 	}
 	for (i=0; i<newvars; i++) { 
-	    strcpy(datainfo->varname[i + oldv], 
-		   sheet->column[i + oldcols].button.label);
+	    colnum = origvars + i; /* FIXME? */
+	    strcpy(datainfo->varname[oldv + i], sheet->column[colnum].button.label);
 	}
     }
 
-    j = 0;
+    colnum = 0;
     for (i=1; i<datainfo->v; i++) {
 	if (spreadsheet_hide(i, datainfo)) {
 	    continue;
 	}
 	for (t=0; t<datainfo->n; t++) {
-	    celltext = gtk_sheet_cell_get_text(sheet, t, j);
+	    celltext = gtk_sheet_cell_get_text(sheet, t, colnum);
 	    if (celltext != NULL && *celltext != 0) {
 		Z[i][t] = atof(celltext);
 	    } else {
@@ -481,7 +482,7 @@ static void get_data_from_sheet (void)
 		missobs = 1;
 	    }
 	}
-	j++;
+	colnum++;
     }
 
     if (datainfo->markers && datainfo->S != NULL) {
@@ -510,13 +511,11 @@ static void add_data_to_sheet (GtkWidget *w)
     GtkSheet *sheet = GTK_SHEET(w);
     int i, j, t;
 
-    n_hidden = 0;
     numrows = datainfo->n;
+    numcolumns = j = 0;
 
-    j = 0;
     for (i=1; i<datainfo->v; i++) {
 	if (spreadsheet_hide(i, datainfo)) {
-	    n_hidden++;
 	    continue;
 	}
 	gtk_sheet_column_button_add_label(sheet, j, datainfo->varname[i]);
@@ -524,7 +523,7 @@ static void add_data_to_sheet (GtkWidget *w)
 	j++;
     }
 
-    numcolumns = j;
+    numcolumns = origvars = j;
 
     for (t=0; t<datainfo->n; t++) {
 	get_full_obs_string(rowlabel, t, datainfo);
@@ -551,8 +550,6 @@ static void add_data_to_sheet (GtkWidget *w)
     sheet_modified = 0;
 }
 
-/* ........................................................... */
-
 static void add_skel_to_sheet (GtkWidget *w)
 {
     GtkSheet *sheet = GTK_SHEET(w);
@@ -560,21 +557,15 @@ static void add_skel_to_sheet (GtkWidget *w)
     int i, j, t;
 
     numrows = datainfo->n;
-    numcolumns = 0;
-    n_hidden = 0;
+    numcolumns = j = 0;
 
-    j = 0;
     for (i=1; i<datainfo->v; i++) {
-	if (spreadsheet_hide(i, datainfo)) {
-	    n_hidden++;
-	    continue;
-	}
 	gtk_sheet_column_button_add_label(sheet, j, datainfo->varname[i]);
 	gtk_sheet_set_column_title(sheet, j, datainfo->varname[i]);
 	j++;
     }
 
-    numcolumns = j;
+    numcolumns = origvars = j;
 
     for (t=0; t<datainfo->n; t++) {
 	get_full_obs_string(rowlabel, t, datainfo);
@@ -584,9 +575,6 @@ static void add_skel_to_sheet (GtkWidget *w)
 
     j = 0;
     for (i=1; i<datainfo->v; i++) {
-	if (spreadsheet_hide(i, datainfo)) {
-	    continue;
-	}
 	for (t=0; t<datainfo->n; t++) {
 	    gtk_sheet_set_cell(sheet, t, j, GTK_JUSTIFY_RIGHT, ""); 
 	}
@@ -624,7 +612,7 @@ static void maybe_exit_sheet (GtkWidget *w, GtkWidget *swin)
 
 /* ........................................................... */
 
-void show_spreadsheet (DATAINFO *pdinfo) 
+void show_spreadsheet (SheetCode code) 
 {
     GtkWidget *tmp, *button_box;
     GtkWidget *scroller, *main_vbox;
@@ -637,7 +625,7 @@ void show_spreadsheet (DATAINFO *pdinfo)
 	return;
     }
 
-    if (pdinfo == NULL && datainfo->v == 1) {
+    if (datainfo->v == 1) {
 	errbox(_("Please add a variable to the dataset first"));
 	return;
     }
@@ -661,9 +649,11 @@ void show_spreadsheet (DATAINFO *pdinfo)
     gtk_item_factory_create_items(ifac, 
 				  sizeof sheet_items / sizeof sheet_items[0],
 				  sheet_items, sheetwin);
-    if (dataset_is_subsampled()) {
+
+    if (complex_subsampled()) {
 	disable_obs_menu(ifac);
     }
+
     mbar = gtk_item_factory_get_widget(ifac, "<main>");
     gtk_accel_group_attach(accel, GTK_OBJECT (sheetwin));
     gtk_box_pack_start(GTK_BOX(main_vbox), mbar, FALSE, TRUE, 0);
@@ -733,12 +723,13 @@ void show_spreadsheet (DATAINFO *pdinfo)
 
     GTK_SHEET_SET_FLAGS(gretlsheet, GTK_SHEET_AUTORESIZE);
 
-    if (pdinfo != NULL) {
-	add_skel_to_sheet(gretlsheet);
-    } else {
+    if (code == SHEET_EDIT_DATASET) {
 	add_data_to_sheet(gretlsheet);
+    } else {
+	add_skel_to_sheet(gretlsheet);
     }
 
     gtk_widget_show(sheetwin);
+    gretl_set_window_modal(sheetwin);
 }
 

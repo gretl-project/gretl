@@ -41,6 +41,44 @@ void add_remove_markers_state (gboolean s)
     flip(mdata->ifac, "/Sample/Remove case markers", s);
 }
 
+/* ......................................................... */
+
+/* by using gretl_set_window_modal() we make the main
+   window visibly insensitive */
+
+static int modcount;
+
+static void increment_modal_count (GtkWidget *w)
+{
+    if (modcount == 0) {
+	gtk_widget_set_sensitive(mdata->w, FALSE);
+    }
+
+    modcount++;
+}
+
+static void decrement_modal_count (GtkWidget *w, gpointer p)
+{
+    if (modcount > 0) {
+	modcount--;
+    }
+
+    if (modcount == 0) {
+	gtk_widget_set_sensitive(mdata->w, TRUE);
+    }
+}
+
+void gretl_set_window_modal (GtkWidget *w)
+{
+    gtk_window_set_modal(GTK_WINDOW(w), TRUE);
+    increment_modal_count(w);
+    g_signal_connect(G_OBJECT(w), "destroy", 
+		     G_CALLBACK(decrement_modal_count),
+		     NULL);
+}
+
+/* ......................................................... */
+
 void main_menubar_state (gboolean s)
 {
     if (mdata->ifac == NULL) return;
