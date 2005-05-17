@@ -8,6 +8,7 @@ MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
 
+build_gui = @build_gui@
 have_gtk = @have_gtk@
 have_gmp = @have_gmp@
 
@@ -89,18 +90,12 @@ SRCS = excel_import.c \
 
 PLUGINS = arma.la \
 	arma_x12.la \
-	excel_import.la \
 	garch.la \
-	gnumeric_import.la \
 	johansen.la \
 	kernel.la \
 	lad.la \
-	leverage.la \
-	logistic.la \
 	nistcheck.la \
 	panel_data.la \
-	pca.la \
-	progress_bar.la \
 	range-mean.la \
 	fractals.la \
 	stats_tables.la \
@@ -110,6 +105,17 @@ PLUGINS = arma.la \
 	vif.la \
 	poisson.la \
 	$(TXPLUGIN)
+
+GUI_DEPENDENT_PLUGINS = excel_import.la \
+	gnumeric_import.la \
+	progress_bar.la \
+	leverage.la \
+	logistic.la \
+	pca.la 
+
+ifeq ($(build_gui),yes)
+  PLUGINS += $(GUI_DEPENDENT_PLUGINS)
+endif
 
 ifeq ($(have_gmp),yes)
   PLUGINS += mp_ols.la

@@ -19,7 +19,9 @@
 
 /* dbread.c for gretl */
 
-#include <glib.h>
+#ifdef USE_GTK2
+# include <glib.h>
+#endif
 
 #include "libgretl.h"
 
@@ -412,10 +414,17 @@ static int dinfo_to_tbl_row (const DATEINFO *dinfo, db_table_row *row,
 
     if (!err) {
 	get_endobs(endobs, dinfo->year, startfrac, dinfo->info, n);
-	row->varname = g_strdup(varname);
-	row->comment = g_strdup(comment);
+	row->varname = gretl_strdup(varname);
+	row->comment = gretl_strdup(comment);
+#ifdef USE_GTK2
 	row->obsinfo = g_strdup_printf("%c  %d%s - %s  n = %d", pd, 
 				       (int) dinfo->year, pdstr, endobs, n);
+#else
+	row->obsinfo = malloc(64);
+	sprintf(row->obsinfo, "%c  %d%s - %s  n = %d", pd, 
+		(int) dinfo->year, pdstr, endobs, n);
+
+#endif
     } 
 
     return err;

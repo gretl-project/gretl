@@ -400,7 +400,7 @@ fi
 
 dnl if the above succeeds, check separately for glib 2.0 flags
 if test "$have_gtk" = "2.0" ; then
-     PKG_CHECK_MODULES(GLIB, glib-2.0,,,)
+   PKG_CHECK_MODULES(GLIB, glib-2.0,,,)
 fi
 
 dnl ...and try for gtksourceview flags, unless prohibited
@@ -449,6 +449,7 @@ if test "$build_gui" = "yes" && test "$have_gtk" = "no" ; then
 fi
 
 dnl record the results of the above tests
+AC_SUBST(build_gui)
 AC_SUBST(have_gtk)
 AC_SUBST(have_gmp)
 AC_SUBST(have_gtksourceview)

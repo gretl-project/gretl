@@ -31,7 +31,7 @@
 #endif
 
 #if defined(ENABLE_NLS) && defined(USE_GTK2)
-#include <glib.h>
+# include <glib.h>
 #endif
 
 static char gretl_tmp_str[MAXLEN];

@@ -30,12 +30,12 @@
 # include <dirent.h>
 #endif
 
-#ifndef WIN32
+#if defined(USE_GTK2) && !defined(WIN32)
 # include <glib.h>
 # if GLIB_CHECK_VERSION(2,0,0)
 #  define GLIB2
 # endif /* GLIB_CHECK_VERSION */
-#endif /* ! WIN32 */
+#endif /* GTK2, !WIN32 */
 
 #if (GLIB_MAJOR_VERSION >= 2) && (GLIB_MINOR_VERSION >= 6)
 # ifdef WIN32

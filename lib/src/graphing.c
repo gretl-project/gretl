@@ -32,9 +32,9 @@
 # include <windows.h>
 # define EMF_USER_COLORS
 #else
-# include <glib.h>
-# if GLIB_CHECK_VERSION(2,0,0)
+# ifdef USE_GTK2
 #  define GLIB2
+#  include <glib.h>
 #  include <signal.h>
 #  if HAVE_SYS_WAIT_H
 #   include <sys/wait.h>
@@ -45,7 +45,7 @@
 #  ifndef WIFEXITED
 #   define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 #  endif
-# endif /* GLIB_CHECK_VERSION */
+# endif /* GTK2 */
 #endif /* ! _WIN32 */
 
 

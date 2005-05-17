@@ -24,12 +24,15 @@
 #include <errno.h>
 
 #ifndef WIN32
-# include <glib.h>
 # include <signal.h>
+#endif
+
+#if defined(USE_GTK2) && !defined(WIN32)
+# include <glib.h>
 # if GLIB_CHECK_VERSION(2,0,0)
-#  define GRETL_GLIB 2
+#  define GLIB2
 # endif /* GLIB_CHECK_VERSION */
-#endif /* ! WIN32 */
+#endif /* GTK2, !WIN32 */
 
 /**
  * date:
