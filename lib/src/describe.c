@@ -1798,7 +1798,7 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     }
 }
 
-static void print_summary_single (const GRETLSUMMARY *summ,
+static void print_summary_single (const Summary *summ,
 				  const DATAINFO *pdinfo,
 				  PRN *prn)
 {
@@ -1863,7 +1863,7 @@ static void print_summary_single (const GRETLSUMMARY *summ,
  *
  */
 
-void print_summary (const GRETLSUMMARY *summ,
+void print_summary (const Summary *summ,
 		    const DATAINFO *pdinfo,
 		    PRN *prn)
 {
@@ -1946,7 +1946,7 @@ void print_summary (const GRETLSUMMARY *summ,
  *
  */
 
-void free_summary (GRETLSUMMARY *summ)
+void free_summary (Summary *summ)
 {
     free(summ->list);
 
@@ -1962,9 +1962,9 @@ void free_summary (GRETLSUMMARY *summ)
     free(summ);
 }
 
-static GRETLSUMMARY *summary_new (const int *list)
+static Summary *summary_new (const int *list)
 {
-    GRETLSUMMARY *summ;
+    Summary *summ;
     int nv = list[0];
 
     summ = malloc(sizeof *summ);
@@ -2017,11 +2017,11 @@ static GRETLSUMMARY *summary_new (const int *list)
  *
  */
 
-GRETLSUMMARY *summary (const int *list, 
+Summary *summary (const int *list, 
 		       const double **Z, const DATAINFO *pdinfo,
 		       PRN *prn) 
 {
-    GRETLSUMMARY *summ;
+    Summary *summ;
     int i, vi, sn;
 
     summ = summary_new(list);

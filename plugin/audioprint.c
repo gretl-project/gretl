@@ -85,7 +85,7 @@ audioprint_model (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 }
 
 static void 
-audioprint_summary (GRETLSUMMARY *summ, const DATAINFO *pdinfo,
+audioprint_summary (Summary *summ, const DATAINFO *pdinfo,
 		    PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN];
@@ -344,7 +344,7 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
     
     /* descriptive statistics */
     if (role == SUMMARY || role == VAR_SUMMARY) {
-	GRETLSUMMARY *summ = (GRETLSUMMARY *) data;
+	Summary *summ = (Summary *) data;
 
 	audioprint_summary(summ, pdinfo, prn);
     } else if (role == CORR) {

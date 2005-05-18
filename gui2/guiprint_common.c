@@ -96,7 +96,7 @@ static void printfrtf (double zz, PRN *prn, int endrow)
 
 /* ............................................................. */
 
-void rtfprint_summary (GRETLSUMMARY *summ,
+void rtfprint_summary (Summary *summ,
 		       const DATAINFO *pdinfo,
 		       PRN *prn)
 {
@@ -192,7 +192,7 @@ static void printftex (double zz, PRN *prn, int endrow)
 
 /* ............................................................. */
 
-void texprint_summary (GRETLSUMMARY *summ,
+void texprint_summary (Summary *summ,
 		       const DATAINFO *pdinfo,
 		       PRN *prn)
 {

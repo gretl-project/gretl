@@ -403,7 +403,7 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
     /* descriptive statistics */
     if ((vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
 	&& SPECIAL_COPY(how)) {
-	GRETLSUMMARY *summ = (GRETLSUMMARY *) vwin->data;
+	Summary *summ = (Summary *) vwin->data;
 	
 	if (bufopen(&prn)) return;
 

@@ -2261,7 +2261,7 @@ int simple_commands (CMD *cmd, const char *line,
 {
     int err = 0, order = 0;
     CorrMat *corrmat;
-    GRETLSUMMARY *summ;
+    Summary *summ;
 
     switch (cmd->ci) {
 

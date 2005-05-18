@@ -30,11 +30,11 @@ int winprint_graph (char *emfname);
 void winprint (char *fullbuf, char *selbuf);
 #endif
 
-void texprint_summary (GRETLSUMMARY *summ,
+void texprint_summary (Summary *summ,
 		       const DATAINFO *pdinfo,
 		       PRN *prn);
 
-void rtfprint_summary (GRETLSUMMARY *summ,
+void rtfprint_summary (Summary *summ,
 		       const DATAINFO *pdinfo,
 		       PRN *prn);
 

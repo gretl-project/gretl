@@ -17,10 +17,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
-typedef struct GRETLSUMMARY_ GRETLSUMMARY;
+typedef struct Summary_ Summary;
 typedef struct FREQDIST_ FREQDIST;
 
-struct GRETLSUMMARY_ {
+struct Summary_ {
     int n;
     int *list;
     double *mean;
@@ -95,15 +95,15 @@ int periodogram (int varno,
 		 double ***pZ, const DATAINFO *pdinfo, 
 		 int batch, int opt, PRN *prn);
 
-GRETLSUMMARY *summary (const int *list, const double **Z, 
+Summary *summary (const int *list, const double **Z, 
 		       const DATAINFO *pdinfo,
 		       PRN *prn);
 
-void print_summary (const GRETLSUMMARY *summ,
+void print_summary (const Summary *summ,
 		    const DATAINFO *pdinfo,
 		    PRN *prn); 
 
-void free_summary (GRETLSUMMARY *summ);
+void free_summary (Summary *summ);
 
 CorrMat *corrlist (const int *list, const double **Z, const DATAINFO *pdinfo);
 
