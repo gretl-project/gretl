@@ -702,7 +702,7 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
 	   int ci, gretlopt opt, double rho)
 {
     int l0, yno, i;
@@ -1858,7 +1858,7 @@ static double autores (MODEL *pmod, const double **Z, int ci)
  * Returns: rho estimate on successful completion, %NADBL error.
  */
 
-double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
+double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 		     int batch, int ci, int *err, gretlopt opt, 
 		     PRN *prn)
 {
@@ -2253,7 +2253,7 @@ tsls_make_replist (const int *reglist, int *instlist, int *replist)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tsls_func (int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
+MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt)
 {
     int i, t;
@@ -2683,7 +2683,7 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL hsk_func (int *list, double ***pZ, DATAINFO *pdinfo)
+MODEL hsk_func (const int *list, double ***pZ, DATAINFO *pdinfo)
 {
     int i, err;
     int orig_nvar = pdinfo->v;
@@ -3035,7 +3035,7 @@ static int ar_list_max (const int *list)
  * Returns: #MODEL struct containing the results.
  */
 
-MODEL ar_func (int *list, int pos, double ***pZ, 
+MODEL ar_func (const int *list, int pos, double ***pZ, 
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     double diff, ess, tss, xx;
@@ -3575,7 +3575,7 @@ MODEL arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arch_model (int *list, int order, double ***pZ, DATAINFO *pdinfo, 
+MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn)
 {
     MODEL lmod, amod;
@@ -3607,7 +3607,7 @@ MODEL arch_model (int *list, int order, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL lad (int *list, double ***pZ, DATAINFO *pdinfo)
+MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
 {
     MODEL lad_model;
     void *handle;
@@ -3651,12 +3651,12 @@ MODEL lad (int *list, double ***pZ, DATAINFO *pdinfo)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, 
+MODEL arma (const int *list, const double **Z, DATAINFO *pdinfo, 
 	    gretlopt opt, PRN *prn)
 {
     MODEL armod;
     void *handle;
-    MODEL (*arma_model) (int *, const double **, DATAINFO *, gretlopt, PRN *);
+    MODEL (*arma_model) (const int *, const double **, DATAINFO *, gretlopt, PRN *);
 
     *gretl_errmsg = '\0';
 
@@ -3693,12 +3693,12 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, 
+MODEL arma_x12 (const int *list, const double **Z, DATAINFO *pdinfo, 
 		const PATHS *ppaths, gretlopt opt, PRN *prn)
 {
     MODEL armod;
     void *handle;
-    MODEL (*arma_x12_model) (int *, const double **, DATAINFO *, 
+    MODEL (*arma_x12_model) (const int *, const double **, DATAINFO *, 
 			     const char *, const char *,
 			     gretlopt, int, PRN *);
     int gui = gretl_in_gui_mode();
@@ -3737,12 +3737,12 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 		      const char *param)
 {
     MODEL lmod;
     void *handle;
-    MODEL (*logistic_estimate) (int *, double ***, DATAINFO *, const char *);
+    MODEL (*logistic_estimate) (const int *, double ***, DATAINFO *, const char *);
 
     *gretl_errmsg = '\0';
 
@@ -3775,11 +3775,11 @@ MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tobit_model (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     MODEL tmod;
     void *handle;
-    MODEL (* tobit_estimate) (int *, double ***, DATAINFO *, PRN *);
+    MODEL (* tobit_estimate) (const int *, double ***, DATAINFO *, PRN *);
 
     *gretl_errmsg = '\0';
 
@@ -3825,23 +3825,33 @@ static int get_offset_var (int *list)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL poisson_model (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     MODEL pmodel;
     void *handle;
+    int *listcpy;
     int offvar;
     int (* poisson_estimate) (MODEL *, int, double ***, DATAINFO *, PRN *);
 
     *gretl_errmsg = '\0';
 
-    offvar = get_offset_var(list);
+    gretl_model_init(&pmodel);
+
+    listcpy = gretl_list_copy(list);
+    if (listcpy == NULL) {
+	pmodel.errcode = E_ALLOC;
+        return pmodel;
+    }
+
+    offvar = get_offset_var(listcpy);
 
     /* run an initial OLS to "set the model up" and check for errors.
        the poisson_estimate_driver function will overwrite the
        coefficients etc.
     */
 
-    pmodel = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    pmodel = lsq(listcpy, pZ, pdinfo, OLS, OPT_A, 0.0);
+    free(listcpy);
 
     if (pmodel.errcode) {
         return pmodel;
@@ -3876,13 +3886,13 @@ MODEL poisson_model (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
+MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 	     PRN *prn)
 {
     MODEL gmod;
     void *handle;
     PRN *myprn;
-    MODEL (*garch_model) (int *, double ***, DATAINFO *, PRN *,
+    MODEL (*garch_model) (const int *, double ***, DATAINFO *, PRN *,
 			  gretlopt);
 
     *gretl_errmsg = '\0';
@@ -3910,7 +3920,7 @@ MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
     return gmod;
 } 
 
-MODEL pooled (int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL pooled (const int *list, double ***pZ, DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn)
 {
     MODEL wmod;
@@ -3919,7 +3929,7 @@ MODEL pooled (int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (opt & OPT_W) {
 	void *handle;
-	MODEL (*panel_wls_by_unit) (int *, double ***, DATAINFO *,
+	MODEL (*panel_wls_by_unit) (const int *, double ***, DATAINFO *,
 				    gretlopt, PRN *);
 
 	panel_wls_by_unit = get_plugin_function("panel_wls_by_unit", &handle);

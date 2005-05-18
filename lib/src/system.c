@@ -393,7 +393,7 @@ static void sur_rearrange_lists (gretl_equation_system *sys)
 }
 
 int gretl_equation_system_append (gretl_equation_system *sys, 
-				  int *list)
+				  const int *list)
 {
     int i, neq;
 

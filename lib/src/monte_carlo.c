@@ -24,6 +24,7 @@
 #include "loop_private.h"
 #include "libset.h"
 #include "compat.h"
+#include "cmd_private.h"
 
 #include <time.h>
 #include <unistd.h>
@@ -2126,65 +2127,6 @@ static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum)
     }
 
     return -1;
-}
-
-/**
- * get_cmd_ci:
- * @line: command line.
- * @cmd: pointer to gretl command struct.
- *
- * Parse @line and assign to @cmd->ci the index number of
- * the command embedded in @line.
- */
-
-void get_cmd_ci (const char *line, CMD *cmd)
-{
-    static int context;
-
-    /* allow for leading spaces */
-    while (isspace(*line)) {
-	line++;
-    }
-
-    if (*line == '#') {
-	cmd->nolist = 1;
-	cmd->ci = CMD_COMMENT;
-	return;
-    }
-
-#if 0
-    fprintf(stderr, "get_cmd_ci: line = '%s'\n", line);
-#endif
-
-    if (sscanf(line, "%s", cmd->word) != 1 || 
-	*line == '(' || *line == '#') {
-	cmd->nolist = 1;
-	cmd->ci = -1;
-	return;
-    }
-
-    /* subsetted commands (e.g. "deriv" in relation to "nls") */
-    if (!strcmp(cmd->word, "end")) {
-	context = 0;
-	cmd->ci = END;
-    } else if (context && strcmp(cmd->word, "equation")) {
-	/* "equation" occurs in the SYSTEM context, but it is
-	   a command in its own right */
-	cmd->ci = context;
-    } else if ((cmd->ci = gretl_command_number(cmd->word)) == 0) {
-	cmd->errcode = 1;
-	sprintf(gretl_errmsg, _("command \"%s\" not recognized"), 
-		cmd->word);
-	return;
-    }
-
-    if (cmd->ci == NLS) {
-	context = NLS;
-    }
-
-    if (!strcmp(line, "end loop")) {
-	cmd->ci = ENDLOOP;
-    }
 }
 
 static int 

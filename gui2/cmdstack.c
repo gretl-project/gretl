@@ -20,6 +20,7 @@
 #include "gretl.h"
 #include "cmdstack.h"
 #include "lib_private.h"
+#include "cmd_private.h"
 
 #undef CMD_DEBUG
 

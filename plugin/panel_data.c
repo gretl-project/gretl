@@ -1373,7 +1373,7 @@ static int singleton_check (const int *unit_obs, int nunits)
 #define SMALLDIFF 0.0001
 #define WLS_MAX   20
 
-MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 			 gretlopt opt, PRN *prn)
 {
     MODEL mdl;

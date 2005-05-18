@@ -55,7 +55,7 @@ int outcovmx (MODEL *pmod,
 
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 
-int printdata (int *list, const double **Z, const DATAINFO *pdinfo, 
+int printdata (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt oflag, PRN *prn);
 
 int text_print_fit_resid (const FITRESID *fr, 

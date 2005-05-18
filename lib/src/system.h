@@ -43,7 +43,7 @@ char *get_system_name_from_line (const char *s);
 void gretl_equation_systems_cleanup (void);
 
 int gretl_equation_system_append (gretl_equation_system *sys, 
-				  int *list);
+				  const int *list);
 
 int system_parse_line (gretl_equation_system *sys,
 		       const char *line, 

@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_func.h"
 #include "system.h"
+#include "cmd_private.h"
 
 #include <errno.h>
 
@@ -1418,10 +1419,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     int err = 0, ignore = 0;
     double rho = 0;
 
-    cmd.list = malloc(sizeof *cmd.list);
-    cmd.param = malloc(1);
-
-    if (cmd.list == NULL || cmd.param == NULL) {
+    if (gretl_cmd_init(&cmd)) {
 	return 1;
     }
 
@@ -1429,7 +1427,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
     gretl_model_init(tmpmod);
 
-    switch(cmd.ci) {
+    switch (cmd.ci) {
     case AR:
 	*tmpmod = ar_func(cmd.list, atoi(cmd.param), pZ, 
 			  pdinfo, OPT_NONE, NULL);
@@ -1473,8 +1471,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 	clear_model(tmpmod);
     }
 
-    free(cmd.list);
-    free(cmd.param);
+    gretl_cmd_free(&cmd);
 
     return err;
 }
@@ -1852,24 +1849,15 @@ int gretl_spawn (const char *cmdline)
 
 /* library init and cleanup functions */
 
-void libgretl_init (CMD *cmd)
+void libgretl_init (void)
 {
-    if (cmd != NULL && gretl_cmd_init(cmd)) {
-	exit(EXIT_FAILURE);
-    }
-
     gretl_rand_init();
-
     set_gretl_tex_preamble(); 
 }
 
-void libgretl_cleanup (CMD *cmd)
+void libgretl_cleanup (void)
 {
     const char *p;
-
-    if (cmd != NULL) {
-	gretl_cmd_free(cmd);
-    }
 
     gretl_rand_free();
     gretl_functions_cleanup();

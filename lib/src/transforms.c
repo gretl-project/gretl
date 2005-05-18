@@ -92,7 +92,13 @@ make_transform_varname (char *vname, const char *orig, int cmd,
     } else if (cmd == LAGS) {
 	char ext[6];
 
-	sprintf(ext, "_%d", lag);
+	if (lag >= 0) {
+	    /* an actual lag */
+	    sprintf(ext, "_%d", lag);
+	} else {
+	    /* in fact a lead */
+	    sprintf(ext, "%d", -lag);
+	}
 	strncat(vname, orig, len - strlen(ext));
 	strcat(vname, ext);
     }
@@ -115,7 +121,11 @@ make_transform_label (char *label, const char *parent,
     } else if (cmd == SQUARE) {
 	sprintf(label, _("= %s squared"), parent);
     } else if (cmd == LAGS) {
-	sprintf(label, "= %s(t - %d)", parent, lag);
+	if (lag >= 0) {
+	    sprintf(label, "= %s(t - %d)", parent, lag);
+	} else {
+	    sprintf(label, "= %s(t + %d)", parent, -lag);
+	}
     } else {
 	err = 1;
     }

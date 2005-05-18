@@ -379,7 +379,7 @@ static void tail_strip (char *s)
 /**
  * get_gretl_options:
  * @line: command line to parse.
- * @err: address for error code, which is set to 1 in case any 
+ * @err: location for error code, which is set to 1 in case any 
  * invalid options are found, else set to 0.
  * 
  * Check for option flags in @line: if found, chop them out and set
@@ -403,7 +403,9 @@ gretlopt get_gretl_options (char *line, int *err)
 	*err = 0;
     }
 
-    if (n < 2 || *line == '#') return oflags;
+    if (n < 2 || *line == '#') {
+	return oflags;
+    }
 
     /* to enable reading of trad. esl input files */
     if (line[n-2] == ';' && isspace(line[n-1])) {
@@ -425,7 +427,9 @@ gretlopt get_gretl_options (char *line, int *err)
 	ci = gretl_command_number(cmdword);
     }
 
-    if (ci == 0) return oflags;
+    if (ci == 0) {
+	return oflags;
+    }
 
     /* try for short-form options (e.g. "-o") */
     opt = get_short_opts(line, ci, &myerr);

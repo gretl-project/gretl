@@ -19,7 +19,7 @@
 
 /* functions follow */
 
-MODEL logit_probit (int *list, 
+MODEL logit_probit (const int *list, 
 		    double ***pZ, DATAINFO *pdinfo, 
 		    int opt);
 

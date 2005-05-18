@@ -41,9 +41,10 @@ struct COMPARE {
     int robust;    /* = 1 when robust vcv is in use, else 0 */
 };
 
-/* given a list of variables, check them against the independent
+/* Given a list of variables, check them against the independent
    variables included in a model, and construct a mask with 1s in
-   positions where there is a match, 0s otherwise
+   positions where there is a match, 0s otherwise.  If the test list
+   is NULL, match all variables except the constant.
 */
 
 static char *
@@ -82,7 +83,8 @@ enum {
 /* Wald (chi-square or F) test for a set of zero restrictions on the
    parameters of a given model, based on the covariance matrix of the
    unrestricted model. Suitable for use where the original model is
-   estimated by FGLS or IV.
+   estimated by FGLS or IV.  Note that if list is NULL, we do an
+   automatic test, for the significance of all vars but the constant.
 */
 
 static double wald_test (const int *list, MODEL *pmod, int form)
@@ -127,6 +129,11 @@ static double wald_test (const int *list, MODEL *pmod, int form)
     if (form == F_FORM && !err) {
 	w /= gretl_vector_get_length(b);
     }
+
+#if WDEBUG
+    fprintf(stderr, "Wald test: %s = %g\n", 
+	    (form == F_FORM)? "F" : "Chi^2", w);
+#endif
 
     free(mask);
     gretl_matrix_free(C);
@@ -657,7 +664,7 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int add_test (int *addvars, MODEL *orig, MODEL *new, 
+int add_test (const int *addvars, MODEL *orig, MODEL *new, 
 	      double ***pZ, DATAINFO *pdinfo, 
 	      gretlopt opt, PRN *prn)
 {
@@ -714,15 +721,17 @@ int add_test (int *addvars, MODEL *orig, MODEL *new,
 
 	if (new->nobs == orig->nobs) {
 	    struct COMPARE cmp;
+	    int *addlist;
 
-	    gretl_list_diff(addvars, new->list, orig->list);
-	    cmp = add_or_omit_compare(orig, new, 1, addvars);
+	    addlist = gretl_list_diff(new->list, orig->list);
+	    cmp = add_or_omit_compare(orig, new, 1, addlist);
 
 	    if (save_test) {
 		opt |= OPT_S;
 	    }
 
-	    gretl_print_compare(&cmp, addvars, orig, pdinfo, opt, prn);
+	    gretl_print_compare(&cmp, addlist, orig, pdinfo, opt, prn);
+	    free(addlist);
 	}
     }
 
@@ -753,7 +762,7 @@ int add_test (int *addvars, MODEL *orig, MODEL *new,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int omit_test (int *omitvars, MODEL *orig, MODEL *new, 
+int omit_test (const int *omitvars, MODEL *orig, MODEL *new, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn)
 {
@@ -827,15 +836,17 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
 
 	if (new->nobs == orig->nobs && omitvars != NULL) {
 	    struct COMPARE cmp;
+	    int *omitlist;
 
-	    gretl_list_diff(omitvars, orig->list, new->list);
-	    cmp = add_or_omit_compare(orig, new, 0, omitvars);
+	    omitlist = gretl_list_diff(orig->list, new->list);
+	    cmp = add_or_omit_compare(orig, new, 0, omitlist);
 
 	    if (save_test) {
 		opt |= OPT_S;
 	    }
 
-	    gretl_print_compare(&cmp, omitvars, orig, pdinfo, opt, prn); 
+	    gretl_print_compare(&cmp, omitlist, orig, pdinfo, opt, prn); 
+	    free(omitlist);
 	}
 
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {

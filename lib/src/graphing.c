@@ -1004,6 +1004,22 @@ static void print_gnuplot_flags (unsigned char flags)
 }
 #endif
 
+static void set_withstr (unsigned char flags, const int *lines, 
+			 int i, char *str)
+{
+    int ltest = 0;
+
+    if (lines != NULL) {
+	ltest = lines[(flags & GP_GUI)? i - 1 : 0];
+    }
+
+    if (ltest) {
+	strcpy(str, "w lines");
+    } else {
+	strcpy(str, "w points");
+    }
+}
+
 /**
  * gnuplot:
  * @list: list of variables to plot, by ID number.
@@ -1228,13 +1244,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 		strcpy(s1, series_name(pdinfo, list[i]));
 	    }
 	    if (!gpinfo.impulses) { 
-		int ltest = lines[(flags & GP_GUI)? i - 1 : 0];
-
-		if (ltest) {
-		    strcpy(withstr, "w lines");
-		} else {
-		    strcpy(withstr, "w points");
-		}
+		set_withstr(flags, lines, i, withstr);
 	    }
 	    fprintf(fp, " '-' using 1:($2) title '%s' %s", 
 		    s1, withstr);

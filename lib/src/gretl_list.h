@@ -36,7 +36,7 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err);
 
 int *gretl_list_omit_last (const int *orig, int *err);
 
-void gretl_list_diff (int *targ, const int *biglist, const int *sublist);
+int *gretl_list_diff (const int *biglist, const int *sublist);
 
 void rearrange_list (int *list);
 

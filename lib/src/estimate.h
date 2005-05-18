@@ -23,35 +23,35 @@
 
 /* functions follow */
 
-MODEL lsq (int *list, 
+MODEL lsq (const int *list, 
 	   double ***pZ, DATAINFO *pdinfo, 
 	   int ci, gretlopt opt, double rho);
 
-double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
+double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 		     int batch, int ci, int *err, 
 		     gretlopt opt, PRN *prn);
 
-MODEL lad (int *list, double ***pZ, DATAINFO *pdinfo); 
+MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo); 
 
-MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, 
+MODEL arma (const int *list, const double **Z, DATAINFO *pdinfo, 
 	    gretlopt opt, PRN *prn);
 
-MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, 
+MODEL arma_x12 (const int *list, const double **Z, DATAINFO *pdinfo, 
 		const PATHS *ppaths, gretlopt opt, PRN *prn);
 
-MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 		      const char *param);
 
-MODEL tobit_model (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn);
 
-MODEL poisson_model (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		     PRN *prn);
 
-MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
+MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 	     PRN *prn);
 
-MODEL pooled (int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL pooled (const int *list, double ***pZ, DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn);
 
 int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
@@ -61,17 +61,17 @@ double *tsls_get_Xi (const MODEL *pmod, double **Z, int i);
 
 void tsls_free_data (const MODEL *pmod);
 
-MODEL tsls_func (int *list, int pos_in, 
+MODEL tsls_func (const int *list, int pos_in, 
 		 double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt);
 
-MODEL hsk_func (int *list, double ***pZ, DATAINFO *pdinfo);
+MODEL hsk_func (const int *list, double ***pZ, DATAINFO *pdinfo);
 
 int whites_test (MODEL *pmod, 
 		 double ***pZ, DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn);
 
-MODEL ar_func (int *list, int pos, 
+MODEL ar_func (const int *list, int pos, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 
@@ -79,7 +79,7 @@ MODEL arch_test (MODEL *pmod, int order,
 		 double ***pZ, DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn);
 
-MODEL arch_model (int *list, int order, 
+MODEL arch_model (const int *list, int order, 
 		  double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn);
 

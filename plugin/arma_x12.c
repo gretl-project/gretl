@@ -740,7 +740,7 @@ static int check_arma_list (const int *list)
     return err;
 }
 
-MODEL arma_x12_model (int *list, const double **Z, const DATAINFO *pdinfo, 
+MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo, 
 		      const char *prog, const char *workdir,
 		      gretlopt opt, int gui, PRN *prn)
 {

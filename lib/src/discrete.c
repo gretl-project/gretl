@@ -232,7 +232,7 @@ static double *hessian (MODEL *pmod, const double **Z, int opt)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
+MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 {
     int i, t, v, misst, depvar = list[1];
     int oldt1 = pdinfo->t1;

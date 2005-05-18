@@ -29,19 +29,6 @@
 
 typedef struct _CMD CMD;
 
-struct _CMD {
-    char word[9];               /* command word */
-    int ci;                     /* command index number */
-    int context;                /* context for subsetted commands */
-    gretlopt opt;               /* option flags */
-    char savename[MAXSAVENAME]; /* name used to save an object from the command */
-    char str[4];                /* used, e.g., in "multiply" command */
-    int nolist;                 /* = 1 if the command does not take a list */
-    int *list;                  /* list of variables by ID number */
-    char *param;                /* general-purpose parameter to command */
-    int errcode;                /* error code */
-};
-
 enum option_codes {
     OPT_BATCH = 1,
     OPT_HELP,
@@ -61,15 +48,29 @@ enum forced_langs {
 /* functions follow */
 
 int gretl_cmd_init (CMD *cmd);
- 
-void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd, 
-	     int *ignore, double ***pZ, PRN *cmdprn);
 
-int command_number (const char *cmd);
+void gretl_cmd_free (CMD *cmd);
+
+CMD *gretl_cmd_new (void);
+
+void gretl_cmd_destroy (CMD *cmd);
 
 void gretl_cmd_set_context (CMD *cmd, int ci);
 
 void gretl_cmd_destroy_context (CMD *cmd);
+
+const char *gretl_cmd_get_savename (const CMD *cmd);
+
+gretlopt gretl_cmd_get_opt (const CMD *cmd);
+
+void gretl_cmd_set_opt (CMD *cmd, gretlopt opt);
+
+void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd, 
+	     int *ignore, double ***pZ, PRN *cmdprn);
+
+void get_cmd_ci (const char *line, CMD *cmd);
+
+int command_number (const char *cmd);
 
 int help (const char *cmd, const char *helpfile, PRN *prn);
 

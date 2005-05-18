@@ -19,11 +19,11 @@
 
 /* dbread.c for gretl */
 
+#include "libgretl.h"
+
 #ifdef USE_GTK2
 # include <glib.h>
 #endif
-
-#include "libgretl.h"
 
 #undef DB_DEBUG
 

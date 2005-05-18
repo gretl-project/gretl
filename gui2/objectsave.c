@@ -24,6 +24,7 @@
 #include "gpt_control.h"
 #include "objectsave.h"
 
+#include "cmd_private.h"
 #include "var.h"
 
 enum {
@@ -224,17 +225,20 @@ static int parse_object_request (const char *line,
 int maybe_save_model (const CMD *cmd, MODEL **ppmod, 
 		      DATAINFO *pdinfo, PRN *prn)
 {
+    const char *savename;
     int err;
 
     if ((*ppmod)->errcode) {
 	return 1;
     }
 
-    if (*cmd->savename == 0) {
+    savename = gretl_cmd_get_savename(cmd);
+
+    if (*savename == 0) {
 	return 0;
     }
 
-    (*ppmod)->name = g_strdup(cmd->savename);
+    (*ppmod)->name = g_strdup(savename);
 
     err = try_add_model_to_session(*ppmod);
 
@@ -244,7 +248,7 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
 	if (mnew != NULL) {
 	    copy_model(mnew, *ppmod, pdinfo);
 	    *ppmod = mnew;
-	    pprintf(prn, _("%s saved\n"), cmd->savename);
+	    pprintf(prn, _("%s saved\n"), savename);
 	} else {
 	    err = E_ALLOC;
 	}
@@ -255,10 +259,13 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
 
 int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
+    const char *savename;
     GRETL_VAR *var;
     int err;
 
-    if (*cmd->savename == 0) return 0;
+    savename = gretl_cmd_get_savename(cmd);
+
+    if (*savename == 0) return 0;
 
     /* FIXME allow "robust" option? */
     var = full_var(atoi(cmd->param), cmd->list, pZ, pdinfo, OPT_NONE, NULL);
@@ -266,11 +273,11 @@ int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     if (var == NULL) {
 	err = E_ALLOC;
     } else {
-	gretl_var_assign_specific_name(var, cmd->savename);
+	gretl_var_assign_specific_name(var, savename);
 	err = try_add_var_to_session(var);
 
 	if (!err) {
-	    pprintf(prn, _("%s saved\n"), cmd->savename);
+	    pprintf(prn, _("%s saved\n"), savename);
 	} else {
 	    gretl_var_free(var);
 	    err = E_ALLOC;
@@ -283,15 +290,18 @@ int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 int maybe_save_graph (const CMD *cmd, const char *fname, int code,
 		      PRN *prn)
 {
+    const char *savename;
     char savedir[MAXLEN];
     gchar *tmp, *plotfile;
     int err = 0;
 
-    if (*cmd->savename == 0) return 0;
+    savename = gretl_cmd_get_savename(cmd);
+
+    if (*savename == 0) return 0;
 
     get_default_dir(savedir);
 
-    tmp = g_strdup(cmd->savename);
+    tmp = g_strdup(savename);
     plotfile = g_strdup_printf("%ssession.%s", savedir, 
 			       space_to_score(tmp));
     g_free(tmp);
@@ -301,15 +311,15 @@ int maybe_save_graph (const CMD *cmd, const char *fname, int code,
 	if (!err) {
 	    int ret;
 
-	    ret = real_add_graph_to_session(plotfile, cmd->savename, code);
+	    ret = real_add_graph_to_session(plotfile, savename, code);
 	    if (ret == ADD_OBJECT_FAIL) {
 		err = 1;
 	    } else {
 		remove(fname);
 		if (ret == ADD_OBJECT_REPLACE) {
-		    pprintf(prn, _("%s replaced\n"), cmd->savename);
+		    pprintf(prn, _("%s replaced\n"), savename);
 		} else {
-		    pprintf(prn, _("%s saved\n"), cmd->savename);
+		    pprintf(prn, _("%s saved\n"), savename);
 		}
 	    }
 	}

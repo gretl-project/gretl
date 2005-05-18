@@ -105,7 +105,7 @@ void print_summary (const GRETLSUMMARY *summ,
 
 void free_summary (GRETLSUMMARY *summ);
 
-CorrMat *corrlist (int *list, const double **Z, const DATAINFO *pdinfo);
+CorrMat *corrlist (const int *list, const double **Z, const DATAINFO *pdinfo);
 
 void free_corrmat (CorrMat *corrmat);
 

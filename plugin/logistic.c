@@ -279,40 +279,51 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-MODEL logistic_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL logistic_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 			 const char *param) 
 {
     double lmax;
+    int *llist = NULL;
     int dv = list[1];
     MODEL lmod;
 
     gretl_model_init(&lmod); 
 
+    llist = gretl_list_copy(list);
+    if (llist == NULL) {
+	lmod.errcode = E_ALLOC;
+	return lmod;
+    }
+
     lmax = get_lmax((*pZ)[dv], pdinfo, param);
 
     if (na(lmax)) {
 	lmod.errcode = E_DATA;
-	return lmod;
     } else if (lmax == 0.0) {
 	lmod.errcode = E_CANCEL;
+    }
+
+    if (!lmod.errcode) {
+	if (make_logistic_depvar(pZ, pdinfo, dv, lmax)) {
+	    lmod.errcode = E_ALLOC;	
+	}
+    }
+
+    if (lmod.errcode) {
+	free(llist);
 	return lmod;
     }
 
-    if (make_logistic_depvar(pZ, pdinfo, dv, lmax)) {
-	lmod.errcode = E_ALLOC;	
-	return lmod;
-    }
+    llist[1] = pdinfo->v - 1;
 
-    list[1] = pdinfo->v - 1;
-
-    lmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    lmod = lsq(llist, pZ, pdinfo, OLS, OPT_A, 0.0);
     if (!lmod.errcode) {
 	rewrite_logistic_stats((const double **) *pZ, pdinfo, &lmod,
 			       dv, lmax);
     }
 
     dataset_drop_vars(1, pZ, pdinfo);
-    list[1] = dv;
+    free(llist);
     
     return lmod;
 }

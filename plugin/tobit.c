@@ -470,7 +470,7 @@ static double tobit_depvar_scale (const MODEL *pmod)
 
 /* the driver function for the plugin */
 
-MODEL tobit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 		      PRN *prn) 
 {
     MODEL model;

@@ -444,6 +444,8 @@ static int remove_const (int *list)
 static int 
 check_arma_list (int *list, gretlopt opt, struct arma_info *ainfo)
 {
+    int armax = (list[0] > 4);
+    int hadconst = 0;
     int err = 0;
 
     if (list[0] < 4) {
@@ -458,15 +460,17 @@ check_arma_list (int *list, gretlopt opt, struct arma_info *ainfo)
 
     /* If there's an explicit constant in the list here, we'll remove
        it, since it is added implicitly later.  But if we're supplied
-       with OPT_S (suppress intercept) we'll flag this by setting 
-       ifc = 0.
+       with OPT_S (meaning: suppress the intercept) we'll flag this by
+       setting ifc = 0.  Also, if the user gave an armax list
+       (specifying regressors) we'll respect the absence of a constant
+       from that list by setting ifc = 0.
     */
 
-    if (list[0] > 4) {
-	remove_const(list);
+    if (armax) {
+	hadconst = remove_const(list);
     }
 
-    if (opt & OPT_S) {
+    if ((opt & OPT_S) || (armax && !hadconst)) {
 	ainfo->ifc = 0;
     } else {
 	ainfo->ifc = 1;
@@ -704,15 +708,16 @@ set_up_arma_model_info (struct arma_info *ainfo)
     return arma;
 }
 
-MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo, 
+MODEL arma_model (const int *list, const double **Z, DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn)
 {
     int nc, yno;
     double *coeff = NULL;
     const double **X = NULL;
+    int *alist = NULL;
     PRN *aprn = NULL;
+    model_info *arma = NULL;
     MODEL armod;
-    model_info *arma;
     struct arma_info ainfo;
     int err = 0;
 
@@ -723,23 +728,29 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
 
-    if (check_arma_list(list, opt, &ainfo)) {
-	armod.errcode = E_UNSPEC;
-	return armod;
+    alist = gretl_list_copy(list);
+    if (alist == NULL) {
+	armod.errcode = E_ALLOC;
+	goto bailout;
     }
 
-    yno = list[4];         /* dependent variable */
-    ainfo.p = list[1];     /* AR order */
-    ainfo.q = list[2];     /* MA order */
-    ainfo.maxlag = (ainfo.p > ainfo.q)? 
-	ainfo.p : ainfo.q; /* maximum lag in the model */
+    if (check_arma_list(alist, opt, &ainfo)) {
+	armod.errcode = E_UNSPEC;
+	goto bailout;
+    }
 
-    ainfo.r = list[0] - 4; /* number of ordinary regressors */
+    yno = alist[4];         /* dependent variable */
+    ainfo.p = alist[1];     /* AR order */
+    ainfo.q = alist[2];     /* MA order */
+    ainfo.maxlag = (ainfo.p > ainfo.q)? 
+	ainfo.p : ainfo.q;  /* maximum lag in the model */
+
+    ainfo.r = alist[0] - 4; /* number of ordinary regressors */
 
     /* adjust sample range if need be */
-    if (adjust_sample(pdinfo, Z, list, &ainfo)) {
+    if (adjust_sample(pdinfo, Z, alist, &ainfo)) {
         armod.errcode = E_DATA;
-        return armod;
+	goto bailout;
     }
 
     /* tally of coefficients */
@@ -749,33 +760,29 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     coeff = malloc(nc * sizeof *coeff);
     if (coeff == NULL) {
 	armod.errcode = E_ALLOC;
-	return armod;
+	goto bailout;
     }
 
     /* create model_info struct to feed to bhhh_max() */
     arma = set_up_arma_model_info(&ainfo);
     if (arma == NULL) {
-	free(coeff);
 	armod.errcode = E_ALLOC;
-	return armod;
+	goto bailout;
     }
 
     /* initialize the coefficients: AR and regression part by OLS, 
        MA at 0 */
-    err = ar_init_by_ols(list, coeff, Z, pdinfo, &ainfo);
+    err = ar_init_by_ols(alist, coeff, Z, pdinfo, &ainfo);
     if (err) {
-	free(coeff);
-	model_info_free(arma);
 	armod.errcode = E_ALLOC;
-	return armod;
+	goto bailout;
     }	
 
     /* construct virtual dataset for dep var, real regressors */
-    X = make_armax_X(list, Z);
+    X = make_armax_X(alist, Z);
     if (X == NULL) {
 	armod.errcode = E_ALLOC;
-	free(coeff);
-	return armod;
+	goto bailout;
     }
 
     /* call BHHH conditional ML function (OPG regression) */
@@ -789,7 +796,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	double *theta = model_info_get_theta(arma);
 	cmplx *roots;
 
-	rewrite_arma_model_stats(pmod, arma, list, ainfo.ifc, Z[yno], 
+	rewrite_arma_model_stats(pmod, arma, alist, ainfo.ifc, Z[yno], 
 				 theta, nc);
 
 	/* compute and save polynomial roots */
@@ -804,6 +811,9 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	armod = *pmod;
     }
 
+ bailout:
+
+    free(alist);
     free(coeff);
     free(X);
     model_info_free(arma);

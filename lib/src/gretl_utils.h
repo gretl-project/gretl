@@ -150,12 +150,10 @@ typedef enum {
 
 /* functions follow */
 
-void libgretl_init (CMD *cmd);
+void libgretl_init (void);
 
-void libgretl_cleanup (CMD *cmd);
+void libgretl_cleanup (void);
 
-void gretl_cmd_free (CMD *cmd);
- 
 double date (int nt, int pd, const double sd0);
 
 /* checks on variables */

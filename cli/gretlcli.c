@@ -33,6 +33,7 @@
 #include "modelspec.h"
 #include "libset.h"
 #include "forecast.h"
+#include "cmd_private.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -540,7 +541,8 @@ int main (int argc, char *argv[])
 	noalloc("models"); 
     }
 
-    libgretl_init(&cmd);
+    gretl_cmd_init(&cmd);
+    libgretl_init();
 
     /* print list of variables */
     if (data_status) {
@@ -632,8 +634,8 @@ int main (int argc, char *argv[])
     }
 
     gretl_print_destroy(prn);
-
-    libgretl_cleanup(&cmd);
+    gretl_cmd_free(&cmd);
+    libgretl_cleanup();
 
     return 0;
 }
@@ -809,6 +811,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case PCA:
     case PLOT: 
     case PRINT: 
+    case RENAME:
     case RHODIFF:
     case RMPLOT: 
     case RUNS: 
@@ -993,15 +996,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	break;
 
-    case RENAME:
-	err = rename_var_by_id(cmd.str, cmd.param, datainfo);
-	if (err) {
-	    errmsg(err, prn);
-	} else {
-	    varlist(datainfo, prn);
-	}
-	break;
-
     case END:
 	if (!strcmp(cmd.param, "system")) {
 	    err = gretl_equation_system_finalize(sys, &Z, datainfo, prn);
@@ -1096,19 +1090,21 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	pputs(prn, _("Retrieved fitted values as \"autofit\"\n"));
 	varlist(datainfo, prn);
 	if (dataset_is_time_series(datainfo)) {
+	    int *plotlist;
+
 	    plotvar(&Z, datainfo, "time");
-	    cmd.list = realloc(cmd.list, 4 * sizeof(int));
-	    cmd.list[0] = 3; 
-	    if ((models[0])->ci == ARMA) {
-		cmd.list[1] = (models[0])->list[4];
+	    plotlist = gretl_list_new(3);
+	    if (models[0]->ci == ARMA) {
+		plotlist[1] = models[0]->list[4];
 	    } else {
-		cmd.list[1] = (models[0])->list[1];
+		plotlist[1] = models[0]->list[1];
 	    }
-	    cmd.list[2] = varindex(datainfo, "autofit");
-	    cmd.list[3] = varindex(datainfo, "time");
+	    plotlist[2] = varindex(datainfo, "autofit");
+	    plotlist[3] = varindex(datainfo, "time");
 	    lines[0] = 1;
-	    err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
+	    err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
 			  &plot_count, gp_flags(batch, 0));
+	    free(plotlist);
 	    if (err) {
 		pputs(prn, _("gnuplot command failed\n"));
 	    }

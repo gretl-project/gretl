@@ -57,11 +57,11 @@ enum aux_codes {
  
 double robust_omit_F (const int *list, MODEL *pmod);
 
-int add_test (int *addvars,  MODEL *orig, MODEL *new,
+int add_test (const int *addvars,  MODEL *orig, MODEL *new,
 	      double ***pZ, DATAINFO *pdinfo, 
 	      gretlopt opt, PRN *prn);
 
-int omit_test (int *omitvars, MODEL *orig, MODEL *new, 
+int omit_test (const int *omitvars, MODEL *orig, MODEL *new, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 

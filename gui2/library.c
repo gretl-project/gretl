@@ -31,6 +31,7 @@
 #include "menustate.h"
 #include "dlgutils.h"
 #include "lib_private.h"
+#include "cmd_private.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -101,12 +102,14 @@ void exit_free_modelspec (void)
 
 void library_command_init (void)
 {
-    libgretl_init(&cmd);
+    gretl_cmd_init(&cmd);
+    libgretl_init();
 }
 
 void library_command_free (void)
 {
-    libgretl_cleanup(&cmd);
+    gretl_cmd_free(&cmd);
+    libgretl_cleanup();
 }
 
 /* ........................................................... */
@@ -484,7 +487,6 @@ int check_specific_command (char *s)
     int err = 0;
 
     /* cmd is global */
-    *cmd.param = '\0';
     cmd.opt = get_gretl_options(s, &err);
 
     if (err) {
@@ -1947,8 +1949,6 @@ static gint check_model_cmd (char *modelgenr)
     int err;
 
     if (bufopen(&gprn)) return 1;
-
-    *cmd.param = '\0';
 
     cmd.opt = get_gretl_options(cmdline, &err);
     if (err) {
@@ -3838,8 +3838,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 
     /* special case: showing only one series */
     if (prcmd.list[0] == 1) {
-	free(prcmd.list);
-	free(prcmd.param);
+	gretl_cmd_free(&cmd);
 	display_var();
 	return;
     }
@@ -3865,8 +3864,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	view_buffer(prn, width, 350, _("gretl: display data"), PRINT, NULL);
     }
 
-    free(prcmd.list);
-    free(prcmd.param);
+    gretl_cmd_free(&cmd);
 }
 
 void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
@@ -5521,6 +5519,7 @@ int gui_exec_line (char *line,
     case PCA:
     case PLOT: 
     case PRINT: 
+    case RENAME:
     case RHODIFF:
     case RMPLOT: 
     case RUNS: 
@@ -5736,15 +5735,6 @@ int gui_exec_line (char *line,
 	}
 	break;
 
-    case RENAME:
-	err = rename_var_by_id(cmd.str, cmd.param, datainfo);
-	if (err) {
-	    errmsg(err, prn);
-	} else {
-	    varlist(datainfo, prn);
-	}
-	break;
-
     case END:
 	if (!strcmp(cmd.param, "system")) {
 	    err = gretl_equation_system_finalize(sys, &Z, datainfo, outprn);
@@ -5841,25 +5831,28 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	    break;
 	}
+
 	err = 0;
 	pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
 	varlist(datainfo, prn); 
-	if (exec_code != CONSOLE_EXEC)
-	    break;
-	if (dataset_is_time_series(datainfo)) {
+
+	if (exec_code == CONSOLE_EXEC && 
+	    dataset_is_time_series(datainfo)) {
+	    int *plotlist;
+
 	    plotvar(&Z, datainfo, "time");
-	    cmd.list = myrealloc(cmd.list, 4 * sizeof *cmd.list);
-	    cmd.list[0] = 3; 
-	    if ((models[0])->ci == ARMA) {
-		cmd.list[1] = (models[0])->list[4]; 
+	    plotlist = gretl_list_new(3);
+	    if (models[0]->ci == ARMA) {
+		plotlist[1] = models[0]->list[4];
 	    } else {
-		cmd.list[1] = (models[0])->list[1]; 
+		plotlist[1] = models[0]->list[1];
 	    }
-	    cmd.list[2] = varindex(datainfo, "autofit");
-	    cmd.list[3] = varindex(datainfo, "time");
+	    plotlist[2] = varindex(datainfo, "autofit");
+	    plotlist[3] = varindex(datainfo, "time");
 	    lines[0] = (cmd.opt != 0); 
-	    err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
+	    err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
 			  &plot_count, 0); 
+	    free(plotlist);
 	    if (err < 0) {
 		pprintf(prn, _("gnuplot command failed\n"));
 	    } else {

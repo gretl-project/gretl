@@ -54,7 +54,7 @@ int *gretl_list_copy (const int *src)
     int *targ;
     int i;
 
-    if (src == NULL) {
+    if (src == NULL || src[0] == 0) {
 	return NULL;
     }
 
@@ -375,21 +375,29 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err)
 
 /**
  * gretl_list_diff:
- * @targ: target list (must be pre-allocated).
  * @biglist: inclusive list.
  * @sublist: subset of biglist.
  *
- * fills out list @targ with the elements of biglist that are not
- * present in sublist.
- * 
+ * Returns: a newly allocated list including the elements of @biglist,
+ * from position 2 onwards, that are not present in @sublist, or %NULL on 
+ * failure.  It is assumed that the variable ID number in position 1
+ * (dependent variable) is the same in both lists.  It is an error
+ * if, from position 2 on, @sublist is not a proper subset of @biglist.
  */
 
-void gretl_list_diff (int *targ, const int *biglist, const int *sublist)
+int *gretl_list_diff (const int *biglist, const int *sublist)
 {
-    int i, j, k = 0;
+    int *targ = NULL;
+    int i, j, n, k = 0;
     int match;
 
-    targ[0] = biglist[0] - sublist[0];
+    n = biglist[0] - sublist[0];
+
+    if (n <= 0) {
+	return NULL;
+    }
+
+    targ = gretl_list_new(n);
 
     for (i=2; i<=biglist[0]; i++) {
 	match = 0;
@@ -403,6 +411,8 @@ void gretl_list_diff (int *targ, const int *biglist, const int *sublist)
 	    targ[++k] = biglist[i];
 	}
     }
+
+    return targ;
 }
 
 /* Check if any var in list has been replaced via genr since a

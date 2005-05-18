@@ -638,7 +638,7 @@ static int *make_ols_list (const int *list)
 
 /* the driver function for the plugin */
 
-MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
+MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn, gretlopt opt) 
 {
     MODEL model;
