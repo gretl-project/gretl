@@ -39,6 +39,10 @@
 # endif
 #endif
 
+#if USE_LAGINFO
+# include "laginfo.c"
+#endif
+
 typedef struct {
     int firstlag;
     int lastlag;
@@ -528,10 +532,10 @@ int auto_lag_ok (const char *s, int *lnum,
 	} else {
 	    cmd->list[llen++] = vnum;
 	    if (newly_created_lag()) {
+#if USE_LAGINFO
+		add_to_list_lag_info(lagvar.varnum, laglen, vnum, cmd);
+#else
 		pprintf(prn, "genr %s\n", VARLABEL(pdinfo, vnum));
-#if LAG_DEBUG
-		fprintf(stderr, "genr %s = %s\n", pdinfo->varname[vnum],
-			VARLABEL(pdinfo, vnum));
 #endif
 	    }
 	}
@@ -818,6 +822,9 @@ void gretl_cmd_clear (CMD *cmd)
     *cmd->word = '\0';
     *cmd->param = '\0';
     *cmd->str = '\0';
+#if USE_LAGINFO
+    cmd_lag_info_destroy(cmd);
+#endif
 }
 
 /**
@@ -2674,7 +2681,9 @@ int gretl_cmd_init (CMD *cmd)
     cmd->ci = 0;
     cmd->context = 0;
 
-    /* FIXME do more here? */
+#if USE_LAGINFO
+    cmd->linfo = NULL;
+#endif
 
     return 0;
 }
