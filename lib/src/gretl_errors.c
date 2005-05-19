@@ -35,23 +35,13 @@ const char *gretl_error_messages[] = {
     N_("Dependent variable is all zeros, aborting regression"),  /* E_ZERO */
     N_("Total sum of squares was not positive"),                 /* E_TSS */
     N_("Sum of squared residuals negative!"),                    /* E_ESS */
-    N_("First character of new name is not a letter"),           /* E_NOTALPH */
-    N_("You can't redefine the constant in genr"),               /* E_CONST */
     N_("Unbalanced parentheses in genr command"),                /* E_UNBAL */
-    N_("Too many nested parentheses.  genr not done"),           /* E_NEST */
-    N_("Argument must be an integer"),                           /* E_NOTINTG */
     N_("Sorry, command not available for this estimator"),       /* E_NOTIMP */
-    N_("Evaluation of genr expression failed"),                  /* E_IGNONZERO */
-    N_("Unrecognized term in genr formula"),                     /* E_CASEU */
     N_("Unspecified error -- FIXME"),                            /* E_UNSPEC */
     N_("Syntax error in genr formula"),                          /* E_SYNTAX */
-    N_("\"getxvec\" failed in generating new variable"),         /* E_ER */
-    N_("Unrecognized operator in genr formula"),                 /* E_BADOP */
     N_("This command won't work with the current periodicity"),  /* E_PDWRONG */
-    N_("The \"-o\" flag is not implemented for this command"),   /* E_OFLAG */
     N_("Error attempting to open file"),                         /* E_FOPEN */
     N_("Out of memory error"),                                   /* E_ALLOC */
-    N_("Missing equals sign in genr"),                           /* E_NOEQ */
     N_("No formula supplied in genr"),                           /* E_EQN */
     N_("Unknown variable name in command"),                      /* E_UNKVAR */
     N_("The observations specified for the regression "
@@ -60,7 +50,6 @@ const char *gretl_error_messages[] = {
     N_("This command is implemented only for OLS models"),       /* E_OLSONLY */
     N_("Invalid argument for coeff, corr, stderr, rho, "
        "pvalue, critical or mpow"),                              /* E_INVARG */
-    N_("Invalid lag order for adf command"),                     /* E_ADF */
     N_("Invalid sample split for Chow test"),                    /* E_SPLIT */
     N_("Syntax error in command line"),                          /* E_PARSE */
     N_("No independent variables left after omissions"),         /* E_NOVARS */
@@ -72,12 +61,10 @@ const char *gretl_error_messages[] = {
     N_("Error generating logarithms"),                           /* E_LOGS */
     N_("Error generating squares"),                              /* E_SQUARES */
     N_("Error generating lagged variables"),                     /* E_LAGS */
-    N_("Error in auxiliary regression for rho"),                 /* E_RHO */
     N_("Attempting to take square root of negative number"),     /* E_SQRT */
     N_("Excessive exponent in genr formula"),                    /* E_HIGH */
     N_("Weight variable is all zeros, aborting regression"),     /* E_WTZERO */
     N_("Need valid starting and ending observations"),           /* E_OBS */
-    N_("New variable name was not supplied"),                    /* E_NOVAR */
     N_("You must include a constant in this sort of model"),     /* E_NOCONST */
     N_("There were missing observations for the added "
        "variable(s).\nReset the sample and rerun the original "

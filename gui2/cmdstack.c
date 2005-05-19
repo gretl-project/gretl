@@ -194,7 +194,7 @@ int model_command_init (int model_ID)
 	return 1;
     }
 
-    echo_cmd(libcmd, datainfo, line, 0, 1, 0, echo);
+    echo_cmd(libcmd, datainfo, line, 0, echo);
 
     if (add_command_to_mstack(mstack, gretl_print_get_buffer(echo))) {
 	err = 1;
@@ -246,7 +246,6 @@ static int vnum_from_data_command (const char *s)
 static int parse_store_cmd (const char *sline, CMD *scmd)
 {
     char *linecpy;
-    int ignore = 0;
     int err = 0;
 
     linecpy = gretl_strdup(sline);
@@ -257,7 +256,7 @@ static int parse_store_cmd (const char *sline, CMD *scmd)
     scmd->opt = get_gretl_options(linecpy, &err);
 
     if (!err) {
-	getcmd(linecpy, datainfo, scmd, &ignore, &Z, NULL); 
+	getcmd(linecpy, scmd, &Z, datainfo); 
 	err = scmd->errcode;
     }
 

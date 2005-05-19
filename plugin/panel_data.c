@@ -24,7 +24,7 @@
 #include "clapack_double.h"
 #include "gretl_model.h"
 
-#define PDEBUG 0
+#undef PDEBUG
 
 enum vcv_ops {
     VCV_INIT,
@@ -209,7 +209,7 @@ within_groups_dataset (const double **Z, double ***wZ,
 
 #if PDEBUG
 	fprintf(stderr, "working on list[%d] (original var %d, var %d in wZ)\n",
-		j, list[j], k);
+		j, diag->vlist[j], k);
 #endif
 
 	for (i=0; i<diag->nunits; i++) { 
@@ -453,6 +453,32 @@ static int bXb (diagnostics_t *diag)
     return info;
 }
 
+static void apply_panel_df_correction (MODEL *pmod, int ndf)
+{
+    double dfcorr = sqrt((double) pmod->dfd / (pmod->dfd - ndf));
+    int i, j, idx;
+
+    pmod->dfd -= ndf;
+    pmod->dfn += ndf; 
+
+    pmod->sigma *= dfcorr;
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	pmod->sderr[i] *= dfcorr;
+    }
+
+    dfcorr *= dfcorr;
+
+    if (pmod->vcv != NULL) {
+	for (i=0; i<pmod->ncoeff; i++) {
+	    for (j=i; j<pmod->ncoeff; j++) {
+		idx = ijton(i, j, pmod->ncoeff);
+		pmod->vcv[idx] *= dfcorr;
+	    }
+	}
+    }
+}
+
 #define MINOBS 1
 
 /* calculate the fixed effects regression, either using dummy variables
@@ -468,7 +494,7 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
     int *felist = NULL;
     MODEL lsdv;
 #if PDEBUG
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
 #endif
 
     gretl_model_init(&lsdv);
@@ -528,20 +554,11 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
 	       all zero -- this is a symptom of collinearity */
 	    lsdv.errcode = E_SINGULAR;
 	} else {
-	    double sdcorr = sqrt((double) lsdv.dfd / (lsdv.dfd - diag->nunits));
-
 	    /* we estimated a bunch of group means, and have to
 	       subtract that many degrees of freedom */
-	    lsdv.dfd -= diag->nunits;
-	    lsdv.dfn += diag->nunits; 
-
-	    lsdv.sigma *= sdcorr;
-
-	    for (i=0; i<lsdv.ncoeff; i++) {
-		lsdv.sderr[i] *= sdcorr;
-	    }
+	    apply_panel_df_correction(&lsdv, diag->nunits);
 #if PDEBUG
-	    printmodel(&lsdv, winfo, OPT_NONE, prn);
+	    printmodel(&lsdv, winfo, OPT_O, prn);
 #endif
 	}
 
@@ -651,7 +668,7 @@ fixed_effects_variance (diagnostics_t *diag,
 
 #if PDEBUG
 	fprintf(stderr, "f.e. variance, lsdv.ncoeff=%d, var=%g, "
-		"list[0]=%d\n", lsdv.ncoeff, var, diag->list[0]);
+		"list[0]=%d\n", lsdv.ncoeff, diag->fe_var, diag->vlist[0]);
 	fprintf(stderr, "haus->bdiff = %p, haus->sigma = %p\n",
 		diag->bdiff, diag->sigma);
 #endif

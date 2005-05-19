@@ -394,7 +394,7 @@ int get_generated_value (const char *argv, double *val,
 #ifdef GENR_DEBUG
 	fprintf(stderr, "get_generated_value: trying '%s'\n", genline);
 #endif
-	err = generate(pZ, pdinfo, genline, pmod);
+	err = generate(genline, pZ, pdinfo, pmod);
 	free(genline);
 	if (!err) {
 	    int v = pdinfo->v - 1;
@@ -1176,8 +1176,6 @@ static int evaluate_genr (GENERATE *genr)
     return genr->err;
 }
 
-/* ...................................................... */
-
 /* insert right paren at the end of the numeric portion of
    the given string.
 */
@@ -1375,8 +1373,6 @@ static int catch_special_operators (char *s)
 
     return err;
 }
-
-/* ...................................................... */
 
 static int op_level (int c)
 {
@@ -1728,8 +1724,6 @@ int insert_paren (char *s, int pos, char lr)
     return 0;
 }
 
-/* ...................................................... */
-
 static int paren_state (char c, int *state, char lr)
 {
     int s = *state;
@@ -1756,8 +1750,6 @@ static int paren_state (char c, int *state, char lr)
 
     return s;
 }
-
-/* ...................................................... */
 
 static int parenthesize (char *str)
 {
@@ -2352,9 +2344,9 @@ make_genr_label (GENERATE *genr, char *genrs, const char *vname)
 
 /**
  * generate:
+ * @line: command line (formula for generating variable).
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @line: command line for parsing.
  * @pmod: pointer to a model, or NULL if not needed.
  *
  * Generates a new variable, usually via some transformation of
@@ -2364,8 +2356,8 @@ make_genr_label (GENERATE *genr, char *genrs, const char *vname)
  * Returns: 0 on success, integer error code on error.
  */
 
-int generate (double ***pZ, DATAINFO *pdinfo, 
-	      const char *line, MODEL *pmod)
+int generate (const char *line, double ***pZ, DATAINFO *pdinfo, 
+	      MODEL *pmod)
 {
     int i;
     char s[MAXLEN], genrs[MAXLEN];

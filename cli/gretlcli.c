@@ -72,7 +72,6 @@ int runit, loopstack, looprun;
 int data_status, runfile_open;
 int echo_off;               /* suppress command echoing */
 int plot_count;             /* graphs via gnuplot */
-int ignore;                 /* trap for comments */
 int order;                  /* VAR lag order */
 int lines[1];               /* for gnuplot command */
 char *line;                 /* non-Readline command line */
@@ -682,6 +681,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     LOOPSET *loop = *ploop;
     int chk, nulldata_n, renumber;
     int dbdata = 0, do_arch = 0, do_nls = 0;
+    unsigned char echo_flags;
     char s1[12], s2[12];
     int fncall = 0;
     double rho;
@@ -704,16 +704,10 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     }  
     
     /* are we ready for this? */
-    if (!data_status && !ignore && 
+    if (!data_status && !cmd.ignore && 
 	!ready_for_command(line)) {
 	fprintf(stderr, _("You must open a data file first\n"));
 	err = 1;
-	return;
-    }
-
-    cmd.opt = get_gretl_options(line, &err);
-    if (err) {
-	errmsg(err, prn);
 	return;
     }
 
@@ -723,8 +717,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     if (loopstack) {
 	get_cmd_ci(line, &cmd);
     } else {
-	getcmd(line, datainfo, &cmd, &ignore, &Z, 
-	       (runit)? NULL : cmdprn);
+	getcmd(line, &cmd, &Z, datainfo);
     }
 
     /* tell libgretl if we're in batch mode */
@@ -762,8 +755,14 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
 	} else {
 	    if (!echo_off) {
-		echo_cmd(&cmd, datainfo, line, (batch || runit)? 1 : 0, 
-			 0, loopstack, cmdprn);
+		echo_flags = CMD_ECHO_TO_STDOUT;
+		if (loopstack) {
+		    echo_flags |= CMD_STACKING;
+		}
+		if (batch || runit) {
+		    echo_flags |= CMD_BATCH_MODE;
+		}
+		echo_cmd(&cmd, datainfo, line, echo_flags, cmdprn);
 	    }
 	    loop = add_to_loop(line, cmd.ci, cmd.opt,
 			       datainfo, &Z, loop, 
@@ -778,8 +777,11 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     }
 
     if (!echo_off) {
-	echo_cmd(&cmd, datainfo, line, (batch || runit)? 1 : 0, 0, 0,
-		 cmdprn);
+	echo_flags = CMD_ECHO_TO_STDOUT;
+	if (batch || runit) {
+	    echo_flags |= CMD_BATCH_MODE;
+	}
+	echo_cmd(&cmd, datainfo, line, echo_flags, cmdprn);
     }
 
     check_for_loop_only_options(cmd.ci, cmd.opt, prn);
@@ -1124,7 +1126,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case GENR:
-	err = generate(&Z, datainfo, line, models[0]);
+	err = generate(line, &Z, datainfo, models[0]);
 	if (err) { 
 	    errmsg(err, prn);
 	} else {
@@ -1610,10 +1612,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if (err) {
 	    errmsg(err, prn);
 	}
-	break;
-
-    case VARDUP:
-	err = 1;
 	break;
 
     default:

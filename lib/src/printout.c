@@ -1097,36 +1097,6 @@ check_for_sorted_var (int *list, const DATAINFO *pdinfo)
     return ret;
 }
 
-static int *make_full_print_list (const DATAINFO *pdinfo,
-				  int *nvars)
-{
-    int i, j, nv = 0;
-    int *list = NULL;
-
-    for (i=1; i<pdinfo->v; i++) {
-	if (pdinfo->vector[i] && !hidden_var(i, pdinfo)) {
-	    nv++;
-	}
-    }
-
-    *nvars = nv;
-    
-    if (nv > 0) {
-	list = gretl_list_new(nv);
-    }
-
-    if (list != NULL) {
-	j = 1;
-	for (i=1; i<pdinfo->v; i++) {
-	    if (pdinfo->vector[i] && !hidden_var(i, pdinfo)) {
-		list[j++] = i;
-	    }
-	}
-    }	    
-
-    return list;
-}
-
 /**
  * printdata:
  * @list: list of variables to print.
@@ -1157,10 +1127,12 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
     int pause = gretl_get_text_pause();
 
     if (list == NULL) {
-	plist = make_full_print_list(pdinfo, &nvars);
+	plist = full_var_list(pdinfo, &nvars);
     } else {
 	nvars = list[0];
-	plist = gretl_list_copy(list);
+	if (nvars > 0) {
+	    plist = gretl_list_copy(list);
+	}
     }
 
     if (plist == NULL) {

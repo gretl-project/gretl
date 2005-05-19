@@ -24,6 +24,7 @@ IGNORE_HFILES = \
         f2c.h \
 	clapack_double.h \
 	genstack.h \
+	cmd_private.h \
 	gretl_matrix_private.h \
 	loop_private.h \
 	system_private.h \
@@ -121,6 +122,9 @@ man: sgml.stamp $(DOC_MAIN_SGML_FILE) $(content_files)
 
 clean:
 	rm -f *~ *.bak $(SCANOBJ_FILES) *-unused.txt $(DOC_STAMPS)
+
+sectclean: clean
+	rm -f $(DOC_MODULE)-sections.txt
 
 realclean: clean
 	cd $(srcdir) && rm -rf sgml html $(DOC_MODULE)-decl-list.txt \

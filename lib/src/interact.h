@@ -23,13 +23,18 @@
 #define INTERACT_H
 
 #define MAXSAVENAME 32
-#define VARDUP     999
 #define CMD_NULL    -1
 #define CMD_COMMENT -2
 
 typedef struct _CMD CMD;
 
-enum option_codes {
+typedef enum {
+    CMD_BATCH_MODE     = 1 << 0,
+    CMD_ECHO_TO_STDOUT = 1 << 1,
+    CMD_STACKING       = 1 << 2
+} CmdEchoFlags;
+
+typedef enum {
     OPT_BATCH = 1,
     OPT_HELP,
     OPT_PVALS,
@@ -38,12 +43,12 @@ enum option_codes {
     OPT_DBOPEN,
     OPT_WEBDB,
     OPT_DUMP
-};
+} ProgramOptions;
 
-enum forced_langs {
+typedef enum {
     ENGLISH = 1,
     BASQUE
-};
+} ForcedLangs;
     
 /* functions follow */
 
@@ -65,8 +70,7 @@ gretlopt gretl_cmd_get_opt (const CMD *cmd);
 
 void gretl_cmd_set_opt (CMD *cmd, gretlopt opt);
 
-void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd, 
-	     int *ignore, double ***pZ, PRN *cmdprn);
+void getcmd (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo); 
 
 void get_cmd_ci (const char *line, CMD *cmd);
 
@@ -82,8 +86,8 @@ int parseopt (const char **argv, int argc, char *fname,
 
 int shell (const char *arg);
 
-void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line, 
-	       int batch, int gui, int loopstack, PRN *prn);
+void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line, 
+	       unsigned char flags, PRN *prn);
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *datainfo,

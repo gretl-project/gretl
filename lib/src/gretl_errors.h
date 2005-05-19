@@ -33,56 +33,43 @@ enum gretl_error_codes {
     E_ZERO,         /* 6 */
     E_TSS,          /* 7 */
     E_ESS,          /* 8 */
-    E_NOTALPH,      /* 9 */
-    E_CONST,       /* 10 */
-    E_UNBAL,       /* 11 */
-    E_NEST,        /* 12 */
-    E_NOTINTG,     /* 13 */
-    E_NOTIMP,      /* 14 */
-    E_IGNONZERO,   /* 15 */
-    E_CASEU,       /* 16 */
-    E_UNSPEC,      /* 17 */
-    E_SYNTAX,      /* 18 */
-    E_ER,          /* 19 */
-    E_BADOP,       /* 20 */
-    E_PDWRONG,     /* 21 */
-    E_OFLAG,       /* 22 */
-    E_FOPEN,       /* 23 */
-    E_ALLOC,       /* 24 */
-    E_NOEQ,        /* 25 */
-    E_EQN,         /* 26 */
-    E_UNKVAR,      /* 27 */
-    E_NODATA,      /* 28 */
-    E_ARGS,        /* 29 */
-    E_OLSONLY,     /* 30 */
-    E_INVARG,      /* 31 */
-    E_ADF,         /* 32 */
-    E_SPLIT,       /* 33 */
-    E_PARSE,       /* 34 */
-    E_NOVARS,      /* 35 */
-    E_NOOMIT,      /* 36 */
-    E_VARCHANGE,   /* 37 */
-    E_NOADD,       /* 38 */
-    E_ADDDUP,      /* 39 */
-    E_LOGS,        /* 40 */
-    E_SQUARES,     /* 41 */
-    E_LAGS,        /* 42 */
-    E_RHO,         /* 43 */
-    E_SQRT,        /* 44 */
-    E_HIGH,        /* 45 */
-    E_WTZERO,      /* 46 */
-    E_OBS,         /* 47 */
-    E_NOVAR,       /* 48 */
-    E_NOCONST,     /* 49 */
-    E_MISS,        /* 50 */
-    E_BADSTAT,     /* 51 */
-    E_NOMERGE,     /* 52 */
-    E_NOCONV,      /* 53 */
-    E_CANCEL,      /* 54 */
-    E_MISSDATA,    /* 55 */
-    E_NAN,         /* 56 */
-    E_OK,          /* 57 : not really an error */
-    E_MAX          /* 58 */
+    E_UNBAL,        /* 9 */
+    E_NOTIMP,      /* 10 */
+    E_UNSPEC,      /* 11 */
+    E_SYNTAX,      /* 12 */
+    E_PDWRONG,     /* 13 */
+    E_FOPEN,       /* 14 */
+    E_ALLOC,       /* 15 */
+    E_EQN,         /* 16 */
+    E_UNKVAR,      /* 17 */
+    E_NODATA,      /* 18 */
+    E_ARGS,        /* 19 */
+    E_OLSONLY,     /* 20 */
+    E_INVARG,      /* 21 */
+    E_SPLIT,       /* 22 */
+    E_PARSE,       /* 23 */
+    E_NOVARS,      /* 24 */
+    E_NOOMIT,      /* 25 */
+    E_VARCHANGE,   /* 26 */
+    E_NOADD,       /* 27 */
+    E_ADDDUP,      /* 28 */
+    E_LOGS,        /* 29 */
+    E_SQUARES,     /* 30 */
+    E_LAGS,        /* 31 */
+    E_SQRT,        /* 32 */
+    E_HIGH,        /* 33 */
+    E_WTZERO,      /* 34 */
+    E_OBS,         /* 35 */
+    E_NOCONST,     /* 36 */
+    E_MISS,        /* 37 */
+    E_BADSTAT,     /* 38 */
+    E_NOMERGE,     /* 39 */
+    E_NOCONV,      /* 40 */
+    E_CANCEL,      /* 41 */
+    E_MISSDATA,    /* 42 */
+    E_NAN,         /* 43 */
+    E_OK,          /* 44 : not really an error */
+    E_MAX          /* 45 */
 }; 
 
 /* functions follow */

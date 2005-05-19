@@ -70,7 +70,6 @@ const char *CANTDO = N_("Can't do this: no model has been estimated yet\n");
 /* file scope state variables */
 static CMD cmd;
 static char cmdline[MAXLINE];
-static int ignore;
 static int echo_off;
 static int replay;
 static MODELSPEC *modelspec;
@@ -465,7 +464,7 @@ static int cmd_init (char *s)
     } else {
 	const char *buf;
 
-	echo_cmd(&cmd, datainfo, s, 0, 1, 0, echo);
+	echo_cmd(&cmd, datainfo, s, 0, echo);
 	buf = gretl_print_get_buffer(echo);
 	err = add_command_to_stack(buf);
 	gretl_print_destroy(echo);
@@ -487,17 +486,11 @@ int check_specific_command (char *s)
     int err = 0;
 
     /* cmd is global */
-    cmd.opt = get_gretl_options(s, &err);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	getcmd(s, datainfo, &cmd, &ignore, &Z, NULL); 
-	if (cmd.errcode) {
-	    gui_errmsg(cmd.errcode);
-	    err = 1;
-	} 
-    }
+    getcmd(s, &cmd, &Z, datainfo); 
+    if (cmd.errcode) {
+	gui_errmsg(cmd.errcode);
+	err = 1;
+    } 
 
     if (!err) {
 	/* At this point we're not just replaying 
@@ -525,21 +518,15 @@ int *command_list_from_string (char *s)
 {
     CMD mycmd;
     int *list = NULL;
-    int myignore = 0;
     int err = 0;
 
     gretl_cmd_init(&mycmd);
 
-    mycmd.opt = get_gretl_options(s, &err);
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	getcmd(s, datainfo, &mycmd, &myignore, &Z, NULL); 
-	if (mycmd.errcode) {
-	    gui_errmsg(mycmd.errcode);
-	    err = 1;
-	} 
-    }
+    getcmd(s, &mycmd, &Z, datainfo); 
+    if (mycmd.errcode) {
+	gui_errmsg(mycmd.errcode);
+	err = 1;
+    } 
 
     if (!err) {
 	list = gretl_list_copy(mycmd.list);
@@ -1933,44 +1920,28 @@ static int model_error (MODEL *pmod)
 
 static int model_output (MODEL *pmod, PRN *prn)
 {
-    if (model_error(pmod)) return 1;
+    int err = 0;
 
-    printmodel(pmod, datainfo, OPT_NONE, prn);
+    if (model_error(pmod)) {
+	err = 1;
+    } else {
+	printmodel(pmod, datainfo, OPT_NONE, prn);
+    }
 
-    return 0;
+    return err;
 }
 
 /* ........................................................... */
 
-static gint check_model_cmd (char *modelgenr)
+static gint check_model_cmd (void)
 {
-    PRN *gprn;
-    const char *genbuf;
-    int err;
+    getcmd(cmdline, &cmd, &Z, datainfo); 
 
-    if (bufopen(&gprn)) return 1;
-
-    cmd.opt = get_gretl_options(cmdline, &err);
-    if (err) {
-	gui_errmsg(err);
-	return 1;
-    }	
-
-    getcmd(cmdline, datainfo, &cmd, &ignore, &Z, gprn); 
     if (cmd.errcode) {
 	gui_errmsg(cmd.errcode);
-	return 1;
     }
 
-    genbuf = gretl_print_get_buffer(gprn);
-
-    if (genbuf != NULL && *genbuf != '\0' && modelgenr != NULL) {
-	strcpy(modelgenr, genbuf);
-    }
-
-    gretl_print_destroy(gprn);
-
-    return 0;
+    return cmd.errcode;
 }
 
 /* ........................................................... */
@@ -2278,7 +2249,7 @@ void do_model (GtkWidget *widget, gpointer p)
     selector *sr = (selector *) p; 
     const char *buf;
     PRN *prn;
-    char title[26], estimator[9], modelgenr[80];
+    char title[26], estimator[9];
     int order, err = 0, action;
     double rho;
     MODEL *pmod = NULL;
@@ -2302,12 +2273,10 @@ void do_model (GtkWidget *widget, gpointer p)
 			  print_flags(cmd.opt, action));
 
 #if 0
-    fprintf(stderr, "do_model: line = '%s'\n", cmdline);
+    fprintf(stderr, "do_model: cmdline = '%s'\n", cmdline);
 #endif
 
-    *modelgenr = '\0';
-
-    if (check_model_cmd(modelgenr)) {
+    if (check_model_cmd()) {
 	return;
     }
 
@@ -2450,11 +2419,6 @@ void do_model (GtkWidget *widget, gpointer p)
 	gretl_command_strcat(cmd.param);
     }
 
-    if (*modelgenr && add_command_to_stack(modelgenr)) {
-	errbox(_("Error saving model information"));
-	return;
-    }
-
     if (lib_cmd_init() || stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
@@ -2484,14 +2448,9 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
     gretl_command_sprintf("arma %d %d ; %d%s", ar, ma, v, 
 			  print_flags(opts, ARMA));
 
-    if (check_model_cmd(NULL)) {
+    if (check_model_cmd()) {
 	return;
     }
-
-#if 0
-    /* why were we doing this?? */
-    echo_cmd(&cmd, datainfo, line, 0, 1, 0, NULL);
-#endif
 
     if (bufopen(&prn)) return;
 
@@ -2693,9 +2652,9 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
     int err = 0;
 
     if (pmod != NULL) {
-	err = generate(&Z, datainfo, cmdline, pmod); 
+	err = generate(cmdline, &Z, datainfo, pmod); 
     } else {
-	err = generate(&Z, datainfo, cmdline, reference_model());
+	err = generate(cmdline, &Z, datainfo, reference_model());
     }
 
     if (err) {
@@ -3780,16 +3739,22 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
     int err;
     PRN *prn;
 
-    if (datainfo->v * datainfo->n > MAXDISPLAY) { /* use file */
+    if (datainfo->v * datainfo->n > MAXDISPLAY) { 
+	/* use file */
 	char fname[MAXLEN];
 
-	if (!user_fopen("data_display_tmp", fname, &prn)) return;
+	if (!user_fopen("data_display_tmp", fname, &prn)) {
+	    return;
+	}
 
 	err = printdata(NULL, (const double **) Z, datainfo, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
-    } else { /* use buffer */
-	if (bufopen(&prn)) return;
+    } else { 
+	/* use buffer */
+	if (bufopen(&prn)) {
+	    return;
+	}
 
 	err = printdata(NULL, (const double **) Z, datainfo, OPT_O, prn);
 	if (err) {
@@ -3804,67 +3769,58 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 void display_selected (gpointer data, guint action, GtkWidget *widget)
 {
     char *liststr; 
-    char line[MAXLINE];
-    PRN *prn;
-    int ig = 0;
-    CMD prcmd;
-    int width = 78;
+    PRN *prn = NULL;
+    int *list = NULL;
     int n = datainfo->t2 - datainfo->t1 + 1;
 
-    /* We use a local "CMD" here, since we don't want to record the
-       printing of a variable or variables as part of the command
-       script every time a user chooses to view variables in the gui
-       program.
-    */
-
-    if (gretl_cmd_init(&prcmd)) {
-	errbox(_("Out of memory!"));
-	return;
-    }
-
     liststr = main_window_selection_as_string();
-    if (liststr == NULL) {
+    if (liststr == NULL || *liststr == '\0') {
 	return;
     }
 
-    sprintf(line, "print%s", liststr);
+    list = gretl_list_from_string(liststr);
     free(liststr);
 
-    getcmd(line, datainfo, &prcmd, &ig, &Z, NULL);
-    if (prcmd.errcode) {
-	gui_errmsg(prcmd.errcode);
-	return;
-    }   
-
-    /* special case: showing only one series */
-    if (prcmd.list[0] == 1) {
-	gretl_cmd_free(&cmd);
-	display_var();
+    if (list == NULL) {
 	return;
     }
 
-    if (prcmd.list[0] * n > MAXDISPLAY) { /* use disk file */
+    /* special case: showing only one series */
+    if (list[0] == 1) {
+	display_var();
+	free(list);
+	return;
+    }
+
+    if (list[0] * n > MAXDISPLAY) { 
+	/* use disk file */
 	char fname[MAXLEN];
 
-	if (!user_fopen("data_display_tmp", fname, &prn)) return;
+	if (!user_fopen("data_display_tmp", fname, &prn)) {
+	    return;
+	}
 
-	printdata(prcmd.list, (const double **) Z, datainfo, OPT_O, prn);
+	printdata(list, (const double **) Z, datainfo, OPT_O, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, width, 350, VIEW_DATA);
-    } else { /* use buffer */
+	free(list);
+	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
+    } else { 
+	/* use buffer */
 	int err;
 
-	if (bufopen(&prn)) return;
-	err = printdata(prcmd.list, (const double **) Z, datainfo, OPT_O, prn);
+	if (bufopen(&prn)) {
+	    return;
+	}
+
+	err = printdata(list, (const double **) Z, datainfo, OPT_O, prn);
+	free(list);
 	if (err) {
 	    errbox(_("Out of memory in display buffer"));
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	view_buffer(prn, width, 350, _("gretl: display data"), PRINT, NULL);
+	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, NULL);
     }
-
-    gretl_cmd_free(&cmd);
 }
 
 void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
@@ -3885,8 +3841,6 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 	view_buffer(prn, 78, 350, _("gretl: display data"), FCAST, fr);  
     }  
 }
-
-/* ........................................................... */
 
 /* Before deleting specified variables, check that they are not
    required by any saved models; also, don't delete variables 
@@ -4185,8 +4139,6 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
     }
 }
 
-/* ........................................................... */
-
 #ifndef G_OS_WIN32
 
 #include <signal.h>
@@ -4293,7 +4245,9 @@ static int list_position (int v, const int *list)
     int i;
 
     for (i=list[0]; i>=1; i--) {
-	if (v == list[i]) return i;
+	if (v == list[i]) {
+	    return i;
+	}
     }
 
     return 0;
@@ -4407,18 +4361,25 @@ void display_var (void)
 	height = 140;
     }
 
-    if (n > MAXDISPLAY) { /* use disk file */
+    if (n > MAXDISPLAY) { 
+	/* use disk file */
 	char fname[MAXLEN];
 
-	if (!user_fopen("data_display_tmp", fname, &prn)) return;
+	if (!user_fopen("data_display_tmp", fname, &prn)) {
+	    return;
+	}
 
 	printdata(list, (const double **) Z, datainfo, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 28, height, VIEW_DATA);
-    } else { /* use buffer */
+    } else { 
+	/* use buffer */
 	int err;
 
-	if (bufopen(&prn)) return;
+	if (bufopen(&prn)) {
+	    return;
+	}
+
 	err = printdata(list, (const double **) Z, datainfo, OPT_O, prn);
 	if (err) {
 	    errbox(_("Out of memory in display buffer"));
@@ -5411,31 +5372,11 @@ int gui_exec_line (char *line,
     *linecopy = 0;
     strncat(linecopy, line, sizeof linecopy - 1);
 
-    cmd.opt = get_gretl_options(line, &err);
-    if (err) {
-        errmsg(err, prn);
-        return 1;
-    }
-
     /* if we're stacking commands for a loop, parse "lightly" */
     if (loopstack) { 
 	get_cmd_ci(line, &cmd);
     } else {
-	if (exec_code == CONSOLE_EXEC) {
-	    /* catch any model-related genr commands */
-	    PRN *genprn;
-	    const char *genbuf;
-
-	    bufopen(&genprn);
-	    getcmd(line, datainfo, &cmd, &ignore, &Z, genprn);
-	    genbuf = gretl_print_get_buffer(genprn);
-	    if (genbuf != NULL && *genbuf != '\0') {
-		add_command_to_stack(genbuf);
-	    }
-	    gretl_print_destroy(genprn);
-	} else {
-	    getcmd(line, datainfo, &cmd, &ignore, &Z, NULL);
-	}
+	getcmd(line, &cmd, &Z, datainfo);
     }
 
     if (cmd.ci < 0) return 0; /* nothing there, or a comment */
@@ -5878,7 +5819,7 @@ int gui_exec_line (char *line,
 	break;
 
     case GENR:
-	err = generate(&Z, datainfo, line, reference_model());
+	err = generate(line, &Z, datainfo, reference_model());
 	if (err) {
 	    errmsg(err, prn);
 	} else {
@@ -6341,10 +6282,6 @@ int gui_exec_line (char *line,
 	if (!err) {
 	    err = maybe_save_var(&cmd, &Z, datainfo, prn);
 	}
-	break;
-
-    case VARDUP:
-	err = 1;
 	break;
 
     default:

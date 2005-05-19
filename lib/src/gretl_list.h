@@ -36,7 +36,9 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err);
 
 int *gretl_list_omit_last (const int *orig, int *err);
 
-int *gretl_list_diff (const int *biglist, const int *sublist);
+int gretl_list_diff (int *targ, const int *biglist, const int *sublist);
+
+int *gretl_list_diff_new (const int *biglist, const int *sublist);
 
 void rearrange_list (int *list);
 
@@ -46,5 +48,7 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 int gretl_list_has_const (const int *list);
 
 int gretl_list_duplicates (const int *list, int ci);
+
+int *full_var_list (const DATAINFO *pdinfo, int *nvars);
 
 #endif /* GRETL_LIST_H */

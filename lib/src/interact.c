@@ -39,9 +39,7 @@
 # endif
 #endif
 
-#if USE_LAGINFO
-# include "laginfo.c"
-#endif
+#include "laginfo.c"
 
 typedef struct {
     int firstlag;
@@ -50,12 +48,11 @@ typedef struct {
     char varname[VNAMELEN];
 } LAGVAR;
 
-static int make_full_list (const DATAINFO *pdinfo, CMD *cmd);
 static void get_optional_filename (const char *line, CMD *cmd);
 
 /* ........................................................... */
 
-static int trydatafile (char *line, int *ignore)
+static int trydatafile (char *line, CMD *cmd)
 {
     int i, m, n = strlen(line);
     char datfile[MAXLEN];
@@ -72,7 +69,7 @@ static int trydatafile (char *line, int *ignore)
 	    lower(datfile);
 	    i += 4;
 	} else if (line[i] == '*' && line[i+1] == ')') {
-	    *ignore = 0;
+	    cmd->ignore = 0;
 	}
     }
 
@@ -84,9 +81,7 @@ static int trydatafile (char *line, int *ignore)
     return 0;
 }
 
-/* ........................................................... */
-
-static int filter_comments (char *line, int *ignore)
+static int filter_comments (char *line, CMD *cmd)
 {
     int i, j = 0, n = strlen(line);
     char tmpstr[MAXLEN], datfile[MAXLEN];
@@ -97,19 +92,22 @@ static int filter_comments (char *line, int *ignore)
     
     for (i=0; i<n; i++) {
 	if (line[i] == '(' && line [i+1] == '*') {
-	    *ignore = 1;
+	    cmd->ignore = 1;
 	    if (line[i+3] == '!') { /* special code for data file to open */
 		sscanf(line + 4, "%s", datfile);
 		sprintf(line, "open %s", datfile);
-		*ignore = 0;  /* FIXME ? */
+		cmd->ignore = 0;  /* FIXME ? */
 		return 0;
 	    }
 	} else if (line[i] == '*' && line [i+1] == ')') {
-	    *ignore = 0; i += 2;
-	    while (isspace((unsigned char) line[i]) && i < n) i++;
+	    cmd->ignore = 0; 
+	    i += 2;
+	    while (isspace((unsigned char) line[i]) && i < n) {
+		i++;
+	    }
 	}
 
-	if (!(*ignore) && line[i] != '\r') {
+	if (!cmd->ignore && line[i] != '\r') {
 	    tmpstr[j] = line[i];
 	    j++;
 	}
@@ -118,8 +116,7 @@ static int filter_comments (char *line, int *ignore)
     tmpstr[j] = '\0';
     strcpy(line, tmpstr);
 
-    if (*line) return 0;
-    else return 1;
+    return (*line == '\0');
 }
 
 /* ........................................................... */
@@ -402,7 +399,9 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 	    for (i=0; i<2 && !err; i++) {
 		p = (i == 0)? l1str : l2str;
 
-		if (*p == '-') {
+		if (*p == '0') {
+		    lsign = 1;
+		} else if (*p == '-') {
 		    lsign = 1;
 		    p++;
 		} else if (*p == '+') {
@@ -445,6 +444,25 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
     return err;
 }
 
+static int cmd_full_list (const DATAINFO *pdinfo, CMD *cmd)
+{
+    int nv = 0, err = 0;
+    int *list;
+
+    list = full_var_list(pdinfo, &nv);
+
+    if (list == NULL) {
+	if (nv > 0) {
+	    err = E_ALLOC;
+	}
+    } else {
+	free(cmd->list);
+	cmd->list = list;
+    }
+
+    return err;
+}
+
 static int expand_command_list (CMD *cmd, int add)
 {
     int oldn = cmd->list[0];
@@ -472,10 +490,10 @@ static int get_n_lags (int last, int first)
 {
     int nl = 0;
 
-    if (last > 0 && first > 0) {
+    if (last >= 0 && first >= 0) {
 	/* pure lags list */
 	nl = last - first + 1;
-    } else if (last < 0 && first < 0) {
+    } else if (last <= 0 && first <= 0) {
 	/* pure leads list */
 	nl = first - last + 1;
     } 
@@ -487,7 +505,7 @@ static int get_n_lags (int last, int first)
 
 int auto_lag_ok (const char *s, int *lnum,
 		 double ***pZ, DATAINFO *pdinfo,
-		 CMD *cmd, PRN *prn)
+		 CMD *cmd)
 {
     LAGVAR lagvar;
     int nlags, i;
@@ -517,7 +535,7 @@ int auto_lag_ok (const char *s, int *lnum,
     for (i=0; i<nlags && ok; i++) {
 	int laglen, vnum;
 
-	if (lagvar.firstlag > 0) {
+	if (lagvar.firstlag >= 0 && lagvar.lastlag > 0) {
 	    laglen = lagvar.firstlag + i;
 	} else {
 	    laglen = lagvar.firstlag - i;
@@ -530,13 +548,18 @@ int auto_lag_ok (const char *s, int *lnum,
 	    sprintf(gretl_errmsg, _("generation of lag variable failed"));
 	    ok = 0;
 	} else {
+	    int err;
+
+	    /* record the info regarding te auto-generation of lags,
+	       so that we;ll be able to echo the command properly --
+	       see the echo_cmd() function. 
+	    */
+
 	    cmd->list[llen++] = vnum;
-	    if (newly_created_lag()) {
-#if USE_LAGINFO
-		add_to_list_lag_info(lagvar.varnum, laglen, vnum, cmd);
-#else
-		pprintf(prn, "genr %s\n", VARLABEL(pdinfo, vnum));
-#endif
+	    err = add_to_list_lag_info(lagvar.varnum, laglen, vnum, cmd);
+	    if (err) {
+		cmd->errcode = E_ALLOC;
+		ok = 0;
 	    }
 	}
     }
@@ -822,27 +845,21 @@ void gretl_cmd_clear (CMD *cmd)
     *cmd->word = '\0';
     *cmd->param = '\0';
     *cmd->str = '\0';
-#if USE_LAGINFO
     cmd_lag_info_destroy(cmd);
-#endif
 }
 
 /**
  * getcmd:
- * @line: the command line (string).
- * @pdinfo: pointer to data information struct.
- * @cmd: pointer to #CMD struct.
- * @ignore: pointer to int indicating whether (1) or not (0) we're
- * in comment mode, and @line should not be parsed.
+ * @line: the command line.
+ * @cmd: pointer to command struct.
  * @pZ: pointer to data matrix.
- * @cmdprn: pointer to gretl printing struct.
+ * @pdinfo: pointer to data information struct.
  *
- * Parses @line and fills out @command accordingly.  In case
+ * Parses @line and fills out @cmd accordingly.  In case
  * of error, @cmd->errcode gets a non-zero value.
  */
 
-void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd, 
-	     int *ignore, double ***pZ, PRN *cmdprn)
+void getcmd (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo) 
 {
     int j, nf, linelen, n, v, lnum;
     int gotdata = 0, ar = 0, poly = 0;
@@ -853,15 +870,21 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd,
 
     *gretl_errmsg = '\0';
 
+    /* extract any options first */
+    cmd->opt = get_gretl_options(line, &cmd->errcode);
+    if (cmd->errcode) {
+	return;
+    }
+
     /* look for ramu practice files */
     if (line[0] == '(' && line[1] == '*') {
-	*ignore = 1;
-	gotdata = trydatafile(line, ignore);
+	cmd->ignore = 1;
+	gotdata = trydatafile(line, cmd);
     }
 
     /* trap comments */
     if (!gotdata) {
-	if (filter_comments(line, ignore)) {
+	if (filter_comments(line, cmd)) {
 	    cmd->nolist = 1;
 	    cmd->ci = CMD_COMMENT;
 	    return;
@@ -1006,6 +1029,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd,
 	if (cmd->ci == END) {
 	    check_end_command(cmd);
 	}
+	/* note: return point for various commands that take no list */
 	return;
     }
 
@@ -1106,6 +1130,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd,
 
     if (cmd->ci == AR || cmd->ci == ARMA ||
 	cmd->ci == GARCH) {
+	/* flag acceptance of lags or ar, ma orders */
 	ar = 1;
     }
 
@@ -1120,7 +1145,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd,
     cmd->list[0] = nf;
 
     /* now assemble the command list */
-    for (j=1,lnum=1; j<=nf; j++) {
+
+    for (j=1, lnum=1; j<=nf; j++) {
 	int skip;
 
 	strcpy(remainder, line + n + 1);
@@ -1156,7 +1182,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd,
 	    } else { /* possibly an auto-generated variable? */
 
 		/* Case 1: automated lags:  e.g. 'var(-1)' */
-		if (auto_lag_ok(field, &lnum, pZ, pdinfo, cmd, cmdprn)) {
+		if (auto_lag_ok(field, &lnum, pZ, pdinfo, cmd)) {
 		    /* handled, get on with it */
 		    n += strlen(field) + 1;
 		    continue; 
@@ -1259,12 +1285,16 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd,
 	n += strlen(field) + 1;
     } /* end of loop through fields in command line */
 
+    /* By now we're looking at a command that takes a list,
+       which either has been specified already or needs to
+       be filled out automatically */
+
     /* commands that can take a specified list, but where if the
        list is null or just ";" we want to operate on all variables
     */    
     if (DEFAULTS_TO_FULL_LIST(cmd->ci)) {
 	if (cmd->list[0] == 0) {
-	    make_full_list(pdinfo, cmd);
+	    cmd_full_list(pdinfo, cmd);
 	    /* suppress echo of the list -- may be too long */
 	    cmd->nolist = 1;
 	}
@@ -1282,7 +1312,19 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd,
     if ((cmd->ci == AR || cmd->ci == TSLS || 
 	 cmd->ci == ARMA || cmd->ci == SCATTERS ||
 	 cmd->ci == GARCH) && *cmd->param == '\0') {
+	/* missing param field */
 	cmd->errcode = E_ARGS;
+    }
+
+    /* check list for duplicated variables? */
+    if (!cmd->errcode && !cmd->nolist) {
+	int dupv = gretl_list_duplicates(cmd->list, cmd->ci);
+
+	if (dupv) {
+	    cmd->errcode = E_UNSPEC;
+	    sprintf(gretl_errmsg, _("var number %d duplicated in the command list."),
+		    dupv);
+	}
     }
 
  bailout:
@@ -1505,40 +1547,6 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
     return vi;
 }
 
-/* create a gretl "list" containing all the vars in the data set,
-   except for the constant and any "hidden" variables or scalars 
-*/
-
-static int make_full_list (const DATAINFO *pdinfo, CMD *cmd)
-{
-    int i, n;
-    int *list;
-
-    n = pdinfo->v;
-    for (i=1; i<pdinfo->v; i++) {
-	if (hidden_var(i, pdinfo) || pdinfo->vector[i] == 0) {
-	    n--;
-	}
-    }
-
-    list = realloc(cmd->list, n * sizeof *list);
-    if (list == NULL) {
-	return E_ALLOC;
-    }
-
-    cmd->list = list;
-    cmd->list[0] = n - 1;
-
-    n = 1;
-    for (i=1; i<pdinfo->v; i++) {
-	if (!hidden_var(i, pdinfo) && pdinfo->vector[i]) {
-	    cmd->list[n++] = i;
-	}
-    }
-
-    return 0;
-}
-
 /**
  * parseopt:
  * @argv: command-line argument array.
@@ -1754,56 +1762,48 @@ print_maybe_quoted_str (const char *s, int cli, PRN *prn)
     }
 }
 
-#if USE_LAGINFO
-static void 
-cmd_list_print_var (CMD *cmd, int i, const DATAINFO *pdinfo,
-		    int cli, PRN *prn)
+static int 
+cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
+		    int echo_stdout, PRN *prn)
 {
     int v = cmd->list[i];
     int src, genpos;
+    int printed = 1;
 
     if (i > 1 && v > 0 &&
 	(genpos = is_auto_generated_lag(v, cmd->linfo)) > 0) {
 	if (is_first_lag(genpos, cmd->linfo, &src)) {
-	    print_lags_by_varnum(src, cmd->linfo, cli, pdinfo, prn);
-	} 
+	    print_lags_by_varnum(src, cmd->linfo, echo_stdout, pdinfo, prn);
+	} else {
+	    printed = 0;
+	}
     } else {
-	if (cli) {
+	if (echo_stdout) {
 	    printf(" %s", pdinfo->varname[v]);
 	} else {
 	    pprintf(prn, " %s", pdinfo->varname[v]);
 	}
     }
+
+    return printed;
 }
-#else
-static void 
-cmd_list_print_var (CMD *cmd, int v, const DATAINFO *pdinfo,
-		    int cli, PRN *prn)
-{
-    if (cli) {
-	printf(" %s", pdinfo->varname[cmd->list[v]]);
-    } else {
-	pprintf(prn, " %s", pdinfo->varname[cmd->list[v]]);
-    }
-}
-#endif
 
 #define hold_param(c) (c == TSLS || c == AR || c == ARMA || c == CORRGM || \
                        c == MPOLS || c == SCATTERS || c == GNUPLOT || \
                        c == LOGISTIC || c == GARCH || c == EQUATION || \
 		       c == POISSON)
 
-static void print_cmd_list (CMD *cmd, const DATAINFO *pdinfo,  
-			    int batch, int cli, char leadchar,
+static void print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,  
+			    int batch, int echo_stdout, char leadchar,
 			    PRN *prn)
 {
-    int i, gotsep = 1;
+    int i, j, k, listmax, gotsep = 1;
 
     if (cmd->ci == AR || cmd->ci == ARMA || cmd->ci == GARCH) {
 	gotsep = 0;
     }
 
-    if (cli) {
+    if (echo_stdout) {
 	if (batch) {
 	    if (cmd->ci != EQUATION) {
 		putchar('\n');
@@ -1837,7 +1837,7 @@ static void print_cmd_list (CMD *cmd, const DATAINFO *pdinfo,
     }
 
     if (cmd->ci == STORE) {
-	if (cli) {
+	if (echo_stdout) {
 	    printf(" \\\n");
 	}
 	if (!batch) {
@@ -1845,9 +1845,12 @@ static void print_cmd_list (CMD *cmd, const DATAINFO *pdinfo,
 	}
     }
 
+    listmax = cmd->list[0];
+    j = k = 1;
+
     for (i=1; i<=cmd->list[0]; i++) {
 	if (cmd->list[i] == LISTSEP) {
-	    if (cli) {
+	    if (echo_stdout) {
 		printf(" ;");
 	    }
 	    if (!batch) {
@@ -1857,69 +1860,71 @@ static void print_cmd_list (CMD *cmd, const DATAINFO *pdinfo,
 	    continue;
 	}
 
-	if (cli) {
+	if (echo_stdout) {
 	    if (gotsep) {
-		cmd_list_print_var(cmd, i, pdinfo, 1, prn);
+		if (cmd_list_print_var(cmd, i, pdinfo, 1, prn)) {
+		    j++;
+		} else {
+		    listmax--;
+		}
 	    } else {
 		printf(" %d", cmd->list[i]);
+		j++;
 	    }
-	    if (i > 1 && i < cmd->list[0] && (i+1) % 10 == 0) {
+	    if (j > 1 && j < listmax && (j+1) % 10 == 0) {
 		printf(" \\\n"); /* line continuation */
 	    }
 	}
 
 	if (!batch) {
 	    if (gotsep) {
-		cmd_list_print_var(cmd, i, pdinfo, 0, prn);
+		if (!cmd_list_print_var(cmd, i, pdinfo, 0, prn)) {
+		    k++;
+		} else {
+		    listmax--;
+		}
 	    } else {
 		pprintf(prn, " %d", cmd->list[i]);
+		k++;
 	    }
-	    if (i > 1 && i < cmd->list[0] && (i+1) % 10 == 0) {
+	    if (k > 1 && k < listmax && (k+1) % 10 == 0) {
 		pputs(prn, " \\\n"); /* line continuation */
 	    }
 	}
     }
 }
 
+#undef ECHO_DEBUG
+
 /**
  * echo_cmd:
- * @pcmd: pointer to #CMD struct.
+ * @cmd: pointer to #CMD struct.
  * @pdinfo: pointer to data information struct.
- * @line: "raw" command line to be echoed.
- * @batch: set to 1 for batch mode, 0 for interactive.
- * @gui: 1 for the gretl GUI, 0 for command-line program.
- * @loopstack: 1 if stacking commands for a loop, else 0.
+ * @line: "raw" command line associated with @cmd.
+ * @flags: bitwise OR of elements from #CmdEchoFlags.
  * @prn: pointer to gretl printing struct (or %NULL).
  *
- * Echoes the user command represented by @pcmd and @line.
- * 
+ * Echoes the user command represented by @pcmd and @line, to
+ * %stdout and/or @prn.
  */
 
-/* The following may appear to be insanely complicated.  Nonetheless,
-   I _think_ it is only as complex as it has to be, given the several
-   dimensions in play:
-
-   * batch mode vs interactive mode ("batch" param)
-   * command-line client program vs gui program ("gui" param)
-   * stacking loop commands or not ("loopstack" param)
-   
-   If you are tempted to optimize one or other aspect, please make
-   sure you have not broken one of the others in the process.
-*/
-
-void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line, 
-	       int batch, int gui, int loopstack, PRN *prn)
+void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line, 
+	       unsigned char flags, PRN *prn)
 {
-    char leadchar = (loopstack)? '>' : '?';
-    int err, cli = !gui;
+    char leadchar = (flags & CMD_STACKING)? '>' : '?';
+    int echo_stdout = (flags & CMD_ECHO_TO_STDOUT);
+    int batch = (flags & CMD_BATCH_MODE);
 
-    if (line == NULL) return;
+    if (line == NULL) {
+	return;
+    }
 
-#if 0
-    fprintf(stderr, "echo_cmd: line='%s', gui=%d, cmd->opt=%ld, batch=%d, "
-	    "param='%s', nolist=%d\n", line, gui, cmd->opt, batch, cmd->param,
+#if ECHO_DEBUG
+    fprintf(stderr, "echo_cmd: line='%s', echo_stdout=%d, cmd->opt=%ld, batch=%d, "
+	    "param='%s', nolist=%d\n", line, echo_stdout, cmd->opt, batch, cmd->param,
 	    cmd->nolist);
-    fprintf(stderr, "cmd->word='%s'\n", cmd->word);
+    fprintf(stderr, " prn=%p\n", (void *) prn);
+    fprintf(stderr, " cmd->word='%s'\n", cmd->word);
 #endif
 
     /* special case: gui "store" command, which could overflow the
@@ -1927,7 +1932,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
        "store" in the command script.  As a compromise we'll record it,
        but commented out. (FIXME: loop context?)
     */
-    if (gui && !batch && cmd->ci == STORE) {  
+    if (!echo_stdout && !batch && cmd->ci == STORE) {  
 	pprintf(prn, "# store '%s'", cmd->param);
 	if (cmd->opt) { 
 	    const char *flagstr = print_flags(cmd->opt, cmd->ci);
@@ -1944,26 +1949,19 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 
     /* command is preceded by a "savename" to which an object will
        be assigned */
-    if (*cmd->savename && gui && !batch) {
+    if (*cmd->savename && !echo_stdout && !batch) {
 	pprintf(prn, "%s <- ", cmd->savename);
     }
 
     if (!cmd->nolist) { 
 	/* command has a list of args to be printed */
-	print_cmd_list(cmd, pdinfo, batch, cli, leadchar, prn);
-
-	/* check for duplicated vars */
-	err = gretl_list_duplicates(cmd->list, cmd->ci);
-	if (err) {
-	    printf(_("\nvar number %d duplicated in the command list.\n"),
-		   err);
-	    cmd->ci = VARDUP;
-	}
+	print_cmd_list(cmd, pdinfo, batch, echo_stdout, leadchar, prn);
     } else if ((cmd->ci == GENR || cmd->ci == SMPL) && 
 	       strlen(line) > SAFELEN - 2) {
-	real_safe_print_line(line, cli, batch, 0, loopstack, prn);
+	real_safe_print_line(line, echo_stdout, batch, 0, 
+			     (flags & CMD_STACKING), prn);
     } else if (strcmp(cmd->word, "quit")) {
-	if (cli) {
+	if (echo_stdout) {
 	    if (batch) {
 		printf("%c %s", leadchar, line);
 	    } else {
@@ -1978,7 +1976,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     /* print parameter after list, if wanted */
     if (cmd->ci == LOGISTIC) {
 	if (cmd->param[0] != '\0') {
-	    if (cli) {
+	    if (echo_stdout) {
 		putchar(' ');
 		fputs(cmd->param, stdout);
 	    }
@@ -1998,7 +1996,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	    ci = NLS;
 	}
 	flagstr = print_flags(cmd->opt, ci);
-	if (cli) {
+	if (echo_stdout) {
 	    fputs(flagstr, stdout);
 	}
 	if (!batch) {
@@ -2006,7 +2004,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	}
     }
 
-    if (cli) {
+    if (echo_stdout) {
 	putchar('\n');
     }
 
@@ -2086,6 +2084,19 @@ static char *get_flag_field  (const char *s, char f)
 
 /* .......................................................... */
 
+static void get_optional_filename (const char *line, CMD *cmd)
+{
+    char *p;
+
+    p = get_flag_field(line + 8, 'f');
+    if (p != NULL) {
+	free(cmd->param);
+	cmd->param = p;
+    }    
+}
+
+/* .......................................................... */
+
 static int make_var_label (const char *line, const DATAINFO *pdinfo, 
 			   PRN *prn)
 {
@@ -2128,19 +2139,6 @@ static int make_var_label (const char *line, const DATAINFO *pdinfo,
     }
 
     return 0;
-}
-
-/* .......................................................... */
-
-static void get_optional_filename (const char *line, CMD *cmd)
-{
-    char *p;
-
-    p = get_flag_field(line + 8, 'f');
-    if (p != NULL) {
-	free(cmd->param);
-	cmd->param = p;
-    }    
 }
 
 static void showlabels (const DATAINFO *pdinfo, PRN *prn)
@@ -2682,10 +2680,9 @@ int gretl_cmd_init (CMD *cmd)
 
     cmd->ci = 0;
     cmd->context = 0;
+    cmd->ignore = 0;
 
-#if USE_LAGINFO
     cmd->linfo = NULL;
-#endif
 
     return 0;
 }
@@ -2694,9 +2691,7 @@ void gretl_cmd_free (CMD *cmd)
 {
     free(cmd->list);
     free(cmd->param);
-#if USE_LAGINFO
     cmd_lag_info_destroy(cmd);
-#endif
 }
 
 void gretl_cmd_destroy (CMD *cmd)

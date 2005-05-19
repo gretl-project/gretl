@@ -2345,7 +2345,7 @@ int loop_exec (LOOPSET *loop, char *line,
     MODEL *lastmod = models[0];
     char errline[MAXLINE];
     char linecpy[MAXLINE];
-    int m = 0, ignore = 0;
+    int m = 0;
     int modnum = 0;
     int err = 0;
 
@@ -2391,9 +2391,6 @@ int loop_exec (LOOPSET *loop, char *line,
 	    strcpy(linecpy, loop->lines[j]);
 	    strcpy(errline, loop->lines[j]);
 
-	    cmd.opt = get_gretl_options(linecpy, &err);
-	    if (err) break;
-
 	    err = make_dollar_substitutions(linecpy, loop, 
 					    (const double **) *pZ,
 					    *ppdinfo);
@@ -2403,7 +2400,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	       will do some checking that hasn't been done earlier.
 	    */
 
-	    getcmd(linecpy, *ppdinfo, &cmd, &ignore, pZ, NULL);
+	    getcmd(linecpy, &cmd, pZ, *ppdinfo);
 
 	    if (cmd.ci < 0) {
 		continue;
@@ -2416,7 +2413,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		if (cmd.ci == ENDLOOP) {
 		    pputc(prn, '\n');
 		} else {
-		    echo_cmd(&cmd, *ppdinfo, linecpy, 0, 1, 0, prn);
+		    echo_cmd(&cmd, *ppdinfo, linecpy, 0, prn);
 		}
 	    }
 
@@ -2463,7 +2460,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    case GENR:
-		err = generate(pZ, *ppdinfo, linecpy, lastmod);
+		err = generate(linecpy, pZ, *ppdinfo, lastmod);
 		if (loop_is_verbose(loop) && !err) { 
 		    print_gretl_msg(prn);
 		}
@@ -2833,7 +2830,7 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 
     sprintf(formula, "__iftest=%s", line);
 
-    err = generate(pZ, pdinfo, formula, NULL);
+    err = generate(formula, pZ, pdinfo, NULL);
 
     if (err) {
 	strcpy(gretl_errmsg, _("error evaluating 'if'"));

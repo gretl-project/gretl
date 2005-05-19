@@ -723,7 +723,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	    struct COMPARE cmp;
 	    int *addlist;
 
-	    addlist = gretl_list_diff(new->list, orig->list);
+	    addlist = gretl_list_diff_new(new->list, orig->list);
 	    cmp = add_or_omit_compare(orig, new, 1, addlist);
 
 	    if (save_test) {
@@ -838,7 +838,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	    struct COMPARE cmp;
 	    int *omitlist;
 
-	    omitlist = gretl_list_diff(orig->list, new->list);
+	    omitlist = gretl_list_diff_new(orig->list, new->list);
 	    cmp = add_or_omit_compare(orig, new, 0, omitlist);
 
 	    if (save_test) {

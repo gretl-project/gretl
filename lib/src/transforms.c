@@ -481,21 +481,18 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 {
     int lno, oldv = pdinfo->v;
 
-    if (!pdinfo->vector[v]) {
-	return -1;
-    }
+    if (!pdinfo->vector[v] || lag > pdinfo->n) {
+	lno = -1;
+    } else if (lag == 0) {
+	lno = v;
+    } else {
+	newlag = 1;
 
-    /* sanity check on lag length */
-    if (lag > pdinfo->n) {
-	return -1;
-    }
+	lno = get_transform(LAGS, v, lag, pZ, pdinfo, 8);
 
-    newlag = 1;
-
-    lno = get_transform(LAGS, v, lag, pZ, pdinfo, 8);
-
-    if (lno < oldv) {
-	newlag = 0;
+	if (lno < oldv) {
+	    newlag = 0;
+	}
     }
 
     return lno;

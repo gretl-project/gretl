@@ -1130,6 +1130,13 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
     int *outlist = NULL;
     int j, err = 0;
 
+    if (robust) {
+	outlist = malloc(varmod->list[0] * sizeof *outlist);
+	if (outlist == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
     pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
 
     /* restrictions for all lags of specific variables */
@@ -1137,13 +1144,8 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 	compose_varlist(vl, depvar, order, j + 1, pdinfo);	
 
 	if (robust) {
-	    outlist = gretl_list_diff(varmod->list, vl->reglist);
-	    if (outlist != NULL) {
-		F = robust_omit_F(outlist, varmod);
-		free(outlist);
-	    } else {
-		F = NADBL;
-	    }
+	    gretl_list_diff(outlist, varmod->list, vl->reglist);
+	    F = robust_omit_F(outlist, varmod);
 	    if (na(F)) {
 		err = 1;
 	    }
@@ -1175,13 +1177,8 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 	compose_varlist(vl, depvar, order - 1, 0, pdinfo);	
 
 	if (robust) {
-	    outlist = gretl_list_diff(varmod->list, vl->reglist);
-	    if (outlist != NULL) {
-		F = robust_omit_F(outlist, varmod);
-		free(outlist);
-	    } else {
-		F = NADBL;
-	    }
+	    gretl_list_diff(outlist, varmod->list, vl->reglist);
+	    F = robust_omit_F(outlist, varmod);
 	    if (na(F)) {
 		err = 1;
 	    }
@@ -1213,6 +1210,10 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 
     if (!err && pause) {
 	scroll_pause();
+    }
+
+    if (outlist != NULL) {
+	free(outlist);
     }
 
     return err;

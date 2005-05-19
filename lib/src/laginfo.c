@@ -10,6 +10,8 @@ struct Laginfo_ {
     int **lag_lists;
 };
 
+#undef LLDEBUG
+
 static Laginfo *list_lag_info_new (void)
 {
     Laginfo *linfo = malloc(sizeof *linfo);
@@ -116,15 +118,64 @@ static int add_lag_to_laglist (int i, int lag, Laginfo *linfo)
     return err;
 }
 
+static int laginfo_add_lags_list (int n, Laginfo *linfo)
+{
+    int **llists;
+    int err = 0;
+
+    llists = realloc(linfo->lag_lists, n * sizeof *llists);
+
+    if (llists != NULL) {
+#if LLDEBUG
+	fprintf(stderr, " realloced lag_lists, size %d\n", n);
+#endif
+	linfo->lag_lists = llists;
+	linfo->lag_lists[n - 1] = NULL;
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
+static int laginfo_expand_reflist (int n, int v, Laginfo *linfo)
+{
+    int *reflist;
+    int l0, err = 0;
+
+    if (linfo->reflist == NULL) {
+	l0 = 1;
+    } else {
+	l0 = linfo->reflist[0] + 1;
+    }
+
+#if LLDEBUG
+    fprintf(stderr, " now reallocing %p, %d elements\n", 
+	    (void *) linfo->reflist, n);
+#endif
+
+    reflist = realloc(linfo->reflist, n * sizeof *reflist);
+
+    if (reflist != NULL) {
+	linfo->reflist = reflist;
+	linfo->reflist[0] = l0;
+	linfo->reflist[l0] = v;
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
 static int add_to_list_lag_info (int v, int lag, int lagv, CMD *cmd)
 {
-    int *reflist = NULL;
-    int **llists = NULL;
     int add_to_reflist = 0;
     int nl, llnum = 0, err = 0;
 
-    fprintf(stderr, "add_to_list_lag_info: v=%d, lag=%d, lagv=%d\n",
+#if LLDEBUG
+    fprintf(stderr, "*** add_to_list_lag_info: v=%d, lag=%d, lagv=%d\n",
 	    v, lag, lagv);
+#endif
 
     if (cmd->linfo == NULL) {
 	cmd->linfo = list_lag_info_new();
@@ -149,53 +200,29 @@ static int add_to_list_lag_info (int v, int lag, int lagv, CMD *cmd)
     }
 
     if (add_to_reflist) {
-	fprintf(stderr, "reallocing %p, %d elements\n", 
-		(void *) cmd->linfo->reflist, nl + 1);
-	reflist = realloc(cmd->linfo->reflist, (nl + 1) * sizeof *reflist);
-	if (reflist != NULL) {
-	    cmd->linfo->reflist = reflist;
-	    fprintf(stderr, "set cmd->linfo->reflist = %p\n",
-		    (void *) cmd->linfo->reflist);
-	    cmd->linfo->reflist[0] = 0;
-	} else {
-	    err = 1;
-	}
- 
+	err = laginfo_add_lags_list(nl, cmd->linfo);
 	if (!err) {
-	    llists = realloc(cmd->linfo->lag_lists, nl * sizeof *llists);
-	    if (llists != NULL) {
-		fprintf(stderr, " realloced lag_lists, size %d\n", nl);
-		cmd->linfo->lag_lists = llists;
-		cmd->linfo->lag_lists[nl - 1] = NULL;
-	    } else {
-		err = 1;
-	    }
+	    err = laginfo_expand_reflist(nl + 1, v, cmd->linfo);
 	}
     }
 
     if (!err) {
 	err = add_lagv_to_genlist(lagv, cmd->linfo);
-	fprintf(stderr, " add_lagv_to_genlist: err = %d\n", err);
+#if LLDEBUG
+	fprintf(stderr, " add_lagv_to_genlist: lagv = %d, err = %d\n", 
+		lagv, err);
+#endif
     }
 
     if (!err) {
-	if (cmd->linfo->reflist[0] > 0) {
-	    llnum = cmd->linfo->reflist[0] - 1;
-	}
+	llnum = cmd->linfo->reflist[0] - 1;
+#if LLDEBUG
+	printlist(cmd->linfo->reflist, "reflist");
 	fprintf(stderr, " llnum = %d\n", llnum);
-    }    
-
-    if (!err) {
 	fprintf(stderr, " doing add_lag_to_laglist(%d, %d, %p)\n", 
 		llnum, lag, (void *) cmd->linfo);
+#endif
 	err = add_lag_to_laglist(llnum, lag, cmd->linfo);
-    }
-
-    if (!err) {
-	if (add_to_reflist) {
-	    cmd->linfo->reflist[0] += 1;
-	    cmd->linfo->reflist[nl] = v;
-	}
     }
 
     return err;
@@ -205,30 +232,63 @@ static int var_lags_contiguous (const int *laglist)
 {
     int i, ret = 1;
 
+    /* actual lags */
     for (i=2; i<=laglist[0]; i++) {
 	if (laglist[i] != laglist[i-1] + 1) {
 	    ret = 0;
+	    break;
 	}
     }
+
+    if (ret == 0) {
+	/* check for contiguous leads? */
+	int test = 1;
+
+	for (i=2; i<=laglist[0]; i++) {
+	    if (laglist[i] != laglist[i-1] - 1) {
+		test = 0;
+		break;
+	    }
+	}
+	if (test == 1) {
+	    ret = 1;
+	}
+    }	
 
     return ret;    
 }
 
 /* returns number of bytes printed */
 
+static const char *lag_sign_str (int lag)
+{
+    if (lag > 0) return "-";
+    if (lag < 0) return "+";
+    else return "";
+}
+
 static int print_var_lags (const int *laglist, PRN *prn)
 {
     char tmp[32];
+    int lag, lsign;
     int lmax = laglist[0];
     int ret = 0;
     
-    /* FIXME leads */
-
     if (lmax == 1) {
-	sprintf(tmp, "(-%d)", laglist[1]);
+	lsign = laglist[1];
+	lag = abs(laglist[1]);
+	sprintf(tmp, "(%s%d)", lag_sign_str(lsign), lag);
 	ret += pputs(prn, tmp);	
     } else if (var_lags_contiguous(laglist)) {
-	sprintf(tmp, "(-%d to -%d)", laglist[1], laglist[lmax]);
+	/* first lag */
+	lsign = laglist[1];
+	lag = abs(laglist[1]);
+	sprintf(tmp, "(%s%d to ", lag_sign_str(lsign), lag);
+	ret += pputs(prn, tmp);	
+	/* last lag */ 
+	lsign = laglist[lmax];
+	lag = abs(laglist[lmax]);
+	sprintf(tmp, "%s%d)", lag_sign_str(lsign), lag);
 	ret += pputs(prn, tmp);	
     } else {
 	int i;
@@ -236,7 +296,9 @@ static int print_var_lags (const int *laglist, PRN *prn)
 	pputc(prn, '(');
 	ret++;
 	for (i=1; i<=lmax; i++) {
-	    sprintf(tmp, "%d", laglist[i]);
+	    lsign = laglist[i];
+	    lag = fabs(laglist[i]);
+	    sprintf(tmp, "%s%d", lag_sign_str(lsign), lag);
 	    ret += pputs(prn, tmp);
 	    if (i < lmax) {
 		ret += pputs(prn, ", ");

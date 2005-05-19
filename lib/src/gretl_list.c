@@ -20,8 +20,18 @@
 #include "libgretl.h"
 #include "gretl_list.h"
 
-/* gretl_list_new:
+/**
+ * gretl_list_new:
+ * @nterms: the maximum number of elements to be stored in the list.
+ * 
+ * Creates a newly allocated list with space for @nterms elements,
+ * besides the leading element, which in a gretl list always
+ * holds a count of the number of elements that follow.  This
+ * leading element is initialized appropriately.  For example, if
+ * @nterms = 4, space for 5 integers is allocated and the first
+ * element of the array is set to 4.
  *
+ * Returns: the newly allocated list, or %NULL on failure.
  */
 
 int *gretl_list_new (int nterms)
@@ -43,10 +53,12 @@ int *gretl_list_new (int nterms)
     return list;
 }
 
-/* gretl_list_copy:
- * @src: an array of integers.
+/**
+ * gretl_list_copy:
+ * @src: an array of integers, the first element of which holds
+ * a count of the number of elements following.
  *
- * Returns: an allocate copy @src.
+ * Returns: an allocated copy @src.
  */
 
 int *gretl_list_copy (const int *src)
@@ -70,7 +82,8 @@ int *gretl_list_copy (const int *src)
     return targ;
 }
 
-/* gretl_list_from_string:
+/**
+ * gretl_list_from_string:
  * @liststr: string representation of list of integers.
  *
  * Reads a string containing a list of integers and constructs
@@ -120,24 +133,45 @@ int *gretl_list_from_string (const char *liststr)
     return list;
 }
 
-/* in_gretl_list:
+/**
+ * in_gretl_list:
+ * @list: an array of integers, the first element of which holds
+ * a count of the number of elements following.
+ * @k: integer to test.
  *
+ * Checks whether @k is present among the members of @list,
+ * in position 1 or higher.
+ *
+ * Returns: the position of @k in @list, or 0 if @k is not
+ * present. 
  */
 
 int in_gretl_list (const int *list, int k)
 {
-    int i;
+    int i, ret = 0;
 
     for (i=1; i<=list[0]; i++) {
-	if (list[i] == k) return i;
+	if (list[i] == k) {
+	    ret = i;
+	    break;
+	}
     }
 
-    return 0;
+    return ret;
 }
 
-/* checks a list for a constant term (ID 0), and if present, 
-   moves it to the first dep var position (pos 2)
-*/
+/**
+ * rearrange_list:
+ * @list: an array of integers, the first element of which holds
+ * a count of the number of elements following.
+ *
+ * Checks @list for the presence of a constant term (ID 0), and 
+ * if present, moves it to position 2 in @list.  This is
+ * designed for producing a canonical version of a regression
+ * list, with the constant (if any) preceding any other
+ * regressors (position 1 holds the dependent variable in such
+ * a list).
+ */
 
 void rearrange_list (int *list)
 {
@@ -154,15 +188,17 @@ void rearrange_list (int *list)
     }
 }
 
-/* gretl_list_delete_at_pos:
- * @list: original list.
+/**
+ * gretl_list_delete_at_pos:
+ * @list: an array of integers, the first element of which holds
+ * a count of the number of elements following.
  * @pos: position at which to delete list element.
  *
- * deletes the element at position @pos from @list and moves any
- * remaining elements forward.
+ * Deletes the element at position @pos from @list and moves any
+ * remaining elements forward.  Decrements the value of the first,
+ * counter, element of @list.
  *
  * Returns: 0 on success, 1 on error.
- * 
  */
 
 int gretl_list_delete_at_pos (int *list, int pos)
@@ -183,16 +219,19 @@ int gretl_list_delete_at_pos (int *list, int pos)
     return 0;
 }
 
-/* gretl_list_add:
- * @orig: original list.
- * @add: list of variables to add.
- * @err: pointer to receive error code.
+/**
+ * gretl_list_add:
+ * @orig: an array of integers, the first element of which holds
+ * a count of the number of elements following.
+ * @add: list of variables to be added.
+ * @err: location to receive error code.
  *
- * creates a list containing the union of elements of @orig 
- * and the elements of @add. 
+ * Creates a list containing the union of elements of @orig 
+ * and the elements of @add.  If one or more elements of
+ * @add were already present in @orig, the error code is
+ * %E_ADDDUP.
  *
  * Returns: new list on success, %NULL on error.
- * 
  */
 
 int *gretl_list_add (const int *orig, const int *add, int *err)
@@ -244,13 +283,13 @@ int *gretl_list_add (const int *orig, const int *add, int *err)
 
 /**
  * gretl_list_omit_last:
- * @orig: original list.
- * @err: pointer to receive error code.
+ * @orig: an array of integers, the first element of which holds
+ * a count of the number of elements following.
+ * @err: location to receive error code.
  *
- * creates a list containing all but the last elements of @orig.
+ * Creates a list containing all but the last elements of @orig.
  *
  * Returns: new list on success, %NULL on error.
- * 
  */
 
 int *gretl_list_omit_last (const int *orig, int *err)
@@ -308,15 +347,15 @@ static int list_count (const int *list)
 
 /**
  * gretl_list_omit:
- * @orig: original list.
+ * @orig: an array of integers, the first element of which holds
+ * a count of the number of elements following.
  * @omit: list of variables to drop.
  * @err: pointer to receive error code.
  *
- * creates a list containing the elements of @orig that are not
+ * Creates a list containing the elements of @orig that are not
  * present in @omit. 
  *
  * Returns: new list on success, %NULL on error.
- * 
  */
 
 int *gretl_list_omit (const int *orig, const int *omit, int *err)
@@ -375,6 +414,49 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err)
 
 /**
  * gretl_list_diff:
+ * @targ: target list (must be pre-allocated).
+ * @biglist: inclusive list.
+ * @sublist: subset of biglist.
+ *
+ * Fills out @targ with the elements of @biglist, from position 2 
+ * onwards, that are not present in @sublist.  It is assumed that 
+ * the variable ID number in position 1 (dependent variable) is the 
+ * same in both lists.  It is an error if, from position 2 on, 
+ * @sublist is not a proper subset of @biglist.  See also 
+ * #gretl_list_diff_new.
+ *
+ * Returns: 0 on success, 1 on error.
+ */
+
+int gretl_list_diff (int *targ, const int *biglist, const int *sublist)
+{
+    int i, j, k = 0;
+    int match, err = 0;
+
+    targ[0] = biglist[0] - sublist[0];
+
+    if (targ[0] <= 0) {
+	err = 1;
+    } else {
+	for (i=2; i<=biglist[0]; i++) {
+	    match = 0;
+	    for (j=2; j<=sublist[0]; j++) {
+		if (sublist[j] == biglist[i]) {
+		    match = 1;
+		    break;
+		}
+	    }
+	    if (!match) {
+		targ[++k] = biglist[i];
+	    }
+	}
+    }
+
+    return err;
+}
+
+/**
+ * gretl_list_diff_new:
  * @biglist: inclusive list.
  * @sublist: subset of biglist.
  *
@@ -385,7 +467,7 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err)
  * if, from position 2 on, @sublist is not a proper subset of @biglist.
  */
 
-int *gretl_list_diff (const int *biglist, const int *sublist)
+int *gretl_list_diff_new (const int *biglist, const int *sublist)
 {
     int *targ = NULL;
     int i, j, n, k = 0;
@@ -415,10 +497,19 @@ int *gretl_list_diff (const int *biglist, const int *sublist)
     return targ;
 }
 
-/* Check if any var in list has been replaced via genr since a
-   previous model (ref_id) was estimated.  Expects the "label"
-   in datainfo to be of the form "Replaced after model <count>".
-*/
+/**
+ * list_members_replaced:
+ * @list: an array of integer variable ID numbers, the first element
+ * of which holds a count of the number of elements following.
+ * @pdinfo: dataset information.
+ * @ref_id: ID number of reference #MODEL.
+ *
+ * Checks whether any variable in @list has been redefined via
+ * gretl's %genr command since a previous model (identified by
+ * @ref_id) was estimated.
+ *
+ * Returns: 1 if any variables have been replaced, 0 otherwise.
+ */
 
 int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 			   int ref_id)
@@ -453,8 +544,15 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
     return err;
 }
 
-/* check if a var list contains a constant (variable with ID
-   number 0) in position 2 or higher */
+/**
+ * gretl_list_has_const:
+ * @list: an array of integer variable ID numbers, the first element
+ * of which holds a count of the number of elements following.
+ *
+ * Returns: 1 if the constant (variable ID 0) is found in @list,
+ * in position 2 or higher.  This corresponds to determining
+ * whether of not a set of regressors contains an intercept.
+ */
 
 int gretl_list_has_const (const int *list)
 {
@@ -469,6 +567,19 @@ int gretl_list_has_const (const int *list)
     return 0;
 }
 
+/**
+ * gretl_list_duplicates:
+ * @list: an array of integer variable ID numbers, the first element
+ * of which holds a count of the number of elements following.
+ * @ci: gretl command index (see #gretl_cmd_codes).
+ *
+ * Checks whether or not a gretl list contains duplicated elements.
+ * Exactly what counts as duplication depends on the context of the
+ * command in which @list will be used, which is given by @ci.
+ *
+ * Returns: 1 in case of erroneous duplication, 0 otherwise.
+ */
+
 int gretl_list_duplicates (const int *list, int ci)
 {
     int i, j, start = 2;
@@ -476,7 +587,7 @@ int gretl_list_duplicates (const int *list, int ci)
 
     if (ci == ARCH) {
 	start = 3;
-    } else if (ci == LAGS && list[2] == LISTSEP) {
+    } else if (ci == LAGS && list[0] > 1 && list[2] == LISTSEP) {
 	start = 3;
     } else if (ci == TSLS || ci == AR || ci == ARMA || 
 	       ci == SCATTERS || ci == MPOLS || ci == GARCH) {
@@ -497,4 +608,52 @@ int gretl_list_duplicates (const int *list, int ci)
     }
 
     return ret;
+}
+
+/**
+ * full_var_list:
+ * @pdinfo: dataset information.
+ * @nvars: location for return of number of elements in full list.
+ *
+ * Creates a newly allocated list including all variables in the
+ * dataset that are not scalars and are not hidden variables.
+ * The return value is %NULL in case either (a) allocation of
+ * memory failed, or (b) the resulting list would be empty.
+ * The caller can distinguish between these possibilities by
+ * examining the value returned in @nvars, which will be zero if
+ * and only if the resulting list would be empty.  If this is
+ * not of interest to the caller, @nvars may be given as %NULL.
+ *
+ * Returns: the allocated list, or %NULL.
+ */
+
+int *full_var_list (const DATAINFO *pdinfo, int *nvars)
+{
+    int i, j, nv = 0;
+    int *list = NULL;
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (pdinfo->vector[i] && !hidden_var(i, pdinfo)) {
+	    nv++;
+	}
+    }
+
+    if (nvars != NULL) {
+	*nvars = nv;
+    }
+    
+    if (nv > 0) {
+	list = gretl_list_new(nv);
+    }
+
+    if (list != NULL) {
+	j = 1;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (pdinfo->vector[i] && !hidden_var(i, pdinfo)) {
+		list[j++] = i;
+	    }
+	}
+    }	    
+
+    return list;
 }

@@ -20,8 +20,8 @@
 #ifndef GENERATE_H
 #define GENERATE_H
 
-int generate (double ***pZ, DATAINFO *pdinfo, 
-	      const char *line, MODEL *pmod); 
+int generate (const char *line, double ***pZ, DATAINFO *pdinfo, 
+	      MODEL *pmod); 
 
 int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
 
