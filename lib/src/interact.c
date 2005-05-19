@@ -1756,27 +1756,29 @@ print_maybe_quoted_str (const char *s, int cli, PRN *prn)
 
 #if USE_LAGINFO
 static void 
-cmd_list_print_var (CMD *cmd, int v, const DATAINFO *pdinfo,
+cmd_list_print_var (CMD *cmd, int i, const DATAINFO *pdinfo,
 		    int cli, PRN *prn)
 {
-    if (is_auto_generated_lag(v, cmd->linfo)) {
-	return;
-    }
+    int v = cmd->list[i];
+    int src, genpos;
 
-    if (cli) {
-	printf(" %s", pdinfo->varname[cmd->list[v]]);
+    if (i > 1 && v > 0 &&
+	(genpos = is_auto_generated_lag(v, cmd->linfo)) > 0) {
+	if (is_first_lag(genpos, cmd->linfo, &src)) {
+	    print_lags_by_varnum(src, cmd->linfo, cli, pdinfo, prn);
+	} 
     } else {
-	pprintf(prn, " %s", pdinfo->varname[cmd->list[v]]);
-    }
-
-    if (has_auto_generated_lags(v, cmd->linfo)) {
-	print_lags_by_varnum(v, cmd->linfo, cli, prn);
+	if (cli) {
+	    printf(" %s", pdinfo->varname[v]);
+	} else {
+	    pprintf(prn, " %s", pdinfo->varname[v]);
+	}
     }
 }
 #else
 static void 
-cmd_list_print_varname (CMD *cmd, int v, const DATAINFO *pdinfo,
-			int cli, PRN *prn)
+cmd_list_print_var (CMD *cmd, int v, const DATAINFO *pdinfo,
+		    int cli, PRN *prn)
 {
     if (cli) {
 	printf(" %s", pdinfo->varname[cmd->list[v]]);
@@ -1857,7 +1859,7 @@ static void print_cmd_list (CMD *cmd, const DATAINFO *pdinfo,
 
 	if (cli) {
 	    if (gotsep) {
-		cmd_list_print_varname(cmd, i, pdinfo, 1, prn);
+		cmd_list_print_var(cmd, i, pdinfo, 1, prn);
 	    } else {
 		printf(" %d", cmd->list[i]);
 	    }
@@ -1868,7 +1870,7 @@ static void print_cmd_list (CMD *cmd, const DATAINFO *pdinfo,
 
 	if (!batch) {
 	    if (gotsep) {
-		cmd_list_print_varname(cmd, i, pdinfo, 0, prn);
+		cmd_list_print_var(cmd, i, pdinfo, 0, prn);
 	    } else {
 		pprintf(prn, " %d", cmd->list[i]);
 	    }
@@ -2692,12 +2694,14 @@ void gretl_cmd_free (CMD *cmd)
 {
     free(cmd->list);
     free(cmd->param);
+#if USE_LAGINFO
+    cmd_lag_info_destroy(cmd);
+#endif
 }
 
 void gretl_cmd_destroy (CMD *cmd)
 {
-    free(cmd->list);
-    free(cmd->param);
+    gretl_cmd_free(cmd);
     free(cmd);
 }
 

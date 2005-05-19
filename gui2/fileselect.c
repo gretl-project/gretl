@@ -1060,7 +1060,7 @@ void file_selector (const char *msg, int action, gpointer data)
 					  startdir, suffix);
     }
 
-    gretl_set_window_modal(filesel);
+    gtk_window_set_modal(GTK_WINDOW(filesel), TRUE);
     gtk_main(); 
 
     if (*fsinfo.fname != '\0') {

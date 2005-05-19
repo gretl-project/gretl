@@ -3,6 +3,12 @@
 #ifndef CMD_PRIVATE_H
 #define CMD_PRIVATE_H
 
+#undef USE_LAGINFO
+
+#if USE_LAGINFO
+typedef struct Laginfo_ Laginfo;
+#endif
+
 struct _CMD {
     char word[9];               /* command word */
     int ci;                     /* command index number */
@@ -14,6 +20,9 @@ struct _CMD {
     int *list;                  /* list of variables by ID number */
     char *param;                /* general-purpose parameter to command */
     int errcode;                /* error code */
+#if USE_LAGINFO
+    Laginfo *linfo;
+#endif
 };
 
 #endif /* CMD_PRIVATE_H */
