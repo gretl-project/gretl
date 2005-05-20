@@ -253,12 +253,7 @@ static int parse_store_cmd (const char *sline, CMD *scmd)
 	return 1;
     }
 
-    scmd->opt = get_gretl_options(linecpy, &err);
-
-    if (!err) {
-	getcmd(linecpy, scmd, &Z, datainfo); 
-	err = scmd->errcode;
-    }
+    err = parse_command_line(linecpy, scmd, &Z, datainfo); 
 
     free(linecpy);
 

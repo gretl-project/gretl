@@ -483,16 +483,13 @@ static int lib_cmd_init (void)
 
 int check_specific_command (char *s)
 {
-    int err = 0;
+    int err;
 
     /* cmd is global */
-    getcmd(s, &cmd, &Z, datainfo); 
-    if (cmd.errcode) {
-	gui_errmsg(cmd.errcode);
-	err = 1;
-    } 
-
-    if (!err) {
+    err = parse_command_line(s, &cmd, &Z, datainfo); 
+    if (err) {
+	gui_errmsg(err);
+    } else {
 	/* At this point we're not just replaying 
 	   saved session commands. */
 	set_replay_off();
@@ -518,19 +515,20 @@ int *command_list_from_string (char *s)
 {
     CMD mycmd;
     int *list = NULL;
-    int err = 0;
+    int err;
 
-    gretl_cmd_init(&mycmd);
-
-    getcmd(s, &mycmd, &Z, datainfo); 
-    if (mycmd.errcode) {
-	gui_errmsg(mycmd.errcode);
-	err = 1;
-    } 
+    err = gretl_cmd_init(&mycmd);
 
     if (!err) {
-	list = gretl_list_copy(mycmd.list);
+	err = parse_command_line(s, &mycmd, &Z, datainfo);
+	if (!err) {
+	    list = gretl_list_copy(mycmd.list);
+	}
     }
+
+    if (err) {
+	gui_errmsg(err);
+    } 
 
     gretl_cmd_free(&mycmd);
 
@@ -1935,13 +1933,13 @@ static int model_output (MODEL *pmod, PRN *prn)
 
 static gint check_model_cmd (void)
 {
-    getcmd(cmdline, &cmd, &Z, datainfo); 
+    int err = parse_command_line(cmdline, &cmd, &Z, datainfo); 
 
-    if (cmd.errcode) {
-	gui_errmsg(cmd.errcode);
+    if (err) {
+	gui_errmsg(err);
     }
 
-    return cmd.errcode;
+    return err;
 }
 
 /* ........................................................... */
@@ -5374,16 +5372,18 @@ int gui_exec_line (char *line,
 
     /* if we're stacking commands for a loop, parse "lightly" */
     if (loopstack) { 
-	get_cmd_ci(line, &cmd);
+	err = get_command_index(line, &cmd);
     } else {
-	getcmd(line, &cmd, &Z, datainfo);
+	err = parse_command_line(line, &cmd, &Z, datainfo);
     }
 
-    if (cmd.ci < 0) return 0; /* nothing there, or a comment */
-
-    if (cmd.errcode) {
-        errmsg(cmd.errcode, prn);
+    if (err) {
+        errmsg(err, prn);
         return 1;
+    }
+
+    if (cmd.ci < 0) {
+	return 0; /* nothing there, or a comment */
     }
 
     if (sys != NULL && cmd.ci != END && cmd.ci != EQUATION &&

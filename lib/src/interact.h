@@ -70,9 +70,10 @@ gretlopt gretl_cmd_get_opt (const CMD *cmd);
 
 void gretl_cmd_set_opt (CMD *cmd, gretlopt opt);
 
-void getcmd (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo); 
+int parse_command_line (char *line, CMD *cmd, double ***pZ, 
+			DATAINFO *pdinfo); 
 
-void get_cmd_ci (const char *line, CMD *cmd);
+int get_command_index (const char *line, CMD *cmd);
 
 int command_number (const char *cmd);
 

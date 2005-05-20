@@ -1417,13 +1417,17 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 {
     CMD cmd;
     double rho = 0.0;
-    int err = 0;
+    int err;
 
     if (gretl_cmd_init(&cmd)) {
 	return 1;
     }
 
-    getcmd(model_spec, &cmd, pZ, pdinfo);
+    err = parse_command_line(model_spec, &cmd, pZ, pdinfo);
+    if (err) {
+	gretl_cmd_free(&cmd);
+	return err;
+    }
 
     gretl_model_init(tmpmod);
 

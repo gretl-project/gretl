@@ -366,7 +366,9 @@ static int is_first_lag (int v, const Laginfo *linfo, int *src)
 	    if (k == v) {
 		if (j == 0) {
 		    ret = 1;
-		    *src = linfo->reflist[i+1];
+		    if (src != NULL) {
+			*src = linfo->reflist[i+1];
+		    }
 		}
 		break;
 	    }

@@ -34,6 +34,10 @@
 # endif
 #endif
 
+#ifdef OLD_GTK
+# include "menustate.h"
+#endif
+
 #define IS_DAT_ACTION(i) (i == SAVE_DATA || \
                           i == SAVE_DATA_AS || \
                           i == SAVE_GZDATA || \

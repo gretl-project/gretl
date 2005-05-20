@@ -713,24 +713,24 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     compress_spaces(line);
 
-    /* if we're stacking commands for a loop, parse "lightly" */
-    if (loopstack) {
-	get_cmd_ci(line, &cmd);
-    } else {
-	getcmd(line, &cmd, &Z, datainfo);
-    }
-
     /* tell libgretl if we're in batch mode */
     gretl_set_batch_mode(batch);
+
+    /* if we're stacking commands for a loop, parse "lightly" */
+    if (loopstack) {
+	err = get_command_index(line, &cmd);
+    } else {
+	err = parse_command_line(line, &cmd, &Z, datainfo);
+    }
+
+    if (err) {
+	errmsg(err, prn);
+	return;
+    }
 
     /* if in batch mode, echo comments from input */
     if (batch && cmd.ci == CMD_COMMENT && !echo_off) {
 	printf_strip(linebak, loopstack);
-    }
-
-    if ((err = cmd.errcode)) {
-	errmsg(err, prn);
-	return;
     }
 
     if (cmd.ci < 0) return; /* there's nothing there */ 

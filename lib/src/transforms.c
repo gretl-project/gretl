@@ -21,17 +21,6 @@
 
 #undef TRDEBUG
 
-/* newlag is used when auto-generating a lag in the context of reading
-   a regression list (interact.c)
-*/
-
-static int newlag;
-
-int newly_created_lag (void)
-{
-    return newlag;
-}
-
 enum {
     VARS_IDENTICAL,
     X_HAS_MISSING,
@@ -479,20 +468,14 @@ static int get_transform (int ci, int v, int aux,
 
 int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 {
-    int lno, oldv = pdinfo->v;
+    int lno;
 
     if (!pdinfo->vector[v] || lag > pdinfo->n) {
 	lno = -1;
     } else if (lag == 0) {
 	lno = v;
     } else {
-	newlag = 1;
-
 	lno = get_transform(LAGS, v, lag, pZ, pdinfo, 8);
-
-	if (lno < oldv) {
-	    newlag = 0;
-	}
     }
 
     return lno;

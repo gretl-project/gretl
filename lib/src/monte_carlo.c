@@ -2400,12 +2400,11 @@ int loop_exec (LOOPSET *loop, char *line,
 	       will do some checking that hasn't been done earlier.
 	    */
 
-	    getcmd(linecpy, &cmd, pZ, *ppdinfo);
+	    err = parse_command_line(linecpy, &cmd, pZ, *ppdinfo);
 
 	    if (cmd.ci < 0) {
 		continue;
-	    } else if (cmd.errcode) {
-		err = cmd.errcode;
+	    } else if (err) {
 		break;
 	    }
 
