@@ -20,9 +20,6 @@
 #ifndef GRETL_MATRIX_H
 #define GRETL_MATRIX_H
 
-#include "f2c.h"
-#include "clapack_double.h"
-
 /* #define LDEBUG 1 */
 
 typedef enum {

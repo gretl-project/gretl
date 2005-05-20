@@ -472,6 +472,7 @@ struct format_info {
     GtkWidget *dialog;
     windata_t *vwin;
     int format;
+    int multi;
 };
 
 static void destroy_format_dialog (GtkWidget *w, struct format_info *finfo)
@@ -491,12 +492,39 @@ static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
     gtk_widget_destroy(finfo->dialog);
 }
 
+#ifndef OLD_GTK
+static int preferred_format (int f, int multi)
+{
+# ifdef G_OS_WIN32
+    static int multi_pref = COPY_RTF;
+    static int simple_pref = COPY_TEXT_AS_RTF;
+# else 
+    static int multi_pref = COPY_LATEX;
+    static int simple_pref = COPY_TEXT;
+#endif
+    int ret;
+    
+    if (multi) {
+	if (f) multi_pref = f;
+	ret = multi_pref;
+    } else {
+	if (f) simple_pref = f;
+	ret = simple_pref;
+    }
+
+    return ret;
+}
+#endif
+
 static void set_copy_format (GtkWidget *w, struct format_info *finfo)
 {
     gpointer p = g_object_get_data(G_OBJECT(w), "format");
 
     if (p != NULL) {
 	finfo->format = GPOINTER_TO_INT(p);
+#ifndef OLD_GTK
+	preferred_format(finfo->format, finfo->multi);
+#endif	
     }
 }
 
@@ -517,6 +545,7 @@ void copy_format_dialog (windata_t *vwin, int unused)
     finfo->vwin = vwin;
     finfo->dialog = dialog;
     finfo->format = COPY_LATEX;
+    finfo->multi = 1;
 
     set_dialog_border_widths(dialog);
 
@@ -591,7 +620,7 @@ void copy_format_dialog (windata_t *vwin, int unused)
 
 static GtkWidget *
 TeX_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
-		 gboolean dflt)
+		 int pref)
 {
     GtkWidget *button;
 
@@ -600,7 +629,8 @@ TeX_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
     g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), dflt);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
+				 (pref == COPY_LATEX));
     gtk_widget_show(button); 
 
     return button;
@@ -608,7 +638,7 @@ TeX_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 
 static GtkWidget *
 RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
-		 int multicopy, gboolean dflt)
+		 int multicopy, int pref)
 {
     GtkWidget *button;
 
@@ -626,7 +656,10 @@ RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 	g_object_set_data(G_OBJECT(button), "format", 
 			  GINT_TO_POINTER(COPY_TEXT_AS_RTF));
     }
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), dflt);
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
+				 (pref == COPY_RTF || 
+				  pref == COPY_TEXT_AS_RTF));
     gtk_widget_show(button);
 
     return button;
@@ -634,10 +667,12 @@ RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 
 void copy_format_dialog (windata_t *vwin, int multicopy)
 {
-    GtkWidget *dialog, *tempwid, *button, *hbox;
+    GtkWidget *dialog, *tempwid, *hbox;
+    GtkWidget *button;
     GtkWidget *myvbox;
     GSList *group = NULL;
     struct format_info *finfo;
+    int pref;
 
     finfo = mymalloc(sizeof *finfo);
     if (finfo == NULL) return;
@@ -647,19 +682,8 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
     finfo->vwin = vwin;
     finfo->dialog = dialog;
 
-# ifdef G_OS_WIN32
-    if (multicopy) {
-	finfo->format = COPY_RTF;
-    } else {
-	finfo->format = COPY_TEXT_AS_RTF;
-    }
-# else
-    if (multicopy) {
-	finfo->format = COPY_LATEX;
-    } else {
-	finfo->format = COPY_TEXT;
-    }
-# endif
+    finfo->format = pref = preferred_format(0, multicopy);
+    finfo->multi = multicopy;
 
     dialog_set_no_resize(dialog);
     set_dialog_border_widths(dialog);
@@ -679,12 +703,12 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
 # ifdef G_OS_WIN32
 
     /* RTF option */
-    button = RTF_copy_button(group, myvbox, finfo, multicopy, TRUE);
+    button = RTF_copy_button(group, myvbox, finfo, multicopy, pref);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 
     /* LaTeX option? */
     if (multicopy) {
-	button = TeX_copy_button(group, myvbox, finfo, FALSE);
+	button = TeX_copy_button(group, myvbox, finfo, pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
@@ -692,12 +716,12 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
 
     /* LaTeX option? */
     if (multicopy) {
-	button = TeX_copy_button(group, myvbox, finfo, TRUE);
+	button = TeX_copy_button(group, myvbox, finfo, pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
     /* RTF option */
-    button = RTF_copy_button(group, myvbox, finfo, multicopy, FALSE);
+    button = RTF_copy_button(group, myvbox, finfo, multicopy, pref);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 
 # endif /* G_OS_WIN32 */
@@ -708,11 +732,8 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
     g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_TEXT));
-# ifdef G_OS_WIN32
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), FALSE);
-# else
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), !multicopy);
-# endif
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
+				 (pref == COPY_TEXT));
     gtk_widget_show(button);
 
     hbox = gtk_hbox_new(FALSE, 5);

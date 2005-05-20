@@ -1077,6 +1077,7 @@ int bool_subsample (gretlopt opt)
 	OPT_C  replace current restriction
      */
 {
+    const char *smplmsg;
     int err = restore_sample(opt);
 
     if (err) return 1;
@@ -1090,6 +1091,12 @@ int bool_subsample (gretlopt opt)
     if (err) {
 	gui_errmsg(err);
 	return 1;
+    } 
+
+    smplmsg = get_gretl_msg();
+    if (smplmsg != NULL) {
+	infobox(smplmsg);
+	return 0;
     }
 
     if (dataset_is_panel(datainfo) || dataset_is_time_series(datainfo)) {
@@ -6201,6 +6208,8 @@ int gui_exec_line (char *line,
 
 	if (err) {
 	    errmsg(err, prn);
+	} else if (get_gretl_msg()) {
+	    print_gretl_msg(prn);
 	} else {
 	    print_smpl(datainfo, get_full_length_n(), prn);
 	    if (cmd.opt) { 

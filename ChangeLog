@@ -23,6 +23,10 @@
 - ADF test: allow greater lag length if the data permit
 - Add facility to import GNU Octave ascii data files
 - Improvements to formatting in Spanish translation
+- In statistical tables utility, add a bit more information for
+  Durbin-Watson and improve formatting
+- smpl --restrict: make it not an error if the restriction has
+  no effect (drops no observations)
 - Improvements to several dialog boxes
 - Numerous small bug-fixes
 

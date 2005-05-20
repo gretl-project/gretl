@@ -61,7 +61,9 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 
 	t = pmod->t1;
 	for (i = 0; i < m; i++) {
-	    while (model_missing(pmod, t)) t++;
+	    while (model_missing(pmod, t)) {
+		t++;
+	    }
 	    a[i + k * nrows] = Z[lj1][t++];
 	}
 	k++;
@@ -69,7 +71,9 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 
     t = pmod->t1;
     for (i = 0; i < m; i++) {
-	while (model_missing(pmod, t)) t++;
+	while (model_missing(pmod, t)) {
+	    t++;
+	}
 	b[i] = a[i + n * nrows] = Z[yno][t++];
     }
 
@@ -104,6 +108,7 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 	pmod->rsq = NADBL;
 	pmod->adjrsq = NADBL;
 	pmod->fstt = NADBL;
+
 	/* LaPlace errors: equivalent of standard error is sum of
 	   absolute residuals over nobs */
 	pmod->sigma = pmod->rho / pmod->nobs; 
@@ -516,24 +521,26 @@ static int col_(double *v1, double *v2, double amlt,
     return 0;
 }
 
-static int missobs_before (const char *mask, int t)
+static int missobs_before (const MODEL *pmod, int t)
 {
     int i, c = 0;
 
     for (i=0; i<t; i++) {
-	if (mask[i]) c++;
+	if (pmod->missmask[i + pmod->t1] == '1') {
+	    c++;
+	}
     }
 
     return c;
 }
 
-static void adjust_sample_for_missing (int *sample, int n, 
-				       const char *mask)
+static void 
+adjust_sample_for_missing (int *sample, int n, const MODEL *pmod)
 {
     int i;
 
     for (i=0; i<n; i++) {
-	sample[i] += missobs_before(mask, sample[i]);
+	sample[i] += missobs_before(pmod, sample[i]);
     }
 }
 
@@ -557,7 +564,7 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 	return 1;
     }
 
-    /* each array has length ITERS + 1*/
+    /* each array has length ITERS + 1 */
     for (i=0; i<pmod->ncoeff; i++) {
 	coeffs[i] = malloc((ITERS + 1) * sizeof **coeffs);
 	if (coeffs[i] == NULL) {
@@ -598,7 +605,7 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 	}
 
 	if (pmod->missmask != NULL) {
-	    adjust_sample_for_missing(sample, m, pmod->missmask);
+	    adjust_sample_for_missing(sample, m, pmod);
 	}
 
 	/* populate data array using the sample */

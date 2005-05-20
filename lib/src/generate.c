@@ -5067,7 +5067,11 @@ static void genr_msg (GENERATE *genr, int oldv)
     int scalar = genr_is_scalar(genr);
     int mutant = 0;
 
-    if (!strcmp(genr->varname, "argv")) return;
+    if (!strcmp(genr->varname, "argv") ||
+	!strncmp(genr->varname, "$nl", 3) ||
+	!strcmp(genr->varname, "tmpmsk")) {
+	return;
+    }
 
     if (!(genr_doing_save(genr))) {
 	x = genr->xvec[genr->pdinfo->t1];

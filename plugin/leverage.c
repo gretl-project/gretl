@@ -21,6 +21,9 @@
 #include "gretl_matrix.h"
 #include "gretl_matrix_private.h"
 
+#include "f2c.h"
+#include "clapack_double.h"
+
 #include <gtk/gtk.h>
 
 struct flag_info {

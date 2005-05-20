@@ -1550,6 +1550,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
 	if (err) {
 	    errmsg(err, prn);
+	} else if (get_gretl_msg()) {
+	    print_gretl_msg(prn);
 	} else {
 	    print_smpl(datainfo, get_full_length_n(), prn);
 	}

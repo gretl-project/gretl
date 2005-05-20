@@ -226,11 +226,15 @@ static int sn_from_tmp_dummy (double ***pZ, DATAINFO *pdinfo,
 {
     char formula[MAXLEN];
     int dnum, isdum, dlist[2];
+    int err;
 
     /* + 4 to skip the command word "smpl" */
     sprintf(formula, "__tmpmsk=%s", line + 4);
 
-    if (generate(formula, pZ, pdinfo, NULL)) {
+    err = generate(formula, pZ, pdinfo, NULL);
+    *gretl_msg = '\0';
+
+    if (err) {
 	return -1;
     }
 
@@ -623,6 +627,7 @@ int restrict_sample (const char *line,
     int err = 0;
 
     *gretl_errmsg = '\0';
+    *gretl_msg = '\0';
 
     if (oflag & OPT_M) {
 	opt = SUBSAMPLE_DROP_MISSING;
@@ -697,7 +702,10 @@ int restrict_sample (const char *line,
 	    if (mask[(*ppdinfo)->t1] == 0) {
 		strcpy(gretl_errmsg, _("No observations would be left!"));
 	    } else {
-		strcpy(gretl_errmsg, _("No observations were dropped!"));
+		/* this is not really an error, just a no-op */
+		strcpy(gretl_msg, _("No observations were dropped!"));
+		free(mask);
+		return 0;
 	    }
 	}
 	err = 1;
@@ -796,8 +804,14 @@ int restrict_sample (const char *line,
 
 /* .......................................................... */
 
+enum {
+    SMPL_T1,
+    SMPL_T2
+};
+
 static int 
-get_sample_limit (char *s, const double **Z, DATAINFO *pdinfo)
+get_sample_limit (char *s, const double **Z, DATAINFO *pdinfo,
+		  int code)
 {
     int v, ret = -1;
 
@@ -816,7 +830,11 @@ get_sample_limit (char *s, const double **Z, DATAINFO *pdinfo)
 		}
 	    }
 	}
-	ret = pdinfo->t1 + incr;
+	if (code == SMPL_T1) {
+	    ret = pdinfo->t1 + incr;
+	} else {
+	    ret = pdinfo->t2 + incr;
+	}
     } else {
 	/* absolute form */
 	ret = get_t_from_obs_string(s, Z, pdinfo);
@@ -831,6 +849,7 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
     char cmd[5], newstart[OBSLEN], newstop[OBSLEN];
 
     *gretl_errmsg = '\0';
+    *gretl_msg = '\0';
 
     nf = count_fields(line);
 
@@ -855,7 +874,7 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
 	    strcpy(gretl_errmsg, _("error reading smpl line"));
 	    return 1;
 	} else {
-	    new_t1 = get_sample_limit(newstart, Z, pdinfo);
+	    new_t1 = get_sample_limit(newstart, Z, pdinfo, SMPL_T1);
 	    if (new_t1 < 0 || new_t1 >= pdinfo->n) {
 		strcpy(gretl_errmsg, _("error in new starting obs"));
 		return 1;
@@ -873,7 +892,7 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
     }
 
     if (strcmp(newstart, ";")) {
-	new_t1 = get_sample_limit(newstart, Z, pdinfo);
+	new_t1 = get_sample_limit(newstart, Z, pdinfo, SMPL_T1);
 	if (new_t1 < 0 || new_t1 >= pdinfo->n) {
 	    strcpy(gretl_errmsg, _("error in new starting obs"));
 	    return 1;
@@ -881,7 +900,7 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
     }
 
     if (strcmp(newstop, ";")) {
-	new_t2 = get_sample_limit(newstop, Z, pdinfo);
+	new_t2 = get_sample_limit(newstop, Z, pdinfo, SMPL_T2);
 	if (new_t2 < 0 || new_t2 >= pdinfo->n) {
 	    strcpy(gretl_errmsg, _("error in new ending obs"));
 	    return 1;
@@ -1059,6 +1078,7 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt)
     int i, t, err = 0;
 
     *gretl_errmsg = '\0';
+    *gretl_msg = '\0';
 
 #ifdef SUBDEBUG
     fprintf(stderr, "restore_full_sample: pZ=%p, ppdinfo=%p opt=%lu\n",

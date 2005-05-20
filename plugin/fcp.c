@@ -30,6 +30,9 @@
 #include "libset.h"
 #include "fcp.h"
 
+#include "f2c.h"
+#include "clapack_double.h"
+
 #undef FDEBUG
 
 #define NLL    50   /* number of iterative results to store */

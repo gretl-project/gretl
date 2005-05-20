@@ -1779,7 +1779,7 @@ cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
     int src, genpos;
     int bytes = 0;
 
-    if (i > 1 && v > 0 &&
+    if (v > 0 &&
 	(genpos = is_auto_generated_lag(v, cmd->linfo)) > 0) {
 	if (is_first_lag(genpos, cmd->linfo, &src)) {
 	    bytes += print_lags_by_varnum(src, cmd->linfo, echo_stdout, 
@@ -1823,7 +1823,7 @@ static int more_coming (const CMD *cmd, int i)
                        c == LOGISTIC || c == GARCH || c == EQUATION || \
 		       c == POISSON)
 
-#define TESTLEN 64
+#define TESTLEN 62
 #define LINELEN 78
 
 static void
@@ -1903,7 +1903,7 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 		*stdlen += printf(" %d", cmd->list[i]);
 	    }
 	    if (*stdlen > TESTLEN && more_coming(cmd, i)) {
-		printf(" \\\n "); /* line continuation */
+		printf(" \\\n "); 
 		*stdlen = 1;
 	    }
 	}
@@ -1918,7 +1918,7 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 		*prnlen += pputs(prn, numstr);
 	    }
 	    if (*prnlen > TESTLEN && more_coming(cmd, i)) {
-		pputs(prn, " \\\n "); /* line continuation */
+		pputs(prn, " \\\n "); 
 		*prnlen = 1;
 	    }
 	}

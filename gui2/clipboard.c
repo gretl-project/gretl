@@ -254,7 +254,9 @@ int prn_to_clipboard (PRN *prn, int copycode)
 	    err = 1;
 	} else if (copycode == COPY_TEXT) {
 	    clipboard_buf = gretl_strdup(trbuf);
-	    err = (clipboard_buf == NULL);
+	    if (clipboard_buf == NULL) {
+		err = 1;
+	    }
 	    g_free(trbuf);
 	} else if (copycode == COPY_TEXT_AS_RTF) {
 	    clipboard_buf = dosify_buffer(trbuf, copycode);

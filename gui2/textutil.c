@@ -585,7 +585,9 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 	PRN *textprn;
 	int myhow = how;
 
-	if (myhow == COPY_SELECTION) myhow = COPY_TEXT;
+	if (myhow == COPY_SELECTION) {
+	    myhow = COPY_TEXT;
+	}
 
 	if (gtk_text_buffer_get_selection_bounds(textbuf, NULL, NULL)) {
 	    /* there is a selection in place */

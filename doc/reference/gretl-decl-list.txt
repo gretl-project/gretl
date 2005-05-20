@@ -332,8 +332,8 @@ gretl_cmd_destroy_context
 gretl_cmd_get_savename
 gretl_cmd_get_opt
 gretl_cmd_set_opt
-getcmd
-get_cmd_ci
+parse_command_line
+get_command_index
 command_number
 help
 fcast
@@ -506,8 +506,6 @@ DISPLAYNAME
 COMPACT_METHOD
 STACK_LEVEL
 SORTED_MARKER
-parse_set_line
-set_use_qr
 </SECTION>
 
 <SECTION>
@@ -868,6 +866,7 @@ coeff_pval
 
 <SECTION>
 <FILE>libset</FILE>
+set_use_qr
 get_use_qr
 set_xsect_hccme
 set_tseries_hccme
@@ -892,6 +891,9 @@ gretl_set_batch_mode
 gretl_in_batch_mode
 gretl_set_gui_mode
 gretl_in_gui_mode
+set_gretl_echo
+gretl_echo_on
+execute_set_line
 </SECTION>
 
 <SECTION>
@@ -969,17 +971,11 @@ free_modelspec
 <FILE>missing</FILE>
 NADBL
 na
-missing_masked
 model_missing
-has_missing_obs
 model_missval_count
+varlist_adjust_sample
+check_for_missing_obs
 set_miss
-adjust_t1t2
-set_reference_missmask
-apply_reference_missmask
-reference_missmask_present
-undo_daily_repack
-repack_missing_daily_obs
 </SECTION>
 
 <SECTION>
@@ -994,7 +990,6 @@ list_ldiffgenr
 list_laggenr
 list_loggenr
 list_xpxgenr
-newly_created_lag
 gretl_transforms_cleanup
 </SECTION>
 
