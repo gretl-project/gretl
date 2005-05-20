@@ -27,6 +27,7 @@ IGNORE_HFILES = \
 	cmd_private.h \
 	gretl_matrix_private.h \
 	loop_private.h \
+	missing_private.h \
 	system_private.h \
 	version.h
 

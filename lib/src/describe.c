@@ -1033,7 +1033,7 @@ int corrgram (int varno, int order, double ***pZ,
 
     list[0] = 1;
     list[1] = varno;
-    adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
+    varlist_adjust_sample(list, &t1, &t2, (const double **) *pZ);
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno][t1], nobs)) {
@@ -1561,7 +1561,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
     list[0] = 1;
     list[1] = varno;
-    adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
+    varlist_adjust_sample(list, &t1, &t2, (const double **) *pZ);
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno][t1], nobs)) {
@@ -2478,8 +2478,8 @@ int mahalanobis_distance (const int *list, double ***pZ,
     int orig_t2 = pdinfo->t2;
     int n, err = 0;
 
-    adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
-		(const double **) *pZ, NULL);
+    varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
+			  (const double **) *pZ);
 
     n = pdinfo->t2 - pdinfo->t1 + 1;
     if (n < 2) {

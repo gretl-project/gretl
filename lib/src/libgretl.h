@@ -394,7 +394,4 @@ struct VCV_ {
 # include "gretl_win32.h"
 #endif
 
-int parse_set_line (const char *line, int *echo_off, PRN *prn); /* libset.c */
-void set_use_qr (int set);
-
 #endif /* LIBGRETL_H */

@@ -1243,7 +1243,6 @@ static int real_var (int order, const int *inlist,
 {
     int i, k, neqns;
     int t1, t2, oldt1, oldt2;
-    int missv = 0, misst = 0;
     struct var_lists vlists;
     MODEL var_model;
     GRETL_VAR *var = NULL;
@@ -1291,13 +1290,13 @@ static int real_var (int order, const int *inlist,
     /* sort out sample range */
     t1 = pdinfo->t1;
     t2 = pdinfo->t2;
-    
-    if ((missv = adjust_t1t2(NULL, vlists.testlist, &t1, &t2, 
-			     (const double **) *pZ, &misst))) {
-	err = 1;
+
+    if (check_for_missing_obs(vlists.testlist, &t1, &t2,
+			      (const double **) *pZ, NULL)) {
+	err = E_MISSDATA;
 	goto var_bailout;
     }
-
+    
     pdinfo->t1 = t1;
     pdinfo->t2 = t2;
 

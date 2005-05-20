@@ -639,8 +639,9 @@ static void output_series_to_spc (const double *x, int t1, int t2,
     fputs(" )\n", fp);
 }
 
-static int check_for_missing (const double **Z, const DATAINFO *pdinfo,
-			      int v, int *t1, int *t2)
+static int 
+arma_missobs_check (const double **Z, const DATAINFO *pdinfo,
+		    int v, int *t1, int *t2)
 {
     int misst = 0;
     int list[2];
@@ -651,7 +652,7 @@ static int check_for_missing (const double **Z, const DATAINFO *pdinfo,
     *t1 = pdinfo->t1;
     *t2 = pdinfo->t2;
 
-    if (adjust_t1t2(NULL, list, t1, t2, Z, &misst)) {
+    if (check_for_missing_obs(list, t1, t2, Z, &misst)) {
 	gchar *msg;
 
 	msg = g_strdup_printf(_("Missing value encountered for "
@@ -782,9 +783,8 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	return armod;
     }
 
-    /* missing observations check */
-    if (check_for_missing(Z, pdinfo, v, &t1, &t2)) {
-	armod.errcode = E_DATA;
+    if (arma_missobs_check(Z, pdinfo, v, &t1, &t2)) {
+	armod.errcode = E_MISSDATA;
 	return armod;
     }	
 

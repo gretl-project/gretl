@@ -32,6 +32,7 @@
 #include "dlgutils.h"
 #include "lib_private.h"
 #include "cmd_private.h"
+#include "libset.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -70,7 +71,6 @@ const char *CANTDO = N_("Can't do this: no model has been estimated yet\n");
 /* file scope state variables */
 static CMD cmd;
 static char cmdline[MAXLINE];
-static int echo_off;
 static int replay;
 static MODELSPEC *modelspec;
 static gretl_equation_system *sys;
@@ -4481,7 +4481,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 #endif
 
     /* re-establish command echo */
-    echo_off = 0;
+    set_gretl_echo(1);
 }
 
 /* ........................................................... */
@@ -5123,8 +5123,7 @@ int execute_script (const char *runfile, const char *buf,
 
     while (strcmp(cmd.word, "quit")) {
 	if (looprun) { 
-	    exec_err = loop_exec(loop, line, &Z, &datainfo,
-				 models, &echo_off, prn);
+	    exec_err = loop_exec(loop, line, &Z, &datainfo, models, prn);
 	    gretl_loop_destroy(loop);
 	    loop = NULL;
 	    looprun = 0;
@@ -5176,10 +5175,11 @@ int execute_script (const char *runfile, const char *buf,
 	    }
 
 	    if (!exec_err) {
-		if (!strncmp(line, "noecho", 6)) echo_off = 1;
-		if (strncmp(line, "(* saved objects:", 17) == 0) { 
+		if (!strncmp(line, "noecho", 6)) {
+		    set_gretl_echo(0);
+		} else if (!strncmp(line, "(* saved objects:", 17)) { 
 		    strcpy(line, "quit"); 
-		} else if (!echo_off) {
+		} else if (gretl_echo_on()) {
 		    output_line(line, loopstack, prn);
 		}
 		strcpy(tmp, line);
@@ -6150,7 +6150,7 @@ int gui_exec_line (char *line,
 	break;
 
     case SET:
-	err = parse_set_line(line, &echo_off, prn);
+	err = execute_set_line(line, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}

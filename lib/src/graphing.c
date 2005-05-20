@@ -1115,8 +1115,8 @@ int gnuplot (int *list, const int *lines, const char *literal,
     }
 
     /* adjust sample range, and reject if it's empty */
-    adjust_t1t2(NULL, list, &gpinfo.t1, &gpinfo.t2, 
-		(const double **) *pZ, NULL);
+    varlist_adjust_sample(list, &gpinfo.t1, &gpinfo.t2, 
+			  (const double **) *pZ);
     if (gpinfo.t2 == gpinfo.t1) {
 	fclose(fp);
 	return GRAPH_NO_DATA;
@@ -1517,7 +1517,7 @@ int gnuplot_3d (int *list, const char *literal,
 	return E_FOPEN;
     }
 
-    adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
+    varlist_adjust_sample(list, &t1, &t2, (const double **) *pZ);
 
     /* if resulting sample range is empty, complain */
     if (t2 == t1) {

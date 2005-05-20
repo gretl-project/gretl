@@ -29,6 +29,7 @@ static int bkbp_k = 8;                  /* for Baxter-King filter */
 static int bkbp_periods[2] = { 8, 32 }; /* for Baxter-King filter */
 static int horizon = 0;                 /* for VAR impulse responses */ 
 static double nls_toler;                /* NLS convergence criterion */
+static int gretl_echo = 1;              /* echoing commands or not */
 
 enum {
     AUTO_LAG_STOCK_WATSON,
@@ -144,6 +145,16 @@ int get_force_hc (void)
     return get_or_set_force_hc(-1);
 }
 
+void set_gretl_echo (int e)
+{
+    gretl_echo = e;
+}
+
+int gretl_echo_on (void)
+{
+    return gretl_echo;
+}
+
 int get_hac_lag (int m)
 {
     /* Variants of Newey-West */
@@ -234,7 +245,7 @@ void set_garch_robust_vcv (const char *s)
     free(scpy);
 }
 
-int parse_set_line (const char *line, int *echo_off, PRN *prn)
+int execute_set_line (const char *line, PRN *prn)
 {
     char setobj[16], setarg[16], setarg2[16];
     int nw, err = E_PARSE;
@@ -245,7 +256,7 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
     
     if (nw == 1) {
 	if (!strcmp(setobj, "echo")) {
-	    *echo_off = 0;
+	    gretl_echo = 1;
 	    err = 0;
 	}
     } else if (nw == 2) {
@@ -253,15 +264,13 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 
 	/* set echo on/off */
 	if (!strcmp(setobj, "echo")) {
-	    if (echo_off != NULL) {
-		if (!strcmp(setarg, "off")) {
-		    *echo_off = 1;
-		    err = 0;
-		} else if (!strcmp(setarg, "on")) {
-		    *echo_off = 0;
-		    err = 0;
-		}
-	    } 
+	    if (!strcmp(setarg, "off")) {
+		gretl_echo = 0;
+		err = 0;
+	    } else if (!strcmp(setarg, "on")) {
+		gretl_echo = 1;
+		err = 0;
+	    }
 	} else if (!strcmp(setobj, "hac_lag")) {
 	    /* set max lag for HAC estimation */
 	    if (!strcmp(setarg, "nw1")) {

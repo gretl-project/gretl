@@ -610,8 +610,9 @@ static int ar_init_by_ols (const int *list, double *coeff,
     return err;
 }
 
-static int adjust_sample (DATAINFO *pdinfo, const double **Z, const int *list,
-			  struct arma_info *ainfo)
+static int 
+adjust_sample (DATAINFO *pdinfo, const double **Z, const int *list,
+	       struct arma_info *ainfo)
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int an, i, v, t, t1min = 0;

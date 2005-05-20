@@ -24,6 +24,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_matrix.h"
+#include "missing_private.h"
 
 #undef WDEBUG
 
@@ -504,9 +505,13 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     }
 
     /* check that we got the same sample as the original */
-    if (!rep.errcode && rep.nobs < orig->nobs) {
-	rep.errcode = E_MISS;
-    }
+    if (!rep.errcode) {
+	if (rep.nobs < orig->nobs) {
+	    rep.errcode = E_MISS;
+	} else if (rep.nobs > orig->nobs) {
+	    rep.errcode = E_DATA;
+	}
+    } 
 
     /* if the model count went up for an aux regression,
        bring it back down */
@@ -796,9 +801,12 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	return err;
     }
 
-    /* temporarily impose the sample that was in force when the
-       original model was estimated */
+    /* temporarily impose the sample starting and ending points that
+       were in force when the original model was estimated */
     exchange_smpl(orig, pdinfo);
+
+    /* set the mask for missing obs within the sample range, based
+       on the original model */
     set_reference_missmask(orig);
 
     if (orig->ci == AR) { 
@@ -858,6 +866,8 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 
     /* put back into pdinfo what was there on input */
     exchange_smpl(orig, pdinfo);
+
+    /* reset the missing mask */
     set_reference_missmask(NULL);
 
     free(tmplist);
@@ -876,7 +886,7 @@ static int ljung_box (int varno, int order, const double **Z,
     list[0] = 1;
     list[1] = varno;
 
-    adjust_t1t2(NULL, list, &t1, &t2, Z, NULL);
+    varlist_adjust_sample(list, &t1, &t2, Z);
     nobs = t2 - t1 + 1;
 
     x = malloc(n * sizeof *x);

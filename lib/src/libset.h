@@ -29,6 +29,7 @@ enum vcv_codes {
     VCV_BW
 };
 
+void set_use_qr (int set);
 int get_use_qr (void);
 
 void set_xsect_hccme (const char *s);
@@ -65,6 +66,11 @@ int gretl_in_batch_mode (void);
 
 void gretl_set_gui_mode (int g);
 int gretl_in_gui_mode (void);
+
+void set_gretl_echo (int e);
+int gretl_echo_on (void);
+
+int execute_set_line (const char *line, PRN *prn);
 
 #endif /* LIBSET_H */
 

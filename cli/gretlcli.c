@@ -70,7 +70,6 @@ FILE *dat, *fb;
 int i, j, dot, opt, err, errfatal, batch;
 int runit, loopstack, looprun;
 int data_status, runfile_open;
-int echo_off;               /* suppress command echoing */
 int plot_count;             /* graphs via gnuplot */
 int order;                  /* VAR lag order */
 int lines[1];               /* for gnuplot command */
@@ -192,9 +191,9 @@ void file_get_line (void)
     }
 
     if (!strncmp(line, "noecho", 6)) {
-	echo_off = 1;
+	set_gretl_echo(0);
     }
-    if (!echo_off && cmd.ci == RUN && batch && *line == '(') {
+    if (gretl_echo_on() && cmd.ci == RUN && batch && *line == '(') {
 	printf("%s", line);
 	*linebak = 0;
     }
@@ -214,9 +213,9 @@ void fn_get_line (void)
     strncat(linebak, line, MAXLINE - 1);
 
     if (!strncmp(line, "noecho", 6)) {
-	echo_off = 1;
+	set_gretl_echo(0);
     }
-    if (!echo_off && cmd.ci == RUN && batch && *line == '(') {
+    if (gretl_echo_on() && cmd.ci == RUN && batch && *line == '(') {
 	printf("%s", line);
 	*linebak = 0;
     }
@@ -588,8 +587,7 @@ int main (int argc, char *argv[])
 	}
 
 	if (looprun) { 
-	    if (loop_exec(loop, line, &Z, &datainfo,
-			  models, &echo_off, prn)) {
+	    if (loop_exec(loop, line, &Z, &datainfo, models, prn)) {
 		return 1;
 	    }
 	    gretl_loop_destroy(loop);
@@ -729,7 +727,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     }
 
     /* if in batch mode, echo comments from input */
-    if (batch && cmd.ci == CMD_COMMENT && !echo_off) {
+    if (batch && cmd.ci == CMD_COMMENT && gretl_echo_on()) {
 	printf_strip(linebak, loopstack);
     }
 
@@ -754,7 +752,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if (!ok_in_loop(cmd.ci, loop)) {
 	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
 	} else {
-	    if (!echo_off) {
+	    if (gretl_echo_on()) {
 		echo_flags = CMD_ECHO_TO_STDOUT;
 		if (loopstack) {
 		    echo_flags |= CMD_STACKING;
@@ -776,7 +774,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	return;
     }
 
-    if (!echo_off) {
+    if (gretl_echo_on()) {
 	echo_flags = CMD_ECHO_TO_STDOUT;
 	if (batch || runit) {
 	    echo_flags |= CMD_BATCH_MODE;
@@ -1502,7 +1500,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case SET:
-	err = parse_set_line(line, &echo_off, prn);
+	err = execute_set_line(line, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}

@@ -23,6 +23,7 @@
 #include "qr_estimate.h"
 #include "libset.h"
 #include "compat.h"
+#include "missing_private.h"
 
 /* There's a balancing act with 'TINY' here.  It's the minimum value
    for test that libgretl will accept before rejecting a
@@ -140,7 +141,9 @@ static int ar_info_init (MODEL *pmod, int nterms)
     int i;
 
     pmod->arinfo = malloc(sizeof *pmod->arinfo);
-    if (pmod->arinfo == NULL) return 1;
+    if (pmod->arinfo == NULL) {
+	return 1;
+    }
 
     pmod->arinfo->arlist = malloc(nterms * sizeof *pmod->arinfo->arlist);
     if (pmod->arinfo->arlist == NULL) {
@@ -178,6 +181,8 @@ static int ar_info_init (MODEL *pmod, int nterms)
 
 static int get_model_df (MODEL *pmod)
 {
+    int err = 0;
+
     pmod->ncoeff = pmod->list[0] - 1;
 
     pmod->dfd = pmod->nobs - pmod->ncoeff;
@@ -185,12 +190,12 @@ static int get_model_df (MODEL *pmod)
 	pmod->errcode = E_DF;
         sprintf(gretl_errmsg, _("No. of obs (%d) is less than no. "
 		"of parameters (%d)"), pmod->nobs, pmod->ncoeff);
-	return 1;
+	err = 1;
+    } else {
+	pmod->dfn = pmod->ncoeff - pmod->ifc;
     }
 
-    pmod->dfn = pmod->ncoeff - pmod->ifc;
-
-    return 0;
+    return err;
 }
 
 #define LDDEBUG 0
@@ -253,7 +258,7 @@ ldepvar_std_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     printf("rho = %g\n", rho);
 #endif
 
-    list = malloc((vnew + 1 + pmod->ifc) * sizeof *list);
+    list = gretl_list_new(vnew + pmod->ifc);
     if (list == NULL) {
 	pmod->errcode = E_ALLOC;
 	return 1;
@@ -265,8 +270,6 @@ ldepvar_std_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 	pmod->errcode = E_ALLOC;
 	return 1;
     }
-
-    list[0] = vnew + pmod->ifc;
 
     vi = origv;
 
@@ -503,7 +506,16 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
     if (reference_missmask_present()) {
 	int err = apply_reference_missmask(pmod);
 
-	if (!err) return 0;
+	/* If there was a reference mask present, it was put there
+	   as part of a hypothesis test on some original model, and
+	   it has to be respected in estimation of this model */
+
+	if (err) {
+	    pmod->errcode = E_ALLOC;
+	    return 1;
+	} else {
+	    return 0;
+	}
     }
 
     /* can't do HAC VCV with missing obs in middle */
@@ -519,11 +531,11 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
     if (reject_missing) {
 	/* reject missing obs within adjusted sample */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
-			    Z, misst);
+			    pdinfo->n, Z, misst);
     } else {
 	/* we'll try to compensate for missing obs */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
-			    Z, NULL);
+			    pdinfo->n, Z, NULL);
 	if (pmod->ci == POOLED && pmod->missmask != NULL) {
 	    if (!model_mask_leaves_balanced_panel(pmod, pdinfo)) {
 		gretl_model_set_int(pmod, "unbalanced", 1);
@@ -769,18 +781,22 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	mdl.nwt = 0;
     }
 
-    /* sanity checks */
+    /* sanity check */
     if (mdl.t1 < 0 || mdl.t2 > pdinfo->n - 1) {
         mdl.errcode = E_NODATA;
         goto lsq_abort;
     }
 
-    /* adjust sample range and check for missing obs */
+    /* adjust sample range and check for missing obs: this
+       may set the model errcode */
     missv = lsq_check_for_missing_obs(&mdl, opt, pdinfo,
 				      (const double **) *pZ,
 				      &misst);
+    if (mdl.errcode) {
+        goto lsq_abort;
+    }
 
-    /* react to presence of missing obs */
+    /* react to presence of unhandled missing obs */
     if (missv) {
 	if (dated_daily_data(pdinfo)) {
 	    if (repack_missing_daily_obs(&mdl, *pZ, pdinfo)) {
@@ -1042,7 +1058,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
     xpy[0] = xpy[l0] = 0.0;
 
     for (t=t1; t<=t2; t++) {
-	if (missing_masked(mask, t, t1)) {
+	if (missing_masked(mask, t)) {
 	    continue;
 	}
 	x = Z[yno][t]; 
@@ -1104,7 +1120,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		lj = list[j];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
-		    if (!missing_masked(mask, t, t1)) {
+		    if (!missing_masked(mask, t)) {
 			z1 = Z[nwt][t];
 			x += z1 * z1 * Z[li][t] * Z[lj][t];
 		    }
@@ -1116,7 +1132,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 	    }
 	    x = 0.0;
 	    for (t=t1; t<=t2; t++) {
-		if (!missing_masked(mask, t, t1)) {
+		if (!missing_masked(mask, t)) {
 		    z1 = Z[nwt][t];
 		    x += z1 * z1 * Z[yno][t] * Z[li][t];
 		}
@@ -1131,7 +1147,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		lj = list[j];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
-		    if (!missing_masked(mask, t, t1)) {
+		    if (!missing_masked(mask, t)) {
 			x += Z[li][t] * Z[lj][t];
 		    }
 		}
@@ -1142,7 +1158,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 	    }
 	    x = 0.0;
 	    for (t=t1; t<=t2; t++) {
-		if (!missing_masked(mask, t, t1)) {
+		if (!missing_masked(mask, t)) {
 		    x += Z[yno][t] * Z[li][t];
 		}
 	    }
@@ -1875,7 +1891,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
     *err = 0;
 
     missv = adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
-			(const double **) *pZ, &misst);
+			pdinfo->n, (const double **) *pZ, &misst);
     if (missv) {
 	sprintf(gretl_errmsg, _("Missing value encountered for "
 				"variable %d, obs %d"), missv, misst);
@@ -2278,8 +2294,8 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     *gretl_errmsg = '\0';
 
     /* adjust sample range for missing observations */
-    adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
-		(const double **) *pZ, NULL); 
+    varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
+			  (const double **) *pZ); 
 
     /* 
        reglist: dependent var plus list of regressors

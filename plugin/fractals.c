@@ -182,12 +182,12 @@ static int h_adjust_t1t2 (int v, const double **Z, int *t1, int *t2)
     int miss = 0;
 
     for (t=t1min; t<t2max; t++) {
-	if (na(Z[v][t])) t1min += 1;
+	if (na(Z[v][t])) t1min++;
 	else break;
     }
 
     for (t=t2max; t>t1min; t--) {
-	if (na(Z[v][t])) t2max -= 1;
+	if (na(Z[v][t])) t2max--;
 	else break;
     }
 

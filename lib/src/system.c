@@ -986,10 +986,10 @@ const char *gretl_system_get_name (const gretl_equation_system *sys)
 int system_adjust_t1t2 (gretl_equation_system *sys,
 			int *t1, int *t2, const double **Z)
 {
-    int i, misst, err = 0;
+    int i, err = 0;
 
     for (i=0; i<sys->n_equations && !err; i++) {
-	err = adjust_t1t2(NULL, sys->lists[i], t1, t2, Z, &misst);
+	err = check_for_missing_obs(sys->lists[i], t1, t2, Z, NULL);
     }
 
     if (!err) {

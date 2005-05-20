@@ -17,25 +17,25 @@
  *
  */
 
-#ifndef MISSING_H
-#define MISSING_H
+#ifndef MISSING_PRIVATE_H
+#define MISSING_PRIVATE_H
 
-#include <float.h>
+#define missing_masked(m,t) (m != NULL && m[t] == '1')
+#define has_missing_obs(m)  ((m)->missmask != NULL)
 
-#define NADBL DBL_MAX
-#define na(x) (x == NADBL)
+void set_reference_missmask (const MODEL *pmod);
 
-#define model_missing(m,t) ((m)->missmask != NULL && (m)->missmask[t] == '1')
+int apply_reference_missmask (MODEL *pmod);
 
-int model_missval_count (const MODEL *pmod);
+int reference_missmask_present (void);
 
-int varlist_adjust_sample (const int *list, int *t1, int *t2, 
-			   const double **Z);
+int undo_daily_repack (MODEL *pmod, double **Z, 
+		       const DATAINFO *pdinfo);
 
-int check_for_missing_obs (const int *list, int *t1, int *t2,
-			   const double **Z, int *misst);
+int repack_missing_daily_obs (MODEL *pmod, double **Z, 
+			      const DATAINFO *pdinfo);
 
-int set_miss (const int *list, const char *param, double **Z,
-	      DATAINFO *pdinfo, PRN *prn);
+int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
+		 int n, const double **Z, int *misst);
 
-#endif /* MISSING_H */
+#endif /* MISSING_PRIVATE_H */

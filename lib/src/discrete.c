@@ -234,7 +234,7 @@ static double *hessian (MODEL *pmod, const double **Z, int opt)
 
 MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 {
-    int i, t, v, misst, depvar = list[1];
+    int i, t, v, depvar = list[1];
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
     int oldv = pdinfo->v;
@@ -290,8 +290,8 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 
     v = oldv; /* the first newly created variable */
 
-    adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
-		(const double **) *pZ, &misst);
+    varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
+			  (const double **) *pZ);
 
     dmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
     if (dmod.ifc == 0) {

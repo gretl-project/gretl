@@ -92,22 +92,21 @@ do_range_mean_plot (int n, const double **Z, double *yhat, const char *vname)
     return 0;
 }
 
-static int rm_adjust_t1t2 (int varnum, const double **Z, int *t1, int *t2)
-     /* drop first/last observations from sample if missing obs 
-        encountered */
+/* drop first/last observations from sample if missing obs 
+   encountered */
+
+static int 
+rm_adjust_sample (int v, const double **Z, int *t1, int *t2)
 {
     int t, t1min = *t1, t2max = *t2;
-    double xx;
 
     for (t=t1min; t<t2max; t++) {
-	xx = Z[varnum][t];
-	if (na(xx)) t1min += 1;
+	if (na(Z[v][t])) t1min++;
 	else break;
     }
 
     for (t=t2max; t>t1min; t--) {
-	xx = Z[varnum][t];
-	if (na(xx)) t2max -= 1;
+	if (na(Z[v][t])) t2max--;
 	else break;
     }
 
@@ -130,7 +129,7 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
 
     t1 = pdinfo->t1;
     t2 = pdinfo->t2;
-    rm_adjust_t1t2(vnum, Z, &t1, &t2);
+    rm_adjust_sample(vnum, Z, &t1, &t2);
 
     nsamp = t2 - t1 + 1;
 

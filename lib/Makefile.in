@@ -62,6 +62,55 @@ cephessrc = $(topsrc)/cephes
 minpacksrc = $(topsrc)/minpack
 VPATH = $(libsrc):$(cephessrc):$(minpacksrc)
 
+PUBLIC_HDRS = \
+	bhhh_max.h \
+	calendar.h \
+	compare.h \
+	compat.h \
+	dataio.h \
+	dbread.h \
+	describe.h \
+	discrete.h \
+	estimate.h \
+	forecast.h \
+	generate.h \
+	genstack.h \
+	graphing.h \
+	gretl_commands.h \
+	gretl_errors.h \
+	gretl_func.h \
+	gretl_intl.h \
+	gretl_list.h \
+	gretl_matrix.h \
+	gretl_model.h \
+	gretl_paths.h \
+	gretl_prn.h \
+	gretl_restrict.h \
+	gretl_string_table.h \
+	gretl_utils.h \
+	gretl_win32.h \
+	interact.h \
+	libgretl.h \
+	libset.h \
+	missing.h \
+	modelprint.h \
+	modelspec.h \
+	monte_carlo.h \
+	nls.h \
+	nonparam.h \
+	options.h \
+	plugins.h \
+	printout.h \
+	pvalues.h \
+	qr_estimate.h \
+	random.h \
+	strutils.h \
+	subsample.h \
+	system.h \
+	texprint.h \
+	transforms.h \
+	var.h
+
 SRCS = bhhh_max.c \
 	calendar.c \
 	compare.c \
@@ -149,8 +198,8 @@ install-strip: $(LIBGRETL) install-data
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $< $(libdir)/$<
 
 install-data: installdirs $(INSTALL_CFG)
-	$(INSTALL_DATA) $(libsrc)/*.h $(includedir)
-	$(INSTALL_DATA) $(cephessrc)/libprob.h $(includedir)
+	for f in $(PUBLIC_HDRS) ; do \
+	$(INSTALL_DATA) $(libsrc)/$$f $(includedir) ; done
 
 install-cfg-old: ../gretl-config
 	$(INSTALL_PROGRAM) ../gretl-config $(bindir)

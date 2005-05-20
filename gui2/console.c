@@ -23,6 +23,8 @@
 #include "console.h"
 #include "menustate.h"
 
+#include "libset.h"
+
 static GtkWidget *console_view;
 static PRN *console_prn;
 static gchar *cbuf;
@@ -34,7 +36,6 @@ static int hl, hlmax, hlines;
 
 static LOOPSET *loop;
 static int loopstack, looprun;
-static int echo_off;
 
 static int gretl_console_init (void)
 {
@@ -62,7 +63,8 @@ static int gretl_console_init (void)
 
     loop = NULL;
     loopstack = looprun = 0;
-    echo_off = 0;
+
+    set_gretl_echo(1);
 
     return 0;
 }
@@ -280,8 +282,7 @@ static void console_exec (void)
 		  CONSOLE_EXEC, NULL);
 
     if (looprun) { 
-	loop_exec(loop, execline, &Z, &datainfo, models,
-		  &echo_off, console_prn);
+	loop_exec(loop, execline, &Z, &datainfo, models, console_prn);
 	gretl_loop_destroy(loop);
 	loop = NULL;
 	looprun = 0;

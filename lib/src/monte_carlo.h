@@ -36,6 +36,6 @@ void gretl_loop_destroy (LOOPSET *loop);
 
 int loop_exec (LOOPSET *loop, char *line,
 	       double ***pZ, DATAINFO **ppdinfo, 
-	       MODEL **models, int *echo_off, PRN *prn);
+	       MODEL **models, PRN *prn);
 
 #endif /* MONTE_CARLO_H */

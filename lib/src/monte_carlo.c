@@ -2338,8 +2338,7 @@ make_dollar_substitutions (char *str, const LOOPSET *loop,
 
 int loop_exec (LOOPSET *loop, char *line,
 	       double ***pZ, DATAINFO **ppdinfo, 
-	       MODEL **models, int *echo_off, 
-	       PRN *prn)
+	       MODEL **models, PRN *prn)
 {
     CMD cmd;
     MODEL *lastmod = models[0];
@@ -2380,7 +2379,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	fprintf(stderr, "top of loop: iter = %d\n", loop->iter);
 #endif
 
-	if (!(*echo_off) && indexed_loop(loop)) {
+	if (gretl_echo_on() && indexed_loop(loop)) {
 	    print_loop_progress(loop, *ppdinfo, prn);
 	}
 
@@ -2408,7 +2407,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 	    }
 
-	    if (!(*echo_off) && indexed_loop(loop)) {
+	    if (gretl_echo_on() && indexed_loop(loop)) {
 		if (cmd.ci == ENDLOOP) {
 		    pputc(prn, '\n');
 		} else {
@@ -2447,7 +2446,7 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    case LOOP:
 		err = loop_exec(loop->children[childnum++], NULL,
-				pZ, ppdinfo, models, echo_off, prn);
+				pZ, ppdinfo, models, prn);
 		break;
 
 	    case BREAK:
@@ -2638,7 +2637,7 @@ int loop_exec (LOOPSET *loop, char *line,
 
 		if (err) {
 		    errmsg(err, prn);
-		} else if (1 || !(*echo_off)) {
+		} else if (1 || gretl_echo_on()) {
 		    print_smpl(*ppdinfo, get_full_length_n(), prn);
 		}
 		break;

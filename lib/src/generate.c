@@ -2900,7 +2900,7 @@ static double hp_lambda (const DATAINFO *pdinfo)
    encountered -- also check for missing vals within the
    remaining sample */
 
-int series_adjust_t1t2 (const double *x, int *t1, int *t2)
+static int array_adjust_t1t2 (const double *x, int *t1, int *t2)
 {
     int t, t1min = *t1, t2max = *t2;
 
@@ -2950,7 +2950,7 @@ static int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
 	hp[t] = NADBL;
     }
 
-    err = series_adjust_t1t2(x, &t1, &t2);
+    err = array_adjust_t1t2(x, &t1, &t2);
     if (err) {
 	err = E_DATA;
 	goto bailout;
@@ -3122,7 +3122,7 @@ static int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
 	return 1;
     }
 
-    err = series_adjust_t1t2(y, &t1, &t2);
+    err = array_adjust_t1t2(y, &t1, &t2);
     if (err) {
 	return err;
     } 
@@ -3189,7 +3189,7 @@ static int get_fracdiff (const double *y, double *diffvec, double d,
 
     DPRINTF(("Doing get_fracdiff, with d = %g\n", d));
 
-    err = series_adjust_t1t2(y, &t1, &t2);
+    err = array_adjust_t1t2(y, &t1, &t2);
     if (err) {
 	return E_DATA;
     } 
@@ -3598,7 +3598,7 @@ static double *get_tmp_series (double *mvec, GENERATE *genr,
 	int i, n, rt1 = t1, rt2 = t2;
 	double *tmp = NULL;
 
-	series_adjust_t1t2(mvec, &rt1, &rt2);
+	array_adjust_t1t2(mvec, &rt1, &rt2);
 
 	n = rt2 - rt1 + 1;
 	if (n <= 1) {
