@@ -760,6 +760,16 @@ char *sprint_html_to_l2 (char *targ, const char *s)
     return targ;
 }
 
+char *sprint_l2_to_ascii (char *targ, const char *s, size_t len)
+{
+    char *asc = real_iso_to_ascii(s, 2);
+
+    strcpy(targ, asc);
+    free(asc);
+
+    return targ;
+}
+
 int print_as_html (const char *s, FILE *fp)
 {
     unsigned char c;

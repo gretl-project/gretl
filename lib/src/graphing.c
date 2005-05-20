@@ -531,8 +531,10 @@ int gnuplot_init (int plottype, FILE **fpp)
 static int recode_gnuplot_file (const char *fname)
 {
     FILE *fp, *fq;
+    const char *font;
     char oldline[512], newline[1024];
     char rname[FILENAME_MAX];
+    int ttf = 0;
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
@@ -548,6 +550,11 @@ static int recode_gnuplot_file (const char *fname)
 	return 1;
     }
 
+    font = gretl_png_font();
+    if (font != NULL && *font != '\0') {
+	ttf = 1;
+    }
+
     while (fgets(oldline, sizeof oldline, fp)) {
 	if (isdigit((unsigned char) oldline[0])) {
 	    fputs(oldline, fq);
@@ -555,13 +562,16 @@ static int recode_gnuplot_file (const char *fname)
 	    fprintf(stderr, "recode: passed line unaltered:\n"
 		    " '%s'\n", oldline);
 #endif
-	} else {
+	} else if (ttf) {
 	    sprint_l2_to_html(newline, oldline, sizeof newline);
 	    fputs(newline, fq);
 #if GP_DEBUG
 	    fprintf(stderr, "recode: modified line:\n"
 		    " '%s'\n", newline);
 #endif
+	} else if (0) {
+	    sprint_l2_to_ascii(newline, oldline, sizeof newline);
+	    fputs(newline, fq);
 	}
     }
 
