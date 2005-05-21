@@ -418,6 +418,8 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
 
 #define be_quiet(o) ((o & OPT_A) || (o & OPT_Q))
 
+#undef SMPL_DEBUG
+
 static MODEL replicate_estimator (MODEL *orig, int **plist,
 				  double ***pZ, DATAINFO *pdinfo,
 				  gretlopt lsqopt, PRN *prn)
@@ -503,6 +505,14 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	rep = lsq(list, pZ, pdinfo, repci, lsqopt, rho);
 	break;
     }
+
+#if SMPL_DEBUG
+    fprintf(stderr, "replicate_estimator:\n"
+	    " orig: t1=%d, t2=%d, nobs = %d\n"
+	    " rep:  t1=%d, t2=%d, nobs = %d\n",
+	    orig->t1, orig->t2, orig->nobs,
+	    rep.t1, rep.t2, rep.nobs);
+#endif
 
     /* check that we got the same sample as the original */
     if (!rep.errcode) {
@@ -599,6 +609,8 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		       int aux_code, gretlopt opt, PRN *prn) 
 {
+    int smpl_t1 = pdinfo->t1;
+    int smpl_t2 = pdinfo->t2;
     int *tmplist = NULL;
     const int orig_nvar = pdinfo->v; 
     int err = 0;
@@ -619,7 +631,8 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     /* re-impose the sample that was in force when the original model
        was estimated */
-    exchange_smpl(pmod, pdinfo);
+    pdinfo->t1 = pmod->smpl.t1;
+    pdinfo->t1 = pmod->smpl.t2;
 
     /* add squares or logs */
     tmplist = augment_regression_list(pmod->list, aux_code, 
@@ -646,7 +659,8 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     dataset_drop_vars(pdinfo->v - orig_nvar, pZ, pdinfo);
 
     /* put back into pdinfo what was there on input */
-    exchange_smpl(pmod, pdinfo);
+    pdinfo->t1 = smpl_t1;
+    pdinfo->t2 = smpl_t2;
 
     free(tmplist);
 
@@ -673,6 +687,8 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	      double ***pZ, DATAINFO *pdinfo, 
 	      gretlopt opt, PRN *prn)
 {
+    int smpl_t1 = pdinfo->t1;
+    int smpl_t2 = pdinfo->t2;
     int *tmplist = NULL;
     const int orig_nvar = pdinfo->v; 
     int save_test = 0;
@@ -698,9 +714,10 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	return err;
     }
 
-    /* re-impose the sample that was in force when the original model
-       was estimated */
-    exchange_smpl(orig, pdinfo);
+    /* impose as sample range the estimation range of the 
+       original model */
+    pdinfo->t1 = orig->t1;
+    pdinfo->t2 = orig->t2;
 
     if (opt & OPT_S) {
 	save_test = 1;
@@ -744,7 +761,8 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
     dataset_drop_vars(pdinfo->v - orig_nvar, pZ, pdinfo);
 
     /* put back into pdinfo what was there on input */
-    exchange_smpl(orig, pdinfo);
+    pdinfo->t1 = smpl_t1;
+    pdinfo->t2 = smpl_t2;
 
     free(tmplist);
 
@@ -771,8 +789,10 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn)
 {
+    int smpl_t1 = pdinfo->t1;
+    int smpl_t2 = pdinfo->t2;
     int *tmplist = NULL;
-    int maxlag = 0, t1 = pdinfo->t1;
+    int maxlag = 0;
     int save_test = 0;
     int err = 0;
 
@@ -801,9 +821,10 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	return err;
     }
 
-    /* temporarily impose the sample starting and ending points that
-       were in force when the original model was estimated */
-    exchange_smpl(orig, pdinfo);
+    /* impose as sample range the estimation range of the 
+       original model */
+    pdinfo->t1 = orig->t1;
+    pdinfo->t2 = orig->t2;
 
     /* set the mask for missing obs within the sample range, based
        on the original model */
@@ -862,10 +883,9 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	}
     }
 
-    pdinfo->t1 = t1;
-
     /* put back into pdinfo what was there on input */
-    exchange_smpl(orig, pdinfo);
+    pdinfo->t1 = smpl_t1;
+    pdinfo->t2 = smpl_t2;
 
     /* reset the missing mask */
     set_reference_missmask(NULL);
@@ -1159,6 +1179,8 @@ int autocorr_test (MODEL *pmod, int order,
 		   double ***pZ, DATAINFO *pdinfo, 
 		   gretlopt opt, PRN *prn)
 {
+    int smpl_t1 = pdinfo->t1;
+    int smpl_t2 = pdinfo->t2;
     int *newlist = NULL;
     MODEL aux;
     int i, t, n = pdinfo->n, v = pdinfo->v; 
@@ -1190,7 +1212,10 @@ int autocorr_test (MODEL *pmod, int order,
 	return err;
     }
 
-    exchange_smpl(pmod, pdinfo);
+    /* impose original sample range */
+    pdinfo->t1 = pmod->smpl.t1;
+    pdinfo->t2 = pmod->smpl.t2;
+
     gretl_model_init(&aux);
 
     if (order <= 0) order = pdinfo->pd;
@@ -1295,7 +1320,9 @@ int autocorr_test (MODEL *pmod, int order,
 	autocorr_standard_errors(pmod, pZ, pdinfo, prn);
     }
 
-    exchange_smpl(pmod, pdinfo);
+    /* reset sample as it was */
+    pdinfo->t1 = smpl_t1;
+    pdinfo->t2 = smpl_t2;
 
     return err;
 }
@@ -1317,6 +1344,8 @@ int autocorr_test (MODEL *pmod, int order,
 int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
+    int smpl_t1 = pdinfo->t1;
+    int smpl_t2 = pdinfo->t2;
     int *chowlist = NULL;
     int newvars = pmod->list[0] - 1;
     int i, t, v = pdinfo->v;
@@ -1331,7 +1360,8 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 
     /* temporarily impose the sample that was in force when the
        original model was estimated */
-    exchange_smpl(pmod, pdinfo);
+    pdinfo->t1 = pmod->smpl.t1;
+    pdinfo->t2 = pmod->smpl.t2;
 
     gretl_model_init(&chow_mod);
 
@@ -1435,7 +1465,8 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     dataset_drop_vars(newvars, pZ, pdinfo);
     free(chowlist);
 
-    exchange_smpl(pmod, pdinfo);    
+    pdinfo->t1 = smpl_t1;
+    pdinfo->t2 = smpl_t2;
 
     return err;
 }
@@ -1489,8 +1520,9 @@ static double vprime_M_v (double *v, double *M, int n)
 int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		gretlopt opt, PRN *prn) 
 {
+    int smpl_t1 = pdinfo->t1;
+    int smpl_t2 = pdinfo->t2;
     int n_est, i, j, t;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int xno, yno = pmod->list[1];
     const int T = pmod->t2 - pmod->t1 + 1;
     const int K = pmod->ncoeff;
@@ -1638,8 +1670,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* restore sample */
-    pdinfo->t1 = t1;
-    pdinfo->t2 = t2;
+    pdinfo->t1 = smpl_t1;
+    pdinfo->t2 = smpl_t2;
     
     free(cresid);
     free(W);
@@ -2047,6 +2079,8 @@ int sum_test (const int *sumvars, MODEL *pmod,
 	      double ***pZ, DATAINFO *pdinfo, 
 	      PRN *prn)
 {
+    int smpl_t1 = pdinfo->t1;
+    int smpl_t2 = pdinfo->t2;
     int *tmplist = NULL;
     const int oldv = pdinfo->v;
     int testcoeff;
@@ -2086,7 +2120,8 @@ int sum_test (const int *sumvars, MODEL *pmod,
 
     /* temporarily impose the sample that was in force when the
        original model was estimated */
-    exchange_smpl(pmod, pdinfo);
+    pdinfo->t1 = pmod->smpl.t1;
+    pdinfo->t2 = pmod->smpl.t2;
 
     gretl_model_init(&summod);
 
@@ -2128,7 +2163,8 @@ int sum_test (const int *sumvars, MODEL *pmod,
     gretl_print_destroy(nullprn);
 
     /* put back into pdinfo what was there on input */
-    exchange_smpl(pmod, pdinfo);
+    pdinfo->t1 = smpl_t1;
+    pdinfo->t2 = smpl_t2;
 
     return err;
 }

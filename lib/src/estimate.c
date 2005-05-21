@@ -495,6 +495,8 @@ static void model_stats_init (MODEL *pmod)
     pmod->rsq = pmod->adjrsq = NADBL;
 }
 
+#undef SMPL_DEBUG
+
 static int 
 lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 			   DATAINFO *pdinfo, const double **Z, 
@@ -506,6 +508,10 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
     if (reference_missmask_present()) {
 	int err = apply_reference_missmask(pmod);
 
+#if SMPL_DEBUG
+	fprintf(stderr, "missmask found, applied with err = %d\n",
+		err);
+#endif
 	/* If there was a reference mask present, it was put there
 	   as part of a hypothesis test on some original model, and
 	   it has to be respected in estimation of this model */
@@ -546,11 +552,14 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 #if SMPL_DEBUG
     if (1) {
 	char t1s[OBSLEN], t2s[OBSLEN];
+	int misscount = model_missval_count(pmod);
 
 	ntodate(t1s, pmod->t1, pdinfo);
 	ntodate(t2s, pmod->t2, pdinfo);
 	fprintf(stderr, "*** after adjustment, t1=%d (%s), t2=%d (%s)\n", 
 		pmod->t1, t1s, pmod->t2, t2s);
+	fprintf(stderr, "Valid observations in range = %d\n", 
+		pmod->t2 - pmod->t1 + 1 - misscount);
     }
 #endif
 
