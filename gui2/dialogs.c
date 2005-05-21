@@ -2966,7 +2966,7 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 
 	for (i=0; ok_pd[i].pd != 0; i++) { 
 	    if (dwinfo->pd == ok_pd[i].pd) {
-		tslabel = ok_pd[i].label;
+		tslabel = _(ok_pd[i].label);
 		break;
 	    }
 	} 

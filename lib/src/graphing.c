@@ -564,8 +564,9 @@ static int recode_gnuplot_file (const char *fname)
 	    sprint_l2_to_html(newline, oldline, sizeof newline);
 	    fputs(newline, fq);
 #if RECODE_DBG
-	    fprintf(stderr, "recode (sprint_l2_to_html): modified line:\n"
-		    " '%s'\n", newline);
+	    fprintf(stderr, "recode (sprint_l2_to_html):\n"
+		    " original: '%s'\n modified: '%s'\n",
+		    oldline, newline);
 #endif
 	} else {
 	    fputs(oldline, fq);
@@ -1710,7 +1711,7 @@ int plot_freq (FREQDIST *freq, DistCode dist)
 	    }
 
 	    if (!na(freq->test)) {
-		fprintf(fp, "set label '%s:' at graph .03, graph .97%s\n",
+		fprintf(fp, "set label \"%s:\" at graph .03, graph .97%s\n",
 			I_("Test statistic for normality"),
 			label_front());
 		print_freq_test_label(label, I_("Chi-squared(2) = %.3f pvalue = %.5f"), 
@@ -1846,7 +1847,15 @@ int plot_fcast_errs (int n, const double *obs,
     xrange = xmax - xmin;
     xmin -= xrange * .025;
     xmax += xrange * .025;
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
     fprintf(fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
     fputs("set missing \"?\"\n", fp);
 
     if (!time_series) {
@@ -1856,7 +1865,7 @@ int plot_fcast_errs (int n, const double *obs,
     }
 
     fprintf(fp, "set key left top\n"
-	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
+	    "plot \\\n'-' using 1:2 title \"%s\" w lines , \\\n"
 	    "'-' using 1:2 title '%s' w lines , \\\n"
 	    "'-' using 1:2:3 title '%s' w errorbars\n", 
 	    varname, I_("fitted"), I_("95 percent confidence interval"));
