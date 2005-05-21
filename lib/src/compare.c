@@ -438,7 +438,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	if (orig->ci == HILU && gretl_model_get_int(orig, "no-corc")) {
 	    hlopt = OPT_B;
 	}
-	rho = estimate_rho(list, pZ, pdinfo, 1, orig->ci, 
+	rho = estimate_rho(list, pZ, pdinfo, orig->ci, 
 			   &rep.errcode, hlopt, prn);
     } else if (gretl_model_get_int(orig, "unit_weights")) {
 	/* panel model with per-unit weights */
@@ -596,7 +596,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
  * @aux_code: %AUX_SQ for squares or %AUX_LOG for logs
- * @opt: if contains OPT_S, save test results to model.
+ * @opt: if contains %OPT_S, save test results to model.
  * @prn: gretl printing struct.
  *
  * Run an auxiliary regression to test @pmod for non-linearity,
@@ -631,8 +631,7 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     /* re-impose the sample that was in force when the original model
        was estimated */
-    pdinfo->t1 = pmod->smpl.t1;
-    pdinfo->t1 = pmod->smpl.t2;
+    impose_model_smpl(pmod, pdinfo);
 
     /* add squares or logs */
     tmplist = augment_regression_list(pmod->list, aux_code, 
@@ -674,7 +673,8 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * @new: pointer to receive new model, with vars added.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: can contain option flags (--quiet, --vcv).
+ * @opt: can contain %OPT_Q (quiet) to suppress printing
+ * of the new model, %OPT_O to print covariance matrx.
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after adding the specified
@@ -714,19 +714,22 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	return err;
     }
 
-    /* impose as sample range the estimation range of the 
-       original model */
-    pdinfo->t1 = orig->t1;
-    pdinfo->t2 = orig->t2;
+    /* impose as sample range the sample range in force
+       when the original model was estimated */
+    impose_model_smpl(orig, pdinfo);
 
     if (opt & OPT_S) {
+	/* don't pass OPT_S to replicate_estimator() */
 	save_test = 1;
 	opt &= ~OPT_S;
     }
 
-    /* run augmented regression, matching the original
-       estimation method */
-    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, opt, prn);
+    /* Run augmented regression, matching the original estimation
+       method; use OPT_Z to suppress the elimination of perfectly
+       collinear variables.
+    */
+    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
+			       (opt | OPT_Z), prn);
 
     if (new->errcode) {
 	pprintf(prn, "%s\n", gretl_errmsg);
@@ -776,7 +779,8 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
  * @new: pointer to receive new model, with vars omitted.
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
- * @opt: can contain option flags (--quiet, --vcv).
+ * @opt: can contain %OPT_Q (quiet) to suppress printing
+ * of the new model, %OPT_O to print covariance matrx.
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after removing a list of 
@@ -843,6 +847,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     }
 
     if (opt & OPT_S) {
+	/* don't pass OPT_S to replicate estimator */
 	save_test = 1;
 	opt &= ~OPT_S;
     }
@@ -945,7 +950,7 @@ static int ljung_box (int varno, int order, const double **Z,
  * @pmod: pointer to model to be tested.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if contains OPT_S, save test results to model.
+ * @opt: if contains %OPT_S, save test results to model.
  * @prn: gretl printing struct.
  *
  * Carries out Ramsey's RESET test for model specification.
@@ -1165,7 +1170,7 @@ static int autocorr_standard_errors (MODEL *pmod, double ***pZ,
  * @order: lag order for test.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if flags include OPT_S, save test results to model.
+ * @opt: if flags include %OPT_S, save test results to model.
  * @prn: gretl printing struct.
  *
  * Tests the given model for autocorrelation of order equal to
@@ -1213,8 +1218,7 @@ int autocorr_test (MODEL *pmod, int order,
     }
 
     /* impose original sample range */
-    pdinfo->t1 = pmod->smpl.t1;
-    pdinfo->t2 = pmod->smpl.t2;
+    impose_model_smpl(pmod, pdinfo);
 
     gretl_model_init(&aux);
 
@@ -1304,6 +1308,7 @@ int autocorr_test (MODEL *pmod, int order,
 		model_test_set_teststat(test, GRETL_STAT_LMF);
 		model_test_set_dfn(test, order);
 		model_test_set_dfd(test, aux.nobs - pmod->ncoeff - order);
+		model_test_set_order(test, order);
 		model_test_set_value(test, LMF);
 		model_test_set_pvalue(test, pval);
 	    }	    
@@ -1333,7 +1338,7 @@ int autocorr_test (MODEL *pmod, int order,
  * @pmod: pointer to model to be tested.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if flags include OPT_S, save test results to model.
+ * @opt: if flags include %OPT_S, save test results to model.
  * @prn: gretl printing struct.
  *
  * Tests the given model for structural stability (Chow test).
@@ -1360,8 +1365,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 
     /* temporarily impose the sample that was in force when the
        original model was estimated */
-    pdinfo->t1 = pmod->smpl.t1;
-    pdinfo->t2 = pmod->smpl.t2;
+    impose_model_smpl(pmod, pdinfo);
 
     gretl_model_init(&chow_mod);
 
@@ -1509,7 +1513,7 @@ static double vprime_M_v (double *v, double *M, int n)
  * @pmod: pointer to model to be tested.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if flags include OPT_S, save results of test to model.
+ * @opt: if flags include %OPT_S, save results of test to model.
  * @prn: gretl printing struct.
  *
  * Tests the given model for parameter stability (CUSUM test).
@@ -1829,7 +1833,7 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
  * @pmod: pointer to model to be tested.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if OPT_S, add calculated series to data set.
+ * @opt: if %OPT_S, add calculated series to data set.
  * @prn: gretl printing struct.
  *
  * Tests the data used in the given model for points with
@@ -2120,8 +2124,7 @@ int sum_test (const int *sumvars, MODEL *pmod,
 
     /* temporarily impose the sample that was in force when the
        original model was estimated */
-    pdinfo->t1 = pmod->smpl.t1;
-    pdinfo->t2 = pmod->smpl.t2;
+    impose_model_smpl(pmod, pdinfo);
 
     gretl_model_init(&summod);
 

@@ -22,15 +22,15 @@
 #include <stdio.h>
 #include "gretl_matrix.h"
 
-enum series_save_opts {
+typedef enum {
     SAVE_LEVERAGE  = 1 << 0,
     SAVE_INFLUENCE = 1 << 1,
     SAVE_DFFITS    = 1 << 2,
     SAVE_TREND     = 1 << 3,
     SAVE_CYCLE     = 1 << 4
-};
+} SeriesSaveCode;
 
-enum aux_codes {
+typedef enum {
     AUX_NONE,  /* not an auxiliary regression */
     AUX_SQ,    /* aux. regression for nonlinearity (squared terms) */
     AUX_LOG,   /* aux. regression for nonlinearity (log terms) */
@@ -51,7 +51,7 @@ enum aux_codes {
     AUX_JOHANSEN,  /* Johansen cointegration test */
     AUX_GROUPWISE, /* testing for groupwise heteroskedasticity */
     AUX_AUX    /* auxiliary regression not otherwise specified */
-};
+} ModelAuxCode;
 
 /* functions follow */
  

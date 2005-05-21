@@ -495,7 +495,7 @@ static void model_stats_init (MODEL *pmod)
     pmod->rsq = pmod->adjrsq = NADBL;
 }
 
-#undef SMPL_DEBUG
+#undef SMPL_DEBUG 
 
 static int 
 lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
@@ -704,15 +704,15 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
  * @pdinfo: information on the data set.
  * @ci: command index (see gretl_commands.h)
  * @opt: option flags: zero or more of the following --
- *   OPT_R compute robust standard errors;
- *   OPT_C force use of Cholesky decomp;
- *   OPT_A treat as auxiliary regression (don't bother checking
+ *   %OPT_R compute robust standard errors;
+ *   %OPT_C force use of Cholesky decomp;
+ *   %OPT_A treat as auxiliary regression (don't bother checking
  *     for presence of lagged dependent var, don't augment model count);
- *   OPT_P use Prais-Winsten for first obs.
- *   OPT_N don't use degrees of freedom correction for standard
+ *   %OPT_P use Prais-Winsten for first obs.
+ *   %OPT_N don't use degrees of freedom correction for standard
  *      error of regression
- *   OPT_M reject missing observations within sample range
- *   OPT_Z (internal use) suppress the automatic elimination of 
+ *   %OPT_M reject missing observations within sample range
+ *   %OPT_Z (internal use) suppress the automatic elimination of 
  *      perfectly collinear variables
  * @rho: coefficient for rho-differencing the data (0.0 for no
  * differencing)
@@ -1492,7 +1492,7 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv)
 
 /**
  * makevcv:
- * @pmod: gretl MODEL.
+ * @pmod: pointer to model.
  *
  * Inverts the Choleski-decomposed X'X and computes the 
  * coefficient covariance matrix.
@@ -1579,66 +1579,6 @@ int makevcv (MODEL *pmod)
     }
 
     return 0;
-}
-
-/**
- * get_vcv:
- * @pmod: pointer to model.
- * 
- * Save the variance-covariance matrix for the parameter
- * estimates in @pmod.
- *
- * Returns: VCV struct or NULL on error.
- */
-
-VCV *get_vcv (MODEL *pmod)
-{
-    int i, nv = pmod->ncoeff;
-    VCV *vcv;
-
-    vcv = malloc(sizeof *vcv);
-    if (vcv == NULL) return NULL;
-
-    vcv->list = malloc((nv + 1) * sizeof *vcv->list);
-    if (vcv->list == NULL) {
-	free(vcv);
-	return NULL;
-    }
-
-    vcv->list[0] = nv;
-    for (i=1; i<=nv; i++) {
-	vcv->list[i] = pmod->list[i+1];
-    }
-
-    if (pmod->vcv == NULL && makevcv(pmod)) {
-	free(vcv->list);
-	free(vcv);
-	return NULL;
-    }
-
-    /* calculate number of elements in vcv */
-    nv = (nv * nv + nv) / 2;
-
-    /* copy vcv */
-    vcv->vec = copyvec(pmod->vcv, nv + 1);
-    if (vcv->vec == NULL) {
-	free(vcv->list);
-	free(vcv);
-	return NULL;
-    }
-
-    vcv->ci = pmod->ci;
-    
-    return vcv;
-}
-
-/* ............................................................... */
-
-void free_vcv (VCV *vcv)
-{
-    free(vcv->vec);
-    free(vcv->list);
-    free(vcv);
 }
 
 /*  dwstat: computes Durbin-Watson statistic
@@ -1867,12 +1807,12 @@ static double autores (MODEL *pmod, const double **Z, int ci)
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @batch: = 1 if in batch mode
- * @ci: command index: CORC for Cochrane-Orcutt, HILU for Hildreth-Lu,
- *                     PWE for Prais-Winsten estimator.
+ * @ci: command index: %CORC for Cochrane-Orcutt, %HILU for Hildreth-Lu,
+ *                     %PWE for Prais-Winsten estimator.
  * @err: pointer for error code.
- * @opt: option flag: may include OPT_B to suppress Cochrane-Orcutt
- *       fine-tuning of Hildreth-Lu results.
+ * @opt: option flags: may include %OPT_B to suppress Cochrane-Orcutt
+ *       fine-tuning of Hildreth-Lu results, %OPT_P to generate
+ *       a gnuplot graph of the search in case @ci = %HILU.
  * @prn: gretl printing struct.
  *
  * Estimate the quasi-differencing coefficient for use with the
@@ -1884,8 +1824,7 @@ static double autores (MODEL *pmod, const double **Z, int ci)
  */
 
 double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
-		     int batch, int ci, int *err, gretlopt opt, 
-		     PRN *prn)
+		     int ci, int *err, gretlopt opt, PRN *prn)
 {
     double rho = 0.0, rho0 = 0.0, diff;
     double finalrho = 0.0, essmin = 1.0e8;
@@ -1894,6 +1833,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int missv = 0, misst = 0;
     gretlopt lsqopt = OPT_A;
+    int ascii = !(opt & OPT_P);
     MODEL corc_model;
 
     *gretl_errmsg = '\0';
@@ -1925,7 +1865,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 		goto bailout;
 	    }
 	    ess = corc_model.ess;
-	    if (batch) {
+	    if (ascii) {
 		char num[16];
 		int chk;
 		
@@ -1992,7 +1932,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 	rho0 = rho = finalrho;
 	pprintf(prn, _("\n\nESS is minimum for rho = %g\n\n"), rho);
-	if (batch) {
+	if (ascii) {
 	    graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
 	    pputs(prn, "\n");
 	} else {
@@ -2268,9 +2208,9 @@ tsls_make_replist (const int *reglist, int *instlist, int *replist)
  *   of variables and list of instruments (or 0 if unknown).
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: may contain OPT_R for robust VCV, OPT_S to save second-
- * stage regressors (OPT_S is used in context of three-stage least 
- * squares), OPT_N (no df correction).
+ * @opt: may contain %OPT_R for robust VCV, %OPT_S to save second-
+ * stage regressors (%OPT_S is used in context of three-stage least 
+ * squares), %OPT_N (no df correction).
  *
  * Estimate the model given in @list by means of Two-Stage Least
  * Squares.
@@ -2927,10 +2867,10 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 
 /**
  * whites_test:
- * @pmod: #MODEL struct.
+ * @pmod: pointer to model.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if flags include OPT_S, save results to model.
+ * @opt: if flags include %OPT_S, save results to model.
  * @prn: gretl printing struct.
  *
  * Runs White's test for heteroskedasticity on the given model,
@@ -3105,7 +3045,7 @@ MODEL ar_func (const int *list, int pos, double ***pZ,
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
-	xx = estimate_rho(reglist, pZ, pdinfo, 1, CORC, &err, OPT_NONE, prn);
+	xx = estimate_rho(reglist, pZ, pdinfo, CORC, &err, OPT_NONE, prn);
 	if (err) {
 	    ar.errcode = err;
 	} else {
@@ -3427,7 +3367,7 @@ lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo)
  * @order: lag order for ARCH process.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: mat contain OPT_O to print covariance matrix, OPT_S
+ * @opt: mat contain %OPT_O to print covariance matrix, %OPT_S
  *       to save test results to model.
  * @prn: gretl printing struct.
  *
@@ -3665,11 +3605,11 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
 
 /**
  * arma:
- * @list: dependent variable plus AR and MA orders
+ * @list: dependent variable plus AR and MA orders.
  * @Z: data array.
  * @pdinfo: information on the data set.
- * @opt: options: may include OPT_S to suppress intercept.
- * @PRN: for printing details of iterations (or NULL) 
+ * @opt: options: may include %OPT_S to suppress intercept.
+ * @PRN: for printing details of iterations (or %NULL). 
  *
  * Calculate ARMA estimates.
  * 
@@ -3900,11 +3840,11 @@ MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
 /**
  * garch:
- * @list: dependent variable plus arch and garch orders
- * @pZ: pointer to data matrix
- * @pdinfo: information on the data set
- * @opt: can specify robust standard errors and VCV
- * @prn: for printing details of iterations (or NULL)
+ * @list: dependent variable plus arch and garch orders.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: can specify robust standard errors and VCV.
+ * @prn: for printing details of iterations (or %NULL).
  *
  * Calculate GARCH estimates.
  * 

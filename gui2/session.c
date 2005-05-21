@@ -902,6 +902,10 @@ void do_open_session (GtkWidget *w, gpointer data)
 
 void verify_clear_data (void)
 {
+    if (dataset_locked()) {
+	return;
+    }
+
     if (!expert) {
         if (yes_no_dialog ("gretl",                      
 			   _("Clearing the data set will end\n"
@@ -910,6 +914,7 @@ void verify_clear_data (void)
             return;
 	}
     }
+
     close_session();
 }
 

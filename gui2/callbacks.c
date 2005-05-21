@@ -214,6 +214,10 @@ void unselectrow (GtkCList *clist, gint row, gint column,
 
 void open_data (gpointer data, guint code, GtkWidget *widget)
 {
+    if (dataset_locked()) {
+	return;
+    }
+
     switch (code) {
     case OPEN_DATA:
     case APPEND_DATA:
@@ -688,6 +692,10 @@ static void n_obs_callback (GtkWidget *w, dialog_t *dlg)
 
 void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget) 
 {
+    if (dataset_locked()) {
+	return;
+    }
+
     if (pd_code == 0) {
 	/* cross-sectional dataset */
 	datainfo->structure = CROSS_SECTION;

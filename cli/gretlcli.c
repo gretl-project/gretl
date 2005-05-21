@@ -954,7 +954,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case CORC:
     case HILU:
     case PWE:
-	rho = estimate_rho(cmd.list, &Z, datainfo, 1, cmd.ci,
+	rho = estimate_rho(cmd.list, &Z, datainfo, cmd.ci,
 			   &err, cmd.opt, prn);
 	if (err) {
 	    errmsg(err, prn);

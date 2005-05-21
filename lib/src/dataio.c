@@ -1671,7 +1671,7 @@ int write_data (const char *fname, const int *list,
 	
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (pdinfo->S != NULL) {
-		fprintf(fp, "%s%c", pdinfo->S[t], delim);
+		fprintf(fp, "\"%s\"%c", pdinfo->S[t], delim);
 	    } else {
 		char tmp[OBSLEN];
 

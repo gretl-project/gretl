@@ -51,6 +51,7 @@ typedef struct {
     int totcols;
     int orig_vars;
     int added_vars;
+    int orig_main_v;
     int modified;
     guint cid;
     guint point;
@@ -64,6 +65,7 @@ static void set_up_sheet_column (GtkTreeViewColumn *column, gint width,
 static gint get_data_col_width (void);
 static int add_data_column (Spreadsheet *sheet);
 static void create_sheet_cell_renderers (Spreadsheet *sheet);
+static void set_dataset_locked (gboolean s);
 
 static GtkItemFactoryEntry sheet_items[] = {
     { N_("/_Observation"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -615,7 +617,14 @@ static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
 
 #endif /* !OLD_SELECTION */
 
-/* ........................................................... */
+static int 
+var_added_since_ssheet_opened (int i, Spreadsheet *sheet, int main_v)
+{
+    return (i >= sheet->orig_main_v && i < main_v);
+}
+
+/* pull modified values from the data-editing spreadsheet
+   into the main dataset */
 
 static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 {
@@ -637,8 +646,8 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
     }    
 
 #if SSDEBUG
-    fprintf(stderr, "get_data_from_sheet: newvars = %d, newobs = %d\n",
-	    newvars, newobs);
+    fprintf(stderr, "get_data_from_sheet: oldv = %d, newvars = %d, newobs = %d\n",
+	    oldv, newvars, newobs);
 #endif
 
     model = gtk_tree_view_get_model(view);
@@ -675,7 +684,13 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 
     colnum = 1;
     for (i=1; i<datainfo->v; i++) {
+
 	if (spreadsheet_hide(i, datainfo)) {
+	    /* hidden vars were not put into the spreadsheet */
+	    continue;
+	}
+
+	if (var_added_since_ssheet_opened(i, sheet, oldv)) {
 	    continue;
 	}
 
@@ -808,9 +823,11 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCode code)
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     }
 
+    sheet->orig_main_v = datainfo->v;
+
 #if SSDEBUG
-    fprintf(stderr, " datarows=%d, orig_vars=%d\n", 
-	    sheet->datarows, sheet->orig_vars);
+    fprintf(stderr, " datarows=%d, orig_vars=%d, orig_main_v=%d\n", 
+	    sheet->datarows, sheet->orig_vars, sheet->orig_main_v);
 #endif
 
     return 0;
@@ -1214,6 +1231,8 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
 
     free(sheet);
     *psheet = NULL;
+
+    set_dataset_locked(FALSE);
 }
 
 static Spreadsheet *spreadsheet_new (void)
@@ -1233,6 +1252,7 @@ static Spreadsheet *spreadsheet_new (void)
     sheet->totcols = 0;
     sheet->orig_vars = 0;
     sheet->added_vars = 0;
+    sheet->orig_main_v = 0;
     sheet->modified = 0;
     sheet->cid = 0;
 
@@ -1419,8 +1439,28 @@ void show_spreadsheet (SheetCode code)
 
     gtk_widget_show(sheet->win);
 
-    /* we can't have the user making any changes elsewhere,
+    /* we can't have the user making confounding changes elsewhere,
        while editing the dataset here */
-    gretl_set_window_modal(sheet->win);
+    set_dataset_locked(TRUE);
 }
+
+/* mechanism for locking dataset against changes while editing */
+
+static int locked;
+
+static void set_dataset_locked (gboolean s)
+{
+    locked = s;
+    flip(mdata->ifac, "/Sample", !s);
+}
+
+int dataset_locked (void)
+{
+    if (locked) {
+	errbox(_("You can't do this while editing the dataset"));
+    }
+
+    return locked;
+}
+
 

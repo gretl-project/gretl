@@ -27,4 +27,6 @@ typedef enum {
 
 void show_spreadsheet (SheetCode code);
 
+int dataset_locked (void);
+
 #endif /* SSHEET_H */

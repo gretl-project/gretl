@@ -30,6 +30,7 @@
 #include "forecast.h"
 #include "menustate.h"
 #include "dlgutils.h"
+#include "ssheet.h"
 #include "lib_private.h"
 #include "cmd_private.h"
 #include "libset.h"
@@ -1852,6 +1853,8 @@ void do_arch (gpointer data, guint u, GtkWidget *widget)
     MODEL *pmod = vwin->data;
     PRN *prn;
     char tmpstr[26];
+    int smpl_t1 = datainfo->t1;
+    int smpl_t2 = datainfo->t2;
     int i, order;
     int err = 0;
 
@@ -1886,7 +1889,10 @@ void do_arch (gpointer data, guint u, GtkWidget *widget)
     if (bufopen(&prn)) return;
 
     clear_model(models[1]);
-    exchange_smpl(pmod, datainfo);
+
+    /* temporarily reimpose the sample range in effect
+       when pmod was estimated */
+    impose_model_smpl(pmod, datainfo);
 
     /* FIXME opt? */
     *models[1] = arch_test(pmod, order, &Z, datainfo, OPT_S, prn);
@@ -1897,7 +1903,10 @@ void do_arch (gpointer data, guint u, GtkWidget *widget)
     }
 
     clear_model(models[1]);
-    exchange_smpl(pmod, datainfo);
+
+    /* restore original sample */
+    datainfo->t1 = smpl_t1;
+    datainfo->t2 = smpl_t2;
 
     if (err) {
 	gretl_print_destroy(prn);
@@ -2302,8 +2311,8 @@ void do_model (GtkWidget *widget, gpointer p)
     case CORC:
     case HILU:
     case PWE: 
-	rho = estimate_rho(cmd.list, &Z, datainfo, 0, action, 
-			   &err, cmd.opt, prn);
+	rho = estimate_rho(cmd.list, &Z, datainfo, action, 
+			   &err, (cmd.opt | OPT_P), prn);
 	if (err) {
 	    gui_errmsg(err);
 	    break;
@@ -3222,7 +3231,7 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 
     if (bufopen(&prn)) return;
 
-    vcv = get_vcv(pmod);
+    vcv = gretl_model_get_vcv(pmod);
 
     if (vcv == NULL) {
 	errbox(_("Error generating covariance matrix"));
@@ -3886,6 +3895,10 @@ void delete_selected_vars (int id)
     int err, renumber, pruned = 0;
     char *liststr = NULL;
     char *msg;
+
+    if (dataset_locked()) {
+	return;
+    }
 
     if (complex_subsampled()) {
 	errbox(_("Can't delete a variable when in sub-sample"
@@ -5635,7 +5648,7 @@ int gui_exec_line (char *line,
     case CORC:
     case HILU:
     case PWE:
-	rho = estimate_rho(cmd.list, &Z, datainfo, 1, cmd.ci,
+	rho = estimate_rho(cmd.list, &Z, datainfo, cmd.ci,
 			   &err, cmd.opt, outprn);
 	if (err) {
 	    errmsg(err, prn);
@@ -5659,6 +5672,9 @@ int gui_exec_line (char *line,
 	break;
 
     case DELEET:
+	if (dataset_locked()) {
+	    break;
+	}
 	if (complex_subsampled()) {
 	    pputs(prn, _("Can't delete a variable when in sub-sample"
 		    " mode\n"));
@@ -5881,7 +5897,9 @@ int gui_exec_line (char *line,
 	break;
 
     case IMPORT:
-	if (exec_code == SAVE_SESSION_EXEC) break;
+	if (dataset_locked() || exec_code == SAVE_SESSION_EXEC) {
+	    break;
+	}
         err = getopenfile(line, datfile, &paths, 0, 0);
         if (err) {
             pprintf(prn, _("import command is malformed\n"));
@@ -5912,7 +5930,9 @@ int gui_exec_line (char *line,
 
     case OPEN:
     case APPEND:
-	if (exec_code == SAVE_SESSION_EXEC) break;
+	if (dataset_locked() || exec_code == SAVE_SESSION_EXEC) {
+	    break;
+	}
 	err = getopenfile(line, datfile, &paths, 0, 0);
 	if (err) {
 	    errbox(_("'open' command is malformed"));
@@ -6064,6 +6084,9 @@ int gui_exec_line (char *line,
 	break;
 
     case NULLDATA:
+	if (dataset_locked()) {
+	    break;
+	}
 	nulldata_n = atoi(cmd.param);
 	if (nulldata_n < 2) {
 	    pprintf(prn, _("Data series length count missing or invalid\n"));

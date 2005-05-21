@@ -42,12 +42,14 @@ static char newvarname[9], newobsmarker[9];
 static int numcolumns, numrows;
 static int sheet_modified;
 static int origvars;
+static int orig_main_v;
 
 static void sheet_add_var (void);
 static void sheet_add_obs (void);
 static void sheet_insert_obs (void);
 static void sheet_clear (gpointer *data, guint all, GtkWidget *w);
 static void get_data_from_sheet (void);
+static void set_dataset_locked (gboolean s);
 
 static GtkItemFactoryEntry sheet_items[] = {
     { N_("/_Observation"), NULL, NULL, 0, "<Branch>" },
@@ -428,6 +430,11 @@ static gint activate_sheet_cell (GtkWidget *w, gint row, gint column,
 
 /* ........................................................... */
 
+static int var_added_since_ssheet_opened (int i, int main_v)
+{
+    return (i >= orig_main_v && i < main_v);
+}
+
 static void get_data_from_sheet (void)
 {
     int oldv = datainfo->v;
@@ -463,7 +470,7 @@ static void get_data_from_sheet (void)
 	    return;
 	}
 	for (i=0; i<newvars; i++) { 
-	    colnum = origvars + i; /* FIXME? */
+	    colnum = origvars + i; 
 	    strcpy(datainfo->varname[oldv + i], sheet->column[colnum].button.label);
 	}
     }
@@ -471,6 +478,9 @@ static void get_data_from_sheet (void)
     colnum = 0;
     for (i=1; i<datainfo->v; i++) {
 	if (spreadsheet_hide(i, datainfo)) {
+	    continue;
+	}
+	if (var_added_since_ssheet_opened(i, oldv)) {
 	    continue;
 	}
 	for (t=0; t<datainfo->n; t++) {
@@ -546,6 +556,8 @@ static void add_data_to_sheet (GtkWidget *w)
 	}
 	j++;
     }
+
+    orig_main_v = datainfo->v;
     
     sheet_modified = 0;
 }
@@ -589,6 +601,7 @@ static void add_skel_to_sheet (GtkWidget *w)
 static void free_spreadsheet (GtkWidget *widget, gpointer data) 
 {
     gretlsheet = NULL;
+    set_dataset_locked(FALSE);
 }
 
 /* ........................................................... */
@@ -730,6 +743,24 @@ void show_spreadsheet (SheetCode code)
     }
 
     gtk_widget_show(sheetwin);
-    gretl_set_window_modal(sheetwin);
+    set_dataset_locked(TRUE);
 }
 
+/* mechanism for locking dataset against changes while editing */
+
+static int locked;
+
+static void set_dataset_locked (gboolean s)
+{
+    locked = s;
+    flip(mdata->ifac, "/Sample", !s);
+}
+
+int dataset_locked (void)
+{
+    if (locked) {
+	errbox(_("You can't do this while editing the dataset"));
+    }
+
+    return locked;
+}

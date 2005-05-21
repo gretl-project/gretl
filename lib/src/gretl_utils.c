@@ -1439,7 +1439,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     case CORC:
     case HILU:
     case PWE:
-	rho = estimate_rho(cmd.list, pZ, pdinfo, 1, cmd.ci, 
+	rho = estimate_rho(cmd.list, pZ, pdinfo, cmd.ci, 
 			   &err, cmd.opt, NULL);
 	if (!err) {
 	    *tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, 0, rho);

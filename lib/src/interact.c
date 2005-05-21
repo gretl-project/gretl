@@ -375,6 +375,8 @@ static void grab_gnuplot_literal_block (char *line, CMD *cmd)
     }
 }
 
+#define LAG_DEBUG 0
+
 static int parse_lagvar (const char *s, LAGVAR *lv, 
 			 const double **Z, const DATAINFO *pdinfo)
 {
@@ -441,6 +443,12 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 	} 
     }
 
+#if LAG_DEBUG
+    fprintf(stderr, "parse_lagvar: s = '%s'\n", s);
+    fprintf(stderr, " firstlag = %d, lastlag = %d\n",
+	    lv->firstlag, lv->lastlag);
+#endif
+
     return err;
 }
 
@@ -484,21 +492,21 @@ static int expand_command_list (CMD *cmd, int add)
     return 0;
 }
 
-#undef LAG_DEBUG
+/* Get the total number of lags and set the increment for
+   generating successive lags.  Allows for mixed leads
+   and lags. */
 
-static int get_n_lags (int last, int first)
+static int get_n_lags (int last, int first, int *incr)
 {
     int nl = 0;
 
-    if (last >= 0 && first >= 0) {
-	/* pure lags list */
+    if (last >= first) {
 	nl = last - first + 1;
-    } else if (last <= 0 && first <= 0) {
-	/* pure leads list */
+	*incr = 1;
+    } else {
 	nl = first - last + 1;
-    } 
-
-    /* FIXME mixed leads and lags? */
+	*incr = -1;
+    }
 
     return nl;
 }
@@ -510,17 +518,18 @@ int auto_lag_ok (const char *s, int *lnum,
     LAGVAR lagvar;
     int nlags, i;
     int llen = *lnum;
+    int lincr = 1;
     int ok = 1;
 	
     if (parse_lagvar(s, &lagvar, (const double **) *pZ, pdinfo)) {
 	return 0;
     }
 
-    nlags = get_n_lags(lagvar.lastlag, lagvar.firstlag);
+    nlags = get_n_lags(lagvar.lastlag, lagvar.firstlag, &lincr);
 
 #if LAG_DEBUG
-    fprintf(stderr, "auto lags: last=%d, first=%d, n=%d\n",
-	    lagvar.lastlag, lagvar.firstlag, nlags);
+    fprintf(stderr, "auto lags: last=%d, first=%d, n=%d, incr=%d\n",
+	    lagvar.lastlag, lagvar.firstlag, nlags, lincr);
 #endif
 
     if (nlags <= 0) {
@@ -535,13 +544,14 @@ int auto_lag_ok (const char *s, int *lnum,
     for (i=0; i<nlags && ok; i++) {
 	int laglen, vnum;
 
-	if (lagvar.firstlag >= 0 && lagvar.lastlag > 0) {
-	    laglen = lagvar.firstlag + i;
-	} else {
-	    laglen = lagvar.firstlag - i;
-	}
+	laglen = lagvar.firstlag + i * lincr;
 
 	vnum = laggenr(lagvar.varnum, laglen, pZ, pdinfo);
+
+#if LAG_DEBUG
+	fprintf(stderr, "laggenr for var %d (%s), lag %d, gave vnum = %d\n",
+		lagvar.varnum, pdinfo->varname[lagvar.varnum], laglen, vnum);
+#endif
 
 	if (vnum < 0) {
 	    cmd->errcode = 1;

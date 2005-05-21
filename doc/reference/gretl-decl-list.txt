@@ -109,8 +109,6 @@ ar_func
 arch_test
 arch_model
 makevcv
-get_vcv
-free_vcv
 augment_regression_list
 </SECTION>
 
@@ -125,6 +123,8 @@ winfork
 
 <SECTION>
 <FILE>compare</FILE>
+SeriesSaveCode
+ModelAuxCode
 robust_omit_F
 add_test
 omit_test
@@ -482,7 +482,6 @@ GRAPHT
 PRN
 FITRESID
 CONFINT
-VCV
 DATASET
 GRETL_VAR
 mp_results
@@ -500,7 +499,6 @@ GRAPHT_
 mp_results_
 FITRESID_
 CONFINT_
-VCV_
 VARLABEL
 DISPLAYNAME
 COMPACT_METHOD
@@ -816,6 +814,8 @@ set_gretl_png_font
 
 <SECTION>
 <FILE>gretl_model</FILE>
+VCV
+VCV_
 free_model
 AR_MODEL
 ML_ESTIMATOR
@@ -824,8 +824,8 @@ ModelTestType
 gretl_model_new
 gretl_model_init
 gretl_model_smpl_init
+impose_model_smpl
 gretl_model_set_auxiliary
-exchange_smpl
 clear_model
 gretl_model_set_data
 gretl_model_destroy_data_item
@@ -835,6 +835,8 @@ gretl_model_get_data
 gretl_model_get_data_and_size
 gretl_model_get_int
 gretl_model_get_double
+free_vcv
+gretl_model_get_vcv
 debug_print_model_info
 copy_model
 swap_models
@@ -1052,6 +1054,7 @@ get_gretl_charset
 get_gnuplot_charset
 use_latin_2
 sprint_l2_to_html
+sprint_l2_to_ascii
 sprint_html_to_l2
 print_as_html
 print_as_locale

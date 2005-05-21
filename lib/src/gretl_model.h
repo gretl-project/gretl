@@ -20,6 +20,14 @@
 #ifndef GRETL_MODEL_H
 #define GRETL_MODEL_H
 
+typedef struct VCV_ VCV;
+
+struct VCV_ {
+    int ci;
+    int *list;
+    double *vec;
+};
+
 /**
  * free_model:
  * @p: pointer to #MODEL.
@@ -61,9 +69,9 @@ void gretl_model_init (MODEL *pmod);
 
 void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo);
 
-void gretl_model_set_auxiliary (MODEL *pmod, int aux);
+void impose_model_smpl (const MODEL *pmod, DATAINFO *pdinfo);
 
-void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo);
+void gretl_model_set_auxiliary (MODEL *pmod, ModelAuxCode aux);
 
 void clear_model (MODEL *pmod);
 
@@ -83,6 +91,10 @@ void *gretl_model_get_data_and_size (const MODEL *pmod, const char *key,
 int gretl_model_get_int (const MODEL *pmod, const char *key);
 
 double gretl_model_get_double (const MODEL *pmod, const char *key);
+
+void free_vcv (VCV *vcv);
+
+VCV *gretl_model_get_vcv (MODEL *pmod);
 
 void debug_print_model_info (const MODEL *pmod, const char *msg);
 

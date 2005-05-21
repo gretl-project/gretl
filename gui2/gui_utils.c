@@ -3283,6 +3283,8 @@ gchar *my_filename_from_utf8 (char *fname)
     return fname;
 }
 
+#define TR_DEBUG 0
+
 static gchar *
 real_locale_from_utf8 (const gchar *src, int force)
 {
@@ -3291,11 +3293,25 @@ real_locale_from_utf8 (const gchar *src, int force)
     GError *err = NULL;
     const gchar *cset = NULL;
 
+#if TR_DEBUG
+    gchar *msg;
+    int u = g_get_charset(&cset);
+    msg = g_strdup_printf("real_locale_from_utf8: force=%d, "
+			  "g_get_charset returned %d and gave "
+			  "'%s'\n", force, u, 
+			  (cset != NULL)? cset : "NULL");
+    infobox(msg);
+    g_free(msg);
+    if (!force && u) {
+	return g_strdup(src);
+    }
+#else
     if (!force && g_get_charset(&cset)) {
 	/* According to the glib manual, g_get_charset returns TRUE if 
 	   the returned charset is UTF-8 */ 
 	return g_strdup(src);
     }
+#endif
 
     trstr = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
 

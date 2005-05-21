@@ -70,11 +70,17 @@ static model_data_item *create_data_item (const char *key, void *ptr, size_t siz
  * @ptr: data-pointer to be attached to model.
  * @size: size of data in bytes.
  *
- * Attaches data to a model: the data can be retrieved later using
+ * Attaches data to @pmod: the data can be retrieved later using
  * #gretl_model_get_data.  Note that the data are not "physically"
- * copied to the model; simply, the pointer is recorded.  The 
- * size is needed in case the model is copied.  The data pointer
- * will be freed when the model is cleared, with #clear_model.
+ * copied to the model; simply, @ptr is recorded on the model.
+ * This means that the data referenced by the pointer now in 
+ * effect belong to @pmod.  The data pointer will be freed when 
+ * @pmod is cleared, with #clear_model.
+ *
+ * The @size is needed in case the model is copied with
+ * #copy_model, in which case the target of the copying
+ * operation receives a newly allocated copy of the data in
+ * question.
  *
  * Returns: 0 on success, 1 on failure.
  */
@@ -106,7 +112,7 @@ int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size)
  * @val: integer value to set.
  *
  * Records an integer value on a model: the value can be retrieved 
- * later using gretl_model_get_int().  
+ * later using #gretl_model_get_int, using the appropriate @key.  
  *
  * Returns: 0 on success, 1 on failure.
  */
@@ -136,12 +142,13 @@ int gretl_model_set_int (MODEL *pmod, const char *key, int val)
 
 /**
  * gretl_model_set_double:
- * @pmod: pointer to #MODEL.
+ * @pmod: pointer to model.
  * @key: key string, used in retrieval.
  * @val: double-precision value to set.
  *
- * Records a floating-point value on a model: the value can be 
- * retrieved later using gretl_model_get_double().  
+ * Records a floating-point value on @pmod: the value can be 
+ * retrieved later using #gretl_model_get_double with the
+ * appropriate @key. 
  *
  * Returns: 0 on success, 1 on failure.
  */
@@ -171,11 +178,11 @@ int gretl_model_set_double (MODEL *pmod, const char *key, double val)
 
 /**
  * gretl_model_get_data_and_size:
- * @pmod: pointer to #MODEL.
+ * @pmod: pointer to model.
  * @key: key string.
- * @sz: pointer to receive the size of the data
+ * @sz: location to receive the size of the data.
  *
- * Returns the data pointer identified by @key, or %NULL on failure.
+ * Returns: the data pointer identified by @key, or %NULL on failure.
  */
 
 void *gretl_model_get_data_and_size (const MODEL *pmod, const char *key,
@@ -197,7 +204,7 @@ void *gretl_model_get_data_and_size (const MODEL *pmod, const char *key,
 
 /**
  * gretl_model_get_data:
- * @pmod: pointer to #MODEL.
+ * @pmod: pointer to model.
  * @key: key string.
  *
  * Returns: the data pointer identified by @key, or %NULL on failure.
@@ -210,7 +217,7 @@ void *gretl_model_get_data (const MODEL *pmod, const char *key)
 
 /**
  * gretl_model_get_int:
- * @pmod: pointer to #MODEL.
+ * @pmod: pointer to model.
  * @key: key string.
  *
  * Returns: the integer value identified by @key, or 0 on failure.
@@ -233,7 +240,7 @@ int gretl_model_get_int (const MODEL *pmod, const char *key)
 
 /**
  * gretl_model_get_double:
- * @pmod: pointer to #MODEL.
+ * @pmod: pointer to model.
  * @key: key string.
  *
  * Returns: the double-precision value identified by @key, or 
@@ -253,6 +260,92 @@ double gretl_model_get_double (const MODEL *pmod, const char *key)
     }
 
     return NADBL;
+}
+
+/**
+ * free_vcv:
+ * @vcv: pointer to covariance matrix struct.
+ * 
+ * Frees the resources associated with @vcv, then frees the
+ * pointer itself.
+ */
+
+void free_vcv (VCV *vcv)
+{
+    free(vcv->vec);
+    free(vcv->list);
+    free(vcv);
+}
+
+/**
+ * gretl_model_get_vcv:
+ * @pmod: pointer to model.
+ * 
+ * Supplies the caller with a copy of the variance-covariance 
+ * matrix for the parameter estimates in @pmod.  See also
+ * #free_vcv.
+ *
+ * Returns: #VCV struct or %NULL on error.
+ */
+
+VCV *gretl_model_get_vcv (MODEL *pmod)
+{
+    int i, nv = pmod->ncoeff;
+    VCV *vcv;
+
+    vcv = malloc(sizeof *vcv);
+    if (vcv == NULL) return NULL;
+
+    vcv->list = malloc((nv + 1) * sizeof *vcv->list);
+    if (vcv->list == NULL) {
+	free(vcv);
+	return NULL;
+    }
+
+    vcv->list[0] = nv;
+    for (i=1; i<=nv; i++) {
+	vcv->list[i] = pmod->list[i+1];
+    }
+
+    if (pmod->vcv == NULL && makevcv(pmod)) {
+	free(vcv->list);
+	free(vcv);
+	return NULL;
+    }
+
+    /* calculate number of elements in vcv */
+    nv = (nv * nv + nv) / 2;
+
+    /* copy vcv */
+    vcv->vec = copyvec(pmod->vcv, nv + 1);
+    if (vcv->vec == NULL) {
+	free(vcv->list);
+	free(vcv);
+	return NULL;
+    }
+
+    vcv->ci = pmod->ci;
+    
+    return vcv;
+}
+
+/**
+ * impose_model_smpl:
+ * @pmod: pointer to model.
+ * @pdinfo: dataset information.
+ *
+ * Sets on @pdinfo the sample range (starting and ending
+ * observations) that was in effect when @pmod was estimated.
+ * This is not always the same as the data range over which
+ * @pmod was actually estimated (e.g. in case of 
+ * autoregressive models, where observations are dropped
+ * to allow for lags).
+ */
+
+void impose_model_smpl (const MODEL *pmod, DATAINFO *pdinfo)
+{
+    pdinfo->t1 = pmod->smpl.t1;
+    pdinfo->t2 = pmod->smpl.t2;
 }
 
 #ifdef HAVE_X12A
@@ -288,6 +381,18 @@ static void destroy_all_data_items (MODEL *pmod)
     free(pmod->data_items);
     pmod->data_items = NULL;
 }
+
+/**
+ * gretl_model_destroy_data_item:
+ * @pmod: pointer to model.
+ * @key: key string.
+ *
+ * Looks up the data pointer, attached to @pmod, that is
+ * identified by @key, and if a pointer is found, frees
+ * it and removes it from the model's list of data items.
+ *
+ * Returns: 0 on success, 1 on failure (pointer not found).
+ */
 
 int gretl_model_destroy_data_item (MODEL *pmod, const char *key)
 {
@@ -327,9 +432,18 @@ int gretl_model_destroy_data_item (MODEL *pmod, const char *key)
     return err;
 }
 
-/* .......................................................... */
+/**
+ * gretl_model_set_auxiliary:
+ * @pmod: pointer to model.
+ * @aux: code indicating a model's function in an
+ * auxiliary role (typically, in relation to a hypothesis
+ * test on another model).
+ *
+ * Sets an auxiliary code on @pmod, which may be relevant
+ * for how the model is printed.
+ */
 
-void gretl_model_set_auxiliary (MODEL *pmod, int aux)
+void gretl_model_set_auxiliary (MODEL *pmod, ModelAuxCode aux)
 {
     pmod->aux = aux;
 }
@@ -356,10 +470,13 @@ static void gretl_model_init_pointers (MODEL *pmod)
 
 /**
  * gretl_model_init:
- * @pmod: pointer to #MODEL.
+ * @pmod: pointer to model.
  *
  * Initializes a gretl #MODEL, including setting its pointer members
- * to %NULL.
+ * to %NULL. This initialization should be done if the caller has
+ * declared a #MODEL struct directly, rather than obtaining a pointer to
+ * #MODEL using #gretl_model_new (in which case the initialization is
+ * done automatically).
  */
 
 void gretl_model_init (MODEL *pmod)
@@ -389,11 +506,16 @@ void gretl_model_init (MODEL *pmod)
 
 /**
  * gretl_model_smpl_init:
- * @pmod: pointer to #MODEL.
+ * @pmod: pointer to model.
  * @pdinfo: dataset information.
  *
- * Sets the start and end of the model's sample to the current dataset
- * values.
+ * Records the start and end of the current sample range in
+ * the model @pmod, which may be necessary for future reference
+ * if a hypothesis test is to be performed.  Note that this
+ * sample range may not be the same as the data range over
+ * which the model is actually estimated (for example, in the
+ * case of autoregressive models where observations have to
+ * be dropped to allow for lags).
  */
 
 void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo)
@@ -405,10 +527,10 @@ void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo)
 /**
  * gretl_model_new:
  * 
- * Allocates memory for a gretl MODEL struct and initializes the struct,
- * using gretl_model_init().
+ * Allocates memory for a gretl #MODEL struct and initializes the struct,
+ * using #gretl_model_init.
  *
- * Returns: pointer to #MODEL (or %NULL if allocation fails).
+ * Returns: pointer to model (or %NULL if allocation fails).
  */
 
 MODEL *gretl_model_new (void)
@@ -417,26 +539,6 @@ MODEL *gretl_model_new (void)
 
     gretl_model_init(pmod);
     return pmod;
-}
-
-/**
- * exchange_smpl:
- * @pmod: pointer to #MODEL.
- * @pdinfo: pointer to data information struct.
- * 
- * Swaps the starting and ending values for the data sample
- * between @pmod and @pdinfo.
- */
-
-void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo)
-{
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
-
-    pdinfo->t1 = pmod->smpl.t1;
-    pdinfo->t2 = pmod->smpl.t2;
-
-    pmod->smpl.t1 = t1;
-    pmod->smpl.t2 = t2;
 }
 
 /* .......................................................... */
@@ -499,11 +601,14 @@ static void gretl_test_free (ModelTest *test)
 
 /**
  * clear_model:
- * @pmod: pointer to #MODEL.
+ * @pmod: pointer to model.
  *
  * Clears a gretl #MODEL, freeing all allocated storage and setting
  * pointer members to %NULL.  Also frees any data pointers attached
- * via gretl_model_set_data().
+ * via #gretl_model_set_data.  The model pointer itself is not
+ * freed, so this function may be called on a #MODEL which has been 
+ * declared directly by the caller (by passing the address of the
+ * #MODEL).  
  */
 
 void clear_model (MODEL *pmod)
@@ -1252,8 +1357,8 @@ int is_quiet_model_test (int ci, gretlopt opt)
 /**
  * command_ok_for_model:
  * @test_ci:  index of command to be tested.
- * @model_ci: command index of a gretl #MODEL (for example,
- * OLS, HCCM or CORC).
+ * @model_ci: command index of a gretl model (for example,
+ * %OLS, %HCCM or %CORC).
  *
  * Returns: 1 if the model-related command in question is
  * meaningful and acceptable in the context of the specific

@@ -167,7 +167,6 @@ typedef struct GRAPHT_ GRAPHT;
 typedef struct PRN_ PRN;
 typedef struct FITRESID_ FITRESID;
 typedef struct CONFINT_ CONFINT;
-typedef struct VCV_ VCV;
 typedef struct DATASET_ DATASET;
 typedef struct GRETL_VAR_ GRETL_VAR;
 
@@ -345,12 +344,6 @@ struct CONFINT_ {
     int ifc;
 };
 
-struct VCV_ {
-    int ci;
-    int *list;
-    double *vec;
-};
-
 #define VARLABEL(p,i)        ((p->varinfo[i])->label)
 #define DISPLAYNAME(p,i)     ((p->varinfo[i])->display_name)
 #define COMPACT_METHOD(p,i)  ((p->varinfo[i])->compact_method)
@@ -363,13 +356,13 @@ struct VCV_ {
 #include "interact.h"
 #include "estimate.h"
 #include "generate.h"
+#include "compare.h"
 #include "gretl_intl.h"
 #include "gretl_list.h"
 #include "gretl_paths.h"
 #include "gretl_utils.h"
 #include "gretl_model.h"
 #include "gretl_prn.h"
-#include "compare.h"
 #include "pvalues.h"
 #include "dataio.h"
 #include "dbread.h"

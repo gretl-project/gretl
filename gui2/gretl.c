@@ -637,7 +637,7 @@ static void real_nls_init (void)
     }
 
     build_path(gretldir, "locale", localedir, NULL);
-    loc = setlocale (LC_ALL, "");
+    loc = setlocale(LC_ALL, "");
     set_gretl_charset(loc);
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);

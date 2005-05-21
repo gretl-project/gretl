@@ -28,8 +28,7 @@ MODEL lsq (const int *list,
 	   int ci, gretlopt opt, double rho);
 
 double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
-		     int batch, int ci, int *err, 
-		     gretlopt opt, PRN *prn);
+		     int ci, int *err, gretlopt opt, PRN *prn);
 
 MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo); 
 
@@ -84,10 +83,6 @@ MODEL arch_model (const int *list, int order,
 		  gretlopt opt, PRN *prn);
 
 int makevcv (MODEL *pmod);
-
-VCV *get_vcv (MODEL *pmod);
-
-void free_vcv (VCV *vcv);
 
 int *augment_regression_list (const int *orig, int aux, 
 			      double ***pZ, DATAINFO *pdinfo);
