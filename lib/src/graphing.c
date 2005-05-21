@@ -528,6 +528,8 @@ int gnuplot_init (int plottype, FILE **fpp)
 
 #ifdef ENABLE_NLS
 
+#undef RECODE_DBG
+
 static int recode_gnuplot_file (const char *fname)
 {
     FILE *fp, *fq;
@@ -558,20 +560,15 @@ static int recode_gnuplot_file (const char *fname)
     while (fgets(oldline, sizeof oldline, fp)) {
 	if (isdigit((unsigned char) oldline[0])) {
 	    fputs(oldline, fq);
-#if GP_DEBUG
-	    fprintf(stderr, "recode: passed line unaltered:\n"
-		    " '%s'\n", oldline);
-#endif
 	} else if (ttf) {
 	    sprint_l2_to_html(newline, oldline, sizeof newline);
 	    fputs(newline, fq);
-#if GP_DEBUG
-	    fprintf(stderr, "recode: modified line:\n"
+#if RECODE_DBG
+	    fprintf(stderr, "recode (sprint_l2_to_html): modified line:\n"
 		    " '%s'\n", newline);
 #endif
-	} else if (0) {
-	    sprint_l2_to_ascii(newline, oldline, sizeof newline);
-	    fputs(newline, fq);
+	} else {
+	    fputs(oldline, fq);
 	}
     }
 

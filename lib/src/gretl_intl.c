@@ -94,14 +94,21 @@ static int gretl_cpage;
 
 void set_gretl_charset (const char *s)
 {
-    char gretl_charset[32];
+# ifdef USE_GTK2
     const char *charset = NULL;
+# else
+    char charset[16] = {0};
+#endif
+    char gretl_charset[32];
     int using_utf8 = 0;
 
 # ifdef USE_GTK2
     using_utf8 = g_get_charset(&charset);
 # else
-    charset = s;
+    if (*s == 'p' || *s == 'P') {
+	/* guessing this means Polish */
+	strcpy(charset, "iso-8859-2");
+    }
 # endif
 
     *gretl_charset = '\0';
@@ -287,28 +294,20 @@ utf8_to_iso_latin_1 (unsigned char *out, int outlen,
 
 #endif /* !USE_GTK2 */
 
-static char *real_iso_to_ascii (char *s, int latin)
+static void 
+iso_to_ascii_translate (char *targ, const char *src, int latin)
 {
-    char *tmp, *p, *q;
+    char *p;
+    const char *q;
 
-    tmp = malloc(strlen(s) + 1);
-    if (tmp == NULL) {
-	return NULL;
-    }
-
-    p = tmp;
-    q = s;
-
-    if (latin != 1 && latin != 2) {
-	/* fallback?? */
-	latin = 1;
-    }
+    p = targ;
+    q = src;
 
     if (latin == 1) {
 	while (*q) {
 	    unsigned char c = *q;
 
-	    if (c == '\t' || (c >= 32 && c <= 126)) {
+	    if (c == '\t' || c == '\n' || (c >= 32 && c <= 126)) {
 		*p++ = c;
 	    } else if (c >= 192 && c <= 198) {
 		*p++ = 'A';
@@ -357,7 +356,7 @@ static char *real_iso_to_ascii (char *s, int latin)
 	while (*q) {
 	    unsigned char c = *q;
 
-	    if (c == '\t' || (c >= 32 && c <= 126)) {
+	    if (c == '\t' || c == '\n' || (c >= 32 && c <= 126)) {
 		*p++ = c;
 	    }
 
@@ -510,6 +509,23 @@ static char *real_iso_to_ascii (char *s, int latin)
     }
 
     *p = '\0';
+}
+
+static char *real_iso_to_ascii (char *s, int latin)
+{
+    char *tmp;
+
+    tmp = malloc(strlen(s) + 1);
+    if (tmp == NULL) {
+	return NULL;
+    }
+
+    if (latin != 1 && latin != 2) {
+	/* fallback?? */
+	latin = 1;
+    }
+
+    iso_to_ascii_translate(tmp, s, latin);
 
     strcpy(s, tmp);
     free(tmp);
@@ -762,10 +778,7 @@ char *sprint_html_to_l2 (char *targ, const char *s)
 
 char *sprint_l2_to_ascii (char *targ, const char *s, size_t len)
 {
-    char *asc = real_iso_to_ascii(s, 2);
-
-    strcpy(targ, asc);
-    free(asc);
+    iso_to_ascii_translate(targ, s, 2);
 
     return targ;
 }
