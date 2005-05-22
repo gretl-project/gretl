@@ -37,6 +37,7 @@
 #include "filelists.h"
 #include "menustate.h"
 #include "dlgutils.h"
+#include "ssheet.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -1047,6 +1048,10 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 
 void verify_open_data (gpointer userdata, int code)
 {
+    if (dataset_locked()) {
+	return;
+    }
+
     if (data_status && !expert) {
 	int resp = 
 	    yes_no_dialog (_("gretl: open data"), 
