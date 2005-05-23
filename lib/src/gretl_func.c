@@ -22,7 +22,7 @@
 
 #define CALLSTACK_DEPTH 8
 
-#undef FN_DEBUG
+#define FN_DEBUG 0
 
 typedef struct ufunc_ ufunc;
 typedef struct fncall_ fncall;
@@ -180,8 +180,8 @@ destroy_local_vars (double ***pZ, DATAINFO *pdinfo, int nc)
 	    locals[0] = nlocal;
 	    for (i=1; i<pdinfo->v; i++) {
 		if (STACK_LEVEL(pdinfo, i) == nc) {
-#ifdef FN_DEBUG
-                    fprintf(stderr, "local variable ID %d '%s' "
+#if FN_DEBUG
+                    fprintf(stderr, "local variable %d (%s) "
 			    "marked for deletion\n", i,
 			    pdinfo->varname[i]);
 #endif
@@ -205,7 +205,7 @@ static int unstack_fncall (double ***pZ, DATAINFO *pdinfo)
 
     nc = gretl_function_stack_depth();
 
-#ifdef FN_DEBUG
+#if FN_DEBUG
     fprintf(stderr, "unstack_fncall: terminating call to "
 	    "function '%s' at depth %d\n", 
 	    (callstack[0])->fun->name, nc);
@@ -349,28 +349,35 @@ static void free_fncall (fncall *call)
     free(call);
 }
 
-static ufunc *get_ufunc_by_name (const char *fname)
+static ufunc *get_ufunc_by_name (const char *name)
 {
+    ufunc *fun = NULL;
     int i;
 
+#if FN_DEBUG
+    fprintf(stderr, "get_ufunc_by_name: name = '%s' (n_ufuns = %d)\n",
+	    name, n_ufuns);
+#endif
+
     for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(fname, (ufuns[i])->name)) {
-	    return ufuns[i];
+	if (!strcmp(name, (ufuns[i])->name)) {
+	    fun = ufuns[i];
+	    break;
 	}
     }
 
-    return NULL;
+    return fun;
 }
 
 int gretl_is_user_function (const char *s)
 {
     int ret = 0;
 
-    if (n_ufuns > 0 && *s != '\0') {
-	char fname[32];
+    if (n_ufuns > 0 && !string_is_blank(s)) {
+	char name[32];
 
-	if (sscanf(s, "%31s", fname) &&
-	    get_ufunc_by_name(fname) != NULL) {
+	if (sscanf(s, "%31s", name) &&
+	    get_ufunc_by_name(name) != NULL) {
 	    ret = 1;
 	}
     }
@@ -596,6 +603,10 @@ int gretl_function_append_line (const char *line)
 
     if (fun == NULL) return 1;
 
+    if (string_is_blank(line)) {
+	return 0;
+    }
+
     if (!strncmp(line, "end ", 4)) {
 	if (fun->n_lines == 0) {
 	    sprintf(gretl_errmsg, "%s: empty function", fun->name);
@@ -753,8 +764,11 @@ char *gretl_function_get_line (char *line, int len,
 
     call->lnum += 1;
 
-    err = substitute_dollar_terms(line, src, len, call->argc, 
-				  (const char **) call->argv); 
+    if (!string_is_blank(src)) {
+	err = substitute_dollar_terms(line, src, len, call->argc, 
+				      (const char **) call->argv); 
+    }
+
     if (err) {
 	sprintf(gretl_errmsg,
 		_("Maximum length of command line "
@@ -763,8 +777,9 @@ char *gretl_function_get_line (char *line, int len,
 	return NULL;
     }
 
-#ifdef FN_DEBUG
-    fprintf(stderr, "src='%s', line='%s'\n", src, line);
+#if FN_DEBUG
+	fprintf(stderr, "function_get_line, $substitution: \n"
+		" before: '%s'\n  after: '%s'\n", src, line);
 #endif
 
     return line;
