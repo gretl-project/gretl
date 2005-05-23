@@ -90,6 +90,7 @@ enum file_ops {
     SAVE_DATA,
     SAVE_DATA_AS,
     SAVE_GZDATA,
+    SAVE_DBDATA,
     SAVE_BIN1,
     SAVE_BIN2,
     EXPORT_OCTAVE,

@@ -187,6 +187,8 @@ GtkItemFactoryEntry data_items[] = {
       SAVE_DATA_AS, NULL },
     { N_("/File/Save data as/_gzipped..."), NULL, 
       file_save, SAVE_GZDATA, NULL },
+    { N_("/File/Save data as/_database..."), NULL, 
+      file_save, SAVE_DBDATA, NULL },
 
     /* File, Export data */
     { N_("/File/_Export data"), NULL, NULL, 0, "<Branch>" },

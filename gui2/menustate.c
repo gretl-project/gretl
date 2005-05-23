@@ -140,11 +140,19 @@ static GtkItemFactoryEntry time_series_model_items[] = {
                                 (d->pd == 4 || d->pd == 12 || \
                                  d->pd == 5 || d->pd == 7))
 
+#define DATASET_DB_OK(d) (d->pd == 1 || d->pd == 4 || d->pd == 12)
+
 void time_series_menu_state (gboolean s)
 {
+    gboolean dbsave;
+
     if (mdata->ifac == NULL) {
 	return;
     }
+
+    /* File menu */
+    dbsave = s && (DATASET_DB_OK(datainfo));
+    flip(mdata->ifac, "/File/Save data as/database...", dbsave);
 
     /* Data menu */
     flip(mdata->ifac, "/Data/Graph specified vars/Time series plot...", s);

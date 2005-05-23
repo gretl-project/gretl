@@ -46,6 +46,8 @@ static int write_xmldata (const char *fname, const int *list,
 			  int opt, PATHS *ppaths);
 static int xmlfile (const char *fname);
 static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn);
+static int write_db_data (const char *fname, const int *list, 
+			  const double **Z, const DATAINFO *pdinfo); 
 
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
@@ -1495,6 +1497,8 @@ static int data_option (gretlopt flag)
     case OPT_Z:
 	return GRETL_DATA_GZIPPED;
     case OPT_D:
+        return GRETL_DATA_DB;
+    case OPT_G:
         return GRETL_DATA_DAT;
     default:
 	return 0;
@@ -1521,7 +1525,7 @@ int write_data (const char *fname, const int *list,
 		const double **Z, const DATAINFO *pdinfo, 
 		gretlopt flag, PATHS *ppaths)
 {
-    int i, t, l0, opt;
+    int i, t, v, l0, opt;
     char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     int n = pdinfo->n;
@@ -1541,6 +1545,10 @@ int write_data (const char *fname, const int *list,
 
     if (opt == 0 || opt == GRETL_DATA_GZIPPED) {
 	return write_xmldata(fname, list, Z, pdinfo, opt, ppaths);
+    }
+
+    if (opt == GRETL_DATA_DB) {
+	return write_db_data(fname, list, Z, pdinfo);
     }
 
     if (opt == GRETL_DATA_CSV && pdinfo->delim == ',' && 
@@ -1590,21 +1598,23 @@ int write_data (const char *fname, const int *list,
 	float x;
 
 	for (i=1; i<=l0; i++) {
-	    x = (float) Z[list[i]][0];
+	    v = list[i];
+	    x = (float) Z[v][0];
 	    for (t=0; t<n; t++) {
-		if (pdinfo->vector[list[i]]) {
-		    x = (float) Z[list[i]][t];
+		if (pdinfo->vector[v]) {
+		    x = (float) Z[v][t];
 		}
 		fwrite(&x, sizeof x, 1, fp);
 	    }
 	}
     } else if (opt == GRETL_DATA_DOUBLE) { /* double-precision binary */
 	for (i=1; i<=l0; i++) {
-	    if (pdinfo->vector[list[i]]) {
-		fwrite(&Z[list[i]][0], sizeof(double), n, fp);
+	    v = list[i];
+	    if (pdinfo->vector[v]) {
+		fwrite(&Z[v][0], sizeof(double), n, fp);
 	    } else {
 		for (t=0; t<n; t++) {
-		    fwrite(&Z[list[i]][0], sizeof(double), 1, fp);
+		    fwrite(&Z[v][0], sizeof(double), 1, fp);
 		}
 	    }
 	}
@@ -1619,8 +1629,9 @@ int write_data (const char *fname, const int *list,
 	    return 1;
 	}
 	for (i=1; i<=l0; i++) {
-	    if (pdinfo->vector[list[i]]) {
-		pmax[i-1] = get_precision(&Z[list[i]][pdinfo->t1], tsamp, 10);
+	    v = list[i];
+	    if (pdinfo->vector[v]) {
+		pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 10);
 	    } else {
 		pmax[i-1] = SCALAR_DIGITS;
 	    }
@@ -1638,21 +1649,22 @@ int write_data (const char *fname, const int *list,
 		fprintf(fp, "%s ", pdinfo->S[t]);
 	    }
 	    for (i=1; i<=l0; i++) {
-		if (na(Z[list[i]][t])) {
+		v = list[i];
+		if (na(Z[v][t])) {
 		    fprintf(fp, "-999 ");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		    fprintf(fp, "%.12g ", 
-			    (pdinfo->vector[list[i]])? 
-			    Z[list[i]][t] : Z[list[i]][0]);
+			    (pdinfo->vector[v])? 
+			    Z[v][t] : Z[v][0]);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], 
-			    (pdinfo->vector[list[i]])? 
-			    Z[list[i]][t] : Z[list[i]][0]);
+			    (pdinfo->vector[v])? 
+			    Z[v][t] : Z[v][0]);
 		}
 	    }
-	    fputs("\n", fp);
+	    fputc('\n', fp);
 	}
-	fputs("\n", fp);
+	fputc('\n', fp);
     } else if (opt == GRETL_DATA_CSV || opt == GRETL_DATA_R) { 
 	/* export CSV or GNU R (dataframe) */
 	char delim;
@@ -1679,11 +1691,12 @@ int write_data (const char *fname, const int *list,
 		fprintf(fp, "\"%s\"%c", tmp, delim);
 	    }
 	    for (i=1; i<=l0; i++) { 
-		xx = (pdinfo->vector[list[i]])? Z[list[i]][t] : Z[list[i]][0];
+		v = list[i];
+		xx = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
 		if (na(xx)) {
 		    fprintf(fp, "NA");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.12g", xx);;
+		    fprintf(fp, "%.12g", xx);
 		} else {
 		    fprintf(fp, "%.*f", pmax[i-1], xx);
 		}
@@ -1704,7 +1717,8 @@ int write_data (const char *fname, const int *list,
 
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    for (i=1; i<=l0; i++) {
-		xx = (pdinfo->vector[list[i]])? Z[list[i]][t] : Z[list[i]][0];
+		v = list[i];
+		xx = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
 		if (na(xx)) {
 		    fputs("NA", fp);
 		} else {
@@ -1742,10 +1756,11 @@ int write_data (const char *fname, const int *list,
     } else if (opt == GRETL_DATA_R_ALT) { 
 	/* export GNU R (structure) */
 	for (i=1; i<=l0; i++) {
-	    fprintf(fp, "\"%s\" <-\n", pdinfo->varname[list[i]]);
+	    v = list[i];
+	    fprintf(fp, "\"%s\" <-\n", pdinfo->varname[v]);
 	    fprintf(fp, "structure(c(");
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		xx = (pdinfo->vector[list[i]])? Z[list[i]][t] : Z[list[i]][0];
+		xx = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
 		if (na(xx)) {
 		    fprintf(fp, "NA");
 		} else {
@@ -1772,12 +1787,13 @@ int write_data (const char *fname, const int *list,
 		n, list[0]);
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    for (i=1; i<=list[0]; i++) {
+		v = list[i];
 		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.12g ", Z[list[i]][t]);
+		    fprintf(fp, "%.12g ", Z[v][t]);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], 
-			    (pdinfo->vector[list[i]])? 
-			    Z[list[i]][t] : Z[list[i]][0]);
+			    (pdinfo->vector[v])? 
+			    Z[v][t] : Z[v][0]);
 		}
 	    }
 	    fputc('\n', fp);
@@ -1804,7 +1820,8 @@ int write_data (const char *fname, const int *list,
 	    fputc('\n', fp);
 
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		xx = (pdinfo->vector[list[i]])? Z[list[i]][t] : Z[list[i]][0];
+		v = list[i];
+		xx = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
 		if (na(xx)) {
 		    fprintf(fp, "-9999.99");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
@@ -5537,4 +5554,156 @@ int transpose_data (double ***pZ, DATAINFO *pdinfo)
 void dataset_set_regular_markers (DATAINFO *pdinfo)
 {
     pdinfo->markers = REGULAR_MARKERS;
+}
+
+#define DBNA  -999.0 /* missing value code for gretl databases */
+
+static int 
+open_db_files (const char *fname, FILE **fidx, FILE **fbin, int *append)
+{
+    FILE *fp;
+    char base[FILENAME_MAX];
+    char idxname[FILENAME_MAX];
+    char binname[FILENAME_MAX];
+    char *p;
+
+    strcpy(base, fname);
+    p = strchr(base, '.');
+    if (p != NULL) {
+	*p = 0;
+    }
+
+    strcpy(idxname, base);
+    strcat(idxname, ".idx");
+
+    fp = fopen(idxname, "r");
+    if (fp != NULL) {
+	*append = 1;
+	fclose(fp);
+    }
+
+    *fidx = fopen(idxname, (*append)? "a" : "w");
+    if (*fidx == NULL) {
+	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), idxname);
+	return 1;
+    }
+
+    strcpy(binname, base);
+    strcat(binname, ".bin");
+    
+    *fbin = fopen(binname, (*append)? "ab" : "wb");
+    if (*fbin == NULL) {
+	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), binname);
+	fclose(*fidx);
+	if (*append == 0) {
+	    remove(idxname);
+	}
+	return 1;
+    }
+
+    fprintf(stderr, "Writing gretl database index file '%s'\n", idxname);
+    fprintf(stderr, "Writing gretl database binary file '%s'\n", binname);
+
+    return 0;
+}
+
+static void dotify (char *s)
+{
+    while (*s) {
+	if (*s == ':') *s = '.';
+	s++;
+    }
+}
+
+static char pd_char (int pd)
+{
+    if (pd == 4) return 'Q';
+    if (pd == 12) return 'M';
+    return 'A';
+}
+
+/* 
+   For reference, example of first few lines of a gretl .idx file:
+
+    # Standard and Poors (US stock price indices)
+    sp11  DJ Industrial Average Open
+    M  1950.01 - 2005.02  n = 662
+    sp12  DJ Industrial Average High
+    M  1950.01 - 2005.02  n = 662
+*/
+
+static int write_db_data (const char *fname, const int *list, 
+			  const double **Z, const DATAINFO *pdinfo) 
+{
+    char stobs[OBSLEN], endobs[OBSLEN];
+    FILE *fbin, *fidx;
+    int append = 0;
+    float val;
+    int t1, t2;
+    int i, t;
+
+    if (!dataset_is_time_series(pdinfo) ||
+	(pdinfo->pd != 1 && pdinfo->pd != 4 && pdinfo->pd != 12)) {
+	return 1;
+    }
+
+    if (open_db_files(fname, &fidx, &fbin, &append)) {
+	return 1;
+    }
+
+    if (!append) {
+	/* FIXME */
+	fprintf(fidx, "# No description\n");
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	int v = list[i];
+	int nobs;
+
+	if (!pdinfo->vector[v]) {
+	    continue;
+	}
+	
+	t1 = 0;
+	for (t=0; t<pdinfo->n; t++) {
+	    if (na(Z[v][t])) t1++;
+	    else break;
+	}
+
+	t2 = pdinfo->n - 1;
+	for (t=pdinfo->n - 1; t>=t1; t--) {
+	    if (na(Z[v][t])) t2--;
+	    else break;
+	}
+
+	nobs = t2 - t1 + 1;
+	if (nobs <= 0) {
+	    continue;
+	}
+
+	ntodate(stobs, t1, pdinfo);
+	ntodate(endobs, t2, pdinfo);
+	dotify(stobs);
+	dotify(endobs);	
+
+	/* FIXME character encoding for varlabel? */
+	fprintf(fidx, "%s  %s\n", pdinfo->varname[v], VARLABEL(pdinfo, v));
+
+	fprintf(fidx, "%c  %s - %s  n = %d\n", pd_char(pdinfo->pd),
+		stobs, endobs, nobs);
+
+	for (t=t1; t<=t2; t++) {
+	    if (na(Z[v][t])) {
+		val = DBNA;
+	    } else {
+		val = Z[v][t];
+	    }
+	    fwrite(&val, sizeof val, 1, fbin);
+	}
+    }
+
+    fclose(fidx);
+    fclose(fbin);
+
+    return 0;
 }

@@ -131,7 +131,8 @@ struct gretl_option gretl_opts[] = {
     { SPEARMAN, OPT_O, "verbose" },
     { SQUARE,   OPT_O, "cross" },
     { STORE,    OPT_C, "csv" },
-    { STORE,    OPT_D, "dat" },
+    { STORE,    OPT_D, "database" },
+    { STORE,    OPT_G, "dat" },
     { STORE,    OPT_M, "gnu-octave" },
     { STORE,    OPT_R, "gnu-R" },
     { STORE,    OPT_T, "traditional" },
@@ -188,6 +189,7 @@ struct flag_match flag_matches[] = {
     { OPT_B, 'b' },
     { OPT_C, 'c' },
     { OPT_D, 'd' },
+    { OPT_G, 'g' },
     { OPT_I, 'i' },
     { OPT_L, 'l' },
     { OPT_M, 'm' },
@@ -208,10 +210,10 @@ struct flag_match flag_matches[] = {
 /* note: 'f' is not treated as an option flag for now */
 
 #define isflag(c) (c == 'a' || c == 'b' || c == 'c' || c == 'd' || \
-                   c == 'i' || c == 'l' || c == 'm' || c == 'p' || \
-                   c == 'n' || c == 'o' || c == 'q' || c == 'r' || \
-                   c == 's' || c == 't' || c == 'v' || c == 'w' || \
-                   c == 'x' || c == 'z')
+                   c == 'g' || c == 'i' || c == 'l' || c == 'm' || \
+                   c == 'p' || c == 'n' || c == 'o' || c == 'q' || \
+                   c == 'r' || c == 's' || c == 't' || c == 'v' || \
+                   c == 'w' || c == 'x' || c == 'z')
 
 static gretlopt opt_from_flag (unsigned char c)
 {

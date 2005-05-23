@@ -27,6 +27,8 @@
 
 #undef DB_DEBUG
 
+#define DBNA -999.0 /* missing value code for databases */
+
 #define RECNUM long
 #define NAMELENGTH 16
 #define RATSCOMMENTLENGTH 80
@@ -113,7 +115,7 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
 	fread(&val, sizeof val, 1, fp);
 	sprintf(numstr, "%g", val);
 	Z[1][t] = atof(numstr);
-	if (Z[1][t] == -999.0) {
+	if (Z[1][t] == DBNA) {
 	    Z[1][t] = NADBL;
 	}
     }
@@ -221,21 +223,18 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 
     while (!gotit) {
 
-	if (fgets(line1, 255, fp) == NULL) break;
+	if (fgets(line1, sizeof line1, fp) == NULL) break;
 
 	if (*line1 == '#') continue;
-	line1[255] = 0;
 
 	if (sscanf(line1, "%8s", sername) != 1) break;
-	sername[8] = 0;
 
 	if (!strcmp(series, sername)) {
 	    gotit = 1;
 	    strcpy(sinfo->varname, sername);
 	}
 
-	fgets(line2, 71, fp);
-	line2[71] = 0;
+	fgets(line2, sizeof line2, fp);
 
 	if (gotit) {
 	    get_native_series_comment(sinfo, line1);
@@ -269,8 +268,6 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 
     return err;
 }
-
-/* ........................................................... */
 
 /* Figure the ending observation date of a series */
 
@@ -344,12 +341,10 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
 	} else {
 	    startfrac = 4;
 	}
-    }
-    else if (dinfo->info == 12) {
+    } else if (dinfo->info == 12) {
 	sprintf(pdstr, ".%02d", dinfo->month);
 	startfrac = dinfo->month;
-    }
-    else if (dinfo->info == 1) {
+    } else if (dinfo->info == 1) {
 	startfrac = 0;
     } else {
 	fprintf(stderr, I_("frequency (%d) does not make seem to make sense"),

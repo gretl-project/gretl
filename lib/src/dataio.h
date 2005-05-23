@@ -29,7 +29,8 @@ typedef enum {
     GRETL_DATA_R_ALT,     /* data in alternate Gnu R format */
     GRETL_DATA_GZIPPED,   /* gzipped data */
     GRETL_DATA_TRAD,      /* traditional (ESL-style) data */
-    GRETL_DATA_DAT        /* data in PcGive format */
+    GRETL_DATA_DAT,       /* data in PcGive format */
+    GRETL_DATA_DB         /* gretl native database format */
 } gretl_data_format;
 
 typedef enum {

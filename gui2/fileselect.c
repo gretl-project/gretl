@@ -93,6 +93,7 @@ static struct extmap action_map[] = {
     { SAVE_GZDATA,       ".gdt" },
     { SAVE_BIN1,         ".gdt" },
     { SAVE_BIN2,         ".gdt" },
+    { SAVE_DBDATA,       ".bin" },
     { SAVE_CMDS,         ".inp" },
     { SAVE_SCRIPT,       ".inp" },
     { SAVE_CONSOLE,      ".inp" },
@@ -138,11 +139,12 @@ static gretlopt action_to_opt (const int action)
     case SAVE_GZDATA:   return OPT_Z;
     case SAVE_BIN1:     return OPT_S;
     case SAVE_BIN2:     return OPT_O;
+    case SAVE_DBDATA:   return OPT_D;
     case EXPORT_OCTAVE: return OPT_M;
     case EXPORT_R:      return OPT_R;
     case EXPORT_R_ALT:  return OPT_A;
     case EXPORT_CSV:    return OPT_C;
-    case EXPORT_DAT:    return OPT_D;
+    case EXPORT_DAT:    return OPT_G; /* PcGive */
     default: return 0L;
     }
 }
@@ -519,7 +521,7 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
     if (SAVE_DATA_ACTION(action)) {
 	int overwrite = 0;
 
-	if (!strcmp(fname, paths.datfile)) {
+	if (!strcmp(fname, paths.datfile) || action == SAVE_DBDATA) {
 	    overwrite = 1;
 	}
 	do_store(fname, action_to_opt(action), overwrite);
@@ -620,6 +622,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{SAVE_GZDATA,  { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{SAVE_BIN1,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{SAVE_BIN2,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{SAVE_DBDATA,  { N_("gretl database files (*.bin)"), "*.bin" }},
 	{SAVE_CMDS,    { N_("gretl command files (*.inp)"), "*.inp" }},
 	{SAVE_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},
 	{SAVE_CONSOLE, { N_("gretl command files (*.inp)"), "*.inp" }},

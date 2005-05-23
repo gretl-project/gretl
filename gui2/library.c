@@ -4695,8 +4695,8 @@ void gui_transpose_data (gpointer p, guint u, GtkWidget *w)
 
 /* ........................................................... */
 
-#define DATA_EXPORT(o) (o == OPT_M || o == OPT_R || \
-                        o == OPT_A || o == OPT_C)
+#define DATA_EXPORT(o) (o == OPT_M || o == OPT_R || o == OPT_G || \
+                        o == OPT_A || o == OPT_C || o == OPT_D)
 
 int do_store (char *savename, gretlopt oflag, int overwrite)
 {
@@ -4719,7 +4719,7 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
 	tmp = g_strdup_printf("store '%s' %s%s", savename, 
 			      (showlist)? storelist : "", flagstr);
     } else if (has_suffix(savename, ".dat")) { 
-	/* saving in "tradtional" mode as ".dat" */
+	/* saving in "traditional" mode as ".dat" */
 	tmp = g_strdup_printf("store '%s' %s -t", savename, 
 			      (showlist)? storelist : "");
 	oflag = OPT_T;
@@ -4748,13 +4748,15 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
     err = cmd_init(tmp);
     if (err) goto store_get_out;
 
-    /* back up existing datafile if need be */
-    if ((fp = gretl_fopen(savename, "rb")) && fgetc(fp) != EOF &&
-	fclose(fp) == 0) {
-	tmp = g_strdup_printf("%s~", savename);
-	if (copyfile(savename, tmp)) {
-	    err = 1;
-	    goto store_get_out;
+    /* back up existing datafile if need be (not for databases) */
+    if (!(oflag & OPT_D)) {
+	if ((fp = gretl_fopen(savename, "rb")) && fgetc(fp) != EOF &&
+	    fclose(fp) == 0) {
+	    tmp = g_strdup_printf("%s~", savename);
+	    if (copyfile(savename, tmp)) {
+		err = 1;
+		goto store_get_out;
+	    }
 	}
     }
 

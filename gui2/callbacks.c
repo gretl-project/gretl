@@ -289,6 +289,7 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     case SAVE_GZDATA:
     case SAVE_BIN1:
     case SAVE_BIN2:
+    case SAVE_DBDATA:
 	data_save_selection_wrapper(file_code);
 	break;
     case EXPORT_CSV:
