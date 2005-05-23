@@ -1546,6 +1546,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     n_est = T - K;
+
     /* set sample based on model to be tested */
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = pmod->t1 + K - 1;    
@@ -1560,7 +1561,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	for (j=0; j<n_est && !err; j++) {
-	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, OPT_C, 0.0);
+	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, (OPT_C | OPT_A), 0.0);
 	    err = cum_mod.errcode;
 	    if (err) {
 		errmsg(err, prn);
