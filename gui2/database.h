@@ -9,5 +9,7 @@ void grab_remote_db (GtkWidget *w, gpointer data);
 gint populate_dbfilelist (windata_t *ddata);
 void display_db_error (windata_t *dbwin, char *buf);
 void do_compact_data_set (void);
+gchar *get_db_description (const char *binname);
+int write_db_description (const char *binname, const char *descrip);
 
 #endif

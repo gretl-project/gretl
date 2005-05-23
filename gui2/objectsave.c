@@ -299,7 +299,7 @@ int maybe_save_graph (const CMD *cmd, const char *fname, int code,
 
     if (*savename == 0) return 0;
 
-    get_default_dir(savedir);
+    get_default_dir(savedir, SAVE_THIS_GRAPH);
 
     tmp = g_strdup(savename);
     plotfile = g_strdup_printf("%ssession.%s", savedir, 

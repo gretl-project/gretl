@@ -117,6 +117,7 @@ LIBSRC = bhhh_max.c \
 	compat.c \
 	dataio.c \
 	dbread.c \
+	dbwrite.c \
 	describe.c \
         discrete.c \
 	estimate.c \

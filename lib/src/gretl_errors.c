@@ -75,8 +75,10 @@ const char *gretl_error_messages[] = {
     N_("The convergence criterion was not met"),                 /* E_NOCONV */
     N_("The operation was canceled"),                            /* E_CANCEL */
     N_("Missing values encountered"),                            /* E_MISSDATA */
+    NULL,                                                        /* E_NAN */
+    NULL,                                                        /* E_DB_DUP */
     NULL,                                                        /* E_OK */
-    NULL                                                         /* E_NAN */
+    NULL                                                         /* E_MAX */
 };
 
 /**

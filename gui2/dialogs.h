@@ -49,6 +49,8 @@ void copy_format_dialog (windata_t *vwin, int multicopy);
 
 void varinfo_dialog (int varnum, int full);
 
+void database_description_dialog (const char *binname);
+
 int select_var_from_list (const int *list, const char *query);
 
 void sample_range_dialog (gpointer p, guint u, GtkWidget *w);

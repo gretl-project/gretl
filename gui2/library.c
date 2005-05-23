@@ -28,6 +28,7 @@
 #include "gretl_func.h"
 #include "modelspec.h"
 #include "forecast.h"
+#include "dbwrite.h"
 #include "menustate.h"
 #include "dlgutils.h"
 #include "ssheet.h"
@@ -4695,10 +4696,32 @@ void gui_transpose_data (gpointer p, guint u, GtkWidget *w)
 
 /* ........................................................... */
 
-#define DATA_EXPORT(o) (o == OPT_M || o == OPT_R || o == OPT_G || \
-                        o == OPT_A || o == OPT_C || o == OPT_D)
+static int db_write_response (const char *savename, const int *list)
+{
+    gchar *msg;
+    int resp, ret = 0;
 
-int do_store (char *savename, gretlopt oflag, int overwrite)
+    msg = g_strdup_printf("%s\n%s", get_gretl_errmsg(),
+			  _("OK to overwrite?"));
+
+    resp = yes_no_dialog("gretl", msg, 0);
+    if (resp == GRETL_NO) {
+	ret = 1;
+    } else {
+	ret = write_db_data(savename, list, OPT_F,
+			    (const double **) Z, datainfo);
+    }
+
+    g_free(msg);  
+
+    return ret;
+}
+
+#define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | OPT_C | OPT_D))
+
+#define WRITING_DB(o) (o & OPT_D)
+
+int do_store (char *savename, gretlopt opt, int overwrite)
 {
     gchar *msg, *tmp = NULL;
     FILE *fp;
@@ -4712,9 +4735,9 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
     /* "storelist" is a global */
     if (storelist == NULL) showlist = 0;
 
-    if (oflag != 0) { 
+    if (opt != OPT_NONE) { 
 	/* not a bog-standard native save */
-	const char *flagstr = print_flags(oflag, STORE);
+	const char *flagstr = print_flags(opt, STORE);
 
 	tmp = g_strdup_printf("store '%s' %s%s", savename, 
 			      (showlist)? storelist : "", flagstr);
@@ -4722,7 +4745,7 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
 	/* saving in "traditional" mode as ".dat" */
 	tmp = g_strdup_printf("store '%s' %s -t", savename, 
 			      (showlist)? storelist : "");
-	oflag = OPT_T;
+	opt = OPT_T;
     } else {
 	/* standard data save */
 	tmp = g_strdup_printf("store '%s' %s", savename, 
@@ -4745,11 +4768,13 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
     err = check_specific_command(tmp);
     if (err) goto store_get_out;
 
-    err = cmd_init(tmp);
-    if (err) goto store_get_out;
+    if (!WRITING_DB(opt)) {
+	err = cmd_init(tmp);
+	if (err) goto store_get_out;
+    }
 
     /* back up existing datafile if need be (not for databases) */
-    if (!(oflag & OPT_D)) {
+    if (!WRITING_DB(opt)) {
 	if ((fp = gretl_fopen(savename, "rb")) && fgetc(fp) != EOF &&
 	    fclose(fp) == 0) {
 	    tmp = g_strdup_printf("%s~", savename);
@@ -4758,20 +4783,29 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
 		goto store_get_out;
 	    }
 	}
-    }
+    } 
 
     /* actually write the data to file */
-    if (write_data(savename, cmd.list, (const double **) Z, datainfo, 
-		   oflag, &paths)) {
-	sprintf(errtext, _("Write of data file failed\n%s"),
-		get_gretl_errmsg());
-	errbox(errtext);
-	err = 1;
-	goto store_get_out;
-    }
+    err = write_data(savename, cmd.list, (const double **) Z, datainfo, 
+		     opt, &paths);
+
+    if (err) {
+	if (WRITING_DB(opt) && err == E_DB_DUP) {
+	    err = db_write_response(savename, cmd.list);
+	    if (err) {
+		goto store_get_out;
+	    }
+	} else {
+	    sprintf(errtext, _("Write of data file failed\n%s"),
+		    get_gretl_errmsg());
+	    errbox(errtext);
+	    err = 1;
+	    goto store_get_out;
+	} 
+    }   
 
     /* record that data have been saved, etc. */
-    if (!DATA_EXPORT(oflag)) {
+    if (!DATA_EXPORT(opt)) {
 	mkfilelist(FILE_LIST_DATA, savename);
 	if (paths.datfile != savename) {
 	    strcpy(paths.datfile, savename);
@@ -4785,9 +4819,13 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
     }
 
     /* tell the user */
-    msg = g_strdup_printf(_("%s written OK"), savename);
-    infobox(msg);
-    g_free(msg);
+    if (WRITING_DB(opt)) {
+	database_description_dialog(savename);
+    } else {
+	msg = g_strdup_printf(_("%s written OK"), savename);
+	infobox(msg);
+	g_free(msg);
+    }
 
  store_get_out:
 

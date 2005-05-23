@@ -17,6 +17,9 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#ifndef DATAIO_H
+#define DATAIO_H
+
 #include <stdio.h>
 #include <string.h>
 
@@ -31,7 +34,7 @@ typedef enum {
     GRETL_DATA_TRAD,      /* traditional (ESL-style) data */
     GRETL_DATA_DAT,       /* data in PcGive format */
     GRETL_DATA_DB         /* gretl native database format */
-} gretl_data_format;
+} GretlDataFormat;
 
 typedef enum {
     GRETL_NATIVE_DATA,    /* gretl native format data file */
@@ -45,28 +48,30 @@ typedef enum {
     GRETL_NATIVE_DB,      /* gretl database */
     GRETL_RATS_DB,        /* RATS 4.0 database */
     GRETL_UNRECOGNIZED    /* none of the above */
-} gretl_filetype;
+} GretlFileType;
 
 typedef enum {
     CLEAR_FULL,           /* fully clear the dataset */
     CLEAR_SUBSAMPLE       /* dataset is sub-sampled: clear partially */
-} data_clear_code;
+} DataClearCode;
 
 typedef enum {
     DATA_NONE,    /* no dataset is currently open */
     DATA_CLEAR,   /* dataset is open: dataset info should be cleared */
     DATA_APPEND   /* dataset is open: attempt to append new data */
-} data_open_code;
+} DataOpenCode;
 
 typedef enum {
     VARNAME_RESERVED = 1, /* vername is a gretl reserved name */
     VARNAME_FIRSTCHAR,    /* first character is not alphabetical */
     VARNAME_BADCHAR       /* illegal character in second or subsequent place */
-} gretl_varname_errors;
+} GretlVarnameError;
 
 
 #define free_datainfo(p) do { if (p != NULL) { clear_datainfo(p, 0); free(p); } \
                             } while (0);
+
+#define DBNA  -999.0 /* missing value code for gretl databases */
 
 /* functions follow */
 
@@ -110,7 +115,7 @@ double get_date_x (int pd, const char *obs);
 
 int write_data (const char *fname, const int *list, 
 		const double **Z, const DATAINFO *pdinfo, 
-	        gretlopt flag, PATHS *ppaths);
+	        gretlopt opt, PATHS *ppaths);
 
 int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn);
 
@@ -124,7 +129,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 
 int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, 
 		    char *datfile, PATHS *ppaths, 
-		    data_open_code code, PRN *prn);
+		    DataOpenCode code, PRN *prn);
 
 int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
 		   int data_status, int length,
@@ -141,7 +146,7 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 
 int add_case_markers (DATAINFO *pdinfo, const char *fname);
 
-int detect_filetype (char *fname, PATHS *ppaths, PRN *prn);
+GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn);
 
 int check_varname (const char *varname);
 
@@ -154,3 +159,4 @@ int check_atof (const char *numstr);
 
 int transpose_data (double ***pZ, DATAINFO *pdinfo);
 
+#endif /* DATAIO_H */

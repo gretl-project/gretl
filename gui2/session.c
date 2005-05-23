@@ -421,7 +421,7 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
     
     errno = 0;
 
-    get_default_dir(savedir);
+    get_default_dir(savedir, SAVE_THIS_GRAPH);
 
     if (code == GRETL_GNUPLOT_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;

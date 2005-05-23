@@ -132,6 +132,7 @@ struct gretl_option gretl_opts[] = {
     { SQUARE,   OPT_O, "cross" },
     { STORE,    OPT_C, "csv" },
     { STORE,    OPT_D, "database" },
+    { STORE,    OPT_F, "overwrite" },
     { STORE,    OPT_G, "dat" },
     { STORE,    OPT_M, "gnu-octave" },
     { STORE,    OPT_R, "gnu-R" },
@@ -189,6 +190,7 @@ struct flag_match flag_matches[] = {
     { OPT_B, 'b' },
     { OPT_C, 'c' },
     { OPT_D, 'd' },
+    { OPT_F, 'f' },
     { OPT_G, 'g' },
     { OPT_I, 'i' },
     { OPT_L, 'l' },
@@ -207,13 +209,9 @@ struct flag_match flag_matches[] = {
     { 0L,   '\0' }
 };
 
-/* note: 'f' is not treated as an option flag for now */
+static const char *ok_flags = "abcdfgilmnopqrstvwxz";
 
-#define isflag(c) (c == 'a' || c == 'b' || c == 'c' || c == 'd' || \
-                   c == 'g' || c == 'i' || c == 'l' || c == 'm' || \
-                   c == 'p' || c == 'n' || c == 'o' || c == 'q' || \
-                   c == 'r' || c == 's' || c == 't' || c == 'v' || \
-                   c == 'w' || c == 'x' || c == 'z')
+#define isflag(c) (strchr(ok_flags, c) != NULL)
 
 static gretlopt opt_from_flag (unsigned char c)
 {

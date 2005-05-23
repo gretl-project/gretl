@@ -26,6 +26,7 @@
 #include "textutil.h"
 #include "menustate.h"
 #include "dlgutils.h"
+#include "database.h"
 
 void menu_exit_check (GtkWidget *w, gpointer data)
 {
@@ -1149,6 +1150,88 @@ void varinfo_dialog (int varnum, int full)
 	gretl_set_window_modal(vset->dlg);
 	gtk_main();
     }
+}
+
+static void db_descrip_callback (GtkWidget *w, GtkWidget *dlg)
+{
+    GtkWidget *entry;
+    gchar *fname;
+
+    entry = g_object_get_data(G_OBJECT(dlg), "entry");
+    fname = g_object_get_data(G_OBJECT(dlg), "fname");
+
+    if (entry != NULL && fname != NULL) {
+	const gchar *newdesc = gtk_entry_get_text(GTK_ENTRY(entry));
+
+	write_db_description(fname, newdesc);
+    }
+    
+    gtk_widget_destroy(dlg);
+}
+
+static void free_db_fname (GtkWidget *w, char *fname)
+{
+    g_free(fname);
+}
+
+void database_description_dialog (const char *binname)
+{
+    GtkWidget *dlg, *entry;
+    GtkWidget *tempwid, *hbox;
+    gchar *fname, *descrip;
+
+    descrip = get_db_description(binname);
+    if (descrip == NULL) {
+	return;
+    }
+
+    fname = g_strdup(binname);
+
+    dlg = gtk_dialog_new();
+
+    gtk_window_set_title(GTK_WINDOW(dlg), _("gretl: database description"));
+    set_dialog_border_widths(dlg);
+    gtk_window_set_position(GTK_WINDOW(dlg), GTK_WIN_POS_MOUSE);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tempwid = gtk_label_new (_("description:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
+    gtk_widget_show(tempwid);
+
+    g_signal_connect(G_OBJECT(dlg), "destroy", 
+		     G_CALLBACK(free_db_fname), fname);
+
+#ifdef OLD_GTK
+    entry = gtk_entry_new_with_max_length(64);
+#else
+    entry = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(entry), 64);
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), 32);
+#endif
+
+    gtk_entry_set_text(GTK_ENTRY(entry), descrip);
+    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 0);
+    gtk_entry_set_editable(GTK_ENTRY(entry), TRUE);
+    gtk_widget_show(entry); 
+    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), 
+		       hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox); 
+
+    /* set data on dialog */
+    g_object_set_data(G_OBJECT(dlg), "entry", entry);
+    g_object_set_data(G_OBJECT(dlg), "fname", fname);
+    
+    /* Create the "OK" button */
+    tempwid = ok_button(GTK_DIALOG(dlg)->action_area);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(db_descrip_callback), dlg);
+    gtk_widget_grab_default(tempwid);
+    gtk_widget_show(tempwid);
+
+    gtk_widget_show(dlg);
+    gretl_set_window_modal(dlg);
 }
 
 /* apparatus for setting sample range */

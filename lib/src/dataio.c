@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_string_table.h"
+#include "dbwrite.h"
 
 #include <ctype.h>
 #include <time.h>
@@ -43,11 +44,9 @@ static int writehdr (const char *hdrfile, const int *list,
 static double obs_float (const DATAINFO *pdinfo, int end);
 static int write_xmldata (const char *fname, const int *list, 
 			  const double **Z, const DATAINFO *pdinfo, 
-			  int opt, PATHS *ppaths);
+			  GretlDataFormat fmt, PATHS *ppaths);
 static int xmlfile (const char *fname);
 static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn);
-static int write_db_data (const char *fname, const int *list, 
-			  const double **Z, const DATAINFO *pdinfo); 
 
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
@@ -1479,30 +1478,31 @@ int get_precision (const double *x, int n, int placemax)
     return pmax;
 }
 
-static int data_option (gretlopt flag)
+static GretlDataFormat data_format_from_opt (gretlopt opt)
 {
-    switch (flag) {
-    case OPT_S:
-	return GRETL_DATA_FLOAT;
-    case OPT_T:
-	return GRETL_DATA_TRAD;
-    case OPT_O:
-	return GRETL_DATA_DOUBLE;
-    case OPT_M:
-	return GRETL_DATA_OCTAVE;
-    case OPT_C:
-	return GRETL_DATA_CSV;
-    case OPT_R:
-	return GRETL_DATA_R;
-    case OPT_Z:
-	return GRETL_DATA_GZIPPED;
-    case OPT_D:
-        return GRETL_DATA_DB;
-    case OPT_G:
-        return GRETL_DATA_DAT;
-    default:
-	return 0;
+    GretlDataFormat fmt = 0;
+    
+    if (opt & OPT_S) {
+	fmt = GRETL_DATA_FLOAT;	
+    } else if (opt & OPT_T) {
+	fmt = GRETL_DATA_TRAD;
+    } else if (opt & OPT_O) {
+	fmt = GRETL_DATA_DOUBLE;
+    } else if (opt & OPT_M) {
+	fmt = GRETL_DATA_OCTAVE;
+    } else if (opt & OPT_R) {
+	fmt = GRETL_DATA_R;
+    } else if (opt & OPT_C) {
+	fmt = GRETL_DATA_CSV;
+    } else if (opt & OPT_Z) {
+	fmt = GRETL_DATA_GZIPPED;
+    } else if (opt & OPT_D) {
+	fmt = GRETL_DATA_DB;
+    } else if (opt & OPT_G) {
+	fmt = GRETL_DATA_DAT;
     }
+
+    return fmt;
 }
 
 /**
@@ -1511,7 +1511,7 @@ static int data_option (gretlopt flag)
  * @list: list of variables to write.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @flag: option flag for format in which to write the data (see #data_options).
+ * @opt: option flag indicating format in which to write the data.
  * @ppaths: pointer to paths information (should be NULL when not
  * called from gui).
  * 
@@ -1523,9 +1523,10 @@ static int data_option (gretlopt flag)
 
 int write_data (const char *fname, const int *list, 
 		const double **Z, const DATAINFO *pdinfo, 
-		gretlopt flag, PATHS *ppaths)
+		gretlopt opt, PATHS *ppaths)
 {
-    int i, t, v, l0, opt;
+    int i, t, v, l0;
+    GretlDataFormat fmt;
     char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     int n = pdinfo->n;
@@ -1541,17 +1542,17 @@ int write_data (const char *fname, const int *list,
 
     l0 = list[0];
 
-    opt = data_option(flag);
+    fmt = data_format_from_opt(opt);
 
-    if (opt == 0 || opt == GRETL_DATA_GZIPPED) {
-	return write_xmldata(fname, list, Z, pdinfo, opt, ppaths);
+    if (fmt == 0 || fmt == GRETL_DATA_GZIPPED) {
+	return write_xmldata(fname, list, Z, pdinfo, fmt, ppaths);
     }
 
-    if (opt == GRETL_DATA_DB) {
-	return write_db_data(fname, list, Z, pdinfo);
+    if (fmt == GRETL_DATA_DB) {
+	return write_db_data(fname, list, opt, Z, pdinfo);
     }
 
-    if (opt == GRETL_DATA_CSV && pdinfo->delim == ',' && 
+    if (fmt == GRETL_DATA_CSV && pdinfo->delim == ',' && 
 	',' == pdinfo->decpoint) {
 	sprintf(gretl_errmsg, _("You can't use the same character for "
 				"the column delimiter and the decimal point"));
@@ -1560,14 +1561,14 @@ int write_data (const char *fname, const int *list,
 
     strcpy(datfile, fname);
 
-    if (opt == GRETL_DATA_R && pdinfo->structure == TIME_SERIES) {
-	opt = GRETL_DATA_R_ALT;
+    if (fmt == GRETL_DATA_R && pdinfo->structure == TIME_SERIES) {
+	fmt = GRETL_DATA_R_ALT;
     }
 
     /* write header and label files if not exporting to other formats */
-    if (opt != GRETL_DATA_R && opt != GRETL_DATA_R_ALT && 
-	opt != GRETL_DATA_CSV && opt != GRETL_DATA_OCTAVE &&
-	opt != GRETL_DATA_DAT) {
+    if (fmt != GRETL_DATA_R && fmt != GRETL_DATA_R_ALT && 
+	fmt != GRETL_DATA_CSV && fmt != GRETL_DATA_OCTAVE &&
+	fmt != GRETL_DATA_DAT) {
 	if (!has_suffix(datfile, ".gz")) {
 	    switch_ext(hdrfile, datfile, "hdr");
 	    switch_ext(lblfile, datfile, "lbl");
@@ -1575,7 +1576,7 @@ int write_data (const char *fname, const int *list,
 	    gz_switch_ext(hdrfile, datfile, "hdr");
 	    gz_switch_ext(lblfile, datfile, "lbl");
 	}
-	if (writehdr(hdrfile, list, pdinfo, opt)) {
+	if (writehdr(hdrfile, list, pdinfo, fmt)) {
 	    fprintf(stderr, I_("Write of header file failed"));
 	    return 1;
 	}
@@ -1586,7 +1587,7 @@ int write_data (const char *fname, const int *list,
     }
 
     /* open file for output */
-    if (opt == GRETL_DATA_FLOAT || opt == GRETL_DATA_DOUBLE) {
+    if (fmt == GRETL_DATA_FLOAT || fmt == GRETL_DATA_DOUBLE) {
 	fp = gretl_fopen(datfile, "wb");
     } else {
 	fp = gretl_fopen(datfile, "w");
@@ -1594,7 +1595,7 @@ int write_data (const char *fname, const int *list,
 
     if (fp == NULL) return 1;
 
-    if (opt == GRETL_DATA_FLOAT) { /* single-precision binary */
+    if (fmt == GRETL_DATA_FLOAT) { /* single-precision binary */
 	float x;
 
 	for (i=1; i<=l0; i++) {
@@ -1607,7 +1608,7 @@ int write_data (const char *fname, const int *list,
 		fwrite(&x, sizeof x, 1, fp);
 	    }
 	}
-    } else if (opt == GRETL_DATA_DOUBLE) { /* double-precision binary */
+    } else if (fmt == GRETL_DATA_DOUBLE) { /* double-precision binary */
 	for (i=1; i<=l0; i++) {
 	    v = list[i];
 	    if (pdinfo->vector[v]) {
@@ -1620,8 +1621,8 @@ int write_data (const char *fname, const int *list,
 	}
     }
 
-    if (opt == GRETL_DATA_CSV || opt == GRETL_DATA_OCTAVE || 
-	GRETL_DATA_R || opt == GRETL_DATA_TRAD || opt == GRETL_DATA_DAT) { 
+    if (fmt == GRETL_DATA_CSV || fmt == GRETL_DATA_OCTAVE || 
+	GRETL_DATA_R || fmt == GRETL_DATA_TRAD || fmt == GRETL_DATA_DAT) { 
 	/* an ASCII variant of some sort */
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) {
@@ -1639,11 +1640,11 @@ int write_data (const char *fname, const int *list,
     }
 
 #ifdef ENABLE_NLS
-    if (opt == GRETL_DATA_CSV && pdinfo->decpoint == ',') ;
+    if (fmt == GRETL_DATA_CSV && pdinfo->decpoint == ',') ;
     else setlocale(LC_NUMERIC, "C");
 #endif
 
-    if (opt == GRETL_DATA_TRAD) { /* plain ASCII */
+    if (fmt == GRETL_DATA_TRAD) { /* plain ASCII */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (pdinfo->markers && pdinfo->S != NULL) {
 		fprintf(fp, "%s ", pdinfo->S[t]);
@@ -1665,15 +1666,15 @@ int write_data (const char *fname, const int *list,
 	    fputc('\n', fp);
 	}
 	fputc('\n', fp);
-    } else if (opt == GRETL_DATA_CSV || opt == GRETL_DATA_R) { 
+    } else if (fmt == GRETL_DATA_CSV || fmt == GRETL_DATA_R) { 
 	/* export CSV or GNU R (dataframe) */
 	char delim;
 	
-	if (opt == GRETL_DATA_CSV) delim = pdinfo->delim;
+	if (fmt == GRETL_DATA_CSV) delim = pdinfo->delim;
 	else delim = ' ';
 
 	/* variable names */
-	if (opt == GRETL_DATA_CSV) {
+	if (fmt == GRETL_DATA_CSV) {
 	    fprintf(fp, "obs%c", delim);
 	}
 	for (i=1; i<l0; i++) {
@@ -1708,7 +1709,7 @@ int write_data (const char *fname, const int *list,
 	    }
 	}
 	fputc('\n', fp);
-    } else if (opt == GRETL_DATA_R_ALT && pdinfo->structure == TIME_SERIES) {
+    } else if (fmt == GRETL_DATA_R_ALT && pdinfo->structure == TIME_SERIES) {
 	/* October, 2003: attempt at improved R time-series structure */
 	char *p, datestr[OBSLEN];
 	int subper = 1;
@@ -1753,7 +1754,7 @@ int write_data (const char *fname, const int *list,
 		fputs(")\n", fp);
 	    }
 	}
-    } else if (opt == GRETL_DATA_R_ALT) { 
+    } else if (fmt == GRETL_DATA_R_ALT) { 
 	/* export GNU R (structure) */
 	for (i=1; i<=l0; i++) {
 	    v = list[i];
@@ -1781,7 +1782,7 @@ int write_data (const char *fname, const int *list,
 	    }
 	    fprintf(fp, ")\n");
 	}
-    } else if (opt == GRETL_DATA_OCTAVE) { 
+    } else if (fmt == GRETL_DATA_OCTAVE) { 
 	/* GNU Octave: write out data as a matrix */
 	fprintf(fp, "# name: X\n# type: matrix\n# rows: %d\n# columns: %d\n", 
 		n, list[0]);
@@ -1799,7 +1800,7 @@ int write_data (const char *fname, const int *list,
 	    fputc('\n', fp);
 	}
 	fputc('\n', fp);
-    } else if (opt == GRETL_DATA_DAT) { 
+    } else if (fmt == GRETL_DATA_DAT) { 
 	/* PcGive: data file with load info */
 	int pd = pdinfo->pd;
 
@@ -2154,7 +2155,7 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
  */
 
 int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppaths, 
-		    data_open_code code, PRN *prn) 
+		    DataOpenCode code, PRN *prn) 
 {
     DATAINFO *tmpdinfo = NULL;
     double **tmpZ = NULL;
@@ -4378,11 +4379,11 @@ static int xmlfile (const char *fname)
  * Attempt to determine the type of a file to be opened in gretl:
  * data file (native, CSV or BOX), or command script.
  * 
- * Returns: integer code indicating the type of file (see #gretl_filetypes).
+ * Returns: integer code indicating the type of file.
  *
  */
 
-int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
+GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 {
     int i, c, ftype = GRETL_NATIVE_DATA;
     char teststr[5];
@@ -4504,7 +4505,7 @@ static int alt_puts (const char *s, FILE *fp, gzFile *fz)
  * @list: list of variables to write.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @gz: if non-zero, write gzipped data, else plain.
+ * @fmt: if %GRETL_DATA_GZIPPED write gzipped data, else uncompressed.
  * @ppaths: pointer to paths information (or NULL).
  * 
  * Write out in xml a data file containing the values of the given set
@@ -4516,10 +4517,11 @@ static int alt_puts (const char *s, FILE *fp, gzFile *fz)
 
 static int write_xmldata (const char *fname, const int *list, 
 			  const double **Z, const DATAINFO *pdinfo, 
-			  int gz, PATHS *ppaths)
+			  GretlDataFormat fmt, PATHS *ppaths)
 {
     FILE *fp = NULL;
     gzFile *fz = Z_NULL;
+    int gz = (fmt == GRETL_DATA_GZIPPED);
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     int *pmax = NULL;
     char startdate[OBSLEN], enddate[OBSLEN];
@@ -5556,154 +5558,3 @@ void dataset_set_regular_markers (DATAINFO *pdinfo)
     pdinfo->markers = REGULAR_MARKERS;
 }
 
-#define DBNA  -999.0 /* missing value code for gretl databases */
-
-static int 
-open_db_files (const char *fname, FILE **fidx, FILE **fbin, int *append)
-{
-    FILE *fp;
-    char base[FILENAME_MAX];
-    char idxname[FILENAME_MAX];
-    char binname[FILENAME_MAX];
-    char *p;
-
-    strcpy(base, fname);
-    p = strchr(base, '.');
-    if (p != NULL) {
-	*p = 0;
-    }
-
-    strcpy(idxname, base);
-    strcat(idxname, ".idx");
-
-    fp = fopen(idxname, "r");
-    if (fp != NULL) {
-	*append = 1;
-	fclose(fp);
-    }
-
-    *fidx = fopen(idxname, (*append)? "a" : "w");
-    if (*fidx == NULL) {
-	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), idxname);
-	return 1;
-    }
-
-    strcpy(binname, base);
-    strcat(binname, ".bin");
-    
-    *fbin = fopen(binname, (*append)? "ab" : "wb");
-    if (*fbin == NULL) {
-	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), binname);
-	fclose(*fidx);
-	if (*append == 0) {
-	    remove(idxname);
-	}
-	return 1;
-    }
-
-    fprintf(stderr, "Writing gretl database index file '%s'\n", idxname);
-    fprintf(stderr, "Writing gretl database binary file '%s'\n", binname);
-
-    return 0;
-}
-
-static void dotify (char *s)
-{
-    while (*s) {
-	if (*s == ':') *s = '.';
-	s++;
-    }
-}
-
-static char pd_char (int pd)
-{
-    if (pd == 4) return 'Q';
-    if (pd == 12) return 'M';
-    return 'A';
-}
-
-/* 
-   For reference, example of first few lines of a gretl .idx file:
-
-    # Standard and Poors (US stock price indices)
-    sp11  DJ Industrial Average Open
-    M  1950.01 - 2005.02  n = 662
-    sp12  DJ Industrial Average High
-    M  1950.01 - 2005.02  n = 662
-*/
-
-static int write_db_data (const char *fname, const int *list, 
-			  const double **Z, const DATAINFO *pdinfo) 
-{
-    char stobs[OBSLEN], endobs[OBSLEN];
-    FILE *fbin, *fidx;
-    int append = 0;
-    float val;
-    int t1, t2;
-    int i, t;
-
-    if (!dataset_is_time_series(pdinfo) ||
-	(pdinfo->pd != 1 && pdinfo->pd != 4 && pdinfo->pd != 12)) {
-	return 1;
-    }
-
-    if (open_db_files(fname, &fidx, &fbin, &append)) {
-	return 1;
-    }
-
-    if (!append) {
-	/* FIXME */
-	fprintf(fidx, "# No description\n");
-    }
-
-    for (i=1; i<=list[0]; i++) {
-	int v = list[i];
-	int nobs;
-
-	if (!pdinfo->vector[v]) {
-	    continue;
-	}
-	
-	t1 = 0;
-	for (t=0; t<pdinfo->n; t++) {
-	    if (na(Z[v][t])) t1++;
-	    else break;
-	}
-
-	t2 = pdinfo->n - 1;
-	for (t=pdinfo->n - 1; t>=t1; t--) {
-	    if (na(Z[v][t])) t2--;
-	    else break;
-	}
-
-	nobs = t2 - t1 + 1;
-	if (nobs <= 0) {
-	    continue;
-	}
-
-	ntodate(stobs, t1, pdinfo);
-	ntodate(endobs, t2, pdinfo);
-	dotify(stobs);
-	dotify(endobs);	
-
-	/* FIXME character encoding for varlabel? */
-	fprintf(fidx, "%s  %s\n", pdinfo->varname[v], VARLABEL(pdinfo, v));
-
-	fprintf(fidx, "%c  %s - %s  n = %d\n", pd_char(pdinfo->pd),
-		stobs, endobs, nobs);
-
-	for (t=t1; t<=t2; t++) {
-	    if (na(Z[v][t])) {
-		val = DBNA;
-	    } else {
-		val = Z[v][t];
-	    }
-	    fwrite(&val, sizeof val, 1, fbin);
-	}
-    }
-
-    fclose(fidx);
-    fclose(fbin);
-
-    return 0;
-}

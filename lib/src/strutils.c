@@ -743,7 +743,7 @@ char *tailstrip (char *str)
 
     for (i=len-1; i>=0; i--) {
 	if (isspace((unsigned char) str[i]) ||
-	    str[i] == '\n') {
+	    str[i] == '\n' || str[i] == '\r') {
 	    str[i] = 0;
 	} else {
 	    break;

@@ -727,7 +727,6 @@ static int check_serinfo (char *str, char *sername)
 {
     char pdc;
     char stobs[OBSLEN], endobs[OBSLEN];
-    char msg[64];
     int n, err = 0;
 
     if (!isalpha((unsigned char) sername[0]) || 
@@ -737,8 +736,10 @@ static int check_serinfo (char *str, char *sername)
 	!isdigit((unsigned char) endobs[0]) ||
 	(pdc != 'M' && pdc != 'A' && pdc != 'Q' && pdc != 'U' &&
 	 pdc != 'D' && pdc != 'B')) {
-	sprintf(msg, _("Database parse error at variable '%s'"), sername);
+	gchar *msg = g_strdup_printf(_("Database parse error at variable '%s'"), 
+				     sername);
 	errbox(msg);
+	g_free(msg);
 	err = 1;
     }
 
@@ -1704,14 +1705,19 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-static gchar *get_descrip (char *fname, const char *dbdir)
+static gchar *
+db_description (const char *fullname, const char *binname, 
+		const char *dbdir)
 {
     FILE *fp;
-    char idxname[MAXLEN];
-    char tmp[64];
+    char idxname[FILENAME_MAX];
     char *p, *descrip = NULL;
-
-    build_path(dbdir, fname, idxname, NULL);
+    
+    if (fullname == NULL) {
+	build_path(dbdir, binname, idxname, NULL);
+    } else {
+	strcpy(idxname, fullname);
+    }
 
     p = strrchr(idxname, '.');
     if (p != NULL) {
@@ -1721,15 +1727,85 @@ static gchar *get_descrip (char *fname, const char *dbdir)
     fp = gretl_fopen(idxname, "r");
 
     if (fp != NULL) {
+	char tmp[DB_DESCRIP_LEN] = {0};
+
 	fgets(tmp, sizeof tmp, fp);
 	fclose(fp);
-	if (tmp != NULL && *tmp == '#' && strlen(tmp) > 2) {
-	    descrip = g_strdup(tmp + 2);
-	    descrip[strlen(descrip) - 1] = 0;
+	if (*tmp == '#') {
+	    int len = strlen(tmp);
+
+	    if (len > 2) {
+		tailstrip(tmp);
+		descrip = g_strdup(tmp + 2);
+	    }
 	}
     }
 
     return descrip;
+}
+
+gchar *get_db_description (const char *binname)
+{
+    return db_description(binname, NULL, NULL);
+}
+
+int write_db_description (const char *binname, const char *descrip)
+{
+    FILE *fnew, *fbak;
+    char idxname[FILENAME_MAX];
+    char idxtmp[FILENAME_MAX];
+    char tmp[64];
+    char *p;
+    int err = 0;
+    
+    strcpy(idxname, binname);
+    p = strrchr(idxname, '.');
+    if (p != NULL) {
+	strcpy(p, ".idx");
+    }
+
+    strcpy(idxtmp, idxname);
+    p = strrchr(idxtmp, '.');
+    if (p != NULL) {
+	strcpy(p, ".idxtmp");
+    }    
+
+    err = copyfile(idxname, idxtmp);
+
+    if (!err) {
+	fnew = gretl_fopen(idxname, "w");
+	if (fnew == NULL) {
+	    err = 1;
+	} else {
+	    fbak = gretl_fopen(idxtmp, "r");
+	    if (fbak == NULL) {
+		fclose(fnew);
+		err = 1;
+	    }
+	}
+    }
+
+    if (!err) {
+	const char *p = descrip;
+	char line[256];
+
+	while (isspace((unsigned char) *p)) {
+	    p++;
+	}
+	sprintf(tmp, "# %.61s\n", p);
+	tailstrip(tmp);
+	fprintf(fnew, "%s\n", tmp);
+	while (fgets(line, sizeof line, fbak)) {
+	    if (*line != '#') {
+		fputs(line, fnew);
+	    }
+	}
+	fclose(fnew);
+	fclose(fbak);
+	remove(idxtmp);
+    }
+
+    return err;
 }
 
 #ifndef OLD_GTK
@@ -1740,7 +1816,8 @@ read_idx_files_in_dir (DIR *dir, int dbtype, const char *filter,
 		       GtkTreeIter *iter)
 {
     struct dirent *dirent;
-    char *fname, *descrip;
+    const char *fname;
+    char *descrip;
     int n, ndb = 0;
 
     while ((dirent = readdir(dir)) != NULL) {
@@ -1748,7 +1825,7 @@ read_idx_files_in_dir (DIR *dir, int dbtype, const char *filter,
 	n = strlen(fname);
 	if (g_ascii_strcasecmp(fname + n - 4, filter) == 0) {
 	    if (dbtype == NATIVE_DB) {
-		descrip = get_descrip(fname, dbdir);
+		descrip = db_description(NULL, fname, dbdir);
 		if (descrip != NULL) {
 		    gtk_list_store_append(store, iter);
 		    gtk_list_store_set(store, iter, 0, fname, 1, descrip, 
@@ -1775,7 +1852,8 @@ read_idx_files_in_dir (DIR *dir, const char *filter,
 		       char *dbdir, windata_t *vwin)
 {
     struct dirent *dirent;
-    char *fname, *descrip;
+    const char *fname;
+    char *descrip;
     gchar *row[2];
     int n, i = 0;
 
@@ -1787,7 +1865,7 @@ read_idx_files_in_dir (DIR *dir, const char *filter,
 	}
 	row[0] = fname;
 	if (vwin->role == NATIVE_DB) {
-	    descrip = get_descrip(fname, dbdir);
+	    descrip = db_description(NULL, fname, dbdir);
 	    if (descrip != NULL) {
 		row[1] = descrip;
 		gtk_clist_append(GTK_CLIST(vwin->listbox), row);

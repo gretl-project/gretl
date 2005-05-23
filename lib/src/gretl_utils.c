@@ -1851,6 +1851,39 @@ int gretl_spawn (const char *cmdline)
 
 #endif
 
+/* file copying */
+
+int gretl_copy_file (const char *src, const char *dest) 
+{
+    FILE *srcfd, *destfd;
+    char buf[8192];
+    size_t n;
+
+    if (!strcmp(src, dest)) {
+	return 1;
+    }
+   
+    if ((srcfd = gretl_fopen(src, "rb")) == NULL) {
+	sprintf(gretl_errmsg, _("Couldn't open %s"), src);
+	return 1; 
+    }
+
+    if ((destfd = gretl_fopen(dest, "wb")) == NULL) {
+	sprintf(gretl_errmsg, _("Couldn't write to %s"), dest);
+	fclose(srcfd);
+	return 1;
+    }
+
+    while ((n = fread(buf, 1, sizeof buf, srcfd)) > 0) {
+	fwrite(buf, 1, n, destfd);
+    }
+
+    fclose(srcfd);
+    fclose(destfd);
+
+    return 0;
+}    
+
 /* library init and cleanup functions */
 
 void libgretl_init (void)

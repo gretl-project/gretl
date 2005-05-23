@@ -367,11 +367,11 @@ static void slash_terminate (char *path)
     }
 }
 
-void get_default_dir (char *s)
+void get_default_dir (char *s, int action)
 {
     *s = '\0';
 
-    if (usecwd) {
+    if (usecwd && action != SAVE_DBDATA) {
 	char *test = getcwd(s, MAXLEN);
 
 	if (test == NULL) {

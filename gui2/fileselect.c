@@ -329,16 +329,16 @@ static void save_editable_content (int action, const char *fname,
 
 /* ........................................................... */
 
-static void set_startdir (char *startdir)
+static void set_startdir (char *startdir, int action)
 {
 #ifdef REMEMBER_DIR
     if (*remember_dir != '\0') {
 	strcpy(startdir, remember_dir);
     } else {
-	get_default_dir(startdir);
+	get_default_dir(startdir, action);
     }
 #else
-    get_default_dir(startdir);
+    get_default_dir(startdir, action);
 #endif
 
 #ifndef G_OS_WIN32
@@ -735,7 +735,7 @@ void file_selector (const char *msg, int action, gpointer data)
     *fname = '\0';
     *endname = '\0';
 
-    set_startdir(startdir);
+    set_startdir(startdir, action);
 
     /* special cases */
     if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
@@ -892,7 +892,7 @@ void file_selector (const char *msg, int action, gpointer data)
     char startdir[MAXLEN];
     GtkFileFilter *filter;
 
-    set_startdir(startdir);
+    set_startdir(startdir, action);
 
     /* FIXME: parent window below should not always be mdata->w,
        in particular when action == SAVE_THIS_GRAPH
@@ -1003,7 +1003,7 @@ void file_selector (const char *msg, int action, gpointer data)
 
     *fsinfo.fname = '\0';
 
-    set_startdir(startdir);
+    set_startdir(startdir, action);
 
     filesel = gtk_file_selection_new(msg);
     fsinfo.w = filesel;
@@ -1088,7 +1088,7 @@ void file_selector (const char *msg, int action, gpointer data)
 
     *fsinfo.fname = '\0';
 
-    set_startdir(startdir);
+    set_startdir(startdir, action);
 
     filesel = gtk_icon_file_selection_new(msg);
 

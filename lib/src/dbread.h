@@ -20,6 +20,8 @@
 #ifndef DBREAD_H
 #define DBREAD_H
 
+#define DB_DESCRIP_LEN 72  /* size of array to hold "# description" */
+
 typedef enum {
     DB_OK = 0,
     DB_MISSING_DATA,

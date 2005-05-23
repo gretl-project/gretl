@@ -27,8 +27,6 @@
 
 #undef DB_DEBUG
 
-#define DBNA -999.0 /* missing value code for databases */
-
 #define RECNUM long
 #define NAMELENGTH 16
 #define RATSCOMMENTLENGTH 80
@@ -641,8 +639,6 @@ static int find_rats_dir_by_number (FILE *fp, int first_dir,
     return (int) forward;
 }
 
-/* ........................................................... */
-
 static int get_rats_series_offset_by_number (FILE *fp, 
 					     int series_number)
 {
@@ -661,11 +657,10 @@ static int get_rats_series_offset_by_number (FILE *fp,
     return offset;
 }
 
-/* ........................................................... */
+/* retrieve the actual data values from the data blocks */
 
 static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp, 
 			    double **Z)
-/* retrieve the actual data values from the data blocks */
 {
     RATSData rdata;
     char numstr[16];
@@ -794,8 +789,6 @@ get_rats_series_info_by_name (const char *series_name,
 
     return ret;
 }
-
-/* ........................................................... */
 
 static int 
 get_rats_data_by_offset (const char *fname, 

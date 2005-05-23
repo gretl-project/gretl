@@ -37,7 +37,7 @@ void gnuplot_color_selector (GtkWidget *w, gpointer p);
 
 GtkWidget *color_patch_button (int colnum);
 
-void get_default_dir (char *s);
+void get_default_dir (char *s, int action);
 
 void filesel_set_path_callback (const char *setting, char *strvar);
 

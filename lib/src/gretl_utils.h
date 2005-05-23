@@ -220,6 +220,8 @@ double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo);
 
 int gretl_compare_doubles (const void *a, const void *b);
 
+int gretl_copy_file (const char *src, const char *dest);
+
 /* model selection criteria */
 
 int gretl_calculate_criteria (double *x, double ess, int nobs, int ncoeff);
