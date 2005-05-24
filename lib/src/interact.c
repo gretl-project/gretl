@@ -2791,6 +2791,7 @@ const char *gretl_cmd_get_savename (const CMD *cmd)
     return cmd->savename;
 }
 
+/* keep track of input streams */
 
 
 

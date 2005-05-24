@@ -69,7 +69,7 @@ MODEL tmpmod;
 FILE *dat, *fb;
 int i, j, dot, opt, err, errfatal, batch;
 int runit, loopstack, looprun;
-int data_status, runfile_open;
+int data_status;
 int plot_count;             /* graphs via gnuplot */
 int order;                  /* VAR lag order */
 int lines[1];               /* for gnuplot command */
@@ -83,8 +83,10 @@ gretl_equation_system *sys;
 gretl_restriction_set *rset;
 
 static void exec_line (char *line, LOOPSET **ploop, PRN *prn); 
+static int push_input_file (FILE *fp);
+static FILE *pop_input_file (void);
 
-void usage(void)
+static void usage(void)
 {
     logo();
     printf(_("\nYou may supply the name of a data file on the command line.\n"
@@ -456,7 +458,6 @@ int main (int argc, char *argv[])
 
     logo();     /* print version info */
     session_time(NULL);
-    fb = stdin; /* may be reset later with "run" command */
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT);
 
@@ -560,6 +561,11 @@ int main (int argc, char *argv[])
 	}
     } 
 
+    if (!batch) {
+	fb = stdin;
+	push_input_file(fb);
+    }
+
     if (!batch && !runit && !data_status) {
 	fprintf(stderr, _("Type \"open filename\" to open a data set\n"));
     }
@@ -569,6 +575,8 @@ int main (int argc, char *argv[])
 #endif
 
     if (batch || runit) {
+	/* re-initialize: will be incremented by "run" cmd */
+	runit = 0;
 	sprintf(line, "run %s\n", runfile);
 	exec_line(line, &loop, prn);
     }
@@ -620,7 +628,7 @@ int main (int argc, char *argv[])
 	free_datainfo(datainfo);
     }
 
-    if (runfile_open && fb != NULL) {
+    if (fb != stdin && fb != NULL) {
 	fclose(fb);
     }
 
@@ -684,7 +692,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     int fncall = 0;
     double rho;
 
-    if (*line == '\0') return;
+    if (string_is_blank(line)) return;
 
     /* catch any user-defined functions */
     err = handle_user_defined_function(line, &fncall);
@@ -1435,18 +1443,15 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case QUIT:
-	if (batch) {
-	    pputs(prn, _("Done\n"));
-	    break;
-	}
 	if (runit) {
-	    runit = 0;
-	    if (fb != NULL) {
-		fclose(fb);
+	    runit--;
+	    fclose(fb);
+	    fb = pop_input_file();
+	    if (fb == NULL) {
+		pputs(prn, _("Done\n"));
+	    } else {
+		strcpy(cmd.word, "endrun"); /* overwrite "quit" */
 	    }
-	    fb = stdin;
-	    runfile_open = 0;
-	    strcpy(cmd.word, "endrun"); /* overwrite "quit" */
 	    break;
 	}
 	printf(_("commands saved as %s\n"), cmdfile);
@@ -1483,19 +1488,17 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    pputs(prn, _("Command is malformed\n"));
 	    break;
 	}
+	if (fb != NULL) {
+	    push_input_file(fb);
+	}
 	if ((fb = fopen(runfile, "r")) == NULL) {
 	    fprintf(stderr, _("Couldn't open script \"%s\"\n"), runfile);
-	    if (runit) {
-		fb = stdin;
-		runit = 0;
-	    } else {
-		if (batch) exit(EXIT_FAILURE);
-	    }
+	    fb = pop_input_file();
+	    /* batch exit? */
 	} else {
 	    fprintf(stderr, _("%s opened OK\n"), runfile);
 	    pprintf(cmdprn, "run \"%s\"\n", runfile);
-	    runfile_open = 1;
-	    if (!batch) runit = 1;
+	    runit++;
 	}
 	break;
 
@@ -1638,4 +1641,35 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	err = modelspec_save(models[0], &modelspec);
     }
 
+}
+
+/* apparatus for keeping track of input stream */
+
+#define N_STACKED_FILES 8
+
+static int nfiles;
+static FILE *fstack[N_STACKED_FILES];
+
+static int push_input_file (FILE *fp)
+{
+    int err = 0;
+
+    if (nfiles >= N_STACKED_FILES) {
+	err = 1;
+    } else {
+	fstack[nfiles++] = fp;
+    }
+
+    return err;
+}
+
+static FILE *pop_input_file (void)
+{
+    FILE *ret = NULL;
+
+    if (nfiles > 0) {
+	ret = fstack[--nfiles];
+    }
+
+    return ret;
 }

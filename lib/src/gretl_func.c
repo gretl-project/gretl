@@ -539,7 +539,7 @@ static int maybe_delete_function (const char *fname)
     int err = 0;
 
     if (fun == NULL) {
-	err = 1;
+	; /* no-op */
     } else if (function_is_on_stack(fun)) {
 	sprintf(gretl_errmsg, "%s: function is in use", fname);
 	err = 1;
@@ -553,11 +553,21 @@ static int maybe_delete_function (const char *fname)
 int gretl_start_compiling_function (const char *line)
 {
     char fname[32];
-    int name_status;
+    char extra[8];
+    int n, name_status;
     ufunc *fun = NULL;
 
-    if (!sscanf(line, "function %31s", fname)) {
+    n = sscanf(line, "function %31s %7s", fname, extra);
+
+    if (n == 0) {
 	return E_PARSE;
+    } 
+
+    if (n == 2) {
+	if (!strcmp(extra, "clear") || !strcmp(extra, "delete")) {
+	    maybe_delete_function(fname);
+	    return 0;
+	}
     }
 
     name_status = check_func_name(fname);
@@ -567,11 +577,7 @@ int gretl_start_compiling_function (const char *line)
     } 
 
     if (name_status == FN_NAME_TAKEN) {
-	if (strstr(line, "delete")) {
-	    return maybe_delete_function(fname);
-	} else {
-	    return 1;
-	}
+	return 1;
     }
 
     fun = add_ufunc();
@@ -752,14 +758,14 @@ char *gretl_function_get_line (char *line, int len,
     if (call->lnum > call->fun->n_lines - 1) {
 	/* finished executing */
 	unstack_fncall(pZ, pdinfo);
-	return NULL;
+	return "";
     } 
 
     src = call->fun->lines[call->lnum];
     if (!strncmp(src, "exit", 4)) {
 	/* terminate execution */
 	unstack_fncall(pZ, pdinfo);
-	return NULL;
+	return "";
     } 
 
     call->lnum += 1;

@@ -842,6 +842,7 @@ static int populate_series_list (windata_t *vwin)
 
     if (fp == NULL) {
 	errbox(_("Couldn't open database index file"));
+	fprintf(stderr, "Couldn't open '%s'\n", dbidx);
 	return 1;
     }
 
@@ -1323,7 +1324,6 @@ void open_named_db_list (char *dbname)
     } else {
 	fclose(fp);
 	display_db_series_list(action, dbname, NULL);
-	/* FIXME: check for error */
     } 
 }
 
@@ -1849,13 +1849,14 @@ read_idx_files_in_dir (DIR *dir, int dbtype, const char *filter,
 
 static int
 read_idx_files_in_dir (DIR *dir, const char *filter, 
-		       char *dbdir, windata_t *vwin)
+		       char *dbdir, windata_t *vwin,
+		       int ndb)
 {
     struct dirent *dirent;
-    const char *fname;
+    char *fname;
     char *descrip;
     gchar *row[2];
-    int n, i = 0;
+    int n, i;
 
     while ((dirent = readdir(dir)) != NULL) {
 	fname = dirent->d_name;
@@ -1868,25 +1869,26 @@ read_idx_files_in_dir (DIR *dir, const char *filter,
 	    descrip = db_description(NULL, fname, dbdir);
 	    if (descrip != NULL) {
 		row[1] = descrip;
-		gtk_clist_append(GTK_CLIST(vwin->listbox), row);
+		i = gtk_clist_append(GTK_CLIST(vwin->listbox), row);
 		gtk_clist_set_row_data(GTK_CLIST(vwin->listbox), i, dbdir);
 		g_free(descrip);
+		ndb++;
 	    } else {
 		continue;
 	    }
 	} else {
 	    /* RATS database */
 	    row[1] = NULL;
-	    gtk_clist_append(GTK_CLIST(vwin->listbox), row);
+	    i = gtk_clist_append(GTK_CLIST(vwin->listbox), row);
 	    gtk_clist_set_row_data(GTK_CLIST(vwin->listbox), i, dbdir);
+	    ndb++;
 	}
-	if (i % 2) {
+	if (ndb % 2) {
 	    gtk_clist_set_background(GTK_CLIST(vwin->listbox), i, &gray);
 	}
-	i++;
     }
 
-    return i;
+    return ndb;
 }
 
 #endif
@@ -1949,7 +1951,7 @@ gint populate_dbfilelist (windata_t *vwin)
 #ifndef OLD_GTK
     ndb = read_idx_files_in_dir(dir, vwin->role, filter, dbdir, store, &iter);
 #else
-    ndb = read_idx_files_in_dir(dir, filter, dbdir, vwin);
+    ndb = read_idx_files_in_dir(dir, filter, dbdir, vwin, 0);
 #endif
 
     closedir(dir);
@@ -1963,7 +1965,7 @@ gint populate_dbfilelist (windata_t *vwin)
 # ifndef OLD_GTK
 	ndb += read_idx_files_in_dir(dir, vwin->role, filter, dbdir, store, &iter);
 # else
-	ndb += read_idx_files_in_dir(dir, filter, dbdir, vwin);
+	ndb = read_idx_files_in_dir(dir, filter, dbdir, vwin, ndb);
 # endif
 	closedir(dir);
     }

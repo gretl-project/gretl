@@ -5147,7 +5147,7 @@ int execute_script (const char *runfile, const char *buf,
 		    PRN *prn, int exec_code)
 {
     FILE *fb = NULL;
-    char line[MAXLEN];
+    char line[MAXLINE];
     char tmp[MAXLINE];
     int loopstack = 0, looprun = 0;
     int exec_err = 0;
@@ -5208,7 +5208,7 @@ int execute_script (const char *runfile, const char *buf,
 		/* done reading */
 		goto endwhile;
 	    }
-		
+
 	    while (top_n_tail(line)) {
 		/* handle backslash-continued lines */
 		*tmp = '\0';
@@ -5396,6 +5396,10 @@ int gui_exec_line (char *line,
     fprintf(stderr, "gui_exec_line: exec_code = %d\n",
 	    exec_code);
 #endif
+
+    if (string_is_blank(line)) {
+	return 0;
+    }
 
     /* catch any user-defined functions */
     err = handle_user_defined_function(line, &fncall);

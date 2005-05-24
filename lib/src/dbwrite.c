@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "dbwrite.h"
 
-#define DB_DEBUG 1
+#define DB_DEBUG 0
 
 static void dotify (char *s)
 {
@@ -55,7 +55,6 @@ static char **get_db_series_names (const char *idxname)
 #endif
 
     /* first pass: count the number of vars */
-
     i = nv = 0;
     while (fgets(line, sizeof line, fp)) {
 	if (*line == '#' || string_is_blank(line)) {
@@ -86,7 +85,6 @@ static char **get_db_series_names (const char *idxname)
     rewind(fp);
 
     /* second pass: grab all the varnames */
-
     i = j = 0;
     while (fgets(line, sizeof line, fp)) {
 	if (*line == '#' || string_is_blank(line)) {
@@ -187,7 +185,6 @@ static int output_db_var (int v, const double **Z, const DATAINFO *pdinfo,
     dotify(endobs);	
 
     fprintf(fidx, "%s  %s\n", pdinfo->varname[v], VARLABEL(pdinfo, v));
-
     fprintf(fidx, "%c  %s - %s  n = %d\n", pd_char(pdinfo->pd),
 	    stobs, endobs, nobs);
 
@@ -474,7 +471,9 @@ open_db_files (const char *fname, char *idxname, char *binname,
     return 0;
 }
 
-/* screen out scalars and any empty series */
+/* screen out scalars and any empty series, after discounting
+   missing obs.
+*/
 
 static int *make_db_save_list (const int *list, const double **Z, 
 			       const DATAINFO *pdinfo)
@@ -514,14 +513,11 @@ static int *make_db_save_list (const int *list, const double **Z,
     return dlist;
 }
 
-/* 
-   For reference, example of first few lines of a gretl .idx file:
-
-    # Standard and Poors (US stock price indices)
-    sp11  DJ Industrial Average Open
-    M  1950.01 - 2005.02  n = 662
-    sp12  DJ Industrial Average High
-    M  1950.01 - 2005.02  n = 662
+/* public function: write listed vars from working memory to a gretl
+   database.  If opt & OPT_F (force, overwrite), then in case any vars
+   in the database have the same names as some of those in list,
+   replace the ones in the database.  Otherwise, in case of replicated
+   variables, print a message and return E_DB_DUP.
 */
 
 int write_db_data (const char *fname, const int *list, gretlopt opt,
