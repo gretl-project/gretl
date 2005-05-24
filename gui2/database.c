@@ -287,7 +287,7 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 	    }
 	}
 
-	if (!overwrite && dataset_add_vars(1, &Z, datainfo)) {
+	if (!overwrite && dataset_add_series(1, &Z, datainfo)) {
 	    errbox(_("Out of memory adding series"));
 	    return;
 	}
@@ -299,7 +299,9 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 	    if (datainfo->pd != 1 && datainfo->pd != 4 &&
 		sinfo->pd != 12) {
 		errbox(_("Sorry, can't handle this conversion yet!"));
-		if (!overwrite) dataset_drop_vars(1, &Z, datainfo);
+		if (!overwrite) {
+		    dataset_drop_last_variables(1, &Z, datainfo);
+		}
 		return;
 	    }
 
@@ -308,7 +310,7 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 
 	    if (compact_method == COMPACT_NONE) {
 		if (!overwrite) {
-		    dataset_drop_vars(1, &Z, datainfo);
+		    dataset_drop_last_variables(1, &Z, datainfo);
 		}
 		return;
 	    }
@@ -327,7 +329,7 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 	if (xvec == NULL) {
 	    errbox(_("Out of memory attempting to add variable"));
 	    if (!overwrite) {
-		dataset_drop_vars(1, &Z, datainfo);
+		dataset_drop_last_variables(1, &Z, datainfo);
 	    }
 	    return;
 	}

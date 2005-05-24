@@ -350,7 +350,7 @@ int pca_from_corrmat (CorrMat *corrmat, double ***pZ,
 #ifdef PCA_DEBUG
 	    printlist(list, "pclist");
 #endif
-	    err = dataset_add_vars(nc, pZ, pdinfo);
+	    err = dataset_add_series(nc, pZ, pdinfo);
 	}
 
 	if (!err) {

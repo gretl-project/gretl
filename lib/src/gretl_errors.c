@@ -20,6 +20,7 @@
 /* errors.c - error messages for gretl */
 
 #include "libgretl.h"
+#include "libset.h"
 
 int gretl_errno;
 char gretl_errmsg[ERRLEN];
@@ -148,8 +149,10 @@ const char *get_gretl_msg (void)
 {
     const char *ret = NULL;
 
-    if (*gretl_msg != '\0') {
-	ret = gretl_msg;
+    if (gretl_messages_on()) {
+	if (*gretl_msg != '\0') {
+	    ret = gretl_msg;
+	}
     }
 
     return ret;
@@ -173,9 +176,11 @@ int print_gretl_msg (PRN *prn)
 {
     int ret = 0;
 
-    if (*gretl_msg != '\0') {
-	pprintf(prn, "%s\n", gretl_msg);
-	ret = 1;
+    if (gretl_messages_on()) {
+	if (*gretl_msg != '\0') {
+	    pprintf(prn, "%s\n", gretl_msg);
+	    ret = 1;
+	}
     }
 
     return ret;

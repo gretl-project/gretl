@@ -1308,7 +1308,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	gchar id[5];
 
 	if (i == 0 && !MODEL_CODE(cmdcode)) continue;
-        if (hidden_var(i, datainfo)) continue;
+        if (is_hidden_variable(i, datainfo)) continue;
 	if (screen_scalar(i, cmdcode)) continue;
 	sprintf(id, "%d", i);
 	row[0] = id;
@@ -1628,7 +1628,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 	    gchar *row[2];
 	    gchar id[5];
 
-	    if (hidden_var(i, datainfo) || screen_scalar(i, cmdcode)) {
+	    if (is_hidden_variable(i, datainfo) || screen_scalar(i, cmdcode)) {
 		continue;
 	    }
 	    sprintf(id, "%d", i);

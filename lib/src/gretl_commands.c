@@ -32,6 +32,7 @@ struct gretl_cmd {
 static struct gretl_cmd gretl_cmds[] = {
     { SEMIC,    ";" },     
     { ADD,      "add" },
+    { ADDOBS,   "addobs" },
     { ADDTO,    "addto" },
     { ADF,      "adf" }, 
     { APPEND,   "append" },
@@ -77,6 +78,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { HURST,    "hurst" },
     { IF,       "if" },
     { IMPORT,   "import" },
+    { INCLUDE,  "include" },
     { INFO,     "info" }, 
     { KPSS,     "kpss" },
     { LABEL,    "label" },

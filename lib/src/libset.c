@@ -30,6 +30,7 @@ static int bkbp_periods[2] = { 8, 32 }; /* for Baxter-King filter */
 static int horizon = 0;                 /* for VAR impulse responses */ 
 static double nls_toler;                /* NLS convergence criterion */
 static int gretl_echo = 1;              /* echoing commands or not */
+static int gretl_msgs = 1;              /* emitting non-error messages or not */
 
 enum {
     AUTO_LAG_STOCK_WATSON,
@@ -155,6 +156,16 @@ int gretl_echo_on (void)
     return gretl_echo;
 }
 
+void set_gretl_messages (int e)
+{
+    gretl_msgs = e;
+}
+
+int gretl_messages_on (void)
+{
+    return gretl_msgs;
+}
+
 int get_hac_lag (int m)
 {
     /* Variants of Newey-West */
@@ -262,13 +273,21 @@ int execute_set_line (const char *line, PRN *prn)
     } else if (nw == 2) {
 	lower(setarg);
 
-	/* set echo on/off */
+	/* set command echo on/off */
 	if (!strcmp(setobj, "echo")) {
 	    if (!strcmp(setarg, "off")) {
 		gretl_echo = 0;
 		err = 0;
 	    } else if (!strcmp(setarg, "on")) {
 		gretl_echo = 1;
+		err = 0;
+	    }
+	} else if (!strcmp(setobj, "messages")) {
+	    if (!strcmp(setarg, "off")) {
+		gretl_msgs = 0;
+		err = 0;
+	    } else if (!strcmp(setarg, "on")) {
+		gretl_msgs = 1;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "hac_lag")) {

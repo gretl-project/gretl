@@ -735,7 +735,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	if (blank_cols > 0) {
 	    fprintf(stderr, "Dropping %d apparently blank column(s)\n", 
 		    blank_cols);
-	    dataset_drop_vars(blank_cols, &newZ, newinfo);
+	    dataset_drop_last_variables(blank_cols, &newZ, newinfo);
 	}
 
 	if (label_strings && wsheet_labels_complete(&sheet)) {

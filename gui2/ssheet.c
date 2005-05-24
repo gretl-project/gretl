@@ -90,7 +90,7 @@ static int spreadsheet_hide (int i, const DATAINFO *pdinfo)
 
     if (pdinfo->vector[i] == 0) {
 	ret = 1;
-    } else if (hidden_var(i, pdinfo)) {
+    } else if (is_hidden_variable(i, pdinfo)) {
 	ret = 1;
     }
 
@@ -654,8 +654,8 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 
     if (newobs > 0) {
 	/* extend series length first, if needed */
-	if (grow_nobs(newobs, &Z, datainfo) ||
-	    dataset_destroy_hidden_vars(&Z, datainfo)) {
+	if (dataset_add_observations(newobs, &Z, datainfo) ||
+	    dataset_destroy_hidden_variables(&Z, datainfo)) {
 	    errbox(_("Failed to allocate memory for new data"));
 	    return;
 	}
@@ -663,7 +663,7 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 
     if (newvars > 0) {
 	/* then add variables, if needed */
-	if (dataset_add_vars(newvars, &Z, datainfo)) {
+	if (dataset_add_series(newvars, &Z, datainfo)) {
 	    errbox(_("Failed to allocate memory for new data"));
 	    return;
 	}

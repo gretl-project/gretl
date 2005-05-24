@@ -1603,7 +1603,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	if (i == 0 && !MODEL_CODE(cmdcode)) {
 	    continue;
 	}
-        if (hidden_var(i, datainfo)) {
+        if (is_hidden_variable(i, datainfo)) {
 	    continue;
 	}
 	if (screen_scalar(i, cmdcode)) {
@@ -1911,7 +1911,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 	int nleft = 0;
 
 	for (i=1; i<datainfo->v; i++) {
-	    if (hidden_var(i, datainfo) || screen_scalar(i, cmdcode)) {
+	    if (is_hidden_variable(i, datainfo) || screen_scalar(i, cmdcode)) {
 		continue;
 	    }
 	    gtk_list_store_append(store, &iter);

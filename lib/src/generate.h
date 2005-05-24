@@ -40,6 +40,8 @@ int plotvar (double ***pZ, DATAINFO *pdinfo,
 
 void varlist (const DATAINFO *pdinfo, PRN *prn);
 
+void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn);
+
 int varindex (const DATAINFO *pdinfo, const char *varname);
 
 int genr_fit_resid (const MODEL *pmod, 

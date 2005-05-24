@@ -60,6 +60,29 @@
 
   </command>
 
+  <command name="addobs" section="Dataset" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>nobs</argument>
+      </arguments>
+      <examples>
+        <example>addobs 10</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Adds the specified number of extra observations to the end
+	of the working dataset.  The values of all variables over the
+	additional range are set to missing.  This command is not
+	available if the dataset is currently subsampled by selection of
+	cases on some Boolean criterion.
+      </para>
+    </description>
+
+  </command>
+
   <command name="addto" section="Tests" context="cli">
 
     <usage>
@@ -455,7 +478,7 @@
 	median.  This is obtained by the bootstrap method.</para>
 
       <para context="gui">After each variable specified in the boxplot
-	command, a parenthesized boolean expression may be added, to
+	command, a parenthesized Boolean expression may be added, to
 	limit the sample for the variable in question.  A space must
 	be inserted between the variable name or number and the
 	expression. Suppose you have salary figures for men and women,
@@ -465,7 +488,7 @@
 	dialog:</para>
 
       <para context="cli">After each variable specified in the boxplot
-	command, a parenthesized boolean expression may be added, to
+	command, a parenthesized Boolean expression may be added, to
 	limit the sample for the variable in question.  A space must
 	be inserted between the variable name or number and the
 	expression. Suppose you have salary figures for men and women,
@@ -1469,9 +1492,17 @@
 
   <command name="function" section="Programming" context="cli">
 
+    <usage>
+      <arguments>
+        <argument>fnname</argument>
+      </arguments>
+    </usage>
+
     <description>
       <para>
-	Define a function.  This entry still to be written.
+	Opens a block of statements in which a function is defined.  This block must
+	be closed with <lit>end function</lit>.  Please see 
+      <manref targ="functions"/> for details.
       </para>
     </description>
 
@@ -2567,6 +2598,24 @@
     <gui-access>
       <menu-path>/File/Open data/import</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="include" section="Programming" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>inputfile</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Intended for use in a command script, primarily for including definitions of
+	functions.  Executes the commands in <repl>inputfile</repl> then returns
+	control to the main script. 
+      </para>
+    </description>
 
   </command>
 
@@ -5358,6 +5407,14 @@
 	  <flag>--dat</flag>
 	  <effect>use PcGive ASCII format</effect>
         </option>
+        <option>
+	  <flag>--database</flag>
+	  <effect>use gretl database format</effect>
+        </option>
+        <option>
+	  <flag>--overwrite</flag>
+	  <effect>see below, on database format</effect>
+        </option>
       </options>
     </usage>
 
@@ -5385,6 +5442,19 @@
 	automatically: if you wish to save scalars you must explicitly
 	list them in <repl>varlist</repl>.
       </para>  
+
+      <para>
+	The option of saving in gretl database format is intended to help with the
+	construction of large sets of series, possibly having mixed frequencies and
+	ranges of observations.  At present this option is available only for
+	annual, quarterly or monthly time-series data. If you save to a file that
+	already exists, the default action is to append the newly saved series to
+	the existing content of the database.  In this context it is an error if one
+	or more of the variables to be saved has the same name as a variable that is
+	already present in the database. The <lit>--overwrite</lit> flag has the
+	effect that, if there are variable names in common, the newly saved variable
+	replaces the variable of the same name in the original dataset.
+      </para>
 	
     </description>
 

@@ -838,7 +838,7 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 	free_freq(freq);
     }
 
-    dataset_drop_vars(1, pZ, pdinfo);
+    dataset_drop_last_variables(1, pZ, pdinfo);
 
     return err;
 
@@ -896,7 +896,7 @@ static int get_pacf (double *pacf, int m, int varnum,
 	clear_model(&tmp, pdinfo);
     }
 
-    dataset_drop_vars(pdinfo->v - v, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo);
     free(laglist);
     free(list);
 
@@ -2448,7 +2448,7 @@ static int mdist_saver (double ***pZ, DATAINFO *pdinfo)
     int sv = 0;
     int err;
 
-    err = dataset_add_vars(1, pZ, pdinfo);
+    err = dataset_add_series(1, pZ, pdinfo);
 
     if (!err) {
 	int t;

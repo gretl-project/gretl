@@ -264,7 +264,7 @@ ldepvar_std_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 	return 1;
     }
 
-    err = dataset_add_vars(vnew, pZ, pdinfo);
+    err = dataset_add_series(vnew, pZ, pdinfo);
     if (err) {
 	free(list);
 	pmod->errcode = E_ALLOC;
@@ -344,7 +344,7 @@ ldepvar_std_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     clear_model(&emod);
     
     free(list);
-    dataset_drop_vars(vnew, pZ, pdinfo);
+    dataset_drop_last_variables(vnew, pZ, pdinfo);
 
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
@@ -2308,7 +2308,7 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* replist[0] holds the number of fitted vars to create */
-    if (dataset_add_vars(replist[0], pZ, pdinfo)) {
+    if (dataset_add_series(replist[0], pZ, pdinfo)) {
 	tsls.errcode = E_ALLOC;
 	goto tsls_bailout;
     } 
@@ -2481,7 +2481,7 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     free(replist);
 
     /* delete first-stage fitted values from dataset */
-    dataset_drop_vars(pdinfo->v - orig_nvar, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - orig_nvar, pZ, pdinfo);
 
     if (tsls.errcode) {
 	model_count_minus();
@@ -2579,7 +2579,7 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     MODEL aux;
 
     /* allocate space for an additional variable */
-    if (dataset_add_vars(1, pZ, pdinfo)) {
+    if (dataset_add_series(1, pZ, pdinfo)) {
 	return E_ALLOC;
     }
 
@@ -2628,7 +2628,7 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     clear_model(&aux);
 
     if (shrink > 0) {
-	dataset_drop_vars(shrink, pZ, pdinfo);
+	dataset_drop_last_variables(shrink, pZ, pdinfo);
     }
 
     free(list);
@@ -2692,7 +2692,7 @@ MODEL hsk_func (const int *list, double ***pZ, DATAINFO *pdinfo)
     hsk = lsq(hsklist, pZ, pdinfo, WLS, OPT_NONE, 0.0);
     hsk.ci = HSK;
 
-    dataset_drop_vars(pdinfo->v - orig_nvar, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - orig_nvar, pZ, pdinfo);
 
     free(hsklist);
 
@@ -2904,7 +2904,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     ncoeff = pmod->list[0] - 1;
 
     /* make space in data set */
-    if (dataset_add_vars(1, pZ, pdinfo)) {
+    if (dataset_add_series(1, pZ, pdinfo)) {
 	err = E_ALLOC;
     }
 
@@ -2964,7 +2964,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     clear_model(&white);
 
-    dataset_drop_vars(pdinfo->v - v, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo);
 
     free(list);
 
@@ -3064,7 +3064,7 @@ MODEL ar_func (const int *list, int pos, double ***pZ,
     }
 
     /* allocate space for the uhat terms and transformed data */
-    if (dataset_add_vars(arlist[0] + 1 + reglist[0], pZ, pdinfo)) {
+    if (dataset_add_series(arlist[0] + 1 + reglist[0], pZ, pdinfo)) {
 	ar.errcode = E_ALLOC;
 	goto bailout;
     }
@@ -3198,7 +3198,7 @@ MODEL ar_func (const int *list, int pos, double ***pZ,
     ar.dw = dwstat(maxlag, &ar, *pZ);
     ar.rho = rhohat(maxlag, ar.t1, ar.t2, ar.uhat);
 
-    dataset_drop_vars(arlist[0] + 1 + reglist[0], pZ, pdinfo);
+    dataset_drop_last_variables(arlist[0] + 1 + reglist[0], pZ, pdinfo);
 
     if (ar_info_init(&ar, 1 + maxlag)) {
 	ar.errcode = E_ALLOC;
@@ -3402,7 +3402,7 @@ MODEL arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	/* allocate workspace */
-	if (dataset_add_vars(order + 1, pZ, pdinfo) || 
+	if (dataset_add_series(order + 1, pZ, pdinfo) || 
 	    (arlist = malloc((order + 3) * sizeof *arlist)) == NULL) {
 	    err = archmod.errcode = E_ALLOC;
 	}
@@ -3518,7 +3518,7 @@ MODEL arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
     if (arlist != NULL) free(arlist);
     if (wlist != NULL) free(wlist);
 
-    dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo); 
+    dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo); 
 
     return archmod;
 }

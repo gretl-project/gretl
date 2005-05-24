@@ -404,7 +404,7 @@ int get_generated_value (const char *argv, double *val,
 	    } else {
 		*val = (*pZ)[v][t];
 	    }
-	    err = dataset_drop_vars(1, pZ, pdinfo);
+	    err = dataset_drop_last_variables(1, pZ, pdinfo);
 	}
     }
 
@@ -2477,7 +2477,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     /* special case of stacking a group of series */
     if (!strncmp(s, "stack(", 6)) {
-	genr.err = dataset_stack_vars(pZ, pdinfo, newvar, s);
+	genr.err = dataset_stack_variables(pZ, pdinfo, newvar, s);
 	return genr.err;
     }
 
@@ -2569,7 +2569,7 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 
     /* is the new variable an addition to the data set? */
     if (v >= pdinfo->v) {
-	if (dataset_add_vars(1, pZ, pdinfo)) {
+	if (dataset_add_series(1, pZ, pdinfo)) {
 	    return E_ALLOC;
 	}
 	strcpy(pdinfo->varname[v], genr->varname);
@@ -4238,7 +4238,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
 	return E_PDWRONG;
     }
 
-    if (dataset_add_vars(ndums, pZ, pdinfo)) {
+    if (dataset_add_series(ndums, pZ, pdinfo)) {
 	return E_ALLOC;
     }
 
@@ -4298,7 +4298,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    dataset_drop_vars(ndums - (newvnum - orig_v), pZ, pdinfo);
+    dataset_drop_last_variables(ndums - (newvnum - orig_v), pZ, pdinfo);
 
     return 0;
 }
@@ -4348,7 +4348,7 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 			 (xsect)? n_freqdum : n_blockdum,
 			 (xsect)? n_blockdum : n_freqdum);
 
-    if (dataset_add_vars(nnew, pZ, pdinfo)) {
+    if (dataset_add_series(nnew, pZ, pdinfo)) {
 	return E_ALLOC;
     }
 
@@ -4486,7 +4486,7 @@ int genrunit (double ***pZ, DATAINFO *pdinfo)
     i = varindex(pdinfo, "unit");
 
     if (i == pdinfo->v) {
-	if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
+	if (dataset_add_series(1, pZ, pdinfo)) return E_ALLOC;
     }
 
     strcpy(pdinfo->varname[i], "unit");
@@ -4545,7 +4545,7 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
 
     i = varindex(pdinfo, (tm)? "time" : "index");
 
-    if (i == pdinfo->v && dataset_add_vars(1, pZ, pdinfo)) {
+    if (i == pdinfo->v && dataset_add_series(1, pZ, pdinfo)) {
 	return E_ALLOC;
     }
 
@@ -4607,7 +4607,7 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 	if (plotvar_is_full_size(vi, pdinfo->n, (*pZ)[vi])) {
 	    return vi;
 	} 
-    } else if (dataset_add_vars(1, pZ, pdinfo)) {
+    } else if (dataset_add_series(1, pZ, pdinfo)) {
 	return -1;
     }
 
@@ -4714,6 +4714,22 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
     if (n % 5) pputc(prn, '\n');
 
     pputc(prn, '\n');
+}
+
+/**
+ * maybe_list_vars:
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct
+ *
+ * Prints a list of the names of the variables currently defined,
+ * unless gretl messaging is turned off.
+ */
+
+void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn)
+{
+    if (gretl_messages_on()) {
+	varlist(pdinfo, prn);
+    }
 }
 
 static int 
@@ -5174,7 +5190,7 @@ int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	if (h == NULL) return E_DATA;
     }
 
-    if (dataset_add_vars(1, pZ, pdinfo)) {
+    if (dataset_add_series(1, pZ, pdinfo)) {
 	return E_ALLOC;
     }
 

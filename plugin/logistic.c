@@ -205,7 +205,7 @@ static int make_logistic_depvar (double ***pZ, DATAINFO *pdinfo,
 {
     int t, v = pdinfo->v;
 
-    if (dataset_add_vars(1, pZ, pdinfo)) {
+    if (dataset_add_series(1, pZ, pdinfo)) {
 	return 1;
     }
 
@@ -322,7 +322,7 @@ MODEL logistic_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 			       dv, lmax);
     }
 
-    dataset_drop_vars(1, pZ, pdinfo);
+    dataset_drop_last_variables(1, pZ, pdinfo);
     free(llist);
     
     return lmod;

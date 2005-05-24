@@ -956,7 +956,7 @@ void populate_varlist (void)
 
     j = 0;
     for (i=0; i<datainfo->v; i++) {
-	if (hidden_var(i, datainfo)) continue;
+	if (is_hidden_variable(i, datainfo)) continue;
 	sprintf(id, "%d", i);
 	row[0] = id;
 	row[1] = datainfo->varname[i];

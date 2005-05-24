@@ -1213,7 +1213,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    pdinfo->n, pdinfo->v, (void *) pdinfo->varname);
 #endif
 
-    if (new && dataset_add_vars(1, pZ, pdinfo)) {
+    if (new && dataset_add_series(1, pZ, pdinfo)) {
 	strcpy(gretl_errmsg, _("Out of memory adding series"));
 	return 1;
     }
@@ -1226,7 +1226,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    sinfo->pd != 12) {
 	    strcpy(gretl_errmsg, _("Sorry, can't handle this conversion yet!"));
 	    if (new) {
-		dataset_drop_vars(1, pZ, pdinfo);
+		dataset_drop_last_variables(1, pZ, pdinfo);
 	    }
 	    return 1;
 	}
@@ -1234,7 +1234,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    sprintf(gretl_errmsg, _("%s: you must specify a compaction method"), 
 		    sinfo->varname);
 	    if (new) {
-		dataset_drop_vars(1, pZ, pdinfo);
+		dataset_drop_last_variables(1, pZ, pdinfo);
 	    }
 	    return 1;
 	}
@@ -1252,7 +1252,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     if (xvec == NULL) {
 	strcpy(gretl_errmsg, _("Out of memory adding series"));
 	if (new) {
-	    dataset_drop_vars(1, pZ, pdinfo);
+	    dataset_drop_last_variables(1, pZ, pdinfo);
 	}
 	return 1;
     }
@@ -1812,7 +1812,7 @@ insert_missing_hidden_obs (double ***pZ, DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    err = grow_nobs(nmiss, pZ, pdinfo);
+    err = dataset_add_observations(nmiss, pZ, pdinfo);
     if (err) {
 	free(tmp);
 	return err;

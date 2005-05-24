@@ -806,7 +806,7 @@ static int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
 	return index;
     }
     
-    if (dataset_add_vars(1, pZ, pdinfo)) {
+    if (dataset_add_series(1, pZ, pdinfo)) {
 	return TREND_FAILED;
     }
 
@@ -1610,7 +1610,7 @@ int coint (int order, const int *list, double ***pZ,
 
     /* add residuals from cointegrating regression to data set */
     n = pdinfo->n;
-    if (dataset_add_vars(1, pZ, pdinfo)) {
+    if (dataset_add_series(1, pZ, pdinfo)) {
 	return E_ALLOC;
     }
     nv = pdinfo->v - 1;
@@ -1642,7 +1642,7 @@ int coint (int order, const int *list, double ***pZ,
     /* clean up and get out */
     clear_model(&cmod);
     free(cointlist);
-    dataset_drop_vars(1, pZ, pdinfo);
+    dataset_drop_last_variables(1, pZ, pdinfo);
 
     return 0;
 }
@@ -2007,7 +2007,7 @@ static int real_adf_test (int varno, int order, int niv,
 	free(biglist);
     }
 
-    dataset_drop_vars(pdinfo->v - orig_nvars, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - orig_nvars, pZ, pdinfo);
 
     return err;
 }
@@ -2215,7 +2215,7 @@ has_time_trend (const int *varlist, double ***pZ, DATAINFO *pdinfo)
 	if (trends) break;
     }
 
-    dataset_drop_vars(pdinfo->v - origv, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
 
     return trends;
 }
@@ -2523,7 +2523,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 
     pdinfo->t1 = orig_t1;
 
-    dataset_drop_vars(pdinfo->v - orig_v, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
 
     return err;
 }
@@ -2645,7 +2645,7 @@ int gretl_var_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
     MODEL *pmod = var->models[eqnum];
     int i, t;
 
-    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_series(1, pZ, pdinfo)) return E_ALLOC;
 
     i = pdinfo->v - 1;
 

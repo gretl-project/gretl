@@ -283,7 +283,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     }
 
     /* make room for full set of transformed vars */
-    if (dataset_add_vars(list[0], pZ, pdinfo)) {
+    if (dataset_add_series(list[0], pZ, pdinfo)) {
 	dmod.errcode = E_ALLOC;
 	return dmod;
     }
@@ -511,7 +511,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     pdinfo->t1 = oldt1;
     pdinfo->t2 = oldt2;
 
-    dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
 
     return dmod;
 }

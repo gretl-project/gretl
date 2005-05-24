@@ -2843,7 +2843,7 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 	    } else {
 		ret = (int) val;
 	    }
-	    dataset_drop_vars(1, pZ, pdinfo);
+	    dataset_drop_last_variables(1, pZ, pdinfo);
 	}
     }
 

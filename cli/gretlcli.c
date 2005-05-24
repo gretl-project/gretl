@@ -195,6 +195,7 @@ void file_get_line (void)
     if (!strncmp(line, "noecho", 6)) {
 	set_gretl_echo(0);
     }
+
     if (gretl_echo_on() && cmd.ci == RUN && batch && *line == '(') {
 	printf("%s", line);
 	*linebak = 0;
@@ -217,6 +218,7 @@ void fn_get_line (void)
     if (!strncmp(line, "noecho", 6)) {
 	set_gretl_echo(0);
     }
+
     if (gretl_echo_on() && cmd.ci == RUN && batch && *line == '(') {
 	printf("%s", line);
 	*linebak = 0;
@@ -794,6 +796,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     switch (cmd.ci) {
 
+    case ADDOBS:
     case ADF: 
     case COINT2: 
     case COINT: 
@@ -991,8 +994,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 			 " mode\n"));
 	    break;
 	}	
-	err = dataset_drop_listed_vars(cmd.list, &Z, datainfo, 
-				       &renumber);
+	err = dataset_drop_listed_variables(cmd.list, &Z, datainfo, 
+					    &renumber);
 	if (err) {
 	    pputs(prn, _("Failed to shrink the data set"));
 	} else {
@@ -1000,7 +1003,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 		pputs(prn, _("Take note: variables have been renumbered"));
 		pputc(prn, '\n');
 	    }
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -1073,7 +1076,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    errmsg(err, prn);
 	} else {
 	    err = 0;
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -1096,7 +1099,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	err = 0;
 	pputs(prn, _("Retrieved fitted values as \"autofit\"\n"));
-	varlist(datainfo, prn);
+	maybe_list_vars(datainfo, prn);
 	if (dataset_is_time_series(datainfo)) {
 	    int *plotlist;
 
@@ -1276,7 +1279,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if (err > 1) {
 	    errmsg(err, prn);
 	} else if (cmd.opt & OPT_S) {
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -1483,6 +1486,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case RUN:
+    case INCLUDE:
 	err = getopenfile(line, runfile, &paths, 1, 1);
 	if (err) { 
 	    pputs(prn, _("Command is malformed\n"));
@@ -1494,10 +1498,13 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if ((fb = fopen(runfile, "r")) == NULL) {
 	    fprintf(stderr, _("Couldn't open script \"%s\"\n"), runfile);
 	    fb = pop_input_file();
-	    /* batch exit? */
 	} else {
 	    fprintf(stderr, _("%s opened OK\n"), runfile);
-	    pprintf(cmdprn, "run \"%s\"\n", runfile);
+	    if (cmd.ci == INCLUDE) {
+		pprintf(cmdprn, "include \"%s\"\n", runfile);
+	    } else {
+		pprintf(cmdprn, "run \"%s\"\n", runfile);
+	    }
 	    runit++;
 	}
 	break;

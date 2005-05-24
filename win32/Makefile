@@ -116,6 +116,7 @@ LIBSRC = bhhh_max.c \
 	compare.c \
 	compat.c \
 	dataio.c \
+	dataset.c \
 	dbread.c \
 	dbwrite.c \
 	describe.c \

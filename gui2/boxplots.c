@@ -1809,7 +1809,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     free(s);
 
     if (nbool) {
-	dataset_drop_vars(nbool, pZ, pdinfo);
+	dataset_drop_last_variables(nbool, pZ, pdinfo);
     }
     
     return err;

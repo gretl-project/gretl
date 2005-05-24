@@ -208,7 +208,7 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	goto bailout;
     }
 
-    if (dataset_add_vars(2, pZ, pdinfo)) {
+    if (dataset_add_series(2, pZ, pdinfo)) {
 	pmod->errcode = E_ALLOC;
 	goto bailout;
     }
@@ -318,7 +318,7 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     clear_model(&tmpmod);
     free(local_list);
-    dataset_drop_vars(pdinfo->v - origv, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
 
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;

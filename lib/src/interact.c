@@ -119,8 +119,6 @@ static int filter_comments (char *line, CMD *cmd)
     return (*line == '\0');
 }
 
-/* ........................................................... */
-
 static int get_rhodiff_or_lags_param (char *str, CMD *cmd)
 {
     int k;
@@ -139,8 +137,6 @@ static int get_rhodiff_or_lags_param (char *str, CMD *cmd)
 
     return 1;
 }
-
-/* ........................................................... */
 
 static int aliased (char *str)
 {
@@ -194,6 +190,7 @@ static int aliased (char *str)
 	               c == CRITERIA || \
 	               c == PVALUE || \
 	               c == RUN || \
+                       c == INCLUDE || \
 	               c == SHELL || \
 	               c == SETOBS || \
 	               c == CHOW || \
@@ -847,6 +844,23 @@ static int resize_cmd_param (CMD *cmd, const char *s, int inlen)
     return 0;
 }
 
+/* capture the remainder of a command line as parameter for
+   a command */
+
+static int capture_param (CMD *cmd, const char *line,
+			  int linelen, int n)
+{
+    if (resize_cmd_param(cmd, NULL, linelen - n + 1)) {
+	cmd->errcode = E_ALLOC;
+    } else if (cmd->ci == PRINT) {
+	strcpy(cmd->param, line + n + 1);
+    } else {
+	sscanf(line + n + 1, "%s", cmd->param);
+    }
+
+    return cmd->errcode;
+}
+
 void gretl_cmd_clear (CMD *cmd)
 {
     cmd->ci = 0;
@@ -1018,6 +1032,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* unless it's on a short list of specials */
     if (cmd->ci == HELP ||
 	cmd->ci == LOOP ||
+	cmd->ci == ADDOBS ||
 	cmd->ci == END ||
 	cmd->ci == LMTEST ||
 	cmd->ci == RESTRICT ||
@@ -1027,20 +1042,13 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (!strncmp(line, "man ", 4)) {
 	    n--;
 	}
-	if (nf) {
-	    if (resize_cmd_param(cmd, NULL, linelen - n + 1)) {
-		cmd->errcode = E_ALLOC;
-		goto bailout;
-	    } else if (cmd->ci == PRINT) {
-		strcpy(cmd->param, line + n + 1);
-	    } else {
-		sscanf(line + n + 1, "%s", cmd->param);
-	    }
+	if (nf && capture_param(cmd, line, linelen, n)) {
+	    goto bailout;
 	}
 	if (cmd->ci == END) {
 	    check_end_command(cmd);
 	}
-	/* note: return point for various commands that take no list */
+	/* note: final return point for various commands that take no list */
 	return cmd->errcode;
     }
 
@@ -1548,7 +1556,7 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 
     vi = varindex(pdinfo, varname);
 
-    if (vi >= pdinfo->v && dataset_add_vars(1, pZ, pdinfo)) { 
+    if (vi >= pdinfo->v && dataset_add_series(1, pZ, pdinfo)) { 
 	return -1 * E_ALLOC;
     }
 
@@ -2318,6 +2326,26 @@ int call_pca_plugin (CorrMat *corrmat, double ***pZ,
     return err;
 }
 
+static int add_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    int err = 0;
+
+    if (complex_subsampled()) {
+	pprintf(prn, _("The data set is currently sub-sampled.\n"));
+	err = E_DATA;
+    } else if (n <= 0) {
+	err = E_PARSE;
+    } else {
+	err = dataset_add_observations(n, pZ, pdinfo);
+	if (!err) {
+	    pprintf(prn, _("Dataset extended by %d observations"), n);
+	    pputc(prn, '\n');
+	}
+    }
+
+    return err;
+}
+
 /* common code for command-line and GUI client programs, where the
    command doesn't require special handling on the client side 
 */
@@ -2332,12 +2360,16 @@ int simple_commands (CMD *cmd, const char *line,
 
     switch (cmd->ci) {
 
+    case ADDOBS:
+	order = atoi(cmd->param);
+	err = add_obs(order, pZ, datainfo, prn);
+	break;
+
     case ADF:
 	if (!isdigit(*cmd->param) && *cmd->param != '-') {
 	    pputs(prn, _("adf: lag order must be given first\n"));
 	    break;
 	}
-	/* flag an error if cmd->list[0] > 1? */
 	order = atoi(cmd->param);
 	err = adf_test(order, cmd->list[1], pZ, datainfo, cmd->opt, prn);
 	break;
@@ -2380,7 +2412,7 @@ int simple_commands (CMD *cmd, const char *line,
 	} else {
 	    err = call_pca_plugin(corrmat, pZ, datainfo, &cmd->opt, prn);
 	    if (cmd->opt && !err) {
-		varlist(datainfo, prn);
+		maybe_list_vars(datainfo, prn);
 	    }
 	    free_corrmat(corrmat);
 	}
@@ -2406,7 +2438,7 @@ int simple_commands (CMD *cmd, const char *line,
 	if (err) {
 	    pputs(prn, _("Error adding first differences of variables.\n"));
 	} else {
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -2424,7 +2456,7 @@ int simple_commands (CMD *cmd, const char *line,
 	if (err) {
 	    pputs(prn, _("Error adding log differences of variables.\n"));
 	} else {
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -2434,7 +2466,7 @@ int simple_commands (CMD *cmd, const char *line,
 	if (err) {
 	    pputs(prn, _("Error adding lags of variables.\n"));
 	} else {
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -2443,7 +2475,7 @@ int simple_commands (CMD *cmd, const char *line,
 	if (err) {
 	    pputs(prn, _("Error adding logs of variables.\n"));
 	} else {
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -2452,14 +2484,14 @@ int simple_commands (CMD *cmd, const char *line,
 	if (err) {
 	    pputs(prn, _("Failed to generate squares\n"));
 	} else {
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
     case MULTIPLY:
 	err = gretl_multiply(cmd->param, cmd->list, cmd->str, pZ, datainfo);
 	if (!err) {
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -2502,7 +2534,7 @@ int simple_commands (CMD *cmd, const char *line,
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -2532,7 +2564,7 @@ int simple_commands (CMD *cmd, const char *line,
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -2686,6 +2718,7 @@ int ready_for_command (const char *line)
     const char *ok_cmds[] = {
 	"open", 
 	"run", 
+	"include",
 	"nulldata", 
 	"import", 
 	"pvalue",

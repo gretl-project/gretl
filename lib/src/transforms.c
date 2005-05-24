@@ -369,7 +369,7 @@ check_add_transform (int vnum, const double *x,
 	}
     } else {
 	/* no var of this name, working from scratch */
-	if (dataset_add_vars(1, pZ, pdinfo)) {
+	if (dataset_add_series(1, pZ, pdinfo)) {
 	    ret = VAR_ADD_FAILED;
 	} else {
 	    strcpy(pdinfo->varname[vnum], vname);

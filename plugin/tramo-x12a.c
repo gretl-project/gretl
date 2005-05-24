@@ -710,7 +710,7 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (addvars > 0 && dataset_add_vars(addvars, pZ, pdinfo)) {
+    if (addvars > 0 && dataset_add_series(addvars, pZ, pdinfo)) {
 	strcpy(errmsg, _("Failed to allocate memory for new data"));
 	return 1;
     }

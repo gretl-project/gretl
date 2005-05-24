@@ -8,10 +8,8 @@
     <para>As of version 1.3.0, <application>gretl</application>
       contains a mechanism for defining functions in the context of a
       script.  The syntax for this is somewhat similar to the
-      <application>bash</application> shell.  Details follow.  At this
-      point the mechanism is not <quote>set in stone</quote>, and I
-      welcome comments and suggestions.  I also welcome help in
-      shaking out any bugs.</para>
+      <application>bash</application> shell.  Details follow.
+    </para>
 
   </sect1>
 
@@ -27,25 +25,26 @@
       end function</programlisting>
 
     <para>
-      <replaceable>function-name</replaceable> is the unique
-      identifier for the function. Names must start with a letter.
-      They have a maximum length of 31 characters; if you type a
-      longer name it will be truncated.  Function names cannot contain
-      spaces.  You will get an error if you try to define a function
-      having the same name as an existing
-      <application>gretl</application> command, or with the same name
-      as a previously defined user function.</para>
+      <replaceable>function-name</replaceable> is the unique identifier for the
+      function. Names must start with a letter. They have a maximum length of 31
+      characters; if you type a longer name it will be truncated.  Function names
+      cannot contain spaces.  You will get an error if you try to define a function
+      having the same name as an existing <application>gretl</application> command,
+      or with the same name as a previously defined user function.  To avoid an
+      error in the latter case (that is, to be able to redefine a user
+      function), preface the function definition with</para>
+
+    <programlisting>
+      function <replaceable>function-name</replaceable> clear</programlisting>
 
     <para>
       The <replaceable>function body</replaceable> is composed of
-      <application>gretl</application> commands, or calls to
-      user-defined functions (that is, functions may be nested).  A
-      function may call itself (that is, functions may be recursive).
-      There is a maximum <quote>stacking depth</quote> for user
-      functions: at present this is set to 8 but I can increase it if
-      this seems too limiting.  While the function body may contain
-      function calls, it may not contain function definitions.  That
-      is, you cannot define a function inside another function.</para>
+      <application>gretl</application> commands, or calls to user-defined functions
+      (that is, functions may be nested).  A function may call itself (that is,
+      functions may be recursive). There is a maximum <quote>stacking depth</quote>
+      for user functions: at present this is set to 8.  While the function body may
+      contain function calls, it may not contain function definitions.  That is, you
+      cannot define a function inside another function.</para>
 
     <para>
       Functions may be called, but may not be defined, within the

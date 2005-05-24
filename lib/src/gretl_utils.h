@@ -28,119 +28,6 @@ typedef enum {
     C_MAX
 } model_selection_criteria;
 
-/**
- * dataset_is_time_series:
- * @p: pointer to data information struct.
- *
- * Attempt to determine whether a data set contains time series
- * data (1) or not (0).
- */
-#define dataset_is_time_series(p) ((p)->structure == TIME_SERIES || \
-				   (p)->structure == SPECIAL_TIME_SERIES)
-
-/**
- * custom_time_series:
- * @p: pointer to data information struct.
- *
- * Attempt to determine whether a data set contains time series
- * data with custom (non-standard) frequency (1) or not (0).
- */
-#define custom_time_series(p) ((p)->structure == SPECIAL_TIME_SERIES)
-
-/**
- * dataset_is_daily:
- * @p: pointer to data information struct.
- *
- * Attempt to determine whether a data set contains daily time series
- * data (1) or not (0).
- */
-#define dataset_is_daily(p) (p->structure == TIME_SERIES \
-                             && (p->pd == 5 || p->pd == 6 || p->pd == 7))
-
-/**
- * dataset_is_weekly:
- * @p: pointer to data information struct.
- *
- * Attempt to determine whether a data set contains weekly time series
- * data (1) or not (0).
- */
-#define dataset_is_weekly(p) (p->structure == TIME_SERIES \
-                              && p->pd == 52)
-
-/**
- * dataset_is_hourly:
- * @p: pointer to data information struct.
- *
- * Attempt to determine whether a data set contains hourly time series
- * data (1) or not (0).
- */
-#define dataset_is_hourly(p) (p->structure == TIME_SERIES \
-                              && p->pd == 24)
-
-/**
- * dataset_is_decennial:
- * @p: pointer to data information struct.
- *
- * Attempt to determine whether a data set contains decennial time series
- * data (1) or not (0).
- */
-#define dataset_is_decennial(p) (p->structure == TIME_SERIES \
-                                 && p->pd == 10)
-
-/**
- * dated_daily_data:
- * @p: pointer to data information struct.
- *
- * Attempt to determine whether a data set contains dated daily time series
- * data (1) or not (0).
- */
-#define dated_daily_data(p) (p->structure == TIME_SERIES \
-                             && (p->pd == 5 || p->pd == 6 || p->pd == 7) \
-                             && p->sd0 > 10000.0)
-
-/**
- * dated_seven_day_data:
- * @p: pointer to data information struct.
- *
- * Attempt to determine whether a data set contains dated daily 
- * (seven-day) time series data (1) or not (0).
- */
-#define dated_seven_day_data(p) (p->structure == TIME_SERIES \
-                                 && p->pd == 7 && \
-                                 p->sd0 > 10000.0)
-
-/**
- * dated_weekly_data:
- * @p: pointer to data information struct.
- *
- * Attempt to determine whether a data set contains dated weekly 
- * time series data (1) or not (0).
- */
-#define dated_weekly_data(p) (p->structure == TIME_SERIES \
-                              && p->pd == 52 && \
-                              p->sd0 > 10000.0)
-
-/**
- * calendar_data:
- * @p: pointer to data information struct.
- *
- * Attempt to determine whether a data set uses calendar
- * dates for observation strings (1) or not (0).
- */
-#define calendar_data(p) (p->structure == TIME_SERIES && \
-                          (p->pd == 5 || p->pd == 6 || p->pd == 7 \
-                           || p->pd == 52) && p->sd0 > 10000.0) 
-                          
-/**
- * dataset_is_panel:
- * @p: pointer to data information struct.
- *
- * Attempt to determine whether a data set contains panel
- * data (1) or not (0).
- */
-#define dataset_is_panel(p) ((p)->structure == STACKED_TIME_SERIES || \
-                             (p)->structure == STACKED_CROSS_SECTION)
-
 #include <float.h>
 
 #define floateq(x, y)  (fabs((x) - (y)) < DBL_EPSILON)
@@ -176,26 +63,6 @@ char *format_obs (char *obs, int maj, int min, int pd);
 
 int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt);
 
-/* changing the size or shape of the dataset */
-
-int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo);
-
-int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo);
-
-int dataset_add_allocated_var (double *x, double ***pZ, DATAINFO *pdinfo);
-
-int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo);
-
-int dataset_drop_listed_vars (const int *list, double ***pZ, 
-			      DATAINFO *pdinfo, int *renumber);
-
-int dataset_destroy_hidden_vars (double ***pZ, DATAINFO *pdinfo);
-
-int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo);
-
-int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo, 
-			char *newvar, char *s);
-
 /* other */
 
 int positive_int_from_string (const char *s);
@@ -204,8 +71,6 @@ int varnum_from_string (const char *str, DATAINFO *pdinfo);
 
 int rename_var_by_id (const char *str, const char *vname, 
 		      DATAINFO *pdinfo);
-
-int hidden_var (int i, const DATAINFO *pdinfo);
 
 int re_estimate (char *model_spec, MODEL *tmpmod, 
 		 double ***pZ, DATAINFO *pdinfo);

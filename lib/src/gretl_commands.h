@@ -23,6 +23,7 @@
 enum gretl_cmd_codes {
     SEMIC,    
     ADD,
+    ADDOBS,
     ADDTO,
     ADF,
     APPEND,
@@ -68,6 +69,7 @@ enum gretl_cmd_codes {
     HURST,
     IF,
     IMPORT,
+    INCLUDE,
     INFO,
     KPSS,
     LABEL,

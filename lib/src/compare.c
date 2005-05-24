@@ -542,7 +542,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
     int t, err = 0;
 
     /* grow data set to accommodate new dependent var */
-    if (dataset_add_vars(1, pZ, pdinfo)) {
+    if (dataset_add_series(1, pZ, pdinfo)) {
 	return E_ALLOC;
     }
 
@@ -655,7 +655,7 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 	
     /* trash any extra variables generated (squares, logs) */
-    dataset_drop_vars(pdinfo->v - orig_nvar, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - orig_nvar, pZ, pdinfo);
 
     /* put back into pdinfo what was there on input */
     pdinfo->t1 = smpl_t1;
@@ -761,7 +761,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
     }
 
     /* trash any extra variables generated (squares, logs) */
-    dataset_drop_vars(pdinfo->v - orig_nvar, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - orig_nvar, pZ, pdinfo);
 
     /* put back into pdinfo what was there on input */
     pdinfo->t1 = smpl_t1;
@@ -983,7 +983,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	for (i=1; i<=pmod->list[0]; i++) {
 	    newlist[i] = pmod->list[i];
 	}
-	if (dataset_add_vars(2, pZ, pdinfo)) {
+	if (dataset_add_series(2, pZ, pdinfo)) {
 	    err = E_ALLOC;
 	}
     }
@@ -1039,7 +1039,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     free(newlist);
-    dataset_drop_vars(2, pZ, pdinfo); 
+    dataset_drop_last_variables(2, pZ, pdinfo); 
     clear_model(&aux); 
 
     return err;
@@ -1237,7 +1237,7 @@ int autocorr_test (MODEL *pmod, int order,
 	for (i=2; i<=pmod->list[0]; i++) {
 	    newlist[i] = pmod->list[i];
 	}
-	if (dataset_add_vars(1, pZ, pdinfo)) {
+	if (dataset_add_series(1, pZ, pdinfo)) {
 	    err = E_ALLOC;
 	}
     }
@@ -1318,7 +1318,7 @@ int autocorr_test (MODEL *pmod, int order,
     }
 
     free(newlist);
-    dataset_drop_vars(pdinfo->v - v, pZ, pdinfo); 
+    dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo); 
     clear_model(&aux); 
 
     if (pval < 0.05 && !gretl_model_get_int(pmod, "robust")) {
@@ -1384,7 +1384,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	if (pmod->ifc == 0) {
 	    newvars++;
 	}
-	if (dataset_add_vars(newvars, pZ, pdinfo)) {
+	if (dataset_add_series(newvars, pZ, pdinfo)) {
 	    newvars = 0;
 	    err = E_ALLOC;
 	} else {
@@ -1466,7 +1466,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     }
 
     /* clean up extra variables */
-    dataset_drop_vars(newvars, pZ, pdinfo);
+    dataset_drop_last_variables(newvars, pZ, pdinfo);
     free(chowlist);
 
     pdinfo->t1 = smpl_t1;
@@ -1757,7 +1757,7 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
     if (flags & SAVE_INFLUENCE) addvars++;
     if (flags & SAVE_DFFITS) addvars++;
 
-    if (dataset_add_vars(addvars, pZ, pdinfo)) {
+    if (dataset_add_series(addvars, pZ, pdinfo)) {
 	strcpy(gretl_errmsg, _("Out of memory adding series"));
 	return 1;
     }
@@ -2107,7 +2107,7 @@ int sum_test (const int *sumvars, MODEL *pmod,
 	return E_ALLOC;
     }
 
-    if (dataset_add_vars(sumvars[0] - 1, pZ, pdinfo)) {
+    if (dataset_add_series(sumvars[0] - 1, pZ, pdinfo)) {
 	free(tmplist);
 	return E_ALLOC;
     }
@@ -2119,7 +2119,7 @@ int sum_test (const int *sumvars, MODEL *pmod,
     if (testcoeff < 0) {
 	pprintf(prn, _("Invalid input\n"));
 	free(tmplist);
-	dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo);
+	dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
 	return E_DATA;
     }
 
@@ -2163,7 +2163,7 @@ int sum_test (const int *sumvars, MODEL *pmod,
     free(tmplist);
     clear_model(&summod);
 
-    dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
     gretl_print_destroy(nullprn);
 
     /* put back into pdinfo what was there on input */

@@ -188,7 +188,7 @@ destroy_local_vars (double ***pZ, DATAINFO *pdinfo, int nc)
 		    locals[j++] = i;
 		}
 	    }
-	    err = dataset_drop_listed_vars(locals, pZ, pdinfo, NULL);
+	    err = dataset_drop_listed_variables(locals, pZ, pdinfo, NULL);
 	}
 	free(locals);
     }

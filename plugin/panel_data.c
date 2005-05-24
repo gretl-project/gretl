@@ -582,7 +582,7 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
 	    return lsdv;
 	}
 
-	if (dataset_add_vars(ndum, pZ, pdinfo)) {
+	if (dataset_add_series(ndum, pZ, pdinfo)) {
 	    free(felist);
 	    lsdv.errcode = E_ALLOC;
 	    return lsdv;
@@ -633,7 +633,7 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
 	gretl_print_destroy(prn);
 #endif
 
-	dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo);
+	dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
     }
 
     free(felist);
@@ -1240,7 +1240,7 @@ write_uvar_to_dataset (double *uvar, int nunits, int T,
 static int
 allocate_weight_var (double ***pZ, DATAINFO *pdinfo)
 {
-    if (dataset_add_vars(1, pZ, pdinfo)) {
+    if (dataset_add_series(1, pZ, pdinfo)) {
 	return E_ALLOC;
     }
 
@@ -1581,7 +1581,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     free(wlist);
     free(bvec);
 
-    dataset_drop_vars(pdinfo->v - orig_v, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
     
     return mdl;
 }

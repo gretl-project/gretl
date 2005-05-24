@@ -70,6 +70,9 @@ int gretl_in_gui_mode (void);
 void set_gretl_echo (int e);
 int gretl_echo_on (void);
 
+void set_gretl_messages (int e);
+int gretl_messages_on (void);
+
 int execute_set_line (const char *line, PRN *prn);
 
 #endif /* LIBSET_H */

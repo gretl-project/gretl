@@ -355,6 +355,7 @@ struct CONFINT_ {
 #include "gretl_commands.h"
 #include "gretl_errors.h"
 #include "interact.h"
+#include "dataset.h"
 #include "estimate.h"
 #include "generate.h"
 #include "compare.h"

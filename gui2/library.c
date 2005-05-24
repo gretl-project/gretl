@@ -2844,7 +2844,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     freq = get_freq(rinfo->v - 1, (const double **) *rZ, rinfo, 
 		    pmod->ncoeff, OPT_NONE);
 
-    dataset_drop_vars(1, rZ, rinfo);
+    dataset_drop_last_variables(1, rZ, rinfo);
 
     if (freq_error(freq, NULL)) {
 	gretl_print_destroy(prn);
@@ -3402,7 +3402,7 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
 
 	if (*datainfo->varname[v] == '\0') {
 	    /* the user canceled */
-	    dataset_drop_vars(1, &Z, datainfo);
+	    dataset_drop_last_variables(1, &Z, datainfo);
 	    return 0;
 	}	
 
@@ -3446,7 +3446,7 @@ int add_var_resid (GRETL_VAR *var, int eqnum)
 
     if (*datainfo->varname[v] == '\0') {
 	/* the user canceled */
-	dataset_drop_vars(1, &Z, datainfo);
+	dataset_drop_last_variables(1, &Z, datainfo);
 	return 0;
     }    
 
@@ -3538,7 +3538,7 @@ void add_model_stat (MODEL *pmod, int which)
 
     if (*datainfo->varname[i] == '\0') {
 	/* the user canceled */
-	dataset_drop_vars(1, &Z, datainfo);
+	dataset_drop_last_variables(1, &Z, datainfo);
 	return;
     }
 
@@ -3607,7 +3607,7 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 	pv = plotvar(gZ, ginfo, get_timevar_name(ginfo));
 	if (pv < 0) {
 	    errbox(_("Failed to add plotting index variable"));
-	    dataset_drop_vars(1, gZ, ginfo);
+	    dataset_drop_last_variables(1, gZ, ginfo);
 	    return;
 	}
 	plot_list[2] = pv;
@@ -3631,7 +3631,7 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 	register_graph();
     }
     
-    dataset_drop_vars(ginfo->v - origv, gZ, ginfo);
+    dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo);
 }
 
 void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
@@ -3685,7 +3685,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	pv = plotvar(gZ, ginfo, get_timevar_name(ginfo));
 	if (pv < 0) {
 	    errbox(_("Failed to add plotting index variable"));
-	    dataset_drop_vars(1, gZ, ginfo);
+	    dataset_drop_last_variables(1, gZ, ginfo);
 	    return;
 	}
 	plot_list[3] = pv;
@@ -3702,7 +3702,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	register_graph();
     }
 
-    dataset_drop_vars(ginfo->v - origv, gZ, ginfo);
+    dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo);
 }
 
 void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
@@ -3963,7 +3963,7 @@ void delete_selected_vars (int id)
 	errbox(_("Cannot delete all of the specified variables"));
     }
 
-    err = dataset_drop_listed_vars(cmd.list, &Z, datainfo, &renumber);
+    err = dataset_drop_listed_variables(cmd.list, &Z, datainfo, &renumber);
 
     if (err) {
 	errbox(_("Out of memory reorganizing data set"));
@@ -5499,6 +5499,7 @@ int gui_exec_line (char *line,
 
     switch (cmd.ci) {
 
+    case ADDOBS:
     case ADF: 
     case COINT2:
     case COINT: 
@@ -5728,8 +5729,8 @@ int gui_exec_line (char *line,
 	if (cmd.list[0] == 0) {
 	    err = 1;
 	} else {
-	    err = dataset_drop_listed_vars(cmd.list, &Z, datainfo,
-					   &renumber);
+	    err = dataset_drop_listed_variables(cmd.list, &Z, datainfo,
+						&renumber);
 	}
 	if (err) {
 	    pputs(prn, _("Failed to shrink the data set"));
@@ -5739,7 +5740,7 @@ int gui_exec_line (char *line,
 		pputc(prn, '\n');
 	    }
 	    maybe_clear_selector(cmd.list);
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -5818,7 +5819,7 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	} else {
 	    err = 0;
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -5842,7 +5843,7 @@ int gui_exec_line (char *line,
 
 	err = 0;
 	pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
-	varlist(datainfo, prn); 
+	maybe_list_vars(datainfo, prn); 
 
 	if (exec_code == CONSOLE_EXEC && 
 	    dataset_is_time_series(datainfo)) {
@@ -6033,7 +6034,7 @@ int gui_exec_line (char *line,
 	if (err > 1) {
 	    errmsg(err, prn);
 	} else if (cmd.opt & OPT_S) {
-	    varlist(datainfo, prn);
+	    maybe_list_vars(datainfo, prn);
 	}
 	break;
 
@@ -6208,6 +6209,7 @@ int gui_exec_line (char *line,
 	break;
 
     case RUN:
+    case INCLUDE:
 	err = getopenfile(line, runfile, &paths, 1, 1);
 	if (err) { 
 	    pprintf(prn, _("Run command failed\n"));
@@ -6340,7 +6342,7 @@ int gui_exec_line (char *line,
 	 
 	    freq = get_freq(datainfo->v - 1, (const double **) Z, datainfo, 
 			    (models[0])->ncoeff, OPT_NONE);
-	    dataset_drop_vars(1, &Z, datainfo);
+	    dataset_drop_last_variables(1, &Z, datainfo);
 	    if (!(err = freq_error(freq, prn))) {
 		if (rebuild) {
 		    normal_test(models[0], freq);

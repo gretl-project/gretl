@@ -657,7 +657,7 @@ int rhodiff (char *param, const int *list, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    if (dataset_add_vars(list[0], pZ, pdinfo)) {
+    if (dataset_add_series(list[0], pZ, pdinfo)) {
 	return E_ALLOC;
     }
 
@@ -940,7 +940,7 @@ int gretl_multiply (char *s, int *list, char *sfx, double ***pZ,
 	if (v == pdinfo->v) return E_UNKVAR; 
     }
 
-    if (dataset_add_vars(l0, pZ, pdinfo)) {
+    if (dataset_add_series(l0, pZ, pdinfo)) {
 	return E_ALLOC;
     }
 

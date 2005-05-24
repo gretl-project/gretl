@@ -6,7 +6,9 @@
 <!ENTITY compare  SYSTEM "xml/compare.xml">
 <!ENTITY compat   SYSTEM "xml/compat.xml">
 <!ENTITY dataio   SYSTEM "xml/dataio.xml">
+<!ENTITY dataset  SYSTEM "xml/dataset.xml">
 <!ENTITY dbread   SYSTEM "xml/dbread.xml">
+<!ENTITY dbwrite  SYSTEM "xml/dbwrite.xml">
 <!ENTITY describe SYSTEM "xml/describe.xml">
 <!ENTITY discrete SYSTEM "xml/discrete.xml">
 <!ENTITY estimate SYSTEM "xml/estimate.xml">
@@ -72,6 +74,7 @@
     <title>Data input and output</title>
     &dataio;  
     &dbread; 
+    &dbwrite;
     &gretl-string-table;  
   </chapter>
 
@@ -96,29 +99,22 @@
   </chapter>
 
   <chapter id="ch-data-manipulation">
-    <title>Working with the data set</title>
-    &calendar;   
+    <title>Manipulating datasets</title>
+    &calendar; 
+    &dataset;
     &generate;
-	&transforms;
+    &transforms;
     &subsample;
-  </chapter>
-
-  <chapter id="ch-missing-values">
-    <title>Handling missing data values</title>
-    &missing;   
+    &missing;
   </chapter>
 
   <chapter id="ch-printing">
-    <title>Printing</title>
+    <title>Printing and graphing</title>
     &printout;  
     &modelprint;
     &texprint;
+    &graphing;
     &gretl-prn;
-  </chapter>
-
-  <chapter id="ch-graphing">
-    <title>Graphing and plotting</title>
-    &graphing;   
   </chapter>
 
   <chapter id="ch-list">
@@ -132,13 +128,9 @@
   </chapter>
 
   <chapter id="ch-func">
-    <title>Support for user-defined functions</title>
+    <title>Command structures: loops and functions</title>
+    &monte-carlo;
     &gretl-func;   
-  </chapter>
-
-  <chapter id="ch-paths">
-    <title>Handling paths</title>
-    &gretl-paths;   
   </chapter>
 
   <chapter id="ch-interact">
@@ -155,19 +147,9 @@
     &libgretl;   
   </chapter>
 
-  <chapter id="ch-monte-carlo">
-    <title>Simulation and loops</title>
-    &monte-carlo; 
-    &random; 
-  </chapter>
-
-  <chapter id="ch-plugins">
-    <title>Driver for gretl plugins</title>
-    &plugins;   
-  </chapter>
-
   <chapter id="ch-pvalues">
-    <title>P-values, probability distributions, etc.</title>
+    <title>Random numbers and probability distributions</title>
+    &random; 
     &pvalues;   
   </chapter>
 
@@ -175,6 +157,8 @@
     <title>Utilities</title>
     &gretl-utils;
     &strutils; 
+    &gretl-paths; 
+    &plugins; 
     &gretl-intl;
     &gretl-win32;
   </chapter>

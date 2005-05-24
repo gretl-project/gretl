@@ -246,7 +246,7 @@ static int sn_from_tmp_dummy (double ***pZ, DATAINFO *pdinfo,
 
     dlist[0] = 1;
     dlist[1] = dnum;
-    dataset_drop_listed_vars(dlist, pZ, pdinfo, NULL);
+    dataset_drop_listed_variables(dlist, pZ, pdinfo, NULL);
 
     return isdum;
 }
@@ -328,7 +328,7 @@ static int maybe_add_subdum (double ***pZ, DATAINFO *pdinfo, int *snum)
 
     if (s == pdinfo->v) {
 	/* variable doesn't exist: create it */
-	if (dataset_add_vars(1, pZ, pdinfo)) {
+	if (dataset_add_series(1, pZ, pdinfo)) {
 	    return 1;
 	}
 	strcpy(pdinfo->varname[s], "subdum");
@@ -1166,7 +1166,7 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	tmiss = 0;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (hidden_var(i, pdinfo) || !pdinfo->vector[i]) continue;
+	    if (is_hidden_variable(i, pdinfo) || !pdinfo->vector[i]) continue;
 	    if (na((*pZ)[i][t])) {
 		if (missvec[i] == 0) {
 		    missvec[0] += 1;

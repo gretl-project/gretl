@@ -1017,7 +1017,7 @@ lm_approximate (nls_spec *spec, double *uhat, double *jac, PRN *prn)
  * The required format for @dstr is "%varname = %formula", where
  * %varname is the name of the (scalar) variable holding the parameter
  * in question, and %formula is an expression, of the sort that
- * is fed to gretl's genr command, giving the derivative of the
+ * is fed to gretl's %genr command, giving the derivative of the
  * regression function in @spec with respect to the parameter.
  * The variable holding the parameter must be already present in
  * the dataset.
@@ -1094,7 +1094,7 @@ nls_spec_add_param_with_deriv (nls_spec *spec, const char *dstr,
  * have previously been obtained by a call to #nls_spec_new.
  * The required format for @fnstr is "%varname = %formula", where
  * %varname is the name of the dependent variable and %formula
- * is an expression of the sort that is fed to gretl's genr command.
+ * is an expression of the sort that is fed to gretl's %genr command.
  * The dependent variable must be already present in the
  * dataset.
  *
@@ -1221,8 +1221,8 @@ int nls_parse_line (const char *line, const double **Z,
     return err;
 }
 
-/* static function, but we place it here because it gives the
-   content for the two public wrapper functions below */
+/* static function providing the real content for the two public
+   wrapper functions below */
 
 static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo, 
 		       PRN *prn)
@@ -1338,7 +1338,7 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	clear_nls_spec(pspec);
     }
 
-    dataset_drop_vars(pdinfo->v - origv, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
 
     if (nlsmod.errcode == 0) {
 	set_model_id(&nlsmod);
@@ -1374,7 +1374,10 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
  * @prn: printing struct.
  *
  * Computes estimates of the model specified in @spec, via nonlinear 
- * least squares.
+ * least squares. The @spec must first be obtained using #nls_spec_new, and
+ * initialized using #nls_spec_set_regression_function.  If analytical
+ * derivatives are to be used (which is optional but recommended)
+ * these are set using #nls_spec_add_param_with_deriv.
  *
  * Returns: a model struct containing the parameter estimates
  * and associated statistics.

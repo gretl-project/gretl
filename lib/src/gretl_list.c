@@ -633,7 +633,7 @@ int *full_var_list (const DATAINFO *pdinfo, int *nvars)
     int *list = NULL;
 
     for (i=1; i<pdinfo->v; i++) {
-	if (pdinfo->vector[i] && !hidden_var(i, pdinfo)) {
+	if (pdinfo->vector[i] && !is_hidden_variable(i, pdinfo)) {
 	    nv++;
 	}
     }
@@ -649,7 +649,7 @@ int *full_var_list (const DATAINFO *pdinfo, int *nvars)
     if (list != NULL) {
 	j = 1;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (pdinfo->vector[i] && !hidden_var(i, pdinfo)) {
+	    if (pdinfo->vector[i] && !is_hidden_variable(i, pdinfo)) {
 		list[j++] = i;
 	    }
 	}

@@ -433,7 +433,7 @@ add_uhat_squared (const MODEL *pmod, double scale,
 {
     int t, v = pdinfo->v;
 
-    if (dataset_add_vars(1, pZ, pdinfo)) {
+    if (dataset_add_series(1, pZ, pdinfo)) {
 	return E_ALLOC;
     }
 
@@ -560,7 +560,7 @@ garch_init_by_arma (const MODEL *pmod, const int *garchlist,
 
  bailout:
 
-    dataset_drop_vars(pdinfo->v - v, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo);
     free(list);
 
     return err;

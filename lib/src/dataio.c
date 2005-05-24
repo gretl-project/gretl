@@ -3001,7 +3001,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
        int k = pdinfo->v;
        int i, t;
 
-       if (addvars > 0 && dataset_add_vars(addvars, pZ, pdinfo)) {
+       if (addvars > 0 && dataset_add_series(addvars, pZ, pdinfo)) {
 	   merge_error(_("Out of memory adding data\n"), prn);
 	   err = 1;
        }
@@ -3361,7 +3361,7 @@ csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
 	return 1;
     }
 
-    return dataset_drop_vars(1, pZ, pdinfo);
+    return dataset_drop_last_variables(1, pZ, pdinfo);
 }
 
 #define starts_number(c) (isdigit((unsigned char) c) || c == '-' || \
@@ -4335,7 +4335,7 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
     dataset_dates_defaults(boxinfo);
 
     if (dumpvars) {
-	dataset_drop_vars(dumpvars, &boxZ, boxinfo);
+	dataset_drop_last_variables(dumpvars, &boxZ, boxinfo);
 	pprintf(prn, M_("Warning: discarded %d non-numeric variable(s)\n"), 
 		dumpvars);
     }

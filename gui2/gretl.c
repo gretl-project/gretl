@@ -1093,7 +1093,7 @@ void populate_varlist (void)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     for (i=0; i<datainfo->v; i++) {
-	if (hidden_var(i, datainfo)) continue;
+	if (is_hidden_variable(i, datainfo)) continue;
 	gtk_list_store_append(store, &iter);
 	sprintf(id, "%d", i);
 	gtk_list_store_set (store, &iter, 

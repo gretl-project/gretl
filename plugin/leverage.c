@@ -327,7 +327,7 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 	return E_ALLOC;
     }
 
-    if (dataset_add_allocated_var(dum, pZ, pdinfo)) {
+    if (dataset_add_allocated_series(dum, pZ, pdinfo)) {
 	free(dum);
 	free(slist);
 	return E_ALLOC;	
@@ -376,7 +376,7 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 
     free(slist);
 
-    dataset_drop_vars(pdinfo->v - orig_v, pZ, pdinfo);
+    dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
 
     return err;
 }
