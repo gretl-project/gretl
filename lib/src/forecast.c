@@ -22,15 +22,16 @@
 int gretl_forecast (int t1, int t2, int nv, 
 		    const MODEL *pmod, double ***pZ)
 {
-    double xx, zz, zr;
+    double xx, zz, rk;
     int i, k, maxlag = 0, yno;
     int v, t, miss;
     const int *arlist = NULL;
+    double *yhat = (*pZ)[nv];
     int ar = AR_MODEL(pmod->ci);
 
     if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
 	for (t=t1; t<=t2; t++) {
-	    (*pZ)[nv][t] = pmod->yhat[t];
+	    yhat[t] = pmod->yhat[t];
 	}
 	return 0;
     }
@@ -48,23 +49,26 @@ int gretl_forecast (int t1, int t2, int nv,
     for (t=t1; t<=t2; t++) {
 	miss = 0;
 	zz = 0.0;
-	if (ar) 
+
+	if (ar) { 
 	    for (k=1; k<=arlist[0]; k++) {
-	    xx = (*pZ)[yno][t - arlist[k]];
-	    zr = pmod->arinfo->rho[k];
-	    if (na(xx)) {
-		if (zr == 0) {
-		    continue;
-		}
-		xx = (*pZ)[nv][t - arlist[k]];
+		xx = (*pZ)[yno][t - arlist[k]];
+		rk = pmod->arinfo->rho[k];
 		if (na(xx)) {
-		    (*pZ)[nv][t] = NADBL;
-		    miss = 1;
+		    if (rk == 0.0) {
+			continue;
+		    }
+		    xx = yhat[t - arlist[k]];
+		    if (na(xx)) {
+			yhat[t] = NADBL;
+			miss = 1;
+		    }
 		}
+		zz += xx * rk;
 	    }
-	    zz = zz + xx * zr;
 	} /* end if ar */
-	for (v=0; !miss && v<pmod->ncoeff; v++) {
+
+	for (v=0; v<pmod->ncoeff && !miss; v++) {
 	    k = pmod->list[v+2];
 	    xx = (*pZ)[k][t];
 	    if (na(xx)) {
@@ -78,7 +82,7 @@ int gretl_forecast (int t1, int t2, int nv,
 		}
 	    }
 	    if (!miss) {
-		zz = zz + xx * pmod->coeff[v];
+		zz += xx * pmod->coeff[v];
 	    }
 	}
 
@@ -88,7 +92,7 @@ int gretl_forecast (int t1, int t2, int nv,
 	    zz = lmax / (1.0 + exp(-zz));
 	}
 
-	(*pZ)[nv][t] = zz;
+	yhat[t] = zz;
     }
 
     return 0;

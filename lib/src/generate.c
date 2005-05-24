@@ -3739,6 +3739,8 @@ static int arma_model_stat_pos (const char *s, const MODEL *pmod)
     return p;
 }
 
+#define AR1_MODEL(c) (c == CORC || c == HILU || c == PWE)
+
 static double 
 get_model_data_element (const char *s, GENERATE *genr,
 			MODEL *pmod, int idx)
@@ -3753,7 +3755,7 @@ get_model_data_element (const char *s, GENERATE *genr,
     if (idx == T_RHO) {
 	if (!(numeric_string(s))) {
 	    genr->err = E_INVARG;
-	} else if (dot_atof(s) == 1 && (pmod->ci == CORC || pmod->ci == HILU)) {
+	} else if (dot_atof(s) == 1 && AR1_MODEL(pmod->ci)) {
 	    x = gretl_model_get_double(pmod, "rho_in");
 	} else if (pmod->ci != AR && dot_atof(s) == 1) {
 	    x = pmod->rho;

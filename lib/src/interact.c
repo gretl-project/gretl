@@ -1505,7 +1505,7 @@ static int parse_criteria (const char *line, const double **Z,
  * @line: the command line, giving a starting observation, ending
  * observation, and variable name to use for the forecast values
  * (the starting and ending observations may be omitted).
- * @pmod: pointer to gretl #MODEL.
+ * @pmod: pointer to model.
  * @pdinfo: pointer to data information struct.
  * @pZ: pointer to data matrix.
  *
@@ -1526,13 +1526,17 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 
     /* the varname should either be in the 2nd or 4th position */
     if (sscanf(line, "%*s %8s %8s %8s", t1str, t2str, varname) != 3) {
-	if (sscanf(line, "%*s" "%8s", varname) != 1) return -1;
+	if (sscanf(line, "%*s" "%8s", varname) != 1) {
+	    return -1;
+	}
     }
 
     if (*t1str && *t2str) {
 	t1 = dateton(t1str, pdinfo);
 	t2 = dateton(t2str, pdinfo);
-	if (t1 < 0 || t2 < 0 || t2 < t1) return -1;
+	if (t1 < 0 || t2 < 0 || t2 < t1) {
+	    return -1;
+	}
     } else {
 	t1 = pdinfo->t1;
 	t2 = pdinfo->t2;
