@@ -57,6 +57,28 @@
     </gui-access>
 
   </command>
+  
+  <command name="addobs" section="Dataset" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>numero_osservazioni</argument>
+      </arguments>
+      <examples>
+        <example>addobs 10</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+       Aggiunge il numero indicato di osservazioni alla fine del dataset,
+       assegnando un codice di valore mancante a tutte le variabili.
+       Il comando non è disponibile se sul dataset è impostato un sotto-campione
+       ottenuto con una condizione Booleana.
+      </para>
+    </description>
+
+  </command>
 
   <command name="addto" section="Tests" context="cli">
 
@@ -1437,9 +1459,17 @@
 
   <command name="function" section="Programming" context="cli">
 
+    <usage>
+      <arguments>
+        <argument>nome_funzione</argument>
+      </arguments>
+    </usage>
+
     <description>
       <para>
-	Definisce una funzione.  Questa voce deve ancora essere scritta.
+	Apre un blocco di istruzioni che definiscono una funzione. Il blocco va
+        chiuso con <lit>end function</lit>. Per i dettagli, si veda
+        <manref targ="functions"/>.
       </para>
     </description>
 
@@ -2524,6 +2554,25 @@
     </gui-access>
 
   </command>
+
+  <command name="include" section="Programming" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>file</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Da usare in uno script di comandi, principalmente per includere
+        definizioni di funzioni. Esegue i comandi nel <repl>file<repl>
+        e ripassa il controllo allo script principale.
+      </para>
+    </description>
+
+  </command>
+
 
   <command name="info" section="Dataset" context="cli">
 
@@ -5283,6 +5332,14 @@
 	  <flag>--dat</flag>
 	  <effect>usa il formato ASCII di PcGive</effect>
         </option>
+        <option>
+         <flag>--database</flag>
+         <effect>usa il formato database di gretl</effect>
+        </option>
+        <option>
+         <flag>--overwrite</flag>
+         <effect>cfr oltre, a proposito del formato dei database</effect>
+        </option>
       </options>
     </usage>
 
@@ -5310,7 +5367,22 @@
         automaticamente: per salvarle occorre includerle esplicitamente
         nella <repl>lista-variabili</repl>.
       </para>  
-	
+
+      <para>
+        L'opzione di salvataggio in formato database di gretl è indicata se
+        occorre costruire dei grandi dataset di serie, magari con frequenze
+        diverse e diversi intervalli di osservazioni. Al momento questa opzione
+        è disponibile solo per dati annuali, trimestrali o mensili. Salvando su
+        un file che esiste già, il comportamento predefinito è quello di
+        accodare le nuove serie al contenuto del database preesistente. In
+        questo contesto, se una o più delle variabili da salvare hanno lo stesso
+        nome di una delle variabili già presenti nel database si otterrà un
+        messaggio di errore. L'opzione <lit>--overwrite</lit> permette invece di
+        sovrascrivere eventuali variabili del dataset che hanno lo stesso nome
+        delle nuove variabili, in modo che queste ultime rimpiazzino le
+        variabili preesistenti.
+      </para>
+
     </description>
 
     <gui-access>
