@@ -773,17 +773,16 @@ static void accommodate_obsolete_commands (char *word, char *line)
 
 static int plausible_genr_start (CMD *cmd, const char *line)
 {
-    const char *p = strchr(line, '=');
+    if (strchr(line, '=') != NULL) {
+	char word[9];
 
-    if (p != NULL) {
-	char *word = gretl_strndup(line, p - line);
-	
-	if (word != NULL) {
-	    tailstrip(word);
-	    if (check_varname(word) == 0) {
+	if (sscanf(line, "%8[^ =]", word)) {
+	    int n = strlen(word);
+
+	    if ((line[n] == ' ' || line[n] == '=') &&
+		check_varname(word) == 0) {
 		cmd->ci = GENR;
 	    }
-	    free(word);
 	}
     }
 
