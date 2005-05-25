@@ -118,6 +118,7 @@ struct gretl_option gretl_opts[] = {
     { PLOT,     OPT_O, "one-scale" },
     { PRINT,    OPT_O, "byobs" },
     { PRINT,    OPT_T, "ten" },
+    { QUIT,     OPT_X, "exit" },
     { SETOBS,   OPT_C, "stacked-cross-section" },
     { SETOBS,   OPT_S, "stacked-time-series" },
     { SETOBS,   OPT_T, "time-series" },
@@ -190,6 +191,7 @@ struct flag_match flag_matches[] = {
     { OPT_B, 'b' },
     { OPT_C, 'c' },
     { OPT_D, 'd' },
+    { OPT_E, 'e' },
     { OPT_F, 'f' },
     { OPT_G, 'g' },
     { OPT_I, 'i' },
@@ -209,7 +211,7 @@ struct flag_match flag_matches[] = {
     { 0L,   '\0' }
 };
 
-static const char *ok_flags = "abcdfgilmnopqrstvwxz";
+static const char *ok_flags = "abcdefgilmnopqrstvwxz";
 
 #define isflag(c) (strchr(ok_flags, c) != NULL)
 
@@ -473,7 +475,14 @@ const char *print_flags (gretlopt oflags, int ci)
 
     flagstr[0] = '\0';
 
-    if (oflags == 0L) return flagstr;
+    if (oflags == OPT_NONE) {
+	return flagstr;
+    }
+
+    if (ci == QUIT) {
+	/* any option flags are "hidden" */
+	return flagstr;
+    }
 
     /* special: -o (--vcv) can be used with several model
        commands */

@@ -138,57 +138,37 @@ static int get_rhodiff_or_lags_param (char *str, CMD *cmd)
     return 1;
 }
 
-static void maybe_genr_local (CMD *cmd, char *line)
+/* catch aliased command words and assign ci */
+
+static void catch_command_alias (CMD *cmd)
 {
-    int len = strlen(line);
+    char *s = cmd->word;
 
-    if (len < MAXLINE - 6) {
-	memmove(line + 5, line, len + 1);
-	strcpy(line, "genr");
-	line[4] = ' ';
+    if (!strcmp(s, "q")) {
+	strcpy(s, "quit");
+	cmd->ci = QUIT;
+    } if (!strcmp(s, "x")) {
+	strcpy(s, "quit");
+	cmd->ci = QUIT;
+	cmd->opt = OPT_X;
+    } else if (!strcmp(s, "let")) {
+	cmd->ci = GENR;
+    } else if (!strcmp(s, "ls") ||
+	       !strcmp(s, "list")) {
+	cmd->ci = VARLIST;
+    } else if (!strcmp(s, "boxplots")) { 
+	cmd->ci = BXPLOT;
+    } else if (!strcmp(s, "man")) {
+	cmd->ci = HELP;
+    } else if (!strcmp(s, "sample")) {
+	cmd->ci = SMPL;
+    } else if (!strcmp(s, "eval") ||
+	       !strcmp(s, "my") ||
+	       !strcmp(s, "series")) { 
+	cmd->ci = GENR;
+    } else if (*s == '!') {
+	cmd->ci = SHELL;
     }
-}
-
-static int aliased (char *str)
-{
-    int ret = 0;
-
-    if (!strcmp(str, "q")) {
-	strcpy(str, "quit");
-	ret = 1;
-    } else if (!strcmp(str, "x")) {
-	strcpy(str, "quit");
-	ret = 2; /* special */
-    } else if (!strcmp(str, "let")) {
-	strcpy(str, "genr");
-	ret = 1;
-    } else if (!strcmp(str, "ls")) {
-	strcpy(str, "varlist");
-	ret = 1;
-    } else if (!strcmp(str, "list")) {
-	strcpy(str, "varlist");
-	ret = 1;
-    } else if (!strcmp(str, "boxplots")) { 
-	strcpy(str, "boxplot");
-	ret = 1;
-    } else if (!strcmp(str, "man")) {
-	strcpy(str, "help");
-	ret = 1;
-    } else if (!strcmp(str, "sample")) {
-	strcpy(str, "smpl");
-	ret = 1;
-    } else if (!strcmp(str, "eval")) {
-	strcpy(str, "genr");
-	ret = 1;
-    } else if (!strcmp(str, "my")) {
-	strcpy(str, "genr");
-	ret = 2;
-    } else if (str[0] == '!') {
-	strcpy(str, "shell");
-	ret = 1;
-    }
-
-    return ret;
 }
 
 #define NO_VARLIST(c) (c == VARLIST || \
@@ -744,15 +724,17 @@ static void parse_logistic_ymax (char *line, CMD *cmd)
     }
 }
 
+#define FIELDLEN 32
+
 static int field_from_line (char *field, const char *s)
 {
     const char *p;
     int ret = 0;
 
-    sscanf(s, "%s", field);
+    sscanf(s, "%31s", field);
     
     p = strchr(field, '(');
-    if (p == NULL) return 0; /* no parens? */
+    if (p == NULL) return 0; /* no parens */
 
     p = strchr(p + 1, ')');
     if (p != NULL) return 0; /* balanced parens? */
@@ -760,9 +742,9 @@ static int field_from_line (char *field, const char *s)
     /* fields that need to be glued together */
     p = s + strlen(field);
     if (!strncmp(p, " to ", 4)) {
-	char tmp[8];
+	char tmp[9];
 
-	if (sscanf(p, " to %7s", tmp)) {
+	if (sscanf(p, " to %8s", tmp)) {
 	    strcat(field, " to ");
 	    strcat(field, tmp);
 	    ret = 2;
@@ -789,18 +771,42 @@ static void accommodate_obsolete_commands (char *word, char *line)
     }
 }
 
-static int fix_semicolon_after_var (char *s, int len)
+static int plausible_genr_start (CMD *cmd, const char *line)
 {
+    const char *p = strchr(line, '=');
+
+    if (p != NULL) {
+	char *word = gretl_strndup(line, p - line);
+	
+	if (word != NULL) {
+	    tailstrip(word);
+	    if (check_varname(word) == 0) {
+		cmd->ci = GENR;
+	    }
+	    free(word);
+	}
+    }
+
+    return cmd->ci;
+}
+
+static int fix_semicolon_after_var (char *s)
+{
+    int len = strlen(s);
     int i, j;
 
     for (i=0; i<len-1; i++) {
 	if (isalnum((unsigned char) s[i]) && s[i+1] == ';') {
-	    for (j=len; j>i+1; j--) {
-		s[j] = s[j-1];
+	    if (len < MAXLINE - 1) {
+		for (j=len; j>i+1; j--) {
+		    s[j] = s[j-1];
+		}
+		s[i+1] = ' ';
+		s[len + 1] = '\0';
+		len++;
+	    } else {
+		break;
 	    }
-	    s[i+1] = ' ';
-	    s[len + 1] = '\0';
-	    len = strlen(s);
 	}
     }
 
@@ -858,18 +864,17 @@ static int resize_cmd_param (CMD *cmd, const char *s, int inlen)
     return 0;
 }
 
-/* capture the remainder of a command line as parameter for
+/* capture the balance of the command line as parameter for
    a command */
 
-static int capture_param (CMD *cmd, const char *line,
-			  int linelen, int n)
+static int capture_param (CMD *cmd, const char *s)
 {
-    if (resize_cmd_param(cmd, NULL, linelen - n + 1)) {
+    if (resize_cmd_param(cmd, NULL, strlen(s) + 1)) {
 	cmd->errcode = E_ALLOC;
     } else if (cmd->ci == PRINT) {
-	strcpy(cmd->param, line + n + 1);
+	strcpy(cmd->param, s);
     } else {
-	sscanf(line + n + 1, "%s", cmd->param);
+	sscanf(s, "%s", cmd->param);
     }
 
     return cmd->errcode;
@@ -900,10 +905,10 @@ void gretl_cmd_clear (CMD *cmd)
 
 int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo) 
 {
-    int j, nf, linelen, n, v, lnum;
+    int j, nf, linelen, pos, v, lnum;
     int gotdata = 0, ar = 0, poly = 0;
     char *remainder = NULL;
-    char field[16] = {0};
+    char field[FIELDLEN] = {0};
 
     gretl_cmd_clear(cmd);
 
@@ -950,17 +955,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* backwards compatibility */
     accommodate_obsolete_commands(cmd->word, line);
 
-    linelen = strlen(line);
-
-    if (aliased(cmd->word) == 2) {
-	/* aliases requiring special treatment */
-	if (!strcmp(cmd->word, "quit")) {
-	    strcpy(cmd->param, "x");
-	} else if (!strcmp(cmd->word, "genr")) {
-	    maybe_genr_local(cmd, line);
-	    linelen = strlen(line);
-	}
-    }
+    /* replace simple aliases and a few specials */
+    catch_command_alias(cmd);
 
     /* subsetted commands (e.g. "deriv" in relation to "nls") */
     if (!strcmp(cmd->word, "end")) {
@@ -971,14 +967,16 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci = cmd->context;
     }
 
-    /* trap bogus commands */ 
     if (cmd->ci == 0) {
 	cmd->ci = gretl_command_number(cmd->word);
 	if (cmd->ci == 0) {
-	    cmd->errcode = 1;
-	    sprintf(gretl_errmsg, _("command '%s' not recognized"), 
-		    cmd->word);
-	    goto bailout;
+	    /* trap bogus commands */
+	    if (!plausible_genr_start(cmd, line)) {
+		cmd->errcode = 1;
+		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
+			cmd->word);
+		goto bailout;
+	    }
 	}
     }
 
@@ -1038,11 +1036,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* fix lines that contain a semicolon right after a var */
-    linelen = fix_semicolon_after_var(line, linelen);
+    linelen = fix_semicolon_after_var(line);
 
     /* now we're probably dealing with a command that wants a list... */    
     nf = count_fields(line) - 1;
-    n = strlen(cmd->word);
+    pos = strlen(cmd->word);
 
     /* unless it's on a short list of specials */
     if (cmd->ci == HELP ||
@@ -1054,16 +1052,15 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci == NULLDATA ||
 	(cmd->ci == PRINT && strstr(line, "\""))) {
 	cmd->nolist = 1;
-	if (!strncmp(line, "man ", 4)) {
-	    n--;
-	}
-	if (nf && capture_param(cmd, line, linelen, n)) {
-	    goto bailout;
+	if (nf > 0) {
+	    if (capture_param(cmd, line + pos + 1)) {
+		goto bailout;
+	    }
 	}
 	if (cmd->ci == END) {
 	    check_end_command(cmd);
 	}
-	/* note: final return point for various commands that take no list */
+	/* note: return point for various commands that take no list */
 	return cmd->errcode;
     }
 
@@ -1075,7 +1072,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->errcode;
     }
 
-    remainder = calloc(linelen - n + 1, 1);
+    remainder = gretl_strdup(line + pos + 1);
     if (remainder == NULL) {
 	cmd->errcode = E_ALLOC;
 	goto bailout;
@@ -1085,7 +1082,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
        the end of the command word to the first semicolon into
        "param", for processing later */
     if (cmd->ci == RHODIFF) {  /* FIXME */
-	strcpy(remainder, line + n + 1);
 	if (!get_rhodiff_or_lags_param(remainder, cmd)) {
 	    cmd->errcode = E_SYNTAX;
 	    goto bailout;
@@ -1093,17 +1089,16 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	strcpy(line, remainder);
 	linelen = strlen(line);
 	nf = count_fields(line);
-	n = 0;
+	pos = 0;
     }
 
     if (cmd->ci == LAGS) {
 	/* optional initial lags field */
-	strcpy(remainder, line + n + 1);
 	if (get_rhodiff_or_lags_param(remainder, cmd)) {
 	    strcpy(line, remainder);
 	    linelen = strlen(line);
 	    nf = count_fields(line);
-	    n = 0;
+	    pos = 0;
 	} else {
 	    *remainder = '\0';
 	}
@@ -1112,12 +1107,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* "store" is a special case since the filename that comes
        before the list may be quoted, and have spaces in it.  Groan */
     if (cmd->ci == STORE && nf > 0) {
-	strcpy(remainder, line + n + 1);
 	cmd->errcode = get_maybe_quoted_storename(cmd, remainder, &nf);
 	if (cmd->errcode) {
 	    goto bailout;
 	} else {
-	    n = 0;
+	    pos = 0;
 	    if (--nf > 0) {
 		strcpy(line, remainder);	
 		linelen = strlen(line);
@@ -1137,13 +1131,13 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci == MULTIPLY ||
 	cmd->ci == SETMISS) {
 	if (nf) {
-	    if (resize_cmd_param(cmd, line + n + 1, 0)) {
+	    if (resize_cmd_param(cmd, line + pos + 1, 0)) {
 		cmd->errcode = E_ALLOC;
 		goto bailout;
 	    }
-	    sscanf(line + n + 1, "%s", cmd->param);
-	    strcpy(remainder, line + n + 1 + strlen(cmd->param));
-	    n = 0;
+	    sscanf(line + pos + 1, "%s", cmd->param);
+	    strcpy(remainder, line + pos + 1 + strlen(cmd->param));
+	    pos = 0;
 	    if (--nf > 0) {
 		strcpy(line, remainder);
 		linelen = strlen(line);
@@ -1158,7 +1152,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	strcpy(cmd->str, suffix);
 	shift_string_left(line, strlen(suffix));
 	nf--;
-	n = 0;
+	pos = 0;
 	linelen = strlen(line);
     }
 
@@ -1167,6 +1161,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	/* flag acceptance of lags or ar, ma orders */
 	ar = 1;
     }
+
+    /* allocate space for the command list */
 
     cmd->list = realloc(cmd->list, (1 + nf) * sizeof *cmd->list);
 
@@ -1183,7 +1179,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     for (j=1, lnum=1; j<=nf; j++) {
 	int skip;
 
-	strcpy(remainder, line + n + 1);
+	strcpy(remainder, line + pos + 1);
 
 	/* special: optional lag order for correlogram */
 	if (cmd->ci == CORRGM && j == 2) {
@@ -1218,7 +1214,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		/* Case 1: automated lags:  e.g. 'var(-1)' */
 		if (auto_lag_ok(field, &lnum, pZ, pdinfo, cmd)) {
 		    /* handled, get on with it */
-		    n += strlen(field) + 1;
+		    pos += strlen(field) + 1;
 		    continue; 
 		}
 
@@ -1226,7 +1222,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		else if (!cmd->errcode && 
 			 plot_var_ok(field, &lnum, pZ, pdinfo, cmd)) {
 		    /* handled, get on with it */
-		    n += strlen(field) + 1;
+		    pos += strlen(field) + 1;
 		    continue; 
 		} 
 
@@ -1235,7 +1231,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		else if (!cmd->errcode && 
 			 wildcard_expand_ok(field, &lnum, pdinfo, cmd)) {
 		    /* handled, get on with it */
-		    n += strlen(field) + 1;
+		    pos += strlen(field) + 1;
 		    continue; 			
 		}
 #endif
@@ -1284,7 +1280,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		    goto bailout;
 		}
 		sprintf(cmd->param, "%d", lnum);
-		n += strlen(field) + 1;
+		pos += strlen(field) + 1;
 		cmd->list[lnum++] = LISTSEP;
 		ar = 0; /* turn off acceptance of AR lags */
 		if (cmd->ci == MPOLS) {
@@ -1292,7 +1288,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		}
 		continue;
 	    } else if (cmd->ci == VAR) {
-		n += strlen(field) + 1;
+		pos += strlen(field) + 1;
 		cmd->list[lnum++] = LISTSEP;
 		continue;
 	    } else {
@@ -1316,7 +1312,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    }
 	}
 
-	n += strlen(field) + 1;
+	pos += strlen(field) + 1;
     } /* end of loop through fields in command line */
 
     /* By now we're looking at a command that takes a list,
@@ -1381,25 +1377,25 @@ static void nl_strip (char *line)
 
 /**
  * help:
- * @cmd: the command on which help is wanted.
+ * @cmdword: the command on which help is wanted.
  * @helpfile: path to the gretl help file.
  * @prn: pointer to gretl printing struct.
  *
- * Searches in @helpfile for help on @cmd and, if help is found,
- * prints it to @prn.  If @cmd is a NULL pointer, lists the valid
+ * Searches in @helpfile for help on @cmdword and, if help is found,
+ * prints it to @prn.  If @cmdword is %NULL, lists the valid
  * commands.
  *
  * Returns: 0 on success, 1 if the helpfile was not found or the
  * requested topic was not found.
  */
 
-int help (const char *cmd, const char *helpfile, PRN *prn)
+int help (const char *cmdword, const char *helpfile, PRN *prn)
 {
-    FILE *fq;
-    char line[MAXLEN], cmdcopy[9];
+    FILE *fp;
+    char line[128];
     int i, ok;
 
-    if (cmd == NULL || *cmd == '\0') {
+    if (cmdword == NULL || *cmdword == '\0') {
 	pputs(prn, _("\nValid gretl commands are:\n"));
 	for (i=1; i<NC; i++) {
 	    pprintf(prn, "%-9s", gretl_command_word(i));
@@ -1416,34 +1412,25 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 	return 0;
     }
 
-    *cmdcopy = 0;
-    strncat(cmdcopy, cmd, 8);
-
-    ok = 0;
-
-    if (gretl_command_number(cmd) > 0) {
-	ok = 1;
-    } else if (aliased(cmdcopy) && gretl_command_number(cmdcopy) > 0) {
-	ok = 1;
-    }
+    ok = gretl_command_number(cmdword) > 0;
 
     if (!ok) {
-	pprintf(prn, _("\"%s\" is not a gretl command.\n"), cmd);
+	pprintf(prn, _("\"%s\" is not a gretl command.\n"), cmdword);
 	return 1;
     }
 
-    if ((fq = gretl_fopen(helpfile, "r")) == NULL) {
+    if ((fp = gretl_fopen(helpfile, "r")) == NULL) {
 	printf(_("Unable to access the file %s.\n"), helpfile);
 	return 1;
     } 
 
     ok = 0;
-    while (fgets(line, MAXLEN, fq) != NULL) {
+    while (fgets(line, sizeof line, fp) != NULL) {
 	nl_strip(line);
-	if (!strcmp(cmdcopy, line)) {
+	if (!strcmp(cmdword, line)) {
 	    ok = 1;
-	    pputs(prn, "\n");
-	    while (fgets(line, MAXLEN, fq)) {
+	    pputc(prn, '\n');
+	    while (fgets(line, MAXLEN, fp)) {
 		if (*line == '#') {
 		    break;
 		}
@@ -1457,10 +1444,10 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
     }
 
     if (!ok) {
-	pprintf(prn, _("%s: sorry, no help available.\n"), cmd);
+	pprintf(prn, _("%s: sorry, no help available.\n"), cmdword);
     }
 
-    fclose(fq);
+    fclose(fp);
 
     return 0;
 }

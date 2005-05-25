@@ -106,11 +106,12 @@ enum transformations {
 #define VALSTACK_SIZE 32
 
 enum genr_flags {
-    GENR_SAVE        = 1 << 0,
-    GENR_SCALAR      = 1 << 1,
-    GENR_LOCAL       = 1 << 2,
-    GENR_WARN        = 1 << 3,
-    GENR_SIMPLE_SORT = 1 << 4
+    GENR_SAVE         = 1 << 0,
+    GENR_SCALAR       = 1 << 1,
+    GENR_FORCE_VECTOR = 1 << 2,
+    GENR_LOCAL        = 1 << 3,
+    GENR_WARN         = 1 << 4,
+    GENR_SIMPLE_SORT  = 1 << 5
 };
 
 typedef struct _GENERATE GENERATE;

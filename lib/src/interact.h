@@ -77,7 +77,7 @@ int get_command_index (const char *line, CMD *cmd);
 
 int command_number (const char *cmd);
 
-int help (const char *cmd, const char *helpfile, PRN *prn);
+int help (const char *cmdword, const char *helpfile, PRN *prn);
 
 int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 
 	   double ***pZ);

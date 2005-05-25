@@ -287,6 +287,40 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
     return 0;
 }
 
+/**
+ * dataset_scalar_to_vector:
+ * @v: index number of variable to process.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ *
+ * Expands an existing scalar member of a dataset to a
+ * full-length vector.  All values are initializes to
+ * the missing value code.
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
+
+int dataset_scalar_to_vector (int v, double ***pZ, DATAINFO *pdinfo)
+{
+    double *tmp;
+    int t, err = 0;
+
+    tmp = realloc((*pZ)[v], pdinfo->n * sizeof *tmp);
+
+    if (tmp == NULL) {
+	err = E_ALLOC;
+    } else {
+	/* initialize all vals to missing */
+	for (t=0; t<pdinfo->n; t++) {
+	    tmp[t] = NADBL;
+	}
+	(*pZ)[v] = tmp;
+	pdinfo->vector[v] = 1;
+    }
+
+    return err;
+}
+
 static int 
 shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv)
 {

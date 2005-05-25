@@ -1460,7 +1460,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	printf(_("commands saved as %s\n"), cmdfile);
 	gretl_print_destroy(cmdprn);
 
-	if (cmd.param[0] == 'x') break;
+	if (cmd.opt & OPT_X) break;
 
 	printf(_("type a filename to store output (enter to quit): "));
 	*outfile = '\0';

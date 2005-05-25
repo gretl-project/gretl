@@ -394,17 +394,20 @@ char *gretl_strdup (const char *src)
 
 char *gretl_strndup (const char *src, size_t n)
 {
-    char *targ;
-    size_t len = strlen(src);
+    char *targ = NULL;
 
-    if (len > n) {
-	len = n;
-    }
+    if (n > 0) {
+	size_t len = strlen(src);
 
-    targ = malloc(len + 1);
-    if (targ != NULL) {
-	*targ = '\0';
-	strncat(targ, src, len);
+	if (len > n) {
+	    len = n;
+	}
+
+	targ = malloc(len + 1);
+	if (targ != NULL) {
+	    *targ = '\0';
+	    strncat(targ, src, len);
+	}
     }
 
     return targ;

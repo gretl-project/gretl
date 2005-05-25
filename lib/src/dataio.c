@@ -782,7 +782,6 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
  * Check a variable name for legality.
  * 
  * Returns: 0 if name is OK, 1 if not.
- *
  */
 
 int check_varname (const char *varname)

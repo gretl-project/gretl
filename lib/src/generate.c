@@ -54,9 +54,11 @@ static int genr_mlog (const char *str, double *xvec, double **pZ,
 		      DATAINFO *pdinfo);
 #endif
 
-static void genr_msg (GENERATE *genr, int oldv);
+static void eval_msg (const GENERATE *genr);
+static void compose_genr_msg (const GENERATE *genr, int oldv);
 static int listpos (int v, const int *list);
-static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr);
+static int genr_write_var (double ***pZ, DATAINFO *pdinfo, 
+			   GENERATE *genr);
 
 static int math_tokenize (char *s, GENERATE *genr, int level);
 static double get_obs_value (const char *s, const double **Z, 
@@ -216,8 +218,12 @@ static const char *get_func_word (int fnum);
 #define ARGLEN    64
 
 #define genr_is_scalar(g) ((g)->flags & GENR_SCALAR)
+#define genr_is_vector(g) (!((g)->flags & GENR_SCALAR))
 #define genr_set_scalar(g) ((g)->flags |= GENR_SCALAR)
 #define genr_unset_scalar(g) ((g)->flags &= ~GENR_SCALAR)
+
+#define genr_force_vector(g) ((g)->flags |= GENR_FORCE_VECTOR)
+#define genr_forcing_vector(g) ((g)->flags & GENR_FORCE_VECTOR)
 
 #define genr_doing_save(g) ((g)->flags & GENR_SAVE)
 #define genr_set_save(g) ((g)->flags |= GENR_SAVE)
@@ -1244,7 +1250,7 @@ static int insert_ghost_zero (char *start, char *p, int *np)
     }
 
     /* do we have space to make the insertion? */
-    if (n + (2 * (*np)) >= MAXLEN) {
+    if (n + (2 * (*np)) >= MAXLINE) {
 	return 1;
     }
 
@@ -1704,7 +1710,7 @@ int insert_paren (char *s, int pos, char lr)
     static int lpos;
     int i, rpos, n = strlen(s);
 
-    if (n + 1 >= MAXLEN) {
+    if (n + 1 >= MAXLINE) {
 	return 1;
     }
 
@@ -1838,16 +1844,6 @@ static int parenthesize (char *str)
     return 0;
 }
 
-/* ........................................................  */
-
-static void otheruse (const char *str1, const char *str2)
-{
-    sprintf(gretl_errmsg, _("'%s' refers to a %s and may not be used as a "
-			    "variable name"), str1, str2); 
-}
-
-/* .......................................................... */
-
 #ifdef GENR_DEBUG
 
 static const char *get_func_word (int fnum)
@@ -1889,68 +1885,73 @@ int genr_function_from_string (const char *s)
     return 0;
 }
 
-/* .......................................................... */
+static void otheruse (const char *s1, const char *s2)
+{
+    sprintf(gretl_errmsg, _("'%s' refers to a %s and may not be used as a "
+			    "variable name"), s1, s2); 
+}
+
+/**
+ * gretl_reserved_word:
+ * @str: string to be tested.
+ *
+ * Returns 1 if @str is a reserved word that cannot figure as the
+ * name of a user-defined variable, otherwise 0.
+ */
 
 int gretl_reserved_word (const char *str)
 {
-    const char *resword[] = {"uhat", "yhat",
-			     "const", "CONST", "pi",
-			     "coeff", "stderr", "rho",
-			     "mean", "median", "var", "cov", "vcv", "sd",
-			     "full", "subdum", 
-			     "t", "annual", "qtrs", "months", "hrs", 
-			     "i", "obs", 
-			     NULL};
-    int i = 0;
+    const char *resword[] = {
+	"uhat", "yhat",
+	"const", "CONST", "pi",
+	"coeff", "stderr", "rho",
+	/* stats functions */
+	"mean", "median", "var", "cov", "vcv", "sd",
+	/* internal sampling vars */
+	"full", "subdum", 
+	/* plotting vars */
+	"t", "annual", "qtrs", "months", "hrs", 
+	/* other internal vars */
+	"i", "obs", "series",
+	NULL
+    };
+    int i, ret = 0;
 
-    while (resword[i] != NULL) {
-	if (strcmp(str, resword[i]) == 0) {
-	    switch (i) {
-	    case 0: 
+    for (i=0; resword[i] != NULL && !ret; i++) {
+	if (!strcmp(str, resword[i])) {
+	    if (i == 0) {
 		otheruse(str, _("residual vector"));
-		break;
-	    case 1: 
+	    } else if (i == 1) {
 		otheruse(str, _("fitted values vector"));
-		break;
-	    case 2: case 3: case 4:
+	    } else if (i >= 2 && i <= 4) {
 		otheruse(str, _("constant"));
-		break;
-	    case 5:
+	    } else if (i == 5) {
 		otheruse(str, _("regr. coeff."));
-		break;
-	    case 6:
+	    } else if (i == 6) {
 		otheruse(str, _("standard error"));
-		break;
-	    case 7:
+	    } else if (i == 7) {
 		otheruse(str, _("autocorr. coeff."));
-		break;
-	    case 8: case 9: case 10: case 11: case 12: case 13:
+	    } else if (i >= 8 && i <= 13) {
 		otheruse(str, _("stats function"));
-		break;
-	    case 14: case 15:
+	    } else if (i == 14 || i == 15) {
 		otheruse(str, _("sampling concept"));
-		break;
-	    case 16: case 17: case 18: case 19: case 20:
+	    } else if (i >= 16 && i <= 20) {
 		otheruse(str, _("plotting variable"));
-		break;
-	    case 21: case 22: 
+	    } else if (i >= 21 && i <= 23) {
 		otheruse(str, _("internal variable"));
-		break;
-	    default:
+	    } else {
 		otheruse(str, _("math function"));
-		break;
 	    }
-	    return 1;
+	    ret = 1;
 	}
-	i++; 
     } 
 
-    if (genr_function_from_string(str)) {
+    if (!ret && genr_function_from_string(str)) {
 	otheruse(str, _("math function"));
-	return 1;
+	ret = 1;
     }
  
-    return 0;
+    return ret;
 }
 
 /* allow stuff like "genr foo += 3.0", as abbreviation for
@@ -1964,7 +1965,7 @@ expand_operator_abbrev (char *s, const char *lhs, char op)
     int i, err = 0;
 
     /* do we have space to make the insertion? */
-    if (strlen(s) + llen + 2 >= MAXLEN) {
+    if (strlen(s) + llen + 2 >= MAXLINE) {
 	err = 1;
     } else {
 	memmove(s + llen + 1, s, strlen(s) + 1);
@@ -2203,20 +2204,34 @@ static void get_genr_formula (char *formula, const char *line,
 			      GENERATE *genr)
 {
     char vname[USER_VLEN], obs[OBSLEN];
+    char first[9];
 
-    if (line == NULL || *line == '\0') return;
-
-    /* skip over any leading white space */
-    while (isspace((unsigned char) *line)) line++;
-
-    if (!strncmp(line, "eval", 4)) {
-	genr_unset_save(genr);
+    if (string_is_blank(line)) {
+	return;
     }
 
-    if (!strncmp(line, "genr", 4) || !(genr_doing_save(genr))) {
+    /* look at first 'word' in line */
+    sscanf(line, "%8s", first);
+
+    if (!strcmp(first, "genr")) {
 	line += 4;
-	while (isspace((unsigned char) *line)) line++;
-    }
+    } else if (!strcmp(first, "eval")) {
+	genr_unset_save(genr);
+	line += 4;
+    } else if (!strcmp(first, "my")) {
+	if (gretl_executing_function()) {
+	    /* generation of vars local to function */
+	    genr_set_local(genr);
+	    line += 2;
+	}
+    } else if (!strcmp(first, "series")) {
+	genr_force_vector(genr);
+	line += 6;
+    } 
+
+    while (isspace((unsigned char) *line)) {
+	line++;
+    }    
 
     /* allow for generating a single value in a series */
     if (sscanf(line, "%8[^[ =][%10[^]]", vname, obs) == 2) {
@@ -2228,8 +2243,7 @@ static void get_genr_formula (char *formula, const char *line,
 	}
     }
 
-    if (gretl_executing_function()) {
-	/* allow for generation of vars local to function */
+    if (!genr_is_local(genr) && gretl_executing_function()) {
 	if (sscanf(line, "my %8s =", vname)) {
 	    genr_set_local(genr);
 	    line += 3;
@@ -2238,7 +2252,7 @@ static void get_genr_formula (char *formula, const char *line,
 
     *formula = '\0';
 
-    copy_compress(formula, line, MAXLEN - 10);
+    copy_compress(formula, line, MAXLINE - 10);
 }
 
 static int gentoler (const char *s)
@@ -2294,7 +2308,7 @@ static void substitute_in_genrs (char *genrs, char *src)
     if (slen > 0) {
 	int srclen = strlen(src);
 	
-	if (strlen(genrs) + srclen < MAXLEN) {
+	if (strlen(genrs) + srclen < MAXLINE) {
 	    int tail = strlen(p) + 1;
 
 	    *p = ' ';
@@ -2305,7 +2319,7 @@ static void substitute_in_genrs (char *genrs, char *src)
 }
 
 static void 
-make_genr_label (GENERATE *genr, char *genrs, const char *vname)
+write_genr_label (GENERATE *genr, char *genrs, int oldv)
 {
     char tmp[64] = {0};
     int llen = 0;
@@ -2314,20 +2328,14 @@ make_genr_label (GENERATE *genr, char *genrs, const char *vname)
 	sprintf(tmp, "%.63s", genr->label);
     }
 
-    if (vname != NULL) {
-	if (!strncmp(vname, "$nl", 3) || 
-	    !strncmp(vname, "__", 2) ||
-	    !strcmp(vname, "argv")) {
-	    return;
-	} else {
-	    int mc = get_model_count();
+    if (genr->varnum < oldv) {
+	int mc = get_model_count();
 
-	    if (mc > 0) {
-		sprintf(genr->label, _("Replaced after model %d: "), mc);
-		llen = 48;
-	    }
+	if (mc > 0) {
+	    sprintf(genr->label, _("Replaced after model %d: "), mc);
+	    llen = 48;
 	}
-    }
+    }	
 
     if (*tmp != '\0') {
 	*genr->label = '\0';
@@ -2340,6 +2348,22 @@ make_genr_label (GENERATE *genr, char *genrs, const char *vname)
     } else {
 	strncat(genr->label, genrs, MAXLABEL - 1);
     }
+
+    strcpy(VARLABEL(genr->pdinfo, genr->varnum), genr->label);    
+}
+
+static int label_genr_output (const char *vname)
+{
+    int ret = 1;
+
+    if (!strcmp(vname, "argv") ||
+	!strncmp(vname, "__", 2) ||
+	!strncmp(vname, "$nl", 3) ||
+	!strcmp(vname, "tmpmsk")) {
+	ret = 0;
+    }
+
+    return ret;
 }
 
 /**
@@ -2360,7 +2384,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	      MODEL *pmod)
 {
     int i;
-    char s[MAXLEN], genrs[MAXLEN];
+    char s[MAXLINE], genrs[MAXLINE];
     char newvar[USER_VLEN];
     int oldv = pdinfo->v;
     GENERATE genr;
@@ -2418,7 +2442,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    strcpy(genr.varname, s);
 	    genr.varnum = varindex(pdinfo, s);
 	    genr_unset_scalar(&genr);
-	    genr_msg(&genr, oldv);
+	    compose_genr_msg(&genr, oldv);
 	}
 	return genr.err;
     } else if (!strcmp(s, "unit")) {
@@ -2427,7 +2451,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    strcpy(genr.varname, s);
 	    genr.varnum = varindex(pdinfo, s);
 	    genr_unset_scalar(&genr);
-	    genr_msg(&genr, oldv);
+	    compose_genr_msg(&genr, oldv);
 	}
 	return genr.err;	
     } else if (strncmp(s, "toler=", 6) == 0) {
@@ -2536,132 +2560,135 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
  genr_return:
 
-    if (genr.err) {
-	genrfree(&genr);
-    } else {
-	make_genr_varname(&genr, newvar);
-	genr_msg(&genr, oldv);
-	if (genr_doing_save(&genr)) {
-	    const char *vname;
-
-	    if (genr.varnum < oldv) {
-		vname = newvar;
-	    } else {
-		vname = NULL;
-	    }
-	    make_genr_label(&genr, genrs, vname);
-	    genr.err = add_new_var(pZ, pdinfo, &genr);
+    if (!genr.err) {
+	if (!genr_doing_save(&genr)) {
+	    eval_msg(&genr);
 	} else {
-	    genrfree(&genr);
-	}
+	    make_genr_varname(&genr, newvar);
+	    genr.err = genr_write_var(pZ, pdinfo, &genr);
+	    if (!genr.err && label_genr_output(newvar)) {
+		write_genr_label(&genr, genrs, oldv);
+		compose_genr_msg(&genr, oldv);
+	    }
+	} 
     }
+
+    genrfree(&genr);
 
     return genr.err;
 }
 
 /* ........................................................... */
     
-static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
+static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 {
-    int t, n = pdinfo->n, v = genr->varnum;
-    int modify = 0, was_scalar = 0, vectorize = 0;
-    double xx;
+    double xt = genr->xvec[pdinfo->t1];
+    int t, v = genr->varnum;
+    int modifying = 0;
+    int err = 0;
 
-    /* is the new variable an addition to the data set? */
+    /* take into account any forcing the user has attempted */
+    if (genr_forcing_vector(genr) && genr_is_scalar(genr)) {
+	genr_unset_scalar(genr);
+	for (t=0; t<pdinfo->n; t++) {
+	    genr->xvec[t] = xt;
+	}
+    } 
+
     if (v >= pdinfo->v) {
-	if (dataset_add_series(1, pZ, pdinfo)) {
-	    return E_ALLOC;
+	/* the generated var is an addition to the data set */
+	if (genr_is_vector(genr)) {
+	    err = dataset_add_series(1, pZ, pdinfo);
+	} else {
+	    err = dataset_add_scalar(pZ, pdinfo);
 	}
-	strcpy(pdinfo->varname[v], genr->varname);
+	if (!err) {
+	    strcpy(pdinfo->varname[v], genr->varname);
+	}
     } else {
-	modify = 1;
-	if (!pdinfo->vector[v]) {
-	    was_scalar = 1;
-	} else if (genr_is_scalar(genr)) {
-	    vectorize = 1;
-	}
+	/* we're modifying an existing variable */
+	modifying = 1;
     }
 
-    if (modify && complex_subsampled()) {
-	if (!genr_is_scalar(genr) && !pdinfo->vector[v]) {
-	    strcpy(gretl_errmsg, _("You cannot turn a scalar into a vector "
-		   "when the dataset is subsampled."));
-	    return 1;
-	} 
+    /* generally we allow scalar -> vector expansion for existing
+       vars, but not if the dataset is subsampled */
+    if (modifying && complex_subsampled() &&
+	genr_is_vector(genr) && !pdinfo->vector[v]) {
+	strcpy(gretl_errmsg, _("You cannot turn a scalar into a vector "
+			       "when the dataset is subsampled."));
+	err = 1;
     }
 
-    strcpy(VARLABEL(pdinfo, v), genr->label);
-
-    if (!vectorize) {
-	/* do not coerce existing vectors into scalars */
-	pdinfo->vector[v] = !(genr_is_scalar(genr));
-    }
-
-    if (genr_is_local(genr)) {
+    if (!err && genr_is_local(genr)) {
 	/* record as a var local to a particular function
 	   stack depth */
 	STACK_LEVEL(pdinfo, v) = gretl_function_stack_depth();
     }
 
-    xx = genr->xvec[pdinfo->t1];
-
 #ifdef GENR_DEBUG
-    fprintf(stderr, "add_new_var: adding %s '%s' (#%d, %s)\n",
-	    (genr_is_scalar(genr) && !vectorize)? "scalar" : "vector",
-	    pdinfo->varname[v], v,
-	    (modify)? "replaced" : "newly created");
+    if (err) {
+	fprintf(stderr, "genr_write_var: err = %d\n", err);
+    } else {
+	fprintf(stderr, "genr_write_var: adding %s '%s' (#%d, %s)\n",
+		(pdinfo->vector[v])? "vector" : "scalar",
+		pdinfo->varname[v], v,
+		(modifying)? "replaced" : "newly created");
+    }
 #endif
 
-    if (genr->obs >= 0) {
-	/* replacing single observation */
-	if (genr_is_scalar(genr)) {
-	    (*pZ)[v][genr->obs] = xx;
+    if (!err) {
+	if (genr->obs >= 0) {
+	    /* we're replacing a single observation */
+	    if (genr_is_scalar(genr)) {
+		(*pZ)[v][genr->obs] = xt;
+	    } else {
+		(*pZ)[v][genr->obs] = genr->xvec[genr->obs];
+	    }
+	} else if (genr_is_scalar(genr)) {
+	    if (pdinfo->vector[v]) {
+		/* we never allow vector -> scalar conversion for
+		   existing vars, so expand the result */
+		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+		    (*pZ)[v][t] = xt;
+		}
+	    } else {
+		/* just transcribe scalar */
+		strcat(VARLABEL(pdinfo, v), _(" (scalar)"));
+		(*pZ)[v][0] = xt;
+	    }
 	} else {
-	    (*pZ)[v][genr->obs] = genr->xvec[genr->obs];
-	}
-    } else if (vectorize) {
-	/* expand result */
-	for (t=0; t<n; t++) {
-	    (*pZ)[v][t] = xx;
-	}
-    } else if (genr_is_scalar(genr)) {
-	strcat(VARLABEL(pdinfo, v), _(" (scalar)"));
-	(*pZ)[v] = realloc((*pZ)[v], sizeof ***pZ);
-	(*pZ)[v][0] = xx;
-    } else {
-	if (was_scalar) {
-	    double *tmp;
+	    /* we generated, and will now transcribe, a vector result */
+	    if (modifying && !pdinfo->vector[v]) {
+		err = dataset_scalar_to_vector(v, pZ, pdinfo);
+	    }
 
-	    /* variable was previously a scalar, now a vector */
-	    tmp = realloc((*pZ)[v], pdinfo->n * sizeof *tmp);
-	    if (tmp == NULL) {
-		return E_ALLOC;
-	    } else {
-		(*pZ)[v] = tmp;
+	    if (!modifying) {
+		/* initialize all vals to missing */
+		for (t=0; t<pdinfo->n; t++) {
+		    (*pZ)[v][t] = NADBL;
+		}
+	    }
+
+	    if (!err) {
+		/* transcribe the generated values */
+		for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
+		    (*pZ)[v][t] = genr->xvec[t];
+		}
+	    }
+
+	    if (!err && genr->S != NULL) {
+		/* handle sorted observation markers */
+		if (genr_simple_sort(genr)) {
+		    set_sorted_markers(pdinfo, v, genr->S);
+		    genr->S = NULL;
+		} else {
+		    free_genr_S(genr);
+		}
 	    }
 	}
-	if (!modify) {
-	    /* newly created var: initialize all to missing */
-	    for (t=0; t<n; t++) {
-		(*pZ)[v][t] = NADBL;
-	    }
-	}
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
-	    (*pZ)[v][t] = genr->xvec[t];
-	}
-	if (genr->S != NULL) {
-	    if (genr_simple_sort(genr)) {
-		set_sorted_markers(pdinfo, v, genr->S);
-		genr->S = NULL;
-	    } else {
-		free_genr_S(genr);
-	    }
-	}
-    }
+    } /* !err */
 
-    genrfree(genr);
-
-    return 0;
+    return err;
 }
 
 /* ............................................................ */
@@ -5079,25 +5106,27 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 
 /* ...................................................... */
 
-static void genr_msg (GENERATE *genr, int oldv)
+static void eval_msg (const GENERATE *genr)
+{
+    double x = genr->xvec[genr->pdinfo->t1];
+
+    if (na(x)) {
+	strcpy(gretl_msg, " NA");
+    } else {
+	sprintf(gretl_msg, " %g", x);
+    }
+}
+
+static void compose_genr_msg (const GENERATE *genr, int oldv)
 {
     double x;
     int scalar = genr_is_scalar(genr);
     int mutant = 0;
 
+    /* no message for special internal vars */
     if (!strcmp(genr->varname, "argv") ||
 	!strncmp(genr->varname, "$nl", 3) ||
 	!strcmp(genr->varname, "tmpmsk")) {
-	return;
-    }
-
-    if (!(genr_doing_save(genr))) {
-	x = genr->xvec[genr->pdinfo->t1];
-	if (na(x)) {
-	    strcpy(gretl_msg, " NA");
-	} else {
-	    sprintf(gretl_msg, " %g", x);
-	}
 	return;
     }
 
