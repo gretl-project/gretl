@@ -138,6 +138,17 @@ static int get_rhodiff_or_lags_param (char *str, CMD *cmd)
     return 1;
 }
 
+static void maybe_genr_local (CMD *cmd, char *line)
+{
+    int len = strlen(line);
+
+    if (len < MAXLINE - 6) {
+	memmove(line + 5, line, len + 1);
+	strcpy(line, "genr");
+	line[4] = ' ';
+    }
+}
+
 static int aliased (char *str)
 {
     int ret = 0;
@@ -147,7 +158,7 @@ static int aliased (char *str)
 	ret = 1;
     } else if (!strcmp(str, "x")) {
 	strcpy(str, "quit");
-	ret = 2;
+	ret = 2; /* special */
     } else if (!strcmp(str, "let")) {
 	strcpy(str, "genr");
 	ret = 1;
@@ -169,6 +180,9 @@ static int aliased (char *str)
     } else if (!strcmp(str, "eval")) {
 	strcpy(str, "genr");
 	ret = 1;
+    } else if (!strcmp(str, "my")) {
+	strcpy(str, "genr");
+	ret = 2;
     } else if (str[0] == '!') {
 	strcpy(str, "shell");
 	ret = 1;
@@ -938,13 +952,14 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     linelen = strlen(line);
 
-    /* command aliases */
     if (aliased(cmd->word) == 2) {
-	if (resize_cmd_param(cmd, NULL, 2)) {
-	    cmd->errcode = E_ALLOC;
-	    goto bailout;
+	/* aliases requiring special treatment */
+	if (!strcmp(cmd->word, "quit")) {
+	    strcpy(cmd->param, "x");
+	} else if (!strcmp(cmd->word, "genr")) {
+	    maybe_genr_local(cmd, line);
+	    linelen = strlen(line);
 	}
-	strcpy(cmd->param, "x");
     }
 
     /* subsetted commands (e.g. "deriv" in relation to "nls") */
@@ -2677,7 +2692,7 @@ int get_command_index (const char *line, CMD *cmd)
 	return 0;
     }
 
-    if (sscanf(line, "%s", cmd->word) != 1) {
+    if (sscanf(line, "%8s", cmd->word) != 1) {
 	cmd->nolist = 1;
 	cmd->ci = CMD_NULL;
 	return 0;
@@ -2691,6 +2706,8 @@ int get_command_index (const char *line, CMD *cmd)
 	/* "equation" occurs in the SYSTEM context, but it is
 	   a command in its own right */
 	cmd->ci = context;
+    } else if (!strcmp(cmd->word, "my")) {
+	cmd->ci = GENR;
     } else if ((cmd->ci = gretl_command_number(cmd->word)) == 0) {
 	cmd->errcode = 1;
 	sprintf(gretl_errmsg, _("command \"%s\" not recognized"), 
@@ -2763,7 +2780,7 @@ int gretl_cmd_init (CMD *cmd)
 	return 1;
     }
 
-    cmd->param = calloc(1, 1);
+    cmd->param = calloc(2, 1);
     if (cmd->param == NULL) {
 	free(cmd->list);
 	cmd->list = NULL;
