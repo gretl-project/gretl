@@ -9,9 +9,7 @@
     <para>A partire dalla versione 1.3.0, <application>gretl</application>
       contiene un meccanismo per definire funzioni all'interno di uno script,
       con una sintassi in qualche modo simile a quella della shell
-      <application>bash</application>.  Allo stato attuale, il meccanismo
-      non è ancora <quote>scolpito nella pietra</quote> e sono benvenuti
-      commenti e suggerimenti, oltre che aiuti per correggere eventuali bug.
+      <application>bash</application>.  Si veda oltre per i dettagli.
       </para>
 
   </sect1>
@@ -34,7 +32,11 @@
       al massimo 31 caratteri (eventuali caratteri in più verranno troncati)
       e non può contenere spazi. Se si tenta di definire una funzione con
       lo stesso nome di un comando di <application>gretl</application> o
-      di una funzione preesistente, si otterrà un'errore.
+      di una funzione preesistente, si otterrà un'errore. Nel secondo caso,
+      per evitare un errore (ossia per poter ridefinire una funzione utente),
+      basta far precedere la definizione della funzione da:
+      <programlisting>
+      function <replaceable>nome-funzione</replaceable>clear</programlisting>
       </para>
 
     <para>
