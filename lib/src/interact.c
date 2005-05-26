@@ -679,7 +679,7 @@ static void parse_outfile_cmd (char *s, CMD *cmd)
 
     if (*s) {
 	free(cmd->param);
-	cmd->param = gretl_stdrup(s);
+	cmd->param = gretl_strdup(s);
 	if (cmd->param == NULL) {
 	    cmd->errcode = E_ALLOC;
 	} else {
