@@ -167,16 +167,9 @@ destroy_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo, int nc)
     int n_returns = call->fun->n_returns;
     char **returns = call->fun->returns;
     int saves = call->assc;
+    int *locals = NULL;
     int i, nlocal = 0;
     int err = 0;
-
-    /* FIXME: check if any of these "locals" are wanted by the
-       caller.  This is a matter of checking the list of
-       assignments for the function call against the list of
-       "returns" of the function.  If we're to save any vars,
-       rename them to what the caller said.
-    */
-
 
     for (i=1; i<pdinfo->v; i++) {
 	if (STACK_LEVEL(pdinfo, i) == nc) {
@@ -185,50 +178,56 @@ destroy_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo, int nc)
     }
 
     if (nlocal > 0) {
-	int *locals = gretl_list_new(nlocal);
-
+	locals = gretl_list_new(nlocal);
 	if (locals == NULL) {
 	    err = 1;
 	} else {
-	    int k, v = 0, j = 1;
-
 	    locals[0] = 0;
+	}
+    }
 
-	    for (i=1; i<pdinfo->v; i++) {
-		if (STACK_LEVEL(pdinfo, i) == nc) {
-		    int wanted = 0;
+    if (locals != NULL) {
+	int k, v = 0, j = 1;
+	int wanted;
 
-		    if (saves > 0) {
-			for (k=0; k<n_returns; k++) {
-			    if (!strcmp(pdinfo->varname[i], returns[k])) {
-				fprintf(stderr, "%s: this var is wanted\n",
-					pdinfo->varname[i]);
-				wanted = 1;
-				saves--;
-				break;
-			    }
-			}
-		    }
+	for (i=1; i<pdinfo->v; i++) {
+	    if (STACK_LEVEL(pdinfo, i) != nc) {
+		continue;
+	    }
 
-		    if (wanted) {
-			/* rename variable as caller desired */
-			strcpy(pdinfo->varname[i], call->assv[v++]);
-			STACK_LEVEL(pdinfo, i) -= 1; 
-		    } else {
+	    wanted = 0;
+
+	    if (saves > 0) {
+		for (k=0; k<n_returns; k++) {
+		    if (!strcmp(pdinfo->varname[i], returns[k])) {
 #if FN_DEBUG
-			fprintf(stderr, "local variable %d (%s) "
-				"marked for deletion\n", i,
+			fprintf(stderr, "%s: this var is wanted by caller\n",
 				pdinfo->varname[i]);
 #endif
-			locals[j++] = i;
-			locals[0] += 1;
+			wanted = 1;
+			saves--;
+			break;
 		    }
 		}
 	    }
 
-	    err = dataset_drop_listed_variables(locals, pZ, pdinfo, NULL);
-	    free(locals);
+	    if (wanted) {
+		/* rename variable as caller desired */
+		strcpy(pdinfo->varname[i], call->assv[v++]);
+		STACK_LEVEL(pdinfo, i) -= 1; 
+	    } else {
+#if FN_DEBUG
+		fprintf(stderr, "local variable %d (%s) "
+			"marked for deletion\n", i,
+			pdinfo->varname[i]);
+#endif
+		locals[j++] = i;
+		locals[0] += 1;
+	    }
 	}
+
+	err = dataset_drop_listed_variables(locals, pZ, pdinfo, NULL);
+	free(locals);
     }
 
     return err;
