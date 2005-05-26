@@ -664,39 +664,40 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
     }
 
     free(cmd->param);
-    cmd->param = malloc(strlen(vname) + 1);
+    cmd->param = gretl_strdup(vname);
     if (cmd->param == NULL) {
 	cmd->errcode = E_ALLOC;
 	return;
     }
     
-    strcpy(cmd->param, vname);
     sprintf(cmd->str, "%d", vnum);
 }
 
-static void parse_outfile_cmd (char *line, CMD *cmd)
+line += 7;
+while (isspace((unsigned char) *s) || *s == '"') {
+    s++;
+}
+
+static void parse_outfile_cmd (char *s, CMD *cmd)
 {
     /* 7 = number of chars in the command word, "outfile" */
-    int n = strlen(line) - 7;
+    s += 7;
+    while (isspace((unsigned char) *s) || *s == '"') {
+	s++;
+    }
 
-    if (n > 1) {
+    if (*s) {
 	free(cmd->param);
-	cmd->param = malloc(n);
+	cmd->param = gretl_stdrup(s);
 	if (cmd->param == NULL) {
 	    cmd->errcode = E_ALLOC;
 	} else {
-	    char *p = line + 7 + 1;
+	    int n;
 
-	    while (*p && (isspace(*p) || *p == '"')) p++;
-	    strcpy(cmd->param, p);
-	    n = strlen(cmd->param) - 1;
-	    while (n > 0) {
-		if (isspace(cmd->param[n]) || cmd->param[n] == '"') {
-		    cmd->param[n] = 0;
-		    n--;
-		} else {
-		    break;
-		}
+	    tailstrip(cmd->param);
+	    n = strlen(cmd->param);
+	    if (cmd->param[n] == '"') {
+		cmd->param[n] = 0;
 	    }
 	}
     }
