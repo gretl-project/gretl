@@ -231,6 +231,10 @@ static const char *get_func_word (int fnum);
 
 #define genr_is_local(g) ((g)->flags & GENR_LOCAL)
 #define genr_set_local(g) ((g)->flags |= GENR_LOCAL)
+#define genr_unset_local(g) ((g)->flags &= ~GENR_LOCAL)
+
+#define genr_is_private(g) ((g)->flags & GENR_PRIVATE)
+#define genr_set_private(g) ((g)->flags |= GENR_PRIVATE)
 
 #define genr_warn(g) ((g)->flags & GENR_WARN)
 #define genr_set_warn(g) ((g)->flags |= GENR_WARN)
@@ -241,7 +245,7 @@ static const char *get_func_word (int fnum);
 /* ...................................................... */
 
 static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
-		       MODEL *pmod)
+		       MODEL *pmod, gretlopt opt)
 {
     genr->err = 0;
     genr->flags = GENR_SAVE | GENR_SCALAR;
@@ -257,6 +261,14 @@ static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
     genr->pmod = pmod;
     genr->aset = NULL;
     genr->S = NULL;
+
+    if (opt & OPT_P) {
+	genr_set_private(genr);
+    }
+    if (opt & OPT_L) {
+	fprintf(stderr, "genr, OPT_L, setting local\n");
+	genr_set_local(genr);
+    }
 
     reset_calc_stack(genr);
 }
@@ -390,34 +402,31 @@ int get_generated_value (const char *argv, double *val,
 			 double ***pZ, DATAINFO *pdinfo,
 			 MODEL *pmod, int t)
 {
-    char *genline = malloc(strlen(argv) + 12);
+    char genline[MAXLINE];
     int err = 0;
 
-    if (genline == NULL) {
-	err = E_ALLOC;
-    } else {
-	sprintf(genline, "genr argv=%s", argv);
+    sprintf(genline, "genr argv=%s", argv);
 #ifdef GENR_DEBUG
-	fprintf(stderr, "get_generated_value: trying '%s'\n", genline);
+    fprintf(stderr, "get_generated_value: trying '%s'\n", genline);
 #endif
-	err = generate(genline, pZ, pdinfo, pmod);
-	free(genline);
-	if (!err) {
-	    int v = pdinfo->v - 1;
+    err = generate(genline, pZ, pdinfo, pmod, OPT_P);
+    if (!err) {
+	int v = pdinfo->v - 1;
 
-	    if (pdinfo->vector[v]) {
-		*val = (*pZ)[v][0];
-	    } else {
-		*val = (*pZ)[v][t];
-	    }
-	    err = dataset_drop_last_variables(1, pZ, pdinfo);
+	if (pdinfo->vector[v]) {
+	    *val = (*pZ)[v][0];
+	} else {
+	    *val = (*pZ)[v][t];
 	}
+	err = dataset_drop_last_variables(1, pZ, pdinfo);
     }
 
     return err;
 }
 
-static int evaluate_function_args (char *s, GENERATE *genr)
+/* get the values of the scalar arguments to a genr function */
+
+static int evaluate_genr_function_args (char *s, GENERATE *genr)
 {
     char *tmp = gretl_strdup(s);
     char *st, *arg;
@@ -425,7 +434,9 @@ static int evaluate_function_args (char *s, GENERATE *genr)
     int i, nf;
     int err = 0;
 
-    if (tmp == NULL) return 1;
+    if (tmp == NULL) {
+	return 1;
+    }
 
     st = strtok(tmp, ",");
     if (st == NULL) {
@@ -480,7 +491,7 @@ static int get_arg_string (char *str, const char *s, int func, GENERATE *genr)
     }
 
     if (func == T_PVALUE || func == T_CRIT) {
-	err = evaluate_function_args(str, genr);
+	err = evaluate_genr_function_args(str, genr);
     } else if (func == T_FRACDIFF) {
 	char vname[9];
 	double param;
@@ -2224,6 +2235,12 @@ static void get_genr_formula (char *formula, const char *line,
 	    genr_set_local(genr);
 	    line += 2;
 	}
+    } else if (!strcmp(first, "global")) {
+	if (gretl_executing_function()) {
+	    /* generation of vars local to function */
+	    genr_unset_local(genr);
+	    line += 6;
+	}	
     } else if (!strcmp(first, "series")) {
 	genr_force_vector(genr);
 	line += 6;
@@ -2352,26 +2369,13 @@ write_genr_label (GENERATE *genr, char *genrs, int oldv)
     strcpy(VARLABEL(genr->pdinfo, genr->varnum), genr->label);    
 }
 
-static int label_genr_output (const char *vname)
-{
-    int ret = 1;
-
-    if (!strcmp(vname, "argv") ||
-	!strncmp(vname, "__", 2) ||
-	!strncmp(vname, "$nl", 3) ||
-	!strcmp(vname, "tmpmsk")) {
-	ret = 0;
-    }
-
-    return ret;
-}
-
 /**
  * generate:
  * @line: command line (formula for generating variable).
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @pmod: pointer to a model, or NULL if not needed.
+ * @opt: option flags (for future development).
  *
  * Generates a new variable, usually via some transformation of
  * existing variables, or by retrieving an internal variable associated
@@ -2381,7 +2385,7 @@ static int label_genr_output (const char *vname)
  */
 
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo, 
-	      MODEL *pmod)
+	      MODEL *pmod, gretlopt opt)
 {
     int i;
     char s[MAXLINE], genrs[MAXLINE];
@@ -2395,7 +2399,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
     *gretl_errmsg = *s = *genrs = '\0';
     *gretl_msg = '\0';
 
-    genr_init(&genr, pZ, pdinfo, pmod);
+    genr_init(&genr, pZ, pdinfo, pmod, opt);
 
     /* grab the expression, skipping the command word 
        and compressing spaces */
@@ -2566,7 +2570,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    make_genr_varname(&genr, newvar);
 	    genr.err = genr_write_var(pZ, pdinfo, &genr);
-	    if (!genr.err && label_genr_output(newvar)) {
+	    if (!genr.err && !genr_is_private(&genr)) {
 		write_genr_label(&genr, genrs, oldv);
 		compose_genr_msg(&genr, oldv);
 	    }

@@ -931,13 +931,19 @@ int gretl_multiply (char *s, int *list, char *sfx, double ***pZ,
     int slen;
     double m = 0;
     char tmp[VNAMELEN];
+    
+    if (s == NULL || sfx == NULL) {
+	return E_ALLOC;
+    }
 
     /* parse s */
     if (isdigit((unsigned char) *s)) {
 	m = dot_atof(s);
     } else {
 	v = varindex(pdinfo, s);
-	if (v == pdinfo->v) return E_UNKVAR; 
+	if (v == pdinfo->v) {
+	    return E_UNKVAR; 
+	}
     }
 
     if (dataset_add_series(l0, pZ, pdinfo)) {

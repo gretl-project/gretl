@@ -111,7 +111,8 @@ enum genr_flags {
     GENR_FORCE_VECTOR = 1 << 2,
     GENR_LOCAL        = 1 << 3,
     GENR_WARN         = 1 << 4,
-    GENR_SIMPLE_SORT  = 1 << 5
+    GENR_SIMPLE_SORT  = 1 << 5,
+    GENR_PRIVATE      = 1 << 6
 };
 
 typedef struct _GENERATE GENERATE;

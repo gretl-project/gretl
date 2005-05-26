@@ -36,18 +36,36 @@
 
 int *gretl_list_new (int nterms)
 {
-    int *list;
+    int *list = NULL;
     int i;
 
     list = malloc((nterms + 1) * sizeof *list);
-    if (list == NULL) {
-	return NULL;
+
+    if (list != NULL) {
+	list[0] = nterms;
+	for (i=1; i<=nterms; i++) {
+	    list[i] = 0;
+	}
     }
 
-    list[0] = nterms;
+    return list;
+}
 
-    for (i=1; i<=nterms; i++) {
-	list[i] = 0;
+/**
+ * gretl_null_list:
+ * 
+ * Creates a newly allocated "list" with only one member, 
+ * which is set to zero.
+ *
+ * Returns: the newly allocated list, or %NULL on failure.
+ */
+
+int *gretl_null_list (void)
+{
+    int *list = malloc(sizeof *list);
+
+    if (list != NULL) {
+	list[0] = 0;
     }
 
     return list;
@@ -63,20 +81,16 @@ int *gretl_list_new (int nterms)
 
 int *gretl_list_copy (const int *src)
 {
-    int *targ;
+    int *targ = NULL;
     int i;
 
-    if (src == NULL || src[0] == 0) {
-	return NULL;
-    }
-
-    targ = malloc((src[0] + 1) * sizeof *targ);
-    if (targ == NULL) {
-	return NULL;
-    }
-
-    for (i=0; i<=src[0]; i++) {
-	targ[i] = src[i];
+    if (src != NULL && src[0] != 0) {
+	targ = malloc((src[0] + 1) * sizeof *targ);
+	if (targ != NULL) {
+	    for (i=0; i<=src[0]; i++) {
+		targ[i] = src[i];
+	    }
+	}
     }
 
     return targ;

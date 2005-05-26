@@ -94,10 +94,10 @@ static int nls_auto_genr (int i, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (pZ != NULL && pdinfo != NULL) {
-	genr_err = generate(formula, pZ, pdinfo, NULL);
+	genr_err = generate(formula, pZ, pdinfo, NULL, OPT_P);
     } else {
 	/* using "global" nZ and ndinfo pointers here */
-	genr_err = generate(formula, nZ, ndinfo, NULL);
+	genr_err = generate(formula, nZ, ndinfo, NULL, OPT_P);
     }
 
 #if NLS_DEBUG

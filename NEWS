@@ -1,6 +1,14 @@
-No news is good news?
+Stuff not yet documented (May 2005)
 
-Seriously, what was in here was too dated to count as news,
-and I have not got around to updating it.
+genr:
+
+The command word "genr" is implicit, given a well-formed genr
+formula.
+
+"series: is an alias for "genr" with the side effect of coercing
+the result into a vector.
+
+"my" is an alias for "genr", making the variable local to a function
+
 
 

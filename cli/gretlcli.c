@@ -694,7 +694,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     int fncall = 0;
     double rho;
 
-    if (string_is_blank(line)) return;
+    if (string_is_blank(line)) {
+	return;
+    }
 
     /* catch any user-defined functions */
     err = handle_user_defined_function(line, &fncall);
@@ -741,7 +743,10 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	printf_strip(linebak, loopstack);
     }
 
-    if (cmd.ci < 0) return; /* there's nothing there */ 
+    if (cmd.ci < 0) {
+	/* there's nothing there */ 	
+	return;
+    }
 
     if (sys != NULL && cmd.ci != END && cmd.ci != EQUATION &&
 	cmd.ci != SYSTEM) {
@@ -1135,7 +1140,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case GENR:
-	err = generate(line, &Z, datainfo, models[0]);
+	err = generate(line, &Z, datainfo, models[0], cmd.opt);
 	if (err) { 
 	    errmsg(err, prn);
 	} else {

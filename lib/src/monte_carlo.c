@@ -927,8 +927,10 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	    (void *) ploop, loopstack);
 #endif
 
-    /* skip over the common stuff */
-    while (isspace((unsigned char) *line)) line++;
+    while (isspace((unsigned char) *line)) {
+	line++;
+    }
+
     if (strncmp(line, "loop", 4)) {
 	printf("parse_loopline: line didn't begin with 'loop': '%s'\n", line);
 	strcpy(gretl_errmsg, _("No valid loop condition was given."));
@@ -2458,7 +2460,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    case GENR:
-		err = generate(linecpy, pZ, *ppdinfo, lastmod);
+		err = generate(linecpy, pZ, *ppdinfo, lastmod, cmd.opt);
 		if (loop_is_verbose(loop) && !err) { 
 		    print_gretl_msg(prn);
 		}
@@ -2828,7 +2830,7 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 
     sprintf(formula, "__iftest=%s", line);
 
-    err = generate(formula, pZ, pdinfo, NULL);
+    err = generate(formula, pZ, pdinfo, NULL, OPT_P);
 
     if (err) {
 	strcpy(gretl_errmsg, _("error evaluating 'if'"));

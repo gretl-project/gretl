@@ -2667,9 +2667,10 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
     int err = 0;
 
     if (pmod != NULL) {
-	err = generate(cmdline, &Z, datainfo, pmod); 
+	err = generate(cmdline, &Z, datainfo, pmod, OPT_NONE); 
     } else {
-	err = generate(cmdline, &Z, datainfo, reference_model());
+	err = generate(cmdline, &Z, datainfo, reference_model(),
+		       OPT_NONE);
     }
 
     if (err) {
@@ -5887,7 +5888,7 @@ int gui_exec_line (char *line,
 	break;
 
     case GENR:
-	err = generate(line, &Z, datainfo, reference_model());
+	err = generate(line, &Z, datainfo, reference_model(), cmd.opt);
 	if (err) {
 	    errmsg(err, prn);
 	} else {

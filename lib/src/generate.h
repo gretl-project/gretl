@@ -21,7 +21,7 @@
 #define GENERATE_H
 
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo, 
-	      MODEL *pmod); 
+	      MODEL *pmod, gretlopt opt); 
 
 int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
 

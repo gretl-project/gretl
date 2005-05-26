@@ -22,7 +22,7 @@
 
 #define CALLSTACK_DEPTH 8
 
-#define FN_DEBUG 0
+#define FN_DEBUG 1
 
 typedef struct ufunc_ ufunc;
 typedef struct fncall_ fncall;
@@ -31,6 +31,8 @@ struct ufunc_ {
     char name[32];
     int n_lines;
     char **lines;
+    int n_returns;
+    char **returns;
 };
 
 struct fncall_ {
@@ -38,6 +40,8 @@ struct fncall_ {
     int lnum;
     int argc;
     char **argv;
+    int assc;
+    char **assv;
 };
 
 static int n_ufuns;
@@ -158,10 +162,21 @@ static int push_fncall (fncall *call)
 }
 
 static int 
-destroy_local_vars (double ***pZ, DATAINFO *pdinfo, int nc)
+destroy_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo, int nc)
 {
+    int n_returns = call->fun->n_returns;
+    char **returns = call->fun->returns;
+    int saves = call->assc;
     int i, nlocal = 0;
     int err = 0;
+
+    /* FIXME: check if any of these "locals" are wanted by the
+       caller.  This is a matter of checking the list of
+       assignments for the function call against the list of
+       "returns" of the function.  If we're to save any vars,
+       rename them to what the caller said.
+    */
+
 
     for (i=1; i<pdinfo->v; i++) {
 	if (STACK_LEVEL(pdinfo, i) == nc) {
@@ -170,27 +185,50 @@ destroy_local_vars (double ***pZ, DATAINFO *pdinfo, int nc)
     }
 
     if (nlocal > 0) {
-	int *locals = malloc((nlocal + 1) * sizeof *locals);
+	int *locals = gretl_list_new(nlocal);
 
 	if (locals == NULL) {
 	    err = 1;
 	} else {
-	    int j = 1;
+	    int k, v = 0, j = 1;
 
-	    locals[0] = nlocal;
+	    locals[0] = 0;
+
 	    for (i=1; i<pdinfo->v; i++) {
 		if (STACK_LEVEL(pdinfo, i) == nc) {
+		    int wanted = 0;
+
+		    if (saves > 0) {
+			for (k=0; k<n_returns; k++) {
+			    if (!strcmp(pdinfo->varname[i], returns[k])) {
+				fprintf(stderr, "%s: this var is wanted\n",
+					pdinfo->varname[i]);
+				wanted = 1;
+				saves--;
+				break;
+			    }
+			}
+		    }
+
+		    if (wanted) {
+			/* rename variable as caller desired */
+			strcpy(pdinfo->varname[i], call->assv[v++]);
+			STACK_LEVEL(pdinfo, i) -= 1; 
+		    } else {
 #if FN_DEBUG
-                    fprintf(stderr, "local variable %d (%s) "
-			    "marked for deletion\n", i,
-			    pdinfo->varname[i]);
+			fprintf(stderr, "local variable %d (%s) "
+				"marked for deletion\n", i,
+				pdinfo->varname[i]);
 #endif
-		    locals[j++] = i;
+			locals[j++] = i;
+			locals[0] += 1;
+		    }
 		}
 	    }
+
 	    err = dataset_drop_listed_variables(locals, pZ, pdinfo, NULL);
+	    free(locals);
 	}
-	free(locals);
     }
 
     return err;
@@ -201,7 +239,9 @@ static int unstack_fncall (double ***pZ, DATAINFO *pdinfo)
     int i, nc;
     int err = 0;
 
-    if (callstack == NULL) return 1;
+    if (callstack == NULL) {
+	return 1;
+    }
 
     nc = gretl_function_stack_depth();
 
@@ -211,8 +251,9 @@ static int unstack_fncall (double ***pZ, DATAINFO *pdinfo)
 	    (callstack[0])->fun->name, nc);
 #endif
 
+    err = destroy_local_vars(callstack[0], pZ, pdinfo, nc);
+
     free_fncall(callstack[0]);
-    err = destroy_local_vars(pZ, pdinfo, nc);
 
     for (i=0; i<nc; i++) {
 	if (i == nc - 1) {
@@ -259,13 +300,18 @@ static ufunc *ufunc_new (void)
     if (func == NULL) return NULL;
 
     func->name[0] = '\0';
+
     func->n_lines = 0;
     func->lines = NULL;
+
+    func->n_returns = 0;
+    func->returns = NULL;
 
     return func;
 }
 
-static fncall *fncall_new (ufunc *fun, int argc, char **argv)
+static fncall *fncall_new (ufunc *fun, int argc, char **argv,
+			   int assc, char **assv)
 {
     fncall *call = malloc(sizeof *call);
 
@@ -278,13 +324,25 @@ static fncall *fncall_new (ufunc *fun, int argc, char **argv)
 	    }
 	    free(argv);
 	}
+	if (assc > 0) {
+	    int i;
+
+	    for (i=0; i<assc; i++) {
+		free(assv[i]);
+	    }
+	    free(assv);
+	}
 	return NULL;
     }
 
     call->fun = fun;
     call->lnum = 0;
+
     call->argc = argc;
     call->argv = argv;
+
+    call->assc = assc;
+    call->assv = assv;
 
     return call;
 }
@@ -321,6 +379,11 @@ static void free_ufunc (ufunc *fun)
     }
     free(fun->lines);
 
+    for (i=0; i<fun->n_returns; i++) {
+	free(fun->returns[i]);
+    }
+    free(fun->returns);    
+
     free(fun);
 }
 
@@ -346,6 +409,11 @@ static void free_fncall (fncall *call)
     }
     free(call->argv);
 
+    for (i=0; i<call->assc; i++) {
+	free(call->assv[i]);
+    }
+    free(call->assv);
+
     free(call);
 }
 
@@ -354,11 +422,6 @@ static ufunc *get_ufunc_by_name (const char *name)
     ufunc *fun = NULL;
     int i;
 
-#if FN_DEBUG
-    fprintf(stderr, "get_ufunc_by_name: name = '%s' (n_ufuns = %d)\n",
-	    name, n_ufuns);
-#endif
-
     for (i=0; i<n_ufuns; i++) {
 	if (!strcmp(name, (ufuns[i])->name)) {
 	    fun = ufuns[i];
@@ -366,18 +429,48 @@ static ufunc *get_ufunc_by_name (const char *name)
 	}
     }
 
+#if FN_DEBUG
+    if (fun != NULL) {
+	fprintf(stderr, "get_ufunc_by_name: name = '%s' (n_ufuns = %d);"
+		" found match\n", name, n_ufuns);
+    }
+#endif
+
     return fun;
 }
 
-int gretl_is_user_function (const char *s)
+static char *function_name_from_line (const char *line, char *name)
+{
+    if (*line == '#' || !strncmp(line, "(*", 2)) {
+	*name = '\0';
+    } else {
+	const char *p = strchr(line, '=');
+
+	if (p == NULL) {
+	    p = line;
+	} else {
+	    p++;
+	}
+
+	sscanf(p, "%31s", name);
+    }
+
+    return name;
+}
+
+int gretl_is_user_function (const char *line)
 {
     int ret = 0;
 
-    if (n_ufuns > 0 && !string_is_blank(s)) {
+#if FN_DEBUG
+    fprintf(stderr, "gretl_is_user_function: testing '%s'\n", line);
+#endif
+
+    if (n_ufuns > 0 && !string_is_blank(line)) {
 	char name[32];
 
-	if (sscanf(s, "%31s", name) &&
-	    get_ufunc_by_name(name) != NULL) {
+	function_name_from_line(line, name);
+	if (get_ufunc_by_name(name) != NULL) {
 	    ret = 1;
 	}
     }
@@ -449,88 +542,140 @@ static int check_func_name (const char *fname)
     return FN_NAME_OK;
 }
 
-static int comma_count (const char *s)
+static char **get_separated_fields_8 (const char *line, int *nfields)
 {
-    int nc = 0;
+    char **fields = NULL;
+    char *cpy, *s;
+    char str[9];
+    int i, j, nf, err = 0;
 
-    while (*s) {
-	if (*s == ',') nc++;
-	s++;
+    *nfields = 0;
+
+    if (string_is_blank(line)) {
+	return NULL;
     }
 
-    return nc;
+    cpy = gretl_strdup(line);
+    if (cpy == NULL) {
+	return NULL;
+    }
+
+    s = cpy;
+    charsub(s, ',', ' ');
+
+    nf = count_fields(s);
+    fields = malloc(nf * sizeof *fields);
+    if (fields == NULL) {
+	free(s);
+	return NULL;
+    }
+
+    for (i=0; i<nf && !err; i++) {
+	sscanf(s, "%8s", str);
+	fields[i] = gretl_strdup(str);
+	if (fields[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(fields[j]);
+	    }
+	    free(fields);
+	    fields = NULL;
+	    err = 1;
+	} else {
+	    s += strcspn(s, " ");
+	    s += strspn(s, " ");
+	}
+    }
+
+    if (!err) {
+	*nfields = nf;
+    }
+
+    free(cpy);
+
+    return fields;
 }
 
-static char **parse_args (const char *s, int *argc, int *err)
+static char **parse_assignment (char *s, int *na)
+{
+    char **vnames;
+    int n;
+
+    /* clean the string up */
+    s += strspn(s, " ");
+    if (*s == '(') {
+	s++;
+    }
+    tailstrip(s);
+    n = strlen(s);
+    if (s[n-1] == ')') {
+	s[n-1] = '\0';
+    }
+
+    vnames = get_separated_fields_8(s, na);
+
+    if (vnames != NULL) {
+	int i;
+
+	for (i=0; i<*na; i++) {
+	    fprintf(stderr, "assignee %d: '%s'\n", i, vnames[i]);
+	}
+    }
+
+    return vnames;
+}
+
+static int 
+parse_function_args_etc (const char *s, int *argc, char ***pargv,
+			 int *assc, char ***passv)
 {
     char **argv = NULL;
-    int i, na;
+    char **assign = NULL;
+    const char *p;
+    int na, err = 0;
 
     *argc = 0;
-    *err = 0;
+    *pargv = NULL;
+    *assc = 0;
+    *passv = NULL;
 
-    /* skip over function name */
-    while (*s) {
-	if (*s == ' ') break;
-	s++;
-    }
+    if ((p = strchr(s, '=')) != NULL && *s != '=') {
+	char *astr = gretl_strndup(s, p - s);
 
-    /* skip over spaces to args */
-    while (*s) {
-	if (*s != ' ') break;
-	s++;
-    } 
-
-    if (*s == '\0') {
-	/* got no args */
-	return NULL;
-    }
-
-    /* count comma-separated arguments */
-    na = comma_count(s) + 1;
-
-    argv = malloc(na * sizeof *argv);
-    if (argv == NULL) {
-	*err = 1;
-	return NULL;
-    }
-
-    for (i=0; i<na; i++) {
-	char *arg;
-	int len;
-
-	if (i < na - 1) {
-	    len = strcspn(s, ",");
+	/* seems we have a left-hand side assignment */
+	assign = parse_assignment(astr, &na);
+	if (assign == NULL) {
+	    err = 1;
 	} else {
-	    len = strlen(s);
+	    *passv = assign;
+	    *assc = na;
 	}
-
-	arg = gretl_strndup(s, len);
-	if (arg == NULL) {
-	    na = i;
-	    *err = 1;
-	    break;
-	}
-	argv[i] = arg;
-
-	s += len;
-	while (*s) {
-	    if (*s != ',' && *s != ' ') break;
-	    s++;
-	}
-    }
-
-    if (*err) {
-	for (i=0; i<na; i++) {
-	    free(argv[i]);
-	}
-	free(argv);
-	argv = NULL;
+	free(astr);
+	s = p + 1;
     } else {
-	*argc = na;
+	s++;
     }
 
-    return argv;
+    if (!err) {
+	/* skip over function name and spaces before args */
+	s += strspn(s, " ");
+	s += strcspn(s, " ");
+	s += strspn(s, " ");
+
+	if (*s != '\0') {
+#if FN_DEBUG
+	    fprintf(stderr, "function_args: looking at '%s'\n", s);
+#endif
+	    argv = get_separated_fields_8(s, &na);
+	    if (argv == NULL) {
+		err = 1;
+	    } else {
+		*pargv = argv;
+		*argc = na;
+	    }
+	}
+    }
+
+    return err;
 }
 
 static int maybe_delete_function (const char *fname)
@@ -601,13 +746,74 @@ static ufunc *get_latest_ufunc (void)
     }
 }
 
+static int create_function_return_list (ufunc *fun, const char *line)
+{
+    const char *s = line + 8;
+    int i, nr;
+    int err = 0;
+
+    s += strspn(s, " ");
+
+    fun->returns = get_separated_fields_8(s, &nr);
+
+    if (fun->returns != NULL) {
+	fun->n_returns = nr;
+#if FN_DEBUG
+	fprintf(stderr, "done create_function_return_list:\n");
+	for (i=0; i<nr; i++) {
+	    fprintf(stderr, " return %d = '%s'\n", i, fun->returns[i]);
+	}
+#endif
+    } else {
+	err = E_ALLOC;
+    }
+
+    return err;
+}
+
+static int real_add_fn_line (ufunc *fun, const char *s)
+{
+    char **lines;
+    int nl = fun->n_lines;
+    int err = 0;
+
+#if FN_DEBUG > 1
+    fprintf(stderr, "real_add_fn_line: '%s'\n", s);
+    fprintf(stderr, "currently fun->n_lines = %d\n", nl);
+#endif
+
+    lines = realloc(fun->lines, (nl + 1) * sizeof *lines);
+
+    if (lines == NULL) {
+	err = E_ALLOC;
+    } else {
+	fun->lines = lines;
+	fun->lines[nl] = gretl_strdup(s);
+	if (fun->lines[nl] == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    fun->n_lines += 1;
+	}
+    }
+
+    return err;
+}
+
 int gretl_function_append_line (const char *line)
 {
     ufunc *fun = get_latest_ufunc();
-    char **lines;
-    int nl, err = 0;
+    int err = 0;
 
-    if (fun == NULL) return 1;
+#if FN_DEBUG
+    fprintf(stderr, "gretl_function_append_line: '%s'\n", line);
+#endif
+
+    if (fun == NULL) {
+#if FN_DEBUG
+	fprintf(stderr, " fun == NULL!\n");
+#endif
+	return 1;
+    }
 
     if (string_is_blank(line)) {
 	return 0;
@@ -635,47 +841,40 @@ int gretl_function_append_line (const char *line)
 	return 1;
     }
 
-    nl = fun->n_lines;
-    lines = realloc(fun->lines, (nl + 1) * sizeof *lines);
-    if (lines == NULL) {
-	return E_ALLOC;
+    if (!strncmp(line, "returns ", 8)) {
+	err = create_function_return_list(fun, line);
+    } else {    
+	err = real_add_fn_line(fun, line);
     }
-
-    fun->lines = lines;
-
-    fun->lines[nl] = gretl_strdup(line);
-    if (fun->lines[nl] == NULL) {
-	return E_ALLOC;
-    }
-
-    fun->n_lines += 1;
 
     return err;
 }
 
 int gretl_function_start_exec (const char *line)
 {
-    char **argv;
+    char **argv = NULL;
+    char **assv = NULL;
     char fname[32];
     ufunc *fun;
     fncall *call;
-    int argc;
+    int argc = 0;
+    int assc = 0;
     int err = 0;
 
-    sscanf(line, "%31s", fname);
+    function_name_from_line(line, fname);
     fun = get_ufunc_by_name(fname);
 
     if (fun == NULL) {
 	return 1;
     }
 
-    argv = parse_args(line + 1, &argc, &err);
+    err = parse_function_args_etc(line, &argc, &argv, &assc, &assv);
 
     if (err) {
 	return E_ALLOC;
     }
 
-    call = fncall_new(fun, argc, argv);
+    call = fncall_new(fun, argc, argv, assc, assv);
     if (call == NULL) {
 	return E_ALLOC;
     } 

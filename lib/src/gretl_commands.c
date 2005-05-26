@@ -161,8 +161,11 @@ int gretl_command_number (const char *s)
 
 const char *gretl_command_word (int i)
 {
-    if (i >= 0 && i < NC) return gretl_cmds[i].cword;
-    else return "";
+    if (i >= 0 && i < NC) {
+	return gretl_cmds[i].cword;
+    } else {
+	return "";
+    }
 }
 
 const char *gretl_command_complete_next (const char *s,

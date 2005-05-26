@@ -603,16 +603,18 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 
 int positive_int_from_string (const char *s)
 {
-    int ret;
-    char *test;
+    int ret = -1;
 
-    errno = 0;
+    if (s != NULL && *s != '\0') {
+	char *test;
 
-    ret = strtol(s, &test, 10);
+	errno = 0;
 
-    if (*test != '\0' || !strcmp(s, test) || errno == ERANGE) {
-        ret = -1;
-    } 
+	ret = strtol(s, &test, 10);
+	if (*test != '\0' || !strcmp(s, test) || errno == ERANGE) {
+	    ret = -1;
+	} 
+    }
 
     return ret;
 }

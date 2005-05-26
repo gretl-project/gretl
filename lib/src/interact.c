@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Ramu Ramanathan and Allin Cottrell
+ *  Copyright (c) by Allin Cottrell
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -119,30 +119,29 @@ static int filter_comments (char *line, CMD *cmd)
     return (*line == '\0');
 }
 
-static int get_rhodiff_or_lags_param (char *str, CMD *cmd)
+static int get_rhodiff_or_lags_param (char *s, CMD *cmd)
 {
-    int k;
+    int k = haschar(';', s);
+    int ret = 0;
 
-    if ((k = haschar(';', str)) < 0) {
-	return 0;
+    if (k > 0) {
+	free(cmd->param);
+	cmd->param = gretl_strndup(s, k);
+	shift_string_left(s, k + 1);
+	ret = 1;
     }
 
-    cmd->param = realloc(cmd->param, k+1);
-    if (cmd->param != NULL) {
-	*cmd->param = 0;
-	strncat(cmd->param, str, k);
-    }
-
-    shift_string_left(str, k + 1);
-
-    return 1;
+    return ret;
 }
 
-/* catch aliased command words and assign ci */
+/* catch aliased command words and assign ci; return 1
+   if alias caught, else 0. */
 
-static void catch_command_alias (CMD *cmd)
+static int catch_command_alias (CMD *cmd)
 {
     char *s = cmd->word;
+
+    cmd->ci = 0;
 
     if (!strcmp(s, "q")) {
 	strcpy(s, "quit");
@@ -164,11 +163,14 @@ static void catch_command_alias (CMD *cmd)
 	cmd->ci = SMPL;
     } else if (!strcmp(s, "eval") ||
 	       !strcmp(s, "my") ||
+	       !strcmp(s, "global") ||
 	       !strcmp(s, "series")) { 
 	cmd->ci = GENR;
     } else if (*s == '!') {
 	cmd->ci = SHELL;
     }
+
+    return cmd->ci;
 }
 
 #define NO_VARLIST(c) (c == VARLIST || \
@@ -328,13 +330,11 @@ get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
 	len = strcspn(s, " ");
     }
 
-    cmd->param = realloc(cmd->param, len + 1);
+    free(cmd->param);
+    cmd->param = gretl_strndup(s + quoted, len);
     if (cmd->param == NULL) {
 	return E_ALLOC;
     }
-
-    *cmd->param = '\0';
-    strncat(cmd->param, s + quoted, len);
 
     if (quoted) {
 	char *p = cmd->param;
@@ -629,6 +629,7 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
 {
     int v, vnum;
     char vname[VNAMELEN];
+    char numstr[8];
 
     line += strlen("rename ");
 
@@ -664,8 +665,11 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
 	cmd->errcode = E_ALLOC;
 	return;
     }
-    
-    sprintf(cmd->str, "%d", vnum);
+
+    sprintf(numstr, "%d", vnum);
+
+    free(cmd->extra);
+    cmd->extra = gretl_strdup(numstr);
 }
 
 static void parse_outfile_cmd (char *s, CMD *cmd)
@@ -696,9 +700,8 @@ static void parse_outfile_cmd (char *s, CMD *cmd)
 
 static void parse_logistic_ymax (char *line, CMD *cmd)
 {
-    char *p;
+    char *p = strstr(line, "ymax");
 
-    p = strstr(line, "ymax");
     if (p != NULL) {
 	char *q = p + 4;
 	char numstr[12];
@@ -829,6 +832,21 @@ static void check_end_command (CMD *cmd)
     }
 }
 
+static int int_to_cmd_param (CMD *cmd, int i)
+{
+    char numstr[16];
+
+    sprintf(numstr, "%d", i);
+
+    free(cmd->param);
+    cmd->param = gretl_strdup(numstr);
+    if (cmd->param == NULL) {
+	cmd->errcode = E_ALLOC;
+    }
+
+    return cmd->errcode;
+}
+
 static int resize_cmd_param (CMD *cmd, const char *s, int inlen)
 {
     char *param;
@@ -873,15 +891,23 @@ static int capture_param (CMD *cmd, const char *s)
     return cmd->errcode;
 }
 
-void gretl_cmd_clear (CMD *cmd)
+static int gretl_cmd_clear (CMD *cmd)
 {
     cmd->ci = 0;
     cmd->errcode = 0;
     cmd->nolist = 0;
     *cmd->word = '\0';
-    *cmd->param = '\0';
-    *cmd->str = '\0';
+
+    if (cmd->list == NULL || cmd->param == NULL || cmd->extra == NULL) {
+	cmd->errcode = E_ALLOC;
+    } else {
+	*cmd->param = '\0';
+	*cmd->extra = '\0';
+    }
+
     cmd_lag_info_destroy(cmd);
+
+    return cmd->errcode;
 }
 
 /**
@@ -903,7 +929,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     char *remainder = NULL;
     char field[FIELDLEN] = {0};
 
-    gretl_cmd_clear(cmd);
+    if (gretl_cmd_clear(cmd)) {
+	return cmd->errcode;
+    }
 
     *gretl_errmsg = '\0';
 
@@ -979,6 +1007,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci = CMD_NULL;
 	return cmd->errcode;
     }
+
+#if 1
+    if (cmd->ci == GENR && gretl_executing_function()) {
+	cmd->opt |= OPT_L;
+    }
+#endif
 
     /* tex printing commands can take a filename parameter; so
        can gnuplot command */
@@ -1142,7 +1176,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	char suffix[4];
 
 	sscanf(line, "%3s", suffix);
-	strcpy(cmd->str, suffix);
+	free(cmd->extra);
+	cmd->extra = gretl_strdup(suffix);
 	shift_string_left(line, strlen(suffix));
 	nf--;
 	pos = 0;
@@ -1268,11 +1303,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	else if (*field == ';') {
 	    /* could be the separator between two sub-lists */
 	    if (USES_LISTSEP(cmd->ci)) {
-		if (resize_cmd_param(cmd, NULL, 4)) {
-		    cmd->errcode = E_ALLOC;
+		if (int_to_cmd_param(cmd, lnum)) {
 		    goto bailout;
 		}
-		sprintf(cmd->param, "%d", lnum);
 		pos += strlen(field) + 1;
 		cmd->list[lnum++] = LISTSEP;
 		ar = 0; /* turn off acceptance of AR lags */
@@ -1351,6 +1384,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
  bailout:
+
+    /* double-check that allocation hasn't failed */
+    if (cmd->list == NULL || cmd->param == NULL || cmd->extra == NULL) {
+	cmd->errcode = E_ALLOC;
+    }
 
     if (cmd->errcode) {
 	cmd->context = 0;
@@ -2484,7 +2522,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case MULTIPLY:
-	err = gretl_multiply(cmd->param, cmd->list, cmd->str, pZ, datainfo);
+	err = gretl_multiply(cmd->param, cmd->list, cmd->extra, pZ, datainfo);
 	if (!err) {
 	    maybe_list_vars(datainfo, prn);
 	}
@@ -2525,7 +2563,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case RENAME:
-	err = rename_var_by_id(cmd->str, cmd->param, datainfo);
+	err = rename_var_by_id(cmd->extra, cmd->param, datainfo);
 	if (err) {
 	    errmsg(err, prn);
 	} else {
@@ -2661,7 +2699,6 @@ int get_command_index (const char *line, CMD *cmd)
 {
     static int context;
 
-    /* allow for leading spaces */
     while (isspace(*line)) {
 	line++;
     }
@@ -2686,8 +2723,8 @@ int get_command_index (const char *line, CMD *cmd)
 	/* "equation" occurs in the SYSTEM context, but it is
 	   a command in its own right */
 	cmd->ci = context;
-    } else if (!strcmp(cmd->word, "my")) {
-	cmd->ci = GENR;
+    } else if (catch_command_alias(cmd)) {
+	; /* cmd->ci is set OK */
     } else if ((cmd->ci = gretl_command_number(cmd->word)) == 0) {
 	cmd->errcode = 1;
 	sprintf(gretl_errmsg, _("command \"%s\" not recognized"), 
@@ -2733,53 +2770,69 @@ int ready_for_command (const char *line)
 	"noecho",
 	NULL 
     };
-    const char **p = ok_cmds;
+    int i, ok = 0;
 
     if (string_is_blank(line) || gretl_compiling_function()) {
-	return 1;
-    }
-
-    if (*line == 'q' || *line == 'x' || *line == '#') {
-	return 1;
-    }
-
-    while (*p) {
-	if (strncmp(line, *p, strlen(*p)) == 0) {
-	    return 1;
+	ok = 1;
+    } else if (*line == 'q' || *line == 'x' || *line == '#') {
+	ok = 1;
+    } else {
+	for (i=0; ok_cmds[i] != NULL && !ok; i++) {
+	    if (strncmp(line, ok_cmds[i], strlen(ok_cmds[i])) == 0) {
+		ok = 1;
+	    }
 	}
-	p++;
     }
 
-    return 0;
+    return ok;
 }
 
 int gretl_cmd_init (CMD *cmd)
 {
-    cmd->list = malloc(sizeof *cmd->list);
-    if (cmd->list == NULL) {
-	return 1;
-    }
-
-    cmd->param = calloc(2, 1);
-    if (cmd->param == NULL) {
-	free(cmd->list);
-	cmd->list = NULL;
-	return 1;
-    }
-
     cmd->ci = 0;
+    cmd->errcode = 0;
     cmd->context = 0;
     cmd->ignore = 0;
+    *cmd->word = '\0';
 
+    cmd->list = NULL;
+    cmd->param = NULL;
+    cmd->extra = NULL;
     cmd->linfo = NULL;
 
-    return 0;
+    /* make 'list', 'param' and 'extra' blank rather than NULL
+       for safety (in case they are deferenced) */
+
+    cmd->list = gretl_null_list();
+    if (cmd->list == NULL) {
+	cmd->errcode = E_ALLOC;
+    }
+
+    if (cmd->errcode == 0) {
+	cmd->param = calloc(1, 1);
+	if (cmd->param == NULL) {
+	    cmd->errcode = E_ALLOC;
+	}
+    }
+
+    if (cmd->errcode == 0) {
+	cmd->extra = calloc(1, 1);
+	if (cmd->extra == NULL) {
+	    free(cmd->param);
+	    cmd->param = NULL;
+	    cmd->errcode = E_ALLOC;
+	}
+    }    
+
+    return cmd->errcode;
 }
 
 void gretl_cmd_free (CMD *cmd)
 {
     free(cmd->list);
     free(cmd->param);
+    free(cmd->extra);
+
     cmd_lag_info_destroy(cmd);
 }
 
