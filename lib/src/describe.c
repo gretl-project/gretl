@@ -1429,12 +1429,13 @@ double LWE (const gretl_matrix *X, int m)
     gretl_matrix *I;
     gretl_matrix *lambda;
     int n = gretl_matrix_rows(X);
-    double maxOJ = -1.0e+9;
-    double d, ret = -0.45;
-    double Inf = -0.5, Sup = 0.5;
-    double tmp = NADBL;
-    double lcm, step;
+    double d = 0, ret;
+    double lcm;
 
+    double dd = 1.0, f, incr, incl, deriv, h, eps = 1.0e-05;
+    int iter = 0;
+    const int MAX_ITER = 100;
+      
     I = gretl_matrix_periodogram(X, m);
     if (I == NULL) {
 	return NADBL;
@@ -1446,34 +1447,36 @@ double LWE (const gretl_matrix *X, int m)
 	return NADBL;
     }    
 
-    for (step = 0.1; step > 1.0e-8; step /= 10.0) {
+    while (fabs(dd) > 1.0e-06 && iter < MAX_ITER) {
+	f = LWE_obj_func(I, d, lambda, lcm);
+	incr = LWE_obj_func(I, d + eps, lambda, lcm) / eps;
+	incl = LWE_obj_func(I, d - eps, lambda, lcm) / eps;
+	deriv = (incr - incl) / 2.0;
+	h = (0.5 * (incr + incl) - f / eps) / eps;
 
-#if LWE_DEBUG
-	fprintf(stderr, "LWE: step = %g\n", step);
-#endif
-
-	for (d = Inf; d <= Sup; d += step) {
-	    tmp = LWE_obj_func(I, d, lambda, lcm);
-	    if (na(tmp)) {
-		break;
-	    }
-#if LWE_DEBUG
-	    fprintf(stderr, "LWE: d = %g, tmp = %g\n", d, tmp);
-#endif
-	    if (tmp > maxOJ) {
-		maxOJ = tmp;
-		ret = d;
-	    }
+	if (h >= 0) {
+	    dd = deriv;
+	} else {
+	    dd = -deriv / h;
 	}
 
-	if (na(tmp)) break;
-
-	if (ret == Inf || floateq(ret, Sup)) {
-	    step *= 10.0;
+	if (fabs(dd) > 1) {
+	    dd = (dd > 0) ? 1 : -1;
 	}
+	
+#if LWE_DEBUG
+	fprintf(stderr, "d = %g, f(d) = %g, deriv = %g, h = %g, dd = %g\n",
+		d, f, deriv, h, dd);
+#endif
+	d += 0.5 * dd;
+	iter++;
+    }
 
-	Inf = ret - step;
-	Sup = ret + step;
+    if (iter == MAX_ITER) {
+	fprintf(stderr, "Maximum number of iterations reached\n");
+	ret = NADBL;
+    } else {
+        ret = d;
     }
 
     gretl_matrix_free(I);
@@ -1498,7 +1501,7 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
     T = gretl_vector_get_length(X);
 
     m1 = floor((double) T / 2.0);
-    m2 = 10.0 * floor(pow((double) T, 0.4));
+    m2 = floor(pow((double) T, 0.6));
 
     if (m1 < m2) {
 	m = m1;
