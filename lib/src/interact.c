@@ -350,19 +350,13 @@ get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
     return 0;
 } 
 
-static void grab_gnuplot_literal_block (char *line, CMD *cmd)
+static void grab_gnuplot_literal_block (char *s, CMD *cmd)
 {
-    char *p = strchr(line, '{');
-    char *bl = NULL;
-
-    if (p != NULL) {
-	bl = malloc(strlen(p) + 1);
-	if (bl != NULL) {
-	    strcpy(bl, p);
-	    free(cmd->param);
-	    cmd->param = bl;
-	    *p = 0;
-	}
+    s = strchr(s, '{');
+    if (s != NULL) {
+	free(cmd->param);
+	cmd->param = gretl_strdup(s);
+	*s = 0;
     }
 }
 
@@ -551,8 +545,8 @@ int auto_lag_ok (const char *s, int *lnum,
 	} else {
 	    int err;
 
-	    /* record the info regarding te auto-generation of lags,
-	       so that we;ll be able to echo the command properly --
+	    /* record info regarding the auto-generation of lags,
+	       so that we'll be able to echo the command properly --
 	       see the echo_cmd() function. 
 	    */
 
@@ -580,8 +574,9 @@ static int plot_var_ok (const char *s, int *lnum,
     
     if (strcmp(s, "qtrs") &&
 	strcmp(s, "months") &&
-	strcmp(s, "time")) 
+	strcmp(s, "time")) { 
 	return 0;
+    }
 
     pnum = plotvar(pZ, pdinfo, s);
 
@@ -673,15 +668,11 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
     sprintf(cmd->str, "%d", vnum);
 }
 
-line += 7;
-while (isspace((unsigned char) *s) || *s == '"') {
-    s++;
-}
-
 static void parse_outfile_cmd (char *s, CMD *cmd)
 {
     /* 7 = number of chars in the command word, "outfile" */
     s += 7;
+
     while (isspace((unsigned char) *s) || *s == '"') {
 	s++;
     }
@@ -712,7 +703,9 @@ static void parse_logistic_ymax (char *line, CMD *cmd)
 	char *q = p + 4;
 	char numstr[12];
 
-	while (*q == ' ' || *q == '=') q++;
+	while (*q == ' ' || *q == '=') {
+	    q++;
+	}
 	if (sscanf(q, "%11s", numstr)) {
 	    cmd->param = realloc(cmd->param, 6 + strlen(numstr));
 	    if (cmd->param == NULL) {
