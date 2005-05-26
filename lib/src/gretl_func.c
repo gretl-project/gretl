@@ -205,7 +205,6 @@ destroy_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo, int nc)
 				pdinfo->varname[i]);
 #endif
 			wanted = 1;
-			saves--;
 			break;
 		    }
 		}
@@ -215,6 +214,7 @@ destroy_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo, int nc)
 		/* rename variable as caller desired */
 		strcpy(pdinfo->varname[i], call->assv[v++]);
 		STACK_LEVEL(pdinfo, i) -= 1; 
+		saves--;
 	    } else {
 #if FN_DEBUG
 		fprintf(stderr, "local variable %d (%s) "
