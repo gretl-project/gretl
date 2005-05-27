@@ -36,7 +36,6 @@
 
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
 
-static int prepZ (double ***pZ, const DATAINFO *pdinfo);
 static int writelbl (const char *lblfile, const int *list, 
 		     const DATAINFO *pdinfo);
 static int writehdr (const char *hdrfile, const int *list, 
@@ -51,155 +50,48 @@ static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn);
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
 
-/* from strutils.c */
-extern void check_for_console (PRN *prn);
-extern void console_off (void);
-
 #define PROGRESS_BAR "progress_bar"
 
-enum {
-    NO_MARKERS = 0,
-    REGULAR_MARKERS,
-    DAILY_DATE_STRINGS
-};
+/* bodge: these shouldn't be used here, in dataset.c for now */
+extern int dataset_allocate_varnames (DATAINFO *pdinfo);
+extern int prepZ (double ***pZ, const DATAINFO *pdinfo);
+extern int dataset_allocate_markers (DATAINFO *pdinfo);
+extern void dataset_dates_defaults (DATAINFO *pdinfo);
 
-/**
- * free_Z:
- * @Z: data matrix.
- * @pdinfo: data information struct.
- *
- * Do a deep free on the data matrix.
- * 
- */
+/* ------------------------------------------------------------- */
 
-void free_Z (double **Z, DATAINFO *pdinfo)
+#ifdef ENABLE_NLS
+
+static int printing_to_console;
+
+char *maybe_iso_gettext (const char *msgid)
 {
-    int i;
+   if (printing_to_console) {
+       return iso_gettext(msgid);
+   } else {
+       return gettext(msgid);
+   }
+} 
 
-    if (Z == NULL || pdinfo == NULL) return;
+void check_for_console (PRN *prn)
+{
+    if (prn == NULL) return;
 
-    for (i=0; i<pdinfo->v; i++) {
-	free(Z[i]);
+    if (printing_to_standard_stream(prn)) {
+	printing_to_console = 1;
+    } else {
+	printing_to_console = 0;
     }
-    free(Z);
 }
 
-/**
- * destroy_dataset_markers:
- * @pdinfo: data information struct.
- *
- * Free any allocated observation markers for @pdinfo.
- */
-
-void destroy_dataset_markers (DATAINFO *pdinfo)
+void console_off (void)
 {
-    int i;
-
-    if (pdinfo->S != NULL) {
-	for (i=0; i<pdinfo->n; i++) { 
-	   free(pdinfo->S[i]); 
-	}
-	free(pdinfo->S);
-	pdinfo->S = NULL;
-	pdinfo->markers = NO_MARKERS;
-    } 
+    printing_to_console = 0;
 }
 
-static void free_sorted_markers (DATAINFO *pdinfo, int v)
-{
-    VARINFO *vinfo = pdinfo->varinfo[v];
-    int i;
+#endif /* ENABLE_NLS */
 
-    if (vinfo->sorted_markers != NULL) {
-	for (i=0; i<pdinfo->n; i++) {
-	    free(vinfo->sorted_markers[i]);
-	}
-	free(vinfo->sorted_markers);
-	vinfo->sorted_markers = NULL;
-    }    
-}
-
-void free_varinfo (DATAINFO *pdinfo, int v)
-{
-    free_sorted_markers(pdinfo, v);
-    free(pdinfo->varinfo[v]);
-}
-
-void set_sorted_markers (DATAINFO *pdinfo, int v, char **S)
-{
-    free_sorted_markers(pdinfo, v);
-    pdinfo->varinfo[v]->sorted_markers = S;
-}
-
-/**
- * clear_datainfo:
- * @pdinfo: data information struct.
- * @code: either CLEAR_FULL or CLEAR_SUBSAMPLE.
- *
- * Free the allocated content of a data information struct.
- * 
- */
-
-void clear_datainfo (DATAINFO *pdinfo, int code)
-{
-    int i;
-
-    if (pdinfo == NULL) return;
-
-    if (pdinfo->S != NULL) {
-	destroy_dataset_markers(pdinfo);
-    } 
-
-    if (pdinfo->submask != NULL) {
-	free(pdinfo->submask);
-	pdinfo->submask = NULL;
-    }
-
-    /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
-    if (code == CLEAR_FULL) {
-	if (pdinfo->varname != NULL) {
-	    for (i=0; i<pdinfo->v; i++) {
-		free(pdinfo->varname[i]); 
-	    }
-	    free(pdinfo->varname);
-	    pdinfo->varname = NULL;
-	}
-	if (pdinfo->varinfo != NULL) {
-	    for (i=0; i<pdinfo->v; i++) {
-		free_varinfo(pdinfo, i);
-	    }
-	    free(pdinfo->varinfo);
-	    pdinfo->varinfo = NULL;
-	}
-	if (pdinfo->descrip) {
-	    free(pdinfo->descrip);
-	    pdinfo->descrip = NULL;
-	}
-	if (pdinfo->vector) {
-	    free(pdinfo->vector);
-	    pdinfo->vector = NULL;
-	}
-
-	maybe_free_full_dataset(pdinfo);
-
-	/* added Sat Dec  4 12:19:26 EST 2004 */
-	pdinfo->v = pdinfo->n = 0;
-    } 
-}
-
-/* ......................................................... */
-
-static void dataset_dates_defaults (DATAINFO *pdinfo)
-{
-    strcpy(pdinfo->stobs, "1");
-    sprintf(pdinfo->endobs, "%d", pdinfo->n);
-    pdinfo->sd0 = 1.0;
-    pdinfo->pd = 1;
-    pdinfo->structure = CROSS_SECTION;
-    pdinfo->decpoint = '.';
-}
-
-/* ......................................................... */
+/* ------------------------------------------------------------- */
 
 double get_date_x (int pd, const char *obs)
 {
@@ -216,6 +108,24 @@ double get_date_x (int pd, const char *obs)
     }
 
     return x;
+}
+
+static char *compact_method_to_string (int method)
+{
+    if (method == COMPACT_SUM) return "COMPACT_SUM";
+    else if (method == COMPACT_AVG) return "COMPACT_AVG";
+    else if (method == COMPACT_SOP) return "COMPACT_SOP";
+    else if (method == COMPACT_EOP) return "COMPACT_EOP";
+    else return "COMPACT_NONE";
+}
+
+static int compact_string_to_int (const char *str)
+{
+    if (!strcmp(str, "COMPACT_SUM")) return COMPACT_SUM;
+    else if (!strcmp(str, "COMPACT_AVG")) return COMPACT_AVG;
+    else if (!strcmp(str, "COMPACT_SOP")) return COMPACT_SOP;
+    else if (!strcmp(str, "COMPACT_EOP")) return COMPACT_EOP;
+    else return COMPACT_NONE;
 }
 
 /* Skip past comments in .hdr file.  Return 0 if comments found,
@@ -238,8 +148,6 @@ static int skipcomments (FILE *fp, const char *str)
 
     return 1;
 }
-
-/* ................................................. */
 
 static int comment_lines (FILE *fp, char **pbuf)
 {
@@ -280,292 +188,6 @@ static int comment_lines (FILE *fp, char **pbuf)
     return count;
 }
 
-static int add_case_marker (DATAINFO *pdinfo, int n)
-{
-    char **S;
-
-    S = realloc(pdinfo->S, n * sizeof *S);
-    if (S == NULL) {
-	return 1;
-    }
-
-    pdinfo->S = S;
-
-    pdinfo->S[n-1] = malloc(OBSLEN);
-    if (pdinfo->S[n-1] == NULL) {
-	return 1;
-    }
-
-    strcpy(pdinfo->S[n-1], "NA");
-
-    return 0;
-}
-
-/* allocate_case_markers:
- * @n: number of observations.
- *
- * Allocate storage for a set of @n case markers or observation
- * labels.
- * 
- * Returns: pointer to storage, or %NULL if allocation fails.
- */
-
-char **allocate_case_markers (int n)
-{
-    char **S;
-    int j, t;
-
-    S = malloc(n * sizeof *S);
-    if (S == NULL) return NULL;
-
-    for (t=0; t<n; t++) {
-	S[t] = malloc(OBSLEN);
-	if (S[t] == NULL) {
-	    for (j=0; j<t; j++) {
-		free(S[j]);
-	    }
-	    free(S);
-	    return NULL;
-	}
-	S[t][0] = '\0';
-    }
-
-    return S;
-}
-
-static int dataset_allocate_markers (DATAINFO *pdinfo)
-{
-    char **S = allocate_case_markers(pdinfo->n);
-
-    if (S == NULL) {
-	return 1;
-    } else {
-	pdinfo->S = S;
-	pdinfo->markers = REGULAR_MARKERS;
-    }
-
-    return 0;
-}
-
-/* ................................................. */
-
-void gretl_varinfo_init (VARINFO *vinfo)
-{
-    *vinfo->label = '\0';
-    *vinfo->display_name = '\0';
-    vinfo->compact_method = COMPACT_NONE;
-    vinfo->stack_level = 0;
-    vinfo->sorted_markers = NULL;
-}
-
-/* ................................................. */
-
-static char *compact_method_to_string (int method)
-{
-    if (method == COMPACT_SUM) return "COMPACT_SUM";
-    else if (method == COMPACT_AVG) return "COMPACT_AVG";
-    else if (method == COMPACT_SOP) return "COMPACT_SOP";
-    else if (method == COMPACT_EOP) return "COMPACT_EOP";
-    else return "COMPACT_NONE";
-}
-
-static int compact_string_to_int (const char *str)
-{
-    if (!strcmp(str, "COMPACT_SUM")) return COMPACT_SUM;
-    else if (!strcmp(str, "COMPACT_AVG")) return COMPACT_AVG;
-    else if (!strcmp(str, "COMPACT_SOP")) return COMPACT_SOP;
-    else if (!strcmp(str, "COMPACT_EOP")) return COMPACT_EOP;
-    else return COMPACT_NONE;
-}
-
-/* ................................................. */
-
-static int dataset_allocate_varnames (DATAINFO *pdinfo)
-{
-    int i, v = pdinfo->v;
-    
-    pdinfo->varname = malloc(v * sizeof *pdinfo->varname);
-    pdinfo->varinfo = malloc(v * sizeof *pdinfo->varinfo);
-    pdinfo->vector = malloc(v * sizeof *pdinfo->vector);
-
-    if (pdinfo->varname == NULL || 
-	pdinfo->varinfo == NULL ||
-	pdinfo->vector == NULL) return 1;
-
-    for (i=0; i<v; i++) {
-	pdinfo->varname[i] = malloc(VNAMELEN);
-	if (pdinfo->varname[i] == NULL) return 1;
-
-	pdinfo->varname[i][0] = '\0';
-	pdinfo->varinfo[i] = malloc(sizeof **pdinfo->varinfo);
-	if (pdinfo->varinfo[i] == NULL) return 1;
-
-	gretl_varinfo_init(pdinfo->varinfo[i]);
-	pdinfo->vector[i] = 1;
-    }
-
-    strcpy(pdinfo->varname[0], "const");
-    strcpy(VARLABEL(pdinfo, 0), _("auto-generated constant"));
-    return 0;
-}
-
-/**
- * datainfo_new:
- *
- * Create a new data information struct pointer from scratch,
- * properly initialized.
- * 
- * Returns: pointer to data information struct, or NULL on error.
- *
- */
-
-DATAINFO *datainfo_new (void)
-{
-    DATAINFO *dinfo;
-
-    dinfo = malloc(sizeof *dinfo);
-    if (dinfo == NULL) return NULL;
-
-    dinfo->v = 0;
-    dinfo->n = 0;
-    dinfo->pd = 1;
-    dinfo->sd0 = 1.0;
-    dinfo->t1 = 0;
-    dinfo->t2 = 0;
-    dinfo->stobs[0] = '\0';
-    dinfo->endobs[0] = '\0';
-
-    dinfo->varname = NULL;
-    dinfo->varinfo = NULL;    
-
-    dinfo->markers = NO_MARKERS;  
-    dinfo->delim = ',';
-    dinfo->decpoint = '.';
-
-    dinfo->S = NULL;
-    dinfo->descrip = NULL;
-    dinfo->vector = NULL;
-    dinfo->submask = NULL;
-    dinfo->data = NULL;
-
-    dinfo->structure = CROSS_SECTION;
-
-    return dinfo;
-}
-
-/**
- * create_new_dataset:
- * @pZ: pointer to data matrix.
- * @nvar: number of variables.
- * @nobs: number of observations per variable 
- * @markers: 1 if there are case markers for the observations, 0
- * otherwise.
- *
- * Create a new data information struct corresponding to a given
- * data matrix.
- * 
- * Returns: pointer to data information struct, or NULL on error.
- *
- */
-
-DATAINFO *
-create_new_dataset (double ***pZ, int nvar, int nobs, int markers)
-{
-    DATAINFO *pdinfo;
-
-    pdinfo = malloc(sizeof *pdinfo);
-    if (pdinfo == NULL) return NULL;
-
-    pdinfo->v = nvar;
-    pdinfo->n = nobs;
-    *pZ = NULL;
-
-    if (start_new_Z(pZ, pdinfo, 0)) {
-	free(pdinfo);
-	return NULL;
-    }
-
-    pdinfo->markers = (unsigned char) markers;
-    if (pdinfo->markers) {
-	if (dataset_allocate_markers(pdinfo)) {
-	    free_datainfo(pdinfo);
-	    return NULL;
-	}
-    } 
-
-    dataset_dates_defaults(pdinfo);
-    pdinfo->descrip = NULL;
-
-    return pdinfo;
-}
-
-/**
- * start_new_Z:
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- * @resample: 1 if we're sub-sampling from a full data set, 0 otherwise.
- *
- * Initialize data matrix (add the constant) and the data information
- * struct.
- * 
- * Returns: 0 on successful completion, 1 on error.
- *
- */
-
-int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
-{
-    if (prepZ(pZ, pdinfo)) return 1;
-
-    pdinfo->t1 = 0; 
-    pdinfo->t2 = pdinfo->n - 1;
-
-    if (resample) {
-	pdinfo->varname = NULL;
-	pdinfo->varinfo = NULL;
-    } else if (dataset_allocate_varnames(pdinfo)) {
-	return 1;
-    }
-
-    pdinfo->S = NULL;
-    pdinfo->markers = NO_MARKERS;
-    pdinfo->delim = ',';
-    pdinfo->descrip = NULL;
-    pdinfo->data = NULL;
-    pdinfo->submask = NULL;
-    
-    return 0;
-}
-
-/* ................................................. */
-
-static int prepZ (double ***pZ, const DATAINFO *pdinfo)
-    /* allocate data array and put in constant */
-{
-    int i, t;
-
-    if (*pZ != NULL) free(*pZ);
-
-    *pZ = malloc(pdinfo->v * sizeof **pZ);
-    if (*pZ == NULL) {
-	return 1;
-    }
-
-    for (i=0; i<pdinfo->v; i++) {
-	(*pZ)[i] = malloc(pdinfo->n * sizeof ***pZ);
-	if (*pZ == NULL) {
-	    return 1;
-	}
-    }
-
-    for (t=0; t<pdinfo->n; t++) {
-	(*pZ)[0][t] = 1.0; 
-    }
-
-    return 0;
-}
-
-/* ................................................. */
-
 static void eatspace (FILE *fp)
 {
     char c;
@@ -578,8 +200,6 @@ static void eatspace (FILE *fp)
 	}
     }
 }
-
-/* ................................................. */
 
 static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 		     int binary, int old_byvar)
@@ -670,8 +290,6 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 
     return err;
 }
-
-/* ................................................. */
 
 static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 			int binary)
@@ -837,8 +455,6 @@ int check_varname (const char *varname)
     return ret;
 }   
 
-/* ................................................ */
-
 static int readhdr (const char *hdrfile, DATAINFO *pdinfo, 
 		    int *binary, int *old_byvar)
 {
@@ -1000,8 +616,6 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
 
     return E_DATA;
 }
-
-/* ................................................ */
 
 static int bad_date_string (const char *s)
 {
@@ -1361,8 +975,6 @@ int get_info (const char *hdrfile, PRN *prn)
 
     return 0;
 }
-
-/* ................................................ */
 
 static int writehdr (const char *hdrfile, const int *list, 
 		     const DATAINFO *pdinfo, int opt)
@@ -3231,6 +2843,27 @@ static int csv_missval (const char *str, int i, int t, PRN *prn)
     }
 
     return miss;
+}
+
+static int add_case_marker (DATAINFO *pdinfo, int n)
+{
+    char **S;
+
+    S = realloc(pdinfo->S, n * sizeof *S);
+    if (S == NULL) {
+	return 1;
+    }
+
+    pdinfo->S = S;
+
+    pdinfo->S[n-1] = malloc(OBSLEN);
+    if (pdinfo->S[n-1] == NULL) {
+	return 1;
+    }
+
+    strcpy(pdinfo->S[n-1], "NA");
+
+    return 0;
 }
 
 static int dataset_add_obs (double ***pZ, DATAINFO *pdinfo)

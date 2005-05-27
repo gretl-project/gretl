@@ -19,6 +19,396 @@
 
 #include "libgretl.h"
 
+#ifdef NEW_STYLE_FUNCTIONS
+# include "gretl_func.h"
+#endif
+
+/**
+ * free_Z:
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Do a deep free on the data matrix.
+ * 
+ */
+
+void free_Z (double **Z, DATAINFO *pdinfo)
+{
+    int i;
+
+    if (Z == NULL || pdinfo == NULL) return;
+
+    for (i=0; i<pdinfo->v; i++) {
+	free(Z[i]);
+    }
+    free(Z);
+}
+
+/**
+ * destroy_dataset_markers:
+ * @pdinfo: data information struct.
+ *
+ * Free any allocated observation markers for @pdinfo.
+ */
+
+void destroy_dataset_markers (DATAINFO *pdinfo)
+{
+    int i;
+
+    if (pdinfo->S != NULL) {
+	for (i=0; i<pdinfo->n; i++) { 
+	   free(pdinfo->S[i]); 
+	}
+	free(pdinfo->S);
+	pdinfo->S = NULL;
+	pdinfo->markers = NO_MARKERS;
+    } 
+}
+
+static void free_sorted_markers (DATAINFO *pdinfo, int v)
+{
+    VARINFO *vinfo = pdinfo->varinfo[v];
+    int i;
+
+    if (vinfo->sorted_markers != NULL) {
+	for (i=0; i<pdinfo->n; i++) {
+	    free(vinfo->sorted_markers[i]);
+	}
+	free(vinfo->sorted_markers);
+	vinfo->sorted_markers = NULL;
+    }    
+}
+
+static void free_varinfo (DATAINFO *pdinfo, int v)
+{
+    free_sorted_markers(pdinfo, v);
+    free(pdinfo->varinfo[v]);
+}
+
+void set_sorted_markers (DATAINFO *pdinfo, int v, char **S)
+{
+    free_sorted_markers(pdinfo, v);
+    pdinfo->varinfo[v]->sorted_markers = S;
+}
+
+/**
+ * clear_datainfo:
+ * @pdinfo: data information struct.
+ * @code: either CLEAR_FULL or CLEAR_SUBSAMPLE.
+ *
+ * Free the allocated content of a data information struct.
+ * 
+ */
+
+void clear_datainfo (DATAINFO *pdinfo, int code)
+{
+    int i;
+
+    if (pdinfo == NULL) return;
+
+    if (pdinfo->S != NULL) {
+	destroy_dataset_markers(pdinfo);
+    } 
+
+    if (pdinfo->submask != NULL) {
+	free(pdinfo->submask);
+	pdinfo->submask = NULL;
+    }
+
+    /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
+    if (code == CLEAR_FULL) {
+	if (pdinfo->varname != NULL) {
+	    for (i=0; i<pdinfo->v; i++) {
+		free(pdinfo->varname[i]); 
+	    }
+	    free(pdinfo->varname);
+	    pdinfo->varname = NULL;
+	}
+	if (pdinfo->varinfo != NULL) {
+	    for (i=0; i<pdinfo->v; i++) {
+		free_varinfo(pdinfo, i);
+	    }
+	    free(pdinfo->varinfo);
+	    pdinfo->varinfo = NULL;
+	}
+	if (pdinfo->descrip) {
+	    free(pdinfo->descrip);
+	    pdinfo->descrip = NULL;
+	}
+	if (pdinfo->vector) {
+	    free(pdinfo->vector);
+	    pdinfo->vector = NULL;
+	}
+
+	maybe_free_full_dataset(pdinfo);
+
+	/* added Sat Dec  4 12:19:26 EST 2004 */
+	pdinfo->v = pdinfo->n = 0;
+    } 
+}
+
+/* should be static, but currently used in dataio.c: FIXME */
+
+void dataset_dates_defaults (DATAINFO *pdinfo)
+{
+    strcpy(pdinfo->stobs, "1");
+    sprintf(pdinfo->endobs, "%d", pdinfo->n);
+    pdinfo->sd0 = 1.0;
+    pdinfo->pd = 1;
+    pdinfo->structure = CROSS_SECTION;
+    pdinfo->decpoint = '.';
+}
+
+/* allocate_case_markers:
+ * @n: number of observations.
+ *
+ * Allocate storage for a set of @n case markers or observation
+ * labels.
+ * 
+ * Returns: pointer to storage, or %NULL if allocation fails.
+ */
+
+char **allocate_case_markers (int n)
+{
+    char **S;
+    int j, t;
+
+    S = malloc(n * sizeof *S);
+    if (S == NULL) return NULL;
+
+    for (t=0; t<n; t++) {
+	S[t] = malloc(OBSLEN);
+	if (S[t] == NULL) {
+	    for (j=0; j<t; j++) {
+		free(S[j]);
+	    }
+	    free(S);
+	    return NULL;
+	}
+	S[t][0] = '\0';
+    }
+
+    return S;
+}
+
+/* should be static, but currently used in dataio.c: FIXME */
+
+int dataset_allocate_markers (DATAINFO *pdinfo)
+{
+    char **S = allocate_case_markers(pdinfo->n);
+
+    if (S == NULL) {
+	return 1;
+    } else {
+	pdinfo->S = S;
+	pdinfo->markers = REGULAR_MARKERS;
+    }
+
+    return 0;
+}
+
+static void gretl_varinfo_init (VARINFO *vinfo)
+{
+    *vinfo->label = '\0';
+    *vinfo->display_name = '\0';
+    vinfo->compact_method = COMPACT_NONE;
+    vinfo->stack_level = 0;
+    vinfo->sorted_markers = NULL;
+
+#ifdef NEW_STYLE_FUNCTIONS
+    vinfo->stack_level = gretl_function_stack_depth();
+#else
+    vinfo->stack_level = 0;
+#endif
+}
+
+/* should be static, but currently used in dataio.c: FIXME */
+
+int dataset_allocate_varnames (DATAINFO *pdinfo)
+{
+    int i, v = pdinfo->v;
+    
+    pdinfo->varname = malloc(v * sizeof *pdinfo->varname);
+    pdinfo->varinfo = malloc(v * sizeof *pdinfo->varinfo);
+    pdinfo->vector = malloc(v * sizeof *pdinfo->vector);
+
+    if (pdinfo->varname == NULL || 
+	pdinfo->varinfo == NULL ||
+	pdinfo->vector == NULL) return 1;
+
+    for (i=0; i<v; i++) {
+	pdinfo->varname[i] = malloc(VNAMELEN);
+	if (pdinfo->varname[i] == NULL) return 1;
+
+	pdinfo->varname[i][0] = '\0';
+	pdinfo->varinfo[i] = malloc(sizeof **pdinfo->varinfo);
+	if (pdinfo->varinfo[i] == NULL) return 1;
+
+	gretl_varinfo_init(pdinfo->varinfo[i]);
+	pdinfo->vector[i] = 1;
+    }
+
+    strcpy(pdinfo->varname[0], "const");
+    strcpy(VARLABEL(pdinfo, 0), _("auto-generated constant"));
+
+    return 0;
+}
+
+/**
+ * datainfo_new:
+ *
+ * Create a new data information struct pointer from scratch,
+ * properly initialized.
+ * 
+ * Returns: pointer to data information struct, or NULL on error.
+ *
+ */
+
+DATAINFO *datainfo_new (void)
+{
+    DATAINFO *dinfo;
+
+    dinfo = malloc(sizeof *dinfo);
+    if (dinfo == NULL) return NULL;
+
+    dinfo->v = 0;
+    dinfo->n = 0;
+    dinfo->pd = 1;
+    dinfo->sd0 = 1.0;
+    dinfo->t1 = 0;
+    dinfo->t2 = 0;
+    dinfo->stobs[0] = '\0';
+    dinfo->endobs[0] = '\0';
+
+    dinfo->varname = NULL;
+    dinfo->varinfo = NULL;    
+
+    dinfo->markers = NO_MARKERS;  
+    dinfo->delim = ',';
+    dinfo->decpoint = '.';
+
+    dinfo->S = NULL;
+    dinfo->descrip = NULL;
+    dinfo->vector = NULL;
+    dinfo->submask = NULL;
+    dinfo->data = NULL;
+
+    dinfo->structure = CROSS_SECTION;
+
+    return dinfo;
+}
+
+/**
+ * create_new_dataset:
+ * @pZ: pointer to data matrix.
+ * @nvar: number of variables.
+ * @nobs: number of observations per variable 
+ * @markers: 1 if there are case markers for the observations, 0
+ * otherwise.
+ *
+ * Create a new data information struct corresponding to a given
+ * data matrix.
+ * 
+ * Returns: pointer to data information struct, or NULL on error.
+ *
+ */
+
+DATAINFO *
+create_new_dataset (double ***pZ, int nvar, int nobs, int markers)
+{
+    DATAINFO *pdinfo;
+
+    pdinfo = malloc(sizeof *pdinfo);
+    if (pdinfo == NULL) return NULL;
+
+    pdinfo->v = nvar;
+    pdinfo->n = nobs;
+    *pZ = NULL;
+
+    if (start_new_Z(pZ, pdinfo, 0)) {
+	free(pdinfo);
+	return NULL;
+    }
+
+    pdinfo->markers = (unsigned char) markers;
+    if (pdinfo->markers) {
+	if (dataset_allocate_markers(pdinfo)) {
+	    free_datainfo(pdinfo);
+	    return NULL;
+	}
+    } 
+
+    dataset_dates_defaults(pdinfo);
+    pdinfo->descrip = NULL;
+
+    return pdinfo;
+}
+
+/* allocate data array and put in constant */
+/* should be static, but currently used in dataio.c: FIXME */
+
+int prepZ (double ***pZ, const DATAINFO *pdinfo)
+{
+    int i, t;
+
+    if (*pZ != NULL) free(*pZ);
+
+    *pZ = malloc(pdinfo->v * sizeof **pZ);
+    if (*pZ == NULL) {
+	return 1;
+    }
+
+    for (i=0; i<pdinfo->v; i++) {
+	(*pZ)[i] = malloc(pdinfo->n * sizeof ***pZ);
+	if (*pZ == NULL) {
+	    return 1;
+	}
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	(*pZ)[0][t] = 1.0; 
+    }
+
+    return 0;
+}
+
+/**
+ * start_new_Z:
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @resample: 1 if we're sub-sampling from a full data set, 0 otherwise.
+ *
+ * Initialize data matrix (add the constant) and the data information
+ * struct.
+ * 
+ * Returns: 0 on successful completion, 1 on error.
+ *
+ */
+
+int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
+{
+    if (prepZ(pZ, pdinfo)) return 1;
+
+    pdinfo->t1 = 0; 
+    pdinfo->t2 = pdinfo->n - 1;
+
+    if (resample) {
+	pdinfo->varname = NULL;
+	pdinfo->varinfo = NULL;
+    } else if (dataset_allocate_varnames(pdinfo)) {
+	return 1;
+    }
+
+    pdinfo->S = NULL;
+    pdinfo->markers = NO_MARKERS;
+    pdinfo->delim = ',';
+    pdinfo->descrip = NULL;
+    pdinfo->data = NULL;
+    pdinfo->submask = NULL;
+    
+    return 0;
+}
+
 static int reallocate_markers (DATAINFO *pdinfo, int n)
 {
     char **S;
@@ -316,6 +706,25 @@ int dataset_scalar_to_vector (int v, double ***pZ, DATAINFO *pdinfo)
 	}
 	(*pZ)[v] = tmp;
 	pdinfo->vector[v] = 1;
+    }
+
+    return err;
+}
+
+int dataset_copy_variable (int v, double ***pZ, DATAINFO *pdinfo)
+{
+    int t, err = 0;
+
+    err = real_dataset_add_series(1, NULL, pZ, pdinfo);
+    if (!err) {
+	int vnew = pdinfo->v - 1;
+
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[vnew][t] = (*pZ)[v][t];
+	}
+	strcpy(pdinfo->varname[vnew], pdinfo->varname[v]);
+	STACK_LEVEL(pdinfo, vnew) += 1;
+	 /* FIXME other varinfo stuff */
     }
 
     return err;

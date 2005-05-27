@@ -2566,7 +2566,7 @@
     <description>
       <para>
         Da usare in uno script di comandi, principalmente per includere
-        definizioni di funzioni. Esegue i comandi nel <repl>file<repl>
+        definizioni di funzioni. Esegue i comandi nel <repl>file</repl>
         e ripassa il controllo allo script principale.
       </para>
     </description>

@@ -5364,7 +5364,7 @@ static int handle_user_defined_function (char *line, int *fncall)
 
     /* an actual function call */
     else if (ufunc) {
-	err = gretl_function_start_exec(line);
+	err = gretl_function_start_exec(line, &Z, datainfo);
 	*fncall = 1;
     } 
 
@@ -5510,6 +5510,8 @@ int gui_exec_line (char *line,
     case DATA:
     case DIFF: 
     case ESTIMATE:
+    case FUNC:
+    case FUNCERR:
     case GRAPH: 
     case HURST: 
     case INFO: 
@@ -5877,13 +5879,6 @@ int gui_exec_line (char *line,
 		       prn, cmd.opt);
 	if (!err && exec_code == CONSOLE_EXEC) {
 	    register_graph();
-	}
-	break;
-
-    case FUNC:
-	err = gretl_start_compiling_function(line);
-	if (err) {
-	    errmsg(err, prn);
 	}
 	break;
 
@@ -6371,7 +6366,7 @@ int gui_exec_line (char *line,
 
     /* clean up in case a user function bombed */
     if (err && gretl_executing_function()) {
-	gretl_function_error();
+	gretl_function_stop_on_error();
     }    
 
     /* log the specific command? */

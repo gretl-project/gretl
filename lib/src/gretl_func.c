@@ -22,7 +22,7 @@
 
 #define CALLSTACK_DEPTH 8
 
-#define FN_DEBUG 0
+#define FN_DEBUG 1
 
 typedef struct ufunc_ ufunc;
 typedef struct fncall_ fncall;
@@ -128,6 +128,10 @@ int gretl_function_stack_depth (void)
 {
     int i, n = 0;
 
+    if (callstack == NULL && callstack_init()) {
+	return E_ALLOC;
+    }
+
     for (i=0; i<CALLSTACK_DEPTH; i++) {
 	if (callstack[i] != NULL) n++;
 	else break;
@@ -212,6 +216,7 @@ destroy_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo, int nc)
 
 	    if (wanted) {
 		/* rename variable as caller desired */
+		/* FIXME: what if var already exists at caller level? */
 		strcpy(pdinfo->varname[i], call->assv[v++]);
 		STACK_LEVEL(pdinfo, i) -= 1; 
 		saves--;
@@ -452,6 +457,9 @@ static char *function_name_from_line (const char *line, char *name)
 	}
 
 	sscanf(p, "%31s", name);
+#if FN_DEBUG
+	fprintf(stderr, "function_name_from_line: got '%s'\n", name);
+#endif
     }
 
     return name;
@@ -594,10 +602,22 @@ static char **get_separated_fields_8 (const char *line, int *nfields)
     return fields;
 }
 
+static void free_strings (char **s, int n)
+{
+    if (s != NULL) {
+	int i;
+
+	for (i=0; i<n; i++) {
+	    free(s[i]);
+	}
+	free(s);
+    }
+}
+
 static char **parse_assignment (char *s, int *na)
 {
     char **vnames;
-    int n;
+    int n, err = 0;
 
     /* clean the string up */
     s += strspn(s, " ");
@@ -615,9 +635,17 @@ static char **parse_assignment (char *s, int *na)
     if (vnames != NULL) {
 	int i;
 
-	for (i=0; i<*na; i++) {
+	for (i=0; i<*na && !err; i++) {
+#if FN_DEBUG
 	    fprintf(stderr, "assignee %d: '%s'\n", i, vnames[i]);
+#endif
+	    err = check_varname(vnames[i]);
 	}
+    }
+
+    if (err) {
+	free_strings(vnames, *na);
+	vnames = NULL;
     }
 
     return vnames;
@@ -748,8 +776,10 @@ static ufunc *get_latest_ufunc (void)
 static int create_function_return_list (ufunc *fun, const char *line)
 {
     const char *s = line + 8;
-    int i, nr;
-    int err = 0;
+    int nr, err = 0;
+#if FN_DEBUG
+    int i;
+#endif
 
     s += strspn(s, " ");
 
@@ -849,13 +879,42 @@ int gretl_function_append_line (const char *line)
     return err;
 }
 
-int gretl_function_start_exec (const char *line)
+#ifdef NEW_STYLE_FUNCTIONS
+
+/* FIXME headers */
+extern int dataset_copy_variable (int v, double ***pZ, DATAINFO *pdinfo);
+
+static int check_and_allocate_function_args (int argc, char **argv, 
+					     double ***pZ,
+					     DATAINFO *pdinfo)
+{
+    int i, v, err = 0;
+
+    for (i=0; i<argc && !err; i++) {
+	if (!numeric_string(argv[i])) {
+	    v = varindex(pdinfo, argv[i]);
+	    if (v == pdinfo->v) {
+		fprintf(stderr, "%s: not a known variable\n", argv[i]);
+		err = 1;
+	    } else {
+		err = dataset_copy_variable(v, pZ, pdinfo);
+	    }
+	}
+    }
+
+    return err;
+}
+
+#endif
+
+int gretl_function_start_exec (const char *line, double ***pZ,
+			       DATAINFO *pdinfo)
 {
     char **argv = NULL;
     char **assv = NULL;
     char fname[32];
     ufunc *fun;
-    fncall *call;
+    fncall *call = NULL;
     int argc = 0;
     int assc = 0;
     int err = 0;
@@ -868,10 +927,29 @@ int gretl_function_start_exec (const char *line)
     }
 
     err = parse_function_args_etc(line, &argc, &argv, &assc, &assv);
-
     if (err) {
 	return E_ALLOC;
     }
+
+    if (assc > fun->n_returns) {
+	sprintf(gretl_errmsg, _("Number of assignments (%d) exceeds the "
+				"number of values returned by\n%s (%d)"), 
+		assc, fun->name, fun->n_returns);
+	free_strings(argv, argc);
+	free_strings(assv, assc);
+	return 1;
+    }
+
+#ifdef NEW_STYLE_FUNCTIONS
+    if (argc > 0) {
+	err = check_and_allocate_function_args(argc, argv, pZ, pdinfo);
+    }
+    if (err) {
+	free_strings(argv, argc);
+	free_strings(assv, assc);
+	return 1;
+    }
+#endif
 
     call = fncall_new(fun, argc, argv, assc, assv);
     if (call == NULL) {
@@ -879,6 +957,7 @@ int gretl_function_start_exec (const char *line)
     } 
 
     err = push_fncall(call);
+
     if (err) {
 	free_fncall(call);
     }
@@ -995,8 +1074,25 @@ void gretl_functions_cleanup (void)
     ufuncs_destroy();
 }
 
-void gretl_function_error (void)
+void gretl_function_stop_on_error (void)
 {
     callstack_destroy();
     executing = 0;
+}
+
+int gretl_function_flagged_error (const char *s, PRN *prn)
+{
+    if (executing == 0) {
+	return 0;
+    }
+
+    if (s != NULL && *s != '\0') {
+	pprintf(prn, "%s\n", s);
+    } else {
+	pprintf(prn, _("Error condition in execution of function %s"),
+		(callstack[0])->fun->name);
+	pputc(prn, '\n');
+    }
+
+    return 1;
 }

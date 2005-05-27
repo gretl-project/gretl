@@ -180,6 +180,7 @@ static int catch_command_alias (CMD *cmd)
 	               c == FCAST || \
 	               c == FCASTERR || \
 	               c == FIT || \
+                       c == FUNCERR || \
  	               c == LABEL || \
  	               c == LABELS || \
     	               c == INFO || \
@@ -672,6 +673,17 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
     cmd->extra = gretl_strdup(numstr);
 }
 
+static void get_funcerr_msg (const char *s, CMD *cmd)
+{
+    if (strlen(s) > 8) {
+	free(cmd->param);
+	cmd->param = gretl_strdup(s + 8); /* skip "funcerr " */
+	if (cmd->param == NULL) {
+	    cmd->errcode = E_ALLOC;
+	}
+    }
+}
+
 static void parse_outfile_cmd (char *s, CMD *cmd)
 {
     /* 7 = number of chars in the command word, "outfile" */
@@ -1008,7 +1020,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->errcode;
     }
 
-#if 1
+#ifdef NEW_STYLE_FUNCTIONS
     if (cmd->ci == GENR && gretl_executing_function()) {
 	cmd->opt |= OPT_L;
     }
@@ -1034,7 +1046,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* "logistic" can have a special parameter */
     else if (cmd->ci == LOGISTIC) {
 	parse_logistic_ymax(line, cmd);
-    }      
+    }  
+
+    /* "funcerr" takes a string error message */
+    else if (cmd->ci == FUNCERR) {
+	get_funcerr_msg(line, cmd);
+    }     
 
     /* commands that never take a list of variables */
     if (NO_VARLIST(cmd->ci)) {
@@ -2437,6 +2454,17 @@ int simple_commands (CMD *cmd, const char *line,
     case ESTIMATE:
 	err = estimate_named_system(line, pZ, datainfo, cmd->opt, prn);
 	break;
+
+    case FUNC:
+	err = gretl_start_compiling_function(line);
+	if (err) {
+	    errmsg(err, prn);
+	}
+	break;
+
+    case FUNCERR:
+	err = gretl_function_flagged_error(cmd->param, prn);
+	break;	
 
     case PCA:
 	corrmat = corrlist(cmd->list, (const double **) *pZ, datainfo);

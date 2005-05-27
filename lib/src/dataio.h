@@ -75,32 +75,6 @@ typedef enum {
 
 /* functions follow */
 
-void free_Z (double **Z, DATAINFO *pdinfo);
-
-DATAINFO *datainfo_new (void);
-
-DATAINFO *create_new_dataset (double ***pZ, /* data matrix */
-			      int nvar,     /* number of variables */
-			      int nobs,     /* observations per variable */
-			      int markers   /* case markers or not? */
-			      );
-
-void clear_datainfo (DATAINFO *pdinfo, int code);
-
-char **allocate_case_markers (int n);
-
-void destroy_dataset_markers (DATAINFO *pdinfo);
-
-void set_sorted_markers (DATAINFO *pdinfo, int v, char **S);
-
-void dataset_set_regular_markers (DATAINFO *pdinfo);
-
-void free_varinfo (DATAINFO *pdinfo, int v);
-
-void gretl_varinfo_init (VARINFO *vinfo);
-
-int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);
-
 int dateton (const char *date, const DATAINFO *pdinfo);
 
 char *ntodate (char *datestr, int nt, const DATAINFO *pdinfo);

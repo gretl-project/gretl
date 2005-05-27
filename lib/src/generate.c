@@ -266,7 +266,6 @@ static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
 	genr_set_private(genr);
     }
     if (opt & OPT_L) {
-	fprintf(stderr, "genr, OPT_L, setting local\n");
 	genr_set_local(genr);
     }
 
@@ -2260,12 +2259,21 @@ static void get_genr_formula (char *formula, const char *line,
 	}
     }
 
+#ifdef NEW_STYLE_FUNCTIONS
+    if (gretl_executing_function()) {
+	if (sscanf(line, "my %8s =", vname)) {
+	    genr_set_local(genr);
+	    line += 3;
+	}
+    }
+#else
     if (!genr_is_local(genr) && gretl_executing_function()) {
 	if (sscanf(line, "my %8s =", vname)) {
 	    genr_set_local(genr);
 	    line += 3;
 	}
     }
+#endif
 
     *formula = '\0';
 
@@ -4763,6 +4771,86 @@ void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn)
     }
 }
 
+#ifdef NEW_STYLE_FUNCTIONS
+
+static int 
+real_varindex (const DATAINFO *pdinfo, const char *varname, 
+	       /* unused */ int local)
+{
+    const char *check;
+    int i, sd = 0, ret = pdinfo->v;
+
+    if (varname == NULL) {
+	return ret;
+    }
+
+    if (!strncmp(varname, "__", 2)) {
+	check = varname + 2;
+    } else {
+	check = varname;
+    }
+
+    if (!strcmp(check, "uhat") || !strcmp(check, "$uhat")) {
+	return UHATNUM; 
+    } else if (!strcmp(check, "yhat") || !strcmp(check, "$yhat")) {
+	return YHATNUM; 
+    } else if (!strcmp(check, "$h")) {
+	return HNUM; 
+    } else if (!strcmp(check, "t") || !strcmp(check, "obs")) {
+	return TNUM;
+    } else if (!strcmp(check, "const") || !strcmp(check, "CONST")) {
+	return 0;
+    }
+
+    if (strlen(check) == 1 && is_active_index_loop_char(*check)) {
+	/* loop index variable: 'i', 'j' or such */
+	return INDEXNUM;
+    }
+
+    if (gretl_executing_function()) {
+	sd = gretl_function_stack_depth();
+    } 
+
+    if (sd > 0) {
+	/* inside a function, see only variables at same level */
+	for (i=1; i<pdinfo->v; i++) { 
+	    if (STACK_LEVEL(pdinfo, i) == sd && 
+		!strcmp(pdinfo->varname[i], check)) {
+		ret = i;
+		break;
+	    }
+	}
+    } else {
+	/* not inside a function, don't have to check level */
+	for (i=1; i<pdinfo->v; i++) { 
+	    if (!strcmp(pdinfo->varname[i], check)) { 
+		ret = i;
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+/**
+ * varindex:
+ * @pdinfo: data information struct.
+ * @varname: name of variable to test.
+ *
+ * Returns: the ID number of the variable whose name is given,
+ * or the next available ID number if there is no variable of
+ * that name.
+ *
+ */
+
+int varindex (const DATAINFO *pdinfo, const char *varname)
+{
+    return real_varindex(pdinfo, varname, 0);
+}
+
+#else /* old version follows */
+
 static int 
 real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 {
@@ -4874,7 +4962,7 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     return real_varindex(pdinfo, varname, 0);
 }
 
-/* ........................................................ */
+#endif /* !NEW_STYLE_FUNCTIONS */
 
 static void genrfree (GENERATE *genr)
 {

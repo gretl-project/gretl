@@ -57,6 +57,7 @@ enum gretl_cmd_codes {
     FIT,     
     FREQ, 
     FUNC,
+    FUNCERR,
     GARCH,
     GENR,     
     GNUPLOT, 

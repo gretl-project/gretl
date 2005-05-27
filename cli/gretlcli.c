@@ -677,7 +677,7 @@ static int handle_user_defined_function (char *line, int *fncall)
 	;
     } else if (ufunc) {
 	/* an actual function call */
-	err = gretl_function_start_exec(line);
+	err = gretl_function_start_exec(line, &Z, datainfo);
 	*fncall = 1;
     } 
 
@@ -811,6 +811,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case DATA:
     case DIFF: 
     case ESTIMATE:
+    case FUNC:
+    case FUNCERR:
     case GRAPH: 
     case HURST:
     case INFO: 
@@ -1130,13 +1132,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case FREQ:
 	err = freqdist(cmd.list[1], (const double **) Z, 
 		       datainfo, !batch, prn, cmd.opt);
-	break;
-
-    case FUNC:
-	err = gretl_start_compiling_function(line);
-	if (err) {
-	    errmsg(err, prn);
-	}
 	break;
 
     case GENR:
@@ -1637,7 +1632,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     }
 
     if (err && gretl_executing_function()) {
-	gretl_function_error();
+	gretl_function_stop_on_error();
     }
 
     if (!err && (is_model_cmd(cmd.word) || do_nls || do_arch)

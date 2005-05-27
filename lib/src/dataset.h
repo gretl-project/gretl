@@ -20,6 +20,12 @@
 #ifndef DATASET_H
 #define DATASET_H
 
+typedef enum {
+    NO_MARKERS = 0,
+    REGULAR_MARKERS,
+    DAILY_DATE_STRINGS
+} DatasetMarkerType;
+
 /**
  * dataset_is_time_series:
  * @p: pointer to data information struct.
@@ -133,6 +139,27 @@
 #define dataset_is_panel(p) ((p)->structure == STACKED_TIME_SERIES || \
                              (p)->structure == STACKED_CROSS_SECTION)
 
+void free_Z (double **Z, DATAINFO *pdinfo);
+
+DATAINFO *datainfo_new (void);
+
+DATAINFO *create_new_dataset (double ***pZ, /* data matrix */
+			      int nvar,     /* number of variables */
+			      int nobs,     /* observations per variable */
+			      int markers   /* case markers or not? */
+			      );
+
+void clear_datainfo (DATAINFO *pdinfo, int code);
+
+char **allocate_case_markers (int n);
+
+void destroy_dataset_markers (DATAINFO *pdinfo);
+
+void set_sorted_markers (DATAINFO *pdinfo, int v, char **S);
+
+void dataset_set_regular_markers (DATAINFO *pdinfo);
+
+int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);
 
 int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo);
 

@@ -30,14 +30,17 @@ int gretl_function_append_line (const char *line);
 
 int gretl_is_user_function (const char *s);
 
-int gretl_function_start_exec (const char *line);
+int gretl_function_start_exec (const char *line, double ***pZ,
+			       DATAINFO *pdinfo);
 
 char *gretl_function_get_line (char *line, int len,
 			       double ***pZ, DATAINFO *pdinfo);
 
 int gretl_function_stack_depth (void);
 
-void gretl_function_error (void);
+void gretl_function_stop_on_error (void);
+
+int gretl_function_flagged_error (const char *s, PRN *prn);
 
 void gretl_functions_cleanup (void);
 
