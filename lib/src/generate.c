@@ -4738,6 +4738,47 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
  * Prints a list of the names of the variables currently defined.
  */
 
+#ifdef NEW_STYLE_FUNCTIONS
+
+void varlist (const DATAINFO *pdinfo, PRN *prn)
+{
+    int level = 0;
+    int i, j, n;
+
+    if (gretl_executing_function()) {
+	level = gretl_function_stack_depth();
+
+	n = 0;
+	for (i=0; i<pdinfo->v; i++) {
+	    if (STACK_LEVEL(pdinfo, i) == level) {
+		n++;
+	    }
+	}
+    } else {
+	n = pdinfo->v;
+    }
+
+    pprintf(prn, _("Listing %d variables:\n"), n);
+
+    j = 1;
+    for (i=0; i<pdinfo->v; i++) {
+	if (level > 0 && STACK_LEVEL(pdinfo, i) != level) {
+	    continue;
+	}
+	pprintf(prn, "%3d) %-10s", i, pdinfo->varname[i]);
+	if (j % 5 == 0) {
+	    pputc(prn, '\n');
+	}
+	j++;
+    }
+
+    if (n % 5) pputc(prn, '\n');
+
+    pputc(prn, '\n');
+}
+
+#else
+
 void varlist (const DATAINFO *pdinfo, PRN *prn)
 {
     int i, n = pdinfo->v;
@@ -4754,6 +4795,8 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
 
     pputc(prn, '\n');
 }
+
+#endif
 
 /**
  * maybe_list_vars:

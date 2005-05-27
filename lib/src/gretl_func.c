@@ -22,7 +22,7 @@
 
 #define CALLSTACK_DEPTH 8
 
-#define FN_DEBUG 1
+#define FN_DEBUG 0
 
 typedef struct ufunc_ ufunc;
 typedef struct fncall_ fncall;
@@ -999,10 +999,14 @@ substitute_dollar_terms (char *targ, const char *src,
 	}
 
 	len = strcspn(src, "$");
-	if ((err = safe_strncat(targ, src, len, maxlen))) {
-	    break;
+
+	if (len > 0) {
+	    err = safe_strncat(targ, src, len, maxlen);
+	    if (err) {
+		break;
+	    }
+	    src += len;
 	}
-	src += len;
 
 	/* got a positional parameter? */
 	if (*(src+1) && sscanf(src, "$%d", &pos)) {
@@ -1061,8 +1065,8 @@ char *gretl_function_get_line (char *line, int len,
     }
 
 #if FN_DEBUG
-	fprintf(stderr, "function_get_line, $substitution: \n"
-		" before: '%s'\n  after: '%s'\n", src, line);
+    fprintf(stderr, "function_get_line, $substitution: \n"
+	    " before: '%s'\n  after: '%s'\n", src, line);
 #endif
 
     return line;
