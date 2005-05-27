@@ -256,6 +256,33 @@ void set_garch_robust_vcv (const char *s)
     free(scpy);
 }
 
+static int parse_set_plotfile (const char *s)
+{
+    char *fname;
+    int err = 0;
+
+    while (isspace((unsigned char) *s)) {
+	s++;
+    }
+
+    /* now skip two words, "set" and "plotfile" */
+    s += strcspn(s, " ");
+    s += strspn(s, " ");
+    s += strcspn(s, " ");
+    s += strspn(s, " ");
+
+    fname = gretl_strdup(s);
+    if (fname != NULL) {
+	tailstrip(fname);
+	set_gretl_plotfile(fname);
+	free(fname);
+    } else {
+	err = E_ALLOC;
+    }
+
+    return err;
+}
+
 int execute_set_line (const char *line, PRN *prn)
 {
     char setobj[16], setarg[16], setarg2[16];
@@ -264,6 +291,11 @@ int execute_set_line (const char *line, PRN *prn)
     *setobj = *setarg = *setarg2 = '\0';
 
     nw = sscanf(line, "%*s %15s %15s %15s", setobj, setarg, setarg2);
+
+    /* special: plotfile */
+    if (nw > 1 && !strcmp(setobj, "plotfile")) {
+	return parse_set_plotfile(line);
+    }
     
     if (nw == 1) {
 	if (!strcmp(setobj, "echo")) {

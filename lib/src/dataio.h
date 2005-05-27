@@ -118,7 +118,7 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 int import_box (double ***pZ, DATAINFO **ppdinfo, 
 		const char *fname, PRN *prn);
 
-int add_case_markers (DATAINFO *pdinfo, const char *fname);
+int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname);
 
 GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn);
 

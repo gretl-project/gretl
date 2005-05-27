@@ -739,15 +739,11 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (label_strings && wsheet_labels_complete(&sheet)) {
-	    char **S;
-
-	    S = allocate_case_markers(newinfo->n);
-	    if (S != NULL) {
-		newinfo->markers = 1;
+	    dataset_allocate_obs_markers(newinfo);
+	    if (newinfo->S != NULL) {
 		for (t=0; t<newinfo->n; t++) {
-		    strcpy(S[t], sheet.label[t+1]);
+		    strcpy(newinfo->S[t], sheet.label[t+1]);
 		}
-		newinfo->S = S;
 	    }
 	}
 

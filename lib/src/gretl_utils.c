@@ -497,7 +497,7 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	    structure = TIME_SERIES;
 
 	    /* replace any existing markers with date strings */
-	    destroy_dataset_markers(pdinfo);
+	    dataset_destroy_obs_markers(pdinfo);
 	} else {
 	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
 	    return 1;

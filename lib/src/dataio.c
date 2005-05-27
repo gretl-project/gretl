@@ -52,12 +52,6 @@ static char ENDCOMMENT[3] = "*)";
 
 #define PROGRESS_BAR "progress_bar"
 
-/* bodge: these shouldn't be used here, in dataset.c for now */
-extern int dataset_allocate_varnames (DATAINFO *pdinfo);
-extern int prepZ (double ***pZ, const DATAINFO *pdinfo);
-extern int dataset_allocate_markers (DATAINFO *pdinfo);
-extern void dataset_dates_defaults (DATAINFO *pdinfo);
-
 /* ------------------------------------------------------------- */
 
 #ifdef ENABLE_NLS
@@ -97,12 +91,13 @@ double get_date_x (int pd, const char *obs)
 {
     double x = 1.0;
 
-    if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) 
-	&& strlen(obs) > 4) { 
+    if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) && strlen(obs) > 4) { 
 	/* calendar data */
 	long ed = get_epoch_day(obs);
 
-	if (ed >= 0) x = ed;
+	if (ed >= 0) {
+	    x = ed;
+	}
     } else {
 	x = obs_str_to_double(obs); 
     }
@@ -491,7 +486,6 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
     pdinfo->v = i + 1;
     fclose(fp);
 
-    pdinfo->S = NULL;
     if (dataset_allocate_varnames(pdinfo)) {
 	return E_ALLOC;
     }
@@ -1839,12 +1833,12 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     /* deal with case where first col. of data file contains
        "marker" strings */
     tmpdinfo->S = NULL;
-    if (tmpdinfo->markers && dataset_allocate_markers(tmpdinfo)) {
+    if (tmpdinfo->markers && dataset_allocate_obs_markers(tmpdinfo)) {
 	return E_ALLOC; 
     }
     
     /* allocate dataset */
-    if (prepZ(&tmpZ, tmpdinfo)) {
+    if (allocate_Z(&tmpZ, tmpdinfo)) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -1953,14 +1947,14 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     /* dummy up the data info */
     pdinfo->n = length;
     pdinfo->v = 2;
-    dataset_dates_defaults(pdinfo);
+    dataset_obs_info_default(pdinfo);
 
     if (dataset_allocate_varnames(pdinfo)) {
 	return E_ALLOC;
     }
 
     /* allocate dataset */
-    if (prepZ(pZ, pdinfo)) {
+    if (allocate_Z(pZ, pdinfo)) {
 	return E_ALLOC;
     }
 
@@ -2369,71 +2363,6 @@ static int extend_markers (DATAINFO *pdinfo, int old_n, int new_n)
 
     return err;
 }
-
-#if 0
-
-static int 
-shuffle_data_forward (double **Z, DATAINFO *pdinfo, int new_n, int offset)
-{
-    double *tmp;
-    int old_n = pdinfo->n;
-    size_t oldsize = old_n * sizeof *tmp;
-    int i, t, err = 0;
-
-    tmp = malloc(oldsize);
-    if (tmp == NULL) {
-	return 1;
-    }
-
-    for (i=0; i<pdinfo->v; i++) {
-	double *x;
-	
-	if (!pdinfo->vector[i]) {
-	    continue;
-	}
-
-	x = realloc(Z[i], new_n * sizeof *x);
-	if (x == NULL) {
-	    err = 1;
-	    break;
-	}
-
-	if (i == 0) {
-	    for (t=0; t<new_n; t++) {
-		x[t] = 1.0;
-	    }
-	} else {
-	    memcpy(tmp, x, oldsize);
-	    for (t=0; t<offset; t++) {
-		x[t] = NADBL;
-	    }
-	    memcpy(x + offset, tmp, oldsize);
-	    for (t=old_n+offset; t<new_n; t++) {
-		x[t] = NADBL;
-	    }
-	}
-	
-	Z[i] = x;
-    }
-
-    pdinfo->n = new_n;
-    
-    if (oldinfo->S != NULL) {
-	err = extend_markers(pdinfo, old_n, new_n);
-	if (!err) {
-	    for (t=old_n-1; t>=0; t--) {
-		strcpy(pdinfo->S[t + offset], pdinfo->S[t]);
-		pdinfo->S[t][0] = '\0';
-	    }
-	}
-    }
-
-    free(tmp);
-
-    return err;
-}
-
-#endif
 
 static int count_add_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo)
 {
@@ -2845,7 +2774,7 @@ static int csv_missval (const char *str, int i, int t, PRN *prn)
     return miss;
 }
 
-static int add_case_marker (DATAINFO *pdinfo, int n)
+static int add_obs_marker (DATAINFO *pdinfo, int n)
 {
     char **S;
 
@@ -2894,7 +2823,7 @@ static int dataset_add_obs (double ***pZ, DATAINFO *pdinfo)
     }
 
     if (pdinfo->S != NULL) {
-	err = add_case_marker(pdinfo, pdinfo->n);
+	err = add_obs_marker(pdinfo, pdinfo->n);
     }
 
     return err;
@@ -2989,7 +2918,7 @@ static char *get_csv_descrip (FILE *fp)
 static int 
 csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
 {
-    if (dataset_allocate_markers(pdinfo)) {
+    if (dataset_allocate_obs_markers(pdinfo)) {
 	return 1;
     }
 
@@ -3155,7 +3084,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     }
 
     if (blank_1 || obs_1) {
-	if (dataset_allocate_markers(csvinfo)) {
+	if (dataset_allocate_obs_markers(csvinfo)) {
 	    pputs(prn, M_("Out of memory\n"));
 	    goto csv_bailout;
 	}
@@ -3324,7 +3253,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	pputs(prn, M_("taking date information from row labels\n\n"));
     } else {
 	pputs(prn, M_("treating these as undated data\n\n"));
-	dataset_dates_defaults(csvinfo);
+	dataset_obs_info_default(csvinfo);
     }
 
     if (csvinfo->pd != 1 || strcmp(csvinfo->stobs, "1")) { 
@@ -3400,75 +3329,67 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 }
 
 /**
- * add_case_markers:
+ * add_obs_markers_from_file:
  * @pdinfo: data information struct.
  * @fname: name of file containing case markers.
  * 
- * Read case markers (strings of OBSLEN - 1 characters or less that identify
+ * Read case markers (strings of %OBSLEN - 1 characters or less that identify
  * the observations) from a file, and associate tham with the 
  * current data set.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
- *
  */
 
-int add_case_markers (DATAINFO *pdinfo, const char *fname)
+int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
 {
+    char **Sbak = NULL;
     FILE *fp;
-    char **S, marker[OBSLEN], sformat[8];
-    int i, t;
+    char marker[OBSLEN], sformat[8];
+    int t, err = 0;
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	return E_FOPEN;
     }
+
+    if (pdinfo->S != NULL) {
+	/* keep backup copy */
+	Sbak = pdinfo->S;
+	pdinfo->S = NULL;
+    }
+
+    if (dataset_allocate_obs_markers(pdinfo)) {
+	err = E_ALLOC;
+	goto bailout;
+    }
     
-    S = malloc(pdinfo->n * sizeof *S);
-    if (S == NULL) {
-	return E_ALLOC; 
-    }
-
-    for (i=0; i<pdinfo->n; i++) {
-	S[i] = malloc(OBSLEN);
-	if (S[i] == NULL) {
-	    for (t=0; t<i; t++) {
-		free(S[t]);
-	    }
-	    free(S);
-	    return E_ALLOC; 
-	}
-	S[i][0] = '\0';
-    }
-
     sprintf(sformat, "%%%ds", OBSLEN - 1);
 
     for (t=0; t<pdinfo->n; t++) {
 	eatspace(fp);
-	if (fscanf(fp, sformat, marker) != 1) {
-	    for (i=0; i<pdinfo->n; i++) {
-		free(S[i]);
-	    }
-	    free(S);
-	    fclose(fp);
-	    return 1;
+	if (fscanf(fp, sformat, marker)) {
+	    strcat(pdinfo->S[t], marker);
+	} else {
+	    err = E_DATA;
+	    goto bailout;
 	}
-	marker[OBSLEN-1] = '\0';
-	strcat(S[t], marker);
     }
+
+ bailout:
 
     fclose(fp);
 
-    if (pdinfo->S != NULL) {
-	for (i=0; i<pdinfo->n; i++) {
-	    free(pdinfo->S[i]);
+    if (Sbak != NULL) {
+	if (err) {
+	    /* restore old markers */
+	    pdinfo->S = Sbak;
+	} else {
+	    /* destroy them */
+	    free_strings_array(Sbak, pdinfo->n);
 	}
-	free(pdinfo->S);
     }
 
-    pdinfo->S = S;
-    pdinfo->markers = REGULAR_MARKERS;
-
-    return 0;
+    return err;
 }
 
 static void 
@@ -3964,7 +3885,7 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
     free(varsize);
     free(line);
 
-    dataset_dates_defaults(boxinfo);
+    dataset_obs_info_default(boxinfo);
 
     if (dumpvars) {
 	dataset_drop_last_variables(dumpvars, &boxZ, boxinfo);
@@ -4653,7 +4574,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     tmp = xmlGetProp(node, (UTF) "labels");
     if (tmp) {
 	if (!strcmp(tmp, "true")) {
-	    if (dataset_allocate_markers(pdinfo)) {
+	    if (dataset_allocate_obs_markers(pdinfo)) {
 		sprintf(gretl_errmsg, "Out of memory");
 		return 1;
 	    }
@@ -5178,7 +5099,7 @@ int transpose_data (double ***pZ, DATAINFO *pdinfo)
     pdinfo->varinfo = tinfo->varinfo;
     pdinfo->vector = tinfo->vector;
 
-    dataset_dates_defaults(pdinfo);
+    dataset_obs_info_default(pdinfo);
 
     free(tinfo);
 

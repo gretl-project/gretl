@@ -45,13 +45,13 @@ void free_Z (double **Z, DATAINFO *pdinfo)
 }
 
 /**
- * destroy_dataset_markers:
+ * dataset_destroy_obs_markers:
  * @pdinfo: data information struct.
  *
  * Free any allocated observation markers for @pdinfo.
  */
 
-void destroy_dataset_markers (DATAINFO *pdinfo)
+void dataset_destroy_obs_markers (DATAINFO *pdinfo)
 {
     int i;
 
@@ -107,7 +107,7 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
     if (pdinfo == NULL) return;
 
     if (pdinfo->S != NULL) {
-	destroy_dataset_markers(pdinfo);
+	dataset_destroy_obs_markers(pdinfo);
     } 
 
     if (pdinfo->submask != NULL) {
@@ -147,9 +147,16 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
     } 
 }
 
-/* should be static, but currently used in dataio.c: FIXME */
+/**
+ * dataset_obs_info_default:
+ * @pdinfo: dataset information struct.
+ *
+ * Sets the "date" or observations information in @pdinfo to a
+ * simple default of cross-sectional data, observations 1 to n,
+ * where n is the %n element (number of observations) in @pdinfo.
+ */
 
-void dataset_dates_defaults (DATAINFO *pdinfo)
+void dataset_obs_info_default (DATAINFO *pdinfo)
 {
     strcpy(pdinfo->stobs, "1");
     sprintf(pdinfo->endobs, "%d", pdinfo->n);
@@ -159,16 +166,7 @@ void dataset_dates_defaults (DATAINFO *pdinfo)
     pdinfo->decpoint = '.';
 }
 
-/* allocate_case_markers:
- * @n: number of observations.
- *
- * Allocate storage for a set of @n case markers or observation
- * labels.
- * 
- * Returns: pointer to storage, or %NULL if allocation fails.
- */
-
-char **allocate_case_markers (int n)
+static char **allocate_obslen_strings (int n)
 {
     char **S;
     int j, t;
@@ -191,20 +189,38 @@ char **allocate_case_markers (int n)
     return S;
 }
 
-/* should be static, but currently used in dataio.c: FIXME */
+/**
+ * dataset_allocate_obs_markers:
+ * @pdinfo: dataset information struct
+ *
+ * Allocates space in @pdinfo for strings indentifying the
+ * observations and initializes all of the markers to empty
+ * strings.  Note that These strings have a fixed maximum 
+ * length of #OBSLEN - 1.
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
 
-int dataset_allocate_markers (DATAINFO *pdinfo)
+int dataset_allocate_obs_markers (DATAINFO *pdinfo)
 {
-    char **S = allocate_case_markers(pdinfo->n);
+    char **S = NULL;
+    int err = 0;
 
-    if (S == NULL) {
-	return 1;
-    } else {
-	pdinfo->S = S;
+    if (pdinfo->S == NULL) {
+	/* not already allocated */
+	S = allocate_obslen_strings(pdinfo->n);
+	if (S == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    pdinfo->S = S;
+	}
+    }
+
+    if (pdinfo->S != NULL) {
 	pdinfo->markers = REGULAR_MARKERS;
     }
 
-    return 0;
+    return err;
 }
 
 static void gretl_varinfo_init (VARINFO *vinfo)
@@ -222,46 +238,89 @@ static void gretl_varinfo_init (VARINFO *vinfo)
 #endif
 }
 
-/* should be static, but currently used in dataio.c: FIXME */
+/**
+ * dataset_allocate_varnames:
+ * @pdinfo: dataset information struct.
+ *
+ * Given a blank @pdinfo, which should have been obtained using
+ * datainfo_new(), allocate space for the names of variables.
+ * The @v member of @pdinfo (number of variables) should be
+ * set before calling this function.
+ * 
+ * Returns: 0 on sucess, %E_ALLOC on failure.
+ */
 
 int dataset_allocate_varnames (DATAINFO *pdinfo)
 {
-    int i, v = pdinfo->v;
+    int i, j, v = pdinfo->v;
+    int err = 0;
     
     pdinfo->varname = malloc(v * sizeof *pdinfo->varname);
-    pdinfo->varinfo = malloc(v * sizeof *pdinfo->varinfo);
-    pdinfo->vector = malloc(v * sizeof *pdinfo->vector);
+    if (pdinfo->varname == NULL) {
+	return E_ALLOC;
+    }
 
-    if (pdinfo->varname == NULL || 
-	pdinfo->varinfo == NULL ||
-	pdinfo->vector == NULL) return 1;
+    pdinfo->varinfo = malloc(v * sizeof *pdinfo->varinfo);
+    if (pdinfo->varinfo == NULL) {
+	free(pdinfo->varname);
+	return E_ALLOC;
+    }
+
+    pdinfo->vector = malloc(v * sizeof *pdinfo->vector);
+    if (pdinfo->vector == NULL) {
+	free(pdinfo->varname);
+	free(pdinfo->varinfo);
+	return E_ALLOC;
+    }
 
     for (i=0; i<v; i++) {
 	pdinfo->varname[i] = malloc(VNAMELEN);
-	if (pdinfo->varname[i] == NULL) return 1;
+	if (pdinfo->varname[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(pdinfo->varname[j]);
+	    }
+	    free(pdinfo->varname);
+	    pdinfo->varname = NULL;
+	    err = E_ALLOC;
+	    break;
+	} else {
+	    pdinfo->varname[i][0] = '\0';
+	}
 
-	pdinfo->varname[i][0] = '\0';
 	pdinfo->varinfo[i] = malloc(sizeof **pdinfo->varinfo);
-	if (pdinfo->varinfo[i] == NULL) return 1;
+	if (pdinfo->varinfo[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(pdinfo->varinfo[j]);
+	    }
+	    free(pdinfo->varinfo);
+	    pdinfo->varinfo = NULL;
+	    err = E_ALLOC;
+	    break;
+	} else {
+	    gretl_varinfo_init(pdinfo->varinfo[i]);
+	}
 
-	gretl_varinfo_init(pdinfo->varinfo[i]);
 	pdinfo->vector[i] = 1;
     }
 
-    strcpy(pdinfo->varname[0], "const");
-    strcpy(VARLABEL(pdinfo, 0), _("auto-generated constant"));
+    if (!err) {
+	strcpy(pdinfo->varname[0], "const");
+	strcpy(VARLABEL(pdinfo, 0), _("auto-generated constant"));
+    } else {
+	free(pdinfo->vector);
+	pdinfo->vector = NULL;
+    }
 
-    return 0;
+    return err;
 }
 
 /**
  * datainfo_new:
  *
  * Create a new data information struct pointer from scratch,
- * properly initialized.
+ * properly initialized as empty.
  * 
  * Returns: pointer to data information struct, or NULL on error.
- *
  */
 
 DATAINFO *datainfo_new (void)
@@ -269,7 +328,9 @@ DATAINFO *datainfo_new (void)
     DATAINFO *dinfo;
 
     dinfo = malloc(sizeof *dinfo);
-    if (dinfo == NULL) return NULL;
+    if (dinfo == NULL) {
+	return NULL;
+    }
 
     dinfo->v = 0;
     dinfo->n = 0;
@@ -332,44 +393,69 @@ create_new_dataset (double ***pZ, int nvar, int nobs, int markers)
 
     pdinfo->markers = (unsigned char) markers;
     if (pdinfo->markers) {
-	if (dataset_allocate_markers(pdinfo)) {
+	if (dataset_allocate_obs_markers(pdinfo)) {
 	    free_datainfo(pdinfo);
 	    return NULL;
 	}
     } 
 
-    dataset_dates_defaults(pdinfo);
+    dataset_obs_info_default(pdinfo);
     pdinfo->descrip = NULL;
 
     return pdinfo;
 }
 
-/* allocate data array and put in constant */
-/* should be static, but currently used in dataio.c: FIXME */
+/**
+ * allocate_Z:
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information struct.
+ *
+ * Allocate the two-dimensional array to which @pZ points,
+ * based on the %v (number of variables) and %n (number of
+ * observations) members of @pdinfo.  The variable at 
+ * position 0 is initialized to all 1s; no other variables
+ * are initialized.
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
 
-int prepZ (double ***pZ, const DATAINFO *pdinfo)
+int allocate_Z (double ***pZ, const DATAINFO *pdinfo)
 {
-    int i, t;
+    double **Z;
+    int i, j, t;
+    int err = 0;
 
-    if (*pZ != NULL) free(*pZ);
-
-    *pZ = malloc(pdinfo->v * sizeof **pZ);
-    if (*pZ == NULL) {
-	return 1;
+    if (*pZ != NULL) {
+	free(*pZ);
     }
 
-    for (i=0; i<pdinfo->v; i++) {
-	(*pZ)[i] = malloc(pdinfo->n * sizeof ***pZ);
-	if (*pZ == NULL) {
-	    return 1;
+    Z = malloc(pdinfo->v * sizeof *Z);
+
+    if (Z == NULL) {
+	err = E_ALLOC;
+    } else {
+	for (i=0; i<pdinfo->v && !err; i++) {
+	    Z[i] = malloc(pdinfo->n * sizeof **Z);
+	    if (Z[i] == NULL) {
+		for (j=0; j<i; j++) {
+		    free(Z[j]);
+		}
+		free(Z);
+		Z = NULL;
+		err = E_ALLOC;
+	    }
 	}
     }
 
-    for (t=0; t<pdinfo->n; t++) {
-	(*pZ)[0][t] = 1.0; 
+    if (!err) {
+	for (t=0; t<pdinfo->n; t++) {
+	    Z[0][t] = 1.0; 
+	}
     }
 
-    return 0;
+    *pZ = Z;
+
+    return err;
 }
 
 /**
@@ -387,7 +473,7 @@ int prepZ (double ***pZ, const DATAINFO *pdinfo)
 
 int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
 {
-    if (prepZ(pZ, pdinfo)) return 1;
+    if (allocate_Z(pZ, pdinfo)) return 1;
 
     pdinfo->t1 = 0; 
     pdinfo->t2 = pdinfo->n - 1;

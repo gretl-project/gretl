@@ -33,6 +33,8 @@ struct ufunc_ {
     char **lines;
     int n_returns;
     char **returns;
+    int n_params;
+    char **params;
 };
 
 struct fncall_ {
@@ -311,6 +313,9 @@ static ufunc *ufunc_new (void)
     func->n_returns = 0;
     func->returns = NULL;
 
+    func->n_params = 0;
+    func->params = NULL;
+
     return func;
 }
 
@@ -376,17 +381,9 @@ static ufunc *add_ufunc (void)
 
 static void free_ufunc (ufunc *fun)
 {
-    int i;
-
-    for (i=0; i<fun->n_lines; i++) {
-	free(fun->lines[i]);
-    }
-    free(fun->lines);
-
-    for (i=0; i<fun->n_returns; i++) {
-	free(fun->returns[i]);
-    }
-    free(fun->returns);    
+    free_strings_array(fun->lines, fun->n_lines);
+    free_strings_array(fun->returns, fun->n_returns);
+    free_strings_array(fun->params, fun->n_params);
 
     free(fun);
 }
@@ -602,18 +599,6 @@ static char **get_separated_fields_8 (const char *line, int *nfields)
     return fields;
 }
 
-static void free_strings (char **s, int n)
-{
-    if (s != NULL) {
-	int i;
-
-	for (i=0; i<n; i++) {
-	    free(s[i]);
-	}
-	free(s);
-    }
-}
-
 static char **parse_assignment (char *s, int *na)
 {
     char **vnames;
@@ -644,7 +629,7 @@ static char **parse_assignment (char *s, int *na)
     }
 
     if (err) {
-	free_strings(vnames, *na);
+	free_strings_array(vnames, *na);
 	vnames = NULL;
     }
 
@@ -722,8 +707,65 @@ static int maybe_delete_function (const char *fname)
     return err;
 }
 
+#ifdef NEW_STYLE_FUNCTIONS
+
+static int parse_func_name_and_params (char *name, char ***params,
+				       int *n_params, const char *line)
+{
+    char **pm1 = NULL;
+    char **pm2 = NULL;
+    char *fname, *param;
+    const char *p, *q;
+    int np = 0, err = 0;
+
+    p = strchr(line, '(');
+    q = strchr(line, ')');
+
+    if ((p != NULL && q == NULL) ||
+	(p == NULL && q != NULL) ||
+	q - p < 0) {
+	err = E_PARSE;
+    }
+
+    if (!err) {
+	fname = gretl_word_strdup(line, &p);
+	if (fname == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    *name = '\0';
+	    strncat(name, fname, 31);
+	    free(fname);
+	}
+    }
+
+    while (*p && !err) {
+	param = gretl_word_strdup(p, &p);
+	if (param != NULL) {
+	    pm2 = realloc(pm1, (np + 1) * sizeof *pm1);
+	    if (pm2 == NULL) {
+		err = E_ALLOC;
+	    } else {
+		pm2[np] = param;
+		pm1 = pm2;
+		np++;
+	    }	    
+	}
+    }
+
+    *params = pm1;
+    *n_params = np;
+
+    return err;
+}
+
+#endif /* NEW_STYLE_FUNCTIONS */
+
 int gretl_start_compiling_function (const char *line)
 {
+#ifdef NEW_STYLE_FUNCTIONS
+    char **params = NULL;
+    int n_params = 0;
+#endif
     char fname[32];
     char extra[8];
     int n, name_status;
@@ -742,22 +784,29 @@ int gretl_start_compiling_function (const char *line)
 	}
     }
 
+#ifdef NEW_STYLE_FUNCTIONS
+    parse_func_name_and_params(name, &params, &n_params, line);
+#endif
+
     name_status = check_func_name(fname);
-
-    if (name_status == FN_NAME_BAD) {
-	return 1;
-    } 
-
-    if (name_status == FN_NAME_TAKEN) {
+    if (name_status == FN_NAME_BAD || name_status == FN_NAME_TAKEN) {
 	return 1;
     }
 
     fun = add_ufunc();
     if (fun == NULL) {
+#ifdef NEW_STYLE_FUNCTIONS
+	free_strings_array(params, n_params);
+#endif
 	return E_ALLOC;
     }
 
     strcpy(fun->name, fname);
+
+#ifdef NEW_STYLE_FUNCTIONS
+    fun->params = params;
+    fun->n_params = n_params;
+#endif
 
     set_compiling_on();
     
@@ -935,8 +984,8 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 	sprintf(gretl_errmsg, _("Number of assignments (%d) exceeds the "
 				"number of values returned by\n%s (%d)"), 
 		assc, fun->name, fun->n_returns);
-	free_strings(argv, argc);
-	free_strings(assv, assc);
+	free_strings_array(argv, argc);
+	free_strings_array(assv, assc);
 	return 1;
     }
 
@@ -945,8 +994,8 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 	err = check_and_allocate_function_args(argc, argv, pZ, pdinfo);
     }
     if (err) {
-	free_strings(argv, argc);
-	free_strings(assv, assc);
+	free_strings_array(argv, argc);
+	free_strings_array(assv, assc);
 	return 1;
     }
 #endif

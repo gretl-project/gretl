@@ -795,6 +795,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 {
     int smpl_t1 = pdinfo->t1;
     int smpl_t2 = pdinfo->t2;
+    int omitlast = 0;
     int *tmplist = NULL;
     int maxlag = 0;
     int save_test = 0;
@@ -813,8 +814,12 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	return err;
     }
 
+    if (omitvars == NULL || omitvars[0] == 0) {
+	omitlast = 1;
+    }
+
     /* create list for test model */
-    if (omitvars == NULL) {
+    if (omitlast) {
 	/* special: just drop the last variable */
 	tmplist = gretl_list_omit_last(orig->list, &err);
     } else {
@@ -868,7 +873,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	    printmodel(new, pdinfo, opt, prn); 
 	}	
 
-	if (new->nobs == orig->nobs && omitvars != NULL) {
+	if (new->nobs == orig->nobs && !omitlast) {
 	    struct COMPARE cmp;
 	    int *omitlist;
 

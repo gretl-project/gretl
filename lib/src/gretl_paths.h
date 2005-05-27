@@ -47,7 +47,7 @@ void set_gretl_user_dir (const char *path, PATHS *ppaths);
 const char *gretl_gnuplot_path (void);
 
 const char *gretl_plotfile (void);
-void set_gretl_plotfile (const char *fname);
+char *set_gretl_plotfile (const char *fname);
 
 const char *gretl_png_font (void);
 

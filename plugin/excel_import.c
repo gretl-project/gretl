@@ -1462,19 +1462,14 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (label_strings) {
-	char **S;
-
-	S = allocate_case_markers(newinfo->n);
-	    
-	if (S != NULL) {
-	    newinfo->markers = 1;
+	dataset_allocate_obs_markers(newinfo);
+	if (newinfo->S != NULL) {
 	    i = book.col_offset;
 	    for (t=0; t<newinfo->n; t++) {
 		int ts = t + 1 + book.row_offset;
 
-		strncat(S[t], rows[ts].cells[i] + 1, OBSLEN - 1);
+		strncat(newinfo->S[t], rows[ts].cells[i] + 1, OBSLEN - 1);
 	    }
-	    newinfo->S = S;
 	}
     }
 

@@ -97,6 +97,7 @@ enum transformations {
     T_BKFILT,
     T_FRACDIFF,
     T_VARNUM,
+    T_VECTOR,
 #ifdef HAVE_MPFR
     T_MLOG,
 #endif

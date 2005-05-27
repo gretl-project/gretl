@@ -174,6 +174,7 @@ struct genr_func funcs[] = {
     { T_BKFILT,   "bkfilt" },    /* Baxter-King filter */
     { T_FRACDIFF, "fracdiff" },  /* fractional difference */
     { T_VARNUM,   "varnum" },    /* variable's ID number from its name */
+    { T_VECTOR,   "isvector" },
 #ifdef HAVE_MPFR
     { T_MLOG,     "mlog" },
 #endif
@@ -191,7 +192,7 @@ struct genr_func funcs[] = {
 #define UNIVARIATE_STAT(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
                             t == T_VAR || t == T_MEDIAN || t == T_MIN || \
                             t == T_SST || t == T_MAX || t == T_NOBS || \
-                            t == T_VARNUM)
+                            t == T_VARNUM || t == T_VECTOR)
 
 #define BIVARIATE_STAT(t) (t == T_CORR || t == T_COV)
 
@@ -569,7 +570,7 @@ static genatom *parse_token (const char *s, char op,
 					       &genr->err);
 			scalar = 1;
 		    }
-		} else if (func == T_VARNUM) {
+		} else if (func == T_VARNUM || func == T_VECTOR) {
 		    scalar = 1;
 		} else if (MODEL_DATA_ELEMENT(func)) {
 		    val = get_model_data_element(str, genr,
@@ -994,7 +995,7 @@ static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
     return genr->err;
 }
 
-static double genr_get_varnum (GENERATE *genr, genatom *atom)
+static double genr_get_var_status (GENERATE *genr, genatom *atom)
 {
     double val = NADBL;
     genatom *child;
@@ -1002,7 +1003,11 @@ static double genr_get_varnum (GENERATE *genr, genatom *atom)
     child = pop_child_atom(atom);	
     if (child != NULL) {
 	if (child->varnum >= 0 && child->varnum < genr->pdinfo->v) {
-	    val = child->varnum;
+	    if (atom->func == T_VARNUM) { 
+		val = child->varnum;
+	    } else if (atom->func == T_VECTOR) {
+		val = genr->pdinfo->vector[child->varnum];
+	    }
 	} 
     }
 
@@ -1011,7 +1016,7 @@ static double genr_get_varnum (GENERATE *genr, genatom *atom)
 	genr->err = E_SYNTAX;
     }
 
-    DPRINTF(("genr_get_varnum: got %g\n", val));
+    DPRINTF(("genr_get_var_status: got %g\n", val));
 
     return val;
 }
@@ -1022,18 +1027,22 @@ static int add_statistic_to_genr (GENERATE *genr, genatom *atom)
 
     atom_stack_set_parentage(genr);
 
-    if (atom->func == T_VARNUM) {
-	val = genr_get_varnum(genr, atom);
+    if (atom->func == T_VARNUM || atom->func == T_VECTOR) {
+	val = genr_get_var_status(genr, atom);
     } else {
 	double *x = eval_compound_arg(genr, atom);
 
-	if (x == NULL) return genr->err;
+	if (x == NULL) {
+	    return genr->err;
+	}
 
 	val = evaluate_statistic(x, genr, atom->func);
 	free(x);
     }
 
-    if (genr->err) return genr->err;
+    if (genr->err) {
+	return genr->err;
+    }
 
 #ifdef GENR_DEBUG
     fprintf(stderr, "add_statistic_to_genr:\n atom->func = %d (%s), val = %g, "
@@ -3313,7 +3322,7 @@ static double evaluate_statistic (double *z, GENERATE *genr, int fn)
 	    if (!na(z[t])) i++;
 	}
 	return (double) i;
-    } 
+    }
 
     tmp = malloc((t2 - t1 + 1) * sizeof *tmp);
     if (tmp == NULL) {
@@ -3346,7 +3355,7 @@ static double evaluate_statistic (double *z, GENERATE *genr, int fn)
 
 	gretl_minmax(0, i, tmp, &min, &max);
 	x = (fn == T_MIN)? min : max;
-    }
+    } 
 
     free(tmp);
     

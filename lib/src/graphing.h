@@ -117,7 +117,7 @@ typedef enum {
     PLOT_RANGE_MEAN,
     PLOT_LEVERAGE,
     PLOT_TYPE_MAX
-} plot_type_codes;
+} PlotType;
 
 #define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
 				c == PLOT_FREQ_NORMAL || \
@@ -128,15 +128,15 @@ typedef enum {
     
 /* functions follow */
 
-const char *get_gretl_png_term_line (int plottype);
+const char *get_gretl_png_term_line (PlotType ptype);
 
-const char *get_gretl_emf_term_line (int plottype, int color);
+const char *get_gretl_emf_term_line (PlotType ptype, int color);
 
 const char *get_timevar_name (DATAINFO *pdinfo);
 
 const char *gp_justification_string (int j);
 
-int gnuplot_init (int plottype, FILE **fpp);
+int gnuplot_init (PlotType ptype, FILE **fpp);
 
 int gnuplot_make_graph (void);
 
@@ -188,7 +188,7 @@ int gnuplot_has_specified_colors (void);
 
 void set_gnuplot_pallette (int i, const char *colstr);
 
-const char *get_gnuplot_pallette (int i, int plottype);
+const char *get_gnuplot_pallette (int i, PlotType ptype);
 
 int gnuplot_test_command (const char *cmd);
 

@@ -1784,7 +1784,7 @@ static int dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 	pdinfo->t1 = 0;
 	pdinfo->t2 = pdinfo->n - 1;
 
-	destroy_dataset_markers(pdinfo);
+	dataset_destroy_obs_markers(pdinfo);
     }
 
     return err;
@@ -1841,7 +1841,7 @@ insert_missing_hidden_obs (double ***pZ, DATAINFO *pdinfo,
     free(tmp);
 
     if (!err) {
-	destroy_dataset_markers(pdinfo);
+	dataset_destroy_obs_markers(pdinfo);
 	pdinfo->t2 = pdinfo->n - 1;
 	ntodate_full(pdinfo->endobs, pdinfo->n - 1, pdinfo);
     }
@@ -1957,7 +1957,7 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     
     if (oldpd >= 5 && oldpd <= 7) {
 	/* remove any daily date strings */
-	destroy_dataset_markers(pdinfo);
+	dataset_destroy_obs_markers(pdinfo);
     }
 
     /* compact the individual data series */

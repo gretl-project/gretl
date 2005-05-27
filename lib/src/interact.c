@@ -173,79 +173,94 @@ static int catch_command_alias (CMD *cmd)
     return cmd->ci;
 }
 
-#define NO_VARLIST(c) (c == VARLIST || \
-	               c == QUIT || \
+#define REQUIRES_PARAM(c) (c == ADDOBS || \
+                           c == ADDTO || \
+                           c == LOOP ||  \
+                           c == MULTIPLY || \
+                           c == NULLDATA || \
+                           c == OMITFROM || \
+                           c == SETMISS)
+
+#define NO_VARLIST(c) (c == ADDOBS || \
+                       c == APPEND || \
+                       c == BREAK || \
+                       c == CHOW || \
+	               c == CRITERIA || \
+	               c == CRITICAL || \
+	               c == CUSUM || \
+                       c == DATA || \
+                       c == END || \
+	               c == ENDLOOP || \
+                       c == ESTIMATE || \
 	               c == EQNPRINT || \
-	               c == TABPRINT || \
 	               c == FCAST || \
 	               c == FCASTERR || \
 	               c == FIT || \
+                       c == FUNC || \
                        c == FUNCERR || \
+	               c == GENR || \
+	               c == HAUSMAN || \
+                       c == HELP || \
+	               c == IMPORT || \
+                       c == INCLUDE || \
+    	               c == INFO || \
  	               c == LABEL || \
  	               c == LABELS || \
-    	               c == INFO || \
-	               c == CRITERIA || \
-	               c == PVALUE || \
-	               c == RUN || \
-                       c == INCLUDE || \
-	               c == SHELL || \
-	               c == SETOBS || \
-	               c == CHOW || \
-	               c == CUSUM || \
-	               c == CRITICAL || \
-                       c == ESTIMATE || \
-	               c == HAUSMAN || \
-	               c == PANEL || \
-	               c == OPEN || \
-	               c == IMPORT || \
-                       c == APPEND || \
-	               c == ENDLOOP || \
-                       c == BREAK || \
-	               c == SIM || \
-                       c == RENAME || \
-	               c == TESTUHAT || \
-                       c == RESET || \
-                       c == SYSTEM || \
                        c == LEVERAGE || \
-                       c == VIF || \
+                       c == LMTEST || \
+                       c == LOOP || \
                        c == MODELTAB || \
                        c == NLS || \
-                       c == DATA || \
-	               c == GENR || \
-                       c == SET || \
+                       c == NULLDATA || \
+ 	               c == OPEN || \
+                       c == OUTFILE || \
+	               c == PANEL || \
                        c == PRINTF || \
-                       c == FUNC || \
-                       c == OUTFILE)
+	               c == PVALUE || \
+	               c == QUIT || \
+                       c == RENAME || \
+                       c == RESET || \
+                       c == RESTRICT || \
+	               c == RUN || \
+                       c == SET || \
+	               c == SETOBS || \
+	               c == SHELL || \
+	               c == SIM || \
+                       c == SYSTEM || \
+                       c == TABPRINT || \
+                       c == TESTUHAT || \
+                       c == VARLIST || \
+                       c == VIF)
 
-#define USES_LISTSEP(c) (c == TSLS || \
-                         c == AR || \
-                         c == MPOLS || \
-                         c == SCATTERS || \
+#define USES_LISTSEP(c) (c == AR || \
                          c == ARMA || \
+                         c == EQUATION || \
                          c == GARCH || \
+                         c == MPOLS || \
                          c == POISSON || \
-		         c == EQUATION) 
+                         c == SCATTERS || \
+                         c == TSLS)
 
 #define TAKES_LAG_ORDER(c) (c == ADF || \
-                            c == KPSS || \
                             c == ARCH || \
                             c == COINT || \
                             c == COINT2 || \
+                            c == KPSS || \
                             c == VAR)
 
-#define DEFAULTS_TO_FULL_LIST(c) (c == PRINT || \
-                                  c == STORE || \
-                                  c == CORR || \
-                                  c == LOGS || \
-                                  c == SQUARE || \
+#define DEFAULTS_TO_FULL_LIST(c) (c == CORR || \
                                   c == DIFF || \
                                   c == LDIFF || \
-                                  c == SUMMARY || \
-                                  c == SMPL || \
+                                  c == LAGS || \
+                                  c == LOGS || \
                                   c == PCA || \
-                                  c == LAGS)
+                                  c == PRINT || \
+                                  c == SMPL || \
+                                  c == SQUARE || \
+                                  c == STORE || \
+                                  c == SUMMARY)
 
-#define SCALARS_OK_IN_LIST(c) (c == PRINT || c == STORE || c == DELEET)
+#define SCALARS_OK_IN_LIST(c) (c == DELEET || c == PRINT || c == STORE)
 
 /* ........................................................... */
 
@@ -632,7 +647,7 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
     char vname[VNAMELEN];
     char numstr[8];
 
-    line += strlen("rename ");
+    line += strlen(cmd->word);
 
     if (sscanf(line, "%d %8s", &vnum, vname) != 2) {
 	cmd->errcode = E_DATA;
@@ -673,21 +688,9 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
     cmd->extra = gretl_strdup(numstr);
 }
 
-static void get_funcerr_msg (const char *s, CMD *cmd)
-{
-    if (strlen(s) > 8) {
-	free(cmd->param);
-	cmd->param = gretl_strdup(s + 8); /* skip "funcerr " */
-	if (cmd->param == NULL) {
-	    cmd->errcode = E_ALLOC;
-	}
-    }
-}
-
 static void parse_outfile_cmd (char *s, CMD *cmd)
 {
-    /* 7 = number of chars in the command word, "outfile" */
-    s += 7;
+    s += strlen(cmd->word);
 
     while (isspace((unsigned char) *s) || *s == '"') {
 	s++;
@@ -763,15 +766,15 @@ static int field_from_line (char *field, const char *s)
     return ret;
 }
 
-static void accommodate_obsolete_commands (char *word, char *line)
+static void accommodate_obsolete_commands (char *line, CMD *cmd)
 {
-    if (!strcmp(word, "noecho")) {
-	strcpy(word, "set");
+    if (!strcmp(cmd->word, "noecho")) {
+	strcpy(cmd->word, "set");
 	strcpy(line, "set echo off");
-    } else if (!strcmp(word, "seed")) {
+    } else if (!strcmp(cmd->word, "seed")) {
 	char seedstr[16];
 
-	strcpy(word, "set");
+	strcpy(cmd->word, "set");
 	if (sscanf(line, "%*s %15s", seedstr)) {
 	    sprintf(line, "set seed %s", seedstr);
 	} else {
@@ -780,7 +783,7 @@ static void accommodate_obsolete_commands (char *word, char *line)
     }
 }
 
-static int plausible_genr_start (CMD *cmd, const char *line)
+static int plausible_genr_start (const char *line, CMD *cmd)
 {
     if (strchr(line, '=') != NULL) {
 	char word[9];
@@ -797,6 +800,9 @@ static int plausible_genr_start (CMD *cmd, const char *line)
 
     return cmd->ci;
 }
+
+/* if we find a semicolon directly after a varname, insert a space so
+   that we can count the fields in the line correctly */
 
 static int fix_semicolon_after_var (char *s)
 {
@@ -821,12 +827,14 @@ static int fix_semicolon_after_var (char *s)
     return len;
 }
 
-#define COMMAND_CAN_END(c) (c == SYSTEM || \
+/* apparatus for checking that the "end" command is valid */
+
+#define COMMAND_CAN_END(c) (c == FUNC || \
                             c == NLS || \
 			    c == RESTRICT || \
-			    c == FUNC)
+			    c == SYSTEM)
 
-static void check_end_command (CMD *cmd)
+static int check_end_command (CMD *cmd)
 {
     if (*cmd->param) {
 	int cmdcode = gretl_command_number(cmd->param);
@@ -842,6 +850,8 @@ static void check_end_command (CMD *cmd)
 	cmd->errcode = 1;
 	strcpy(gretl_errmsg, _("end: nothing to end")); 
     }
+
+    return cmd->errcode;
 }
 
 static int int_to_cmd_param (CMD *cmd, int i)
@@ -887,17 +897,49 @@ static int resize_cmd_param (CMD *cmd, const char *s, int inlen)
     return 0;
 }
 
-/* capture the balance of the command line as parameter for
-   a command */
+/* Capture the next 'word' found following the initial command word
+   (or the whole remainder of the line in some cases) as the parameter
+   for cmd.  Flag an error if the command requires a parameter but
+   none is found.
+*/
 
-static int capture_param (CMD *cmd, const char *s)
+static int capture_param (const char *s, CMD *cmd)
 {
-    if (resize_cmd_param(cmd, NULL, strlen(s) + 1)) {
-	cmd->errcode = E_ALLOC;
-    } else if (cmd->ci == PRINT) {
-	strcpy(cmd->param, s);
+    /* if param has already been written by some special
+       routine, don't overwrite it */
+    if (*cmd->param != '\0') {
+	return cmd->errcode;
+    }
+
+    /* skip past leading word on line */
+    s += strcspn(s, " ");
+    s += strspn(s, " ");
+
+    if (string_is_blank(s)) {
+	if (REQUIRES_PARAM(cmd->ci) || TAKES_LAG_ORDER(cmd->ci)) {
+	    cmd->errcode = E_PARSE;
+	    sprintf(gretl_errmsg, _("%s: required parameter is missing"),
+		    cmd->word);
+	}
     } else {
-	sscanf(s, "%s", cmd->param);
+	if (resize_cmd_param(cmd, NULL, strlen(s) + 1)) {
+	    cmd->errcode = E_ALLOC;
+	} else if (cmd->ci == PRINT || cmd->ci == FUNCERR) {
+	    /* grab the whole remainder of line */
+	    strcpy(cmd->param, s);
+	} else {
+	    /* grab one 'word' */
+	    sscanf(s, "%s", cmd->param);
+	}
+#if CMD_DEBUG
+	fprintf(stderr, "capture_param: s='%s', param='%s'\n",
+		s, cmd->param);
+#endif
+    }
+
+    if (cmd->ci == END) {
+	/* test that param is present and valid */
+	check_end_command(cmd);
     }
 
     return cmd->errcode;
@@ -913,6 +955,7 @@ static int gretl_cmd_clear (CMD *cmd)
     if (cmd->list == NULL || cmd->param == NULL || cmd->extra == NULL) {
 	cmd->errcode = E_ALLOC;
     } else {
+	cmd->list[0] = 0;
 	*cmd->param = '\0';
 	*cmd->extra = '\0';
     }
@@ -986,7 +1029,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* backwards compatibility */
-    accommodate_obsolete_commands(cmd->word, line);
+    accommodate_obsolete_commands(line, cmd);
 
     /* replace simple aliases and a few specials */
     catch_command_alias(cmd);
@@ -1004,7 +1047,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci = gretl_command_number(cmd->word);
 	if (cmd->ci == 0) {
 	    /* trap bogus commands */
-	    if (!plausible_genr_start(cmd, line)) {
+	    if (!plausible_genr_start(line, cmd)) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
 			cmd->word);
@@ -1013,7 +1056,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    /* if, else, endif controls */
+    /* if, else, endif controls: should this come earlier? */
     if (flow_control(line, pZ, pdinfo, cmd)) {
 	cmd->nolist = 1;
 	cmd->ci = CMD_NULL;
@@ -1022,12 +1065,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
 #ifdef NEW_STYLE_FUNCTIONS
     if (cmd->ci == GENR && gretl_executing_function()) {
+	/* pass OPT_L to make generated vars local to function */
 	cmd->opt |= OPT_L;
     }
 #endif
 
-    /* tex printing commands can take a filename parameter; so
-       can gnuplot command */
+    /* tex printing commands can take a filename parameter */
     if (cmd->ci == EQNPRINT || cmd->ci == TABPRINT) {
 	get_optional_filename(line, cmd);
     } 
@@ -1043,79 +1086,66 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	parse_rename_cmd(line, cmd, pdinfo);
     }  
 
-    /* "logistic" can have a special parameter */
-    else if (cmd->ci == LOGISTIC) {
-	parse_logistic_ymax(line, cmd);
-    }  
-
-    /* "funcerr" takes a string error message */
-    else if (cmd->ci == FUNCERR) {
-	get_funcerr_msg(line, cmd);
-    }     
-
     /* commands that never take a list of variables */
-    if (NO_VARLIST(cmd->ci)) {
+    if (NO_VARLIST(cmd->ci)) { 
 	cmd->nolist = 1;
+	capture_param(line, cmd);
 	return cmd->errcode;
     }
 
-    /* smpl can be special: only takes a list in case of OPT_M
+    /** now for a few command which may or may not take a list **/
+
+    /* PRINT can take a list, but not in its string literal variant */
+    if (cmd->ci == PRINT && strstr(line, "\"")) {
+	cmd->nolist = 1;
+	capture_param(line, cmd);
+	return cmd->errcode;
+    }
+
+    /* SMPL can take a list, but only in case of OPT_M
        "--no-missing" */
     if (cmd->ci == SMPL && !(cmd->opt & OPT_M)) {
 	cmd->nolist = 1;
 	return cmd->errcode;
     }	
 
-    /* boxplots can be special: boolean conditions embedded in
-       the list, which have to be parsed separately */
+    /* boxplots take a list, but if there are Boolean conditions
+       embedded, the line has to be parsed specially */
     if (cmd->ci == BXPLOT && strchr(line, '(')) {
 	cmd->nolist = 1;
 	return cmd->errcode;
     }
 
-    /* gnuplot command can have a block of stuff to pass literally
+    /* OMIT typically takes a list, but can be given without args
+       to omit last var */
+    if (cmd->ci == OMIT && string_is_blank(line + 4)) {
+	cmd->nolist = 1;
+	return cmd->errcode;
+    }
+
+    /** OK, now we're definitely doing a list-oriented command,
+	We begin by taking care of a few specials **/
+
+    /* GNUPLOT can have a block of stuff to pass literally
        to gnuplot */
     if (cmd->ci == GNUPLOT) {
 	grab_gnuplot_literal_block(line, cmd);
     }
 
+    /* "logistic" can have a "ymax" parameter */
+    else if (cmd->ci == LOGISTIC) {
+	parse_logistic_ymax(line, cmd);
+    } 
+
     /* fix lines that contain a semicolon right after a var */
     linelen = fix_semicolon_after_var(line);
 
-    /* now we're probably dealing with a command that wants a list... */    
+    /* find number of space-separated fields remaining in line,
+       record our reading position, and make a copy of the
+       remainder of the line
+    */
     nf = count_fields(line) - 1;
     pos = strlen(cmd->word);
-
-    /* unless it's on a short list of specials */
-    if (cmd->ci == HELP ||
-	cmd->ci == LOOP ||
-	cmd->ci == ADDOBS ||
-	cmd->ci == END ||
-	cmd->ci == LMTEST ||
-	cmd->ci == RESTRICT ||
-	cmd->ci == NULLDATA ||
-	(cmd->ci == PRINT && strstr(line, "\""))) {
-	cmd->nolist = 1;
-	if (nf > 0) {
-	    if (capture_param(cmd, line + pos + 1)) {
-		goto bailout;
-	    }
-	}
-	if (cmd->ci == END) {
-	    check_end_command(cmd);
-	}
-	/* note: return point for various commands that take no list */
-	return cmd->errcode;
-    }
-
-    /* ... or "omit" without args (omit last var) */
-    if (cmd->ci == OMIT && nf == 0) {
-	free(cmd->list);
-	cmd->list = NULL;
-	cmd->nolist = 1;
-	return cmd->errcode;
-    }
-
     remainder = gretl_strdup(line + pos + 1);
     if (remainder == NULL) {
 	cmd->errcode = E_ALLOC;
@@ -1125,7 +1155,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* need to treat rhodiff specially -- put everything from
        the end of the command word to the first semicolon into
        "param", for processing later */
-    if (cmd->ci == RHODIFF) {  /* FIXME */
+    if (cmd->ci == RHODIFF) { 
 	if (!get_rhodiff_or_lags_param(remainder, cmd)) {
 	    cmd->errcode = E_SYNTAX;
 	    goto bailout;
@@ -1174,12 +1204,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci == OMITFROM ||
 	cmd->ci == MULTIPLY ||
 	cmd->ci == SETMISS) {
-	if (nf) {
-	    if (resize_cmd_param(cmd, line + pos + 1, 0)) {
-		cmd->errcode = E_ALLOC;
-		goto bailout;
-	    }
-	    sscanf(line + pos + 1, "%s", cmd->param);
+	capture_param(line, cmd);
+	if (cmd->errcode) {
+	    goto bailout;
+	} else {
 	    strcpy(remainder, line + pos + 1 + strlen(cmd->param));
 	    pos = 0;
 	    if (--nf > 0) {
@@ -1395,7 +1423,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
 	if (dupv) {
 	    cmd->errcode = E_UNSPEC;
-	    sprintf(gretl_errmsg, _("var number %d duplicated in the command list."),
+	    sprintf(gretl_errmsg, 
+		    _("var number %d duplicated in the command list."),
 		    dupv);
 	}
     }
@@ -2352,8 +2381,6 @@ do_outfile_command (gretlopt flag, char *fname, PRN *prn)
     return 1; /* not reached */
 }
 
-/* ........................................................ */
-
 int call_pca_plugin (CorrMat *corrmat, double ***pZ,
 		     DATAINFO *pdinfo, gretlopt *pflag,
 		     PRN *prn)
@@ -2612,7 +2639,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case PRINT:
-	if (strlen(cmd->param)) {
+	if (*cmd->param != '\0') {
 	    do_print_string(cmd->param, prn);
 	} else {
 	    printdata(cmd->list, (const double **) *pZ, datainfo, 

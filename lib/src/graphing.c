@@ -368,17 +368,18 @@ static char *label_front (void)
 
 /**
  * get_gretl_png_term_line:
- * @plottype: 
+ * @ptype: indication of the sort of plot to be made, which
+ * may made a difference to the color palette chosen.
  *
  * Constructs a suitable line for sending to gnuplot to invoke
  * the PNG "terminal".  Checks the environment for setting of 
- * GRETL_PNG_GRAPH_FONT. Also appends a color-specification string 
+ * %GRETL_PNG_GRAPH_FONT.  Also appends a color-specification string 
  * if the gnuplot PNG driver supports this.
  *
- * Returns: the term string, "set term png ..."
+ * Returns: the terminal string, "set term png ..."
  */
 
-const char *get_gretl_png_term_line (int plottype)
+const char *get_gretl_png_term_line (PlotType ptype)
 {
     static char png_term_line[256];
     char font_string[128];
@@ -412,7 +413,7 @@ const char *get_gretl_png_term_line (int plottype)
 	strcpy(color_string, " xffffff x000000 x202020");
 	for (i=0; i<3; i++) {
 	    strcat(color_string, " ");
-	    strcat(color_string, get_gnuplot_pallette(i, plottype));
+	    strcat(color_string, get_gnuplot_pallette(i, ptype));
 	}
     } else {
 	strcpy(color_string, " color"); /* old PNG driver */
@@ -430,7 +431,7 @@ const char *get_gretl_png_term_line (int plottype)
 
 /**
  * get_gretl_emf_term_line:
- * @plottype: a type from among #plot_type_codes.
+ * @ptype: indication of the sort of plot to be made.
  * @color: 1 if graph is to be in color, else 0.
  *
  * Constructs a suitable line for sending to gnuplot to invoke
@@ -439,7 +440,7 @@ const char *get_gretl_png_term_line (int plottype)
  * Returns: the term string, "set term emf ..."
  */
 
-const char *get_gretl_emf_term_line (int plottype, int color)
+const char *get_gretl_emf_term_line (PlotType ptype, int color)
 {
     static char emf_term_line[256];
 
@@ -449,7 +450,7 @@ const char *get_gretl_emf_term_line (int plottype, int color)
     }
 
 #ifdef EMF_USER_COLORS
-    if (frequency_plot_code(plottype)) {
+    if (frequency_plot_code(ptype)) {
 	sprintf(emf_term_line, "set term emf color %s",
 		get_gnuplot_pallette(0, PLOT_FREQ_SIMPLE));
     } else {
@@ -474,17 +475,24 @@ const char *get_gretl_emf_term_line (int plottype, int color)
 
 /**
  * gnuplot_init:
- * @plottype: code for the type of plot.
+ * @ptype: indication of the sort of plot to be made.
  * @fpp: pointer to stream to be opened.
  *
- * If we're in GUI mode, writes a unique temporary filename into
- * gretl_plotfile; opens plotfile for writing as @fpp; if
- * we're in GUI mode, writes PNG terminal type into plotfile.
+ * If we're in GUI mode: writes a unique temporary filename into
+ * the internal variable #gretl_plotfile; opens plotfile for writing 
+ * as @fpp; and writes initial lines into the output file to select 
+ * the PNG terminal type, and direct gnuplot's ouput to a temporary
+ * file in the gretl user directory.  
  *
- * Returns: 0 on success, 1 on failure
+ * If not in GUI mode, opens as @fpp the file %gpttmp.plt in the
+ * gretl user directory.  
+ *
+ * This function is not used in batch mode.
+ *
+ * Returns: 0 on success, 1 on failure.
  */
 
-int gnuplot_init (int plottype, FILE **fpp)
+int gnuplot_init (PlotType ptype, FILE **fpp)
 {
     int gui = gretl_in_gui_mode();
     char plotfile[MAXLEN] = {0};
@@ -511,16 +519,18 @@ int gnuplot_init (int plottype, FILE **fpp)
 
     *fpp = gretl_fopen(plotfile, "w");
     if (*fpp == NULL) {
+	fprintf(stderr, "gnuplot_init: couldn't write to %s\n", plotfile);
 	return E_FOPEN;
-    }
+    } 
 
     if (gui) {
-	fprintf(*fpp, "%s\n", get_gretl_png_term_line(plottype));
+	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ptype));
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_user_dir());
     }
 
 #if GP_DEBUG
-    fprintf(stderr, "gnuplot_init: set plotfile = '%s'\n", plotfile);
+    fprintf(stderr, "gnuplot_init: set plotfile = '%s'\n", 
+	    plotfile);
 #endif
 
     return 0;
@@ -749,13 +759,15 @@ get_gnuplot_output_file (FILE **fpp, unsigned char flags,
 	if (*plotfile == '\0' || strstr(plotfile, "gpttmp") != NULL) {
 	    *plot_count += 1; 
 	    sprintf(fname, "%sgpttmp%02d.plt", gretl_user_dir(), *plot_count);
-	}
-	set_gretl_plotfile(fname);
-	*fpp = gretl_fopen(fname, "w");
+	    set_gretl_plotfile(fname);
+	} 
+	plotfile = gretl_plotfile();
+	*fpp = gretl_fopen(plotfile, "w");
 	if (*fpp == NULL) {
 	    err = E_FOPEN;
 	}
     } else {
+	/* note: gnuplot_init not used in batch mode */
 	err = gnuplot_init(code, fpp);
     }
 
@@ -2540,7 +2552,7 @@ static char gnuplot_pallette[4][8] = {
     "xaabbcc"
 };
 
-const char *get_gnuplot_pallette (int i, int ptype)
+const char *get_gnuplot_pallette (int i, PlotType ptype)
 {
 #if GP_DEBUG
     fprintf(stderr, "get_gnuplot_pallette: i=%d, ptype=%d\n",

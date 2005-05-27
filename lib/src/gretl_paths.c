@@ -613,9 +613,12 @@ const char *gretl_plotfile (void)
     return gretl_paths.plotfile;
 }
 
-void set_gretl_plotfile (const char *fname)
+char *set_gretl_plotfile (const char *fname)
 {
-    strcpy(gretl_paths.plotfile, fname);
+    *gretl_paths.plotfile = 0;
+    strncat(gretl_paths.plotfile, fname, MAXLEN - 1);
+
+    return gretl_paths.plotfile;
 }
 
 const char *gretl_png_font (void)

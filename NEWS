@@ -10,5 +10,12 @@ the result into a vector.
 
 "my" is an alias for "genr", making the variable local to a function
 
+gnuplot:
+
+in batch mode you can say "set plotfile foo" before doing a
+graph and the graph will go to "foo"
+
+
+
 
 

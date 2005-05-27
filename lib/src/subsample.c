@@ -616,7 +616,7 @@ int restrict_sample (const char *line,
 		     double ***pZ, DATAINFO **ppdinfo, 
 		     const int *list, gretlopt oflag)
 {
-    char **S = NULL, dname[VNAMELEN] = {0};
+    char dname[VNAMELEN] = {0};
     int subnum = 0;
     int t, sn = 0;
     int opt = SUBSAMPLE_UNKNOWN;
@@ -751,8 +751,8 @@ int restrict_sample (const char *line,
 	return E_ALLOC;
     }
 
-    /* link (don't copy) varnames and descriptions 
-       (these are not dependent on the series length) */
+    /* link (don't copy) varnames and descriptions, 
+       these are not dependent on the series length */
     subinfo->varname = (*ppdinfo)->varname;
     subinfo->varinfo = (*ppdinfo)->varinfo;
     subinfo->descrip = (*ppdinfo)->descrip;
@@ -760,14 +760,13 @@ int restrict_sample (const char *line,
 
     /* set up case markers? */
     if ((*ppdinfo)->markers) {
-	S = allocate_case_markers(sn);
-	if (S == NULL) {
+	err = dataset_allocate_obs_markers(subinfo);
+	if (err) {
 	    free_Z(subZ, subinfo);
 	    free(subinfo);
 	    free(mask);
 	    return E_ALLOC;
 	}
-	subinfo->S = S;
 	subinfo->markers = (*ppdinfo)->markers;
     }
 
@@ -946,7 +945,7 @@ static int update_case_markers (const DATAINFO *pdinfo)
     int err = 0;
 
     if (pdinfo->markers && !fullinfo->markers) {
-	fullinfo->S = allocate_case_markers(fullinfo->n); 
+	dataset_allocate_obs_markers(fullinfo);
 	if (fullinfo->S == NULL) {
 	    err = 1;
 	} else {
@@ -959,7 +958,6 @@ static int update_case_markers (const DATAINFO *pdinfo)
 		    sprintf(fullinfo->S[t], "%d", t + 1);
 		}
 	    }
-	    dataset_set_regular_markers(fullinfo);
 	}
     }	
 	

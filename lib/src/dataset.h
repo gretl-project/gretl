@@ -151,9 +151,15 @@ DATAINFO *create_new_dataset (double ***pZ, /* data matrix */
 
 void clear_datainfo (DATAINFO *pdinfo, int code);
 
-char **allocate_case_markers (int n);
+int allocate_Z (double ***pZ, const DATAINFO *pdinfo);
 
-void destroy_dataset_markers (DATAINFO *pdinfo);
+int dataset_allocate_varnames (DATAINFO *pdinfo);
+
+int dataset_allocate_obs_markers (DATAINFO *pdinfo);
+
+void dataset_destroy_obs_markers (DATAINFO *pdinfo);
+
+void dataset_obs_info_default (DATAINFO *pdinfo);
 
 void set_sorted_markers (DATAINFO *pdinfo, int v, char **S);
 

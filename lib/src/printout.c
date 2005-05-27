@@ -1772,14 +1772,7 @@ int generate_obs_markers (double ***pZ, DATAINFO *pdinfo, char *s)
     }
 
     if (!err && pdinfo->S == NULL) {
-	char **S = allocate_case_markers(pdinfo->n);
-
-	if (S == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    pdinfo->S = S;
-	    pdinfo->markers = 1;
-	}
+	err = dataset_allocate_obs_markers(pdinfo);
     }
 
     if (!err) {

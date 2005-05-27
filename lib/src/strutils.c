@@ -369,7 +369,7 @@ char *lower (char *str)
  * gretl_strdup:
  * @src: the string to duplicate.
  *
- * Returns: an allocated copy of @src, or NULL on error.
+ * Returns: an allocated copy of @src, or %NULL on error.
  */
 
 char *gretl_strdup (const char *src)
@@ -389,7 +389,7 @@ char *gretl_strdup (const char *src)
  * @n: the maximum number of characters to copy.
  *
  * Returns: an allocated copy of at most @n characters from 
- * @src, or NULL on error.
+ * @src, or %NULL on error.
  */
 
 char *gretl_strndup (const char *src, size_t n)
@@ -407,6 +407,62 @@ char *gretl_strndup (const char *src, size_t n)
 	if (targ != NULL) {
 	    *targ = '\0';
 	    strncat(targ, src, len);
+	}
+    }
+
+    return targ;
+}
+
+#define is_word_char(c) (isalnum((unsigned char) c) || c == '_')
+
+/**
+ * gretl_word_strdup:
+ * @src: the source string.
+ * @ptr: location to receive end of word pointer, or %NULL.
+ *
+ * Copies the first 'word' found in @src, where a word
+ * is defined as consisting of alphanumeric characters
+ * and the underscore.  If @ptr is not %NULL, on exit it
+ * points at the next position in @src after the copied
+ * word.
+ *
+ * Returns: the allocated word or %NULL in case no word is
+ * found, or if allocation fails.
+ */
+
+char *gretl_word_strdup (const char *src, const char **ptr)
+{
+    char *targ = NULL;
+
+    if (src == NULL) {
+	if (ptr != NULL) {
+	    *ptr = NULL;
+	}
+    } else if (*src == '\0') {
+	if (ptr != NULL) {
+	    *ptr = src;
+	}
+    } else {
+	const char *p;
+	int len = 0;
+
+	while (*src && !is_word_char(*src) ) {
+	    src++;
+	}
+
+	p = src;
+
+	while (is_word_char(*src)) {
+	    len++;
+	    src++;
+	}
+
+	if (ptr != NULL) {
+	    *ptr = src;
+	}
+
+	if (len > 0) {
+	    targ = gretl_strndup(p, len);
 	}
     }
 
@@ -836,6 +892,27 @@ char *safecpy (char *targ, const char *src, int n)
     *targ = 0;
     strncat(targ, src, n);
     return targ;
+}
+
+/**
+ * free_strings_array:
+ * @strs: array of allocated strings.
+ * @nstrs: number of strings in array.
+ *
+ * Frees each allocated string in @strs, then frees @strs itself.
+ * Checks that @strs is not %NULL before proceeding.
+ */
+
+void free_strings_array (char **strs, int nstrs)
+{
+    int i;
+
+    if (strs != NULL) {
+	for (i=0; i<nstrs; i++) {
+	    free(strs[i]);
+	}
+	free(strs);
+    }
 }
 
 static char *

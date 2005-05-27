@@ -1185,7 +1185,7 @@ void count_missing (void)
 
 void do_add_markers (const char *fname) 
 {
-    if (add_case_markers(datainfo, fname)) { 
+    if (add_obs_markers_from_file(datainfo, fname)) { 
 	errbox(_("Failed to add case markers"));
     } else {
 	infobox(_("Case markers added"));
@@ -1196,7 +1196,7 @@ void do_add_markers (const char *fname)
 
 void do_remove_markers (gpointer data, guint u, GtkWidget *w) 
 {
-    destroy_dataset_markers(datainfo);
+    dataset_destroy_obs_markers(datainfo);
     infobox(_("Case markers removed"));
     mark_dataset_as_modified();
     add_remove_markers_state(FALSE);

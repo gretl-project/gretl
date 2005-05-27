@@ -2878,7 +2878,7 @@ datawiz_make_changes (DATAINFO *dwinfo)
 	errbox(get_gretl_errmsg());
     } else {
 	if (delete_markers) {
-	    destroy_dataset_markers(datainfo);
+	    dataset_destroy_obs_markers(datainfo);
 	}
 	mark_dataset_as_modified();
     }

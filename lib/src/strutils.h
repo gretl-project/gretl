@@ -67,6 +67,8 @@ char *gretl_strdup (const char *src);
 
 char *gretl_strndup (const char *src, size_t n);
 
+char *gretl_word_strdup (const char *src, const char **ptr);
+
 char *charsub (char *str, char find, char repl);
 
 char *shift_string_left (char *str, size_t move);
@@ -92,6 +94,8 @@ char *compress_spaces (char *s);
 char *space_to_score (char *s);
 
 char *safecpy (char *targ, const char *src, int n);
+
+void free_strings_array (char **strs, int nstrs);
 
 char *get_obs_string (char *obs, int t, const DATAINFO *pdinfo);
 
