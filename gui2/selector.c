@@ -1543,7 +1543,7 @@ build_selector_buttons (selector *sr, void (*okfunc)())
     gtk_widget_show(tmp);
 
     if (sr->code != PRINT && !SAVE_DATA_ACTION(sr->code)) {
-	tmp = gtk_button_new_from_stock (GTK_STOCK_HELP);
+	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_box_pack_start(GTK_BOX(sr->action_area), tmp, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT (tmp), "clicked", 
