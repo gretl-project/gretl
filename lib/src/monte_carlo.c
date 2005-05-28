@@ -253,7 +253,6 @@ int ok_in_loop (int ci, const LOOPSET *loop)
     /* "simple_commands" */
     else if (ci == ADF || 
 	     ci == COINT || 
-	     ci == COINT2 || 
 	     ci == CORR ||
 	     ci == CRITERIA || 
 	     ci == CRITICAL || 
@@ -2420,7 +2419,6 @@ int loop_exec (LOOPSET *loop, char *line,
 	    switch (cmd.ci) {
 
 	    case ADF: 
-	    case COINT2: 
 	    case COINT: 
 	    case CORR:
 	    case CRITERIA: 

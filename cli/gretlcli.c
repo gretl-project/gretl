@@ -684,6 +684,28 @@ static int handle_user_defined_function (char *line, int *fncall)
     return err;
 }
 
+static int do_autofit_plot (PRN *prn)
+{
+    int *plotlist;
+
+    plotvar(&Z, datainfo, "time");
+    plotlist = gretl_list_new(3);
+    if (models[0]->ci == ARMA) {
+	plotlist[1] = models[0]->list[4];
+    } else {
+	plotlist[1] = models[0]->list[1];
+    }
+    plotlist[2] = varindex(datainfo, "autofit");
+    plotlist[3] = varindex(datainfo, "time");
+    lines[0] = 1;
+    err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
+		  &plot_count, gp_flags(batch, 0));
+    free(plotlist);
+    if (err) {
+	pputs(prn, _("gnuplot command failed\n"));
+    }
+}
+
 static void exec_line (char *line, LOOPSET **ploop, PRN *prn) 
 {
     LOOPSET *loop = *ploop;
@@ -803,7 +825,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case ADDOBS:
     case ADF: 
-    case COINT2: 
     case COINT: 
     case CORR: 
     case CRITERIA: 
@@ -827,7 +848,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case MULTIPLY: 
     case OUTFILE: 
     case PCA:
-    case PLOT: 
     case PRINT: 
     case RENAME:
     case RHODIFF:
@@ -1057,16 +1077,12 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	break;
 
-    case EQNPRINT:
-    case TABPRINT:
+    case TEXPRINT:
 	strcpy(texfile, cmd.param);
-	if ((err = model_test_start(cmd.ci, 0, prn))) 
+	if ((err = model_test_start(cmd.ci, 0, prn))) {
 	    break;
-	if (cmd.ci == EQNPRINT) {
-	    err = eqnprint(models[0], datainfo, texfile, cmd.opt);
-	} else {
-	    err = tabprint(models[0], datainfo, texfile, cmd.opt);
 	}
+	err = texprint(models[0], datainfo, texfile, cmd.opt);
 	if (err) {
 	    pputs(prn, _("Couldn't open tex file for writing\n"));
 	} else {
@@ -1075,60 +1091,37 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case FCAST:
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = fcast(line, models[0], datainfo, &Z);
-	if (err < 0) {
-	    err *= -1;
-	    pputs(prn, _("Error retrieving fitted values\n"));
-	    errmsg(err, prn);
-	} else {
-	    err = 0;
-	    maybe_list_vars(datainfo, prn);
-	}
-	break;
-
-    case FCASTERR:
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = fcast_with_errs(line, models[0], &Z, datainfo, prn, cmd.opt); 
-	if (err) {
-	    errmsg(err, prn);
-	}
-	break;
-
-    case FIT:
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = fcast("fcast autofit", models[0], datainfo, &Z);
-	if (err < 0) {
-	    err *= -1;
-	    pputs(prn, _("Error retrieving fitted values\n"));
-	    errmsg(err, prn);
+	if ((err = model_test_start(cmd.ci, 0, prn))) {
 	    break;
 	}
-	err = 0;
-	pputs(prn, _("Retrieved fitted values as \"autofit\"\n"));
-	maybe_list_vars(datainfo, prn);
-	if (dataset_is_time_series(datainfo)) {
-	    int *plotlist;
-
-	    plotvar(&Z, datainfo, "time");
-	    plotlist = gretl_list_new(3);
-	    if (models[0]->ci == ARMA) {
-		plotlist[1] = models[0]->list[4];
-	    } else {
-		plotlist[1] = models[0]->list[1];
-	    }
-	    plotlist[2] = varindex(datainfo, "autofit");
-	    plotlist[3] = varindex(datainfo, "time");
-	    lines[0] = 1;
-	    err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
-			  &plot_count, gp_flags(batch, 0));
-	    free(plotlist);
+	if (cmd.opt & OPT_E) {
+	    err = fcast_with_errs(line, models[0], &Z, datainfo, prn, cmd.opt); 
 	    if (err) {
-		pputs(prn, _("gnuplot command failed\n"));
+		errmsg(err, prn);
 	    }
-	}
+	} else {  
+	    if (cmd.opt & OPT_A) {
+		err = fcast("fcast autofit", models[0], datainfo, &Z);
+	    } else {
+		err = fcast(line, models[0], datainfo, &Z);
+	    }
+	    if (err < 0) {
+		err = -err;
+		pputs(prn, _("Error retrieving fitted values\n"));
+		errmsg(err, prn);
+	    } else {
+		err = 0;
+		if (cmd.opt & OPT_A) {
+		    pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
+		}
+		maybe_list_vars(datainfo, prn);
+		if ((cmd.opt & OPT_A) && dataset_is_time_series(datainfo)) {
+		    do_autofit_plot(prn);
+		}
+	    }
+	} 
 	break;
-		
+
     case FREQ:
 	err = freqdist(cmd.list[1], (const double **) Z, 
 		       datainfo, !batch, prn, cmd.opt);
@@ -1217,7 +1210,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case OPEN:
-    case APPEND:
 	err = getopenfile(line, datfile, &paths, 0, 0);
 	if (err) {
 	    pputs(prn, _("'open' command is malformed\n"));
@@ -1227,7 +1219,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	chk = detect_filetype(datfile, &paths, prn);
 	dbdata = (chk == GRETL_NATIVE_DB || chk == GRETL_RATS_DB);
 
-	if (data_status && !batch && !dbdata && cmd.ci != APPEND &&
+	if (data_status && !batch && !dbdata && !(cmd.opt & OPT_A) &&
 	    strcmp(datfile, paths.datfile)) {
 	    fprintf(stderr, _("Opening a new data file closes the "
 			      "present one.  Proceed? (y/n) "));
@@ -1239,7 +1231,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    }
 	}
 
-	if (data_status && !dbdata && cmd.ci != APPEND) {
+	if (data_status && !dbdata && !(cmd.opt & OPT_A)) {
 	    clear_data();
 	}
 
@@ -1263,7 +1255,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	if (!dbdata && cmd.ci != APPEND) {
+	if (!dbdata && !(cmd.opt & OPT_A)) {
 	    strncpy(paths.datfile, datfile, MAXLEN-1);
 	}
 	data_status = 1;

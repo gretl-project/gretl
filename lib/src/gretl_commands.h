@@ -26,7 +26,6 @@ enum gretl_cmd_codes {
     ADDOBS,
     ADDTO,
     ADF,
-    APPEND,
     AR,      
     ARCH,
     ARMA,
@@ -35,7 +34,6 @@ enum gretl_cmd_codes {
     CHOW,
     COEFFSUM,
     COINT,
-    COINT2,
     CORC,     
     CORR,     
     CORRGM,   
@@ -49,12 +47,9 @@ enum gretl_cmd_codes {
     END,
     ENDIF,
     ENDLOOP,
-    EQNPRINT, 
     EQUATION,
     ESTIMATE,
     FCAST,   
-    FCASTERR, 
-    FIT,     
     FREQ, 
     FUNC,
     FUNCERR,
@@ -99,7 +94,6 @@ enum gretl_cmd_codes {
     PANEL,
     PCA,
     PERGM,
-    PLOT,    
     POISSON,
     POOLED,
     PRINT, 
@@ -127,8 +121,8 @@ enum gretl_cmd_codes {
     STORE,   
     SUMMARY,
     SYSTEM,
-    TABPRINT,
     TESTUHAT,
+    TEXPRINT,
     TOBIT,
     TSLS,    
     VAR,
@@ -139,7 +133,7 @@ enum gretl_cmd_codes {
     NC
 };
 
-#define NEEDS_TWO_VARS(c)  ((c) == AR || (c) == ARCH || (c) == COINT || \
+#define NEEDS_TWO_VARS(c) ((c) == AR || (c) == ARCH || (c) == COINT || \
                            (c) == CORC || (c) == HCCM || (c) == HILU || \
                            (c) == HSK || (c) == LOGIT || (c) == SPEARMAN || \
                            (c) == OLS || (c) == POOLED || (c) == PROBIT || \
@@ -152,15 +146,12 @@ enum gretl_cmd_codes {
                         c == CHOW || \
                         c == COEFFSUM || \
                         c == COINT || \
-                        c == COINT2 || \
                         c == CORR || \
                         c == CORRGM || \
                         c == CRITERIA || \
                         c == CRITICAL || \
                         c == CUSUM || \
                         c == FCAST || \
-                        c == FCASTERR || \
-                        c == FIT || \
                         c == FREQ || \
                         c == GRAPH || \
                         c == HAUSMAN || \
@@ -173,7 +164,6 @@ enum gretl_cmd_codes {
                         c == OMITFROM || \
                         c == PCA || \
                         c == PERGM || \
-                        c == PLOT || \
                         c == PRINT || \
                         c == PRINTF || \
                         c == PVALUE || \

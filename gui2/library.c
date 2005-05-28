@@ -769,24 +769,23 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     view_buffer(prn, hsize, vsize, title, action, obj);
 }
 
-/* ........................................................... */
-
-static void real_do_coint (gpointer p, int action)
+void do_coint (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
     const char *buf = selector_list(sr);
+    const char *flagstr;
+    gretlopt opt;
     PRN *prn;
     int err = 0, order = 0;
 
-    if (buf == NULL) return;
+    if (buf == NULL) {
+	return;
+    }
 
-    if (action == COINT) {
-	cmd.opt = (selector_list_hasconst(sr))? OPT_NONE : OPT_N;
-	gretl_command_sprintf("coint %s%s", buf, (cmd.opt)? " --nc" : "");
-    } else {
-	cmd.opt = selector_get_opts(sr);
-	gretl_command_sprintf("coint2 %s%s", buf, (cmd.opt)? " --verbose" : "");
-    }	
+    opt = selector_get_opts(sr);
+    flagstr = print_flags(opt, COINT);
+
+    gretl_command_sprintf("coint %s%s", buf, flagstr);
 
     if (check_and_record_command() || bufopen(&prn)) {
 	return;
@@ -799,11 +798,11 @@ static void real_do_coint (gpointer p, int action)
 	return;
     }
 
-    if (action == COINT) {
-	err = coint(order, cmd.list, &Z, datainfo, cmd.opt, prn);
-    } else {
+    if (cmd.opt & OPT_J) {
 	johansen_test(order, cmd.list, &Z, datainfo, cmd.opt, prn);
-    }
+    } else {
+	err = coint(order, cmd.list, &Z, datainfo, cmd.opt, prn);
+    } 
 
     if (err) {
 	gui_errmsg(err);
@@ -812,17 +811,7 @@ static void real_do_coint (gpointer p, int action)
     } 
 
     view_buffer(prn, 78, 400, _("gretl: cointegration test"), 
-		action, NULL);
-}
-
-void do_coint (GtkWidget *widget, gpointer p)
-{
-    real_do_coint(p, COINT);
-}
-
-void do_coint2 (GtkWidget *widget, gpointer p)
-{
-    real_do_coint(p, COINT2);
+		COINT, NULL);
 }
 
 static int ok_obs_in_series (int varno)
@@ -1245,7 +1234,7 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	if (!err) {
 	    register_graph();
 	}
-	view_buffer(prn, 78, 350, _("gretl: forecasts"), FCASTERR, fr);
+	view_buffer(prn, 78, 350, _("gretl: forecasts"), FCAST, fr);
     }
 }
 
@@ -4975,9 +4964,9 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
     *texfile = 0;
 
     if (code == LATEX_VIEW_EQUATION) {
-	err = eqnprint(pmod, datainfo, texfile, OPT_O);
+	err = texprint(pmod, datainfo, texfile, OPT_O | OPT_E);
     } else if (code == LATEX_VIEW_TABULAR) {
-	err = tabprint(pmod, datainfo, texfile, OPT_O);
+	err = texprint(pmod, datainfo, texfile, OPT_O);
     } else if (code == LATEX_VIEW_MODELTABLE) {
 	const char *buf;
 	PRN *prn;
@@ -5371,7 +5360,31 @@ static int handle_user_defined_function (char *line, int *fncall)
     return err;
 }
 
-/* ........................................................... */
+static void do_autofit_plot (PRN *prn)
+{
+    int lines[1];
+    int *plotlist;
+    int err;
+
+    plotvar(&Z, datainfo, "time");
+    plotlist = gretl_list_new(3);
+    if (models[0]->ci == ARMA) {
+	plotlist[1] = models[0]->list[4];
+    } else {
+	plotlist[1] = models[0]->list[1];
+    }
+    plotlist[2] = varindex(datainfo, "autofit");
+    plotlist[3] = varindex(datainfo, "time");
+    lines[0] = (cmd.opt != 0); 
+    err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
+		  &plot_count, 0); 
+    free(plotlist);
+    if (err < 0) {
+	pprintf(prn, _("gnuplot command failed\n"));
+    } else {
+	register_graph();
+    }
+}
 
 int gui_exec_line (char *line, 
 		   LOOPSET **plp, int *plstack, int *plrun, 
@@ -5502,7 +5515,6 @@ int gui_exec_line (char *line,
 
     case ADDOBS:
     case ADF: 
-    case COINT2:
     case COINT: 
     case CORR: 
     case CRITERIA: 
@@ -5526,7 +5538,6 @@ int gui_exec_line (char *line,
     case MULTIPLY: 
     case OUTFILE: 
     case PCA:
-    case PLOT: 
     case PRINT: 
     case RENAME:
     case RHODIFF:
@@ -5791,8 +5802,7 @@ int gui_exec_line (char *line,
 	}
 	break;
 
-    case EQNPRINT:
-    case TABPRINT:
+    case TEXPRINT:
 	if ((models[0])->errcode == E_NAN) {
 	    pprintf(prn, _("Couldn't format model\n"));
 	    break;
@@ -5801,11 +5811,7 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	strcpy(texfile, cmd.param);
-	if (cmd.ci == EQNPRINT) {
-	    err = eqnprint(models[0], datainfo, texfile, cmd.opt);
-	} else {
-	    err = tabprint(models[0], datainfo, texfile, cmd.opt);
-	}
+	err = texprint(models[0], datainfo, texfile, cmd.opt);
 	if (err) {
 	    pprintf(prn, _("Couldn't open tex file for writing\n"));
 	} else {
@@ -5814,65 +5820,39 @@ int gui_exec_line (char *line,
 	break;
 
     case FCAST:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = fcast(line, models[0], datainfo, &Z);
-	if (err < 0) {
-	    err = -err;
-	    printf(_("Error retrieving fitted values\n"));
-	    errmsg(err, prn);
-	} else {
-	    err = 0;
-	    maybe_list_vars(datainfo, prn);
-	}
-	break;
-
-    case FCASTERR:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = fcast_with_errs(line, models[0], &Z, datainfo, outprn,
-			      (cmd.opt != 0)); 
-	if (err) {
-	    errmsg(err, prn);
-	}
-	break;
-
-    case FIT:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = fcast("fcast autofit", models[0], datainfo, &Z);
-	if (err < 0) {
-	    err *= -1;
-	    errmsg(err, prn);
+	if ((err = script_model_test(cmd.ci, 0, prn))) {
 	    break;
 	}
-
-	err = 0;
-	pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
-	maybe_list_vars(datainfo, prn); 
-
-	if (exec_code == CONSOLE_EXEC && 
-	    dataset_is_time_series(datainfo)) {
-	    int *plotlist;
-
-	    plotvar(&Z, datainfo, "time");
-	    plotlist = gretl_list_new(3);
-	    if (models[0]->ci == ARMA) {
-		plotlist[1] = models[0]->list[4];
-	    } else {
-		plotlist[1] = models[0]->list[1];
+	if (cmd.opt & OPT_E) {
+	    err = fcast_with_errs(line, models[0], &Z, datainfo, outprn,
+				  (cmd.opt != 0)); 
+	    if (err) {
+		errmsg(err, prn);
 	    }
-	    plotlist[2] = varindex(datainfo, "autofit");
-	    plotlist[3] = varindex(datainfo, "time");
-	    lines[0] = (cmd.opt != 0); 
-	    err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
-			  &plot_count, 0); 
-	    free(plotlist);
-	    if (err < 0) {
-		pprintf(prn, _("gnuplot command failed\n"));
+	} else {
+	    if (cmd.opt & OPT_A) {
+		err = fcast("fcast autofit", models[0], datainfo, &Z);
 	    } else {
-		register_graph();
+		err = fcast(line, models[0], datainfo, &Z);
+	    }
+	    if (err < 0) {
+		err = -err;
+		printf(_("Error retrieving fitted values\n"));
+		errmsg(err, prn);
+	    } else {
+		err = 0;
+		if (cmd.opt & OPT_A) {
+		    pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
+		}
+		maybe_list_vars(datainfo, prn);
+		if ((cmd.opt & OPT_A) && exec_code == CONSOLE_EXEC &&
+		    dataset_is_time_series(datainfo)) {
+		    do_autofit_plot(prn);
+		}
 	    }
 	}
 	break;
-		
+
     case FREQ:
 	err = freqdist(cmd.list[1], (const double **) Z, 
 		       datainfo, (exec_code == CONSOLE_EXEC),
@@ -5970,7 +5950,6 @@ int gui_exec_line (char *line,
         break;
 
     case OPEN:
-    case APPEND:
 	if (dataset_locked() || exec_code == SAVE_SESSION_EXEC) {
 	    break;
 	}
@@ -6006,7 +5985,7 @@ int gui_exec_line (char *line,
 	    gui_errmsg(err);
 	    break;
 	}
-	if (!dbdata && cmd.ci != APPEND) {
+	if (!dbdata && !(cmd.opt & OPT_A)) {
 	    strncpy(paths.datfile, datfile, MAXLEN-1);
 	}
 	if (chk == GRETL_CSV_DATA || chk == GRETL_BOX_DATA || dbdata) {
@@ -6014,7 +5993,7 @@ int gui_exec_line (char *line,
 	    maybe_display_string_table();
 	}
 	if (datainfo->v > 0 && !dbdata) {
-	    if (cmd.ci == APPEND) {
+	    if (cmd.opt & OPT_A) {
 		register_data(NULL, NULL, 0);
 	    } else {
 		register_data(paths.datfile, NULL, 0);

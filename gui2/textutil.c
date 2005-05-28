@@ -451,8 +451,8 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 	gretl_print_destroy(prn);
     }   
 
-    /* forecasts with standard errors */
-    else if (vwin->role == FCASTERR && SPECIAL_COPY(how)) {
+    /* forecasts with standard errors FIXME */
+    else if (vwin->role == FCAST && SPECIAL_COPY(how)) {
 	FITRESID *fr = (FITRESID *) vwin->data;
 
 	if (bufopen(&prn)) return;

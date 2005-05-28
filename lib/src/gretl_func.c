@@ -785,7 +785,7 @@ int gretl_start_compiling_function (const char *line)
     }
 
 #ifdef NEW_STYLE_FUNCTIONS
-    parse_func_name_and_params(name, &params, &n_params, line);
+    parse_func_name_and_params(fname, &params, &n_params, line);
 #endif
 
     name_status = check_func_name(fname);

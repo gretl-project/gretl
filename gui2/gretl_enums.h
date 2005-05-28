@@ -64,6 +64,8 @@ enum extra_cmds {
     KERNEL_DENSITY,
     CREATE_DATASET,
     HCCME,
+    ENGLE_GRANGER,
+    JOHANSEN,
     GUI_CMD_MAX
 };
 

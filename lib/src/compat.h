@@ -25,11 +25,8 @@ void graphyzx (const int *list, const double *y1, const double *y2,
 	       const char *xname, const DATAINFO *pdinfo, 
 	       gretlopt oflag, PRN *prn);
 
-int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo, 
-		gretlopt oflag, PRN *prn);
-
 int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo, 
-		 gretlopt oflag, PRN *prn);
+		 gretlopt opt, PRN *prn);
 
 int rhodiff (char *param, const int *list, double ***pZ, DATAINFO *pdinfo);
 

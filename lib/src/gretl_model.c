@@ -1333,9 +1333,7 @@ int is_model_ref_cmd (int ci)
 	ci == LEVERAGE ||
 	ci == VIF ||
 	ci == RESTRICT ||
-	ci == FCAST ||
-	ci == FCASTERR ||
-	ci == FIT) {
+	ci == FCAST) {
 	ret = 1;
     }
 
@@ -1384,16 +1382,13 @@ int command_ok_for_model (int test_ci, int model_ci)
 	    model_ci == GARCH) ok = 0;
 	break;
 
-    case EQNPRINT:
-	if (model_ci != OLS) ok = 0; /* unduly restrictive? */
+    case TEXPRINT:
+	if (0) ok = 0; /* check this !! */
 	break;
 
     case FCAST:
-    case FIT:
-	break;
-
-    case FCASTERR:
-	if (model_ci != OLS) ok = 0;
+	/* FIXME!! */
+	if (0) ok = 0;
 	break;
 
     case LMTEST:

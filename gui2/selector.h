@@ -34,7 +34,7 @@
                        c == TOBIT || c == PWE || c == POISSON)
 #endif
 
-#define COINT_CODE(c) (c == COINT || c == COINT2)
+#define COINT_CODE(c) (c == ENGLE_GRANGER || c == JOHANSEN)
 
 #define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE || \
                         c == DIFF || c == LDIFF)

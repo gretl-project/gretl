@@ -119,7 +119,7 @@ static int z_to_xyz (int v1, int v2, int v3,
 void graphyzx (const int *list, const double *y1, const double *y2, 
 	       const double *x, int n, const char *yname, 
 	       const char *xname, const DATAINFO *pdinfo, 
-	       gretlopt oflag, PRN *prn)
+	       gretlopt opt, PRN *prn)
 {
     int ix, iy1, iy2, lx, ly, xzero, yzero;
     int nrows, nr2, nc2, ls, lw, t1, t2;
@@ -154,7 +154,7 @@ void graphyzx (const int *list, const double *y1, const double *y2,
     xzero = yzero = 0;
 
     /* set the number of rows to be used */
-    if (oflag & OPT_O) {
+    if (opt & OPT_O) {
 	nrows = 40;
     } else {
 	nrows = (y2 != NULL)? 16 : 18;
@@ -276,7 +276,7 @@ void graphyzx (const int *list, const double *y1, const double *y2,
  * @list: contains ID numbers of variables to plot.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @oflag: if non-zero, forces two variables to be plotted on the same
+ * @opt: if includes OPT_S, forces two variables to be plotted on the same
  * scale (otherwise they will be scaled to fit).
  * @prn: gretl printing struct.
  *
@@ -286,8 +286,9 @@ void graphyzx (const int *list, const double *y1, const double *y2,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo, 
-		gretlopt oflag, PRN *prn)
+static int ascii_plot (const int *list, const double **Z, 
+		       const DATAINFO *pdinfo, gretlopt opt, 
+		       PRN *prn)
 {
     int i, nc2, vy, vz, cntrline;
     int ix = 0, iy = 0, iz = 0, n = 0;
@@ -402,7 +403,7 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 	   "and %s are equal when scaled\n"), ' ', s1, s2, ' ', s1, s2);
     lineno = 6;
 
-    if (oflag & OPT_O) {
+    if (opt & OPT_S) {
 	pprintf(prn, _("%20c%s and %s are plotted on same scale\n\n%8c"),
 	       ' ', s1, s2, ' ');
 
@@ -475,7 +476,7 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
 
 	prntdate(t, n, pdinfo, prn);
 
-	if (oflag & OPT_O) {
+	if (opt & OPT_S) {
 	    ix = (floatneq(xyrange, 0.0))? ((xx-xymin)/xyrange) * ncols : nc2;
 	    iy = (floatneq(xyrange, 0.0))? ((yy-xymin)/xyrange) * ncols : nc2;
 	} else {
@@ -524,24 +525,37 @@ int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo,
  * @list: contains ID numbers of variables to graph.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @oflag: if non-zero, use 40 rows, otherwise use 20 rows.
+ * @opt: if includes OPT_B or OPT_O, use 40 rows, otherwise use 20 rows;
+ * if includes OPT_T do a time-series plot.
  * @prn: gretl printing struct.
  *
  * Graph (using ascii graphics) one variable against another, as given
- * in @list: the first variable will appear on the y-axis, the second
- * on the x-axis.
+ * in @list: by default, the first variable will appear on the y-axis, 
+ * the second on the x-axis.  But if @opt contains %OPT_T the listed
+ * variables will be plotted against time (or by observation).
  *
  * Returns: 0 on successful completion, error code on error.
  */
 
 int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo, 
-		 gretlopt oflag, PRN *prn)
+		 gretlopt opt, PRN *prn)
 {
     int T = pdinfo->t2 - pdinfo->t1 + 1;
     int m, vx, vy1;
     double *x = NULL;
     double *y1 = NULL;
     double *y2 = NULL;
+
+    if (opt & OPT_T) {
+	if (opt & OPT_O) {
+	    opt |= OPT_S;
+	}
+	return ascii_plot(list, Z, pdinfo, opt, prn);
+    }
+
+    if (opt & OPT_B) {
+	opt |= OPT_O;
+    }
 
     if (list[0] < 2) {
 	return E_ARGS; 
@@ -581,7 +595,7 @@ int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo,
     pputc(prn, '\n');
 
     graphyzx(list, y1, y2, x, m, pdinfo->varname[vy1], 
-	     pdinfo->varname[vx], pdinfo, oflag, prn);
+	     pdinfo->varname[vx], pdinfo, opt, prn);
 
     pputc(prn, '\n');
 

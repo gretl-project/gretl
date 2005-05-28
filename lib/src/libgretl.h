@@ -141,19 +141,20 @@ enum gretl_opt_flags {
     OPT_F = 1 <<  5,
     OPT_G = 1 <<  6,
     OPT_I = 1 <<  7,
-    OPT_L = 1 <<  8,
-    OPT_M = 1 <<  9,
-    OPT_N = 1 << 10,
-    OPT_O = 1 << 11,
-    OPT_P = 1 << 12,
-    OPT_Q = 1 << 13,
-    OPT_R = 1 << 14,
-    OPT_S = 1 << 15,
-    OPT_T = 1 << 16,
-    OPT_V = 1 << 17,
-    OPT_W = 1 << 18,
-    OPT_X = 1 << 19,
-    OPT_Z = 1 << 20
+    OPT_J = 1 <<  8,
+    OPT_L = 1 <<  9,
+    OPT_M = 1 << 10,
+    OPT_N = 1 << 11,
+    OPT_O = 1 << 12,
+    OPT_P = 1 << 13,
+    OPT_Q = 1 << 14,
+    OPT_R = 1 << 15,
+    OPT_S = 1 << 16,
+    OPT_T = 1 << 17,
+    OPT_V = 1 << 18,
+    OPT_W = 1 << 19,
+    OPT_X = 1 << 20,
+    OPT_Z = 1 << 21
 };
 
 typedef unsigned long gretlopt;

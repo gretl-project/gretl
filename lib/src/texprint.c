@@ -621,61 +621,37 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
 }
 
 /**
- * tabprint:
+ * texprint:
  * @pmod: pointer to model.
  * @pdinfo: information regarding the data set.
  * @texfile: name of file to save.
- * @oflag: if oflag & OPT_O, complete doc, else fragment
+ * @opt: if opt & %OPT_O, complete doc, else fragment;
+ * if opt & %OPT_E print as equation, otherwise use tabular
+ * format.
  *
- * Prints to file a gretl model in the form of a LaTeX table, either as
- * a stand-alone document or as a fragment of LaTeX source for
- * insertion into a document.
+ * Prints to file a gretl model in the form of a LaTeX table or
+ * equation, either as a stand-alone document or as a fragment 
+ * of LaTeX source for insertion into a document.
  * 
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int tabprint (MODEL *pmod, const DATAINFO *pdinfo,
-	      char *texfile, gretlopt oflag)
+int texprint (MODEL *pmod, const DATAINFO *pdinfo,
+	      char *texfile, gretlopt opt)
 {
     PRN *prn;
+    int eqn = (opt & OPT_E);
     int err = 0;
 
-    prn = make_texprn(pmod->ID, 0, texfile);
+    prn = make_texprn(pmod->ID, eqn, texfile);
     if (prn == NULL) {
 	err = 1;
     } else {
-	tex_print_model(pmod, pdinfo, (oflag & OPT_O), prn);
-	gretl_print_destroy(prn);
-    }
-
-    return err;
-}
-
-/**
- * eqnprint:
- * @pmod: pointer to model.
- * @pdinfo: information regarding the data set.
- * @texfile: name of file to save.
- * @oflag: if oflag & OPT_O, complete doc, else fragment
- *
- * Prints to file a gretl model in the form of a LaTeX equation, either as
- * a stand-alone document or as a fragment of LaTeX source for
- * insertion into a document.
- * 
- * Returns: 0 on successful completion, 1 on error.
- */
-
-int eqnprint (MODEL *pmod, const DATAINFO *pdinfo,
-	      char *texfile, gretlopt oflag)
-{
-    PRN *prn;
-    int err = 0;
-
-    prn = make_texprn(pmod->ID, 1, texfile);
-    if (prn == NULL) {
-	err = 1;
-    } else {
-	tex_print_equation(pmod, pdinfo, (oflag & OPT_O), prn);
+	if (eqn) {
+	    tex_print_equation(pmod, pdinfo, (opt & OPT_O), prn);
+	} else {
+	    tex_print_model(pmod, pdinfo, (opt & OPT_O), prn);
+	}
 	gretl_print_destroy(prn);
     }
 

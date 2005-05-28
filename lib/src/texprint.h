@@ -30,11 +30,8 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 		      int c, PRN *prn);
 
-int tabprint (MODEL *pmod, const DATAINFO *pdinfo,
-	      char *texfile, gretlopt oflag);
-
-int eqnprint (MODEL *pmod, const DATAINFO *pdinfo,
-	      char *texfile, gretlopt oflag);
+int texprint (MODEL *pmod, const DATAINFO *pdinfo,
+	      char *texfile, gretlopt opt);
 
 char *tex_escape (char *targ, const char *src);
 

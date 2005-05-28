@@ -166,6 +166,28 @@ static int catch_command_alias (CMD *cmd)
 	       !strcmp(s, "global") ||
 	       !strcmp(s, "series")) { 
 	cmd->ci = GENR;
+    } else if (!strcmp(s, "tabprint")) {
+	cmd->ci = TEXPRINT;
+    } else if (!strcmp(s, "eqnprint")) {
+	cmd->ci = TEXPRINT;
+	cmd->opt |= OPT_E;
+    } else if (!strcmp(s, "coint2")) {
+	strcpy(cmd->word, "coint");
+	cmd->ci = COINT;
+	cmd->opt |= OPT_J;
+    } else if (!strcmp(s, "append")) {
+	cmd->ci = OPEN;
+	cmd->opt |= OPT_A;
+    } else if (!strcmp(s, "fcasterr")) {
+	cmd->ci = FCAST;
+	cmd->opt |= OPT_E;
+    } else if (!strcmp(s, "fit")) {
+	cmd->ci = FCAST;
+	cmd->opt |= OPT_A;
+    } else if (!strcmp(s, "plot")) {
+	strcpy(cmd->word, "graph");
+	cmd->ci = GRAPH;
+	cmd->opt |= OPT_T;
     } else if (*s == '!') {
 	cmd->ci = SHELL;
     }
@@ -182,7 +204,6 @@ static int catch_command_alias (CMD *cmd)
                            c == SETMISS)
 
 #define NO_VARLIST(c) (c == ADDOBS || \
-                       c == APPEND || \
                        c == BREAK || \
                        c == CHOW || \
 	               c == CRITERIA || \
@@ -192,10 +213,7 @@ static int catch_command_alias (CMD *cmd)
                        c == END || \
 	               c == ENDLOOP || \
                        c == ESTIMATE || \
-	               c == EQNPRINT || \
 	               c == FCAST || \
-	               c == FCASTERR || \
-	               c == FIT || \
                        c == FUNC || \
                        c == FUNCERR || \
 	               c == GENR || \
@@ -227,8 +245,8 @@ static int catch_command_alias (CMD *cmd)
 	               c == SHELL || \
 	               c == SIM || \
                        c == SYSTEM || \
-                       c == TABPRINT || \
                        c == TESTUHAT || \
+                       c == TEXPRINT || \
                        c == VARLIST || \
                        c == VIF)
 
@@ -244,7 +262,6 @@ static int catch_command_alias (CMD *cmd)
 #define TAKES_LAG_ORDER(c) (c == ADF || \
                             c == ARCH || \
                             c == COINT || \
-                            c == COINT2 || \
                             c == KPSS || \
                             c == VAR)
 
@@ -965,6 +982,18 @@ static int gretl_cmd_clear (CMD *cmd)
     return cmd->errcode;
 }
 
+static int pos_after_first_word (const char *line)
+{
+    char word[32];
+    int pos = 0;
+
+    if (sscanf(line, "%31s", word)) {
+	pos = strlen(word);
+    }
+
+    return pos;
+}
+
 /**
  * parse_command_line:
  * @line: the command line.
@@ -1070,8 +1099,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 #endif
 
-    /* tex printing commands can take a filename parameter */
-    if (cmd->ci == EQNPRINT || cmd->ci == TABPRINT) {
+    /* tex printing command can take a filename parameter */
+    if (cmd->ci == TEXPRINT) {
 	get_optional_filename(line, cmd);
     } 
 
@@ -1145,7 +1174,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
        remainder of the line
     */
     nf = count_fields(line) - 1;
-    pos = strlen(cmd->word);
+    pos = pos_after_first_word(line);
     remainder = gretl_strdup(line + pos + 1);
     if (remainder == NULL) {
 	cmd->errcode = E_ALLOC;
@@ -2453,12 +2482,11 @@ int simple_commands (CMD *cmd, const char *line,
 
     case COINT:
 	order = atoi(cmd->param);
-	err = coint(order, cmd->list, pZ, datainfo, cmd->opt, prn);
-	break;
-
-    case COINT2:
-	order = atoi(cmd->param);
-	err = johansen_test(order, cmd->list, pZ, datainfo, cmd->opt, prn);
+	if (cmd->opt & OPT_J) {
+	    err = johansen_test(order, cmd->list, pZ, datainfo, cmd->opt, prn);
+	} else {
+	    err = coint(order, cmd->list, pZ, datainfo, cmd->opt, prn);
+	}
 	break;
 
     case CORR:
@@ -2586,11 +2614,6 @@ int simple_commands (CMD *cmd, const char *line,
     case GRAPH:
 	ascii_graph(cmd->list, (const double **) *pZ, datainfo, 
 		    cmd->opt, prn);
-	break;
-
-    case PLOT:
-	ascii_plot(cmd->list, (const double **) *pZ, datainfo, 
-		   cmd->opt, prn);
 	break;
 
     case RMPLOT:

@@ -49,7 +49,7 @@ struct _selector {
 };
 
 #define WANT_TOGGLES(c) (c == OLS || c == TOBIT || c == ARMA || \
-                         c == GARCH || c == COINT2 || c == TSLS || \
+                         c == GARCH || c == JOHANSEN || c == TSLS || \
                          c == VAR || c == HILU)
 
 void clear_selector (void)
@@ -430,7 +430,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    add_to_cmdlist(sr, lags);
 	    add_to_cmdlist(sr, " ; ");
 	}
-    } else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
+    } else if (sr->code == VAR || COINT_CODE(sr->code)) {
 	GtkAdjustment *adj;
  
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
@@ -621,8 +621,8 @@ static char *est_str (int cmdnum)
 	return N_("VAR");
     case LAD:
 	return N_("LAD");
-    case COINT:
-    case COINT2:
+    case ENGLE_GRANGER:
+    case JOHANSEN:
 	return N_("Cointegration");
 #ifdef ENABLE_GMP
     case MPOLS:
@@ -971,8 +971,8 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     if (sr->code == WLS || sr->code == POISSON ||
 	sr->code == GR_DUMMY || sr->code == GR_3D) {
 	extra_var_box (sr, right_vbox);
-    } else if (sr->code == COINT || sr->code == COINT2) {
-	lag_order_spin (sr, right_vbox);
+    } else if (COINT_CODE(sr->code)) {
+	lag_order_spin(sr, right_vbox);
     } else if (sr->code == TSLS) {
 	auxiliary_varlist_box (sr, right_vbox);
     } else if (sr->code == AR) {
@@ -981,7 +981,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 			   FALSE, TRUE, 0);
 	gtk_widget_show(sr->extra); 
     } else if (sr->code == VAR) {
-	lag_order_spin (sr, right_vbox);
+	lag_order_spin(sr, right_vbox);
 	tmp = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
@@ -1162,11 +1162,11 @@ build_selector_switches (selector *sr)
     }
 
     if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH ||
-	sr->code == COINT2 || sr->code == VAR) {
+	sr->code == JOHANSEN || sr->code == VAR) {
 	if (sr->code == VAR) {
 	    tmp = gtk_check_button_new_with_label
 		(_("Show impulse responses"));
-	} else if (sr->code == COINT2) {
+	} else if (sr->code == JOHANSEN) {
 	    tmp = gtk_check_button_new_with_label
 		(_("Show details of regressions"));
 	} else {
@@ -1288,6 +1288,10 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     else
 	strcpy(topstr, "fixme need string");
 
+    if (cmdcode == JOHANSEN) {
+	sr->opts |= OPT_J;
+    }
+
     tmp = gtk_label_new(topstr);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 
 		       tmp, FALSE, FALSE, 5);
@@ -1345,7 +1349,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 
     /* middle right: used for some estimators and factored plot */
     if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || 
-	cmdcode == VAR || cmdcode == COINT || cmdcode == COINT2 ||
+	cmdcode == VAR || cmdcode == ENGLE_GRANGER || cmdcode == JOHANSEN ||
 	cmdcode == POISSON || cmdcode == GR_DUMMY || cmdcode == GR_3D) {
 	build_mid_section(sr, right_vbox);
     }

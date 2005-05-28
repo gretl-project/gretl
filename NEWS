@@ -15,6 +15,21 @@ gnuplot:
 in batch mode you can say "set plotfile foo" before doing a
 graph and the graph will go to "foo"
 
+cruft cleanup on old commands.  The old command on the left
+have been removed; the new replacement is on the right.
+
+tabprint -> texprint
+eqnprint -> texprint --equation
+
+fcasterr -> fcast --stderrs
+fit      -> fcast --auto
+
+coint2   -> coint --johansen
+
+append   -> open --append
+
+plot     -> graph --time-series
+
 
 
 
