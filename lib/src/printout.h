@@ -56,7 +56,7 @@ int outcovmx (MODEL *pmod,
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 
 int printdata (const int *list, const double **Z, const DATAINFO *pdinfo, 
-	       gretlopt oflag, PRN *prn);
+	       gretlopt opt, PRN *prn);
 
 int text_print_fit_resid (const FITRESID *fr, 
 			  const DATAINFO *pdinfo, 
@@ -67,8 +67,8 @@ int print_fit_resid (const MODEL *pmod,
 		     PRN *prn);
 
 int text_print_fcast_with_errs (const FITRESID *fr, 
-				double ***pZ, DATAINFO *pdinfo, PRN *prn,
-				int plot);
+				double ***pZ, DATAINFO *pdinfo, 
+				gretlopt opt, PRN *prn);
 
 void text_print_matrix (const double *rr, const int *list, 
 			MODEL *pmod, const DATAINFO *pdinfo, 

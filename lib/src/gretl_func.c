@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Allin Cottrell
+ *  Copyright (c) 2005 by Allin Cottrell
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -533,8 +533,6 @@ static int check_func_name (const char *fname)
 	return FN_NAME_BAD;
     }
 
-    /* or should we overwrite? */
-
     for (i=0; i<n_ufuns; i++) {
 	if (!strcmp(fname, (ufuns[i])->name)) {
 	    sprintf(gretl_errmsg, "'%s': function is already defined",
@@ -545,6 +543,11 @@ static int check_func_name (const char *fname)
 
     return FN_NAME_OK;
 }
+
+/* Parse line and return an allocated array of strings consisting of
+   the space- or comma-separated fields in line, each one truncated if
+   necessary to a maximum of 8 characters.
+*/ 
 
 static char **get_separated_fields_8 (const char *line, int *nfields)
 {
@@ -785,7 +788,7 @@ int gretl_start_compiling_function (const char *line)
     }
 
 #ifdef NEW_STYLE_FUNCTIONS
-    parse_func_name_and_params(fname, &params, &n_params, line);
+    parse_func_name_and_params(fname, &params, &n_params, line + 9);
 #endif
 
     name_status = check_func_name(fname);
@@ -919,7 +922,7 @@ int gretl_function_append_line (const char *line)
 	return 1;
     }
 
-    if (!strncmp(line, "returns ", 8)) {
+    if (!strncmp(line, "return ", 7) || !strncmp(line, "returns ", 8)) {
 	err = create_function_return_list(fun, line);
     } else {    
 	err = real_add_fn_line(fun, line);
@@ -931,22 +934,44 @@ int gretl_function_append_line (const char *line)
 #ifdef NEW_STYLE_FUNCTIONS
 
 /* FIXME headers */
-extern int dataset_copy_variable (int v, double ***pZ, DATAINFO *pdinfo);
+extern int dataset_copy_variable_as (int v, const char *newname,
+				     double ***pZ, DATAINFO *pdinfo);
+int dataset_add_scalar_as (const char *numstr, const char *newname,
+			   double ***pZ, DATAINFO *pdinfo);
 
-static int check_and_allocate_function_args (int argc, char **argv, 
+static int check_and_allocate_function_args (ufunc *fun,
+					     int argc, char **argv, 
 					     double ***pZ,
 					     DATAINFO *pdinfo)
 {
     int i, v, err = 0;
 
+    if (argc != fun->n_params) {
+	sprintf(gretl_errmsg, _("Number of arguments (%d) does not "
+				"match the number of\nparameters for "
+				"function %s (%d)"),
+		argc, fun->name, fun->n_params);
+	err = 1;
+    }
+
     for (i=0; i<argc && !err; i++) {
-	if (!numeric_string(argv[i])) {
+	if (numeric_string(argv[i])) {
+	    err = dataset_add_scalar_as(argv[i], fun->params[i], pZ, pdinfo);
+#if FN_DEBUG
+	    fprintf(stderr, "fn args: new scalar '%s' = %g: err = %d\n",
+		    fun->params[i], atof(argv[i]), err);
+#endif
+	} else {
 	    v = varindex(pdinfo, argv[i]);
 	    if (v == pdinfo->v) {
 		fprintf(stderr, "%s: not a known variable\n", argv[i]);
 		err = 1;
 	    } else {
-		err = dataset_copy_variable(v, pZ, pdinfo);
+		err = dataset_copy_variable_as(v, fun->params[i], pZ, pdinfo);
+#if FN_DEBUG
+                fprintf(stderr, "fn args: copy var %d as '%s': err = %d\n", 
+			v, fun->params[i], err);
+#endif
 	    }
 	}
     }
@@ -991,7 +1016,7 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 
 #ifdef NEW_STYLE_FUNCTIONS
     if (argc > 0) {
-	err = check_and_allocate_function_args(argc, argv, pZ, pdinfo);
+	err = check_and_allocate_function_args(fun, argc, argv, pZ, pdinfo);
     }
     if (err) {
 	free_strings_array(argv, argc);
@@ -1013,6 +1038,8 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 
     return err;
 }
+
+#ifndef NEW_STYLE_FUNCTIONS
 
 static int 
 safe_strncat (char *targ, const char *src, int n, int maxlen)
@@ -1074,12 +1101,13 @@ substitute_dollar_terms (char *targ, const char *src,
     return err;
 }
 
+#endif /* !NEW_STYLE_FUNCTIONS */
+
 char *gretl_function_get_line (char *line, int len,
 			       double ***pZ, DATAINFO *pdinfo)
 {
     fncall *call = current_call();
     const char *src;
-    int err = 0;
 
     if (call == NULL || call->fun == NULL) {
 	return NULL;
@@ -1100,22 +1128,24 @@ char *gretl_function_get_line (char *line, int len,
 
     call->lnum += 1;
 
+#ifdef NEW_STYLE_FUNCTIONS
+    strcpy(line, src);
+#else
     if (!string_is_blank(src)) {
-	err = substitute_dollar_terms(line, src, len, call->argc, 
-				      (const char **) call->argv); 
+	int err = substitute_dollar_terms(line, src, len, call->argc, 
+					  (const char **) call->argv); 
+	if (err) {
+	    sprintf(gretl_errmsg,
+		    _("Maximum length of command line "
+		      "(%d bytes) exceeded\n"), MAXLEN);
+	    unstack_fncall(pZ, pdinfo);
+	    return NULL;
+	}
     }
-
-    if (err) {
-	sprintf(gretl_errmsg,
-		_("Maximum length of command line "
-		  "(%d bytes) exceeded\n"), MAXLEN);
-	unstack_fncall(pZ, pdinfo);
-	return NULL;
-    }
-
-#if FN_DEBUG
+# if FN_DEBUG
     fprintf(stderr, "function_get_line, $substitution: \n"
 	    " before: '%s'\n  after: '%s'\n", src, line);
+# endif
 #endif
 
     return line;

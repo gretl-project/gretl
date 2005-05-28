@@ -308,7 +308,6 @@ parse_command_line
 get_command_index
 command_number
 help
-fcast
 parseopt
 shell
 echo_cmd
@@ -758,8 +757,7 @@ bhhh_max
 tex_print_equation
 tex_print_model
 tex_print_coeff
-tabprint
-eqnprint
+texprint
 tex_escape
 tex_dcolumn_double
 set_gretl_tex_preamble
@@ -1002,7 +1000,6 @@ tex_doc_format
 <SECTION>
 <FILE>compat</FILE>
 graphyzx
-ascii_plot
 ascii_graph
 rhodiff
 simulate
@@ -1011,12 +1008,12 @@ gretl_multiply
 
 <SECTION>
 <FILE>forecast</FILE>
-gretl_forecast
+fit_resid_new
+free_fit_resid
 get_fit_resid
 get_fcast_with_errs
 fcast_with_errs
-fit_resid_new
-free_fit_resid
+fcast
 </SECTION>
 
 <SECTION>

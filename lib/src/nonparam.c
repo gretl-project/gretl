@@ -231,7 +231,7 @@ static int spearman_rho (const double *x, const double *y, int n,
  * @list: list of (two) variables to process.
  * @Z: data matrix.
  * @pdinfo: information on the data set.
- * @opt: if non-zero, print both the "raw" and the ranked data.
+ * @opt: if includes %OPT_V, print both the "raw" and the ranked data.
  * @prn: gretl printing struct.
  *
  * Calculates and prints Spearman's rank correlation coefficient for the two
@@ -259,8 +259,8 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 		     Z[vy] + pdinfo->t1, 
 		     pdinfo->t2 - pdinfo->t1 + 1, 
 		     &rho, &sd, &pval,
-		     (opt)? &rx : NULL,
-		     (opt)? &ry : NULL,
+		     (opt & OPT_V)? &rx : NULL,
+		     (opt & OPT_V)? &ry : NULL,
 		     &m, RUN_FIRST)) {
 	return E_ALLOC;
     }
@@ -287,7 +287,7 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 		"the normal distribution\n"));
     }
 
-    if (opt) { /* print raw and ranked data */
+    if (opt & OPT_V) { /* print raw and ranked data */
 	int i = 0;
 
 	pprintf(prn, "\n     %s ", _("Obs"));

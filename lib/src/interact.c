@@ -166,28 +166,6 @@ static int catch_command_alias (CMD *cmd)
 	       !strcmp(s, "global") ||
 	       !strcmp(s, "series")) { 
 	cmd->ci = GENR;
-    } else if (!strcmp(s, "tabprint")) {
-	cmd->ci = TEXPRINT;
-    } else if (!strcmp(s, "eqnprint")) {
-	cmd->ci = TEXPRINT;
-	cmd->opt |= OPT_E;
-    } else if (!strcmp(s, "coint2")) {
-	strcpy(cmd->word, "coint");
-	cmd->ci = COINT;
-	cmd->opt |= OPT_J;
-    } else if (!strcmp(s, "append")) {
-	cmd->ci = OPEN;
-	cmd->opt |= OPT_A;
-    } else if (!strcmp(s, "fcasterr")) {
-	cmd->ci = FCAST;
-	cmd->opt |= OPT_E;
-    } else if (!strcmp(s, "fit")) {
-	cmd->ci = FCAST;
-	cmd->opt |= OPT_A;
-    } else if (!strcmp(s, "plot")) {
-	strcpy(cmd->word, "graph");
-	cmd->ci = GRAPH;
-	cmd->opt |= OPT_T;
     } else if (*s == '!') {
 	cmd->ci = SHELL;
     }
@@ -197,6 +175,8 @@ static int catch_command_alias (CMD *cmd)
 
 #define REQUIRES_PARAM(c) (c == ADDOBS || \
                            c == ADDTO || \
+                           c == FCAST || \
+                           c == FCASTERR || \
                            c == LOOP ||  \
                            c == MULTIPLY || \
                            c == NULLDATA || \
@@ -204,6 +184,7 @@ static int catch_command_alias (CMD *cmd)
                            c == SETMISS)
 
 #define NO_VARLIST(c) (c == ADDOBS || \
+                       c == APPEND || \
                        c == BREAK || \
                        c == CHOW || \
 	               c == CRITERIA || \
@@ -213,7 +194,10 @@ static int catch_command_alias (CMD *cmd)
                        c == END || \
 	               c == ENDLOOP || \
                        c == ESTIMATE || \
+	               c == EQNPRINT || \
 	               c == FCAST || \
+	               c == FCASTERR || \
+	               c == FIT || \
                        c == FUNC || \
                        c == FUNCERR || \
 	               c == GENR || \
@@ -245,8 +229,8 @@ static int catch_command_alias (CMD *cmd)
 	               c == SHELL || \
 	               c == SIM || \
                        c == SYSTEM || \
+                       c == TABPRINT || \
                        c == TESTUHAT || \
-                       c == TEXPRINT || \
                        c == VARLIST || \
                        c == VIF)
 
@@ -262,6 +246,7 @@ static int catch_command_alias (CMD *cmd)
 #define TAKES_LAG_ORDER(c) (c == ADF || \
                             c == ARCH || \
                             c == COINT || \
+                            c == COINT2 || \
                             c == KPSS || \
                             c == VAR)
 
@@ -982,18 +967,6 @@ static int gretl_cmd_clear (CMD *cmd)
     return cmd->errcode;
 }
 
-static int pos_after_first_word (const char *line)
-{
-    char word[32];
-    int pos = 0;
-
-    if (sscanf(line, "%31s", word)) {
-	pos = strlen(word);
-    }
-
-    return pos;
-}
-
 /**
  * parse_command_line:
  * @line: the command line.
@@ -1099,8 +1072,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 #endif
 
-    /* tex printing command can take a filename parameter */
-    if (cmd->ci == TEXPRINT) {
+    /* tex printing commands can take a filename parameter */
+    if (cmd->ci == EQNPRINT || cmd->ci == TABPRINT) {
 	get_optional_filename(line, cmd);
     } 
 
@@ -1174,7 +1147,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
        remainder of the line
     */
     nf = count_fields(line) - 1;
-    pos = pos_after_first_word(line);
+    pos = strlen(cmd->word);
     remainder = gretl_strdup(line + pos + 1);
     if (remainder == NULL) {
 	cmd->errcode = E_ALLOC;
@@ -1614,70 +1587,6 @@ static int parse_criteria (const char *line, const double **Z,
     gretl_print_criteria(ess, T, k, prn);
 
     return 0;
-}
-
-/**
- * fcast:
- * @line: the command line, giving a starting observation, ending
- * observation, and variable name to use for the forecast values
- * (the starting and ending observations may be omitted).
- * @pmod: pointer to model.
- * @pdinfo: pointer to data information struct.
- * @pZ: pointer to data matrix.
- *
- * Creates a new variable containing predicted values for the
- * dependent variable in @pmod.
- *
- * Returns: the ID number of the newly created variable containing the
- * forecast, or a negative integer on error.
- */
-
-int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 
-	   double ***pZ)
-{
-    int t, t1, t2, vi;
-    char t1str[OBSLEN], t2str[OBSLEN], varname[VNAMELEN];
-
-    *t1str = '\0'; *t2str = '\0';
-
-    /* the varname should either be in the 2nd or 4th position */
-    if (sscanf(line, "%*s %8s %8s %8s", t1str, t2str, varname) != 3) {
-	if (sscanf(line, "%*s" "%8s", varname) != 1) {
-	    return -1;
-	}
-    }
-
-    if (*t1str && *t2str) {
-	t1 = dateton(t1str, pdinfo);
-	t2 = dateton(t2str, pdinfo);
-	if (t1 < 0 || t2 < 0 || t2 < t1) {
-	    return -1;
-	}
-    } else {
-	t1 = pdinfo->t1;
-	t2 = pdinfo->t2;
-    }
-
-    if (check_varname(varname)) {
-	return -1;
-    }
-
-    vi = varindex(pdinfo, varname);
-
-    if (vi >= pdinfo->v && dataset_add_series(1, pZ, pdinfo)) { 
-	return -1 * E_ALLOC;
-    }
-
-    strcpy(pdinfo->varname[vi], varname);
-    strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
-
-    for (t=0; t<pdinfo->n; t++) {
-	(*pZ)[vi][t] = NADBL;
-    }
-
-    gretl_forecast(t1, t2, vi, pmod, pZ);
-
-    return vi;
 }
 
 /**
@@ -2482,11 +2391,12 @@ int simple_commands (CMD *cmd, const char *line,
 
     case COINT:
 	order = atoi(cmd->param);
-	if (cmd->opt & OPT_J) {
-	    err = johansen_test(order, cmd->list, pZ, datainfo, cmd->opt, prn);
-	} else {
-	    err = coint(order, cmd->list, pZ, datainfo, cmd->opt, prn);
-	}
+	err = coint(order, cmd->list, pZ, datainfo, cmd->opt, prn);
+	break;
+
+    case COINT2:
+	order = atoi(cmd->param);
+	err = johansen_test(order, cmd->list, pZ, datainfo, cmd->opt, prn);
 	break;
 
     case CORR:
@@ -2614,6 +2524,11 @@ int simple_commands (CMD *cmd, const char *line,
     case GRAPH:
 	ascii_graph(cmd->list, (const double **) *pZ, datainfo, 
 		    cmd->opt, prn);
+	break;
+
+    case PLOT:
+	ascii_graph(cmd->list, (const double **) *pZ, datainfo, 
+		    (cmd->opt | OPT_T), prn);
 	break;
 
     case RMPLOT:
@@ -2804,10 +2719,12 @@ int get_command_index (const char *line, CMD *cmd)
     } else if (catch_command_alias(cmd)) {
 	; /* cmd->ci is set OK */
     } else if ((cmd->ci = gretl_command_number(cmd->word)) == 0) {
-	cmd->errcode = 1;
-	sprintf(gretl_errmsg, _("command \"%s\" not recognized"), 
-		cmd->word);
-	return 1;
+	if (!plausible_genr_start(line, cmd)) {
+	    cmd->errcode = 1;
+	    sprintf(gretl_errmsg, _("command '%s' not recognized"), 
+		    cmd->word);
+	    return 1;
+	}
     }
 
     if (cmd->ci == NLS) {

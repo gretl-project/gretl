@@ -826,6 +826,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case ADDOBS:
     case ADF: 
     case COINT: 
+    case COINT2:
     case CORR: 
     case CRITERIA: 
     case CRITICAL: 
@@ -834,7 +835,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case ESTIMATE:
     case FUNC:
     case FUNCERR:
-    case GRAPH: 
+    case GRAPH:
+    case PLOT: 
     case HURST:
     case INFO: 
     case KPSS:
@@ -1077,12 +1079,15 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	break;
 
-    case TEXPRINT:
+    case TABPRINT:
+    case EQNPRINT:
 	strcpy(texfile, cmd.param);
 	if ((err = model_test_start(cmd.ci, 0, prn))) {
 	    break;
 	}
-	err = texprint(models[0], datainfo, texfile, cmd.opt);
+	err = texprint(models[0], datainfo, texfile, 
+		       (cmd.ci == EQNPRINT)? (cmd.opt | OPT_E) :
+		       cmd.opt);
 	if (err) {
 	    pputs(prn, _("Couldn't open tex file for writing\n"));
 	} else {
@@ -1091,35 +1096,32 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case FCAST:
-	if ((err = model_test_start(cmd.ci, 0, prn))) {
-	    break;
+    case FIT:
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;
+	if (cmd.ci == FIT) {
+	    err = fcast("fcast autofit", models[0], &Z, datainfo);
+	} else {
+	    err = fcast(line, models[0], &Z, datainfo);
 	}
-	if (cmd.opt & OPT_E) {
-	    err = fcast_with_errs(line, models[0], &Z, datainfo, prn, cmd.opt); 
-	    if (err) {
-		errmsg(err, prn);
+	if (err) {
+	    errmsg(err, prn);
+	} else {
+	    if (cmd.ci == FIT) {
+		pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
 	    }
-	} else {  
-	    if (cmd.opt & OPT_A) {
-		err = fcast("fcast autofit", models[0], datainfo, &Z);
-	    } else {
-		err = fcast(line, models[0], datainfo, &Z);
+	    maybe_list_vars(datainfo, prn);
+	    if (cmd.ci == FIT && dataset_is_time_series(datainfo)) {
+		do_autofit_plot(prn);
 	    }
-	    if (err < 0) {
-		err = -err;
-		pputs(prn, _("Error retrieving fitted values\n"));
-		errmsg(err, prn);
-	    } else {
-		err = 0;
-		if (cmd.opt & OPT_A) {
-		    pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
-		}
-		maybe_list_vars(datainfo, prn);
-		if ((cmd.opt & OPT_A) && dataset_is_time_series(datainfo)) {
-		    do_autofit_plot(prn);
-		}
-	    }
-	} 
+	}
+	break;
+
+    case FCASTERR:
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;
+	err = fcast_with_errs(line, models[0], &Z, datainfo, cmd.opt, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case FREQ:
@@ -1210,6 +1212,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case OPEN:
+    case APPEND:
 	err = getopenfile(line, datfile, &paths, 0, 0);
 	if (err) {
 	    pputs(prn, _("'open' command is malformed\n"));
@@ -1219,7 +1222,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	chk = detect_filetype(datfile, &paths, prn);
 	dbdata = (chk == GRETL_NATIVE_DB || chk == GRETL_RATS_DB);
 
-	if (data_status && !batch && !dbdata && !(cmd.opt & OPT_A) &&
+	if (data_status && !batch && !dbdata && cmd.ci != APPEND &&
 	    strcmp(datfile, paths.datfile)) {
 	    fprintf(stderr, _("Opening a new data file closes the "
 			      "present one.  Proceed? (y/n) "));
@@ -1231,7 +1234,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    }
 	}
 
-	if (data_status && !dbdata && !(cmd.opt & OPT_A)) {
+	if (data_status && !dbdata && cmd.ci != APPEND) {
 	    clear_data();
 	}
 
@@ -1255,7 +1258,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	if (!dbdata && !(cmd.opt & OPT_A)) {
+	if (!dbdata && cmd.ci != APPEND) {
 	    strncpy(paths.datfile, datfile, MAXLEN-1);
 	}
 	data_status = 1;

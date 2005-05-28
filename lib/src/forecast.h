@@ -20,8 +20,10 @@
 #ifndef FORECAST_H
 #define FORECAST_H
 
-int gretl_forecast (int t1, int t2, int nv, 
-		    const MODEL *pmod, double ***pZ);
+FITRESID *fit_resid_new (int n, int errs);
+
+void free_fit_resid (FITRESID *fr);
+
 
 FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
 			 DATAINFO *pdinfo);
@@ -30,12 +32,11 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 			       double ***pZ, DATAINFO *pdinfo, PRN *prn);
 
 int fcast_with_errs (const char *str, const MODEL *pmod, 
-		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
-		     int plot);
+		     double ***pZ, DATAINFO *pdinfo, 
+		     gretlopt opt, PRN *prn);
 
-FITRESID *fit_resid_new (int n, int errs);
-
-void free_fit_resid (FITRESID *fr);
+int fcast (const char *line, const MODEL *pmod, double ***pZ,
+	   DATAINFO *pdinfo);
 
 #endif /* FORECAST_H */
 

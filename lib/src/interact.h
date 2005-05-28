@@ -79,9 +79,6 @@ int command_number (const char *cmd);
 
 int help (const char *cmdword, const char *helpfile, PRN *prn);
 
-int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 
-	   double ***pZ);
-
 int parseopt (const char **argv, int argc, char *fname, 
 	      int *force_lang);
 

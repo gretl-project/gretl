@@ -74,7 +74,8 @@ char *storelist = NULL;
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
 #define MULTI_COPY_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY \
-	                      || c == CORR || c == FCAST || c == COEFFINT \
+	                      || c == CORR || c == FCASTERR \
+	                      || c == FCAST || c == COEFFINT \
 	                      || c == COVAR || c == VIEW_MODEL \
                               || c == VIEW_MODELTABLE || c == VAR)
 
@@ -160,7 +161,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Model data/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL, GNULL },
     { N_("/Model data/Forecasts with standard errors"), NULL, 
-      do_forecast, FCAST, NULL, GNULL },
+      do_forecast, FCASTERR, NULL, GNULL },
     { N_("/Model data/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL, GNULL },
     { N_("/Model data/coefficient covariance matrix"), NULL, 
@@ -231,7 +232,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Model data/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL },
     { N_("/Model data/Forecasts with standard errors"), NULL, 
-      do_forecast, FCAST, NULL },
+      do_forecast, FCASTERR, NULL },
     { N_("/Model data/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL },
     { N_("/Model data/coefficient covariance matrix"), NULL, 
@@ -308,6 +309,8 @@ gchar *menu_translate (const gchar *path, gpointer p)
 }
 #endif
 
+/* ........................................................... */
+
 int copyfile (const char *src, const char *dest) 
 {
     FILE *srcfd, *destfd;
@@ -339,12 +342,16 @@ int copyfile (const char *src, const char *dest)
     return 0;
 }
 
+/* ........................................................... */
+
 int isdir (const char *path)
 {
     struct stat buf;
 
     return (stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)); 
 }
+
+/* ........................................................... */
 
 static int max_var_in_stacked_models (GtkWidget **wstack, int nwin)
 {
@@ -498,11 +505,15 @@ static void winstack_remove (GtkWidget *w)
     winstack(STACK_REMOVE, w, NULL);
 }
 
+/* ........................................................... */
+
 static void delete_file (GtkWidget *widget, char *fname) 
 {
     remove(fname);
     g_free(fname);
 }
+
+/* ........................................................... */
 
 static void delete_file_viewer (GtkWidget *widget, gpointer data) 
 {
@@ -523,6 +534,8 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
     }
 }
 
+/* ........................................................... */
+
 static void delete_unnamed_model (GtkWidget *widget, gpointer data) 
 {
     MODEL *pmod = (MODEL *) data;
@@ -536,10 +549,14 @@ static void delete_unnamed_model (GtkWidget *widget, gpointer data)
     }
 }
 
+/* ........................................................... */
+
 void delete_widget (GtkWidget *widget, gpointer data)
 {
     gtk_widget_destroy(GTK_WIDGET(data));
 }
+
+/* ........................................................... */
 
 #ifndef OLD_GTK
 
@@ -555,6 +572,8 @@ static gint catch_button_3 (GtkWidget *w, GdkEventButton *event)
 }
 
 #endif
+
+/* ........................................................... */
 
 #ifdef G_OS_WIN32
 
@@ -572,6 +591,8 @@ static void win_ctrl_c (windata_t *vwin)
 }
 
 #endif
+
+/* ........................................................... */
 
 static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
@@ -827,6 +848,8 @@ void register_data (char *fname, const char *user_fname,
                            action == APPEND_EXCEL || \
                            action == APPEND_ASCII)
 
+/* ........................................................... */
+
 int get_worksheet_data (char *fname, int datatype, int append,
 			int *gui_get_data)
 {
@@ -1060,6 +1083,8 @@ void verify_open_session (gpointer userdata)
     do_open_session(NULL, userdata);
 }
 
+/* ........................................................... */
+
 void save_session (char *fname) 
 {
     char msg[MAXLEN], savedir[MAXLEN], fname2[MAXLEN];
@@ -1149,6 +1174,8 @@ void save_session (char *fname)
     return;
 }
 
+/* ........................................................... */
+
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 {
 #ifndef OLD_GTK
@@ -1162,6 +1189,8 @@ static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 
     set_window_help_active(vwin);
 }
+
+/* ........................................................... */
 
 static void buf_edit_save (GtkWidget *widget, gpointer data)
 {
@@ -1196,6 +1225,8 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     }
 }
 
+/* ........................................................... */
+
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 {
     if (strstr(vwin->fname, "script_tmp") || !strlen(vwin->fname)) {
@@ -1227,6 +1258,8 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 	}
     }
 }
+
+/* .................................................................. */
 
 void windata_init (windata_t *vwin)
 {
@@ -1283,7 +1316,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_summary(vwin->data); 
 	else if (vwin->role == CORR || vwin->role == PCA)
 	    free_corrmat(vwin->data);
-	else if (vwin->role == FCAST)
+	else if (vwin->role == FCASTERR || vwin->role == FCAST)
 	    free_fit_resid(vwin->data);
 	else if (vwin->role == COEFFINT)
 	    free_confint(vwin->data);
@@ -1368,6 +1401,8 @@ static void window_help (GtkWidget *w, windata_t *vwin)
 {
     context_help(NULL, GINT_TO_POINTER(vwin->role));
 }
+
+/* ........................................................... */
 
 struct viewbar_item {
     const char *str;
@@ -1464,7 +1499,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 		      vwin->role != EDIT_NOTES);
 
     int help_ok = (vwin->role == LEVERAGE || 
-		   vwin->role == JOHANSEN ||
+		   vwin->role == COINT2 ||
 		   vwin->role == MAHAL);
 
 #ifndef OLD_GTK
@@ -1615,6 +1650,8 @@ static void add_edit_items_to_viewbar (windata_t *vwin)
     }
 }
 
+/* ........................................................... */
+
 static gchar *make_viewer_title (int role, const char *fname)
 {
     gchar *title = NULL;
@@ -1663,10 +1700,14 @@ static gchar *make_viewer_title (int role, const char *fname)
     return title;
 }
 
+/* ........................................................... */
+
 static void content_changed (GtkWidget *w, windata_t *vwin)
 {
     MARK_CONTENT_CHANGED(vwin);
 }
+
+/* ........................................................... */
 
 static windata_t *common_viewer_new (int role, const char *title, 
 				     gpointer data, int record)
@@ -1674,9 +1715,7 @@ static windata_t *common_viewer_new (int role, const char *title,
     windata_t *vwin;
 
     vwin = mymalloc(sizeof *vwin);
-    if (vwin == NULL) {
-	return NULL;
-    }
+    if (vwin == NULL) return NULL;
 
     windata_init(vwin);
 
@@ -1694,6 +1733,8 @@ static windata_t *common_viewer_new (int role, const char *title,
 
     return vwin;
 }
+
+/* ........................................................... */
 
 static void viewer_box_config (windata_t *vwin)
 {
@@ -1718,6 +1759,8 @@ static void viewer_box_config (windata_t *vwin)
     gtk_container_add(GTK_CONTAINER(vwin->dialog), vwin->vbox);
 }
 
+/* ........................................................... */
+
 static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
     const char *pbuf = gretl_print_get_buffer(prn);
@@ -1739,6 +1782,8 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
     }
 #endif
 }
+
+/* ........................................................... */
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role, 
@@ -1837,6 +1882,8 @@ static void set_file_view_style (GtkWidget *w)
     gtk_widget_set_style(w, style);
 }
 #endif
+
+/* ........................................................... */
 
 windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role)
@@ -2004,6 +2051,8 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     return vwin;
 }
 
+/* ........................................................... */
+
 void file_view_set_editable (windata_t *vwin)
 {
 #ifndef OLD_GTK
@@ -2027,6 +2076,8 @@ void file_view_set_editable (windata_t *vwin)
     add_edit_items_to_viewbar(vwin);
 }
 
+/* ........................................................... */
+
 static gint query_save_text (GtkWidget *w, GdkEvent *event, 
 			     windata_t *vwin)
 {
@@ -2049,6 +2100,8 @@ static gint query_save_text (GtkWidget *w, GdkEvent *event,
 
     return FALSE;
 }
+
+/* ........................................................... */
 
 windata_t *edit_buffer (char **pbuf, int hsize, int vsize, 
 			char *title, int role) 
@@ -2244,6 +2297,8 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     return 0;
 }
 
+/* ........................................................... */
+
 static void auto_save_script (windata_t *vwin)
 {
     FILE *fp;
@@ -2278,6 +2333,8 @@ static void auto_save_script (windata_t *vwin)
 
     MARK_CONTENT_SAVED(vwin);
 }
+
+/* ........................................................... */
 
 void flip (GtkItemFactory *ifac, const char *path, gboolean s)
 {
@@ -2436,6 +2493,8 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	panel_heteroskedasticity_menu(vwin);
     }
 }
+
+/* ........................................................... */
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[])
@@ -2625,6 +2684,8 @@ static void add_model_dataset_items (windata_t *vwin)
     }
 }
 
+/* .................................................................. */
+
 static void add_vars_to_plot_menu (windata_t *vwin)
 {
     int i, j, varstart;
@@ -2691,6 +2752,8 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	}	
     }
 }
+
+/* .................................................................. */
 
 static void plot_dummy_call (gpointer data, guint v, GtkWidget *widget)
 {
@@ -2766,6 +2829,8 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
     g_free(radiopath);
 }
 
+/* ........................................................... */
+
 static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
@@ -2833,6 +2898,8 @@ static void add_x12_output_menu_item (windata_t *vwin)
     gtk_item_factory_create_item(vwin->ifac, &x12item, vwin, 1);
     g_free(x12item.path);
 }
+
+/* ........................................................... */
 
 static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
 {
@@ -2937,6 +3004,8 @@ static void add_var_menu_items (windata_t *vwin)
     }
 }
 
+/* ........................................................... */
+
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data)
 {
@@ -2995,6 +3064,8 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     return FALSE;
 }
 
+/* ........................................................... */
+
 int validate_varname (const char *varname)
 {
     int i, n = strlen(varname);
@@ -3029,6 +3100,8 @@ int validate_varname (const char *varname)
     return 0;
 }	
 
+/* ......................................................... */
+
 gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 			 gpointer data)
 {
@@ -3045,6 +3118,8 @@ gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
     }
     return FALSE;
 }
+
+/* .................................................................. */
 
 void add_popup_item (const gchar *label, GtkWidget *menu,
 #ifndef OLD_GTK
@@ -3066,6 +3141,8 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 		      G_CALLBACK(callback), data);
     gtk_widget_show(item);
 }
+
+/* .................................................................. */
 
 void *gui_get_plugin_function (const char *funcname, 
 			       void **phandle)

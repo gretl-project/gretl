@@ -106,6 +106,7 @@ struct controller_ {
     double val;
     int vnum;
     char vname[VNAMELEN];
+    int vsign;
 };
 
 typedef struct controller_ controller;
@@ -190,7 +191,7 @@ loop_controller_get_value (controller *clr, const double **Z)
     double ret = NADBL;
 
     if (clr->vnum > 0) {
-	ret = Z[clr->vnum][0];
+	ret = Z[clr->vnum][0] * clr->vsign;
     } else {
 	ret = clr->val;
     } 
@@ -253,6 +254,7 @@ int ok_in_loop (int ci, const LOOPSET *loop)
     /* "simple_commands" */
     else if (ci == ADF || 
 	     ci == COINT || 
+	     ci == COINT2 || 
 	     ci == CORR ||
 	     ci == CRITERIA || 
 	     ci == CRITICAL || 
@@ -399,8 +401,15 @@ controller_set_var (controller *clr, LOOPSET *loop, const DATAINFO *pdinfo,
 		    const char *s)
 {
     int v, err = 0;
+    int vsign = 1;
 
-    v = ok_loop_var(loop, pdinfo, s);
+    if (*s == '-' && isalpha((unsigned char) *(s + 1))) {
+	/* negative sign in front of varname? */
+	vsign = -1;
+	v = ok_loop_var(loop, pdinfo, s + 1);
+    } else {
+	v = ok_loop_var(loop, pdinfo, s);
+    }
 
     if (v == LOOP_VAL_BAD) {
 	err = 1;
@@ -410,6 +419,7 @@ controller_set_var (controller *clr, LOOPSET *loop, const DATAINFO *pdinfo,
 	strncat(clr->vname, s, VNAMELEN - 1);
     } else {
 	clr->vnum = v;
+	clr->vsign = vsign;
     }
 
     return err;
@@ -642,7 +652,6 @@ test_forloop_element (const char *s, LOOPSET *loop,
 #if LOOP_DEBUG
 	fprintf(stderr, " lhs: varindex = %d (pdinfo->v = %d)\n", v, pdinfo->v);
 #endif
-
 	/* examine the LHS */
 	if (i == 0) {
 	    if (v == pdinfo->v) {
@@ -1150,6 +1159,7 @@ static void controller_init (controller *clr)
     clr->val = NADBL;
     clr->vnum = 0;
     clr->vname[0] = 0;
+    clr->vsign = 1;
 }
 
 static void gretl_loop_init (LOOPSET *loop)
@@ -2419,6 +2429,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    switch (cmd.ci) {
 
 	    case ADF: 
+	    case COINT2: 
 	    case COINT: 
 	    case CORR:
 	    case CRITERIA: 

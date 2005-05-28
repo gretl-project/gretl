@@ -123,7 +123,6 @@ static struct gui_help_item gui_help_items[] = {
     { MODELTABLE,     "modeltab" },
     { GRAPHPAGE ,     "graphpag" },
     { SETSEED,        "seed" },
-    { ENGLE_GRANGER,  "coint" },
     { KERNEL_DENSITY, "density" },
     { HCCME,          "hccme" },
     { -1,          NULL },

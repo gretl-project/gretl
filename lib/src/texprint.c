@@ -410,7 +410,7 @@ void gretl_tex_preamble (PRN *prn, int ams)
  * @standalone: print as full doc (1) or fragment (0).
  * @prn: gretl printing struct.
  *
- * Prints a gretl model in the form of a LaTeX equation, either as
+ * Prints to @prn a gretl model in the form of a LaTeX equation, either as
  * a stand-alone document or as a fragment of LaTeX source for
  * insertion into a document.
  * 
@@ -601,7 +601,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
  * @standalone: print as full doc (1) or fragment (0).
  * @prn: gretl printing struct.
  *
- * Prints a gretl model in the form of a LaTeX table, either as
+ * Prints to @prn a gretl model in the form of a LaTeX table, either as
  * a stand-alone document or as a fragment of LaTeX source for
  * insertion into a document.
  * 

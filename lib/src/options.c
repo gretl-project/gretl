@@ -19,18 +19,32 @@
 
 #include "libgretl.h"
 
-#define is_model_ci(c) (c == OLS || c == CORC || c == HILU || \
-                        c == WLS || c == PWE || c == POOLED || c == HCCM || \
-                        c == HSK || c == ADD || c == LAD || \
-                        c == OMIT || c == TSLS || c == LOGIT || \
-                        c == PROBIT || c == TOBIT || c == ARMA || \
-                        c == AR || c == LOGISTIC || c == NLS || \
-                        c == GARCH || c == POISSON)
+#define is_model_ci(c) (c == ADD || \
+                        c == AR || \
+                        c == ARMA || \
+                        c == CORC || \
+                        c == GARCH || \
+                        c == HCCM || \
+                        c == HILU || \
+                        c == HSK || \
+                        c == LAD || \
+                        c == LOGISTIC || \
+                        c == LOGIT || \
+                        c == OLS || \
+                        c == OMIT || \
+                        c == NLS || \
+                        c == POISSON || \
+                        c == POOLED || \
+                        c == PROBIT || \
+                        c == PWE || \
+                        c == TOBIT || \
+                        c == TSLS || \
+                        c == WLS)
 
 struct gretl_option {
-    int ci;              /* command index (context) */
+    int ci;              /* command index (gives context) */
     gretlopt o;          /* index of integer type */
-    const char *longopt; /* -- string representation of option */
+    const char *longopt; /* "--"-style string representation of option */
 };
 
 struct flag_match {
@@ -57,15 +71,14 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_V, "verbose" },
     { ARMA,     OPT_X, "x-12-arima" },
     { BXPLOT,   OPT_O, "notches" },
-    { COINT,    OPT_J, "johansen" },
     { COINT,    OPT_N, "nc" },
-    { COINT,    OPT_V, "verbose" },
+    { COINT2,   OPT_V, "verbose" },
+    { EQNPRINT, OPT_O, "complete" },
+    { TABPRINT, OPT_O, "complete" },
     { ESTIMATE, OPT_M, "geomean" },
     { ESTIMATE, OPT_N, "no-df-corr" },
     { ESTIMATE, OPT_T, "iterate" },
-    { FCAST,    OPT_A, "auto" },
-    { FCAST,    OPT_E, "stderrs" },
-    { FCAST,    OPT_O, "plot" },
+    { FCASTERR, OPT_O, "plot" },
     { FREQ,     OPT_O, "gamma" },
     { FREQ,     OPT_Q, "quiet" },
     { GARCH,    OPT_A, "arma-init" },    
@@ -77,9 +90,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_M, "with-impulses" },
     { GNUPLOT,  OPT_S, "suppress-fitted" },
     { GNUPLOT,  OPT_Z, "dummy" },
-    { GRAPH,    OPT_B, "big" },
-    { GRAPH,    OPT_S, "one-scale" },
-    { GRAPH,    OPT_T, "time-series" },
+    { GRAPH,    OPT_O, "tall" },
     { HAUSMAN,  OPT_T, "time-effects" },
     { HILU,     OPT_B, "no-corc" },
     { IMPORT,   OPT_B, "box1" },
@@ -108,7 +119,6 @@ struct gretl_option gretl_opts[] = {
     { OLS,      OPT_S, "simple-print" },
     { OMIT,     OPT_Q, "quiet" },
     { OMITFROM, OPT_Q, "quiet" },
-    { OPEN,     OPT_A, "append" },
     { OUTFILE,  OPT_A, "append" },
     { OUTFILE,  OPT_C, "close" },
     { OUTFILE,  OPT_W, "write" },
@@ -121,6 +131,7 @@ struct gretl_option gretl_opts[] = {
     { PCA,      OPT_A, "save-all" },
     { PCA,      OPT_O, "save" },
     { PERGM,    OPT_O, "bartlett" },
+    { PLOT,     OPT_O, "one-scale" },
     { PRINT,    OPT_O, "byobs" },
     { PRINT,    OPT_T, "ten" },
     { QUIT,     OPT_X, "exit" },
@@ -134,7 +145,7 @@ struct gretl_option gretl_opts[] = {
     { SMPL,     OPT_M, "no-missing" },
     { SMPL,     OPT_N, "random" },
     { SMPL,     OPT_R, "restrict" },
-    { SPEARMAN, OPT_O, "verbose" },
+    { SPEARMAN, OPT_V, "verbose" },
     { SQUARE,   OPT_O, "cross" },
     { STORE,    OPT_C, "csv" },
     { STORE,    OPT_D, "database" },
@@ -144,8 +155,6 @@ struct gretl_option gretl_opts[] = {
     { STORE,    OPT_R, "gnu-R" },
     { STORE,    OPT_T, "traditional" },
     { STORE,    OPT_Z, "gzipped" },
-    { TEXPRINT, OPT_O, "complete" },    
-    { TEXPRINT, OPT_E, "equation" },
     { TOBIT,    OPT_V, "verbose" },
     { TSLS,     OPT_R, "robust" },  
     { TSLS,     OPT_S, "save" },
@@ -202,7 +211,6 @@ struct flag_match flag_matches[] = {
     { OPT_F, 'f' },
     { OPT_G, 'g' },
     { OPT_I, 'i' },
-    { OPT_J, 'j' },
     { OPT_L, 'l' },
     { OPT_M, 'm' },
     { OPT_N, 'n' },
@@ -219,7 +227,7 @@ struct flag_match flag_matches[] = {
     { 0L,   '\0' }
 };
 
-static const char *ok_flags = "abcdefgijlmnopqrstvwxz";
+static const char *ok_flags = "abcdefgilmnopqrstvwxz";
 
 #define isflag(c) (strchr(ok_flags, c) != NULL)
 

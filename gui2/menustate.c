@@ -112,9 +112,9 @@ static GtkItemFactoryEntry time_series_model_items[] = {
     { N_("/Model/Time series/_Vector Autoregression..."), NULL, model_callback, VAR, NULL, GNULL },
     { N_("/Model/Time series/Cointegration test"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Model/Time series/Cointegration test/Engle-Granger..."), NULL, 
-      selector_callback, ENGLE_GRANGER, NULL, GNULL },
+      selector_callback, COINT, NULL, GNULL },
     { N_("/Model/Time series/Cointegration test/Johansen..."), NULL, 
-      selector_callback, JOHANSEN, NULL, GNULL }
+      selector_callback, COINT2, NULL, GNULL }
 };
 
 #else
@@ -129,9 +129,9 @@ static GtkItemFactoryEntry time_series_model_items[] = {
     { N_("/Model/Time series/_Vector Autoregression..."), NULL, model_callback, VAR, NULL },
     { N_("/Model/Time series/Cointegration test"), NULL, NULL, 0, "<Branch>" },
     { N_("/Model/Time series/Cointegration test/Engle-Granger..."), NULL, 
-      selector_callback, ENGLE_GRANGER, NULL },
+      selector_callback, COINT, NULL },
     { N_("/Model/Time series/Cointegration test/Johansen..."), NULL, 
-      selector_callback, JOHANSEN, NULL }
+      selector_callback, COINT2, NULL }
 };
 
 #endif

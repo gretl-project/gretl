@@ -276,7 +276,7 @@ void graphyzx (const int *list, const double *y1, const double *y2,
  * @list: contains ID numbers of variables to plot.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @opt: if includes OPT_S, forces two variables to be plotted on the same
+ * @opt: if includes OPT_O, forces two variables to be plotted on the same
  * scale (otherwise they will be scaled to fit).
  * @prn: gretl printing struct.
  *
@@ -403,7 +403,7 @@ static int ascii_plot (const int *list, const double **Z,
 	   "and %s are equal when scaled\n"), ' ', s1, s2, ' ', s1, s2);
     lineno = 6;
 
-    if (opt & OPT_S) {
+    if (opt & OPT_O) {
 	pprintf(prn, _("%20c%s and %s are plotted on same scale\n\n%8c"),
 	       ' ', s1, s2, ' ');
 
@@ -525,7 +525,7 @@ static int ascii_plot (const int *list, const double **Z,
  * @list: contains ID numbers of variables to graph.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @opt: if includes OPT_B or OPT_O, use 40 rows, otherwise use 20 rows;
+ * @opt: if includes OPT_O, use 40 rows, otherwise use 20 rows;
  * if includes OPT_T do a time-series plot.
  * @prn: gretl printing struct.
  *
@@ -547,14 +547,7 @@ int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo,
     double *y2 = NULL;
 
     if (opt & OPT_T) {
-	if (opt & OPT_O) {
-	    opt |= OPT_S;
-	}
 	return ascii_plot(list, Z, pdinfo, opt, prn);
-    }
-
-    if (opt & OPT_B) {
-	opt |= OPT_O;
     }
 
     if (list[0] < 2) {

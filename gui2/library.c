@@ -769,23 +769,24 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     view_buffer(prn, hsize, vsize, title, action, obj);
 }
 
-void do_coint (GtkWidget *widget, gpointer p)
+/* ........................................................... */
+
+static void real_do_coint (gpointer p, int action)
 {
     selector *sr = (selector *) p;
     const char *buf = selector_list(sr);
-    const char *flagstr;
-    gretlopt opt;
     PRN *prn;
     int err = 0, order = 0;
 
-    if (buf == NULL) {
-	return;
-    }
+    if (buf == NULL) return;
 
-    opt = selector_get_opts(sr);
-    flagstr = print_flags(opt, COINT);
+    cmd.opt = selector_get_opts(sr);
 
-    gretl_command_sprintf("coint %s%s", buf, flagstr);
+    if (action == COINT) {
+	gretl_command_sprintf("coint %s%s", buf, print_flags(cmd.opt, action));
+    } else {
+	gretl_command_sprintf("coint2 %s%s", buf, print_flags(cmd.opt, action));
+    }	
 
     if (check_and_record_command() || bufopen(&prn)) {
 	return;
@@ -798,11 +799,11 @@ void do_coint (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    if (cmd.opt & OPT_J) {
-	johansen_test(order, cmd.list, &Z, datainfo, cmd.opt, prn);
-    } else {
+    if (action == COINT) {
 	err = coint(order, cmd.list, &Z, datainfo, cmd.opt, prn);
-    } 
+    } else {
+	johansen_test(order, cmd.list, &Z, datainfo, cmd.opt, prn);
+    }
 
     if (err) {
 	gui_errmsg(err);
@@ -811,7 +812,17 @@ void do_coint (GtkWidget *widget, gpointer p)
     } 
 
     view_buffer(prn, 78, 400, _("gretl: cointegration test"), 
-		COINT, NULL);
+		action, NULL);
+}
+
+void do_coint (GtkWidget *widget, gpointer p)
+{
+    real_do_coint(p, COINT);
+}
+
+void do_coint2 (GtkWidget *widget, gpointer p)
+{
+    real_do_coint(p, COINT2);
 }
 
 static int ok_obs_in_series (int varno)
@@ -957,7 +968,7 @@ void do_spearman (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    err = spearman(cmd.list, (const double **) Z, datainfo, 1, prn);
+    err = spearman(cmd.list, (const double **) Z, datainfo, OPT_V, prn);
 
     if (err) {
         gui_errmsg(err);
@@ -1230,11 +1241,11 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	gui_errmsg(fr->err);
 	free_fit_resid(fr);
     } else {
-	err = text_print_fcast_with_errs(fr, &Z, datainfo, prn, 1);
+	err = text_print_fcast_with_errs(fr, &Z, datainfo, OPT_P, prn);
 	if (!err) {
 	    register_graph();
 	}
-	view_buffer(prn, 78, 350, _("gretl: forecasts"), FCAST, fr);
+	view_buffer(prn, 78, 350, _("gretl: forecasts"), FCASTERR, fr);
     }
 }
 
@@ -5360,6 +5371,8 @@ static int handle_user_defined_function (char *line, int *fncall)
     return err;
 }
 
+/* ........................................................... */
+
 static void do_autofit_plot (PRN *prn)
 {
     int lines[1];
@@ -5385,6 +5398,8 @@ static void do_autofit_plot (PRN *prn)
 	register_graph();
     }
 }
+
+/* ........................................................... */
 
 int gui_exec_line (char *line, 
 		   LOOPSET **plp, int *plstack, int *plrun, 
@@ -5515,6 +5530,7 @@ int gui_exec_line (char *line,
 
     case ADDOBS:
     case ADF: 
+    case COINT2:
     case COINT: 
     case CORR: 
     case CRITERIA: 
@@ -5525,6 +5541,7 @@ int gui_exec_line (char *line,
     case FUNC:
     case FUNCERR:
     case GRAPH: 
+    case PLOT: 
     case HURST: 
     case INFO: 
     case KPSS:
@@ -5802,7 +5819,8 @@ int gui_exec_line (char *line,
 	}
 	break;
 
-    case TEXPRINT:
+    case EQNPRINT:
+    case TABPRINT:
 	if ((models[0])->errcode == E_NAN) {
 	    pprintf(prn, _("Couldn't format model\n"));
 	    break;
@@ -5811,7 +5829,9 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	strcpy(texfile, cmd.param);
-	err = texprint(models[0], datainfo, texfile, cmd.opt);
+	err = texprint(models[0], datainfo, texfile, 
+		       (cmd.ci == EQNPRINT)? (cmd.opt & OPT_E) :
+		       cmd.opt);
 	if (err) {
 	    pprintf(prn, _("Couldn't open tex file for writing\n"));
 	} else {
@@ -5820,36 +5840,33 @@ int gui_exec_line (char *line,
 	break;
 
     case FCAST:
-	if ((err = script_model_test(cmd.ci, 0, prn))) {
-	    break;
-	}
-	if (cmd.opt & OPT_E) {
-	    err = fcast_with_errs(line, models[0], &Z, datainfo, outprn,
-				  (cmd.opt != 0)); 
-	    if (err) {
-		errmsg(err, prn);
-	    }
+    case FIT:
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
+	if (cmd.ci == FIT) {
+	    err = fcast("fcast autofit", models[0], &Z, datainfo);
 	} else {
-	    if (cmd.opt & OPT_A) {
-		err = fcast("fcast autofit", models[0], datainfo, &Z);
-	    } else {
-		err = fcast(line, models[0], datainfo, &Z);
+	    err = fcast(line, models[0], &Z, datainfo);
+	}
+	if (err) {
+	    errmsg(err, prn);
+	} else {
+	    if (cmd.ci == FIT) {
+		pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
 	    }
-	    if (err < 0) {
-		err = -err;
-		printf(_("Error retrieving fitted values\n"));
-		errmsg(err, prn);
-	    } else {
-		err = 0;
-		if (cmd.opt & OPT_A) {
-		    pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
-		}
-		maybe_list_vars(datainfo, prn);
-		if ((cmd.opt & OPT_A) && exec_code == CONSOLE_EXEC &&
-		    dataset_is_time_series(datainfo)) {
-		    do_autofit_plot(prn);
-		}
+	    maybe_list_vars(datainfo, prn);
+	    if (cmd.ci == FIT && exec_code == CONSOLE_EXEC && 
+		dataset_is_time_series(datainfo)) {
+		do_autofit_plot(prn);
 	    }
+	}
+	break;
+
+    case FCASTERR:
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
+	err = fcast_with_errs(line, models[0], &Z, datainfo, 
+			      cmd.opt, outprn);
+	if (err) {
+	    errmsg(err, prn);
 	}
 	break;
 
@@ -5950,6 +5967,7 @@ int gui_exec_line (char *line,
         break;
 
     case OPEN:
+    case APPEND:
 	if (dataset_locked() || exec_code == SAVE_SESSION_EXEC) {
 	    break;
 	}
@@ -5985,7 +6003,7 @@ int gui_exec_line (char *line,
 	    gui_errmsg(err);
 	    break;
 	}
-	if (!dbdata && !(cmd.opt & OPT_A)) {
+	if (!dbdata && cmd.ci != APPEND) {
 	    strncpy(paths.datfile, datfile, MAXLEN-1);
 	}
 	if (chk == GRETL_CSV_DATA || chk == GRETL_BOX_DATA || dbdata) {
@@ -5993,7 +6011,7 @@ int gui_exec_line (char *line,
 	    maybe_display_string_table();
 	}
 	if (datainfo->v > 0 && !dbdata) {
-	    if (cmd.opt & OPT_A) {
+	    if (cmd.ci == APPEND) {
 		register_data(NULL, NULL, 0);
 	    } else {
 		register_data(paths.datfile, NULL, 0);

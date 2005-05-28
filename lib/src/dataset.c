@@ -797,7 +797,27 @@ int dataset_scalar_to_vector (int v, double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
-int dataset_copy_variable (int v, double ***pZ, DATAINFO *pdinfo)
+/* apparatus for use by new-style gretl functions */
+
+int dataset_add_scalar_as (const char *numstr, const char *newname,
+			   double ***pZ, DATAINFO *pdinfo)
+{
+    int err = 0;
+
+    err = dataset_add_scalar(pZ, pdinfo);
+    if (!err) {
+	int vnew = pdinfo->v - 1;
+
+	(*pZ)[vnew][0] = atof(numstr);
+	strcpy(pdinfo->varname[vnew], newname);
+	STACK_LEVEL(pdinfo, vnew) += 1;
+    }
+
+    return err;
+}
+
+int dataset_copy_variable_as (int v, const char *newname,
+			      double ***pZ, DATAINFO *pdinfo)
 {
     int t, err = 0;
 
@@ -808,13 +828,15 @@ int dataset_copy_variable (int v, double ***pZ, DATAINFO *pdinfo)
 	for (t=0; t<pdinfo->n; t++) {
 	    (*pZ)[vnew][t] = (*pZ)[v][t];
 	}
-	strcpy(pdinfo->varname[vnew], pdinfo->varname[v]);
+	strcpy(pdinfo->varname[vnew], newname);
 	STACK_LEVEL(pdinfo, vnew) += 1;
-	 /* FIXME other varinfo stuff */
+	 /* FIXME other varinfo stuff?? */
     }
 
     return err;
 }
+
+/* end new-style function apparatus */
 
 static int 
 shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv)

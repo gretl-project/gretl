@@ -408,8 +408,10 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 
     strcpy(title, "gretl: ");
 
-    if (action == ENGLE_GRANGER || action == JOHANSEN) {
+    if (action == COINT) {
 	selection_dialog(_("gretl: cointegration test"), do_coint, action);
+    } else if (action == COINT2) {
+	selection_dialog(_("gretl: cointegration test"), do_coint2, action);
     } else if (action == GR_XY || action == GR_IMP || action == GR_DUMMY
 	       || action == SCATTERS || action == GR_3D) {
 	void (*okfunc)() = NULL;

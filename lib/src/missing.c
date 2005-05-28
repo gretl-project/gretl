@@ -92,10 +92,10 @@ static int reorganize_uhat_yhat (MODEL *pmod)
  * @Z: data array.
  * @pdinfo: information on dataset.
  *
- * Reverses the effect of #repack_missing_daily_obs, hence
+ * Reverses the effect of repack_missing_daily_obs(), hence
  * restoring a daily dataset to its correct order.  The
  * model pointer, @pmod, must be the same as that given 
- * previously to #repack_missing_daily_obs.
+ * previously to repack_missing_daily_obs().
  *
  * Returns: 0 on success, non-zero error code on error.
  */
@@ -242,7 +242,7 @@ repack_missing (const MODEL *pmod, double **Z, const DATAINFO *pdinfo,
  * as not really "missing" but rather non-existent (e.g. values
  * of financial market variables on dates of trading holidays).
  * The original dataset can (and generally should) be restored
- * using #undo_daily_repack after model estimation.
+ * using undo_daily_repack() after model estimation.
  *
  * Returns: 0 on success, %E_ALLOC on error.
  */
@@ -538,7 +538,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
  * the range.  
  *
  * If you want to check for missing values inside the sample
- * range, use #check_for_missing_obs instead.
+ * range, use check_for_missing_obs() instead.
  * 
  * Returns: 1 if an adjustment was made, otherwise 0.
  */
@@ -566,7 +566,7 @@ int varlist_adjust_sample (const int *list, int *t1, int *t2,
  * @t2: on entry, initial end of sample range; on exit, end
  *      of sample range adjusted for missing values.
  * @Z: data array.
- * @misst: return location for index of the first missing
+ * @misst: return location for index of the first missing observation
  *         inside the (possibly reduced) sample range, or %NULL.
  *
  * Drops leading or trailing observations from the sample range
@@ -578,7 +578,7 @@ int varlist_adjust_sample (const int *list, int *t1, int *t2,
  * observation where the first such missing value was found.
  * 
  * If you don't care about missing values inside the sample range,
- * use the simpler #varlist_adjust_sample.
+ * use the simpler varlist_adjust_sample().
  *
  * Returns: the (non-zero) ID number of the first variable for 
  * which a missing value is first found inside the adjusted sample 
@@ -679,13 +679,13 @@ static int real_setmiss (double missval, int varno,
  * set_miss:
  * @list: list of variables to process, or an empty list or %NULL
  *        to process all variables.
- * @param: string with specification of value to treat as missing.
+ * @param: string representation of the numerical value to treat as missing.
  * @Z: data matrix.
  * @pdinfo: pointer to data information struct.
  * @prn: pointer to printing struct.
  * 
  * Set to "missing" each observation of each series in @list that
- * has the specified value, as in @param.
+ * has the value represented by @param.
  *
  * Returns: 1 if at least one observation was set as missing,
  * otherwise 0.

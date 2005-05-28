@@ -19,8 +19,8 @@
 
 #include "libgretl.h"
 
-int gretl_forecast (int t1, int t2, int nv, 
-		    const MODEL *pmod, double ***pZ)
+static int gretl_forecast (int t1, int t2, int nv, 
+			   const MODEL *pmod, double ***pZ)
 {
     double xx, zz, rk;
     int i, k, maxlag = 0, yno;
@@ -424,8 +424,8 @@ void free_fit_resid (FITRESID *fr)
 }
 
 int fcast_with_errs (const char *str, const MODEL *pmod, 
-		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
-		     int plot)
+		     double ***pZ, DATAINFO *pdinfo, 
+		     gretlopt opt, PRN *prn)
 {
     FITRESID *fr;
     int err;
@@ -437,11 +437,76 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     }
 
     if ((err = fr->err) == 0) {
-	err = text_print_fcast_with_errs(fr, pZ, pdinfo, prn, plot);
+	err = text_print_fcast_with_errs(fr, pZ, pdinfo, opt, prn);
     }
 
     free_fit_resid(fr);
     
     return err;
 }
+
+/**
+ * fcast:
+ * @line: command line, giving a starting observation, ending
+ * observation, and variable name to use for the forecast values
+ * (the starting and ending observations may be omitted).
+ * @pmod: pointer to model.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: pointer to data information struct.
+ *
+ * Adds to the dataset a new variable containing predicted values for the
+ * dependent variable in @pmod over the specified range of observations,
+ * or, by default, over the sample range currently defined in @pdinfo.
+ *
+ * Returns: 0 on sucess, non-zero error code on failure.
+ */
+
+int fcast (const char *line, const MODEL *pmod, double ***pZ,
+	   DATAINFO *pdinfo)
+{
+    int t, t1, t2, vi;
+    char t1str[OBSLEN], t2str[OBSLEN], varname[VNAMELEN];
+
+    *t1str = '\0'; *t2str = '\0';
+
+    /* the varname should either be in the 2nd or 4th position */
+    if (sscanf(line, "%*s %8s %8s %8s", t1str, t2str, varname) != 3) {
+	if (sscanf(line, "%*s" "%8s", varname) != 1) {
+	    return E_PARSE;
+	}
+    }
+
+    if (*t1str && *t2str) {
+	t1 = dateton(t1str, pdinfo);
+	t2 = dateton(t2str, pdinfo);
+	if (t1 < 0 || t2 < 0 || t2 < t1) {
+	    return E_DATA;
+	}
+    } else {
+	t1 = pdinfo->t1;
+	t2 = pdinfo->t2;
+    }
+
+    if (check_varname(varname)) {
+	return 1;
+    }
+
+    vi = varindex(pdinfo, varname);
+
+    if (vi >= pdinfo->v && dataset_add_series(1, pZ, pdinfo)) { 
+	return E_ALLOC;
+    }
+
+    strcpy(pdinfo->varname[vi], varname);
+    strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
+
+    for (t=0; t<pdinfo->n; t++) {
+	(*pZ)[vi][t] = NADBL;
+    }
+
+    gretl_forecast(t1, t2, vi, pmod, pZ);
+
+    return 0;
+}
+
 

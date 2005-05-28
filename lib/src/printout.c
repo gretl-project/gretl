@@ -1102,8 +1102,8 @@ check_for_sorted_var (int *list, const DATAINFO *pdinfo)
  * @list: list of variables to print.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @oflag: if = OPT_O, print the data by observation (series in columns);
- *          if = OPT_T, print the data to 10 significant digits.
+ * @opt: if = OPT_O, print the data by observation (series in columns);
+ *       if = OPT_T, print the data to 10 significant digits.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list, from observations t1 to
@@ -1113,7 +1113,7 @@ check_for_sorted_var (int *list, const DATAINFO *pdinfo)
  */
 
 int printdata (const int *list, const double **Z, const DATAINFO *pdinfo, 
-	       gretlopt oflag, PRN *prn)
+	       gretlopt opt, PRN *prn)
 {
     int j, v, v1, v2, j5, nvj5, lineno, ncol;
     int allconst, scalars = 0;
@@ -1149,7 +1149,7 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
     /* screen out any scalars and print them first */
     for (j=1; j<=plist[0]; j++) {
 	if (!pdinfo->vector[plist[j]]) {
-	    if (oflag & OPT_T) {
+	    if (opt & OPT_T) {
 		pprintf(prn, "\n%8s = %.10g", pdinfo->varname[plist[j]], 
 			Z[plist[j]][0]);
 	    } else {
@@ -1182,7 +1182,7 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     if (allconst) {
 	for (j=1; j<=plist[0]; j++) {
-	    if (oflag & OPT_T) {
+	    if (opt & OPT_T) {
 		pprintf(prn, "%8s = %.10g\n", pdinfo->varname[plist[j]], 
 			Z[plist[j]][pdinfo->t1]);
 	    } else {
@@ -1193,7 +1193,7 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto endprint;
     }
 
-    if (!(oflag & OPT_O)) { /* not by observations, but by variable */
+    if (!(opt & OPT_O)) { /* not by observations, but by variable */
 	if (plist[0] > 0) {
 	    pputc(prn, '\n');
 	}
@@ -1201,7 +1201,7 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    pprintf(prn, _("Varname: %s\n"), pdinfo->varname[plist[j]]);
 	    print_smpl (pdinfo, 0, prn);
 	    pputc(prn, '\n');
-	    printz(Z[plist[j]], pdinfo, prn, oflag);
+	    printz(Z[plist[j]], pdinfo, prn, opt);
 	    pputc(prn, '\n');
 	}
 	goto endprint;
@@ -1345,12 +1345,13 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 /* ........................................................... */
 
 int text_print_fcast_with_errs (const FITRESID *fr, 
-				double ***pZ, DATAINFO *pdinfo, PRN *prn,
-				int plot)
+				double ***pZ, DATAINFO *pdinfo, 
+				gretlopt opt, PRN *prn)
 {
     int t, pv, err = 0;
     double *maxerr;
     int time_series = (pdinfo->structure == TIME_SERIES);
+    int plot = (opt & OPT_P);
 
     maxerr = malloc(fr->nobs * sizeof *maxerr);
     if (maxerr == NULL) {
