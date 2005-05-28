@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-05-28 13:35-0400\n"
-"PO-Revision-Date: 2005-05-20 17:06-0400\n"
+"PO-Revision-Date: 2005-05-28 21:58+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1184,7 +1184,7 @@ msgstr "Il dataset compattato sarebbe vuoto"
 #: lib/src/dbwrite.c:574
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
+msgstr "Delle variabili da salvare, %d sono già presenti nel database."
 
 #: lib/src/describe.c:678
 #, c-format
@@ -2277,6 +2277,8 @@ msgid ""
 "Number of arguments (%d) does not match the number of\n"
 "parameters for function %s (%d)"
 msgstr ""
+"Il numero di argomenti (%d) non corrisponde al numero di\n"
+"parametri per la funzione %s (%d)"
 
 #: lib/src/gretl_func.c:995
 #, c-format
@@ -2284,6 +2286,8 @@ msgid ""
 "Number of assignments (%d) exceeds the number of values returned by\n"
 "%s (%d)"
 msgstr ""
+"Il numero delle assegnazioni (%d) eccede il numero dei valori restituiti da\n"
+"%s (%d)"
 
 #: lib/src/gretl_func.c:1123 cli/gretlcli.c:612 gui2/library.c:5227
 #, c-format
@@ -2294,7 +2298,7 @@ msgstr ""
 #: lib/src/gretl_func.c:1159
 #, c-format
 msgid "Error condition in execution of function %s"
-msgstr ""
+msgstr "Condizione di errore nell'esecuzione della funzione %s"
 
 #: lib/src/gretl_intl.c:39 gui/gretl.c:159 gui2/gretl.c:213
 msgid "/File/_Open data"
@@ -2647,7 +2651,7 @@ msgstr "end: non c'è niente da finire"
 #: lib/src/interact.c:923
 #, c-format
 msgid "%s: required parameter is missing"
-msgstr ""
+msgstr "%s: il parametro richiesto manca"
 
 #: lib/src/interact.c:1054 gui2/objectsave.c:214
 #, c-format
@@ -2764,14 +2768,13 @@ msgid "Now appending output to '%s'\n"
 msgstr "Aggiunta dei risultati a '%s'\n"
 
 #: lib/src/interact.c:2349
-#, fuzzy
 msgid "The data set is currently sub-sampled.\n"
-msgstr "Il GdkFont selezionato attualmente."
+msgstr "Al momento sul dataset è definito un sotto-campione.\n"
 
 #: lib/src/interact.c:2356
-#, fuzzy, c-format
+#, c-format
 msgid "Dataset extended by %d observations"
-msgstr "Dataset completo: %d osservazioni\n"
+msgstr "Il dataset è stato esteso di %d osservazioni"
 
 #: lib/src/interact.c:2385
 msgid "adf: lag order must be given first\n"
@@ -5067,9 +5070,8 @@ msgid "/File/Save data as/_gzipped..."
 msgstr "/File/Salva dati come/g_zip..."
 
 #: gui/gretl.c:190 gui2/gretl.c:253
-#, fuzzy
 msgid "/File/Save data as/_database..."
-msgstr "/File/Salva dati come/g_zip..."
+msgstr "/File/Salva dati come/_database..."
 
 #: gui/gretl.c:194 gui2/gretl.c:257
 msgid "/File/_Export data"
@@ -6119,9 +6121,8 @@ msgid "Fine-tune using Cochrane-Orcutt"
 msgstr "Affina usando Cochrane-Orcutt"
 
 #: gui/selector.c:1217 gui2/selector.c:1522
-#, fuzzy
 msgid "Cointegrating regression includes a constant"
-msgstr "Regressione di cointegrazione - "
+msgstr "La regressione di cointegrazione include una costante"
 
 #: gui/selector.c:1237 gui2/dialogs.c:2623 gui2/dlgutils.c:33
 #: plugin/leverage.c:178 plugin/logistic.c:122 plugin/pca.c:194
@@ -6389,7 +6390,7 @@ msgstr "Chiudi"
 
 #: gui/ssheet.c:762 gui2/ssheet.c:1460
 msgid "You can't do this while editing the dataset"
-msgstr ""
+msgstr "Impossibile eseguire l'operazione mentre si modifica il dataset"
 
 #: gui/textbuf.c:47 gui2/textbuf.c:131 gui2/textbuf.c:140
 msgid "No undo information available"
@@ -7594,9 +7595,8 @@ msgid "compaction method (for reducing frequency):"
 msgstr "Metodo di compattamento (per ridurre la frequenza):"
 
 #: gui2/dialogs.c:1192
-#, fuzzy
 msgid "gretl: database description"
-msgstr "Directory dei database di gretl"
+msgstr "gretl: descrizione del database"
 
 #: gui2/dialogs.c:1410 gui2/dialogs.c:1597
 #, c-format
@@ -8045,9 +8045,8 @@ msgid "gretl data files (*.gdt)"
 msgstr "gretl file di dati (*.gdt)"
 
 #: gui2/fileselect.c:625
-#, fuzzy
 msgid "gretl database files (*.bin)"
-msgstr "gretl: file database"
+msgstr "gretl file database (*.bin)"
 
 #: gui2/fileselect.c:626 gui2/fileselect.c:628
 msgid "gretl command files (*.inp)"
@@ -8059,7 +8058,7 @@ msgstr "gretl file di comandi (*.inp)"
 
 #: gui2/fileselect.c:629 gui2/fileselect.c:641
 msgid "text files (*.txt)"
-msgstr "file di testi (*.txt)"
+msgstr "file di testo (*.txt)"
 
 #: gui2/fileselect.c:630 gui2/fileselect.c:649
 msgid "session files (*.gretl)"
@@ -9842,7 +9841,7 @@ msgstr "Dati trasposti"
 
 #: gui2/library.c:4706
 msgid "OK to overwrite?"
-msgstr ""
+msgstr "Conferma la sovrascrittura?"
 
 #: gui2/library.c:4761
 msgid ""
@@ -9850,7 +9849,7 @@ msgid ""
 "OK to overwrite it?"
 msgstr ""
 "Esiste già un file di dati con questo nome.\n"
-"OK per sovrascriverlo?"
+"Conferma la sovrascrittura?"
 
 #: gui2/library.c:4800
 #, c-format
