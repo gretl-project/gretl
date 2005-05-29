@@ -210,7 +210,7 @@ struct genr_func funcs[] = {
 # define MP_MATH(f) (f == T_MPOW)
 #endif
 
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
 static const char *get_func_word (int fnum);
 #endif
 
@@ -225,6 +225,9 @@ static const char *get_func_word (int fnum);
 
 #define genr_force_vector(g) ((g)->flags |= GENR_FORCE_VECTOR)
 #define genr_forcing_vector(g) ((g)->flags & GENR_FORCE_VECTOR)
+
+#define genr_set_require_scalar(g) ((g)->flags |= GENR_NEED_SCALAR)
+#define genr_require_scalar(g) ((g)->flags & GENR_NEED_SCALAR)
 
 #define genr_doing_save(g) ((g)->flags & GENR_SAVE)
 #define genr_set_save(g) ((g)->flags |= GENR_SAVE)
@@ -304,7 +307,7 @@ static genatom *make_atom (int scalar, int varnum,
     return atom;
 }
 
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
 static int print_atom (genatom *atom)
 {
     if (atom == NULL) return 1;
@@ -406,7 +409,7 @@ int get_generated_value (const char *argv, double *val,
     int err = 0;
 
     sprintf(genline, "genr argv=%s", argv);
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
     fprintf(stderr, "get_generated_value: trying '%s'\n", genline);
 #endif
     err = generate(genline, pZ, pdinfo, pmod, OPT_P);
@@ -998,9 +1001,8 @@ static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
 static double genr_get_var_status (GENERATE *genr, genatom *atom)
 {
     double val = NADBL;
-    genatom *child;
+    genatom *child = pop_child_atom(atom);
 
-    child = pop_child_atom(atom);	
     if (child != NULL) {
 	if (child->varnum >= 0 && child->varnum < genr->pdinfo->v) {
 	    if (atom->func == T_VARNUM) { 
@@ -1016,7 +1018,8 @@ static double genr_get_var_status (GENERATE *genr, genatom *atom)
 	genr->err = E_SYNTAX;
     }
 
-    DPRINTF(("genr_get_var_status: got %g\n", val));
+    DPRINTF(("genr_get_var_status: child=%p, got %g\n", 
+	     (void *) child, val));
 
     return val;
 }
@@ -1044,7 +1047,7 @@ static int add_statistic_to_genr (GENERATE *genr, genatom *atom)
 	return genr->err;
     }
 
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
     fprintf(stderr, "add_statistic_to_genr:\n atom->func = %d (%s), val = %g, "
 	    "now atom->scalar = 1\n", atom->func, get_func_word(atom->func),
 	    val);
@@ -1449,6 +1452,12 @@ static int token_is_atomic (const char *s, GENERATE *genr)
 	return 1;
     }
 
+    /* if not numeric string but begins with digit, can't
+       be atomic */
+    if (isdigit((unsigned char) *s)) {
+	return 0;
+    }
+
     /* treat lag variable as atom */
     if (get_lagvar(s, NULL, genr)) {
 	return 1;
@@ -1548,7 +1557,7 @@ static int stack_op_and_token (char *s, GENERATE *genr, int level)
 	s++;
     } 
 
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
     if (isprint(op)) fprintf(stderr, "op = '%c'\n", op);
     else fprintf(stderr, "op = %d\n", op);
 #endif
@@ -1576,14 +1585,14 @@ static int stack_op_and_token (char *s, GENERATE *genr, int level)
 	} else {
 	    genatom *atom;
 
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
 	    if (*tok == '\0') fprintf(stderr, "genr: got a blank token\n");
 	    else fprintf(stderr, "token = '%s'\n", tok);
 #endif
 	    atom = parse_token(tok, op, genr, level);
 	    if (atom != NULL) {
 		genr->err = push_atom(atom);
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
 		if (!genr->err) fprintf(stderr, "pushed atom OK\n");
 #endif
 	    }
@@ -1863,7 +1872,7 @@ static int parenthesize (char *str)
     return 0;
 }
 
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
 
 static const char *get_func_word (int fnum)
 {
@@ -2238,19 +2247,22 @@ static void get_genr_formula (char *formula, const char *line,
 	genr_unset_save(genr);
 	line += 4;
     } else if (!strcmp(first, "my")) {
-	if (gretl_executing_function()) {
-	    /* generation of vars local to function */
+	if (gretl_executing_macro()) {
+	    /* generation of vars local to macro */
 	    genr_set_local(genr);
 	    line += 2;
 	}
     } else if (!strcmp(first, "global")) {
-	if (gretl_executing_function()) {
-	    /* generation of vars local to function */
+	if (gretl_executing_macro()) {
+	    /* generation of global vars within macro */
 	    genr_unset_local(genr);
 	    line += 6;
 	}	
     } else if (!strcmp(first, "series")) {
 	genr_force_vector(genr);
+	line += 6;
+    } else if (!strcmp(first, "scalar")) {
+	genr_set_require_scalar(genr);
 	line += 6;
     } 
 
@@ -2268,21 +2280,13 @@ static void get_genr_formula (char *formula, const char *line,
 	}
     }
 
-#ifdef NEW_STYLE_FUNCTIONS
-    if (gretl_executing_function()) {
-	if (sscanf(line, "my %8s =", vname)) {
+    /* allow for old-style "genr my ... " */
+    if (sscanf(line, "my %8s =", vname)) {
+	if (gretl_executing_macro()) {
 	    genr_set_local(genr);
-	    line += 3;
 	}
+	line += 3;
     }
-#else
-    if (!genr_is_local(genr) && gretl_executing_function()) {
-	if (sscanf(line, "my %8s =", vname)) {
-	    genr_set_local(genr);
-	    line += 3;
-	}
-    }
-#endif
 
     *formula = '\0';
 
@@ -2409,7 +2413,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
     char newvar[USER_VLEN];
     int oldv = pdinfo->v;
     GENERATE genr;
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
     genatom *atom;
 #endif
 
@@ -2564,7 +2568,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	genr.err = math_tokenize(s, &genr, 0);
     }
 
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
     i = 0;
     while ((atom = pop_atom(&genr))) {
 	fprintf(stderr, "*** atom %d ***\n", i++);
@@ -2596,17 +2600,45 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     genrfree(&genr);
 
+#if GENR_DEBUG
+    fprintf(stderr, "\ngenerate: err = %d\n\n", genr.err);
+#endif
+
     return genr.err;
 }
 
 /* ........................................................... */
+
+static int 
+set_new_var_stack_depth (DATAINFO *pdinfo, int v)
+{
+    int fsd = gretl_function_stack_depth();
+    int msd = gretl_macro_stack_depth();
+
+    /* FIXME: not sure about this! */
+    if (fsd > msd) {
+	STACK_LEVEL(pdinfo, v) = fsd;
+	return fsd;
+    } else {
+	STACK_LEVEL(pdinfo, v) = msd;
+	return msd;
+    }
+}
     
 static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 {
     double xt = genr->xvec[pdinfo->t1];
     int t, v = genr->varnum;
     int modifying = 0;
-    int err = 0;
+    int depth = 0, err = 0;
+
+    /* check that any request for a scalar can be honored,
+       abort if not */
+    if (genr_require_scalar(genr) && genr_is_vector(genr)) {
+	strcpy(gretl_errmsg, _("Specified a scalar, but a vector "
+			       "was produced."));
+	return 1;
+    }	
 
     /* take into account any forcing the user has attempted */
     if (genr_forcing_vector(genr) && genr_is_scalar(genr)) {
@@ -2640,20 +2672,24 @@ static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	err = 1;
     }
 
-    if (!err && genr_is_local(genr)) {
+    if (!err && (1 || genr_is_local(genr))) {
+#if GENR_DEBUG
+	fprintf(stderr, "genr is local\n");
+#endif
 	/* record as a var local to a particular function
-	   stack depth */
-	STACK_LEVEL(pdinfo, v) = gretl_function_stack_depth();
+	   function or macro stack depth */
+	depth = set_new_var_stack_depth(pdinfo, v);
     }
 
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
     if (err) {
 	fprintf(stderr, "genr_write_var: err = %d\n", err);
     } else {
-	fprintf(stderr, "genr_write_var: adding %s '%s' (#%d, %s)\n",
+	fprintf(stderr, "genr_write_var: adding %s '%s' (#%d, %s, depth %d)\n",
 		(pdinfo->vector[v])? "vector" : "scalar",
 		pdinfo->varname[v], v,
-		(modifying)? "replaced" : "newly created");
+		(modifying)? "replaced" : "newly created",
+		depth);
     }
 #endif
 
@@ -2721,7 +2757,7 @@ static double calc_xy (double x, double y, char op, int t, int *err)
 
     *err = 0;
 
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
     fprintf(stderr, "calc_xy: in: x=%g, y=%g, ", x, y);
     if (isprint(op)) fprintf(stderr, "op='%c'\n", op);
     else fprintf(stderr, "op=%d\n", op);
@@ -3579,7 +3615,7 @@ static double *get_tmp_series (double *mvec, GENERATE *genr,
     double *x;
     double xx, yy;
 
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
     fprintf(stderr, "*** Doing get_tmp_series, fn = %d ***\n", fn);
 #endif
 
@@ -4747,8 +4783,6 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
  * Prints a list of the names of the variables currently defined.
  */
 
-#ifdef NEW_STYLE_FUNCTIONS
-
 void varlist (const DATAINFO *pdinfo, PRN *prn)
 {
     int level = 0;
@@ -4786,27 +4820,6 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
     pputc(prn, '\n');
 }
 
-#else
-
-void varlist (const DATAINFO *pdinfo, PRN *prn)
-{
-    int i, n = pdinfo->v;
-
-    pprintf(prn, _("Listing %d variables:\n"), n);
-
-    for (i=0; i<n; i++) {
-	pprintf(prn, "%3d) %-10s", i, pdinfo->varname[i]);
-	if ((i+1) % 5 == 0) {
-	    pputc(prn, '\n');
-	}
-    }
-    if (n % 5) pputc(prn, '\n');
-
-    pputc(prn, '\n');
-}
-
-#endif
-
 /**
  * maybe_list_vars:
  * @pdinfo: data information struct.
@@ -4823,23 +4836,61 @@ void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn)
     }
 }
 
-#ifdef NEW_STYLE_FUNCTIONS
+/* executing a macro: pick a local var as first choice, parent-local
+   or global as second, but limited by an enclosing function, if any.
+*/
+
+static int macro_pick_varmatch (const DATAINFO *pdinfo, 
+				const char *check, int msd,
+				int minsee)
+{
+    int localv = -1;
+    int globalv = -1;
+    int slmax = -1;
+    int i, ret = pdinfo->v;
+
+    for (i=1; i<pdinfo->v; i++) { 
+	if (!strcmp(pdinfo->varname[i], check)) {
+	    int sl = STACK_LEVEL(pdinfo, i);
+
+	    if (sl >= minsee && sl < msd) {
+		if (sl > slmax) {
+		    slmax = sl;
+		    globalv = i;
+		}
+	    } else if (sl == msd) {
+		localv = i;
+	    }
+	    if (localv > 0) {
+		break;
+	    }
+	}
+    }
+
+    if (localv > 0) {
+	ret = localv;
+    } else if (globalv > 0) {
+	ret = globalv;
+    }
+
+    return ret;
+}
+
+#define GEN_LEVEL_DEBUG 0
 
 static int 
-real_varindex (const DATAINFO *pdinfo, const char *varname, 
-	       /* unused */ int local)
+real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 {
-    const char *check;
-    int i, sd = 0, ret = pdinfo->v;
+    const char *check = varname;
+    int sd = 0, fsd = 0, msd = 0;
+    int i, ret = pdinfo->v;
 
     if (varname == NULL) {
 	return ret;
     }
 
-    if (!strncmp(varname, "__", 2)) {
-	check = varname + 2;
-    } else {
-	check = varname;
+    while (*check == '_') {
+	check++;
     }
 
     if (!strcmp(check, "uhat") || !strcmp(check, "$uhat")) {
@@ -4854,26 +4905,44 @@ real_varindex (const DATAINFO *pdinfo, const char *varname,
 	return 0;
     }
 
-    if (strlen(check) == 1 && is_active_index_loop_char(*check)) {
-	/* loop index variable: 'i', 'j' or such */
+    if (*(check + 1) == 0 && is_active_index_loop_char(*check)) {
+	/* single-char loop index variable: 'i', 'j' or such */
 	return INDEXNUM;
     }
 
-    if (gretl_executing_function()) {
-	sd = gretl_function_stack_depth();
-    } 
+    fsd = gretl_function_stack_depth();
+    msd = gretl_macro_stack_depth();
 
-    if (sd > 0) {
-	/* inside a function, see only variables at same level */
+    if (fsd > 0) {
+	sd = fsd;
+    } else if (msd && local) {
+	sd = msd;
+    }
+
+#if GEN_LEVEL_DEBUG
+    fprintf(stderr, "varindex for '%s': fsd=%d, msd=%d, sd=%d\n",
+	    check, fsd, msd, sd);
+#endif
+
+    if (fsd > 0 && (local || msd == 0)) {
+	/* inside a function, or inside a macro in "local" mode:
+	   see only variables at same level */
 	for (i=1; i<pdinfo->v; i++) { 
+#if GEN_LEVEL_DEBUG > 1
+	    fprintf(stderr, "checking '%s' at level %d\n", 
+		    pdinfo->varname[i],STACK_LEVEL(pdinfo, i));
+#endif 
 	    if (STACK_LEVEL(pdinfo, i) == sd && 
 		!strcmp(pdinfo->varname[i], check)) {
 		ret = i;
 		break;
 	    }
 	}
+    } else if (msd > 0) {
+	/* complicated, see above */
+	ret = macro_pick_varmatch(pdinfo, check, msd, fsd);
     } else {
-	/* not inside a function, don't have to check level */
+	/* not inside a function or macro, don't have to check level */
 	for (i=1; i<pdinfo->v; i++) { 
 	    if (!strcmp(pdinfo->varname[i], check)) { 
 		ret = i;
@@ -4893,128 +4962,12 @@ real_varindex (const DATAINFO *pdinfo, const char *varname,
  * Returns: the ID number of the variable whose name is given,
  * or the next available ID number if there is no variable of
  * that name.
- *
  */
 
 int varindex (const DATAINFO *pdinfo, const char *varname)
 {
     return real_varindex(pdinfo, varname, 0);
 }
-
-#else /* old version follows */
-
-static int 
-real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
-{
-    const char *check;
-    int i, sd = 0, ret = pdinfo->v;
-
-    if (varname == NULL) {
-	return ret;
-    }
-
-    if (!strncmp(varname, "__", 2)) {
-	check = varname + 2;
-    } else {
-	check = varname;
-    }
-
-    if (!strcmp(check, "uhat") || !strcmp(check, "$uhat")) {
-	return UHATNUM; 
-    } 
-    if (!strcmp(check, "yhat") || !strcmp(check, "$yhat")) {
-	return YHATNUM; 
-    }
-    if (!strcmp(check, "$h")) {
-	return HNUM; 
-    }
-
-    if (!strcmp(check, "t") || !strcmp(check, "obs")) {
-	return TNUM;
-    }
-    if (!strcmp(check, "const") || !strcmp(check, "CONST")) {
-	return 0;
-    }
-
-    if (strlen(check) == 1 && is_active_index_loop_char(*check)) {
-	/* loop index variable: 'i', 'j' or such */
-	return INDEXNUM;
-    }
-
-    if (gretl_executing_function()) {
-	sd = gretl_function_stack_depth();
-    } 
-
-    /* inside a function, generating a "my" local var:
-       ignore globals altogether */
-    if (local) {
-	for (i=1; i<pdinfo->v; i++) { 
-	    if (!strcmp(pdinfo->varname[i], check) &&
-		STACK_LEVEL(pdinfo, i) == sd) {
-		ret = i;
-		break;
-	    }
-	}
-    } else if (sd > 0) {
-	/* executing a function: pick a local var as first
-	   choice, parent-local or global as second */
-	int localv = -1;
-	int globalv = -1;
-	int slmax = -1;
-
-	for (i=1; i<pdinfo->v; i++) { 
-	    if (!strcmp(pdinfo->varname[i], check)) {
-		int sl = STACK_LEVEL(pdinfo, i);
-
-		if (sl < sd) {
-		    if (sl > slmax) {
-			slmax = sl;
-			globalv = i;
-		    }
-		} else if (sl == sd) {
-		    localv = i;
-		}
-		if (localv > 0) {
-		    break;
-		}
-	    }
-	}
-
-	if (localv > 0) {
-	    ret = localv;
-	} else if (globalv > 0) {
-	    ret = globalv;
-	}
-    } else {
-	/* not inside a function, nice and simple */
-	for (i=1; i<pdinfo->v; i++) { 
-	    if (!strcmp(pdinfo->varname[i], check)) { 
-		ret = i;
-		break;
-	    }
-	}
-    }
-
-    return ret;
-}
-
-/**
- * varindex:
- * @pdinfo: data information struct.
- * @varname: name of variable to test.
- *
- * Returns: the ID number of the variable whose name is given,
- * or the next available ID number if there is no variable of
- * that name.
- *
- */
-
-int varindex (const DATAINFO *pdinfo, const char *varname)
-{
-    return real_varindex(pdinfo, varname, 0);
-}
-
-#endif /* !NEW_STYLE_FUNCTIONS */
 
 static void genrfree (GENERATE *genr)
 {

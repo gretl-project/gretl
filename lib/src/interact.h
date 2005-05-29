@@ -87,6 +87,8 @@ int shell (const char *arg);
 void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line, 
 	       unsigned char flags, PRN *prn);
 
+void echo_function_call (const char *line, unsigned char flags, PRN *prn);
+
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *datainfo,
 		     PRN *prn);

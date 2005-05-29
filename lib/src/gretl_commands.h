@@ -89,6 +89,7 @@ enum gretl_cmd_codes {
     MODELTAB,
     MPOLS,
     MULTIPLY,
+    NEWFUNC,
     NLS,
     NULLDATA,
     OLS,     

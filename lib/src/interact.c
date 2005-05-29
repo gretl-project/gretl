@@ -27,6 +27,7 @@
 #include "system.h"
 #include "forecast.h"
 #include "cmd_private.h"
+#include "libset.h"
 
 /* equipment for the "shell" command */
 #ifndef WIN32
@@ -164,7 +165,8 @@ static int catch_command_alias (CMD *cmd)
     } else if (!strcmp(s, "eval") ||
 	       !strcmp(s, "my") ||
 	       !strcmp(s, "global") ||
-	       !strcmp(s, "series")) { 
+	       !strcmp(s, "series") ||
+	       !strcmp(s, "scalar")) { 
 	cmd->ci = GENR;
     } else if (*s == '!') {
 	cmd->ci = SHELL;
@@ -177,8 +179,10 @@ static int catch_command_alias (CMD *cmd)
                            c == ADDTO || \
                            c == FCAST || \
                            c == FCASTERR || \
+                           c == FUNC || \
                            c == LOOP ||  \
                            c == MULTIPLY || \
+                           c == NEWFUNC || \
                            c == NULLDATA || \
                            c == OMITFROM || \
                            c == SETMISS)
@@ -212,6 +216,7 @@ static int catch_command_alias (CMD *cmd)
                        c == LMTEST || \
                        c == LOOP || \
                        c == MODELTAB || \
+                       c == NEWFUNC || \
                        c == NLS || \
                        c == NULLDATA || \
  	               c == OPEN || \
@@ -832,6 +837,7 @@ static int fix_semicolon_after_var (char *s)
 /* apparatus for checking that the "end" command is valid */
 
 #define COMMAND_CAN_END(c) (c == FUNC || \
+                            c == NEWFUNC || \
                             c == NLS || \
 			    c == RESTRICT || \
 			    c == SYSTEM)
@@ -1064,13 +1070,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci = CMD_NULL;
 	return cmd->errcode;
     }
-
-#ifdef NEW_STYLE_FUNCTIONS
-    if (cmd->ci == GENR && gretl_executing_function()) {
-	/* pass OPT_L to make generated vars local to function */
-	cmd->opt |= OPT_L;
-    }
-#endif
 
     /* tex printing commands can take a filename parameter */
     if (cmd->ci == EQNPRINT || cmd->ci == TABPRINT) {
@@ -1966,6 +1965,20 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 
 #undef ECHO_DEBUG
 
+static int is_silent (const CMD *cmd)
+{
+    if (cmd->ci == FUNCERR) {
+	return 1;
+    }
+
+    if (cmd->ci == SET && !strcmp(cmd->param, "echo") &&
+	gretl_executing_function_or_macro()) {
+	return 1;
+    }
+
+    return 0;
+}
+
 /**
  * echo_cmd:
  * @cmd: pointer to #CMD struct.
@@ -1997,6 +2010,11 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     fprintf(stderr, " prn=%p\n", (void *) prn);
     fprintf(stderr, " cmd->word='%s'\n", cmd->word);
 #endif
+
+    /* don't echo certain things */
+    if (is_silent(cmd)) {
+	return;
+    }
 
     /* special case: gui "store" command, which could overflow the
        line length; also I'm not sure whether we should record gui
@@ -2096,6 +2114,15 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     if (!batch) {
 	pputc(prn, '\n');
 	gretl_print_flush_stream(prn);
+    }
+}
+
+void echo_function_call (const char *line, unsigned char flags, PRN *prn)
+{
+    char leadchar = (flags & CMD_STACKING)? '>' : '?';
+
+    if (gretl_echo_on()) {
+	pprintf(prn, "%c %s\n", leadchar, line);
     }
 }
 
@@ -2421,6 +2448,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case FUNC:
+    case NEWFUNC:
 	err = gretl_start_compiling_function(line);
 	if (err) {
 	    errmsg(err, prn);
@@ -2762,6 +2790,7 @@ int ready_for_command (const char *line)
 	"critical", 
 	"seed", 
 	"function",
+	"newfunc",
 	"noecho",
 	NULL 
     };

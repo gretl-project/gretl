@@ -20,9 +20,9 @@
 #ifndef GENSTACK_H
 #define GENSTACK_H
 
-#undef GENR_DEBUG
+#define GENR_DEBUG 0
 
-#ifdef GENR_DEBUG
+#if GENR_DEBUG
 void dprintf (const char *format, ...);
 # define DPRINTF(x) dprintf x
 #else 
@@ -110,10 +110,11 @@ enum genr_flags {
     GENR_SAVE         = 1 << 0,
     GENR_SCALAR       = 1 << 1,
     GENR_FORCE_VECTOR = 1 << 2,
-    GENR_LOCAL        = 1 << 3,
-    GENR_WARN         = 1 << 4,
-    GENR_SIMPLE_SORT  = 1 << 5,
-    GENR_PRIVATE      = 1 << 6
+    GENR_NEED_SCALAR  = 1 << 3,
+    GENR_LOCAL        = 1 << 4,
+    GENR_WARN         = 1 << 5,
+    GENR_SIMPLE_SORT  = 1 << 6,
+    GENR_PRIVATE      = 1 << 7
 };
 
 typedef struct _GENERATE GENERATE;

@@ -1224,7 +1224,8 @@ build_selector_switches (selector *sr)
 
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
 
-	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox),
+			   hbox, FALSE, FALSE, 0);
 	gtk_widget_show(hbox);
     }
 } 

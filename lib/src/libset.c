@@ -283,6 +283,28 @@ static int parse_set_plotfile (const char *s)
     return err;
 }
 
+static int display_settings (PRN *prn)
+{
+    /* FIXME defaults */
+    pputs(prn, "Variables that can be set using \"set\":\n");
+    pprintf(prn, " use_qr (use QR decomposition?) = %d\n", use_qr);
+    pprintf(prn, " halt_on_error = %d\n", halt_on_error);
+    pprintf(prn, " hp_lambda (for Hodrick-Prescott filter) = %g\n", 
+	    hp_lambda);
+    pprintf(prn, " bkbp_k (for Baxter-King filter) = %d\n", bkbp_k);
+    pprintf(prn, " bkbp_limits (for Baxter-King filter) = (%d, %d)\n", 
+	    bkbp_periods[0], bkbp_periods[1]);
+    pprintf(prn, " horizon (for VAR impulse responses) = %d\n", horizon);
+    pprintf(prn, " nls_toler (NLS convergence criterion) = %d\n", nls_toler);
+    pprintf(prn, " gretl_echo (echoing commands or not) = %d\n", gretl_echo);
+    pprintf(prn, " gretl_msgs (emitting non-error messages) = %d\n", 
+	    gretl_msgs);
+
+    /* there are more */
+
+    return 0;
+}
+
 int execute_set_line (const char *line, PRN *prn)
 {
     char setobj[16], setarg[16], setarg2[16];
@@ -291,6 +313,10 @@ int execute_set_line (const char *line, PRN *prn)
     *setobj = *setarg = *setarg2 = '\0';
 
     nw = sscanf(line, "%*s %15s %15s %15s", setobj, setarg, setarg2);
+
+    if (nw <= 0) {
+	return display_settings(prn);
+    }
 
     /* special: plotfile */
     if (nw > 1 && !strcmp(setobj, "plotfile")) {

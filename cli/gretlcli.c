@@ -320,7 +320,7 @@ static int clear_data (void)
 
 static void get_an_input_line (void)
 {
-    if (gretl_executing_function()) {
+    if (gretl_executing_function_or_macro()) {
 	/* reading from compiled function */
 	fn_get_line();
     } else if (runit || batch) {
@@ -357,7 +357,7 @@ static int maybe_get_input_line_continuation (char *tmp)
     while (top_n_tail(line)) {
 	tmp[0] = '\0';
 
-	if (gretl_executing_function()) {
+	if (gretl_executing_function_or_macro()) {
 	    gretl_function_get_line(tmp, MAXLINE - 1, &Z, datainfo);
 	} else if (batch || runit) {
 	    fgets(tmp, MAXLINE - 1, fb);
@@ -579,7 +579,7 @@ int main (int argc, char *argv[])
     if (batch || runit) {
 	/* re-initialize: will be incremented by "run" cmd */
 	runit = 0;
-	sprintf(line, "run %s\n", runfile);
+	sprintf(line, "run %s", runfile);
 	exec_line(line, &loop, prn);
     }
 
@@ -667,16 +667,20 @@ static void printf_strip (char *s, int loopstack)
     }
 }
 
-static int handle_user_defined_function (char *line, int *fncall)
+static int handle_user_defined_function (char *line, int *fncall,
+					 PRN *prn)
 {
     int ufunc = gretl_is_user_function(line);
     int err = 0;
 
+    /* allow for nested function calls */
     if (ufunc && gretl_compiling_function()) {
-	/* allow for nested function calls */
-	;
-    } else if (ufunc) {
-	/* an actual function call */
+	return 0;
+    }
+
+    /* an actual function call */
+    else if (ufunc) {
+	echo_function_call(line, CMD_ECHO_TO_STDOUT, prn);
 	err = gretl_function_start_exec(line, &Z, datainfo);
 	*fncall = 1;
     } 
@@ -721,7 +725,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     }
 
     /* catch any user-defined functions */
-    err = handle_user_defined_function(line, &fncall);
+    err = handle_user_defined_function(line, &fncall, prn);
     if (err) {
 	errmsg(err, prn);
 	return;
@@ -848,6 +852,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case MAHAL:
     case MEANTEST: 
     case MULTIPLY: 
+    case NEWFUNC:
     case OUTFILE: 
     case PCA:
     case PRINT: 
@@ -1626,7 +1631,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
     }
 
-    if (err && gretl_executing_function()) {
+    if (err && gretl_executing_function_or_macro()) {
 	gretl_function_stop_on_error();
     }
 

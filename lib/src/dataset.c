@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "gretl_func.h"
 
 #ifdef NEW_STYLE_FUNCTIONS
 # include "gretl_func.h"
@@ -231,11 +232,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->stack_level = 0;
     vinfo->sorted_markers = NULL;
 
-#ifdef NEW_STYLE_FUNCTIONS
     vinfo->stack_level = gretl_function_stack_depth();
-#else
-    vinfo->stack_level = 0;
-#endif
 }
 
 /**

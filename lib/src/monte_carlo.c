@@ -206,11 +206,17 @@ loop_controller_get_value (controller *clr, const double **Z)
 
 static double loop_lval (LOOPSET *loop, const double **Z)
 {
+#if LOOP_DEBUG
+    fprintf(stderr, "getting loop_lval...\n");
+#endif
     return loop_controller_get_value(&loop->left, Z);
 }
 
 static double loop_rval (LOOPSET *loop, const double **Z)
 {
+#if LOOP_DEBUG
+    fprintf(stderr, "getting loop_rval...\n");
+#endif
     return loop_controller_get_value(&loop->right, Z);
 }
 
@@ -218,7 +224,13 @@ static double loop_incrval (LOOPSET *loop, const double **Z)
 {
     double x = loop_controller_get_value(&loop->incr, Z);
 
-    if (!na(x)) x *= loop->incrsgn;
+    if (!na(x)) {
+	x *= loop->incrsgn;
+    }
+
+#if LOOP_DEBUG
+    fprintf(stderr, "loop_incrval, returning %g\n", x);
+#endif
 
     return x;
 }
@@ -422,6 +434,11 @@ controller_set_var (controller *clr, LOOPSET *loop, const DATAINFO *pdinfo,
 	clr->vsign = vsign;
     }
 
+#if LOOP_DEBUG
+    fprintf(stderr, " controller set var: vnum=%d, vsign=%d\n", 
+	    clr->vnum, clr->vsign);
+#endif
+
     return err;
 }
 
@@ -517,6 +534,10 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     /* starting and ending values: try for dates first, then
        numeric constants, then variables */
 
+#if LOOP_DEBUG
+    fprintf(stderr, "parse_as_indexed_loop: start='%s'\n", start);
+#endif
+
     if (!err) {
 	if (maybe_date(start)) {
 	    nstart = dateton(start, pdinfo);
@@ -531,6 +552,10 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    err = controller_set_var(&loop->init, loop, pdinfo, start);
 	}
     }
+
+#if LOOP_DEBUG
+    fprintf(stderr, "parse_as_indexed_loop: end='%s'\n", end);
+#endif
 
     if (!err) {
 	if (dated) {
@@ -1084,6 +1109,18 @@ eval_numeric_condition (int op, double xl, double xr)
 {
     int cont = 0;
 
+#if LOOP_DEBUG
+    char opstr[4];
+
+    if (op == GT) strcpy(opstr, "GT");
+    else if (op == GTE) strcpy(opstr, "GTE");
+    else if (op == LTE) strcpy(opstr, "LTE");
+    else if (op == LT) strcpy(opstr, "LT");
+    else strcpy(opstr, "??");
+    fprintf(stderr, "** eval_numeric_condition: xl=%g, xr=%g, "
+	    "op=%s\n", xl, xr, opstr);
+#endif
+
     if (op == GT) {
 	cont = (xl > xr);
     } else if (op == GTE) {
@@ -1118,6 +1155,10 @@ loop_condition (LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 	loop->brk = 0;
 	ok = 0;
     } else if (loop->type == COUNT_LOOP || indexed_loop(loop)) {
+#if LOOP_DEBUG
+	fprintf(stderr, "** COUNT_LOOP: iter = %d, itermax = %d\n",
+		loop->iter, loop->itermax);
+#endif
 	/* simple count loop or indexed loop */
 	if (loop->iter < loop->itermax) {
 	    ok = 1;
@@ -2275,7 +2316,8 @@ top_of_loop (LOOPSET *loop, double **Z, const DATAINFO *pdinfo)
 
     if (!err) {
 	if (loop->init.vnum > 0) {
-	    loop->init.val = Z[loop->init.vnum][0];
+	    loop->init.val = 
+		loop_controller_get_value(&loop->init, (const double **) Z);
 	} 
 
 	if (loop->type == FOR_LOOP) {
@@ -2289,6 +2331,11 @@ top_of_loop (LOOPSET *loop, double **Z, const DATAINFO *pdinfo)
 		err = 1;
 	    } else {
 		loop->itermax = maxval - loop->init.val + 1;
+#if LOOP_DEBUG
+		fprintf(stderr, "*** itermax = %g - %g + 1 = %d\n",
+			maxval, loop->init.val, loop->itermax);
+#endif
+
 	    }
 	}
     } 
@@ -2840,12 +2887,15 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
     sprintf(formula, "__iftest=%s", line);
 
     err = generate(formula, pZ, pdinfo, NULL, OPT_P);
+#if IFDEBUG
+    fprintf(stderr, "if_eval: generate returned %d\n", err);
+#endif
 
     if (err) {
 	strcpy(gretl_errmsg, _("error evaluating 'if'"));
     } else {
 	int v = varindex(pdinfo, "iftest");
-	
+
 	if (v < pdinfo->v) {
 	    double val = (*pZ)[v][0];
 

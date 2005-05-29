@@ -5196,7 +5196,7 @@ int execute_script (const char *runfile, const char *buf,
 
 	    *line = '\0';
 
-	    if (gretl_executing_function()) {
+	    if (gretl_executing_function_or_macro()) {
 		gotline = gretl_function_get_line(line, MAXLINE,
 						  &Z, datainfo);
 	    } else if (fb != NULL) {
@@ -5214,7 +5214,7 @@ int execute_script (const char *runfile, const char *buf,
 		/* handle backslash-continued lines */
 		*tmp = '\0';
 
-		if (gretl_executing_function()) {
+		if (gretl_executing_function_or_macro()) {
 		    gretl_function_get_line(tmp, MAXLINE, &Z, datainfo);
 		} else if (fb != NULL) {
 		    fgets(tmp, MAXLINE, fb);
@@ -5553,6 +5553,7 @@ int gui_exec_line (char *line,
     case MAHAL:
     case MEANTEST: 
     case MULTIPLY: 
+    case NEWFUNC:
     case OUTFILE: 
     case PCA:
     case PRINT: 
@@ -6362,7 +6363,7 @@ int gui_exec_line (char *line,
     } /* end of command switch */
 
     /* clean up in case a user function bombed */
-    if (err && gretl_executing_function()) {
+    if (err && gretl_executing_function_or_macro()) {
 	gretl_function_stop_on_error();
     }    
 

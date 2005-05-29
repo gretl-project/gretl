@@ -29,6 +29,7 @@ typedef struct fncall_ fncall;
 
 struct ufunc_ {
     char name[32];
+    int is_macro;
     int n_lines;
     char **lines;
     int n_returns;
@@ -56,7 +57,8 @@ static void free_fncall (fncall *call);
 /* record of state, and communication of state with outside world */
 
 static int compiling;
-static int executing;
+static int fn_executing;
+static int macro_executing;
 
 int gretl_compiling_function (void)
 {
@@ -75,17 +77,35 @@ static void set_compiling_off (void)
 
 int gretl_executing_function (void)
 {
-    return executing;
+    return fn_executing;
 }
 
-static void set_executing_on (void)
+int gretl_executing_macro (void)
 {
-    executing++;
+    return macro_executing;
 }
 
-static void set_executing_off (void)
+int gretl_executing_function_or_macro (void)
 {
-    executing--;
+    return (fn_executing || macro_executing);
+}
+
+static void set_executing_on (fncall *call)
+{
+    if (call->fun->is_macro) {
+	macro_executing++;
+    } else {
+	fn_executing++;
+    }
+}
+
+static void set_executing_off (fncall *call)
+{
+    if (call->fun->is_macro) {
+	macro_executing--;
+    } else {
+	fn_executing--;
+    }
 }
 
 /* function call stack mechanism */
@@ -128,18 +148,12 @@ static void callstack_destroy (void)
 
 int gretl_function_stack_depth (void)
 {
-    int i, n = 0;
+    return fn_executing;
+}
 
-    if (callstack == NULL && callstack_init()) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<CALLSTACK_DEPTH; i++) {
-	if (callstack[i] != NULL) n++;
-	else break;
-    }
-
-    return n;
+int gretl_macro_stack_depth (void)
+{
+    return macro_executing;
 }
 
 static int push_fncall (fncall *call)
@@ -162,7 +176,7 @@ static int push_fncall (fncall *call)
 
     callstack[0] = call;
 
-    set_executing_on();
+    set_executing_on(call);
 
     return 0;
 }
@@ -242,24 +256,34 @@ destroy_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo, int nc)
 
 static int unstack_fncall (double ***pZ, DATAINFO *pdinfo)
 {
+    fncall *call;   
     int i, nc;
     int err = 0;
 
     if (callstack == NULL) {
 	return 1;
     }
+    
+    call = callstack[0];
 
-    nc = gretl_function_stack_depth();
+    /* FIXME */
+    if (call->fun->is_macro) {
+	nc = gretl_macro_stack_depth();
+    } else {
+	nc = gretl_function_stack_depth();
+    }
 
 #if FN_DEBUG
     fprintf(stderr, "unstack_fncall: terminating call to "
 	    "function '%s' at depth %d\n", 
-	    (callstack[0])->fun->name, nc);
+	    call->fun->name, nc);
 #endif
 
-    err = destroy_local_vars(callstack[0], pZ, pdinfo, nc);
+    err = destroy_local_vars(call, pZ, pdinfo, nc);
 
-    free_fncall(callstack[0]);
+    set_executing_off(call);
+
+    free_fncall(call);
 
     for (i=0; i<nc; i++) {
 	if (i == nc - 1) {
@@ -269,8 +293,6 @@ static int unstack_fncall (double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    set_executing_off();
-
     return err;
 }
 
@@ -279,7 +301,9 @@ static int function_is_on_stack (ufunc *func)
     int i;
 
     for (i=0; i<CALLSTACK_DEPTH; i++) {
-	if (callstack[i] == NULL) break;
+	if (callstack[i] == NULL) {
+	    break;
+	}
 	if ((callstack[i])->fun == func) {
 	    return 1;
 	}
@@ -306,6 +330,8 @@ static ufunc *ufunc_new (void)
     if (func == NULL) return NULL;
 
     func->name[0] = '\0';
+
+    func->is_macro = 0;
 
     func->n_lines = 0;
     func->lines = NULL;
@@ -403,17 +429,8 @@ static void ufuncs_destroy (void)
 
 static void free_fncall (fncall *call)
 {
-    int i;
-
-    for (i=0; i<call->argc; i++) {
-	free(call->argv[i]);
-    }
-    free(call->argv);
-
-    for (i=0; i<call->assc; i++) {
-	free(call->assv[i]);
-    }
-    free(call->assv);
+    free_strings_array(call->argv, call->argc);
+    free_strings_array(call->assv, call->assc);
 
     free(call);
 }
@@ -710,8 +727,6 @@ static int maybe_delete_function (const char *fname)
     return err;
 }
 
-#ifdef NEW_STYLE_FUNCTIONS
-
 static int parse_func_name_and_params (char *name, char ***params,
 				       int *n_params, const char *line)
 {
@@ -761,35 +776,41 @@ static int parse_func_name_and_params (char *name, char ***params,
     return err;
 }
 
-#endif /* NEW_STYLE_FUNCTIONS */
-
 int gretl_start_compiling_function (const char *line)
 {
-#ifdef NEW_STYLE_FUNCTIONS
     char **params = NULL;
     int n_params = 0;
-#endif
     char fname[32];
     char extra[8];
-    int n, name_status;
+    int nm, nf;
+    int name_status;
+    int is_macro = 0;
     ufunc *fun = NULL;
 
-    n = sscanf(line, "function %31s %7s", fname, extra);
+    /* for now (May 2005), "function" means macro and
+       "newfunc" means function, but this will change */
 
-    if (n == 0) {
+    nm = sscanf(line, "function %31s %7s", fname, extra);
+    nf = sscanf(line, "newfunc %31s %7s", fname, extra);
+
+    if (nm <= 0 && nf <= 0) {
 	return E_PARSE;
     } 
 
-    if (n == 2) {
+    if (nm == 2 || nf == 2) {
 	if (!strcmp(extra, "clear") || !strcmp(extra, "delete")) {
 	    maybe_delete_function(fname);
 	    return 0;
 	}
     }
 
-#ifdef NEW_STYLE_FUNCTIONS
-    parse_func_name_and_params(fname, &params, &n_params, line + 9);
-#endif
+    if (nm > 0) {
+	is_macro = 1;
+    }
+
+    if (!is_macro) {
+	parse_func_name_and_params(fname, &params, &n_params, line + 8);
+    }
 
     name_status = check_func_name(fname);
     if (name_status == FN_NAME_BAD || name_status == FN_NAME_TAKEN) {
@@ -798,18 +819,15 @@ int gretl_start_compiling_function (const char *line)
 
     fun = add_ufunc();
     if (fun == NULL) {
-#ifdef NEW_STYLE_FUNCTIONS
 	free_strings_array(params, n_params);
-#endif
 	return E_ALLOC;
     }
 
     strcpy(fun->name, fname);
+    fun->is_macro = is_macro;
 
-#ifdef NEW_STYLE_FUNCTIONS
     fun->params = params;
     fun->n_params = n_params;
-#endif
 
     set_compiling_on();
     
@@ -827,15 +845,14 @@ static ufunc *get_latest_ufunc (void)
 
 static int create_function_return_list (ufunc *fun, const char *line)
 {
-    const char *s = line + 8;
     int nr, err = 0;
 #if FN_DEBUG
     int i;
 #endif
 
-    s += strspn(s, " ");
+    line += strspn(line, " ");
 
-    fun->returns = get_separated_fields_8(s, &nr);
+    fun->returns = get_separated_fields_8(line, &nr);
 
     if (fun->returns != NULL) {
 	fun->n_returns = nr;
@@ -922,16 +939,14 @@ int gretl_function_append_line (const char *line)
 	return 1;
     }
 
-    if (!strncmp(line, "return ", 7) || !strncmp(line, "returns ", 8)) {
-	err = create_function_return_list(fun, line);
+    if (!strncmp(line, "return ", 7)) {
+	err = create_function_return_list(fun, line + 7);
     } else {    
 	err = real_add_fn_line(fun, line);
     }
 
     return err;
 }
-
-#ifdef NEW_STYLE_FUNCTIONS
 
 /* FIXME headers */
 extern int dataset_copy_variable_as (int v, const char *newname,
@@ -979,8 +994,6 @@ static int check_and_allocate_function_args (ufunc *fun,
     return err;
 }
 
-#endif
-
 int gretl_function_start_exec (const char *line, double ***pZ,
 			       DATAINFO *pdinfo)
 {
@@ -1014,16 +1027,16 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 	return 1;
     }
 
-#ifdef NEW_STYLE_FUNCTIONS
-    if (argc > 0) {
-	err = check_and_allocate_function_args(fun, argc, argv, pZ, pdinfo);
+    if (!fun->is_macro) {
+	if (argc > 0) {
+	    err = check_and_allocate_function_args(fun, argc, argv, pZ, pdinfo);
+	}
+	if (err) {
+	    free_strings_array(argv, argc);
+	    free_strings_array(assv, assc);
+	    return 1;
+	}
     }
-    if (err) {
-	free_strings_array(argv, argc);
-	free_strings_array(assv, assc);
-	return 1;
-    }
-#endif
 
     call = fncall_new(fun, argc, argv, assc, assv);
     if (call == NULL) {
@@ -1038,8 +1051,6 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 
     return err;
 }
-
-#ifndef NEW_STYLE_FUNCTIONS
 
 static int 
 safe_strncat (char *targ, const char *src, int n, int maxlen)
@@ -1101,8 +1112,6 @@ substitute_dollar_terms (char *targ, const char *src,
     return err;
 }
 
-#endif /* !NEW_STYLE_FUNCTIONS */
-
 char *gretl_function_get_line (char *line, int len,
 			       double ***pZ, DATAINFO *pdinfo)
 {
@@ -1128,25 +1137,25 @@ char *gretl_function_get_line (char *line, int len,
 
     call->lnum += 1;
 
-#ifdef NEW_STYLE_FUNCTIONS
-    strcpy(line, src);
-#else
-    if (!string_is_blank(src)) {
-	int err = substitute_dollar_terms(line, src, len, call->argc, 
-					  (const char **) call->argv); 
-	if (err) {
-	    sprintf(gretl_errmsg,
-		    _("Maximum length of command line "
-		      "(%d bytes) exceeded\n"), MAXLEN);
-	    unstack_fncall(pZ, pdinfo);
-	    return NULL;
+    if (call->fun->is_macro) {
+	if (!string_is_blank(src)) {
+	    int err = substitute_dollar_terms(line, src, len, call->argc, 
+					      (const char **) call->argv); 
+	    if (err) {
+		sprintf(gretl_errmsg,
+			_("Maximum length of command line "
+			  "(%d bytes) exceeded\n"), MAXLEN);
+		unstack_fncall(pZ, pdinfo);
+		return NULL;
+	    }
 	}
-    }
 # if FN_DEBUG
-    fprintf(stderr, "function_get_line, $substitution: \n"
-	    " before: '%s'\n  after: '%s'\n", src, line);
+	fprintf(stderr, "function_get_line, $substitution: \n"
+		" before: '%s'\n  after: '%s'\n", src, line);
 # endif
-#endif
+    } else {
+	strcpy(line, src);
+    }
 
     return line;
 }
@@ -1160,17 +1169,22 @@ void gretl_functions_cleanup (void)
 void gretl_function_stop_on_error (void)
 {
     callstack_destroy();
-    executing = 0;
+    fn_executing = 0;
+    macro_executing = 0;
 }
 
 int gretl_function_flagged_error (const char *s, PRN *prn)
 {
-    if (executing == 0) {
+    fncall *call;
+
+    if (!fn_executing && !macro_executing) {
 	return 0;
     }
 
+    call = current_call();
+
     if (s != NULL && *s != '\0') {
-	pprintf(prn, "%s\n", s);
+	pprintf(prn, "%s: %s\n", call->fun->name, s);
     } else {
 	pprintf(prn, _("Error condition in execution of function %s"),
 		(callstack[0])->fun->name);
