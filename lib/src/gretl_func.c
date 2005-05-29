@@ -588,6 +588,71 @@ static int check_func_name (const char *fname)
     return FN_NAME_OK;
 }
 
+static int comma_count (const char *s)
+{
+    int nc = 0;
+
+    while (*s) {
+	if (*s == ',') nc++;
+	s++;
+    }
+
+    return nc;
+}
+
+static char **get_comma_separated_strings (const char *s, int *argc)
+{
+    char **argv = NULL;
+    int i, na, err = 0;
+
+    *argc = 0;
+
+    /* count comma-separated arguments */
+    na = comma_count(s) + 1;
+
+    argv = malloc(na * sizeof *argv);
+    if (argv == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<na; i++) {
+	char *arg;
+	int len;
+
+	if (i < na - 1) {
+	    len = strcspn(s, ",");
+	} else {
+	    len = strlen(s);
+	}
+
+	arg = gretl_strndup(s, len);
+	if (arg == NULL) {
+	    na = i;
+	    err = 1;
+	    break;
+	}
+	argv[i] = arg;
+
+	s += len;
+	while (*s) {
+	    if (*s != ',' && *s != ' ') break;
+	    s++;
+	}
+    }
+
+    if (err) {
+	for (i=0; i<na; i++) {
+	    free(argv[i]);
+	}
+	free(argv);
+	argv = NULL;
+    } else {
+	*argc = na;
+    }
+
+    return argv;
+}
+
 /* Parse line and return an allocated array of strings consisting of
    the space- or comma-separated fields in line, each one truncated if
    necessary to a maximum of 8 characters.
@@ -685,7 +750,7 @@ static char **parse_assignment (char *s, int *na)
 
 static int 
 parse_function_args_etc (const char *s, int *argc, char ***pargv,
-			 int *assc, char ***passv)
+			 int *assc, char ***passv, int is_macro)
 {
     char **argv = NULL;
     char **assign = NULL;
@@ -724,7 +789,11 @@ parse_function_args_etc (const char *s, int *argc, char ***pargv,
 #if FN_DEBUG
 	    fprintf(stderr, "function_args: looking at '%s'\n", s);
 #endif
-	    argv = get_separated_fields_8(s, &na);
+	    if (is_macro) {
+		argv = get_comma_separated_strings(s, &na);
+	    } else {
+		argv = get_separated_fields_8(s, &na);
+	    }
 	    if (argv == NULL) {
 		err = 1;
 	    } else {
@@ -1040,7 +1109,8 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 	return 1;
     }
 
-    err = parse_function_args_etc(line, &argc, &argv, &assc, &assv);
+    err = parse_function_args_etc(line, &argc, &argv, &assc, &assv,
+				  fun->is_macro);
     if (err) {
 	return E_ALLOC;
     }
