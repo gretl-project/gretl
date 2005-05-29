@@ -269,6 +269,8 @@ static int catch_command_alias (CMD *cmd)
 
 #define SCALARS_OK_IN_LIST(c) (c == DELEET || c == PRINT || c == STORE)
 
+#define HIDDEN_COMMAND(c) (c == NEWFUNC || c == FUNCERR)
+
 /* ........................................................... */
 
 static int flow_control (const char *line, double ***pZ, 
@@ -1450,7 +1452,9 @@ static void nl_strip (char *line)
 {
     int n = strlen(line);
 
-    if (n && line[n-1] == '\n') line[n-1] = 0;
+    if (n > 0 && line[n-1] == '\n') {
+	line[n-1] = 0;
+    }
 }
 
 /**
@@ -1471,17 +1475,22 @@ int help (const char *cmdword, const char *helpfile, PRN *prn)
 {
     FILE *fp;
     char line[128];
-    int i, ok;
+    int i, j, ok;
 
     if (cmdword == NULL || *cmdword == '\0') {
 	pputs(prn, _("\nValid gretl commands are:\n"));
+	j = 1;
 	for (i=1; i<NC; i++) {
+	    if (HIDDEN_COMMAND(i)) {
+		continue;
+	    }
 	    pprintf(prn, "%-9s", gretl_command_word(i));
-	    if (i % 8 == 0) {
+	    if (j % 8 == 0) {
 		pputc(prn, '\n');
 	    } else {
 		pputc(prn, ' ');
 	    }
+	    j++;
 	}
 
 	pputs(prn, _("\n\nFor help on a specific command, type: help cmdname"));

@@ -2607,22 +2607,24 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
     return genr.err;
 }
 
-/* ........................................................... */
+/* Note that the "depth" stuff here is required only for the generation
+   of variables within old-style gretl functions ("macros").  With
+   new-style functions, all vars generated within a function are
+   automatically and necessarily local and this is handled centrally
+   in dataset.c; there's not need to adjust the level conditionally
+   here.
+*/
 
 static int 
 set_new_var_stack_depth (DATAINFO *pdinfo, int v)
 {
-    int fsd = gretl_function_stack_depth();
-    int msd = gretl_macro_stack_depth();
+    int sd = gretl_macro_stack_depth();
 
-    /* FIXME: not sure about this! */
-    if (fsd > msd) {
-	STACK_LEVEL(pdinfo, v) = fsd;
-	return fsd;
-    } else {
-	STACK_LEVEL(pdinfo, v) = msd;
-	return msd;
+    if (sd > 0) {
+	STACK_LEVEL(pdinfo, v) = sd;
     }
+
+    return sd;
 }
     
 static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
@@ -2672,12 +2674,12 @@ static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	err = 1;
     }
 
-    if (!err && (1 || genr_is_local(genr))) {
+    if (!err && genr_is_local(genr)) {
 #if GENR_DEBUG
-	fprintf(stderr, "genr is local\n");
+	fprintf(stderr, "genr is explicitly local\n");
 #endif
-	/* record as a var local to a particular function
-	   function or macro stack depth */
+	/* record as a var local to a particular macro
+	   stack depth */
 	depth = set_new_var_stack_depth(pdinfo, v);
     }
 
@@ -4837,12 +4839,11 @@ void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn)
 }
 
 /* executing a macro: pick a local var as first choice, parent-local
-   or global as second, but limited by an enclosing function, if any.
+   or global as second.
 */
 
 static int macro_pick_varmatch (const DATAINFO *pdinfo, 
-				const char *check, int msd,
-				int minsee)
+				const char *check, int sd)
 {
     int localv = -1;
     int globalv = -1;
@@ -4853,12 +4854,12 @@ static int macro_pick_varmatch (const DATAINFO *pdinfo,
 	if (!strcmp(pdinfo->varname[i], check)) {
 	    int sl = STACK_LEVEL(pdinfo, i);
 
-	    if (sl >= minsee && sl < msd) {
+	    if (sl < sd) {
 		if (sl > slmax) {
 		    slmax = sl;
 		    globalv = i;
 		}
-	    } else if (sl == msd) {
+	    } else if (sl == sd) {
 		localv = i;
 	    }
 	    if (localv > 0) {
@@ -4882,7 +4883,7 @@ static int
 real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 {
     const char *check = varname;
-    int sd = 0, fsd = 0, msd = 0;
+    int fsd = 0, msd = 0;
     int i, ret = pdinfo->v;
 
     if (varname == NULL) {
@@ -4910,29 +4911,25 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 	return INDEXNUM;
     }
 
-    fsd = gretl_function_stack_depth();
-    msd = gretl_macro_stack_depth();
-
-    if (fsd > 0) {
-	sd = fsd;
-    } else if (msd && local) {
-	sd = msd;
+    if (gretl_executing_function()) {
+	fsd = gretl_function_stack_depth();
+    } else if (local) {
+	msd = gretl_macro_stack_depth();
     }
 
 #if GEN_LEVEL_DEBUG
-    fprintf(stderr, "varindex for '%s': fsd=%d, msd=%d, sd=%d\n",
-	    check, fsd, msd, sd);
+    fprintf(stderr, "varindex for '%s': fsd=%d, msd=%d\n",
+	    check, fsd, msd);
 #endif
 
-    if (fsd > 0 && (local || msd == 0)) {
-	/* inside a function, or inside a macro in "local" mode:
-	   see only variables at same level */
+    if (fsd > 0) {
+	/* inside a function: see only variables at same level */
 	for (i=1; i<pdinfo->v; i++) { 
 #if GEN_LEVEL_DEBUG > 1
 	    fprintf(stderr, "checking '%s' at level %d\n", 
 		    pdinfo->varname[i],STACK_LEVEL(pdinfo, i));
 #endif 
-	    if (STACK_LEVEL(pdinfo, i) == sd && 
+	    if (STACK_LEVEL(pdinfo, i) == fsd && 
 		!strcmp(pdinfo->varname[i], check)) {
 		ret = i;
 		break;
@@ -4940,7 +4937,7 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 	}
     } else if (msd > 0) {
 	/* complicated, see above */
-	ret = macro_pick_varmatch(pdinfo, check, msd, fsd);
+	ret = macro_pick_varmatch(pdinfo, check, msd);
     } else {
 	/* not inside a function or macro, don't have to check level */
 	for (i=1; i<pdinfo->v; i++) { 

@@ -216,6 +216,7 @@ void fn_get_line (void)
     strncat(linebak, line, MAXLINE - 1);
 
     if (!strncmp(line, "noecho", 6)) {
+	/* FIXME? */
 	set_gretl_echo(0);
     }
 

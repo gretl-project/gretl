@@ -20,17 +20,12 @@
 #include "libgretl.h"
 #include "gretl_func.h"
 
-#ifdef NEW_STYLE_FUNCTIONS
-# include "gretl_func.h"
-#endif
-
 /**
  * free_Z:
  * @Z: data matrix.
  * @pdinfo: data information struct.
  *
- * Do a deep free on the data matrix.
- * 
+ * Does a deep free on the data matrix.
  */
 
 void free_Z (double **Z, DATAINFO *pdinfo)
@@ -49,7 +44,7 @@ void free_Z (double **Z, DATAINFO *pdinfo)
  * dataset_destroy_obs_markers:
  * @pdinfo: data information struct.
  *
- * Free any allocated observation markers for @pdinfo.
+ * Frees any allocated observation markers for @pdinfo.
  */
 
 void dataset_destroy_obs_markers (DATAINFO *pdinfo)
@@ -95,10 +90,9 @@ void set_sorted_markers (DATAINFO *pdinfo, int v, char **S)
 /**
  * clear_datainfo:
  * @pdinfo: data information struct.
- * @code: either CLEAR_FULL or CLEAR_SUBSAMPLE.
+ * @code: either %CLEAR_FULL or %CLEAR_SUBSAMPLE.
  *
- * Free the allocated content of a data information struct.
- * 
+ * Frees the allocated content of a data information struct.
  */
 
 void clear_datainfo (DATAINFO *pdinfo, int code)
@@ -232,7 +226,9 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->stack_level = 0;
     vinfo->sorted_markers = NULL;
 
-    vinfo->stack_level = gretl_function_stack_depth();
+    if (gretl_executing_function()) {
+	vinfo->stack_level = gretl_function_stack_depth();
+    } 
 }
 
 /**
@@ -314,7 +310,7 @@ int dataset_allocate_varnames (DATAINFO *pdinfo)
 /**
  * datainfo_new:
  *
- * Create a new data information struct pointer from scratch,
+ * Creates a new data information struct pointer from scratch,
  * properly initialized as empty.
  * 
  * Returns: pointer to data information struct, or NULL on error.
@@ -364,11 +360,10 @@ DATAINFO *datainfo_new (void)
  * @markers: 1 if there are case markers for the observations, 0
  * otherwise.
  *
- * Create a new data information struct corresponding to a given
+ * Creates a new data information struct corresponding to a given
  * data matrix.
  * 
- * Returns: pointer to data information struct, or NULL on error.
- *
+ * Returns: pointer to data information struct, or %NULL on error.
  */
 
 DATAINFO *
@@ -407,7 +402,7 @@ create_new_dataset (double ***pZ, int nvar, int nobs, int markers)
  * @pZ: pointer to data array.
  * @pdinfo: dataset information struct.
  *
- * Allocate the two-dimensional array to which @pZ points,
+ * Allocates the two-dimensional array to which @pZ points,
  * based on the %v (number of variables) and %n (number of
  * observations) members of @pdinfo.  The variable at 
  * position 0 is initialized to all 1s; no other variables
@@ -461,11 +456,10 @@ int allocate_Z (double ***pZ, const DATAINFO *pdinfo)
  * @pdinfo: data information struct.
  * @resample: 1 if we're sub-sampling from a full data set, 0 otherwise.
  *
- * Initialize data matrix (add the constant) and the data information
- * struct.
+ * Initializes the data matrix pointed to by @pZ (adding the constant in
+ * position 0) and the data information struct @pdinfo.
  * 
  * Returns: 0 on successful completion, 1 on error.
- *
  */
 
 int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
@@ -767,8 +761,8 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
  * @pdinfo: dataset information.
  *
  * Expands an existing scalar member of a dataset to a
- * full-length vector.  All values are initializes to
- * the missing value code.
+ * full-length vector.  All values are initialized to
+ * the missing value code, #NABDL.
  *
  * Returns: 0 on success, %E_ALLOC on error.
  */

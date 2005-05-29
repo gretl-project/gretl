@@ -97,6 +97,11 @@ static void set_executing_on (fncall *call)
     } else {
 	fn_executing++;
     }
+#if FN_DEBUG
+    fprintf(stderr, "set_executing_on: fun=%s, macro_executing=%d, "
+	    "fn_executing=%d\n", call->fun->name, macro_executing,
+	    fn_executing);
+#endif
 }
 
 static void set_executing_off (fncall *call)
@@ -106,6 +111,11 @@ static void set_executing_off (fncall *call)
     } else {
 	fn_executing--;
     }
+#if FN_DEBUG
+    fprintf(stderr, "set_executing_off: fun=%s, macro_executing=%d, "
+	    "fn_executing=%d\n", call->fun->name, macro_executing,
+	    fn_executing);
+#endif
 }
 
 /* function call stack mechanism */
@@ -146,14 +156,32 @@ static void callstack_destroy (void)
     callstack = NULL;
 }
 
+static int real_gretl_function_stack_depth (void)
+{
+    int i, n = 0;
+
+    if (callstack == NULL) {
+	callstack_init();
+    }
+
+    if (callstack != NULL) {
+	for (i=0; i<CALLSTACK_DEPTH; i++) {
+	    if (callstack[i] != NULL) n++;
+	    else break;
+	}
+    }
+
+    return n;
+}
+
 int gretl_function_stack_depth (void)
 {
-    return fn_executing;
+    return real_gretl_function_stack_depth();
 }
 
 int gretl_macro_stack_depth (void)
 {
-    return macro_executing;
+    return real_gretl_function_stack_depth();
 }
 
 static int push_fncall (fncall *call)
@@ -483,13 +511,12 @@ int gretl_is_user_function (const char *line)
 {
     int ret = 0;
 
-#if FN_DEBUG
-    fprintf(stderr, "gretl_is_user_function: testing '%s'\n", line);
-#endif
-
     if (n_ufuns > 0 && !string_is_blank(line)) {
 	char name[32];
 
+#if FN_DEBUG
+	fprintf(stderr, "gretl_is_user_function: testing '%s'\n", line);
+#endif
 	function_name_from_line(line, name);
 	if (get_ufunc_by_name(name) != NULL) {
 	    ret = 1;
@@ -1119,8 +1146,16 @@ char *gretl_function_get_line (char *line, int len,
     const char *src;
 
     if (call == NULL || call->fun == NULL) {
+#if FN_DEBUG
+	fprintf(stderr, "gretl_function_get_line: returning NULL\n"); 
+#endif
 	return NULL;
     }
+
+#if FN_DEBUG
+    fprintf(stderr, "gretl_function_get_line: current fun='%s'\n", 
+	    call->fun->name);
+#endif
 
     if (call->lnum > call->fun->n_lines - 1) {
 	/* finished executing */

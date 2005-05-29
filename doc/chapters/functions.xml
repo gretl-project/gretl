@@ -196,38 +196,38 @@
       anywhere, so long as it is before they are called.</para>
 
     <programlisting>
-      set echo off
-
-      genr testvar = 1
-      printf "in main: testvar = %d\n", testvar  
+      function bar
+        genr my testvar = 3
+        printf "in bar: testvar = %d\n", testvar
+      end function
 
       function foo
-         # create a local variable
-         genr my testvar = 2
-         printf "in foo: testvar = %d\n", testvar
-         bar
-         printf "back in foo: testvar = %d\n", testvar
-         # generate a global variable
-         genr glob = 15
+        # create a local variable
+        genr my testvar = 2
+        printf "in foo: testvar = %d\n", testvar
+        # nested function call
+        bar
+        printf "back in foo: testvar = %d\n", testvar
+        # generate a global variable
+        genr glob = 15
       end function
 
-      function bar
-         genr my testvar = 3
-         printf "in bar: testvar = %d\n", testvar
-      end function
-
-      # call foo, which calls bar
+      # main script begins here
+      nulldata 5
+      set echo off
+      genr testvar = 1
+      printf "in main: testvar = %d\n", testvar  
+      # call function foo, which in turn calls function bar
       foo
-      printf "back in main: testvar = %d, glob = %d\n", \
-      testvar, glob 
+      printf "back in main: testvar = %d, glob = %d\n", testvar, glob 
       # list the global variables 
-      ls 
+      varlist 
     </programlisting>
 
     <para>The output from the above is:</para>
 
     <programlisting>
-      gretl version 1.3.0 ...
+      gretl version 1.3.4 ...
       ? nulldata 5
       periodicity: 1, maxobs: 5,
       observations range: 1-5
