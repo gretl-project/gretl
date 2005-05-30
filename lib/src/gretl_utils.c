@@ -21,6 +21,7 @@
 #include "gretl_func.h"
 #include "system.h"
 #include "cmd_private.h"
+#include "libset.h"
 
 #include <errno.h>
 
@@ -1149,6 +1150,7 @@ int gretl_copy_file (const char *src, const char *dest)
 
 void libgretl_init (void)
 {
+    libset_init();
     gretl_rand_init();
     set_gretl_tex_preamble(); 
 }
@@ -1161,6 +1163,7 @@ void libgretl_cleanup (void)
     gretl_functions_cleanup();
     gretl_equation_systems_cleanup();
     gretl_transforms_cleanup();
+    libset_cleanup();
 
     p = strstr(gretl_plotfile(), "gpttmp");
     if (p != NULL) {

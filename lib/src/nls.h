@@ -47,4 +47,6 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 MODEL model_from_nls_spec (nls_spec *spec, double ***pZ, 
 			   DATAINFO *pdinfo, PRN *prn);
 
+double get_default_nls_toler (void);
+
 #endif /* GRETL_NLS_H */

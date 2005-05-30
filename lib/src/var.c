@@ -325,7 +325,7 @@ int default_VAR_horizon (const DATAINFO *pdinfo)
 {
     int h = get_VAR_horizon();
 
-    if (h == 0) {
+    if (h <= 0) {
 	h = periods_from_pd(pdinfo->pd);
     }
 

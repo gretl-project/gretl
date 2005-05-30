@@ -32,5 +32,7 @@ void gretl_rand_init (void);
 
 void gretl_rand_free (void);
 
+unsigned int get_gretl_random_seed (void);
+
 #endif /* RANDOM_H */
 

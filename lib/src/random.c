@@ -37,6 +37,13 @@
 static GRand *gretl_rand;
 #endif
 
+static unsigned int useed;
+
+unsigned int get_gretl_random_seed (void)
+{
+    return useed;
+}
+
 /**
  * gretl_rand_init:
  *
@@ -45,11 +52,12 @@ static GRand *gretl_rand;
 
 void gretl_rand_init (void)
 {
+    useed = time(NULL);
 #ifdef HAVE_G_RAND
     gretl_rand = g_rand_new();
-    gretl_rand_set_seed((guint32) time(NULL));
+    gretl_rand_set_seed((guint32) useed);
 #else
-    init_genrand(time(NULL));
+    init_genrand(useed);
 #endif
 }
 
@@ -58,14 +66,22 @@ void gretl_rand_init (void)
  * @seed: the chosen seed value.
  *
  * Set a specific (and hence reproducible) seed for gretl's PRNG.
+ * But if the value 0 is given for @seed, set the seed using
+ * the system time (which is the default when libgretl is
+ * initialized).
  */
 
 void gretl_rand_set_seed (unsigned int seed)
 {
+    if (seed == 0) {
+	useed = time(NULL);
+    } else {
+	useed = seed;
+    }
 #ifdef HAVE_G_RAND
-    g_rand_set_seed(gretl_rand, seed);
+    g_rand_set_seed(gretl_rand, useed);
 #else
-    init_genrand(seed);
+    init_genrand(useed);
 #endif
 }
 

@@ -1221,6 +1221,24 @@ int nls_parse_line (const char *line, const double **Z,
     return err;
 }
 
+static double default_nls_toler;
+
+/**
+ * get_default_nls_toler:
+ *
+ * Returns: the default value used in the convergence criterion
+ * for estimation of models using nonlinear least squares.
+ */
+
+double get_default_nls_toler (void)
+{
+    if (default_nls_toler == 0.0) {
+	default_nls_toler = pow(dpmpar_(&one), .75);
+    }
+
+    return default_nls_toler;
+}
+
 /* static function providing the real content for the two public
    wrapper functions below */
 
@@ -1289,13 +1307,8 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* get tolerance from user setting, or default */
+    /* get tolerance from user setting or default */
     toler = get_nls_toler();
-    if (toler > 0) {
-	pspec->tol = toler;
-    } else {
-	pspec->tol = pow(dpmpar_(&one), .75);
-    }
 
     /* export Z pointer for minpack's benefit */
     nZ = pZ;

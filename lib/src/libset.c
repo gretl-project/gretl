@@ -22,56 +22,183 @@
 #include "libgretl.h"
 #include "libset.h"
 
-static int use_qr = -1;                 /* use QR decomposition? */
-static int halt_on_error = -1;          /* halt cli program on script error? */
-static double hp_lambda;                /* for Hodrick-Prescott filter */
-static int bkbp_k = 8;                  /* for Baxter-King filter */
-static int bkbp_periods[2] = { 8, 32 }; /* for Baxter-King filter */
-static int horizon = 0;                 /* for VAR impulse responses */ 
-static double nls_toler;                /* NLS convergence criterion */
-static int gretl_echo = 1;              /* echoing commands or not */
-static int gretl_msgs = 1;              /* emitting non-error messages or not */
-
 enum {
     AUTO_LAG_STOCK_WATSON,
     AUTO_LAG_WOOLDRIDGE
 };
 
-static struct {
+/* for values that really want a non-negative integer */
+#define UNSET_INT -1
+#define is_unset(i) (i == UNSET_INT)
+
+typedef struct set_vars_ set_vars;
+
+struct robust_opts {
     int auto_lag;
     int user_lag;
     int hc_version;
-} robust_opts;
+    int force_hc;
+};
+
+struct garch_opts {
+    int vcv_variant;
+    int robust_vcv_variant;
+};
+
+struct bkbp_opts {
+    int k;
+    int periods[2];
+};
+
+struct sample_info {
+    int t1;
+    int t2;
+    int subsampled;
+};
+    
+struct set_vars_ {
+    int use_qr;                 /* use QR decomposition? */
+    unsigned int seed;          /* for PRNG */
+    int halt_on_error;          /* halt cli program on script error? */
+    double hp_lambda;           /* for Hodrick-Prescott filter */
+    int horizon;                /* for VAR impulse responses */ 
+    double nls_toler;           /* NLS convergence criterion */
+    int gretl_echo;             /* echoing commands or not */
+    int gretl_msgs;             /* emitting non-error messages or not */
+    struct robust_opts ropts;   /* robust standard error options */
+    struct garch_opts gopts;    /* GARCH covariance matrix */
+    struct bkbp_opts bkopts;    /* Baxter-King filter */
+    struct sample_info sinfo;   /* record of dataset sample state */
+};
+
+/* global state */
+set_vars *state;
+
+static void robust_opts_init (struct robust_opts *opts)
+{
+    opts->auto_lag = AUTO_LAG_STOCK_WATSON;
+    opts->user_lag = 0;
+    opts->hc_version = 0;
+    opts->force_hc = 0; 
+}
+
+static void robust_opts_copy (struct robust_opts *opts)
+{
+    opts->auto_lag = state->ropts.auto_lag;
+    opts->user_lag = state->ropts.user_lag;
+    opts->hc_version = state->ropts.hc_version;
+    opts->force_hc = state->ropts.force_hc; 
+}
+
+static void garch_opts_init (struct garch_opts *opts)
+{
+    opts->vcv_variant = VCV_UNSET;
+    opts->robust_vcv_variant = VCV_UNSET;
+}
+
+static void garch_opts_copy (struct garch_opts *opts)
+{
+    opts->vcv_variant = state->gopts.vcv_variant;
+    opts->robust_vcv_variant = state->gopts.robust_vcv_variant;
+}
+
+static void bkbp_opts_init (struct bkbp_opts *opts)
+{
+    opts->k = 8;
+    opts->periods[0] = 8;
+    opts->periods[1] = 32;
+}
+
+static void bkbp_opts_copy (struct bkbp_opts *opts)
+{
+    opts->k = state->bkopts.k;
+    opts->periods[0] = state->bkopts.periods[0];
+    opts->periods[1] = state->bkopts.periods[1];
+}
+
+static void sample_info_init (struct sample_info *sinfo)
+{
+    sinfo->t1 = UNSET_INT;
+    sinfo->t2 = UNSET_INT;
+    sinfo->subsampled = 0;
+}
+
+#define sinfo_is_set(s) (s.t1 != UNSET_INT && s.t2 != UNSET_INT)
+
+static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
+{
+    sv->use_qr = state->use_qr;
+    sv->seed = state->seed;
+    sv->halt_on_error = state->halt_on_error;
+    sv->hp_lambda = state->hp_lambda;
+    sv->horizon = state->horizon;
+    sv->nls_toler = state->nls_toler;
+    sv->gretl_echo = state->gretl_echo; 
+    sv->gretl_msgs = state->gretl_msgs; 
+
+    robust_opts_copy(&sv->ropts);
+    garch_opts_copy(&sv->gopts);
+    bkbp_opts_copy(&sv->bkopts);
+
+    if (pdinfo != NULL) {
+	sv->sinfo.t1 = pdinfo->t1;
+	sv->sinfo.t2 = pdinfo->t2;
+	sv->sinfo.subsampled = complex_subsampled();
+    } else {
+	sample_info_init(&sv->sinfo);
+    }
+}
+
+static void state_vars_init (set_vars *sv)
+{
+    sv->use_qr = UNSET_INT; 
+    sv->seed = 0;
+    sv->halt_on_error = UNSET_INT;
+    sv->hp_lambda = NADBL;
+    sv->horizon = UNSET_INT;
+    sv->nls_toler = NADBL;
+    sv->gretl_echo = 1; 
+    sv->gretl_msgs = 1; 
+
+    robust_opts_init(&sv->ropts);
+    garch_opts_init(&sv->gopts);
+    bkbp_opts_init(&sv->bkopts);
+    sample_info_init(&sv->sinfo);
+}
 
 int get_hc_version (void)
 {
-    return robust_opts.hc_version;
+    return state->ropts.hc_version;
 }
 
 double get_hp_lambda (void)
 {
-    return hp_lambda;
+    return state->hp_lambda;
 }
 
 int get_bkbp_k (void)
 {
-    return bkbp_k;
+    return state->bkopts.k;
 }
 
 void get_bkbp_periods (int *periods)
 {
-    periods[0] = bkbp_periods[0];
-    periods[1] = bkbp_periods[1];
+    periods[0] = state->bkopts.periods[0];
+    periods[1] = state->bkopts.periods[1];
 }
 
 int get_VAR_horizon (void)
 {
-    return horizon;
+    return state->horizon;
 }
 
 double get_nls_toler (void)
 {
-    return nls_toler;
+    if (na(state->nls_toler)) {
+	state->nls_toler = get_default_nls_toler();
+    }
+
+    return state->nls_toler;
 }
 
 int set_nls_toler (double tol)
@@ -81,7 +208,7 @@ int set_nls_toler (double tol)
     if (tol <= 0.0) {
 	err = 1;
     } else {
-	nls_toler = tol;
+	state->nls_toler = tol;
     }
 
     return err;
@@ -89,37 +216,71 @@ int set_nls_toler (double tol)
 
 static int get_or_set_force_hc (int f)
 {
-    static int force;
+    if (f >= 0) {
+	state->ropts.force_hc = f;
+    }
 
-    if (f >= 0) force = f;
-    return force;
+    return state->ropts.force_hc;
 }
 
 static int get_or_set_garch_vcv (int v)
 {
-    static int variant;
+    if (v >= 0) {
+	state->gopts.vcv_variant = v;
+    }
 
-    if (v >= 0) variant = v;
-    return variant;
+    return state->gopts.vcv_variant;
 }
 
 static int get_or_set_garch_robust_vcv (int v)
 {
-    static int variant;
+    if (v >= 0) {
+	state->gopts.robust_vcv_variant = v;
+    }
 
-    if (v >= 0) variant = v;
-    return variant;
+    return state->gopts.robust_vcv_variant;
+}
+
+struct g_vcv {
+    int opt;
+    char *str;
+};
+
+static struct g_vcv g_vcv_types[] = {
+    { VCV_UNSET,   "unset" },
+    { VCV_HESSIAN, "hessian" },
+    { VCV_IM,      "im" },
+    { VCV_OP,      "op" },
+    { VCV_QML,     "qml" },
+    { VCV_BW,      "bw" }
+};
+
+static const char *garch_vcv_string (void)
+{
+    int i, n = sizeof g_vcv_types / sizeof g_vcv_types[0];
+    const char *ret = "";
+
+    for (i=0; i<n; i++ ) {
+	if (state->gopts.vcv_variant == g_vcv_types[i].opt) {
+	    ret = g_vcv_types[i].str;
+	    break;
+	}
+    }
+
+    return ret;
 }
 
 static int set_garch_vcv_variant (const char *s)
 {
-    int vopt = VCV_UNSET;
+    int i, vopt = VCV_UNSET;
+    int n = sizeof g_vcv_types / sizeof g_vcv_types[0];
 
-    if (!strcmp(s, "hessian"))  vopt = VCV_HESSIAN;
-    else if (!strcmp(s, "im"))  vopt = VCV_IM;
-    else if (!strcmp(s, "op"))  vopt = VCV_OP;
-    else if (!strcmp(s, "qml")) vopt = VCV_QML;
-    else if (!strcmp(s, "bw"))  vopt = VCV_BW;
+    for (i=0; i<n; i++ ) {
+	if (!strcmp(s, g_vcv_types[i].str)) {
+	    vopt = g_vcv_types[i].opt;
+	    break;
+	}
+    }	
 
     get_or_set_garch_vcv(vopt);
     
@@ -148,41 +309,55 @@ int get_force_hc (void)
 
 void set_gretl_echo (int e)
 {
-    gretl_echo = e;
+    state->gretl_echo = e;
 }
 
 int gretl_echo_on (void)
 {
-    return gretl_echo;
+    return state->gretl_echo;
 }
 
 void set_gretl_messages (int e)
 {
-    gretl_msgs = e;
+    state->gretl_msgs = e;
 }
 
 int gretl_messages_on (void)
 {
-    return gretl_msgs;
+    return state->gretl_msgs;
 }
 
 int get_hac_lag (int m)
 {
     /* Variants of Newey-West */
 
-    if (robust_opts.user_lag != 0 && robust_opts.user_lag < m - 2) {
+    if (state->ropts.user_lag != 0 && state->ropts.user_lag < m - 2) {
 	/* FIXME upper limit? */
-	return robust_opts.user_lag;
+	return state->ropts.user_lag;
     }
 
-    if (robust_opts.auto_lag == AUTO_LAG_STOCK_WATSON) {
+    if (state->ropts.auto_lag == AUTO_LAG_STOCK_WATSON) {
 	return 0.75 * pow(m, 1.0 / 3.0);
-    } else if (robust_opts.auto_lag == AUTO_LAG_WOOLDRIDGE) {
+    } else if (state->ropts.auto_lag == AUTO_LAG_WOOLDRIDGE) {
 	return 4.0 * pow(m / 100.0, 2.0 / 9.0);
     }
 
     /* fallback -- should not be reached */
     return 0.75 * pow(m, 1.0 / 3.0);
+}
+
+static char *get_hac_lag_string (void)
+{
+    if (state->ropts.user_lag > 0 && state->ropts.user_lag < 1000) {
+	static char lagstr[6];
+
+	sprintf(lagstr, "%d", state->ropts.user_lag);
+	return lagstr;
+    } else if (state->ropts.auto_lag == AUTO_LAG_STOCK_WATSON) {
+	return "nw1";
+    } else {
+	return "nm2";
+    }
 }
 
 static int parse_hc_variant (const char *s)
@@ -191,10 +366,10 @@ static int parse_hc_variant (const char *s)
 
     if (!strcmp(s, "0") || !strcmp(s, "1") ||
 	!strcmp(s, "2") || !strcmp(s, "3")) {
-	robust_opts.hc_version = atoi(s);
+	state->ropts.hc_version = atoi(s);
 	err = 0;
     } else if (!strcmp(s, "3a")) {
-	robust_opts.hc_version = 4;
+	state->ropts.hc_version = 4;
 	err = 0;
     }
 
@@ -202,11 +377,11 @@ static int parse_hc_variant (const char *s)
 	int hcv;
 
 	if (!strcmp(s, "hc3a")) {
-	    robust_opts.hc_version = 4;
+	    state->ropts.hc_version = 4;
 	    err = 0;
 	} else if (sscanf(s, "hc%d", &hcv)) {
 	    if (hcv >= 0 && hcv <= 4) {
-		robust_opts.hc_version = hcv;
+		state->ropts.hc_version = hcv;
 		err = 0;
 	    }
 	}
@@ -256,6 +431,34 @@ void set_garch_robust_vcv (const char *s)
     free(scpy);
 }
 
+static int set_bkbp_periods (const char *s0, const char *s1,
+			     PRN *prn)
+{
+    int p0, p1;
+
+    if (!isdigit((unsigned char) *s0) || !isdigit((unsigned char) *s1)) {
+	return 1;
+    }
+
+    p0 = atoi(s0);
+    p1 = atoi(s1);
+
+    if (p1 < p0) {
+	/* 2nd entry should be bigger than 1st one */
+	int tmp = p1;
+
+	p1 = p0;
+	p0 = tmp;
+    }
+
+    pprintf(prn, _("Baxter-King band = %d-%d periods\n"), p0, p1);
+
+    state->bkopts.periods[0] = p0;
+    state->bkopts.periods[1] = p1;
+
+    return 0;
+}
+
 static int parse_set_plotfile (const char *s)
 {
     char *fname;
@@ -285,22 +488,46 @@ static int parse_set_plotfile (const char *s)
 
 static int display_settings (PRN *prn)
 {
-    /* FIXME defaults */
-    pputs(prn, "Variables that can be set using \"set\":\n");
-    pprintf(prn, " use_qr (use QR decomposition?) = %d\n", use_qr);
-    pprintf(prn, " halt_on_error = %d\n", halt_on_error);
-    pprintf(prn, " hp_lambda (for Hodrick-Prescott filter) = %g\n", 
-	    hp_lambda);
-    pprintf(prn, " bkbp_k (for Baxter-King filter) = %d\n", bkbp_k);
-    pprintf(prn, " bkbp_limits (for Baxter-King filter) = (%d, %d)\n", 
-	    bkbp_periods[0], bkbp_periods[1]);
-    pprintf(prn, " horizon (for VAR impulse responses) = %d\n", horizon);
-    pprintf(prn, " nls_toler (NLS convergence criterion) = %d\n", nls_toler);
-    pprintf(prn, " gretl_echo (echoing commands or not) = %d\n", gretl_echo);
-    pprintf(prn, " gretl_msgs (emitting non-error messages) = %d\n", 
-	    gretl_msgs);
+    unsigned int uval;
+    int ival;
 
-    /* there are more */
+    pputs(prn, "Variables that can be set using \"set\" (do \"help set\""
+	  " for details):\n");
+
+    pprintf(prn, " echo = %d\n", state->gretl_echo);
+
+    ival = get_use_qr();
+    pprintf(prn, " qr = %d\n", state->use_qr);
+
+    uval = get_gretl_random_seed();
+    pprintf(prn, " seed = %u\n", uval);
+
+    pprintf(prn, " hac_lag = %s\n", get_hac_lag_string());
+    pprintf(prn, " hc_version = %d\n", state->ropts.hc_version);
+    pprintf(prn, " force_hc = %d\n", state->ropts.force_hc);
+
+    pprintf(prn, " garch_vcv = %s\n", garch_vcv_string());
+
+    if (na(state->hp_lambda)) {
+	pputs(prn, " hp_lambda: auto\n");
+    } else {
+	pprintf(prn, " hp_lambda = %g\n", state->hp_lambda);
+    }
+
+    pprintf(prn, " bkbp_limits = (%d, %d)\n", state->bkopts.periods[0], 
+	    state->bkopts.periods[1]);
+    pprintf(prn, " bkbp_k = %d\n", state->bkopts.k);
+
+    if (is_unset(state->horizon)) {
+	pputs(prn, " horizon: auto\n");
+    } else {
+	pprintf(prn, " horizon = %d\n", state->horizon);
+    }
+
+    /* undocumented! */
+    pprintf(prn, " nls_toler = %g\n", get_nls_toler());
+    pprintf(prn, " messages = %d\n", state->gretl_msgs);
+    pprintf(prn, " halt_on_error = %d\n", state->halt_on_error);
 
     return 0;
 }
@@ -325,7 +552,7 @@ int execute_set_line (const char *line, PRN *prn)
     
     if (nw == 1) {
 	if (!strcmp(setobj, "echo")) {
-	    gretl_echo = 1;
+	    state->gretl_echo = 1;
 	    err = 0;
 	}
     } else if (nw == 2) {
@@ -334,32 +561,32 @@ int execute_set_line (const char *line, PRN *prn)
 	/* set command echo on/off */
 	if (!strcmp(setobj, "echo")) {
 	    if (!strcmp(setarg, "off")) {
-		gretl_echo = 0;
+		state->gretl_echo = 0;
 		err = 0;
 	    } else if (!strcmp(setarg, "on")) {
-		gretl_echo = 1;
+		state->gretl_echo = 1;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "messages")) {
 	    if (!strcmp(setarg, "off")) {
-		gretl_msgs = 0;
+		state->gretl_msgs = 0;
 		err = 0;
 	    } else if (!strcmp(setarg, "on")) {
-		gretl_msgs = 1;
+		state->gretl_msgs = 1;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "hac_lag")) {
 	    /* set max lag for HAC estimation */
 	    if (!strcmp(setarg, "nw1")) {
-		robust_opts.auto_lag = AUTO_LAG_STOCK_WATSON;
-		robust_opts.user_lag = 0;
+		state->ropts.auto_lag = AUTO_LAG_STOCK_WATSON;
+		state->ropts.user_lag = 0;
 		err = 0;
 	    } else if (!strcmp(setarg, "nw2")) {
-		robust_opts.auto_lag = AUTO_LAG_WOOLDRIDGE;
-		robust_opts.user_lag = 0;
+		state->ropts.auto_lag = AUTO_LAG_WOOLDRIDGE;
+		state->ropts.user_lag = 0;
 		err = 0;
 	    } else if (isdigit(*setarg)) {
-		robust_opts.user_lag = atoi(setarg);
+		state->ropts.user_lag = atoi(setarg);
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "hc_version")) {
@@ -380,18 +607,18 @@ int execute_set_line (const char *line, PRN *prn)
 	} else if (!strcmp(setobj, "qr")) {
 	    /* switch QR vs Cholesky decomposition */
 	    if (!strcmp(setarg, "on")) {
-		use_qr = 1;
+		state->use_qr = 1;
 		err = 0;
 	    } else if (!strcmp(setarg, "off")) {
-		use_qr = 0;
+		state->use_qr = 0;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "halt_on_error")) {
 	    if (!strcmp(setarg, "on")) {
-		halt_on_error = 1;
+		state->halt_on_error = 1;
 		err = 0;
 	    } else if (!strcmp(setarg, "off")) {
-		halt_on_error = 0;
+		state->halt_on_error = 0;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "seed")) {
@@ -399,40 +626,41 @@ int execute_set_line (const char *line, PRN *prn)
 	    if (isdigit(*setarg)) {
 		int k = atoi(setarg);
 
-		gretl_rand_set_seed(k);
+		gretl_rand_set_seed((unsigned int) k);
 		pprintf(prn, 
 			_("Pseudo-random number generator seeded with %d\n"), k);
+		state->seed = k;
 		err = 0;
 
 	    }
 	} else if (!strcmp(setobj, "hp_lambda")) {
 	    /* Hodrick-Prescott filter parameter */
 	    if (!strcmp(setarg, "auto")) {
-		hp_lambda = 0.0;
+		state->hp_lambda = NADBL;
 		err = 0;
 	    } else if (check_atof(setarg) == 0) {
-		hp_lambda = atof(setarg);
+		state->hp_lambda = atof(setarg);
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "bkbp_k")) {
 	    /* Baxter-King approximation order */
 	    if (isdigit(*setarg)) {
-		bkbp_k = atoi(setarg);
+		state->bkopts.k = atoi(setarg);
 		pprintf(prn, 
-			_("Baxter-King approximation = %d\n"), bkbp_k);
+			_("Baxter-King approximation = %d\n"), state->bkopts.k);
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "horizon")) {
 	    /* horizon for VAR impulse responses */
 	    if (!strcmp(setarg, "auto")) {
-		horizon = 0;
+		state->horizon = UNSET_INT;
 		err = 0;
 	    } else {
-		horizon = atoi(setarg);
-		if (horizon >= 0) {
+		state->horizon = atoi(setarg);
+		if (state->horizon > 0) {
 		    err = 0;
 		} else {
-		    horizon = 0;
+		    state->horizon = UNSET_INT;
 		}
 	    }	    
 	} else if (!strcmp(setobj, "nls_toler")) {
@@ -444,24 +672,7 @@ int execute_set_line (const char *line, PRN *prn)
 	}
     } else if (nw == 3) {
 	if (!strcmp(setobj, "bkbp_limits")) {
-	    /* Baxter-King threshold periodicities */
-	    if (isdigit(*setarg)) {
-		bkbp_periods[0] = atoi(setarg);
-		if (isdigit(*setarg2)) {
-		    bkbp_periods[1] = atoi(setarg2);
-		    if (bkbp_periods[1] < bkbp_periods[0]) {
-			/* 2nd entry should be bigger than 1st one */
-			int tmp = bkbp_periods[1];
-
-			bkbp_periods[1] = bkbp_periods[0];
-			bkbp_periods[0] = tmp;
-		    }
-		    pprintf(prn, 
-			    _("Baxter-King band = %d-%d periods\n"), 
-			    bkbp_periods[0], bkbp_periods[1]);
-		    err = 0;
-		}
-	    }
+	    err = set_bkbp_periods(setarg, setarg2, prn);
 	}
     }
 		    
@@ -472,43 +683,162 @@ int execute_set_line (const char *line, PRN *prn)
 
 void set_use_qr (int set)
 {
-    use_qr = set;
+    state->use_qr = set;
 }
 
 int get_use_qr (void)
 {
-    /* if use_qr has not been set explicitly, try env */
-    if (use_qr == -1) {
+    if (is_unset(state->use_qr)) {
 	char *s = getenv("GRETL_USE_QR");
 
 	if (s != NULL && *s != '\0' && *s != '0') {
-	    use_qr = 1;
+	    state->use_qr = 1;
 	} else {
-	    use_qr = 0;
+	    state->use_qr = 0;
 	}
     } 
 
-    return use_qr;
+    return state->use_qr;
 }
 
 int get_halt_on_error (void)
 {
     /* if halt_on_error has not been set explicitly, try env */
-    if (halt_on_error == -1) {
+    if (state->halt_on_error == -1) {
 	char *s = getenv("GRETL_KEEP_GOING");
 
 	if (s != NULL && *s != '\0' && *s != '0') {
-	    halt_on_error = 0;
+	    state->halt_on_error = 0;
 	} else {
-	    halt_on_error = 1;
+	    state->halt_on_error = 1;
 	}
     } 
 
-    return halt_on_error;
+    return state->halt_on_error;
 }
 
-/* switches for looping, batch mode, and pausing between
-   screens of output */
+/* Mechanism for pushing and popping program state for new-style
+   functions. push_program_state() is used when a function starts
+   execution: the function gets a copy of the current program state,
+   while that state is pushed onto the stack for restoration when the
+   function exits.
+*/
+
+int n_states;
+static set_vars **state_stack;
+
+int push_program_state (const DATAINFO *pdinfo)
+{
+    set_vars *mystate, **sstack;
+    int ns = n_states;
+    int err = 0;
+
+    mystate = malloc(sizeof *mystate);
+    if (mystate == NULL) {
+	err = 1;
+    } else {
+	sstack = realloc(state_stack, (ns + 1) * sizeof *sstack);
+	if (sstack == NULL) {
+	    free(mystate);
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	if (ns == 0) {
+	    /* set all defaults */
+	    state_vars_init(mystate);
+	} else {
+	    /* copy existing state */
+	    state_vars_copy(mystate, pdinfo);
+	}
+	state_stack = sstack;
+	state = state_stack[ns] = mystate;
+	n_states++;
+    }
+
+    return err;
+}
+
+/* Called when a new-style function exits: restores the program state
+   that was in force when the function started executing.  This may
+   involve putting the sample back the way it was.  But if the dataset
+   was complex subsampled either before or after function execution,
+   we will not (currently) mess with the sample state.  That case
+   requires more careful thought.
+*/
+
+int pop_program_state (DATAINFO *pdinfo)
+{
+    set_vars **sstack;
+    int ns = n_states;
+    int err = 0;
+
+    if (ns < 2) {
+	err = 1;
+    } else {
+	free(state_stack[ns - 1]);
+	state_stack[ns - 1] = NULL;
+	sstack = realloc(state_stack, (ns - 1) * sizeof *sstack);
+	if (sstack == NULL) {
+	    err = 1;
+	}	
+    }
+
+    if (!err) {
+	state_stack = sstack;
+	state = state_stack[ns - 2];
+	n_states--;
+    }
+
+    if (!err && pdinfo != NULL && sinfo_is_set(state->sinfo)) {
+	/* restore original t1, t2 if complex subsample in force
+	   neither before nor after the function call */
+	if (!complex_subsampled() && !state->sinfo.subsampled) {
+	    pdinfo->t1 = state->sinfo.t1;
+	    pdinfo->t2 = state->sinfo.t2;
+	}
+    }
+
+    return err;
+}
+
+/* initialization of all user-settable settings */
+
+int libset_init (void)
+{
+    return push_program_state(NULL);
+}
+
+void libset_cleanup (void)
+{
+    int i;
+
+    for (i=0; i<n_states; i++) {
+	free(state_stack[i]);
+    }
+
+    free(state_stack);
+    state_stack = NULL;
+    n_states = 0;
+}
+
+int libset_restore_state_zero (DATAINFO *pdinfo)
+{
+    int i, ns = n_states;
+    int err = 0;
+
+    for (i=ns; i>=2 && !err; i--) {
+	err = pop_program_state(pdinfo);
+    }
+
+    return err;
+}
+
+/* switches for looping, batch mode, and pausing between screens of
+   output: these depend on the state of the program calling libgretl,
+   but are not user-settable
+*/
 
 static int gretl_text_pause;
 static int loop_on;

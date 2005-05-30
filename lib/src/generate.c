@@ -2972,14 +2972,13 @@ static double evaluate_math_function (double arg, int fn, int *err)
 
 static double hp_lambda (const DATAINFO *pdinfo)
 {
-    double l;
+    double la = get_hp_lambda();
 
-    l = get_hp_lambda();
-    if (l == 0.0) {
-	l = 100 * pdinfo->pd * pdinfo->pd;
+    if (na(la)) {
+	la = 100 * pdinfo->pd * pdinfo->pd;
     }
 
-    return l;
+    return la;
 }
 
 /* drop first/last observations from sample if missing obs 

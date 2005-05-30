@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_func.h"
+#include "libset.h"
 
 #define CALLSTACK_DEPTH 8
 
@@ -184,7 +185,7 @@ int gretl_macro_stack_depth (void)
     return real_gretl_function_stack_depth();
 }
 
-static int push_fncall (fncall *call)
+static int push_fncall (fncall *call, const DATAINFO *pdinfo)
 {
     int i, nc;
 
@@ -205,6 +206,10 @@ static int push_fncall (fncall *call)
     callstack[0] = call;
 
     set_executing_on(call);
+
+    if (!call->fun->is_macro) {
+	push_program_state(pdinfo);
+    }
 
     return 0;
 }
@@ -311,6 +316,10 @@ static int unstack_fncall (double ***pZ, DATAINFO *pdinfo)
 
     set_executing_off(call);
 
+    if (!call->fun->is_macro) {
+	pop_program_state(pdinfo);
+    }
+
     free_fncall(call);
 
     for (i=0; i<nc; i++) {
@@ -355,10 +364,11 @@ static ufunc *ufunc_new (void)
 {
     ufunc *func = malloc(sizeof *func);
 
-    if (func == NULL) return NULL;
+    if (func == NULL) {
+	return NULL;
+    }
 
     func->name[0] = '\0';
-
     func->is_macro = 0;
 
     func->n_lines = 0;
@@ -1140,7 +1150,7 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 	return E_ALLOC;
     } 
 
-    err = push_fncall(call);
+    err = push_fncall(call, pdinfo);
 
     if (err) {
 	free_fncall(call);
@@ -1271,9 +1281,14 @@ void gretl_functions_cleanup (void)
     ufuncs_destroy();
 }
 
-void gretl_function_stop_on_error (void)
+void gretl_function_stop_on_error (DATAINFO *pdinfo)
 {
     callstack_destroy();
+
+    if (fn_executing > 0) {
+	libset_restore_state_zero(pdinfo);
+    }
+
     fn_executing = 0;
     macro_executing = 0;
 }

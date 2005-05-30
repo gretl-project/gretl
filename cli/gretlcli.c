@@ -1633,7 +1633,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     }
 
     if (err && gretl_executing_function_or_macro()) {
-	gretl_function_stop_on_error();
+	gretl_function_stop_on_error(datainfo);
     }
 
     if (!err && (is_model_cmd(cmd.word) || do_nls || do_arch)
