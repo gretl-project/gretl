@@ -683,6 +683,10 @@ int execute_set_line (const char *line, PRN *prn)
 
 void set_use_qr (int set)
 {
+    if (state == NULL) {
+	libset_init();
+    }
+
     state->use_qr = set;
 }
 
@@ -807,7 +811,15 @@ int pop_program_state (DATAINFO *pdinfo)
 
 int libset_init (void)
 {
-    return push_program_state(NULL);
+    static int done;
+    int err = 0;
+
+    if (!done) {
+	err = push_program_state(NULL);
+	done = 1;
+    }
+
+    return err;
 }
 
 void libset_cleanup (void)

@@ -5151,6 +5151,7 @@ int execute_script (const char *runfile, const char *buf,
     char line[MAXLINE];
     char tmp[MAXLINE];
     int loopstack = 0, looprun = 0;
+    int including = (exec_code & INCLUDE_EXEC);
     int exec_err = 0;
     LOOPSET *loop = NULL;
 
@@ -5175,10 +5176,13 @@ int execute_script (const char *runfile, const char *buf,
 
     /* reset model count to 0 if starting/saving session */
     if (exec_code == SESSION_EXEC || exec_code == REBUILD_EXEC ||
-	exec_code == SAVE_SESSION_EXEC) 
+	exec_code == SAVE_SESSION_EXEC) {
 	reset_model_count();
+    }
 
-    gui_script_logo(prn);
+    if (!including) {
+	gui_script_logo(prn);
+    }
 
     *cmd.word = '\0';
 
@@ -5240,7 +5244,7 @@ int execute_script (const char *runfile, const char *buf,
 		    set_gretl_echo(0);
 		} else if (!strncmp(line, "(* saved objects:", 17)) { 
 		    strcpy(line, "quit"); 
-		} else if (gretl_echo_on()) {
+		} else if (gretl_echo_on() && !including) {
 		    output_line(line, loopstack, prn);
 		}
 		strcpy(tmp, line);
@@ -5409,6 +5413,7 @@ int gui_exec_line (char *line,
     int i, err = 0, chk = 0, order, nulldata_n, lines[1];
     int dbdata = 0, do_arch = 0, do_nls = 0, renumber;
     int fncall = 0;
+    int script_code = exec_code;
     int loopstack = *plstack, looprun = *plrun;
     int rebuild = (exec_code == REBUILD_EXEC);
     double rho;
@@ -6214,9 +6219,14 @@ int gui_exec_line (char *line,
 	    return 1;
 	}
 	/* was SESSION_EXEC below */
-	err = execute_script(runfile, NULL, prn, 
-			     (exec_code == CONSOLE_EXEC)? SCRIPT_EXEC :
-			     exec_code);
+	if (exec_code == CONSOLE_EXEC) {
+	    script_code = SCRIPT_EXEC;
+	}
+	if (cmd.ci == INCLUDE) {
+	    pprintf(prn, _("%s opened OK\n"), runfile);
+	    script_code |= INCLUDE_EXEC;
+	}
+	err = execute_script(runfile, NULL, prn, script_code);
 	break;
 
     case SET:
