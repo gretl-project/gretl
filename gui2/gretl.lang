@@ -65,6 +65,7 @@
              <keyword>identity</keyword> 
              <keyword>if</keyword>
              <keyword>import</keyword>
+	     <keyword>include</keyword>
              <keyword>info</keyword>
              <keyword>instr</keyword> 
              <keyword>label</keyword>
@@ -92,7 +93,8 @@
              <keyword>panel</keyword>
              <keyword>pca</keyword>
              <keyword>pergm</keyword>
-             <keyword>plot</keyword>    
+             <keyword>plot</keyword>  
+	     <keyword>poisson</keyword>   
              <keyword>pooled</keyword>
              <keyword>print</keyword>
              <keyword>printf</keyword>  
@@ -160,6 +162,8 @@
              <keyword>cum</keyword>
              <keyword>hpfilt</keyword>
              <keyword>bkfilt</keyword>
+	     <keyword>fracdiff</keyword>
+	     <keyword>isvector</keyword>
              <keyword>missing</keyword>
              <keyword>misszero</keyword>
              <keyword>corr</keyword>

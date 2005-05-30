@@ -24,6 +24,7 @@
 #include "menustate.h"
 
 #include "libset.h"
+#include "gretl_func.h"
 
 static GtkWidget *console_view;
 static PRN *console_prn;
@@ -243,6 +244,23 @@ static int sample_changed (const DATAINFO *pdinfo)
     return console_sample_handler(pdinfo, SAMPLE_CHECK);
 }
 
+static int console_function_exec (char *execline)
+{
+    char *gotline;
+    int err = 0;
+
+    while (!looprun) {
+	gotline = gretl_function_get_line(execline, MAXLINE, &Z, datainfo);
+	if (gotline == NULL || *gotline == '\0') {
+	    break;
+	}
+	err = gui_exec_line(execline, &loop, &loopstack, &looprun, console_prn, 
+			    SCRIPT_EXEC, NULL);
+    }
+
+    return err;
+}
+
 static void console_exec (void)
 {
     static int redirected;
@@ -296,12 +314,26 @@ static void console_exec (void)
     gui_exec_line(execline, &loop, &loopstack, &looprun, console_prn, 
 		  CONSOLE_EXEC, NULL);
 
+    /* the control structure below is rather weird and needs more
+       testing/thought.  The issue is the nesting of loops inside
+       functions or vice versa */
+
     if (looprun) { 
+    fn_run_loop:
 	loop_exec(loop, execline, &Z, &datainfo, models, console_prn);
 	gretl_loop_destroy(loop);
 	loop = NULL;
 	looprun = 0;
-    }
+	if (gretl_executing_function_or_macro()) {
+	    console_function_exec(execline);
+	}
+    } else if (gretl_executing_function_or_macro()) {
+	console_function_exec(execline);
+	if (looprun) {
+	    /* the function we are exec'ing includes a loop */
+	    goto fn_run_loop;
+	}
+    } 
 
     redirected = printing_is_redirected(console_prn);
 
