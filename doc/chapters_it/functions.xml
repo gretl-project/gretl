@@ -206,38 +206,38 @@
       usarle.</para>
 
     <programlisting>
-      set echo off
-
-      genr testvar = 1
-      printf "Fuori, testvar vale %d\n", testvar  
+      function pluto
+        genr my testvar = 3
+        printf "In pluto, testvar vale %d\n", testvar
+      end function
 
       function pippo
-         # genera una variabile locale
-         genr my testvar = 2
-         printf "In pippo: testvar vale %d\n", testvar
-         pluto
-         printf "Tornando in pippo, testvar vale %d\n", testvar
-         # genera una variabile globale
-         genr glob = 15
+        # genera una variabile locale
+        genr my testvar = 2
+        printf "In pippo, testvar vale %d\n", testvar
+        # chiamata di funzione nidificata
+        pluto
+        printf "Tornando in pippo, testvar vale %d\n", testvar
+        # genera una variabile globale
+        genr glob = 15
       end function
 
-      function pluto
-         genr my testvar = 3
-         printf "In pluto, testvar vale %d\n", testvar
-      end function
-
-      # Chiama pippo, che chiama pluto
+      # inizia lo script principale
+      nulldata 5
+      set echo off
+      genr testvar = 1
+      printf "Nello script principale, testvar vale %d\n", testvar
+      # Chiama la funzione pippo, che a sua volta chiama la funzione pluto
       foo
-      printf "Tornando fuori, testvar vale %d, glob vale %d\n", \
-      testvar, glob 
+      printf "Tornando nello script principale, testvar vale %d, glob vale %d\n", testvar, glob 
       # Elenca le variabili globali
-      ls 
+      varlist
     </programlisting>
 
     <para>Eseguendo lo script si ottiene:</para>
 
     <programlisting>
-      gretl versione 1.3.0 ...
+      gretl versione 1.3.4 ...
       ? nulldata 5
       Periodicità: 1, oss. max.: 5,
       intervallo: 1-5
