@@ -443,6 +443,9 @@ double gretl_corr_rsq (int t1, int t2, const double *x, const double *y)
     }
 }
 
+/* we're supposing a variance smaller than this is just noise */
+#define TINYVAR 1.0e-16 
+
 /**
  * gretl_moments:
  * @t1: starting observation.
@@ -532,10 +535,15 @@ int gretl_moments (int t1, int t2, const double *x,
 	return 1;
     }
 
-    *std = sqrt(var);
+    if (var > TINYVAR) {
+	*std = sqrt(var);
+    } else {
+	*std = 0.0;
+    }
 
     if (allstats) {
-	if (var > 0.0) {
+	if (var > TINYVAR) {
+	    /* if variance is effectively zero, these should be undef'd */
 	    *skew = (s3 / n) / pow(s2 / n, 1.5);
 	    *kurt = ((s4 / n) / pow(s2 / n, 2)) - 3.0; /* excess kurtosis */
 	} else {
@@ -1925,11 +1933,13 @@ void print_summary (const Summary *summ,
 
 	pprintf(prn, "%-10s", pdinfo->varname[vi]);
 
-	if (summ->mean[i] != 0.0 && !na(summ->sd[i])) {
-	    cv = fabs(summ->sd[i] / summ->mean[i]);
-	} else {
+	if (floateq(summ->mean[i], 0.0)) {
 	    cv = NADBL;
-	}
+	} else if (floateq(summ->sd[i], 0.0)) {
+	    cv = 0.0;
+	} else {
+	    cv = fabs(summ->sd[i] / summ->mean[i]);
+	} 
 
 	printf15(summ->sd[i], prn);
 	printf15(cv, prn);

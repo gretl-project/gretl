@@ -433,7 +433,9 @@ int main (int argc, char *argv[])
 	    break;
 	case OPT_RUNIT:
 	    runit = 1;
-	    if (*filearg == '\0') usage();
+	    if (*filearg == '\0') {
+		usage();
+	    }
 	    strcpy(runfile, filearg); 
 	    cli_get_data = 1;
 	    break;
@@ -590,7 +592,7 @@ int main (int argc, char *argv[])
     }
 
     /* main command loop */
-    while (strcmp(cmd.word, "quit")) {
+    while (strcmp(cmd.word, "quit") && fb != NULL) {
 	char linecopy[MAXLINE];
 
 	if (err && batch && errfatal) {

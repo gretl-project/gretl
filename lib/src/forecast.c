@@ -22,7 +22,7 @@
 static int gretl_forecast (int t1, int t2, int nv, 
 			   const MODEL *pmod, double ***pZ)
 {
-    double xx, zz, rk;
+    double xval, zz;
     int i, k, maxlag = 0, yno;
     int v, t, miss;
     const int *arlist = NULL;
@@ -50,49 +50,67 @@ static int gretl_forecast (int t1, int t2, int nv,
 	miss = 0;
 	zz = 0.0;
 
+	if (pmod->ci == PWE && t == pmod->t1) {
+	    /* PWE first obs is special */
+	    yhat[t] = pmod->yhat[t];
+	    continue;
+	}
+
 	if (ar) { 
+	    double rk, ylag;
+
 	    for (k=1; k<=arlist[0]; k++) {
-		xx = (*pZ)[yno][t - arlist[k]];
 		rk = pmod->arinfo->rho[k];
-		if (na(xx)) {
-		    if (rk == 0.0) {
-			continue;
-		    }
-		    xx = yhat[t - arlist[k]];
-		    if (na(xx)) {
-			yhat[t] = NADBL;
-			miss = 1;
-		    }
+		/* use actual lagged y by preference */
+		ylag = (*pZ)[yno][t - arlist[k]];
+		if (na(ylag)) {
+		    /* use forecast of lagged y */
+		    ylag = yhat[t - arlist[k]];
 		}
-		zz += xx * rk;
+		if (na(ylag)) {
+		    yhat[t] = NADBL;
+		    miss = 1;
+		} else {
+		    zz += rk * ylag;
+		}
 	    }
 	} /* end if ar */
 
-	for (v=0; v<pmod->ncoeff && !miss; v++) {
-	    k = pmod->list[v+2];
-	    xx = (*pZ)[k][t];
-	    if (na(xx)) {
-		zz = NADBL;
+	for (i=0; i<pmod->ncoeff && !miss; i++) {
+	    v = pmod->list[i+2];
+	    xval = (*pZ)[v][t];
+	    if (na(xval)) {
 		miss = 1;
-	    }
-	    if (!miss && ar) {
-		xx = (*pZ)[k][t];
-		for (i=1; i<=arlist[0]; i++) {
-		    xx -= pmod->arinfo->rho[i] * (*pZ)[k][t - arlist[i]];
+	    } else {
+		if (ar) {
+		    double rk, xlag;
+
+		    for (k=1; k<=arlist[0]; k++) {
+			rk = pmod->arinfo->rho[k];
+			xlag = (*pZ)[v][t - arlist[k]];
+			if (!na(xlag)) {
+			    xval -= rk * xlag;
+			}
+		    }
 		}
-	    }
-	    if (!miss) {
-		zz += xx * pmod->coeff[v];
+		zz += xval * pmod->coeff[i];
 	    }
 	}
 
-	if (pmod->ci == LOGISTIC) {
+	if (!miss && pmod->ci == LOGISTIC) {
 	    double lmax = gretl_model_get_double(pmod, "lmax");
 
 	    zz = lmax / (1.0 + exp(-zz));
 	}
 
-	yhat[t] = zz;
+	if (miss) {
+	    yhat[t] = NADBL;
+	} else { 
+	    yhat[t] = zz;
+	}
+#if FCAST_DEBUG
+	fprintf(stderr, "gretl_forecast: set yhat[%d] = %g\n", t, yhat[t]);
+#endif
     }
 
     return 0;
@@ -458,7 +476,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
  * dependent variable in @pmod over the specified range of observations,
  * or, by default, over the sample range currently defined in @pdinfo.
  *
- * Returns: 0 on sucess, non-zero error code on failure.
+ * Returns: 0 on success, non-zero error code on failure.
  */
 
 int fcast (const char *line, const MODEL *pmod, double ***pZ,
@@ -466,6 +484,7 @@ int fcast (const char *line, const MODEL *pmod, double ***pZ,
 {
     int t, t1, t2, vi;
     char t1str[OBSLEN], t2str[OBSLEN], varname[VNAMELEN];
+    int err = 0;
 
     *t1str = '\0'; *t2str = '\0';
 
@@ -493,20 +512,22 @@ int fcast (const char *line, const MODEL *pmod, double ***pZ,
 
     vi = varindex(pdinfo, varname);
 
-    if (vi >= pdinfo->v && dataset_add_series(1, pZ, pdinfo)) { 
-	return E_ALLOC;
+    if (vi == pdinfo->v) {
+	err = dataset_add_series(1, pZ, pdinfo);
     }
 
-    strcpy(pdinfo->varname[vi], varname);
-    strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
+    if (!err) {
+	strcpy(pdinfo->varname[vi], varname);
+	strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
 
-    for (t=0; t<pdinfo->n; t++) {
-	(*pZ)[vi][t] = NADBL;
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[vi][t] = NADBL;
+	}
+
+	gretl_forecast(t1, t2, vi, pmod, pZ);
     }
 
-    gretl_forecast(t1, t2, vi, pmod, pZ);
-
-    return 0;
+    return err;
 }
 
 
