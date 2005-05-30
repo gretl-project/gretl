@@ -795,6 +795,11 @@ int dataset_add_scalar_as (const char *numstr, const char *newname,
 {
     int err = 0;
 
+    if (pdinfo->varinfo == NULL) {
+	strcpy(gretl_errmsg, _("Please open a data file first"));
+	return 1;
+    }
+
     err = dataset_add_scalar(pZ, pdinfo);
     if (!err) {
 	int vnew = pdinfo->v - 1;
