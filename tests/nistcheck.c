@@ -891,6 +891,8 @@ int main (int argc, char *argv[])
 	strcpy(datadir, argv[2]);
     }
 
+    libgretl_init();
+
     prn = gretl_print_new(GRETL_PRINT_STDOUT); 
 
     for (j=0; j<ntests; j++) {
@@ -924,6 +926,8 @@ int main (int argc, char *argv[])
 		       prog, prn);
 
     gretl_print_destroy(prn);
+
+    libgretl_cleanup();
 
     return (missing || modelerrs || poorvals);
 }

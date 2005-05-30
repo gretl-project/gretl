@@ -104,13 +104,11 @@ void exit_free_modelspec (void)
 void library_command_init (void)
 {
     gretl_cmd_init(&cmd);
-    libgretl_init();
 }
 
 void library_command_free (void)
 {
     gretl_cmd_free(&cmd);
-    libgretl_cleanup();
 }
 
 /* ........................................................... */

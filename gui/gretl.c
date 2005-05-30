@@ -615,11 +615,13 @@ int main (int argc, char *argv[])
     gtk_init(&argc, &argv);
 #endif
 
+    libgretl_init();
     set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
+
+    set_rcfile();
     if (!expert) {
 	root_check();
     }
-    set_rcfile();
     init_fileptrs();
 
     if (argc > 1) {
@@ -833,8 +835,11 @@ int main (int argc, char *argv[])
     free(models);
 
     library_command_free();
+    libgretl_cleanup();
 
-    if (data_status) free_datainfo(datainfo);
+    if (data_status) {
+	free_datainfo(datainfo);
+    }
 
     free_command_stack();
     exit_free_modelspec();

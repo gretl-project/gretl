@@ -1170,8 +1170,8 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
     show_or_hide_toolbar(want_toolbar);
 
+    /* register these for session using libset apparatus */
     set_use_qr(useqr);
-
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
     set_garch_robust_vcv(hc_garch);

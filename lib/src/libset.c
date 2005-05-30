@@ -74,6 +74,8 @@ struct set_vars_ {
 /* global state */
 set_vars *state;
 
+#define check_for_state() (state != NULL || libset_init())
+
 static void robust_opts_init (struct robust_opts *opts)
 {
     opts->auto_lag = AUTO_LAG_STOCK_WATSON;
@@ -168,32 +170,39 @@ static void state_vars_init (set_vars *sv)
 
 int get_hc_version (void)
 {
+    check_for_state();
     return state->ropts.hc_version;
 }
 
 double get_hp_lambda (void)
 {
+    check_for_state();
     return state->hp_lambda;
 }
 
 int get_bkbp_k (void)
 {
+    check_for_state();
     return state->bkopts.k;
 }
 
 void get_bkbp_periods (int *periods)
 {
+    check_for_state();
     periods[0] = state->bkopts.periods[0];
     periods[1] = state->bkopts.periods[1];
 }
 
 int get_VAR_horizon (void)
 {
+    check_for_state();
     return state->horizon;
 }
 
 double get_nls_toler (void)
 {
+    check_for_state();
+
     if (na(state->nls_toler)) {
 	state->nls_toler = get_default_nls_toler();
     }
@@ -204,6 +213,8 @@ double get_nls_toler (void)
 int set_nls_toler (double tol)
 {
     int err = 0;
+
+    check_for_state();
 
     if (tol <= 0.0) {
 	err = 1;
@@ -216,6 +227,8 @@ int set_nls_toler (double tol)
 
 static int get_or_set_force_hc (int f)
 {
+    check_for_state();
+
     if (f >= 0) {
 	state->ropts.force_hc = f;
     }
@@ -225,6 +238,8 @@ static int get_or_set_force_hc (int f)
 
 static int get_or_set_garch_vcv (int v)
 {
+    check_for_state();
+
     if (v >= 0) {
 	state->gopts.vcv_variant = v;
     }
@@ -234,6 +249,8 @@ static int get_or_set_garch_vcv (int v)
 
 static int get_or_set_garch_robust_vcv (int v)
 {
+    check_for_state();
+
     if (v >= 0) {
 	state->gopts.robust_vcv_variant = v;
     }
@@ -309,26 +326,32 @@ int get_force_hc (void)
 
 void set_gretl_echo (int e)
 {
+    check_for_state();
     state->gretl_echo = e;
 }
 
 int gretl_echo_on (void)
 {
+    check_for_state();
     return state->gretl_echo;
 }
 
 void set_gretl_messages (int e)
 {
+    check_for_state();
     state->gretl_msgs = e;
 }
 
 int gretl_messages_on (void)
 {
+    check_for_state();
     return state->gretl_msgs;
 }
 
 int get_hac_lag (int m)
 {
+    check_for_state();
+
     /* Variants of Newey-West */
 
     if (state->ropts.user_lag != 0 && state->ropts.user_lag < m - 2) {
@@ -348,6 +371,8 @@ int get_hac_lag (int m)
 
 static char *get_hac_lag_string (void)
 {
+    check_for_state();
+
     if (state->ropts.user_lag > 0 && state->ropts.user_lag < 1000) {
 	static char lagstr[6];
 
@@ -363,6 +388,8 @@ static char *get_hac_lag_string (void)
 static int parse_hc_variant (const char *s)
 {
     int err = 1;
+
+    check_for_state();
 
     if (!strcmp(s, "0") || !strcmp(s, "1") ||
 	!strcmp(s, "2") || !strcmp(s, "3")) {
@@ -496,7 +523,7 @@ static int display_settings (PRN *prn)
 
     pprintf(prn, " echo = %d\n", state->gretl_echo);
 
-    ival = get_use_qr();
+    ival = get_use_qr(); /* checks env */
     pprintf(prn, " qr = %d\n", state->use_qr);
 
     uval = get_gretl_random_seed();
@@ -527,6 +554,8 @@ static int display_settings (PRN *prn)
     /* undocumented! */
     pprintf(prn, " nls_toler = %g\n", get_nls_toler());
     pprintf(prn, " messages = %d\n", state->gretl_msgs);
+
+    ival =  get_halt_on_error(); /* checks env */
     pprintf(prn, " halt_on_error = %d\n", state->halt_on_error);
 
     return 0;
@@ -536,6 +565,8 @@ int execute_set_line (const char *line, PRN *prn)
 {
     char setobj[16], setarg[16], setarg2[16];
     int nw, err = E_PARSE;
+
+    check_for_state();
 
     *setobj = *setarg = *setarg2 = '\0';
 
@@ -683,15 +714,14 @@ int execute_set_line (const char *line, PRN *prn)
 
 void set_use_qr (int set)
 {
-    if (state == NULL) {
-	libset_init();
-    }
-
+    check_for_state();
     state->use_qr = set;
 }
 
 int get_use_qr (void)
 {
+    check_for_state();
+
     if (is_unset(state->use_qr)) {
 	char *s = getenv("GRETL_USE_QR");
 
@@ -707,8 +737,9 @@ int get_use_qr (void)
 
 int get_halt_on_error (void)
 {
-    /* if halt_on_error has not been set explicitly, try env */
-    if (state->halt_on_error == -1) {
+    check_for_state();
+
+    if (is_unset(state->halt_on_error)) {
 	char *s = getenv("GRETL_KEEP_GOING");
 
 	if (s != NULL && *s != '\0' && *s != '0') {

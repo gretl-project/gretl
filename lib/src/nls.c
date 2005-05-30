@@ -1248,7 +1248,6 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     MODEL nlsmod;
     double *uhat = NULL;
     double *jac = NULL;
-    double toler;
     int origv = pdinfo->v;
     int err = 0;
 
@@ -1308,7 +1307,7 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* get tolerance from user setting or default */
-    toler = get_nls_toler();
+    pspec->tol = get_nls_toler();
 
     /* export Z pointer for minpack's benefit */
     nZ = pZ;

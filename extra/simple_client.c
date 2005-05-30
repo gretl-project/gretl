@@ -37,6 +37,9 @@ int main (void)
     PRN *prn;                   /* pointer to struct for printing */
     int model_count = 0;        /* keep a tally of models estimated */
 
+    /* basic initialization of library */
+    libgretl_init();
+
     logo(); /* print version info and session time */
     prn = gretl_print_new(GRETL_PRINT_STDOUT); /* simple printing */
 
@@ -125,6 +128,8 @@ int main (void)
     free(list);
     free_datainfo(datainfo);
     gretl_print_destroy(prn);
+
+    libgretl_cleanup();
 
     return 0;
 

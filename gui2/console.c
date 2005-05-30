@@ -39,22 +39,28 @@ static int loopstack, looprun;
 
 static int gretl_console_init (void)
 {
-    int i;
     char *hstr;
+    int i;
 
     hlines = 0;
 
     hstr = getenv("GRETL_HISTORY_LINES");
-    if (hstr != NULL) hlines = atoi(hstr);
+    if (hstr != NULL) {
+	hlines = atoi(hstr);
+    }
 
-    if (hlines <= 2 || hlines > 128) 
+    if (hlines <= 2 || hlines > 128) {
 	hlines = DEFAULT_HLINES;
+    }
 
     cmd_history = mymalloc(hlines * sizeof *cmd_history);
-    if (cmd_history == NULL) return E_ALLOC;
+    if (cmd_history == NULL) {
+	return E_ALLOC;
+    }
 
-    for (i=0; i<hlines; i++) 
+    for (i=0; i<hlines; i++) {
 	cmd_history[i] = NULL;
+    }
 
     hlmax = 0;
     hl = -1;
@@ -74,7 +80,9 @@ static void gretl_console_free (GtkWidget *w, gpointer p)
     int i;
 
     if (cmd_history != NULL) {
-	for (i=0; i<hlines; i++) free(cmd_history[i]);
+	for (i=0; i<hlines; i++) {
+	    free(cmd_history[i]);
+	}
 	free(cmd_history);
 	cmd_history = NULL;
     }
@@ -107,7 +115,9 @@ static int push_history_line (const char *line)
     /* add the new line */
     cmd_history[0] = g_strdup(line);
     
-    if (hlmax < hlines) hlmax++;
+    if (hlmax < hlines) {
+	hlmax++;
+    }
 
     hl = -1;
 
@@ -142,7 +152,9 @@ static char *pop_history_line (int keyval)
     else if (keyval == GDK_Down) {
 	if (hl >= 0) hl--;
 	if (hl < 0) {
-	    if (beeptime) beep();
+	    if (beeptime) {
+		beep();
+	    }
 	    beeptime = 1;
 	} else {
 	    beeptime = 0;
@@ -161,7 +173,9 @@ static int last_console_line_len (int len)
 
     for (i=len; i>0; i--) {
 	c = GTK_TEXT_INDEX(GTK_TEXT(console_view), i - 1);
-	if (c == '\n') break; 
+	if (c == '\n') {
+	    break; 
+	}
     }
     return len - i - 2;
 }
@@ -193,7 +207,7 @@ enum {
     SAMPLE_CHECK
 };
 
-static int console_sample (const DATAINFO *pdinfo, int code)
+static int console_sample_handler (const DATAINFO *pdinfo, int code)
 {
     static int pd, t1, t2, ts;
     static double sd0;
@@ -221,12 +235,12 @@ static int console_sample (const DATAINFO *pdinfo, int code)
 
 void console_record_sample (const DATAINFO *pdinfo)
 {
-    console_sample(pdinfo, SAMPLE_RECORD);
+    console_sample_handler(pdinfo, SAMPLE_RECORD);
 }
 
 static int sample_changed (const DATAINFO *pdinfo)
 {
-    return console_sample(pdinfo, SAMPLE_CHECK);
+    return console_sample_handler(pdinfo, SAMPLE_CHECK);
 }
 
 static void console_exec (void)
@@ -278,6 +292,7 @@ static void console_exec (void)
 
     push_history_line(execline); 
 
+    /* actually execute the command line */
     gui_exec_line(execline, &loop, &loopstack, &looprun, console_prn, 
 		  CONSOLE_EXEC, NULL);
 
@@ -368,8 +383,13 @@ void show_gretl_console (void)
 	return;
     }
 
-    if (!user_fopen("console_tmp", fname, &prn)) return;
-    if (gretl_console_init()) return;
+    if (!user_fopen("console_tmp", fname, &prn)) {
+	return;
+    }
+
+    if (gretl_console_init()) {
+	return;
+    }
 
     pputs(prn, _(intro));
     gretl_print_destroy(prn);
@@ -408,7 +428,7 @@ void show_gretl_console (void)
     gtk_editable_changed(GTK_EDITABLE(console_view));
 #endif
 
-    gtk_widget_grab_focus (console_view);
+    gtk_widget_grab_focus(console_view);
 }
 
 #define IS_BACKKEY(k) (k == GDK_BackSpace || k == GDK_Left)
@@ -426,7 +446,9 @@ static int bslash_cont (const gchar *line)
 	}
     }
 
-    if (cbuf == NULL) return 0;
+    if (cbuf == NULL) {
+	return 0;
+    }
 
     if (bslash) {
 	char *p = strrchr(cbuf, '\\');
@@ -715,20 +737,4 @@ gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
     return FALSE;
 }
 
-#if 0
-gint console_click_handler (GtkWidget *w, GdkEventButton *event,
-			    gpointer p)
-{
-    if (!on_last_line()) {
-	GdkModifierType mods;
-
-	gdk_window_get_pointer(w->window, NULL, NULL, &mods);
-	if (mods & GDK_BUTTON2_MASK) {
-	    return TRUE;
-	}
-    }
-
-    return FALSE;
-}
-#endif
 

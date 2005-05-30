@@ -459,6 +459,7 @@ int main (int argc, char *argv[])
     }
 #endif
 
+    libgretl_init();
     logo();     /* print version info */
     session_time(NULL);
 
@@ -544,7 +545,6 @@ int main (int argc, char *argv[])
     }
 
     gretl_cmd_init(&cmd);
-    libgretl_init();
 
     /* print list of variables */
     if (data_status) {

@@ -2268,7 +2268,15 @@ static void get_genr_formula (char *formula, const char *line,
 
     while (isspace((unsigned char) *line)) {
 	line++;
-    }    
+    } 
+
+    /* allow for old-style "genr my ... " */
+    if (sscanf(line, "my %8s =", vname)) {
+	if (gretl_executing_macro()) {
+	    genr_set_local(genr);
+	}
+	line += 3;
+    }   
 
     /* allow for generating a single value in a series */
     if (sscanf(line, "%8[^[ =][%10[^]]", vname, obs) == 2) {
@@ -2278,14 +2286,6 @@ static void get_genr_formula (char *formula, const char *line,
 	    genr->err = 1;
 	    return;
 	}
-    }
-
-    /* allow for old-style "genr my ... " */
-    if (sscanf(line, "my %8s =", vname)) {
-	if (gretl_executing_macro()) {
-	    genr_set_local(genr);
-	}
-	line += 3;
     }
 
     *formula = '\0';
@@ -4837,12 +4837,13 @@ void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn)
     }
 }
 
-/* executing a macro: pick a local var as first choice, parent-local
-   or global as second.
+/* executing a macro: if !local, pick a local var as first choice,
+   parent-local or global as second; if local, _only_ pick from
+   local vars.
 */
 
-static int macro_pick_varmatch (const DATAINFO *pdinfo, 
-				const char *check, int sd)
+static int macro_pick_varmatch (const DATAINFO *pdinfo, const char *check, 
+				int sd, int local)
 {
     int localv = -1;
     int globalv = -1;
@@ -4853,7 +4854,7 @@ static int macro_pick_varmatch (const DATAINFO *pdinfo,
 	if (!strcmp(pdinfo->varname[i], check)) {
 	    int sl = STACK_LEVEL(pdinfo, i);
 
-	    if (sl < sd) {
+	    if (!local && sl < sd) {
 		if (sl > slmax) {
 		    slmax = sl;
 		    globalv = i;
@@ -4936,7 +4937,7 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 	}
     } else if (msd > 0) {
 	/* complicated, see above */
-	ret = macro_pick_varmatch(pdinfo, check, msd);
+	ret = macro_pick_varmatch(pdinfo, check, msd, local);
     } else {
 	/* not inside a function or macro, don't have to check level */
 	for (i=1; i<pdinfo->v; i++) { 
@@ -4946,6 +4947,11 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 	    }
 	}
     }
+
+#if GEN_LEVEL_DEBUG
+    fprintf(stderr, "real_varindex for '%s': returning %d\n",
+	    check, ret);
+#endif 
 
     return ret;
 }

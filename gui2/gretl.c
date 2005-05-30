@@ -767,15 +767,16 @@ int main (int argc, char *argv[])
     gtk_init(&argc, &argv);
 #endif /* USE_GNOME */
 
+    libgretl_init();
     set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
 
 #ifdef G_OS_WIN32
     gretl_win32_init(argv[0]);
 #else 
+    set_rcfile(); /* also calls read_rc() */
     if (!expert) {
 	root_check();
     }
-    set_rcfile(); /* also calls read_rc() */
 #endif/* G_OS_WIN32 */
 
     if (argc > 1) {
@@ -1007,6 +1008,7 @@ int main (int argc, char *argv[])
     free(models);
 
     library_command_free();
+    libgretl_cleanup();
 
     if (data_status) {
 	free_datainfo(datainfo);
