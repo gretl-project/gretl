@@ -19,6 +19,19 @@
 
 #include "libgretl.h"
 
+/* The "ar" code below is based on the representation of a model
+   with an AR error, u(t) = r1*u(t-1) + r2*u(t-2) + ... + e(t),
+   as
+
+       (1 - r(L)) y(t) = (1 - r(L) X(t)*b + e(t)
+
+   where r(L) is a polynomial in the lag operator.  In effect,
+   we generate a forecast that incorporates the error process
+   by using rho-differenced X on the RHS, and applying a
+   compensation on the LHS so that the forecast is of y, not
+   (1 - r(L)) y.
+*/
+
 static int gretl_forecast (int t1, int t2, int nv, 
 			   const MODEL *pmod, double ***pZ)
 {
@@ -29,6 +42,8 @@ static int gretl_forecast (int t1, int t2, int nv,
     double *yhat = (*pZ)[nv];
     int ar = AR_MODEL(pmod->ci);
 
+    /* bodge: for now we're not going to forecast out of sample
+       for these estimators. TODO */
     if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
 	for (t=t1; t<=t2; t++) {
 	    yhat[t] = pmod->yhat[t];
@@ -57,6 +72,7 @@ static int gretl_forecast (int t1, int t2, int nv,
 	}
 
 	if (ar) { 
+	    /* LHS adjustment */
 	    double rk, ylag;
 
 	    for (k=1; k<=arlist[0]; k++) {
@@ -83,6 +99,7 @@ static int gretl_forecast (int t1, int t2, int nv,
 		miss = 1;
 	    } else {
 		if (ar) {
+		    /* use rho-differenced X on RHS */
 		    double rk, xlag;
 
 		    for (k=1; k<=arlist[0]; k++) {
