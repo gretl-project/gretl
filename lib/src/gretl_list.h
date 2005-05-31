@@ -49,7 +49,7 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 
 int gretl_list_has_const (const int *list);
 
-int gretl_list_duplicates (const int *list, int ci);
+int gretl_list_duplicates (const int *list, GretlCmdIndex ci);
 
 int *full_var_list (const DATAINFO *pdinfo, int *nvars);
 

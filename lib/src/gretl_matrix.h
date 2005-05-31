@@ -132,7 +132,7 @@ int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 
 double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 				 const gretl_matrix *b, GretlMatrixMod bmod,
-				 int *err);
+				 int *errp);
 
 gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a, 
 					 const gretl_matrix *b);
@@ -177,11 +177,14 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 			  gretl_vector *uhat, double *s2);
 
 double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
-				 int *err);
+				 int *errp);
+
+double gretl_scalar_b_X_b_prime (const gretl_vector *b, const gretl_matrix *X,
+				 int *errp);
 
 gretl_matrix *
 gretl_matrix_A_X_A_prime (const gretl_matrix *A, const gretl_matrix *X,
-			  int *err);
+			  int *errp);
 
 gretl_matrix *
 gretl_vcv_matrix_from_model (MODEL *pmod, const char *select);
@@ -208,6 +211,6 @@ int gretl_is_zero_vector (const gretl_vector *v);
 gretl_matrix *
 gretl_covariance_matrix_from_varlist (const int *list, const double **Z, 
 				      const DATAINFO *pdinfo, 
-				      gretl_matrix **means, int *err);
+				      gretl_matrix **means, int *errp);
 
 #endif /* GRETL_MATRIX_H */

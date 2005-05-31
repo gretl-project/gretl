@@ -1531,7 +1531,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
  close_format:
 
-    if (pmod->ci != LAD && (opt & OPT_O)) {
+    if (opt & OPT_O) {
 	outcovmx(pmod, pdinfo, prn);
     }
 

@@ -19,27 +19,28 @@
 
 #include "libgretl.h"
 
-#define is_model_ci(c) (c == ADD || \
-                        c == AR || \
-                        c == ARMA || \
-                        c == CORC || \
-                        c == GARCH || \
-                        c == HCCM || \
-                        c == HILU || \
-                        c == HSK || \
-                        c == LAD || \
-                        c == LOGISTIC || \
-                        c == LOGIT || \
-                        c == OLS || \
-                        c == OMIT || \
-                        c == NLS || \
-                        c == POISSON || \
-                        c == POOLED || \
-                        c == PROBIT || \
-                        c == PWE || \
-                        c == TOBIT || \
-                        c == TSLS || \
-                        c == WLS)
+/* model commands plus ADD and OMIT */
+#define vcv_opt_ok(c) (c == ADD || \
+                       c == AR || \
+                       c == ARMA || \
+                       c == CORC || \
+                       c == GARCH || \
+                       c == HCCM || \
+                       c == HILU || \
+                       c == HSK || \
+                       c == LAD || \
+                       c == LOGISTIC || \
+                       c == LOGIT || \
+                       c == OLS || \
+                       c == OMIT || \
+                       c == NLS || \
+                       c == POISSON || \
+                       c == POOLED || \
+                       c == PROBIT || \
+                       c == PWE || \
+                       c == TOBIT || \
+                       c == TSLS || \
+                       c == WLS)
 
 struct gretl_option {
     int ci;              /* command index (gives context) */
@@ -170,7 +171,7 @@ const char **get_opts_for_command (int ci, int *nopt)
     int i, j, n = 0;
     const char **ret = NULL;
 
-    if (is_model_ci(ci) && ci != OLS && ci != LAD) {
+    if (vcv_opt_ok(ci) && ci != OLS) {
 	n++; /* vcv */
     }
 
@@ -193,7 +194,7 @@ const char **get_opts_for_command (int ci, int *nopt)
 	}
     }
 
-    if (is_model_ci(ci) && ci != OLS && ci != LAD) {
+    if (vcv_opt_ok(ci) && ci != OLS) {
 	ret[j++] = "vcv";
     }
 
@@ -246,7 +247,7 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
 {
     int i;
 
-    if (opt == OPT_O && is_model_ci(ci)) {
+    if (opt == OPT_O && vcv_opt_ok(ci)) {
 	return 1;
     }
 
@@ -314,8 +315,7 @@ static int valid_long_opt (int ci, const char *lopt)
     int opt = OPT_NONE;
     int i;
 
-    if (is_model_ci(ci) && ci != LAD && !strcmp(lopt, "vcv")) {
-	/* VCV is available for all but LAD models */
+    if (vcv_opt_ok(ci) && !strcmp(lopt, "vcv")) {
 	return OPT_O;
     }
 
@@ -502,7 +502,7 @@ const char *print_flags (gretlopt oflags, int ci)
 
     /* special: -o (--vcv) can be used with several model
        commands */
-    if ((oflags & OPT_O) && is_model_ci(ci)) {
+    if ((oflags & OPT_O) && vcv_opt_ok(ci)) {
 	strcat(flagstr, " --vcv");
 	oflags &= ~OPT_O;
     }

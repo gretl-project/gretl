@@ -585,7 +585,7 @@ int gretl_list_has_const (const int *list)
  * gretl_list_duplicates:
  * @list: an array of integer variable ID numbers, the first element
  * of which holds a count of the number of elements following.
- * @ci: gretl command index (see #gretl_cmd_codes).
+ * @ci: index of gretl command (for context).
  *
  * Checks whether or not a gretl list contains duplicated elements.
  * Exactly what counts as duplication depends on the context of the
@@ -594,7 +594,7 @@ int gretl_list_has_const (const int *list)
  * Returns: 1 in case of erroneous duplication, 0 otherwise.
  */
 
-int gretl_list_duplicates (const int *list, int ci)
+int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 {
     int i, j, start = 2;
     int ret = 0;

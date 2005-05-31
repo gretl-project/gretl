@@ -1210,11 +1210,11 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
  * @amod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE.
  * @b: right-hand matrix.
  * @bmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE.
- * @err: pointer to integer error-code variable.
+ * @errp: pointer to receive error code (zero on success,
+ * non-zero on failure), or %NULL.
  * 
  * Returns: The dot (scalar) product of @a (or @a-transpose) and
- * @b (or @b-transpose).  @err points to %GRETL_MATRIX_ERR on
- * failure.
+ * @b (or @b-transpose).
  */
 
 double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
@@ -2236,14 +2236,69 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     return err;
 }
 
+/* computes either b'Xb (if bmod = GRETL_MOD_TRANSPOSE), 
+   or bXb' (bmod = GRETL_MOD_NONE) */
+
+static double gretl_scalar_b_X_b (const gretl_vector *b, 
+				  GretlMatrixMod bmod,
+				  const gretl_matrix *X,
+				  int *errp)
+{
+    gretl_matrix *tmp = NULL;
+    double ret = NADBL;
+    int tmpdim = (bmod == GRETL_MOD_TRANSPOSE)?
+	b->rows : b->cols;
+    int chk = (bmod == GRETL_MOD_TRANSPOSE)? 
+	b->cols : b->rows;
+    int err = 0;
+
+    if (X->rows != X->cols || tmpdim != X->rows || chk != 1) {
+	err = GRETL_MATRIX_NON_CONFORM;
+    }
+
+    if (!err) {
+	tmp = gretl_matrix_alloc(1, tmpdim);
+	if (tmp == NULL) {
+	    err = GRETL_MATRIX_NOMEM;
+	}
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply_mod(b, bmod,
+					X, GRETL_MOD_NONE,
+					tmp);
+    }
+
+    if (!err) {
+	GretlMatrixMod rmod = (bmod == GRETL_MOD_TRANSPOSE)?
+	    GRETL_MOD_NONE : GRETL_MOD_TRANSPOSE;
+
+	ret = gretl_matrix_dot_product(tmp, GRETL_MOD_NONE,
+				       b, rmod, &err);
+    }
+
+    gretl_matrix_free(tmp);
+
+    if (err) {
+	ret = NADBL;
+    }
+
+    if (errp != NULL) {
+	*errp = err;
+    }
+
+    return ret;
+}
+
 /**
  * gretl_scalar_b_prime_X_b:
  * @b: column k-vector.
  * @X: k x k matrix.
- * @err: pointer to error code variable.
+ * @errp: pointer to receive error code, or %NULL.
  *
  * Computes the scalar product, @b transpose times @X times @b.
- * On success, *err = 0, otherwise it is non-zero.
+ * If @errp is not %NULL its content is set to 0 on success, non-zero
+ * on failure.
  * 
  * Returns: the scalar product, or #NADBL on failure.
  */
@@ -2251,70 +2306,59 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
 				 int *errp)
 {
-    gretl_matrix *tmp = NULL;
-    double ret = NADBL;
+    return gretl_scalar_b_X_b(b, GRETL_MOD_TRANSPOSE, X, errp);
+}
 
-    *errp = 0;
+/**
+ * gretl_scalar_b_X_b_prime:
+ * @b: column k-vector.
+ * @X: k x k matrix.
+ * @errp: pointer to receive error code, or %NULL.
+ *
+ * Computes the scalar product, @b times @X times @b transpose.
+ * If @errp is not %NULL its content is set to 0 on success, non-zero
+ * on failure.
+ * 
+ * Returns: the scalar product, or #NADBL on failure.
+ */
 
-    if (b->rows != X->rows ||
-	X->rows != X->cols ||
-	b->cols != 1) {
-	*errp = GRETL_MATRIX_NON_CONFORM;
-    }
-
-    if (*errp == 0) {
-	tmp = gretl_matrix_alloc(1, b->rows);
-	if (tmp == NULL) {
-	    *errp = GRETL_MATRIX_NOMEM;
-	}
-    }
-
-    if (*errp == 0) {
-	*errp = gretl_matrix_multiply_mod(b, GRETL_MOD_TRANSPOSE,
-					  X, GRETL_MOD_NONE,
-					  tmp);
-    }
-
-    if (*errp == 0) {
-	ret = gretl_matrix_dot_product(tmp, GRETL_MOD_NONE,
-				       b, GRETL_MOD_NONE,
-				       errp);
-    }
-
-    gretl_matrix_free(tmp);
-
-    if (*errp) {
-	ret = NADBL;
-    }
-
-    return ret;
+double gretl_scalar_b_X_b_prime (const gretl_vector *b, const gretl_matrix *X,
+				 int *errp)
+{
+    return gretl_scalar_b_X_b(b, GRETL_MOD_NONE, X, errp);
 }
 
 /**
  * gretl_matrix_A_X_A_prime:
  * @A: m * k matrix.
  * @X: k * k matrix.
- * @err: pointer to error code variable.
+ * @errp: pointer to receive error code, or %NULL.
  *
  * Computes A * X * A'.
+ * If @errp is not %NULL its content is set to 0 on success, non-zero
+ * on failure.
  * 
- * Returns: m * m matrix product, or %NULL on error (in which case
- * @err will point to a non-zero error code).
+ * Returns: m * m matrix product, or %NULL on error.
  */
 
 gretl_matrix *
 gretl_matrix_A_X_A_prime (const gretl_matrix *A, const gretl_matrix *X,
-			  int *err)
+			  int *errp)
 {
     gretl_matrix *tmp = NULL;
     gretl_matrix *ret = NULL;
     int m = A->rows;
     int k = A->cols;
+    int err = 0;
 
-    *err = 0;
+    if (errp != NULL) {
+	*errp = 0;
+    }
 
     if (X->rows != k || X->cols != k) {
-	*err = GRETL_MATRIX_NON_CONFORM;
+	if (errp != NULL) {
+	    *errp = GRETL_MATRIX_NON_CONFORM;
+	}
 	return NULL;
     }
 
@@ -2324,25 +2368,30 @@ gretl_matrix_A_X_A_prime (const gretl_matrix *A, const gretl_matrix *X,
     if (tmp == NULL || ret == NULL) {
 	gretl_matrix_free(tmp);
 	gretl_matrix_free(ret);
-	*err = GRETL_MATRIX_NOMEM;
+	if (errp != NULL) {
+	    *errp = GRETL_MATRIX_NOMEM;
+	}
 	return NULL;
     }
 
-    *err = gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
-				     X, GRETL_MOD_NONE,
-				     tmp);
+    err = gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
+				    X, GRETL_MOD_NONE,
+				    tmp);
 
-    if (!*err) {
-	*err = gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
-					 A, GRETL_MOD_TRANSPOSE,
-					 ret);
+    if (!err) {
+	err = gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
+					A, GRETL_MOD_TRANSPOSE,
+					ret);
     }
 
     gretl_matrix_free(tmp);
 
-    if (*err) {
+    if (err) {
 	gretl_matrix_free(ret);
 	ret = NULL;
+	if (errp != NULL) {
+	    *errp = err;
+	}
     }
 
     return ret;
@@ -2433,7 +2482,7 @@ gretl_vcv_matrix_from_model (MODEL *pmod, const char *select)
  * (or %NULL for the full vector).
  *
  * Produces all or part of the coefficient vector for @pmod  
- * in the form of a gretl_vector.  Storage is allocated, to be freed
+ * in the form of a gretl column vector.  Storage is allocated, to be freed
  * by the caller.  If @select is non-%NULL, it should be an array
  * with non-zero elements in positions corresponding to the
  * desired rows and zero elements otherwise.
@@ -2525,7 +2574,8 @@ int gretl_is_zero_vector (const gretl_vector *v)
  * @Z: data array.
  * @pdinfo: pointer to data information struct.
  * @means: pointer to pick up vector of means, or %NULL to discard.
- * @err: pointer to pass back error code.
+ * @errp: pointer to receive non-zero error code in case of
+ * failure, or %NULL.
  *
  * Returns: the variance-covariance matrix of the listed variables
  * (over the currently defined data sample), or %NULL in case of
@@ -2536,7 +2586,7 @@ gretl_matrix *
 gretl_covariance_matrix_from_varlist (const int *list, const double **Z, 
 				      const DATAINFO *pdinfo, 
 				      gretl_matrix **means,
-				      int *err)
+				      int *errp)
 {
     gretl_matrix *vcv;
     gretl_vector *xbar;
@@ -2546,33 +2596,39 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
 
     double vv, x, y;
     double xbi, xbj;
-    int nv;
-
-    *err = 0;
+    int nv, err = 0;
+    
+    if (*errp != NULL) {
+	*errp = 0;
+    }
 
     vcv = gretl_matrix_alloc(k, k);
     if (vcv == NULL) {
-	*err = E_ALLOC;
+	if (errp != NULL) {
+	    *errp = E_ALLOC;
+	}
 	return NULL;
     }
 
     xbar = gretl_vector_alloc(k);
     if (xbar == NULL) {
-	*err = E_ALLOC;
+	if (errp != NULL) {
+	    *errp = E_ALLOC;
+	}
 	gretl_matrix_free(vcv);
 	return NULL;
     }
     
-    for (i=0; i<k && !*err; i++) {
+    for (i=0; i<k && !err; i++) {
 	xbi = gretl_mean(pdinfo->t1, pdinfo->t2, Z[list[i+1]]);
 	if (na(xbi)) {
-	    *err = E_DATA;
+	    err = E_DATA;
 	} else {
 	    gretl_vector_set(xbar, i, xbi);
 	}
     }
 
-    for (i=0; i<k && !*err; i++) {
+    for (i=0; i<k && !err; i++) {
 	xbi = gretl_vector_get(xbar, i);
 	for (j=i; j<k; j++) {
 	    xbj = gretl_vector_get(xbar, j);
@@ -2588,7 +2644,7 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
 		nv++;
 	    }
 	    if (nv < 2) {
-		*err = E_DATA;
+		err = E_DATA;
 		vv = NADBL;
 	    } else {
 		vv /= (nv - 1); /* plain nv? */
@@ -2598,15 +2654,18 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
 	}
     }
 
-    if (means != NULL && !*err) {
+    if (means != NULL && !err) {
 	*means = xbar;
     } else {
 	gretl_vector_free(xbar);
     }
 
-    if (*err) {
+    if (err) {
 	gretl_matrix_free(vcv);
 	vcv = NULL;
+	if (errp != NULL) {
+	    *errp = err;
+	}
     }
 
     return vcv;

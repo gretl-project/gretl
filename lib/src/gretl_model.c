@@ -25,6 +25,7 @@ struct model_data_item_ {
     char *key;
     void *ptr;
     size_t size;
+    void (*destructor) (void *);
 };
 
 struct ModelTest_ {
@@ -37,26 +38,32 @@ struct ModelTest_ {
     double pvalue;
 };
 
-static void free_item_data (const char *key, void *ptr)
+static void free_model_data_item (model_data_item *item)
 {
-    /* FIXME? (case of structs) */
-    free(ptr);
+    if (item->destructor != NULL) {
+	(*item->destructor)(item->ptr);
+    } else {
+	free(item->ptr);
+    }
+    free(item->key);
+    free(item);
 }
 
-static model_data_item *create_data_item (const char *key, void *ptr, size_t size)
+static model_data_item *create_data_item (const char *key, void *ptr, size_t size,
+					  void (*destructor) (void *))
 {
     model_data_item *item;
 
     item = malloc(sizeof *item);
     if (item != NULL) {
-	item->key = malloc(strlen(key) + 1);
+	item->key = gretl_strdup(key);
 	if (item->key == NULL) {
 	    free(item);
 	    item = NULL;
 	} else {
-	    strcpy(item->key, key);
 	    item->ptr = ptr;
 	    item->size = size;
+	    item->destructor = destructor;
 	}
     }
 
@@ -64,28 +71,33 @@ static model_data_item *create_data_item (const char *key, void *ptr, size_t siz
 }
 
 /**
- * gretl_model_set_data:
+ * gretl_model_set_data_with_destructor:
  * @pmod: pointer to #MODEL.
  * @key: key string for data, used in retrieval.
  * @ptr: data-pointer to be attached to model.
  * @size: size of data in bytes.
+ * @destructor: pointer to function that should be used to free
+ * the data-pointer in question.
  *
  * Attaches data to @pmod: the data can be retrieved later using
- * #gretl_model_get_data.  Note that the data are not "physically"
+ * gretl_model_get_data().  Note that the data are not "physically"
  * copied to the model; simply, @ptr is recorded on the model.
  * This means that the data referenced by the pointer now in 
- * effect belong to @pmod.  The data pointer will be freed when 
- * @pmod is cleared, with #clear_model.
+ * effect belong to @pmod.  When @pmod is cleared with clear_model(),
+ * @destructor will be invoked with @ptr as its single argument.
+ * If a simple "free" is OK for freeing the data, you can use
+ * gretl_model_set_data() instead.
  *
  * The @size is needed in case the model is copied with
- * #copy_model, in which case the target of the copying
+ * copy_model(), in which case the target of the copying
  * operation receives a newly allocated copy of the data in
  * question.
  *
  * Returns: 0 on success, 1 on failure.
  */
 
-int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size)
+int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr, 
+					  size_t size, void (*destructor) (void *))
 {
     model_data_item **items;
     model_data_item *item;
@@ -96,7 +108,7 @@ int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size)
 
     pmod->data_items = items;
 
-    item = create_data_item(key, ptr, size);
+    item = create_data_item(key, ptr, size, destructor);
     if (item == NULL) return 1;
 
     pmod->data_items[n_items - 1] = item;
@@ -106,13 +118,42 @@ int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size)
 }
 
 /**
+ * gretl_model_set_data:
+ * @pmod: pointer to #MODEL.
+ * @key: key string for data, used in retrieval.
+ * @ptr: data-pointer to be attached to model.
+ * @size: size of data in bytes.
+ *
+ * Attaches data to @pmod: the data can be retrieved later using
+ * gretl_model_get_data().  Note that the data are not "physically"
+ * copied to the model; simply, @ptr is recorded on the model.
+ * This means that the data referenced by the pointer now in 
+ * effect belong to @pmod.  The data pointer will be freed when 
+ * @pmod is cleared with clear_model().  If the data has deep
+ * structure that requires special treatment on freeing, use
+ * gretl_model_set_data_with_destructor() instead.
+ *
+ * The @size is needed in case the model is copied with
+ * copy_model(), in which case the target of the copying
+ * operation receives a newly allocated copy of the data in
+ * question.
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
+int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size)
+{
+    return gretl_model_set_data_with_destructor(pmod, key, ptr, size, NULL);
+}
+
+/**
  * gretl_model_set_int:
  * @pmod: pointer to #MODEL.
  * @key: key string, used in retrieval.
  * @val: integer value to set.
  *
  * Records an integer value on a model: the value can be retrieved 
- * later using #gretl_model_get_int, using the appropriate @key.  
+ * later using gretl_model_get_int(), using the appropriate @key.  
  *
  * Returns: 0 on success, 1 on failure.
  */
@@ -147,7 +188,7 @@ int gretl_model_set_int (MODEL *pmod, const char *key, int val)
  * @val: double-precision value to set.
  *
  * Records a floating-point value on @pmod: the value can be 
- * retrieved later using #gretl_model_get_double with the
+ * retrieved later using gretl_model_get_double() with the
  * appropriate @key. 
  *
  * Returns: 0 on success, 1 on failure.
@@ -278,12 +319,52 @@ void free_vcv (VCV *vcv)
 }
 
 /**
+ * gretl_model_new_vcv:
+ * @pmod: pointer to model.
+ * @nelem: pointer to receive number of elements in
+ * the packed array, or %NULL;
+ * 
+ * Allocates space for a packed coefficient covariance matrix
+ * in @pmod (if such space is not already allocated).  Sets
+ * all entries in the array to zero.
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
+
+int gretl_model_new_vcv (MODEL *pmod, int *nelem)
+{
+    int nv = pmod->ncoeff;
+    int nxpx = (nv * nv + nv) / 2; 
+    int i, err = 0;
+
+    if (pmod->vcv == NULL) {
+	/* not already allocated */
+	pmod->vcv = malloc(nxpx * sizeof *pmod->vcv);
+	if (pmod->vcv == NULL) {
+	    err = E_ALLOC;
+	} 
+    }
+
+    if (pmod->vcv != NULL) {
+	for (i=0; i<nxpx; i++) {
+	    pmod->vcv[i] = 0.0;
+	}
+	if (nelem != NULL) {
+	    *nelem = nxpx;
+	}
+    }	
+
+    return err;
+}
+
+/**
  * gretl_model_get_vcv:
  * @pmod: pointer to model.
  * 
  * Supplies the caller with a copy of the variance-covariance 
  * matrix for the parameter estimates in @pmod.  See also
- * #free_vcv.
+ * free_vcv().  To get the covariance matrix in gretl_matrix
+ * format, see gretl_vcv_matrix_from_model().
  *
  * Returns: #VCV struct or %NULL on error.
  */
@@ -362,39 +443,26 @@ static void maybe_delete_x12_file (const MODEL *pmod)
 
 static void destroy_all_data_items (MODEL *pmod)
 {
-    model_data_item *item;
     int i;
 
-    if (pmod->n_data_items == 0) return;
+    if (pmod->n_data_items == 0) {
+	return;
+    }
 
 #ifdef HAVE_X12A
     maybe_delete_x12_file(pmod);
 #endif
 
     for (i=0; i<pmod->n_data_items; i++) {
-	item = pmod->data_items[i];
-	free_item_data(item->key, item->ptr);
-	free(item->key);
-	free(item);
+	free_model_data_item(pmod->data_items[i]);
     }
 
     free(pmod->data_items);
     pmod->data_items = NULL;
 }
 
-/**
- * gretl_model_destroy_data_item:
- * @pmod: pointer to model.
- * @key: key string.
- *
- * Looks up the data pointer, attached to @pmod, that is
- * identified by @key, and if a pointer is found, frees
- * it and removes it from the model's list of data items.
- *
- * Returns: 0 on success, 1 on failure (pointer not found).
- */
-
-int gretl_model_destroy_data_item (MODEL *pmod, const char *key)
+static int discard_model_data_item (MODEL *pmod, const char *key,
+				    int free_data)
 {
     model_data_item *junk = NULL;
     int i, targ = 0;
@@ -425,11 +493,58 @@ int gretl_model_destroy_data_item (MODEL *pmod, const char *key)
 
 	pmod->n_data_items -= 1;
 
-	free(junk->key);
-	free(junk);
+	if (free_data) {
+	    /* deep free the data item */
+	    free_model_data_item(junk);
+	} else {
+	    /* just free the item, not the actual data */
+	    free(junk->key);
+	    free(junk);
+	}
     }
 
     return err;
+}
+
+/**
+ * gretl_model_destroy_data_item:
+ * @pmod: pointer to model.
+ * @key: key string.
+ *
+ * Looks up the data pointer, attached to @pmod, that is
+ * identified by @key, and if a pointer is found, frees
+ * it (or applies the destructor function that was set for
+ * the item, if any) and removes it from the model's list of 
+ * data items.  If you want to remove the item from the
+ * model's list without freeing the underlying data pointer,
+ * use gretl_model_detach_data_item().
+ *
+ * Returns: 0 on success, 1 on failure (pointer not found).
+ */
+
+int gretl_model_destroy_data_item (MODEL *pmod, const char *key)
+{
+    return discard_model_data_item(pmod, key, 1);
+}
+
+/**
+ * gretl_model_detach_data_item:
+ * @pmod: pointer to model.
+ * @key: key string.
+ *
+ * Looks up the data item, attached to @pmod, that is
+ * identified by @key, and if an item is found, removes
+ * it from the model's list of such items.  The data
+ * pointer associated with @key is not touched.  If you
+ * want the underlying resources associated with @key to be 
+ * freed, use gretl_model_destroy_data_item().
+ *
+ * Returns: 0 on success, 1 on failure (key not found).
+ */
+
+int gretl_model_detach_data_item (MODEL *pmod, const char *key)
+{
+    return discard_model_data_item(pmod, key, 0);
 }
 
 /**
@@ -475,7 +590,7 @@ static void gretl_model_init_pointers (MODEL *pmod)
  * Initializes a gretl #MODEL, including setting its pointer members
  * to %NULL. This initialization should be done if the caller has
  * declared a #MODEL struct directly, rather than obtaining a pointer to
- * #MODEL using #gretl_model_new (in which case the initialization is
+ * #MODEL using gretl_model_new() (in which case the initialization is
  * done automatically).
  */
 
@@ -528,7 +643,7 @@ void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo)
  * gretl_model_new:
  * 
  * Allocates memory for a gretl #MODEL struct and initializes the struct,
- * using #gretl_model_init.
+ * using gretl_model_init().
  *
  * Returns: pointer to model (or %NULL if allocation fails).
  */
@@ -605,7 +720,7 @@ static void gretl_test_free (ModelTest *test)
  *
  * Clears a gretl #MODEL, freeing all allocated storage and setting
  * pointer members to %NULL.  Also frees any data pointers attached
- * via #gretl_model_set_data.  The model pointer itself is not
+ * via gretl_model_set_data().  The model pointer itself is not
  * freed, so this function may be called on a #MODEL which has been 
  * declared directly by the caller (by passing the address of the
  * #MODEL).  
@@ -1159,6 +1274,7 @@ static int copy_model_data_items (MODEL *targ, const MODEL *src)
 
 	memcpy(targitem->ptr, srcitem->ptr, srcitem->size);
 	targitem->size = srcitem->size;
+	targitem->destructor = srcitem->destructor;
     }
 
     if (err) {
@@ -1320,28 +1436,6 @@ int is_model_cmd (const char *s)
     return ret;
 }
 
-int is_model_ref_cmd (int ci)
-{
-    int ret = 0;
-
-    if (ci == ADD ||
-	ci == OMIT ||
-	ci == ARCH ||
-	ci == CHOW ||
-	ci == CUSUM ||
-	ci == LMTEST ||
-	ci == LEVERAGE ||
-	ci == VIF ||
-	ci == RESTRICT ||
-	ci == FCAST ||
-	ci == FCASTERR ||
-	ci == FIT) {
-	ret = 1;
-    }
-
-    return ret;
-}
-
 int is_quiet_model_test (int ci, gretlopt opt)
 {
     int ret = 0;
@@ -1385,7 +1479,7 @@ int command_ok_for_model (int test_ci, int model_ci)
 	break;
 
     case EQNPRINT:
-	if (model_ci != OLS) ok = 0; /* unduly restrictive? */
+	if (model_ci != OLS) ok = 0; /* FIXME: unduly restrictive? */
 	break;
 
     case FCAST:
@@ -1393,7 +1487,7 @@ int command_ok_for_model (int test_ci, int model_ci)
 	break;
 
     case FCASTERR:
-	if (model_ci != OLS) ok = 0;
+	if (AR_MODEL(model_ci)) ok = 0;
 	break;
 
     case LMTEST:
@@ -1415,7 +1509,7 @@ int command_ok_for_model (int test_ci, int model_ci)
 	if (model_ci == LAD || model_ci == NLS) ok = 0;
 	break;
     case TESTUHAT:
-	/* need to exclude garch? */
+	/* do we really need to exclude garch? */
 	if (model_ci == TOBIT || model_ci == GARCH) ok = 0;
 	break;
 

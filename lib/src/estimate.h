@@ -23,12 +23,11 @@
 
 /* functions follow */
 
-MODEL lsq (const int *list, 
-	   double ***pZ, DATAINFO *pdinfo, 
-	   int ci, gretlopt opt, double rho);
+MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
+	   GretlCmdIndex ci, gretlopt opt, double rho);
 
 double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
-		     int ci, int *err, gretlopt opt, PRN *prn);
+		     GretlCmdIndex ci, int *err, gretlopt opt, PRN *prn);
 
 MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo); 
 

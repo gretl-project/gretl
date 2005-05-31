@@ -40,12 +40,49 @@ struct VCV_ {
                              free(p); \
                           }
 
-#define AR_MODEL(c) (c == AR || c == CORC || c == PWE || c == HILU)
+#define AR_MODEL(c) (c == AR || \
+                     c == ARMA || \
+                     c == CORC || \
+                     c == GARCH || \
+                     c == HILU || \
+                     c == PWE)
 
-#define ML_ESTIMATOR(c) (c ==  ARMA || c == GARCH || c == POISSON || \
-                         c == LOGIT || c == PROBIT || c == TOBIT)
+#define SIMPLE_AR_MODEL(c) (c == AR || \
+                            c == CORC || \
+                            c == HILU || \
+                            c == PWE)
 
-#define LIMDEP(c) (c == LOGIT || c == PROBIT || c == TOBIT)
+#define ML_ESTIMATOR(c) (c == ARMA || \
+                         c == GARCH || \
+                         c == LOGIT || \
+                         c == POISSON || \
+                         c == PROBIT || \
+                         c == TOBIT)
+
+#define LIMDEP(c) (c == LOGIT || \
+                   c == PROBIT || \
+                   c == TOBIT)
+
+#define LSQ_MODEL(c) (c == CORC || \
+                      c == HCCM || \
+                      c == HILU || \
+                      c == HSK || \
+                      c == OLS || \
+                      c == PWE || \
+                      c == WLS)
+
+#define is_model_ref_cmd(c) (c == ADD || \
+	                     c == ARCH || \
+	                     c == CHOW || \
+	                     c == CUSUM || \
+	                     c == FCAST || \
+	                     c == FCASTERR || \
+	                     c == FIT || \
+                             c == LEVERAGE || \
+	                     c == LMTEST || \
+                             c == OMIT || \
+	                     c == RESTRICT || \
+                             c == VIF)
 
 typedef enum {
     GRETL_TEST_ADD,
@@ -75,9 +112,14 @@ void gretl_model_set_auxiliary (MODEL *pmod, ModelAuxCode aux);
 
 void clear_model (MODEL *pmod);
 
+int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr, 
+					  size_t size, void (*destructor) (void *));
+
 int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size);
 
 int gretl_model_destroy_data_item (MODEL *pmod, const char *key);
+
+int gretl_model_detach_data_item (MODEL *pmod, const char *key);
 
 int gretl_model_set_int (MODEL *pmod, const char *key, int val);
 
@@ -94,6 +136,8 @@ double gretl_model_get_double (const MODEL *pmod, const char *key);
 
 void free_vcv (VCV *vcv);
 
+int gretl_model_new_vcv (MODEL *pmod, int *nelem);
+
 VCV *gretl_model_get_vcv (MODEL *pmod);
 
 void debug_print_model_info (const MODEL *pmod, const char *msg);
@@ -103,8 +147,6 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo);
 int swap_models (MODEL **targ, MODEL **src);
 
 int is_model_cmd (const char *line);
-
-int is_model_ref_cmd (int ci);
 
 int is_quiet_model_test (int ci, gretlopt opt);
 

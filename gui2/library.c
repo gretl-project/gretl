@@ -1230,7 +1230,8 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	return;
     }
 
-    fr = get_fcast_with_errs(cmdline, pmod, &Z, datainfo, prn);
+    fr = get_fcast_with_errs(cmdline, pmod, (const double **) Z, 
+			     datainfo, prn);
 
     if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));

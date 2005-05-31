@@ -167,7 +167,8 @@ int undo_daily_repack (MODEL *pmod, double **Z,
     /* undo temporary shrinkage of pmod->t2 */
     pmod->t2 += mobs->misscount;
 
-    /* trash the daily missing obs stuff */
+    /* Trash the daily missing obs stuff. TODO: might save this info
+       for future use (e.g. in forecasting) */
     free(mobs->missvec);
     free(mobs);
     pmod->data = NULL;
@@ -277,7 +278,7 @@ int repack_missing_daily_obs (MODEL *pmod, double **Z,
 	free(missvec);
     } else {
 	gretl_model_set_int(pmod, "daily_repack", 1);
-	/* have to be sure to undo this after estimation */
+	/* Be sure to undo this after estimation! */
 	pmod->t2 -= misscount;
 	mobs->missvec = missvec;
 	mobs->misscount = misscount;

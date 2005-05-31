@@ -28,10 +28,11 @@ void free_fit_resid (FITRESID *fr);
 FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
 			 DATAINFO *pdinfo);
 
-FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod, 
-			       double ***pZ, DATAINFO *pdinfo, PRN *prn);
+FITRESID *get_fcast_with_errs (const char *str, MODEL *pmod, 
+			       const double **Z, DATAINFO *pdinfo, 
+			       PRN *prn);
 
-int fcast_with_errs (const char *str, const MODEL *pmod, 
+int fcast_with_errs (const char *str, MODEL *pmod, 
 		     double ***pZ, DATAINFO *pdinfo, 
 		     gretlopt opt, PRN *prn);
 

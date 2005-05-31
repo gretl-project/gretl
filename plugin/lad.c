@@ -11,10 +11,9 @@ static int l1_ (int m, int n,
 static int col_(double *v1, double *v2, double amlt, 
 		int m1, int iout);
 
-static int 
-bootstrap_stderrs (MODEL *pmod, double **Z,
-		   double *a, double *b, double *e, double *x,
-		   int m, int n, int dim);
+static int bootstrap_vcv (MODEL *pmod, double **Z,
+			  double *a, double *b, double *e, double *x,
+			  int m, int n, int dim);
 
 
 int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
@@ -113,7 +112,7 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 	   absolute residuals over nobs */
 	pmod->sigma = pmod->rho / pmod->nobs; 
 
-	if (bootstrap_stderrs (pmod, Z, a, b, e, x, m, n, dim)) {
+	if (bootstrap_vcv(pmod, Z, a, b, e, x, m, n, dim)) {
 	    pmod->errcode = E_ALLOC;
 	}
 
@@ -546,44 +545,60 @@ adjust_sample_for_missing (int *sample, int n, const MODEL *pmod)
 
 #define ITERS 500
 
-/* obtain bootstrap estimates of LAD standard errors */
+/* obtain bootstrap estimates of LAD covariance matrix */
 
-static int 
-bootstrap_stderrs (MODEL *pmod, double **Z,
-		   double *a, double *b, double *e, double *x,
-		   int m, int n, int dim)
+static int bootstrap_vcv (MODEL *pmod, double **Z,
+			  double *a, double *b, double *e, double *x,
+			  int m, int n, int dim)
 {
     double **coeffs = NULL;
-    int i, j, k, r, *sample = NULL;
+    double *meanb = NULL;
+    int *sample = NULL;
+    double xi, xj;
+    int i, j, k, r;
     int yno = pmod->list[1];
-    int nrows = m + 2;
+    int nvcv, nrows = m + 2;
+    int err = 0;
+
+    /* note: new_vcv sets all entries to zero */
+    err = gretl_model_new_vcv(pmod, &nvcv);
+    if (err) {
+	return err;
+    }
 
     /* an array for each coefficient */
     coeffs = malloc(pmod->ncoeff * sizeof *coeffs);
     if (coeffs == NULL) {
-	return 1;
+	err = E_ALLOC;
+	goto bailout;
     }
 
-    /* each array has length ITERS + 1 */
+    /* a scalar for each coefficient mean */
+    meanb = malloc(pmod->ncoeff * sizeof *meanb);
+    if (meanb == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }    
+
+    /* each array has length ITERS */
     for (i=0; i<pmod->ncoeff; i++) {
-	coeffs[i] = malloc((ITERS + 1) * sizeof **coeffs);
+	coeffs[i] = malloc(ITERS * sizeof **coeffs);
 	if (coeffs[i] == NULL) {
 	    for (k=0; k<i; k++) {
 		free(coeffs[k]);
 	    }
 	    free(coeffs);
-	    return 1;
+	    coeffs = NULL;
+	    err = E_ALLOC;
+	    goto bailout;
 	}
     }
 
     /* sample array has length pmod->nobs */
     sample = malloc(m * sizeof *sample);
     if (sample == NULL) {
-	for (i=0; i<pmod->ncoeff; i++) {
-	    free(coeffs[i]);
-	}
-	free(coeffs);
-	return 1;
+	err = E_ALLOC;
+	goto bailout;
     }
 
     for (k=0; k<ITERS; k++) {
@@ -629,36 +644,47 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 	}
     }
 
-    /* initialize means and standard deviations */
-    for (i=0; i<pmod->ncoeff; i++) {
-	coeffs[i][ITERS] = 0.0;
-	pmod->sderr[i] = 0.0;
-    }
-
     /* find means of coeff estimates */
     for (i=0; i<pmod->ncoeff; i++) {
+	double bbar = 0.0;
+
 	for (k=0; k<ITERS; k++) {
-	   coeffs[i][ITERS] += coeffs[i][k];
+	   bbar += coeffs[i][k];
 	} 
-	coeffs[i][ITERS] /= ITERS;
+	meanb[i] = bbar / ITERS;
     }    
 
-    /* find standard deviations */
+    /* find variances and covariances */
     for (i=0; i<pmod->ncoeff; i++) {
+	double vi = 0.0;
+
 	for (k=0; k<ITERS; k++) {
-	   pmod->sderr[i] += (coeffs[i][k] - coeffs[i][ITERS]) *
-	       (coeffs[i][k] - coeffs[i][ITERS]);
+	    xi = coeffs[i][k] - meanb[i];
+	    vi += xi * xi;
+	    for (j=0; j<=i; j++) {
+		xj = coeffs[j][k] - meanb[j];
+		pmod->vcv[ijton(i, j, pmod->ncoeff)] += xi * xj;
+	    }
 	}
-	pmod->sderr[i] = sqrt(pmod->sderr[i] / ITERS);
+	pmod->sderr[i] = sqrt(vi / ITERS);
     }
+
+    for (i=0; i<nvcv; i++) {
+	pmod->vcv[i] /= ITERS;
+    }
+
+ bailout:
 
     free(sample);
 
-    for (i=0; i<pmod->ncoeff; i++) {
-	free(coeffs[i]);
+    if (coeffs != NULL) {
+	for (i=0; i<pmod->ncoeff; i++) {
+	    free(coeffs[i]);
+	}
+	free(coeffs);
     }
 
-    free(coeffs);
+    free(meanb);
 
     return 0;
 }

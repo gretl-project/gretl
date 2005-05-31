@@ -702,7 +702,7 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @ci: command index (see gretl_commands.h)
+ * @ci: one of the command indices in #LSQ_MODEL.
  * @opt: option flags: zero or more of the following --
  *   %OPT_R compute robust standard errors;
  *   %OPT_C force use of Cholesky decomp;
@@ -724,7 +724,7 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
  */
 
 MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
-	   int ci, gretlopt opt, double rho)
+	   GretlCmdIndex ci, gretlopt opt, double rho)
 {
     int l0, yno, i;
     int effobs = 0;
@@ -1807,8 +1807,8 @@ static double autores (MODEL *pmod, const double **Z, int ci)
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @ci: command index: %CORC for Cochrane-Orcutt, %HILU for Hildreth-Lu,
- *                     %PWE for Prais-Winsten estimator.
+ * @ci: %CORC for Cochrane-Orcutt, %HILU for Hildreth-Lu,
+ *      %PWE for Prais-Winsten estimator.
  * @err: pointer for error code.
  * @opt: option flags: may include %OPT_B to suppress Cochrane-Orcutt
  *       fine-tuning of Hildreth-Lu results, %OPT_P to generate
@@ -1820,11 +1820,11 @@ static double autores (MODEL *pmod, const double **Z, int ci)
  * handling first-order serial correlation.  Print a trace of the
  * search for rho.
  * 
- * Returns: rho estimate on successful completion, %NADBL error.
+ * Returns: rho estimate on successful completion, %NADBL on error.
  */
 
 double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
-		     int ci, int *err, gretlopt opt, PRN *prn)
+		     GretlCmdIndex ci, int *err, gretlopt opt, PRN *prn)
 {
     double rho = 0.0, rho0 = 0.0, diff;
     double finalrho = 0.0, essmin = 1.0e8;
@@ -2082,7 +2082,7 @@ static int tsls_save_data (MODEL *pmod, const int *list,
 	X = malloc(Xsize);
     } else if (Xsize != xs_old) {
 	tsls_free_data(pmod);
-	gretl_model_destroy_data_item(pmod, "tslsX");
+	gretl_model_detach_data_item(pmod, "tslsX");
 	free(X);
 	X = malloc(Xsize);
     } else {
@@ -2093,7 +2093,7 @@ static int tsls_save_data (MODEL *pmod, const int *list,
     if (endog == NULL) {
 	endog = malloc(esize);
     } else if (esize != es_old) {
-	gretl_model_destroy_data_item(pmod, "endog");
+	gretl_model_detach_data_item(pmod, "endog");
 	free(endog);
 	endog = malloc(esize);
     } else {

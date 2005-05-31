@@ -20,7 +20,7 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
-enum gretl_cmd_codes {
+typedef enum {
     SEMIC,    
     ADD,
     ADDOBS,
@@ -138,7 +138,7 @@ enum gretl_cmd_codes {
     VIF,
     WLS,
     NC
-};
+} GretlCmdIndex;
 
 #define NEEDS_TWO_VARS(c)  ((c) == AR || (c) == ARCH || (c) == COINT || \
                            (c) == CORC || (c) == HCCM || (c) == HILU || \

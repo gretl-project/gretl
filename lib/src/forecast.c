@@ -19,132 +19,19 @@
 
 #include "libgretl.h"
 
-/* The "ar" code below is based on the representation of a model
-   with an AR error, u(t) = r1*u(t-1) + r2*u(t-2) + ... + e(t),
-   as
-
-       (1 - r(L)) y(t) = (1 - r(L) X(t)*b + e(t)
-
-   where r(L) is a polynomial in the lag operator.  In effect,
-   we generate a forecast that incorporates the error process
-   by using rho-differenced X on the RHS, and applying a
-   compensation on the LHS so that the forecast is of y, not
-   (1 - r(L)) y.
-*/
-
-static int gretl_forecast (int t1, int t2, int nv, 
-			   const MODEL *pmod, double ***pZ)
-{
-    double xval, zz;
-    int i, k, maxlag = 0, yno;
-    int v, t, miss;
-    const int *arlist = NULL;
-    double *yhat = (*pZ)[nv];
-    int ar = AR_MODEL(pmod->ci);
-
-    /* bodge: for now we're not going to forecast out of sample
-       for these estimators. TODO */
-    if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
-	for (t=t1; t<=t2; t++) {
-	    yhat[t] = pmod->yhat[t];
-	}
-	return 0;
-    }
-
-    yno = pmod->list[1];
-
-    if (ar) {
-	arlist = pmod->arinfo->arlist;
-	maxlag = arlist[arlist[0]];
-	if (t1 < maxlag) {
-	    t1 = maxlag; 
-	}
-    }
-
-    for (t=t1; t<=t2; t++) {
-	miss = 0;
-	zz = 0.0;
-
-	if (pmod->ci == PWE && t == pmod->t1) {
-	    /* PWE first obs is special */
-	    yhat[t] = pmod->yhat[t];
-	    continue;
-	}
-
-	if (ar) { 
-	    /* LHS adjustment */
-	    double rk, ylag;
-
-	    for (k=1; k<=arlist[0]; k++) {
-		rk = pmod->arinfo->rho[k];
-		/* use actual lagged y by preference */
-		ylag = (*pZ)[yno][t - arlist[k]];
-		if (na(ylag)) {
-		    /* use forecast of lagged y */
-		    ylag = yhat[t - arlist[k]];
-		}
-		if (na(ylag)) {
-		    yhat[t] = NADBL;
-		    miss = 1;
-		} else {
-		    zz += rk * ylag;
-		}
-	    }
-	} /* end if ar */
-
-	for (i=0; i<pmod->ncoeff && !miss; i++) {
-	    v = pmod->list[i+2];
-	    xval = (*pZ)[v][t];
-	    if (na(xval)) {
-		miss = 1;
-	    } else {
-		if (ar) {
-		    /* use rho-differenced X on RHS */
-		    double rk, xlag;
-
-		    for (k=1; k<=arlist[0]; k++) {
-			rk = pmod->arinfo->rho[k];
-			xlag = (*pZ)[v][t - arlist[k]];
-			if (!na(xlag)) {
-			    xval -= rk * xlag;
-			}
-		    }
-		}
-		zz += xval * pmod->coeff[i];
-	    }
-	}
-
-	if (!miss && pmod->ci == LOGISTIC) {
-	    double lmax = gretl_model_get_double(pmod, "lmax");
-
-	    zz = lmax / (1.0 + exp(-zz));
-	}
-
-	if (miss) {
-	    yhat[t] = NADBL;
-	} else { 
-	    yhat[t] = zz;
-	}
-#if FCAST_DEBUG
-	fprintf(stderr, "gretl_forecast: set yhat[%d] = %g\n", t, yhat[t]);
-#endif
-    }
-
-    return 0;
-}
-
-static int allocate_fit_resid_arrays (FITRESID *fr, int n, int errs)
+static int 
+allocate_fit_resid_arrays (FITRESID *fr, int n, int errs)
 {
     fr->actual = malloc(n * sizeof *fr->actual);
     if (fr->actual == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
     fr->fitted = malloc(n * sizeof *fr->fitted);
     if (fr->fitted == NULL) {
 	free(fr->actual);
 	fr->actual = NULL;
-	return 1;
+	return E_ALLOC;
     }
 
     if (errs) {
@@ -154,7 +41,7 @@ static int allocate_fit_resid_arrays (FITRESID *fr, int n, int errs)
 	    fr->actual = NULL;
 	    free(fr->fitted);
 	    fr->fitted = NULL;
-	    return 1;
+	    return E_ALLOC;
 	}
     } else {
 	fr->sderr = NULL;
@@ -165,9 +52,8 @@ static int allocate_fit_resid_arrays (FITRESID *fr, int n, int errs)
 
 FITRESID *fit_resid_new (int n, int errs)
 {
-    FITRESID *fr;
+    FITRESID *fr = malloc(sizeof *fr);
 
-    fr = malloc(sizeof *fr);
     if (fr == NULL) {
 	return NULL;
     }
@@ -182,17 +68,24 @@ FITRESID *fit_resid_new (int n, int errs)
 	fr->actual = NULL;
 	fr->fitted = NULL;
 	fr->sderr = NULL;
-	return fr;
+    } else {
+	if (allocate_fit_resid_arrays(fr, n, errs)) {
+	    free(fr);
+	    fr = NULL;
+	} else {
+	    fr->nobs = n;
+	}
     }
-
-    if (allocate_fit_resid_arrays(fr, n, errs)) {
-	free(fr);
-	return NULL;
-    }
-
-    fr->nobs = n;
     
     return fr;
+}
+
+void free_fit_resid (FITRESID *fr)
+{
+    free(fr->actual);
+    free(fr->fitted);
+    free(fr->sderr);
+    free(fr);
 }
 
 FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
@@ -237,14 +130,14 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 
 static void fcast_adjust_t1_t2 (const MODEL *pmod,
 				const double **Z,
-				int *t1, int *t2)
+				int *pt1, int *pt2)
 {
     int i, t;
-    int my_t1 = *t1, my_t2 = *t2;
+    int t1 = *pt1, t2 = *pt2;
     int imin = (pmod->ifc)? 3 : 2;
     int miss;
 
-    for (t=*t1; t<=*t2; t++) {
+    for (t=t1; t<=t2; t++) {
 	miss = 0;
 	for (i=imin; i<=pmod->list[0]; i++) {
 	    if (na(Z[pmod->list[i]][t])) {
@@ -252,11 +145,11 @@ static void fcast_adjust_t1_t2 (const MODEL *pmod,
 		break;
 	    }
 	}
-	if (miss) my_t1++;
+	if (miss) t1++;
 	else break;
     }
 
-    for (t=*t2; t>0; t--) {
+    for (t=t2; t>t1; t--) {
 	miss = 0;
 	for (i=imin; i<=pmod->list[0]; i++) {
 	    if (na(Z[pmod->list[i]][t])) {
@@ -264,12 +157,12 @@ static void fcast_adjust_t1_t2 (const MODEL *pmod,
 		break;
 	    }
 	}
-	if (miss) my_t2--;
+	if (miss) t2--;
 	else break;
     }
 
-    *t1 = my_t1;
-    *t2 = my_t2;
+    *pt1 = t1;
+    *pt2 = t2;
 }
 
 static int 
@@ -287,185 +180,176 @@ fcast_x_missing (const int *list, const double **Z, int t)
     return ret;
 }
 
-/* 
-   Below: the method for generating forecasts and prediction errors
-   that is presented in Wooldridge's Introductory Econometrics,
-   Chapter 6.
+/* initialize FITRESID struct based on string giving starting
+   and ending observations */
+
+static int 
+fit_resid_init (const char *line, const MODEL *pmod, 
+		const double **Z, const DATAINFO *pdinfo,
+		FITRESID *fr)
+{
+    char t1str[OBSLEN], t2str[OBSLEN];
+
+    /* parse the date strings giving the limits of the forecast
+       range */
+    if (sscanf(line, "%*s %10s %10s", t1str, t2str) != 2) {
+	fr->err = E_OBS;
+    }
+
+    if (!fr->err) {
+	fr->t1 = dateton(t1str, pdinfo);
+	fr->t2 = dateton(t2str, pdinfo);
+
+	if (fr->t1 < 0 || fr->t2 < 0 || fr->t2 <= fr->t1) {
+	    fr->err = E_OBS;
+	}
+    }
+
+    /* move endpoints if there are missing values for the
+       independent variables */
+    if (!fr->err) {
+	fcast_adjust_t1_t2(pmod, Z, &fr->t1, &fr->t2);
+	fr->nobs = fr->t2 - fr->t1 + 1;
+	if (fr->nobs == 0) {
+	    fr->err = E_OBS;
+	}
+    }
+
+    if (!fr->err) {
+	fr->err = allocate_fit_resid_arrays(fr, fr->nobs, 1);
+    }
+
+    return fr->err;
+}
+
+/* The following is based on Davidson and MacKinnon, Econometric
+   Theory and Methods, chapter 3 (p. 104), which shows how the
+   variance of forecast errors can be computed given the covariance
+   matrix of the parameter estimates, provided the error term is
+   assumed to be serially uncorrelated.
 */
 
-FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod, 
-			       double ***pZ, DATAINFO *pdinfo, 
+FITRESID *get_fcast_with_errs (const char *str, MODEL *pmod, 
+			       const double **Z, DATAINFO *pdinfo, 
 			       PRN *prn)
 {
-    double **fZ = NULL;
-    DATAINFO *finfo = NULL;
-    MODEL fmod; 
-    FITRESID *fr;
-    int *flist = NULL;
-    int i, k, t, n_est, nv;
+    gretl_matrix *V = NULL;
+    gretl_vector *Xs = NULL;
+    gretl_vector *b = NULL;
+    FITRESID *fr = NULL;
+
+    double s2 = pmod->sigma * pmod->sigma;
     int yno = pmod->list[1];
-    char t1str[OBSLEN], t2str[OBSLEN];
+    int k = pmod->ncoeff;
+    int i, vi, s, t;
 
     fr = fit_resid_new(0, 1); 
     if (fr == NULL) {
 	return NULL;
     }
 
-    if (pmod->ci != OLS) {
-	fr->err = E_OLSONLY;
+    if (AR_MODEL(pmod->ci)) {
+	/* need to test this this works for "exotic" non-AR models */
+	fr->err = E_NOTIMP;
 	return fr;
     }
 
-    /* bodge (reject in case of subsampled data) */
+    /* Reject in case model was estimated using repacked daily
+       data: this case should be handled more elegantly */
     if (gretl_model_get_int(pmod, "daily_repack")) {
 	fr->err = E_DATA;
 	return fr;
     }
 
-    /* parse dates */
-    if (sscanf(str, "%*s %10s %10s", t1str, t2str) != 2) {
-	fr->err = E_OBS;
+    fit_resid_init(str, pmod, Z, pdinfo, fr);
+    if (fr->err) {
 	return fr;
-    }
-
-    fr->t1 = dateton(t1str, pdinfo);
-    fr->t2 = dateton(t2str, pdinfo);
-
-    if (fr->t1 < 0 || fr->t2 < 0 || fr->t2 <= fr->t1) {
-	fr->err = E_OBS;
-	return fr;
-    }
-
-    /* move endpoints if there are missing vals for the
-       independent variables */
-    fcast_adjust_t1_t2(pmod, (const double **) *pZ, &fr->t1, &fr->t2);
-
-    /* number of obs for which forecasts will be generated */
-    fr->nobs = fr->t2 - fr->t1 + 1;
-
-    if (allocate_fit_resid_arrays(fr, fr->nobs, 1)) {
+    }    
+    
+    V = gretl_vcv_matrix_from_model(pmod, NULL);
+    if (V == NULL) {
 	fr->err = E_ALLOC;
-	return fr;
+	goto bailout;
     }
 
-    nv = pmod->list[0];
-    if (!pmod->ifc) nv++;
-
-    n_est = pmod->t2 - pmod->t1 + 1;
-
-    finfo = create_new_dataset(&fZ, nv, n_est, 0);
-    if (finfo == NULL) {
+    Xs = gretl_vector_alloc(k);
+    if (Xs == NULL) {
 	fr->err = E_ALLOC;
-	return fr;
+	goto bailout;
     }
 
-    /* insert depvar at position 1 */
-    for (t=0; t<finfo->n; t++) {
-	fZ[1][t] = (*pZ)[yno][t + pmod->t1];
-    }
-
-    /* create new list */
-    flist = malloc((finfo->v + 1) * sizeof *flist);
-    if (flist == NULL) {
+    b = gretl_coeff_vector_from_model(pmod, NULL);
+    if (b == NULL) {
 	fr->err = E_ALLOC;
-	goto fcast_bailout;
+	goto bailout;
     }
 
-    flist[0] = finfo->v;
-    flist[1] = 1;
-    flist[2] = 0;
-    for (i=3; i<=flist[0]; i++) {
-	flist[i] = i - 1;
-    }
+    for (t=fr->t1; t<=fr->t2 && !fr->err; t++) {
+	int missing = 0;
+	double vyh;
 
-    gretl_model_init(&fmod);
+	s = t - fr->t1;
 
-    /* loop across the observations for which we want forecasts
-       and standard errors */
+	fr->actual[s] = Z[yno][t];
 
-#ifdef FCAST_DEBUG
-    printf("get_fcast_with_errs: ft1=%d, ft2=%d, pmod->t1=%d, pmod->t2=%d\n",
-	   fr->t1, fr->t2, pmod->t1, pmod->t2);
-#endif
-
-    for (k=0; k<fr->nobs; k++) {
-	int tk = k + fr->t1;
-
-	fr->actual[k] = (*pZ)[yno][tk];
-
-	if (fcast_x_missing(pmod->list, (const double **) *pZ, tk)) {
-	    fr->sderr[k] = fr->fitted[k] = NADBL;
+	/* skip if we can't compute forecast */
+	if (t >= pmod->t1 && t <= pmod->t2) {
+	    missing = na(pmod->yhat[t]);
+	} else {
+	    missing = fcast_x_missing(pmod->list, Z, t);
+	}
+	if (missing) {
+	    fr->sderr[s] = fr->fitted[s] = NADBL;
 	    continue;
+	}	    
+
+	/* populate Xs vector for observation */
+	for (i=0; i<k; i++) {
+	    vi = pmod->list[i + 2];
+	    gretl_vector_set(Xs, i, Z[vi][t]);
 	}
 
-	/* form modified indep vars: original data minus the values
-	   to be used for the forecast 
-	*/
-	for (i=3; i<=flist[0]; i++) {
-	    int v = (pmod->ifc)? pmod->list[i] : pmod->list[i-1];
-	    const double *xv = (*pZ)[v];
+	/* forecast value */
+	fr->fitted[s] = gretl_matrix_dot_product(Xs, GRETL_MOD_NONE,
+						 b, GRETL_MOD_NONE,
+						 NULL);
 
-	    for (t=0; t<finfo->n; t++) {
-		int tp = t + pmod->t1;
-
-		if (na(xv[tp])) {
-		    fZ[i-1][t] = NADBL;
-		} else {
-		    fZ[i-1][t] = xv[tp] - xv[tk];
-		}
+	/* forecast variance */
+	vyh = gretl_scalar_b_X_b_prime(Xs, V, NULL);
+	if (na(vyh)) {
+	    fr->err = 1;
+	} else {
+	    vyh += s2;
+	    if (vyh >= 0.0) {
+		fr->sderr[s] = sqrt(vyh);
+	    } else {
+		fr->err = 1;
 	    }
 	}
-
-	fmod = lsq(flist, &fZ, finfo, OLS, OPT_A, 0.0);
-
-	if (fmod.errcode) {
-	    fr->err = fmod.errcode;
-	    clear_model(&fmod);
-	    goto fcast_bailout;
-	}
-
-	fr->fitted[k] = fmod.coeff[0];
-
-	/* what exactly do we want here? */
-#ifdef GIVE_SDERR_OF_EXPECTED_Y
-	fr->sderr[k] = fmod.sderr[0];
-#else
-	fr->sderr[k] = sqrt(fmod.sderr[0] * fmod.sderr[0] + 
-			    fmod.sigma * fmod.sigma);
-#endif
-	clear_model(&fmod);
     }
 
     fr->tval = tcrit95(pmod->dfd);
     strcpy(fr->depvar, pdinfo->varname[yno]);
     fr->df = pmod->dfd;
 
- fcast_bailout:
+ bailout:
 
-    free_Z(fZ, finfo);
-    free(flist);
-    clear_datainfo(finfo, CLEAR_FULL);
-    free(finfo);
+    gretl_matrix_free(V);
+    gretl_vector_free(Xs);
+    gretl_vector_free(b);
 
     return fr;
 }
 
-void free_fit_resid (FITRESID *fr)
-{
-    free(fr->actual);
-    free(fr->fitted);
-    free(fr->sderr);
-    free(fr);
-}
-
-int fcast_with_errs (const char *str, const MODEL *pmod, 
+int fcast_with_errs (const char *str, MODEL *pmod, 
 		     double ***pZ, DATAINFO *pdinfo, 
 		     gretlopt opt, PRN *prn)
 {
     FITRESID *fr;
     int err;
 
-    fr = get_fcast_with_errs(str, pmod, pZ, pdinfo, prn);
+    fr = get_fcast_with_errs(str, pmod, (const double **) *pZ, 
+			     pdinfo, prn);
 
     if (fr == NULL) {
 	return E_ALLOC;
@@ -478,6 +362,127 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     free_fit_resid(fr);
     
     return err;
+}
+
+/* Compute forecasts for various sorts of gretl models, including
+   those with autoregressive errors.
+
+   The "ar" code below generates one-step ahead forecasts that
+   incorporate the predictable portion of an AR error term:
+
+       u_t = r1 u_{t-1} + r2 u_{t-1} + ... + e_t
+
+   where e_t is white noise.  The forecasts are based on the
+   representation of a model with such an error term as
+
+       (1 - r(L)) y_t = (1 - r(L) X_t b + e_t
+
+   where r(L) is a polynomial in the lag operator.  In effect, we
+   generate a forecast that incorporates the error process by using
+   rho-differenced X on the RHS, and applying a corresponding
+   compensation on the LHS so that the forecast is of y_t, not (1 -
+   r(L)) y_t.
+*/
+
+static int gretl_forecast (int t1, int t2, int nv, 
+			   const MODEL *pmod, double ***pZ)
+{
+    double xval, yh;
+    int i, k, maxlag = 0, yno;
+    int v, t, miss;
+    const int *arlist = NULL;
+    double *yhat = (*pZ)[nv];
+    int ar = SIMPLE_AR_MODEL(pmod->ci);
+
+    /* bodge: for now we're not going to forecast out of sample
+       for these estimators. TODO */
+    if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
+	for (t=t1; t<=t2; t++) {
+	    yhat[t] = pmod->yhat[t];
+	}
+	return 0;
+    }
+
+    yno = pmod->list[1];
+
+    if (ar) {
+	arlist = pmod->arinfo->arlist;
+	maxlag = arlist[arlist[0]];
+	if (t1 < maxlag) {
+	    t1 = maxlag; 
+	}
+    }
+
+    for (t=t1; t<=t2; t++) {
+	miss = 0;
+	yh = 0.0;
+
+	if (pmod->ci == PWE && t == pmod->t1) {
+	    /* PWE first obs is special */
+	    yhat[t] = pmod->yhat[t];
+	    continue;
+	}
+
+	if (ar) { 
+	    /* LHS adjustment */
+	    double rk, ylag;
+
+	    for (k=1; k<=arlist[0]; k++) {
+		rk = pmod->arinfo->rho[k];
+		/* use actual lagged y by preference */
+		ylag = (*pZ)[yno][t - arlist[k]];
+		if (na(ylag)) {
+		    /* use forecast of lagged y */
+		    ylag = yhat[t - arlist[k]];
+		}
+		if (na(ylag)) {
+		    yhat[t] = NADBL;
+		    miss = 1;
+		} else {
+		    yh += rk * ylag;
+		}
+	    }
+	} /* end if ar */
+
+	for (i=0; i<pmod->ncoeff && !miss; i++) {
+	    v = pmod->list[i+2];
+	    xval = (*pZ)[v][t];
+	    if (na(xval)) {
+		miss = 1;
+	    } else {
+		if (ar) {
+		    /* use rho-differenced X on RHS */
+		    double rk, xlag;
+
+		    for (k=1; k<=arlist[0]; k++) {
+			rk = pmod->arinfo->rho[k];
+			xlag = (*pZ)[v][t - arlist[k]];
+			if (!na(xlag)) {
+			    xval -= rk * xlag;
+			}
+		    }
+		}
+		yh += xval * pmod->coeff[i];
+	    }
+	}
+
+	if (!miss && pmod->ci == LOGISTIC) {
+	    double lmax = gretl_model_get_double(pmod, "lmax");
+
+	    yh = lmax / (1.0 + exp(-yh));
+	}
+
+	if (miss) {
+	    yhat[t] = NADBL;
+	} else { 
+	    yhat[t] = yh;
+	}
+#if FCAST_DEBUG
+	fprintf(stderr, "gretl_forecast: set yhat[%d] = %g\n", t, yhat[t]);
+#endif
+    }
+
+    return 0;
 }
 
 /**
