@@ -309,8 +309,6 @@ gchar *menu_translate (const gchar *path, gpointer p)
 }
 #endif
 
-/* ........................................................... */
-
 int copyfile (const char *src, const char *dest) 
 {
     FILE *srcfd, *destfd;
@@ -341,8 +339,6 @@ int copyfile (const char *src, const char *dest)
 
     return 0;
 }
-
-/* ........................................................... */
 
 int isdir (const char *path)
 {
@@ -513,8 +509,6 @@ static void delete_file (GtkWidget *widget, char *fname)
     g_free(fname);
 }
 
-/* ........................................................... */
-
 static void delete_file_viewer (GtkWidget *widget, gpointer data) 
 {
     windata_t *vwin = (windata_t *) data;
@@ -534,8 +528,6 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
     }
 }
 
-/* ........................................................... */
-
 static void delete_unnamed_model (GtkWidget *widget, gpointer data) 
 {
     MODEL *pmod = (MODEL *) data;
@@ -549,14 +541,10 @@ static void delete_unnamed_model (GtkWidget *widget, gpointer data)
     }
 }
 
-/* ........................................................... */
-
 void delete_widget (GtkWidget *widget, gpointer data)
 {
     gtk_widget_destroy(GTK_WIDGET(data));
 }
-
-/* ........................................................... */
 
 #ifndef OLD_GTK
 
@@ -572,8 +560,6 @@ static gint catch_button_3 (GtkWidget *w, GdkEventButton *event)
 }
 
 #endif
-
-/* ........................................................... */
 
 #ifdef G_OS_WIN32
 
@@ -591,8 +577,6 @@ static void win_ctrl_c (windata_t *vwin)
 }
 
 #endif
-
-/* ........................................................... */
 
 static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
@@ -1082,8 +1066,6 @@ void verify_open_session (gpointer userdata)
 
     do_open_session(NULL, userdata);
 }
-
-/* ........................................................... */
 
 void save_session (char *fname) 
 {
@@ -2423,14 +2405,9 @@ static void fit_resid_menu_off (GtkItemFactory *ifac)
     flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
 }
 
-static void fcast_menu_off (GtkItemFactory *ifac)
+static void fcasterr_menu_off (GtkItemFactory *ifac)
 {
     flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
-}
-
-static void vcv_menu_off (GtkItemFactory *ifac)
-{
-    flip(ifac, "/Model data/coefficient covariance matrix", FALSE);
 }
 
 static void confint_menu_off (GtkItemFactory *ifac)
@@ -2466,7 +2443,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 
     if (LIMDEP(pmod->ci)) {
 	if (pmod->ci == TOBIT) {
-	    fcast_menu_off(vwin->ifac);
+	    fcasterr_menu_off(vwin->ifac);
 	} else {
 	    fit_resid_menu_off(vwin->ifac);
 	}
@@ -2478,10 +2455,9 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     }
 
     if (pmod->ci == LAD) {
-	fcast_menu_off(vwin->ifac);
-	vcv_menu_off(vwin->ifac);
+	fcasterr_menu_off(vwin->ifac);
     } else if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
-	fcast_menu_off(vwin->ifac);
+	fcasterr_menu_off(vwin->ifac);
 	confint_menu_off(vwin->ifac);
 	if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	    arma_x12_menu_mod(vwin);

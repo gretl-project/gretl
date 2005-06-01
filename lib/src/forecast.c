@@ -366,7 +366,7 @@ int fcast_with_errs (const char *str, MODEL *pmod,
 
 /* generate forecasts from nonlinear least squares model, using
    the string specification of the regression function that
-   was saved as data on the model 
+   was saved as data on the model (see nls.c) 
 */
 
 static int nls_forecast (int t1, int t2, int nv, const MODEL *pmod, 
@@ -440,7 +440,7 @@ static int gretl_forecast (int t1, int t2, int nv, const MODEL *pmod,
     }
 
     /* bodge: for now we're not going to forecast out of sample
-       for these estimators. TODO */
+       for these estimators. FIXME. */
     if (pmod->ci == ARMA || pmod->ci == GARCH) {
 	for (t=t1; t<=t2; t++) {
 	    yhat[t] = pmod->yhat[t];

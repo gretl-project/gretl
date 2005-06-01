@@ -538,6 +538,10 @@ add_fit_resid_to_model (MODEL *pmod, nls_spec *spec, double *uhat,
     }
 }
 
+/* this may be used later for generating out-of-sample forecasts --
+   see nls_forecast() in forecast.c
+*/
+
 static int transcribe_nls_function (MODEL *pmod, const char *s)
 {
     char *formula;
@@ -589,6 +593,7 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 	return gnr;
     }
 
+    /* transcribe sample info */
     gdinfo->t1 = spec->t1;
     gdinfo->t2 = spec->t2;
     
@@ -1323,7 +1328,7 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* allocate arrays to be passed to minpack */
+    /* allocate (full-length) arrays to be passed to minpack */
     uhat = malloc(pdinfo->n * sizeof *uhat);
     jac = malloc(pdinfo->n * pspec->nparam * sizeof *jac);
 

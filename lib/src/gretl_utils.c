@@ -982,7 +982,9 @@ CONFINT *get_model_confints (const MODEL *pmod)
     CONFINT *cf;
 
     cf = malloc(sizeof *cf);
-    if (cf == NULL) return NULL;
+    if (cf == NULL) {
+	return NULL;
+    }
 
     cf->coeff = malloc(pmod->ncoeff * sizeof *cf->coeff);
     if (cf->coeff == NULL) {

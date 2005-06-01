@@ -522,6 +522,9 @@ static genatom *parse_token (const char *s, char op,
 	    if (!strcmp(s, "pi")) {
 		val = M_PI;
 		scalar = 1;
+	    } else if (!strcmp(s, "NA")) {
+		val = NADBL;
+		scalar = 1;
 	    } else {
 		v = varindex(genr->pdinfo, s);
 
@@ -1931,7 +1934,7 @@ int gretl_reserved_word (const char *str)
 {
     const char *resword[] = {
 	"uhat", "yhat",
-	"const", "CONST", "pi",
+	"const", "CONST", "pi", "NA",
 	"coeff", "stderr", "rho",
 	/* stats functions */
 	"mean", "median", "var", "cov", "vcv", "sd",
@@ -1951,21 +1954,21 @@ int gretl_reserved_word (const char *str)
 		otheruse(str, _("residual vector"));
 	    } else if (i == 1) {
 		otheruse(str, _("fitted values vector"));
-	    } else if (i >= 2 && i <= 4) {
+	    } else if (i >= 2 && i <= 5) {
 		otheruse(str, _("constant"));
-	    } else if (i == 5) {
-		otheruse(str, _("regr. coeff."));
 	    } else if (i == 6) {
-		otheruse(str, _("standard error"));
+		otheruse(str, _("regr. coeff."));
 	    } else if (i == 7) {
+		otheruse(str, _("standard error"));
+	    } else if (i == 8) {
 		otheruse(str, _("autocorr. coeff."));
-	    } else if (i >= 8 && i <= 13) {
+	    } else if (i >= 9 && i <= 14) {
 		otheruse(str, _("stats function"));
-	    } else if (i == 14 || i == 15) {
+	    } else if (i == 15 || i == 16) {
 		otheruse(str, _("sampling concept"));
-	    } else if (i >= 16 && i <= 20) {
+	    } else if (i >= 17 && i <= 21) {
 		otheruse(str, _("plotting variable"));
-	    } else if (i >= 21 && i <= 23) {
+	    } else if (i >= 22 && i <= 24) {
 		otheruse(str, _("internal variable"));
 	    } else {
 		otheruse(str, _("math function"));

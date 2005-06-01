@@ -2781,6 +2781,12 @@
         <argument>depvar</argument>
         <argument>indepvars</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+        </option>
+      </options>
     </usage>
 
     <description>
@@ -2789,9 +2795,13 @@
 	deviations of the observed from the fitted values of the
 	dependent variable.  Coefficient estimates are derived using
 	the Barrodale&ndash;Roberts simplex algorithm; a warning is
-	printed if the solution is not unique. Standard errors are
-	derived using the bootstrap procedure with 500 drawings.
+	printed if the solution is not unique.
       </para>
+      <para>
+	Standard errors are derived using the bootstrap procedure with
+	500 drawings. The covariance matrix for the parameter
+	estimates, printed when the <lit>--vcv</lit> flag is given, is
+	based on the same bootstrap.
     </description>
 
     <gui-access>
