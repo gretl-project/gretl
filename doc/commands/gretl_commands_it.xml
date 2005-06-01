@@ -2729,6 +2729,12 @@
         <argument>variabile-dipendente</argument>
         <argument>variabili-indipendenti</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+        </option>
+      </options>
     </usage>
 
     <description>
@@ -2738,8 +2744,13 @@
         dipendente. Le stime dei coefficienti sono derivate usando
         l'algoritmo del simplesso di Barrodale&ndash;Roberts; viene
         mostrato un messaggio di avvertimento se la soluzione non è
-        unica. Gli errori standard sono derivati attraverso la procedura
-        bootstrap con 500 estrazioni.
+        unica.
+      </para>
+      <para>
+	Gli errori standard sono derivati usando la procedura bootstrap
+        con 500 estrazioni. La matrice di covarianza per le stime dei
+        parametri, mostrata se si usa l'opzione <lit>--vcv</lit>, si basa
+        sulla stessa procedura.
       </para>
     </description>
 
