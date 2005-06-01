@@ -963,8 +963,14 @@ static int g_too_long (double x, int signif)
 
 static int bufprintnum (char *buf, double x, int signif, int width)
 {
-    static char numstr[24];
+    static char numstr[32];
     int i, l;
+
+    /* guard against monster numbers that will smash the stack */
+    if (fabs(x) > 1.0e20) {
+	sprintf(numstr, "%g", x);
+	goto finish;
+    }
 
     if (signif < 0) {
 #ifdef PRN_DEBUG
@@ -972,16 +978,13 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 		    "printing with %%.%df\n", signif, -signif);
 #endif
 	sprintf(numstr, "%.*f", -signif, x);
-    }
-
-    else if (signif == 0) {
+    } else if (signif == 0) {
 #ifdef PRN_DEBUG
 	    fprintf(stderr, "got 0 for signif: "
 		    "printing with %%.0f\n");
 #endif
 	sprintf(numstr, "%.0f", x);
-    } 
-    else {
+    } else {
 	double z = fabs(x);
 
 	if (z < 1) l = 0;
@@ -1020,6 +1023,8 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 	    sprintf(numstr, "%#.*G", signif, x); /* # wanted? */
 	}
     }
+
+ finish:
 
     l = width - strlen(numstr);
     for (i=0; i<l; i++) {
@@ -1118,7 +1123,7 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
     int *plist = NULL;
     int *pmax = NULL; 
     int t, nsamp;
-    char line[96];
+    char line[128];
     int err = 0;
 
     int pause = gretl_get_text_pause();
