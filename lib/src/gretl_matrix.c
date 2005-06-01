@@ -2598,7 +2598,7 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
     double xbi, xbj;
     int nv, err = 0;
     
-    if (*errp != NULL) {
+    if (errp != NULL) {
 	*errp = 0;
     }
 
