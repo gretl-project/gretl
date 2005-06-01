@@ -2802,6 +2802,7 @@
 	500 drawings. The covariance matrix for the parameter
 	estimates, printed when the <lit>--vcv</lit> flag is given, is
 	based on the same bootstrap.
+      </para>
     </description>
 
     <gui-access>
