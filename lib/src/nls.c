@@ -1320,8 +1320,6 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     } 
 
-    fprintf(stderr, "nls-spec: t1=%d, t2=%d\n", pspec->t1, pspec->t2);
-
     err = nls_missval_check(pZ, pdinfo, pspec);
     if (err) {
 	nlsmod.errcode = err;

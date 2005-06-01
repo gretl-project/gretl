@@ -475,10 +475,10 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 	if (bufopen(&prn)) return;
 
 	if (how == COPY_LATEX) { 
-	    texprint_confints(cf, datainfo, prn);
+	    texprint_confints(cf, prn);
 	} 
 	else if (how == COPY_RTF) { 
-	    rtfprint_confints(cf, datainfo, prn);
+	    rtfprint_confints(cf, prn);
 	}
 
 	prn_to_clipboard(prn, how);

@@ -17,8 +17,6 @@
  *
  */
 
-/* gui_utils.c for gretl */
-
 #include "gretl.h"
 #include "var.h"
 #include "modelspec.h"
@@ -160,7 +158,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/_Model data"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Model data/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL, GNULL },
-    { N_("/Model data/Forecasts with standard errors"), NULL, 
+    { N_("/Model data/Forecasts..."), NULL, 
       do_forecast, FCASTERR, NULL, GNULL },
     { N_("/Model data/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL, GNULL },
@@ -231,7 +229,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/_Model data"), NULL, NULL, 0, "<Branch>" },
     { N_("/Model data/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL },
-    { N_("/Model data/Forecasts with standard errors"), NULL, 
+    { N_("/Model data/Forecasts..."), NULL, 
       do_forecast, FCASTERR, NULL },
     { N_("/Model data/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL },
@@ -2398,21 +2396,9 @@ static void arch_menu_off (GtkItemFactory *ifac)
     flip(ifac, "/Tests/ARCH", FALSE);
 }
 
-static void fit_resid_menu_off (GtkItemFactory *ifac)
-{
-    flip(ifac, "/Graphs", FALSE);
-    flip(ifac, "/Model data/Display actual, fitted, residual", FALSE);
-    flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
-}
-
 static void fcasterr_menu_off (GtkItemFactory *ifac)
 {
-    flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
-}
-
-static void confint_menu_off (GtkItemFactory *ifac)
-{
-    flip(ifac, "/Model data/Confidence intervals for coefficients", FALSE);
+    flip(ifac, "/Model data/Forecasts...", FALSE);
 }
 
 static void latex_menu_state (GtkItemFactory *ifac, gboolean s)
@@ -2441,28 +2427,19 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 
     set_tests_menu_state(vwin->ifac, pmod);
 
-    if (LIMDEP(pmod->ci)) {
-	if (pmod->ci == TOBIT) {
-	    fcasterr_menu_off(vwin->ifac);
-	} else {
-	    fit_resid_menu_off(vwin->ifac);
-	}
-    } 
-
     /* disallow saving an already-saved model */
     if (pmod->name != NULL) {
 	model_save_state(vwin->ifac, FALSE);
     }
 
-    if (pmod->ci == LAD) {
+    /* FIXME in forecast.c */
+    if (pmod->ci == ARMA || pmod->ci == GARCH) {
 	fcasterr_menu_off(vwin->ifac);
-    } else if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
-	fcasterr_menu_off(vwin->ifac);
-	confint_menu_off(vwin->ifac);
-	if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
-	    arma_x12_menu_mod(vwin);
-	}	
     }
+
+    if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
+	arma_x12_menu_mod(vwin);
+    }	
 
     if (dataset_is_panel(datainfo)) {
 	arch_menu_off(vwin->ifac);
@@ -3020,9 +2997,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     flip(mwin->ifac, "/Tests", ok);
     flip(mwin->ifac, "/Graphs", graphs_ok);
     flip(mwin->ifac, "/Model data/Display actual, fitted, residual", ok);
-    if (pmod->ci != LAD) {
-	flip(mwin->ifac, "/Model data/Forecasts with standard errors", ok);
-    }
+    flip(mwin->ifac, "/Model data/Forecasts...", ok);
     flip(mwin->ifac, "/Model data/Confidence intervals for coefficients", ok);
     flip(mwin->ifac, "/Model data/Add to data set/fitted values", ok);
     flip(mwin->ifac, "/Model data/Add to data set/residuals", ok);

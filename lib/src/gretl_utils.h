@@ -109,7 +109,7 @@ mp_results *gretl_mp_results_new (int totvar);
 
 int allocate_mp_varnames (mp_results *mpvals);
 
-CONFINT *get_model_confints (const MODEL *pmod);
+CONFINT *get_model_confints (const MODEL *pmod, const DATAINFO *pdinfo);
 
 void free_confint (CONFINT *cf);
 

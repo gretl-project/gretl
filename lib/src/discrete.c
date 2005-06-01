@@ -484,13 +484,22 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     xx = 0.0;
     n_correct = 0;
     for (t=dmod.t1; t<=dmod.t2; t++) {
+	double xb = dmod.yhat[t];
+
 	if (model_missing(&dmod, t)) {
 	    continue;
 	}
 	zz = (*pZ)[depvar][t];
 	xx += zz;
-	n_correct += ((dmod.yhat[t] > 0.0 && floateq(zz, 1.0)) ||
-		      (dmod.yhat[t] <= 0.0 && floateq(zz, 0.0)));
+	n_correct += ((xb > 0.0 && floateq(zz, 1.0)) ||
+		      (xb <= 0.0 && floateq(zz, 0.0)));
+
+	if (dmod.ci == LOGIT) {
+	   dmod.yhat[t] = exp(xb) / (1.0 + exp(xb)); 
+	} else {
+	   dmod.yhat[t] = normal_cdf(xb); 
+	}
+	dmod.uhat[t] = zz - dmod.yhat[t];
     }
 
     xx /= dmod.nobs;

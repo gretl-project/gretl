@@ -28,10 +28,6 @@
 
 #undef PRN_DEBUG
 
-static void 
-print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
-		      int c, PRN *prn);
-
 void bufspace (int n, PRN *prn)
 {
     while (n-- > 0) {
@@ -151,6 +147,33 @@ void gui_script_logo (PRN *prn)
     pprintf(prn, "%s: %s\n", _("Current session"), print_time(&runtime));
 }
 
+/* -------------------------------------------------------- */
+
+static void print_coeff_interval (const CONFINT *cf, int i, PRN *prn)
+{
+    pprintf(prn, " %8s ", cf->names[i]);
+
+    bufspace(3, prn);
+
+    if (isnan(cf->coeff[i])) {
+	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 16), _("undefined"));
+    } else {
+	gretl_print_value(cf->coeff[i], prn);
+    }
+
+    bufspace(2, prn);
+
+    if (isnan(cf->maxerr[i])) {
+	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
+    } else {
+	pprintf(prn, " (%#.*g, %#.*g)", 
+		GRETL_DIGITS, cf->coeff[i] - cf->maxerr[i],
+		GRETL_DIGITS, cf->coeff[i] + cf->maxerr[i]);
+    }
+
+    pputc(prn, '\n');
+}
+
 /**
  * text_print_model_confints:
  * @cf: pointer to confidence intervals.
@@ -161,18 +184,17 @@ void gui_script_logo (PRN *prn)
  * estimates.
  */
 
-void text_print_model_confints (const CONFINT *cf, const DATAINFO *pdinfo, 
-				PRN *prn)
+void text_print_model_confints (const CONFINT *cf, PRN *prn)
 {
-    int i, ncoeff = cf->list[0];
+    int i;
 
     pprintf(prn, "t(%d, .025) = %.3f\n\n", cf->df, tcrit95(cf->df));
     /* xgettext:no-c-format */
     pputs(prn, _("      VARIABLE      COEFFICIENT      95% CONFIDENCE "
 	    "INTERVAL\n\n"));      
 
-    for (i=2; i<=ncoeff; i++) {
-	print_coeff_interval(cf, pdinfo, i, prn);
+    for (i=0; i<cf->ncoeff; i++) {
+	print_coeff_interval(cf, i, prn);
     }
 
     pputc(prn, '\n');
@@ -464,31 +486,6 @@ void gretl_print_value (double x, PRN *prn)
 
 /* ......................................................... */ 
 
-static void print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
-				  int c, PRN *prn)
-{
-    pprintf(prn, " %3d) %8s ", cf->list[c], 
-	    pdinfo->varname[cf->list[c]]);
-
-    bufspace(3, prn);
-
-    if (isnan(cf->coeff[c-2])) {
-	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 16), _("undefined"));
-    } else {
-	gretl_print_value (cf->coeff[c-2], prn);
-    }
-
-    bufspace(2, prn);
-
-    if (isnan(cf->maxerr[c-2])) {
-	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
-    } else {
-	pprintf(prn, " (%#.*g, %#.*g)", 
-		GRETL_DIGITS, cf->coeff[c-2] - cf->maxerr[c-2],
-		GRETL_DIGITS, cf->coeff[c-2] + cf->maxerr[c-2]);
-    }
-    pputc(prn, '\n');
-}
 
 /**
  * outcovmx:
@@ -1349,22 +1346,29 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 				gretlopt opt, PRN *prn)
 {
     int t, pv, err = 0;
-    double *maxerr;
+    int do_errs = (fr->sderr != NULL);
+    double *maxerr = NULL;
     int time_series = (pdinfo->structure == TIME_SERIES);
     int plot = (opt & OPT_P);
 
-    maxerr = malloc(fr->nobs * sizeof *maxerr);
-    if (maxerr == NULL) {
-	return E_ALLOC;
+    if (do_errs) {
+	maxerr = malloc(fr->nobs * sizeof *maxerr);
+	if (maxerr == NULL) {
+	    return E_ALLOC;
+	}
     }
 
-    pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
-	    fr->df, fr->tval);
+    if (do_errs) {
+	pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
+		fr->df, fr->tval);
+    }
     pputs(prn, "\n     Obs ");
     pprintf(prn, "%12s", fr->depvar);
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
-    pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
-    pprintf(prn, _("   95%% confidence interval\n"));
+    if (do_errs) {
+	pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
+	pprintf(prn, _("   95%% confidence interval\n"));
+    }
     pputc(prn, '\n');
 
     for (t=0; t<fr->nobs; t++) {
@@ -1375,13 +1379,17 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 	    continue;
 	}
 	gretl_printxn(fr->fitted[t], 15, prn);
-	gretl_printxn(fr->sderr[t], 15, prn);
-	maxerr[t] = fr->tval * fr->sderr[t];
-	gretl_printxn(fr->fitted[t] - maxerr[t], 15, prn);
-	pputs(prn, " -");
-	gretl_printxn(fr->fitted[t] + maxerr[t], 10, prn);
+	if (do_errs) {
+	    gretl_printxn(fr->sderr[t], 15, prn);
+	    maxerr[t] = fr->tval * fr->sderr[t];
+	    gretl_printxn(fr->fitted[t] - maxerr[t], 15, prn);
+	    pputs(prn, " -");
+	    gretl_printxn(fr->fitted[t] + maxerr[t], 10, prn);
+	}
 	pputc(prn, '\n');
     }
+
+    /* do we really want a plot for non-time series? */
 
     if (plot && fr->nobs > 0) {
 	if (time_series) {
@@ -1418,7 +1426,9 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 	}
     }
 
-    free(maxerr);
+    if (maxerr != NULL) {
+	free(maxerr);
+    }
 
     return err;
 }
@@ -1426,7 +1436,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 /**
  * print_fit_resid:
  * @pmod: pointer to gretl model.
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  *
@@ -1435,12 +1445,12 @@ int text_print_fcast_with_errs (const FITRESID *fr,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int print_fit_resid (const MODEL *pmod, double ***pZ, 
-		     DATAINFO *pdinfo, PRN *prn)
+int print_fit_resid (const MODEL *pmod, const double **Z, 
+		     const DATAINFO *pdinfo, PRN *prn)
 {
     FITRESID *fr;
 
-    fr = get_fit_resid(pmod, pZ, pdinfo);
+    fr = get_fit_resid(pmod, Z, pdinfo);
     if (fr == NULL) {
 	return 1;
     }

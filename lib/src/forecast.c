@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "forecast.h"
 
 static int 
 allocate_fit_resid_arrays (FITRESID *fr, int n, int errs)
@@ -50,6 +51,21 @@ allocate_fit_resid_arrays (FITRESID *fr, int n, int errs)
     return 0;
 }
 
+/**
+ * fit_resid_new:
+ * @n: the number of observations to allow for, or 0 if this
+ * information will be added later.
+ * @errs: set = 1 to allocate space in the structure for
+ * forecast standard errors, otherwise 0. 
+ *
+ * Allocates a #FITRESID struct for holding fitted values and
+ * residuals from a model (or out-of-sample forecasts).  If
+ * @n is greater than 0 the arrays required for that number
+ * of observations will be allocated.
+ *
+ * Returns: pointer to allocated structure, or %NULL on failure.
+ */
+
 FITRESID *fit_resid_new (int n, int errs)
 {
     FITRESID *fr = malloc(sizeof *fr);
@@ -80,6 +96,14 @@ FITRESID *fit_resid_new (int n, int errs)
     return fr;
 }
 
+/**
+ * free_fit_resid:
+ * @fr: the pointer to be freed.
+ *
+ * Frees all resources associated with @fr, then frees the pointer
+ * itself.
+ */
+
 void free_fit_resid (FITRESID *fr)
 {
     free(fr->actual);
@@ -88,8 +112,22 @@ void free_fit_resid (FITRESID *fr)
     free(fr);
 }
 
-FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
-			 DATAINFO *pdinfo)
+/**
+ * get_fit_resid:
+ * @pmod: the model for which actual and fitted values
+ * are wanted.
+ * @Z: data array using which @pmod was estimated.
+ * @pdinfo: dataset information.
+ *
+ * Allocates a #FITRESID structure and fills it out with
+ * the actual and predicted values of the dependent variable
+ * in @pmod.
+ *
+ * Returns: pointer to allocated structure, or %NULL on failure.
+ */
+
+FITRESID *get_fit_resid (const MODEL *pmod, const double **Z, 
+			 const DATAINFO *pdinfo)
 {
     int depvar, t, ft;
     FITRESID *fr;
@@ -105,7 +143,11 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 	return NULL;
     }
 
-    fr->sigma = pmod->sigma;
+    if (LIMDEP(pmod->ci)) {
+	fr->sigma = NADBL;
+    } else {
+	fr->sigma = pmod->sigma;
+    }
 
     fr->t1 = pmod->t1;
     fr->t2 = pmod->t2;
@@ -113,7 +155,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 
     for (t=fr->t1; t<=fr->t2; t++) {
 	ft = t - fr->t1;
-	fr->actual[ft] = (*pZ)[depvar][t];
+	fr->actual[ft] = Z[depvar][t];
 	fr->fitted[ft] = pmod->yhat[t];
     }
 
@@ -186,13 +228,17 @@ fcast_x_missing (const int *list, const double **Z, int t)
 static int 
 fit_resid_init (const char *line, const MODEL *pmod, 
 		const double **Z, const DATAINFO *pdinfo,
-		FITRESID *fr)
+		FITRESID *fr, int errs)
 {
     char t1str[OBSLEN], t2str[OBSLEN];
 
+    if (!strncmp(line, "fcasterr", 8)) {
+	line += 9;
+    }
+
     /* parse the date strings giving the limits of the forecast
        range */
-    if (sscanf(line, "%*s %10s %10s", t1str, t2str) != 2) {
+    if (sscanf(line, "%10s %10s", t1str, t2str) != 2) {
 	fr->err = E_OBS;
     }
 
@@ -216,22 +262,42 @@ fit_resid_init (const char *line, const MODEL *pmod,
     }
 
     if (!fr->err) {
-	fr->err = allocate_fit_resid_arrays(fr, fr->nobs, 1);
+	fr->err = allocate_fit_resid_arrays(fr, fr->nobs, errs);
     }
 
     return fr->err;
 }
 
-/* The following is based on Davidson and MacKinnon, Econometric
-   Theory and Methods, chapter 3 (p. 104), which shows how the
-   variance of forecast errors can be computed given the covariance
-   matrix of the parameter estimates, provided the error term is
-   assumed to be serially uncorrelated.
-*/
+/**
+ * get_fcast_with_errs:
+ * @str: string giving starting and ending observations, separated
+ * by a space.
+ * @pmod: the model from which forecasts are wanted.
+ * @Z: data array using which @pmod was estimated.
+ * @pdinfo: dataset information.
+ *
+ * Allocates a #FITRESID structure and fills it out with forecasts
+ * plus forecast standard errors based on @pmod, over the specified
+ * range of observations.
+ * 
+ * The calculation is based on Davidson and MacKinnon, Econometric
+ * Theory and Methods, chapter 3 (p. 104), which shows how the
+ * variance of forecast errors can be computed given the covariance
+ * matrix of the parameter estimates, provided the error term is
+ * assumed to be serially uncorrelated.
+ *
+ * Some types of models are not supported: those with autoregressive
+ * errors (e.g. %AR, %CORC) and those where the forecast of the 
+ * dependent variable is a nonlinear function of the underlying
+ * regression function (e.g. %LOGIT, %PROBIT).
+ *
+ * Returns: pointer to allocated structure, or %NULL on failure.
+ * The %err member of the returned object should be checked:
+ * a non-zero value indicates an error condition.
+ */
 
 FITRESID *get_fcast_with_errs (const char *str, MODEL *pmod, 
-			       const double **Z, DATAINFO *pdinfo, 
-			       PRN *prn)
+			       const double **Z, const DATAINFO *pdinfo) 
 {
     gretl_matrix *V = NULL;
     gretl_vector *Xs = NULL;
@@ -248,8 +314,8 @@ FITRESID *get_fcast_with_errs (const char *str, MODEL *pmod,
 	return NULL;
     }
 
-    if (AR_MODEL(pmod->ci)) {
-	/* need to test this this works for "exotic" non-AR models */
+    /* reject estimators that we can't currently handle */
+    if (AR_MODEL(pmod->ci) || FCAST_SPECIAL(pmod->ci)) {
 	fr->err = E_NOTIMP;
 	return fr;
     }
@@ -261,7 +327,7 @@ FITRESID *get_fcast_with_errs (const char *str, MODEL *pmod,
 	return fr;
     }
 
-    fit_resid_init(str, pmod, Z, pdinfo, fr);
+    fit_resid_init(str, pmod, Z, pdinfo, fr, 1);
     if (fr->err) {
 	return fr;
     }    
@@ -341,6 +407,26 @@ FITRESID *get_fcast_with_errs (const char *str, MODEL *pmod,
     return fr;
 }
 
+/**
+ * fcast_with_errs:
+ * @str: string giving starting and ending observations, separated
+ * by a space.
+ * @pmod: the model from which forecasts are wanted.
+ * @pZ: pointer to data array using which @pmod was estimated.
+ * @pdinfo: dataset information.
+ * @opt: if includes %OPT_P, make a plot of the forecasts and
+ * error bounds.
+ * @prn: printing structure.
+ *
+ * This function uses get_fcast_with_errs() (see above for details
+ * and limitations) to get forecasts and their standard errors
+ * from the specified model.  It then arranges for the results
+ * to be printed to @prn (and possibly plotted also).  The 
+ * internal resources required for this operation are then freed.
+ *
+ * Returns: 0 on success, non-zero error code on error.
+ */
+
 int fcast_with_errs (const char *str, MODEL *pmod, 
 		     double ***pZ, DATAINFO *pdinfo, 
 		     gretlopt opt, PRN *prn)
@@ -349,7 +435,7 @@ int fcast_with_errs (const char *str, MODEL *pmod,
     int err;
 
     fr = get_fcast_with_errs(str, pmod, (const double **) *pZ, 
-			     pdinfo, prn);
+			     pdinfo);
 
     if (fr == NULL) {
 	return E_ALLOC;
@@ -369,7 +455,7 @@ int fcast_with_errs (const char *str, MODEL *pmod,
    was saved as data on the model (see nls.c) 
 */
 
-static int nls_forecast (int t1, int t2, int nv, const MODEL *pmod, 
+static int nls_forecast (int t1, int t2, double *fcast, const MODEL *pmod, 
 			 double ***pZ, DATAINFO *pdinfo)
 {
     int oldt1 = pdinfo->t1;
@@ -394,7 +480,7 @@ static int nls_forecast (int t1, int t2, int nv, const MODEL *pmod,
     if (!err) {
 	/* transcribe values from last generated var to target */
 	for (t=t1; t<=t2; t++) {
-	    (*pZ)[nv][t] = (*pZ)[oldv][t];
+	    fcast[t] = (*pZ)[oldv][t];
 	}
 	err = dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
     }
@@ -403,6 +489,52 @@ static int nls_forecast (int t1, int t2, int nv, const MODEL *pmod,
     pdinfo->t2 = oldt2;
 
     return err;
+}
+
+/**
+ * fcast_transform:
+ * @xb: value of the basic linear regression function, X*b,
+ * or independent variable vector times coefficient vector.
+ * @t: zero-based index of observation.
+ * @pmod: model on which forecast is based.
+ *
+ * Calculates the transformation required to get from X*b to the
+ * actual prediction for the dependent variable, for models of
+ * type %LOGIT, %PROBIT, %TOBIT and %POISSON.
+ *
+ * Returns: the transformed value.
+ */
+
+static double fcast_transform (double xb, int ci, int t, 
+			       const double *offset)
+{
+    double yf = xb;
+
+    if (na(yf)) {
+	return yf;
+    }
+
+    if (ci == TOBIT) {
+	if (xb < 0.0) {
+	    yf = 0.0;
+	}
+    } else if (ci == LOGIT) {
+	yf = exp(xb) / (1.0 + exp(xb));
+    } else if (ci == PROBIT) {
+	yf = normal_cdf(xb);
+    } else if (ci == POISSON) {
+	if (offset != NULL) {
+	    if (na(offset[t])) {
+		yf = NADBL;
+	    } else {
+		yf = exp(xb + log(offset[t]));
+	    }
+	} else {
+	    yf = exp(xb);
+	}
+    }
+
+    return yf;
 }
 
 /* Compute forecasts for various sorts of gretl models, including
@@ -425,18 +557,28 @@ static int nls_forecast (int t1, int t2, int nv, const MODEL *pmod,
    r(L)) y_t.
 */
 
-static int gretl_forecast (int t1, int t2, int nv, const MODEL *pmod, 
+static int gretl_forecast (int t1, int t2, double *yhat, const MODEL *pmod, 
 			   double ***pZ, DATAINFO *pdinfo)
 {
     double xval, yh;
+    double *offset = NULL;
     int i, k, maxlag = 0, yno;
     int v, t, miss;
     const int *arlist = NULL;
-    double *yhat = (*pZ)[nv];
     int ar = SIMPLE_AR_MODEL(pmod->ci);
 
     if (pmod->ci == NLS) {
-	return nls_forecast(t1, t2, nv, pmod, pZ, pdinfo);
+	/* special handling for nonlinear least squares */
+	return nls_forecast(t1, t2, yhat, pmod, pZ, pdinfo);
+    }
+
+    if (pmod->ci == POISSON) {
+	/* special for poisson "offset" variable */
+	int offnum = gretl_model_get_int(pmod, "offset_var");
+
+	if (offnum > 0) {
+	    offset = (*pZ)[offnum];
+	}
     }
 
     /* bodge: for now we're not going to forecast out of sample
@@ -519,9 +661,13 @@ static int gretl_forecast (int t1, int t2, int nv, const MODEL *pmod,
 
 	if (miss) {
 	    yhat[t] = NADBL;
-	} else { 
+	} else if (FCAST_SPECIAL(pmod->ci)) {
+	    /* special handling for LOGIT and others */
+	    yhat[t] = fcast_transform(yh, pmod->ci, t, offset);
+	} else {
 	    yhat[t] = yh;
 	}
+
 #if FCAST_DEBUG
 	fprintf(stderr, "gretl_forecast: set yhat[%d] = %g\n", t, yhat[t]);
 #endif
@@ -542,6 +688,12 @@ static int gretl_forecast (int t1, int t2, int nv, const MODEL *pmod,
  * Adds to the dataset a new variable containing predicted values for the
  * dependent variable in @pmod over the specified range of observations,
  * or, by default, over the sample range currently defined in @pdinfo.
+ *
+ * In the case of "simple" models with an autoregressive error term 
+ * (%AR, %CORC, %HILU, %PWE) the predicted values incorporate
+ * the forecastable portion of the error.  In the case of
+ * %ARMA and %GARCH, "forecasts" are currently only available
+ * over the estimation range of the model.  This is a TODO item.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
@@ -591,10 +743,92 @@ int fcast (const char *line, const MODEL *pmod, double ***pZ,
 	    (*pZ)[vi][t] = NADBL;
 	}
 
-	gretl_forecast(t1, t2, vi, pmod, pZ, pdinfo);
+	gretl_forecast(t1, t2, (*pZ)[vi], pmod, pZ, pdinfo);
     }
 
     return err;
+}
+
+/**
+ * get_fcast_without_errs:
+ * @str: string giving starting and ending observations, separated
+ * by a space.
+ * @pmod: the model from which forecasts are wanted.
+ * @Z: data array using which @pmod was estimated.
+ * @pdinfo: dataset information.
+ *
+ * Allocates a #FITRESID structure and fills it out with forecasts
+ * based on @pmod, over the specified range of observations.
+ *
+ * Works much like get_fcast_with_errs() except that standard
+ * errors of the forecasts are not calculated and in consequence
+ * a wider variety of estimators is supported.
+ *
+ * Returns: pointer to allocated structure, or %NULL on failure.
+ * The %err member of the returned object should be checked:
+ * a non-zero value indicates an error condition.
+ */
+
+FITRESID *get_fcast_without_errs (const char *str, MODEL *pmod, 
+				  double ***pZ, DATAINFO *pdinfo) 
+{
+    FITRESID *fr = NULL;
+    double *yhat;
+    int yno = pmod->list[1]; /* FIXME nls? */
+    int s, t;
+
+    fr = fit_resid_new(0, 0); 
+    if (fr == NULL) {
+	return NULL;
+    }
+
+    /* reject estimators that we can't currently handle */
+    if (pmod->ci == ARMA || pmod->ci == GARCH) {
+	fr->err = E_NOTIMP;
+	return fr;
+    }
+
+    /* Reject in case model was estimated using repacked daily
+       data: this case should be handled more elegantly */
+    if (gretl_model_get_int(pmod, "daily_repack")) {
+	fr->err = E_DATA;
+	return fr;
+    }
+
+    yhat = malloc(pdinfo->n * sizeof *yhat);
+    if (yhat == NULL) {
+	fr->err = E_ALLOC;
+	return fr;
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	yhat[t] = NADBL;
+    }
+
+    fit_resid_init(str, pmod, (const double **) *pZ, pdinfo, fr, 0);
+    if (fr->err) {
+	return fr;
+    } 
+
+    fr->err = gretl_forecast(fr->t1, fr->t2, yhat, pmod, pZ, pdinfo);
+    if (fr->err) {
+	free(yhat);
+	return fr;
+    }
+
+    for (t=fr->t1; t<=fr->t2; t++) {
+	s = t - fr->t1;
+	fr->actual[s] = (*pZ)[yno][t];
+	fr->fitted[s] = yhat[t];
+    }
+
+    free(yhat);
+
+    fr->tval = tcrit95(pmod->dfd);
+    strcpy(fr->depvar, pdinfo->varname[yno]);
+    fr->df = pmod->dfd;
+
+    return fr;
 }
 
 

@@ -28,7 +28,7 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
 		     const int standalone, PRN *prn);
 
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-		      int c, PRN *prn);
+		     int i, PRN *prn);
 
 int texprint (MODEL *pmod, const DATAINFO *pdinfo,
 	      char *texfile, gretlopt opt);

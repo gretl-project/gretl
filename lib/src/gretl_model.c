@@ -303,6 +303,64 @@ double gretl_model_get_double (const MODEL *pmod, const char *key)
     return NADBL;
 }
 
+static void make_cname (const char *orig, char *cname)
+{
+    char *p;
+
+    if (orig == NULL || *orig == 0) {
+	return;
+    }
+
+    p = strrchr(orig, '_');
+
+    if (p == NULL) {
+	strcpy(cname, orig);
+    } else {
+	unsigned char c = (unsigned char) *(p + 1);
+
+	if (isdigit(c)) {
+	    int lag = atoi(++p);
+
+	    sprintf(cname, "ut^2(-%d)", lag);
+	}
+    }
+}
+
+/**
+ * gretl_model_get_param_name:
+ * @pmod: pointer to model.
+ * @pdinfo: dataset information.
+ * @i: index number for parameter, zero-based, corresponding
+ * to position in the %coeff array in @pmod.
+ * @targ: string into which to write param name.
+ *
+ * Writes the appropriate parameter name into @targ, which
+ * should be at least #VNAMELEN bytes long.  Usually this is
+ * the name of a variable in the dataset, but sometimes it is
+ * a special string (e.g. for nonlinear models).
+ *
+ * Returns: @targ.
+ */
+
+char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
+				  int i, char *targ)
+{
+    *targ = '\0';
+
+    if (pmod != NULL) {
+	/* special treatment for ARCH, ARMA, GARCH, NLS */
+	if (pmod->aux == AUX_ARCH) {
+	    make_cname(pdinfo->varname[pmod->list[i + 2]], targ);
+	} else if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
+	    strcpy(targ, pmod->params[i + 1]);
+	} else {
+	    strcpy(targ, pdinfo->varname[pmod->list[i + 2]]);
+	}
+    }
+
+    return targ;
+}
+
 /**
  * free_vcv:
  * @vcv: pointer to covariance matrix struct.

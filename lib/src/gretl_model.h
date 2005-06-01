@@ -134,6 +134,10 @@ int gretl_model_get_int (const MODEL *pmod, const char *key);
 
 double gretl_model_get_double (const MODEL *pmod, const char *key);
 
+char *gretl_model_get_param_name (const MODEL *pmod, 
+				  const DATAINFO *pdinfo,
+				  int i, char *targ);
+
 void free_vcv (VCV *vcv);
 
 int gretl_model_new_vcv (MODEL *pmod, int *nelem);

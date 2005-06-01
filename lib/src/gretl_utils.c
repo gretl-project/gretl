@@ -940,29 +940,21 @@ mp_results *gretl_mp_results_new (int nc)
     return mpvals;
 }
 
-/* ........................................................... */
-
-static int copy_main_list (int **targ, const int *src)
+void free_confint (CONFINT *cf)
 {
-    int i, n = 0;
+    int i;
 
-    if (src == NULL) return 1;
+    free(cf->coeff);
+    free(cf->maxerr);
 
-    for (i=1; i<=src[0] && src[i]!=LISTSEP; i++) n++;
-
-    if (*targ != NULL) free(*targ);
-
-    *targ = malloc((n + 2) * sizeof *targ);
-    if (*targ == NULL) {
-	return 1;
-    }
-    
-    (*targ)[0] = n;
-    for (i=1; i<=n; i++) {
-	(*targ)[i] = src[i];
+    if (cf->names != NULL) {
+	for (i=0; i<cf->ncoeff; i++) {
+	    free(cf->names[i]);
+	}
+	free(cf->names);
     }
 
-    return 0;
+    free(cf);
 }
 
 /**
@@ -975,55 +967,69 @@ static int copy_main_list (int **targ, const int *src)
  * Returns: pointer to #CONFINT struct containing the results.
  */
 
-CONFINT *get_model_confints (const MODEL *pmod)
+CONFINT *get_model_confints (const MODEL *pmod, const DATAINFO *pdinfo)
 {
-    int i;
-    double t = tcrit95(pmod->dfd);
     CONFINT *cf;
+    double t = tcrit95(pmod->dfd);
+    char pname[24];
+    int i, err = 0;
 
     cf = malloc(sizeof *cf);
     if (cf == NULL) {
 	return NULL;
     }
 
-    cf->coeff = malloc(pmod->ncoeff * sizeof *cf->coeff);
-    if (cf->coeff == NULL) {
-	free(cf);
-	return NULL;
-    }
-
-    cf->maxerr = malloc(pmod->ncoeff * sizeof *cf->maxerr);
-    if (cf->maxerr == NULL) {
-	free(cf);
-	free(cf->coeff);
-	return NULL;
-    }
-
-    cf->list = NULL;
-    if (copy_main_list(&cf->list, pmod->list)) {
-	free(cf);
-	free(cf->coeff);
-	free(cf->maxerr);
-	return NULL;
-    }
-
-    for (i=0; i<pmod->ncoeff; i++) { 
-	cf->coeff[i] = pmod->coeff[i];
-	cf->maxerr[i] = (pmod->sderr[i] > 0)? t * pmod->sderr[i] : 0;
-    }
-
+    cf->ncoeff = pmod->ncoeff;
     cf->df = pmod->dfd;
     cf->ifc = pmod->ifc;
 
-    return cf;
-}
+    cf->coeff = NULL;
+    cf->maxerr = NULL;
+    cf->names = NULL;
 
-void free_confint (CONFINT *cf)
-{
-    free(cf->coeff);
-    free(cf->maxerr);
-    free(cf->list);
-    free(cf);
+    cf->coeff = malloc(cf->ncoeff * sizeof *cf->coeff);
+    if (cf->coeff == NULL) {
+	err = 1;
+	goto bailout;
+    }
+
+    cf->maxerr = malloc(cf->ncoeff * sizeof *cf->maxerr);
+    if (cf->maxerr == NULL) {
+	err = 1;
+	goto bailout;
+    }
+
+    cf->names = malloc(cf->ncoeff * sizeof *cf->names);
+    if (cf->names == NULL) {
+	err = 1;
+	goto bailout;
+    }    
+
+    for (i=0; i<cf->ncoeff && !err; i++) { 
+	cf->coeff[i] = pmod->coeff[i];
+	cf->maxerr[i] = (pmod->sderr[i] > 0)? t * pmod->sderr[i] : 0.0;
+	gretl_model_get_param_name(pmod, pdinfo, i, pname);
+	cf->names[i] = gretl_strdup(pname);
+	if (cf->names[i] == NULL) {
+	    int j;
+	    
+	    for (j=0; j<i; j++) {
+		free(cf->names[i]);
+	    }
+	    free(cf->names);
+	    cf->names = NULL;
+	    err = 1;
+	}
+    }
+
+ bailout:
+
+    if (err) {
+	free_confint(cf);
+	cf = NULL;
+    }
+
+    return cf;
 }
 
 /* ........................................................... */

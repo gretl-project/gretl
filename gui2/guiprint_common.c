@@ -709,9 +709,44 @@ void rtfprint_fit_resid (const FITRESID *fr,
 
 /* .................................................................. */
 
-void texprint_fcast_with_errs (const FITRESID *fr, 
-			       const DATAINFO *pdinfo, 
-			       PRN *prn)
+static void texprint_fcast_without_errs (const FITRESID *fr, 
+					 const DATAINFO *pdinfo, 
+					 PRN *prn)
+{
+    char actual[32], fitted[32];
+    char vname[16];
+    char pt = get_local_decpoint();
+    int t;
+
+    pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
+
+    pprintf(prn, "\\begin{center}\n"
+	    "\\begin{tabular}{%%\n"
+	    "r%% col 1: obs\n"
+	    "  l%% col 2: varname\n"
+	    "    D{%c}{%c}{-1}%% col 3: fitted\n",
+	    pt, pt);
+
+    tex_escape(vname, fr->depvar);
+
+    pprintf(prn, "%s & %s & \\multicolumn{1}{c}{%s} \\\\\n",
+	    I_("Obs"), vname, I_("prediction"));
+
+    for (t=0; t<fr->nobs; t++) {
+	tex_dcolumn_double(fr->actual[t], actual);
+	tex_dcolumn_double(fr->fitted[t], fitted);
+	print_obs_marker(t + fr->t1, pdinfo, prn);
+	pprintf(prn, " & %s & %s \\\\\n",
+		actual, fitted);
+    }
+
+    pputs(prn, "\\end{tabular}\n"
+	  "\\end{center}\n\n");
+}
+
+static void real_texprint_fcast_with_errs (const FITRESID *fr, 
+					   const DATAINFO *pdinfo, 
+					   PRN *prn)
 {
     int t;
     double maxerr;
@@ -764,15 +799,58 @@ void texprint_fcast_with_errs (const FITRESID *fr,
 	  "\\end{center}\n\n");
 }
 
+void texprint_fcast_with_errs (const FITRESID *fr, 
+			       const DATAINFO *pdinfo, 
+			       PRN *prn)
+{
+    if (fr->sderr != NULL) {
+	real_texprint_fcast_with_errs(fr, pdinfo, prn);
+    } else {
+	texprint_fcast_without_errs(fr, pdinfo, prn);
+    }
+}
+
+
 /* .................................................................. */
 
 #define FC_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
-                "\\cellx800\\cellx2200\\cellx3600\\cellx5000" \
-                "\\cellx7800\n"
+                "\\cellx800\\cellx2200\\cellx3600\n"
 
-void rtfprint_fcast_with_errs (const FITRESID *fr, 
-			       const DATAINFO *pdinfo, 
-			       PRN *prn)
+#define FCE_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
+                 "\\cellx800\\cellx2200\\cellx3600\\cellx5000" \
+                 "\\cellx7800\n"
+
+static void rtfprint_fcast_without_errs (const FITRESID *fr, 
+					 const DATAINFO *pdinfo, 
+					 PRN *prn)
+{
+    int t;
+
+    pputs(prn, "{\\rtf1\\par\n\n");
+
+    pputs(prn, "{" FC_ROW "\\intbl ");
+
+    pprintf(prn, 
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\intbl \\row\n", 
+	    I_("Obs"), fr->depvar, I_("prediction")); 
+
+    for (t=0; t<fr->nobs; t++) {
+	pputs(prn, "\\qr ");
+	print_obs_marker(t + fr->t1, pdinfo, prn);
+	pputs(prn, "\\cell"); 
+	printfrtf(fr->actual[t], prn, 0);
+	printfrtf(fr->fitted[t], prn, 0);
+    }
+
+    pputs(prn, "}}\n");
+}
+
+static void real_rtfprint_fcast_with_errs (const FITRESID *fr, 
+					   const DATAINFO *pdinfo, 
+					   PRN *prn)
 {
     int t;
     double maxerr;
@@ -784,7 +862,7 @@ void rtfprint_fcast_with_errs (const FITRESID *fr,
 
     pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n\\par\n", tmp);
 
-    pputs(prn, "{" FC_ROW "\\intbl ");
+    pputs(prn, "{" FCE_ROW "\\intbl ");
     pprintf(prn, 
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
@@ -813,33 +891,43 @@ void rtfprint_fcast_with_errs (const FITRESID *fr,
     pputs(prn, "}}\n");
 }
 
+void rtfprint_fcast_with_errs (const FITRESID *fr, 
+			       const DATAINFO *pdinfo, 
+			       PRN *prn)
+{
+    if (fr->sderr != NULL) {
+	real_rtfprint_fcast_with_errs(fr, pdinfo, prn);
+    } else {
+	rtfprint_fcast_without_errs(fr, pdinfo, prn);
+    }
+}
+
 /* .................................................................. */
 
 static void 
-texprint_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
-			 int c, PRN *prn)
+texprint_coeff_interval (const CONFINT *cf, int i, PRN *prn)
 {
     char vname[16];
 
-    tex_escape(vname, pdinfo->varname[cf->list[c]]);
-    pprintf(prn, " %3d) & %8s & ", cf->list[c], vname);
+    tex_escape(vname, cf->names[i]);
+    pprintf(prn, " %s & ", vname);
 
-    if (isnan(cf->coeff[c-2])) {
+    if (isnan(cf->coeff[i])) {
 	pprintf(prn, "\\multicolumn{1}{c}{%s} & ", I_("undefined"));
     } else {
 	char coeff[32];
 
-	tex_dcolumn_double(cf->coeff[c-2], coeff);
+	tex_dcolumn_double(cf->coeff[i], coeff);
 	pprintf(prn, "%s & ", coeff);
     }
 
-    if (isnan(cf->maxerr[c-2])) {
+    if (isnan(cf->maxerr[i])) {
 	pprintf(prn, "\\multicolumn{2}{c}{%s}", I_("undefined"));
     } else {
 	char lo[32], hi[32];
 
-	tex_dcolumn_double(cf->coeff[c-2] - cf->maxerr[c-2], lo);
-	tex_dcolumn_double(cf->coeff[c-2] + cf->maxerr[c-2], hi);
+	tex_dcolumn_double(cf->coeff[i] - cf->maxerr[i], lo);
+	tex_dcolumn_double(cf->coeff[i] + cf->maxerr[i], hi);
 	pprintf(prn, "%s & %s", lo, hi);
     }
     pputs(prn, "\\\\\n");
@@ -847,33 +935,32 @@ texprint_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
 
 /* .................................................................. */
 
-void texprint_confints (const CONFINT *cf, const DATAINFO *pdinfo, 
-			PRN *prn)
+void texprint_confints (const CONFINT *cf, PRN *prn)
 {
-    int i, ncoeff = cf->list[0];
     char pt = get_local_decpoint();
+    int i;
 
     pprintf(prn, "$t(%d, .025) = %.3f$\n\n", cf->df, tcrit95(cf->df));
 
     pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
 
     pprintf(prn, "\\begin{center}\n"
-	    "\\begin{tabular}{rrD{%c}{%c}{-1}D{%c}{%c}{-1}D{%c}{%c}{-1}}\n",
+	    "\\begin{tabular}{rD{%c}{%c}{-1}D{%c}{%c}{-1}D{%c}{%c}{-1}}\n",
 	    pt, pt, pt, pt, pt, pt);
 
-    pprintf(prn, " & %s%%\n"
+    pprintf(prn, " %s%%\n"
 	    " & \\multicolumn{1}{c}{%s}%%\n"
 	    "  & \\multicolumn{2}{c}{%s}\\\\\n",
 	    I_("Variable"), I_("Coefficient"),
 	    /* xgettext:no-c-format */
 	    I_("95\\% confidence interval"));
 
-    pprintf(prn, " & & & \\multicolumn{1}{c}{%s}%%\n"
+    pprintf(prn, " & & \\multicolumn{1}{c}{%s}%%\n"
 	    "  & \\multicolumn{1}{c}{%s}\\\\\n",
 	    I_("low"), I_("high"));
 
-    for (i=2; i<=ncoeff; i++) {
-	texprint_coeff_interval(cf, pdinfo, i, prn);
+    for (i=0; i<cf->ncoeff; i++) {
+	texprint_coeff_interval(cf, i, prn);
     }
 
     pputs(prn, "\\end{tabular}\n"
@@ -883,40 +970,34 @@ void texprint_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 /* .................................................................. */
 
 static void 
-rtfprint_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
-			 int c, PRN *prn)
+rtfprint_coeff_interval (const CONFINT *cf, int i, PRN *prn)
 {
-    pprintf(prn, "\\qr %d)\\cell \\qc %s\\cell", cf->list[c], 
-	    pdinfo->varname[cf->list[c]]);
+    pprintf(prn, "\\qc %s\\cell", cf->names[i]);
 
-    printfrtf(cf->coeff[c-2], prn, 0);
+    printfrtf(cf->coeff[i], prn, 0);
 
-    if (isnan(cf->maxerr[c-2])) {
+    if (isnan(cf->maxerr[i])) {
 	pprintf(prn, "\\qc %s\\cell ", I_("undefined"));
     } else {
 	pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell ", 
-		GRETL_DIGITS, cf->coeff[c-2] - cf->maxerr[c-2], 
-		GRETL_DIGITS, cf->coeff[c-2] + cf->maxerr[c-2]);
+		GRETL_DIGITS, cf->coeff[i] - cf->maxerr[i], 
+		GRETL_DIGITS, cf->coeff[i] + cf->maxerr[i]);
     }
     pputs(prn, " \\intbl \\row\n");
 }
 
-/* .................................................................. */
+#define CF_ROW  "\\trowd \\trgaph60\\trleft-30\\trrh262" \
+                "\\cellx2400\\cellx4000\\cellx7200\n" 
 
-#define CF_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
-                "\\cellx800\\cellx2400\\cellx4000\\cellx7200\n" 
-
-void rtfprint_confints (const CONFINT *cf, const DATAINFO *pdinfo, 
-			PRN *prn)
+void rtfprint_confints (const CONFINT *cf, PRN *prn)
 {
-    int i, ncoeff = cf->list[0];
+    int i;
 
     pprintf(prn, "{\\rtf1\\par\n\\qc t(%d, .025) = %.3f\\par\n\\par\n", 
 	    cf->df, tcrit95(cf->df));
 
     pputs(prn, "{" CF_ROW "\\intbl ");
     pprintf(prn, 
-	    " \\qc \\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
@@ -925,8 +1006,8 @@ void rtfprint_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 	    /* xgettext:no-c-format */
 	    I_("95% confidence interval"));
 
-    for (i=2; i<=ncoeff; i++) {
-	rtfprint_coeff_interval(cf, pdinfo, i, prn);
+    for (i=0; i<cf->ncoeff; i++) {
+	rtfprint_coeff_interval(cf, i, prn);
     }
 
     pputs(prn, "}}\n");

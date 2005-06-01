@@ -348,25 +348,6 @@ augment_restriction_set (gretl_restriction_set *rset, int n_terms)
     return rset->restrictions[n];
 }
 
-static const char *
-get_varname (const gretl_restriction_set *rset, int cnum)
-{
-    const char *vname;
-
-    if (rset->pmod == NULL) return NULL;
-
-    /* FIXME: test for AR, TSLS?? */
-    if (rset->pmod->ci == ARMA || rset->pmod->ci == GARCH) {
-	vname = rset->pmod->params[cnum + 1];
-    } else {
-	int vnum = rset->pmod->list[cnum + 2];
-
-	vname = rset->pdinfo->varname[vnum];
-    }
-
-    return vname;
-}
-
 static void print_mult (double mult, int first, PRN *prn)
 {
     if (mult == 1.0) {
@@ -390,6 +371,7 @@ static void print_restriction (const gretl_restriction_set *rset,
 			       int j, PRN *prn)
 {
     const restriction *r = rset->restrictions[j];
+    char vname[24];
     int i;
 
     for (i=0; i<r->nterms; i++) {
@@ -397,7 +379,9 @@ static void print_restriction (const gretl_restriction_set *rset,
 	if (rset->cross) {
 	    pprintf(prn, "b[%d,%d]", r->eq[i] + 1, r->coeff[i]);
 	} else {
-	    pprintf(prn, "b[%s]", get_varname(rset, r->coeff[i]));
+	    gretl_model_get_param_name(rset->pmod, rset->pdinfo, 
+				       r->coeff[i], vname);
+	    pprintf(prn, "b[%s]", vname);
 	}
     }
     pprintf(prn, " = %g\n", r->rhs);

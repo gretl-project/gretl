@@ -234,43 +234,42 @@ static void tex_lagname (char *s, const DATAINFO *pdinfo, int v)
 }
 
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-		     int c, PRN *prn)
+		     int i, PRN *prn)
 {
     char tmp[24], coeff[64], sderr[64], tratio[64], pval[64];
-    int v = c - 2;
 
-    if (isnan(pmod->coeff[v]) || na(pmod->coeff[v])) {
+    if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
 	sprintf(coeff, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
-	tex_dcolumn_double(pmod->coeff[v], coeff);
+	tex_dcolumn_double(pmod->coeff[i], coeff);
     }
 
-    if (isnan(pmod->sderr[v]) || na(pmod->sderr[v])) {
+    if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
 	sprintf(sderr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	sprintf(tratio, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	sprintf(pval, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
-	tex_dcolumn_double(pmod->sderr[v], sderr);
-	sprintf(tratio, "%.4f", pmod->coeff[v] / pmod->sderr[v]);
-	sprintf(pval, "%.4f", coeff_pval(pmod, pmod->coeff[v] / pmod->sderr[v], 
+	tex_dcolumn_double(pmod->sderr[i], sderr);
+	sprintf(tratio, "%.4f", pmod->coeff[i] / pmod->sderr[i]);
+	sprintf(pval, "%.4f", coeff_pval(pmod, pmod->coeff[i] / pmod->sderr[i], 
 					 pmod->dfd));
     }    
 
     *tmp = 0;
     if (pmod->aux == AUX_ARCH) {
-	tex_make_cname(tmp, pdinfo->varname[pmod->list[c]]);
+	tex_make_cname(tmp, pdinfo->varname[pmod->list[i+2]]);
     } else if (pmod->ci == NLS) {
-	if (!tex_greek_param(tmp, pmod->params[c-1])) {
-	    tex_escape(tmp, pmod->params[c-1]);
+	if (!tex_greek_param(tmp, pmod->params[i+1])) {
+	    tex_escape(tmp, pmod->params[i+1]);
 	}
     } else if (pmod->ci == ARMA) {
-	tex_arma_coeff_name(tmp, pmod->params[c-1], 0);
+	tex_arma_coeff_name(tmp, pmod->params[i+1], 0);
     } else if (pmod->ci == GARCH) {
-	tex_garch_coeff_name(tmp, pmod->params[c-1], 0);
+	tex_garch_coeff_name(tmp, pmod->params[i+1], 0);
     } else if (pmod->ci == VAR) {
-	tex_lagname(tmp, pdinfo, pmod->list[c]);
+	tex_lagname(tmp, pdinfo, pmod->list[i+2]);
     } else {
-	tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
+	tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
     }
 	
     if (pmod->ci != LOGIT && pmod->ci != PROBIT) {
@@ -289,8 +288,8 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	double *slopes = gretl_model_get_data(pmod, "slopes");
 	char slope[32];
 
-	if (pmod->list[c]) {
-	    tex_dcolumn_double(slopes[v], slope);
+	if (pmod->list[i+2]) {
+	    tex_dcolumn_double(slopes[i], slope);
 	}
 	pprintf(prn, "%s &\n"
 		"  %s &\n"
@@ -301,7 +300,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 		coeff,
 		sderr,
 		tratio,
-		(pmod->list[c])? slope : "");
+		(pmod->list[i+2])? slope : "");
     }
 
     return 0;

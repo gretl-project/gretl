@@ -339,7 +339,8 @@ struct FITRESID_ {
 };
 
 struct CONFINT_ {
-    int *list;
+    int ncoeff;
+    char **names;
     double *coeff;
     double *maxerr;
     int df;

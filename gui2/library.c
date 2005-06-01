@@ -1208,6 +1208,7 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
     int t1 = 0, t2 = datainfo->n - 1;
+    int width = 78;
     FITRESID *fr;
     PRN *prn;
     int resp, err;
@@ -1231,7 +1232,14 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     }
 
     fr = get_fcast_with_errs(cmdline, pmod, (const double **) Z, 
-			     datainfo, prn);
+			     datainfo);
+
+    if (fr != NULL && fr->err == E_NOTIMP) {
+	/* fallback */
+	free_fit_resid(fr);
+	fr = get_fcast_without_errs(cmdline, pmod, &Z, datainfo);
+	width = 50;
+    }	
 
     if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));
@@ -1240,11 +1248,13 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	gui_errmsg(fr->err);
 	free_fit_resid(fr);
     } else {
-	err = text_print_fcast_with_errs(fr, &Z, datainfo, OPT_P, prn);
-	if (!err) {
+	gretlopt popt = (LIMDEP(pmod->ci))? OPT_NONE : OPT_P;
+	
+	err = text_print_fcast_with_errs(fr, &Z, datainfo, popt, prn);
+	if (!err && popt == OPT_P) {
 	    register_graph();
 	}
-	view_buffer(prn, 78, 350, _("gretl: forecasts"), FCASTERR, fr);
+	view_buffer(prn, width, 400, _("gretl: forecasts"), FCASTERR, fr);
     }
 }
 
@@ -3208,10 +3218,10 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
 
     if (bufopen(&prn)) return;
 
-    cf = get_model_confints(pmod);
+    cf = get_model_confints(pmod, datainfo);
 
     if (cf != NULL) {
-	text_print_model_confints(cf, datainfo, prn);
+	text_print_model_confints(cf, prn);
 	view_buffer(prn, 78, 300, 
 		    _("gretl: coefficient confidence intervals"), 
 		    COEFFINT, cf);
@@ -3847,7 +3857,7 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 
     if (bufopen(&prn)) return;
 
-    fr = get_fit_resid(pmod, &Z, datainfo);
+    fr = get_fit_resid(pmod, (const double **) Z, datainfo);
     if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));
 	gretl_print_destroy(prn);

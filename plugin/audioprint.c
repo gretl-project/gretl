@@ -6,29 +6,32 @@
 #include "gretl_enums.h"
 
 static int audioprint_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			     int c, PRN *prn)
+			     int i, PRN *prn)
 {
-    pprintf(prn, "Variable %d, %s.\n", pmod->list[c], 
-	    pdinfo->varname[pmod->list[c]]);
+    char varname[24];
+
+    gretl_model_get_param_name(pmod, pdinfo, i, varname);
+
+    pprintf(prn, "Variable %d, %s.\n", pmod->list[i+2], varname);
 
     /* print coeff value if well-defined */
-    if (isnan(pmod->coeff[c-2]) || na(pmod->coeff[c-2])) {
+    if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
 	pputs(prn, "Coefficient is undefined.\n");
 	return 1;
     } else {
-	pprintf(prn, "Coefficient %g.\n", pmod->coeff[c-2]);
+	pprintf(prn, "Coefficient %g.\n", pmod->coeff[i]);
     }
 
     /* get out if std error is undefined */
-    if (isnan(pmod->sderr[c-2]) || na(pmod->sderr[c-2])) {
+    if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
 	return 1;
     }
 
     /* std error is well-defined, but is it positive? */
-    if (pmod->sderr[c-2] > 0.) {
+    if (pmod->sderr[i] > 0.) {
 	double t, pval;
 
-	t = pmod->coeff[c-2] / pmod->sderr[c-2];
+	t = pmod->coeff[i] / pmod->sderr[i];
 	pval = coeff_pval(pmod, t, pmod->dfd);
 	pprintf(prn, "P-value %.3g.\n", pval);
     } else { /* zero standard error */
@@ -45,7 +48,7 @@ static int audioprint_coefficients (const MODEL *pmod, const DATAINFO *pdinfo,
     int n = pmod->ncoeff;
 
     for (i=0; i<n; i++) {
-	err = audioprint_coeff(pdinfo, pmod, i + 2, prn);
+	err = audioprint_coeff(pdinfo, pmod, i, prn);
 	if (err) gotnan = 1;
     }
 
@@ -172,31 +175,29 @@ audioprint_corrmat (CorrMat *corr,
 /* .................................................................. */
 
 static void 
-audioprint_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
-			   int c, PRN *prn)
+audioprint_coeff_interval (const CONFINT *cf, int i, PRN *prn)
 {
-    pprintf(prn, "Variable %d, '%s', ", cf->list[c], pdinfo->varname[cf->list[c]]);
-    pprintf(prn, "point estimate %.4g, 95%% confidence interval, ", cf->coeff[c-2]);
+    pprintf(prn, "Variable '%s', ", cf->names[i]);
+    pprintf(prn, "point estimate %.4g, 95%% confidence interval, ", cf->coeff[i]);
 
-    if (isnan(cf->maxerr[c-2])) {
+    if (isnan(cf->maxerr[i])) {
 	pputs(prn, "undefined.\n");	
     } else {
 	pprintf(prn, "%.4g to %.4g.\n", 
-		cf->coeff[c-2] - cf->maxerr[c-2],
-		cf->coeff[c-2] + cf->maxerr[c-2]);
+		cf->coeff[i] - cf->maxerr[i],
+		cf->coeff[i] + cf->maxerr[i]);
     }
 }
 
 /* .................................................................. */
 
 static void 
-audioprint_confints (const CONFINT *cf, const DATAINFO *pdinfo, 
-		     PRN *prn)
+audioprint_confints (const CONFINT *cf, PRN *prn)
 {
-    int i, ncoeff = cf->list[0];
+    int i;
 
-    for (i=2; i<=ncoeff; i++) {
-	audioprint_coeff_interval(cf, pdinfo, i, prn);
+    for (i=0; i<cf->ncoeff; i++) {
+	audioprint_coeff_interval(cf, i, prn);
     }
 }
 
@@ -358,7 +359,7 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
     } else if (role == COEFFINT) {
 	CONFINT *cf = (CONFINT *) data;
 
-	audioprint_confints(cf, pdinfo, prn);
+	audioprint_confints(cf, prn);
     } else if (role == VIEW_MODEL) {
 	MODEL *pmod = (MODEL *) data;
 
