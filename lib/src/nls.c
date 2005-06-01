@@ -83,7 +83,7 @@ static int genr_err;
 
 static int nls_auto_genr (int i, double ***pZ, DATAINFO *pdinfo)
 {
-    char formula[MAXLEN];
+    char formula[MAXLINE];
 
     if (i == 0) {
 	/* note: $nl_y is the residual */
@@ -520,15 +520,41 @@ add_param_names_to_model (MODEL *pmod, nls_spec *spec, const DATAINFO *pdinfo)
 
 static void 
 add_fit_resid_to_model (MODEL *pmod, nls_spec *spec, double *uhat, 
-			const double **Z)
+			const double **Z, int perfect)
 {
     int t, j = 0;
 
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	pmod->uhat[t] = uhat[j];
-	pmod->yhat[t] = Z[spec->depvar][t] - uhat[j];
-	j++;
+    if (perfect) {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    pmod->uhat[t] = 0.0;
+	    pmod->yhat[t] = Z[spec->depvar][t];
+	}
+    } else {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    pmod->uhat[t] = uhat[j];
+	    pmod->yhat[t] = Z[spec->depvar][t] - uhat[j];
+	    j++;
+	}
     }
+}
+
+static int transcribe_nls_function (MODEL *pmod, const char *s)
+{
+    char *formula;
+    int err = 0;
+
+    /* skip "depvar - " */
+    s += strcspn(s, " ") + 3;
+
+    formula = gretl_strdup(s);
+    if (s != NULL) {
+	gretl_model_set_data(pmod, "nl_regfunc", formula, 
+			     strlen(formula) + 1);
+    } else {
+	err = E_ALLOC;
+    }
+
+    return err;
 }
 
 /* Gauss-Newton regression to calculate standard errors for the
@@ -543,30 +569,30 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     int *glist;
     MODEL gnr;
     int i, j, t;
-    int t1 = spec->t1, t2 = spec->t2;
-    int T = t2 - t1 + 1;
     int iters = spec->iters;
+    int perfect = 0;
     int err = 0;
 
-    spec->t1 = 0;
-    spec->t2 = ndinfo->n - 1;
-
-    if (gretl_iszero(0, T-1, uhat)) {
+    if (gretl_iszero(spec->t1, spec->t2, uhat)) {
 	pputs(prn, _("Perfect fit achieved\n"));
-	for (t=0; t<T; t++) {
+	perfect = 1;
+	for (t=spec->t1; t<=spec->t2; t++) {
 	    uhat[t] = 1.0;
 	}
 	spec->ess = 0.0;
     }
 
-    gdinfo = create_new_dataset(&gZ, spec->nparam + 1, ndinfo->n, 0);
+    gdinfo = create_new_dataset(&gZ, spec->nparam + 1, pdinfo->n, 0);
     if (gdinfo == NULL) {
 	gretl_model_init(&gnr);
 	gnr.errcode = E_ALLOC;
 	return gnr;
     }
 
-    glist = malloc((spec->nparam + 2) * sizeof *glist);
+    gdinfo->t1 = spec->t1;
+    gdinfo->t2 = spec->t2;
+    
+    glist = gretl_list_new(spec->nparam + 1);
     if (glist == NULL) {
 	free_Z(gZ, gdinfo);
 	free_datainfo(gdinfo);
@@ -575,15 +601,13 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 	return gnr;
     }
     
-    glist[0] = spec->nparam + 1;
-
     for (i=0; i<=spec->nparam; i++) {
 	glist[i+1] = i;
 	if (i == 0) {
 	    /* dependent variable (NLS residual) */
 	    j = 0;
-	    for (t=0; t<ndinfo->n; t++) {
-		if (t < t1 || t > t2) {
+	    for (t=0; t<gdinfo->n; t++) {
+		if (t < gdinfo->t1 || t > gdinfo->t2) {
 		    gZ[i][t] = NADBL;
 		} else {
 		    gZ[i][t] = uhat[j++];
@@ -594,9 +618,9 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 	    if (spec->mode == ANALYTIC_DERIVS) {
 		get_nls_deriv(i-1, gZ[i]);
 	    } else {
-		j = T * (i - 1);
-		for (t=0; t<ndinfo->n; t++) {
-		    if (t < t1 || t > t2) {
+		j = gdinfo->n * (i - 1);
+		for (t=0; t<gdinfo->n; t++) {
+		    if (t < gdinfo->t1 || t > gdinfo->t2) {
 			gZ[i][t] = NADBL;
 		    } else {
 			gZ[i][t] = jac[j++];
@@ -631,14 +655,14 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 	gnr.ci = NLS;
 	add_coeffs_to_model(&gnr, spec->coeff);
 	add_param_names_to_model(&gnr, spec, pdinfo);
-	add_fit_resid_to_model(&gnr, spec, uhat, Z);
+	add_fit_resid_to_model(&gnr, spec, uhat, Z, perfect);
 	gnr.list[1] = spec->depvar;
+
+	/* set relevant data on model to be shipped out */
 	gretl_model_set_int(&gnr, "iters", iters);
 	gretl_model_set_double(&gnr, "tol", spec->tol);
+	transcribe_nls_function(&gnr, pspec->nlfunc);
     }
-
-    spec->t1 = t1;
-    spec->t2 = t2;
 
     free_Z(gZ, gdinfo); 
     free_datainfo(gdinfo);
@@ -1290,6 +1314,8 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	nlsmod.errcode = E_PARSE;
 	goto bailout;
     } 
+
+    fprintf(stderr, "nls-spec: t1=%d, t2=%d\n", pspec->t1, pspec->t2);
 
     err = nls_missval_check(pZ, pdinfo, pspec);
     if (err) {

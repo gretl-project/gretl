@@ -364,6 +364,47 @@ int fcast_with_errs (const char *str, MODEL *pmod,
     return err;
 }
 
+/* generate forecasts from nonlinear least squares model, using
+   the string specification of the regression function that
+   was saved as data on the model 
+*/
+
+static int nls_forecast (int t1, int t2, int nv, const MODEL *pmod, 
+			 double ***pZ, DATAINFO *pdinfo)
+{
+    int oldt1 = pdinfo->t1;
+    int oldt2 = pdinfo->t2;
+    const char *nlfunc;    
+    char formula[MAXLINE];
+    int t, oldv = pdinfo->v;
+    int err = 0;
+
+    nlfunc = gretl_model_get_data(pmod, "nl_regfunc");
+    if (nlfunc == NULL) {
+	err = E_DATA;
+    }
+
+    if (!err) {
+	pdinfo->t1 = t1;
+	pdinfo->t2 = t2;
+	sprintf(formula, "$nl_y = %s", nlfunc);
+	err = generate(formula, pZ, pdinfo, NULL, OPT_P);
+    }
+
+    if (!err) {
+	/* transcribe values from last generated var to target */
+	for (t=t1; t<=t2; t++) {
+	    (*pZ)[nv][t] = (*pZ)[oldv][t];
+	}
+	err = dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
+    }
+    
+    pdinfo->t1 = oldt1;
+    pdinfo->t2 = oldt2;
+
+    return err;
+}
+
 /* Compute forecasts for various sorts of gretl models, including
    those with autoregressive errors.
 
@@ -384,8 +425,8 @@ int fcast_with_errs (const char *str, MODEL *pmod,
    r(L)) y_t.
 */
 
-static int gretl_forecast (int t1, int t2, int nv, 
-			   const MODEL *pmod, double ***pZ)
+static int gretl_forecast (int t1, int t2, int nv, const MODEL *pmod, 
+			   double ***pZ, DATAINFO *pdinfo)
 {
     double xval, yh;
     int i, k, maxlag = 0, yno;
@@ -394,9 +435,13 @@ static int gretl_forecast (int t1, int t2, int nv,
     double *yhat = (*pZ)[nv];
     int ar = SIMPLE_AR_MODEL(pmod->ci);
 
+    if (pmod->ci == NLS) {
+	return nls_forecast(t1, t2, nv, pmod, pZ, pdinfo);
+    }
+
     /* bodge: for now we're not going to forecast out of sample
        for these estimators. TODO */
-    if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
+    if (pmod->ci == ARMA || pmod->ci == GARCH) {
 	for (t=t1; t<=t2; t++) {
 	    yhat[t] = pmod->yhat[t];
 	}
@@ -546,7 +591,7 @@ int fcast (const char *line, const MODEL *pmod, double ***pZ,
 	    (*pZ)[vi][t] = NADBL;
 	}
 
-	gretl_forecast(t1, t2, vi, pmod, pZ);
+	gretl_forecast(t1, t2, vi, pmod, pZ, pdinfo);
     }
 
     return err;

@@ -2712,8 +2712,11 @@ static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 		}
 	    } else {
 		/* just transcribe scalar */
-		strcat(VARLABEL(pdinfo, v), _(" (scalar)"));
 		(*pZ)[v][0] = xt;
+		if (!genr_is_private(genr)) {
+		    /* don't write labels for "private" vars */
+		    strcat(VARLABEL(pdinfo, v), _(" (scalar)"));
+		}
 	    }
 	} else {
 	    /* we generated, and will now transcribe, a vector result */

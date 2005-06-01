@@ -220,8 +220,8 @@ int dataset_allocate_obs_markers (DATAINFO *pdinfo)
 
 static void gretl_varinfo_init (VARINFO *vinfo)
 {
-    *vinfo->label = '\0';
-    *vinfo->display_name = '\0';
+    vinfo->label[0] = '\0';
+    vinfo->display_name[0] = '\0';
     vinfo->compact_method = COMPACT_NONE;
     vinfo->stack_level = 0;
     vinfo->sorted_markers = NULL;
