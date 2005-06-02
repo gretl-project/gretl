@@ -36,7 +36,7 @@ void gui_script_logo (PRN *prn);
 
 void gui_logo (PRN *prn);
 
-void text_print_model_confints (const CONFINT *cf, PRN *prn);
+void text_print_model_confints (const CoeffIntervals *cf, PRN *prn);
 
 void print_freq (const FREQDIST *freq, PRN *prn);
 
@@ -64,9 +64,9 @@ int print_fit_resid (const MODEL *pmod,
 		     const double **Z, const DATAINFO *pdinfo, 
 		     PRN *prn);
 
-int text_print_fcast_with_errs (const FITRESID *fr, 
-				double ***pZ, DATAINFO *pdinfo, 
-				gretlopt opt, PRN *prn);
+int text_print_forecast (const FITRESID *fr, 
+			 double ***pZ, DATAINFO *pdinfo, 
+			 gretlopt opt, PRN *prn);
 
 void text_print_matrix (const double *rr, const int *list, 
 			MODEL *pmod, const DATAINFO *pdinfo, 

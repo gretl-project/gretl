@@ -905,7 +905,7 @@ void rtfprint_fcast_with_errs (const FITRESID *fr,
 /* .................................................................. */
 
 static void 
-texprint_coeff_interval (const CONFINT *cf, int i, PRN *prn)
+texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
     char vname[16];
 
@@ -935,7 +935,7 @@ texprint_coeff_interval (const CONFINT *cf, int i, PRN *prn)
 
 /* .................................................................. */
 
-void texprint_confints (const CONFINT *cf, PRN *prn)
+void texprint_confints (const CoeffIntervals *cf, PRN *prn)
 {
     char pt = get_local_decpoint();
     int i;
@@ -970,7 +970,7 @@ void texprint_confints (const CONFINT *cf, PRN *prn)
 /* .................................................................. */
 
 static void 
-rtfprint_coeff_interval (const CONFINT *cf, int i, PRN *prn)
+rtfprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
     pprintf(prn, "\\qc %s\\cell", cf->names[i]);
 
@@ -989,7 +989,7 @@ rtfprint_coeff_interval (const CONFINT *cf, int i, PRN *prn)
 #define CF_ROW  "\\trowd \\trgaph60\\trleft-30\\trrh262" \
                 "\\cellx2400\\cellx4000\\cellx7200\n" 
 
-void rtfprint_confints (const CONFINT *cf, PRN *prn)
+void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
 {
     int i;
 

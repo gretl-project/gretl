@@ -1,5 +1,6 @@
 <SECTION>
 <FILE>gretl_commands</FILE>
+GretlCmdIndex
 NEEDS_TWO_VARS
 TEXTSAVE_OK
 gretl_command_number
@@ -75,6 +76,7 @@ nls_spec_set_t1_t2
 nls_parse_line
 nls
 model_from_nls_spec
+get_default_nls_toler
 </SECTION>
 
 <SECTION>
@@ -311,6 +313,7 @@ help
 parseopt
 shell
 echo_cmd
+echo_function_call
 simple_commands
 call_pca_plugin
 ready_for_command
@@ -369,6 +372,7 @@ gretl_normal_dist
 gretl_rand_int_max
 gretl_rand_init
 gretl_rand_free
+get_gretl_random_seed
 </SECTION>
 
 <SECTION>
@@ -668,6 +672,7 @@ gretl_matrix_ols
 gretl_matrix_restricted_ols
 gretl_matrix_svd_ols
 gretl_scalar_b_prime_X_b
+gretl_scalar_b_X_b_prime
 gretl_matrix_A_X_A_prime
 gretl_vcv_matrix_from_model
 gretl_coeff_vector_from_model
@@ -791,8 +796,11 @@ VCV
 VCV_
 free_model
 AR_MODEL
+SIMPLE_AR_MODEL
 ML_ESTIMATOR
 LIMDEP
+LSQ_MODEL
+is_model_ref_cmd
 ModelTestType
 gretl_model_new
 gretl_model_init
@@ -800,21 +808,24 @@ gretl_model_smpl_init
 impose_model_smpl
 gretl_model_set_auxiliary
 clear_model
+gretl_model_set_data_with_destructor
 gretl_model_set_data
 gretl_model_destroy_data_item
+gretl_model_detach_data_item
 gretl_model_set_int
 gretl_model_set_double
 gretl_model_get_data
 gretl_model_get_data_and_size
 gretl_model_get_int
 gretl_model_get_double
+gretl_model_get_param_name
 free_vcv
+gretl_model_new_vcv
 gretl_model_get_vcv
 debug_print_model_info
 copy_model
 swap_models
 is_model_cmd
-is_model_ref_cmd
 is_quiet_model_test
 command_ok_for_model
 get_model_count
@@ -841,6 +852,11 @@ coeff_pval
 
 <SECTION>
 <FILE>libset</FILE>
+libset_init
+libset_cleanup
+libset_restore_state_zero
+push_program_state
+pop_program_state
 set_use_qr
 get_use_qr
 set_xsect_hccme
@@ -923,12 +939,15 @@ gretl_restriction_set_finalize
 <FILE>gretl_func</FILE>
 gretl_compiling_function
 gretl_executing_function
+gretl_executing_macro
+gretl_executing_function_or_macro
 gretl_start_compiling_function
 gretl_function_append_line
 gretl_is_user_function
 gretl_function_start_exec
 gretl_function_get_line
 gretl_function_stack_depth
+gretl_macro_stack_depth
 gretl_function_stop_on_error
 gretl_function_flagged_error
 gretl_functions_cleanup
@@ -1008,10 +1027,12 @@ gretl_multiply
 
 <SECTION>
 <FILE>forecast</FILE>
+FCAST_SPECIAL
 fit_resid_new
 free_fit_resid
 get_fit_resid
 get_fcast_with_errs
+get_fcast_without_errs
 fcast_with_errs
 fcast
 </SECTION>

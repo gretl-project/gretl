@@ -1299,7 +1299,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	else if (vwin->role == FCASTERR || vwin->role == FCAST)
 	    free_fit_resid(vwin->data);
 	else if (vwin->role == COEFFINT)
-	    free_confint(vwin->data);
+	    free_coeff_intervals(vwin->data);
 	else if (vwin->role == COVAR)
 	    free_vcv(vwin->data);
 	else if (vwin->role == MPOLS)
@@ -2396,11 +2396,6 @@ static void arch_menu_off (GtkItemFactory *ifac)
     flip(ifac, "/Tests/ARCH", FALSE);
 }
 
-static void fcasterr_menu_off (GtkItemFactory *ifac)
-{
-    flip(ifac, "/Model data/Forecasts...", FALSE);
-}
-
 static void latex_menu_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/LaTeX", s);
@@ -2430,11 +2425,6 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     /* disallow saving an already-saved model */
     if (pmod->name != NULL) {
 	model_save_state(vwin->ifac, FALSE);
-    }
-
-    /* FIXME in forecast.c */
-    if (pmod->ci == ARMA || pmod->ci == GARCH) {
-	fcasterr_menu_off(vwin->ifac);
     }
 
     if (pmod->ci == ARMA && arma_by_x12a(pmod)) {

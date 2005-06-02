@@ -62,9 +62,9 @@ void rtfprint_fcast_with_errs (const FITRESID *fr,
 			       const DATAINFO *pdinfo, 
 			       PRN *prn);
 
-void texprint_confints (const CONFINT *cf, PRN *prn);
+void texprint_confints (const CoeffIntervals *cf, PRN *prn);
 
-void rtfprint_confints (const CONFINT *cf, PRN *prn);
+void rtfprint_confints (const CoeffIntervals *cf, PRN *prn);
 
 void texprint_vcv (const VCV *vcv, 
 		   const DATAINFO *pdinfo, 

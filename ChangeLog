@@ -27,7 +27,7 @@
   Durbin-Watson and improve formatting
 - smpl --restrict: make it not an error if the restriction has
   no effect (drops no observations)
-- Forecasts for GUI models: make these available for more types
+- Forecasts for GUI models: make these available for all types
   of models (but not all with error bounds)
 - Confidence interval for coefficients, GUI model menu: make
   available for all models

@@ -87,11 +87,17 @@ int gretl_compare_doubles (const void *a, const void *b);
 
 int gretl_copy_file (const char *src, const char *dest);
 
+#ifndef WIN32
+int gretl_spawn (const char *cmdline);
+#endif
+
 /* model selection criteria */
 
 int gretl_calculate_criteria (double *x, double ess, int nobs, int ncoeff);
 
 int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn);
+
+int ls_aic_bic (MODEL *pmod);
 
 /* panel data utilities */
 
@@ -109,16 +115,6 @@ mp_results *gretl_mp_results_new (int totvar);
 
 int allocate_mp_varnames (mp_results *mpvals);
 
-CONFINT *get_model_confints (const MODEL *pmod, const DATAINFO *pdinfo);
-
-void free_confint (CONFINT *cf);
-
-int ls_aic_bic (MODEL *pmod);
-
-#ifndef WIN32
-int gretl_spawn (const char *cmdline);
-#endif
-
 /* hypothesis tests mechanism */
 
 void record_test_result (double teststat, double pval, char *blurb);
@@ -126,6 +122,5 @@ void record_test_result (double teststat, double pval, char *blurb);
 double get_last_test_statistic (char *blurb);
 
 double get_last_pvalue (char *blurb);
-
 
 #endif /* GRETL_UTILS_H */

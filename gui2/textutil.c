@@ -470,7 +470,7 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 
     /* coefficient confidence intervals */
     else if (vwin->role == COEFFINT && SPECIAL_COPY(how)) {
-	CONFINT *cf = (CONFINT *) vwin->data;
+	CoeffIntervals *cf = (CoeffIntervals *) vwin->data;
 
 	if (bufopen(&prn)) return;
 

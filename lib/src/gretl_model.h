@@ -28,6 +28,17 @@ struct VCV_ {
     double *vec;
 };
 
+typedef struct CoeffIntervals_ CoeffIntervals;
+
+struct CoeffIntervals_ {
+    int ncoeff;
+    char **names;
+    double *coeff;
+    double *maxerr;
+    int df;
+    int ifc;
+};
+
 /**
  * free_model:
  * @p: pointer to #MODEL.
@@ -112,8 +123,9 @@ void gretl_model_set_auxiliary (MODEL *pmod, ModelAuxCode aux);
 
 void clear_model (MODEL *pmod);
 
-int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr, 
-					  size_t size, void (*destructor) (void *));
+int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, 
+					  void *ptr, size_t size, 
+					  void (*destructor) (void *));
 
 int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size);
 
@@ -137,6 +149,18 @@ double gretl_model_get_double (const MODEL *pmod, const char *key);
 char *gretl_model_get_param_name (const MODEL *pmod, 
 				  const DATAINFO *pdinfo,
 				  int i, char *targ);
+
+void free_coeff_intervals (CoeffIntervals *cf);
+
+CoeffIntervals *
+gretl_model_get_coeff_intervals (const MODEL *pmod, 
+				 const DATAINFO *pdinfo);
+
+int gretl_model_get_depvar (const MODEL *pmod);
+
+int gretl_arma_model_get_AR_order (const MODEL *pmod);
+int gretl_arma_model_get_MA_order (const MODEL *pmod);
+int *gretl_arma_model_get_x_list (const MODEL *pmod);
 
 void free_vcv (VCV *vcv);
 

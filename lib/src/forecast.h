@@ -20,35 +20,22 @@
 #ifndef FORECAST_H
 #define FORECAST_H
 
-/* estimators where a simple X*b does _not_ give the
-   predicted value of the dependent variable */
-
-#define FCAST_SPECIAL(c) (c == LOGIT || \
-                          c == NLS || \
-                          c == POISSON || \
-                          c == PROBIT || \
-                          c == TOBIT)
-
 FITRESID *fit_resid_new (int n, int errs);
 
 void free_fit_resid (FITRESID *fr);
 
-
 FITRESID *get_fit_resid (const MODEL *pmod, const double **Z, 
 			 const DATAINFO *pdinfo);
 
-FITRESID *get_fcast_with_errs (const char *str, MODEL *pmod, 
-			       const double **Z, const DATAINFO *pdinfo); 
+FITRESID *get_forecast (const char *str, MODEL *pmod, 
+			double ***pZ, DATAINFO *pdinfo);
 
-FITRESID *get_fcast_without_errs (const char *str, MODEL *pmod, 
-				  double ***pZ, DATAINFO *pdinfo);
+int display_forecast (const char *str, MODEL *pmod, 
+		      double ***pZ, DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn);
 
-int fcast_with_errs (const char *str, MODEL *pmod, 
-		     double ***pZ, DATAINFO *pdinfo, 
-		     gretlopt opt, PRN *prn);
-
-int fcast (const char *line, const MODEL *pmod, double ***pZ,
-	   DATAINFO *pdinfo);
+int add_forecast (const char *str, const MODEL *pmod, 
+		  double ***pZ, DATAINFO *pdinfo);
 
 #endif /* FORECAST_H */
 

@@ -1208,7 +1208,6 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
     int t1 = 0, t2 = datainfo->n - 1;
-    int width = 78;
     FITRESID *fr;
     PRN *prn;
     int resp, err;
@@ -1231,15 +1230,7 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	return;
     }
 
-    fr = get_fcast_with_errs(cmdline, pmod, (const double **) Z, 
-			     datainfo);
-
-    if (fr != NULL && fr->err == E_NOTIMP) {
-	/* fallback */
-	free_fit_resid(fr);
-	fr = get_fcast_without_errs(cmdline, pmod, &Z, datainfo);
-	width = 50;
-    }	
+    fr = get_forecast(cmdline, pmod, &Z, datainfo);
 
     if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));
@@ -1249,10 +1240,14 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	free_fit_resid(fr);
     } else {
 	gretlopt popt = (LIMDEP(pmod->ci))? OPT_NONE : OPT_P;
+	int width = 78;
 	
-	err = text_print_fcast_with_errs(fr, &Z, datainfo, popt, prn);
+	err = text_print_forecast(fr, &Z, datainfo, popt, prn);
 	if (!err && popt == OPT_P) {
 	    register_graph();
+	}
+	if (fr->sderr == NULL) {
+	    width = 50;
 	}
 	view_buffer(prn, width, 400, _("gretl: forecasts"), FCASTERR, fr);
     }
@@ -3214,11 +3209,11 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
     PRN *prn;
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
-    CONFINT *cf;
+    CoeffIntervals *cf;
 
     if (bufopen(&prn)) return;
 
-    cf = get_model_confints(pmod, datainfo);
+    cf = gretl_model_get_coeff_intervals(pmod, datainfo);
 
     if (cf != NULL) {
 	text_print_model_confints(cf, prn);
@@ -5858,9 +5853,9 @@ int gui_exec_line (char *line,
     case FIT:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	if (cmd.ci == FIT) {
-	    err = fcast("fcast autofit", models[0], &Z, datainfo);
+	    err = add_forecast("fcast autofit", models[0], &Z, datainfo);
 	} else {
-	    err = fcast(line, models[0], &Z, datainfo);
+	    err = add_forecast(line, models[0], &Z, datainfo);
 	}
 	if (err) {
 	    errmsg(err, prn);
@@ -5878,8 +5873,8 @@ int gui_exec_line (char *line,
 
     case FCASTERR:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = fcast_with_errs(line, models[0], &Z, datainfo, 
-			      cmd.opt, outprn);
+	err = display_forecast(line, models[0], &Z, datainfo, 
+			       cmd.opt, outprn);
 	if (err) {
 	    errmsg(err, prn);
 	}

@@ -381,6 +381,10 @@
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
         </option>
+        <option>
+	  <flag>--suppress-const</flag>
+	  <effect>do not include an intercept</effect>
+        </option>
       </options>
       <examples>
         <example>arma 1 2 ; y</example>
@@ -390,11 +394,14 @@
 
     <description>
       <para context="cli">
-	If no <repl>indepvars</repl> list is given, estimates a
-	univariate ARMA (Autoregressive, Moving Average) model.  The
-	integer values <repl>p</repl> and <repl>q</repl> represent the
-	AR and MA orders respectively.  If <repl>indepvars</repl> are
-	added, the model becomes ARMAX.
+	If no <repl>indepvars</repl> list is given, estimates a univariate ARMA
+	(Autoregressive, Moving Average) model.  The integer values
+	<repl>p</repl> and <repl>q</repl> represent the AR and MA orders
+	respectively.  In the univariate case the default is to include an
+	intercept in the model but this can be suppressed with the
+	<lit>--suppress-const</lit> flag.  If <repl>indepvars</repl> are added,
+	the model becomes ARMAX; in this case the constant should be included
+	explicitly if you want an intercept (as in the second example above).
       </para>
 
       <para context="gui">

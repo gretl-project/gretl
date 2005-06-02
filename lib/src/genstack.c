@@ -387,7 +387,4 @@ void dprintf (const char *format, ...)
 
    return;
 }
-# define DPRINTF(x) dprintf x
-#else 
-# define DPRINTF(x)
 #endif /* GENR_DEBUG */

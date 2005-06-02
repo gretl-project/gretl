@@ -149,7 +149,8 @@ void gui_script_logo (PRN *prn)
 
 /* -------------------------------------------------------- */
 
-static void print_coeff_interval (const CONFINT *cf, int i, PRN *prn)
+static void 
+print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
     pprintf(prn, " %8s ", cf->names[i]);
 
@@ -184,7 +185,7 @@ static void print_coeff_interval (const CONFINT *cf, int i, PRN *prn)
  * estimates.
  */
 
-void text_print_model_confints (const CONFINT *cf, PRN *prn)
+void text_print_model_confints (const CoeffIntervals *cf, PRN *prn)
 {
     int i;
 
@@ -1344,11 +1345,23 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * text_print_forecast:
+ * @fr: pointer to structure containing forecasts.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: if includes %OPT_P, make a plot of the forecasts.
+ * @prn: printing structure.
+ *
+ * Print the forecasts in @fr to @prn, and also plot the
+ * forecasts if %OPT_P is given.
+ *
+ * Returns: 0 on success, non-zero error code on error.
+ */
 
-int text_print_fcast_with_errs (const FITRESID *fr, 
-				double ***pZ, DATAINFO *pdinfo, 
-				gretlopt opt, PRN *prn)
+int text_print_forecast (const FITRESID *fr, 
+			 double ***pZ, DATAINFO *pdinfo, 
+			 gretlopt opt, PRN *prn)
 {
     int t, pv, err = 0;
     int do_errs = (fr->sderr != NULL);
@@ -1367,13 +1380,18 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 	pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
 		fr->df, fr->tval);
     }
+
     pputs(prn, "\n     Obs ");
     pprintf(prn, "%12s", fr->depvar);
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
+
     if (do_errs) {
 	pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
 	pprintf(prn, _("   95%% confidence interval\n"));
+    } else {
+	pputc(prn, '\n');
     }
+
     pputc(prn, '\n');
 
     for (t=0; t<fr->nobs; t++) {

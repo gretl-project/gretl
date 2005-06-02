@@ -168,7 +168,6 @@ typedef struct MODEL_ MODEL;
 typedef struct GRAPHT_ GRAPHT;
 typedef struct PRN_ PRN;
 typedef struct FITRESID_ FITRESID;
-typedef struct CONFINT_ CONFINT;
 typedef struct DATASET_ DATASET;
 typedef struct GRETL_VAR_ GRETL_VAR;
 
@@ -338,21 +337,11 @@ struct FITRESID_ {
     char depvar[VNAMELEN];
 };
 
-struct CONFINT_ {
-    int ncoeff;
-    char **names;
-    double *coeff;
-    double *maxerr;
-    int df;
-    int ifc;
-};
-
 #define VARLABEL(p,i)        ((p->varinfo[i])->label)
 #define DISPLAYNAME(p,i)     ((p->varinfo[i])->display_name)
 #define COMPACT_METHOD(p,i)  ((p->varinfo[i])->compact_method)
 #define STACK_LEVEL(p,i)     ((p->varinfo[i])->stack_level)
 #define SORTED_MARKER(p,i,t) ((p->varinfo[i])->sorted_markers[t])
-
 
 #include "gretl_commands.h"
 #include "gretl_errors.h"

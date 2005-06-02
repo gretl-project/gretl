@@ -161,8 +161,6 @@ audioprint_matrix (const double *vec, const int *list,
     }
 }
 
-/* ........................................................... */
-
 static void 
 audioprint_corrmat (CorrMat *corr,
 		    const DATAINFO *pdinfo, 
@@ -172,10 +170,8 @@ audioprint_corrmat (CorrMat *corr,
 		      corr->n, CORR, pdinfo, prn);
 }
 
-/* .................................................................. */
-
 static void 
-audioprint_coeff_interval (const CONFINT *cf, int i, PRN *prn)
+audioprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
     pprintf(prn, "Variable '%s', ", cf->names[i]);
     pprintf(prn, "point estimate %.4g, 95%% confidence interval, ", cf->coeff[i]);
@@ -189,10 +185,8 @@ audioprint_coeff_interval (const CONFINT *cf, int i, PRN *prn)
     }
 }
 
-/* .................................................................. */
-
 static void 
-audioprint_confints (const CONFINT *cf, PRN *prn)
+audioprint_confints (const CoeffIntervals *cf, PRN *prn)
 {
     int i;
 
@@ -201,8 +195,6 @@ audioprint_confints (const CONFINT *cf, PRN *prn)
     }
 }
 
-/* .................................................................. */
-
 static void 
 audioprint_vcv (const VCV *vcv, const DATAINFO *pdinfo, 
 		PRN *prn)
@@ -210,8 +202,6 @@ audioprint_vcv (const VCV *vcv, const DATAINFO *pdinfo,
     audioprint_matrix(vcv->vec, vcv->list, 0, 0, 0,
 		      COVAR, pdinfo, prn);
 }
-
-/* .................................................................. */
 
 #ifdef HAVE_FLITE
 
@@ -357,7 +347,7 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
 
 	audioprint_vcv(vcv, pdinfo, prn);
     } else if (role == COEFFINT) {
-	CONFINT *cf = (CONFINT *) data;
+	CoeffIntervals *cf = (CoeffIntervals *) data;
 
 	audioprint_confints(cf, prn);
     } else if (role == VIEW_MODEL) {
@@ -480,7 +470,8 @@ static int read_listbox_content (windata_t *vwin, int (*should_stop)())
 	}
 
 	if (!err) {
-	    line = g_strdup_printf("%s. %s. %s.\n", tmpstr[0], tmpstr[1], tmpstr[2]);
+	    line = g_strdup_printf("%s. %s. %s.\n", tmpstr[0], 
+				   tmpstr[1], tmpstr[2]);
 	    err = speak_line(line);
 	    g_free(line);
 	}

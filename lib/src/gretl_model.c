@@ -361,6 +361,201 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
     return targ;
 }
 
+void free_coeff_intervals (CoeffIntervals *cf)
+{
+    int i;
+
+    free(cf->coeff);
+    free(cf->maxerr);
+
+    if (cf->names != NULL) {
+	for (i=0; i<cf->ncoeff; i++) {
+	    free(cf->names[i]);
+	}
+	free(cf->names);
+    }
+
+    free(cf);
+}
+
+/**
+ * gretl_model_get_coeff_intervals:
+ * @pmod: pointer to gretl model.
+ * @pdinfo: dataset information.
+ *
+ * Save the 95 percent confidence intervals for the parameter
+ * estimates in @pmod.
+ * 
+ * Returns: pointer to #CONFINT struct containing the results.
+ */
+
+CoeffIntervals *
+gretl_model_get_coeff_intervals (const MODEL *pmod, 
+				 const DATAINFO *pdinfo)
+{
+    CoeffIntervals *cf;
+    double t = tcrit95(pmod->dfd);
+    char pname[24];
+    int i, err = 0;
+
+    cf = malloc(sizeof *cf);
+    if (cf == NULL) {
+	return NULL;
+    }
+
+    cf->ncoeff = pmod->ncoeff;
+    cf->df = pmod->dfd;
+    cf->ifc = pmod->ifc;
+
+    cf->coeff = NULL;
+    cf->maxerr = NULL;
+    cf->names = NULL;
+
+    cf->coeff = malloc(cf->ncoeff * sizeof *cf->coeff);
+    if (cf->coeff == NULL) {
+	err = 1;
+	goto bailout;
+    }
+
+    cf->maxerr = malloc(cf->ncoeff * sizeof *cf->maxerr);
+    if (cf->maxerr == NULL) {
+	err = 1;
+	goto bailout;
+    }
+
+    cf->names = malloc(cf->ncoeff * sizeof *cf->names);
+    if (cf->names == NULL) {
+	err = 1;
+	goto bailout;
+    }    
+
+    for (i=0; i<cf->ncoeff && !err; i++) { 
+	cf->coeff[i] = pmod->coeff[i];
+	cf->maxerr[i] = (pmod->sderr[i] > 0)? t * pmod->sderr[i] : 0.0;
+	gretl_model_get_param_name(pmod, pdinfo, i, pname);
+	cf->names[i] = gretl_strdup(pname);
+	if (cf->names[i] == NULL) {
+	    int j;
+	    
+	    for (j=0; j<i; j++) {
+		free(cf->names[i]);
+	    }
+	    free(cf->names);
+	    cf->names = NULL;
+	    err = 1;
+	}
+    }
+
+ bailout:
+
+    if (err) {
+	free_coeff_intervals(cf);
+	cf = NULL;
+    }
+
+    return cf;
+}
+
+/**
+ * gretl_arma_model_get_AR_order:
+ * @pmod: pointer to gretl model.
+ *
+ * Returns: the autoregressive order of @pmod, or 0 if
+ * @pmod is not an ARMA model.
+ */
+
+int gretl_arma_model_get_AR_order (const MODEL *pmod)
+{
+    int p = 0;
+
+    if (pmod->ci == ARMA) {
+	p = pmod->list[1];
+    }
+
+    return p;
+}
+
+/**
+ * gretl_arma_model_get_MA_order:
+ * @pmod: pointer to gretl model.
+ *
+ * Returns: the moving-average order of @pmod, or 0 if
+ * @pmod is not an ARMA model.
+ */
+
+int gretl_arma_model_get_MA_order (const MODEL *pmod)
+{
+    int q = 0;
+
+    if (pmod->ci == ARMA) {
+	q = pmod->list[2];
+    }
+
+    return q;
+}
+
+/**
+ * gretl_model_get_depvar:
+ * @pmod: pointer to gretl model.
+ *
+ * Returns: the ID number of the dependent variable in @pmod.
+ */
+
+int gretl_model_get_depvar (const MODEL *pmod)
+{
+    int dv = 0;
+
+    if (pmod != NULL && pmod->list != NULL) {
+	if (pmod->ci == ARMA || pmod->ci == GARCH) {
+	    dv = pmod->list[4];
+	} else {
+	    dv = pmod->list[1];
+	}
+    }
+
+    return dv;
+}
+
+/**
+ * gretl_arma_model_get_x_list:
+ * @pmod: pointer to gretl model.
+ *
+ * Returns: an allocated copy of the list of independent
+ * variables included in @pmod, or %NULL if @pmod is not 
+ * an ARMA model.
+ */
+
+int *gretl_arma_model_get_x_list (const MODEL *pmod)
+{
+    int *list = NULL;
+
+    if (pmod->ci == ARMA || pmod->ci == GARCH) {
+	int i, nx = pmod->list[0] - 4;
+
+	if (pmod->ci == ARMA) {
+	    nx += pmod->ifc;
+	}
+
+	if (nx > 0) {
+	    list = gretl_list_new(nx);
+	    if (list != NULL) {
+		if (pmod->ci == ARMA && pmod->ifc) {
+		    list[1] = 0;
+		    for (i=2; i<=list[0]; i++) {
+			list[i] = pmod->list[i + 3];
+		    }
+		} else {
+		    for (i=1; i<=list[0]; i++) {
+			list[i] = pmod->list[i + 4];
+		    }
+		}		    
+	    }
+	}
+    }
+
+    return list;
+}
+
 /**
  * free_vcv:
  * @vcv: pointer to covariance matrix struct.
@@ -1538,14 +1733,6 @@ int command_ok_for_model (int test_ci, int model_ci)
 
     case EQNPRINT:
 	if (model_ci != OLS) ok = 0; /* FIXME: unduly restrictive? */
-	break;
-
-    case FCAST:
-    case FIT:
-	break;
-
-    case FCASTERR:
-	if (AR_MODEL(model_ci)) ok = 0;
 	break;
 
     case LMTEST:
