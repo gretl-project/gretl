@@ -374,6 +374,10 @@
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
         </option>
+        <option>
+         <flag>--suppress-const</flag>
+         <effect>non include l'intercetta</effect>
+        </option>
       </options>
       <examples>
         <example>arma 1 2 ; y</example>
@@ -386,9 +390,13 @@
 	Se non viene fornita una lista di <repl>variabili-indipendenti</repl>,
         stima un modello autoregressivo a media mobile (ARMA: Autoregressive,
         Moving Average) univariato.  I valori interi <repl>p</repl> e
-        <repl>q</repl> rappresentano rispettivamente gli ordini AR e MA. Se
-        vengono aggiunte delle <repl>variabili-indipendenti</repl>, il modello
-        diventa un ARMAX.
+        <repl>q</repl> rappresentano rispettivamente gli ordini AR e MA.
+        Nel caso univariato la scelta predefinita include un'intercetta nel
+        modello, ma questa può essere soppressa con l'opzione
+        <lit>--suppress-const</lit>.  Se vengono aggiunte delle
+        <repl>variabili-indipendenti</repl>, il modello diventa un ARMAX: in
+        questo caso occorre indicare esplicitamente la costante se si
+        desidera un'intercetta (come nel secondo degli esempi proposti).
       </para>
 
       <para context="gui">
