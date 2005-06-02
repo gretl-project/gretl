@@ -1368,6 +1368,8 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
 	add_leverage_data(vwin);
     } else if (vwin->role == MAHAL) {
 	add_mahalanobis_data(vwin);
+    } else if (vwin->role == FCASTERR) {
+	add_fcast_data(vwin);
     }
 
     if (datainfo->v > oldv) {
@@ -1537,7 +1539,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	}
 
 	if (vwin->role != PCA && vwin->role != LEVERAGE && 
-	    vwin->role != MAHAL && viewbar_items[i].flag == ADD_ITEM) {
+	    vwin->role != MAHAL && vwin->role != FCASTERR &&
+	    viewbar_items[i].flag == ADD_ITEM) {
 	    continue;
 	}
 

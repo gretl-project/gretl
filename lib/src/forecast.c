@@ -84,6 +84,7 @@ FITRESID *fit_resid_new (int n, int errs)
 	return NULL;
     }
 
+    fr->model_ID = 0;
     fr->err = 0;
     fr->t1 = 0;
     fr->t2 = 0;
@@ -244,8 +245,8 @@ fcast_x_missing (const int *list, const double **Z, int t)
     return ret;
 }
 
-/* initialize FITRESID struct based on string giving starting
-   and ending observations */
+/* initialize FITRESID struct based on model and string giving
+   starting and ending observations */
 
 static int 
 fit_resid_init (const char *line, const MODEL *pmod, 
@@ -286,6 +287,8 @@ fit_resid_init (const char *line, const MODEL *pmod,
     if (!fr->err) {
 	fr->err = allocate_fit_resid_arrays(fr, fr->nobs, errs);
     }
+
+    fr->model_ID = pmod->ID;
 
     return fr->err;
 }

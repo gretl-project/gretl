@@ -623,6 +623,58 @@ void add_pca_data (windata_t *vwin)
     }
 }
 
+void add_fcast_data (windata_t *vwin)
+{
+    char stobs[OBSLEN], endobs[OBSLEN];
+    FITRESID *fr = (FITRESID *) vwin->data;
+    char vname[VNAMELEN];
+    int v, t, s;
+
+    if (dataset_add_series(1, &Z, datainfo)) {
+	errbox(_("Out of memory attempting to add variable"));
+	return;
+    }
+
+    v = datainfo->v - 1;
+
+    strcpy(vname, fr->depvar); 
+    gretl_trunc(vname, 5);
+    if (strlen(vname) < 5) {
+	strcat(vname, "_hat");
+    } else {
+	strcat(vname, "hat");
+    }
+    strcpy(datainfo->varname[v], vname);
+    sprintf(VARLABEL(datainfo, v), _("forecast of %s"), fr->depvar);
+
+    /* give the user a chance to choose a different name */
+    varinfo_dialog(v, 0);
+
+    if (*datainfo->varname[v] == '\0') {
+	/* the user canceled */
+	dataset_drop_last_variables(1, &Z, datainfo);
+	return;
+    }
+
+    s = 0;
+    for (t=0; t<datainfo->n; t++) {
+	if (t >= fr->t1 && t <= fr->t2) {
+	    Z[v][t] = fr->fitted[s++];
+	} else {
+	    Z[v][t] = NADBL;
+	}
+    }
+
+    ntodate(stobs, fr->t1, datainfo);
+    ntodate(endobs, fr->t2, datainfo);
+
+    gretl_command_sprintf("fcast %s %s %s", stobs, endobs, datainfo->varname[v]);
+    model_command_init(fr->model_ID);
+
+    /* nothing else need be done, since we're called by
+       add_data_callback() */
+}
+
 /* ........................................................... */
 
 static const char *selected_varname (void)
@@ -3373,12 +3425,13 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
     }
 }
 
+/* 
+   add_fit_resid: if undo = 1, don't bother with the label, don't
+   update the var display in the main window, and don't add to command
+   log.
+*/
+
 int add_fit_resid (MODEL *pmod, int code, int undo)
-   /* 
-      If undo = 1, don't bother with the label, don't update
-      the var display in the main window, and don't add to
-      command log. 
-   */
 {
     int err;
 

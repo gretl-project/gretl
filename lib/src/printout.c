@@ -178,11 +178,10 @@ print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 /**
  * text_print_model_confints:
  * @cf: pointer to confidence intervals.
- * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  *
  * Print to @prn the 95 percent confidence intervals for parameter
- * estimates.
+ * estimates contained in @cf.
  */
 
 void text_print_model_confints (const CoeffIntervals *cf, PRN *prn)

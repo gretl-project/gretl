@@ -79,7 +79,7 @@
   </chapter>
 
   <chapter id="ch-estimation">
-    <title>Estimation</title>    
+    <title>Estimation and forecasting</title>    
     &estimate;
     &discrete;   
     &nonparam; 
@@ -89,6 +89,7 @@
     &system;   
     &var;   
     &bhhh-max;
+    &forecast;
   </chapter>
 
   <chapter id="ch-tests">
@@ -115,11 +116,6 @@
     &texprint;
     &graphing;
     &gretl-prn;
-  </chapter>
-
-  <chapter id="ch-list">
-    <title>Manipulating lists of variables</title>
-    &gretl-list;   
   </chapter>
 
   <chapter id="ch-matrix">
@@ -157,6 +153,7 @@
     <title>Utilities</title>
     &gretl-utils;
     &strutils; 
+    &gretl-list;
     &gretl-paths; 
     &plugins; 
     &gretl-intl;

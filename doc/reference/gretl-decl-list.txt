@@ -271,18 +271,16 @@ ztox
 get_xvalue
 gretl_compare_doubles
 gretl_copy_file
+gretl_spawn
 gretl_calculate_criteria
 gretl_print_criteria
+ls_aic_bic
 get_panel_structure
 set_panel_structure
 balanced_panel
 free_gretl_mp_results
 gretl_mp_results_new
 allocate_mp_varnames
-get_model_confints
-free_confint
-ls_aic_bic
-gretl_spawn
 record_test_result
 get_last_test_statistic
 get_last_pvalue
@@ -458,7 +456,6 @@ MODEL
 GRAPHT
 PRN
 FITRESID
-CONFINT
 DATASET
 GRETL_VAR
 mp_results
@@ -475,7 +472,6 @@ MODEL_
 GRAPHT_
 mp_results_
 FITRESID_
-CONFINT_
 VARLABEL
 DISPLAYNAME
 COMPACT_METHOD
@@ -580,7 +576,7 @@ print_obs_marker
 printdata
 text_print_fit_resid
 print_fit_resid
-text_print_fcast_with_errs
+text_print_forecast
 text_print_matrix
 gretl_print_fullwidth_double
 gretl_print_value
@@ -794,6 +790,8 @@ set_gretl_png_font
 <FILE>gretl_model</FILE>
 VCV
 VCV_
+CoeffIntervals
+CoeffIntervals_
 free_model
 AR_MODEL
 SIMPLE_AR_MODEL
@@ -819,6 +817,12 @@ gretl_model_get_data_and_size
 gretl_model_get_int
 gretl_model_get_double
 gretl_model_get_param_name
+free_coeff_intervals
+gretl_model_get_coeff_intervals
+gretl_model_get_depvar
+gretl_arma_model_get_AR_order
+gretl_arma_model_get_MA_order
+gretl_arma_model_get_x_list
 free_vcv
 gretl_model_new_vcv
 gretl_model_get_vcv
@@ -1027,14 +1031,12 @@ gretl_multiply
 
 <SECTION>
 <FILE>forecast</FILE>
-FCAST_SPECIAL
 fit_resid_new
 free_fit_resid
 get_fit_resid
-get_fcast_with_errs
-get_fcast_without_errs
-fcast_with_errs
-fcast
+get_forecast
+display_forecast
+add_forecast
 </SECTION>
 
 <SECTION>

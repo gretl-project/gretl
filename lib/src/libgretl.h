@@ -323,6 +323,7 @@ struct mp_results_ {
 };
 
 struct FITRESID_ {
+    int model_ID;
     double *actual;
     double *fitted;
     double *sderr;

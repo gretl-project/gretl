@@ -267,5 +267,7 @@ void add_mahalanobis_data (windata_t *vwin);
 
 void add_pca_data (windata_t *vwin);
 
+void add_fcast_data (windata_t *vwin);
+
 #endif /* LIBRARY_H */
 
