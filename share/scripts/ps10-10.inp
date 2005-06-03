@@ -1,21 +1,22 @@
-(* PS10.10, using DATA10-1, for Example 10.8 *)
+# PS10.10 for Example 10.8 
+open data10-1
+# subtract the mean from each observation
 genr R = r - mean(r)
-(* subtract the mean from each observation *)
 genr m = M - mean(M)
-(* generate quarterly lags *)
+# generate quarterly lags
 lags R m
 genr R_5 = R(-5)
 genr R_6 = R(-6)
 genr m_5 = m(-5)
 genr m_6 = m(-6)
 list
-(* supress the first six observations *)
+# supress the first six observations
 smpl 1965.3 1991.2
-(* estimate the model for interest Rate *)
+# estimate the model for interest Rate 
 ols R R_1 R_2 R_3 R_4 R_5 R_6 m_1 m_2 m_3 m_4 m_5 m_6
-(* omit the money supply variables - note the Wald F value at the end *)
+# omit the money supply variables - note the Wald F value at the end 
 omit m_1 m_2 m_3 m_4 m_5 m_6
-(* estimate the model for money supply *)
+# estimate the model for money supply 
 ols m m_1 m_2 m_3 m_4 m_5 m_6 R_1 R_2 R_3 R_4 R_5 R_6
-(* omit the interest Rate variables - Wald F value is at the end *)
+# omit the interest Rate variables - Wald F value is at the end 
 omit R_1 R_2 R_3 R_4 R_5 R_6

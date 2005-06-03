@@ -28,6 +28,8 @@ int *gretl_list_copy (const int *src);
 
 int *gretl_list_from_string (const char *liststr);
 
+char *gretl_list_to_string (const int *list);
+
 int in_gretl_list (const int *list, int k);
 
 int gretl_list_delete_at_pos (int *list, int pos);

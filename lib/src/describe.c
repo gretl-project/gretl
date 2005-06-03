@@ -2410,50 +2410,64 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-static int n_string_digits (int k)
+struct MahalDist_ {
+    int *list;
+    int n;
+    double *d;
+};
+
+const double *mahal_dist_get_distances (const MahalDist *md)
 {
-    int n = 1;
-
-    while ((k = k / 10)) {
-	n++;
-    }
-
-    return n;
+    return md->d;
 }
 
-char *unique_savename (char *vname, DATAINFO *pdinfo, int vmax)
+int mahal_dist_get_n (const MahalDist *md)
 {
-    int suf = 0;
-    int i;
+    return md->n;
+}
 
-    for (i=1; i<vmax; i++) {
-	char base[VNAMELEN];
-	char *test = pdinfo->varname[i];
-	int k = 0;
+const int *mahal_dist_get_varlist(const MahalDist *md)
+{
+    return md->list;
+}
 
-	if (!strcmp(test, vname)) {
-	    k = 1;
-	} else if (sscanf(test, "%[^0-9]%d", base, &k) == 2) {
-	    if (!strcmp(base, vname)) {
-		k++;
+void free_mahal_dist (MahalDist *md)
+{
+    free(md->list);
+    free(md->d);
+    free(md);
+}
+
+static MahalDist *mahal_dist_new (const int *list, int n)
+{
+    MahalDist *md = malloc(sizeof *md);
+    
+    if (md != NULL) {
+	md->d = malloc(n * sizeof *md->d);
+	if (md->d == NULL) {
+	    free(md);
+	    md = NULL;
+	} else {
+	    md->list = gretl_list_copy(list);
+	    if (md->list == NULL) {
+		free(md->d);
+		free(md);
+		md = NULL;
 	    } else {
-		k = 0;
+		md->n = n;
 	    }
 	}
-	if (k > suf) {
-	    suf = k;
+    }
+
+    if (md != NULL) {
+	int t;
+
+	for (t=0; t<n; t++) {
+	    md->d[t] = NADBL;
 	}
     }
-	
-    if (suf > 0) {
-	char tmp[VNAMELEN];
-	int n = n_string_digits(suf);
 
-	sprintf(tmp, "%.*s", 8 - n, vname);
-	sprintf(vname, "%s%d", tmp, suf);
-    } 
-
-    return vname;
+    return md;
 }
 
 static int mdist_saver (double ***pZ, DATAINFO *pdinfo)
@@ -2472,17 +2486,18 @@ static int mdist_saver (double ***pZ, DATAINFO *pdinfo)
 	}
 
 	strcpy(pdinfo->varname[sv], "mdist");
-	unique_savename(pdinfo->varname[sv], pdinfo, sv);
+	make_varname_unique(pdinfo->varname[sv], sv, pdinfo);
 
-	strcpy(VARLABEL(pdinfo, sv), "Mahalanobis distances");	
+	strcpy(VARLABEL(pdinfo, sv), _("Mahalanobis distances"));	
     }
 		
     return sv;
 }
 
-int mahalanobis_distance (const int *list, double ***pZ,
-			  DATAINFO *pdinfo, gretlopt opt, 
-			  PRN *prn)
+static int 
+real_mahalanobis_distance (const int *list, double ***pZ,
+			   DATAINFO *pdinfo, gretlopt opt,
+			   MahalDist *md, PRN *prn)
 {
     gretl_matrix *S = NULL;
     gretl_vector *means = NULL;
@@ -2568,6 +2583,8 @@ int mahalanobis_distance (const int *list, double ***pZ,
 		pprintf(prn, "%9.6f\n", m);
 		if (savevar > 0) {
 		    (*pZ)[savevar][t] = m;
+		} else if (md != NULL) {
+		    md->d[t] = m;
 		}
 	    }
 	}
@@ -2590,4 +2607,31 @@ int mahalanobis_distance (const int *list, double ***pZ,
     pdinfo->t2 = orig_t2;
 
     return err;
+}
+
+int mahalanobis_distance (const int *list, double ***pZ,
+			  DATAINFO *pdinfo, gretlopt opt, 
+			  PRN *prn)
+{
+    return real_mahalanobis_distance(list, pZ, pdinfo, opt, 
+				     NULL, prn);
+}
+
+MahalDist *get_mahal_distances (const int *list, double ***pZ,
+			     DATAINFO *pdinfo, gretlopt opt,
+			     PRN *prn)
+{
+    MahalDist *md = mahal_dist_new(list, pdinfo->n);
+    int err;
+
+    if (md != NULL) {
+	err = real_mahalanobis_distance(list, pZ, pdinfo, opt, 
+					md, prn);
+	if (err) {
+	    free_mahal_dist(md);
+	    md = NULL;
+	}
+    }
+
+    return md;
 }

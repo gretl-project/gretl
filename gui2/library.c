@@ -561,37 +561,54 @@ static gint stack_model (MODEL *pmod)
 
 void add_mahalanobis_data (windata_t *vwin)
 {
-    char *liststr = (char *) vwin->data;
-    char tmpname[VNAMELEN] = "mdist";
-    gchar *msg;
-    int resp, err;
+    MahalDist *md = (MahalDist *) vwin->data;
+    const double *dx;
+    const int *mlist;
+    char *liststr;
+    char vname[VNAMELEN];
+    int v, t;
 
-    if (liststr == NULL || *liststr == '\0') {
+    if (md == NULL) {
+	errbox(_("Error adding variables"));
 	return;
     }
 
-    unique_savename(tmpname, datainfo, datainfo->v);  
-
-    msg = g_strdup_printf("Save Mahalanobis distances as '%s'?", tmpname);
-    resp = yes_no_dialog("gretl", msg, 0);
-    g_free(msg);
-
-    if (resp == GRETL_NO) {
+    dx = mahal_dist_get_distances(md);
+    mlist = mahal_dist_get_varlist(md);
+    if (dx == NULL || mlist == NULL) {
+	errbox(_("Error adding variables"));
 	return;
     }
 
-    gretl_command_sprintf("mahal%s --save", liststr);
-
-    if (check_and_record_command()) {
-	return;
-    }    
-
-    err = mahalanobis_distance(cmd.list, &Z, datainfo, OPT_S, NULL);
-
-    if (err) {
-	gui_errmsg(err);
+    if (dataset_add_series(1, &Z, datainfo)) {
+	errbox(_("Out of memory attempting to add variable"));
 	return;
     }
+
+    v = datainfo->v - 1;
+
+    strcpy(vname, "mdist");
+    make_varname_unique(vname, 0, datainfo);
+    strcpy(datainfo->varname[v], vname);
+    sprintf(VARLABEL(datainfo, v), _("Mahalanobis distances"));
+
+    /* give the user a chance to choose a different name */
+    varinfo_dialog(v, 0);
+
+    if (*datainfo->varname[v] == '\0') {
+	/* the user canceled */
+	dataset_drop_last_variables(1, &Z, datainfo);
+	return;
+    }
+
+    for (t=0; t<datainfo->n; t++) {
+	Z[v][t] = dx[t];
+    }
+
+    liststr = gretl_list_to_string(mlist);
+    gretl_command_sprintf("mahal %s --save", liststr);
+    free(liststr);
+    check_and_record_command();
 }
 
 void add_pca_data (windata_t *vwin)
@@ -610,17 +627,29 @@ void add_pca_data (windata_t *vwin)
     if (datainfo->v > oldv) {
 	/* if data were added, register the command */
 	if (oflag == OPT_O || oflag == OPT_A) {
-	    char listbuf[MAXLEN - 8];
+	    char *liststr = gretl_list_to_string(corrmat->list);
 	    
-	    err = print_list_to_buffer(corrmat->list, listbuf, sizeof listbuf);
-	    if (!err) {
+	    if (liststr != NULL) {
 		const char *flagstr = print_flags(oflag, PCA); 
 
-		gretl_command_sprintf("pca %s%s", listbuf, flagstr);
+		gretl_command_sprintf("pca %s%s", liststr, flagstr);
 		check_and_record_command();
+		free(liststr);
 	    }
 	}
     }
+}
+
+static void make_fcast_save_name (char *vname, const char *s)
+{
+    strcpy(vname, s); 
+    gretl_trunc(vname, 5);
+    if (strlen(vname) < 5) {
+	strcat(vname, "_hat");
+    } else {
+	strcat(vname, "hat");
+    }
+    make_varname_unique(vname, 0, datainfo);
 }
 
 void add_fcast_data (windata_t *vwin)
@@ -637,13 +666,7 @@ void add_fcast_data (windata_t *vwin)
 
     v = datainfo->v - 1;
 
-    strcpy(vname, fr->depvar); 
-    gretl_trunc(vname, 5);
-    if (strlen(vname) < 5) {
-	strcat(vname, "_hat");
-    } else {
-	strcat(vname, "hat");
-    }
+    make_fcast_save_name(vname, fr->depvar);
     strcpy(datainfo->varname[v], vname);
     sprintf(VARLABEL(datainfo, v), _("forecast of %s"), fr->depvar);
 
@@ -716,8 +739,6 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	break;
     case MAHAL:
 	gretl_command_sprintf("mahal%s", liststr);
-	obj = liststr;
-	liststr = NULL;
 	hsize = 60;
 	strcat(title, _("Mahalanobis distances"));
 	break;
@@ -796,7 +817,12 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	if (cmd.list[0] <= 4) {
 	    opt = OPT_V;
 	}
-	err = mahalanobis_distance(cmd.list, &Z, datainfo, opt, prn);
+	obj = get_mahal_distances(cmd.list, &Z, datainfo, opt, prn);
+	if (obj == NULL) {
+	    errbox(_("Command failed"));
+	    gretl_print_destroy(prn);
+	    return;
+	}
 	break;
 
     case SUMMARY:

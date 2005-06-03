@@ -274,8 +274,6 @@ void texprint_summary (Summary *summ,
     
 }
 
-/* ......................................................... */ 
-
 static void tex_outxx (double xx, PRN *prn)
 {
     if (na(xx)) {
@@ -285,8 +283,6 @@ static void tex_outxx (double xx, PRN *prn)
     }
 }
 
-/* ......................................................... */ 
-
 static void rtf_outxx (double xx, PRN *prn)
 {
     if (na(xx)) {
@@ -295,8 +291,6 @@ static void rtf_outxx (double xx, PRN *prn)
 	pprintf(prn, "\\qc %.4f\\cell ", xx);	
     }
 }
-
-/* ......................................................... */ 
 
 static void rtf_corr_row (int lo, PRN *prn)
 {
@@ -320,14 +314,10 @@ static void rtf_corr_row (int lo, PRN *prn)
     pputs(prn, "\\intbl ");
 }
 
-/* ......................................................... */ 
-
 static void rtf_table_pad (int pad, PRN *prn)
 {
     while (pad--) pputs(prn, "\\cell ");
 }
-
-/* ......................................................... */ 
 
 static void
 rtfprint_matrix (const double *vec, const int *list,
@@ -724,12 +714,12 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
 	    "\\begin{tabular}{%%\n"
 	    "r%% col 1: obs\n"
 	    "  l%% col 2: varname\n"
-	    "    D{%c}{%c}{-1}%% col 3: fitted\n",
+	    "    D{%c}{%c}{-1}}%% col 3: fitted\n",
 	    pt, pt);
 
     tex_escape(vname, fr->depvar);
 
-    pprintf(prn, "%s & %s & \\multicolumn{1}{c}{%s} \\\\\n",
+    pprintf(prn, "%s & %s & \\multicolumn{1}{c}{%s} \\\\ [4pt] \n",
 	    I_("Obs"), vname, I_("prediction"));
 
     for (t=0; t<fr->nobs; t++) {

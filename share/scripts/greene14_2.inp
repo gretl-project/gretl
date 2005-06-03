@@ -1,9 +1,9 @@
 # replicate Example 14.2 (SUR system) from Greene's 5th edition
 open greene13_1.gdt
 system type=sur
-equation I_GM const F_GM C_GM
-equation I_CH const F_CH C_CH
-equation I_GE const F_GE C_GE
-equation I_WE const F_WE C_WE
-equation I_US const F_US C_US
+ equation I_GM const F_GM C_GM
+ equation I_CH const F_CH C_CH
+ equation I_GE const F_GE C_GE
+ equation I_WE const F_WE C_WE
+ equation I_US const F_US C_US
 end system

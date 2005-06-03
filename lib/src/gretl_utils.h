@@ -51,12 +51,6 @@ int gretl_iszero (int t1, int t2, const double *x);
 
 int gretl_isconst (int t1, int t2, const double *x);
 
-/* list printing utilities */
-
-void printlist (const int *list, const char *msg);
-
-int print_list_to_buffer (const int *list, char *buf, size_t len);
-
 /* setting observations */
 
 char *format_obs (char *obs, int maj, int min, int pd);
@@ -64,6 +58,8 @@ char *format_obs (char *obs, int maj, int min, int pd);
 int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt);
 
 /* other */
+
+void printlist (const int *list, const char *msg);
 
 int positive_int_from_string (const char *s);
 

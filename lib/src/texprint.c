@@ -89,6 +89,11 @@ void tex_dcolumn_double (double xx, char *numstr)
 {
     double a;
 
+    if (na(xx)) {
+	strcpy(numstr, "\\multicolumn{1}{c}{}");
+	return;
+    }
+
     xx = screen_zero(xx);
     a = fabs(xx);
 

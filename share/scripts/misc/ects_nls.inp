@@ -5,8 +5,8 @@ genr beta = coeff(x1)
 genr a0 = alpha
 genr b0 = beta
 nls y = alpha + beta*x1 + (1/beta)*x2
-deriv alpha = 1
-deriv beta = x1 - x2/(beta*beta)
+ deriv alpha = 1
+ deriv beta = x1 - x2/(beta*beta)
 end nls --vcv
 genr alpha = a0
 genr beta = b0

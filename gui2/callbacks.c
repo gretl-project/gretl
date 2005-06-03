@@ -378,7 +378,7 @@ void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
 
 void model_callback (gpointer data, guint model_code, GtkWidget *widget) 
 {
-    selection_dialog (_("gretl: specify model"), do_model, model_code);
+    selection_dialog(_("gretl: specify model"), do_model, model_code);
 }
 
 #ifdef ENABLE_GMP

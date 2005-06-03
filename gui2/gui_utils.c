@@ -1311,7 +1311,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	else if (vwin->role == LEVERAGE) 
 	    gretl_matrix_free(vwin->data);
 	else if (vwin->role == MAHAL)
-	    free(vwin->data); /* string */
+	    free_mahal_dist(vwin->data);
 
 	if (vwin->dialog) {
 	    winstack_remove(vwin->dialog);

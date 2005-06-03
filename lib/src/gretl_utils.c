@@ -274,39 +274,6 @@ void printlist (const int *list, const char *msg)
     fputc('\n', stderr);
 }
 
-/**
- * print_list_to_buffer:
- * @list: array of integers.
- * @buf: buffer to which list should be printed.
- * @len: length of the buffer
- * 
- * Prints to @buf the given @list of integers.
- *
- * Returns: 0 on success, 1 if the buffer is too small to contain
- * the printed list.
- */
-
-int print_list_to_buffer (const int *list, char *buf, size_t len)
-{
-    int i;
-    char numstr[16];
-    size_t test = 0;
-
-    *buf = '\0';
-
-    for (i=1; i<=list[0]; i++) {
-	sprintf(numstr, "%d ", list[i]);
-	test += strlen(numstr);
-	if (test >= len) {
-	    *buf = '\0';
-	    return 1;
-	}
-	strcat(buf, numstr);
-    }
-
-    return 0;
-}
-
 /* Compute model selection criteria */
 
 int gretl_calculate_criteria (double *x, double ess, int nobs, int ncoeff)

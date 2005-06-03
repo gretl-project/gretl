@@ -1114,6 +1114,23 @@ void unescape_url (char *url)
     url[x] = '\0';
 }
 
+/**
+ * make_varname_unique:
+ * @vname: tentative name for variable.
+ * @v: the ID number for the new variable.
+ * @pdinfo: dataset information.
+ *
+ * Given a tenative name for a new variable, check that it
+ * is not a duplicate of an existing varname.  If it is,
+ * modify the new name so that it becomes unique. The ID
+ * number @v is required so that, if the variable has already
+ * been added to the dataset, its name does not appear to 
+ * conflict with itself!  If the name to be tested is not
+ * associated with an existing variable, pass 0 for @v.
+ *
+ * Returns: the (possibly modified) variable name.
+ */
+
 char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo) 
 {
     int i, j, conflict;

@@ -19,6 +19,7 @@
 
 typedef struct Summary_ Summary;
 typedef struct FREQDIST_ FREQDIST;
+typedef struct MahalDist_ MahalDist;
 
 struct Summary_ {
     int n;
@@ -128,5 +129,12 @@ int mahalanobis_distance (const int *list, double ***pZ,
 			  DATAINFO *pdinfo, gretlopt opt,
 			  PRN *prn);
 
-char *unique_savename (char *vname, DATAINFO *pdinfo, int vmax);
+MahalDist *get_mahal_distances (const int *list, double ***pZ,
+				DATAINFO *pdinfo, gretlopt opt,
+				PRN *prn);
 
+void free_mahal_dist (MahalDist *md);
+
+const double *mahal_dist_get_distances (const MahalDist *md);
+int mahal_dist_get_n (const MahalDist *md);
+const int *mahal_dist_get_varlist(const MahalDist *md);
