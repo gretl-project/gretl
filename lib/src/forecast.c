@@ -30,15 +30,27 @@
                           c == PROBIT || \
                           c == TOBIT)
 
-static int 
-allocate_fit_resid_arrays (FITRESID *fr, int n, int errs)
+static int fit_resid_add_errs (FITRESID *fr)
 {
-    fr->actual = malloc(n * sizeof *fr->actual);
+    int err = 0;
+
+    fr->sderr = malloc(fr->nobs * sizeof *fr->sderr);
+    if (fr->sderr == NULL) {
+	err = 1;
+    }
+
+    return err;
+}
+
+static int 
+allocate_fit_resid_arrays (FITRESID *fr, int errs)
+{
+    fr->actual = malloc(fr->nobs * sizeof *fr->actual);
     if (fr->actual == NULL) {
 	return E_ALLOC;
     }
 
-    fr->fitted = malloc(n * sizeof *fr->fitted);
+    fr->fitted = malloc(fr->nobs * sizeof *fr->fitted);
     if (fr->fitted == NULL) {
 	free(fr->actual);
 	fr->actual = NULL;
@@ -46,7 +58,7 @@ allocate_fit_resid_arrays (FITRESID *fr, int n, int errs)
     }
 
     if (errs) {
-	fr->sderr = malloc(n * sizeof *fr->sderr);
+	fr->sderr = malloc(fr->nobs * sizeof *fr->sderr);
 	if (fr->sderr == NULL) {
 	    free(fr->actual);
 	    fr->actual = NULL;
@@ -96,12 +108,11 @@ FITRESID *fit_resid_new (int n, int errs)
 	fr->fitted = NULL;
 	fr->sderr = NULL;
     } else {
-	if (allocate_fit_resid_arrays(fr, n, errs)) {
+	fr->nobs = n;
+	if (allocate_fit_resid_arrays(fr, errs)) {
 	    free(fr);
 	    fr = NULL;
-	} else {
-	    fr->nobs = n;
-	}
+	} 
     }
     
     return fr;
@@ -285,7 +296,7 @@ fit_resid_init (const char *line, const MODEL *pmod,
     }
 
     if (!fr->err) {
-	fr->err = allocate_fit_resid_arrays(fr, fr->nobs, errs);
+	fr->err = allocate_fit_resid_arrays(fr, errs);
     }
 
     fr->model_ID = pmod->ID;
@@ -507,15 +518,55 @@ garch_fcast (int t1, int t2, double *yhat, const MODEL *pmod,
     return 0;
 }
 
+static double 
+arma_variance_machine (const double *phi, int p, 
+		       const double *theta, int q,
+		       double *psi, int s, double s2, 
+		       double *var)
+{
+    int i, h = s - 1;
+
+    if (h > p) {
+	h = p;
+    }
+
+    if (s == 1) {
+	psi[h] = 1.0;
+    } else {
+	psi[h] = 0.0;
+    }
+
+    for (i=1; i<=p && i<s; i++) {
+	psi[h] += phi[i-1] * psi[h-i];
+    }
+
+    if (s > 1 && s <= q+1) {
+	psi[h] += theta[s-2];
+    }
+
+    *var += psi[h] * psi[h] * s2;
+    
+    if (s > p) {
+	for (i=0; i<p-1; i++) {
+	    psi[i] = psi[i+1];
+	}
+    }
+
+    return *var;
+}
+
 /* generate forecasts for ARMA (or ARMAX) models */
 
 static int 
-arma_fcast (int t1, int t2, double *yhat, const MODEL *pmod, 
-	    const double **Z, const DATAINFO *pdinfo)
+arma_fcast (int t1, int t2, double *yhat, double *sderr,
+	    const MODEL *pmod, const double **Z, 
+	    const DATAINFO *pdinfo)
 {
-    const double *ar_coeff;
-    const double *ma_coeff;
+    const double *phi;
+    const double *theta;
 
+    double *psi = NULL;
+    double vt, s2 = 0.0;
     double xval, yval;
     int xvars, yno;
     int *xlist = NULL;
@@ -545,8 +596,19 @@ arma_fcast (int t1, int t2, double *yhat, const MODEL *pmod,
 	xvars = 0;
     }
 
-    ar_coeff = pmod->coeff + xvars;
-    ma_coeff = ar_coeff + p;
+    phi = pmod->coeff + xvars; /* AR coeffs */
+    theta = phi + p;           /* MA coeffs */
+
+    /* setup for forecast error variance */
+    if (sderr != NULL) {
+	psi = malloc((p + 1) * sizeof *psi);
+	if (psi == NULL) {
+	    sderr = NULL;
+	} else {
+	    s2 = pmod->sigma * pmod->sigma;
+	    vt = 0.0;
+	}
+    }
 
     /* do real forecast */
     for (t=pmod->t2 + 1; t<=t2; t++) {
@@ -582,8 +644,8 @@ arma_fcast (int t1, int t2, double *yhat, const MODEL *pmod,
 	    if (na(yval)) {
 		miss = 1;
 	    } else {
-		DPRINTF(("  AR: lag %d, s=%d, using coeff %g\n", i+1, s, ar_coeff[i]));
-		yh += ar_coeff[i] * yval;
+		DPRINTF(("  AR: lag %d, s=%d, using coeff %g\n", i+1, s, phi[i]));
+		yh += phi[i] * yval;
 	    }
 	}
 
@@ -594,8 +656,8 @@ arma_fcast (int t1, int t2, double *yhat, const MODEL *pmod,
 	    s = t - i - 1;
 	    if (s >= pmod->t1 && s <= pmod->t2) {
 		DPRINTF(("  MA: lag %d, e[%d] = %g, coeff %g\n", i+1, s, 
-			 pmod->uhat[s], ma_coeff[i]));
-		yh += ma_coeff[i] * pmod->uhat[s];
+			 pmod->uhat[s], theta[i]));
+		yh += theta[i] * pmod->uhat[s];
 	    }
 	}
 
@@ -606,9 +668,21 @@ arma_fcast (int t1, int t2, double *yhat, const MODEL *pmod,
 	} else {
 	    yhat[t] = yh;
 	}
+
+	/* forecast error variance */
+	if (sderr != NULL) {
+	    arma_variance_machine(phi, p, theta, q,
+				  psi, t - pmod->t2, 
+				  s2, &vt);
+	    sderr[t] = sqrt(vt);
+	}
     }
 
     free(xlist);
+
+    if (psi != NULL) {
+	free(psi);
+    }
 
     return 0;
 }
@@ -795,11 +869,11 @@ linear_fcast (int t1, int t2, double *yhat, const MODEL *pmod,
 /* driver for various functions that compute forecasts
    for different sorts of models */
 
-static int
-get_fcast_without_errs (FITRESID *fr, MODEL *pmod, 
-			double ***pZ, DATAINFO *pdinfo) 
+static int get_fcast (FITRESID *fr, MODEL *pmod, 
+		      double ***pZ, DATAINFO *pdinfo) 
 {
     int yno = gretl_model_get_depvar(pmod);
+    double *sderr = NULL;
     double *yhat;
     int s, t;
     int err = 0;
@@ -807,6 +881,10 @@ get_fcast_without_errs (FITRESID *fr, MODEL *pmod,
     yhat = malloc(pdinfo->n * sizeof *yhat);
     if (yhat == NULL) {
 	return E_ALLOC;
+    }
+
+    if (pmod->ci == ARMA) {
+	sderr = malloc(pdinfo->n * sizeof *sderr);
     }
 
     for (t=0; t<pdinfo->n; t++) {
@@ -819,7 +897,7 @@ get_fcast_without_errs (FITRESID *fr, MODEL *pmod,
 	err = ar_fcast(fr->t1, fr->t2, yhat, pmod, 
 		       (const double **) *pZ, pdinfo);
     } else if (pmod->ci == ARMA) {
-	err = arma_fcast(fr->t1, fr->t2, yhat, pmod, 
+	err = arma_fcast(fr->t1, fr->t2, yhat, sderr, pmod, 
 			 (const double **) *pZ, pdinfo);
     } else if (pmod->ci == GARCH) {
 	err = garch_fcast(fr->t1, fr->t2, yhat, pmod, 
@@ -838,9 +916,15 @@ get_fcast_without_errs (FITRESID *fr, MODEL *pmod,
 	s = t - fr->t1;
 	fr->actual[s] = (*pZ)[yno][t];
 	fr->fitted[s] = yhat[t];
+	if (sderr != NULL) {
+	    fr->sderr[s] = sderr[t];
+	}
     }
 
     free(yhat);
+    if (sderr != NULL) {
+	free(sderr);
+    }
 
     fr->tval = tcrit95(pmod->dfd);
     strcpy(fr->depvar, pdinfo->varname[yno]);
@@ -882,13 +966,13 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
 			double ***pZ, DATAINFO *pdinfo) 
 {
     FITRESID *fr;
-    int do_errs = 1;
+    int full_errs = 1;
 
     if (AR_MODEL(pmod->ci) || FCAST_SPECIAL(pmod->ci)) {
-	do_errs = 0;
+	full_errs = 0;
     }
 
-    fr = fit_resid_new(0, do_errs); 
+    fr = fit_resid_new(0, 0); 
     if (fr == NULL) {
 	return NULL;
     }
@@ -900,16 +984,17 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
 	return fr;
     }
 
-    fit_resid_init(str, pmod, (const double **) *pZ, pdinfo, fr, do_errs);
+    fit_resid_init(str, pmod, (const double **) *pZ, pdinfo, fr, 
+		   (full_errs || pmod->ci == ARMA));
     if (fr->err) {
 	return fr;
     }     
     
-    if (do_errs) {
+    if (full_errs) {
 	fr->err = get_static_fcast_with_errs(fr, pmod, (const double **) *pZ, 
 					     pdinfo);
     } else {
-	fr->err = get_fcast_without_errs(fr, pmod, pZ, pdinfo);
+	fr->err = get_fcast(fr, pmod, pZ, pdinfo);
     }
 
     return fr;
@@ -995,7 +1080,7 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 	    ar_fcast(t1, t2, (*pZ)[vi], pmod, (const double **) *pZ, 
 		     pdinfo);
 	} else if (pmod->ci == ARMA) {
-	    arma_fcast(t1, t2, (*pZ)[vi], pmod, (const double **) *pZ, 
+	    arma_fcast(t1, t2, (*pZ)[vi], NULL, pmod, (const double **) *pZ, 
 		       pdinfo);
 	} else if (pmod->ci == GARCH) {
 	    garch_fcast(t1, t2, (*pZ)[vi], pmod, (const double **) *pZ, 
