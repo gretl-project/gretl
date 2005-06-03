@@ -1396,17 +1396,23 @@ int text_print_forecast (const FITRESID *fr,
     for (t=0; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
 	gretl_printxn(fr->actual[t], 15, prn);
+
 	if (na(fr->fitted[t])) {
 	    pputc(prn, '\n');
 	    continue;
 	}
 	gretl_printxn(fr->fitted[t], 15, prn);
+
 	if (do_errs) {
-	    gretl_printxn(fr->sderr[t], 15, prn);
-	    maxerr[t] = fr->tval * fr->sderr[t];
-	    gretl_printxn(fr->fitted[t] - maxerr[t], 15, prn);
-	    pputs(prn, " -");
-	    gretl_printxn(fr->fitted[t] + maxerr[t], 10, prn);
+	    if (na(fr->sderr[t])) {
+		maxerr[t] = NADBL;
+	    } else {
+		gretl_printxn(fr->sderr[t], 15, prn);
+		maxerr[t] = fr->tval * fr->sderr[t];
+		gretl_printxn(fr->fitted[t] - maxerr[t], 15, prn);
+		pputs(prn, " -");
+		gretl_printxn(fr->fitted[t] + maxerr[t], 10, prn);
+	    }
 	}
 	pputc(prn, '\n');
     }

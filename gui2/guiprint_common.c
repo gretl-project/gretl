@@ -734,9 +734,9 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
 	  "\\end{center}\n\n");
 }
 
-static void real_texprint_fcast_with_errs (const FITRESID *fr, 
-					   const DATAINFO *pdinfo, 
-					   PRN *prn)
+static void texprint_fcast_with_errs (const FITRESID *fr, 
+				      const DATAINFO *pdinfo, 
+				      PRN *prn)
 {
     int t;
     double maxerr;
@@ -774,12 +774,20 @@ static void real_texprint_fcast_with_errs (const FITRESID *fr,
 	  "\\multicolumn{1}{c}{high} \\\\\n");
 
     for (t=0; t<fr->nobs; t++) {
-	maxerr = fr->tval * fr->sderr[t];
+	double xlo, xhi;
+
+	if (na(fr->sderr[t])) {
+	    xlo = xhi = NADBL;
+	} else {
+	    maxerr = fr->tval * fr->sderr[t];
+	    xlo = fr->fitted[t] - maxerr;
+	    xhi = fr->fitted[t] + maxerr;
+	}
 	tex_dcolumn_double(fr->actual[t], actual);
 	tex_dcolumn_double(fr->fitted[t], fitted);
 	tex_dcolumn_double(fr->sderr[t], sderr);
-	tex_dcolumn_double(fr->fitted[t] - maxerr, lo);
-	tex_dcolumn_double(fr->fitted[t] + maxerr, hi);
+	tex_dcolumn_double(xlo, lo);
+	tex_dcolumn_double(xhi, hi);
 	print_obs_marker(t + fr->t1, pdinfo, prn);
 	pprintf(prn, " & %s & %s & %s & %s & %s \\\\\n",
 		actual, fitted, sderr, lo, hi);
@@ -789,12 +797,12 @@ static void real_texprint_fcast_with_errs (const FITRESID *fr,
 	  "\\end{center}\n\n");
 }
 
-void texprint_fcast_with_errs (const FITRESID *fr, 
-			       const DATAINFO *pdinfo, 
-			       PRN *prn)
+void texprint_forecast (const FITRESID *fr, 
+			const DATAINFO *pdinfo, 
+			PRN *prn)
 {
     if (fr->sderr != NULL) {
-	real_texprint_fcast_with_errs(fr, pdinfo, prn);
+	texprint_fcast_with_errs(fr, pdinfo, prn);
     } else {
 	texprint_fcast_without_errs(fr, pdinfo, prn);
     }
@@ -838,9 +846,9 @@ static void rtfprint_fcast_without_errs (const FITRESID *fr,
     pputs(prn, "}}\n");
 }
 
-static void real_rtfprint_fcast_with_errs (const FITRESID *fr, 
-					   const DATAINFO *pdinfo, 
-					   PRN *prn)
+static void rtfprint_fcast_with_errs (const FITRESID *fr, 
+				      const DATAINFO *pdinfo, 
+				      PRN *prn)
 {
     int t;
     double maxerr;
@@ -873,20 +881,25 @@ static void real_rtfprint_fcast_with_errs (const FITRESID *fr,
 	printfrtf(fr->actual[t], prn, 0);
 	printfrtf(fr->fitted[t], prn, 0);
 	printfrtf(fr->sderr[t], prn, 0);
-	pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell \\intbl \\row\n", 
-		GRETL_DIGITS, fr->fitted[t] - maxerr, 
-		GRETL_DIGITS, fr->fitted[t] + maxerr);
+	if (na(fr->sderr[t])) {
+	    pputs(prn, "\\qc \\cell \\intbl \\row\n");
+	} else {
+	    maxerr = fr->tval * fr->sderr[t];
+	    pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell \\intbl \\row\n", 
+		    GRETL_DIGITS, fr->fitted[t] - maxerr, 
+		    GRETL_DIGITS, fr->fitted[t] + maxerr);
+	}
     }
 
     pputs(prn, "}}\n");
 }
 
-void rtfprint_fcast_with_errs (const FITRESID *fr, 
-			       const DATAINFO *pdinfo, 
-			       PRN *prn)
+void rtfprint_forecast (const FITRESID *fr, 
+			const DATAINFO *pdinfo, 
+			PRN *prn)
 {
     if (fr->sderr != NULL) {
-	real_rtfprint_fcast_with_errs(fr, pdinfo, prn);
+	rtfprint_fcast_with_errs(fr, pdinfo, prn);
     } else {
 	rtfprint_fcast_without_errs(fr, pdinfo, prn);
     }
