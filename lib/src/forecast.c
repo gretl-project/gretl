@@ -547,12 +547,12 @@ arma_variance_machine (const double *phi, int p,
 	psi[h] = 0.0;
     }
 
-    /* add AR-derived psi components */
+    /* add AR-derived psi[h] components */
     for (i=1; i<=p && i<s; i++) {
 	psi[h] += phi[i-1] * psi[h-i];
     }
 
-    /* add MA-derived psi components */
+    /* add MA-derived psi[h] components */
     if (s > 1 && s <= q+1) {
 	psi[h] += theta[s-2];
     }
