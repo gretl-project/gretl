@@ -284,6 +284,10 @@ fit_resid_init (const char *line, const MODEL *pmod,
 	}
     }
 
+    if (pmod->ci == ARMA && fr->t2 > pmod->t2) {
+	errs = 1;
+    }
+
     if (!fr->err) {
 	fr->err = allocate_fit_resid_arrays(fr, errs);
     }
@@ -967,7 +971,6 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
 {
     FITRESID *fr;
     int full_errs = 1;
-    int arma_errs = 0;
 
     if (AR_MODEL(pmod->ci) || FCAST_SPECIAL(pmod->ci)) {
 	full_errs = 0;
@@ -986,17 +989,11 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
     }
 
     fit_resid_init(str, pmod, (const double **) *pZ, pdinfo, fr, 
-		   (full_errs || arma_errs));
+		   full_errs);
     if (fr->err) {
 	return fr;
     }   
 
-    if (pmod->ci == ARMA && fr->t2 > pmod->t2) {
-	/* for arma, we calculate forecast error variance only
-	   for out of sample forecasts */
-	arma_errs = 1;
-    }
-    
     if (full_errs) {
 	fr->err = get_static_fcast_with_errs(fr, pmod, (const double **) *pZ, 
 					     pdinfo);
