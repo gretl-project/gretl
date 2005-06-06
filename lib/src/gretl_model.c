@@ -529,17 +529,13 @@ int *gretl_arma_model_get_x_list (const MODEL *pmod)
 {
     int *list = NULL;
 
-    if (pmod->ci == ARMA || pmod->ci == GARCH) {
-	int i, nx = pmod->list[0] - 4;
-
-	if (pmod->ci == ARMA) {
-	    nx += pmod->ifc;
-	}
+    if (pmod->ci == ARMA) {
+	int i, nx = pmod->list[0] - 4 + pmod->ifc;
 
 	if (nx > 0) {
 	    list = gretl_list_new(nx);
 	    if (list != NULL) {
-		if (pmod->ci == ARMA && pmod->ifc) {
+		if (pmod->ifc) {
 		    list[1] = 0;
 		    for (i=2; i<=list[0]; i++) {
 			list[i] = pmod->list[i + 3];
@@ -549,6 +545,17 @@ int *gretl_arma_model_get_x_list (const MODEL *pmod)
 			list[i] = pmod->list[i + 4];
 		    }
 		}		    
+	    }
+	}
+    } else if (pmod->ci == GARCH) {
+	int i, nx = pmod->list[0] - 4;
+
+	if (nx > 0) {
+	    list = gretl_list_new(nx);
+	    if (list != NULL) {
+		for (i=1; i<=list[0]; i++) {
+		    list[i] = pmod->list[i + 4];
+		}
 	    }
 	}
     }

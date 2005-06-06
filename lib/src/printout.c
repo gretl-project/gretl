@@ -1099,6 +1099,27 @@ check_for_sorted_var (int *list, const DATAINFO *pdinfo)
     return ret;
 }
 
+static void print_scalar (double x, const char *vname, 
+			  gretlopt opt, int allconst,
+			  PRN *prn)
+{
+    if (!allconst) {
+	pputc(prn, '\n');
+    }
+
+    if (na(x)) {
+	pprintf(prn, "%8s = NA", vname);
+    } else if (opt & OPT_T) {
+	pprintf(prn, "%8s = %.10g", vname, x);
+    } else {
+	pprintf(prn, "%8s = %10g", vname, x);
+    }
+
+    if (allconst) {
+	pputc(prn, '\n');
+    }
+}
+
 /**
  * printdata:
  * @list: list of variables to print.
@@ -1151,13 +1172,8 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
     /* screen out any scalars and print them first */
     for (j=1; j<=plist[0]; j++) {
 	if (!pdinfo->vector[plist[j]]) {
-	    if (opt & OPT_T) {
-		pprintf(prn, "\n%8s = %.10g", pdinfo->varname[plist[j]], 
-			Z[plist[j]][0]);
-	    } else {
-		pprintf(prn, "\n%8s = %10g", pdinfo->varname[plist[j]], 
-			Z[plist[j]][0]);
-	    }
+	    print_scalar(Z[plist[j]][0], pdinfo->varname[plist[j]],
+			 opt, 0, prn);
 	    scalars = 1;
 	    gretl_list_delete_at_pos(plist, j);
 	    j--;
@@ -1184,13 +1200,8 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     if (allconst) {
 	for (j=1; j<=plist[0]; j++) {
-	    if (opt & OPT_T) {
-		pprintf(prn, "%8s = %.10g\n", pdinfo->varname[plist[j]], 
-			Z[plist[j]][pdinfo->t1]);
-	    } else {
-		pprintf(prn, "%8s = %10g\n", pdinfo->varname[plist[j]], 
-			Z[plist[j]][pdinfo->t1]);
-	    }
+	    print_scalar(Z[plist[j]][pdinfo->t1], pdinfo->varname[plist[j]],
+			 opt, 1, prn);
 	}
 	goto endprint;
     }
@@ -1201,7 +1212,7 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 	}
 	for (j=1; j<=plist[0]; j++) {
 	    pprintf(prn, _("Varname: %s\n"), pdinfo->varname[plist[j]]);
-	    print_smpl (pdinfo, 0, prn);
+	    print_smpl(pdinfo, 0, prn);
 	    pputc(prn, '\n');
 	    printz(Z[plist[j]], pdinfo, prn, opt);
 	    pputc(prn, '\n');
@@ -1376,6 +1387,7 @@ int text_print_forecast (const FITRESID *fr,
     }
 
     if (do_errs) {
+	/* FIXME arma */
 	pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
 		fr->df, fr->tval);
     }
@@ -1416,6 +1428,8 @@ int text_print_forecast (const FITRESID *fr,
 	}
 	pputc(prn, '\n');
     }
+
+    pputc(prn, '\n');
 
     /* do we really want a plot for non-time series? */
 

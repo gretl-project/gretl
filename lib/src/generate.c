@@ -3857,7 +3857,7 @@ get_model_data_element (const char *s, GENERATE *genr,
 	} else if (!(vi = listpos(atoi(s), pmod->arinfo->arlist))) {
 	    genr->err = E_INVARG;
 	} else {
-	    x = pmod->arinfo->rho[vi];
+	    x = pmod->arinfo->rho[vi-1];
 	}
     }
 

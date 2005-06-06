@@ -1785,7 +1785,9 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
 	strncat(tryfile, datfile, MAXLEN-1);
 	try_gdt(tryfile); 
 	found = (addpath(tryfile, ppaths, 0) != NULL);
-	if (found) add_gdt = 1;
+	if (found) {
+	    add_gdt = 1;
+	}
 
 	/* or maybe the file is gzipped but lacks a .gz extension? */
 	if (!found && !gzsuff) { 
@@ -1795,6 +1797,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
 		found = 1;
 	    }
 	}
+
 	if (!found) {
 	    sprintf(gretl_errmsg, _("Couldn't open file %s"),  datfile);
 	    return E_FOPEN;
@@ -1824,7 +1827,10 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
 
     /* read data header file */
     err = readhdr(hdrfile, tmpdinfo, &binary, &old_byvar);
-    if (err) {
+    if (err == E_FOPEN) {
+	/* no header file, so maybe it's just an ascii datafile */
+	return import_csv(pZ, ppdinfo, datfile, prn);
+    } else if (err) {
 	return err;
     } else { 
 	pprintf(prn, I_("\nReading header file %s\n"), hdrfile);
@@ -3971,7 +3977,8 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) { 
-	return GRETL_NATIVE_DATA; /* may be native file in different location */
+	/* may be native file in different location */
+	return GRETL_NATIVE_DATA; 
     }
 
     /* look at extension */
@@ -3997,19 +4004,14 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     fclose(fp);
     teststr[4] = 0;
 
-    switch (ftype) {
-    case GRETL_NATIVE_DATA: 
-	return GRETL_NATIVE_DATA;
-    case GRETL_BOX_DATA: 
-	if (strcmp(teststr, "00**") == 0) {
-	    return GRETL_BOX_DATA;
-	} else {
+    if (ftype == GRETL_BOX_DATA) {
+	if (strcmp(teststr, "00**")) {
 	    pputs(prn, M_("box file seems to be malformed\n"));
-	    return GRETL_UNRECOGNIZED;
+	    ftype = GRETL_UNRECOGNIZED;
 	}
     }
 
-    return GRETL_NATIVE_DATA; /* FIXME? */
+    return ftype;
 }
 
 #define UTF const xmlChar *

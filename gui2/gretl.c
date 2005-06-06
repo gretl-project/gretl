@@ -795,7 +795,9 @@ int main (int argc, char *argv[])
 #ifdef USE_GNOME
 	    get_runfile(optrun);
 #else
-	    if (*filearg == '\0') gui_usage();
+	    if (*filearg == '\0') {
+		gui_usage();
+	    }
 	    get_runfile(filearg);
 #endif
 	    gui_get_data = 1;
@@ -805,10 +807,14 @@ int main (int argc, char *argv[])
 #ifdef USE_GNOME
 	    strncpy(dbname, optdb, MAXLEN-1);
 #else
-	    if (*filearg == '\0') gui_usage();
+	    if (*filearg == '\0') {
+		gui_usage();
+	    }
 	    strcpy(dbname, filearg);
 #endif
-	    if (opt == OPT_DBOPEN) fix_dbname(dbname);
+	    if (opt == OPT_DBOPEN) {
+		fix_dbname(dbname);
+	    }
 	    gui_get_data = opt;
 	    break;
 	case OPT_DUMP:
@@ -849,8 +855,9 @@ int main (int argc, char *argv[])
     models[1] = gretl_model_new();
     models[2] = gretl_model_new();
 
-    if (models[0] == NULL || models[1] == NULL || models[2] == NULL) 
+    if (models[0] == NULL || models[1] == NULL || models[2] == NULL) {
 	noalloc(_("models")); 
+    }
 
     library_command_init();
 
@@ -869,8 +876,9 @@ int main (int argc, char *argv[])
 	*paths.datfile = '\0';
 
 #ifdef G_OS_WIN32
-	if (unmangle(filearg, paths.datfile)) 
+	if (unmangle(filearg, paths.datfile)) {
 	    exit(EXIT_FAILURE);
+	}
 #else
 	strcpy(paths.datfile, filearg);
 #endif

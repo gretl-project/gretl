@@ -145,7 +145,7 @@ static int ar_info_init (MODEL *pmod, int nterms)
 	return 1;
     }
 
-    pmod->arinfo->arlist = malloc(nterms * sizeof *pmod->arinfo->arlist);
+    pmod->arinfo->arlist = gretl_list_new(nterms);
     if (pmod->arinfo->arlist == NULL) {
 	free(pmod->arinfo);
 	pmod->arinfo = NULL;
@@ -170,7 +170,6 @@ static int ar_info_init (MODEL *pmod, int nterms)
     }
 
     for (i=0; i<nterms; i++) {
-	pmod->arinfo->arlist[i] = 0;
 	pmod->arinfo->sderr[i] = pmod->arinfo->rho[i] = NADBL;
     }
 
@@ -363,7 +362,7 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     int i, t, yno = pmod->list[1];
     double x, pw1 = 0.0;
 
-    if (ar_info_init(pmod, 2)) {
+    if (ar_info_init(pmod, 1)) {
 	pmod->errcode = E_ALLOC;
 	return 1;
     }
@@ -373,7 +372,7 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     }
 
     pmod->arinfo->arlist[0] = pmod->arinfo->arlist[1] = 1;
-    pmod->arinfo->rho[1] = rho;
+    pmod->arinfo->rho[0] = rho;
     gretl_model_set_double(pmod, "rho_in", rho);
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -3200,14 +3199,14 @@ MODEL ar_func (const int *list, int pos, double ***pZ,
 
     dataset_drop_last_variables(arlist[0] + 1 + reglist[0], pZ, pdinfo);
 
-    if (ar_info_init(&ar, 1 + maxlag)) {
+    if (ar_info_init(&ar, maxlag)) {
 	ar.errcode = E_ALLOC;
     } else {
 	for (i=0; i<=arlist[0]; i++) { 
 	    ar.arinfo->arlist[i] = arlist[i];
 	    if (i >= 1) {
-		ar.arinfo->rho[i] = rhomod.coeff[i-1];
-		ar.arinfo->sderr[i] = rhomod.sderr[i-1];
+		ar.arinfo->rho[i-1] = rhomod.coeff[i-1];
+		ar.arinfo->sderr[i-1] = rhomod.sderr[i-1];
 	    }
 	}
     }

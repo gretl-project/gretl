@@ -30,6 +30,8 @@
                           c == PROBIT || \
                           c == TOBIT)
 
+#define CHECK_LAGGED_DEPVAR(c) (c != NLS && c != ARMA)
+
 static int 
 allocate_fit_resid_arrays (FITRESID *fr, int errs)
 {
@@ -177,72 +179,79 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
     return fr;
 }
 
-static int fcast_adjust_t1_t2 (const MODEL *pmod,
-			       const double **Z,
-			       int *pt1, int *pt2)
+/* Make a "double list" to keep track of any "independent variables"
+   that are really lags of the dependent variable.  The first element
+   of the list is the number of _pairs_ of integers that follow; in
+   each following pair the leading number is the ID number of a
+   variable in the regression list and the second is the lag order.
+   Thus for example the pair (13, 2) records the fact that the
+   variable with ID number 13 is actually lag 2 of the dependent
+   variable.
+*/
+
+static int process_lagged_depvar (const MODEL *pmod, 
+				  const DATAINFO *pdinfo,
+				  int **depvar_lags)
 {
-    int *xlist = NULL;
-    int t1 = *pt1, t2 = *pt2;
-    int imin, miss;
-    int i, t;
+    int *dvlags = NULL;
+    const char *label;
+    const char *yname;
+    char xname[9], tmp[9];
+    int lag, nlags = 0;
+    int vi, i;
+    int err = 0;
 
-    if (pmod->ci == ARMA || pmod->ci == GARCH) {
-	xlist = gretl_arma_model_get_x_list(pmod);
-	imin = (pmod->ifc)? 2 : 1;
-    } else {
-	xlist = gretl_list_copy(pmod->list);
-	imin = (pmod->ifc)? 3 : 2;
+    if (pmod->ci == NLS || pmod->ci == ARMA) {
+	/* we won't do this for these models */
+	return 0;
     }
 
-    if (xlist == NULL) {
-	return 1;
-    }
+    yname = pdinfo->varname[pmod->list[1]];
 
-    for (t=t1; t<=t2; t++) {
-	miss = 0;
-	for (i=imin; i<=xlist[0]; i++) {
-	    if (na(Z[xlist[i]][t])) {
-		miss = 1;
-		break;
-	    }
-	}
-	if (miss) t1++;
-	else break;
-    }
-
-    for (t=t2; t>t1; t--) {
-	miss = 0;
-	for (i=imin; i<=xlist[0]; i++) {
-	    if (na(Z[xlist[i]][t])) {
-		miss = 1;
-		break;
-	    }
-	}
-	if (miss) t2--;
-	else break;
-    }
-
-    *pt1 = t1;
-    *pt2 = t2;
-
-    free(xlist);
-
-    return 0;
-}
-
-static int 
-fcast_x_missing (const int *list, const double **Z, int t)
-{
-    int i, ret = 0;
-
-    for (i=2; i<=list[0]; i++) {
-	if (na(Z[list[i]][t])) {
-	    ret = 1;
+    for (i=2; i<=pmod->list[0]; i++) {
+	vi = pmod->list[i];
+	if (vi == LISTSEP) {
+	    /* two-stage least squares */
 	    break;
 	}
+	label = VARLABEL(pdinfo, vi);
+	if ((sscanf(label, "= %8[^(](t - %d)", xname, &lag) == 2 ||
+	     sscanf(label, "%8[^=]=%8[^(](-%d)", tmp, xname, &lag) == 3) &&
+	    !strcmp(xname, yname)) {
+	    nlags++;
+	}
     }
 
-    return ret;
+    if (nlags > 0) {
+	dvlags = malloc((nlags * 2 + 1) * sizeof *dvlags);
+	if (dvlags == NULL) {
+	    err = 1;
+	} else {
+	    dvlags[0] = nlags;
+	}
+    }
+
+    if (nlags > 0 && !err) {
+	int j = 1;
+
+	for (i=2; i<=pmod->list[0]; i++) {
+	    vi = pmod->list[i];
+	    if (vi == LISTSEP) {
+		break;
+	    }
+	    label = VARLABEL(pdinfo, vi);
+	    if ((sscanf(label, "= %8[^(](t - %d)", xname, &lag) == 2 ||
+		 sscanf(label, "%8[^=]=%8[^(](-%d)", tmp, xname, &lag) == 3) &&
+		!strcmp(xname, yname)) {
+		dvlags[j++] = vi;
+		dvlags[j++] = lag;
+	    }
+	}
+    } 
+
+    *depvar_lags = dvlags;
+
+    return err;
 }
 
 /* initialize FITRESID struct based on model and string giving
@@ -274,27 +283,47 @@ fit_resid_init (const char *line, const MODEL *pmod,
 	}
     }
 
-    /* move endpoints if there are missing values for the
-       independent variables */
     if (!fr->err) {
-	fcast_adjust_t1_t2(pmod, Z, &fr->t1, &fr->t2);
 	fr->nobs = fr->t2 - fr->t1 + 1;
-	if (fr->nobs == 0) {
-	    fr->err = E_OBS;
+	if ((pmod->ci == ARMA || SIMPLE_AR_MODEL(pmod->ci)) && 
+	    fr->t2 > pmod->t2) {
+	    errs = 1;
 	}
-    }
-
-    if (pmod->ci == ARMA && fr->t2 > pmod->t2) {
-	errs = 1;
-    }
-
-    if (!fr->err) {
 	fr->err = allocate_fit_resid_arrays(fr, errs);
     }
 
     fr->model_ID = pmod->ID;
 
     return fr->err;
+}
+
+/* if an "independent" variable needed in generating a forecast is
+   missing, check whether it might in fact be a lagged value of the
+   dependent variable, for which we have a prior forecast available 
+*/
+
+static double 
+maybe_get_yhat_lag (int vi, const int *dvlags, const double *yhat, int s,
+		    int *order)
+{
+    double yhlag = NADBL;
+    int i, lag = 0;
+
+    for (i=1; i<=dvlags[0]; i++) {
+	if (dvlags[2*i-1] == vi) {
+	    lag = dvlags[2*i];
+	    if (s - lag >= 0) {
+		yhlag = yhat[s - lag];
+	    }
+	    break;
+	}
+    }
+
+    if (order != NULL) {
+	*order = lag;
+    }
+
+    return yhlag;
 }
 
 /* Get forecasts plus standard errors for same, for models without
@@ -347,18 +376,25 @@ get_static_fcast_with_errs (FITRESID *fr, MODEL *pmod,
 	/* skip if we can't compute forecast */
 	if (t >= pmod->t1 && t <= pmod->t2) {
 	    missing = na(pmod->yhat[t]);
-	} else {
-	    missing = fcast_x_missing(pmod->list, Z, t);
+	}   
+
+	/* populate Xs vector for observation */
+	for (i=0; i<k && !missing; i++) {
+	    double xval;
+
+	    vi = pmod->list[i + 2];
+	    xval = Z[vi][t];
+	    if (na(xval)) {
+		fr->sderr[s] = fr->fitted[s] = NADBL;
+		missing = 1;
+	    } else {
+		gretl_vector_set(Xs, i, xval);
+	    }
 	}
+
 	if (missing) {
 	    fr->sderr[s] = fr->fitted[s] = NADBL;
 	    continue;
-	}	    
-
-	/* populate Xs vector for observation */
-	for (i=0; i<k; i++) {
-	    vi = pmod->list[i + 2];
-	    gretl_vector_set(Xs, i, Z[vi][t]);
 	}
 
 	/* forecast value */
@@ -401,8 +437,7 @@ get_static_fcast_with_errs (FITRESID *fr, MODEL *pmod,
 */
 
 static int nls_fcast (int t1, int t2, double *fcast, int offset,
-		      const MODEL *pmod, 
-		      double ***pZ, DATAINFO *pdinfo)
+		      const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 {
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
@@ -462,12 +497,12 @@ static void dprintf (const char *format, ...)
 
 static int 
 garch_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod, 
-	     const double **Z, const DATAINFO *pdinfo)
+	     const int *dvlags, const double **Z, const DATAINFO *pdinfo)
 {
     double xval;
     int xvars, yno;
     int *xlist = NULL;
-    int i, s, t;
+    int i, v, s, t;
 
     /* use pre-calculated fitted values over model estimation range */
     for (t=t1; t<=pmod->t2; t++) {
@@ -497,7 +532,11 @@ garch_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 	s = t - offset;
 
 	for (i=1; i<=xvars; i++) {
-	    xval = Z[xlist[i]][t];
+	    v = xlist[i];
+	    xval = Z[v][t];
+	    if (na(xval) && dvlags != NULL) {
+		xval = maybe_get_yhat_lag(v, dvlags, yhat, s, NULL);
+	    }
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
@@ -526,8 +565,7 @@ garch_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 static double 
 arma_variance_machine (const double *phi, int p, 
 		       const double *theta, int q,
-		       double *psi, int s, double s2, 
-		       double *var)
+		       double *psi, int s, double *ss_psi)
 {
     int i, h = s - 1;
 
@@ -561,17 +599,17 @@ arma_variance_machine (const double *phi, int p,
 	psi[h] += theta[s-2];
     }
 
-    /* increment error variance */
-    *var += psi[h] * psi[h] * s2;
+    /* increment running sum of psi squared terms */
+    *ss_psi += psi[h] * psi[h];
     
     if (s > p) {
 	/* drop the oldest psi and make space for a new one */
-	for (i=0; i<p-1; i++) {
+	for (i=0; i<p; i++) {
 	    psi[i] = psi[i+1];
 	}
     }
 
-    return *var;
+    return *ss_psi;
 }
 
 /* generate forecasts for ARMA (or ARMAX) models, including
@@ -586,9 +624,10 @@ arma_fcast (int t1, int t2, double *yhat, double *sderr,
 {
     const double *phi;
     const double *theta;
+    const double *beta;
 
     double *psi = NULL;
-    double vt, s2 = 0.0;
+    double ss_psi = 0.0;
     double xval, yval;
     int xvars, yno;
     int *xlist = NULL;
@@ -623,18 +662,13 @@ arma_fcast (int t1, int t2, double *yhat, double *sderr,
 	xvars = 0;
     }
 
-    phi = pmod->coeff + xvars; /* AR coeffs */
-    theta = phi + p;           /* MA coeffs */
+    phi = pmod->coeff + pmod->ifc; /* AR coeffs */
+    theta = phi + p;               /* MA coeffs */
+    beta = theta + q;              /* coeffs on indep vars */
 
     /* setup for forecast error variance */
     if (sderr != NULL) {
 	psi = malloc((p + 1) * sizeof *psi);
-	if (psi == NULL) {
-	    sderr = NULL;
-	} else {
-	    s2 = pmod->sigma * pmod->sigma;
-	    vt = 0.0;
-	}
     }
 
     /* do real forecast */
@@ -648,11 +682,17 @@ arma_fcast (int t1, int t2, double *yhat, double *sderr,
 
 	/* contribution of independent variables */
 	for (i=1; i<=xvars; i++) {
-	    xval = Z[xlist[i]][t];
-	    if (na(xval)) {
-		miss = 1;
+	    int j = 0;
+
+	    if (xlist[i] == 0) {
+		yh += pmod->coeff[0];
 	    } else {
-		yh += pmod->coeff[i-1] * xval;
+		xval = Z[xlist[i]][t];
+		if (na(xval)) {
+		    miss = 1;
+		} else {
+		    yh += beta[j++] * xval;
+		}
 	    }
 	}
 
@@ -668,7 +708,7 @@ arma_fcast (int t1, int t2, double *yhat, double *sderr,
 		DPRINTF(("  AR: lag %d, y[%d] = %g\n", i+1, s, yval));
 	    } else {
 		yval = yhat[s - offset];
-		DPRINTF(("  AR: lag %d, yhat[%d] = %g\n", i+1, ss, yval));
+		DPRINTF(("  AR: lag %d, yhat[%d] = %g\n", i+1, s-offset, yval));
 	    }
 	    if (na(yval)) {
 		miss = 1;
@@ -699,11 +739,11 @@ arma_fcast (int t1, int t2, double *yhat, double *sderr,
 	}
 
 	/* forecast error variance */
-	if (sderr != NULL) {
+	if (psi != NULL) {
 	    arma_variance_machine(phi, p, theta, q,
 				  psi, t - pmod->t2, 
-				  s2, &vt);
-	    sderr[tt] = sqrt(vt);
+				  &ss_psi);
+	    sderr[tt] = pmod->sigma * sqrt(ss_psi);
 	}
     }
 
@@ -714,6 +754,88 @@ arma_fcast (int t1, int t2, double *yhat, double *sderr,
     }
 
     return 0;
+}
+
+/* construct the "phi" array of AR coefficients, based on the
+   ARINFO that was added to the model at estimation time.
+   The latter's "rho" member may be a compacted array, with
+   zero elements omitted, but here we need a full-length
+   array with zeros inserted as required */
+
+static double *make_phi_from_arinfo (const ARINFO *arinfo, int pmax)
+{
+    const int *arlist = arinfo->arlist;
+    int maxlag = arlist[arlist[0]];
+    double *phi;
+    int i;
+
+    if (pmax > maxlag) {
+	maxlag = pmax;
+    }
+
+    phi = malloc(maxlag * sizeof *phi);
+
+    if (phi != NULL) {
+	int lag;
+
+	for (i=0; i<maxlag; i++) {
+	    phi[i] = 0.0;
+	}
+
+	for (i=1; i<=arlist[0]; i++) {
+	    lag = arlist[i];
+	    phi[lag-1] = arinfo->rho[i-1];
+	}
+    }
+
+    return phi;
+}
+
+/* determine the highest lag order of lagged dependent
+   variable */
+
+static int get_max_dv_lag (const int *dvlags)
+{
+    int i, pmax = 0;
+
+    for (i=1; i<=dvlags[0]; i++) {
+	if (dvlags[2*i] > pmax) {
+	    pmax = dvlags[2*i];
+	}
+    }
+
+    return pmax;
+}
+
+/* Set things up for computing forecast error variance for ar models
+   (AR, CORC, HILU, PWE).  This is complicated by the fact that there
+   may be a lagged dependent variable in the picture.  If there is,
+   the effective AR coefficients have to be incremented, for the
+   purposes of calculating forecast variance.  But I'm not sure this
+   is quite right yet.
+*/
+
+static void set_up_ar_fcast_variance (const MODEL *pmod, int pmax,
+				      double **phi, double **psi,
+				      double **errphi)
+{
+    *errphi = make_phi_from_arinfo(pmod->arinfo, pmax);
+
+    if (*errphi != NULL) {
+	*psi = malloc((pmax + 1) * sizeof **psi);
+	if (*psi == NULL) {
+	    free(*errphi);
+	    *errphi = NULL;
+	} else {
+	    *phi = malloc(pmax * sizeof **phi);
+	    if (*phi == NULL) {
+		free(*errphi);
+		*errphi = NULL;
+		free(*psi);
+		*psi = NULL;
+	    }
+	}
+    } 
 }
 
 /* 
@@ -733,25 +855,41 @@ arma_fcast (int t1, int t2, double *yhat, double *sderr,
    compensation on the LHS so that the forecast is of y_t, not 
    (1 - r(L)) y_t.
 
+   We also attempt to calculate forecast error variance for
+   out-of-sample forecasts.  These calculations, like those for
+   ARMA, do not take into account parameter uncertainty.
+
    This code is used for AR, CORC, HILU and PWE models.
 */
 
 static int 
-ar_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod, 
+ar_fcast (int t1, int t2, double *yhat, double *sderr, 
+	  int offset, const MODEL *pmod, const int *dvlags,
 	  const double **Z, const DATAINFO *pdinfo)
 {
     const int *arlist;
+    double *phi = NULL;
+    double *psi = NULL;
+    double *errphi = NULL;
+    double ss_psi = 0.0;
     double xval, yh;
     double rk, ylag, xlag;
-    int miss, maxlag, yno;
+    int miss, p, pmax, yno;
     int i, k, v, s, t;
 
     yno = pmod->list[1];
     arlist = pmod->arinfo->arlist;
-    maxlag = arlist[arlist[0]];
+    p = arlist[arlist[0]]; /* AR order of error term */
 
-    if (t1 < maxlag) {
-	t1 = maxlag; 
+    if (dvlags != NULL) {
+	/* highest order of lagged dependent var */
+	pmax = get_max_dv_lag(dvlags);
+    } else {
+	pmax = p;
+    }
+
+    if (t2 > pmod->t2 && sderr != NULL) {
+	set_up_ar_fcast_variance(pmod, pmax, &phi, &psi, &errphi);
     }
 
     for (t=t1; t<=t2; t++) {
@@ -759,19 +897,35 @@ ar_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 	yh = 0.0;
 	s = t - offset;
 
-	if (pmod->ci == PWE && t == pmod->t1) {
-	    /* PWE first obs is special */
-	    yhat[s] = pmod->yhat[t];
+	if (t < p) {
+	    yhat[s] = NADBL;
+	    if (sderr != NULL) {
+		sderr[s] = NADBL;
+	    }
 	    continue;
+	}
+
+        if (pmod->ci == PWE && t == pmod->t1) {
+            /* PWE first obs is special */
+            yhat[s] = pmod->yhat[t];
+            continue;
+        }
+
+	if (phi != NULL) {
+	    /* initialize the phi's based on the AR error process
+	       alone */
+	    for (i=0; i<pmax; i++) {
+		phi[i] = errphi[i];
+	    }
 	}
 
 	/* LHS adjustment */
 	for (k=1; k<=arlist[0]; k++) {
-	    rk = pmod->arinfo->rho[k];
+	    rk = pmod->arinfo->rho[k-1];
 	    /* use actual lagged y by preference */
 	    ylag = Z[yno][t - arlist[k]];
 	    if (na(ylag) && s - arlist[k] >= 0) {
-		/* use forecast of lagged y */
+		/* use prior forecast of lagged y */
 		ylag = yhat[s - arlist[k]];
 	    }
 	    if (na(ylag)) {
@@ -784,13 +938,28 @@ ar_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
 	    v = pmod->list[i+2];
 	    xval = Z[v][t];
+	    if (na(xval) && dvlags != NULL) {
+		int order;
+
+		/* lagged dependent variable? */
+		xval = maybe_get_yhat_lag(v, dvlags, yhat, s, &order);
+		if (!na(xval)) {
+		    /* augment the effective AR coefficient for the
+		       purpose of computing variance */
+		    phi[order - 1] += pmod->coeff[i];
+		}
+	    }
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
 		/* use rho-differenced X on RHS */
 		for (k=1; k<=arlist[0]; k++) {
-		    rk = pmod->arinfo->rho[k];
+		    rk = pmod->arinfo->rho[k-1];
 		    xlag = Z[v][t - arlist[k]];
+		    if (na(xlag) && dvlags != NULL) {
+			/* lagged dependent variable? */
+			xlag = maybe_get_yhat_lag(v, dvlags, yhat, s - arlist[k], NULL);
+		    }
 		    if (!na(xlag)) {
 			xval -= rk * xlag;
 		    }
@@ -804,6 +973,24 @@ ar_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 	} else {
 	    yhat[s] = yh;
 	}
+
+	/* forecast error variance */
+	if (phi != NULL) {
+	    if (t > pmod->t2) {
+		arma_variance_machine(phi, pmax, NULL, 0,
+				      psi, t - pmod->t2, 
+				      &ss_psi);
+		sderr[s] = pmod->sigma * sqrt(ss_psi);
+	    } else {
+		sderr[s] = NADBL;
+	    }
+	}
+    }
+
+    if (psi != NULL) {
+	free(phi);
+	free(psi);
+	free(errphi);
     }
 
     return 0;
@@ -849,16 +1036,18 @@ static double fcast_transform (double xb, int ci, int t,
     return yf;
 }
 
-/* compute forecasts for static linear models */
+/* compute forecasts for linear models without autoregressive errors,
+   version without computation of forecast standard errors
+*/
 
 static int 
 linear_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod, 
-	      const double **Z, const DATAINFO *pdinfo)
+	      const int *dvlags, const double **Z, const DATAINFO *pdinfo)
 {
     const double *offvar = NULL;
     double lmax = NADBL;
     double xval;
-    int i, t, s;
+    int i, vi, t, s;
 
     if (pmod->ci == POISSON) {
 	/* special for poisson "offset" variable */
@@ -878,7 +1067,12 @@ linear_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 	s = t - offset;
 
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
-	    xval = Z[pmod->list[i+2]][t];
+	    vi = pmod->list[i+2];
+	    xval = Z[vi][t];
+	    if (na(xval) && dvlags != NULL) {
+		/* lagged dependent variable? */
+		xval = maybe_get_yhat_lag(vi, dvlags, yhat, s, NULL);
+	    }
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
@@ -902,7 +1096,7 @@ linear_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 /* driver for various functions that compute forecasts
    for different sorts of models */
 
-static int get_fcast (FITRESID *fr, MODEL *pmod, 
+static int get_fcast (FITRESID *fr, MODEL *pmod, const int *dvlags,
 		      double ***pZ, DATAINFO *pdinfo) 
 {
     int yno = gretl_model_get_depvar(pmod);
@@ -912,17 +1106,17 @@ static int get_fcast (FITRESID *fr, MODEL *pmod,
     if (pmod->ci == NLS) {
 	err = nls_fcast(fr->t1, fr->t2, fr->fitted, fr->t1, pmod, pZ, pdinfo);
     } else if (SIMPLE_AR_MODEL(pmod->ci)) {
-	err = ar_fcast(fr->t1, fr->t2, fr->fitted, fr->t1, pmod, 
-		       (const double **) *pZ, pdinfo);
+	err = ar_fcast(fr->t1, fr->t2, fr->fitted, fr->sderr, fr->t1, pmod, 
+		       dvlags, (const double **) *pZ, pdinfo);
     } else if (pmod->ci == ARMA) {
 	err = arma_fcast(fr->t1, fr->t2, fr->fitted, fr->sderr, fr->t1, pmod, 
 			 (const double **) *pZ, pdinfo);
     } else if (pmod->ci == GARCH) {
 	err = garch_fcast(fr->t1, fr->t2, fr->fitted, fr->t1, pmod, 
-			  (const double **) *pZ, pdinfo);
+			  dvlags, (const double **) *pZ, pdinfo);
     } else {
 	err = linear_fcast(fr->t1, fr->t2, fr->fitted, fr->t1, pmod, 
-			   (const double **) *pZ, pdinfo);
+			   dvlags, (const double **) *pZ, pdinfo);
     }
 
     for (t=fr->t1; t<=fr->t2; t++) {
@@ -930,7 +1124,13 @@ static int get_fcast (FITRESID *fr, MODEL *pmod,
 	fr->actual[s] = (*pZ)[yno][t];
     }
 
-    fr->tval = tcrit95(pmod->dfd);
+    if (pmod->ci == ARMA) {
+	/* asymptotic normal */
+	fr->tval = 1.96;
+    } else {
+	fr->tval = tcrit95(pmod->dfd);
+    }
+
     strcpy(fr->depvar, pdinfo->varname[yno]);
     fr->df = pmod->dfd;
 
@@ -970,6 +1170,7 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
 			double ***pZ, DATAINFO *pdinfo) 
 {
     FITRESID *fr;
+    int *dvlags = NULL;
     int full_errs = 1;
 
     if (AR_MODEL(pmod->ci) || FCAST_SPECIAL(pmod->ci)) {
@@ -988,6 +1189,10 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
 	return fr;
     }
 
+    if (dataset_is_time_series(pdinfo)) {
+	process_lagged_depvar(pmod, pdinfo, &dvlags);
+    }
+
     fit_resid_init(str, pmod, (const double **) *pZ, pdinfo, fr, 
 		   full_errs);
     if (fr->err) {
@@ -998,7 +1203,11 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
 	fr->err = get_static_fcast_with_errs(fr, pmod, (const double **) *pZ, 
 					     pdinfo);
     } else {
-	fr->err = get_fcast(fr, pmod, pZ, pdinfo);
+	fr->err = get_fcast(fr, pmod, dvlags, pZ, pdinfo);
+    }
+
+    if (dvlags != NULL) {
+	free(dvlags);
     }
 
     return fr;
@@ -1029,6 +1238,7 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 {
     int t, t1, t2, vi;
     char t1str[OBSLEN], t2str[OBSLEN], varname[VNAMELEN];
+    int *dvlags = NULL;
     int err = 0;
 
     *t1str = '\0'; *t2str = '\0';
@@ -1066,6 +1276,10 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 	err = dataset_add_series(1, pZ, pdinfo);
     }
 
+    if (dataset_is_time_series(pdinfo)) {
+	process_lagged_depvar(pmod, pdinfo, &dvlags);
+    }
+
     if (!err) {
 	strcpy(pdinfo->varname[vi], varname);
 	strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
@@ -1081,18 +1295,22 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 	if (pmod->ci == NLS) {
 	    nls_fcast(t1, t2, (*pZ)[vi], 0, pmod, pZ, pdinfo);
 	} else if (SIMPLE_AR_MODEL(pmod->ci)) {
-	    ar_fcast(t1, t2, (*pZ)[vi], 0, pmod, (const double **) *pZ, 
-		     pdinfo);
+	    ar_fcast(t1, t2, (*pZ)[vi], NULL, 0, pmod, dvlags,
+		     (const double **) *pZ, pdinfo);
 	} else if (pmod->ci == ARMA) {
 	    arma_fcast(t1, t2, (*pZ)[vi], NULL, 0, pmod, (const double **) *pZ, 
 		       pdinfo);
 	} else if (pmod->ci == GARCH) {
-	    garch_fcast(t1, t2, (*pZ)[vi], 0, pmod, (const double **) *pZ, 
-			pdinfo);
+	    garch_fcast(t1, t2, (*pZ)[vi], 0, pmod, dvlags,
+			(const double **) *pZ, pdinfo);
 	} else {
-	    linear_fcast(t1, t2, (*pZ)[vi], 0, pmod, (const double **) *pZ, 
-			 pdinfo);
+	    linear_fcast(t1, t2, (*pZ)[vi], 0, pmod, dvlags,
+			 (const double **) *pZ, pdinfo);
 	}
+    }
+
+    if (dvlags != NULL) {
+	free(dvlags);
     }
 
     return err;

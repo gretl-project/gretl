@@ -1754,30 +1754,26 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
     double xx = arinfo->rho[c] / arinfo->sderr[c];
 
     if (plain_format(prn)) {
-	sprintf(ustr, "u_%d", arinfo->arlist[c]);
+	char pvalstr[16];
+	double pval;
+
+	sprintf(ustr, "u_%d", arinfo->arlist[c+1]);
 	pprintf(prn, "%14s", ustr); 
 	bufspace(3, prn);
 	gretl_print_value (arinfo->rho[c], prn);
 	bufspace(2, prn);
 	gretl_print_value (arinfo->sderr[c], prn); 
-	pprintf(prn, " %7.3f ", xx, t_pvalue_2(xx, dfd));
-	if (1) {
-	    char pvalstr[16];
-	    double pval;
-
-	    pval = t_pvalue_2(xx, dfd);
-	    print_pval_str(pval, pvalstr);
-	    pprintf(prn, "%*s\n", UTF_WIDTH(pvalstr, 12), pvalstr);
-	}
-    }
-
-    else if (tex_format(prn)) {
+	pval = t_pvalue_2(xx, dfd);
+	pprintf(prn, " %7.3f ", xx, pval);
+	print_pval_str(pval, pvalstr);
+	pprintf(prn, "%*s\n", UTF_WIDTH(pvalstr, 12), pvalstr);
+    } else if (tex_format(prn)) {
 	char coeff[32], sderr[32];
 
 	tex_dcolumn_double(arinfo->rho[c], coeff);
 	tex_dcolumn_double(arinfo->sderr[c], sderr);
 
-	sprintf(ustr, "$\\hat{u}_{t-%d}$", arinfo->arlist[c]);
+	sprintf(ustr, "$\\hat{u}_{t-%d}$", arinfo->arlist[c+1]);
 
 	pprintf(prn, "%s &\n"
 		"  %s &\n"
@@ -1815,8 +1811,8 @@ static void print_rho_terms (const MODEL *pmod, PRN *prn)
     }
 
     for (i=1; i<=pmod->arinfo->arlist[0]; i++) {
-	print_rho(pmod->arinfo, i, dfd, prn);
-	xx += pmod->arinfo->rho[i]; 
+	print_rho(pmod->arinfo, i - 1, dfd, prn);
+	xx += pmod->arinfo->rho[i-1]; 
     }
 
     if (pmod->arinfo->arlist[0] > 1 && plain_format(prn)) {
