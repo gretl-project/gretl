@@ -2039,17 +2039,26 @@ static void print_discrete_statistics (const MODEL *pmod,
 				       const DATAINFO *pdinfo,
 				       PRN *prn)
 {
-    int i;
-    int correct = gretl_model_get_int(pmod, "correct");
-    double pc_correct = 100 * (double) correct / pmod->nobs;
     double model_chisq = gretl_model_get_double(pmod, "chisq");
     const double *crit = pmod->criterion;
+    const int *act_pred;
+    int correct = -1;
+    double pc_correct = NADBL;
+    int i;
+
+    act_pred = gretl_model_get_data(pmod, "discrete_act_pred");
+    if (act_pred != NULL) {
+	correct = act_pred[0] + act_pred[3];
+	pc_correct = 100 * (double) correct / pmod->nobs;
+    } 
 
     if (plain_format(prn)) {
 	pprintf(prn, "  %s %s = %.3f\n", _("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
-	pprintf(prn, "  %s = %d (%.1f%%)\n", _("Number of cases 'correctly predicted'"), 
-		correct, pc_correct);
+	if (correct >= 0) {
+	    pprintf(prn, "  %s = %d (%.1f%%)\n", _("Number of cases 'correctly predicted'"), 
+		    correct, pc_correct);
+	}
 	pprintf(prn, "  f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
 		pmod->sdy);
 	pprintf(prn, "  %s = %g\n", _("Log-likelihood"), pmod->lnL);
@@ -2065,6 +2074,15 @@ static void print_discrete_statistics (const MODEL *pmod,
 		crit[C_BIC]);
 	pprintf(prn, "  %s = %g\n", _("McFadden's pseudo-R-squared"), pmod->rsq);
 	pputc(prn, '\n');
+
+	if (act_pred != NULL) {
+	    pprintf(prn, "\t\t%s\n", _("Predicted"));
+	    pprintf(prn, "\t\t0\t1\n");
+	    pprintf(prn, "\t0\t%d\t%d\n", act_pred[0], act_pred[1]);
+	    pprintf(prn, "  Actual\n");
+	    pprintf(prn, "\t1\t%d\t%d\n", act_pred[2], act_pred[3]);
+	    pputc(prn, '\n');
+	}
     }
 
     else if (rtf_format(prn)) {
@@ -2072,8 +2090,10 @@ static void print_discrete_statistics (const MODEL *pmod,
 	pprintf(prn, "\\par {\\super *}%s\n", I_("Evaluated at the mean"));
 	pprintf(prn, "\\par %s %s = %.3f\n", I_("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
-	pprintf(prn, "\\par %s = %d (%.1f%%)\n", I_("Number of cases 'correctly predicted'"), 
-		correct, pc_correct);
+	if (correct >= 0) {
+	    pprintf(prn, "\\par %s = %d (%.1f%%)\n", I_("Number of cases 'correctly predicted'"), 
+		    correct, pc_correct);
+	}
 	pprintf(prn, "\\par f(beta'x) %s = %.3f\n", I_("at mean of independent vars"), 
 		pmod->sdy);
 	pprintf(prn, "\\par %s = %g\n", I_("Log-likelihood"), pmod->lnL);
@@ -2101,9 +2121,11 @@ static void print_discrete_statistics (const MODEL *pmod,
 	pputs(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
 	pprintf(prn, "%s %s = %.3f\\\\\n", I_("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
-	pprintf(prn, "%s = %d (%.1f percent)\\\\\n", 
-		I_("Number of cases `correctly predicted'"), 
-		correct, pc_correct);
+	if (correct >= 0) {
+	    pprintf(prn, "%s = %d (%.1f percent)\\\\\n", 
+		    I_("Number of cases `correctly predicted'"), 
+		    correct, pc_correct);
+	}
 	pprintf(prn, "$f(\\beta'x)$ %s = %.3f\\\\\n", I_("at mean of independent vars"), 
 		pmod->sdy);
 	tex_float_str(pmod->lnL, lnlstr);

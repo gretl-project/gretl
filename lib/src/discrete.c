@@ -241,8 +241,9 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     int itermax = 250;
     double tol = 1.0e-9; /* ? */
     int *dmodlist = NULL;
+    int *act_pred = NULL;
     MODEL dmod;
-    int dummy, n_correct;
+    int dummy;
     double xx, zz, fx, Fx, fbx;
     double lldiff, llbak;
     int iters;
@@ -280,6 +281,14 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     if (beta == NULL) {
 	dmod.errcode = E_ALLOC;
 	goto bailout;
+    }
+
+    /* space for actual/predicated matrix */
+    act_pred = malloc(4 * sizeof *act_pred);
+    if (act_pred != NULL) {
+	for (i=0; i<4; i++) {
+	    act_pred[i] = 0;
+	}
     }
 
     /* make room for full set of transformed vars */
@@ -482,7 +491,6 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 
     /* calculate additional statistics */
     xx = 0.0;
-    n_correct = 0;
     for (t=dmod.t1; t<=dmod.t2; t++) {
 	double xb = dmod.yhat[t];
 
@@ -491,8 +499,11 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	}
 	zz = (*pZ)[depvar][t];
 	xx += zz;
-	n_correct += ((xb > 0.0 && floateq(zz, 1.0)) ||
-		      (xb <= 0.0 && floateq(zz, 0.0)));
+
+	if (act_pred != NULL) {
+	    i = 2 * (floateq(zz, 1.0)) + (xb > 0.0);
+	    act_pred[i] += 1;
+	}
 
 	if (dmod.ci == LOGIT) {
 	   dmod.yhat[t] = exp(xb) / (1.0 + exp(xb)); 
@@ -505,7 +516,11 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     xx /= dmod.nobs;
     dmod.ybar = xx;
     dmod.sdy = fbx;
-    gretl_model_set_int(&dmod, "correct", n_correct);
+
+    if (act_pred != NULL) {
+	gretl_model_set_data(&dmod, "discrete_act_pred", act_pred, 
+			     4 * sizeof *act_pred);
+    }
 
     mle_aic_bic(&dmod, 0);
 
