@@ -288,7 +288,7 @@ fit_resid_init (const char *line, const MODEL *pmod,
 	if (pmod->ci == ARMA && fr->t2 > pmod->t2) {
 	    errs = 1;
 	} 
-	if (SIMPLE_AR_MODEL(pmod->ci) && !(opt & OPT_D)) {
+	if (SIMPLE_AR_MODEL(pmod->ci) && !(opt & OPT_S)) {
 	    errs = 1;
 	}
 	fr->err = allocate_fit_resid_arrays(fr, errs);
@@ -1138,7 +1138,9 @@ static int get_fcast (FITRESID *fr, MODEL *pmod, const int *dvlags,
  * @pZ: pointer to data array using which @pmod was estimated.
  * @pdinfo: dataset information.
  * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
- * a static forecast.
+ * a static forecast.  By default, the forecast is static within
+ * the data range over which the model was estimated, and dynamic
+ * out of sample (in cases where a dynamic forecast is meaningful).
  *
  * Allocates a #FITRESID structure and fills it out with forecasts
  * based on @pmod, over the specified range of observations.  
@@ -1183,9 +1185,8 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
 	return fr;
     }
 
-    if (dataset_is_time_series(pdinfo) && !(opt & OPT_D)) {
-	/* "dynamic" (one-step ahead) forecasts need the actual value
-	   of any lagged dependent variable */
+    if (dataset_is_time_series(pdinfo) && !(opt & OPT_S)) {
+	/* don't treat lagged depvar specially for static f'cast */
 	process_lagged_depvar(pmod, pdinfo, &dvlags);
     }
 
@@ -1217,8 +1218,10 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
  * @pmod: pointer to model.
  * @pZ: pointer to data matrix.
  * @pdinfo: pointer to data information struct.
- * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force a
- * static forecast.
+ * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
+ * a static forecast.  By default, the forecast is static within
+ * the data range over which the model was estimated, and dynamic
+ * out of sample (in cases where a dynamic forecast is meaningful).
  *
  * Adds to the dataset a new variable containing predicted values for the
  * dependent variable in @pmod over the specified range of observations,
@@ -1274,7 +1277,8 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 	err = dataset_add_series(1, pZ, pdinfo);
     }
 
-    if (dataset_is_time_series(pdinfo) && !(opt & OPT_D)) {
+    if (dataset_is_time_series(pdinfo) && !(opt & OPT_S)) {
+	/* don't treat lagged depvar specially for static f'cast */
 	process_lagged_depvar(pmod, pdinfo, &dvlags);
     }
 
@@ -1321,9 +1325,10 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
  * @pmod: the model from which forecasts are wanted.
  * @pZ: pointer to data array using which @pmod was estimated.
  * @pdinfo: dataset information.
- * @opt: if includes %OPT_P, make a plot of the forecasts; if
- * includes OPT_S, force a static forecast; if includes OPT_D,
- * force a dynamic forecast.
+ * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
+ * a static forecast.  By default, the forecast is static within
+ * the data range over which the model was estimated, and dynamic
+ * out of sample (in cases where a dynamic forecast is meaningful).
  * @prn: printing structure.
  *
  * Computes forecasts based on @pmod, over the range of observations
