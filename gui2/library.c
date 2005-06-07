@@ -1308,7 +1308,7 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	return;
     }
 
-    fr = get_forecast(cmdline, pmod, &Z, datainfo);
+    fr = get_forecast(cmdline, pmod, &Z, datainfo, OPT_NONE); /* FIXME */
 
     if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));
@@ -5932,9 +5932,9 @@ int gui_exec_line (char *line,
     case FIT:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	if (cmd.ci == FIT) {
-	    err = add_forecast("fcast autofit", models[0], &Z, datainfo);
+	    err = add_forecast("fcast autofit", models[0], &Z, datainfo, cmd.opt);
 	} else {
-	    err = add_forecast(line, models[0], &Z, datainfo);
+	    err = add_forecast(line, models[0], &Z, datainfo, cmd.opt);
 	}
 	if (err) {
 	    errmsg(err, prn);

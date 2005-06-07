@@ -28,14 +28,16 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 			 const DATAINFO *pdinfo);
 
 FITRESID *get_forecast (const char *str, MODEL *pmod, 
-			double ***pZ, DATAINFO *pdinfo);
+			double ***pZ, DATAINFO *pdinfo,
+			gretlopt opt);
 
 int display_forecast (const char *str, MODEL *pmod, 
 		      double ***pZ, DATAINFO *pdinfo, 
 		      gretlopt opt, PRN *prn);
 
 int add_forecast (const char *str, const MODEL *pmod, 
-		  double ***pZ, DATAINFO *pdinfo);
+		  double ***pZ, DATAINFO *pdinfo,
+		  gretlopt opt);
 
 #endif /* FORECAST_H */
 

@@ -260,7 +260,7 @@ static int process_lagged_depvar (const MODEL *pmod,
 static int 
 fit_resid_init (const char *line, const MODEL *pmod, 
 		const double **Z, const DATAINFO *pdinfo,
-		FITRESID *fr, int errs)
+		FITRESID *fr, int errs, gretlopt opt)
 {
     char t1str[OBSLEN], t2str[OBSLEN];
 
@@ -285,8 +285,10 @@ fit_resid_init (const char *line, const MODEL *pmod,
 
     if (!fr->err) {
 	fr->nobs = fr->t2 - fr->t1 + 1;
-	if ((pmod->ci == ARMA || SIMPLE_AR_MODEL(pmod->ci)) && 
-	    fr->t2 > pmod->t2) {
+	if (pmod->ci == ARMA && fr->t2 > pmod->t2) {
+	    errs = 1;
+	} 
+	if (SIMPLE_AR_MODEL(pmod->ci) && !(opt & OPT_D)) {
 	    errs = 1;
 	}
 	fr->err = allocate_fit_resid_arrays(fr, errs);
@@ -504,17 +506,6 @@ garch_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
     int *xlist = NULL;
     int i, v, s, t;
 
-    /* use pre-calculated fitted values over model estimation range */
-    for (t=t1; t<=pmod->t2; t++) {
-	s = t - offset;
-	yhat[s] = pmod->yhat[t];
-    }
-
-    if (t2 <= pmod->t2) {
-	/* no real forecasts called for, we're done */
-	return 0;
-    }
-
     xlist = gretl_arma_model_get_x_list(pmod);
     yno = gretl_model_get_depvar(pmod);
 
@@ -524,8 +515,7 @@ garch_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 	xvars = 0;
     }
 
-    /* do real forecast */
-    for (t=pmod->t2 + 1; t<=t2; t++) {
+    for (t=t1; t<=t2; t++) {
 	int miss = 0;
 	double yh = 0.0;
 
@@ -557,9 +547,7 @@ garch_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 }
 
 /* Compute ARMA forecast error variance (ignoring parameter
-   uncertainty, as is common), via recursion.  Added June 3,
-   2005.  Experimental: needs to be checked against, say,
-   R's arma forecast errors.
+   uncertainty, as is common), via recursion. 
 */
 
 static double 
@@ -865,7 +853,8 @@ static void set_up_ar_fcast_variance (const MODEL *pmod, int pmax,
 static int 
 ar_fcast (int t1, int t2, double *yhat, double *sderr, 
 	  int offset, const MODEL *pmod, const int *dvlags,
-	  const double **Z, const DATAINFO *pdinfo)
+	  const double **Z, const DATAINFO *pdinfo,
+	  gretlopt opt)
 {
     const int *arlist;
     double *phi = NULL;
@@ -922,7 +911,7 @@ ar_fcast (int t1, int t2, double *yhat, double *sderr,
 	/* LHS adjustment */
 	for (k=1; k<=arlist[0]; k++) {
 	    rk = pmod->arinfo->rho[k-1];
-	    /* use actual lagged y by preference */
+	    /* FIXME static versus dynamic forecasts */
 	    ylag = Z[yno][t - arlist[k]];
 	    if (na(ylag) && s - arlist[k] >= 0) {
 		/* use prior forecast of lagged y */
@@ -958,7 +947,8 @@ ar_fcast (int t1, int t2, double *yhat, double *sderr,
 		    xlag = Z[v][t - arlist[k]];
 		    if (na(xlag) && dvlags != NULL) {
 			/* lagged dependent variable? */
-			xlag = maybe_get_yhat_lag(v, dvlags, yhat, s - arlist[k], NULL);
+			xlag = maybe_get_yhat_lag(v, dvlags, yhat, s - arlist[k], 
+						  NULL);
 		    }
 		    if (!na(xlag)) {
 			xval -= rk * xlag;
@@ -1097,7 +1087,8 @@ linear_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
    for different sorts of models */
 
 static int get_fcast (FITRESID *fr, MODEL *pmod, const int *dvlags,
-		      double ***pZ, DATAINFO *pdinfo) 
+		      double ***pZ, DATAINFO *pdinfo,
+		      gretlopt opt) 
 {
     int yno = gretl_model_get_depvar(pmod);
     int s, t;
@@ -1107,7 +1098,7 @@ static int get_fcast (FITRESID *fr, MODEL *pmod, const int *dvlags,
 	err = nls_fcast(fr->t1, fr->t2, fr->fitted, fr->t1, pmod, pZ, pdinfo);
     } else if (SIMPLE_AR_MODEL(pmod->ci)) {
 	err = ar_fcast(fr->t1, fr->t2, fr->fitted, fr->sderr, fr->t1, pmod, 
-		       dvlags, (const double **) *pZ, pdinfo);
+		       dvlags, (const double **) *pZ, pdinfo, opt);
     } else if (pmod->ci == ARMA) {
 	err = arma_fcast(fr->t1, fr->t2, fr->fitted, fr->sderr, fr->t1, pmod, 
 			 (const double **) *pZ, pdinfo);
@@ -1146,6 +1137,8 @@ static int get_fcast (FITRESID *fr, MODEL *pmod, const int *dvlags,
  * @pmod: the model from which forecasts are wanted.
  * @pZ: pointer to data array using which @pmod was estimated.
  * @pdinfo: dataset information.
+ * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
+ * a static forecast.
  *
  * Allocates a #FITRESID structure and fills it out with forecasts
  * based on @pmod, over the specified range of observations.  
@@ -1167,7 +1160,8 @@ static int get_fcast (FITRESID *fr, MODEL *pmod, const int *dvlags,
  */
 
 FITRESID *get_forecast (const char *str, MODEL *pmod, 
-			double ***pZ, DATAINFO *pdinfo) 
+			double ***pZ, DATAINFO *pdinfo,
+			gretlopt opt) 
 {
     FITRESID *fr;
     int *dvlags = NULL;
@@ -1189,12 +1183,14 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
 	return fr;
     }
 
-    if (dataset_is_time_series(pdinfo)) {
+    if (dataset_is_time_series(pdinfo) && !(opt & OPT_D)) {
+	/* "dynamic" (one-step ahead) forecasts need the actual value
+	   of any lagged dependent variable */
 	process_lagged_depvar(pmod, pdinfo, &dvlags);
     }
 
     fit_resid_init(str, pmod, (const double **) *pZ, pdinfo, fr, 
-		   full_errs);
+		   full_errs, opt);
     if (fr->err) {
 	return fr;
     }   
@@ -1203,7 +1199,7 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
 	fr->err = get_static_fcast_with_errs(fr, pmod, (const double **) *pZ, 
 					     pdinfo);
     } else {
-	fr->err = get_fcast(fr, pmod, dvlags, pZ, pdinfo);
+	fr->err = get_fcast(fr, pmod, dvlags, pZ, pdinfo, opt);
     }
 
     if (dvlags != NULL) {
@@ -1221,6 +1217,8 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
  * @pmod: pointer to model.
  * @pZ: pointer to data matrix.
  * @pdinfo: pointer to data information struct.
+ * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force a
+ * static forecast.
  *
  * Adds to the dataset a new variable containing predicted values for the
  * dependent variable in @pmod over the specified range of observations,
@@ -1234,7 +1232,7 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
  */
 
 int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
-		  DATAINFO *pdinfo)
+		  DATAINFO *pdinfo, gretlopt opt)
 {
     int t, t1, t2, vi;
     char t1str[OBSLEN], t2str[OBSLEN], varname[VNAMELEN];
@@ -1276,7 +1274,7 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 	err = dataset_add_series(1, pZ, pdinfo);
     }
 
-    if (dataset_is_time_series(pdinfo)) {
+    if (dataset_is_time_series(pdinfo) && !(opt & OPT_D)) {
 	process_lagged_depvar(pmod, pdinfo, &dvlags);
     }
 
@@ -1296,7 +1294,7 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 	    nls_fcast(t1, t2, (*pZ)[vi], 0, pmod, pZ, pdinfo);
 	} else if (SIMPLE_AR_MODEL(pmod->ci)) {
 	    ar_fcast(t1, t2, (*pZ)[vi], NULL, 0, pmod, dvlags,
-		     (const double **) *pZ, pdinfo);
+		     (const double **) *pZ, pdinfo, opt);
 	} else if (pmod->ci == ARMA) {
 	    arma_fcast(t1, t2, (*pZ)[vi], NULL, 0, pmod, (const double **) *pZ, 
 		       pdinfo);
@@ -1323,7 +1321,9 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
  * @pmod: the model from which forecasts are wanted.
  * @pZ: pointer to data array using which @pmod was estimated.
  * @pdinfo: dataset information.
- * @opt: if includes %OPT_P, make a plot of the forecasts.
+ * @opt: if includes %OPT_P, make a plot of the forecasts; if
+ * includes OPT_S, force a static forecast; if includes OPT_D,
+ * force a dynamic forecast.
  * @prn: printing structure.
  *
  * Computes forecasts based on @pmod, over the range of observations
@@ -1341,7 +1341,7 @@ int display_forecast (const char *str, MODEL *pmod,
     FITRESID *fr;
     int err;
 
-    fr = get_forecast(str, pmod, pZ, pdinfo);
+    fr = get_forecast(str, pmod, pZ, pdinfo, opt);
 
     if (fr == NULL) {
 	return E_ALLOC;

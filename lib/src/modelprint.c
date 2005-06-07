@@ -2035,6 +2035,38 @@ static void print_arma_stats (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void plain_print_act_pred (const int *ap, PRN *prn)
+{
+    int leftlen;
+    int numwidth = 1;
+    int i, bign = 0;
+
+    for (i=0; i<4; i++) {
+	if (ap[i] > bign) {
+	    bign = ap[i];
+	}
+    }
+
+    while (bign /= 10) {
+	numwidth++;
+    }
+
+    leftlen = strlen(_("Actual")) + 3; /* utflen */
+
+    bufspace(leftlen + 2, prn);
+    pputs(prn, _("Predicted"));
+    pputc(prn, '\n');
+    bufspace(leftlen + 3, prn);
+    pprintf(prn, "%*d   %*d\n\n", numwidth, 0, numwidth, 1);
+    bufspace(leftlen, prn);
+    pprintf(prn, "0  %*d   %*d\n", numwidth, ap[0], numwidth, ap[1]);
+    bufspace(2, prn);
+    pputs(prn, _("Actual"));  
+    pputc(prn, '\n');
+    bufspace(leftlen, prn);
+    pprintf(prn, "1  %*d   %*d\n", numwidth, ap[2], numwidth, ap[3]);
+}
+
 static void print_discrete_statistics (const MODEL *pmod, 
 				       const DATAINFO *pdinfo,
 				       PRN *prn)
@@ -2056,7 +2088,8 @@ static void print_discrete_statistics (const MODEL *pmod,
 	pprintf(prn, "  %s %s = %.3f\n", _("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
 	if (correct >= 0) {
-	    pprintf(prn, "  %s = %d (%.1f%%)\n", _("Number of cases 'correctly predicted'"), 
+	    pprintf(prn, "  %s = %d (%.1f%%)\n", 
+		    _("Number of cases 'correctly predicted'"), 
 		    correct, pc_correct);
 	}
 	pprintf(prn, "  f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
@@ -2076,12 +2109,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 	pputc(prn, '\n');
 
 	if (act_pred != NULL) {
-	    pprintf(prn, "\t\t%s\n", _("Predicted"));
-	    pprintf(prn, "\t\t0\t1\n");
-	    pprintf(prn, "\t0\t%d\t%d\n", act_pred[0], act_pred[1]);
-	    pprintf(prn, "  Actual\n");
-	    pprintf(prn, "\t1\t%d\t%d\n", act_pred[2], act_pred[3]);
-	    pputc(prn, '\n');
+	    plain_print_act_pred(act_pred, prn);
 	}
     }
 
@@ -2091,7 +2119,8 @@ static void print_discrete_statistics (const MODEL *pmod,
 	pprintf(prn, "\\par %s %s = %.3f\n", I_("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
 	if (correct >= 0) {
-	    pprintf(prn, "\\par %s = %d (%.1f%%)\n", I_("Number of cases 'correctly predicted'"), 
+	    pprintf(prn, "\\par %s = %d (%.1f%%)\n", 
+		    I_("Number of cases 'correctly predicted'"), 
 		    correct, pc_correct);
 	}
 	pprintf(prn, "\\par f(beta'x) %s = %.3f\n", I_("at mean of independent vars"), 

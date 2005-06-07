@@ -1107,9 +1107,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case FIT:
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	if (cmd.ci == FIT) {
-	    err = add_forecast("fcast autofit", models[0], &Z, datainfo);
+	    err = add_forecast("fcast autofit", models[0], &Z, datainfo, cmd.opt);
 	} else {
-	    err = add_forecast(line, models[0], &Z, datainfo);
+	    err = add_forecast(line, models[0], &Z, datainfo, cmd.opt);
 	}
 	if (err) {
 	    errmsg(err, prn);
