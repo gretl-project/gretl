@@ -1280,18 +1280,61 @@ void do_remove_markers (gpointer data, guint u, GtkWidget *w)
 
 /* ........................................................... */
 
+static gretlopt get_gui_forecast_option (const MODEL *pmod,
+					 int t2, int *cancel)
+{
+    const char *fcast_opts[] = {
+	N_("automatic forecast (dynamic out of sample)"),
+	N_("dynamic forecast"),
+	N_("static forecast")
+    };
+    const char **opts;
+    int dyn_ok, auto_ok, nopts;
+    gretlopt ret = OPT_NONE;
+    int fopt;
+
+    *cancel = 0;
+
+    forecast_options_for_model(pmod, t2, datainfo, 
+			       &dyn_ok, &auto_ok);
+
+    if (dyn_ok && auto_ok) {
+	opts = fcast_opts;
+	nopts = 3;
+    } else if (dyn_ok) {
+	opts = fcast_opts + 1;
+	nopts = 2;
+    } else {
+	return ret;
+    }
+
+    fopt = radio_dialog(_("forecast options"), opts, nopts, 
+			0, FCASTERR);
+
+    if (fopt < 0) {
+	*cancel = 1;
+    } else if (fopt == nopts - 2) {
+	ret = OPT_D;
+    } else if (fopt == nopts - 1) {
+	ret = OPT_S;
+    }
+
+    return ret;
+}
+
 void do_forecast (gpointer data, guint u, GtkWidget *w) 
 {
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
     int t1 = 0, t2 = datainfo->n - 1;
+    gretlopt opt = OPT_NONE;
     FITRESID *fr;
     PRN *prn;
     int resp, err;
 
     resp = get_obs_dialog(_("gretl: forecast"), 
-			  _("Forecast period"),
+			  _("Forecast range"),
 			  _("Start:"), _("End:"), 
 			  0, datainfo->n - 1, &t1,
 			  0, datainfo->n - 1, &t2);
@@ -1299,16 +1342,22 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	return;
     }
 
+    opt = get_gui_forecast_option(pmod, t2, &err);
+    if (err) {
+	return;
+    }
+
     ntodate(startobs, t1, datainfo);
     ntodate(endobs, t2, datainfo);
 
-    gretl_command_sprintf("fcasterr %s %s", startobs, endobs);
+    gretl_command_sprintf("fcasterr %s %s%s", startobs, endobs,
+			  print_flags(opt, FCASTERR));
 
     if (check_and_record_command() || bufopen(&prn)) {
 	return;
     }
 
-    fr = get_forecast(cmdline, pmod, &Z, datainfo, OPT_NONE); /* FIXME */
+    fr = get_forecast(cmdline, pmod, &Z, datainfo, opt);
 
     if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));

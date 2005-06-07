@@ -20,7 +20,29 @@
 #ifndef FORECAST_H
 #define FORECAST_H
 
-FITRESID *fit_resid_new (int n, int errs);
+typedef enum {
+    FC_STATIC,
+    FC_DYNAMIC,
+    FC_AUTO
+} ForecastMethod;
+
+struct FITRESID_ {
+    int model_ID;
+    int model_ci;
+    int method;
+    double *actual;
+    double *fitted;
+    double *sderr;
+    double sigma;
+    double tval;
+    int pmax;
+    int df;
+    int t1, t2;
+    int nobs;
+    int real_nobs;
+    int err;
+    char depvar[VNAMELEN];
+};
 
 void free_fit_resid (FITRESID *fr);
 
@@ -38,6 +60,11 @@ int display_forecast (const char *str, MODEL *pmod,
 int add_forecast (const char *str, const MODEL *pmod, 
 		  double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt);
+
+void forecast_options_for_model (const MODEL *pmod, int t2,
+				 const DATAINFO *pdinfo,
+				 int *dyn_ok, int *auto_ok);
+
 
 #endif /* FORECAST_H */
 

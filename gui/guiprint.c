@@ -23,6 +23,7 @@
 #include "gretl.h"
 #include "selector.h"
 #include "textutil.h"
+#include "forecast.h"
 
 #if defined(USE_GNOME)
 

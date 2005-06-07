@@ -322,22 +322,6 @@ struct mp_results_ {
     double fstt;
 };
 
-struct FITRESID_ {
-    int model_ID;
-    double *actual;
-    double *fitted;
-    double *sderr;
-    double sigma;
-    double tval;
-    int pmax;
-    int df;
-    int t1, t2;
-    int nobs;
-    int real_nobs;
-    int err;
-    char depvar[VNAMELEN];
-};
-
 #define VARLABEL(p,i)        ((p->varinfo[i])->label)
 #define DISPLAYNAME(p,i)     ((p->varinfo[i])->display_name)
 #define COMPACT_METHOD(p,i)  ((p->varinfo[i])->compact_method)

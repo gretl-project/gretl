@@ -32,8 +32,21 @@
 
 #define CHECK_LAGGED_DEPVAR(c) (c != NLS && c != ARMA)
 
+typedef struct Forecast_ Forecast;
+
+struct Forecast_ {
+    int method;
+    double *yhat;
+    double *sderr;
+    double *eps;
+    int *dvlags;
+    int offset;
+    int t1;
+    int t2;
+};
+
 static int 
-allocate_fit_resid_arrays (FITRESID *fr, int errs)
+allocate_basic_fit_resid_arrays (FITRESID *fr)
 {
     fr->actual = malloc(fr->nobs * sizeof *fr->actual);
     if (fr->actual == NULL) {
@@ -47,29 +60,28 @@ allocate_fit_resid_arrays (FITRESID *fr, int errs)
 	return E_ALLOC;
     }
 
-    if (errs) {
-	fr->sderr = malloc(fr->nobs * sizeof *fr->sderr);
-	if (fr->sderr == NULL) {
-	    free(fr->actual);
-	    fr->actual = NULL;
-	    free(fr->fitted);
-	    fr->fitted = NULL;
-	    return E_ALLOC;
-	}
-    } else {
-	fr->sderr = NULL;
-    }
+    fr->sderr = NULL;
 
     return 0;
+}
+
+static int fit_resid_add_sderr (FITRESID *fr)
+{
+    int err = 0;
+
+    fr->sderr = malloc(fr->nobs * sizeof *fr->sderr);
+
+    if (fr->sderr == NULL) {
+	err = E_ALLOC;
+    } 
+    
+    return err;
 }
 
 /**
  * fit_resid_new:
  * @n: the number of observations to allow for, or 0 if this
  * information will be added later.
- * @errs: set = 1 to allocate space in the structure for
- * forecast standard errors, otherwise 0 (relevant only if
- * @n is greater than zero).
  *
  * Allocates a #FITRESID struct for holding fitted values and
  * residuals from a model (or out-of-sample forecasts).  If
@@ -79,7 +91,7 @@ allocate_fit_resid_arrays (FITRESID *fr, int errs)
  * Returns: pointer to allocated structure, or %NULL on failure.
  */
 
-FITRESID *fit_resid_new (int n, int errs)
+static FITRESID *fit_resid_new (int n)
 {
     FITRESID *fr = malloc(sizeof *fr);
 
@@ -88,23 +100,24 @@ FITRESID *fit_resid_new (int n, int errs)
     }
 
     fr->model_ID = 0;
+    fr->model_ci = 0;
     fr->err = 0;
     fr->t1 = 0;
     fr->t2 = 0;
     fr->nobs = 0;
     fr->real_nobs = 0;
 
-    if (n == 0) {
-	fr->actual = NULL;
-	fr->fitted = NULL;
-	fr->sderr = NULL;
-    } else {
+    if (n > 0) {
 	fr->nobs = n;
-	if (allocate_fit_resid_arrays(fr, errs)) {
+	if (allocate_basic_fit_resid_arrays(fr)) {
 	    free(fr);
 	    fr = NULL;
 	} 
-    }
+    } else {
+	fr->actual = NULL;
+	fr->fitted = NULL;
+	fr->sderr = NULL;
+    } 
     
     return fr;
 }
@@ -147,7 +160,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 
     depvar = gretl_model_get_depvar(pmod);
 
-    fr = fit_resid_new(pmod->t2 - pmod->t1 + 1, 0);
+    fr = fit_resid_new(pmod->t2 - pmod->t1 + 1);
     if (fr == NULL) {
 	return NULL;
     }
@@ -179,34 +192,21 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
     return fr;
 }
 
-/* Make a "double list" to keep track of any "independent variables"
-   that are really lags of the dependent variable.  The first element
-   of the list is the number of _pairs_ of integers that follow; in
-   each following pair the leading number is the ID number of a
-   variable in the regression list and the second is the lag order.
-   Thus for example the pair (13, 2) records the fact that the
-   variable with ID number 13 is actually lag 2 of the dependent
-   variable.
-*/
-
-static int process_lagged_depvar (const MODEL *pmod, 
-				  const DATAINFO *pdinfo,
-				  int **depvar_lags)
+static int 
+count_depvar_lags (const MODEL *pmod, const DATAINFO *pdinfo)
 {
-    int *dvlags = NULL;
+    char xname[9], tmp[9];  
     const char *label;
     const char *yname;
-    char xname[9], tmp[9];
-    int lag, nlags = 0;
-    int vi, i;
-    int err = 0;
+    int i, vi, lag;
+    int nlags = 0;
 
     if (pmod->ci == NLS || pmod->ci == ARMA) {
 	/* we won't do this for these models */
 	return 0;
     }
 
-    yname = pdinfo->varname[pmod->list[1]];
+    yname = pdinfo->varname[gretl_model_get_depvar(pmod)];
 
     for (i=2; i<=pmod->list[0]; i++) {
 	vi = pmod->list[i];
@@ -222,17 +222,48 @@ static int process_lagged_depvar (const MODEL *pmod,
 	}
     }
 
-    if (nlags > 0) {
-	dvlags = malloc((nlags * 2 + 1) * sizeof *dvlags);
-	if (dvlags == NULL) {
-	    err = 1;
-	} else {
-	    dvlags[0] = nlags;
-	}
+    return nlags;
+}
+
+/* Make a "double list" to keep track of any "independent variables"
+   that are really lags of the dependent variable.  The first element
+   of the list is the number of _pairs_ of integers that follow; in
+   each following pair the leading number is the ID number of a
+   variable in the regression list and the second is the lag order.
+   Thus for example the pair (13, 2) records the fact that the
+   variable with ID number 13 is actually lag 2 of the dependent
+   variable.
+*/
+
+static int process_lagged_depvar (const MODEL *pmod, 
+				  const DATAINFO *pdinfo,
+				  int **depvar_lags)
+{
+    int *dvlags = NULL;
+    int nlags;
+    int err = 0;
+
+    nlags = count_depvar_lags(pmod, pdinfo);
+
+    if (nlags == 0) {
+	*depvar_lags = NULL;
+	return 0;
+    }
+
+    dvlags = malloc((nlags * 2 + 1) * sizeof *dvlags);
+    if (dvlags == NULL) {
+	err = 1;
+    } else {
+	dvlags[0] = nlags;
     }
 
     if (nlags > 0 && !err) {
-	int j = 1;
+	char xname[9], tmp[9];
+	const char *label;
+	const char *yname;
+	int i, vi, lag, j = 1;
+
+	yname = pdinfo->varname[gretl_model_get_depvar(pmod)];
 
 	for (i=2; i<=pmod->list[0]; i++) {
 	    vi = pmod->list[i];
@@ -259,8 +290,7 @@ static int process_lagged_depvar (const MODEL *pmod,
 
 static int 
 fit_resid_init (const char *line, const MODEL *pmod, 
-		const double **Z, const DATAINFO *pdinfo,
-		FITRESID *fr, int errs, gretlopt opt)
+		const DATAINFO *pdinfo, FITRESID *fr)
 {
     char t1str[OBSLEN], t2str[OBSLEN];
 
@@ -285,39 +315,65 @@ fit_resid_init (const char *line, const MODEL *pmod,
 
     if (!fr->err) {
 	fr->nobs = fr->t2 - fr->t1 + 1;
-	if (pmod->ci == ARMA && fr->t2 > pmod->t2) {
-	    errs = 1;
-	} 
-	if (SIMPLE_AR_MODEL(pmod->ci) && !(opt & OPT_S)) {
-	    errs = 1;
-	}
-	fr->err = allocate_fit_resid_arrays(fr, errs);
+	fr->err = allocate_basic_fit_resid_arrays(fr);
     }
 
     fr->model_ID = pmod->ID;
+    fr->model_ci = pmod->ci;
 
     return fr->err;
 }
 
-/* if an "independent" variable needed in generating a forecast is
+/* If an "independent" variable needed in generating a forecast is
    missing, check whether it might in fact be a lagged value of the
-   dependent variable, for which we have a prior forecast available 
+   dependent variable, for which we have a prior forecast available.
+   if so, return that value; also we use "order" to return the lag
+   order of the variable whose value is retrieved.
 */
 
 static double 
-maybe_get_yhat_lag (int vi, const int *dvlags, const double *yhat, int s,
-		    int *order)
+get_lagged_yhat (Forecast *fc, int vi, int t, int *order)
 {
     double yhlag = NADBL;
+    int s = t - fc->offset;
     int i, lag = 0;
 
-    for (i=1; i<=dvlags[0]; i++) {
-	if (dvlags[2*i-1] == vi) {
-	    lag = dvlags[2*i];
-	    if (s - lag >= 0) {
-		yhlag = yhat[s - lag];
+    if (fc->dvlags != NULL) {
+	for (i=1; i<=fc->dvlags[0]; i++) {
+	    if (fc->dvlags[2*i-1] == vi) {
+		lag = fc->dvlags[2*i];
+		if (s - lag >= 0) {
+		    yhlag = fc->yhat[s - lag];
+		}
+		break;
 	    }
-	    break;
+	}
+    }
+
+    *order = lag;
+
+    return yhlag;
+}
+
+/* below: FIXME.  If method is dynamic we should prefer lagged
+   prediction to lagged actual.  If method is static, we don't
+   want the lagged prediction.  If method is auto, which we prefer
+   depends on whether we're in or out of sample */
+
+static double fcast_get_xit (Forecast *fc, int i, int t,
+			     const double **Z, int *order)
+{
+    double ylag, xit = Z[i][t];
+    int lag = 0;
+
+    if (fc->method == FC_DYNAMIC) {
+	ylag = get_lagged_yhat(fc, i, t, &lag);
+	if (lag > 0 && lag < t - fc->t1) {
+	    xit = ylag;
+	}
+    } else if (fc->method == FC_AUTO) {
+	if (na(xit) && fc->dvlags != NULL) {
+	    xit = get_lagged_yhat(fc, i, t, &lag);
 	}
     }
 
@@ -325,10 +381,10 @@ maybe_get_yhat_lag (int vi, const int *dvlags, const double *yhat, int s,
 	*order = lag;
     }
 
-    return yhlag;
+    return xit;
 }
 
-/* Get forecasts plus standard errors for same, for models without
+/* Get forecasts, plus standard errors for same, for models without
    autoregressive errors and without "special requirements"
    (e.g. nonlinearity).  The forecast standard errors include both
    uncertainty over the error process and parameter uncertainty
@@ -336,15 +392,14 @@ maybe_get_yhat_lag (int vi, const int *dvlags, const double *yhat, int s,
 */
 
 static int
-get_static_fcast_with_errs (FITRESID *fr, MODEL *pmod, 
-			    const double **Z, const DATAINFO *pdinfo) 
+static_fcast_with_errs (Forecast *fc, MODEL *pmod, 
+			const double **Z, const DATAINFO *pdinfo) 
 {
     gretl_matrix *V = NULL;
     gretl_vector *Xs = NULL;
     gretl_vector *b = NULL;
 
     double s2 = pmod->sigma * pmod->sigma;
-    int yno = gretl_model_get_depvar(pmod);
     int k = pmod->ncoeff;
     int i, vi, s, t;
     int err = 0;
@@ -367,13 +422,11 @@ get_static_fcast_with_errs (FITRESID *fr, MODEL *pmod,
 	goto bailout;
     }
 
-    for (t=fr->t1; t<=fr->t2 && !err; t++) {
+    for (t=fc->t1; t<=fc->t2 && !err; t++) {
 	int missing = 0;
 	double vyh;
 
-	s = t - fr->t1;
-
-	fr->actual[s] = Z[yno][t];
+	s = t - fc->offset;
 
 	/* skip if we can't compute forecast */
 	if (t >= pmod->t1 && t <= pmod->t2) {
@@ -387,7 +440,7 @@ get_static_fcast_with_errs (FITRESID *fr, MODEL *pmod,
 	    vi = pmod->list[i + 2];
 	    xval = Z[vi][t];
 	    if (na(xval)) {
-		fr->sderr[s] = fr->fitted[s] = NADBL;
+		fc->sderr[s] = fc->yhat[s] = NADBL;
 		missing = 1;
 	    } else {
 		gretl_vector_set(Xs, i, xval);
@@ -395,14 +448,14 @@ get_static_fcast_with_errs (FITRESID *fr, MODEL *pmod,
 	}
 
 	if (missing) {
-	    fr->sderr[s] = fr->fitted[s] = NADBL;
+	    fc->sderr[s] = fc->yhat[s] = NADBL;
 	    continue;
 	}
 
 	/* forecast value */
-	fr->fitted[s] = gretl_matrix_dot_product(Xs, GRETL_MOD_NONE,
-						 b, GRETL_MOD_NONE,
-						 NULL);
+	fc->yhat[s] = gretl_matrix_dot_product(Xs, GRETL_MOD_NONE,
+					       b, GRETL_MOD_NONE,
+					       NULL);
 
 	/* forecast variance */
 	vyh = gretl_scalar_b_X_b_prime(Xs, V, NULL);
@@ -411,17 +464,13 @@ get_static_fcast_with_errs (FITRESID *fr, MODEL *pmod,
 	} else {
 	    vyh += s2;
 	    if (vyh >= 0.0) {
-		fr->sderr[s] = sqrt(vyh);
+		fc->sderr[s] = sqrt(vyh);
 	    } else {
-		fr->sderr[s] = NADBL;
+		fc->sderr[s] = NADBL;
 		err = 1;
 	    }
 	}
     }
-
-    fr->tval = tcrit95(pmod->dfd);
-    strcpy(fr->depvar, pdinfo->varname[yno]);
-    fr->df = pmod->dfd;
 
  bailout:
 
@@ -438,8 +487,8 @@ get_static_fcast_with_errs (FITRESID *fr, MODEL *pmod,
    attempt to calculate forecast error variance.
 */
 
-static int nls_fcast (int t1, int t2, double *fcast, int offset,
-		      const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
+static int nls_fcast (Forecast *fc, const MODEL *pmod, 
+		      double ***pZ, DATAINFO *pdinfo)
 {
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
@@ -454,16 +503,16 @@ static int nls_fcast (int t1, int t2, double *fcast, int offset,
     }
 
     if (!err) {
-	pdinfo->t1 = t1;
-	pdinfo->t2 = t2;
+	pdinfo->t1 = fc->t1;
+	pdinfo->t2 = fc->t2;
 	sprintf(formula, "$nl_y = %s", nlfunc);
 	err = generate(formula, pZ, pdinfo, NULL, OPT_P);
     }
 
     if (!err) {
 	/* transcribe values from last generated var to target */
-	for (t=t1; t<=t2; t++) {
-	    fcast[t - offset] = (*pZ)[oldv][t];
+	for (t=fc->t1; t<=fc->t2; t++) {
+	    fc->yhat[t - fc->offset] = (*pZ)[oldv][t];
 	}
 	err = dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
     }
@@ -497,9 +546,8 @@ static void dprintf (const char *format, ...)
    do something interesting with forecast error variance, but right
    now we don't do anything */
 
-static int 
-garch_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod, 
-	     const int *dvlags, const double **Z, const DATAINFO *pdinfo)
+static int garch_fcast (Forecast *fc, const MODEL *pmod, 
+			const double **Z, const DATAINFO *pdinfo)
 {
     double xval;
     int xvars, yno;
@@ -515,18 +563,15 @@ garch_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 	xvars = 0;
     }
 
-    for (t=t1; t<=t2; t++) {
+    for (t=fc->t1; t<=fc->t2; t++) {
 	int miss = 0;
 	double yh = 0.0;
 
-	s = t - offset;
+	s = t - fc->offset;
 
 	for (i=1; i<=xvars; i++) {
 	    v = xlist[i];
-	    xval = Z[v][t];
-	    if (na(xval) && dvlags != NULL) {
-		xval = maybe_get_yhat_lag(v, dvlags, yhat, s, NULL);
-	    }
+	    xval = fcast_get_xit(fc, i, t, Z, NULL);
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
@@ -535,9 +580,9 @@ garch_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 	}
 
 	if (miss) {
-	    yhat[s] = NADBL;
+	    fc->yhat[s] = NADBL;
 	} else {
-	    yhat[s] = yh;
+	    fc->yhat[s] = yh;
 	}
     }
 
@@ -605,10 +650,8 @@ arma_variance_machine (const double *phi, int p,
    forecasting
 */
 
-static int 
-arma_fcast (int t1, int t2, double *yhat, double *sderr,
-	    int offset, const MODEL *pmod, 
-	    const double **Z, const DATAINFO *pdinfo)
+static int arma_fcast (Forecast *fc, const MODEL *pmod, 
+		       const double **Z, const DATAINFO *pdinfo)
 {
     const double *phi;
     const double *theta;
@@ -620,21 +663,27 @@ arma_fcast (int t1, int t2, double *yhat, double *sderr,
     int xvars, yno;
     int *xlist = NULL;
     int p, q;
+    int tstart = fc->t1;
+    int ar_smax, ma_smax;
     int i, s, t, tt;
 
-    /* use pre-calculated fitted values over model estimation range,
-       and don't calculate forecast error variance */
-    for (t=t1; t<=pmod->t2; t++) {
-	tt = t - offset;
-	yhat[tt] = pmod->yhat[t];
-	if (sderr != NULL) {
-	    sderr[tt] = NADBL;
-	}
-    }
+    DPRINTF(("\n\n*** arma_fcast: METHOD = %d\n", fc->method));
 
-    if (t2 <= pmod->t2) {
-	/* no "real" forecasts were called for, we're done */
-	return 0;
+    if (fc->method == FC_AUTO || fc->method == FC_STATIC) {
+	/* use pre-calculated fitted values over model estimation range,
+	   and don't bother calculating forecast error variance */
+	for (t=fc->t1; t<=pmod->t2; t++) {
+	    tt = t - fc->offset;
+	    fc->yhat[tt] = pmod->yhat[t];
+	    if (fc->sderr != NULL) {
+		fc->sderr[tt] = NADBL;
+	    }
+	}
+	if (fc->t2 <= pmod->t2) {
+	    /* no "real" forecasts were called for, we're done */
+	    return 0;
+	}
+	tstart = pmod->t2 + 1;
     }
 
     p = gretl_arma_model_get_AR_order(pmod);
@@ -642,7 +691,8 @@ arma_fcast (int t1, int t2, double *yhat, double *sderr,
     xlist = gretl_arma_model_get_x_list(pmod);
     yno = gretl_model_get_depvar(pmod);
 
-    DPRINTF(("forecasting variable %d (%s)\n", yno, pdinfo->varname[yno]));
+    DPRINTF(("forecasting variable %d (%s), obs %d to %d\n", yno, 
+	     pdinfo->varname[yno], fc->t1, fc->t2));
 
     if (xlist != NULL) {
 	xvars = xlist[0];
@@ -655,16 +705,31 @@ arma_fcast (int t1, int t2, double *yhat, double *sderr,
     beta = theta + q;              /* coeffs on indep vars */
 
     /* setup for forecast error variance */
-    if (sderr != NULL) {
+    if (fc->sderr != NULL) {
 	psi = malloc((p + 1) * sizeof *psi);
     }
 
+    /* cut-off points for using actual rather than forecast
+       values of y in generating further forecasts */
+    if (fc->method == FC_STATIC) {
+	ar_smax = fc->t2;
+	ma_smax = pmod->t2;
+    } else if (fc->method == FC_DYNAMIC) {
+	ar_smax = fc->t1 - 1;
+	ma_smax = fc->t1 - 1;
+    } else {
+	ar_smax = pmod->t2;
+	ma_smax = pmod->t2;
+    }
+
+    DPRINTF(("ar_smax = %d, ma_smax = %d\n", ar_smax, ma_smax));
+
     /* do real forecast */
-    for (t=pmod->t2 + 1; t<=t2; t++) {
+    for (t=tstart; t<=fc->t2; t++) {
 	int miss = 0;
 	double yh = 0.0;
 
-	tt = t - offset;
+	tt = t - fc->offset;
 
 	DPRINTF(("\n *** Doing forecast for obs %d\n", t));
 
@@ -691,12 +756,12 @@ arma_fcast (int t1, int t2, double *yhat, double *sderr,
 	    s = t - i - 1;
 	    if (s < 0) {
 		yval = NADBL;
-	    } else if (s <= pmod->t2) {
+	    } else if (s <= ar_smax) {
 		yval = Z[yno][s];
 		DPRINTF(("  AR: lag %d, y[%d] = %g\n", i+1, s, yval));
 	    } else {
-		yval = yhat[s - offset];
-		DPRINTF(("  AR: lag %d, yhat[%d] = %g\n", i+1, s-offset, yval));
+		yval = fc->yhat[s - fc->offset];
+		DPRINTF(("  AR: lag %d, yhat[%d] = %g\n", i+1, s - fc->offset, yval));
 	    }
 	    if (na(yval)) {
 		miss = 1;
@@ -711,27 +776,36 @@ arma_fcast (int t1, int t2, double *yhat, double *sderr,
 	/* MA contribution */
 	for (i=0; i<q && !miss; i++) {
 	    s = t - i - 1;
-	    if (s >= pmod->t1 && s <= pmod->t2) {
+	    if (s >= pmod->t1 && s <= ma_smax) {
 		DPRINTF(("  MA: lag %d, e[%d] = %g, coeff %g\n", i+1, s, 
 			 pmod->uhat[s], theta[i]));
 		yh += theta[i] * pmod->uhat[s];
+	    } else if (fc->eps != NULL) {
+		DPRINTF(("  MA: lag %d, ehat[%d] = %g, coeff %g\n", i+1, s, 
+			 fc->eps[s - fc->offset], theta[i]));
+		yh += theta[i] * fc->eps[s - fc->offset];
 	    }
 	}
 
 	DPRINTF((" with MA contribution: %g\n", yh));
 
 	if (miss) {
-	    yhat[tt] = NADBL;
+	    fc->yhat[tt] = NADBL;
 	} else {
-	    yhat[tt] = yh;
+	    fc->yhat[tt] = yh;
+	}
+
+	if (fc->eps != NULL && !miss) {
+	    /* form estimated error in case of static forecast */
+	    fc->eps[tt] = Z[yno][t] - fc->yhat[tt];
 	}
 
 	/* forecast error variance */
 	if (psi != NULL) {
 	    arma_variance_machine(phi, p, theta, q,
-				  psi, t - pmod->t2, 
+				  psi, t - tstart + 1, 
 				  &ss_psi);
-	    sderr[tt] = pmod->sigma * sqrt(ss_psi);
+	    fc->sderr[tt] = pmod->sigma * sqrt(ss_psi);
 	}
     }
 
@@ -850,11 +924,8 @@ static void set_up_ar_fcast_variance (const MODEL *pmod, int pmax,
    This code is used for AR, CORC, HILU and PWE models.
 */
 
-static int 
-ar_fcast (int t1, int t2, double *yhat, double *sderr, 
-	  int offset, const MODEL *pmod, const int *dvlags,
-	  const double **Z, const DATAINFO *pdinfo,
-	  gretlopt opt)
+static int ar_fcast (Forecast *fc, const MODEL *pmod, 
+		     const double **Z, const DATAINFO *pdinfo)
 {
     const int *arlist;
     double *phi = NULL;
@@ -870,33 +941,33 @@ ar_fcast (int t1, int t2, double *yhat, double *sderr,
     arlist = pmod->arinfo->arlist;
     p = arlist[arlist[0]]; /* AR order of error term */
 
-    if (dvlags != NULL) {
+    if (fc->dvlags != NULL) {
 	/* highest order of lagged dependent var */
-	pmax = get_max_dv_lag(dvlags);
+	pmax = get_max_dv_lag(fc->dvlags);
     } else {
 	pmax = p;
     }
 
-    if (t2 > pmod->t2 && sderr != NULL) {
+    if (fc->t2 > pmod->t2 && fc->sderr != NULL) {
 	set_up_ar_fcast_variance(pmod, pmax, &phi, &psi, &errphi);
     }
 
-    for (t=t1; t<=t2; t++) {
+    for (t=fc->t1; t<=fc->t2; t++) {
 	miss = 0;
 	yh = 0.0;
-	s = t - offset;
+	s = t - fc->offset;
 
 	if (t < p) {
-	    yhat[s] = NADBL;
-	    if (sderr != NULL) {
-		sderr[s] = NADBL;
+	    fc->yhat[s] = NADBL;
+	    if (fc->sderr != NULL) {
+		fc->sderr[s] = NADBL;
 	    }
 	    continue;
 	}
 
         if (pmod->ci == PWE && t == pmod->t1) {
             /* PWE first obs is special */
-            yhat[s] = pmod->yhat[t];
+            fc->yhat[s] = pmod->yhat[t];
             continue;
         }
 
@@ -915,7 +986,7 @@ ar_fcast (int t1, int t2, double *yhat, double *sderr,
 	    ylag = Z[yno][t - arlist[k]];
 	    if (na(ylag) && s - arlist[k] >= 0) {
 		/* use prior forecast of lagged y */
-		ylag = yhat[s - arlist[k]];
+		ylag = fc->yhat[s - arlist[k]];
 	    }
 	    if (na(ylag)) {
 		miss = 1;
@@ -925,31 +996,20 @@ ar_fcast (int t1, int t2, double *yhat, double *sderr,
 	}
 
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
-	    v = pmod->list[i+2];
-	    xval = Z[v][t];
-	    if (na(xval) && dvlags != NULL) {
-		int order;
+	    int order = 0;
 
-		/* lagged dependent variable? */
-		xval = maybe_get_yhat_lag(v, dvlags, yhat, s, &order);
-		if (!na(xval)) {
-		    /* augment the effective AR coefficient for the
-		       purpose of computing variance */
-		    phi[order - 1] += pmod->coeff[i];
-		}
-	    }
+	    v = pmod->list[i+2];
+	    xval = fcast_get_xit(fc, v, t, Z, &order);
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
+		if (order > 0) {
+		    phi[order - 1] += pmod->coeff[i];
+		}
 		/* use rho-differenced X on RHS */
 		for (k=1; k<=arlist[0]; k++) {
 		    rk = pmod->arinfo->rho[k-1];
-		    xlag = Z[v][t - arlist[k]];
-		    if (na(xlag) && dvlags != NULL) {
-			/* lagged dependent variable? */
-			xlag = maybe_get_yhat_lag(v, dvlags, yhat, s - arlist[k], 
-						  NULL);
-		    }
+		    xlag = fcast_get_xit(fc, v, t - arlist[k], Z, NULL);
 		    if (!na(xlag)) {
 			xval -= rk * xlag;
 		    }
@@ -959,9 +1019,9 @@ ar_fcast (int t1, int t2, double *yhat, double *sderr,
 	}
 
 	if (miss) {
-	    yhat[s] = NADBL;
+	    fc->yhat[s] = NADBL;
 	} else {
-	    yhat[s] = yh;
+	    fc->yhat[s] = yh;
 	}
 
 	/* forecast error variance */
@@ -970,9 +1030,9 @@ ar_fcast (int t1, int t2, double *yhat, double *sderr,
 		arma_variance_machine(phi, pmax, NULL, 0,
 				      psi, t - pmod->t2, 
 				      &ss_psi);
-		sderr[s] = pmod->sigma * sqrt(ss_psi);
+		fc->sderr[s] = pmod->sigma * sqrt(ss_psi);
 	    } else {
-		sderr[s] = NADBL;
+		fc->sderr[s] = NADBL;
 	    }
 	}
     }
@@ -1030,9 +1090,8 @@ static double fcast_transform (double xb, int ci, int t,
    version without computation of forecast standard errors
 */
 
-static int 
-linear_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod, 
-	      const int *dvlags, const double **Z, const DATAINFO *pdinfo)
+static int linear_fcast (Forecast *fc, const MODEL *pmod, 
+			 const double **Z, const DATAINFO *pdinfo)
 {
     const double *offvar = NULL;
     double lmax = NADBL;
@@ -1050,19 +1109,15 @@ linear_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 	lmax = gretl_model_get_double(pmod, "lmax");
     }
 
-    for (t=t1; t<=t2; t++) {
+    for (t=fc->t1; t<=fc->t2; t++) {
 	int miss = 0;
 	double yh = 0.0;
 
-	s = t - offset;
+	s = t - fc->offset;
 
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
 	    vi = pmod->list[i+2];
-	    xval = Z[vi][t];
-	    if (na(xval) && dvlags != NULL) {
-		/* lagged dependent variable? */
-		xval = maybe_get_yhat_lag(vi, dvlags, yhat, s, NULL);
-	    }
+	    xval = fcast_get_xit(fc, vi, t, Z, NULL);
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
@@ -1071,59 +1126,170 @@ linear_fcast (int t1, int t2, double *yhat, int offset, const MODEL *pmod,
 	}
 
 	if (miss) {
-	    yhat[s] = NADBL;
+	    fc->yhat[s] = NADBL;
 	} else if (FCAST_SPECIAL(pmod->ci)) {
 	    /* special handling for LOGIT and others */
-	    yhat[s] = fcast_transform(yh, pmod->ci, t, offvar, lmax);
+	    fc->yhat[s] = fcast_transform(yh, pmod->ci, t, offvar, lmax);
 	} else {
-	    yhat[s] = yh;
+	    fc->yhat[s] = yh;
 	}
     }
 
     return 0;
 }
 
+static int get_forecast_method (Forecast *fc,
+				const MODEL *pmod, 
+				const DATAINFO *pdinfo,
+				gretlopt opt)
+{
+    int dyn_ok = 0;
+    int dyn_errs_ok = 0;
+    int err = 0;
+
+    fc->dvlags = NULL;
+    fc->method = FC_STATIC;
+
+    if ((opt & OPT_D) && (opt & OPT_S)) {
+	/* conflicting options: remove them */
+	fputs("got conflicting options, static and dynamic\n", stderr);
+	opt &= ~OPT_D;
+	opt &= ~OPT_S;
+	err = 1;
+    }
+
+    /* do setup for possible lags of the dependent variable,
+       unless OPT_S for "static" has been given */
+    if (dataset_is_time_series(pdinfo) && !(opt & OPT_S)) {
+	process_lagged_depvar(pmod, pdinfo, &fc->dvlags);
+    }
+
+    if (!(opt & OPT_S) && (pmod->ci == ARMA || fc->dvlags != NULL)) {
+	/* dynamic forecast is possible, and not ruled out by 
+	   "static" option */
+	dyn_ok = 1;
+    }
+
+    if (SIMPLE_AR_MODEL(pmod->ci)) {
+	dyn_errs_ok = 1;
+    }    
+
+    if (!dyn_ok && (opt & OPT_D)) {
+	/* "dynamic" option given, but can't be honored */
+	fputs("requested dynamic option, but it is not applicable\n", stderr);
+	opt &= ~OPT_D;
+	err = 1;
+    }
+
+    if (opt & OPT_D) {
+	/* user requested dynamic forecast and it seems OK */
+	fc->method = FC_DYNAMIC;
+    } else if ((dyn_ok || dyn_errs_ok) && fc->t2 > pmod->t2) {
+	/* do dynamic f'cast out of sample */
+	fc->method = FC_AUTO;
+    }
+
+    return err;
+}
+
 /* driver for various functions that compute forecasts
    for different sorts of models */
 
-static int get_fcast (FITRESID *fr, MODEL *pmod, const int *dvlags,
-		      double ***pZ, DATAINFO *pdinfo,
-		      gretlopt opt) 
+static int real_get_fcast (FITRESID *fr, MODEL *pmod, 
+			   double ***pZ, DATAINFO *pdinfo,
+			   gretlopt opt) 
 {
+    Forecast fc;
+    const double **Z = (const double **) *pZ;
     int yno = gretl_model_get_depvar(pmod);
-    int s, t;
-    int err = 0;
+    int DM_errs = 0;
+    int dyn_errs = 0;
+    int nf = 0;
+    int s, t, err = 0;
 
-    if (pmod->ci == NLS) {
-	err = nls_fcast(fr->t1, fr->t2, fr->fitted, fr->t1, pmod, pZ, pdinfo);
+    fc.t1 = fr->t1;
+    fc.t2 = fr->t2;
+    fc.offset = fr->t1;
+    fc.eps = NULL;
+
+    get_forecast_method(&fc, pmod, pdinfo, opt);
+
+    if (!FCAST_SPECIAL(pmod->ci) && pmod->ci != GARCH) {
+	if (pmod->ci != ARMA && !SIMPLE_AR_MODEL(pmod->ci) && fc.dvlags == NULL) {
+	    /* we'll do Davidson-MacKinnon error variance */
+	    DM_errs = 1;
+	} else if (fc.method == FC_DYNAMIC) {
+	    /* we'll do dynamic forecast errors throughout */
+	    dyn_errs = 1;
+	} else if (fc.method == FC_AUTO && fc.t2 > pmod->t2) {
+	    /* do dynamic forecast errors out of sample */
+	    dyn_errs = 1;
+	}
+    }
+
+    /* bodge: for now we don't actually handle dynamic forecast 
+       standard errors for other than AR and ARMA */
+    if (pmod->ci != ARMA && !SIMPLE_AR_MODEL(pmod->ci)) {
+	dyn_errs = 0;
+    }
+
+    if (DM_errs || dyn_errs) {
+	err = fit_resid_add_sderr(fr);
+    }
+
+    if (err) {
+	return err;
+    }
+
+    fc.yhat = fr->fitted;
+    fc.sderr = fr->sderr;
+
+    if (pmod->ci == ARMA && fc.method == FC_STATIC) {
+	fc.eps = malloc(fr->nobs * sizeof *fc.eps);
+    }
+
+    if (DM_errs) {
+	err = static_fcast_with_errs(&fc, pmod, Z, pdinfo);
+    } else if (pmod->ci == NLS) {
+	err = nls_fcast(&fc, pmod, pZ, pdinfo);
     } else if (SIMPLE_AR_MODEL(pmod->ci)) {
-	err = ar_fcast(fr->t1, fr->t2, fr->fitted, fr->sderr, fr->t1, pmod, 
-		       dvlags, (const double **) *pZ, pdinfo, opt);
+	err = ar_fcast(&fc, pmod, Z, pdinfo);
     } else if (pmod->ci == ARMA) {
-	err = arma_fcast(fr->t1, fr->t2, fr->fitted, fr->sderr, fr->t1, pmod, 
-			 (const double **) *pZ, pdinfo);
+	err = arma_fcast(&fc, pmod, Z, pdinfo);
     } else if (pmod->ci == GARCH) {
-	err = garch_fcast(fr->t1, fr->t2, fr->fitted, fr->t1, pmod, 
-			  dvlags, (const double **) *pZ, pdinfo);
+	err = garch_fcast(&fc, pmod, Z, pdinfo);
     } else {
-	err = linear_fcast(fr->t1, fr->t2, fr->fitted, fr->t1, pmod, 
-			   dvlags, (const double **) *pZ, pdinfo);
+	err = linear_fcast(&fc, pmod, Z, pdinfo);
+    }
+
+    if (fc.dvlags != NULL) {
+	free(fc.dvlags);
+    }
+    if (fc.eps != NULL) {
+	free(fc.eps);
     }
 
     for (t=fr->t1; t<=fr->t2; t++) {
 	s = t - fr->t1;
+	if (!na(fr->fitted[s])) {
+	    nf++;
+	}
 	fr->actual[s] = (*pZ)[yno][t];
     }
 
-    if (pmod->ci == ARMA) {
-	/* asymptotic normal */
-	fr->tval = 1.96;
+    if (nf == 0) {
+	err = E_DATA;
     } else {
-	fr->tval = tcrit95(pmod->dfd);
-    }
+	if (pmod->ci == ARMA) {
+	    /* asymptotic normal */
+	    fr->tval = 1.96;
+	} else {
+	    fr->tval = tcrit95(pmod->dfd);
+	}
 
-    strcpy(fr->depvar, pdinfo->varname[yno]);
-    fr->df = pmod->dfd;
+	strcpy(fr->depvar, pdinfo->varname[yno]);
+	fr->df = pmod->dfd;
+    }
 
     return err;
 }
@@ -1166,14 +1332,8 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
 			gretlopt opt) 
 {
     FITRESID *fr;
-    int *dvlags = NULL;
-    int full_errs = 1;
 
-    if (AR_MODEL(pmod->ci) || FCAST_SPECIAL(pmod->ci)) {
-	full_errs = 0;
-    }
-
-    fr = fit_resid_new(0, 0); 
+    fr = fit_resid_new(0); 
     if (fr == NULL) {
 	return NULL;
     }
@@ -1185,27 +1345,12 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
 	return fr;
     }
 
-    if (dataset_is_time_series(pdinfo) && !(opt & OPT_S)) {
-	/* don't treat lagged depvar specially for static f'cast */
-	process_lagged_depvar(pmod, pdinfo, &dvlags);
-    }
-
-    fit_resid_init(str, pmod, (const double **) *pZ, pdinfo, fr, 
-		   full_errs, opt);
+    fit_resid_init(str, pmod, pdinfo, fr); 
     if (fr->err) {
 	return fr;
-    }   
-
-    if (full_errs) {
-	fr->err = get_static_fcast_with_errs(fr, pmod, (const double **) *pZ, 
-					     pdinfo);
-    } else {
-	fr->err = get_fcast(fr, pmod, dvlags, pZ, pdinfo, opt);
     }
 
-    if (dvlags != NULL) {
-	free(dvlags);
-    }
+    fr->err = real_get_fcast(fr, pmod, pZ, pdinfo, opt);
 
     return fr;
 }
@@ -1221,7 +1366,7 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
  * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
  * a static forecast.  By default, the forecast is static within
  * the data range over which the model was estimated, and dynamic
- * out of sample (in cases where a dynamic forecast is meaningful).
+ * out of sample (in cases where this distinction is meaningful).
  *
  * Adds to the dataset a new variable containing predicted values for the
  * dependent variable in @pmod over the specified range of observations,
@@ -1239,7 +1384,6 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 {
     int t, t1, t2, vi;
     char t1str[OBSLEN], t2str[OBSLEN], varname[VNAMELEN];
-    int *dvlags = NULL;
     int err = 0;
 
     *t1str = '\0'; *t2str = '\0';
@@ -1277,12 +1421,10 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 	err = dataset_add_series(1, pZ, pdinfo);
     }
 
-    if (dataset_is_time_series(pdinfo) && !(opt & OPT_S)) {
-	/* don't treat lagged depvar specially for static f'cast */
-	process_lagged_depvar(pmod, pdinfo, &dvlags);
-    }
-
     if (!err) {
+	const double **Z = (const double **) *pZ;
+	Forecast fc;
+
 	strcpy(pdinfo->varname[vi], varname);
 	strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
 
@@ -1290,29 +1432,41 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 	    (*pZ)[vi][t] = NADBL;
 	}
 
+	fc.yhat = (*pZ)[vi];
+	fc.sderr = NULL;
+	fc.eps = NULL;
+	fc.t1 = t1;
+	fc.t2 = t2;
+	fc.offset = 0;
+
+	get_forecast_method(&fc, pmod, pdinfo, opt);
+
+	if (pmod->ci == ARMA && fc.method == FC_STATIC) {
+	    fc.eps = malloc(pdinfo->n * sizeof *fc.eps);
+	}
+
 	/* write forecast values into the newly added variable: note
 	   that in this case we're not interested in computing
 	   forecast standard errors
 	*/
 	if (pmod->ci == NLS) {
-	    nls_fcast(t1, t2, (*pZ)[vi], 0, pmod, pZ, pdinfo);
+	    nls_fcast(&fc, pmod, pZ, pdinfo);
 	} else if (SIMPLE_AR_MODEL(pmod->ci)) {
-	    ar_fcast(t1, t2, (*pZ)[vi], NULL, 0, pmod, dvlags,
-		     (const double **) *pZ, pdinfo, opt);
+	    ar_fcast(&fc, pmod, Z, pdinfo);
 	} else if (pmod->ci == ARMA) {
-	    arma_fcast(t1, t2, (*pZ)[vi], NULL, 0, pmod, (const double **) *pZ, 
-		       pdinfo);
+	    arma_fcast(&fc, pmod, Z, pdinfo);
 	} else if (pmod->ci == GARCH) {
-	    garch_fcast(t1, t2, (*pZ)[vi], 0, pmod, dvlags,
-			(const double **) *pZ, pdinfo);
+	    garch_fcast(&fc, pmod, Z, pdinfo);
 	} else {
-	    linear_fcast(t1, t2, (*pZ)[vi], 0, pmod, dvlags,
-			 (const double **) *pZ, pdinfo);
+	    linear_fcast(&fc, pmod, Z, pdinfo);
 	}
-    }
 
-    if (dvlags != NULL) {
-	free(dvlags);
+	if (fc.dvlags != NULL) {
+	    free(fc.dvlags);
+	}
+	if (fc.eps != NULL) {
+	    free(fc.eps);
+	}
     }
 
     return err;
@@ -1328,7 +1482,7 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
  * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
  * a static forecast.  By default, the forecast is static within
  * the data range over which the model was estimated, and dynamic
- * out of sample (in cases where a dynamic forecast is meaningful).
+ * out of sample (in cases where this distinction is meaningful).
  * @prn: printing structure.
  *
  * Computes forecasts based on @pmod, over the range of observations
@@ -1361,5 +1515,42 @@ int display_forecast (const char *str, MODEL *pmod,
     free_fit_resid(fr);
     
     return err;
+}
+
+/**
+ * forecast_options_for_model:
+ * @pmod: the model from which forecasts are wanted.
+ * @t2: end point of the forecast range.
+ * @pdinfo: dataset information.
+ * @dyn_ok: location to receive 1 if the "dynamic" option is
+ * applicable, 0 otherwise.
+ * @auto_ok: location to receive 1 if the automatic forecasting 
+ * option (static within sample, dynamic out of sample) is
+ * applicable, 0 otherwise.
+ *
+ * Examines @pmod and determines which forecasting options are
+ * applicable for this model and forecast range.
+ */
+
+void forecast_options_for_model (const MODEL *pmod, int t2,
+				 const DATAINFO *pdinfo,
+				 int *dyn_ok, int *auto_ok)
+{
+    *dyn_ok = 0;
+    *auto_ok = 0;
+
+    if (pmod->ci == ARMA) {
+	*dyn_ok = 1;
+    } else if (dataset_is_time_series(pdinfo)) {
+	int ldv = count_depvar_lags(pmod, pdinfo);
+
+	if (ldv > 0) {
+	    *dyn_ok = 1;
+	}
+    }
+
+    if (*dyn_ok && t2 > pmod->t2) {
+	*auto_ok = 1;
+    }
 }
 

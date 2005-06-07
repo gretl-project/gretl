@@ -246,6 +246,8 @@ static const char *get_func_word (int fnum);
 #define genr_simple_sort(g) ((g)->flags & GENR_SIMPLE_SORT)
 #define genr_set_simple_sort(g) ((g)->flags |= GENR_SIMPLE_SORT)
 
+#define genr_single_obs(g) ((g)->obs >= 0)
+
 /* ...................................................... */
 
 static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
@@ -2595,7 +2597,9 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    make_genr_varname(&genr, newvar);
 	    genr.err = genr_write_var(pZ, pdinfo, &genr);
 	    if (!genr.err && !genr_is_private(&genr)) {
-		write_genr_label(&genr, genrs, oldv);
+		if (!genr_single_obs(&genr)) {
+		    write_genr_label(&genr, genrs, oldv);
+		}
 		compose_genr_msg(&genr, oldv);
 	    }
 	} 

@@ -1386,10 +1386,16 @@ int text_print_forecast (const FITRESID *fr,
 	}
     }
 
+    pputc(prn, '\n');
+
     if (do_errs) {
-	/* FIXME arma */
-	pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
-		fr->df, fr->tval);
+	if (fr->model_ci == ARMA) {
+	    pprintf(prn, _(" For 95%% confidence intervals, z(.025) = %.2f\n"), 
+		    1.96);
+	} else {
+	    pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
+		    fr->df, fr->tval);
+	}
     }
 
     pputs(prn, "\n     Obs ");
