@@ -20,6 +20,85 @@
 #include "libgretl.h"
 #include "gretl_list.h"
 
+#if 0
+
+static char **list_names;
+static int **list_stack;
+static int n_lists;
+
+int *get_list_by_name (const char *name, int *lnum)
+{
+    int i;
+
+    for (i=0; i<n_lists; i++) {
+	if (!strcmp(name, list_names[i])) {
+	    if (lnum != NULL) {
+		*lnum = 1;
+	    }
+	    return list_stack[i];
+	}
+    }
+
+    return NULL;
+}
+
+static int stack_list (int *list, const char *name, PRN *prn)
+{
+    int *orig;
+    int lnum;
+
+    orig = get_list_by_name(name, &lnum);
+
+    if (orig != NULL) {
+	/* replace existing list of same name */
+	free(orig);
+	list_stack[lnum] = list;
+	pprintf(prn, "Replaced list '%s'\n", name);
+    } else {
+	char **lnames;
+	int **lstack;
+
+	lstack = realloc(list_stack, (n_lists + 1) * sizeof *lstack);
+	if (lstack == NULL) {
+	    return E_ALLOC;
+	}
+	list_stack = lstack;
+
+	lnames = realloc(list_names, (n_lists + 1) * sizeof *lnames);
+	if (lnames == NULL) {
+	    return E_ALLOC;
+	}
+	list_names = lnames;
+
+	list_stack[n_lists] = list;
+	list_names[n_lists] = gretl_strdup(name);
+	pprintf(prn, "Added list '%s'\n", name);
+	n_lists++;
+    }
+
+    return 0;
+}
+
+void gretl_lists_cleanup (void)
+{
+    int i;
+
+    for (i=0; i<n_lists; i++) {
+	free(list_stack[i]);
+	free(list_names[i]);
+    }
+
+    free(list_stack);
+    free(list_names);
+
+    list_stack = NULL;
+    list_names = NULL;
+
+    n_lists = 0;
+}
+
+#endif
+
 /**
  * gretl_list_new:
  * @nterms: the maximum number of elements to be stored in the list.
