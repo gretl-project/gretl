@@ -562,14 +562,12 @@ int auto_lag_ok (const char *s, int *lnum,
 	int laglen, vnum;
 
 	laglen = lagvar.firstlag + i * lincr;
-
 	vnum = laggenr(lagvar.varnum, laglen, pZ, pdinfo);
 
 #if LAG_DEBUG
 	fprintf(stderr, "laggenr for var %d (%s), lag %d, gave vnum = %d\n",
 		lagvar.varnum, pdinfo->varname[lagvar.varnum], laglen, vnum);
 #endif
-
 	if (vnum < 0) {
 	    cmd->errcode = 1;
 	    sprintf(gretl_errmsg, _("generation of lag variable failed"));
@@ -581,7 +579,6 @@ int auto_lag_ok (const char *s, int *lnum,
 	       so that we'll be able to echo the command properly --
 	       see the echo_cmd() function. 
 	    */
-
 	    cmd->list[llen++] = vnum;
 	    err = add_to_list_lag_info(lagvar.varnum, laglen, vnum, cmd);
 	    if (err) {
@@ -594,6 +591,75 @@ int auto_lag_ok (const char *s, int *lnum,
     if (ok) {
 	*lnum = llen;
     }
+
+    return ok;
+} 
+
+int auto_transform_ok (const char *s, int *lnum,
+		       double ***pZ, DATAINFO *pdinfo,
+		       CMD *cmd)
+{
+    const char *trans_words[] = {
+	"logs",
+	"diff",
+	"ldiff",
+	"square",
+	NULL
+    };
+    char fword[9];
+    int *genlist = NULL;
+    int trans = -1;
+    int i, err = 0, ok = 1;
+
+    if (sscanf(s, "%8[^(](", fword)) {
+	char *lname;
+	int *gotlist;
+
+	for (i=0; trans_words[i] != NULL; i++) {
+	    if (!strcmp(fword, trans_words[i])) {
+		trans = i;
+		break;
+	    }
+	}
+
+	if (trans >= 0) {
+	    s = strchr(s, '(') + 1;
+	    lname = gretl_word_strdup(s, NULL);
+	    if (lname != NULL) {
+		gotlist = get_list_by_name(lname);
+		if (gotlist != NULL) {
+		    genlist = gretl_list_copy(gotlist);
+		}
+		free(lname);
+	    }
+	}
+    }
+
+    if (genlist == NULL) {
+	cmd->errcode = E_PARSE;
+	return 0;
+    }	
+
+    if (trans == 0) {
+	err = list_loggenr(genlist, pZ, pdinfo);
+    } else if (trans == 1) {
+	err = list_diffgenr(genlist, pZ, pdinfo);
+    } else if (trans == 2) {
+	err = list_ldiffgenr(genlist, pZ, pdinfo);
+    } else if (trans == 3) {
+	err = list_xpxgenr(genlist, pZ, pdinfo, OPT_NONE);
+    }
+
+    if (err) {
+	cmd->errcode = err;
+	ok = 0;
+    } else {
+	cmd->list[0] -= 1;
+	gretl_list_insert_list(&cmd->list, genlist, *lnum);
+	*lnum = cmd->list[0];
+    }
+
+    free(genlist);
 
     return ok;
 } 
@@ -1318,7 +1384,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    } else if ((savedlist = get_list_by_name(field)) != NULL) {
 		/* or it's a pre-defined list */
 		cmd->list[0] -= 1;
-		cmd->errcode = gretl_list_add_list(&cmd->list, savedlist);
+		cmd->errcode = gretl_list_insert_list(&cmd->list, savedlist,
+						      lnum);
 	    } else { /* possibly an auto-generated variable? */
 
 		/* Case 1: automated lags:  e.g. 'var(-1)' */
@@ -1328,7 +1395,14 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		    continue; 
 		}
 
-		/* Case 2: special plotting variable */
+		/* Case 2: automated transformations:  e.g. 'logs(x,z)' */
+		else if (auto_transform_ok(field, &lnum, pZ, pdinfo, cmd)) {
+		    /* handled, get on with it */
+		    pos += strlen(field) + 1;
+		    continue; 
+		}
+
+		/* Case 3: special plotting variable */
 		else if (!cmd->errcode && 
 			 plot_var_ok(field, &lnum, pZ, pdinfo, cmd)) {
 		    /* handled, get on with it */
@@ -2439,6 +2513,11 @@ static int add_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
+#define list_genr_command(c) (c == DIFF || \
+                              c == LDIFF || \
+                              c == LOGS || \
+                              c == SQUARE)
+
 /* common code for command-line and GUI client programs, where the
    command doesn't require special handling on the client side 
 */
@@ -2450,6 +2529,14 @@ int simple_commands (CMD *cmd, const char *line,
     int err = 0, order = 0;
     CorrMat *corrmat;
     Summary *summ;
+    int *genlist = NULL;
+
+    if (list_genr_command(cmd->ci)) {
+	genlist = gretl_list_copy(cmd->list);
+	if (genlist == NULL) {
+	    return E_ALLOC;
+	}
+    }
 
     switch (cmd->ci) {
 
@@ -2539,7 +2626,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case DIFF:
-	err = list_diffgenr(cmd->list, pZ, datainfo);
+	err = list_diffgenr(genlist, pZ, datainfo);
 	if (err) {
 	    pputs(prn, _("Error adding first differences of variables.\n"));
 	} else {
@@ -2557,7 +2644,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case LDIFF:
-	err = list_ldiffgenr(cmd->list, pZ, datainfo);
+	err = list_ldiffgenr(genlist, pZ, datainfo);
 	if (err) {
 	    pputs(prn, _("Error adding log differences of variables.\n"));
 	} else {
@@ -2576,7 +2663,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case LOGS:
-	err = list_loggenr(cmd->list, pZ, datainfo);
+	err = list_loggenr(genlist, pZ, datainfo);
 	if (err) {
 	    pputs(prn, _("Error adding logs of variables.\n"));
 	} else {
@@ -2585,7 +2672,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case SQUARE:
-	err = list_xpxgenr(cmd->list, pZ, datainfo, cmd->opt);
+	err = list_xpxgenr(genlist, pZ, datainfo, cmd->opt);
 	if (err) {
 	    pputs(prn, _("Failed to generate squares\n"));
 	} else {
@@ -2753,6 +2840,10 @@ int simple_commands (CMD *cmd, const char *line,
 
     default:
 	break;
+    }
+
+    if (genlist != NULL) {
+	free(genlist);
     }
 
     if (err == E_OK) {

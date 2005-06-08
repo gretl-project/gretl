@@ -813,7 +813,7 @@ int *gretl_list_diff_new (const int *biglist, const int *sublist)
  * @src: list to be added to @targ.
  *
  * Adds @src onto the end of @targ.  The length of @targ becomes the
- * sum of te lengths of the two original lists.
+ * sum of the lengths of the two original lists.
  *
  * Returns: 0 on success, %E_ALLOC on failure.
  */
@@ -832,6 +832,47 @@ int gretl_list_add_list (int **targ, const int *src)
 	big[0] = n1 + n2;
 	for (i=1; i<=src[0]; i++) {
 	    big[n1 + i] = src[i];
+	}
+	*targ = big;
+    }
+
+    return err;
+}
+
+/**
+ * gretl_list_insert_list:
+ * @targ: location of list into which @src should be inserted.
+ * @src: list to be inserted.
+ * @pos: zero-based position at which @src should be inserted.
+ *
+ * Inserts @src into @targ at @pos.  The length of @targ becomes the
+ * sum of the lengths of the two original lists.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int gretl_list_insert_list (int **targ, const int *src, int pos)
+{
+    int *big;
+    int n1 = (*targ)[0];
+    int n2 = src[0];
+    int bign = n1 + n2;
+    int i, err = 0;
+
+    if (pos > n1 + 1) {
+	return 1;
+    }
+
+    big = realloc(*targ, (bign + 1) * sizeof *big);
+    if (big == NULL) {
+	err = E_ALLOC;
+    } else {
+	big[0] = bign;
+	for (i=bign; i>=pos+n2; i--) {
+	    big[i] = big[i-n2];
+	}
+	for (i=1; i<=src[0]; i++) {
+	    big[pos+i-1] = src[i];
 	}
 	*targ = big;
     }

@@ -30,15 +30,15 @@ int loggenr (int v, double ***pZ, DATAINFO *pdinfo);
 
 int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo);
 
-int list_diffgenr (const int *list, double ***pZ, DATAINFO *pdinfo);
+int list_diffgenr (int *list, double ***pZ, DATAINFO *pdinfo);
 
-int list_ldiffgenr (const int *list, double ***pZ, DATAINFO *pdinfo);
+int list_ldiffgenr (int *list, double ***pZ, DATAINFO *pdinfo);
 
 int list_laggenr (int order, const int *list, double ***pZ, DATAINFO *pdinfo);
 
-int list_loggenr (const int *list, double ***pZ, DATAINFO *pdinfo);
+int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo);
 
-int list_xpxgenr (const int *list, double ***pZ, DATAINFO *pdinfo, 
+int list_xpxgenr (int *list, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt);
 
 void gretl_transforms_cleanup (void);

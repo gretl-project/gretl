@@ -46,6 +46,8 @@ int *gretl_list_diff_new (const int *biglist, const int *sublist);
 
 int gretl_list_add_list (int **targ, const int *src);
 
+int gretl_list_insert_list (int **targ, const int *src, int pos);
+
 void rearrange_list (int *list);
 
 int list_members_replaced (const int *list, const DATAINFO *pdinfo,

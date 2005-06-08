@@ -598,7 +598,8 @@ get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
 
 /**
  * list_loggenr:
- * @list: list of variables to process.
+ * @list: on entry, list of variables to process; on exit,
+ * holds the ID numbers of the generated variables.
  * @pZ: pointer to data array.
  * @pdinfo: data information struct.
  *
@@ -608,9 +609,9 @@ get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
  * Returns: 0 on success, error code on error.
  */
 
-int list_loggenr (const int *list, double ***pZ, DATAINFO *pdinfo)
+int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo)
 {
-    int lognum, i, v;
+    int tnum, i, v;
     int startlen;
     int n_ok = 0;
 
@@ -626,9 +627,11 @@ int list_loggenr (const int *list, double ***pZ, DATAINFO *pdinfo)
 	    continue;
 	}
 
-	lognum = get_transform(LOGS, v, 0, pZ, pdinfo, startlen);
-	if (lognum > 0) {
+	tnum = get_transform(LOGS, v, 0, pZ, pdinfo, startlen);
+
+	if (tnum > 0) {
 	    n_ok++;
+	    list[i] = tnum;
 	}
     }
 
@@ -721,7 +724,8 @@ int list_laggenr (int order, const int *list, double ***pZ, DATAINFO *pdinfo)
 
 /**
  * list_diffgenr:
- * @list: list of variables to process.
+ * @list: on entry, list of variables to process; on exit,
+ * ID numbers of the generated variables.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  *
@@ -732,25 +736,30 @@ int list_laggenr (int order, const int *list, double ***pZ, DATAINFO *pdinfo)
  *
  */
 
-int list_diffgenr (const int *list, double ***pZ, DATAINFO *pdinfo)
+int list_diffgenr (int *list, double ***pZ, DATAINFO *pdinfo)
 {
     int i, v, startlen;
+    int tnum, err = 0;
 
     startlen = get_starting_length(list, pdinfo, 2);
     
-    for (i=1; i<=list[0]; i++) {
+    for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
-	if (get_transform(DIFF, v, 0, pZ, pdinfo, startlen) < 0) {
-	    return 1;
+	tnum = get_transform(DIFF, v, 0, pZ, pdinfo, startlen);
+	if (tnum < 0) {
+	    err = 1;
+	} else {
+	    list[i] = tnum;
 	}
     }
 
-    return 0;
+    return err;
 }
 
 /**
  * list_ldiffgenr:
- * @list: list of variables to process.
+ * @list: on entry, list of variables to process; on exit,
+ * ID numbers of the generated variables.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  *
@@ -761,25 +770,31 @@ int list_diffgenr (const int *list, double ***pZ, DATAINFO *pdinfo)
  *
  */
 
-int list_ldiffgenr (const int *list, double ***pZ, DATAINFO *pdinfo)
+int list_ldiffgenr (int *list, double ***pZ, DATAINFO *pdinfo)
 {
     int i, v, startlen;
+    int tnum, err = 0;
 
     startlen = get_starting_length(list, pdinfo, 3);
     
-    for (i=1; i<=list[0]; i++) {
+    for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
-	if (get_transform(LDIFF, v, 0, pZ, pdinfo, startlen) < 0) {
-	    return 1;
+	tnum = get_transform(LDIFF, v, 0, pZ, pdinfo, startlen);
+	if (tnum < 0) {
+	    err = 1;
+	} else {
+	    list[i] = tnum;
 	}
     }
 
-    return 0;
+    return err;
 }
 
 /**
  * list_xpxgenr:
- * @list: list of variables to process.
+ * @list: list of variables to process.  If squares only are
+ * being generated, on exit this holds the ID numbers of the
+ * squares.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  * @opt: If = 0, only squares are generated, if OPT_O, both
@@ -791,10 +806,10 @@ int list_ldiffgenr (const int *list, double ***pZ, DATAINFO *pdinfo)
  * Returns: 0 on success, error code on error.
  */
 
-int list_xpxgenr (const int *list, double ***pZ, DATAINFO *pdinfo, 
+int list_xpxgenr (int *list, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt)
 {
-    int xnum, i, j, vi, vj;
+    int tnum, i, j, vi, vj;
     int startlen;
     int n_ok = 0;
 
@@ -810,16 +825,19 @@ int list_xpxgenr (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    continue;
 	}
 
-	xnum = get_transform(SQUARE, vi, vi, pZ, pdinfo, startlen);
-	if (xnum > 0) {
+	tnum = get_transform(SQUARE, vi, vi, pZ, pdinfo, startlen);
+	if (tnum > 0) {
 	    n_ok++;
+	    if (opt == OPT_NONE) {
+		list[i] = tnum;
+	    }
 	}
 
 	if (opt & OPT_O) {
 	    for (j=i+1; j<=list[0]; j++) {
 		vj = list[j];
-		xnum = xpxgenr(vi, vj, pZ, pdinfo);
-		if (xnum > 0) {
+		tnum = xpxgenr(vi, vj, pZ, pdinfo);
+		if (tnum > 0) {
 		    n_ok++;
 		}
 	    }
