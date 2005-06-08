@@ -862,6 +862,10 @@ static void accommodate_obsolete_commands (char *line, CMD *cmd)
 	} else {
 	    strcpy(line, "set seed");
 	}
+    } else if (!strcmp(cmd->word, "list") &&
+	       string_is_blank(line + 4)) {
+	strcpy(cmd->word, "varlist");
+	strcpy(line, "varlist");
     }
 }
 
@@ -1388,18 +1392,19 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 						      lnum);
 	    } else { /* possibly an auto-generated variable? */
 
-		/* Case 1: automated lags:  e.g. 'var(-1)' */
-		if (auto_lag_ok(field, &lnum, pZ, pdinfo, cmd)) {
-		    /* handled, get on with it */
-		    pos += strlen(field) + 1;
-		    continue; 
-		}
-
-		/* Case 2: automated transformations:  e.g. 'logs(x,z)' */
-		else if (auto_transform_ok(field, &lnum, pZ, pdinfo, cmd)) {
-		    /* handled, get on with it */
-		    pos += strlen(field) + 1;
-		    continue; 
+		if (strchr(field, '(') != NULL) {
+		    /* Case 1: automated lags: e.g. 'var(-1)' */
+		    if (auto_lag_ok(field, &lnum, pZ, pdinfo, cmd)) {
+			/* handled, get on with it */
+			pos += strlen(field) + 1;
+			continue; 
+		    }
+		    /* Case 2: automated transformations: e.g. 'logs(x,z)' */
+		    else if (auto_transform_ok(field, &lnum, pZ, pdinfo, cmd)) {
+			/* handled, get on with it */
+			pos += strlen(field) + 1;
+			continue; 
+		    }
 		}
 
 		/* Case 3: special plotting variable */
