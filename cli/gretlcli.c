@@ -1488,6 +1488,14 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	} 
 	break;
 
+    case REMEMBER:
+	pprintf(prn, "got remember command with param='%s', opt=%d\n",
+		cmd.param, (int) cmd.opt);
+	if (cmd.opt & OPT_L) {
+	    stack_list(cmd.list, cmd.param, prn);
+	}
+	break;
+
     case RUN:
     case INCLUDE:
 	err = getopenfile(line, runfile, &paths, 1, 1);

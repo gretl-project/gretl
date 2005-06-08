@@ -666,6 +666,7 @@ static int arma_fcast (Forecast *fc, const MODEL *pmod,
     int tstart = fc->t1;
     int ar_smax, ma_smax;
     int i, s, t, tt;
+    int err = 0;
 
     DPRINTF(("\n\n*** arma_fcast: METHOD = %d\n", fc->method));
 
@@ -717,6 +718,12 @@ static int arma_fcast (Forecast *fc, const MODEL *pmod,
     } else if (fc->method == FC_DYNAMIC) {
 	ar_smax = fc->t1 - 1;
 	ma_smax = fc->t1 - 1;
+	if (ar_smax < p) {
+	    ar_smax = p;
+	}
+	if (ma_smax < q) {
+	    ma_smax = q;
+	}	
     } else {
 	ar_smax = pmod->t2;
 	ma_smax = pmod->t2;
@@ -725,7 +732,7 @@ static int arma_fcast (Forecast *fc, const MODEL *pmod,
     DPRINTF(("ar_smax = %d, ma_smax = %d\n", ar_smax, ma_smax));
 
     /* do real forecast */
-    for (t=tstart; t<=fc->t2; t++) {
+    for (t=tstart; t<=fc->t2 && !err; t++) {
 	int miss = 0;
 	double yh = 0.0;
 
@@ -764,6 +771,7 @@ static int arma_fcast (Forecast *fc, const MODEL *pmod,
 		DPRINTF(("  AR: lag %d, yhat[%d] = %g\n", i+1, s - fc->offset, yval));
 	    }
 	    if (na(yval)) {
+		DPRINTF(("  AR: lag %d, s =%d, missing value\n", i+1, s));
 		miss = 1;
 	    } else {
 		DPRINTF(("  AR: lag %d, s=%d, using coeff %g\n", i+1, s, phi[i]));
@@ -807,6 +815,11 @@ static int arma_fcast (Forecast *fc, const MODEL *pmod,
 				  &ss_psi);
 	    fc->sderr[tt] = pmod->sigma * sqrt(ss_psi);
 	}
+
+	if (miss && t >= p) {
+	    DPRINTF(("aborting with NA at t=%d (p=%d)\n", t, p));
+	    err = 1;
+	}
     }
 
     free(xlist);
@@ -815,7 +828,7 @@ static int arma_fcast (Forecast *fc, const MODEL *pmod,
 	free(psi);
     }
 
-    return 0;
+    return err;
 }
 
 /* construct the "phi" array of AR coefficients, based on the
@@ -936,6 +949,7 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
     double rk, ylag, xlag;
     int miss, p, pmax, yno;
     int i, k, v, s, t;
+    int err = 0;
 
     yno = pmod->list[1];
     arlist = pmod->arinfo->arlist;
@@ -1043,7 +1057,7 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 	free(errphi);
     }
 
-    return 0;
+    return err;
 }
 
 /* Calculates the transformation required to get from xb (= X*b) to
@@ -1382,8 +1396,10 @@ FITRESID *get_forecast (const char *str, MODEL *pmod,
 int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 		  DATAINFO *pdinfo, gretlopt opt)
 {
+    int oldv = pdinfo->v;
     int t, t1, t2, vi;
     char t1str[OBSLEN], t2str[OBSLEN], varname[VNAMELEN];
+    int nf = 0;
     int err = 0;
 
     *t1str = '\0'; *t2str = '\0';
@@ -1467,6 +1483,17 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 	if (fc.eps != NULL) {
 	    free(fc.eps);
 	}
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (!na((*pZ)[vi][t])) {
+	    nf++;
+	}
+    }
+
+    if (nf == 0) {
+	dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
+	err = E_DATA;
     }
 
     return err;

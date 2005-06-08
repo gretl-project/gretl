@@ -153,8 +153,7 @@ static int catch_command_alias (CMD *cmd)
 	cmd->opt = OPT_X;
     } else if (!strcmp(s, "let")) {
 	cmd->ci = GENR;
-    } else if (!strcmp(s, "ls") ||
-	       !strcmp(s, "list")) {
+    } else if (!strcmp(s, "ls")) {
 	cmd->ci = VARLIST;
     } else if (!strcmp(s, "boxplots")) { 
 	cmd->ci = BXPLOT;
@@ -168,6 +167,9 @@ static int catch_command_alias (CMD *cmd)
 	       !strcmp(s, "series") ||
 	       !strcmp(s, "scalar")) { 
 	cmd->ci = GENR;
+    } else if (!strcmp(s, "list")) {
+	cmd->ci = REMEMBER;
+	cmd->opt = OPT_L;
     } else if (*s == '!') {
 	cmd->ci = SHELL;
     }
@@ -185,6 +187,7 @@ static int catch_command_alias (CMD *cmd)
                            c == NEWFUNC || \
                            c == NULLDATA || \
                            c == OMITFROM || \
+                           c == REMEMBER || \
                            c == SETMISS)
 
 #define NO_VARLIST(c) (c == ADDOBS || \
@@ -267,9 +270,13 @@ static int catch_command_alias (CMD *cmd)
                                   c == STORE || \
                                   c == SUMMARY)
 
-#define SCALARS_OK_IN_LIST(c) (c == DELEET || c == PRINT || c == STORE)
+#define SCALARS_OK_IN_LIST(c) (c == DELEET || \
+                               c == PRINT || \
+                               c == STORE)
 
-#define HIDDEN_COMMAND(c) (c == NEWFUNC || c == FUNCERR)
+#define HIDDEN_COMMAND(c) (c == FUNCERR || \
+                           c == NEWFUNC || \
+                           c == REMEMBER)
 
 /* ........................................................... */
 
@@ -1200,12 +1207,14 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
        "multiply" takes a multiplier;
        "omitfrom" and "addto" take the ID of a previous model;
        "setmiss" takes a value to be interpreted as missing;
+       "remember" takes a thing to remember;
        these are captured in cmd->param
     */
     if (TAKES_LAG_ORDER(cmd->ci) ||
 	cmd->ci == ADDTO ||
 	cmd->ci == OMITFROM ||
 	cmd->ci == MULTIPLY ||
+	cmd->ci == REMEMBER ||
 	cmd->ci == SETMISS) {
 	capture_param(line, cmd);
 	if (cmd->errcode) {
@@ -1220,7 +1229,13 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	} 
     }
 
-    if (cmd->ci == MULTIPLY) { 
+    if (cmd->ci == REMEMBER) {
+	line += strspn(line, " ");
+	line += strspn(line, "=");
+	nf--;
+	pos = 0;
+	linelen = strlen(line);
+    } else if (cmd->ci == MULTIPLY) { 
 	char suffix[4];
 
 	sscanf(line, "%3s", suffix);
@@ -1425,6 +1440,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	int dupv = gretl_list_duplicates(cmd->list, cmd->ci);
 
 	if (dupv) {
+	    printlist(cmd->list, "cmd->list");
 	    cmd->errcode = E_UNSPEC;
 	    sprintf(gretl_errmsg, 
 		    _("var number %d duplicated in the command list."),

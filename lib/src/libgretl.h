@@ -286,7 +286,7 @@ struct MODEL_ {
     double criterion[2];         /* array of model selection statistics */
     double dw, rho;              /* Durbin-Watson stat. and estimated 1st
 				    order autocorrelation coefficient */
-    ARINFO *arinfo;              /* struct to hold special info for 
+    ARINFO *arinfo;              /* pointer to struct to hold special info for 
 				    autoregressive model */ 
     int errcode;                 /* Error code in case of failure */
     char *name;

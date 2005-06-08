@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "gretl_list.h"
 
-#if 0
+#if 1
 
 static char **list_names;
 static int **list_stack;
@@ -42,7 +42,7 @@ int *get_list_by_name (const char *name, int *lnum)
     return NULL;
 }
 
-static int stack_list (int *list, const char *name, PRN *prn)
+int stack_list (int *list, const char *name, PRN *prn)
 {
     int *orig;
     int lnum;
