@@ -859,6 +859,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case OUTFILE: 
     case PCA:
     case PRINT: 
+    case REMEMBER:
     case RENAME:
     case RHODIFF:
     case RMPLOT: 
@@ -1486,14 +1487,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 #endif
 	    printf("%s\n", syscmd);
 	} 
-	break;
-
-    case REMEMBER:
-	pprintf(prn, "got remember command with param='%s', opt=%d\n",
-		cmd.param, (int) cmd.opt);
-	if (cmd.opt & OPT_L) {
-	    stack_list(cmd.list, cmd.param, prn);
-	}
 	break;
 
     case RUN:

@@ -5694,6 +5694,7 @@ int gui_exec_line (char *line,
     case OUTFILE: 
     case PCA:
     case PRINT: 
+    case REMEMBER:
     case RENAME:
     case RHODIFF:
     case RMPLOT: 

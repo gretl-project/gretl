@@ -982,6 +982,27 @@ static int gretl_cmd_clear (CMD *cmd)
     return cmd->errcode;
 }
 
+static int resize_command_list (CMD *cmd, int nf)
+{
+    int *list;
+    int i;
+
+    list = realloc(cmd->list, (1 + nf) * sizeof *cmd->list);
+
+    if (list == NULL) {
+	cmd->errcode = E_ALLOC;
+	strcpy (gretl_errmsg, _("Memory allocation failed for command list"));
+    } else {
+	list[0] = nf;
+	for (i=1; i<=nf; i++) {
+	    list[i] = 0;
+	}
+	cmd->list = list;
+    }
+
+    return cmd->errcode;
+}
+
 /**
  * parse_command_line:
  * @line: the command line.
@@ -1254,16 +1275,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* allocate space for the command list */
-
-    cmd->list = realloc(cmd->list, (1 + nf) * sizeof *cmd->list);
-
-    if (cmd->list == NULL) {
-	cmd->errcode = E_ALLOC;
-	strcpy (gretl_errmsg, _("Memory allocation failed for command list"));
+    if (resize_command_list(cmd, nf)) {
 	goto bailout;
     }
-
-    cmd->list[0] = nf;
 
     /* now assemble the command list */
 
@@ -1290,7 +1304,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	if (isalpha((unsigned char) *field)) {
-	    /* should be the name of a variable */
+	    /* probably should be the name of a variable */
+	    int *savedlist;
 
 	    if (field[strlen(field) - 1] == ';') {
 		/* strip any trailing semicolon */
@@ -1300,6 +1315,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    if ((v = varindex(pdinfo, field)) < pdinfo->v) {
 		/* yes, it's an existing variable */
 		cmd->list[lnum++] = v;
+	    } else if ((savedlist = get_list_by_name(field)) != NULL) {
+		/* or it's a pre-defined list */
+		cmd->list[0] -= 1;
+		cmd->errcode = gretl_list_add_list(&cmd->list, savedlist);
 	    } else { /* possibly an auto-generated variable? */
 
 		/* Case 1: automated lags:  e.g. 'var(-1)' */
@@ -1326,7 +1345,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		    continue; 			
 		}
 #endif
-		/* last chance: try abbreviating the varname? */
+		/* try abbreviating the varname? */
 		else if (!cmd->errcode) {
 		    cmd->errcode = 1; /* presume guilt at this stage */
 		    if (strlen(field) > 8) {
@@ -1918,6 +1937,10 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 	} else if (cmd->param[0] != '\0' && !hold_param(cmd->ci)) {
 	    *stdlen += print_maybe_quoted_str(cmd->param, 1, prn);
 	}
+	if (cmd->ci == REMEMBER) {
+	    fputs(" =", stdout);
+	    *stdlen += 2;
+	}
     }
 
     if (!batch) {
@@ -1934,6 +1957,9 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 	} else if (cmd->param[0] != '\0' && !hold_param(cmd->ci)) {
 	    *prnlen += print_maybe_quoted_str(cmd->param, 0, prn);
 	}
+	if (cmd->ci == REMEMBER) {
+	    *prnlen += pputs(prn, " =");
+	}	
     }
 
 #if 0
@@ -2716,6 +2742,12 @@ int simple_commands (CMD *cmd, const char *line,
 	if (((cmd->opt & OPT_O) || (cmd->opt & OPT_S)) && datainfo->markers) {
 	    pprintf(prn, _("Warning: case markers not saved in "
 			   "binary datafile\n"));
+	}
+	break;
+
+    case REMEMBER:
+	if (cmd->opt & OPT_L) {
+	    err = remember_list(cmd->list, cmd->param, prn);
 	}
 	break;
 

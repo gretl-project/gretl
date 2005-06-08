@@ -44,6 +44,8 @@ int gretl_list_diff (int *targ, const int *biglist, const int *sublist);
 
 int *gretl_list_diff_new (const int *biglist, const int *sublist);
 
+int gretl_list_add_list (int **targ, const int *src);
+
 void rearrange_list (int *list);
 
 int list_members_replaced (const int *list, const DATAINFO *pdinfo,
@@ -54,5 +56,15 @@ int gretl_list_has_const (const int *list);
 int gretl_list_duplicates (const int *list, GretlCmdIndex ci);
 
 int *full_var_list (const DATAINFO *pdinfo, int *nvars);
+
+int *get_list_by_name (const char *name);
+
+int remember_list (const int *list, const char *name, PRN *prn);
+
+int copy_named_list_as (const char *orig, const char *new);
+
+int destroy_saved_lists_at_level (int level);
+
+void gretl_lists_cleanup (void);
 
 #endif /* GRETL_LIST_H */

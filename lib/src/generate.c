@@ -271,7 +271,8 @@ static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
     if (opt & OPT_P) {
 	genr_set_private(genr);
     }
-    if (opt & OPT_L) {
+
+    if ((opt & OPT_L) || gretl_executing_function()) {
 	genr_set_local(genr);
     }
 
@@ -4933,18 +4934,18 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 #endif
 
     if (fsd > 0) {
+#if 0
 	/* inside a function: see only variables at same level */
 	for (i=1; i<pdinfo->v; i++) { 
-#if GEN_LEVEL_DEBUG > 1
-	    fprintf(stderr, "checking '%s' at level %d\n", 
-		    pdinfo->varname[i],STACK_LEVEL(pdinfo, i));
-#endif 
 	    if (STACK_LEVEL(pdinfo, i) == fsd && 
 		!strcmp(pdinfo->varname[i], check)) {
 		ret = i;
 		break;
 	    }
 	}
+#else
+	ret = macro_pick_varmatch(pdinfo, check, fsd, local);
+#endif
     } else if (msd > 0) {
 	/* complicated, see above */
 	ret = macro_pick_varmatch(pdinfo, check, msd, local);

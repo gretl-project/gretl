@@ -19,22 +19,65 @@
 
 #include "libgretl.h"
 #include "gretl_list.h"
+#include "gretl_func.h"
 
-#if 1
+typedef struct saved_list_ saved_list;
 
-static char **list_names;
-static int **list_stack;
+struct saved_list_ {
+    int *list;
+    char *name;
+    int level;
+};
+
+static saved_list **list_stack;
 static int n_lists;
 
-int *get_list_by_name (const char *name, int *lnum)
+static saved_list *saved_list_new (const int *list, const char *name)
 {
+    saved_list *sl = malloc(sizeof *sl);
+
+    if (sl != NULL) {
+	if (gretl_executing_function()) {
+	    sl->level = gretl_function_stack_depth();
+	} else {
+	    sl->level = 0;
+	}
+	sl->list = gretl_list_copy(list);
+	if (sl->list == NULL) {
+	    free(sl);
+	    sl = NULL;
+	} else {
+	    sl->name = gretl_strdup(name);
+	    if (sl->name == NULL) {
+		free(sl->list);
+		free(sl);
+		sl = NULL;
+	    }
+	}
+    }
+
+    return sl;
+}
+
+static void free_saved_list (saved_list *sl)
+{
+    free(sl->list);
+    free(sl->name);
+    free(sl);
+}
+
+static saved_list *get_saved_list_by_name (const char *name)
+{
+    int fsd = 0;
     int i;
 
+    if (gretl_executing_function()) {
+	fsd = gretl_function_stack_depth();
+    }
+
     for (i=0; i<n_lists; i++) {
-	if (!strcmp(name, list_names[i])) {
-	    if (lnum != NULL) {
-		*lnum = 1;
-	    }
+	if (!strcmp(name, list_stack[i]->name) && 
+	    fsd == list_stack[i]->level) {
 	    return list_stack[i];
 	}
     }
@@ -42,21 +85,50 @@ int *get_list_by_name (const char *name, int *lnum)
     return NULL;
 }
 
-int stack_list (int *list, const char *name, PRN *prn)
-{
-    int *orig;
-    int lnum;
+/**
+ * get_list_by_name:
+ * @name: the name of the list to be found.
+ *
+ * Looks up @name in the stack of saved lists (if any) and
+ * retrieves the associated list.
+ *
+ * Returns: the list, or %NULL if the lookup fails. 
+ */
 
-    orig = get_list_by_name(name, &lnum);
+int *get_list_by_name (const char *name)
+{
+    int *ret = NULL;
+    saved_list *sl = get_saved_list_by_name(name);
+
+    if (sl != NULL) {
+	ret = sl->list;
+    }
+
+    return ret;
+}
+
+static int real_remember_list (const int *list, const char *name, 
+			       int force_new, PRN *prn)
+{
+    saved_list *orig = NULL;
+    int err = 0;
+
+    if (!force_new) {
+	orig = get_saved_list_by_name(name);
+    }
 
     if (orig != NULL) {
 	/* replace existing list of same name */
-	free(orig);
-	list_stack[lnum] = list;
-	pprintf(prn, "Replaced list '%s'\n", name);
+	free(orig->list);
+	orig->list = gretl_list_copy(list);
+	if (orig->list == NULL) {
+	    pprintf(prn, "Out of memory replacing list '%s'\n", name);
+	    err = E_ALLOC;
+	} else {
+	    pprintf(prn, "Replaced list '%s'\n", name);
+	}
     } else {
-	char **lnames;
-	int **lstack;
+	saved_list **lstack;
 
 	lstack = realloc(list_stack, (n_lists + 1) * sizeof *lstack);
 	if (lstack == NULL) {
@@ -64,40 +136,135 @@ int stack_list (int *list, const char *name, PRN *prn)
 	}
 	list_stack = lstack;
 
-	lnames = realloc(list_names, (n_lists + 1) * sizeof *lnames);
-	if (lnames == NULL) {
-	    return E_ALLOC;
+	list_stack[n_lists] = saved_list_new(list, name);
+	if (list_stack[n_lists] == NULL) {
+	    pprintf(prn, "Out of memory adding list '%s'\n", name);
+	    err = E_ALLOC;
+	} else {
+	    pprintf(prn, "Added list '%s'\n", name);
+	    n_lists++;
 	}
-	list_names = lnames;
-
-	list_stack[n_lists] = list;
-	list_names[n_lists] = gretl_strdup(name);
-	pprintf(prn, "Added list '%s'\n", name);
-	n_lists++;
     }
 
-    return 0;
+    return err;
 }
+
+/**
+ * remember_list:
+ * @list: array of integers, the first element being a count
+ * of the following elements.
+ * @name: name to be given to the list.
+ * @prn: printing struct.
+ *
+ * Adds @list to the stack of saved lists and associates it
+ * with @name, unless there is already a list with the given
+ * name in which case the original list is replaced.  A status
+ * message is printed to @prn.
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
+
+int remember_list (const int *list, const char *name, PRN *prn)
+{
+    return real_remember_list(list, name, 0, prn);
+}
+
+/**
+ * copy_named_list:
+ * @orig: the name of the original list.
+ * @new: the name to be given to the copy.
+ *
+ * If a saved list is found by the name @orig, a copy of
+ * this list is added to the stack of saved lists under the
+ * name @new.  This is intended for use when a list is given
+ * as the argument to a user-defined function: it is copied
+ * under the name assigned by the function's parameter list.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int copy_named_list_as (const char *orig, const char *new)
+{
+    saved_list *sl;
+    int err = 0;
+
+    sl = get_saved_list_by_name(orig);
+    if (sl == NULL) {
+	err = 1;
+    } else {
+	err = real_remember_list(sl->list, new, 1, NULL);
+	if (!err) {
+	    /* for use in functions */
+	    sl = list_stack[n_lists - 1];
+	    sl->level += 1;
+	}
+    }
+
+    return err;
+}
+
+/**
+ * destroy_saved_lists_at_level:
+ * @level: stack level of function execution.
+ *
+ * Destroys and removes from the stack of saved lists all
+ * lists that were created at the given @level.  This is 
+ * part of the cleanup that is performed when a user-defined
+ * function terminates.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int destroy_saved_lists_at_level (int level)
+{
+    saved_list **lstack;
+    int i, j, nl = 0;
+    int err = 0;
+
+    for (i=0; i<n_lists; i++) {
+	if (list_stack[i]->level == level) {
+	    free_saved_list(list_stack[i]);
+	    for (j=i; j<n_lists - 1; j++) {
+		list_stack[j] = list_stack[j+1];
+	    }
+	    list_stack[n_lists - 1] = NULL;
+	} else {
+	    nl++;
+	}
+    }
+
+    if (nl < n_lists) {
+	n_lists = nl;
+	lstack = realloc(list_stack, nl * sizeof *list_stack);
+	if (lstack == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    list_stack = lstack;
+	}
+    }
+
+    return err;
+}
+
+/**
+ * gretl_lists_cleanup:
+ *
+ * Frees all resources associated with the internal
+ * apparatus for saving and retrieving named lists.
+ */
 
 void gretl_lists_cleanup (void)
 {
     int i;
 
     for (i=0; i<n_lists; i++) {
-	free(list_stack[i]);
-	free(list_names[i]);
+	free_saved_list(list_stack[i]);
     }
 
     free(list_stack);
-    free(list_names);
-
     list_stack = NULL;
-    list_names = NULL;
-
     n_lists = 0;
 }
-
-#endif
 
 /**
  * gretl_list_new:
@@ -638,6 +805,38 @@ int *gretl_list_diff_new (const int *biglist, const int *sublist)
     }
 
     return targ;
+}
+
+/**
+ * gretl_list_add_list:
+ * @targ: location of list to which @src should be added.
+ * @src: list to be added to @targ.
+ *
+ * Adds @src onto the end of @targ.  The length of @targ becomes the
+ * sum of te lengths of the two original lists.
+ *
+ * Returns: 0 on success, %E_ALLOC on failure.
+ */
+
+int gretl_list_add_list (int **targ, const int *src)
+{
+    int *big;
+    int n1 = (*targ)[0];
+    int n2 = src[0];
+    int i, err = 0;
+
+    big = realloc(*targ, (n1 + n2 + 1) * sizeof *big);
+    if (big == NULL) {
+	err = E_ALLOC;
+    } else {
+	big[0] = n1 + n2;
+	for (i=1; i<=src[0]; i++) {
+	    big[n1 + i] = src[i];
+	}
+	*targ = big;
+    }
+
+    return err;
 }
 
 /**

@@ -237,7 +237,6 @@ gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m)
     return gretl_matrix_copy_mod(m, GRETL_MOD_TRANSPOSE);
 }
 
-
 /**
  * gretl_matrix_free:
  * @m: matrix to be freed.
@@ -616,6 +615,36 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
     }
     
     for (i=0; i<n; i++) targ->val[i] -= src->val[i];
+
+    return GRETL_MATRIX_OK;
+}
+
+/**
+ * gretl_matrix_transpose:
+ * @targ: target matrix.
+ * @src: source matrix.
+ *
+ * Fills out @targ (which must be pre-allocated and of the right
+ * dimensions) with the transpose of @src.
+ *
+ * Returns: %GRETL_MATRIX_OK on success, non-zero error code otherwise.
+ */
+
+int gretl_matrix_transpose (gretl_matrix *targ, const gretl_matrix *src)
+{
+    int i, j;
+    double x;
+
+    if (targ->rows != src->cols || targ->cols != src->rows) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    for (i=0; i<src->rows; i++) {
+	for (j=0; j<src->cols; j++) {
+	    x = src->val[mdx(src, i, j)];
+	    targ->val[mdx(targ, j, i)] = x;
+	}
+    }
 
     return GRETL_MATRIX_OK;
 }

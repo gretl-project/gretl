@@ -284,6 +284,10 @@ destroy_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo, int nc)
 	free(locals);
     }
 
+    if (!err) {
+	err = destroy_saved_lists_at_level(nc);
+    }
+
     return err;
 }
 
@@ -1084,15 +1088,22 @@ static int check_and_allocate_function_args (ufunc *fun,
 #endif
 	} else {
 	    v = varindex(pdinfo, argv[i]);
-	    if (v == pdinfo->v) {
-		fprintf(stderr, "%s: not a known variable\n", argv[i]);
-		err = 1;
-	    } else {
+	    if (v < pdinfo->v) {
 		err = dataset_copy_variable_as(v, fun->params[i], pZ, pdinfo);
 #if FN_DEBUG
                 fprintf(stderr, "fn args: copy var %d as '%s': err = %d\n", 
 			v, fun->params[i], err);
 #endif
+	    } else if (get_list_by_name(argv[i]) != NULL) {
+		err = copy_named_list_as(argv[i], fun->params[i]);
+#if FN_DEBUG
+		fprintf(stderr, "fn args: copy list '%s' as '%s': err = %d\n", 
+			argv[i], fun->params[i], err);
+#endif
+	    } else {
+		fprintf(stderr, "argument %d (%s): not a known variable\n", 
+			i + 1, argv[i]);
+		err = 1;
 	    }
 	}
     }
