@@ -355,10 +355,11 @@ get_lagged_yhat (Forecast *fc, int vi, int t, int *order)
     return yhlag;
 }
 
-/* below: FIXME.  If method is dynamic we should prefer lagged
-   prediction to lagged actual.  If method is static, we don't
-   want the lagged prediction.  If method is auto, which we prefer
-   depends on whether we're in or out of sample */
+/* If method is dynamic we prefer lagged prediction to lagged actual.
+   If method is static, we don't want the lagged prediction.  If
+   method is auto, which we prefer depends on whether we're in or out
+   of sample.  
+*/
 
 static double fcast_get_xit (Forecast *fc, int i, int t,
 			     const double **Z, int *order)
@@ -569,6 +570,12 @@ static int garch_fcast (Forecast *fc, const MODEL *pmod,
 
 	s = t - fc->offset;
 
+	if (fc->method != FC_DYNAMIC && 
+	    t >= pmod->t1 && t <= pmod->t2) {
+	    fc->yhat[s] = pmod->yhat[t];
+	    continue;
+	}
+
 	for (i=1; i<=xvars; i++) {
 	    v = xlist[i];
 	    xval = fcast_get_xit(fc, i, t, Z, NULL);
@@ -670,7 +677,7 @@ static int arma_fcast (Forecast *fc, const MODEL *pmod,
 
     DPRINTF(("\n\n*** arma_fcast: METHOD = %d\n", fc->method));
 
-    if (fc->method == FC_AUTO || fc->method == FC_STATIC) {
+    if (fc->method != FC_DYNAMIC) {
 	/* use pre-calculated fitted values over model estimation range,
 	   and don't bother calculating forecast error variance */
 	for (t=fc->t1; t<=pmod->t2; t++) {
@@ -1013,6 +1020,7 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 	    int order = 0;
 
 	    v = pmod->list[i+2];
+	    /* FIXME forecast method? */
 	    xval = fcast_get_xit(fc, v, t, Z, &order);
 	    if (na(xval)) {
 		miss = 1;
