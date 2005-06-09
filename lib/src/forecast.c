@@ -326,6 +326,8 @@ fit_resid_init (const char *line, const MODEL *pmod,
     return fr->err;
 }
 
+#define AR_DEBUG 0
+
 /* Get a value for a lag of the dependent variable.  If method is
    dynamic we prefer lagged prediction to lagged actual.  If method is
    static, we don't want the lagged prediction, only the actual.  If
@@ -339,6 +341,11 @@ static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
     /* initialize to actual lagged value */
     double ldv = Z[i][t];
 
+#if AR_DEBUG
+    fprintf(stderr, "fcast_get_ldv: i=%d, t=%d, lag=%d; "
+	    "initial ldv = Z[%d][%d] = %g\n", i, t, lag, i, t, ldv);
+#endif
+
     if (fc->method != FC_STATIC) {
 	int yht = t - fc->offset - lag;
 
@@ -349,6 +356,10 @@ static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
 	} else if (fc->method == FC_AUTO && yht >= 0) {
 	    if (t > fc->model_t2 || na(ldv)) {
 		ldv = fc->yhat[yht];
+#if AR_DEBUG
+		fprintf(stderr, "fcast_get_ldv: reset ldv = yhat[%d] = %g\n",
+			yht, ldv);
+#endif
 	    } 
 	}
     }
@@ -887,21 +898,21 @@ static void set_up_ar_fcast_variance (const MODEL *pmod, int pmax,
 }
 
 /* 
-   The code below generates one-step ahead forecasts that
-   incorporate the predictable portion of an AR error term:
+   The code below generates forecasts that incorporate the 
+   predictable portion of an AR error term:
 
        u_t = r1 u_{t-1} + r2 u_{t-1} + ... + e_t
 
    where e_t is white noise.  The forecasts are based on the
    representation of a model with such an error term as
 
-       (1 - r(L)) y_t = (1 - r(L) X_t b + e_t
+       (1 - r(L)) y_t = (1 - r(L)) X_t b + e_t
 
-   where r(L) is a polynomial in the lag operator.  In effect, we
-   generate a forecast that incorporates the error process by using
-   rho-differenced X on the RHS, and applying a corresponding
-   compensation on the LHS so that the forecast is of y_t, not 
-   (1 - r(L)) y_t.
+   or
+
+       y_t = r(L) y_t + (1 - r(L)) X_t b + e_t
+
+   where r(L) is a polynomial in the lag operator.
 
    We also attempt to calculate forecast error variance for
    out-of-sample forecasts.  These calculations, like those for
@@ -924,6 +935,10 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
     int i, k, v, s, t, tk;
     int p, dvlag, pmax = 0;
     int err = 0;
+
+#if AR_DEBUG
+    fprintf(stderr, "\n*** arma_fcast, method = %d\n\n", fc->method);
+#endif
 
     yno = pmod->list[1];
     arlist = pmod->arinfo->arlist;
@@ -963,11 +978,11 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 	    }
 	}
 
-	/* LHS adjustment */
+	/* r(L) y_t */
 	for (k=1; k<=arlist[0]; k++) {
 	    rk = pmod->arinfo->rho[k-1];
 	    tk = t - arlist[k];
-	    ylag = fcast_get_ldv(fc, yno, tk, arlist[k], Z);
+	    ylag = fcast_get_ldv(fc, yno, tk, 0, Z);
 	    if (na(ylag)) {
 		miss = 1;
 	    } else {
@@ -975,7 +990,7 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 	    }
 	}
 
-	/* RHS */
+	/* (1 - r(L)) X_t b */
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
 	    v = pmod->list[i+2];
 	    if ((dvlag = depvar_lag(fc, i))) {
@@ -990,7 +1005,6 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 		    /* augment phi for computation of variance */
 		    phi[dvlag - 1] += pmod->coeff[i];
 		}
-		/* use rho-differenced X on RHS */
 		for (k=1; k<=arlist[0]; k++) {
 		    rk = pmod->arinfo->rho[k-1];
 		    tk = t - arlist[k];

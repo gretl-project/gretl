@@ -1,17 +1,18 @@
-(* PS11.2, using DATA10-5, for evaluating Model B - Table 11.2 *)
+# PS11.2 for evaluating Model B - Table 11.2
+open data10-5.gdt
 genr time
-(* create square of time *)
+# create square of time
 genr tsq = time*time
 smpl 1960 1989 
-(* quadratic Model B *)
+# quadratic Model B
 corc calwage 0 time tsq
-(* obtain predicted value *)
-fcast 1960 1994 yhatb
-(* reset sample range and regress actual against predicted calwage *)
+# obtain one-step ahead forecasts
+fcast 1960 1994 yhatb --static
+# reset sample range and regress actual against predicted calwage
 smpl 1990 1994
 ols calwage 0 yhatb
-(* compute absolute percentage error *)
+# compute absolute percentage error
 smpl 1961 1994
 genr yf = int(100*yhatb+0.5)/100
 genr ape = int(100*((100*abs(calwage-yhatb)/calwage)+0.5))/100
-print -o calwage yf ape
+print calwage yf ape --byobs

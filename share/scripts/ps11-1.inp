@@ -1,117 +1,118 @@
-(* PS11.1, using DATA10-5, for fitting time trends in calwage *)
+# PS11.1 for fitting time trends in calwage
+open data10-5.gdt
 genr time
-(* create the square of time *)
+# create the square of time
 genr tsq = time*time
-(* create the cube of time *)
+# create the cube of time
 genr t3 = tsq*time
-(* create inverse of time *)
+# create inverse of time
 genr invt = 1/time
-(* generate log of time *)
+# generate log of time
 genr l_time = log(time)
-(* generate log of calwage *)
+# generate log of calwage
 logs calwage 
 graph calwage time
-(* set sample range to 1960-1989 and save 1990-1994 for predictions *)
+# set sample range to 1960-1989 and save 1990-1994 for predictions
 smpl 1960 1989
-(* Note that the OLS estimates exhibit serial correlation *)
+# Note that the OLS estimates exhibit serial correlation
 ols calwage 0 time
-(* linear Model A *)
+# linear Model A
 corc calwage 0 time
-(* obtain predicted value *)
-fcast 1990 1994 yhata
-(* reset sample range *)
+# obtain one-step-ahead predicted values
+fcast 1990 1994 yhata --static
+# reset sample range
 smpl 1990 1994
-(* regress actual against predicted *)
+# regress actual against predicted
 ols calwage 0 yhata;
-(* compute prediction error, error sum of squares, and selection criteria *)
+# compute prediction error, error sum of squares, and selection criteria
 genr uhata = calwage - yhata
 genr mapea = mean(100*abs(uhata)/calwage)
 genr essa = sum(uhata*uhata)
 criteria essa 5 2
-(* reset sample range to beginning *)
+# reset sample range to beginning
 smpl 1960 1989
-(* quadratic Model B *)
+# quadratic Model B
 corc calwage 0 time tsq
-(* obtain predicted value *)
-fcast 1990 1994 yhatb
-(* reset sample range and regress actual against predicted calwage *)
+# obtain predicted value
+fcast 1990 1994 yhatb --static
+# reset sample range and regress actual against predicted calwage
 smpl 1990 1994
 ols calwage 0 yhatb
-(* compute prediction error, error sum of squares, and selection criteria *)
+# compute prediction error, error sum of squares, and selection criteria
 genr uhatb = calwage - yhatb
 genr mapeb = mean(100*abs(uhatb)/calwage)
 genr essb = sum(uhatb*uhatb)
 criteria essb 5 2
 smpl 1960 1989
-(* cubic Model C *)
+# cubic Model C
 corc calwage 0 time tsq t3
-(* obtain predicted value *)
-fcast 1990 1994 yhatc
-(* reset sample range and regress actual against predicted calwage *)
+# obtain predicted value
+fcast 1990 1994 yhatc --static
+# reset sample range and regress actual against predicted calwage
 smpl 1990 1994
 ols calwage 0 yhatc
-(* compute prediction error, error sum of squares, and selection criteria *)
+# compute prediction error, error sum of squares, and selection criteria
 genr uhatc = calwage - yhatc
 genr mapec = mean(100*abs(uhatc)/calwage)
 genr essc = sum(uhatc*uhatc)
 criteria essc 5 2
 smpl 1960 1989
-(* linear-log Model D *)
+# linear-log Model D
 corc calwage 0 l_time
-(* obtain predicted value *)
-fcast 1990 1994 yhatd
-(* reset sample range and regress actual against predicted calwage *)
+# obtain predicted value
+fcast 1990 1994 yhatd --static
+# reset sample range and regress actual against predicted calwage
 smpl 1990 1994
 ols calwage 0 yhatd
-(* compute prediction error, error sum of squares, and selection criteria *)
+# compute prediction error, error sum of squares, and selection criteria
 genr uhatd = calwage - yhatd
 genr maped = mean(100*abs(uhatd)/calwage)
 genr essd = sum(uhatd*uhatd)
 criteria essd 5 2
 smpl 1960 1989
-(* reciprocal Model E *)
+# reciprocal Model E
 corc calwage 0 invt
-(* obtain predicted value *)
-fcast 1990 1994 yhate
-(* reset sample range and regress actual against predicted calwage *)
+# obtain predicted value
+fcast 1990 1994 yhate --static
+# reset sample range and regress actual against predicted calwage
 smpl 1990 1994
 ols calwage 0 yhate
-(* compute prediction error, error sum of squares, and selection criteria *)
+# compute prediction error, error sum of squares, and selection criteria
 genr uhate = calwage - yhate
 genr mapee = mean(100*abs(uhate)/calwage)
 genr esse = sum(uhate*uhate)
 criteria esse 5 2
 smpl 1960 1989
-(* log-linear Model F *)
+# log-linear Model F
 corc l_calwag 0 time
-(* obtain predicted value *)
-fcast 1990 1994 yhatf
+# obtain predicted value
+fcast 1990 1994 yhatf --static
 smpl 1960 1994
-(* retrieve sigma squared from model E for bias correction *)
+# retrieve sigma squared from model E for bias correction
 genr sgmasq = $ess/$df
 genr yhatf = exp(yhatf+(sgmasq/2))
-(* reset sample range and regress actual against predicted calwage *)
+# reset sample range and regress actual against predicted calwage
 smpl 1990 1994
 ols calwage 0 yhatf
-(* compute prediction error, error sum of squares, and selection criteria *)
+# compute prediction error, error sum of squares, and selection criteria
 genr uhatf = calwage - yhatf
 genr mapef= mean(100*abs(uhatf)/calwage)
 genr essf = sum(uhatf*uhatf)
 criteria essf 5 2
 smpl 1960 1989
-(* double-log Model G *)
+# double-log Model G
 corc l_calwag 0 l_time
-(* obtain predicted value *)
-fcast 1990 1994 yhatg
+# obtain predicted value
+fcast 1990 1994 yhatg --static
 smpl 1960 1994
-(* retrieve sigma squared for model G *)
+# retrieve sigma squared for model G
 genr sgmasq = $ess/$df
-(* predict levels from model G *)
+# predict levels from model G
 genr yhatg = exp(yhatg+(sgmasq/2))
 smpl 1990 1994
-(* reset sample range and regress actual against predicted calwage *)
+# reset sample range and regress actual against predicted calwage
 ols calwage 0 yhatg
-(* compute prediction error, error sum of squares, and selection criteria *)
+# compute prediction error, error sum of squares, and selection criteria
 genr uhatg = calwage - yhatg
 genr mapeg= mean(100*abs(uhatg)/calwage)
 genr essg = sum(uhatg*uhatg)
