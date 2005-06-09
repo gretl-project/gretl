@@ -193,13 +193,13 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 }
 
 static int 
-count_depvar_lags (const MODEL *pmod, const DATAINFO *pdinfo)
+has_depvar_lags (const MODEL *pmod, const DATAINFO *pdinfo)
 {
     char xname[9], tmp[9];  
     const char *label;
     const char *yname;
     int i, vi, lag;
-    int nlags = 0;
+    int ret = 0;
 
     if (pmod->ci == NLS || pmod->ci == ARMA) {
 	/* we won't do this for these models */
@@ -218,21 +218,20 @@ count_depvar_lags (const MODEL *pmod, const DATAINFO *pdinfo)
 	if ((sscanf(label, "= %8[^(](t - %d)", xname, &lag) == 2 ||
 	     sscanf(label, "%8[^=]=%8[^(](-%d)", tmp, xname, &lag) == 3) &&
 	    !strcmp(xname, yname)) {
-	    nlags++;
+	    ret = 1;
+	    break;
 	}
     }
 
-    return nlags;
+    return ret;
 }
 
-/* Make a "double list" to keep track of any "independent variables"
-   that are really lags of the dependent variable.  The first element
-   of the list is the number of _pairs_ of integers that follow; in
-   each following pair the leading number is the ID number of a
-   variable in the regression list and the second is the lag order.
-   Thus for example the pair (13, 2) records the fact that the
-   variable with ID number 13 is actually lag 2 of the dependent
-   variable.
+/* Make a list to keep track of any "independent variables" that are
+   really lags of the dependent variable.  The list has as many
+   elements as the model has coefficients, and in each place we either
+   write a zero (if the coefficient does not correspond to a lag of
+   the dependent variable) or a positive integer corresponding to the
+   lag order.
 */
 
 static int process_lagged_depvar (const MODEL *pmod, 
@@ -240,33 +239,29 @@ static int process_lagged_depvar (const MODEL *pmod,
 				  int **depvar_lags)
 {
     int *dvlags = NULL;
-    int nlags;
+    int anylags;
     int err = 0;
 
-    nlags = count_depvar_lags(pmod, pdinfo);
+    anylags = has_depvar_lags(pmod, pdinfo);
 
-    if (nlags == 0) {
+    if (!anylags) {
 	*depvar_lags = NULL;
 	return 0;
     }
 
-    dvlags = malloc((nlags * 2 + 1) * sizeof *dvlags);
+    dvlags = malloc(pmod->ncoeff * sizeof *dvlags);
     if (dvlags == NULL) {
 	err = 1;
     } else {
-	dvlags[0] = nlags;
-    }
-
-    if (nlags > 0 && !err) {
 	char xname[9], tmp[9];
 	const char *label;
 	const char *yname;
-	int i, vi, lag, j = 1;
+	int i, vi, lag;
 
 	yname = pdinfo->varname[gretl_model_get_depvar(pmod)];
 
-	for (i=2; i<=pmod->list[0]; i++) {
-	    vi = pmod->list[i];
+	for (i=0; i<pmod->ncoeff; i++) {
+	    vi = pmod->list[i+2];
 	    if (vi == LISTSEP) {
 		break;
 	    }
@@ -274,8 +269,9 @@ static int process_lagged_depvar (const MODEL *pmod,
 	    if ((sscanf(label, "= %8[^(](t - %d)", xname, &lag) == 2 ||
 		 sscanf(label, "%8[^=]=%8[^(](-%d)", tmp, xname, &lag) == 3) &&
 		!strcmp(xname, yname)) {
-		dvlags[j++] = vi;
-		dvlags[j++] = lag;
+		dvlags[i] = lag;
+	    } else {
+		dvlags[i] = 0;
 	    }
 	}
     } 
@@ -324,65 +320,29 @@ fit_resid_init (const char *line, const MODEL *pmod,
     return fr->err;
 }
 
-/* If an "independent" variable needed in generating a forecast is
-   missing, check whether it might in fact be a lagged value of the
-   dependent variable, for which we have a prior forecast available.
-   if so, return that value; also we use "order" to return the lag
-   order of the variable whose value is retrieved.
-*/
-
-static double 
-get_lagged_yhat (Forecast *fc, int vi, int t, int *order)
-{
-    double yhlag = NADBL;
-    int s = t - fc->offset;
-    int i, lag = 0;
-
-    if (fc->dvlags != NULL) {
-	for (i=1; i<=fc->dvlags[0]; i++) {
-	    if (fc->dvlags[2*i-1] == vi) {
-		lag = fc->dvlags[2*i];
-		if (s - lag >= 0) {
-		    yhlag = fc->yhat[s - lag];
-		}
-		break;
-	    }
-	}
-    }
-
-    *order = lag;
-
-    return yhlag;
-}
-
 /* If method is dynamic we prefer lagged prediction to lagged actual.
    If method is static, we don't want the lagged prediction.  If
    method is auto, which we prefer depends on whether we're in or out
    of sample.  
 */
 
-static double fcast_get_xit (Forecast *fc, int i, int t,
-			     const double **Z, int *order)
+static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
+			     const double **Z)
 {
-    double ylag, xit = Z[i][t];
-    int lag = 0;
+    /* initialize to actual lagged value */
+    double ldv = Z[i][t];
 
     if (fc->method == FC_DYNAMIC) {
-	ylag = get_lagged_yhat(fc, i, t, &lag);
-	if (lag > 0 && lag < t - fc->t1) {
-	    xit = ylag;
+	if (lag < t - fc->t1) {
+	    ldv = fc->yhat[t - fc->offset - lag];
 	}
     } else if (fc->method == FC_AUTO) {
-	if (na(xit) && fc->dvlags != NULL) {
-	    xit = get_lagged_yhat(fc, i, t, &lag);
+	if (na(ldv)) {
+	    ldv = fc->yhat[t - fc->offset - lag];
 	}
     }
 
-    if (order != NULL) {
-	*order = lag;
-    }
-
-    return xit;
+    return ldv;
 }
 
 /* Get forecasts, plus standard errors for same, for models without
@@ -543,6 +503,8 @@ static void dprintf (const char *format, ...)
 # define DPRINTF(x)
 #endif 
 
+#define depvar_lag(f,i) ((f->dvlags != NULL)? f->dvlags[i] : 0)
+
 /* forecasts for GARCH models -- seems as if we ought to be able to
    do something interesting with forecast error variance, but right
    now we don't do anything */
@@ -565,7 +527,7 @@ static int garch_fcast (Forecast *fc, const MODEL *pmod,
     }
 
     for (t=fc->t1; t<=fc->t2; t++) {
-	int miss = 0;
+	int lag, miss = 0;
 	double yh = 0.0;
 
 	s = t - fc->offset;
@@ -576,9 +538,13 @@ static int garch_fcast (Forecast *fc, const MODEL *pmod,
 	    continue;
 	}
 
-	for (i=1; i<=xvars; i++) {
-	    v = xlist[i];
-	    xval = fcast_get_xit(fc, i, t, Z, NULL);
+	for (i=0; i<xvars; i++) {
+	    v = xlist[i+1];
+	    if ((lag = depvar_lag(fc, i))) {
+		xval = fcast_get_ldv(fc, i, t, lag, Z);
+	    } else {
+		xval = Z[v][t];
+	    }
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
@@ -1017,21 +983,28 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 	}
 
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
-	    int order = 0;
+	    int lag;
 
 	    v = pmod->list[i+2];
-	    /* FIXME forecast method? */
-	    xval = fcast_get_xit(fc, v, t, Z, &order);
+	    if ((lag = depvar_lag(fc, i))) {
+		xval = fcast_get_ldv(fc, v, t, lag, Z);
+	    } else {
+		xval = Z[v][t];
+	    }
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
-		if (order > 0) {
-		    phi[order - 1] += pmod->coeff[i];
+		if (lag > 0) {
+		    phi[lag - 1] += pmod->coeff[i];
 		}
 		/* use rho-differenced X on RHS */
 		for (k=1; k<=arlist[0]; k++) {
 		    rk = pmod->arinfo->rho[k-1];
-		    xlag = fcast_get_xit(fc, v, t - arlist[k], Z, NULL);
+		    if (lag > 0) {
+			xlag = fcast_get_ldv(fc, v, t - arlist[k], lag, Z);
+		    } else {
+			xlag = Z[v][t - arlist[k]];
+		    }
 		    if (!na(xlag)) {
 			xval -= rk * xlag;
 		    }
@@ -1138,8 +1111,14 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod,
 	s = t - fc->offset;
 
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
+	    int lag;
+
 	    vi = pmod->list[i+2];
-	    xval = fcast_get_xit(fc, vi, t, Z, NULL);
+	    if ((lag = depvar_lag(fc, i))) {
+		xval = fcast_get_ldv(fc, vi, t, lag, Z);
+	    } else {
+		xval = Z[vi][t];
+	    }
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
@@ -1576,12 +1555,9 @@ void forecast_options_for_model (const MODEL *pmod, int t2,
 
     if (pmod->ci == ARMA) {
 	*dyn_ok = 1;
-    } else if (dataset_is_time_series(pdinfo)) {
-	int ldv = count_depvar_lags(pmod, pdinfo);
-
-	if (ldv > 0) {
-	    *dyn_ok = 1;
-	}
+    } else if (dataset_is_time_series(pdinfo) &&
+	       has_depvar_lags(pmod, pdinfo)) {
+	*dyn_ok = 1;
     }
 
     if (*dyn_ok && t2 > pmod->t2) {

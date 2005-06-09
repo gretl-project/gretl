@@ -960,13 +960,14 @@ int gretl_list_has_const (const int *list)
  * Exactly what counts as duplication depends on the context of the
  * command in which @list will be used, which is given by @ci.
  *
- * Returns: 1 in case of erroneous duplication, 0 otherwise.
+ * Returns: the ID number of the first duplicated variable found,
+ * or -1 in case of no duplication.
  */
 
 int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 {
     int i, j, start = 2;
-    int ret = 0;
+    int ret = -1;
 
     if (ci == ARCH) {
 	start = 3;
@@ -982,9 +983,9 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 	}
     }
     
-    for (i=start; i<list[0] && !ret; i++) {
-	for (j=start+1; j<=list[0] && !ret; j++) {
-	    if (i != j && list[i] == list[j]) {
+    for (i=start; i<list[0] && ret < 0; i++) {
+	for (j=i+1; j<=list[0] && ret < 0; j++) {
+	    if (list[i] == list[j]) {
 		ret = list[i];
 	    }
 	}

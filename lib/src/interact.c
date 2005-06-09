@@ -1537,7 +1537,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (!cmd->errcode && !cmd->nolist) {
 	int dupv = gretl_list_duplicates(cmd->list, cmd->ci);
 
-	if (dupv) {
+	if (dupv >= 0) {
 	    printlist(cmd->list, "cmd->list");
 	    cmd->errcode = E_UNSPEC;
 	    sprintf(gretl_errmsg, 
