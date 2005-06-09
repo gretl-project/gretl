@@ -1040,6 +1040,65 @@ static void set_withstr (unsigned char flags, const int *lines,
     }
 }
 
+static void graph_list_adjust_sample (int *list, 
+				      struct gnuplot_info *ginfo,
+				      const double **Z)
+{
+    int t1min = ginfo->t1;
+    int t2max = ginfo->t2;
+    int t_ok;
+    int i, t;
+
+    for (t=t1min; t<=t2max; t++) {
+	t_ok = 0;
+	for (i=1; i<=list[0]; i++) {
+	    if (!na(Z[list[i]][t])) {
+		t_ok = 1;
+		break;
+	    }
+	}
+	if (t_ok) {
+	    break;
+	} 
+	t1min++;
+    }
+
+    for (t=t2max; t>t1min; t--) {
+	t_ok = 0;
+	for (i=1; i<=list[0]; i++) {
+	    if (!na(Z[list[i]][t])) {
+		t_ok = 1;
+		break;
+	    }
+	}
+	if (t_ok) {
+	    break;
+	}
+	t2max--;
+    }
+
+    if (t2max > t1min) {
+	for (i=1; i<=list[0]; i++) {
+	    int all_missing = 1;
+
+	    for (t=t1min; t<=t2max; t++) {
+		if (!na(Z[list[i]][t])) {
+		    all_missing = 0;
+		    break;
+		}
+	    }
+	    if (all_missing) {
+		gretl_list_delete_at_pos(list, i);
+		i--;
+	    }
+	}
+    }
+
+    ginfo->t1 = t1min;
+    ginfo->t2 = t2max;
+    ginfo->lo = list[0];
+}
+
 /**
  * gnuplot:
  * @list: list of variables to plot, by ID number.
@@ -1135,9 +1194,8 @@ int gnuplot (int *list, const int *lines, const char *literal,
     }
 
     /* adjust sample range, and reject if it's empty */
-    varlist_adjust_sample(list, &gpinfo.t1, &gpinfo.t2, 
-			  (const double **) *pZ);
-    if (gpinfo.t2 == gpinfo.t1) {
+    graph_list_adjust_sample(list, &gpinfo, (const double **) *pZ);
+    if (gpinfo.t1 == gpinfo.t2 || gpinfo.lo == 1) {
 	fclose(fp);
 	return GRAPH_NO_DATA;
     }
