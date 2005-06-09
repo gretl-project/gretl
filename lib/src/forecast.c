@@ -20,6 +20,11 @@
 #include "libgretl.h"
 #include "forecast.h"
 
+#ifdef max
+# undef max
+#endif
+#define max(x,y) (((x) > (y))? (x) : (y))
+
 /* estimators where a simple X*b does _not_ give the
    predicted value of the dependent variable */
 
@@ -689,14 +694,8 @@ static int arma_fcast (Forecast *fc, const MODEL *pmod,
 	ar_smax = fc->t2;
 	ma_smax = pmod->t2;
     } else if (fc->method == FC_DYNAMIC) {
-	ar_smax = fc->t1 - 1;
-	ma_smax = fc->t1 - 1;
-	if (ar_smax < p) {
-	    ar_smax = p;
-	}
-	if (ma_smax < q) {
-	    ma_smax = q;
-	}	
+	ar_smax = max(fc->t1 - 1, p);
+	ma_smax = max(fc->t1 - 1, q);
     } else {
 	ar_smax = pmod->t2;
 	ma_smax = pmod->t2;
