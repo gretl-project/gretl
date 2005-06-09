@@ -1057,6 +1057,10 @@ static int resize_command_list (CMD *cmd, int nf)
     int *list;
     int i;
 
+    if (nf < 0) {
+	return 0;
+    }
+
     list = realloc(cmd->list, (1 + nf) * sizeof *cmd->list);
 
     if (list == NULL) {
@@ -1321,6 +1325,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (cmd->ci == REMEMBER) {
+	if (nf == 0) {
+	    /* creating empty object, OK */
+	    return cmd->errcode;
+	}
 	line += strspn(line, " ");
 	line += strspn(line, "=");
 	nf--;

@@ -42,7 +42,11 @@ static saved_list *saved_list_new (const int *list, const char *name)
 	} else {
 	    sl->level = 0;
 	}
-	sl->list = gretl_list_copy(list);
+	if (list != NULL && list[0] > 0) {
+	    sl->list = gretl_list_copy(list);
+	} else {
+	    sl->list = gretl_null_list();
+	}
 	if (sl->list == NULL) {
 	    free(sl);
 	    sl = NULL;
