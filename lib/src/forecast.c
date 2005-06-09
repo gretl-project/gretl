@@ -40,14 +40,15 @@
 typedef struct Forecast_ Forecast;
 
 struct Forecast_ {
-    int method;
-    double *yhat;
-    double *sderr;
-    double *eps;
-    int *dvlags;
-    int offset;
-    int t1;
-    int t2;
+    int method;       /* static, dynamic or auto */
+    double *yhat;     /* array of forecast values */
+    double *sderr;    /* array of forecast standard errors */
+    double *eps;      /* array of estimated forecast errors */
+    int *dvlags;      /* info on lagged dependent variable */
+    int offset;       /* start of yhat, etc. arrays relative to true 0 */
+    int t1;           /* start of forecast range */
+    int t2;           /* end of forecast range */
+    int model_t2;     /* end of period over which model was estimated */
 };
 
 static int 
@@ -325,10 +326,11 @@ fit_resid_init (const char *line, const MODEL *pmod,
     return fr->err;
 }
 
-/* If method is dynamic we prefer lagged prediction to lagged actual.
-   If method is static, we don't want the lagged prediction.  If
-   method is auto, which we prefer depends on whether we're in or out
-   of sample.  
+/* Get a value for a lag of the dependent variable.  If method is
+   dynamic we prefer lagged prediction to lagged actual.  If method is
+   static, we don't want the lagged prediction, only the actual.  If
+   method is "auto", which we prefer depends on whether we're in or
+   out of sample (actual within, lagged prediction without).
 */
 
 static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
@@ -337,13 +339,17 @@ static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
     /* initialize to actual lagged value */
     double ldv = Z[i][t];
 
-    if (fc->method == FC_DYNAMIC) {
-	if (lag < t - fc->t1) {
-	    ldv = fc->yhat[t - fc->offset - lag];
-	}
-    } else if (fc->method == FC_AUTO) {
-	if (na(ldv)) {
-	    ldv = fc->yhat[t - fc->offset - lag];
+    if (fc->method != FC_STATIC) {
+	int yht = t - fc->offset - lag;
+
+	if (fc->method == FC_DYNAMIC) {
+	    if (lag < t - fc->t1) {
+		ldv = fc->yhat[yht];
+	    }
+	} else if (fc->method == FC_AUTO && yht >= 0) {
+	    if (t > fc->model_t2 || na(ldv)) {
+		ldv = fc->yhat[yht];
+	    } 
 	}
     }
 
@@ -805,32 +811,23 @@ static int arma_fcast (Forecast *fc, const MODEL *pmod,
 
 /* construct the "phi" array of AR coefficients, based on the
    ARINFO that was added to the model at estimation time.
-   The latter's "rho" member may be a compacted array, with
+   The latter's rho member may be a compacted array, with
    zero elements omitted, but here we need a full-length
    array with zeros inserted as required */
 
 static double *make_phi_from_arinfo (const ARINFO *arinfo, int pmax)
 {
-    const int *arlist = arinfo->arlist;
-    int maxlag = arlist[arlist[0]];
-    double *phi;
-    int i;
-
-    if (pmax > maxlag) {
-	maxlag = pmax;
-    }
-
-    phi = malloc(maxlag * sizeof *phi);
+    double *phi = malloc(pmax * sizeof *phi);
 
     if (phi != NULL) {
-	int lag;
+	int i, lag;
 
-	for (i=0; i<maxlag; i++) {
+	for (i=0; i<pmax; i++) {
 	    phi[i] = 0.0;
 	}
 
-	for (i=1; i<=arlist[0]; i++) {
-	    lag = arlist[i];
+	for (i=1; i<=arinfo->arlist[0]; i++) {
+	    lag = arinfo->arlist[i];
 	    phi[lag-1] = arinfo->rho[i-1];
 	}
     }
@@ -838,16 +835,20 @@ static double *make_phi_from_arinfo (const ARINFO *arinfo, int pmax)
     return phi;
 }
 
-/* determine the highest lag order of lagged dependent
-   variable */
+/* determine the highest lag order for AR model, either
+   via AR in the error term or via inclusion of lagged
+   dependent variable */
 
-static int get_max_dv_lag (const int *dvlags)
+static int 
+get_max_ar_lag (Forecast *fc, const MODEL *pmod, int p)
 {
-    int i, pmax = 0;
+    int i, pmax = p; /* AR error order */
 
-    for (i=1; i<=dvlags[0]; i++) {
-	if (dvlags[2*i] > pmax) {
-	    pmax = dvlags[2*i];
+    if (fc->dvlags != NULL) {
+	for (i=0; i<pmod->ncoeff; i++) {
+	    if (fc->dvlags[i] > pmax) {
+		pmax = fc->dvlags[i];
+	    }
 	}
     }
 
@@ -919,22 +920,19 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
     double ss_psi = 0.0;
     double xval, yh;
     double rk, ylag, xlag;
-    int miss, p, pmax, yno;
-    int i, k, v, s, t;
+    int miss, yno;
+    int i, k, v, s, t, tk;
+    int p, dvlag, pmax = 0;
     int err = 0;
 
     yno = pmod->list[1];
     arlist = pmod->arinfo->arlist;
     p = arlist[arlist[0]]; /* AR order of error term */
 
-    if (fc->dvlags != NULL) {
-	/* highest order of lagged dependent var */
-	pmax = get_max_dv_lag(fc->dvlags);
-    } else {
-	pmax = p;
-    }
-
     if (fc->t2 > pmod->t2 && fc->sderr != NULL) {
+	/* we compute variance only if we're forecasting
+	   out of sample */
+	pmax = get_max_ar_lag(fc, pmod, p);
 	set_up_ar_fcast_variance(pmod, pmax, &phi, &psi, &errphi);
     }
 
@@ -968,12 +966,8 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 	/* LHS adjustment */
 	for (k=1; k<=arlist[0]; k++) {
 	    rk = pmod->arinfo->rho[k-1];
-	    /* FIXME static versus dynamic forecasts */
-	    ylag = Z[yno][t - arlist[k]];
-	    if (na(ylag) && s - arlist[k] >= 0) {
-		/* use prior forecast of lagged y */
-		ylag = fc->yhat[s - arlist[k]];
-	    }
+	    tk = t - arlist[k];
+	    ylag = fcast_get_ldv(fc, yno, tk, arlist[k], Z);
 	    if (na(ylag)) {
 		miss = 1;
 	    } else {
@@ -981,28 +975,29 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 	    }
 	}
 
+	/* RHS */
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
-	    int lag;
-
 	    v = pmod->list[i+2];
-	    if ((lag = depvar_lag(fc, i))) {
-		xval = fcast_get_ldv(fc, v, t, lag, Z);
+	    if ((dvlag = depvar_lag(fc, i))) {
+		xval = fcast_get_ldv(fc, v, t, dvlag, Z);
 	    } else {
 		xval = Z[v][t];
 	    }
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
-		if (lag > 0) {
-		    phi[lag - 1] += pmod->coeff[i];
+		if (dvlag > 0 && phi != NULL) {
+		    /* augment phi for computation of variance */
+		    phi[dvlag - 1] += pmod->coeff[i];
 		}
 		/* use rho-differenced X on RHS */
 		for (k=1; k<=arlist[0]; k++) {
 		    rk = pmod->arinfo->rho[k-1];
-		    if (lag > 0) {
-			xlag = fcast_get_ldv(fc, v, t - arlist[k], lag, Z);
+		    tk = t - arlist[k];
+		    if (dvlag > 0) {
+			xlag = fcast_get_ldv(fc, v, tk, dvlag, Z);
 		    } else {
-			xlag = Z[v][t - arlist[k]];
+			xlag = Z[v][tk];
 		    }
 		    if (!na(xlag)) {
 			xval -= rk * xlag;
@@ -1170,7 +1165,7 @@ static int get_forecast_method (Forecast *fc,
 	dyn_ok = 1;
     }
 
-    if (SIMPLE_AR_MODEL(pmod->ci)) {
+    if (SIMPLE_AR_MODEL(pmod->ci) && !(opt & OPT_S)) {
 	dyn_errs_ok = 1;
     }    
 
@@ -1210,6 +1205,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     fc.t1 = fr->t1;
     fc.t2 = fr->t2;
     fc.offset = fr->t1;
+    fc.model_t2 = pmod->t2;
     fc.eps = NULL;
 
     get_forecast_method(&fc, pmod, pdinfo, opt);
@@ -1440,6 +1436,7 @@ int add_forecast (const char *str, const MODEL *pmod, double ***pZ,
 	fc.t1 = t1;
 	fc.t2 = t2;
 	fc.offset = 0;
+	fc.model_t2 = pmod->t2;
 
 	get_forecast_method(&fc, pmod, pdinfo, opt);
 
