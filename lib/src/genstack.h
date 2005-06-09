@@ -98,6 +98,8 @@ enum transformations {
     T_FRACDIFF,
     T_VARNUM,
     T_VECTOR,
+    T_ISLIST,
+    T_NELEM,
 #ifdef HAVE_MPFR
     T_MLOG,
 #endif

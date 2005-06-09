@@ -175,6 +175,8 @@ struct genr_func funcs[] = {
     { T_FRACDIFF, "fracdiff" },  /* fractional difference */
     { T_VARNUM,   "varnum" },    /* variable's ID number from its name */
     { T_VECTOR,   "isvector" },
+    { T_ISLIST,   "islist" },
+    { T_NELEM,    "nelem" },
 #ifdef HAVE_MPFR
     { T_MLOG,     "mlog" },
 #endif
@@ -192,7 +194,8 @@ struct genr_func funcs[] = {
 #define UNIVARIATE_STAT(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
                             t == T_VAR || t == T_MEDIAN || t == T_MIN || \
                             t == T_SST || t == T_MAX || t == T_NOBS || \
-                            t == T_VARNUM || t == T_VECTOR)
+                            t == T_VARNUM || t == T_VECTOR || \
+                            t == T_ISLIST || t == T_NELEM)
 
 #define BIVARIATE_STAT(t) (t == T_CORR || t == T_COV)
 
@@ -532,9 +535,15 @@ static genatom *parse_token (const char *s, char op,
 		v = varindex(genr->pdinfo, s);
 
 		if (v == genr->pdinfo->v) { 
-		    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"),
-			    s);
-		    genr->err = E_UNKVAR;
+		    if (get_list_by_name(s) != NULL) {
+			/* name of saved list, not single variable */
+			v = -1;
+			strncat(str, s, ARGLEN - 1);
+		    } else {
+			sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"),
+				s);
+			genr->err = E_UNKVAR;
+		    }
 		} else {
 		    DPRINTF(("recognized var '%s' (#%d)\n", s, v));
 		}
@@ -544,7 +553,7 @@ static genatom *parse_token (const char *s, char op,
 
 		    val = k;
 		    scalar = 1;
-		} else if (v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
+		} else if (v >= 0 && v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
 		    /* handle regular scalar variables here */
 		    val = (*genr->pZ)[v][0];
 		    scalar = 1;
@@ -579,7 +588,8 @@ static genatom *parse_token (const char *s, char op,
 					       &genr->err);
 			scalar = 1;
 		    }
-		} else if (func == T_VARNUM || func == T_VECTOR) {
+		} else if (func == T_VARNUM || func == T_VECTOR ||
+			   func == T_ISLIST || func == T_NELEM) {
 		    scalar = 1;
 		} else if (MODEL_DATA_ELEMENT(func)) {
 		    val = get_model_data_element(str, genr,
@@ -1004,19 +1014,26 @@ static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
     return genr->err;
 }
 
-static double genr_get_var_status (GENERATE *genr, genatom *atom)
+static double genr_get_child_status (GENERATE *genr, genatom *atom)
 {
     double val = NADBL;
     genatom *child = pop_child_atom(atom);
 
     if (child != NULL) {
-	if (child->varnum >= 0 && child->varnum < genr->pdinfo->v) {
-	    if (atom->func == T_VARNUM) { 
-		val = child->varnum;
-	    } else if (atom->func == T_VECTOR) {
-		val = genr->pdinfo->vector[child->varnum];
+	if (atom->func == T_VARNUM || atom->func == T_VECTOR) {
+	    if (child->varnum >= 0 && child->varnum < genr->pdinfo->v) {
+		val == (atom->func == T_VARNUM)? child->varnum :
+		    genr->pdinfo->vector[child->varnum];
+	    } 
+	} else if (atom->func == T_ISLIST || atom->func == T_NELEM) {
+	    int *list = get_list_by_name(child->str);
+
+	    if (atom->func == T_ISLIST) {
+		val = (list != NULL);
+	    } else {
+		val = (list == NULL)? NADBL : list[0];
 	    }
-	} 
+	}
     }
 
     if (pop_child_atom(atom)) {
@@ -1024,7 +1041,7 @@ static double genr_get_var_status (GENERATE *genr, genatom *atom)
 	genr->err = E_SYNTAX;
     }
 
-    DPRINTF(("genr_get_var_status: child=%p, got %g\n", 
+    DPRINTF(("genr_get_object_status: child=%p, got %g\n", 
 	     (void *) child, val));
 
     return val;
@@ -1036,8 +1053,9 @@ static int add_statistic_to_genr (GENERATE *genr, genatom *atom)
 
     atom_stack_set_parentage(genr);
 
-    if (atom->func == T_VARNUM || atom->func == T_VECTOR) {
-	val = genr_get_var_status(genr, atom);
+    if (atom->func == T_VARNUM || atom->func == T_VECTOR ||
+	atom->func == T_ISLIST || atom->func == T_NELEM) {
+	val = genr_get_child_status(genr, atom);
     } else {
 	double *x = eval_compound_arg(genr, atom);
 

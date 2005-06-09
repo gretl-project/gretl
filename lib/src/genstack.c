@@ -59,6 +59,7 @@ struct atomset_ {
                                f == T_DIFF || f == T_LDIFF || \
                                f == T_CUM || f == T_SORT || \
                                f == T_VARNUM || f == T_VECTOR || \
+                               f == T_ISLIST || f == T_NELEM || \
                                f == T_RESAMPLE || f == T_HPFILT || f == T_BKFILT)
 
 static int all_children_scalar (genatom **atoms, int n,

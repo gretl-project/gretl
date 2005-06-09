@@ -47,7 +47,7 @@ static saved_list *saved_list_new (const int *list, const char *name)
 	    free(sl);
 	    sl = NULL;
 	} else {
-	    sl->name = gretl_strdup(name);
+	    sl->name = gretl_strndup(name, 31);
 	    if (sl->name == NULL) {
 		free(sl->list);
 		free(sl);

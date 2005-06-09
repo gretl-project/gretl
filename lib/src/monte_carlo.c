@@ -766,6 +766,50 @@ static int allocate_each_strings (LOOPSET *loop, int n)
     return err;
 }
 
+static int each_strings_from_named_list (LOOPSET *loop, char *s,
+					 int *nf)
+{
+    int *list;
+    int err = 0;
+
+    chopstr(s);
+    list = get_list_by_name(s);
+    
+    if (list == NULL) {
+	err = 1;
+    } else {
+	err = allocate_each_strings(loop, list[0]);
+    }
+
+    if (!err) {
+	char numstr[16];
+	int i, li;
+
+	for (i=1; i<=list[0] && !err; i++) {
+	    li = list[i];
+	    if (abs(li) > 9999999) {
+		err = 1;
+	    } else {
+		sprintf(numstr, "%d", li);
+		loop->eachstrs[i-1] = gretl_strdup(numstr);
+		if (loop->eachstrs[i-1] == NULL) {
+		    err = 1;
+		}
+	    }
+	}
+    }
+
+    if (err && loop->eachstrs != NULL) {
+	destroy_each_strings(loop, list[0]);
+    }
+
+    if (!err) {
+	*nf = list[0];
+    }
+
+    return err;
+}
+
 static int
 each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo, 
 				char *s, int *nf)
@@ -824,8 +868,11 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 	return 1;
     }
 
+    /* we're looking at the string that follows "loop foreach" */
+
     s++;
 
+    /* should be something like "i " */
     if (sscanf(s, "%7s", ivar) != 1) {
 	err = 1;
     } else if (strlen(ivar) > 1) {
@@ -847,10 +894,15 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
     }
 
     loop->ichar = ichar;
-
+    
     if (nf <= 3 && strstr(s, "..") != NULL) {
+	/* range of values, foo..quux */
 	err = each_strings_from_list_of_vars(loop, pdinfo, s, &nf);
+    } else if (nf == 1) {
+	/* named list? */
+	err = each_strings_from_named_list(loop, s, &nf);
     } else {
+	/* simple list of values */
 	err = allocate_each_strings(loop, nf);
 
 	for (i=0; i<nf && !err; i++) {
