@@ -1390,6 +1390,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		cmd->list[0] -= 1;
 		cmd->errcode = gretl_list_insert_list(&cmd->list, savedlist,
 						      lnum);
+		lnum += savedlist[0];
 	    } else { /* possibly an auto-generated variable? */
 
 		if (strchr(field, '(') != NULL) {
