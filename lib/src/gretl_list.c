@@ -20,6 +20,9 @@
 #include "libgretl.h"
 #include "gretl_list.h"
 #include "gretl_func.h"
+#include "libset.h"
+
+#define LDEBUG 0
 
 typedef struct saved_list_ saved_list;
 
@@ -117,6 +120,11 @@ static int real_remember_list (const int *list, const char *name,
     saved_list *orig = NULL;
     int err = 0;
 
+#if LDEBUG
+    fprintf(stderr, "remember_list (in): name='%s', force_new=%d,"
+	    " n_lists=%d\n", name, force_new, n_lists);
+#endif
+
     if (!force_new) {
 	orig = get_saved_list_by_name(name);
     }
@@ -128,7 +136,7 @@ static int real_remember_list (const int *list, const char *name,
 	if (orig->list == NULL) {
 	    pprintf(prn, "Out of memory replacing list '%s'\n", name);
 	    err = E_ALLOC;
-	} else {
+	} else if (gretl_messages_on()) {
 	    pprintf(prn, "Replaced list '%s'\n", name);
 	}
     } else {
@@ -145,10 +153,18 @@ static int real_remember_list (const int *list, const char *name,
 	    pprintf(prn, "Out of memory adding list '%s'\n", name);
 	    err = E_ALLOC;
 	} else {
-	    pprintf(prn, "Added list '%s'\n", name);
+	    if (gretl_messages_on()) {
+		pprintf(prn, "Added list '%s'\n", name);
+	    }
 	    n_lists++;
 	}
     }
+
+#if LDEBUG
+    fprintf(stderr, "remember_list (out): n_lists=%d, ", n_lists);
+    fprintf(stderr, "list_stack[%d]=%p\n", n_lists - 1, 
+	    (void *) list_stack[n_lists - 1]);
+#endif
 
     return err;
 }
@@ -226,6 +242,9 @@ int destroy_saved_lists_at_level (int level)
     int err = 0;
 
     for (i=0; i<n_lists; i++) {
+	if (list_stack[i] == NULL) {
+	    break;
+	}
 	if (list_stack[i]->level == level) {
 	    free_saved_list(list_stack[i]);
 	    for (j=i; j<n_lists - 1; j++) {

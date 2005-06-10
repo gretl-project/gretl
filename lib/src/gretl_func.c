@@ -1007,6 +1007,21 @@ static int real_add_fn_line (ufunc *fun, const char *s)
     return err;
 }
 
+static int end_of_function (const char *s)
+{
+    int ret = 0;
+
+    if (!strncmp(s, "end ", 4)) {
+	char word[9];
+
+	if (sscanf(s + 4, "%8s", word) && !strcmp(word, "function")) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 int gretl_function_append_line (const char *line)
 {
     ufunc *fun = get_latest_ufunc();
@@ -1027,7 +1042,7 @@ int gretl_function_append_line (const char *line)
 	return 0;
     }
 
-    if (!strncmp(line, "end ", 4)) {
+    if (end_of_function(line)) {
 	if (fun->n_lines == 0) {
 	    sprintf(gretl_errmsg, "%s: empty function", fun->name);
 	    delete_ufunc_from_list(fun);
@@ -1292,8 +1307,10 @@ void gretl_functions_cleanup (void)
     ufuncs_destroy();
 }
 
-void gretl_function_stop_on_error (DATAINFO *pdinfo)
+void gretl_function_stop_on_error (DATAINFO *pdinfo, PRN *prn)
 {
+    gretl_function_flagged_error(NULL, prn);
+
     callstack_destroy();
 
     if (fn_executing > 0) {

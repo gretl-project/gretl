@@ -4952,7 +4952,7 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 #endif
 
     if (fsd > 0) {
-#if 0
+#if 1
 	/* inside a function: see only variables at same level */
 	for (i=1; i<pdinfo->v; i++) { 
 	    if (STACK_LEVEL(pdinfo, i) == fsd && 

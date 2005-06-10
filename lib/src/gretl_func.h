@@ -44,7 +44,7 @@ int gretl_function_stack_depth (void);
 
 int gretl_macro_stack_depth (void);
 
-void gretl_function_stop_on_error (DATAINFO *pdinfo);
+void gretl_function_stop_on_error (DATAINFO *pdinfo, PRN *prn);
 
 int gretl_function_flagged_error (const char *s, PRN *prn);
 

@@ -28,9 +28,15 @@
 - smpl --restrict: make it not an error if the restriction has
   no effect (drops no observations)
 - Forecasts for GUI models: make these available for all types
-  of models (but not all with error bounds)
+  of models (but not all with error bounds); add "+" icon to
+  the window showing a forecast, to add the forecast series to
+  the dataset
 - Confidence interval for coefficients, GUI model menu: make
   available for all models
+- Introduce named lists as a type that can be created and
+  manipulated
+- Add matrix of actual and predicted outcomes to the printout
+  of results for discrete models
 - Improvements to several dialog boxes
 - Numerous small bug-fixes
 

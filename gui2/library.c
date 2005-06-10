@@ -6507,7 +6507,7 @@ int gui_exec_line (char *line,
 
     /* clean up in case a user function bombed */
     if (err && gretl_executing_function_or_macro()) {
-	gretl_function_stop_on_error(datainfo);
+	gretl_function_stop_on_error(datainfo, prn);
     }    
 
     /* log the specific command? */

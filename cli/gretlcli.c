@@ -67,7 +67,7 @@ PRN *cmdprn;
 MODELSPEC *modelspec;
 MODEL tmpmod;
 FILE *dat, *fb;
-int i, j, dot, opt, err, errfatal, batch;
+int i, j, dot, opt, errfatal, batch;
 int runit, loopstack, looprun;
 int data_status;
 int plot_count;             /* graphs via gnuplot */
@@ -82,7 +82,7 @@ char *line_read;
 gretl_equation_system *sys;
 gretl_restriction_set *rset;
 
-static void exec_line (char *line, LOOPSET **ploop, PRN *prn); 
+static int exec_line (char *line, LOOPSET **ploop, PRN *prn); 
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
 
@@ -215,10 +215,12 @@ void fn_get_line (void)
     *linebak = 0;
     strncat(linebak, line, MAXLINE - 1);
 
+#if 0
     if (!strncmp(line, "noecho", 6)) {
 	/* FIXME? */
 	set_gretl_echo(0);
     }
+#endif
 
     if (gretl_echo_on() && cmd.ci == RUN && batch && *line == '(') {
 	printf("%s", line);
@@ -393,6 +395,7 @@ int main (int argc, char *argv[])
     char tmp[MAXLINE];
     LOOPSET *loop = NULL;
     PRN *prn;
+    int err = 0;
 
 #ifdef WIN32
     strcpy(tmp, argv[0]);
@@ -617,7 +620,7 @@ int main (int argc, char *argv[])
 	    break;
 	} else {
 	    strcpy(linecopy, line);
-	    exec_line(line, &loop, prn);
+	    err = exec_line(line, &loop, prn);
 	}
     } /* end of get commands loop */
 
@@ -694,6 +697,7 @@ static int handle_user_defined_function (char *line, int *fncall,
 static int do_autofit_plot (PRN *prn)
 {
     int *plotlist;
+    int err = 0;
 
     plotvar(&Z, datainfo, "time");
     plotlist = gretl_list_new(3);
@@ -711,9 +715,11 @@ static int do_autofit_plot (PRN *prn)
     if (err) {
 	pputs(prn, _("gnuplot command failed\n"));
     }
+
+    return err;
 }
 
-static void exec_line (char *line, LOOPSET **ploop, PRN *prn) 
+static int exec_line (char *line, LOOPSET **ploop, PRN *prn) 
 {
     LOOPSET *loop = *ploop;
     int chk, nulldata_n, renumber;
@@ -722,32 +728,34 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     char s1[12], s2[12];
     int fncall = 0;
     double rho;
+    int err = 0;
 
     if (string_is_blank(line)) {
-	return;
+	return 0;
     }
 
     /* catch any user-defined functions */
     err = handle_user_defined_function(line, &fncall, prn);
     if (err) {
 	errmsg(err, prn);
-	return;
+	return err;
     } else if (fncall) {
-	return;
+	return 0;
     }
 
     if (gretl_compiling_function()) {
 	err = gretl_function_append_line(line);
-	if (err) errmsg(err, prn);
-	return;
+	if (err) {
+	    errmsg(err, prn);
+	}
+	return err;
     }  
     
     /* are we ready for this? */
     if (!data_status && !cmd.ignore && 
 	!ready_for_command(line)) {
 	fprintf(stderr, _("You must open a data file first\n"));
-	err = 1;
-	return;
+	return 1;
     }
 
     compress_spaces(line);
@@ -760,11 +768,14 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	err = get_command_index(line, &cmd);
     } else {
 	err = parse_command_line(line, &cmd, &Z, datainfo);
+	if (err && gretl_executing_function_or_macro()) {
+	    gretl_function_stop_on_error(datainfo, prn);
+	}	
     }
 
     if (err) {
 	errmsg(err, prn);
-	return;
+	return err;
     }
 
     /* if in batch mode, echo comments from input */
@@ -774,7 +785,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     if (cmd.ci < 0) {
 	/* there's nothing there */ 	
-	return;
+	return 0;
     }
 
     if (sys != NULL && cmd.ci != END && cmd.ci != EQUATION &&
@@ -783,7 +794,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	       line);
 	gretl_equation_system_destroy(sys);
 	sys = NULL;
-	return;
+	return 1;
     }
 
     if (cmd.ci == LOOP && !batch && !runit) {
@@ -815,7 +826,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    } 
 	    *ploop = loop;
 	}
-	return;
+	return err;
     }
 
     if (gretl_echo_on()) {
@@ -1636,7 +1647,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     }
 
     if (err && gretl_executing_function_or_macro()) {
-	gretl_function_stop_on_error(datainfo);
+	gretl_function_stop_on_error(datainfo, prn);
     }
 
     if (!err && (is_model_cmd(cmd.word) || do_nls || do_arch)
@@ -1652,6 +1663,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	err = modelspec_save(models[0], &modelspec);
     }
 
+    return err;
 }
 
 /* apparatus for keeping track of input stream */

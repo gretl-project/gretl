@@ -59,6 +59,7 @@ struct flag_match {
 */
 
 struct gretl_option gretl_opts[] = {
+    { ADD,      OPT_I, "silent" },
     { ADD,      OPT_Q, "quiet" },
     { ADDTO,    OPT_Q, "quiet" },
     { ADF,      OPT_N, "nc" }, 
@@ -122,6 +123,7 @@ struct gretl_option gretl_opts[] = {
     { OLS,      OPT_R, "robust" },
     { OLS,      OPT_Q, "quiet" },
     { OLS,      OPT_S, "simple-print" },
+    { OMIT,     OPT_I, "silent" },
     { OMIT,     OPT_Q, "quiet" },
     { OMITFROM, OPT_Q, "quiet" },
     { OUTFILE,  OPT_A, "append" },

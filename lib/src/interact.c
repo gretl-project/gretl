@@ -1077,6 +1077,30 @@ static int resize_command_list (CMD *cmd, int nf)
     return cmd->errcode;
 }
 
+static int maybe_print_object (const char *line, CMD *cmd)
+{
+    char word[8];
+    int ret = 0;
+
+    if (cmd->opt & OPT_L) {
+	int *list;
+
+	if (sscanf(line, "%5s", word) && !strcmp(word, "print")) {
+	    list = get_list_by_name(cmd->param);
+	    if (list != NULL) {
+		free(cmd->list);
+		cmd->list = gretl_list_copy(list);
+		if (cmd->list != NULL) {
+		    cmd->opt |= OPT_P;
+		    ret = 1;
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /**
  * parse_command_line:
  * @line: the command line.
@@ -1328,8 +1352,17 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (nf == 0) {
 	    /* creating empty object, OK */
 	    return cmd->errcode;
+	} else if (nf == 1) {
+	    /* printing the remembered object? */
+	    if (maybe_print_object(line, cmd)) {
+		return cmd->errcode;
+	    }
 	}
 	line += strspn(line, " ");
+	if (*line != '=') {
+	    cmd->errcode = E_PARSE;
+	    return cmd->errcode;
+	}
 	line += strspn(line, "=");
 	nf--;
 	pos = 0;
@@ -2847,9 +2880,11 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case REMEMBER:
-	if (cmd->opt & OPT_L) {
+	if (cmd->opt & OPT_P) {
+	    ; /* let echo do the work? */
+	} else if (cmd->opt & OPT_L) {
 	    err = remember_list(cmd->list, cmd->param, prn);
-	}
+	} 
 	break;
 
     default:

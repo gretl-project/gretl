@@ -28,6 +28,10 @@
 
 #undef WDEBUG
 
+#define print_add_omit_model(m,o) (m->ci != AR && m->ci != ARCH && \
+                                   !(opt & OPT_Q) && !(opt & OPT_I))
+
+
 struct COMPARE {
     int cmd;       /* ADD or OMIT */
     int m1;        /* ID for first model */
@@ -195,16 +199,23 @@ add_diffvars_to_test (ModelTest *test, const int *list,
 }
 
 static void
-gretl_print_compare (const struct COMPARE *cmp, const int *diffvars, 
-		     MODEL *new, const DATAINFO *pdinfo, 
-		     gretlopt opt, PRN *prn)
+gretl_make_compare (const struct COMPARE *cmp, const int *diffvars, 
+		    MODEL *new, const DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn)
 {
     ModelTest *test = NULL;
     double pval = NADBL;
+    int verbosity = 2;
     int stat_ok, i;
 
     if (cmp->ci == LAD) {
 	return;
+    }
+
+    if (opt & OPT_I) {
+	verbosity = 0;
+    } else if (opt & OPT_Q) {
+	verbosity = 1;
     }
 
     stat_ok = !na(cmp->F) || !na(cmp->chisq);
@@ -214,12 +225,12 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 				 GRETL_TEST_OMIT : GRETL_TEST_ADD);
     }
 
-    if (!(opt & OPT_Q)) {
+    if (verbosity > 1) {
 	pprintf(prn, _("Comparison of Model %d and Model %d:\n"), 
 		cmp->m1, cmp->m2);
     } 
 
-    if (stat_ok) {
+    if (stat_ok && verbosity > 0) {
 	pputs(prn, _("\n  Null hypothesis: the regression parameters are "
 		     "zero for the variables\n\n"));
 	for (i=1; i<=diffvars[0]; i++) {
@@ -228,11 +239,13 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
     }
 
     if (!na(cmp->F)) {
-	pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
-		(cmp->robust)? _("Robust F") : "F",
-		cmp->dfn, cmp->dfd, cmp->F);
 	pval = fdist(cmp->F, cmp->dfn, cmp->dfd);
-	pprintf(prn, _("with p-value = %g\n"), pval);
+	if (verbosity > 0) {
+	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
+		    (cmp->robust)? _("Robust F") : "F",
+		    cmp->dfn, cmp->dfd, cmp->F);
+	    pprintf(prn, _("with p-value = %g\n"), pval);
+	}
 	record_test_result(cmp->F, pval, (cmp->cmd == OMIT)? "omit" : "add");
 
 	if (test != NULL) {
@@ -243,13 +256,15 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 	    model_test_set_pvalue(test, pval);
 	}
     } else if (!na(cmp->chisq)) {
-	pprintf(prn, "\n  %s:%s%s(%d) = %g, ",  
-		(LIMDEP(cmp->ci))? _("Test statistic") : 
-		_("Asymptotic test statistic"),
-		(LIMDEP(cmp->ci))? " " : "\n    ",
-		_("Chi-square"), cmp->dfn, cmp->chisq);
 	pval = chisq(cmp->chisq, cmp->dfn);
-	pprintf(prn, _("with p-value = %g\n\n"), pval);
+	if (verbosity > 0) {
+	    pprintf(prn, "\n  %s:%s%s(%d) = %g, ",  
+		    (LIMDEP(cmp->ci))? _("Test statistic") : 
+		    _("Asymptotic test statistic"),
+		    (LIMDEP(cmp->ci))? " " : "\n    ",
+		    _("Chi-square"), cmp->dfn, cmp->chisq);
+	    pprintf(prn, _("with p-value = %g\n\n"), pval);
+	}
 	record_test_result(cmp->chisq, pval, (cmp->cmd == OMIT)? "omit" : "add");
 
 	if (test != NULL) {
@@ -265,7 +280,7 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 	add_diffvars_to_test(test, diffvars, pdinfo);
     }
 
-    if (!(opt & OPT_Q)) {
+    if (verbosity > 1) {
 	pprintf(prn, _("  Of the %d model selection statistics, %d "), 
 		C_MAX, cmp->score);
 	if (cmp->score == 1) {
@@ -674,7 +689,8 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @opt: can contain %OPT_Q (quiet) to suppress printing
- * of the new model, %OPT_O to print covariance matrx.
+ * of the new model, %OPT_O to print covariance matrix,
+ * %OPT_I for silent operation.
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after adding the specified
@@ -740,7 +756,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 
 	new->aux = AUX_ADD;
 
-	if (!(opt & OPT_Q) && new->ci != AR && new->ci != ARCH) {
+	if (print_add_omit_model(new, opt)) {
 	    printmodel(new, pdinfo, opt, prn);
 	}
 
@@ -755,7 +771,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 		opt |= OPT_S;
 	    }
 
-	    gretl_print_compare(&cmp, addlist, orig, pdinfo, opt, prn);
+	    gretl_make_compare(&cmp, addlist, orig, pdinfo, opt, prn);
 	    free(addlist);
 	}
     }
@@ -780,7 +796,8 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
  * @opt: can contain %OPT_Q (quiet) to suppress printing
- * of the new model, %OPT_O to print covariance matrx.
+ * of the new model, %OPT_O to print covariance matrix,
+ * %OPT_I for silent operation.
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after removing a list of 
@@ -869,7 +886,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	    new->aux = AUX_OMIT;
 	}
 
-	if (!(opt & OPT_Q) && orig->ci != AR && orig->ci != ARCH) {
+	if (print_add_omit_model(orig, opt)) {
 	    printmodel(new, pdinfo, opt, prn); 
 	}	
 
@@ -884,7 +901,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 		opt |= OPT_S;
 	    }
 
-	    gretl_print_compare(&cmp, omitlist, orig, pdinfo, opt, prn); 
+	    gretl_make_compare(&cmp, omitlist, orig, pdinfo, opt, prn); 
 	    free(omitlist);
 	}
 
