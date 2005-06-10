@@ -1514,6 +1514,7 @@ int print_fit_resid (const MODEL *pmod, const double **Z,
 #undef PRINTF_DEBUG
 
 #define is_format_char(c) (c == 'f' || c == 'g' || c == 'd' || c == 's')
+#define numeric_conv(c)   (c == 'f' || c == 'g' || c == 'd')
 
 static int print_arg (const char **pfmt, double val, 
 		      const char *str, PRN *prn)
@@ -1663,11 +1664,9 @@ static char *varname_string (const char *s, const DATAINFO *pdinfo)
 
 static int get_conversion (const char *s, int *skip)
 {
-    *skip = strspn(s, "0123456789.");
+    *skip = strspn(s, "#0123456789.");
     return (*(s + *skip));
 }
-
-#define numeric_conv(c) (c == 'f' || c == 'g' || c == 'd')
 
 static int real_do_printf (const char *line, double ***pZ, 
 			   DATAINFO *pdinfo, MODEL *pmod,
@@ -1720,9 +1719,16 @@ static int real_do_printf (const char *line, double ***pZ,
 	    } else if (c == 's') {
 		scnv++;
 		p += skip;
+	    } else {
+		err = 1;
+		break;
 	    }
 	}
 	p++;
+    }
+
+    if (err) {
+	return err;
     }
 
     line += strlen(format) + 2;
