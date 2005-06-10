@@ -95,6 +95,8 @@ char *space_to_score (char *s);
 
 char *safecpy (char *targ, const char *src, int n);
 
+char **create_strings_array (int nstrs);
+
 void free_strings_array (char **strs, int nstrs);
 
 char *get_obs_string (char *obs, int t, const DATAINFO *pdinfo);

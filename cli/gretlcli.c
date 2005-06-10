@@ -215,13 +215,6 @@ void fn_get_line (void)
     *linebak = 0;
     strncat(linebak, line, MAXLINE - 1);
 
-#if 0
-    if (!strncmp(line, "noecho", 6)) {
-	/* FIXME? */
-	set_gretl_echo(0);
-    }
-#endif
-
     if (gretl_echo_on() && cmd.ci == RUN && batch && *line == '(') {
 	printf("%s", line);
 	*linebak = 0;

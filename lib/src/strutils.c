@@ -895,6 +895,31 @@ char *safecpy (char *targ, const char *src, int n)
 }
 
 /**
+ * create_strings_array:
+ * @nstrs: number of strings in array.
+ *
+ * Allocates storage for @nstrs strings and initalizes all 
+ * to %NULL.
+ * 
+ * Returns: the allocated array, or %NULL on failure.
+ */
+
+char **create_strings_array (int nstrs)
+{
+    char **s;
+    int i;
+
+    s = malloc(nstrs * sizeof *s);
+    if (s != NULL) {
+	for (i=0; i<nstrs; i++) {
+	    s[i] = NULL;
+	}
+    }
+
+    return s;
+}
+
+/**
  * free_strings_array:
  * @strs: array of allocated strings.
  * @nstrs: number of strings in array.

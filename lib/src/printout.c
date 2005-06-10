@@ -1647,6 +1647,28 @@ static int get_marker_offset (const char *s)
     return off;
 }
 
+static char *varname_string (const char *s, const DATAINFO *pdinfo)
+{
+    char *vname = NULL;
+    int v;
+
+    if (sscanf(s, "varname(%d)", &v)) {
+	if (v >= 0 && v < pdinfo->v) {
+	    vname = gretl_strdup(pdinfo->varname[v]);
+	}
+    }
+
+    return vname;
+}
+
+static int get_conversion (const char *s, int *skip)
+{
+    *skip = strspn(s, "0123456789.");
+    return (*(s + *skip));
+}
+
+#define numeric_conv(c) (c == 'f' || c == 'g' || c == 'd')
+
 static int real_do_printf (const char *line, double ***pZ, 
 			   DATAINFO *pdinfo, MODEL *pmod,
 			   PRN *prn, int t)
@@ -1654,8 +1676,10 @@ static int real_do_printf (const char *line, double ***pZ,
     const char *p;
     char format[128];
     char *argv, *str = NULL;
-    double *vals = NULL;
-    int argc = 0, cnvc = 0, inparen = 0;
+    double *xvals = NULL;
+    char **svals = NULL;
+    int argc = 0, inparen = 0;
+    int xcnv = 0, scnv = 0;
     int markerpos = -1;
     int markeroffset = 0;
     int i, err = 0;
@@ -1684,9 +1708,19 @@ static int real_do_printf (const char *line, double ***pZ,
 
     p = format;
     while (*p) {
+	int c, skip;
+
 	if (*p == '%') {
-	    if (*(p+1) == '%') p++;
-	    else cnvc++;
+	    c = get_conversion(p + 1, &skip);
+	    if (c == '%') {
+		p++;
+	    } else if (numeric_conv(c)) {
+		xcnv++;
+		p += skip;
+	    } else if (c == 's') {
+		scnv++;
+		p += skip;
+	    }
 	}
 	p++;
     }
@@ -1707,16 +1741,19 @@ static int real_do_printf (const char *line, double ***pZ,
     }
 
     argc++;
-    if (argc != cnvc) {
+    if (argc != xcnv + scnv) {
 	fprintf(stderr, "do_printf: argc = %d but conversions = %d\n",
-		argc, cnvc);
+		argc, xcnv + scnv);
 	err = 1;
 	goto printf_bailout;
     }
 
-    vals = malloc(argc * sizeof *vals);
+    /* play safe with sizes here */
+    xvals = malloc(argc * sizeof *xvals);
     str = malloc(strlen(line) + 1);
-    if (vals == NULL || str == NULL) {
+    svals = create_strings_array(argc);
+
+    if (xvals == NULL || svals == NULL || str == NULL) {
 	err = E_ALLOC;
 	goto printf_bailout;
     }
@@ -1724,44 +1761,49 @@ static int real_do_printf (const char *line, double ***pZ,
     strcpy(str, line);
 
     for (i=0; i<argc; i++) {
+	char *vname;
+
 	argv = get_arg((i > 0)? NULL : str);
 	chopstr(argv);
+
+	xvals[i] = NADBL;
+	svals[i] = NULL;
 
 #ifdef PRINTF_DEBUG
 	fprintf(stderr, "do_printf: processing argv[%d] '%s'\n", i, argv);	
 #endif
-
 	if (numeric_string(argv)) {
-	    vals[i] = atof(argv);
+	    xvals[i] = atof(argv);
 	} else if (!strncmp(argv, "marker", 6)) {
 	    if (markerpos >= 0 || pdinfo->S == NULL) {
 		err = 1;
 	    } else {
 		markerpos = i;
-		vals[i] = 0.0;
+		xvals[i] = 0.0;
 		markeroffset = get_marker_offset(argv);
 	    }
+	} else if ((vname = varname_string(argv, pdinfo)) != NULL) {
+	    svals[i] = vname;
 	} else {
 	    int v = varindex(pdinfo, argv);
 
 	    if (v < pdinfo->v) {
 		/* simple existent varname */
 		if (pdinfo->vector[v]) {
-		    vals[i] = (*pZ)[v][t];
+		    xvals[i] = (*pZ)[v][t];
 		} else {
-		    vals[i] = (*pZ)[v][0];
+		    xvals[i] = (*pZ)[v][0];
 		}
 	    } else {
-		err = get_generated_value(argv, &vals[i], pZ, pdinfo, 
+		err = get_generated_value(argv, &xvals[i], pZ, pdinfo, 
 					  pmod, t);
 	    }
 	}
 
 #ifdef PRINTF_DEBUG
-	fprintf(stderr, " after processing arg, vals[%d] = %g, err = %d\n", 
-		i, vals[i], err);	
+	fprintf(stderr, " after processing arg, xvals[%d] = %g, err = %d\n", 
+		i, xvals[i], err);	
 #endif
-
 	if (err) {
 	    goto printf_bailout;
 	}
@@ -1770,7 +1812,7 @@ static int real_do_printf (const char *line, double ***pZ,
     p = format;
     i = 0;
     while (*p && !err) {
-	const char *marker = NULL;
+	const char *s = NULL;
 
 	if (*p == '%') {
 	    if (*(p + 1) == '%') {
@@ -1778,13 +1820,16 @@ static int real_do_printf (const char *line, double ***pZ,
 		p += 2;
 	    } else {
 		if (i == markerpos) {
-		    marker = pdinfo->S[t];
+		    s = pdinfo->S[t];
 		    if (markeroffset > 0 && 
 			markeroffset < strlen(pdinfo->S[t])) {
-			marker += markeroffset;
+			s += markeroffset;
 		    }
-		} 
-		err = print_arg(&p, vals[i++], marker, prn);
+		} else if (svals[i] != NULL) {
+		    s = svals[i];
+		}
+		err = print_arg(&p, xvals[i], s, prn);
+		i++;
 	    }
 	} else if (*p == '\\') {
 	    err = handle_escape(*(p + 1), prn);
@@ -1800,8 +1845,10 @@ static int real_do_printf (const char *line, double ***pZ,
     }
 
  printf_bailout:
-    free(vals);
+
+    free(xvals);
     free(str);
+    free_strings_array(svals, argc);
 
     return err;
 }
