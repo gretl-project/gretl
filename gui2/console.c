@@ -415,7 +415,7 @@ void show_gretl_console (void)
 	return;
     }
 
-    if (!user_fopen("console_tmp", fname, &prn)) {
+    if (user_fopen("console_tmp", fname, &prn)) {
 	return;
     }
 

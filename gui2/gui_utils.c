@@ -71,11 +71,10 @@ char *storelist = NULL;
 #define MARK_CONTENT_SAVED(w) (w->active_var = 0)
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
-#define MULTI_COPY_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY \
-	                      || c == CORR || c == FCASTERR \
-	                      || c == FCAST || c == COEFFINT \
-	                      || c == COVAR || c == VIEW_MODEL \
-                              || c == VIEW_MODELTABLE || c == VAR)
+#define TEX_VIEW_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY \
+	                     || c == CORR || c == FCASTERR \
+	                     || c == FCAST || c == COEFFINT \
+	                     || c == COVAR || c == VIEW_MODELTABLE || c == VAR)
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
@@ -1321,11 +1320,6 @@ void free_windata (GtkWidget *w, gpointer data)
     }
 }
 
-static void modeltable_tex_view (void)
-{
-    tex_print_model_table(1);
-}
-
 #ifndef OLD_GTK
 static int tex_icon_init (void)
 {
@@ -1404,7 +1398,7 @@ enum {
     GP_ITEM,
     RUN_ITEM,
     COPY_ITEM,
-    MODELTABLE_ITEM,
+    TEX_VIEW_ITEM,
     ADD_ITEM,
     HELP_ITEM
 } viewbar_codes;
@@ -1425,7 +1419,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
-    { N_("LaTeX"), "STOCK_TEX", modeltable_tex_view, MODELTABLE_ITEM },
+    { N_("LaTeX"), "STOCK_TEX", window_tex_view, TEX_VIEW_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_ITEM },
     { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
@@ -1447,7 +1441,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Replace..."), stock_search_replace_16_xpm, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), stock_undo_16_xpm, text_undo_callback, EDIT_ITEM },
     { N_("Help on command"), stock_help_16_xpm, activate_script_help, RUN_ITEM },
-    { N_("LaTeX"), mini_tex_xpm, modeltable_tex_view, MODELTABLE_ITEM },
+    { N_("LaTeX"), mini_tex_xpm, window_tex_view, TEX_VIEW_ITEM },
     { N_("Add to dataset..."), stock_add_16_xpm, add_data_callback, ADD_ITEM },
     { N_("Help"), stock_help_16_xpm, window_help, HELP_ITEM },
     { N_("Close"), stock_close_16_xpm, delete_file_viewer, 0 },
@@ -1485,7 +1479,9 @@ static void make_viewbar (windata_t *vwin, int text_out)
 		   vwin->role == MAHAL);
 
 #ifndef OLD_GTK
-    if (vwin->role == VIEW_MODELTABLE) tex_icon_init();
+    if (TEX_VIEW_ENABLED(vwin->role)) {
+	tex_icon_init();
+    }
 #endif
 
     if (text_out || vwin->role == SCRIPT_OUT) {
@@ -1533,8 +1529,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
-	if (vwin->role != VIEW_MODELTABLE && 
-	    viewbar_items[i].flag == MODELTABLE_ITEM) {
+	if (!TEX_VIEW_ENABLED(vwin->role) && 
+	    viewbar_items[i].flag == TEX_VIEW_ITEM) {
 	    continue;
 	}
 

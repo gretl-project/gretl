@@ -426,7 +426,7 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
     gchar *plotcmd = NULL;
     int cmds, err;
 
-    if (!user_fopen("gptout.tmp", plottmp, &prn)) {
+    if (user_fopen("gptout.tmp", plottmp, &prn)) {
 	return;
     }
 
@@ -3028,7 +3028,7 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     int err;
 
     /* create temporary file to hold the special gnuplot commands */
-    if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
+    if (user_fopen("gptout.tmp", plottmp, &prn)) return;
 
     /* open the gnuplot source file for the graph */
     fq = gretl_fopen(spec->fname, "r");

@@ -363,19 +363,20 @@ static int gretl_command_strcat (const char *s)
 
 /* ........................................................... */
 
-char *user_fopen (const char *fname, char *fullname, PRN **pprn)
+int user_fopen (const char *fname, char *fullname, PRN **pprn)
 {
     strcpy(fullname, paths.userdir);
     strcat(fullname, fname);
+    int err = 0;
 
     *pprn = gretl_print_new_with_filename(fullname);
 
     if (*pprn == NULL) {
 	errbox(_("Couldn't open file for writing"));
-	return NULL;
+	err = 1;
     }
 
-    return fullname;
+    return err;
 }
 
 gint bufopen (PRN **pprn)
@@ -3891,7 +3892,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 	/* use file */
 	char fname[MAXLEN];
 
-	if (!user_fopen("data_display_tmp", fname, &prn)) {
+	if (user_fopen("data_display_tmp", fname, &prn)) {
 	    return;
 	}
 
@@ -3944,7 +3945,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	/* use disk file */
 	char fname[MAXLEN];
 
-	if (!user_fopen("data_display_tmp", fname, &prn)) {
+	if (user_fopen("data_display_tmp", fname, &prn)) {
 	    return;
 	}
 
@@ -4517,7 +4518,7 @@ void display_var (void)
 	/* use disk file */
 	char fname[MAXLEN];
 
-	if (!user_fopen("data_display_tmp", fname, &prn)) {
+	if (user_fopen("data_display_tmp", fname, &prn)) {
 	    return;
 	}
 
@@ -4561,7 +4562,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
     int err;
 
 #ifdef SCRIPT_TO_FILE
-    if (!user_fopen("gretl_output_tmp", fname, &prn)) return;
+    if (user_fopen("gretl_output_tmp", fname, &prn)) return;
 #else
     if (bufopen(&prn)) {
 	return ;
@@ -4676,7 +4677,7 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
     char fname[MAXLEN];
     PRN *prn;
 
-    if (!user_fopen("script_tmp", fname, &prn)) {
+    if (user_fopen("script_tmp", fname, &prn)) {
 	return;
     }
 
@@ -5095,7 +5096,7 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
     MODEL *pmod = NULL;
     char *texshort = NULL;
 
-    if (code != LATEX_VIEW_MODELTABLE) {
+    if (code == LATEX_VIEW_EQUATION || code == LATEX_VIEW_TABULAR) {
 	vwin = (windata_t *) data;
 	pmod = (MODEL *) vwin->data;
 	if (pmod->errcode == E_NAN) {
@@ -5110,24 +5111,24 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 	err = texprint(pmod, datainfo, texfile, OPT_O | OPT_E);
     } else if (code == LATEX_VIEW_TABULAR) {
 	err = texprint(pmod, datainfo, texfile, OPT_O);
-    } else if (code == LATEX_VIEW_MODELTABLE) {
+    } else {
 	const char *buf;
-	PRN *prn;
-	FILE *fp;
+	PRN *bprn = (PRN *) data;
+	PRN *fprn;
 
-	prn = (PRN *) data;
-	sprintf(texfile, "%smodeltable.tex", paths.userdir);
-	fp = gretl_fopen(texfile, "w");
-	if (fp == NULL) {
+	sprintf(texfile, "%swindow.tex", paths.userdir);
+	fprn = gretl_print_new_with_filename(texfile);
+	if (fprn == NULL) {
 	    sprintf(errtext, _("Couldn't write to %s"), texfile);
 	    errbox(errtext);
-	    gretl_print_destroy(prn);
 	    return;
 	} 
-	buf = gretl_print_get_buffer(prn);
-	fputs(buf, fp);
-	fclose(fp);
-	gretl_print_destroy(prn);
+
+	gretl_tex_preamble(fprn, 0);
+	buf = gretl_print_get_buffer(bprn);
+	pputs(fprn, buf);
+	pputs(fprn, "\n\\end{document}\n");
+	gretl_print_destroy(fprn);
     }
 	
     if (err) {

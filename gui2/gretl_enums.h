@@ -224,4 +224,10 @@ enum calc_functions {
     CALC_TEST
 };
 
+#define MULTI_COPY_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY \
+	                       || c == CORR || c == FCASTERR \
+	                       || c == FCAST || c == COEFFINT \
+	                       || c == COVAR || c == VIEW_MODEL \
+                               || c == VIEW_MODELTABLE || c == VAR)
+
 #endif /* GRETL_ENUMS_H */

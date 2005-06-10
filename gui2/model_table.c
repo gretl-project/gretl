@@ -723,12 +723,11 @@ int display_model_table (int gui)
     return 0;
 }
 
-int tex_print_model_table (int view)
+int tex_print_model_table (PRN *prn)
 {
     int j, ci;
     int binary = 0;
     char tmp[16];
-    PRN *prn;
 
     if (model_list_empty()) {
 	mtable_errmsg(_("The model table is empty"), 1);
@@ -737,15 +736,9 @@ int tex_print_model_table (int view)
 
     if (make_grand_varlist()) return 1;
 
-    if (bufopen(&prn)) return 1;
-
     gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
 
     ci = common_estimator();
-
-    if (view) {
-	gretl_tex_preamble(prn, 0);
-    }
 
     pputs(prn, "\\begin{center}\n");
 
@@ -816,16 +809,6 @@ int tex_print_model_table (int view)
 
     pputs(prn, "\\end{center}\n");
 
-    if (view) {
-	pputs(prn, "\n\\end{document}\n");
-    }
-
-    if (view) {
-	view_latex(prn, LATEX_VIEW_MODELTABLE, NULL);
-    } else {
-	prn_to_clipboard(prn, COPY_LATEX);
-    }
-
     return 0;
 }
 
@@ -842,11 +825,10 @@ static void print_rtf_row_spec (PRN *prn, int tall)
     pputc(prn, '\n');
 }
 
-int rtf_print_model_table (void)
+int rtf_print_model_table (PRN *prn)
 {
     int j, ci;
     int binary = 0;
-    PRN *prn;
 
     if (model_list_empty()) {
 	mtable_errmsg(_("The model table is empty"), 1);
@@ -854,8 +836,6 @@ int rtf_print_model_table (void)
     }
 
     if (make_grand_varlist()) return 1;
-
-    if (bufopen(&prn)) return 1;
 
     gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
 
@@ -921,8 +901,6 @@ int rtf_print_model_table (void)
     }
 
     pputs(prn, "\\par\n}\n");
-
-    prn_to_clipboard(prn, COPY_RTF);
 
     return 0;
 }

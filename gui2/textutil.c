@@ -390,6 +390,103 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
 
 #endif /* old versus new gtk */
 
+static int special_text_copy (int obj, int how, int show, gpointer data)
+{
+    PRN *prn = NULL;
+    int err = 0;
+
+    if (obj == SUMMARY || obj == VAR_SUMMARY) {
+	Summary *summ = (Summary *) data;
+
+	if (how == COPY_LATEX) {
+	    texprint_summary(summ, datainfo, prn);
+	} else if (how == COPY_RTF) { 
+	    rtfprint_summary(summ, datainfo, prn);
+	}
+    } else if (obj == CORR) {
+	CorrMat *corr = (CorrMat *) data;
+
+	if (how == COPY_LATEX) { 
+	    texprint_corrmat(corr, datainfo, prn);
+	} else if (how == COPY_RTF) { 
+	    rtfprint_corrmat(corr, datainfo, prn);
+	}
+    } else if (obj == FCAST) {
+	FITRESID *fr = (FITRESID *) data;
+
+	if (how == COPY_LATEX) { 
+	    texprint_fit_resid(fr, datainfo, prn);
+	} else if (how == COPY_RTF) { 
+	    rtfprint_fit_resid(fr, datainfo, prn);
+	}
+    } else if (obj == FCASTERR) {
+	FITRESID *fr = (FITRESID *) data;
+
+	if (how == COPY_LATEX) { 
+	    texprint_forecast(fr, datainfo, prn);
+	} else if (how == COPY_RTF) { 
+	    rtfprint_forecast(fr, datainfo, prn);
+	}
+    } else if (obj == COEFFINT) {
+	CoeffIntervals *cf = (CoeffIntervals *) data;
+
+	if (how == COPY_LATEX) { 
+	    texprint_confints(cf, prn);
+	} else if (how == COPY_RTF) { 
+	    rtfprint_confints(cf, prn);
+	}
+    } else if (obj == COVAR) {
+	VCV *vcv = (VCV *) data;
+
+	if (how == COPY_LATEX) { 
+	    texprint_vcv(vcv, datainfo, prn);
+	} else if (how == COPY_RTF) { 
+	    rtfprint_vcv(vcv, datainfo, prn);
+	}
+    } else if (obj == MPOLS) {
+	mp_results *mpvals = (mp_results *) data;
+
+	if (how == COPY_LATEX) { 
+	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
+	} else if (how == COPY_RTF) { 
+	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
+	}
+	print_mpols_results(mpvals, datainfo, prn);
+    } else if (obj == VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) data;
+
+	if (how == COPY_LATEX) { 
+	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
+	} else if (how == COPY_RTF) { 
+	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
+	}
+	gretl_var_print(var, datainfo, prn);
+    } else if (obj == VIEW_MODELTABLE) {
+	if (how == COPY_LATEX) {
+	    err = tex_print_model_table(prn);
+	} else if (how == COPY_RTF) {
+	    err = rtf_print_model_table(prn);
+	}
+    } 
+
+    if (!err) {
+	if (show) {
+	    view_latex(prn, obj, NULL);
+	} else {
+	    prn_to_clipboard(prn, how);
+	}
+    }
+
+    gretl_print_destroy(prn);
+
+    return err;
+}
+
+void window_tex_view (GtkWidget *w, windata_t *vwin)
+{
+    special_text_copy(vwin->role, COPY_LATEX, 1, vwin->data);
+}
+
 /* copying text from gretl windows */
 
 #define SPECIAL_COPY(h) (h == COPY_LATEX || h == COPY_RTF)
@@ -399,146 +496,16 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
     windata_t *vwin = (windata_t *) data;
     gchar *msg = NULL;
     PRN *prn;
+    int err = 0;
 
-    /* descriptive statistics */
-    if ((vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
-	&& SPECIAL_COPY(how)) {
-	Summary *summ = (Summary *) vwin->data;
-	
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) {
-	    texprint_summary(summ, datainfo, prn);
-	} else if (how == COPY_RTF) { 
-	    rtfprint_summary(summ, datainfo, prn);
+    /* copying from window with special stuff enabled */
+    if (MULTI_COPY_ENABLED(vwin->role) && SPECIAL_COPY(how) &&
+	vwin->role != VIEW_MODEL) {
+	err = special_text_copy(vwin->role, how, 0, vwin->data);
+	if (err) {
+	    return;
 	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
     }
-
-    /* correlation matrix */
-    else if (vwin->role == CORR && SPECIAL_COPY(how)) {
-	CorrMat *corr = (CorrMat *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    texprint_corrmat(corr, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    rtfprint_corrmat(corr, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }
-
-    /* display for fitted, actual, resid */
-    else if (vwin->role == FCAST && SPECIAL_COPY(how)) {
-	FITRESID *fr = (FITRESID *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    texprint_fit_resid(fr, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    rtfprint_fit_resid(fr, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }   
-
-    /* forecasts with standard errors */
-    else if (vwin->role == FCASTERR && SPECIAL_COPY(how)) {
-	FITRESID *fr = (FITRESID *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    texprint_forecast(fr, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    rtfprint_forecast(fr, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }  
-
-    /* coefficient confidence intervals */
-    else if (vwin->role == COEFFINT && SPECIAL_COPY(how)) {
-	CoeffIntervals *cf = (CoeffIntervals *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    texprint_confints(cf, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    rtfprint_confints(cf, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }  
-
-    /* coefficient covariance matrix */
-    else if (vwin->role == COVAR && SPECIAL_COPY(how)) {
-	VCV *vcv = (VCV *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    texprint_vcv(vcv, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    rtfprint_vcv(vcv, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }      
-
-    /* multiple-precision OLS (gtk-1.2?) */
-    else if (vwin->role == MPOLS && SPECIAL_COPY(how)) {
-	mp_results *mpvals = (mp_results *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
-	    print_mpols_results (mpvals, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
-	    print_mpols_results (mpvals, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }
-
-    /* VAR system */
-    else if (vwin->role == VAR && SPECIAL_COPY(how)) {
-	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
-	    gretl_var_print(var, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
-	    gretl_var_print(var, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }    
 
     /* or it's a model window we're copying from? */
     else if (vwin->role == VIEW_MODEL &&
@@ -550,31 +517,21 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 	    errbox("Couldn't format model");
 	    return;
 	}
+
 	if (bufopen(&prn)) return;
 
 	if (how == COPY_RTF) {
 	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
 	    printmodel(pmod, datainfo, OPT_NONE, prn);
-	}
-	else if (how == COPY_LATEX) {
+	} else if (how == COPY_LATEX) {
 	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
 	    printmodel(pmod, datainfo, OPT_NONE, prn);
-	}
-	else if (how == COPY_LATEX_EQUATION) {
+	} else if (how == COPY_LATEX_EQUATION) {
 	    tex_print_equation(pmod, datainfo, 0, prn);
 	}
+
 	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
-    }
-
-    /* or from the model table? */
-    else if (vwin->role == VIEW_MODELTABLE && SPECIAL_COPY(how)) {
-	if (how == COPY_LATEX) {
-	    if (tex_print_model_table(0)) return;
-	}
-	else if (how == COPY_RTF) {
-	    if (rtf_print_model_table()) return;
-	} 
     }
 
     /* copying plain text from window */
