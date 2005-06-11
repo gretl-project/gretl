@@ -166,10 +166,10 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Model data/Add to data set"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/View/_Tabular"), NULL, view_latex, 
-      LATEX_VIEW_TABULAR, NULL, GNULL },
-    { N_("/LaTeX/View/_Equation"), NULL, view_latex, 
-      LATEX_VIEW_EQUATION, NULL, GNULL },
+    { N_("/LaTeX/View/_Tabular"), NULL, view_latex, LATEX_VIEW_TABULAR, 
+      NULL, GNULL },
+    { N_("/LaTeX/View/_Equation"), NULL, view_latex, LATEX_VIEW_EQUATION, 
+      NULL, GNULL },
     { N_("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/LaTeX/Save/_Tabular"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/LaTeX/Save/Tabular/as _document"), NULL, file_save, 
@@ -1291,26 +1291,26 @@ void free_windata (GtkWidget *w, gpointer data)
 	}
 
 	/* data specific to certain windows */
-	if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
+	if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY) {
 	    free_summary(vwin->data); 
-	else if (vwin->role == CORR || vwin->role == PCA)
+	} else if (vwin->role == CORR || vwin->role == PCA || 
+		   vwin->role == COVAR) {
 	    free_vmatrix(vwin->data);
-	else if (vwin->role == FCASTERR || vwin->role == FCAST)
+	} else if (vwin->role == FCASTERR || vwin->role == FCAST) {
 	    free_fit_resid(vwin->data);
-	else if (vwin->role == COEFFINT)
+	} else if (vwin->role == COEFFINT) {
 	    free_coeff_intervals(vwin->data);
-	else if (vwin->role == COVAR)
-	    free_vmatrix(vwin->data);
-	else if (vwin->role == MPOLS)
+	} else if (vwin->role == MPOLS) {
 	    free_gretl_mp_results(vwin->data);
-	else if (vwin->role == VIEW_SERIES)
+	} else if (vwin->role == VIEW_SERIES) {
 	    free_series_view(vwin->data);
-	else if (vwin->role == VAR) 
+	} else if (vwin->role == VAR) { 
 	    gretl_var_free_unnamed(vwin->data);
-	else if (vwin->role == LEVERAGE) 
+	} else if (vwin->role == LEVERAGE) {
 	    gretl_matrix_free(vwin->data);
-	else if (vwin->role == MAHAL)
+	} else if (vwin->role == MAHAL) {
 	    free_mahal_dist(vwin->data);
+	}
 
 	if (vwin->dialog) {
 	    winstack_remove(vwin->dialog);

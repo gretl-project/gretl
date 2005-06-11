@@ -269,20 +269,20 @@ void open_script (gpointer data, guint action, GtkWidget *widget)
 
 void file_save (gpointer data, guint file_code, GtkWidget *widget)
 {
-    windata_t *mydata = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
 
     switch (file_code) {
     case SAVE_OUTPUT:
-	file_selector(_("Save output file"), SAVE_OUTPUT, mydata);
+	file_selector(_("Save output file"), SAVE_OUTPUT, vwin);
 	break;
     case SAVE_CONSOLE:
-	file_selector(_("Save console output"), SAVE_CONSOLE, mydata);
+	file_selector(_("Save console output"), SAVE_CONSOLE, vwin);
 	break;
     case SAVE_CMDS: 
-	file_selector(_("Save command log"), SAVE_CMDS, mydata);
+	file_selector(_("Save command log"), SAVE_CMDS, vwin);
 	break;
     case SAVE_SCRIPT:
-	file_selector(_("Save command script"), SAVE_SCRIPT, mydata);
+	file_selector(_("Save command script"), SAVE_SCRIPT, vwin);
 	break;
     case SAVE_DATA:
     case SAVE_DATA_AS:
@@ -304,13 +304,13 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     case SAVE_TEX_EQ:
     case SAVE_TEX_TAB_FRAG:
     case SAVE_TEX_EQ_FRAG:
-	file_selector(_("Save LaTeX file"), file_code, mydata->data);
+	file_selector(_("Save LaTeX file"), file_code, vwin->data);
 	break;
     case SAVE_MODEL:
-	file_selector(_("Save model output"), file_code, mydata);
+	file_selector(_("Save model output"), file_code, vwin);
 	break;
     case SAVE_GP_CMDS:
-	file_selector(_("Save gnuplot commands"), file_code, mydata);
+	file_selector(_("Save gnuplot commands"), file_code, vwin);
 	break;
     default:
 	dummy_call();

@@ -94,8 +94,6 @@ static void printfrtf (double zz, PRN *prn, int endrow)
 #define VAR_SUMM_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                       "\\cellx2000\\cellx4000\\cellx6000\\cellx8000\n"
 
-/* ............................................................. */
-
 void rtfprint_summary (Summary *summ,
 		       const DATAINFO *pdinfo,
 		       PRN *prn)
@@ -183,22 +181,18 @@ static void printftex (double zz, PRN *prn, int endrow)
 	tex_dcolumn_double(zz, s);
 
 	if (endrow) {
-	    pprintf(prn, "%s\\\\", s);
+	    pprintf(prn, "$%s$\\\\", s);
 	} else {
-	    pprintf(prn, "%s & ", s);
+	    pprintf(prn, "$%s$ & ", s);
 	}
     }	
 }
 
-/* ............................................................. */
-
-void texprint_summary (Summary *summ,
-		       const DATAINFO *pdinfo,
+void texprint_summary (Summary *summ, const DATAINFO *pdinfo,
 		       PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN], vname[16], tmp[128];
     int i, vi;
-    char pt = get_local_decpoint();
 
     ntodate(date1, pdinfo->t1, pdinfo);
     ntodate(date2, pdinfo->t2, pdinfo);
@@ -217,9 +211,7 @@ void texprint_summary (Summary *summ,
     } else {
 	strcpy(tmp, I_("(skipping any missing values)"));
 	pprintf(prn, "%s\\\\[8pt]\n\n", tmp);
-	pprintf(prn, "\\begin{tabular}{lD{%c}{%c}{-1}"
-		"D{%c}{%c}{-1}D{%c}{%c}{-1}D{%c}{%c}{-1}}\n", 
-		pt, pt, pt, pt, pt, pt, pt, pt);
+	pputs(prn, "\\begin{tabular}{lrrrr}\n");
 	pprintf(prn, "%s &", I_("Variable"));
     }
 
@@ -318,8 +310,8 @@ static void rtf_table_pad (int pad, PRN *prn)
     while (pad--) pputs(prn, "\\cell ");
 }
 
-static void
-rtfprint_matrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
+void
+rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 {
     register int i, j;
     int n = vmat->t2 - vmat->t1 + 1;
@@ -403,22 +395,14 @@ rtfprint_matrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
     pputs(prn, "}}\n");
 }
 
-void rtfprint_corrmat (const VMatrix *corr, const DATAINFO *pdinfo, 
-		       PRN *prn)
-{
-    rtfprint_matrix(corr, pdinfo, prn);
-}
-
-static void
-texprint_matrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
+void
+texprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 {
     register int i, j;
     int n = vmat->t2 - vmat->t1 + 1;
     int lo, nf, li2, p, k, idx, ij2;
-    char vname[16], tmp[128];
-    int fields;
-
-    fields = (vmat->ci == CORR)? 5 : 4;
+    char vname[16];
+    int fields = 5;
 
     lo = vmat->dim;
 
@@ -428,14 +412,17 @@ texprint_matrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 	ntodate(date1, vmat->t1, pdinfo);
 	ntodate(date2, vmat->t2, pdinfo);
 
-	sprintf(tmp, I_("Correlation coefficients, using the observations "
+	pputs(prn, "\\begin{center}\n");
+	pprintf(prn, I_("Correlation coefficients, using the observations "
 			"%s--%s"), date1, date2);
-	pprintf(prn, "\\begin{center}\n%s\\\\\n(%s)\\\\\n", 
-		tmp, I_("skipping any missing values"));
-
-	sprintf(tmp, I_("5\\%% critical value (two-tailed) = %.4f for n = %d"), 
+	pputs(prn, "\\\\\n");
+	if (vmat->missing) {
+	    pputs(prn, I_("skipping any missing values"));
+	    pputs(prn, "\\\\\n");
+	}
+	pprintf(prn, I_("5\\%% critical value (two-tailed) = %.4f for n = %d"), 
 		rhocrit95(n), n);
-	pprintf(prn, "%s\\\\\n", tmp);
+	pputs(prn, "\\\\\n");
     } else {
 	pprintf(prn, "\\begin{center}\n%s\\\\\n", 
 		I_("Coefficient covariance matrix"));
@@ -443,45 +430,31 @@ texprint_matrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 
     pputs(prn, "\\vspace{8pt}\n");
 
-    if (vmat->ci == CORR) {
-	pprintf(prn, "\\begin{tabular}{rrr%s}\n",
-		(lo == 3)? "r" : (lo == 4)? "rr" : "rrr");
-    } else {
-	char pt = get_local_decpoint();
-
-	pputs(prn, "\\begin{tabular}{");
-	for (i=0; i<=lo && i<fields; i++) {
-	    pprintf(prn, "D{%c}{%c}{-1}", pt, pt);
-	}
-	pputs(prn, "r}\n");
-    }
-
     for (i=0; i<=lo/fields; i++) {
 	nf = i * fields;
 	li2 = lo - nf;
+	/* p = number of cols we'll print */
 	p = (li2 > fields) ? fields : li2;
 	if (p == 0) break;
 
+	pputs(prn, "\\begin{tabular}{");
+	for (j=0; j<p; j++) {
+	    pputc(prn, 'r');
+	}
+	pputs(prn, "l}\n");
+
 	/* print the varname headings */
-	for (j=1; j<=p; ++j)  {
-	    tex_escape(vname, vmat->names[j + nf - 1]);
+	for (j=0; j<p; j++)  {
+	    tex_escape(vname, vmat->names[j + nf]);
 	    if (vmat->ci == CORR) {
 		pprintf(prn, "%s%s", vname,
-			(j == p)? " &\\\\" : " & ");
+			(j == p - 1)? " &\\\\\n" : " & ");
 	    } else {
 		pprintf(prn, "\\multicolumn{1}{c}{%s}%s", vname,
-			(j == p)? " &\\\\\n" : " &\n");
+			(j == p - 1)? " &\\\\\n" : " &\n");
 	    }
 	}
 	
-	/* insert spacers */
-	if (vmat->ci == CORR) {
-	    for (j=1; j<=p; ++j) {
-		pputs(prn, "\\rule{13ex}{0pt} & ");
-	    }
-	    pputs(prn, "\\\\\[-6pt]\n"); 
-	}   
-
 	/* print rectangular part, if any, of matrix */
 	for (j=0; j<nf; j++) {
 	    for (k=0; k<p; k++) {
@@ -492,13 +465,16 @@ texprint_matrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 		    printftex(vmat->vec[idx], prn, 0);
 		}
 	    }
-	    pprintf(prn, "%s\\\\\n", vmat->names[j]);
+	    tex_escape(vname, vmat->names[j]);
+	    pprintf(prn, "%s\\\\\n", vname);
 	}
 
 	/* print upper triangular part of matrix */
 	for (j=0; j<p; ++j) {
 	    ij2 = nf + j;
-	    for (k=0; k<j; k++) pputs(prn, " & ");
+	    for (k=0; k<j; k++) {
+		pputs(prn, " & ");
+	    }
 	    for (k=j; k<p; k++) {
 		idx = ijton(ij2, nf+k, lo);
 		if (vmat->ci == CORR) {
@@ -507,18 +483,14 @@ texprint_matrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 		    printftex(vmat->vec[idx], prn, 0);
 		}
 	    }
-	    pprintf(prn, "%s\\\\\n", vmat->names[ij2]);
+	    tex_escape(vname, vmat->names[ij2]);
+	    pprintf(prn, "%s\\\\\n", vname);
 	}
-	pputs(prn, "\\\\\n");
+
+	pputs(prn, "\\end{tabular}\n\n");
     }
 
-    pputs(prn, "\\end{tabular}\n\\end{center}\n");
-}
-
-void texprint_corrmat (const VMatrix *corr, const DATAINFO *pdinfo, 
-		       PRN *prn)
-{
-    texprint_matrix(corr, pdinfo, prn);
+    pputs(prn, "\\end{center}\n");
 }
 
 static 
@@ -992,18 +964,6 @@ void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
     }
 
     pputs(prn, "}}\n");
-}
-
-void texprint_vcv (const VMatrix *vcv, const DATAINFO *pdinfo, 
-                   PRN *prn)
-{
-    texprint_matrix(vcv, pdinfo, prn);
-}
-
-void rtfprint_vcv (const VMatrix *vcv, const DATAINFO *pdinfo, 
-                   PRN *prn)
-{
-    rtfprint_matrix(vcv, pdinfo, prn);
 }
 
 /* copy data to buffer in CSV format and place on clipboard */

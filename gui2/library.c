@@ -5088,7 +5088,9 @@ int latex_compile (char *texshort)
 
 /* ........................................................... */
 
-void view_latex (gpointer data, guint code, GtkWidget *widget)
+static void 
+real_view_or_save_latex (gpointer data, guint code, GtkWidget *w,
+			 const char *fname)
 {
     char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
     int dot, err = LATEX_OK;
@@ -5115,8 +5117,13 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 	const char *buf;
 	PRN *bprn = (PRN *) data;
 	PRN *fprn;
+	
+	if (fname != NULL) {
+	    strcpy(texfile, fname);
+	} else {
+	    sprintf(texfile, "%swindow.tex", paths.userdir);
+	} 
 
-	sprintf(texfile, "%swindow.tex", paths.userdir);
 	fprn = gretl_print_new_with_filename(texfile);
 	if (fprn == NULL) {
 	    sprintf(errtext, _("Couldn't write to %s"), texfile);
@@ -5133,6 +5140,10 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 	
     if (err) {
 	errbox(_("Couldn't open tex file for writing"));
+	return;
+    }
+
+    if (code == SAVE_TEX_MISC) {
 	return;
     }
 
@@ -5177,9 +5188,19 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
     remove(tmp);
 }
 
+void view_latex (gpointer p, guint u, GtkWidget *w)
+{
+    real_view_or_save_latex(p, u, w, NULL);
+}
+
+void save_tex_misc (const char *fname, PRN *prn)
+{
+    real_view_or_save_latex(prn, SAVE_TEX_MISC, NULL, fname);
+}
+
 /* ........................................................... */
 
-void do_save_tex (char *fname, int code, MODEL *pmod)
+void save_tex_model (char *fname, int code, MODEL *pmod)
 {
     PRN *texprn;
 

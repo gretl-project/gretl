@@ -30,19 +30,19 @@ int winprint_graph (char *emfname);
 void winprint (char *fullbuf, char *selbuf);
 #endif
 
-void texprint_summary (Summary *summ,
+void texprint_summary (const Summary *summ,
 		       const DATAINFO *pdinfo,
 		       PRN *prn);
 
-void rtfprint_summary (Summary *summ,
+void rtfprint_summary (const Summary *summ,
 		       const DATAINFO *pdinfo,
 		       PRN *prn);
 
-void texprint_corrmat (const VMatrix *corr,
+void texprint_vmatrix (const VMatrix *corr,
 		       const DATAINFO *pdinfo, 
 		       PRN *prn);
 
-void rtfprint_corrmat (const VMatrix *corr,
+void rtfprint_vmatrix (const VMatrix *corr,
 		       const DATAINFO *pdinfo, 
 		       PRN *prn);
 
@@ -65,14 +65,6 @@ void rtfprint_forecast (const FITRESID *fr,
 void texprint_confints (const CoeffIntervals *cf, PRN *prn);
 
 void rtfprint_confints (const CoeffIntervals *cf, PRN *prn);
-
-void texprint_vcv (const VMatrix *vcv, 
-		   const DATAINFO *pdinfo, 
-		   PRN *prn);
-
-void rtfprint_vcv (const VMatrix *vcv, 
-		   const DATAINFO *pdinfo, 
-		   PRN *prn);
 
 int csv_to_clipboard (void);
 

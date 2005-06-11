@@ -67,7 +67,8 @@ double gretl_stddev (int t1, int t2, const double *x);
 
 double gretl_covar (int t1, int t2, const double *x, const double *y);
 
-double gretl_corr (int t1, int t2, const double *x, const double *y);
+double gretl_corr (int t1, int t2, const double *x, const double *y,
+		   int *missing);
 
 double gretl_corr_rsq (int t1, int t2, const double *x, const double *y);
 
@@ -107,6 +108,8 @@ void print_summary (const Summary *summ,
 void free_summary (Summary *summ);
 
 VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo);
+
+VMatrix *vmatrix_new (void);
 
 void free_vmatrix (VMatrix *vmat);
 

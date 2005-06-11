@@ -245,7 +245,9 @@ int do_store (char *mydatfile, gretlopt oflag, int overwrite);
 
 void view_latex (gpointer data, guint prn_code, GtkWidget *widget);
 
-void do_save_tex (char *fname, int code, MODEL *pmod);
+void save_tex_misc (const char *fname, PRN *prn);
+
+void save_tex_model (char *fname, int code, MODEL *pmod);
 
 void do_save_text (char *fname, MODEL *pmod);
 

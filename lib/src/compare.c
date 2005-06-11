@@ -950,7 +950,7 @@ static int ljung_box (int varno, int order, const double **Z,
 	    x[k] = Z[varno][t];
 	    y[k] = Z[varno][t-m];
 	}
-	acf[m] = gretl_corr(0, nobs - m - 1, x, y);
+	acf[m] = gretl_corr(0, nobs - m - 1, x, y, NULL);
     }
 
     /* compute Ljung-Box statistic */

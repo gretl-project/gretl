@@ -105,6 +105,7 @@ enum file_ops {
     SAVE_TEX_EQ,
     SAVE_TEX_TAB_FRAG,
     SAVE_TEX_EQ_FRAG,
+    SAVE_TEX_MISC,
     SAVE_SCRIPT,
     SAVE_OUTPUT,
     SAVE_SESSION,
@@ -212,10 +213,11 @@ enum font_selections {
     GRAPH_FONT_SELECTION
 };
 
-enum latex_views {
+enum latex_ops {
     LATEX_VIEW_TABULAR,
     LATEX_VIEW_EQUATION,
-    LATEX_VIEW_MODELTABLE
+    LATEX_VIEW_MISC,
+    LATEX_SAVE
 };
 
 enum calc_functions {

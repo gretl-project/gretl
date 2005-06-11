@@ -390,7 +390,13 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
 
 #endif /* old versus new gtk */
 
-static int special_text_copy (int obj, int how, int show, gpointer data)
+enum {
+    W_PREVIEW,
+    W_COPY,
+    W_SAVE
+};
+
+static int special_text_copy (int obj, int how, int what, gpointer data)
 {
     PRN *prn = NULL;
     int err = 0;
@@ -407,13 +413,13 @@ static int special_text_copy (int obj, int how, int show, gpointer data)
 	} else if (how == COPY_RTF) { 
 	    rtfprint_summary(summ, datainfo, prn);
 	}
-    } else if (obj == CORR) {
+    } else if (obj == CORR || obj == COVAR) {
 	VMatrix *corr = (VMatrix *) data;
 
 	if (how == COPY_LATEX) { 
-	    texprint_corrmat(corr, datainfo, prn);
+	    texprint_vmatrix(corr, datainfo, prn);
 	} else if (how == COPY_RTF) { 
-	    rtfprint_corrmat(corr, datainfo, prn);
+	    rtfprint_vmatrix(corr, datainfo, prn);
 	}
     } else if (obj == FCAST) {
 	FITRESID *fr = (FITRESID *) data;
@@ -438,14 +444,6 @@ static int special_text_copy (int obj, int how, int show, gpointer data)
 	    texprint_confints(cf, prn);
 	} else if (how == COPY_RTF) { 
 	    rtfprint_confints(cf, prn);
-	}
-    } else if (obj == COVAR) {
-	VMatrix *vcv = (VMatrix *) data;
-
-	if (how == COPY_LATEX) { 
-	    texprint_vcv(vcv, datainfo, prn);
-	} else if (how == COPY_RTF) { 
-	    rtfprint_vcv(vcv, datainfo, prn);
 	}
     } else if (obj == MPOLS) {
 	mp_results *mpvals = (mp_results *) data;
@@ -474,10 +472,12 @@ static int special_text_copy (int obj, int how, int show, gpointer data)
     } 
 
     if (!err) {
-	if (show) {
-	    view_latex(prn, obj, NULL);
-	} else {
+	if (what == W_PREVIEW) {
+	    view_latex(prn, LATEX_VIEW_MISC, NULL);
+	} else if (what == W_COPY) {
 	    prn_to_clipboard(prn, how);
+	} else if (what == W_SAVE) {
+	    file_selector(_("Save LaTeX file"), SAVE_TEX_MISC, prn);
 	}
     }
 
@@ -488,7 +488,16 @@ static int special_text_copy (int obj, int how, int show, gpointer data)
 
 void window_tex_view (GtkWidget *w, windata_t *vwin)
 {
-    special_text_copy(vwin->role, COPY_LATEX, 1, vwin->data);
+    const char *opts[] = {
+	N_("Preview"),
+	N_("Copy to clipboard"),
+	N_("Save as...")
+    };
+    int opt = radio_dialog("gretl: LaTeX", opts, 3, 0, 0);
+
+    if (opt >= 0) {
+	special_text_copy(vwin->role, COPY_LATEX, opt, vwin->data);
+    }
 }
 
 /* copying text from gretl windows */
@@ -505,7 +514,7 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
     /* copying from window with special stuff enabled */
     if (MULTI_COPY_ENABLED(vwin->role) && SPECIAL_COPY(how) &&
 	vwin->role != VIEW_MODEL) {
-	err = special_text_copy(vwin->role, how, 0, vwin->data);
+	err = special_text_copy(vwin->role, how, W_COPY, vwin->data);
 	if (err) {
 	    return;
 	}

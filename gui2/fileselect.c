@@ -60,10 +60,10 @@
                                i == APPEND_EXCEL || \
                                i == APPEND_ASCII)
 
-#define SAVE_TEX_ACTION(i) (i == SAVE_TEX_TAB || \
-                            i == SAVE_TEX_EQ || \
-	                    i == SAVE_TEX_TAB_FRAG || \
-                            i == SAVE_TEX_EQ_FRAG)
+#define SAVE_MODEL_TEX_ACTION(i) (i == SAVE_TEX_TAB || \
+                                  i == SAVE_TEX_EQ || \
+	                          i == SAVE_TEX_TAB_FRAG || \
+                                  i == SAVE_TEX_EQ_FRAG)
 
 #define SAVE_GRAPH_ACTION(i) (i == SAVE_GNUPLOT || \
                               i == SAVE_THIS_GRAPH || \
@@ -115,6 +115,7 @@ static struct extmap action_map[] = {
     { SAVE_TEX_EQ,       ".tex" },
     { SAVE_TEX_TAB_FRAG, ".tex" },
     { SAVE_TEX_EQ_FRAG,  ".tex" },
+    { SAVE_TEX_MISC,     ".tex" },
     { OPEN_DATA,         ".gdt" },
     { APPEND_DATA,       ".gdt" },    
     { OPEN_SCRIPT,       ".inp" },
@@ -549,10 +550,14 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	else errbox(_("boxplot save failed"));
     } else if (action == SAVE_SESSION) {
 	save_session(fname);
-    } else if (SAVE_TEX_ACTION(action)) {
+    } else if (SAVE_MODEL_TEX_ACTION(action)) {
 	MODEL *pmod = (MODEL *) data;
 
-	do_save_tex(fname, action, pmod); 
+	save_tex_model(fname, action, pmod); 
+    } else if (action == SAVE_TEX_MISC) {
+	PRN *prn = (PRN *) data;
+
+	save_tex_misc(fname, prn);
     } else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 
@@ -643,6 +648,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{SAVE_TEX_EQ,  { N_("TeX files (*.tex)"), "*.tex" }},
 	{SAVE_TEX_TAB_FRAG, { N_("TeX files (*.tex)"), "*.tex" }},
 	{SAVE_TEX_EQ_FRAG,  { N_("TeX files (*.tex)"), "*.tex" }},
+	{SAVE_TEX_MISC,     { N_("TeX files (*.tex)"), "*.tex" }},
 	{OPEN_DATA,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{APPEND_DATA,  { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{OPEN_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},

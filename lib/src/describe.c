@@ -357,13 +357,16 @@ double gretl_covar (int t1, int t2, const double *x, const double *y)
  * @t2: ending observation.
  * @x: data series.
  * @y: data seties.
+ * @missing: location to receive information on the number
+ * of missing observations that were skipped, or %NULL.
  *
  * Returns: the correlation coefficient for the series @x and @y 
  * from obs @t1 to obs @t2, skipping any missing values, or #NADBL 
  * on failure.
  */
 
-double gretl_corr (int t1, int t2, const double *x, const double *y)
+double gretl_corr (int t1, int t2, const double *x, const double *y,
+		   int *missing)
 {
     int t, nn, n = t2 - t1 + 1;
     double sx, sy, sxx, syy, sxy, den, xbar, ybar;
@@ -416,6 +419,10 @@ double gretl_corr (int t1, int t2, const double *x, const double *y)
 	}
     }
 
+    if (missing != NULL) {
+	*missing = n - nn;
+    }
+
     return cval;
 }
 
@@ -434,7 +441,7 @@ double gretl_corr (int t1, int t2, const double *x, const double *y)
 
 double gretl_corr_rsq (int t1, int t2, const double *x, const double *y)
 {
-    double r = gretl_corr(t1, t2, x, y);
+    double r = gretl_corr(t1, t2, x, y, NULL);
 
     if (na(r)) {
 	return NADBL;
@@ -2096,11 +2103,36 @@ Summary *summary (const int *list,
 }
 
 /**
- * free_corrmat:
- * @corrmat: gretl correlation matrix struct
+ * vmatrix_new:
+ *
+ * Returns: an allocated and initialized #VMatrix, or
+ * %NULL on failure.
+ */
+
+VMatrix *vmatrix_new (void)
+{
+    VMatrix *vmat = malloc(sizeof *vmat);
+
+    if (vmat != NULL) {
+	vmat->vec = NULL;
+	vmat->list = NULL;
+	vmat->names = NULL;
+
+	vmat->ci = 0;
+	vmat->dim = 0;
+	vmat->t1 = 0;
+	vmat->t2 = 0;
+	vmat->missing = 0;
+    }
+
+    return vmat;
+}
+
+/**
+ * free_vmatrix:
+ * @vmat: gretl correlation matrix struct
  *
  * Frees all malloced elements of the struct.
- *
  */
 
 void free_vmatrix (VMatrix *vmat)
@@ -2124,8 +2156,7 @@ void free_vmatrix (VMatrix *vmat)
  * Computes pairwise correlation coefficients for the variables
  * specified in @list, skipping any constants.
  *
- * Returns: gretl correlation matrix struct.
- * 
+ * Returns: gretl correlation matrix struct, or %NULL on failure.
  */
 
 VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
@@ -2133,13 +2164,12 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
     VMatrix *corrmat;
     int i, j, lo, nij, mm;
     int t1 = pdinfo->t1, t2 = pdinfo->t2; 
+    int missing = 0;
 
-    corrmat = malloc(sizeof *corrmat);
+    corrmat = vmatrix_new();
     if (corrmat == NULL) {
 	return NULL;
     }
-
-    corrmat->list = NULL;
 
     /* drop any constants from list */
     for (i=1; i<=list[0]; i++) {
@@ -2181,7 +2211,10 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
 		corrmat->vec[nij] = 1.0;
 		continue;
 	    }
-	    corrmat->vec[nij] = gretl_corr(t1, t2, Z[vi], Z[vj]);
+	    corrmat->vec[nij] = gretl_corr(t1, t2, Z[vi], Z[vj], &missing);
+	    if (missing > 0) {
+		corrmat->missing = 1;
+	    }
 	}
     }
 

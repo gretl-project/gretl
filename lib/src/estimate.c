@@ -1642,7 +1642,7 @@ static double altrho (int order, int t1, int t2, const double *uhat)
 	}
     }
 
-    rho = gretl_corr(0, n - 1, ut, ut1);
+    rho = gretl_corr(0, n - 1, ut, ut1, NULL);
 
     free(ut);
     free(ut1);

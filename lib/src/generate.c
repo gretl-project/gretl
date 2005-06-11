@@ -5134,7 +5134,7 @@ static double genr_cov_corr (const char *str, double ***pZ,
     if (fn == T_COV) {
 	ret = gretl_covar(pdinfo->t1, pdinfo->t2, (*pZ)[v1], (*pZ)[v2]);
     } else if (fn == T_CORR) {
-	ret = gretl_corr(pdinfo->t1, pdinfo->t2, (*pZ)[v1], (*pZ)[v2]);
+	ret = gretl_corr(pdinfo->t1, pdinfo->t2, (*pZ)[v1], (*pZ)[v2], NULL);
     }
 
     return ret;

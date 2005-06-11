@@ -238,6 +238,7 @@ struct VMatrix_ {
     char **names;
     double *vec;
     int *list;
+    int missing;
 };
 
 struct SAMPLE_ {

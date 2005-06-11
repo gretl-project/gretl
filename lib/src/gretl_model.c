@@ -621,13 +621,11 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo)
     int i, nt, nc = pmod->ncoeff;
     VMatrix *vcv;
 
-    vcv = malloc(sizeof *vcv);
+    vcv = vmatrix_new();
 
     if (vcv == NULL) {
 	return NULL;
     }
-
-    vcv->list = NULL;
 
     vcv->names = create_strings_array(nc);
     if (vcv->names == NULL) {
