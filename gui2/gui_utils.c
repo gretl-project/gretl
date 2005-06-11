@@ -1478,8 +1478,18 @@ static void make_viewbar (windata_t *vwin, int text_out)
 		   vwin->role == COINT2 ||
 		   vwin->role == MAHAL);
 
+    static int latex_ok = -1;
+
+    if (latex_ok == -1) {
+#ifdef G_OS_WIN32
+	latex_ok = check_for_prog("latex.exe");
+#else
+	latex_ok = check_for_prog("latex");
+#endif
+    }
+
 #ifndef OLD_GTK
-    if (TEX_VIEW_ENABLED(vwin->role)) {
+    if (TEX_VIEW_ENABLED(vwin->role) && latex_ok) {
 	tex_icon_init();
     }
 #endif
@@ -1529,7 +1539,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
-	if (!TEX_VIEW_ENABLED(vwin->role) && 
+	if ((!latex_ok || !TEX_VIEW_ENABLED(vwin->role)) && 
 	    viewbar_items[i].flag == TEX_VIEW_ITEM) {
 	    continue;
 	}

@@ -743,9 +743,11 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     char vname[16];
     char pt = get_local_decpoint();
 
+    pputs(prn, "\\begin{center}\n");
     pprintf(prn, I_("For 95 percent confidence intervals, "
 		    "$t(%d, .025) = %.3f$\n\n"), 
 	    fr->df, fr->tval);
+    pputs(prn, "\\end{center}\n");
 
     pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
 
