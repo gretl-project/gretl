@@ -1294,13 +1294,13 @@ void free_windata (GtkWidget *w, gpointer data)
 	if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
 	    free_summary(vwin->data); 
 	else if (vwin->role == CORR || vwin->role == PCA)
-	    free_corrmat(vwin->data);
+	    free_vmatrix(vwin->data);
 	else if (vwin->role == FCASTERR || vwin->role == FCAST)
 	    free_fit_resid(vwin->data);
 	else if (vwin->role == COEFFINT)
 	    free_coeff_intervals(vwin->data);
 	else if (vwin->role == COVAR)
-	    free_vcv(vwin->data);
+	    free_vmatrix(vwin->data);
 	else if (vwin->role == MPOLS)
 	    free_gretl_mp_results(vwin->data);
 	else if (vwin->role == VIEW_SERIES)

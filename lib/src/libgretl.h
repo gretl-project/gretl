@@ -161,7 +161,7 @@ typedef unsigned long gretlopt;
 typedef struct VARINFO_ VARINFO;
 typedef struct DATAINFO_ DATAINFO;
 typedef struct PATHS_ PATHS;
-typedef struct CorrMat_ CorrMat;
+typedef struct VMatrix_ VMatrix;
 typedef struct SAMPLE_ SAMPLE;
 typedef struct ARINFO_ ARINFO;
 typedef struct MODEL_ MODEL;
@@ -231,10 +231,13 @@ struct PATHS_ {
     char pngfont[32];
 };
 
-struct CorrMat_ {
-    int n, t1, t2;
+struct VMatrix_ {
+    int ci;
+    int dim;
+    int t1, t2;
+    char **names;
+    double *vec;
     int *list;
-    double *xpx;
 };
 
 struct SAMPLE_ {

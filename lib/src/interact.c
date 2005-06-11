@@ -2518,12 +2518,12 @@ do_outfile_command (gretlopt flag, char *fname, PRN *prn)
     return 1; /* not reached */
 }
 
-int call_pca_plugin (CorrMat *corrmat, double ***pZ,
+int call_pca_plugin (VMatrix *corrmat, double ***pZ,
 		     DATAINFO *pdinfo, gretlopt *pflag,
 		     PRN *prn)
 {
     void *handle = NULL;
-    int (*pca_from_corrmat) (CorrMat *, double ***, DATAINFO *,
+    int (*pca_from_corrmat) (VMatrix *, double ***, DATAINFO *,
 			     gretlopt *, PRN *);
     int err = 0;
 
@@ -2574,7 +2574,7 @@ int simple_commands (CMD *cmd, const char *line,
 		     PRN *prn)
 {
     int err = 0, order = 0;
-    CorrMat *corrmat;
+    VMatrix *corrmat;
     Summary *summ;
     int *genlist = NULL;
 
@@ -2623,8 +2623,8 @@ int simple_commands (CMD *cmd, const char *line,
 	if (corrmat == NULL) {
 	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	} else {
-	    printcorr(corrmat, datainfo, prn);
-	    free_corrmat(corrmat);
+	    printcorr(corrmat, prn);
+	    free_vmatrix(corrmat);
 	}
 	break;
 
@@ -2653,7 +2653,7 @@ int simple_commands (CMD *cmd, const char *line,
 	    if (cmd->opt && !err) {
 		maybe_list_vars(datainfo, prn);
 	    }
-	    free_corrmat(corrmat);
+	    free_vmatrix(corrmat);
 	}
 	break;
 

@@ -40,16 +40,12 @@ void text_print_model_confints (const CoeffIntervals *cf, PRN *prn);
 
 void print_freq (const FREQDIST *freq, PRN *prn);
 
-void printcorr (const CorrMat *corrmat, 
-		const DATAINFO *pdinfo, 
-		PRN *prn);
+void printcorr (const VMatrix *corrmat, PRN *prn);
 
 void print_smpl (const DATAINFO *pdinfo, 
 		 int fulln, PRN *prn); 
 
-int outcovmx (MODEL *pmod, 
-	      const DATAINFO *pdinfo, 
-	      PRN *prn);
+int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
 
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 
@@ -68,9 +64,7 @@ int text_print_forecast (const FITRESID *fr,
 			 double ***pZ, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn);
 
-void text_print_matrix (const double *rr, const int *list, 
-			MODEL *pmod, const DATAINFO *pdinfo, 
-			PRN *prn);
+void text_print_vmatrix (VMatrix *vmat, PRN *prn);
 
 void gretl_print_fullwidth_double (double x, int digits, PRN *prn);
 

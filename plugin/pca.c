@@ -225,12 +225,11 @@ static gretlopt pca_flag_dialog (void)
     return 0L;
 }
 
-static void pca_print (CorrMat *corrmat, gretl_matrix *m,
-		       double *evals, DATAINFO *pdinfo, 
-		       PRN *prn)
+static void pca_print (VMatrix *vmat, gretl_matrix *m,
+		       double *evals, PRN *prn)
 {
     double x, y;
-    int n = corrmat->list[0];
+    int n = vmat->dim;
     int i, j, cols;
 
     pprintf(prn, "%s\n\n", _("Principal Components Analysis"));
@@ -268,7 +267,7 @@ static void pca_print (CorrMat *corrmat, gretl_matrix *m,
 	}
 	pputc(prn, '\n');
 	for (i=0; i<n; i++) {
-	    pprintf(prn, "%-10s", pdinfo->varname[corrmat->list[i+1]]);
+	    pprintf(prn, "%-10s", vmat->names[i]);
 	    for (j=cols-1; j>cols-8 && j>=0; j--) {
 		pprintf(prn, "%9.3f", gretl_matrix_get(m, i, j));
 	    }
@@ -279,13 +278,13 @@ static void pca_print (CorrMat *corrmat, gretl_matrix *m,
     }
 }
 
-int pca_from_corrmat (CorrMat *corrmat, double ***pZ,
+int pca_from_corrmat (VMatrix *corrmat, double ***pZ,
 		      DATAINFO *pdinfo, gretlopt *pflag,
 		      PRN *prn)
 {
     gretl_matrix *m;
     double x;
-    int i, j, idx, n = corrmat->list[0];
+    int i, j, idx, n = corrmat->dim;
     double *evals;
     gretlopt oflag = 0L;
 
@@ -306,7 +305,7 @@ int pca_from_corrmat (CorrMat *corrmat, double ***pZ,
     for (i=0; i<n; i++) {
 	for (j=0; j<n; j++) {
 	    idx = ijton(i, j, n);
-	    x = corrmat->xpx[idx];
+	    x = corrmat->vec[idx];
 	    gretl_matrix_set(m, i, j, x);
 	}
     }
@@ -318,7 +317,7 @@ int pca_from_corrmat (CorrMat *corrmat, double ***pZ,
     }
 
     if (prn != NULL) {
-	pca_print(corrmat, m, evals, pdinfo, prn);
+	pca_print(corrmat, m, evals, prn);
     }
 
     if (oflag) {
@@ -327,7 +326,7 @@ int pca_from_corrmat (CorrMat *corrmat, double ***pZ,
 	int nc = 0, err = 0;
 	double **sZ = NULL;
 	int add_all = (oflag == OPT_A);
-	int *list;
+	int *plist;
 
 	if (add_all) {
 	    nc = n;
@@ -337,18 +336,20 @@ int pca_from_corrmat (CorrMat *corrmat, double ***pZ,
 	    }
 	}
 
-	list = malloc((nc + 1) * sizeof *list);
-	if (list == NULL) err = E_ALLOC;
+	plist = malloc((nc + 1) * sizeof *plist);
+	if (plist == NULL) err = E_ALLOC;
 
 	if (!err) {
 	    /* build list of PCs (with eigenvals > 1?) */
-	    list[0] = nc;
+	    plist[0] = nc;
 	    j = 1;
 	    for (i=n-1; i>=0; i--) {
-		if (add_all || evals[i] > 1.0) list[j++] = i;
+		if (add_all || evals[i] > 1.0) {
+		    plist[j++] = i;
+		}
 	    }
 #ifdef PCA_DEBUG
-	    printlist(list, "pclist");
+	    printlist(plist, "pclist");
 #endif
 	    err = dataset_add_series(nc, pZ, pdinfo);
 	}
@@ -356,9 +357,12 @@ int pca_from_corrmat (CorrMat *corrmat, double ***pZ,
 	if (!err) {
 	    /* construct standardized versions of variables */
 	    sZ = malloc(n * sizeof *sZ);
-	    if (sZ == NULL) err = E_ALLOC;
-	    else {
-		for (i=0; i<n; i++) sZ[i] = NULL;
+	    if (sZ == NULL) {
+		err = E_ALLOC;
+	    } else {
+		for (i=0; i<n; i++) {
+		    sZ[i] = NULL;
+		}
 		for (i=0; i<n; i++) {
 		    int oldv = corrmat->list[i+1];
 
@@ -374,7 +378,9 @@ int pca_from_corrmat (CorrMat *corrmat, double ***pZ,
 		    }
 		}
 		if (err) {
-		    for (i=0; i<n; i++) free(sZ[i]);
+		    for (i=0; i<n; i++) {
+			free(sZ[i]);
+		    }
 		    free(sZ);
 		    sZ = NULL;
 		}
@@ -382,9 +388,9 @@ int pca_from_corrmat (CorrMat *corrmat, double ***pZ,
 	}
 
 	if (!err) {
-	    for (i=1; i<=list[0]; i++) {
+	    for (i=1; i<=plist[0]; i++) {
 		int newv = v + i - 1;
-		int pcnum = list[i];
+		int pcnum = plist[i];
 		int t;
 
 		sprintf(pdinfo->varname[newv], "PC%d", i);
@@ -416,9 +422,11 @@ int pca_from_corrmat (CorrMat *corrmat, double ***pZ,
 	    } /* end loop over components */
 	} /* end !err conditional */
 
-	free(list);
+	free(plist);
 	if (sZ != NULL) {
-	    for (i=0; i<n; i++) free(sZ[i]);
+	    for (i=0; i<n; i++) {
+		free(sZ[i]);
+	    }
 	    free(sZ);
 	}
 

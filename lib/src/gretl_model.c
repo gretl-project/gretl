@@ -564,21 +564,6 @@ int *gretl_arma_model_get_x_list (const MODEL *pmod)
 }
 
 /**
- * free_vcv:
- * @vcv: pointer to covariance matrix struct.
- * 
- * Frees the resources associated with @vcv, then frees the
- * pointer itself.
- */
-
-void free_vcv (VCV *vcv)
-{
-    free(vcv->vec);
-    free(vcv->list);
-    free(vcv);
-}
-
-/**
  * gretl_model_new_vcv:
  * @pmod: pointer to model.
  * @nelem: pointer to receive number of elements in
@@ -620,52 +605,64 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem)
 /**
  * gretl_model_get_vcv:
  * @pmod: pointer to model.
+ * @pdinfo: dataset information.
  * 
  * Supplies the caller with a copy of the variance-covariance 
  * matrix for the parameter estimates in @pmod.  See also
  * free_vcv().  To get the covariance matrix in gretl_matrix
  * format, see gretl_vcv_matrix_from_model().
  *
- * Returns: #VCV struct or %NULL on error.
+ * Returns: #VMatrix struct or %NULL on error.
  */
 
-VCV *gretl_model_get_vcv (MODEL *pmod)
+VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo)
 {
-    int i, nv = pmod->ncoeff;
-    VCV *vcv;
+    char varname[VNAMELEN];
+    int i, nt, nc = pmod->ncoeff;
+    VMatrix *vcv;
 
     vcv = malloc(sizeof *vcv);
-    if (vcv == NULL) return NULL;
 
-    vcv->list = malloc((nv + 1) * sizeof *vcv->list);
-    if (vcv->list == NULL) {
+    if (vcv == NULL) {
+	return NULL;
+    }
+
+    vcv->list = NULL;
+
+    vcv->names = create_strings_array(nc);
+    if (vcv->names == NULL) {
 	free(vcv);
 	return NULL;
     }
 
-    vcv->list[0] = nv;
-    for (i=1; i<=nv; i++) {
-	vcv->list[i] = pmod->list[i+1];
+    for (i=0; i<nc; i++) {
+	gretl_model_get_param_name(pmod, pdinfo, i, varname);
+	vcv->names[i] = gretl_strdup(varname);
+	if (vcv->names[i] == NULL) {
+	    free_vmatrix(vcv);
+	    return NULL;
+	}
     }
 
     if (pmod->vcv == NULL && makevcv(pmod)) {
-	free(vcv->list);
-	free(vcv);
+	free_vmatrix(vcv);
 	return NULL;
     }
 
     /* calculate number of elements in vcv */
-    nv = (nv * nv + nv) / 2;
+    nt = (nc * nc + nc) / 2;
 
     /* copy vcv */
-    vcv->vec = copyvec(pmod->vcv, nv + 1);
+    vcv->vec = copyvec(pmod->vcv, nt + 1); /* + 1?? */
     if (vcv->vec == NULL) {
-	free(vcv->list);
-	free(vcv);
+	free_vmatrix(vcv);
 	return NULL;
     }
 
     vcv->ci = pmod->ci;
+    vcv->dim = nc;
+    vcv->t1 = pmod->t1;
+    vcv->t2 = pmod->t2;
     
     return vcv;
 }

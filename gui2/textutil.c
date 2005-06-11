@@ -408,7 +408,7 @@ static int special_text_copy (int obj, int how, int show, gpointer data)
 	    rtfprint_summary(summ, datainfo, prn);
 	}
     } else if (obj == CORR) {
-	CorrMat *corr = (CorrMat *) data;
+	VMatrix *corr = (VMatrix *) data;
 
 	if (how == COPY_LATEX) { 
 	    texprint_corrmat(corr, datainfo, prn);
@@ -440,7 +440,7 @@ static int special_text_copy (int obj, int how, int show, gpointer data)
 	    rtfprint_confints(cf, prn);
 	}
     } else if (obj == COVAR) {
-	VCV *vcv = (VCV *) data;
+	VMatrix *vcv = (VMatrix *) data;
 
 	if (how == COPY_LATEX) { 
 	    texprint_vcv(vcv, datainfo, prn);

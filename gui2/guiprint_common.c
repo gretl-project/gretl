@@ -319,20 +319,19 @@ static void rtf_table_pad (int pad, PRN *prn)
 }
 
 static void
-rtfprint_matrix (const double *vec, const int *list,
-		 int t1, int t2, int n, int ci,
-		 const DATAINFO *pdinfo, PRN *prn)
+rtfprint_matrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 {
     register int i, j;
-    int lo, ljnf, nf, li2, p, k, index, ij2;
+    int n = vmat->t2 - vmat->t1 + 1;
+    int lo, nf, li2, p, k, idx, ij2;
     char tmp[128];
     enum { FIELDS = 5 };
 
-    if (ci == CORR) {
+    if (vmat->ci == CORR) {
 	char date1[OBSLEN], date2[OBSLEN];
 
-	ntodate(date1, t1, pdinfo);
-	ntodate(date2, t2, pdinfo);
+	ntodate(date1, vmat->t1, pdinfo);
+	ntodate(date2, vmat->t2, pdinfo);
 
 	sprintf(tmp, I_("Correlation coefficients, using the observations "
 			"%s - %s"), date1, date2);
@@ -342,13 +341,12 @@ rtfprint_matrix (const double *vec, const int *list,
 	sprintf(tmp, I_("5%% critical value (two-tailed) = %.4f for n = %d"), 
 		rhocrit95(n), n);
 	pprintf(prn, "%s\\par\n\\par\n{", tmp);
-    } 
-    else if (ci == COVAR) {
+    } else {
 	pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n\\par\n{",
 		I_("Coefficient covariance matrix"));
     }
     
-    lo = list[0];
+    lo = vmat->dim;
 
     for (i=0; i<=lo/FIELDS; i++) {
 	int pad;
@@ -366,8 +364,7 @@ rtfprint_matrix (const double *vec, const int *list,
 
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
-	    ljnf = list[j + nf];
-	    pprintf(prn, "%d) %s\\cell %s", ljnf, pdinfo->varname[ljnf],
+	    pprintf(prn, "%s\\cell %s", vmat->names[j+nf-1],
 		    (j == p)? "\\cell \\intbl \\row\n" : "");
 	}
 
@@ -376,14 +373,14 @@ rtfprint_matrix (const double *vec, const int *list,
 	    pputs(prn, "\\intbl "); 
 	    if (pad) rtf_table_pad(pad, prn);
 	    for (k=0; k<p; k++) {
-		index = ijton(j, nf+k, lo);
-		if (ci == CORR) {
-		    rtf_outxx(vec[index], prn);
+		idx = ijton(j, nf+k, lo);
+		if (vmat->ci == CORR) {
+		    rtf_outxx(vmat->vec[idx], prn);
 		} else {
-		    printfrtf(vec[index], prn, 0);
+		    printfrtf(vmat->vec[idx], prn, 0);
 		}
 	    }
-	    pprintf(prn, "\\ql (%d\\cell \\intbl \\row\n", list[j+1]);
+	    pprintf(prn, "\\ql %s\\cell \\intbl \\row\n", vmat->names[j]);
 	}
 
 	/* print upper triangular part of matrix */
@@ -392,51 +389,44 @@ rtfprint_matrix (const double *vec, const int *list,
 	    rtf_table_pad(pad + j, prn);
 	    ij2 = nf + j;
 	    for (k=j; k<p; k++) {
-		index = ijton(ij2, nf+k, lo);
-		if (ci == CORR) {
-		    rtf_outxx(vec[index], prn);
+		idx = ijton(ij2, nf+k, lo);
+		if (vmat->ci == CORR) {
+		    rtf_outxx(vmat->vec[idx], prn);
 		} else {
-		    printfrtf(vec[index], prn, 0);
+		    printfrtf(vmat->vec[idx], prn, 0);
 		}
 	    }
-	    pprintf(prn, "\\ql (%d\\cell \\intbl \\row\n", list[ij2+1]);
+	    pprintf(prn, "\\ql %s\\cell \\intbl \\row\n", vmat->names[ij2]);
 	}
     }
+
     pputs(prn, "}}\n");
 }
 
-/* ........................................................... */
-
-void rtfprint_corrmat (CorrMat *corr,
-		       const DATAINFO *pdinfo, 
+void rtfprint_corrmat (const VMatrix *corr, const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
-    rtfprint_matrix(corr->xpx, corr->list, corr->t1, corr->t2,
-		    corr->n, CORR, pdinfo, prn);
+    rtfprint_matrix(corr, pdinfo, prn);
 }
 
-/* ......................................................... */
-
 static void
-texprint_matrix (const double *vec, const int *list,
-		 int t1, int t2, int n, int ci,
-		 const DATAINFO *pdinfo, PRN *prn)
+texprint_matrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 {
     register int i, j;
-    int lo, ljnf, nf, li2, p, k, index, ij2;
+    int n = vmat->t2 - vmat->t1 + 1;
+    int lo, nf, li2, p, k, idx, ij2;
     char vname[16], tmp[128];
     int fields;
 
-    if (ci == CORR) fields = 5;
-    else fields = 4;
+    fields = (vmat->ci == CORR)? 5 : 4;
 
-    lo = list[0];
+    lo = vmat->dim;
 
-    if (ci == CORR) {
+    if (vmat->ci == CORR) {
 	char date1[OBSLEN], date2[OBSLEN];
 
-	ntodate(date1, t1, pdinfo);
-	ntodate(date2, t2, pdinfo);
+	ntodate(date1, vmat->t1, pdinfo);
+	ntodate(date2, vmat->t2, pdinfo);
 
 	sprintf(tmp, I_("Correlation coefficients, using the observations "
 			"%s--%s"), date1, date2);
@@ -446,15 +436,14 @@ texprint_matrix (const double *vec, const int *list,
 	sprintf(tmp, I_("5\\%% critical value (two-tailed) = %.4f for n = %d"), 
 		rhocrit95(n), n);
 	pprintf(prn, "%s\\\\\n", tmp);
-    }
-    else if (ci == COVAR) {
+    } else {
 	pprintf(prn, "\\begin{center}\n%s\\\\\n", 
 		I_("Coefficient covariance matrix"));
     }
 
     pputs(prn, "\\vspace{8pt}\n");
 
-    if (ci == CORR) {
+    if (vmat->ci == CORR) {
 	pprintf(prn, "\\begin{tabular}{rrr%s}\n",
 		(lo == 3)? "r" : (lo == 4)? "rr" : "rrr");
     } else {
@@ -475,19 +464,18 @@ texprint_matrix (const double *vec, const int *list,
 
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
-	    ljnf = list[j + nf];
-	    tex_escape(vname, pdinfo->varname[ljnf]);
-	    if (ci == CORR) {
-		pprintf(prn, "%d) %s%s", ljnf, vname,
+	    tex_escape(vname, vmat->names[j + nf - 1]);
+	    if (vmat->ci == CORR) {
+		pprintf(prn, "%s%s", vname,
 			(j == p)? " &\\\\" : " & ");
 	    } else {
-		pprintf(prn, "\\multicolumn{1}{c}{%d) %s}%s", ljnf, vname,
+		pprintf(prn, "\\multicolumn{1}{c}{%s}%s", vname,
 			(j == p)? " &\\\\\n" : " &\n");
 	    }
 	}
 	
 	/* insert spacers */
-	if (ci == CORR) {
+	if (vmat->ci == CORR) {
 	    for (j=1; j<=p; ++j) {
 		pputs(prn, "\\rule{13ex}{0pt} & ");
 	    }
@@ -497,14 +485,14 @@ texprint_matrix (const double *vec, const int *list,
 	/* print rectangular part, if any, of matrix */
 	for (j=0; j<nf; j++) {
 	    for (k=0; k<p; k++) {
-		index = ijton(j, nf+k, lo);
-		if (ci == CORR) {
-		    tex_outxx(vec[index], prn);
+		idx = ijton(j, nf+k, lo);
+		if (vmat->ci == CORR) {
+		    tex_outxx(vmat->vec[idx], prn);
 		} else {
-		    printftex(vec[index], prn, 0);
+		    printftex(vmat->vec[idx], prn, 0);
 		}
 	    }
-	    pprintf(prn, "(%d\\\\\n", list[j+1]);
+	    pprintf(prn, "%s\\\\\n", vmat->names[j]);
 	}
 
 	/* print upper triangular part of matrix */
@@ -512,31 +500,26 @@ texprint_matrix (const double *vec, const int *list,
 	    ij2 = nf + j;
 	    for (k=0; k<j; k++) pputs(prn, " & ");
 	    for (k=j; k<p; k++) {
-		index = ijton(ij2, nf+k, lo);
-		if (ci == CORR) {
-		    tex_outxx(vec[index], prn);
+		idx = ijton(ij2, nf+k, lo);
+		if (vmat->ci == CORR) {
+		    tex_outxx(vmat->vec[idx], prn);
 		} else {
-		    printftex(vec[index], prn, 0);
+		    printftex(vmat->vec[idx], prn, 0);
 		}
 	    }
-	    pprintf(prn, "(%d\\\\\n", list[ij2+1]);
+	    pprintf(prn, "%s\\\\\n", vmat->names[ij2]);
 	}
 	pputs(prn, "\\\\\n");
     }
+
     pputs(prn, "\\end{tabular}\n\\end{center}\n");
 }
 
-/* ........................................................... */
-
-void texprint_corrmat (CorrMat *corr,
-		       const DATAINFO *pdinfo, 
+void texprint_corrmat (const VMatrix *corr, const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
-    texprint_matrix(corr->xpx, corr->list, corr->t1, corr->t2,
-		    corr->n, CORR, pdinfo, prn);
+    texprint_matrix(corr, pdinfo, prn);
 }
-
-/* ........................................................... */
 
 static 
 void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo, 
@@ -906,8 +889,6 @@ void rtfprint_forecast (const FITRESID *fr,
     }
 }
 
-/* .................................................................. */
-
 static void 
 texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
@@ -936,8 +917,6 @@ texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
     }
     pputs(prn, "\\\\\n");
 }
-
-/* .................................................................. */
 
 void texprint_confints (const CoeffIntervals *cf, PRN *prn)
 {
@@ -970,8 +949,6 @@ void texprint_confints (const CoeffIntervals *cf, PRN *prn)
     pputs(prn, "\\end{tabular}\n"
 	  "\\end{center}\n");
 }
-
-/* .................................................................. */
 
 static void 
 rtfprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
@@ -1017,24 +994,16 @@ void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
     pputs(prn, "}}\n");
 }
 
-/* .................................................................. */
-
-void texprint_vcv (const VCV *vcv, 
-                   const DATAINFO *pdinfo, 
+void texprint_vcv (const VMatrix *vcv, const DATAINFO *pdinfo, 
                    PRN *prn)
 {
-    texprint_matrix(vcv->vec, vcv->list, 0, 0,
-                    0, COVAR, pdinfo, prn);
+    texprint_matrix(vcv, pdinfo, prn);
 }
 
-/* .................................................................. */
-
-void rtfprint_vcv (const VCV *vcv,
-                   const DATAINFO *pdinfo, 
+void rtfprint_vcv (const VMatrix *vcv, const DATAINFO *pdinfo, 
                    PRN *prn)
 {
-    rtfprint_matrix(vcv->vec, vcv->list, 0, 0,
-                    0, COVAR, pdinfo, prn);
+    rtfprint_matrix(vcv, pdinfo, prn);
 }
 
 /* copy data to buffer in CSV format and place on clipboard */

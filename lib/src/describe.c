@@ -2103,12 +2103,15 @@ Summary *summary (const int *list,
  *
  */
 
-void free_corrmat (CorrMat *corrmat)
+void free_vmatrix (VMatrix *vmat)
 {
-    if (corrmat != NULL) {
-	free(corrmat->list);
-	free(corrmat->xpx);
-	free(corrmat);
+    if (vmat != NULL) {
+	free_strings_array(vmat->names, vmat->dim);
+	free(vmat->vec);
+	if (vmat->list != NULL) {
+	    free(vmat->list);
+	}
+	free(vmat);
     }
 }
 
@@ -2125,10 +2128,9 @@ void free_corrmat (CorrMat *corrmat)
  * 
  */
 
-CorrMat *corrlist (const int *list, const double **Z, const DATAINFO *pdinfo)
+VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
 {
-    CorrMat *corrmat;
-    int *clist = NULL;
+    VMatrix *corrmat;
     int i, j, lo, nij, mm;
     int t1 = pdinfo->t1, t2 = pdinfo->t2; 
 
@@ -2137,47 +2139,54 @@ CorrMat *corrlist (const int *list, const double **Z, const DATAINFO *pdinfo)
 	return NULL;
     }
 
-    clist = gretl_list_copy(list);
-    if (clist == NULL) {
-	free(corrmat);
-	return NULL;
-    }	
+    corrmat->list = NULL;
 
     /* drop any constants from list */
-    for (i=1; i<=clist[0]; i++) {
-	if (gretl_isconst(t1, t2, Z[clist[i]])) {
-	    gretl_list_delete_at_pos(clist, i);
+    for (i=1; i<=list[0]; i++) {
+	if (gretl_isconst(t1, t2, Z[list[i]])) {
+	    gretl_list_delete_at_pos(list, i);
 	    i--;
 	}
     }
 
-    corrmat->list = clist;
-
-    lo = corrmat->list[0];  
-    corrmat->n = t2 - t1 + 1;
+    corrmat->dim = lo = list[0];  
     mm = (lo * (lo + 1)) / 2;
 
-    corrmat->xpx = malloc(mm * sizeof *corrmat->xpx);
-    if (corrmat->xpx == NULL) {
-	free_corrmat(corrmat);
+    corrmat->names = create_strings_array(lo);
+    if (corrmat->names == NULL) {
+	free(corrmat);
 	return NULL;
     }
 
-    for (i=1; i<=lo; i++) {  
-	int vi = corrmat->list[i];
+    corrmat->vec = malloc(mm * sizeof *corrmat->vec);
+    if (corrmat->vec == NULL) {
+	free_vmatrix(corrmat);
+	return NULL;
+    }
 
-	for (j=i; j<=lo; j++)  {
-	    int vj = corrmat->list[j];
+    for (i=0; i<lo; i++) {  
+	int vi = list[i+1];
 
-	    nij = ijton(i-1, j-1, lo);
+	corrmat->names[i] = gretl_strdup(pdinfo->varname[vi]);
+	if (corrmat->names[i] == NULL) {
+	    free_vmatrix(corrmat);
+	    return NULL;
+	}
+
+	for (j=0; j<lo; j++)  {
+	    int vj = list[j+1];
+
+	    nij = ijton(i, j, lo);
 	    if (i == j) {
-		corrmat->xpx[nij] = 1.0;
+		corrmat->vec[nij] = 1.0;
 		continue;
 	    }
-	    corrmat->xpx[nij] = gretl_corr(t1, t2, Z[vi], Z[vj]);
+	    corrmat->vec[nij] = gretl_corr(t1, t2, Z[vi], Z[vj]);
 	}
     }
 
+    corrmat->list = gretl_list_copy(list);
+    corrmat->ci = CORR;
     corrmat->t1 = t1;
     corrmat->t2 = t2;
 
@@ -2187,23 +2196,22 @@ CorrMat *corrlist (const int *list, const double **Z, const DATAINFO *pdinfo)
 /**
  * matrix_print_corr:
  * @corr: gretl correlation matrix
- * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  *
  * Prints a gretl correlation matrix.
  *
  */
 
-void matrix_print_corr (CorrMat *corr, const DATAINFO *pdinfo,
-			PRN *prn)
+void matrix_print_corr (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
 {
     char tmp[96];
+    int n = corr->t2 - corr->t1 + 1;
 
     prhdr(_("Correlation Coefficients"), pdinfo, CORR, prn);
     sprintf(tmp, _("5%% critical value (two-tailed) = "
-	    "%.4f for n = %d"), rhocrit95(corr->n), corr->n);
+	    "%.4f for n = %d"), rhocrit95(n), n);
     center_line(tmp, prn, 1);
-    text_print_matrix(corr->xpx, corr->list, NULL, pdinfo, prn);
+    text_print_vmatrix(corr, prn);
 }
 
 /**
@@ -2222,7 +2230,7 @@ void matrix_print_corr (CorrMat *corr, const DATAINFO *pdinfo,
 int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo, 
 		  PRN *prn)
 {
-    CorrMat *corr;
+    VMatrix *corr;
 
     corr = corrlist(list, Z, pdinfo);
     if (corr == NULL) {
@@ -2230,7 +2238,7 @@ int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     matrix_print_corr(corr, pdinfo, prn);
-    free_corrmat(corr);
+    free_vmatrix(corr);
 
     return 0;
 }

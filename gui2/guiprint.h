@@ -38,11 +38,11 @@ void rtfprint_summary (Summary *summ,
 		       const DATAINFO *pdinfo,
 		       PRN *prn);
 
-void texprint_corrmat (CorrMat *corr,
+void texprint_corrmat (const VMatrix *corr,
 		       const DATAINFO *pdinfo, 
 		       PRN *prn);
 
-void rtfprint_corrmat (CorrMat *corr,
+void rtfprint_corrmat (const VMatrix *corr,
 		       const DATAINFO *pdinfo, 
 		       PRN *prn);
 
@@ -66,11 +66,11 @@ void texprint_confints (const CoeffIntervals *cf, PRN *prn);
 
 void rtfprint_confints (const CoeffIntervals *cf, PRN *prn);
 
-void texprint_vcv (const VCV *vcv, 
+void texprint_vcv (const VMatrix *vcv, 
 		   const DATAINFO *pdinfo, 
 		   PRN *prn);
 
-void rtfprint_vcv (const VCV *vcv, 
+void rtfprint_vcv (const VMatrix *vcv, 
 		   const DATAINFO *pdinfo, 
 		   PRN *prn);
 

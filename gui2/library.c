@@ -616,7 +616,7 @@ void add_pca_data (windata_t *vwin)
 {
     int err, oldv = datainfo->v;
     gretlopt oflag = OPT_D;
-    CorrMat *corrmat = (CorrMat *) vwin->data;
+    VMatrix *corrmat = (VMatrix *) vwin->data;
 
     err = call_pca_plugin(corrmat, &Z, datainfo, &oflag, NULL);
 
@@ -810,7 +810,8 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	    gretl_print_destroy(prn);
 	    return;
 	} else {
-	    err = call_pca_plugin((CorrMat *) obj, &Z, datainfo, NULL, prn);
+	    err = call_pca_plugin((VMatrix *) obj, &Z, datainfo, 
+				  NULL, prn);
 	}
 	break;
 
@@ -3356,7 +3357,7 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
     PRN *prn;
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
-    VCV *vcv = NULL;
+    VMatrix *vcv = NULL;
 
     if (Z == NULL || datainfo == NULL) {
 	errbox(_("Data set is gone"));
@@ -3365,13 +3366,12 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 
     if (bufopen(&prn)) return;
 
-    vcv = gretl_model_get_vcv(pmod);
+    vcv = gretl_model_get_vcv(pmod, datainfo);
 
     if (vcv == NULL) {
 	errbox(_("Error generating covariance matrix"));
     } else {
-	text_print_matrix (vcv->vec, vcv->list, 
-			   pmod, datainfo, prn);
+	text_print_vmatrix(vcv, prn);
 	view_buffer(prn, 78, 300, _("gretl: coefficient covariances"), 
 		    COVAR, vcv);
     }

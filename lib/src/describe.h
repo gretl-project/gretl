@@ -106,9 +106,9 @@ void print_summary (const Summary *summ,
 
 void free_summary (Summary *summ);
 
-CorrMat *corrlist (const int *list, const double **Z, const DATAINFO *pdinfo);
+VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo);
 
-void free_corrmat (CorrMat *corrmat);
+void free_vmatrix (VMatrix *vmat);
 
 int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo, 
 		  PRN *prn);
@@ -120,8 +120,7 @@ int means_test (const int *list, const double **Z,
 int vars_test (const int *list, const double **Z, 
 	       const DATAINFO *pdinfo, PRN *prn);
 
-void matrix_print_corr (CorrMat *corr, const DATAINFO *pdinfo,
-			PRN *prn);
+void matrix_print_corr (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn);
 
 double doornik_chisq (double skew, double kurt, int n);
 

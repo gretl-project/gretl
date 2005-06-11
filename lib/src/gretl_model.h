@@ -20,14 +20,6 @@
 #ifndef GRETL_MODEL_H
 #define GRETL_MODEL_H
 
-typedef struct VCV_ VCV;
-
-struct VCV_ {
-    int ci;
-    int *list;
-    double *vec;
-};
-
 typedef struct CoeffIntervals_ CoeffIntervals;
 
 struct CoeffIntervals_ {
@@ -162,11 +154,9 @@ int gretl_arma_model_get_AR_order (const MODEL *pmod);
 int gretl_arma_model_get_MA_order (const MODEL *pmod);
 int *gretl_arma_model_get_x_list (const MODEL *pmod);
 
-void free_vcv (VCV *vcv);
-
 int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 
-VCV *gretl_model_get_vcv (MODEL *pmod);
+VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo);
 
 void debug_print_model_info (const MODEL *pmod, const char *msg);
 

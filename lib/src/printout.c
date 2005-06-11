@@ -54,7 +54,8 @@ static void printxx (const double xx, char *str, int ci)
 
 static void covhdr (PRN *prn)
 {
-    pprintf(prn, "\n%s\n\n", _("COVARIANCE MATRIX OF REGRESSION COEFFICIENTS"));
+    pprintf(prn, "\n  %s\n\n", 
+	    _("Covariance matrix of regression coefficients"));
 }
 
 /**
@@ -147,8 +148,6 @@ void gui_script_logo (PRN *prn)
     pprintf(prn, "%s: %s\n", _("Current session"), print_time(&runtime));
 }
 
-/* -------------------------------------------------------- */
-
 static void 
 print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
@@ -203,40 +202,37 @@ void text_print_model_confints (const CoeffIntervals *cf, PRN *prn)
 /**
  * printcorr:
  * @corrmat: gretl correlation matrix struct.
- * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  *
  * Print correlation matrix to @prn in a simple columnar format.
- * 
  */
 
-void printcorr (const CorrMat *corrmat, const DATAINFO *pdinfo, 
-		PRN *prn)
+void printcorr (const VMatrix *corrmat, PRN *prn)
 {
-    int i = 1, j, k = 0, m, ncoeffs;
+    int i, j, k = 0;
+    int m, nterms;
     char corrstring[32];
 
-    m = corrmat->list[0];
-    ncoeffs = (m * (m + 1)) / 2;
+    m = corrmat->dim;
+    nterms = (m * (m + 1)) / 2;
 
     pputs(prn, _("\nPairwise correlation coefficients:\n\n"));
 
-    while (k < ncoeffs) {
+    while (k < nterms) {
         for (i=1; i<=m; i++) {
 	    k++;
 	    for (j=i+1; j<=m; j++) {
 		sprintf(corrstring, "corr(%s, %s)", 
-			pdinfo->varname[corrmat->list[i]], 
-			pdinfo->varname[corrmat->list[j]]);
-		if (na(corrmat->xpx[k])) {
+			corrmat->names[i-1], corrmat->names[j-1]);
+		if (na(corrmat->vec[k])) {
 		    pprintf(prn, "  %-24s    %s\n", 
 			    corrstring, _("undefined"));
-		} else if (corrmat->xpx[k] < 0.) {
+		} else if (corrmat->vec[k] < 0.0) {
 		    pprintf(prn, "  %-24s = %.4f\n", corrstring, 
-			    corrmat->xpx[k]);
+			    corrmat->vec[k]);
 		} else {
 		    pprintf(prn, "  %-24s =  %.4f\n", corrstring, 
-			    corrmat->xpx[k]);
+			    corrmat->vec[k]);
 		}
 		k++;
 	    }
@@ -477,15 +473,10 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
     pputs(prn, final);
 }
 
-/* ......................................................... */ 
-
 void gretl_print_value (double x, PRN *prn)
 {
     gretl_print_fullwidth_double(x, GRETL_DIGITS, prn);  
 }
-
-/* ......................................................... */ 
-
 
 /**
  * outcovmx:
@@ -501,43 +492,20 @@ void gretl_print_value (double x, PRN *prn)
 
 int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
-    int k, nbeta = 0;
-    int *tmplist = NULL;
+    VMatrix *vmat;
+    int err = 0;
 
-    if (pmod->ci == TSLS) {
-	k = 2;
-	while (pmod->list[k++] != LISTSEP) {
-	    nbeta++;
-	}
-    } else if (pmod->ci == ARMA || pmod->ci == GARCH) {
-	nbeta = pmod->ifc + pmod->list[1] + pmod->list[2] + pmod->list[0] - 4;
+    vmat = gretl_model_get_vcv(pmod, pdinfo);
+
+    if (vmat == NULL) {
+	err = E_ALLOC;
     } else {
-	nbeta = pmod->list[0] - 1;
-    }
+	text_print_vmatrix(vmat, prn);
+	free_vmatrix(vmat);
+    }  
 
-    tmplist = gretl_list_new(nbeta);
-    if (tmplist == NULL) {
-	return E_ALLOC;
-    }
-
-    for (k=1; k<=tmplist[0]; k++) {
-	tmplist[k] = pmod->list[k+1];
-    }
-
-    if (pmod->vcv == NULL) {
-	if (makevcv(pmod)) {
-	    return E_ALLOC;
-	}
-    } 
-
-    text_print_matrix(pmod->vcv, tmplist, pmod, pdinfo, prn);  
-
-    free(tmplist);
-
-    return 0;
+    return err;
 }
-
-/* ......................................................... */ 
 
 static void outxx (const double xx, int ci, PRN *prn)
 {
@@ -548,13 +516,9 @@ static void outxx (const double xx, int ci, PRN *prn)
 	} else {
 	    pputs(prn, "              ");
 	}
-    }
-	
-    else if (ci == CORR) {
+    } else if (ci == CORR) {
 	pprintf(prn, " %13.4f", xx);
-    }
-
-    else {
+    } else {
 	char numstr[18];
 
 	if (xx > -0.001 && xx < 0.001) {
@@ -627,27 +591,23 @@ int scroll_pause_or_quit (void)
     10 and columns 6 - 10
 */
 
-void text_print_matrix (const double *rr, const int *list, 
-			MODEL *pmod, const DATAINFO *pdinfo, 
-			PRN *prn)
+void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 {
     register int i, j;
-    int lo, ljnf, nf, li2, p, k, m, index, ij2, lineno = 0;
-    int nls = (pmod != NULL && pmod->ci == NLS);
-    int arma = (pmod != NULL && pmod->ci == ARMA);
-    int garch = (pmod != NULL && pmod->ci == GARCH);
+    int nf, li2, p, k, m, idx, ij2, lineno = 0;
     int pause = gretl_get_text_pause();
-    char s[16];
+    const char *s;
     enum { FIELDS = 5 };
 
-    if (pmod != NULL) covhdr(prn);
+    if (vmat->ci != CORR) {
+	covhdr(prn);
+    }
 
     m = 1;
-    lo = list[0];
 
-    for (i=0; i<=lo/FIELDS; i++) {
+    for (i=0; i<=vmat->dim/FIELDS; i++) {
 	nf = i * FIELDS;
-	li2 = lo - nf;
+	li2 = vmat->dim - nf;
 	p = (li2 > FIELDS) ? FIELDS : li2;
 	if (p == 0) break;
 
@@ -657,17 +617,12 @@ void text_print_matrix (const double *rr, const int *list,
 
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
-	    if (nls || arma || garch) {
-		ljnf = j + nf;
-		strcpy(s, pmod->params[ljnf]);
-	    } else {
-		ljnf = list[j + nf];
-		strcpy(s, pdinfo->varname[ljnf]);
-	    }
-	    bufspace(9 - strlen(s), prn);
-	    pprintf(prn, "%3d) %s", ljnf, s);
+	    s = vmat->names[j + nf - 1];
+	    bufspace(14 - strlen(s), prn);
+	    pputs(prn, s); 
 	}
 	pputc(prn, '\n');
+
 	lineno += 2;
 
 	/* print rectangular part, if any, of matrix */
@@ -678,11 +633,10 @@ void text_print_matrix (const double *rr, const int *list,
 		lineno = 1;
 	    }
 	    for (k=0; k<p; k++) {
-		index = ijton(j, nf+k, lo);
-		outxx(rr[index], (pmod == NULL)? CORR : 0, prn);
+		idx = ijton(j, nf+k, vmat->dim);
+		outxx(vmat->vec[idx], vmat->ci, prn);
 	    }
-	    pprintf(prn, "   (%d\n", (nls || arma || garch)? 
-		    j+1 : list[j+1]);
+	    pprintf(prn, "  %s\n", vmat->names[j]);
 	    lineno++;
 	}
 
@@ -696,18 +650,15 @@ void text_print_matrix (const double *rr, const int *list,
 	    ij2 = nf + j;
 	    bufspace(14 * j, prn);
 	    for (k=j; k<p; k++) {
-		index = ijton(ij2, nf+k, lo);
-		outxx(rr[index], (pmod == NULL)? CORR : 0, prn);
+		idx = ijton(ij2, nf+k, vmat->dim);
+		outxx(vmat->vec[idx], vmat->ci, prn);
 	    }
-	    pprintf(prn, "   (%d\n", (nls || arma || garch)? 
-		    ij2+1 : list[ij2+1]);
+	    pprintf(prn, "  %s\n", vmat->names[ij2]);
 	    lineno++;
 	}
 	pputc(prn, '\n');
     }
 }
-
-/* ........................................................... */
 
 static void fit_resid_head (const FITRESID *fr, 
 			    const DATAINFO *pdinfo, 
@@ -785,8 +736,6 @@ void gretl_printxn (double x, int n, PRN *prn)
     pputs(prn, s);
 }
 
-/* ........................................................... */
-
 static void printstr_ten (PRN *prn, double xx, int *ls)
 {
     int lwrd;    
@@ -806,8 +755,6 @@ static void printstr_ten (PRN *prn, double xx, int *ls)
     pputs(prn, str);
     *ls += lwrd;
 }
-
-/* ........................................................ */
 
 static void printstr (PRN *prn, double xx, int *ls)
 {
@@ -947,8 +894,6 @@ static int get_signif (const double *x, int n)
     return smax;
 }
 
-/* ........................................................... */
-
 static int g_too_long (double x, int signif)
 {
     char n1[32], n2[32];
@@ -958,8 +903,6 @@ static int g_too_long (double x, int signif)
     
     return (strlen(n1) > strlen(n2));
 }
-
-/* ........................................................... */
 
 static int bufprintnum (char *buf, double x, int signif, int width)
 {

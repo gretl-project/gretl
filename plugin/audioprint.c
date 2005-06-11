@@ -120,18 +120,18 @@ audioprint_summary (Summary *summ, const DATAINFO *pdinfo,
 }
 
 static void
-audioprint_matrix (const double *vec, const int *list,
-		   int t1, int t2, int n, int ci,
-		   const DATAINFO *pdinfo, PRN *prn)
+audioprint_matrix (const VMatrix *vmat, const DATAINFO *pdinfo,
+		   PRN *prn)
 {
     int i, j, k;
-    int lo = list[0];
+    int n = vmat->t2 - vmat->t1 + 1;
+    int lo = vmat->dim;
 
-    if (ci == CORR) {
+    if (vmat->ci == CORR) {
 	char date1[OBSLEN], date2[OBSLEN];
 
-	ntodate(date1, t1, pdinfo);
-	ntodate(date2, t2, pdinfo);
+	ntodate(date1, vmat->t1, pdinfo);
+	ntodate(date2, vmat->t2, pdinfo);
 
 	pprintf(prn, "Correlation coefficients, using the observations "
 		"%s to %s.\n", date1, date2);
@@ -145,29 +145,21 @@ audioprint_matrix (const double *vec, const int *list,
 	for (j=i; j<=lo; j++) {
 	    k = ijton(i-1, j-1, lo);
 	    if (i == j) {
-		if (ci == CORR) continue;
-		pprintf(prn, "%s, ", pdinfo->varname[list[i]]);
+		if (vmat->ci == CORR) {
+		    continue;
+		}
+		pprintf(prn, "%s, ", vmat->names[i-1]);
 	    } else {
-		pprintf(prn, "%s and %s, ", 
-			pdinfo->varname[list[i]],
-			pdinfo->varname[list[j]]);
+		pprintf(prn, "%s and %s, ", vmat->names[i-1], 
+			vmat->names[j-1]);
 	    }
-	    if (ci == CORR) {
-		pprintf(prn, "%.3f.\n", vec[k]);
+	    if (vmat->ci == CORR) {
+		pprintf(prn, "%.3f.\n", vmat->vec[k]);
 	    } else {
-		pprintf(prn, "%.4g.\n", vec[k]);
+		pprintf(prn, "%.4g.\n", vmat->vec[k]);
 	    }
 	}
     }
-}
-
-static void 
-audioprint_corrmat (CorrMat *corr,
-		    const DATAINFO *pdinfo, 
-		    PRN *prn)
-{
-    audioprint_matrix(corr->xpx, corr->list, corr->t1, corr->t2,
-		      corr->n, CORR, pdinfo, prn);
 }
 
 static void 
@@ -193,14 +185,6 @@ audioprint_confints (const CoeffIntervals *cf, PRN *prn)
     for (i=0; i<cf->ncoeff; i++) {
 	audioprint_coeff_interval(cf, i, prn);
     }
-}
-
-static void 
-audioprint_vcv (const VCV *vcv, const DATAINFO *pdinfo, 
-		PRN *prn)
-{
-    audioprint_matrix(vcv->vec, vcv->list, 0, 0, 0,
-		      COVAR, pdinfo, prn);
 }
 
 #ifdef HAVE_FLITE
@@ -338,14 +322,10 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
 	Summary *summ = (Summary *) data;
 
 	audioprint_summary(summ, pdinfo, prn);
-    } else if (role == CORR) {
-	CorrMat *corr = (CorrMat *) data;
+    } else if (role == CORR || role == COVAR) {
+	VMatrix *vmat = (VMatrix *) data;
 
-	audioprint_corrmat(corr, pdinfo, prn);
-    } else if (role == COVAR) {
-	VCV *vcv = (VCV *) data;
-
-	audioprint_vcv(vcv, pdinfo, prn);
+	audioprint_matrix(vmat, pdinfo, prn);
     } else if (role == COEFFINT) {
 	CoeffIntervals *cf = (CoeffIntervals *) data;
 
