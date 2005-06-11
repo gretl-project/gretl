@@ -395,6 +395,10 @@ static int special_text_copy (int obj, int how, int show, gpointer data)
     PRN *prn = NULL;
     int err = 0;
 
+    if (bufopen(&prn)) {
+	return 1;
+    }
+
     if (obj == SUMMARY || obj == VAR_SUMMARY) {
 	Summary *summ = (Summary *) data;
 

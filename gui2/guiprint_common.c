@@ -215,8 +215,7 @@ void texprint_summary (Summary *summ,
 	pprintf(prn, "%s\\\\[8pt]\n\n", tmp);
 	pputs(prn, "\\begin{tabular}{rrrr}\n");
     } else {
-	strcpy(tmp, I_("(missing values denoted by $-999$ will be "
-		"skipped)"));
+	strcpy(tmp, I_("(skipping any missing values)"));
 	pprintf(prn, "%s\\\\[8pt]\n\n", tmp);
 	pprintf(prn, "\\begin{tabular}{lD{%c}{%c}{-1}"
 		"D{%c}{%c}{-1}D{%c}{%c}{-1}D{%c}{%c}{-1}}\n", 
