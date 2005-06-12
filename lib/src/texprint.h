@@ -24,8 +24,7 @@
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
 			const int standalone, PRN *prn);
 
-int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, 
-		     const int standalone, PRN *prn);
+int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
 
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 		     int i, PRN *prn);

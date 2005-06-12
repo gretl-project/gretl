@@ -486,9 +486,9 @@ static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
 {
     gtk_widget_hide(finfo->dialog);
 #ifdef OLD_GTK
-    text_copy(finfo->vwin, finfo->format, NULL);
+    window_copy(finfo->vwin, finfo->format, NULL);
 #else
-    text_copy(finfo->vwin, finfo->format, w);
+    window_copy(finfo->vwin, finfo->format, w);
 #endif
     gtk_widget_destroy(finfo->dialog);
 }
@@ -497,11 +497,11 @@ static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
 static int preferred_format (int f, int multi)
 {
 # ifdef G_OS_WIN32
-    static int multi_pref = COPY_RTF;
-    static int simple_pref = COPY_TEXT_AS_RTF;
+    static int multi_pref = GRETL_FORMAT_RTF;
+    static int simple_pref = GRETL_FORMAT_RTF_TXT;
 # else 
-    static int multi_pref = COPY_LATEX;
-    static int simple_pref = COPY_TEXT;
+    static int multi_pref = GRETL_FORMAT_TEX;
+    static int simple_pref = GRETL_FORMAT_TXT;
 #endif
     int ret;
     
@@ -545,7 +545,7 @@ void copy_format_dialog (windata_t *vwin, int unused)
     
     finfo->vwin = vwin;
     finfo->dialog = dialog;
-    finfo->format = COPY_LATEX;
+    finfo->format = GRETL_FORMAT_TEX;
     finfo->multi = 1;
 
     set_dialog_border_widths(dialog);
@@ -570,7 +570,8 @@ void copy_format_dialog (windata_t *vwin, int unused)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_copy_format), finfo);
-    gtk_object_set_data(GTK_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));    
+    gtk_object_set_data(GTK_OBJECT(button), "format", 
+			GINT_TO_POINTER(GRETL_FORMAT_TEX));    
     gtk_widget_show(button);   
 
     /* RTF option */
@@ -580,7 +581,8 @@ void copy_format_dialog (windata_t *vwin, int unused)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_copy_format), finfo);
-    gtk_object_set_data(GTK_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));    
+    gtk_object_set_data(GTK_OBJECT(button), "format", 
+			GINT_TO_POINTER(GRETL_FORMAT_RTF));    
     gtk_widget_show(button);
 
     /* plain text option */
@@ -590,7 +592,8 @@ void copy_format_dialog (windata_t *vwin, int unused)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_copy_format), finfo);
-    gtk_object_set_data(GTK_OBJECT(button), "format", GINT_TO_POINTER(COPY_TEXT));
+    gtk_object_set_data(GTK_OBJECT(button), "format", 
+			GINT_TO_POINTER(GRETL_FORMAT_TXT));
     gtk_widget_show (button);
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -629,9 +632,10 @@ TeX_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
-    g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));
+    g_object_set_data(G_OBJECT(button), "format", 
+		      GINT_TO_POINTER(GRETL_FORMAT_TEX));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
-				 (pref == COPY_LATEX));
+				 (pref == GRETL_FORMAT_TEX));
     gtk_widget_show(button); 
 
     return button;
@@ -652,15 +656,16 @@ RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
     if (multicopy) {
-	g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));  
+	g_object_set_data(G_OBJECT(button), "format", 
+			  GINT_TO_POINTER(GRETL_FORMAT_RTF));  
     } else {
 	g_object_set_data(G_OBJECT(button), "format", 
-			  GINT_TO_POINTER(COPY_TEXT_AS_RTF));
+			  GINT_TO_POINTER(GRETL_FORMAT_RTF_TXT));
     }
 
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
-				 (pref == COPY_RTF || 
-				  pref == COPY_TEXT_AS_RTF));
+				 (pref == GRETL_FORMAT_RTF || 
+				  pref == GRETL_FORMAT_RTF_TXT));
     gtk_widget_show(button);
 
     return button;
@@ -732,9 +737,10 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
     gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
-    g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_TEXT));
+    g_object_set_data(G_OBJECT(button), "format", 
+		      GINT_TO_POINTER(GRETL_FORMAT_TXT));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
-				 (pref == COPY_TEXT));
+				 (pref == GRETL_FORMAT_TXT));
     gtk_widget_show(button);
 
     hbox = gtk_hbox_new(FALSE, 5);

@@ -29,10 +29,14 @@ typedef enum {
 } PrnType;
 
 typedef enum {
-    GRETL_PRINT_FORMAT_PLAIN,
-    GRETL_PRINT_FORMAT_TEX,
-    GRETL_PRINT_FORMAT_TEX_DOC,
-    GRETL_PRINT_FORMAT_RTF
+    GRETL_FORMAT_TXT       = 1 << 0,
+    GRETL_FORMAT_TEX       = 1 << 1,
+    GRETL_FORMAT_DOC       = 1 << 2,
+    GRETL_FORMAT_RTF       = 1 << 3,
+    GRETL_FORMAT_RTF_TXT   = 1 << 4,
+    GRETL_FORMAT_EQN       = 1 << 5,
+    GRETL_FORMAT_SELECTION = 1 << 6,
+    GRETL_FORMAT_CSV       = 1 << 7
 } PrnFormat;
 
 /* functions follow */
@@ -74,5 +78,7 @@ int rtf_format (PRN *prn);
 int tex_format (PRN *prn);
 
 int tex_doc_format (PRN *prn);
+
+int tex_eqn_format (PRN *prn);
 
 #endif /* GRETL_PRN_H */

@@ -101,11 +101,7 @@ enum file_ops {
     COPY_CSV,
     END_SAVE_DATA,  /* marker for end of data-saving section */
     SAVE_CMDS,
-    SAVE_TEX_TAB,
-    SAVE_TEX_EQ,
-    SAVE_TEX_TAB_FRAG,
-    SAVE_TEX_EQ_FRAG,
-    SAVE_TEX_MISC,
+    SAVE_TEX,
     SAVE_SCRIPT,
     SAVE_OUTPUT,
     SAVE_SESSION,
@@ -163,16 +159,6 @@ enum clipstuff {
     TARGET_RTF
 };
 
-enum copy_variants {
-    COPY_SELECTION = 1,
-    COPY_TEXT,
-    COPY_LATEX,
-    COPY_LATEX_EQUATION,
-    COPY_RTF,
-    COPY_TEXT_AS_RTF,
-    COPY_EMF
-};
-
 enum data_status {
     HAVE_DATA     = 1 << 0,
     BOOK_DATA     = 1 << 1,
@@ -213,23 +199,16 @@ enum font_selections {
     GRAPH_FONT_SELECTION
 };
 
-enum latex_ops {
-    LATEX_VIEW_TABULAR,
-    LATEX_VIEW_EQUATION,
-    LATEX_VIEW_MISC,
-    LATEX_SAVE
-};
-
 enum calc_functions {
     CALC_PVAL,
     CALC_DIST,
     CALC_TEST
 };
 
-#define MULTI_COPY_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY \
-	                       || c == CORR || c == FCASTERR \
-	                       || c == FCAST || c == COEFFINT \
-	                       || c == COVAR || c == VIEW_MODEL \
-                               || c == VIEW_MODELTABLE || c == VAR)
+#define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || \
+	                         c == CORR || c == FCASTERR || \
+	                         c == FCAST || c == COEFFINT || \
+	                         c == COVAR || c == VIEW_MODEL || \
+                                 c == VIEW_MODELTABLE || c == VAR)
 
 #endif /* GRETL_ENUMS_H */

@@ -396,7 +396,8 @@ enum {
     W_SAVE
 };
 
-static int special_text_copy (int obj, int how, int what, gpointer data)
+static int special_text_handler (int cmd, guint fmt, int what, 
+				 gpointer data)
 {
     PRN *prn = NULL;
     int err = 0;
@@ -405,79 +406,62 @@ static int special_text_copy (int obj, int how, int what, gpointer data)
 	return 1;
     }
 
-    if (obj == SUMMARY || obj == VAR_SUMMARY) {
+    gretl_print_set_format(prn, fmt);
+
+    if (cmd == SUMMARY || cmd == VAR_SUMMARY) {
 	Summary *summ = (Summary *) data;
 
-	if (how == COPY_LATEX) {
-	    texprint_summary(summ, datainfo, prn);
-	} else if (how == COPY_RTF) { 
-	    rtfprint_summary(summ, datainfo, prn);
-	}
-    } else if (obj == CORR || obj == COVAR) {
+	special_print_summary(summ, datainfo, prn);
+    } else if (cmd == CORR || cmd == COVAR) {
 	VMatrix *corr = (VMatrix *) data;
 
-	if (how == COPY_LATEX) { 
-	    texprint_vmatrix(corr, datainfo, prn);
-	} else if (how == COPY_RTF) { 
-	    rtfprint_vmatrix(corr, datainfo, prn);
-	}
-    } else if (obj == FCAST) {
+	special_print_vmatrix(corr, datainfo, prn);
+    } else if (cmd == FCAST) {
 	FITRESID *fr = (FITRESID *) data;
 
-	if (how == COPY_LATEX) { 
-	    texprint_fit_resid(fr, datainfo, prn);
-	} else if (how == COPY_RTF) { 
-	    rtfprint_fit_resid(fr, datainfo, prn);
-	}
-    } else if (obj == FCASTERR) {
+	special_print_fit_resid(fr, datainfo, prn);
+    } else if (cmd == FCASTERR) {
 	FITRESID *fr = (FITRESID *) data;
 
-	if (how == COPY_LATEX) { 
-	    texprint_forecast(fr, datainfo, prn);
-	} else if (how == COPY_RTF) { 
-	    rtfprint_forecast(fr, datainfo, prn);
-	}
-    } else if (obj == COEFFINT) {
+	special_print_forecast(fr, datainfo, prn);
+    } else if (cmd == COEFFINT) {
 	CoeffIntervals *cf = (CoeffIntervals *) data;
 
-	if (how == COPY_LATEX) { 
-	    texprint_confints(cf, prn);
-	} else if (how == COPY_RTF) { 
-	    rtfprint_confints(cf, prn);
+	special_print_confints(cf, prn);
+    } else if (cmd == VIEW_MODEL) { 
+	MODEL *pmod = (MODEL *) data;
+
+	if (pmod->errcode) { 
+	    errbox("Couldn't format model");
+	    err = 1;
+	} else {
+	    if (tex_format(prn)) {
+		tex_print_model(pmod, datainfo, prn);
+	    } else {
+		printmodel(pmod, datainfo, OPT_NONE, prn);
+	    }
 	}
-    } else if (obj == MPOLS) {
+    } else if (cmd == MPOLS) {
+	/* this is not actually ready -- see modelprint.c */
 	mp_results *mpvals = (mp_results *) data;
 
-	if (how == COPY_LATEX) { 
-	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
-	} else if (how == COPY_RTF) { 
-	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
-	}
 	print_mpols_results(mpvals, datainfo, prn);
-    } else if (obj == VAR) {
+    } else if (cmd == VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) data;
 
-	if (how == COPY_LATEX) { 
-	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
-	} else if (how == COPY_RTF) { 
-	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
-	}
 	gretl_var_print(var, datainfo, prn);
-    } else if (obj == VIEW_MODELTABLE) {
-	if (how == COPY_LATEX) {
-	    err = tex_print_model_table(prn);
-	} else if (how == COPY_RTF) {
-	    err = rtf_print_model_table(prn);
-	}
+    } else if (cmd == VIEW_MODELTABLE) {
+	err = special_print_model_table(prn);
     } 
 
     if (!err) {
 	if (what == W_PREVIEW) {
-	    view_latex(prn, LATEX_VIEW_MISC, NULL);
+	    /* there's no RTF preview option */
+	    view_latex(prn);
 	} else if (what == W_COPY) {
-	    prn_to_clipboard(prn, how);
+	    prn_to_clipboard(prn, fmt);
 	} else if (what == W_SAVE) {
-	    file_selector(_("Save LaTeX file"), SAVE_TEX_MISC, prn);
+	    file_selector(_("Save LaTeX file"), SAVE_TEX, prn);
 	}
     }
 
@@ -486,7 +470,7 @@ static int special_text_copy (int obj, int how, int what, gpointer data)
     return err;
 }
 
-void window_tex_view (GtkWidget *w, windata_t *vwin)
+void window_tex_callback (GtkWidget *w, windata_t *vwin)
 {
     const char *opts[] = {
 	N_("View"),
@@ -496,74 +480,62 @@ void window_tex_view (GtkWidget *w, windata_t *vwin)
     int opt = radio_dialog("gretl: LaTeX", opts, 3, 0, 0);
 
     if (opt >= 0) {
-	special_text_copy(vwin->role, COPY_LATEX, opt, vwin->data);
+	special_text_handler(vwin->role, GRETL_FORMAT_TEX, opt, vwin->data);
     }
+}
+
+void model_tex_view (gpointer data, guint fmt, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    special_text_handler(vwin->role, fmt, W_PREVIEW, vwin->data);
+}
+
+void model_tex_save (gpointer data, guint fmt, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    special_text_handler(vwin->role, fmt, W_SAVE, vwin->data);
 }
 
 void var_tex_callback (gpointer data, guint opt, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) data;
 
-    special_text_copy(vwin->role, COPY_LATEX, opt, vwin->data);
+    special_text_handler(vwin->role, GRETL_FORMAT_TEX, opt, vwin->data);
 }
 
 /* copying text from gretl windows */
 
-#define SPECIAL_COPY(h) (h == COPY_LATEX || h == COPY_RTF)
+#define SPECIAL_FORMAT(f) ((f & GRETL_FORMAT_TEX) || \
+                           (f & GRETL_FORMAT_RTF)) 
 
-void text_copy (gpointer data, guint how, GtkWidget *w) 
+void window_copy (gpointer data, guint fmt, GtkWidget *w) 
 {
     windata_t *vwin = (windata_t *) data;
     gchar *msg = NULL;
-    PRN *prn;
     int err = 0;
 
     /* copying from window with special stuff enabled */
-    if (MULTI_COPY_ENABLED(vwin->role) && SPECIAL_COPY(how) &&
-	vwin->role != VIEW_MODEL) {
-	err = special_text_copy(vwin->role, how, W_COPY, vwin->data);
+    if (MULTI_FORMAT_ENABLED(vwin->role) && SPECIAL_FORMAT(fmt)) {
+	err = special_text_handler(vwin->role, fmt, W_COPY, vwin->data);
 	if (err) {
 	    return;
 	}
     }
 
-    /* or it's a model window we're copying from? */
-    else if (vwin->role == VIEW_MODEL &&
-	(how == COPY_RTF || how == COPY_LATEX ||
-	 how == COPY_LATEX_EQUATION)) {
-	MODEL *pmod = (MODEL *) vwin->data;
-
-	if (pmod->errcode) { 
-	    errbox("Couldn't format model");
-	    return;
-	}
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_RTF) {
-	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
-	    printmodel(pmod, datainfo, OPT_NONE, prn);
-	} else if (how == COPY_LATEX) {
-	    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
-	    printmodel(pmod, datainfo, OPT_NONE, prn);
-	} else if (how == COPY_LATEX_EQUATION) {
-	    tex_print_equation(pmod, datainfo, 0, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }
-
     /* copying plain text from window */
 #ifndef OLD_GTK
-    else if (how == COPY_TEXT || how == COPY_TEXT_AS_RTF || how == COPY_SELECTION) {
+    else if (fmt == GRETL_FORMAT_TXT || 
+	     fmt == GRETL_FORMAT_RTF_TXT || 
+	     fmt == GRETL_FORMAT_SELECTION) {
 	GtkTextBuffer *textbuf = 
 	    gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 	PRN *textprn;
-	int myhow = how;
+	int myfmt = fmt;
 
-	if (myhow == COPY_SELECTION) {
-	    myhow = COPY_TEXT;
+	if (myfmt == GRETL_FORMAT_SELECTION) {
+	    myfmt = GRETL_FORMAT_TXT;
 	}
 
 	if (gtk_text_buffer_get_selection_bounds(textbuf, NULL, NULL)) {
@@ -574,7 +546,7 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 	    gtk_text_buffer_get_selection_bounds(textbuf, &selstart, &selend);
 	    selbuf = gtk_text_buffer_get_text(textbuf, &selstart, &selend, FALSE);
 	    textprn = gretl_print_new_with_buffer(selbuf);
-	    prn_to_clipboard(textprn, myhow);
+	    prn_to_clipboard(textprn, myfmt);
 	    gretl_print_destroy(textprn);
 	    if (w != NULL) {
 		infobox(_("Copied selection to clipboard"));
@@ -585,12 +557,12 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 	    char *buf = textview_get_text(GTK_TEXT_VIEW(vwin->w)); 
 
 	    textprn = gretl_print_new_with_buffer(buf);
-	    prn_to_clipboard(textprn, myhow);
+	    prn_to_clipboard(textprn, myfmt);
 	    gretl_print_destroy(textprn);
 	}
     }
 #else
-    else if (how == COPY_TEXT) {
+    else if (fmt == GRETL_FORMAT_TXT) {
 	char *buf;
 	PRN *textprn;
 
@@ -606,9 +578,10 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 
     if (w != NULL) {
 	msg = g_strdup_printf(_("Copied contents of window as %s"),
-			      (how == COPY_LATEX)? "LaTeX" :
-			      (how == COPY_RTF || how == COPY_TEXT_AS_RTF)? 
-			      "RTF" : _("plain text"));
+			      (fmt & GRETL_FORMAT_TEX)? "LaTeX" :
+			      (fmt & GRETL_FORMAT_RTF)? "RTF" : 
+			      (fmt & GRETL_FORMAT_RTF_TXT)? "RTF" :
+			      _("plain text"));
 	infobox(msg);
 	g_free(msg);
     }
@@ -679,6 +652,7 @@ void system_print_buf (const gchar *buf, FILE *fp)
 char *dosify_buffer (const char *buf, int format)
 {
     int extra = 0, nlines = 0;
+    int rtf = (format == GRETL_FORMAT_RTF_TXT);
     char *targ, *q;
     const char *p;
     const char *rtf_preamble = "{\\rtf1\n"
@@ -696,7 +670,7 @@ char *dosify_buffer (const char *buf, int format)
     }
     extra = nlines + 1;
 
-    if (format == COPY_TEXT_AS_RTF) {
+    if (rtf) {
 	extra *= 5;
 	extra += rtf_add_bytes;
     }
@@ -706,7 +680,7 @@ char *dosify_buffer (const char *buf, int format)
 	return NULL;
     }
 
-    if (format == COPY_TEXT_AS_RTF) {
+    if (rtf) {
 	strcpy(targ, rtf_preamble);
 	q = targ + strlen(targ);
     } else {
@@ -716,7 +690,7 @@ char *dosify_buffer (const char *buf, int format)
     p = buf;
     while (*p) {
 	if (*p == '\n') {
-	    if (format == COPY_TEXT_AS_RTF) {
+	    if (rtf) {
 		*q++ = '\\';
 		*q++ = 'p';
 		*q++ = 'a';
@@ -731,7 +705,7 @@ char *dosify_buffer (const char *buf, int format)
     } 
     *q = 0;
 
-    if (format == COPY_TEXT_AS_RTF) {
+    if (rtf) {
 	strcat(q, "}\n");
     }
 

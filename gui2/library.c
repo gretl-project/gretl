@@ -5086,64 +5086,37 @@ int latex_compile (char *texshort)
     return err;
 }
 
-/* ........................................................... */
-
-static void 
-real_view_or_save_latex (gpointer data, guint code, GtkWidget *w,
-			 const char *fname)
+static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 {
     char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
     int dot, err = LATEX_OK;
-    windata_t *vwin = NULL;
-    MODEL *pmod = NULL;
     char *texshort = NULL;
-
-    if (code == LATEX_VIEW_EQUATION || code == LATEX_VIEW_TABULAR) {
-	vwin = (windata_t *) data;
-	pmod = (MODEL *) vwin->data;
-	if (pmod->errcode == E_NAN) {
-	    errbox(_("Sorry, can't format this model"));
-	    return;
-	}
-    }
+    const char *buf;
+    PRN *fprn;
 
     *texfile = 0;
 
-    if (code == LATEX_VIEW_EQUATION) {
-	err = texprint(pmod, datainfo, texfile, OPT_O | OPT_E);
-    } else if (code == LATEX_VIEW_TABULAR) {
-	err = texprint(pmod, datainfo, texfile, OPT_O);
+    if (fname != NULL) {
+	strcpy(texfile, fname);
     } else {
-	const char *buf;
-	PRN *bprn = (PRN *) data;
-	PRN *fprn;
-	
-	if (fname != NULL) {
-	    strcpy(texfile, fname);
-	} else {
-	    sprintf(texfile, "%swindow.tex", paths.userdir);
-	} 
+	sprintf(texfile, "%swindow.tex", paths.userdir);
+    } 
 
-	fprn = gretl_print_new_with_filename(texfile);
-	if (fprn == NULL) {
-	    sprintf(errtext, _("Couldn't write to %s"), texfile);
-	    errbox(errtext);
-	    return;
-	} 
-
-	gretl_tex_preamble(fprn, 0);
-	buf = gretl_print_get_buffer(bprn);
-	pputs(fprn, buf);
-	pputs(fprn, "\n\\end{document}\n");
-	gretl_print_destroy(fprn);
-    }
-	
-    if (err) {
-	errbox(_("Couldn't open tex file for writing"));
+    fprn = gretl_print_new_with_filename(texfile);
+    if (fprn == NULL) {
+	sprintf(errtext, _("Couldn't write to %s"), texfile);
+	errbox(errtext);
 	return;
     }
 
-    if (code == SAVE_TEX_MISC) {
+    gretl_tex_preamble(fprn, tex_eqn_format(bprn));
+    buf = gretl_print_get_buffer(bprn);
+    pputs(fprn, buf);
+    pputs(fprn, "\n\\end{document}\n");
+
+    gretl_print_destroy(fprn);
+	
+    if (saveit) {
 	return;
     }
 
@@ -5188,40 +5161,14 @@ real_view_or_save_latex (gpointer data, guint code, GtkWidget *w,
     remove(tmp);
 }
 
-void view_latex (gpointer p, guint u, GtkWidget *w)
+void view_latex (PRN *prn)
 {
-    real_view_or_save_latex(p, u, w, NULL);
+    view_or_save_latex(prn, NULL, 0);
 }
 
-void save_tex_misc (const char *fname, PRN *prn)
+void save_latex (PRN *prn, const char *fname)
 {
-    real_view_or_save_latex(prn, SAVE_TEX_MISC, NULL, fname);
-}
-
-/* ........................................................... */
-
-void save_tex_model (char *fname, int code, MODEL *pmod)
-{
-    PRN *texprn;
-
-    texprn = gretl_print_new_with_filename(fname);
-    if (texprn == NULL) {
-	errbox(_("Couldn't open tex file for writing"));
-	return;
-    }  
-
-    if (code == SAVE_TEX_EQ)
-	tex_print_equation(pmod, datainfo, 1, texprn);
-    else if (code == SAVE_TEX_TAB)
-	tex_print_model(pmod, datainfo, 1, texprn);
-    else if (code == SAVE_TEX_EQ_FRAG)
-	tex_print_equation(pmod, datainfo, 0, texprn);
-    else if (code == SAVE_TEX_TAB_FRAG)
-	tex_print_model(pmod, datainfo, 0, texprn);
-
-    gretl_print_destroy(texprn);
-
-    infobox(_("LaTeX file saved"));
+    view_or_save_latex(prn, fname, 1);
 }
 
 /* ........................................................... */

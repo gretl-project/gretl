@@ -60,11 +60,6 @@
                                i == APPEND_EXCEL || \
                                i == APPEND_ASCII)
 
-#define SAVE_MODEL_TEX_ACTION(i) (i == SAVE_TEX_TAB || \
-                                  i == SAVE_TEX_EQ || \
-	                          i == SAVE_TEX_TAB_FRAG || \
-                                  i == SAVE_TEX_EQ_FRAG)
-
 #define SAVE_GRAPH_ACTION(i) (i == SAVE_GNUPLOT || \
                               i == SAVE_THIS_GRAPH || \
                               i == SAVE_LAST_GRAPH || \
@@ -111,11 +106,7 @@ static struct extmap action_map[] = {
     { EXPORT_OCTAVE,     ".m" },
     { EXPORT_DAT,        ".dat" },
     { SAVE_OUTPUT,       ".txt" },
-    { SAVE_TEX_TAB,      ".tex" },
-    { SAVE_TEX_EQ,       ".tex" },
-    { SAVE_TEX_TAB_FRAG, ".tex" },
-    { SAVE_TEX_EQ_FRAG,  ".tex" },
-    { SAVE_TEX_MISC,     ".tex" },
+    { SAVE_TEX,          ".tex" },
     { OPEN_DATA,         ".gdt" },
     { APPEND_DATA,       ".gdt" },    
     { OPEN_SCRIPT,       ".inp" },
@@ -550,14 +541,10 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	else errbox(_("boxplot save failed"));
     } else if (action == SAVE_SESSION) {
 	save_session(fname);
-    } else if (SAVE_MODEL_TEX_ACTION(action)) {
-	MODEL *pmod = (MODEL *) data;
-
-	save_tex_model(fname, action, pmod); 
-    } else if (action == SAVE_TEX_MISC) {
+    } else if (action == SAVE_TEX) {
 	PRN *prn = (PRN *) data;
 
-	save_tex_misc(fname, prn);
+	save_latex(prn, fname);
     } else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 
@@ -642,13 +629,9 @@ static struct winfilter get_filter (int action, gpointer data)
 	{EXPORT_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},
 	{OPEN_OCTAVE,  { N_("GNU Octave files (*.m)"), "*.m" }},
 	{APPEND_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},
-	{EXPORT_DAT  , { N_("PcGive files (*.dat)"), "*.dat" }},
+	{EXPORT_DAT,   { N_("PcGive files (*.dat)"), "*.dat" }},
 	{SAVE_OUTPUT,  { N_("text files (*.txt)"), "*.txt" }},
-	{SAVE_TEX_TAB, { N_("TeX files (*.tex)"), "*.tex" }},
-	{SAVE_TEX_EQ,  { N_("TeX files (*.tex)"), "*.tex" }},
-	{SAVE_TEX_TAB_FRAG, { N_("TeX files (*.tex)"), "*.tex" }},
-	{SAVE_TEX_EQ_FRAG,  { N_("TeX files (*.tex)"), "*.tex" }},
-	{SAVE_TEX_MISC,     { N_("TeX files (*.tex)"), "*.tex" }},
+	{SAVE_TEX,     { N_("TeX files (*.tex)"), "*.tex" }},
 	{OPEN_DATA,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{APPEND_DATA,  { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{OPEN_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},

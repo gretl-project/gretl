@@ -64,8 +64,6 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
 #define STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                    "\\cellx2700\\cellx4000\\cellx6700\\cellx8000\n\\intbl"
 
-/* ............................................................. */
-
 static void printfrtf (double zz, PRN *prn, int endrow)
 {
     /* was using "qr", for right alignment */
@@ -94,9 +92,8 @@ static void printfrtf (double zz, PRN *prn, int endrow)
 #define VAR_SUMM_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                       "\\cellx2000\\cellx4000\\cellx6000\\cellx8000\n"
 
-void rtfprint_summary (Summary *summ,
-		       const DATAINFO *pdinfo,
-		       PRN *prn)
+static void 
+rtfprint_summary (const Summary *summ, const DATAINFO *pdinfo, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN], tmp[128];
     int i, vi;
@@ -167,8 +164,6 @@ void rtfprint_summary (Summary *summ,
     pputs(prn, "}}\n");
 }
 
-/* ............................................................. */
-
 static void printftex (double zz, PRN *prn, int endrow)
 {
     if (na(zz)) {
@@ -190,8 +185,8 @@ static void printftex (double zz, PRN *prn, int endrow)
     }	
 }
 
-void texprint_summary (Summary *summ, const DATAINFO *pdinfo,
-		       PRN *prn)
+static void 
+texprint_summary (const Summary *summ, const DATAINFO *pdinfo, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN], vname[16], tmp[128];
     int i, vi;
@@ -214,7 +209,7 @@ void texprint_summary (Summary *summ, const DATAINFO *pdinfo,
 	if (summ->missing) {
 	    pprintf(prn, "%s\\\\[8pt]\n\n", I_("(missing values were skipped)"));
 	} else {
-	    pputs(prn, "\\\\[8pt]\n\n");
+	    pputs(prn, "\n\\vspace{8pt}\n\n");
 	}
 	pputs(prn, "\\begin{tabular}{lrrrr}\n");
 	pprintf(prn, "%s &", I_("Variable"));
@@ -267,7 +262,16 @@ void texprint_summary (Summary *summ, const DATAINFO *pdinfo,
     }
 
     pputs(prn, "\\end{tabular}\n\\end{center}\n");
-    
+}
+
+void special_print_summary (const Summary *summ, const DATAINFO *pdinfo,
+			    PRN *prn)
+{
+    if (tex_format(prn)) {
+	texprint_summary(summ, pdinfo, prn);
+    } else if (rtf_format(prn)) {
+	rtfprint_summary(summ, pdinfo, prn);
+    }
 }
 
 static void tex_outxx (double xx, PRN *prn)
@@ -315,7 +319,7 @@ static void rtf_table_pad (int pad, PRN *prn)
     while (pad--) pputs(prn, "\\cell ");
 }
 
-void
+static void
 rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 {
     register int i, j;
@@ -401,7 +405,7 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
     pputs(prn, "}}\n");
 }
 
-void
+static void
 texprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 {
     register int i, j;
@@ -499,6 +503,16 @@ texprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
     pputs(prn, "\\end{center}\n");
 }
 
+void special_print_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, 
+			    PRN *prn)
+{
+    if (tex_format(prn)) {
+	texprint_vmatrix(vmat, pdinfo, prn);
+    } else if (rtf_format(prn)) {
+	rtfprint_vmatrix(vmat, pdinfo, prn);
+    }
+}
+
 static 
 void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo, 
 			 PRN *prn)
@@ -537,10 +551,9 @@ void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     pprintf(prn, "\\qc %s\\par\n\\par\n", tmp);
 }
 
-/* ........................................................... */
-
-void 
-texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
+static void texprint_fit_resid (const FITRESID *fr, 
+				const DATAINFO *pdinfo, 
+				PRN *prn)
 {
     int t, anyast = 0;
     double xx;
@@ -551,7 +564,7 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
     tex_escape(vname, fr->depvar);
 
     pprintf(prn, "\n\\begin{center}\n"
-	    "\\begin{tabular}{rrrrl}\n"
+	    "\\begin{longtable}{rrrrl}\n"
 	    " & \n"
 	    " \\multicolumn{1}{c}{%s} & \n"
 	    "  \\multicolumn{1}{c}{%s} & \n"
@@ -586,22 +599,20 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	}
     }
 
-    pputs(prn, "\\end{tabular}\n"
+    pputs(prn, "\\end{longtable}\n"
 	  "\\end{center}\n\n");
 
     if (anyast) pputs(prn, I_("\\textit{Note}: * denotes a residual "
 			      "in excess of 2.5 standard errors\n\n"));
 }
 
-/* .................................................................. */
-
 #define FR_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                 "\\cellx800\\cellx2400\\cellx4000\\cellx5600" \
                 "\\cellx6100\n"
 
-void rtfprint_fit_resid (const FITRESID *fr, 
-			 const DATAINFO *pdinfo, 
-			 PRN *prn)
+static void rtfprint_fit_resid (const FITRESID *fr, 
+				const DATAINFO *pdinfo, 
+				PRN *prn)
 {
     double xx;
     int anyast = 0;
@@ -655,6 +666,17 @@ void rtfprint_fit_resid (const FITRESID *fr,
     pputs(prn, "}\n");
 }
 
+void special_print_fit_resid (const FITRESID *fr, 
+			      const DATAINFO *pdinfo, 
+			      PRN *prn)
+{
+    if (tex_format(prn)) {
+	texprint_fit_resid(fr, pdinfo, prn);
+    } else if (rtf_format(prn)) {
+	rtfprint_fit_resid(fr, pdinfo, prn);
+    }
+}
+
 /* .................................................................. */
 
 static void texprint_fcast_without_errs (const FITRESID *fr, 
@@ -664,22 +686,16 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
     char actual[32], fitted[32];
     char vname[16];
     char pt = get_local_decpoint();
-    int longtab = fr->nobs > 30;
     int t;
 
-    if (longtab) {
-	pputs(prn, "%% The table below needs the \"dcolumn\" and "
-	      "\"longtable\" packages\n\n");
-    } else {
-	pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
-    }
+    pputs(prn, "%% The table below needs the \"dcolumn\" and "
+	  "\"longtable\" packages\n\n");
 
     pprintf(prn, "\\begin{center}\n"
-	    "\\begin{%s}{%%\n"
+	    "\\begin{longtable}{%%\n"
 	    "r%% col 1: obs\n"
 	    "  l%% col 2: varname\n"
 	    "    D{%c}{%c}{-1}}%% col 3: fitted\n",
-	    (longtab)? "longtable" : "tabular",
 	    pt, pt);
 
     tex_escape(vname, fr->depvar);
@@ -695,13 +711,7 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
 		actual, fitted);
     }
 
-    if (longtab) {
-	pputs(prn, "\\end{longtable}\n");
-    } else {
-	pputs(prn, "\\end{tabular}\n");
-    }
-
-    pputs(prn, "\\end{center}\n\n");
+    pputs(prn, "\\end{longtable}\n\\end{center}\n\n");
 }
 
 static void texprint_fcast_with_errs (const FITRESID *fr, 
@@ -711,7 +721,6 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     double maxerr;
     char actual[32], fitted[32], sderr[32], lo[32], hi[32];
     char vname[16];
-    int longtab = fr->nobs > 30;
     char pt = get_local_decpoint();
     int t;
 
@@ -721,22 +730,17 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	    fr->df, fr->tval);
     pputs(prn, "\\end{center}\n");
 
-    if (longtab) {
-	pputs(prn, "%% The table below needs the \"dcolumn\" and "
-	      "\"longtable\" packages\n\n");
-    } else {
-	pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
-    }
+    pputs(prn, "%% The table below needs the \"dcolumn\" and "
+	  "\"longtable\" packages\n\n");
 
     pprintf(prn, "\\begin{center}\n"
-	    "\\begin{%s}{%%\n"
+	    "\\begin{longtable}{%%\n"
 	    "r%% col 1: obs\n"
 	    "  l%% col 2: varname\n"
 	    "    D{%c}{%c}{-1}%% col 3: fitted\n"
 	    "      D{%c}{%c}{-1}%% col 4: std error\n"
 	    "        D{%c}{%c}{-1}%% col 5: conf int lo\n"
 	    "         D{%c}{%c}{-1}}%% col 5: conf int hi\n",
-	    (longtab)? "longtable" : "tabular",
 	    pt, pt, pt, pt, pt, pt, pt, pt);
 
     tex_escape(vname, fr->depvar);
@@ -772,28 +776,8 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 		actual, fitted, sderr, lo, hi);
     }
 
-    if (longtab) {
-	pputs(prn, "\\end{longtable}\n");
-    } else {
-	pputs(prn, "\\end{tabular}\n");
-    }
-
-    pputs(prn, "\\end{center}\n\n");
+    pputs(prn, "\\end{longtable}\n\\end{center}\n\n");
 }
-
-void texprint_forecast (const FITRESID *fr, 
-			const DATAINFO *pdinfo, 
-			PRN *prn)
-{
-    if (fr->sderr != NULL) {
-	texprint_fcast_with_errs(fr, pdinfo, prn);
-    } else {
-	texprint_fcast_without_errs(fr, pdinfo, prn);
-    }
-}
-
-
-/* .................................................................. */
 
 #define FC_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                 "\\cellx800\\cellx2200\\cellx3600\n"
@@ -878,14 +862,22 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
     pputs(prn, "}}\n");
 }
 
-void rtfprint_forecast (const FITRESID *fr, 
-			const DATAINFO *pdinfo, 
-			PRN *prn)
+void special_print_forecast (const FITRESID *fr, 
+			     const DATAINFO *pdinfo, 
+			     PRN *prn)
 {
-    if (fr->sderr != NULL) {
-	rtfprint_fcast_with_errs(fr, pdinfo, prn);
-    } else {
-	rtfprint_fcast_without_errs(fr, pdinfo, prn);
+    if (tex_format(prn)) {
+	if (fr->sderr != NULL) {
+	    texprint_fcast_with_errs(fr, pdinfo, prn);
+	} else {
+	    texprint_fcast_without_errs(fr, pdinfo, prn);
+	}
+    } else if (rtf_format(prn)) {
+	if (fr->sderr != NULL) {
+	    rtfprint_fcast_with_errs(fr, pdinfo, prn);
+	} else {
+	    rtfprint_fcast_without_errs(fr, pdinfo, prn);
+	}
     }
 }
 
@@ -918,7 +910,7 @@ texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
     pputs(prn, "\\\\\n");
 }
 
-void texprint_confints (const CoeffIntervals *cf, PRN *prn)
+static void texprint_confints (const CoeffIntervals *cf, PRN *prn)
 {
     char pt = get_local_decpoint();
     int i;
@@ -970,7 +962,7 @@ rtfprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 #define CF_ROW  "\\trowd \\trgaph60\\trleft-30\\trrh262" \
                 "\\cellx2400\\cellx4000\\cellx7200\n" 
 
-void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
+static void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
 {
     int i;
 
@@ -992,6 +984,15 @@ void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
     }
 
     pputs(prn, "}}\n");
+}
+
+void special_print_confints (const CoeffIntervals *cf, PRN *prn)
+{
+    if (tex_format(prn)) {
+	texprint_confints(cf, prn);
+    } else if (rtf_format(prn)) {
+	rtfprint_confints(cf, prn);
+    }
 }
 
 /* copy data to buffer in CSV format and place on clipboard */

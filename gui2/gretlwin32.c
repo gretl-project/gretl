@@ -478,7 +478,7 @@ void win32_make_user_dirs (void)
     win_mkdir(dirname);
 }
 
-static int win_copy_buf (const char *buf, int format, size_t buflen)
+static int win_copy_buf (const char *buf, int fmt, size_t buflen)
 {
     HGLOBAL winclip;
     LPTSTR ptr;
@@ -499,15 +499,15 @@ static int win_copy_buf (const char *buf, int format, size_t buflen)
 
     EmptyClipboard();
 
-    if (doing_nls() && (format == COPY_TEXT || format == COPY_TEXT_AS_RTF)) { 
+    if (doing_nls() && (fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT)) { 
 	tr = my_locale_from_utf8(buf);
 	if (tr == NULL) {
 	    CloseClipboard();
 	    return 1;
 	}
-	winbuf = dosify_buffer(tr, format);
+	winbuf = dosify_buffer(tr, fmt);
     } else {
-	winbuf = dosify_buffer(buf, format);
+	winbuf = dosify_buffer(buf, fmt);
     }
 
     if (winbuf == NULL) {
@@ -527,9 +527,9 @@ static int win_copy_buf (const char *buf, int format, size_t buflen)
     memcpy(ptr, winbuf, len);
     GlobalUnlock(winclip); 
 
-    if (format == COPY_RTF || format == COPY_TEXT_AS_RTF) { 
+    if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) { 
 	clip_format = RegisterClipboardFormat("Rich Text Format");
-    } else if (format == COPY_CSV) {
+    } else if (fmt == GRETL_FORMAT_CSV) {
 	clip_format = RegisterClipboardFormat("CSV");
     } else {
 	clip_format = CF_TEXT;
@@ -548,11 +548,11 @@ static int win_copy_buf (const char *buf, int format, size_t buflen)
     return 0;
 }
 
-int prn_to_clipboard (PRN *prn, int copycode)
+int prn_to_clipboard (PRN *prn, int fmt)
 {
     const char *buf = gretl_print_get_buffer(prn);
 
-    return win_copy_buf(buf, copycode, 0);
+    return win_copy_buf(buf, fmt, 0);
 }
 
 int win_buf_to_clipboard (const char *buf)

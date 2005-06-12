@@ -34,9 +34,7 @@ void free_model_table_list (PRN *prn);
 
 int display_model_table (int gui);
 
-int tex_print_model_table (PRN *prn);
-
-int rtf_print_model_table (PRN *prn);
+int special_print_model_table (PRN *prn);
 
 int modeltab_parse_line (const char *line, const MODEL *pmod, PRN *prn);
 

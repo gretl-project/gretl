@@ -71,12 +71,6 @@ char *storelist = NULL;
 #define MARK_CONTENT_SAVED(w) (w->active_var = 0)
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
-#define TEX_VIEW_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY \
-	                     || c == CORR || c == FCASTERR \
-	                     || c == FCAST || c == COEFFINT \
-	                     || c == COVAR || c == VIEW_MODELTABLE \
-                             || c == VAR)
-
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
@@ -241,24 +235,20 @@ static GtkItemFactoryEntry model_items[] = {
 static GtkItemFactoryEntry model_tex_items[] = {
     { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/View/_Tabular"), NULL, view_latex, LATEX_VIEW_TABULAR, 
-      NULL, GNULL },
-    { N_("/LaTeX/View/_Equation"), NULL, view_latex, LATEX_VIEW_EQUATION, 
-      NULL, GNULL },
+    { N_("/LaTeX/View/_Tabular"), NULL, model_tex_view, 
+      GRETL_FORMAT_TEX, NULL, GNULL },
+    { N_("/LaTeX/View/_Equation"), NULL, model_tex_view, 
+      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL, GNULL },
     { N_("/LaTeX/_Copy"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Copy/_Tabular"), NULL, text_copy, COPY_LATEX, NULL, GNULL },
-    { N_("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL, GNULL },
+    { N_("/LaTeX/Copy/_Tabular"), NULL, window_copy, 
+      GRETL_FORMAT_TEX, NULL, GNULL },
+    { N_("/LaTeX/Copy/_Equation"), NULL, window_copy, 
+      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL, GNULL },
     { N_("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Save/_Tabular"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Save/Tabular/as _document"), NULL, file_save, 
-      SAVE_TEX_TAB, NULL, GNULL },
-    { N_("/LaTeX/Save/Tabular/as _fragment"), NULL, file_save, 
-      SAVE_TEX_TAB_FRAG, NULL, GNULL },
-    { N_("/LaTeX/Save/_Equation"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Save/Equation/as _document"), NULL, file_save, 
-      SAVE_TEX_EQ, NULL, GNULL },
-    { N_("/LaTeX/Save/Equation/as _fragment"), NULL, file_save, 
-      SAVE_TEX_EQ_FRAG, NULL, GNULL }
+    { N_("/LaTeX/Save/Tabular"), NULL, model_tex_save, 
+      GRETL_FORMAT_TEX, NULL, GNULL },
+    { N_("/LaTeX/Save/Equation"), NULL, model_tex_save, 
+      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL, GNULL }
 };
 
 static GtkItemFactoryEntry var_tex_items[] = {
@@ -279,8 +269,10 @@ static GtkItemFactoryEntry var_items[] = {
 # endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
-    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL, GNULL },
+    { N_("/Edit/Copy all/as plain _text"), NULL, window_copy, GRETL_FORMAT_TXT, 
+      NULL, GNULL },
+    { N_("/Edit/Copy all/as _LaTeX"), NULL, window_copy, GRETL_FORMAT_TEX, 
+      NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
@@ -289,18 +281,20 @@ static GtkItemFactoryEntry var_items[] = {
 static GtkItemFactoryEntry model_tex_items[] = {
     { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
     { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/View/_Tabular"), NULL, view_latex, LATEX_VIEW_TABULAR, NULL },
-    { N_("/LaTeX/View/_Equation"), NULL, view_latex, LATEX_VIEW_EQUATION, NULL },
+    { N_("/LaTeX/View/_Tabular"), NULL, model_tex_view, 
+      GRETL_FORMAT_TEX, NULL },
+    { N_("/LaTeX/View/_Equation"), NULL, model_tex_view, 
+      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL },
     { N_("/LaTeX/_Copy"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/Copy/_Tabular"), NULL, text_copy, COPY_LATEX, NULL },
-    { N_("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL },
+    { N_("/LaTeX/Copy/_Tabular"), NULL, window_copy, 
+      GRETL_FORMAT_TEX, NULL },
+    { N_("/LaTeX/Copy/_Equation"), NULL, window_copy, 
+      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL },
     { N_("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/Save/_Tabular"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/Save/Tabular/as _document"), NULL, file_save, SAVE_TEX_TAB, NULL },
-    { N_("/LaTeX/Save/Tabular/as _fragment"), NULL, file_save, SAVE_TEX_TAB_FRAG, NULL },
-    { N_("/LaTeX/Save/_Equation"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/Save/Equation/as _document"), NULL, file_save, SAVE_TEX_EQ, NULL },
-    { N_("/LaTeX/Save/Equation/as _fragment"), NULL, file_save, SAVE_TEX_EQ_FRAG, NULL }
+    { N_("/LaTeX/Save/Tabular"), NULL, model_tex_save, 
+      GRETL_FORMAT_TEX, NULL },
+    { N_("/LaTeX/Save/Equation"), NULL, model_tex_save, 
+      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL }
 };
 
 static GtkItemFactoryEntry var_tex_items[] = {
@@ -320,8 +314,10 @@ static GtkItemFactoryEntry var_items[] = {
 # endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
     { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
-    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
+    { N_("/Edit/Copy all/as plain _text"), NULL, window_copy, 
+      GRETL_FORMAT_TXT, NULL },
+    { N_("/Edit/Copy all/as _LaTeX"), NULL, window_copy, 
+      GRETL_FORMAT_TEX, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
 
@@ -598,11 +594,11 @@ static void win_ctrl_c (windata_t *vwin)
     GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 
     if (gtk_text_buffer_get_selection_bounds(buf, NULL, NULL)) {
-	text_copy(vwin, COPY_SELECTION, NULL);
-    } else if (MULTI_COPY_ENABLED(vwin->role)) {
-	text_copy(vwin, COPY_RTF, NULL);
+	window_copy(vwin, GRETL_FORMAT_SELECTION, NULL);
+    } else if (MULTI_FORMAT_ENABLED(vwin->role)) {
+	window_copy(vwin, GRETL_FORMAT_RTF, NULL);
     } else {
-	text_copy(vwin, COPY_TEXT, NULL);
+	window_copy(vwin, GRETL_FORMAT_TXT, NULL);
     }
 }
 
@@ -1382,7 +1378,7 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
 
 static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 {
-    copy_format_dialog(vwin, MULTI_COPY_ENABLED(vwin->role));
+    copy_format_dialog(vwin, MULTI_FORMAT_ENABLED(vwin->role));
 }
 
 static void add_data_callback (GtkWidget *w, windata_t *vwin)
@@ -1431,7 +1427,7 @@ enum {
     GP_ITEM,
     RUN_ITEM,
     COPY_ITEM,
-    TEX_VIEW_ITEM,
+    TEX_ITEM,
     ADD_ITEM,
     HELP_ITEM
 } viewbar_codes;
@@ -1452,7 +1448,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
-    { N_("LaTeX"), "STOCK_TEX", window_tex_view, TEX_VIEW_ITEM },
+    { N_("LaTeX"), "STOCK_TEX", window_tex_callback, TEX_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_ITEM },
     { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
@@ -1474,7 +1470,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Replace..."), stock_search_replace_16_xpm, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), stock_undo_16_xpm, text_undo_callback, EDIT_ITEM },
     { N_("Help on command"), stock_help_16_xpm, activate_script_help, RUN_ITEM },
-    { N_("LaTeX"), mini_tex_xpm, window_tex_view, TEX_VIEW_ITEM },
+    { N_("LaTeX"), mini_tex_xpm, window_tex_callback, TEX_ITEM },
     { N_("Add to dataset..."), stock_add_16_xpm, add_data_callback, ADD_ITEM },
     { N_("Help"), stock_help_16_xpm, window_help, HELP_ITEM },
     { N_("Close"), stock_close_16_xpm, delete_file_viewer, 0 },
@@ -1514,7 +1510,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
     int latex_ok = latex_is_ok();
 
 #ifndef OLD_GTK
-    if (TEX_VIEW_ENABLED(vwin->role) && latex_ok) {
+    if (MULTI_FORMAT_ENABLED(vwin->role) && latex_ok) {
 	tex_icon_init();
     }
 #endif
@@ -1564,8 +1560,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
-	if ((!latex_ok || !TEX_VIEW_ENABLED(vwin->role)) && 
-	    viewbar_items[i].flag == TEX_VIEW_ITEM) {
+	if ((!latex_ok || !MULTI_FORMAT_ENABLED(vwin->role)) && 
+	    viewbar_items[i].flag == TEX_ITEM) {
 	    continue;
 	}
 
@@ -1581,7 +1577,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	}
 #else
         if (viewbar_items[i].flag == COPY_ITEM && 
-            MULTI_COPY_ENABLED(vwin->role)) {
+            MULTI_FORMAT_ENABLED(vwin->role)) {
             toolfunc = choose_copy_format_callback;
         }
 #endif

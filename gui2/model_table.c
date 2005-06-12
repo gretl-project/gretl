@@ -723,7 +723,7 @@ int display_model_table (int gui)
     return 0;
 }
 
-int tex_print_model_table (PRN *prn)
+static int tex_print_model_table (PRN *prn)
 {
     int j, ci;
     int binary = 0;
@@ -736,7 +736,7 @@ int tex_print_model_table (PRN *prn)
 
     if (make_grand_varlist()) return 1;
 
-    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
+    gretl_print_set_format(prn, GRETL_FORMAT_TEX);
 
     ci = common_estimator();
 
@@ -825,7 +825,7 @@ static void print_rtf_row_spec (PRN *prn, int tall)
     pputc(prn, '\n');
 }
 
-int rtf_print_model_table (PRN *prn)
+static int rtf_print_model_table (PRN *prn)
 {
     int j, ci;
     int binary = 0;
@@ -837,7 +837,7 @@ int rtf_print_model_table (PRN *prn)
 
     if (make_grand_varlist()) return 1;
 
-    gretl_print_set_format(prn, GRETL_PRINT_FORMAT_RTF);
+    gretl_print_set_format(prn, GRETL_FORMAT_RTF);
 
     ci = common_estimator();
 
@@ -903,6 +903,17 @@ int rtf_print_model_table (PRN *prn)
     pputs(prn, "\\par\n}\n");
 
     return 0;
+}
+
+int special_print_model_table (PRN *prn)
+{
+    if (tex_format(prn)) {
+	return tex_print_model_table(prn);
+    } else if (rtf_format(prn)) {
+	return rtf_print_model_table(prn);
+    } else {
+	return 1;
+    }
 }
 
 int modeltab_parse_line (const char *line, const MODEL *pmod, PRN *prn)

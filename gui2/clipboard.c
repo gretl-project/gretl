@@ -64,7 +64,7 @@ int buf_to_clipboard (const char *buf)
     if (clipboard_buf == NULL) {
 	err = 1;
     } else {
-	gretl_clipboard_set(COPY_TEXT);
+	gretl_clipboard_set(GRETL_FORMAT_TXT);
     }
 
     return err;
@@ -129,7 +129,7 @@ static void gretl_clipboard_clear (GtkClipboard *clip, gpointer p)
     gretl_clipboard_free();
 }
 
-static void gretl_clipboard_set (int copycode)
+static void gretl_clipboard_set (int fmt)
 {
     static GtkClipboard *clip;
     GtkTargetEntry *targs;
@@ -139,7 +139,7 @@ static void gretl_clipboard_set (int copycode)
 	clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
     }
 
-    if (copycode == COPY_RTF || copycode == COPY_TEXT_AS_RTF) {
+    if (fmt == GRETL_FORMAT_RTF || fmt == GRETL_FORMAT_RTF_TXT) {
 	targs = full_targets;
 	n_targs = n_full;
     } else {
@@ -235,7 +235,7 @@ static void gretl_clipboard_set (int copycode)
 
 #if defined(ENABLE_NLS) && !defined(OLD_GTK)
 
-int prn_to_clipboard (PRN *prn, int copycode)
+int prn_to_clipboard (PRN *prn, int fmt)
 {
     const char *buf = gretl_print_get_buffer(prn);
     int err = 0;
@@ -246,20 +246,20 @@ int prn_to_clipboard (PRN *prn, int copycode)
 
     gretl_clipboard_free();
 
-    if (copycode == COPY_TEXT || copycode == COPY_TEXT_AS_RTF) { 
+    if (fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT) { 
 	/* need to convert from utf8 */
 	gchar *trbuf = my_locale_from_utf8(buf);
 
 	if (trbuf == NULL) {
 	    err = 1;
-	} else if (copycode == COPY_TEXT) {
+	} else if (fmt == GRETL_FORMAT_TXT) {
 	    clipboard_buf = gretl_strdup(trbuf);
 	    if (clipboard_buf == NULL) {
 		err = 1;
 	    }
 	    g_free(trbuf);
-	} else if (copycode == COPY_TEXT_AS_RTF) {
-	    clipboard_buf = dosify_buffer(trbuf, copycode);
+	} else if (fmt == GRETL_FORMAT_RTF_TXT) {
+	    clipboard_buf = dosify_buffer(trbuf, fmt);
 	    if (clipboard_buf == NULL) {
 		err = 1;
 	    }
@@ -272,7 +272,7 @@ int prn_to_clipboard (PRN *prn, int copycode)
     }
 
     if (!err) {
-	gretl_clipboard_set(copycode);
+	gretl_clipboard_set(fmt);
     }
 
     return err;

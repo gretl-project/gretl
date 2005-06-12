@@ -300,10 +300,7 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     case EXPORT_DAT:
 	data_save_selection_wrapper(file_code);
 	break;
-    case SAVE_TEX_TAB:
-    case SAVE_TEX_EQ:
-    case SAVE_TEX_TAB_FRAG:
-    case SAVE_TEX_EQ_FRAG:
+    case SAVE_TEX:
 	file_selector(_("Save LaTeX file"), file_code, vwin->data);
 	break;
     case SAVE_MODEL:
@@ -532,7 +529,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 
 void text_copy_callback (GtkWidget *w, gpointer data)
 {
-    text_copy(data, COPY_SELECTION, w);
+    window_copy(data, GRETL_FORMAT_SELECTION, w);
 }
 
 void text_paste_callback (GtkWidget *w, gpointer data)

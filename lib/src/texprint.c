@@ -311,14 +311,29 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     return 0;
 }
 
-static PRN *make_texprn (int ID, int equation, char *texfile)
+static PRN *make_tex_prn (int ID, char *texfile,
+			  int eqn, int doc)
 {
+    PrnFormat fmt = GRETL_FORMAT_TEX;
+    PRN *prn;
+
     if (*texfile == '\0') {
 	sprintf(texfile, "%s%s_%d.tex", gretl_user_dir(),
-		(equation)? "equation" : "model", ID);
+		(eqn)? "equation" : "model", ID);
     }
 
-    return gretl_print_new_with_filename(texfile);
+    prn = gretl_print_new_with_filename(texfile);
+    if (prn != NULL) {
+	if (eqn) {
+	    fmt |= GRETL_FORMAT_EQN;
+	}
+	if (doc) {
+	    fmt |= GRETL_FORMAT_DOC;
+	}
+	gretl_print_set_format(prn, fmt);
+    }
+
+    return prn;
 }
 
 /* mechanism for customizing gretl's tex preamble */
@@ -601,27 +616,31 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 /**
  * tex_print_model:
  * @pmod:  pointer to gretl MODEL struct.
- * @pdinfo:  information regarding the data set.
- * @standalone: print as full doc (1) or fragment (0).
+ * @pdinfo: information regarding the data set.
  * @prn: gretl printing struct.
  *
- * Prints to @prn a gretl model in the form of a LaTeX table, either as
- * a stand-alone document or as a fragment of LaTeX source for
- * insertion into a document.
+ * Prints to @prn a gretl model in the form of either a LaTeX 
+ * table or an equation, and either as a stand-alone document or 
+ * as a fragment of LaTeX source for insertion into a document.
+ *
+ * The options are read from the format field of @prn --
+ * gretl_print_set_format().
  * 
  * Returns: 0 on successful completion.
  */
 
-int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, 
-		     int standalone, PRN *prn)
+int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
-    if (standalone) {
-	gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX_DOC);
+    int docopt = tex_doc_format(prn);
+    int ret;
+
+    if (tex_eqn_format(prn)) { 
+	ret = tex_print_equation(pmod, pdinfo, docopt, prn);
     } else {
-	gretl_print_set_format(prn, GRETL_PRINT_FORMAT_TEX);
+	ret = printmodel(pmod, pdinfo, OPT_NONE, prn);
     }
-    
-    return printmodel(pmod, pdinfo, OPT_NONE, prn);
+
+    return ret;
 }
 
 /**
@@ -645,17 +664,14 @@ int texprint (MODEL *pmod, const DATAINFO *pdinfo,
 {
     PRN *prn;
     int eqn = (opt & OPT_E);
+    int doc = (opt & OPT_O);
     int err = 0;
 
-    prn = make_texprn(pmod->ID, eqn, texfile);
+    prn = make_tex_prn(pmod->ID, texfile, eqn, doc);
     if (prn == NULL) {
 	err = 1;
     } else {
-	if (eqn) {
-	    tex_print_equation(pmod, pdinfo, (opt & OPT_O), prn);
-	} else {
-	    tex_print_model(pmod, pdinfo, (opt & OPT_O), prn);
-	}
+	err = tex_print_model(pmod, pdinfo, prn);
 	gretl_print_destroy(prn);
     }
 

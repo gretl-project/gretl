@@ -88,7 +88,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
     prn->fpaux = NULL;
     prn->buf = NULL;
     prn->bufsize = 0;
-    prn->format = GRETL_PRINT_FORMAT_PLAIN;
+    prn->format = GRETL_FORMAT_TXT;
     prn->fixed = 0;
 
     if (ptype == GRETL_PRINT_FILE) {
@@ -557,8 +557,7 @@ int print_end_redirection (PRN *prn)
 
 int plain_format (PRN *prn)
 {
-    return (prn != NULL && 
-	    prn->format == GRETL_PRINT_FORMAT_PLAIN);
+    return (prn != NULL && prn->format == GRETL_FORMAT_TXT);
 }
 
 /**
@@ -570,8 +569,7 @@ int plain_format (PRN *prn)
 
 int rtf_format (PRN *prn)
 {
-    return (prn != NULL &&
-	    prn->format == GRETL_PRINT_FORMAT_RTF);
+    return (prn != NULL && prn->format == GRETL_FORMAT_RTF);
 }
 
 /**
@@ -583,9 +581,7 @@ int rtf_format (PRN *prn)
 
 int tex_format (PRN *prn)
 {
-    return (prn != NULL &&
-	    (prn->format == GRETL_PRINT_FORMAT_TEX ||
-	     prn->format == GRETL_PRINT_FORMAT_TEX_DOC));
+    return (prn != NULL && (prn->format & GRETL_FORMAT_TEX));
 }
 
 /**
@@ -598,6 +594,22 @@ int tex_format (PRN *prn)
 
 int tex_doc_format (PRN *prn)
 {
-    return (prn != NULL &&
-	    prn->format == GRETL_PRINT_FORMAT_TEX_DOC);
+    return (prn != NULL && 
+	    (prn->format & GRETL_FORMAT_TEX) &&
+	    (prn->format & GRETL_FORMAT_DOC));
+}
+/**
+ * tex_eqn_format:
+ * @prn: gretl printing struct.
+ * 
+ * Returns: 1 if the format of @prn is TeX and a model
+ * is being represented as an equation, rather than in
+ * tabular form, else 0.
+ */
+
+int tex_eqn_format (PRN *prn)
+{
+    return (prn != NULL && 
+	    (prn->format & GRETL_FORMAT_TEX) &&
+	    (prn->format & GRETL_FORMAT_EQN));
 }

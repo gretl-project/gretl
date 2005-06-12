@@ -22,11 +22,15 @@
 
 int prn_to_clipboard (PRN *prn, int copycode);
 
-void window_tex_view (GtkWidget *w, windata_t *vwin);
+void window_tex_callback (GtkWidget *w, windata_t *vwin);
+
+void model_tex_view (gpointer data, guint fmt, GtkWidget *w);
+
+void model_tex_save (gpointer data, guint fmt, GtkWidget *w);
 
 void var_tex_callback (gpointer data, guint opt, GtkWidget *w);
 
-void text_copy (gpointer data, guint how, GtkWidget *w);
+void window_copy (gpointer data, guint how, GtkWidget *w);
 
 void text_replace (windata_t *mydata, guint u, GtkWidget *widget);
 

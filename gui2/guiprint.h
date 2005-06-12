@@ -30,41 +30,24 @@ int winprint_graph (char *emfname);
 void winprint (char *fullbuf, char *selbuf);
 #endif
 
-void texprint_summary (const Summary *summ,
-		       const DATAINFO *pdinfo,
-		       PRN *prn);
+void special_print_summary (const Summary *summ,
+			    const DATAINFO *pdinfo,
+			    PRN *prn);
 
-void rtfprint_summary (const Summary *summ,
-		       const DATAINFO *pdinfo,
-		       PRN *prn);
+void special_print_vmatrix (const VMatrix *corr,
+			    const DATAINFO *pdinfo, 
+			    PRN *prn);
 
-void texprint_vmatrix (const VMatrix *corr,
-		       const DATAINFO *pdinfo, 
-		       PRN *prn);
+void special_print_fit_resid (const FITRESID *fr, 
+			      const DATAINFO *pdinfo, 
+			      PRN *prn);
 
-void rtfprint_vmatrix (const VMatrix *corr,
-		       const DATAINFO *pdinfo, 
-		       PRN *prn);
+void special_print_forecast (const FITRESID *fr, 
+			     const DATAINFO *pdinfo, 
+			     PRN *prn);
 
-void texprint_fit_resid (const FITRESID *fr, 
-			 const DATAINFO *pdinfo, 
-			 PRN *prn);
-
-void rtfprint_fit_resid (const FITRESID *fr, 
-			 const DATAINFO *pdinfo, 
-			 PRN *prn);
-
-void texprint_forecast (const FITRESID *fr, 
-			const DATAINFO *pdinfo, 
-			PRN *prn);
-
-void rtfprint_forecast (const FITRESID *fr, 
-			const DATAINFO *pdinfo, 
-			PRN *prn);
-
-void texprint_confints (const CoeffIntervals *cf, PRN *prn);
-
-void rtfprint_confints (const CoeffIntervals *cf, PRN *prn);
+void special_print_confints (const CoeffIntervals *cf, 
+			     PRN *prn);
 
 int csv_to_clipboard (void);
 

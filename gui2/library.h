@@ -243,11 +243,9 @@ void do_open_csv_box (char *fname, int code, int append);
 
 int do_store (char *mydatfile, gretlopt oflag, int overwrite);
 
-void view_latex (gpointer data, guint prn_code, GtkWidget *widget);
+void view_latex (PRN *prn);
 
-void save_tex_misc (const char *fname, PRN *prn);
-
-void save_tex_model (char *fname, int code, MODEL *pmod);
+void save_latex (PRN *prn, const char *fname);
 
 void do_save_text (char *fname, MODEL *pmod);
 

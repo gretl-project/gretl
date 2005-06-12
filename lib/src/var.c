@@ -387,7 +387,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 		pprintf(prn, " (%s)\n\n", I_("continued"));
 	    }
 	    pputs(prn, "\\vspace{1em}\n\n"
-		  "\\begin{tabular}{rcccc}\n");
+		  "\\begin{longtable}{rcccc}\n");
 	} else {
 	    pprintf(prn, _("Responses to a one-standard error shock in %s"), 
 		    pdinfo->varname[vsrc]);
@@ -464,7 +464,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 	}
 
 	if (tex_format(prn)) {
-	    pputs(prn, "\\end{tabular}\n\n");
+	    pputs(prn, "\\end{longtable}\n\n");
 	} else {
 	    pputc(prn, '\n');
 	}
@@ -691,7 +691,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 		pprintf(prn, " (%s)\n\n", I_("continued"));
 	    }
 	    pputs(prn, "\\vspace{1em}\n\n"
-		  "\\begin{tabular}{rccccc}\n");
+		  "\\begin{longtable}{rccccc}\n");
 	} else {
 	    pprintf(prn, _("Decomposition of variance for %s"), 
 		    pdinfo->varname[vtarg]);
@@ -773,7 +773,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 	}
 
 	if (tex_format(prn)) {
-	    pputs(prn, "\\end{tabular}\n\n");
+	    pputs(prn, "\\end{longtable}\n\n");
 	} else {
 	    pputc(prn, '\n');
 	}
