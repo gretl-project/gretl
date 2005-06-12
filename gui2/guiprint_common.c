@@ -115,8 +115,10 @@ void rtfprint_summary (Summary *summ,
 	pprintf(prn, "%s\\par\n\n", tmp);
 	pputs(prn, "{" VAR_SUMM_ROW "\\intbl ");
     } else {
-	strcpy(tmp, I_("(missing values will be skipped)"));
-	pprintf(prn, "%s\\par\n\n", tmp);
+	if (summ->missing) {
+	    strcpy(tmp, I_("(missing values were skipped)"));
+	    pprintf(prn, "%s\\par\n\n", tmp); /* FIXME */
+	}
 	pprintf(prn, "{" SUMM_ROW
 		"\\intbl \\qc %s\\cell", I_("Variable"));
     }
@@ -209,8 +211,11 @@ void texprint_summary (Summary *summ, const DATAINFO *pdinfo,
 	pprintf(prn, "%s\\\\[8pt]\n\n", tmp);
 	pputs(prn, "\\begin{tabular}{rrrr}\n");
     } else {
-	strcpy(tmp, I_("(skipping any missing values)"));
-	pprintf(prn, "%s\\\\[8pt]\n\n", tmp);
+	if (summ->missing) {
+	    pprintf(prn, "%s\\\\[8pt]\n\n", I_("(missing values were skipped)"));
+	} else {
+	    pputs(prn, "\\\\[8pt]\n\n");
+	}
 	pputs(prn, "\\begin{tabular}{lrrrr}\n");
 	pprintf(prn, "%s &", I_("Variable"));
     }
@@ -327,9 +332,10 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 
 	sprintf(tmp, I_("Correlation coefficients, using the observations "
 			"%s - %s"), date1, date2);
-	pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n(%s)\\par\n",
-		tmp, I_("skipping any missing values"));
-
+	pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n", tmp);
+	if (vmat->missing) {
+	    pprintf(prn, "(%s)\\par\n", I_("(missing values were skipped)"));
+	}
 	sprintf(tmp, I_("5%% critical value (two-tailed) = %.4f for n = %d"), 
 		rhocrit95(n), n);
 	pprintf(prn, "%s\\par\n\\par\n{", tmp);
@@ -355,9 +361,9 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 	if (pad) rtf_table_pad(pad, prn);
 
 	/* print the varname headings */
-	for (j=1; j<=p; ++j)  {
-	    pprintf(prn, "%s\\cell %s", vmat->names[j+nf-1],
-		    (j == p)? "\\cell \\intbl \\row\n" : "");
+	for (j=0; j<p; j++)  {
+	    pprintf(prn, "%s\\cell %s", vmat->names[j + nf],
+		    (j == p - 1)? "\\cell \\intbl \\row\n" : "");
 	}
 
 	/* print rectangular part, if any, of matrix */
@@ -417,7 +423,7 @@ texprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 			"%s--%s"), date1, date2);
 	pputs(prn, "\\\\\n");
 	if (vmat->missing) {
-	    pputs(prn, I_("skipping any missing values"));
+	    pputs(prn, I_("(missing values were skipped)"));
 	    pputs(prn, "\\\\\n");
 	}
 	pprintf(prn, I_("5\\%% critical value (two-tailed) = %.4f for n = %d"), 
@@ -511,8 +517,6 @@ void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     pprintf(prn, I_("Standard error of residuals = %g"), fr->sigma);
     pputs(prn, "\n\\end{raggedright}\n");
 }
-
-/* ........................................................... */
 
 static 
 void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo, 
@@ -660,15 +664,22 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
     char actual[32], fitted[32];
     char vname[16];
     char pt = get_local_decpoint();
+    int longtab = fr->nobs > 30;
     int t;
 
-    pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
+    if (longtab) {
+	pputs(prn, "%% The table below needs the \"dcolumn\" and "
+	      "\"longtable\" packages\n\n");
+    } else {
+	pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
+    }
 
     pprintf(prn, "\\begin{center}\n"
-	    "\\begin{tabular}{%%\n"
+	    "\\begin{%s}{%%\n"
 	    "r%% col 1: obs\n"
 	    "  l%% col 2: varname\n"
 	    "    D{%c}{%c}{-1}}%% col 3: fitted\n",
+	    (longtab)? "longtable" : "tabular",
 	    pt, pt);
 
     tex_escape(vname, fr->depvar);
@@ -684,19 +695,25 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
 		actual, fitted);
     }
 
-    pputs(prn, "\\end{tabular}\n"
-	  "\\end{center}\n\n");
+    if (longtab) {
+	pputs(prn, "\\end{longtable}\n");
+    } else {
+	pputs(prn, "\\end{tabular}\n");
+    }
+
+    pputs(prn, "\\end{center}\n\n");
 }
 
 static void texprint_fcast_with_errs (const FITRESID *fr, 
 				      const DATAINFO *pdinfo, 
 				      PRN *prn)
 {
-    int t;
     double maxerr;
     char actual[32], fitted[32], sderr[32], lo[32], hi[32];
     char vname[16];
+    int longtab = fr->nobs > 30;
     char pt = get_local_decpoint();
+    int t;
 
     pputs(prn, "\\begin{center}\n");
     pprintf(prn, I_("For 95 percent confidence intervals, "
@@ -704,16 +721,22 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	    fr->df, fr->tval);
     pputs(prn, "\\end{center}\n");
 
-    pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
+    if (longtab) {
+	pputs(prn, "%% The table below needs the \"dcolumn\" and "
+	      "\"longtable\" packages\n\n");
+    } else {
+	pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
+    }
 
     pprintf(prn, "\\begin{center}\n"
-	    "\\begin{tabular}{%%\n"
+	    "\\begin{%s}{%%\n"
 	    "r%% col 1: obs\n"
 	    "  l%% col 2: varname\n"
 	    "    D{%c}{%c}{-1}%% col 3: fitted\n"
 	    "      D{%c}{%c}{-1}%% col 4: std error\n"
 	    "        D{%c}{%c}{-1}%% col 5: conf int lo\n"
 	    "         D{%c}{%c}{-1}}%% col 5: conf int hi\n",
+	    (longtab)? "longtable" : "tabular",
 	    pt, pt, pt, pt, pt, pt, pt, pt);
 
     tex_escape(vname, fr->depvar);
@@ -749,8 +772,13 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 		actual, fitted, sderr, lo, hi);
     }
 
-    pputs(prn, "\\end{tabular}\n"
-	  "\\end{center}\n\n");
+    if (longtab) {
+	pputs(prn, "\\end{longtable}\n");
+    } else {
+	pputs(prn, "\\end{tabular}\n");
+    }
+
+    pputs(prn, "\\end{center}\n\n");
 }
 
 void texprint_forecast (const FITRESID *fr, 

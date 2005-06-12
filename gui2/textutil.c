@@ -489,15 +489,22 @@ static int special_text_copy (int obj, int how, int what, gpointer data)
 void window_tex_view (GtkWidget *w, windata_t *vwin)
 {
     const char *opts[] = {
-	N_("Preview"),
-	N_("Copy to clipboard"),
-	N_("Save as...")
+	N_("View"),
+	N_("Copy"),
+	N_("Save")
     };
     int opt = radio_dialog("gretl: LaTeX", opts, 3, 0, 0);
 
     if (opt >= 0) {
 	special_text_copy(vwin->role, COPY_LATEX, opt, vwin->data);
     }
+}
+
+void var_tex_callback (gpointer data, guint opt, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    special_text_copy(vwin->role, COPY_LATEX, opt, vwin->data);
 }
 
 /* copying text from gretl windows */

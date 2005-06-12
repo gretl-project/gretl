@@ -569,7 +569,7 @@ int gretl_moments (int t1, int t2, const double *x,
  *
  */
 
-void free_freq (FREQDIST *freq)
+void free_freq (FreqDist *freq)
 {
     free(freq->midpt);
     free(freq->endpt);
@@ -577,9 +577,9 @@ void free_freq (FREQDIST *freq)
     free(freq);
 }
 
-static FREQDIST *freq_new (void)
+static FreqDist *freq_new (void)
 {
-    FREQDIST *freq;
+    FreqDist *freq;
 
     freq = malloc(sizeof *freq);
     if (freq == NULL) return NULL;
@@ -666,10 +666,10 @@ double doornik_chisq (double skew, double kurt, int n)
  *
  */
 
-FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
+FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
 		    int params, gretlopt opt)
 {
-    FREQDIST *freq;
+    FreqDist *freq;
     const double *x = Z[varno];
     double xx, xmin, xmax;
     double skew, kurt;
@@ -808,7 +808,7 @@ FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	      int graph, PRN *prn, gretlopt opt)
 {
-    FREQDIST *freq;
+    FreqDist *freq;
 
     freq = get_freq(varno, Z, pdinfo, 1, opt); 
 
@@ -832,7 +832,7 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 int model_error_dist (const MODEL *pmod, double ***pZ,
 		      DATAINFO *pdinfo, PRN *prn)
 {
-    FREQDIST *freq = NULL;
+    FreqDist *freq = NULL;
     int err = 0;
 
     if (genr_fit_resid(pmod, pZ, pdinfo, GENR_RESID, 1)) {
@@ -1798,7 +1798,7 @@ static void center_line (char *str, PRN *prn, int dblspc)
 /* ............................................................... */
 
 static void prhdr (const char *str, const DATAINFO *pdinfo, 
-		   int ci, PRN *prn)
+		   int ci, int missing, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN], tmp[96];
 
@@ -1810,8 +1810,8 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     sprintf(tmp, _("%s, using the observations %s - %s"), str, date1, date2);
     center_line(tmp, prn, 0);
 
-    if (ci == CORR) {
-	strcpy(tmp, _("(missing values will be skipped)"));
+    if (missing) {
+	strcpy(tmp, _("(missing values were skipped)"));
 	center_line(tmp, prn, 1);
     }
 }
@@ -1837,7 +1837,7 @@ static void print_summary_single (const Summary *summ,
     ntodate(obs1, pdinfo->t1, pdinfo);
     ntodate(obs2, pdinfo->t2, pdinfo);
 
-    prhdr(_("Summary Statistics"), pdinfo, SUMMARY, prn);
+    prhdr(_("Summary Statistics"), pdinfo, SUMMARY, 0, prn);
     sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
 	    pdinfo->varname[summ->list[1]], summ->n);
     center_line(tmp, prn, 1);
@@ -1887,18 +1887,15 @@ void print_summary (const Summary *summ,
 {
     int pause = gretl_get_text_pause();
     int i, vi, lineno;
-    char tmp[128];
 
     if (summ->list[0] == 1) {
 	print_summary_single(summ, pdinfo, prn);
 	return;
     }
 
-    prhdr(_("Summary Statistics"), pdinfo, SUMMARY, prn);
-    strcpy(tmp, _("(missing values will be skipped)"));
-    center_line(tmp, prn, 1);
-    pprintf(prn, "\n%s  ", _("Variable"));
+    prhdr(_("Summary Statistics"), pdinfo, SUMMARY, summ->missing, prn);
 
+    pprintf(prn, "\n%s  ", _("Variable"));
     pputs(prn, _("      MEAN           MEDIAN           MIN"
             "             MAX\n\n"));
 
@@ -1999,6 +1996,7 @@ static Summary *summary_new (const int *list)
     }
 
     summ->n = 0;
+    summ->missing = 0;
 
     summ->mean = summ->median = summ->sd = NULL;
     summ->skew = summ->xkurt = NULL;
@@ -2042,7 +2040,7 @@ Summary *summary (const int *list,
 		       PRN *prn) 
 {
     Summary *summ;
-    int i, vi, sn;
+    int i, vi, sn, gn;
 
     summ = summary_new(list);
     if (summ == NULL) {
@@ -2055,10 +2053,14 @@ Summary *summary (const int *list,
 	vi = summ->list[i + 1];
 
 	sn = pdinfo->t2 - pdinfo->t1 + 1;
-	sn = good_obs(Z[vi] + pdinfo->t1, sn, &x0);
+	gn = good_obs(Z[vi] + pdinfo->t1, sn, &x0);
 
-	if (sn > summ->n) {
-	    summ->n = sn;
+	if (gn < sn) {
+	    summ->missing = 1;
+	}
+
+	if (gn > summ->n) {
+	    summ->n = gn;
 	}
 
 	if (sn < 2) { 
@@ -2240,7 +2242,8 @@ void matrix_print_corr (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
     char tmp[96];
     int n = corr->t2 - corr->t1 + 1;
 
-    prhdr(_("Correlation Coefficients"), pdinfo, CORR, prn);
+    prhdr(_("Correlation Coefficients"), pdinfo, CORR, corr->missing, 
+	  prn);
     sprintf(tmp, _("5%% critical value (two-tailed) = "
 	    "%.4f for n = %d"), rhocrit95(n), n);
     center_line(tmp, prn, 1);

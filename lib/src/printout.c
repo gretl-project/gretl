@@ -242,7 +242,7 @@ void printcorr (const VMatrix *corrmat, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void print_freq_test (const FREQDIST *freq, PRN *prn)
+static void print_freq_test (const FreqDist *freq, PRN *prn)
 {
     double pval = NADBL;
 
@@ -277,7 +277,7 @@ static void print_freq_test (const FREQDIST *freq, PRN *prn)
  * 
  */
 
-void print_freq (const FREQDIST *freq, PRN *prn)
+void print_freq (const FreqDist *freq, PRN *prn)
 {
     int i, k, nlw, K = freq->numbins - 1;
     char word[64];

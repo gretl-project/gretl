@@ -393,7 +393,7 @@ gint bufopen (PRN **pprn)
 
 /* ........................................................... */
 
-static int freq_error (FREQDIST *freq, PRN *prn)
+static int freq_error (FreqDist *freq, PRN *prn)
 {
     int err = 0;
 
@@ -2938,7 +2938,7 @@ int record_varlabel_change (int v)
 
 /* ........................................................... */
 
-static void normal_test (MODEL *pmod, FREQDIST *freq)
+static void normal_test (MODEL *pmod, FreqDist *freq)
 {
     ModelTest *test;
 
@@ -2953,7 +2953,7 @@ static void normal_test (MODEL *pmod, FREQDIST *freq)
 
 void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 {
-    FREQDIST *freq;
+    FreqDist *freq;
     PRN *prn;
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -3025,7 +3025,7 @@ series_has_negative_vals (const double *x)
 
 void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 {
-    FREQDIST *freq;
+    FreqDist *freq;
     gretlopt opt = (dist == DIST_GAMMA)? OPT_O : OPT_NONE;
     int v = mdata->active_var;
 
@@ -6497,7 +6497,7 @@ int gui_exec_line (char *line,
 	    pprintf(prn, _("Out of memory attempting to add variable\n"));
 	    err = 1;
 	} else {
-	    FREQDIST *freq; 
+	    FreqDist *freq; 
 	 
 	    freq = get_freq(datainfo->v - 1, (const double **) Z, datainfo, 
 			    (models[0])->ncoeff, OPT_NONE);

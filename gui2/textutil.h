@@ -24,6 +24,8 @@ int prn_to_clipboard (PRN *prn, int copycode);
 
 void window_tex_view (GtkWidget *w, windata_t *vwin);
 
+void var_tex_callback (gpointer data, guint opt, GtkWidget *w);
+
 void text_copy (gpointer data, guint how, GtkWidget *w);
 
 void text_replace (windata_t *mydata, guint u, GtkWidget *widget);

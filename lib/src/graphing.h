@@ -152,7 +152,7 @@ int gnuplot_3d (int *list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo, 
 		int *plot_count, unsigned char flags);
 
-int plot_freq (FREQDIST *freq, DistCode dist);
+int plot_freq (FreqDist *freq, DistCode dist);
 
 int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo); 
 

@@ -397,7 +397,7 @@ void gretl_tex_preamble (PRN *prn, int ams)
 	if (ams) {
 	    pputs(prn, "\\usepackage{amsmath}\n\n");
 	} else {
-	    pputs(prn, "\\usepackage{dcolumn}\n\n");
+	    pputs(prn, "\\usepackage{dcolumn,longtable}\n\n");
 	}
 
 	pputs(prn, "\\begin{document}\n\n"

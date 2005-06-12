@@ -38,7 +38,7 @@ void gui_logo (PRN *prn);
 
 void text_print_model_confints (const CoeffIntervals *cf, PRN *prn);
 
-void print_freq (const FREQDIST *freq, PRN *prn);
+void print_freq (const FreqDist *freq, PRN *prn);
 
 void printcorr (const VMatrix *corrmat, PRN *prn);
 

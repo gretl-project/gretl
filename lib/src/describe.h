@@ -18,11 +18,12 @@
  */
 
 typedef struct Summary_ Summary;
-typedef struct FREQDIST_ FREQDIST;
+typedef struct FreqDist_ FreqDist;
 typedef struct MahalDist_ MahalDist;
 
 struct Summary_ {
     int n;
+    int missing;
     int *list;
     double *mean;
     double *median;
@@ -34,7 +35,7 @@ struct Summary_ {
     double *cv;
 };
 
-struct FREQDIST_ {
+struct FreqDist_ {
     char varname[VNAMELEN];  /* for ID purposes */
     int dist;                /* code for theoretical distribution */
     int numbins;             /* number of bins or intervals */
@@ -44,8 +45,7 @@ struct FREQDIST_ {
     int *f;                  /* frequencies in the intervals */
     double test;             /* either Chi-squared statistic for testing
                                 for a Gaussian distribution, or z statistic
-			        for testing for Gamma dist.
-			     */
+			        for testing for Gamma dist. */
     int n;
     int t1, t2;
 };
@@ -76,9 +76,9 @@ int gretl_moments (int t1, int t2, const double *x,
 		   double *xbar, double *sd, 
 		   double *skew, double *kurt, int k);
 
-void free_freq (FREQDIST *freq);
+void free_freq (FreqDist *freq);
 
-FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
+FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
 		    int params, gretlopt opt);
 
 int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,

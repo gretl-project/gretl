@@ -74,7 +74,8 @@ char *storelist = NULL;
 #define TEX_VIEW_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY \
 	                     || c == CORR || c == FCASTERR \
 	                     || c == FCAST || c == COEFFINT \
-	                     || c == COVAR || c == VIEW_MODELTABLE || c == VAR)
+	                     || c == COVAR || c == VIEW_MODELTABLE \
+                             || c == VAR)
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
@@ -82,6 +83,7 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
 static gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 static void auto_save_script (windata_t *vwin);
 static void add_model_dataset_items (windata_t *vwin);
+static void add_model_tex_items (windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
 static void add_var_menu_items (windata_t *vwin);
@@ -114,6 +116,21 @@ static int arma_by_x12a (const MODEL *pmod)
     }
 
     return ret;
+}
+
+static int latex_is_ok (void)
+{
+    static int latex_ok = -1; 
+  
+    if (latex_ok == -1) {
+#ifdef G_OS_WIN32
+	latex_ok = check_for_prog("latex.exe");
+#else
+	latex_ok = check_for_prog("latex");
+#endif
+    }
+
+    return latex_ok;
 }
 
 #ifndef OLD_GTK
@@ -164,26 +181,6 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Model data/coefficient covariance matrix"), NULL, 
       do_outcovmx, 0, NULL, GNULL },
     { N_("/Model data/Add to data set"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/View/_Tabular"), NULL, view_latex, LATEX_VIEW_TABULAR, 
-      NULL, GNULL },
-    { N_("/LaTeX/View/_Equation"), NULL, view_latex, LATEX_VIEW_EQUATION, 
-      NULL, GNULL },
-    { N_("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Save/_Tabular"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Save/Tabular/as _document"), NULL, file_save, 
-      SAVE_TEX_TAB, NULL, GNULL },
-    { N_("/LaTeX/Save/Tabular/as _fragment"), NULL, file_save, 
-      SAVE_TEX_TAB_FRAG, NULL, GNULL },
-    { N_("/LaTeX/Save/_Equation"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Save/Equation/as _document"), NULL, file_save, 
-      SAVE_TEX_EQ, NULL, GNULL },
-    { N_("/LaTeX/Save/Equation/as _fragment"), NULL, file_save, 
-      SAVE_TEX_EQ_FRAG, NULL, GNULL },
-    { N_("/LaTeX/_Copy"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Copy/_Tabular"), NULL, text_copy, COPY_LATEX, NULL, GNULL },
-    { N_("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
@@ -235,29 +232,41 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Model data/coefficient covariance matrix"), NULL, 
       do_outcovmx, 0, NULL },
     { N_("/Model data/Add to data set"), NULL, NULL, 0, "<Branch>" },
-    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/View/_Tabular"), NULL, view_latex, LATEX_VIEW_TABULAR, NULL },
-    { N_("/LaTeX/View/_Equation"), NULL, view_latex, LATEX_VIEW_EQUATION, NULL },
-    { N_("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/Save/_Tabular"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/Save/Tabular/as _document"), NULL, file_save, 
-      SAVE_TEX_TAB, NULL },
-    { N_("/LaTeX/Save/Tabular/as _fragment"), NULL, file_save, 
-      SAVE_TEX_TAB_FRAG, NULL },
-    { N_("/LaTeX/Save/_Equation"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/Save/Equation/as _document"), NULL, file_save, 
-      SAVE_TEX_EQ, NULL },
-    { N_("/LaTeX/Save/Equation/as _fragment"), NULL, file_save, 
-      SAVE_TEX_EQ_FRAG, NULL },
-    { N_("/LaTeX/_Copy"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/Copy/_Tabular"), NULL, text_copy, COPY_LATEX, NULL },
-    { N_("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
 #endif /* old versus new GTK */
 
 #ifndef OLD_GTK
+
+static GtkItemFactoryEntry model_tex_items[] = {
+    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/LaTeX/View/_Tabular"), NULL, view_latex, LATEX_VIEW_TABULAR, 
+      NULL, GNULL },
+    { N_("/LaTeX/View/_Equation"), NULL, view_latex, LATEX_VIEW_EQUATION, 
+      NULL, GNULL },
+    { N_("/LaTeX/_Copy"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/LaTeX/Copy/_Tabular"), NULL, text_copy, COPY_LATEX, NULL, GNULL },
+    { N_("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL, GNULL },
+    { N_("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/LaTeX/Save/_Tabular"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/LaTeX/Save/Tabular/as _document"), NULL, file_save, 
+      SAVE_TEX_TAB, NULL, GNULL },
+    { N_("/LaTeX/Save/Tabular/as _fragment"), NULL, file_save, 
+      SAVE_TEX_TAB_FRAG, NULL, GNULL },
+    { N_("/LaTeX/Save/_Equation"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/LaTeX/Save/Equation/as _document"), NULL, file_save, 
+      SAVE_TEX_EQ, NULL, GNULL },
+    { N_("/LaTeX/Save/Equation/as _fragment"), NULL, file_save, 
+      SAVE_TEX_EQ_FRAG, NULL, GNULL }
+};
+
+static GtkItemFactoryEntry var_tex_items[] = {
+    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/LaTeX/_View"), NULL, var_tex_callback, 0, NULL, GNULL },
+    { N_("/LaTeX/_Copy"), NULL, var_tex_callback, 1, NULL, GNULL },
+    { N_("/LaTeX/_Save"), NULL, var_tex_callback, 2, NULL, GNULL }
+};
 
 static GtkItemFactoryEntry var_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -276,6 +285,30 @@ static GtkItemFactoryEntry var_items[] = {
 };
 
 #else
+
+static GtkItemFactoryEntry model_tex_items[] = {
+    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/View/_Tabular"), NULL, view_latex, LATEX_VIEW_TABULAR, NULL },
+    { N_("/LaTeX/View/_Equation"), NULL, view_latex, LATEX_VIEW_EQUATION, NULL },
+    { N_("/LaTeX/_Copy"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/Copy/_Tabular"), NULL, text_copy, COPY_LATEX, NULL },
+    { N_("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL },
+    { N_("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/Save/_Tabular"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/Save/Tabular/as _document"), NULL, file_save, SAVE_TEX_TAB, NULL },
+    { N_("/LaTeX/Save/Tabular/as _fragment"), NULL, file_save, SAVE_TEX_TAB_FRAG, NULL },
+    { N_("/LaTeX/Save/_Equation"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/Save/Equation/as _document"), NULL, file_save, SAVE_TEX_EQ, NULL },
+    { N_("/LaTeX/Save/Equation/as _fragment"), NULL, file_save, SAVE_TEX_EQ_FRAG, NULL }
+};
+
+static GtkItemFactoryEntry var_tex_items[] = {
+    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/_View"), NULL, var_tex_callback, 0, NULL },
+    { N_("/LaTeX/_Copy"), NULL, var_tex_callback, 1, NULL },
+    { N_("/LaTeX/_Save"), NULL, var_tex_callback, 2, NULL }
+};
 
 static GtkItemFactoryEntry var_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },
@@ -1478,15 +1511,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 		   vwin->role == COINT2 ||
 		   vwin->role == MAHAL);
 
-    static int latex_ok = -1;
-
-    if (latex_ok == -1) {
-#ifdef G_OS_WIN32
-	latex_ok = check_for_prog("latex.exe");
-#else
-	latex_ok = check_for_prog("latex");
-#endif
-    }
+    int latex_ok = latex_is_ok();
 
 #ifndef OLD_GTK
     if (TEX_VIEW_ENABLED(vwin->role) && latex_ok) {
@@ -2215,6 +2240,9 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     set_up_viewer_menu(vwin->dialog, vwin, model_items);
     add_vars_to_plot_menu(vwin);
     add_model_dataset_items(vwin);
+    if (latex_is_ok() && !pmod->errcode) {
+	add_model_tex_items(vwin);
+    }
 
     if (pmod->ci != ARMA && pmod->ci != GARCH && pmod->ci != NLS) {
 	add_dummies_to_plot_menu(vwin);
@@ -2323,8 +2351,6 @@ static void auto_save_script (windata_t *vwin)
     MARK_CONTENT_SAVED(vwin);
 }
 
-/* ........................................................... */
-
 void flip (GtkItemFactory *ifac, const char *path, gboolean s)
 {
     if (ifac != NULL) {
@@ -2338,7 +2364,7 @@ void flip (GtkItemFactory *ifac, const char *path, gboolean s)
     }
 }
 
-static void model_equation_copy_state (GtkItemFactory *ifac, gboolean s)
+static void model_tex_equation_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/LaTeX/View/Equation", s);
     flip(ifac, "/LaTeX/Save/Equation", s);
@@ -2405,11 +2431,6 @@ static void arch_menu_off (GtkItemFactory *ifac)
     flip(ifac, "/Tests/ARCH", FALSE);
 }
 
-static void latex_menu_state (GtkItemFactory *ifac, gboolean s)
-{
-    flip(ifac, "/LaTeX", s);
-}
-
 static void model_save_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/File/Save to session as icon", s);
@@ -2424,11 +2445,6 @@ static void arma_x12_menu_mod (windata_t *vwin)
 
 static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 {
-    latex_menu_state(vwin->ifac, !pmod->errcode);
-
-    model_equation_copy_state(vwin->ifac, 
-			      !pmod->errcode && pmod->ci != NLS);
-
     set_tests_menu_state(vwin->ifac, pmod);
 
     /* disallow saving an already-saved model */
@@ -2636,7 +2652,18 @@ static void add_model_dataset_items (windata_t *vwin)
     }
 }
 
-/* .................................................................. */
+static void add_model_tex_items (windata_t *vwin)
+{
+    int i, n = sizeof model_tex_items / sizeof model_tex_items[0];
+    MODEL *pmod = (MODEL *) vwin->data;
+
+    for (i=0; i<n; i++) {
+	gtk_item_factory_create_item(vwin->ifac, &model_tex_items[i], 
+				     vwin, 1);
+    }  
+
+    model_tex_equation_state(vwin->ifac, !pmod->errcode && pmod->ci != NLS);
+}
 
 static void add_vars_to_plot_menu (windata_t *vwin)
 {
@@ -2704,8 +2731,6 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	}	
     }
 }
-
-/* .................................................................. */
 
 static void plot_dummy_call (gpointer data, guint v, GtkWidget *widget)
 {
@@ -2781,8 +2806,6 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
     g_free(radiopath);
 }
 
-/* ........................................................... */
-
 static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
@@ -2850,8 +2873,6 @@ static void add_x12_output_menu_item (windata_t *vwin)
     gtk_item_factory_create_item(vwin->ifac, &x12item, vwin, 1);
     g_free(x12item.path);
 }
-
-/* ........................................................... */
 
 static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
 {
@@ -2952,6 +2973,15 @@ static void add_var_menu_items (windata_t *vwin)
 #else
 	    gtk_object_set_data(GTK_OBJECT(w), "targ", GINT_TO_POINTER(i));
 #endif
+	}
+    }
+
+    if (latex_is_ok()) {
+	int n = sizeof var_tex_items / sizeof var_tex_items[0];
+
+	for (i=0; i<n; i++) {
+	    gtk_item_factory_create_item(vwin->ifac, &var_tex_items[i], 
+					 vwin, 1);
 	}
     }
 }

@@ -1704,7 +1704,7 @@ static void print_freq_dist_label (char *s, int dist, double x, double y)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int plot_freq (FREQDIST *freq, DistCode dist)
+int plot_freq (FreqDist *freq, DistCode dist)
 {
     double alpha = 0.0, beta = 0.0, lambda = 1.0;
     FILE *fp = NULL;
