@@ -515,6 +515,32 @@ static int reallocate_markers (DATAINFO *pdinfo, int n)
     return 0;
 }
 
+static void 
+maybe_extend_trend (double **Z, const DATAINFO *pdinfo, int oldn)
+{
+    int i, t;
+
+    for (i=1; i<pdinfo->v; i++) {
+	int trend = 0;
+
+	if (!strcmp(pdinfo->varname[i], "time") ||
+	    !strcmp(pdinfo->varname[i], "index")) {
+	    trend = 1;
+	    for (t=0; t<oldn; t++) {
+		if (Z[i][t] != t + 1) {
+		    trend = 0;
+		    break;
+		}
+	    }
+	    if (trend) {
+		for (t=oldn; t<pdinfo->n; t++) {
+		    Z[i][t] = t + 1;
+		}
+	    }
+	}
+    }
+}
+
 /**
  * dataset_add_observations:
  * @newobs: number of observations to add.
@@ -531,6 +557,7 @@ static int reallocate_markers (DATAINFO *pdinfo, int n)
 int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo)
 {
     double *x;
+    int oldn = pdinfo->n;
     int i, t, bign;
 
     if (newobs <= 0) return 0;
@@ -554,6 +581,9 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo)
 	if (reallocate_markers(pdinfo, bign)) {
 	    return E_ALLOC;
 	}
+	for (t=oldn; t<bign; t++) {
+	    sprintf(pdinfo->S[t], "%d", t + 1);
+	}
     }
     
     if (pdinfo->t2 == pdinfo->n - 1) {
@@ -561,6 +591,8 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo)
     }
 
     pdinfo->n = bign;
+
+    maybe_extend_trend(*pZ, pdinfo, oldn);
 
     /* does daily data need special handling? */
     ntodate(pdinfo->endobs, bign - 1, pdinfo);

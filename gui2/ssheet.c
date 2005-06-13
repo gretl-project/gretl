@@ -320,19 +320,25 @@ spreadsheet_scroll_to_foot (Spreadsheet *sheet, int row, int col)
     g_free(pathstr);
 }
 
-static void real_add_new_obs (Spreadsheet *sheet, const char *obsname)
+static void 
+real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     gint pointpath = 0;
+    gint oldrows = sheet->datarows;
     GtkListStore *store;
+    gchar *pathstr = NULL;
     GtkTreeIter iter;
     gchar rowlabel[10];
-    gint i;
+    gint i, j;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
 
     if (sheet->point == SHEET_AT_END) {
-	gtk_list_store_append(store, &iter);
+	pathstr = g_strdup_printf("%d", sheet->datarows - 1);
+	for (i=0; i<n; i++) {
+	    gtk_list_store_append(store, &iter);
+	}
     } else if (sheet->point == SHEET_AT_POINT) {
 	GtkTreePath *path;
 
@@ -345,18 +351,34 @@ static void real_add_new_obs (Spreadsheet *sheet, const char *obsname)
 	return;
     }
 
-    sheet->datarows += 1;
-
     if (datainfo->markers && obsname != NULL) {
 	gtk_list_store_set(store, &iter, 0, obsname, -1);
     } else if (sheet->point == SHEET_AT_END) {
-	get_full_obs_string(rowlabel, sheet->datarows - 1, datainfo);
-	gtk_list_store_set(store, &iter, 0, rowlabel, -1);
+	gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(store), &iter,
+					    pathstr);
+	for (j=0; j<n; j++) {
+	    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+	    get_full_obs_string(rowlabel, sheet->datarows + j, datainfo);
+	    gtk_list_store_set(store, &iter, 0, rowlabel, -1);
+	}
     }
 
-    for (i=1; i<=sheet->datacols; i++) {
-	gtk_list_store_set(store, &iter, i, "", -1);
-    }
+    sheet->datarows += n;
+
+    if (pathstr != NULL) {
+	gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(store), &iter,
+					    pathstr);
+	for (j=0; j<n; j++) {
+	    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+	    for (i=1; i<=sheet->datacols; i++) {
+		gtk_list_store_set(store, &iter, i, "", -1);
+	    }	
+	}
+    } else {
+	for (i=1; i<=sheet->datacols; i++) {
+	    gtk_list_store_set(store, &iter, i, "", -1);
+	}
+    }	
 
     if (sheet->point == SHEET_AT_POINT && !datainfo->markers) {
 	for (i=pointpath; i<sheet->datarows; i++) {
@@ -367,15 +389,19 @@ static void real_add_new_obs (Spreadsheet *sheet, const char *obsname)
     } 
 
     if (sheet->point == SHEET_AT_END) {
-	spreadsheet_scroll_to_foot(sheet, sheet->datarows - 1, 1);
+	spreadsheet_scroll_to_foot(sheet, oldrows, 1);
     } else {
-	gchar *pathstr = g_strdup_printf("%d", pointpath);
-	GtkTreePath *path = gtk_tree_path_new_from_string(pathstr);
+	GtkTreePath *path;
 	GtkTreeIter insiter;
 
+	pathstr = g_strdup_printf("%d", pointpath);
+	path = gtk_tree_path_new_from_string(pathstr);
 	gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &insiter, path);
 	gtk_list_store_set(store, &insiter, 1, "", -1);
 	gtk_tree_path_free(path);
+    }
+
+    if (pathstr != NULL) {
 	g_free(pathstr);
     }
 
@@ -417,7 +443,7 @@ static void name_new_obs (GtkWidget *widget, dialog_t *dlg)
     strncat(obsmarker, buf, OBSLEN - 1);
 
     close_dialog(dlg);
-    real_add_new_obs(sheet, obsmarker);
+    real_add_new_obs(sheet, obsmarker, 1);
 }
 
 static void name_var_dialog (Spreadsheet *sheet) 
@@ -526,8 +552,14 @@ static void sheet_add_obs_callback (gpointer data, guint where, GtkWidget *w)
 
     if (datainfo->markers) {
 	new_case_dialog(sheet);
+    } else if (where == SHEET_AT_END) {
+	int n = add_obs_dialog();
+
+	if (n > 0) {
+	    real_add_new_obs(sheet, NULL, n);
+	}
     } else {
-	real_add_new_obs(sheet, NULL);
+	real_add_new_obs(sheet, NULL, 1);
     }
 }
 

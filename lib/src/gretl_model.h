@@ -150,9 +150,11 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
 
 int gretl_model_get_depvar (const MODEL *pmod);
 
+int *gretl_model_get_x_list (const MODEL *pmod);
+
 int gretl_arma_model_get_AR_order (const MODEL *pmod);
+
 int gretl_arma_model_get_MA_order (const MODEL *pmod);
-int *gretl_arma_model_get_x_list (const MODEL *pmod);
 
 int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 

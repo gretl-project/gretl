@@ -2231,10 +2231,10 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
 /**
  * matrix_print_corr:
  * @corr: gretl correlation matrix
+ * @pdinfo: dataset information.
  * @prn: gretl printing struct.
  *
- * Prints a gretl correlation matrix.
- *
+ * Prints a gretl correlation matrix to @prn.
  */
 
 void matrix_print_corr (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)

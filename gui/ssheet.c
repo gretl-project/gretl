@@ -179,21 +179,28 @@ static void sheet_add_obs (void)
 {
     GtkSheet *sheet = GTK_SHEET(gretlsheet);
     char rowlabel[OBSLEN];
+    int i, n = 1;
 
     *newobsmarker = '\0';
 
     if (datainfo->markers) {
 	new_case_dialog();
+    } else {
+	n = add_obs_dialog();
     }
 
+    if (n <= 0) return;
+
     if (!datainfo->markers || *newobsmarker != '\0') {
-	gtk_sheet_add_row(sheet, 1);
-	get_full_obs_string(rowlabel, numrows, datainfo);
-	gtk_sheet_row_button_add_label(sheet, numrows, rowlabel);
-	gtk_sheet_set_row_title(sheet, numrows, rowlabel);
+	for (i=0; i<n; i++) {
+	    gtk_sheet_add_row(sheet, 1);
+	    get_full_obs_string(rowlabel, numrows + i, datainfo);
+	    gtk_sheet_row_button_add_label(sheet, numrows + i, rowlabel);
+	    gtk_sheet_set_row_title(sheet, numrows + i, rowlabel);
+	}
 	gtk_sheet_set_active_cell(sheet, numrows, 0);
 	gtk_sheet_moveto(sheet, numrows, 0, 0.8, 0.0);
-	numrows++;
+	numrows += n;
 	sheet_modified = 1;
     }
 }

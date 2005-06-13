@@ -1282,36 +1282,45 @@ void do_remove_markers (gpointer data, guint u, GtkWidget *w)
 
 /* ........................................................... */
 
-static gretlopt get_gui_forecast_option (const MODEL *pmod,
-					 int t2, int *cancel)
+static gretlopt 
+get_gui_forecast_option (MODEL *pmod, int t1, int t2, int *pre_n, 
+			 int *cancel)
 {
+    const char *pre_txt = N_("Number of pre-forecast observations "
+			     "to graph");
     const char *fcast_opts[] = {
 	N_("automatic forecast (dynamic out of sample)"),
 	N_("dynamic forecast"),
 	N_("static forecast")
     };
     const char **opts;
-    int dyn_ok, auto_ok, nopts;
     gretlopt ret = OPT_NONE;
-    int fopt;
+    int nopts, fopt;
 
     *cancel = 0;
 
-    forecast_options_for_model(pmod, t2, datainfo, 
-			       &dyn_ok, &auto_ok);
-
-    if (dyn_ok && auto_ok) {
+    if (t1 < pmod->t2 && t2 > pmod->t2) {
+	/* forecast is partly in, partly out of sample */
 	opts = fcast_opts;
 	nopts = 3;
-    } else if (dyn_ok) {
+    } else {
+	/* straight dynamic/static choice */
 	opts = fcast_opts + 1;
 	nopts = 2;
-    } else {
-	return ret;
-    }
+    } 
 
-    fopt = radio_dialog(_("forecast options"), opts, nopts, 
-			0, FCASTERR);
+    /* if we have t1 > pmod->t1, offer choice of number of
+       pre-forecast observation to display */
+
+    if (t1 > pmod->t1) {
+	*pre_n = t1 - pmod->t1;
+	fopt = radio_dialog_with_spinner(_("forecast options"), opts, nopts, 
+					 0, FCASTERR,
+					 pre_n, _(pre_txt), 0, t1 - pmod->t1);
+    } else {
+	fopt = radio_dialog(_("forecast options"), opts, nopts, 
+			    0, FCASTERR);
+    }
 
     if (fopt < 0) {
 	*cancel = 1;
@@ -1330,10 +1339,20 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
     int t1 = 0, t2 = datainfo->n - 1;
+    int dyn_ok, add_obs_ok, pre_n = 0;
     gretlopt opt = OPT_NONE;
     FITRESID *fr;
     PRN *prn;
     int resp, err;
+
+    /* try to figure which options might be applicable */
+    forecast_options_for_model(pmod, datainfo, &dyn_ok, &add_obs_ok);
+
+    /* if there are spare obs available, default to an
+       out-of-sample forecast */
+    if (pmod->t2 + 1 < datainfo->n) {
+	t1 = pmod->t2 + 1;
+    }    
 
     resp = get_obs_dialog(_("gretl: forecast"), 
 			  _("Forecast range"),
@@ -1344,9 +1363,11 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	return;
     }
 
-    opt = get_gui_forecast_option(pmod, t2, &err);
-    if (err) {
-	return;
+    if (dyn_ok) {
+	opt = get_gui_forecast_option(pmod, t1, t2, &pre_n, &err);
+	if (err) {
+	    return;
+	}
     }
 
     ntodate(startobs, t1, datainfo);
@@ -1359,7 +1380,7 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	return;
     }
 
-    fr = get_forecast(cmdline, pmod, &Z, datainfo, opt);
+    fr = get_forecast(pmod, t1, t2, pre_n, &Z, datainfo, opt);
 
     if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));
@@ -3437,6 +3458,21 @@ void add_index (gpointer data, guint tm, GtkWidget *widget)
     }
 }
 
+void add_obs (gpointer data, guint u, GtkWidget *widget)
+{
+    int n = add_obs_dialog();
+    int err = 0;
+
+    if (n > 0) {
+	err = dataset_add_observations(n, &Z, datainfo);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    mark_dataset_as_modified();
+	}
+    }
+}
+
 void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 {
     gint err = 0;
@@ -3982,6 +4018,7 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
     if (bufopen(&prn)) return;
 
     fr = get_fit_resid(pmod, (const double **) Z, datainfo);
+
     if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));
 	gretl_print_destroy(prn);

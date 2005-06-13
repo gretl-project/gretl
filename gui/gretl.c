@@ -364,6 +364,7 @@ GtkItemFactoryEntry data_items[] = {
       SETSEED, NULL },
     { N_("/Data/Add variables/sep2"), NULL, NULL, 0, "<Separator>" },
     { N_("/Data/Add variables/Define _new variable..."), NULL, gretl_callback, GENR, NULL },
+    { N_("/Data/Add observations"), NULL, add_obs, 0, NULL },
     { N_("/Data/Refresh window"), NULL, refresh_data, 0, NULL },
 
     /* Sample menu */

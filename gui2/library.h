@@ -189,6 +189,8 @@ void add_dummies (gpointer data, guint action, GtkWidget *widget);
 
 void add_index (gpointer data, guint tm, GtkWidget *widget);
 
+void add_obs (gpointer data, guint u, GtkWidget *widget);
+
 void add_logs_etc (gpointer data, guint action, GtkWidget *widget);
 
 int add_fit_resid (MODEL *pmod, int code, int undo);

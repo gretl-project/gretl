@@ -517,21 +517,20 @@ int gretl_model_get_depvar (const MODEL *pmod)
 }
 
 /**
- * gretl_arma_model_get_x_list:
+ * gretl_model_get_x_list:
  * @pmod: pointer to gretl model.
  *
  * Returns: an allocated copy of the list of independent
- * variables included in @pmod, or %NULL if @pmod is not 
- * an ARMA model.
+ * variables included in @pmod, or %NULL on failure. 
  */
 
-int *gretl_arma_model_get_x_list (const MODEL *pmod)
+int *gretl_model_get_x_list (const MODEL *pmod)
 {
     int *list = NULL;
+    int i, nx;
 
     if (pmod->ci == ARMA) {
-	int i, nx = pmod->list[0] - 4 + pmod->ifc;
-
+	nx = pmod->list[0] - 4 + pmod->ifc;
 	if (nx > 0) {
 	    list = gretl_list_new(nx);
 	    if (list != NULL) {
@@ -548,14 +547,21 @@ int *gretl_arma_model_get_x_list (const MODEL *pmod)
 	    }
 	}
     } else if (pmod->ci == GARCH) {
-	int i, nx = pmod->list[0] - 4;
-
+	nx = pmod->list[0] - 4;
 	if (nx > 0) {
 	    list = gretl_list_new(nx);
 	    if (list != NULL) {
 		for (i=1; i<=list[0]; i++) {
 		    list[i] = pmod->list[i + 4];
 		}
+	    }
+	}
+    } else if (pmod->ci != NLS) {
+	nx = pmod->ncoeff;
+	list = gretl_list_new(nx);
+	if (list != NULL) {
+	    for (i=1; i<=list[0]; i++) {
+		list[i] = pmod->list[i + 1];
 	    }
 	}
     }

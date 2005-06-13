@@ -28,6 +28,9 @@
 #include "dlgutils.h"
 #include "database.h"
 
+static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
+				  int spinmin, int spinmax);
+
 void menu_exit_check (GtkWidget *w, gpointer data)
 {
     int ret = exit_check(w, NULL, data);
@@ -268,6 +271,20 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 
     return FALSE;
 }
+
+#ifdef OLD_GTK
+static GtkWidget *
+gtk_spin_button_new_with_range (double lo, double hi, double step)
+{
+    GtkAdjustment *adj;
+    GtkWidget *sb;
+
+    adj = (GtkAdjustment *) gtk_adjustment_new(lo, lo, hi, step, 10 * step, 0);
+    sb = gtk_spin_button_new(adj, 0, 0);
+
+    return sb;
+}
+#endif
 
 static void vbox_add_hsep (GtkWidget *vbox)
 {
@@ -1685,6 +1702,68 @@ int get_obs_dialog (const char *title, const char *text,
     return ret;
 }
 
+struct add_obs_info {
+    GtkWidget *dlg;
+    GtkWidget *spin;
+    int val;
+};
+
+static gboolean set_add_obs (GtkWidget *w, struct add_obs_info *ainfo)
+{
+#ifdef OLD_GTK
+    ainfo->val = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ainfo->spin));
+#else
+    ainfo->val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(ainfo->spin));
+#endif
+    gtk_widget_destroy(ainfo->dlg);
+
+    return TRUE;
+}
+
+int add_obs_dialog (void)
+{
+    struct add_obs_info ainfo;
+    GtkWidget *hbox;
+    GtkWidget *tmp;
+
+    ainfo.val = 1;
+
+    ainfo.dlg = gtk_dialog_new();
+    gtk_window_set_title(GTK_WINDOW(ainfo.dlg), _("Add observations"));
+    set_dialog_border_widths(ainfo.dlg);
+    gtk_window_set_position(GTK_WINDOW(ainfo.dlg), GTK_WIN_POS_MOUSE);
+    dialog_set_no_resize(ainfo.dlg);
+
+    g_signal_connect(G_OBJECT(ainfo.dlg), "destroy", 
+		     G_CALLBACK(gtk_main_quit), NULL);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Number of observations to add:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+
+    ainfo.spin = gtk_spin_button_new_with_range(1, 100, 1);
+    gtk_box_pack_start(GTK_BOX(hbox), ainfo.spin, TRUE, TRUE, 5);
+    
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ainfo.dlg)->vbox), 
+		       hbox, TRUE, TRUE, 0);
+
+    /* Create the "OK" button */
+    tmp = ok_button(GTK_DIALOG(ainfo.dlg)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(set_add_obs), &ainfo);
+    gtk_widget_grab_default(tmp);
+
+    /* And a Cancel button */
+    cancel_options_button(GTK_DIALOG(ainfo.dlg)->action_area, ainfo.dlg, 
+			  &ainfo.val);
+
+    gtk_widget_show_all(ainfo.dlg);
+    gretl_set_window_modal(ainfo.dlg);
+    gtk_main();
+
+    return ainfo.val;
+}
+
 static GList *compose_var_selection_list (const int *list)
 {
     GList *varlist = NULL;
@@ -1823,21 +1902,6 @@ static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
 
     gtk_widget_destroy(GTK_WIDGET(opts->dlg));
 }
-
-#ifdef OLD_GTK
-static GtkWidget *
-gtk_spin_button_new_with_range (double lo, double hi, double step)
-{
-    GtkAdjustment *adj;
-    GtkWidget *sb;
-
-    adj = (GtkAdjustment *) gtk_adjustment_new(lo, lo, hi, step, 10 * step, 0);
-    sb = gtk_spin_button_new(adj, 0, 0);
-
-    return sb;
-}
-
-#endif
 
 void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 {
@@ -2270,19 +2334,19 @@ static void set_radio_opt (GtkWidget *w, int *opt)
     *opt = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 }
 
-int radio_dialog (const char *title, const char **opts, 
-		  int nopts, int deflt, int helpcode)
+int real_radio_dialog (const char *title, const char **opts, 
+		       int nopts, int deflt, int helpcode,
+		       int *spinvar, const char *spintxt,
+		       int spinmin, int spinmax)
 {
     GtkWidget *dialog;
-    GtkWidget *tempwid;
+    GtkWidget *tmp;
     GtkWidget *button = NULL;
     GSList *group = NULL;
     int i, ret = -1;
 
     dialog = gretl_dialog_new(title);
-
     dialog_set_no_resize(dialog);
-
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(dialog_unblock), NULL);
 
@@ -2295,8 +2359,8 @@ int radio_dialog (const char *title, const char **opts,
 	}
 
 	button = gtk_radio_button_new_with_label(group, _(opts[i]));
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
-			    button, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			   button, TRUE, TRUE, 0);
 
 	if (deflt == i) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
@@ -2307,17 +2371,24 @@ int radio_dialog (const char *title, const char **opts,
 			 G_CALLBACK(set_radio_opt), &ret);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(i));
+	gtk_widget_show(button);
+    }
 
-	gtk_widget_show (button);
+    /* create spinner if wanted */
+    if (spinvar != NULL) {
+	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax);
+	gtk_widget_show(tmp);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+			   tmp, TRUE, TRUE, 0);
     }
 
     /* Create the "OK" button */
-    tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+    tmp = ok_button(GTK_DIALOG(dialog)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
-    gtk_widget_grab_default (tempwid);
-    gtk_widget_show (tempwid);
+    gtk_widget_grab_default(tmp);
+    gtk_widget_show(tmp);
 
     /* Create the "Cancel" button */
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
@@ -2332,6 +2403,22 @@ int radio_dialog (const char *title, const char **opts,
     gtk_main();
 
     return ret;
+}
+
+int radio_dialog (const char *title, const char **opts, 
+		  int nopts, int deflt, int helpcode)
+{
+    return real_radio_dialog(title, opts, nopts, deflt, helpcode,
+			     NULL, NULL, 0, 0);
+}
+
+int radio_dialog_with_spinner (const char *title, const char **opts, 
+			       int nopts, int deflt, int helpcode,
+			       int *spinvar, const char *spintxt,
+			       int spinmin, int spinmax)
+{
+    return real_radio_dialog(title, opts, nopts, deflt, helpcode,
+			     spinvar, spintxt, spinmin, spinmax);
 }
 
 /* selections in relation to kernel density estimation */
@@ -2440,18 +2527,17 @@ int density_dialog (int vnum, double *bw)
     return ret;
 }
 
-static void option_spin_set (GtkWidget *w, int *val)
+static void option_spin_set (GtkWidget *w, int *ivar)
 {
 #ifndef OLD_GTK
-    *val = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w));
+    *ivar = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w));
 #else
-    *val = (int) GTK_ADJUSTMENT(w)->value;
+    *ivar = (int) GTK_ADJUSTMENT(w)->value;
 #endif
 }
 
-static GtkWidget *option_spinbox (const char *spintext,
-				  int spinmin, int spinmax, 
-				  int *spinval)
+static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
+				  int spinmin, int spinmax)
 {
     GtkWidget *hbox;
     GtkWidget *label;
@@ -2459,21 +2545,17 @@ static GtkWidget *option_spinbox (const char *spintext,
     GtkObject *adj;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    label = gtk_label_new(spintext);
+
+    label = gtk_label_new(spintxt);
     gtk_widget_show(label);
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-    adj = gtk_adjustment_new(*spinval, spinmin, spinmax, 1, 1, 1);
+    adj = gtk_adjustment_new(*spinvar, spinmin, spinmax, 1, 1, 1);
     button = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_widget_show(button);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(button), "value-changed",
-		     G_CALLBACK(option_spin_set), spinval);
-#else
-    gtk_signal_connect(GTK_OBJECT(adj), "value-changed",
-		       GTK_SIGNAL_FUNC(option_spin_set), spinval);
-#endif
+		     G_CALLBACK(option_spin_set), spinvar);
 
     return hbox;
 }
@@ -2489,7 +2571,7 @@ static void set_checks_opt (GtkWidget *w, int *active)
    a spinner with numerical values */
 
 int checks_dialog (const char *title, const char **opts, int nopts, 
-		   int *active, int *spinval, const char *spintext, 
+		   int *active, int *spinvar, const char *spintxt, 
 		   int spinmin, int spinmax, int helpcode)
 {
     GtkWidget *dialog;
@@ -2505,8 +2587,8 @@ int checks_dialog (const char *title, const char **opts, int nopts,
 		     G_CALLBACK(dialog_unblock), NULL);
 
     /* create spinner if wanted */
-    if (spinval != NULL) {
-	tempwid = option_spinbox(spintext, spinmin, spinmax, spinval);
+    if (spinvar != NULL) {
+	tempwid = option_spinbox(spinvar, spintxt, spinmin, spinmax);
 	gtk_widget_show(tempwid);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
 			   tempwid, TRUE, TRUE, 0);
@@ -2551,11 +2633,11 @@ int checks_dialog (const char *title, const char **opts, int nopts,
     return ret;
 }
 
-int spin_dialog (const char *title, int *spinval, const char *spintext, 
+int spin_dialog (const char *title, int *spinvar, const char *spintxt, 
 		 int spinmin, int spinmax, int helpcode)
 {
     return checks_dialog(title, NULL, 0, NULL,
-			 spinval, spintext,
+			 spinvar, spintxt,
 			 spinmin, spinmax, helpcode);
 }
 

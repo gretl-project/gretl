@@ -1354,7 +1354,13 @@ int text_print_forecast (const FITRESID *fr,
 
     pputc(prn, '\n');
 
-    for (t=0; t<fr->nobs; t++) {
+    if (do_errs) {
+	for (t=0; t<fr->pre_n; t++) {
+	    maxerr[t] = NADBL;
+	}
+    }
+
+    for (t=fr->pre_n; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
 	gretl_printxn(fr->actual[t], 15, prn);
 

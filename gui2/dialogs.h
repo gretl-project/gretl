@@ -67,17 +67,24 @@ int density_dialog (int vnum, double *bw);
 int radio_dialog (const char *title, const char **opts, 
 		  int nopts, int deflt, int helpcode);
 
+int radio_dialog_with_spinner (const char *title, const char **opts, 
+			       int nopts, int deflt, int helpcode,
+			       int *spinvar, const char *spintxt,
+			       int spinmin, int spinmax);
+
 int checks_dialog (const char *title, const char **opts, int nopts, 
-		   int *active, int *spinval, const char *spintext, 
+		   int *active, int *spinvar, const char *spintxt, 
 		   int spinmin, int spinmax, int helpcode);
 
-int spin_dialog (const char *title, int *spinval, const char *spintext, 
+int spin_dialog (const char *title, int *spinvar, const char *spintxt, 
 		 int spinmin, int spinmax, int helpcode);
 
 int get_obs_dialog (const char *title, const char *text,
 		    const char *t1str, const char *t2str,
 		    int t1min, int t1max, int *t1, 
 		    int t2min, int t2max, int *t2);
+
+int add_obs_dialog (void);
 
 void compute_default_ts_info (DATAINFO *dwinfo, int newdata);
 

@@ -292,31 +292,30 @@ static void rtf_outxx (double xx, PRN *prn)
     }
 }
 
-static void rtf_corr_row (int lo, PRN *prn)
+static void rtf_vmat_row (int lo, PRN *prn)
 {
+    int i, w = 1400;
+    int cmax = (lo + 1 > 6)? 6 : lo + 1;
+
     pputs(prn, "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262");
 
-    if (lo == 2) {
-	pputs(prn, "\\cellx1500\\cellx3000\\cellx3500\n");
-    }
-    else if (lo == 3) {
-	pputs(prn, "\\cellx1500\\cellx3000\\cellx4500\\cellx5000\n");
-    }
-    else if (lo == 4) {
-	pputs(prn, "\\cellx1500\\cellx3000\\cellx4500\\cellx6000"
-		"\\cellx6500\n");
-    }
-    else {
-	pputs(prn, "\\cellx1500\\cellx3000\\cellx4500\\cellx6000"
-		"\\cellx7500\\cellx8000\n");
+    for (i=1; i<=cmax; i++) {
+	pprintf(prn, "\\cellx%d", w * i);
     }
 
-    pputs(prn, "\\intbl ");
+    pputs(prn, "\n\\intbl ");
 }
 
 static void rtf_table_pad (int pad, PRN *prn)
 {
     while (pad--) pputs(prn, "\\cell ");
+}
+
+static void rtf_vmat_blank_row (int lo, int n, PRN *prn)
+{
+    rtf_vmat_row(lo, prn);
+    while (n--) pputs(prn, "\\cell ");
+    pputs(prn, "\\intbl \\row\n");
 }
 
 static void
@@ -360,7 +359,7 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 
 	pad = (lo > FIELDS)? FIELDS - p : lo - p;
 
-	rtf_corr_row(lo, prn);
+	rtf_vmat_row(lo, prn);
 
 	if (pad) rtf_table_pad(pad, prn);
 
@@ -373,7 +372,9 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 	/* print rectangular part, if any, of matrix */
 	for (j=0; j<nf; j++) {
 	    pputs(prn, "\\intbl "); 
-	    if (pad) rtf_table_pad(pad, prn);
+	    if (pad) {
+		rtf_table_pad(pad, prn);
+	    }
 	    for (k=0; k<p; k++) {
 		idx = ijton(j, nf+k, lo);
 		if (vmat->ci == CORR) {
@@ -400,6 +401,8 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 	    }
 	    pprintf(prn, "\\ql %s\\cell \\intbl \\row\n", vmat->names[ij2]);
 	}
+	
+	rtf_vmat_blank_row(lo, pad + p, prn);
     }
 
     pputs(prn, "}}\n");
@@ -717,7 +720,7 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
     pprintf(prn, "%s & %s & \\multicolumn{1}{c}{%s} \\\\ [4pt] \n",
 	    I_("Obs"), vname, I_("prediction"));
 
-    for (t=0; t<fr->nobs; t++) {
+    for (t=fr->pre_n; t<fr->nobs; t++) {
 	tex_dcolumn_double(fr->actual[t], actual);
 	tex_dcolumn_double(fr->fitted[t], fitted);
 	tex_print_obs_marker(t + fr->t1, pdinfo, prn);
@@ -739,9 +742,13 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     int t;
 
     pputs(prn, "\\begin{center}\n");
-    pprintf(prn, I_("For 95 percent confidence intervals, "
-		    "$t(%d, .025) = %.3f$\n\n"), 
-	    fr->df, fr->tval);
+    if (fr->model_ci == ARMA) {
+	pprintf(prn, _("For 95%% confidence intervals, $z(.025) = %.2f$\n\n"), 
+		1.96);
+    } else {
+	pprintf(prn, I_("For 95%% confidence intervals, $t(%d, .025) = %.3f$\n\n"), 
+		fr->df, fr->tval);
+    }
     pputs(prn, "\\end{center}\n");
 
     pputs(prn, "%% The table below needs the \"dcolumn\" and "
@@ -770,7 +777,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     pputs(prn, "& & & & \\multicolumn{1}{c}{low} & "
 	  "\\multicolumn{1}{c}{high} \\\\\n");
 
-    for (t=0; t<fr->nobs; t++) {
+    for (t=fr->pre_n; t<fr->nobs; t++) {
 	double xlo, xhi;
 
 	if (na(fr->sderr[t])) {
@@ -817,7 +824,7 @@ static void rtfprint_fcast_without_errs (const FITRESID *fr,
 	    " \\intbl \\row\n", 
 	    I_("Obs"), fr->depvar, I_("prediction")); 
 
-    for (t=0; t<fr->nobs; t++) {
+    for (t=fr->pre_n; t<fr->nobs; t++) {
 	pputs(prn, "\\qr ");
 	print_obs_marker(t + fr->t1, pdinfo, prn);
 	pputs(prn, "\\cell"); 
@@ -836,10 +843,13 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
     double maxerr;
     char tmp[128];
 
-    sprintf(tmp, I_("For 95 percent confidence intervals, "
-		    "t(%d, .025) = %.3f"), 
-	    fr->df, fr->tval);
-
+    if (fr->model_ci == ARMA) {
+	sprintf(tmp, I_("For 95%% confidence intervals, z(.025) = %.2f"), 
+		1.96);
+    } else {
+	sprintf(tmp, I_("For 95%% confidence intervals, t(%d, .025) = %.3f"), 
+		fr->df, fr->tval);
+    }
     pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n\\par\n", tmp);
 
     pputs(prn, "{" FCE_ROW "\\intbl ");
@@ -855,7 +865,7 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 	    /* xgettext:no-c-format */
 	    I_("95% confidence interval"));
 
-    for (t=0; t<fr->nobs; t++) {
+    for (t=fr->pre_n; t<fr->nobs; t++) {
 	pputs(prn, "\\qr ");
 	print_obs_marker(t + fr->t1, pdinfo, prn);
 	pputs(prn, "\\cell"); 
