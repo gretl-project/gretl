@@ -40,5 +40,5 @@ void set_gretl_tex_preamble (void);
 
 void gretl_tex_preamble (PRN *prn, int ams);
 
-
+void tex_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 

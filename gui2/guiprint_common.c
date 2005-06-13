@@ -551,6 +551,23 @@ void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     pprintf(prn, "\\qc %s\\par\n\\par\n", tmp);
 }
 
+static void tex_print_x (double x, int pmax, PRN *prn)
+{
+    if (x < 0) {
+	pputs(prn, "$-$");
+    } 
+
+    x = fabs(x);
+
+    if (pmax != PMAX_NOT_AVAILABLE) {
+	pprintf(prn, "%.*f", pmax, x);
+    } else {
+	pprintf(prn, "%g", x);
+    }
+
+    pputs(prn, " & ");
+}
+
 static void texprint_fit_resid (const FITRESID *fr, 
 				const DATAINFO *pdinfo, 
 				PRN *prn)
@@ -569,41 +586,38 @@ static void texprint_fit_resid (const FITRESID *fr,
 	    " \\multicolumn{1}{c}{%s} & \n"
 	    "  \\multicolumn{1}{c}{%s} & \n"
 	    "   \\multicolumn{1}{c}{%s}\\\\\n",
-	    vname, I_("fitted"), I_("residuals"));
+	    vname, I_("fitted"), I_("residual"));
 
     for (t=0; t<fr->nobs; t++) {
-	print_obs_marker(t + fr->t1, pdinfo, prn);
+	tex_print_obs_marker(t + fr->t1, pdinfo, prn);
 	pputs(prn, " & ");
 
 	if (na(fr->actual[t])) {
-	    pputs(prn, "\\\\\n");
+	    ;
 	} else if (na(fr->fitted[t])) {
-	    pprintf(prn, "%13.*f \\\\\n", fr->pmax, fr->actual[t]);
+	    tex_print_x(fr->actual[t], fr->pmax, prn);
 	} else {
 	    int ast;
 
 	    xx = fr->actual[t] - fr->fitted[t];
 	    ast = (fabs(xx) > 2.5 * fr->sigma);
 	    if (ast) anyast = 1;
-	    if (fr->pmax != PMAX_NOT_AVAILABLE) {
-		pprintf(prn, "%13.*f & %13.*f & %13.*f & %s \\\\\n", 
-			fr->pmax, fr->actual[t],
-			fr->pmax, fr->fitted[t], fr->pmax, xx,
-			(ast)? " *" : "");
-	    } else {
-		pprintf(prn, "%13g & %13g & %13g & %s \\\\\n", 
-			fr->actual[t],
-			fr->fitted[t], xx,
-			(ast)? " *" : "");
+	    tex_print_x(fr->actual[t], fr->pmax, prn);
+	    tex_print_x(fr->fitted[t], fr->pmax, prn);
+	    tex_print_x(xx, fr->pmax, prn);
+	    if (ast) {
+		pputs(prn, " *");
 	    }
 	}
+	pputs(prn, " \\\\\n");
     }
 
-    pputs(prn, "\\end{longtable}\n"
-	  "\\end{center}\n\n");
+    pputs(prn, "\\end{longtable}\n\\end{center}\n\n");
 
-    if (anyast) pputs(prn, I_("\\textit{Note}: * denotes a residual "
-			      "in excess of 2.5 standard errors\n\n"));
+    if (anyast) {
+	pputs(prn, I_("\\textit{Note}: * denotes a residual "
+		      "in excess of 2.5 standard errors\n\n"));
+    }
 }
 
 #define FR_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
@@ -706,7 +720,7 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
     for (t=0; t<fr->nobs; t++) {
 	tex_dcolumn_double(fr->actual[t], actual);
 	tex_dcolumn_double(fr->fitted[t], fitted);
-	print_obs_marker(t + fr->t1, pdinfo, prn);
+	tex_print_obs_marker(t + fr->t1, pdinfo, prn);
 	pprintf(prn, " & %s & %s \\\\\n",
 		actual, fitted);
     }
@@ -771,7 +785,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	tex_dcolumn_double(fr->sderr[t], sderr);
 	tex_dcolumn_double(xlo, lo);
 	tex_dcolumn_double(xhi, hi);
-	print_obs_marker(t + fr->t1, pdinfo, prn);
+	tex_print_obs_marker(t + fr->t1, pdinfo, prn);
 	pprintf(prn, " & %s & %s & %s & %s & %s \\\\\n",
 		actual, fitted, sderr, lo, hi);
     }

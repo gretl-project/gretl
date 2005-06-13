@@ -677,3 +677,24 @@ int texprint (MODEL *pmod, const DATAINFO *pdinfo,
 
     return err;
 }
+
+/**
+ * tex_print_obs_marker:
+ * @t: observation number.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ *
+ * Print a string (label, date or obs number) representing the given @t.
+ */
+
+void tex_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
+{
+    if (pdinfo->markers) { 
+	pprintf(prn, "\\texttt{%s} ", pdinfo->S[t]); 
+    } else {
+	char tmp[OBSLEN]; 
+
+	ntodate(tmp, t, pdinfo);
+	pprintf(prn, "%8s ", tmp);
+    }
+}
