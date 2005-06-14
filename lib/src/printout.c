@@ -1068,8 +1068,9 @@ static void print_scalar (double x, const char *vname,
  * @list: list of variables to print.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @opt: if = OPT_O, print the data by observation (series in columns);
- *       if = OPT_T, print the data to 10 significant digits.
+ * @opt: if OPT_O, print the data by observation (series in columns);
+ *       if OPT_N, use simple obs numbers, not dates; 
+ *       if OPT_T, print the data to 10 significant digits.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list, from observations t1 to
@@ -1201,6 +1202,8 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 
 		if (sortvar && plist[0] == 1) {
 		    strcpy(obs_string, SORTED_MARKER(pdinfo, sortvar, t));
+		} else if (opt & OPT_N) {
+		    sprintf(obs_string, "%d", t + 1);
 		} else {
 		    get_obs_string(obs_string, t, pdinfo);
 		}
