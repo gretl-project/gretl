@@ -30,6 +30,7 @@
 
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 				  int spinmin, int spinmax);
+static void set_radio_opt (GtkWidget *w, int *opt);
 
 void menu_exit_check (GtkWidget *w, gpointer data)
 {
@@ -1479,24 +1480,37 @@ static struct range_setting *rset_new (guint code, gpointer p,
     return rset;
 }
 
+typedef enum {
+    SPIN_LABEL_NONE,
+    SPIN_LABEL_ABOVE,
+    SPIN_LABEL_INLINE
+} SpinLabelAlign;
+
 static GtkWidget *
 obs_spinbox (struct range_setting *rset, const char *label, 
 	     const char *t1str, const char *t2str,
 	     int t1min, int t1max, int *t1,
-	     int t2min, int t2max, int *t2)
+	     int t2min, int t2max, int *t2,
+	     SpinLabelAlign align)
 {
     GtkWidget *lbl;
     GtkWidget *vbox;
     GtkWidget *hbox;
     GtkObject *adj;
 
-    if (label != NULL) {
+    if (label != NULL && align == SPIN_LABEL_ABOVE) {
 	lbl = gtk_label_new(label);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   lbl, FALSE, FALSE, 5);
     }
 
-    hbox = gtk_hbox_new(TRUE, 5);
+    if (label != NULL && align == SPIN_LABEL_INLINE) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	lbl = gtk_label_new(label);
+	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+    } else {
+	hbox = gtk_hbox_new(TRUE, 5);
+    }
 
     /* spinner for t1 */
     vbox = gtk_vbox_new(FALSE, 5);
@@ -1608,7 +1622,8 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	hbox = obs_spinbox(rset, _("Set sample range"), 
 			   _("Start:"), _("End:"),
 			   0, datainfo->n - 1, &datainfo->t1,
-			   0, datainfo->n - 1, &datainfo->t2);
+			   0, datainfo->n - 1, &datainfo->t2,
+			   SPIN_LABEL_ABOVE);
 
 	/* pack the spinner apparatus */
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
@@ -1652,7 +1667,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 
 /* general purpose dialog box for getting from the user either one or
    two observations (e.g. for setting the break point in a Chow test,
-   or setting the start and end of a forecast range)
+   or setting the start and end of a sample range)
 */
 
 int get_obs_dialog (const char *title, const char *text,
@@ -1676,7 +1691,8 @@ int get_obs_dialog (const char *title, const char *text,
 
     tempwid = obs_spinbox(rset, text, t1str, t2str, 
 			  t1min, t1max, t1, 
-			  t2min, t2max, t2);
+			  t2min, t2max, t2,
+			  SPIN_LABEL_ABOVE);
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG (rset->dlg)->vbox), 
 		       tempwid, TRUE, TRUE, 0);
@@ -1702,6 +1718,114 @@ int get_obs_dialog (const char *title, const char *text,
     return ret;
 }
 
+int forecast_dialog (int t1min, int t1max, int *t1, 
+		     int t2min, int t2max, int *t2,
+		     int pmin, int pmax, int *p,
+		     int dyn_ok)
+{
+    const char *pre_txt = N_("Number of pre-forecast observations "
+			     "to graph");
+    const char *opts[] = {
+	N_("automatic forecast (dynamic out of sample)"),
+	N_("dynamic forecast"),
+	N_("static forecast")
+    };
+    int nopts = 3;
+    int deflt = 0;
+    GtkWidget *tmp;
+    GtkWidget *hbox;
+    GtkWidget *button = NULL;
+    struct range_setting *rset;
+    int i, ret = 0;
+
+    rset = rset_new(0, NULL, t1, t2);
+    if (rset == NULL) {
+	return -1;
+    }
+
+    gtk_window_set_title(GTK_WINDOW(rset->dlg), _("gretl: forecast"));
+    set_dialog_border_widths(rset->dlg);
+    gtk_window_set_position(GTK_WINDOW(rset->dlg), GTK_WIN_POS_MOUSE);
+    dialog_set_no_resize(rset->dlg);
+
+    tmp = obs_spinbox(rset, _("Forecast range:"), 
+		      _("Start"), _("End"), 
+		      t1min, t1max, t1, 
+		      t2min, t2max, t2,
+		      SPIN_LABEL_INLINE);
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+		       tmp, TRUE, TRUE, 5);
+
+    /* relevant options? */
+    if (!dyn_ok) {
+	nopts = 0;
+    }
+
+    if (nopts > 1) {
+	tmp = gtk_hseparator_new();
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+		       tmp, TRUE, TRUE, 0);
+    }
+
+    /* forecast-type options? */
+    for (i=0; i<nopts; i++) {
+	GSList *group;
+
+	if (button != NULL) {
+	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	} else {
+	    group = NULL;
+	}
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	button = gtk_radio_button_new_with_label(group, _(opts[i]));
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   hbox, TRUE, TRUE, 0);
+
+	if (deflt == i) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+	    ret = i;
+	}
+
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_radio_opt), &ret);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(i));
+    }
+
+    /* pre-forecast obs spinner? */
+    if (dyn_ok && p != NULL) {
+	tmp = gtk_hseparator_new();
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   tmp, TRUE, TRUE, 0);
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = option_spinbox(p, _(pre_txt), pmin, pmax);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   hbox, TRUE, TRUE, 5);
+    }
+
+    /* Create the "OK" button */
+    tmp = ok_button(GTK_DIALOG(rset->dlg)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(set_obs_from_dialog), rset);
+    gtk_widget_grab_default(tmp);
+
+    /* And a Cancel button */
+    cancel_options_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, &ret);
+
+    g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
+		     G_CALLBACK(free_rsetting), rset);
+
+    gtk_widget_show_all(rset->dlg);
+    gretl_set_window_modal(rset->dlg);
+    gtk_main();
+
+    return ret;
+}
+
 struct add_obs_info {
     GtkWidget *dlg;
     GtkWidget *spin;
@@ -1720,7 +1844,7 @@ static gboolean set_add_obs (GtkWidget *w, struct add_obs_info *ainfo)
     return TRUE;
 }
 
-int add_obs_dialog (void)
+int add_obs_dialog (const char *blurb, int addmin)
 {
     struct add_obs_info ainfo;
     GtkWidget *hbox;
@@ -1737,11 +1861,19 @@ int add_obs_dialog (void)
     g_signal_connect(G_OBJECT(ainfo.dlg), "destroy", 
 		     G_CALLBACK(gtk_main_quit), NULL);
 
+    if (blurb != NULL) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new(blurb);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ainfo.dlg)->vbox), 
+			   hbox, TRUE, TRUE, 0);
+    }
+
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Number of observations to add:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
-    ainfo.spin = gtk_spin_button_new_with_range(1, 100, 1);
+    ainfo.spin = gtk_spin_button_new_with_range(addmin, 100, 1);
     gtk_box_pack_start(GTK_BOX(hbox), ainfo.spin, TRUE, TRUE, 5);
     
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ainfo.dlg)->vbox), 
@@ -1920,7 +2052,7 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 
     gtk_window_set_title(GTK_WINDOW(opts->dlg), _("ARMA"));
     set_dialog_border_widths(opts->dlg);
-    gtk_window_set_position (GTK_WINDOW (opts->dlg), GTK_WIN_POS_MOUSE);
+    gtk_window_set_position(GTK_WINDOW(opts->dlg), GTK_WIN_POS_MOUSE);
 
     /* horizontal box for spinners */
     hbox = gtk_hbox_new(FALSE, 5);

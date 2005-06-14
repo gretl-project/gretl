@@ -553,7 +553,7 @@ static void sheet_add_obs_callback (gpointer data, guint where, GtkWidget *w)
     if (datainfo->markers) {
 	new_case_dialog(sheet);
     } else if (where == SHEET_AT_END) {
-	int n = add_obs_dialog();
+	int n = add_obs_dialog(NULL, 1);
 
 	if (n > 0) {
 	    real_add_new_obs(sheet, NULL, n);

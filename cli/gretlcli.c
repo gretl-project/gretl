@@ -876,7 +876,9 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case VARLIST:
     case VARTEST: 
 	err = simple_commands(&cmd, line, &Z, datainfo, prn);
-	if (err) errmsg(err, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case ADD:
@@ -1647,12 +1649,10 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) { 
 
 	attach_subsample_to_model(models[0], datainfo);
-
 #ifdef MSPEC_DEBUG
 	fprintf(stderr, "\ngretlcli: saving spec: model.ID = %d, model_count = %d\n",
 		(models[0])->ID, get_model_count());
 #endif
-
 	err = modelspec_save(models[0], &modelspec);
     }
 

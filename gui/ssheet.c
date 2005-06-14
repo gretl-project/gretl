@@ -186,7 +186,7 @@ static void sheet_add_obs (void)
     if (datainfo->markers) {
 	new_case_dialog();
     } else {
-	n = add_obs_dialog();
+	n = add_obs_dialog(NULL, 1);
     }
 
     if (n <= 0) return;

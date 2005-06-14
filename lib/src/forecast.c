@@ -51,6 +51,31 @@ struct Forecast_ {
     int model_t2;     /* end of period over which model was estimated */
 };
 
+/* create an empty, dummy AR info structure for use with models
+   that don't have an explicit AR error process, but that do
+   have a lagged dependent variable that in effect produces
+   an AR error, for forecasting purposes */
+
+static int dummy_ar_info_init (MODEL *pmod)
+{
+    pmod->arinfo = malloc(sizeof *pmod->arinfo);
+    if (pmod->arinfo == NULL) {
+	return 1;
+    }
+
+    pmod->arinfo->arlist = gretl_null_list();
+    if (pmod->arinfo->arlist == NULL) {
+	free(pmod->arinfo);
+	pmod->arinfo = NULL;
+	return 1; 
+    }
+
+    pmod->arinfo->rho = NULL;
+    pmod->arinfo->sderr = NULL;
+
+    return 0;
+}
+
 static int 
 allocate_basic_fit_resid_arrays (FITRESID *fr)
 {
@@ -244,12 +269,14 @@ has_depvar_lags (MODEL *pmod, const DATAINFO *pdinfo)
     return ret;
 }
 
-/* Make a list to keep track of any "independent variables" that are
+/* Makes a list to keep track of any "independent variables" that are
    really lags of the dependent variable.  The list has as many
-   elements as the model has coefficients, and in each place we either
-   write a zero (if the coefficient does not correspond to a lag of
-   the dependent variable) or a positive integer corresponding to the
-   lag order.
+   elements as the model has independent variables, and in each place
+   we either write a zero (if the coefficient does not correspond to a
+   lag of the dependent variable) or a positive integer corresponding
+   to the lag order.  However, In case the list of independent vars
+   contains no lagged dependent var, *depvar_lags is set to NULL.
+   Returns 1 on error, 0 otherwise.
 */
 
 static int process_lagged_depvar (MODEL *pmod, 
@@ -297,18 +324,32 @@ static int process_lagged_depvar (MODEL *pmod,
     return err;
 }
 
+/* Tries to determine if a model has any "real" exogenous regressors:
+   we discount a simple time trend and periodic dummy variables, since
+   these can be extended automatically.  If dvlags is non-NULL we use
+   it to screen out "independent vars" that are really lags of the
+   dependent variable.
+*/
+
 static int 
-has_exog_regressors (MODEL *pmod, const int *dvlags)
+has_real_exog_regressors (MODEL *pmod, const int *dvlags,
+			  const double **Z, const DATAINFO *pdinfo)
 {
     int *xlist = model_xlist(pmod);
-    int i, ret = 0;
+    int i, xi, ret = 0;
 
     if (xlist != NULL) {
 	for (i=0; i<xlist[0]; i++) {
-	    if (xlist[i+1] != 0 && dvlags[i] == 0) {
-		fprintf(stderr, "exog: xlist[%d] = %d\n", i+1, xlist[i+1]);
-		ret = 1;
-		break;
+	    xi = xlist[i + 1];
+	    if (xi != 0 && (dvlags == NULL || dvlags[i] == 0)) {
+		if (is_trend_variable(Z[xi], pdinfo->n)) {
+		    continue;
+		} else if (is_periodic_dummy(Z[xi], pdinfo->n)) {
+		    continue;
+		} else {
+		    ret = 1;
+		    break;
+		}
 	    }
 	}
     } else {
@@ -351,31 +392,40 @@ fit_resid_init (int t1, int t2, int pre_n, const MODEL *pmod,
 
 /* Get a value for a lag of the dependent variable.  If method is
    dynamic we prefer lagged prediction to lagged actual.  If method is
-   static, we don't want the lagged prediction, only the actual.  If
-   method is "auto", which we prefer depends on whether we're in or
-   out of sample (actual within, lagged prediction without).
+   static, we never want the lagged prediction, only the actual.  If
+   method is "auto", which value we prefer depends on whether we're in
+   or out of sample (actual within, lagged prediction without).
 */
 
 static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
 			     const double **Z)
 {
-    /* initialize to actual lagged value */
-    double ldv = Z[i][t];
+    double ldv;
+
+    /* initialize to actual lagged value, if available */
+    if (t - lag < 0) {
+	ldv = NADBL;
+    } else {
+	ldv = Z[i][t-lag];
+    }
 
 #if AR_DEBUG
     fprintf(stderr, "fcast_get_ldv: i=%d, t=%d, lag=%d; "
-	    "initial ldv = Z[%d][%d] = %g\n", i, t, lag, i, t, ldv);
+	    "initial ldv = Z[%d][%d] = %g\n", i, t, lag, i, t-lag, ldv);
 #endif
 
     if (fc->method != FC_STATIC) {
 	int yht = t - fc->offset - lag;
 
-	if (fc->method == FC_DYNAMIC) {
-	    if (lag < t - fc->t1) {
+#if AR_DEBUG
+	fprintf(stderr, "fcast_get_ldv (non-static): yht = %d\n", yht);
+#endif
+	if (fc->method == FC_DYNAMIC && yht >= 0) {
+	    if (!na(fc->yhat[yht])) {
 		ldv = fc->yhat[yht];
 	    }
 	} else if (fc->method == FC_AUTO && yht >= 0) {
-	    if (t > fc->model_t2 || na(ldv)) {
+	    if (t > fc->model_t2 + lag || na(ldv)) {
 		ldv = fc->yhat[yht];
 #if AR_DEBUG
 		fprintf(stderr, "fcast_get_ldv: reset ldv = yhat[%d] = %g\n",
@@ -584,7 +634,7 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 	for (i=0; i<xvars; i++) {
 	    v = xlist[i+1];
 	    if ((lag = depvar_lag(fc, i))) {
-		xval = fcast_get_ldv(fc, i, t, lag, Z);
+		xval = fcast_get_ldv(fc, yno, t, lag, Z);
 	    } else {
 		xval = Z[v][t];
 	    }
@@ -865,14 +915,14 @@ static double *make_phi_from_arinfo (const ARINFO *arinfo, int pmax)
     return phi;
 }
 
-/* determine the highest lag order for AR model, either
-   via AR in the error term or via inclusion of lagged
-   dependent variable */
+/* Determine the greatest lag order for a model, either via explicit
+   AR error process or via inclusion of lagged dependent var as
+   regressor.
+*/
 
-static int 
-get_max_ar_lag (Forecast *fc, const MODEL *pmod, int p)
+static int max_ar_lag (Forecast *fc, const MODEL *pmod, int p)
 {
-    int i, pmax = p; /* AR error order */
+    int i, pmax = p; /* explicit AR order */
 
     if (fc->dvlags != NULL) {
 	for (i=0; i<pmod->ncoeff; i++) {
@@ -937,7 +987,11 @@ static void set_up_ar_fcast_variance (const MODEL *pmod, int pmax,
    out-of-sample forecasts.  These calculations, like those for
    ARMA, do not take into account parameter uncertainty.
 
-   This code is used for AR, CORC, HILU and PWE models.
+   This code is used for AR, CORC, HILU and PWE models; it
+   is also used for dynamic forecasting with models that do
+   not have an explicit AR error process but that have one
+   or more lagged values of the dependent variable as
+   regressors.  
 */
 
 static int ar_fcast (Forecast *fc, const MODEL *pmod, 
@@ -956,7 +1010,7 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
     int err = 0;
 
 #if AR_DEBUG
-    fprintf(stderr, "\n*** arma_fcast, method = %d\n\n", fc->method);
+    fprintf(stderr, "\n*** ar_fcast, method = %d\n\n", fc->method);
 #endif
 
     yno = pmod->list[1];
@@ -966,7 +1020,7 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
     if (fc->t2 > pmod->t2 && fc->sderr != NULL) {
 	/* we compute variance only if we're forecasting
 	   out of sample */
-	pmax = get_max_ar_lag(fc, pmod, p);
+	pmax = max_ar_lag(fc, pmod, p);
 	set_up_ar_fcast_variance(pmod, pmax, &phi, &psi, &errphi);
     }
 
@@ -1013,7 +1067,7 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
 	    v = pmod->list[i+2];
 	    if ((dvlag = depvar_lag(fc, i))) {
-		xval = fcast_get_ldv(fc, v, t, dvlag, Z);
+		xval = fcast_get_ldv(fc, yno, t, dvlag, Z);
 	    } else {
 		xval = Z[v][t];
 	    }
@@ -1028,7 +1082,7 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 		    rk = pmod->arinfo->rho[k-1];
 		    tk = t - arlist[k];
 		    if (dvlag > 0) {
-			xlag = fcast_get_ldv(fc, v, tk, dvlag, Z);
+			xlag = fcast_get_ldv(fc, yno, tk, dvlag, Z);
 		    } else {
 			xlag = Z[v][tk];
 		    }
@@ -1116,6 +1170,7 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod,
 			 const double **Z, const DATAINFO *pdinfo)
 {
     const double *offvar = NULL;
+    int yno = pmod->list[1];
     double lmax = NADBL;
     double xval;
     int i, vi, t, s;
@@ -1142,7 +1197,7 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod,
 
 	    vi = pmod->list[i+2];
 	    if ((lag = depvar_lag(fc, i))) {
-		xval = fcast_get_ldv(fc, vi, t, lag, Z);
+		xval = fcast_get_ldv(fc, yno, t, lag, Z);
 	    } else {
 		xval = Z[vi][t];
 	    }
@@ -1231,6 +1286,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     Forecast fc;
     const double **Z = (const double **) *pZ;
     int yno = gretl_model_get_depvar(pmod);
+    int dummy_AR = 0;
     int DM_errs = 0;
     int dyn_errs = 0;
     int nf = 0;
@@ -1257,10 +1313,21 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	}
     }
 
-    /* bodge: for now we don't actually handle dynamic forecast 
-       standard errors for other than AR and ARMA */
-    if (pmod->ci != ARMA && !SIMPLE_AR_MODEL(pmod->ci)) {
+    /* bodge for now! (not ready) */
+    if (dyn_errs && pmod->ci == GARCH) {
 	dyn_errs = 0;
+    }
+
+    if (dyn_errs && pmod->ci != ARMA && !SIMPLE_AR_MODEL(pmod->ci)) {
+	/* create dummy AR info structure for model with lagged
+	   dependent variable */
+	int err = dummy_ar_info_init(pmod);
+
+	if (err) {
+	    dyn_errs = 0;
+	} else {
+	    dummy_AR = 1;
+	}
     }
 
     if (DM_errs || dyn_errs) {
@@ -1286,7 +1353,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	err = static_fcast_with_errs(&fc, pmod, Z, pdinfo);
     } else if (pmod->ci == NLS) {
 	err = nls_fcast(&fc, pmod, pZ, pdinfo);
-    } else if (SIMPLE_AR_MODEL(pmod->ci)) {
+    } else if (SIMPLE_AR_MODEL(pmod->ci) || dummy_AR) {
 	err = ar_fcast(&fc, pmod, Z, pdinfo);
     } else if (pmod->ci == ARMA) {
 	err = arma_fcast(&fc, pmod, Z, pdinfo);
@@ -1301,6 +1368,12 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     }
     if (fc.eps != NULL) {
 	free(fc.eps);
+    }
+
+    if (dummy_AR) {
+	free(pmod->arinfo->arlist);
+	free(pmod->arinfo);
+	pmod->arinfo = NULL;
     }
 
     for (s=0; s<fr->nobs; s++) {
@@ -1321,7 +1394,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     }
 
     if (nf == 0) {
-	err = E_DATA;
+	err = E_MISSDATA;
     } else {
 	if (pmod->ci == ARMA) {
 	    /* asymptotic normal */
@@ -1604,6 +1677,9 @@ int display_forecast (const char *str, MODEL *pmod,
     return err;
 }
 
+/* try to determine in advance how far we can go with a forecast,
+   either dynamic or static (ftype) */
+
 static int 
 fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
 		 const double **Z, const DATAINFO *pdinfo, int ftype)
@@ -1627,9 +1703,11 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
 	    vi = list[i];
 	    if (vi == 0) {
 		continue;
+	    } else if (dvlags != NULL && dvlags[i-1] != 0) {
+		continue;
 	    } else if (is_trend_variable(Z[vi], pdinfo->n)) {
 		continue;
-	    } else if (dvlags != NULL && dvlags[i-1] != 0) {
+	    } else if (is_periodic_dummy(Z[vi], pdinfo->n)) {
 		continue;
 	    }
 	    if (na(Z[vi][t])) {
@@ -1664,7 +1742,7 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
  * be supported for a static forecast.
  *
  * Examines @pmod and determines which forecasting options are
- * applicable for this model and forecast range.
+ * applicable.
  */
 
 void forecast_options_for_model (MODEL *pmod, const double **Z,
@@ -1688,9 +1766,10 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
     }
 
     if (*dyn_ok) {
-	process_lagged_depvar(pmod, pdinfo, &dvlags);
-	if (dvlags != NULL) {
-	    exo = has_exog_regressors(pmod, dvlags);
+	int err = process_lagged_depvar(pmod, pdinfo, &dvlags);
+
+	if (!err) {
+	    exo = has_real_exog_regressors(pmod, dvlags, Z, pdinfo);
 	}
 	if (!exo) {
 	    *add_obs_ok = 1;

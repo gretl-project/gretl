@@ -1905,11 +1905,34 @@ int plot_fcast_errs (int n, const double *obs,
 {
     FILE *fp = NULL;
     double xmin, xmax, xrange;
+    int depvar_present = 0;
     int do_errs = (maxerr != NULL);
     int t, err;
 
     if ((err = gnuplot_init(PLOT_FORECAST, &fp))) {
 	return err;
+    }
+
+    /* don't graph empty portion of forecast */
+    for (t=n-1; t>0; t--) {
+	if (na(depvar[t]) && na(yhat[t])) {
+	    n--;
+	} else {
+	    break;
+	}
+    }
+
+    if (n < 3) {
+	/* won't draw a graph for 2 datapoints or less */
+	return 1;
+    }
+
+    /* check that we have any values for the actual var */
+    for (t=0; t<n; t++) {
+	if (!na(depvar[t])) {
+	    depvar_present = 1;
+	    break;
+	}
     }
 
     fputs("# forecasts with 95 pc conf. interval\n", fp);
@@ -1935,31 +1958,33 @@ int plot_fcast_errs (int n, const double *obs,
 	fputs("set xtics 1\n", fp);
     }
 
+    fputs("set key left top\nplot \\\n", fp);
+    if (depvar_present) {
+	fprintf(fp, "'-' using 1:2 title \"%s\" w lines , \\\n",
+		varname);
+    }
+    fprintf(fp, "'-' using 1:2 title '%s' w lines", I_("fitted"));
     if (do_errs) {
-	fprintf(fp, "set key left top\n"
-		"plot \\\n'-' using 1:2 title \"%s\" w lines , \\\n"
-		"'-' using 1:2 title '%s' w lines , \\\n"
-		"'-' using 1:2:3 title '%s' w errorbars\n", 
-		varname, I_("fitted"), I_("95 percent confidence interval"));
+	fprintf(fp, " , \\\n'-' using 1:2:3 title '%s' w errorbars\n",
+		I_("95 percent confidence interval"));
     } else {
-	fprintf(fp, "set key left top\n"
-		"plot \\\n'-' using 1:2 title \"%s\" w lines , \\\n"
-		"'-' using 1:2 title '%s' w lines\n",
-		varname, I_("fitted"));
-    }	
+	fputc('\n', fp);
+    }
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    for (t=0; t<n; t++) {
-	if (na(depvar[t])) {
-	    fprintf(fp, "%.8g ?\n", obs[t]);
-	} else {
-	    fprintf(fp, "%.8g %.8g\n", obs[t], depvar[t]);
+    if (depvar_present) {
+	for (t=0; t<n; t++) {
+	    if (na(depvar[t])) {
+		fprintf(fp, "%.8g ?\n", obs[t]);
+	    } else {
+		fprintf(fp, "%.8g %.8g\n", obs[t], depvar[t]);
+	    }
 	}
+	fputs("e\n", fp);
     }
-    fputs("e\n", fp);
 
     for (t=0; t<n; t++) {
 	if (na(yhat[t])) {

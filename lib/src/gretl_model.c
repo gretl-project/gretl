@@ -1676,7 +1676,7 @@ int is_model_cmd (const char *s)
 	    !strncmp(s, "pooled", 6)  ||
 	    !strncmp(s, "hccm", 4) ||
 	    !strncmp(s, "hsk", 3)  ||
-	    !strncmp(s, "add", 3)  ||
+	    !strncmp(s, "add ", 4)  ||
 	    !strncmp(s, "lad", 3)  ||
 	    !strncmp(s, "omit", 4) ||
 	    !strncmp(s, "tsls", 4) ||

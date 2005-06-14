@@ -515,6 +515,79 @@ static int reallocate_markers (DATAINFO *pdinfo, int n)
     return 0;
 }
 
+static int real_periodic_dummy (const double *x, int n,
+				int *pd, int *offset,
+				int *trail)
+{
+    int onebak = 0;
+    int gap = 0;
+    int t, m = n - 1, ret = 1;
+
+    *pd = -1;
+    *offset = -1;
+    *trail = 0;
+
+    /* find number of trailing zeros */
+    for (t=n-1; t>0; t--) {
+	if (x[t] == 0.0) {
+	    *trail += 1;
+	} else {
+	    if (x[t] == 1.0) {
+		m = t;
+	    } else {
+		ret = 0;
+	    }
+	    break;
+	}
+    }
+
+    /* check for dummyhood and periodicity */
+    for (t=0; t<=m && ret; t++) {
+	if (x[t] == 0.0) {
+	    onebak = 0;
+	    gap++;
+	} else if (x[t] == 1.0) {
+	    if (onebak) {
+		ret = 0;
+	    } else if (*offset < 0) {
+		*offset = gap;
+	    } else if (*pd < 0) {
+		*pd = gap + 1;
+		if (*pd < *offset + 1) {
+		    ret = 0;
+		}
+	    } else if (gap != *pd - 1) {
+		ret = 0;
+	    } else if (gap < *trail) {
+		ret = 0;
+	    }
+	    gap = 0;
+	    onebak = 1;
+	} else {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+/**
+ * is_periodic_dummy:
+ * @x: array to examine.
+ * @n: number of elements in array.
+ *
+ * Returns: 1 if @x is a periodic dummy variable,
+ * 0 otherwise.
+ */
+
+int is_periodic_dummy (const double *x, int n)
+{
+    int pd, offset, trail;
+
+    return real_periodic_dummy(x, n, &pd, &offset, &trail);
+}
+
 /**
  * is_trend_variable:
  * @x: array to examine.
@@ -548,6 +621,24 @@ maybe_extend_trends (double **Z, const DATAINFO *pdinfo, int oldn)
 	if (is_trend_variable(Z[i], oldn)) {
 	    for (t=oldn; t<pdinfo->n; t++) {
 		Z[i][t] = Z[i][t-1] + 1.0;
+	    }
+	}
+    }
+}
+
+static void 
+maybe_extend_dummies (double **Z, const DATAINFO *pdinfo, int oldn)
+{
+    int pd, offset, trail;
+    int i, t;
+
+    for (i=0; i<pdinfo->v; i++) {
+	if (real_periodic_dummy(Z[i], oldn, &pd, &offset, &trail)) {
+	    int s = pd - offset;
+
+	    for (t=oldn; t<pdinfo->n; t++) {
+		Z[i][t] = (s % pd)? 0.0 : 1.0;
+		s++;
 	    }
 	}
     }
@@ -605,6 +696,7 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo)
     pdinfo->n = bign;
 
     maybe_extend_trends(*pZ, pdinfo, oldn);
+    maybe_extend_dummies(*pZ, pdinfo, oldn);
 
     /* does daily data need special handling? */
     ntodate(pdinfo->endobs, bign - 1, pdinfo);
