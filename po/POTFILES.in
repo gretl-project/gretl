@@ -28,7 +28,6 @@ lib/src/gretl_utils.c
 lib/src/gretl_win32.c
 lib/src/interact.c
 lib/src/laginfo.c
-lib/src/laglist.c
 lib/src/libset.c
 lib/src/missing.c
 lib/src/modelprint.c
