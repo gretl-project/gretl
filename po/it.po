@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-06-14 16:19-0400\n"
-"PO-Revision-Date: 2005-05-28 21:58+0200\n"
+"PO-Revision-Date: 2005-06-14 23:53+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1396,9 +1396,8 @@ msgstr "%s, usando le osservazioni %s - %s"
 #: lib/src/describe.c:1814 gui2/guiprint_common.c:116
 #: gui2/guiprint_common.c:210 gui2/guiprint_common.c:340
 #: gui2/guiprint_common.c:433
-#, fuzzy
 msgid "(missing values were skipped)"
-msgstr "(i valori mancanti saranno esclusi)"
+msgstr "(i valori mancanti sono stati saltati)"
 
 #: lib/src/describe.c:1826 gui2/guiprint_common.c:129
 #: gui2/guiprint_common.c:222
@@ -1845,7 +1844,7 @@ msgstr "Variabili dummy per il panel generate.\n"
 
 #: lib/src/generate.c:2666
 msgid "Specified a scalar, but a vector was produced."
-msgstr ""
+msgstr "Era stato specificato uno scalare, ma è stato prodotto un vettore."
 
 #: lib/src/generate.c:2698
 msgid "You cannot turn a scalar into a vector when the dataset is subsampled."
@@ -3480,14 +3479,12 @@ msgid "sigma"
 msgstr "sigma"
 
 #: lib/src/modelprint.c:2054 lib/src/modelprint.c:2064
-#, fuzzy
 msgid "Actual"
-msgstr "Effettivi"
+msgstr "Effettivo"
 
 #: lib/src/modelprint.c:2057
-#, fuzzy
 msgid "Predicted"
-msgstr "Previsione"
+msgstr "Previsto"
 
 #: lib/src/modelprint.c:2088 lib/src/modelprint.c:2119
 #: lib/src/modelprint.c:2151
@@ -3862,9 +3859,8 @@ msgid "Couldn't load plugin function"
 msgstr "Impossibile caricare la funzione del plugin"
 
 #: lib/src/printout.c:58
-#, fuzzy
 msgid "Covariance matrix of regression coefficients"
-msgstr "Coefficienti di correlazione"
+msgstr "Matrice di covarianza dei coefficienti della regressione"
 
 #: lib/src/printout.c:79 lib/src/printout.c:148
 msgid "Current session"
@@ -4005,9 +4001,9 @@ msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
 msgstr "Nota: * indica un residuo che eccede di 2.5 volte l'errore standard\n"
 
 #: lib/src/printout.c:1336
-#, fuzzy, c-format
+#, c-format
 msgid " For 95%% confidence intervals, z(.025) = %.2f\n"
-msgstr " Per intervalli di confidenza al 95%%, t(%d, .025) = %.3f\n"
+msgstr " Per intervalli di confidenza al 95%%, z(.025) = %.2f\n"
 
 #: lib/src/printout.c:1339
 #, c-format
@@ -5563,9 +5559,8 @@ msgid "/Data/Add variables/Define _new variable..."
 msgstr "/Dati/Aggiungi variabili/De_finisci nuova variabile..."
 
 #: gui/gretl.c:367 gui2/gretl.c:444
-#, fuzzy
 msgid "/Data/Add observations..."
-msgstr "Aggiungi osservazione"
+msgstr "/Dati/Aggiungi osservazioni..."
 
 #: gui/gretl.c:368 gui2/gretl.c:445
 msgid "/Data/Refresh window"
@@ -7674,51 +7669,44 @@ msgid "End:"
 msgstr "Fine:"
 
 #: gui2/dialogs.c:1726
-#, fuzzy
 msgid "Number of pre-forecast observations to graph"
-msgstr "Numero di osservazioni = %d\n"
+msgstr "Numero di osservazioni pre-previsione da mostrare"
 
 #: gui2/dialogs.c:1729
 msgid "automatic forecast (dynamic out of sample)"
-msgstr ""
+msgstr "previsione automatica (dinamica, fuori campione)"
 
 #: gui2/dialogs.c:1730
 msgid "dynamic forecast"
-msgstr ""
+msgstr "previsione dinamica"
 
 #: gui2/dialogs.c:1731
-#, fuzzy
 msgid "static forecast"
-msgstr "gretl: previsione"
+msgstr "previsione statica"
 
 #: gui2/dialogs.c:1746
 msgid "gretl: forecast"
 msgstr "gretl: previsione"
 
 #: gui2/dialogs.c:1751
-#, fuzzy
 msgid "Forecast range:"
-msgstr "Periodo di previsione"
+msgstr "Intervallo di previsione:"
 
 #: gui2/dialogs.c:1752
-#, fuzzy
 msgid "Start"
-msgstr "Inizio:"
+msgstr "Inizio"
 
 #: gui2/dialogs.c:1752
-#, fuzzy
 msgid "End"
-msgstr "Fine:"
+msgstr "Fine"
 
 #: gui2/dialogs.c:1856
-#, fuzzy
 msgid "Add observations"
-msgstr "Aggiungi osservazione"
+msgstr "Aggiungi osservazioni"
 
 #: gui2/dialogs.c:1873
-#, fuzzy
 msgid "Number of observations to add:"
-msgstr "Numero di osservazioni:"
+msgstr "Numero di osservazioni da aggiungere:"
 
 #: gui2/dialogs.c:2093
 msgid "Native code"
@@ -8644,18 +8632,22 @@ msgid "Note: * denotes a residual in excess of 2.5 standard errors"
 msgstr "Nota: * indica un residuo che eccede di 2.5 volte l'errore standard"
 
 #: gui2/guiprint_common.c:746
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "For 95\\%% confidence intervals, $z(.025) = %.2f$\n"
 "\n"
-msgstr " Per intervalli di confidenza al 95%%, t(%d, .025) = %.3f\n"
+msgstr ""
+"Per intervalli di confidenza al 95\\%%, $z(.025) = %.2f$\n"
+"\n"
 
 #: gui2/guiprint_common.c:749
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "For 95\\%% confidence intervals, $t(%d, .025) = %.3f$\n"
 "\n"
-msgstr " Per intervalli di confidenza al 95%%, t(%d, .025) = %.3f\n"
+msgstr ""
+"Per intervalli di confidenza al 95\\%%, $t(%d, .025) = %.3f$\n"
+"\n"
 
 #: gui2/guiprint_common.c:775 gui2/guiprint_common.c:955
 #, no-c-format
@@ -8663,14 +8655,14 @@ msgid "95\\% confidence interval"
 msgstr "Intervallo di confidenza al 95\\%"
 
 #: gui2/guiprint_common.c:847
-#, fuzzy, c-format
+#, c-format
 msgid "For 95%% confidence intervals, z(.025) = %.2f"
-msgstr " Per intervalli di confidenza al 95%%, t(%d, .025) = %.3f\n"
+msgstr "Per intervalli di confidenza al 95%%, z(.025) = %.2f"
 
 #: gui2/guiprint_common.c:850
-#, fuzzy, c-format
+#, c-format
 msgid "For 95%% confidence intervals, t(%d, .025) = %.3f"
-msgstr " Per intervalli di confidenza al 95%%, t(%d, .025) = %.3f\n"
+msgstr " Per intervalli di confidenza al 95%%, t(%d, .025) = %.3f"
 
 #: gui2/guiprint_common.c:866 gui2/guiprint_common.c:1004
 #, no-c-format
@@ -8825,9 +8817,8 @@ msgid "/Model data/Display actual, fitted, residual"
 msgstr "/Dati modello/Mostra valori effettivi, stime, residui"
 
 #: gui2/gui_utils.c:171 gui2/gui_utils.c:222
-#, fuzzy
 msgid "/Model data/Forecasts..."
-msgstr "/Dati modello/sep1"
+msgstr "/Dati modello/Previsione..."
 
 #: gui2/gui_utils.c:173 gui2/gui_utils.c:224
 msgid "/Model data/Confidence intervals for coefficients"
@@ -8878,14 +8869,12 @@ msgid "/LaTeX/_Save"
 msgstr "/LaTeX/_Salva"
 
 #: gui2/gui_utils.c:248 gui2/gui_utils.c:294
-#, fuzzy
 msgid "/LaTeX/Save/Tabular"
-msgstr "/LaTeX/Salva/_Tabella"
+msgstr "/LaTeX/Salva/Tabella"
 
 #: gui2/gui_utils.c:250 gui2/gui_utils.c:296
-#, fuzzy
 msgid "/LaTeX/Save/Equation"
-msgstr "/LaTeX/Salva/_Equazione"
+msgstr "/LaTeX/Salva/Equazione"
 
 #: gui2/gui_utils.c:271 gui2/gui_utils.c:316 gui2/series_view.c:57
 #: gui2/series_view.c:76
@@ -9357,9 +9346,9 @@ msgid "Error adding variables"
 msgstr "Errore nell'aggiunta delle variabili"
 
 #: gui2/library.c:672
-#, fuzzy, c-format
+#, c-format
 msgid "forecast of %s"
-msgstr "Spettro di %s"
+msgstr "previsione di %s"
 
 #: gui2/library.c:730 gui2/library.c:734
 msgid "correlation matrix"
@@ -9496,6 +9485,9 @@ msgid ""
 "out of sample.  You can add some observations now\n"
 "if you wish."
 msgstr ""
+"Non sono disponibili osservazioni per la previsione\n"
+"fuori dal campione. È possibile aggiungerne alcune,\n"
+"se lo si vuole."
 
 #: gui2/library.c:1306
 msgid ""
@@ -9504,6 +9496,11 @@ msgid ""
 "(Data menu, Edit data), or you can shorten the sample\n"
 "range over which the model is estimated (Sample menu)."
 msgstr ""
+"Non sono disponibili osservazioni per la previsione\n"
+"fuori dal campione. Se lo si vuole, è possibile\n"
+"aggiungerne alcune (menù Dati, Modifica dati),\n"
+"oppure è possibile accorciare l'intervallo del\n"
+"campione su cui viene stimato il modello (menù Campione)."
 
 #: gui2/library.c:1386 gui2/library.c:4023
 msgid "Failed to generate fitted values"
