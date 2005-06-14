@@ -824,10 +824,12 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	    fc->sderr[tt] = pmod->sigma * sqrt(ss_psi);
 	}
 
+#if 0
 	if (miss && t >= p) {
 	    DPRINTF(("aborting with NA at t=%d (p=%d)\n", t, p));
 	    err = 1;
 	}
+#endif
     }
 
     if (psi != NULL) {
@@ -1638,6 +1640,8 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
 
 	if (!all_ok) {
 	    t--;
+	    break;
+	} else if (t == pdinfo->n - 1) {
 	    break;
 	}
     }

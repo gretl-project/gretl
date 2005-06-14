@@ -2554,8 +2554,13 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
     gtk_widget_show(button);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
+#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(button), "value-changed",
 		     G_CALLBACK(option_spin_set), spinvar);
+#else
+    gtk_signal_connect(GTK_OBJECT(adj), "value-changed",
+		       GTK_SIGNAL_FUNC(option_spin_set), spinvar);
+#endif
 
     return hbox;
 }

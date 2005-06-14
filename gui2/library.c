@@ -1283,8 +1283,8 @@ void do_remove_markers (gpointer data, guint u, GtkWidget *w)
 /* ........................................................... */
 
 static gretlopt 
-get_gui_forecast_option (MODEL *pmod, int t1, int t2, int *pre_n, 
-			 int *cancel)
+get_gui_forecast_option (MODEL *pmod, int t1, int t2,
+			 int *pre_n, int *cancel)
 {
     const char *pre_txt = N_("Number of pre-forecast observations "
 			     "to graph");
@@ -1311,7 +1311,6 @@ get_gui_forecast_option (MODEL *pmod, int t1, int t2, int *pre_n,
 
     /* if we have t1 > pmod->t1, offer choice of number of
        pre-forecast observation to display */
-
     if (t1 > pmod->t1) {
 	*pre_n = t1 - pmod->t1;
 	fopt = radio_dialog_with_spinner(_("forecast options"), opts, nopts, 
