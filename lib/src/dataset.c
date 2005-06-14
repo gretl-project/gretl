@@ -515,27 +515,39 @@ static int reallocate_markers (DATAINFO *pdinfo, int n)
     return 0;
 }
 
+/**
+ * is_trend_variable:
+ * @x: array to examine.
+ * @n: number of elements in array.
+ *
+ * Returns: 1 if @x is a simple linear trend variable, with each
+ * observation equal to the preceding observation plus 1, 
+ * 0 otherwise.
+ */
+
+int is_trend_variable (const double *x, int n)
+{
+    int t, ret = 1;
+    
+    for (t=1; t<n; t++) {
+	if (x[t] != x[t-1] + 1.0) {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
 static void 
-maybe_extend_trend (double **Z, const DATAINFO *pdinfo, int oldn)
+maybe_extend_trends (double **Z, const DATAINFO *pdinfo, int oldn)
 {
     int i, t;
 
     for (i=1; i<pdinfo->v; i++) {
-	int trend = 0;
-
-	if (!strcmp(pdinfo->varname[i], "time") ||
-	    !strcmp(pdinfo->varname[i], "index")) {
-	    trend = 1;
-	    for (t=0; t<oldn; t++) {
-		if (Z[i][t] != t + 1) {
-		    trend = 0;
-		    break;
-		}
-	    }
-	    if (trend) {
-		for (t=oldn; t<pdinfo->n; t++) {
-		    Z[i][t] = t + 1;
-		}
+	if (is_trend_variable(Z[i], oldn)) {
+	    for (t=oldn; t<pdinfo->n; t++) {
+		Z[i][t] = Z[i][t-1] + 1.0;
 	    }
 	}
     }
@@ -592,7 +604,7 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo)
 
     pdinfo->n = bign;
 
-    maybe_extend_trend(*pZ, pdinfo, oldn);
+    maybe_extend_trends(*pZ, pdinfo, oldn);
 
     /* does daily data need special handling? */
     ntodate(pdinfo->endobs, bign - 1, pdinfo);

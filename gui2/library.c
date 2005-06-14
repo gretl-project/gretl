@@ -1338,27 +1338,36 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
-    int t1 = 0, t2 = datainfo->n - 1;
+    int t2, t1 = 0;
     int dyn_ok, add_obs_ok, pre_n = 0;
+    int dt2 = datainfo->n - 1;
+    int st2 = datainfo->n - 1;
     gretlopt opt = OPT_NONE;
     FITRESID *fr;
     PRN *prn;
     int resp, err;
 
     /* try to figure which options might be applicable */
-    forecast_options_for_model(pmod, datainfo, &dyn_ok, &add_obs_ok);
+    forecast_options_for_model(pmod, (const double **) Z, datainfo, &dyn_ok, 
+			       &add_obs_ok, &dt2, &st2);
+
+    if (dyn_ok) {
+	t2 = dt2;
+    } else {
+	t2 = st2;
+    }
 
     /* if there are spare obs available, default to an
        out-of-sample forecast */
-    if (pmod->t2 + 1 < datainfo->n) {
+    if (t2 > pmod->t2) {
 	t1 = pmod->t2 + 1;
     }    
 
     resp = get_obs_dialog(_("gretl: forecast"), 
 			  _("Forecast range"),
 			  _("Start:"), _("End:"), 
-			  0, datainfo->n - 1, &t1,
-			  0, datainfo->n - 1, &t2);
+			  0, t2, &t1,
+			  0, t2, &t2);
     if (resp < 0) {
 	return;
     }

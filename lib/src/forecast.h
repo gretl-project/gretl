@@ -62,9 +62,10 @@ int add_forecast (const char *str, MODEL *pmod,
 		  double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt);
 
-void forecast_options_for_model (MODEL *pmod, const DATAINFO *pdinfo,
-				 int *dyn_ok, int *add_obs_ok);
-
+void forecast_options_for_model (MODEL *pmod, const double **Z,
+				 const DATAINFO *pdinfo,
+				 int *dyn_ok, int *add_obs_ok,
+				 int *dt2max, int *st2max);
 
 #endif /* FORECAST_H */
 

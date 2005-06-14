@@ -167,6 +167,8 @@ void dataset_set_regular_markers (DATAINFO *pdinfo);
 
 int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);
 
+int is_trend_variable (const double *x, int n);
+
 int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_series (int newvars, double ***pZ, DATAINFO *pdinfo);

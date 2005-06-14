@@ -301,16 +301,20 @@ static int
 has_exog_regressors (MODEL *pmod, const int *dvlags)
 {
     int *xlist = model_xlist(pmod);
-    int i, ret = 1;
+    int i, ret = 0;
 
     if (xlist != NULL) {
-	ret = 0;
 	for (i=0; i<xlist[0]; i++) {
 	    if (xlist[i+1] != 0 && dvlags[i] == 0) {
+		fprintf(stderr, "exog: xlist[%d] = %d\n", i+1, xlist[i+1]);
 		ret = 1;
 		break;
 	    }
 	}
+    } else {
+	/* should not happen */
+	fprintf(stderr, "xlist is NULL\n");
+	ret = 1;
     }
 
     return ret;
@@ -1598,26 +1602,79 @@ int display_forecast (const char *str, MODEL *pmod,
     return err;
 }
 
+static int 
+fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
+		 const double **Z, const DATAINFO *pdinfo, int ftype)
+{
+    const double *ay = NULL;
+    int i, vi, t;
+
+    if (pmod->ci == ARMA && ftype == FC_STATIC) {
+	ay = Z[gretl_model_get_depvar(pmod)];
+    }
+
+    for (t=pmod->t2; t<pdinfo->n; t++) {
+	int all_ok = 1;
+
+	if (ay != NULL && na(ay[t-1])) {
+	    /* FIXME? */
+	    break;
+	}
+
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (vi == 0) {
+		continue;
+	    } else if (is_trend_variable(Z[vi], pdinfo->n)) {
+		continue;
+	    } else if (dvlags != NULL && dvlags[i-1] != 0) {
+		continue;
+	    }
+	    if (na(Z[vi][t])) {
+		all_ok = 0;
+		break;
+	    }
+	}
+
+	if (!all_ok) {
+	    t--;
+	    break;
+	}
+    }
+
+    return t;
+}
+
 /**
  * forecast_options_for_model:
  * @pmod: the model from which forecasts are wanted.
+ * @Z: data array.
  * @pdinfo: dataset information.
  * @dyn_ok: location to receive 1 if the "dynamic" option is
  * applicable, 0 otherwise.
  * @add_obs_ok: location to receive 1 if it looks as if we can
  * extend the forecast by adding blank observations, 0 otherwise.
+ * @dt2max: location to receive the last observation that can
+ * be supported for a dynamic forecast.
+ * @st2max: location to receive the last observation that can
+ * be supported for a static forecast.
  *
  * Examines @pmod and determines which forecasting options are
  * applicable for this model and forecast range.
  */
 
-void forecast_options_for_model (MODEL *pmod, const DATAINFO *pdinfo,
-				 int *dyn_ok, int *add_obs_ok)
+void forecast_options_for_model (MODEL *pmod, const double **Z,
+				 const DATAINFO *pdinfo,
+				 int *dyn_ok, int *add_obs_ok,
+				 int *dt2max, int *st2max)
 {
+    int *dvlags = NULL;
     int exo = 1;
 
     *dyn_ok = 0;
     *add_obs_ok = 0;
+    *dt2max = pmod->t2;
+    *st2max = pmod->t2;
 
     if (pmod->ci == ARMA) {
 	*dyn_ok = 1;
@@ -1627,16 +1684,26 @@ void forecast_options_for_model (MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     if (*dyn_ok) {
-	int *dvlags = NULL;
-
 	process_lagged_depvar(pmod, pdinfo, &dvlags);
 	if (dvlags != NULL) {
 	    exo = has_exog_regressors(pmod, dvlags);
-	    free(dvlags);
 	}
 	if (!exo) {
 	    *add_obs_ok = 1;
+	    *dt2max = pdinfo->n - 1;
+	}
+    } 
+
+    if (exo) {
+	int *xlist = model_xlist(pmod);
+
+	if (xlist != NULL) {
+	    *dt2max = fcast_get_t2max(xlist, dvlags, pmod, Z, pdinfo, FC_DYNAMIC);
+	    *st2max = fcast_get_t2max(xlist, dvlags, pmod, Z, pdinfo, FC_STATIC);
 	}
     }
-}
 
+    if (dvlags != NULL) {
+	free(dvlags);
+    }
+}
