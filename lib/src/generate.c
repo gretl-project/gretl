@@ -4942,7 +4942,7 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 
     if (gretl_executing_function()) {
 	fsd = gretl_function_stack_depth();
-    } else if (local) {
+    } else if (gretl_executing_macro()) {  /* hmm, this did say "if local" */
 	msd = gretl_macro_stack_depth();
     }
 

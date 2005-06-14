@@ -825,9 +825,9 @@ gretl_model_get_param_name
 free_coeff_intervals
 gretl_model_get_coeff_intervals
 gretl_model_get_depvar
+gretl_model_get_x_list
 gretl_arma_model_get_AR_order
 gretl_arma_model_get_MA_order
-gretl_arma_model_get_x_list
 gretl_model_new_vcv
 gretl_model_get_vcv
 debug_print_model_info
@@ -1103,6 +1103,8 @@ dataset_obs_info_default
 set_sorted_markers
 dataset_set_regular_markers
 start_new_Z
+is_trend_variable
+is_periodic_dummy
 dataset_add_observations
 dataset_add_series
 dataset_add_allocated_series

@@ -1352,7 +1352,7 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	t1 = pmod->t2 + 1;
 	premax = pmod->t2;
     } else {
-	premax = pmod->t1;
+	premax = pmod->t1; /* ?? */
     }
 
     pre_n = premax / 2;
