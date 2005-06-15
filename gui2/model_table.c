@@ -388,8 +388,7 @@ static void print_model_table_coeffs (PRN *prn)
 	if (tex) {
 	    tex_escape(tmp, datainfo->varname[v]);
 	    pprintf(prn, "%s ", tmp);
-	}
-	else if (rtf) {
+	} else if (rtf) {
 	    print_rtf_row_spec(prn, 0);
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", datainfo->varname[v]);
 	} else {
@@ -407,24 +406,25 @@ static void print_model_table_coeffs (PRN *prn)
 		char numstr[32];
 
 		if (floateq(s, 0.0)) {
-		    if (floateq(x, 0.0)) pval = 1.0;
-		    else pval = 0.0001;
+		    if (floateq(x, 0.0)) {
+			pval = 1.0;
+		    } else {
+			pval = 0.0001;
+		    }
 		} else {
 		    pval = coeff_pval(pmod, x / s, pmod->dfd);
 		}
 
-		if (!tex) {
-		    sprintf(numstr, "%#.4g", x);
-		    gretl_fix_exponent(numstr);
-		}
+		sprintf(numstr, "%#.4g", x);
+		gretl_fix_exponent(numstr);
 
 		if (tex) {
 		    if (x < 0) {
-			pprintf(prn, "& %s$-$%#.4g%s ", get_pre_asts(pval),
-				fabs(x), tex_get_asts(pval));
+			pprintf(prn, "& %s$-$%s%s ", get_pre_asts(pval),
+				numstr + 1, tex_get_asts(pval));
 		    } else {
-			pprintf(prn, "& %s%#.4g%s ", get_pre_asts(pval), 
-				x, tex_get_asts(pval));
+			pprintf(prn, "& %s%s%s ", get_pre_asts(pval), 
+				numstr, tex_get_asts(pval));
 		    }
 		} else if (rtf) {
 		    pprintf(prn, "\\qc %s%s\\cell ", numstr, get_asts(pval));
@@ -434,9 +434,13 @@ static void print_model_table_coeffs (PRN *prn)
 		}
 		f = 0;
 	    } else {
-		if (tex) pputs(prn, "& ");
-		else if (rtf) pputs(prn, "\\qc \\cell ");
-		else pputs(prn, "            ");
+		if (tex) {
+		    pputs(prn, "& ");
+		} else if (rtf) {
+		    pputs(prn, "\\qc \\cell ");
+		} else {
+		    pputs(prn, "            ");
+		}
 	    }
 	}
 
@@ -455,8 +459,11 @@ static void print_model_table_coeffs (PRN *prn)
 	f = 1;
 	for (j=0; j<model_list_len; j++) {
 	    pmod = model_list[j];
-	    if (pmod == NULL) continue;
+	    if (pmod == NULL) {
+		continue;
+	    }
 	    if ((k = var_is_in_model(v, pmod))) {
+		char numstr[32];
 		double val;
 
 		if (use_tstats) {
@@ -465,31 +472,43 @@ static void print_model_table_coeffs (PRN *prn)
 		    val = pmod->sderr[k-2];
 		}
 
-		if (tex) {
-		    pprintf(prn, "& \\footnotesize{(%#.4g)} ", val);
-		} else {
-		    char numstr[32];
+		sprintf(numstr, "%#.4g", val);
+		gretl_fix_exponent(numstr);
 
-		    sprintf(numstr, "%#.4g", val);
-		    gretl_fix_exponent(numstr);
-		    if (rtf) {
-			if (f == 1) pputs(prn, "\\qc \\cell ");
-			pprintf(prn, "\\qc (%s)\\cell ", numstr);
-			f = 0;
+		if (tex) {
+		    if (val < 0) {
+			pprintf(prn, "& \\footnotesize{($-$%s)} ", numstr + 1);
 		    } else {
-			sprintf(tmp, "(%s)", numstr);
-			pprintf(prn, "%12s", tmp);
+			pprintf(prn, "& \\footnotesize{(%s)} ", numstr);
 		    }
+		} else if (rtf) {
+		    if (f == 1) {
+			pputs(prn, "\\qc \\cell ");
+		    }
+		    pprintf(prn, "\\qc (%s)\\cell ", numstr);
+		    f = 0;
+		} else {
+		    sprintf(tmp, "(%s)", numstr);
+		    pprintf(prn, "%12s", tmp);
 		}
 	    } else {
-		if (tex) pputs(prn, "& ");
-		else if (rtf) pputs(prn, "\\qc \\cell ");
-		else pputs(prn, "            ");
+		if (tex) {
+		    pputs(prn, "& ");
+		} else if (rtf) {
+		    pputs(prn, "\\qc \\cell ");
+		} else {
+		    pputs(prn, "            ");
+		}
 	    }
 	}
-	if (tex) pputs(prn, "\\\\ [4pt] \n");
-	else if (rtf) pputs(prn, "\\intbl \\row\n");
-	else pputs(prn, "\n\n");
+
+	if (tex) {
+	    pputs(prn, "\\\\ [4pt] \n");
+	} else if (rtf) {
+	    pputs(prn, "\\intbl \\row\n");
+	} else {
+	    pputs(prn, "\n\n");
+	}
     }
 }
 

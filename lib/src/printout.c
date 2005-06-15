@@ -396,9 +396,15 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 char *gretl_fix_exponent (char *s)
 {
     char *p;
+    int n;
 
     if ((p = strstr(s, "+00")) || (p = strstr(s, "-00"))) {
 	memmove(p+1, p+2, strlen(p+1));
+    }
+
+    n = strlen(s);
+    if (s[n-1] == '.') {
+	s[n-1] = 0;
     }
 
     return s;
