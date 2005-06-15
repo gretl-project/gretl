@@ -173,7 +173,7 @@
       \documentclass[11pt]{article}
       \usepackage[latin1]{inputenc}
       \usepackage{amsmath}
-      \usepackage{dcolumn}
+      \usepackage{dcolumn,longtable}
       \begin{document}
       \thispagestyle{empty}
     </programlisting>
