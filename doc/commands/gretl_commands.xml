@@ -1372,6 +1372,16 @@
         <argument optional="true" >startobs endobs</argument>
 	<argument>fitvar</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--dynamic</flag>
+	  <effect>create dynamic forecast</effect>
+        </option>
+        <option>
+	  <flag>--static</flag>
+	  <effect>create static forecast</effect>
+        </option>
+      </options>
       <examples>
         <example>fcast 1997:1 2001:4 f1</example>
 	<example>fcast fit2</example>
@@ -1383,14 +1393,22 @@
 	Must follow an estimation command.  Forecasts are generated
 	for the specified range (or the largest possible range if no
 	<repl>startobs</repl> and <repl>endobs</repl> are given) and
-	the values saved as <repl>fitvar</repl>, which can be
-	printed, graphed, or plotted. The right-hand side variables
-	are those in the original model.  There is no provision to
-	substitute other variables.  If an autoregressive error
-	process is specified (for <cmd>hilu</cmd>, <cmd>corc</cmd>,
-	and <cmd>ar</cmd>) the forecast is conditional one step ahead
-	and incorporates the error process.
+	the values saved as <repl>fitvar</repl>, which can be printed,
+	graphed, or plotted. The right-hand side variables are those
+	in the original model.  There is no provision to substitute
+	other variables.  If an autoregressive error process is
+	specified the forecast is conditional one step ahead and
+	incorporates the error process.
       </para>
+
+      <para>
+	The choice between a static and a dynamic forecast applies
+	only in the case of dynamic models, with an autoregressive
+	error process or including one or more lagged values of the
+	dependent variable as regressors.  See <cmdref
+	targ="fcasterr"/> for more details.
+      </para>
+
     </description>
 
     <gui-access>
@@ -1412,23 +1430,63 @@
 	  <flag>--plot</flag>
 	  <effect>display graph</effect>
         </option>
+        <option>
+	  <flag>--dynamic</flag>
+	  <effect>create dynamic forecast</effect>
+        </option>
+        <option>
+	  <flag>--static</flag>
+	  <effect>create static forecast</effect>
+        </option>
       </options>
     </usage>
 
     <description>
       <para>
-	After estimating a model via OLS you can use this command to
-	print out fitted values over the specified observation range,
-	along with the estimated standard errors of those predictions
-	and 95 percent confidence intervals.</para>  
+	After estimating a model you can use this command to print out
+	fitted values over the specified observation range, along with
+	(depending on the nature of the model and the available data)
+	estimated standard errors of those predictions and 95 percent
+	confidence intervals.
+      </para>  
 
-      <para>The standard errors are calculated in the manner described
-	by Wooldridge in chapter 6 of his <book>Introductory
-	  Econometrics</book>. They incorporate two sources of
-	variation: the variance associated with the expected value of
-	the dependent variable, conditional on the given values of the
-	independent variables, and the variance of the regression
-	residuals.</para>
+      <para>
+	The choice between a static and a dynamic forecast applies
+	only in the case of dynamic models, with an autoregressive
+	error process or including one or more lagged values of the
+	dependent variable as regressors.  Static forecasts are one
+	step ahead, based on realized values from the previous period,
+	while dynamic forecasts employ the chain rule of forecasting.
+	For example, if a forecast for <mathvar>y</mathvar> in 2008
+	requires as input a value of <mathvar>y</mathvar> for 2007, a
+	static forecast is impossible without actual data for 2007.  A
+	dynamic forecast for 2008 is possible if a prior forecast can
+	be substituted for <mathvar>y</mathvar> in 2007.
+      </para>
+
+      <para>
+	The default is to give a static forecast for any portion of
+	the forecast range that lies with the sample range over which
+	the model was estimated, and a dynamic forecast (if relevant)
+	out of sample.  The <lit>dynamic</lit> option requests a
+	dynamic forecast from the earliest possible date, and the
+	<lit>static</lit> option requests a static forecast even out
+	of sample.  
+      </para>
+
+      <para>
+	The nature of the forecast standard errors (if available)
+	depends on the nature of the model and the forecast.  For
+	static linear models standard errors are computed using
+	the method outlined by Davidson and MacKinnon (2004); they
+	incorporate both uncertainty due to the error process and
+	parameter uncertainty (summarized in the covariance matrix of
+	the parameter estimates).  For dynamic models, forecast
+	standard errors are computed only in the case of a dynamic
+	forecast, and they do not incorporate parameter uncertainty.
+	For nonlinear models, forecast standard errors are not
+	presently available.
+      </para>
 
     </description>
 
@@ -4305,6 +4363,10 @@
 	  <flag>--ten</flag>
 	  <effect>use 10 significant digits</effect>
 	</option>
+	<option>
+	  <flag>--no-dates</flag>
+	  <effect>use simple observation numbers</effect>
+	</option>
       </options>
       <examples>
 	<example>print x1 x2 --byobs</example>
@@ -4321,6 +4383,15 @@
 	observation, otherwise they are printed by variable.  If the
 	<lit>--ten</lit> flag is given the data are printed by
 	variable to 10 significant digits.
+      </para>
+
+      <para>
+	If the <lit>--byobs</lit> flag is given and the data are
+	printed by observation, the default is to show the date (with
+	time-series data) or the observation marker string (if any) at
+	the start of each line.  The <lit>--no-dates</lit> option
+	suppresses the printing of dates or markers; a simple
+	observation number is shown instead.
       </para>
 
       <para>
@@ -4359,16 +4430,29 @@
       <para>The format string itself must be enclosed in double
 	quotes.  The values to be printed must follow the format
 	string, separated by commas.  These values should take the
-	form of either (a) the names of variables in the dataset, or
-	(b) expressions that are valid for the <cmd>genr</cmd>
-	command.  The following example prints the values of two
-	variables plus that of a calculated expression:</para>
+	form of either (a) the names of variables in the dataset, (b)
+	expressions that are valid for the <cmd>genr</cmd> command, or
+	(c) the special functions <lit>varname()</lit> or
+	<lit>date()</lit>.  The following example prints the values of
+	two variables plus that of a calculated expression:</para>
 
       <code>
 	ols 1 0 2 3
 	genr b = coeff(2)
 	genr se_b = stderr(2)
 	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
+      </code>
+
+      <para>
+	The next lines illustrate the use of the varname and date
+	functions, which respectively print the name of a variable,
+	given its ID number, and a date string, given a 1-based
+	observation number.
+      </para>
+
+      <code>
+	printf "The name of variable %d is %s\n", i, varname(i)
+	printf "The date of observation %d is %s\n", j, date(j)
       </code>
 
       <para>
