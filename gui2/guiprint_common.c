@@ -696,6 +696,15 @@ void special_print_fit_resid (const FITRESID *fr,
 
 /* .................................................................. */
 
+static void texprint_fcast_x (double x, int places, char *str)
+{
+    if (places > 0 && !na(x)) {
+	sprintf(str, "%.*f", places, x);
+    } else {
+	tex_dcolumn_double(x, str);
+    }
+}
+
 static void texprint_fcast_without_errs (const FITRESID *fr, 
 					 const DATAINFO *pdinfo, 
 					 PRN *prn)
@@ -739,7 +748,15 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     char actual[32], fitted[32], sderr[32], lo[32], hi[32];
     char vname[16];
     char pt = get_local_decpoint();
-    int t;
+    int pmax, t;
+
+    pmax = get_signif(fr->actual + fr->pre_n, 
+		      fr->nobs - fr->pre_n);
+    if (pmax < 0) {
+	pmax = -pmax;
+    } else {
+	pmax = 0;
+    }
 
     pputs(prn, "\\begin{center}\n");
     if (fr->model_ci == ARMA) {
@@ -787,11 +804,11 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	    xlo = fr->fitted[t] - maxerr;
 	    xhi = fr->fitted[t] + maxerr;
 	}
-	tex_dcolumn_double(fr->actual[t], actual);
-	tex_dcolumn_double(fr->fitted[t], fitted);
-	tex_dcolumn_double(fr->sderr[t], sderr);
-	tex_dcolumn_double(xlo, lo);
-	tex_dcolumn_double(xhi, hi);
+	texprint_fcast_x(fr->actual[t], pmax, actual);
+	texprint_fcast_x(fr->fitted[t], pmax, fitted);
+	texprint_fcast_x(fr->sderr[t], pmax, sderr);
+	texprint_fcast_x(xlo, pmax, lo);
+	texprint_fcast_x(xhi, pmax, hi);
 	tex_print_obs_marker(t + fr->t1, pdinfo, prn);
 	pprintf(prn, " & %s & %s & %s & %s & %s \\\\\n",
 		actual, fitted, sderr, lo, hi);

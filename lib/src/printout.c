@@ -736,6 +736,15 @@ void gretl_printxn (double x, int n, PRN *prn)
     pputs(prn, s);
 }
 
+static void fcast_print_x (double x, int n, int places, PRN *prn)
+{
+    if (places > 0 && !na(x)) {
+	pprintf(prn, "%*.*f", n - 3, places, x);
+    } else {
+	gretl_printxn(x, n, prn);
+    }
+}
+
 static void printstr_ten (PRN *prn, double xx, int *ls)
 {
     int lwrd;    
@@ -806,10 +815,12 @@ static void printz (const double *z, const DATAINFO *pdinfo,
 #define SMAX 7            /* stipulated max. significant digits */
 #define TEST_PLACES 12    /* # of decimal places to use in test string */
 
-static int get_signif (const double *x, int n)
-     /* return either (a) the number of significant digits in
-	a data series (+), or (b) the number of decimal places to
-	use when printing the series (-) */
+/* return either (a) the number of significant digits in a data series
+   (+), or (b) the number of decimal places to use when printing the
+   series (-) 
+*/
+
+int get_signif (const double *x, int n)
 {
     static char numstr[48];
     int i, j, s, smax = 0; 
@@ -1324,12 +1335,21 @@ int text_print_forecast (const FITRESID *fr,
     double *maxerr = NULL;
     int time_series = (pdinfo->structure == TIME_SERIES);
     int plot = (opt & OPT_P);
+    int pmax;
 
     if (do_errs) {
 	maxerr = malloc(fr->nobs * sizeof *maxerr);
 	if (maxerr == NULL) {
 	    return E_ALLOC;
 	}
+    }
+
+    pmax = get_signif(fr->actual + fr->pre_n, 
+		      fr->nobs - fr->pre_n);
+    if (pmax < 0) {
+	pmax = -pmax;
+    } else {
+	pmax = 0;
     }
 
     pputc(prn, '\n');
@@ -1365,23 +1385,23 @@ int text_print_forecast (const FITRESID *fr,
 
     for (t=fr->pre_n; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
-	gretl_printxn(fr->actual[t], 15, prn);
+	fcast_print_x(fr->actual[t], 15, pmax, prn);
 
 	if (na(fr->fitted[t])) {
 	    pputc(prn, '\n');
 	    continue;
 	}
-	gretl_printxn(fr->fitted[t], 15, prn);
+	fcast_print_x(fr->fitted[t], 15, pmax, prn);
 
 	if (do_errs) {
 	    if (na(fr->sderr[t])) {
 		maxerr[t] = NADBL;
 	    } else {
-		gretl_printxn(fr->sderr[t], 15, prn);
+		fcast_print_x(fr->sderr[t], 15, pmax, prn);
 		maxerr[t] = fr->tval * fr->sderr[t];
-		gretl_printxn(fr->fitted[t] - maxerr[t], 15, prn);
+		fcast_print_x(fr->fitted[t] - maxerr[t], 15, pmax, prn);
 		pputs(prn, " -");
-		gretl_printxn(fr->fitted[t] + maxerr[t], 10, prn);
+		fcast_print_x(fr->fitted[t] + maxerr[t], 10, pmax, prn);
 	    }
 	}
 	pputc(prn, '\n');
