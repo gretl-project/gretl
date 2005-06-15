@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretll-1.3.0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-06-14 16:19-0400\n"
-"PO-Revision-Date: 2005-05-12 12:52-0400\n"
+"PO-Revision-Date: 2005-06-15 08:14-0400\n"
 "Last-Translator: Markus Hahn <markus.hahn@rub.de>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -417,7 +417,7 @@ msgstr "%s kann nicht geöffnet werden\n"
 #: lib/src/dataio.c:936
 #, c-format
 msgid "No info in %s\n"
-msgstr "Keine Infos is %s\n"
+msgstr "Keine Infos in %s\n"
 
 #: lib/src/dataio.c:946
 #, c-format
@@ -2402,7 +2402,7 @@ msgstr ""
 
 #: lib/src/gretl_restrict.c:770
 msgid "Failed to compute F statistic for test\n"
-msgstr "Berechnung der F-Statistik für Test fehlgeschagen\n"
+msgstr "Berechnung der F-Statistik für Test fehlgeschlagen\n"
 
 #: lib/src/gretl_string_table.c:134
 #, c-format
@@ -3211,7 +3211,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:940
 msgid "Variable used as weight"
-msgstr "Variable vewendet als Gewicht"
+msgstr "Variable verwendet als Gewicht"
 
 #: lib/src/modelprint.c:962 lib/src/modelprint.c:963
 msgid "Weight var is a dummy variable, effective obs ="
@@ -4601,7 +4601,7 @@ msgstr ""
 #: cli/gretlcli.c:559 gui2/helpfiles.c:555
 #, c-format
 msgid "help file %s is not accessible\n"
-msgstr "Hifedatei %s ist nich erreichbar\n"
+msgstr "Hifedatei %s ist nicht erreichbar\n"
 
 #: cli/gretlcli.c:571
 #, c-format
@@ -4647,9 +4647,8 @@ msgid "Failed to shrink the data set"
 msgstr ""
 
 #: cli/gretlcli.c:1047 gui2/library.c:4144 gui2/library.c:5915
-#, fuzzy
 msgid "Take note: variables have been renumbered"
-msgstr "Zu Kenntniss nehmen: Variablen wurden neu nummeriert"
+msgstr "Zu Kenntnis nehmen: Variablen wurden neu nummeriert"
 
 #: cli/gretlcli.c:1083 gui2/library.c:5952
 msgid "You can't end a loop here, you haven't started one\n"
@@ -7175,7 +7174,7 @@ msgstr ""
 #: gui2/database.c:1934
 #, c-format
 msgid "Can't open folder %s"
-msgstr "Kann Verzeichniss %s nicht öffnen"
+msgstr "Kann Verzeichnis %s nicht öffnen"
 
 #: gui2/database.c:1977 gui2/datafiles.c:874
 msgid "No database files found"
@@ -7346,7 +7345,7 @@ msgstr "nicht gesetzt"
 
 #: gui2/dialogs.c:985
 msgid "average of observations"
-msgstr "Druchschnitt der Beobachtungen"
+msgstr "Durchschnitt der Beobachtungen"
 
 #: gui2/dialogs.c:986
 msgid "sum of observations"
@@ -7838,7 +7837,7 @@ msgstr "Graph gespeichert"
 
 #: gui2/fileselect.c:540
 msgid "boxplots saved"
-msgstr "Boxplots gepeichert"
+msgstr "Boxplots gespeichert"
 
 #: gui2/fileselect.c:541
 msgid "boxplot save failed"
@@ -7921,7 +7920,7 @@ msgstr "PcGive-Dateien (*.dat)"
 
 #: gui2/fileselect.c:634
 msgid "TeX files (*.tex)"
-msgstr "TeX-Datien (*.tex)"
+msgstr "TeX-Dateien (*.tex)"
 
 #: gui2/fileselect.c:641 gui2/fileselect.c:642
 msgid "ASCII files (*.txt)"
@@ -8237,7 +8236,7 @@ msgstr "/Hilfe/Handbuch in PDF"
 #: gui2/gretl.c:764
 #, fuzzy
 msgid "The GNOME 2.0 econometrics package"
-msgstr "Das GNOME 2.0 Ökonometrie-Packet"
+msgstr "Das GNOME 2.0 Ökonometrie-Paket"
 
 #: gui2/gretlwin32.c:92 gui2/gui_utils.c:3400
 msgid "Couldn't write R startup file"
@@ -8249,7 +8248,7 @@ msgstr ""
 
 #: gui2/gretlwin32.c:111 gui2/gui_utils.c:3419
 msgid "Write of R data file failed"
-msgstr "Schreiben der R-Datendatei fehlgeschagen"
+msgstr "Schreiben der R-Datendatei fehlgeschlagen"
 
 #: gui2/gretlwin32.c:224 gui2/gretlwin32.c:227
 msgid "gretl.chm"
@@ -8289,9 +8288,7 @@ msgstr "Vorschautext"
 
 #: gui2/gtkfontselhack.c:254
 msgid "The text to display in order to demonstrate the selected font."
-msgstr ""
-"Der Text, der angzeigt werden soll, um die ausgewählte Schriftart zu "
-"demonstrieren,"
+msgstr "Der Text, der angezeigt werden soll, um die ausgewählte Schriftart zu demonstrieren."
 
 #: gui2/gtkfontselhack.c:260
 msgid "Filter"
@@ -8667,7 +8664,7 @@ msgid ""
 "will be lost.  Proceed to open data file?"
 msgstr ""
 "Öffnen einer neuen Datendatei schließt\n"
-"auttomatisch die aktuelle Datei. Jede un-\n"
+"automatisch die aktuelle Datei. Jede un-\n"
 "gespeicherte Arbeit geht dann verloren.\n"
 "Mit dem Öffnen der Datendatei fortfahren?"
 
@@ -8689,7 +8686,7 @@ msgstr ""
 #: gui2/gui_utils.c:1130
 #, c-format
 msgid "Couldn't open session file %s"
-msgstr "Konnte Sessiondatei %s nich öffnen"
+msgstr "Konnte Sessiondatei %s nicht öffnen"
 
 #: gui2/gui_utils.c:1144
 #, fuzzy
@@ -10462,7 +10459,7 @@ msgstr ""
 
 #: gui2/textutil.c:66
 msgid "gretl: replace"
-msgstr "gretl: ersetzten"
+msgstr "gretl: ersetzen"
 
 #: gui2/textutil.c:71
 msgid "Find:"
@@ -10892,7 +10889,7 @@ msgstr ""
 
 #: plugin/logistic.c:168
 msgid "Illegal non-positive value of the dependent variable"
-msgstr "Unzulässiger nichtpositiver Wert der abhängigen Variaable"
+msgstr "Unzulässiger nichtpositiver Wert der abhängigen Variablen"
 
 #: plugin/mp_ols.c:131
 #, c-format
@@ -11510,7 +11507,7 @@ msgstr "Unerwarteter Fehler beim Lesen der Datei\n"
 #~ msgstr "Sie können die Konstante in genr nicht neu definieren"
 
 #~ msgid "Too many nested parentheses.  genr not done"
-#~ msgstr "Zu viele Klammern ineinander geschachtelt. genr nich durchgeführt"
+#~ msgstr "Zu viele Klammern ineinander geschachtelt. genr nicht durchgeführt"
 
 #~ msgid "Argument must be an integer"
 #~ msgstr "Argument muss eine Ganzzahl sein"
