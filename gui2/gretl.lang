@@ -21,6 +21,7 @@
         <keyword-list _name = "Commands" style = "Keyword" case-sensitive="TRUE"
            beginning-regex="\b" end-regex="\b">
              <keyword>add</keyword>
+             <keyword>addobs</keyword>
              <keyword>addto</keyword>
              <keyword>adf</keyword>      
              <keyword>ar</keyword>       
@@ -109,8 +110,10 @@
              <keyword>rmplot</keyword>
              <keyword>run</keyword>
              <keyword>runs</keyword>
+             <keyword>scalar</keyword>
              <keyword>scatters</keyword>
              <keyword>seed</keyword>
+             <keyword>series</keyword>
              <keyword>set</keyword>
              <keyword>setobs</keyword>
              <keyword>setmiss</keyword>
@@ -133,49 +136,50 @@
              <keyword>wls</keyword>
         </keyword-list>
 
-        <keyword-list _name = "Genr-functions" style = "Function" case-sensitive="TRUE">
-             <keyword>log</keyword> 
-             <keyword>exp</keyword> 
-             <keyword>sin</keyword> 
-             <keyword>cos</keyword> 
-             <keyword>tan</keyword>
-             <keyword>atan</keyword>
-             <keyword>diff</keyword>
-             <keyword>ldiff</keyword> 
-             <keyword>mean</keyword>
-             <keyword>sd</keyword> 
-             <keyword>min</keyword>
-             <keyword>max</keyword>
-             <keyword>sort</keyword> 
-             <keyword>int</keyword> 
-             <keyword>ln</keyword>
-             <keyword>coeff</keyword>
+        <keyword-list _name = "Genr-functions" style = "Function"
+	case-sensitive="TRUE">
              <keyword>abs</keyword> 
-             <keyword>rho</keyword> 
-             <keyword>sqrt</keyword> 
-             <keyword>sum</keyword>
-             <keyword>nobs</keyword> 
-             <keyword>normal</keyword>
-             <keyword>uniform</keyword>
-             <keyword>resample</keyword>
-             <keyword>stderr</keyword>
-             <keyword>cum</keyword>
-             <keyword>hpfilt</keyword>
+             <keyword>atan</keyword>
              <keyword>bkfilt</keyword>
-	     <keyword>fracdiff</keyword>
-	     <keyword>isvector</keyword>
+             <keyword>coeff</keyword>
+             <keyword>corr</keyword>
+             <keyword>cos</keyword> 
+             <keyword>cov</keyword>
+             <keyword>cum</keyword>
+             <keyword>diff</keyword>
+             <keyword>exp</keyword> 
+             <keyword>fracdiff</keyword>
+             <keyword>hpfilt</keyword>
+             <keyword>int</keyword> 
+             <keyword>isvector</keyword>
+             <keyword>ldiff</keyword> 
+             <keyword>ln</keyword>
+             <keyword>log</keyword> 
+             <keyword>max</keyword>
+             <keyword>mean</keyword>
+             <keyword>median</keyword>
+             <keyword>min</keyword>
              <keyword>missing</keyword>
              <keyword>misszero</keyword>
-             <keyword>corr</keyword>
-             <keyword>vcv</keyword>
-             <keyword>var</keyword>
-             <keyword>cov</keyword>
-             <keyword>median</keyword>
-             <keyword>zeromiss</keyword>
-             <keyword>pvalue</keyword>
-             <keyword>mpow</keyword>
              <keyword>mlog</keyword>
+             <keyword>mpow</keyword>
+             <keyword>nobs</keyword> 
+             <keyword>normal</keyword>
+             <keyword>pvalue</keyword>
+             <keyword>resample</keyword>
+             <keyword>rho</keyword> 
+             <keyword>sd</keyword> 
+             <keyword>sin</keyword> 
+             <keyword>sort</keyword> 
+             <keyword>sqrt</keyword> 
              <keyword>sst</keyword>
+             <keyword>stderr</keyword>
+             <keyword>sum</keyword>
+             <keyword>tan</keyword>
+             <keyword>uniform</keyword>
+             <keyword>var</keyword>
+             <keyword>vcv</keyword>
+             <keyword>zeromiss</keyword>
         </keyword-list>
 
         <pattern-item _name = "Internal-Variables" style = "Data Type">

@@ -62,7 +62,7 @@ static int genr_write_var (double ***pZ, DATAINFO *pdinfo,
 
 static int math_tokenize (char *s, GENERATE *genr, int level);
 static double get_obs_value (const char *s, const double **Z, 
-			     const DATAINFO *pdinfo);
+			     const DATAINFO *pdinfo, int *err);
 static int model_scalar_stat_index (const char *s);
 static int model_vector_index (const char *s);
 static int dataset_var_index (const char *s);
@@ -612,8 +612,11 @@ static genatom *parse_token (const char *s, char op,
 		}
 	    }
 	} else if (strchr(s, '[')) {
-	    val = get_obs_value(s, (const double **) *genr->pZ, genr->pdinfo);
-	    if (val == NADBL) {
+	    int err;
+
+	    val = get_obs_value(s, (const double **) *genr->pZ, genr->pdinfo,
+				&err);
+	    if (err) {
 		DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
 		genr->err = E_SYNTAX; 
 	    } else {
@@ -4007,8 +4010,6 @@ static double get_dataset_statistic (DATAINFO *pdinfo, int idx)
     return x;
 }
 
-/* ...........................................................*/
-
 static double get_test_stat_value (char *label, int idx)
 {
     double x = NADBL;
@@ -4022,13 +4023,13 @@ static double get_test_stat_value (char *label, int idx)
     return x;
 }
 
-/* ...........................................................*/
-
 static double get_obs_value (const char *s, const double **Z, 
-			     const DATAINFO *pdinfo)
+			     const DATAINFO *pdinfo, int *err)
 {
     char vname[USER_VLEN], obs[OBSLEN];
     double val = NADBL;
+
+    *err = 0;
 
     if (sscanf(s, "%8[^[][%10[^]]]", vname, obs) == 2) {
 	int t, i = varindex(pdinfo, vname);
@@ -4037,14 +4038,18 @@ static double get_obs_value (const char *s, const double **Z,
 	    t = get_t_from_obs_string(obs, Z, pdinfo);
 	    if (t >= 0 && t < pdinfo->n) {
 		val = Z[i][t];
+	    } else {
+		*err = 1;
 	    }
+	} else {
+	    *err = 1;
 	}
+    } else {
+	*err = 1;
     }
 
     return val;
 }
-
-/* ...........................................................*/
 
 static double *get_model_series (const DATAINFO *pdinfo,
 				 const MODEL *pmod, int v)
@@ -4102,8 +4107,6 @@ static double *get_model_series (const DATAINFO *pdinfo,
     return x;
 }
 
-/* ...........................................................*/
-
 static double get_tnum (const DATAINFO *pdinfo, int t)
 {
     if (pdinfo->structure == TIME_SERIES && pdinfo->pd == 1) {
@@ -4114,8 +4117,6 @@ static double get_tnum (const DATAINFO *pdinfo, int t)
 	return (double) (t + 1);
     }
 }
-
-/* ......................................................   */
 
 static int obs_num (const char *s, const DATAINFO *pdinfo)
 {
@@ -4166,8 +4167,6 @@ static int obs_num (const char *s, const DATAINFO *pdinfo)
 
     return 0;
 }
-
-/* ......................................................   */
 
 static int dataset_var_index (const char *s)
 {

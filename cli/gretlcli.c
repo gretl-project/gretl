@@ -814,6 +814,8 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 			       datainfo, &Z, loop, 
 			       &loopstack, &looprun);
 	    if (loop == NULL) {
+		loopstack = 0;
+		errfatal = 1;
 		print_gretl_errmsg(prn);
 		err = 1;
 	    } 

@@ -165,7 +165,6 @@ struct LOOPSET_ {
 #define loop_is_quiet(l) (l->flags & LOOP_QUIET)
 #define loop_set_quiet(l) (l->flags |= LOOP_QUIET)
 
-
 static void gretl_loop_init (LOOPSET *loop);
 static int prepare_loop_for_action (LOOPSET *loop);
 static void free_loop_model (LOOP_MODEL *lmod);
@@ -233,6 +232,19 @@ static double loop_incrval (LOOPSET *loop, const double **Z)
 #endif
 
     return x;
+}
+
+static void set_loop_opts (LOOPSET *loop, gretlopt opt)
+{
+    if (opt & OPT_P) {
+	loop_set_progressive(loop);
+    }
+    if (opt & OPT_V) {
+	loop_set_verbose(loop);
+    }
+    if (opt & OPT_Q) {
+	loop_set_quiet(loop);
+    }
 }
 
 /**
@@ -1002,14 +1014,15 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 {
     LOOPSET *loop;
     char lvar[VNAMELEN], rvar[VNAMELEN], op[VNAMELEN];
+    gretlopt opt = OPT_NONE;
     char ichar;
     int err = 0;
 
     *gretl_errmsg = '\0';
 
 #if LOOP_DEBUG
-    fprintf(stderr, "parse_loopline: ploop = %p, loopstack = %d\n",
-	    (void *) ploop, loopstack);
+    fprintf(stderr, "parse_loopline: ploop = %p, loopstack = %d\n"
+	    " line: '%s'\n", (void *) ploop, loopstack, line);
 #endif
 
     while (isspace((unsigned char) *line)) {
@@ -1021,9 +1034,6 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	strcpy(gretl_errmsg, _("No valid loop condition was given."));
 	return NULL;
     }
-
-    line += 4; /* "loop" */
-    while (isspace((unsigned char) *line)) line++;
 
     if (ploop == NULL) {
 	/* starting from scratch */
@@ -1044,11 +1054,26 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	if (loop == NULL) {
 	    gretl_errmsg_set(_("Out of memory!"));
 	    return NULL;
+	} else {
+	    opt = get_gretl_options(line, &err);
+	    if (err) {
+		gretl_loop_destroy(loop);
+		return NULL;
+	    } 
 	}
     } else {
 	/* shouldn't happen: need error message? */
 	loop = ploop;
     }
+
+    line += 4; /* "loop" */
+    while (isspace((unsigned char) *line)) {
+	line++;
+    }
+
+#if LOOP_DEBUG
+    fprintf(stderr, "ready for parse: '%s'\n", line);
+#endif
 
     /* try parsing the loop line in various ways */
 
@@ -1107,6 +1132,10 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	    free(loop);
 	}
 	loop = NULL;
+    }
+
+    if (!err && opt != OPT_NONE) {
+	set_loop_opts(loop, opt);
     }
 
     return loop;
@@ -1872,17 +1901,11 @@ LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
 	if (lret == NULL) {
 	    if (*gretl_errmsg == '\0') {
 		gretl_errmsg_set(_("No valid loop condition was given."));
+		gretl_errno = E_PARSE;
 	    }
+	    goto bailout;
 	} else {
-	    if (opt & OPT_P) {
-		loop_set_progressive(lret);
-	    }
-	    if (opt & OPT_V) {
-		loop_set_verbose(lret);
-	    }
-	    if (opt & OPT_Q) {
-		loop_set_quiet(lret);
-	    }
+	    set_loop_opts(lret, opt);
 	    *loopstack += 1;
 	}
     } else if (ci == ENDLOOP) {
