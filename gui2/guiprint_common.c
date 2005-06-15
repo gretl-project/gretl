@@ -705,6 +705,19 @@ static void texprint_fcast_x (double x, int places, char *str)
     }
 }
 
+static int tex_get_pmax (const FITRESID *fr)
+{
+    int pmax = get_signif(fr->actual + fr->pre_n, 
+			  fr->nobs - fr->pre_n);
+    if (pmax < 0) {
+	pmax = -pmax;
+    } else {
+	pmax = 0;
+    }
+
+    return pmax;
+}
+
 static void texprint_fcast_without_errs (const FITRESID *fr, 
 					 const DATAINFO *pdinfo, 
 					 PRN *prn)
@@ -712,7 +725,9 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
     char actual[32], fitted[32];
     char vname[16];
     char pt = get_local_decpoint();
-    int t;
+    int pmax, t;
+
+    pmax = tex_get_pmax(fr);
 
     pputs(prn, "%% The table below needs the \"dcolumn\" and "
 	  "\"longtable\" packages\n\n");
@@ -730,8 +745,8 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
 	    I_("Obs"), vname, I_("prediction"));
 
     for (t=fr->pre_n; t<fr->nobs; t++) {
-	tex_dcolumn_double(fr->actual[t], actual);
-	tex_dcolumn_double(fr->fitted[t], fitted);
+	texprint_fcast_x(fr->actual[t], pmax, actual);
+	texprint_fcast_x(fr->fitted[t], pmax, fitted);
 	tex_print_obs_marker(t + fr->t1, pdinfo, prn);
 	pprintf(prn, " & %s & %s \\\\\n",
 		actual, fitted);
@@ -750,13 +765,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     char pt = get_local_decpoint();
     int pmax, t;
 
-    pmax = get_signif(fr->actual + fr->pre_n, 
-		      fr->nobs - fr->pre_n);
-    if (pmax < 0) {
-	pmax = -pmax;
-    } else {
-	pmax = 0;
-    }
+    pmax = tex_get_pmax(fr);
 
     pputs(prn, "\\begin{center}\n");
     if (fr->model_ci == ARMA) {
