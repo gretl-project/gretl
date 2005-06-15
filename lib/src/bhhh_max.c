@@ -33,7 +33,7 @@ struct _model_info {
     int n_series;       /* number of additional series needed in the
                            likelihood and/or score calculations */
     double tol;         /* tolerance for convergence */
-    unsigned char opts; /* options from among bhhh_opts */
+    unsigned char opts; /* options from among BHHH_opts */
 
     void *extra_info;   /* pointer to additional info which may be
 			   used in likelihood callback */
@@ -72,265 +72,277 @@ static int get_maxiter (void)
 
 /**
  * model_info_free:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  *
- * Frees the dynamically allocated members of @model, then
- * frees @model itself.
- * 
+ * Frees the dynamically allocated members of @minfo, then
+ * frees @minfo itself.
  */
 
-void model_info_free (model_info *model)
+void model_info_free (model_info *minfo)
 {
     int i;
 
-    if (model == NULL) return;
+    if (minfo == NULL) return;
 
-    free(model->theta);
+    free(minfo->theta);
 
-    if (model->series != NULL) {
-	for (i=0; i<model->n_series; i++) {
-	    free(model->series[i]);
+    if (minfo->series != NULL) {
+	for (i=0; i<minfo->n_series; i++) {
+	    free(minfo->series[i]);
 	}
-	free(model->series);
+	free(minfo->series);
     }
 
-    if (model->VCV != NULL) {
-	gretl_matrix_free(model->VCV);
+    if (minfo->VCV != NULL) {
+	gretl_matrix_free(minfo->VCV);
     }
 
-    free(model);
+    free(minfo);
 }
 
 /**
  * model_info_capture_OPG_model:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  *
  * Returns: pointer to a gretl #MODEL, which contains the
  * results of the OPG (Outer Product of the Gradient) regression
- * associated with @model.
+ * associated with @minfo.
  */
 
-MODEL *model_info_capture_OPG_model (model_info *model)
+MODEL *model_info_capture_OPG_model (model_info *minfo)
 {
-    MODEL *pmod = model->pmod;
+    MODEL *pmod = minfo->pmod;
 
-    model->pmod = NULL;
+    minfo->pmod = NULL;
     return pmod;
 }
 
 /**
  * model_info_get_VCV:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  *
- * Returns: pointer to the covariance matrix of @model.
+ * Returns: pointer to the covariance matrix of @minfo.
  */
 
-gretl_matrix *model_info_get_VCV (model_info *model)
+gretl_matrix *model_info_get_VCV (model_info *minfo)
 {
-    return model->VCV;
+    return minfo->VCV;
 }
 
 /**
  * model_info_get_theta:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  *
- * Returns: parameter vector @theta from @model.
+ * Returns: parameter vector @theta from @minfo.
  */
 
-double *model_info_get_theta (model_info *model)
+double *model_info_get_theta (model_info *minfo)
 {
-    return model->theta;
+    return minfo->theta;
 }
 
 /**
  * model_info_get_t1:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  *
  * Returns: the (zero-based) start of the sample range for 
- * @model.
+ * @minfo.
  */
 
-int model_info_get_t1 (const model_info *model)
+int model_info_get_t1 (const model_info *minfo)
 {
-    return model->t1;
+    return minfo->t1;
 }
 
 /**
  * model_info_get_t2:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  *
- * Returns: the end of the sample range for @model.
+ * Returns: the end of the sample range for @minfo.
  */
 
-int model_info_get_t2 (const model_info *model)
+int model_info_get_t2 (const model_info *minfo)
 {
-    return model->t2;
+    return minfo->t2;
 }
 
 /**
  * model_info_get_n:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  *
- * Returns: the number of observations used in @model.
+ * Returns: the number of observations used in @minfo.
  */
 
-int model_info_get_n (const model_info *model)
+int model_info_get_n (const model_info *minfo)
 {
-    return model->n;
+    return minfo->n;
 } 
 
 /**
  * model_info_get_iters:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  *
  * Returns: the number of iterations taken in estimating
- * @model.
+ * the model in @minfo.
  */  
 
-int model_info_get_iters (const model_info *model)
+int model_info_get_iters (const model_info *minfo)
 {
-    return model->iters;
+    return minfo->iters;
 }
 
 /**
  * model_info_get_series:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  *
  * Returns: FIXME.
  */  
 
-double **model_info_get_series (const model_info *model)
+double **model_info_get_series (const model_info *minfo)
 {
-    return model->series;
+    return minfo->series;
 }
 
 /**
  * model_info_get_ll:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  *
- * Returns: the log-likelihood for @model.
+ * Returns: the log-likelihood for @minfo.
  */ 
 
-double model_info_get_ll (const model_info *model)
+double model_info_get_ll (const model_info *minfo)
 {
-    return model->ll;
+    return minfo->ll;
 }
 
 /**
  * model_info_set_ll:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  * @ll: log-likehood.
  * @do_score:
  *
- * Sets the log-likelihood for @model.  If @do_score is non-zero,
+ * Sets the log-likelihood for @minfo.  If @do_score is non-zero,
  * sets the primary ll value, otherwise sets the secondary value,
  * which is used for comparison (to see if we have succeeded in
  * increasing the likelihood by following the estimated gradient).
  */ 
 
-void model_info_set_ll (model_info *model, double ll, int do_score)
+void model_info_set_ll (model_info *minfo, double ll, int do_score)
 {
     if (do_score) {
-	model->ll = ll;
+	minfo->ll = ll;
     } else {
-	model->ll2 = ll;
+	minfo->ll2 = ll;
     }
 }
 
 /**
  * model_info_set_opts:
- * @model: model info pointer.
- * @opts: option flags to set.
+ * @minfo: model info pointer.
+ * @opts: option flags to set, from #BHHH_opts.
  *
- * Sets the option flags for @model. 
- * FIXME: explain this.
+ * Sets the option flags for @minfo. 
  */ 
 
-void model_info_set_opts (model_info *model, unsigned char opts)
+void model_info_set_opts (model_info *minfo, unsigned char opts)
 {
-    model->opts = opts;
+    minfo->opts = opts;
 }
 
 /**
  * model_info_set_tol:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  * @tol: tolerance for convergence of estimates.
  *
- * Sets the convergence tolerance for @model. 
+ * Sets the convergence tolerance for @minfo. 
  */ 
 
-void model_info_set_tol (model_info *model, double tol)
+void model_info_set_tol (model_info *minfo, double tol)
 {
-    model->tol = tol;
+    minfo->tol = tol;
 }
 
 /**
  * model_info_set_k:
- * @model: model info pointer.
- * @k: number of regressors in model.
+ * @minfo: model info pointer.
+ * @k: number of regressors in minfo.
  *
  * Sets the total number of regressors.
  */ 
 
-void model_info_set_k (model_info *model, int k)
+void model_info_set_k (model_info *minfo, int k)
 {
-    model->k = k;
+    minfo->k = k;
 }
 
 /**
  * model_info_get_k:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  *
- * Returns: the number of regressors in @model.
+ * Returns: the number of regressors in @minfo.
  */ 
 
-int model_info_get_k (model_info *model)
+int model_info_get_k (model_info *minfo)
 {
-    return model->k;
+    return minfo->k;
 }
 
 /**
  * model_info_set_n_series:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  * @n: number of data series.
  *
  * Sets the number of auxiliary data series needed for the
- * OPG regression associated with @model.
+ * OPG regression associated with @minfo.
  */ 
 
-void model_info_set_n_series (model_info *model, int n)
+void model_info_set_n_series (model_info *minfo, int n)
 {
-    model->n_series = n;
+    minfo->n_series = n;
 }
 
 /**
  * model_info_set_t1_t2:
- * @model: model info pointer.
+ * @minfo: model info pointer.
  * @t1: starting observation number (zero-based).
  * @t2: ending observation number.
  *
- * Sets the sample range for @model.
+ * Sets the sample range for @minfo.
  */ 
 
-void model_info_set_t1_t2 (model_info *model, int t1, int t2)
+void model_info_set_t1_t2 (model_info *minfo, int t1, int t2)
 {
-    model->t1 = t1;
-    model->t2 = t2;
-    model->n = t2 + 1;
+    minfo->t1 = t1;
+    minfo->t2 = t2;
+    minfo->n = t2 + 1;
 }
 
-/* set extra information pointer on basic model_info */
+/**
+ * model_info_set_extra_info:
+ * @minfo: model info pointer.
+ * @extra: pointer to set on @minfo.
+ *
+ * Set the content of the "extra" pointer member of @minfo.
+ */
 
-void model_info_set_extra_info (model_info *model, void *extra)
+void model_info_set_extra_info (model_info *minfo, void *extra)
 {
-    model->extra_info = extra;
+    minfo->extra_info = extra;
 }
 
-/* retrieve extra information pointer from model_info */
+/**
+ * model_info_get_extra_info:
+ * @minfo: model info pointer.
+ *
+ * Retrieves the content of the "extra" pointer member of @minfo.
+ *
+ * Returns: the pointer that was set with model_info_set_extra_info(),
+ * or NULL if none was set.
+ */
 
-void *model_info_get_extra_info (model_info *model)
+void *model_info_get_extra_info (model_info *minfo)
 {
-    return model->extra_info;
+    return minfo->extra_info;
 }
 
 /* Construct the regression list for the OPG regression, with the
@@ -358,42 +370,42 @@ static int *make_opg_list (int k)
     return list;
 }
 
-static int model_info_init (model_info *model, const double *init_coeff)
+static int model_info_init (model_info *minfo, const double *init_coeff)
 {
     int i, t, err = 0;
-    int n_series = model->n_series;
+    int n_series = minfo->n_series;
 
-    model->theta = malloc(model->k * sizeof *model->theta);
+    minfo->theta = malloc(minfo->k * sizeof *minfo->theta);
 
-    if (model->theta == NULL) {
-	model_info_free(model);
+    if (minfo->theta == NULL) {
+	model_info_free(minfo);
 	return 1;
     }    
 
     /* allocate series */
     if (n_series > 0) {
-	model->series = malloc(n_series * sizeof *model->series);
-	if (model->series == NULL) {
-	    model_info_free(model);
+	minfo->series = malloc(n_series * sizeof *minfo->series);
+	if (minfo->series == NULL) {
+	    model_info_free(minfo);
 	    return 1;
 	}
-	model->n_series = 0;
+	minfo->n_series = 0;
 	for (i=0; i<n_series; i++) {
-	    model->series[i] = malloc(model->n * sizeof **model->series);
-	    if (model->series[i] == NULL) {
-		model_info_free(model);
+	    minfo->series[i] = malloc(minfo->n * sizeof **minfo->series);
+	    if (minfo->series[i] == NULL) {
+		model_info_free(minfo);
 		return 1;
 	    }
-	    for (t=0; t<model->n; t++) {
-		model->series[i][t] = 0.0;
+	    for (t=0; t<minfo->n; t++) {
+		minfo->series[i][t] = 0.0;
 	    }
-	    model->n_series += 1;
+	    minfo->n_series += 1;
 	}
     }
 
     /* initialize parameters */
-    for (i=0; i<model->k; i++) {
-	model->theta[i] = init_coeff[i];
+    for (i=0; i<minfo->k; i++) {
+	minfo->theta[i] = init_coeff[i];
     }
 
     return err;
@@ -402,7 +414,8 @@ static int model_info_init (model_info *model, const double *init_coeff)
 /**
  * model_info_new:
  *
- * Returns: pointer to newly allocated model_info.
+ * Returns: pointer to newly allocated model_info, or
+ * %NULL on failure.
  */
  
 model_info *model_info_new (void)
@@ -450,7 +463,7 @@ static int bhhh_iter_info (int iter, double *theta, int m, double ll,
  * score matrix.
  * @X: original data set (passed on for use by @loglik).
  * @init_coeff: starting values for coefficients.
- * @model: model info struct, with some initialization carried out by
+ * @minfo: model info struct, with some initialization carried out by
  * the caller.
  * @prn: printing struct for iteration info (or %NULL).
  *
@@ -464,7 +477,7 @@ static int bhhh_iter_info (int iter, double *theta, int m, double ll,
 int bhhh_max (LL_FUNC loglik,
 	      const double **X, 
 	      const double *init_coeff,
-	      model_info *model, 
+	      model_info *minfo, 
 	      PRN *prn)
 {
     /* OPG model */
@@ -484,12 +497,12 @@ int bhhh_max (LL_FUNC loglik,
 
     int i, t, err, k;
 
-    err = model_info_init(model, init_coeff);
+    err = model_info_init(minfo, init_coeff);
     if (err) {
 	return E_ALLOC;
     }
 
-    k = model->k;
+    k = minfo->k;
     blist = make_opg_list(k);
     if (blist == NULL) {
 	return E_ALLOC;
@@ -505,7 +518,7 @@ int bhhh_max (LL_FUNC loglik,
     }
 
     /* create temp dataset for OPG regression: k vars plus constant */    
-    tinfo = create_new_dataset(&tZ, k + 1, model->n, 0);
+    tinfo = create_new_dataset(&tZ, k + 1, minfo->n, 0);
     if (tinfo == NULL) {
 	free(delta);
 	free(ctemp);
@@ -514,15 +527,15 @@ int bhhh_max (LL_FUNC loglik,
     } 
 
     /* respect the incoming sample range */
-    tinfo->t1 = model->t1;
-    tinfo->t2 = model->t2;
+    tinfo->t1 = minfo->t1;
+    tinfo->t2 = minfo->t2;
 
     /* zero the dataset */
     for (i=1; i<=k; i++) {
 #ifdef BHHH_DEBUG
 	sprintf(tinfo->varname[i], "tZ%d", i);
 #endif
-	for (t=0; t<model->n; t++) {
+	for (t=0; t<minfo->n; t++) {
 	    tZ[i][t] = 0.0;
 	}
     }
@@ -533,10 +546,10 @@ int bhhh_max (LL_FUNC loglik,
     iters = 0;
     itermax = get_maxiter();
 
-    while (crit > model->tol && iters++ < itermax) {
+    while (crit > minfo->tol && iters++ < itermax) {
 
 	/* compute loglikelihood and score matrix */
-	err = loglik(model->theta, X, tZ, model, 1); 
+	err = loglik(minfo->theta, X, tZ, minfo, 1); 
 	if (err) {
 	    pputs(prn, "Error calculating log-likelihood\n");
 	    err = E_NOCONV;
@@ -544,7 +557,7 @@ int bhhh_max (LL_FUNC loglik,
 	}
 
 #ifdef BHHH_DEBUG
-	pprintf(prn, "Top of loop: ll = %g\n", model->ll);
+	pprintf(prn, "Top of loop: ll = %g\n", minfo->ll);
 #endif
 
 	/* BHHH via OPG regression */
@@ -563,19 +576,19 @@ int bhhh_max (LL_FUNC loglik,
 
 	for (i=0; i<k; i++) {
 	    delta[i] = bmod->coeff[i] * stepsize;
-	    ctemp[i] = model->theta[i] + delta[i];
+	    ctemp[i] = minfo->theta[i] + delta[i];
 	} 
 	
 	clear_model(bmod);
 
 	/* see if we've gone up... (0 means "don't compute score") */
-	err = loglik(ctemp, X, tZ, model, 0); 
+	err = loglik(ctemp, X, tZ, minfo, 0); 
 
 #ifdef BHHH_DEBUG
-	pprintf(prn, "bhhh loop: initial ll2 = %g\n", model->ll2);
+	pprintf(prn, "bhhh loop: initial ll2 = %g\n", minfo->ll2);
 #endif
 
-	while (model->ll2 < model->ll || err) { 
+	while (minfo->ll2 < minfo->ll || err) { 
 	    /* ... if not, halve the steplength */
 	    stepsize *= 0.5;
 	    if (stepsize < minstep) {
@@ -584,11 +597,11 @@ int bhhh_max (LL_FUNC loglik,
 	    }
 	    for (i=0; i<k; i++) {
 		delta[i] *= 0.5;
-		ctemp[i] = model->theta[i] + delta[i];
+		ctemp[i] = minfo->theta[i] + delta[i];
 	    }
-	    err = loglik(ctemp, X, tZ, model, 0);
+	    err = loglik(ctemp, X, tZ, minfo, 0);
 #ifdef BHHH_DEBUG
-	    pprintf(prn, "bhhh loop: modified ll2 = %g\n", model->ll2);
+	    pprintf(prn, "bhhh loop: modified ll2 = %g\n", minfo->ll2);
 #endif
 	}
 
@@ -596,7 +609,7 @@ int bhhh_max (LL_FUNC loglik,
 
 	/* actually update parameter estimates */
 	for (i=0; i<k; i++) {
-	    model->theta[i] = ctemp[i];
+	    minfo->theta[i] = ctemp[i];
 	}	
 
 	/* double the steplength? */
@@ -605,14 +618,14 @@ int bhhh_max (LL_FUNC loglik,
 	}
 
 	/* print interation info, if wanted */
-	bhhh_iter_info(iters, model->theta, k, model->ll, stepsize, prn);
+	bhhh_iter_info(iters, minfo->theta, k, minfo->ll, stepsize, prn);
 
-	crit = model->ll2 - model->ll;  
+	crit = minfo->ll2 - minfo->ll;  
     }
 
-    if (crit > model->tol || err != 0) {
+    if (crit > minfo->tol || err != 0) {
 	fprintf(stderr, "bhhh_max: crit = %g, tol = %g, err = %d\n",
-		crit, model->tol, err);
+		crit, minfo->tol, err);
 	err = E_NOCONV;
     }
 
@@ -620,26 +633,26 @@ int bhhh_max (LL_FUNC loglik,
     free(ctemp);
 
     if (!err) {
-	if (model->opts & FULL_VCV_MATRIX) {
+	if (minfo->opts & FULL_VCV_MATRIX) {
 	    gretl_matrix *G, *VCV;
 
 	    G = gretl_matrix_from_2d_array((const double **) tZ + 1, 
-					   model->n, model->k);
+					   minfo->n, minfo->k);
 	    VCV = gretl_matrix_vcv(G);
-	    model->VCV = VCV;
+	    minfo->VCV = VCV;
 	    gretl_matrix_free(G);
 	}
-	if (model->opts & PRESERVE_OPG_MODEL) {
+	if (minfo->opts & PRESERVE_OPG_MODEL) {
 	    int qr_bak = get_use_qr();
 
 	    /* run OPG once more using QR, to get packed VCV */
 	    set_use_qr(1);
 	    *bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A, 0.0);
 	    set_use_qr(qr_bak);
-	    model->pmod = bmod;
+	    minfo->pmod = bmod;
 	    gretl_model_set_int(bmod, "iters", iters);
 	} 
-	model->iters = iters;
+	minfo->iters = iters;
     }
 
     /* free all remaining temp stuff */
@@ -647,7 +660,7 @@ int bhhh_max (LL_FUNC loglik,
     free_datainfo(tinfo); 
     free(blist);
 
-    if (bmod != model->pmod) {
+    if (bmod != minfo->pmod) {
 	free(bmod);
     }
 

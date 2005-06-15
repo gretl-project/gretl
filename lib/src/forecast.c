@@ -170,6 +170,19 @@ void free_fit_resid (FITRESID *fr)
     free(fr);
 }
 
+static void fit_resid_set_dec_places (FITRESID *fr)
+{
+    if (gretl_isdummy(0, fr->nobs, fr->actual) > 0) {
+	fr->pmax = get_precision(fr->fitted, fr->nobs, 6);
+    } else {
+	fr->pmax = get_precision(fr->actual, fr->nobs, 6);
+    }
+
+    if (fr->pmax == 0) {
+	fr->pmax = 2;
+    }
+}
+
 /**
  * get_fit_resid:
  * @pmod: the model for which actual and fitted values
@@ -213,12 +226,8 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 	fr->fitted[ft] = pmod->yhat[t];
     }
 
-    if (gretl_isdummy(0, fr->nobs, fr->actual) > 0) {
-	fr->pmax = get_precision(fr->fitted, fr->nobs, 8);
-    } else {
-	fr->pmax = get_precision(fr->actual, fr->nobs, 8);
-    }
-    
+    fit_resid_set_dec_places(fr);
+
     strcpy(fr->depvar, pdinfo->varname[depvar]);
     
     return fr;
@@ -373,7 +382,7 @@ fit_resid_init (int t1, int t2, int pre_n, const MODEL *pmod,
     fr->t2 = t2;
     fr->pre_n = pre_n;
 
-    if (fr->t1 < 0 || fr->t2 < 0 || fr->t2 <= fr->t1) {
+    if (fr->t1 < 0 || fr->t2 < 0 || fr->t2 < fr->t1) {
 	fr->err = E_OBS;
     }
 
@@ -384,6 +393,8 @@ fit_resid_init (int t1, int t2, int pre_n, const MODEL *pmod,
 
     fr->model_ID = pmod->ID;
     fr->model_ci = pmod->ci;
+
+    fr->pmax = PMAX_NOT_AVAILABLE;
 
     return fr->err;
 }
@@ -1402,6 +1413,8 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	} else {
 	    fr->tval = tcrit95(pmod->dfd);
 	}
+
+	fit_resid_set_dec_places(fr);
 
 	strcpy(fr->depvar, pdinfo->varname[yno]);
 	fr->df = pmod->dfd;

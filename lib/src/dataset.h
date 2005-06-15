@@ -173,6 +173,8 @@ int is_periodic_dummy (const double *x, int n);
 
 int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo);
 
+int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo);
+
 int dataset_add_series (int newvars, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_allocated_series (double *x, double ***pZ, 

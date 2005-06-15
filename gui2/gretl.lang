@@ -146,12 +146,15 @@
              <keyword>cos</keyword> 
              <keyword>cov</keyword>
              <keyword>cum</keyword>
+             <keyword>date</keyword>
              <keyword>diff</keyword>
              <keyword>exp</keyword> 
+             <keyword>firstobs</keyword>
              <keyword>fracdiff</keyword>
              <keyword>hpfilt</keyword>
              <keyword>int</keyword> 
              <keyword>isvector</keyword>
+             <keyword>lastobs</keyword>
              <keyword>ldiff</keyword> 
              <keyword>ln</keyword>
              <keyword>log</keyword> 
@@ -178,6 +181,7 @@
              <keyword>tan</keyword>
              <keyword>uniform</keyword>
              <keyword>var</keyword>
+             <keyword>varname</keyword>
              <keyword>vcv</keyword>
              <keyword>zeromiss</keyword>
         </keyword-list>

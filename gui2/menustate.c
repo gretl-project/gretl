@@ -232,6 +232,13 @@ void restore_sample_state (gboolean s)
     }
 }
 
+void drop_obs_state (gboolean s)
+{
+    if (mdata->ifac != NULL) {
+	flip(mdata->ifac, "/Data/Remove extra observations", s);
+    }
+}
+
 void compact_data_state (gboolean s)
 {
     if (mdata->ifac != NULL) {

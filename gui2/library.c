@@ -77,6 +77,7 @@ static int replay;
 static MODELSPEC *modelspec;
 static gretl_equation_system *sys;
 static gretl_restriction_set *rset;
+static int original_n;
 
 /* ........................................................... */
 
@@ -1294,11 +1295,13 @@ static int out_of_sample_info (int add_ok, int *t2)
 	if (n < 0) {
 	    err = 1;
 	} else if (n > 0) {
+	    original_n = datainfo->n;
 	    err = dataset_add_observations(n, &Z, datainfo);
 	    if (err) {
 		gui_errmsg(err);
 	    } else {
 		mark_dataset_as_modified();
+		drop_obs_state(TRUE);
 		*t2 += n;
 	    }
 	} 
@@ -3458,7 +3461,7 @@ void add_index (gpointer data, guint tm, GtkWidget *widget)
     }
 }
 
-void add_obs (gpointer data, guint u, GtkWidget *widget)
+void do_add_obs (gpointer data, guint u, GtkWidget *widget)
 {
     int n = add_obs_dialog(NULL, 1);
     int err = 0;
@@ -3470,6 +3473,42 @@ void add_obs (gpointer data, guint u, GtkWidget *widget)
 	} else {
 	    mark_dataset_as_modified();
 	}
+    }
+}
+
+void do_remove_obs (gpointer data, guint u, GtkWidget *widget)
+{
+    int drop = 0;
+
+    if (complex_subsampled()) {
+	errbox(_("The data set is currently sub-sampled.\n"));
+	drop_obs_state(FALSE);
+    } else {
+	drop = datainfo->n - original_n;
+    }
+
+    if (drop > 0) {
+	gchar *msg;
+	int resp;
+
+	msg = g_strdup_printf(_("Really delete the last %d observations?"),
+			      drop);
+	resp = yes_no_dialog(_("gretl: drop observations"), msg, 0);
+	g_free(msg);
+
+	if (resp == GRETL_YES) {
+	    int err = dataset_drop_observations(drop, &Z, datainfo);
+
+	    if (err) {
+		gui_errmsg(err);
+	    } else {
+		mark_dataset_as_modified();
+	    }
+	    drop_obs_state(FALSE);
+	}
+    } else {
+	errbox(_("There are no extra observations to drop"));
+	drop_obs_state(FALSE);
     }
 }
 

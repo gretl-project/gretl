@@ -72,6 +72,8 @@ enum transformations {
     T_SQRT, 
     T_SUM, 
     T_NOBS,
+    T_T1,
+    T_T2,
     T_NORMAL, 
     T_UNIFORM, 
     T_STDERR,

@@ -736,10 +736,10 @@ void gretl_printxn (double x, int n, PRN *prn)
     pputs(prn, s);
 }
 
-static void fcast_print_x (double x, int n, int places, PRN *prn)
+static void fcast_print_x (double x, int n, int pmax, PRN *prn)
 {
-    if (places > 0 && !na(x)) {
-	pprintf(prn, "%*.*f", n - 3, places, x);
+    if (pmax != PMAX_NOT_AVAILABLE && !na(x)) {
+	pprintf(prn, "%*.*f", n - 2, pmax, x);
     } else {
 	gretl_printxn(x, n, prn);
     }
@@ -799,8 +799,7 @@ static void printz (const double *z, const DATAINFO *pdinfo,
 	} else {
 	    printstr(prn, z[t1], &ls);
 	}
-    }
-    else for (t=t1; t<=t2; t++) {
+    } else for (t=t1; t<=t2; t++) {
 	xx = z[t];
 	if (opt & OPT_T) {
 	    printstr_ten(prn, xx, &ls);
@@ -815,12 +814,24 @@ static void printz (const double *z, const DATAINFO *pdinfo,
 #define SMAX 7            /* stipulated max. significant digits */
 #define TEST_PLACES 12    /* # of decimal places to use in test string */
 
-/* return either (a) the number of significant digits in a data series
-   (+), or (b) the number of decimal places to use when printing the
-   series (-) 
-*/
+/**
+ * get_signif:
+ * @x: array to examine
+ * @n: length of the array
+ * 
+ * Examines array @x from the point of view of printing the
+ * data.  Tries to determine the most economical yet faithful
+ * string representation of the data.
+ *
+ * Returns: if successful, either a positive integer representing
+ * the number of significant digits to use when printing the
+ * series (e.g. when using the %%g conversion in printf), or a
+ * negative integer representing the number of decimal places
+ * to use (e.g. with the %%f conversion).  If unsuccessful,
+ * returns #PMAX_NOT_AVAILABLE.
+ */
 
-int get_signif (const double *x, int n)
+static int get_signif (const double *x, int n)
 {
     static char numstr[48];
     int i, j, s, smax = 0; 
@@ -836,10 +847,19 @@ int get_signif (const double *x, int n)
 
     for (i=0; i<n; i++) {
 
-	if (na(x[i])) continue;
+	if (na(x[i])) {
+	    continue;
+	}
 
 	xx = fabs(x[i]);
-	if (xx >= 1.0) allfrac = 0;
+
+	if (xx > 0 && (xx < 1.0e-6 || xx > 1.0e+8)) {
+	    return PMAX_NOT_AVAILABLE;
+	}	
+
+	if (xx >= 1.0) {
+	    allfrac = 0;
+	}
 
 	sprintf(numstr, "%.*f", TEST_PLACES, xx);
 	s = strlen(numstr) - 1;
@@ -849,11 +869,16 @@ int get_signif (const double *x, int n)
 	for (j=s; j>0; j--) {
 	    if (numstr[j] == '0') {
 		s--;
-		if (!gotdec) trail--;
+		if (!gotdec) {
+		    trail--;
+		}
 	    } else if (numstr[j] == decpoint) {
 		gotdec = 1;
-		if (xx < 10000) break;
-		else continue;
+		if (xx < 10000) {
+		    break;
+		} else {
+		    continue;
+		}
 	    } else {
 		break;
 	    }
@@ -863,7 +888,9 @@ int get_signif (const double *x, int n)
 	    trailmax = trail;
 	}
 
-	if (xx < 1.0) s--; /* don't count leading zero */
+	if (xx < 1.0) {
+	    s--; /* don't count leading zero */
+	}
 
 	if (s > smax) {
 	    smax = s;
@@ -875,15 +902,24 @@ int get_signif (const double *x, int n)
 
 	lead = 0;
 	for (j=0; j<=s; j++) {
-	    if (xx >= 1.0 && numstr[j] != decpoint) lead++;
-	    else break;
+	    if (xx >= 1.0 && numstr[j] != decpoint) {
+		lead++;
+	    } else {
+		break;
+	    }
 	}
 
-	if (lead > leadmax) leadmax = lead;
-	if (lead < leadmin) leadmin = lead;
+	if (lead > leadmax) {
+	    leadmax = lead;
+	}
+	if (lead < leadmin) {
+	    leadmin = lead;
+	}
     } 
 
-    if (smax > SMAX) smax = SMAX;
+    if (smax > SMAX) {
+	smax = SMAX;
+    }
 
     if (trailmax > 0 && (leadmax + trailmax <= SMAX)) {
 	smax = -trailmax;
@@ -921,7 +957,7 @@ static int bufprintnum (char *buf, double x, int signif, int width)
     int i, l;
 
     /* guard against monster numbers that will smash the stack */
-    if (fabs(x) > 1.0e20) {
+    if (fabs(x) > 1.0e20 || signif == PMAX_NOT_AVAILABLE) {
 	sprintf(numstr, "%g", x);
 	goto finish;
     }
@@ -1335,21 +1371,12 @@ int text_print_forecast (const FITRESID *fr,
     double *maxerr = NULL;
     int time_series = (pdinfo->structure == TIME_SERIES);
     int plot = (opt & OPT_P);
-    int pmax;
 
     if (do_errs) {
 	maxerr = malloc(fr->nobs * sizeof *maxerr);
 	if (maxerr == NULL) {
 	    return E_ALLOC;
 	}
-    }
-
-    pmax = get_signif(fr->actual + fr->pre_n, 
-		      fr->nobs - fr->pre_n);
-    if (pmax < 0) {
-	pmax = -pmax;
-    } else {
-	pmax = 0;
     }
 
     pputc(prn, '\n');
@@ -1385,23 +1412,23 @@ int text_print_forecast (const FITRESID *fr,
 
     for (t=fr->pre_n; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
-	fcast_print_x(fr->actual[t], 15, pmax, prn);
+	fcast_print_x(fr->actual[t], 15, fr->pmax, prn);
 
 	if (na(fr->fitted[t])) {
 	    pputc(prn, '\n');
 	    continue;
 	}
-	fcast_print_x(fr->fitted[t], 15, pmax, prn);
+	fcast_print_x(fr->fitted[t], 15, fr->pmax, prn);
 
 	if (do_errs) {
 	    if (na(fr->sderr[t])) {
 		maxerr[t] = NADBL;
 	    } else {
-		fcast_print_x(fr->sderr[t], 15, pmax, prn);
+		fcast_print_x(fr->sderr[t], 15, fr->pmax, prn);
 		maxerr[t] = fr->tval * fr->sderr[t];
-		fcast_print_x(fr->fitted[t] - maxerr[t], 15, pmax, prn);
-		pputs(prn, " -");
-		fcast_print_x(fr->fitted[t] + maxerr[t], 10, pmax, prn);
+		fcast_print_x(fr->fitted[t] - maxerr[t], 15, fr->pmax, prn);
+		pputs(prn, " - ");
+		fcast_print_x(fr->fitted[t] + maxerr[t], 10, fr->pmax, prn);
 	    }
 	}
 	pputc(prn, '\n');
@@ -1620,6 +1647,32 @@ static int get_marker_offset (const char *s)
     return off;
 }
 
+static char *date_string (const char *s, double **Z, const DATAINFO *pdinfo)
+{
+    char darg[16];
+    char *ret = NULL;
+    int v, t = -1;
+
+    if (sscanf(s, "date(%15[^)])", darg)) {
+	if (isdigit(*darg)) {
+	    t = atoi(darg);
+	} else {
+	    v = varindex(pdinfo, darg);
+	    if (v < pdinfo->v) {
+		t = Z[v][0];
+	    }
+	}
+	if (t > 0 && t <= pdinfo->n) {
+	    char tstr[OBSLEN];
+
+	    ntodate(tstr, t - 1, pdinfo);
+	    ret = gretl_strdup(tstr);
+	}
+    }
+
+    return ret;
+}
+
 static char *varname_string (const char *s, const DATAINFO *pdinfo)
 {
     char *vname = NULL;
@@ -1739,7 +1792,7 @@ static int real_do_printf (const char *line, double ***pZ,
     strcpy(str, line);
 
     for (i=0; i<argc; i++) {
-	char *vname;
+	char *special;
 
 	argv = get_arg((i > 0)? NULL : str);
 	chopstr(argv);
@@ -1760,8 +1813,10 @@ static int real_do_printf (const char *line, double ***pZ,
 		xvals[i] = 0.0;
 		markeroffset = get_marker_offset(argv);
 	    }
-	} else if ((vname = varname_string(argv, pdinfo)) != NULL) {
-	    svals[i] = vname;
+	} else if ((special = varname_string(argv, pdinfo)) != NULL) {
+	    svals[i] = special;
+	} else if ((special = date_string(argv, *pZ, pdinfo)) != NULL) {
+	    svals[i] = special;
 	} else {
 	    int v = varindex(pdinfo, argv);
 

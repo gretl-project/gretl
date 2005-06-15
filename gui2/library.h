@@ -189,7 +189,9 @@ void add_dummies (gpointer data, guint action, GtkWidget *widget);
 
 void add_index (gpointer data, guint tm, GtkWidget *widget);
 
-void add_obs (gpointer data, guint u, GtkWidget *widget);
+void do_add_obs (gpointer data, guint u, GtkWidget *widget);
+
+void do_remove_obs (gpointer data, guint u, GtkWidget *widget);
 
 void add_logs_etc (gpointer data, guint action, GtkWidget *widget);
 

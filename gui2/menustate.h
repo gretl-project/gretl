@@ -14,6 +14,7 @@ void ts_or_panel_menu_state (gboolean s);
 void session_menu_state (gboolean s);
 void restore_sample_state (gboolean s);
 void compact_data_state (gboolean s);
+void drop_obs_state (gboolean s);
 
 GtkWidget *build_var_popup (void);
 GtkWidget *build_selection_popup (void);

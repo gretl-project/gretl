@@ -49,8 +49,6 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
 
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 
-int get_signif (const double *x, int n);
-
 int printdata (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 

@@ -704,6 +704,55 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo)
     return 0;
 }
 
+/**
+ * dataset_drop_observations:
+ * @n: number of observations to drop.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ *
+ * Deletes @n observations from the end of each series in the 
+ * dataset.
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
+
+int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
+{
+    double *x;
+    int i, newn;
+
+    if (n <= 0) return 0;
+
+    newn = pdinfo->n - n;
+
+    for (i=0; i<pdinfo->v; i++) {
+	if (pdinfo->vector[i]) {
+	    x = realloc((*pZ)[i], newn * sizeof *x);
+	    if (x == NULL) {
+		return E_ALLOC;
+	    }
+	    (*pZ)[i] = x;
+	}
+    }
+    
+    if (pdinfo->markers && pdinfo->S != NULL) {
+	if (reallocate_markers(pdinfo, newn)) {
+	    return E_ALLOC;
+	}
+    }
+    
+    if (pdinfo->t2 > newn - 1) {
+	pdinfo->t2 = newn - 1;
+    }
+
+    pdinfo->n = newn;
+
+    /* does daily data need special handling? */
+    ntodate(pdinfo->endobs, newn - 1, pdinfo);
+
+    return 0;
+}
+
 static int real_dataset_add_series (int newvars, double *x,
 				    double ***pZ, DATAINFO *pdinfo)
 {
@@ -953,12 +1002,21 @@ int dataset_copy_variable_as (int v, const char *newname,
 {
     int t, err = 0;
 
-    err = real_dataset_add_series(1, NULL, pZ, pdinfo);
+    if (pdinfo->vector[v]) {
+	err = real_dataset_add_series(1, NULL, pZ, pdinfo);
+    } else {
+	err = dataset_add_scalar(pZ, pdinfo);
+    }
+
     if (!err) {
 	int vnew = pdinfo->v - 1;
 
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[vnew][t] = (*pZ)[v][t];
+	if (pdinfo->vector[v]) {
+	    for (t=0; t<pdinfo->n; t++) {
+		(*pZ)[vnew][t] = (*pZ)[v][t];
+	    }
+	} else {
+	    (*pZ)[vnew][0] = (*pZ)[v][0];
 	}
 	strcpy(pdinfo->varname[vnew], newname);
 	STACK_LEVEL(pdinfo, vnew) += 1;

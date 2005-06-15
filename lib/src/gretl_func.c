@@ -505,6 +505,7 @@ static char *function_name_from_line (const char *line, char *name)
 	*name = '\0';
     } else {
 	const char *p = strchr(line, '=');
+	char *q;
 
 	if (p == NULL) {
 	    p = line;
@@ -513,6 +514,10 @@ static char *function_name_from_line (const char *line, char *name)
 	}
 
 	sscanf(p, "%31s", name);
+	q = strchr(name, '(');
+	if (q != NULL) {
+	    *q = 0;
+	}
 #if FN_DEBUG
 	fprintf(stderr, "function_name_from_line: got '%s'\n", name);
 #endif
@@ -690,7 +695,18 @@ static char **get_separated_fields_8 (const char *line, int *nfields)
 	return NULL;
     }
 
+    /* clean the string up */
     s = cpy;
+    s += strspn(s, " ");
+    if (*s == '(') {
+	s++;
+    }
+    tailstrip(s);
+    j = strlen(s);
+    if (s[j-1] == ')') {
+	s[j-1] = '\0';
+    }    
+
     charsub(s, ',', ' ');
 
     nf = count_fields(s);
@@ -728,18 +744,7 @@ static char **get_separated_fields_8 (const char *line, int *nfields)
 static char **parse_assignment (char *s, int *na)
 {
     char **vnames;
-    int n, err = 0;
-
-    /* clean the string up */
-    s += strspn(s, " ");
-    if (*s == '(') {
-	s++;
-    }
-    tailstrip(s);
-    n = strlen(s);
-    if (s[n-1] == ')') {
-	s[n-1] = '\0';
-    }
+    int err = 0;
 
     vnames = get_separated_fields_8(s, na);
 
@@ -794,10 +799,18 @@ parse_function_args_etc (const char *s, int *argc, char ***pargv,
     }
 
     if (!err) {
-	/* skip over function name and spaces before args */
-	s += strspn(s, " ");
-	s += strcspn(s, " ");
-	s += strspn(s, " ");
+	/* skip over function name and spaces before args,
+	   or deal with the case where the args are parenthesized
+	*/
+	const char *p = strchr(s, '(');
+
+	if (p != NULL) {
+	    s = p;
+	} else {
+	    s += strspn(s, " ");
+	    s += strcspn(s, " ");
+	    s += strspn(s, " ");
+	}
 
 	if (*s != '\0') {
 #if FN_DEBUG
@@ -960,6 +973,12 @@ static int create_function_return_list (ufunc *fun, const char *line)
     int i;
 #endif
 
+    if (fun->returns != NULL) {
+	sprintf(gretl_errmsg, "Function %s: return value is already defined",
+		fun->name);
+	return 1;
+    }
+
     line += strspn(line, " ");
 
     fun->returns = get_separated_fields_8(line, &nr);
@@ -1095,6 +1114,10 @@ static int check_and_allocate_function_args (ufunc *fun,
     }
 
     for (i=0; i<argc && !err; i++) {
+#if FN_DEBUG
+	fprintf(stderr, "fn args: argv[%d] = '%s', param[%d] = '%s'\n", i, argv[i],
+		i, fun->params[i]);
+#endif
 	if (numeric_string(argv[i])) {
 	    err = dataset_add_scalar_as(argv[i], fun->params[i], pZ, pdinfo);
 #if FN_DEBUG

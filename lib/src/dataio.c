@@ -1050,27 +1050,29 @@ static int writehdr (const char *hdrfile, const int *list,
  * data series uniformly.
  * 
  * Returns: the required number of decimal places.
- *
  */
 
 int get_precision (const double *x, int n, int placemax)
 {
     int t, p, pmax = 0;
     char *s, numstr[48];
+    double z;
 
     for (t=0; t<n; t++) {
 	if (na(x[t])) {
 	    continue;
 	}
 
+	z = fabs(x[t]);
+
 	/* escape clause: numbers are too big or too small for
 	   this treatment */
-	if (x[t] < 1.0e-6 || x[t] > 1.0e+8) {
+	if (z > 0 && (z < 1.0e-6 || z > 1.0e+8)) {
 	    return PMAX_NOT_AVAILABLE;
 	}
 
 	p = placemax;
-	sprintf(numstr, "%.*f", p, x[t]);
+	sprintf(numstr, "%.*f", p, z);
 	s = numstr + strlen(numstr) - 1;
 	while (*s-- == '0') {
 	    p--;
@@ -1446,9 +1448,13 @@ int write_data (const char *fname, const int *list,
     setlocale(LC_NUMERIC, "");
 #endif
 
-    if (pmax) free(pmax);
+    if (pmax != NULL) {
+	free(pmax);
+    }
 
-    if (fp != NULL) fclose(fp);
+    if (fp != NULL) {
+	fclose(fp);
+    }
 
     return 0;
 }
@@ -4255,7 +4261,7 @@ static int write_xmldata (const char *fname, const int *list,
 		sprintf(numstr, "\n role=\"scalar\" value=\"%.12g\"",
 			Z[list[i]][0]);
 	    } else {
-		sprintf(numstr, "\n role=\"scalar\" value=\"%.*g\"",
+		sprintf(numstr, "\n role=\"scalar\" value=\"%.*f\"",
 			pmax[i-1], Z[list[i]][0]);
 	    }
 	    alt_puts(numstr, fp, fz);

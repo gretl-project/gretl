@@ -734,6 +734,7 @@ close_plugin
 
 <SECTION>
 <FILE>bhhh_max</FILE>
+BHHH_opts
 model_info
 LL_FUNC
 model_info_free
@@ -1106,6 +1107,7 @@ start_new_Z
 is_trend_variable
 is_periodic_dummy
 dataset_add_observations
+dataset_drop_observations
 dataset_add_series
 dataset_add_allocated_series
 dataset_add_scalar

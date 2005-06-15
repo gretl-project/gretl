@@ -850,6 +850,9 @@ void register_data (char *fname, const char *user_fname,
 
     /* focus the data window */
     gtk_widget_grab_focus(mdata->listbox);
+
+    /* invalidate "remove extra obs" menu item */
+    drop_obs_state(FALSE);
 }
 
 #define APPENDING(action) (action == APPEND_DATA || \

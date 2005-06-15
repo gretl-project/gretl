@@ -751,6 +751,7 @@ static void model_print_newline (PRN *prn)
 
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
+				 gretlopt opt, 
 				 PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN], vname[16];
@@ -811,7 +812,7 @@ static void print_model_heading (const MODEL *pmod,
 	break;
     case AUX_ADD:
     default:
-	if (pmod->ID < 0) {
+	if (pmod->ID < 0 || (opt & OPT_S)) {
 	    pputc(prn, '\n');
 	} else if (pmod->name) {
 	    pprintf(prn, "\n%s:\n", pmod->name);
@@ -1307,7 +1308,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	}
     }
 
-    print_model_heading(pmod, pdinfo, prn);
+    print_model_heading(pmod, pdinfo, opt, prn);
 
     print_coeff_table_start(pmod, prn, is_discrete);
 

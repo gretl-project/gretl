@@ -149,6 +149,8 @@ struct genr_func funcs[] = {
     { T_SQRT,     "sqrt" }, 
     { T_SUM,      "sum" }, 
     { T_NOBS,     "nobs" },
+    { T_T1,       "firstobs" },
+    { T_T2,       "lastobs" },
     { T_NORMAL,   "normal" }, 
     { T_UNIFORM,  "uniform" }, 
     { T_STDERR,   "stderr" },
@@ -194,8 +196,8 @@ struct genr_func funcs[] = {
 #define UNIVARIATE_STAT(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
                             t == T_VAR || t == T_MEDIAN || t == T_MIN || \
                             t == T_SST || t == T_MAX || t == T_NOBS || \
-                            t == T_VARNUM || t == T_VECTOR || \
-                            t == T_ISLIST || t == T_NELEM)
+                            t == T_T1 || t == T_T2 || t == T_VARNUM || \
+                            t == T_VECTOR || t == T_ISLIST || t == T_NELEM)
 
 #define BIVARIATE_STAT(t) (t == T_CORR || t == T_COV)
 
@@ -3384,13 +3386,29 @@ static double evaluate_statistic (double *z, GENERATE *genr, int fn)
     double *tmp = NULL;
     int i, t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
 
-    if (fn == T_NOBS) {
-	/* special: doesn't need a series allocated */
-	i = 0;
-	for (t=t1; t<=t2; t++) {
-	    if (!na(z[t])) i++;
+    if (fn == T_NOBS || fn == T_T1 || fn == T_T2) {
+	/* special: they don't need a series allocated */
+	if (fn == T_NOBS) {
+	    i = 0;
+	    for (t=t1; t<=t2; t++) {
+		if (!na(z[t])) i++;
+	    }
+	    return (double) i;
+	} else if (fn == T_T1) {
+	    for (t=0; t<genr->pdinfo->n; t++) {
+		if (!na(z[t])) {
+		    break;
+		}
+	    }
+	    return (double) (t + 1);
+	} else {
+	    for (t=genr->pdinfo->n - 1; t>=0; t--) {
+		if (!na(z[t])) {
+		    break;
+		}
+	    }
+	    return (double) (t + 1);
 	}
-	return (double) i;
     }
 
     tmp = malloc((t2 - t1 + 1) * sizeof *tmp);

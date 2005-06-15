@@ -17,10 +17,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
-enum bhhh_opts {
-    PRESERVE_OPG_MODEL = 1 << 0,
+typedef enum {
+    PRESERVE_OPG_MODEL = 1 << 0,  
     FULL_VCV_MATRIX    = 1 << 1
-};
+} BHHH_opts;
 
 typedef struct _model_info model_info;
 
@@ -30,48 +30,48 @@ typedef int (*LL_FUNC) (double *,
 			model_info *, 
 			int);
 
-void model_info_free (model_info *model);
+void model_info_free (model_info *minfo);
 
 model_info *model_info_new (void);
 
-MODEL *model_info_capture_OPG_model (model_info *model);
+MODEL *model_info_capture_OPG_model (model_info *minfo);
 
-gretl_matrix *model_info_get_VCV (model_info *model);
+gretl_matrix *model_info_get_VCV (model_info *minfo);
 
-double *model_info_get_theta (model_info *model);
+double *model_info_get_theta (model_info *minfo);
 
-int model_info_get_t1 (const model_info *model);
+int model_info_get_t1 (const model_info *minfo);
 
-int model_info_get_t2 (const model_info *model);
+int model_info_get_t2 (const model_info *minfo);
 
-int model_info_get_n (const model_info *model);
+int model_info_get_n (const model_info *minfo);
 
-int model_info_get_iters (const model_info *model);
+int model_info_get_iters (const model_info *minfo);
 
-void *model_info_get_extra_info (model_info *model);
+void *model_info_get_extra_info (model_info *minfo);
 
-double model_info_get_ll (const model_info *model);
+double model_info_get_ll (const model_info *minfo);
 
-double **model_info_get_series (const model_info *model);
+double **model_info_get_series (const model_info *minfo);
 
-void model_info_set_extra_info (model_info *model, void *extra);
+void model_info_set_extra_info (model_info *minfo, void *extra);
 
-void model_info_set_n_series (model_info *model, int n);
+void model_info_set_n_series (model_info *minfo, int n);
 
-void model_info_set_k (model_info *model, int k);
+void model_info_set_k (model_info *minfo, int k);
 
-int model_info_get_k (model_info *model);
+int model_info_get_k (model_info *minfo);
 
-void model_info_set_t1_t2 (model_info *model, int t1, int t2);
+void model_info_set_t1_t2 (model_info *minfo, int t1, int t2);
 
-void model_info_set_opts (model_info *model, unsigned char opts);
+void model_info_set_opts (model_info *minfo, unsigned char opts);
 
-void model_info_set_tol (model_info *model, double tol);
+void model_info_set_tol (model_info *minfo, double tol);
 
-void model_info_set_ll (model_info *model, double ll, int do_score);
+void model_info_set_ll (model_info *minfo, double ll, int do_score);
 
 int bhhh_max (LL_FUNC loglik, 
 	      const double **X, 
 	      const double *init_coeff,
-	      model_info *model, 
+	      model_info *minfo, 
 	      PRN *prn);

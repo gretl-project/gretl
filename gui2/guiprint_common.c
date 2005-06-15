@@ -698,24 +698,11 @@ void special_print_fit_resid (const FITRESID *fr,
 
 static void texprint_fcast_x (double x, int places, char *str)
 {
-    if (places > 0 && !na(x)) {
+    if (places != PMAX_NOT_AVAILABLE && !na(x)) {
 	sprintf(str, "%.*f", places, x);
     } else {
 	tex_dcolumn_double(x, str);
     }
-}
-
-static int tex_get_pmax (const FITRESID *fr)
-{
-    int pmax = get_signif(fr->actual + fr->pre_n, 
-			  fr->nobs - fr->pre_n);
-    if (pmax < 0) {
-	pmax = -pmax;
-    } else {
-	pmax = 0;
-    }
-
-    return pmax;
 }
 
 static void texprint_fcast_without_errs (const FITRESID *fr, 
@@ -725,9 +712,7 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
     char actual[32], fitted[32];
     char vname[16];
     char pt = get_local_decpoint();
-    int pmax, t;
-
-    pmax = tex_get_pmax(fr);
+    int t;
 
     pputs(prn, "%% The table below needs the \"dcolumn\" and "
 	  "\"longtable\" packages\n\n");
@@ -745,8 +730,8 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
 	    I_("Obs"), vname, I_("prediction"));
 
     for (t=fr->pre_n; t<fr->nobs; t++) {
-	texprint_fcast_x(fr->actual[t], pmax, actual);
-	texprint_fcast_x(fr->fitted[t], pmax, fitted);
+	texprint_fcast_x(fr->actual[t], fr->pmax, actual);
+	texprint_fcast_x(fr->fitted[t], fr->pmax, fitted);
 	tex_print_obs_marker(t + fr->t1, pdinfo, prn);
 	pprintf(prn, " & %s & %s \\\\\n",
 		actual, fitted);
@@ -763,9 +748,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     char actual[32], fitted[32], sderr[32], lo[32], hi[32];
     char vname[16];
     char pt = get_local_decpoint();
-    int pmax, t;
-
-    pmax = tex_get_pmax(fr);
+    int t;
 
     pputs(prn, "\\begin{center}\n");
     if (fr->model_ci == ARMA) {
@@ -813,11 +796,11 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	    xlo = fr->fitted[t] - maxerr;
 	    xhi = fr->fitted[t] + maxerr;
 	}
-	texprint_fcast_x(fr->actual[t], pmax, actual);
-	texprint_fcast_x(fr->fitted[t], pmax, fitted);
-	texprint_fcast_x(fr->sderr[t], pmax, sderr);
-	texprint_fcast_x(xlo, pmax, lo);
-	texprint_fcast_x(xhi, pmax, hi);
+	texprint_fcast_x(fr->actual[t], fr->pmax, actual);
+	texprint_fcast_x(fr->fitted[t], fr->pmax, fitted);
+	texprint_fcast_x(fr->sderr[t], fr->pmax, sderr);
+	texprint_fcast_x(xlo, fr->pmax, lo);
+	texprint_fcast_x(xhi, fr->pmax, hi);
 	tex_print_obs_marker(t + fr->t1, pdinfo, prn);
 	pprintf(prn, " & %s & %s & %s & %s & %s \\\\\n",
 		actual, fitted, sderr, lo, hi);
@@ -1118,7 +1101,9 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     setlocale(LC_NUMERIC, "");
 #endif
 
-    if (pmax) free(pmax);
+    if (pmax != NULL) {
+	free(pmax);
+    }
 
     return 0;
 }
