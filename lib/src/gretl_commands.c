@@ -98,7 +98,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { MODELTAB, "modeltab" },
     { MPOLS,    "mpols" },
     { MULTIPLY, "multiply" },
-    { NEWFUNC,  "newfunc" },
     { NLS,      "nls" },
     { NULLDATA, "nulldata" },
     { OLS,      "ols" },     

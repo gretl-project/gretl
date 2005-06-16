@@ -182,6 +182,12 @@ int dataset_add_allocated_series (double *x, double ***pZ,
 
 int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo);
 
+int dataset_add_scalar_as (const char *numstr, const char *newname,
+			   double ***pZ, DATAINFO *pdinfo);
+
+int dataset_copy_variable_as (int v, const char *newname,
+			      double ***pZ, DATAINFO *pdinfo);
+
 int dataset_scalar_to_vector (int v, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_drop_listed_variables (const int *list, double ***pZ, 

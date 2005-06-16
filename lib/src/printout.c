@@ -1516,7 +1516,7 @@ int print_fit_resid (const MODEL *pmod, const double **Z,
 
 /* apparatus for user-defined printf statements */
 
-#undef PRINTF_DEBUG
+#define PRINTF_DEBUG 0
 
 #define is_format_char(c) (c == 'f' || c == 'g' || c == 'd' || c == 's')
 #define numeric_conv(c)   (c == 'f' || c == 'g' || c == 'd')
@@ -1545,32 +1545,27 @@ static int print_arg (const char **pfmt, double val,
 
     if (n == 0 || !is_format_char(fc)) {
 	err = 1;
-    } else if (fc == 's') {
-	if (str == NULL) {
-	    fprintf(stderr, "NULL string in printf\n");
-	    err = 1;
-	} else {
-#ifdef PRINTF_DEBUG
-	    fprintf(stderr, "fmt='%s', val = '%s'\n", fmt, str);
-#endif
-	    pprintf(prn, fmt, str);
-	    *pfmt += n;	
-	}
-    } else {
-#ifdef PRINTF_DEBUG
-	if (fc == 'd') {
-	    fprintf(stderr, "fmt='%s', val = %d\n", fmt, (int) val);
-	} else {
-	    fprintf(stderr, "fmt='%s', val = %g\n", fmt, val);
-	}
-#endif
-	if (fc == 'd') {
+    } else if (fc != 's') {
+	/* numeric */
+	if (na(val)) {
+	    fmt[n-1] = 's';
+	    pprintf(prn, fmt, "NA");
+	} else if (fc == 'd') {
 	    pprintf(prn, fmt, (int) val);
 	} else {
 	    pprintf(prn, fmt, val);
 	}
 	*pfmt += n;
-    }
+    } else {
+	/* string */
+	if (str == NULL) {
+	    fprintf(stderr, "NULL string in printf\n");
+	    err = 1;
+	} else {
+	    pprintf(prn, fmt, str);
+	    *pfmt += n;	
+	}
+    } 
     
     return err;
 }
@@ -1718,7 +1713,7 @@ static int real_do_printf (const char *line, double ***pZ,
 	t = pdinfo->t1;
     }
 
-#ifdef PRINTF_DEBUG
+#if PRINTF_DEBUG
     fprintf(stderr, "do_printf: line='%s'\n", line);
 #endif
 
@@ -1732,7 +1727,7 @@ static int real_do_printf (const char *line, double ***pZ,
 	return 1;
     }
 
-#ifdef PRINTF_DEBUG
+#if PRINTF_DEBUG
     fprintf(stderr, "do_printf: format='%s'\n", format);
 #endif
 
@@ -1806,7 +1801,7 @@ static int real_do_printf (const char *line, double ***pZ,
 	xvals[i] = NADBL;
 	svals[i] = NULL;
 
-#ifdef PRINTF_DEBUG
+#if PRINTF_DEBUG
 	fprintf(stderr, "do_printf: processing argv[%d] '%s'\n", i, argv);	
 #endif
 	if (numeric_string(argv)) {
@@ -1826,7 +1821,14 @@ static int real_do_printf (const char *line, double ***pZ,
 	} else {
 	    int v = varindex(pdinfo, argv);
 
+#if PRINTF_DEBUG
+	    fprintf(stderr, "looked up '%s' as variable: not found\n", argv);
+#endif
 	    if (v < pdinfo->v) {
+#if PRINTF_DEBUG
+		fprintf(stderr, "'%s' is variable #%d (vector = %d)\n",
+			argv, v, pdinfo->vector[v]);
+#endif
 		/* simple existent varname */
 		if (pdinfo->vector[v]) {
 		    xvals[i] = (*pZ)[v][t];
@@ -1839,7 +1841,7 @@ static int real_do_printf (const char *line, double ***pZ,
 	    }
 	}
 
-#ifdef PRINTF_DEBUG
+#if PRINTF_DEBUG
 	fprintf(stderr, " after processing arg, xvals[%d] = %g, err = %d\n", 
 		i, xvals[i], err);	
 #endif

@@ -93,9 +93,6 @@ static double evaluate_pvalue (const char *s, const double **Z,
 			       const DATAINFO *pdinfo, int *err);
 static double evaluate_critval (const char *s, const double **Z,
 				const DATAINFO *pdinfo, int *err);
-static int real_varindex (const DATAINFO *pdinfo, 
-			  const char *varname, 
-			  int local);
 static void free_genr_S (GENERATE *genr);
 
 
@@ -238,10 +235,6 @@ static const char *get_func_word (int fnum);
 #define genr_set_save(g) ((g)->flags |= GENR_SAVE)
 #define genr_unset_save(g) ((g)->flags &= ~GENR_SAVE)
 
-#define genr_is_local(g) ((g)->flags & GENR_LOCAL)
-#define genr_set_local(g) ((g)->flags |= GENR_LOCAL)
-#define genr_unset_local(g) ((g)->flags &= ~GENR_LOCAL)
-
 #define genr_is_private(g) ((g)->flags & GENR_PRIVATE)
 #define genr_set_private(g) ((g)->flags |= GENR_PRIVATE)
 
@@ -252,8 +245,6 @@ static const char *get_func_word (int fnum);
 #define genr_set_simple_sort(g) ((g)->flags |= GENR_SIMPLE_SORT)
 
 #define genr_single_obs(g) ((g)->obs >= 0)
-
-/* ...................................................... */
 
 static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
 		       MODEL *pmod, gretlopt opt)
@@ -277,14 +268,8 @@ static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
 	genr_set_private(genr);
     }
 
-    if ((opt & OPT_L) || gretl_executing_function()) {
-	genr_set_local(genr);
-    }
-
     reset_calc_stack(genr);
 }
-
-/* ...................................................... */
 
 static genatom *make_atom (int scalar, int varnum,
 			   int lag, double val,
@@ -1760,8 +1745,6 @@ static int count_ops (char *s, int *opcount)
     return maxlev;
 }
 
-/* ...................................................... */
-
 int insert_paren (char *s, int pos, char lr)
 {
     static int lpos;
@@ -1902,7 +1885,6 @@ static int parenthesize (char *str)
 }
 
 #if GENR_DEBUG
-
 static const char *get_func_word (int fnum)
 {
     int i;
@@ -1915,7 +1897,6 @@ static const char *get_func_word (int fnum)
 
     return NULL;
 }
-
 #endif
 
 int genr_function_from_string (const char *s)
@@ -2255,8 +2236,6 @@ int get_t_from_obs_string (char *s, const double **Z,
     return t;
 }
 
-/* ........................................................... */
-
 static void get_genr_formula (char *formula, const char *line,
 			      GENERATE *genr)
 {
@@ -2275,18 +2254,6 @@ static void get_genr_formula (char *formula, const char *line,
     } else if (!strcmp(first, "eval")) {
 	genr_unset_save(genr);
 	line += 4;
-    } else if (!strcmp(first, "my")) {
-	if (gretl_executing_macro()) {
-	    /* generation of vars local to macro */
-	    genr_set_local(genr);
-	    line += 2;
-	}
-    } else if (!strcmp(first, "global")) {
-	if (gretl_executing_macro()) {
-	    /* generation of global vars within macro */
-	    genr_unset_local(genr);
-	    line += 6;
-	}	
     } else if (!strcmp(first, "series")) {
 	genr_force_vector(genr);
 	line += 6;
@@ -2298,14 +2265,6 @@ static void get_genr_formula (char *formula, const char *line,
     while (isspace((unsigned char) *line)) {
 	line++;
     } 
-
-    /* allow for old-style "genr my ... " */
-    if (sscanf(line, "my %8s =", vname)) {
-	if (gretl_executing_macro()) {
-	    genr_set_local(genr);
-	}
-	line += 3;
-    }   
 
     /* allow for generating a single value in a series */
     if (sscanf(line, "%8[^[ =][%10[^]]", vname, obs) == 2) {
@@ -2527,7 +2486,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    genr.err = E_SYNTAX;
 	    goto genr_return;
 	}
-	genr.varnum = real_varindex(pdinfo, newvar, genr_is_local(&genr));
+	genr.varnum = varindex(pdinfo, newvar);
     } else {
 	/* no "lhs=" bit */
 	if (!(genr_doing_save(&genr))) {
@@ -2638,32 +2597,12 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
     return genr.err;
 }
 
-/* Note that the "depth" stuff here is required only for the generation
-   of variables within old-style gretl functions ("macros").  With
-   new-style functions, all vars generated within a function are
-   automatically and necessarily local and this is handled centrally
-   in dataset.c; there's not need to adjust the level conditionally
-   here.
-*/
-
-static int 
-set_new_var_stack_depth (DATAINFO *pdinfo, int v)
-{
-    int sd = gretl_macro_stack_depth();
-
-    if (sd > 0) {
-	STACK_LEVEL(pdinfo, v) = sd;
-    }
-
-    return sd;
-}
-    
 static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 {
     double xt = genr->xvec[pdinfo->t1];
     int t, v = genr->varnum;
     int modifying = 0;
-    int depth = 0, err = 0;
+    int err = 0;
 
     /* check that any request for a scalar can be honored,
        abort if not */
@@ -2705,24 +2644,14 @@ static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	err = 1;
     }
 
-    if (!err && genr_is_local(genr)) {
-#if GENR_DEBUG
-	fprintf(stderr, "genr is explicitly local\n");
-#endif
-	/* record as a var local to a particular macro
-	   stack depth */
-	depth = set_new_var_stack_depth(pdinfo, v);
-    }
-
 #if GENR_DEBUG
     if (err) {
 	fprintf(stderr, "genr_write_var: err = %d\n", err);
     } else {
-	fprintf(stderr, "genr_write_var: adding %s '%s' (#%d, %s, depth %d)\n",
+	fprintf(stderr, "genr_write_var: adding %s '%s' (#%d, %s)\n",
 		(pdinfo->vector[v])? "vector" : "scalar",
 		pdinfo->varname[v], v,
-		(modifying)? "replaced" : "newly created",
-		depth);
+		(modifying)? "replaced" : "newly created");
     }
 #endif
 
@@ -2783,8 +2712,6 @@ static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 
     return err;
 }
-
-/* ............................................................ */
 
 static double calc_xy (double x, double y, char op, int t, int *err) 
 {
@@ -2923,8 +2850,6 @@ static double calc_xy (double x, double y, char op, int t, int *err)
 
     return x;
 }
-
-/* ........................................................  */
 
 int panel_unit_first_obs (int t, const DATAINFO *pdinfo)
 {
@@ -3783,8 +3708,6 @@ static double *get_tmp_series (double *mvec, GENERATE *genr,
     return x;
 }
 
-/* ...........................................................*/
-
 static int check_modelstat (const MODEL *pmod, int idx)
 {
     if (pmod == NULL || pmod->list == NULL) {
@@ -4008,8 +3931,6 @@ get_model_scalar_stat (const MODEL *pmod, int idx, int *err)
 
     return x;
 }
-
-/* ...........................................................*/
 
 static double get_dataset_statistic (DATAINFO *pdinfo, int idx)
 {
@@ -4883,53 +4804,22 @@ void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn)
     }
 }
 
-/* executing a macro: if !local, pick a local var as first choice,
-   parent-local or global as second; if local, _only_ pick from
-   local vars.
-*/
-
-static int macro_pick_varmatch (const DATAINFO *pdinfo, const char *check, 
-				int sd, int local)
-{
-    int localv = -1;
-    int globalv = -1;
-    int slmax = -1;
-    int i, ret = pdinfo->v;
-
-    for (i=1; i<pdinfo->v; i++) { 
-	if (!strcmp(pdinfo->varname[i], check)) {
-	    int sl = STACK_LEVEL(pdinfo, i);
-
-	    if (!local && sl < sd) {
-		if (sl > slmax) {
-		    slmax = sl;
-		    globalv = i;
-		}
-	    } else if (sl == sd) {
-		localv = i;
-	    }
-	    if (localv > 0) {
-		break;
-	    }
-	}
-    }
-
-    if (localv > 0) {
-	ret = localv;
-    } else if (globalv > 0) {
-	ret = globalv;
-    }
-
-    return ret;
-}
-
 #define GEN_LEVEL_DEBUG 0
 
-static int 
-real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
+/**
+ * varindex:
+ * @pdinfo: data information struct.
+ * @varname: name of variable to test.
+ *
+ * Returns: the ID number of the variable whose name is given,
+ * or the next available ID number if there is no variable of
+ * that name.
+ */
+
+int varindex (const DATAINFO *pdinfo, const char *varname)
 {
     const char *check = varname;
-    int fsd = 0, msd = 0;
+    int fsd = 0;
     int i, ret = pdinfo->v;
 
     if (varname == NULL) {
@@ -4959,19 +4849,14 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 
     if (gretl_executing_function()) {
 	fsd = gretl_function_stack_depth();
-    } else if (gretl_executing_macro()) {  
-	/* hmm, this did say "if local" above */
-	msd = gretl_macro_stack_depth();
     }
 
 #if GEN_LEVEL_DEBUG
-    fprintf(stderr, "varindex for '%s': fsd=%d, msd=%d\n",
-	    check, fsd, msd);
+    fprintf(stderr, "varindex for '%s': fsd=%d\n", check, fsd);
 #endif
 
     if (fsd > 0) {
-#if 1
-	/* inside a function: see only variables at same level */
+	/* inside a function: see only vars at that level */
 	for (i=1; i<pdinfo->v; i++) { 
 	    if (STACK_LEVEL(pdinfo, i) == fsd && 
 		!strcmp(pdinfo->varname[i], check)) {
@@ -4979,14 +4864,8 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 		break;
 	    }
 	}
-#else
-	ret = macro_pick_varmatch(pdinfo, check, fsd, local);
-#endif
-    } else if (msd > 0) {
-	/* complicated, see above */
-	ret = macro_pick_varmatch(pdinfo, check, msd, local);
     } else {
-	/* not inside a function or macro, don't have to check level */
+	/* see all vars */
 	for (i=1; i<pdinfo->v; i++) { 
 	    if (!strcmp(pdinfo->varname[i], check)) { 
 		ret = i;
@@ -4996,26 +4875,10 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
     }
 
 #if GEN_LEVEL_DEBUG
-    fprintf(stderr, "real_varindex for '%s': returning %d\n",
-	    check, ret);
+    fprintf(stderr, "varindex for '%s': returning %d\n", check, ret);
 #endif 
 
     return ret;
-}
-
-/**
- * varindex:
- * @pdinfo: data information struct.
- * @varname: name of variable to test.
- *
- * Returns: the ID number of the variable whose name is given,
- * or the next available ID number if there is no variable of
- * that name.
- */
-
-int varindex (const DATAINFO *pdinfo, const char *varname)
-{
-    return real_varindex(pdinfo, varname, 0);
 }
 
 static void genrfree (GENERATE *genr)
@@ -5035,9 +4898,6 @@ static void genrfree (GENERATE *genr)
 
     free(genr->xvec);
 }
-
-
-/* ...................................................... */
 
 static int genr_mpow (const char *str, double *xvec, double **Z, 
 		      DATAINFO *pdinfo)
@@ -5250,8 +5110,6 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
     return ret;
 }
 
-/* ...................................................... */
-
 static void eval_msg (const GENERATE *genr)
 {
     double x = genr->xvec[genr->pdinfo->t1];
@@ -5309,8 +5167,6 @@ static void compose_genr_msg (const GENERATE *genr, int oldv)
 	*gretl_errmsg = '\0';
     }
 }
-
-/* ......................................................  */
 
 static int listpos (int v, const int *list)
 {

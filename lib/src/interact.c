@@ -162,8 +162,6 @@ static int catch_command_alias (CMD *cmd)
     } else if (!strcmp(s, "sample")) {
 	cmd->ci = SMPL;
     } else if (!strcmp(s, "eval") ||
-	       !strcmp(s, "my") ||
-	       !strcmp(s, "global") ||
 	       !strcmp(s, "series") ||
 	       !strcmp(s, "scalar")) { 
 	cmd->ci = GENR;
@@ -184,7 +182,6 @@ static int catch_command_alias (CMD *cmd)
                            c == FUNC || \
                            c == LOOP ||  \
                            c == MULTIPLY || \
-                           c == NEWFUNC || \
                            c == NULLDATA || \
                            c == OMITFROM || \
                            c == REMEMBER || \
@@ -219,7 +216,6 @@ static int catch_command_alias (CMD *cmd)
                        c == LMTEST || \
                        c == LOOP || \
                        c == MODELTAB || \
-                       c == NEWFUNC || \
                        c == NLS || \
                        c == NULLDATA || \
  	               c == OPEN || \
@@ -275,7 +271,6 @@ static int catch_command_alias (CMD *cmd)
                                c == STORE)
 
 #define HIDDEN_COMMAND(c) (c == FUNCERR || \
-                           c == NEWFUNC || \
                            c == REMEMBER)
 
 /* ........................................................... */
@@ -916,7 +911,6 @@ static int fix_semicolon_after_var (char *s)
 /* apparatus for checking that the "end" command is valid */
 
 #define COMMAND_CAN_END(c) (c == FUNC || \
-                            c == NEWFUNC || \
                             c == NLS || \
 			    c == RESTRICT || \
 			    c == SYSTEM)
@@ -2144,7 +2138,7 @@ static int is_silent (const CMD *cmd)
     }
 
     if (cmd->ci == SET && !strcmp(cmd->param, "echo") &&
-	gretl_executing_function_or_macro()) {
+	gretl_executing_function()) {
 	return 1;
     }
 
@@ -2633,7 +2627,6 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case FUNC:
-    case NEWFUNC:
 	err = gretl_start_compiling_function(line);
 	if (err) {
 	    errmsg(err, prn);

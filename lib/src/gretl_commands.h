@@ -89,7 +89,6 @@ typedef enum {
     MODELTAB,
     MPOLS,
     MULTIPLY,
-    NEWFUNC,
     NLS,
     NULLDATA,
     OLS,     

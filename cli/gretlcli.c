@@ -44,6 +44,11 @@
 # include <unistd.h>
 #endif 
 
+enum {
+    ERRFATAL_AUTO,
+    ERRFATAL_FORCE
+};
+
 #ifdef HAVE_READLINE
 # include <readline/readline.h>
 /* readline functions from complete.c */
@@ -202,23 +207,24 @@ void file_get_line (void)
     }
 }
 
-void fn_get_line (void)
+int fn_get_line (void)
 {
+    int err = 0;
+
     clear(line, MAXLINE);
-    
-    gretl_function_get_line(line, MAXLINE, &Z, datainfo);
+    gretl_function_get_line(line, MAXLINE, &Z, datainfo, &err);
 
-    if (*line == '\0') {
-	return;
-    }
-
-    *linebak = 0;
-    strncat(linebak, line, MAXLINE - 1);
-
-    if (gretl_echo_on() && cmd.ci == RUN && batch && *line == '(') {
-	printf("%s", line);
+    if (*line != '\0') {
 	*linebak = 0;
+	strncat(linebak, line, MAXLINE - 1);
+
+	if (gretl_echo_on() && cmd.ci == RUN && batch && *line == '(') {
+	    printf("%s", line);
+	    *linebak = 0;
+	}
     }
+
+    return err;
 }
 
 unsigned char gp_flags (int batch, gretlopt opt)
@@ -314,11 +320,13 @@ static int clear_data (void)
     return err;
 }
 
-static void get_an_input_line (void)
+static int get_an_input_line (void)
 {
-    if (gretl_executing_function_or_macro()) {
+    int err = 0;
+
+    if (gretl_executing_function()) {
 	/* reading from compiled function */
-	fn_get_line();
+	err = fn_get_line();
     } else if (runit || batch) {
 	/* reading from script file */
 	file_get_line();
@@ -339,6 +347,8 @@ static void get_an_input_line (void)
 	file_get_line(); /* "file" = stdin here */
 #endif
     }
+
+    return err;
 }
 
 static int maybe_get_input_line_continuation (char *tmp)
@@ -353,8 +363,8 @@ static int maybe_get_input_line_continuation (char *tmp)
     while (top_n_tail(line)) {
 	tmp[0] = '\0';
 
-	if (gretl_executing_function_or_macro()) {
-	    gretl_function_get_line(tmp, MAXLINE - 1, &Z, datainfo);
+	if (gretl_executing_function()) {
+	    gretl_function_get_line(tmp, MAXLINE - 1, &Z, datainfo, &err);
 	} else if (batch || runit) {
 	    fgets(tmp, MAXLINE - 1, fb);
 	} else {
@@ -378,6 +388,27 @@ static int maybe_get_input_line_continuation (char *tmp)
     }
 
     return err;
+}
+
+static void set_errfatal (int code)
+{
+    static int hoe = -1;
+
+    if (hoe < 0) {
+	hoe = get_halt_on_error();
+    }
+
+    if (code == ERRFATAL_FORCE) {
+	/* for contexts where contunuation on error is
+	   bound to make a big mess */
+	errfatal = 1;
+    } else if (hoe == 0) {
+	/* we've been explicitly told to keep going on error */
+	errfatal = 0;
+    } else {
+	/* default: errors are fatal in batch mode only */
+	errfatal = batch;
+    }
 }
 
 int main (int argc, char *argv[])
@@ -583,15 +614,13 @@ int main (int argc, char *argv[])
     }
 
     /* should we stop immediately on error, in batch mode? */
-    if (get_halt_on_error()) {
-	errfatal = batch;  /* exit on error in batch mode */
-    }
+    set_errfatal(ERRFATAL_AUTO);
 
     /* main command loop */
     while (strcmp(cmd.word, "quit") && fb != NULL) {
 	char linecopy[MAXLINE];
 
-	if (err && batch && errfatal) {
+	if (err && errfatal) {
 	    gretl_abort(linecopy);
 	}
 
@@ -601,9 +630,14 @@ int main (int argc, char *argv[])
 	    }
 	    gretl_loop_destroy(loop);
 	    loop = NULL;
-	    looprun = errfatal = 0;
+	    looprun = 0;
+	    set_errfatal(ERRFATAL_AUTO);
 	} else {
-	    get_an_input_line();
+	    err = get_an_input_line();
+	    if (err) {
+		errmsg(err, prn);
+		continue;
+	    }
 	}
 
 	cmd_overflow = maybe_get_input_line_continuation(tmp);
@@ -761,7 +795,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	err = get_command_index(line, &cmd);
     } else {
 	err = parse_command_line(line, &cmd, &Z, datainfo);
-	if (err && gretl_executing_function_or_macro()) {
+	if (err && gretl_executing_function()) {
 	    gretl_function_stop_on_error(datainfo, prn);
 	}	
     }
@@ -815,7 +849,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 			       &loopstack, &looprun);
 	    if (loop == NULL) {
 		loopstack = 0;
-		errfatal = 1;
+		set_errfatal(ERRFATAL_FORCE);
 		print_gretl_errmsg(prn);
 		err = 1;
 	    } 
@@ -861,7 +895,6 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case MAHAL:
     case MEANTEST: 
     case MULTIPLY: 
-    case NEWFUNC:
     case OUTFILE: 
     case PCA:
     case PRINT: 
@@ -1643,7 +1676,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
     }
 
-    if (err && gretl_executing_function_or_macro()) {
+    if (err && gretl_executing_function()) {
 	gretl_function_stop_on_error(datainfo, prn);
     }
 

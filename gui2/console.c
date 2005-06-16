@@ -250,12 +250,14 @@ static int console_function_exec (char *execline)
     int err = 0;
 
     while (!looprun) {
-	gotline = gretl_function_get_line(execline, MAXLINE, &Z, datainfo);
+	gotline = gretl_function_get_line(execline, MAXLINE, &Z, datainfo, &err);
 	if (gotline == NULL || *gotline == '\0') {
 	    break;
 	}
-	err = gui_exec_line(execline, &loop, &loopstack, &looprun, console_prn, 
-			    SCRIPT_EXEC, NULL);
+	if (!err) {
+	    err = gui_exec_line(execline, &loop, &loopstack, &looprun, 
+				console_prn, SCRIPT_EXEC, NULL);
+	}
     }
 
     return err;
@@ -324,10 +326,10 @@ static void console_exec (void)
 	gretl_loop_destroy(loop);
 	loop = NULL;
 	looprun = 0;
-	if (gretl_executing_function_or_macro()) {
+	if (gretl_executing_function()) {
 	    console_function_exec(execline);
 	}
-    } else if (gretl_executing_function_or_macro()) {
+    } else if (gretl_executing_function()) {
 	console_function_exec(execline);
 	if (looprun) {
 	    /* the function we are exec'ing includes a loop */

@@ -24,10 +24,6 @@ int gretl_compiling_function (void);
 
 int gretl_executing_function (void);
 
-int gretl_executing_macro (void);
-
-int gretl_executing_function_or_macro (void);
-
 int gretl_start_compiling_function (const char *line);
 
 int gretl_function_append_line (const char *line);
@@ -38,11 +34,10 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 			       DATAINFO *pdinfo);
 
 char *gretl_function_get_line (char *line, int len,
-			       double ***pZ, DATAINFO *pdinfo);
+			       double ***pZ, DATAINFO *pdinfo,
+			       int *err);
 
 int gretl_function_stack_depth (void);
-
-int gretl_macro_stack_depth (void);
 
 void gretl_function_stop_on_error (DATAINFO *pdinfo, PRN *prn);
 

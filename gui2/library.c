@@ -5377,9 +5377,9 @@ int execute_script (const char *runfile, const char *buf,
 
 	    *line = '\0';
 
-	    if (gretl_executing_function_or_macro()) {
+	    if (gretl_executing_function()) {
 		gotline = gretl_function_get_line(line, MAXLINE,
-						  &Z, datainfo);
+						  &Z, datainfo, &exec_err);
 	    } else if (fb != NULL) {
 		gotline = fgets(line, MAXLINE, fb);
 	    } else {
@@ -5391,24 +5391,23 @@ int execute_script (const char *runfile, const char *buf,
 		goto endwhile;
 	    }
 
-	    while (top_n_tail(line)) {
+	    while (top_n_tail(line) && !exec_err) {
 		/* handle backslash-continued lines */
 		*tmp = '\0';
 
-		if (gretl_executing_function_or_macro()) {
-		    gretl_function_get_line(tmp, MAXLINE, &Z, datainfo);
+		if (gretl_executing_function()) {
+		    gretl_function_get_line(tmp, MAXLINE, &Z, datainfo, &exec_err);
 		} else if (fb != NULL) {
 		    fgets(tmp, MAXLINE, fb);
 		} else {
 		    bufgets(tmp, MAXLINE, buf); 
 		}
 
-		if (*tmp != '\0') {
+		if (!exec_err && *tmp != '\0') {
 		    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
 			pprintf(prn, _("Maximum length of command line "
 				       "(%d bytes) exceeded\n"), MAXLINE);
 			exec_err = 1;
-			break;
 		    } else {
 			strcat(line, tmp);
 			compress_spaces(line);
@@ -5735,7 +5734,6 @@ int gui_exec_line (char *line,
     case MAHAL:
     case MEANTEST: 
     case MULTIPLY: 
-    case NEWFUNC:
     case OUTFILE: 
     case PCA:
     case PRINT: 
@@ -6551,7 +6549,7 @@ int gui_exec_line (char *line,
     } /* end of command switch */
 
     /* clean up in case a user function bombed */
-    if (err && gretl_executing_function_or_macro()) {
+    if (err && gretl_executing_function()) {
 	gretl_function_stop_on_error(datainfo, prn);
     }    
 

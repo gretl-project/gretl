@@ -237,7 +237,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
  *
  * Given a blank @pdinfo, which should have been obtained using
  * datainfo_new(), allocate space for the names of variables.
- * The @v member of @pdinfo (number of variables) should be
+ * The @v member of @pdinfo (number of variables) must be
  * set before calling this function.
  * 
  * Returns: 0 on sucess, %E_ALLOC on failure.
@@ -753,36 +753,17 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
     return 0;
 }
 
-static int real_dataset_add_series (int newvars, double *x,
-				    double ***pZ, DATAINFO *pdinfo)
+static int 
+dataset_expand_varinfo (int newvars, DATAINFO *pdinfo)
 {
-    double **newZ;
-    char **varname;
-    char *vector;
-    VARINFO **varinfo;
-    int i, n = pdinfo->n, v = pdinfo->v;    
+    char **varname = NULL;
+    char *vector = NULL;
+    VARINFO **varinfo = NULL;
+    int v = pdinfo->v;
+    int bigv = v + newvars;
+    int i;
 
-    newZ = realloc(*pZ, (v + newvars) * sizeof *newZ);  
-
-    if (newZ == NULL) {
-	return E_ALLOC;
-    }
-
-    if (newvars == 1 && x != NULL) {
-	/* new var is pre-allocated */
-	newZ[v] = x;
-    } else {
-	for (i=0; i<newvars; i++) {
-	    newZ[v+i] = malloc(n * sizeof **newZ);
-	    if (newZ[v+i] == NULL) {
-		return E_ALLOC;
-	    }
-	}
-    }
-
-    *pZ = newZ;
-
-    varname = realloc(pdinfo->varname, (v + newvars) * sizeof *varname);
+    varname = realloc(pdinfo->varname, bigv * sizeof *varname);
     if (varname == NULL) {
 	return E_ALLOC;
     }
@@ -798,7 +779,7 @@ static int real_dataset_add_series (int newvars, double *x,
     }
 
     if (pdinfo->varinfo != NULL) {
-	varinfo = realloc(pdinfo->varinfo, (v + newvars) * sizeof *varinfo);
+	varinfo = realloc(pdinfo->varinfo, bigv * sizeof *varinfo);
 	if (varinfo == NULL) {
 	    return E_ALLOC;
 	} else {
@@ -813,7 +794,7 @@ static int real_dataset_add_series (int newvars, double *x,
 	}
     }
 
-    vector = realloc(pdinfo->vector, (v + newvars));
+    vector = realloc(pdinfo->vector, bigv);
     if (vector == NULL) {
 	return E_ALLOC;
     }
@@ -827,6 +808,42 @@ static int real_dataset_add_series (int newvars, double *x,
     pdinfo->v += newvars;
 
     return 0;
+}
+
+static int real_dataset_add_series (int newvars, double *x,
+				    double ***pZ, DATAINFO *pdinfo)
+{
+    double **newZ;
+    int i, n = pdinfo->n, v = pdinfo->v;
+    int err = 0;
+
+    newZ = realloc(*pZ, (v + newvars) * sizeof *newZ);  
+
+    if (newZ == NULL) {
+	err = E_ALLOC;
+    } else {
+	*pZ = newZ;
+    }
+    
+    if (!err) {
+	if (newvars == 1 && x != NULL) {
+	    /* new var is pre-allocated */
+	    newZ[v] = x;
+	} else {
+	    for (i=0; i<newvars && !err; i++) {
+		newZ[v+i] = malloc(n * sizeof **newZ);
+		if (newZ[v+i] == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
+	}
+    }
+
+    if (!err) {
+	err = dataset_expand_varinfo(newvars, pdinfo);
+    }
+
+    return err;
 }
 
 /**
@@ -880,63 +897,33 @@ dataset_add_allocated_series (double *x, double ***pZ, DATAINFO *pdinfo)
 int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;
-    char **varname;
-    char *vector;
-    VARINFO **varinfo;
-    int n = pdinfo->n, v = pdinfo->v;    
+    int n = pdinfo->n, v = pdinfo->v; 
+    int err = 0;
 
     newZ = realloc(*pZ, (v + 1) * sizeof *newZ);  
 
     if (newZ == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
+    } else {
+	*pZ = newZ;
     }
 
-    newZ[v] = malloc(n * sizeof **newZ);
-
-    if (newZ[v] == NULL) {
-	return E_ALLOC;
-    }
-
-    *pZ = newZ;
-
-    varname = realloc(pdinfo->varname, (v + 1) * sizeof *varname);
-
-    if (varname == NULL) {
-	return E_ALLOC;
-    }
-    pdinfo->varname = varname;
-
-    pdinfo->varname[v] = malloc(VNAMELEN);
-    if (pdinfo->varname[v] == NULL) {
-	return E_ALLOC;
-    }
-
-    pdinfo->varname[v][0] = '\0';
-
-    if (pdinfo->varinfo != NULL) {
-	varinfo = realloc(pdinfo->varinfo, (v + 1) * sizeof *varinfo);
-	if (varinfo == NULL) {
-	    return E_ALLOC;
+    if (!err) {
+	newZ[v] = malloc(n * sizeof **newZ);
+	if (newZ[v] == NULL) {
+	    err = E_ALLOC;
 	}
-	pdinfo->varinfo = varinfo;
-	pdinfo->varinfo[v] = malloc(sizeof **varinfo);
-	if (pdinfo->varinfo[v] == NULL) {
-	    return E_ALLOC;
-	}
-	gretl_varinfo_init(pdinfo->varinfo[v]);
     }
 
-    vector = realloc(pdinfo->vector, (v + 1));
-    if (vector == NULL) {
-	return E_ALLOC;
+    if (!err) {
+	err = dataset_expand_varinfo(1, pdinfo);
     }
-    pdinfo->vector = vector;
 
-    pdinfo->vector[v] = 0;
+    if (!err) {
+	pdinfo->vector[v] = 0;
+    }
 
-    pdinfo->v += 1;
-
-    return 0;
+    return err;
 }
 
 /**
@@ -973,7 +960,21 @@ int dataset_scalar_to_vector (int v, double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
-/* apparatus for use by new-style gretl functions */
+/**
+ * dataset_add_scalar_as:
+ * @numstr: string representation of numeric value.
+ * @newname: name to give the new variable.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ *
+ * Adds to the dataset a new scalar with name @newname and
+ * value given by @numstr.  The new variable is added at one
+ * level "deeper" (in terms of function execution) than the
+ * current level.  This is for use with user-defined functions,
+ * where a numeric string is given as a function argument.
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
 
 int dataset_add_scalar_as (const char *numstr, const char *newname,
 			   double ***pZ, DATAINFO *pdinfo)
@@ -997,10 +998,28 @@ int dataset_add_scalar_as (const char *numstr, const char *newname,
     return err;
 }
 
+/**
+ * dataset_copy_variable_as:
+ * @v: index number of variable to copy.
+ * @newname: name to give the copy.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ *
+ * Makes a copy of variable @v under the name @newname.
+ * The copy exists in a variable namespace one level "deeper"
+ * (in terms of function execution) than the variable being copied. 
+ * This is for use with user-defined functions: a variable
+ * supplied to a function as an argument is copied into the
+ * function's namespace under the name it was given as a
+ * parameter.
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
+
 int dataset_copy_variable_as (int v, const char *newname,
 			      double ***pZ, DATAINFO *pdinfo)
 {
-    int t, err = 0;
+    int t, err;
 
     if (pdinfo->vector[v]) {
 	err = real_dataset_add_series(1, NULL, pZ, pdinfo);
@@ -1025,8 +1044,6 @@ int dataset_copy_variable_as (int v, const char *newname,
 
     return err;
 }
-
-/* end new-style function apparatus */
 
 static int 
 shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv)
@@ -1231,8 +1248,6 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 
     return shrink_dataset_to_size(pZ, pdinfo, v - delvars);
 }
-
-/* ........................................................... */
 
 static void make_stack_label (char *label, char *s)
 {
