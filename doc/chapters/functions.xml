@@ -5,10 +5,12 @@
   <sect1 id="func-intro">
     <title>Introduction</title>
 
-    <para>As of version 1.3.0, <application>gretl</application>
-      contains a mechanism for defining functions in the context of a
-      script.  The syntax for this is somewhat similar to the
-      <application>bash</application> shell.  Details follow.
+    <para>As of version 1.4.0, <application>gretl</application> contains a
+      revised mechanism for defining functions in the context of a script.  
+      Details follow.<footnote><para>Note that the revised definition of functions
+	  represents a backward-incompatible change relative to version 1.3.3 of
+	  the program.</para>
+      </footnote>
     </para>
 
   </sect1>
@@ -16,11 +18,12 @@
   <sect1 id="func-define">
     <title>Defining a function</title>
 
-    <para>Functions must be defined before they are called.  The
-      syntax for defining a function looks like this</para>
+    <para>Functions must be defined before they are called.  The syntax for
+      defining a function looks like this
+    </para>
 
     <programlisting>
-      function <replaceable>function-name</replaceable>
+      function <replaceable>function-name</replaceable> <replaceable>parameters</replaceable>
          <replaceable>function body</replaceable>
       end function</programlisting>
 
@@ -32,220 +35,152 @@
       having the same name as an existing <application>gretl</application> command,
       or with the same name as a previously defined user function.  To avoid an
       error in the latter case (that is, to be able to redefine a user
-      function), preface the function definition with</para>
+      function), preface the function definition with
+    </para>
 
     <programlisting>
       function <replaceable>function-name</replaceable> clear</programlisting>
 
     <para>
-      The <replaceable>function body</replaceable> is composed of
-      <application>gretl</application> commands, or calls to user-defined functions
-      (that is, functions may be nested).  A function may call itself (that is,
-      functions may be recursive). There is a maximum <quote>stacking depth</quote>
-      for user functions: at present this is set to 8.  While the function body may
-      contain function calls, it may not contain function definitions.  That is, you
-      cannot define a function inside another function.</para>
+      The <replaceable>parameters</replaceable> for a function (if any) are
+      given in the form of a comma-separated list.  Parameters can be of three
+      types: ordinary variables (data series), scalar variables, or named lists
+      of variables.  Each element in the listing of parameters is composed of
+      two terms: first a type specifier (<literal>series</literal>,
+      <literal>scalar</literal> or <literal>list</literal>) then the
+      name by which the parameter shall be known within the function.  An
+      example follows (the parentheses enclosing the list of parameters are
+      optional):
+    </para>
+
+    <programlisting>
+      function myfunc (series y, list xvars, scalar verbose)</programlisting>
 
     <para>
-      Functions may be called, but may not be defined, within the
-      context of a command loop (see <xref
-	linkend="looping"/>).</para>
+      When a function is called, the parameters are instantiated by arguments
+      given by the caller.  There are automatic checks in place to ensure that
+      the number of arguments given in a function call matches the number of
+      parameters, and that the types of the given arguments match the types
+      specified in the definition of the function.  An error is flagged if
+      either of these conditions is violated.  A series argument may be
+      specified either using either the name of the variable in question or its
+      ID number.  Scalar arguments may be specified by giving the name of a
+      variable or a numerical value (the ID number of a variable is not
+      acceptable).  List arguments must be specified by name.  
+    </para>
 
-  </sect1>
+    <para>
+      The <replaceable>function body</replaceable> is composed of
+      <application>gretl</application> commands, or calls to user-defined
+      functions (that is, functions may be nested).  A function may call itself
+      (that is, functions may be recursive). There is a maximum <quote>stacking
+	depth</quote> for user functions: at present this is set to 8.  While
+      the function body may contain function calls, it may not contain function
+      definitions.  That is, you cannot define a function inside another
+      function.</para>
 
-  <sect1 id="func-params">
-    <title>Function parameters</title>
-
-    <para>The parameters (if any) of a user function are defined
-      implicitly &mdash; as in <application>bash</application> &mdash;
-      via references in the function body.  Within the body, you use
-      <literal>$1</literal> to refer to the first parameter,
-      <literal>$2</literal> for the second, and so on. These numbered
-      references will be replaced by the supplied arguments (if any)
-      when the function is called.</para>
-
-    <para>Parameter replacement is by simple string substitution.
-      There is no mechanism for <quote>passing parameters by
-	value</quote>, as in some programming languages.</para>
+    <para>
+      Functions may be called, but may not be defined, within the context of a
+      command loop (see <xref linkend="looping"/>).
+    </para>
 
   </sect1>
 
   <sect1 id="func-call">
     <title>Calling a function</title>
 
-    <para>A user function is called or invoked by typing its name,
-      followed by zero or more arguments.  If there are two or more
-      arguments these should be separated by commas.  For
-      example:</para>
-
-    <programlisting>
-      myfun <replaceable>arg1</replaceable>, <replaceable>arg2</replaceable></programlisting>
-
-    <para>
-      In case more arguments are supplied than are referenced in the
-      function body (see above), the excess arguments are simply
-      ignored.  In case less arguments are supplied than are
-      referenced in the function, the missing references become
-      blanks.</para>
-
-    <para>Function arguments can take the form of single terms or
-      lists.  Here is a trivial example:</para>
+    <para>A user function is called or invoked by typing its name followed by
+      zero or more arguments.  If there are two or more arguments these should
+      be separated by commas.  The following trivial example illustrates a
+      function call that correctly matches the function definition.
+    </para>
 
     <programlisting>
       # function definition
-      function myfun
-      open $1
-      ols $2 0 $3
+      function ols_ess (series y, list xvars)
+        ols y 0 xvars --quiet
+        scalar myess = $ess
+        printf "ESS = %g\n", myess
+        return myess
       end function
-      # function call
-      myfun data4-1, 1, 2 3 4</programlisting>
+      # main script
+      open data4-1
+      list xlist = 2 3 4
+      # function call (the return value is ignored here)
+      ols_ess price, xlist</programlisting>
 
     <para>
-      The function call gives three arguments, the third of which is a
-      list of regressors.  The effect is to open the data file
-      <literal>data4-1</literal> and run a regression given by the
-      command <literal>ols 1 0 2 3 4</literal>.</para>
+      The function call gives two arguments: the first is a data series
+      specified by name and the second is a named list of regressors.  Note that
+      while the function offers the variable <literal>myess</literal> as a
+      return value, it is ignored by the caller in this instance.
+    </para>
 
-    <para>(As a side note here, if you want a function to calculate
-      some value having to do with a regression, but are not
-      interested in the full results of the regression, you may wish
-      to use the <literal>--quiet</literal> flag with the estimation
-      command.)</para>
+    <para>(As a side note here, if you want a function to calculate some value
+      having to do with a regression, but are not interested in the full results
+      of the regression, you may wish to use the <literal>--quiet</literal> flag
+      with the estimation command as shown above.)
+    </para>
 
   </sect1>
 
   <sect1 id="func-scope">
     <title>Scope of variables</title>
 
-    <para>By default all variables are <quote>global</quote>.  There
-      is a common namespace for variables, shared by the main script
-      and any functions that it calls.  Variables in the main script
-      can be accessed and modified from within functions, and
-      variables newly created within functions are added to the global
-      dataset.</para>
+    <para>All variables created within a function are local to that function,
+      and are destroyed when the function exits, unless they are made available
+      as return values and these values are <quote>picked up</quote> or assigned
+      by the caller.
+    </para>
 
-    <para>In some cases, however, it may be useful to create variables
-      that are local or private to a particular function.  You can do
-      this by using the keyword <literal>my</literal> with
-      <literal>genr</literal>. Inside a function, if I do</para>
-
-    <programlisting>
-      genr x = <replaceable>expression</replaceable></programlisting>
-
-    <para>I thereby create a global variable (or modify a global
-      variable if <varname>x</varname> already exists).  But if I
-      do</para>
-
-    <programlisting>
-      genr my x = <replaceable>expression</replaceable></programlisting>
-
-    <para>I create a new variable <varname>x</varname> that is local
-      to the function, and will disappear when the function exits.  If
-      a variable <varname>x</varname> already exists outside of the
-      function, the above command will <quote>mask</quote> the outer
-      variable: the outer <varname>x</varname> will be inaccessible
-      inside the function, and will not be modified by commands of the
-      sort <literal>genr x =</literal> &hellip; until the function
-      exits.</para>
-
-    <para>This behavior is illustrated by the sample script in 
-      <xref linkend="func-scope-example"/>.</para>
-
-    <para>When a function, say <literal>fun1</literal>, calls another
-      function, <literal>fun2</literal>, any local
-      (<literal>my</literal>) variables from <literal>fun1</literal>
-      are by default inherited by the <quote>child</quote> function
-      <literal>fun2</literal>. These variables can, however, be masked
-      as described above by the creation of local variables of the
-      same name within <literal>fun2</literal>.</para>
+    <para>
+      Functions do not have access to variables in <quote>outer scope</quote>
+      (that is, variables that exist in the script from which the function is
+      called) except insofar as these are explicitly passed to the function as
+      arguments.  Even in this case, what the function actually gets is a copy
+      of the variables in question.  Therefore, variables in outer scope and
+      never modified by a function other than via assignment of the return
+      values from the function.
+    </para> 
 
   </sect1>
 
   <sect1 id="func-return">
-    <title>Return value (absence of)</title>
+    <title>Return values</title>
 
-    <para>There is no mechanism for returning a value from a
-      <application>gretl</application> script function, such as is
-      available in many programming languages.  But this is not a
-      serious limitation, since you can achieve the same effect by
-      generating a global variable or variables within the function,
-      to hold any value(s) that you wish to make accessible when the
-      function exits.</para>
+    <para>
+      Functions can return zero or more values; these can be series or scalars
+      (not lists).  Return values are specified via a statement within the
+      function body beginning with the keyword <literal>return</literal>,
+      followed by a space- or comma-separated list of names of variables. 
+    </para>
+
+    <para>
+      Note that the <literal>return</literal> statement does not cause the
+      function to return (exit) at the point where it appears within the body of
+      the function.  Rather, it just specifies which variables are available for
+      assignment when the function exits, and a function exits only when (a) the
+      end of the function code is reached, or (b) a <literal>funcerr</literal>
+      statement is reached, or (c) a gretl error occurs.
+    </para>
 
   </sect1>
 
   <sect1 id="func-errors">
     <title>Error checking</title>
 
-    <para>When gretl first reads and <quote>compiles</quote> a
-      function definition there is minimal error-checking: the only
-      checks are that the function name is acceptable, and, so far as
-      the body is concerned, that you are not trying to define a
-      function inside a function (see <xref linkend="func-define"/>).
-      Otherwise, if the function body contains invalid commands this
-      will become apparent only when the function is called, and its
-      commands are executed.</para>
+    <para>When gretl first reads and <quote>compiles</quote> a function
+      definition there is minimal error-checking: the only checks are that the
+      function name is acceptable, and, so far as the body is concerned, that
+      you are not trying to define a function inside a function (see <xref
+	linkend="func-define"/>). Otherwise, if the function body contains
+      invalid commands this will become apparent only when the function is
+      called, and its commands are executed.
+    </para>
 
   </sect1>
 
-  <sect1 id="func-scope-example">
-    <title>Example showing scope of variables</title>
 
-    <para>The following script illustrates the difference between
-      global and local variables.  Note that functions can be defined
-      anywhere, so long as it is before they are called.</para>
-
-    <programlisting>
-      function bar
-        genr my testvar = 3
-        printf "in bar: testvar = %d\n", testvar
-      end function
-
-      function foo
-        # create a local variable
-        genr my testvar = 2
-        printf "in foo: testvar = %d\n", testvar
-        # nested function call
-        bar
-        printf "back in foo: testvar = %d\n", testvar
-        # generate a global variable
-        genr glob = 15
-      end function
-
-      # main script begins here
-      nulldata 5
-      set echo off
-      genr testvar = 1
-      printf "in main: testvar = %d\n", testvar  
-      # call function foo, which in turn calls function bar
-      foo
-      printf "back in main: testvar = %d, glob = %d\n", testvar, glob 
-      # list the global variables 
-      varlist 
-    </programlisting>
-
-    <para>The output from the above is:</para>
-
-    <programlisting>
-      gretl version 1.3.4 ...
-      ? nulldata 5
-      periodicity: 1, maxobs: 5,
-      observations range: 1-5
-      ? set echo off
-      Generated scalar testvar (ID 2) = 1
-      in main: testvar = 1
-      Generated scalar testvar (ID 3) = 2
-      in foo: testvar = 2
-      Generated scalar testvar (ID 4) = 3
-      in bar: testvar = 3
-      back in foo: testvar = 2
-      Generated scalar glob (ID 4) = 15
-      back in main: testvar = 1, glob = 15
-      Listing 4 variables:
-      0) const       1) index       2) testvar     3) glob
-    </programlisting>      
-    
-  </sect1>
 
   </chapter>
 
