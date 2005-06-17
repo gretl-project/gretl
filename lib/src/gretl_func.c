@@ -851,7 +851,10 @@ static int parse_fn_element (char *s, char **parmv, char *ptype, int i,
     if (ptype[i] == 0) {
 	sprintf(gretl_errmsg, "Unrecognized data type '%s'", tstr);
 	err = E_PARSE;
-    } /* FIXME can't return list */
+    } else if (ptype[i] == ARG_LIST && which == FN_RETURNS) {
+	strcpy(gretl_errmsg, "A function cannot return a list");
+	err = 1;
+    }
 
     if (!err) {
 	s += len;

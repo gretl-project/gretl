@@ -101,7 +101,7 @@
         ols y 0 xvars --quiet
         scalar myess = $ess
         printf "ESS = %g\n", myess
-        return myess
+        return scalar myess
       end function
       # main script
       open data4-1
@@ -138,7 +138,7 @@
       (that is, variables that exist in the script from which the function is
       called) except insofar as these are explicitly passed to the function as
       arguments.  Even in this case, what the function actually gets is a copy
-      of the variables in question.  Therefore, variables in outer scope and
+      of the variables in question.  Therefore, variables in outer scope are
       never modified by a function other than via assignment of the return
       values from the function.
     </para> 
@@ -152,16 +152,24 @@
       Functions can return zero or more values; these can be series or scalars
       (not lists).  Return values are specified via a statement within the
       function body beginning with the keyword <literal>return</literal>,
-      followed by a space- or comma-separated list of names of variables. 
+      followed by a comma-separated list, each element of which is
+      composed of a type specifier and the name of a variable (as in
+      the listing of parameters).  There can be only one such
+      statement.  An example of a valid return statement is shown below:
     </para>
 
+    <programlisting>
+      return scalar SSR, series resid</programlisting>
+
     <para>
-      Note that the <literal>return</literal> statement does not cause the
-      function to return (exit) at the point where it appears within the body of
-      the function.  Rather, it just specifies which variables are available for
-      assignment when the function exits, and a function exits only when (a) the
-      end of the function code is reached, or (b) a <literal>funcerr</literal>
-      statement is reached, or (c) a gretl error occurs.
+      Note that the <literal>return</literal> statement does
+      <emphasis>not</emphasis> cause the function to return (exit) at
+      the point where it appears within the body of the function.
+      Rather, it specifies which variables are available for
+      assignment when the function exits, and a function exits only
+      when (a) the end of the function code is reached, or (b) a
+      <literal>funcerr</literal> statement is reached, or (c) a gretl
+      error occurs.
     </para>
 
   </sect1>
