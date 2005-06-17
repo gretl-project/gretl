@@ -745,6 +745,8 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 				      PRN *prn)
 {
     double maxerr;
+    int pmax = fr->pmax;
+    int errpmax = fr->pmax;
     char actual[32], fitted[32], sderr[32], lo[32], hi[32];
     char vname[16];
     char pt = get_local_decpoint();
@@ -786,6 +788,10 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     pputs(prn, "& & & & \\multicolumn{1}{c}{low} & "
 	  "\\multicolumn{1}{c}{high} \\\\\n");
 
+    if (pmax < 4) {
+	errpmax = pmax + 1;
+    }
+
     for (t=fr->pre_n; t<fr->nobs; t++) {
 	double xlo, xhi;
 
@@ -796,11 +802,11 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	    xlo = fr->fitted[t] - maxerr;
 	    xhi = fr->fitted[t] + maxerr;
 	}
-	texprint_fcast_x(fr->actual[t], fr->pmax, actual);
-	texprint_fcast_x(fr->fitted[t], fr->pmax, fitted);
-	texprint_fcast_x(fr->sderr[t], fr->pmax, sderr);
-	texprint_fcast_x(xlo, fr->pmax, lo);
-	texprint_fcast_x(xhi, fr->pmax, hi);
+	texprint_fcast_x(fr->actual[t], pmax, actual);
+	texprint_fcast_x(fr->fitted[t], pmax, fitted);
+	texprint_fcast_x(fr->sderr[t], errpmax, sderr);
+	texprint_fcast_x(xlo, pmax, lo);
+	texprint_fcast_x(xhi, pmax, hi);
 	tex_print_obs_marker(t + fr->t1, pdinfo, prn);
 	pprintf(prn, " & %s & %s & %s & %s & %s \\\\\n",
 		actual, fitted, sderr, lo, hi);

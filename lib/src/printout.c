@@ -1374,6 +1374,8 @@ int text_print_forecast (const FITRESID *fr,
 {
     int t, pv, err = 0;
     int do_errs = (fr->sderr != NULL);
+    int pmax = fr->pmax;
+    int errpmax = fr->pmax;
     double *maxerr = NULL;
     int time_series = (pdinfo->structure == TIME_SERIES);
     int plot = (opt & OPT_P);
@@ -1414,27 +1416,30 @@ int text_print_forecast (const FITRESID *fr,
 	for (t=0; t<fr->pre_n; t++) {
 	    maxerr[t] = NADBL;
 	}
+	if (pmax < 4) {
+	    errpmax = pmax + 1;
+	}
     }
 
     for (t=fr->pre_n; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
-	fcast_print_x(fr->actual[t], 15, fr->pmax, prn);
+	fcast_print_x(fr->actual[t], 15, pmax, prn);
 
 	if (na(fr->fitted[t])) {
 	    pputc(prn, '\n');
 	    continue;
 	}
-	fcast_print_x(fr->fitted[t], 15, fr->pmax, prn);
+	fcast_print_x(fr->fitted[t], 15, pmax, prn);
 
 	if (do_errs) {
 	    if (na(fr->sderr[t])) {
 		maxerr[t] = NADBL;
 	    } else {
-		fcast_print_x(fr->sderr[t], 15, fr->pmax, prn);
+		fcast_print_x(fr->sderr[t], 15, errpmax, prn);
 		maxerr[t] = fr->tval * fr->sderr[t];
-		fcast_print_x(fr->fitted[t] - maxerr[t], 15, fr->pmax, prn);
+		fcast_print_x(fr->fitted[t] - maxerr[t], 15, pmax, prn);
 		pputs(prn, " - ");
-		fcast_print_x(fr->fitted[t] + maxerr[t], 10, fr->pmax, prn);
+		fcast_print_x(fr->fitted[t] + maxerr[t], 10, pmax, prn);
 	    }
 	}
 	pputc(prn, '\n');

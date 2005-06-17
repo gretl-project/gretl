@@ -205,6 +205,78 @@ GRETL_VAR *gretl_var_new (int neqns, int order, const DATAINFO *pdinfo,
     return var;
 }
 
+/* FIXME below: needs checking in various ways */
+
+gretl_matrix *
+gretl_var_forecast (GRETL_VAR *var, int t1, int t2,
+		    const double **Z, const DATAINFO *pdinfo)
+{
+    const MODEL *pmod;
+    gretl_matrix *F;
+    int ns, nf = t2 - t1 + 1;
+    double fti, xti;
+    int i, j, k, s, t;
+    int lag, vj, m;
+
+    F = gretl_matrix_alloc(nf, var->neqns);
+    if (F == NULL) {
+	return NULL;
+    }
+
+    gretl_matrix_zero(F);
+
+    ns = var->order * var->neqns;
+
+    for (s=0; s<nf; s++) {
+	int miss = 0;
+
+	t = s + t1;
+	for (i=0; i<var->neqns; i++) {
+	    pmod = var->models[i];
+	    fti = 0.0;
+	    lag = 1;
+	    k = 0;
+	    for (j=0; j<pmod->ncoeff && !miss; j++) {
+		vj = pmod->list[j + 2];
+		if (j < ns + pmod->ifc && vj > 0) {
+		    /* stochastic var */
+		    if (s - lag < 0) {
+			/* pre-forecast value */
+			m = (j - pmod->ifc) / var->order;
+			vj = var->models[m]->list[1];
+			xti = Z[vj][t-lag];
+			if (na(xti)) {
+			    miss = 1;
+			}
+		    } else {
+			/* prior forecast value */
+			xti = gretl_matrix_get(F, s - lag, k);
+		    }
+		    lag++;
+		    if (lag > var->order) {
+			lag = 1;
+			k++;
+		    }
+		} else {
+		    /* deterministic var: value from dataset */
+		    xti = Z[vj][t];
+		    if (na(xti)) {
+			miss = 1;
+		    }
+		}
+		if (miss) {
+		    fti = NADBL;
+		} else {
+		    fti += pmod->coeff[j] * xti;
+		}
+	    }
+	    gretl_matrix_set(F, s, i, fti);
+	}
+    }
+
+    return F;
+}
+
 /* ......................................................  */
 
 static int gretl_var_do_error_decomp (GRETL_VAR *var)
@@ -282,6 +354,16 @@ int gretl_var_get_variable_number (const GRETL_VAR *var, int k)
 int gretl_var_get_n_equations (const GRETL_VAR *var)
 {
     return var->neqns;
+}
+
+int gretl_var_get_t1 (const GRETL_VAR *var)
+{
+    return var->models[0]->t1;
+}
+
+int gretl_var_get_t2 (const GRETL_VAR *var)
+{
+    return var->models[0]->t2;
 }
 
 /* ......................................................  */

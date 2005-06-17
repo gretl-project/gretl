@@ -366,10 +366,10 @@
       <listitem><para><guimenu>Data menu</guimenu></para>
 	<itemizedlist mark="dash">
 	  <listitem><para><guimenuitem>Display values</guimenuitem>:
-	      pops up a window with a simple (not editable) printout
+	      Pops up a window with a simple (not editable) printout
 	      of the values of the variables (either all of them or a
 	      selected subset).</para></listitem>
-	  <listitem><para><guimenuitem>Edit values</guimenuitem>: pops
+	  <listitem><para><guimenuitem>Edit values</guimenuitem>: Pops
 	      up a spreadsheet window where you can make changes, add
 	      new variables, and extend the number of observations.
 	      </para></listitem>
@@ -404,31 +404,40 @@
 	      allows you to make changes to it (if you have permission
 	      to do so).</para></listitem>
 	  <listitem><para><guimenuitem>Print
-		description</guimenuitem>: opens a window containing a
+		description</guimenuitem>: Opens a window containing a
 		full account of the current dataset, including the
 		summary information and any specific information on
 		each of the variables.</para>
 	  </listitem>
 	  <listitem><para><guimenuitem>Summary
-		statistics</guimenuitem>: shows a fairly full set of
+		statistics</guimenuitem>: Shows a fairly full set of
 	      descriptive statistics for all variables in the data
-	      set.</para></listitem>
+	      set, or for selected variables.</para></listitem>
 	  <listitem><para><guimenuitem>Correlation
-		matrix</guimenuitem>: shows the pairwise correlation
-	      coefficients for the variables in the data
-	      set.</para></listitem>
+		matrix</guimenuitem>: Shows the pairwise correlation
+	      coefficients for all variables in the data
+	      set, or selected variables</para></listitem>
+	  <listitem><para><guimenuitem>Principal components</guimenuitem>:
+	      Active only if two or more variables are selected; produces a
+	      Principal Components Analysis of the selected variables.
+	      </para></listitem>
+	  <listitem><para><guimenuitem>Mahalonobis distances</guimenuitem>:
+	      Active only if two or more variables are selected; computes the
+	      Mahalonobis distance of each observation from the centroid of the
+	      selected set of variables.
+	      </para></listitem>
 	  <listitem><para><guimenuitem>Difference of
-		means</guimenuitem>: calculates the
+		means</guimenuitem>: Calculates the
 	      <emphasis>t</emphasis> statistic for the null hypothesis
 	      that the population means are equal for two selected
 	      variables and shows its p-value.</para></listitem>
 	  <listitem><para><guimenuitem>Difference of
-		variances</guimenuitem>: calculates the
+		variances</guimenuitem>: Calculates the
 	      <emphasis>F</emphasis> statistic for the null hypothesis
 	      that the population variances are equal for two selected
 	      variables and shows its p-value.</para></listitem>
-	  <listitem><para><guimenuitem>Add variables</guimenuitem>
-	      gives a sub-menu of standard transformations of
+	  <listitem><para><guimenuitem>Add variables</guimenuitem>:
+	      Gives a sub-menu of standard transformations of
 	      variables (logs, lags, squares, etc.) that you may wish
 	      to add to the data set. Also gives the option of adding
 	      random variables, and (for time-series data) adding
@@ -436,7 +445,15 @@
 	      for quarterly data). Includes an item for seeding the
 	      program's pseudo-random number
 	      generator.</para></listitem>
-	  <listitem><para><guimenuitem>Refresh window</guimenuitem>
+	  <listitem><para><guimenuitem>Add observations</guimenuitem>:
+	      Gives a dialog box in which you can choose a number of observations
+	      to add at the end of the current dataset; for use with forecasting.
+	    </para></listitem>
+	  <listitem><para><guimenuitem>Remove extra observations</guimenuitem>:
+	      Active only if extra observations have been added automatically
+	      in the process of forecasting; deletes these extra observations.
+	    </para></listitem>
+	  <listitem><para><guimenuitem>Refresh window</guimenuitem>:
 	      Sometimes <application>gretl</application> commands
 	      generate new variables.  The <quote>refresh</quote> item
 	      ensures that the listing of variables visible in the
@@ -509,12 +526,22 @@
 	      to the data set. See
 	      <xref linkend="datafiles"/>.</para>
 	  </listitem>
+	  <listitem><para><guimenuitem>Remove case markers</guimenuitem>:
+	      Active only if the dataset has case markers indentifying the
+	      observations; removes these case markers.</para>
+	  </listitem>
 	  <listitem><para><guimenuitem>Restructure
 		panel</guimenuitem>: Allows the conversion of a panel
 	      data set in stacked cross-section form into stacked time
 	      series or vice versa.  (Unlike the <guimenuitem>Dataset
 		structure</guimenuitem> menu item above, this one
 	      actually changes the organization of the data.)
+	    </para></listitem>
+	  <listitem><para><guimenuitem>Transpose data</guimenuitem>: Turn each
+	      observation into a variable and vice versa (or in other words,
+	      each row of the data matrix becomes a column in the modified data
+	      matrix); can be useful with imported data that have been 
+	      read in <quote>sideways</quote>.
 	    </para></listitem>
 	</itemizedlist>
       </listitem>

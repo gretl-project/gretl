@@ -657,7 +657,7 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo)
     nt = (nc * nc + nc) / 2;
 
     /* copy vcv */
-    vcv->vec = copyvec(pmod->vcv, nt + 1); /* + 1?? */
+    vcv->vec = copyvec(pmod->vcv, nt);
     if (vcv->vec == NULL) {
 	free_vmatrix(vcv);
 	return NULL;

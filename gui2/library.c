@@ -2713,10 +2713,17 @@ void do_simdata (GtkWidget *widget, dialog_t *dlg)
 void do_genr (GtkWidget *widget, dialog_t *dlg) 
 {
     const gchar *buf = edit_dialog_get_text(dlg);
+    char test[8];
 
     if (buf == NULL) return;
 
-    gretl_command_sprintf("genr %s", buf);
+    while (isspace((unsigned char) *buf)) buf++;
+    sscanf(buf, "%7s", test);
+    if (!strcmp(test, "series")) {
+	gretl_command_sprintf("%s", buf);
+    } else {
+	gretl_command_sprintf("genr %s", buf);
+    }
 
     if (check_and_record_command()) {
 	return;

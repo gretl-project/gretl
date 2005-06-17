@@ -39,6 +39,10 @@ GRETL_VAR *full_var (int order, const int *list,
 		     double ***pZ, DATAINFO *pdinfo,
 		     gretlopt opts, PRN *prn);
 
+gretl_matrix *
+gretl_var_forecast (GRETL_VAR *var, int t1, int t2,
+		    const double **Z, const DATAINFO *pdinfo);
+
 void gretl_var_free (GRETL_VAR *var);
 
 void gretl_var_free_unnamed (GRETL_VAR *var);
@@ -75,6 +79,10 @@ const char *gretl_var_get_name (const GRETL_VAR *var);
 int gretl_var_get_variable_number (const GRETL_VAR *var, int k);
 
 int gretl_var_get_n_equations (const GRETL_VAR *var);
+
+int gretl_var_get_t1 (const GRETL_VAR *var);
+
+int gretl_var_get_t2 (const GRETL_VAR *var);
 
 int gretl_var_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 				     double ***pZ, DATAINFO *pdinfo);

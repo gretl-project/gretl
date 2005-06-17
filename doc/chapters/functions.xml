@@ -122,6 +122,26 @@
       with the estimation command as shown above.)
     </para>
 
+    <para>
+      A second example shows how to write a function call that assigns return
+      values to variables in the caller:
+    </para>
+
+    <programlisting>
+      # function definition
+      function ess_uhat (series y, list xvars)
+        ols y 0 xvars --quiet
+        scalar myess = $ess
+        printf "ESS = %g\n", myess
+        series uh = $uhat
+        return scalar myess, series uh
+      end function
+      # main script
+      open data4-1
+      list xlist = 2 3 4
+      # function call
+      (SSR, resids) = ess_uhat price, xlist</programlisting>
+
   </sect1>
 
   <sect1 id="func-scope">

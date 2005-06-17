@@ -2901,6 +2901,45 @@ static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
     }
 }
 
+static void var_forecast_call (gpointer p, guint u, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    gretl_matrix *F;
+    gchar *title;
+    int t1, vt2, nf, err;
+
+    vt2 = gretl_var_get_t2(var);
+
+    t1 = vt2 + 1;
+    nf = datainfo->n - vt2 - 1;
+
+    title = g_strdup_printf("gretl: %s", _("VAR forecasts"));
+    /* FIXME: use the right dialog here */
+    err = spin_dialog(title, &nf, _("forecast horizon (periods):"),
+		      1, nf, 0);
+    g_free(title);
+
+    if (err < 0) {
+	return;
+    }
+
+    F = gretl_var_forecast(var, t1, t1 + nf, (const double **) Z, datainfo);
+
+    if (F == NULL) {
+	errbox("Forecast failed");
+    } else {
+	PRN *prn;
+
+	if (bufopen(&prn) == 0) {
+	    /* FIXME: have to format this properly */
+	    gretl_matrix_print(F, "forecast matrix", prn);
+	    view_buffer(prn, 78, 450, NULL, PRINT, NULL);
+	}
+	gretl_matrix_free(F);
+    }
+}
+
 static void add_var_menu_items (windata_t *vwin)
 {
     int i, j;
@@ -2909,6 +2948,7 @@ static void add_var_menu_items (windata_t *vwin)
     const gchar *dpath = N_("/Model data/Add to data set");
     GRETL_VAR *var = vwin->data;
     int neqns = gretl_var_get_n_equations(var);
+    int t2 = gretl_var_get_t2(var);
     int vtarg, vshock;
     char tmp[16];
 
@@ -2921,6 +2961,22 @@ static void add_var_menu_items (windata_t *vwin)
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);
 
+    if (t2 < datainfo->n - 1) {
+	/* if we have any out-of-sample data points, offer 
+	   a forecast */
+	varitem.path = g_strdup(_("/_Model data"));
+	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	g_free(varitem.path);
+
+	varitem.callback = var_forecast_call;
+	varitem.item_type = NULL;
+	varitem.path = g_strdup(_("/_Model data/Forecasts..."));
+	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	g_free(varitem.path);
+    }
+    
+    varitem.callback = NULL;
+    varitem.item_type = "<Branch>";
     varitem.path = g_strdup(_("/_Model data/Add to data set"));
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);
