@@ -38,7 +38,7 @@ int list_laggenr (int order, const int *list, double ***pZ, DATAINFO *pdinfo);
 
 int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo);
 
-int list_xpxgenr (int *list, double ***pZ, DATAINFO *pdinfo, 
+int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt);
 
 void gretl_transforms_cleanup (void);

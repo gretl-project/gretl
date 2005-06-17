@@ -792,30 +792,46 @@ int list_ldiffgenr (int *list, double ***pZ, DATAINFO *pdinfo)
 
 /**
  * list_xpxgenr:
- * @list: list of variables to process.  If squares only are
- * being generated, on exit this holds the ID numbers of the
- * squares.
+ * @plist: pointer to list of variables to process.  On exit
+ * the list holds the ID numbers of the squares (and possibly 
+ * cross-products).
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @opt: If = 0, only squares are generated, if OPT_O, both
- * squares and cross-products are generated.
+ * @opt: If OPT_O, both squares and cross-products are generated,
+ * otherwise only squares.
  *
- * Generates and adds to the data set squares and (if @opt is non-zero) 
- * cross-products of the variables given in @list.
+ * Generates and adds to the data set squares and (if @opt is %OPT_O) 
+ * cross-products of the variables given in the list pointed to
+ * by @plist.
  *
  * Returns: 0 on success, error code on error.
  */
 
-int list_xpxgenr (int *list, double ***pZ, DATAINFO *pdinfo, 
+int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt)
 {
-    int tnum, i, j, vi, vj;
+    int *list = *plist;
+    int l0 = list[0];
+    int *xpxlist = NULL;
+    int tnum, i, j, k, vi, vj;
     int startlen;
-    int n_ok = 0;
+
+    if (opt & OPT_O) {
+	int maxterms = (l0 * l0 + l0) / 2;
+    
+	xpxlist = gretl_list_new(maxterms);
+	if (xpxlist == NULL) {
+	    return E_ALLOC;
+	}
+    } else {
+	xpxlist = list;
+    }
 
     startlen = get_starting_length(list, pdinfo, 3);
+    xpxlist[0] = 0;
 
-    for (i=1; i<=list[0]; i++) {
+    k = 1;
+    for (i=1; i<=l0; i++) {
 	vi = list[i];
 
 	if (vi == 0 || !pdinfo->vector[vi]) {
@@ -827,23 +843,27 @@ int list_xpxgenr (int *list, double ***pZ, DATAINFO *pdinfo,
 
 	tnum = get_transform(SQUARE, vi, vi, pZ, pdinfo, startlen);
 	if (tnum > 0) {
-	    n_ok++;
-	    if (opt == OPT_NONE) {
-		list[i] = tnum;
-	    }
+	    xpxlist[k++] = tnum;
+	    xpxlist[0] += 1;
 	}
 
 	if (opt & OPT_O) {
-	    for (j=i+1; j<=list[0]; j++) {
+	    for (j=i+1; j<=l0; j++) {
 		vj = list[j];
 		tnum = xpxgenr(vi, vj, pZ, pdinfo);
 		if (tnum > 0) {
-		    n_ok++;
+		    xpxlist[k++] = tnum;
+		    xpxlist[0] += 1;
 		}
 	    }
 	}
     }
 
-    return (n_ok > 0)? 0 : E_SQUARES;
+    if (opt & OPT_O) {
+	free(*plist);
+	*plist = xpxlist;
+    }
+
+    return (xpxlist[0] > 0)? 0 : E_SQUARES;
 }
 

@@ -590,6 +590,23 @@ int auto_lag_ok (const char *s, int *lnum,
     return ok;
 } 
 
+gretlopt get_xpx_opt (const char *s)
+{
+    gretlopt opt = OPT_NONE;
+    int xpx;
+
+    s = strchr(s, ',');
+    if (s != NULL && *(s+1) != 0) {
+	s++;
+	while (isspace((unsigned char) *s)) s++;
+	if (*s != 0 && sscanf(s, "%d", &xpx) == 1 && xpx > 0) {
+	    opt = OPT_O;
+	}
+    }
+
+    return opt;
+}
+
 int auto_transform_ok (const char *s, int *lnum,
 		       double ***pZ, DATAINFO *pdinfo,
 		       CMD *cmd)
@@ -604,6 +621,7 @@ int auto_transform_ok (const char *s, int *lnum,
     char fword[9];
     int *genlist = NULL;
     int trans = -1;
+    gretlopt opt = OPT_NONE;
     int i, err = 0, ok = 1;
 
     if (sscanf(s, "%8[^(](", fword)) {
@@ -626,6 +644,9 @@ int auto_transform_ok (const char *s, int *lnum,
 		    genlist = gretl_list_copy(gotlist);
 		}
 		free(lname);
+		if (!strcmp(fword, "square")) {
+		    opt = get_xpx_opt(s);
+		}
 	    }
 	}
     }
@@ -642,7 +663,7 @@ int auto_transform_ok (const char *s, int *lnum,
     } else if (trans == 2) {
 	err = list_ldiffgenr(genlist, pZ, pdinfo);
     } else if (trans == 3) {
-	err = list_xpxgenr(genlist, pZ, pdinfo, OPT_NONE);
+	err = list_xpxgenr(&genlist, pZ, pdinfo, opt);
     }
 
     if (err) {
@@ -1996,7 +2017,7 @@ cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
 
 static int more_coming (const CMD *cmd, int i)
 {
-    if (cmd->opt) {
+    if (cmd->opt && cmd->ci != REMEMBER) {
 	return 1;
     } else if (cmd->linfo == NULL) {
 	return (i < cmd->list[0]);
@@ -2712,7 +2733,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case SQUARE:
-	err = list_xpxgenr(genlist, pZ, datainfo, cmd->opt);
+	err = list_xpxgenr(&genlist, pZ, datainfo, cmd->opt);
 	if (err) {
 	    pputs(prn, _("Failed to generate squares\n"));
 	} else {
