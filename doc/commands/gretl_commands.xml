@@ -19,10 +19,14 @@
 	  <flag>--quiet</flag>
 	  <effect>don't print estimates for augmented model</effect>
 	</option>
+	<option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
+	</option>
       </options>
       <examples>
         <example>add 5 7 9</example>
-        <example>add xx yy zz</example>
+        <example>add xx yy zz --quiet</example>
       </examples>
     </usage>
 
@@ -42,7 +46,10 @@
 	added variables, otherwise the estimates for the augmented
 	model are also printed.  In the latter case, the
 	<lit>--vcv</lit> flag causes the covariance matrix for the
-	coefficients to be printed also.
+	coefficients to be printed also.  If the <lit>--silent</lit>
+	option is given, nothing is printed; nonetheless, the results
+	of the test can be retrieved using the special variables
+        <lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
       <para context="gui">
 	The selected variables are added to the previous model and the
@@ -73,13 +80,21 @@
 
     <description>
       <para>
-	Adds the specified number of extra observations to the end
-	of the working dataset.  The values of all variables over the
-	additional range are set to missing.  This command is not
-	available if the dataset is currently subsampled by selection of
-	cases on some Boolean criterion.
+	Adds the specified number of extra observations to the end of the
+	working dataset.  This is primarily intended for forecasting purposes.
+	The values of most variables over the additional range will be set to
+	missing, but certain deterministic variables are recognized and
+	extended, namely, a simple linear trend and periodic dummy variables.
+      </para>
+      <para>
+	This command is not available if the dataset is currently subsampled by
+	selection of cases on some Boolean criterion.
       </para>
     </description>
+
+    <gui-access>
+      <menu-path>/Data/Add observations</menu-path>
+    </gui-access>
 
   </command>
 
@@ -333,7 +348,6 @@
       <para context="gui">
 	This command needs an integer lag order.
       </para>
-
       <para>
 	Tests the model for ARCH (Autoregressive Conditional
 	Heteroskedasticity) of the specified lag order. If the LM test
@@ -1390,15 +1404,14 @@
 
     <description>
       <para>
-	Must follow an estimation command.  Forecasts are generated
-	for the specified range (or the largest possible range if no
-	<repl>startobs</repl> and <repl>endobs</repl> are given) and
-	the values saved as <repl>fitvar</repl>, which can be printed,
-	graphed, or plotted. The right-hand side variables are those
-	in the original model.  There is no provision to substitute
-	other variables.  If an autoregressive error process is
-	specified the forecast is conditional one step ahead and
-	incorporates the error process.
+	Must follow an estimation command.  Forecasts are generated for the
+	specified range (or the largest possible range if no
+	<repl>startobs</repl> and <repl>endobs</repl> are given) and the values
+	saved as <repl>fitvar</repl>, which can be printed, graphed, or plotted.
+	The right-hand side variables are those in the original model.  There is
+	no provision to substitute other variables.  If an autoregressive error
+	process is specified the forecast incorporates the predictable fraction
+	of the error process.
       </para>
 
       <para>
@@ -1689,12 +1702,38 @@
 
     <description>
       <para>
-	Creates new variables, usually through transformations of
-	existing variables. See also <cmdref targ="diff"/>, <cmdref
-	  targ="logs"/>,
-	<cmdref targ="lags"/>, <cmdref targ="ldiff"/>, <cmdref
-	  targ="multiply"/> and
-	<cmdref targ="square"/> for shortcuts.
+	Creates new variables, usually through transformations of existing
+	variables. See also <cmdref targ="diff"/>, <cmdref
+	  targ="logs"/>, <cmdref targ="lags"/>, <cmdref targ="ldiff"/>, <cmdref
+	  targ="multiply"/> and <cmdref targ="square"/> for shortcuts. In the
+	context of a <lit>genr</lit> formula, existing variables must be
+	referenced by name, not ID number.  The formula should be a well-formed
+	combination of variable names, constants, operators and functions
+	(described below).  Note that further details on some aspects of this
+	command can be found in <manref targ="chap-genr"/>.
+      </para>
+
+      <para>
+	This command may yield either a series or a scalar result.  For example,
+	the formula <lit>x2 = x * 2</lit> naturally yields a series if the
+	variable <lit>x</lit> is a series and a scalar is <lit>x</lit> is a
+	scalar.  The formulae <lit>x = 0</lit> and <lit>mx = mean(x)</lit>
+	naturally return scalars. Under some circumstances you may want to have
+	a scalar result expanded into a series or vector.  You can do this by
+	using <lit>series</lit> as an <quote>alias</quote> for the
+	<lit>genr</lit> command.  For example, <lit>series x = 0</lit> produces
+	a series all of whose values are set to 0.  You can also use
+	<lit>scalar</lit> as an alias for <lit>genr</lit>.  It is not possible
+	to coerce a vector result into a scalar, but use of this keyword 
+	indicates that the result <emphasis>should be</emphasis> a scalar: if it
+	is not, an error occurs.
+      </para>
+
+      <para>
+	When a formula yields a series or vector result, the range over which
+	the result is written to the target variable depends on the current
+	sample setting.  It is possible, therefore, to define a series piecewise
+	using the <lit>smpl</lit> command in conjunction with <lit>genr</lit>.
       </para>
 
       <para>
@@ -1705,127 +1744,172 @@
       </para>
 
       <para>
-	The available <emphasis>Boolean operators</emphasis> are
-	(again, in order of precedence): <lit>!</lit> (negation),
-	<lit>&amp;</lit> (logical AND), <lit>|</lit> (logical OR),
-	<lit>&gt;</lit>, <lit>&lt;</lit>, <lit>=</lit>,
-	<lit>&gt;=</lit> (greater than or equal), <lit>&lt;=</lit>
-	(less than or equal) and <lit>!=</lit> (not equal).  The
-	Boolean operators can be used in constructing dummy variables:
-	for instance <lit>(x > 10)</lit> returns 1 if <lit>x</lit>
-	&gt; 10, 0 otherwise.</para>
+	The available <emphasis>Boolean operators</emphasis> are (again, in
+	order of precedence): <lit>!</lit> (negation), <lit>&amp;</lit> (logical
+	AND), <lit>|</lit> (logical OR), <lit>&gt;</lit>, <lit>&lt;</lit>,
+	<lit>=</lit>, <lit>&gt;=</lit> (greater than or equal), <lit>&lt;=</lit>
+	(less than or equal) and <lit>!=</lit> (not equal).  The Boolean
+	operators can be used in constructing dummy variables: for instance
+	<lit>(x > 10)</lit> returns 1 if <lit>x</lit> &gt; 10, 0
+	otherwise.
+      </para>
+
+      <para>Built-in constants are <lit>pi</lit> and <lit>NA</lit>.  The latter
+	is the missing value code: you can initialize a variable to the missing
+	value with <lit>scalar x = NA</lit>.
+      </para>
 
       <para>Supported <emphasis>functions</emphasis> fall into these
 	groups:
       </para>
 
       <ilist>
-	<li><para>Standard math functions: <func>abs</func>,
-	    <func>cos</func>, <func>exp</func>, <func>int</func>
-	    (integer part), <func>ln</func> (natural log:
-	    <func>log</func> is a synonym), <func>sin</func>,
-	    <func>sqrt</func>.</para>
-	</li>
-	<li><para>Statistical functions: <func>max</func> (maximum
-	    value in a series), <func>min</func> (minimum),
-	    <func>mean</func> (arithmetic mean), <func>median</func>,
-	    <func>var</func> (variance) <func>sd</func> (standard
-	    deviation), <func>sst</func> (sum of squared deviations
-	    from the mean), <func>sum</func>, <func>cov</func>
-	    (covariance), <func>corr</func> (correlation coefficient),
-	    <func>pvalue</func>, <func>sort</func>, <func>cum</func>
-	    (cumulate, or running sum), <func>cnorm</func> (standard
-	    normal CDF), <func>dnorm</func> (standard normal PDF),
-	    <func>resample</func> (resample a series with replacement,
-	    for bootstrap purposes), <func>hpfilt</func>
-	    (Hodrick&ndash;Prescott filter: this function returns the
-	    <quote>cycle</quote> component of the series),
-	    <func>bkfilt</func> (Baxter&ndash;King bandpass
-	    filter).</para>
-	</li>
-	<li><para>Time-series functions: <func>diff</func> (first
-	    difference), <func>ldiff</func> (log-difference, or first
-	    difference of natural logs), <func>fracdiff</func>
-	    (fractional difference).  To generate lags of a variable
-	    <lit>x</lit>, use the syntax <cmd>x(-N)</cmd>, where
-	    <lit>N</lit> represents the desired lag length; to
-	    generate leads, use <cmd>x(+N)</cmd>.</para>
-	</li>
-	<li><para>Dataset functions: <func>misszero</func> (replace
-	    the missing observation code in a given series with
-	    zeros); <func>zeromiss</func> (the inverse operation to
-	    <func>misszero</func>); <func>nobs</func> (return the
-	    number of valid observations in a given data series);
-	    <func>missing</func> (at each observation, 1 if the
-	    argument has a missing value, 0 otherwise);
-	    <func>ok</func> (the opposite of <func>missing</func>).
+	<li>
+	  <para>Standard mathematical functions: <func>abs</func>,
+	    <func>cos</func>, <func>exp</func>, <func>int</func> (integer part),
+	    <func>ln</func> (natural logarithm: <func>log</func> is a synonym),
+	    <func>sin</func>, <func>sqrt</func>.  All of these take a single
+	    argument, which may be either a series or a scalar.
 	  </para>
 	</li>
-	<li><para>Pseudo-random numbers: <func>uniform</func>,
-	    <func>normal</func>.</para>
+
+	<li>
+	  <para>
+	    Standard statistical functions taking a single argument and yielding
+	    a scalar result: <func>max</func> (maximum value in a series),
+	    <func>min</func> (minimum value in series), <func>mean</func>
+	    (arithmetic mean), <func>median</func>, <func>var</func> (variance),
+	    <func>sd</func> (standard deviation), <func>sst</func> (sum of
+	    squared deviations from the mean), <func>sum</func>.
+	  </para>
+	</li>
+
+	<li>
+	  <para>
+	    Statistical functions taking one series as argument and yielding a
+	    series or vector result: <func>sort</func> (sort a series is
+	    ascending order of magnitude), <func>cum</func> (cumulate, or
+	    running sum).
+	  </para>
+	</li>
+
+	<li>
+	  <para>
+	    Statistical functions taking two series as arguments and yielding a
+	    scalar result: <func>cov</func> (covariance), <func>corr</func>
+	    (correlation coefficient).
+	  </para>
+	</li>
+	
+	<li><para>Special statistical functions: <func>pvalue</func> (see
+	    below), <func>cnorm</func> (standard normal CDF), <func>dnorm</func>
+	    (standard normal PDF), <func>resample</func> (resample a series with
+	    replacement, for bootstrap purposes), <func>hpfilt</func>
+	    (Hodrick&ndash;Prescott filter: this function returns the
+	    <quote>cycle</quote> component of the series), <func>bkfilt</func>
+	    (Baxter&ndash;King bandpass filter).
+	  </para>
+	</li>
+
+	<li>
+	  <para>
+	    Time-series functions: <func>diff</func> (first difference),
+	    <func>ldiff</func> (log-difference, or first difference of natural
+	    logs), <func>fracdiff</func> (fractional difference).  To generate
+	    lags of a variable <lit>x</lit>, use the syntax <cmd>x(-N)</cmd>,
+	    where <lit>N</lit> represents the desired lag length; to generate
+	    leads, use <cmd>x(+N)</cmd>.
+	  </para>
+	</li>
+
+	<li>
+	  <para>
+	    Dataset functions yielding a series: <func>misszero</func> (replaces
+	    the missing observation code in a given series with zeros);
+	    <func>zeromiss</func> (the inverse operation to
+	    <func>misszero</func>); <func>missing</func> (at each observation, 1
+	    if the argument has a missing value, 0 otherwise); <func>ok</func>
+	    (the opposite of <func>missing</func>).
+	  </para>
+	</li>
+
+	<li>
+	  <para>
+	    Dataset functions yielding a scalar: <func>nobs</func> (gives the
+	    number of valid observations in a data series),
+	    <func>firstobs</func> (gives the 1-based observation number of the
+	    first non-missing value in a series), <func>lastobs</func>
+	    (observation number of the last non-missing observation in a
+	    series).
+	  </para>
+	</li>
+
+	<li><para>
+	    Pseudo-random numbers: <func>uniform</func> and <func>normal</func>.
+	    These functions do not take an argument and should be written with
+	    empty parentheses: <lit>uniform()</lit>, <lit>normal()</lit>.  They
+	    create pseudo-random series drawn from the uniform (0&ndash;1) and
+	    standard normal distributions respectively.  See also the <cmdref
+	      targ="set"/> command,
+	    <lit>seed</lit> option.  Uniform series are generated using the
+	    Mersenne Twister;<footnote><para>See Matsumoto and Nishimura (1998).
+		The implementation is provided by <program>glib</program>, if
+		available, or by the C code written by Nishimura and
+		Matsumoto.</para></footnote> for normal series the method of Box
+	    and Muller (1958) is used, taking input from the Mersenne Twister.
+	  </para>
 	</li>
       </ilist> 
 
       <para>
-	All of the above functions with the exception of
-	<func>cov</func>, <func>corr</func>, <func>pvalue</func>,
-	<func>fracdiff</func>, <func>uniform</func> and
-	<func>normal</func> take as their single argument either the
-	name of a variable (note that you can't refer to variables by
-	their ID numbers in a <cmd>genr</cmd> formula) or an
-	expression that evaluates to a variable (e.g.
-	<lit>ln((x1+x2)/2)</lit>). <func>cov</func> and
-	<func>corr</func> both require two arguments, and return
-	respectively the covariance and the correlation coefficient
-	between the arguments. The <func>pvalue</func> function takes
-	the same arguments as the <cmdref targ="pvalue"/> command, but
-	in this context commas should be placed between the arguments.
-	This function returns a one-tailed p-value, and in the case of
-	the normal and <emphasis>t</emphasis> distributions, it is for
-	the <quote>short tail</quote>.  With the normal, for example,
-	both 1.96 and -1.96 will give a result of around 0.025. The
-	<func>fracdiff</func> takes two arguments: the name of the
-	series and a fraction, in the range &minus;1 to 1.
-	</para>
+	All of the above functions with the exception of <func>cov</func>,
+	<func>corr</func>, <func>pvalue</func>, <func>fracdiff</func>,
+	<func>uniform</func> and <func>normal</func> take as their single
+	argument either the name of a variable or an expression that evaluates
+	to a variable (e.g. <lit>ln((x1+x2)/2)</lit>). The <func>pvalue</func>
+	function takes the same arguments as the <cmdref targ="pvalue"/>
+	command, but in this context commas should be placed between the
+	arguments. This function returns a one-tailed p-value, and in the case
+	of the normal and <emphasis>t</emphasis> distributions, it is for the
+	<quote>short tail</quote>.  With the normal, for example, both 1.96 and
+	&minus;1.96 will give a result of around 0.025. The
+	<func>fracdiff</func> takes two arguments: the name of the series and a
+	fraction, in the range &minus;1 to 1.
+      </para>
 
-      <para>
-	<func>uniform()</func> and <func>normal()</func>, which do not
-	take arguments, return pseudo-random series drawn from the
-	uniform (0&ndash;1) and standard normal distributions
-	respectively (see also the
-	<cmdref targ="set"/> command, <lit>seed</lit> option).
-	Uniform series are generated using the Mersenne
-	Twister;<footnote><para>See Matsumoto and
-	    Nishimura (1998).  The implementation is provided by
-	    <program>glib</program>, if available, or by the C code
-	    written by Nishimura and Matsumoto.</para></footnote> for
-	normal series the method of Box and Muller (1958) is used,
-	taking input from the Mersenne Twister.</para>
-
-      <para>Besides the operators and functions just noted there are
+      <para>Besides the operators and functions noted above there are
 	some special uses of <cmd>genr</cmd>:
       </para>
 
       <ilist>
-	<li><para><cmd>genr time</cmd> creates a time trend variable
-	    (1,2,3,&hellip;) called <cmd>time</cmd>. <cmd>genr
-	      index</cmd> does the same thing except that the variable
-	    is called <lit>index</lit>.</para>
+	<li>
+	  <para>
+	    <cmd>genr time</cmd> creates a time trend variable (1,2,3,&hellip;)
+	    called <cmd>time</cmd>. <cmd>genr index</cmd> does the same thing
+	    except that the variable is called <lit>index</lit>.
+	  </para>
 	</li>
-	<li><para><cmd>genr dummy</cmd> creates dummy variables up to
-	    the periodicity of the data.  E.g. in the case of
-	    quarterly data (periodicity 4), the program creates
-	    <lit>dummy_1</lit> = 1 for first quarter and 0 in other
-	    quarters, <lit>dummy_2</lit> = 1 for the second quarter
-	    and 0 in other quarters, and so on.</para>
+	<li>
+	  <para>
+	    <cmd>genr dummy</cmd> creates dummy variables up to the periodicity
+	    of the data.  E.g. in the case of quarterly data (periodicity 4),
+	    the program creates <lit>dummy_1</lit> = 1 for first quarter and 0
+	    in other quarters, <lit>dummy_2</lit> = 1 for the second quarter and
+	    0 in other quarters, and so on.
+	  </para>
 	</li>
-	<li><para><cmd>genr paneldum</cmd> creates a set of special
-	    dummy variables for use with a panel data set &mdash; see
-	    <cmdref targ="panel"/>.</para>
+	<li>
+	  <para>
+	    <cmd>genr paneldum</cmd> creates a set of special dummy variables
+	    for use with a panel data set &mdash; see
+	    <cmdref targ="panel"/>.
+	  </para>
 	</li>
-	<li><para>Various internal variables defined in the course of
-	    running a regression can be retrieved using
-	    <cmd>genr</cmd>, as follows:</para>
+	<li>
+	  <para>
+	    Various internal variables defined in the course of running a
+	    regression can be retrieved using <cmd>genr</cmd>, as follows:
+	  </para>
 
 	  <table lwidth="100pt" rwidth="300pt">
 	    <row> 
@@ -1883,7 +1967,7 @@
 	    </row> 
 	    <row>
 	      <cell>vcv(<repl>x1</repl>,<repl>x2</repl>)</cell>
-	      <cell>covariance between coefficients for named
+	      <cell>estimated covariance between coefficients for the named
 		variables <repl>x1</repl> and <repl>x2</repl> 
 	      </cell> 
 	    </row>
@@ -1893,80 +1977,80 @@
       </ilist> 
 
       <para>
-	<emphasis>Note</emphasis>: In the command-line program,
-	<cmd>genr</cmd> commands that retrieve model-related data
-	always reference the model that was estimated most recently.
-	This is also true in the GUI program, if one uses
-	<cmd>genr</cmd> in the <quote>gretl console</quote> or enters
-	a formula using the <quote>Define new variable</quote> option
-	under the Variable menu in the main window.  With the GUI,
-	however, you have the option of retrieving data from any model
-	currently displayed in a window (whether or not it's the most
-	recent model).  You do this under the <quote>Model
-	  data</quote> menu in the model's window.</para>
+	<emphasis>Note</emphasis>: In the command-line program, <cmd>genr</cmd>
+	commands that retrieve model-related data always reference the model
+	that was estimated most recently. This is also true in the GUI program,
+	if one uses <cmd>genr</cmd> in the <quote>gretl console</quote> or
+	enters a formula using the <quote>Define new variable</quote> option
+	under the Variable menu in the main window.  With the GUI, however, you
+	have the option of retrieving data from any model currently displayed in
+	a window (whether or not it's the most recent model).  You do this under
+	the <quote>Model data</quote> menu in the model's window.
+      </para>
 
-      <para>The internal series <lit>uhat</lit> and <lit>yhat</lit>
-	hold, respectively, the residuals and fitted values from the
-	last regression.</para>
+      <para>The internal series <lit>$uhat</lit> and <lit>$yhat</lit> hold,
+	respectively, the residuals and fitted values from the last regression.
+      </para>
 
       <para>
 	Three <quote>internal</quote> dataset variables are available:
-	<lit>$nobs</lit> holds the number of observations in the
-	current sample range (which may or may not equal the value of
-	<lit>$T</lit>, the number of observations used in estimating
-	the last model); <lit>$nvars</lit> holds the number of
-	variables in the dataset (including the constant); and
-	<lit>$pd</lit> holds the frequency or periodicity of the data
-	(e.g. 4 for quarterly data).</para>
-
-      <para>Two special internal scalars, <lit>$test</lit> and
-	<lit>$pvalue</lit>, hold respectively the value and the
-	p-value of the test statistic that was generated by the last
-	explicit hypothesis-testing command, if any (e.g.
-	<lit>chow</lit>).  Please see <manref targ="chap-genr"/> for
-	details on this.
+	<lit>$nobs</lit> holds the number of observations in the current sample
+	range (which may or may not equal the value of <lit>$T</lit>, the number
+	of observations used in estimating the last model); <lit>$nvars</lit>
+	holds the number of variables in the dataset (including the constant);
+	and <lit>$pd</lit> holds the frequency or periodicity of the data (e.g.
+	4 for quarterly data).
       </para>
 
-      <para>The variable <lit>t</lit> serves as an index of the
-	observations. For instance <lit>genr dum = (t=15)</lit>
-	will generate a dummy variable that has value 1 for
-	observation 15, 0 otherwise.  The variable <lit>obs</lit> is
-	similar but more flexible: you can use this to pick out
-	particular observations by date or name.  For example,
-	<lit>genr d = (obs&gt;1986:4)</lit> or <lit>genr d =
-	  (obs="CA")</lit>. The last form presumes that the
-	observations are labeled; the label must be put in double
-	quotes.</para>
-
-      <para>Scalar values can be pulled from a series in the context
-	of a <lit>genr</lit> formula, using the syntax
-	<repl>varname</repl><lit>[</lit><repl>obs</repl><lit>]</lit>.
-	The <repl>obs</repl> value can be given by number or date.
-	Examples: <lit>x[5]</lit>, <lit>CPI[1996:01]</lit>.  For daily
-	data, the form <repl>YYYY/MM/DD</repl> should be used, e.g.
-	<lit>ibm[1970/01/23]</lit>.
+      <para>
+	Two special internal scalars, <lit>$test</lit> and <lit>$pvalue</lit>,
+	hold respectively the value and the p-value of the test statistic that
+	was generated by the last explicit hypothesis-testing command, if any
+	(e.g. <lit>chow</lit>).  Please see
+	<manref targ="chap-genr"/> for details on this.
       </para>
 
-      <para>An individual observation in a series can be modified via
-	<lit>genr</lit>.  To do this, a valid observation number or
-	date, in square brackets, must be appended to the name of the
-	variable on the left-hand side of the formula.  For example,
-	<lit>genr x[3] = 30</lit> or <lit>genr x[1950:04] =
-	  303.7</lit>.
+      <para>
+	The variable <lit>t</lit> serves as an index of the observations. For
+	instance <lit>genr dum = (t=15)</lit> will generate a dummy variable
+	that has value 1 for observation 15, 0 otherwise.  The variable
+	<lit>obs</lit> is similar but more flexible: you can use this to pick
+	out particular observations by date or name.  For example, <lit>genr d =
+	  (obs&gt;1986:4)</lit> or <lit>genr d = (obs="CA")</lit>. The last form
+	presumes that the observations are labeled; the label must be put in
+	double quotes.
+      </para>
+
+      <para>
+	Scalar values can be pulled from a series in the context of a
+	<lit>genr</lit> formula, using the syntax
+	<repl>varname</repl><lit>[</lit><repl>obs</repl><lit>]</lit>. The
+	<repl>obs</repl> value can be given by number or date. Examples:
+	<lit>x[5]</lit>, <lit>CPI[1996:01]</lit>.  For daily data, the form
+	<repl>YYYY/MM/DD</repl> should be used, e.g. <lit>ibm[1970/01/23]</lit>.
+      </para>
+
+      <para>
+	An individual observation in a series can be modified via
+	<lit>genr</lit>.  To do this, a valid observation number or date, in
+	square brackets, must be appended to the name of the variable on the
+	left-hand side of the formula.  For example, <lit>genr x[3] = 30</lit>
+	or <lit>genr x[1950:04] = 303.7</lit>.
       </para>
 
       <para>
 	<tabref targ="tab-genr"/> gives several examples of uses of
-	<cmd>genr</cmd> with explanatory notes; here are a
-	couple of tips on dummy variables:
+	<cmd>genr</cmd> with explanatory notes; here are a couple of tips on
+	dummy variables:
       </para>
 
       <ilist>
-	<li><para>Suppose <lit>x</lit> is coded with values 1, 2, or 3
-	    and you want three dummy variables, <lit>d1</lit> = 1 if
-	    <lit>x</lit> = 1, 0 otherwise, <lit>d2</lit> = 1 if
-	    <lit>x</lit> = 2, and so on.  To create these, use the
-	    commands:</para>
+	<li><para>
+	    Suppose <lit>x</lit> is coded with values 1, 2, or 3 and you want
+	    three dummy variables, <lit>d1</lit> = 1 if <lit>x</lit> = 1, 0
+	    otherwise, <lit>d2</lit> = 1 if <lit>x</lit> = 2, and so on.  To
+	    create these, use the commands:
+	  </para>
 
 	  <code>
 	    genr d1 = (x=1)
@@ -2003,7 +2087,7 @@
 	  <cell><lit>x</lit> lagged 2 periods</cell>
 	</row>     
 	<row>
-	  <cell><lit>y = x(2)</lit></cell>
+	  <cell><lit>y = x(+2)</lit></cell>
 	  <cell><lit>x</lit> led 2 periods</cell>
 	</row>
 	<row>
@@ -2078,7 +2162,7 @@
 	    3</cell>
 	</row>
 	<row>
-	  <cell><lit>samp = !missing(x)</lit></cell>
+	  <cell><lit>samp = ok(x)</lit></cell>
 	  <cell>= 1 for observations where <lit>x</lit> is not
 	    missing.</cell>
 	</row>
@@ -3166,15 +3250,14 @@
 
     <description>
       <para>
-	Binomial logit regression. The dependent variable should be a
-	binary variable.  Maximum likelihood estimates of the
-	coefficients on <repl>indepvars</repl> are obtained via the EM
-	or Expectation&ndash;Maximization method (see Ruud, 2000,
-	Chapter 27).  As the model is nonlinear the slopes depend on
-	the values of the independent variables: the reported slopes
-	are evaluated at the means of those variables. The chi-square
-	statistic tests the null hypothesis that all coefficients are
-	zero apart from the constant.
+	Binomial logit regression. The dependent variable should be a binary
+	variable.  Maximum likelihood estimates of the coefficients on
+	<repl>indepvars</repl> are obtained via the <quote>binary response model
+	  regression</quote> (BRMR) method outlined by Davidson and MacKinnon
+	(2004). As the model is nonlinear the slopes depend on the values of the
+	independent variables: the reported slopes are evaluated at the means of
+	those variables. The chi-square statistic tests the null hypothesis that
+	all coefficients are zero apart from the constant.
       </para>
 
       <para>
@@ -3893,9 +3976,14 @@
 	  <flag>--quiet</flag>
 	  <effect>don't print estimates for reduced model</effect>
 	</option>
+	<option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
+	</option>
       </options>
       <examples>
         <example>omit 5 7 9</example>
+        <example>omit seasonals --quiet</example>
       </examples>
     </usage>
 
@@ -3915,7 +4003,10 @@
 	omitted variables, otherwise the estimates for the reduced
 	model are also printed.  In the latter case, the
 	<lit>--vcv</lit> flag causes the covariance matrix for the
-	coefficients to be printed also.
+	coefficients to be printed also.  If the <lit>--silent</lit>
+	option is given, nothing is printed; nontheless, the results
+	of the test can be retrieved using the special variables
+        <lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
     </description>
 

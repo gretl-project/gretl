@@ -163,13 +163,19 @@
 
     <para>
       Note that the <literal>return</literal> statement does
-      <emphasis>not</emphasis> cause the function to return (exit) at
-      the point where it appears within the body of the function.
-      Rather, it specifies which variables are available for
-      assignment when the function exits, and a function exits only
-      when (a) the end of the function code is reached, or (b) a
-      <literal>funcerr</literal> statement is reached, or (c) a gretl
-      error occurs.
+      <emphasis>not</emphasis> cause the function to return (exit) at the point
+      where it appears within the body of the function. Rather, it specifies
+      which variables are available for assignment when the function exits, and
+      a function exits only when (a) the end of the function code is reached, or
+      (b) a <literal>funcerr</literal> statement is reached (see below), or (c)
+      a gretl error occurs.
+    </para>
+
+    <para>
+      The <literal>funcerr</literal> keyword, which may be followed by
+      a string enclosed in double quotes, causes a function to exit with
+      an error flagged.  If a string is provided, this is printed on exit
+      otherwise a generic error message is printed.  
     </para>
 
   </sect1>

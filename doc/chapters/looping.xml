@@ -95,7 +95,7 @@
 
       <para>Execution of the commands within the loop will continue so
 	long as the specified condition evaluates as true. If
-	right-hand term of the inequality is a variable, it is
+	the right-hand term of the inequality is a variable, it is
 	evaluated at the top of the loop at each iteration.</para>
 
     </sect2>

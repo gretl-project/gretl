@@ -590,23 +590,6 @@ int auto_lag_ok (const char *s, int *lnum,
     return ok;
 } 
 
-gretlopt get_xpx_opt (const char *s)
-{
-    gretlopt opt = OPT_NONE;
-    int xpx;
-
-    s = strchr(s, ',');
-    if (s != NULL && *(s+1) != 0) {
-	s++;
-	while (isspace((unsigned char) *s)) s++;
-	if (*s != 0 && sscanf(s, "%d", &xpx) == 1 && xpx > 0) {
-	    opt = OPT_O;
-	}
-    }
-
-    return opt;
-}
-
 int auto_transform_ok (const char *s, int *lnum,
 		       double ***pZ, DATAINFO *pdinfo,
 		       CMD *cmd)
@@ -628,6 +611,11 @@ int auto_transform_ok (const char *s, int *lnum,
 	char *lname;
 	int *gotlist;
 
+	if (!strcmp(fword, "cross")) {
+	    strcpy(fword, "square");
+	    opt = OPT_O;
+	}
+
 	for (i=0; trans_words[i] != NULL; i++) {
 	    if (!strcmp(fword, trans_words[i])) {
 		trans = i;
@@ -644,9 +632,6 @@ int auto_transform_ok (const char *s, int *lnum,
 		    genlist = gretl_list_copy(gotlist);
 		}
 		free(lname);
-		if (!strcmp(fword, "square")) {
-		    opt = get_xpx_opt(s);
-		}
 	    }
 	}
     }

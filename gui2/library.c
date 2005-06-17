@@ -3558,7 +3558,7 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
     } else if (action == LOGS) {
 	err = list_loggenr(cmd.list, &Z, datainfo);
     } else if (action == SQUARE) {
-	err = list_xpxgenr(cmd.list, &Z, datainfo, OPT_NONE);
+	err = list_xpxgenr(&cmd.list, &Z, datainfo, OPT_NONE);
     } else if (action == DIFF) {
 	err = list_diffgenr(cmd.list, &Z, datainfo);
     } else if (action == LDIFF) {
