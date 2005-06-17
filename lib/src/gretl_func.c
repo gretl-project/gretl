@@ -214,15 +214,12 @@ static int on_returns_list (const char *vname, char **returns, int n_returns)
 static void copy_values_to_assignee (int targ, int src, double **Z, 
 				     const DATAINFO *pdinfo)
 {
-    int t, n = (pdinfo->vector[targ])? pdinfo->n: 1;
+    int t, n = (pdinfo->vector[targ])? pdinfo->n : 1;
 
     for (t=0; t<n; t++) {
 	Z[targ][t] = Z[src][t];
     }
 }
-
-extern int level_varindex (const DATAINFO *pdinfo, const char *varname, 
-			   int level);
 
 static int 
 destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo, 
@@ -363,12 +360,14 @@ static int function_is_on_stack (ufunc *func)
 {
     int i;
 
-    for (i=0; i<CALLSTACK_DEPTH; i++) {
-	if (callstack[i] == NULL) {
-	    break;
-	}
-	if ((callstack[i])->fun == func) {
-	    return 1;
+    if (callstack != NULL) {
+	for (i=0; i<CALLSTACK_DEPTH; i++) {
+	    if (callstack[i] == NULL) {
+		break;
+	    }
+	    if ((callstack[i])->fun == func) {
+		return 1;
+	    }
 	}
     }
 
@@ -418,6 +417,7 @@ static fncall *fncall_new (ufunc *fun, int argc, char **argv,
     if (call == NULL) {
 	free_strings_array(argv, argc);
 	free_strings_array(assv, asslist[0]);
+	free(asslist);
 	return NULL;
     }
 
@@ -545,7 +545,7 @@ int gretl_is_user_function (const char *line)
     if (n_ufuns > 0 && !string_is_blank(line)) {
 	char name[FN_NAMELEN];
 
-#if FN_DEBUG
+#if FN_DEBUG > 1
 	fprintf(stderr, "gretl_is_user_function: testing '%s'\n", line);
 #endif
 	function_name_from_line(line, name);
@@ -851,7 +851,7 @@ static int parse_fn_element (char *s, char **parmv, char *ptype, int i,
     if (ptype[i] == 0) {
 	sprintf(gretl_errmsg, "Unrecognized data type '%s'", tstr);
 	err = E_PARSE;
-    }
+    } /* FIXME can't return list */
 
     if (!err) {
 	s += len;
@@ -1174,7 +1174,8 @@ static int check_and_allocate_function_args (ufunc *fun,
 		if (v < pdinfo->v && !pdinfo->vector[v]) {
 		    err = dataset_copy_variable_as(v, fun->params[i], pZ, pdinfo);
 		} else {
-		    sprintf(gretl_errmsg, "argument %d (%s): not a scalar", i, argv[i]);
+		    sprintf(gretl_errmsg, "argument %d (%s): not a scalar", i+1, argv[i]);
+		    err = 1;
 		} 
 	    }
 	} else if (fun->ptype[i] == ARG_SERIES) {
@@ -1186,13 +1187,15 @@ static int check_and_allocate_function_args (ufunc *fun,
 	    if (v < pdinfo->v && pdinfo->vector[v]) {
 		err = dataset_copy_variable_as(v, fun->params[i], pZ, pdinfo);
 	    } else {
-		sprintf(gretl_errmsg, "argument %d (%s): not a series", i, argv[i]);
+		sprintf(gretl_errmsg, "argument %d (%s): not a series", i+1, argv[i]);
+		err = 1;
 	    } 
 	} else if (fun->ptype[i] == ARG_LIST) {
 	    if (get_list_by_name(argv[i]) != NULL) {
 		err = copy_named_list_as(argv[i], fun->params[i]);
 	    } else {
-		sprintf(gretl_errmsg, "argument %d (%s): not a list", i, argv[i]);
+		sprintf(gretl_errmsg, "argument %d (%s): not a list", i+1, argv[i]);
+		err = 1;
 	    }
 	} else {
 	    /* impossible */
@@ -1286,7 +1289,6 @@ int gretl_function_start_exec (const char *line, double ***pZ,
     } 
 
     err = push_fncall(call, pdinfo);
-
     if (err) {
 	free_fncall(call);
     }
