@@ -39,6 +39,7 @@ struct GRETL_VAR_ {
     gretl_matrix *A;   /* augmented coefficient matrix */
     gretl_matrix *E;   /* residuals matrix */
     gretl_matrix *C;   /* augmented Cholesky-decomposed error matrix */
+    gretl_matrix *F;   /* optional forecast matrix */
     MODEL **models;    /* pointers to individual equation estimates */
     double *Fvals;     /* hold results of F-tests */
     char *name;        /* for use in session management */
@@ -96,6 +97,7 @@ gretl_var_init (GRETL_VAR *var, int neqns, int order, const DATAINFO *pdinfo,
     var->A = NULL;
     var->E = NULL;
     var->C = NULL;
+    var->F = NULL;
     var->models = NULL;
     var->Fvals = NULL;
     var->name = NULL;
@@ -165,6 +167,7 @@ void gretl_var_free (GRETL_VAR *var)
     gretl_matrix_free(var->A);
     gretl_matrix_free(var->E);
     gretl_matrix_free(var->C);
+    gretl_matrix_free(var->F);
 
     free(var->Fvals);
     free(var->name);
@@ -205,22 +208,26 @@ GRETL_VAR *gretl_var_new (int neqns, int order, const DATAINFO *pdinfo,
     return var;
 }
 
-/* FIXME below: needs checking in various ways */
-
-gretl_matrix *
-gretl_var_forecast (GRETL_VAR *var, int t1, int t2,
-		    const double **Z, const DATAINFO *pdinfo)
+static int
+gretl_var_add_forecast (GRETL_VAR *var, int nf, const double **Z, 
+			const DATAINFO *pdinfo)
 {
     const MODEL *pmod;
     gretl_matrix *F;
-    int ns, nf = t2 - t1 + 1;
     double fti, xti;
     int i, j, k, s, t;
-    int lag, vj, m;
+    int ns, lag, vj, m;
+    int ft1;
+
+    pmod = var->models[0];
+    ft1 = pmod->t2 + 1;
+    if (nf > pdinfo->n - ft1) {
+	return E_DATA;
+    }    
 
     F = gretl_matrix_alloc(nf, var->neqns);
     if (F == NULL) {
-	return NULL;
+	return E_ALLOC;
     }
 
     gretl_matrix_zero(F);
@@ -230,7 +237,7 @@ gretl_var_forecast (GRETL_VAR *var, int t1, int t2,
     for (s=0; s<nf; s++) {
 	int miss = 0;
 
-	t = s + t1;
+	t = s + ft1;
 	for (i=0; i<var->neqns; i++) {
 	    pmod = var->models[i];
 	    fti = 0.0;
@@ -274,10 +281,34 @@ gretl_var_forecast (GRETL_VAR *var, int t1, int t2,
 	}
     }
 
-    return F;
+#if 0
+    gretl_matrix_print(F, "var->F", NULL);
+#endif
+
+    var->F = F;
+
+    return 0;
 }
 
-/* ......................................................  */
+const gretl_matrix *
+gretl_var_get_forecast_matrix (GRETL_VAR *var, int nf, const double **Z, 
+			       const DATAINFO *pdinfo)
+{
+    if (var->F != NULL) {
+	if (nf == gretl_matrix_rows(var->F)) {
+	    ; /* fine */
+	} else {
+	    gretl_matrix_free(var->F);
+	    var->F = NULL;
+	}
+    }
+
+    if (var->F == NULL) {
+	gretl_var_add_forecast(var, nf, Z, pdinfo);
+    }
+
+    return var->F;
+}
 
 static int gretl_var_do_error_decomp (GRETL_VAR *var)
 {
@@ -364,6 +395,15 @@ int gretl_var_get_t1 (const GRETL_VAR *var)
 int gretl_var_get_t2 (const GRETL_VAR *var)
 {
     return var->models[0]->t2;
+}
+
+const MODEL *gretl_var_get_model (const GRETL_VAR *var, int i)
+{
+    if (i < var->neqns) {
+	return var->models[i];
+    } else {
+	return NULL;
+    }
 }
 
 /* ......................................................  */

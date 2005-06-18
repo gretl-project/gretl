@@ -2901,42 +2901,53 @@ static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
     }
 }
 
-static void var_forecast_call (gpointer p, guint u, GtkWidget *w)
+static void var_forecast_callback (gpointer p, guint i, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-    gretl_matrix *F;
-    gchar *title;
-    int t1, vt2, nf, err;
+    FITRESID *fr;
+    int t1, t2, vt2, nf, resp;
+    int premax, pre_n;
 
     vt2 = gretl_var_get_t2(var);
 
     t1 = vt2 + 1;
-    nf = datainfo->n - vt2 - 1;
+    t2 = datainfo->n - 1;
+    
+    premax = vt2;
+    pre_n = premax / 2;
 
-    title = g_strdup_printf("gretl: %s", _("VAR forecasts"));
-    /* FIXME: use the right dialog here */
-    err = spin_dialog(title, &nf, _("forecast horizon (periods):"),
-		      1, nf, 0);
-    g_free(title);
-
-    if (err < 0) {
+    resp = forecast_dialog(t1, t1, &t1,
+			   t1, t2, &t2,
+			   0, premax, &pre_n,
+			   1);
+    if (resp < 0) {
 	return;
     }
 
-    F = gretl_var_forecast(var, t1, t1 + nf, (const double **) Z, datainfo);
+    nf = t2 - t1 + 1;
 
-    if (F == NULL) {
+    fr = get_VAR_forecast(var, i, nf, pre_n, (const double **) Z, 
+			  datainfo, OPT_NONE);
+
+    if (fr == NULL) {
 	errbox("Forecast failed");
     } else {
+	int err, width = 78;
 	PRN *prn;
 
-	if (bufopen(&prn) == 0) {
-	    /* FIXME: have to format this properly */
-	    gretl_matrix_print(F, "forecast matrix", prn);
-	    view_buffer(prn, 78, 450, NULL, PRINT, NULL);
+	if (bufopen(&prn)) {
+	    return;
 	}
-	gretl_matrix_free(F);
+
+	err = text_print_forecast(fr, &Z, datainfo, OPT_P, prn);
+	if (!err) {
+	    register_graph();
+	}
+	if (fr->sderr == NULL) {
+	    width = 50;
+	}
+	view_buffer(prn, width, 400, _("gretl: forecasts"), FCASTERR, fr);
     }
 }
 
@@ -2945,6 +2956,7 @@ static void add_var_menu_items (windata_t *vwin)
     int i, j;
     GtkItemFactoryEntry varitem;
     const gchar *gpath = N_("/Graphs");
+    const gchar *fpath = N_("/Model data/Forecasts");
     const gchar *dpath = N_("/Model data/Add to data set");
     GRETL_VAR *var = vwin->data;
     int neqns = gretl_var_get_n_equations(var);
@@ -2962,27 +2974,31 @@ static void add_var_menu_items (windata_t *vwin)
     g_free(varitem.path);
 
     if (t2 < datainfo->n - 1) {
-	/* if we have any out-of-sample data points, offer 
-	   a forecast */
-	varitem.path = g_strdup(_("/_Model data"));
-	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	g_free(varitem.path);
-
-	varitem.callback = var_forecast_call;
-	varitem.item_type = NULL;
-	varitem.path = g_strdup(_("/_Model data/Forecasts..."));
+	/* if we have any out-of-sample data points, offer forecasts */
+	varitem.path = g_strdup(_(fpath));
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	g_free(varitem.path);
     }
     
-    varitem.callback = NULL;
-    varitem.item_type = "<Branch>";
-    varitem.path = g_strdup(_("/_Model data/Add to data set"));
+    varitem.path = g_strdup(_(dpath));
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);
 
     for (i=0; i<neqns; i++) {
 	char maj[32], min[16];
+
+	/* forecast items */
+	if (t2 < datainfo->n - 1) {
+	    int dv = gretl_var_get_variable_number(var, i);
+
+	    varitem.path = g_strdup_printf("%s/%s", _(fpath), 
+					   datainfo->varname[dv]);
+	    varitem.callback = var_forecast_callback;
+	    varitem.callback_action = i;
+	    varitem.item_type = NULL;
+	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	    g_free(varitem.path);
+	}
 
 	/* save resids items */
 	varitem.path = g_strdup_printf("%s/%s %d", _(dpath), 

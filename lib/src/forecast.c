@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "forecast.h"
+#include "var.h"
 
 #ifdef max
 # undef max
@@ -1738,6 +1739,87 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
     }
 
     return t;
+}
+
+/**
+ * get_VAR_forecast:
+ * @var: the VAR system from which forecasts are wanted.
+ * @i: 0-based index for the variable to forecast, within
+ * the VAR system (the dependent variable in the ith equation,
+ * counting from 0).
+ * @nf: number of periods to forecast (starting in the first
+ * period after the VAR sample range).
+ * @pre_n: number of pre-forecast observations to display.
+ * @pZ: pointer to data array using which @pmod was estimated.
+ * @pdinfo: dataset information.
+ * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
+ * a static forecast.  By default, the forecast is static within
+ * the data range over which the model was estimated, and dynamic
+ * out of sample (in cases where a dynamic forecast is meaningful).
+ *
+ * Allocates a #FITRESID structure and fills it out with forecasts
+ * based on @var, over the specified range of observations.  
+ * 
+ * Returns: pointer to allocated structure, or %NULL on failure.
+ * The %err member of the returned object should be checked:
+ * a non-zero value indicates an error condition.
+ */
+
+FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int nf, int pre_n,
+			    const double **Z, DATAINFO *pdinfo,
+			    gretlopt opt)
+{
+    FITRESID *fr;
+    const gretl_matrix *F;
+    const MODEL *pmod;
+    int yno, nobs = nf + pre_n;
+    int s, t;
+
+    if (nf <= 0) {
+	return NULL;
+    }
+
+    pmod = gretl_var_get_model(var, i);
+    if (pmod == NULL) {
+	return NULL;
+    }
+
+    F = gretl_var_get_forecast_matrix(var, nf, Z, pdinfo);
+    if (F == NULL) {
+	return NULL;
+    }
+
+    fr = fit_resid_new(nobs);
+    if (fr == NULL) {
+	return NULL;
+    }
+
+    fr->model_ci = VAR;
+    fr->t1 = pmod->t2 + 1;
+    fr->t2 = pmod->t2 + nf;
+    fr->pre_n = pre_n;  
+
+    yno = pmod->list[1];
+    strcpy(fr->depvar, pdinfo->varname[yno]);
+
+    for (s=0; s<fr->nobs; s++) {
+	t = s + fr->t1 - fr->pre_n;
+	fr->actual[s] = Z[yno][t];
+	if (s < fr->pre_n) {
+	    fr->fitted[s] = pmod->yhat[t];
+	} else {
+	    fr->fitted[s] = gretl_matrix_get(F, s - pre_n, i);
+	}
+    }
+
+    fr->tval = tcrit95(pmod->dfd);
+    fit_resid_set_dec_places(fr);
+    strcpy(fr->depvar, pdinfo->varname[yno]);
+    fr->df = pmod->dfd;
+
+    fr->t1 -= pre_n;
+
+    return fr;
 }
 
 /**
