@@ -29,7 +29,8 @@
 #include "database.h"
 
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
-				  int spinmin, int spinmax);
+				  int spinmin, int spinmax,
+				  GtkObject **padj);
 static void set_radio_opt (GtkWidget *w, int *opt);
 
 void menu_exit_check (GtkWidget *w, gpointer data)
@@ -1264,7 +1265,9 @@ struct range_setting {
     gretlopt opt;
     GtkWidget *dlg;
     GtkWidget *obslabel;
+    GtkObject *adj1;
     GtkWidget *startspin;
+    GtkObject *adj2;
     GtkWidget *endspin;
     GtkWidget *combo;
     gpointer p;
@@ -1433,7 +1436,7 @@ gboolean update_obs_label (GtkEditable *entry, gpointer data)
     if (nobs > 0) {
 	sprintf(obstext, _("Observations: %d"), nobs);  
 	gtk_label_set_text(GTK_LABEL(rset->obslabel), obstext); 
-    }   
+    }
 
     return FALSE;
 }
@@ -1469,6 +1472,7 @@ static struct range_setting *rset_new (guint code, gpointer p,
 
     rset->dlg = gtk_dialog_new();
     rset->combo = NULL;
+    rset->adj1 = rset->adj2 = NULL;
     rset->startspin = rset->endspin = NULL;
     rset->obslabel = NULL;
 
@@ -1496,7 +1500,6 @@ obs_spinbox (struct range_setting *rset, const char *label,
     GtkWidget *lbl;
     GtkWidget *vbox;
     GtkWidget *hbox;
-    GtkObject *adj;
 
     if (label != NULL && align == SPIN_LABEL_ABOVE) {
 	lbl = gtk_label_new(label);
@@ -1518,8 +1521,8 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	lbl = gtk_label_new(t1str);
 	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
     }
-    adj = gtk_adjustment_new(*t1, t1min, t1max, 1, 1, 1);
-    rset->startspin = obs_button_new(GTK_ADJUSTMENT(adj), datainfo);
+    rset->adj1 = gtk_adjustment_new(*t1, t1min, t1max, 1, 1, 1);
+    rset->startspin = obs_button_new(GTK_ADJUSTMENT(rset->adj1), datainfo);
     gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
@@ -1530,8 +1533,8 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	    lbl = gtk_label_new(t2str);
 	    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
 	}
-	adj = gtk_adjustment_new(*t2, t2min, t2max, 1, 1, 1);
-	rset->endspin = obs_button_new(GTK_ADJUSTMENT(adj), datainfo);
+	rset->adj2 = gtk_adjustment_new(*t2, t2min, t2max, 1, 1, 1);
+	rset->endspin = obs_button_new(GTK_ADJUSTMENT(rset->adj2), datainfo);
 	gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
@@ -1718,10 +1721,27 @@ int get_obs_dialog (const char *title, const char *text,
     return ret;
 }
 
+static void sync_pre_forecast (GtkWidget *w, struct range_setting *rset)
+{
+    if (rset->p != NULL) {
+	int t1 = (int) obs_button_get_value(OBS_BUTTON(rset->startspin));
+	GtkAdjustment *preadj = GTK_ADJUSTMENT(rset->p);
+
+	if (preadj->upper != t1) {
+	    preadj->upper = t1;
+	    if (preadj->value > t1) {
+		preadj->value = t1;
+		gtk_adjustment_value_changed(preadj);
+	    }
+	    gtk_adjustment_changed(preadj);
+	}
+    }
+}
+
 int forecast_dialog (int t1min, int t1max, int *t1, 
 		     int t2min, int t2max, int *t2,
 		     int pmin, int pmax, int *p,
-		     int dyn_ok)
+		     int dyn)
 {
     const char *pre_txt = N_("Number of pre-forecast observations "
 			     "to graph");
@@ -1754,21 +1774,23 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		      t2min, t2max, t2,
 		      SPIN_LABEL_INLINE);
 
+    g_signal_connect(G_OBJECT(rset->adj1), "value-changed",
+		     G_CALLBACK(sync_pre_forecast), rset);
+
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 		       tmp, TRUE, TRUE, 5);
 
-    /* relevant options? */
-    if (!dyn_ok) {
-	nopts = 0;
-    }
-
-    if (nopts > 1) {
-	tmp = gtk_hseparator_new();
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 		       tmp, TRUE, TRUE, 0);
+    
+    if (dyn == DYNAMIC_NA) {
+	deflt = 2;
+    } else if (dyn == DYNAMIC_FORCED) {
+	deflt = 1;
     }
 
-    /* forecast-type options? */
+    /* forecast-type options */
     for (i=0; i<nopts; i++) {
 	GSList *group;
 
@@ -1789,23 +1811,27 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	    ret = i;
 	}
 
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(set_radio_opt), &ret);
-	g_object_set_data(G_OBJECT(button), "action", 
-			  GINT_TO_POINTER(i));
+	if (dyn != DYNAMIC_OK) {
+	    gtk_widget_set_sensitive(button, FALSE);
+	} else {
+	    g_signal_connect(G_OBJECT(button), "clicked",
+			     G_CALLBACK(set_radio_opt), &ret);
+	    g_object_set_data(G_OBJECT(button), "action", 
+			      GINT_TO_POINTER(i));
+	}
     }
 
-    /* pre-forecast obs spinner? */
-    if (dyn_ok && p != NULL) {
-	tmp = gtk_hseparator_new();
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-			   tmp, TRUE, TRUE, 0);
-	hbox = gtk_hbox_new(FALSE, 5);
-	tmp = option_spinbox(p, _(pre_txt), pmin, pmax);
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-			   hbox, TRUE, TRUE, 5);
-    }
+    /* pre-forecast obs spinner */
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+		       tmp, TRUE, TRUE, 0);
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = option_spinbox(p, _(pre_txt), pmin, pmax, (GtkObject **) &rset->p);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+		       hbox, TRUE, TRUE, 5);
+    /* get the max pre-forecast obs right */
+    gtk_adjustment_value_changed(GTK_ADJUSTMENT(rset->adj1));
 
     /* Create the "OK" button */
     tmp = ok_button(GTK_DIALOG(rset->dlg)->action_area);
@@ -2508,7 +2534,7 @@ int real_radio_dialog (const char *title, const char **opts,
 
     /* create spinner if wanted */
     if (spinvar != NULL) {
-	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax);
+	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax, NULL);
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   tmp, TRUE, TRUE, 0);
@@ -2669,7 +2695,8 @@ static void option_spin_set (GtkWidget *w, int *ivar)
 }
 
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
-				  int spinmin, int spinmax)
+				  int spinmin, int spinmax,
+				  GtkObject **padj)
 {
     GtkWidget *hbox;
     GtkWidget *label;
@@ -2693,6 +2720,10 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
     gtk_signal_connect(GTK_OBJECT(adj), "value-changed",
 		       GTK_SIGNAL_FUNC(option_spin_set), spinvar);
 #endif
+
+    if (padj != NULL) {
+	*padj = adj;
+    }
 
     return hbox;
 }
@@ -2725,7 +2756,7 @@ int checks_dialog (const char *title, const char **opts, int nopts,
 
     /* create spinner if wanted */
     if (spinvar != NULL) {
-	tempwid = option_spinbox(spinvar, spintxt, spinmin, spinmax);
+	tempwid = option_spinbox(spinvar, spintxt, spinmin, spinmax, NULL);
 	gtk_widget_show(tempwid);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
 			   tempwid, TRUE, TRUE, 0);

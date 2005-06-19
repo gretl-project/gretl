@@ -93,6 +93,18 @@ CMD *get_lib_cmd (void)
 
 /* ........................................................... */
 
+void set_original_n (int n)
+{
+    original_n = n;
+}
+
+int get_original_n (void)
+{
+    return original_n;
+} 
+
+/* ........................................................... */
+
 void exit_free_modelspec (void)
 {
     if (modelspec != NULL) {
@@ -1281,7 +1293,7 @@ void do_remove_markers (gpointer data, guint u, GtkWidget *w)
     add_remove_markers_state(FALSE);
 }
 
-static int out_of_sample_info (int add_ok, int *t2)
+int out_of_sample_info (int add_ok, int *t2)
 {
     const char *can_add = 
 	N_("There are no observations available for forecasting\n"
@@ -1295,7 +1307,7 @@ static int out_of_sample_info (int add_ok, int *t2)
 	if (n < 0) {
 	    err = 1;
 	} else if (n > 0) {
-	    original_n = datainfo->n;
+	    set_original_n(datainfo->n);
 	    err = dataset_add_observations(n, &Z, datainfo);
 	    if (err) {
 		gui_errmsg(err);
@@ -1349,16 +1361,18 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	}
     }
 
+    /* max number of pre-forecast obs in "best case" */
+    premax = datainfo->n - 1;
+
     /* if there are spare obs available, default to an
        out-of-sample forecast */
     if (t2 > pmod->t2) {
 	t1 = pmod->t2 + 1;
-	premax = pmod->t2;
+	pre_n = pmod->t2 / 2;
     } else {
-	premax = pmod->t1; /* ?? */
+	pre_n = 0;
     }
 
-    pre_n = premax / 2;
     resp = forecast_dialog(0, t2, &t1,
 			   0, t2, &t2,
 			   0, premax, &pre_n,
@@ -3491,7 +3505,7 @@ void do_remove_obs (gpointer data, guint u, GtkWidget *widget)
 	errbox(_("The data set is currently sub-sampled.\n"));
 	drop_obs_state(FALSE);
     } else {
-	drop = datainfo->n - original_n;
+	drop = datainfo->n - get_original_n();
     }
 
     if (drop > 0) {
@@ -3769,14 +3783,13 @@ void add_model_stat (MODEL *pmod, int which)
        as "modified" here. (FIXME saving scalars?) */
 }
 
-/* ........................................................... */
-
 void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 {
-    int err, origv, ts, plot_list[5], lines[1];
+    int err, origv, ts, plot_list[4], lines[1];
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
     int pdum = vwin->active_var; 
+    int yno, uhatno;
     double ***gZ;
     DATAINFO *ginfo;
 
@@ -3807,17 +3820,22 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
     }    
 
     ts = dataset_is_time_series(ginfo);
+    uhatno = ginfo->v - 1; /* residual: last var added */
 
-    plot_list[0] = 3; /* extra entry to pass depvar name to plot */
-    plot_list[1] = ginfo->v - 1; /* last var added */
-    plot_list[3] = pmod->list[1];
+    plot_list[0] = 2;
+    plot_list[1] = uhatno; 
 
-    strcpy(ginfo->varname[plot_list[1]], _("residual"));
+    strcpy(ginfo->varname[uhatno], _("residual"));
+    yno = gretl_model_get_depvar(pmod);
+    sprintf(VARLABEL(ginfo, uhatno), "residual for %s", 
+	    ginfo->varname[yno]);
 
-    if (xvar) { /* plot against specified xvar */
+    if (xvar) { 
+	/* plot against specified xvar */
 	plot_list[2] = xvar;
 	lines[0] = 0;
-    } else {    /* plot against obs index or time */
+    } else {    
+	/* plot against obs index or time */
 	int pv;
 
 	pv = plotvar(gZ, ginfo, get_timevar_name(ginfo));
@@ -3832,9 +3850,8 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 
     /* plot separated by dummy variable? */
     if (pdum) {
-	plot_list[0] = 4;
+	plot_list[0] = 3;
 	plot_list[3] = pdum;
-	plot_list[4] = pmod->list[1];
     }
 
     /* generate graph */

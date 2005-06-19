@@ -5208,14 +5208,6 @@ int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     int i, t;
     double *h = NULL;
 
-#if 0
-    if (pmod->dataset != NULL) {
-	/* use dataset attached to model */
-	pZ = &pmod->dataset->Z;
-	pdinfo = pmod->dataset->dinfo;
-    }
-#endif
-
     if (code == GENR_H) {
 	h = gretl_model_get_data(pmod, "garch_h");
 	if (h == NULL) return E_DATA;

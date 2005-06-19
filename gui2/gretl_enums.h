@@ -205,6 +205,12 @@ enum calc_functions {
     CALC_TEST
 };
 
+enum dynamic_forecast_status {
+    DYNAMIC_NA,
+    DYNAMIC_OK,
+    DYNAMIC_FORCED
+};
+
 #define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || \
 	                         c == CORR || c == FCASTERR || \
 	                         c == FCAST || c == COEFFINT || \

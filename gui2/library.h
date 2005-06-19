@@ -95,6 +95,10 @@ void gui_transpose_data (gpointer p, guint u, GtkWidget *w);
 
 int dataset_is_subsampled (void);
 
+void set_original_n (int n);
+
+int get_original_n (void);
+
 /* model-related functions */
 
 void do_coint (GtkWidget *widget, gpointer p);
@@ -144,6 +148,8 @@ void do_spearman (GtkWidget *widget, gpointer p);
 #ifdef ENABLE_GMP
 void do_mp_ols (GtkWidget *widget, gpointer p);
 #endif
+
+int out_of_sample_info (int add_ok, int *t2);
 
 /* variable-related functions */
 

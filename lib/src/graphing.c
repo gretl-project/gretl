@@ -656,6 +656,7 @@ static int auto_plot_var (const char *s)
 static void make_gtitle (FILE *fp, int code, const char *s1, const char *s2)
 {
     char title[128];
+    char depvar[9];
 
     switch (code) {
     case GTITLE_VLS:
@@ -663,7 +664,10 @@ static void make_gtitle (FILE *fp, int code, const char *s1, const char *s2)
 		s1, s2);
 	break;
     case GTITLE_RESID:
-	sprintf(title, I_("Regression residuals (= observed - fitted %s)"), s1);
+	if (sscanf(s1, "residual for %8s", depvar) == 1) {
+	    sprintf(title, I_("Regression residuals (= observed - fitted %s)"), 
+		    depvar);
+	}
 	break;
     case GTITLE_AF:
 	sprintf(title, I_("Actual and fitted %s"), s1);
@@ -1125,7 +1129,6 @@ int gnuplot (int *list, const int *lines, const char *literal,
     char s1[MAXDISP] = {0};
     char s2[MAXDISP] = {0};
     char xlabel[MAXDISP] = {0};
-    char depvar[VNAMELEN] = {0};
     char withstr[16] = {0};
     char keystr[48] = {0};
     char ols_line[128] = {0};
@@ -1154,13 +1157,6 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     if (gpinfo.impulses) {
 	strcpy(withstr, "w i");
-    }
-
-    /* hack to get the name of the dependent variable into the
-       graph */
-    if (flags & GP_RESIDS) {
-	strcpy(depvar, pdinfo->varname[list[gpinfo.lo]]);
-	gpinfo.lo -= 1;
     }
 
     /* check whether we're doing a time-series plot */
@@ -1247,14 +1243,14 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	    }
 	}
 	if (flags & GP_RESIDS && !(flags & GP_DUMMY)) { 
-	    make_gtitle(fp, GTITLE_RESID, depvar, NULL);
+	    make_gtitle(fp, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
 	    fprintf(fp, "set ylabel '%s'\n", I_("residual"));
 	} else {
 	    fprintf(fp, "set ylabel '%s'\n", series_name(pdinfo, list[1]));
 	}
 	strcpy(keystr, "set nokey\n");
     } else if ((flags & GP_RESIDS) && (flags & GP_DUMMY)) { 
-	make_gtitle(fp, GTITLE_RESID, depvar, NULL);
+	make_gtitle(fp, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
 	fprintf(fp, "set ylabel '%s'\n", I_("residual"));
     } else if (flags & GP_FA) {
 	if (list[3] == pdinfo->v - 1) { 

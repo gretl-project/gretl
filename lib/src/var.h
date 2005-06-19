@@ -40,9 +40,10 @@ GRETL_VAR *full_var (int order, const int *list,
 		     gretlopt opts, PRN *prn);
 
 const gretl_matrix *
-gretl_var_get_forecast_matrix (GRETL_VAR *var, int nf,
+gretl_var_get_forecast_matrix (GRETL_VAR *var, int t1, int t2,
 			       const double **Z, 
-			       const DATAINFO *pdinfo);
+			       const DATAINFO *pdinfo,
+			       gretlopt opt);
 
 void gretl_var_free (GRETL_VAR *var);
 
