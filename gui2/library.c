@@ -1346,6 +1346,11 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     forecast_options_for_model(pmod, (const double **) Z, datainfo, &dyn_ok, 
 			       &add_obs_ok, &dt2, &st2);
 
+    /* special */
+    if (pmod->ci == GARCH && pmod->t2 < dt2) {
+	dyn_ok = 1;
+    }
+
     if (dyn_ok) {
 	t2 = dt2;
     } else {
@@ -3894,11 +3899,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     plot_list[1] = ginfo->v - 1;    /* last var added (fitted vals) */
 
     /* depvar from regression */
-    if (pmod->ci == ARMA) {
-	plot_list[2] = pmod->list[4];   
-    } else {
-	plot_list[2] = pmod->list[1];
-    }
+    plot_list[2] = gretl_model_get_depvar(pmod);
 
     if (xvar) { 
 	/* plot against specified xvar */

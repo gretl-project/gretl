@@ -610,9 +610,92 @@ static void dprintf (const char *format, ...)
 
 #define depvar_lag(f,i) ((f->dvlags != NULL)? f->dvlags[i] : 0)
 
-/* forecasts for GARCH models -- seems as if we ought to be able to
-   do something interesting with forecast error variance, but right
-   now we don't do anything */
+/*   
+   GARCH error variance process:
+
+   h(t) = a(0) + sum(i=1 to q) a(i) * u(t-i)^2 + sum(j=1 to p) b(j) * h(t-j)
+
+   This is then complexified if the model includes lags of the
+   dependent variable among the regressors.
+*/
+
+static double *garch_h_hat (const MODEL *pmod, int t1, int t2,
+			    int xvars)
+{
+    const double *alpha;
+    const double *beta;
+    double hlag;
+    double *h, *mh;
+    int nf, q, p;
+    int i, s, t, ti;
+    int err = 0;
+
+    mh = gretl_model_get_data(pmod, "garch_h");
+    if (mh == NULL) {
+	return NULL;
+    }
+
+    nf = t2 - t1 + 1;
+
+    h = malloc(nf * sizeof *h);
+    if (h == NULL) {
+	return NULL;
+    }
+
+    q = pmod->list[1];
+    p = pmod->list[2];
+    alpha = pmod->coeff + xvars;
+    beta = alpha + q + 1;
+
+    for (t=t1; t<=t2 && !err; t++) {
+	s = t - t1;
+
+	h[s] = alpha[0];
+    
+	for (i=1; i<=q; i++) {
+	    ti = t - i;
+	    if (ti < 0) {
+		break;
+	    }
+	    if (!na(pmod->uhat[ti])) {
+		h[s] += alpha[i] * pmod->uhat[ti] * pmod->uhat[ti];
+	    }
+	}
+
+	for (i=1; i<=p; i++) {
+	    ti = t - i;
+	    if (ti < 0) {
+		break;
+	    }
+	    hlag = 0.0;
+	    if (ti <= pmod->t2) {
+		if (!na(mh[ti])) {
+		    hlag = mh[ti];
+		}
+	    } else {
+		hlag = h[s-i];
+	    }
+	    h[s] += beta[i-1] * hlag;
+	}
+	
+	if (h[s] < 0.0) {
+	    err = 1;
+	}
+    }
+
+    if (err) {
+	free(h);
+	h = NULL;
+    }
+
+#if 0
+    for (t=t1; t<=t1 + 10; t++) {
+	fprintf(stderr, "h_hat[%d] = %g\n", t, h[t-t1]);
+    }
+#endif
+
+    return h;
+}
 
 static int garch_fcast (Forecast *fc, MODEL *pmod, 
 			const double **Z, const DATAINFO *pdinfo)
@@ -620,6 +703,7 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
     double xval;
     int xvars, yno;
     int *xlist = NULL;
+    double *h = NULL;
     int i, v, s, t;
 
     xlist = model_xlist(pmod);
@@ -629,6 +713,10 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 	xvars = xlist[0];
     } else {
 	xvars = 0;
+    }
+
+    if (fc->sderr != NULL) {
+	h = garch_h_hat(pmod, fc->t1, fc->t2, xvars);
     }
 
     for (t=fc->t1; t<=fc->t2; t++) {
@@ -653,7 +741,7 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
-		yh += pmod->coeff[i-1] * xval;
+		yh += pmod->coeff[i] * xval;
 	    }
 	}
 
@@ -662,6 +750,14 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 	} else {
 	    fc->yhat[s] = yh;
 	}
+
+	if (h != NULL && t > pmod->t2) {
+	    fc->sderr[s] = sqrt(h[t - pmod->t2 - 1]);
+	}
+    }
+
+    if (h != NULL) {
+	free(h);
     }
 
     return 0;
@@ -1006,15 +1102,17 @@ static void set_up_ar_fcast_variance (const MODEL *pmod, int pmax,
    regressors.  
 */
 
-static int ar_fcast (Forecast *fc, const MODEL *pmod, 
+static int ar_fcast (Forecast *fc, MODEL *pmod, 
 		     const double **Z, const DATAINFO *pdinfo)
 {
     const int *arlist;
+    int *xlist;
     double *phi = NULL;
     double *psi = NULL;
     double *errphi = NULL;
+    double *h = NULL;
     double ss_psi = 0.0;
-    double xval, yh;
+    double xvars, xval, yh;
     double rk, ylag, xlag;
     int miss, yno;
     int i, k, v, s, t, tk;
@@ -1025,7 +1123,14 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
     fprintf(stderr, "\n*** ar_fcast, method = %d\n\n", fc->method);
 #endif
 
-    yno = pmod->list[1];
+    yno = gretl_model_get_depvar(pmod);
+    xlist = model_xlist(pmod);
+    if (xlist == NULL) {
+	return 1;
+    }
+
+    xvars = xlist[0];
+
     arlist = pmod->arinfo->arlist;
     p = arlist[arlist[0]]; /* AR order of error term */
 
@@ -1034,6 +1139,9 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 	   out of sample */
 	pmax = max_ar_lag(fc, pmod, p);
 	set_up_ar_fcast_variance(pmod, pmax, &phi, &psi, &errphi);
+	if (pmod->ci == GARCH) {
+	    h = garch_h_hat(pmod, fc->t1, fc->t2, xvars);
+	}
     }
 
     for (t=fc->t1; t<=fc->t2; t++) {
@@ -1076,8 +1184,8 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 	}
 
 	/* (1 - r(L)) X_t b */
-	for (i=0; i<pmod->ncoeff && !miss; i++) {
-	    v = pmod->list[i+2];
+	for (i=0; i<xvars && !miss; i++) {
+	    v = xlist[i+1];
 	    if ((dvlag = depvar_lag(fc, i))) {
 		xval = fcast_get_ldv(fc, yno, t, dvlag, Z);
 	    } else {
@@ -1118,7 +1226,15 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 		arma_variance_machine(phi, pmax, NULL, 0,
 				      psi, t - pmod->t2, 
 				      &ss_psi);
-		fc->sderr[s] = pmod->sigma * sqrt(ss_psi);
+		if (pmod->ci == GARCH) {
+		    if (h != NULL) {
+			fc->sderr[s] = sqrt(h[t - pmod->t2 - 1] * ss_psi);
+		    } else {
+			fc->sderr[s] = NADBL;
+		    }
+		} else {
+		    fc->sderr[s] = pmod->sigma * sqrt(ss_psi);
+		}
 	    } else {
 		fc->sderr[s] = NADBL;
 	    }
@@ -1129,6 +1245,10 @@ static int ar_fcast (Forecast *fc, const MODEL *pmod,
 	free(phi);
 	free(psi);
 	free(errphi);
+    }
+
+    if (h != NULL) {
+	free(h);
     }
 
     return err;
@@ -1260,14 +1380,15 @@ static int get_forecast_method (Forecast *fc,
 	process_lagged_depvar(pmod, pdinfo, &fc->dvlags);
     }
 
-    if (!(opt & OPT_S) && (pmod->ci == ARMA || fc->dvlags != NULL)) {
-	/* dynamic forecast is possible, and not ruled out by 
-	   "static" option */
-	dyn_ok = 1;
-    }
-
-    if (SIMPLE_AR_MODEL(pmod->ci) && !(opt & OPT_S)) {
-	dyn_errs_ok = 1;
+    if (!(opt & OPT_S)) {
+	if (pmod->ci == ARMA || fc->dvlags != NULL) {
+	    /* dynamic forecast is possible, and not ruled out by 
+	       "static" option */
+	    dyn_ok = 1;
+	}
+	if (SIMPLE_AR_MODEL(pmod->ci) || pmod->ci == GARCH) {
+	    dyn_errs_ok = 1;
+	}
     }    
 
     if (!dyn_ok && (opt & OPT_D)) {
@@ -1312,8 +1433,8 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 
     get_forecast_method(&fc, pmod, pdinfo, opt);
 
-    if (!FCAST_SPECIAL(pmod->ci) && pmod->ci != GARCH) {
-	if (pmod->ci != ARMA && !SIMPLE_AR_MODEL(pmod->ci) && fc.dvlags == NULL) {
+    if (!FCAST_SPECIAL(pmod->ci)) {
+	if (!AR_MODEL(pmod->ci) && fc.dvlags == NULL) {
 	    /* we'll do Davidson-MacKinnon error variance */
 	    DM_errs = 1;
 	} else if (fc.method == FC_DYNAMIC) {
@@ -1325,12 +1446,8 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	}
     }
 
-    /* bodge for now! (not ready) */
-    if (dyn_errs && pmod->ci == GARCH) {
-	dyn_errs = 0;
-    }
-
-    if (dyn_errs && pmod->ci != ARMA && !SIMPLE_AR_MODEL(pmod->ci)) {
+    if (dyn_errs && pmod->ci != ARMA && !SIMPLE_AR_MODEL(pmod->ci) &&
+	fc.dvlags != NULL) {
 	/* create dummy AR info structure for model with lagged
 	   dependent variable */
 	int err = dummy_ar_info_init(pmod);
@@ -1878,7 +1995,7 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
     *dt2max = pmod->t2;
     *st2max = pmod->t2;
 
-    if (pmod->ci == ARMA) {
+    if (pmod->ci == ARMA || pmod->ci == GARCH) {
 	*dyn_ok = 1;
     } else if (dataset_is_time_series(pdinfo) &&
 	       has_depvar_lags(pmod, pdinfo)) {

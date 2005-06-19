@@ -644,6 +644,7 @@ static int auto_plot_var (const char *s)
 {
     if (strcmp(s, "t") == 0 ||
 	strcmp(s, "annual") == 0 ||
+	strcmp(s, "decdate") == 0 ||
 	strcmp(s, "qtrs") == 0 ||
 	strcmp(s, "months") == 0 ||
 	strcmp(s, "hrs") == 0) {
