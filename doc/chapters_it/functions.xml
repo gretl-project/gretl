@@ -6,22 +6,22 @@
   <sect1 id="func-intro">
     <title>Introduzione</title>
 
-    <para>A partire dalla versione 1.3.0, <application>gretl</application>
-      contiene un meccanismo per definire funzioni all'interno di uno script,
-      con una sintassi in qualche modo simile a quella della shell
-      <application>bash</application>.  Si veda oltre per i dettagli.
-      </para>
+    <para>A partire dalla versione 1.4.0, <application>gretl</application>
+      contiene un nuovo meccanismo per definire funzioni all'interno di uno script.
+      <footnote><para>Si noti che il nuovo modo di definire le funzioni presenta
+      aspetti non compatibili con la versione 1.3.3 del programma.</para>
+      </footnote>
 
   </sect1>
 
   <sect1 id="func-define">
-    <title>Definire una funzione</title>
+    <title>Definizione di una funzione</title>
 
     <para>Occorre definire una funzione prima di poterla utilizzare. La sintassi
       per farlo è la seguente:</para>
 
     <programlisting>
-      function <replaceable>nome-funzione</replaceable>
+      function <replaceable>nome-funzione</replaceable> <replaceable>parametri</replaceable>
          <replaceable>corpo della funzione</replaceable>
       end function
     </programlisting>
@@ -35,10 +35,40 @@
       di una funzione preesistente, si otterrà un'errore. Nel secondo caso,
       per evitare un errore (ossia per poter ridefinire una funzione utente),
       basta far precedere la definizione della funzione da:
-      <programlisting>
+    </para>
+      
+    <programlisting>
       function <replaceable>nome-funzione</replaceable>clear</programlisting>
-      </para>
 
+    <para>
+      I <replaceable>parametri</replaceable> di una funzione (se esistono) vanno
+      indicati sotto forma di lista separata da virgole. I parametri possono
+      essere di tre tipi: variabili ordinarie (serie di dati), variabili
+      scalari, o liste di variabili. Ogni elemento della lista di parametri è
+      composto da due termini: per prima cosa un indicatore di tipo
+      (<literal>series</literal>, <literal>scalar</literal> o
+      <literal>list</literal>), quindi il nome con cui il parametro verrà
+      riconosciuto all'interno della funzione. Ecco un esempio (le parentesi che
+      racchiudono la lista dei parametri sono opzionali):
+    </para>
+    
+    <programlisting>
+      function funzione (series y, list xvars, scalar verbose)</programlisting>
+    
+    <para>
+      Quando una funzione viene chiamata, i parametri vengono istanziati usando
+      gli argomenti indicati nella chiamata della funzione. Vengono fatti dei
+      controlli automatici per assicurarsi che il numero degli argomenti
+      contenuti in una chiamata di funzione corrisponda al numero di parametri,
+      e che i tipi degli argomenti corrispondano ai tipi specificati nella
+      definizione della funzione; se qualcuna di queste condizioni è violata,
+      viene segnalato un errore. Una serie può essere indicata come argomento
+      specificando il nome della variabile in questione, oppure il suo numero
+      identificativo. Gli scalari possono essere indicati specificando il nome
+      di una variabile o un valore numerico (non è possibile indicare il numero
+      identificativo della variabile). Le liste devono essere indicate per nome.
+    </para>
+    
     <para>
       Il <replaceable>corpo della funzione</replaceable> è composto da
       comandi <application>gretl</application> o funzioni definite dall'utente
@@ -57,130 +87,118 @@
 
   </sect1>
 
-  <sect1 id="func-params">
-    <title>Parametri delle funzioni</title>
-
-    <para>I parametri (se ne esistono) di una funzione utente sono definiti
-      implicitamente (come in <application>bash</application>) facendovi
-      riferimento nel corpo della funzione, usando <literal>$1</literal> per il
-      primo parametro, <literal>$2</literal> per il secondo, e così via.
-      Questi riferimenti numerati saranno sostituiti dagli argomenti forniti
-      quando la funzione viene chiamata.</para>
-
-    <para>La sostituzione dei parametri è una semplice sostituzione di stringhe,
-      non c'è modo di <quote>passare i parametri per valore</quote>, come avviene
-      in alcuni linguaggi di programmazione.</para>
-
-  </sect1>
-
   <sect1 id="func-call">
     <title>Chiamare una funzione</title>
 
     <para>Una funzione utente viene chiamata, o invocata, usando il
       suo nome, eventualmente seguito da argomenti; se si usano due o
-      più argomenti, vanno separati da virgole. Ad esempio:
-    </para>
-
-    <programlisting>
-      funz <replaceable>arg1</replaceable>, <replaceable>arg2</replaceable>
-    </programlisting>
-
-    <para>
-      Se vengono forniti più argomenti di quanti ne siano usati nel
-      corpo della funzione (si veda sopra), gli argomenti in eccesso
-      vengono semplicemente ignorati. Nel caso gli argomenti forniti
-      siano di meno di quelli definiti nel corpo della funzione, si
-      assume che gli argomenti mancanti abbiano valore nullo.
-    </para>
-
-    <para>Gli argomenti di una funzione possono avere la forma di termini
-      singoli o di liste. Ecco un semplice esempio:
+      più argomenti, vanno separati da virgole. L'esempio seguente mostra una
+      chiamata di funzione che rispetta la definizione della funzione stessa.
     </para>
 
     <programlisting>
       # Definizione della funzione
-      function stima-ols
-      open $1
-      ols $2 0 $3
+      function ols_ess (series y, list xvars)
+        ols y 0 xvars --quiet
+        scalar myess = $ess
+        printf "ESS = %g\n", myess
+        return scalar myess
       end function
-      # Chiamata della funzione
-      stima-ols data4-1, 1, 2 3 4
-    </programlisting>
+      # Script principale
+      open data4-1
+      list xlist = 2 3 4
+      # Chiamata della funzione (il valore restituito viene qui ignorato)
+      ols_ess price, xlist</programlisting>
 
     <para>
-      La funzione viene chiamata con tre argomenti, il terzo dei quali
-      è una lista di regressori. L'effetto è di aprire il file di dati
-      <literal>data4-1</literal> e di eseguire una regressione indicata
-      dal comando <literal>ols 1 0 2 3 4</literal>.</para>
+      La chiamata della funzione contiene due argomenti: il primo è una serie di
+      dati specificata per nome, e il secondo è una lista di regressori. Si noti
+      che la funzione produce la variabile <literal>myess</literal> come
+      risultato, ma in questo esempio esso è ignorato.
+    </para>
 
-    <para>Si noti che se si vuole che una funzione calcoli un valore
-      risultante da una regressione, senza essere interessati all'intero
-      insieme dei risultati, è possibile usare l'opzione
-      <literal>--quiet</literal> con il il comando di stima.</para>
+    <para>(Una nota a margine: se si desidera che una funzione calcoli alcuni
+      valori che hanno a che fare con una regressione, ma non si è interessati ai
+      risultati completi della regressione, è possibile usare l'opzione
+      <literal>--quiet</literal> con il comando di stima, come visto sopra.)
+    </para>
+
+    <para>
+      Un secondo esempio mostra una chiamata di funzione che assegna i valori
+      prodotti dalla funzione a variabili:
+    </para>
+
+    <programlisting>
+      # Definizione di funzione
+      function ess_uhat (series y, list xvars)
+        ols y 0 xvars --quiet
+        scalar myess = $ess
+        printf "ESS = %g\n", myess
+        series uh = $uhat
+        return scalar myess, series uh
+      end function
+      # Script principale
+      open data4-1
+      list xlist = 2 3 4
+      # Chiamata di funzione
+      (SSR, resids) = ess_uhat price, xlist</programlisting>
 
   </sect1>
 
   <sect1 id="func-scope">
     <title>Ambito delle variabili</title>
 
-    <para>In modalità predefinita, tutte le variabili sono <quote>globali</quote>: c'è un
-      registro dei nomi di variabile condiviso dallo script principale
-      e da qualunque funzione venga chiamata da esso. Le variabili nello script
-      principale possono essere lette e modificate dall'interno delle funzioni,
-      e le nuove variabili create all'interno delle funzioni vengono aggiunte
-      all'elenco del dataset.
+    <para>Tutte le variabili create in una funzione sono locali a quella funzione,
+      e vengono distrutte quando la funzione termina la sua esecuzione, a meno
+      che esse siano rese disponibili come valori di ritorno, e che questi siano
+      <quote>raccolti</quote> o assegnati nella chiamata della funzione.
     </para>
 
-    <para>In alcuni casi, tuttavia, può essere utile creare variabili
-      che siano locali, confinate a una particolare funzione. È possibile
-      farlo usando la parola chiave <literal>my</literal> con
-      <literal>genr</literal>. Se all'interno di una funzione si scrive</para>
-
-    <programlisting>
-      genr x = <replaceable>espressione</replaceable>
-    </programlisting>
-
-    <para>viene creata una variabile globale (o viene modificata la variabile
-      globale <varname>x</varname> se esiste già). Ma scrivendo
+    <para>
+      Le funzioni non hanno accesso alle variabili nell'<quote>ambito esterno</quote>
+      (ossia le variabili che esistono nello script da cui la funzione è
+      chiamata), a meno che queste siano passate esplicitamente alla funzione
+      come argomenti. Anche in questo caso, quello che viene passato alla
+      funzione è una copia delle variabili in questione, quindi le variabili
+      nell'ambito esterno non vengono mai modificate da una funzione, a meno che
+      non vengano assegnate come valore prodotto da una funzione.
     </para>
-
-    <programlisting>
-      genr my x = <replaceable>espressione</replaceable>
-    </programlisting>
-
-    <para>viene creata una nuova variabile <varname>x</varname> locale
-      alla funzione, che scomparirà una volta che la funzione è stata
-      eseguita. Se esiste già una variabile <varname>x</varname> al di fuori
-      della funzione, essa verrà <quote>mascherata</quote>: la variabile
-      <varname>x</varname> esterna sarà inaccessibile all'interno della funzione
-      e non sarà modificabile da comandi come <literal>genr x =</literal> &hellip; 
-      finché l'esecuzione della funzione non sarà terminata.
-    </para>
-
-    <para>Questo comportamento è illustrato dallo script di esempio
-      nel<xref linkend="func-scope-example"/>.</para>
-
-    <para>Quando una funzione, ad es. <literal>fun1</literal>, chiama un'altra
-      funzione, <literal>fun2</literal>, tutte le variabili locali
-      (<literal>my</literal>) di <literal>fun1</literal> sono ereditate
-      automaticamente dalla funzione <quote>figlia</quote>
-      <literal>fun2</literal>. Queste variabili, tuttavia, possono essere
-      mascherate nel modo descritto in precedenza creando delle variabili
-      con lo stesso nome all'interno della funzione
-      <literal>fun2</literal>.</para>
 
   </sect1>
 
   <sect1 id="func-return">
-    <title>Valore di uscita (sua assenza)</title>
+    <title>Valori di uscita</title>
 
-    <para>Non c'è modo di ottenere un valore di uscita da una funzione
-      di <application>gretl</application>, come è possibile fare in molti
-      linguaggi di programmazione. Questo non è un limite vincolante,
-      visto che è possibile raggiungere lo stesso scopo generando una o
-      più variabili globali all'interno della funzione, che conserveranno
-      tutti i valori a cui si vuole accedere una volta terminata l'esecuzione
-      della funzione.</para>
+    <para>Le funzioni possono produrre zero o più valori di uscita: questi
+      possono essere serie o scalari (non liste). I valori di uscita sono
+      specificati con una dichiarazione all'interno del corpo della funzione che
+      comincia con la parola chiave <literal>return</literal>, seguita da una
+      lista separata da virgole, ogni elemento della quale è composto da un
+      indicatore di tipo e dal nome di una variabile (in modo analogo a quanto
+      avviene per la lista dei parametri di una funzione). All'interno di una
+      funzione può esserci solo una di queste dichiarazioni. Ecco un esempio di
+      dichiarazione return valida:
+    </para>
+
+    <programlisting>
+      return scalar SSR, series resid</programlisting>
+
+    <para>
+      Si noti che la dichiarazione <literal>return</literal> <emphasis>non</emphasis>
+      indica alla funzione di produrre il valore (terminare) nel punto in cui
+      essa appare nel corpo della funzione. Piuttosto, essa specifica quali
+      variabili sono disponibili per l'assegnazione quando la funzione
+      terminerà, cosa che può avvenire solo quando: a) viene raggiunta la fine
+      del codice che definisce la funzione; b) si incontra una dichiarazione
+      <literal>funcerr</literal> (si veda oltre); c) gretl produce un errore.
+    </para>
+
+    <para>
+      La parola chiave <literal>funcerr</literal>, che può essere seguita da una
+      stringa contenuta fra virgolette doppie, fa terminare una funzione con un
+      messaggio di errore, che può essere generico o rappresentato dalla stringa
+      indicata.
+    </para>
 
   </sect1>
 
@@ -197,65 +215,7 @@
 
   </sect1>
 
-  <sect1 id="func-scope-example">
-    <title>Esempio che mostra l'ambito delle variabili</title>
 
-    <para>Lo script seguente illustra la differenza tra le variabili
-      globali e locali. Si noti che le funzioni possono essere definite
-      in qualsiasi punto dello script, a patto di definirle prima di
-      usarle.</para>
-
-    <programlisting>
-      function pluto
-        genr my testvar = 3
-        printf "In pluto, testvar vale %d\n", testvar
-      end function
-
-      function pippo
-        # genera una variabile locale
-        genr my testvar = 2
-        printf "In pippo, testvar vale %d\n", testvar
-        # chiamata di funzione nidificata
-        pluto
-        printf "Tornando in pippo, testvar vale %d\n", testvar
-        # genera una variabile globale
-        genr glob = 15
-      end function
-
-      # inizia lo script principale
-      nulldata 5
-      set echo off
-      genr testvar = 1
-      printf "Nello script principale, testvar vale %d\n", testvar
-      # Chiama la funzione pippo, che a sua volta chiama la funzione pluto
-      foo
-      printf "Tornando nello script principale, testvar vale %d, glob vale %d\n", testvar, glob 
-      # Elenca le variabili globali
-      varlist
-    </programlisting>
-
-    <para>Eseguendo lo script si ottiene:</para>
-
-    <programlisting>
-      gretl versione 1.3.4 ...
-      ? nulldata 5
-      Periodicità: 1, oss. max.: 5,
-      intervallo: 1-5
-      ? set echo off
-      Generato lo scalare testvar (ID 2) = 1
-      Fuori, testvar vale 1
-      Generato lo scalare testvar (ID 3) = 2
-      In pippo, testvar vale 2
-      Generato lo scalare testvar (ID 4) = 3
-      In pluto, testvar vale 3
-      Tornando in pippo, testvar vale 2
-      Generato lo scalare glob (ID 4) = 15
-      Tornando fuori, testvar vale 1, glob vale 15
-      4 variabili elencate:
-      0) const       1) index       2) testvar     3) glob
-    </programlisting>      
-    
-  </sect1>
 
   </chapter>
 
