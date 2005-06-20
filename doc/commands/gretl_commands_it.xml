@@ -19,10 +19,14 @@
 	  <flag>--quiet</flag>
 	  <effect>non mostra le stime del modello aumentato</effect>
 	</option>
+ 	<option>
+ 	  <flag>--silent</flag>
+ 	  <effect>non mostra nulla</effect>
+ 	</option>
       </options>
       <examples>
         <example>add 5 7 9</example>
-        <example>add xx yy zz</example>
+        <example>add xx yy zz --quiet</example>
       </examples>
     </usage>
 
@@ -42,6 +46,9 @@
 	variabili aggiunte, altrimenti vengono mostrate anche le stime
 	per il modello aumentato. Nell'ultimo caso, l'opzione
 	<lit>--vcv</lit> mostra anche la matrice di covarianza dei coefficienti.
+ 	Usando l'opzione <lit>--silent</lit>, non viene mostrato nulla; tuttavia
+        i risultati del test possono essere recuperati usando le variabili
+        speciali <lit>$test</lit> e <lit>$pvalue</lit>.
       </para>
       <para context="gui">
 	Aggiunge le variabili selezionate al modello precedente e stima il
@@ -72,11 +79,20 @@
     <description>
       <para>
        Aggiunge il numero indicato di osservazioni alla fine del dataset,
-       assegnando un codice di valore mancante a tutte le variabili.
+       principalmente a scopo di previsione. I valori della maggior parte delle
+       variabili saranno impostati a "mancante", ma alcune variabili
+       deterministiche verranno riconosciute ed estese; ad esempio, un semplice
+       trend lineare o delle dummy periodiche.
+       </para>
+       <para>
        Il comando non è disponibile se sul dataset è impostato un sotto-campione
        ottenuto con una condizione Booleana.
       </para>
     </description>
+    
+    <gui-access>
+     <menu-path>/Data/Aggiungi osservazioni</menu-path>
+    </gui-access>
 
   </command>
 
@@ -1343,6 +1359,16 @@
         <argument optional="true" >oss-iniziale oss-finale</argument>
 	<argument>var-stima</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--dynamic</flag>
+	  <effect>crea previsioni dinamiche</effect>
+        </option>
+        <option>
+	  <flag>--static</flag>
+	  <effect>crea previsioni statiche</effect>
+        </option>
+      </options>
       <examples>
         <example>fcast 1997:1 2001:4 f1</example>
 	<example>fcast fit2</example>
@@ -1358,9 +1384,15 @@
 	<repl>var-stima</repl>, che può essere stampata e rappresentata
         graficamente o con un diagramma ASCII. Le variabili indipendenti
         sono quelle del modello originale, non è possibile introdurre altre
-        variabili. Se viene specificato un processo di errore autoregressivo
-	(per <cmd>hilu</cmd>, <cmd>corc</cmd> e <cmd>ar</cmd>) la previsione
-        è condizionale per il periodo successivo e incorpora il processo di errore.
+        variabili. Se viene specificato un processo di errore autoregressivo,
+	la previsione incorpora la frazione prevedibile del processo di errore.
+      </para>
+      <para>
+	La scelta tra previsione statica e dinamica è rilevante solo nel caso di
+        modelli dinamici, che comprendono un processo di errore autoregressivo,
+        o che comprendono uno o più valori ritardati della variabile dipendente
+        come regressori. Si veda <cmdref targ="fcasterr"/> per maggiori
+        dettagli.
       </para>
     </description>
 
@@ -1383,22 +1415,62 @@
 	  <flag>--plot</flag>
 	  <effect>mostra il grafico</effect>
         </option>
+        <option>
+	  <flag>--dynamic</flag>
+	  <effect>crea previsioni dinamiche</effect>
+        </option>
+        <option>
+	  <flag>--static</flag>
+	  <effect>crea previsioni statiche</effect>
+        </option>
       </options>
     </usage>
 
     <description>
       <para>
-	Dopo aver stimato un modello OLS è possibile usare questo comando
+	Dopo aver stimato un modello è possibile usare questo comando
         per rappresentare i valori stimati su un intervallo di osservazioni
 	specificato, insieme agli errori standard stimati per queste previsioni
-        e agli intervalli di confidenza al 95 per cento.</para>  
+        (a seconda del tipo di modello e dei dati disponibili)
+        e agli intervalli di confidenza al 95 per cento.</para>
 
-      <para>Gli errori standard sono calcolati nel modo descritto da Wooldridge
-        nel capitolo 6 del suo <book>Introductory Econometrics</book>.
-        Incorporano due fonti di variabilità: la varianza associata al valore
-        atteso della variabile dipendente, condizionale ai valori dati delle
-        variabili indipendenti, e la varianza dei residui della regressione.
-      </para>
+       <para>
+	La scelta tra previsione statica e dinamica è rilevante solo nel caso di
+        modelli dinamici, che comprendono un processo di errore autoregressivo,
+        o che comprendono uno o più valori ritardati della variabile dipendente
+        come regressori. Le previsioni statiche sono per il periodo successivo,
+        basate sui valori effettivi nel periodo precedente, mentre quelle
+        dinamiche usano la regola della previsione a catena.
+        Ad esempio, se la previsione per <mathvar>y</mathvar> nel 2008
+ 	richiede come input il valore di <mathvar>y</mathvar> nel 2007,
+        non è possibile calcolare una previsione statica se non si hanno dati
+        per il 2007. È possibile calcolare una previsione dinamica per il 2008
+        se si dispone di una precendente previsione per
+ 	<mathvar>y</mathvar> nel 2007.
+       </para>
+ 
+       <para>
+ 	La scelta predefinita consiste nel fornire una previsione statica per
+        ogni porzione dell'intervallo di previsione che fa parte dell'intervallo
+        del campione su cui il modello è stato stimato, e una previsione
+        dinamica (se rilevante) fuori dal campione. L'opzione
+ 	<lit>dynamic</lit> richiede di produrre previsioni dinamiche a partire
+        dalla prima data possibile, mentre l'opzione <lit>static</lit>
+        richiede di produrre previsioni statiche anche fuori dal campione.
+       </para>
+ 
+       <para>
+ 	La natura degli errori standard della previsione (se disponibili)
+        dipende dalla natura del modello e della previsione. Per i modelli
+        lineari statici, gli errori standard sono calcolati seguendo il metodo
+        delineato in Davidson and MacKinnon (2004); essi incorporano sia
+        l'incertezza dovuta al processo d'errore, sia l'incertezza dei parametri
+        (sintetizzata dalla matrice di covarianza delle stime dei parametri).
+        Per modelli dinamici, gli errori standard della previsione sono
+        calcolati solo nel caso di previsione dinamica, e non incorporano
+        incertezza dei parametri. Per modelli non lineari, al momento non sono
+        disponibili errori standard della previsione.
+       </para>
 
     </description>
 
@@ -1526,7 +1598,7 @@
 	<equation status="display"
 	  tex="\[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
 	  \sum_{j=1}^p \beta_i h_{t-j}\]"
-	  ascii="h(t) = a(0) + somma(per i da 1 a q) a(i)*u(t-i) + somma( per j da 1 a p) b(j)*h(t-j)"
+	  ascii="h(t) = a(0) + somma(per i da 1 a q) a(i)*u(t-i)^2 + somma( per j da 1 a p) b(j)*h(t-j)"
 	  graphic="garch_h"/>
       </para>
 
@@ -1599,7 +1671,34 @@
         di variabili esistenti. Si veda anche <cmdref targ="diff"/>,
         <cmdref targ="logs"/>, <cmdref targ="lags"/>, <cmdref targ="ldiff"/>,
         <cmdref targ="multiply"/> e <cmdref targ="square"/> per le
-        scorciatoie.
+        scorciatoie. Nel contesto di una formula <lit>genr</lit>, le variabili esistenti
+        devono essere referenziate per nome, non per numero identificativo.
+        La formula dev'essere una combinazione ben definita di nomi di
+        variabile, costanti, operatori e funzioni (descritte oltre). Ulteriori
+        dettagli su alcuni aspetti di questo comando si possono trovare in
+        <manref targ="chap-genr"/>.
+
+      <para>
+	Questo comando può produrre come risultato una serie o uno scalare. Ad
+        esempio, la formula <lit>x2 = x * 2</lit> produce una serie se la variabile
+	<lit>x</lit> è una serie e uno scalare se <lit>x</lit> è uno scalare.
+        Le formule <lit>x = 0</lit> e <lit>mx = mean(x)</lit> producono degli
+        scalari. In alcune circostanze, può essere utile che un risultato
+        scalare sia espanso in una serie o in un vettore: è possibile ottenere
+        questo risultato usando <lit>series</lit> come <quote>alias</quote> per il comando
+	<lit>genr</lit>. Ad esempio, <lit>series x = 0</lit> produce una
+	serie con tutti i valori pari a 0. Allo stesso modo, è possibile usare
+        <lit>scalar</lit> come alias per <lit>genr</lit>, ma non è possibile
+        forzare un risultato vettoriale in uno scalare: con questa parola chiave
+        si indica che il risultato <emphasis>dovrebbe essere</emphasis> uno scalare;
+        se non lo è, viene emesso un messaggio di errore.
+      </para>
+
+      <para>
+        Quando una formula produce una serie o un vettore come risultato,
+        l'intervallo su cui essi sono definiti dipende dall'impostazione attuale
+        del campione. È quindi possibile definire una serie a pezzi, alternando
+        l'uso dei comandi <lit>smpl</lit> e <lit>genr</lit>.
       </para>
 
       <para>
@@ -1619,6 +1718,11 @@
 	Booleani possono essere usati per costuire variabili dummy:
 	ad esempio <lit>(x > 10)</lit> produce 1 se <lit>x</lit>
 	&gt; 10, 0 altrimenti.</para>
+ 
+       <para>Le costanti predefinite sono <lit>pi</lit> e <lit>NA</lit>. L'ultima
+       rappresenta il codice per i valori mancanti: è possibile inizializzare
+       una variabile con valori mancanti usando <lit>scalar x = NA</lit>.
+       </para>
 
       <para>Le <emphasis>funzioni</emphasis> supportate appartengono
         ai gruppi seguenti:
@@ -1629,21 +1733,35 @@
 	    <func>cos</func>, <func>exp</func>, <func>int</func>
 	    (parte intera), <func>ln</func> (logaritmo naturale:
 	    <func>log</func> è un sinonimo), <func>sin</func>,
-	    <func>sqrt</func> (radice quadrata).</para>
+	    <func>sqrt</func> (radice quadrata). Tutte queste accettano un solo
+            argomento, che può essere una serie o uno scalare.</para>
 	</li>
-	<li><para>Funzioni statistiche: <func>max</func> (valore
+	<li><para>Funzioni statistiche standard, che possono accettare un solo
+            argomento e producono un risultato scalare: <func>max</func> (valore
             massimo in una serie), <func>min</func> (minimo),
 	    <func>mean</func> (media aritmetica), <func>median</func>,
 	    <func>var</func> (varianza) <func>sd</func> (deviazione
             standard), <func>sst</func> (somma dei quadrati delle
-            deviazioni dalla media), <func>sum</func>, <func>cov</func>
-	    (covarianza), <func>corr</func> (coefficiente di correlazione),
-	    <func>pvalue</func>, <func>sort</func>, <func>cum</func>
-	    (somma cumulata), <func>cnorm</func> (funzione di ripartizione
-            normale standard), <func>dnorm</func> (funzione di densità normale
-            standard), <func>resample</func> (ricampiona una serie
-            con rimpiazzo, utile per il bootstrap), <func>hpfilt</func> (filtro
-            di Hodrick&ndash;Prescott: produce la componente di
+            deviazioni dalla media), <func>sum</func>.</para>
+        </li>
+        <li>
+          <para>Funzioni statistiche che accettano una serie com argomento e
+          producono una serie o un vettore: <func>sort</func> (ordina una serie
+          in ordine ascendente di grandezza), <func>cum</func> (somma cumulata).
+          </para>
+        </li>
+	<li>
+          <para>Funzioni statistiche che accettano due serie come argomenti e
+          producono uno scalare: <func>cov</func> (covarianza), <func>corr</func>
+          (coefficiente di correlazione).
+          </para>
+        </li>
+        <li>
+          <para>Funzioni statistiche speciali: <func>pvalue</func> (si veda oltre),
+          <func>cnorm</func> (funzione di ripartizione normale standard),
+          <func>dnorm</func> (funzione di densità normale standard),
+          <func>resample</func> (ricampiona una serie con rimpiazzo, utile per
+          il bootstrap), <func>hpfilt</func> (componente di
             <quote>ciclo</quote> della serie), <func>bkfilt</func> (filtro
             passa-banda di Baxter&ndash;King).</para>
 	</li>
@@ -1656,29 +1774,43 @@
             la lunghezza del ritardo desiderato; per generare anticipi
 	    si usi <cmd>x(+N)</cmd>.</para>
 	</li>
-	<li><para>Funzioni dataset: <func>misszero</func> (sostituisce con 
-            zero il codice delle osservazioni mancanti in una serie);
-	    <func>zeromiss</func> (l'operazione inversa di
-	    <func>misszero</func>); <func>nobs</func> (riporta il numero di
-	    osservazioni valide in una data serie); <func>missing</func>
-            (per ogni osservazione, vale 1 se l'argomento ha un valore mancante,
-            0 altrimenti); <func>ok</func> (l'opposto di <func>missing</func>).</para>
+        <li><para>Funzioni dataset, che producono una serie:
+          <func>misszero</func> (sostituisce con zero il codice delle
+          osservazioni mancanti in una serie); <func>zeromiss</func>
+          (l'operazione inversa di <func>misszero</func>); 
+          <func>missing</func> (per ogni osservazione, vale 1 se l'argomento ha
+          un valore mancante, 0 altrimenti); <func>ok</func> (l'opposto di
+          <func>missing</func>).</para>
 	</li>
-	<li><para>Numeri pseudo-casuali: <func>uniform</func>,
-	    <func>normal</func>.</para>
-	</li>
+        <li><para>Funzioni dataset, che producono uno scalare:
+          <func>nobs</func> (riporta il numero di osservazioni valide in una
+          serie), <func>firstobs</func> (riporta il numero della prima osservazione
+          non mancante in una serie) <func>lastobs</func> (numero dell'ultima osservazione
+          non mancante in una serie).
+ 	  </para>
+ 	</li>
+        
+	<li><para>
+	    Numeri pseudo-casuali: <func>uniform</func> e <func>normal</func>.
+	    Queste funzioni non accettano argomenti e vanno scritte con
+            parentesi vuote: <lit>uniform()</lit>, <lit>normal()</lit>. Esse
+            creano serie pseudo-casuali estraendo i valori dalle distribuzioni
+            uniforme (0&ndash;1) e normale standard. Si veda anche l'opzione
+            <lit>seed</lit> del comando <cmdref targ="set"/>.
+            Le serie dalla distribuzione uniforme sono generate usando il Mersenne Twister
+            <footnote><para>Si veda Matsumoto e Nishimura
+            (1998). L'implementazione è fornita da <program>glib</program>, se è
+            disponibile, o dal codice C scritto da Nishimura e Matsumoto.</para>
+            </footnote>; per le serie dalla distribuzione normale, viene usato il
+            metodo di Box e Muller (1958), prendendo l'input dal Mersenne Twister.</para>
       </ilist> 
 
       <para>
         Tutte le funzioni viste sopra, con l'eccezione di <func>cov</func>,
         <func>corr</func>, <func>pvalue</func>, <func>fracdiff</func>,
 	<func>uniform</func> e <func>normal</func> hanno come unico argomento
-	il nome di una variabile (attenzione: non è possibile
-	indicare le variabili con il loro numero identificativo in una
-        formula <cmd>genr</cmd>) o un'espressione che si risolve in una
-	variabie (ad es. <lit>ln((x1+x2)/2)</lit>). <func>cov</func> e
-	<func>corr</func> richiedono due argomenti e producono rispettivamente
-	il coefficiente di covarianza e di correlazione tra i due argomenti.
+	il nome di una variabile o un'espressione che si risolve in una
+	variabile (ad es. <lit>ln((x1+x2)/2)</lit>).
 	La funzione <func>pvalue</func> richiede gli stessi argomenti del
 	comando <cmdref targ="pvalue"/>, ma in questo caso occorre separare
 	gli argomenti con delle virgole. Questa funzione produce un p-value
@@ -1691,9 +1823,9 @@
       
       <para>
 	<func>uniform()</func> e <func>normal()</func>, che non richiedono
-        argomenti, producono delle serie pseudo-casuali estratte dalle distribuzioni
-	uniforme (0&ndash;1) e normale standard (si veda anche il comando
-	<cmdref targ="set"/> con l'opzione <lit>seed</lit>).
+        argomenti, producono delle serie pseudo-casuali estratte dalle
+        distribuzioni uniforme (0&ndash;1) e normale standard (si veda anche
+        l'opzione <lit>seed</lit> del comando <cmdref targ="set"/>).
 	Le serie dalla distribuzione uniforme sono generate usando il Mersenne Twister
         <footnote><para>Si veda Matsumoto e Nishimura
         (1998). L'implementazione è fornita da <program>glib</program>, se è
@@ -1782,7 +1914,7 @@
 	    </row> 
 	    <row>
 	      <cell>vcv(<repl>x1</repl>,<repl>x2</repl>)</cell>
-	      <cell>covarianza tra i coefficienti delle variabili
+	      <cell>covarianza stimata tra i coefficienti delle variabili
 		<repl>x1</repl> e <repl>x2</repl> 
 	      </cell> 
 	    </row>
@@ -1900,7 +2032,7 @@
 	  <cell><lit>x</lit> ritardata di 2 periodi</cell>
 	</row>     
 	<row>
-	  <cell><lit>y = x(2)</lit></cell>
+	  <cell><lit>y = x(+2)</lit></cell>
 	  <cell><lit>x</lit> anticipata di 2 periodi</cell>
 	</row>
 	<row>
@@ -1975,7 +2107,7 @@
 	    3</cell>
 	</row>
 	<row>
-	  <cell><lit>samp = !missing(x)</lit></cell>
+	  <cell><lit>samp = ok(x)</lit></cell>
 	  <cell>vale 1 per le osservazioni dove il valore di <lit>x</lit>
             non è mancante.</cell>
 	</row>
@@ -3060,8 +3192,8 @@
         Regressione binomiale logit. La variabile dipendente deve essere
         binaria. Le stime di massima verosimiglianza dei coefficienti
         per le <repl>variabili-indipendenti</repl> sono ottenute con il
-        metodo EM (Expectation&ndash;Maximization, si veda Ruud, 2000,
-	capitolo 27).  Visto che il modello è nonlineare, le pendenze
+        metodo BRMR (<quote>binary response model regression</quote>) descritto
+        in Davidson e MacKinnon (2004). Visto che il modello è nonlineare, le pendenze
         dipendono dai valori delle variabili indipendenti: le pendenze
         riportate sono valutate nelle medie di queste variabili. La
         statistica chi-quadro testa l'ipotesi nulla che tutti i
@@ -3771,9 +3903,14 @@
 	  <flag>--quiet</flag>
 	  <effect>non mostra le stime per il modello ridotto</effect>
 	</option>
+ 	<option>
+ 	  <flag>--silent</flag>
+ 	  <effect>non mostra nulla</effect>
+ 	</option>
       </options>
       <examples>
         <example>omit 5 7 9</example>
+        <example>omit seasonals --quiet</example>
       </examples>
     </usage>
 
@@ -3794,6 +3931,9 @@
         anche le stime del modello ridotto. In quest'ultimo caso,
         l'opzione <lit>--vcv</lit> mostra anche la matrice di covarianza
         dei coefficienti.
+ 	Usando l'opzione <lit>--silent</lit>, non viene mostrato nulla; tuttavia
+        i risultati del test possono essere recuperati usando le variabili
+        speciali <lit>$test</lit> e <lit>$pvalue</lit>.
       </para>
     </description>
 
@@ -4234,6 +4374,10 @@
 	  <flag>--ten</flag>
 	  <effect>usa 10 cifre significative</effect>
 	</option>
+ 	<option>
+ 	  <flag>--no-dates</flag>
+ 	  <effect>usa i numeri delle osservazioni</effect>
+ 	</option>
       </options>
       <examples>
 	<example>print x1 x2 --byobs</example>
@@ -4253,6 +4397,14 @@
       </para>
 
       <para>
+ 	Se si usa l'opzione <lit>--byobs</lit> e i dati sono mostrati per
+        osservazione, il comportamento predefinito è quello di mostrare la data
+        (per serie storiche) o il marcatore (se esiste) all'inizio di ogni riga.
+ 	L'opzione <lit>--no-dates</lit> sopprime la visualizzazione delle date o
+        dei marcatori: viene mostrato solo un semplice numero di osservazione.
+       </para>
+ 
+       <para>
 	Se l'argomento di <cmd>print</cmd> è una stringa letterale (che
         deve iniziare con le virgolette doppie <lit>"</lit>), la stringa
         viene stampata così come è stata indicata. Si veda anche <cmdref
@@ -4287,9 +4439,10 @@
 
       <para>La stringa di formato deve essere racchiusa tra virgolette
         doppie, i valori da stampare devono seguire la stringa di
-        formato, separati da virgole. I valori possono avere due forme:
-	i nomi di variabili nel dataset, oppure espressioni valide per
-        il comando <cmd>genr</cmd>. L'esempio seguente stampa i valori
+        formato, separati da virgole. I valori possono avere tre forme:
+	a) i nomi di variabili nel dataset; b) espressioni valide per
+        il comando <cmd>genr</cmd>; c) le funzioni speciali <lit>varname()</lit>
+        o <lit>date()</lit>. L'esempio seguente stampa i valori
         di due variabili e quello di un'espressione calcolata:</para>
 
       <code>
@@ -4300,6 +4453,17 @@
       </code>
 
       <para>
+ 	Le prossime righe mostrano l'uso delle funzioni varname e date, che
+        rispettivamente mostrano il nome di una variabile dato il suo numero
+        identificativo, e una stringa data, dato un numero di osservazione.
+      </para>
+ 
+       <code>
+ 	printf "Il nome della variabile %d è %s\n", i, varname(i)
+ 	printf "La data dell'osservazione %d è %s\n", j, date(j)
+       </code>
+ 
+       <para>
 	La lunghezza massima di una stringa di formato è di 127
         caratteri. Vengono riconosciute le sequenze di escape
 	<lit>\n</lit> (newline), <lit>\t</lit> (tab),
