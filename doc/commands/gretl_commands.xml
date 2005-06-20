@@ -1716,7 +1716,7 @@
       <para>
 	This command may yield either a series or a scalar result.  For example,
 	the formula <lit>x2 = x * 2</lit> naturally yields a series if the
-	variable <lit>x</lit> is a series and a scalar is <lit>x</lit> is a
+	variable <lit>x</lit> is a series and a scalar if <lit>x</lit> is a
 	scalar.  The formulae <lit>x = 0</lit> and <lit>mx = mean(x)</lit>
 	naturally return scalars. Under some circumstances you may want to have
 	a scalar result expanded into a series or vector.  You can do this by

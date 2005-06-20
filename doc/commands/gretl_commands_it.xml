@@ -1677,6 +1677,7 @@
         variabile, costanti, operatori e funzioni (descritte oltre). Ulteriori
         dettagli su alcuni aspetti di questo comando si possono trovare in
         <manref targ="chap-genr"/>.
+      </para>
 
       <para>
 	Questo comando può produrre come risultato una serie o uno scalare. Ad
@@ -1802,7 +1803,9 @@
             (1998). L'implementazione è fornita da <program>glib</program>, se è
             disponibile, o dal codice C scritto da Nishimura e Matsumoto.</para>
             </footnote>; per le serie dalla distribuzione normale, viene usato il
-            metodo di Box e Muller (1958), prendendo l'input dal Mersenne Twister.</para>
+            metodo di Box e Muller (1958), prendendo l'input dal Mersenne Twister.
+	  </para>
+	</li>
       </ilist> 
 
       <para>
