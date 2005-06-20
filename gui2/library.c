@@ -1365,6 +1365,9 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	if (err) {
 	    return;
 	}
+	if (dyn_ok) { /* ?? */
+	    t2 = datainfo->n - 1;
+	}
     }
 
     /* max number of pre-forecast obs in "best case" */

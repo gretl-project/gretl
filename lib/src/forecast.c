@@ -234,6 +234,8 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
     return fr;
 }
 
+/* local shortcut to get a model's list of regressors */
+
 static int *model_xlist (MODEL *pmod)
 {
     int *xlist = (int *) gretl_model_get_data(pmod, "xlist");
@@ -248,6 +250,10 @@ static int *model_xlist (MODEL *pmod)
 
     return xlist;
 }
+
+/* try to figure out if a model has any lags of the dependent
+   variable among the regressors: return 1 if so, 0 if not
+*/
 
 static int 
 has_depvar_lags (MODEL *pmod, const DATAINFO *pdinfo)
@@ -615,10 +621,12 @@ static void dprintf (const char *format, ...)
 /*   
    GARCH error variance process:
 
-   h(t) = a(0) + sum(i=1 to q) a(i) * u(t-i)^2 + sum(j=1 to p) b(j) * h(t-j)
+   h(t) = a(0) + sum(i=1 to q) a(i) * u(t-i)^2 
+                   + sum(j=1 to p) b(j) * h(t-j)
 
    This is then complexified if the model includes lags of the
-   dependent variable among the regressors.
+   dependent variable among the regressors, but in the following
+   function we just calculate the successive h's.
 */
 
 static double *garch_h_hat (const MODEL *pmod, int t1, int t2,
@@ -699,8 +707,9 @@ static double *garch_h_hat (const MODEL *pmod, int t1, int t2,
     return h;
 }
 
-/* infinite MA representation, in case GARCH model has lags of the
-   dependent var among the regressors (coeffs recorded in array phi)
+/* Infinite MA representation, in case GARCH model has lags of the
+   dependent var among the regressors (the autoregressive coeffs are
+   recorded in the array phi).
 */
 
 static double *garch_psi (const double *phi, int p, int nf)
@@ -719,8 +728,8 @@ static double *garch_psi (const double *phi, int p, int nf)
 
     psi[0] = 1.0;
 
-    /* are we right w.r.t. signs below?  do we need to 
-       keep a record of squares too? (or instead?) 
+    /* Are we OK with regard to signs below?  Do we need to keep a
+       record of the squares of the psi elements too? (Or instead?)
     */
 
     for (s=1; s<nf; s++) {
@@ -744,6 +753,12 @@ static double *garch_psi (const double *phi, int p, int nf)
 
     return psi;
 }
+
+/* Construct an array, "phi", of autoregressive coefficients, if a
+   GARCH model has any lags of the dependent variable among the
+   regressors; the array has dimension equal to the highest-order lag
+   of the dependent variable.
+*/
 
 static double *garch_ldv_phi (const MODEL *pmod, const int *xlist,
 			      const int *dvlags, int *ppmax)
@@ -783,6 +798,12 @@ static double *garch_ldv_phi (const MODEL *pmod, const int *xlist,
 
     return phi;
 }
+
+/* Compute forecast standard errors for a GARCH model that includes
+   lags of the dependent variable among the regressors.  This could do
+   with some scrutiny (or the calculation, above, of the "psi" array
+   could do with checking).
+*/
 
 static double garch_ldv_sderr (const double *h,
 			       const double *psi,
