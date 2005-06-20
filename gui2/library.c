@@ -1347,11 +1347,6 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     forecast_options_for_model(pmod, (const double **) Z, datainfo, &dyn_ok, 
 			       &add_obs_ok, &dt2, &st2);
 
-    /* special */
-    if (pmod->ci == GARCH) {
-	dyn_ok = (pmod->t2 < dt2);
-    }
-
     if (dyn_ok) {
 	t2 = dt2;
     } else {
@@ -1364,9 +1359,6 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	err = out_of_sample_info(add_obs_ok, &t2);
 	if (err) {
 	    return;
-	}
-	if (dyn_ok) { /* ?? */
-	    t2 = datainfo->n - 1;
 	}
     }
 
