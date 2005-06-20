@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-06-14 16:19-0400\n"
-"PO-Revision-Date: 2005-05-20 17:06-0400\n"
+"PO-Revision-Date: 2005-06-20 17:06-0400\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -1194,6 +1194,8 @@ msgstr "Le jeu de données compactées devrait être vide"
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
 msgstr ""
+"Des variables devant être sauvegardées, %d étaient déjà présents dans \n"
+"la base de données."
 
 #: lib/src/describe.c:693
 #, c-format
@@ -1398,9 +1400,8 @@ msgstr "%s, utilisant les observations %s - %s"
 #: lib/src/describe.c:1814 gui2/guiprint_common.c:116
 #: gui2/guiprint_common.c:210 gui2/guiprint_common.c:340
 #: gui2/guiprint_common.c:433
-#, fuzzy
 msgid "(missing values were skipped)"
-msgstr "(valeurs manquantes seront escamotées)"
+msgstr "(les valeurs manquantes ont été escamotées)"
 
 #: lib/src/describe.c:1826 gui2/guiprint_common.c:129
 #: gui2/guiprint_common.c:222
@@ -1844,7 +1845,7 @@ msgstr "Variables auxiliaires du panel générées.\n"
 
 #: lib/src/generate.c:2666
 msgid "Specified a scalar, but a vector was produced."
-msgstr ""
+msgstr "Spécifiait un scalaire mais un vecteur a été produit."
 
 #: lib/src/generate.c:2698
 msgid "You cannot turn a scalar into a vector when the dataset is subsampled."
@@ -2290,6 +2291,8 @@ msgid ""
 "Number of arguments (%d) does not match the number of\n"
 "parameters for function %s (%d)"
 msgstr ""
+"Le nombre d'arguements (%d) ne concorde par avec le nombre de\n"
+"paramètres pour la fonction %s (%d)"
 
 #: lib/src/gretl_func.c:1155
 #, c-format
@@ -2297,6 +2300,8 @@ msgid ""
 "Number of assignments (%d) exceeds the number of values returned by\n"
 "%s (%d)"
 msgstr ""
+"Le nombre d'assignations (%d) excède le nombre de valeurs retournées\n"
+"par %s (%d)"
 
 #: lib/src/gretl_func.c:1287 cli/gretlcli.c:611 gui2/library.c:5369
 #, c-format
@@ -2306,7 +2311,7 @@ msgstr "Longueur maximum de la ligne de commande (%d octets) en excès\n"
 #: lib/src/gretl_func.c:1337
 #, c-format
 msgid "Error condition in execution of function %s"
-msgstr ""
+msgstr "Condition d'erreur dans l'exécution de la fonction %s"
 
 #: lib/src/gretl_intl.c:39 gui/gretl.c:159 gui2/gretl.c:213
 msgid "/File/_Open data"
@@ -2659,7 +2664,7 @@ msgstr "end: déclaration n'a rien à terminer"
 #: lib/src/interact.c:1008
 #, c-format
 msgid "%s: required parameter is missing"
-msgstr ""
+msgstr "%s: le paramètre requis est manquant"
 
 #: lib/src/interact.c:1188 lib/src/interact.c:2949 gui2/objectsave.c:214
 #, c-format
@@ -2777,14 +2782,13 @@ msgid "Now appending output to '%s'\n"
 msgstr "Écriture en cours à la fin du fichier '%s'\n"
 
 #: lib/src/interact.c:2548
-#, fuzzy
 msgid "The data set is currently sub-sampled.\n"
-msgstr "La fonte GDk qui est actuellement sélectionnée."
+msgstr "Le jeu de données est couramment sous-échantilloné.\n"
 
 #: lib/src/interact.c:2555
-#, fuzzy, c-format
+#, c-format
 msgid "Dataset extended by %d observations"
-msgstr "Étendue complète: %d observations\n"
+msgstr "Jeu de données étendue de %d observations"
 
 #: lib/src/interact.c:2597
 msgid "adf: lag order must be given first\n"
@@ -3472,14 +3476,12 @@ msgid "sigma"
 msgstr "sigma"
 
 #: lib/src/modelprint.c:2054 lib/src/modelprint.c:2064
-#, fuzzy
 msgid "Actual"
-msgstr "actuel"
+msgstr "Actuel"
 
 #: lib/src/modelprint.c:2057
-#, fuzzy
 msgid "Predicted"
-msgstr "Prédiction"
+msgstr "Prédi"
 
 #: lib/src/modelprint.c:2088 lib/src/modelprint.c:2119
 #: lib/src/modelprint.c:2151
@@ -3857,9 +3859,8 @@ msgid "Couldn't load plugin function"
 msgstr "Ne peut charger la fonction du plugin"
 
 #: lib/src/printout.c:58
-#, fuzzy
 msgid "Covariance matrix of regression coefficients"
-msgstr "Coefficients de corrélation"
+msgstr "Matrice de covariance des coefficients de régression"
 
 #: lib/src/printout.c:79 lib/src/printout.c:148
 msgid "Current session"
@@ -4001,9 +4002,9 @@ msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
 msgstr "Note: * indique un résidu en excès de 2.5 de l'erreur standard\n"
 
 #: lib/src/printout.c:1336
-#, fuzzy, c-format
+#, c-format
 msgid " For 95%% confidence intervals, z(.025) = %.2f\n"
-msgstr " Pour l'intervalle de confiance 95%%, t(%d, .025) = %.3f\n"
+msgstr " Pour l'intervalle de confiance 95%%, z(.025) = %.2f\n"
 
 #: lib/src/printout.c:1339
 #, c-format
@@ -5111,9 +5112,8 @@ msgid "/File/Save data as/_gzipped..."
 msgstr "/Fichier/_Sauvegarder les données/_gzipped..."
 
 #: gui/gretl.c:190 gui2/gretl.c:253
-#, fuzzy
 msgid "/File/Save data as/_database..."
-msgstr "/Fichier/_Sauvegarder les données/_gzipped..."
+msgstr "/Fichier/_Sauvegarder les données/_base de données..."
 
 #: gui/gretl.c:194 gui2/gretl.c:257
 msgid "/File/_Export data"
@@ -5583,9 +5583,8 @@ msgid "/Data/Add variables/Define _new variable..."
 msgstr "/Variable/Ajouter des variables/Définir la _nouvelle variable..."
 
 #: gui/gretl.c:367 gui2/gretl.c:444
-#, fuzzy
 msgid "/Data/Add observations..."
-msgstr "Ajouter une observation"
+msgstr "/Données/Ajouter des observations..."
 
 #: gui/gretl.c:368 gui2/gretl.c:445
 msgid "/Data/Refresh window"
@@ -6179,9 +6178,8 @@ msgid "Fine-tune using Cochrane-Orcutt"
 msgstr "Utiliser Cochrane-Orcutt pour finir"
 
 #: gui/selector.c:1217 gui2/selector.c:1522
-#, fuzzy
 msgid "Cointegrating regression includes a constant"
-msgstr "Régression de cointégration - "
+msgstr "Régression de cointégration inclut une constante"
 
 #: gui/selector.c:1238 gui2/dialogs.c:2848 gui2/dlgutils.c:33
 #: plugin/leverage.c:178 plugin/logistic.c:122 plugin/pca.c:194
@@ -6447,9 +6445,8 @@ msgid "Close"
 msgstr "Fermer"
 
 #: gui/ssheet.c:769 gui2/ssheet.c:1492
-#, fuzzy
 msgid "You can't do this while editing the dataset"
-msgstr "Vous ne pouvez simuler avec la constante"
+msgstr "Vous ne pouvez faire cela lors de l'édition du jeu de données"
 
 #: gui/textbuf.c:47 gui2/textbuf.c:131 gui2/textbuf.c:140
 msgid "No undo information available"
@@ -7651,9 +7648,8 @@ msgid "compaction method (for reducing frequency):"
 msgstr "méthode de compactage (pour la réduction en fréquence):"
 
 #: gui2/dialogs.c:1216
-#, fuzzy
 msgid "gretl: database description"
-msgstr "répertoire de la base de données gretl"
+msgstr "gretl: description de la base de données"
 
 #: gui2/dialogs.c:1434 gui2/dialogs.c:1635
 #, c-format
@@ -7694,51 +7690,44 @@ msgid "End:"
 msgstr "Fin:"
 
 #: gui2/dialogs.c:1726
-#, fuzzy
 msgid "Number of pre-forecast observations to graph"
-msgstr "Nombre d'itérations = %d\n"
+msgstr "Nombre d'observation de pré-prévision au graphe"
 
 #: gui2/dialogs.c:1729
 msgid "automatic forecast (dynamic out of sample)"
-msgstr ""
+msgstr "prévision automatique (dynamique hors échantillon)"
 
 #: gui2/dialogs.c:1730
 msgid "dynamic forecast"
-msgstr ""
+msgstr "prévision dynamique"
 
 #: gui2/dialogs.c:1731
-#, fuzzy
 msgid "static forecast"
-msgstr "gretl: prévisions"
+msgstr "prévision statique"
 
 #: gui2/dialogs.c:1746
 msgid "gretl: forecast"
 msgstr "gretl: prévisions"
 
 #: gui2/dialogs.c:1751
-#, fuzzy
 msgid "Forecast range:"
-msgstr "période des prévisions"
+msgstr "Étendue de prévision:"
 
 #: gui2/dialogs.c:1752
-#, fuzzy
 msgid "Start"
-msgstr "Début:"
+msgstr "Début"
 
 #: gui2/dialogs.c:1752
-#, fuzzy
 msgid "End"
-msgstr "Fin:"
+msgstr "Fin"
 
 #: gui2/dialogs.c:1856
-#, fuzzy
 msgid "Add observations"
-msgstr "Ajouter une observation"
+msgstr "Ajouter des observations"
 
 #: gui2/dialogs.c:1873
-#, fuzzy
 msgid "Number of observations to add:"
-msgstr "Nombre d'observations:"
+msgstr "Nombre d'observations à ajouter:"
 
 #: gui2/dialogs.c:2093
 msgid "Native code"
@@ -8149,9 +8138,8 @@ msgid "gretl data files (*.gdt)"
 msgstr "fichiers de données gretl (*.gdt)"
 
 #: gui2/fileselect.c:617
-#, fuzzy
 msgid "gretl database files (*.bin)"
-msgstr "gretl: fichier de bases de données"
+msgstr "fichiers de bases de données (*.bin)"
 
 #: gui2/fileselect.c:618 gui2/fileselect.c:620
 msgid "gretl command files (*.inp)"
@@ -8661,18 +8649,18 @@ msgid "Note: * denotes a residual in excess of 2.5 standard errors"
 msgstr "Note: * indique un résidu en excès de 2.5 de l'erreur standard"
 
 #: gui2/guiprint_common.c:746
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "For 95\\%% confidence intervals, $z(.025) = %.2f$\n"
 "\n"
-msgstr " Pour l'intervalle de confiance 95%%, t(%d, .025) = %.3f\n"
+msgstr "Pour l'intervalle de confiance 95%%, $z(.025) = %.2f$\n"
 
 #: gui2/guiprint_common.c:749
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "For 95\\%% confidence intervals, $t(%d, .025) = %.3f$\n"
 "\n"
-msgstr " Pour l'intervalle de confiance 95%%, t(%d, .025) = %.3f\n"
+msgstr "Pour l'intervalle de confiance 95%%, $t(%d, .025) = %.3f$\n"
 
 #: gui2/guiprint_common.c:775 gui2/guiprint_common.c:955
 #, no-c-format
@@ -8680,14 +8668,14 @@ msgid "95\\% confidence interval"
 msgstr "intervalle de confiance 95\\%"
 
 #: gui2/guiprint_common.c:847
-#, fuzzy, c-format
+#, c-format
 msgid "For 95%% confidence intervals, z(.025) = %.2f"
-msgstr " Pour l'intervalle de confiance 95%%, t(%d, .025) = %.3f\n"
+msgstr "Pour l'intervalle de confiance 95%%, z(.025) = %.2f"
 
 #: gui2/guiprint_common.c:850
-#, fuzzy, c-format
+#, c-format
 msgid "For 95%% confidence intervals, t(%d, .025) = %.3f"
-msgstr " Pour l'intervalle de confiance 95%%, t(%d, .025) = %.3f\n"
+msgstr "Pour l'intervalle de confiance 95%%, t(%d, .025) = %.3f"
 
 #: gui2/guiprint_common.c:866 gui2/guiprint_common.c:1004
 #, no-c-format
@@ -8841,9 +8829,8 @@ msgid "/Model data/Display actual, fitted, residual"
 msgstr "/Données du modèle/Afficher l'actuel, ajusté et résiduel"
 
 #: gui2/gui_utils.c:171 gui2/gui_utils.c:222
-#, fuzzy
 msgid "/Model data/Forecasts..."
-msgstr "/Données du modèle/sep1"
+msgstr "/Données du modèle/Prévisions..."
 
 #: gui2/gui_utils.c:173 gui2/gui_utils.c:224
 msgid "/Model data/Confidence intervals for coefficients"
@@ -8894,14 +8881,12 @@ msgid "/LaTeX/_Save"
 msgstr "/LaTeX/_Sauvegarder"
 
 #: gui2/gui_utils.c:248 gui2/gui_utils.c:294
-#, fuzzy
 msgid "/LaTeX/Save/Tabular"
-msgstr "/LaTeX/Sauvegarder/_Tabulaire"
+msgstr "/LaTeX/Sauvegarder/Tabulaire"
 
 #: gui2/gui_utils.c:250 gui2/gui_utils.c:296
-#, fuzzy
 msgid "/LaTeX/Save/Equation"
-msgstr "/LaTeX/Sauvegader/_Équation"
+msgstr "/LaTeX/Sauvegader/Équation"
 
 #: gui2/gui_utils.c:271 gui2/gui_utils.c:316 gui2/series_view.c:57
 #: gui2/series_view.c:76
@@ -9373,9 +9358,9 @@ msgid "Error adding variables"
 msgstr "Erreur d'ajout de variables"
 
 #: gui2/library.c:672
-#, fuzzy, c-format
+#, c-format
 msgid "forecast of %s"
-msgstr "Spectre de %s"
+msgstr "prévision de %s"
 
 #: gui2/library.c:730 gui2/library.c:734
 msgid "correlation matrix"
@@ -9511,6 +9496,9 @@ msgid ""
 "out of sample.  You can add some observations now\n"
 "if you wish."
 msgstr ""
+"Il n'y a pas d'observation disponible pour prédire en \n"
+"dehors de l'échantillon. Vous pouvez ajouter des observations\n"
+"maintenant si vous le désirez."
 
 #: gui2/library.c:1306
 msgid ""
@@ -9519,6 +9507,11 @@ msgid ""
 "(Data menu, Edit data), or you can shorten the sample\n"
 "range over which the model is estimated (Sample menu)."
 msgstr ""
+"Il n'y a pas d'observation disponible pour prédire en dehors \n"
+"de l'échantillon. Si vous le désirez, vous pouvez ajouter\n"
+"des observations (menu données, édition de données) ou vous\n"
+"pouvez réduire l'étendue de l'échantillon sur lequel le modèle\n"
+"est estimé (menu échantillon)."
 
 #: gui2/library.c:1386 gui2/library.c:4023
 msgid "Failed to generate fitted values"
@@ -9936,7 +9929,7 @@ msgstr "Données transposées"
 
 #: gui2/library.c:4876
 msgid "OK to overwrite?"
-msgstr ""
+msgstr "D'accord pour écraser?"
 
 #: gui2/library.c:4931
 msgid ""

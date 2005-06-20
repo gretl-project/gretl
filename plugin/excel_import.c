@@ -848,8 +848,8 @@ static int allocate_row_col (int i, int j, wbook *book)
     if (j >= rows[i].end) {
 	newcol = (j / 16 + 1) * 16;
 #ifdef MEMDEBUG
-	fprintf(stderr, "allocate: allocating %d cells on row %d\n", 
-		newcol - rows[i].end, row);
+	fprintf(stderr, "allocate: reallocing rows[%d].cells to size %d\n", 
+		i, newcol);
 #endif
 	cells = realloc(rows[i].cells, newcol * sizeof *cells);
 
@@ -1121,10 +1121,17 @@ check_data_block (wbook *book, int ncols, const char *blank_col,
 	    continue;
 	}
 	for (i=startrow; i<nrows; i++) {
+#ifdef EDEBUG
+	    fprintf(stderr, "data_block: looking at rows[%d], end = %d\n", 
+		    i, rows[i].end);
+#endif
 	    if (rows[i].cells  == NULL) {
 #ifdef EDEBUG
 		fprintf(stderr, "data_block: rows[%d].cells = NULL\n", i);
 #endif
+		ret = -1;
+	    } else if (j >= rows[i].end) {
+		fprintf(stderr, "data_block: short row, fell off the end\n");
 		ret = -1;
 	    } else if (rows[i].cells[j] == NULL) {
 #ifdef EDEBUG
@@ -1204,7 +1211,8 @@ static int transcribe_data (double **Z, DATAINFO *pdinfo,
 	for (t=0; t<pdinfo->n; t++) {
 	    int ts = t + 1 + row_offset;
 
-	    if (rows[ts].cells == NULL || rows[ts].cells[i] == NULL) {
+	    if (rows[ts].cells == NULL || i >= rows[ts].end ||
+		rows[ts].cells[i] == NULL) {
 		continue;
 	    }
 #ifdef EDEBUG
