@@ -1335,6 +1335,7 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     int t2, t1 = 0;
     int dyn_ok, add_obs_ok;
     int premax, pre_n = 0;
+    int t1min = 0;
     int dt2 = datainfo->n - 1;
     int st2 = datainfo->n - 1;
     gretlopt opt = OPT_NONE;
@@ -1347,8 +1348,8 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 			       &add_obs_ok, &dt2, &st2);
 
     /* special */
-    if (pmod->ci == GARCH && pmod->t2 < dt2) {
-	dyn_ok = 1;
+    if (pmod->ci == GARCH) {
+	dyn_ok = (pmod->t2 < dt2);
     }
 
     if (dyn_ok) {
@@ -1374,11 +1375,18 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     if (t2 > pmod->t2) {
 	t1 = pmod->t2 + 1;
 	pre_n = pmod->t2 / 2;
+	if (pre_n > 100) {
+	    pre_n = 100;
+	}
+	if (pmod->ci == GARCH) {
+	    /* force out-of-sample fcast */
+	    t1min = t1;
+	}
     } else {
 	pre_n = 0;
     }
-
-    resp = forecast_dialog(0, t2, &t1,
+    
+    resp = forecast_dialog(t1min, t2, &t1,
 			   0, t2, &t2,
 			   0, premax, &pre_n,
 			   dyn_ok);

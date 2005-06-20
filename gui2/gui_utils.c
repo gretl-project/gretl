@@ -2933,6 +2933,9 @@ static void var_forecast_callback (gpointer p, guint i, GtkWidget *w)
     if (t2 > pmod->t2) {
 	t1 = pmod->t2 + 1;
 	pre_n = pmod->t2 / 2;
+	if (pre_n > 100) {
+	    pre_n = 100;
+	}
 	dyn_ok = 1;
     } else {
 	t1 = 0;

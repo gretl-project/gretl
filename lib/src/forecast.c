@@ -610,6 +610,8 @@ static void dprintf (const char *format, ...)
 
 #define depvar_lag(f,i) ((f->dvlags != NULL)? f->dvlags[i] : 0)
 
+#define GFC_DEBUG 0
+
 /*   
    GARCH error variance process:
 
@@ -688,13 +690,118 @@ static double *garch_h_hat (const MODEL *pmod, int t1, int t2,
 	h = NULL;
     }
 
-#if 0
+#if GFC_DEBUG
     for (t=t1; t<=t1 + 10; t++) {
 	fprintf(stderr, "h_hat[%d] = %g\n", t, h[t-t1]);
     }
 #endif
 
     return h;
+}
+
+/* infinite MA representation, in case GARCH model has lags of the
+   dependent var among the regressors (coeffs recorded in array phi)
+*/
+
+static double *garch_psi (const double *phi, int p, int nf)
+{
+    double *psi;
+    int i, s;
+
+    if (phi == NULL) {
+	return NULL;
+    }
+
+    psi = malloc(nf * sizeof *psi);
+    if (psi == NULL) {
+	return NULL;
+    }
+
+    psi[0] = 1.0;
+
+    /* are we right w.r.t. signs below?  do we need to 
+       keep a record of squares too? (or instead?) 
+    */
+
+    for (s=1; s<nf; s++) {
+	psi[s] = 0.0;
+
+	/* add psi[s] components derived from dep var lags */
+	for (i=0; i<p && i<s; i++) {
+	    psi[s] += phi[i] * psi[s-i-1];
+#if GFC_DEBUG
+	    fprintf(stderr, "psi[%d]: adding phi[%d] * psi[%d] = %g\n",
+		    s, i, s-i-1, phi[i] * psi[s-i-1]);
+#endif
+	}
+    }
+
+#if GFC_DEBUG
+    for (s=0; s<nf; s++) {
+	fprintf(stderr, "psi[%d] = %g\n", s, psi[s]);
+    }    
+#endif
+
+    return psi;
+}
+
+static double *garch_ldv_phi (const MODEL *pmod, const int *xlist,
+			      const int *dvlags, int *ppmax)
+{
+    double *phi = NULL;
+    int i, pmax = 0;
+
+    if (dvlags != NULL && xlist != NULL) {
+	for (i=0; i<xlist[0]; i++) {
+	    if (dvlags[i] > pmax) {
+		pmax = dvlags[i];
+	    }
+	}
+
+	phi = malloc(pmax * sizeof *phi);
+	if (phi != NULL) {
+	    for (i=0; i<pmax; i++) {
+		phi[i] = 0.0;
+	    }
+	    for (i=0; i<xlist[0]; i++) {
+		if (dvlags[i] > 0) {
+		    phi[dvlags[i] - 1] = pmod->coeff[i];
+		}
+	    }
+	}
+    }
+
+    if (phi != NULL) {
+#if GFC_DEBUG
+	fprintf(stderr, "garch_ldv_phi: pmax = %d\n", pmax);
+	for (i=0; i<pmax; i++) {
+	    fprintf(stderr, "phi[%d] = %g\n", i, phi[i]);
+	}
+#endif
+	*ppmax = pmax;
+    }
+
+    return phi;
+}
+
+static double garch_ldv_sderr (const double *h,
+			       const double *psi,
+			       int s)
+{
+    double ss, vs = h[s];
+    int i;
+
+    for (i=1; i<=s; i++) {
+	vs += h[s-i] * psi[i] * psi[i];
+    }
+
+    if (vs >= 0.0) {
+	ss = sqrt(vs);
+    } else {
+	ss = NADBL;
+    }
+
+    return ss;
 }
 
 static int garch_fcast (Forecast *fc, MODEL *pmod, 
@@ -704,6 +811,8 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
     int xvars, yno;
     int *xlist = NULL;
     double *h = NULL;
+    double *phi = NULL;
+    double *psi = NULL;
     int i, v, s, t;
 
     xlist = model_xlist(pmod);
@@ -717,6 +826,16 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 
     if (fc->sderr != NULL) {
 	h = garch_h_hat(pmod, fc->t1, fc->t2, xvars);
+    }
+
+    if (fc->dvlags != NULL) {
+	int pmax, ns = fc->t2 - pmod->t2;
+	
+	if (ns > 0) {
+	    phi = garch_ldv_phi(pmod, xlist, fc->dvlags, &pmax);
+	    psi = garch_psi(phi, pmax, ns);
+	    free(phi);
+	}
     }
 
     for (t=fc->t1; t<=fc->t2; t++) {
@@ -752,12 +871,21 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 	}
 
 	if (h != NULL && t > pmod->t2) {
-	    fc->sderr[s] = sqrt(h[t - pmod->t2 - 1]);
+	    if (psi != NULL) {
+		/* build in effect of lagged dependent var */
+		fc->sderr[s] = garch_ldv_sderr(h, psi, t - pmod->t2 - 1);
+	    } else {
+		/* no lagged dependent variable */
+		fc->sderr[s] = sqrt(h[t - pmod->t2 - 1]);
+	    }
 	}
     }
 
     if (h != NULL) {
 	free(h);
+    }
+    if (psi != NULL) {
+	free(psi);
     }
 
     return 0;
@@ -1106,13 +1234,11 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 		     const double **Z, const DATAINFO *pdinfo)
 {
     const int *arlist;
-    int *xlist;
     double *phi = NULL;
     double *psi = NULL;
     double *errphi = NULL;
-    double *h = NULL;
     double ss_psi = 0.0;
-    double xvars, xval, yh;
+    double xval, yh;
     double rk, ylag, xlag;
     int miss, yno;
     int i, k, v, s, t, tk;
@@ -1123,14 +1249,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
     fprintf(stderr, "\n*** ar_fcast, method = %d\n\n", fc->method);
 #endif
 
-    yno = gretl_model_get_depvar(pmod);
-    xlist = model_xlist(pmod);
-    if (xlist == NULL) {
-	return 1;
-    }
-
-    xvars = xlist[0];
-
+    yno = pmod->list[1];
     arlist = pmod->arinfo->arlist;
     p = arlist[arlist[0]]; /* AR order of error term */
 
@@ -1139,9 +1258,6 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	   out of sample */
 	pmax = max_ar_lag(fc, pmod, p);
 	set_up_ar_fcast_variance(pmod, pmax, &phi, &psi, &errphi);
-	if (pmod->ci == GARCH) {
-	    h = garch_h_hat(pmod, fc->t1, fc->t2, xvars);
-	}
     }
 
     for (t=fc->t1; t<=fc->t2; t++) {
@@ -1184,8 +1300,8 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	}
 
 	/* (1 - r(L)) X_t b */
-	for (i=0; i<xvars && !miss; i++) {
-	    v = xlist[i+1];
+	for (i=0; i<pmod->ncoeff && !miss; i++) {
+	    v = pmod->list[i+2];
 	    if ((dvlag = depvar_lag(fc, i))) {
 		xval = fcast_get_ldv(fc, yno, t, dvlag, Z);
 	    } else {
@@ -1221,20 +1337,12 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	}
 
 	/* forecast error variance */
-	if (phi != NULL) {
+	if (phi != NULL && pmod->ci != GARCH) {
 	    if (t > pmod->t2) {
 		arma_variance_machine(phi, pmax, NULL, 0,
 				      psi, t - pmod->t2, 
 				      &ss_psi);
-		if (pmod->ci == GARCH) {
-		    if (h != NULL) {
-			fc->sderr[s] = sqrt(h[t - pmod->t2 - 1] * ss_psi);
-		    } else {
-			fc->sderr[s] = NADBL;
-		    }
-		} else {
-		    fc->sderr[s] = pmod->sigma * sqrt(ss_psi);
-		}
+		fc->sderr[s] = pmod->sigma * sqrt(ss_psi);
 	    } else {
 		fc->sderr[s] = NADBL;
 	    }
@@ -1245,10 +1353,6 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	free(phi);
 	free(psi);
 	free(errphi);
-    }
-
-    if (h != NULL) {
-	free(h);
     }
 
     return err;
@@ -1446,8 +1550,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	}
     }
 
-    if (dyn_errs && pmod->ci != ARMA && !SIMPLE_AR_MODEL(pmod->ci) &&
-	fc.dvlags != NULL) {
+    if (dyn_errs && !AR_MODEL(pmod->ci) && fc.dvlags != NULL) {
 	/* create dummy AR info structure for model with lagged
 	   dependent variable */
 	int err = dummy_ar_info_init(pmod);
