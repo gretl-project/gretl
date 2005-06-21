@@ -646,6 +646,9 @@ static double *garch_h_hat (const MODEL *pmod, int t1, int t2,
     }
 
     nf = t2 - t1 + 1;
+    if (nf <= 0) {
+	return NULL;
+    }
 
     h = malloc(nf * sizeof *h);
     if (h == NULL) {
@@ -661,14 +664,22 @@ static double *garch_h_hat (const MODEL *pmod, int t1, int t2,
 	s = t - t1;
 
 	h[s] = alpha[0];
+#if GFC_DEBUG
+	fprintf(stderr, "h[%d or %d] init'd to %g\n", s, t, h[s]);
+#endif
     
 	for (i=1; i<=q; i++) {
 	    ti = t - i;
 	    if (ti < 0) {
 		break;
 	    }
-	    if (!na(pmod->uhat[ti])) {
+	    if (ti <= pmod->t2 && !na(pmod->uhat[ti])) {
 		h[s] += alpha[i] * pmod->uhat[ti] * pmod->uhat[ti];
+#if GFC_DEBUG
+		fprintf(stderr, " added alpha[%d] * uhat[%d]^2 = %g * %g = %g\n",
+			i, ti, alpha[i], pmod->uhat[ti] * pmod->uhat[ti],
+			alpha[i] * pmod->uhat[ti] * pmod->uhat[ti]);
+#endif
 	    }
 	}
 
@@ -686,23 +697,25 @@ static double *garch_h_hat (const MODEL *pmod, int t1, int t2,
 		hlag = h[s-i];
 	    }
 	    h[s] += beta[i-1] * hlag;
+#if GFC_DEBUG
+	    fprintf(stderr, " added beta[%d] * h[-%d] = %g * %g = %g\n",
+		    i-1, i, beta[i-1], hlag, beta[i-1] * hlag);
+#endif
 	}
 	
 	if (h[s] < 0.0) {
 	    err = 1;
 	}
+
+#if GFC_DEBUG
+	fprintf(stderr, "h[%d or %d] = %g (%g)\n", s, t, h[s], sqrt(h[s]));
+#endif
     }
 
     if (err) {
 	free(h);
 	h = NULL;
     }
-
-#if GFC_DEBUG
-    for (t=t1; t<=t1 + 10; t++) {
-	fprintf(stderr, "h_hat[%d] = %g\n", t, h[t-t1]);
-    }
-#endif
 
     return h;
 }
@@ -846,7 +859,7 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
     }
 
     if (fc->sderr != NULL) {
-	h = garch_h_hat(pmod, fc->t1, fc->t2, xvars);
+	h = garch_h_hat(pmod, pmod->t2 + 1, fc->t2, xvars);
     }
 
     if (fc->dvlags != NULL) {

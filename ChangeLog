@@ -1,4 +1,13 @@
 05/12/2005 version 1.3.4
+- Revise definition of functions in gertl scripts (a backward-
+  incompatible change) in the interest of more structured
+  programming
+- Introduce named lists as a type that can be created and
+  manipulated
+- Big revamp of forecasting code.  Make forecasts available for
+  all types of models; give a choice of static versus dynamic
+  forecasting where relevant; make forecast standard errors
+  available in more cases
 - Increase max length of gretl script command line to 4095 bytes
 - Add support for decennial data
 - Fix for finding TrueType graph fonts on Windows 2000
@@ -14,6 +23,7 @@
 - sort function in genr: save sorted case markers if the dataset
   has case markers
 - Bug fixes for data editing spreadsheet
+- Another bug fix for the XLS importer
 - In correlogram (acf) output, show calculated 5% critical value
 - Correlogram: acf calculations should not use more than 20 percent
   of the available data by default (Tadeusz Kufel)
@@ -27,17 +37,11 @@
   Durbin-Watson and improve formatting
 - smpl --restrict: make it not an error if the restriction has
   no effect (drops no observations)
-- Forecasts for GUI models: make these available for all types
-  of models (but not all with error bounds); add "+" icon to
-  the window showing a forecast, to add the forecast series to
-  the dataset
 - Confidence interval for coefficients, GUI model menu: make
   available for all models
-- Introduce named lists as a type that can be created and
-  manipulated
 - Add matrix of actual and predicted outcomes to the printout
   of results for discrete models
-- Improvements to several dialog boxes
+- Improvements to many dialog boxes
 - Numerous small bug-fixes
 
 03/14/2005 version 1.3.3

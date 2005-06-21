@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.0-pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-06-14 16:19-0400\n"
-"PO-Revision-Date: 2005-06-19 14:00+0100\n"
+"PO-Revision-Date: 2005-06-21 20:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -7574,7 +7574,7 @@ msgstr "Liczba obserwacji przed prognoz± na wykresie"
 
 #: gui2/dialogs.c:1729
 msgid "automatic forecast (dynamic out of sample)"
-msgstr "prognoza dynamiczna (poza zakres próby)"
+msgstr "prognoza dynamiczna (tylko poza zakres próby)"
 
 #: gui2/dialogs.c:1730
 msgid "dynamic forecast"
@@ -7602,7 +7602,7 @@ msgstr "Koñcowa obs.:"
 
 #: gui2/dialogs.c:1856
 msgid "Add observations"
-msgstr "Dodaj obserwacjê"
+msgstr "Dodaj obserwacje"
 
 #: gui2/dialogs.c:1873
 msgid "Number of observations to add:"
@@ -11029,7 +11029,7 @@ msgstr "('*' oznacza wp³ywow± obserwacjê - leverage point)"
 
 #: plugin/leverage.c:547
 msgid "No leverage points were found"
-msgstr "Nie znaleziono wy³ywowych obserwacji (leverage points)"
+msgstr "Nie znaleziono wp³ywowych obserwacji (leverage points)"
 
 #: plugin/logistic.c:49 plugin/logistic.c:191
 msgid "Invalid value for the maximum of the dependent variable"

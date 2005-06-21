@@ -328,6 +328,7 @@ safe_print_line
 var_max_order
 simple_var
 full_var
+gretl_var_get_forecast_matrix
 gretl_var_free
 gretl_var_free_unnamed
 coint
@@ -342,6 +343,9 @@ gretl_var_assign_specific_name
 gretl_var_get_name
 gretl_var_get_variable_number
 gretl_var_get_n_equations
+gretl_var_get_t1
+gretl_var_get_t2
+gretl_var_get_model
 gretl_var_add_resids_to_dataset
 gretl_var_get_highest_variable
 </SECTION>
@@ -1047,6 +1051,7 @@ FITRESID_
 free_fit_resid
 get_fit_resid
 get_forecast
+get_VAR_forecast
 display_forecast
 add_forecast
 forecast_options_for_model
