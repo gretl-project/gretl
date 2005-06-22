@@ -810,6 +810,7 @@ MODEL arma_model (const int *list, const double **Z, DATAINFO *pdinfo,
 	add_arma_varnames(pmod, pdinfo, &ainfo);
 
 	armod = *pmod;
+	free(pmod);
     }
 
  bailout:

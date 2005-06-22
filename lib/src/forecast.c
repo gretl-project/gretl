@@ -173,7 +173,7 @@ void free_fit_resid (FITRESID *fr)
 
 static void fit_resid_set_dec_places (FITRESID *fr)
 {
-    if (gretl_isdummy(0, fr->nobs, fr->actual) > 0) {
+    if (gretl_isdummy(0, fr->nobs - 1, fr->actual) > 0) {
 	fr->pmax = get_precision(fr->fitted, fr->nobs, 6);
     } else {
 	fr->pmax = get_precision(fr->actual, fr->nobs, 6);
@@ -636,7 +636,7 @@ static double *garch_h_hat (const MODEL *pmod, int t1, int t2,
     const double *beta;
     double hlag;
     double *h, *mh;
-    int nf, q, p;
+    int nf, q, p, lmax;
     int i, s, t, ti;
     int err = 0;
 
@@ -660,6 +660,8 @@ static double *garch_h_hat (const MODEL *pmod, int t1, int t2,
     alpha = pmod->coeff + xvars;
     beta = alpha + q + 1;
 
+    lmax = max(p, q);
+
     for (t=t1; t<=t2 && !err; t++) {
 	s = t - t1;
 
@@ -667,23 +669,7 @@ static double *garch_h_hat (const MODEL *pmod, int t1, int t2,
 #if GFC_DEBUG
 	fprintf(stderr, "h[%d or %d] init'd to %g\n", s, t, h[s]);
 #endif
-    
-	for (i=1; i<=q; i++) {
-	    ti = t - i;
-	    if (ti < 0) {
-		break;
-	    }
-	    if (ti <= pmod->t2 && !na(pmod->uhat[ti])) {
-		h[s] += alpha[i] * pmod->uhat[ti] * pmod->uhat[ti];
-#if GFC_DEBUG
-		fprintf(stderr, " added alpha[%d] * uhat[%d]^2 = %g * %g = %g\n",
-			i, ti, alpha[i], pmod->uhat[ti] * pmod->uhat[ti],
-			alpha[i] * pmod->uhat[ti] * pmod->uhat[ti]);
-#endif
-	    }
-	}
-
-	for (i=1; i<=p; i++) {
+	for (i=1; i<=lmax; i++) {
 	    ti = t - i;
 	    if (ti < 0) {
 		break;
@@ -696,17 +682,31 @@ static double *garch_h_hat (const MODEL *pmod, int t1, int t2,
 	    } else {
 		hlag = h[s-i];
 	    }
-	    h[s] += beta[i-1] * hlag;
+	    if (i <= q) {
+		if (ti <= pmod->t2 && !na(pmod->uhat[ti])) {
+		    h[s] += alpha[i] * pmod->uhat[ti] * pmod->uhat[ti];
 #if GFC_DEBUG
-	    fprintf(stderr, " added beta[%d] * h[-%d] = %g * %g = %g\n",
-		    i-1, i, beta[i-1], hlag, beta[i-1] * hlag);
+		    fprintf(stderr, " added alpha[%d] * uhat[%d]^2 = %g * %g = %g\n",
+			    i, ti, alpha[i], pmod->uhat[ti] * pmod->uhat[ti],
+			    alpha[i] * pmod->uhat[ti] * pmod->uhat[ti]);
 #endif
+		} else {
+		    /* lagged uhat^2 not available: substitute its
+		       expectation, h at the same date */
+		    h[s] += alpha[i] * hlag;
+		}
+	    }
+	    if (i <= p) {
+		h[s] += beta[i-1] * hlag;
+#if GFC_DEBUG
+		fprintf(stderr, " added beta[%d] * h[-%d] = %g * %g = %g\n",
+			i-1, i, beta[i-1], hlag, beta[i-1] * hlag);
+#endif
+	    }
 	}
-	
 	if (h[s] < 0.0) {
 	    err = 1;
 	}
-
 #if GFC_DEBUG
 	fprintf(stderr, "h[%d or %d] = %g (%g)\n", s, t, h[s], sqrt(h[s]));
 #endif
@@ -845,6 +845,7 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
     int xvars, yno;
     int *xlist = NULL;
     double *h = NULL;
+    double *mh = NULL;
     double *phi = NULL;
     double *psi = NULL;
     int i, v, s, t;
@@ -860,6 +861,7 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 
     if (fc->sderr != NULL) {
 	h = garch_h_hat(pmod, pmod->t2 + 1, fc->t2, xvars);
+	mh = gretl_model_get_data(pmod, "garch_h");
     }
 
     if (fc->dvlags != NULL) {
@@ -881,6 +883,9 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 	if (fc->method != FC_DYNAMIC && 
 	    t >= pmod->t1 && t <= pmod->t2) {
 	    fc->yhat[s] = pmod->yhat[t];
+	    if (fc->sderr != NULL && mh != NULL) {
+		fc->sderr[s] = mh[t];
+	    }
 	    continue;
 	}
 
@@ -904,13 +909,17 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 	    fc->yhat[s] = yh;
 	}
 
-	if (h != NULL && t > pmod->t2) {
-	    if (psi != NULL) {
-		/* build in effect of lagged dependent var */
-		fc->sderr[s] = garch_ldv_sderr(h, psi, t - pmod->t2 - 1);
+	if (h != NULL) {
+	    if (t > pmod->t2) {
+		if (psi != NULL) {
+		    /* build in effect of lagged dependent var */
+		    fc->sderr[s] = garch_ldv_sderr(h, psi, t - pmod->t2 - 1);
+		} else {
+		    /* no lagged dependent variable */
+		    fc->sderr[s] = sqrt(h[t - pmod->t2 - 1]);
+		}
 	    } else {
-		/* no lagged dependent variable */
-		fc->sderr[s] = sqrt(h[t - pmod->t2 - 1]);
+		fc->sderr[s] = NADBL;
 	    }
 	}
     }
@@ -1681,7 +1690,8 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     return err;
 }
 
-static int parse_forecast_string (const char *s, const DATAINFO *pdinfo,
+static int parse_forecast_string (const char *s, const MODEL *pmod,
+				  const DATAINFO *pdinfo,
 				  int *t1, int *t2)
 {
     char t1str[OBSLEN], t2str[OBSLEN];
@@ -1691,12 +1701,16 @@ static int parse_forecast_string (const char *s, const DATAINFO *pdinfo,
         s += 9;
     }
 
-    if (sscanf(s, "%10s %10s", t1str, t2str) != 2) {
-        err = E_OBS;
-    } else {
+    if (sscanf(s, "%10s %10s", t1str, t2str) == 2) {
 	*t1 = dateton(t1str, pdinfo);
 	*t2 = dateton(t2str, pdinfo);
-    }
+    } else if (pmod != NULL && pdinfo->n - pmod->t2 - 1 > 0) {
+	/* default, if it works: out-of-sample range */
+	*t1 = pmod->t2 + 1;
+	*t2 = pdinfo->n - 1;
+    } else {
+        err = E_OBS;
+    } 
 
     return err;
 }
@@ -1923,7 +1937,7 @@ int display_forecast (const char *str, MODEL *pmod,
     int t1, t2;
     int err;
 
-    err = parse_forecast_string(str, pdinfo, &t1, &t2);
+    err = parse_forecast_string(str, pmod, pdinfo, &t1, &t2);
     if (err) {
 	return err;
     }

@@ -1056,12 +1056,15 @@ int get_precision (const double *x, int n, int placemax)
 {
     int t, p, pmax = 0;
     char *s, numstr[48];
+    int n_ok = 0;
     double z;
 
     for (t=0; t<n; t++) {
 	if (na(x[t])) {
 	    continue;
 	}
+
+	n_ok++;
 
 	z = fabs(x[t]);
 
@@ -1080,6 +1083,10 @@ int get_precision (const double *x, int n, int placemax)
 	if (p > pmax) {
 	    pmax = p;
 	}
+    }
+
+    if (n_ok == 0) {
+	pmax = PMAX_NOT_AVAILABLE;
     }
 
     return pmax;

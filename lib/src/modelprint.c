@@ -69,8 +69,6 @@ static void noconst (const MODEL *pmod, PRN *prn)
 
 #define RTFTAB "\\par \\ql \\tab "
 
-/* ......................................................... */ 
-
 static void depvarstats (const MODEL *pmod, PRN *prn)
 {
     if (plain_format(prn)) {
@@ -94,7 +92,22 @@ static void depvarstats (const MODEL *pmod, PRN *prn)
     }
 }
 
-/* ......................................................... */ 
+static void garch_variance_line (const MODEL *pmod, PRN *prn)
+{
+    const char *varstr = N_("Unconditional error variance");
+    double v = pmod->sigma * pmod->sigma;
+
+    if (plain_format(prn)) {  
+	pprintf(prn, "  %s = %.*g\n", _(varstr), GRETL_DIGITS, v);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, RTFTAB "%s = %g\n", I_(varstr), v);
+    } else if (tex_format(prn)) {
+	char xstr[32];
+
+	tex_dcolumn_double(v, xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_(varstr), xstr);
+    }
+}
 
 static int essline (const MODEL *pmod, PRN *prn, int wt)
 {
@@ -155,8 +168,6 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
     return 0;
 }
 
-/* ......................................................... */ 
-
 static void rsqline (const MODEL *pmod, PRN *prn)
 {
     if (plain_format(prn)) { 
@@ -189,8 +200,6 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	}
     }
 }
-
-/* ......................................................... */ 
 
 static const char *aic_str = N_("Akaike information criterion");
 static const char *bic_str = N_("Schwarz Bayesian criterion");
@@ -229,8 +238,6 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
     }
 }
 
-/* ......................................................... */ 
-
 static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 {
     double lmin = gretl_model_get_double(pmod, "lmin");
@@ -258,8 +265,6 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 	}
     }
 }
-
-/* ......................................................... */ 
 
 static void ladstats (const MODEL *pmod, PRN *prn)
 {
@@ -293,8 +298,6 @@ static void ladstats (const MODEL *pmod, PRN *prn)
 	}
     }
 }
-
-/* ......................................................... */ 
 
 static void print_f_pval_str (double pval, PRN *prn)
 {
@@ -369,8 +372,6 @@ static void Fline (const MODEL *pmod, PRN *prn)
     }
 }
 
-/* ......................................................... */ 
-
 static void dwline (const MODEL *pmod, PRN *prn)
 {
     if (plain_format(prn)) {
@@ -437,8 +438,6 @@ static void dhline (const MODEL *pmod, PRN *prn)
     }
 }
 
-/* ......................................................... */ 
-
 static int least_signif_coeff (const MODEL *pmod)
 {
     int i, k = 0;
@@ -459,8 +458,6 @@ static int least_signif_coeff (const MODEL *pmod)
     return 0;
 }
 
-/* ......................................................... */ 
-
 static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo, 
 			   PRN *prn)
 {
@@ -476,8 +473,6 @@ static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo,
 	pprintf(prn, "%s\n\n", tmp);
     }
 }
-
-/* ......................................................... */
 
 static const char *aux_string (int aux, PRN *prn)
 {
@@ -558,8 +553,6 @@ my_estimator_string (const MODEL *pmod, PRN *prn)
     } 
 }
 
-/* ......................................................... */
-
 static void print_model_tests (const MODEL *pmod, PRN *prn)
 {
     int i;
@@ -583,8 +576,6 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 	}
     }
 }
-
-/* ......................................................... */
 
 static int 
 print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
@@ -651,8 +642,6 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
 
     return 0;
 }
-
-/* ......................................................... */
 
 static void hac_vcv_line (const MODEL *pmod, PRN *prn)
 {
@@ -734,8 +723,6 @@ static void garch_vcv_line (const MODEL *pmod, PRN *prn)
     }
 }
 
-/* ......................................................... */
-
 static void model_print_newline (PRN *prn)
 {
     if (tex_format(prn)) {
@@ -746,8 +733,6 @@ static void model_print_newline (PRN *prn)
 	pputc(prn, '\n');
     }
 }
-
-/* ......................................................... */
 
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
@@ -1362,6 +1347,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     if (pmod->ci == GARCH) {
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
+	garch_variance_line(pmod, prn);
 	print_arma_stats(pmod, prn);
 	print_middle_table_end(prn);
 	goto close_format;
@@ -1658,8 +1644,6 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     return gotnan;
 }
 
-/* ......................................................... */ 
-
 static void rtf_print_double (double xx, PRN *prn)
 {
     char numstr[32];
@@ -1746,8 +1730,6 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     return gotnan;
 }
-
-/* ......................................................... */ 
 
 static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 {
@@ -2174,8 +2156,6 @@ static void print_discrete_statistics (const MODEL *pmod,
 	pputs(prn, "\\end{raggedright}\n");
     }
 }
-
-/* ....................................................... */
 
 static void mp_other_stats (const mp_results *mpvals, PRN *prn)
 {

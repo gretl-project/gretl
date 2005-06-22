@@ -129,7 +129,11 @@ static int write_garch_stats (MODEL *pmod, const double **Z,
 {
     int err = 0;
     double *coeff, *sderr, *garch_h;
-    int i, ynum = list[4];
+    double den;
+    int ynum = list[4];
+    int nvp = list[1] + list[2];
+    int xvars = list[0] - 4;
+    int i;
 
     coeff = realloc(pmod->coeff, nparam * sizeof *pmod->coeff);
     sderr = realloc(pmod->sderr, nparam * sizeof *pmod->sderr);
@@ -153,7 +157,13 @@ static int write_garch_stats (MODEL *pmod, const double **Z,
 	pmod->yhat[i] =  Z[ynum][i] * scale - pmod->uhat[i];
     }
 
-    pmod->sigma = NADBL;
+    /* set sigma to its unconditional or steady-state value */
+    den = 1.0;
+    for (i=0; i<nvp; i++) {
+	den -= coeff[i+xvars+1];
+    }
+    pmod->sigma = sqrt(coeff[xvars] / den);
+
     pmod->adjrsq = NADBL; 
     pmod->fstt = NADBL;
 

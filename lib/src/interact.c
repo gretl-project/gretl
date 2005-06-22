@@ -178,7 +178,6 @@ static int catch_command_alias (CMD *cmd)
 #define REQUIRES_PARAM(c) (c == ADDOBS || \
                            c == ADDTO || \
                            c == FCAST || \
-                           c == FCASTERR || \
                            c == FUNC || \
                            c == LOOP ||  \
                            c == MULTIPLY || \
@@ -1169,6 +1168,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* replace simple aliases and a few specials */
     catch_command_alias(cmd);
+
+    /* "remember": capture the line in cmd's "extra" field */
+    if (cmd->ci == REMEMBER) {
+	cmd->extra == gretl_strdup(line);
+    }
 
     /* subsetted commands (e.g. "deriv" in relation to "nls") */
     if (!strcmp(cmd->word, "end")) {
