@@ -1171,7 +1171,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* "remember": capture the line in cmd's "extra" field */
     if (cmd->ci == REMEMBER) {
-	cmd->extra == gretl_strdup(line);
+	free(cmd->extra);
+	cmd->extra = gretl_strdup(line);
     }
 
     /* subsetted commands (e.g. "deriv" in relation to "nls") */
@@ -2038,10 +2039,17 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 		int batch, int echo_stdout, char leadchar,
 		int *stdlen, int *prnlen, PRN *prn)
 {
+    char first[16];
     int i, gotsep = 1;
 
     if (cmd->ci == AR || cmd->ci == ARMA || cmd->ci == GARCH) {
 	gotsep = 0;
+    }
+
+    if (cmd->ci == REMEMBER && cmd->extra != NULL) {
+	sprintf(first, "# %s", cmd->word);
+    } else {
+	strcpy(first, cmd->word);
     }
 
     if (echo_stdout) {
@@ -2049,9 +2057,9 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 	    if (cmd->ci != EQUATION) {
 		putchar('\n');
 	    }
-	    *stdlen += printf("%c %s", leadchar, cmd->word);
+	    *stdlen += printf("%c %s", leadchar, first);
 	} else {
-	    *stdlen += printf(" %s", cmd->word);
+	    *stdlen += printf(" %s", first);
 	}
 	if (cmd->ci == RHODIFF) {
 	    *stdlen += printf(" %s;", cmd->param);
@@ -2069,8 +2077,8 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
     }
 
     if (!batch) {
-	pprintf(prn, "%s", cmd->word);
-	*prnlen += strlen(cmd->word);
+	pprintf(prn, "%s", first);
+	*prnlen += strlen(first);
 	if (cmd->ci == RHODIFF) {
 	    pprintf(prn, " %s;", cmd->param);
 	    *prnlen += 2 + strlen(cmd->param);
@@ -2206,6 +2214,13 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	}
 	pputc(prn, '\n');
 	return;
+    }
+
+    /* another special, REMEMBER: we should print the literal
+       command line first */
+    if (cmd->ci == REMEMBER && cmd->extra != NULL) {
+	pputs(prn, cmd->extra);
+	pputc(prn, '\n');
     }
 
     if (*line == '\0' || *line == '!' || !strcmp(line, "quit")) {
@@ -2370,8 +2385,6 @@ static char *get_flag_field  (const char *s, char f)
     return ret;
 }
 
-/* .......................................................... */
-
 static void get_optional_filename (const char *line, CMD *cmd)
 {
     char *p;
@@ -2382,8 +2395,6 @@ static void get_optional_filename (const char *line, CMD *cmd)
 	cmd->param = p;
     }    
 }
-
-/* .......................................................... */
 
 static int make_var_label (const char *line, const DATAINFO *pdinfo, 
 			   PRN *prn)
