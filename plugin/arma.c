@@ -689,19 +689,17 @@ adjust_sample (DATAINFO *pdinfo, const double **Z, const int *list,
 static model_info *
 set_up_arma_model_info (struct arma_info *ainfo)
 {
-    model_info *arma = model_info_new();
+    model_info *arma;
     int m;
+
+    m = ainfo->p + ainfo->q + ainfo->r + ainfo->ifc;
+
+    arma = model_info_new(m, ainfo->t1, ainfo->t2, 1.0e-6);
 
     if (arma == NULL) return NULL;
 
     model_info_set_opts(arma, PRESERVE_OPG_MODEL);
-    model_info_set_tol(arma, 1.0e-6);
-
-    m = ainfo->p + ainfo->q + ainfo->r + ainfo->ifc;
-    model_info_set_k(arma, m);
-
     model_info_set_n_series(arma, m + 1);
-    model_info_set_t1_t2(arma, ainfo->t1, ainfo->t2);
 
     /* add pointer to ARMA-specific details */
     model_info_set_extra_info(arma, ainfo);

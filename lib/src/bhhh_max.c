@@ -25,8 +25,8 @@
 
 struct _model_info {
 
-    /* members that may be set by caller of bhhh_max, via accessor
-       functions */
+    /* members that may be set by caller of bhhh_max, via 
+       initialization or accessor functions */
 
     int k;              /* number of parameters */
     int t1, t2;         /* starting and ending point of sample */
@@ -106,7 +106,9 @@ void model_info_free (model_info *minfo)
  *
  * Returns: pointer to a gretl #MODEL, which contains the
  * results of the OPG (Outer Product of the Gradient) regression
- * associated with @minfo.
+ * associated with @minfo, if the preservation of this model
+ * has been flagged by use of the option %PRESERVE_OPG_MODEL:
+ * see see model_info_set_opts(). Otherwise returns %NULL.
  */
 
 MODEL *model_info_capture_OPG_model (model_info *minfo)
@@ -121,7 +123,10 @@ MODEL *model_info_capture_OPG_model (model_info *minfo)
  * model_info_get_VCV:
  * @minfo: model info pointer.
  *
- * Returns: pointer to the covariance matrix of @minfo.
+ * Returns: pointer to the covariance matrix of @minfo, if
+ * the creation of this matrix has been flagged by use of the
+ * option %FULL_VCV_MATRIX: see model_info_set_opts().
+ * Otherwise returns %NULL.
  */
 
 gretl_matrix *model_info_get_VCV (model_info *minfo)
@@ -133,7 +138,10 @@ gretl_matrix *model_info_get_VCV (model_info *minfo)
  * model_info_get_theta:
  * @minfo: model info pointer.
  *
- * Returns: parameter vector @theta from @minfo.
+ * Returns: the parameter vector @theta from @minfo. 
+ * This array is freed when @minfo is freed, so if the
+ * results are wanted by the caller, they should be
+ * copied.
  */
 
 double *model_info_get_theta (model_info *minfo)
@@ -170,7 +178,7 @@ int model_info_get_t2 (const model_info *minfo)
  * model_info_get_n:
  * @minfo: model info pointer.
  *
- * Returns: the number of observations used in @minfo.
+ * Returns: the length of the data series used in @minfo.
  */
 
 int model_info_get_n (const model_info *minfo)
@@ -195,7 +203,10 @@ int model_info_get_iters (const model_info *minfo)
  * model_info_get_series:
  * @minfo: model info pointer.
  *
- * Returns: FIXME.
+ * Returns: the allocated two-dimensional array set on
+ * @minfo using model_info_set_n_series().  This array
+ * is freed when @minfo is freed, so the returned pointer
+ * itself should not be modified.  
  */  
 
 double **model_info_get_series (const model_info *minfo)
@@ -241,38 +252,17 @@ void model_info_set_ll (model_info *minfo, double ll, int do_score)
  * @minfo: model info pointer.
  * @opts: option flags to set, from #BHHH_opts.
  *
- * Sets the option flags for @minfo. 
+ * Sets the option flags for @minfo.  If the option %PRESERVE_OPG_MODEL
+ * is set, a pointer to the #MODEL struct used internally by bhhh_max() 
+ * is available on exit via model_info_capture_OPG_model(); otherwise 
+ * this is freed on exit.  If %FULL_VCV_MATRIX is set, a pointer to
+ * the full covariance matrix from the last iteration of the OPG
+ * model is available on exit using model_info_get_VCV().
  */ 
 
 void model_info_set_opts (model_info *minfo, unsigned char opts)
 {
     minfo->opts = opts;
-}
-
-/**
- * model_info_set_tol:
- * @minfo: model info pointer.
- * @tol: tolerance for convergence of estimates.
- *
- * Sets the convergence tolerance for @minfo. 
- */ 
-
-void model_info_set_tol (model_info *minfo, double tol)
-{
-    minfo->tol = tol;
-}
-
-/**
- * model_info_set_k:
- * @minfo: model info pointer.
- * @k: number of regressors in minfo.
- *
- * Sets the total number of regressors.
- */ 
-
-void model_info_set_k (model_info *minfo, int k)
-{
-    minfo->k = k;
 }
 
 /**
@@ -290,10 +280,26 @@ int model_info_get_k (model_info *minfo)
 /**
  * model_info_set_n_series:
  * @minfo: model info pointer.
- * @n: number of data series.
+ * @n: number of auxiliary data series.
  *
  * Sets the number of auxiliary data series needed for the
- * OPG regression associated with @minfo.
+ * calculations associated with @minfo.  These series are
+ * allocated within the bhhh_max() function, and are freed
+ * when @minfo is freed; see model_info_free().  The length
+ * of each series is given by the %n member of @minfo, which
+ * is set implicitly when the start and end of the sample
+ * range are set, using model_info_new(), and which
+ * can be retrieved using model_info_get_n().  This length
+ * is in fact t2 (zero-based ending observation of sample range) 
+ * plus one.  
+ * 
+ * These series (if any) are not actually used within bhhh_max() 
+ * itself: they are intended for use within the log-likelihood 
+ * callback (serving as persistent storage, and saving the 
+ * callback function from having to allocate and deallocate 
+ * storage on each call).  The series may be written to in that 
+ * context, but the pointers themselves should not be altered 
+ * in any way.
  */ 
 
 void model_info_set_n_series (model_info *minfo, int n)
@@ -302,27 +308,14 @@ void model_info_set_n_series (model_info *minfo, int n)
 }
 
 /**
- * model_info_set_t1_t2:
- * @minfo: model info pointer.
- * @t1: starting observation number (zero-based).
- * @t2: ending observation number.
- *
- * Sets the sample range for @minfo.
- */ 
-
-void model_info_set_t1_t2 (model_info *minfo, int t1, int t2)
-{
-    minfo->t1 = t1;
-    minfo->t2 = t2;
-    minfo->n = t2 + 1;
-}
-
-/**
  * model_info_set_extra_info:
  * @minfo: model info pointer.
  * @extra: pointer to set on @minfo.
  *
  * Set the content of the "extra" pointer member of @minfo.
+ * This pointer is not used within bhhh_max(), it is intended
+ * for use within the log-likelihood callback.  Setting this
+ * pointer is therefore optional.
  */
 
 void model_info_set_extra_info (model_info *minfo, void *extra)
@@ -337,7 +330,7 @@ void model_info_set_extra_info (model_info *minfo, void *extra)
  * Retrieves the content of the "extra" pointer member of @minfo.
  *
  * Returns: the pointer that was set with model_info_set_extra_info(),
- * or NULL if none was set.
+ * or %NULL if none was set.
  */
 
 void *model_info_get_extra_info (model_info *minfo)
@@ -413,12 +406,22 @@ static int model_info_init (model_info *minfo, const double *init_coeff)
 
 /**
  * model_info_new:
+ * @k: number of parameters to be estimated.
+ * @t1: starting observation of estimation range.
+ * @t2: ending observation of estimation range.
+ * @tol: tolerance for assessing convergence.
  *
- * Returns: pointer to newly allocated model_info, or
- * %NULL on failure.
+ * Creates the basic information structure required by
+ * bhhh_max().  Within that function, iteration is terminated 
+ * when the difference in the log-likelihood from one round to 
+ * the next falls below @tol.  Note that @t1 and @t2 are
+ * zero-based.  
+ *
+ * Returns: pointer to newly allocated model_info, or %NULL 
+ * on failure.
  */
  
-model_info *model_info_new (void)
+model_info *model_info_new (int k, int t1, int t2, double tol)
 {
     model_info *mi;
 
@@ -460,16 +463,35 @@ static int bhhh_iter_info (int iter, double *theta, int m, double ll,
 /**
  * bhhh_max:
  * @loglik: pointer to function for calculating log-likelihood and
- * score matrix.
- * @X: original data set (passed on for use by @loglik).
+ * score matrix; see below.
+ * @X: primary data set (not used within this function, but passed 
+ * on for use by @loglik).
  * @init_coeff: starting values for coefficients.
- * @minfo: model info struct, with some initialization carried out by
- * the caller.
+ * @minfo: model info struct; see below.
  * @prn: printing struct for iteration info (or %NULL).
  *
  * Maximize likelihood using the BHHH conditional ML method,
  * implemented via iteration of the Outer Product of the Gradient 
- * (OPG) regression.
+ * (OPG) regression with line search.
+ *
+ * The @minfo pointer is obtained using model_info_new().
+ * Optional settings may be applied using model_info_set_opts(), 
+ * model_info_set_n_series() and model_info_set_extra_info().
+ *
+ * @loglik is called to calculate the log-likelihood for the model
+ * in question.  The parameters passed to this function are:
+ * (1) the array of estimated coefficients; (2) the primary data 
+ * array @X; (3) a further data array %Z; (4) @minfo; and (5) an 
+ * integer that is 1 if the score matrix should be calculated in
+ * %Z, otherwise 0.  The %Z array is allocated within %bhhh_max
+ * and is freed on exit; it is a two-dimensional array with %k + 1
+ * members, each of length %n (where %k and %n may be obtained
+ * using model_info_get_k() and model_info_get_n()).  The first
+ * member, %Z[0], represents the constant or intercept, and should
+ * not be modified.  
+ *
+ * For examples of the use of this function, see arma.c and tobit.c
+ * in the %plugin directory of the gretl source.
  * 
  * Returns: 0 on successful completion, non-zero error code otherwise.
  */

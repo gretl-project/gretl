@@ -2018,7 +2018,7 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
  * @t1: start of forecast range.
  * @t2: end of forecast range.
  * @pre_n: number of pre-forecast observations to display.
- * @pZ: pointer to data array using which @pmod was estimated.
+ * @Z: data array using which @var was estimated.
  * @pdinfo: dataset information.
  * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
  * a static forecast.  By default, the forecast is static within

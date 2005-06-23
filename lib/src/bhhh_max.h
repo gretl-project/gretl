@@ -32,7 +32,7 @@ typedef int (*LL_FUNC) (double *,
 
 void model_info_free (model_info *minfo);
 
-model_info *model_info_new (void);
+model_info *model_info_new (int k, int t1, int t2, double tol);
 
 MODEL *model_info_capture_OPG_model (model_info *minfo);
 
@@ -58,15 +58,9 @@ void model_info_set_extra_info (model_info *minfo, void *extra);
 
 void model_info_set_n_series (model_info *minfo, int n);
 
-void model_info_set_k (model_info *minfo, int k);
-
 int model_info_get_k (model_info *minfo);
 
-void model_info_set_t1_t2 (model_info *minfo, int t1, int t2);
-
 void model_info_set_opts (model_info *minfo, unsigned char opts);
-
-void model_info_set_tol (model_info *minfo, double tol);
 
 void model_info_set_ll (model_info *minfo, double ll, int do_score);
 

@@ -310,15 +310,14 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 static model_info *
 tobit_model_info_init (int nobs, int k, int n_series)
 {
-    model_info *tobit = model_info_new();
+    model_info *tobit;
+
+    tobit = model_info_new(k, 0, nobs - 1, TOBIT_TOL);
 
     if (tobit == NULL) return NULL;
 
     model_info_set_opts(tobit, FULL_VCV_MATRIX);
-    model_info_set_tol(tobit, TOBIT_TOL);
-    model_info_set_k(tobit, k);
     model_info_set_n_series(tobit, n_series);
-    model_info_set_t1_t2(tobit, 0, nobs - 1);
 
     return tobit;
 }
