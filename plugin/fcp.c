@@ -541,7 +541,7 @@ int garch_estimate (int t1, int t2, int nobs,
 
     param[nc] = amax[0];
 
-    toler1 = .05;
+    toler1 = .05; /* tolerance before switching to Hessian */
     toler2 = 1e-8;
     tollog = log10(toler2);
 
@@ -667,7 +667,9 @@ int garch_estimate (int t1, int t2, int nobs,
 	    s_2 += pappo * pappo;
 	}
 
-	if (s_1 == 0.0) s_1 = 1e-10;
+	if (s_1 == 0.0) {
+	    s_1 = 1e-10;
+	}
 
 	if (s_2 / s_1 > toler2 * toler2) {
 	    goto L6765;

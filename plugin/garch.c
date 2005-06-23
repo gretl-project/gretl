@@ -23,6 +23,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "var.h"
 
 #include "fcp.h"
 
@@ -644,6 +645,35 @@ static int *make_ols_list (const int *list)
     return olist;
 }
 
+#if 0
+int garch_pretest (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+		   PRN *prn)
+{
+    int t, err = 0;
+
+    if (dataset_add_series(1, pZ, pdinfo)) {
+	err = E_ALLOC;
+    } else {
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[pdinfo->v - 1][t] = pmod->uhat[t];
+	}
+
+	err = adf_test(0, pdinfo->v - 1, pZ, pdinfo,
+		       OPT_N | OPT_Q, prn);
+    }
+
+    if (!err) {
+	char teststat[64];
+	double tstat = get_last_test_statistic(teststat);
+	double pval = get_last_pvalue(teststat);
+
+	fprintf(stderr, "ADF: t = %g, pval = %g\n", tstat, pval);
+    }
+
+    return err;
+}
+#endif
+
 #define GARCH_SCALE_SIGMA 1
 
 /* the driver function for the plugin */
@@ -677,6 +707,13 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	    err = model.errcode;
 	}
     }
+
+#if 0
+    /* pretest the residuals for unit root */
+    if (!err) {
+	err = garch_pretest(&model, pZ, pdinfo, prn);
+    }
+#endif
 
 #if GARCH_SCALE_SDY
     if (!err) {
