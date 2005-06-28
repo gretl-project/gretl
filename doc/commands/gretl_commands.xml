@@ -308,7 +308,7 @@
 	<equation status="display" 
 	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
 	    \rho_4 u_{t-4} + e_t\]"
-	  ascii="u(t) = rho1*u(t-1) + rho3+u(t-3) + rho4*u(t-4)"
+	  ascii="u(t) = rho1*u(t-1) + rho3*u(t-3) + rho4*u(t-4)"
 	  graphic="arlags"/>
       </para>
 
@@ -319,7 +319,7 @@
 	<equation status="display" 
 	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
 	    \rho_4 u_{t-4} + e_t\]"
-	  ascii="u(t) = rho(1)*u(t-1) + rho(3)+u(t-3) + rho(4)*u(t-4)"
+	  ascii="u(t) = rho(1)*u(t-1) + rho(3)*u(t-3) + rho(4)*u(t-4)"
 	  graphic="arlags"/>
       </para>
 

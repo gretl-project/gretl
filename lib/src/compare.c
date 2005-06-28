@@ -1343,8 +1343,10 @@ int autocorr_test (MODEL *pmod, int order,
     dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo); 
     clear_model(&aux); 
 
-    if (pval < 0.05 && !gretl_model_get_int(pmod, "robust")) {
-	autocorr_standard_errors(pmod, pZ, pdinfo, prn);
+    if (!(opt & OPT_Q)) {
+	if (pval < 0.05 && !gretl_model_get_int(pmod, "robust")) {
+	    autocorr_standard_errors(pmod, pZ, pdinfo, prn);
+	}
     }
 
     /* reset sample as it was */

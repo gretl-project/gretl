@@ -649,25 +649,17 @@ static int *make_ols_list (const int *list)
 int garch_pretest (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn)
 {
-    int t, err = 0;
+    int err;
 
-    if (dataset_add_series(1, pZ, pdinfo)) {
-	err = E_ALLOC;
-    } else {
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[pdinfo->v - 1][t] = pmod->uhat[t];
-	}
-
-	err = adf_test(0, pdinfo->v - 1, pZ, pdinfo,
-		       OPT_N | OPT_Q, prn);
-    }
+    err = autocorr_test(pmod, pdinfo->pd, pZ, pdinfo,
+			OPT_S | OPT_Q, prn);
 
     if (!err) {
 	char teststat[64];
-	double tstat = get_last_test_statistic(teststat);
+	double LMF = get_last_test_statistic(teststat);
 	double pval = get_last_pvalue(teststat);
 
-	fprintf(stderr, "ADF: t = %g, pval = %g\n", tstat, pval);
+	fprintf(stderr, "LMF = %g, pval = %g\n", LMF, pval);
     }
 
     return err;
@@ -709,7 +701,7 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     }
 
 #if 0
-    /* pretest the residuals for unit root */
+    /* pretest the residuals for autocorrelation */
     if (!err) {
 	err = garch_pretest(&model, pZ, pdinfo, prn);
     }
