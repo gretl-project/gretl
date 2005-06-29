@@ -378,9 +378,10 @@ static int gretl_command_strcat (const char *s)
 
 int user_fopen (const char *fname, char *fullname, PRN **pprn)
 {
+    int err = 0;
+
     strcpy(fullname, paths.userdir);
     strcat(fullname, fname);
-    int err = 0;
 
     *pprn = gretl_print_new_with_filename(fullname);
 
