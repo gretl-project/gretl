@@ -1,5 +1,5 @@
-05/12/2005 version 1.3.4
-- Revise definition of functions in gertl scripts (a backward-
+06/29/2005 version 1.4.0
+- Revise definition of functions in gretl scripts (a backward-
   incompatible change) in the interest of more structured
   programming
 - Introduce named lists as a type that can be created and
