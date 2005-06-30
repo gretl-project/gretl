@@ -727,18 +727,18 @@ static int do_autofit_plot (PRN *prn)
     int err = 0;
 
     plotvar(&Z, datainfo, "time");
+
     plotlist = gretl_list_new(3);
-    if (models[0]->ci == ARMA) {
-	plotlist[1] = models[0]->list[4];
-    } else {
-	plotlist[1] = models[0]->list[1];
-    }
+    plotlist[1] = gretl_model_get_depvar(models[0]);
     plotlist[2] = varindex(datainfo, "autofit");
     plotlist[3] = varindex(datainfo, "time");
     lines[0] = 1;
+
     err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
 		  &plot_count, gp_flags(batch, 0));
+
     free(plotlist);
+
     if (err) {
 	pputs(prn, _("gnuplot command failed\n"));
     }

@@ -117,6 +117,10 @@ void file_view_set_editable (windata_t *vwin);
 
 int validate_varname (const char *varname);
 
+#if GTK_MAJOR_VERSION >= 2
+int my_utf_validate (char *s);
+#endif
+
 gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, 
 			windata_t *vwin);
 

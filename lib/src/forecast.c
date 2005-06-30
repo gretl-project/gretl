@@ -2148,6 +2148,8 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 
     if (pmod->ci == ARMA || pmod->ci == GARCH) {
 	*dyn_ok = 1;
+    } else if (AR_MODEL(pmod->ci)) {
+	*dyn_ok = 1;
     } else if (dataset_is_time_series(pdinfo) &&
 	       has_depvar_lags(pmod, pdinfo)) {
 	*dyn_ok = 1;

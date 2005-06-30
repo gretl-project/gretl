@@ -776,32 +776,6 @@ static char *start_trim (char *s)
     return p;
 }
 
-/* ........................................................... */
-
-#ifndef OLD_GTK
-static int my_utf_validate (char *s)
-{
-    if (!g_utf8_validate(s, -1, NULL)) {
-	gchar *new;
-
-# if 0
-	fprintf(stderr, "database: string '%s' does not utf-8 validate\n", s);
-# endif
-	new = my_locale_to_utf8(s);
-	if (new != NULL) {
-	    strcpy(s, new);
-	    g_free(new);
-	} else {
-	    *s = '\0';
-	}
-	return 1;
-    }
-    return 0;
-}
-#endif
-
-/* ........................................................... */
-
 static void db_drag_series (GtkWidget *w, GdkDragContext *context,
 			    GtkSelectionData *sel, guint info, guint t,
 			    windata_t *vwin)
@@ -820,8 +794,6 @@ static void db_drag_connect (windata_t *vwin)
 		     G_CALLBACK(db_drag_series),
 		     vwin);
 }
-
-/* ........................................................... */
 
 static int populate_series_list (windata_t *vwin)
 {
@@ -1729,7 +1701,7 @@ db_description (const char *fullname, const char *binname,
     fp = gretl_fopen(idxname, "r");
 
     if (fp != NULL) {
-	char tmp[DB_DESCRIP_LEN] = {0};
+	char tmp[DB_DESCRIP_LEN + 32] = {0};
 
 	fgets(tmp, sizeof tmp, fp);
 	fclose(fp);
@@ -1738,6 +1710,9 @@ db_description (const char *fullname, const char *binname,
 
 	    if (len > 2) {
 		tailstrip(tmp);
+#ifndef OLD_GTK
+		my_utf_validate(tmp);
+#endif
 		descrip = g_strdup(tmp + 2);
 	    }
 	}

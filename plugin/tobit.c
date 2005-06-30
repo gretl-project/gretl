@@ -314,10 +314,10 @@ tobit_model_info_init (int nobs, int k, int n_series)
 
     tobit = model_info_new(k, 0, nobs - 1, TOBIT_TOL);
 
-    if (tobit == NULL) return NULL;
-
-    model_info_set_opts(tobit, FULL_VCV_MATRIX);
-    model_info_set_n_series(tobit, n_series);
+    if (tobit != NULL) {
+	model_info_set_opts(tobit, FULL_VCV_MATRIX);
+	model_info_set_n_series(tobit, n_series);
+    }
 
     return tobit;
 }

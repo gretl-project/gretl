@@ -3173,7 +3173,25 @@ int validate_varname (const char *varname)
 	}
     }
     return 0;
-}	
+}
+
+#ifndef OLD_GTK
+int my_utf_validate (char *s)
+{
+    if (!g_utf8_validate(s, -1, NULL)) {
+	gchar *new = my_locale_to_utf8(s);
+
+	if (new != NULL) {
+	    strcpy(s, new);
+	    g_free(new);
+	} else {
+	    *s = '\0';
+	}
+	return 1;
+    }
+    return 0;
+}
+#endif	
 
 /* ......................................................... */
 

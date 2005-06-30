@@ -506,8 +506,14 @@ int gretl_model_get_depvar (const MODEL *pmod)
     int dv = 0;
 
     if (pmod != NULL && pmod->list != NULL) {
-	if (pmod->ci == ARMA || pmod->ci == GARCH) {
+	if (pmod->ci == GARCH) {
 	    dv = pmod->list[4];
+	} else if (pmod->ci == ARMA) {
+	    if (gretl_model_get_int(pmod, "seasonal")) {
+		dv = pmod->list[7];
+	    } else {
+		dv = pmod->list[4];
+	    }
 	} else {
 	    dv = pmod->list[1];
 	}
@@ -530,18 +536,25 @@ int *gretl_model_get_x_list (const MODEL *pmod)
     int i, nx;
 
     if (pmod->ci == ARMA) {
-	nx = pmod->list[0] - 4 + pmod->ifc;
+	int start;
+
+	if (gretl_model_get_int(pmod, "seasonal")) {
+	    start = 7;
+	} else {
+	    start = 4;
+	}
+	nx = pmod->list[0] - start + pmod->ifc;
 	if (nx > 0) {
 	    list = gretl_list_new(nx);
 	    if (list != NULL) {
 		if (pmod->ifc) {
 		    list[1] = 0;
 		    for (i=2; i<=list[0]; i++) {
-			list[i] = pmod->list[i + 3];
+			list[i] = pmod->list[i + start - 1];
 		    }
 		} else {
 		    for (i=1; i<=list[0]; i++) {
-			list[i] = pmod->list[i + 4];
+			list[i] = pmod->list[i + start];
 		    }
 		}		    
 	    }

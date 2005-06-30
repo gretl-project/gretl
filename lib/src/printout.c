@@ -1976,10 +1976,10 @@ int in_usa (void)
  * @size: max number of characters to print
  * @buf: source buffer
  *
- * This function (which works rather line fgets) must be initialized 
+ * This function (which works rather like fgets) must be initialized 
  * via the call: bufgets(NULL, 0, buf);
  * 
- * Returns: s (NULL if nothing more can be read from buf).
+ * Returns: @s (%NULL if nothing more can be read from @buf).
  */
 
 char *bufgets (char *s, size_t size, const char *buf)

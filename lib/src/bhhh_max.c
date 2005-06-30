@@ -433,6 +433,12 @@ model_info *model_info_new (int k, int t1, int t2, double tol)
 	mi->pmod = NULL;
 	mi->VCV = NULL;
 	mi->n_series = 0;
+
+	mi->k = k;
+	mi->t1 = t1;
+	mi->t2 = t2;
+	mi->n = t2 + 1;
+	mi->tol = tol;
     }
 
     return mi;

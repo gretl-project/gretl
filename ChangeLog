@@ -1,3 +1,11 @@
+06/30/2005 version 1.4.1
+- Fix horrid unnoticed breakage in bhhh_max (broke both arma 
+  and tobit, big mess)	
+- Add utf8 validation/conversion for database descriptions 
+  (Banco de Espana databases)
+- Allow dynamic forecasts with models estimated via corc and 
+  similar
+
 06/29/2005 version 1.4.0
 - Revise definition of functions in gretl scripts (a backward-
   incompatible change) in the interest of more structured

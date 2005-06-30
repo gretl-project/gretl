@@ -805,7 +805,7 @@ static gint populate_remote_db_list (windata_t *win)
 #endif  
     int err;
     char *buf;
-    char fname[16], line[80], errbuf[80], status[20];
+    char fname[16], line[128], errbuf[80], status[20];
     gchar *row[3];
     gint i;
     time_t remtime;
@@ -839,13 +839,19 @@ static gint populate_remote_db_list (windata_t *win)
     i = 0;
 
     while (bufgets(line, sizeof line, buf)) {
-	if (strstr(line, "idx")) continue;
-	if (parse_db_list_line(line, fname, &remtime))
+	if (strstr(line, "idx")) {
 	    continue;
+	}
+	if (parse_db_list_line(line, fname, &remtime)) {
+	    continue;
+	}
 	get_local_status(fname, status, remtime);
 	row[0] = strip_extension(fname);
 
 	if (bufgets(line, sizeof line, buf)) {
+#ifndef OLD_GTK
+	    my_utf_validate(line);
+#endif
 	    row[1] = line + 2;
 	} else {
 	    row[1] = NULL;
