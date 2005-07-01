@@ -205,4 +205,8 @@ int mle_aic_bic (MODEL *pmod, int addk);
 
 double coeff_pval (const MODEL *pmod, double x, int df);
 
+int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
+				   int yno, int p, int q, int P, int Q, 
+				   int r);
+
 #endif /* GRETL_MODEL_H */

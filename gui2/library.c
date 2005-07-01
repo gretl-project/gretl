@@ -2633,15 +2633,20 @@ void do_model (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
-void do_arma (int v, int ar, int ma, gretlopt opts)
+void do_arma (int v, int p, int q, int P, int Q, gretlopt opts)
 {
     char title[26];
     int err = 0;
     MODEL *pmod;
     PRN *prn;
 
-    gretl_command_sprintf("arma %d %d ; %d%s", ar, ma, v, 
-			  print_flags(opts, ARMA));
+    if (P > 0 || Q > 0) {
+	gretl_command_sprintf("arma %d %d ; %d %d ; %d%s", p, q, P, Q, v, 
+			      print_flags(opts, ARMA));
+    } else {
+	gretl_command_sprintf("arma %d %d ; %d%s", p, q, v, 
+			      print_flags(opts, ARMA));
+    }
 
     if (check_model_cmd()) {
 	return;

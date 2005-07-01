@@ -2016,8 +2016,10 @@ int select_var_from_list (const int *list, const char *query)
 struct arma_options {
     int v;
     GtkWidget *dlg;
-    GtkWidget *arspin;
-    GtkWidget *maspin;
+    GtkWidget *pspin;
+    GtkWidget *qspin;
+    GtkWidget *Pspin;
+    GtkWidget *Qspin;
     GtkWidget *verbcheck;
 #ifdef HAVE_X12A
     GtkWidget *x12check;
@@ -2036,16 +2038,28 @@ static void destroy_arma_opts (GtkWidget *w, gpointer p)
 
 static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
 {
-    int ar, ma;
+    int p, q;
+    int P = 0, Q = 0;
     gretlopt aopt = OPT_NONE;
 
 #ifdef OLD_GTK
-    ar = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->arspin));
-    ma = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->maspin));
+    p = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->pspin));
+    q = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->qspin));
 #else
-    ar = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->arspin));
-    ma = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->maspin));
+    p = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->pspin));
+    q = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->qspin));
 #endif
+
+    if (opts->Pspin != NULL && opts->Qspin != NULL) {
+#ifdef OLD_GTK
+	P = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->Pspin));
+	Q = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->Qspin));
+#else
+	P = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->Pspin));
+	Q = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->Qspin));
+#endif
+    }
+
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->verbcheck))) {
 	aopt |= OPT_V;
     }
@@ -2056,7 +2070,7 @@ static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
     }
 #endif
 
-    do_arma(opts->v, ar, ma, aopt);
+    do_arma(opts->v, p, q, P, Q, aopt);
 
     gtk_widget_destroy(GTK_WIDGET(opts->dlg));
 }
@@ -2066,6 +2080,7 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     GtkWidget *tmp, *hbox;
     GSList *group;
     struct arma_options *opts;
+    int seasonal = datainfo->pd > 1;
 
     opts = mymalloc(sizeof *opts);
     if (opts == NULL) return;
@@ -2080,26 +2095,64 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     set_dialog_border_widths(opts->dlg);
     gtk_window_set_position(GTK_WINDOW(opts->dlg), GTK_WIN_POS_MOUSE);
 
+    if (seasonal) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new(_("Non-seasonal"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 5);
+    }
+
     /* horizontal box for spinners */
     hbox = gtk_hbox_new(FALSE, 5);
 
     /* AR spinner */
     tmp = gtk_label_new (_("AR order:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    opts->arspin = gtk_spin_button_new_with_range(0, 4, 1);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(opts->arspin), 1);
-    gtk_box_pack_start(GTK_BOX(hbox), opts->arspin, FALSE, FALSE, 0);
+    opts->pspin = gtk_spin_button_new_with_range(0, 4, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(opts->pspin), 1);
+    gtk_box_pack_start(GTK_BOX(hbox), opts->pspin, FALSE, FALSE, 0);
 
     /* MA spinner */
     tmp = gtk_label_new (_("MA order:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    opts->maspin = gtk_spin_button_new_with_range(0, 4, 1);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(opts->maspin), 1);
-    gtk_box_pack_start(GTK_BOX(hbox), opts->maspin, FALSE, FALSE, 0);
+    opts->qspin = gtk_spin_button_new_with_range(0, 4, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(opts->qspin), 1);
+    gtk_box_pack_start(GTK_BOX(hbox), opts->qspin, FALSE, FALSE, 0);
 
     /* pack the spinners */
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
+
+    if (seasonal) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new(_("Seasonal"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 5);	
+
+	hbox = gtk_hbox_new(FALSE, 5);
+
+	/* seasonal AR spinner */
+	tmp = gtk_label_new (_("AR order:"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	opts->Pspin = gtk_spin_button_new_with_range(0, 4, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(opts->Pspin), 0);
+	gtk_box_pack_start(GTK_BOX(hbox), opts->Pspin, FALSE, FALSE, 0);
+
+	/* seasonal MA spinner */
+	tmp = gtk_label_new (_("MA order:"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	opts->Qspin = gtk_spin_button_new_with_range(0, 4, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(opts->Qspin), 0);
+	gtk_box_pack_start(GTK_BOX(hbox), opts->Qspin, FALSE, FALSE, 0);
+
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 5);	
+    } else {
+	opts->Pspin = NULL;
+	opts->Qspin = NULL;
+    }
 
     /* verbosity button */
     hbox = gtk_hbox_new(FALSE, 5);

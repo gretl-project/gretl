@@ -129,7 +129,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg);
 
 void do_model (GtkWidget *widget, gpointer p);
 
-void do_arma (int v, int ar, int ma, gretlopt opts);
+void do_arma (int v, int p, int q, int P, int Q, gretlopt opts);
 
 void do_kernel (gpointer data, guint u, GtkWidget *w);
 

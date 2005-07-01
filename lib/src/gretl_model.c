@@ -1896,5 +1896,101 @@ double coeff_pval (const MODEL *pmod, double x, int df)
     }
 }
 
+/**
+ * gretl_model_add_arma_varnames:
+ * @pmod: pointer to target model.
+ * @pdinfo: dataset information.
+ * @yno: ID number of dependent variable.
+ * @p: non-seasonal AR order.
+ * @q: non-seasonal MA order.
+ * @P: seasonal AR order.
+ * @Q: seasonal MA order.
+ * @r: number of exogenous regressors (excluding the constant).
+ * 
+ * Composes a set of names to be given to the regressors in an
+ * ARMA model.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
+				   int yno, int p, int q, int P, int Q, 
+				   int r)
+{
+    int ptot = p + P;
+    int qtot = q + Q;
+    int np = ptot + qtot + r + pmod->ifc + 1;
+    int xstart;
+    int i, j, s;
+
+    const char *depvar;
+    size_t n;
+
+    pmod->params = malloc(np * sizeof pmod->params);
+    if (pmod->params == NULL) {
+	pmod->errcode = E_ALLOC;
+	return 1;
+    }
+
+    pmod->nparams = np;
+
+    for (i=0; i<np; i++) {
+	pmod->params[i] = malloc(VNAMELEN);
+	if (pmod->params[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(pmod->params[j]);
+	    }
+	    free(pmod->params);
+	    pmod->params = NULL;
+	    pmod->nparams = 0;
+	    pmod->errcode = E_ALLOC;
+	    return 1;
+	}
+    }
+
+    strcpy(pmod->params[0], pdinfo->varname[yno]);
+
+    if (pmod->ifc) {
+	strcpy(pmod->params[1], pdinfo->varname[0]);
+	j = 2;
+    } else {
+	j = 1;
+    }
+
+    depvar = pmod->params[0];
+    n = strlen(depvar);
+
+    for (i=0; i<ptot; i++) {
+	if (i < p) {
+	    s = i + 1;
+	} else {
+	    s = (i - p + 1) * pdinfo->pd;
+	}
+	if (n < VNAMELEN - 4) {
+	    sprintf(pmod->params[j++], "%s(-%d)", depvar, s);
+	} else {
+	    sprintf(pmod->params[j++], "y(-%d)", s);
+	}
+    }
+
+    for (i=0; i<qtot; i++) {
+	if (i < q) {
+	    s = i + 1;
+	} else {
+	    s = (i - q + 1) * pdinfo->pd;
+	}    
+	sprintf(pmod->params[j++], "e(-%d)", s);
+    }
+
+    xstart = (P || Q)? 8 : 5;
+
+    for (i=0; i<r; i++) {
+	strcpy(pmod->params[j++], pdinfo->varname[pmod->list[xstart+i]]); 
+    }   
+
+    return 0;
+}
+
+
 
 

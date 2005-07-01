@@ -2026,6 +2026,22 @@ static int more_coming (const CMD *cmd, int i)
     return 0;
 }
 
+static int n_separators (const int *list)
+{
+    int i, nsep = 0;
+
+    for (i=2; i<list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    nsep++;
+	}
+    }
+
+    return nsep;
+}
+
+#define listsep_switch(c) (c == AR || c == GARCH || c == ARMA || \
+                           c == MPOLS)
+
 #define hold_param(c) (c == TSLS || c == AR || c == ARMA || c == CORRGM || \
                        c == MPOLS || c == SCATTERS || c == GNUPLOT || \
                        c == LOGISTIC || c == GARCH || c == EQUATION || \
@@ -2039,11 +2055,14 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 		int batch, int echo_stdout, char leadchar,
 		int *stdlen, int *prnlen, PRN *prn)
 {
+    int use_varnames = 1;
     char first[16];
-    int i, gotsep = 1;
+    int nsep, gotsep, i;
 
-    if (cmd->ci == AR || cmd->ci == ARMA || cmd->ci == GARCH) {
-	gotsep = 0;
+    nsep = n_separators(cmd->list);
+
+    if (cmd->ci == AR || cmd->ci == GARCH || cmd->ci == ARMA) {
+	use_varnames = 0;	
     }
 
     if (cmd->ci == REMEMBER && cmd->extra != NULL) {
@@ -2106,7 +2125,10 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
     }
 #endif
 
+    gotsep = 0;
+
     for (i=1; i<=cmd->list[0]; i++) {
+
 	if (cmd->list[i] == LISTSEP) {
 	    if (echo_stdout) {
 		*stdlen += printf(" ;");
@@ -2114,12 +2136,15 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 	    if (!batch) {
 		*prnlen += pputs(prn, " ;");
 	    }
-	    gotsep = (cmd->ci != MPOLS)? 1 : 0;
+	    gotsep++;
+	    if (listsep_switch(cmd->ci) && gotsep == nsep) {
+		use_varnames = !use_varnames;
+	    }
 	    continue;
 	}
 
 	if (echo_stdout) {
-	    if (gotsep) {
+	    if (use_varnames) {
 		*stdlen += cmd_list_print_var(cmd, i, pdinfo, 1, prn);
 	    } else {
 		*stdlen += printf(" %d", cmd->list[i]);
@@ -2131,7 +2156,7 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 	}
 
 	if (!batch) {
-	    if (gotsep) {
+	    if (use_varnames) {
 		*prnlen += cmd_list_print_var(cmd, i, pdinfo, 0, prn);
 	    } else {
 		char numstr[12];

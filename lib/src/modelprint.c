@@ -541,7 +541,11 @@ static const char *
 my_estimator_string (const MODEL *pmod, PRN *prn)
 {
     if (pmod->ci == ARMA) {
-	return (pmod->list[0] > 4)? N_("ARMAX") : N_("ARMA");
+	if (gretl_model_get_int(pmod, "armax")) {
+	    return N_("ARMAX");
+	} else {
+	    return N_("ARMA");
+	}
     } else if (pmod->ci == WLS) {
 	if (gretl_model_get_int(pmod, "iters")) {
 	    return N_("Maximum Likelihood");
@@ -870,8 +874,7 @@ static void print_model_heading (const MODEL *pmod,
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? vname : pmod->params[0]);
     } else { 
-	int v = (pmod->ci == ARMA || pmod->ci == GARCH)? 
-	    pmod->list[4] : pmod->list[1];
+	int v = gretl_model_get_depvar(pmod);
 
 	if (tex) tex_escape(vname, pdinfo->varname[v]);
 	pprintf(prn, "%s: %s", 
@@ -1819,6 +1822,43 @@ const char *root_fmt = "%8s%3d%17.4f%11.4f%11.4f%11.4f\n";
 const char *roots_sep = "  -----------------------------------------"
                         "------------------";
 
+static void print_root (double rx, double ix, double mod, double fr,
+			int i, int hline, PRN *prn)
+{
+     if (plain_format(prn)) {
+	 pprintf(prn, root_fmt, _("Root"), i, rx, ix, mod, fr);
+     } else if (tex_format(prn)) {
+	 pprintf(prn, "& %s & %d & $%.4f$ & $%.4f$ & $%.4f$ & $%.4f$ \\\\ ",
+		 I_("Root"), i, rx, ix, mod, fr);
+	 if (hline) {
+	     pputs(prn, "\\hline\n");
+	 } else {
+	     pputc(prn, '\n');
+	 }
+     } else if (rtf_format(prn)) {
+	 pputs(prn, RTF_ROOT_ROW);
+	 pprintf(prn, "\\ql \\cell \\ql %s %d \\cell"
+		 " \\qr %.4f\\cell"
+		 " \\qr %.4f\\cell"
+		 " \\qr %.4f\\cell"
+		 " \\qr %.4f\\cell \\intbl \\row\n",
+		 I_("Root"), i, rx, ix, mod, fr);
+     }
+}
+
+static void root_start (const char *tag, PRN *prn)
+{
+    if (plain_format(prn)) {
+	pprintf(prn, "  %s\n", _(tag));
+    } else if (tex_format(prn)) {
+	pprintf(prn, "%s \\\\ \n", I_(tag));
+    } else if (rtf_format(prn)) {
+	pputs(prn, RTF_ROOT_ROW);
+	pprintf(prn, "\\ql %s\\cell\\ql \\cell\\ql \\cell\\ql \\cell\\ql \\cell"
+		"\\ql\\cell \\intbl \\row\n", I_(tag));
+    }
+}
+
 static void print_arma_roots (const MODEL *pmod, PRN *prn)
 {
     cmplx *roots = gretl_model_get_data(pmod, "roots");
@@ -1826,7 +1866,9 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
     if (roots != NULL) {
 	int p = pmod->list[1];
 	int q = pmod->list[2];
-	int i;
+	int P = gretl_model_get_int(pmod, "arma_P");
+	int Q = gretl_model_get_int(pmod, "arma_Q");
+	int i, k, hline;
 	double mod, fr;
 
 	if (plain_format(prn)) {
@@ -1847,15 +1889,8 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 	}
 
 	if (p > 0) {
-	    if (plain_format(prn)) {
-		pprintf(prn, "  %s\n", _("AR"));
-	    } else if (tex_format(prn)) {
-		pprintf(prn, "%s \\\\ \n", I_("AR"));
-	    } else if (rtf_format(prn)) {
-		pputs(prn, RTF_ROOT_ROW);
-		pprintf(prn, "\\ql %s\\cell\\ql \\cell\\ql \\cell\\ql \\cell\\ql \\cell"
-			"\\ql\\cell \\intbl \\row\n", I_("AR"));
-	    }
+	    k = 1;
+	    root_start(N_("AR"), prn);
 	    for (i=0; i<p; i++) {
 		if (roots[i].i != 0) {
 		    mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
@@ -1864,37 +1899,19 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 		    mod = fabs(roots[i].r);
 		}
 		fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
-		if (plain_format(prn)) {
-		    pprintf(prn, root_fmt, _("Root"), i + 1, 
-			    roots[i].r, roots[i].i, mod, fr);
-		} else if (tex_format(prn)) {
-		    pprintf(prn, "& %s & %d & $%.4f$ & $%.4f$ & $%.4f$ & $%.4f$ \\\\ ",
-			    I_("Root"), i + 1, roots[i].r, roots[i].i, mod, fr);
-		    if (i == p - 1 && q == 0) pputs(prn, "\\hline\n");
-		    else pputc(prn, '\n');
-		} else if (rtf_format(prn)) {
-		    pputs(prn, RTF_ROOT_ROW);
-		    pprintf(prn, "\\ql \\cell \\ql %s %d \\cell"
-			    " \\qr %.4f\\cell"
-			    " \\qr %.4f\\cell"
-			    " \\qr %.4f\\cell"
-			    " \\qr %.4f\\cell \\intbl \\row\n",
-			    I_("Root"), i + 1, roots[i].r, roots[i].i, mod, fr);
+		if (i == p - 1 && q == 0 && P == 0 && Q == 0) {
+		    hline = 1;
+		} else {
+		    hline = 0;
 		}
+		print_root(roots[i].r, roots[i].i, mod, fr, k++, hline, prn);
 	    }
-	} 
+	}
 
-	if (q > 0) {
-	    if (plain_format(prn)) {
-		pprintf(prn, "  %s\n", _("MA"));
-	    } else if (tex_format(prn)) {
-		pprintf(prn, "%s \\\\ \n", I_("MA"));
-	    } else if (rtf_format(prn)) {
-		pputs(prn, RTF_ROOT_ROW);
-		pprintf(prn, "\\ql %s\\cell\\ql \\cell\\ql \\cell\\ql \\cell\\ql \\cell"
-			"\\ql\\cell \\intbl \\row\n", I_("MA"));
-	    }
-	    for (i=p; i<p+q; i++) {
+	if (P > 0) {
+	    k = 1;
+	    root_start(N_("AR (seasonal)"), prn);
+	    for (i=p; i<p+P; i++) {
 		if (roots[i].i != 0) {
 		    mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
 		    mod = sqrt(mod);
@@ -1902,23 +1919,52 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 		    mod = fabs(roots[i].r);
 		}
 		fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
-		if (plain_format(prn)) {
-		    pprintf(prn, root_fmt, _("Root"), i - p + 1, 
-			    roots[i].r, roots[i].i, mod, fr);
-		} else if (tex_format(prn)) {
-		    pprintf(prn, "& %s & %d & $%.4f$ & $%.4f$ & $%.4f$ & $%.4f$ \\\\ ",
-			    I_("Root"), i - p + 1, roots[i].r, roots[i].i, mod, fr);
-		    if (i == p + q - 1) pputs(prn, "\\hline\n");
-		    else pputc(prn, '\n');
-		} else if (rtf_format(prn)) {
-		    pputs(prn, RTF_ROOT_ROW);
-		    pprintf(prn, "\\ql \\cell \\ql %s %d \\cell"
-			    " \\qr %.4f\\cell"
-			    " \\qr %.4f\\cell"
-			    " \\qr %.4f\\cell"
-			    " \\qr %.4f\\cell \\intbl \\row\n",
-			    I_("Root"), i - p + 1, roots[i].r, roots[i].i, mod, fr);
+		if (i == p + P - 1 && q == 0 && Q == 0) {
+		    hline = 1;
+		} else {
+		    hline = 0;
 		}
+		print_root(roots[i].r, roots[i].i, mod, fr, k++, hline, prn);
+	    }
+	}
+
+	if (q > 0) {
+	    k = 1;
+	    root_start(N_("MA"), prn);
+	    for (i=p+P; i<p+P+q; i++) {
+		if (roots[i].i != 0) {
+		    mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
+		    mod = sqrt(mod);
+		} else {
+		    mod = fabs(roots[i].r);
+		}
+		fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
+		if (i == p + P + q - 1 && Q == 0) {
+		    hline = 1;
+		} else {
+		    hline = 0;
+		}
+		print_root(roots[i].r, roots[i].i, mod, fr, k++, hline, prn);
+	    }
+	}
+
+	if (Q > 0) {
+	    k = 1;
+	    root_start(N_("MA (seasonal)"), prn);
+	    for (i=p+P+q; i<p+P+q+Q; i++) {
+		if (roots[i].i != 0) {
+		    mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
+		    mod = sqrt(mod);
+		} else {
+		    mod = fabs(roots[i].r);
+		}
+		fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
+		if (i == p + P + q + Q - 1) {
+		    hline = 1;
+		} else {
+		    hline = 0;
+		}
+		print_root(roots[i].r, roots[i].i, mod, fr, k++, hline, prn);
 	    }
 	}
 
