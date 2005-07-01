@@ -32,24 +32,26 @@
 #define MAX_ARMA_ORDER 6
 
 struct arma_info {
-    int p;      /* non-seasonal AR order */
-    int q;      /* non-seasonal MA order */
-    int P;      /* seasonal AR order */
-    int Q;      /* seasonal MA order */
-    int maxlag; /* longest lag in model */
-    int r;      /* number of other regressors (ARMAX) */
-    int ifc;    /* 1 for intercept included, otherwise 0 */
-    int nc;     /* total number of coefficients */
-    int t1;     /* starting observation */
-    int t2;     /* ending observation */
+    int yno;      /* ID number of dependent var */
+    int p;        /* non-seasonal AR order */
+    int q;        /* non-seasonal MA order */
+    int P;        /* seasonal AR order */
+    int Q;        /* seasonal MA order */
+    int maxlag;   /* longest lag in model */
+    int r;        /* number of other regressors (ARMAX) */
+    int ifc;      /* 1 for intercept included, otherwise 0 */
+    int nc;       /* total number of coefficients */
+    int t1;       /* starting observation */
+    int t2;       /* ending observation */
     int seasonal; /* 1 if any seasonal terms, otherwise 0 */
+    int pd;       /* periodicity of data (for seasonal models) */
 };
 
 static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 			       struct arma_info *ainfo)
 {
     int np = ainfo->nc + 1;
-    int yno, xstart;
+    int xstart;
     int i, j, s;
 
     const char *depvar;
@@ -77,8 +79,7 @@ static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 	}
     }
 
-    yno = gretl_model_get_depvar(pmod);
-    strcpy(pmod->params[0], pdinfo->varname[yno]);
+    strcpy(pmod->params[0], pdinfo->varname[ainfo->yno]);
 
     if (ainfo->ifc) {
 	strcpy(pmod->params[1], pdinfo->varname[0]);
@@ -130,28 +131,42 @@ static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 /* check whether the MA estimates have gone out of bounds in the
    course of BHHH iterations */
 
-static int ma_out_of_bounds (int q, const double *ma_coeff)
+static int 
+ma_out_of_bounds (struct arma_info *ainfo, const double *ma_coeff,
+		  const double *sma_coeff)
 {
     double *temp = NULL, *tmp2 = NULL;
     double re, im, rt;
     cmplx *roots = NULL;
-    int i, err = 0, allzero = 1;
+    int qmax, allzero = 1;
+    int i, j, k, err = 0;
 
-    for (i=0; i<q; i++){
+    qmax = ainfo->q;
+    if (ainfo->seasonal) {
+	qmax += ainfo->Q * ainfo->pd;
+    }
+
+    for (i=0; i<ainfo->q && allzero; i++) {
 	if (ma_coeff[i] != 0.0) {
 	    allzero = 0;
-	}    
-    }    
-    
+	}
+    }
+
+    for (i=0; i<ainfo->Q && allzero; i++) {
+	if (sma_coeff[i] != 0.0) {
+	    allzero = 0;
+	}
+    }
+
     if (allzero) {
 	return 0;
     }
 
     /* we'll use a budget version of the "arma_roots" function here */
 
-    temp  = malloc((q + 1) * sizeof *temp);
-    tmp2  = malloc((q + 1) * sizeof *tmp2);
-    roots = malloc(q * sizeof *roots);
+    temp  = malloc((qmax + 1) * sizeof *temp);
+    tmp2  = malloc((qmax + 1) * sizeof *tmp2);
+    roots = malloc(qmax * sizeof *roots);
 
     if (temp == NULL || tmp2 == NULL || roots == NULL) {
 	free(temp);
@@ -161,12 +176,28 @@ static int ma_out_of_bounds (int q, const double *ma_coeff)
     }
 
     temp[0] = 1.0;
-    for (i=0; i<q; i++){
-	temp[i+1] = ma_coeff[i];
-    }
-    polrt(temp, tmp2, q, roots);
 
-    for (i=0; i<q; i++) {
+    for (i=0; i<qmax; i++) {
+	temp[i+1] = 0.0;
+    }
+
+    for (i=0; i<ainfo->q; i++){
+	k = i + 1;
+	temp[k] += ma_coeff[i];
+    }
+
+    for (i=0; i<ainfo->Q; i++){
+	k = (i + 1) * ainfo->pd;
+	temp[k] += sma_coeff[i];
+	for (j=0; j<ainfo->q; j++) {
+	    k = (i + 1) * ainfo->pd + j + 1;
+	    temp[k] += sma_coeff[i] * ma_coeff[j];
+	}
+    }
+
+    polrt(temp, tmp2, qmax, roots);
+
+    for (i=0; i<qmax; i++) {
 	re = roots[i].r;
 	im = roots[i].i;
 	rt = re * re + im * im;
@@ -192,11 +223,10 @@ static int arma_ll (double *coeff,
 		    model_info *arma,
 		    int do_score)
 {
-    int i, j, t;
+    int i, j, s, t;
     int t1 = model_info_get_t1(arma);
     int t2 = model_info_get_t2(arma);
     int n = t2 - t1 + 1;
-    int p, q, r;
 
     const double K = 1.41893853320467274178; /* ln(sqrt(2*pi)) + 0.5 */
     const double *y = bhX[0];
@@ -204,8 +234,12 @@ static int arma_ll (double *coeff,
     double **series = model_info_get_series(arma);
     double *e = series[0];
     double **de = series + 1;
-    double **de_a, **de_m, **de_r;
-    const double *ar_coeff, *ma_coeff, *reg_coeff;
+    double **de_a, **de_m;
+    double **de_sa, **de_sm;
+    double **de_r;
+    const double *ar_coeff, *ma_coeff;
+    const double *sar_coeff, *sma_coeff;
+    const double *reg_coeff;
 
     struct arma_info *ainfo;
 
@@ -215,21 +249,21 @@ static int arma_ll (double *coeff,
     /* retrieve ARMA-specific information */
     ainfo = model_info_get_extra_info(arma);
 
-    p = ainfo->p;
-    q = ainfo->q;
-    r = ainfo->r;
-
     /* pointers to blocks of coefficients */
     ar_coeff = coeff + ainfo->ifc;
     ma_coeff = ar_coeff + ainfo->p;
-    reg_coeff = ma_coeff + ainfo->q;
+    sar_coeff = ma_coeff + ainfo->q;
+    sma_coeff = sar_coeff + ainfo->P;
+    reg_coeff = sma_coeff + ainfo->Q;
 
     /* pointers to blocks of derivatives */
     de_a = de + ainfo->ifc;
     de_m = de_a + ainfo->p;
-    de_r = de_m + ainfo->q;
+    de_sa = de_m + ainfo->q;
+    de_sm = de_sa + ainfo->P;
+    de_r = de_sm + ainfo->Q;
 
-    if (ma_out_of_bounds(q, ma_coeff)) {
+    if (ma_out_of_bounds(ainfo, ma_coeff, sma_coeff)) {
 	fputs("arma: MA estimate(s) out of bounds\n", stderr);
 	return 1;
     }
@@ -244,17 +278,37 @@ static int arma_ll (double *coeff,
 	    e[t] -= coeff[0];
 	} 
 
-	for (i=0; i<p; i++) {
-	    e[t] -= ar_coeff[i] * y[t-i-1];
+	/* non-seasonal AR component */
+	for (i=0; i<ainfo->p; i++) {
+	    s = t - (i + 1);
+	    e[t] -= ar_coeff[i] * y[s];
 	}
 
-	for (i=0; i<q; i++) {
-	    if (t - i - 1 >= t1) {
-		e[t] -= ma_coeff[i] * e[t-i-1];
+	/* non-seasonal MA component */
+	for (i=0; i<ainfo->q; i++) {
+	    s = t - (i + 1);
+	    if (s >= t1) {
+		e[t] -= ma_coeff[i] * e[s];
 	    }
 	}
 
-	for (i=0; i<r; i++) {
+	/* seasonal AR component */
+	for (i=0; i<ainfo->P; i++) {
+	    s = t - ainfo->pd * (i + 1);
+	    e[t] -= sar_coeff[i] * y[s];
+	}
+
+	/* seasonal MA component */
+	for (i=0; i<ainfo->Q; i++) {
+	    s = t - ainfo->pd * (i + 1) ;
+	    if (s >= t1) {
+		e[t] -= sma_coeff[i] * e[s];
+	    }
+	}
+
+	/* FIXME interactions */
+
+	for (i=0; i<ainfo->r; i++) {
 	    e[t] -= reg_coeff[i] * X[i][t];
 	}
 
@@ -277,37 +331,59 @@ static int arma_ll (double *coeff,
 	    /* the constant term (de_0) */
 	    if (ainfo->ifc) {
 		de[0][t] = -1.0;
-		for (i=0; i<q; i++) {
+		for (i=0; i<ainfo->q; i++) {
 		    de[0][t] -= ma_coeff[i] * de[0][t-i-1];
 		}
 	    }
 
-	    /* AR terms (de_a) */
-	    for (j=0; j<p; j++) {
+	    /* non-seasonal AR terms (de_a) */
+	    for (j=0; j<ainfo->p; j++) {
 		lag = j + 1;
 		if (t >= lag) {
 		    de_a[j][t] = -y[t-lag];
-		    for (i=0; i<q; i++) {
+		    for (i=0; i<ainfo->q; i++) {
 			de_a[j][t] -= ma_coeff[i] * de_a[j][t-i-1];
 		    }
 		}
 	    }
 
-	    /* MA terms (de_m) */
-	    for (j=0; j<q; j++) {
+	    /* non-seasonal MA terms (de_m) */
+	    for (j=0; j<ainfo->q; j++) {
 		lag = j + 1;
 		if (t >= lag) {
 		    de_m[j][t] = -e[t-lag];
-		    for (i=0; i<q; i++) {
+		    for (i=0; i<ainfo->q; i++) {
+			de_m[j][t] -= ma_coeff[i] * de_m[j][t-i-1];
+		    }
+		}
+	    }
+
+	    /* seasonal AR terms (de_sa) FIXME */
+	    for (j=0; j<ainfo->P; j++) {
+		lag = ainfo->pd * (j + 1);
+		if (t >= lag) {
+		    de_sa[j][t] = -y[t-lag];
+		    for (i=0; i<ainfo->q; i++) {
+			de_a[j][t] -= ma_coeff[i] * de_a[j][t-i-1];
+		    }
+		}
+	    }
+
+	    /* seasonal MA terms (de_sm) FIXME */
+	    for (j=0; j<ainfo->Q; j++) {
+		lag = ainfo->pd * (j + 1);
+		if (t >= lag) {
+		    de_sm[j][t] = -e[t-lag];
+		    for (i=0; i<ainfo->q; i++) {
 			de_m[j][t] -= ma_coeff[i] * de_m[j][t-i-1];
 		    }
 		}
 	    }
 
 	    /* ordinary regressors (de_r) */
-	    for (j=0; j<r; j++) {
+	    for (j=0; j<ainfo->r; j++) {
 		de_r[j][t] = -X[j][t]; 
-		for (i=0; i<q; i++) {
+		for (i=0; i<ainfo->q; i++) {
 		    de_r[j][t] -= ma_coeff[i] * de_r[j][t-i-1];
 		}
 	    }
@@ -370,6 +446,7 @@ static cmplx *arma_roots (struct arma_info *ainfo, const double *coeff)
     for (j=0; j<ainfo->q; j++){
 	temp[j+1] = ma_coeff[j];
     }
+
     polrt(temp, temp2, ainfo->q, roots + ainfo->p);
 
     free(temp);
@@ -597,13 +674,12 @@ static int ar_init_by_ols (const int *list, double *coeff,
 			   struct arma_info *ainfo)
 {
     int an = pdinfo->t2 - ainfo->t1 + 1;
-    int ynum = list[4];
-    int av = ainfo->p + ainfo->r + 2;
+    int av = ainfo->p + ainfo->P + ainfo->r + 2;
     double **aZ = NULL;
     DATAINFO *adinfo = NULL;
     int *alist = NULL;
     MODEL armod;
-    int offset;
+    int offset, xstart;
     int i, j, t, err = 0;
 
     gretl_model_init(&armod);  
@@ -627,8 +703,12 @@ static int ar_init_by_ols (const int *list, double *coeff,
 	alist[i + offset] = i + 2;
     }
 
+    for (i=0; i<ainfo->P; i++) {
+	alist[i + + ainfo->p + offset] = i + ainfo->p + 2;
+    }
+
     for (i=0; i<ainfo->r; i++) {
-	alist[i + offset + ainfo->p] = i + ainfo->p + 2;
+	alist[i + offset + ainfo->p + ainfo->P] = i + ainfo->p + ainfo->P + 2;
     }
 
     adinfo = create_new_dataset(&aZ, av, an, 0);
@@ -637,19 +717,28 @@ static int ar_init_by_ols (const int *list, double *coeff,
 	return 1;
     }
 
+    xstart = (ainfo->seasonal)? 8 : 5;
+
     /* build temporary dataset containing lagged vars */
     for (t=0; t<an; t++) {
 	int j, s;
 
+	/* FIXME s */
+
 	for (i=0; i<=ainfo->p; i++) {
 	    s = t + ainfo->t1 - i;
-	    aZ[i+1][t] = Z[ynum][s];
+	    aZ[i+1][t] = Z[ainfo->yno][s];
+	}
+
+	for (i=0; i<=ainfo->P; i++) {
+	    s = t + ainfo->t1 - i * ainfo->pd;
+	    aZ[i + ainfo->p + 1][t] = Z[ainfo->yno][s];
 	}
 
 	for (i=0; i<ainfo->r; i++) {
-	    j = list[i+5];
+	    j = list[i+xstart];
 	    s = t + ainfo->t1;
-	    aZ[i + ainfo->p + 2][t] = Z[j][s];
+	    aZ[i + ainfo->p + ainfo->P + 2][t] = Z[j][s];
 	}
     }
 
@@ -694,7 +783,7 @@ adjust_sample (DATAINFO *pdinfo, const double **Z, const int *list,
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int an, i, v, t, t1min = 0;
-    int vstart, anymiss;
+    int vstart, pmax, anymiss;
 
     vstart = (ainfo->seasonal)? 7 : 4;
 
@@ -736,7 +825,12 @@ adjust_sample (DATAINFO *pdinfo, const double **Z, const int *list,
 	}
     }
 
-    for (t=t1-ainfo->p; t<t2; t++) {
+    pmax = ainfo->p;
+    if (ainfo->P > 0) {
+	pmax += ainfo->P * ainfo->pd;
+    }
+
+    for (t=t1-pmax; t<t2; t++) {
 	for (i=vstart; i<=list[0]; i++) {
 	    if (t < t1 && i > vstart) {
 		continue;
@@ -784,10 +878,22 @@ set_up_arma_model_info (struct arma_info *ainfo)
     return arma;
 }
 
+static void calc_max_lag (struct arma_info *ainfo)
+{
+    int pmax = ainfo->p;
+    int qmax = ainfo->q;
+
+    if (ainfo->seasonal) {
+	pmax += ainfo->P * ainfo->pd;
+	qmax += ainfo->Q * ainfo->pd;
+    }
+
+    ainfo->maxlag = (pmax > qmax)? pmax : qmax;
+}
+
 MODEL arma_model (const int *list, const double **Z, DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn)
 {
-    int yno;
     double *coeff = NULL;
     const double **X = NULL;
     int *alist = NULL;
@@ -814,13 +920,15 @@ MODEL arma_model (const int *list, const double **Z, DATAINFO *pdinfo,
 	armod.errcode = E_UNSPEC;
 	goto bailout;
     }
+    
+    /* periodicity of data */
+    ainfo.pd = pdinfo->pd;
+
+    /* calculate maximum lag */
+    calc_max_lag(&ainfo);
 
     /* dependent variable */
-    yno = (ainfo.seasonal)? alist[7] : alist[4];
-
-    /* FIXME maxlag */
-    ainfo.maxlag = (ainfo.p > ainfo.q)? 
-	ainfo.p : ainfo.q;  /* maximum non-seasonal lag in the model */
+    ainfo.yno = (ainfo.seasonal)? alist[7] : alist[4];
 
     /* adjust sample range if need be */
     if (adjust_sample(pdinfo, Z, alist, &ainfo)) {
@@ -868,7 +976,7 @@ MODEL arma_model (const int *list, const double **Z, DATAINFO *pdinfo,
 	double *theta = model_info_get_theta(arma);
 	cmplx *roots;
 
-	rewrite_arma_model_stats(pmod, arma, alist, Z[yno], 
+	rewrite_arma_model_stats(pmod, arma, alist, Z[ainfo.yno], 
 				 theta, &ainfo);
 
 	/* compute and save polynomial roots */
