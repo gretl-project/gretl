@@ -1499,10 +1499,9 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     return err;
 }
 
-/* ........................................................... */
+/* compute v'Mv, for symmetric M */
 
 static double vprime_M_v (double *v, double *M, int n)
-     /* compute v'Mv, for symmetric M */
 {
     int i, j, jmin, jmax, k;
     double xx, val = 0.0;
@@ -1555,6 +1554,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     const int T = pmod->t2 - pmod->t1 + 1;
     const int K = pmod->ncoeff;
     MODEL cum_mod;
+    gretlopt cmodopt = OPT_C | OPT_A;
     char cumdate[OBSLEN];
     double xx, yy, sigma, hct, wbar = 0.0;
     double *cresid = NULL, *W = NULL, *xvec = NULL;
@@ -1585,24 +1585,29 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	for (j=0; j<n_est && !err; j++) {
-	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, (OPT_C | OPT_A), 0.0);
+	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, cmodopt, 0.0);
 	    err = cum_mod.errcode;
 	    if (err) {
 		errmsg(err, prn);
 	    } else {
+#if 0
+		printmodel(&cum_mod, pdinfo, OPT_NONE, prn);
+#endif
 		t = pdinfo->t2 + 1;
 		yy = 0.0;
-		for (i=0; i<K; i++) {
+		for (i=0; i<cum_mod.ncoeff; i++) {
 		    xno = cum_mod.list[i+2];
 		    xvec[i] = (*pZ)[xno][t];
-		    yy += cum_mod.coeff[i] * (*pZ)[xno][t];
+		    yy += cum_mod.coeff[i] * xvec[i];
 		}
 		cresid[j] = (*pZ)[yno][t] - yy;
 		cum_mod.ci = CUSUM;
 		makevcv(&cum_mod);
-		xx = vprime_M_v(xvec, cum_mod.vcv, K);
+		xx = vprime_M_v(xvec, cum_mod.vcv, cum_mod.ncoeff);
 		cresid[j] /= sqrt(1.0 + xx);
-		/*  printf("w[%d] = %g\n", t, cresid[j]); */
+#if 0
+		printf("cresid[%d] = %g\n", j, cresid[j]);
+#endif
 		wbar += cresid[j];
 		clear_model(&cum_mod);
 		pdinfo->t2 += 1;

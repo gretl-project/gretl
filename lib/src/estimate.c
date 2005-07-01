@@ -3246,6 +3246,7 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
 		sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
 		strcat(gretl_msg, vnamebit);
 		dropmsg = 1;
+		v--;
 	    }
 	}
     }
@@ -3268,6 +3269,7 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
 		sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
 		strcat(gretl_msg, vnamebit);
 		dropmsg = 1;
+		v--;
 	    }
 	}
     }
