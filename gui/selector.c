@@ -31,6 +31,8 @@ static GtkWidget *scatters_label;
 static GtkWidget *scatters_menu;
 static GtkWidget *x_axis_item;
 
+#define N_EXTRA 4
+
 struct _selector {
     GtkWidget *dlg;
     GtkWidget *varlist;
@@ -38,9 +40,8 @@ struct _selector {
     GtkWidget *rightvars;
     GtkWidget *auxvars;
     GtkWidget *default_check;
-    GtkWidget *extra;
-    GtkWidget *extra2;
     GtkWidget *add_button;
+    GtkWidget *extra[N_EXTRA];
     int code;
     int error;
     gretlopt opts;
@@ -78,8 +79,8 @@ static void set_extra_var (gint i, selector *sr)
 
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &vnum); 
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 1, &vname);
-    gtk_entry_set_text(GTK_ENTRY(sr->extra), vname);
-    gtk_object_set_user_data(GTK_OBJECT(sr->extra),
+    gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), vname);
+    gtk_object_set_user_data(GTK_OBJECT(sr->extra[0]),
 			     GINT_TO_POINTER(atoi(vnum)));
 }
 
@@ -378,19 +379,50 @@ static int add_to_cmdlist (selector *sr, const char *add)
 {
     int n = strlen(sr->cmdlist);
     char *cmdlist = NULL;
+    int err = 0;
 
     if (n % MAXLEN > MAXLEN - 32) {
 	int blocks = 2 + n / MAXLEN;
 
 	cmdlist = realloc(sr->cmdlist, blocks * MAXLEN);
-	if (cmdlist == NULL) return 1;
-	else sr->cmdlist = cmdlist;
+	if (cmdlist == NULL) {
+	    err = 1;
+	} else {
+	    sr->cmdlist = cmdlist;
+	}
     }
 
-    strcat(sr->cmdlist, add);
+    if (!err) {
+	strcat(sr->cmdlist, add);
+    }
 
-    return 0;
+    return err;
 }
+
+static void add_pq_vals_to_cmdlist (selector *sr)
+{
+    GtkAdjustment *adj;
+    int vals[N_EXTRA] = {0};
+    char s[8];
+    int i, imax = 2;
+
+    for (i=0; i < N_EXTRA && sr->extra[i] != NULL; i++) {
+	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[i]));
+	vals[i] = (int) adj->value;
+    }
+
+    if (vals[2] != 0 || vals[3] != 0) {
+	imax = 4;
+    }
+
+    for (i=0; i<imax; i++) {
+	sprintf(s, "%d ", vals[i]);
+	add_to_cmdlist(sr, s);
+	if (i == 1 || i == 3) {
+	    add_to_cmdlist(sr, "; ");
+	}
+    }
+}    
 
 static void construct_cmdlist (GtkWidget *w, selector *sr)
 {
@@ -408,27 +440,27 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
     /* first deal with content of "extra" widget */
     if (sr->code == WLS) {
-	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
+	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 
 	if (str == NULL || *str == '\0') {
 	    errbox(_("You must select a weight variable"));
 	    sr->error = 1;
 	} else {
-	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra)));
+	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra[0])));
 	    sprintf(numstr, "%d ", i);
 	    add_to_cmdlist(sr, numstr);
 	}
     } else if (sr->code == POISSON) {
-	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
+	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 
 	if (str != NULL && *str != '\0') {
-	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra)));
+	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra[0])));
 	    sprintf(endbit, " ; %d", i);
 	}
     } else if (sr->code == AR) {
 	gchar *lags;
 
-	lags = gtk_entry_get_text(GTK_ENTRY(sr->extra));
+	lags = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 	if (!strlen(lags)) {
 	    errbox(_("You must specify a list of lags"));
 	    sr->error = 1;
@@ -439,32 +471,20 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     } else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
 	GtkAdjustment *adj;
  
-	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
+	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[0]));
 	i = (gint) adj->value;
 	sprintf(numstr, "%d ", i);
 	add_to_cmdlist(sr, numstr);
     } else if (sr->code == ARMA || sr->code == GARCH) {
-	GtkAdjustment *adj;
-
-	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
-	i = (gint) adj->value;
-	sprintf(numstr, "%d ", i);
-	add_to_cmdlist(sr, numstr);
-
-	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra2));
-	i = (gint) adj->value;
-	sprintf(numstr, "%d ", i);
-	add_to_cmdlist(sr, numstr);
-
-	add_to_cmdlist(sr, " ; ");
+	add_pq_vals_to_cmdlist(sr);
     } else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
-	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
+	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 
 	if (str == NULL || !strlen(str)) {
 	    errbox(_("You must select a Y-axis variable"));
 	    sr->error = 1;
 	} else {
-	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra)));
+	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra[0])));
 	    sprintf(numstr, "%d ", i);
 	    add_to_cmdlist(sr, numstr);
 	}
@@ -854,11 +874,11 @@ static void lag_order_spin (selector *sr, GtkWidget *right_vbox)
     midhbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("lag order:"));
     adj = gtk_adjustment_new(order, 1, ordermax, 1, 1, 1);
-    sr->extra = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
+    sr->extra[0] = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
     gtk_box_pack_start (GTK_BOX (midhbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
-    gtk_box_pack_start (GTK_BOX (midhbox), sr->extra, FALSE, FALSE, 5);
-    gtk_widget_show(sr->extra);
+    gtk_box_pack_start (GTK_BOX (midhbox), sr->extra[0], FALSE, FALSE, 5);
+    gtk_widget_show(sr->extra[0]);
 
     gtk_box_pack_start(GTK_BOX(right_vbox), midhbox, FALSE, TRUE, 0);
     gtk_widget_show(midhbox); 
@@ -890,9 +910,9 @@ static void extra_var_box (selector *sr, GtkWidget *right_vbox)
 			GTK_SIGNAL_FUNC(select_extra_var_callback), sr);
     gtk_widget_show(tmp); 
 
-    sr->extra = gtk_entry_new_with_max_length(8);
-    gtk_box_pack_start(GTK_BOX(midhbox), sr->extra, FALSE, TRUE, 0);
-    gtk_widget_show(sr->extra); 
+    sr->extra[0] = gtk_entry_new_with_max_length(8);
+    gtk_box_pack_start(GTK_BOX(midhbox), sr->extra[0], FALSE, TRUE, 0);
+    gtk_widget_show(sr->extra[0]); 
 
     gtk_box_pack_start(GTK_BOX(right_vbox), midhbox, FALSE, TRUE, 0);
     gtk_widget_show(midhbox); 
@@ -982,10 +1002,10 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     } else if (sr->code == TSLS) {
 	auxiliary_varlist_box (sr, right_vbox);
     } else if (sr->code == AR) {
-	sr->extra = gtk_entry_new();
-	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra, 
+	sr->extra[0] = gtk_entry_new();
+	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra[0], 
 			   FALSE, TRUE, 0);
-	gtk_widget_show(sr->extra); 
+	gtk_widget_show(sr->extra[0]); 
     } else if (sr->code == VAR) {
 	lag_order_spin (sr, right_vbox);
 	tmp = gtk_hseparator_new();
@@ -1013,13 +1033,19 @@ static int screen_scalar (int i, int c)
 
 static void selector_init (selector *sr, guint code, const char *title)
 {
+    int i;
+
     sr->varlist = NULL;
     sr->depvar = NULL;
     sr->rightvars = NULL;
     sr->auxvars = NULL;
     sr->default_check = NULL;
-    sr->extra = NULL;
     sr->add_button = NULL;
+
+    for (i=0; i<N_EXTRA; i++) {
+	sr->extra[i] = NULL;
+    }
+
     sr->cmdlist = NULL;
     sr->data = NULL;
 
@@ -1093,36 +1119,82 @@ static void engle_granger_callback (GtkWidget *w,  selector *sr)
     }
 }
 
+static GtkWidget *spinner_aux_label (int i)
+{
+    GtkWidget *hbox;
+    GtkWidget *lbl;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+
+    if (i == 0) {
+	lbl = gtk_label_new(_("Non-seasonal"));
+    } else {
+	lbl = gtk_label_new(_("Seasonal"));
+    }
+
+    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+    gtk_widget_show(lbl);
+
+    return hbox;
+}
+
+static GtkWidget *spinner_label (int i, int code)
+{
+    const char *arma_strs[] = {
+	N_("AR order:"),
+	N_("MA order:")
+    };
+    const char *arch_strs[] = {
+	N_("ARCH p:"),
+	N_("ARCH q:")
+    };
+    GtkWidget *lbl = NULL;
+
+    if (code == ARMA) {
+	lbl = gtk_label_new(_(arma_strs[i % 2]));
+    } else {
+	lbl = gtk_label_new(_(arch_strs[i]));
+    }
+
+    return lbl;
+}
+
 static void build_pq_spinners (selector *sr)
 {
     GtkWidget *hbox, *tmp;
     GtkObject *adj;
+    gdouble val;
+    int i, imax = 2;
+
+    if (sr->code == ARMA && datainfo->pd > 1) {
+	imax = 4;
+    }
 
     hbox = gtk_hbox_new(FALSE, 5);
 
-    if (sr->code == ARMA) {
-	tmp = gtk_label_new(_("AR order:"));
-    } else {
-	tmp = gtk_label_new(_("ARCH p:"));
-    }
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    gtk_widget_show(tmp);
-    adj = gtk_adjustment_new(1, 0, 4, 1, 1, 1);
-    sr->extra = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), sr->extra, FALSE, FALSE, 5);
-    gtk_widget_show(sr->extra);
+    for (i=0; i<imax; i++) {
+	if (i == 2) {
+	    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox),
+			       hbox, FALSE, FALSE, 5);
+	    gtk_widget_show(hbox);
+	    hbox = gtk_hbox_new(FALSE, 5);
+	}
+	if (imax > 2 && i % 2 == 0) {
+	    tmp = spinner_aux_label(i);
+	    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox),
+			       tmp, FALSE, FALSE, 0);
+	    gtk_widget_show(tmp);
+	}	    
+	tmp = spinner_label(i, sr->code);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_widget_show(tmp);
 
-    if (sr->code == ARMA) {
-	tmp = gtk_label_new(_("MA order:"));
-    } else {
-	tmp = gtk_label_new(_("ARCH q:"));
+	val = (i < 2)? 1 : 0;
+	adj = gtk_adjustment_new(val, 0, 4, 1, 1, 1);
+	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
+	gtk_widget_show(sr->extra[i]);
     }
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    gtk_widget_show(tmp);
-    adj = gtk_adjustment_new(1, 0, 4, 1, 1, 1);
-    sr->extra2 = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), sr->extra2, FALSE, FALSE, 5);
-    gtk_widget_show(sr->extra2);
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox),
 		       hbox, FALSE, FALSE, 5);

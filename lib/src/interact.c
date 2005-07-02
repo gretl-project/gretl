@@ -1125,6 +1125,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     *gretl_errmsg = '\0';
 
+    compress_spaces(line);
+#if 0
+    fprintf(stderr, "parsing '%s'\n", line);
+#endif
+
     /* extract any options first */
     cmd->opt = get_gretl_options(line, &cmd->errcode);
     if (cmd->errcode) {
@@ -1599,6 +1604,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (cmd->list == NULL || cmd->param == NULL || cmd->extra == NULL) {
 	cmd->errcode = E_ALLOC;
     }
+
+#if 0
+    printlist(cmd->list, "cmd->list");
+#endif
 
     if (cmd->errcode) {
 	cmd->context = 0;

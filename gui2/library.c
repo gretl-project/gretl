@@ -2421,13 +2421,20 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg)
     view_model(prn, pmod, 78, 420, title); 
 }
 
-/* ........................................................... */
-
 static void arma_maybe_suppress_const (void)
 {
+    int offset, nsep = 0;
     int i, got0 = 0;
 
-    for (i=4; i<=cmd.list[0]; i++) {
+    for (i=2; i<cmd.list[0]; i++) {
+	if (cmd.list[i] == LISTSEP) {
+	    nsep++;
+	}
+    }
+
+    offset = (nsep > 1)? 7 : 4;
+
+    for (i=offset; i<=cmd.list[0]; i++) {
 	if (cmd.list[i] == 0) {
 	    got0 = 1;
 	    break;

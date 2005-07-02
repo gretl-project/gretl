@@ -785,8 +785,6 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	return 1;
     }
 
-    compress_spaces(line);
-
     /* tell libgretl if we're in batch mode */
     gretl_set_batch_mode(batch);
 

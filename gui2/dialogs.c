@@ -2100,7 +2100,7 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 	tmp = gtk_label_new(_("Non-seasonal"));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
-			   hbox, FALSE, FALSE, 5);
+			   hbox, FALSE, FALSE, 0);
     }
 
     /* horizontal box for spinners */
@@ -2129,7 +2129,7 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 	tmp = gtk_label_new(_("Seasonal"));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
-			   hbox, FALSE, FALSE, 5);	
+			   hbox, FALSE, FALSE, 0);	
 
 	hbox = gtk_hbox_new(FALSE, 5);
 
