@@ -83,7 +83,7 @@ enum {
 
 static int real_adf_test (int varno, int order, int niv,
 			  double ***pZ, DATAINFO *pdinfo, 
-			  gretlopt opt, int egtest, 
+			  gretlopt opt, int eg_test, 
 			  int print_ack, PRN *prn);
 
 static void pad_var_coeff_matrix (GRETL_VAR *var)
