@@ -71,9 +71,20 @@ enum {
 
 #define TREND_FAILED 9999
 
+enum {
+    EG_TEST_NO,
+    EG_TEST_YES
+};
+
+enum {
+    URC_NO_PRINT_ACK,
+    URC_PRINT_ACK
+};
+
 static int real_adf_test (int varno, int order, int niv,
 			  double ***pZ, DATAINFO *pdinfo, 
-			  gretlopt opt, int cointcode, PRN *prn);
+			  gretlopt opt, int egtest, 
+			  int print_ack, PRN *prn);
 
 static void pad_var_coeff_matrix (GRETL_VAR *var)
 {
@@ -1693,6 +1704,11 @@ static double df_pvalue_from_plugin (double tau, int n, int niv, int itv)
 
     pval = (*mackinnon_pvalue)(tau, n, niv, itv, datapath);
 
+#if 0
+    fprintf(stderr, "getting pval: tau=%g, n=%d, niv=%d, itv=%d: pval=%g\n",
+	    tau, n, niv, itv, pval);
+#endif
+
     close_plugin(handle);
 
     if (*datapath == '\0') {
@@ -1725,7 +1741,6 @@ int coint (int order, const int *list, double ***pZ,
     int hasconst = gretl_list_has_const(list);
     MODEL cmod;
     int *cointlist = NULL;
-    int adfcode = UR_CONST;
 
     if (order <= 0 || list[0] - hasconst < 2) {
 	strcpy(gretl_errmsg, "coint: needs a positive lag order "
@@ -1742,7 +1757,8 @@ int coint (int order, const int *list, double ***pZ,
 	}
 	pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
 		i, pdinfo->varname[list[i]]);
-	real_adf_test(list[i], order, 1, pZ, pdinfo, 0L, -1, prn);
+	real_adf_test(list[i], order, 1, pZ, pdinfo, OPT_NONE, 
+		      EG_TEST_YES, URC_NO_PRINT_ACK, prn);
     }
 
     /* step 2: carry out the cointegrating regression */
@@ -1794,7 +1810,7 @@ int coint (int order, const int *list, double ***pZ,
 
     /* Run (A)DF test on the residuals */
     real_adf_test(pdinfo->v - 1, order, 1 + cmod.ncoeff - cmod.ifc, 
-		  pZ, pdinfo, OPT_N, adfcode, prn);
+		  pZ, pdinfo, OPT_N, EG_TEST_YES, URC_PRINT_ACK, prn);
 
     pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
 		 "(a) The unit-root hypothesis is not rejected for the individual"
@@ -1932,7 +1948,7 @@ static void copy_list_values (int *targ, const int *src)
 static void 
 print_adf_results (int order, double DFt, double pv, const MODEL *dfmod,
 		   int dfnum, const char *vname, int *blurb_done,
-		   int coint, int i, PRN *prn)
+		   int eg_test, int i, PRN *prn)
 {
     const char *models[] = {
 	"(1 - L)y = (a-1)*y(-1) + e",
@@ -1980,7 +1996,7 @@ print_adf_results (int order, double DFt, double pv, const MODEL *dfmod,
 
     pprintf(prn, "   %s\n", _(teststrs[i]));
 
-    if (coint == 0) {
+    if (eg_test == EG_TEST_NO) {
 	pprintf(prn, "   %s: %s\n", _("model"), 
 		(order > 0)? aug_models[i] : models[i]);
     }
@@ -1995,8 +2011,8 @@ print_adf_results (int order, double DFt, double pv, const MODEL *dfmod,
 
 static int real_adf_test (int varno, int order, int niv,
 			  double ***pZ, DATAINFO *pdinfo, 
-			  gretlopt opt, int cointcode,
-			  PRN *prn)
+			  gretlopt opt, int eg_test,
+			  int print_ack, PRN *prn)
 {
     MODEL dfmod;
 
@@ -2042,7 +2058,7 @@ static int real_adf_test (int varno, int order, int niv,
 
     gretl_model_init(&dfmod);
 
-    if (opt == 0L || opt == OPT_V) {
+    if (opt == OPT_NONE || opt == OPT_V) {
 	/* default display */
 	mask[1] = mask[2] = mask[3] = 1;
     } else {
@@ -2118,14 +2134,10 @@ static int real_adf_test (int varno, int order, int niv,
 
 	DFt = dfmod.coeff[dfnum] / dfmod.sderr[dfnum];
 
-	if (cointcode > 0) {
-	    itv = cointcode;
-	} else {
-	    itv = (i == 0)? UR_NO_CONST :
-		(i == 1)? UR_CONST : 
-		(i == 2)? UR_TREND :
-		UR_TREND_SQUARED;
-	}
+	itv = (i == 0)? UR_NO_CONST :
+	    (i == 1)? UR_CONST : 
+	    (i == 2)? UR_TREND :
+	    UR_TREND_SQUARED;
 
 	pv = df_pvalue_from_plugin(DFt, 
 				   /* use asymptotic p-value for augmented case */
@@ -2134,7 +2146,7 @@ static int real_adf_test (int varno, int order, int niv,
 
 	if (!(opt & OPT_Q)) {
 	    print_adf_results(order, DFt, pv, &dfmod, dfnum, pdinfo->varname[varno],
-			      &blurb_done, cointcode, i, prn);
+			      &blurb_done, eg_test, i, prn);
 	}
 
 	if (opt & OPT_V) {
@@ -2153,10 +2165,10 @@ static int real_adf_test (int varno, int order, int niv,
     }
 
     if (!err) {
-	if (cointcode == 0) {
+	if (eg_test == EG_TEST_NO) {
 	    record_test_result(DFt, pv, "Dickey-Fuller");
 	}
-	if (cointcode >= 0 && !(opt & OPT_Q)) {
+	if (print_ack == URC_PRINT_ACK && !(opt & OPT_Q)) {
 	    pputs(prn, _("P-values based on MacKinnon (JAE, 1996)\n"));
 	}	
     }
@@ -2193,7 +2205,8 @@ static int real_adf_test (int varno, int order, int niv,
 int adf_test (int order, int varno, double ***pZ,
 	      DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
-    return real_adf_test(varno, order, 1, pZ, pdinfo, opt, 0, prn);
+    return real_adf_test(varno, order, 1, pZ, pdinfo, opt, 
+			 EG_TEST_NO, URC_PRINT_ACK, prn);
 }
 
 /**
