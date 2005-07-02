@@ -34,7 +34,7 @@ struct _cmplx {
 #define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || a == AUX_AR)
 
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			int i, int longnames, PRN *prn);
+			int i, PRN *prn);
 static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			    int i, PRN *prn);
 static void depvarstats (const MODEL *pmod, PRN *prn);
@@ -975,11 +975,11 @@ static void model_format_start (PRN *prn)
 }
 
 #define RTF_COEFF_ROW  "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
-                       "\\cellx500\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
+                       "\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
                        "\\cellx7500\\cellx8000\n\\intbl"
 
 #define RTF_DISCRETE_ROW  "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
-                       "\\cellx500\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
+                       "\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
                        "\\cellx8000\n\\intbl"
 
 #define RTF_ROOT_ROW   "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
@@ -1041,7 +1041,6 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn, int discrete)
 	if (rtf_format(prn)) {
 	    if (discrete) {
 		pprintf(prn, "{" RTF_DISCRETE_ROW
-			" \\qr \\cell"
 			" \\qc {\\i %s}\\cell"
 			" \\qc {\\i %s}\\cell"
 			" \\qc {\\i %s}\\cell"
@@ -1052,7 +1051,6 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn, int discrete)
 			I_("t-statistic"), I_("Slope"));
 	    } else {
 		pprintf(prn, "{" RTF_COEFF_ROW
-			" \\qr \\cell"
 			" \\qc {\\i %s}\\cell"
 			" \\qc {\\i %s}\\cell"
 			" \\qc {\\i %s}\\cell"
@@ -1091,41 +1089,14 @@ static void model_format_end (PRN *prn)
     }
 } 
 
-static int long_coeff_names (const MODEL *pmod, const DATAINFO *pdinfo)
-{
-    int ret = 0;
-
-    if (pmod->aux != AUX_ARCH &&
-	pmod->ci != NLS && 
-	pmod->ci != ARMA && 
-	pmod->ci != GARCH) {
-	int i, len;
-
-	for (i=0; i<pmod->ncoeff; i++) {
-	    len = strlen(pdinfo->varname[pmod->list[i+2]]);
-	    if (len > 8) {
-		ret = 1;
-		break;
-	    }
-	}
-    }
-
-    return ret;
-}
-
 static int 
 print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0, gotnan = 0;
-    int longnames = 0;
     int gn = -1;
 
     if (pmod->ci == GARCH) {
 	gn = pmod->list[0] - 4;
-    }
-
-    if (plain_format(prn)) {
-	longnames = long_coeff_names(pmod, pdinfo);
     }
 
     for (i=0; i<pmod->ncoeff; i++) {
@@ -1133,7 +1104,7 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	    if (i == gn) {
 		pputc(prn, '\n');
 	    }
-	    err = print_coeff(pdinfo, pmod, i, longnames, prn);
+	    err = print_coeff(pdinfo, pmod, i, prn);
 	} else if (tex_format(prn)) {
 	    if (i == gn) {
 		pputs(prn, "\\\\ \n");
@@ -1552,7 +1523,7 @@ static void print_pval_str (double pval, char *str)
 }
 
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			int i, int longnames, PRN *prn)
+			int i, PRN *prn)
 {
     double t, pvalue = 999.0;
     int gotnan = 0;
@@ -1561,15 +1532,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     gretl_model_get_param_name(pmod, pdinfo, i, varname);
 
-    if (longnames) {
-	pprintf(prn, " %13s ", varname);
-    } else if (pmod->ci == GARCH) {
-	pprintf(prn, "      %8s ", varname);
-    } else if (pmod->ci == ARMA) {
-	pprintf(prn, " %3d) %8s ", i + 1, varname);
-    } else {
-	pprintf(prn, " %3d) %8s ", pmod->list[i + 2], varname);
-    }
+    pprintf(prn, " %13s ", varname);
 
     bufspace((strlen(varname) > 12)? 1 : 2, prn);
 
@@ -1669,9 +1632,7 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     pputs(prn, RTF_COEFF_ROW);
 
-    pprintf(prn, " \\qr %d\\cell \\ql %s\\cell", 
-	    ((pmod->ci == ARMA || pmod->ci == GARCH)? i+1 : pmod->list[i+2]), 
-	    varname);
+    pprintf(prn, "\\ql %s\\cell", varname);
 
     if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
@@ -2016,7 +1977,7 @@ print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	    pprintf(prn, "\n %13s         1.0\n", namestr);
 	} else if (rtf_format(prn)) {
 	    pputs(prn, RTF_COEFF_ROW);
-	    pprintf(prn, " \\qr \\cell\\ql %s\\cell\\qc 1.0\\cell", namestr);
+	    pprintf(prn, "\\ql %s\\cell\\qc 1.0\\cell", namestr);
 	    pputs(prn, "\\qc \\cell\\qc \\cell \\qc \\cell \\intbl \\row\n");
 	} else if (tex_format(prn)) {
 	    char tmp[32];
