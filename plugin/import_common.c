@@ -160,14 +160,16 @@ static void wbook_free (wbook *book)
     free(book->byte_offsets);
 }
 
-static void wbook_init (wbook *book)
+static void wbook_init (wbook *book, int source)
 {
+    book->source = source;
     book->version = 0;
     book->nsheets = 0;
     book->col_offset = book->row_offset = 0;
     book->sheetnames = NULL;
     book->byte_offsets = NULL;
     book->selected = 0;
+    book->debug = 0;
 }
 
 static const char *column_label (int col)
@@ -259,6 +261,12 @@ void wbook_get_row_offset (GtkWidget *w, wbook *book)
 }
 
 static 
+void debug_callback (GtkWidget *w, wbook *book)
+{
+    book->debug = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+}
+
+static 
 void add_sheets_list (GtkWidget *vbox, wbook *book)
 {
     GtkWidget *label, *view, *sw, *hsep;
@@ -317,6 +325,8 @@ static void wsheet_menu (wbook *book, int multisheet)
 
     gtk_window_set_title(GTK_WINDOW(w), _("gretl: spreadsheet import"));
 
+    g_signal_connect_after(G_OBJECT(w), "delete_event",
+			   G_CALLBACK(wsheet_menu_cancel), book);
     g_signal_connect(G_OBJECT(w), "destroy",  
 		     G_CALLBACK(gtk_main_quit), NULL);
 
@@ -366,6 +376,17 @@ static void wsheet_menu (wbook *book, int multisheet)
 	add_sheets_list(vbox, book);
     }
 
+    /* debugging option for XLS */
+    if (book->source == WBOOK_XLS) {
+	GtkWidget *chk;
+
+	chk = gtk_check_button_new_with_label(_("Produce debugging output"));
+	g_signal_connect(G_OBJECT(chk), "toggled", G_CALLBACK(debug_callback), 
+			 book);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), FALSE);
+	gtk_box_pack_start(GTK_BOX(vbox), chk, TRUE, TRUE, 5);
+    }
+
     hbox = gtk_hbox_new (TRUE, 5);
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
 
@@ -382,7 +403,7 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
     g_signal_connect (G_OBJECT (tmp), "clicked", 
-		      G_CALLBACK (wsheet_menu_cancel), book);
+		      G_CALLBACK(wsheet_menu_cancel), book);
     g_signal_connect_swapped (G_OBJECT (tmp), "clicked", 
 			      G_CALLBACK (gtk_widget_destroy), 
 			      G_OBJECT (w));

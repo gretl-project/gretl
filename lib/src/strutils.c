@@ -1228,7 +1228,9 @@ int build_path (const char *dir, const char *fname, char *path,
 {
     size_t len;
 
-    if (dir == NULL || fname == NULL || path == NULL) return 1;
+    if (dir == NULL || fname == NULL || path == NULL) {
+	return 1;
+    }
 
     *path = '\0';
     strcat(path, dir);
@@ -1250,7 +1252,9 @@ int build_path (const char *dir, const char *fname, char *path,
         strcat(path, fname);
     }
 
-    if (ext != NULL) strcat(path, ext);
+    if (ext != NULL) {
+	strcat(path, ext);
+    }
 
     return 0;
 }

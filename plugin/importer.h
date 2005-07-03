@@ -17,7 +17,13 @@
  *
  */
 
+enum {
+    WBOOK_XLS,
+    WBOOK_GNUMERIC
+};
+
 typedef struct {
+    int source;
     int version;
     int nsheets;
     int selected;
@@ -25,6 +31,7 @@ typedef struct {
     char **sheetnames;
     guint32 *byte_offsets;
     void *colspin, *rowspin;
+    int debug;
 } wbook;
 
 typedef struct {

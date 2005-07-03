@@ -861,8 +861,6 @@ void register_data (char *fname, const char *user_fname,
                            action == APPEND_EXCEL || \
                            action == APPEND_ASCII)
 
-/* ........................................................... */
-
 int get_worksheet_data (char *fname, int datatype, int append,
 			int *gui_get_data)
 {
