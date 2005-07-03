@@ -3900,7 +3900,9 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	pmod->dataset->dinfo->v : datainfo->v;
 
     /* add fitted values to data set temporarily */
-    if (add_fit_resid(pmod, 1, 1)) return;
+    if (add_fit_resid(pmod, 1, 1)) {
+	return;
+    }
 
     /* handle model estimated on different subsample */
     if (pmod->dataset != NULL) {

@@ -543,6 +543,7 @@ static void rewrite_arma_model_stats (MODEL *pmod, model_info *arma,
     if (ainfo->seasonal) {
 	gretl_model_set_int(pmod, "arma_P", ainfo->P);
 	gretl_model_set_int(pmod, "arma_Q", ainfo->Q);
+	gretl_model_set_int(pmod, "arma_pd", ainfo->pd);	
     }
 
     if (ainfo->r > 0) {

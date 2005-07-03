@@ -247,9 +247,9 @@ struct SAMPLE_ {
 };
 
 struct ARINFO_ {
-    int *arlist;                /* list of autoreg lags */
-    double *rho;                /* array of autoreg. coeffs. */
-    double *sderr;              /* and their standard errors */
+    int *arlist;          /* list of autoreg lags */
+    double *rho;          /* array of autoreg. coeffs. */
+    double *sderr;        /* and their standard errors */
 };
 
 /* struct to hold model results */

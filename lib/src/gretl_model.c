@@ -457,14 +457,14 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
 }
 
 /**
- * gretl_arma_model_get_AR_order:
+ * gretl_arma_model_get_nonseasonal_AR_order:
  * @pmod: pointer to gretl model.
  *
- * Returns: the autoregressive order of @pmod, or 0 if
+ * Returns: the non-seasonal autoregressive order of @pmod, or 0 if
  * @pmod is not an ARMA model.
  */
 
-int gretl_arma_model_get_AR_order (const MODEL *pmod)
+int gretl_arma_model_get_nonseasonal_AR_order (const MODEL *pmod)
 {
     int p = 0;
 
@@ -476,14 +476,14 @@ int gretl_arma_model_get_AR_order (const MODEL *pmod)
 }
 
 /**
- * gretl_arma_model_get_MA_order:
+ * gretl_arma_model_get_nonseasonal_MA_order:
  * @pmod: pointer to gretl model.
  *
- * Returns: the moving-average order of @pmod, or 0 if
+ * Returns: the non-seasonal moving-average order of @pmod, or 0 if
  * @pmod is not an ARMA model.
  */
 
-int gretl_arma_model_get_MA_order (const MODEL *pmod)
+int gretl_arma_model_get_nonseasonal_MA_order (const MODEL *pmod)
 {
     int q = 0;
 
@@ -492,6 +492,210 @@ int gretl_arma_model_get_MA_order (const MODEL *pmod)
     }
 
     return q;
+}
+
+/**
+ * gretl_arma_model_get_max_AR_lag:
+ * @pmod: pointer to gretl model.
+ *
+ * Returns: the maximum autoregressive lag in @pmod, or 0 if
+ * @pmod is not an ARMA model.
+ */
+
+int gretl_arma_model_get_max_AR_lag (const MODEL *pmod)
+{
+    int pmax = 0;
+
+    if (pmod->ci == ARMA) {
+	int p, P, pd;
+
+	p = pmod->list[1];
+	P = gretl_model_get_int(pmod, "arma_P");
+
+	if (P == 0) {
+	    pmax = p;
+	} else {
+	    pd = gretl_model_get_int(pmod, "arma_pd");
+	    pmax = P * pd + p;
+	}
+    }
+
+    return pmax;
+}
+
+/**
+ * gretl_arma_model_get_max_MA_lag:
+ * @pmod: pointer to gretl model.
+ *
+ * Returns: the maximum moving-average lag in @pmod, or 0 if
+ * @pmod is not an ARMA model.
+ */
+
+int gretl_arma_model_get_max_MA_lag (const MODEL *pmod)
+{
+    int qmax = 0;
+
+    if (pmod->ci == ARMA) {
+	int q, Q, pd;
+
+	q = pmod->list[2];
+	Q = gretl_model_get_int(pmod, "arma_Q");
+	
+	if (Q == 0) {
+	    qmax = q;
+	} else {
+	    pd = gretl_model_get_int(pmod, "arma_pd");
+	    qmax = Q * pd + q;
+	}
+    }
+
+    return qmax;
+}
+
+/**
+ * gretl_arma_model_get_AR_MA_coeffs:
+ * @pmod: pointer to gretl model.
+ * @arvec: pointer to receive AR coeff vector.
+ * @mavec: pointer to receive MA coeff vector.
+ *
+ * Creates allocated copies of the AR and MA coefficient vectors from
+ * @pmod.  If @pmod includes seasonal ARMA terms, the coefficient vectors
+ * are suitably expanded, and include the interactions, if any, between 
+ * seasonal and non-seasonal terms.  The length of these vectors can
+ * be determined using gretl_arma_model_get_max_AR_lag() and
+ * gretl_arma_model_get_max_MA_lag() respectively.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
+				       double **arvec,
+				       double **mavec)
+{
+    double *ac = NULL;
+    double *mc = NULL;
+    int err = 0;
+
+    if (pmod->ci != ARMA) {
+	err = 1;
+    } else {
+	const double *phi = NULL, *Phi = NULL;
+	const double *theta = NULL, *Theta = NULL;
+
+	int p = pmod->list[1];
+	int q = pmod->list[2];
+	int P = gretl_model_get_int(pmod, "arma_P");
+	int Q = gretl_model_get_int(pmod, "arma_Q");
+	int pd = gretl_model_get_int(pmod, "arma_pd");
+	int pmax, qmax;
+	int i, j, k;
+
+	pmax = (P > 0)? P * pd + p : p;
+	qmax = (Q > 0)? Q * pd + q : q;
+	
+	if (pmax > 0) {
+	    ac = malloc(pmax * sizeof *ac);
+	    if (ac == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+
+	if (!err && qmax > 0) {
+	    mc = malloc(qmax * sizeof *ac);
+	    if (mc == NULL) {
+		free(ac);
+		ac = NULL;
+		err = E_ALLOC;
+	    }
+	}
+
+	if (!err) {
+	    phi = pmod->coeff + pmod->ifc; /* non-seasonal AR coeffs */
+	    Phi = phi + p;                 /* seasonal AR coeffs */
+	    theta = Phi + P;               /* non-seasonal MA coeffs */
+	    Theta = theta + q;             /* seasonal MA coeffs */
+	}
+
+	if (ac != NULL) {
+	    for (i=0; i<p; i++) {
+		ac[i] = phi[i];
+	    }	    
+	    if (P > 0) {
+		for (i=p; i<pmax; i++) {
+		    ac[i] = 0.0;
+		}
+		for (i=0; i<P; i++) {
+		    k = pd * (i+1) - 1;
+		    ac[k] += Phi[i];
+		    for (j=0; j<p; j++) {
+			ac[k+j+1] += Phi[i] * phi[j];
+		    }
+		}
+	    }		
+	}
+
+	if (mc != NULL) {
+	    for (i=0; i<q; i++) {
+		mc[i] = theta[i];
+	    }	    
+	    if (Q > 0) {
+		for (i=p; i<qmax; i++) {
+		    mc[i] = 0.0;
+		}
+		for (i=0; i<Q; i++) {
+		    k = pd * (i+1) - 1;
+		    mc[k] += Theta[i];
+		    for (j=0; j<q; j++) {
+			mc[k+j+1] += Theta[i] * theta[j];
+		    }
+		}
+	    }		
+	}
+    }
+
+    if (!err) {
+	*arvec = ac;
+	*mavec = mc;
+    }
+
+    return err;
+}
+
+/**
+ * gretl_arma_model_get_x_coeffs:
+ * @pmod: pointer to gretl model.
+ *
+ * Returns: pointer to the array of coefficients on the exogenous
+ * regressors in @pmod, or %NULL if the model is not ARMA or if there
+ * are no such regressors.
+ */
+
+const double *gretl_arma_model_get_x_coeffs (const MODEL *pmod)
+{
+    const double *xc = NULL;
+
+    if (pmod->ci == ARMA && gretl_model_get_int(pmod, "armax")) {
+	xc = pmod->coeff;
+	xc += pmod->ifc;
+	xc += pmod->list[1];
+	xc += pmod->list[2];
+	xc += gretl_model_get_int(pmod, "arma_P");
+	xc += gretl_model_get_int(pmod, "arma_Q");
+    }
+
+    return xc;
+}
+
+static int is_seasonal_arma (const MODEL *pmod)
+{
+    int ret = 0;
+
+    if (gretl_model_get_int(pmod, "arma_P") ||
+	gretl_model_get_int(pmod, "arma_Q")) {
+	ret = 1;
+    }
+
+    return ret;
 }
 
 /**
@@ -509,7 +713,7 @@ int gretl_model_get_depvar (const MODEL *pmod)
 	if (pmod->ci == GARCH) {
 	    dv = pmod->list[4];
 	} else if (pmod->ci == ARMA) {
-	    if (gretl_model_get_int(pmod, "seasonal")) {
+	    if (is_seasonal_arma(pmod)) {
 		dv = pmod->list[7];
 	    } else {
 		dv = pmod->list[4];
@@ -536,13 +740,8 @@ int *gretl_model_get_x_list (const MODEL *pmod)
     int i, nx;
 
     if (pmod->ci == ARMA) {
-	int start;
+	int start = (is_seasonal_arma(pmod))? 7 : 4;
 
-	if (gretl_model_get_int(pmod, "seasonal")) {
-	    start = 7;
-	} else {
-	    start = 4;
-	}
 	nx = pmod->list[0] - start + pmod->ifc;
 	if (nx > 0) {
 	    list = gretl_list_new(nx);

@@ -595,7 +595,7 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
     return err;
 }
 
-#define ARF_DEBUG 0
+#define ARF_DEBUG 1
 
 #if ARF_DEBUG
 # include <stdarg.h>
@@ -996,8 +996,8 @@ arma_variance_machine (const double *phi, int p,
 static int arma_fcast (Forecast *fc, MODEL *pmod, 
 		       const double **Z, const DATAINFO *pdinfo)
 {
-    const double *phi;
-    const double *theta;
+    double *phi = NULL;
+    double *theta = NULL;
     const double *beta;
 
     double *psi = NULL;
@@ -1030,13 +1030,14 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	tstart = pmod->t2 + 1;
     }
 
-    p = gretl_arma_model_get_AR_order(pmod);
-    q = gretl_arma_model_get_MA_order(pmod);
+    p = gretl_arma_model_get_max_AR_lag(pmod);
+    q = gretl_arma_model_get_max_MA_lag(pmod);
+
     xlist = model_xlist(pmod);
     yno = gretl_model_get_depvar(pmod);
 
-    DPRINTF(("forecasting variable %d (%s), obs %d to %d\n", yno, 
-	     pdinfo->varname[yno], fc->t1, fc->t2));
+    DPRINTF(("forecasting variable %d (%s), obs %d to %d, with p=%d, q=%d\n", yno, 
+	     pdinfo->varname[yno], fc->t1, fc->t2, p, q));
 
     if (xlist != NULL) {
 	xvars = xlist[0];
@@ -1044,9 +1045,12 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	xvars = 0;
     }
 
-    phi = pmod->coeff + pmod->ifc; /* AR coeffs */
-    theta = phi + p;               /* MA coeffs */
-    beta = theta + q;              /* coeffs on indep vars */
+    err = gretl_arma_model_get_AR_MA_coeffs(pmod, &phi, &theta);
+    if (err) {
+	goto bailout;
+    }
+
+    beta = gretl_arma_model_get_x_coeffs(pmod);
 
     /* setup for forecast error variance */
     if (fc->sderr != NULL) {
@@ -1054,7 +1058,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     }
 
     /* cut-off points for using actual rather than forecast
-       values of y in generating further forecasts */
+       values of y in generating further forecasts (FIXME??) */
     if (fc->method == FC_STATIC) {
 	ar_smax = fc->t2;
 	ma_smax = pmod->t2;
@@ -1072,6 +1076,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     for (t=tstart; t<=fc->t2 && !err; t++) {
 	int miss = 0;
 	double yh = 0.0;
+	int lag;
 
 	tt = t - fc->offset;
 
@@ -1097,21 +1102,22 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
 	/* AR contribution */
 	for (i=0; i<p && !miss; i++) {
-	    s = t - i - 1;
+	    lag = i + 1;
+	    s = t - lag;
 	    if (s < 0) {
 		yval = NADBL;
 	    } else if (s <= ar_smax) {
 		yval = Z[yno][s];
-		DPRINTF(("  AR: lag %d, y[%d] = %g\n", i+1, s, yval));
+		DPRINTF(("  AR: lag %d, y[%d] = %g\n", lag, s, yval));
 	    } else {
 		yval = fc->yhat[s - fc->offset];
-		DPRINTF(("  AR: lag %d, yhat[%d] = %g\n", i+1, s - fc->offset, yval));
+		DPRINTF(("  AR: lag %d, yhat[%d] = %g\n", lag, s - fc->offset, yval));
 	    }
 	    if (na(yval)) {
-		DPRINTF(("  AR: lag %d, s =%d, missing value\n", i+1, s));
+		DPRINTF(("  AR: lag %d, s =%d, missing value\n", lag, s));
 		miss = 1;
 	    } else {
-		DPRINTF(("  AR: lag %d, s=%d, using coeff %g\n", i+1, s, phi[i]));
+		DPRINTF(("  AR: lag %d, s=%d, using coeff %g\n", lag, s, phi[i]));
 		yh += phi[i] * yval;
 	    }
 	}
@@ -1120,13 +1126,14 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
 	/* MA contribution */
 	for (i=0; i<q && !miss; i++) {
-	    s = t - i - 1;
+	    lag = i + 1;
+	    s = t - lag;
 	    if (s >= pmod->t1 && s <= ma_smax) {
-		DPRINTF(("  MA: lag %d, e[%d] = %g, coeff %g\n", i+1, s, 
+		DPRINTF(("  MA: lag %d, e[%d] = %g, coeff %g\n", lag, s, 
 			 pmod->uhat[s], theta[i]));
 		yh += theta[i] * pmod->uhat[s];
 	    } else if (fc->eps != NULL) {
-		DPRINTF(("  MA: lag %d, ehat[%d] = %g, coeff %g\n", i+1, s, 
+		DPRINTF(("  MA: lag %d, ehat[%d] = %g, coeff %g\n", lag, s, 
 			 fc->eps[s - fc->offset], theta[i]));
 		yh += theta[i] * fc->eps[s - fc->offset];
 	    }
@@ -1161,8 +1168,16 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 #endif
     }
 
+ bailout:
+
     if (psi != NULL) {
 	free(psi);
+    }
+    if (phi != NULL) {
+	free(phi);
+    }
+    if (theta != NULL) {
+	free(theta);
     }
 
     return err;

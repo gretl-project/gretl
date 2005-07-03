@@ -152,9 +152,19 @@ int gretl_model_get_depvar (const MODEL *pmod);
 
 int *gretl_model_get_x_list (const MODEL *pmod);
 
-int gretl_arma_model_get_AR_order (const MODEL *pmod);
+int gretl_arma_model_get_nonseasonal_AR_order (const MODEL *pmod);
 
-int gretl_arma_model_get_MA_order (const MODEL *pmod);
+int gretl_arma_model_get_nonseasonal_MA_order (const MODEL *pmod);
+
+int gretl_arma_model_get_max_AR_lag (const MODEL *pmod);
+
+int gretl_arma_model_get_max_MA_lag (const MODEL *pmod);
+
+int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
+				       double **arvec,
+				       double **mavec);
+
+const double *gretl_arma_model_get_x_coeffs (const MODEL *pmod);
 
 int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 
