@@ -203,6 +203,12 @@ static void colspin_changed (GtkEditable *ed, GtkWidget *w)
     }
 }
 
+static 
+void debug_callback (GtkWidget *w, wbook *book)
+{
+    book->debug = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+}
+
 #if GTK_MAJOR_VERSION >= 2
 
 static
@@ -258,12 +264,6 @@ void wbook_get_row_offset (GtkWidget *w, wbook *book)
 {
     book->row_offset = gtk_spin_button_get_value_as_int
 	(GTK_SPIN_BUTTON(book->rowspin)) - 1;
-}
-
-static 
-void debug_callback (GtkWidget *w, wbook *book)
-{
-    book->debug = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 }
 
 static 
@@ -540,6 +540,18 @@ static void wsheet_menu (wbook *book, int multisheet)
 	wsheet_menu_make_list(list, book);
 	gtk_container_set_border_width (GTK_CONTAINER (list), 10);
 	gtk_container_add(GTK_CONTAINER(frame), list);
+    }
+
+    /* debugging option for XLS */
+    if (book->source == WBOOK_XLS) {
+	GtkWidget *chk;
+
+	chk = gtk_check_button_new_with_label(_("Produce debugging output"));
+	gtk_signal_connect(GTK_OBJECT(chk), "toggled", 
+			   GTK_SIGNAL_FUNC(debug_callback), 
+			   book);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), FALSE);
+	gtk_box_pack_start(GTK_BOX(vbox), chk, TRUE, TRUE, 5);
     }
 
     hbox = gtk_hbox_new (TRUE, 5);
