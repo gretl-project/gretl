@@ -397,7 +397,7 @@ static int max_var_in_stacked_models (GtkWidget **wstack, int nwin)
 
 		var = g_object_get_data(G_OBJECT(wstack[i]), "object");
 		if (var != NULL) {
-		    mvm = gretl_var_get_highest_variable(var, datainfo);
+		    mvm = gretl_VAR_get_highest_variable(var, datainfo);
 		    if (mvm > vmax) {
 			vmax = mvm;
 		    }		    
@@ -1335,7 +1335,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	} else if (vwin->role == VIEW_SERIES) {
 	    free_series_view(vwin->data);
 	} else if (vwin->role == VAR) { 
-	    gretl_var_free_unnamed(vwin->data);
+	    gretl_VAR_free_unnamed(vwin->data);
 	} else if (vwin->role == LEVERAGE) {
 	    gretl_matrix_free(vwin->data);
 	} else if (vwin->role == MAHAL) {
@@ -2494,7 +2494,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	adjust_model_menu_state(vwin, pmod);
     } else if (vwin->role == VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-	const char *name = gretl_var_get_name(var);
+	const char *name = gretl_VAR_get_name(var);
 
 	if (name != NULL && *name != '\0') {
 	    model_save_state(vwin->ifac, FALSE);
@@ -2892,7 +2892,7 @@ static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
 	return;
     }    
 
-    err = gretl_var_plot_impulse_response(var, targ, shock, h, datainfo);
+    err = gretl_VAR_plot_impulse_response(var, targ, shock, h, datainfo);
 
     if (!err) {
 	register_graph();
@@ -2910,7 +2910,7 @@ static void var_forecast_callback (gpointer p, guint i, GtkWidget *w)
     gretlopt opt = OPT_NONE;
     int err = 0;
 
-    pmod = gretl_var_get_model(var, i);
+    pmod = gretl_VAR_get_model(var, i);
 
     t2 = datainfo->n - 1;
 
@@ -2987,7 +2987,7 @@ static void add_var_menu_items (windata_t *vwin)
     const gchar *fpath = N_("/Model data/Forecasts");
     const gchar *dpath = N_("/Model data/Add to data set");
     GRETL_VAR *var = vwin->data;
-    int neqns = gretl_var_get_n_equations(var);
+    int neqns = gretl_VAR_get_n_equations(var);
     int vtarg, vshock;
     char tmp[16];
 
@@ -3013,7 +3013,7 @@ static void add_var_menu_items (windata_t *vwin)
 	int dv;
 
 	/* forecast items */
-	dv = gretl_var_get_variable_number(var, i);
+	dv = gretl_VAR_get_variable_number(var, i);
 	varitem.path = g_strdup_printf("%s/%s", _(fpath), 
 				       datainfo->varname[dv]);
 	varitem.callback = var_forecast_callback;
@@ -3032,7 +3032,7 @@ static void add_var_menu_items (windata_t *vwin)
 	g_free(varitem.path);	
 
 	/* impulse responses: make branch for target */
-	vtarg = gretl_var_get_variable_number(var, i);
+	vtarg = gretl_VAR_get_variable_number(var, i);
 	double_underscores(tmp, datainfo->varname[vtarg]);
 	sprintf(maj, _("response of %s"), tmp);
 
@@ -3049,7 +3049,7 @@ static void add_var_menu_items (windata_t *vwin)
 	    GtkWidget *w;
 
 	    /* impulse responses: subitems for shocks */
-	    vshock = gretl_var_get_variable_number(var, j);
+	    vshock = gretl_VAR_get_variable_number(var, j);
 	    varitem.callback_action = j;
 	    double_underscores(tmp, datainfo->varname[vshock]);
 	    sprintf(min, _("to %s"), tmp);

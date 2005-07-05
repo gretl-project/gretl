@@ -31,23 +31,23 @@ enum ur_codes {
 
 int var_max_order (const int *list, const DATAINFO *pdinfo);
 
-int simple_var (int order, const int *list, 
+int simple_VAR (int order, const int *list, 
 		double ***pZ, DATAINFO *pdinfo,
-		gretlopt opts, PRN *prn);
+		gretlopt opt, PRN *prn);
 
-GRETL_VAR *full_var (int order, const int *list, 
+GRETL_VAR *full_VAR (int order, const int *list, 
 		     double ***pZ, DATAINFO *pdinfo,
-		     gretlopt opts, PRN *prn);
+		     gretlopt opt, PRN *prn);
 
 const gretl_matrix *
-gretl_var_get_forecast_matrix (GRETL_VAR *var, int t1, int t2,
+gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2,
 			       const double **Z, 
 			       const DATAINFO *pdinfo,
 			       gretlopt opt);
 
-void gretl_var_free (GRETL_VAR *var);
+void gretl_VAR_free (GRETL_VAR *var);
 
-void gretl_var_free_unnamed (GRETL_VAR *var);
+void gretl_VAR_free_unnamed (GRETL_VAR *var);
 
 int coint (int order, const int *list, 
 	   double ***pZ, DATAINFO *pdinfo, 
@@ -67,31 +67,32 @@ int johansen_test (int order, const int *list,
 int default_VAR_horizon (const DATAINFO *pdinfo);
 
 double *
-gretl_var_get_impulse_responses (GRETL_VAR *var, int targ, int shock,
+gretl_VAR_get_impulse_responses (GRETL_VAR *var, int targ, int shock,
 				 int periods);
 
-int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn);
+int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
+		     PRN *prn);
 
-void gretl_var_assign_name (GRETL_VAR *var);
+void gretl_VAR_assign_name (GRETL_VAR *var);
 
-void gretl_var_assign_specific_name (GRETL_VAR *var, const char *name);
+void gretl_VAR_assign_specific_name (GRETL_VAR *var, const char *name);
 
-const char *gretl_var_get_name (const GRETL_VAR *var);
+const char *gretl_VAR_get_name (const GRETL_VAR *var);
 
-int gretl_var_get_variable_number (const GRETL_VAR *var, int k);
+int gretl_VAR_get_variable_number (const GRETL_VAR *var, int k);
 
-int gretl_var_get_n_equations (const GRETL_VAR *var);
+int gretl_VAR_get_n_equations (const GRETL_VAR *var);
 
-int gretl_var_get_t1 (const GRETL_VAR *var);
+int gretl_VAR_get_t1 (const GRETL_VAR *var);
 
-int gretl_var_get_t2 (const GRETL_VAR *var);
+int gretl_VAR_get_t2 (const GRETL_VAR *var);
 
-const MODEL *gretl_var_get_model (const GRETL_VAR *var, int i);
+const MODEL *gretl_VAR_get_model (const GRETL_VAR *var, int i);
 
-int gretl_var_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
+int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 				     double ***pZ, DATAINFO *pdinfo);
 
-int gretl_var_get_highest_variable (const GRETL_VAR *var,
+int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
 				    const DATAINFO *pdinfo);
 
 #endif /* VAR_H_ */

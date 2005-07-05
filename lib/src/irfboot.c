@@ -1,24 +1,32 @@
 
 /* bootstrapped confidence intervals for impulse response functions */
 
+#define BDEBUG 1
+
+#define BOOT_ITERS 999 /* 999 */
+
 typedef struct irfboot_ irfboot;
 
 struct irfboot_ {
-    int n;
-    int neqns;
-    int order;
-    int ifc;
-    double **Z;
-    DATAINFO *dinfo;
-    int **lists;
-    gretl_matrix *C;
-    gretl_matrix *A;
-    gretl_matrix *E;
-    gretl_matrix *rE;
-    gretl_matrix *rtmp;
-    gretl_matrix *ctmp;
-    double *resp;
-    int *sample;
+    int n;              /* number of observations */
+    int neqns;          /* number of equations */
+    int order;          /* VAR lag order */
+    int nc;             /* number of coefficients per equation */
+    int ifc;            /* equations include intercept? */
+    int t1;             /* starting observation */
+    int t2;             /* ending observation */
+    int horizon;        /* horizon for impulse responses */
+    double **Z;         /* artificial dataset */
+    DATAINFO *dinfo;    /* datainfo for artificial dataset */
+    int **lists;        /* regression lists for VAR models */
+    gretl_matrix *C;    /* error covariance matrix */
+    gretl_matrix *A;    /* augmented coefficient matrix */
+    gretl_matrix *E;    /* matrix of residuals */
+    gretl_matrix *rE;   /* matrix of resampled original residuals */
+    gretl_matrix *rtmp; /* temporary storage */
+    gretl_matrix *ctmp; /* temporary storage */
+    gretl_matrix *resp; /* impulse response matrix */
+    int *sample;        /* resampling array */
 };
 
 static void irf_boot_free (irfboot *boot)
@@ -40,8 +48,8 @@ static void irf_boot_free (irfboot *boot)
     gretl_matrix_free(boot->rE);
     gretl_matrix_free(boot->rtmp);
     gretl_matrix_free(boot->ctmp);
+    gretl_matrix_free(boot->resp);
 
-    free(boot->resp);
     free(boot->sample);
 }
 
@@ -93,7 +101,8 @@ static int boot_tmp_init (irfboot *boot)
     return err;
 }
 
-static int irf_boot_init (irfboot *boot, const GRETL_VAR *var)
+static int irf_boot_init (irfboot *boot, const GRETL_VAR *var,
+			  const DATAINFO *pdinfo)
 {
     int err = 0;
 
@@ -107,14 +116,27 @@ static int irf_boot_init (irfboot *boot, const GRETL_VAR *var)
     boot->rE = NULL;
     boot->rtmp = NULL;
     boot->ctmp = NULL;
-
     boot->resp = NULL;
+
     boot->sample = NULL;
 
     boot->n = var->n;
     boot->neqns = var->neqns;
     boot->order = var->order;
     boot->ifc = var->ifc;
+
+    boot->t1 = var->models[0]->t1;
+    boot->t2 = var->models[0]->t2;
+    boot->nc = var->models[0]->list[0] - 1;
+
+    boot->horizon = default_VAR_horizon(pdinfo);
+
+#if BDEBUG
+    fprintf(stderr, "boot: t1=%d, t2=%d, nc=%d, horizon=%d\n",
+	    boot->t1, boot->t2, boot->nc, boot->horizon);
+    fprintf(stderr, " n=%d, neqns=%d, order=%d, ifc=%d\n",
+	    boot->n, boot->neqns, boot->order, boot->ifc);
+#endif
 
     err = boot_A_C_init(boot);
     if (err) {
@@ -127,7 +149,7 @@ static int irf_boot_init (irfboot *boot, const GRETL_VAR *var)
     }
 
     boot->rE = gretl_matrix_alloc(boot->n, boot->neqns);
-    if (boot->E == NULL) {
+    if (boot->rE == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -138,7 +160,13 @@ static int irf_boot_init (irfboot *boot, const GRETL_VAR *var)
 	goto bailout;
     }
 
-    boot->sample = malloc(var->n * sizeof *boot->sample);
+    boot->resp = gretl_matrix_alloc(boot->horizon, BOOT_ITERS);
+    if (boot->resp == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    boot->sample = malloc(boot->n * sizeof *boot->sample);
     if (boot->sample == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -147,18 +175,22 @@ static int irf_boot_init (irfboot *boot, const GRETL_VAR *var)
  bailout:
     if (err) {
 	irf_boot_free(boot);
-    }	
+    }
 
     return err;
 }
 
-int
-recalculate_impulse_responses (int targ, int shock, irfboot *boot)
+static int
+recalculate_impulse_responses (irfboot *boot, int targ, int shock, int iter)
 {
-    int horizon = default_VAR_horizon(boot->dinfo);
+    double rt;
     int t, err = 0;
 
-    for (t=0; t<horizon && !err; t++) {
+#if BDEBUG
+	fprintf(stderr, "\nrecalculate_impulse_responses: iteration %d\n", iter);
+#endif
+
+    for (t=0; t<boot->horizon && !err; t++) {
 	if (t == 0) {
 	    /* calculate initial estimated responses */
 	    err = gretl_matrix_copy_values(boot->rtmp, boot->C);
@@ -169,8 +201,13 @@ recalculate_impulse_responses (int targ, int shock, irfboot *boot)
 	}
 
 	if (!err) {
-	    boot->resp[t] = gretl_matrix_get(boot->rtmp, targ, shock);
+	    rt = gretl_matrix_get(boot->rtmp, targ, shock);
+	    gretl_matrix_set(boot->resp, t, iter, rt);
 	}
+
+#if BDEBUG
+	fprintf(stderr, "resp[%d] = %g\n", t, gretl_matrix_get(boot->resp, t, iter));
+#endif
     }
 
     return err;
@@ -201,7 +238,7 @@ static void irf_record_model_data (irfboot *boot, const MODEL *pmod, int k)
     }
 }
 
-static int re_estimate_VAR (irfboot *boot)
+static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
 {
     MODEL var_model;
     int i, err = 0;
@@ -209,33 +246,34 @@ static int re_estimate_VAR (irfboot *boot)
     for (i=0; i<boot->neqns && !err; i++) {
 	var_model = lsq(boot->lists[i], &boot->Z, boot->dinfo, VAR, OPT_A, 0.0);
 	err = var_model.errcode;
-
 	if (!err) {
 	    irf_record_model_data(boot, &var_model, i);
 	}
-
 	clear_model(&var_model);
     }
 
     if (!err) {
-	err = gretl_var_do_error_decomp(boot->n, boot->neqns, boot->E, boot->C);
+	err = gretl_VAR_do_error_decomp(boot->n, boot->neqns, boot->E, boot->C);
     }
 
-#if 0
     if (!err) {
-	for (i=0; i<boot->neqns; i++) {
-	    err = real_var_get_impulse_responses(targ, shock, periods,
-						 boot->A, boot->C,
-						 boot->rtmp, boot->ctmp,
-						 resp);
-	}
+	recalculate_impulse_responses(boot, targ, shock, iter);
+    }
+
+#if BDEBUG > 1
+    fprintf(stderr, "\ntarg=%d, shock = %d:\n", targ, shock);
+    for (i=0; i<boot->horizon && !err; i++) {
+	fprintf(stderr, "resp[%d] = %g\n", i, boot->resp[i]);
     }
 #endif
 
     return err;
 }
 
-static int allocate_bootstrap_lists (irfboot *boot, int nl)
+/* Allocate storage for the regressions lists that will be
+   used for the bootstrap VAR models */
+
+static int allocate_bootstrap_lists (irfboot *boot)
 {
     int i, err = 0;
 
@@ -245,7 +283,7 @@ static int allocate_bootstrap_lists (irfboot *boot, int nl)
     }
 
     for (i=0; i<boot->neqns && !err; i++) {
-	boot->lists[i] = gretl_list_new(nl);
+	boot->lists[i] = gretl_list_new(boot->nc + 1);
 	if (boot->lists[i] == NULL) {
 	    int j;
 
@@ -261,28 +299,28 @@ static int allocate_bootstrap_lists (irfboot *boot, int nl)
     return err;
 }
 
-static int make_bs_dataset_and_lists (const GRETL_VAR *var,
+/* Construct a temporary dataset for use with the bootstrap
+   procedure.  Build the VAR regression lists as we go.
+*/
+
+static int make_bs_dataset_and_lists (irfboot *boot,
+				      const GRETL_VAR *var,
 				      const double **Z,
-				      const DATAINFO *pdinfo,
-				      irfboot *boot)
+				      const DATAINFO *pdinfo)
 {
     const MODEL *pmod;
-
     double **bZ = NULL;
     DATAINFO *binfo = NULL;
     int ns, nd, nv;
-    int i, j, k, p;
-    int m, v, t;
+    int i, j, k;
+    int v, t;
     int err = 0;
 
-    pmod = var->models[0]; 
-
-    m = pmod->list[0] - 1;        /* total regressors per equation */
     ns = var->order * var->neqns; /* stochastic regressors per equation */
-    nd = m - ns;                  /* number of deterministic regressors */
-    nv = m + var->neqns;          /* total variables required */
+    nd = boot->nc - ns;           /* number of deterministic regressors */
+    nv = boot->nc + boot->neqns;  /* total variables required */
 
-    err = allocate_bootstrap_lists(boot, m + 1);
+    err = allocate_bootstrap_lists(boot);
     
     if (!err) {
 	binfo = create_new_dataset(&bZ, nv, pdinfo->n, 0);
@@ -300,118 +338,129 @@ static int make_bs_dataset_and_lists (const GRETL_VAR *var,
     }
 
     if (!err) {
+	int lv = var->neqns + 1;
+	int dv = lv + ns;
+
 	for (i=0; i<var->neqns; i++) {
-	    p = 1;
 	    /* copy stochastic vars into positions 1 to var->neqns */
 	    pmod = var->models[i];
 	    v = pmod->list[1];
-	    k = i + 1;
 	    for (t=0; t<pdinfo->n; t++) {
-		bZ[k][t] = Z[v][t];
+		bZ[i+1][t] = Z[v][t];
 	    }
-	    boot->lists[i][p++] = k;
 	    /* create lags */
 	    for (j=1; j<=var->order; j++) {
-		k = var->neqns + (i + 1) * j;
 		for (t=0; t<pdinfo->n; t++) {
-		    bZ[k][t] = (t - j >= 0)? Z[v][t-j] : NADBL;
+		    bZ[lv][t] = (t - j >= 0)? Z[v][t-j] : NADBL;
 		}
-		boot->lists[i][p++] = k;
+		lv++;
 	    }
-	    /* deal with deterministic vars */
-	    k = var->neqns * (var->order + 1);
-	    for (j=ns+1; j<=pmod->list[0]; j++) {
-		v = pmod->list[j];
-		if (v == 0) {
-		    boot->lists[i][p++] = 0;
-		    continue;
-		}
-		k++;
-		boot->lists[i][p++] = k;
-		if (i == 0) {
+	    /* deal with deterministic vars: copy once */
+	    if (i == 0) {
+		for (j=ns+2+pmod->ifc; j<=pmod->list[0]; j++) {
+		    v = pmod->list[j];
 		    for (t=0; t<pdinfo->n; t++) {
-			bZ[k][t] = Z[v][t];
+			bZ[dv][t] = Z[v][t];
 		    }
+		    dv++;
 		}
 	    }
 	}
+
+	/* compose lists */
+	for (i=0; i<var->neqns; i++) {
+	    lv = var->neqns + 1;
+	    dv = lv + ns;
+	    boot->lists[i][1] = i+1;
+	    k = 2;
+	    if (boot->ifc) {
+		boot->lists[i][k++] = 0;
+	    }
+	    for (j=0; j<ns; j++) {
+		boot->lists[i][k++] = lv++;
+	    }
+	    for (j=0; j<nd-boot->ifc; j++) {
+		boot->lists[i][k++] = dv++;
+	    }
+	}
+    }
+
+    for (i=1; i<binfo->v; i++) {
+	sprintf(binfo->varname[i], "bZ%d", i);
     }
 
     return err;
 }
 
-static int fill_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var)
+/* (Re-)fill the bootstrap dataset with artificial data, based on the
+   re-sampled residuals from the original VAR.
+*/
+
+static void fill_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var,
+				    const double **Z)
 {
     const MODEL *pmod;
+    int lv = var->neqns + 1;
+    double bti, eti;
+    int i, j, vj, t;
 
-    double bti, xti;
-    int i, j, k, s, t;
-    int nc, t1, t2;
-    int ns, lag, vj, m;
-    int err = 0;
+    /* This function needs more thought: it should not be
+       necessary to copy all the original stochastic data
+       every time, if the second block of code were
+       correct!!
+    */
 
-    ns = boot->order * boot->neqns;
-
-    pmod = var->models[0];
-    nc = pmod->list[0] - 1;
-
-    t1 = pmod->t1;
-    t2 = pmod->t2;
-
-    for (t=t1; t<=t2; t++) {
-	int miss = 0;
-
-	s = t - t1;
-	for (i=0; i<boot->neqns; i++) {
-	    pmod = var->models[i];
-	    bti = 0.0;
-	    lag = 1;
-	    k = 0;
-	    for (j=0; j<nc; j++) {
-		vj = boot->lists[i][j+2];
-		if (j < ns + pmod->ifc && vj > 0) {
-		    /* stochastic var */
-		    if (s - lag < 0) { /* FIXME? */
-			/* pre-simulation value */
-			m = (j - boot->ifc) / boot->order;
-			vj = boot->lists[m][1];
-			if (t - lag < 0) {
-			    xti = NADBL;
-			} else {
-			    xti = boot->Z[vj][t-lag];
-			}
-			if (na(xti)) {
-			    miss = 1;
-			}
-		    } else {
-			/* prior simulated value */
-			xti = boot->Z[k+1][t-lag]; /* ?? */
-			/* xti = gretl_matrix_get(F, s - lag, k); */
-		    }
-		    lag++;
-		    if (lag > boot->order) {
-			lag = 1;
-			k++;
-		    }
-		} else {
-		    /* deterministic var */
-		    xti = boot->Z[vj][t];
-		    if (na(xti)) {
-			miss = 1;
-		    }
-		}
-		if (miss) {
-		    bti = NADBL;
-		} else {
-		    bti += pmod->coeff[j] * xti;
-		}
+    for (i=0; i<boot->neqns; i++) {
+	/* copy original stochastic vars into position */
+	pmod = var->models[i];
+	vj = pmod->list[1];
+	for (t=0; t<boot->dinfo->n; t++) {
+	    boot->Z[i+1][t] = Z[vj][t];
+	}
+	/* recreate original lags */
+	for (j=1; j<=boot->order; j++) {
+	    for (t=0; t<boot->dinfo->n; t++) {
+		boot->Z[lv][t] = (t - j >= 0)? Z[vj][t-j] : NADBL;
 	    }
-	    /* FIXME need to fill out lags too */
-	    boot->Z[i+1][t] = bti + gretl_matrix_get(boot->rE, s, i);
+	    lv++;
 	}
     }
 
-    return err;
+    for (t=boot->t1; t<=boot->t2; t++) {
+	int lv = boot->neqns + 1;
+
+	for (i=0; i<boot->neqns; i++) {
+	    pmod = var->models[i];
+	    bti = 0.0;
+	    for (j=0; j<boot->nc; j++) {
+		vj = boot->lists[i][j+2];
+		bti += pmod->coeff[j] * boot->Z[vj][t];
+	    }
+	    /* set value of dependent var to forecast + re-sampled error */
+	    eti = gretl_matrix_get(boot->rE, t - boot->t1, i);
+	    boot->Z[i+1][t] = bti + eti;
+	    /* and recreate lags */
+	    for (j=1; j<=boot->order; j++) {
+		boot->Z[lv][t] = (t - j >= 0)? boot->Z[i+1][t-j] : NADBL;
+		lv++;
+	    }
+	}
+    }
+
+#if BDEBUG > 1
+    if (1) {
+	PRN *prn;
+	int list[5];
+
+	list[0] = 4;
+	for (i=1; i<5; i++) {
+	    list[i] = i;
+	}
+	prn = gretl_print_new(GRETL_PRINT_STDERR);
+	printdata(list, (const double **) boot->Z, boot->dinfo, OPT_O, prn);
+	gretl_print_destroy(prn);
+    }
+#endif
 }
 
 static void resample_resids (irfboot *boot, const GRETL_VAR *var)
@@ -419,10 +468,16 @@ static void resample_resids (irfboot *boot, const GRETL_VAR *var)
     double e;
     int i, s;
 
+    /* construct sampling array */
     for (s=0; s<boot->n; s++) {
 	boot->sample[s] = gretl_rand_int_max(boot->n);
+	/* boot->sample[s] = s; */
+#if BDEBUG > 1
+	fprintf(stderr, "boot->sample[%d] = %d\n", s, boot->sample[s]);
+#endif
     }
 
+    /* draw sample from the original residuals */
     for (s=0; s<boot->n; s++) {
 	for (i=0; i<boot->neqns; i++) {
 	    e = gretl_matrix_get(var->E, boot->sample[s], i);
@@ -431,28 +486,65 @@ static void resample_resids (irfboot *boot, const GRETL_VAR *var)
     }
 }
 
-#define ITERS 499
-
-int irf_bootstrap_driver (const GRETL_VAR *var, 
-			  const double **Z, 
-			  DATAINFO *pdinfo)
+static int irf_boot_quantiles (irfboot *boot)
 {
-    irfboot boot;
-    int i, err = 0;
+    double alpha = 0.05;
+    double *rk;
+    int k, ilo, ihi;
 
-    err = irf_boot_init(&boot, var);
-
-    if (!err) {
-	err = make_bs_dataset_and_lists(var, Z, pdinfo, &boot);
+    rk = malloc(BOOT_ITERS * sizeof *rk);
+    if (rk == NULL) {
+	return E_ALLOC;
     }
 
-    for (i=0; i<ITERS && !err; i++) {
+    ilo = (BOOT_ITERS + 1) * alpha / 2.0;
+    ihi = (BOOT_ITERS + 1) * (1.0 - alpha / 2.0);
+
+    fprintf(stderr, "IRF bootstrap, 0.025 and 0.975 quantiles\n");
+    fprintf(stderr, " based on %d iterations, ilo = %d, ihi = %d\n", 
+	    BOOT_ITERS, ilo, ihi);
+
+    for (k=0; k<boot->horizon; k++) {
+	gretl_matrix_row_to_array(boot->resp, k, rk);
+	qsort(rk, BOOT_ITERS, sizeof *rk, gretl_compare_doubles);
+	fprintf(stderr, "%10g, %10g\n", rk[ilo-1], rk[ihi-1]);
+    }
+
+    free(rk);
+
+    return 0;
+}
+
+static int irf_bootstrap_driver (const GRETL_VAR *var, 
+				 const double **Z, 
+				 const DATAINFO *pdinfo)
+{
+    irfboot boot;
+    /* FIXME */
+    int targ = 0, shock = 1;
+    int i, err = 0;
+
+    err = irf_boot_init(&boot, var, pdinfo);
+    if (err) {
+	fprintf(stderr, "error in irf_boot_init\n");
+	goto bailout;
+    }
+
+    err = make_bs_dataset_and_lists(&boot, var, Z, pdinfo);
+
+    for (i=0; i<BOOT_ITERS && !err; i++) {
 	resample_resids(&boot, var);
-	fill_bootstrap_dataset(&boot, var);
-	err = re_estimate_VAR(&boot);
+	fill_bootstrap_dataset(&boot, var, Z);
+	err = re_estimate_VAR(&boot, targ, shock, i);
+    }
+
+    if (!err && BOOT_ITERS >= 199) {
+	irf_boot_quantiles(&boot);
     }
 
     irf_boot_free(&boot);
+
+ bailout:
 
     return err;
 }

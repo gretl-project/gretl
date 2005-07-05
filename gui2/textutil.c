@@ -449,7 +449,7 @@ static int special_text_handler (int cmd, guint fmt, int what,
     } else if (cmd == VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) data;
 
-	gretl_var_print(var, datainfo, prn);
+	gretl_VAR_print(var, datainfo, OPT_NONE, prn);
     } else if (cmd == VIEW_MODELTABLE) {
 	err = special_print_model_table(prn);
     } 

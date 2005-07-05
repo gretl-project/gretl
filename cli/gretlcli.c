@@ -1656,7 +1656,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case VAR:
 	order = atoi(cmd.param);
-	err = simple_var(order, cmd.list, &Z, datainfo, cmd.opt, prn);
+	err = simple_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}

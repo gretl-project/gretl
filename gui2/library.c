@@ -2549,7 +2549,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	var = full_var(order, cmd.list, &Z, datainfo, cmd.opt, prn);
+	var = full_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn);
 	if (var == NULL) {
 	    const char *msg = get_gretl_errmsg();
 
@@ -3682,7 +3682,7 @@ int add_var_resid (GRETL_VAR *var, int eqnum)
 {
     int err, v;
 
-    err = gretl_var_add_resids_to_dataset(var, eqnum,
+    err = gretl_VAR_add_resids_to_dataset(var, eqnum,
 					  &Z, datainfo);
 
     if (err) {
@@ -6578,7 +6578,7 @@ int gui_exec_line (char *line,
 
     case VAR:
 	order = atoi(cmd.param);
-	err = simple_var(order, cmd.list, &Z, datainfo, cmd.opt, outprn);
+	err = simple_VAR(order, cmd.list, &Z, datainfo, cmd.opt, outprn);
 	if (!err) {
 	    err = maybe_save_var(&cmd, &Z, datainfo, prn);
 	}

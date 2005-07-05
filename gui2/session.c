@@ -237,7 +237,7 @@ static void print_session (const char *msg)
     }
     fprintf(stderr, "Session contains %d VARs\n", session.nvars);
     for (i=0; i<session.nvars; i++) {
-	fprintf(stderr, " var '%s'\n", gretl_var_get_name(session.vars[i]));
+	fprintf(stderr, " var '%s'\n", gretl_VAR_get_name(session.vars[i]));
     }
     fprintf(stderr, "Session contains %d graphs\n", session.ngraphs);
     for (i=0; i<session.ngraphs; i++) {
@@ -332,7 +332,7 @@ static int look_up_var_by_name (const char *vname)
     int i;
 
     for (i=0; i<session.nvars; i++) {
-	if (!strcmp(vname, gretl_var_get_name(session.vars[i]))) {
+	if (!strcmp(vname, gretl_VAR_get_name(session.vars[i]))) {
 	    return i;
 	}
     }
@@ -598,7 +598,7 @@ void *get_session_object_by_name (const char *name, char *which)
     }
 
     for (i=0; i<session.nvars; i++) {
-	if (strcmp(name, gretl_var_get_name(session.vars[i])) == 0) {
+	if (strcmp(name, gretl_VAR_get_name(session.vars[i])) == 0) {
 	    *which = 'v';
 	    return session.vars[i];
 	}
@@ -654,10 +654,10 @@ int try_add_var_to_session (GRETL_VAR *var)
 	return 1;
     }
 
-    nv = look_up_var_by_name(gretl_var_get_name(var));
+    nv = look_up_var_by_name(gretl_VAR_get_name(var));
     if (nv >= 0) {
 	/* replace existing VAR of the same name */
-	gretl_var_free(session.vars[nv]);
+	gretl_VAR_free(session.vars[nv]);
 	session.vars[nv] = var;
 	return 0;
     }
@@ -719,13 +719,13 @@ void remember_var (gpointer data, guint close, GtkWidget *widget)
 	return;
     }
 
-    gretl_var_assign_name(var);
+    gretl_VAR_assign_name(var);
 
     if (real_add_var_to_session(var)) {
 	return;
     }
 
-    buf = g_strdup_printf(_("%s saved"), gretl_var_get_name(var));
+    buf = g_strdup_printf(_("%s saved"), gretl_VAR_get_name(var));
     infobox(buf);
     g_free(buf);
 
@@ -934,7 +934,7 @@ void free_session (void)
 
     if (session.vars) {
 	for (i=0; i<session.nvars; i++) {
-	    gretl_var_free(session.vars[i]);
+	    gretl_VAR_free(session.vars[i]);
 	}
 	free(session.vars);
 	session.vars = NULL;
@@ -984,7 +984,7 @@ int highest_numbered_variable_in_session (void)
 
     if (session.vars) {
 	for (i=0; i<session.nvars; i++) {
-	    mvm = gretl_var_get_highest_variable(session.vars[i],
+	    mvm = gretl_VAR_get_highest_variable(session.vars[i],
 						 datainfo);
 	    if (mvm > vmax) {
 		vmax = mvm;
@@ -1465,8 +1465,8 @@ static char *boxplot_str (GRAPHT *graph)
 
 static void open_gui_model (gui_obj *gobj)
 { 
-    PRN *prn;
     MODEL *pmod = (MODEL *) gobj->data;
+    PRN *prn;
 
     if (bufopen(&prn)) {
 	return;
@@ -1480,14 +1480,14 @@ static void open_gui_model (gui_obj *gobj)
 
 static void open_gui_var (gui_obj *gobj)
 { 
-    PRN *prn;
     GRETL_VAR *var = (GRETL_VAR *) gobj->data;
+    PRN *prn;
 
     if (bufopen(&prn)) {
 	return;
     }
 
-    gretl_var_print(var, datainfo, prn);
+    gretl_VAR_print(var, datainfo, OPT_NONE, prn); /* FIXME */
     view_buffer(prn, 78, 450, gobj->name, VAR, var);
 }
 
@@ -1589,7 +1589,7 @@ static int real_delete_model_from_session (MODEL *junk)
 static int real_delete_var_from_session (GRETL_VAR *junk)
 {
     if (session.nvars == 1) {
-	gretl_var_free(session.vars[0]);
+	gretl_VAR_free(session.vars[0]);
     } else {
 	GRETL_VAR **ppvar;
 	int i, j;
@@ -1603,7 +1603,7 @@ static int real_delete_var_from_session (GRETL_VAR *junk)
 	    if (session.vars[i] != junk) {
 		ppvar[j++] = session.vars[i];
 	    } else {
-		gretl_var_free(session.vars[i]);
+		gretl_VAR_free(session.vars[i]);
 	    }
 	}
 	free(session.vars);
@@ -1756,7 +1756,7 @@ static void rename_session_model (MODEL *pmod, const char *newname)
 
 static void rename_session_var (GRETL_VAR *var, const char *newname)
 {
-    gretl_var_assign_specific_name(var, newname);
+    gretl_VAR_assign_specific_name(var, newname);
 }
 
 static void rename_session_graph (GRAPHT *graph, const char *newname)
@@ -2546,7 +2546,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	break;
     case 'v':
 	var = (GRETL_VAR *) data;
-	name = g_strdup(gretl_var_get_name(var));
+	name = g_strdup(gretl_VAR_get_name(var));
 	break;
     case 'b':
     case 'g':

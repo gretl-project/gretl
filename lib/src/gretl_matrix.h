@@ -215,4 +215,6 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
 				      const DATAINFO *pdinfo, 
 				      gretl_matrix **means, int *errp);
 
+int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x);
+
 #endif /* GRETL_MATRIX_H */

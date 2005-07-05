@@ -2572,7 +2572,7 @@ hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 /* ........................................................... */
 
 int 
-gretl_var_plot_impulse_response (GRETL_VAR *var,
+gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
 				 const DATAINFO *pdinfo)
 {
@@ -2586,13 +2586,13 @@ gretl_var_plot_impulse_response (GRETL_VAR *var,
 	return err;
     }
 
-    resp = gretl_var_get_impulse_responses(var, targ, shock, periods);
+    resp = gretl_VAR_get_impulse_responses(var, targ, shock, periods);
     if (resp == NULL) {
 	return E_ALLOC;
     }
 
-    vtarg = gretl_var_get_variable_number(var, targ);
-    vshock = gretl_var_get_variable_number(var, shock);
+    vtarg = gretl_VAR_get_variable_number(var, targ);
+    vshock = gretl_VAR_get_variable_number(var, shock);
 
     fputs("# impulse response plot\n", fp);
 

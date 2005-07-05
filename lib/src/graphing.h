@@ -176,7 +176,7 @@ int plot_fcast_errs (int n, const double *obs,
 		     int time_series);
 
 int 
-gretl_var_plot_impulse_response (GRETL_VAR *var,
+gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
 				 const DATAINFO *pdinfo);
 

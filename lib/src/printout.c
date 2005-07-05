@@ -1659,7 +1659,7 @@ static char *date_string (const char *s, double **Z, const DATAINFO *pdinfo)
     char *ret = NULL;
     int v, t = -1;
 
-    if (sscanf(s, "date(%15[^)])", darg)) {
+    if (!strncmp(s, "date(", 5) && sscanf(s + 5, "%15[^)])", darg)) {
 	if (isdigit(*darg)) {
 	    t = atoi(darg);
 	} else {

@@ -595,7 +595,7 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
     return err;
 }
 
-#define ARF_DEBUG 1
+#define ARF_DEBUG 0
 
 #if ARF_DEBUG
 # include <stdarg.h>
@@ -2063,14 +2063,14 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
 	return NULL;
     }
 
-    pmod = gretl_var_get_model(var, i);
+    pmod = gretl_VAR_get_model(var, i);
     if (pmod == NULL) {
 	return NULL;
     }
 
-    F = gretl_var_get_forecast_matrix(var, t1, t2, Z, pdinfo, opt);
+    F = gretl_VAR_get_forecast_matrix(var, t1, t2, Z, pdinfo, opt);
     if (F == NULL) {
-	fprintf(stderr, "gretl_var_get_forecast_matrix() gave NULL\n");
+	fprintf(stderr, "gretl_VAR_get_forecast_matrix() gave NULL\n");
 	return NULL;
     }
 
@@ -2094,7 +2094,7 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
     yno = pmod->list[1];
     strcpy(fr->depvar, pdinfo->varname[yno]);
 
-    m = gretl_var_get_n_equations(var);
+    m = gretl_VAR_get_n_equations(var);
 
     nf = 0;
     for (s=0; s<fr->nobs; s++) {

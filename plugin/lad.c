@@ -542,34 +542,6 @@ adjust_sample_for_missing (int *sample, int n, const MODEL *pmod)
 }
 
 #define ITERS 500
-#define LAD_RESAMPLE_OBS 0
-
-#if LAD_RESAMPLE_OBS
-
-/* populate data arrays using resampled observations */
-
-static void
-make_data_arrays (MODEL *pmod, double **Z,
-		  double *a, double *b,
-		  const int *sample,
-		  int nrows, int k, int m)
-{
-    int i, j, v;
-
-    for (j=0; j<k; j++) {
-	v = pmod->list[j+2];
-	for (i=0; i<m; i++) {
-	    a[i + j * nrows] = Z[v][sample[i]];
-	}
-    }
-
-    v = pmod->list[1];
-    for (i=0; i<m; i++) {
-	b[i] = a[i + k * nrows] = Z[v][sample[i]];
-    }
-}
-
-#else
 
 /* populate dependent var using resampled residuals */
 
@@ -605,8 +577,6 @@ make_data_arrays (MODEL *pmod, double **Z,
 	    pmod->yhat[t++] + pmod->uhat[sample[i]];
     }
 }
-
-#endif
 
 /* obtain bootstrap estimates of LAD covariance matrix */
 

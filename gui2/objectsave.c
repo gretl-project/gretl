@@ -111,16 +111,9 @@ static void show_saved_var (GRETL_VAR *var, const DATAINFO *pdinfo)
 
     if (bufopen(&prn)) return;
 
-    gretl_var_print(var, pdinfo, prn);
-    view_buffer(prn, 78, 450, gretl_var_get_name(var), VAR, var);
+    gretl_VAR_print(var, pdinfo, OPT_NONE, prn); /* FIXME */
+    view_buffer(prn, 78, 450, gretl_VAR_get_name(var), VAR, var);
 }
-
-#if 0
-static void show_saved_text (GRETL_VAR *var, const DATAINFO *pdinfo)
-{
-    view_buffer(prn, 78, 450, XXX, XXX, NULL);
-}
-#endif
 
 static void get_word_and_command (const char *s, char *word, 
 				  char *cmd)
@@ -267,19 +260,18 @@ int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     if (*savename == 0) return 0;
 
-    /* FIXME allow "robust" option? */
-    var = full_var(atoi(cmd->param), cmd->list, pZ, pdinfo, OPT_NONE, NULL);
+    var = full_VAR(atoi(cmd->param), cmd->list, pZ, pdinfo, cmd->opt, NULL);
 
     if (var == NULL) {
 	err = E_ALLOC;
     } else {
-	gretl_var_assign_specific_name(var, savename);
+	gretl_VAR_assign_specific_name(var, savename);
 	err = try_add_var_to_session(var);
 
 	if (!err) {
 	    pprintf(prn, _("%s saved\n"), savename);
 	} else {
-	    gretl_var_free(var);
+	    gretl_VAR_free(var);
 	    err = E_ALLOC;
 	}
     }

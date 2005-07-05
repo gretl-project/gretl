@@ -2700,6 +2700,32 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
     return vcv;
 }
 
+/**
+ * gretl_matrix_row_to_array:
+ * @m: source matrix.
+ * @i: the row from which values should be copied.
+ * @x: array of doubles large enough to hold a row from @m.
+ *
+ * Copies the values from row @i of matrix @m into the array
+ * @x, which should already be allocated to the correct size.
+ *
+ * Returns: 0 on sucess, 1 if the row is out of bounds.
+ */
+
+int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x)
+{
+    int j, err = 0;
+
+    if (i >= gretl_matrix_rows(m)) {
+	err = 1;
+    } else {
+	for (j=0; j<m->cols; j++) {
+	    x[j] = m->val[mdx(m, i, j)];
+	}
+    }
+
+    return err;
+}
 
 #if 0
 
