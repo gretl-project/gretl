@@ -149,6 +149,8 @@ DATAINFO *create_new_dataset (double ***pZ, /* data matrix */
 			      int markers   /* case markers or not? */
 			      );
 
+void destroy_dataset (double **Z, DATAINFO *pdinfo);
+
 void clear_datainfo (DATAINFO *pdinfo, int code);
 
 int allocate_Z (double ***pZ, const DATAINFO *pdinfo);
@@ -160,6 +162,8 @@ int dataset_allocate_obs_markers (DATAINFO *pdinfo);
 void dataset_destroy_obs_markers (DATAINFO *pdinfo);
 
 void dataset_obs_info_default (DATAINFO *pdinfo);
+
+void copy_dataset_obs_info (DATAINFO *targ, const DATAINFO *src);
 
 void set_sorted_markers (DATAINFO *pdinfo, int v, char **S);
 

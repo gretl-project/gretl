@@ -805,10 +805,7 @@ static int ar_init_by_ols (const int *list, double *coeff,
 
     /* clear everything up */
     free(alist);
-    free_Z(aZ, adinfo);
-    clear_datainfo(adinfo, CLEAR_FULL);
-    free(adinfo);
-
+    destroy_dataset(aZ, adinfo);
     clear_model(&armod);
 
     return err;

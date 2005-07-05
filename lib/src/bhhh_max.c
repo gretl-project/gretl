@@ -684,8 +684,7 @@ int bhhh_max (LL_FUNC loglik,
     }
 
     /* free all remaining temp stuff */
-    free_Z(tZ, tinfo);
-    free_datainfo(tinfo); 
+    destroy_dataset(tZ, tinfo);
     free(blist);
 
     if (bmod != minfo->pmod) {

@@ -913,10 +913,9 @@ int main (int argc, char *argv[])
 
 	    free_gretl_mp_results(certvals);
 	    certvals = NULL;
-	    free_Z(Z, datainfo);
-	    Z = NULL;
 	    free_data_digits(datainfo);
-	    free_datainfo(datainfo);
+	    destroy_dataset(Z, datainfo);
+	    Z = NULL;
 	    datainfo = NULL;
 	    
 	}
@@ -1010,10 +1009,9 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 
 	    free_gretl_mp_results(certvals);
 	    certvals = NULL;
-	    free_Z(Z, datainfo);
-	    Z = NULL;
 	    free_data_digits(datainfo);
-	    free_datainfo(datainfo);
+	    destroy_dataset(Z, datainfo);
+	    Z = NULL;
 	    datainfo = NULL;
 	    
 	}

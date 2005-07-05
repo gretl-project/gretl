@@ -1062,9 +1062,11 @@ int main (int argc, char *argv[])
 	}
 	printf("\nReading %s...\n", thisfile);
 	err = read_nist_nls_data(thisfile);
-	if (!err) err = run_gretl_nls_check();
-	free_Z(Z, datainfo);
-	free_datainfo(datainfo);
+	if (!err) {
+	    err = run_gretl_nls_check();
+	}
+
+	destroy_dataset(Z, datainfo);
 	Z = NULL;
 	datainfo = NULL;
     }

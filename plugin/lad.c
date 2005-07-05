@@ -19,7 +19,7 @@ static int bootstrap_vcv (MODEL *pmod, double **Z,
 int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 {
     double *a = NULL, *b = NULL, *e = NULL, *x = NULL;
-    int i, j, k, t, m, n, nrows, dim;
+    int i, j, t, m, n, nrows, dim;
     int yno = pmod->list[1];
     int ladcode;
 
@@ -54,22 +54,20 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
     }
 
     /* populate data array */
-    k = 0;
-    for (j = 1; j <= n; j++) {
-	int lj1 = pmod->list[j+1];
+    for (j=0; j<n; j++) {
+	int v = pmod->list[j+2];
 
 	t = pmod->t1;
-	for (i = 0; i < m; i++) {
+	for (i=0; i<m; i++) {
 	    while (model_missing(pmod, t)) {
 		t++;
 	    }
-	    a[i + k * nrows] = Z[lj1][t++];
+	    a[i + j * nrows] = Z[v][t++];
 	}
-	k++;
     }
 
     t = pmod->t1;
-    for (i = 0; i < m; i++) {
+    for (i=0; i<m; i++) {
 	while (model_missing(pmod, t)) {
 	    t++;
 	}
@@ -544,6 +542,71 @@ adjust_sample_for_missing (int *sample, int n, const MODEL *pmod)
 }
 
 #define ITERS 500
+#define LAD_RESAMPLE_OBS 0
+
+#if LAD_RESAMPLE_OBS
+
+/* populate data arrays using resampled observations */
+
+static void
+make_data_arrays (MODEL *pmod, double **Z,
+		  double *a, double *b,
+		  const int *sample,
+		  int nrows, int k, int m)
+{
+    int i, j, v;
+
+    for (j=0; j<k; j++) {
+	v = pmod->list[j+2];
+	for (i=0; i<m; i++) {
+	    a[i + j * nrows] = Z[v][sample[i]];
+	}
+    }
+
+    v = pmod->list[1];
+    for (i=0; i<m; i++) {
+	b[i] = a[i + k * nrows] = Z[v][sample[i]];
+    }
+}
+
+#else
+
+/* populate dependent var using resampled residuals */
+
+static void
+make_data_arrays (MODEL *pmod, double **Z,
+		  double *a, double *b,
+		  const int *sample,
+		  int nrows, int k, int m)
+{
+    int i, j, v, t;
+
+    /* we need to do this on each iteration because the "a" array is
+       overwritten by the LAD calculations
+    */
+    for (j=0; j<k; j++) {
+	v = pmod->list[j+2];
+	t = pmod->t1;
+	for (i=0; i<m; i++) {
+	    while (model_missing(pmod, t)) {
+		t++;
+	    }
+	    a[i + j * nrows] = Z[v][t++];
+	}
+    }
+
+    t = pmod->t1;
+
+    for (i=0; i<m; i++) {
+	while (model_missing(pmod, t)) {
+	    t++;
+	}
+	b[i] = a[i + k * nrows] = 
+	    pmod->yhat[t++] + pmod->uhat[sample[i]];
+    }
+}
+
+#endif
 
 /* obtain bootstrap estimates of LAD covariance matrix */
 
@@ -555,8 +618,7 @@ static int bootstrap_vcv (MODEL *pmod, double **Z,
     double *meanb = NULL;
     int *sample = NULL;
     double xi, xj;
-    int i, j, k, r;
-    int yno = pmod->list[1];
+    int i, j, k;
     int nvcv, nrows = m + 2;
     int err = 0;
 
@@ -603,6 +665,15 @@ static int bootstrap_vcv (MODEL *pmod, double **Z,
 
     for (k=0; k<ITERS; k++) {
 
+	/* create random sample index array */
+	for (i=0; i<m; i++) {
+	    sample[i] = pmod->t1 + gretl_rand_int_max(m);
+	}
+
+	if (pmod->missmask != NULL) {
+	    adjust_sample_for_missing(sample, m, pmod);
+	}
+
 	/* initialize arrays */
 	for (i=0; i<dim; i++) {
 	    a[i] = 0.0;
@@ -613,28 +684,8 @@ static int bootstrap_vcv (MODEL *pmod, double **Z,
 	for (i=0; i<n; i++) {
 	    x[i] = 0.0;
 	}
-	
-	/* create random sample index array */
-	for (i=0; i<m; i++) {
-	    sample[i] = pmod->t1 + gretl_rand_int_max(m);
-	}
 
-	if (pmod->missmask != NULL) {
-	    adjust_sample_for_missing(sample, m, pmod);
-	}
-
-	/* populate data array using the sample */
-	r = 0;
-	for (j = 1; j <= n; j++) {
-	    for (i = 0; i < m; i++) {
-		a[i + r * nrows] = Z[pmod->list[j+1]][sample[i]];
-	    }
-	    r++;
-	}
-
-	for (i = 0; i < m; i++) {
-	    b[i] = a[i + n * nrows] = Z[yno][sample[i]];
-	}
+	make_data_arrays(pmod, Z, a, b, sample, nrows, n, m);
 
 	/* estimate LAD model and store coeffs */
 	l1_(m, n, a, b, x, e);

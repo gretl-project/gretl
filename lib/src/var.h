@@ -33,7 +33,7 @@ int var_max_order (const int *list, const DATAINFO *pdinfo);
 
 int simple_var (int order, const int *list, 
 		double ***pZ, DATAINFO *pdinfo,
-		int pause, gretlopt opts, PRN *prn);
+		gretlopt opts, PRN *prn);
 
 GRETL_VAR *full_var (int order, const int *list, 
 		     double ***pZ, DATAINFO *pdinfo,

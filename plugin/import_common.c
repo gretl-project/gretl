@@ -17,6 +17,9 @@
  *
  */
 
+#define BUILDING_PLUGIN
+#include "../gui2/dialogs.h"
+
 #ifdef EXCEL_IMPORTER
 
 static void set_all_missing (double **Z, DATAINFO *pdinfo)
@@ -206,7 +209,24 @@ static void colspin_changed (GtkEditable *ed, GtkWidget *w)
 static 
 void debug_callback (GtkWidget *w, wbook *book)
 {
+    static int done;
+
     book->debug = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    if (book->debug && !done) {
+	gchar *msg;
+
+#ifdef WIN32
+	make_debug_fname();
+	msg = g_strdup_printf(_("Sending debugging output to %s"),
+			      debug_fname);
+#else
+	msg = g_strdup_printf(_("Sending debugging output to %s"),
+			      "stderr");
+#endif
+	infobox(msg);
+	g_free(msg);
+	done = 1;
+    }
 }
 
 #if GTK_MAJOR_VERSION >= 2

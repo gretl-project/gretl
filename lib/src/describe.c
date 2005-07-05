@@ -1308,9 +1308,8 @@ static int fract_int_GPH (int n, double *hhat, double *omega, PRN *prn)
     }
 
     clear_model(&tmp);
-    free_Z(tmpZ, tmpdinfo);
-    clear_datainfo(tmpdinfo, CLEAR_FULL);
-    free(tmpdinfo);
+
+    destroy_dataset(tmpZ, tmpdinfo);
 
     return err;
 }

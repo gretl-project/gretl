@@ -213,9 +213,8 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
     }
 
     clear_model(&rmmod);
-    free_Z(rmZ, rminfo);
-    clear_datainfo(rminfo, CLEAR_FULL);
-    free(rminfo);
+
+    destroy_dataset(rmZ, rminfo);
 
     return err;
 }

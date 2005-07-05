@@ -566,9 +566,7 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
 	gretl_print_destroy(prn);
 #endif
 
-	free_Z(wZ, winfo);
-	clear_datainfo(winfo, CLEAR_FULL);
-	free(winfo);
+	destroy_dataset(wZ, winfo);
 	    
     } else {
 	int j = 0;
@@ -862,11 +860,7 @@ static int random_effects (diagnostics_t *diag,
     }
 
     clear_model(&remod);
-
-    free_Z(reZ, reinfo);
-    clear_datainfo(reinfo, CLEAR_FULL);
-    free(reinfo);
-
+    destroy_dataset(reZ, reinfo);
     free(relist);    
 
     return err;
@@ -1202,9 +1196,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (ginfo != NULL) {
-	    free_Z(gZ, ginfo);
-	    clear_datainfo(ginfo, CLEAR_FULL);
-	    free(ginfo);
+	    destroy_dataset(gZ, ginfo);
 	}
     }
 
@@ -1778,9 +1770,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     free(aclist);
     clear_model(&aux); 
 
-    free_Z(tmpZ, tmpinfo);
-    clear_datainfo(tmpinfo, CLEAR_FULL);
-    free(tmpinfo);
+    destroy_dataset(tmpZ, tmpinfo);
 
     return err;
 }

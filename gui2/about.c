@@ -31,7 +31,7 @@ extern const char *version_string;
 
 /* some material that is common between gtk 1.2 and gtk 2 variants */
 
-const gchar *copyright = "Copyright (C) 2000-2004 Allin Cottrell";
+const gchar *copyright = "Copyright (C) 2000-2005 Allin Cottrell";
 const gchar *website = "http://gretl.sourceforge.net/";
 
 #ifdef USE_GNOME

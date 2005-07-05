@@ -1372,9 +1372,7 @@ void free_model_dataset (MODEL *pmod)
 #ifdef SUBDEBUG
 	fprintf(stderr, "Deep freeing model->dataset\n");
 #endif
-	free_Z(pmod->dataset->Z, pmod->dataset->dinfo);
-	clear_datainfo(pmod->dataset->dinfo, CLEAR_FULL);
-	free(pmod->dataset->dinfo);
+	destroy_dataset(pmod->dataset->Z, pmod->dataset->dinfo);
 	free(pmod->dataset);
 	pmod->dataset = NULL;
     }

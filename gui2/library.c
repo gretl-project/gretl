@@ -6578,8 +6578,7 @@ int gui_exec_line (char *line,
 
     case VAR:
 	order = atoi(cmd.param);
-	err = simple_var(order, cmd.list, &Z, datainfo, 0, 
-			 cmd.opt, outprn);
+	err = simple_var(order, cmd.list, &Z, datainfo, cmd.opt, outprn);
 	if (!err) {
 	    err = maybe_save_var(&cmd, &Z, datainfo, prn);
 	}

@@ -30,14 +30,14 @@
 
 void free_Z (double **Z, DATAINFO *pdinfo)
 {
-    int i;
+    if (Z != NULL && pdinfo != NULL) {
+	int i;
 
-    if (Z == NULL || pdinfo == NULL) return;
-
-    for (i=0; i<pdinfo->v; i++) {
-	free(Z[i]);
+	for (i=0; i<pdinfo->v; i++) {
+	    free(Z[i]);
+	}
+	free(Z);
     }
-    free(Z);
 }
 
 /**
@@ -140,6 +140,43 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	/* added Sat Dec  4 12:19:26 EST 2004 */
 	pdinfo->v = pdinfo->n = 0;
     } 
+}
+
+/**
+ * destroy_dataset:
+ * @Z: data array.
+ * @pdinfo: dataset information struct.
+ *
+ * Frees all resources associated with @Z and @pdinfo.
+ */
+
+void destroy_dataset (double **Z, DATAINFO *pdinfo)
+{
+    free_Z(Z, pdinfo);
+
+    if (pdinfo != NULL) {
+	clear_datainfo(pdinfo, CLEAR_FULL); 
+	free(pdinfo);
+    }
+}
+
+/**
+ * copy_dataset_obs_info:
+ * @targ: target dataset information struct.
+ * @src: source dataset information struct.
+ *
+ * Sets the "date" or observations information in @targ to that
+ * found in @src.
+ */
+
+void copy_dataset_obs_info (DATAINFO *targ, const DATAINFO *src)
+{
+    strcpy(targ->stobs, src->stobs);
+    strcpy(targ->endobs, src->endobs);
+    targ->sd0 = src->sd0;
+    targ->pd = src->pd;
+    targ->structure = src->structure;
+    targ->decpoint = src->decpoint;
 }
 
 /**

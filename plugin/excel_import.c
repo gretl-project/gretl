@@ -41,8 +41,17 @@ static char *convert8to7 (const unsigned char *s, int count);
 static char *convert16to7 (const unsigned char *s, int count);
 static char *make_string (char *str);
 
-#undef EDEBUG
-#undef MEMDEBUG
+int debug_print;
+
+#ifdef WIN32
+# include "../lib/src/version.h"
+# include "build.h"
+char debug_fname[FILENAME_MAX];
+FILE *fdb;
+static void make_debug_fname (void);
+#else
+extern const char *version_string;
+#endif
 
 #define EXCEL_IMPORTER
 #include "import_common.c"
@@ -75,18 +84,18 @@ int nrows = 0;
 const char *adjust_rc = N_("Perhaps you need to adjust the "
 			   "starting column or row?");
 
-int debug_print;
-
 #ifdef WIN32
-FILE *fdb;
+static void make_debug_fname (void)
+{
+    read_reg_val(HKEY_CURRENT_USER, "gretl", "userdir", debug_fname);
+    strcat(debug_fname, "xls.log");
+}
 
 static void open_debug_stream (void)
 {
-    char fname[FILENAME_MAX] = {0};
-
-    read_reg_val(HKEY_CURRENT_USER, "gretl", "userdir", fname);
-    strcat(fname, "xls.log");
-    fdb = fopen(fname, "w");
+    if (debug_fname[0] != '\0') {
+	fdb = fopen(debug_fname, "w");
+    }
 }
 #endif
 
@@ -117,6 +126,15 @@ static int dprintf (const char *format, ...)
 #endif
 
     return len;
+}
+
+static void print_version (void)
+{
+#ifdef WIN32
+    dprintf("gretl, version %s, %s\n", version_string, BUILD_DATE);
+#else
+    dprintf("gretl, version %s\n", version_string); 
+#endif
 }
 
 static double get_le_double (const unsigned char *rec) 
@@ -806,10 +824,8 @@ static int allocate_row_col (int i, int j, wbook *book)
 
     started = 1;
 
-#ifdef MEMDEBUG
-    fprintf(stderr, "allocate: row=%d, col=%d, nrows=%d\n",
-	    i, j, nrows);
-#endif
+    dprintf("allocate: row=%d, col=%d, nrows=%d\n", i, j, nrows);
+
     if (i >= nrows) {
 	new_nrows = (i / 16 + 1) * 16;
 
@@ -822,28 +838,18 @@ static int allocate_row_col (int i, int j, wbook *book)
 	rows = myrows;
 
 	for (k=nrows; k<new_nrows; k++) {
-#ifdef MEMDEBUG
-	    fprintf(stderr, "allocate: initing rows[%d]\n", k);
-#endif
+	    dprintf("allocate: initing rows[%d]\n", k);
 	    row_init(&rows[k]);
-#ifdef MEMDEBUG
-	    fprintf(stderr, "rows[%d].end=%d\n", i, rows[k].end);
-#endif
+	    dprintf("rows[%d].end=%d\n", i, rows[k].end);
 	}
 	nrows = new_nrows;
     }
 
-#ifdef MEMDEBUG
-    fprintf(stderr, "allocate: col=%d and rows[%d].end = %d\n",
-	    j, i, rows[i].end);
-#endif
+    dprintf("allocate: col=%d and rows[%d].end = %d\n", j, i, rows[i].end);
 
     if (j >= rows[i].end) {
 	newcol = (j / 16 + 1) * 16;
-#ifdef MEMDEBUG
-	fprintf(stderr, "allocate: reallocing rows[%d].cells to size %d\n", 
-		i, newcol);
-#endif
+	dprintf("allocate: reallocing rows[%d].cells to size %d\n", i, newcol);
 	cells = realloc(rows[i].cells, newcol * sizeof *cells);
 
 	if (cells == NULL) {
@@ -869,9 +875,7 @@ static void free_sheet (void)
 {
     int i, j;
 
-#ifdef MEMDEBUG
-    printf("free_sheet(), nrows=%d\n", nrows);
-#endif
+    dprintf("free_sheet(), nrows=%d\n", nrows);
 
     /* free shared string table */
     if (sst != NULL) {
@@ -885,24 +889,17 @@ static void free_sheet (void)
     if (rows != NULL) {
 	for (i=0; i<nrows; i++) {
 	    if (rows[i].cells == NULL) {
-#ifdef MEMDEBUG
-		fprintf(stderr, "rows[%d].cells = NULL, skipping free\n", i);
-#endif
+		dprintf("rows[%d].cells = NULL, skipping free\n", i);
 		continue;
 	    }
 	    for (j=0; j<rows[i].end; j++) {
 		if (rows[i].cells[j] != NULL) {
-#ifdef MEMDEBUG
-		    fprintf(stderr, "Freeing rows[%d].cells[%d] at %p\n",
+		    dprintf("Freeing rows[%d].cells[%d] at %p\n",
 			    i, j, (void *) rows[i].cells[j]);
-#endif
 		    free(rows[i].cells[j]); 
 		}
 	    }
-#ifdef MEMDEBUG
-	    fprintf(stderr, "Freeing rows[%d].cells at %p\n",
-		    i, (void *) rows[i].cells);
-#endif
+	    dprintf("Freeing rows[%d].cells at %p\n", i, (void *) rows[i].cells);
 	    free(rows[i].cells);
 	}
 	free(rows);
@@ -1319,7 +1316,9 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    wsheet_menu(&book, 0);
 	}
 	debug_print = book.debug;
-	fprintf(stderr, "debug_print = %d\n", debug_print);
+	if (debug_print) {
+	    print_version();
+	}
     }
 
     dprintf("sheet selected=%d; import offsets: col=%d, row=%d\n",

@@ -27,9 +27,11 @@ enum {
     HELP_BUTTON
 } buttons;
 
+#ifndef BUILDING_PLUGIN
 typedef struct dialog_t_ dialog_t;
 
-/* functions follow */
+void copy_format_dialog (windata_t *vwin, int multicopy);
+#endif
 
 void errbox (const char *msg);
 
@@ -44,8 +46,6 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
 void menu_exit_check (GtkWidget *w, gpointer data);
 
 void delimiter_dialog (void);
-
-void copy_format_dialog (windata_t *vwin, int multicopy);
 
 void varinfo_dialog (int varnum, int full);
 

@@ -926,9 +926,7 @@ int write_tx_data (char *fname, int varnum,
 	}
     }
 
-    free_Z(tmpZ, tmpinfo);
-    clear_datainfo(tmpinfo, CLEAR_FULL);
-    free(tmpinfo);
+    destroy_dataset(tmpZ, tmpinfo);
 
     return err;
 }

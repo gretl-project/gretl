@@ -653,15 +653,11 @@ int main (int argc, char *argv[])
 
     /* leak check -- try explicitly freeing all memory allocated */
 
-    free_Z(Z, datainfo);
-
     free_model(models[0]);
     free_model(models[1]);
     free(models);
 
-    if (data_status) {
-	free_datainfo(datainfo);
-    }
+    destroy_dataset(Z, datainfo);
 
     if (fb != stdin && fb != NULL) {
 	fclose(fb);
@@ -1660,8 +1656,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case VAR:
 	order = atoi(cmd.param);
-	err = simple_var(order, cmd.list, &Z, datainfo, !batch, 
-			 cmd.opt, prn);
+	err = simple_var(order, cmd.list, &Z, datainfo, cmd.opt, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}
