@@ -186,8 +186,8 @@ recalculate_impulse_responses (irfboot *boot, int targ, int shock, int iter)
     double rt;
     int t, err = 0;
 
-#if BDEBUG
-	fprintf(stderr, "\nrecalculate_impulse_responses: iteration %d\n", iter);
+#if BDEBUG > 1
+    fprintf(stderr, "\nrecalculate_impulse_responses: iteration %d\n", iter);
 #endif
 
     for (t=0; t<boot->horizon && !err; t++) {
@@ -205,7 +205,7 @@ recalculate_impulse_responses (irfboot *boot, int targ, int shock, int iter)
 	    gretl_matrix_set(boot->resp, t, iter, rt);
 	}
 
-#if BDEBUG
+#if BDEBUG > 1
 	fprintf(stderr, "resp[%d] = %g\n", t, gretl_matrix_get(boot->resp, t, iter));
 #endif
     }
@@ -400,8 +400,8 @@ static void fill_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var,
 				    const double **Z)
 {
     const MODEL *pmod;
-    int lv = var->neqns + 1;
-    double bti, eti;
+    int ns = var->order * var->neqns;
+    double xti, bti, eti;
     int i, j, vj, t;
 
     /* This function needs more thought: it should not be
@@ -410,38 +410,43 @@ static void fill_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var,
        correct!!
     */
 
-    for (i=0; i<boot->neqns; i++) {
-	/* copy original stochastic vars into position */
-	pmod = var->models[i];
-	vj = pmod->list[1];
-	for (t=0; t<boot->dinfo->n; t++) {
-	    boot->Z[i+1][t] = Z[vj][t];
-	}
-	/* recreate original lags */
-	for (j=1; j<=boot->order; j++) {
-	    for (t=0; t<boot->dinfo->n; t++) {
-		boot->Z[lv][t] = (t - j >= 0)? Z[vj][t-j] : NADBL;
-	    }
-	    lv++;
-	}
-    }
-
     for (t=boot->t1; t<=boot->t2; t++) {
 	int lv = boot->neqns + 1;
 
 	for (i=0; i<boot->neqns; i++) {
+	    int m, k = 0, lag = 1;
+
 	    pmod = var->models[i];
 	    bti = 0.0;
+
 	    for (j=0; j<boot->nc; j++) {
 		vj = boot->lists[i][j+2];
-		bti += pmod->coeff[j] * boot->Z[vj][t];
+		if (j < ns + pmod->ifc && vj > 0) {
+		    /* stochastic variable */
+		    m = (j - pmod->ifc) / boot->order;
+		    vj = boot->lists[m][1];
+		    xti = boot->Z[vj][t-lag];
+		    lag++;
+		    if (lag > boot->order) {
+			lag = 1;
+			k++;
+		    }
+		} else {
+		    /* deterministic variable */
+		    xti = boot->Z[vj][t];
+		}
+		bti += pmod->coeff[j] * xti;
 	    }
+
 	    /* set value of dependent var to forecast + re-sampled error */
 	    eti = gretl_matrix_get(boot->rE, t - boot->t1, i);
 	    boot->Z[i+1][t] = bti + eti;
+
 	    /* and recreate lags */
 	    for (j=1; j<=boot->order; j++) {
-		boot->Z[lv][t] = (t - j >= 0)? boot->Z[i+1][t-j] : NADBL;
+		if (t - j >= boot->t1) {
+		    boot->Z[lv][t] = boot->Z[i+1][t-j];
+		}
 		lv++;
 	    }
 	}
@@ -526,7 +531,6 @@ static int irf_bootstrap_driver (const GRETL_VAR *var,
 
     err = irf_boot_init(&boot, var, pdinfo);
     if (err) {
-	fprintf(stderr, "error in irf_boot_init\n");
 	goto bailout;
     }
 
