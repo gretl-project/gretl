@@ -31,9 +31,10 @@ real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
 static gretl_matrix *
 gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods);
 
-static int 
-irf_bootstrap_driver (const GRETL_VAR *var, const double **Z, 
-		      const DATAINFO *pdinfo);
+static gretl_matrix *irf_bootstrap (const GRETL_VAR *var, 
+				    int targ, int shock, int periods,
+				    const double **Z, 
+				    const DATAINFO *pdinfo);
 
 #define VAR_DEBUG 0
 
@@ -642,40 +643,15 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
     return err;
 }
 
-static int
-real_var_get_impulse_responses (int targ, int shock, int periods,
-				gretl_matrix *A, gretl_matrix *C,
-				gretl_matrix *rtmp, gretl_matrix *ctmp,
-				double *resp)
-{
-    int t, err = 0;
-
-    for (t=0; t<periods && !err; t++) {
-	if (t == 0) {
-	    /* calculate initial estimated responses */
-	    err = gretl_matrix_copy_values(rtmp, C);
-	} else {
-	    /* calculate further estimated responses */
-	    err = gretl_matrix_multiply(A, rtmp, ctmp);
-	    gretl_matrix_copy_values(rtmp, ctmp);
-	}
-
-	if (!err) {
-	    resp[t] = gretl_matrix_get(rtmp, targ, shock);
-	}
-    }
-
-    return err;
-}
-
 double *
 gretl_VAR_get_impulse_responses (GRETL_VAR *var, int targ, int shock,
 				 int periods) 
 {
     int rows = var->neqns * var->order;
-    gretl_matrix *rtmp, *ctmp;
-    double *resp;
-    int err;
+    gretl_matrix *rtmp = NULL;
+    gretl_matrix *ctmp = NULL;
+    double *resp = NULL;
+    int t, err = 0;
 
     if (shock >= var->neqns) {
 	fprintf(stderr, "Shock variable out of bounds\n");
@@ -710,15 +686,51 @@ gretl_VAR_get_impulse_responses (GRETL_VAR *var, int targ, int shock,
 	return NULL;
     }
 
-    err = real_var_get_impulse_responses(targ, shock, periods,
-					 var->A, var->C, 
-					 rtmp, ctmp,
-					 resp);
+    for (t=0; t<periods && !err; t++) {
+	if (t == 0) {
+	    /* calculate initial estimated responses */
+	    err = gretl_matrix_copy_values(rtmp, var->C);
+	} else {
+	    /* calculate further estimated responses */
+	    err = gretl_matrix_multiply(var->A, rtmp, ctmp);
+	    gretl_matrix_copy_values(rtmp, ctmp);
+	}
+
+	if (!err) {
+	    resp[t] = gretl_matrix_get(rtmp, targ, shock);
+	}
+    }
 
     gretl_matrix_free(rtmp);
     gretl_matrix_free(ctmp);
 
     return resp;    
+}
+
+gretl_matrix *
+gretl_VAR_get_impulse_response_full (GRETL_VAR *var, 
+				     int targ, int shock,
+				     int periods,
+				     const double **Z,
+				     const DATAINFO *pdinfo)
+{
+    gretl_matrix *resp = NULL;
+    double *point;
+    int i;
+
+    point = gretl_VAR_get_impulse_responses(var, targ, shock, periods);
+    
+    if (point != NULL) {
+	resp = irf_bootstrap(var, targ, shock, periods, Z, pdinfo);
+	if (resp != NULL) {
+	    for (i=0; i<periods; i++) {
+		gretl_matrix_set(resp, i, 0, point[i]);
+	    }
+	}
+	free(point);
+    }
+
+    return resp;
 }
 
 static gretl_matrix *
@@ -1517,9 +1529,6 @@ int simple_VAR (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (var != NULL) {
 	gretl_VAR_print(var, pdinfo, opt, prn);
-	if (1 && (opt & OPT_V)) {
-	    irf_bootstrap_driver(var, (const double **) *pZ, pdinfo);
-	}
 	gretl_VAR_free(var);
     }
 

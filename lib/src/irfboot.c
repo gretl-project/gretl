@@ -3,7 +3,7 @@
 
 #define BDEBUG 1
 
-#define BOOT_ITERS 999 /* 999 */
+#define BOOT_ITERS 999
 
 typedef struct irfboot_ irfboot;
 
@@ -102,7 +102,7 @@ static int boot_tmp_init (irfboot *boot)
 }
 
 static int irf_boot_init (irfboot *boot, const GRETL_VAR *var,
-			  const DATAINFO *pdinfo)
+			  int periods)
 {
     int err = 0;
 
@@ -129,7 +129,7 @@ static int irf_boot_init (irfboot *boot, const GRETL_VAR *var,
     boot->t2 = var->models[0]->t2;
     boot->nc = var->models[0]->list[0] - 1;
 
-    boot->horizon = default_VAR_horizon(pdinfo);
+    boot->horizon = periods;
 
 #if BDEBUG
     fprintf(stderr, "boot: t1=%d, t2=%d, nc=%d, horizon=%d\n",
@@ -299,8 +299,31 @@ static int allocate_bootstrap_lists (irfboot *boot)
     return err;
 }
 
+static void copy_stochastic_vars (irfboot *boot,
+				  const GRETL_VAR *var,
+				  const double **Z)
+{
+    const MODEL *pmod;
+    int lv = var->neqns + 1;
+    int i, j, t, v;
+
+    for (i=0; i<var->neqns; i++) {
+	pmod = var->models[i];
+	v = pmod->list[1];
+	for (t=0; t<boot->dinfo->n; t++) {
+	    boot->Z[i+1][t] = Z[v][t];
+	}
+	for (j=1; j<=var->order; j++) {
+	    for (t=0; t<boot->dinfo->n; t++) {
+		boot->Z[lv][t] = (t - j >= 0)? Z[v][t-j] : NADBL;
+	    }
+	    lv++;
+	}
+    }
+}
+
 /* Construct a temporary dataset for use with the bootstrap
-   procedure.  Build the VAR regression lists as we go.
+   procedure.  Also build the VAR regression lists.
 */
 
 static int make_bs_dataset_and_lists (irfboot *boot,
@@ -355,7 +378,7 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 		}
 		lv++;
 	    }
-	    /* deal with deterministic vars: copy once */
+	    /* deterministic vars: copy once */
 	    if (i == 0) {
 		for (j=ns+2+pmod->ifc; j<=pmod->list[0]; j++) {
 		    v = pmod->list[j];
@@ -396,19 +419,14 @@ static int make_bs_dataset_and_lists (irfboot *boot,
    re-sampled residuals from the original VAR.
 */
 
-static void fill_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var,
-				    const double **Z)
+static void compute_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var)
 {
     const MODEL *pmod;
-    int ns = var->order * var->neqns;
+    int ns = boot->order * boot->neqns;
     double xti, bti, eti;
     int i, j, vj, t;
 
-    /* This function needs more thought: it should not be
-       necessary to copy all the original stochastic data
-       every time, if the second block of code were
-       correct!!
-    */
+    /* This function needs more thought: I'm not sure it's right */
 
     for (t=boot->t1; t<=boot->t2; t++) {
 	int lv = boot->neqns + 1;
@@ -421,9 +439,9 @@ static void fill_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var,
 
 	    for (j=0; j<boot->nc; j++) {
 		vj = boot->lists[i][j+2];
-		if (j < ns + pmod->ifc && vj > 0) {
+		if (j < ns + boot->ifc && vj > 0) {
 		    /* stochastic variable */
-		    m = (j - pmod->ifc) / boot->order;
+		    m = (j - boot->ifc) / boot->order;
 		    vj = boot->lists[m][1];
 		    xti = boot->Z[vj][t-lag];
 		    lag++;
@@ -476,7 +494,6 @@ static void resample_resids (irfboot *boot, const GRETL_VAR *var)
     /* construct sampling array */
     for (s=0; s<boot->n; s++) {
 	boot->sample[s] = gretl_rand_int_max(boot->n);
-	/* boot->sample[s] = s; */
 #if BDEBUG > 1
 	fprintf(stderr, "boot->sample[%d] = %d\n", s, boot->sample[s]);
 #endif
@@ -491,7 +508,7 @@ static void resample_resids (irfboot *boot, const GRETL_VAR *var)
     }
 }
 
-static int irf_boot_quantiles (irfboot *boot)
+static int irf_boot_quantiles (irfboot *boot, gretl_matrix *R)
 {
     double alpha = 0.05;
     double *rk;
@@ -505,14 +522,20 @@ static int irf_boot_quantiles (irfboot *boot)
     ilo = (BOOT_ITERS + 1) * alpha / 2.0;
     ihi = (BOOT_ITERS + 1) * (1.0 - alpha / 2.0);
 
+#if 1
     fprintf(stderr, "IRF bootstrap, 0.025 and 0.975 quantiles\n");
     fprintf(stderr, " based on %d iterations, ilo = %d, ihi = %d\n", 
 	    BOOT_ITERS, ilo, ihi);
+#endif
 
     for (k=0; k<boot->horizon; k++) {
 	gretl_matrix_row_to_array(boot->resp, k, rk);
 	qsort(rk, BOOT_ITERS, sizeof *rk, gretl_compare_doubles);
+#if 1
 	fprintf(stderr, "%10g, %10g\n", rk[ilo-1], rk[ihi-1]);
+#endif
+	gretl_matrix_set(R, k, 1, rk[ilo-1]);
+	gretl_matrix_set(R, k, 2, rk[ihi-1]);
     }
 
     free(rk);
@@ -520,16 +543,21 @@ static int irf_boot_quantiles (irfboot *boot)
     return 0;
 }
 
-static int irf_bootstrap_driver (const GRETL_VAR *var, 
-				 const double **Z, 
-				 const DATAINFO *pdinfo)
+static gretl_matrix *irf_bootstrap (const GRETL_VAR *var, 
+				    int targ, int shock, int periods,
+				    const double **Z, 
+				    const DATAINFO *pdinfo)
 {
+    gretl_matrix *R;
     irfboot boot;
-    /* FIXME */
-    int targ = 0, shock = 1;
     int i, err = 0;
 
-    err = irf_boot_init(&boot, var, pdinfo);
+    R = gretl_matrix_alloc(periods, 3);
+    if (R == NULL) {
+	return NULL;
+    }
+
+    err = irf_boot_init(&boot, var, periods);
     if (err) {
 	goto bailout;
     }
@@ -538,19 +566,25 @@ static int irf_bootstrap_driver (const GRETL_VAR *var,
 
     for (i=0; i<BOOT_ITERS && !err; i++) {
 	resample_resids(&boot, var);
-	fill_bootstrap_dataset(&boot, var, Z);
+	copy_stochastic_vars(&boot, var, Z);
+	compute_bootstrap_dataset(&boot, var);
 	err = re_estimate_VAR(&boot, targ, shock, i);
     }
 
-    if (!err && BOOT_ITERS >= 199) {
-	irf_boot_quantiles(&boot);
+    if (!err) {
+	irf_boot_quantiles(&boot, R);
     }
 
     irf_boot_free(&boot);
 
  bailout:
 
-    return err;
+    if (err) {
+	gretl_matrix_free(R);
+	R = NULL;
+    }
+
+    return R;
 }
 
 

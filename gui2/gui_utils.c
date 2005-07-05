@@ -2892,7 +2892,13 @@ static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
 	return;
     }    
 
+#if 0
+    err = gretl_VAR_plot_impulse_response_full(var, targ, shock, h, 
+					       (const double **) Z,
+					       datainfo);
+#else
     err = gretl_VAR_plot_impulse_response(var, targ, shock, h, datainfo);
+#endif
 
     if (!err) {
 	register_graph();

@@ -70,6 +70,13 @@ double *
 gretl_VAR_get_impulse_responses (GRETL_VAR *var, int targ, int shock,
 				 int periods);
 
+gretl_matrix *
+gretl_VAR_get_impulse_response_full (GRETL_VAR *var, 
+				     int targ, int shock,
+				     int periods,
+				     const double **Z,
+				     const DATAINFO *pdinfo);
+
 int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		     PRN *prn);
 

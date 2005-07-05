@@ -2521,8 +2521,6 @@ int go_gnuplot (GPT_SPEC *spec, char *fname)
     return err;
 }
 
-/* ........................................................... */
-
 int 
 rmplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 {
@@ -2568,8 +2566,6 @@ hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 
     return err;
 }
-
-/* ........................................................... */
 
 int 
 gretl_VAR_plot_impulse_response (GRETL_VAR *var,
@@ -2624,6 +2620,69 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     return gnuplot_make_graph();
 }
 
+int 
+gretl_VAR_plot_impulse_response_full (GRETL_VAR *var,
+				      int targ, int shock, int periods,
+				      const double **Z,
+				      const DATAINFO *pdinfo)
+{
+    FILE *fp = NULL;
+    int vtarg, vshock;
+    gretl_matrix *resp;
+    char title[128];
+    int t, err;
+
+    if ((err = gnuplot_init(PLOT_REGULAR, &fp))) {
+	return err;
+    }
+
+    resp = gretl_VAR_get_impulse_response_full(var, targ, shock, periods,
+					       Z, pdinfo);
+    if (resp == NULL) {
+	return E_ALLOC;
+    }
+
+    vtarg = gretl_VAR_get_variable_number(var, targ);
+    vshock = gretl_VAR_get_variable_number(var, shock);
+
+    fputs("# impulse response plot\n", fp);
+
+    fputs("set nokey\n", fp);
+    fprintf(fp, "set xlabel '%s'\n", _("periods"));
+    sprintf(title, I_("response of %s to a shock in %s"), 
+	    pdinfo->varname[vtarg], pdinfo->varname[vshock]);
+    fprintf(fp, "set title '%s'\n", title);
+
+    fputs("plot \\\n'-' using 1:2 w lines, \\\n", fp);
+    fprintf(fp, "'-' using 1:2:3 title '%s' w errorbars\n",
+	    I_("95 percent confidence interval"));
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
+    for (t=0; t<periods; t++) {
+	fprintf(fp, "%d %.8g\n", t+1, gretl_matrix_get(resp, t, 0));
+    }
+    fputs("e\n", fp);
+
+    for (t=0; t<periods; t++) {
+	fprintf(fp, "%d %.8g %.8g\n", t+1, gretl_matrix_get(resp, t, 1),
+		gretl_matrix_get(resp, t, 2));
+    }
+    fputs("e\n", fp);
+
+    gretl_matrix_free(resp);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
 /* ........................................................... */
 
 int is_auto_ols_string (const char *s)
@@ -2632,8 +2691,6 @@ int is_auto_ols_string (const char *s)
     if (strstr(s, I_("with least squares fit"))) return 1;
     return 0;
 }
-
-/* ........................................................... */
 
 static char gnuplot_pallette[4][8] = {
     "xff0000", 

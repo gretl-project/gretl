@@ -180,6 +180,12 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
 				 const DATAINFO *pdinfo);
 
+int 
+gretl_VAR_plot_impulse_response_full (GRETL_VAR *var,
+				      int targ, int shock, int periods,
+				      const double **Z,
+				      const DATAINFO *pdinfo);
+
 int is_auto_ols_string (const char *s);
 
 int gnuplot_has_ttf (void);
