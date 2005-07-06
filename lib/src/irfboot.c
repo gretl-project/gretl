@@ -1,4 +1,3 @@
-
 /* bootstrapped confidence intervals for impulse response functions */
 
 #define BDEBUG 1
@@ -299,29 +298,6 @@ static int allocate_bootstrap_lists (irfboot *boot)
     return err;
 }
 
-static void copy_stochastic_vars (irfboot *boot,
-				  const GRETL_VAR *var,
-				  const double **Z)
-{
-    const MODEL *pmod;
-    int lv = var->neqns + 1;
-    int i, j, t, v;
-
-    for (i=0; i<var->neqns; i++) {
-	pmod = var->models[i];
-	v = pmod->list[1];
-	for (t=0; t<boot->dinfo->n; t++) {
-	    boot->Z[i+1][t] = Z[v][t];
-	}
-	for (j=1; j<=var->order; j++) {
-	    for (t=0; t<boot->dinfo->n; t++) {
-		boot->Z[lv][t] = (t - j >= 0)? Z[v][t-j] : NADBL;
-	    }
-	    lv++;
-	}
-    }
-}
-
 /* Construct a temporary dataset for use with the bootstrap
    procedure.  Also build the VAR regression lists.
 */
@@ -342,6 +318,11 @@ static int make_bs_dataset_and_lists (irfboot *boot,
     ns = var->order * var->neqns; /* stochastic regressors per equation */
     nd = boot->nc - ns;           /* number of deterministic regressors */
     nv = boot->nc + boot->neqns;  /* total variables required */
+
+    if (!boot->ifc) {
+	/* a gretl dataset includes a constant, regardless */
+	nv++;
+    }
 
     err = allocate_bootstrap_lists(boot);
     
@@ -364,15 +345,24 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 	int lv = var->neqns + 1;
 	int dv = lv + ns;
 
+	fprintf(stderr, "dv = %d\n", dv);
+
 	for (i=0; i<var->neqns; i++) {
 	    /* copy stochastic vars into positions 1 to var->neqns */
 	    pmod = var->models[i];
 	    v = pmod->list[1];
+#if BDEBUG
+	    fprintf(stderr, "Copying %s as var %d\n", pdinfo->varname[v], i+1);
+#endif
 	    for (t=0; t<pdinfo->n; t++) {
 		bZ[i+1][t] = Z[v][t];
 	    }
 	    /* create lags */
 	    for (j=1; j<=var->order; j++) {
+#if BDEBUG
+		fprintf(stderr, "Creating lag %d of %s as var %d\n", 
+			j, pdinfo->varname[v], lv);
+#endif
 		for (t=0; t<pdinfo->n; t++) {
 		    bZ[lv][t] = (t - j >= 0)? Z[v][t-j] : NADBL;
 		}
@@ -382,6 +372,10 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 	    if (i == 0) {
 		for (j=ns+2+pmod->ifc; j<=pmod->list[0]; j++) {
 		    v = pmod->list[j];
+#if BDEBUG
+		    fprintf(stderr, "Copying %s as var %d\n", 
+			    pdinfo->varname[v], dv);
+#endif
 		    for (t=0; t<pdinfo->n; t++) {
 			bZ[dv][t] = Z[v][t];
 		    }
@@ -405,6 +399,9 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 	    for (j=0; j<nd-boot->ifc; j++) {
 		boot->lists[i][k++] = dv++;
 	    }
+#if BDEBUG
+	    printlist(boot->lists[i], "IRF boot list");
+#endif
 	}
     }
 
@@ -425,8 +422,6 @@ static void compute_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var)
     int ns = boot->order * boot->neqns;
     double xti, bti, eti;
     int i, j, vj, t;
-
-    /* This function needs more thought: I'm not sure it's right */
 
     for (t=boot->t1; t<=boot->t2; t++) {
 	int lv = boot->neqns + 1;
@@ -460,7 +455,7 @@ static void compute_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var)
 	    eti = gretl_matrix_get(boot->rE, t - boot->t1, i);
 	    boot->Z[i+1][t] = bti + eti;
 
-	    /* and recreate lags */
+	    /* and recreate the lags */
 	    for (j=1; j<=boot->order; j++) {
 		if (t - j >= boot->t1) {
 		    boot->Z[lv][t] = boot->Z[i+1][t-j];
@@ -566,7 +561,6 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 
     for (i=0; i<BOOT_ITERS && !err; i++) {
 	resample_resids(&boot, var);
-	copy_stochastic_vars(&boot, var, Z);
 	compute_bootstrap_dataset(&boot, var);
 	err = re_estimate_VAR(&boot, targ, shock, i);
     }

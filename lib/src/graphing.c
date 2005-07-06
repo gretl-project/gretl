@@ -2647,15 +2647,17 @@ gretl_VAR_plot_impulse_response_full (GRETL_VAR *var,
 
     fputs("# impulse response plot\n", fp);
 
-    fputs("set nokey\n", fp);
+    fputs("set key top left\n", fp);
     fprintf(fp, "set xlabel '%s'\n", _("periods"));
-    sprintf(title, I_("response of %s to a shock in %s"), 
+    sprintf(title, I_("response of %s to a shock in %s, "
+		      "with bootstrap confidence interval"),
 	    pdinfo->varname[vtarg], pdinfo->varname[vshock]);
     fprintf(fp, "set title '%s'\n", title);
 
-    fputs("plot \\\n'-' using 1:2 w lines, \\\n", fp);
-    fprintf(fp, "'-' using 1:2:3 title '%s' w errorbars\n",
-	    I_("95 percent confidence interval"));
+    fprintf(fp, "plot \\\n'-' using 1:2 title '%s' w lines,\\\n", 
+	    I_("point estimate"));
+    fprintf(fp, "'-' using 1:2:3:4 title '%s' w errorbars\n",
+	    I_("0.025 and 0.975 quantiles"));
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -2666,17 +2668,31 @@ gretl_VAR_plot_impulse_response_full (GRETL_VAR *var,
     }
     fputs("e\n", fp);
 
+#if 0
     for (t=0; t<periods; t++) {
-	fprintf(fp, "%d %.8g %.8g\n", t+1, gretl_matrix_get(resp, t, 1),
-		gretl_matrix_get(resp, t, 2));
+	fprintf(fp, "%d %.8g\n", t+1, gretl_matrix_get(resp, t, 1));
     }
     fputs("e\n", fp);
 
-    gretl_matrix_free(resp);
+    for (t=0; t<periods; t++) {
+	fprintf(fp, "%d %.8g\n", t+1, gretl_matrix_get(resp, t, 2));
+    }
+    fputs("e\n", fp);
+#else
+    for (t=0; t<periods; t++) {
+	fprintf(fp, "%d %.8g %.8g %.8g\n", t+1, 
+		gretl_matrix_get(resp, t, 0),
+		gretl_matrix_get(resp, t, 1),
+		gretl_matrix_get(resp, t, 2));
+    }
+    fputs("e\n", fp);
+#endif
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
+
+    gretl_matrix_free(resp);
 
     fclose(fp);
 
