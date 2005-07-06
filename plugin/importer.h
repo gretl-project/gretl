@@ -17,13 +17,7 @@
  *
  */
 
-enum {
-    WBOOK_XLS,
-    WBOOK_GNUMERIC
-};
-
 typedef struct {
-    int source;
     int version;
     int nsheets;
     int selected;

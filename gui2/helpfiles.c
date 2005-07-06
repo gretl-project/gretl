@@ -125,6 +125,7 @@ static struct gui_help_item gui_help_items[] = {
     { SETSEED,        "seed" },
     { KERNEL_DENSITY, "density" },
     { HCCME,          "hccme" },
+    { IRF_BOOT,       "irfboot" },
     { -1,          NULL },
 };
 

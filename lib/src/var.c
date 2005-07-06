@@ -643,14 +643,15 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
     return err;
 }
 
-double *
-gretl_VAR_get_impulse_responses (GRETL_VAR *var, int targ, int shock,
-				 int periods) 
+static gretl_matrix *
+gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
+			       int periods) 
 {
     int rows = var->neqns * var->order;
     gretl_matrix *rtmp = NULL;
     gretl_matrix *ctmp = NULL;
-    double *resp = NULL;
+    gretl_matrix *resp = NULL;
+    double rt;
     int t, err = 0;
 
     if (shock >= var->neqns) {
@@ -668,14 +669,14 @@ gretl_VAR_get_impulse_responses (GRETL_VAR *var, int targ, int shock,
 	return NULL;
     }
 
-    resp = malloc(periods * sizeof *resp);
+    resp = gretl_matrix_alloc(periods, 1);
     if (resp == NULL) {
 	return NULL;
     }
 
     rtmp = gretl_matrix_alloc(rows, var->neqns);
     if (rtmp == NULL) {
-	free(resp);
+	gretl_matrix_free(resp);
 	return NULL;
     }
 
@@ -697,7 +698,8 @@ gretl_VAR_get_impulse_responses (GRETL_VAR *var, int targ, int shock,
 	}
 
 	if (!err) {
-	    resp[t] = gretl_matrix_get(rtmp, targ, shock);
+	    rt = gretl_matrix_get(rtmp, targ, shock);
+	    gretl_matrix_set(resp, t, 0, rt);
 	}
     }
 
@@ -708,29 +710,36 @@ gretl_VAR_get_impulse_responses (GRETL_VAR *var, int targ, int shock,
 }
 
 gretl_matrix *
-gretl_VAR_get_impulse_response_full (GRETL_VAR *var, 
-				     int targ, int shock,
-				     int periods,
-				     const double **Z,
-				     const DATAINFO *pdinfo)
+gretl_VAR_get_impulse_response (GRETL_VAR *var, 
+				int targ, int shock, int periods,
+				const double **Z,
+				const DATAINFO *pdinfo)
 {
-    gretl_matrix *resp = NULL;
-    double *point;
+    gretl_matrix *point = NULL;
+    gretl_matrix *full = NULL;
+    gretl_matrix *ret = NULL;
     int i;
 
-    point = gretl_VAR_get_impulse_responses(var, targ, shock, periods);
-    
-    if (point != NULL) {
-	resp = irf_bootstrap(var, targ, shock, periods, Z, pdinfo);
-	if (resp != NULL) {
+    point = gretl_VAR_get_point_responses(var, targ, shock, periods);
+
+    if (Z == NULL) {
+	/* no data matrix given: just return point estimate */
+	ret = point;
+    } else if (point != NULL) {
+	full = irf_bootstrap(var, targ, shock, periods, Z, pdinfo);
+	if (full != NULL) {
+	    double p;
+
 	    for (i=0; i<periods; i++) {
-		gretl_matrix_set(resp, i, 0, point[i]);
+		p = gretl_matrix_get(point, i, 0);
+		gretl_matrix_set(full, i, 0, p);
 	    }
 	}
-	free(point);
+	gretl_matrix_free(point);
+	ret = full;
     }
 
-    return resp;
+    return ret;
 }
 
 static gretl_matrix *

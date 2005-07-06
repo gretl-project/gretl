@@ -513,7 +513,6 @@ void var_tex_callback (gpointer data, guint opt, GtkWidget *w)
 void window_copy (gpointer data, guint fmt, GtkWidget *w) 
 {
     windata_t *vwin = (windata_t *) data;
-    gchar *msg = NULL;
     int err = 0;
 
     /* copying from window with special stuff enabled */
@@ -548,9 +547,6 @@ void window_copy (gpointer data, guint fmt, GtkWidget *w)
 	    textprn = gretl_print_new_with_buffer(selbuf);
 	    prn_to_clipboard(textprn, myfmt);
 	    gretl_print_destroy(textprn);
-	    if (w != NULL) {
-		infobox(_("Copied selection to clipboard"));
-	    }
 	    return;
 	} else {
 	    /* no selection: copy everything */
@@ -575,16 +571,6 @@ void window_copy (gpointer data, guint fmt, GtkWidget *w)
 	return;
     }
 #endif
-
-    if (w != NULL) {
-	msg = g_strdup_printf(_("Copied contents of window as %s"),
-			      (fmt & GRETL_FORMAT_TEX)? "LaTeX" :
-			      (fmt & GRETL_FORMAT_RTF)? "RTF" : 
-			      (fmt & GRETL_FORMAT_RTF_TXT)? "RTF" :
-			      _("plain text"));
-	infobox(msg);
-	g_free(msg);
-    }
 }
 
 /* native printing from gretl windows */

@@ -2570,63 +2570,11 @@ hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 int 
 gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
+				 const double **Z,
 				 const DATAINFO *pdinfo)
 {
     FILE *fp = NULL;
-    int vtarg, vshock;
-    double *resp;
-    char title[128];
-    int t, err;
-
-    if ((err = gnuplot_init(PLOT_REGULAR, &fp))) {
-	return err;
-    }
-
-    resp = gretl_VAR_get_impulse_responses(var, targ, shock, periods);
-    if (resp == NULL) {
-	return E_ALLOC;
-    }
-
-    vtarg = gretl_VAR_get_variable_number(var, targ);
-    vshock = gretl_VAR_get_variable_number(var, shock);
-
-    fputs("# impulse response plot\n", fp);
-
-    fputs("set nokey\n", fp);
-    fprintf(fp, "set xlabel '%s'\n", _("periods"));
-    sprintf(title, I_("response of %s to a shock in %s"), 
-	    pdinfo->varname[vtarg], pdinfo->varname[vshock]);
-    fprintf(fp, "set title '%s'\n", title);
-
-    fputs("plot \\\n'-' using 1:2 w lines\n", fp);
-
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
-
-    for (t=0; t<periods; t++) {
-	fprintf(fp, "%d %.8g\n", t+1, resp[t]);
-    }
-    fputs("e\n", fp);
-
-    free(resp);
-
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
-
-    fclose(fp);
-
-    return gnuplot_make_graph();
-}
-
-int 
-gretl_VAR_plot_impulse_response_full (GRETL_VAR *var,
-				      int targ, int shock, int periods,
-				      const double **Z,
-				      const DATAINFO *pdinfo)
-{
-    FILE *fp = NULL;
+    int confint = 0;
     int vtarg, vshock;
     gretl_matrix *resp;
     char title[128];
@@ -2636,10 +2584,14 @@ gretl_VAR_plot_impulse_response_full (GRETL_VAR *var,
 	return err;
     }
 
-    resp = gretl_VAR_get_impulse_response_full(var, targ, shock, periods,
-					       Z, pdinfo);
+    resp = gretl_VAR_get_impulse_response(var, targ, shock, periods,
+					  Z, pdinfo);
     if (resp == NULL) {
 	return E_ALLOC;
+    }
+
+    if (gretl_matrix_cols(resp) > 1) {
+	confint = 1;
     }
 
     vtarg = gretl_VAR_get_variable_number(var, targ);
@@ -2647,17 +2599,29 @@ gretl_VAR_plot_impulse_response_full (GRETL_VAR *var,
 
     fputs("# impulse response plot\n", fp);
 
-    fputs("set key top left\n", fp);
+    if (confint) {
+	fputs("set key top left\n", fp);
+	sprintf(title, I_("response of %s to a shock in %s, "
+			  "with bootstrap confidence interval"),
+		pdinfo->varname[vtarg], pdinfo->varname[vshock]);
+    } else {
+	fputs("set nokey\n", fp);
+	sprintf(title, I_("response of %s to a shock in %s"), 
+		pdinfo->varname[vtarg], pdinfo->varname[vshock]);
+    }
+
     fprintf(fp, "set xlabel '%s'\n", _("periods"));
-    sprintf(title, I_("response of %s to a shock in %s, "
-		      "with bootstrap confidence interval"),
-	    pdinfo->varname[vtarg], pdinfo->varname[vshock]);
+    fputs("set xzeroaxis\n", fp);
     fprintf(fp, "set title '%s'\n", title);
 
-    fprintf(fp, "plot \\\n'-' using 1:2 title '%s' w lines,\\\n", 
-	    I_("point estimate"));
-    fprintf(fp, "'-' using 1:2:3:4 title '%s' w errorbars\n",
-	    I_("0.025 and 0.975 quantiles"));
+    if (confint) {
+	fprintf(fp, "plot \\\n'-' using 1:2 title '%s' w lines,\\\n", 
+		I_("point estimate"));
+	fprintf(fp, "'-' using 1:2:3:4 title '%s' w errorbars\n",
+		I_("0.025 and 0.975 quantiles"));
+    } else {
+	fputs("plot \\\n'-' using 1:2 w lines\n", fp);
+    }
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -2668,33 +2632,22 @@ gretl_VAR_plot_impulse_response_full (GRETL_VAR *var,
     }
     fputs("e\n", fp);
 
-#if 0
-    for (t=0; t<periods; t++) {
-	fprintf(fp, "%d %.8g\n", t+1, gretl_matrix_get(resp, t, 1));
+    if (confint) {
+	for (t=0; t<periods; t++) {
+	    fprintf(fp, "%d %.8g %.8g %.8g\n", t+1, 
+		    gretl_matrix_get(resp, t, 0),
+		    gretl_matrix_get(resp, t, 1),
+		    gretl_matrix_get(resp, t, 2));
+	}
+	fputs("e\n", fp);
     }
-    fputs("e\n", fp);
-
-    for (t=0; t<periods; t++) {
-	fprintf(fp, "%d %.8g\n", t+1, gretl_matrix_get(resp, t, 2));
-    }
-    fputs("e\n", fp);
-#else
-    for (t=0; t<periods; t++) {
-	fprintf(fp, "%d %.8g %.8g %.8g\n", t+1, 
-		gretl_matrix_get(resp, t, 0),
-		gretl_matrix_get(resp, t, 1),
-		gretl_matrix_get(resp, t, 2));
-    }
-    fputs("e\n", fp);
-#endif
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 
-    gretl_matrix_free(resp);
-
     fclose(fp);
+    gretl_matrix_free(resp);
 
     return gnuplot_make_graph();
 }

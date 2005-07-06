@@ -1394,7 +1394,9 @@ static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
     int err = restore_sample(OPT_C); 
 
     if (verbose && !err) {
+#if 0
 	infobox(_("Full sample range restored"));
+#endif
 	set_sample_label(datainfo);    
 	gretl_command_strcpy("smpl full");
 	check_and_record_command();

@@ -1204,7 +1204,7 @@ int bool_subsample (gretlopt opt)
 
     if (opt & OPT_M) {
 	infobox(_("Sample now includes only complete observations"));
-    } else {
+    } else if (0) {
 	infobox(_("Sub-sampling done"));
     }
 

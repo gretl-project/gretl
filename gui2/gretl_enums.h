@@ -64,6 +64,7 @@ enum extra_cmds {
     KERNEL_DENSITY,
     CREATE_DATASET,
     HCCME,
+    IRF_BOOT,
     GUI_CMD_MAX
 };
 

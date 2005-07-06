@@ -661,6 +661,10 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
 
 	if (handled_record(q)) {
 	    err = process_item(q, book, prn);
+	} else if (q->ms_op == 0x02 && q->ls_op == BIFF_ROW) {
+	    dprintf("Got BIFF_ROW\n");
+	} else if (q->opcode == BIFF_DBCELL) {
+	    dprintf("Got BIFF_DBCELL\n");
 	} else {
 	    dprintf("skipping unhandled opcode 0x%02x\n", q->opcode);
 	}
@@ -698,6 +702,7 @@ copy_unicode_string (unsigned char *src, int remlen,
 
     dprintf("copy_unicode_string: count = %d, csize = %d\n",
 	    count, csize);
+
     if (flags & 0x08) {
 	dprintf(" contains Rich-Text info\n");
     }
@@ -772,9 +777,8 @@ static char *convert8to7 (const unsigned char *s, int count)
 
 static char *convert16to7 (const unsigned char *s, int count) 
 {
-    char *p, *dest;
-    int i, j;
-    guint16 u;
+    char *dest;
+    int i, u, j = 0;
 
     dest = malloc(USER_VLEN);
     if (dest == NULL) {
@@ -783,16 +787,31 @@ static char *convert16to7 (const unsigned char *s, int count)
 
     memset(dest, 0, USER_VLEN);
 
-    p = dest;
-    j = 0;
+#if 1
     for (i=0; i<count && j<USER_VLEN-1; i++) {
 	u = MS_OLE_GET_GUINT16(s);
 	s += 2;
 	if ((isalnum(u) || ispunct(u)) && u < 128) {
-	    *p++ = u;
-	    j++;
+	    dest[j++] = u;
 	}
     }
+#else
+    printf("convert16to7: count = %d\n", count);
+    for (i=0; i<count; i++) {
+	u = MS_OLE_GET_GUINT16(s);
+	s += 2;
+	if ((isalnum(u) || ispunct(u) || u == ' ') && u < 128) {
+	    putchar(u);
+	    if (j<USER_VLEN-1) {
+		dest[j++] = u;
+	    }
+	    if (i % 56 == 0) {
+		putchar('\n');
+	    }	
+	}
+    }
+    printf("\nconvert16to7: returning '%s'\n", dest);
+#endif
 
     if (*dest == '\0') {
 	strcpy(dest, "varname");
@@ -1297,7 +1316,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    wbook_init(&book, WBOOK_XLS);
+    wbook_init(&book);
 
     if (excel_book_get_info(fname, &book)) {
 	pputs(prn, _("Failed to get workbook info"));

@@ -2812,7 +2812,7 @@ int checks_dialog (const char *title, const char **opts, int nopts,
 	tempwid = option_spinbox(spinvar, spintxt, spinmin, spinmax, NULL);
 	gtk_widget_show(tempwid);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
-			   tempwid, TRUE, TRUE, 0);
+			   tempwid, TRUE, TRUE, 5);
     }
 
     /* create check buttons, if any */

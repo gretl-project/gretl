@@ -1408,8 +1408,6 @@ static void window_help (GtkWidget *w, windata_t *vwin)
     context_help(NULL, GINT_TO_POINTER(vwin->role));
 }
 
-/* ........................................................... */
-
 struct viewbar_item {
     const char *str;
 #ifndef OLD_GTK
@@ -1478,6 +1476,11 @@ static struct viewbar_item viewbar_items[] = {
     { NULL, NULL, NULL, 0 }};
 
 #endif /* old versus new GTK */
+
+#define editor_role(r) (r == EDIT_SCRIPT || \
+                        r == EDIT_HEADER || \
+                        r == EDIT_NOTES || \
+                        r == GR_PLOT)
 
 static void make_viewbar (windata_t *vwin, int text_out)
 {
@@ -1573,7 +1576,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	}
 
 #ifndef OLD_GTK
-	if (viewbar_items[i].flag == COPY_ITEM) {
+	if (viewbar_items[i].flag == COPY_ITEM && 
+	    !editor_role(vwin->role)) {
 	    toolfunc = choose_copy_format_callback;
 	}
 #else
@@ -2879,26 +2883,31 @@ static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
     int h = default_VAR_horizon(datainfo);
     gint targ;
     int err;
+    const double **vZ = NULL;
+    const char *impulse_opts[] = {
+	N_("include bootstrap confidence interval")
+    };
+    static int active[] = { 0 };
 
     targ = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "targ"));
 
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
 
-    err = spin_dialog(title, &h, _("forecast horizon (periods):"),
-		      2, datainfo->n / 2, 0);
+    err = checks_dialog(title, impulse_opts, 1, active,
+			&h, _("forecast horizon (periods):"),
+			2, datainfo->n / 2, IRF_BOOT);
     g_free(title);
 
     if (err < 0) {
 	return;
-    }    
+    } 
 
-#if 1
-    err = gretl_VAR_plot_impulse_response_full(var, targ, shock, h, 
-					       (const double **) Z,
-					       datainfo);
-#else
-    err = gretl_VAR_plot_impulse_response(var, targ, shock, h, datainfo);
-#endif
+    if (active[0]) {
+	vZ = (const double **) Z;
+    }
+
+    err = gretl_VAR_plot_impulse_response(var, targ, shock, h, vZ,
+					  datainfo);
 
     if (!err) {
 	register_graph();

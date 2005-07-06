@@ -474,7 +474,7 @@ static int wbook_get_info (const char *fname, wbook *book, PRN *prn)
     LIBXML_TEST_VERSION 
 	xmlKeepBlanksDefault(0);
 
-    wbook_init(book, WBOOK_GNUMERIC);
+    wbook_init(book);
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {

@@ -2784,6 +2784,25 @@
 
   </command>
 
+  <command name="irfboot" section="Graphs" context="gui"
+    label="Impulse response bootstrap">
+
+    <description>
+      <para>If you select the bootstrap confidence interval when plotting
+	impulse responses, gretl computes a 95 percent confidence interval for
+	the responses using the bootstrap method.  The residuals from the
+	original VAR are resampled with replacement; an artificial dataset is
+	constructed based on the original parameter estimates and the resampled
+	residuals; the VAR is recomputed and the impulse responses are
+	re-evaluated.  This is repeated 999 times and the 0.025 and 0.975
+	quantiles for the responses are found and plotted along with the point
+	estimates.
+      </para>
+
+    </description>
+
+  </command>
+
   <command name="label" section="Dataset" label="Edit attributes of variable">
 
     <usage>

@@ -178,13 +178,8 @@ int plot_fcast_errs (int n, const double *obs,
 int 
 gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
+				 const double **Z,
 				 const DATAINFO *pdinfo);
-
-int 
-gretl_VAR_plot_impulse_response_full (GRETL_VAR *var,
-				      int targ, int shock, int periods,
-				      const double **Z,
-				      const DATAINFO *pdinfo);
 
 int is_auto_ols_string (const char *s);
 

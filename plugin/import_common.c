@@ -17,10 +17,12 @@
  *
  */
 
-#define BUILDING_PLUGIN
-#include "../gui2/dialogs.h"
-
 #ifdef EXCEL_IMPORTER
+
+# ifndef WIN32
+#  define BUILDING_PLUGIN
+#  include "../gui2/dialogs.h" /* for infobox */
+# endif
 
 static void set_all_missing (double **Z, DATAINFO *pdinfo)
 {
@@ -33,7 +35,7 @@ static void set_all_missing (double **Z, DATAINFO *pdinfo)
     }
 }
 
-#endif
+#endif /* EXCEL_IMPORTER */
 
 static void time_series_setup (const char *s, DATAINFO *newinfo, int pd,
 			       int *text_cols, int *time_series, 
@@ -163,9 +165,8 @@ static void wbook_free (wbook *book)
     free(book->byte_offsets);
 }
 
-static void wbook_init (wbook *book, int source)
+static void wbook_init (wbook *book)
 {
-    book->source = source;
     book->version = 0;
     book->nsheets = 0;
     book->col_offset = book->row_offset = 0;
@@ -206,6 +207,8 @@ static void colspin_changed (GtkEditable *ed, GtkWidget *w)
     }
 }
 
+#ifdef EXCEL_IMPORTER
+
 static 
 void debug_callback (GtkWidget *w, wbook *book)
 {
@@ -215,19 +218,22 @@ void debug_callback (GtkWidget *w, wbook *book)
     if (book->debug && !done) {
 	gchar *msg;
 
-#ifdef WIN32
+# ifdef WIN32
 	make_debug_fname();
-	msg = g_strdup_printf(_("Sending debugging output to %s"),
+	msg = g_strdup_printf(I_("Sending debugging output to %s"),
 			      debug_fname);
-#else
+	MessageBox(NULL, msg, "gretl", MB_OK | MB_ICONINFORMATION);
+# else
 	msg = g_strdup_printf(_("Sending debugging output to %s"),
 			      "stderr");
-#endif
 	infobox(msg);
+# endif
 	g_free(msg);
 	done = 1;
     }
 }
+
+#endif /* EXCEL_IMPORTER */
 
 #if GTK_MAJOR_VERSION >= 2
 
@@ -396,16 +402,13 @@ static void wsheet_menu (wbook *book, int multisheet)
 	add_sheets_list(vbox, book);
     }
 
-    /* debugging option for XLS */
-    if (book->source == WBOOK_XLS) {
-	GtkWidget *chk;
-
-	chk = gtk_check_button_new_with_label(_("Produce debugging output"));
-	g_signal_connect(G_OBJECT(chk), "toggled", G_CALLBACK(debug_callback), 
-			 book);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), FALSE);
-	gtk_box_pack_start(GTK_BOX(vbox), chk, TRUE, TRUE, 5);
-    }
+#ifdef EXCEL_IMPORTER
+    tmp = gtk_check_button_new_with_label(_("Produce debugging output"));
+    g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(debug_callback), 
+		     book);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
+#endif
 
     hbox = gtk_hbox_new (TRUE, 5);
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
@@ -562,17 +565,14 @@ static void wsheet_menu (wbook *book, int multisheet)
 	gtk_container_add(GTK_CONTAINER(frame), list);
     }
 
-    /* debugging option for XLS */
-    if (book->source == WBOOK_XLS) {
-	GtkWidget *chk;
-
-	chk = gtk_check_button_new_with_label(_("Produce debugging output"));
-	gtk_signal_connect(GTK_OBJECT(chk), "toggled", 
-			   GTK_SIGNAL_FUNC(debug_callback), 
-			   book);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), FALSE);
-	gtk_box_pack_start(GTK_BOX(vbox), chk, TRUE, TRUE, 5);
-    }
+#ifdef EXCEL_IMPORTER
+    tmp = gtk_check_button_new_with_label(_("Produce debugging output"));
+    gtk_signal_connect(GTK_OBJECT(tmp), "toggled", 
+		       GTK_SIGNAL_FUNC(debug_callback), 
+		       book);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
+#endif
 
     hbox = gtk_hbox_new (TRUE, 5);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 5);

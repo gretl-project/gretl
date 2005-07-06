@@ -267,8 +267,6 @@ static void script_window_update (windata_t *vwin, const char *fname)
 #endif
 }
 
-/* ........................................................... */
-
 static void save_editable_content (int action, const char *fname,
 				   windata_t *vwin)
 {
@@ -308,7 +306,10 @@ static void save_editable_content (int action, const char *fname,
 
     g_free(buf);
 
+#if 0
     infobox(_("File saved OK"));
+#endif
+
     fclose(fp);
     
     if (action == SAVE_SCRIPT) {
@@ -522,13 +523,17 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
 	err = go_gnuplot(plot, fname);
-	if (err == 0) {
-	    infobox(_("graph saved"));
-	} else if (err == 1) {
+	if (err == 1) {
 	    errbox(_("gnuplot command failed"));
 	} else if (err == 2) {
 	    infobox(_("There were missing observations"));
 	}
+#if 0
+	if (err == 0) {
+	    infobox(_("graph saved"));
+	}
+#endif
+
     } else if (action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
@@ -537,8 +542,11 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	int err;
 
 	err = ps_print_plots(fname, action, data);
-	if (!err) infobox(_("boxplots saved"));
-	else errbox(_("boxplot save failed"));
+	if (err) {
+	    errbox(_("boxplot save failed"));
+	} else {
+	    infobox(_("boxplots saved"));
+	}
     } else if (action == SAVE_SESSION) {
 	save_session(fname);
     } else if (action == SAVE_TEX) {
