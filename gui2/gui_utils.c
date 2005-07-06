@@ -934,7 +934,9 @@ int get_worksheet_data (char *fname, int datatype, int append,
 	register_data(NULL, NULL, 0);
     } else {
 	data_status |= IMPORT_DATA;
-	strcpy(paths.datfile, fname);
+	if (fname != paths.datfile) {
+	    strcpy(paths.datfile, fname);
+	}
 	if (mdata != NULL) {
 	    register_data(fname, NULL, 1);
 	}

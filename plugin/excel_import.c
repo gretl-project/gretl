@@ -746,7 +746,10 @@ copy_unicode_string (unsigned char *src, int remlen,
 	}
     }
 
-    if (csize == 1) {
+    if (count > 64) {
+	/* let's not mess with excessive strings */
+	return g_strdup("bigstr");
+    } else if (csize == 1) {
 	return convert8to7(src + this_skip, count);
     } else { 
 	return convert16to7(src + this_skip, count);
