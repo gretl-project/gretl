@@ -814,17 +814,15 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	return TRUE;
     }
 
-    if (MODEL_CODE(sr->code)) {
-	if (rows > 0) { 
-	    int *rlist;
+    if (MODEL_CODE(sr->code) && rows > 0) {
+	int *rlist;
 
-	    rlist = myrealloc(xlist, (rows + 1) * sizeof *rlist);
-	    if (rlist == NULL) {
-		return FALSE;
-	    }
-	    xlist = rlist;
-	    xlist[0] = rows;
+	rlist = myrealloc(xlist, (rows + 1) * sizeof *rlist);
+	if (rlist == NULL) {
+	    return FALSE;
 	}
+	xlist = rlist;
+	xlist[0] = rows;
     }
 
     model = gtk_tree_view_get_model (GTK_TREE_VIEW(sr->rightvars));
@@ -1778,19 +1776,10 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	store = 
 	    GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rightvars)));
 	gtk_list_store_clear (store);
-	gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
+	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
 	if (MODEL_CODE(cmdcode)) {
-	    if (xlist != NULL) {
-		/* we have a saved list of regressors */
-		for (i=1; i<=xlist[0]; i++) {
-		    gtk_list_store_append(store, &iter);
-		    gtk_list_store_set(store, &iter, 
-				       0, xlist[i], 
-				       1, datainfo->varname[xlist[i]], 
-				       -1);
-		}
-	    } else if (cmdcode != VAR) {
+	    if (cmdcode != VAR) {
 		/* stick the constant in by default */
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 
@@ -1798,7 +1787,22 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 				   1, "const", 
 				   -1);
 	    }
-	}
+	    if (xlist != NULL) {
+		/* we have a saved list of regressors */
+		for (i=1; i<=xlist[0]; i++) {
+		    int xi = xlist[i];
+
+		    if (xi == 0) {
+			continue;
+		    }
+		    gtk_list_store_append(store, &iter);
+		    gtk_list_store_set(store, &iter, 
+				       0, xi, 
+				       1, datainfo->varname[xi], 
+				       -1);
+		}
+	    }
+	} 
 
 	/* hook remove button to listing */
 	g_signal_connect (G_OBJECT(remove), "clicked", 

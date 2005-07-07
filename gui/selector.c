@@ -539,14 +539,13 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	return;
     }
 
-    if (MODEL_CODE(sr->code)) {
-	if (rows > 0) { 
-	    xlist = realloc(xlist, (rows + 1) * sizeof *xlist);
-	    if (xlist != NULL) {
-		xlist[0] = rows;
-	    }
+    if (MODEL_CODE(sr->code) && rows > 0) {
+	xlist = realloc(xlist, (rows + 1) * sizeof *xlist);
+	if (xlist != NULL) {
+	    xlist[0] = rows;
 	}
     }
+
     for (i=0; i<rows; i++) {
 	gchar *rvar;
 
@@ -1503,22 +1502,25 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	gtk_clist_clear(GTK_CLIST(sr->rightvars));
 
 	if (MODEL_CODE(cmdcode)) {
-	    if (xlist != NULL) {
-		for (i=1; i<=xlist[0]; i++) {
-		    gchar *row[2];
-		    gchar id[4];
-
-		    sprintf(id, "%d", xlist[i]);
-		    row[0] = id;
-		    row[1] = datainfo->varname[xlist[i]];
-		    gtk_clist_append(GTK_CLIST(sr->rightvars), row);
-		}
-	    } else if (cmdcode != VAR) {
+	    if (cmdcode != VAR) {
 		gchar *row[2];
 
 		row[0] = "0";
 		row[1] = "const";
 		gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+	    }	    
+	    if (xlist != NULL) {
+		for (i=1; i<=xlist[0]; i++) {
+		    gchar *row[2];
+		    gchar id[4];
+
+		    if (xlist[i] != 0) {
+			sprintf(id, "%d", xlist[i]);
+			row[0] = id;
+			row[1] = datainfo->varname[xlist[i]];
+			gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+		    }
+		}
 	    }
 	}
 

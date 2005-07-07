@@ -1683,12 +1683,14 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    /* xgettext:no-c-format */
 		    I_("CUSUM plot with 95% confidence band"));
 	    fputs("set nokey\n", fq);
-	    fprintf(fq, "plot %f+%f*x w l 1, \\\n", xx - K*yy, yy);
-	    fprintf(fq, "%f-%f*x w l 1, \\\n", -xx + K*yy, yy);
+
+	    fprintf(fq, "plot %g+%g*x w l 1, \\\n", xx - K*yy, yy);
+	    fprintf(fq, "%g-%g*x w l 1, \\\n", -xx + K*yy, yy);
 	    fputs("'-' using 1:2 w lp\n", fq);
+
 	    for (j=0; j<n_est; j++) { 
 		t = pmod->t1 + K + j;
-		fprintf(fq, "%d %f\n", t, W[j]);
+		fprintf(fq, "%d %g\n", t, W[j]);
 	    }
 	    fputs("e\n", fq);
 
