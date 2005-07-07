@@ -2733,6 +2733,25 @@
 
   </command>
 
+  <command name="irfboot" section="Graphs" context="gui"
+    label="Bootstrap impulso-risposta">
+
+    <description>
+      <para>Se si sceglie l'intervallo di confidenza bootstrap nella
+       visualizzazione delle funzioni di impulso-risposta, gretl calcola
+       un intervallo di confidenza al 95 per cento per le risposte usando il
+       metodo bootstrap. Si effettua un campionamento (con reimmissione) dai
+       residui del VAR originale, viene costruito un dataset artificiale usando
+       le stime originali dei parametri e i residui ri-campionati, viene
+       ricalcolato il VAR e vengono ri-stimate le funzioni di impulso-risposta.
+       Questa procedura viene ripetuta 999 volte e vengono mostrati i quantili
+       0.025 e 0.975 per le risposte, insieme alle stime puntuali.
+      </para>
+
+    </description>
+
+  </command>
+
   <command name="label" section="Dataset" label="Modifica degli attributi di una variabile">
 
     <usage>
