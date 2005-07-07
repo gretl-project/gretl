@@ -263,8 +263,6 @@ void set_session_saved (int val)
     session_saved = val;
 }
 
-/* ........................................................... */
-
 static void rebuild_init (void)
 {
     rebuild.nmodels = 0;
@@ -291,8 +289,6 @@ static void free_rebuild (void)
     }
 }
 
-/* .................................................................. */
-
 static void edit_session_notes (void)
 {
     static GtkWidget *notes_window;
@@ -312,8 +308,6 @@ static void edit_session_notes (void)
 	gdk_window_raise(notes_window->window);
     }
 }
-
-/* .................................................................. */
 
 static int look_up_model_by_name (const char *mname)
 {
@@ -362,8 +356,6 @@ static int look_up_text_by_name (const char *tname)
     }
     return -1;
 }
-
-/* .................................................................. */
 
 int real_add_graph_to_session (const char *fname, const char *grname,
 			       int code)
@@ -417,7 +409,6 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
     char pltname[MAXLEN], savedir[MAXLEN];
     char grname[OBJNAMLEN];
     int boxplot_count;
-    int err = 0;
     
     errno = 0;
 
@@ -439,8 +430,7 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 	remove(plot->fname);
 	strcpy(plot->fname, pltname);
 	mark_plot_as_saved(plot);	
-    } 
-    else if (code == GRETL_BOXPLOT) {
+    } else if (code == GRETL_BOXPLOT) {
 	boxplot_count = augment_boxplot_count();
 	sprintf(pltname, "%ssession.Plot_%d", savedir, boxplot_count);
 	sprintf(grname, "%s %d", _("Boxplot"), boxplot_count);
@@ -448,20 +438,13 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 	    return;
 	} 
 	remove(boxplottmp);
-    }
-    else {
+    } else {
 	errbox("bad code in add_graph_to_session");
 	return;
     }
 
-    err = real_add_graph_to_session(pltname, grname, code);
-
-    if (err != ADD_OBJECT_FAIL) {
-	infobox(_("Graph saved"));
-    }
+    real_add_graph_to_session(pltname, grname, code);
 }
-
-/* ........................................................... */
 
 int model_already_saved (const MODEL *pmod)
 {
@@ -486,8 +469,6 @@ static int var_already_saved (GRETL_VAR *var)
     }
     return 0;
 }
-
-/* ........................................................... */
 
 static int real_add_model_to_session (MODEL *pmod)
 {
@@ -584,8 +565,6 @@ int real_add_text_to_session (PRN *prn, const char *tname)
     return (replace)? ADD_OBJECT_REPLACE : ADD_OBJECT_OK;
 }
 
-/* ........................................................... */
-
 void *get_session_object_by_name (const char *name, char *which)
 {
     int i;
@@ -620,8 +599,6 @@ void *get_session_object_by_name (const char *name, char *which)
 
     return NULL;
 }
-
-/* ........................................................... */
 
 int try_add_model_to_session (MODEL *pmod)
 {
@@ -736,8 +713,6 @@ void remember_var (gpointer data, guint close, GtkWidget *widget)
 	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
     } 
 }
-
-/* ........................................................... */
 
 int session_changed (int set)
 {
@@ -898,8 +873,6 @@ void do_open_session (GtkWidget *w, gpointer data)
     view_session();
 }
 
-/* ........................................................... */
-
 void verify_clear_data (void)
 {
     if (dataset_locked()) {
@@ -917,8 +890,6 @@ void verify_clear_data (void)
 
     close_session();
 }
-
-/* ........................................................... */
 
 void free_session (void)
 {
@@ -966,8 +937,6 @@ void free_session (void)
     *session.name = '\0';
 }
 
-/* ........................................................... */
-
 int highest_numbered_variable_in_session (void)
 {
     int i, mvm, vmax = 0;
@@ -995,14 +964,10 @@ int highest_numbered_variable_in_session (void)
     return vmax;
 }
 
-/* ........................................................... */
-
 int session_file_is_open (void)
 {
     return session_file_open;
 }
-
-/* ........................................................... */
 
 void close_session (void)
 {
@@ -1109,8 +1074,6 @@ static int check_session_graph (const char *line,
 
     return 0;
 }
-
-/* ........................................................... */
 
 static int allocate_model_rebuilder (int nmodels)
 {
@@ -1353,8 +1316,6 @@ int recreate_session (const char *fname)
     return 0;
 }
 
-/* ........................................................... */
-
 void save_session_callback (GtkWidget *w, guint code, gpointer data)
 {
     if (code == SAVE_AS_IS && session_file_open && scriptfile[0]) {
@@ -1364,8 +1325,6 @@ void save_session_callback (GtkWidget *w, guint code, gpointer data)
 	file_selector(_("Save session"), SAVE_SESSION, NULL);
     }
 }
-
-/* ........................................................... */
 
 static char *model_cmd_str (MODEL *pmod)
 {
@@ -1387,8 +1346,6 @@ static char *model_cmd_str (MODEL *pmod)
 
     return str;
 }
-
-/* ........................................................... */
 
 static gchar *graph_str (GRAPHT *graph)
 {
@@ -1430,8 +1387,6 @@ static gchar *graph_str (GRAPHT *graph)
     return buf;
 }
 
-/* ........................................................... */
-
 static char *boxplot_str (GRAPHT *graph)
 {
     FILE *fp;
@@ -1461,8 +1416,6 @@ static char *boxplot_str (GRAPHT *graph)
     return str;
 }
 
-/* ........................................................... */
-
 static void open_gui_model (gui_obj *gobj)
 { 
     MODEL *pmod = (MODEL *) gobj->data;
@@ -1475,8 +1428,6 @@ static void open_gui_model (gui_obj *gobj)
     printmodel(pmod, datainfo, OPT_NONE, prn);
     view_model(prn, pmod, 78, 400, gobj->name);
 }
-
-/* ........................................................... */
 
 static void open_gui_var (gui_obj *gobj)
 { 
@@ -1491,16 +1442,12 @@ static void open_gui_var (gui_obj *gobj)
     view_buffer(prn, 78, 450, gobj->name, VAR, var);
 }
 
-/* ........................................................... */
-
 static void open_boxplot (gui_obj *gobj)
 {
     GRAPHT *graph = (GRAPHT *) gobj->data;
 
     retrieve_boxplot(graph->fname);
 }
-
-/* ........................................................... */
 
 static void open_gui_text (gui_obj *gobj)
 { 
@@ -1514,14 +1461,10 @@ static void open_gui_text (gui_obj *gobj)
     }
 }
 
-/* ........................................................... */
-
 static void delete_delfiles (const gchar *fname, gpointer p)
 {
     remove(fname);
 }
-
-/* ........................................................... */
 
 void session_file_manager (int action, const char *fname)
 {
@@ -1532,25 +1475,19 @@ void session_file_manager (int action, const char *fname)
 
 	delname = g_strdup(fname);
 	delfiles = g_list_append(delfiles, delname);
-    }
-
-    else if (action == REALLY_DELETE_ALL) {
+    } else if (action == REALLY_DELETE_ALL) {
 	if (delfiles != NULL) {
 	    g_list_foreach(delfiles, (GFunc) delete_delfiles, NULL);
 	    g_list_free(delfiles);
 	    delfiles = NULL;
 	}
-    }
-
-    else if (action == CLEAR_DELFILES) {
+    } else if (action == CLEAR_DELFILES) {
 	if (delfiles != NULL) {
 	    g_list_free(delfiles);
 	    delfiles = NULL;
 	}
     }	     
 }
-
-/* ........................................................... */
 
 static int real_delete_model_from_session (MODEL *junk)
 {
@@ -1584,8 +1521,6 @@ static int real_delete_model_from_session (MODEL *junk)
     return 0;
 }
 
-/* ........................................................... */
-
 static int real_delete_var_from_session (GRETL_VAR *junk)
 {
     if (session.nvars == 1) {
@@ -1616,15 +1551,11 @@ static int real_delete_var_from_session (GRETL_VAR *junk)
     return 0;
 }
 
-/* ........................................................... */
-
 static void gretl_text_free (GRETL_TEXT *text)
 {
     free(text->buf);
     free(text);
 }
-
-/* ........................................................... */
 
 static int real_delete_text_from_session (GRETL_TEXT *junk)
 {
@@ -1655,8 +1586,6 @@ static int real_delete_text_from_session (GRETL_TEXT *junk)
 
     return 0;
 }
-
-/* ........................................................... */
 
 static int real_delete_graph_from_session (GRAPHT *junk)
 {
@@ -1692,8 +1621,6 @@ static int real_delete_graph_from_session (GRAPHT *junk)
 
     return 0;
 }
-
-/* ........................................................... */
 
 static int delete_session_object (gui_obj *obj)
 {
@@ -1775,17 +1702,18 @@ static void rename_session_graph (GRAPHT *graph, const char *newname)
 
 static void rename_session_object (gui_obj *obj, const char *newname)
 {
-    if (obj->sort == 'm') { /* it's a model */
+    if (obj->sort == 'm') { 
+	/* it's a model */
 	MODEL *pmod = (MODEL *) obj->data;
 
 	rename_session_model(pmod, newname);
-    }
-    if (obj->sort == 'v') { /* it's a VAR */
+    } if (obj->sort == 'v') { 
+	/* it's a VAR */
 	GRETL_VAR *var = (GRETL_VAR *) obj->data;
 
 	rename_session_var(var, newname);
-    }
-    else if (obj->sort == 'g' || obj->sort == 'b') { /* it's a graph */    
+    } else if (obj->sort == 'g' || obj->sort == 'b') { 
+	/* it's a graph */    
 	GRAPHT *graph = (GRAPHT *) obj->data;
 
 	rename_session_graph(graph, newname);
@@ -1897,15 +1825,11 @@ void display_text_by_name (const char *tname)
     }
 }
 
-/* ........................................................... */
-
 static void session_view_init (void)
 {
     icon_list = NULL;
     icon_table = NULL;
 }
-
-/* ........................................................... */
 
 static void delete_icons_at_close (gui_obj *gobj, gpointer p)
 {
@@ -1921,8 +1845,6 @@ static void session_view_free (GtkWidget *w, gpointer data)
     g_list_free(icon_list);
     icon_list = NULL;
 }
-
-/* ........................................................... */
 
 #define SESSION_VIEW_COLS 4
 
@@ -2135,8 +2057,6 @@ static void add_all_icons (void)
     batch_pack_icons();
 }
 
-/* ........................................................... */
-
 static void rearrange_icons (void) 
 {
     g_list_foreach(icon_list, (GFunc) foreach_delete_icons, NULL);
@@ -2147,8 +2067,6 @@ static void rearrange_icons (void)
     add_all_icons();
 }
 
-/* ........................................................... */
-
 static gint catch_iconview_key (GtkWidget *w, GdkEventKey *key, 
 				gpointer p)
 {
@@ -2158,8 +2076,6 @@ static gint catch_iconview_key (GtkWidget *w, GdkEventKey *key,
 
     return FALSE;
 }
-
-/* ........................................................... */
 
 static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
 {
@@ -2203,8 +2119,6 @@ static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
     gtk_menu_popup(GTK_MENU(w), NULL, NULL, NULL, NULL,
 		   event->button, event->time);
 }
-
-/* ........................................................... */
 
 static void display_model_table_wrapper (void)
 {
@@ -2283,7 +2197,6 @@ static gboolean session_icon_click (GtkWidget *widget,
 
     return FALSE;
 }
-/* ........................................................... */
 
 static void global_popup_activated (GtkWidget *widget, gpointer data)
 {
@@ -2295,8 +2208,6 @@ static void global_popup_activated (GtkWidget *widget, gpointer data)
 	gtk_widget_destroy(iconview);
 }
 
-/* ........................................................... */
-
 static void session_popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
@@ -2307,8 +2218,6 @@ static void session_popup_activated (GtkWidget *widget, gpointer data)
 	save_session_callback(NULL, SAVE_RENAME, NULL);
 }
 
-/* ........................................................... */
-
 static void info_popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
@@ -2318,8 +2227,6 @@ static void info_popup_activated (GtkWidget *widget, gpointer data)
     else if (strcmp(item, _("Edit")) == 0) 
 	edit_header(NULL, 0, NULL);
 }
-
-/* ........................................................... */
 
 static void data_popup_activated (GtkWidget *widget, gpointer data)
 {
@@ -2335,8 +2242,6 @@ static void data_popup_activated (GtkWidget *widget, gpointer data)
 	csv_to_clipboard();
 }
 
-/* ........................................................... */
-
 static void object_popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
@@ -2347,27 +2252,20 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     if (strcmp(item, _("Display")) == 0) {
 	if (obj->sort == 'm') {
 	    open_gui_model(obj);
-	}
-	if (obj->sort == 'v') {
+	} else if (obj->sort == 'v') {
 	    open_gui_var(obj);
-	}
-	if (obj->sort == 'x') {
+	} else if (obj->sort == 'x') {
 	    open_gui_text(obj);
-	}
-	if (obj->sort == 't') {
+	} else if (obj->sort == 't') {
 	    display_model_table_wrapper();
-	}
-	if (obj->sort == 'q') {
+	} else if (obj->sort == 'q') {
 	    display_graph_page();
-	}
-	else if (obj->sort == 'g') {
+	} else if (obj->sort == 'g') {
 	    open_gui_graph(obj);
-	}
-	else if (obj->sort == 'b') {
+	} else if (obj->sort == 'b') {
 	    open_boxplot(obj);
 	}
-    } 
-    else if (strcmp(item, _("Edit plot commands")) == 0) {
+    } else if (strcmp(item, _("Edit plot commands")) == 0) {
 	if (obj->sort == 'g' || obj->sort == 'b') {
 	    GRAPHT *graph = (GRAPHT *) obj->data;
 
@@ -2375,34 +2273,29 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	    view_file(graph->fname, 1, 0, 78, 400, 
 		      (obj->sort == 'g')? GR_PLOT : GR_BOX);
 	}
-    }   
-    else if (strcmp(item, _("Delete")) == 0) {
+    } else if (strcmp(item, _("Delete")) == 0) {
 	maybe_delete_session_object(obj);
-    }
-    else if (strcmp(item, _("Add to model table")) == 0) {
+    } else if (strcmp(item, _("Add to model table")) == 0) {
 	if (obj->sort == 'm') {
 	    MODEL *pmod = (MODEL *) obj->data;
 	    add_to_model_table_list((const MODEL *) pmod, MODEL_ADD_FROM_MENU,
 				    NULL);
 	}
-    }
-    else if (strcmp(item, _("Clear")) == 0) {
+    } else if (strcmp(item, _("Clear")) == 0) {
 	if (obj->sort == 't') {
 	    free_model_table_list(NULL);
 	}
 	else if (obj->sort == 'q') {
 	    clear_graph_page();
 	}
-    }
-    else if (strcmp(item, _("Help")) == 0) {
+    } else if (strcmp(item, _("Help")) == 0) {
 	if (obj->sort == 't') {
 	    context_help(NULL, GINT_TO_POINTER(MODELTAB));
 	}
 	else if (obj->sort == 'q') {
 	    context_help(NULL, GINT_TO_POINTER(GRAPHPAGE));
 	}
-    } 
-    else if (strcmp(item, _("Options")) == 0) {
+    } else if (strcmp(item, _("Options")) == 0) {
 	if (obj->sort == 't') {
 	    model_table_dialog();
 	} else {
@@ -2410,8 +2303,6 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	}
     }     
 }
-
-/* ........................................................... */
 
 static gboolean icon_entered (GtkWidget *icon, GdkEventCrossing *event,
 			      gui_obj *gobj)
@@ -2428,8 +2319,6 @@ static gboolean icon_left (GtkWidget *icon, GdkEventCrossing *event,
     
     return FALSE;
 }
-
-/* ........................................................... */
 
 static void 
 session_data_received (GtkWidget *widget,
@@ -2472,15 +2361,9 @@ static void session_drag_setup (gui_obj *gobj)
                        targ, 1,
                        GDK_ACTION_COPY);
 
-#ifdef OLD_GTK
-    gtk_signal_connect (GTK_OBJECT(w), "drag_data_received",
-			GTK_SIGNAL_FUNC(session_data_received),
-			NULL);
-#else
     g_signal_connect (G_OBJECT(w), "drag_data_received",
                       G_CALLBACK(session_data_received),
                       NULL);
-#endif
 }
 
 static void drag_graph (GtkWidget *w, GdkDragContext *context,
@@ -2496,13 +2379,8 @@ static void graph_drag_connect (GtkWidget *w, GRAPHT *graph)
     gtk_drag_source_set(w, GDK_BUTTON1_MASK,
                         &session_drag_targets[1],
                         1, GDK_ACTION_COPY);
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(w), "drag_data_get",
-		       GTK_SIGNAL_FUNC(drag_graph), graph);
-#else
     g_signal_connect(G_OBJECT(w), "drag_data_get",
                      G_CALLBACK(drag_graph), graph);
-#endif
 }
 
 static void drag_model (GtkWidget *w, GdkDragContext *context,
@@ -2518,16 +2396,9 @@ static void model_drag_connect (GtkWidget *w, MODEL *pmod)
     gtk_drag_source_set(w, GDK_BUTTON1_MASK,
                         &session_drag_targets[0],
                         1, GDK_ACTION_COPY);
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(w), "drag_data_get",
-		       GTK_SIGNAL_FUNC(drag_model), pmod);
-#else
     g_signal_connect(G_OBJECT(w), "drag_data_get",
                      G_CALLBACK(drag_model), pmod);
-#endif
 }
-
-/* ........................................................... */
 
 static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 {
@@ -2819,8 +2690,6 @@ static GtkWidget *create_popup_item (GtkWidget *popup, char *str,
 
 #endif
 
-/* ........................................................... */
-
 static void session_build_popups (void)
 {
     size_t i;
@@ -2917,21 +2786,12 @@ static void session_build_popups (void)
     }
 }
 
-/* ........................................................... */
-
 static void iconview_connect_signals (GtkWidget *iconview)
 {
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(iconview), "destroy",
-		     GTK_SIGNAL_FUNC(session_view_free), NULL);
-    gtk_signal_connect(GTK_OBJECT(iconview), "key_press_event",
-		     GTK_SIGNAL_FUNC(catch_iconview_key), NULL);
-#else
     g_signal_connect(G_OBJECT(iconview), "destroy",
 		     G_CALLBACK(session_view_free), NULL);
     g_signal_connect(G_OBJECT(iconview), "key_press_event",
 		     G_CALLBACK(catch_iconview_key), NULL);
-#endif
 }
 
 void view_session (void)

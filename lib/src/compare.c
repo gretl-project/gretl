@@ -1677,7 +1677,6 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	/* plot with 95% confidence bands, if not batch mode */
 	if (!gretl_in_batch_mode() &&
 	    gnuplot_init(PLOT_CUSUM, &fq) == 0) {
-	    fputs("# CUSUM test\n", fq);
 	    fprintf(fq, "set xlabel \"%s\"\n", I_("Observation"));
 	    fputs("set xzeroaxis\n", fq);
 	    fprintf(fq, "set title \"%s\"\n",

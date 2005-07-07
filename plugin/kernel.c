@@ -107,7 +107,7 @@ static int density_plot (const double *x, double s, double h,
     double xt, xdt;
     int ktype, t;
 
-    if (gnuplot_init(0, &fp)) {
+    if (gnuplot_init(PLOT_KERNEL, &fp)) {
 	return E_FOPEN;
     }
 
@@ -124,7 +124,6 @@ static int density_plot (const double *x, double s, double h,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    fputs("# kernel density plot (no auto-parse)\n", fp);
     fputs("set nokey\n", fp); 
     fprintf(fp, "set xrange [%g:%g]\n", xmin, xmax);
 

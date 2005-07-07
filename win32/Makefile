@@ -5,38 +5,36 @@ include config.mk
 
 # directories
 topsrc = ..
-libdir  = $(topsrc)/lib/src
+libsrcdir  = $(topsrc)/lib/src
 plugindir = $(topsrc)/plugin
 guidir = $(topsrc)/gui2
 extradir = $(guidir)/gtkextra-lite
 imports = ./import-libs
 
 # tools
-CC = $(MGW_PREFIX)-gcc -Wall -O2 -mms-bitfields -DWIN32
-AS = $(MGW_PREFIX)-as
-DLLWRAP = $(MGW_PREFIX)-dllwrap
+CC = $(MGW_PREFIX)gcc -Wall -O2 -mms-bitfields -DWIN32
+AS = $(MGW_PREFIX)as
+DLLWRAP = $(MGW_PREFIX)dllwrap
 DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
-RC = $(MGW_PREFIX)-windres
+RC = $(MGW_PREFIX)windres
 RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 	--define __GNUWIN32__
 
 # libraries
-GTKLIBS := -L$(imports) $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
-                          pkg-config --libs gtk+-win32-2.0)
-GLIBLIB := -L$(imports) $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
-                          pkg-config --libs glib-2.0)
-CLI_LIBS = -L$(imports) -lreadline.dll
-GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lgtksourceview -lwsock32 #-lhhctrl
+GTKLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs gtk+-win32-2.0)
+GLIBLIB := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs glib-2.0)
+CLI_LIBS = -lreadline.dll
+GUI_LIBS = -lwsock32 $(GTKLIBS) -lgtksourceview -L$(imports) -lgtkextra-lite
 GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
 LAPACK_LIBS = -llapack -lblas -lf2c
 
 # flags/defines
-CFLAGS = -I. -I$(libdir) -I$(extradir) -I$(plugindir) -I$(guidir) -DUSE_GMP
+CFLAGS = -I. -I$(libsrcdir) -I$(extradir) -I$(plugindir) -I$(guidir) -I$(XML2_INC) -DUSE_GMP
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
 # source paths
-vpath %.c $(libdir)
+vpath %.c $(libsrcdir)
 vpath %.c $(topsrc)/cephes
 vpath %.c $(topsrc)/minpack
 vpath %.c $(topsrc)/cli
@@ -45,7 +43,7 @@ vpath %.c $(extradir)
 vpath %.c $(plugindir)
 vpath %.c $(plugindir)/libole2
 vpath %.c $(topsrc)/tests
-vpath %.h $(libdir):$(topsrc)/cli:$(guidir):$(extradir):$(plugindir):.
+vpath %.h $(libsrcdir):$(topsrc)/cli:$(guidir):$(extradir):$(plugindir):.
 vpath %.h $(topsrc)/cephes:..
 vpath %.rc $(topsrc)/win32
 

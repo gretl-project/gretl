@@ -304,12 +304,6 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    if (opt == TRAMO_SEATS) {
-	fputs("# TRAMO/SEATS tri-graph (no auto-parse)\n", fp);
-    } else {
-	fputs("# X-12-ARIMA tri-graph (no auto-parse)\n", fp);
-    }
-
     if (pdinfo->pd == 4) {
 	if ((pdinfo->t2 - pdinfo->t1) / 4 < 8) {
 	    fputs("set xtics nomirror 0,1\n", fp); 

@@ -53,7 +53,7 @@ do_range_mean_plot (int n, const double **Z, double *yhat, const char *vname)
 	return err;
     }
 
-    fprintf(fp, "# range-mean plot for %s\n", vname);
+    fprintf(fp, "# for %s\n", vname);
     fputs("set nokey\n", fp);
     fprintf(fp, "set title '%s %s %s'\n", 
 	    I_("range-mean plot for"), vname, 

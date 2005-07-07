@@ -233,7 +233,6 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    fputs("# leverage/influence plot\n", fp);
     fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fp);
     fputs("set xzeroaxis\n", fp);
     fputs("set nokey\n", fp); 

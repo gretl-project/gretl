@@ -318,14 +318,16 @@ static void rtf_vmat_blank_row (int lo, int n, PRN *prn)
     pputs(prn, "\\intbl \\row\n");
 }
 
+#define FIELDS 5
+
 static void
 rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 {
     register int i, j;
     int n = vmat->t2 - vmat->t1 + 1;
-    int lo, nf, li2, p, k, idx, ij2;
+    int blockmax = vmat->dim / FIELDS;
+    int nf, li2, p, k, idx, ij2;
     char tmp[128];
-    enum { FIELDS = 5 };
 
     if (vmat->ci == CORR) {
 	char date1[OBSLEN], date2[OBSLEN];
@@ -347,19 +349,17 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 		I_("Coefficient covariance matrix"));
     }
     
-    lo = vmat->dim;
-
-    for (i=0; i<=lo/FIELDS; i++) {
+    for (i=0; i<=blockmax; i++) {
 	int pad;
 
 	nf = i * FIELDS;
-	li2 = lo - nf;
+	li2 = vmat->dim - nf;
 	p = (li2 > FIELDS) ? FIELDS : li2;
 	if (p == 0) break;
 
-	pad = (lo > FIELDS)? FIELDS - p : lo - p;
+	pad = (vmat->dim > FIELDS)? FIELDS - p : vmat->dim - p;
 
-	rtf_vmat_row(lo, prn);
+	rtf_vmat_row(vmat->dim, prn);
 
 	if (pad) rtf_table_pad(pad, prn);
 
@@ -376,7 +376,7 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 		rtf_table_pad(pad, prn);
 	    }
 	    for (k=0; k<p; k++) {
-		idx = ijton(j, nf+k, lo);
+		idx = ijton(j, nf+k, vmat->dim);
 		if (vmat->ci == CORR) {
 		    rtf_outxx(vmat->vec[idx], prn);
 		} else {
@@ -392,7 +392,7 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 	    rtf_table_pad(pad + j, prn);
 	    ij2 = nf + j;
 	    for (k=j; k<p; k++) {
-		idx = ijton(ij2, nf+k, lo);
+		idx = ijton(ij2, nf+k, vmat->dim);
 		if (vmat->ci == CORR) {
 		    rtf_outxx(vmat->vec[idx], prn);
 		} else {
@@ -401,8 +401,10 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 	    }
 	    pprintf(prn, "\\ql %s\\cell \\intbl \\row\n", vmat->names[ij2]);
 	}
-	
-	rtf_vmat_blank_row(lo, pad + p, prn);
+
+	if (i < blockmax) {
+	    rtf_vmat_blank_row(vmat->dim, pad + p + 1, prn);
+	}
     }
 
     pputs(prn, "}}\n");

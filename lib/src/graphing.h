@@ -67,6 +67,33 @@ typedef enum {
     GP_JUST_RIGHT
 } gp_just_codes;
 
+typedef enum {
+    DIST_NONE = 0,
+    DIST_NORMAL,
+    DIST_GAMMA
+} DistCode;
+
+typedef enum {
+    PLOT_REGULAR = 0,
+    PLOT_SAMPLING_DIST,
+    PLOT_FORECAST,
+    PLOT_GARCH,
+    PLOT_FREQ_SIMPLE,
+    PLOT_FREQ_NORMAL,
+    PLOT_FREQ_GAMMA,
+    PLOT_PERIODOGRAM,
+    PLOT_CORRELOGRAM,
+    PLOT_CUSUM,
+    PLOT_MULTI_SCATTER,
+    PLOT_TRI_GRAPH,
+    PLOT_RANGE_MEAN,
+    PLOT_HURST,
+    PLOT_LEVERAGE,
+    PLOT_IRFBOOT,
+    PLOT_KERNEL,
+    PLOT_TYPE_MAX
+} PlotType;
+
 typedef struct {
     char text[PLOT_LABEL_TEXT_LEN + 1]; 
     double pos[2];
@@ -76,7 +103,7 @@ typedef struct {
 typedef struct {
     FILE *fp;
     char fname[MAXLEN];        /* for gui purposes */
-    int code;                  /* to deal with FREQ, FCASTERR... */
+    PlotType code;             /* to deal with FREQ, FCASTERR... */
     unsigned char flags;       /* bitwise OR of options (gptspec_flags) */
     int t1, t2;                /* starting and ending obs */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
@@ -96,29 +123,6 @@ typedef struct {
     void *ptr;                 /* for GUI use */
 } GPT_SPEC;
 
-typedef enum {
-    DIST_NONE = 0,
-    DIST_NORMAL,
-    DIST_GAMMA
-} DistCode;
-
-typedef enum {
-    PLOT_REGULAR = 0,
-    PLOT_SAMPLING_DIST,
-    PLOT_FORECAST,
-    PLOT_FREQ_SIMPLE,
-    PLOT_FREQ_NORMAL,
-    PLOT_FREQ_GAMMA,
-    PLOT_PERIODOGRAM,
-    PLOT_CORRELOGRAM,
-    PLOT_CUSUM,
-    PLOT_MULTI_SCATTER,
-    PLOT_TRI_GRAPH,
-    PLOT_RANGE_MEAN,
-    PLOT_LEVERAGE,
-    PLOT_TYPE_MAX
-} PlotType;
-
 #define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
 				c == PLOT_FREQ_NORMAL || \
 				c == PLOT_FREQ_GAMMA)
@@ -137,6 +141,8 @@ const char *get_timevar_name (DATAINFO *pdinfo);
 const char *gp_justification_string (int j);
 
 int gnuplot_init (PlotType ptype, FILE **fpp);
+
+PlotType plot_type_from_string (const char *str);
 
 int gnuplot_make_graph (void);
 

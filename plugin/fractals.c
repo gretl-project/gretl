@@ -31,11 +31,11 @@ do_hurst_plot (int n, double **Z, double *yhat, const char *vname)
     FILE *fp = NULL;
     int t, err;
 
-    if ((err = gnuplot_init(PLOT_RANGE_MEAN, &fp))) {
+    if ((err = gnuplot_init(PLOT_HURST, &fp))) {
 	return err;
     }
 
-    fprintf(fp, "# rescaled range plot for %s\n", vname);
+    fprintf(fp, "# for %s\n", vname);
     fputs("set nokey\n", fp);
     fprintf(fp, "set title '%s %s'\n", 
 	    I_("Rescaled-range plot for"), vname);

@@ -421,8 +421,6 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
     if (gnuplot_init(PLOT_SAMPLING_DIST, &fp)) return;
 
-    fprintf(fp, "# sampling distribution\n");
-
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif

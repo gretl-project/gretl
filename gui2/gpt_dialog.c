@@ -75,7 +75,8 @@ struct gpt_titles_t gpt_titles[] = {
 
 #define frequency_plot(s)       (s->code == PLOT_FREQ_SIMPLE || \
 			         s->code == PLOT_FREQ_NORMAL || \
-			         s->code == PLOT_FREQ_GAMMA)
+			         s->code == PLOT_FREQ_GAMMA || \
+                                 s->code == PLOT_KERNEL)
 
 static const char *get_font_filename (const char *showname);
 
@@ -411,8 +412,6 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     }
 }
 
-/* ........................................................... */
-
 static void set_keyspec_sensitivity (GPT_SPEC *spec)
 {
     if (!frequency_plot(spec)) {
@@ -429,8 +428,6 @@ static void set_keyspec_sensitivity (GPT_SPEC *spec)
     }
     gtk_widget_set_sensitive(keycombo, FALSE);
 }
-
-/* ........................................................... */
 
 #define TAB_MAIN_COLS 3
 
@@ -1017,8 +1014,6 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(yaxiscombo[i]);	
     }
 }
-
-/* ........................................................... */
 
 static void label_pos_to_entry (double *pos, GtkWidget *w)
 {

@@ -24,6 +24,7 @@
 #include "session.h"
 #include "gpt_dialog.h"
 
+#define GPDEBUG 0
 #undef POINTS_DEBUG
 
 #ifdef G_OS_WIN32
@@ -49,10 +50,12 @@ enum {
     PLOT_ZOOMING        = 1 << 3,
     PLOT_NO_MARKERS     = 1 << 4,
     PLOT_PNG_COORDS     = 1 << 5,
-    PLOT_DONT_ZOOM      = 1 << 6,
-    PLOT_DONT_EDIT      = 1 << 7,
-    PLOT_DONT_MOUSE     = 1 << 8,
-    PLOT_POSITIONING    = 1 << 9
+    PLOT_HAS_XRANGE     = 1 << 6,
+    PLOT_HAS_YRANGE     = 1 << 7,
+    PLOT_DONT_ZOOM      = 1 << 8,
+    PLOT_DONT_EDIT      = 1 << 9,
+    PLOT_DONT_MOUSE     = 1 << 10,
+    PLOT_POSITIONING    = 1 << 11
 } plot_status_flags;
 
 enum {
@@ -70,6 +73,8 @@ enum {
 #define plot_is_zooming(p)      (p->status & PLOT_ZOOMING)
 #define plot_has_no_markers(p)  (p->status & PLOT_NO_MARKERS)
 #define plot_has_png_coords(p)  (p->status & PLOT_PNG_COORDS)
+#define plot_has_xrange(p)      (p->status & PLOT_HAS_XRANGE)
+#define plot_has_yrange(p)      (p->status & PLOT_HAS_YRANGE)
 #define plot_not_zoomable(p)    (p->status & PLOT_DONT_ZOOM)
 #define plot_not_editable(p)    (p->status & PLOT_DONT_EDIT)
 #define plot_doing_position(p)  (p->status & PLOT_POSITIONING)
@@ -90,12 +95,6 @@ enum {
     PNG_REDISPLAY
 } png_zoom_codes;
 
-struct png_zoom_t {
-    double xmin, xmax;
-    double ymin, ymax;
-    int screen_xmin, screen_ymin;
-};
-
 struct png_plot_t {
     GtkWidget *shell;
     GtkWidget *canvas;
@@ -115,7 +114,9 @@ struct png_plot_t {
     int pd;
     int err;
     guint cid;
-    struct png_zoom_t *zoom;
+    double zoom_xmin, zoom_xmax;
+    double zoom_ymin, zoom_ymax;
+    int screen_xmin, screen_ymin;
     unsigned long status; 
     unsigned char format;
 #ifndef OLD_GTK
@@ -387,14 +388,15 @@ static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
     return 0;
 }
 
+/* take saved plot source file and make PNG from it, then display
+   the PNG */
+
 void display_session_graph_png (char *fname) 
 {
     char *myfname = fname;
     gchar *plotcmd;
     int err = 0;
 
-    /* take saved plot source file and make PNG from it, then display
-       the PNG */
     if (add_png_term_to_plotfile(myfname)) {
 	return;
     }
@@ -474,9 +476,7 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 
     if (err) {
 	errbox(_("Gnuplot error creating graph"));
-    } else {
-	infobox(_("Graph saved"));
-    }
+    } 
 }
 
 /* chop trailing comma, if present; return 1 if comma chopped,
@@ -544,81 +544,15 @@ static void get_gpt_data (char *line, double *x, double *y)
 #endif
 }
 
-/* ........................................................... */
-
-static int cant_zoom (const char *line)
-{
-    if (strncmp(line, "# multi", 7) == 0) {
-	/* multiple scatterplots */
-	return 1;
-    }
-    if (strncmp(line, "# CUSUM", 7) == 0) {
-	/* graph from CUSUM test */
-	return 1;
-    }
-    if (strncmp(line, "# frequ", 7) == 0) {
-	/* frequency distribution plot */
-	return 1;
-    }
-    if (strncmp(line, "# sampl", 7) == 0) {
-	/* sampling distribution graph (stats calculator) */
-	return 1;
-    }
-    if (strncmp(line, "# corre", 7) == 0) {
-	/* correlogram */
-	return 1;
-    }
-    if (strncmp(line, "# perio", 7) == 0) {
-	/* periodogram */
-	return 1;
-    }
-    if (strncmp(line, "# range", 7) == 0) {
-	/* range-mean plot */
-	return 1;
-    }
-    if (strncmp(line, "# lever", 7) == 0) {
-	/* leverage plot */
-	return 1;
-    }
-    if (strstr(line, "no auto-parse")) {
-	/* general prohibition on gui plot editing */
-	return 1;
-    }
-    return 0;
-}
-
-/* ........................................................... */
-
-static int cant_edit (const char *line)
-{
-    if (strncmp(line, "# mult", 6) == 0) {
-	/* multiple scatterplots (or excessive number of lines) */
-	return 1;
-    }
-    if (strncmp(line, "# CUSUM", 7) == 0) {
-	/* graph from CUSUM test */
-	return 1;
-    }
-    if (strncmp(line, "# corre", 7) == 0) {
-	/* correlogram */
-	return 1;
-    }
-    if (strncmp(line, "# sampl", 7) == 0) {
-	/* sampling distribution graph (stats calculator) */
-	return 1;
-    }
-    if (strncmp(line, "# lever", 7) == 0) {
-	/* leverage plot */
-	return 1;
-    }
-    if (strstr(line, "no auto-parse")) {
-	/* general prohibition on gui plot editing */
-	return 1;
-    }
-    return 0;
-}
-
-/* ........................................................... */
+#define cant_edit(p) (p == PLOT_CORRELOGRAM || \
+                      p == PLOT_CUSUM || \
+                      p == PLOT_FORECAST || \
+                      p == PLOT_GARCH || \
+                      p == PLOT_IRFBOOT || \
+                      p == PLOT_LEVERAGE || \
+                      p == PLOT_MULTI_SCATTER || \
+                      p == PLOT_SAMPLING_DIST || \
+                      p == PLOT_TRI_GRAPH)
 
 static void plot_label_init (GPT_LABEL *lbl)
 {
@@ -902,26 +836,36 @@ static int allocate_plotspec_markers (GPT_SPEC *spec, int plot_n)
     return 0;
 }
 
-/* determine the number of data points in a plot, and whether
-   there are any data-point markers along with the data 
+/* Determine the number of data points in a plot; also the type of
+   plot, and whether there are any data-point markers along with the
+   data.
 */
 
-static int get_plot_n (FILE *fp, int *got_markers)
+static int get_plot_n (FILE *fp, PlotType *ptype, int *got_markers)
 {
     int n = 0, started = -1;
     char line[MAXLEN], label[OBSLEN];
     char *p;
 
+    *ptype = PLOT_REGULAR;
     *got_markers = 0;
 
     while (fgets(line, MAXLEN - 1, fp)) {
+
+	if (*line == '#' && *ptype == PLOT_REGULAR) {
+	    tailstrip(line);
+	    *ptype = plot_type_from_string(line);
+	}
+
 	if (!strncmp(line, "plot", 4)) {
 	    started = 0;
 	}
+
 	if (started == 0 && strchr(line, '\\') == NULL) {
 	    started = 1;
 	    continue;
 	}
+
 	if (started == 1) {
 	    if (*got_markers == 0 && (p = strchr(line, '#')) != NULL) {
 		if (sscanf(p + 1, "%8s", label) == 1) {
@@ -938,12 +882,34 @@ static int get_plot_n (FILE *fp, int *got_markers)
     return n;
 }
 
+static int allocate_plot_literals (GPT_SPEC *spec)
+{
+    int i, j, err = 0;
+
+    for (i=0; i<4 && !err; i++) {
+	spec->literal[i] = mymalloc(MAXLEN);
+	if (spec->literal[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(spec->literal[j]);
+		spec->literal[j] = NULL;
+	    }
+	    err = E_ALLOC;
+	}
+    }
+
+    return err;
+}
+
+#define need_literal_lines(p) (p == PLOT_FREQ_NORMAL || \
+                               p == PLOT_FREQ_GAMMA || \
+                               p == PLOT_PERIODOGRAM)
+
 /* Read plotspec struct from gnuplot command file.  This is _not_ a
    general parser for gnuplot files; it is designed specifically for
    files auto-generated by gretl.
 */
 
-static int read_plotspec_from_file (GPT_SPEC *spec)
+static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 {
     int i, t, n, plot_n, done, labelno;
     int got_markers = 0;
@@ -952,9 +918,18 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     double *tmpy = NULL;
     size_t diff;
     FILE *fp;
+    int err = 0;
+
+#if GPDEBUG
+    fprintf(stderr, "read_plotspec_from_file: spec=%p\n", 
+	    (void *) spec);
+#endif
 
     /* check: are we already done? */
     if (PLOTSPEC_DETAILS_IN_MEMORY(spec)) {
+#if GPDEBUG
+	fprintf(stderr, " info already in memory, returning 0\n");
+#endif
 	return 0;
     }
 
@@ -965,11 +940,28 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	return 1;
     }
 
-    /* get the number of data-points, and check for markers */
-    plot_n = get_plot_n(fp, &got_markers);
+    /* get the number of data-points, plot type, and check for markers */
+    plot_n = get_plot_n(fp, &spec->code, &got_markers);
     if (plot_n == 0) {
+	/* failed reading plot data */
+#if GPDEBUG
+	fprintf(stderr, " got plot_n = 0\n");
+#endif
 	fclose(fp);
 	return 1;
+    } else if (cant_edit(spec->code)) {
+#if GPDEBUG
+	fprintf(stderr, " got non-editable plot\n");
+#endif
+	fclose(fp);
+	return 0;
+    }
+
+    if (need_literal_lines(spec->code)) {
+	if (allocate_plot_literals(spec)) {
+	    fclose(fp);
+	    return 1;
+	}
     }
 
     rewind(fp);
@@ -977,38 +969,25 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     /* get the preamble and "set" lines */
     labelno = 0;
     while ((got = fgets(gpline, MAXLEN - 1, fp))) {
-	if (cant_edit(gpline)) {
-	    goto plot_bailout;
-	}
-	if (strncmp(gpline, "# timeseries", 12) == 0) {
+	if (!strncmp(gpline, "# timeseries", 12)) {
+	    int pd;
+
+	    if (sscanf(gpline, "# timeseries %d", &pd)) {
+		*plot_pd = pd;
+	    }
 	    spec->flags |= GPTSPEC_TS;
 	    continue;
 	}
-	if (strncmp(gpline, "# freq", 6) == 0 ||
-	    strncmp(gpline, "# peri", 6) == 0) {
-	    /* special cases */
-	    if (gpline[2] == 'f') {
-		if (strstr(gpline, "normal")) {
-		    spec->code = PLOT_FREQ_NORMAL;
-		} else if (strstr(gpline, "gamma")) {
-		    spec->code = PLOT_FREQ_GAMMA;
-		} else {
-		    spec->code = PLOT_FREQ_SIMPLE;
-		}
-	    } else {
-		spec->code = PLOT_PERIODOGRAM;
-	    }
+	/* FIXME ! */
+	if (!strncmp(gpline, "# freq", 6) ||
+	    !strncmp(gpline, "# peri", 6)) {
 	    if (spec->code != PLOT_FREQ_SIMPLE) {
-		/* grab special plot lines */
 		for (i=0; i<4; i++) {
-		    spec->literal[i] = mymalloc(MAXLEN);
-		    if (spec->literal[i] == NULL) {
-			return 1;
-		    }
 		    if (!fgets(spec->literal[i], MAXLEN - 1, fp)) {
 			errbox(_("Plot file is corrupted"));
 			free(spec->literal[i]);
 			spec->literal[i] = NULL;
+			err = 1;
 			goto plot_bailout;
 		    }
 		    top_n_tail(spec->literal[i]);
@@ -1017,17 +996,12 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	    continue;
 	}
 
-	if (strncmp(gpline, "# forecast", 10) == 0) {
-	    spec->code = PLOT_FORECAST;
-	    continue;
-	}
-
 	if (strstr(gpline, "automatic OLS")) {
 	    spec->flags |= GPTSPEC_AUTO_OLS;
 	    continue;
 	}
 
-	if (strncmp(gpline, "# ", 2) == 0) {
+	if (!strncmp(gpline, "# ", 2)) {
 	    /* ignore unknown comment lines */
 	    continue;
 	}
@@ -1038,29 +1012,32 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	}
 
 	if (parse_gp_set_line(spec, gpline, &labelno)) {
+	    err = 1;
 	    goto plot_bailout;
 	}
     }
 
     if (got == NULL) {
+	err = 1;
 	goto plot_bailout;
     }
 
     for (i=0; i<4; i++) {
-	if (spec->titles[i][0] != 0) {
+	if (spec->titles[i][0] != '\0') {
 	    delchar('\'', spec->titles[i]);
 	}
     }
 
-    if (spec->keyspec[0] == 0) {
+    if (*spec->keyspec == '\0') {
 	strcpy(spec->keyspec, "none");
     }
 
     /* then get the "plot" lines */
-    if (strncmp(gpline, "plot ", 4) ||
+    if (strncmp(gpline, "plot ", 5) ||
 	(strlen(gpline) < 10 && fgets(gpline, MAXLEN - 1, fp) == NULL)) {	
 	errbox(_("Failed to parse gnuplot file"));
 	fprintf(stderr, "bad plotfile line: '%s'\n", gpline);
+	err = 1;
 	goto plot_bailout;
     }
 
@@ -1126,6 +1103,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     }
 
     if (got == NULL) {
+	err = 1;
 	goto plot_bailout;
     }
 
@@ -1141,6 +1119,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     spec->data = mymalloc(plot_n * (i + 2) * sizeof *spec->data);
     tmpy = mymalloc(plot_n * sizeof *tmpy);
     if (spec->data == NULL || tmpy == NULL) {
+	err = 1;
 	goto plot_bailout;
     }
 
@@ -1149,6 +1128,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	    free(spec->data);
 	    spec->data = NULL;
 	    free(tmpy);
+	    err = 1;
 	    goto plot_bailout;
 	}
     }
@@ -1207,13 +1187,11 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	    (void *) spec->markers, spec->nmarkers);
 #endif
 
-    fclose(fp);
-    return 0;
-
  plot_bailout:
 
     fclose(fp);
-    return 1;
+
+    return err;
 }
 
 /* Size of drawing area */
@@ -1231,10 +1209,10 @@ static int get_data_xy (png_plot *plot, int x, int y,
     double ymin, ymax;
 
     if (plot_is_zoomed(plot)) {
-	xmin = plot->zoom->xmin;
-	xmax = plot->zoom->xmax;
-	ymin = plot->zoom->ymin;
-	ymax = plot->zoom->ymax;
+	xmin = plot->zoom_xmin;
+	xmax = plot->zoom_xmax;
+	ymin = plot->zoom_ymin;
+	ymax = plot->zoom_ymax;
     } else {
 	xmin = plot->xmin;
 	xmax = plot->xmax;
@@ -1298,10 +1276,10 @@ static void draw_selection_rectangle (png_plot *plot,
 {
     int rx, ry, rw, rh;
 
-    rx = (plot->zoom->screen_xmin < x)? plot->zoom->screen_xmin : x;
-    ry = (plot->zoom->screen_ymin < y)? plot->zoom->screen_ymin : y;
-    rw = x - plot->zoom->screen_xmin;
-    rh = y - plot->zoom->screen_ymin;
+    rx = (plot->screen_xmin < x)? plot->screen_xmin : x;
+    ry = (plot->screen_ymin < y)? plot->screen_ymin : y;
+    rw = x - plot->screen_xmin;
+    rh = y - plot->screen_ymin;
     if (rw < 0) rw = -rw;
     if (rh < 0) rh = -rh;    
 
@@ -1415,11 +1393,8 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
     int t, plot_n;
     const double *data_x, *data_y = NULL;
 
-    if (!PLOTSPEC_DETAILS_IN_MEMORY(plot->spec) && !plot->err) {
-	plot->err = read_plotspec_from_file(plot->spec);
-	if (plot->err) {
-	    return TRUE;
-	}
+    if (plot->err) {
+	return TRUE;
     }
 
     /* no markers to show */
@@ -1442,8 +1417,8 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 #endif
 
     if (plot_is_zoomed(plot)) {
-	min_xdist = xrange = plot->zoom->xmax - plot->zoom->xmin;
-	min_ydist = yrange = plot->zoom->ymax - plot->zoom->ymin;
+	min_xdist = xrange = plot->zoom_xmax - plot->zoom_xmin;
+	min_ydist = yrange = plot->zoom_ymax - plot->zoom_ymin;
     } else {
 	min_xdist = xrange = plot->xmax - plot->xmin;
 	min_ydist = yrange = plot->ymax - plot->ymin;
@@ -1592,10 +1567,13 @@ static void set_plot_format_flags (png_plot *plot)
 
 static void start_editing_png_plot (png_plot *plot)
 {
-    /* the spec struct is not yet filled out by reference
-       to the gnuplot source file */
-    plot->err = read_plotspec_from_file(plot->spec);
-    if (plot->err) {
+#if GPDEBUG
+    fprintf(stderr, "start_editing_png_plot: plot = %p\n", (void *) plot);
+#endif
+
+    if (!PLOTSPEC_DETAILS_IN_MEMORY(plot->spec)) {
+	errbox(_("Couldn't access graph info"));
+	plot->err = 1;
 	return;
     }
 
@@ -1851,6 +1829,10 @@ int redisplay_edited_png (png_plot *plot)
     FILE *fp;
     int err = 0;
 
+#if GPDEBUG
+    fprintf(stderr, "redisplay_edited_png: plot = %p\n", (void *) plot);
+#endif
+
     /* open file in which to dump plot specification */
     gnuplot_png_init(plot->spec, &fp);
     if (fp == NULL) {
@@ -1878,6 +1860,9 @@ int redisplay_edited_png (png_plot *plot)
 	errbox(_("Failed to generate PNG file"));
 	return 1;
     }
+
+    /* reset format flags */
+    set_plot_format_flags(plot);
 
     /* grab (possibly modified) data ranges */
     get_plot_ranges(plot);
@@ -1915,10 +1900,10 @@ static int zoom_unzoom_png (png_plot *plot, int view)
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "C");
 #endif
-	fprintf(fpout, "set xrange [%g:%g]\n", plot->zoom->xmin,
-		plot->zoom->xmax);
-	fprintf(fpout, "set yrange [%g:%g]\n", plot->zoom->ymin,
-		plot->zoom->ymax);
+	fprintf(fpout, "set xrange [%g:%g]\n", plot->zoom_xmin,
+		plot->zoom_xmax);
+	fprintf(fpout, "set yrange [%g:%g]\n", plot->zoom_ymin,
+		plot->zoom_ymax);
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "");
 #endif
@@ -1967,25 +1952,25 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 	double z;
 
 	if (!get_data_xy(plot, event->x, event->y, 
-			 &plot->zoom->xmax, &plot->zoom->ymax)) {
+			 &plot->zoom_xmax, &plot->zoom_ymax)) {
 	    return TRUE;
 	}
 
 	/* flip the selected rectangle if required */
-	if (plot->zoom->xmin > plot->zoom->xmax) {
-	    z = plot->zoom->xmax;
-	    plot->zoom->xmax = plot->zoom->xmin;
-	    plot->zoom->xmin = z;
+	if (plot->zoom_xmin > plot->zoom_xmax) {
+	    z = plot->zoom_xmax;
+	    plot->zoom_xmax = plot->zoom_xmin;
+	    plot->zoom_xmin = z;
 	}
 
-	if (plot->zoom->ymin > plot->zoom->ymax) {
-	    z = plot->zoom->ymax;
-	    plot->zoom->ymax = plot->zoom->ymin;
-	    plot->zoom->ymin = z;
+	if (plot->zoom_ymin > plot->zoom_ymax) {
+	    z = plot->zoom_ymax;
+	    plot->zoom_ymax = plot->zoom_ymin;
+	    plot->zoom_ymin = z;
 	}
 
-	if (plot->zoom->xmin != plot->zoom->xmax &&
-	    plot->zoom->ymin != plot->zoom->ymax) {
+	if (plot->zoom_xmin != plot->zoom_xmax &&
+	    plot->zoom_ymin != plot->zoom_ymax) {
 	    zoom_unzoom_png(plot, PNG_ZOOM);
 	}
 
@@ -2003,9 +1988,9 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
     if (plot_is_zooming(plot)) {
 	/* think about this */
 	if (get_data_xy(plot, event->x, event->y, 
-			&plot->zoom->xmin, &plot->zoom->ymin)) {
-	    plot->zoom->screen_xmin = event->x;
-	    plot->zoom->screen_ymin = event->y;
+			&plot->zoom_xmin, &plot->zoom_ymin)) {
+	    plot->screen_xmin = event->x;
+	    plot->screen_ymin = event->y;
 	}
 	return TRUE;
     }
@@ -2216,9 +2201,6 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
     }
 
     /* free allocated elements of png_plot struct */
-    if (plot->zoom != NULL) {
-	free(plot->zoom);
-    }
 #ifndef OLD_GTK
     if (plot->labeled != NULL) {
 	free(plot->labeled);
@@ -2235,10 +2217,6 @@ static void set_approx_pixel_bounds (png_plot *plot,
 				     int max_num_width,
 				     int max_num2_width)
 {
-    if (PLOTSPEC_DETAILS_IN_MEMORY(plot->spec)) {
-	set_plot_format_flags(plot);
-    }
-
     if (plot_has_xlabel(plot)) {
 	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 36;
     } else {
@@ -2429,21 +2407,25 @@ static int get_dumb_plot_yrange (png_plot *plot)
     return err;
 }
 
-/* do a partial parse of the gnuplot source file, enough to determine
+/* Do a partial parse of the gnuplot source file: enough to determine
    the data ranges so we can read back the mouse pointer coordinates
-   when the user moves the pointer over the graph 
+   when the user moves the pointer over the graph.
 */
 
 static int get_plot_ranges (png_plot *plot)
 {
     FILE *fp;
     char line[MAXLEN];
-    int noedit = 0;
-    int got_x = 0, got_y = 0, got_pd = 0;
-    int err = 0;
+    int got_x = 0, got_y = 0;
 #ifdef PNG_COMMENTS
     png_bounds b;
 #endif
+    int err = 0;
+
+#if GPDEBUG
+    fprintf(stderr, "get_plot_ranges: plot=%p, plot->spec=%p\n", 
+	    (void *) plot, (void *) plot->spec);
+#endif    
 
     plot->xmin = plot->xmax = 0.0;
     plot->ymin = plot->ymax = 0.0;   
@@ -2452,6 +2434,7 @@ static int get_plot_ranges (png_plot *plot)
 
     fp = gretl_fopen(plot->spec->fname, "r");
     if (fp == NULL) {
+	plot->status |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
 	return 1;
     }
 
@@ -2459,46 +2442,11 @@ static int get_plot_ranges (png_plot *plot)
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    while (fgets(line, MAXLEN-1, fp)) {
-
-	if (cant_edit(line)) {
-	    plot->status |= PLOT_DONT_EDIT;
-	    plot->status |= PLOT_DONT_ZOOM;
-	    noedit = 1;
-	    break;
-	}
-
-	if (strstr(line, "# forecasts with 95")) {
-	    /* auto-parse can't handle the error bars */
-	    plot->status |= PLOT_DONT_EDIT;
-	} else if (strstr(line, "# range-mean")) {
-	    plot->spec->code = PLOT_RANGE_MEAN;
-	} else if (sscanf(line, "set xrange [%lf:%lf]", 
-			  &plot->xmin, &plot->xmax) == 2) { 
+    while (fgets(line, MAXLEN-1, fp) && strncmp(line, "plot ", 5)) {
+	if (sscanf(line, "set xrange [%lf:%lf]", 
+		   &plot->xmin, &plot->xmax) == 2) { 
 	    got_x = 1;
-	} else if (sscanf(line, "# timeseries %d", &plot->pd) == 1) {
-	    got_pd = 1;
-	}
-
-	if (!PLOTSPEC_DETAILS_IN_MEMORY(plot->spec)) {
-	    if (!strncmp(line, "set tit", 7)) {
-		plot->format |= PLOT_TITLE;
-	    } else if (!strncmp(line, "set xla", 7)) {
-		plot->format |= PLOT_XLABEL;
-	    } else if (!strncmp(line, "set yla", 7)) {
-		plot->format |= PLOT_YLABEL;
-	    } else if (!strncmp(line, "set y2la", 8)) {
-		plot->format |= PLOT_Y2LABEL;
-	    } else if (!strncmp(line, "set y2ti", 8)) {
-		plot->format |= PLOT_Y2AXIS;
-	    } else if (cant_zoom(line)) {
-		plot->status |= PLOT_DONT_ZOOM;
-	    } 
-	}
-
-	if (!strncmp(line, "plot ", 5)) {
-	    break;
-	}
+	} 
     }
 
 #ifdef ENABLE_NLS
@@ -2506,10 +2454,6 @@ static int get_plot_ranges (png_plot *plot)
 #endif
 
     fclose(fp);
-
-    if (noedit) {
-	return 1;
-    }
 
 #ifdef PNG_COMMENTS
     /* now try getting accurate coordinate info from PNG file */
@@ -2541,32 +2485,34 @@ static int get_plot_ranges (png_plot *plot)
     */
 
     if (got_x) {
-	/* get the "dumb" coordinates only if we haven't got
-	   more accurate ones from the PNG file */
-	if (!plot_has_png_coords(plot)) { 
-	    err = get_dumb_plot_yrange(plot);
-	}
+	plot->status |= PLOT_HAS_XRANGE;
+    } else {
+	plot->status |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
+	return 1;
+    }    
 
-	if (!err) {
-	    got_y = 1;
-	    if ((plot->xmax - plot->xmin) / 
-		(plot->pixel_xmax - plot->pixel_xmin) >= 1.0) {
-		plot->xint = 1;
-	    }
-	    if ((plot->ymax - plot->ymin) / 
-		(plot->pixel_ymax - plot->pixel_ymin) >= 1.0) {
-		plot->yint = 1;
-	    }
-	}
+    /* get the "dumb" y coordinates only if we haven't got
+       more accurate ones from the PNG file */
+    if (!plot_has_png_coords(plot)) { 
+	err = get_dumb_plot_yrange(plot);
     }
 
-    if (!got_x || !got_y) {
+    if (!err) {
+	plot->status |= PLOT_HAS_YRANGE;
+	if ((plot->xmax - plot->xmin) / 
+	    (plot->pixel_xmax - plot->pixel_xmin) >= 1.0) {
+	    plot->xint = 1;
+	}
+	if ((plot->ymax - plot->ymin) / 
+	    (plot->pixel_ymax - plot->pixel_ymin) >= 1.0) {
+	    plot->yint = 1;
+	}
+    } else {
 	plot->status |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
 #ifdef POINTS_DEBUG 
 	fputs("get_plot_ranges: setting PLOT_DONT_ZOOM, PLOT_DONT_MOUSE\n", 
 	      stderr);
 #endif
-	err = 1;
     }
 
     return err;
@@ -2574,9 +2520,8 @@ static int get_plot_ranges (png_plot *plot)
 
 static png_plot *png_plot_new (void)
 {
-    png_plot *plot;
+    png_plot *plot = mymalloc(sizeof *plot);
 
-    plot = mymalloc(sizeof *plot);
     if (plot == NULL) {
 	return NULL;
     }
@@ -2590,15 +2535,21 @@ static png_plot *png_plot_new (void)
     plot->pixmap = NULL;
     plot->invert_gc = NULL;
     plot->spec = NULL;
+
     plot->xmin = plot->xmax = 0.0;
     plot->ymin = plot->ymax = 0.0;
     plot->xint = plot->yint = 0;
+
+    plot->zoom_xmin = plot->zoom_xmax = 0.0;
+    plot->zoom_ymin = plot->zoom_ymax = 0.0;
+    plot->screen_xmin = plot->screen_ymin = 0;
+
     plot->pd = 0;
     plot->err = 0;
     plot->cid = 0;
-    plot->zoom = NULL;
     plot->status = 0;
     plot->format = 0;
+
 #ifndef OLD_GTK
     plot->labeled = NULL;
 #endif
@@ -2608,14 +2559,17 @@ static png_plot *png_plot_new (void)
 
 int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 {
-    png_plot *plot;
-    int plot_has_xrange = 0;
-    int err = 0;
-
     GtkWidget *vbox;
     GtkWidget *canvas_hbox;
     GtkWidget *label_frame = NULL;
     GtkWidget *status_hbox = NULL;
+    png_plot *plot;
+    int err = 0;
+
+#if GPDEBUG
+    fprintf(stderr, "gnuplot_show_png:\n plotfile='%s', spec=%p, saved=%d\n",
+	    plotfile, (void *) spec, saved);
+#endif
 
     plot = png_plot_new();
     if (plot == NULL) {
@@ -2633,33 +2587,27 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 	strcpy(plot->spec->fname, plotfile);
     }
 
-    /* make png plot struct accessible via spec */
-    plot->spec->ptr = plot;
-
-    plot->zoom = mymalloc(sizeof *plot->zoom);
-    if (plot->zoom == NULL) {
-	if (spec == NULL) {
-	    free_plotspec(plot->spec);
-	}
-	free(plot);
-	return 1;
-    }
-
     if (saved) {
 	plot->status |= PLOT_SAVED;
     }
 
-    /* parse this file for x range */
-    err = get_plot_ranges(plot);
-    if (!err) {
-	/* we'd better check that the full plot info is OK */
-	err = read_plotspec_from_file(plot->spec);
-	if (!err) {
-	    plot_has_xrange = 1;
-	} else {
-	    plot->err = 1;
-	}
-    }
+    /* make png plot struct accessible via spec */
+    plot->spec->ptr = plot;
+
+    /* Parse the gnuplot source file.  If we hit errors here,
+       flag this, but it's not necessarily a show-stopper in
+       terms of simply displaying the graph. 
+    */
+    err = read_plotspec_from_file(plot->spec, &plot->pd);
+    if (err) {
+	plot->err = 1;
+	plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
+    } else if (cant_edit(plot->spec->code)) {
+	plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
+    } else {
+	set_plot_format_flags(plot);
+	get_plot_ranges(plot);
+    } 
 
 #ifdef OLD_GTK
     gtk_widget_push_visual(gdk_rgb_get_visual());
@@ -2727,7 +2675,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 		     G_CALLBACK(plot_button_release), plot);
 
     /* create the contents of the status area */
-    if (plot_has_xrange) {
+    if (plot_has_xrange(plot)) {
 	/* cursor label (graph position indicator) */
 	label_frame = gtk_frame_new(NULL);
 	gtk_frame_set_shadow_type(GTK_FRAME(label_frame), GTK_SHADOW_IN);
@@ -2739,23 +2687,25 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     /* the statusbar */
     plot->statusbar = gtk_statusbar_new();
+
 #ifdef OLD_GTK
     gtk_widget_set_usize(plot->statusbar, 1, -1);
 #else
     gtk_widget_set_size_request(plot->statusbar, 1, -1);
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(plot->statusbar), FALSE);
 #endif
+
     gtk_container_set_resize_mode(GTK_CONTAINER (plot->statusbar),
 				  GTK_RESIZE_QUEUE);
-    plot->cid = gtk_statusbar_get_context_id (GTK_STATUSBAR (plot->statusbar),
-					      "plot_message");
+    plot->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(plot->statusbar),
+					     "plot_message");
 
     if (!plot->err) {
-	gtk_statusbar_push(GTK_STATUSBAR (plot->statusbar),
+	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar),
 			   plot->cid, _(" Click on graph for pop-up menu"));
     }
     
-    if (plot_has_xrange) {
+    if (plot_has_xrange(plot)) {
 	g_signal_connect(G_OBJECT(plot->canvas), "motion_notify_event",
 			 G_CALLBACK(motion_notify_event), plot);
     }
@@ -2764,7 +2714,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     gtk_box_pack_start(GTK_BOX(canvas_hbox), plot->canvas, FALSE, FALSE, 0);
 
     /* fill the status area */
-    if (plot_has_xrange) {
+    if (plot_has_xrange(plot)) {
 	gtk_box_pack_start(GTK_BOX(status_hbox), label_frame, FALSE, FALSE, 0);
     }
 
@@ -2773,22 +2723,22 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     /* show stuff */
     gtk_widget_show(plot->canvas);
 
-    if (plot_has_xrange) {
+    if (plot_has_xrange(plot)) {
 	gtk_widget_show(label_frame);
     }
 
     gtk_widget_show(plot->statusbar);
     gtk_widget_show(plot->statusarea);
 
-    gtk_widget_realize (plot->canvas);
-    gdk_window_set_back_pixmap (plot->canvas->window, NULL, FALSE);
+    gtk_widget_realize(plot->canvas);
+    gdk_window_set_back_pixmap(plot->canvas->window, NULL, FALSE);
 
-    if (plot_has_xrange) {
-	gtk_widget_realize (plot->cursor_label);
+    if (plot_has_xrange(plot)) {
+	gtk_widget_realize(plot->cursor_label);
 #ifdef OLD_GTK
-	gtk_widget_set_usize (plot->cursor_label, 140, -1);
+	gtk_widget_set_usize(plot->cursor_label, 140, -1);
 #else
-	gtk_widget_set_size_request (plot->cursor_label, 140, -1);
+	gtk_widget_set_size_request(plot->cursor_label, 140, -1);
 #endif
     }
 

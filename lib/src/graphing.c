@@ -70,6 +70,32 @@ struct gnuplot_info {
     double *yvar1;
     double *yvar2;
 };
+
+struct plot_type_info {
+    PlotType ptype;
+    const char *pstr;
+};
+
+struct plot_type_info ptinfo[] = {
+    { PLOT_REGULAR,        NULL },
+    { PLOT_CORRELOGRAM,    "correlogram" },
+    { PLOT_CUSUM,          "CUSUM test" },
+    { PLOT_FORECAST,       "forecasts with 95 pc conf. interval" },
+    { PLOT_FREQ_SIMPLE,    "frequency plot (simple)" },
+    { PLOT_FREQ_NORMAL,    "frequency plot (against normal)" },
+    { PLOT_FREQ_GAMMA,     "frequency plot (against gamma)" },
+    { PLOT_GARCH,          "GARCH residual plot" },
+    { PLOT_HURST,          "rescaled range plot" },
+    { PLOT_IRFBOOT,        "impulse response plot with quantiles" },
+    { PLOT_KERNEL,         "kernel density plot" },
+    { PLOT_LEVERAGE,       "leverage/influence plot" },
+    { PLOT_MULTI_SCATTER,  "multiple scatterplots" },
+    { PLOT_PERIODOGRAM,    "periodogram" },
+    { PLOT_RANGE_MEAN,     "range-mean plot" },
+    { PLOT_SAMPLING_DIST,  "sampling distribution" },
+    { PLOT_TRI_GRAPH,      "TRAMO / X12A tri-graph" },
+    { PLOT_TYPE_MAX,       NULL }
+};
     
 #ifdef GLIB2
 
@@ -233,8 +259,6 @@ const char *get_timevar_name (DATAINFO *pdinfo)
 	return "time";
     }
 }
-
-/* ........................................................ */
 
 static int factorized_vars (struct gnuplot_info *gpinfo,
 			    const double **Z, int ynum, int dum)
@@ -474,6 +498,44 @@ const char *get_gretl_emf_term_line (PlotType ptype, int color)
 }
 
 /**
+ * plot_type_from_string:
+ * @str: initial comment line from plot file.
+ *
+ * Returns: the special plot code corresponding to the initial
+ * comment string in the plot file, or %PLOT_REGULAR if no special
+ * comment is recognized.
+ */
+
+PlotType plot_type_from_string (const char *str)
+{
+    int i, ret = PLOT_REGULAR;
+
+    for (i=1; i<PLOT_TYPE_MAX; i++) {
+	if (!strcmp(str + 2, ptinfo[i].pstr)) {
+	    ret = ptinfo[i].ptype;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+static int write_plot_type_string (PlotType ptype, FILE *fp)
+{
+    int i, ret = 0;
+
+    for (i=1; i<PLOT_TYPE_MAX; i++) {
+	if (ptype == ptinfo[i].ptype) {
+	    fprintf(fp, "# %s\n", ptinfo[i].pstr);
+	    ret = 1;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+/**
  * gnuplot_init:
  * @ptype: indication of the sort of plot to be made.
  * @fpp: pointer to stream to be opened.
@@ -527,6 +589,8 @@ int gnuplot_init (PlotType ptype, FILE **fpp)
 	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ptype));
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_user_dir());
     }
+
+    write_plot_type_string(ptype, *fpp);
 
 #if GP_DEBUG
     fprintf(stderr, "gnuplot_init: set plotfile = '%s'\n", 
@@ -1423,7 +1487,6 @@ int multi_scatters (const int *list, int pos, double ***pZ,
 	return E_FOPEN;
     }
 
-    fputs("# multiple scatterplots\n", fp);
     fputs("set size 1.0,1.0\nset origin 0.0,0.0\n"
 	  "set multiplot\n", fp);
     fputs("set nokey\n", fp);
@@ -1710,12 +1773,19 @@ int plot_freq (FreqDist *freq, DistCode dist)
     char label[80] = {0};
     double plotmin = 0.0, plotmax = 0.0;
     double barwidth, barskip;
-    int plottype = PLOT_FREQ_SIMPLE;
-    int use_boxes = 1;
+    int plottype, use_boxes = 1;
     int err;
 
     if (K == 0) {
 	return 1;
+    }
+
+    if (dist == DIST_NORMAL) {
+	plottype = PLOT_FREQ_NORMAL;
+    } else if (dist == DIST_GAMMA) {
+	plottype = PLOT_FREQ_GAMMA;
+    } else {
+	plottype = PLOT_FREQ_SIMPLE;
     }
 
     if ((err = gnuplot_init(plottype, &fp))) {
@@ -1733,17 +1803,9 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	barskip /= 2.0;
     }
 
-    if (dist == DIST_NORMAL) {
-	plottype = PLOT_FREQ_NORMAL;
-    } else if (dist == DIST_GAMMA) {
-	plottype = PLOT_FREQ_GAMMA;
-    }
-
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
-
-    fputs("# frequency plot ", fp);
 
     if (dist) {
 	double propn;
@@ -1760,8 +1822,6 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	   height adjustment factor for the impulses */
 
 	if (dist == DIST_NORMAL) {
-	    fputs("(against normal)\n", fp);
-
 	    propn = normal_pvalue_1((freq->endpt[i-1] - freq->xbar)/freq->sdx) -
 		normal_pvalue_1((freq->endpt[i] - freq->xbar)/freq->sdx);
 	    lambda = 1.0 / (propn * freq->n * sqrt(2 * M_PI) * freq->sdx);
@@ -1789,8 +1849,6 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	} else if (dist == DIST_GAMMA) {
 	    double xx, height, var = freq->sdx * freq->sdx;
 
-	    fputs("(against gamma)\n", fp);
-	
 	    /* scale param = variance/mean */
 	    beta = var / freq->xbar;
 	    /* shape param = mean/scale */
@@ -1830,8 +1888,6 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	fputs("set key right top\n", fp);
     } else { 
 	/* plain frequency plot */
-	fputs("(simple)\n", fp);
-
 	lambda = 1.0 / freq->n;
 	plotmin = freq->midpt[0] - barwidth;
 	plotmax = freq->midpt[K-1] + barwidth;
@@ -2025,7 +2081,7 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 	return E_DATA;
     }
 
-    if ((err = gnuplot_init(PLOT_FORECAST, &fp))) {
+    if ((err = gnuplot_init(PLOT_GARCH, &fp))) {
 	return err;
     }
 
@@ -2036,8 +2092,6 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 	fclose(fp);
 	return E_ALLOC;
     }
-
-    fputs("# GARCH residual plot (no auto-parse)\n", fp);
 
     fprintf(fp, "set key left top\n"
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
@@ -2322,26 +2376,13 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
        sort of graph, so that it will be recognized by type when
        it is redisplayed */
 
-    if (spec->code == PLOT_FORECAST) {
-	fputs("# forecasts with 95 pc conf. interval\n", fp);
-    } else if (spec->code == PLOT_CORRELOGRAM) {
-	fputs("# correlogram\n", fp); 
-    } else if (spec->code == PLOT_FREQ_SIMPLE) {
-	fputs("# frequency plot (simple)\n", fp); 
-    } else if (spec->code == PLOT_FREQ_NORMAL || 
-	       spec->code == PLOT_FREQ_GAMMA ||
-	       spec->code == PLOT_PERIODOGRAM) { 
-	if (spec->code == PLOT_FREQ_NORMAL) {
-	    fputs("# frequency plot (against normal)\n", fp); 
-	} else if (spec->code == PLOT_FREQ_GAMMA) {
-	    fputs("# frequency plot (against gamma)\n", fp); 
-	} else {
-	    fputs("# periodogram\n", fp);
-	}
-	for (i=0; i<4; i++) {
+    write_plot_type_string(spec->code, fp);
+
+    for (i=0; i<4; i++) {
+	if (spec->literal[i] != NULL && *spec->literal[i] != '\0') {
 	    fprintf(fp, "%s\n", spec->literal[i]);
 	}
-    } 
+    }
 
     if (spec->flags & GPTSPEC_AUTO_OLS) {
 	fputs(auto_ols_string, fp);
@@ -2580,10 +2621,6 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     char title[128];
     int t, err;
 
-    if ((err = gnuplot_init(PLOT_REGULAR, &fp))) {
-	return err;
-    }
-
     resp = gretl_VAR_get_impulse_response(var, targ, shock, periods,
 					  Z, pdinfo);
     if (resp == NULL) {
@@ -2594,10 +2631,18 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	confint = 1;
     }
 
+    err = gnuplot_init((confint)? PLOT_IRFBOOT : PLOT_REGULAR, &fp);
+    if (err) {
+	gretl_matrix_free(resp);
+	return err;
+    }
+
     vtarg = gretl_VAR_get_variable_number(var, targ);
     vshock = gretl_VAR_get_variable_number(var, shock);
 
-    fputs("# impulse response plot\n", fp);
+    if (!confint) {
+	fputs("# impulse response plot\n", fp);
+    }
 
     if (confint) {
 	fputs("set key top left\n", fp);

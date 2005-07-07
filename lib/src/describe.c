@@ -1185,8 +1185,6 @@ int corrgram (int varno, int order, double ***pZ,
 	goto acf_getout;
     }
 
-    fprintf(fq, "# correlogram\n");
-
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
@@ -1638,7 +1636,6 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     if (do_graph && gnuplot_init(PLOT_PERIODOGRAM, &fq) == 0) {
 	char titlestr[80];
 
-	fputs("# periodogram\n", fq);
 	fputs("set xtics nomirror\n", fq); 
 
 	if (pdinfo->pd == 4) {
