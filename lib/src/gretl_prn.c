@@ -256,7 +256,24 @@ const char *gretl_print_get_buffer (PRN *prn)
 void gretl_print_set_format (PRN *prn, PrnFormat format)
 {
     if (prn != NULL) {
+	if (format == GRETL_FORMAT_RTF) {
+	    format = GRETL_FORMAT_RTF | GRETL_FORMAT_DOC;
+	}
 	prn->format = format;
+    }
+}
+
+/**
+ * gretl_print_unset_doc_format:
+ * @prn: printing struct.
+ * 
+ * Toggles the %GRETL_FORMAT_DOC flag on @prn.
+ */
+
+void gretl_print_toggle_doc_flag (PRN *prn)
+{
+    if (prn != NULL) {
+	prn->format ^= GRETL_FORMAT_DOC;
     }
 }
 
@@ -569,7 +586,22 @@ int plain_format (PRN *prn)
 
 int rtf_format (PRN *prn)
 {
-    return (prn != NULL && prn->format == GRETL_FORMAT_RTF);
+    return (prn != NULL && (prn->format & GRETL_FORMAT_RTF));
+}
+
+/**
+ * rtf_doc_format:
+ * @prn: gretl printing struct.
+ * 
+ * Returns: 1 if the format of @prn is RTF, and the
+ * RTF preamble should be printed, else 0.
+ */
+
+int rtf_doc_format (PRN *prn)
+{
+    return (prn != NULL && 
+	    (prn->format & GRETL_FORMAT_RTF) &&
+	    (prn->format & GRETL_FORMAT_DOC));
 }
 
 /**
@@ -598,6 +630,7 @@ int tex_doc_format (PRN *prn)
 	    (prn->format & GRETL_FORMAT_TEX) &&
 	    (prn->format & GRETL_FORMAT_DOC));
 }
+
 /**
  * tex_eqn_format:
  * @prn: gretl printing struct.

@@ -55,6 +55,8 @@ const char *gretl_print_get_buffer (PRN *prn);
 
 void gretl_print_set_format (PRN *prn, PrnFormat format);
 
+void gretl_print_toggle_doc_flag (PRN *prn);
+
 int pprintf (PRN *prn, const char *template, ...);
 
 int pputs (PRN *prn, const char *s);
@@ -74,6 +76,8 @@ int print_end_redirection (PRN *prn);
 int plain_format (PRN *prn);
 
 int rtf_format (PRN *prn);
+
+int rtf_doc_format (PRN *prn);
 
 int tex_format (PRN *prn);
 

@@ -970,7 +970,11 @@ static void model_format_start (PRN *prn)
 	}
 	pputs(prn, "\\begin{center}\n");
     } else if (rtf_format(prn)) {
-	pputs(prn, "{\\rtf1\\par\n\\qc ");
+	if (rtf_doc_format(prn)) {
+	    pputs(prn, "{\\rtf1\\par\n\\qc ");
+	} else {
+	    pputs(prn, "\\par\n\\qc ");
+	}
     }
 }
 
