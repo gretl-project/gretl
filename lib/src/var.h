@@ -45,6 +45,8 @@ gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2,
 			       const DATAINFO *pdinfo,
 			       gretlopt opt);
 
+int gretl_VAR_print_VCV (const GRETL_VAR *var, PRN *prn);
+
 void gretl_VAR_free (GRETL_VAR *var);
 
 void gretl_VAR_free_unnamed (GRETL_VAR *var);

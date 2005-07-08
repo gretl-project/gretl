@@ -36,46 +36,14 @@ extern int liml_driver (gretl_equation_system *sys, double ***pZ,
 static void 
 print_system_vcv (const gretl_equation_system *sys, PRN *prn)
 {
-    const gretl_matrix *m = sys->sigma;
-    gretl_matrix *mcopy;
-    int jmax = 1;
-    char numstr[16];
-    double x, ldet = NADBL;
-    int i, j;
+    int dim = sys->sigma->rows;
+    int df = dim * (dim - 1) / 2;
+    double ldet = NADBL;
 
-    pprintf(prn, "%s\n(%s)\n\n",
-	    _("Cross-equation VCV for residuals"),
-	    _("correlations above the diagonal"));
-
-    for (i=0; i<m->rows; i++) {
-	for (j=0; j<jmax; j++) {
-	    pprintf(prn, "%#10.5g ", gretl_matrix_get(m, i, j));
-	}
-	for (j=jmax; j<m->cols; j++) {
-	    x = gretl_matrix_get(m, i, i) * gretl_matrix_get(m, j, j);
-	    x = sqrt(x);
-	    x = gretl_matrix_get(m, i, j) / x;
-	    sprintf(numstr,"(%.3f)", x); 
-	    pprintf(prn, "%11s", numstr);
-	}
-	pputc(prn, '\n');
-	if (jmax < m->cols) {
-	    jmax++;
-	}
-    }
-
-    mcopy = gretl_matrix_copy(m);
-    if (mcopy != NULL) {
-	ldet = gretl_vcv_log_determinant(mcopy);
-	if (!na(ldet)) {
-	    pprintf(prn, "\n%s = %g\n", _("log determinant"), ldet);
-	}
-	gretl_matrix_free(mcopy);
-    }
+    ldet = print_contemp_covariance_matrix(sys->sigma, prn);
 
     if (sys->method == SYS_SUR && sys->iters > 0) {
 	if (!na(ldet) && sys->diag != 0.0) {
-	    int df = m->rows * (m->rows - 1) / 2;
 	    double lr = sys->n_obs * (sys->diag - ldet);
 
 	    pprintf(prn, "%s:\n", _("LR test for diagonal covariance matrix"));
@@ -86,8 +54,6 @@ print_system_vcv (const gretl_equation_system *sys, PRN *prn)
 	double lm = sys->diag;
 
 	if (lm > 0) {
-	    int df = m->rows * (m->rows - 1) / 2;
-	
 	    pprintf(prn, "%s:\n", _("Breusch-Pagan test for diagonal covariance matrix"));
 	    pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
 		    df, lm, _("with p-value"), chisq(lm, df));

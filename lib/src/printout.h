@@ -45,6 +45,10 @@ void printcorr (const VMatrix *corrmat, PRN *prn);
 void print_smpl (const DATAINFO *pdinfo, 
 		 int fulln, PRN *prn); 
 
+double
+print_contemp_covariance_matrix (const gretl_matrix *m, 
+				 PRN *prn);
+
 int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
 
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);

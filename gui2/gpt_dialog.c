@@ -78,6 +78,12 @@ struct gpt_titles_t gpt_titles[] = {
 			         s->code == PLOT_FREQ_GAMMA || \
                                  s->code == PLOT_KERNEL)
 
+#define no_edit_lines(s) (s->code == PLOT_FREQ_SIMPLE || \
+                          s->code == PLOT_FREQ_NORMAL || \
+                          s->code == PLOT_FREQ_GAMMA || \
+                          s->code == PLOT_KERNEL || \
+                          s->code == PLOT_CUSUM)
+
 static const char *get_font_filename (const char *showname);
 
 
@@ -290,7 +296,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	} 
     } 
 
-    if (!frequency_plot(spec)) {    
+    if (!no_edit_lines(spec)) {    
 	for (i=0; i<spec->nlines; i++) {
 	    spec->lines[i].yaxis = 1;
 	    if (supress_y2) {
@@ -322,7 +328,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-    if (!err && !frequency_plot(spec)) {   
+    if (!err && !no_edit_lines(spec)) {   
 	for (i=0; i<spec->nlines; i++) {
 	    entry_to_gp_string(GTK_COMBO(stylecombo[i])->entry, 
 			       spec->lines[i].style, 
@@ -414,7 +420,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
 static void set_keyspec_sensitivity (GPT_SPEC *spec)
 {
-    if (!frequency_plot(spec)) {
+    if (!no_edit_lines(spec)) {
 	int i; 
 	const char *p;
 
@@ -1369,7 +1375,7 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 	gpt_tab_XY(notebook, spec, 2);
     }
 
-    if (!frequency_plot(spec)) {
+    if (!no_edit_lines(spec)) {
 	gpt_tab_lines(notebook, spec);
     }    
 

@@ -1684,7 +1684,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    I_("CUSUM plot with 95% confidence band"));
 	    fputs("set nokey\n", fq);
 
-	    fprintf(fq, "plot %g+%g*x w l 1, \\\n", xx - K*yy, yy);
+	    fprintf(fq, "plot \\\n%g+%g*x w l 1, \\\n", xx - K*yy, yy);
 	    fprintf(fq, "%g-%g*x w l 1, \\\n", -xx + K*yy, yy);
 	    fputs("'-' using 1:2 w lp\n", fq);
 

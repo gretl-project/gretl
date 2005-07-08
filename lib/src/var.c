@@ -355,6 +355,31 @@ gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, const double **Z,
     return var->F;
 }
 
+int gretl_VAR_print_VCV (const GRETL_VAR *var, PRN *prn)
+{
+    int err = 0;
+
+    if (var->E == NULL) {
+	err = 1;
+    } else {
+	gretl_matrix *V = gretl_matrix_vcv(var->E);
+
+	if (V == NULL) {
+	    err = 1;
+	} else {
+	    double ldet;
+
+	    ldet = print_contemp_covariance_matrix(V, prn);
+	    if (na(ldet)) {
+		err = 1;
+	    }
+	    gretl_matrix_free(V);
+	}
+    }
+
+    return err;
+}
+
 static int gretl_VAR_do_error_decomp (int n, int neqns,
 				      const gretl_matrix *E,
 				      gretl_matrix *C)

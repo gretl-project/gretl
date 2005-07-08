@@ -81,6 +81,7 @@ static void add_model_tex_items (windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
 static void add_var_menu_items (windata_t *vwin);
+static void add_VAR_VCV_menu_item(windata_t *vwin);
 static void add_x12_output_menu_item (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
@@ -1776,8 +1777,6 @@ static void viewer_box_config (windata_t *vwin)
     gtk_container_add(GTK_CONTAINER(vwin->dialog), vwin->vbox);
 }
 
-/* ........................................................... */
-
 static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
     const char *pbuf = gretl_print_get_buffer(prn);
@@ -1799,8 +1798,6 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
     }
 #endif
 }
-
-/* ........................................................... */
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role, 
@@ -1843,6 +1840,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     if (role == VAR) {
 	/* model-specific additions to menus */
+	add_VAR_VCV_menu_item(vwin);
 	add_var_menu_items(vwin);
     }
 
@@ -2465,8 +2463,6 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     }
 }
 
-/* ........................................................... */
-
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[])
 {
@@ -2832,6 +2828,27 @@ static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
     }
 }
 
+static void VAR_VCV_callback (gpointer p, guint u, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = vwin->data;
+    PRN *prn;
+    int err;
+
+    if (var == NULL) return;
+    if (bufopen(&prn)) return;
+
+    err = gretl_VAR_print_VCV(var, prn);
+
+    if (err) {
+	errbox(_("Error generating covariance matrix"));
+	gretl_print_destroy(prn);
+    } else {
+	view_buffer(prn, 80, 400, _("gretl: VAR covariance matrix"), 
+		    PRINT, NULL);
+    }
+}
+
 static void panel_heteroskedasticity_menu (windata_t *vwin)
 {
     GtkItemFactoryEntry hitem;
@@ -2856,25 +2873,40 @@ static void panel_heteroskedasticity_menu (windata_t *vwin)
 
 static void add_x12_output_menu_item (windata_t *vwin)
 {
-    GtkItemFactoryEntry x12item;
+    GtkItemFactoryEntry item;
     const gchar *mpath = "/Model data";
 
-    x12item.accelerator = NULL; 
-    x12item.callback_action = 0;
+    item.accelerator = NULL; 
+    item.callback_action = 0;
 
     /* separator */
-    x12item.callback = NULL;
-    x12item.item_type = "<Separator>";
-    x12item.path = g_strdup_printf("%s/%s", mpath, _("x12sep"));
-    gtk_item_factory_create_item(vwin->ifac, &x12item, vwin, 1);
-    g_free(x12item.path);
+    item.callback = NULL;
+    item.item_type = "<Separator>";
+    item.path = g_strdup_printf("%s/%s", mpath, _("x12sep"));
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 
     /* actual item */
-    x12item.callback = x12_output_callback;
-    x12item.item_type = NULL;
-    x12item.path = g_strdup_printf("%s/%s", mpath, _("view X-12-ARIMA output"));
-    gtk_item_factory_create_item(vwin->ifac, &x12item, vwin, 1);
-    g_free(x12item.path);
+    item.callback = x12_output_callback;
+    item.item_type = NULL;
+    item.path = g_strdup_printf("%s/%s", mpath, _("view X-12-ARIMA output"));
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
+}
+
+static void add_VAR_VCV_menu_item (windata_t *vwin)
+{
+    GtkItemFactoryEntry item;
+    const gchar *mpath = "/Model data";
+
+    item.accelerator = NULL; 
+    item.callback_action = 0;
+
+    item.callback = VAR_VCV_callback;
+    item.item_type = NULL;
+    item.path = g_strdup_printf("%s/%s", mpath, _("Cross-equation covariance matrix"));
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
 }
 
 static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
