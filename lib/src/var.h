@@ -45,7 +45,16 @@ gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2,
 			       const DATAINFO *pdinfo,
 			       gretlopt opt);
 
+const gretl_matrix *
+gretl_VAR_get_residual_matrix (const GRETL_VAR *var);
+
 int gretl_VAR_print_VCV (const GRETL_VAR *var, PRN *prn);
+
+int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order, 
+				    double ***pZ, DATAINFO *pdinfo,
+				    PRN *prn);
+
+int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
 
 void gretl_VAR_free (GRETL_VAR *var);
 
@@ -77,6 +86,16 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
 
 int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		     PRN *prn);
+
+int 
+gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
+				  int periods, const DATAINFO *pdinfo, 
+				  int pause, PRN *prn);
+
+int 
+gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
+			      int periods, const DATAINFO *pdinfo, 
+			      int pause, PRN *prn);
 
 void gretl_VAR_assign_name (GRETL_VAR *var);
 

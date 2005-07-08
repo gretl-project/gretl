@@ -1,3 +1,14 @@
+version 1.4.2, in progress
+- Another XLS importer fix
+- Add seasonal ARMA
+- Add bootstrapped confidence intervals for impulse
+  responses in VAR models
+- Add test for multivariate normality of VAR residuals
+- Add autocorrelation test for VAR systems
+- Add printing of cross-equation covariance matrix for
+  VARs
+- Add combined plot of residuals for VARs
+
 06/30/2005 version 1.4.1
 - Fix horrid unnoticed breakage in bhhh_max (broke both arma 
   and tobit, big mess)	

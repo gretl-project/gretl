@@ -125,7 +125,11 @@ int vars_test (const int *list, const double **Z,
 
 void matrix_print_corr (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn);
 
-double doornik_chisq (double skew, double kurt, int n);
+double dh_root_b1_to_z1 (double rb1, double n);
+
+double dh_b2_to_z2 (double b1, double b2, double n);
+
+double doornik_chisq (double skew, double xkurt, int n);
 
 int mahalanobis_distance (const int *list, double ***pZ,
 			  DATAINFO *pdinfo, gretlopt opt,

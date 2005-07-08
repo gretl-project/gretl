@@ -1248,11 +1248,8 @@ build_selector_switches (selector *sr)
     }
 
     if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH ||
-	sr->code == COINT2 || sr->code == VAR) {
-	if (sr->code == VAR) {
-	    tmp = gtk_check_button_new_with_label
-		(_("Show impulse responses"));
-	} else if (sr->code == COINT2) {
+	sr->code == COINT2) {
+	if (sr->code == COINT2) {
 	    tmp = gtk_check_button_new_with_label
 		(_("Show details of regressions"));
 	} else {

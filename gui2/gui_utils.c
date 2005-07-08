@@ -81,7 +81,6 @@ static void add_model_tex_items (windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
 static void add_var_menu_items (windata_t *vwin);
-static void add_VAR_VCV_menu_item(windata_t *vwin);
 static void add_x12_output_menu_item (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
@@ -1840,7 +1839,6 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     if (role == VAR) {
 	/* model-specific additions to menus */
-	add_VAR_VCV_menu_item(vwin);
 	add_var_menu_items(vwin);
     }
 
@@ -2828,25 +2826,65 @@ static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
     }
 }
 
-static void VAR_VCV_callback (gpointer p, guint u, GtkWidget *w)
+enum {
+    VAR_PRINT_VCV,
+    VAR_PRINT_IRFS,
+    VAR_PRINT_DECOMPS
+};
+
+static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = vwin->data;
+    int h, neqns;
+    gchar *title;
     PRN *prn;
-    int err;
+    int i, err;
 
     if (var == NULL) return;
     if (bufopen(&prn)) return;
 
-    err = gretl_VAR_print_VCV(var, prn);
+    if (code != VAR_PRINT_VCV) {
+	neqns = gretl_VAR_get_n_equations(var);
+	h = default_VAR_horizon(datainfo);
+	title = g_strdup_printf("gretl: %s", 
+				(code == VAR_PRINT_IRFS)? _("impulse responses") :
+				_("variance decompositions"));
+	err = checks_dialog(title, NULL, 0, NULL,
+			    &h, _("forecast horizon (periods):"),
+			    2, datainfo->n / 2, 0);
+	g_free(title);
+	if (err < 0) {
+	    gretl_print_destroy(prn);
+	    return;
+	} 
+    }
+
+    if (code == VAR_PRINT_VCV) {
+	title = g_strdup(_("gretl: VAR covariance matrix"));
+	err = gretl_VAR_print_VCV(var, prn);
+    } else if (code == VAR_PRINT_IRFS) {
+	title = g_strdup(_("gretl: VAR impulse responses"));
+	for (i=0; i<neqns && !err; i++) {
+	    err = gretl_VAR_print_impulse_response(var, i, h, datainfo, 0, prn);
+	}
+    } else if (code == VAR_PRINT_DECOMPS) {
+	title = g_strdup(_("gretl: VAR variance decompositions"));
+	for (i=0; i<neqns && !err; i++) {
+	    err = gretl_VAR_print_fcast_decomp(var, i, h, datainfo, 0, prn);
+	}
+    } else {
+	err = 1;
+    }
 
     if (err) {
-	errbox(_("Error generating covariance matrix"));
+	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, 80, 400, _("gretl: VAR covariance matrix"), 
-		    PRINT, NULL);
+	view_buffer(prn, 80, 400, title, PRINT, NULL);
     }
+
+    g_free(title);
 }
 
 static void panel_heteroskedasticity_menu (windata_t *vwin)
@@ -2894,22 +2932,7 @@ static void add_x12_output_menu_item (windata_t *vwin)
     g_free(item.path);
 }
 
-static void add_VAR_VCV_menu_item (windata_t *vwin)
-{
-    GtkItemFactoryEntry item;
-    const gchar *mpath = "/Model data";
-
-    item.accelerator = NULL; 
-    item.callback_action = 0;
-
-    item.callback = VAR_VCV_callback;
-    item.item_type = NULL;
-    item.path = g_strdup_printf("%s/%s", mpath, _("Cross-equation covariance matrix"));
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
-}
-
-static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
+static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
@@ -3028,22 +3051,97 @@ static void var_forecast_callback (gpointer p, guint i, GtkWidget *w)
     }
 }
 
+enum {
+    VAR_AUTOCORR_TEST,
+    VAR_NORMALITY_TEST
+};
+
+static void VAR_test_call (gpointer p, guint code, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    char title[72];
+    PRN *prn;
+    int err;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    if (code == VAR_AUTOCORR_TEST) {
+	int order = default_lag_order(datainfo);
+
+	set_window_busy(vwin);
+	err = spin_dialog(_("gretl: autocorrelation"), 
+			  &order, _("Lag order for test:"),
+			  1, datainfo->n / 2, LMTEST);
+	unset_window_busy(vwin);
+
+	if (err < 0) {
+	    gretl_print_destroy(prn);
+	    return;
+	}
+
+	strcpy(title, _("gretl: LM test (autocorrelation)"));
+	err = gretl_VAR_autocorrelation_test(var, order, 
+					     &Z, datainfo, 
+					     prn);
+    } else if (code == VAR_NORMALITY_TEST) {
+	sprintf(title, "gretl: %s", _("Test for normality of residual"));
+	err = gretl_VAR_normality_test(var, prn);
+    } else {
+	err = 1;
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	view_buffer(prn, 78, 400, title, PRINT, NULL); 
+    }
+}
+
+static void VAR_resid_plot_call (gpointer p, guint i, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    int err;
+
+    err = gretl_VAR_residual_plot(var, &Z, datainfo);
+    
+    if (err) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	register_graph();
+    }
+}
+
 static void add_var_menu_items (windata_t *vwin)
 {
-    int i, j;
     GtkItemFactoryEntry varitem;
+    const gchar *tpath = N_("/Tests");
     const gchar *gpath = N_("/Graphs");
+    const gchar *mpath = N_("/Model data");
     const gchar *fpath = N_("/Model data/Forecasts");
     const gchar *dpath = N_("/Model data/Add to data set");
     GRETL_VAR *var = vwin->data;
     int neqns = gretl_VAR_get_n_equations(var);
     int vtarg, vshock;
     char tmp[16];
+    int i, j;
 
     varitem.accelerator = NULL;
     varitem.callback = NULL;
     varitem.callback_action = 0;
     varitem.item_type = "<Branch>";
+
+    varitem.path = g_strdup(_("/_Tests"));
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
+
+    varitem.path = g_strdup(_("/_Model data"));
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
 
     varitem.path = g_strdup(_("/_Graphs"));
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
@@ -3054,6 +3152,58 @@ static void add_var_menu_items (windata_t *vwin)
     g_free(varitem.path);
     
     varitem.path = g_strdup(_(dpath));
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
+
+    /* autocorrelation tests */
+    varitem.path = g_strdup_printf("%s/%s", _(tpath), 
+				   _("autocorrelation"));
+    varitem.callback = VAR_test_call;
+    varitem.callback_action = VAR_AUTOCORR_TEST;
+    varitem.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
+
+    /* multivariate normality test */
+    varitem.path = g_strdup_printf("%s/%s", _(tpath), 
+				   _("normality of residuals"));
+    varitem.callback = VAR_test_call;
+    varitem.callback_action = VAR_NORMALITY_TEST;
+    varitem.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
+
+    /* cross-equation VCV */
+    varitem.path = g_strdup_printf("%s/%s", _(mpath), 
+				   _("Cross-equation covariance matrix"));
+    varitem.callback = VAR_model_data_callback;
+    varitem.callback_action = VAR_PRINT_VCV;
+    varitem.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
+
+    /* impulse response printout */
+    varitem.path = g_strdup_printf("%s/%s", _(mpath), _("impulse responses"));
+    varitem.callback = VAR_model_data_callback;
+    varitem.callback_action = VAR_PRINT_IRFS;
+    varitem.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);    
+
+    /* variance decomp printout */
+    varitem.path = g_strdup_printf("%s/%s", _(mpath), 
+				   _("forecast variance decomposition"));
+    varitem.callback = VAR_model_data_callback;
+    varitem.callback_action = VAR_PRINT_DECOMPS;
+    varitem.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path); 
+
+    /* combined residual plot */
+    varitem.path = g_strdup_printf("%s/%s", _(gpath), _("residual plot"));
+    varitem.callback = VAR_resid_plot_call;
+    varitem.callback_action = 0;
+    varitem.item_type = NULL;
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);
 
@@ -3080,7 +3230,7 @@ static void add_var_menu_items (windata_t *vwin)
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	g_free(varitem.path);	
 
-	/* impulse responses: make branch for target */
+	/* impulse response plots: make branch for target */
 	vtarg = gretl_VAR_get_variable_number(var, i);
 	double_underscores(tmp, datainfo->varname[vtarg]);
 	sprintf(maj, _("response of %s"), tmp);
@@ -3104,7 +3254,7 @@ static void add_var_menu_items (windata_t *vwin)
 	    sprintf(min, _("to %s"), tmp);
 
 	    varitem.path = g_strdup_printf("%s/%s/%s", _(gpath), maj, min);
-	    varitem.callback = impulse_response_call;
+	    varitem.callback = impulse_plot_call;
 	    varitem.callback_action = j;
 	    varitem.item_type = NULL;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);

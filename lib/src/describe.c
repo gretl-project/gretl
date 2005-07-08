@@ -594,7 +594,20 @@ static FreqDist *freq_new (void)
     return freq;
 }
 
-static double rb1_to_z1 (double rb1, double n)
+/**
+ * dh_root_b1_to_z1:
+ * @rb1: square root b1, skewness.
+ * @n: number of observations.
+ *
+ * Performs the transformation from skewness, root b1, to the 
+ * normal score, z1, as set out in Doornik and Hansen, "An Omnibus 
+ * Test for Normality", 1994.  The transformation is originally 
+ * due to D'Agostino (Biometrika, 1970).
+ *
+ * Returns: the z1 value.
+ */
+
+double dh_root_b1_to_z1 (double rb1, double n)
 {
     double b, w2, d, y, z1;
 
@@ -612,7 +625,19 @@ static double rb1_to_z1 (double rb1, double n)
     return z1;
 }
 
-static double b2_to_z2 (double b1, double b2, double n)
+/**
+ * dh_b2_to_z2:
+ * @b2: kurtosis.
+ * @n: number of observations.
+ *
+ * Performs the transformation from kurtosis, b2, to the 
+ * normal score, z2, as set out in Doornik and Hansen, "An Omnibus 
+ * Test for Normality", 1994.
+ *
+ * Returns: the z2 value.
+ */
+
+double dh_b2_to_z2 (double b1, double b2, double n)
 {
     double d, a, c, k, alpha, chi, z2;
     double n2 = n * n;
@@ -635,18 +660,30 @@ static double b2_to_z2 (double b1, double b2, double n)
     return z2;
 }
 
-/* Bowman-Shenton as modified by Doornik & Hansen */
+/**
+ * doornik_chisq:
+ * @skew: skewness.
+ * @xkurt: excess kurtosis.
+ * @n: number of observations.
+ *
+ * Calculates the Chi-square test for normality as set out by
+ * Doornik and Hansen, "An Omnibus Test for Normality", 1994.
+ * This is a modified version of the test proposed by Bowman and
+ * Shenton (Biometrika, 1975).
+ *
+ * Returns: the Chi-square value, which has 2 degrees of freedom.
+ */
 
-double doornik_chisq (double skew, double kurt, int n)
+double doornik_chisq (double skew, double xkurt, int n)
 {
     double rb1, b1, b2, z1, z2;
 
     rb1 = skew;
     b1 = skew * skew;
-    b2 = kurt + 3.0; /* convert from "excess" to regular */
+    b2 = xkurt + 3.0; /* Note: convert from "excess" to regular */
 
-    z1 = rb1_to_z1 (rb1, (double) n);
-    z2 = b2_to_z2 (b1, b2, (double) n);
+    z1 = dh_root_b1_to_z1(rb1, (double) n);
+    z2 = dh_b2_to_z2(b1, b2, (double) n);
 
     return z1*z1 + z2*z2;
 }

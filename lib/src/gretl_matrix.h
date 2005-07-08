@@ -136,10 +136,13 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 				 const gretl_matrix *b, GretlMatrixMod bmod,
 				 int *errp);
 
+double gretl_vector_dot_product (const gretl_vector *a, const gretl_vector *b,
+				 int *errp);
+
 gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a, 
 					 const gretl_matrix *b);
 
-gretl_matrix *gretl_matrix_vcv (gretl_matrix *m);
+gretl_matrix *gretl_matrix_vcv (const gretl_matrix *m);
 
 double gretl_matrix_determinant (gretl_matrix *a);
 
@@ -187,6 +190,10 @@ double gretl_scalar_b_X_b_prime (const gretl_vector *b, const gretl_matrix *X,
 gretl_matrix *
 gretl_matrix_A_X_A_prime (const gretl_matrix *A, const gretl_matrix *X,
 			  int *errp);
+
+int
+gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,
+				gretl_matrix *DXD);
 
 gretl_matrix *
 gretl_vcv_matrix_from_model (MODEL *pmod, const char *select);

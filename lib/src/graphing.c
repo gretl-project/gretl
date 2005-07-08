@@ -2699,6 +2699,73 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     return gnuplot_make_graph();
 }
 
+int gretl_VAR_residual_plot (const GRETL_VAR *var, 
+			     double ***pZ, DATAINFO *pdinfo)
+{
+    const gretl_matrix *E;
+    FILE *fp = NULL;
+    char title[32];
+    int nvars, nobs, pv;
+    int i, t, t1, err;
+
+    E = gretl_VAR_get_residual_matrix(var);
+    if (E == NULL) {
+	return E_DATA;
+    }
+
+    err = gnuplot_init(PLOT_REGULAR, &fp);
+    if (err) {
+	return err;
+    }
+
+    nvars = gretl_matrix_cols(E);
+    nobs = gretl_matrix_rows(E);
+
+    fputs("# VAR residual plot\n", fp);
+    fputs("set key top left\n", fp);
+    fputs("set xzeroaxis\n", fp);
+    fprintf(fp, "set title '%s'\n", I_("VAR residuals"));
+
+    fputs("plot \\\n", fp);
+    for (i=0; i<nvars; i++) {
+	sprintf(title, I_("Equation %d"), i + 1);
+	fprintf(fp, "'-' using 1:2 title '%s' w lines", title);
+	if (i == nvars - 1) {
+	    fputc('\n', fp);
+	} else {
+	    fputs(",\\\n", fp); 
+	}
+    }
+
+    pv = plotvar(pZ, pdinfo, get_timevar_name(pdinfo));
+    t1 = gretl_VAR_get_t1(var);
+	
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
+    for (i=0; i<nvars; i++) {
+	for (t=0; t<nobs; t++) {
+	    double eti = gretl_matrix_get(E, t, i);
+
+	    if (pv > 0) {
+		fprintf(fp, "%g %.8g\n", (*pZ)[pv][t+t1], eti);
+	    } else {
+		fprintf(fp, "%d %.8g\n", t+1, eti);
+	    }
+	}
+	fputs("e\n", fp);
+    }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
 /* ........................................................... */
 
 int is_auto_ols_string (const char *s)

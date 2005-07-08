@@ -1192,7 +1192,8 @@ static int autocorr_standard_errors (MODEL *pmod, double ***pZ,
  * @order: lag order for test.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if flags include %OPT_S, save test results to model.
+ * @opt: if flags include %OPT_S, save test results to model;
+ * if %OPT_Q, be less verbose.
  * @prn: gretl printing struct.
  *
  * Tests the given model for autocorrelation of order equal to
@@ -1298,7 +1299,11 @@ int autocorr_test (MODEL *pmod, int order,
     if (!err) {
 	aux.aux = AUX_AR;
 	aux.order = order;
-	printmodel(&aux, pdinfo, OPT_NONE, prn);
+
+	if (pmod->aux != AUX_VAR) {
+	    printmodel(&aux, pdinfo, OPT_NONE, prn);
+	}
+
 	trsq = aux.rsq * aux.nobs;
 	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
 	    (aux.nobs - pmod->ncoeff - order)/order; 

@@ -1976,7 +1976,7 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = vwin->data;
     PRN *prn;
-    char title[40];
+    char title[64];
     int order, err = 0;
 
     order = default_lag_order(datainfo);

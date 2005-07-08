@@ -37,19 +37,21 @@ static int packed_idx (int nrows, int i, int j);
 static gretl_matrix *real_gretl_matrix_alloc (int rows, int cols,
 					      int packed)
 {
-    gretl_matrix *m;
+    gretl_matrix *m = malloc(sizeof *m);
+    int n;
 
-    m = malloc(sizeof *m);
-    if (m == NULL) return m;
-
-    if (packed) { /* symmetric, only triangle stored */
-	int n = (rows * rows + rows) / 2;
-
-	m->val = malloc(n * sizeof *m->val);
-    } else {
-	m->val = malloc(rows * cols * sizeof *m->val);
+    if (m == NULL) {
+	return m;
     }
 
+    if (packed) {
+	/* symmetric, only triangle stored */	
+	n = (rows * rows + rows) / 2;
+    } else {
+	n = rows * cols;
+    }
+
+    m->val = malloc(n * sizeof *m->val);
     if (m->val == NULL) {
 	free(m);
 	return NULL;
@@ -162,49 +164,40 @@ gretl_vector *gretl_data_series_to_vector (const double **Z, int varno,
     return v;
 }
 
-
-/* ....................................................... */
-
 static gretl_matrix *
 gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 {
     gretl_matrix *c;
+    int rows, cols;
     int i, j, n;
 
-    if (m->packed) {
-	n = (m->rows * m->rows + m->rows) / 2;
+    if (mod == GRETL_MOD_TRANSPOSE) {
+	rows = m->cols;
+	cols = m->rows;
     } else {
-	n = m->rows * m->cols;
+	rows = m->rows;
+	cols = m->cols;
     }
 
-    c = malloc(sizeof *c);
-    if (c == NULL) return c;
-
-    c->val = malloc(n * sizeof *c->val);
-
-    if (c->val == NULL) {
-	free(c);
+    c = real_gretl_matrix_alloc(rows, cols, m->packed);
+    if (c == NULL) {
 	return NULL;
     }
 
-    c->rows = m->rows;
-    c->cols = m->cols;
-
-    c->packed = m->packed;
-
     if (mod == GRETL_MOD_TRANSPOSE) {
-	for (i=0; i<m->rows; i++) {
-	    for (j=0; j<m->cols; j++) {
+	for (i=0; i<c->rows; i++) {
+	    for (j=0; j<c->cols; j++) {
 		if (m->packed) { 
-		    c->val[packed_idx(m->rows, i, j)] = 
+		    c->val[packed_idx(c->rows, i, j)] = 
 			m->val[packed_idx(m->rows, j, i)];
 		} else {
-		    c->val[mdx(m, i, j)] = 
-			m->val[mdx(m, j, i)];
+		    c->val[mdx(c, i, j)] = m->val[mdx(m, j, i)];
 		}
 	    }
 	}
-    } else { /* not transposing */
+    } else { 
+	/* not transposing */
+	n = rows * cols;
 	for (i=0; i<n; i++) {
 	    c->val[i] = m->val[i];
 	}
@@ -1145,6 +1138,11 @@ matrix_multiply_self_transpose (const gretl_matrix *a,
     int nr = a->rows;
     double targ;
 
+    if (gretl_is_vector(a)) {
+	fprintf(stderr, "matrix_multiply_self_transpose: got vector!");
+	;
+    }
+
     for (i=0; i<nc; i++) {
 	for (j=i; j<nc; j++) {
 	    targ = 0.0;
@@ -1195,7 +1193,7 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	return GRETL_MATRIX_ERR;
     }
 
-    if (a == b && atr && !btr) {
+    if (a == b && atr && !btr && c->rows == a->cols && c->cols == a->cols) {
 	return matrix_multiply_self_transpose(a, c);
     }
 
@@ -1234,6 +1232,39 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 }
 
 /**
+ * gretl_vector_dot_product:
+ * @a: first vector.
+ * @b: second vector.
+ * @errp: pointer to receive error code (zero on success,
+ * non-zero on failure), or %NULL.
+ * 
+ * Returns: The dot (scalar) product of @a and @b, or #NADBL on
+ * failure.
+ */
+
+double gretl_vector_dot_product (const gretl_vector *a, const gretl_vector *b,
+				 int *errp)
+{
+    int dima = (a->rows > 1)? a->rows : a->cols;
+    int dimb = (b->rows > 1)? b->rows : b->cols;
+    double dp = 0.0;
+    int i;
+
+    if (!gretl_is_vector(a) || !gretl_is_vector(b) || dima != dimb) {
+	if (errp != NULL) {
+	    *errp = GRETL_MATRIX_NON_CONFORM;
+	}
+	dp = NADBL;
+    } else {
+	for (i=0; i<dima; i++) {
+	    dp += a->val[i] * b->val[i];
+	}
+    }
+
+    return dp;
+}
+
+/**
  * gretl_matrix_dot_product:
  * @a: left-hand matrix.
  * @amod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE.
@@ -1243,7 +1274,7 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
  * non-zero on failure), or %NULL.
  * 
  * Returns: The dot (scalar) product of @a (or @a-transpose) and
- * @b (or @b-transpose).
+ * @b (or @b-transpose), or #NADBL on failure.
  */
 
 double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
@@ -1253,6 +1284,10 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
     gretl_matrix *c = NULL;
     double ret = NADBL;
     int err = 0;
+
+    if (gretl_is_vector(a) && gretl_is_vector(b)) {
+	return gretl_vector_dot_product(a, b, errp);
+    }
 
     c = gretl_matrix_alloc(1, 1);
     if (c == NULL) {
@@ -1338,7 +1373,7 @@ gretl_matrix_column_mean (const gretl_matrix *m, int col)
  * on failure.
  */
 
-gretl_matrix *gretl_matrix_vcv (gretl_matrix *m)
+gretl_matrix *gretl_matrix_vcv (const gretl_matrix *m)
 {
     int i, j, err = 0;
     double colmean;
@@ -2424,6 +2459,42 @@ gretl_matrix_A_X_A_prime (const gretl_matrix *A, const gretl_matrix *X,
     }
 
     return ret;
+}
+
+/**
+ * gretl_matrix_diagonal_sandwich:
+ * @d: k-vector.
+ * @X: k * k matrix.
+ * @DXD: target k * k matrix.
+ *
+ * Computes in @DXD (which must be pre-allocated), the matrix
+ * product D * X * D, where D is a diagonal matrix with elements
+ * given by the vector @d.
+ * 
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int
+gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,
+				gretl_matrix *DXD)
+{
+    int dim = (d->rows == 1)? d->cols : d->rows;
+    double xij;
+    int i, j, err = 0;
+
+    if (dim != X->rows || dim != X->cols ||
+	dim != DXD->rows || dim != DXD->cols) {
+	err = GRETL_MATRIX_NON_CONFORM;
+    } else {
+	for (i=0; i<dim; i++) {
+	    for (j=0; j<dim; j++) {
+		xij = X->val[mdx(X, i, j)];
+		DXD->val[mdx(DXD, i, j)] = xij * d->val[i] * d->val[j];
+	    }
+	}
+    }
+
+    return err;
 }
 
 static int count_selection (const char *s, int n)
