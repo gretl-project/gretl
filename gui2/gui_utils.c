@@ -67,8 +67,6 @@ char *storelist = NULL;
 #include "../pixmaps/mini.tex.xpm"
 #endif
 
-#define MARK_CONTENT_CHANGED(w) (w->active_var = 1)
-#define MARK_CONTENT_SAVED(w) (w->active_var = 0)
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
@@ -91,6 +89,43 @@ static void panel_heteroskedasticity_menu (windata_t *vwin);
 #ifndef OLD_GTK
 static int maybe_recode_file (const char *fname);
 #endif
+
+#ifdef OLD_GTK /* FIXME needs checking */
+static GtkWidget *gtk_toolbar_get_nth_item (GtkToolbar *tb, int n)
+{
+    GList *children = g_list_first(tb->children);
+    GtkToolbarChild *child = children->data;
+
+    return child->widget;
+}
+
+static int gtk_widget_get_sensitive (const GtkWidget *w)
+{
+    return (GTK_WIDGET_FLAGS(w) & GTK_SENSITIVE);
+}
+#endif
+
+static void mark_content_changed (windata_t *vwin) 
+{
+    GtkWidget *w = gtk_toolbar_get_nth_item(GTK_TOOLBAR(vwin->mbar), 0);
+
+    if (w != NULL && !gtk_widget_get_sensitive(w)) {
+	gtk_widget_set_sensitive(w, TRUE);
+    }
+
+    vwin->active_var = 1;
+}
+
+static void mark_content_saved (windata_t *vwin) 
+{
+    GtkWidget *w = gtk_toolbar_get_nth_item(GTK_TOOLBAR(vwin->mbar), 0);
+
+    if (w != NULL && gtk_widget_get_sensitive(w)) {
+	gtk_widget_set_sensitive(w, FALSE);
+    }
+
+    vwin->active_var = 0;
+}
 
 static void close_model (gpointer data, guint close, GtkWidget *w)
 {
@@ -1219,11 +1254,11 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 
     if (vwin->role == EDIT_HEADER) {
 	infobox(_("Data info saved"));
-	MARK_CONTENT_SAVED(vwin);
+	mark_content_saved(vwin);
 	mark_dataset_as_modified();
     } else if (vwin->role == EDIT_NOTES) {
 	infobox(_("Notes saved"));
-	MARK_CONTENT_SAVED(vwin);
+	mark_content_saved(vwin);
 	session_changed(1);
     }
 }
@@ -1253,10 +1288,12 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 	    system_print_buf(text, fp);
 	    fclose(fp);
 	    g_free(text);
+#if 0
 	    sprintf(buf, _("Saved %s\n"), vwin->fname);
+#endif
 	    infobox(buf);
 	    if (vwin->role == EDIT_SCRIPT || vwin->role == EDIT_HEADER) { 
-		MARK_CONTENT_SAVED(vwin);
+		mark_content_saved(vwin);
 	    }
 	}
     }
@@ -1778,7 +1815,7 @@ static gchar *make_viewer_title (int role, const char *fname)
 
 static void content_changed (GtkWidget *w, windata_t *vwin)
 {
-    MARK_CONTENT_CHANGED(vwin);
+    mark_content_changed(vwin);
 }
 
 /* ........................................................... */
@@ -2404,7 +2441,7 @@ static void auto_save_script (windata_t *vwin)
 	infobox(_("script saved"));
     }
 
-    MARK_CONTENT_SAVED(vwin);
+    mark_content_saved(vwin);
 }
 
 void flip (GtkItemFactory *ifac, const char *path, gboolean s)

@@ -2740,6 +2740,7 @@ static void VAR_info_header_block (int code, int v, int block,
 	pprintf(prn, "\\vspace{1em}\n\n\\begin{longtable}{%s}\n",
 		(code == IRF)? "rcccc" : "rccccc");
     } else if (rtf) {
+	pputs(prn, "\\par\n\n");
 	if (code == IRF) {
 	    pprintf(prn, I_("Responses to a one-standard error shock in %s"), 
 		    pdinfo->varname[v]);
@@ -2773,7 +2774,7 @@ static void VAR_info_header_block (int code, int v, int block,
     if (tex) {
 	pprintf(prn, "%s & ", I_("period"));
     } else if (rtf) {
-	pprintf(prn, "%s \\cell ", I_("period"));
+	pprintf(prn, "\\intbl \\qc %s\\cell ", I_("period"));
     } else {
 	pprintf(prn, "%s ", _("period"));
     }
@@ -2831,7 +2832,7 @@ static void VAR_info_end_table (PRN *prn)
     if (tex_format(prn)) {
 	pputs(prn, "\\end{longtable}\n\n");
     } else if (rtf_format(prn)) {
-	pputs(prn, "\n}\n"); /* FIXME? */
+	pputs(prn, "}\n");
     } else {
 	pputc(prn, '\n');
     }
@@ -3121,6 +3122,10 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	return 0;
     }
 
+    if (rtf) {
+	pputs(prn, "{\\rtf1\\par\n\\qc ");
+    }
+
     if (opt & (OPT_I | OPT_D)) {
 	goto print_extras;
     }
@@ -3225,6 +3230,10 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 					     pause, prn);
 	    }
 	}
+    }
+
+    if (rtf) {
+	pputs(prn, "}\n");
     }
 
     return 0;
