@@ -396,9 +396,9 @@ enum {
     W_SAVE
 };
 
-static int special_text_handler (int cmd, guint fmt, int what, 
-				 gpointer data)
+static int special_text_handler (windata_t *vwin, guint fmt, int what)
 {
+    int cmd = vwin->role;
     PRN *prn = NULL;
     int err = 0;
 
@@ -409,27 +409,27 @@ static int special_text_handler (int cmd, guint fmt, int what,
     gretl_print_set_format(prn, fmt);
 
     if (cmd == SUMMARY || cmd == VAR_SUMMARY) {
-	Summary *summ = (Summary *) data;
+	Summary *summ = (Summary *) vwin->data;
 
 	special_print_summary(summ, datainfo, prn);
     } else if (cmd == CORR || cmd == COVAR) {
-	VMatrix *corr = (VMatrix *) data;
+	VMatrix *corr = (VMatrix *) vwin->data;
 
 	special_print_vmatrix(corr, datainfo, prn);
     } else if (cmd == FCAST) {
-	FITRESID *fr = (FITRESID *) data;
+	FITRESID *fr = (FITRESID *) vwin->data;
 
 	special_print_fit_resid(fr, datainfo, prn);
     } else if (cmd == FCASTERR) {
-	FITRESID *fr = (FITRESID *) data;
+	FITRESID *fr = (FITRESID *) vwin->data;
 
 	special_print_forecast(fr, datainfo, prn);
     } else if (cmd == COEFFINT) {
-	CoeffIntervals *cf = (CoeffIntervals *) data;
+	CoeffIntervals *cf = (CoeffIntervals *) vwin->data;
 
 	special_print_confints(cf, prn);
     } else if (cmd == VIEW_MODEL) { 
-	MODEL *pmod = (MODEL *) data;
+	MODEL *pmod = (MODEL *) vwin->data;
 
 	if (pmod->errcode) { 
 	    errbox("Couldn't format model");
@@ -443,13 +443,24 @@ static int special_text_handler (int cmd, guint fmt, int what,
 	}
     } else if (cmd == MPOLS) {
 	/* this is not actually ready -- see modelprint.c */
-	mp_results *mpvals = (mp_results *) data;
+	mp_results *mpvals = (mp_results *) vwin->data;
 
 	print_mpols_results(mpvals, datainfo, prn);
     } else if (cmd == VAR) {
-	GRETL_VAR *var = (GRETL_VAR *) data;
+	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
 
 	gretl_VAR_print(var, datainfo, OPT_NONE, prn);
+    } else if (cmd == VAR_IRF || cmd == VAR_DECOMP) {
+	windata_t *parent = vwin->gretl_parent;
+
+	if (parent == NULL) {
+	    errbox("Couldn't find the VAR");
+	} else {
+	    gretlopt opt = (cmd == VAR_IRF)? OPT_I : OPT_D;
+	    GRETL_VAR *var = (GRETL_VAR *) parent->data;
+
+	    gretl_VAR_print(var, datainfo, opt, prn);
+	}
     } else if (cmd == VIEW_MODELTABLE) {
 	err = special_print_model_table(prn);
     } 
@@ -480,7 +491,7 @@ void window_tex_callback (GtkWidget *w, windata_t *vwin)
     int opt = radio_dialog("gretl: LaTeX", opts, 3, 0, 0);
 
     if (opt >= 0) {
-	special_text_handler(vwin->role, GRETL_FORMAT_TEX, opt, vwin->data);
+	special_text_handler(vwin, GRETL_FORMAT_TEX, opt);
     }
 }
 
@@ -488,21 +499,21 @@ void model_tex_view (gpointer data, guint fmt, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) data;
 
-    special_text_handler(vwin->role, fmt, W_PREVIEW, vwin->data);
+    special_text_handler(vwin, fmt, W_PREVIEW);
 }
 
 void model_tex_save (gpointer data, guint fmt, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) data;
 
-    special_text_handler(vwin->role, fmt, W_SAVE, vwin->data);
+    special_text_handler(vwin, fmt, W_SAVE);
 }
 
 void var_tex_callback (gpointer data, guint opt, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) data;
 
-    special_text_handler(vwin->role, GRETL_FORMAT_TEX, opt, vwin->data);
+    special_text_handler(vwin, GRETL_FORMAT_TEX, opt);
 }
 
 /* copying text from gretl windows */
@@ -517,7 +528,7 @@ void window_copy (gpointer data, guint fmt, GtkWidget *w)
 
     /* copying from window with special stuff enabled */
     if (MULTI_FORMAT_ENABLED(vwin->role) && SPECIAL_FORMAT(fmt)) {
-	err = special_text_handler(vwin->role, fmt, W_COPY, vwin->data);
+	err = special_text_handler(vwin, fmt, W_COPY);
 	if (err) {
 	    return;
 	}

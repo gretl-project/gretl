@@ -37,7 +37,7 @@ void edit_header (gpointer data, guint save, GtkWidget *widget);
 
 void fit_resid_callback (gpointer data, guint code, GtkWidget *widget);
 
-void var_resid_callback (gpointer data, guint eqnum, GtkWidget *widget);
+void VAR_resid_callback (gpointer data, guint eqnum, GtkWidget *widget);
 
 void model_stat_callback (gpointer data, guint which, GtkWidget *widget);
 

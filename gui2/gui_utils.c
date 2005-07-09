@@ -80,7 +80,7 @@ static void add_model_dataset_items (windata_t *vwin);
 static void add_model_tex_items (windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
-static void add_var_menu_items (windata_t *vwin);
+static void add_VAR_menu_items (windata_t *vwin);
 static void add_x12_output_menu_item (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
@@ -251,14 +251,14 @@ static GtkItemFactoryEntry model_tex_items[] = {
       GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL, GNULL }
 };
 
-static GtkItemFactoryEntry var_tex_items[] = {
+static GtkItemFactoryEntry VAR_tex_items[] = {
     { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/LaTeX/_View"), NULL, var_tex_callback, 0, NULL, GNULL },
     { N_("/LaTeX/_Copy"), NULL, var_tex_callback, 1, NULL, GNULL },
     { N_("/LaTeX/_Save"), NULL, var_tex_callback, 2, NULL, GNULL }
 };
 
-static GtkItemFactoryEntry var_items[] = {
+static GtkItemFactoryEntry VAR_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, "<StockItem>", 
       GTK_STOCK_SAVE_AS },
@@ -268,11 +268,7 @@ static GtkItemFactoryEntry var_items[] = {
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 # endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/Copy all/as plain _text"), NULL, window_copy, GRETL_FORMAT_TXT, 
-      NULL, GNULL },
-    { N_("/Edit/Copy all/as _LaTeX"), NULL, window_copy, GRETL_FORMAT_TEX, 
-      NULL, GNULL },
+    { N_("/Edit/_Copy"), "", model_copy_callback, 0, "<StockItem>", GTK_STOCK_COPY },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
@@ -297,14 +293,14 @@ static GtkItemFactoryEntry model_tex_items[] = {
       GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL }
 };
 
-static GtkItemFactoryEntry var_tex_items[] = {
+static GtkItemFactoryEntry VAR_tex_items[] = {
     { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
     { N_("/LaTeX/_View"), NULL, var_tex_callback, 0, NULL },
     { N_("/LaTeX/_Copy"), NULL, var_tex_callback, 1, NULL },
     { N_("/LaTeX/_Save"), NULL, var_tex_callback, 2, NULL }
 };
 
-static GtkItemFactoryEntry var_items[] = {
+static GtkItemFactoryEntry VAR_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, NULL },
     { N_("/File/Save to session as icon"), NULL, remember_var, 0, NULL },
@@ -313,11 +309,7 @@ static GtkItemFactoryEntry var_items[] = {
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 # endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/Copy all/as plain _text"), NULL, window_copy, 
-      GRETL_FORMAT_TXT, NULL },
-    { N_("/Edit/Copy all/as _LaTeX"), NULL, window_copy, 
-      GRETL_FORMAT_TEX, NULL },
+    { N_("/Edit/_Copy"), "", model_copy_callback, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1275,22 +1267,70 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 void windata_init (windata_t *vwin)
 {
     vwin->dialog = NULL;
-    vwin->listbox = NULL;
     vwin->vbox = NULL;
+    vwin->listbox = NULL;
     vwin->mbar = NULL;
     vwin->w = NULL;
     vwin->status = NULL;
     vwin->popup = NULL;
     vwin->ifac = NULL;
+    vwin->gretl_parent = NULL;
+    vwin->gretl_children = NULL;
     vwin->data = NULL;
-    vwin->fname[0] = '\0';
-    vwin->role = 0;
     vwin->active_var = 0;
+    vwin->role = 0;
     vwin->n_model_tests = 0;
+    vwin->n_gretl_children = 0;
     vwin->flags = 0;
+    vwin->fname[0] = '\0';
 #ifdef USE_GTKSOURCEVIEW
     vwin->sbuf = NULL;
 #endif
+}
+
+static int vwin_add_child (windata_t *parent, windata_t *child)
+{
+    int n = parent->n_gretl_children;
+    int i, done = 0, err = 0;
+
+    for (i=0; i<n; i++) {
+	if (parent->gretl_children[i] == NULL) {
+	    /* reuse a vacant slot */
+	    parent->gretl_children[i] = child;
+	    done = 1;
+	    break;
+	}
+    }
+
+    if (!done) {
+	windata_t **children;
+
+	children = realloc(parent->gretl_children, (n + 1) * sizeof *children);
+	if (children == NULL) {
+	    err = 1;
+	} else {
+	    parent->gretl_children = children;
+	    parent->gretl_children[n] = child;
+	    parent->n_gretl_children += 1;
+	}
+    }
+    
+    if (!err) {
+	child->gretl_parent = parent;
+    }
+
+    return err;
+}
+
+static void vwin_nullify_child (windata_t *parent, windata_t *child)
+{
+    int i, n = parent->n_gretl_children;
+
+    for (i=0; i<n; i++) {
+	if (child == parent->gretl_children[i]) {
+	    parent->gretl_children[i] = NULL;
+	}
+    }
 }
 
 void free_windata (GtkWidget *w, gpointer data)
@@ -1304,6 +1344,23 @@ void free_windata (GtkWidget *w, gpointer data)
 	    if (undo != NULL) {
 		g_free(undo);
 	    }
+	}
+
+	/* notify parent, if any */
+	if (vwin->gretl_parent != NULL) {
+	    vwin_nullify_child(vwin->gretl_parent, vwin);
+	}
+
+	/* notify children, if any */
+	if (vwin->n_gretl_children > 0) {
+	    int i;
+
+	    for (i=0; i<vwin->n_gretl_children; i++) {
+		if (vwin->gretl_children[i] != NULL) {
+		    vwin->gretl_children[i]->gretl_parent = NULL;
+		}
+	    }
+	    free(vwin->gretl_children);
 	}
 
 	/* menu stuff */
@@ -1825,7 +1882,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	GtkItemFactoryEntry *menu_items;
 
 	if (role == VAR) {
-	    menu_items = var_items;
+	    menu_items = VAR_items;
 	} else {
 	    menu_items = get_series_view_menu_items(role);
 	}
@@ -1839,7 +1896,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     if (role == VAR) {
 	/* model-specific additions to menus */
-	add_var_menu_items(vwin);
+	add_VAR_menu_items(vwin);
     }
 
 #ifndef OLD_GTK
@@ -2826,12 +2883,6 @@ static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
     }
 }
 
-enum {
-    VAR_PRINT_VCV,
-    VAR_PRINT_IRFS,
-    VAR_PRINT_DECOMPS
-};
-
 static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
@@ -2844,11 +2895,11 @@ static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
     if (var == NULL) return;
     if (bufopen(&prn)) return;
 
-    if (code != VAR_PRINT_VCV) {
+    if (code != VAR_VCV) {
 	neqns = gretl_VAR_get_n_equations(var);
 	h = default_VAR_horizon(datainfo);
 	title = g_strdup_printf("gretl: %s", 
-				(code == VAR_PRINT_IRFS)? _("impulse responses") :
+				(code == VAR_IRF)? _("impulse responses") :
 				_("variance decompositions"));
 	err = checks_dialog(title, NULL, 0, NULL,
 			    &h, _("forecast horizon (periods):"),
@@ -2860,15 +2911,15 @@ static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
 	} 
     }
 
-    if (code == VAR_PRINT_VCV) {
+    if (code == VAR_VCV) {
 	title = g_strdup(_("gretl: VAR covariance matrix"));
 	err = gretl_VAR_print_VCV(var, prn);
-    } else if (code == VAR_PRINT_IRFS) {
+    } else if (code == VAR_IRF) {
 	title = g_strdup(_("gretl: VAR impulse responses"));
 	for (i=0; i<neqns && !err; i++) {
 	    err = gretl_VAR_print_impulse_response(var, i, h, datainfo, 0, prn);
 	}
-    } else if (code == VAR_PRINT_DECOMPS) {
+    } else if (code == VAR_DECOMP) {
 	title = g_strdup(_("gretl: VAR variance decompositions"));
 	for (i=0; i<neqns && !err; i++) {
 	    err = gretl_VAR_print_fcast_decomp(var, i, h, datainfo, 0, prn);
@@ -2881,7 +2932,10 @@ static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, 80, 400, title, PRINT, NULL);
+	windata_t *viewer;
+
+	viewer = view_buffer(prn, 80, 400, title, code, NULL);
+	vwin_add_child(vwin, viewer);
     }
 
     g_free(title);
@@ -2971,7 +3025,7 @@ static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
     }
 }
 
-static void var_forecast_callback (gpointer p, guint i, GtkWidget *w)
+static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
@@ -3116,7 +3170,7 @@ static void VAR_resid_plot_call (gpointer p, guint i, GtkWidget *w)
     }
 }
 
-static void add_var_menu_items (windata_t *vwin)
+static void add_VAR_menu_items (windata_t *vwin)
 {
     GtkItemFactoryEntry varitem;
     const gchar *tpath = N_("/Tests");
@@ -3177,7 +3231,7 @@ static void add_var_menu_items (windata_t *vwin)
     varitem.path = g_strdup_printf("%s/%s", _(mpath), 
 				   _("Cross-equation covariance matrix"));
     varitem.callback = VAR_model_data_callback;
-    varitem.callback_action = VAR_PRINT_VCV;
+    varitem.callback_action = VAR_VCV;
     varitem.item_type = NULL;
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);
@@ -3185,7 +3239,7 @@ static void add_var_menu_items (windata_t *vwin)
     /* impulse response printout */
     varitem.path = g_strdup_printf("%s/%s", _(mpath), _("impulse responses"));
     varitem.callback = VAR_model_data_callback;
-    varitem.callback_action = VAR_PRINT_IRFS;
+    varitem.callback_action = VAR_IRF;
     varitem.item_type = NULL;
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);    
@@ -3194,7 +3248,7 @@ static void add_var_menu_items (windata_t *vwin)
     varitem.path = g_strdup_printf("%s/%s", _(mpath), 
 				   _("forecast variance decomposition"));
     varitem.callback = VAR_model_data_callback;
-    varitem.callback_action = VAR_PRINT_DECOMPS;
+    varitem.callback_action = VAR_DECOMP;
     varitem.item_type = NULL;
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path); 
@@ -3215,7 +3269,7 @@ static void add_var_menu_items (windata_t *vwin)
 	dv = gretl_VAR_get_variable_number(var, i);
 	varitem.path = g_strdup_printf("%s/%s", _(fpath), 
 				       datainfo->varname[dv]);
-	varitem.callback = var_forecast_callback;
+	varitem.callback = VAR_forecast_callback;
 	varitem.callback_action = i;
 	varitem.item_type = NULL;
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
@@ -3224,7 +3278,7 @@ static void add_var_menu_items (windata_t *vwin)
 	/* save resids items */
 	varitem.path = g_strdup_printf("%s/%s %d", _(dpath), 
 				       _("residuals from equation"), i + 1);
-	varitem.callback = var_resid_callback;
+	varitem.callback = VAR_resid_callback;
 	varitem.callback_action = i;
 	varitem.item_type = NULL;
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
@@ -3269,10 +3323,10 @@ static void add_var_menu_items (windata_t *vwin)
     }
 
     if (latex_is_ok()) {
-	int n = sizeof var_tex_items / sizeof var_tex_items[0];
+	int n = sizeof VAR_tex_items / sizeof VAR_tex_items[0];
 
 	for (i=0; i<n; i++) {
-	    gtk_item_factory_create_item(vwin->ifac, &var_tex_items[i], 
+	    gtk_item_factory_create_item(vwin->ifac, &VAR_tex_items[i], 
 					 vwin, 1);
 	}
     }

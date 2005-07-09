@@ -59,6 +59,22 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
 
 #endif /* USE_GNOME */
 
+void rtf_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
+{
+    const char *obs;
+
+    if (pdinfo->markers) { 
+	obs = pdinfo->S[t];
+    } else {
+	char tmp[OBSLEN]; 
+
+	ntodate(tmp, t, pdinfo);
+	obs = tmp;
+    }
+
+    pprintf(prn, "\\intbl \\ql %s\\cell", obs);
+}
+
 /* row format specifications for RTF "tables" */
 
 #define STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
@@ -650,10 +666,7 @@ static void rtfprint_fit_resid (const FITRESID *fr,
 	    fr->depvar, I_("fitted"), I_("residual"));
 
     for (t=0; t<fr->nobs; t++) {
-	pputs(prn, "\\qr ");
-	print_obs_marker(t + fr->t1, pdinfo, prn);
-	pputs(prn, "\\cell"); 
-
+	rtf_print_obs_marker(t + fr->t1, pdinfo, prn);
 	if (na(fr->actual[t])) {
 	    pputs(prn, "\\qc \\cell \\qc \\cell \\qc \\cell \\ql \\cell"
 		  " \\intbl \\row\n"); 
@@ -842,9 +855,7 @@ static void rtfprint_fcast_without_errs (const FITRESID *fr,
 	    I_("Obs"), fr->depvar, I_("prediction")); 
 
     for (t=fr->pre_n; t<fr->nobs; t++) {
-	pputs(prn, "\\qr ");
-	print_obs_marker(t + fr->t1, pdinfo, prn);
-	pputs(prn, "\\cell"); 
+	rtf_print_obs_marker(t + fr->t1, pdinfo, prn);
 	printfrtf(fr->actual[t], prn, 0);
 	printfrtf(fr->fitted[t], prn, 0);
     }
@@ -883,9 +894,7 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 	    I_("95% confidence interval"));
 
     for (t=fr->pre_n; t<fr->nobs; t++) {
-	pputs(prn, "\\qr ");
-	print_obs_marker(t + fr->t1, pdinfo, prn);
-	pputs(prn, "\\cell"); 
+	rtf_print_obs_marker(t + fr->t1, pdinfo, prn);
 	maxerr = fr->tval * fr->sderr[t];
 	printfrtf(fr->actual[t], prn, 0);
 	printfrtf(fr->fitted[t], prn, 0);

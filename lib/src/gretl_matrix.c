@@ -94,6 +94,41 @@ gretl_matrix *gretl_packed_matrix_alloc (int rows)
 }
 
 /**
+ * gretl_matrix_reuse:
+ * @m: matrix to reuse.
+ * @rows: desired number of rows in "new" matrix.
+ * @cols: desired number of columns in "new" matrix.
+ *
+ * A memory-conservation trick. If @m is an already-allocated
+ * gretl matrix, you can "resize" it by specifying a new
+ * number of rows and columns.  This works only if the product 
+ * of @rows and @cols is less than or equal to the product of 
+ * the number of rows and columns in the original matrix; no 
+ * actual reallocation of memory is performed.  Note that
+ * the matrix-pointer returned is not really new, and the
+ * when the matrix is to be freed, gretl_matrix_free()
+ * should be applied only once. 
+ *
+ * Returns: pointer to the "resized" gretl_matrix, or %NULL
+ * if the product of @rows and @cols is out of bounds.
+ */
+
+gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
+{
+    gretl_matrix *ret = NULL;
+    int oldsz = m->rows * m->cols;
+    int newsz = rows * cols;
+    
+    if (newsz <= oldsz) {
+	m->rows = rows;
+	m->cols = cols;
+	ret = m;
+    }
+
+    return ret;
+}
+
+/**
  * gretl_column_vector_from_array:
  * @x: pointer to array of elements.
  * @n: number of elements.

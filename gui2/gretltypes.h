@@ -40,10 +40,13 @@ struct _windata_t {
     GtkWidget *status;
     GtkWidget *popup;
     GtkItemFactory *ifac; 
+    windata_t *gretl_parent;
+    windata_t **gretl_children;
     gpointer data;
     int active_var; 
     int role;
     int n_model_tests;
+    int n_gretl_children;
     unsigned char flags;
     char fname[MAXLEN];
 #ifdef USE_GTKSOURCEVIEW

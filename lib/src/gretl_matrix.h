@@ -66,6 +66,8 @@ typedef struct _gretl_matrix gretl_vector;
 
 gretl_matrix *gretl_matrix_alloc (int rows, int cols);
 
+gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols);
+
 gretl_matrix *gretl_packed_matrix_alloc (int rows);
 
 gretl_matrix *gretl_matrix_copy (const gretl_matrix *m);
