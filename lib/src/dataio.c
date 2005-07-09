@@ -2400,6 +2400,8 @@ static int count_add_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo)
 	    }
 	}
 	if (addvars < 0) {
+	    fprintf(stderr, "%s: can't replace scalar with vector\n",
+		    addinfo->varname[i]);
 	    break;
 	}
     }
@@ -2419,31 +2421,25 @@ static int compare_ranges (const DATAINFO *pdinfo,
     ed1 = merge_dateton(addinfo->endobs, pdinfo);
 
     if (sd1 < 0) {
+	fprintf(stderr, "addinfo->stobs: '%s', can't figure\n", 
+		addinfo->stobs);
 	addobs = -1;
-    }
-
-    /* case: exact match of ranges */
-    else if (sd1 == 0 && ed1 == ed0) {
+    } else if (sd1 == 0 && ed1 == ed0) {
+	/* case: exact match of ranges */
 	*offset = 0;
 	addobs = 0;
-    }    
-
-    /* case: starting obs the same */
-    else if (sd1 == 0) {
+    } else if (sd1 == 0) {
+	/* case: starting obs the same */
 	*offset = 0;
 	if (ed1 > ed0) {
 	    addobs = ed1 - ed0;
 	}
-    }
-
-    /* case: new data start right after end of old */
-    else if (sd1 == ed0 + 1) {
+    } else if (sd1 == ed0 + 1) {
+	/* case: new data start right after end of old */
 	*offset = sd1;
 	addobs = addinfo->n;
-    }
-
-    /* case: new data start later than old */
-    else if (sd1 > 0) {
+    } else if (sd1 > 0) {
+	/* case: new data start later than old */
 	if (sd1 <= ed0) {
 	    /* but there's some overlap */
 	    *offset = sd1;
@@ -2453,6 +2449,10 @@ static int compare_ranges (const DATAINFO *pdinfo,
 		addobs = 0;
 	    }
 	}
+    }
+
+    if (sd1 < 0) {
+	fputs("compare_ranges: returning error\n", stderr);
     }
 
     return addobs;
