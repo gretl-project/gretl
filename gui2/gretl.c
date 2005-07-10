@@ -1105,7 +1105,10 @@ void populate_varlist (void)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     for (i=0; i<datainfo->v; i++) {
-	if (is_hidden_variable(i, datainfo)) continue;
+	if (is_hidden_variable(i, datainfo) ||
+	    is_standard_lag(i, datainfo)) {
+	    continue;
+	}
 	gtk_list_store_append(store, &iter);
 	sprintf(id, "%d", i);
 	gtk_list_store_set (store, &iter, 
@@ -1394,9 +1397,6 @@ static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
     int err = restore_sample(OPT_C); 
 
     if (verbose && !err) {
-#if 0
-	infobox(_("Full sample range restored"));
-#endif
 	set_sample_label(datainfo);    
 	gretl_command_strcpy("smpl full");
 	check_and_record_command();

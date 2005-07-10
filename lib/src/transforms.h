@@ -22,6 +22,8 @@
 
 int default_lag_order (const DATAINFO *pdinfo);
 
+int is_standard_lag (int v, const DATAINFO *pdinfo);
+
 int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff);
 
 int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo);

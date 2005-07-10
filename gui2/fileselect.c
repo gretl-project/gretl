@@ -305,17 +305,11 @@ static void save_editable_content (int action, const char *fname,
 #endif
 
     g_free(buf);
-
-#if 0
-    infobox(_("File saved OK"));
-#endif
-
     fclose(fp);
     
     if (action == SAVE_SCRIPT) {
 	strcpy(scriptfile, fname);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-	vwin->active_var = 0; /* zero out "changed" flag */
 	script_window_update(vwin, fname);
     }
 }
@@ -528,12 +522,6 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	} else if (err == 2) {
 	    infobox(_("There were missing observations"));
 	}
-#if 0
-	if (err == 0) {
-	    infobox(_("graph saved"));
-	}
-#endif
-
     } else if (action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
@@ -544,8 +532,6 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	err = ps_print_plots(fname, action, data);
 	if (err) {
 	    errbox(_("boxplot save failed"));
-	} else {
-	    infobox(_("boxplots saved"));
 	}
     } else if (action == SAVE_SESSION) {
 	save_session(fname);
@@ -907,7 +893,9 @@ void file_selector (const char *msg, int action, gpointer data)
 					      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					      NULL);
-    }	
+    }
+
+    gtk_dialog_set_default_response(GTK_DIALOG(filesel), GTK_RESPONSE_ACCEPT);
 
     filter = get_file_filter(action, data);
     gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);

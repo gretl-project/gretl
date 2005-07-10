@@ -767,9 +767,7 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 
     if (missobs) {
 	infobox(_("Warning: there were missing observations"));
-    } else {
-	infobox(_("Data updated OK"));
-    }
+    } 
 
     sheet->modified = 0;
 }

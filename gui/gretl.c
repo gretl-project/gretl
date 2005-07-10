@@ -963,7 +963,10 @@ void populate_varlist (void)
 
     j = 0;
     for (i=0; i<datainfo->v; i++) {
-	if (is_hidden_variable(i, datainfo)) continue;
+	if (is_hidden_variable(i, datainfo) ||
+	    is_standard_lag(i, datainfo)) {
+	    continue;
+	}
 	sprintf(id, "%d", i);
 	row[0] = id;
 	row[1] = datainfo->varname[i];
@@ -978,8 +981,7 @@ void populate_varlist (void)
     if (j >= 2) {
 	mdata->active_var = 1;	
 	/* both select and focus the first real variable */
-	gtk_clist_select_row 
-	    (GTK_CLIST(mdata->listbox), mdata->active_var, 1); 
+	gtk_clist_select_row(GTK_CLIST(mdata->listbox), mdata->active_var, 1); 
 	(GTK_CLIST(mdata->listbox))->focus_row = mdata->active_var;
     } else {
 	mdata->active_var = 0;
@@ -1227,7 +1229,6 @@ static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
     int err = restore_sample(OPT_NONE); /* FIXME OPT_C? */
 
     if (verbose && !err) {
-	infobox(_("Full sample range restored"));
 	set_sample_label(datainfo);    
 	gretl_command_strcpy("smpl full");
 	check_and_record_command();

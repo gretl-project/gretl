@@ -111,7 +111,7 @@ static void show_saved_var (GRETL_VAR *var, const DATAINFO *pdinfo)
 
     if (bufopen(&prn)) return;
 
-    gretl_VAR_print(var, pdinfo, OPT_NONE, prn); /* FIXME */
+    gretl_VAR_print(var, pdinfo, OPT_NONE, prn);
     view_buffer(prn, 78, 450, gretl_VAR_get_name(var), VAR, var);
 }
 
@@ -357,48 +357,37 @@ int saved_object_action (const char *line,
 
     code = parse_object_request(line, savename, param, &ptr, prn);
 
-    if (code == OBJ_NONE) return 0;
+    if (code == OBJ_NONE) {
+	return 0;
+    }
 
-    if (code == OBJ_NULL || code == OBJ_INVALID) return -1;
+    if (code == OBJ_NULL || code == OBJ_INVALID) {
+	return -1;
+    }
 
     if (code == OBJ_MODEL_SHOW) {
 	show_saved_model((MODEL *) ptr, pdinfo);
-    } 
-
-    else if (code == OBJ_MODEL_FREE) {
+    } else if (code == OBJ_MODEL_FREE) {
 	delete_model_from_session((MODEL *) ptr);
 	pprintf(prn, _("Freed %s\n"), savename);
-    }
-
-    else if (code == OBJ_MODEL_STAT) {
+    } else if (code == OBJ_MODEL_STAT) {
 	print_model_stat((MODEL *) ptr, param, prn);
-    }
-
-    if (code == OBJ_VAR_SHOW) {
+    } if (code == OBJ_VAR_SHOW) {
 	show_saved_var((GRETL_VAR *) ptr, pdinfo);
-    } 
-
-    else if (code == OBJ_VAR_FREE) {
+    } else if (code == OBJ_VAR_FREE) {
 	delete_var_from_session((GRETL_VAR *) ptr);
 	pprintf(prn, _("Freed %s\n"), savename);
-    }
-
-    else if (code == OBJ_GRAPH_SHOW) {
+    } else if (code == OBJ_GRAPH_SHOW) {
 	GRAPHT *graph = (GRAPHT *) ptr;
-	display_session_graph_png(graph->fname);
-    } 
 
-    else if (code == OBJ_GRAPH_FREE) {
+	display_session_graph_png(graph->fname);
+    } else if (code == OBJ_GRAPH_FREE) {
 	/* FIXME */
 	dummy_call();
 	fprintf(stderr, "Got request to delete graph\n");
-    }
-
-    else if (code == OBJ_TEXT_SHOW) {
+    } else if (code == OBJ_TEXT_SHOW) {
 	display_text_by_name(savename);
-    }
-
-    else if (code == OBJ_TEXT_FREE) {
+    } else if (code == OBJ_TEXT_FREE) {
 	delete_text_from_session(savename);
 	pprintf(prn, _("Freed %s\n"), savename);
     }    

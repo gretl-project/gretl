@@ -1204,9 +1204,7 @@ int bool_subsample (gretlopt opt)
 
     if (opt & OPT_M) {
 	infobox(_("Sample now includes only complete observations"));
-    } else if (0) {
-	infobox(_("Sub-sampling done"));
-    }
+    } 
 
     return 0;
 }
@@ -1280,7 +1278,6 @@ void do_add_markers (const char *fname)
     if (add_obs_markers_from_file(datainfo, fname)) { 
 	errbox(_("Failed to add case markers"));
     } else {
-	infobox(_("Case markers added"));
 	mark_dataset_as_modified();
 	add_remove_markers_state(TRUE);
     }
@@ -1289,7 +1286,6 @@ void do_add_markers (const char *fname)
 void do_remove_markers (gpointer data, guint u, GtkWidget *w) 
 {
     dataset_destroy_obs_markers(datainfo);
-    infobox(_("Case markers removed"));
     mark_dataset_as_modified();
     add_remove_markers_state(FALSE);
 }
@@ -3670,8 +3666,6 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
 	}
 
 	model_command_init(pmod->ID);
-
-	infobox(_("variable added"));
 	mark_dataset_as_modified();
     }
 
@@ -3702,7 +3696,6 @@ int add_var_resid (GRETL_VAR *var, int eqnum)
     }    
 
     populate_varlist();
-    infobox(_("variable added"));
     mark_dataset_as_modified();
 
     return 0;
@@ -3797,7 +3790,6 @@ void add_model_stat (MODEL *pmod, int which)
 
     populate_varlist();
     model_command_init(pmod->ID);
-    infobox(_("variable added"));
 
     /* note: since this is a scalar, which will not be saved by
        default on File/Save data, we will not mark the data set
@@ -4942,7 +4934,7 @@ void gui_transpose_data (gpointer p, guint u, GtkWidget *w)
 	} else {
 	    mark_dataset_as_modified();
 	    populate_varlist();
-	    infobox(_("Data tranposed"));
+	    infobox(_("Data transposed"));
 	}
     }
 }

@@ -122,6 +122,20 @@ make_transform_label (char *label, const char *parent,
     return err;
 }
 
+int is_standard_lag (int v, const DATAINFO *pdinfo)
+{
+    const char *test = VARLABEL(pdinfo, v);
+    char vname[13];
+    int pm, lag;
+    int ret = 0;
+
+    if (sscanf(test, "= %12[^(](t %c %d)", vname, &pm, &lag) == 3) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
 static void make_xp_varname (char *vname, const char *v1, 
 			     const char *v2, int len)
 {

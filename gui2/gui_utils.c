@@ -90,40 +90,45 @@ static void panel_heteroskedasticity_menu (windata_t *vwin);
 static int maybe_recode_file (const char *fname);
 #endif
 
-#ifdef OLD_GTK /* FIXME needs checking */
-static GtkWidget *gtk_toolbar_get_nth_item (GtkToolbar *tb, int n)
-{
-    GList *children = g_list_first(tb->children);
-    GtkToolbarChild *child = children->data;
+/* in editable window toolbar, Save is first button */
 
-    return child->widget;
-}
-
-static int gtk_widget_get_sensitive (const GtkWidget *w)
+static GtkWidget *toolbar_first_button (GtkToolbar *tb)
 {
-    return (GTK_WIDGET_FLAGS(w) & GTK_SENSITIVE);
+    GList *kids = tb->children;
+    GtkToolbarChild *child;
+    GtkWidget *w = NULL;
+
+    while (kids != NULL) {
+	child = kids->data;
+	if (child->type == GTK_TOOLBAR_CHILD_BUTTON) {
+	    w = child->widget;
+	    break;
+	}
+	kids = kids->next;
+    }
+
+    return w;
 }
-#endif
 
 static void mark_content_changed (windata_t *vwin) 
 {
-    GtkWidget *w = gtk_toolbar_get_nth_item(GTK_TOOLBAR(vwin->mbar), 0);
+    if (vwin->active_var == 0) {
+	GtkWidget *w = toolbar_first_button(GTK_TOOLBAR(vwin->mbar));
 
-    if (w != NULL && !gtk_widget_get_sensitive(w)) {
-	gtk_widget_set_sensitive(w, TRUE);
+	if (w != NULL) {
+	    gtk_widget_set_sensitive(w, TRUE);
+	}
+	vwin->active_var = 1;	
     }
-
-    vwin->active_var = 1;
 }
 
 static void mark_content_saved (windata_t *vwin) 
 {
-    GtkWidget *w = gtk_toolbar_get_nth_item(GTK_TOOLBAR(vwin->mbar), 0);
+    GtkWidget *w = toolbar_first_button(GTK_TOOLBAR(vwin->mbar));
 
-    if (w != NULL && gtk_widget_get_sensitive(w)) {
+    if (w != NULL) {
 	gtk_widget_set_sensitive(w, FALSE);
     }
-
     vwin->active_var = 0;
 }
 
@@ -1253,17 +1258,13 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     *pbuf = text;
 
     if (vwin->role == EDIT_HEADER) {
-	infobox(_("Data info saved"));
 	mark_content_saved(vwin);
 	mark_dataset_as_modified();
     } else if (vwin->role == EDIT_NOTES) {
-	infobox(_("Notes saved"));
 	mark_content_saved(vwin);
 	session_changed(1);
     }
 }
-
-/* ........................................................... */
 
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 {
@@ -1271,8 +1272,8 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 	/* special case: a newly created script */
 	file_save(vwin, SAVE_SCRIPT, NULL);
 	strcpy(vwin->fname, scriptfile);
+	mark_content_saved(vwin);
     } else {
-	char buf[MAXLEN];
 	FILE *fp;
 	gchar *text;
 
@@ -1288,18 +1289,10 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 	    system_print_buf(text, fp);
 	    fclose(fp);
 	    g_free(text);
-#if 0
-	    sprintf(buf, _("Saved %s\n"), vwin->fname);
-#endif
-	    infobox(buf);
-	    if (vwin->role == EDIT_SCRIPT || vwin->role == EDIT_HEADER) { 
-		mark_content_saved(vwin);
-	    }
+	    mark_content_saved(vwin);
 	}
     }
 }
-
-/* .................................................................. */
 
 void windata_init (windata_t *vwin)
 {
@@ -1493,7 +1486,6 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
     }
 
     if (datainfo->v > oldv) {
-	infobox(_("data added"));
 	populate_varlist();
 	mark_dataset_as_modified();
     }	
@@ -1637,6 +1629,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 #endif
 
     for (i=0; viewbar_items[i].str != NULL; i++) {
+	GtkWidget *w;
 
 	toolfunc = viewbar_items[i].toolfunc;
 
@@ -1699,18 +1692,23 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	button = gtk_image_new();
 	gtk_image_set_from_stock(GTK_IMAGE(button), viewbar_items[i].icon, 
 				 GTK_ICON_SIZE_MENU);
-        gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
-				NULL, _(viewbar_items[i].str), NULL,
-				button, toolfunc, vwin);
+        w = gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
+				    NULL, _(viewbar_items[i].str), NULL,
+				    button, toolfunc, vwin);
 #else
 	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, NULL, 
 						     viewbar_items[i].toolxpm);
 	button = gtk_pixmap_new(icon, mask);
-	gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
-				NULL, _(viewbar_items[i].str), NULL,
-				button, toolfunc, vwin);
+	w = gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
+				    NULL, _(viewbar_items[i].str), NULL,
+				    button, toolfunc, vwin);
 	gtk_toolbar_append_space(GTK_TOOLBAR(vwin->mbar));
 #endif
+
+	if (viewbar_items[i].flag == SAVE_ITEM) { 
+	    /* nothing to save just yet */
+	    gtk_widget_set_sensitive(w, FALSE);
+	}
     }
 
     gtk_widget_show(vwin->mbar);
@@ -2158,8 +2156,6 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     return vwin;
 }
 
-/* ........................................................... */
-
 void file_view_set_editable (windata_t *vwin)
 {
 #ifndef OLD_GTK
@@ -2183,8 +2179,6 @@ void file_view_set_editable (windata_t *vwin)
     add_edit_items_to_viewbar(vwin);
 }
 
-/* ........................................................... */
-
 static gint query_save_text (GtkWidget *w, GdkEvent *event, 
 			     windata_t *vwin)
 {
@@ -2195,11 +2189,11 @@ static gint query_save_text (GtkWidget *w, GdkEvent *event,
 	if (resp == GRETL_CANCEL) {
 	    return TRUE;
 	}
+
 	if (resp == GRETL_YES) {
 	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
 		buf_edit_save(NULL, vwin);
-	    }
-	    else if (vwin->role == EDIT_SCRIPT) {
+	    } else if (vwin->role == EDIT_SCRIPT) {
 		auto_save_script(vwin);
 	    }
 	}
@@ -2207,8 +2201,6 @@ static gint query_save_text (GtkWidget *w, GdkEvent *event,
 
     return FALSE;
 }
-
-/* ........................................................... */
 
 windata_t *edit_buffer (char **pbuf, int hsize, int vsize, 
 			char *title, int role) 
@@ -2407,8 +2399,6 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     return 0;
 }
 
-/* ........................................................... */
-
 static void auto_save_script (windata_t *vwin)
 {
     FILE *fp;
@@ -2436,10 +2426,6 @@ static void auto_save_script (windata_t *vwin)
     fprintf(fp, "%s", savestuff);
     g_free(savestuff); 
     fclose(fp);
-
-    if (!unsaved) {
-	infobox(_("script saved"));
-    }
 
     mark_content_saved(vwin);
 }
@@ -3369,8 +3355,6 @@ static void add_VAR_menu_items (windata_t *vwin)
     }
 }
 
-/* ........................................................... */
-
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data)
 {
@@ -3426,8 +3410,6 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 
     return FALSE;
 }
-
-/* ........................................................... */
 
 int validate_varname (const char *varname)
 {

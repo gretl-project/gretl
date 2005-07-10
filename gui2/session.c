@@ -47,7 +47,7 @@
 # include <gdk-pixbuf/gdk-pixbuf.h>
 #endif
 
-static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
+static void auto_save_gp (windata_t *vwin);
 
 #include "../pixmaps/model.xpm"
 #include "../pixmaps/boxplot.xpm"
@@ -652,7 +652,6 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
 {
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
-    gchar *buf;
 
     if (pmod == NULL) {
 	return;
@@ -669,10 +668,6 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
 	return;
     }
 
-    buf = g_strdup_printf(_("%s saved"), pmod->name);
-    infobox(buf);
-    g_free(buf);
-
     session_changed(1);
 
     /* close model window? */
@@ -687,7 +682,6 @@ void remember_var (gpointer data, guint close, GtkWidget *widget)
 {
     windata_t *vwin = (windata_t *) data;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-    gchar *buf;
 
     if (var == NULL) return;
 
@@ -701,10 +695,6 @@ void remember_var (gpointer data, guint close, GtkWidget *widget)
     if (real_add_var_to_session(var)) {
 	return;
     }
-
-    buf = g_strdup_printf(_("%s saved"), gretl_VAR_get_name(var));
-    infobox(buf);
-    g_free(buf);
 
     session_changed(1);
 
@@ -1438,7 +1428,7 @@ static void open_gui_var (gui_obj *gobj)
 	return;
     }
 
-    gretl_VAR_print(var, datainfo, OPT_NONE, prn); /* FIXME */
+    gretl_VAR_print(var, datainfo, OPT_NONE, prn);
     view_buffer(prn, 78, 450, gobj->name, VAR, var);
 }
 
@@ -3076,70 +3066,58 @@ static gui_obj *gui_object_new (gchar *name, int sort)
 
 #ifdef OLD_GTK
 
-static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
+static void auto_save_gp (windata_t *vwin)
 {
     FILE *fp;
-    char msg[MAXLEN];
-    gchar *savestuff;
-    windata_t *vwin = (windata_t *) data;
+    gchar *buf;
 
     if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
-	sprintf(msg, _("Couldn't write to %s"), vwin->fname);
-	errbox(msg); 
-	return;
-    }
-
-    savestuff = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
-    fprintf(fp, "%s", savestuff);
-    g_free(savestuff); 
-    fclose(fp);
-
-    if (!quiet) {
-	infobox(_("plot commands saved"));
+	buf = g_strdup_printf(_("Couldn't write to %s"), vwin->fname);
+	errbox(buf); 
+	g_free(buf);
+    } else {
+	buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
+	fprintf(fp, "%s", buf);
+	g_free(buf); 
+	fclose(fp);
     }
 }
 
 #else 
 
-static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
+static void auto_save_gp (windata_t *vwin)
 {
     FILE *fp;
-    gchar *msg, *savestuff;
-    windata_t *vwin = (windata_t *) data;
+    gchar *buf;
 # ifdef ENABLE_NLS
     gchar *trbuf;
 # endif
 
-    savestuff = textview_get_text(GTK_TEXT_VIEW(vwin->w));
-
-    if (savestuff == NULL) return;
+    buf = textview_get_text(GTK_TEXT_VIEW(vwin->w));
+    if (buf == NULL) return;
 
     if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
-	msg = g_strdup_printf(_("Couldn't write to %s"), vwin->fname);
-	errbox(msg); 
-	g_free(msg);
-	g_free(savestuff);
+	g_free(buf);
+	buf = g_strdup_printf(_("Couldn't write to %s"), vwin->fname);
+	errbox(buf); 
+	g_free(buf);
 	return;
     }
 
 # ifdef ENABLE_NLS
-    trbuf = force_locale_from_utf8(savestuff);
+    trbuf = force_locale_from_utf8(buf);
     if (trbuf != NULL) {
 	fputs(trbuf, fp);
 	g_free(trbuf);
     } else {
-	fputs(savestuff, fp);
+	fputs(buf, fp);
     }
 # else
-    fputs(savestuff, fp);
+    fputs(buf, fp);
 # endif
 
-    g_free(savestuff); 
+    g_free(buf); 
     fclose(fp);
-
-    if (!quiet) {
-	infobox(_("plot commands saved"));
-    }
 }
 
 #endif /* OLD_GTK */
@@ -3189,7 +3167,7 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
     gchar *buf = NULL;
     windata_t *vwin = (windata_t *) data;
 
-    auto_save_gp(data, 1, NULL);
+    auto_save_gp(vwin);
 
     buf = g_strdup_printf("gnuplot -persist \"%s\"", vwin->fname);
 
@@ -3211,7 +3189,7 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
     gchar *tmpfile;
 # endif
 
-    auto_save_gp(data, 1, NULL);
+    auto_save_gp(vwin);
 
 # ifdef G_OS_WIN32
     tmpfile = add_pause_to_plotfile(vwin->fname);
@@ -3239,7 +3217,7 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 
 void save_plot_commands_callback (GtkWidget *w, gpointer p)
 {
-    auto_save_gp(p, 0, NULL);
+    auto_save_gp((windata_t *) p);
 }
 
 static void open_gui_graph (gui_obj *gobj)

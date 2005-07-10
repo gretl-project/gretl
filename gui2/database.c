@@ -403,10 +403,6 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
     }
 
     register_data(NULL, NULL, 0);
-
-    if (!err) {
-	infobox(_("Series imported OK")); 
-    }
 }
 
 /* ........................................................... */

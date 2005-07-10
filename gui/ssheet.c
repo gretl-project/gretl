@@ -513,9 +513,7 @@ static void get_data_from_sheet (void)
 
     if (missobs) {
 	infobox(_("Warning: there were missing observations"));
-    } else {
-	infobox(_("Data updated OK"));
-    }
+    } 
 
     sheet_modified = 0;
 }
