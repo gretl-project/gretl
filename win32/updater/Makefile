@@ -3,7 +3,7 @@
 
 include ../config.mk
 
-CC = $(MGW_PREFIX)-gcc -O2 -Wall -mms-bitfields
+CC = $(MGW_PREFIX)gcc -O2 -Wall -mms-bitfields
 CFLAGS = -DUPDATER -I../../lib/src -I../../gui2 -I../../win32/updater
 SRC = update_client.c webget.c untgz.c progress_bar.c
 OBJ = update_client.o webget.o untgz.o progress_bar.o

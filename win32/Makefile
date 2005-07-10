@@ -225,7 +225,7 @@ MOFILES = mo/de.po mo/es.mo mo/fr.mo mo/it.mo mo/pl.mo mo/rw.mo mo/tr.mo
 # targets begin
 
 all: buildstamp dirs dlls/libprob.dll dlls/libgretl.dll dlls/libgtkextra-lite.dll \
-	$(PLUGINS) gretlcli.exe gretlw32.exe $(MOFILES)
+	$(PLUGINS) gretlcli.exe gretlw32.exe $(MOFILES) gretl_updater.exe
 
 gretlcli.exe: $(CLIOBJ)
 	$(CC) -o $@ $^ $(LIBS) $(CLI_LIBS) -lz -lmingwex -s
