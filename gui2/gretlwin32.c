@@ -600,7 +600,7 @@ static char *fname_from_fullname (const char *fullname)
     return fname;
 }
 
-int email_file (const char *fullname)
+int email_file (char *fullname)
 {
     HINSTANCE mapilib = NULL;
     LPMAPISENDDOCUMENTS send_docs = NULL;
@@ -615,8 +615,6 @@ int email_file (const char *fullname)
 	    err = 1;
 	} 
     }
-
-    get_base()
 
     if (err) {
 	errbox("Couldn't access Windows MAPI system");
