@@ -197,6 +197,13 @@ static void root_check (void)
 }
 #endif
 
+#ifdef G_OS_WIN32
+static void email_data (gpointer p, guint u, GtkWidget *w)
+{
+    email_file(paths.datfile);
+}
+#endif
+
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
 static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
@@ -260,6 +267,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
       EXPORT_OCTAVE, NULL, GNULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL, GNULL },
+#ifdef G_OS_WIN32
+    { N_("/File/E_mail data to..."), NULL, email_data, 0, NULL, GNULL },
+#endif
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, 
       "<StockItem>", GTK_STOCK_CLEAR },
     { N_("/File/sep0"), NULL, NULL, 0, "<Separator>", GNULL },

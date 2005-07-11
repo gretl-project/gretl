@@ -24,6 +24,7 @@
 #include "textutil.h"
 
 #include <dirent.h>
+#include <mapi.h>
 
 #define HUSH_RUNTIME_WARNINGS
 
@@ -580,4 +581,58 @@ int win_buf_to_clipboard (const char *buf)
     CloseClipboard();
 
     return 0;
+}
+
+static char *fname_from_fullname (const char *fullname)
+{
+    char *fname = NULL;
+    char *p;
+
+    p = strrchr(fullname, '\\');
+    if (p == NULL) {
+	p = strrchr(fullname, '/');
+    }
+
+    if (p != NULL) {
+	fname = gretl_strdup(p + 1);
+    }
+
+    return fname;
+}
+
+int email_file (const char *fullname)
+{
+    HINSTANCE mapilib = NULL;
+    MAPISENDDOCUMENTS send_docs = NULL;
+    int err = 0;
+
+    mapilib = LoadLibrary("MAPI32.DLL");
+    if (mapilib == NULL) {
+	err = 1;
+    } else {
+	send_docs = (MAPISENDDOCUMENTS) GetProcAddress(mapilib, "MAPISendDocuments");
+	if (send_docs == NULL) {
+	    err = 1;
+	} 
+    }
+
+    get_base()
+
+    if (err) {
+	errbox("Couldn't access Windows MAPI system");
+    } else {
+	char *fname = fname_from_fullname(fullname);
+	ULONG sd = send_docs(0L, ";", fullname, fname, 0L);
+
+	if (sd != SUCCESS_SUCCESS && sd != MAPI_E_USER_ABORT) {
+	    errbox("MAPI error sending message");
+	}
+	free(fname);
+    }
+
+    if (mapilib != NULL) {
+	FreeLibrary(mapilib);
+    }
+
+    return err;
 }

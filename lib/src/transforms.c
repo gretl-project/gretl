@@ -125,9 +125,8 @@ make_transform_label (char *label, const char *parent,
 int is_standard_lag (int v, const DATAINFO *pdinfo)
 {
     const char *test = VARLABEL(pdinfo, v);
-    char vname[13];
-    int pm, lag;
-    int ret = 0;
+    char pm, vname[13];
+    int lag, ret = 0;
 
     if (sscanf(test, "= %12[^(](t %c %d)", vname, &pm, &lag) == 3) {
 	ret = 1;

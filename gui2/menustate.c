@@ -88,6 +88,9 @@ void main_menubar_state (gboolean s)
     flip(mdata->ifac, "/File/Save data", s);
     flip(mdata->ifac, "/File/Save data as", s);
     flip(mdata->ifac, "/File/Export data", s);
+#ifdef G_OS_WIN32
+    flip(mdata->ifac, "/File/Email data to...", s);
+#endif
     flip(mdata->ifac, "/File/Create data set", !s);
     flip(mdata->ifac, "/Data", s);
     flip(mdata->ifac, "/Sample", s);
