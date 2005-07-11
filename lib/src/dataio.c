@@ -2420,6 +2420,15 @@ static int compare_ranges (const DATAINFO *pdinfo,
     sd1 = merge_dateton(addinfo->stobs, pdinfo);
     ed1 = merge_dateton(addinfo->endobs, pdinfo);
 
+#if 1
+    fprintf(stderr, "compare_ranges:\n"
+	    " pdinfo->n = %d, addinfo->n = %d\n"
+	    " pdinfo->stobs = '%s', addinfo->stobs = '%s'\n" 
+	    " sd1 = %d, ed1 = %d\n",
+	    pdinfo->n, addinfo->n, pdinfo->stobs, addinfo->stobs,
+	    sd1, ed1);
+#endif
+
     if (sd1 < 0) {
 	fprintf(stderr, "addinfo->stobs: '%s', can't figure\n", 
 		addinfo->stobs);
@@ -2506,8 +2515,12 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err && pdinfo->markers != addinfo->markers) {
-	merge_error(_("Inconsistency in observation markers\n"), prn);
-	err = 1;
+	if (addinfo->n != pdinfo->n) {
+	    merge_error(_("Inconsistency in observation markers\n"), prn);
+	    err = 1;
+	} else if (addinfo->markers && !pdinfo->markers) {
+	    dataset_destroy_obs_markers(addinfo);
+	}
     }
 	
     /* if checks are passed, try merging the data */

@@ -1,13 +1,19 @@
 version 1.4.2, in progress
-- Another XLS importer fix
+- More XLS importer fixes
 - Add seasonal ARMA
-- Add bootstrapped confidence intervals for impulse
-  responses in VAR models
+- Add bootstrapped confidence intervals for impulse responses 
+  in VAR models
 - Add test for multivariate normality of VAR residuals
 - Add autocorrelation test for VAR systems
-- Add printing of cross-equation covariance matrix for
-  VARs
+- Add printing of cross-equation covariance matrix for VARs
 - Add combined plot of residuals for VARs
+- Remove overly verbose notification dialogs
+- Editable windows: show Save button as disabled if there's
+  nothing to be saved
+- Model selection dialog: ensure that the selected regressand 
+  is not also listed among the regressors
+- Graph editing: make some more types of graph editable
+- Main window: don't show generated lags in the list of variables 
 
 06/30/2005 version 1.4.1
 - Fix horrid unnoticed breakage in bhhh_max (broke both arma 

@@ -53,7 +53,8 @@ enum {
     P_URCDIST,
     P_KERNEL,
     P_FRACTAL,
-    P_POISSON
+    P_POISSON,
+    P_MAILER
 } plugin_codes;
 
 struct plugin_info {
@@ -95,7 +96,8 @@ struct plugin_info plugins[] = {
     { P_URCDIST,         "urcdist" },
     { P_KERNEL,          "kernel" },
     { P_FRACTAL,         "fractals" },
-    { P_POISSON,         "poisson" }
+    { P_POISSON,         "poisson" },
+    { P_MAILER,          "mailer" },
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -177,6 +179,9 @@ struct plugin_function plugin_functions[] = {
 
     /* Hurst exponent estimation */
     { "hurst_exponent",    P_FRACTAL },
+
+    /* Send email */
+    { "email_file",    P_MAILER },
 
     /* sentinel */
     { NULL, 0 }

@@ -192,7 +192,7 @@ static void real_set_extra_var (GtkTreeModel *model, GtkTreePath *path,
     gint vnum;
     gchar *vname;
     
-    gtk_tree_model_get (model, iter, 0, &vnum, 1, &vname, -1);
+    gtk_tree_model_get(model, iter, 0, &vnum, 1, &vname, -1);
     gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), vname);
     g_free(vname);
     g_object_set_data(G_OBJECT(sr->extra[0]), "data",
@@ -234,11 +234,40 @@ static void set_factor_callback (GtkWidget *w, selector *sr)
 					 sr);
 }
 
+static void remove_specified_var_from_right (selector *sr, gint ynum)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(sr->rightvars);
+    GtkTreeModel *model = gtk_tree_view_get_model(view);
+    GtkTreeIter iter;
+    gint rnum;
+
+    if (gtk_tree_model_get_iter_first(model, &iter)) {
+	gtk_tree_model_get(model, &iter, 0, &rnum, -1);
+	if (rnum == ynum) {
+	    gtk_list_store_remove(GTK_LIST_STORE(model), &iter); 
+	} else {   
+	    while (gtk_tree_model_iter_next(model, &iter)) {
+		gtk_tree_model_get(model, &iter, 0, &rnum, -1);
+		if (rnum == ynum) {
+		    gtk_list_store_remove(GTK_LIST_STORE(model), &iter);
+		    break;
+		}
+	    }
+	}
+    }
+}
+
 static void set_dependent_var_from_active (selector *sr)
 {
     gint i = sr->active_var;
 
     if (sr->depvar == NULL) return;
+
+    /* models: if we select foo as regressand, remove it from the
+       list of regressors if need be */
+    if (MODEL_CODE(sr->code)) {
+	remove_specified_var_from_right(sr, i);
+    }
 
     gtk_entry_set_text(GTK_ENTRY(sr->depvar), datainfo->varname[i]);
     g_object_set_data(G_OBJECT(sr->depvar), "data",
@@ -412,6 +441,16 @@ static void add_auxvar (GtkTreeModel *model, GtkTreePath *path,
 static void add_to_right (GtkTreeModel *model, GtkTreePath *path,
 			  GtkTreeIter *iter, selector *sr)
 {
+    /* models: don't add the regressand to the list of regressors */
+    if (MODEL_CODE(sr->code)) {
+	gint xnum, ynum;
+    
+	gtk_tree_model_get(model, iter, 0, &xnum, -1);
+	ynum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->depvar), "data"));
+	if (xnum == ynum) {
+	    return;
+	}
+    }
     real_add_generic(model, iter, sr, SR_RIGHTVARS);
 }
 
@@ -457,7 +496,7 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
 {
     GtkTreeView *view = GTK_TREE_VIEW(data);
     GtkTreeModel *model = gtk_tree_view_get_model(view);
-    GtkTreeSelection *selection = gtk_tree_view_get_selection (view);
+    GtkTreeSelection *selection = gtk_tree_view_get_selection(view);
     GtkTreePath *path;
     GtkTreeIter iter, last;
     selector *sr;

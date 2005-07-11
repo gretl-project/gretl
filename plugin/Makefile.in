@@ -38,8 +38,7 @@ ifeq ($(INSTALL_DATA),)
   INSTALL_DATA = $(INSTALL) -m 644
 endif
 
-
-VPATH = $(topsrc)/plugin:$(topsrc)/tests
+VPATH = $(topsrc)/plugin:$(topsrc)/tests:$(topsrc)/plugin/mpack
 
 override CFLAGS += -I.. -I$(topsrc)/gui2 -DHAVE_CONFIG_H
 
@@ -111,6 +110,7 @@ GUI_DEPENDENT_PLUGINS = excel_import.la \
 	progress_bar.la \
 	leverage.la \
 	logistic.la \
+	mailer.la \
 	pca.la 
 
 ifeq ($(build_gui),yes)
@@ -232,6 +232,9 @@ garch.la: garch.lo fcp.lo
 
 audio.la: audio.lo midi_utils.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(AUDIO_LIBS)
+
+mailer.la: mailer.lo codes.lo encode.lo md5c.lo
+	$(LINK) -o $@ $^ $(GTK_LIBS)
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib

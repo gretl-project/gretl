@@ -202,6 +202,20 @@ static void email_data (gpointer p, guint u, GtkWidget *w)
 {
     email_file(paths.datfile);
 }
+#else
+static void email_data (gpointer p, guint u, GtkWidget *w)
+{
+    int (*email_file) (const char *, const char *, char *);
+    void *handle;
+
+    email_file = gui_get_plugin_function("email_file", &handle);
+    if (email_file == NULL) {
+        return;
+    }
+    
+    email_file(paths.datfile, paths.userdir, errtext);
+    close_plugin(handle);
+}
 #endif
 
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
@@ -267,9 +281,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
       EXPORT_OCTAVE, NULL, GNULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL, GNULL },
-#ifdef G_OS_WIN32
     { N_("/File/E_mail data to..."), NULL, email_data, 0, NULL, GNULL },
-#endif
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, 
       "<StockItem>", GTK_STOCK_CLEAR },
     { N_("/File/sep0"), NULL, NULL, 0, "<Separator>", GNULL },

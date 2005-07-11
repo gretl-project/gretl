@@ -119,11 +119,31 @@ static void select_factor_callback (GtkWidget *w, selector *sr)
     }
 }
 
+static void remove_specified_var_from_right (selector *sr, gint ynum)
+{
+    gint i, nrows = GTK_CLIST(sr->rightvars)->rows; 
+    gchar *rnum;
+
+    for (i=0; i<nrows; i++) {
+	gtk_clist_get_text(GTK_CLIST(sr->rightvars), i, 0, &rnum);
+	if (ynum == atoi(rnum)) {
+	    gtk_clist_remove(GTK_CLIST(sr->rightvars), i);
+	    break;
+	}
+    }
+}
+
 static void set_dependent_var (gint i, selector *sr)
 {
     gchar *vnum, *vname;
 
     if (sr->depvar == NULL) return;
+
+    /* models: if we select foo as regressand, remove it from the
+       list of regressors if need be */
+    if (MODEL_CODE(sr->code)) {
+	remove_specified_var_from_right(sr, i);
+    }
 
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &vnum); 
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 1, &vname);
@@ -187,7 +207,7 @@ static int selection_at_max (selector *sr, int nsel)
     return ret;
 }
 
-static void add_var_on_right (gint i, selector *sr)
+static void add_to_right (gint i, selector *sr)
 {
     gchar *row[2];
     gint j, rows;
@@ -199,6 +219,16 @@ static void add_var_on_right (gint i, selector *sr)
     rows = GTK_CLIST(sr->rightvars)->rows;
 
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &row[0]);
+
+    /* models: don't add the regressand to the list of regressors */
+    if (MODEL_CODE(sr->code)) {
+	gint ynum;
+
+	ynum = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->depvar)));
+	if (ynum == atoi(row[0])) {
+	    return;
+	}
+    }    
 
     for (j=0; j<rows; j++) {
 	gchar *test;
@@ -235,7 +265,7 @@ static void add_all_to_right_callback (GtkWidget *w, selector *sr)
     mylist = GTK_CLIST(sr->varlist)->selection;
 
     if (mylist != NULL) {
-	g_list_foreach(mylist, (GFunc) add_var_on_right, sr);
+	g_list_foreach(mylist, (GFunc) add_to_right, sr);
     }
 }
 
@@ -249,7 +279,7 @@ static void add_to_right_callback (GtkWidget *w, selector *sr)
     mylist = GTK_CLIST(sr->varlist)->selection;
 
     if (mylist != NULL) {
-	g_list_foreach(mylist, (GFunc) add_var_on_right, sr);
+	g_list_foreach(mylist, (GFunc) add_to_right, sr);
     }
 }
 
@@ -258,7 +288,7 @@ static void set_vars_from_main (selector *sr)
     GList *mylist = GTK_CLIST(mdata->listbox)->selection;
 
     if (mylist != NULL) {
-	g_list_foreach(mylist, (GFunc) add_var_on_right, sr);
+	g_list_foreach(mylist, (GFunc) add_to_right, sr);
     }
 }
 
