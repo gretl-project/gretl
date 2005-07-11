@@ -603,14 +603,14 @@ static char *fname_from_fullname (const char *fullname)
 int email_file (const char *fullname)
 {
     HINSTANCE mapilib = NULL;
-    MAPISENDDOCUMENTS send_docs = NULL;
+    LPMAPISENDDOCUMENTS send_docs = NULL;
     int err = 0;
 
     mapilib = LoadLibrary("MAPI32.DLL");
     if (mapilib == NULL) {
 	err = 1;
     } else {
-	send_docs = (MAPISENDDOCUMENTS) GetProcAddress(mapilib, "MAPISendDocuments");
+	send_docs = (LPMAPISENDDOCUMENTS) GetProcAddress(mapilib, "MAPISendDocuments");
 	if (send_docs == NULL) {
 	    err = 1;
 	} 
