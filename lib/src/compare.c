@@ -1641,8 +1641,11 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	xx = 0.948 * sqrt((double) (T-K));
 	yy = 2.0 * xx / (T-K);
 
-	pputs(prn, _("Cumulated sum of scaled residuals\n"
-		"('*' indicates a value outside of 95%% confidence band):\n\n"));
+	pputs(prn, _("Cumulated sum of scaled residuals"));
+	pputc(prn, '\n');
+	pputs(prn, /* xgettext:no-c-format */
+	      _("('*' indicates a value outside of 95% confidence band)"));
+	pputs(prn, "\n\n");
     
 	for (j=0; j<n_est; j++) {
 	    W[j] = 0.0;
@@ -1688,7 +1691,6 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    /* xgettext:no-c-format */
 		    I_("CUSUM plot with 95% confidence band"));
 	    fputs("set nokey\n", fq);
-
 	    fprintf(fq, "plot \\\n%g+%g*x w l 1, \\\n", xx - K*yy, yy);
 	    fprintf(fq, "%g-%g*x w l 1, \\\n", -xx + K*yy, yy);
 	    fputs("'-' using 1:2 w lp\n", fq);

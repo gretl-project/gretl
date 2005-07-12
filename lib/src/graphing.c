@@ -1825,7 +1825,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	    propn = normal_pvalue_1((freq->endpt[i-1] - freq->xbar)/freq->sdx) -
 		normal_pvalue_1((freq->endpt[i] - freq->xbar)/freq->sdx);
 	    lambda = 1.0 / (propn * freq->n * sqrt(2 * M_PI) * freq->sdx);
-	    /* fputs("# protected lines = 4\n", fp); */
+	    fputs("# literal lines = 4\n", fp);
 	    fprintf(fp, "sigma = %g\n", freq->sdx);
 	    fprintf(fp, "mu = %g\n", freq->xbar);
 
@@ -1861,7 +1861,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	    height = pow(xx, alpha - 1.0) * exp(-xx / beta) /
 		(cephes_gamma(alpha) * pow(beta, alpha));
 	    lambda = height / (freq->n * propn);
-	    /* fputs("# protected lines = 4\n", fp); */
+	    fputs("# literal lines = 4\n", fp);
 	    fprintf(fp, "beta = %g\n", beta);
 	    fprintf(fp, "alpha = %g\n", alpha);
 	    plotmin = 0.0;

@@ -940,6 +940,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     /* get the preamble and "set" lines */
     labelno = 0;
     while ((got = fgets(gpline, MAXLEN - 1, fp))) {
+	int litlines = 0;
+
 	if (!strncmp(gpline, "# timeseries", 12)) {
 	    int pd;
 
@@ -949,17 +951,14 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    spec->flags |= GPTSPEC_TS;
 	    continue;
 	}
-
-	if (!strncmp(gpline, "# freq", 6) ||
-	    !strncmp(gpline, "# peri", 6)) {
-	    if (spec->code != PLOT_FREQ_SIMPLE) {
-		for (i=0; i<4; i++) {
-		    if (!fgets(gpline, MAXLEN - 1, fp)) {
-			errbox(_("Plot file is corrupted"));
-		    } else {
-			top_n_tail(gpline);
-			spec->literal[i] = g_strdup(gpline);
-		    }
+	
+	if (sscanf(gpline, "# literal lines = %d", &litlines)) {
+	    for (i=0; i<litlines; i++) {
+		if (!fgets(gpline, MAXLEN - 1, fp)) {
+		    errbox(_("Plot file is corrupted"));
+		} else {
+		    top_n_tail(gpline);
+		    spec->literal[i] = g_strdup(gpline);
 		}
 	    }
 	    continue;

@@ -1673,6 +1673,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     if (do_graph && gnuplot_init(PLOT_PERIODOGRAM, &fq) == 0) {
 	char titlestr[80];
 
+	fputs("# literal lines = 4\n", fq);
 	fputs("set xtics nomirror\n", fq); 
 
 	if (pdinfo->pd == 4) {
@@ -1778,8 +1779,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
     if (opt == 0) {
 	if (fract_int_GPH(nT, hhat, omega, prn)) {
-	    pprintf(prn, "\n%s\n",
-		    _("Fractional integration test failed"));
+	    pprintf(prn, "\n%s\n", _("Fractional integration test failed"));
 	}
 	fract_int_LWE((const double **) *pZ, varno, t1, t2, prn);
     }
