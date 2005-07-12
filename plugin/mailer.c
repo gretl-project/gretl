@@ -34,6 +34,49 @@
 
 extern int errno;
 
+#if GTK_MAJOR_VERSION < 2
+
+enum {
+    GTK_STOCK_OK,
+    GTK_STOCK_CANCEL
+};
+
+# define G_OBJECT(o)                    GTK_OBJECT(o)
+# define g_object_set_data(o,s,d)       gtk_object_set_data(o,s,d)
+# define g_object_get_data(o,s)         gtk_object_get_data(o,s)
+# define G_CALLBACK(f)                  GTK_SIGNAL_FUNC(f)
+# define g_signal_connect(o,s,f,p)      gtk_signal_connect(o,s,f,p)
+
+GtkWidget *standard_button (int code)
+{
+    const char *button_strings[] = {
+	N_("OK"),
+	N_("Cancel")
+    };
+
+    return gtk_button_new_with_label(_(button_strings[code]));
+}
+
+static gint entry_activate (GtkWidget *w, GdkEventKey *key, gpointer p)
+{
+    GtkWidget *top = gtk_widget_get_toplevel(w);
+
+    gtk_window_activate_default(GTK_WINDOW(top));
+    return FALSE;
+}
+
+void gtk_entry_set_activates_default (GtkEntry *entry, gboolean setting)
+{
+    gtk_signal_connect(GTK_OBJECT(entry), "activate", 
+		       GTK_SIGNAL_FUNC(entry_activate), NULL);
+}
+
+#else
+
+# define standard_button(s) gtk_button_new_from_stock(s)
+
+#endif /* alternate gtk versions */
+
 struct mail_info {
     GtkWidget *dlg;
     GtkWidget *recip_entry;
@@ -80,13 +123,11 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_info *minfo)
     gtk_widget_destroy(minfo->dlg);
 }
 
-#define standard_button(s) gtk_button_new_from_stock(s)
-
 static void set_dialog_border_widths (GtkWidget *dlg)
 {
     int w1 = 10, w2 = 5;
 
-#ifdef OLD_GTK
+#if GTK_MAJOR_VERSION < 2
     gtk_container_border_width(GTK_CONTAINER 
 			       (GTK_DIALOG(dlg)->vbox), w1);
     gtk_container_border_width(GTK_CONTAINER 
@@ -97,15 +138,22 @@ static void set_dialog_border_widths (GtkWidget *dlg)
     gtk_container_set_border_width(GTK_CONTAINER 
 				   (GTK_DIALOG(dlg)->action_area), w2);
 #endif
-
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dlg)->vbox), w2);
 }
 
-static int mail_to_dialog (char **recip, char **subj, char **note)
+static int 
+mail_to_dialog (const char *fname, char **recip, char **subj, char **note)
 {
-    GtkWidget *lbl, *hbox;
+    const gchar *lbls[] = {
+	N_("To:"),
+	N_("Subject:"),
+	N_("Note:")
+    };
+    GtkWidget *tbl, *lbl, *hbox;
+    const char *short_fname, *p;
+    gchar *attach_str;
     struct mail_info minfo;
-    int err = 0;
+    int i, err = 0;
 
     minfo.dlg = gtk_dialog_new();
     minfo.recip = recip;
@@ -119,45 +167,43 @@ static int mail_to_dialog (char **recip, char **subj, char **note)
     gtk_window_set_title(GTK_WINDOW(minfo.dlg), _("gretl: send mail"));
     set_dialog_border_widths(minfo.dlg);
     gtk_window_set_position(GTK_WINDOW(minfo.dlg), GTK_WIN_POS_MOUSE);
+    gtk_widget_set_usize(minfo.dlg, 390, 185);
 
-    /* recipient */
-    hbox = gtk_hbox_new(FALSE, 0);
-    lbl = gtk_label_new (_("To:"));
-    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 0);
-    gtk_widget_show(lbl);
-    minfo.recip_entry = gtk_entry_new();
-    gtk_box_pack_start(GTK_BOX(hbox), minfo.recip_entry, FALSE, FALSE, 0);
-    gtk_widget_show(minfo.recip_entry); 
-    gtk_entry_set_activates_default(GTK_ENTRY(minfo.recip_entry), TRUE);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(minfo.dlg)->vbox), 
-		       hbox, FALSE, FALSE, 0);
-    gtk_widget_show(hbox); 
+    tbl = gtk_table_new(3, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_container_add(GTK_CONTAINER(GTK_DIALOG(minfo.dlg)->vbox), tbl);
+   
+    for (i=0; i<3; i++) {
+	GtkWidget *w;
 
-    /* subject */
-    hbox = gtk_hbox_new(FALSE, 0);
-    lbl = gtk_label_new (_("Subject:"));
-    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 0);
-    gtk_widget_show(lbl);
-    minfo.subj_entry = gtk_entry_new();
-    gtk_box_pack_start(GTK_BOX(hbox), minfo.subj_entry, FALSE, FALSE, 0);
-    gtk_widget_show(minfo.subj_entry); 
-    gtk_entry_set_activates_default(GTK_ENTRY(minfo.subj_entry), TRUE);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(minfo.dlg)->vbox), 
-		       hbox, FALSE, FALSE, 0);
-    gtk_widget_show(hbox); 
+	lbl = gtk_label_new(_(lbls[i]));
+	gtk_table_attach_defaults(GTK_TABLE (tbl), lbl, 0, 1, i, i+1);
 
-    /* note */
-    hbox = gtk_hbox_new(FALSE, 0);
-    lbl = gtk_label_new (_("Note:"));
-    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 0);
-    gtk_widget_show(lbl);
-    minfo.note_entry = gtk_entry_new();
-    gtk_box_pack_start(GTK_BOX(hbox), minfo.note_entry, FALSE, FALSE, 0);
-    gtk_widget_show(minfo.note_entry); 
-    gtk_entry_set_activates_default(GTK_ENTRY(minfo.note_entry), TRUE);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(minfo.dlg)->vbox), 
-		       hbox, FALSE, FALSE, 0);
-    gtk_widget_show(hbox); 
+	w = gtk_entry_new();
+	gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, i, i+1);
+
+	if (i == 0) {
+	    minfo.recip_entry = w;
+	} else if (i == 1) {
+	    minfo.subj_entry = w;
+	} else {
+	    minfo.note_entry = w;
+	}
+    }
+
+    short_fname = fname;
+    if ((p = strrchr(fname, '/')) != NULL) {
+	short_fname = p + 1;
+    }
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    attach_str = g_strdup_printf(_("sending %s as attachment"), short_fname);
+    lbl = gtk_label_new(attach_str);
+    g_free(attach_str);
+    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(minfo.dlg)->vbox), hbox, FALSE, FALSE, 5);
 
     /* Create the "OK" button */
     minfo.ok = standard_button(GTK_STOCK_OK);
@@ -167,7 +213,6 @@ static int mail_to_dialog (char **recip, char **subj, char **note)
     g_signal_connect(G_OBJECT(minfo.ok), "clicked", 
 		     G_CALLBACK(finalize_mail_settings), &minfo);
     gtk_widget_grab_default(minfo.ok);
-    gtk_widget_show(minfo.ok);
 
     /* And a Cancel button */
     minfo.cancel = standard_button(GTK_STOCK_CANCEL);
@@ -176,9 +221,8 @@ static int mail_to_dialog (char **recip, char **subj, char **note)
 		       minfo.cancel, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(minfo.cancel), "clicked", 
 		     G_CALLBACK(finalize_mail_settings), &minfo);
-    gtk_widget_show(minfo.cancel);
 
-    gtk_widget_show(minfo.dlg);
+    gtk_widget_show_all(minfo.dlg);
     gtk_window_set_modal(GTK_WINDOW(minfo.dlg), TRUE);
     gtk_main();
 
@@ -191,8 +235,8 @@ static void sendmail (FILE *infile, char *recipient)
     int status;
     int pid;
 
-    args[0] = "-oi";
-    args[1] = "sendmail";
+    args[0] = "sendmail";
+    args[1] = "-oi";
     args[2] = recipient;
     args[3] = NULL;
 
@@ -212,8 +256,8 @@ static void sendmail (FILE *infile, char *recipient)
 
     dup2(fileno(infile), 0);
     fclose(infile);
-    execv("/usr/lib/sendmail", args);
     execv("/usr/sbin/sendmail", args);
+    execv("/usr/lib/sendmail", args);
     perror("execv");
     _exit(1);
 }
@@ -269,7 +313,7 @@ int email_file (const char *fname, const char *userdir, char *errmsg)
     }
 
     if (!err) {
-	err = mail_to_dialog(&recipient, &subject, &note);
+	err = mail_to_dialog(fname, &recipient, &subject, &note);
     }
 
     if (!err) {

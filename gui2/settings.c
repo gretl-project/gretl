@@ -776,8 +776,6 @@ static gboolean takes_effect_on_restart (void)
     return FALSE;
 }
 
-/* .................................................................. */
-
 static GList *get_settings_list (void *var)
 {
     char *hc_strs[] = {
@@ -805,8 +803,6 @@ static GList *get_settings_list (void *var)
 
     return list;
 }
-
-/* .................................................................. */
 
 static void get_table_sizes (int page, int *b_count, int *s_count)
 {

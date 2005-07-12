@@ -5244,10 +5244,18 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     err = latex_compile(texshort);
     if (err == LATEX_OK) {
 #ifdef G_OS_WIN32
-	sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);
-	if (WinExec(tmp, SW_SHOWNORMAL) < 32) {
-	    DWORD dw = GetLastError();
-	    win_show_error(dw);
+	if (!strncmp(latex, "pdf", 3)) {
+	    sprintf(tmp, "\"%s.pdf\"", texbase);
+	    if ((int) ShellExecute(NULL, "open", tmp, NULL, NULL, SW_SHOW) <= 32) {
+		DWORD dw = GetLastError();
+		win_show_error(dw);
+	    }
+	} else {
+	    sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);
+	    if (WinExec(tmp, SW_SHOWNORMAL) < 32) {
+		DWORD dw = GetLastError();
+		win_show_error(dw);
+	    }
 	}
 #else
 	gretl_fork(viewdvi, texbase);

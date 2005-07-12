@@ -41,8 +41,6 @@ extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
 extern GtkWidget *active_edit_text;
 
-/* ......................................................... */
-
 static void doubleclick_action (windata_t *win)
 {
     switch (win->role) {
@@ -210,8 +208,6 @@ void unselectrow (GtkCList *clist, gint row, gint column,
 
 #endif /* old versus new gtk */
 
-/* ........................................................... */
-
 void open_data (gpointer data, guint code, GtkWidget *widget)
 {
     if (dataset_locked()) {
@@ -254,8 +250,6 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     }
 }
 
-/* ........................................................... */
-
 void open_script (gpointer data, guint action, GtkWidget *widget)
 {
     if (action == OPEN_SCRIPT) {
@@ -264,8 +258,6 @@ void open_script (gpointer data, guint action, GtkWidget *widget)
 	file_selector(_("Open session file"), action, NULL);
     }
 }
-
-/* ........................................................... */
 
 void file_save (gpointer data, guint file_code, GtkWidget *widget)
 {
@@ -314,14 +306,10 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     }
 }
 
-/* ........................................................... */
-
 void dummy_call (void)
 {
     errbox(_("Sorry, this item not yet implemented!"));
 }
-
-/* ........................................................... */
 
 void print_report (gpointer data, guint unused, GtkWidget *widget)
 {
@@ -335,8 +323,6 @@ void print_report (gpointer data, guint unused, GtkWidget *widget)
 		DATA_REPORT, NULL);
 }
 
-/* ........................................................... */
-
 void edit_header (gpointer data, guint unused, GtkWidget *widget)
 {
     if (data_status & BOOK_DATA) {
@@ -346,8 +332,6 @@ void edit_header (gpointer data, guint unused, GtkWidget *widget)
 		    EDIT_HEADER);
     }
 }
-
-/* ........................................................... */
 
 void fit_resid_callback (gpointer data, guint code, GtkWidget *widget)
 {
@@ -451,8 +435,6 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
     }
 }
 
-/* ........................................................... */
-
 void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 {
     char title[64], query[MAXLABEL], defstr[MAXLEN];
@@ -525,8 +507,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 		action, varclick, 0);   
 }
 
-/* ........................................................... */
-
 void text_copy_callback (GtkWidget *w, gpointer data)
 {
     window_copy(data, GRETL_FORMAT_SELECTION, w);
@@ -547,21 +527,15 @@ void text_undo_callback (GtkWidget *w, gpointer data)
     text_undo(data, 0, w);
 }
 
-/* ........................................................... */
-
 void run_script_callback (GtkWidget *w, gpointer data)
 {
     do_run_script(data, SCRIPT_EXEC, w);
 }
 
-/* ........................................................... */
-
 void gp_send_callback (GtkWidget *w, gpointer data)
 {
     gp_to_gnuplot(data, 0, w);
 }
-
-/* ........................................................... */
 
 void file_save_callback (GtkWidget *w, gpointer data)
 {
@@ -591,8 +565,6 @@ void file_save_callback (GtkWidget *w, gpointer data)
     file_save(data, u, w);
 }
 
-/* ........................................................... */
-
 void add_random_callback (gpointer data, guint code, GtkWidget *widget) 
 {
     if (code == GENR_UNIFORM) {
@@ -610,8 +582,6 @@ void add_random_callback (gpointer data, guint code, GtkWidget *widget)
 		     GENR_NORMAL, GENR, 0);
     }
 }
-
-/* ........................................................... */
 
 static void name_first_ssheet_var (GtkWidget *widget, dialog_t *dlg) 
 {
@@ -742,3 +712,27 @@ void do_nistcheck (gpointer p, guint v, GtkWidget *w)
     g_free(fname);
 }
 
+#ifdef G_OS_WIN32
+
+void email_data (gpointer p, guint u, GtkWidget *w)
+{
+    email_file(paths.datfile);
+}
+
+#else
+
+void email_data (gpointer p, guint u, GtkWidget *w)
+{
+    int (*email_file) (const char *, const char *, char *);
+    void *handle;
+
+    email_file = gui_get_plugin_function("email_file", &handle);
+    if (email_file == NULL) {
+        return;
+    }
+    
+    email_file(paths.datfile, paths.userdir, errtext);
+    close_plugin(handle);
+}
+
+#endif

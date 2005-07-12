@@ -71,10 +71,8 @@ void add_random_callback (gpointer data, guint code, GtkWidget *widget);
 
 void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget);
 
-#if 0
-void start_panel_callback (gpointer data, guint u, GtkWidget *widget);
-#endif
-
 void do_nistcheck (gpointer p, guint u, GtkWidget *w);
+
+void email_data (gpointer p, guint u, GtkWidget *w);
 
 #endif /* CALLBACKS_H */
