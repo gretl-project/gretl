@@ -197,7 +197,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
       EXPORT_OCTAVE, NULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL },
-    { N_("/File/E_mail data set to..."), NULL, email_data, 0, NULL },
+    { N_("/File/Send To..."), NULL, email_data, 0, NULL },
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, NULL },
     { N_("/File/sep0"), NULL, NULL, 0, "<Separator>" },
 
