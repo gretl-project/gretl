@@ -1460,7 +1460,7 @@ void gretl_stock_icons_init (void)
 	g_object_unref(pbuf);
 	gtk_icon_set_add_source(set, source);
 	gtk_icon_source_free(source);
-	gtk_icon_factory_add(ifac, GRETL_STOCK_MAIL, set);
+	gtk_icon_factory_add(ifac, GRETL_STOCK_TEX, set);
 	gtk_icon_set_unref(set);
 
 	set = gtk_icon_set_new();
