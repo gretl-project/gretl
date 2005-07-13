@@ -1314,24 +1314,25 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B)
     int r = B->rows;
     int s = B->cols;
     int i, j, k, l;
+    int ioff, joff;
     int Ki, Kj;
     
     K = real_gretl_matrix_alloc(p * r, q * s, 0);
 
     if (K != NULL) {
 	for (i=0; i<p; i++) {
-	    Ki = i * r;
+	    ioff = i * r;
 	    for (j=0; j<q; j++) {
 		/* block ij is an r * s matrix, a_{ij} * B */
 		aij = A->val[mdx(A, i, j)];
-		Kj = j * s;
+		joff = j * s;
 		for (k=0; k<r; k++) {
+		    Ki = ioff + k;
 		    for (l=0; l<s; l++) {
 			bkl = B->val[mdx(B, k, l)];
+			Kj = joff + l;
 			K->val[mdx(K, Ki, Kj)] = aij * bkl;
-			Kj++;
 		    }
-		    Ki++;
 		}
 	    }
 	}

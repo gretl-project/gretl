@@ -324,11 +324,13 @@ int email_file (const char *fname, const char *userdir, char *errmsg)
 
     if (!err) {
 	err = mail_to_dialog(fname, &recipient, &subject, &note);
-    }
-
-    if (!err) {
-	err = pack_and_mail(subject, note, fname, ctype, recipient,
-			    temp);
+	if (err == -1) {
+	    /* canceled */
+	    err = 0;
+	} else if (!err) {
+	    err = pack_and_mail(subject, note, fname, ctype, recipient,
+				temp);
+	}
     }
 
     return err;
