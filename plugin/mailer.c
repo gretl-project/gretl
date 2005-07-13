@@ -145,9 +145,9 @@ static int
 mail_to_dialog (const char *fname, char **recip, char **subj, char **note)
 {
     const gchar *lbls[] = {
-	N_("To:"),
-	N_("Subject:"),
-	N_("Note:")
+	N_("To"),
+	N_("Subject"),
+	N_("Note")
     };
     GtkWidget *tbl, *lbl, *hbox;
     const char *short_fname, *p;
@@ -167,20 +167,35 @@ mail_to_dialog (const char *fname, char **recip, char **subj, char **note)
     gtk_window_set_title(GTK_WINDOW(minfo.dlg), _("gretl: send mail"));
     set_dialog_border_widths(minfo.dlg);
     gtk_window_set_position(GTK_WINDOW(minfo.dlg), GTK_WIN_POS_MOUSE);
-    gtk_widget_set_usize(minfo.dlg, 390, 185);
+    gtk_widget_set_usize(minfo.dlg, 420, 185);
 
     tbl = gtk_table_new(3, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_container_add(GTK_CONTAINER(GTK_DIALOG(minfo.dlg)->vbox), tbl);
+
+    short_fname = fname;
+    if ((p = strrchr(fname, '/')) != NULL) {
+	short_fname = p + 1;
+    }    
    
     for (i=0; i<3; i++) {
 	GtkWidget *w;
 
 	lbl = gtk_label_new(_(lbls[i]));
-	gtk_table_attach_defaults(GTK_TABLE (tbl), lbl, 0, 1, i, i+1);
+	gtk_misc_set_alignment(GTK_MISC(lbl), 1, 0.5);
+	gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, i, i+1, GTK_FILL, GTK_FILL, 0, 0);
 
 	w = gtk_entry_new();
+	if (i == 1) {
+	    gtk_entry_set_text(GTK_ENTRY(w), "dataset");
+	} else if (i == 2) {
+	    gchar *note = g_strdup_printf("Please find the gretl data file %s attached.",
+					  short_fname);
+
+	    gtk_entry_set_text(GTK_ENTRY(w), note);
+	    g_free(note);
+	}
 	gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, i, i+1);
 
@@ -191,11 +206,6 @@ mail_to_dialog (const char *fname, char **recip, char **subj, char **note)
 	} else {
 	    minfo.note_entry = w;
 	}
-    }
-
-    short_fname = fname;
-    if ((p = strrchr(fname, '/')) != NULL) {
-	short_fname = p + 1;
     }
 
     hbox = gtk_hbox_new(FALSE, 5);

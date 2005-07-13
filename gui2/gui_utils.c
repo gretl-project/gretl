@@ -59,13 +59,14 @@ char *storelist = NULL;
 #include "../pixmaps/stock_help_16.xpm"
 #include "../pixmaps/stock_add_16.xpm"
 #include "../pixmaps/stock_close_16.xpm"
-#include "../pixmaps/mini.tex.xpm"
 # if defined(USE_GNOME)
 #  include "../pixmaps/stock_print_16.xpm"
 # endif
-#else
-#include "../pixmaps/mini.tex.xpm"
 #endif
+
+#include "../pixmaps/mini.tex.xpm"
+#include "../pixmaps/mail_16.xpm"
+#include "../pixmaps/mail_send.xpm"
 
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
@@ -1440,22 +1441,51 @@ void free_windata (GtkWidget *w, gpointer data)
 }
 
 #ifndef OLD_GTK
-static int tex_icon_init (void)
+void gretl_stock_icons_init (void)
 {
     static GtkIconFactory *ifac;
 
     if (ifac == NULL) {
-	GtkIconSet *iset;
+	GtkIconSource *source;
+	GtkIconSet *set;
 	GdkPixbuf *pbuf;
 
-	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mini_tex_xpm);
-	iset = gtk_icon_set_new_from_pixbuf(pbuf);
 	ifac = gtk_icon_factory_new();
-	gtk_icon_factory_add(ifac, "STOCK_TEX", iset);
+
+	set = gtk_icon_set_new();
+	source = gtk_icon_source_new();
+	gtk_icon_source_set_size(source, GTK_ICON_SIZE_SMALL_TOOLBAR);
+	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mini_tex_xpm);
+	gtk_icon_source_set_pixbuf(source, pbuf);
+	g_object_unref(pbuf);
+	gtk_icon_set_add_source(set, source);
+	gtk_icon_source_free(source);
+	gtk_icon_factory_add(ifac, GRETL_STOCK_MAIL, set);
+	gtk_icon_set_unref(set);
+
+	set = gtk_icon_set_new();
+
+	source = gtk_icon_source_new();
+	gtk_icon_source_set_size(source, GTK_ICON_SIZE_SMALL_TOOLBAR);
+	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mini_mail_xpm);
+	gtk_icon_source_set_pixbuf(source, pbuf);
+	g_object_unref(pbuf);
+	gtk_icon_set_add_source(set, source);
+	gtk_icon_source_free(source);
+
+	source = gtk_icon_source_new();
+	gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);
+	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mail_send_xpm);
+	gtk_icon_source_set_pixbuf(source, pbuf);
+	g_object_unref(pbuf);
+	gtk_icon_set_add_source(set, source);
+	gtk_icon_source_free(source);
+
+	gtk_icon_factory_add(ifac, GRETL_STOCK_MAIL, set);
+	gtk_icon_set_unref(set);
+
 	gtk_icon_factory_add_default(ifac);
     }
-
-    return 0;
 }
 #endif
 
@@ -1535,7 +1565,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
-    { N_("LaTeX"), "STOCK_TEX", window_tex_callback, TEX_ITEM },
+    { N_("LaTeX"), GRETL_STOCK_TEX, window_tex_callback, TEX_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_ITEM },
     { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
@@ -1603,7 +1633,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 
 #ifndef OLD_GTK
     if (MULTI_FORMAT_ENABLED(vwin->role) && latex_ok) {
-	tex_icon_init();
+	gretl_stock_icons_init();
     }
 #endif
 

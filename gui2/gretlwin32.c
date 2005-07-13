@@ -620,6 +620,8 @@ int email_file (char *fullname)
 	errbox("Couldn't access Windows MAPI system");
     } else {
 	char *fname = fname_from_fullname(fullname);
+	gchar *note = g_strdup_printf("Please find the gretl data file %s attached.\n",
+				      fname);
 	MapiFileDesc mfd;
 	MapiMessage msg;
 
@@ -630,8 +632,8 @@ int email_file (char *fullname)
 	mfd.lpszFileName = fname;
 	mfd.nPosition = 1; /* ?? */
 
-	msg.lpszSubject  = "Put subject text here";
-	msg.lpszNoteText = "Gretl data file attached.";
+	msg.lpszSubject  = "dataset";
+	msg.lpszNoteText = note;
 	msg.nFileCount = 1;
 	msg.lpFiles = &mfd;
 
@@ -640,6 +642,8 @@ int email_file (char *fullname)
 	if (sd != SUCCESS_SUCCESS && sd != MAPI_E_USER_ABORT) {
 	    errbox("MAPI error sending message");
 	}
+
+	g_free(note);
     }
 
     if (mapilib != NULL) {

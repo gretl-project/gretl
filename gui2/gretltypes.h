@@ -24,6 +24,9 @@
 # include <gtksourceview/gtksourceview.h>
 #endif
 
+#define GRETL_STOCK_TEX    "gretl-tex"
+#define GRETL_STOCK_MAIL   "gretl-mail"
+
 enum windata_flags {
     VWIN_HELP_ACTIVE = 1 << 0,
     VWIN_BUSY        = 1 << 1

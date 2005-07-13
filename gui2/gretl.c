@@ -260,7 +260,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
       EXPORT_OCTAVE, NULL, GNULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL, GNULL },
-    { N_("/File/Send To..."), NULL, email_data, 0, NULL, GNULL },
+    { N_("/File/Send To..."), NULL, email_data, 0, "<StockItem>", GRETL_STOCK_MAIL },
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, 
       "<StockItem>", GTK_STOCK_CLEAR },
     { N_("/File/sep0"), NULL, NULL, 0, "<Separator>", GNULL },
@@ -951,6 +951,7 @@ int main (int argc, char *argv[])
 
     /* create the GUI */
     gretl_tooltips_init();
+    gretl_stock_icons_init();
 
     /* create main window */
     if ((mdata = mymalloc(sizeof *mdata)) == NULL)

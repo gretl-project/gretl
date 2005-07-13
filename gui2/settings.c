@@ -268,8 +268,6 @@ int using_hc_by_default (void)
     return hc_by_default;
 }
 
-/* ........................................................... */
-
 void set_datapage (const char *str)
 {
     strcpy(datapage, str);
@@ -290,8 +288,6 @@ const char *get_scriptpage (void)
     return scriptpage;
 }
 
-/* ........................................................... */
-
 static gretlopt set_paths_opt = OPT_X;
 
 void force_english_help (void)
@@ -299,8 +295,6 @@ void force_english_help (void)
     set_paths_opt |= OPT_N;
     set_paths(&paths, set_paths_opt);
 }
-
-/* ........................................................... */
 
 void set_fixed_font (void)
 {
@@ -313,8 +307,6 @@ void set_fixed_font (void)
     fixed_font = gdk_font_load(fixedfontname);
 #endif
 }
-
-/* ........................................................... */
 
 #if !defined(USE_GNOME) && !defined(OLD_GTK)
 
@@ -356,8 +348,6 @@ void set_app_font (const char *fontname)
 
 #endif
 
-/* .................................................................. */
-
 static void slash_terminate (char *path)
 {
     if (path == NULL || *path == '\0') return;
@@ -383,8 +373,6 @@ void get_default_dir (char *s, int action)
     
     slash_terminate(s);
 }
-
-/* ........................................................... */
 
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
 
@@ -631,8 +619,6 @@ int check_for_prog (const char *prog)
 
 #endif
 
-/* ........................................................... */
-
 #if !defined(G_OS_WIN32) && !defined(USE_GNOME)
 void set_rcfile (void) 
 {
@@ -657,8 +643,6 @@ void set_rcfile (void)
     read_rc();
 }
 #endif
-
-/* .................................................................. */
 
 void options_dialog (gpointer p, guint page, GtkWidget *w) 
 {
@@ -729,8 +713,6 @@ void options_dialog (gpointer p, guint page, GtkWidget *w)
 
     gtk_widget_show(dialog);
 }
-
-/* .................................................................. */
 
 static void flip_sensitive (GtkWidget *w, gpointer data)
 {
@@ -1111,8 +1093,6 @@ static void set_lcnumeric (void)
 }
 #endif
 
-/* .................................................................. */
-
 static void set_gp_colors (void)
 {
     char cstr[4][8];
@@ -1125,8 +1105,6 @@ static void set_gp_colors (void)
 	set_gnuplot_pallette(i, cstr[i]);
     }
 }
-
-/* .................................................................. */
 
 static void apply_changes (GtkWidget *widget, gpointer data) 
 {
@@ -1178,8 +1156,6 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
     proxy_init(dbproxy);
 }
-
-/* .................................................................. */
 
 #ifndef GNOME2
 
