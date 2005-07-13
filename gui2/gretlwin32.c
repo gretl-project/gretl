@@ -583,9 +583,9 @@ int win_buf_to_clipboard (const char *buf)
     return 0;
 }
 
-static char *fname_from_fullname (const char *fullname)
+static char *fname_from_fullname (char *fullname)
 {
-    char *fname = NULL;
+    char *fname = fullname;
     char *p;
 
     p = strrchr(fullname, '\\');
@@ -594,7 +594,7 @@ static char *fname_from_fullname (const char *fullname)
     }
 
     if (p != NULL) {
-	fname = gretl_strdup(p + 1);
+	fname = p + 1;
     }
 
     return fname;
@@ -611,7 +611,7 @@ int email_file (char *fullname)
 	err = 1;
     } else {
 	send_mail = (LPMAPISENDMAIL) GetProcAddress(mapilib, "MAPISendMail");
-	if (send_docs == NULL) {
+	if (send_mail == NULL) {
 	    err = 1;
 	} 
     }
@@ -640,7 +640,6 @@ int email_file (char *fullname)
 	if (sd != SUCCESS_SUCCESS && sd != MAPI_E_USER_ABORT) {
 	    errbox("MAPI error sending message");
 	}
-	free(fname);
     }
 
     if (mapilib != NULL) {
