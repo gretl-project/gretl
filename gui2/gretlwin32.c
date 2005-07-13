@@ -603,14 +603,14 @@ static char *fname_from_fullname (const char *fullname)
 int email_file (char *fullname)
 {
     HINSTANCE mapilib = NULL;
-    LPMAPISENDDOCUMENTS send_docs = NULL;
+    LPMAPISENDMAIL send_mail = NULL;
     int err = 0;
 
     mapilib = LoadLibrary("MAPI32.DLL");
     if (mapilib == NULL) {
 	err = 1;
     } else {
-	send_docs = (LPMAPISENDDOCUMENTS) GetProcAddress(mapilib, "MAPISendDocuments");
+	send_mail = (LPMAPISENDMAIL) GetProcAddress(mapilib, "MAPISendMail");
 	if (send_docs == NULL) {
 	    err = 1;
 	} 
@@ -620,7 +620,22 @@ int email_file (char *fullname)
 	errbox("Couldn't access Windows MAPI system");
     } else {
 	char *fname = fname_from_fullname(fullname);
-	ULONG sd = send_docs(0L, ";", fullname, fname, 0L);
+	MapiFileDesc mfd;
+	MapiMessage msg;
+
+	memset(&mfd, 0, sizeof mfd);
+	memset(&msg, 0, sizeof msg);
+
+	mfd.lpszPathName = fullname;
+	mfd.lpszFileName = fname;
+	mfd.nPosition = 1; /* ?? */
+
+	msg.lpszSubject  = "Put subject text here";
+	msg.lpszNoteText = "Gretl data file attached.";
+	msg.nFileCount = 1;
+	mag.lpFiles = &mfd;
+
+	ULONG sd = send_mail(0L, 0, &msg, MAPI_DIALOG, 0L);
 
 	if (sd != SUCCESS_SUCCESS && sd != MAPI_E_USER_ABORT) {
 	    errbox("MAPI error sending message");
