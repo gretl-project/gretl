@@ -633,7 +633,7 @@ int email_file (char *fullname)
 	msg.lpszSubject  = "Put subject text here";
 	msg.lpszNoteText = "Gretl data file attached.";
 	msg.nFileCount = 1;
-	mag.lpFiles = &mfd;
+	msg.lpFiles = &mfd;
 
 	ULONG sd = send_mail(0L, 0, &msg, MAPI_DIALOG, 0L);
 
