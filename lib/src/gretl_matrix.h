@@ -70,6 +70,8 @@ gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols);
 
 gretl_matrix *gretl_packed_matrix_alloc (int rows);
 
+gretl_matrix *gretl_identity_matrix_new (int n);
+
 gretl_matrix *gretl_matrix_copy (const gretl_matrix *m);
 
 gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m);
@@ -133,6 +135,9 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 
 int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 			   gretl_matrix *c);
+
+gretl_matrix *
+gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B);
 
 double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 				 const gretl_matrix *b, GretlMatrixMod bmod,

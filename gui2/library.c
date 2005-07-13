@@ -2577,8 +2577,8 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case ARMA:
 	arma_maybe_suppress_const();
-	*pmod = arma(cmd.list, (const double **) Z, datainfo, 
-		     cmd.opt, prn); 
+	*pmod = arma(cmd.list, (const double **) Z, datainfo,
+		     &paths, cmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
@@ -2604,7 +2604,12 @@ void do_model (GtkWidget *widget, gpointer p)
     }
 
     if (err) {
-	gretl_print_destroy(prn);
+	if (action == ARMA && (cmd.opt & OPT_V) && !(cmd.opt & OPT_X)) {
+	    /* non-convergence info? */
+	    view_buffer(prn, 78, 400, _("gretl: ARMA"), PRINT, NULL);
+	} else {
+	    gretl_print_destroy(prn);
+	}
 	return;
     }
 
@@ -2626,74 +2631,6 @@ void do_model (GtkWidget *widget, gpointer p)
     if (copy_model(models[2], pmod, datainfo)) {
 	errbox(_("Out of memory copying model"));
     }
-
-    /* record sub-sample info (if any) with the model */
-    attach_subsample_to_model(pmod, datainfo);
-    
-    sprintf(title, _("gretl: model %d"), pmod->ID);
-    view_model(prn, pmod, 78, 420, title); 
-}
-
-/* ........................................................... */
-
-void do_arma (int v, int p, int q, int P, int Q, gretlopt opts)
-{
-    char title[26];
-    int err = 0;
-    MODEL *pmod;
-    PRN *prn;
-
-    if (P > 0 || Q > 0) {
-	gretl_command_sprintf("arma %d %d ; %d %d ; %d%s", p, q, P, Q, v, 
-			      print_flags(opts, ARMA));
-    } else {
-	gretl_command_sprintf("arma %d %d ; %d%s", p, q, v, 
-			      print_flags(opts, ARMA));
-    }
-
-    if (check_model_cmd()) {
-	return;
-    }
-
-    if (bufopen(&prn)) return;
-
-    pmod = gretl_model_new();
-    if (pmod == NULL) {
-	errbox(_("Out of memory"));
-	return;
-    }
-
-#ifdef HAVE_X12A
-    if (opts & OPT_X) {
-	*pmod = arma_x12(cmd.list, (const double **) Z, datainfo,
-			 &paths, cmd.opt, prn);
-    } else {
-	*pmod = arma(cmd.list, (const double **) Z, datainfo,
-		     cmd.opt, prn); 
-    }
-#else
-    *pmod = arma(cmd.list, (const double **) Z, datainfo,
-		 cmd.opt, prn); 
-#endif
-    err = model_output(pmod, prn);
-
-    if (err) {
-	if ((opts & OPT_V) && !(opts & OPT_X)) {
-	    view_buffer(prn, 78, 400, _("gretl: ARMA"), PRINT, NULL);
-	} else {
-	    gretl_print_destroy(prn);
-	}
-	return;
-    }
-
-    if (lib_cmd_init() || stack_model(pmod)) {
-	errbox(_("Error saving model information"));
-	return;
-    }
-
-    /* make copy of most recent model */
-    if (copy_model(models[2], pmod, datainfo))
-	errbox(_("Out of memory copying model"));
 
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
@@ -5888,18 +5825,8 @@ int gui_exec_line (char *line,
 
     case ARMA:
 	clear_model(models[0]);
-#ifdef HAVE_X12A
-	if (cmd.opt & OPT_X) {
-	    *models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
-				  &paths, cmd.opt, prn);
-	} else {
-	    *models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			      cmd.opt, outprn);
-	}
-#else
-	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			  cmd.opt, (cmd.opt & OPT_V)? outprn : NULL);
-#endif
+	*models[0] = arma(cmd.list, (const double **) Z, datainfo,
+			  &paths, cmd.opt, outprn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	} else {	

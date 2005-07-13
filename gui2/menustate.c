@@ -41,8 +41,6 @@ void add_remove_markers_state (gboolean s)
     flip(mdata->ifac, "/Sample/Remove case markers", s);
 }
 
-/* ......................................................... */
-
 /* by using gretl_set_window_modal() we make the main
    window visibly insensitive */
 
@@ -106,8 +104,8 @@ static GtkItemFactoryEntry time_series_model_items[] = {
     { N_("/Model/Time series/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL, GNULL },
     { N_("/Model/Time series/_Prais-Winsten..."), NULL, model_callback, PWE, NULL, GNULL },
     { N_("/Model/Time series/_Autoregressive estimation..."), NULL, model_callback, AR, NULL, GNULL },
-    { N_("/Model/Time series/ARMA_X..."), NULL, model_callback, ARMA, NULL, GNULL },
-    { N_("/Model/Time series/GARCH..."), NULL, model_callback, GARCH, NULL, GNULL },
+    { N_("/Model/Time series/AR_MA..."), NULL, model_callback, ARMA, NULL, GNULL },
+    { N_("/Model/Time series/_GARCH..."), NULL, model_callback, GARCH, NULL, GNULL },
     { N_("/Model/Time series/_Vector Autoregression..."), NULL, model_callback, VAR, NULL, GNULL },
     { N_("/Model/Time series/Cointegration test"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Model/Time series/Cointegration test/Engle-Granger..."), NULL, 
@@ -123,8 +121,8 @@ static GtkItemFactoryEntry time_series_model_items[] = {
     { N_("/Model/Time series/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL },
     { N_("/Model/Time series/_Prais-Winsten..."), NULL, model_callback, PWE, NULL },
     { N_("/Model/Time series/_Autoregressive estimation..."), NULL, model_callback, AR, NULL },
-    { N_("/Model/Time series/ARMA_X..."), NULL, model_callback, ARMA, NULL },
-    { N_("/Model/Time series/GARCH..."), NULL, model_callback, GARCH, NULL },
+    { N_("/Model/Time series/AR_MA..."), NULL, model_callback, ARMA, NULL },
+    { N_("/Model/Time series/_GARCH..."), NULL, model_callback, GARCH, NULL },
     { N_("/Model/Time series/_Vector Autoregression..."), NULL, model_callback, VAR, NULL },
     { N_("/Model/Time series/Cointegration test"), NULL, NULL, 0, "<Branch>" },
     { N_("/Model/Time series/Cointegration test/Engle-Granger..."), NULL, 
@@ -163,7 +161,6 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ifac, "/Variable/Runs test", s);
     flip(mdata->ifac, "/Variable/Augmented Dickey-Fuller test", s);
     flip(mdata->ifac, "/Variable/KPSS test", s);
-    flip(mdata->ifac, "/Variable/ARMA model", s);
 #ifdef HAVE_X12A
     flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", s);
 #endif
@@ -268,7 +265,7 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
     else if (!strcmp(item, _("Spectrum (Bartlett)"))) 
 	do_pergm(NULL, 1, NULL);
     else if (!strcmp(item, _("ARMA model"))) 
-	arma_options_dialog(NULL, 0, NULL);
+	model_callback(GINT_TO_POINTER(mdata->active_var), ARMA, NULL);
     else if (!strcmp(item, _("Dickey-Fuller test"))) 
 	unit_root_test(NULL, ADF, NULL);
     else if (!strcmp(item, _("KPSS test"))) 

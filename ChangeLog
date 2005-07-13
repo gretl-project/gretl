@@ -13,7 +13,10 @@ version 1.4.2, in progress
 - Model selection dialog: ensure that the selected regressand 
   is not also listed among the regressors
 - Graph editing: make some more types of graph editable
-- Main window: don't show generated lags in the list of variables 
+- Main window: don't show generated lags in the list of variables
+- ARMA: remove the ARMA item from the Variable menu (it's still
+  there in the Model menu); revamp the X-12-ARIMA driver so it
+  can handle models with exogenous regressors 
 
 06/30/2005 version 1.4.1
 - Fix horrid unnoticed breakage in bhhh_max (broke both arma 

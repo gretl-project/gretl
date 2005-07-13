@@ -993,7 +993,7 @@ static char *est_str (int cmdnum)
     case AR:
 	return N_("Autoregressive");
     case ARMA:
-	return N_("ARMAX");
+	return N_("ARMA");
     case GARCH:
 	return N_("GARCH");
     case VAR:
@@ -1132,9 +1132,11 @@ static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
     }
 }
 
-static void build_depvar_section (selector *sr, GtkWidget *right_vbox)
+static void build_depvar_section (selector *sr, GtkWidget *right_vbox,
+				  int preselect)
 {
     GtkWidget *tmp, *depvar_hbox;
+    int yvar = (preselect)? preselect : default_var;
 
     if (sr->code == VAR) {
         tmp = gtk_label_new (_("First dependent variable"));
@@ -1157,11 +1159,10 @@ static void build_depvar_section (selector *sr, GtkWidget *right_vbox)
     gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), 8);
     gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), 12);
 
-    if (default_var) {
-        gtk_entry_set_text(GTK_ENTRY(sr->depvar), 
-                           datainfo->varname[default_var]);
+    if (yvar) {
+        gtk_entry_set_text(GTK_ENTRY(sr->depvar), datainfo->varname[yvar]);
         g_object_set_data(G_OBJECT(sr->depvar), "data",
-                          GINT_TO_POINTER(default_var));
+                          GINT_TO_POINTER(yvar));
     }
 
     gtk_box_pack_start(GTK_BOX(depvar_hbox), sr->depvar, FALSE, FALSE, 0);
@@ -1415,7 +1416,7 @@ static void selector_init (selector *sr, guint code, const char *title)
     gtk_box_set_homogeneous(GTK_BOX(sr->action_area), TRUE);
 } 
 
-static void robust_callback (GtkWidget *w,  selector *sr)
+static void robust_callback (GtkWidget *w, selector *sr)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	sr->opts |= OPT_R;
@@ -1424,7 +1425,7 @@ static void robust_callback (GtkWidget *w,  selector *sr)
     }
 }
 
-static void robust_config_button (GtkWidget *w,  GtkWidget *b)
+static void robust_config_button (GtkWidget *w, GtkWidget *b)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	gtk_widget_set_sensitive(b, TRUE);
@@ -1433,7 +1434,7 @@ static void robust_config_button (GtkWidget *w,  GtkWidget *b)
     }
 }
 
-static void verbose_callback (GtkWidget *w,  selector *sr)
+static void verbose_callback (GtkWidget *w, selector *sr)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	sr->opts |= OPT_V;
@@ -1442,7 +1443,7 @@ static void verbose_callback (GtkWidget *w,  selector *sr)
     }
 }
 
-static void corc_callback (GtkWidget *w,  selector *sr)
+static void corc_callback (GtkWidget *w, selector *sr)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	sr->opts &= ~OPT_B;
@@ -1451,7 +1452,7 @@ static void corc_callback (GtkWidget *w,  selector *sr)
     }
 }
 
-static void engle_granger_callback (GtkWidget *w,  selector *sr)
+static void engle_granger_callback (GtkWidget *w, selector *sr)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	sr->opts &= ~OPT_N;
@@ -1459,6 +1460,17 @@ static void engle_granger_callback (GtkWidget *w,  selector *sr)
 	sr->opts |= OPT_N;
     }
 }
+
+#ifdef HAVE_X12A
+static void x12a_callback (GtkWidget *w, selector *sr)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	sr->opts |= OPT_X;
+    } else {
+	sr->opts &= ~OPT_X;
+    }
+}
+#endif
 
 static GtkWidget *spinner_aux_label (int i)
 {
@@ -1544,6 +1556,19 @@ static void hc_config (GtkWidget *w, gpointer p)
     options_dialog(p, 4, NULL);
 }
 
+static void pack_switch (GtkWidget *b, GtkWidget *vbox, gboolean dflt)
+{
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+
+    gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 0);
+    gtk_widget_show(b);
+
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox);
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), dflt);
+}
+
 static void 
 build_selector_switches (selector *sr) 
 {
@@ -1588,50 +1613,31 @@ build_selector_switches (selector *sr)
     if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH ||
 	sr->code == COINT2) {
 	if (sr->code == COINT2) {
-	    tmp = gtk_check_button_new_with_label
-		(_("Show details of regressions"));
+	    tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
 	} else {
-	    tmp = gtk_check_button_new_with_label
-		(_("Show details of iterations"));
+	    tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
 	}
-	g_signal_connect(G_OBJECT(tmp), "toggled",
-			 G_CALLBACK(verbose_callback), sr);
-
-	hbox = gtk_hbox_new(FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
-	gtk_widget_show(tmp);
-
-	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-	gtk_widget_show(hbox);
+	g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(verbose_callback), sr);
+	pack_switch(tmp, sr->vbox, FALSE);
     } else if (sr->code == HILU) {
-	tmp = gtk_check_button_new_with_label
-	    (_("Fine-tune using Cochrane-Orcutt"));
-	g_signal_connect(G_OBJECT(tmp), "toggled",
-			 G_CALLBACK(corc_callback), sr);
-
-	hbox = gtk_hbox_new(FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
-	gtk_widget_show(tmp);
-
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
-
-	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-	gtk_widget_show(hbox);
+	tmp = gtk_check_button_new_with_label(_("Fine-tune using Cochrane-Orcutt"));
+	g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(corc_callback), sr);
+	pack_switch(tmp, sr->vbox, TRUE);
     } else if (sr->code == COINT) {
 	tmp = gtk_check_button_new_with_label
 	    (_("Cointegrating regression includes a constant"));
-	g_signal_connect(G_OBJECT(tmp), "toggled",
+	g_signal_connect(G_OBJECT(tmp), "toggled", 
 			 G_CALLBACK(engle_granger_callback), sr);
-
-	hbox = gtk_hbox_new(FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
-	gtk_widget_show(tmp);
-
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
-
-	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-	gtk_widget_show(hbox);
+	pack_switch(tmp, sr->vbox, TRUE);
     }
+
+#ifdef HAVE_X12A    
+    if (sr->code == ARMA) {
+	tmp = gtk_check_button_new_with_label(_("Use X-12-ARIMA"));
+	g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(x12a_callback), sr);
+	pack_switch(tmp, sr->vbox, FALSE);
+    }	
+#endif
 } 
 
 static void 
@@ -1677,7 +1683,8 @@ build_selector_buttons (selector *sr, void (*okfunc)())
     }
 }
 
-void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode) 
+void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
+		       int preselect) 
 {
     GtkWidget *open_dialog;
     GtkWidget *right_vbox, *tmp;
@@ -1751,7 +1758,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 
     if (MODEL_CODE(cmdcode)) { 
 	/* models: top right -> dependent variable */
-	build_depvar_section(sr, right_vbox);
+	build_depvar_section(sr, right_vbox, preselect);
     } else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
 	       || cmdcode == SCATTERS || cmdcode == GR_3D) {
 	/* graphs: top right -> x-axis variable */
@@ -1858,7 +1865,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
     gtk_widget_show(big_hbox);
 
-    /* AR and MA spinners for ARMAX; also GARCH */
+    /* AR and MA spinners for ARMA; also GARCH */
     if (sr->code == ARMA || sr->code == GARCH) {
 	build_pq_spinners(sr);
     }

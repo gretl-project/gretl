@@ -55,8 +55,6 @@ int select_var_from_list (const int *list, const char *query);
 
 void sample_range_dialog (gpointer p, guint u, GtkWidget *w);
 
-void arma_options_dialog (gpointer p, guint u, GtkWidget *w);
-
 void panel_structure_dialog (DATAINFO *pdinfo);
 
 void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 

@@ -50,7 +50,8 @@ void clear_selector (void);
 
 void delete_selection_dialog (selector *sr);
 
-void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode);
+void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
+		       int preselect);
 
 void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 		       gpointer p);

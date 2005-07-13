@@ -1220,7 +1220,7 @@ static void compute_r_squared (MODEL *pmod, double *y)
 	} else {
 	    pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, y, pmod->yhat);
 	    pmod->adjrsq = 
-		1 - ((1 - pmod->rsq) * (pmod->nobs - 1) / pmod->dfd);
+		1.0 - ((1.0 - pmod->rsq) * (pmod->nobs - 1.0) / pmod->dfd);
 	} 
     }
 
@@ -1258,6 +1258,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
     ysum = xpy[0];
     ypy = xpy[pmod->ncoeff + 1];
+
 #ifdef NO_LHS_ZERO
     if (floateq(ypy, 0.0)) { 
         pmod->errcode = E_YPY;
@@ -1303,7 +1304,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     }
 
     if (floatlt(pmod->tss, 0.0) || floateq(pmod->tss, 0.0)) {
-       pmod->rsq = pmod->adjrsq = NADBL;
+	pmod->rsq = pmod->adjrsq = NADBL;
     } 
 
     hatvar(pmod, n, Z); 
@@ -3606,89 +3607,60 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
 
 /**
  * arma:
- * @list: dependent variable plus AR and MA orders.
+ * @list: dependent variable, AR and MA orders, and any exogenous
+ * regressors.
  * @Z: data array.
  * @pdinfo: information on the data set.
- * @opt: options: may include %OPT_S to suppress intercept.
+ * @ppaths: gretl path info struct (so we can find X-12-ARIMA if needed).
+ * @opt: options: may include %OPT_S to suppress intercept, %OPT_V
+ * for verbose results, %OPT_X to use X-12-ARIMA.
  * @PRN: for printing details of iterations (or %NULL). 
  *
- * Calculate ARMA estimates.
+ * Calculate ARMA estimates, using either native gretl code or
+ * by invoking X-12-ARIMA.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arma (const int *list, const double **Z, DATAINFO *pdinfo, 
-	    gretlopt opt, PRN *prn)
+MODEL arma (const int *list, const double **Z, const DATAINFO *pdinfo, 
+	    const PATHS *ppaths, gretlopt opt, PRN *prn)
 {
     MODEL armod;
     void *handle;
-    MODEL (*arma_model) (const int *, const double **, DATAINFO *, gretlopt, PRN *);
+    MODEL (*arma_model) (const int *, const double **, const DATAINFO *, 
+			 gretlopt, PRN *);
+    MODEL (*arma_x12_model) (const int *, const double **, const DATAINFO *, 
+			     const PATHS *, gretlopt, int, PRN *);
+    int x12a = (opt & OPT_X) && ppaths != NULL;
+    int err = 0;
 
     *gretl_errmsg = '\0';
 
-    arma_model = get_plugin_function("arma_model", &handle);
-
-    if (arma_model == NULL) {
-	gretl_model_init(&armod);
-	armod.errcode = E_FOPEN;
-	return armod;
+    if (x12a) {
+	arma_x12_model = get_plugin_function("arma_x12_model", &handle);
+	err = arma_x12_model == NULL;
+	if (!err) {
+	    armod = (*arma_x12_model) (list, Z, pdinfo, ppaths, opt, 
+				       gretl_in_gui_mode(), prn);
+	}
+    } else {
+	arma_model = get_plugin_function("arma_model", &handle);
+	err = arma_model == NULL;
+	if (!err) {
+	    armod = (*arma_model) (list, Z, pdinfo, opt, prn);
+	}
     }
 
-    armod = (*arma_model) (list, Z, pdinfo, opt, prn);
-
-    close_plugin(handle);
-
-    set_model_id(&armod);
+    if (err) {
+	gretl_model_init(&armod);
+	armod.errcode = E_FOPEN;
+    } else {
+	close_plugin(handle);
+	set_model_id(&armod);
+    }
 
     return armod;
 } 
-
-#ifdef HAVE_X12A
-
-/**
- * arma_x12a:
- * @list: dependent variable plus AR and MA orders
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @ppaths: gretl path info struct (so we can find X-12-ARIMA).
- * @opt: may include OPT_V for verbose results.
- * @PRN: for printing details of iterations (or NULL).
- *
- * Calculate ARMA estimates, via a call to X-12-ARIMA.
- * 
- * Returns: a #MODEL struct, containing the estimates.
- */
-
-MODEL arma_x12 (const int *list, const double **Z, DATAINFO *pdinfo, 
-		const PATHS *ppaths, gretlopt opt, PRN *prn)
-{
-    MODEL armod;
-    void *handle;
-    MODEL (*arma_x12_model) (const int *, const double **, DATAINFO *, 
-			     const char *, const char *,
-			     gretlopt, int, PRN *);
-    int gui = gretl_in_gui_mode();
-
-    *gretl_errmsg = '\0';
-
-    arma_x12_model = get_plugin_function("arma_x12_model", &handle);
-    if (arma_x12_model == NULL) {
-	gretl_model_init(&armod);
-	armod.errcode = E_FOPEN;
-	return armod;
-    }
-
-    armod = (*arma_x12_model) (list, Z, pdinfo, ppaths->x12a, 
-			       ppaths->x12adir, opt, gui, prn);
-
-    close_plugin(handle);
-
-    set_model_id(&armod);
-
-    return armod;
-}  
-
-#endif /* HAVE_X12A */
 
 /**
  * logistic_model:

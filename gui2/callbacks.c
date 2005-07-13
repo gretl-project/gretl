@@ -359,13 +359,21 @@ void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
 
 void model_callback (gpointer data, guint model_code, GtkWidget *widget) 
 {
-    selection_dialog(_("gretl: specify model"), do_model, model_code);
+    int presel = 0;
+
+    if (widget == NULL && data != NULL) {
+	/* preselected dependent variable */
+	presel = GPOINTER_TO_INT(data);
+    }
+
+    selection_dialog(_("gretl: specify model"), do_model, model_code,
+		     presel);
 }
 
 #ifdef ENABLE_GMP
 void mp_ols_callback (gpointer data, guint model_code, GtkWidget *widget)
 {
-    selection_dialog (_("gretl: specify model"), do_mp_ols, model_code);
+    selection_dialog(_("gretl: specify model"), do_mp_ols, model_code, 0);
 }
 #endif /* ENABLE_GMP */
 
@@ -390,9 +398,9 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
     strcpy(title, "gretl: ");
 
     if (action == COINT) {
-	selection_dialog(_("gretl: cointegration test"), do_coint, action);
+	selection_dialog(_("gretl: cointegration test"), do_coint, action, 0);
     } else if (action == COINT2) {
-	selection_dialog(_("gretl: cointegration test"), do_coint2, action);
+	selection_dialog(_("gretl: cointegration test"), do_coint2, action, 0);
     } else if (action == GR_XY || action == GR_IMP || action == GR_DUMMY
 	       || action == SCATTERS || action == GR_3D) {
 	void (*okfunc)() = NULL;
@@ -414,7 +422,7 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	default:
 	    return;
 	}
-	selection_dialog(_("gretl: define graph"), okfunc, action);
+	selection_dialog(_("gretl: define graph"), okfunc, action, 0);
     } else if (action == ADD || action == OMIT) {
 	simple_selection(_("gretl: model tests"), do_add_omit, action, vwin);
     } else if (action == COEFFSUM) {

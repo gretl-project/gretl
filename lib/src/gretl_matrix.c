@@ -32,7 +32,6 @@ static int packed_idx (int nrows, int i, int j);
 
 #define gretl_is_vector(v) (v->rows == 1 || v->cols == 1)
 
-/* ....................................................... */
 
 static gretl_matrix *real_gretl_matrix_alloc (int rows, int cols,
 					      int packed)
@@ -126,6 +125,36 @@ gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
     }
 
     return ret;
+}
+
+/**
+ * gretl_identity_matrix_new:
+ * @n: desired number of rows and columns in the matrix.
+ *
+ * Returns: pointer to a newly allocated identity matrix, or %NULL
+ * on failure.
+ */
+
+gretl_matrix *gretl_identity_matrix_new (int n)
+{
+    gretl_matrix *m;
+    int i, j;
+
+    m = real_gretl_matrix_alloc(n, n, 0);
+
+    if (m != NULL) {
+	for (i=0; i<n; i++) {
+	    for (j=0; j<n; j++) {
+		if (i == j) {
+		    m->val[mdx(m, i, j)] = 1.0;
+		} else {
+		    m->val[mdx(m, i, j)] = 0.0;
+		}
+	    }
+	}
+    }
+
+    return m;
 }
 
 /**
@@ -1264,6 +1293,51 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
     }
 
     return GRETL_MATRIX_OK;
+}
+
+/**
+ * gretl_matrix_kronecker_product:
+ * @A: left-hand matrix.
+ * @B: right-hand matrix.
+ * 
+ * Returns: A newly allocated matrix which is the Kronecker 
+ * product of matrices @a and @b, or %NULL on failure.
+ */
+
+gretl_matrix *
+gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B)
+{
+    gretl_matrix *K;
+    double aij, bkl;
+    int p = A->rows;
+    int q = A->cols;
+    int r = B->rows;
+    int s = B->cols;
+    int i, j, k, l;
+    int Ki, Kj;
+    
+    K = real_gretl_matrix_alloc(p * r, q * s, 0);
+
+    if (K != NULL) {
+	for (i=0; i<p; i++) {
+	    Ki = i * r;
+	    for (j=0; j<q; j++) {
+		/* block ij is an r * s matrix, a_{ij} * B */
+		aij = A->val[mdx(A, i, j)];
+		Kj = j * s;
+		for (k=0; k<r; k++) {
+		    for (l=0; l<s; l++) {
+			bkl = B->val[mdx(B, k, l)];
+			K->val[mdx(K, Ki, Kj)] = aij * bkl;
+			Kj++;
+		    }
+		    Ki++;
+		}
+	    }
+	}
+    }
+
+    return K;
 }
 
 /**

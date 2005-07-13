@@ -994,18 +994,8 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case ARMA:
 	clear_model(models[0]);
-#ifdef HAVE_X12A
-	if (cmd.opt & OPT_X) {
-	    *models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
-				  &paths, cmd.opt, prn);
-	} else {
-	    *models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			      cmd.opt, prn);
-	}
-#else
-	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			  cmd.opt, prn);
-#endif
+	*models[0] = arma(cmd.list, (const double **) Z, datainfo,
+			  &paths, cmd.opt, prn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	} else {	
