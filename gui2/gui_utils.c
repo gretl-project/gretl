@@ -66,7 +66,6 @@ char *storelist = NULL;
 
 #include "../pixmaps/mini.tex.xpm"
 #include "../pixmaps/mail_16.xpm"
-#include "../pixmaps/mail_send.xpm"
 
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
@@ -1467,7 +1466,7 @@ void gretl_stock_icons_init (void)
 
 	source = gtk_icon_source_new();
 	gtk_icon_source_set_size(source, GTK_ICON_SIZE_SMALL_TOOLBAR);
-	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mini_mail_xpm);
+	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mail_16_xpm);
 	gtk_icon_source_set_pixbuf(source, pbuf);
 	g_object_unref(pbuf);
 	gtk_icon_set_add_source(set, source);
@@ -1475,7 +1474,7 @@ void gretl_stock_icons_init (void)
 
 	source = gtk_icon_source_new();
 	gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);
-	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mail_send_xpm);
+	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mail_16_xpm);
 	gtk_icon_source_set_pixbuf(source, pbuf);
 	g_object_unref(pbuf);
 	gtk_icon_set_add_source(set, source);
