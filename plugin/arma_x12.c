@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "bhhh_max.h"
+#include "libset.h"
 
 #include "../cephes/mconf.h"
 
@@ -675,11 +676,11 @@ static int write_spc_file (const char *fname,
 }
 
 MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
-		      const PATHS *ppaths, gretlopt opt, int gui, PRN *prn)
+		      gretlopt opt, PRN *prn)
 {
     int verbose = (opt & OPT_V);
-    const char *prog = ppaths->x12a;
-    const char *workdir = ppaths->x12adir;
+    const char *prog = gretl_x12_arima();
+    const char *workdir = gretl_x12_arima_dir();
     char yname[VNAMELEN], path[MAXLEN];
     int *alist = NULL;
     PRN *aprn = NULL;
@@ -753,7 +754,7 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	if (verbose && !armod.errcode) {
 	    print_iterations(path, aprn);
 	}
-	if (!armod.errcode && gui) {
+	if (!armod.errcode && gretl_in_gui_mode()) {
 	    add_unique_output_file(&armod, path);
 	    gretl_model_set_int(&armod, "arma_by_x12a", 1);
 	}	

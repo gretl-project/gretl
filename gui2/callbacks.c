@@ -734,6 +734,8 @@ void email_data (gpointer p, guint u, GtkWidget *w)
     int (*email_file) (const char *, const char *, char *);
     void *handle;
 
+    *errtext = '\0';
+
     email_file = gui_get_plugin_function("email_file", &handle);
     if (email_file == NULL) {
         return;
@@ -741,6 +743,10 @@ void email_data (gpointer p, guint u, GtkWidget *w)
     
     email_file(paths.datfile, paths.userdir, errtext);
     close_plugin(handle);
+
+    if (*errtext) {
+	errbox(errtext);
+    }
 }
 
 #endif

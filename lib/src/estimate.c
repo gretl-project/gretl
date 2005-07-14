@@ -3578,7 +3578,7 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
 {
     MODEL lad_model;
     void *handle;
-    int (*lad_driver)(MODEL *, double **, DATAINFO *);
+    int (*lad_driver) (MODEL *, double **, DATAINFO *);
 
     /* run an initial OLS to "set the model up" and check for errors.
        the lad_driver function will overwrite the coefficients etc.
@@ -3591,6 +3591,7 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
     }
 
     lad_driver = get_plugin_function("lad_driver", &handle);
+
     if (lad_driver == NULL) {
 	fprintf(stderr, I_("Couldn't load plugin function\n"));
 	lad_model.errcode = E_FOPEN;
@@ -3611,7 +3612,6 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
  * regressors.
  * @Z: data array.
  * @pdinfo: information on the data set.
- * @ppaths: gretl path info struct (so we can find X-12-ARIMA if needed).
  * @opt: options: may include %OPT_S to suppress intercept, %OPT_V
  * for verbose results, %OPT_X to use X-12-ARIMA.
  * @PRN: for printing details of iterations (or %NULL). 
@@ -3623,41 +3623,32 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
  */
 
 MODEL arma (const int *list, const double **Z, const DATAINFO *pdinfo, 
-	    const PATHS *ppaths, gretlopt opt, PRN *prn)
+	    gretlopt opt, PRN *prn)
 {
     MODEL armod;
     void *handle;
-    MODEL (*arma_model) (const int *, const double **, const DATAINFO *, 
+    MODEL (*arma_func) (const int *, const double **, const DATAINFO *, 
 			 gretlopt, PRN *);
-    MODEL (*arma_x12_model) (const int *, const double **, const DATAINFO *, 
-			     const PATHS *, gretlopt, int, PRN *);
-    int x12a = (opt & OPT_X) && ppaths != NULL;
-    int err = 0;
 
     *gretl_errmsg = '\0';
 
-    if (x12a) {
-	arma_x12_model = get_plugin_function("arma_x12_model", &handle);
-	err = arma_x12_model == NULL;
-	if (!err) {
-	    armod = (*arma_x12_model) (list, Z, pdinfo, ppaths, opt, 
-				       gretl_in_gui_mode(), prn);
-	}
+    if (opt & OPT_X) {
+	arma_func = get_plugin_function("arma_x12_model", &handle);
     } else {
-	arma_model = get_plugin_function("arma_model", &handle);
-	err = arma_model == NULL;
-	if (!err) {
-	    armod = (*arma_model) (list, Z, pdinfo, opt, prn);
-	}
+	arma_func = get_plugin_function("arma_model", &handle);
     }
 
-    if (err) {
+    if (arma_func == NULL) {
+	fprintf(stderr, I_("Couldn't load plugin function\n"));
 	gretl_model_init(&armod);
 	armod.errcode = E_FOPEN;
-    } else {
-	close_plugin(handle);
-	set_model_id(&armod);
+	return armod;
     }
+
+    armod = (*arma_func) (list, Z, pdinfo, opt, prn);
+
+    close_plugin(handle);
+    set_model_id(&armod);
 
     return armod;
 } 

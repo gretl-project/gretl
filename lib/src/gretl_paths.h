@@ -49,6 +49,10 @@ const char *gretl_gnuplot_path (void);
 const char *gretl_plotfile (void);
 char *set_gretl_plotfile (const char *fname);
 
+const char *gretl_x12_arima (void);
+
+const char *gretl_x12_arima_dir (void);
+
 const char *gretl_png_font (void);
 
 void set_gretl_png_font (const char *s, PATHS *ppaths);

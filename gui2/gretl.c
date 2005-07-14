@@ -119,7 +119,7 @@ char dbproxy[21];
 #ifdef G_OS_WIN32
 char Rcommand[MAXSTR] = "RGui.exe";
 char calculator[MAXSTR] = "calc.exe";
-char latex[MAXSTR] = "latex.exe";
+char latex[MAXSTR] = "pdflatex.exe";
 char viewdvi[MAXSTR] = "windvi.exe";
 char viewps[MAXSTR] = "gsview.exe";
 #else

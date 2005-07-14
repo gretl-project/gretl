@@ -995,7 +995,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case ARMA:
 	clear_model(models[0]);
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo,
-			  &paths, cmd.opt, prn);
+			  cmd.opt, prn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	} else {	

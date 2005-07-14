@@ -553,7 +553,7 @@ garch_init_by_arma (const MODEL *pmod, const int *garchlist,
     /* dep var is squared OLS residual */
     list[4] = v;
 
-    amod = arma(list, (const double **) *pZ, pdinfo, NULL, OPT_NONE, NULL);
+    amod = arma(list, (const double **) *pZ, pdinfo, OPT_NONE, NULL);
     if (amod.errcode) {
 	err = amod.errcode;
 	goto bailout;

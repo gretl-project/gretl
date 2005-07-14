@@ -52,8 +52,6 @@ enum {
 
 static void ensure_slash (char *str);
 
-/* .......................................................... */
-
 static int add_gdt_suffix (char *fname)
 {
     int added = 0;
@@ -65,8 +63,6 @@ static int add_gdt_suffix (char *fname)
 
     return added;
 }
-
-/* .......................................................... */
 
 FILE *gretl_fopen (const char *filename, const char *mode)
 {
@@ -92,8 +88,6 @@ gzFile gretl_gzopen (const char *filename, const char *mode)
     return gzopen(filename, mode);
 #endif
 }
-
-/* .......................................................... */
 
 int gretl_path_prepend (char *file, const char *path)
 {
@@ -289,8 +283,6 @@ static int find_in_subdir (const char *topdir, char *fname, int code)
 
 #endif /* win32 vs posix */
 
-/* .......................................................... */
-
 static char *search_dir (char *fname, const char *topdir, int code)
 {
     FILE *test;
@@ -320,8 +312,6 @@ static char *search_dir (char *fname, const char *topdir, int code)
     return NULL;
 }
 
-/* .......................................................... */
-
 static int path_is_absolute (const char *fname)
 {
     int ret = 0;
@@ -337,8 +327,6 @@ static int path_is_absolute (const char *fname)
 
     return ret;
 }
-
-/* .......................................................... */
 
 static void make_path_absolute (char *fname, const char *orig)
 {
@@ -532,8 +520,6 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     return 0;
 }
 
-/* .......................................................... */
-
 enum paths_status_flags {
     STRING_TABLE_WRITTEN = 1 << 0
 };
@@ -543,6 +529,8 @@ struct INTERNAL_PATHS {
     char gnuplot[MAXLEN];
     char plotfile[MAXLEN];
     char libpath[MAXLEN];
+    char x12a[MAXLEN];
+    char x12adir[MAXLEN];
     char pngfont[32];
     unsigned char status;
 };
@@ -574,16 +562,14 @@ static void set_gretl_libpath (const char *path)
 #endif /* WIN32 */
 }
 
-/* .......................................................... */
-
 static void copy_paths_to_internal (const PATHS *paths)
 {
     strcpy(gretl_paths.userdir, paths->userdir);
     strcpy(gretl_paths.gnuplot, paths->gnuplot);
+    strcpy(gretl_paths.x12a, paths->x12a);
+    strcpy(gretl_paths.x12adir, paths->x12adir);
     strcpy(gretl_paths.pngfont, paths->pngfont);
 }
-
-/* .......................................................... */
 
 const char *gretl_lib_path (void)
 {
@@ -621,6 +607,16 @@ char *set_gretl_plotfile (const char *fname)
     return gretl_paths.plotfile;
 }
 
+const char *gretl_x12_arima (void)
+{
+    return gretl_paths.x12a;
+}
+
+const char *gretl_x12_arima_dir (void)
+{
+    return gretl_paths.x12adir;
+}
+
 const char *gretl_png_font (void)
 {
     return gretl_paths.pngfont;
@@ -655,8 +651,6 @@ static void ensure_slash (char *str)
     }
 }
 
-/* .......................................................... */
-
 void show_paths (const PATHS *ppaths)
 {
     printf(_("gretl: using these basic search paths:\n"));
@@ -666,8 +660,6 @@ void show_paths (const PATHS *ppaths)
     printf("scriptdir: %s\n", ppaths->scriptdir);
     printf("gnuplot: %s\n", ppaths->gnuplot);
 }
-
-/* .......................................................... */
 
 #ifdef WIN32
 

@@ -2578,7 +2578,7 @@ void do_model (GtkWidget *widget, gpointer p)
     case ARMA:
 	arma_maybe_suppress_const();
 	*pmod = arma(cmd.list, (const double **) Z, datainfo,
-		     &paths, cmd.opt, prn);
+		     cmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
@@ -5826,7 +5826,7 @@ int gui_exec_line (char *line,
     case ARMA:
 	clear_model(models[0]);
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo,
-			  &paths, cmd.opt, outprn);
+			  cmd.opt, outprn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	} else {	
