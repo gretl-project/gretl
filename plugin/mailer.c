@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -300,7 +301,9 @@ static int mail_to_dialog (const char *fname, char **recip, char **reply_to,
 
 	if (i == 0) {
 	    w = gtk_combo_new();
-	    gtk_combo_set_popdown_strings(GTK_COMBO(w), minfo.addrs); 
+	    if (minfo.addrs != NULL) {
+		gtk_combo_set_popdown_strings(GTK_COMBO(w), minfo.addrs);
+	    } 
 	} else {
 	    w = gtk_entry_new();
 	}
@@ -369,7 +372,62 @@ static int mail_to_dialog (const char *fname, char **recip, char **reply_to,
     return err;
 }
 
-static int
+#if GTK_MAJOR_VERSION < 2
+
+static void mail_infobox (const char *msg) 
+{
+    GtkWidget *w, *label, *button, *vbox, *hbox;
+
+    w = gtk_window_new(GTK_WINDOW_DIALOG);
+
+    gtk_container_border_width(GTK_CONTAINER(w), 5);
+    gtk_window_position (GTK_WINDOW(w), GTK_WIN_POS_MOUSE);
+    gtk_window_set_title (GTK_WINDOW (w), _("gretl info")); 
+
+    vbox = gtk_vbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(w), vbox);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+
+    /* text of message */
+    label = gtk_label_new(msg);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+
+    /* button */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    
+    button = gtk_button_new_with_label(_("OK"));
+
+    gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+
+    gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
+			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
+			      (gpointer) w);
+
+    gtk_widget_show_all(w);
+}
+
+#else
+
+static void mail_infobox (const char *msg)
+{
+    GtkWidget *dialog;
+
+    dialog = gtk_message_dialog_new (NULL,
+				     GTK_DIALOG_DESTROY_WITH_PARENT,
+				     GTK_MESSAGE_INFO,
+				     GTK_BUTTONS_CLOSE,
+				     msg);
+    gtk_dialog_run(GTK_DIALOG (dialog));
+    gtk_widget_destroy (dialog);
+}
+
+#endif
+
+
+static void
 real_send_mail (FILE *infile, char *recipient, char *sendmail)
 {
     char *argv[4];
@@ -389,23 +447,33 @@ real_send_mail (FILE *infile, char *recipient, char *sendmail)
     
     if (pid == -1) {
 	perror("fork");
-	return 1;
+	return;
     }
 
     if (pid != 0) {
+	/* parent */
 	while (pid != wait(&status));
-	return 0;
+	if (WIFEXITED(status)) {
+	    int err = WEXITSTATUS(status);
+	    gchar *msg = g_strdup_printf("sendmail exited with status %d", err);
+
+	    mail_infobox(msg);
+	    g_free(msg);
+	} else {
+	    mail_infobox("sendmail exited abnormally");
+	}
+	return;
     }
 
-    /* child process */
+    /* child */
 #if 0
     fprintf(stderr, "not doing sendmail\n");
     fclose(infile);
 #else
     dup2(fileno(infile), 0);
     fclose(infile);
-    execvp(sendmail, argv);
-    perror("execvp");
+    execv(sendmail, argv);
+    perror("execv");
 #endif
     _exit(1);
 }
@@ -435,7 +503,7 @@ static int pack_and_mail (const char *subject, const char *note,
 	    perror(tmpfname);
 	    err = 1;
 	} else {
-	    err = real_send_mail(fp, recipient, sendmail);
+	    real_send_mail(fp, recipient, sendmail);
 	    fclose(fp);
 	}
     }
@@ -443,6 +511,28 @@ static int pack_and_mail (const char *subject, const char *note,
     remove(tmpfname);
 
     return err;
+}
+
+static char *find_sendmail (void)
+{
+    const char *candidate[] = {
+	"/usr/sbin/sendmail",
+	"/usr/lib/sendmail",
+	"/usr/bin/sendmail",
+	NULL
+    };
+    struct stat buf;
+    char *prog = NULL;
+    int i;
+
+    for (i=0; candidate[i] != NULL; i++) {
+	if (stat(candidate[i], &buf) == 0 && (buf.st_mode & S_IXUSR)) {
+	    prog = g_strdup(candidate[i]);
+	    break;
+	}
+    }
+
+    return prog;
 }
 
 int email_file (const char *fname, const char *userdir, char *errmsg)
@@ -458,15 +548,11 @@ int email_file (const char *fname, const char *userdir, char *errmsg)
 
     *errmsg = 0;
 
-#if GTK_MAJOR_VERSION >= 2
-    sendmail = g_find_program_in_path("sendmail");
+    sendmail = find_sendmail();
     if (sendmail == NULL) {
-	strcpy(errmsg, "Couldn't find sendmail");
+	strcpy(errmsg, "Couldn't find sendmail executable");
 	return 1;
     }
-#else
-    sendmail = g_strdup("sendmail");
-#endif
 
     sprintf(temp, "%smpack.XXXXXX", userdir);
     if (mktemp(temp) == NULL) {
@@ -484,8 +570,8 @@ int email_file (const char *fname, const char *userdir, char *errmsg)
 	}
     }
 
-    g_free(sendmail);
     g_free(reply_to);
+    g_free(sendmail);
 
     return err;
 }
