@@ -47,6 +47,6 @@ int prn_to_clipboard (PRN *prn, int copycode);
 
 int win_buf_to_clipboard (const char *buf);
 
-int email_file (char *fullname);
+int send_file (char *fullname);
 
 #endif /* GRETLWIN32_H */

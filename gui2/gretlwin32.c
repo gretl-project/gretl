@@ -600,7 +600,7 @@ static char *fname_from_fullname (char *fullname)
     return fname;
 }
 
-int email_file (char *fullname)
+int send_file (char *fullname)
 {
     HINSTANCE mapilib = NULL;
     LPMAPISENDMAIL send_mail = NULL;
@@ -620,8 +620,7 @@ int email_file (char *fullname)
 	errbox("Couldn't access Windows MAPI system");
     } else {
 	char *fname = fname_from_fullname(fullname);
-	gchar *note = g_strdup_printf("Please find the gretl data file %s attached.\n",
-				      fname);
+	gchar *note = NULL;
 	MapiFileDesc mfd;
 	MapiMessage msg;
 
@@ -630,9 +629,16 @@ int email_file (char *fullname)
 
 	mfd.lpszPathName = fullname;
 	mfd.lpszFileName = fname;
-	mfd.nPosition = 1; /* ?? */
+	mfd.nPosition = 1; /* ? */
 
-	msg.lpszSubject  = "dataset";
+	if (strstr(fname, ".gdt") != NULL) {
+	    note = g_strdup_printf("Please find the gretl data file %s attached.\n", fname);
+	    msg.lpszSubject  = "dataset";
+	} else {
+	    note = g_strdup_printf("Please find the gretl script %s attached.\n", fname);
+	    msg.lpszSubject  = "script";
+	}
+
 	msg.lpszNoteText = note;
 	msg.nFileCount = 1;
 	msg.lpFiles = &mfd;

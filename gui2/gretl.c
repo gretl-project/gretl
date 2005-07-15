@@ -121,12 +121,12 @@ char Rcommand[MAXSTR] = "RGui.exe";
 char calculator[MAXSTR] = "calc.exe";
 char latex[MAXSTR] = "pdflatex.exe";
 char viewdvi[MAXSTR] = "windvi.exe";
-char viewps[MAXSTR] = "gsview.exe";
 #else
 char calculator[MAXSTR] = "xcalc";
 char latex[MAXSTR] = "latex";
 char viewdvi[MAXSTR] = "xdvi";
 char viewps[MAXSTR] = "gv";
+char viewpdf[MAXSTR] = "acroread";
 # ifdef USE_GNOME
 char Rcommand[MAXSTR] = "R --gui=gnome";
 extern const char *version_string;
@@ -204,6 +204,11 @@ static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
     varinfo_dialog(mdata->active_var, 1);
 }
 
+static void email_data (gpointer p, guint u, GtkWidget *w)
+{
+    send_file(paths.datfile);
+}
+
 GtkItemFactoryEntry data_items[] = {
 
     /* File menu */
@@ -260,7 +265,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
       EXPORT_OCTAVE, NULL, GNULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL, GNULL },
-    { N_("/File/Send To..."), NULL, email_data, 0, "<StockItem>", GRETL_STOCK_MAIL },
+    { N_("/File/Send To..."), NULL, email_data, OPEN_DATA, "<StockItem>", GRETL_STOCK_MAIL },
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, 
       "<StockItem>", GTK_STOCK_CLEAR },
     { N_("/File/sep0"), NULL, NULL, 0, "<Separator>", GNULL },
@@ -697,12 +702,12 @@ void nls_init (void)
 static void force_language (int f)
 {
     if (f == ENGLISH) {
-	setlocale (LC_ALL, "C");
-    } else {
+	setlocale(LC_ALL, "C");
+    } else if (f == BASQUE) {
 # ifdef G_OS_WIN32
-	setlocale (LC_ALL, "eu");
+	setlocale(LC_ALL, "eu");
 #else
-	setlocale (LC_ALL, "eu_ES");
+	setlocale(LC_ALL, "eu_ES");
 # endif
     }
 
@@ -711,7 +716,7 @@ static void force_language (int f)
 	SetEnvironmentVariable("LC_ALL", "C");
 	putenv("LC_ALL=C");
 	textdomain("none");
-    } else {
+    } else if (f == BASQUE) {
 	SetEnvironmentVariable("LC_ALL", "eu");
 	putenv("LC_ALL=eu");
     }

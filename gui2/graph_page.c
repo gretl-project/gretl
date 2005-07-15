@@ -84,19 +84,18 @@ static void gpage_errmsg (char *msg, int gui)
 
 static void graph_page_init (void)
 {
-    gpage.output = PS_OUTPUT;
     gpage.color = 0;
     gpage.ngraphs = 0;
     gpage.fnames = NULL;
 }
 
-static void doctop (int otype, FILE *fp)
+static void doctop (FILE *fp)
 {
     int letter = in_usa();
 
     fprintf(fp, "\\documentclass%s{article}\n", (letter)? "" : "[a4paper]");
     fprintf(fp, "\\usepackage[%s]{graphicx}\n", 
-	    (otype == PS_OUTPUT)? "dvips" : "pdftex");
+	    (gpage.output == PS_OUTPUT)? "dvips" : "pdftex");
 }
 
 /* A4 is 210mm * 297mm */
@@ -235,9 +234,11 @@ static int make_graphpage_tex (void)
     fname = gpage_fname(".tex", 0);
 
     fp = gretl_fopen(fname, "w");
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	return 1;
+    }
 
-    doctop(gpage.output, fp);
+    doctop(fp);
 
     err = geomline(gpage.ngraphs, fp);
 
@@ -246,7 +247,9 @@ static int make_graphpage_tex (void)
 	err = tex_graph_setup(gpage.ngraphs, fp);
     }
 
-    if (!err) common_end(fp);
+    if (!err) {
+	common_end(fp);
+    }
 
     fclose(fp);
 
@@ -289,8 +292,7 @@ static int gnuplot_compile (const char *fname)
     return err;
 }
 
-static int gp_make_outfile (const char *gfname, int i, double scale,
-			    int output, int color)
+static int gp_make_outfile (const char *gfname, int i, double scale)
 {
     char line[128];
     char *fname;
@@ -312,20 +314,27 @@ static int gp_make_outfile (const char *gfname, int i, double scale,
     setlocale(LC_NUMERIC, "C");
 #endif
     
-    if (output == PDF_OUTPUT) {
-	fprintf(fq, "set term png%s font verdana 6 size %g,%g\n", 
-		((color)? "" : " mono"),
+    if (gpage.output == PDF_OUTPUT) {
+#if 0
+	fprintf(fq, "set term png font verdana 6 size %g,%g\n", 
 		480.0 * scale, 360.0 * scale);
 	fname = gpage_fname(".png", i);
+#else
+	fputs("set term pdf\n", fq);
+	if (scale != 1.0) {
+	    fprintf(fq, "set size %g,%g\n", scale, scale);
+	}	
+	fname = gpage_fname(".pdf", i);
+#endif
     } else {
 #ifdef ENABLE_NLS
 	fprint_gnuplot_encoding("postscript", fq);
 #endif
-	fprintf(fq, "set term postscript eps%s\n", (color)? " color" : "");
-	fname = gpage_fname(".ps", i);
+	fprintf(fq, "set term postscript eps%s\n", (gpage.color)? " color" : "");
 	if (scale != 1.0) {
 	    fprintf(fq, "set size %g,%g\n", scale, scale);
 	}
+	fname = gpage_fname(".ps", i);
     }
 
 #ifdef ENABLE_NLS
@@ -432,7 +441,6 @@ int dvips_compile (char *texshort)
     /* ensure we don't get stale output */
     fname = gpage_fname(".ps", 0);
     remove(fname);
-	
 
 #if defined(G_OS_WIN32)
     if (*dvips_path == 0 && get_dvips_path(dvips_path)) {
@@ -459,8 +467,6 @@ static int latex_compile_graph_page (void)
 {
     int err;
 
-    /* FIXME pdf output */
-
     err = latex_compile(gpage_base);
 
     if (err == LATEX_ERROR) {
@@ -469,7 +475,7 @@ static int latex_compile_graph_page (void)
 	view_file(fname, 0, 1, 78, 350, VIEW_FILE);
     }
 
-    if (!err) {
+    if (gpage.output == PS_OUTPUT && !err) {
 	err = dvips_compile(gpage_base);
     }    
 
@@ -490,8 +496,7 @@ static int make_gp_output (void)
     }
 
     for (i=0; i<gpage.ngraphs && !err; i++) {
-	err = gp_make_outfile(gpage.fnames[i], i + 1, scale, 
-			      gpage.output, gpage.color);
+	err = gp_make_outfile(gpage.fnames[i], i + 1, scale);
     }
 
     fname = gpage_fname(".plt", 0);
@@ -502,15 +507,16 @@ static int make_gp_output (void)
 
 static int real_display_gpage (void)
 {
-    char *fname, *viewer;
+#ifndef G_OS_WIN32
+    char *viewer;
+#endif
+    char *fname;
     int err = 0;
 
     if (gpage.output == PDF_OUTPUT) {
 	fname = gpage_fname(".pdf", 0);
-	viewer = "acroread";
     } else {
 	fname = gpage_fname(".ps", 0);
-	viewer = viewps;
     }
 
 #ifdef G_OS_WIN32
@@ -520,6 +526,7 @@ static int real_display_gpage (void)
 	err = 1;
     }
 #else
+    viewer = (gpage.output == PDF_OUTPUT)? viewpdf : viewps;
     err = gretl_fork(viewer, fname);
 #endif
 
@@ -533,7 +540,11 @@ static void gpage_cleanup (void)
 
     for (i=0; i<gpage.ngraphs; i++) {
 	if (gpage.output == PDF_OUTPUT) {
+#if 0
 	    fname = gpage_fname(".png", i + 1);
+#else
+	    fname = gpage_fname(".pdf", i + 1);
+#endif
 	} else {
 	    fname = gpage_fname(".ps", i + 1);
 	}
@@ -557,6 +568,12 @@ int display_graph_page (void)
     if (gpage.ngraphs == 0) {
 	gpage_errmsg(_("The graph page is empty"), 1);
 	return 1;
+    }
+
+    if (!strncmp(latex, "pdf", 3)) {
+	gpage.output = PDF_OUTPUT;
+    } else {
+	gpage.output = PS_OUTPUT;
     }
 
     /* write the LaTeX driver file */
@@ -594,5 +611,6 @@ void clear_graph_page (void)
 
     graph_page_init();
 }
+
 
 

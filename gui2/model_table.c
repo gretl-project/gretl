@@ -976,7 +976,6 @@ void model_table_dialog (void)
 	N_("t-statistics in parentheses")
     };
     int opt;
-    
 
     opt = radio_dialog(_("model table options"), opts, 2, use_tstats, 0);
 

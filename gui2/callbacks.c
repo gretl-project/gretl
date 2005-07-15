@@ -720,16 +720,9 @@ void do_nistcheck (gpointer p, guint v, GtkWidget *w)
     g_free(fname);
 }
 
-#ifdef G_OS_WIN32
+#ifndef G_OS_WIN32
 
-void email_data (gpointer p, guint u, GtkWidget *w)
-{
-    email_file(paths.datfile);
-}
-
-#else
-
-void email_data (gpointer p, guint u, GtkWidget *w)
+void send_file (char *fullname)
 {
     int (*email_file) (const char *, const char *, char *);
     void *handle;
@@ -741,7 +734,7 @@ void email_data (gpointer p, guint u, GtkWidget *w)
         return;
     }
     
-    email_file(paths.datfile, paths.userdir, errtext);
+    email_file(fullname, paths.userdir, errtext);
     close_plugin(handle);
 
     if (*errtext) {

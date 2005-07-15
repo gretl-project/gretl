@@ -5039,12 +5039,13 @@ static int spawn_latex (char *texsrc)
 {
     char tmp[MAXLEN];
     struct stat sbuf;
+    int pdf = strstr(latex, "pdf") != NULL;
     int ret = LATEX_OK;
 
     sprintf(tmp, "cd %s && %s \\\\batchmode \\\\input %s", 
 	    paths.userdir, latex, texsrc);
     system(tmp);
-    sprintf(tmp, "%s%s.dvi", paths.userdir, texsrc);
+    sprintf(tmp, "%s%s.%s", paths.userdir, texsrc, (pdf)? "pdf" : "dvi");
     if (stat(tmp, &sbuf)) {
 	errbox(_("Failed to process TeX file"));
 	ret = LATEX_EXEC_FAILED;
@@ -5179,6 +5180,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     } 
 
     err = latex_compile(texshort);
+
     if (err == LATEX_OK) {
 #ifdef G_OS_WIN32
 	if (!strncmp(latex, "pdf", 3)) {
@@ -5195,7 +5197,12 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	    }
 	}
 #else
-	gretl_fork(viewdvi, texbase);
+	if (!strncmp(latex, "pdf", 3)) {
+	    sprintf(tmp, "%s.pdf", texbase);
+	    gretl_fork(viewpdf, tmp);
+	} else {
+	    gretl_fork(viewdvi, texbase);
+	}
 #endif
     }
 

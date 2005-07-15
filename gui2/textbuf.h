@@ -33,6 +33,8 @@ gint get_char_width (GtkWidget *widget);
 
 gchar *textview_get_text (GtkTextView *view);
 
+int viewer_char_count (windata_t *vwin);
+
 void text_paste (windata_t *vwin, guint u, GtkWidget *widget);
 
 void text_undo (windata_t *vwin, guint u, GtkWidget *widget);

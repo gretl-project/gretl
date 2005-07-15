@@ -90,19 +90,41 @@ static void panel_heteroskedasticity_menu (windata_t *vwin);
 static int maybe_recode_file (const char *fname);
 #endif
 
-/* in editable window toolbar, Save is first button */
+enum {
+    SAVE_ITEM = 1,
+    SAVE_AS_ITEM,
+    EDIT_ITEM,
+    GP_ITEM,
+    RUN_ITEM,
+    COPY_ITEM,
+    TEX_ITEM,
+    ADD_ITEM,
+    MAIL_ITEM,
+    HELP_ITEM
+} viewbar_flags;
 
-static GtkWidget *toolbar_first_button (GtkToolbar *tb)
+static GtkWidget *get_toolbar_button_by_flag (GtkToolbar *tb, int flag)
 {
-    GList *kids = tb->children;
+    GList *kids;
     GtkToolbarChild *child;
     GtkWidget *w = NULL;
+    int wflag;
+
+    if (tb == NULL) {
+	return NULL;
+    }
+
+    kids = tb->children;
 
     while (kids != NULL) {
 	child = kids->data;
 	if (child->type == GTK_TOOLBAR_CHILD_BUTTON) {
-	    w = child->widget;
-	    break;
+	    wflag = GPOINTER_TO_INT(g_object_get_data
+				    (G_OBJECT(child->widget), "flag"));
+	    if (wflag == flag) {
+		w = child->widget;
+		break;
+	    }
 	}
 	kids = kids->next;
     }
@@ -113,7 +135,8 @@ static GtkWidget *toolbar_first_button (GtkToolbar *tb)
 static void mark_content_changed (windata_t *vwin) 
 {
     if (vwin->active_var == 0) {
-	GtkWidget *w = toolbar_first_button(GTK_TOOLBAR(vwin->mbar));
+	GtkWidget *w = get_toolbar_button_by_flag(GTK_TOOLBAR(vwin->mbar), 
+						  SAVE_ITEM);
 
 	if (w != NULL) {
 	    gtk_widget_set_sensitive(w, TRUE);
@@ -124,7 +147,8 @@ static void mark_content_changed (windata_t *vwin)
 
 static void mark_content_saved (windata_t *vwin) 
 {
-    GtkWidget *w = toolbar_first_button(GTK_TOOLBAR(vwin->mbar));
+    GtkWidget *w = get_toolbar_button_by_flag(GTK_TOOLBAR(vwin->mbar), 
+					      SAVE_ITEM);
 
     if (w != NULL) {
 	gtk_widget_set_sensitive(w, FALSE);
@@ -1268,7 +1292,7 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 {
-    if (strstr(vwin->fname, "script_tmp") || !strlen(vwin->fname)) {
+    if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
 	/* special case: a newly created script */
 	file_save(vwin, SAVE_SCRIPT, NULL);
 	strcpy(vwin->fname, scriptfile);
@@ -1453,7 +1477,7 @@ void gretl_stock_icons_init (void)
 
 	set = gtk_icon_set_new();
 	source = gtk_icon_source_new();
-	gtk_icon_source_set_size(source, GTK_ICON_SIZE_SMALL_TOOLBAR);
+	gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);
 	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mini_tex_xpm);
 	gtk_icon_source_set_pixbuf(source, pbuf);
 	g_object_unref(pbuf);
@@ -1463,15 +1487,6 @@ void gretl_stock_icons_init (void)
 	gtk_icon_set_unref(set);
 
 	set = gtk_icon_set_new();
-
-	source = gtk_icon_source_new();
-	gtk_icon_source_set_size(source, GTK_ICON_SIZE_SMALL_TOOLBAR);
-	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mail_16_xpm);
-	gtk_icon_source_set_pixbuf(source, pbuf);
-	g_object_unref(pbuf);
-	gtk_icon_set_add_source(set, source);
-	gtk_icon_source_free(source);
-
 	source = gtk_icon_source_new();
 	gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);
 	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mail_16_xpm);
@@ -1479,7 +1494,6 @@ void gretl_stock_icons_init (void)
 	g_object_unref(pbuf);
 	gtk_icon_set_add_source(set, source);
 	gtk_icon_source_free(source);
-
 	gtk_icon_factory_add(ifac, GRETL_STOCK_MAIL, set);
 	gtk_icon_set_unref(set);
 
@@ -1520,6 +1534,20 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
     }	
 }
 
+static void mail_script_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (viewer_char_count(vwin) == 0) {
+	infobox(_("Nothing to send"));
+	return;
+    }
+
+    if (query_save_text(NULL, NULL, vwin)) {
+	return;
+    }
+    
+    send_file(vwin->fname);
+}
+
 static void window_help (GtkWidget *w, windata_t *vwin)
 {
     context_help(NULL, GINT_TO_POINTER(vwin->role));
@@ -1536,18 +1564,6 @@ struct viewbar_item {
     int flag;
 };
 
-enum {
-    SAVE_ITEM = 1,
-    SAVE_AS_ITEM,
-    EDIT_ITEM,
-    GP_ITEM,
-    RUN_ITEM,
-    COPY_ITEM,
-    TEX_ITEM,
-    ADD_ITEM,
-    HELP_ITEM
-} viewbar_codes;
-
 #ifndef OLD_GTK
 
 static struct viewbar_item viewbar_items[] = {
@@ -1563,6 +1579,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Find..."), GTK_STOCK_FIND, text_find_callback, 0 },
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
+    { N_("Send To..."), GRETL_STOCK_MAIL, mail_script_callback, MAIL_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, window_tex_callback, TEX_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_ITEM },
@@ -1585,6 +1602,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Find..."), stock_search_16_xpm, text_find_callback, 0 },
     { N_("Replace..."), stock_search_replace_16_xpm, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), stock_undo_16_xpm, text_undo_callback, EDIT_ITEM },
+    { N_("Send To..."), mail_16_xpm, mail_script_callback, MAIL_ITEM },
     { N_("Help on command"), stock_help_16_xpm, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), mini_tex_xpm, window_tex_callback, TEX_ITEM },
     { N_("Add to dataset..."), stock_add_16_xpm, add_data_callback, ADD_ITEM },
@@ -1674,6 +1692,10 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
+	if (!run_ok && viewbar_items[i].flag == MAIL_ITEM) {
+	    continue;
+	}	
+
 	if (!help_ok && viewbar_items[i].flag == HELP_ITEM) {
 	    continue;
 	}
@@ -1734,10 +1756,13 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	gtk_toolbar_append_space(GTK_TOOLBAR(vwin->mbar));
 #endif
 
+	g_object_set_data(G_OBJECT(w), "flag", 
+			  GINT_TO_POINTER(viewbar_items[i].flag));
+
 	if (viewbar_items[i].flag == SAVE_ITEM) { 
 	    /* nothing to save just yet */
 	    gtk_widget_set_sensitive(w, FALSE);
-	}
+	} 
     }
 
     gtk_widget_show(vwin->mbar);
@@ -1787,8 +1812,6 @@ static void add_edit_items_to_viewbar (windata_t *vwin)
 	}
     }
 }
-
-/* ........................................................... */
 
 static gchar *make_viewer_title (int role, const char *fname)
 {
@@ -1871,8 +1894,6 @@ static windata_t *common_viewer_new (int role, const char *title,
 
     return vwin;
 }
-
-/* ........................................................... */
 
 static void viewer_box_config (windata_t *vwin)
 {
@@ -2069,7 +2090,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
-    } else { /* was else if (role != VIEW_FILE) */
+    } else { 
 	make_viewbar(vwin, (role == VIEW_DATA || role == CONSOLE));
     }
 

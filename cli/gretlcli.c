@@ -267,7 +267,7 @@ static void force_language (int f)
 {
     if (f == ENGLISH) {
 	setlocale(LC_ALL, "C");
-    } else {
+    } else if (f == BASQUE) {
 # ifdef WIN32
 	setlocale(LC_ALL, "eu");
 # else
@@ -279,7 +279,7 @@ static void force_language (int f)
     if (f == ENGLISH) { 
 	SetEnvironmentVariable("LC_ALL", "C");
 	putenv("LC_ALL=C");
-    } else {
+    } else if (f == BASQUE) {
 	SetEnvironmentVariable("LC_ALL", "eu");
 	putenv("LC_ALL=eu");
     }	

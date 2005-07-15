@@ -7,3 +7,8 @@ application/x-gretlsession:
 	open=gretl -r %f
 	view=gretl -r %f
 	icon-filename=@gnome_prefix@/share/pixmaps/gnome-application-x-gretlsession.png
+
+application/x-gretlscript:
+	open=gretl -r %f
+	view=gretl -r %f
+	icon-filename=@gnome_prefix@/share/pixmaps/gnome-application-x-gretlsession.png

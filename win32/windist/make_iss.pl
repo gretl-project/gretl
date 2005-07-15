@@ -30,14 +30,12 @@ print "; -- gretl.iss --\n";
 print "[Setup]\n";
 print "AppName=gretl\n";
 print "AppVerName=gretl version $verstr\n";
-print "AppCopyright=Copyright C 1999-2004 Allin Cottrell\n";
+print "AppCopyright=Copyright C 1999-2005 Allin Cottrell\n";
 print "DefaultDirName=c:\\userdata\\gretl\n";
 print "DefaultGroupName=gretl\n";
 print "UninstallDisplayIcon={app}\\gretlw32.exe\n";
 print "ChangesAssociations=yes\n";
 print "DirExistsWarning=no\n";
-# print "MinVersion=4,3.51\n";
-# print "UsePreviousAppDir=no\n";
 
 print "\n[INI]\n";
 print "Filename: \"{win}\\WGNUPLOT.INI\"; Section: \"WGNUPLOT\"; Flags: createkeyifdoesntexist\n";

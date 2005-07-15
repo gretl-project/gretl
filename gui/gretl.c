@@ -151,6 +151,11 @@ static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
     varinfo_dialog(mdata->active_var, 1);
 }
 
+static void email_data (gpointer p, guint u, GtkWidget *w)
+{
+    send_file(paths.datfile);
+}
+
 GtkItemFactoryEntry data_items[] = {
     /* File menu */
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },
@@ -197,7 +202,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
       EXPORT_OCTAVE, NULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL },
-    { N_("/File/Send To..."), NULL, email_data, 0, NULL },
+    { N_("/File/Send To..."), NULL, email_data, OPEN_DATA, NULL },
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, NULL },
     { N_("/File/sep0"), NULL, NULL, 0, "<Separator>" },
 
@@ -585,9 +590,9 @@ static void force_language (int f)
     if (f == ENGLISH) {
 	setlocale(LC_ALL, "C");
 	force_english_help();
-    } else {
-	setlocale(LC_ALL, "XXX");
-    }
+    } else if (f == BASQUE) {
+	setlocale(LC_ALL, "eu_ES");
+    } 
 }
 
 #endif /* ENABLE_NLS */

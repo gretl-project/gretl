@@ -51,6 +51,7 @@ enum {
 # define g_object_get_data(o,s)         gtk_object_get_data(o,s)
 # define G_CALLBACK(f)                  GTK_SIGNAL_FUNC(f)
 # define g_signal_connect(o,s,f,p)      gtk_signal_connect(o,s,f,p)
+# define gtk_widget_set_size_request(g,w,h) gtk_widget_set_usize(g,w,h)
 
 GtkWidget *standard_button (int code)
 {
@@ -96,15 +97,26 @@ struct mail_info {
     char **note;
     int *errp;
     char *addr_file;
+    char *sig;
+    int want_sig;
     GList *addrs;
     char *orig_reply_to;
 };
 
 static void destroy_mail_info (GtkWidget *w, struct mail_info *minfo)
 {
+    GList *tmp;
+
     g_free(minfo->addr_file);
     g_free(minfo->orig_reply_to);
-    /* and the GList?? */
+    free(minfo->sig);
+
+    tmp = minfo->addrs;
+    while (tmp) {
+	/* free the address strings */
+	g_free(tmp->data);
+	tmp = g_list_next(tmp);
+    }
 
     gtk_main_quit();
 }
@@ -131,6 +143,51 @@ static void save_gretl_addresses (struct mail_info *minfo)
     } 
 }
 
+static char *add_to_string (char *str, const char *add)
+{
+    char *tmp = NULL;
+
+    if (str == NULL) {
+	tmp = malloc(strlen(add) + 1);
+	if (tmp != NULL) {
+	    *tmp = '\0';
+	}
+    } else {
+	tmp = realloc(str, strlen(str) + strlen(add) + 1);
+    }
+
+    if (tmp != NULL) {
+	str = tmp;
+	strcat(str, add);
+    }
+
+    return str;
+}
+
+static char *get_signature (void)
+{
+    char *home = getenv("HOME");
+    FILE *fp;
+    char *sig = NULL;
+
+    if (home != NULL) {
+	gchar *sigfile = g_strdup_printf("%s/.signature", home);
+	
+	fp = gretl_fopen(sigfile, "r");
+	if (fp != NULL) {
+	    char line[128];
+
+	    while (fgets(line, sizeof line, fp)) {
+		sig = add_to_string(sig, line);
+	    }
+	    fclose(fp);
+	}
+	g_free(sigfile);
+    }
+
+    return sig;
+}
+
 static void finalize_mail_settings (GtkWidget *w, struct mail_info *minfo)
 {
     int save = 0;
@@ -144,23 +201,33 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_info *minfo)
 
 	txt = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(minfo->recip_combo)->entry));
 	if (txt != NULL && *txt != '\0') {
+	    int i = 0;
+
 	    *minfo->recip = g_strdup(txt);
 	    save = 1;
 	    while (list) {
 		if (!strcmp(txt, (char *) list->data)) {
-		    save = 0;
+		    if (i == 0) {
+			/* current recipient is top of the list already */
+			save = 0;
+		    } else {
+			/* current recipient should be moved to top */
+			list = g_list_remove(list, list->data);
+		    }
 		    break;
 		}
 		list = g_list_next(list);
+		i++;
 	    }
 	    if (save) {
 		minfo->addrs = g_list_prepend(minfo->addrs, g_strdup(txt));
-	    }
+	    } 
 	} else {
 	    err = MAIL_NO_RECIPIENT;
 	}
 
 	if (!err) {
+	    /* reply-to address */
 	    txt = gtk_entry_get_text(GTK_ENTRY(minfo->reply_entry));
 	    if (txt != NULL && *txt != '\0') {
 		*minfo->reply_to = g_strdup(txt);
@@ -170,14 +237,24 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_info *minfo)
 		}
 	    }
 
+	    /* message subject */
 	    txt = gtk_entry_get_text(GTK_ENTRY(minfo->subj_entry));
 	    if (txt != NULL && *txt != '\0') {
 		*minfo->subj = g_strdup(txt);
 	    }
 
+	    /* message text */
 	    txt = gtk_entry_get_text(GTK_ENTRY(minfo->note_entry));
 	    if (txt != NULL && *txt != '\0') {
-		*minfo->note = g_strdup_printf("%s\n", txt);
+		if (minfo->sig != NULL && !minfo->want_sig) {
+		    free(minfo->sig);
+		    minfo->sig = NULL;
+		}
+		if (minfo->sig != NULL) {
+		    *minfo->note = g_strdup_printf("%s\n--\n%s\n", txt, minfo->sig);
+		} else {
+		    *minfo->note = g_strdup_printf("%s\n", txt);
+		}
 	    }
 	}
 
@@ -246,6 +323,22 @@ static void cancel_mail (struct mail_info *minfo)
     *minfo->errp = MAIL_CANCEL;
 }
 
+static int is_data_file (const char *fname)
+{
+    int ret = 1;
+
+    if (fname != NULL && strlen(fname) > 4) {
+	ret = !strcmp(fname + strlen(fname) - 4, ".gdt");
+    }
+
+    return ret;
+}
+
+static void sig_callback (GtkWidget *w, struct mail_info *minfo)
+{
+    minfo->want_sig = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+}
+
 static int mail_to_dialog (const char *fname, char **recip, char **reply_to, 
 			   char **subj, char **note)
 {
@@ -259,6 +352,7 @@ static int mail_to_dialog (const char *fname, char **recip, char **reply_to,
     const char *short_fname, *p;
     gchar *attach_str;
     struct mail_info minfo;
+    int datafile;
     int i, err = 0;
 
     get_gretl_address_list(&minfo);
@@ -271,6 +365,9 @@ static int mail_to_dialog (const char *fname, char **recip, char **reply_to,
     minfo.note = note;
     minfo.errp = &err;
 
+    minfo.sig = get_signature();
+    minfo.want_sig = minfo.sig != NULL;
+
     g_signal_connect(G_OBJECT(minfo.dlg), "delete-event", 
 		     G_CALLBACK(cancel_mail), &minfo);
 
@@ -280,7 +377,6 @@ static int mail_to_dialog (const char *fname, char **recip, char **reply_to,
     gtk_window_set_title(GTK_WINDOW(minfo.dlg), _("gretl: send mail"));
     set_dialog_border_widths(minfo.dlg);
     gtk_window_set_position(GTK_WINDOW(minfo.dlg), GTK_WIN_POS_MOUSE);
-    gtk_widget_set_usize(minfo.dlg, 420, 224);
 
     tbl = gtk_table_new(4, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
@@ -290,7 +386,9 @@ static int mail_to_dialog (const char *fname, char **recip, char **reply_to,
     short_fname = fname;
     if ((p = strrchr(fname, '/')) != NULL) {
 	short_fname = p + 1;
-    }    
+    }  
+
+    datafile = is_data_file(short_fname);
 
     for (i=0; i<4; i++) {
 	GtkWidget *w;
@@ -313,11 +411,17 @@ static int mail_to_dialog (const char *fname, char **recip, char **reply_to,
 		gtk_entry_set_text(GTK_ENTRY(w), minfo.orig_reply_to);
 	    }
 	} else if (i == 2) {
-	    gtk_entry_set_text(GTK_ENTRY(w), "dataset");
+	    gtk_entry_set_text(GTK_ENTRY(w), (datafile)? "dataset" : "script");
 	} else if (i == 3) {
-	    gchar *note = g_strdup_printf("Please find the gretl data file %s attached.",
-					  short_fname);
+	    gchar *note;
 
+	    if (datafile) {
+		note = g_strdup_printf("Please find the gretl data file %s attached.",
+				       short_fname);
+	    } else {
+		note = g_strdup_printf("Please find the gretl script %s attached.",
+				       short_fname);
+	    }		
 	    gtk_entry_set_text(GTK_ENTRY(w), note);
 	    g_free(note);
 	}
@@ -339,6 +443,17 @@ static int mail_to_dialog (const char *fname, char **recip, char **reply_to,
 	} else {
 	    minfo.note_entry = w;
 	}
+    }
+
+    if (minfo.sig != NULL) {
+	GtkWidget *w;
+
+	w = gtk_check_button_new_with_label("Attach signature");
+	g_signal_connect(G_OBJECT(w), "toggled", G_CALLBACK(sig_callback), &minfo);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(minfo.dlg)->vbox), hbox, FALSE, FALSE, 5);
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -365,6 +480,8 @@ static int mail_to_dialog (const char *fname, char **recip, char **reply_to,
     g_signal_connect(G_OBJECT(minfo.cancel), "clicked", 
 		     G_CALLBACK(finalize_mail_settings), &minfo);
 
+    
+    gtk_widget_set_size_request(minfo.dlg, 420, -1);
     gtk_widget_show_all(minfo.dlg);
     gtk_window_set_modal(GTK_WINDOW(minfo.dlg), TRUE);
     gtk_main();
@@ -374,7 +491,7 @@ static int mail_to_dialog (const char *fname, char **recip, char **reply_to,
 
 #if GTK_MAJOR_VERSION < 2
 
-static void mail_infobox (const char *msg) 
+static void mail_infobox (const char *msg, int err) 
 {
     GtkWidget *w, *label, *button, *vbox, *hbox;
 
@@ -382,7 +499,11 @@ static void mail_infobox (const char *msg)
 
     gtk_container_border_width(GTK_CONTAINER(w), 5);
     gtk_window_position (GTK_WINDOW(w), GTK_WIN_POS_MOUSE);
-    gtk_window_set_title (GTK_WINDOW (w), _("gretl info")); 
+    if (err) {
+	gtk_window_set_title(GTK_WINDOW (w), _("gretl error"));
+    } else {
+	gtk_window_set_title(GTK_WINDOW (w), _("gretl info"));
+    } 
 
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_add(GTK_CONTAINER(w), vbox);
@@ -411,13 +532,13 @@ static void mail_infobox (const char *msg)
 
 #else
 
-static void mail_infobox (const char *msg)
+static void mail_infobox (const char *msg, int err)
 {
     GtkWidget *dialog;
 
     dialog = gtk_message_dialog_new (NULL,
 				     GTK_DIALOG_DESTROY_WITH_PARENT,
-				     GTK_MESSAGE_INFO,
+				     (err)? GTK_MESSAGE_ERROR : GTK_MESSAGE_INFO,
 				     GTK_BUTTONS_CLOSE,
 				     msg);
     gtk_dialog_run(GTK_DIALOG (dialog));
@@ -425,7 +546,6 @@ static void mail_infobox (const char *msg)
 }
 
 #endif
-
 
 static void
 real_send_mail (FILE *infile, char *recipient, char *sendmail)
@@ -455,12 +575,17 @@ real_send_mail (FILE *infile, char *recipient, char *sendmail)
 	while (pid != wait(&status));
 	if (WIFEXITED(status)) {
 	    int err = WEXITSTATUS(status);
-	    gchar *msg = g_strdup_printf("sendmail exited with status %d", err);
 
-	    mail_infobox(msg);
-	    g_free(msg);
+	    if (!err) {
+		mail_infobox("sendmail exited normally", 0);
+	    } else {
+		gchar *msg = g_strdup_printf("sendmail exited with status %d", err);
+
+		mail_infobox(msg, 1);
+		g_free(msg);
+	    }
 	} else {
-	    mail_infobox("sendmail exited abnormally");
+	    mail_infobox("sendmail exited abnormally", 1);
 	}
 	return;
     }
@@ -479,10 +604,10 @@ real_send_mail (FILE *infile, char *recipient, char *sendmail)
 }
 
 static int pack_and_mail (const char *subject, const char *note,
-			  const char *fname, const char *ctype,
-			  char *recipient, char *reply_to,
+			  const char *fname, char *recipient, char *reply_to,
 			  char *tmpfname, char *sendmail)
 {
+    const char *ctype;
     FILE *fp;
     int err = 0;
 
@@ -490,6 +615,12 @@ static int pack_and_mail (const char *subject, const char *note,
     if (fp == NULL) {
 	perror(fname);
 	err = 1;
+    }
+
+    if (is_data_file(fname)) {
+	ctype = "application/x-gretldata";
+    } else {
+	ctype = "application/x-gretlscript";
     }
 
     if (!err) {
@@ -543,7 +674,6 @@ int email_file (const char *fname, const char *userdir, char *errmsg)
     char *recipient = NULL;
     char *reply_to = NULL;
     char *sendmail = NULL;
-    char *ctype = "application/x-gretldata";
     int mval, err = 0;
 
     *errmsg = 0;
@@ -565,7 +695,7 @@ int email_file (const char *fname, const char *userdir, char *errmsg)
 	    strcpy(errmsg, "No address was given");
 	    err = 1;
 	} else if (mval == MAIL_OK) {
-	    err = pack_and_mail(subject, note, fname, ctype, recipient,
+	    err = pack_and_mail(subject, note, fname, recipient,
 				reply_to, temp, sendmail);
 	}
     }

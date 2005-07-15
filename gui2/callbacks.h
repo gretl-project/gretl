@@ -73,6 +73,8 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget);
 
 void do_nistcheck (gpointer p, guint u, GtkWidget *w);
 
-void email_data (gpointer p, guint u, GtkWidget *w);
+#ifndef G_OS_WIN32
+void send_file (char *fullname);
+#endif
 
 #endif /* CALLBACKS_H */

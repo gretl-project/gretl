@@ -32,8 +32,6 @@ enum {
     RED_TEXT
 };
 
-/* .................................................................. */
-
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
     GdkWindow *win = gtk_text_view_get_window(GTK_TEXT_VIEW(w),
@@ -49,8 +47,6 @@ void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
     } 
 }
 
-/* ........................................................... */
-
 void cursor_to_top (windata_t *vwin)
 {
     GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w)); 
@@ -63,8 +59,6 @@ void cursor_to_top (windata_t *vwin)
     gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->w), 
 				 mark, 0.0, FALSE, 0, 0);
 }
-
-/* .................................................................. */
 
 gint get_char_width (GtkWidget *widget)
 {
@@ -86,8 +80,6 @@ gint get_char_width (GtkWidget *widget)
     return width;
 }
 
-/* .................................................................. */
-
 gchar *textview_get_text (GtkTextView *view)
 {
     GtkTextBuffer *tbuf;
@@ -100,7 +92,13 @@ gchar *textview_get_text (GtkTextView *view)
     return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 }
 
-/* .................................................................. */
+int viewer_char_count (windata_t *vwin)
+{
+    GtkTextBuffer *tbuf;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    return gtk_text_buffer_get_char_count(tbuf);
+}
 
 void text_paste (windata_t *vwin, guint u, GtkWidget *widget)
 {
@@ -116,8 +114,6 @@ void text_paste (windata_t *vwin, guint u, GtkWidget *widget)
     gtk_text_buffer_paste_clipboard(buf, gtk_clipboard_get(GDK_NONE),
 				    NULL, TRUE);
 }
-
-/* .................................................................. */
 
 void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
 {
@@ -489,8 +485,6 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
     fclose(fp);
 }
 
-/* ........................................................... */
-
 static GtkTextTagTable *gretl_tags_new (void)
 {
     GtkTextTagTable *table;
@@ -536,8 +530,6 @@ void correct_line_color (windata_t *vwin)
 
 #endif /* not USE_GTKSOURCEVIEW */
 
-/* ........................................................... */
-
 void create_text (windata_t *vwin, GtkTextBuffer **buf, 
 		  int hsize, int vsize, gboolean editable)
 {
@@ -563,8 +555,6 @@ void create_text (windata_t *vwin, GtkTextBuffer **buf,
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), editable);
 }
-
-/* ........................................................... */
 
 void text_table_setup (windata_t *vwin)
 {

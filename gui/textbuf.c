@@ -36,8 +36,6 @@ void text_paste (windata_t *vwin, guint u, GtkWidget *widget)
     gtk_editable_paste_clipboard(GTK_EDITABLE(vwin->w));
 }
 
-/* .................................................................. */
-
 void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
 {
     gchar *old =
@@ -63,8 +61,6 @@ void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
     }
 }
 
-/* ........................................................... */
-
 void create_text (windata_t *vwin, int hsize, int vsize, 
 		  gboolean editable)
 {
@@ -76,8 +72,6 @@ void create_text (windata_t *vwin, int hsize, int vsize,
     hsize += 48;
     gtk_widget_set_usize (vwin->dialog, hsize, vsize);
 }
-
-/* ........................................................... */
 
 void text_table_setup (windata_t *vwin)
 {
@@ -101,8 +95,6 @@ void text_table_setup (windata_t *vwin)
 
     gtk_widget_show(table);
 }
-
-/* ........................................................... */
 
 void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn)
 {
@@ -136,8 +128,6 @@ void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn)
 	colptr = nextcolor;
     }
 }
-
-/* ........................................................... */
 
 int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 {
@@ -207,4 +197,15 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
     fclose(fp);
 
     return 0;
+}
+
+int viewer_char_count (windata_t *vwin)
+{
+    int ret = 0;
+
+    if (GTK_IS_TEXT(vwin->w)) {
+	ret = gtk_text_get_length(GTK_TEXT(vwin->w));
+    }
+
+    return ret;
 }

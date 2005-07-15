@@ -1778,31 +1778,27 @@ static int parse_criteria (const char *line, const double **Z,
  * option flag, or 0 if the option flag is not recognized.
  */
 
-int parseopt (const char **argv, int argc, char *fname,
-	      int *force_lang)
+int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 {
     int opt = 0;
     const char *s = argv[1];
 
     *fname = '\0';
+    *force_lang = 0;
 
 #ifdef ENABLE_NLS
-    if (strcmp(s, "-e") == 0 || strncmp(s, "--english", 9) == 0) { 
+    if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) { 
 	*force_lang = ENGLISH;
-	if (--argc < 2) {
-	    return 0;
-	}
-	argv++;
-	s = argv[1];
-    }
-    if (strcmp(s, "-q") == 0 || strncmp(s, "--basque", 8) == 0) { 
+    } else if (!strcmp(s, "-q") || !strncmp(s, "--basque", 8)) { 
 	*force_lang = BASQUE;
+    }
+    if (*force_lang) {
 	if (--argc < 2) {
 	    return 0;
 	}
 	argv++;
 	s = argv[1];
-    }
+    }	
 #endif
 
     if (strcmp(s, "-b") == 0 || strncmp(s, "--batch", 7) == 0) 
