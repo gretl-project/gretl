@@ -315,17 +315,11 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 #endif
     
     if (gpage.output == PDF_OUTPUT) {
-#if 0
-	fprintf(fq, "set term png font verdana 6 size %g,%g\n", 
-		480.0 * scale, 360.0 * scale);
-	fname = gpage_fname(".png", i);
-#else
 	fputs("set term pdf\n", fq);
 	if (scale != 1.0) {
 	    fprintf(fq, "set size %g,%g\n", scale, scale);
 	}	
 	fname = gpage_fname(".pdf", i);
-#endif
     } else {
 #ifdef ENABLE_NLS
 	fprint_gnuplot_encoding("postscript", fq);
@@ -540,11 +534,7 @@ static void gpage_cleanup (void)
 
     for (i=0; i<gpage.ngraphs; i++) {
 	if (gpage.output == PDF_OUTPUT) {
-#if 0
-	    fname = gpage_fname(".png", i + 1);
-#else
 	    fname = gpage_fname(".pdf", i + 1);
-#endif
 	} else {
 	    fname = gpage_fname(".ps", i + 1);
 	}
@@ -563,6 +553,7 @@ static void gpage_cleanup (void)
 
 int display_graph_page (void)
 {
+    char *latex_orig = NULL;
     int err = 0;
 
     if (gpage.ngraphs == 0) {
@@ -571,7 +562,13 @@ int display_graph_page (void)
     }
 
     if (!strncmp(latex, "pdf", 3)) {
-	gpage.output = PDF_OUTPUT;
+	if (gnuplot_has_pdf()) {
+	    gpage.output = PDF_OUTPUT;
+	} else {
+	    latex_orig = g_strdup(latex);
+	    strcpy(latex, latex_orig + 3);
+	    gpage.output = PS_OUTPUT;
+	}
     } else {
 	gpage.output = PS_OUTPUT;
     }
@@ -592,6 +589,11 @@ int display_graph_page (void)
     if (!err) {
 	/* compile LaTeX and display output */
 	err = real_display_gpage();
+    }
+
+    if (latex_orig != NULL) {
+	strcpy(latex, latex_orig);
+	g_free(latex_orig);
     }
 
     gpage_cleanup();

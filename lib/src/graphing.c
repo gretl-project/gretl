@@ -308,6 +308,12 @@ int gnuplot_has_ttf (void)
     return 1;
 }
 
+int gnuplot_has_pdf (void)
+{
+    /* ... and we know it does PDF output */
+    return 1;
+}
+
 int gnuplot_has_specified_colors (void)
 {
     /* ... and we know it does specified colors */
@@ -343,6 +349,17 @@ int gnuplot_has_ttf (void)
 	if (err) {
 	    err = gnuplot_test_command("set term png font arial 8");
 	}
+    }
+
+    return !err;
+}
+
+int gnuplot_has_pdf (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set term pdf");
     }
 
     return !err;
