@@ -2114,8 +2114,8 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 
     fprintf(fp, "set key left top\n"
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
-	    "'-' using 1:2 title '%s' w lines lt 2, \\\n" 
-	    "'-' using 1:2 notitle w lines lt 2\n", 
+	    "'-' using 1:2 title '%s' w l 2, \\\n" 
+	    "'-' using 1:2 notitle w l 2\n", 
 	    I_("residual"), I_("+- sqrt(h(t))"));
 
 #ifdef ENABLE_NLS
@@ -2453,6 +2453,9 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	}
 
 	fprintf(fp, "w %s", spec->lines[i].style);
+	if (spec->lines[i].type != 0) {
+	    fprintf(fp, " %d", spec->lines[i].type);
+	}
 
 	if (i == nlines - 1) {
 	    fputc('\n', fp);

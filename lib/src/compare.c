@@ -1685,14 +1685,14 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	/* plot with 95% confidence bands, if not batch mode */
 	if (!gretl_in_batch_mode() &&
 	    gnuplot_init(PLOT_CUSUM, &fq) == 0) {
-	    fprintf(fq, "set xlabel \"%s\"\n", I_("Observation"));
+	    fprintf(fq, "set xlabel '%s'\n", I_("Observation"));
 	    fputs("set xzeroaxis\n", fq);
-	    fprintf(fq, "set title \"%s\"\n",
+	    fprintf(fq, "set title '%s'\n",
 		    /* xgettext:no-c-format */
 		    I_("CUSUM plot with 95% confidence band"));
 	    fputs("set nokey\n", fq);
-	    fprintf(fq, "plot \\\n%g+%g*x w l 1, \\\n", xx - K*yy, yy);
-	    fprintf(fq, "%g-%g*x w l 1, \\\n", -xx + K*yy, yy);
+	    fprintf(fq, "plot \\\n%g+%g*x title '' w l 1, \\\n", xx - K*yy, yy);
+	    fprintf(fq, "%g-%g*x title '' w l 1, \\\n", -xx + K*yy, yy);
 	    fputs("'-' using 1:2 w lp\n", fq);
 
 	    for (j=0; j<n_est; j++) { 

@@ -57,6 +57,7 @@ typedef struct {
     char style[16];        /* lines, points, etc. */
     char scale[8];         /* string repres. of scale factor */
     int yaxis;             /* 1 for left, 2 for right */
+    int type;              /* 1, 2, ... */
 } GPT_LINE;
 
 #define PLOT_LABEL_TEXT_LEN 31

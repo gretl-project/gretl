@@ -545,7 +545,6 @@ static void get_gpt_data (char *line, double *x, double *y)
 }
 
 #define cant_edit(p) (p == PLOT_CORRELOGRAM || \
-                      p == PLOT_CUSUM || \
                       p == PLOT_FORECAST || \
                       p == PLOT_GARCH || \
                       p == PLOT_IRFBOOT || \
@@ -586,6 +585,7 @@ static GPT_SPEC *plotspec_new (void)
 	spec->lines[i].style[0] = 0;
 	spec->lines[i].scale[0] = 0;
 	spec->lines[i].yaxis = 1;
+	spec->lines[i].type = 0;
     }
 
     for (i=0; i<4; i++) {
@@ -836,9 +836,9 @@ static int allocate_plotspec_markers (GPT_SPEC *spec, int plot_n)
     return 0;
 }
 
-/* Determine the number of data points in a plot; also the type of
+/* Determine the number of data points in a plot (also the type of
    plot, and whether there are any data-point markers along with the
-   data.
+   data).
 */
 
 static int get_plot_n (FILE *fp, PlotType *ptype, int *got_markers)
@@ -1054,7 +1054,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
 	p = strstr(gpline, " w ");
 	if (p != NULL) {
-	    sscanf(p + 3, "%15[^, ]", spec->lines[i].style);
+	    sscanf(p + 3, "%15[^, ] %d", spec->lines[i].style, &spec->lines[i].type);
 	} else {
 	    strcpy(spec->lines[i].style, "points");
 	}
