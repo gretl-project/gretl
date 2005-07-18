@@ -45,16 +45,26 @@ struct _graphpage {
 
 static graphpage gpage;
 static char gpage_base[FILENAME_MAX];
+static char gpage_tex_base[FILENAME_MAX];
 
 static void gpage_filenames_init (const char *base)
 {
     if (base == NULL) {
 	strcpy(gpage_base, paths.userdir);
 	strcat(gpage_base, "gretl_graphpage");
+	strcpy(gpage_tex_base, "gretl_graphpage");
     } else {
+	const char *p;
+
 	strcpy(gpage_base, base);
 	if (has_suffix(gpage_base, ".tex")) {
 	    gpage_base[strlen(gpage_base) - 4] = '\0';
+	}
+	p = strrchr(base, SLASH);
+	if (p != NULL) {
+	    strcpy(gpage_tex_base, p + 1);
+	} else {
+	    strcpy(gpage_tex_base, base);
 	}
     }
 }
@@ -167,30 +177,24 @@ static int tex_graph_setup (int ng, FILE *fp)
 #endif
 
     if (ng == 1) {
-	sprintf(fname, "%s_1", gpage_base);
+	sprintf(fname, "%s_1", gpage_tex_base);
 	fprintf(fp, "\\includegraphics[scale=1.2]{%s}\n", fname);
-    }
-
-    else if (ng == 2) {
-	sprintf(fname, "%s_%d", gpage_base, 1);
+    } else if (ng == 2) {
+	sprintf(fname, "%s_%d", gpage_tex_base, 1);
 	fprintf(fp, "\\includegraphics{%s}\n\n", fname);
 	fprintf(fp, "\\vspace{%gin}\n\n", vspace);
-	sprintf(fname, "%s_%d", gpage_base, 2);
+	sprintf(fname, "%s_%d", gpage_tex_base, 2);
 	fprintf(fp, "\\includegraphics{%s}\n\n", fname);
-    }
-
-    else if (ng == 3) {
+    } else if (ng == 3) {
 	scale = 0.9;
 	vspace = 0.25;
 	for (i=0; i<3; i++) {
-	    sprintf(fname, "%s_%d", gpage_base, i + 1);
+	    sprintf(fname, "%s_%d", gpage_tex_base, i + 1);
 	    fprintf(fp, "\\includegraphics[scale=%g]{%s}\n\n",
 		    scale, fname);
 	    fprintf(fp, "\\vspace{%gin}\n", vspace);
 	}
-    }    
-
-    else {
+    } else {
 	if (ng > 6) {
 	    scale = 0.85;
 	    vspace = 0.20;
@@ -200,7 +204,7 @@ static int tex_graph_setup (int ng, FILE *fp)
 	}	    
 	fputs("\\begin{tabular}{cc}\n", fp);
 	for (i=0; i<ng; i++) {
-	    sprintf(fname, "%s_%d", gpage_base, i + 1);
+	    sprintf(fname, "%s_%d", gpage_tex_base, i + 1);
 	    if (oddgraph(ng, i)) {
 		fprintf(fp, "\\multicolumn{2}{c}{\\includegraphics[scale=%g]{%s}}",
 			scale, fname);
@@ -429,7 +433,6 @@ static int spawn_dvips (char *texsrc)
 
 int dvips_compile (char *texshort)
 {
-    char *fname;
 #ifdef G_OS_WIN32
     static char dvips_path[MAXLEN];
 #endif
@@ -437,10 +440,6 @@ int dvips_compile (char *texshort)
     char tmp[MAXLEN];
 #endif
     int err = 0;
-
-    /* ensure we don't get stale output */
-    fname = gpage_fname(".ps", 0);
-    remove(fname);
 
 #if defined(G_OS_WIN32)
     if (*dvips_path == 0 && get_dvips_path(dvips_path)) {
@@ -465,7 +464,16 @@ int dvips_compile (char *texshort)
 
 static int latex_compile_graph_page (void)
 {
+    char *fname;
     int err;
+
+    /* ensure we don't get stale output */
+    if (gpage.output == PS_OUTPUT) {
+	fname = gpage_fname(".ps", 0);
+    } else {
+	fname = gpage_fname(".pdf", 0);
+    }
+    remove(fname);
 
     err = latex_compile(gpage_base);
 
