@@ -116,6 +116,7 @@ typedef struct {
     char termtype[MAXTITLE];   /* gnuplot "term" setting */
     int n_lines;               /* number of lines */
     int n_yseries;             /* number of y-axis data series (not formulae) */
+    int xzeroaxis;             /* show x == 0 (1) or not (0) */
     GPT_LINE *lines;           /* details on individual lines */
     char *literal[4];          /* additional commands */
     double *data;              /* data to plot */

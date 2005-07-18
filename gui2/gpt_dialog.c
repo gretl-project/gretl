@@ -78,9 +78,11 @@ struct gpt_titles_t gpt_titles[] = {
 			         s->code == PLOT_FREQ_GAMMA || \
                                  s->code == PLOT_KERNEL)
 
-#define no_edit_lines(s) (s->code == PLOT_FREQ_SIMPLE || \
+#define no_edit_lines(s) (s->code == PLOT_FORECAST || \
+                          s->code == PLOT_FREQ_SIMPLE || \
                           s->code == PLOT_FREQ_NORMAL || \
                           s->code == PLOT_FREQ_GAMMA || \
+                          s->code == PLOT_GARCH || \
                           s->code == PLOT_KERNEL || \
                           s->code == PLOT_CUSUM)
 

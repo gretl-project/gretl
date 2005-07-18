@@ -516,7 +516,6 @@ static int get_gpt_marker (const char *line, char *label)
 }
 
 #define cant_edit(p) (p == PLOT_CORRELOGRAM || \
-                      p == PLOT_IRFBOOT || \
                       p == PLOT_LEVERAGE || \
                       p == PLOT_MULTI_SCATTER || \
                       p == PLOT_SAMPLING_DIST || \
@@ -571,6 +570,7 @@ static GPT_SPEC *plotspec_new (void)
     spec->mxtics[0] = 0;
     spec->fname[0] = 0;
     strcpy(spec->keyspec, "left top");
+    spec->xzeroaxis = 0;
 
     for (i=0; i<3; i++) {
 	spec->range[i][0] = NADBL;
@@ -852,6 +852,8 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 	safecpy(spec->xtics, value, 15);
     } else if (!strcmp(variable, "mxtics")) { 
 	safecpy(spec->mxtics, value, 3);
+    } else if (!strcmp(variable, "xzeroaxis")) {
+	spec->xzeroaxis = 1;
     } else if (!strcmp(variable, "label")) {
 	parse_label_line(spec, s, *labelno);
 	*labelno += 1;
@@ -1437,7 +1439,9 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	min_ydist = yrange = plot->ymax - plot->ymin;
     }
 
-    data_x = &plot->spec->data[0];
+    data_x = plot->spec->data;
+    data_y = data_x + plot->spec->nobs;
+
     /* there's an ambiguity here: in case of more than one y series,
        what do we want to use as "data_y"? */
     if (plot_has_y2axis(plot)) {
@@ -1445,16 +1449,15 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	int i;
 
 	for (i=0; i<plot->spec->n_lines; i++) {
+	    if (i > 0 && plot->spec->lines[i].ncols > 0) {
+		data_y += (plot->spec->lines[i].ncols - 1) * plot->spec->nobs;
+		/* FIXME */
+	    }
 	    if (plot->spec->lines[i].yaxis == 1) {
-		data_y = &plot->spec->data[(i + 1) * plot->spec->nobs]; /* FIXME */
 		break;
 	    }
 	}
     } 
-
-    if (data_y == NULL) {
-	data_y = &plot->spec->data[plot->spec->n_yseries * plot->spec->nobs]; /* FIXME */
-    }
 
     /* try to find the best-matching data point */
     for (t=0; t<plot->spec->nobs; t++) {
