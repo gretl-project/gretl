@@ -1404,6 +1404,14 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	    }
 	    fprintf(fp, " '-' using 1:2 title '%s' %s", 
 		    s1, withstr);
+	    if (flags & GP_FA) {
+		/* reverse line types: make "actual" type 1 */
+		if (i == 1) {
+		    fputs(" lt 2", fp);
+		} else if (i == 2) {
+		    fputs(" lt 1", fp);
+		}
+	    }
 	    if (i < gpinfo.lo - 1 || gpinfo.ols_ok) {
 	        fputs(" , \\\n", fp); 
 	    } else {
@@ -2179,6 +2187,8 @@ int get_termstr (const GPT_SPEC *spec, char *termstr)
 	strcpy(termstr, "postscript eps color"); 
     } else if (!strcmp(spec->termtype, "postscript")) {
 	strcpy(termstr, "postscript eps"); 
+    } else if (!strcmp(spec->termtype, "PDF")) {
+	strcpy(termstr, "pdf");
     } else if (!strcmp(spec->termtype, "fig")) {
 	strcpy(termstr, "fig");
     } else if (!strcmp(spec->termtype, "latex")) {
@@ -2201,8 +2211,6 @@ int get_termstr (const GPT_SPEC *spec, char *termstr)
 
     return cmds;
 }
-
-/* ........................................................... */
 
 static char *escape_quotes (const char *s)
 {
@@ -2238,8 +2246,6 @@ static char *escape_quotes (const char *s)
 	return ret;
     }
 }
-
-/* ........................................................... */
 
 static void 
 gp_string (FILE *fp, const char *fmt, const char *s, int png)

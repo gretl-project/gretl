@@ -78,16 +78,7 @@ struct gpt_titles_t gpt_titles[] = {
 			         s->code == PLOT_FREQ_GAMMA || \
                                  s->code == PLOT_KERNEL)
 
-#define no_edit_lines(s) (s->code == PLOT_FORECAST || \
-                          s->code == PLOT_FREQ_SIMPLE || \
-                          s->code == PLOT_FREQ_NORMAL || \
-                          s->code == PLOT_FREQ_GAMMA || \
-                          s->code == PLOT_GARCH || \
-                          s->code == PLOT_KERNEL || \
-                          s->code == PLOT_CUSUM)
-
 static const char *get_font_filename (const char *showname);
-
 
 static void close_plot_controller (GtkWidget *widget, gpointer data) 
 {
@@ -126,6 +117,7 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
     const gchar *wstr;
     
     *targ = '\0';
+
     g_return_if_fail(GTK_IS_ENTRY(w));
     wstr = gtk_entry_get_text(GTK_ENTRY(w));
 
@@ -298,19 +290,18 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	} 
     } 
 
-    if (!no_edit_lines(spec)) {    
-	for (i=0; i<spec->n_lines; i++) {
-	    spec->lines[i].yaxis = 1;
-	    if (supress_y2) {
-		continue;
-	    }
-	    yaxis = 
-		gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry));
-	    if (yaxis != NULL && *yaxis && !strcmp(yaxis, "right"))
-		spec->lines[i].yaxis = 2;	
-	    if (spec->lines[i].yaxis == 2) {
-		spec->flags |= GPTSPEC_Y2AXIS;
-	    }
+    for (i=0; i<spec->n_lines; i++) {
+	spec->lines[i].yaxis = 1;
+	if (supress_y2 || yaxiscombo[i] == NULL) {
+	    continue;
+	}
+	yaxis = 
+	    gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry));
+	if (yaxis != NULL && *yaxis && !strcmp(yaxis, "right")) {
+	    spec->lines[i].yaxis = 2;	
+	}
+	if (spec->lines[i].yaxis == 2) {
+	    spec->flags |= GPTSPEC_Y2AXIS;
 	}
     }
 
@@ -330,17 +321,23 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-    if (!err && !no_edit_lines(spec)) {   
+    if (!err) {   
 	for (i=0; i<spec->n_lines; i++) {
-	    entry_to_gp_string(GTK_COMBO(stylecombo[i])->entry, 
-			       spec->lines[i].style, 
-			       sizeof spec->lines[0].style);
-	    entry_to_gp_string(linetitle[i], 
-			       spec->lines[i].title, 
-			       sizeof spec->lines[0].title);
-	    entry_to_gp_string(linescale[i], 
-			       spec->lines[i].scale, 
-			       sizeof spec->lines[0].scale);
+	    if (stylecombo[i] != NULL) {
+		entry_to_gp_string(GTK_COMBO(stylecombo[i])->entry, 
+				   spec->lines[i].style, 
+				   sizeof spec->lines[0].style);
+	    }
+	    if (linetitle[i] != NULL) {
+		entry_to_gp_string(linetitle[i], 
+				   spec->lines[i].title, 
+				   sizeof spec->lines[0].title);
+	    }
+	    if (linescale[i] != NULL) {
+		entry_to_gp_string(linescale[i], 
+				   spec->lines[i].scale, 
+				   sizeof spec->lines[0].scale);
+	    }
 	}
     }
 
@@ -422,19 +419,19 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
 static void set_keyspec_sensitivity (GPT_SPEC *spec)
 {
-    if (!no_edit_lines(spec)) {
-	int i; 
-	const char *p;
+    gboolean state = FALSE;
+    const char *p;
+    int i;
 
-	for (i=0; i<spec->n_lines; i++) {
-	    p = gtk_entry_get_text(GTK_ENTRY(linetitle[i]));
-	    if (p != NULL && *p != 0) {
-		gtk_widget_set_sensitive(keycombo, TRUE);
-		return;
-	    }
+    for (i=0; i<spec->n_lines; i++) {
+	p = gtk_entry_get_text(GTK_ENTRY(linetitle[i]));
+	if (p != NULL && *p != 0) {
+	    state = TRUE;
+	    break;
 	}
     }
-    gtk_widget_set_sensitive(keycombo, FALSE);
+
+    gtk_widget_set_sensitive(keycombo, state);
 }
 
 #define TAB_MAIN_COLS 3
@@ -811,25 +808,28 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     }
 }
 
-/* ........................................................... */
-
 static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     GtkWidget *label, *vbox, *tbl;
     int i, tbl_len;
     GList *termlist = NULL;
-
     gchar *termtypes[] = {
 	"postscript",
 	"postscript color",
+	"PDF",
 	"fig",
 	"latex",
 	"png",
 	"plot commands",
 	NULL
-    };  
+    }; 
+    int pdf_ok = gnuplot_has_pdf();
+    
 
     for (i=0; termtypes[i] != NULL; i++) {
+	if (!pdf_ok && !strcmp(termtypes[i], "PDF")) {
+	    continue;
+	}
 	termlist = g_list_append(termlist, termtypes[i]);
     }
    
@@ -861,7 +861,7 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
     gtk_widget_show(termcombo);
 
     /* button to generate output to file */
-    filesavebutton = gtk_button_new_with_label (_("Save to file..."));
+    filesavebutton = gtk_button_new_with_label(_("Save to file..."));
     GTK_WIDGET_SET_FLAGS(filesavebutton, GTK_CAN_DEFAULT);
     tbl_len++;
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -885,6 +885,11 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     char label_text[32];
     GList *plot_types = NULL;
     GList *yaxis_loc = NULL;
+    int do_scale_axis = 0;
+
+    if (spec->code == PLOT_REGULAR && (spec->flags & GPTSPEC_TS)) {
+	do_scale_axis = 1;
+    }
 
     if (spec->flags & GPTSPEC_TS) {
 	plot_types = g_list_append(plot_types, "lines");
@@ -898,8 +903,10 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     plot_types = g_list_append(plot_types, "impulses");
     plot_types = g_list_append(plot_types, "dots");
 
-    yaxis_loc = g_list_append(yaxis_loc, "left");
-    yaxis_loc = g_list_append(yaxis_loc, "right");
+    if (do_scale_axis) {
+	yaxis_loc = g_list_append(yaxis_loc, "left");
+	yaxis_loc = g_list_append(yaxis_loc, "right");
+    }
 
     vbox = gtk_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
@@ -975,51 +982,63 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	stylecombo[i] = gtk_combo_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  stylecombo[i], 2, 3, tbl_len-1, tbl_len);
-	gtk_combo_set_popdown_strings(GTK_COMBO(stylecombo[i]), plot_types); 
-	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(stylecombo[i])->entry), 
-			   spec->lines[i].style);  
+	/* errorbars style is not exchangeable with the others */
+	if (!strcmp(spec->lines[i].style, "errorbars")) {
+	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(stylecombo[i])->entry), 
+			       spec->lines[i].style); 
+	    gtk_widget_set_sensitive(stylecombo[i], FALSE);
+	} else {
+	    gtk_combo_set_popdown_strings(GTK_COMBO(stylecombo[i]), plot_types); 
+	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(stylecombo[i])->entry), 
+			       spec->lines[i].style); 
+	} 
 	gtk_widget_show(stylecombo[i]);	
 
-	/* scale factor for data */
-	tbl_len++;
-	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	label = gtk_label_new(_("scale"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  label, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(label);
+	if (!do_scale_axis) {
+	    linescale[i] = NULL;
+	    yaxiscombo[i] = NULL;
+	} else {
+	    /* scale factor for data? */
+	    tbl_len++;
+	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	    label = gtk_label_new(_("scale"));
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				      label, 1, 2, tbl_len-1, tbl_len);
+	    gtk_widget_show(label);
 
-	linescale[i] = gtk_entry_new();
-	gtk_entry_set_max_length(GTK_ENTRY(linescale[i]), 6);
-	gtk_entry_set_text(GTK_ENTRY(linescale[i]), spec->lines[i].scale);
+	    linescale[i] = gtk_entry_new();
+	    gtk_entry_set_max_length(GTK_ENTRY(linescale[i]), 6);
+	    gtk_entry_set_text(GTK_ENTRY(linescale[i]), spec->lines[i].scale);
 #ifdef OLD_GTK
-	gtk_signal_connect(GTK_OBJECT(linescale[i]), "activate", 
-			   GTK_SIGNAL_FUNC(apply_gpt_changes), 
-			   spec);
+	    gtk_signal_connect(GTK_OBJECT(linescale[i]), "activate", 
+			       GTK_SIGNAL_FUNC(apply_gpt_changes), 
+			       spec);
 #else
-	gtk_entry_set_width_chars(GTK_ENTRY(linescale[i]), 6);
-	g_signal_connect(G_OBJECT(linescale[i]), "activate", 
-			 G_CALLBACK(apply_gpt_changes), 
-			 spec);
+	    gtk_entry_set_width_chars(GTK_ENTRY(linescale[i]), 6);
+	    g_signal_connect(G_OBJECT(linescale[i]), "activate", 
+			     G_CALLBACK(apply_gpt_changes), 
+			     spec);
 #endif
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  linescale[i], 2, 3, tbl_len-1, tbl_len);
-	gtk_widget_show(linescale[i]);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				      linescale[i], 2, 3, tbl_len-1, tbl_len);
+	    gtk_widget_show(linescale[i]);
 
-	/* use left or right y axis? */
-	tbl_len++;
-	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	label = gtk_label_new(_("y axis"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  label, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(label);
+	    /* use left or right y axis? */
+	    tbl_len++;
+	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	    label = gtk_label_new(_("y axis"));
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				      label, 1, 2, tbl_len-1, tbl_len);
+	    gtk_widget_show(label);
 
-	yaxiscombo[i] = gtk_combo_new();
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  yaxiscombo[i], 2, 3, tbl_len-1, tbl_len);
-	gtk_combo_set_popdown_strings(GTK_COMBO(yaxiscombo[i]), yaxis_loc); 
-	gtk_entry_set_text (GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry), 
-			    (spec->lines[i].yaxis == 1)? "left" : "right");  
-	gtk_widget_show(yaxiscombo[i]);	
+	    yaxiscombo[i] = gtk_combo_new();
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				      yaxiscombo[i], 2, 3, tbl_len-1, tbl_len);
+	    gtk_combo_set_popdown_strings(GTK_COMBO(yaxiscombo[i]), yaxis_loc); 
+	    gtk_entry_set_text (GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry), 
+				(spec->lines[i].yaxis == 1)? "left" : "right");  
+	    gtk_widget_show(yaxiscombo[i]);	
+	} 
     }
 }
 
@@ -1182,8 +1201,6 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
     }
 }
 
-/* ........................................................... */
-
 static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis) 
 {
     GtkWidget *vbox, *manual, *tbl;
@@ -1328,8 +1345,6 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
     }
 }
 
-/* ........................................................... */
-
 int show_gnuplot_dialog (GPT_SPEC *spec) 
 {
     GtkWidget *button, *notebook;
@@ -1377,10 +1392,7 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 	gpt_tab_XY(notebook, spec, 2);
     }
 
-    if (!no_edit_lines(spec)) {
-	gpt_tab_lines(notebook, spec);
-    }    
-
+    gpt_tab_lines(notebook, spec);
     gpt_tab_labels(notebook, spec); 
     gpt_tab_output(notebook, spec);
 

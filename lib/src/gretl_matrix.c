@@ -1739,6 +1739,11 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 
     n = a->cols;
 
+    if (n == 1) {
+	a->val[0] = 1.0 / a->val[0];
+	return 0;
+    }
+
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
     if (info != 0) {

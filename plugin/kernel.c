@@ -127,6 +127,7 @@ static int density_plot (const double *x, double s, double h,
     fputs("set nokey\n", fp); 
     fprintf(fp, "set xrange [%g:%g]\n", xmin, xmax);
 
+    fputs("# literal lines = 2\n", fp);
     fprintf(fp, "set label '%s' at graph .65, graph .97\n",
 	    (ktype == GAUSSIAN_KERNEL)? I_("Gaussian kernel") :
 	    I_("Epanechnikov kernel"));

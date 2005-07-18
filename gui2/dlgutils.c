@@ -273,10 +273,13 @@ gchar *edit_dialog_special_get_text (dialog_t *dlg)
     buf = textview_get_text(GTK_TEXT_VIEW(dlg->edit));
 #endif
 
-    if (buf == NULL || *buf == '\0') {
+    if (buf != NULL && *buf == '\0') {
 	g_free(buf);
+	buf = NULL;
+    }
+
+    if (buf == NULL) {
 	gtk_widget_destroy(dlg->dialog);
-	return NULL;
     }
 
     return buf;

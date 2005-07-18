@@ -123,8 +123,6 @@ static struct extmap action_map[] = {
     { FILE_OP_MAX,       NULL }
 };
 
-/* ........................................................... */
-
 static gretlopt action_to_opt (const int action)
 {
     switch (action) {
@@ -144,6 +142,7 @@ static gretlopt action_to_opt (const int action)
 static const char *get_gp_ext (const char *termtype)
 {
     if (!strncmp(termtype, "postscript", 10))    return ".eps";
+    else if (!strcmp(termtype, "PDF"))           return ".pdf";
     else if (!strcmp(termtype, "fig"))           return ".fig";
     else if (!strcmp(termtype, "latex"))         return ".tex";
     else if (!strncmp(termtype, "png", 3))       return ".png";
@@ -151,8 +150,6 @@ static const char *get_gp_ext (const char *termtype)
     else if (!strcmp(termtype, "plot commands")) return ".plt";
     else return "*";
 }
-
-/* ........................................................... */
 
 static int dat_ext (const char *str, int showerr)
 {
@@ -175,8 +172,6 @@ static int dat_ext (const char *str, int showerr)
 
     return err;
 }
-
-/* ........................................................... */
 
 static const char *get_ext (int action, gpointer data)
 {
@@ -204,8 +199,6 @@ static const char *get_ext (int action, gpointer data)
 
     return s;
 }
-
-/* ........................................................... */
 
 static int check_maybe_add_ext (char *fname, int action, gpointer data)
 {
@@ -241,8 +234,6 @@ static int check_maybe_add_ext (char *fname, int action, gpointer data)
 
     return 0;
 }
-
-/* ........................................................... */
 
 static void script_window_update (windata_t *vwin, const char *fname)
 {
@@ -314,8 +305,6 @@ static void save_editable_content (int action, const char *fname,
     }
 }
 
-/* ........................................................... */
-
 static void set_startdir (char *startdir, int action)
 {
 #ifdef REMEMBER_DIR
@@ -335,8 +324,6 @@ static void set_startdir (char *startdir, int action)
 #endif
 }
 
-/* ........................................................... */
-
 static void filesel_open_script (const char *fname)
 {
     int spos;
@@ -354,8 +341,6 @@ static void filesel_open_script (const char *fname)
     }
 }
 
-/* ........................................................... */
-
 static void filesel_open_session (const char *fname)
 {
     int pub = !strncmp(tryscript, paths.scriptdir, strlen(paths.scriptdir));
@@ -369,8 +354,6 @@ static void filesel_open_session (const char *fname)
 	strcpy(scriptfile, tryscript);
     }
 }
-
-/* ........................................................... */
 
 static char *suggested_savename (const char *fname)
 {
@@ -705,8 +688,6 @@ static char *make_winfilter (int action, gpointer data)
     return start;
 }
 
-/* ........................................................... */
-
 void file_selector (const char *msg, int action, gpointer data) 
 {
     OPENFILENAME of;
@@ -836,8 +817,6 @@ static void filesel_callback (GtkWidget *w, struct fsinfo_t *fsinfo)
 }
 
 # endif /* !USE_GTK_CHOOSER */
-
-/* ........................................................... */
 
 static char *get_filter_suffix (int action, gpointer data, char *suffix)
 {

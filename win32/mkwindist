@@ -88,7 +88,7 @@ cd $THISDIR
 for f in \
     libgmp-3.dll libxml2.dll readline.dll zlib1.dll libpng12.dll \
     libblas.dll libf2c.dll liblapack.dll libgtksourceview.dll \
-    iconv.dll intl.dll
+    iconv.dll intl.dll libpdf.dll
 do
     add_file $HOME_WIN32/misc-dll/$f gretl/$f
 done

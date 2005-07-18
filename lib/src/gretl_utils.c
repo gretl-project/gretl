@@ -1079,13 +1079,11 @@ record_or_get_test_result (double teststat, double pval, char *blurb,
 	val = teststat;
 	pv = pval;
 	if (blurb != NULL) {
-	    strcpy(info, blurb);
-	} else {
-	    *info = '\0';
-	}
+	    strncat(info, blurb, 127);
+	} 
     } else if (code == GET_TEST_STAT || code == GET_TEST_PVAL) {
 	if (blurb != NULL) {
-	    strcpy(blurb, info);
+	    strncat(info, blurb, 127);
 	}
 	ret = (code == GET_TEST_STAT)? val : pv;
     } 

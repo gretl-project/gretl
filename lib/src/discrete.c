@@ -28,8 +28,6 @@ static int cholesky_decomp (double *xpx, int nv);
 
 #undef LPDEBUG
 
-/* .......................................................... */
-
 static double logit (double x)
 {
     double l = 1.0 / (1.0 + exp(-x));
@@ -58,8 +56,6 @@ static double logit_pdf (double x)
     return l;
 }
 
-/* .......................................................... */
-
 static void Lr_chisq (MODEL *pmod, double **Z)
 {
     int t, zeros, ones = 0, m = pmod->nobs;
@@ -84,8 +80,6 @@ static void Lr_chisq (MODEL *pmod, double **Z)
     pmod->adjrsq = NADBL;
 }
 
-/* .......................................................... */
-
 static double 
 logit_probit_llhood (const double *y, const MODEL *pmod, int opt)
 {
@@ -106,8 +100,6 @@ logit_probit_llhood (const double *y, const MODEL *pmod, int opt)
 
     return lnL;
 }
-
-/* .......................................................... */
 
 static int add_slopes_to_model (MODEL *pmod, double fbx)
 {
@@ -135,8 +127,6 @@ static int add_slopes_to_model (MODEL *pmod, double fbx)
 
     return 0;
 }
-
-/* .......................................................... */
 
 static double *hess_wts (MODEL *pmod, const double **Z, int opt) 
 {
@@ -169,8 +159,6 @@ static double *hess_wts (MODEL *pmod, const double **Z, int opt)
 
     return w;
 }
-
-/* .......................................................... */
 
 static double *hessian (MODEL *pmod, const double **Z, int opt) 
 {
@@ -235,6 +223,7 @@ static double *hessian (MODEL *pmod, const double **Z, int opt)
 MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 {
     int i, t, v, depvar = list[1];
+    int nx = list[0] - 1;
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
     int oldv = pdinfo->v;
@@ -263,27 +252,27 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	return dmod;
     }
 
-    dmodlist = malloc((list[0] + 1) * sizeof *dmodlist);
+    dmodlist = gretl_list_new(list[0]);
     if (dmodlist == NULL) {
 	dmod.errcode = E_ALLOC;
 	return dmod;
     } 
 
     /* allocate space for means of indep vars */
-    xbar = malloc((list[0] - 1) * sizeof *xbar);
+    xbar = malloc(nx * sizeof *xbar);
     if (xbar == NULL) {
 	dmod.errcode = E_ALLOC;
 	return dmod;
     }
 
     /* space for coefficient vector */
-    beta = malloc((list[0] - 1) * sizeof *beta);
+    beta = malloc(nx * sizeof *beta);
     if (beta == NULL) {
 	dmod.errcode = E_ALLOC;
 	goto bailout;
     }
 
-    /* space for actual/predicated matrix */
+    /* space for actual/predicted matrix */
     act_pred = malloc(4 * sizeof *act_pred);
     if (act_pred != NULL) {
 	for (i=0; i<4; i++) {
@@ -303,13 +292,8 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 			  (const double **) *pZ);
 
     dmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
-    if (dmod.ifc == 0) {
-	dmod.errcode = E_NOCONST;
-    } else if (dmod.list[0] != list[0]) {
+    if (dmod.list[0] != list[0]) {
 	dmod.errcode = E_DATA;
-    }
-
-    if (dmod.errcode) {
 	goto bailout;
     }
 

@@ -87,6 +87,7 @@ enum {
 #define plot_has_data_markers(p) (p->format & PLOT_MARKERS_UP)
 
 #define plot_is_range_mean(p)   (p->spec->code == PLOT_RANGE_MEAN)
+#define plot_is_hurst(p)        (p->spec->code == PLOT_HURST)
 
 enum {
     PNG_START,
@@ -515,10 +516,12 @@ static int get_gpt_marker (const char *line, char *label)
     return 1;
 }
 
+/* graphs that show more than one plot: editing via GUI
+   is not supported */
+
 #define cant_edit(p) (p == PLOT_CORRELOGRAM || \
                       p == PLOT_LEVERAGE || \
                       p == PLOT_MULTI_SCATTER || \
-                      p == PLOT_SAMPLING_DIST || \
                       p == PLOT_TRI_GRAPH)
 
 static void plot_label_init (GPT_LABEL *lbl)
@@ -585,7 +588,6 @@ static GPT_SPEC *plotspec_new (void)
     spec->n_markers = 0;
     spec->ptr = NULL;
     spec->n_lines = 0;
-    spec->n_yseries = 0;
     spec->nobs = 0;
 
     spec->termtype[0] = 0;
@@ -1135,7 +1137,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	top_n_tail(gpline);
 
 	if (!chop_comma(gpline)) {
-	    /* line did not end with comma -> no contination of
+	    /* line did not end with comma -> no continuation of
 	       the plot command */
 	    done = 1;
 	} 
@@ -1168,16 +1170,20 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     /* determine total number of required data columns */
     for (i=0; i<spec->n_lines; i++) {
-	if (i == 0) {
+	if (spec->lines[i].ncols == 0) {
+	    continue;
+	}
+	if (datacols == 0) {
 	    datacols = spec->lines[i].ncols;
-	    if (datacols > 0) {
-		spec->n_yseries = datacols;
-	    }
-	} else if (spec->lines[i].ncols > 0) {
+	} else {
 	    datacols += spec->lines[i].ncols - 1;
-	    spec->n_yseries += 1;
 	}
     }
+
+#if 0
+    fprintf(stderr, "allocating: nobs=%d, datacols=%d, size=%d\n", 
+	    spec->nobs, datacols, spec->nobs * datacols * sizeof *spec->data);
+#endif    
 
     /* allocate for the plot data... */
     spec->data = mymalloc(spec->nobs * datacols * sizeof *spec->data);
@@ -1442,20 +1448,23 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
     data_x = plot->spec->data;
     data_y = data_x + plot->spec->nobs;
 
-    /* there's an ambiguity here: in case of more than one y series,
-       what do we want to use as "data_y"? */
     if (plot_has_y2axis(plot)) {
-	/* use first y-var that's on y1 axis */
-	int i;
+	/* use first y-var that's on y1 axis, if any */
+	int i, got_y = 0;
 
 	for (i=0; i<plot->spec->n_lines; i++) {
-	    if (i > 0 && plot->spec->lines[i].ncols > 0) {
-		data_y += (plot->spec->lines[i].ncols - 1) * plot->spec->nobs;
-		/* FIXME */
-	    }
 	    if (plot->spec->lines[i].yaxis == 1) {
+		got_y = 1;
 		break;
 	    }
+	    if (plot->spec->lines[i].ncols > 0) {
+		data_y += (plot->spec->lines[i].ncols - 1) * plot->spec->nobs;
+	    }
+	}
+	if (!got_y) {
+	    data_y = NULL;
+	    plot->status |= PLOT_NO_MARKERS;	
+	    return TRUE;
 	}
     } 
 
@@ -1672,10 +1681,15 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     if (!strcmp(item, _("Save as PNG..."))) {
 	strcpy(plot->spec->termtype, "png");
         file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, plot->spec);
+    } else if (!strcmp(item, _("Save as PDF..."))) {
+	strcpy(plot->spec->termtype, "PDF");
+        file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, plot->spec);
     } else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_graph_to_session(plot->spec, GRETL_GNUPLOT_GRAPH, NULL);
     } else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
 	context_help(NULL, GINT_TO_POINTER(RMPLOT));
+    } else if (plot_is_hurst(plot) && !strcmp(item, _("Help"))) { 
+	context_help(NULL, GINT_TO_POINTER(HURST));
     }
 #ifndef OLD_GTK
     else if (!strcmp(item, _("Clear data labels"))) { 
@@ -1746,6 +1760,7 @@ static void build_plot_menu (png_plot *plot)
 #endif
 	N_("Save as PNG..."),
         N_("Save as postscript (EPS)..."),
+	N_("Save as PDF..."),
 #ifndef G_OS_WIN32
 	N_("Save as Windows metafile (EMF)..."),
 #endif
@@ -1774,7 +1789,12 @@ static void build_plot_menu (png_plot *plot)
 	NULL
     };
     const char **plot_items;
+    static int pdf_ok = -1;
     int i;
+
+    if (pdf_ok == -1) {
+	pdf_ok = gnuplot_has_pdf();
+    }
 
     plot->popup = gtk_menu_new();
 
@@ -1791,7 +1811,7 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if (!plot_is_range_mean(plot) &&
+	if (!(plot_is_range_mean(plot) || plot_is_hurst(plot)) &&
 	    !strcmp(plot_items[i], "Help")) {
 	    i++;
 	    continue;
@@ -1806,6 +1826,10 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
+	if (!pdf_ok && !strcmp(plot_items[i], "Save as PDF...")) {
+	    i++;
+	    continue;
+	}	    
 #ifndef OLD_GTK
 	if (!plot_has_data_markers(plot) &&
 	    !strcmp(plot_items[i], "Clear data labels")) {

@@ -23,6 +23,7 @@
 #include "var.h"
 #include "textbuf.h"
 #include "gpt_control.h"
+#include "graph_page.h"
 #include "system.h"
 #include "gretl_restrict.h"
 #include "gretl_func.h"
@@ -2199,8 +2200,6 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 
 #endif /* ENABLE_GMP */
 
-/* ........................................................... */
-
 static int 
 record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 				int got_start, int got_end)
@@ -2231,8 +2230,6 @@ record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 
     return 0;
 }
-
-/* ........................................................... */
 
 void do_restrict (GtkWidget *widget, dialog_t *dlg)
 {
@@ -3256,7 +3253,7 @@ void do_hurst (gpointer data, guint opt, GtkWidget *widget)
 	make_and_display_graph();
     }
 
-    view_buffer(prn, 60, 350, _("gretl: Hurst exponent"), RMPLOT, 
+    view_buffer(prn, 60, 350, _("gretl: Hurst exponent"), HURST, 
 		NULL);
 }
 
@@ -5231,7 +5228,11 @@ void view_latex (PRN *prn)
 
 void save_latex (PRN *prn, const char *fname)
 {
-    view_or_save_latex(prn, fname, 1);
+    if (prn != NULL) {
+	view_or_save_latex(prn, fname, 1);
+    } else {
+	save_graph_page(fname);
+    }
 }
 
 /* ........................................................... */

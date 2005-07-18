@@ -44,20 +44,26 @@ struct _graphpage {
 };
 
 static graphpage gpage;
-static char *gpage_base = "gretl_graphpage";
+static char gpage_base[FILENAME_MAX];
+
+static void gpage_filenames_init (const char *base)
+{
+    if (base == NULL) {
+	strcpy(gpage_base, paths.userdir);
+	strcat(gpage_base, "gretl_graphpage");
+    } else {
+	strcpy(gpage_base, base);
+	if (has_suffix(gpage_base, ".tex")) {
+	    gpage_base[strlen(gpage_base) - 4] = '\0';
+	}
+    }
+}
 
 static char *gpage_fname (const char *ext, int i)
 {
     static char fname[MAXLEN];
-    size_t n;
 
-    strcpy(fname, paths.userdir);
-    n = strlen(fname);
-    if (fname[n - 1] != SLASH) {
-	strcat(fname, SLASHSTR);
-    }
-
-    strcat(fname, gpage_base);
+    strcpy(fname, gpage_base);
 
     if (i > 0) {
 	char num[6];
@@ -561,6 +567,8 @@ int display_graph_page (void)
 	return 1;
     }
 
+    gpage_filenames_init(NULL);
+
     if (!strncmp(latex, "pdf", 3)) {
 	if (gnuplot_has_pdf()) {
 	    gpage.output = PDF_OUTPUT;
@@ -608,10 +616,50 @@ void clear_graph_page (void)
     for (i=0; i<gpage.ngraphs; i++) {
 	free(gpage.fnames[i]);
     }
-
     free(gpage.fnames);
 
     graph_page_init();
+}
+
+int graph_page_get_n_graphs (void)
+{
+    return gpage.ngraphs;
+}
+
+int save_graph_page (const char *fname)
+{
+    char *latex_orig = NULL;
+    int err = 0;
+
+    gpage_filenames_init(fname);
+
+    if (!strncmp(latex, "pdf", 3)) {
+	if (gnuplot_has_pdf()) {
+	    gpage.output = PDF_OUTPUT;
+	} else {
+	    latex_orig = g_strdup(latex);
+	    strcpy(latex, latex_orig + 3);
+	    gpage.output = PS_OUTPUT;
+	}
+    } else {
+	gpage.output = PS_OUTPUT;
+    }
+
+    /* write the LaTeX driver file */
+    err = make_graphpage_tex();
+
+    if (!err) {
+	/* transform individual plot files and compile 
+	   using gnuplot */
+	err = make_gp_output();
+    }
+
+    if (latex_orig != NULL) {
+	strcpy(latex, latex_orig);
+	g_free(latex_orig);
+    }
+
+    return err;
 }
 
 

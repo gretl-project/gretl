@@ -26,7 +26,7 @@
 #define HDEBUG 0
 
 static int 
-do_hurst_plot (int n, double **Z, double *yhat, const char *vname)
+do_hurst_plot (int n, double **Z, const MODEL *pmod, const char *vname)
 {
     FILE *fp = NULL;
     int t, err;
@@ -37,12 +37,13 @@ do_hurst_plot (int n, double **Z, double *yhat, const char *vname)
 
     fprintf(fp, "# for %s\n", vname);
     fputs("set nokey\n", fp);
-    fprintf(fp, "set title '%s %s'\n", 
-	    I_("Rescaled-range plot for"), vname);
-    fprintf(fp, "set xlabel '%s'\nset ylabel '%s'\n",
-	    I_("log(sample size)"), I_("log(R/S)"));
-    fputs("plot \\\n'-' using 1:2 w points", fp);
-    fputs(" ,\\\n'-' using 1:2 w lines\n", fp);
+    fprintf(fp, "set title '%s %s'\n", I_("Rescaled-range plot for"), vname);
+    fprintf(fp, "set xlabel '%s'\n", I_("log(sample size)"));
+    fprintf(fp, "set ylabel '%s'\n", I_("log(R/S)"));
+    fputs("plot \\\n", fp);
+    fprintf(fp, "%g+%g*x notitle w lines lt 2 ,\\\n", 
+	    pmod->coeff[0], pmod->coeff[1]);
+    fputs("'-' using 1:2 w points lt 1\n", fp);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -50,11 +51,6 @@ do_hurst_plot (int n, double **Z, double *yhat, const char *vname)
 
     for (t=0; t<n; t++) {
 	fprintf(fp, "%g %g\n", Z[2][t], Z[1][t]);
-    }
-    fputs("e\n", fp);
-
-    for (t=0; t<n; t++) {
-	fprintf(fp, "%g %g\n", Z[2][t], yhat[t]);
     }
     fputs("e\n", fp);
 
@@ -265,8 +261,8 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
 	pprintf(prn, "%s = %g\n", _("Estimated Hurst exponent"), hmod.coeff[1]);
     }
 
-    if (!gretl_in_batch_mode() && !gretl_looping()) {
-	err = do_hurst_plot(k, hZ, hmod.yhat, pdinfo->varname[vnum]);
+    if (!err && !gretl_in_batch_mode() && !gretl_looping()) {
+	err = do_hurst_plot(k, hZ, &hmod, pdinfo->varname[vnum]);
     }
 
     clear_model(&hmod);

@@ -73,8 +73,6 @@ enum {
     GAMMA_PVAL
 };
 
-/* ........................................................... */
-
 static int printnum (char *dest, const char *s, int d) 
 {
     char numstr[16];
@@ -114,10 +112,10 @@ static int printnum (char *dest, const char *s, int d)
     return 0;
 }
 
-/* ........................................................... */
+
+/* if pos != 0, value must be positive or it is invalid */ 
 
 static double getval (const char *s, PRN *prn, int pos)
-     /* if pos != 0, value must be positive or it is invalid */ 
 {
     double x = NADBL;
 
@@ -143,8 +141,6 @@ static double getval (const char *s, PRN *prn, int pos)
     return x;
 }
 
-/* ........................................................... */
-
 static int getint (const char *s, PRN *prn) 
 {
     int n;
@@ -164,8 +160,6 @@ static int getint (const char *s, PRN *prn)
 	return n;
     }
 }
-
-/* ........................................................... */
 
 static void get_critical (GtkWidget *w, gpointer data)
 {
@@ -275,8 +269,6 @@ static void get_critical (GtkWidget *w, gpointer data)
     }
 }
 
-/* ........................................................... */
-
 static void get_pvalue (GtkWidget *w, gpointer data)
 {
     lookup_t **pval = (lookup_t **) data;
@@ -382,18 +374,15 @@ static void get_pvalue (GtkWidget *w, gpointer data)
     return;
 }
 
-/* ........................................................... */
-
 static void print_pv (PRN *prn, double p1, double p2)
 {
     pprintf(prn, _("Two-tailed p-value = %.4g\n(one-tailed = %.4g)\n"),
 	    p1, p2);
 }
 
-/* ...................................................................	*/
+/* v. rough 99.9 percent critical value of chi-square */
 
 static double chi_crit (const int df)
-     /* v. rough 99.9 percent critical value of chi-square */
 {
     double x = 10.0;
     
@@ -401,18 +390,15 @@ static double chi_crit (const int df)
     return x;
 }
 
-/* ...................................................................	*/
+/* v. rough 99.9 percent critical value of F */
 
 static double f_crit (const int df1, const int df2)
-     /* v. rough 99.9 percent critical value of F */
 {
     double x = 2.0;
 
     while (fdist(x, df1, df2) > .001) x += .5;
     return x;
 }
-
-/* ........................................................... */
 
 static void htest_graph (int dist, double x, int df1, int df2)
 {
@@ -421,13 +407,11 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
     if (gnuplot_init(PLOT_SAMPLING_DIST, &fp)) return;
 
+    fprintf(fp, "set key right top\n");
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
-
-    fprintf(fp, "set key right top\n");
-    if (df1) fprintf(fp, "df1=%.1f\n", (double) df1);
-    if (df2) fprintf(fp, "df2=%.1f\n", (double) df2);
 
     if (dist == NORMAL_DIST || dist == T_DIST) {
 	xx = fabs(x);
@@ -435,35 +419,39 @@ static void htest_graph (int dist, double x, int df1, int df2)
 	spike = .25;
 	fprintf(fp, "set xrange [%.3f:%.3f]\n", -prange, prange);
 	fprintf(fp, "set yrange [0:.50]\n");
-	fprintf(fp, "set xlabel \"%s\"\n", I_("Standard errors"));
-    }
-
-    if (dist == T_DIST || dist == F_DIST) {
-	fprintf(fp, "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))\n");
-    }
-
-    if (dist == CHISQ_DIST) {
-	prange = chi_crit(df1);
-	if (x > prange) prange = 1.1 * x;
-	spike = 1.0/prange;
+	fprintf(fp, "set xlabel '%s'\n", I_("Standard errors"));
+    } else if (dist == CHISQ_DIST || dist == F_DIST) {
+	prange = (dist == CHISQ_DIST)? chi_crit(df1) : f_crit(df1, df2);
+	if (x > prange) 
+	    prange = 1.1 * x;
+	spike = 1.0 / prange;
 	fprintf(fp, "set xrange [0:%.3f]\n", prange);
+    } 
+
+    /* required variables and formulae */
+    if (dist == T_DIST) {
+	fputs("# literal lines = 2\n", fp);
+	fprintf(fp, "df1=%.1f\n", (double) df1);
+	fprintf(fp, "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))\n");
+    } else if (dist == CHISQ_DIST) {
+	fprintf(fp, "# literal lines = %d\n", (df1 > 69)? 3 : 2);
+	fprintf(fp, "df1=%.1f\n", (double) df1);
 	if (df1 > 69) {
-	    fprintf(fp, "log2=log(2.0)\n");
-	    fprintf(fp, "chi(x)=exp((0.5*df1-1.0)*log(x)-0.5*x-"
-		    "lgamma(0.5*df1)-df1*0.5*log2)\n");
-	} else 
+	    fputs("log2=log(2.0)\n", fp);
+	    fputs("chi(x)=exp((0.5*df1-1.0)*log(x)-0.5*x-"
+		    "lgamma(0.5*df1)-df1*0.5*log2)\n", fp);
+	} else {
 	    fprintf(fp, "chi(x)=x**(0.5*df1-1.0)*exp(-0.5*x)/gamma(0.5*df1)"
 		    "/2**(0.5*df1)\n");
-    }
-
-    if (dist == F_DIST) { 
-	prange = f_crit(df1, df2);
-	if (x > prange) prange = 1.1 * x;
-	spike = 1.0/prange;
-	fprintf(fp, "set xrange [0:%.3f]\n", prange);
-	fprintf(fp, "f(x)=Binv(0.5*df1,0.5*df2)*(df1/df2)**(0.5*df1)"
-		"*x**(0.5*df1-1.0)/(1.0+df1/df2*x)**(0.5*(df1+df2))\n");
-    }
+	}
+    } else if (dist == F_DIST) {
+	fputs("# literal lines = 4\n", fp);
+	fprintf(fp, "df1=%.1f\n", (double) df1);
+	fprintf(fp, "df2=%.1f\n", (double) df2);
+	fputs("Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))\n", fp);
+	fputs("f(x)=Binv(0.5*df1,0.5*df2)*(df1/df2)**(0.5*df1)"
+	      "*x**(0.5*df1-1.0)/(1.0+df1/df2*x)**(0.5*(df1+df2))\n", fp);
+    }	
 
     fprintf(fp, "plot \\\n");
 
@@ -471,22 +459,19 @@ static void htest_graph (int dist, double x, int df1, int df2)
 	fprintf(fp, "(1/(sqrt(2*pi))*exp(-(x)**2/2)) "
 		"title '%s' w lines , \\\n",
 		I_("Gaussian sampling distribution"));
-    }
-    else if (dist == T_DIST) {
+    } else if (dist == T_DIST) {
 	char tmp[64];
 
 	sprintf(tmp, I_("t(%d) sampling distribution"), df1);
 	fprintf(fp, "Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)"
 		"**(-0.5*(df1+1.0)) "
 		"title '%s' w lines , \\\n", tmp);
-    }
-    else if (dist == CHISQ_DIST) {
+    } else if (dist == CHISQ_DIST) {
 	char tmp[64];
 	
 	sprintf(tmp, I_("Chi-square(%d) sampling distribution"), df1);
 	fprintf(fp, "chi(x) title '%s' w lines , \\\n", tmp);
-    }
-    else if (dist == F_DIST) {
+    } else if (dist == F_DIST) {
 	char tmp[64];
 
 	sprintf(tmp, I_("F(%d, %d) sampling distribution"), df1, df2);
@@ -495,7 +480,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
     fprintf(fp, "'-' using 1:2 title '%s' w impulses\n",
 	    I_("test statistic"));
-    fprintf(fp, "%f %f\n", x, spike);
+    fprintf(fp, "%g %g\n", x, spike);
     fprintf(fp, "e\n");
 
 #ifdef ENABLE_NLS
@@ -511,8 +496,6 @@ static void htest_graph (int dist, double x, int df1, int df2)
     }
 }
 
-/* ........................................................... */
-
 static void h_test (GtkWidget *w, gpointer data)
 {
     test_t **test = (test_t **) data;
@@ -525,7 +508,8 @@ static void h_test (GtkWidget *w, gpointer data)
 
     if (bufopen(&prn)) return;
 
-    if (GTK_TOGGLE_BUTTON(test[i]->graph)->active) grf = 1;
+    if (GTK_TOGGLE_BUTTON(test[i]->graph)->active) 
+	grf = 1;
 
     x[4] = 0.0;
 
@@ -746,8 +730,6 @@ static void h_test (GtkWidget *w, gpointer data)
                 NULL);
 }
 
-/* ........................................................... */
-
 static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len, 
 			      const gchar *label, lookup_t **look, 
 			      int code, int pval)
@@ -776,8 +758,6 @@ static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len,
 		     G_CALLBACK(get_critical),
 		     look);
 }
-
-/* .................................................................. */
 
 static void make_lookup_tab (GtkWidget *notebook, int code, lookup_t **look) 
 {
@@ -838,8 +818,6 @@ static void make_lookup_tab (GtkWidget *notebook, int code, lookup_t **look)
 	break;
     } 
 }
-
-/* .................................................................. */
 
 static void make_dist_tab (GtkWidget *notebook, int code, lookup_t **pval) 
 {
@@ -909,8 +887,6 @@ static void make_dist_tab (GtkWidget *notebook, int code, lookup_t **pval)
     } 
 }
 
-/* ........................................................... */
- 
 static void trash_look (GtkWidget *w, gpointer data)
 {
     lookup_t **look = (lookup_t **) data;
@@ -920,8 +896,6 @@ static void trash_look (GtkWidget *w, gpointer data)
     free(look);
 }
 
-/* ........................................................... */
- 
 static void trash_test (GtkWidget *w, gpointer data)
 {
     test_t **test = (test_t **) data;
@@ -930,8 +904,6 @@ static void trash_test (GtkWidget *w, gpointer data)
     for (i=0; i<NTESTS; i++) free(test[i]);
     free(test);
 }
-
-/* ........................................................... */
 
 static void add_test_entry (GtkWidget *tbl, gint *tbl_len, 
 			    const gchar *label, test_t **test, int code)
@@ -955,8 +927,6 @@ static void add_test_entry (GtkWidget *tbl, gint *tbl_len,
 		     G_CALLBACK(h_test), test);
 }
 
-/* ........................................................... */
-
 static void add_test_label (GtkWidget *tbl, gint *tbl_len, 
 			    const gchar *label)
 {
@@ -971,8 +941,6 @@ static void add_test_label (GtkWidget *tbl, gint *tbl_len,
     gtk_widget_show (tempwid);
 }
 
-/* ........................................................... */
-
 static void add_test_check (GtkWidget *tbl, gint *tbl_len, 
 			    const gchar *label, test_t **test, int code)
 {
@@ -986,8 +954,6 @@ static void add_test_check (GtkWidget *tbl, gint *tbl_len,
     gtk_widget_show (tempwid);
     test[code]->check = tempwid;
 }
-
-/* .................................................................. */
 
 static void make_test_tab (GtkWidget *notebook, int code, test_t **test) 
 {
@@ -1133,8 +1099,6 @@ static GretlChild *gretl_child_new (const gchar *title)
 
     return gchild;
 }
-
-/* ........................................................... */
 
 void stats_calculator (gpointer data, guint code, GtkWidget *widget) 
 {

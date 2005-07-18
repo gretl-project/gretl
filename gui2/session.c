@@ -147,6 +147,7 @@ static char *model_table_items[] = {
 
 static char *graph_page_items[] = {
     N_("Display"),
+    N_("Save as TeX..."),
     N_("Clear"),
     N_("Help")
 };
@@ -1985,12 +1986,8 @@ static void batch_pack_icons (void)
 
 static void add_all_icons (void) 
 {
+    int show_graph_page = check_for_prog(latex);
     int i;
-#ifdef G_OS_WIN32
-    int show_graph_page = check_for_prog("latex.exe");
-#else
-    int show_graph_page = check_for_prog("latex");
-#endif
 
     active_object = NULL;
 
@@ -2113,6 +2110,15 @@ static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
 static void display_model_table_wrapper (void)
 {
     display_model_table(1);
+}
+
+static void graph_page_save_wrapper (void)
+{
+    if (graph_page_get_n_graphs() == 0) {
+	errbox(_("The graph page is empty"));
+    } else {
+	file_selector(_("Save LaTeX file"), SAVE_TEX, NULL);
+    }
 }
 
 static void view_script_default (void)
@@ -2274,15 +2280,13 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     } else if (strcmp(item, _("Clear")) == 0) {
 	if (obj->sort == 't') {
 	    free_model_table_list(NULL);
-	}
-	else if (obj->sort == 'q') {
+	} else if (obj->sort == 'q') {
 	    clear_graph_page();
 	}
     } else if (strcmp(item, _("Help")) == 0) {
 	if (obj->sort == 't') {
 	    context_help(NULL, GINT_TO_POINTER(MODELTAB));
-	}
-	else if (obj->sort == 'q') {
+	} else if (obj->sort == 'q') {
 	    context_help(NULL, GINT_TO_POINTER(GRAPHPAGE));
 	}
     } else if (strcmp(item, _("Options")) == 0) {
@@ -2291,7 +2295,11 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	} else {
 	    dummy_call();
 	}
-    }     
+    } else if (strcmp(item, _("Save as TeX...")) == 0) {   
+	if (obj->sort == 'q') {
+	    graph_page_save_wrapper();
+	}
+    }
 }
 
 static gboolean icon_entered (GtkWidget *icon, GdkEventCrossing *event,

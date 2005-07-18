@@ -44,28 +44,33 @@ static void get_range_and_mean (int t1, int t2, const double *x,
 }
 
 static int 
-do_range_mean_plot (int n, const double **Z, double *yhat, const char *vname)
+do_range_mean_plot (int n, const double **Z, double a, double b,
+		    const char *vname)
 {
     FILE *fp = NULL;
+    int fitline = 0;
     int t, err;
 
     if ((err = gnuplot_init(PLOT_RANGE_MEAN, &fp))) {
 	return err;
     }
 
+    if (!na(a) && !na(b)) {
+	fitline = 1;
+    }
+
     fprintf(fp, "# for %s\n", vname);
     fputs("set nokey\n", fp);
     fprintf(fp, "set title '%s %s %s'\n", 
 	    I_("range-mean plot for"), vname, 
-	    (yhat == NULL)? "" : I_("with least squares fit"));
+	    (fitline)? I_("with least squares fit") : "");
     fprintf(fp, "set xlabel '%s'\nset ylabel '%s'\n",
 	    I_("mean"), I_("range"));
-    fputs("plot \\\n'-' using 1:2 w points", fp);
-    if (yhat != NULL) {
-	fputs(" ,\\\n'-' using 1:2 w lines\n", fp);
-    } else {
-	fputc('\n', fp);
+    fputs("plot \\\n", fp);
+    if (fitline) {
+	fprintf(fp, "%g+%g*x notitle w lines lt 2 ,\\\n", a, b);
     }
+    fputs("'-' using 1:2 w points lt 1\n", fp);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -75,13 +80,6 @@ do_range_mean_plot (int n, const double **Z, double *yhat, const char *vname)
 	fprintf(fp, "%g %g\n", Z[2][t], Z[1][t]);
     }
     fputs("e\n", fp);
-
-    if (yhat != NULL) {
-	for (t=0; t<n; t++) {
-	    fprintf(fp, "%g %g\n", Z[2][t], yhat[t]);
-	}
-	fputs("e\n", fp);
-    }
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
@@ -122,9 +120,10 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
     MODEL rmmod;
     int rmlist[4] = { 3, 1, 0, 2 };
     int k, t, m, nsamp, err = 0;
-    int start, end, extra, len;
-    double mean, range, tpval, *yhat = NULL;
+    int start, end, extra;
+    double mean, range, tpval;
     char startdate[OBSLEN], enddate[OBSLEN];
+    double a, b;
     int t1, t2;
 
     t1 = pdinfo->t1;
@@ -149,20 +148,21 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
     m = (nsamp / k) + ((extra >= 3)? 1 : 0);
 
     rminfo = create_new_dataset(&rmZ, 3, m, 0);
-    if (rminfo == NULL) return E_ALLOC;
+    if (rminfo == NULL) {
+	return E_ALLOC;
+    }
 
     pprintf(prn, _("Range-mean statistics for %s\n"), 
 	    pdinfo->varname[vnum]);
     pprintf(prn, _("using %d sub-samples of size %d\n\n"),
 	    m, k);
 
-    ntodate(startdate, t1, pdinfo);
-    len = strlen(startdate) * 2 + 3 + 11;
-
-    pprintf(prn, "%*s%16s\n", len, _("range"), _("mean"));
+    pprintf(prn, "%30s%16s\n", _("range"), _("mean"));
 
     /* find group means and ranges */
     for (t=0; t<m; t++) {
+	char obsstr[32];
+
 	start = t1 + t * k;
 	end = start + k - 1;
 	if (end > t2) {
@@ -177,7 +177,9 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
 
 	ntodate(startdate, start, pdinfo);
 	ntodate(enddate, end, pdinfo);
-	pprintf(prn, "%s - %s  ", startdate, enddate);
+	sprintf(obsstr, "%s - %s", startdate, enddate);
+	pputs(prn, obsstr);
+	bufspace(20 - strlen(obsstr), prn);
 	gretl_print_fullwidth_double(rmZ[1][t], GRETL_DIGITS, prn);
 	gretl_print_fullwidth_double(rmZ[2][t], GRETL_DIGITS, prn);
 	pputc(prn, '\n');
@@ -187,6 +189,8 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
     strcpy(rminfo->varname[2], "mean");
 
     rmmod = lsq(rmlist, &rmZ, rminfo, OLS, OPT_A, 0.0);
+
+    a = b = NADBL;
 
     if ((err = rmmod.errcode)) {
 	pputs(prn, _("Error estimating range-mean model\n"));
@@ -203,12 +207,13 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
 	}
 
 	if (tpval < .10) {
-	    yhat = rmmod.yhat;
+	    a = rmmod.coeff[0];
+	    b = rmmod.coeff[1];
 	} 
     }
 
     if (!gretl_in_batch_mode() && !gretl_looping()) {
-	err = do_range_mean_plot(m, (const double **) rmZ, yhat, 
+	err = do_range_mean_plot(m, (const double **) rmZ, a, b, 
 				 pdinfo->varname[vnum]);
     }
 

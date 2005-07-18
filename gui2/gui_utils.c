@@ -39,6 +39,7 @@
 
 #ifdef G_OS_WIN32
 # include <windows.h>
+# include "gretlwin32.h"
 #endif
 
 #ifdef USE_GTKSOURCEVIEW
@@ -1644,6 +1645,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
 
     int help_ok = (vwin->role == LEVERAGE || 
 		   vwin->role == COINT2 ||
+		   vwin->role == HURST ||
+		   vwin->role == RMPLOT ||
 		   vwin->role == MAHAL);
 
     int latex_ok = latex_is_ok();
