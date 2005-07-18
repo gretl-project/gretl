@@ -515,38 +515,7 @@ static int get_gpt_marker (const char *line, char *label)
     return 1;
 }
 
-static void get_gpt_data (char *line, double *x, double *y)
-{
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
-
-    if (x != NULL) {
-	if (sscanf(line, "%lf %lf", x, y) == 2) {
-	    ; /* we're fine */
-	} else {
-	    if (sscanf(line, "%lf", x) == 1) {
-		*y = NADBL;
-	    } else if (sscanf(line, "%*s %lf", y) == 1) {
-		*x = NADBL;
-	    } else {
-		*x = *y = NADBL;
-	    }
-	}
-    } else {
-	if (sscanf(line, "%*s %lf", y) != 1) {
-	    *y = NADBL;
-	}
-    }
-
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
-}
-
 #define cant_edit(p) (p == PLOT_CORRELOGRAM || \
-                      p == PLOT_FORECAST || \
-                      p == PLOT_GARCH || \
                       p == PLOT_IRFBOOT || \
                       p == PLOT_LEVERAGE || \
                       p == PLOT_MULTI_SCATTER || \
@@ -586,6 +555,7 @@ static GPT_SPEC *plotspec_new (void)
 	spec->lines[i].scale[0] = 0;
 	spec->lines[i].yaxis = 1;
 	spec->lines[i].type = 0;
+	spec->lines[i].ncols = 0;
     }
 
     for (i=0; i<4; i++) {
@@ -612,15 +582,95 @@ static GPT_SPEC *plotspec_new (void)
     spec->fp = NULL;
     spec->data = NULL;
     spec->markers = NULL;
-    spec->nmarkers = 0;
+    spec->n_markers = 0;
     spec->ptr = NULL;
-    spec->nlines = 0;
-    spec->n_y_series = 0;
+    spec->n_lines = 0;
+    spec->n_yseries = 0;
+    spec->nobs = 0;
 
     spec->termtype[0] = 0;
-    spec->t1 = spec->t2 = 0;
 
     return spec;
+}
+
+static int get_gpt_data (GPT_SPEC *spec, int have_markers, FILE *fp)
+{
+    char s[MAXLEN];
+    char *got;
+    double *x[4] = { NULL };
+    char test[4][32];
+    int started_data_lines = 0;
+    int i, j, t;
+    int err = 0;
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
+    for (i=0; i<spec->n_lines && !err; i++) {
+	int offset = 1;
+
+	if (spec->lines[i].ncols == 0) {
+	    continue;
+	}
+
+	if (!started_data_lines) {
+	    offset = 0;
+	    x[0] = spec->data;
+	    x[1] = x[0] + spec->nobs;
+	    started_data_lines = 1;
+	} 
+
+	x[2] = x[1] + spec->nobs;
+	x[3] = x[2] + spec->nobs;	
+
+	for (t=0; t<spec->nobs; t++) {
+	    int nf = 0;
+
+	    got = fgets(s, sizeof s, fp);
+	    if (got == NULL) {
+		err = 1;
+		break;
+	    }
+
+	    nf = 0;
+	    if (spec->lines[i].ncols == 4) {
+		nf = sscanf(s, "%31s %31s %31s %31s", test[0], test[1], test[2], test[3]);
+	    } else if (spec->lines[i].ncols == 3) {
+		nf = sscanf(s, "%31s %31s %31s", test[0], test[1], test[2]);
+	    } else if (spec->lines[i].ncols == 2) {
+		nf = sscanf(s, "%31s %31s", test[0], test[1]);
+	    }
+
+	    if (nf != spec->lines[i].ncols) {
+		err = 1;
+	    }
+
+	    for (j=offset; j<nf; j++) {
+		if (test[j][0] == '?') {
+		    x[j][t] = NADBL;
+		} else {
+		    x[j][t] = atof(test[j]);
+		}
+	    }
+
+	    if (i == 0 && have_markers) {
+		get_gpt_marker(s, spec->markers[t]);
+	    }
+	}
+
+	/* trailer line for data block */
+	fgets(s, sizeof s, fp);
+
+	/* shift 'y' writing location */
+	x[1] += (spec->lines[i].ncols - 1) * spec->nobs;
+    }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    return err;
 }
 
 /* read a gnuplot source line specifying a text label */
@@ -812,43 +862,46 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 
 /* allocate markers for identifying particular data points */
 
-static int allocate_plotspec_markers (GPT_SPEC *spec, int plot_n)
+static int allocate_plotspec_markers (GPT_SPEC *spec)
 {
-    int i;
+    int i, j;
 
-    spec->markers = mymalloc(plot_n * sizeof *spec->markers);
+    spec->markers = mymalloc(spec->nobs * sizeof *spec->markers);
     if (spec->markers == NULL) {
 	return 1;
     }
 
-    for (i=0; i<plot_n; i++) {
+    for (i=0; i<spec->nobs; i++) {
 	spec->markers[i] = malloc(OBSLEN);
 	if (spec->markers[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(spec->markers[j]);
+	    }
 	    free(spec->markers);
-	    spec->nmarkers = 0;
+	    spec->n_markers = 0;
 	    return 1;
 	}
 	spec->markers[i][0] = 0;
     }
 
-    spec->nmarkers = plot_n;
+    spec->n_markers = spec->nobs;
 
     return 0;
 }
 
-/* Determine the number of data points in a plot (also the type of
-   plot, and whether there are any data-point markers along with the
-   data).
+/* Determine the number of data points in a plot (also the type
+   of plot, and whether there are any data-point markers along with
+   the data).
 */
 
-static int get_plot_n (FILE *fp, PlotType *ptype, int *got_markers)
+static int get_plot_nobs (FILE *fp, PlotType *ptype, int *have_markers)
 {
     int n = 0, started = -1;
-    char line[MAXLEN], label[OBSLEN];
+    char line[MAXLEN], label[9];
     char *p;
 
     *ptype = PLOT_REGULAR;
-    *got_markers = 0;
+    *have_markers = 0;
 
     while (fgets(line, MAXLEN - 1, fp)) {
 
@@ -867,9 +920,9 @@ static int get_plot_n (FILE *fp, PlotType *ptype, int *got_markers)
 	}
 
 	if (started == 1) {
-	    if (*got_markers == 0 && (p = strchr(line, '#')) != NULL) {
+	    if (*have_markers == 0 && (p = strchr(line, '#')) != NULL) {
 		if (sscanf(p + 1, "%8s", label) == 1) {
-		    *got_markers = 1;
+		    *have_markers = 1;
 		}
 	    }
 	    if (*line == 'e') {
@@ -882,6 +935,72 @@ static int get_plot_n (FILE *fp, PlotType *ptype, int *got_markers)
     return n;
 }
 
+/* parse the "using..." portion of plot specification for a
+   given plot line: full form is like:
+  
+     using XX axes XX title XX w XX lt XX
+*/
+
+static int parse_gp_line_line (const char *s, GPT_SPEC *spec, int i)
+{
+    const char *p;
+    int err = 0;
+
+    if ((p = strstr(s, " using "))) {
+	/* data column spec */
+	p += 7;
+	if (strstr(p, "1:2:3:4")) {
+	    spec->lines[i].ncols = 4;
+	} else if (strstr(p, "1:2:3")) {
+	    spec->lines[i].ncols = 3;
+	} else if ((p = strstr(s, "($2*"))) {
+	    sscanf(p + 4, "%7[^)]", spec->lines[i].scale);
+	    spec->lines[i].ncols = 2;
+	} else {
+	    spec->lines[i].ncols = 2;
+	}
+	if (spec->lines[i].scale[0] == '\0') {
+	    strcpy(spec->lines[i].scale, "1.0");
+	}
+    } else {
+	/* absence of "using" means the line plots a formula, not a
+	   set of data columns */
+	strcpy(spec->lines[i].scale, "NA");
+	/* get the formula: it runs up to "title" or "notitle" */
+	p = strstr(s, " title");
+	if (p == NULL) {
+	    p = strstr(s, " notitle");
+	}
+	if (p != NULL) {
+	    strncat(spec->lines[i].formula, s, p - s);
+	}
+    }
+
+    /* axes */
+    if (strstr(s, "axes x1y2")) {
+	spec->lines[i].yaxis = 2;
+    } 
+
+    if ((p = strstr(s, " title "))) {
+	sscanf(p + 8, "%79[^']'", spec->lines[i].title);
+    }
+
+    if ((p = strstr(s, " w "))) {
+	sscanf(p + 3, "%15[^, ]", spec->lines[i].style);
+    } 
+
+    if ((p = strstr(s, " lt "))) {
+	sscanf(p + 4, "%d", &spec->lines[i].type);
+    } 
+
+    if (spec->lines[i].ncols == 0 && spec->lines[i].formula[0] == '\0') {
+	/* got neither data column spec nor formula */
+	err = 1;
+    }
+
+    return err;
+}
+
 /* Read plotspec struct from gnuplot command file.  This is _not_ a
    general parser for gnuplot files; it is designed specifically for
    files auto-generated by gretl.
@@ -889,12 +1008,11 @@ static int get_plot_n (FILE *fp, PlotType *ptype, int *got_markers)
 
 static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 {
-    int i, t, n, plot_n, done, labelno;
-    int got_markers = 0;
+    int i, done, labelno;
+    int have_markers = 0;
+    int datacols = 0;
     char gpline[MAXLEN];
-    char *got = NULL, *p = NULL;
-    double *tmpy = NULL;
-    size_t diff;
+    char *got = NULL;
     FILE *fp;
     int err = 0;
 
@@ -919,11 +1037,11 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     }
 
     /* get the number of data-points, plot type, and check for markers */
-    plot_n = get_plot_n(fp, &spec->code, &got_markers);
-    if (plot_n == 0) {
+    spec->nobs = get_plot_nobs(fp, &spec->code, &have_markers);
+    if (spec->nobs == 0) {
 	/* failed reading plot data */
 #if GPDEBUG
-	fprintf(stderr, " got plot_n = 0\n");
+	fprintf(stderr, " got spec->nobs = 0\n");
 #endif
 	fclose(fp);
 	return 1;
@@ -939,7 +1057,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     /* get the preamble and "set" lines */
     labelno = 0;
-    while ((got = fgets(gpline, MAXLEN - 1, fp))) {
+    while ((got = fgets(gpline, sizeof gpline, fp))) {
 	int litlines = 0;
 
 	if (!strncmp(gpline, "# timeseries", 12)) {
@@ -1011,7 +1129,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     i = 0;
     done = 0;
-    while (1) {
+    while (!err) {
 	top_n_tail(gpline);
 
 	if (!chop_comma(gpline)) {
@@ -1020,44 +1138,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    done = 1;
 	} 
 
-	/* scale, [yaxis,] style */
-	p = strstr(gpline, "using");
-	if (p && p[11] == '*') {
-            safecpy(spec->lines[i].scale, p + 12, 7);
-	    charsub(spec->lines[i].scale, ')', '\0');
-	} else {
-	    if (p) { 
-		strcpy(spec->lines[i].scale, "1.0");
-	    } else {
-		strcpy(spec->lines[i].scale, "NA");
-		p = strstr(gpline, "axes");
-		if (p == NULL) {
-		    p = strstr(gpline, "title");
-		}
-		if (p != NULL) {
-		    diff = p - gpline;
-		    strncpy(spec->lines[i].formula, gpline, diff);
-		    spec->lines[i].formula[diff - 1] = 0;
-		} 
-	    }
-	}
-
-	spec->lines[i].yaxis = 1;
-	if (strstr(gpline, "axes x1y2")) {
-	    spec->lines[i].yaxis = 2;
-	}
-
-	p = strstr(gpline, "title");
-	if (p != NULL) {
-	    sscanf(p + 7, "%79[^']'", spec->lines[i].title);
-	}
-
-	p = strstr(gpline, " w ");
-	if (p != NULL) {
-	    sscanf(p + 3, "%15[^, ] %d", spec->lines[i].style, &spec->lines[i].type);
-	} else {
-	    strcpy(spec->lines[i].style, "points");
-	}
+	err = parse_gp_line_line(gpline, spec, i);
 
 	if (done) {
 	    break;
@@ -1070,89 +1151,55 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	}
     }
 
-    if (got == NULL) {
+    if (err || got == NULL) {
 	err = 1;
 	goto plot_bailout;
     }
 
-    spec->nlines = i + 1; /* i is a zero-based index */
+    spec->n_lines = i + 1; /* i is a zero-based index */
 
     /* free any unused lines */
-    if (spec->nlines < MAX_PLOT_LINES) {
+    if (spec->n_lines < MAX_PLOT_LINES) {
 	spec->lines = myrealloc(spec->lines, 
-				spec->nlines * sizeof *spec->lines);
+				spec->n_lines * sizeof *spec->lines);
     }
 
-    /* finally, get the plot data, and markers if any */
-    spec->data = mymalloc(plot_n * (i + 2) * sizeof *spec->data);
-    tmpy = mymalloc(plot_n * sizeof *tmpy);
-    if (spec->data == NULL || tmpy == NULL) {
+    /* determine total number of required data columns */
+    for (i=0; i<spec->n_lines; i++) {
+	if (i == 0) {
+	    datacols = spec->lines[i].ncols;
+	    if (datacols > 0) {
+		spec->n_yseries = datacols;
+	    }
+	} else if (spec->lines[i].ncols > 0) {
+	    datacols += spec->lines[i].ncols - 1;
+	    spec->n_yseries += 1;
+	}
+    }
+
+    /* allocate for the plot data... */
+    spec->data = mymalloc(spec->nobs * datacols * sizeof *spec->data);
+    if (spec->data == NULL) {
 	err = 1;
 	goto plot_bailout;
     }
 
-    if (got_markers) {
-	if (allocate_plotspec_markers(spec, plot_n)) {
+    /* and markers if any */
+    if (have_markers) {
+	if (allocate_plotspec_markers(spec)) {
 	    free(spec->data);
 	    spec->data = NULL;
-	    free(tmpy);
 	    err = 1;
 	    goto plot_bailout;
 	}
     }
 
-    /* Below: read the data from the plot.  There may be more
-       than one y series. */
-    i = 1;
-    t = 0;
-    n = 0;
-    while (fgets(gpline, MAXLEN - 1, fp)) {
-	if (gpline[0] == 'e') {
-	    n = t;
-	    t = 0;
-	    i++;
-	    continue;
-	}
-	if (strncmp(gpline, "pause", 5) == 0) {
-	    break;
-	}
-	if (i == 1) { 
-	    /* first set: read both x and y (and label?) */ 
-	    get_gpt_data(gpline, &(spec->data[t]), &(tmpy[t]));
-	    if (got_markers) {
-		get_gpt_marker(gpline, spec->markers[t]);
-	    }
-	} else {      
-	    /* any subsequent sets: read y only */ 
-	    get_gpt_data(gpline, NULL, &(spec->data[i * n + t]));
-	}
-	t++;
-    }
-
-    spec->n_y_series = i - 1;
-
-    /* put "tmpy" in as last data column */
-    for (t=0; t<n; t++) {
-	spec->data[n + t] = tmpy[t];
-    }
-    free(tmpy);
-
-    spec->t1 = 0;
-    spec->t2 = n - 1;
-
-    /* see if we really have any markers */
-    if (spec->markers != NULL && !got_markers) {
-	for (i=0; i<plot_n; i++) {
-	    free(spec->markers[i]);
-	}
-	free(spec->markers);
-	spec->markers = NULL;
-	spec->nmarkers = 0;
-    }
+    /* Read the data (and markers) from the plot file */
+    err = get_gpt_data(spec, have_markers, fp);
 
 #if 0
-    fprintf(stderr, "spec->markers = %p, spec->nmarkers = %d\n",
-	    (void *) spec->markers, spec->nmarkers);
+    fprintf(stderr, "spec->markers = %p, spec->n_markers = %d\n",
+	    (void *) spec->markers, spec->n_markers);
 #endif
 
  plot_bailout:
@@ -1358,7 +1405,7 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
     double xdiff, ydiff;
     double min_xdist, min_ydist;
     int best_match = -1;
-    int t, plot_n;
+    int t;
     const double *data_x, *data_y = NULL;
 
     if (plot->err) {
@@ -1371,16 +1418,14 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	return TRUE;
     }
 
-    plot_n = plot->spec->t2 - plot->spec->t1 + 1;
-
 #ifndef OLD_GTK
     /* need array to keep track of which points are labeled */
     if (plot->labeled == NULL) {
-	plot->labeled = mymalloc(plot_n);
+	plot->labeled = mymalloc(plot->spec->nobs);
 	if (plot->labeled == NULL) {
 	    return TRUE;
 	}
-	memset(plot->labeled, 0, plot_n);
+	memset(plot->labeled, 0, plot->spec->nobs);
     }
 #endif
 
@@ -1399,20 +1444,20 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	/* use first y-var that's on y1 axis */
 	int i;
 
-	for (i=0; i<plot->spec->nlines; i++) {
+	for (i=0; i<plot->spec->n_lines; i++) {
 	    if (plot->spec->lines[i].yaxis == 1) {
-		data_y = &plot->spec->data[(i + 1) * plot_n];
+		data_y = &plot->spec->data[(i + 1) * plot->spec->nobs]; /* FIXME */
 		break;
 	    }
 	}
     } 
 
     if (data_y == NULL) {
-	data_y = &plot->spec->data[plot->spec->n_y_series * plot_n];
+	data_y = &plot->spec->data[plot->spec->n_yseries * plot->spec->nobs]; /* FIXME */
     }
 
     /* try to find the best-matching data point */
-    for (t=0; t<plot_n; t++) {
+    for (t=0; t<plot->spec->nobs; t++) {
 	if (na(data_x[t]) || na(data_y[t])) {
 	    continue;
 	}

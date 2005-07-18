@@ -493,7 +493,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
 	fprintf(fp, "f(x) title '%s' w lines , \\\n", tmp);
     }
 
-    fprintf(fp, "'-' using 1:($2) title '%s' w impulses\n",
+    fprintf(fp, "'-' using 1:2 title '%s' w impulses\n",
 	    I_("test statistic"));
     fprintf(fp, "%f %f\n", x, spike);
     fprintf(fp, "e\n");

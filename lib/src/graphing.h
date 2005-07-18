@@ -55,9 +55,10 @@ typedef struct {
     char title[MAXTITLE];  /* key or legend title */
     char formula[128];     /* expression to plot (rather than data) */
     char style[16];        /* lines, points, etc. */
-    char scale[8];         /* string repres. of scale factor */
+    char scale[8];         /* string representation of scale factor */
     int yaxis;             /* 1 for left, 2 for right */
-    int type;              /* 1, 2, ... */
+    int type;              /* 1, 2, ... (color) */
+    int ncols;             /* number of data columns (0 for formula) */
 } GPT_LINE;
 
 #define PLOT_LABEL_TEXT_LEN 31
@@ -106,20 +107,20 @@ typedef struct {
     char fname[MAXLEN];        /* for gui purposes */
     PlotType code;             /* to deal with FREQ, FCASTERR... */
     unsigned char flags;       /* bitwise OR of options (gptspec_flags) */
-    int t1, t2;                /* starting and ending obs */
+    int nobs;                  /* number of observations */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
     double range[3][2];        /* axis range specifiers */
     char keyspec[MAXTITLE];    /* position of key (or none) */
     char xtics[16];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */
     char termtype[MAXTITLE];   /* gnuplot "term" setting */
-    int nlines;                /* number of lines */
-    int n_y_series;            /* number of actual y-axis data series (not formulae) */
+    int n_lines;               /* number of lines */
+    int n_yseries;             /* number of y-axis data series (not formulae) */
     GPT_LINE *lines;           /* details on individual lines */
     char *literal[4];          /* additional commands */
     double *data;              /* data to plot */
     char **markers;            /* data-point markers (not always present) */
-    int nmarkers;              /* number of such markers */
+    int n_markers;             /* number of such markers */
     GPT_LABEL labels[MAX_PLOT_LABELS];  /* textual labels written onto graph */
     void *ptr;                 /* for GUI use */
 } GPT_SPEC;

@@ -1376,7 +1376,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
     if (gpinfo.yscale) {
 	fputs("plot \\\n", fp);
 	for (i=1; i<gpinfo.lo; i++) {
-	    fprintf(fp, "'-' using 1:($2) axes %s title '%s (%s)' %s%s",
+	    fprintf(fp, "'-' using 1:2 axes %s title '%s (%s)' %s%s",
 		    (i == gpinfo.oddman)? "x1y2" : "x1y1",
 		    series_name(pdinfo, list[i]), 
 		    (i == gpinfo.oddman)? I_("right") : I_("left"),
@@ -1389,8 +1389,8 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	strcpy(s1, (flags & GP_RESIDS)? I_("residual") : 
 	       series_name(pdinfo, list[1]));
 	strcpy(s2, series_name(pdinfo, list[3]));
-	fprintf(fp, " '-' using 1:($2) title '%s (%s=1)', \\\n", s1, s2);
-	fprintf(fp, " '-' using 1:($2) title '%s (%s=0)'\n", s1, s2);
+	fprintf(fp, " '-' using 1:2 title '%s (%s=1)', \\\n", s1, s2);
+	fprintf(fp, " '-' using 1:2 title '%s (%s=0)'\n", s1, s2);
     } else {
 	fputs("plot \\\n", fp);
 	for (i=1; i<gpinfo.lo; i++)  {
@@ -1402,7 +1402,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	    if (!gpinfo.impulses) { 
 		set_withstr(flags, lines, i, withstr);
 	    }
-	    fprintf(fp, " '-' using 1:($2) title '%s' %s", 
+	    fprintf(fp, " '-' using 1:2 title '%s' %s", 
 		    s1, withstr);
 	    if (i < gpinfo.lo - 1 || gpinfo.ols_ok) {
 	        fputs(" , \\\n", fp); 
@@ -1934,18 +1934,18 @@ int plot_freq (FreqDist *freq, DistCode dist)
     }
 
     if (!dist) {
-	fprintf(fp, "plot '-' using 1:($2) %s\n", withstr);
+	fprintf(fp, "plot '-' using 1:2 %s\n", withstr);
     } else if (dist == DIST_NORMAL) {
 	print_freq_dist_label(label, dist, freq->xbar, freq->sdx);
 	fputs("plot \\\n", fp);
-	fprintf(fp, "'-' using 1:($2) title '%s' %s , \\\n"
+	fprintf(fp, "'-' using 1:2 title '%s' %s , \\\n"
 		"(1/(sqrt(2*pi)*sigma)*exp(-(x-mu)**2/(2*sigma**2))) "
 		"title '%s' w lines\n",
 		freq->varname, withstr, label);
     } else if (dist == DIST_GAMMA) {
 	print_freq_dist_label(label, dist, alpha, beta);
 	fputs("plot \\\n", fp);
-	fprintf(fp, "'-' using 1:($2) title '%s' %s ,\\\n"
+	fprintf(fp, "'-' using 1:2 title '%s' %s ,\\\n"
 		"x**(alpha-1.0)*exp(-x/beta)/(exp(lgamma(alpha))*(beta**alpha)) "
 		"title '%s' w lines\n",
 		freq->varname, withstr, label); 
@@ -1967,8 +1967,6 @@ int plot_freq (FreqDist *freq, DistCode dist)
 
     return gnuplot_make_graph();
 }
-
-/* ......................................................... */ 
 
 int plot_fcast_errs (int n, const double *obs, 
 		     const double *depvar, const double *yhat, 
@@ -2032,7 +2030,7 @@ int plot_fcast_errs (int n, const double *obs,
 
     fputs("set key left top\nplot \\\n", fp);
     if (depvar_present) {
-	fprintf(fp, "'-' using 1:2 title \"%s\" w lines , \\\n",
+	fprintf(fp, "'-' using 1:2 title '%s' w lines , \\\n",
 		varname);
     }
     fprintf(fp, "'-' using 1:2 title '%s' w lines", I_("fitted"));
@@ -2114,8 +2112,8 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 
     fprintf(fp, "set key left top\n"
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
-	    "'-' using 1:2 title '%s' w l 2, \\\n" 
-	    "'-' using 1:2 notitle w l 2\n", 
+	    "'-' using 1:2 title '%s' w l lt 2, \\\n" 
+	    "'-' using 1:2 notitle w l lt 2\n", 
 	    I_("residual"), I_("+- sqrt(h(t))"));
 
 #ifdef ENABLE_NLS
@@ -2148,8 +2146,6 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     return gnuplot_make_graph();
 }
 
-/* ........................................................... */
-
 void free_plotspec (GPT_SPEC *spec)
 {
     int i;
@@ -2166,7 +2162,7 @@ void free_plotspec (GPT_SPEC *spec)
     }
 
     if (spec->markers != NULL) {
-	for (i=0; i<spec->nmarkers; i++) {
+	for (i=0; i<spec->n_markers; i++) {
 	    free(spec->markers[i]);
 	}
 	free(spec->markers);
@@ -2174,8 +2170,6 @@ void free_plotspec (GPT_SPEC *spec)
 
     free(spec);
 }
-
-/* ........................................................... */
 
 int get_termstr (const GPT_SPEC *spec, char *termstr)
 {
@@ -2305,17 +2299,18 @@ print_plot_labelspec (const GPT_LABEL *lbl, int png, FILE *fp)
 
 int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 {
-    int i, k, t, datlines;
-    int plotn, nlines = spec->nlines;
+    int i, k, t;
     int png = get_png_output(spec);
+    int started_data_lines = 0;
+    int n_lines = spec->n_lines;
+    double *x[4];
     int any_y2 = 0;
     int miss = 0;
-    double xx;
 
     if (!string_is_blank(spec->titles[0])) {
 	if ((spec->flags & GPTSPEC_OLS_HIDDEN) && 
 	    is_auto_ols_string(spec->titles[0])) {
-	    ;
+	    n_lines--;
 	} else {
 	    gp_string(fp, "set title '%s'\n", spec->titles[0], png);
 	}
@@ -2380,9 +2375,8 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     if (spec->flags & GPTSPEC_Y2AXIS) {
 	fputs("set ytics nomirror\n", fp);
 	fputs("set y2tics\n", fp);
-    } 
-    /* suppressing border? */
-    else if (spec->flags & GPTSPEC_BORDER_HIDDEN) {
+    } else if (spec->flags & GPTSPEC_BORDER_HIDDEN) {
+	/* suppressing border */
 	fputs("set border 3\n", fp);
 	if (string_is_blank(spec->xtics)) {
 	    fputs("set xtics nomirror\n", fp);
@@ -2405,9 +2399,6 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
     if (spec->flags & GPTSPEC_AUTO_OLS) {
 	fputs(auto_ols_string, fp);
-	if ((spec->flags & GPTSPEC_OLS_HIDDEN) && nlines > 1) {
-	    nlines--;
-	}
     }
 
     if ((spec->code == PLOT_FREQ_SIMPLE ||
@@ -2418,22 +2409,28 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
     fputs("plot \\\n", fp);
 
-    datlines = nlines; /* ? */ 
-
-    for (i=0; i<nlines; i++) {
+    for (i=0; i<n_lines; i++) {
 	if ((spec->flags & GPTSPEC_Y2AXIS) && spec->lines[i].yaxis != 1) {
 	    any_y2 = 1;
 	    break;
 	}
     }
 
-    for (i=0; i<nlines; i++) {
+    for (i=0; i<n_lines; i++) {
+
 	if (strcmp(spec->lines[i].scale, "NA")) {
-	    fprintf(fp, "'-' using 1:($2*%s) ", 
-		    spec->lines[i].scale);
+	    if (!strcmp(spec->lines[i].scale, "1.0")) {
+		fputs("'-' using 1", fp);
+		for (k=2; k<=spec->lines[i].ncols; k++) {
+		    fprintf(fp, ":%d", k);
+		}
+		fputc(' ', fp);
+	    } else {
+		fprintf(fp, "'-' using 1:($2*%s) ", 
+			spec->lines[i].scale);
+	    }
 	} else {
 	    fprintf(fp, "%s ", spec->lines[i].formula); 
-	    datlines--;
 	}
 
 	if ((spec->flags & GPTSPEC_Y2AXIS) && spec->lines[i].yaxis != 1) {
@@ -2454,45 +2451,67 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
 	fprintf(fp, "w %s", spec->lines[i].style);
 	if (spec->lines[i].type != 0) {
-	    fprintf(fp, " %d", spec->lines[i].type);
+	    fprintf(fp, " lt %d", spec->lines[i].type);
 	}
 
-	if (i == nlines - 1) {
+	if (i == n_lines - 1) {
 	    fputc('\n', fp);
 	} else {
 	    fputs(", \\\n", fp);
 	}
     } 
 
+    miss = 0;
+
     /* supply the data to gnuplot inline */
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    miss = 0;
-    plotn = spec->t2 - spec->t1 + 1;
-    for (i=1; i<=datlines; i++) {  
-	for (t=spec->t1; t<=spec->t2; t++) {
-	    xx = spec->data[t - spec->t1];
-	    if (na(xx)) {
+    for (i=0; i<spec->n_lines; i++) { 
+	int j;
+
+	if (spec->lines[i].ncols == 0) {
+	    continue;
+	}
+
+	if (!started_data_lines) {
+	    x[0] = spec->data;
+	    x[1] = x[0] + spec->nobs;
+	    started_data_lines = 1;
+	} 
+
+	x[2] = x[1] + spec->nobs;
+	x[3] = x[2] + spec->nobs;
+
+	for (t=0; t<spec->nobs; t++) {
+	    if (na(x[0][t])) {
 		fputs("? ", fp);
 		miss = 1;
 	    } else {
-		fprintf(fp, "%.8g ", xx);
+		fprintf(fp, "%.8g ", x[0][t]);
 	    }
-	    xx = spec->data[plotn * i + t - spec->t1];
-	    if (na(xx)) {
-		fputc('?', fp);
-		miss = 1;
-	    } else {
-		fprintf(fp, "%.8g", xx);
+
+	    for (j=1; j<spec->lines[i].ncols; j++) {
+		if (na(x[j][t])) {
+		    fputs("? ", fp);
+		    miss = 1;
+		} else {
+		    fprintf(fp, "%.8g ",  x[j][t]);
+		}
 	    }
-	    if (spec->markers != NULL && i == 1) {
+
+	    if (spec->markers != NULL && i == 0) {
 		fprintf(fp, " # %s", spec->markers[t]);
 	    }
+
 	    fputc('\n', fp);
 	}
+
 	fputs("e\n", fp);
+
+	x[1] += (spec->lines[i].ncols - 1) * spec->nobs;
     }
 
 #ifdef ENABLE_NLS
@@ -2785,8 +2804,6 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var,
 
     return gnuplot_make_graph();
 }
-
-/* ........................................................... */
 
 int is_auto_ols_string (const char *s)
 {

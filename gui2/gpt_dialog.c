@@ -297,7 +297,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     } 
 
     if (!no_edit_lines(spec)) {    
-	for (i=0; i<spec->nlines; i++) {
+	for (i=0; i<spec->n_lines; i++) {
 	    spec->lines[i].yaxis = 1;
 	    if (supress_y2) {
 		continue;
@@ -329,7 +329,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     }
 
     if (!err && !no_edit_lines(spec)) {   
-	for (i=0; i<spec->nlines; i++) {
+	for (i=0; i<spec->n_lines; i++) {
 	    entry_to_gp_string(GTK_COMBO(stylecombo[i])->entry, 
 			       spec->lines[i].style, 
 			       sizeof spec->lines[0].style);
@@ -424,7 +424,7 @@ static void set_keyspec_sensitivity (GPT_SPEC *spec)
 	int i; 
 	const char *p;
 
-	for (i=0; i<spec->nlines; i++) {
+	for (i=0; i<spec->n_lines; i++) {
 	    p = gtk_entry_get_text(GTK_ENTRY(linetitle[i]));
 	    if (p != NULL && *p != 0) {
 		gtk_widget_set_sensitive(keycombo, TRUE);
@@ -551,7 +551,7 @@ static void toggle_axis_selection (GtkWidget *w, GPT_SPEC *spec)
     int no_y2 = GTK_TOGGLE_BUTTON(w)->active;
     int i;
 
-    for (i=0; i<spec->nlines; i++) {
+    for (i=0; i<spec->n_lines; i++) {
 	if (i >= MAX_PLOT_LINES) {
 	    break;
 	}
@@ -906,7 +906,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     label = gtk_label_new(_("Lines"));
     gtk_widget_show(label);
 
-    if (spec->nlines > 4) {
+    if (spec->n_lines > 4) {
 	GtkWidget *scroller;
 	
 	scroller = gtk_scrolled_window_new(NULL, NULL);
@@ -931,7 +931,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
    
     tbl_num = tbl_col = 0;
 
-    for (i=0; i<spec->nlines; i++) {
+    for (i=0; i<spec->n_lines; i++) {
 	/* identifier and key or legend text */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
