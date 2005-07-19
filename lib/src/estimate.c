@@ -3363,25 +3363,14 @@ lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo)
     return ret;
 }
 
-/**
- * arch_test:
- * @pmod: model to be tested.
- * @order: lag order for ARCH process.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @opt: mat contain %OPT_O to print covariance matrix, %OPT_S
- *       to save test results to model.
- * @prn: gretl printing struct.
- *
- * Test @pmod for Auto-Regressive Conditional Heteroskedasticity.  
- * If this effect is significant, re-restimate the model using 
- * weighted least squares.
- * 
- * Returns: a #MODEL struct, containing the estimates.
- */
+/* if 'full' is non-zero, do the whole thing (print the ARCH test
+   model, re-estimate if p-value is < .10); otherwise just do
+   the ARCH test itself and print the test result
+*/
 
-MODEL arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo, 
-		 gretlopt opt, PRN *prn)
+static MODEL 
+real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo, 
+		gretlopt opt, PRN *prn, int full)
 {
     MODEL archmod;
     int *wlist = NULL, *arlist = NULL;
@@ -3451,16 +3440,16 @@ MODEL arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	/* print results */
 	archmod.aux = AUX_ARCH;
 	archmod.order = order;
-
-	printmodel(&archmod, pdinfo, OPT_NONE, prn);
-
-	pprintf(prn, _("No of obs. = %d, unadjusted R^2 = %f\n"),
-		archmod.nobs, archmod.rsq);
 	LM = archmod.nobs * archmod.rsq;
 	xx = chisq(LM, order);
+
+	if (full) {
+	    printmodel(&archmod, pdinfo, OPT_NONE, prn);
+	    pprintf(prn, _("No of obs. = %d, unadjusted R^2 = %f\n"),
+		    archmod.nobs, archmod.rsq);
+	}
 
 	if (opt & OPT_S) {
 	    ModelTest *test;
@@ -3473,25 +3462,29 @@ MODEL arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 		model_test_set_value(test, LM);
 		model_test_set_pvalue(test, xx);
 	    }	    
-	}	
+	}
+
+	if (!full) {
+	    goto arch_test_exit;
+	}
 
 	record_test_result(LM, xx, "ARCH");
 
 	pprintf(prn, _("LM test statistic (%f) is distributed as Chi-square "
 		"(%d)\nArea to the right of LM = %f  "), LM, order, xx);
-	if (xx > 0.1) 
+
+	if (xx > 0.1) {
 	    pprintf(prn, "\n%s.\n%s.\n",
 		    _("ARCH effect is insignificant at the 10 percent level"),
 		    _("Weighted estimation not done"));
-	else {
+	} else {
 	    pprintf(prn, "\n%s.\n",
 		    _("ARCH effect is significant at the 10 percent level"));
-	    /* weighted estimation */
-	    wlist = malloc((pmod->list[0] + 2) * sizeof *wlist);
+	    /* do weighted estimation */
+	    wlist = gretl_list_new(pmod->list[0] + 1);
 	    if (wlist == NULL) {
 		archmod.errcode = E_ALLOC;
 	    } else {
-		wlist[0] = pmod->list[0] + 1;
 		nwt = wlist[1] = pdinfo->v - 1; /* weight var */
 		for (i=2; i<=wlist[0]; i++) {
 		    wlist[i] = pmod->list[i-1];
@@ -3517,12 +3510,63 @@ MODEL arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
+ arch_test_exit:
+
     if (arlist != NULL) free(arlist);
     if (wlist != NULL) free(wlist);
 
     dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo); 
 
     return archmod;
+}
+
+/**
+ * arch_test:
+ * @pmod: model to be tested.
+ * @order: lag order for ARCH process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: may contain %OPT_O to print covariance matrix, %OPT_S
+ *       to save test results to model.
+ * @prn: gretl printing struct.
+ *
+ * Tests @pmod for Auto-Regressive Conditional Heteroskedasticity.  
+ * If this effect is significant, re-restimates the model using 
+ * weighted least squares.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo, 
+		 gretlopt opt, PRN *prn)
+{
+    return real_arch_test(pmod, order, pZ, pdinfo, opt, prn, 1);
+}
+
+/**
+ * arch_test_simple:
+ * @pmod: model to be tested.
+ * @order: lag order for ARCH process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ *
+ * Tests @pmod for Auto-Regressive Conditional Heteroskedasticity.  
+ * 
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int arch_test_simple (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo, 
+		      PRN *prn)
+{
+    MODEL amod;
+    int err;
+
+    amod = real_arch_test(pmod, order, pZ, pdinfo, OPT_S, prn, 0);
+    err = amod.errcode;
+    clear_model(&amod);
+
+    return err;
 }
 
 /**
@@ -3555,7 +3599,7 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* FIXME: vcv option? */
-    amod = arch_test(&lmod, order, pZ, pdinfo, opt, prn);
+    amod = real_arch_test(&lmod, order, pZ, pdinfo, opt, prn, 1);
 
     free(lmod.list);
 

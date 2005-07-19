@@ -1180,10 +1180,27 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 
 #endif /* MODEL_DEBUG */
 
-static void gretl_test_free (ModelTest *test)
+/**
+ * gretl_model_destroy_tests:
+ * @pmod: pointer to model.
+ *
+ * Clears any hypothesis test structs that have been attached
+ * to @pmod.
+ */
+
+void gretl_model_destroy_tests (MODEL *pmod)
 {
-    if (test->param != NULL) {
-	free(test->param);
+    if (pmod != NULL && pmod->ntests > 0) {
+	int i;
+
+	for (i=0; i<pmod->ntests; i++) {
+	    if (pmod->tests[i].param != NULL) {
+		free(pmod->tests[i].param);
+	    }
+	}
+	free(pmod->tests);
+	pmod->tests = NULL;
+	pmod->ntests = 0;
     }
 }
 
@@ -1220,12 +1237,6 @@ void clear_model (MODEL *pmod)
 	if (pmod->arinfo) {
 	    clear_ar_info(pmod);
 	}
-	if (pmod->ntests) {
-	    for (i=0; i<pmod->ntests; i++) {
-		gretl_test_free(&pmod->tests[i]);
-	    }
-	    free(pmod->tests);
-	}
 	if (pmod->params) {
 	    for (i=0; i<pmod->nparams; i++) {
 		free(pmod->params[i]);
@@ -1235,14 +1246,13 @@ void clear_model (MODEL *pmod)
 	if (pmod->dataset) {
 	    free_model_dataset(pmod);
 	}
+	gretl_model_destroy_tests(pmod);
 	destroy_all_data_items(pmod);
     }
 
     /* this may be redundant */
     gretl_model_init(pmod);
 }
-
-/* ........................................................... */
 
 static void copy_test (ModelTest *targ, const ModelTest *src)
 {

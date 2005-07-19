@@ -1046,6 +1046,7 @@ void libgretl_cleanup (void)
     gretl_transforms_cleanup();
     libset_cleanup();
     gretl_lists_cleanup();
+    gretl_command_hash_cleanup();
 
     p = strstr(gretl_plotfile(), "gpttmp");
     if (p != NULL) {

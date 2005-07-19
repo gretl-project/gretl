@@ -88,7 +88,7 @@ static FILE *createnewfile (char *fname)
 
 int encode (FILE *fpin, const char *fname, const char *note, 
 	    const char *subject, const char *recipient, const char *reply_to,
-	    const char *type, char *tmpfname)
+	    const char *type, char *tmpfname, int do_id)
 {
     FILE *fpout;
     const char *cleanfname, *p;
@@ -111,7 +111,9 @@ int encode (FILE *fpin, const char *fname, const char *note,
 	return 1;
     }
 
-    generate_msg_id(fpout);
+    if (do_id) {
+	generate_msg_id(fpout);
+    }
 
     fprintf(fpout, "Mime-Version: 1.0\n");
     if (reply_to != NULL) {
@@ -122,7 +124,7 @@ int encode (FILE *fpin, const char *fname, const char *note,
     fputs("Content-Type: multipart/mixed; boundary=\"-\"\n", fpout);
     fputs("\nThis is a MIME encoded message.  Decode it with \"munpack\"\n"
 	  "or any other MIME reading software.  Mpack/munpack is available\n"
-	  "via anonymous FTP in ftp.andrew.cmu.edu:pub/mpack/\n", fpout);
+	  "via anonymous FTP in ftp.andrew.cmu.edu:pub/mpack/\n\n", fpout);
 
     /* description section */
     if (note != NULL) {

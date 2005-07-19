@@ -195,5 +195,6 @@ const char *gretl_command_complete_next (const char *s, int idx);
 
 const char *gretl_command_complete (const char *s);
 
+void gretl_command_hash_cleanup (void);
 
 #endif /* COMMANDS_H */

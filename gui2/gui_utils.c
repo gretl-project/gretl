@@ -3183,6 +3183,7 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 
 enum {
     VAR_AUTOCORR_TEST,
+    VAR_ARCH_TEST,
     VAR_NORMALITY_TEST
 };
 
@@ -3192,30 +3193,36 @@ static void VAR_test_call (gpointer p, guint code, GtkWidget *w)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     char title[72];
     PRN *prn;
+    int order = 0;
     int err;
 
     if (bufopen(&prn)) {
 	return;
     }
 
-    if (code == VAR_AUTOCORR_TEST) {
-	int order = default_lag_order(datainfo);
-
+    if (code == VAR_AUTOCORR_TEST || code == VAR_ARCH_TEST) {
+	order = default_lag_order(datainfo);
 	set_window_busy(vwin);
-	err = spin_dialog(_("gretl: autocorrelation"), 
+	err = spin_dialog((code == VAR_AUTOCORR_TEST)?
+			  _("gretl: autocorrelation") :
+			  _("gretl: ARCH test"),
 			  &order, _("Lag order for test:"),
 			  1, datainfo->n / 2, LMTEST);
 	unset_window_busy(vwin);
-
 	if (err < 0) {
 	    gretl_print_destroy(prn);
 	    return;
 	}
+    }	
 
+    if (code == VAR_AUTOCORR_TEST) {
 	strcpy(title, _("gretl: LM test (autocorrelation)"));
 	err = gretl_VAR_autocorrelation_test(var, order, 
 					     &Z, datainfo, 
 					     prn);
+    } else if (code == VAR_ARCH_TEST) {
+	strcpy(title, _("gretl: ARCH test"));
+	err = gretl_VAR_arch_test(var, order, &Z, datainfo, prn);
     } else if (code == VAR_NORMALITY_TEST) {
 	sprintf(title, "gretl: %s", _("Test for normality of residual"));
 	err = gretl_VAR_normality_test(var, prn);
@@ -3290,6 +3297,15 @@ static void add_VAR_menu_items (windata_t *vwin)
 				   _("autocorrelation"));
     varitem.callback = VAR_test_call;
     varitem.callback_action = VAR_AUTOCORR_TEST;
+    varitem.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
+
+    /* ARCH tests */
+    varitem.path = g_strdup_printf("%s/%s", _(tpath), 
+				   _("ARCH"));
+    varitem.callback = VAR_test_call;
+    varitem.callback_action = VAR_ARCH_TEST;
     varitem.item_type = NULL;
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);

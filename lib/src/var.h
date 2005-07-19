@@ -22,12 +22,20 @@
 
 #include "gretl_matrix.h"
 
-enum ur_codes {
+typedef enum {
     UR_NO_CONST = 1,
     UR_CONST,
     UR_TREND,
     UR_TREND_SQUARED
-};
+} AdfCode;
+
+typedef enum {
+    J_NO_CONST = 0,
+    J_REST_CONST,
+    J_UNREST_CONST,
+    J_REST_TREND,
+    J_UNREST_TREND
+} JohansenCode;
 
 int var_max_order (const int *list, const DATAINFO *pdinfo);
 
@@ -53,6 +61,10 @@ int gretl_VAR_print_VCV (const GRETL_VAR *var, PRN *prn);
 int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order, 
 				    double ***pZ, DATAINFO *pdinfo,
 				    PRN *prn);
+
+int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
+			 double ***pZ, DATAINFO *pdinfo,
+			 PRN *prn);
 
 int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
 

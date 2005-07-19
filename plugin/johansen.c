@@ -21,6 +21,7 @@
 #include "pvalues.h"
 #include "gretl_matrix.h"
 #include "gretl_matrix_private.h"
+#include "var.h"
 
 /* 
    Critical values for Johansen's likelihood ratio tests
@@ -84,7 +85,7 @@ const double s_mMaxev_v_coef[5][5] = {
 
 
 static int
-gamma_par_asymp (double tracetest, double lmaxtest, int det, 
+gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det, 
 		 int N, int T, double *pval)
 {
     /*
@@ -92,12 +93,12 @@ gamma_par_asymp (double tracetest, double lmaxtest, int det,
 
       params:
       tracetest, lmaxtest: trace and lambdamax est. statistics
-      det: deterministic trends; 
-      0 = no constant
-      1 = restricted constant
-      2 = unrestricted constant
-      4 = restricted trend
-      5 = unrestricted trend
+      det: index of setup of deterministic regressors 
+        J_NO_CONST     = no constant
+        J_REST_CONST   = restricted constant
+        J_UNREST_CONST = unrestricted constant
+        J_REST_TREND   = restricted trend
+        J_UNREST_TREND = unrestricted trend
       N: cointegration rank under H0;
       T: sample size;
       pval: on output, array of pvalues, for the two tests;
@@ -177,8 +178,8 @@ static int inverse_compare_doubles (const void *a, const void *b)
 static gretl_matrix *j_matrix_from_array (const double **X, 
 					  int rows, int cols)
 {
-    int i, j, p;
     gretl_matrix *m;
+    int i, j, p;
 
     m = gretl_matrix_alloc(rows, cols);
     if (m == NULL) return m;
@@ -197,7 +198,7 @@ static int
 johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv, int j)
 {
     gretl_matrix *a = NULL, *b = NULL;
-    double den;
+    double x, den;
     int i, err = 0;
     int k = Svv->rows;
 
@@ -211,8 +212,7 @@ johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv, int j)
     }
 
     for (i=0; i<k; i++) {
-	double x = gretl_matrix_get(A, i, j);
-
+	x = gretl_matrix_get(A, i, j);
 	gretl_matrix_set(a, i, 0, x);
     }
 
@@ -224,8 +224,7 @@ johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv, int j)
     if (!err) {
 	den = sqrt(den);
 	for (i=0; i<k; i++) {
-	    double x = gretl_matrix_get(A, i, j);
-
+	    x = gretl_matrix_get(A, i, j);
 	    gretl_matrix_set(A, i, j, x / den);
 	}
     } 
@@ -275,7 +274,7 @@ print_coint_vecs (struct eigval *evals, const gretl_matrix *vr,
 }
 
 int johansen_eigenvals (const double **X, const double **Y, const double **Z, 
-			int k, int T, int trends, PRN *prn)
+			int k, int T, JohansenCode jcode, PRN *prn)
 {
     gretl_matrix *Suu = NULL, *Svv = NULL, *Suv = NULL;
     gretl_matrix *Inv = NULL, *M = NULL;
@@ -364,7 +363,7 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 
 	for (i=0; i<k; i++) {
 	    /* second-last arg below was T, but Doornik does not use sample size */
-	    gamma_par_asymp(trace[i], lambdamax[i], 2 , k-i, 0, pval);
+	    gamma_par_asymp(trace[i], lambdamax[i], jcode, k-i, 0, pval);
 	    pprintf(prn, "%4d%11.4f%11.4f [%6.4f]%11.4f [%6.4f]\n", \
 		    i, evals[i].v, trace[i], pval[0], lambdamax[i], pval[1]);
 	    if (pval[0] < 0.05) {
@@ -381,13 +380,15 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 	}
 
 	if (r > 0) {
-	    pprintf(prn, _("Cointegrating vectors (trace test, "
-		    "5%% significance level):"), r);
+	    pprintf(prn, 
+		    _("%d cointegrating vectors (trace test, 5%% significance level):"), 
+		    r);
 	    pputc(prn, '\n');
 	    print_coint_vecs(evals, TmpR, r, prn);
 	} else {
-	    pprintf(prn, _("No cointegrating vectors (trace test, "
-		    "5%% significance level)"));
+	    pputs(prn, 
+		  /* xgettext:no-c-format */
+		  _("No cointegrating vectors (trace test, 5% significance level)"));
 	    pputc(prn, '\n');
 	}
 

@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <glib.h>
 
 #include "gretl_commands.h"
 
@@ -149,24 +150,50 @@ static struct gretl_cmd gretl_cmds[] = {
     { NC,       NULL}
 }; 
 
-int gretl_command_number (const char *s)
-{    
-    int i;
-
-    for (i=0; i<NC; i++) {
-	if (!strcmp(s, gretl_cmds[i].cword)) {
-	    return gretl_cmds[i].cnum;
-	}
-    }
-    return 0;
-}
-
 const char *gretl_command_word (int i)
 {
     if (i >= 0 && i < NC) {
 	return gretl_cmds[i].cword;
     } else {
 	return "";
+    }
+}
+
+static GHashTable *ht;
+
+static int gretl_command_hash_init (void)
+{
+    int i;
+
+    ht = g_hash_table_new(g_str_hash, g_str_equal);
+
+    for (i=0; gretl_cmds[i].cword != NULL; i++) {
+	g_hash_table_insert(ht, gretl_cmds[i].cword, 
+			    GINT_TO_POINTER(gretl_cmds[i].cnum));
+    }
+}
+
+int gretl_command_number (const char *s)
+{    
+    gpointer p;
+    int ret = 0;
+
+    if (ht == NULL) {
+	gretl_command_hash_init();
+    }
+    
+    p = g_hash_table_lookup(ht, s);
+    if (p != NULL) {
+	ret = GPOINTER_TO_INT(p);
+    }
+
+    return ret;
+}
+
+void gretl_command_hash_cleanup (void)
+{
+    if (ht != NULL) {
+	g_hash_table_destroy(ht);
     }
 }
 

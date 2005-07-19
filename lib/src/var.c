@@ -553,15 +553,29 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order,
 {
     int i, err = 0;
 
-    pprintf(prn, _("Breusch-Godfrey tests for autocorrelation up to order %d"), 
-	    order);
-    pputs(prn, "\n\n");
-
     for (i=0; i<var->neqns && !err; i++) {
 	pprintf(prn, "Equation %d:\n", i + 1);
 	err = autocorr_test(var->models[i], order, pZ, pdinfo,
-			    OPT_Q, prn);
-	pputc(prn, '\n');
+			    OPT_Q | OPT_S, prn);
+	gretl_model_test_print(var->models[i], 0, prn);
+	gretl_model_destroy_tests(var->models[i]);
+    }
+
+    return err;
+}
+
+int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
+			 double ***pZ, DATAINFO *pdinfo,
+			 PRN *prn)
+{
+    int i, err = 0;
+
+    for (i=0; i<var->neqns && !err; i++) {
+	pprintf(prn, "Equation %d:\n", i + 1);
+	err = arch_test_simple(var->models[i], order, pZ, pdinfo,
+			       prn);
+	gretl_model_test_print(var->models[i], 0, prn);
+	gretl_model_destroy_tests(var->models[i]);
     }
 
     return err;
@@ -2160,6 +2174,8 @@ int kpss_test (int order, int varno, double ***pZ,
     return 0;
 }
 
+#if 0
+
 static int 
 has_time_trend (const int *varlist, double ***pZ, DATAINFO *pdinfo)
 {
@@ -2211,6 +2227,8 @@ has_time_trend (const int *varlist, double ***pZ, DATAINFO *pdinfo)
 
     return trends;
 }
+
+#endif
 
 static int allocate_sigmas (double ***X, double ***Y, double ***Z, int k)
 {
@@ -2316,11 +2334,11 @@ print_sigmas (const double **X, const double **Y, const double **Z,
 
 static int 
 johansen_complete (const double **X, const double **Y, const double **Z,
-		   int k, int T, int trends, PRN *prn)
+		   int k, int T, JohansenCode jcode, PRN *prn)
 {
     void *handle = NULL;
     int (*johansen) (const double **, const double **, const double **,
-		     int, int, int, PRN *);
+		     int, int, JohansenCode, PRN *);
     int err = 0;
 
     *gretl_errmsg = 0;
@@ -2330,7 +2348,7 @@ johansen_complete (const double **X, const double **Y, const double **Z,
     if (johansen == NULL) {
 	err = 1;
     } else {
-	err = (* johansen) (X, Y, Z, k, T, trends, prn);
+	err = (* johansen) (X, Y, Z, k, T, jcode, prn);
 	close_plugin(handle);
     }
     
@@ -2368,7 +2386,8 @@ static int johansen_VAR (int order, const int *inlist,
     neqns = vlists.stochvars[0];    
 
     /* compose base VAR list (entry 1 will vary across equations);
-       assemble test list for t1 and t2 while we're at it */
+       assemble test list for setting t1 and t2 while we're at it 
+    */
     err = compose_varlist(&vlists, vlists.stochvars[1], 
 			  order, 0, pdinfo);
     if (err) {
@@ -2408,7 +2427,7 @@ static int johansen_VAR (int order, const int *inlist,
 	    goto var_bailout;
 	}
 
-	/* save the residuals */
+	/* steal the residuals */
 	resids->t1 = var_model.t1;
 	resids->t2 = var_model.t2;
 	resids->uhat[i] = var_model.uhat;
@@ -2430,6 +2449,7 @@ static int johansen_VAR (int order, const int *inlist,
 	    printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	}
 
+	/* steal the residuals */
 	resids->uhat[i + neqns] = jmod.uhat;
 	jmod.uhat = NULL;
 	clear_model(&jmod);
@@ -2450,12 +2470,28 @@ static int johansen_VAR (int order, const int *inlist,
     return err;
 }
 
+/* FIXME: handle the "restricted" cases too */
+
+static JohansenCode jcode_from_opt (gretlopt opt)
+{
+    JohansenCode jc = J_UNREST_CONST;
+
+    if (opt & OPT_N) {
+	jc = J_NO_CONST;
+    } else if (opt & OPT_T) {
+	jc = J_UNREST_TREND;
+    } 
+
+    return jc;
+}
+
 /**
  * johansen_test:
  * @order:
  * @list:
  * @pZ:
  * @pdinfo:
+ * @opt:
  * @prn:
  *
  *
@@ -2466,6 +2502,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 		   gretlopt opt, PRN *prn)
 {
     PRN *varprn = NULL;
+    JohansenCode jcode;
     struct var_resids resids;
     int err = 0;
     int i, j;
@@ -2474,7 +2511,8 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
     int *varlist;
     int hasconst = 0;
     int l0 = list[0];
-    int trends = 0;
+
+    jcode = jcode_from_opt(opt);
 
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == 0) {
@@ -2607,16 +2645,19 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 #endif
 
+#if 0
 	trends = has_time_trend(list, pZ, pdinfo);
 	if (trends == -1) {
 	    pprintf(prn, "%s\n", _("Error checking for time trends"));
 	    goto johansen_bailout;
 	}
+#endif
 
 	/* now get johansen plugin to finish the job */
 	err = johansen_complete((const double **) Suu, 
 				(const double **) Svv, 
-				(const double **) Suv, k, T, trends, prn);
+				(const double **) Suv, 
+				k, T, jcode, prn);
 
     johansen_bailout:
 	

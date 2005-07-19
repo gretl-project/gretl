@@ -1288,7 +1288,7 @@ int autocorr_test (MODEL *pmod, int order,
 
     if (!err) {
 	newlist[1] = v;
-	/*  printlist(newlist); */
+	/* printlist(newlist); */
 	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	err = aux.errcode;
 	if (err) {
@@ -1299,32 +1299,26 @@ int autocorr_test (MODEL *pmod, int order,
     if (!err) {
 	aux.aux = AUX_AR;
 	aux.order = order;
-
-	if (pmod->aux != AUX_VAR) {
-	    printmodel(&aux, pdinfo, OPT_NONE, prn);
-	}
-
 	trsq = aux.rsq * aux.nobs;
 	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
 	    (aux.nobs - pmod->ncoeff - order)/order; 
-
-	pprintf(prn, "\n%s: LMF = %f,\n", _("Test statistic"), LMF);
-
 	pval = fdist(LMF, order, aux.nobs - pmod->ncoeff - order);
 
-	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
-		order, aux.nobs - pmod->ncoeff - order, LMF, pval);
-
-	pprintf(prn, "\n%s: TR^2 = %f,\n", 
-		_("Alternative statistic"), trsq);
-	pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", 	_("with p-value"), 
-		_("Chi-square"), order, trsq, chisq(trsq, order));
-
-	/* add Ljung-Box Q' */
-	if (ljung_box(v, order, (const double **) *pZ, pdinfo, &lb) == 0) {
-	    pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
-		    lb, _("with p-value"), _("Chi-square"), order,
-		    lb, chisq(lb, order));
+	if (pmod->aux != AUX_VAR) {
+	    printmodel(&aux, pdinfo, OPT_NONE, prn);
+	    pprintf(prn, "\n%s: LMF = %f,\n", _("Test statistic"), LMF);
+	    pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
+		    order, aux.nobs - pmod->ncoeff - order, LMF, pval);
+	    pprintf(prn, "\n%s: TR^2 = %f,\n", 
+		    _("Alternative statistic"), trsq);
+	    pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", 	_("with p-value"), 
+		    _("Chi-square"), order, trsq, chisq(trsq, order));
+	    if (ljung_box(v, order, (const double **) *pZ, pdinfo, &lb) == 0) {
+		pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
+			lb, _("with p-value"), _("Chi-square"), order,
+			lb, chisq(lb, order));
+	    }
+	    record_test_result(LMF, pval, "autocorrelation");
 	}
 
 	if (opt & OPT_S) {
@@ -1340,8 +1334,6 @@ int autocorr_test (MODEL *pmod, int order,
 		model_test_set_pvalue(test, pval);
 	    }	    
 	}
-
-	record_test_result(LMF, pval, "autocorrelation");
     }
 
     free(newlist);

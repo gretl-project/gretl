@@ -206,6 +206,8 @@ void model_test_set_allocated_param (ModelTest *test, char *s);
 void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn);
 void gretl_model_print_last_test (const MODEL *pmod, PRN *prn);
 
+void gretl_model_destroy_tests (MODEL *pmod);
+
 void model_list_to_string (int *list, char *buf);
 
 int highest_numbered_var_in_model (const MODEL *pmod, 
