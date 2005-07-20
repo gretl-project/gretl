@@ -26,45 +26,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <netdb.h>
 
 #include "mpack.h"
-
-#ifndef MAXHOSTNAMELEN
-# define MAXHOSTNAMELEN 64
-#endif
-
-/* Generate a message-id */
-
-static void generate_msg_id (FILE *fp)
-{
-    static int pid = 0;
-    static time_t curtime;
-    static char hostname[MAXHOSTNAMELEN+1];
-    struct hostent *hp;
-
-    if (pid == 0) {
-	pid = getpid();
-	time(&curtime);
-	gethostname(hostname, sizeof(hostname));
-
-	/* If we don't have a FQDN, try canonicalizing with gethostbyname */
-	if (!strchr(hostname, '.')) {
-	    hp = gethostbyname(hostname);
-	    if (hp) {
-		strcpy(hostname, hp->h_name);
-	    }
-	}
-    }
-
-    fprintf(fp, "Message-ID: <%d.%d@%s>\n", pid, (int) curtime, hostname);
-}
 
 static FILE *createnewfile (char *fname)
 {
@@ -88,7 +56,7 @@ static FILE *createnewfile (char *fname)
 
 int encode (FILE *fpin, const char *fname, const char *note, 
 	    const char *subject, const char *recipient, const char *reply_to,
-	    const char *type, char *tmpfname, int do_id)
+	    const char *type, char *tmpfname)
 {
     FILE *fpout;
     const char *cleanfname, *p;
@@ -111,10 +79,6 @@ int encode (FILE *fpin, const char *fname, const char *note,
 	return 1;
     }
 
-    if (do_id) {
-	generate_msg_id(fpout);
-    }
-
     fprintf(fpout, "Mime-Version: 1.0\n");
     if (reply_to != NULL) {
 	fprintf(fpout, "Reply-To: %s\n", reply_to);
@@ -122,9 +86,7 @@ int encode (FILE *fpin, const char *fname, const char *note,
     fprintf(fpout, "To: %s\n", recipient);
     fprintf(fpout, "Subject: %s\n", subject);
     fputs("Content-Type: multipart/mixed; boundary=\"-\"\n", fpout);
-    fputs("\nThis is a MIME encoded message.  Decode it with \"munpack\"\n"
-	  "or any other MIME reading software.  Mpack/munpack is available\n"
-	  "via anonymous FTP in ftp.andrew.cmu.edu:pub/mpack/\n\n", fpout);
+    fputs("\nThis is a MIME encoded message.\n\n", fpout);
 
     /* description section */
     if (note != NULL) {

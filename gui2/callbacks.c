@@ -724,22 +724,16 @@ void do_nistcheck (gpointer p, guint v, GtkWidget *w)
 
 void send_file (char *fullname)
 {
-    int (*email_file) (const char *, const char *, char *);
+    int (*email_file) (const char *, const char *);
     void *handle;
-
-    *errtext = '\0';
 
     email_file = gui_get_plugin_function("email_file", &handle);
     if (email_file == NULL) {
         return;
     }
     
-    email_file(fullname, paths.userdir, errtext);
+    email_file(fullname, paths.userdir);
     close_plugin(handle);
-
-    if (*errtext) {
-	errbox(errtext);
-    }
 }
 
 #endif

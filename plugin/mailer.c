@@ -25,19 +25,12 @@
 
 #include <gtk/gtk.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
 #include <unistd.h>
-#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
-#define HAVE_SOCKET 1
-
-#if HAVE_SOCKET
-# include <sys/socket.h>
-# include <netdb.h>
 extern int h_errno;
-#endif
 
 #include "mpack/mpack.h"
 
@@ -62,6 +55,7 @@ enum {
 # define G_CALLBACK(f)                  GTK_SIGNAL_FUNC(f)
 # define g_signal_connect(o,s,f,p)      gtk_signal_connect(o,s,f,p)
 # define gtk_widget_set_size_request(g,w,h) gtk_widget_set_usize(g,w,h)
+# define gtk_notebook_set_current_page(n,p) gtk_notebook_set_page(n,p)
 
 GtkWidget *standard_button (int code)
 {
@@ -104,13 +98,8 @@ struct mail_info {
     char *sender;
     char *sig;
     int want_sig;
-#if HAVE_SOCKET
     char *server;
     unsigned short port;
-#else
-    char *sendmail;
-#endif
-    int add_msg_id;
 };
 
 struct mail_dialog {
@@ -119,10 +108,8 @@ struct mail_dialog {
     GtkWidget *reply_entry;
     GtkWidget *subj_entry;
     GtkWidget *note_entry;
-#if HAVE_SOCKET
     GtkWidget *server_entry;
     GtkWidget *port_entry;
-#endif
     GtkWidget *ok;
     GtkWidget *cancel;
     struct mail_info *minfo;
@@ -153,25 +140,15 @@ static void mail_info_init (struct mail_info *minfo)
     minfo->sender = NULL;
     minfo->sig = NULL;
     minfo->want_sig = 1;
-#if HAVE_SOCKET
     minfo->server = NULL;
     minfo->port = 25;
-    minfo->add_msg_id = 0;
-#else
-    minfo->sendmail = NULL;
-    minfo->add_msg_id = 1;
-#endif
 }
 
 static void free_mail_info (struct mail_info *minfo)
 {
     free(minfo->sender);
     free(minfo->sig);
-#if HAVE_SOCKET
     free(minfo->server);
-#else
-    free(minfo->sendmail);
-#endif
 }
 
 static void save_email_info (struct mail_dialog *md)
@@ -188,18 +165,20 @@ static void save_email_info (struct mail_dialog *md)
 	if (minfo->sender != NULL && *minfo->sender != '\0') {
 	    fprintf(fp, "Reply-To: %s\n", minfo->sender);
 	}
-#if HAVE_SOCKET
+
 	if (minfo->server != NULL && *minfo->server != '\0') {
 	    fprintf(fp, "SMTP server: %s\n", minfo->server);
 	}
+
 	if (minfo->port != 25) {
 	    fprintf(fp, "SMTP port: %d\n", minfo->port);
 	}
-#endif
+
 	for (i=0; i<maxaddrs && list != NULL; i++) {
 	    fprintf(fp, "%s\n", (char *) list->data);
 	    list = list->next;
 	}
+
 	fclose(fp);
     } 
 }
@@ -251,99 +230,108 @@ static char *get_signature (void)
 
 static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
 {
+    GList *list = md->addrs;
     struct mail_info *minfo = md->minfo;
     struct msg_info *msg = md->msg;
+    const gchar *txt;
+    int err = MAIL_OK;
     int save = 0;
 
     if (w == md->cancel) {
 	*md->errp = MAIL_CANCEL;
-    } else {
-	GList *list = md->addrs;
-	const gchar *txt;
-	int err = MAIL_OK;
-
-	txt = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(md->recip_combo)->entry));
-	if (txt != NULL && *txt != '\0') {
-	    int i = 0;
-
-	    msg->recip = g_strdup(txt);
-	    save = 1;
-	    while (list) {
-		if (!strcmp(txt, (char *) list->data)) {
-		    if (i == 0) {
-			/* current recipient is top of the list already */
-			save = 0;
-		    } else {
-			/* current recipient should be moved to top */
-			list = g_list_remove(list, list->data);
-		    }
-		    break;
-		}
-		list = g_list_next(list);
-		i++;
-	    }
-	    if (save) {
-		md->addrs = g_list_prepend(md->addrs, g_strdup(txt));
-	    } 
-	} else {
-	    err = MAIL_NO_RECIPIENT;
-	}
-
-	if (!err) {
-	    /* reply-to address */
-	    txt = gtk_entry_get_text(GTK_ENTRY(md->reply_entry));
-	    if (txt != NULL && *txt != '\0') {
-		msg->sender = g_strdup(txt);
-		if (minfo->sender == NULL ||
-		    strcmp(txt, minfo->sender)) {
-		    save = 1;
-		}
-	    }
-#if HAVE_SOCKET
-	    else {
-		err = MAIL_NO_SENDER;
-	    }
-#endif
-
-	    /* message subject */
-	    txt = gtk_entry_get_text(GTK_ENTRY(md->subj_entry));
-	    if (txt != NULL && *txt != '\0') {
-		msg->subj = g_strdup(txt);
-	    }
-
-	    /* message text */
-	    txt = gtk_entry_get_text(GTK_ENTRY(md->note_entry));
-	    if (txt != NULL && *txt != '\0') {
-		if (minfo->sig != NULL && !minfo->want_sig) {
-		    free(minfo->sig);
-		    minfo->sig = NULL;
-		}
-		if (minfo->sig != NULL) {
-		    msg->note = g_strdup_printf("%s\n--\n%s\n", txt, minfo->sig);
-		} else {
-		    msg->note = g_strdup_printf("%s\n", txt);
-		}
-	    }
-
-#if HAVE_SOCKET
-	    /* SMTP server */
-	    txt = gtk_entry_get_text(GTK_ENTRY(md->server_entry));
-	    if (txt != NULL && *txt != '\0') {
-		minfo->server = g_strdup(txt);
-	    } else {
-		err = MAIL_NO_SERVER;
-	    }
-
-	    /* port number */
-	    txt = gtk_entry_get_text(GTK_ENTRY(md->port_entry));
-	    if (txt != NULL && *txt != '\0') {
-		minfo->port = atoi(txt);
-	    }	    
-#endif
-	}
-
-	*md->errp = err;
+	gtk_widget_destroy(md->dlg);
+	return;
     }
+
+    /* recipient */
+    txt = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(md->recip_combo)->entry));
+    if (txt != NULL && *txt != '\0') {
+	int i = 0;
+
+	msg->recip = g_strdup(txt);
+	fprintf(stderr, "targ = '%s'\n", msg->recip);
+	save = 1;
+	while (list) {
+	    if (!strcmp(txt, (char *) list->data)) {
+		if (i == 0) {
+		    /* current recipient is top of the list already */
+		    save = 0;
+		} else {
+		    /* current recipient should be moved to top */
+		    list = g_list_remove(list, list->data);
+		}
+		break;
+	    }
+	    list = g_list_next(list);
+	    i++;
+	}
+	if (save) {
+	    md->addrs = g_list_prepend(md->addrs, g_strdup(txt));
+	} 
+    } else {
+	err = MAIL_NO_RECIPIENT;
+    }
+
+    if (!err) {
+	/* reply-to address */
+	txt = gtk_entry_get_text(GTK_ENTRY(md->reply_entry));
+	if (txt != NULL && *txt != '\0') {
+	    msg->sender = g_strdup(txt);
+	    if (minfo->sender == NULL ||
+		strcmp(txt, minfo->sender)) {
+		save = 1;
+	    }
+	    fprintf(stderr, "sender = '%s'\n", msg->sender);
+	} else {
+	    err = MAIL_NO_SENDER;
+	}
+    }
+
+    if (!err) {
+	/* message subject */
+	txt = gtk_entry_get_text(GTK_ENTRY(md->subj_entry));
+	if (txt != NULL && *txt != '\0') {
+	    msg->subj = g_strdup(txt);
+	    fprintf(stderr, "subj = '%s'\n", msg->subj);
+	}
+
+	/* message text */
+	txt = gtk_entry_get_text(GTK_ENTRY(md->note_entry));
+	if (txt != NULL && *txt != '\0') {
+	    if (minfo->sig != NULL && !minfo->want_sig) {
+		free(minfo->sig);
+		minfo->sig = NULL;
+	    }
+	    if (minfo->sig != NULL) {
+		msg->note = g_strdup_printf("%s\n--\n%s\n", txt, minfo->sig);
+	    } else {
+		msg->note = g_strdup_printf("%s\n", txt);
+	    }
+	}
+ 
+	/* SMTP server */
+	txt = gtk_entry_get_text(GTK_ENTRY(md->server_entry));
+	if (txt != NULL && *txt != '\0') {
+	    minfo->server = g_strdup(txt);
+	    save = 1;
+	    fprintf(stderr, "server = '%s'\n", minfo->server);
+	} else {
+	    err = MAIL_NO_SERVER;
+	}
+    }
+
+    if (!err) {
+	/* port number */
+	txt = gtk_entry_get_text(GTK_ENTRY(md->port_entry));
+	if (txt != NULL && *txt != '\0') {
+	    minfo->port = atoi(txt);
+	    if (minfo->port != 25) {
+		save = 1;
+	    }
+	}	    
+    }
+
+    *md->errp = err;
 
     if (save) {
 	save_email_info(md);
@@ -386,19 +374,14 @@ static void get_email_info (struct mail_dialog *md)
 	    if (string_is_blank(line)) {
 		continue;
 	    }
-	    line[strlen(line) - 1] = '\0';
+	    chopstr(line);
 	    if (!strncmp(line, "Reply-To:", 9)) {
 		minfo->sender = g_strdup(line + 10);
-	    } 
-#if HAVE_SOCKET
-	    else if (!strncmp(line, "SMTP server:", 12)) {
+	    } else if (!strncmp(line, "SMTP server:", 12)) {
 		minfo->server = g_strdup(line + 13);
-	    } 
-	    else if (!strncmp(line, "SMTP port:", 10)) {
+	    } else if (!strncmp(line, "SMTP port:", 10)) {
 		minfo->port = atoi(line + 11);
-	    } 
-#endif
-	    else {
+	    } else {
 		addrs = g_list_append(addrs, g_strdup(line));
 	    }
 	}
@@ -456,10 +439,8 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
 	N_("Note:")
     };
     GtkWidget *tbl, *lbl, *vbox;
-#if HAVE_SOCKET
     GtkWidget *nb, *hbox;
     gchar *port_str;
-#endif
     const char *short_fname, *p;
     struct mail_dialog md;
     int datafile, nrows;
@@ -484,11 +465,8 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     set_dialog_border_widths(md.dlg);
     gtk_window_set_position(GTK_WINDOW(md.dlg), GTK_WIN_POS_MOUSE);
 
-    vbox = GTK_DIALOG(md.dlg)->vbox;
-
-#if HAVE_SOCKET
     nb = gtk_notebook_new();
-    gtk_container_add(GTK_CONTAINER(vbox), nb);
+    gtk_container_add(GTK_CONTAINER(GTK_DIALOG(md.dlg)->vbox), nb);
     hbox = gtk_hbox_new(FALSE, 5);
     border_width(hbox, 5);
     vbox = gtk_vbox_new(FALSE, 5);
@@ -496,7 +474,6 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     gtk_container_add(GTK_CONTAINER(hbox), vbox);
     lbl = gtk_label_new(_("Message"));
     gtk_notebook_append_page(GTK_NOTEBOOK(nb), hbox, lbl);    
-#endif
 
     nrows = (md.minfo->sig == NULL)? 4 : 5;
 
@@ -577,7 +554,6 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
 	i++;
     }
 
-#if HAVE_SOCKET
     hbox = gtk_hbox_new(FALSE, 5);
     border_width(hbox, 5);
     vbox = gtk_vbox_new(FALSE, 5);
@@ -610,7 +586,6 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     port_str = g_strdup_printf("%d", md.minfo->port);
     gtk_entry_set_text(GTK_ENTRY(md.port_entry), port_str);
     g_free(port_str);
-#endif
 
     /* Create the "OK" button */
     md.ok = standard_button(GTK_STOCK_OK);
@@ -632,11 +607,9 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     gtk_widget_set_size_request(md.dlg, 420, -1);
     gtk_widget_show_all(md.dlg);
 
-#if HAVE_SOCKET
     if (md.minfo->server == NULL) {
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(nb), 1);
     }
-#endif
 
     gtk_window_set_modal(GTK_WINDOW(md.dlg), TRUE);
     gtk_main();
@@ -702,9 +675,7 @@ static void mail_infobox (const char *msg, int err)
 
 #endif
 
-#if HAVE_SOCKET
-
-static int connect_to_smtp_server (char *hostname, unsigned short port) 
+static int connect_to_server (char *hostname, unsigned short port) 
 {
     gchar *msg;
     struct sockaddr_in soaddr;
@@ -719,12 +690,16 @@ static int connect_to_smtp_server (char *hostname, unsigned short port)
 	g_free(msg);
 	return -1;
     }
+    
+    fprintf(stderr, "got server ip\n");
 
     unit = socket(PF_INET, SOCK_STREAM, 6); /* 6 = TCP */
     if (unit == -1) {
 	mail_infobox("Couldn't open socket", 1);
 	return -1;
     }
+
+    fprintf(stderr, "got socket %d\n", unit);
 
     soaddr.sin_family = AF_INET;
 
@@ -740,7 +715,66 @@ static int connect_to_smtp_server (char *hostname, unsigned short port)
 	return -1;
     } 
 
+    fprintf(stderr, "connected socket OK\n");
+
     return unit;
+}
+
+static int
+pop_before_smtp (const char *server, const char *sender)
+{
+    FILE *fp, *fq;
+    char buf[1024];
+    char pop_server[128];
+    const char *p;
+    int unit;
+
+    p = strchr(server, '.');
+    if (p == NULL) {
+	return 1;
+    }
+
+    sprintf(pop_server, "pop%s", p);
+
+    fprintf(stderr, "trying pop_before_smtp, with %s\n", pop_server);
+    
+    unit = connect_to_server(pop_server, 110);
+    if (unit < 0) {
+	return 1;
+    } 
+
+    fp = fdopen(unit, "r");
+    fq = fdopen(unit, "w");
+
+    if (fp == NULL || fq == NULL) {
+	close(unit);
+	return 1;
+    }
+
+    fgets(buf, sizeof buf, fp);
+    fprintf(stderr, "buf: %s\n", buf);
+
+    fputs("user cottrell\n", fq);
+    fflush(fq);
+    fgets(buf, sizeof buf, fp);
+    fprintf(stderr, "buf: %s\n", buf);
+
+    fputs("pass hozumi86\n", fq);   
+    fflush(fq);
+    fgets(buf, sizeof buf, fp);
+    fprintf(stderr, "buf: %s\n", buf);
+ 
+    fputs("quit\r\n", fq); 
+    fflush(fq);
+    fgets(buf, sizeof buf, fp);
+    fprintf(stderr, "buf: %s\n", buf);
+    
+    fclose(fp);
+    fclose(fq);
+    
+    close(unit);
+
+    return 0;
 }
 
 static int
@@ -748,14 +782,15 @@ real_send_mail (FILE *infile, char *sender, char *recipient,
 		struct mail_info *minfo)
 {
     char localhost[256] = "localhost";
-    char line[1024];
+    char buf[2048];
+    gchar *errmsg;
     FILE *fp, *fq;
     int resp;
     int unit, err = 0;
 
     gethostname(localhost, sizeof localhost);
 
-    unit = connect_to_smtp_server(minfo->server, minfo->port);
+    unit = connect_to_server(minfo->server, minfo->port);
     if (unit < 0) {
 	return 1;
     }
@@ -768,43 +803,64 @@ real_send_mail (FILE *infile, char *sender, char *recipient,
 	return 1;
     }
 
-    fgets(line, sizeof line, fp);
+    /* initial flush of stream */
+    fgets(buf, sizeof buf, fp);
 
     fprintf(fq, "HELO %s\r\n", localhost);
+    fflush(fq);
+
+    fgets(buf, sizeof buf, fp);
+    fprintf(stderr, "server response to HELO:\n%s\n", buf);
+
     fprintf(fq, "MAIL FROM: %s\r\n", sender);
     fflush(fq);
 
-    fgets(line, sizeof line, fp);
-    resp = atoi(line);
+    fprintf(stderr, "sent MAIL FROM:\n", buf);
+
+    fgets(buf, sizeof buf, fp);
+    resp = atoi(buf);
     if (resp != 250) {
-	fprintf(stderr, "server response %d: not good\n", resp);
+	chopstr(buf);
+	errmsg = g_strdup_printf("Server response to MAIL FROM:\n%s", buf);
+	mail_infobox(errmsg, 1);
+	g_free(errmsg);
 	err = 1;
 	goto bailout;
     }
-    
+
+ try_again:
+
     fprintf(fq, "RCPT TO: %s\r\n", recipient);
     fflush(fq);
 
-    fgets(line, sizeof line, fp);
-    resp = atoi(line);
-    if (resp != 250 && resp != 251) {
-	fprintf(stderr, "server response %d: not good\n", resp);
+    fprintf(stderr, "sent RCPT TO:\n", buf);
+
+    fgets(buf, sizeof buf, fp);
+    resp = atoi(buf);
+    if (resp == 553) {
+	err = pop_before_smtp(minfo->server, sender);
+	if (!err) {
+	    goto try_again;
+	}
+    } else if (resp != 250 && resp != 251) {
+	chopstr(buf);
+	errmsg = g_strdup_printf("Server response to RCPT TO:\n%s", buf);
+	mail_infobox(errmsg, 1);
+	g_free(errmsg);
 	err = 1;
 	goto bailout;
     }
 
     fputs("DATA\r\n", fq);
     /* send composed message */
-    while (fgets(line, sizeof line, infile)) {
-	fputs(line, fq);
+    while (fgets(buf, sizeof buf, infile)) {
+	fputs(buf, fq);
     }
     fprintf(fq, "\n.\nQUIT\n");
     fflush(fq);
 
-#if 0
-    fgets(line, sizeof line, fp);
-    printf("server response: '%s'\n", line);
-#endif
+    fgets(buf, sizeof buf, fp);
+    fprintf(stderr, "on QUIT, response: '%s'\n", buf);
 
  bailout:
 
@@ -815,88 +871,6 @@ real_send_mail (FILE *infile, char *sender, char *recipient,
 
     return err;
 }
-
-#else /* no socket, use sendmail */
-
-static char *find_sendmail (void)
-{
-    const char *candidate[] = {
-	"/usr/sbin/sendmail",
-	"/usr/lib/sendmail",
-	"/usr/bin/sendmail",
-	NULL
-    };
-    struct stat buf;
-    char *prog = NULL;
-    int i;
-
-    for (i=0; candidate[i] != NULL; i++) {
-	if (stat(candidate[i], &buf) == 0 && (buf.st_mode & S_IXUSR)) {
-	    prog = g_strdup(candidate[i]);
-	    break;
-	}
-    }
-
-    return prog;
-}
-
-static void
-real_send_mail (FILE *infile, char *recipient, char *sendmail)
-{
-    char *argv[4];
-    int status;
-    int pid;
-
-    extern int errno;
-
-    argv[0] = "sendmail";
-    argv[1] = "-oi";
-    argv[2] = recipient;
-    argv[3] = NULL;
-
-    do {
-	pid = fork();
-    } while (pid == -1 && errno == EAGAIN);
-    
-    if (pid == -1) {
-	perror("fork");
-	return;
-    }
-
-    if (pid != 0) {
-	/* parent */
-	while (pid != wait(&status));
-	if (WIFEXITED(status)) {
-	    int err = WEXITSTATUS(status);
-
-	    if (!err) {
-		mail_infobox("sendmail exited normally", 0);
-	    } else {
-		gchar *msg = g_strdup_printf("sendmail exited with status %d", err);
-
-		mail_infobox(msg, 1);
-		g_free(msg);
-	    }
-	} else {
-	    mail_infobox("sendmail exited abnormally", 1);
-	}
-	return;
-    }
-
-    /* child */
-#if MAIL_DEBUG
-    fprintf(stderr, "not doing sendmail\n");
-    fclose(infile);
-#else
-    dup2(fileno(infile), 0);
-    fclose(infile);
-    execv(sendmail, argv);
-    perror("execv");
-#endif
-    _exit(1);
-}
-
-#endif /* socket vs. sendmail */
 
 static int pack_and_mail (const char *fname, struct msg_info *msg,
 			  struct mail_info *minfo, char *tmpfname)
@@ -919,7 +893,7 @@ static int pack_and_mail (const char *fname, struct msg_info *msg,
 
     if (!err) {
 	err = encode(fp, fname, msg->note, msg->subj, msg->recip,
-		     msg->sender, ctype, tmpfname, minfo->add_msg_id);
+		     msg->sender, ctype, tmpfname);
     }
 
     if (!err) {
@@ -931,11 +905,7 @@ static int pack_and_mail (const char *fname, struct msg_info *msg,
     }
 
     if (!err) {
-#if HAVE_SOCKET
 	real_send_mail(fp, msg->sender, msg->recip, minfo);
-#else
-	real_send_mail(fp, msg->recip, minfo->sendmail);
-#endif
 	fclose(fp);
     }
 
@@ -944,25 +914,16 @@ static int pack_and_mail (const char *fname, struct msg_info *msg,
     return err;
 }
 
-int email_file (const char *fname, const char *userdir, char *errmsg)
+int email_file (const char *fname, const char *userdir)
 {
     struct mail_info minfo;
     struct msg_info msg;
     char temp[FILENAME_MAX];
+    gchar *errmsg = NULL;
     int mval, err = 0;
-
-    *errmsg = 0;
 
     mail_info_init(&minfo);
     msg_init(&msg);
-
-#if HAVE_SOCKET == 0
-    minfo.sendmail = find_sendmail();
-    if (minfo.sendmail == NULL) {
-	strcpy(errmsg, "Couldn't find sendmail executable");
-	return 1;
-    }
-#endif
 
     sprintf(temp, "%smpack.XXXXXX", userdir);
     if (mktemp(temp) == NULL) {
@@ -972,17 +933,20 @@ int email_file (const char *fname, const char *userdir, char *errmsg)
     if (!err) {
 	mval = mail_to_dialog(fname, &minfo, &msg);
 	if (mval == MAIL_NO_RECIPIENT) {
-	    strcpy(errmsg, "No address was given");
-	    err = 1;
+	    errmsg = g_strdup("No address was given");
 	} else if (mval == MAIL_NO_SERVER) {
-	    strcpy(errmsg, "No SMTP was given");
-	    err = 1;
+	    errmsg = g_strdup("No SMTP was given");
 	} else if (mval == MAIL_NO_SENDER) {
-	    strcpy(errmsg, "No sender address was given");
-	    err = 1;
+	    errmsg = g_strdup("No sender address was given");
 	} else if (mval == MAIL_OK) {
 	    err = pack_and_mail(fname, &msg, &minfo, temp);
 	}
+    }
+
+    if (errmsg != NULL) {
+	mail_infobox(errmsg, 1);
+	g_free(errmsg);
+	err = 1;
     }
 
     free_msg(&msg);

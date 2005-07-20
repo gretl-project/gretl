@@ -28,7 +28,7 @@
 
 int encode (FILE *fpin, const char *fname, const char *note, 
 	    const char *subject, const char *recipient,  const char *reply_to,
-	    const char *type, char *tmpfname, int do_id);
+	    const char *type, char *tmpfname);
 
 int to64 (FILE *infile, FILE *outfile);
 
