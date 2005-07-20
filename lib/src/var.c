@@ -2531,8 +2531,8 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 
     varlist[0] = resids.levels_list[0] = l0 - hasconst;
 
-    /* try to respect sample: don't limit the generation of lags 
-       unnecesarily */
+    /* try to respect the chosen sample period: don't limit the
+       generation of lags unnecesarily */
     pdinfo->t1 -= (order - 1);
     if (pdinfo->t1 < 0) {
 	pdinfo->t1 = 0;

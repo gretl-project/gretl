@@ -380,9 +380,9 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 	}
 
 	if (r > 0) {
-	    pprintf(prn, 
-		    _("%d cointegrating vectors (trace test, 5%% significance level):"), 
-		    r);
+	    pputs(prn, 
+		    /* xgettext:no-c-format */
+		    _("Cointegrating vectors (trace test, 5% significance level):")); 
 	    pputc(prn, '\n');
 	    print_coint_vecs(evals, TmpR, r, prn);
 	} else {
