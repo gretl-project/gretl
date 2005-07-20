@@ -2151,13 +2151,9 @@ int kpss_test (int order, int varno, double ***pZ,
     if (!(opt & OPT_Q)) {
 	pprintf(prn, _("\nKPSS test for %s %s\n\n"), pdinfo->varname[varno],
 		(hastrend)? _("(including trend)") : _("(without trend)"));
-
 	pprintf(prn, _("Lag truncation parameter = %d\n"), order);
-
 	pprintf(prn, "%s = %g\n\n", _("Test statistic"), teststat);
-
 	pprintf(prn, "		    10%%\t   5%%\t 2.5%%\t   1%%\n");
-
 	if (hastrend) {
 	    pprintf(prn, "%s: 0.119\t0.146\t0.176\t0.216\n\n", _("Critical values"));
 	} else {
@@ -2166,7 +2162,6 @@ int kpss_test (int order, int varno, double ***pZ,
     }
 
     record_test_result(teststat, NADBL, "KPSS");
-
     clear_model(&KPSSmod);
 
     free(autocov);
@@ -2313,21 +2308,21 @@ print_sigmas (const double **X, const double **Y, const double **Z,
 	if (l == 0) {
 	    P = X;
 	    pprintf(prn, " %s\n\n", _("VAR system in first differences"));
-	}
-	else if (l == 1) {
+	} else if (l == 1) {
 	    P = Y;
 	    pprintf(prn, " %s\n\n", _("System with levels as dependent variable"));
-	}
-	else {
+	} else {
 	    P = Z;
 	    pprintf(prn, " %s\n\n", _("Cross-products"));
 	}
+
 	for (i=0; i<k; i++) {
 	    for (j=0; j<k; j++) {
 		pprintf(prn, "%#12.6g", P[i][j]);
 	    }
 	    pputc(prn, '\n');
 	}
+
 	pputc(prn, '\n');
     }
 }
@@ -2363,8 +2358,6 @@ static int johansen_VAR (int order, const int *inlist,
 			 gretlopt opt, PRN *prn)
 {
     int i, k, neqns;
-    int oldt1 = pdinfo->t1;
-    int oldt2 = pdinfo->t2;
     struct var_lists vlists;
     MODEL var_model;
     MODEL jmod;
@@ -2400,7 +2393,7 @@ static int johansen_VAR (int order, const int *inlist,
 	err = E_MISSDATA;
 	goto var_bailout;
     }
-    
+
     gretl_model_init(&var_model);
 
     if (opt & OPT_V) {
@@ -2463,10 +2456,6 @@ static int johansen_VAR (int order, const int *inlist,
 
     var_lists_free(&vlists);
 
-    /* reset sample range */
-    pdinfo->t1 = oldt1;
-    pdinfo->t2 = oldt2;
-
     return err;
 }
 
@@ -2507,6 +2496,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
     int err = 0;
     int i, j;
     int orig_t1 = pdinfo->t1;
+    int orig_t2 = pdinfo->t2;
     int orig_v = pdinfo->v;
     int *varlist;
     int hasconst = 0;
@@ -2540,6 +2530,13 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     varlist[0] = resids.levels_list[0] = l0 - hasconst;
+
+    /* try to respect sample: don't limit the generation of lags 
+       unnecesarily */
+    pdinfo->t1 -= (order - 1);
+    if (pdinfo->t1 < 0) {
+	pdinfo->t1 = 0;
+    }
 
     j = 1;
     for (i=1; i<=list[0]; i++) {
@@ -2578,7 +2575,6 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	varprn = prn;
     } 
 
-    pdinfo->t1 += order;
     /* Check Hamilton: what if order for test = 1? */
     err = johansen_VAR(order - 1, varlist, pZ, pdinfo, 
 		       &resids, opt, varprn); 
@@ -2668,6 +2664,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
     free(varlist);
 
     pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
 
     dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
 
