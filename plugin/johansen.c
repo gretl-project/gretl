@@ -175,25 +175,6 @@ static int inverse_compare_doubles (const void *a, const void *b)
     return (*da < *db) - (*da > *db);
 }
 
-static gretl_matrix *j_matrix_from_array (const double **X, 
-					  int rows, int cols)
-{
-    gretl_matrix *m;
-    int i, j, p;
-
-    m = gretl_matrix_alloc(rows, cols);
-    if (m == NULL) return m;
-
-    p = 0;
-    for (j=0; j<rows; j++) {
-	for (i=0; i<cols; i++) {
-	    m->val[p++] = X[i][j];
-	}
-    } 
-
-    return m;
-}
-
 static int 
 johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv, int j)
 {
@@ -273,27 +254,24 @@ print_coint_vecs (struct eigval *evals, const gretl_matrix *vr,
     pputc(prn, '\n');
 }
 
-int johansen_eigenvals (const double **X, const double **Y, const double **Z, 
-			int k, int T, JohansenCode jcode, PRN *prn)
+int johansen_eigenvals (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
+			int T, JohansenCode jcode, PRN *prn)
 {
-    gretl_matrix *Suu = NULL, *Svv = NULL, *Suv = NULL;
-    gretl_matrix *Inv = NULL, *M = NULL;
+    int k = gretl_matrix_cols(Svv); /* FIXME restricted case */
+    gretl_matrix *Inv = NULL, *M = NULL, *Svvcpy = NULL;
     gretl_matrix *TmpL = NULL, *TmpR = NULL;
     double *eigvals = NULL;
     int r = 0, err = 0;
-
-    Suu = j_matrix_from_array(X, k, k);
-    Svv = j_matrix_from_array(Y, k, k);
-    Suv = j_matrix_from_array(Z, k, k);
 
     Inv = gretl_matrix_alloc(k, k);
     TmpL = gretl_matrix_alloc(k, k);
     TmpR = gretl_matrix_alloc(k, k);
     M = gretl_matrix_alloc(k, k);
+    Svvcpy = gretl_matrix_copy(Svv);
 
     if (Suu == NULL || Svv == NULL || Suv == NULL ||
 	Inv == NULL || TmpL == NULL || TmpR == NULL ||
-	M == NULL) {
+	M == NULL || Svvcpy == NULL) {
 	err = 1;
 	goto eigenvals_bailout;
     }
@@ -372,12 +350,8 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 	}
 	pputc(prn, '\n');
 
-	gretl_matrix_free(Svv);
-	Svv = j_matrix_from_array(Y, k, k);
-	if (Svv != NULL) {
-	    /* tmpR holds the eigenvectors */
-	    johansen_normalize(TmpR, Svv, 0);
-	}
+	/* tmpR holds the eigenvectors */
+	johansen_normalize(TmpR, Svvcpy, 0);
 
 	if (r > 0) {
 	    pputs(prn, 
@@ -403,14 +377,11 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 
  eigenvals_bailout:    
 
-    gretl_matrix_free(Svv);
-    gretl_matrix_free(Suu);
-    gretl_matrix_free(Suv);
-
     gretl_matrix_free(Inv);
     gretl_matrix_free(TmpL);
     gretl_matrix_free(TmpR);
     gretl_matrix_free(M);
+    gretl_matrix_free(Svvcpy);
 
     return err;
 }

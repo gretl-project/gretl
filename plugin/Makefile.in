@@ -11,6 +11,7 @@ LN = @LN_S@
 build_gui = @build_gui@
 have_gtk = @have_gtk@
 have_gmp = @have_gmp@
+build_mailer = @build_mailer@
 
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
@@ -110,11 +111,15 @@ GUI_DEPENDENT_PLUGINS = excel_import.la \
 	progress_bar.la \
 	leverage.la \
 	logistic.la \
-	mailer.la \
 	pca.la 
+
+MAILER_PLUGIN = mailer.la
 
 ifeq ($(build_gui),yes)
   PLUGINS += $(GUI_DEPENDENT_PLUGINS)
+  ifeq ($(build_mailer),yes)
+     PLUGINS += $(MAILER_PLUGIN)
+  endif
 endif
 
 ifeq ($(have_gmp),yes)

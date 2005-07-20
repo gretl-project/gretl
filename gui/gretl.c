@@ -152,10 +152,12 @@ static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
     varinfo_dialog(mdata->active_var, 1);
 }
 
+#ifdef ENABLE_MAILER
 static void email_data (gpointer p, guint u, GtkWidget *w)
 {
     send_file(paths.datfile);
 }
+#endif
 
 GtkItemFactoryEntry data_items[] = {
     /* File menu */
@@ -203,7 +205,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
       EXPORT_OCTAVE, NULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL },
+#ifdef ENABLE_MAILER
     { N_("/File/Send To..."), NULL, email_data, OPEN_DATA, NULL },
+#endif
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, NULL },
     { N_("/File/sep0"), NULL, NULL, 0, "<Separator>" },
 

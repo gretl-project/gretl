@@ -209,23 +209,18 @@ static void save_email_info (struct mail_info *minfo)
 	if (minfo->sender != NULL && *minfo->sender != '\0') {
 	    fprintf(fp, "Reply-To: %s\n", minfo->sender);
 	}
-
 	if (minfo->server != NULL && *minfo->server != '\0') {
 	    fprintf(fp, "SMTP server: %s\n", minfo->server);
 	}
-
 	if (minfo->port != 25) {
 	    fprintf(fp, "SMTP port: %d\n", minfo->port);
 	}
-
 	if (minfo->pop_server != NULL && *minfo->pop_server != '\0') {
 	    fprintf(fp, "POP server: %s\n", minfo->pop_server);
 	}
-
 	if (minfo->pop_user != NULL && *minfo->pop_user != '\0') {
 	    fprintf(fp, "POP user: %s\n", minfo->pop_user);
 	}
-
 	for (i=0; i<maxaddrs && list != NULL; i++) {
 	    fprintf(fp, "%s\n", (char *) list->data);
 	    list = list->next;
@@ -665,7 +660,7 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     lbl = gtk_label_new(_("Mail setup"));
     gtk_notebook_append_page(GTK_NOTEBOOK(nb), hbox, lbl);  
 
-    tbl = gtk_table_new(2, 2, FALSE);
+    tbl = gtk_table_new(2, 3, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_container_add(GTK_CONTAINER(vbox), tbl);
@@ -675,7 +670,7 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, 0, 1, GTK_FILL, GTK_FILL, 0, 0);
 
     md.server_entry = gtk_entry_new();
-    gtk_table_attach_defaults(GTK_TABLE(tbl), md.server_entry, 1, 2, 0, 1);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), md.server_entry, 1, 3, 0, 1);
     if (md.minfo->server != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(md.server_entry), md.minfo->server);
     }    
@@ -684,11 +679,19 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     gtk_misc_set_alignment(GTK_MISC(lbl), 1, 0.5);
     gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, 1, 2, GTK_FILL, GTK_FILL, 0, 0);
 
+#if GTK_MAJOR_VERSION < 2
+    md.port_entry = gtk_entry_new_with_max_length(5);
+#else
     md.port_entry = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(md.port_entry), 5);
+    gtk_entry_set_width_chars(GTK_ENTRY(md.port_entry), 8);
+#endif
     gtk_table_attach_defaults(GTK_TABLE(tbl), md.port_entry, 1, 2, 1, 2);
     port_str = g_strdup_printf("%d", md.minfo->port);
     gtk_entry_set_text(GTK_ENTRY(md.port_entry), port_str);
     g_free(port_str);
+    lbl = gtk_label_new("                     ");
+    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 2, 3, 1, 2);
 
     /* Create the "OK" button */
     md.ok = standard_button(GTK_STOCK_OK);
@@ -805,7 +808,7 @@ static int pop_info_dialog (struct mail_info *minfo)
     g_signal_connect(G_OBJECT(pd.cancel), "clicked", 
 		     G_CALLBACK(finalize_pop_settings), &pd);
 
-    gtk_widget_set_size_request(pd.dlg, 420, -1);
+    gtk_widget_set_size_request(pd.dlg, 360, -1);
     gtk_widget_show_all(pd.dlg);
 
     gtk_window_set_modal(GTK_WINDOW(pd.dlg), TRUE);

@@ -720,7 +720,7 @@ void do_nistcheck (gpointer p, guint v, GtkWidget *w)
     g_free(fname);
 }
 
-#ifndef G_OS_WIN32
+#if defined (ENABLE_MAILER) && !defined(G_OS_WIN32)
 
 void send_file (char *fullname)
 {

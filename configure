@@ -463,7 +463,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION LIBVERSION LIBGRETL_CURRENT LIBGRETL_REVISION LIBGRETL_AGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE build build_cpu build_vendor build_os host host_cpu host_vendor host_os USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE HAVE_X12A HAVE_TRAMO HAVE_AUDIO LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL have_readline new_readline READLINE_CFLAGS READLINE_LIBS INETLIB have_zlib GMP_CFLAGS GMP_LIBS LAPACK_CFLAGS LAPACK_LIBS FLIB FLITE_CFLAGS FLITE_LIBS GNUPLOT LATEX PKG_CONFIG GTK_CFLAGS GTK_LIBS GLIB_CFLAGS GLIB_LIBS GTKSOURCEVIEW_CFLAGS GTKSOURCEVIEW_LIBS XML_CFLAGS XML_LIBS GTK2_CFLAGS GTK2_LIBS GTK_CONFIG GTK_EXTRA_CONFIG GTK_EXTRA_CFLAGS GTK_EXTRA_LIBS build_gui have_gtk have_gmp have_gtksourceview use_gtksourceview have_audio LIBOLE2_CONFIG LIBOLE2_CFLAGS LIBOLE2_LIBS PNG_CFLAGS PNG_LIBS GDK_PIXBUF_CFLAGS GDK_PIXBUF_LIBS GDK_PIXBUF_CONFIG GNOME_CFLAGS GNOME_LIBS GCONFTOOL GCONF_SCHEMA_CONFIG_SOURCE GCONF_SCHEMA_FILE_DIR GNOME GNOME_CONFIG GNOME_PRINT_CFLAGS GNOME_PRINT_LIBS have_gnome gnome_prefix XMLCONF XSLT_CFLAGS XSLT_LIBS LIBOLE_CFLAGS LIBOLE_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION LIBVERSION LIBGRETL_CURRENT LIBGRETL_REVISION LIBGRETL_AGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE build build_cpu build_vendor build_os host host_cpu host_vendor host_os USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE HAVE_X12A HAVE_TRAMO HAVE_AUDIO LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL have_readline new_readline READLINE_CFLAGS READLINE_LIBS INETLIB have_zlib GMP_CFLAGS GMP_LIBS LAPACK_CFLAGS LAPACK_LIBS FLIB FLITE_CFLAGS FLITE_LIBS GNUPLOT LATEX PKG_CONFIG GTK_CFLAGS GTK_LIBS GLIB_CFLAGS GLIB_LIBS GTKSOURCEVIEW_CFLAGS GTKSOURCEVIEW_LIBS XML_CFLAGS XML_LIBS GTK2_CFLAGS GTK2_LIBS GTK_CONFIG GTK_EXTRA_CONFIG GTK_EXTRA_CFLAGS GTK_EXTRA_LIBS build_gui have_gtk have_gmp have_gtksourceview use_gtksourceview have_audio build_mailer LIBOLE2_CONFIG LIBOLE2_CFLAGS LIBOLE2_LIBS PNG_CFLAGS PNG_LIBS GDK_PIXBUF_CFLAGS GDK_PIXBUF_LIBS GDK_PIXBUF_CONFIG GNOME_CFLAGS GNOME_LIBS GCONFTOOL GCONF_SCHEMA_CONFIG_SOURCE GCONF_SCHEMA_FILE_DIR GNOME GNOME_CONFIG GNOME_PRINT_CFLAGS GNOME_PRINT_LIBS have_gnome gnome_prefix XMLCONF XSLT_CFLAGS XSLT_LIBS LIBOLE_CFLAGS LIBOLE_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -22774,6 +22774,164 @@ presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
 esac
 
 
+
+
+for ac_header in netdb.h sys/socket.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking $ac_header usability" >&5
+echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking $ac_header presence" >&5
+echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <$ac_header>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------------ ##
+## Report this to the AC_PACKAGE_NAME lists.  ##
+## ------------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  eval "$as_ac_Header=\$ac_header_preproc"
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+
+fi
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ build_mailer="yes" ; cat >>confdefs.h <<\_ACEOF
+#define ENABLE_MAILER 1
+_ACEOF
+
+else
+  build_mailer="no"
+
+fi
+
+done
+
+
 if test "$try_readline" = "yes" ; then
 
 # Check whether --with-readline-prefix or --without-readline-prefix was given.
@@ -25747,6 +25905,7 @@ fi
 
 
 
+
 if test $try_ole = "yes" && test $have_gtk = "1.2" ; then
 
 # Check whether --with-libole2-prefix or --without-libole2-prefix was given.
@@ -28445,6 +28604,7 @@ s,@have_gmp@,$have_gmp,;t t
 s,@have_gtksourceview@,$have_gtksourceview,;t t
 s,@use_gtksourceview@,$use_gtksourceview,;t t
 s,@have_audio@,$have_audio,;t t
+s,@build_mailer@,$build_mailer,;t t
 s,@LIBOLE2_CONFIG@,$LIBOLE2_CONFIG,;t t
 s,@LIBOLE2_CFLAGS@,$LIBOLE2_CFLAGS,;t t
 s,@LIBOLE2_LIBS@,$LIBOLE2_LIBS,;t t

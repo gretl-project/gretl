@@ -95,4 +95,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Audio graph support */
 #define HAVE_AUDIO 1
 
+/* Mailer (send-to) support */
+#define ENABLE_MAILER 1
+
 #endif /* WINCONFIG_H */

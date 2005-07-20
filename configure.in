@@ -271,6 +271,12 @@ AC_CHECK_SIZEOF(int)
 AC_TYPE_SIGNAL 
 AC_C_BIGENDIAN 
 
+dnl try to build mailer plugin?
+AC_CHECK_HEADERS(netdb.h sys/socket.h,
+	build_mailer="yes" ; AC_DEFINE(ENABLE_MAILER),
+	build_mailer="no"
+)
+
 dnl
 dnl Check for libreadline for use with gretlcli
 dnl
@@ -455,6 +461,7 @@ AC_SUBST(have_gmp)
 AC_SUBST(have_gtksourceview)
 AC_SUBST(use_gtksourceview)
 AC_SUBST(have_audio)
+AC_SUBST(build_mailer)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(GTKSOURCEVIEW_CFLAGS)

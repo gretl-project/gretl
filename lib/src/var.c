@@ -54,8 +54,8 @@ struct GRETL_VAR_ {
 
 struct var_resids {
     int *levels_list;
-    double **uhat;
-    int m;
+    gretl_matrix *u;
+    gretl_matrix *v;
     int t1, t2;
 };
 
@@ -2225,100 +2225,64 @@ has_time_trend (const int *varlist, double ***pZ, DATAINFO *pdinfo)
 
 #endif
 
-static int allocate_sigmas (double ***X, double ***Y, double ***Z, int k)
+static int 
+allocate_sigmas (gretl_matrix **s1, gretl_matrix **s2, gretl_matrix **s3, 
+		 int k, JohansenCode jcode)
 {
-    int i, j;
-    double **Suu, **Svv, **Suv;
+    int vk = k;
 
-    Suu = malloc(k * sizeof *Suu);
-    Svv = malloc(k * sizeof *Svv);
-    Suv = malloc(k * sizeof *Suv);
+    gretl_matrix *Suu = NULL;
+    gretl_matrix *Svv = NULL;
+    gretl_matrix *Suv = NULL;
 
-    if (Suu == NULL || Svv == NULL || Suv == NULL) return 1;
+    if (jcode == J_REST_CONST) {
+	vk++;
+    }    
 
-    for (i=0; i<k; i++) {
-	Suu[i] = malloc(k * sizeof **Suu);
-	Svv[i] = malloc(k * sizeof **Svv);
-	Suv[i] = malloc(k * sizeof **Suv);
-	if (Suu[i] == NULL || Svv[i] == NULL || Suv[i] == NULL) {
-	    free(Suu);
-	    free(Svv);
-	    free(Suv);
-	    return 1;
-	}
-	for (j=0; j<k; j++) {
-	    Suu[i][j] = 0.0;
-	    Svv[i][j] = 0.0;
-	    Suv[i][j] = 0.0;
-	}
+    Suu = gretl_matrix_alloc(k, k);
+    Svv = gretl_matrix_alloc(vk, vk);
+    Suv = gretl_matrix_alloc(k, vk);
+
+    if (Suu == NULL || Svv == NULL || Suv == NULL) {
+	gretl_matrix_free(Suu);
+	gretl_matrix_free(Svv);
+	gretl_matrix_free(Suv);
+	return 1;
     }
 
-    *X = Suu;
-    *Y = Svv;
-    *Z = Suv;
+    *s1 = Suu;
+    *s2 = Svv;
+    *s3 = Suv;
 
     return 0;
 }
 
-static void free_sigmas (double **X, double **Y, double **Z, int k)
-{
-    int i;
-
-    for (i=0; i<k; i++) {
-	if (X != NULL) free(X[i]);
-	if (Y != NULL) free(Y[i]);
-	if (Z != NULL) free(Z[i]);
-    }
-
-    free(X);
-    free(Y);
-    free(Z);
-}
-
-static void scatter_product (const double **u, const double **v, 
-			     double **X, int T, int k)
-{
-    int i, j, t;
-
-    for (t=0; t<T; t++) {
-	for (i=0; i<k; i++) {
-	    for (j=0; j<k; j++) {
-		X[i][j] += u[i][t] * v[j][t];
-	    }
-	}
-    }
-
-    for (i=0; i<k; i++) {
-	for (j=0; j<k; j++) {
-	    X[i][j] /= (double) T;
-	}
-    }
-}
-
 static void 
-print_sigmas (const double **X, const double **Y, const double **Z, 
-	      int k, PRN *prn)
+print_sigmas (const gretl_matrix *Suu, const gretl_matrix *Svv, 
+	      const gretl_matrix *Suv, int k, PRN *prn)
 {
+    const gretl_matrix *P = NULL;
     int i, j, l;
-    const double **P = NULL;
 
     pprintf(prn, "\n%s\n\n", _("Sample variance-covariance matrices for residuals"));
 
     for (l=0; l<3; l++) {
 	if (l == 0) {
-	    P = X;
+	    P = Suu;
 	    pprintf(prn, " %s\n\n", _("VAR system in first differences"));
 	} else if (l == 1) {
-	    P = Y;
+	    P = Svv;
 	    pprintf(prn, " %s\n\n", _("System with levels as dependent variable"));
 	} else {
-	    P = Z;
+	    P = Suv;
 	    pprintf(prn, " %s\n\n", _("Cross-products"));
 	}
 
+	/* FIXME J_UNREST_CONST extra column */
+
 	for (i=0; i<k; i++) {
 	    for (j=0; j<k; j++) {
-		pprintf(prn, "%#12.6g", P[i][j]);
+		pprintf(prn, "%#12.6g", gretl_matrix_get(P, i, j));
 	    }
 	    pputc(prn, '\n');
 	}
@@ -2327,13 +2291,24 @@ print_sigmas (const double **X, const double **Y, const double **Z,
     }
 }
 
+static void
+transcribe_uhat_to_matrix (const MODEL *pmod, gretl_matrix *u, int col)
+{
+    int i, rows = gretl_matrix_rows(u);
+    int t = pmod->t1;
+
+    for (i=0; i<rows; i++) {
+	gretl_matrix_set(u, i, col, pmod->uhat[t++]);
+    }
+}
+
 static int 
-johansen_complete (const double **X, const double **Y, const double **Z,
-		   int k, int T, JohansenCode jcode, PRN *prn)
+johansen_complete (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
+		   int T, JohansenCode jcode, PRN *prn)
 {
     void *handle = NULL;
-    int (*johansen) (const double **, const double **, const double **,
-		     int, int, JohansenCode, PRN *);
+    int (*johansen) (gretl_matrix *, gretl_matrix *, gretl_matrix *,
+		     int, JohansenCode, PRN *);
     int err = 0;
 
     *gretl_errmsg = 0;
@@ -2343,10 +2318,35 @@ johansen_complete (const double **X, const double **Y, const double **Z,
     if (johansen == NULL) {
 	err = 1;
     } else {
-	err = (* johansen) (X, Y, Z, k, T, jcode, prn);
+	err = (* johansen) (Suu, Svv, Suv, T, jcode, prn);
 	close_plugin(handle);
     }
     
+    return err;
+}
+
+static int 
+allocate_residual_matrices (struct var_resids *resids, int k,
+			    JohansenCode jcode)
+{
+    int T = resids->t2 - resids->t1 + 1;
+    int vk = k;
+    int err = 0;
+
+    if (jcode == J_REST_CONST) vk++;
+
+    resids->u = gretl_matrix_alloc(T, k);
+    if (resids->u == NULL) {
+	err = E_ALLOC;
+    } else {
+	resids->v = gretl_matrix_alloc(T, vk);
+	if (resids->v == NULL) {
+	    gretl_matrix_free(resids->u);
+	    resids->u = NULL;
+	    err = E_ALLOC;
+	}
+    }
+
     return err;
 }
 
@@ -2355,9 +2355,10 @@ johansen_complete (const double **X, const double **Y, const double **Z,
 static int johansen_VAR (int order, const int *inlist, 
 			 double ***pZ, DATAINFO *pdinfo,
 			 struct var_resids *resids, 
-			 gretlopt opt, PRN *prn)
+			 gretlopt opt, JohansenCode jcode, 
+			 PRN *prn)
 {
-    int i, k, neqns;
+    int i, j, neqns;
     struct var_lists vlists;
     MODEL var_model;
     MODEL jmod;
@@ -2400,15 +2401,14 @@ static int johansen_VAR (int order, const int *inlist,
 	pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
     }
 
-    /* apparatus for saving the residuals */
-    resids->m = 2 * neqns;
-    resids->uhat = malloc(2 * neqns * sizeof *resids->uhat);
-    if (resids->uhat == NULL) {
-	err = E_ALLOC;
+    resids->t1 = pdinfo->t1;
+    resids->t2 = pdinfo->t2;
+    err = allocate_residual_matrices(resids, neqns, jcode);
+    if (err) {
 	goto var_bailout;
     }
 
-    k = 0;
+    j = 0;
     for (i=0; i<neqns; i++) {
 
 	compose_varlist(&vlists, vlists.stochvars[i + 1], 
@@ -2420,11 +2420,7 @@ static int johansen_VAR (int order, const int *inlist,
 	    goto var_bailout;
 	}
 
-	/* steal the residuals */
-	resids->t1 = var_model.t1;
-	resids->t2 = var_model.t2;
-	resids->uhat[i] = var_model.uhat;
-	var_model.uhat = NULL;
+	transcribe_uhat_to_matrix(&var_model, resids->u, i);
 
 	if (opt & OPT_V) {
 	    var_model.aux = AUX_VAR;
@@ -2432,7 +2428,23 @@ static int johansen_VAR (int order, const int *inlist,
 	    printmodel(&var_model, pdinfo, OPT_NONE, prn);
 	}
 
-	/* estimate equations for Johansen test */
+	/* special case with constant on LHS */
+	if (i == 0 && jcode == J_REST_CONST) {
+	    vlists.reglist[1] = 0;
+	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+
+	    if (opt & OPT_V) {
+		jmod.aux = AUX_JOHANSEN;
+		jmod.ID = -1;
+		printmodel(&jmod, pdinfo, OPT_NONE, prn);
+	    }
+
+	    transcribe_uhat_to_matrix(&jmod, resids->v, i);
+	    clear_model(&jmod);
+	    j++;
+	}
+
+	/* estimate additional equations for Johansen test */
 	vlists.reglist[1] = resids->levels_list[i + 1]; 
 	jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
 
@@ -2442,11 +2454,9 @@ static int johansen_VAR (int order, const int *inlist,
 	    printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	}
 
-	/* steal the residuals */
-	resids->uhat[i + neqns] = jmod.uhat;
-	jmod.uhat = NULL;
-	clear_model(&jmod);
+	transcribe_uhat_to_matrix(&jmod, resids->v, j++);
 
+	clear_model(&jmod);
 	clear_model(&var_model);
     }
 
@@ -2567,9 +2577,11 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    /* add the constant to the VAR list */
-    varlist[0] += 1;
-    varlist[varlist[0]] = 0;
+    if (jcode != J_NO_CONST && jcode != J_REST_CONST) {
+	/* add the constant to the VAR list */
+	varlist[0] += 1;
+	varlist[varlist[0]] = 0;
+    }
 
     if (opt & OPT_V) {
 	varprn = prn;
@@ -2577,36 +2589,34 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* Check Hamilton: what if order for test = 1? */
     err = johansen_VAR(order - 1, varlist, pZ, pdinfo, 
-		       &resids, opt, varprn); 
+		       &resids, opt, jcode, varprn); 
     
     if (!err) {
-	int k = resids.m / 2;
+	int k = gretl_matrix_cols(resids.u);
 	int T = resids.t2 - resids.t1 + 1;
-	double **Suu, **Svv, **Suv;
-	double **u = NULL, **v = NULL;
+	gretl_matrix *Suu;
+	gretl_matrix *Svv;
+	gretl_matrix *Suv;
 	char stobs[OBSLEN], endobs[OBSLEN];
 
-	if (allocate_sigmas(&Suu, &Svv, &Suv, k)) {
+	if (allocate_sigmas(&Suu, &Svv, &Suv, k, jcode)) {
 	    err = E_ALLOC;
 	    goto johansen_bailout;
 	}
 
-	u = malloc(k * sizeof *u);
-	v = malloc(k * sizeof *v);
+	gretl_matrix_multiply_mod(resids.u, GRETL_MOD_TRANSPOSE,
+				  resids.u, GRETL_MOD_NONE,
+				  Suu);
+	gretl_matrix_multiply_mod(resids.v, GRETL_MOD_TRANSPOSE,
+				  resids.v, GRETL_MOD_NONE,
+				  Svv);
+	gretl_matrix_multiply_mod(resids.u, GRETL_MOD_TRANSPOSE,
+				  resids.v, GRETL_MOD_NONE,
+				  Suv);
 
-	if (u == NULL || v == NULL) {
-	    err = E_ALLOC;
-	    goto johansen_bailout;
-	}
-
-	for (i=0; i<k; i++) {
-	    u[i] = &(resids.uhat[i][resids.t1]);
-	    v[i] = &(resids.uhat[i + k][resids.t1]);
-	}
-
-	scatter_product((const double **) u, (const double **) u, Suu, T, k);
-	scatter_product((const double **) v, (const double **) v, Svv, T, k);
-	scatter_product((const double **) u, (const double **) v, Suv, T, k);
+	gretl_matrix_divide_by_scalar(Suu, T);
+	gretl_matrix_divide_by_scalar(Svv, T);
+	gretl_matrix_divide_by_scalar(Suv, T);
 
 	pprintf(prn, "%s:\n", _("Johansen test"));
 	pprintf(prn, "%s = %d\n", _("Number of equations"), k);
@@ -2615,24 +2625,8 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 		ntodate(endobs, resids.t2, pdinfo), T);
 
 	if (opt & OPT_V) {
-	    print_sigmas((const double **) Suu, 
-			 (const double **) Svv, 
-			 (const double **) Suv, k, prn);
+	    print_sigmas(Suu, Svv, Suv, k, prn);
 	}
-
-#ifdef JOHANSEN_DEBUG
-	for (i=0; i<resids.m; i++) {
-	    char datestr[OBSLEN];
-	    int t;
-
-	    pprintf(prn, "Residuals from VAR model %d\n", i);
-	    for (t=resids.t1; t<=resids.t2; t++) {
-		ntodate(datestr, t, pdinfo);
-		pprintf(prn, "%8s %#.*g\n", datestr, 
-			GRETL_DIGITS, resids.uhat[i][t]);
-	    }
-	}
-#endif
 
 #if 0
 	trends = has_time_trend(list, pZ, pdinfo);
@@ -2643,21 +2637,16 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 #endif
 
 	/* now get johansen plugin to finish the job */
-	err = johansen_complete((const double **) Suu, 
-				(const double **) Svv, 
-				(const double **) Suv, 
-				k, T, jcode, prn);
+	err = johansen_complete(Suu, Svv, Suv, T, jcode, prn);
 
     johansen_bailout:
-	
-	for (i=0; i<resids.m; i++) {
-	    free(resids.uhat[i]);
-	}
-	free(resids.uhat);
 
-	free_sigmas(Suu, Svv, Suv, k);
-	free(u);
-	free(v);
+	gretl_matrix_free(resids.u);
+	gretl_matrix_free(resids.v);
+
+	gretl_matrix_free(Suu);
+	gretl_matrix_free(Svv);
+	gretl_matrix_free(Suv);
     } 
 
     free(resids.levels_list);

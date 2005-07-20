@@ -53,9 +53,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Define if zlib is available */
 #undef HAVE_ZLIB
 
-/* Define if gtkhtml is available */
-#undef USE_GTKHTML
-
 /* Define if gtksourceview is available */
 #undef USE_GTKSOURCEVIEW
 
@@ -85,6 +82,11 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Do we have sys/wait.h */
 #undef HAVE_SYS_WAIT_H
+
+/* Do we have the stuff needed for SMTP? */
+#undef HAVE_SYS_SOCKET_H
+#undef HAVE_NETDB_H
+#undef ENABLE_MAILER
 
 /* Define if the `long double' type works.  */
 #undef HAVE_LONG_DOUBLE
