@@ -42,6 +42,18 @@ enum {
     MAIL_CANCEL
 };
 
+enum {
+    SMTP_OK,
+    SMTP_NO_CONNECT,
+    SMTP_NO_RELAY,
+    SMTP_POP_FIRST,
+    SMTP_BAD_SENDER,
+    SMTP_BAD_ADDRESS,
+    SMTP_ERR
+};
+
+#define SBSIZE 2048
+
 #if GTK_MAJOR_VERSION < 2
 
 enum {
@@ -675,6 +687,23 @@ static void mail_infobox (const char *msg, int err)
 
 #endif
 
+#define VERBOSE 1
+
+static void flush_input (FILE *fp, char *buf)
+{
+    char *got;
+
+    while ((got = fgets(buf, SBSIZE, fp)) != NULL) {
+#if VERBOSE
+	if (got != NULL) {
+	    fprintf(stderr, "server says: %s\n", got);
+	}
+#else
+	;
+#endif
+    }
+}
+
 static int connect_to_server (char *hostname, unsigned short port) 
 {
     gchar *msg;
@@ -721,13 +750,17 @@ static int connect_to_server (char *hostname, unsigned short port)
 }
 
 static int
-pop_before_smtp (const char *server, const char *sender)
+pop_login (const char *server, const char *sender)
 {
-    FILE *fp, *fq;
-    char buf[1024];
+    FILE *fr, *fw;
+    char user[32];
+    char *pass;
+    char buf[SBSIZE];
     char pop_server[128];
     const char *p;
     int unit;
+
+    /* FIXME: need to get POP server, username and password */
 
     p = strchr(server, '.');
     if (p == NULL) {
@@ -735,7 +768,6 @@ pop_before_smtp (const char *server, const char *sender)
     }
 
     sprintf(pop_server, "pop%s", p);
-
     fprintf(stderr, "trying pop_before_smtp, with %s\n", pop_server);
     
     unit = connect_to_server(pop_server, 110);
@@ -743,34 +775,34 @@ pop_before_smtp (const char *server, const char *sender)
 	return 1;
     } 
 
-    fp = fdopen(unit, "r");
-    fq = fdopen(unit, "w");
+    fr = fdopen(unit, "r");
+    fw = fdopen(unit, "w");
 
-    if (fp == NULL || fq == NULL) {
+    if (fr == NULL || fw == NULL) {
 	close(unit);
 	return 1;
     }
 
-    fgets(buf, sizeof buf, fp);
-    fprintf(stderr, "buf: %s\n", buf);
+    fgets(buf, sizeof buf, fr);
+    fprintf(stderr, "POP response: %s\n", buf);
 
-    fputs("user cottrell\n", fq);
-    fflush(fq);
-    fgets(buf, sizeof buf, fp);
-    fprintf(stderr, "buf: %s\n", buf);
+    fprintf(fw, "user %s\n", user);
+    fflush(fw);
+    fgets(buf, sizeof buf, fr);
+    fprintf(stderr, "POP response: %s\n", buf);
 
-    fputs("pass hozumi86\n", fq);   
-    fflush(fq);
-    fgets(buf, sizeof buf, fp);
-    fprintf(stderr, "buf: %s\n", buf);
+    fprintf(fw, "pass %s\n", pass);   
+    fflush(fw);
+    fgets(buf, sizeof buf, fr);
+    fprintf(stderr, "POP response: %s\n", buf);
  
-    fputs("quit\r\n", fq); 
-    fflush(fq);
-    fgets(buf, sizeof buf, fp);
-    fprintf(stderr, "buf: %s\n", buf);
+    fputs("quit\r\n", fw); 
+    fflush(fw);
+    fgets(buf, sizeof buf, fr);
+    fprintf(stderr, "POP response: %s\n", buf);
     
-    fclose(fp);
-    fclose(fq);
+    fclose(fr);
+    fclose(fw);
     
     close(unit);
 
@@ -778,64 +810,77 @@ pop_before_smtp (const char *server, const char *sender)
 }
 
 static int
-real_send_mail (FILE *infile, char *sender, char *recipient, 
+smtp_send_mail (FILE *infile, char *sender, char *recipient, 
 		struct mail_info *minfo)
 {
     char localhost[256] = "localhost";
-    char buf[2048];
+    char buf[SBSIZE];
     gchar *errmsg;
-    FILE *fp, *fq;
-    int resp;
-    int unit, err = 0;
+    FILE *fr, *fw;
+    int unit, resp;
+    int err = SMTP_OK;
 
     gethostname(localhost, sizeof localhost);
+    fprintf(stderr, "localhost = '%s'\n", localhost);
 
     unit = connect_to_server(minfo->server, minfo->port);
     if (unit < 0) {
-	return 1;
+	return SMTP_NO_CONNECT;
     }
 
-    fp = fdopen(unit, "r");
-    fq = fdopen(unit, "w");
+    fprintf(stderr, "opened SMTP socket, unit = %d\n", unit);
 
-    if (fp == NULL || fq == NULL) {
+    fr = fdopen(unit, "r");
+    fw = fdopen(unit, "w");
+
+    if (fr == NULL || fw == NULL) {
 	close(unit);
-	return 1;
+	return SMTP_ERR;
     }
 
-    /* initial flush of stream */
-    fgets(buf, sizeof buf, fp);
+    flush_input(fr, buf);
 
-    fprintf(fq, "HELO %s\r\n", localhost);
-    fflush(fq);
+    fprintf(fw, "HELO %s\r\n", localhost);
+    fflush(fw);
 
-    fgets(buf, sizeof buf, fp);
-    fprintf(stderr, "server response to HELO:\n%s\n", buf);
+    fgets(buf, sizeof buf, fr);
+    fprintf(stderr, "response to HELO:\n%s\n", buf);
+    flush_input(fr, buf);
 
-    fprintf(fq, "MAIL FROM: %s\r\n", sender);
-    fflush(fq);
+    fprintf(fw, "MAIL FROM: %s\r\n", sender);
+    fflush(fw);
 
-    fprintf(stderr, "sent MAIL FROM:\n", buf);
-
-    fgets(buf, sizeof buf, fp);
+    fgets(buf, sizeof buf, fr);
+#if VERBOSE
+    fprintf(stderr, "response to MAIL FROM:\n%s\n", buf);
+#endif
     resp = atoi(buf);
     if (resp != 250) {
 	chopstr(buf);
 	errmsg = g_strdup_printf("Server response to MAIL FROM:\n%s", buf);
 	mail_infobox(errmsg, 1);
 	g_free(errmsg);
-	err = 1;
+	if (resp == 553) {
+	    if (strstr(buf, "must check")) {
+		err = SMTP_POP_FIRST;
+	    } else {
+		err = SMTP_NO_RELAY;
+	    }
+	} else {
+	    err = SMTP_ERR;
+	}
 	goto bailout;
     }
 
- try_again:
+    flush_input(fr, buf);
 
-    fprintf(fq, "RCPT TO: %s\r\n", recipient);
-    fflush(fq);
+    fprintf(fw, "RCPT TO: %s\r\n", recipient);
+    fflush(fw);
 
-    fprintf(stderr, "sent RCPT TO:\n", buf);
-
-    fgets(buf, sizeof buf, fp);
+    fgets(buf, sizeof buf, fr);
+#if VERBOSE
+    fprintf(stderr, "response to RCPT TO:\n%s\n", buf);
+#endif
     resp = atoi(buf);
     if (resp == 553) {
 	err = pop_before_smtp(minfo->server, sender);
@@ -847,25 +892,41 @@ real_send_mail (FILE *infile, char *sender, char *recipient,
 	errmsg = g_strdup_printf("Server response to RCPT TO:\n%s", buf);
 	mail_infobox(errmsg, 1);
 	g_free(errmsg);
-	err = 1;
+	err = SMTP_BAD_ADDRESS; /* FIXME */
 	goto bailout;
     }
 
-    fputs("DATA\r\n", fq);
+    flush_input(fr, buf);
+
+    fputs("DATA\r\n", fw);
+#if VERBOSE
+    fgets(buf, sizeof buf, fr);
+    fprintf(stderr, "response to DATA:\n%s\n", buf);
+#endif
+    fflush(fw);
+    
     /* send composed message */
     while (fgets(buf, sizeof buf, infile)) {
-	fputs(buf, fq);
+	fputs(buf, fw);
     }
-    fprintf(fq, "\n.\nQUIT\n");
-    fflush(fq);
-
-    fgets(buf, sizeof buf, fp);
-    fprintf(stderr, "on QUIT, response: '%s'\n", buf);
+    fputs("\n.\n", fw);
+    fflush(fw);
 
  bailout:
 
-    fclose(fp);
-    fclose(fq);
+    flush_input(fr, buf);
+
+    fputs("QUIT\r\n", fw);
+    fflush(fw);
+
+#if VERBOSE
+    fgets(buf, sizeof buf, fr);
+    fprintf(stderr, "on QUIT, response: '%s'\n", buf);
+    flush_input(fr, buf);
+#endif
+
+    fclose(fr);
+    fclose(fw);
 
     close(unit);
 
@@ -905,7 +966,11 @@ static int pack_and_mail (const char *fname, struct msg_info *msg,
     }
 
     if (!err) {
-	real_send_mail(fp, msg->sender, msg->recip, minfo);
+	err = stmp_send_mail(fp, msg->sender, msg->recip, minfo);
+	if (err == SMTP_POP_FIRST) {
+	    pop_login(minfo->server, msg->sender);
+	    err = stmp_send_mail(fp, msg->sender, msg->recip, minfo);
+	}
 	fclose(fp);
     }
 
