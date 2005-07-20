@@ -1298,7 +1298,7 @@ static int var_compute_F_tests (MODEL *varmod, GRETL_VAR *var,
     }
     
     /* restrictions for last lag, all variables */
-    if (!err) {
+    if (!err && var->order > 1) {
 	compose_varlist(vl, depvar, var->order - 1, 0, pdinfo);	
 
 	if (robust) {
@@ -2576,20 +2576,13 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (opt & OPT_V) {
 	varprn = prn;
-    } else {
-	varprn = gretl_print_new(GRETL_PRINT_NULL);
-    }
+    } 
 
-    /* FIXME? */
-    pdinfo->t1 += (order + 1);
+    pdinfo->t1 += order;
     /* Check Hamilton: what if order for test = 1? */
     err = johansen_VAR(order - 1, varlist, pZ, pdinfo, 
 		       &resids, opt, varprn); 
     
-    if (varprn != NULL) {
-	gretl_print_destroy(varprn);
-    }
-
     if (!err) {
 	int k = resids.m / 2;
 	int T = resids.t2 - resids.t1 + 1;

@@ -17,14 +17,15 @@
  *
  */
 
-/* Mailer plugin for gretl, based on mpack, by John G. Myers.
-   Please see the files in ./mpack for the Carnegie Mellon
+/* Mailer plugin for gretl.  MIME packing is based on mpack, by John
+   G. Myers.  Please see the files in ./mpack for the Carnegie Mellon
    copyright notice. */
 
 #include "libgretl.h"
 
 #include <gtk/gtk.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -39,6 +40,7 @@ enum {
     MAIL_NO_RECIPIENT,
     MAIL_NO_SERVER,
     MAIL_NO_SENDER,
+    MAIL_NO_PASS,
     MAIL_CANCEL
 };
 
@@ -52,7 +54,7 @@ enum {
     SMTP_ERR
 };
 
-#define SBSIZE 2048
+#define SBSIZE 4096
 
 #if GTK_MAJOR_VERSION < 2
 
@@ -112,6 +114,11 @@ struct mail_info {
     int want_sig;
     char *server;
     unsigned short port;
+    char *pop_server;
+    char *pop_user;
+    char *pop_pass;
+    char *addrfile;
+    GList *addrs;
 };
 
 struct mail_dialog {
@@ -126,8 +133,17 @@ struct mail_dialog {
     GtkWidget *cancel;
     struct mail_info *minfo;
     struct msg_info *msg;
-    char *addr_file;
-    GList *addrs;
+    int *errp;
+};
+
+struct pop_dialog {
+    GtkWidget *dlg;
+    GtkWidget *server_entry;
+    GtkWidget *user_entry;
+    GtkWidget *pass_entry;
+    GtkWidget *ok;
+    GtkWidget *cancel;
+    struct mail_info *minfo;
     int *errp;
 };
 
@@ -154,24 +170,40 @@ static void mail_info_init (struct mail_info *minfo)
     minfo->want_sig = 1;
     minfo->server = NULL;
     minfo->port = 25;
+    minfo->pop_server = NULL;
+    minfo->pop_user = NULL;
+    minfo->pop_pass = NULL;
+    minfo->addrfile = NULL;
+    minfo->addrs = NULL;
 }
 
 static void free_mail_info (struct mail_info *minfo)
 {
+    GList *tmp;
+
     free(minfo->sender);
     free(minfo->sig);
     free(minfo->server);
+    free(minfo->pop_server);
+    free(minfo->pop_user);
+    free(minfo->pop_pass);
+    free(minfo->addrfile);
+
+    tmp = minfo->addrs;
+    while (tmp != NULL) {
+	g_free(tmp->data);
+	tmp = g_list_next(tmp);
+    }
 }
 
-static void save_email_info (struct mail_dialog *md)
+static void save_email_info (struct mail_info *minfo)
 {
-    struct mail_info *minfo = md->minfo;
     FILE *fp;
 
-    fp = gretl_fopen(md->addr_file, "w");
+    fp = gretl_fopen(minfo->addrfile, "w");
 
     if (fp != NULL) {
-	GList *list = md->addrs;
+	GList *list = minfo->addrs;
 	int i, maxaddrs = 10;
 
 	if (minfo->sender != NULL && *minfo->sender != '\0') {
@@ -184,6 +216,14 @@ static void save_email_info (struct mail_dialog *md)
 
 	if (minfo->port != 25) {
 	    fprintf(fp, "SMTP port: %d\n", minfo->port);
+	}
+
+	if (minfo->pop_server != NULL && *minfo->pop_server != '\0') {
+	    fprintf(fp, "POP server: %s\n", minfo->pop_server);
+	}
+
+	if (minfo->pop_user != NULL && *minfo->pop_user != '\0') {
+	    fprintf(fp, "POP user: %s\n", minfo->pop_user);
 	}
 
 	for (i=0; i<maxaddrs && list != NULL; i++) {
@@ -242,7 +282,7 @@ static char *get_signature (void)
 
 static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
 {
-    GList *list = md->addrs;
+    GList *list = NULL;
     struct mail_info *minfo = md->minfo;
     struct msg_info *msg = md->msg;
     const gchar *txt;
@@ -254,6 +294,8 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
 	gtk_widget_destroy(md->dlg);
 	return;
     }
+
+    list = minfo->addrs;
 
     /* recipient */
     txt = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(md->recip_combo)->entry));
@@ -278,7 +320,7 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
 	    i++;
 	}
 	if (save) {
-	    md->addrs = g_list_prepend(md->addrs, g_strdup(txt));
+	    minfo->addrs = g_list_prepend(minfo->addrs, g_strdup(txt));
 	} 
     } else {
 	err = MAIL_NO_RECIPIENT;
@@ -346,11 +388,66 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
     *md->errp = err;
 
     if (save) {
-	save_email_info(md);
+	save_email_info(minfo);
     }
 
     gtk_widget_destroy(md->dlg);
 }
+
+static void finalize_pop_settings (GtkWidget *w, struct pop_dialog *pd)
+{
+    struct mail_info *minfo = pd->minfo;
+    const gchar *txt;
+    int err = MAIL_OK;
+
+    if (w == pd->cancel) {
+	*pd->errp = MAIL_CANCEL;
+	gtk_widget_destroy(pd->dlg);
+	return;
+    }
+
+    if (!err) {
+	/* server */
+	txt = gtk_entry_get_text(GTK_ENTRY(pd->server_entry));
+	if (txt != NULL && *txt != '\0') {
+	    minfo->pop_server = g_strdup(txt);
+	    fprintf(stderr, "POP server = '%s'\n", minfo->pop_server);
+	} else {
+	    err = MAIL_NO_SERVER;
+	}
+    }
+
+    if (!err) {
+	/* username */
+	txt = gtk_entry_get_text(GTK_ENTRY(pd->user_entry));
+	if (txt != NULL && *txt != '\0') {
+	    minfo->pop_user = g_strdup(txt);
+	    fprintf(stderr, "username = '%s'\n", minfo->pop_user);
+	} else {
+	    err = MAIL_NO_SENDER;
+	}
+    } 
+
+    if (!err) {
+	/* password */
+	txt = gtk_entry_get_text(GTK_ENTRY(pd->pass_entry));
+	if (txt != NULL && *txt != '\0') {
+	    minfo->pop_pass = g_strdup(txt);
+	    fprintf(stderr, "got %d character password\n", strlen(txt));
+	} else {
+	    err = MAIL_NO_PASS;
+	}
+    }
+
+    if (!err) {
+	save_email_info(minfo);
+    }
+
+    *pd->errp = err;
+
+    gtk_widget_destroy(pd->dlg);
+}
+
 
 static void border_width (GtkWidget *w, int b)
 {
@@ -370,15 +467,14 @@ static void set_dialog_border_widths (GtkWidget *dlg)
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dlg)->vbox), w2);
 }
 
-static void get_email_info (struct mail_dialog *md)
+static void get_email_info (struct mail_info *minfo)
 {
-    struct mail_info *minfo = md->minfo;
     GList *addrs = NULL;
     FILE *fp;
 
-    md->addr_file = g_strdup_printf("%sgretl.addresses", gretl_user_dir());
+    minfo->addrfile = g_strdup_printf("%sgretl.addresses", gretl_user_dir());
 
-    fp = gretl_fopen(md->addr_file, "r");
+    fp = gretl_fopen(minfo->addrfile, "r");
     if (fp != NULL) {
 	char line[128];
 
@@ -393,6 +489,10 @@ static void get_email_info (struct mail_dialog *md)
 		minfo->server = g_strdup(line + 13);
 	    } else if (!strncmp(line, "SMTP port:", 10)) {
 		minfo->port = atoi(line + 11);
+	    } else if (!strncmp(line, "POP server:", 11)) {
+		minfo->pop_server = g_strdup(line + 12);
+	    } else if (!strncmp(line, "POP user:", 9)) {
+		minfo->pop_user = g_strdup(line + 10);
 	    } else {
 		addrs = g_list_append(addrs, g_strdup(line));
 	    }
@@ -401,13 +501,19 @@ static void get_email_info (struct mail_dialog *md)
 	fclose(fp);
     } 
 
-    md->addrs = addrs;
+    minfo->addrs = addrs;
 }
 
 static void cancel_mail (struct mail_dialog *md)
 {
     fprintf(stderr, "delete-event: canceling\n");
     *md->errp = MAIL_CANCEL;
+}
+
+static void cancel_pop (struct pop_dialog *pd)
+{
+    fprintf(stderr, "delete-event: canceling\n");
+    *pd->errp = MAIL_CANCEL;
 }
 
 static int is_data_file (const char *fname)
@@ -424,21 +530,6 @@ static int is_data_file (const char *fname)
 static void sig_callback (GtkWidget *w, struct mail_info *minfo)
 {
     minfo->want_sig = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
-}
-
-static void destroy_mail_dialog (GtkWidget *w, struct mail_dialog *md)
-{
-    GList *tmp = md->addrs;
-
-    while (tmp) {
-	/* free the address strings */
-	g_free(tmp->data);
-	tmp = g_list_next(tmp);
-    }
-
-    g_free(md->addr_file);
-
-    gtk_main_quit();
 }
 
 static int 
@@ -463,7 +554,7 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     md.msg = msg;
     md.errp = &err;
 
-    get_email_info(&md);
+    get_email_info(md.minfo);
     md.minfo->sig = get_signature();
     md.minfo->want_sig = minfo->sig != NULL;
 
@@ -471,7 +562,7 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
 		     G_CALLBACK(cancel_mail), &md);
 
     g_signal_connect(G_OBJECT(md.dlg), "destroy", 
-		     G_CALLBACK(destroy_mail_dialog), &md);
+		     G_CALLBACK(gtk_main_quit), NULL);
 
     gtk_window_set_title(GTK_WINDOW(md.dlg), _("gretl: send mail"));
     set_dialog_border_widths(md.dlg);
@@ -510,8 +601,8 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
 
 	if (i == 0) {
 	    w = gtk_combo_new();
-	    if (md.addrs != NULL) {
-		gtk_combo_set_popdown_strings(GTK_COMBO(w), md.addrs);
+	    if (md.minfo->addrs != NULL) {
+		gtk_combo_set_popdown_strings(GTK_COMBO(w), md.minfo->addrs);
 	    } 
 	} else {
 	    w = gtk_entry_new();
@@ -629,6 +720,100 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     return err;
 }
 
+static int pop_info_dialog (struct mail_info *minfo)
+{
+    const gchar *lbls[] = {
+	N_("POP server:"),
+	N_("Username:"),
+	N_("Password:")
+    };
+    GtkWidget *tbl, *lbl, *vbox;
+    struct pop_dialog pd;
+    int i, err = 0;
+
+    pd.dlg = gtk_dialog_new();
+    pd.minfo = minfo;
+    pd.errp = &err;
+
+    g_signal_connect(G_OBJECT(pd.dlg), "delete-event", 
+		     G_CALLBACK(cancel_pop), &pd);
+
+    g_signal_connect(G_OBJECT(pd.dlg), "destroy", 
+		     G_CALLBACK(gtk_main_quit), NULL);
+
+    gtk_window_set_title(GTK_WINDOW(pd.dlg), _("gretl: POP info"));
+    set_dialog_border_widths(pd.dlg);
+    gtk_window_set_position(GTK_WINDOW(pd.dlg), GTK_WIN_POS_MOUSE);
+
+    vbox = GTK_DIALOG(pd.dlg)->vbox;
+
+    tbl = gtk_table_new(3, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_container_add(GTK_CONTAINER(vbox), tbl);
+
+    for (i=0; i<3; i++) {
+	GtkWidget *w;
+
+	lbl = gtk_label_new(_(lbls[i]));
+	gtk_misc_set_alignment(GTK_MISC(lbl), 1, 0.5);
+	gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, i, i+1, GTK_FILL, GTK_FILL, 0, 0);
+
+	w = gtk_entry_new();
+
+	if (i == 0) {
+	    if (pd.minfo->pop_server != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(w), pd.minfo->pop_server);
+	    }
+	} else if (i == 1) {
+	    if (pd.minfo->pop_user != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(w), pd.minfo->pop_user);
+	    }
+	} else if (i == 2) {
+	    if (pd.minfo->pop_pass != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(w), pd.minfo->pop_pass);
+	    }
+	    gtk_entry_set_visibility(GTK_ENTRY(w), FALSE);
+	}
+
+	gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, i, i+1);
+
+	if (i == 0) {
+	    pd.server_entry = w;
+	} else if (i == 1) {
+	    pd.user_entry = w;
+	} else if (i == 2) {
+	    pd.pass_entry = w;
+	} 
+    }
+
+    /* Create the "OK" button */
+    pd.ok = standard_button(GTK_STOCK_OK);
+    GTK_WIDGET_SET_FLAGS(pd.ok, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pd.dlg)->action_area), 
+		       pd.ok, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(pd.ok), "clicked", 
+		     G_CALLBACK(finalize_pop_settings), &pd);
+    gtk_widget_grab_default(pd.ok);
+
+    /* And a Cancel button */
+    pd.cancel = standard_button(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(pd.cancel, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pd.dlg)->action_area), 
+		       pd.cancel, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(pd.cancel), "clicked", 
+		     G_CALLBACK(finalize_pop_settings), &pd);
+
+    gtk_widget_set_size_request(pd.dlg, 420, -1);
+    gtk_widget_show_all(pd.dlg);
+
+    gtk_window_set_modal(GTK_WINDOW(pd.dlg), TRUE);
+    gtk_main();
+
+    return err;
+}
+
 #if GTK_MAJOR_VERSION < 2
 
 static void mail_infobox (const char *msg, int err) 
@@ -689,19 +874,37 @@ static void mail_infobox (const char *msg, int err)
 
 #define VERBOSE 1
 
-static void flush_input (FILE *fp, char *buf)
+static int get_server_response (int fd, char *buf)
 {
-    char *got;
+    int ret;
 
-    while ((got = fgets(buf, SBSIZE, fp)) != NULL) {
+    memset(buf, 0, SBSIZE);
+    ret = read(fd, buf, SBSIZE - 1);
 #if VERBOSE
-	if (got != NULL) {
-	    fprintf(stderr, "server says: %s\n", got);
-	}
-#else
-	;
+    fprintf(stderr, "response:\n%s\n", buf);
 #endif
-    }
+    return ret;
+}
+
+static int send_to_server (FILE *fp, const char *template, ...)
+{
+    va_list args;
+    int plen = 0;
+
+#if VERBOSE
+    char word[32] = {0};
+
+    sscanf(template, "%31s", word);
+    fprintf(stderr, "sending %s...\n", word);
+#endif
+
+    va_start(args, template);
+    plen = vfprintf(fp, template, args);
+    va_end(args);
+
+    fflush(fp);
+
+    return plen;
 }
 
 static int connect_to_server (char *hostname, unsigned short port) 
@@ -728,10 +931,7 @@ static int connect_to_server (char *hostname, unsigned short port)
 	return -1;
     }
 
-    fprintf(stderr, "got socket %d\n", unit);
-
     soaddr.sin_family = AF_INET;
-
     memcpy(&soaddr.sin_addr, &((struct in_addr*) ip->h_addr)->s_addr,
 	   sizeof(struct in_addr));
     soaddr.sin_port = htons(port);
@@ -744,66 +944,67 @@ static int connect_to_server (char *hostname, unsigned short port)
 	return -1;
     } 
 
-    fprintf(stderr, "connected socket OK\n");
-
     return unit;
 }
 
-static int
-pop_login (const char *server, const char *sender)
+static void set_pop_defaults (struct mail_info *minfo)
 {
-    FILE *fr, *fw;
-    char user[32];
-    char *pass;
-    char buf[SBSIZE];
-    char pop_server[128];
-    const char *p;
-    int unit;
+    char *p;
 
-    /* FIXME: need to get POP server, username and password */
-
-    p = strchr(server, '.');
-    if (p == NULL) {
-	return 1;
+    if (minfo->pop_server == NULL) {
+	p = strchr(minfo->server, '.');
+	if (p != NULL) {
+	    minfo->pop_server = g_strdup_printf("pop%s", p);
+	}
     }
 
-    sprintf(pop_server, "pop%s", p);
-    fprintf(stderr, "trying pop_before_smtp, with %s\n", pop_server);
+    if (minfo->pop_user == NULL) {
+	p = strchr(minfo->sender, '@');
+	if (p != NULL) {
+	    minfo->pop_user = g_strdup(minfo->sender);
+	    p = strchr(minfo->pop_user, '@');
+	    *p = '\0';
+	}
+    }
+}
+
+static int pop_login (struct mail_info *minfo)
+{
+    FILE *fp;
+    char buf[SBSIZE];
+    int unit, err;
+
+    set_pop_defaults(minfo);
+    err = pop_info_dialog(minfo);
+    if (err) {
+	return err;
+    }
+
+    fprintf(stderr, "trying pop_before_smtp, with %s\n", minfo->pop_server);
     
-    unit = connect_to_server(pop_server, 110);
+    unit = connect_to_server(minfo->pop_server, 110);
     if (unit < 0) {
 	return 1;
     } 
 
-    fr = fdopen(unit, "r");
-    fw = fdopen(unit, "w");
-
-    if (fr == NULL || fw == NULL) {
+    fp = fdopen(unit, "w");
+    if (fp == NULL) {
 	close(unit);
 	return 1;
     }
 
-    fgets(buf, sizeof buf, fr);
-    fprintf(stderr, "POP response: %s\n", buf);
+    get_server_response(unit, buf);
 
-    fprintf(fw, "user %s\n", user);
-    fflush(fw);
-    fgets(buf, sizeof buf, fr);
-    fprintf(stderr, "POP response: %s\n", buf);
+    send_to_server(fp, "user %s\n", minfo->pop_user);
+    get_server_response(unit, buf);
 
-    fprintf(fw, "pass %s\n", pass);   
-    fflush(fw);
-    fgets(buf, sizeof buf, fr);
-    fprintf(stderr, "POP response: %s\n", buf);
+    send_to_server(fp, "pass %s\n", minfo->pop_pass);   
+    get_server_response(unit, buf);
  
-    fputs("quit\r\n", fw); 
-    fflush(fw);
-    fgets(buf, sizeof buf, fr);
-    fprintf(stderr, "POP response: %s\n", buf);
+    send_to_server(fp, "quit\r\n"); 
+    get_server_response(unit, buf);
     
-    fclose(fr);
-    fclose(fw);
-    
+    fclose(fp);
     close(unit);
 
     return 0;
@@ -816,7 +1017,7 @@ smtp_send_mail (FILE *infile, char *sender, char *recipient,
     char localhost[256] = "localhost";
     char buf[SBSIZE];
     gchar *errmsg;
-    FILE *fr, *fw;
+    FILE *fp;
     int unit, resp;
     int err = SMTP_OK;
 
@@ -830,30 +1031,19 @@ smtp_send_mail (FILE *infile, char *sender, char *recipient,
 
     fprintf(stderr, "opened SMTP socket, unit = %d\n", unit);
 
-    fr = fdopen(unit, "r");
-    fw = fdopen(unit, "w");
-
-    if (fr == NULL || fw == NULL) {
+    fp = fdopen(unit, "w");
+    if (fp == NULL) {
 	close(unit);
 	return SMTP_ERR;
     }
 
-    flush_input(fr, buf);
+    get_server_response(unit, buf);
 
-    fprintf(fw, "HELO %s\r\n", localhost);
-    fflush(fw);
+    send_to_server(fp, "HELO %s\r\n", localhost);
+    get_server_response(unit, buf);
 
-    fgets(buf, sizeof buf, fr);
-    fprintf(stderr, "response to HELO:\n%s\n", buf);
-    flush_input(fr, buf);
-
-    fprintf(fw, "MAIL FROM: %s\r\n", sender);
-    fflush(fw);
-
-    fgets(buf, sizeof buf, fr);
-#if VERBOSE
-    fprintf(stderr, "response to MAIL FROM:\n%s\n", buf);
-#endif
+    send_to_server(fp, "MAIL FROM: %s\r\n", sender);
+    get_server_response(unit, buf);
     resp = atoi(buf);
     if (resp != 250) {
 	chopstr(buf);
@@ -872,62 +1062,44 @@ smtp_send_mail (FILE *infile, char *sender, char *recipient,
 	goto bailout;
     }
 
-    flush_input(fr, buf);
-
-    fprintf(fw, "RCPT TO: %s\r\n", recipient);
-    fflush(fw);
-
-    fgets(buf, sizeof buf, fr);
-#if VERBOSE
-    fprintf(stderr, "response to RCPT TO:\n%s\n", buf);
-#endif
+    send_to_server(fp, "RCPT TO: %s\r\n", recipient);
+    get_server_response(unit, buf);
     resp = atoi(buf);
-    if (resp == 553) {
-	err = pop_before_smtp(minfo->server, sender);
-	if (!err) {
-	    goto try_again;
-	}
-    } else if (resp != 250 && resp != 251) {
+    if (resp != 250 && resp != 251) {
 	chopstr(buf);
 	errmsg = g_strdup_printf("Server response to RCPT TO:\n%s", buf);
 	mail_infobox(errmsg, 1);
 	g_free(errmsg);
-	err = SMTP_BAD_ADDRESS; /* FIXME */
+	if (resp == 553) {
+	    if (strstr(buf, "must check")) {
+		err = SMTP_POP_FIRST;
+	    } else {
+		err = SMTP_NO_RELAY;
+	    }
+	}
 	goto bailout;
     }
 
-    flush_input(fr, buf);
+    send_to_server(fp, "DATA\r\n");
+    get_server_response(unit, buf);
 
-    fputs("DATA\r\n", fw);
 #if VERBOSE
-    fgets(buf, sizeof buf, fr);
-    fprintf(stderr, "response to DATA:\n%s\n", buf);
-#endif
-    fflush(fw);
-    
-    /* send composed message */
+    fputs("sending actual message...\n", stderr);
+#endif    
     while (fgets(buf, sizeof buf, infile)) {
-	fputs(buf, fw);
+	fputs(buf, fp);
     }
-    fputs("\n.\n", fw);
-    fflush(fw);
+    fputs("\n.\n", fp);
+    fflush(fp);
+
+    get_server_response(unit, buf);
 
  bailout:
 
-    flush_input(fr, buf);
+    send_to_server(fp, "QUIT\r\n");
+    get_server_response(unit, buf);
 
-    fputs("QUIT\r\n", fw);
-    fflush(fw);
-
-#if VERBOSE
-    fgets(buf, sizeof buf, fr);
-    fprintf(stderr, "on QUIT, response: '%s'\n", buf);
-    flush_input(fr, buf);
-#endif
-
-    fclose(fr);
-    fclose(fw);
-
+    fclose(fp);
     close(unit);
 
     return err;
@@ -965,14 +1137,21 @@ static int pack_and_mail (const char *fname, struct msg_info *msg,
 	} 
     }
 
+#if 0 /* testing */
+    err = pop_login(minfo);
+    fclose(fp);
+#else
     if (!err) {
-	err = stmp_send_mail(fp, msg->sender, msg->recip, minfo);
+	err = smtp_send_mail(fp, msg->sender, msg->recip, minfo);
 	if (err == SMTP_POP_FIRST) {
-	    pop_login(minfo->server, msg->sender);
-	    err = stmp_send_mail(fp, msg->sender, msg->recip, minfo);
+	    err = pop_login(minfo);
+	    if (!err) {
+		err = smtp_send_mail(fp, msg->sender, msg->recip, minfo);
+	    }
 	}
 	fclose(fp);
     }
+#endif
 
     remove(tmpfname);
 
