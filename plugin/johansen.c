@@ -231,36 +231,51 @@ johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv)
 
 static void 
 print_coint_vecs (struct eigval *evals, const gretl_matrix *vr, 
-		  int k, PRN *prn)
+		  int k, const int *list, const DATAINFO *pdinfo,
+		  JohansenCode jcode, PRN *prn)
 {
-    int i, j, rows = vr->rows;
+    int i, j, col, rows = vr->rows;
+    double den;
 
+    pprintf(prn, "\n%s", _("eigenvalue"));
     for (i=0; i<k; i++) {
-	double ev, x = 0.0;
-	int col = evals[i].idx;
-
-	if (k > 1) {
-	    pprintf(prn, "(%d) %s = %g\n", i + 1, _("Eigenvalue"), evals[i].v);
-	} else {
-	    pprintf(prn, "%s = %g\n", _("Eigenvalue"), evals[i].v);
-	}
-
-	pprintf(prn, " %s: [ ", _("cointegrating vector"));
-	for (j=0; j<rows; j++) {
-	    pprintf(prn, "%10.5g ", gretl_matrix_get(vr, j, col));
-	}
-	pputs(prn, "]\n");
-
-	pprintf(prn, " %s:         [ ", _("renormalized"));
-
-	x = gretl_matrix_get(vr, i, col);
-	for (j=0; j<rows; j++) {
-	    ev = gretl_matrix_get(vr, j, col) / x;
-	    pprintf(prn, "%10.5g ", ev);
-	}
-	pputs(prn, "]\n");
-
+	pprintf(prn, "%#11.5g ", evals[i].v);
     }
+    pputc(prn, '\n');
+
+    pprintf(prn, "\n%s\n", _("coeff"));
+    for (j=0; j<rows; j++) {
+	if (j < list[0]) {
+	    pprintf(prn, "%-10s", pdinfo->varname[list[j+1]]);
+	} else if (jcode == J_REST_CONST) {
+	    pprintf(prn, "%-10s", "const");
+	} else if (jcode == J_REST_TREND) {
+	    pprintf(prn, "%-10s", "trend");
+	}
+	for (i=0; i<k; i++) {
+	    col = evals[i].idx;
+	    pprintf(prn, "%#11.5g ", gretl_matrix_get(vr, j, col));
+	}
+	pputc(prn, '\n');
+    }
+
+    pprintf(prn, "\n%s\n", _("renormalized"));
+    for (j=0; j<rows; j++) {
+	if (j < list[0]) {
+	    pprintf(prn, "%-10s", pdinfo->varname[list[j+1]]);
+	} else if (jcode == J_REST_CONST) {
+	    pprintf(prn, "%-10s", "const");
+	} else if (jcode == J_REST_TREND) {
+	    pprintf(prn, "%-10s", "trend");
+	}
+	for (i=0; i<k; i++) {
+	    col = evals[i].idx;
+	    den = gretl_matrix_get(vr, i, col);
+	    pprintf(prn, "%#11.5g ", gretl_matrix_get(vr, j, col) / den);
+	}
+	pputc(prn, '\n');
+    }
+
     pputc(prn, '\n');
 }
 
@@ -305,7 +320,8 @@ char *safe_print_pval (double p, int i)
 }
 
 int johansen_eigenvals (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
-			int T, JohansenCode jcode, PRN *prn)
+			int T, JohansenCode jcode, const int *list, 
+			const DATAINFO *pdinfo, PRN *prn)
 {
     int k = gretl_matrix_cols(Suu);
     int kv = gretl_matrix_cols(Svv);
@@ -424,7 +440,7 @@ int johansen_eigenvals (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
 		    /* xgettext:no-c-format */
 		    _("Cointegrating vectors (trace test, 5% significance level):")); 
 	    pputc(prn, '\n');
-	    print_coint_vecs(evals, TmpR, r, prn);
+	    print_coint_vecs(evals, TmpR, r, list, pdinfo, jcode, prn);
 	} else {
 	    pputs(prn, 
 		  /* xgettext:no-c-format */

@@ -2319,11 +2319,13 @@ transcribe_data_as_uhat (int v, const double **Z, gretl_matrix *u,
 
 static int 
 johansen_complete (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
-		   int T, JohansenCode jcode, PRN *prn)
+		   int T, JohansenCode jcode, const int *list,
+		   const DATAINFO *pdinfo, PRN *prn)
 {
     void *handle = NULL;
     int (*johansen) (gretl_matrix *, gretl_matrix *, gretl_matrix *,
-		     int, JohansenCode, PRN *);
+		     int, JohansenCode, const int *, const DATAINFO *,
+		     PRN *);
     int err = 0;
 
     *gretl_errmsg = 0;
@@ -2333,7 +2335,7 @@ johansen_complete (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
     if (johansen == NULL) {
 	err = 1;
     } else {
-	err = (* johansen) (Suu, Svv, Suv, T, jcode, prn);
+	err = (* johansen) (Suu, Svv, Suv, T, jcode, list, pdinfo, prn);
 	close_plugin(handle);
     }
     
@@ -2375,7 +2377,7 @@ static int johansen_VAR (int order, const int *inlist,
 			 gretlopt opt, JohansenCode jcode, 
 			 PRN *prn)
 {
-    int i, j, neqns;
+    int i, neqns;
     struct var_lists vlists;
     MODEL var_model;
     MODEL jmod;
@@ -2425,9 +2427,7 @@ static int johansen_VAR (int order, const int *inlist,
 	pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
     }
 
-    j = 0;
     for (i=0; i<neqns; i++) {
-
 	compose_varlist(&vlists, vlists.stochvars[i + 1], 
 			order, 0, pdinfo);
 
@@ -2449,37 +2449,12 @@ static int johansen_VAR (int order, const int *inlist,
 	    clear_model(&var_model);
 	}
 
-	if (i == 0 && (jcode == J_REST_CONST || jcode == J_REST_TREND)) {
-	    if (jcode == J_REST_CONST) {
-		vlists.reglist[1] = 0;
-	    } else {
-		vlists.reglist[1] = gettrend(pZ, pdinfo, 0);
-	    }
-	    if (vlists.reglist[0] == 1) {
-		/* degenerate */
-		transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
-					resids->v, j++, resids->t1);
-	    } else {	    
-		jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
-		if ((err = jmod.errcode)) {
-		    goto var_bailout;
-		}
-		if (opt & OPT_V) {
-		    jmod.aux = AUX_JOHANSEN;
-		    jmod.ID = -1;
-		    printmodel(&jmod, pdinfo, OPT_NONE, prn);
-		}
-		transcribe_uhat_to_matrix(&jmod, resids->v, j++);
-		clear_model(&jmod);
-	    }
-	} 
-
 	/* estimate additional equations for Johansen test */
 	vlists.reglist[1] = resids->levels_list[i + 1]; 
 	if (vlists.reglist[0] == 1) {
 	    /* degenerate */
 	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
-				    resids->v, j++, resids->t1);
+				    resids->v, i, resids->t1);
 	} else {
 	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
 	    if ((err = jmod.errcode)) {
@@ -2490,10 +2465,36 @@ static int johansen_VAR (int order, const int *inlist,
 		jmod.ID = -1;
 		printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	    }
-	    transcribe_uhat_to_matrix(&jmod, resids->v, j++);
+	    transcribe_uhat_to_matrix(&jmod, resids->v, i);
 	    clear_model(&jmod);
 	}
     }
+
+    /* supplementary regressions for restricted cases */
+    if (jcode == J_REST_CONST || jcode == J_REST_TREND) {
+	if (jcode == J_REST_CONST) {
+	    vlists.reglist[1] = 0;
+	} else {
+	    vlists.reglist[1] = gettrend(pZ, pdinfo, 0);
+	}
+	if (vlists.reglist[0] == 1) {
+	    /* degenerate */
+	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
+				    resids->v, i, resids->t1);
+	} else {	    
+	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    if ((err = jmod.errcode)) {
+		goto var_bailout;
+	    }
+	    if (opt & OPT_V) {
+		jmod.aux = AUX_JOHANSEN;
+		jmod.ID = -1;
+		printmodel(&jmod, pdinfo, OPT_NONE, prn);
+	    }
+	    transcribe_uhat_to_matrix(&jmod, resids->v, i);
+	    clear_model(&jmod);
+	}
+    }     
 
     pputc(prn, '\n');
 
@@ -2681,7 +2682,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 #endif
 
 	/* now get johansen plugin to finish the job */
-	err = johansen_complete(Suu, Svv, Suv, T, jcode, prn);
+	err = johansen_complete(Suu, Svv, Suv, T, jcode, list, pdinfo, prn);
 
     johansen_bailout:
 
