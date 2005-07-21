@@ -872,6 +872,8 @@ double genr_get_critical (const char *line, const double **Z,
 
 static const double gamma_tol = 1e-7;
 
+/* internal functions */
+
 static double gamma_integral (double lambda, double x);
 static double gamma_integral_expansion (double lambda, double x);
 static double gamma_integral_fraction (double lambda, double x);
@@ -892,9 +894,9 @@ double gamma_dist (double s1, double s2, double x, int control)
     } else {
 	scale = s2 / s1; 
 	shape = s1 / scale; 
-    }
+    }	
 
-    if ((shape > 20) && (x / scale < 0.9 * shape) && (x > 1.0)) {
+    if ((shape > 20) && (x / scale < 0.9 * shape) && (x > 1)) {
 	xx = gammadist_wilson_hilferty(shape, scale, x);
     } else {
 	xx = gamma_integral(shape, x / scale);
@@ -906,26 +908,24 @@ double gamma_dist (double s1, double s2, double x, int control)
     return xx;
 }
 
+/* end exported functions */
+
 static double gamma_integral_expansion (double lambda, double x)
      /* Expansion of Gamma Integral int_0^x t^lambda-1 exp(-t)
 	Abramowitz and Stegun p. 262
 	Note that the series is alternating.
      */
 {
-    double x1 = 1.0;
-    double x2 = 0.0;
-    double x3 = 1.0 / lambda;
-    double xx;
-    int i;
+    double xx, x1 = 1.0;
+    double x2, x3 = 1.0 / lambda;
+    int i = 0;
 
-    for (i=1; i<100; i++) {
-	x1 *= (-x) / i;
+    do {
+	i++;
+	x1 *= (-x)/i;
 	x2 = x1 / (lambda + i);
 	x3 += x2;
-	if (fabs(x2) >= gamma_tol) {
-	    break;
-	}
-    }
+    } while (fabs(x2) >= gamma_tol && i <= 100);
 
     if (i == 100) {
 	xx = NADBL;
@@ -952,29 +952,20 @@ static double gamma_integral_fraction (double lambda, double x)
     double q1 = x, q2 = b * x;
     double r2 = p2 / q2;
     double d, p0, q0, r1, xx;
-    int i;
+    int c = 0;
 
-    for (i=1; i<100; i++) {
-	p0 = p1; 
-	p1 = p2; 
-	q0 = q1; 
-	q1 = q2; 
-	r1 = r2;
-	a += 1.0;
-	b += 2.0;
-	d = a * i;
+    do {
+	p0 = p1; p1 = p2; q0 = q1; q1 = q2; r1 = r2;
+	a = a + 1; b = b + 2; c = c + 1; d = a * c;
 	p2 = b * p1 - d * p0;
 	q2 = b * q1 - d * q0;
 	if (fabs(q2) > 0) {
 	    r2 = p2 / q2;
 	}
 	xx = fabs(r2 - r1);
-	if (xx >= gamma_tol || xx >= gamma_tol * r2) {
-	    break;
-	}
-    } 
+    } while (!((xx < gamma_tol ) || (xx < gamma_tol * r2) || (c == 100)));
 
-    if (i == 100) {
+    if (c == 100) {
 	xx = NADBL;
     } else {
 	xx = cephes_gamma(lambda);
@@ -988,11 +979,11 @@ static double gamma_integral (double lambda, double x)
 {
     double xx;
 
-    if (x < 0)  { 
+    if (x < 0.0)  { 
 	xx = NADBL;
     } else if (x < gamma_tol) {
 	xx = 0.0;
-    } else if ((x <= 1.0) || (x < 0.9 * lambda)) {
+    } else if (x <= 1.0 || x < 0.9 * lambda) {
 	xx = gamma_integral_expansion(lambda, x);
     } else {
 	xx = gamma_integral_fraction(lambda, x);
@@ -1008,11 +999,11 @@ static double gammadist_wilson_hilferty (double shape, double scale, double x)
         vol 1, 2nd ed, Wiley 1994
      */
 {
-    double df = 2 * shape;
-    double xscaled = x * 2 / scale;
+    double df = 2.0 * shape;
+    double xscaled = x * 2.0 / scale;
     double xx;
 
-    xx = exp(log(xscaled / df) / 3) - 1 + (double)(2)/9/df;
+    xx = exp(log(xscaled/df)/3) - 1 + (double)(2) / 9 / df;
     xx *= sqrt(9 * df / 2);
 
     return normal_cdf(xx);

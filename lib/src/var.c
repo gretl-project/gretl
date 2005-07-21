@@ -2296,13 +2296,13 @@ print_sigmas (const gretl_matrix *Suu, const gretl_matrix *Svv,
 }
 
 static void
-transcribe_uhat_to_matrix (const MODEL *pmod, gretl_matrix *u, int col)
+transcribe_uhat_to_matrix (const MODEL *pmod, gretl_matrix *u, int row)
 {
-    int i, rows = gretl_matrix_rows(u);
+    int j, cols = gretl_matrix_cols(u);
     int t = pmod->t1;
 
-    for (i=0; i<rows; i++) {
-	gretl_matrix_set(u, i, col, pmod->uhat[t++]);
+    for (j=0; j<cols; j++) {
+	gretl_matrix_set(u, row, j, pmod->uhat[t++]);
     }
 }
 
@@ -2339,11 +2339,11 @@ allocate_residual_matrices (struct var_resids *resids, int k,
 
     if (jcode == J_REST_CONST) vk++;
 
-    resids->u = gretl_matrix_alloc(T, k);
+    resids->u = gretl_matrix_alloc(k, T);
     if (resids->u == NULL) {
 	err = E_ALLOC;
     } else {
-	resids->v = gretl_matrix_alloc(T, vk);
+	resids->v = gretl_matrix_alloc(vk, T);
 	if (resids->v == NULL) {
 	    gretl_matrix_free(resids->u);
 	    resids->u = NULL;
@@ -2538,7 +2538,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    varlist = gretl_list_new(l0 + 1);
+    varlist = gretl_list_new(l0 + 2);
     if (varlist == NULL) {
 	free(resids.levels_list);
 	return E_ALLOC;
@@ -2603,7 +2603,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 		       &resids, opt, jcode, varprn); 
     
     if (!err) {
-	int k = gretl_matrix_cols(resids.u);
+	int k = gretl_matrix_rows(resids.u);
 	int T = resids.t2 - resids.t1 + 1;
 	gretl_matrix *Suu;
 	gretl_matrix *Svv;
@@ -2615,14 +2615,14 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	    goto johansen_bailout;
 	}
 
-	gretl_matrix_multiply_mod(resids.u, GRETL_MOD_TRANSPOSE,
-				  resids.u, GRETL_MOD_NONE,
+	gretl_matrix_multiply_mod(resids.u, GRETL_MOD_NONE,
+				  resids.u, GRETL_MOD_TRANSPOSE,
 				  Suu);
-	gretl_matrix_multiply_mod(resids.v, GRETL_MOD_TRANSPOSE,
-				  resids.v, GRETL_MOD_NONE,
+	gretl_matrix_multiply_mod(resids.v, GRETL_MOD_NONE,
+				  resids.v, GRETL_MOD_TRANSPOSE,
 				  Svv);
-	gretl_matrix_multiply_mod(resids.u, GRETL_MOD_TRANSPOSE,
-				  resids.v, GRETL_MOD_NONE,
+	gretl_matrix_multiply_mod(resids.u, GRETL_MOD_NONE,
+				  resids.v, GRETL_MOD_TRANSPOSE,
 				  Suv);
 
 	gretl_matrix_divide_by_scalar(Suu, T);

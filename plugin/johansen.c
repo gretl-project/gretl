@@ -127,7 +127,7 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
     for (i=0; i<6; i++) {
 	mt += x[i] * tracem[i];
 	vt += x[i] * tracev[i];
-	if(i){
+	if (i) {
 	    ml += x[i] * lmaxm[i-1];
 	    vl += x[i] * lmaxv[i-1];
 	}

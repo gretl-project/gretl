@@ -63,113 +63,6 @@ static char *read_double_and_advance (double *val, char *s)
     return s;
 }
 
-#if 0 /* work in progress here */
-
-/* npr = number of restrictions (p - r) 
-   itt = 1 or 2 for lambda-max test or trace test
-   itv = 0, 1, 2, 3, or 4 for cases 0, 1, 2, 1*, or 2*.
-   arg = test statistic
-   val = P value (returned by routine) 
-*/
-
-static int johval (int npr, int itt, int itv, 
-		   double arg, double *val)
-{
-    gzFile fz;
-    int i1, i2[2];
-
-    int i, ii, np, nx;
-    int junk;
-    double size;
-    int iskip;
-    double precrt;
-
-    char datfile[FILENAME_MAX];
-
-    struct {
-	double crits[URCLEN];
-	double cnorm[URCLEN];
-	double beta[BIGLEN];
-	double wght[URCLEN];
-    } joh;
-
-    /* byte offsets into data : FIXME */
-    int joh_offsets[] = {
-	39,     /* joh-1 */
-	60685,  /* joh-2 */
-	121331, /* joh-3 */
-	178662, /* joh-4 */
-	239308, /* joh-5 */
-	303269, /* joh-6 */
-	360600, /* joh-7 */
-	427876, /* joh-8 */
-	481892  /* probs */
-    };
-
-    int urc_ret = URC_OK;
-
-    if (npr < 1 || npr > 12) {
-	fprintf(stderr, "Number of restrictions must be between 1 and 8\n");
-	return URC_BAD_PARAM;
-    }
-
-    if (itt < 1 || itt > 2) {
-	fprintf(stderr, "The valid options for itt are 1 and 2.\n");
-	return URC_BAD_PARAM;
-    }
-
-    if (itv < 0 || itv > 4) {
-	fprintf(stderr, "The valid options for itv are 0, 1, 2, 3 and 4\n");
-	return URC_BAD_PARAM;
-    }
-
-    /* Open data file */
-    sprintf(datfile, "%sdata%cjohdata.gz", path, SLASH);
-    fz = gzopen(datfile, "rb");
-    if (fz == NULL) {
-	return URC_NOT_FOUND;
-    }
-
-    /* skip to appropriate location in data file */
-    gzseek(fz, (z_off_t) joh_offsets[npr - 1], SEEK_SET);
-
-    if (itt != 1) {
-	iskip = 1110;
-    }    
-    iskip += itv * (URCLEN + 1);
-    for (i = 0; i < iskip; i++) {
-	gzgets(fz, line, sizeof line);
-    }
-
-    /* johN table */
-    for (i = 1; i <= URCLEN; i++) {
-	char *s = gzgets(fz, line, sizeof line);
-
-	/* ii = 222 - i; */
-	read_double_and_advance(&joh.crits[i - 1], s); /* &crits[ii - 1] */
-	read_double_and_advance(&joh.wght[i - 1], s);
-    }
-
-    /* skip to probs now */
-    for (i = 1; i <= URCLEN; i++) {
-	char *s = gzgets(fz, line, sizeof line);
-
-	read_double_and_advance(&joh.probs[i - 1], s);
-	read_double_and_advance(&joh.cnorm[i - 1], s);
-    }
-
-    np = 11;
-    precrt = 2.; /* check args to fpval */
-    *val = fpval(joh.crits, joh.cnorm, joh.wght, joh.probs, 
-		 arg, 2.0, 11, nx);
-
-    gzclose(fz);
-
-    return urc_ret;
-}
-
-#endif /* work in progress */
-
 /* 
    niv = # of integrated variables
    itv = appropriate ur_code for nc, c, ct, ctt models
@@ -423,6 +316,7 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	/* check to see if gamma(4) is needed */
 	sd4 = sqrt(ssrt / (np1 - 4) * xomx[15]);
 	ttest = fabs(gamma[3]) / sd4;
+
 	if (ttest > precrt) {
 	    d1 = stat;
 	    crfit = gamma[0] + gamma[1] * stat + gamma[2] * (d1 * d1) + 
@@ -734,7 +628,6 @@ static double ddnor (double ystar)
 	isw = -1;
     }
 
-    /* evaluate erfc for x > 4.0 */
     if (x > 4.0) {
 	x2 = x * x;
 	xm2 = 1.0 / x2;
@@ -751,7 +644,7 @@ static double ddnor (double ystar)
 	if (isw == -1) {
 	    erfc = 2. - erfc;
 	}
-    } else if (x <= 4.0 && x > .477) {
+    } else if (x > 0.477) {
 	x2 = x * x;
 	x3 = x2 * x;
 	x4 = x2 * x2;
@@ -769,7 +662,6 @@ static double ddnor (double ystar)
 	    erfc = 2. - erfc;
 	}
     } else {
-	/* evaluate erf for x < .477 */
 	x2 = x * x;
 	x4 = x2 * x2;
 	x6 = x4 * x2;

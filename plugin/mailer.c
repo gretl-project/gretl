@@ -35,16 +35,16 @@ extern int h_errno;
 
 #include "mpack/mpack.h"
 
-enum {
+typedef enum {
     MAIL_OK,
     MAIL_NO_RECIPIENT,
     MAIL_NO_SERVER,
     MAIL_NO_SENDER,
     MAIL_NO_PASS,
     MAIL_CANCEL
-};
+} MailError;
 
-enum {
+typedef enum {
     SMTP_OK,
     SMTP_NO_CONNECT,
     SMTP_NO_RELAY,
@@ -52,7 +52,16 @@ enum {
     SMTP_BAD_SENDER,
     SMTP_BAD_ADDRESS,
     SMTP_ERR
-};
+} SMTPError;
+
+typedef enum {
+    SMTP_EHLO,
+    SMTP_MAIL,
+    SMTP_RCPT,
+    SMTP_DATA,
+    SMTP_DOT,
+    SMTP_QUIT
+} SMTPCode;
 
 #define SBSIZE 4096
 
@@ -882,6 +891,9 @@ static int get_server_response (int fd, char *buf)
     int ret;
 
     memset(buf, 0, SBSIZE);
+#if VERBOSE
+    fputs("doing read() on socket...\n", stderr);
+#endif
     ret = read(fd, buf, SBSIZE - 1);
 #if VERBOSE
     fprintf(stderr, "response:\n%s\n", buf);
@@ -971,6 +983,23 @@ static void set_pop_defaults (struct mail_info *minfo)
     }
 }
 
+static int get_POP_error (char *buf)
+{
+    int err = 0;
+
+    if (*buf == '-') {
+	gchar *errmsg;
+
+	chopstr(buf);
+	errmsg = g_strdup_printf("POP server said:\n%s", buf);
+	mail_infobox(errmsg, 1);
+	g_free(errmsg);
+	err = 1;
+    }
+
+    return err;
+}
+
 static int pop_login (struct mail_info *minfo)
 {
     FILE *fp;
@@ -983,7 +1012,7 @@ static int pop_login (struct mail_info *minfo)
 	return err;
     }
 
-    fprintf(stderr, "trying pop_before_smtp, with %s\n", minfo->pop_server);
+    fprintf(stderr, "trying POP before SMTP, with %s\n", minfo->pop_server);
     
     unit = connect_to_server(minfo->pop_server, 110);
     if (unit < 0) {
@@ -998,19 +1027,71 @@ static int pop_login (struct mail_info *minfo)
 
     get_server_response(unit, buf);
 
-    send_to_server(fp, "user %s\n", minfo->pop_user);
+    send_to_server(fp, "USER %s\n", minfo->pop_user);
     get_server_response(unit, buf);
+    err = get_POP_error(buf);
 
-    send_to_server(fp, "pass %s\n", minfo->pop_pass);   
-    get_server_response(unit, buf);
+    if (!err) {
+	send_to_server(fp, "PASS %s\n", minfo->pop_pass);   
+	get_server_response(unit, buf);
+	err = get_POP_error(buf);
+    }
  
-    send_to_server(fp, "quit\r\n"); 
+    send_to_server(fp, "QUIT\r\n"); 
     get_server_response(unit, buf);
     
     fclose(fp);
     close(unit);
 
-    return 0;
+    return err;
+}
+
+static int get_SMTP_error (char *buf, SMTPCode code)
+{
+    gchar *errmsg = NULL;
+    int resp = atoi(buf);
+    int err = SMTP_OK;
+
+    if (code == SMTP_EHLO) {
+	if (resp != 250) {
+	    chopstr(buf);
+	    errmsg = g_strdup_printf("Server response to . :\n%s", buf);
+	    err = SMTP_ERR;
+	}
+    } else if (code == SMTP_MAIL || code == SMTP_RCPT) {
+	if (resp != 250) {
+	    chopstr(buf);
+	    errmsg = g_strdup_printf("Server response to RCPT:\n%s", buf);
+	    if (resp == 553) {
+		if (strstr(buf, "must check")) {
+		    err = SMTP_POP_FIRST;
+		} else {
+		    err = SMTP_NO_RELAY;
+		}
+	    } else {
+		err = SMTP_ERR;
+	    }
+	}
+    } else if (code == SMTP_DATA) {
+	if (resp != 354) {
+	    chopstr(buf);
+	    errmsg = g_strdup_printf("Server response to RCPT:\n%s", buf);
+	    err = SMTP_ERR;
+	}
+    } else if (code == SMTP_DOT) {
+	if (resp != 250) {
+	    chopstr(buf);
+	    errmsg = g_strdup_printf("Server response to . :\n%s", buf);
+	    err = SMTP_ERR;
+	}
+    } 
+
+    if (errmsg != NULL) {
+	mail_infobox(errmsg, 1);
+	g_free(errmsg);
+    }
+
+    return err;
 }
 
 static int
@@ -1019,10 +1100,8 @@ smtp_send_mail (FILE *infile, char *sender, char *recipient,
 {
     char localhost[256] = "localhost";
     char buf[SBSIZE];
-    gchar *errmsg;
     FILE *fp;
-    int unit, resp;
-    int err = SMTP_OK;
+    int unit, err = SMTP_OK;
 
     gethostname(localhost, sizeof localhost);
     fprintf(stderr, "localhost = '%s'\n", localhost);
@@ -1042,72 +1121,50 @@ smtp_send_mail (FILE *infile, char *sender, char *recipient,
 
     get_server_response(unit, buf);
 
-    send_to_server(fp, "HELO %s\r\n", localhost);
+    send_to_server(fp, "EHLO %s\r\n", localhost);
     get_server_response(unit, buf);
+    err = get_SMTP_error(buf, SMTP_EHLO);
+    if (err) goto bailout;
 
-    send_to_server(fp, "MAIL FROM: %s\r\n", sender);
+    send_to_server(fp, "MAIL FROM:<%s>\r\n", sender);
     get_server_response(unit, buf);
-    resp = atoi(buf);
-    if (resp != 250) {
-	chopstr(buf);
-	errmsg = g_strdup_printf("Server response to MAIL FROM:\n%s", buf);
-	mail_infobox(errmsg, 1);
-	g_free(errmsg);
-	if (resp == 553) {
-	    if (strstr(buf, "must check")) {
-		err = SMTP_POP_FIRST;
-	    } else {
-		err = SMTP_NO_RELAY;
-	    }
-	} else {
-	    err = SMTP_ERR;
-	}
-	goto bailout;
-    }
+    err = get_SMTP_error(buf, SMTP_MAIL);
+    if (err) goto bailout;
 
-    send_to_server(fp, "RCPT TO: %s\r\n", recipient);
+    send_to_server(fp, "RCPT TO:<%s>\r\n", recipient);
     get_server_response(unit, buf);
-    resp = atoi(buf);
-    if (resp != 250 && resp != 251) {
-	chopstr(buf);
-	errmsg = g_strdup_printf("Server response to RCPT TO:\n%s", buf);
-	mail_infobox(errmsg, 1);
-	g_free(errmsg);
-	if (resp == 553) {
-	    if (strstr(buf, "must check")) {
-		err = SMTP_POP_FIRST;
-	    } else {
-		err = SMTP_NO_RELAY;
-	    }
-	}
-	goto bailout;
-    }
+    err = get_SMTP_error(buf, SMTP_RCPT);
+    if (err) goto bailout;
 
     send_to_server(fp, "DATA\r\n");
     get_server_response(unit, buf);
+    err = get_SMTP_error(buf, SMTP_DATA);
+    if (err) goto bailout;
 
 #if VERBOSE
     fputs("sending actual message...\n", stderr);
 #endif    
-    while (fgets(buf, sizeof buf, infile)) {
+    while (fgets(buf, sizeof buf - 1, infile)) {
+	int n = strlen(buf);
+
+	/* rfc2821: ensure CRLF termination */
+	if (buf[n-1] == '\n' && buf[n-2] != '\r') {
+	    buf[n-1] = '\r';
+	    buf[n] = '\n';
+	    buf[n+1] = '\0';
+	}
 	fputs(buf, fp);
     }
-    fputs("\n.\n", fp);
+    fputs("\r\n.\r\n", fp);
     fflush(fp);
 
-#if 0
-    /* for some reason this hangs everything when I do it
-       from home, with POP before SMTP */
     get_server_response(unit, buf);
-#endif
+    err = get_SMTP_error(buf, SMTP_DOT);
 
  bailout:
 
     send_to_server(fp, "QUIT\r\n");
-#if 0
-    /* ditto here: why?? */
     get_server_response(unit, buf);
-#endif
 
     fclose(fp);
     close(unit);
