@@ -2259,36 +2259,40 @@ allocate_sigmas (gretl_matrix **s1, gretl_matrix **s2, gretl_matrix **s3,
 
 static void 
 print_sigmas (const gretl_matrix *Suu, const gretl_matrix *Svv, 
-	      const gretl_matrix *Suv, int k, PRN *prn)
+	      const gretl_matrix *Suv, PRN *prn)
 {
-    const gretl_matrix *P = NULL;
-    int i, j, l;
+    int nr, nc;
+    int i, j;
 
     pprintf(prn, "\n%s\n\n", _("Sample variance-covariance matrices for residuals"));
 
-    for (l=0; l<3; l++) {
-	if (l == 0) {
-	    P = Suu;
-	    pprintf(prn, " %s\n\n", _("VAR system in first differences"));
-	} else if (l == 1) {
-	    P = Svv;
-	    pprintf(prn, " %s\n\n", _("System with levels as dependent variable"));
-	} else {
-	    P = Suv;
-	    pprintf(prn, " %s\n\n", _("Cross-products"));
+    nr = gretl_matrix_rows(Suu);
+    pprintf(prn, " %s\n\n", _("VAR system in first differences"));
+    for (i=0; i<nr; i++) {
+	for (j=0; j<nr; j++) {
+	    pprintf(prn, "%#12.6g", gretl_matrix_get(Suu, i, j));
 	}
-
-	/* FIXME J_UNREST_CONST extra column */
-
-	for (i=0; i<k; i++) {
-	    for (j=0; j<k; j++) {
-		pprintf(prn, "%#12.6g", gretl_matrix_get(P, i, j));
-	    }
-	    pputc(prn, '\n');
-	}
-
 	pputc(prn, '\n');
     }
+
+    nr = gretl_matrix_rows(Svv);
+    pprintf(prn, "\n %s\n\n", _("System with levels as dependent variable"));
+    for (i=0; i<nr; i++) {
+	for (j=0; j<nr; j++) {
+	    pprintf(prn, "%#12.6g", gretl_matrix_get(Svv, i, j));
+	}
+	pputc(prn, '\n');
+    } 
+    
+    nr = gretl_matrix_rows(Suv);
+    nc = gretl_matrix_cols(Suv);
+    pprintf(prn, "\n %s\n\n", _("Cross-products"));
+    for (i=0; i<nr; i++) {
+	for (j=0; j<nc; j++) {
+	    pprintf(prn, "%#12.6g", gretl_matrix_get(Suv, i, j));
+	}
+	pputc(prn, '\n');
+    }     
 }
 
 static void
@@ -2439,9 +2443,8 @@ static int johansen_VAR (int order, const int *inlist,
 		printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	    }
 
-	    transcribe_uhat_to_matrix(&jmod, resids->v, i);
+	    transcribe_uhat_to_matrix(&jmod, resids->v, j++);
 	    clear_model(&jmod);
-	    j++;
 	}
 
 	/* estimate additional equations for Johansen test */
@@ -2479,7 +2482,9 @@ static JohansenCode jcode_from_opt (gretlopt opt)
 	jc = J_NO_CONST;
     } else if (opt & OPT_T) {
 	jc = J_UNREST_TREND;
-    } 
+    } else if (opt & OPT_R) {
+	jc = J_REST_CONST;
+    }
 
     return jc;
 }
@@ -2577,7 +2582,13 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (jcode != J_NO_CONST && jcode != J_REST_CONST) {
+    if (jcode == J_UNREST_TREND) {
+	/* add trend to VAR list */
+	varlist[0] += 1;
+	varlist[varlist[0]] = gettrend(pZ, pdinfo, 0);
+    }	
+
+    if (jcode >= J_UNREST_CONST) {
 	/* add the constant to the VAR list */
 	varlist[0] += 1;
 	varlist[varlist[0]] = 0;
@@ -2625,7 +2636,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 		ntodate(endobs, resids.t2, pdinfo), T);
 
 	if (opt & OPT_V) {
-	    print_sigmas(Suu, Svv, Suv, k, prn);
+	    print_sigmas(Suu, Svv, Suv, prn);
 	}
 
 #if 0

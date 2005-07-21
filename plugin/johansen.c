@@ -106,7 +106,7 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
     
     double mt, vt, ml, vl;
     const double *tracem, *tracev, *lmaxm, *lmaxv;
-    double x[7];
+    double g, x[7];
     int i;
 
     tracem = s_mTrace_m_coef[det];
@@ -120,8 +120,8 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
     x[0] = N * N;
     x[1] = N;
     x[2] = 1.0;
-    x[3] = (N == 1) ? 1.0 : 0.0 ;
-    x[4] = (N == 2) ? 1.0 : 0.0 ;
+    x[3] = (N == 1)? 1.0 : 0.0;
+    x[4] = (N == 2)? 1.0 : 0.0;
     x[5] = sqrt((double) N);
 
     for (i=0; i<6; i++) {
@@ -142,10 +142,10 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
 	x[0] = sqrt((double) N) / T;
 	x[1] = (double) N / T;
 	x[2] = x[1] * x[1];
-	x[3] = (N == 1) ? 1.0/ T : 0.0;
-	x[4] = (N == 1) ? 1.0 : 0.0;
-	x[5] = (N == 2) ? 1.0 : 0.0;
-	x[6] = (N == 3) ? 1.0 : 0.0;
+	x[3] = (N == 1)? 1.0 / T : 0.0;
+	x[4] = (N == 1)? 1.0 : 0.0;
+	x[5] = (N == 2)? 1.0 : 0.0;
+	x[6] = (N == 3)? 1.0 : 0.0;
 
 	for (i=0; i<7; i++) {
 	    m2 += x[i] * tracem[i];
@@ -156,8 +156,19 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
 	vt *= exp(v2);
     }
 
-    pval[0] = 1.0 - gamma_dist(mt, vt, tracetest, 2);
-    pval[1] = 1.0 - gamma_dist(ml, vl, lmaxtest, 2);
+    g = gamma_dist(mt, vt, tracetest, 2);
+    if (na(g)) {
+	pval[0] = NADBL;
+    } else {
+	pval[0] = 1.0 - g;
+    }
+
+    g = gamma_dist(ml, vl, lmaxtest, 2);
+    if (na(g)) {
+	pval[1] = NADBL;
+    } else {
+	pval[1] = 1.0 - g;
+    }
 
     return 0;
 }
@@ -254,26 +265,70 @@ print_coint_vecs (struct eigval *evals, const gretl_matrix *vr,
     pputc(prn, '\n');
 }
 
+static void print_test_case (JohansenCode jcode, PRN *prn)
+{
+    pputc(prn, '\n');
+
+    switch (jcode) {
+    case J_NO_CONST:
+	pputs(prn, "Case 1: no constant");
+	break;
+    case J_REST_CONST:
+	pputs(prn, "Case 2: restricted constant");
+	break;
+    case J_UNREST_CONST:
+	pputs(prn, "Case 3: unrestricted constant");
+	break;
+    case J_REST_TREND:
+	pputs(prn, "Case 4: restricted trend");
+	break;
+    case J_UNREST_TREND:
+	pputs(prn, "Case 5: unrestricted trend");
+	break;
+    default:
+	break;
+    }
+
+    pputc(prn, '\n');
+}
+
+char *safe_print_pval (double p, int i)
+{
+    static char pv0[32], pv1[32];
+
+    if (!na(p)) {
+	sprintf((i == 0)? pv0 : pv1, "%6.4f", p);
+    } else {
+	strcpy((i == 0)? pv0 : pv1, "  NA  ");
+    }
+
+    return (i== 0)? pv0 : pv1;
+}
+
 int johansen_eigenvals (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
 			int T, JohansenCode jcode, PRN *prn)
 {
-    int k = gretl_matrix_cols(Svv); /* FIXME restricted case */
-    gretl_matrix *Inv = NULL, *M = NULL, *Svvcpy = NULL;
+    int k = gretl_matrix_cols(Suu);
+    int kv = gretl_matrix_cols(Svv);
+    gretl_matrix *M = NULL, *Svvcpy = NULL;
     gretl_matrix *TmpL = NULL, *TmpR = NULL;
     double *eigvals = NULL;
     int r = 0, err = 0;
 
-    Inv = gretl_matrix_alloc(k, k);
-    TmpL = gretl_matrix_alloc(k, k);
-    TmpR = gretl_matrix_alloc(k, k);
-    M = gretl_matrix_alloc(k, k);
+    TmpL = gretl_matrix_alloc(kv, k);
+    TmpR = gretl_matrix_alloc(kv, kv);
+    M = gretl_matrix_alloc(kv, kv);
     Svvcpy = gretl_matrix_copy(Svv);
 
     if (Suu == NULL || Svv == NULL || Suv == NULL ||
-	Inv == NULL || TmpL == NULL || TmpR == NULL ||
+	TmpL == NULL || TmpR == NULL ||
 	M == NULL || Svvcpy == NULL) {
 	err = 1;
 	goto eigenvals_bailout;
+    }
+
+    if (kv > k) {
+	gretl_matrix_reuse(TmpR, k, kv);
     }
 
     /* calculate Suu^{-1} Suv */
@@ -300,14 +355,22 @@ int johansen_eigenvals (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
 	goto eigenvals_bailout;
     }
 
+    if (kv > k) {
+	gretl_matrix_reuse(TmpR, kv, kv);
+	gretl_matrix_zero(TmpR);
+    }
+
     eigvals = gretl_general_matrix_eigenvals(M, TmpR);
 
     if (eigvals != NULL) {
-	int i;
 	double cumeig = 0.0;
 	double *lambdamax = NULL, *trace = NULL;
 	struct eigval *evals;
 	double pval[2];
+	int i;
+
+	/* in case kv > k */
+	k = kv;
 
 	trace = malloc(k * sizeof *trace);
 	lambdamax = malloc(k * sizeof *lambdamax);
@@ -333,6 +396,8 @@ int johansen_eigenvals (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
  	    trace[i] = cumeig; 
 	}
 
+	print_test_case(jcode, prn);
+
 	/* first col shows cointegration rank under H0, 
 	   second shows associated eigenvalue */
 	pprintf(prn, "\n%s %s %s %s   %s %s\n", _("Rank"), _("Eigenvalue"), 
@@ -342,8 +407,9 @@ int johansen_eigenvals (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
 	for (i=0; i<k; i++) {
 	    /* second-last arg below was T, but Doornik does not use sample size */
 	    gamma_par_asymp(trace[i], lambdamax[i], jcode, k-i, 0, pval);
-	    pprintf(prn, "%4d%11.4f%11.4f [%6.4f]%11.4f [%6.4f]\n", \
-		    i, evals[i].v, trace[i], pval[0], lambdamax[i], pval[1]);
+	    pprintf(prn, "%4d%11.4f%11.4f [%s]%11.4f [%s]\n", \
+		    i, evals[i].v, trace[i], safe_print_pval(pval[0], 0), 
+		    lambdamax[i], safe_print_pval(pval[1], 1));
 	    if (pval[0] < 0.05) {
 		r++;
 	    }
@@ -377,7 +443,6 @@ int johansen_eigenvals (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
 
  eigenvals_bailout:    
 
-    gretl_matrix_free(Inv);
     gretl_matrix_free(TmpL);
     gretl_matrix_free(TmpR);
     gretl_matrix_free(M);

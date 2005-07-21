@@ -1095,12 +1095,19 @@ smtp_send_mail (FILE *infile, char *sender, char *recipient,
     fputs("\n.\n", fp);
     fflush(fp);
 
+#if 0
+    /* for some reason this hangs everything when I do it
+       from home, with POP before SMTP */
     get_server_response(unit, buf);
+#endif
 
  bailout:
 
     send_to_server(fp, "QUIT\r\n");
+#if 0
+    /* ditto here: why?? */
     get_server_response(unit, buf);
+#endif
 
     fclose(fp);
     close(unit);

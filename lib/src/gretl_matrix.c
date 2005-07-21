@@ -98,14 +98,16 @@ gretl_matrix *gretl_packed_matrix_alloc (int rows)
  * @rows: desired number of rows in "new" matrix.
  * @cols: desired number of columns in "new" matrix.
  *
- * A memory-conservation trick. If @m is an already-allocated
- * gretl matrix, you can "resize" it by specifying a new
- * number of rows and columns.  This works only if the product 
- * of @rows and @cols is less than or equal to the product of 
- * the number of rows and columns in the original matrix; no 
- * actual reallocation of memory is performed.  Note that
- * the matrix-pointer returned is not really new, and the
- * when the matrix is to be freed, gretl_matrix_free()
+ * An "experts only" memory-conservation trick. If @m is an 
+ * already-allocated gretl matrix, you can "resize" it by 
+ * specifying a new number of rows and columns.  This works 
+ * only if the product of @rows and @cols is less than or equal 
+ * to the product of the number of rows and columns in the 
+ * matrix as originally allocated; no actual reallocation of memory 
+ * is performed.  If you "reuse" with an excessive number of rows
+ * or columns you will surely crash your program or smash the
+ * stack. Note also that the matrix-pointer returned is not really 
+ * new, and the when the matrix is to be freed, gretl_matrix_free()
  * should be applied only once. 
  *
  * Returns: pointer to the "resized" gretl_matrix, or %NULL
@@ -114,17 +116,10 @@ gretl_matrix *gretl_packed_matrix_alloc (int rows)
 
 gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
 {
-    gretl_matrix *ret = NULL;
-    int oldsz = m->rows * m->cols;
-    int newsz = rows * cols;
-    
-    if (newsz <= oldsz) {
-	m->rows = rows;
-	m->cols = cols;
-	ret = m;
-    }
+    m->rows = rows;
+    m->cols = cols;
 
-    return ret;
+    return m;
 }
 
 /**
@@ -1792,6 +1787,21 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
     double *wr = NULL, *wi = NULL, *vr = NULL;
     double nullvl[2] = {0.0};
     double nullvr[2] = {0.0};
+
+    if (m->rows != m->cols) {
+	fprintf(stderr, "gretl_general_matrix_eigenvals:\n"
+		" matrix must be square, is %d x %d\n", m->rows, m->cols);
+	return NULL;
+    }
+
+    if (ev != NULL) {
+	if (ev->rows != n || ev->cols != n) {
+	    fprintf(stderr, "gretl_general_matrix_eigenvals:\n"
+		    " matrix to hold eigenvalues should be %d x %d, is %d x %d\n",
+		    m->rows, m->rows, ev->rows, ev->cols);
+	    return NULL;
+	}  
+    }  
 
     work = malloc(sizeof *work);
     if (work == NULL) {

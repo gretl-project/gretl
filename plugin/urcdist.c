@@ -63,6 +63,102 @@ static char *read_double_and_advance (double *val, char *s)
     return s;
 }
 
+#if 0 /* work in progress here */
+
+/* npr = number of restrictions (p - r) 
+   itt = 1 or 2 for lambda-max test or trace test
+   itv = 0, 1, 2, 3, or 4 for cases 0, 1, 2, 1*, or 2*.
+   arg = test statistic
+   val = P value (returned by routine) 
+*/
+
+static int johval (int npr, int itt, int itv, 
+		   double arg, double *val)
+{
+
+    int i1, i2[2];
+
+    double probs[URCLEN];
+    double cnorm[URCLEN];
+    double crits[URCLEN];
+    double wght[URCLEN];
+
+    int i, ii, np, nx;
+    double pval;
+    int junk;
+    double size, stat;
+    int iskip;
+    double precrt;
+
+    int urc_ret = URC_OK;
+
+    if (npr < 1 || npr > 12) {
+	fprintf(stderr, "Number of restrictions must be between 1 amd 12\n");
+	return URC_BAD_PARAM;
+    }
+
+    if (itt < 1 || itt > 2) {
+	fprintf(stderr, "The only valid options for itt are 1 and 2.\n");
+	return URC_BAD_PARAM;
+    }
+
+    if (itv < 0 || itv > 4) {
+	fprintf(stderr, "The valid options for itv are 0, 1, 2, 3 and 4\n");
+	return URC_BAD_PARAM;
+    }
+
+    /* open probs.tab */
+    /* open appropriate "joh" table */
+    /* o__1.ofnm = fnames + (npr - 1) * 12; */
+
+    /* skip copyright line */
+
+    do_fio(&c__1, (char *)&junk, (ftnlen)sizeof(int));
+    iskip = 0;
+
+    /* skip groups of 222 lines as necessary. */
+
+    if (itt != 1) {
+	iskip = 1110;
+    }
+    iskip += itv * 222;
+    if (iskip > 0) {
+	i1 = iskip;
+	for (i = 1; i <= i1; ++i) {
+	    s_rsfe(&io___11);
+	    do_fio(&c__1, (char *)&junk, (ftnlen)sizeof(int));
+	    e_rsfe();
+	}
+    }
+
+    do_fio(&c__1, (char *)&junk, (ftnlen)sizeof(int));
+
+    for (i = 1; i <= 221; ++i) {
+	ii = 222 - i;
+	do_fio(&c__1, &crits[ii - 1], sizeof(double));
+	do_fio(&c__1, &wght[ii - 1], sizeof(double));
+    }
+
+    for (i = 1; i <= 221; ++i) {
+	do_lio(&c__5, &c__1, &probs[i - 1], sizeof(double));
+	do_lio(&c__5, &c__1, &cnorm[i - 1], sizeof(double));
+    }
+
+ L999:
+
+    stat = arg;
+    np = 11;
+    precrt = 2.;
+    fpval_(crits, cnorm, wght, probs, &pval, stat, 2.0, 11, nx);
+    *val = pval;
+
+    /* close open files */
+
+    return urc_ret;
+}
+
+#endif /* work in progress */
+
 /* 
    niv = # of integrated variables
    itv = appropriate ur_code for nc, c, ct, ctt models
@@ -493,7 +589,7 @@ static int cholx (double *a, int m, int n)
 	    } else {
 		if (a[i + i * m] <= 0.0) {
 		    err = i;
-		    goto L20;
+		    goto cholx_exit;
 		}
 	    }
 	    if (i == j) {
@@ -512,14 +608,14 @@ static int cholx (double *a, int m, int n)
 	    ooa = 1. / a[j + j * m];
 	    if (i >= j) {
 		t = 1.;
-		goto L12;
+		goto cholx_jump;
 	    }
 	    kl = j - 1;
 	    t = 0.;
 	    for (k = i; k <= kl; ++k) {
 		t -= a[i + k * m] * a[k + j * m];
 	    }
-L12:
+	cholx_jump:
 	    a[i + j * m] = t * ooa;
 	}
     }
@@ -535,7 +631,8 @@ L12:
 	}
     }
 
-L20:
+ cholx_exit:
+
     return err;
 }
 
@@ -658,8 +755,8 @@ static double ddnor (double ystar)
     }
 
     return erfc * .5;
- L20:
 
+ L20:
     /* evaluate erfc for .477.lt.x.le.4.0 */
     x2 = x * x;
     x3 = x2 * x;
@@ -679,8 +776,8 @@ static double ddnor (double ystar)
     }
 
     return erfc * .5;
- L10:
 
+ L10:
     /* evaluate erf for x.lt..477 */
     x2 = x * x;
     x4 = x2 * x2;

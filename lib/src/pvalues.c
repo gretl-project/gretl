@@ -879,13 +879,12 @@ static double gamma_integral_expansion (double lambda, double x);
 static double gamma_integral_fraction (double lambda, double x);
 static double gammadist_wilson_hilferty (double shape, double scale, double x);
 
-/* exported functions */
+/* Control 1 : s1, s2 = shape, scale
+           2 : s1, s2 = expectation, variance
+   Returns NADBL on error 
+*/
 
 double gamma_dist (double s1, double s2, double x, int control)
-     /* Control 1 : s1, s2 = shape, scale
-                2 : s1, s2 = expectation, variance
-        Returns NADBL (-999.0) on error 
-     */
 {
     double shape = 0, scale = 0, xx;
 
@@ -895,17 +894,19 @@ double gamma_dist (double s1, double s2, double x, int control)
 	scale = s2; 
 	break;
     case 2: 
-	scale = s2/s1; 
-	shape = s1/scale; 
+	scale = s2 / s1; 
+	shape = s1 / scale; 
 	break;
     }
-    if ((shape > 20) && (x/scale < 0.9*shape) && (x > 1))
+    if ((shape > 20) && (x/scale < 0.9*shape) && (x > 1)) {
 	xx = gammadist_wilson_hilferty(shape, scale, x);
-    else {
-	xx = gamma_integral(shape, x/scale);
-	if (na(xx)) return xx;
-	xx /= cephes_gamma(shape);
+    } else {
+	xx = gamma_integral(shape, x / scale);
+	if (!na(xx)) {
+	    xx /= cephes_gamma(shape);
+	}
     }
+
     return xx;
 }
 
