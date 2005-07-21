@@ -279,7 +279,7 @@ static void print_test_case (JohansenCode jcode, PRN *prn)
 	pputs(prn, "Case 3: Unrestricted constant");
 	break;
     case J_REST_TREND:
-	pputs(prn, "Case 4: Restricted trend");
+	pputs(prn, "Case 4: Restricted trend, unrestricted constant");
 	break;
     case J_UNREST_TREND:
 	pputs(prn, "Case 5: Unrestricted trend and constant");

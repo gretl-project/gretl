@@ -2235,7 +2235,7 @@ allocate_sigmas (gretl_matrix **s1, gretl_matrix **s2, gretl_matrix **s3,
     gretl_matrix *Svv = NULL;
     gretl_matrix *Suv = NULL;
 
-    if (jcode == J_REST_CONST) {
+    if (jcode == J_REST_CONST || jcode == J_REST_TREND) {
 	vk++;
     }    
 
@@ -2348,7 +2348,9 @@ allocate_residual_matrices (struct var_resids *resids, int k,
     int vk = k;
     int err = 0;
 
-    if (jcode == J_REST_CONST) vk++;
+    if (jcode == J_REST_CONST || jcode == J_REST_TREND) {
+	vk++;
+    }
 
     resids->u = gretl_matrix_alloc(k, T);
     if (resids->u == NULL) {
@@ -2447,12 +2449,15 @@ static int johansen_VAR (int order, const int *inlist,
 	    clear_model(&var_model);
 	}
 
-	/* special case of constant on LHS */
-	if (i == 0 && jcode == J_REST_CONST) {
-	    vlists.reglist[1] = 0;
+	if (i == 0 && (jcode == J_REST_CONST || jcode == J_REST_TREND)) {
+	    if (jcode == J_REST_CONST) {
+		vlists.reglist[1] = 0;
+	    } else {
+		vlists.reglist[1] = gettrend(pZ, pdinfo, 0);
+	    }
 	    if (vlists.reglist[0] == 1) {
 		/* degenerate */
-		transcribe_data_as_uhat(0, (const double **) *pZ,
+		transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
 					resids->v, j++, resids->t1);
 	    } else {	    
 		jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
@@ -2467,7 +2472,7 @@ static int johansen_VAR (int order, const int *inlist,
 		transcribe_uhat_to_matrix(&jmod, resids->v, j++);
 		clear_model(&jmod);
 	    }
-	}
+	} 
 
 	/* estimate additional equations for Johansen test */
 	vlists.reglist[1] = resids->levels_list[i + 1]; 
@@ -2509,9 +2514,9 @@ static JohansenCode jcode_from_opt (gretlopt opt)
 	jc = J_UNREST_TREND;
     } else if (opt & OPT_R) {
 	jc = J_REST_CONST;
+    } else if (opt & OPT_A) {
+	jc = J_REST_TREND;
     }
-
-    /* FIXME "restricted trend": what is it? */
 
     return jc;
 }
