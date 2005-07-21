@@ -2306,6 +2306,17 @@ transcribe_uhat_to_matrix (const MODEL *pmod, gretl_matrix *u, int row)
     }
 }
 
+static void
+transcribe_data_as_uhat (int v, const double **Z, gretl_matrix *u, 
+			 int row, int t)
+{
+    int j, cols = gretl_matrix_cols(u);
+
+    for (j=0; j<cols; j++) {
+	gretl_matrix_set(u, row, j, Z[v][t++]);
+    }
+}
+
 static int 
 johansen_complete (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
 		   int T, JohansenCode jcode, PRN *prn)
@@ -2399,17 +2410,17 @@ static int johansen_VAR (int order, const int *inlist,
 	goto var_bailout;
     }
 
-    gretl_model_init(&var_model);
-
-    if (opt & OPT_V) {
-	pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
-    }
-
     resids->t1 = pdinfo->t1;
     resids->t2 = pdinfo->t2;
     err = allocate_residual_matrices(resids, neqns, jcode);
     if (err) {
 	goto var_bailout;
+    }
+
+    gretl_model_init(&var_model);
+
+    if (opt & OPT_V) {
+	pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
     }
 
     j = 0;
@@ -2418,49 +2429,65 @@ static int johansen_VAR (int order, const int *inlist,
 	compose_varlist(&vlists, vlists.stochvars[i + 1], 
 			order, 0, pdinfo);
 
-	var_model = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
-
-	if ((err = var_model.errcode)) {
-	    goto var_bailout;
+	if (vlists.reglist[0] == 1) {
+	    /* degenerate model */
+	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
+				    resids->u, i, resids->t1);
+	} else {
+	    var_model = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    if ((err = var_model.errcode)) {
+		goto var_bailout;
+	    }
+	    if (opt & OPT_V) {
+		var_model.aux = AUX_VAR;
+		var_model.ID = i + 1;
+		printmodel(&var_model, pdinfo, OPT_NONE, prn);
+	    }
+	    transcribe_uhat_to_matrix(&var_model, resids->u, i);
+	    clear_model(&var_model);
 	}
 
-	transcribe_uhat_to_matrix(&var_model, resids->u, i);
-
-	if (opt & OPT_V) {
-	    var_model.aux = AUX_VAR;
-	    var_model.ID = i + 1;
-	    printmodel(&var_model, pdinfo, OPT_NONE, prn);
-	}
-
-	/* special case with constant on LHS */
+	/* special case of constant on LHS */
 	if (i == 0 && jcode == J_REST_CONST) {
 	    vlists.reglist[1] = 0;
-	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    if (vlists.reglist[0] == 1) {
+		/* degenerate */
+		transcribe_data_as_uhat(0, (const double **) *pZ,
+					resids->v, j++, resids->t1);
+	    } else {	    
+		jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+		if ((err = jmod.errcode)) {
+		    goto var_bailout;
+		}
+		if (opt & OPT_V) {
+		    jmod.aux = AUX_JOHANSEN;
+		    jmod.ID = -1;
+		    printmodel(&jmod, pdinfo, OPT_NONE, prn);
+		}
+		transcribe_uhat_to_matrix(&jmod, resids->v, j++);
+		clear_model(&jmod);
+	    }
+	}
 
+	/* estimate additional equations for Johansen test */
+	vlists.reglist[1] = resids->levels_list[i + 1]; 
+	if (vlists.reglist[0] == 1) {
+	    /* degenerate */
+	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
+				    resids->v, j++, resids->t1);
+	} else {
+	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    if ((err = jmod.errcode)) {
+		goto var_bailout;
+	    }	
 	    if (opt & OPT_V) {
 		jmod.aux = AUX_JOHANSEN;
 		jmod.ID = -1;
 		printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	    }
-
 	    transcribe_uhat_to_matrix(&jmod, resids->v, j++);
 	    clear_model(&jmod);
 	}
-
-	/* estimate additional equations for Johansen test */
-	vlists.reglist[1] = resids->levels_list[i + 1]; 
-	jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
-
-	if (opt & OPT_V) {
-	    jmod.aux = AUX_JOHANSEN;
-	    jmod.ID = -1;
-	    printmodel(&jmod, pdinfo, OPT_NONE, prn);
-	}
-
-	transcribe_uhat_to_matrix(&jmod, resids->v, j++);
-
-	clear_model(&jmod);
-	clear_model(&var_model);
     }
 
     pputc(prn, '\n');
@@ -2599,7 +2626,6 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	varprn = prn;
     } 
 
-    /* Check Hamilton: what if order for test = 1? */
     err = johansen_VAR(order - 1, varlist, pZ, pdinfo, 
 		       &resids, opt, jcode, varprn); 
     
@@ -2632,6 +2658,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 
 	pprintf(prn, "%s:\n", _("Johansen test"));
 	pprintf(prn, "%s = %d\n", _("Number of equations"), k);
+	pprintf(prn, "%s = %d\n", _("Lag order"), order);
 	pprintf(prn, "%s: %s - %s (T = %d)\n", _("Estimation period"),
 		ntodate(stobs, resids.t1, pdinfo), 
 		ntodate(endobs, resids.t2, pdinfo), T);
