@@ -75,30 +75,46 @@ static char *read_double_and_advance (double *val, char *s)
 static int johval (int npr, int itt, int itv, 
 		   double arg, double *val)
 {
-
+    gzFile fz;
     int i1, i2[2];
 
-    double probs[URCLEN];
-    double cnorm[URCLEN];
-    double crits[URCLEN];
-    double wght[URCLEN];
-
     int i, ii, np, nx;
-    double pval;
     int junk;
-    double size, stat;
+    double size;
     int iskip;
     double precrt;
+
+    char datfile[FILENAME_MAX];
+
+    struct {
+	double crits[URCLEN];
+	double cnorm[URCLEN];
+	double beta[BIGLEN];
+	double wght[URCLEN];
+    } joh;
+
+    /* byte offsets into data : FIXME */
+    int joh_offsets[] = {
+	39,     /* joh-1 */
+	60685,  /* joh-2 */
+	121331, /* joh-3 */
+	178662, /* joh-4 */
+	239308, /* joh-5 */
+	303269, /* joh-6 */
+	360600, /* joh-7 */
+	427876, /* joh-8 */
+	481892  /* probs */
+    };
 
     int urc_ret = URC_OK;
 
     if (npr < 1 || npr > 12) {
-	fprintf(stderr, "Number of restrictions must be between 1 amd 12\n");
+	fprintf(stderr, "Number of restrictions must be between 1 and 8\n");
 	return URC_BAD_PARAM;
     }
 
     if (itt < 1 || itt > 2) {
-	fprintf(stderr, "The only valid options for itt are 1 and 2.\n");
+	fprintf(stderr, "The valid options for itt are 1 and 2.\n");
 	return URC_BAD_PARAM;
     }
 
@@ -107,52 +123,47 @@ static int johval (int npr, int itt, int itv,
 	return URC_BAD_PARAM;
     }
 
-    /* open probs.tab */
-    /* open appropriate "joh" table */
-    /* o__1.ofnm = fnames + (npr - 1) * 12; */
+    /* Open data file */
+    sprintf(datfile, "%sdata%cjohdata.gz", path, SLASH);
+    fz = gzopen(datfile, "rb");
+    if (fz == NULL) {
+	return URC_NOT_FOUND;
+    }
 
-    /* skip copyright line */
-
-    do_fio(&c__1, (char *)&junk, (ftnlen)sizeof(int));
-    iskip = 0;
-
-    /* skip groups of 222 lines as necessary. */
+    /* skip to appropriate location in data file */
+    gzseek(fz, (z_off_t) joh_offsets[npr - 1], SEEK_SET);
 
     if (itt != 1) {
 	iskip = 1110;
-    }
-    iskip += itv * 222;
-    if (iskip > 0) {
-	i1 = iskip;
-	for (i = 1; i <= i1; ++i) {
-	    s_rsfe(&io___11);
-	    do_fio(&c__1, (char *)&junk, (ftnlen)sizeof(int));
-	    e_rsfe();
-	}
+    }    
+    iskip += itv * (URCLEN + 1);
+    for (i = 0; i < iskip; i++) {
+	gzgets(fz, line, sizeof line);
     }
 
-    do_fio(&c__1, (char *)&junk, (ftnlen)sizeof(int));
+    /* johN table */
+    for (i = 1; i <= URCLEN; i++) {
+	char *s = gzgets(fz, line, sizeof line);
 
-    for (i = 1; i <= 221; ++i) {
-	ii = 222 - i;
-	do_fio(&c__1, &crits[ii - 1], sizeof(double));
-	do_fio(&c__1, &wght[ii - 1], sizeof(double));
+	/* ii = 222 - i; */
+	read_double_and_advance(&joh.crits[i - 1], s); /* &crits[ii - 1] */
+	read_double_and_advance(&joh.wght[i - 1], s);
     }
 
-    for (i = 1; i <= 221; ++i) {
-	do_lio(&c__5, &c__1, &probs[i - 1], sizeof(double));
-	do_lio(&c__5, &c__1, &cnorm[i - 1], sizeof(double));
+    /* skip to probs now */
+    for (i = 1; i <= URCLEN; i++) {
+	char *s = gzgets(fz, line, sizeof line);
+
+	read_double_and_advance(&joh.probs[i - 1], s);
+	read_double_and_advance(&joh.cnorm[i - 1], s);
     }
 
- L999:
-
-    stat = arg;
     np = 11;
-    precrt = 2.;
-    fpval_(crits, cnorm, wght, probs, &pval, stat, 2.0, 11, nx);
-    *val = pval;
+    precrt = 2.; /* check args to fpval */
+    *val = fpval(joh.crits, joh.cnorm, joh.wght, joh.probs, 
+		 arg, 2.0, 11, nx);
 
-    /* close open files */
+    gzclose(fz);
 
     return urc_ret;
 }
@@ -716,79 +727,60 @@ static double ddnor (double ystar)
 
     x = -y * root2;
 
-    if (x > 0.) {
-	goto L1;
-    }
-    if (x < 0.) {
-	goto L2;
-    }
-
-    return .5;
-
- L2:
-    x = -x;
-    isw = -1;
-
- L1:
-    if (x < .477) {
-	goto L10;
-    }
-    if (x <= 4.) {
-	goto L20;
+    if (x == 0.0) {
+	return .5;
+    } else if (x < 0.0) {
+	x = -x;
+	isw = -1;
     }
 
-    /* evaluate erfc for x.gt.4.0 */
-    x2 = x * x;
-    xm2 = 1. / x2;
-    xm4 = xm2 * xm2;
-    xm6 = xm4 * xm2;
-    xm8 = xm4 * xm4;
-    xm10 = xm6 * xm4;
-    top = p[0] + p[1] * xm2 + p[2] * xm4 + p[3] * xm6 + p[4] * xm8 + p[5] * 
-	xm10;
-    bot = q[0] + q[1] * xm2 + q[2] * xm4 + q[3] * xm6 + q[4] * xm8 + xm10;
-    crap = orpi + top / (bot * x2);
-    erfc = exp(-x2) * crap / x;
+    /* evaluate erfc for x > 4.0 */
+    if (x > 4.0) {
+	x2 = x * x;
+	xm2 = 1.0 / x2;
+	xm4 = xm2 * xm2;
+	xm6 = xm4 * xm2;
+	xm8 = xm4 * xm4;
+	xm10 = xm6 * xm4;
+	top = p[0] + p[1] * xm2 + p[2] * xm4 + p[3] * xm6 + p[4] * xm8 + p[5] * 
+	    xm10;
+	bot = q[0] + q[1] * xm2 + q[2] * xm4 + q[3] * xm6 + q[4] * xm8 + xm10;
+	crap = orpi + top / (bot * x2);
+	erfc = exp(-x2) * crap / x;
 
-    if (isw == -1) {
-	erfc = 2. - erfc;
+	if (isw == -1) {
+	    erfc = 2. - erfc;
+	}
+    } else if (x <= 4.0 && x > .477) {
+	x2 = x * x;
+	x3 = x2 * x;
+	x4 = x2 * x2;
+	x5 = x3 * x2;
+	x6 = x3 * x3;
+	x7 = x3 * x4;
+	x8 = x4 * x4;
+	top = a[0] + a[1] * x + a[2] * x2 + a[3] * x3 + a[4] * 
+	    x4 + a[5] * x5 + a[6] * x6 + a[7] * x7 + a[8] * x8;
+	bot = b[0] + b[1] * x + b[2] * x2 + b[3] * x3 + 
+	    b[4] * x4 + b[5] * x5 + b[6] * x6 + b[7] * x7 + x8;
+	erfc = exp(-x2) * top / bot;
+
+	if (isw == -1) {
+	    erfc = 2. - erfc;
+	}
+    } else {
+	/* evaluate erf for x < .477 */
+	x2 = x * x;
+	x4 = x2 * x2;
+	x6 = x4 * x2;
+	x8 = x4 * x4;
+	top = c[0] + c[1] * x2 + c[2] * x4 + c[3] * x6 + c[4] * x8;
+	bot = d[0] + d[1] * x2 + d[2] * x4 + d[3] * x6 + x8;
+	erf = x * top / bot;
+
+	erf *= isw;
+	erfc = 1.0 - erf;
     }
-
-    return erfc * .5;
-
- L20:
-    /* evaluate erfc for .477.lt.x.le.4.0 */
-    x2 = x * x;
-    x3 = x2 * x;
-    x4 = x2 * x2;
-    x5 = x3 * x2;
-    x6 = x3 * x3;
-    x7 = x3 * x4;
-    x8 = x4 * x4;
-    top = a[0] + a[1] * x + a[2] * x2 + a[3] * x3 + a[4] * 
-	x4 + a[5] * x5 + a[6] * x6 + a[7] * x7 + a[8] * x8;
-    bot = b[0] + b[1] * x + b[2] * x2 + b[3] * x3 + 
-	b[4] * x4 + b[5] * x5 + b[6] * x6 + b[7] * x7 + x8;
-    erfc = exp(-x2) * top / bot;
-
-    if (isw == -1) {
-	erfc = 2. - erfc;
-    }
-
-    return erfc * .5;
-
- L10:
-    /* evaluate erf for x.lt..477 */
-    x2 = x * x;
-    x4 = x2 * x2;
-    x6 = x4 * x2;
-    x8 = x4 * x4;
-    top = c[0] + c[1] * x2 + c[2] * x4 + c[3] * x6 + c[4] * x8;
-    bot = d[0] + d[1] * x2 + d[2] * x4 + d[3] * x6 + x8;
-    erf = x * top / bot;
-
-    erf *= isw;
-    erfc = 1. - erf;
 
     return erfc * .5;
 }
