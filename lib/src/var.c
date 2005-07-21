@@ -2432,7 +2432,7 @@ static int johansen_VAR (int order, const int *inlist,
 			order, 0, pdinfo);
 
 	if (vlists.reglist[0] == 1) {
-	    /* degenerate model */
+	    /* degenerate model (nothing to concentrate out) */
 	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
 				    resids->u, i, resids->t1);
 	} else {

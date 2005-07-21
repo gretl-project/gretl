@@ -423,7 +423,7 @@ int johansen_eigenvals (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
 	for (i=0; i<hmax; i++) {
 	    /* second-last arg below was T, but Doornik does not use sample size */
 	    gamma_par_asymp(trace[i], lambdamax[i], jcode, hmax - i, 0, pval);
-	    pprintf(prn, "%4d%11.4f%11.4f [%s]%11.4f [%s]\n", \
+	    pprintf(prn, "%4d%#11.5g%#11.5g [%s]%#11.5g [%s]\n", \
 		    i, evals[i].v, trace[i], safe_print_pval(pval[0], 0), 
 		    lambdamax[i], safe_print_pval(pval[1], 1));
 	    if (pval[0] < 0.05) {
