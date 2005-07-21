@@ -54,8 +54,6 @@ static void print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo,
 				  PRN *prn);
 static void print_ll (const MODEL *pmod, PRN *prn);
 
-/* ......................................................... */ 
-
 static void noconst (const MODEL *pmod, PRN *prn)
 {
     if (na(pmod->rsq)) return;
@@ -1364,7 +1362,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     }
 
-    if (!pmod->ifc && pmod->ci != NLS && plain_format(prn)) {
+    if (!pmod->ifc && pmod->ci != NLS && pmod->aux != AUX_VAR
+	&& pmod->aux != AUX_JOHANSEN && plain_format(prn)) {
 	noconst(pmod, prn);
     }
     

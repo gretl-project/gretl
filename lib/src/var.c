@@ -2472,8 +2472,6 @@ static int johansen_VAR (int order, const int *inlist,
     return err;
 }
 
-/* FIXME: handle the "restricted" cases too */
-
 static JohansenCode jcode_from_opt (gretlopt opt)
 {
     JohansenCode jc = J_UNREST_CONST;
@@ -2485,6 +2483,8 @@ static JohansenCode jcode_from_opt (gretlopt opt)
     } else if (opt & OPT_R) {
 	jc = J_REST_CONST;
     }
+
+    /* FIXME "restricted trend": what is it? */
 
     return jc;
 }
@@ -2538,6 +2538,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
+    /* make list long enough to accommodate trend, if wanted */
     varlist = gretl_list_new(l0 + 2);
     if (varlist == NULL) {
 	free(resids.levels_list);
