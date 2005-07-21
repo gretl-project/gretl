@@ -870,9 +870,7 @@ double genr_get_critical (const char *line, const double **Z,
    Draws upon the pascal code specialf.pas by Bent Nielsen.
 */
 
-static const double tolerance = 1e-7;
-
-/* internal functions */
+static const double gamma_tol = 1e-7;
 
 static double gamma_integral (double lambda, double x);
 static double gamma_integral_expansion (double lambda, double x);
@@ -886,19 +884,17 @@ static double gammadist_wilson_hilferty (double shape, double scale, double x);
 
 double gamma_dist (double s1, double s2, double x, int control)
 {
-    double shape = 0, scale = 0, xx;
+    double shape, scale, xx;
 
-    switch (control) {
-    case 1: 
+    if (control == 1) {
 	shape = s1; 
 	scale = s2; 
-	break;
-    case 2: 
+    } else {
 	scale = s2 / s1; 
 	shape = s1 / scale; 
-	break;
     }
-    if ((shape > 20) && (x/scale < 0.9*shape) && (x > 1)) {
+
+    if ((shape > 20) && (x / scale < 0.9 * shape) && (x > 1.0)) {
 	xx = gammadist_wilson_hilferty(shape, scale, x);
     } else {
 	xx = gamma_integral(shape, x / scale);
@@ -910,27 +906,33 @@ double gamma_dist (double s1, double s2, double x, int control)
     return xx;
 }
 
-/* end exported functions */
-
 static double gamma_integral_expansion (double lambda, double x)
      /* Expansion of Gamma Integral int_0^x t^lambda-1 exp(-t)
 	Abramowitz and Stegun p. 262
 	Note that the series is alternating.
      */
 {
-    double x1, x2, x3, xx;
-    int i = 0;
+    double x1 = 1.0;
+    double x2 = 0.0;
+    double x3 = 1.0 / lambda;
+    double xx;
+    int i;
 
-    x1 = 1;
-    x3 = 1/lambda;
-    do {
-	i++;
-	x1 *= (-x)/i;
-	x2 = x1/(lambda + i);
+    for (i=1; i<100; i++) {
+	x1 *= (-x) / i;
+	x2 = x1 / (lambda + i);
 	x3 += x2;
-    } while (fabs(x2) >= tolerance && i <= 100);
-    xx = x3 * exp(lambda*log(x));
-    if (i == 100) return NADBL;
+	if (fabs(x2) >= gamma_tol) {
+	    break;
+	}
+    }
+
+    if (i == 100) {
+	xx = NADBL;
+    } else {
+	xx = x3 * exp(lambda * log(x));
+    }
+
     return xx;
 }
 
@@ -944,25 +946,41 @@ static double gamma_integral_fraction (double lambda, double x)
 	See also Schwartz p. 120.      
      */
 {
-    double a = 1-lambda;
-    double b = a+x+1;
-    double p1 = 1, p2 = 1+x;
-    double q1 = x, q2 = b*x;
-    double d, p0, q0, r1, r2, xx;
-    int c = 0;
+    double a = 1 - lambda;
+    double b = a + x + 1;
+    double p1 = 1, p2 = 1 + x;
+    double q1 = x, q2 = b * x;
+    double r2 = p2 / q2;
+    double d, p0, q0, r1, xx;
+    int i;
 
-    r2 = p2/q2;
-    do {
-	p0 = p1; p1 = p2; q0 = q1; q1 = q2; r1 = r2;
-	a = a+1; b = b+2; c = c+1; d = a*c;
-	p2 = b*p1 - d*p0;
-	q2 = b*q1 - d*q0;
-	if (fabs(q2) > 0)  r2 = p2/q2;
-    } while (!((fabs(r2-r1) < tolerance ) || (fabs(r2-r1) < tolerance * r2)
-	       || (c == 100)));
-    xx = cephes_gamma(lambda);
-    xx -= exp(-x + lambda * log(x)) * r2;
-    if (c == 100) return NADBL;
+    for (i=1; i<100; i++) {
+	p0 = p1; 
+	p1 = p2; 
+	q0 = q1; 
+	q1 = q2; 
+	r1 = r2;
+	a += 1.0;
+	b += 2.0;
+	d = a * i;
+	p2 = b * p1 - d * p0;
+	q2 = b * q1 - d * q0;
+	if (fabs(q2) > 0) {
+	    r2 = p2 / q2;
+	}
+	xx = fabs(r2 - r1);
+	if (xx >= gamma_tol || xx >= gamma_tol * r2) {
+	    break;
+	}
+    } 
+
+    if (i == 100) {
+	xx = NADBL;
+    } else {
+	xx = cephes_gamma(lambda);
+	xx -= exp(-x + lambda * log(x)) * r2;
+    }
+
     return xx;
 }
 
@@ -971,15 +989,15 @@ static double gamma_integral (double lambda, double x)
     double xx;
 
     if (x < 0)  { 
-	return NADBL;
-    }
-    if (x < tolerance) {
-	xx = 0;
-    } else if ((x <= 1) || (x < 0.9*lambda)) {
+	xx = NADBL;
+    } else if (x < gamma_tol) {
+	xx = 0.0;
+    } else if ((x <= 1.0) || (x < 0.9 * lambda)) {
 	xx = gamma_integral_expansion(lambda, x);
     } else {
 	xx = gamma_integral_fraction(lambda, x);
     }
+
     return xx;
 }
 
@@ -990,12 +1008,13 @@ static double gammadist_wilson_hilferty (double shape, double scale, double x)
         vol 1, 2nd ed, Wiley 1994
      */
 {
-    double xx, df, xscaled;
+    double df = 2 * shape;
+    double xscaled = x * 2 / scale;
+    double xx;
 
-    df = 2 * shape;
-    xscaled = x * 2/scale;
-    xx = exp(log(xscaled/df)/3) - 1 + (double)(2)/9/df;
-    xx *= sqrt(9*df/2);
+    xx = exp(log(xscaled / df) / 3) - 1 + (double)(2)/9/df;
+    xx *= sqrt(9 * df / 2);
+
     return normal_cdf(xx);
 } 
 
