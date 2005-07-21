@@ -66,6 +66,8 @@ struct _selector {
 static int default_var;
 static int *xlist;
 static int *auxlist;
+static int *calist;
+
 static GtkWidget *scatters_label;
 static GtkWidget *scatters_menu;
 
@@ -182,6 +184,9 @@ void clear_selector (void)
 
     free(auxlist);
     auxlist = NULL;
+
+    free(calist);
+    calist = NULL;
 }
 
 /* add to "extra" var slot the current selection from sr->varlist */
@@ -782,7 +787,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	    add_to_cmdlist(sr, lags);
 	    add_to_cmdlist(sr, " ; ");
 	}
-    } else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
+    } else if (sr->code == VAR || COINT_CODE(sr->code)) {
 	GtkAdjustment *adj;
  
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[0]));
@@ -853,15 +858,23 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	return TRUE;
     }
 
-    if (MODEL_CODE(sr->code) && rows > 0) {
-	int *rlist;
+    if (rows > 0) {
+	int **plist = NULL;
 
-	rlist = myrealloc(xlist, (rows + 1) * sizeof *rlist);
-	if (rlist == NULL) {
-	    return FALSE;
+	if (MODEL_CODE(sr->code)) {
+	    plist = &xlist;
+	} else if (COINT_CODE(sr->code)) {
+	    plist = &calist;
 	}
-	xlist = rlist;
-	xlist[0] = rows;
+	if (plist != NULL) {
+	    int *tmplist;
+
+	    tmplist = myrealloc(*plist, (rows + 1) * sizeof *tmplist);
+	    if (tmplist != NULL) {
+		tmplist[0] = rows;
+		*plist = tmplist;
+	    }
+	}	    
     }
 
     model = gtk_tree_view_get_model (GTK_TREE_VIEW(sr->rightvars));
@@ -877,6 +890,8 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	g_free(tmp);
 	if (MODEL_CODE(sr->code) && xlist != NULL) {
 	    xlist[i+1] = rvar;
+	} else if (COINT_CODE(sr->code) && calist != NULL) {
+	    calist[i+1] = rvar;
 	}
 	gtk_tree_model_iter_next(model, &iter);
     }
@@ -1297,7 +1312,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     if (sr->code == WLS || sr->code == POISSON ||
 	sr->code == GR_DUMMY || sr->code == GR_3D) { 
 	extra_var_box(sr, right_vbox);
-    } else if (sr->code == COINT || sr->code == COINT2) {
+    } else if (COINT_CODE(sr->code)) {
 	lag_order_spin(sr, right_vbox);
     } else if (sr->code == TSLS) {
 	auxiliary_varlist_box(sr, right_vbox);
@@ -1845,7 +1860,16 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
 				       -1);
 		}
 	    }
-	} 
+	} else if (COINT_CODE(cmdcode) && calist != NULL) {
+	    for (i=1; i<=calist[0]; i++) {
+		int xi = calist[i];
+
+		gtk_list_store_append(store, &iter);
+		gtk_list_store_set(store, &iter, 0, xi, 
+				   1, datainfo->varname[xi], 
+				   -1);
+	    }
+	}
 
 	/* hook remove button to listing */
 	g_signal_connect (G_OBJECT(remove), "clicked", 

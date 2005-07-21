@@ -2348,8 +2348,6 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     gtk_main();
 }
 
-/* ........................................................... */
-
 static void set_radio_opt (GtkWidget *w, int *opt)
 {
     *opt = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
