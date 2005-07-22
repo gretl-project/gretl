@@ -187,9 +187,13 @@ static int inverse_compare_doubles (const void *a, const void *b)
 }
 
 static int 
-johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv)
+johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv,
+		    const double *eigvals)
 {
     gretl_matrix *a = NULL, *b = NULL;
+#if TRY_SIGN
+    gretl_matrix *s = NULL;
+#endif
     double x, den;
     int i, j, k = Svv->rows;
     int err = 0;
@@ -197,21 +201,33 @@ johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv)
     a = gretl_column_vector_alloc(k);
     b = gretl_column_vector_alloc(k);
 
+#if TRY_SIGN
+    s = gretl_vector_alloc(k);
+
+    if (a == NULL || b == NULL || s == NULL) {
+	gretl_matrix_free(a);
+	gretl_matrix_free(b);
+	gretl_matrix_free(s);
+	return E_ALLOC;
+    }
+#else
     if (a == NULL || b == NULL) {
 	gretl_matrix_free(a);
 	gretl_matrix_free(b);
 	return E_ALLOC;
     }
+#endif
 
     for (j=0; j<k; j++) {
 
+	/* select column from A */
 	for (i=0; i<k; i++) {
 	    x = gretl_matrix_get(A, i, j);
 	    gretl_vector_set(a, i, x);
 	}
 
+	/* find abs value of appropriate denominator */
 	gretl_matrix_multiply(Svv, a, b);
-
 	den = gretl_vector_dot_product(a, b, &err);
 
 	if (!err) {
@@ -219,12 +235,31 @@ johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv)
 	    for (i=0; i<k; i++) {
 		x = gretl_matrix_get(A, i, j);
 		gretl_matrix_set(A, i, j, x / den);
+#if TRY_SIGN
+		gretl_vector_set(a, i, x / den);
+#endif
 	    }
 	} 
+
+#if TRY_SIGN
+	/* ?? determine sign: a_i' * S_{vv} * \mu_i * a_i
+           This is based on Hamilton, but it doesn't seem to be 
+           working (always produces positive result)
+	*/
+	gretl_matrix_multiply_mod(a, GRETL_MOD_TRANSPOSE,
+				  Svv, GRETL_MOD_NONE,
+				  s);
+	gretl_matrix_multiply_by_scalar(a, eigvals[j]);
+	x = gretl_vector_dot_product(s, a, &err);
+	fprintf(stderr, "normalize: lambda[%d] = %g\n", j, x);
+#endif
     }
-    
+
     gretl_matrix_free(a);
     gretl_matrix_free(b);
+#if TRY_SIGN
+    gretl_matrix_free(s);
+#endif
 
     return err;
 }
@@ -328,7 +363,7 @@ int johansen_eigenvals (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
     gretl_matrix *M = NULL, *Svvcpy = NULL;
     gretl_matrix *TmpL = NULL, *TmpR = NULL;
     double *eigvals = NULL;
-    int r = 0, err = 0;
+    int err = 0;
 
     TmpL = gretl_matrix_alloc(kv, k);
     TmpR = gretl_matrix_alloc(kv, kv);
@@ -372,7 +407,6 @@ int johansen_eigenvals (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
 
     if (kv > k) {
 	gretl_matrix_reuse(TmpR, kv, kv);
-	gretl_matrix_zero(TmpR);
     }
 
     eigvals = gretl_general_matrix_eigenvals(M, TmpR);
@@ -426,27 +460,15 @@ int johansen_eigenvals (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
 	    pprintf(prn, "%4d%#11.5g%#11.5g [%s]%#11.5g [%s]\n", \
 		    i, evals[i].v, trace[i], safe_print_pval(pval[0], 0), 
 		    lambdamax[i], safe_print_pval(pval[1], 1));
-	    if (pval[0] < 0.05) {
-		r++;
-	    }
 	}
 	pputc(prn, '\n');
 
 	/* tmpR holds the eigenvectors */
-	johansen_normalize(TmpR, Svvcpy);
+	johansen_normalize(TmpR, Svvcpy, eigvals);
 
-	if (r > 0) {
-	    pputs(prn, 
-		    /* xgettext:no-c-format */
-		    _("Cointegrating vectors (trace test, 5% significance level):")); 
-	    pputc(prn, '\n');
-	    print_coint_vecs(evals, TmpR, r, list, pdinfo, jcode, prn);
-	} else {
-	    pputs(prn, 
-		  /* xgettext:no-c-format */
-		  _("No cointegrating vectors (trace test, 5% significance level)"));
-	    pputc(prn, '\n');
-	}
+	pputs(prn, _("Cointegrating vectors:")); 
+	pputc(prn, '\n');
+	print_coint_vecs(evals, TmpR, hmax, list, pdinfo, jcode, prn);
 
 	free(eigvals);
 	free(evals);

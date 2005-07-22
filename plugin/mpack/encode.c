@@ -80,9 +80,8 @@ int encode (FILE *fpin, const char *fname, const char *note,
     }
 
     fprintf(fpout, "Mime-Version: 1.0\n");
-    if (reply_to != NULL) {
-	fprintf(fpout, "Reply-To: %s\n", reply_to);
-    }
+    fprintf(fpout, "From: %s\n", reply_to);
+    /* fprintf(fpout, "Reply-To: %s\n", reply_to); */
     fprintf(fpout, "To: %s\n", recipient);
     fprintf(fpout, "Subject: %s\n", subject);
     fputs("Content-Type: multipart/mixed; boundary=\"-\"\n", fpout);
