@@ -51,6 +51,7 @@ typedef enum {
     SMTP_POP_FIRST,
     SMTP_BAD_SENDER,
     SMTP_BAD_ADDRESS,
+    SMTP_OLD_SERVER,
     SMTP_ERR
 } SMTPError;
 
@@ -1053,7 +1054,9 @@ static int get_SMTP_error (char *buf, SMTPCode code)
     int err = SMTP_OK;
 
     if (code == SMTP_EHLO) {
-	if (resp != 250) {
+	if (resp == 500) {
+	    err = SMTP_OLD_SERVER;
+	} else if (resp != 250) {
 	    chopstr(buf);
 	    errmsg = g_strdup_printf("Server response to . :\n%s", buf);
 	    err = SMTP_ERR;
@@ -1124,6 +1127,11 @@ smtp_send_mail (FILE *infile, char *sender, char *recipient,
     send_to_server(fp, "EHLO %s\r\n", localhost);
     get_server_response(unit, buf);
     err = get_SMTP_error(buf, SMTP_EHLO);
+    if (err == SMTP_OLD_SERVER) {
+	send_to_server(fp, "HELO %s\r\n", localhost);
+	get_server_response(unit, buf);
+	err = get_SMTP_error(buf, SMTP_EHLO);
+    }
     if (err) goto bailout;
 
     send_to_server(fp, "MAIL FROM:<%s>\r\n", sender);
