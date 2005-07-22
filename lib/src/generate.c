@@ -2430,7 +2430,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     /* special cases which are not of the form "lhs=rhs" */
     if (strcmp(s, "dummy") == 0) {
-	genr.err = dummy(pZ, pdinfo);
+	genr.err = dummy(pZ, pdinfo, 0);
 	if (!genr.err) {
 	    strcpy(gretl_msg, _("Periodic dummy variables generated.\n"));
 	}
@@ -4262,6 +4262,8 @@ static int n_new_dummies (const DATAINFO *pdinfo,
  * dummy:
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
+ * @center: if non-zero, subtract the sample mean from
+ * each of the generated dummies.
  *
  * Adds to the data set a set of periodic (usually seasonal)
  * dummy variables.
@@ -4269,7 +4271,7 @@ static int n_new_dummies (const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int dummy (double ***pZ, DATAINFO *pdinfo)
+int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 {
     char vname[USER_VLEN];
     char vlabel[MAXLABEL];
@@ -4303,6 +4305,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
     newvnum = orig_v;
 
     for (vi=1; vi<=ndums; vi++) {
+	double dx, dbar = 0.0;
 	int di = orig_v + vi - 1;
 
 	if (pdinfo->pd == 4 && pdinfo->structure == TIME_SERIES) {
@@ -4345,7 +4348,19 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
 		}
 		yy = (int) xx;
 		pp = (int) (mm * (xx - yy) + 0.5);
-		(*pZ)[di][t] = (pp == vi)? 1.0 : 0.0;
+		dx = (pp == vi)? 1.0 : 0.0;
+		(*pZ)[di][t] = dx;
+		if (center && dx > 0.0 && 
+		    t >= pdinfo->t1 && t <= pdinfo->t2) {
+		    dbar += 1.0;
+		}
+	    }
+	}
+
+	if (center) {
+	    dbar /= (pdinfo->t2 - pdinfo->t1 + 1);
+	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+		(*pZ)[di][t] -= dbar;
 	    }
 	}
     }

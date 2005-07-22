@@ -75,6 +75,7 @@ struct gretl_option gretl_opts[] = {
     { BXPLOT,   OPT_O, "notches" },
     { COINT,    OPT_N, "nc" },
     { COINT2,   OPT_A, "crt" },
+    { COINT2,   OPT_D, "seasonals" },
     { COINT2,   OPT_N, "nc" },
     { COINT2,   OPT_R, "rc" },
     { COINT2,   OPT_T, "ct" },

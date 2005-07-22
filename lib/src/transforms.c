@@ -880,3 +880,51 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     return (xpxlist[0] > 0)? 0 : E_SQUARES;
 }
 
+/**
+ * center_variables:
+ * @list: list of variables to process.
+ * @Z: data matrix.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ *
+ * Centers the variables specified in @list, subtracting their 
+ * respective means over the sample period given by @t1 and @t2.
+ *
+ * Returns: 0 on success, 1 if one of more of the variables had
+ * no valid observations.
+ */
+
+int center_variables (const int *list, double **Z, int t1, int t2)
+{
+    int i, v, t;
+    int err = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	double xbar = 0;
+	int xn = 0;
+
+	v = list[i];
+
+	for (t=t1; t<=t2; t++) {
+	    if (!na(Z[v][t])) {
+		xbar += Z[v][t];
+		xn++;
+	    }
+	}
+
+	if (xn == 0) {
+	    err = 1;
+	    continue;
+	}
+
+	xbar /= xn;
+
+	for (t=t1; t<=t2; t++) {
+	    if (!na(Z[v][t])) {
+		Z[v][t] -= xbar;
+	    }
+	}
+    }
+	
+    return err;
+}

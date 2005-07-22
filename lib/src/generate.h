@@ -27,7 +27,7 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
 
 int genrunit (double ***pZ, DATAINFO *pdinfo);
 
-int dummy (double ***pZ, DATAINFO *pdinfo);
+int dummy (double ***pZ, DATAINFO *pdinfo, int center);
 
 int paneldum (double ***pZ, DATAINFO *pdinfo); 
 

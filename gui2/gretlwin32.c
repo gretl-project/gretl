@@ -623,6 +623,7 @@ int send_file (char *fullname)
 	gchar *note = NULL;
 	MapiFileDesc mfd;
 	MapiMessage msg;
+	ULONG sd;
 
 	memset(&mfd, 0, sizeof mfd);
 	memset(&msg, 0, sizeof msg);
@@ -643,7 +644,7 @@ int send_file (char *fullname)
 	msg.nFileCount = 1;
 	msg.lpFiles = &mfd;
 
-	ULONG sd = send_mail(0L, 0, &msg, MAPI_DIALOG, 0L);
+	sd = send_mail(0L, 0, &msg, MAPI_DIALOG, 0L);
 
 	if (sd != SUCCESS_SUCCESS && sd != MAPI_E_USER_ABORT) {
 	    errbox("MAPI error sending message");

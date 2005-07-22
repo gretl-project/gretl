@@ -3426,7 +3426,7 @@ void add_dummies (gpointer data, guint u, GtkWidget *widget)
     }
 
     if (u == 0) {
-	err = dummy(&Z, datainfo);
+	err = dummy(&Z, datainfo, 0);
     } else if (u == 1) {
 	err = panel_unit_dummies(&Z, datainfo);
     } else if (u == 2) {
