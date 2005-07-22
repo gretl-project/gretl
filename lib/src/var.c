@@ -43,12 +43,18 @@ struct GRETL_VAR_ {
     int order;         /* lag order */
     int n;             /* number of observations */
     int ifc;           /* equations include a constant (1) or not (0) */
+    int ncoeff;        /* total coefficients per equation */
     gretl_matrix *A;   /* augmented coefficient matrix */
     gretl_matrix *E;   /* residuals matrix */
     gretl_matrix *C;   /* augmented Cholesky-decomposed error matrix */
+    gretl_matrix *S;   /* cross-equation covariance matrix */
     gretl_matrix *F;   /* optional forecast matrix */
     MODEL **models;    /* pointers to individual equation estimates */
     double *Fvals;     /* hold results of F-tests */
+    double ldet;       /* log-determinant of S */
+    double ll;         /* log-likelihood */
+    double AIC;        /* Akaike criterion */
+    double BIC;        /* Bayesian criterion */
     char *name;        /* for use in session management */
 };
 
@@ -123,15 +129,20 @@ static GRETL_VAR *gretl_VAR_new (int neqns, int order, const DATAINFO *pdinfo)
 
     var->neqns = neqns;
     var->order = order;
+    var->ncoeff = 0;
 
     var->A = NULL;
     var->E = NULL;
     var->C = NULL;
+    var->S = NULL;
     var->F = NULL;
 
     var->models = NULL;
     var->Fvals = NULL;
     var->name = NULL;
+
+    var->ll = var->ldet = NADBL;
+    var->AIC = var->BIC = NADBL;
 
     rows = neqns * order;
 
@@ -198,6 +209,7 @@ void gretl_VAR_free (GRETL_VAR *var)
     gretl_matrix_free(var->A);
     gretl_matrix_free(var->E);
     gretl_matrix_free(var->C);
+    gretl_matrix_free(var->S);
     gretl_matrix_free(var->F);
 
     free(var->Fvals);
@@ -443,7 +455,7 @@ int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn)
     n = gretl_matrix_rows(var->E);
 
     if (!err) {
-	S = gretl_matrix_vcv(var->E);
+	S = gretl_matrix_copy(var->S);
 	V = gretl_vector_alloc(p);
 	C = gretl_matrix_alloc(p, p);
 	X = gretl_matrix_copy_transpose(var->E);
@@ -595,45 +607,22 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
     return err;
 }
 
-static int gretl_VAR_do_error_decomp (int n, int neqns,
-				      const gretl_matrix *E,
+static int gretl_VAR_do_error_decomp (int g, const gretl_matrix *S,
 				      gretl_matrix *C)
 {
     gretl_matrix *tmp = NULL;
     int i, j, err = 0;
 
-    tmp = gretl_matrix_alloc(neqns, neqns);
+    /* copy cross-equation covariance matrix */
+    tmp = gretl_matrix_copy(S);
     if (tmp == NULL) {
 	err = E_ALLOC;
     }
 
-    /* form e'e */
-    if (!err && gretl_matrix_multiply_mod (E, GRETL_MOD_TRANSPOSE,
-					   E, GRETL_MOD_NONE,
-					   tmp)) {
-	err = 1;
-    }
-
-    /* divide by T (or use df correction?) to get sigma-hat.
-       Note: RATS 4 uses straight T.
-    */
-    if (!err) {
-	gretl_matrix_divide_by_scalar(tmp, (double) n);
-    }
-
-#if VAR_DEBUG
-    if (!err) {
-	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-
-	gretl_matrix_print(tmp, "Sigma-hat from VAR system", prn);
-	gretl_print_destroy(prn);
-    }
-#endif
-
     /* lower-triangularize and decompose */
     if (!err) {
-	for (i=0; i<neqns-1; i++) {
-	    for (j=i+1; j<neqns; j++) {
+	for (i=0; i<g-1; i++) {
+	    for (j=i+1; j<g; j++) {
 		gretl_matrix_set(tmp, i, j, 0.0);
 	    }
 	}
@@ -642,8 +631,8 @@ static int gretl_VAR_do_error_decomp (int n, int neqns,
 
     /* write the decomposition into the C matrix */
     if (!err) {
-	for (i=0; i<neqns; i++) {
-	    for (j=0; j<neqns; j++) {
+	for (i=0; i<g; i++) {
+	    for (j=0; j<g; j++) {
 		double x = gretl_matrix_get(tmp, i, j);
 
 		gretl_matrix_set(C, i, j, x);
@@ -1096,6 +1085,15 @@ int var_max_order (const int *list, const DATAINFO *pdinfo)
     return order - 1;
 }
 
+static int centered_dummy (const DATAINFO *pdinfo, int v)
+{
+    if (!strcmp(VARLABEL(pdinfo, v), "centered periodic dummy")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /* Given an incoming regression list, separate it into deterministic
    components (constant, trend, dummy variables) and stochastic
    components, and construct a list for each sort of variable.  Also
@@ -1127,6 +1125,7 @@ static int organize_var_lists (const int *list, const double **Z,
 	if (gotsep || 
 	    !strcmp(pdinfo->varname[li], "const") ||	   
 	    !strcmp(pdinfo->varname[li], "time") ||
+	    centered_dummy(pdinfo, li) ||
 	    gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[li])) {
 	    d[i] = 1;
 	    ndet++;
@@ -1344,6 +1343,43 @@ static int var_compute_F_tests (MODEL *varmod, GRETL_VAR *var,
     return err;
 }
 
+static int VAR_add_stats (GRETL_VAR *var)
+{
+    int err = 0;
+
+    var->S = gretl_matrix_alloc(var->neqns, var->neqns);
+    if (var->S == NULL) {
+	err = 1;
+    }
+
+    if (!err) {
+	gretl_matrix_multiply_mod(var->E, GRETL_MOD_TRANSPOSE,
+				  var->E, GRETL_MOD_NONE,
+				  var->S);
+	gretl_matrix_divide_by_scalar(var->S, var->n);
+    }
+
+    if (!err) {
+	var->ldet = gretl_vcv_log_determinant(var->S);
+	if (na(var->ldet)) {
+	    err = 1;
+	}
+    }    
+
+    if (!err) {
+	int n = var->n;
+	int g = var->neqns;
+	int k = g * var->ncoeff;
+	
+	var->ll = -(g * n / 2.0) * (LN_2_PI + 1) - (n / 2.0) * var->ldet;
+	var->AIC = -2.0 * var->ll + 2.0 * k;
+	var->BIC = -2.0 * var->ll + k * log(n);
+    }
+
+    return err;
+}
+
+
 /* construct the respective VAR lists by adding the appropriate
    number of lags ("order") to the variables in list 
 
@@ -1454,7 +1490,12 @@ static GRETL_VAR *real_var (int order, const int *inlist,
     pdinfo->t2 = oldt2;
 
     if (!*err) {
-	*err = gretl_VAR_do_error_decomp(var->n, var->neqns, var->E, var->C);
+	var->ncoeff = var->models[0]->ncoeff;
+	*err = VAR_add_stats(var);
+    }
+
+    if (!*err) {
+	*err = gretl_VAR_do_error_decomp(var->neqns, var->S, var->C);
     }
 
     if (*err) {
@@ -2616,7 +2657,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
     varlist[0] = resids.levels_list[0] = l0 - hasconst;
 
     /* try to respect the chosen sample period: don't limit the
-       generation of lags unnecesarily */
+       generation of lags unnecessarily */
     pdinfo->t1 -= (order - 1);
     if (pdinfo->t1 < 0) {
 	pdinfo->t1 = 0;
@@ -2647,6 +2688,9 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	    k++;
 	}
     }
+
+    /* FIXME not sure seasonals are right in case of restricted
+       constant */
 
     if (seasonals) {
 	/* add centered seasonal dummies to list */
@@ -2741,27 +2785,12 @@ johansen_exit:
 
 int gretl_VAR_print_VCV (const GRETL_VAR *var, PRN *prn)
 {
-    gretl_matrix *V;
-    double ldet;
     int err = 0;
 
-    if (var->E == NULL) {
+    if (var->S == NULL) {
 	err = 1;
-    }
-
-    if (!err) {
-	V = gretl_matrix_vcv(var->E);
-	if (V == NULL) {
-	    err = 1;
-	}
-    }
-
-    if (!err) {
-	ldet = print_contemp_covariance_matrix(V, prn);
-	if (na(ldet)) {
-	    err = 1;
-	}
-	gretl_matrix_free(V);
+    } else {
+	print_contemp_covariance_matrix(var->S, var->ldet, prn);
     }
 
     return err;
@@ -3229,6 +3258,21 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     } else {
 	pause = gretl_get_text_pause();
 	pprintf(prn, _("\nVAR system, lag order %d\n"), var->order);
+	pputc(prn, '\n');
+    }
+
+    if (tex) {
+	pprintf(prn, "%s $= %.4f$ \\par\n", I_("Log-likelihood"), var->ll);
+	pprintf(prn, "%s $= %.4f$ \\par\n", I_("AIC"), var->AIC);
+	pprintf(prn, "%s $= %.4f$ \\par\n", I_("BIC"), var->BIC);
+    } else if (rtf) {
+	pprintf(prn, "%s = %.4f\\par\n", I_("Log-likelihood"), var->ll);
+	pprintf(prn, "%s = %.4f\\par\n", I_("AIC"), var->AIC);
+	pprintf(prn, "%s = %.4f\\par\n", I_("BIC"), var->BIC);
+    } else {
+	pprintf(prn, "%s = %.4f\n", _("Log-likelihood"), var->ll);
+	pprintf(prn, "%s = %.4f\n", _("AIC"), var->AIC);
+	pprintf(prn, "%s = %.4f\n", _("BIC"), var->BIC);
     }
 
     k = 0;

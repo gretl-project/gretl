@@ -43,8 +43,6 @@ int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo);
 int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt);
 
-int center_variables (const int *list, double **Z, int t1, int t2);
-
 void gretl_transforms_cleanup (void);
 
 #endif /* TRANSFORMS_H */

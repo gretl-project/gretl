@@ -487,23 +487,22 @@ void gretl_print_value (double x, PRN *prn)
 /**
  * print_contemporaneous_covariance_matrix:
  * @m: covariance matrix.
+ * @ldet: log-determinant of @m.
  * @prn: gretl printing struct.
  * 
  * Print to @prn the covariance matrix @m, with correlations
  * above the diagonal, and followed by the log determinant.
- *
- * Returns: the log determinant of @m, or #NADBL on failure.
  */
 
-double
-print_contemp_covariance_matrix (const gretl_matrix *m, PRN *prn)
+void
+print_contemp_covariance_matrix (const gretl_matrix *m, 
+				 double ldet, PRN *prn)
 {
     int rows = gretl_matrix_rows(m);
     int cols = gretl_matrix_cols(m);
-    gretl_matrix *mcopy;
     int jmax = 1;
     char numstr[16];
-    double x, ldet = NADBL;
+    double x;
     int i, j;
 
     pprintf(prn, "%s\n(%s)\n\n",
@@ -527,17 +526,9 @@ print_contemp_covariance_matrix (const gretl_matrix *m, PRN *prn)
 	}
     }
 
-    mcopy = gretl_matrix_copy(m);
-
-    if (mcopy != NULL) {
-	ldet = gretl_vcv_log_determinant(mcopy);
-	if (!na(ldet)) {
-	    pprintf(prn, "\n%s = %g\n", _("log determinant"), ldet);
-	}
-	gretl_matrix_free(mcopy);
+    if (!na(ldet)) {
+	pprintf(prn, "\n%s = %g\n", _("log determinant"), ldet);
     }
-
-    return ldet;
 }
 
 /**

@@ -4277,7 +4277,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     char vlabel[MAXLABEL];
     int vi, t, yy, pp, mm;
     int newvnum, ndums, orig_v = pdinfo->v;
-    double xx;
+    double xx, cx, dx;
 
     if (pdinfo->structure == STACKED_CROSS_SECTION) {
 	ndums = pdinfo->n / pdinfo->pd;
@@ -4302,13 +4302,21 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 	mm *= 10;
     }
 
+    if (center) {
+	cx = 1.0 / pdinfo->pd;
+    } else {
+	cx = 0.0;
+    }
+
     newvnum = orig_v;
 
     for (vi=1; vi<=ndums; vi++) {
-	double dx, dbar = 0.0;
 	int di = orig_v + vi - 1;
 
-	if (pdinfo->pd == 4 && pdinfo->structure == TIME_SERIES) {
+	if (center) {
+	    sprintf(vname, "dc%d", vi);
+	    strcpy(vlabel, "centered periodic dummy");
+	} else if (pdinfo->pd == 4 && pdinfo->structure == TIME_SERIES) {
 	    sprintf(vname, "dq%d", vi);
 	    sprintf(vlabel, 
 		    _("= 1 if quarter = %d, 0 otherwise"), vi);
@@ -4349,18 +4357,10 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 		yy = (int) xx;
 		pp = (int) (mm * (xx - yy) + 0.5);
 		dx = (pp == vi)? 1.0 : 0.0;
-		(*pZ)[di][t] = dx;
-		if (center && dx > 0.0 && 
-		    t >= pdinfo->t1 && t <= pdinfo->t2) {
-		    dbar += 1.0;
+		if (center) {
+		    dx -= cx;
 		}
-	    }
-	}
-
-	if (center) {
-	    dbar /= (pdinfo->t2 - pdinfo->t1 + 1);
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		(*pZ)[di][t] -= dbar;
+		(*pZ)[di][t] = dx;
 	    }
 	}
     }

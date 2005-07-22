@@ -4761,8 +4761,6 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
     view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
 }
 
-/* ........................................................... */
-
 static void maybe_display_string_table (void)
 {
     if (gretl_string_table_written()) {
@@ -5025,11 +5023,7 @@ int do_store (char *savename, gretlopt opt, int overwrite)
     /* tell the user */
     if (WRITING_DB(opt)) {
 	database_description_dialog(savename);
-    } else {
-	msg = g_strdup_printf(_("%s written OK"), savename);
-	infobox(msg);
-	g_free(msg);
-    }
+    } 
 
  store_get_out:
 

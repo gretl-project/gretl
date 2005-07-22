@@ -38,9 +38,11 @@ print_system_vcv (const gretl_equation_system *sys, PRN *prn)
 {
     int dim = sys->sigma->rows;
     int df = dim * (dim - 1) / 2;
-    double ldet = NADBL;
+    double ldet;
 
-    ldet = print_contemp_covariance_matrix(sys->sigma, prn);
+    ldet = gretl_vcv_log_determinant(sys->sigma);
+
+    print_contemp_covariance_matrix(sys->sigma, ldet, prn);
 
     if (sys->method == SYS_SUR && sys->iters > 0) {
 	if (!na(ldet) && sys->diag != 0.0) {

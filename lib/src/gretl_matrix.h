@@ -157,7 +157,7 @@ double gretl_matrix_log_determinant (gretl_matrix *a);
 
 double gretl_matrix_log_abs_determinant (gretl_matrix *a);
 
-double gretl_vcv_log_determinant (gretl_matrix *a);
+double gretl_vcv_log_determinant (const gretl_matrix *m);
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 

@@ -21,6 +21,7 @@ struct irfboot_ {
     gretl_matrix *C;    /* error covariance matrix */
     gretl_matrix *A;    /* augmented coefficient matrix */
     gretl_matrix *E;    /* matrix of residuals */
+    gretl_matrix *S;    /* covariance matrix of residuals */
     gretl_matrix *rE;   /* matrix of resampled original residuals */
     gretl_matrix *rtmp; /* temporary storage */
     gretl_matrix *ctmp; /* temporary storage */
@@ -44,6 +45,7 @@ static void irf_boot_free (irfboot *boot)
     gretl_matrix_free(boot->C);
     gretl_matrix_free(boot->A);
     gretl_matrix_free(boot->E);
+    gretl_matrix_free(boot->S);
     gretl_matrix_free(boot->rE);
     gretl_matrix_free(boot->rtmp);
     gretl_matrix_free(boot->ctmp);
@@ -112,6 +114,7 @@ static int irf_boot_init (irfboot *boot, const GRETL_VAR *var,
     boot->C = NULL;
     boot->A = NULL;
     boot->E = NULL;
+    boot->S = NULL;
     boot->rE = NULL;
     boot->rtmp = NULL;
     boot->ctmp = NULL;
@@ -155,6 +158,12 @@ static int irf_boot_init (irfboot *boot, const GRETL_VAR *var,
 
     boot->E = gretl_matrix_alloc(boot->n, boot->neqns);
     if (boot->E == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    boot->S = gretl_matrix_alloc(boot->neqns, boot->neqns);
+    if (boot->S == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -251,8 +260,12 @@ static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
 	clear_model(&var_model);
     }
 
-    if (!err) {
-	err = gretl_VAR_do_error_decomp(boot->n, boot->neqns, boot->E, boot->C);
+    if (!err) {    
+	gretl_matrix_multiply_mod(boot->E, GRETL_MOD_TRANSPOSE,
+				  boot->E, GRETL_MOD_NONE,
+				  boot->S);
+	gretl_matrix_divide_by_scalar(boot->S, boot->n);
+	err = gretl_VAR_do_error_decomp(boot->neqns, boot->S, boot->C);
     }
 
     if (!err) {

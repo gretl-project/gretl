@@ -948,26 +948,32 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
 
 /**
  * gretl_vcv_log_determinant:
- * @a: gretl_matrix.
+ * @m: gretl_matrix.
  *
  * Compute the log determinant of the symmetric positive-definite
- * matrix @a using Cholesky decomposition.  Matrix @a is not 
- * preserved: it is overwritten by the decomposition.
+ * matrix @m using Cholesky decomposition.  
  * 
  * Returns: the log determinant, or #NABDL on failure.
  */
 
-double gretl_vcv_log_determinant (gretl_matrix *a)
+double gretl_vcv_log_determinant (const gretl_matrix *m)
 {
+    gretl_matrix *a = NULL;
     char uplo = 'U';
     integer info;
-    integer n = a->rows;
-    double det;
+    integer n = m->rows;
+    double det = NADBL;
     int i;
 
-    if (a->rows != a->cols) {
+    if (m->rows != m->cols) {
 	fputs("gretl_vcv_log_determinant: matrix must be square\n", stderr);
-	return NADBL;
+	return det;
+    }
+
+    a = gretl_matrix_copy(m);
+    if (a == NULL) {
+	fputs("gretl_vcv_log_determinant: out of memory\n", stderr);
+	return det;
     }
 
     dpotrf_(&uplo, &n, a->val, &n, &info);
@@ -980,15 +986,17 @@ double gretl_vcv_log_determinant (gretl_matrix *a)
 	    fputs("gretl_vcv_log_determinant: illegal argument to dpotrf\n", 
 		  stderr);
 	}
-	return NADBL;
+    } else {
+	det = 1.0;
+	for (i=0; i<n; i++) {
+	    det *= a->val[mdx(a, i, i)] * a->val[mdx(a, i, i)];
+	}
+	det = log(det);
     }
 
-    det = 1.0;
-    for (i=0; i<n; i++) {
-	det *= a->val[mdx(a, i, i)] * a->val[mdx(a, i, i)];
-    }
+    gretl_matrix_free(a);
 
-    return log(det);
+    return det;
 }
 
 /* calculate determinant using LU factorization.
