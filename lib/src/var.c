@@ -2390,7 +2390,7 @@ print_sigmas (const gretl_matrix *Suu, const gretl_matrix *Svv,
     pprintf(prn, " %s\n\n", _("VAR system in first differences"));
     for (i=0; i<nr; i++) {
 	for (j=0; j<nr; j++) {
-	    pprintf(prn, "%#12.6g", gretl_matrix_get(Suu, i, j));
+	    pprintf(prn, "%#12.5g", gretl_matrix_get(Suu, i, j));
 	}
 	pputc(prn, '\n');
     }
@@ -2399,7 +2399,7 @@ print_sigmas (const gretl_matrix *Suu, const gretl_matrix *Svv,
     pprintf(prn, "\n %s\n\n", _("System with levels as dependent variable"));
     for (i=0; i<nr; i++) {
 	for (j=0; j<nr; j++) {
-	    pprintf(prn, "%#12.6g", gretl_matrix_get(Svv, i, j));
+	    pprintf(prn, "%#12.5g", gretl_matrix_get(Svv, i, j));
 	}
 	pputc(prn, '\n');
     } 
@@ -2409,7 +2409,7 @@ print_sigmas (const gretl_matrix *Suu, const gretl_matrix *Svv,
     pprintf(prn, "\n %s\n\n", _("Cross-products"));
     for (i=0; i<nr; i++) {
 	for (j=0; j<nc; j++) {
-	    pprintf(prn, "%#12.6g", gretl_matrix_get(Suv, i, j));
+	    pprintf(prn, "%#12.5g", gretl_matrix_get(Suv, i, j));
 	}
 	pputc(prn, '\n');
     }     

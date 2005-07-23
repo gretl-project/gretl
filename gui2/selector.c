@@ -1351,14 +1351,14 @@ static int screen_scalar (int i, int c)
 static void selector_init (selector *sr, guint code, const char *title)
 {
     GtkWidget *base, *hsep;
-    int i, dlgheight = 320;
+    int i, dlgheight = 340;
     
     if (MODEL_CODE(code) && datainfo->v > 10) {
-	dlgheight = 400;
+	dlgheight += 80;
     } else if (code == WLS || code == POISSON || code == AR) {
-	dlgheight = 350;
+	dlgheight += 30;
     } else if (code == TSLS) {
-	dlgheight = 400;
+	dlgheight += 80;
     }
 
     if (code == VAR) {
@@ -1431,13 +1431,28 @@ static void selector_init (selector *sr, guint code, const char *title)
     gtk_box_set_homogeneous(GTK_BOX(sr->action_area), TRUE);
 } 
 
-static void robust_callback (GtkWidget *w, selector *sr)
+static void option_callback (GtkWidget *w, selector *sr)
 {
+    gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "opt"));
+    gretlopt opt = i;
+
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	sr->opts |= OPT_R;
+	sr->opts |= opt;
     } else {
-	sr->opts &= ~OPT_R;
-    }
+	sr->opts &= ~opt;
+    }    
+}
+
+static void reverse_option_callback (GtkWidget *w, selector *sr)
+{
+    gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "opt"));
+    gretlopt opt = i;
+
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	sr->opts &= ~opt;
+    } else {
+	sr->opts |= opt;
+    }    
 }
 
 static void robust_config_button (GtkWidget *w, GtkWidget *b)
@@ -1448,44 +1463,6 @@ static void robust_config_button (GtkWidget *w, GtkWidget *b)
 	gtk_widget_set_sensitive(b, FALSE);
     }
 }
-
-static void verbose_callback (GtkWidget *w, selector *sr)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	sr->opts |= OPT_V;
-    } else {
-	sr->opts &= ~OPT_V;
-    }
-}
-
-static void corc_callback (GtkWidget *w, selector *sr)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	sr->opts &= ~OPT_B;
-    } else {
-	sr->opts |= OPT_B;
-    }
-}
-
-static void engle_granger_callback (GtkWidget *w, selector *sr)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	sr->opts &= ~OPT_N;
-    } else {
-	sr->opts |= OPT_N;
-    }
-}
-
-#ifdef HAVE_X12A
-static void x12a_callback (GtkWidget *w, selector *sr)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	sr->opts |= OPT_X;
-    } else {
-	sr->opts &= ~OPT_X;
-    }
-}
-#endif
 
 static GtkWidget *spinner_aux_label (int i)
 {
@@ -1571,14 +1548,26 @@ static void hc_config (GtkWidget *w, gpointer p)
     options_dialog(p, 4, NULL);
 }
 
-static void pack_switch (GtkWidget *b, GtkWidget *vbox, gboolean dflt)
+static void pack_switch (GtkWidget *b, selector *sr,
+			 gboolean dflt, gboolean reversed, 
+			 gretlopt opt)
 {
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    gint i = opt;
+
+    g_object_set_data(G_OBJECT(b), "opt", GINT_TO_POINTER(i));
+    if (reversed) {
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(reverse_option_callback), sr);
+    } else {
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(option_callback), sr);
+    }
 
     gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 0);
     gtk_widget_show(b);
 
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_show(hbox);
 
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), dflt);
@@ -1599,8 +1588,9 @@ build_selector_switches (selector *sr)
 	gtk_widget_show(tmp);
 
 	b1 = gtk_check_button_new_with_label(_("Robust standard errors"));
+	g_object_set_data(G_OBJECT(b1), "opt", GINT_TO_POINTER(OPT_R));
 	g_signal_connect(G_OBJECT(b1), "toggled",
-			 G_CALLBACK(robust_callback), sr);
+			 G_CALLBACK(option_callback), sr);
 	if (using_hc_by_default()) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
 	}
@@ -1625,32 +1615,30 @@ build_selector_switches (selector *sr)
 	gtk_widget_show(hbox);
     }
 
-    if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH ||
-	sr->code == COINT2) {
-	if (sr->code == COINT2) {
-	    tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
-	} else {
-	    tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
+    if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH) {
+	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
+    } else if (sr->code == COINT2) {
+	tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
+	if (datainfo->pd == 4 || datainfo->pd == 12) {
+	    tmp = gtk_check_button_new_with_label
+		(_("Include centered seasonal dummies"));
+	    pack_switch(tmp, sr, FALSE, FALSE, OPT_D);
 	}
-	g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(verbose_callback), sr);
-	pack_switch(tmp, sr->vbox, FALSE);
     } else if (sr->code == HILU) {
 	tmp = gtk_check_button_new_with_label(_("Fine-tune using Cochrane-Orcutt"));
-	g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(corc_callback), sr);
-	pack_switch(tmp, sr->vbox, TRUE);
+	pack_switch(tmp, sr, TRUE, TRUE, OPT_B);
     } else if (sr->code == COINT) {
 	tmp = gtk_check_button_new_with_label
 	    (_("Cointegrating regression includes a constant"));
-	g_signal_connect(G_OBJECT(tmp), "toggled", 
-			 G_CALLBACK(engle_granger_callback), sr);
-	pack_switch(tmp, sr->vbox, TRUE);
+	pack_switch(tmp, sr, TRUE, TRUE, OPT_N);
     }
 
 #ifdef HAVE_X12A    
     if (sr->code == ARMA) {
 	tmp = gtk_check_button_new_with_label(_("Use X-12-ARIMA"));
-	g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(x12a_callback), sr);
-	pack_switch(tmp, sr->vbox, FALSE);
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_X);
     }	
 #endif
 } 
@@ -1696,6 +1684,24 @@ build_selector_buttons (selector *sr, void (*okfunc)())
 			 GINT_TO_POINTER(sr->code));
 	gtk_widget_show(tmp);
     }
+}
+
+static int list_show_var (int v, int code)
+{
+    int ret = 1;
+
+    if (v == 0 && !MODEL_CODE(code)) {
+	ret = 0;
+    } else if (is_hidden_variable(v, datainfo)) {
+	ret = 0;
+    } else if (screen_scalar(v, code)) {
+	ret = 0;
+    } else if ((COINT_CODE(code) || code == VAR) 
+	       && is_standard_lag(v, datainfo)) {
+	ret = 0;
+    }
+
+    return ret;
 }
 
 void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
@@ -1751,17 +1757,10 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
     gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
     
     for (i=0; i<datainfo->v; i++) {
-	if (i == 0 && !MODEL_CODE(cmdcode)) {
-	    continue;
+	if (list_show_var(i, cmdcode)) {
+	    gtk_list_store_append(store, &iter);
+	    gtk_list_store_set(store, &iter, 0, i, 1, datainfo->varname[i], -1);
 	}
-        if (is_hidden_variable(i, datainfo)) {
-	    continue;
-	}
-	if (screen_scalar(i, cmdcode)) {
-	    continue;
-	}
-	gtk_list_store_append(store, &iter);
-	gtk_list_store_set(store, &iter, 0, i, 1, datainfo->varname[i], -1);
     }
 
     /* RHS: vertical holder */
@@ -2077,15 +2076,14 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 	int nleft = 0;
 
 	for (i=1; i<datainfo->v; i++) {
-	    if (is_hidden_variable(i, datainfo) || screen_scalar(i, cmdcode)) {
-		continue;
+	    if (list_show_var(i, cmdcode)) {
+		gtk_list_store_append(store, &iter);
+		gtk_list_store_set(store, &iter, 0, i, 
+				   1, datainfo->varname[i], 
+				   -1);
+		vnum = i;
+		nleft++;
 	    }
-	    gtk_list_store_append(store, &iter);
-	    gtk_list_store_set(store, &iter, 0, i, 
-			       1, datainfo->varname[i], 
-			       -1);
-	    vnum = i;
-	    nleft++;
 	}
 	if (nleft != 1) {
 	    vnum = 0;

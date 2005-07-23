@@ -27,6 +27,8 @@
 static int default_var;
 static int *xlist;
 static int *auxlist;
+static int *calist;
+
 static GtkWidget *scatters_label;
 static GtkWidget *scatters_menu;
 static GtkWidget *x_axis_item;
@@ -62,10 +64,15 @@ struct _selector {
 void clear_selector (void)
 {
     default_var = 0;
+
     free(xlist);
     xlist = NULL;
+
     free(auxlist);
     auxlist = NULL;
+
+    free(calist);
+    calist = NULL;
 }
 
 static gint list_sorter (gconstpointer a, gconstpointer b)
@@ -569,11 +576,23 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	return;
     }
 
-    if (MODEL_CODE(sr->code) && rows > 0) {
-	xlist = realloc(xlist, (rows + 1) * sizeof *xlist);
-	if (xlist != NULL) {
-	    xlist[0] = rows;
+    if (rows > 0) {
+	int **plist = NULL;
+
+	if (MODEL_CODE(sr->code)) {
+	    plist = &xlist;
+	} else if (COINT_CODE(sr->code)) {
+	    plist = &calist;
 	}
+	if (plist != NULL) {
+	    int *tmplist;
+
+	    tmplist = myrealloc(*plist, (rows + 1) * sizeof *tmplist);
+	    if (tmplist != NULL) {
+		tmplist[0] = rows;
+		*plist = tmplist;
+	    }
+	}	    
     }
 
     for (i=0; i<rows; i++) {
@@ -584,6 +603,8 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	add_to_cmdlist(sr, rvar);
 	if (MODEL_CODE(sr->code) && xlist != NULL) { 
 	    xlist[i+1] = atoi(rvar);
+	} else if (COINT_CODE(sr->code) && calist != NULL) {
+	    calist[i+1] = atoi(rvar);
 	}
     }
 
@@ -1104,13 +1125,28 @@ static void selector_init (selector *sr, guint code, const char *title)
     gtk_window_set_position(GTK_WINDOW(sr->dlg), GTK_WIN_POS_MOUSE);
 }
 
-static void robust_callback (GtkWidget *w, selector *sr)
+static void option_callback (GtkWidget *w, selector *sr)
 {
+    gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "opt"));
+    gretlopt opt = i;
+
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	sr->opts |= OPT_R;
+	sr->opts |= opt;
     } else {
-	sr->opts &= ~OPT_R;
-    }
+	sr->opts &= ~opt;
+    }    
+}
+
+static void reverse_option_callback (GtkWidget *w, selector *sr)
+{
+    gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "opt"));
+    gretlopt opt = i;
+
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	sr->opts &= ~opt;
+    } else {
+	sr->opts |= opt;
+    }    
 }
 
 static void robust_config_button (GtkWidget *w, GtkWidget *b)
@@ -1121,44 +1157,6 @@ static void robust_config_button (GtkWidget *w, GtkWidget *b)
 	gtk_widget_set_sensitive(b, FALSE);
     }
 }
-
-static void verbose_callback (GtkWidget *w, selector *sr)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	sr->opts |= OPT_V;
-    } else {
-	sr->opts &= ~OPT_V;
-    }
-}
-
-static void corc_callback (GtkWidget *w, selector *sr)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	sr->opts &= ~OPT_B;
-    } else {
-	sr->opts |= OPT_B;
-    }
-}
-
-static void engle_granger_callback (GtkWidget *w, selector *sr)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	sr->opts &= ~OPT_N;
-    } else {
-	sr->opts |= OPT_N;
-    }
-}
-
-#ifdef HAVE_X12A
-static void x12a_callback (GtkWidget *w, selector *sr)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	sr->opts |= OPT_X;
-    } else {
-	sr->opts &= ~OPT_X;
-    }
-}
-#endif
 
 static GtkWidget *spinner_aux_label (int i)
 {
@@ -1247,9 +1245,22 @@ static void hc_config (GtkWidget *w, gpointer p)
     options_dialog(p, 4, NULL);
 }
 
-static void pack_switch (GtkWidget *b, GtkWidget *vbox, gboolean dflt)
+static void pack_switch (GtkWidget *b, selector *sr,
+			 gboolean dflt, gboolean reversed, 
+			 gretlopt opt)
 {
+    GtkWidget *vbox = GTK_DIALOG(sr->dlg)->vbox;
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    gint i = opt;
+
+    gtk_object_set_data(GTK_OBJECT(b), "opt", GINT_TO_POINTER(i));
+    if (reversed) {
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(reverse_option_callback), sr);
+    } else {
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(option_callback), sr);
+    }
 
     gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 0);
     gtk_widget_show(b);
@@ -1275,8 +1286,9 @@ build_selector_switches (selector *sr)
 	gtk_widget_show(tmp);
 
 	b1 = gtk_check_button_new_with_label(_("Robust standard errors"));
-	gtk_signal_connect(GTK_OBJECT(b1), "toggled",
-			   GTK_SIGNAL_FUNC(robust_callback), sr);
+	gtk_object_set_data(GTK_OBJECT(b1), "opt", GINT_TO_POINTER(OPT_R));
+	g_signal_connect(G_OBJECT(b1), "toggled",
+			 G_CALLBACK(option_callback), sr);	
 	if (using_hc_by_default()) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
 	}
@@ -1302,34 +1314,30 @@ build_selector_switches (selector *sr)
 	gtk_widget_show(hbox);
     }
 
-    if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH ||
-	sr->code == COINT2) {
-	if (sr->code == COINT2) {
-	    tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
-	} else {
-	    tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
+    if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH) {
+	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
+    } else if (sr->code == COINT2) {
+	tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
+	if (datainfo->pd == 4 || datainfo->pd == 12) {
+	    tmp = gtk_check_button_new_with_label
+		(_("Include centered seasonal dummies"));
+	    pack_switch(tmp, sr, FALSE, FALSE, OPT_D);
 	}
-	gtk_signal_connect(GTK_OBJECT(tmp), "toggled",
-			   GTK_SIGNAL_FUNC(verbose_callback), sr);
-	pack_switch(tmp, GTK_DIALOG(sr->dlg)->vbox, FALSE);
     } else if (sr->code == HILU) {
 	tmp = gtk_check_button_new_with_label(_("Fine-tune using Cochrane-Orcutt"));
-	gtk_signal_connect(GTK_OBJECT(tmp), "toggled",
-			   GTK_SIGNAL_FUNC(corc_callback), sr);
-	pack_switch(tmp, GTK_DIALOG(sr->dlg)->vbox, TRUE);
+	pack_switch(tmp, sr, TRUE, TRUE, OPT_B);
     } else if (sr->code == COINT) {
 	tmp = gtk_check_button_new_with_label
 	    (_("Cointegrating regression includes a constant"));
-	g_signal_connect(G_OBJECT(tmp), "toggled",
-			 G_CALLBACK(engle_granger_callback), sr);
-	pack_switch(tmp, GTK_DIALOG(sr->dlg)->vbox, TRUE);
+	pack_switch(tmp, sr, TRUE, TRUE, OPT_N);
     }
 
 #ifdef HAVE_X12A    
     if (sr->code == ARMA) {
 	tmp = gtk_check_button_new_with_label(_("Use X-12-ARIMA"));
-	g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(x12a_callback), sr);
-	pack_switch(tmp, GTK_DIALOG(sr->dlg)->vbox, FALSE);
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_X);
     }	
 #endif
 } 
@@ -1386,6 +1394,24 @@ void delete_selection_dialog (selector *sr)
     gtk_widget_destroy(sr->dlg);
 }
 
+static int list_show_var (int v, int code)
+{
+    int ret = 1;
+
+    if (v == 0 && !MODEL_CODE(code)) {
+	ret = 0;
+    } else if (is_hidden_variable(v, datainfo)) {
+	ret = 0;
+    } else if (screen_scalar(v, code)) {
+	ret = 0;
+    } else if ((COINT_CODE(code) || code == VAR) 
+	       && is_standard_lag(v, datainfo)) {
+	ret = 0;
+    }  
+
+    return ret;
+}
+
 void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
 		       int preselect) 
 {
@@ -1439,16 +1465,15 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
     sr->varlist = gtk_clist_new(2);
     gtk_clist_clear(GTK_CLIST(sr->varlist));
     for (i=0; i<datainfo->v; i++) {
-	gchar *row[2];
-	gchar id[5];
+	if (list_show_var(i, cmdcode)) {
+	    gchar *row[2];
+	    gchar id[5];
 
-	if (i == 0 && !MODEL_CODE(cmdcode)) continue;
-        if (is_hidden_variable(i, datainfo)) continue;
-	if (screen_scalar(i, cmdcode)) continue;
-	sprintf(id, "%d", i);
-	row[0] = id;
-	row[1] = datainfo->varname[i];
-        gtk_clist_append(GTK_CLIST(sr->varlist), row);
+	    sprintf(id, "%d", i);
+	    row[0] = id;
+	    row[1] = datainfo->varname[i];
+	    gtk_clist_append(GTK_CLIST(sr->varlist), row);
+	}
     }
     gtk_clist_set_column_width (GTK_CLIST(sr->varlist), 1, 80);
     gtk_clist_set_selection_mode (GTK_CLIST(sr->varlist),
@@ -1555,6 +1580,16 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
 			gtk_clist_append(GTK_CLIST(sr->rightvars), row);
 		    }
 		}
+	    }
+	} else if (COINT_CODE(cmdcode) && calist != NULL) {
+	    for (i=1; i<=calist[0]; i++) {
+		gchar *row[2];
+		gchar id[4];
+
+		sprintf(id, "%d", calist[i]);
+		row[0] = id;
+		row[1] = datainfo->varname[calist[i]];
+		gtk_clist_append(GTK_CLIST(sr->rightvars), row);
 	    }
 	}
 
@@ -1763,18 +1798,17 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 	int nleft = 0;
 
 	for (i=1; i<datainfo->v; i++) {
-	    gchar *row[2];
-	    gchar id[5];
+	    if (list_show_var(i, cmdcode)) {
+		gchar *row[2];
+		gchar id[5];
 
-	    if (is_hidden_variable(i, datainfo) || screen_scalar(i, cmdcode)) {
-		continue;
+		sprintf(id, "%d", i);
+		row[0] = id;
+		row[1] = datainfo->varname[i];
+		gtk_clist_append(GTK_CLIST(sr->varlist), row);
+		vnum = i;
+		nleft++;
 	    }
-	    sprintf(id, "%d", i);
-	    row[0] = id;
-	    row[1] = datainfo->varname[i];
-	    gtk_clist_append(GTK_CLIST(sr->varlist), row);
-	    vnum = i;
-	    nleft++;
 	}
 	if (nleft != 1) {
 	    vnum = 0;
