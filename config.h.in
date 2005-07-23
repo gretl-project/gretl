@@ -87,6 +87,8 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef HAVE_SYS_SOCKET_H
 #undef HAVE_NETDB_H
 #undef ENABLE_MAILER
+#undef HAVE_SOCKADDR_IN
+#undef HAVE_IN_ADDR
 
 /* Define if the `long double' type works.  */
 #undef HAVE_LONG_DOUBLE

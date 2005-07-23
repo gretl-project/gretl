@@ -923,6 +923,21 @@ static int send_to_server (FILE *fp, const char *template, ...)
     return plen;
 }
 
+#ifndef HAVE_IN_ADDR
+struct in_addr {
+    unsigned long s_addr;
+}; 
+#endif
+
+#ifndef HAVE_SOCKADDR_IN
+struct sockaddr_in {
+    short int          sin_family;
+    unsigned short int sin_port;
+    struct in_addr     sin_addr;
+    unsigned char      sin_zero[8];
+};
+#endif
+
 static int connect_to_server (char *hostname, unsigned short port) 
 {
     gchar *msg;
@@ -948,11 +963,11 @@ static int connect_to_server (char *hostname, unsigned short port)
     }
 
     soaddr.sin_family = AF_INET;
-    memcpy(&soaddr.sin_addr, &((struct in_addr*) ip->h_addr)->s_addr,
+    memcpy(&soaddr.sin_addr, &((struct in_addr *) ip->h_addr)->s_addr,
 	   sizeof(struct in_addr));
     soaddr.sin_port = htons(port);
 
-    if (connect(unit, (struct sockaddr*) &soaddr, sizeof soaddr) < 0) {
+    if (connect(unit, (struct sockaddr *) &soaddr, sizeof soaddr) < 0) {
 	msg = g_strdup_printf("Couldn't connect to %s", hostname);
 	mail_infobox(msg, 1);
 	g_free(msg);
