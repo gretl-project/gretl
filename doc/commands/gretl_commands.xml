@@ -34,11 +34,12 @@
       <para context="cli">
 	Must be invoked after an estimation command.  The variables in
 	<repl>varlist</repl> are added to the previous model and the
-	new model is estimated.  If more than one variable is added,
-	the <mathvar>F</mathvar> statistic for the added variables
-	will be printed (for the OLS procedure only) along with its
-	p-value. A p-value below 0.05 means that the coefficients are
-	jointly significant at the 5 percent level.
+	new model is estimated. A test statistic for the joint
+	significance of the added variables is printed, along with its
+	p-value. The test statistic is <mathvar>F</mathvar> in the
+	case of OLS estimation, an asymptotic Wald chi-square value
+	otherwise. A p-value below 0.05 means that the coefficients
+	are jointly significant at the 5 percent level.
       </para>
       <para context="cli">
 	If the <lit>--quiet</lit> option is given the printed results
@@ -53,11 +54,12 @@
       </para>
       <para context="gui">
 	The selected variables are added to the previous model and the
-	new model estimated.  If more than one variable is added, the
-	<mathvar>F</mathvar> statistic for the added variables will be
-	printed (for the OLS procedure only) along with its p-value. A
-	p-value below 0.05 means that the coefficients are jointly
-	significant at the 5 percent level. 
+	new model estimated. A test statistic for the joint
+	significance of the added variables is printed, along with its
+	p-value. The test statistic is <mathvar>F</mathvar> in the
+	case of OLS estimation, an asymptotic Wald chi-square value
+	otherwise. A p-value below 0.05 means that the coefficients
+	are jointly significant at the 5 percent level.
       </para>
     </description>
 
@@ -373,8 +375,14 @@
 
     <usage>
       <arguments>
-        <argument>p</argument>
-	<argument>q</argument>
+	<argblock>
+	  <argument>p</argument>
+	  <argument>q</argument>
+	</argblock>
+	<argblock separated="true" optional="true">
+	  <argument>P</argument>
+	  <argument>Q</argument>
+	</argblock>
 	<argument separated="true">depvar</argument>
 	<argument optional="true">indepvars</argument>
       </arguments>
@@ -403,19 +411,28 @@
       <examples>
         <example>arma 1 2 ; y</example>
 	<example>arma 2 2 ; y 0 x1 x2 --verbose</example>
+	<example>arma 1 1 ; 1 0 ; y 0 x1 x2</example>
       </examples>
     </usage>
 
     <description>
       <para context="cli">
-	If no <repl>indepvars</repl> list is given, estimates a univariate ARMA
-	(Autoregressive, Moving Average) model.  The integer values
-	<repl>p</repl> and <repl>q</repl> represent the AR and MA orders
-	respectively.  In the univariate case the default is to include an
-	intercept in the model but this can be suppressed with the
-	<lit>--suppress-const</lit> flag.  If <repl>indepvars</repl> are added,
-	the model becomes ARMAX; in this case the constant should be included
-	explicitly if you want an intercept (as in the second example above).
+	If no <repl>indepvars</repl> list is given, estimates a
+	univariate ARMA (Autoregressive, Moving Average) model.  The
+	integer values <repl>p</repl> and <repl>q</repl> represent the
+	AR and MA orders respectively.  The optional integer values
+	<repl>P</repl> and <repl>Q</repl> represent seasonal AR and MA
+	orders; these are relevant only if the data have a frequency
+	greater than 1 (for example, quarterly or monthly data).
+      </para>
+
+      <para context="cli">
+	In the univariate case the default is to include an intercept
+	in the model but this can be suppressed with the
+	<lit>--suppress-const</lit> flag.  If <repl>indepvars</repl>
+	are added, the model becomes ARMAX; in this case the constant
+	should be included explicitly if you want an intercept (as in
+	the second example above).
       </para>
 
       <para context="gui">
@@ -1550,12 +1567,11 @@
 	normality.
       </para>
       <para>
-	If the <literal>--quiet</literal> option is given, the
-	histogram is not shown.  If the <literal>--gamma</literal>
-	option is given, the test for normality is replaced by Locke's
-	nonparametric test for the null hypothesis that the variable
-	follows the gamma distribution; see Locke (1976), Shapiro and
-	Chen (2001).
+	If the <lit>--quiet</lit> option is given, the histogram is
+	not shown.  If the <lit>--gamma</lit> option is given, the
+	test for normality is replaced by Locke's nonparametric test
+	for the null hypothesis that the variable follows the gamma
+	distribution; see Locke (1976), Shapiro and Chen (2001).
       </para>
       <para>
 	In interactive mode a graph of the distribution is displayed.
@@ -4010,11 +4026,12 @@
       <para>
 	This command must follow an estimation command. The selected
 	variables are omitted from the previous model and the new
-	model estimated. If more than one variable is omitted, the
-	Wald <mathvar>F</mathvar>-statistic for the omitted variables
-	will be printed along with its p-value (for the OLS procedure
-	only).  A p-value below 0.05 means that the coefficients are
-	jointly significant at the 5 percent level.
+	model estimated.  A test statistic for the joint significance
+	of the omitted variables is printed, along with its p-value.
+	The test statistic is <mathvar>F</mathvar> in the case of OLS
+	estimation, an asymptotic Wald chi-square value otherwise. A
+	p-value below 0.05 means that the coefficients are jointly
+	significant at the 5 percent level.
       </para>
       <para context="cli">
 	If the <lit>--quiet</lit> option is given the printed results
@@ -4023,7 +4040,7 @@
 	model are also printed.  In the latter case, the
 	<lit>--vcv</lit> flag causes the covariance matrix for the
 	coefficients to be printed also.  If the <lit>--silent</lit>
-	option is given, nothing is printed; nontheless, the results
+	option is given, nothing is printed; nonetheless, the results
 	of the test can be retrieved using the special variables
         <lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
@@ -5161,7 +5178,7 @@
 	  <cell><lit>force_hc</lit></cell> <cell>values: off (the
 	    default) or on.  By default, with time-series data and
 	    when the <lit>--robust</lit> option is given with
-	    <cmd>ols</cmd>, the HAC estimator is used.  If you set
+	    <lit>ols</lit>, the HAC estimator is used.  If you set
 	    <lit>force_hc</lit> to <quote>on</quote>, this forces
 	    calculation of the regular Heteroskedasticity Consistent
 	    Covariance Matrix (which does not take autocorrelation
@@ -5185,7 +5202,7 @@
 	  <cell>values: <lit>auto</lit> (the default), or a numerical
 	  value.  Sets the smoothing parameter for the
 	  Hodrick&ndash;Prescott filter (see the <lit>hpfilt</lit>
-	  function under the <cmd>genr</cmd> command).  The default is
+	  function under the <lit>genr</lit> command).  The default is
 	  to use 100 times the square of the periodicity, which gives
 	  100 for annual data, 1600 for quarterly data, and so
 	  on.</cell>
@@ -5195,7 +5212,7 @@
 	  <cell>values: two integers, the second greater than the
 	    first (the defaults are 8 and 32).  Sets the frequency
 	    bounds for the Baxter&ndash;King bandpass filter (see the
-	    <lit>bkfilt</lit> function under the <cmd>genr</cmd>
+	    <lit>bkfilt</lit> function under the <lit>genr</lit>
 	    command).
 	  </cell>
 	</row>
@@ -5977,10 +5994,6 @@
 	  <flag>--impulse-responses</flag>
 	  <effect>print impulse responses</effect>
         </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>don't print results</effect>
-        </option>
       </options>
       <examples>
         <example>var 4 x1 x2 x3 ; const time</example>
@@ -6058,12 +6071,6 @@
 	within-period. The horizon for variance decompositions and
 	impulse responses can be set using the <cmdref targ="set"/> 
 	command.
-      </para>
-
-      <para context="cli">
-	The <lit>--quiet</lit> flag suppresses the printing of
-	output.  This will be useful only in the context of a script
-	which saves the VAR for future examination.
       </para>
 
     </description>

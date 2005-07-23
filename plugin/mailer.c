@@ -336,11 +336,11 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
 	txt = gtk_entry_get_text(GTK_ENTRY(md->reply_entry));
 	if (txt != NULL && *txt != '\0') {
 	    msg->sender = g_strdup(txt);
-	    if (minfo->sender == NULL || strcmp(txt, minfo->sender)) {
-		save = 1;
-	    }
 	    if (minfo->sender == NULL) {
 		minfo->sender = g_strdup(txt);
+		save = 1;
+	    } else if (strcmp(txt, minfo->sender)) {
+		save = 1;
 	    }
 	    fprintf(stderr, "sender = '%s'\n", msg->sender);
 	} else {

@@ -90,9 +90,17 @@
  <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
+<xsl:template match="argblock">
+  <xsl:if test="(@separated)"><literal>; <literal></xsl:if>
+  <xsl:if test="(@optional)"><literal>[ <literal></xsl:if>
+  <xsl:apply-templates/>
+  <xsl:if test="(@separated)"><literal>; <literal></xsl:if>
+  <xsl:if test="(@optional)"><literal>] <literal></xsl:if>
+</xsl:template>
+
 <xsl:template match="argument">
   <xsl:if test="(@optional)"><literal>[ </literal></xsl:if>
-  <xsl:if test="(@separated)">; </xsl:if>
+  <xsl:if test="(@separated) and not(preceding-sibling::*/@separated)"><literal>; </literal></xsl:if>
   <xsl:if test="(@alternate)">
     <xsl:call-template name="gettext">
       <xsl:with-param name="key" select="'or'"/>

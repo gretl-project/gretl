@@ -36,9 +36,10 @@
    context (cli | gui | both) "both"
 >
 
-<!ELEMENT usage (arguments?, altforms?, options?, examples?)>
+<!ELEMENT usage (altforms?, arguments?, options?, examples?)>
 
-<!ELEMENT arguments    (argument)+>
+<!ELEMENT arguments    (argument | argblock)+>
+<!ELEMENT argblock     (argument)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example)+>
 <!ELEMENT altforms     (altform)+>
@@ -51,6 +52,10 @@
     optional (true | false) "false"
     alternate (true | false) "false"
     flag CDATA #IMPLIED
+>
+<!ATTLIST argblock 
+    separated (true | false) "false"
+    optional (true | false) "false"
 >
 
 <!ELEMENT altform (#PCDATA | repl | lit)*>
