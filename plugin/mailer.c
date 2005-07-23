@@ -880,7 +880,7 @@ static void mail_infobox (const char *msg, int err)
 				     GTK_BUTTONS_CLOSE,
 				     msg);
     gtk_dialog_run(GTK_DIALOG (dialog));
-    gtk_widget_destroy (dialog);
+    gtk_widget_destroy(dialog);
 }
 
 #endif
@@ -1062,18 +1062,12 @@ static int get_SMTP_error (char *buf, SMTPCode code)
 	    err = SMTP_ERR;
 	}
     } else if (code == SMTP_MAIL || code == SMTP_RCPT) {
-	if (resp != 250) {
+	if (resp == 553 && strstr(buf, "must check")) {
+	    err = SMTP_POP_FIRST;
+	} else if (resp != 250) {
 	    chopstr(buf);
 	    errmsg = g_strdup_printf("Server response to RCPT:\n%s", buf);
-	    if (resp == 553) {
-		if (strstr(buf, "must check")) {
-		    err = SMTP_POP_FIRST;
-		} else {
-		    err = SMTP_NO_RELAY;
-		}
-	    } else {
-		err = SMTP_ERR;
-	    }
+	    err = SMTP_ERR;
 	}
     } else if (code == SMTP_DATA) {
 	if (resp != 354) {

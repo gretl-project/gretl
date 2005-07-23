@@ -3250,8 +3250,10 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     if (tex) {
-	pputs(prn, "\\noindent");
-	pprintf(prn, I_("\nVAR system, lag order %d\n\n"), var->order);
+	pputs(prn, "\\begin{center}");
+	pprintf(prn, I_("\nVAR system, lag order %d\n"), var->order);
+	pputs(prn, "\\end{center}");
+	pputs(prn, "\\vspace{1ex}\n");
     } else if (rtf) {
 	gretl_print_toggle_doc_flag(prn);
 	pprintf(prn, I_("\nVAR system, lag order %d\\par\n\n"), var->order);
@@ -3262,9 +3264,9 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     if (tex) {
-	pprintf(prn, "%s $= %.4f$ \\par\n", I_("Log-likelihood"), var->ll);
-	pprintf(prn, "%s $= %.4f$ \\par\n", I_("AIC"), var->AIC);
-	pprintf(prn, "%s $= %.4f$ \\par\n", I_("BIC"), var->BIC);
+	pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("Log-likelihood"), var->ll);
+	pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("AIC"), var->AIC);
+	pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("BIC"), var->BIC);
     } else if (rtf) {
 	pprintf(prn, "%s = %.4f\\par\n", I_("Log-likelihood"), var->ll);
 	pprintf(prn, "%s = %.4f\\par\n", I_("AIC"), var->AIC);

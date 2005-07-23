@@ -4925,7 +4925,7 @@ static int db_write_response (const char *savename, const int *list)
 
 int do_store (char *savename, gretlopt opt, int overwrite)
 {
-    gchar *msg, *tmp = NULL;
+    gchar *tmp = NULL;
     FILE *fp;
     int showlist = 1;
     int err = 0;
@@ -5232,7 +5232,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     if (err == LATEX_ERROR) {
 	view_file(tmp, 0, 1, 78, 350, VIEW_FILE);
     } else {
-	remove(texfile);
+	/* remove(texfile); */
 	remove(tmp);
     }
 
