@@ -80,8 +80,6 @@ static gretl_equation_system *sys;
 static gretl_restriction_set *rset;
 static int original_n;
 
-/* ........................................................... */
-
 char *get_lib_cmdline (void)
 {
     return cmdline;
@@ -91,8 +89,6 @@ CMD *get_lib_cmd (void)
 {
     return &cmd;
 }
-
-/* ........................................................... */
 
 void set_original_n (int n)
 {
@@ -104,16 +100,12 @@ int get_original_n (void)
     return original_n;
 } 
 
-/* ........................................................... */
-
 void exit_free_modelspec (void)
 {
     if (modelspec != NULL) {
 	free_modelspec(modelspec);
     }
 }
-
-/* ........................................................... */
 
 void library_command_init (void)
 {
@@ -124,8 +116,6 @@ void library_command_free (void)
 {
     gretl_cmd_free(&cmd);
 }
-
-/* ........................................................... */
 
 int replaying (void)
 {
@@ -141,8 +131,6 @@ void set_replay_off (void)
 {
     replay = 0;
 }
-
-/* ........................................................... */
 
 static char get_or_set_last_model (char c, int set)
 {
@@ -174,8 +162,6 @@ static MODEL *reference_model (void)
 	return models[2];
     }
 }
-
-/* ........................................................... */
 
 void register_graph (void)
 {
@@ -291,8 +277,6 @@ static void launch_gnuplot_interactive (void)
 
 #endif
 
-/* ......................................................... */
-
 static void set_sample_label_special (void)
 {
     char labeltxt[80];
@@ -305,8 +289,6 @@ static void set_sample_label_special (void)
     panel_menu_state(FALSE);
     ts_or_panel_menu_state(FALSE);
 }
-
-/* ........................................................... */
 
 void clear_data (void)
 {
@@ -344,8 +326,6 @@ void clear_data (void)
     gretl_cmd_destroy_context(&cmd);
 }
 
-/* ........................................................... */
-
 int gretl_command_sprintf (const char *template, ...)
 {
     va_list args;
@@ -374,8 +354,6 @@ static int gretl_command_strcat (const char *s)
 
     return 0;
 }
-
-/* ........................................................... */
 
 int user_fopen (const char *fname, char *fullname, PRN **pprn)
 {
@@ -406,8 +384,6 @@ gint bufopen (PRN **pprn)
     return 0;
 }
 
-/* ........................................................... */
-
 static int freq_error (FreqDist *freq, PRN *prn)
 {
     int err = 0;
@@ -431,8 +407,6 @@ static int freq_error (FreqDist *freq, PRN *prn)
 
     return err;
 }
-
-/* ........................................................... */
 
 static void maybe_quote_filename (char *s, char *cmd)
 {
@@ -551,8 +525,6 @@ int *command_list_from_string (char *s)
     return list;    
 }
 
-/* ........................................................... */
-
 static gint stack_model (MODEL *pmod)
 {
     int script = gretl_model_get_int(pmod, "script");
@@ -572,8 +544,6 @@ static gint stack_model (MODEL *pmod)
 
     return err;
 }
-
-/* ........................................................... */
 
 void add_mahalanobis_data (windata_t *vwin)
 {
@@ -713,8 +683,6 @@ void add_fcast_data (windata_t *vwin)
     /* nothing else need be done, since we're called by
        add_data_callback() */
 }
-
-/* ........................................................... */
 
 static const char *selected_varname (void)
 {
@@ -1147,8 +1115,6 @@ void do_two_var_test (GtkWidget *widget, gpointer p)
     }
 }
 
-/* ........................................................... */
-
 void open_info (gpointer data, guint edit, GtkWidget *widget)
 {
     if (datainfo->descrip == NULL) {
@@ -1169,8 +1135,6 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
     }
 }
 
-/* ........................................................... */
-
 void gui_errmsg (const int errcode)
 {
     const char *msg = get_gretl_errmsg();
@@ -1186,8 +1150,6 @@ void gui_errmsg (const int errcode)
 	}
     }
 }
-
-/* ........................................................... */
 
 int bool_subsample (gretlopt opt)
      /* OPT_M  drop all obs with missing data values 
@@ -1235,8 +1197,6 @@ int bool_subsample (gretlopt opt)
     return 0;
 }
 
-/* ........................................................... */
-
 void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
 {
     int err = bool_subsample(OPT_M);
@@ -1246,8 +1206,6 @@ void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
 	check_and_record_command();
     }
 }
-
-/* ........................................................... */
 
 void do_samplebool (GtkWidget *widget, dialog_t *dlg)
 {
@@ -1281,8 +1239,6 @@ int do_set_sample (void)
     return set_sample(cmdline, (const double **) Z, datainfo);
 }
 
-/* ........................................................... */
-
 void count_missing (void)
 {
     PRN *prn;
@@ -1296,8 +1252,6 @@ void count_missing (void)
 	gretl_print_destroy(prn);
     }
 }
-
-/* ........................................................... */
 
 void do_add_markers (const char *fname) 
 {
@@ -1451,8 +1405,6 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     }
 }
 
-/* ........................................................... */
-
 void do_coeff_sum (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
@@ -1491,8 +1443,6 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
 
     view_buffer(prn, 78, 200, title, COEFFSUM, NULL); 
 }
-
-/* ........................................................... */
 
 void do_add_omit (GtkWidget *widget, gpointer p)
 {
@@ -1563,8 +1513,6 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     view_model(prn, pmod, 78, 420, title);
 }
 
-/* ........................................................... */
-
 #ifdef OLD_GTK
 
 static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
@@ -1618,8 +1566,6 @@ static void update_model_tests (windata_t *vwin)
 	vwin->n_model_tests += 1;
     }
 }
-
-/* ........................................................... */
 
 void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 {
@@ -1676,8 +1622,6 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
     }
 }
 
-/* ........................................................... */
-
 void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) data;
@@ -1720,8 +1664,6 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     }
 }
 
-/* ........................................................... */
-
 static void set_model_id_on_window (GtkWidget *w, int ID)
 {
     g_object_set_data(G_OBJECT(w), "model_ID", 
@@ -1732,8 +1674,6 @@ static int get_model_id_from_window (GtkWidget *w)
 {
     return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "model_ID"));
 }
-
-/* ........................................................... */
 
 static int make_and_display_graph (void)
 {
@@ -1746,8 +1686,6 @@ static int make_and_display_graph (void)
 
     return 0;
 }
-
-/* ........................................................... */
 
 void add_leverage_data (windata_t *vwin)
 {
@@ -2118,8 +2056,6 @@ void do_arch (gpointer data, guint u, GtkWidget *widget)
     }
 }
 
-/* ........................................................... */
-
 static int model_error (MODEL *pmod)
 {
     int err = 0;
@@ -2148,8 +2084,6 @@ static int model_output (MODEL *pmod, PRN *prn)
     return err;
 }
 
-/* ........................................................... */
-
 static gint check_model_cmd (void)
 {
     int err = parse_command_line(cmdline, &cmd, &Z, datainfo); 
@@ -2160,8 +2094,6 @@ static gint check_model_cmd (void)
 
     return err;
 }
-
-/* ........................................................... */
 
 #ifdef ENABLE_GMP
 
@@ -2326,8 +2258,6 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 
     view_buffer(prn, 78, 300, title, PRINT, NULL);
 }
-
-/* ........................................................... */
 
 static int do_nls_genr (void)
 {
@@ -2661,8 +2591,6 @@ void do_model (GtkWidget *widget, gpointer p)
     view_model(prn, pmod, 78, 420, title); 
 }
 
-/* ........................................................... */
-
 void do_simdata (GtkWidget *widget, dialog_t *dlg) 
 {
     const gchar *buf;
@@ -2697,8 +2625,6 @@ void do_simdata (GtkWidget *widget, dialog_t *dlg)
     *paths.datfile = '\0';
     register_data(NULL, NULL, 0);
 }
-
-/* ........................................................... */
 
 void do_genr (GtkWidget *widget, dialog_t *dlg) 
 {
@@ -2814,8 +2740,6 @@ void do_seed (GtkWidget *widget, dialog_t *dlg)
     close_dialog(dlg);
 }
 
-/* ........................................................... */
-
 static int finish_genr (MODEL *pmod, dialog_t *dlg)
 {
     int err = 0;
@@ -2840,8 +2764,6 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 
     return err;
 }
-
-/* ........................................................... */
 
 static int real_do_setmiss (double missval, int varno) 
 {
@@ -2957,8 +2879,6 @@ int record_varlabel_change (int v)
     return check_and_record_command();
 }
 
-/* ........................................................... */
-
 static void normal_test (MODEL *pmod, FreqDist *freq)
 {
     ModelTest *test;
@@ -3028,8 +2948,6 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     free_freq(freq);
 }
 
-/* ........................................................... */
-
 static int 
 series_has_negative_vals (const double *x)
 {
@@ -3073,8 +2991,6 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 	free_freq(freq);
     }
 }
-
-/* ........................................................... */
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 
@@ -3207,8 +3123,6 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 }
 
 #endif /* HAVE_TRAMO || HAVE_X12A */
-
-/* ........................................................... */
 
 void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 {
@@ -3397,8 +3311,6 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 		    COVAR, vcv);
     }
 }
-
-/* ......................................................... */
 
 void add_dummies (gpointer data, guint u, GtkWidget *widget)
 {
@@ -3659,8 +3571,6 @@ int add_var_resid (GRETL_VAR *var, int eqnum)
 
     return 0;
 }
-
-/* ......................................................... */
 
 void add_model_stat (MODEL *pmod, int which)
 {
@@ -3945,8 +3855,6 @@ void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
     }
 }
 
-/* ........................................................... */
-
 #define MAXDISPLAY 4096
 /* max number of observations for which we expect to be able to 
    use the buffer approach for displaying data, as opposed to
@@ -4181,8 +4089,6 @@ void delete_selected_vars (int id)
     }
 }
 
-/* ........................................................... */
-
 void do_graph_var (int varnum)
 {
     int err, lines[1];
@@ -4250,8 +4156,6 @@ void do_scatters (GtkWidget *widget, gpointer p)
 	register_graph();
     }
 }
-
-/* ........................................................... */
 
 void do_box_graph (GtkWidget *widget, dialog_t *dlg)
 {
@@ -4415,8 +4319,6 @@ static int mywhich (const char *prog)
     return ret;
 }
 
-/* ........................................................... */
-
 static int get_terminal (char *s)
 {
     if (mywhich("xterm")) {
@@ -4460,8 +4362,6 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 	launch_gnuplot_interactive();
     }
 }
-
-/* ........................................................... */
 
 static int list_position (int v, const int *list)
 {
@@ -4539,15 +4439,6 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
-#if 0
-    if (cmd.list[0] > MAX_PLOT_LINES + 1) {
-	sprintf(errtext, _("Too many series in plot: maximum is %d"),
-		MAX_PLOT_LINES);
-	errbox(errtext);
-	return;
-    }
-#endif
-
     lines = mymalloc((cmd.list[0] - 1) * sizeof *lines);
     if (lines == NULL) {
 	return;
@@ -4564,8 +4455,6 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
 
     free(lines);
 }
-
-/* ........................................................... */
 
 void display_var (void)
 {
@@ -4616,8 +4505,6 @@ void display_var (void)
 	series_view_connect(vwin, list[1]);
     }
 }
-
-/* ........................................................... */
 
 #define PGRAB
 #undef SCRIPT_TO_FILE
@@ -4709,8 +4596,6 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
     set_gretl_echo(1);
 }
 
-/* ........................................................... */
-
 void do_open_script (void)
 {
     int ret, n = strlen(paths.scriptdir);
@@ -4739,8 +4624,6 @@ void do_open_script (void)
 	view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
     }
 }
-
-/* ........................................................... */
 
 void do_new_script (gpointer data, guint loop, GtkWidget *widget) 
 {
@@ -4808,8 +4691,6 @@ void do_open_csv_box (char *fname, int code, int append)
     }
 }
 
-/* ........................................................... */
-
 int dataset_is_subsampled (void)
 {
     int ret = 0;
@@ -4835,8 +4716,6 @@ int dataset_is_restricted (void)
 
     return dataset_is_subsampled();
 }
-
-/* ........................................................... */
 
 int maybe_restore_full_data (int action)
 {
@@ -4864,8 +4743,6 @@ int maybe_restore_full_data (int action)
 
     return 0;
 }
-
-/* ........................................................... */
 
 void gui_transpose_data (gpointer p, guint u, GtkWidget *w)
 {
@@ -4895,8 +4772,6 @@ void gui_transpose_data (gpointer p, guint u, GtkWidget *w)
 	}
     }
 }
-
-/* ........................................................... */
 
 static int db_write_response (const char *savename, const int *list)
 {
@@ -5232,7 +5107,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     if (err == LATEX_ERROR) {
 	view_file(tmp, 0, 1, 78, 350, VIEW_FILE);
     } else {
-	/* remove(texfile); */
+	remove(texfile);
 	remove(tmp);
     }
 
@@ -5254,8 +5129,6 @@ void save_latex (PRN *prn, const char *fname)
     }
 }
 
-/* ........................................................... */
-
 #if 0
 static const char *exec_string (int i)
 {
@@ -5269,8 +5142,6 @@ static const char *exec_string (int i)
     }
 }
 #endif
-
-/* ........................................................... */
 
 static int ok_script_file (const char *runfile)
 {
@@ -5460,8 +5331,6 @@ int execute_script (const char *runfile, const char *buf,
     return exec_err;
 }
 
-/* ........................................................... */
-
 static int script_model_test (int test_ci, int model_id, PRN *prn)
 {
     int m, mc;
@@ -5516,8 +5385,6 @@ static int script_model_test (int test_ci, int model_id, PRN *prn)
     return 0;
 }
 
-/* ........................................................... */
-
 static unsigned char gp_flags (int batch, gretlopt opt)
 {
     unsigned char flags = 0;
@@ -5537,8 +5404,6 @@ static unsigned char gp_flags (int batch, gretlopt opt)
     return flags;
 }
 
-/* ........................................................... */
-
 static int handle_user_defined_function (char *line, int *fncall)
 {
     int ufunc = gretl_is_user_function(line);
@@ -5557,8 +5422,6 @@ static int handle_user_defined_function (char *line, int *fncall)
 
     return err;
 }
-
-/* ........................................................... */
 
 static void do_autofit_plot (PRN *prn)
 {
@@ -5585,8 +5448,6 @@ static void do_autofit_plot (PRN *prn)
 	register_graph();
     }
 }
-
-/* ........................................................... */
 
 int gui_exec_line (char *line, 
 		   LOOPSET **plp, int *plstack, int *plrun, 
