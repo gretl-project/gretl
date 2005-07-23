@@ -336,9 +336,11 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
 	txt = gtk_entry_get_text(GTK_ENTRY(md->reply_entry));
 	if (txt != NULL && *txt != '\0') {
 	    msg->sender = g_strdup(txt);
-	    if (minfo->sender == NULL ||
-		strcmp(txt, minfo->sender)) {
+	    if (minfo->sender == NULL || strcmp(txt, minfo->sender)) {
 		save = 1;
+	    }
+	    if (minfo->sender == NULL) {
+		minfo->sender = g_strdup(txt);
 	    }
 	    fprintf(stderr, "sender = '%s'\n", msg->sender);
 	} else {
@@ -966,6 +968,7 @@ static int connect_to_server (char *hostname, unsigned short port)
     memcpy(&soaddr.sin_addr, &((struct in_addr *) ip->h_addr)->s_addr,
 	   sizeof(struct in_addr));
     soaddr.sin_port = htons(port);
+    memset(&soaddr.sin_zero, '\0', 8);
 
     if (connect(unit, (struct sockaddr *) &soaddr, sizeof soaddr) < 0) {
 	msg = g_strdup_printf("Couldn't connect to %s", hostname);
@@ -978,9 +981,14 @@ static int connect_to_server (char *hostname, unsigned short port)
     return unit;
 }
 
-static void set_pop_defaults (struct mail_info *minfo)
+static int set_pop_defaults (struct mail_info *minfo)
 {
     char *p;
+
+    if (minfo->server == NULL || minfo->sender == NULL) {
+	/* these must be defined at this point */
+	return 1;
+    }
 
     if (minfo->pop_server == NULL) {
 	p = strchr(minfo->server, '.');
@@ -997,6 +1005,8 @@ static void set_pop_defaults (struct mail_info *minfo)
 	    *p = '\0';
 	}
     }
+
+    return 0;
 }
 
 static int get_POP_error (char *buf)
