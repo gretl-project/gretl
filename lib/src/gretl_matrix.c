@@ -1969,6 +1969,14 @@ int gretl_matrix_get_int (const gretl_matrix *m)
     return m->t;
 }
 
+/**
+ * gretl_vector_get_length:
+ * @v: vector to examine.
+ * 
+ * Returns: the length of vector @v (without regard to whether
+ * it is a row or column vector).
+ */
+
 int gretl_vector_get_length (const gretl_vector *v) 
 {
     return (v->cols > v->rows)? v->cols : v->rows;

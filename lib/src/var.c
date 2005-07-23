@@ -55,6 +55,7 @@ struct GRETL_VAR_ {
     double ll;         /* log-likelihood */
     double AIC;        /* Akaike criterion */
     double BIC;        /* Bayesian criterion */
+    double LR;         /* for likelihood-ration testing */
     char *name;        /* for use in session management */
 };
 
@@ -143,6 +144,7 @@ static GRETL_VAR *gretl_VAR_new (int neqns, int order, const DATAINFO *pdinfo)
 
     var->ll = var->ldet = NADBL;
     var->AIC = var->BIC = NADBL;
+    var->LR = NADBL;
 
     rows = neqns * order;
 
@@ -1264,10 +1266,51 @@ static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
     return err;
 }
 
-static int var_compute_F_tests (MODEL *varmod, GRETL_VAR *var,
-				struct var_lists *vl,
-				double ***pZ, DATAINFO *pdinfo,
-				int i, int *k) 
+static int VAR_LR_lag_test (GRETL_VAR *var)
+{
+    gretl_matrix *S = NULL;
+    double ldet = NADBL;
+    int err = 0;
+
+    S = gretl_matrix_alloc(var->neqns, var->neqns);
+    if (S == NULL) {
+	err = 1;
+    }
+
+    if (!err) {
+	gretl_matrix_multiply_mod(var->F, GRETL_MOD_TRANSPOSE,
+				  var->F, GRETL_MOD_NONE,
+				  S);
+	gretl_matrix_divide_by_scalar(S, var->n);
+    }
+
+    if (!err) {
+	ldet = gretl_vcv_log_determinant(S);
+	if (na(var->ldet)) {
+	    err = 1;
+	}
+    }    
+
+    if (!err) {
+	var->LR = var->n * (ldet - var->ldet);
+    }
+
+    gretl_matrix_free(S);
+
+    /* we're done with this set of residuals */
+    gretl_matrix_free(var->F);
+    var->F = NULL;
+
+    return err;
+}
+
+/* per-equation F-tests for excluding variables and maximum
+   lag */
+
+static int VAR_compute_tests (MODEL *varmod, GRETL_VAR *var,
+			      struct var_lists *vl,
+			      double ***pZ, DATAINFO *pdinfo,
+			      int i, int *k) 
 {
     MODEL testmod;
     double F = NADBL;
@@ -1275,6 +1318,12 @@ static int var_compute_F_tests (MODEL *varmod, GRETL_VAR *var,
     int depvar = vl->stochvars[i + 1];
     int *outlist = NULL;
     int j, err = 0;
+
+    if (i == 0 && var->order > 1) {
+	/* first equation: allocate residual matrix for likelihood
+	   ratio test on maximum lag */
+	var->F = gretl_matrix_alloc(var->n, var->neqns);
+    } 
 
     if (robust) {
 	outlist = malloc(varmod->list[0] * sizeof *outlist);
@@ -1314,21 +1363,32 @@ static int var_compute_F_tests (MODEL *varmod, GRETL_VAR *var,
     if (!err && var->order > 1) {
 	compose_varlist(vl, depvar, var->order - 1, 0, pdinfo);	
 
-	if (robust) {
-	    gretl_list_diff(outlist, varmod->list, vl->reglist);
-	    F = robust_omit_F(outlist, varmod);
-	    if (na(F)) {
-		err = 1;
-	    }
-	} else {
-	    testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
-	    err = testmod.errcode;
-	    if (!err) {
+	testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	err = testmod.errcode;
+
+	if (!err) {
+	    if (robust) {
+		gretl_list_diff(outlist, varmod->list, vl->reglist);
+		F = robust_omit_F(outlist, varmod);
+		if (na(F)) {
+		    err = 1;
+		}
+	    } else {
 		F = ((testmod.ess - varmod->ess) / var->neqns) / 
 		    (varmod->ess / varmod->dfd);
 	    }
-	    clear_model(&testmod);
 	}
+
+	if (!err && var->F != NULL) {
+	    /* record residuals for LR test */
+	    int j, t = testmod.t1;
+
+	    for (j=0; j<var->n; j++) {
+		gretl_matrix_set(var->F, j, i, testmod.uhat[t++]);
+	    }
+	}
+
+	clear_model(&testmod);
 
 	if (!err) {
 	    var->Fvals[*k] = F;
@@ -1369,11 +1429,15 @@ static int VAR_add_stats (GRETL_VAR *var)
     if (!err) {
 	int n = var->n;
 	int g = var->neqns;
-	int k = g * var->ncoeff;
+	int k = var->ncoeff;
 	
 	var->ll = -(g * n / 2.0) * (LN_2_PI + 1) - (n / 2.0) * var->ldet;
-	var->AIC = -2.0 * var->ll + 2.0 * k;
-	var->BIC = -2.0 * var->ll + k * log(n);
+	var->AIC = (-2.0 / g) * var->ll + 2.0 * k;
+	var->BIC = (-2.0 / g) * var->ll + k * log(n);
+    }
+
+    if (!err && var->F != NULL) {
+	VAR_LR_lag_test(var);
     }
 
     return err;
@@ -1477,7 +1541,7 @@ static GRETL_VAR *real_var (int order, const int *inlist,
 	}
 
 	if (!*err) {
-	    *err = var_compute_F_tests(pmod, var, &vlists, pZ, pdinfo, i, &k);
+	    *err = VAR_compute_tests(pmod, var, &vlists, pZ, pdinfo, i, &k);
 	}
     }
 
@@ -3346,6 +3410,46 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	    if (pause) {
 		scroll_pause();
 	    }
+	}
+    }
+
+    pputc(prn, '\n');
+
+    /* global LR test on max lag */
+    if (!na(var->LR)) {
+	char h0str[64];
+	char h1str[64];
+	int df = var->neqns * var->neqns;
+
+	if (tex || rtf) {
+	    sprintf(h0str, I_("the longest lag is %d"), var->order - 1);
+	    sprintf(h1str, I_("the longest lag is %d"), var->order);
+	} else {
+	    sprintf(h0str, _("the longest lag is %d"), var->order - 1);
+	    sprintf(h1str, _("the longest lag is %d"), var->order);
+	}	    
+
+	if (tex) {
+	    pprintf(prn, "\\noindent %s ---\\par\n", I_("For the system as a whole"));
+	    pprintf(prn, "%s: %s\\par\n", I_("Null hypothesis"), h0str);
+	    pprintf(prn, "%s: %s\\par\n", I_("Alternative hypothesis"), h1str);
+	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f (%s %f)\\par\n",
+		    I_("Likelihood ratio test"), 
+		    df, var->LR, I_("p-value"), chisq(var->LR, df));
+	} else if (rtf) {
+	    pprintf(prn, "\\par %s\n", I_("For the system as a whole"));
+	    pprintf(prn, "\\par %s: %s\n", I_("Null hypothesis"), h0str);
+	    pprintf(prn, "\\par %s: %s\n", I_("Alternative hypothesis"), h1str);
+	    pprintf(prn, "\\par %s: %s(%d) = %g (%s %f)\n",
+		    I_("Likelihood ratio test"), I_("Chi-square"), 
+		    df, var->LR, I_("p-value"), chisq(var->LR, df));
+	} else {
+	    pprintf(prn, "%s\n", _("For the system as a whole"));
+	    pprintf(prn, "  %s: %s\n", _("Null hypothesis"), h0str);
+	    pprintf(prn, "  %s: %s\n", _("Alternative hypothesis"), h1str);
+	    pprintf(prn, "  %s: %s(%d) = %g (%s %f)\n",
+		    _("Likelihood ratio test"), _("Chi-square"), 
+		    df, var->LR, _("p-value"), chisq(var->LR, df));
 	}
     }
 

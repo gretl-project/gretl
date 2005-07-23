@@ -769,7 +769,7 @@ double sur_ll (gretl_equation_system *sys)
     int m = sys->n_equations;
     int T = sys->n_obs;
     gretl_matrix *sigtmp;
-    double ldet, ll;
+    double ldet;
 
     sigtmp = gretl_matrix_alloc(m, m);
     if (sigtmp == NULL) return NADBL;
@@ -778,17 +778,15 @@ double sur_ll (gretl_equation_system *sys)
     ldet = gretl_vcv_log_determinant(sigtmp);
 
     if (na(ldet)) {
-	ll = NADBL;
+	sys->ll = NADBL;
     } else {
-	ll = -(m * T / 2.0) * (LN_2_PI + 1.0);
-	ll -= (T / 2.0) * ldet;
+	sys->ll = -(m * T / 2.0) * (LN_2_PI + 1.0);
+	sys->ll -= (T / 2.0) * ldet;
     }
-
-    sys->ll = ll;
 
     gretl_matrix_free(sigtmp);
 
-    return ll;
+    return sys->ll;
 }
 
 /* if we're estimating with a specified set of linear restrictions,
