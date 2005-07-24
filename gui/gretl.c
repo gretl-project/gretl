@@ -113,13 +113,7 @@ char latex[MAXSTR] = "latex";
 char viewdvi[MAXSTR] = "xdvi";
 char viewps[MAXSTR] = "gv";
 char viewpdf[MAXSTR] = "acroread";
-
-#ifdef USE_GNOME
-char Rcommand[MAXSTR] = "R --gui=gnome";
-extern const char *version_string;
-#else
 char Rcommand[MAXSTR] = "xterm -e R";
-#endif
 
 #ifdef HAVE_TRAMO
 char tramo[MAXSTR] = "tramo";
