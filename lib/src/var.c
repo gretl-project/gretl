@@ -1432,8 +1432,8 @@ static int VAR_add_stats (GRETL_VAR *var)
 	int k = var->ncoeff;
 	
 	var->ll = -(g * n / 2.0) * (LN_2_PI + 1) - (n / 2.0) * var->ldet;
-	var->AIC = (-2.0 / g) * var->ll + 2.0 * k;
-	var->BIC = (-2.0 / g) * var->ll + k * log(n);
+	var->AIC = (-2.0 * var->ll + 2.0 * k * g) / n;
+	var->BIC = (-2.0 * var->ll + log(n) * k * g) / n;
     }
 
     if (!err && var->F != NULL) {
