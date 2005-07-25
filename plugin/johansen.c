@@ -137,6 +137,9 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
 	pval[0] = NADBL;
     } else {
 	pval[0] = 1.0 - g;
+	if (pval[0] < 0.0) {
+	    pval[0] = 0.0;
+	}
     }
 
     g = gamma_dist(ml, vl, lmaxtest, 2);
@@ -144,6 +147,9 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
 	pval[1] = NADBL;
     } else {
 	pval[1] = 1.0 - g;
+	if (pval[1] < 0.0) {
+	    pval[1] = 0.0;
+	}
     }
 
     return 0;
@@ -273,7 +279,7 @@ calculate_alpha (JVAR *jv, const gretl_matrix *evecs, int hmax)
 
     tmp1 = gretl_matrix_alloc(n, n);
     tmp2 = gretl_matrix_alloc(n, n);
-    alpha = gretl_matrix_alloc(n, n);
+    alpha = gretl_matrix_alloc(hmax, n);
 
     if (tmp1 == NULL || tmp2 == NULL || alpha == NULL) {
 	err = E_ALLOC;
