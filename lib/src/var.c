@@ -2890,7 +2890,6 @@ int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pd
     return err;
 }
 
-
 /**
  * gretl_VAR_print_VCV:
  * @var:

@@ -100,7 +100,6 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
         J_REST_TREND   = restricted trend
         J_UNREST_TREND = unrestricted trend
       N: cointegration rank under H0;
-      T: sample size;
       pval: on output, array of pvalues, for the two tests;
     */
     
@@ -428,7 +427,7 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 
 	print_test_case(jv->code, prn);
 
-	/* first col shows cointegration rank under H0, 
+	/* first column shows cointegration rank under H0, 
 	   second shows associated eigenvalue */
 	pprintf(prn, "\n%s %s %s %s   %s  %s\n", _("Rank"), _("Eigenvalue"), 
 		_("Trace test"), _("p-value"),
