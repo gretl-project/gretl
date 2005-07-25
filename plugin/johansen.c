@@ -223,7 +223,7 @@ static void print_beta_or_alpha (JVAR *jv, const gretl_matrix *beta,
     const gretl_matrix *c = (alpha == NULL)? beta : alpha;
     int rows = gretl_matrix_rows(c);
     int i, j, col;
-    double den;
+    double x;
 
     if (normalized) {
 	pprintf(prn, "\n%s\n", (alpha == NULL)? 
@@ -246,11 +246,11 @@ static void print_beta_or_alpha (JVAR *jv, const gretl_matrix *beta,
 	for (i=0; i<k; i++) {
 	    col = evals[i].idx;
 	    if (normalized) {
-		den = gretl_matrix_get(beta, i, col);
+		x = gretl_matrix_get(beta, i, col);
 		if (alpha == NULL) {
-		    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, j, col) / den);
+		    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, j, col) / x);
 		} else {
-		    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, j, col) * den);
+		    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, j, col) * x);
 		}
 	    } else {
 		pprintf(prn, "%#12.5g ", gretl_matrix_get(c, j, col));
