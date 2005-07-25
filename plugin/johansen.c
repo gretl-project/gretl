@@ -150,6 +150,19 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
     return 0;
 }
 
+struct eigval {
+    double v;
+    int idx;
+};
+
+static int inverse_compare_doubles (const void *a, const void *b)
+{
+    const double *da = (const double *) a;
+    const double *db = (const double *) b;
+
+    return (*da < *db) - (*da > *db);
+}
+
 static int 
 johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv,
 		    const double *eigvals)
@@ -229,46 +242,48 @@ johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv,
 }
 
 static void 
-print_coint_vecs (const double *evals, const gretl_matrix *vr, 
+print_coint_vecs (struct eigval *evals, const gretl_matrix *vr, 
 		  int k, const int *list, const DATAINFO *pdinfo,
 		  JohansenCode jcode, PRN *prn)
 {
-    int i, j, rows = vr->rows;
+    int i, j, col, rows = vr->rows;
     double den;
 
     pprintf(prn, "\n%s", _("eigenvalue"));
     for (i=0; i<k; i++) {
-	pprintf(prn, "%#11.5g ", evals[i]);
+	pprintf(prn, "%#11.5g ", evals[i].v);
     }
     pputc(prn, '\n');
 
     pprintf(prn, "\n%s\n", _("coeff"));
-    for (i=0; i<rows; i++) {
-	if (i < list[0]) {
-	    pprintf(prn, "%-10s", pdinfo->varname[list[i+1]]);
+    for (j=0; j<rows; j++) {
+	if (j < list[0]) {
+	    pprintf(prn, "%-10s", pdinfo->varname[list[j+1]]);
 	} else if (jcode == J_REST_CONST) {
 	    pprintf(prn, "%-10s", "const");
 	} else if (jcode == J_REST_TREND) {
 	    pprintf(prn, "%-10s", "trend");
 	}
-	for (j=0; j<k; j++) {
-	    pprintf(prn, "%#11.5g ", gretl_matrix_get(vr, i, j));
+	for (i=0; i<k; i++) {
+	    col = evals[i].idx;
+	    pprintf(prn, "%#11.5g ", gretl_matrix_get(vr, j, col));
 	}
 	pputc(prn, '\n');
     }
 
     pprintf(prn, "\n%s\n", _("renormalized"));
-    for (i=0; i<rows; i++) {
-	if (i < list[0]) {
-	    pprintf(prn, "%-10s", pdinfo->varname[list[i+1]]);
+    for (j=0; j<rows; j++) {
+	if (j < list[0]) {
+	    pprintf(prn, "%-10s", pdinfo->varname[list[j+1]]);
 	} else if (jcode == J_REST_CONST) {
 	    pprintf(prn, "%-10s", "const");
 	} else if (jcode == J_REST_TREND) {
 	    pprintf(prn, "%-10s", "trend");
 	}
-	for (j=0; j<k; j++) {
-	    den = gretl_matrix_get(vr, i, j);
-	    pprintf(prn, "%#11.5g ", gretl_matrix_get(vr, i, j) / den);
+	for (i=0; i<k; i++) {
+	    col = evals[i].idx;
+	    den = gretl_matrix_get(vr, i, col);
+	    pprintf(prn, "%#11.5g ", gretl_matrix_get(vr, j, col) / den);
 	}
 	pputc(prn, '\n');
     }
@@ -320,8 +335,9 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 {
     int k = gretl_matrix_cols(jv->Suu);
     int kv = gretl_matrix_cols(jv->Svv);
-    gretl_matrix *M = NULL, *Svv = NULL, *Suu = NULL;
+    gretl_matrix *M = NULL;
     gretl_matrix *TmpL = NULL, *TmpR = NULL;
+    gretl_matrix *Suu = NULL, *Svv = NULL;
     double *eigvals = NULL;
     int err = 0;
 
@@ -329,13 +345,13 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
     TmpR = gretl_matrix_alloc(kv, kv);
     M = gretl_matrix_alloc(kv, kv);
 
-    /* let's preserve the original Svv and Suu, so we copy them
-       before inverting */
+    /* let's preserve Svv and Suu, so copy them before
+       inverting */
     Svv = gretl_matrix_copy(jv->Svv);
     Suu = gretl_matrix_copy(jv->Suu);
 
-    if (TmpL == NULL || TmpR == NULL || M == NULL || 
-	Svv == NULL || Suu == NULL) {
+    if (Suu == NULL || Svv == NULL || TmpL == NULL || 
+	TmpR == NULL || M == NULL) {
 	err = 1;
 	goto eigenvals_bailout;
     }
@@ -375,9 +391,10 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
     eigvals = gretl_general_matrix_eigenvals(M, TmpR);
 
     if (eigvals != NULL) {
-	int T = jv->t2 - jv->t1 + 1;
+	int T = jv->t2 - jv->t1 - 1;
 	double cumeig = 0.0;
 	double *lambdamax = NULL, *trace = NULL;
+	struct eigval *evals;
 	double pval[2];
 	int hmax, i;
 
@@ -387,22 +404,31 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 
 	trace = malloc(k * sizeof *trace);
 	lambdamax = malloc(k * sizeof *lambdamax);
-	if (trace == NULL || lambdamax == NULL) {
+	evals = malloc(k * sizeof *evals);
+	if (trace == NULL || lambdamax == NULL || evals == NULL) {
 	    free(trace);
 	    free(lambdamax);
+	    free(evals);
 	    err = 1;
 	    goto eigenvals_bailout;
 	}
 
+	for (i=0; i<k; i++) {
+	    evals[i].v = eigvals[i];
+	    evals[i].idx = i;
+	}
+
+	qsort(evals, k, sizeof *evals, inverse_compare_doubles);
+
 	for (i=hmax-1; i>=0; i--){
-      	    lambdamax[i] = -T * log(1.0 - eigvals[i]); 
+      	    lambdamax[i] = -T * log(1.0 - evals[i].v); 
 	    cumeig += lambdamax[i];
  	    trace[i] = cumeig; 
 	}
 
 	print_test_case(jv->code, prn);
 
-	/* first column shows cointegration rank under H0, 
+	/* first col shows cointegration rank under H0, 
 	   second shows associated eigenvalue */
 	pprintf(prn, "\n%s %s %s %s   %s  %s\n", _("Rank"), _("Eigenvalue"), 
 		_("Trace test"), _("p-value"),
@@ -411,7 +437,7 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 	for (i=0; i<hmax; i++) {
 	    gamma_par_asymp(trace[i], lambdamax[i], jv->code, hmax - i, pval);
 	    pprintf(prn, "%4d%#11.5g%#11.5g [%s]%#11.5g [%s]\n", \
-		    i, eigvals[i], trace[i], safe_print_pval(pval[0], 0), 
+		    i, evals[i].v, trace[i], safe_print_pval(pval[0], 0), 
 		    lambdamax[i], safe_print_pval(pval[1], 1));
 	}
 	pputc(prn, '\n');
@@ -421,9 +447,10 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 
 	pputs(prn, _("Cointegrating vectors:")); 
 	pputc(prn, '\n');
-	print_coint_vecs(eigvals, TmpR, hmax, jv->list, pdinfo, jv->code, prn);
+	print_coint_vecs(evals, TmpR, hmax, jv->list, pdinfo, jv->code, prn);
 
 	free(eigvals);
+	free(evals);
 	free(lambdamax);
 	free(trace);
 

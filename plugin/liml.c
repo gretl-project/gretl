@@ -100,6 +100,24 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
     return err;
 }
 
+/* find the least characteristic root */
+
+static double lambda_min (const double *lambda, int k)
+{
+    double lmin = 1.0;
+    int i;
+
+    for (i=0; i<k; i++) {
+	if (i == 0) {
+	    lmin = lambda[i];
+	} else if (lambda[i] < lmin) {
+	    lmin = lambda[i];
+	}
+    }
+
+    return lmin;
+}
+
 /* construct the regression list for the auxiliary regressions
    needed as a basis for LIML */
 
@@ -313,7 +331,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
 	goto bailout;
     }
 
-    lmin = lambda[k-1];
+    lmin = lambda_min(lambda, k);
     free(lambda);
     gretl_model_set_double(pmod, "lmin", lmin);
     gretl_model_set_int(pmod, "idf", idf);

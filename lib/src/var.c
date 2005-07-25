@@ -2657,6 +2657,7 @@ static JVAR *johansen_VAR_new (const int *list, gretlopt opt)
 	    jv->Svv = NULL;
 	    jv->Suv = NULL;
 	    jv->err = 0;
+	    jv->t1 = jv->t2 = 0;
 	}
     }
 
@@ -2811,6 +2812,9 @@ JVAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	int T = resids.t2 - resids.t1 + 1;
 	char stobs[OBSLEN], endobs[OBSLEN];
 
+	jv->t1 = resids.t1;
+	jv->t2 = resids.t2;
+
 	gretl_matrix_multiply_mod(resids.u, GRETL_MOD_NONE,
 				  resids.u, GRETL_MOD_TRANSPOSE,
 				  jv->Suu);
@@ -2845,9 +2849,6 @@ johansen_exit:
     var_resids_free(&resids);
     free(varlist);
     
-    jv->t1 = pdinfo->t1;
-    jv->t2 = pdinfo->t2;
-
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
 
