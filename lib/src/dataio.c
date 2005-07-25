@@ -1092,7 +1092,8 @@ int get_precision (const double *x, int n, int placemax)
     return pmax;
 }
 
-static GretlDataFormat data_format_from_opt (gretlopt opt)
+static GretlDataFormat 
+format_from_opt_or_name (gretlopt opt, const char *fname)
 {
     GretlDataFormat fmt = 0;
     
@@ -1114,6 +1115,16 @@ static GretlDataFormat data_format_from_opt (gretlopt opt)
 	fmt = GRETL_DATA_DB;
     } else if (opt & OPT_G) {
 	fmt = GRETL_DATA_DAT;
+    }
+
+    if (fmt == 0) {
+	if (has_suffix(fname, ".R")) {
+	    fmt = GRETL_DATA_R;
+	} else if (has_suffix(fname, ".csv")) {
+	    fmt = GRETL_DATA_CSV;
+	} else if (has_suffix(fname, ".m")) {
+	    fmt = GRETL_DATA_OCTAVE;
+	}
     }
 
     return fmt;
@@ -1156,7 +1167,7 @@ int write_data (const char *fname, const int *list,
 
     l0 = list[0];
 
-    fmt = data_format_from_opt(opt);
+    fmt = format_from_opt_or_name(opt, fname);
 
     if (fmt == 0 || fmt == GRETL_DATA_GZIPPED) {
 	return write_xmldata(fname, list, Z, pdinfo, fmt, ppaths);
@@ -1288,7 +1299,8 @@ int write_data (const char *fname, const int *list,
 	else delim = ' ';
 
 	/* variable names */
-	if (fmt == GRETL_DATA_CSV) {
+	if (fmt == GRETL_DATA_CSV && 
+	    (pdinfo->S != NULL || pdinfo->structure != CROSS_SECTION)) {
 	    fprintf(fp, "obs%c", delim);
 	}
 	for (i=1; i<l0; i++) {
@@ -1299,7 +1311,7 @@ int write_data (const char *fname, const int *list,
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (pdinfo->S != NULL) {
 		fprintf(fp, "\"%s\"%c", pdinfo->S[t], delim);
-	    } else {
+	    } else if (pdinfo->structure != CROSS_SECTION) {
 		char tmp[OBSLEN];
 
 		ntodate_full(tmp, t, pdinfo);

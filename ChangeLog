@@ -1,12 +1,15 @@
 version 1.4.2, in progress
 - More XLS importer fixes
 - Add seasonal ARMA
+- Johansen cointegration test: extend to cover all 5 cases, 
+  produce a fuller report (loadings, long-run matrix)
 - Add bootstrapped confidence intervals for impulse responses 
   in VAR models
 - Add test for multivariate normality of VAR residuals
 - Add autocorrelation and ARCH tests for VAR equations
 - Add printing of cross-equation covariance matrix for VARs
 - Add combined plot of residuals for VARs
+- Add log-likelihood, AIC and BIC for VARs
 - Remove overly verbose notification dialogs
 - Editable windows: show Save button as disabled if there's
   nothing to be saved
@@ -24,6 +27,9 @@ version 1.4.2, in progress
   compile TeX files under /File/Preferences/General/Programs;
   this is now the default on Windows)
 - Add "Send To" (email) functionality for data files and scripts
+- "store" command: take file type from filename suffix for
+  ".R" (GNU R format), ".m" (Octave format) and ".csv" (comma-
+  separated)
 
 06/30/2005 version 1.4.1
 - Fix horrid unnoticed breakage in bhhh_max (broke both arma 
