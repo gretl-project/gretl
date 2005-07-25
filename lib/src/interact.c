@@ -1100,15 +1100,15 @@ static int maybe_print_object (const char *line, CMD *cmd)
     return ret;
 }
 
-static int trap_hash_comments (char *s, CMD *cmd)
+static int trap_comments (char *s, CMD *cmd)
 {
     int ret = 0;
 
-    if (*s == '#') {	
+    if (*s == '#' || (*s == '/' && *(s+1) == '/')) {	
 	cmd->nolist = 1;
 	cmd->ci = CMD_COMMENT;
 	ret = 1;
-    } else if (strstr(s, " #")) {
+    } else if (strstr(s, " #") || strstr(s, "//")) {
 	int quoted = 0;
 	int braced = 0;
 
@@ -1122,9 +1122,12 @@ static int trap_hash_comments (char *s, CMD *cmd)
 		    braced--;
 		}
 	    }
-	    if (!quoted && !braced && *s == ' ' && *(s+1) == '#') {
-		*s = '\0';
-		break;
+	    if (!quoted && !braced) {
+		if ((*s == ' ' && *(s+1) == '#') ||
+		    (*s == '/' && *(s+1) == '/')) {
+		    *s = '\0';
+		    break;
+		}
 	    }
 	    s++;
 	}
@@ -1175,7 +1178,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	gotdata = trydatafile(line, cmd);
     }
 
-    /* trap comments */
+    /* trap old-style comments */
     if (!gotdata) {
 	if (filter_comments(line, cmd)) {
 	    cmd->nolist = 1;
@@ -1185,7 +1188,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* also new-style comments */
-    if (trap_hash_comments(line, cmd)) {
+    if (trap_comments(line, cmd)) {
 	return cmd->errcode;
     } 
 
