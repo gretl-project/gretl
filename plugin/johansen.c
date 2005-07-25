@@ -391,7 +391,7 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
     eigvals = gretl_general_matrix_eigenvals(M, TmpR);
 
     if (eigvals != NULL) {
-	int T = jv->t2 - jv->t1 - 1;
+	int T = jv->t2 - jv->t1 + 1;
 	double cumeig = 0.0;
 	double *lambdamax = NULL, *trace = NULL;
 	struct eigval *evals;
