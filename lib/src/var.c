@@ -2344,72 +2344,64 @@ has_time_trend (const int *varlist, double ***pZ, DATAINFO *pdinfo)
 
 #endif
 
-static int 
-allocate_sigmas (gretl_matrix **s1, gretl_matrix **s2, gretl_matrix **s3, 
-		 int k, JohansenCode jcode)
+static int allocate_johansen_sigmas (JVAR *jv, int k)
 {
     int vk = k;
     int err = 0;
 
-    gretl_matrix *Suu = NULL;
-    gretl_matrix *Svv = NULL;
-    gretl_matrix *Suv = NULL;
-
-    if (jcode == J_REST_CONST || jcode == J_REST_TREND) {
+    if (jv->code == J_REST_CONST || jv->code == J_REST_TREND) {
 	vk++;
     }    
 
-    Suu = gretl_matrix_alloc(k, k);
-    Svv = gretl_matrix_alloc(vk, vk);
-    Suv = gretl_matrix_alloc(k, vk);
+    jv->Suu = gretl_matrix_alloc(k, k);
+    jv->Svv = gretl_matrix_alloc(vk, vk);
+    jv->Suv = gretl_matrix_alloc(k, vk);
 
-    if (Suu == NULL || Svv == NULL || Suv == NULL) {
-	gretl_matrix_free(Suu);
-	gretl_matrix_free(Svv);
-	gretl_matrix_free(Suv);
+    if (jv->Suu == NULL || jv->Svv == NULL || jv->Suv == NULL) {
+	gretl_matrix_free(jv->Suu);
+	gretl_matrix_free(jv->Svv);
+	gretl_matrix_free(jv->Suv);
+	jv->Suu = NULL;
+	jv->Svv = NULL;
+	jv->Suv = NULL;
 	err = E_ALLOC;
-    } else {
-	*s1 = Suu;
-	*s2 = Svv;
-	*s3 = Suv;
-    }
+    } 
 
     return err;
 }
 
 static void 
-print_sigmas (const gretl_matrix *Suu, const gretl_matrix *Svv, 
-	      const gretl_matrix *Suv, PRN *prn)
+print_johansen_sigmas (const JVAR *jv, PRN *prn)
 {
     int nr, nc;
     int i, j;
 
     pprintf(prn, "\n%s\n\n", _("Sample variance-covariance matrices for residuals"));
 
-    nr = gretl_matrix_rows(Suu);
+    nr = gretl_matrix_rows(jv->Suu);
     pprintf(prn, " %s\n\n", _("VAR system in first differences"));
     for (i=0; i<nr; i++) {
 	for (j=0; j<nr; j++) {
-	    pprintf(prn, "%#12.5g", gretl_matrix_get(Suu, i, j));
+	    pprintf(prn, "%#12.5g", gretl_matrix_get(jv->Suu, i, j));
 	}
 	pputc(prn, '\n');
     }
 
-    nr = gretl_matrix_rows(Svv);
+    nr = gretl_matrix_rows(jv->Svv);
     pprintf(prn, "\n %s\n\n", _("System with levels as dependent variable"));
     for (i=0; i<nr; i++) {
 	for (j=0; j<nr; j++) {
-	    pprintf(prn, "%#12.5g", gretl_matrix_get(Svv, i, j));
+	    pprintf(prn, "%#12.5g", gretl_matrix_get(jv->Svv, i, j));
 	}
 	pputc(prn, '\n');
     } 
     
-    nr = gretl_matrix_rows(Suv);
-    nc = gretl_matrix_cols(Suv);
+    nr = gretl_matrix_rows(jv->Suv);
+    nc = gretl_matrix_cols(jv->Suv);
     pprintf(prn, "\n %s\n\n", _("Cross-products"));
     for (i=0; i<nr; i++) {
 	for (j=0; j<nc; j++) {
-	    pprintf(prn, "%#12.5g", gretl_matrix_get(Suv, i, j));
+	    pprintf(prn, "%#12.5g", gretl_matrix_get(jv->Suv, i, j));
 	}
 	pputc(prn, '\n');
     }     
@@ -2438,14 +2430,10 @@ transcribe_data_as_uhat (int v, const double **Z, gretl_matrix *u,
 }
 
 static int 
-johansen_complete (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
-		   int T, JohansenCode jcode, const int *list,
-		   const DATAINFO *pdinfo, PRN *prn)
+johansen_complete (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 {
     void *handle = NULL;
-    int (*johansen) (gretl_matrix *, gretl_matrix *, gretl_matrix *,
-		     int, JohansenCode, const int *, const DATAINFO *,
-		     PRN *);
+    int (*johansen) (JVAR *, const DATAINFO *, PRN *);
     int err = 0;
 
     *gretl_errmsg = 0;
@@ -2455,7 +2443,7 @@ johansen_complete (gretl_matrix *Suu, gretl_matrix *Svv, gretl_matrix *Suv,
     if (johansen == NULL) {
 	err = 1;
     } else {
-	err = (* johansen) (Suu, Svv, Suv, T, jcode, list, pdinfo, prn);
+	err = (* johansen) (jv, pdinfo, prn);
 	close_plugin(handle);
     }
     
@@ -2642,28 +2630,57 @@ static JohansenCode jcode_from_opt (gretlopt opt)
     return jc;
 }
 
+void johansen_VAR_free (JVAR *jv)
+{
+    if (jv != NULL) {
+	gretl_matrix_free(jv->Suu);
+	gretl_matrix_free(jv->Svv);
+	gretl_matrix_free(jv->Suv);
+
+	free(jv);
+    }
+}
+
+static JVAR *johansen_VAR_new (const int *list, gretlopt opt)
+{
+    JVAR *jv;
+
+    jv = malloc(sizeof *jv);
+    if (jv != NULL) {
+	jv->code = jcode_from_opt(opt);
+	jv->list = gretl_list_copy(list);
+	if (jv->list == NULL) {
+	    free(jv);
+	    jv = NULL;
+	} else {
+	    jv->Suu = NULL;
+	    jv->Svv = NULL;
+	    jv->Suv = NULL;
+	    jv->err = 0;
+	}
+    }
+
+    return jv;
+}
+
 /**
  * johansen_test:
- * @order:
- * @list:
- * @pZ:
- * @pdinfo:
+ * @order: lag order for test.
+ * @list: list of variables to test for cointegration.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  * @opt:
- * @prn:
+ * @prn: gretl printing struct.
  *
  *
  * Returns:
  */
 
-int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
-		   gretlopt opt, PRN *prn)
+JVAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
+		     gretlopt opt, PRN *prn)
 {
     PRN *varprn = NULL;
-    JohansenCode jcode;
-
-    gretl_matrix *Suu = NULL;
-    gretl_matrix *Svv = NULL;
-    gretl_matrix *Suv = NULL;
+    JVAR *jv;
 
     int seasonals = (opt & OPT_D);
     struct var_resids resids;
@@ -2673,9 +2690,13 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
     int *varlist = NULL;
     int hasconst = 0;
     int l0 = list[0];
-    int i, j, k, err = 0;
+    int i, j, k;
 
-    jcode = jcode_from_opt(opt);
+    jv = johansen_VAR_new(list, opt);
+    if (jv == NULL) {
+	return NULL;
+    }    
+
     var_resids_init(&resids);
 
     for (i=1; i<=list[0]; i++) {
@@ -2688,33 +2709,34 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
     if (order <= 0 || list[0] - hasconst < 2) {
 	strcpy(gretl_errmsg, "coint2: needs a positive lag order "
 	       "and at least two variables");
-	return 1;
+	jv->err = 1;
+	return jv;
     }
 
     if (seasonals) {
 	if (pdinfo->pd > 1) {
 	    l0 += pdinfo->pd - 1;
-	    err = dummy(pZ, pdinfo, 1);
+	    jv->err = dummy(pZ, pdinfo, 1);
 	} else {
 	    fprintf(stderr, "seasonals option ignored\n");
 	}
     }
 
-    if (err) {
-	return E_ALLOC;
+    if (jv->err) {
+	return jv;
     }
 
     /* we're assuming that the list we are fed is in levels */
     resids.levels_list = gretl_list_new(l0);
     if (resids.levels_list == NULL) {
-	err = E_ALLOC;
+	jv->err = E_ALLOC;
 	goto johansen_exit;
     }
 
     /* make list long enough to accommodate trend, if wanted */
     varlist = gretl_list_new(l0 + 2);
     if (varlist == NULL) {
-	err = E_ALLOC;
+	jv->err = E_ALLOC;
 	goto johansen_exit;
     }
 
@@ -2733,7 +2755,7 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (list[i] != 0) {
 	    resids.levels_list[j] = laggenr(list[i], 1, pZ, pdinfo);
 	    if (resids.levels_list[j] < 0) {
-		err = E_ALLOC;
+		jv->err = E_ALLOC;
 		goto johansen_exit;
 	    }
 	    j++;
@@ -2746,15 +2768,12 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (list[i] != 0) {
 	    varlist[k] = diffgenr(list[i], pZ, pdinfo, 0);
 	    if (varlist[k] < 0) {
-		err = E_ALLOC;
+		jv->err = E_ALLOC;
 		goto johansen_exit;
 	    } 
 	    k++;
 	}
     }
-
-    /* FIXME not sure seasonals are right in case of restricted
-       constant */
 
     if (seasonals) {
 	/* add centered seasonal dummies to list */
@@ -2764,13 +2783,13 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (jcode == J_UNREST_TREND) {
+    if (jv->code == J_UNREST_TREND) {
 	/* add trend to VAR list */
 	varlist[0] += 1;
 	varlist[varlist[0]] = gettrend(pZ, pdinfo, 0);
     }	
 
-    if (jcode >= J_UNREST_CONST) {
+    if (jv->code >= J_UNREST_CONST) {
 	/* add the constant to the VAR list */
 	varlist[0] += 1;
 	varlist[varlist[0]] = 0;
@@ -2780,31 +2799,31 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	varprn = prn;
     } 
 
-    err = johansen_VAR(order - 1, varlist, pZ, pdinfo, 
-		       &resids, opt, jcode, varprn); 
+    jv->err = johansen_VAR(order - 1, varlist, pZ, pdinfo, 
+			   &resids, opt, jv->code, varprn); 
 
-    if (!err) {
+    if (!jv->err) {
 	k = gretl_matrix_rows(resids.u);
-	err = allocate_sigmas(&Suu, &Svv, &Suv, k, jcode);
+	jv->err = allocate_johansen_sigmas(jv, k);
     }
     
-    if (!err) {
+    if (!jv->err) {
 	int T = resids.t2 - resids.t1 + 1;
 	char stobs[OBSLEN], endobs[OBSLEN];
 
 	gretl_matrix_multiply_mod(resids.u, GRETL_MOD_NONE,
 				  resids.u, GRETL_MOD_TRANSPOSE,
-				  Suu);
+				  jv->Suu);
 	gretl_matrix_multiply_mod(resids.v, GRETL_MOD_NONE,
 				  resids.v, GRETL_MOD_TRANSPOSE,
-				  Svv);
+				  jv->Svv);
 	gretl_matrix_multiply_mod(resids.u, GRETL_MOD_NONE,
 				  resids.v, GRETL_MOD_TRANSPOSE,
-				  Suv);
+				  jv->Suv);
 
-	gretl_matrix_divide_by_scalar(Suu, T);
-	gretl_matrix_divide_by_scalar(Svv, T);
-	gretl_matrix_divide_by_scalar(Suv, T);
+	gretl_matrix_divide_by_scalar(jv->Suu, T);
+	gretl_matrix_divide_by_scalar(jv->Svv, T);
+	gretl_matrix_divide_by_scalar(jv->Suv, T);
 
 	pprintf(prn, "%s:\n", _("Johansen test"));
 	pprintf(prn, "%s = %d\n", _("Number of equations"), k);
@@ -2814,29 +2833,62 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 		ntodate(endobs, resids.t2, pdinfo), T);
 
 	if (opt & OPT_V) {
-	    print_sigmas(Suu, Svv, Suv, prn);
+	    print_johansen_sigmas(jv, prn);
 	}
 
 	/* now get johansen plugin to finish the job */
-	err = johansen_complete(Suu, Svv, Suv, T, jcode, list, pdinfo, prn);
+	jv->err = johansen_complete(jv, pdinfo, prn);
     } 
 
 johansen_exit:
 
     var_resids_free(&resids);
     free(varlist);
-
-    gretl_matrix_free(Suu);
-    gretl_matrix_free(Svv);
-    gretl_matrix_free(Suv);
+    
+    jv->t1 = pdinfo->t1;
+    jv->t2 = pdinfo->t2;
 
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
 
     dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
 
+    return jv;
+}
+
+/**
+ * johansen_test_simple:
+ * @order:
+ * @list:
+ * @pZ:
+ * @pdinfo:
+ * @opt:
+ * @prn:
+ *
+ *
+ * Returns:
+ */
+
+int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
+			  gretlopt opt, PRN *prn)
+{
+    JVAR *jv;
+    int err;
+
+    jv = johansen_test(order, list, pZ, pdinfo, opt, prn);
+    if (jv == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = jv->err;
+    }
+
+    if (jv != NULL) {
+	johansen_VAR_free(jv);
+    }
+
     return err;
 }
+
 
 /**
  * gretl_VAR_print_VCV:

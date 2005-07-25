@@ -1454,6 +1454,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gretl_matrix_free(vwin->data);
 	} else if (vwin->role == MAHAL) {
 	    free_mahal_dist(vwin->data);
+	} else if (vwin->role == COINT2) {
+	    johansen_VAR_free(vwin->data);
 	}
 
 	if (vwin->dialog) {

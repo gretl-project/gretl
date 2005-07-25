@@ -834,6 +834,7 @@ static void real_do_coint (gpointer p, int action, gretlopt jopt)
 {
     selector *sr = (selector *) p;
     const char *buf = selector_list(sr);
+    JVAR *jv = NULL;
     PRN *prn;
     int err = 0, order = 0;
 
@@ -862,7 +863,10 @@ static void real_do_coint (gpointer p, int action, gretlopt jopt)
     if (action == COINT) {
 	err = coint(order, cmd.list, &Z, datainfo, cmd.opt, prn);
     } else {
-	johansen_test(order, cmd.list, &Z, datainfo, cmd.opt, prn);
+	jv = johansen_test(order, cmd.list, &Z, datainfo, cmd.opt, prn);
+	if ((err = jv->err)) {
+	    johansen_VAR_free(jv);
+	}
     }
 
     if (err) {
@@ -872,7 +876,7 @@ static void real_do_coint (gpointer p, int action, gretlopt jopt)
     } 
 
     view_buffer(prn, 78, 400, _("gretl: cointegration test"), 
-		action, NULL);
+		action, (action == COINT2)? jv : NULL);
 }
 
 void do_coint (GtkWidget *widget, gpointer p)

@@ -1770,6 +1770,63 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     return err;
 }
 
+static int inverse_compare_doubles (const void *a, const void *b)
+{
+    const double *da = (const double *) a;
+    const double *db = (const double *) b;
+
+    return (*da < *db) - (*da > *db);
+}
+
+struct eigval {
+    double v;
+    int idx;
+};
+
+static int eigen_sort (double *ev, gretl_matrix *evec, int k)
+{
+    gretl_matrix *eveccpy = NULL;
+    struct eigval *evals = NULL;
+    double x;
+    int i, j;
+
+    evals = malloc(k * sizeof *evals);
+    if (evals == NULL) {
+	return 1;
+    }
+
+    if (evec != NULL) {
+	eveccpy = gretl_matrix_copy(evec);
+	if (eveccpy == NULL) {
+	    free(evals);
+	    return 1;
+	}
+    }
+
+    for (i=0; i<k; i++) {
+	evals[i].v = ev[i];
+	evals[i].idx = i;
+    }
+
+    qsort(evals, k, sizeof *evals, inverse_compare_doubles);
+
+    /* reorganize both eigenvalues (ev) and eigenvectors (evec) */
+    for (i=0; i<k; i++) {
+	ev[i] = evals[i].v;
+	if (evec != NULL) {
+	    for (j=0; j<k; j++) {
+		x = gretl_matrix_get(eveccpy, i, evals[j].idx);
+		gretl_matrix_set(evec, i, j, x);
+	    }
+	}
+    }
+
+    free(evals);
+    gretl_matrix_free(eveccpy);
+
+    return 0;
+}
+
 /**
  * gretl_general_matrix_eigenvals:
  * @m: matrix to operate on.
@@ -1777,8 +1834,10 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
  * are not required.
  * 
  * Computes the eigenvalues of the general matrix @m.  If @ev is
- * non-%NULL, write the right eigenvectors of @m into @ev.
- * Uses the lapack function %dgeev.
+ * non-%NULL, write the right eigenvectors of @m into @ev.  On
+ * successful completion, the eigenvalues are ordered largest
+ * to smallest, and the columns of @ev (if non-%NULL) are
+ * ordered correspondingly.  Uses the lapack function %dgeev.
  *
  * Returns: allocated storage containing the eigenvalues, or %NULL
  * on failure.
@@ -1860,6 +1919,10 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
 
     free(wi);
     free(work);
+
+    if (eigen_sort(wr, ev, n)) {
+	goto bailout;
+    }
 
     return wr;
 

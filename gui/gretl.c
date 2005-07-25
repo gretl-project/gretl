@@ -20,6 +20,7 @@
 /* gretl.c : main for gretl */
 
 #include "gretl.h"
+#include "version.h"
 #include "ssheet.h"
 #include "console.h"
 #include "session.h"

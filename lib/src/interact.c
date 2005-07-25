@@ -2653,7 +2653,8 @@ int simple_commands (CMD *cmd, const char *line,
 
     case COINT2:
 	order = atoi(cmd->param);
-	err = johansen_test(order, cmd->list, pZ, datainfo, cmd->opt, prn);
+	err = johansen_test_simple(order, cmd->list, pZ, datainfo, 
+				   cmd->opt, prn);
 	break;
 
     case CORR:

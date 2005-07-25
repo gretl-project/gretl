@@ -21,6 +21,7 @@
 #define VAR_H_
 
 #include "gretl_matrix.h"
+#include "johansen.h"
 
 typedef enum {
     UR_NO_CONST = 1,
@@ -28,14 +29,6 @@ typedef enum {
     UR_TREND,
     UR_TREND_SQUARED
 } AdfCode;
-
-typedef enum {
-    J_NO_CONST = 0,
-    J_REST_CONST,
-    J_UNREST_CONST,
-    J_REST_TREND,
-    J_UNREST_TREND
-} JohansenCode;
 
 int var_max_order (const int *list, const DATAINFO *pdinfo);
 
@@ -82,10 +75,6 @@ int adf_test (int order, int varno,
 
 int kpss_test (int order, int varno, double ***pZ,
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn);
-
-int johansen_test (int order, const int *list, 
-		   double ***pZ, DATAINFO *pdinfo,
-		   gretlopt opt, PRN *prn);
 
 int default_VAR_horizon (const DATAINFO *pdinfo);
 
