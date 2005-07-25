@@ -746,8 +746,10 @@ static void print_model_heading (const MODEL *pmod,
     int tex = tex_format(prn);
     int utf = plain_format(prn);
 
-    ntodate(startdate, t1, pdinfo);
-    ntodate(enddate, t2, pdinfo);
+    if (pmod->aux != AUX_VAR) {
+	ntodate(startdate, t1, pdinfo);
+	ntodate(enddate, t2, pdinfo);
+    }
 
     switch (pmod->aux) {
     case AUX_SQ:
@@ -809,7 +811,9 @@ static void print_model_heading (const MODEL *pmod,
 	break;
     }
 
-    if (pmod->aux == AUX_SYS) {
+    if (pmod->aux == AUX_VAR) {
+	;
+    } else if (pmod->aux == AUX_SYS) {
 	pprintf(prn, (utf)?
 		_("%s estimates using the %d observations %s%s%s") :
 		I_("%s estimates using the %d observations %s%s%s"),
@@ -850,10 +854,12 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
-    model_print_newline(prn);
+    if (pmod->aux != AUX_VAR) {
+	model_print_newline(prn);
+    }
 
-    /* special names for dependent variable in cases of certain sorts
-       of auxiliary regressions */
+    /* special formulations for dependent variable in cases of certain
+       sorts of auxiliary regressions */
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG) {
 	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
@@ -875,9 +881,13 @@ static void print_model_heading (const MODEL *pmod,
 	int v = gretl_model_get_depvar(pmod);
 
 	if (tex) tex_escape(vname, pdinfo->varname[v]);
-	pprintf(prn, "%s: %s", 
-		(utf)? _("Dependent variable") : I_("Dependent variable"),
-		(tex)? vname : pdinfo->varname[v]);
+	if (pmod->aux == AUX_VAR) {
+	    pputs(prn, (tex)? vname : pdinfo->varname[v]);
+	} else {
+	    pprintf(prn, "%s: %s", 
+		    (utf)? _("Dependent variable") : I_("Dependent variable"),
+		    (tex)? vname : pdinfo->varname[v]);
+	}
     }
 
     model_print_newline(prn);

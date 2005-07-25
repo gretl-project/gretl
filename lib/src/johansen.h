@@ -40,6 +40,8 @@ struct JVAR_ {
     gretl_matrix *Suu;
     gretl_matrix *Svv;
     gretl_matrix *Suv;
+    gretl_matrix *pi;
+    gretl_matrix *theta;
     int err;
 };
 

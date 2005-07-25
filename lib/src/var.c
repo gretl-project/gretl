@@ -2344,6 +2344,27 @@ has_time_trend (const int *varlist, double ***pZ, DATAINFO *pdinfo)
 
 #endif
 
+static int allocate_johansen_pi_theta (JVAR *jv, int k)
+{
+    int err = 0;
+
+    jv->pi = gretl_column_vector_alloc(k);
+    jv->theta = gretl_column_vector_alloc(k);
+
+    if (jv->pi == NULL || jv->theta == NULL) {
+	gretl_matrix_free(jv->pi);
+	gretl_matrix_free(jv->theta);
+	jv->pi = NULL;
+	jv->theta = NULL;
+	err = E_ALLOC;
+    } else {
+	gretl_matrix_zero(jv->pi);
+	gretl_matrix_zero(jv->theta);
+    }	
+
+    return err;
+}
+
 static int allocate_johansen_sigmas (JVAR *jv, int k)
 {
     int vk = k;
@@ -2361,9 +2382,11 @@ static int allocate_johansen_sigmas (JVAR *jv, int k)
 	gretl_matrix_free(jv->Suu);
 	gretl_matrix_free(jv->Svv);
 	gretl_matrix_free(jv->Suv);
+	
 	jv->Suu = NULL;
 	jv->Svv = NULL;
 	jv->Suv = NULL;
+
 	err = E_ALLOC;
     } 
 
@@ -2481,13 +2504,11 @@ allocate_residual_matrices (struct var_resids *resids, int k,
 
 static int johansen_VAR (int order, const int *inlist, 
 			 double ***pZ, DATAINFO *pdinfo,
-			 struct var_resids *resids, 
-			 gretlopt opt, JohansenCode jcode, 
-			 PRN *prn)
+			 JVAR *jv, struct var_resids *resids, 
+			 gretlopt opt, PRN *prn)
 {
     int i, neqns;
     struct var_lists vlists;
-    MODEL var_model;
     MODEL jmod;
     int err = 0;
 
@@ -2524,12 +2545,17 @@ static int johansen_VAR (int order, const int *inlist,
 
     resids->t1 = pdinfo->t1;
     resids->t2 = pdinfo->t2;
-    err = allocate_residual_matrices(resids, neqns, jcode);
+    err = allocate_residual_matrices(resids, neqns, jv->code);
     if (err) {
 	goto var_bailout;
     }
 
-    gretl_model_init(&var_model);
+    err = allocate_johansen_pi_theta(jv, neqns);
+    if (err) {
+	goto var_bailout;
+    }    
+
+    gretl_model_init(&jmod);
 
     if (opt & OPT_V) {
 	pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
@@ -2539,25 +2565,29 @@ static int johansen_VAR (int order, const int *inlist,
 	compose_varlist(&vlists, vlists.stochvars[i + 1], 
 			order, 0, pdinfo);
 
+	/* VAR in differences */
 	if (vlists.reglist[0] == 1) {
 	    /* degenerate model (nothing to concentrate out) */
 	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
 				    resids->u, i, resids->t1);
 	} else {
-	    var_model = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
-	    if ((err = var_model.errcode)) {
+	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    if ((err = jmod.errcode)) {
 		goto var_bailout;
 	    }
 	    if (opt & OPT_V) {
-		var_model.aux = AUX_VAR;
-		var_model.ID = i + 1;
-		printmodel(&var_model, pdinfo, OPT_NONE, prn);
+		jmod.aux = AUX_VAR;
+		jmod.ID = i + 1;
+		printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	    }
-	    transcribe_uhat_to_matrix(&var_model, resids->u, i);
-	    clear_model(&var_model);
+	    transcribe_uhat_to_matrix(&jmod, resids->u, i);
+	    if (in_gretl_list(jmod.list, 0)) {
+		gretl_vector_set(jv->pi, i, jmod.coeff[0]);
+	    }
+	    clear_model(&jmod);
 	}
 
-	/* estimate additional equations for Johansen test */
+	/* y_{t-1} regressions */
 	vlists.reglist[1] = resids->levels_list[i + 1]; 
 	if (vlists.reglist[0] == 1) {
 	    /* degenerate */
@@ -2574,13 +2604,16 @@ static int johansen_VAR (int order, const int *inlist,
 		printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	    }
 	    transcribe_uhat_to_matrix(&jmod, resids->v, i);
+	    if (in_gretl_list(jmod.list, 0)) {
+		gretl_vector_set(jv->theta, i, jmod.coeff[0]);
+	    }
 	    clear_model(&jmod);
 	}
     }
 
     /* supplementary regressions for restricted cases */
-    if (jcode == J_REST_CONST || jcode == J_REST_TREND) {
-	if (jcode == J_REST_CONST) {
+    if (jv->code == J_REST_CONST || jv->code == J_REST_TREND) {
+	if (jv->code == J_REST_CONST) {
 	    vlists.reglist[1] = 0;
 	} else {
 	    vlists.reglist[1] = gettrend(pZ, pdinfo, 0);
@@ -2636,6 +2669,8 @@ void johansen_VAR_free (JVAR *jv)
 	gretl_matrix_free(jv->Suu);
 	gretl_matrix_free(jv->Svv);
 	gretl_matrix_free(jv->Suv);
+	gretl_matrix_free(jv->pi);
+	gretl_matrix_free(jv->theta);
 
 	free(jv);
     }
@@ -2656,6 +2691,9 @@ static JVAR *johansen_VAR_new (const int *list, gretlopt opt)
 	    jv->Suu = NULL;
 	    jv->Svv = NULL;
 	    jv->Suv = NULL;
+	    jv->pi = NULL;
+	    jv->theta = NULL;
+
 	    jv->err = 0;
 	    jv->t1 = jv->t2 = 0;
 	}
@@ -2801,7 +2839,7 @@ JVAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     jv->err = johansen_VAR(order - 1, varlist, pZ, pdinfo, 
-			   &resids, opt, jv->code, varprn); 
+			   jv, &resids, opt, varprn); 
 
     if (!jv->err) {
 	k = gretl_matrix_rows(resids.u);
@@ -3347,15 +3385,20 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt, 
 		     PRN *prn)
 {
-    int i, j, k, v;
-    int dfd = (var->models[0])->dfd;
+    char startdate[OBSLEN], enddate[OBSLEN];
+    char Vstr[72];
+    int dfd = var->models[0]->dfd;
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
+    int i, j, k, v;
     int pause = 0;
 
     if (prn == NULL) {
 	return 0;
     }
+
+    ntodate(startdate, var->models[0]->t1, pdinfo);
+    ntodate(enddate, var->models[0]->t2, pdinfo);
 
     if (rtf) {
 	pputs(prn, "{\\rtf1\\par\n\\qc ");
@@ -3365,30 +3408,48 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	goto print_extras;
     }
 
+    if (tex || rtf) {
+	sprintf(Vstr, I_("VAR system, lag order %d"), var->order);
+    } else {
+	sprintf(Vstr, _("VAR system, lag order %d"), var->order);
+    }
+
     if (tex) {
 	pputs(prn, "\\begin{center}");
-	pprintf(prn, I_("\nVAR system, lag order %d\n"), var->order);
-	pputs(prn, "\\end{center}");
+	pprintf(prn, "\n%s\\\\\n", Vstr);
+	pprintf(prn, I_("%s estimates using %d observations from %s%s%s"),
+		I_("OLS"), var->n, startdate, "--", enddate);
+	pputs(prn, "\n\\end{center}");
 	pputs(prn, "\\vspace{1ex}\n");
     } else if (rtf) {
 	gretl_print_toggle_doc_flag(prn);
-	pprintf(prn, I_("\nVAR system, lag order %d\\par\n\n"), var->order);
+	pprintf(prn, "\n%s\\par\n", Vstr);
+	pprintf(prn, I_("%s estimates using %d observations from %s%s%s"),
+		I_("OLS"), var->n, startdate, "-", enddate);
+	pputs(prn, "\\par\n\n");
     } else {
 	pause = gretl_get_text_pause();
-	pprintf(prn, _("\nVAR system, lag order %d\n"), var->order);
-	pputc(prn, '\n');
+	pprintf(prn, "\n%s\n", Vstr);
+	pprintf(prn, _("%s estimates using %d observations from %s%s%s"),
+		_("OLS"), var->n, startdate, "-", enddate);
+	pputs(prn, "\n\n");
     }
 
     if (tex) {
 	pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("Log-likelihood"), var->ll);
+	pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("Determinant of covariance matrix"), 
+		exp(var->ldet));
 	pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("AIC"), var->AIC);
 	pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("BIC"), var->BIC);
     } else if (rtf) {
 	pprintf(prn, "%s = %.4f\\par\n", I_("Log-likelihood"), var->ll);
+	pprintf(prn, "%s = %.4f\\par\n", I_("Determinant of covariance matrix"), 
+		exp(var->ldet));
 	pprintf(prn, "%s = %.4f\\par\n", I_("AIC"), var->AIC);
 	pprintf(prn, "%s = %.4f\\par\n", I_("BIC"), var->BIC);
     } else {
-	pprintf(prn, "%s = %.4f\n", _("Log-likelihood"), var->ll);
+	pprintf(prn, "%s = %#g\n", _("Log-likelihood"), var->ll);
+	pprintf(prn, "%s = %#g\n", _("Determinant of covariance matrix"), exp(var->ldet));
 	pprintf(prn, "%s = %.4f\n", _("AIC"), var->AIC);
 	pprintf(prn, "%s = %.4f\n", _("BIC"), var->BIC);
     }
@@ -3396,6 +3457,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     k = 0;
 
     for (i=0; i<var->neqns; i++) {
+	char Fstr[24];
 
 	printmodel(var->models[i], pdinfo, OPT_NONE, prn);
 
@@ -3410,7 +3472,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	} else if (rtf) {
 	    pprintf(prn, "%s:\\par\n\n", I_("F-tests of zero restrictions"));
 	} else {
-	    pprintf(prn, "%s:\n\n", _("F-tests of zero restrictions"));
+	    pprintf(prn, "  %s:\n", _("F-tests of zero restrictions"));
 	}
 
 	for (j=0; j<var->neqns; j++) {
@@ -3419,16 +3481,20 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		pprintf(prn, I_("All lags of %-8s "), pdinfo->varname[v]);
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->order, dfd, var->Fvals[k]);
-		pprintf(prn, I_("p-value %f"), fdist(var->Fvals[k], var->order, dfd));
-		pputs(prn, "\\\\\n");
+		pprintf(prn, "%s %.4f\\\\\n", I_("p-value"), 
+			fdist(var->Fvals[k], var->order, dfd));
 	    } else if (rtf) {
 		pprintf(prn, I_("All lags of %-8s "), pdinfo->varname[v]);
 		pprintf(prn, "F(%d, %d) = %10g, ", var->order, dfd, var->Fvals[k]);
-		pprintf(prn, I_("p-value %f\\par\n"), fdist(var->Fvals[k], var->order, dfd));
+		pprintf(prn, "%s %.4f\\par\n", I_("p-value"), 
+			fdist(var->Fvals[k], var->order, dfd));
 	    } else {
+		pputs(prn, "    ");
 		pprintf(prn, _("All lags of %-8s "), pdinfo->varname[v]);
-		pprintf(prn, "F(%d, %d) = %10g, ", var->order, dfd, var->Fvals[k]);
-		pprintf(prn, _("p-value %f\n"), fdist(var->Fvals[k], var->order, dfd));
+		sprintf(Fstr, "F(%d, %d)", var->order, dfd);
+		pprintf(prn, "%12s = %#10.5g, ", Fstr, var->Fvals[k]);
+		pprintf(prn, "%s %.4f\n", _("p-value"), 
+			fdist(var->Fvals[k], var->order, dfd));
 	    }
 	    k++;
 	}
@@ -3438,15 +3504,20 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		pprintf(prn, I_("All vars, lag %-6d "), var->order);
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, var->Fvals[k]);
-		pprintf(prn, _("p-value %f\n"), fdist(var->Fvals[k], var->neqns, dfd));
+		pprintf(prn, "%s %.4f\\\\\n", I_("p-value"), 
+			fdist(var->Fvals[k], var->neqns, dfd));
 	    } else if (rtf) {
 		pprintf(prn, I_("All vars, lag %-6d "), var->order);
 		pprintf(prn, "F(%d, %d) = %10g, ", var->neqns, dfd, var->Fvals[k]);
-		pprintf(prn, I_("p-value %f\\par\n"), fdist(var->Fvals[k], var->neqns, dfd));
+		pprintf(prn, "%s %.4f\\par\n", I_("p-value"), 
+			fdist(var->Fvals[k], var->neqns, dfd));
 	    } else {
+		pputs(prn, "    ");
 		pprintf(prn, _("All vars, lag %-6d "), var->order);
-		pprintf(prn, "F(%d, %d) = %10g, ", var->neqns, dfd, var->Fvals[k]);
-		pprintf(prn, _("p-value %f\n"), fdist(var->Fvals[k], var->neqns, dfd));
+		sprintf(Fstr, "F(%d, %d)", var->neqns, dfd);
+		pprintf(prn, "%12s = %#10.5g, ", Fstr, var->Fvals[k]);
+		pprintf(prn, "%s %.4f\n", _("p-value"), 
+			fdist(var->Fvals[k], var->neqns, dfd));
 	    } 
 	    k++;
 	}
@@ -3457,11 +3528,8 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		  "\\clearpage\n\n");
 	} else if (rtf) {
 	    pputs(prn, "\\par\\n\n");
-	} else {
-	    pputc(prn, '\n');
-	    if (pause) {
-		scroll_pause();
-	    }
+	} else if (pause) {
+	    scroll_pause();
 	}
     }
 
