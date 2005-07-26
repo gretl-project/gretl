@@ -34,11 +34,11 @@
       <para context="cli">
 	Va invocato dopo un comando di stima. Aggiunge al modello precedente
         le variabili nella <repl>lista-variabili</repl> e stima il nuovo
-        modello. Se si aggiunge più di una variabile, verranno mostrati la
-        statistica <mathvar>F</mathvar> e il suo p-value per le nuove variabili
-        (solo per la procedura OLS). Un p-value inferiore a 0.05 indica che i
-        coefficienti sono congiuntamente significativi al livello del 5 per
-        cento.
+        modello. Viene eseguito anche un test per la significatività congiunta 
+        delle variabili aggiunte: nel caso di stime OLS, la statistica test è la
+        <mathvar>F</mathvar>, negli altri casi è il chi-quadro asintotico di
+        Wald. Un p-value inferiore a 0.05 indica che i coefficienti sono
+        congiuntamente significativi al livello del 5 per cento.
       </para>
       <para context="cli">
 	Se viene usata l'opzione <lit>--quiet</lit> viene mostrato solo
@@ -52,10 +52,11 @@
       </para>
       <para context="gui">
 	Aggiunge le variabili selezionate al modello precedente e stima il
-        nuovo modello. Se si aggiunge più di una variabile, verrà mostrata la
-        statistica <mathvar>F</mathvar> e il suo p-value per le nuove variabili
-        (solo per la procedura OLS). Un p-value inferiore 0.05 significa che i
-        coefficienti sono congiuntamente significativi al livello del 5 per cento.
+        nuovo modello. Viene eseguito anche un test per la significatività congiunta 
+        delle variabili aggiunte: nel caso di stime OLS, la statistica test è la
+        <mathvar>F</mathvar>, negli altri casi è il chi-quadro asintotico di
+        Wald. Un p-value inferiore a 0.05 indica che i coefficienti sono
+        congiuntamente significativi al livello del 5 per cento.
       </para>
     </description>
 
@@ -398,6 +399,7 @@
       <examples>
         <example>arma 1 2 ; y</example>
 	<example>arma 2 2 ; y 0 x1 x2 --verbose</example>
+        <example>arma 1 1 ; 1 0 ; y 0 x1 x2</example>
       </examples>
     </usage>
 
@@ -407,6 +409,11 @@
         stima un modello autoregressivo a media mobile (ARMA: Autoregressive,
         Moving Average) univariato.  I valori interi <repl>p</repl> e
         <repl>q</repl> rappresentano rispettivamente gli ordini AR e MA.
+        I valori interi opzionali <repl>P</repl> e <repl>Q</repl> rappresentano
+        gli ordini AR e MA stagionali; essi sono rilevanti solo la frequenza dei
+        dati è superiore a 1 (ad esempio, dati trimestrali o mensili).
+      </para>
+      <para context="cli">
         Nel caso univariato la scelta predefinita include un'intercetta nel
         modello, ma questa può essere soppressa con l'opzione
         <lit>--suppress-const</lit>.  Se vengono aggiunte delle
@@ -1520,8 +1527,8 @@
         risultati del test chi-quadro di Doornik&ndash;Hansen per la normalità.
       </para>
       <para>
-       Se si usa l'opzione <literal>--quiet</literal>, l'istogramma non viene mostrato.
-       Usando l'opzione <literal>--gamma</literal>, al posto del test di normalità
+       Se si usa l'opzione <lit>--quiet</lit>, l'istogramma non viene mostrato.
+       Usando l'opzione <lit>--gamma</lit>, al posto del test di normalità
        viene eseguito il test non parametrico di Locke per l'ipotesi nulla che la
        variabile segua la distribuzione gamma; si veda Locke (1976), Shapiro e
        Chen (2001).
@@ -1559,8 +1566,14 @@
 
     <usage>
       <arguments>
-        <argument>p</argument>
-	<argument>q</argument>
+        <argblock>
+          <argument>p</argument>
+          <argument>q</argument>
+        </argblock>
+        <argblock separated="true" optional="true">
+          <argument>P</argument>
+          <argument>Q</argument>
+        </argblock>
 	<argument separated="true">variabile-dipendente</argument>
 	<argument optional="true">variabili-indipendenti</argument>
       </arguments>
@@ -3940,11 +3953,11 @@
       <para>
 	Questo comando deve seguire un comando di stima. Omette le
         variabili indicate dal modello precedente e stima il nuovo
-        modello. Se viene omessa più di una variabile, viene mostrata la
-        statistica <mathvar>F</mathvar> di Wald per le variabili omesse,
-        insieme al suo p-value (solo per la procedura OLS). Un p-value
-        inferiore a 0.05 indica che i coefficienti sono congiuntamente
-        significativi al livello del 5 per cento.
+        modello. Viene eseguito un test per la significatività congiunta
+        delle variabili omesse; la statistica test è la <mathvar>F</mathvar>
+        nel caso della stima OLS, altrimenti è un chi-quadro asintotico di Wald.
+        Un p-value inferiore a 0.05 indica che i coefficienti sono
+        congiuntamente significativi al livello del 5 per cento.
       </para>
       <para context="cli">
 	Se viene usata l'opzione <lit>--quiet</lit>, i risultati
@@ -5079,7 +5092,7 @@
 	  <cell><lit>force_hc</lit></cell> <cell>Valori: off (predefinito)
 	    o on. Lo stimatore HAC viene usato in modo predefinito con dati
             serie storiche e quando si usa l'opzione <lit>--robust</lit> di
-            <cmd>ols</cmd>. Impostando invece <lit>force_hc</lit> a
+            <lit>ols</lit>. Impostando invece <lit>force_hc</lit> a
             <quote>on</quote>, si forza l'uso della matrice di covarianza
 	    coerente con l'eteroschedasticità (che non tiene conto dell'autocorrelazione).
 	  </cell>
@@ -5101,7 +5114,7 @@
 	  <cell>Valori: <lit>auto</lit> (valore predefinito), o un
           valore numerico. Imposta il parametro di livellamento per
           il filtro di Hodrick&ndash;Prescott (si veda la funzione
-          <lit>hpfilt</lit> sotto il comando <cmd>genr</cmd>). Il valore
+          <lit>hpfilt</lit> sotto il comando <lit>genr</lit>). Il valore
           predefinito è 100 volte il quadrato della periodicità, ossia
           100 per i dati annuali, 1600 per i dati trimestrali e così
           via.</cell>
@@ -5111,7 +5124,7 @@
           <cell>Valori: due interi, il secondo maggiore del primo
            (i valori predefiniti sono 8 e 32). Imposta i limiti di
            frequenza per il filtro passa-banda di Baxter&ndash;King
-           (si veda la funzione <lit>bkfilt</lit> nel comando <cmd>genr</cmd>).
+           (si veda la funzione <lit>bkfilt</lit> nel comando <lit>genr</lit>).
          </cell>
         </row>
         <row>
@@ -5893,10 +5906,6 @@
 	  <flag>--impulse-responses</flag>
 	  <effect>mostra impulso-risposta</effect>
         </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>non mostra i risultati</effect>
-        </option>
       </options>
       <examples>
         <example>var 4 x1 x2 x3 ; const time</example>
@@ -5975,12 +5984,6 @@
         per le decomposizioni della varianza e le funzioni di impulso-risposta
         può essere impostato usando il comando <cmdref targ="set"/>.
       </para> 
-
-      <para context="cli">
-	L'opzione <lit>--quiet</lit> disabilita la visualizzazione dei
-        risultati; può essere utile se usata in uno script che salva
-        il VAR per esaminarlo in seguito.
-      </para>
 
     </description>
 
