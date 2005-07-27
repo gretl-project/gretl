@@ -24,6 +24,6 @@
 #define LIBGRETL_REVISION  29
 #define LIBGRETL_AGE       0
 
-const char *version_string = "1.4.1cvs";
+#define GRETL_VERSION "1.4.1cvs"
 
 #endif

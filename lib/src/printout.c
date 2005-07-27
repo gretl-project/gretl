@@ -91,7 +91,7 @@ void session_time (PRN *prn)
 
 void logo (void)
 {
-    printf(_("gretl version %s\n"), version_string);
+    printf(_("gretl version %s\n"), GRETL_VERSION);
     puts(_("Copyright Ramu Ramanathan and Allin Cottrell"));
     puts(_("This is free software with ABSOLUTELY NO WARRANTY"));
 }
@@ -113,7 +113,7 @@ void gui_logo (PRN *prn)
 	prn = myprn;
     }
 	
-    pprintf(prn, _("gretl: gui client for gretl version %s,\n"), version_string);
+    pprintf(prn, _("gretl: gui client for gretl version %s,\n"), GRETL_VERSION);
     pputs(prn, _("copyright Allin Cottrell.\n"));
     pputs(prn, _("This is free software with ABSOLUTELY NO WARRANTY.\n"));
 
@@ -144,7 +144,7 @@ void gui_script_logo (PRN *prn)
 {
     time_t runtime = time(NULL);
 
-    pprintf(prn, _("gretl version %s\n"), version_string);
+    pprintf(prn, _("gretl version %s\n"), GRETL_VERSION);
     pprintf(prn, "%s: %s\n", _("Current session"), print_time(&runtime));
 }
 

@@ -29,6 +29,7 @@
 #include <time.h>
 
 #include "libgretl.h"
+#include "version.h"
 
 #include "importer.h"
 #include "biff.h"
@@ -44,13 +45,10 @@ static char *make_string (char *str);
 int debug_print;
 
 #ifdef WIN32
-# include "../lib/src/version.h"
 # include "build.h"
 char debug_fname[FILENAME_MAX];
 FILE *fdb;
 static void make_debug_fname (void);
-#else
-extern const char *version_string;
 #endif
 
 #define EXCEL_IMPORTER
@@ -131,9 +129,9 @@ static int dprintf (const char *format, ...)
 static void print_version (void)
 {
 #ifdef WIN32
-    dprintf("gretl, version %s, %s\n", version_string, BUILD_DATE);
+    dprintf("gretl, version %s, %s\n", GRETL_VERSION, BUILD_DATE);
 #else
-    dprintf("gretl, version %s\n", version_string); 
+    dprintf("gretl, version %s\n", GRETL_VERSION); 
 #endif
 }
 

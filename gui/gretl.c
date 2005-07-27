@@ -616,7 +616,7 @@ int main (int argc, char *argv[])
 
     /* Initialize gnome or GTK */
 #ifdef USE_GNOME
-    gnome_init_with_popt_table("gretl", version_string, argc, argv,
+    gnome_init_with_popt_table("gretl", GRETL_VERSION, argc, argv,
 			       options, 0, NULL);
 #else
     gtk_init(&argc, &argv);

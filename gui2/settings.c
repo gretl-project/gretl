@@ -26,6 +26,7 @@
 #include "dlgutils.h"
 
 #include "libset.h"
+#include "version.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -50,8 +51,6 @@
 #  include "gtkfontselhack.h"
 # endif
 #endif
-
-extern const char *version_string;
 
 #if !defined(G_OS_WIN32) && !defined(USE_GNOME)
 char rcfile[MAXLEN];
@@ -2313,7 +2312,7 @@ void dump_rc (void)
 	return;
     }
 
-    fprintf(fp, "gretl version %s\n", version_string);
+    fprintf(fp, "gretl version %s\n", GRETL_VERSION);
     fprintf(fp, "built with GTK %d.%d.%d\n", GTK_MAJOR_VERSION, GTK_MINOR_VERSION,
 	    GTK_MICRO_VERSION);
 

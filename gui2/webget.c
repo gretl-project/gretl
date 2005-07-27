@@ -27,13 +27,14 @@
 #undef WDEBUG
 
 #ifdef UPDATER
-# include "version.h"
 # define I_(String) String
 # define _(String) String
 # define MAXLEN         512
 #else
 # include "gretl.h"
 #endif
+
+#include "version.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -291,8 +292,6 @@ enum header_get_flags {
 };
 
 /* end of header-type info, private to webget.c */
-
-extern const char *version_string;
 
 static struct urlinfo gretlproxy; 
 
@@ -898,7 +897,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     }
 
     range = NULL;
-    sprintf(useragent, "gretl-%s", version_string);
+    sprintf(useragent, "gretl-%s", GRETL_VERSION);
 #if defined(UPDATER) || defined (WIN32)
     /* the linux test updater program pretends to be Windows */
     strcat(useragent, "w");

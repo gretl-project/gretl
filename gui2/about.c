@@ -21,12 +21,10 @@
 /* The "about" dialogs for the several gretl GUI variants. */
 
 #include "gretl.h"
+#include "version.h"
 
 #ifdef G_OS_WIN32 
-# include "../lib/src/version.h"
 # include "build.h"
-#else 
-extern const char *version_string;
 #endif
 
 /* some material that is common between gtk 1.2 and gtk 2 variants */
@@ -81,7 +79,7 @@ void about_dialog (gpointer data)
 	fprintf(stderr, "Couldn't find gretl-logo.xpm\n");
     }
 
-    about = gnome_about_new ("gretl", version_string,
+    about = gnome_about_new ("gretl", GRETL_VERSION,
 			     copyright,
 			     _(gretl_gnome_blurb),
 			     (const char **)authors,
@@ -192,7 +190,7 @@ void about_dialog (gpointer data)
 			       BUILD_DATE
 #  endif
 			       "%s\n%s\n%s",
-			       version_string, copyright, 
+			       GRETL_VERSION, copyright, 
 			       website, tr_credit);
     tempwid = gtk_label_new (tempstr);
     g_free (tempstr);
@@ -282,7 +280,7 @@ void about_dialog (gpointer data)
     }
 #  endif 
 
-    dlg = gnome_about_new("gretl", version_string,
+    dlg = gnome_about_new("gretl", GRETL_VERSION,
 			  copyright, 
 			  authors, 
 			  (comment != NULL)? comment : _(gretl_gnome_blurb),
@@ -372,7 +370,7 @@ void about_dialog (gpointer data)
 
     tempstr = g_strdup_printf ("gretl, version %s\n"
 			       "%s\n%s\n%s",
-			       version_string, copyright, 
+			       GRETL_VERSION, copyright, 
 			       website, tr_credit);
     tempwid = gtk_label_new (tempstr);
     g_free (tempstr);
