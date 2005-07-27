@@ -54,7 +54,8 @@ enum {
     P_KERNEL,
     P_FRACTAL,
     P_POISSON,
-    P_MAILER
+    P_MAILER,
+    P_EVIEWS_IMPORT
 } plugin_codes;
 
 struct plugin_info {
@@ -98,12 +99,14 @@ struct plugin_info plugins[] = {
     { P_FRACTAL,         "fractals" },
     { P_POISSON,         "poisson" },
     { P_MAILER,          "mailer" },
+    { P_EVIEWS_IMPORT,   "eviews_import" }
 };  
 
 struct plugin_function plugin_functions[] = { 
     /* data importers */
     { "excel_get_data", P_EXCEL_IMPORT },
     { "wbook_get_data", P_GNUMERIC_IMPORT },
+    { "wf1_get_data",   P_EVIEWS_IMPORT },
 
     /* Johansen cointegration test */
     { "johansen_eigenvals", P_JOHANSEN },

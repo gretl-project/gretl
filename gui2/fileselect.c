@@ -51,14 +51,16 @@
                               i == OPEN_OCTAVE || \
 	                      i == OPEN_BOX || \
                               i == OPEN_GNUMERIC || \
-	                      i == OPEN_EXCEL)
+	                      i == OPEN_EXCEL || \
+                              i == OPEN_WF1)
 
 #define APPEND_DATA_ACTION(i) (i == APPEND_DATA || \
                                i == APPEND_CSV || \
                                i == APPEND_OCTAVE || \
                                i == APPEND_GNUMERIC || \
                                i == APPEND_EXCEL || \
-                               i == APPEND_ASCII)
+                               i == APPEND_ASCII || \
+                               i == APPEND_WF1)
 
 #define SAVE_GRAPH_ACTION(i) (i == SAVE_GNUPLOT || \
                               i == SAVE_THIS_GRAPH || \
@@ -120,6 +122,8 @@ static struct extmap action_map[] = {
     { APPEND_GNUMERIC,   ".gnumeric" },
     { OPEN_EXCEL,        ".xls" },
     { APPEND_EXCEL,      ".xls" },
+    { OPEN_WF1,          ".wf1" },
+    { APPEND_WF1,        ".wf1" },
     { FILE_OP_MAX,       NULL }
 };
 
@@ -622,6 +626,8 @@ static struct winfilter get_filter (int action, gpointer data)
 	{APPEND_GNUMERIC, { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
 	{OPEN_EXCEL,   { N_("Excel files (*.xls)"), "*.xls" }},
 	{APPEND_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
+	{OPEN_WF1,     { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
+	{APPEND_WF1,   { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
 	{SET_PATH,     { N_("program files (*.exe)"), "*.exe" }}
     };
 

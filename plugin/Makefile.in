@@ -62,6 +62,7 @@ SRCS = excel_import.c \
 	fiml.c \
 	liml.c \
 	gnumeric_import.c \
+	eviews_import.c \
 	import_common.c \
 	johansen.c \
 	kernel.c \
@@ -90,6 +91,7 @@ SRCS = excel_import.c \
 
 PLUGINS = arma.la \
 	arma_x12.la \
+	eviews_import.la \
 	fractals.la \
 	garch.la \
 	johansen.la \
@@ -170,6 +172,9 @@ panel_data.la: panel_data.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 range-mean.la: range-mean.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
+
+eviews_import.la: eviews_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 fractals.la: fractals.lo

@@ -234,6 +234,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open data/import Excel..."), NULL, open_data, 
       OPEN_EXCEL, NULL, GNULL },
 #endif
+    { N_("/File/Open data/import Eviews..."), NULL, open_data, OPEN_WF1, NULL, GNULL },
 
     /* File, Append data */
     { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -245,6 +246,8 @@ GtkItemFactoryEntry data_items[] = {
       APPEND_GNUMERIC, NULL, GNULL },
     { N_("/File/Append data/from Excel..."), NULL, open_data, 
       APPEND_EXCEL, NULL, GNULL },
+    { N_("/File/Append data/from Eviews..."), NULL, open_data, 
+      APPEND_WF1, NULL, GNULL },
 
     /* File, Save data */
     { N_("/File/_Save data"), "<control>S", auto_store, 0, "<StockItem>", GTK_STOCK_SAVE },

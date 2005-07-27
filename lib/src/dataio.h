@@ -44,6 +44,7 @@ typedef enum {
     GRETL_OCTAVE,         /* GNU octave ascii data file */
     GRETL_GNUMERIC,       /* gnumeric workbook data */
     GRETL_EXCEL,          /* MS Excel spreadsheet data */
+    GRETL_WF1,            /* Eviews workfile data */
     GRETL_SCRIPT,         /* file containing gretl commands */
     GRETL_NATIVE_DB,      /* gretl database */
     GRETL_RATS_DB,        /* RATS 4.0 database */
