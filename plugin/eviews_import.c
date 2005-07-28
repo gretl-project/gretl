@@ -74,9 +74,14 @@ static int read_wf1_variables (FILE *fp, long pos, double ***pZ,
     for (i=0; i<nv && !err; i++, pos += 70) {
 	/* read the 'code' for the 'object' (should be 44 for a regular
 	   variable?) */
+    try_again:
 	fseek(fp, pos + 60, SEEK_SET);
 	fread(&code, sizeof code, 1, fp);
-	if (code == 43) {
+	if (code == 0) {
+	    /* heuristic bodge: var info may be retarded by 32 bytes? */
+	    pos += 32;
+	    goto try_again;
+	} else if (code == 43) {
 	    /* constant: skip */
 	    continue;
 	} else if (code != 44) {
