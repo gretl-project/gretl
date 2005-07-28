@@ -167,10 +167,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open data/import ASCII..."), NULL, open_data, OPEN_ASCII, NULL },
     { N_("/File/Open data/import Octave..."), NULL, open_data, OPEN_OCTAVE, NULL },
     { N_("/File/Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL },
-    { N_("/File/Open data/import Gnumeric..."), NULL, open_data, 
-      OPEN_GNUMERIC, NULL },
-    { N_("/File/Open data/import Excel..."), NULL, open_data, 
-      OPEN_EXCEL, NULL },
+    { N_("/File/Open data/import Gnumeric..."), NULL, open_data, OPEN_GNUMERIC, NULL },
+    { N_("/File/Open data/import Excel..."), NULL, open_data, OPEN_EXCEL, NULL },
+    { N_("/File/Open data/import Eviews..."), NULL, open_data, OPEN_WF1, NULL },
 
     /* File, Append data */
     { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>" },
@@ -178,27 +177,22 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Append data/from CSV..."), NULL, open_data, APPEND_CSV, NULL },
     { N_("/File/Append data/from ASCII..."), NULL, open_data, APPEND_ASCII, NULL },
     { N_("/File/Append data/from Octave..."), NULL, open_data, APPEND_OCTAVE, NULL },
-    { N_("/File/Append data/from Gnumeric..."), NULL, open_data, 
-      APPEND_GNUMERIC, NULL },
-    { N_("/File/Append data/from Excel..."), NULL, open_data, 
-      APPEND_EXCEL, NULL },
+    { N_("/File/Append data/from Gnumeric..."), NULL, open_data, APPEND_GNUMERIC, NULL },
+    { N_("/File/Append data/from Excel..."), NULL, open_data, APPEND_EXCEL, NULL },
+    { N_("/File/Append data/from Eviews..."), NULL, open_data, APPEND_WF1, NULL },
 
     /* File, Save data */
     { N_("/File/_Save data"), NULL, auto_store, 0, NULL },
     { N_("/File/Save data _as"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/Save data as/_standard format..."), NULL, file_save, 
-      SAVE_DATA_AS, NULL },
-    { N_("/File/Save data as/_gzipped..."), NULL, 
-      file_save, SAVE_GZDATA, NULL },
-    { N_("/File/Save data as/_database..."), NULL, 
-      file_save, SAVE_DBDATA, NULL },
+    { N_("/File/Save data as/_standard format..."), NULL, file_save, SAVE_DATA_AS, NULL },
+    { N_("/File/Save data as/_gzipped..."), NULL, file_save, SAVE_GZDATA, NULL },
+    { N_("/File/Save data as/_database..."), NULL, file_save, SAVE_DBDATA, NULL },
 
     /* File, Export data */
     { N_("/File/_Export data"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Export data/_CSV..."), NULL, file_save, EXPORT_CSV, NULL },
     { N_("/File/Export data/GNU _R..."), NULL, file_save, EXPORT_R, NULL },
-    { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
-      EXPORT_OCTAVE, NULL },
+    { N_("/File/Export data/GNU _octave..."), NULL, file_save, EXPORT_OCTAVE, NULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL },
 #ifdef ENABLE_MAILER
     { N_("/File/Send To..."), NULL, email_data, OPEN_DATA, NULL },
@@ -745,6 +739,7 @@ int main (int argc, char *argv[])
 	    break;
 	case GRETL_EXCEL:
 	case GRETL_GNUMERIC:
+	case GRETL_WF1:
 	    err = get_worksheet_data(paths.datfile, ftype, 0, &gui_get_data);
 	    break;
 	case GRETL_SCRIPT:

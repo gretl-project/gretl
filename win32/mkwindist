@@ -26,7 +26,7 @@ function add_file {
 }
 
 TOPDIR=..
-VERSION=$(cat $TOPDIR/lib/src/version.h | grep version_ | \
+VERSION=$(cat $TOPDIR/lib/src/version.h | grep GRETL_VERSION | \
      awk '{ print $NF}' | sed s/[\"\;]//g)
 
 rm -f windist/MANIFEST

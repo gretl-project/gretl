@@ -3996,6 +3996,8 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	return GRETL_GNUMERIC;
     if (has_suffix(fname, ".xls"))
 	return GRETL_EXCEL;
+    if (has_suffix(fname, ".wf1"))
+	return GRETL_WF1;
     if (has_suffix(fname, ".bin"))
 	return GRETL_NATIVE_DB;
     if (has_suffix(fname, ".rat"))

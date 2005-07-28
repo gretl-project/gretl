@@ -917,6 +917,7 @@ int main (int argc, char *argv[])
 	    break;
 	case GRETL_EXCEL:
 	case GRETL_GNUMERIC:
+	case GRETL_WF1:
 	    err = get_worksheet_data(paths.datfile, ftype, 0, &gui_get_data);
 	    break;
 	case GRETL_SCRIPT:

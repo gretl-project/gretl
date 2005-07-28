@@ -52,6 +52,7 @@ vpath %.rc $(topsrc)/win32
 PLUGINSRC = \
 	excel_import.c \
 	gnumeric_import.c \
+	eviews_import.c \
 	johansen.c \
 	kernel.c \
 	lad.c \
@@ -87,6 +88,7 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/panel_data.dll \
 	plugins/progress_bar.dll \
 	plugins/gnumeric_import.dll \
+	plugins/eviews_import.dll \
 	plugins/excel_import.dll \
 	plugins/mp_ols.dll \
 	plugins/sysest.dll \
@@ -310,6 +312,10 @@ plugins/gnumeric_import.dll: gnumeric_import.o dllinit.o
 plugins/excel_import.dll: excel_import.o workbook.o ms-ole.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) -lmoldname
+
+plugins/eviews_import.dll: eviews_import.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/mp_ols.dll: mp_ols.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
