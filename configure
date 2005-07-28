@@ -1562,7 +1562,7 @@ ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
 
 PACKAGE=gretl
 
-VERSION=`grep const $srcdir/lib/src/version.h | sed -e 's/^.*"\(.*\)";$/\1/'`
+VERSION=`grep GRETL_VERSION^_ $srcdir/lib/src/version.h | sed -e 's/^.*"\(.*\)";$/\1/'`
 LIBGRETL_CURRENT=`grep LIBGRETL_CURRENT $srcdir/lib/src/version.h | awk '{ print $NF }'`
 LIBGRETL_REVISION=`grep LIBGRETL_REVISION $srcdir/lib/src/version.h | awk '{ print $NF }'`
 LIBGRETL_AGE=`grep LIBGRETL_AGE $srcdir/lib/src/version.h | awk '{ print $NF }'`

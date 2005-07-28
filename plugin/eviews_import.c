@@ -71,27 +71,29 @@ static int read_wf1_variables (FILE *fp, long pos, double ***pZ,
     int i, j = 1;
     int err = 0;
 
+    fseek(fp, pos + 62, SEEK_SET);
+    fread(&code, sizeof code, 1, fp);
+    if (code == 0) {
+	fprintf(stderr, "Did not get sensible code: trying skipping forward 32 bytes\n");
+	pos += 32;
+    }
+
     for (i=0; i<nv && !err; i++, pos += 70) {
 	/* read the 'code' for the 'object' (should be 44 for a regular
 	   variable?) */
-    try_again:
-	fseek(fp, pos + 60, SEEK_SET);
+	fseek(fp, pos + 62, SEEK_SET);
 	fread(&code, sizeof code, 1, fp);
-	if (code == 0) {
-	    /* heuristic bodge: var info may be retarded by 32 bytes? */
-	    pos += 32;
-	    goto try_again;
-	} else if (code == 43) {
+	if (code == 43) {
 	    /* constant: skip */
 	    continue;
 	} else if (code != 44) {
 	    pprintf(prn, "byte %ld: unknown object code %d\n", 
-		    pos + 60, (int) code);
+		    pos + 62, (int) code);
 	    continue;
 	}
 
 	/* grab the variable name */
-	fseek(fp, pos + 20, SEEK_SET);
+	fseek(fp, pos + 22, SEEK_SET);
 	fscanf(fp, "%31s", vname);
 	if (!strcmp(vname, "C") || !strcmp(vname, "RESID")) {
 	    continue;
@@ -101,7 +103,7 @@ static int read_wf1_variables (FILE *fp, long pos, double ***pZ,
 	strncat(dinfo->varname[j], vname, 8);
 
 	/* get stream position for the data */
-	fseek(fp, pos + 12, SEEK_SET);
+	fseek(fp, pos + 14, SEEK_SET);
 	fread(&u, sizeof u, 1, fp);
 	if (u > 0) {
 	    /* follow up at the pos given above, if non-zero */
@@ -118,11 +120,16 @@ static int read_wf1_variables (FILE *fp, long pos, double ***pZ,
     return err;
 }
 
-static int parse_wf1_header (FILE *fp, DATAINFO *dinfo)
+static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
 {
     int nvars = 0, nobs = 0, startyr = 0;
     short pd = 0, startper = 0;
+    long off;
     int err = 0;
+
+    fseek(fp, 80, SEEK_SET);
+    fread(&off, sizeof off, 1, fp);
+    *offset = off + 26;
 
     fseek(fp, 114, SEEK_SET);
     fread(&nvars, sizeof nvars, 1, fp);
@@ -194,6 +201,7 @@ int wf1_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     FILE *fp;
     double **newZ = NULL;
     DATAINFO *newinfo = NULL;
+    long offset;
     int err = 0;
 
     fp = gretl_fopen(fname, "rb");
@@ -214,15 +222,14 @@ int wf1_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    err = parse_wf1_header(fp, newinfo);
+    err = parse_wf1_header(fp, newinfo, &offset);
 
     if (!err) {
 	err = start_new_Z(&newZ, newinfo, 0);
     }
 
     if (!err) {
-	/* is the position 172 (always) right? */
-	err = read_wf1_variables(fp, 172L, &newZ, newinfo, prn);
+	err = read_wf1_variables(fp, offset, &newZ, newinfo, prn);
     }
 
     if (!err) {
