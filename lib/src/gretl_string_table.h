@@ -24,6 +24,8 @@ typedef struct _gretl_string_table gretl_string_table;
 
 gretl_string_table *gretl_string_table_new (void);
 
+gretl_string_table *string_table_new_from_cols_list (int *list);
+
 int gretl_string_table_index (gretl_string_table *st, const char *s, int col,
 			      int addcol, PRN *prn);
 

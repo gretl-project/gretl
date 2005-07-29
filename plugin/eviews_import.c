@@ -24,17 +24,73 @@
 #include <string.h>
 
 #include "libgretl.h"
+#include "swap_bytes.h"
+
+#define WF1_NA 1e-37
+
+int swapends = 0;
+
+static void error (const char *s)
+{
+    fputs(s, stderr);
+    fputc('\n', stderr);
+}
+
+static int read_int (FILE *fp, int *err)
+{
+    int i;
+
+    if (fread(&i, sizeof i, 1, fp) != 1) {
+	error(_("a binary read error occurred"));
+	*err = 1;
+    }
+    if (swapends) {
+	reverse_int(i);
+    }
+
+    return i;
+}
+
+#if 0 /* needs to be figured */
+static long read_long (FILE *fp)
+{
+    long int l;
+
+    if (fread(&l, sizeof l, 1, fp) != 1) {
+	error(_("a binary read error occurred"));
+    }
+    if (swapends) {
+	reverse_long(l);
+    }
+
+    return l;
+}
+#endif
+
+static double read_double (FILE *fp, int *err)
+{
+    double x;
+
+    if (fread(&x, sizeof x, 1, fp) != 1) {
+	error(_("a binary read error occurred"));
+	*err = 1;
+    }
+    if (swapends) {
+	reverse_double(x);
+    }
+
+    return (x == WF1_NA)? NADBL : x;
+}
 
 static int get_data (FILE *fp, long pos, double **Z, int i, int n)
 {
     double x;
     int t, nobs = 0;
-    int got;
     int err = 0;
 
     fseek(fp, pos, SEEK_SET);
-    got = fread(&nobs, sizeof nobs, 1, fp);
-    if (got <= 0) {
+    nobs = read_int(fp, &err);
+    if (err) {
 	return 1;
     }
 
@@ -46,16 +102,11 @@ static int get_data (FILE *fp, long pos, double **Z, int i, int n)
 
     fseek(fp, pos + 22, SEEK_SET);
     for (t=0; t<nobs; t++) {
-	got = fread(&x, sizeof x, 1, fp);
-	if (got <= 0) {
-	    err = 1;
+	x = read_double(fp, &err);
+	if (err) {
 	    break;
 	}
-	if (x == 1e-37) {
-	    Z[i][t] = NADBL;
-	} else {
-	    Z[i][t] = x;
-	}
+	Z[i][t] = x;
     }
 
     return err;

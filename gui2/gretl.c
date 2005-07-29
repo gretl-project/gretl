@@ -218,24 +218,21 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Open data/sample file..."), "", display_files, TEXTBOOK_DATA, 
       "<StockItem>", GTK_STOCK_OPEN },
-    { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>", GNULL },    
-    { N_("/File/Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL, GNULL },
-    { N_("/File/Open data/import ASCII..."), NULL, open_data, OPEN_ASCII, NULL, GNULL },
-    { N_("/File/Open data/import Octave..."), NULL, open_data, OPEN_OCTAVE, NULL, GNULL },
-    { N_("/File/Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL, GNULL },
+    { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>", GNULL }, 
+    { N_("/File/Open data/Import"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/File/Open data/Import/CSV..."), NULL, open_data, OPEN_CSV, NULL, GNULL },
+    { N_("/File/Open data/Import/ASCII..."), NULL, open_data, OPEN_ASCII, NULL, GNULL },
+    { N_("/File/Open data/Import/Octave..."), NULL, open_data, OPEN_OCTAVE, NULL, GNULL },
 #ifdef G_OS_WIN32
-    { N_("/File/Open data/import Excel..."), NULL, open_data, 
-      OPEN_EXCEL, NULL, GNULL },
-    { N_("/File/Open data/import Gnumeric..."), NULL, open_data, 
-      OPEN_GNUMERIC, NULL, GNULL },
+    { N_("/File/Open data/Import/Excel..."), NULL, open_data, OPEN_EXCEL, NULL, GNULL },
+    { N_("/File/Open data/Import/Gnumeric..."), NULL, open_data, OPEN_GNUMERIC, NULL, GNULL },
 #else
-    { N_("/File/Open data/import Gnumeric..."), NULL, open_data, 
-      OPEN_GNUMERIC, NULL, GNULL },
-    { N_("/File/Open data/import Excel..."), NULL, open_data, 
-      OPEN_EXCEL, NULL, GNULL },
+    { N_("/File/Open data/Import/Gnumeric..."), NULL, open_data, OPEN_GNUMERIC, NULL, GNULL },
+    { N_("/File/Open data/Import/Excel..."), NULL, open_data, OPEN_EXCEL, NULL, GNULL },
 #endif
-    { N_("/File/Open data/import Eviews..."), NULL, open_data, OPEN_WF1, NULL, GNULL },
-    { N_("/File/Open data/import Stata..."), NULL, open_data, OPEN_DTA, NULL, GNULL },
+    { N_("/File/Open data/Import/Eviews..."), NULL, open_data, OPEN_WF1, NULL, GNULL },
+    { N_("/File/Open data/Import/Stata..."), NULL, open_data, OPEN_DTA, NULL, GNULL },
+    { N_("/File/Open data/Import/BOX..."), NULL, open_data, OPEN_BOX, NULL, GNULL },
 
     /* File, Append data */
     { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -243,14 +240,10 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Append data/from CSV..."), NULL, open_data, APPEND_CSV, NULL, GNULL },
     { N_("/File/Append data/from ASCII..."), NULL, open_data, APPEND_ASCII, NULL, GNULL },
     { N_("/File/Append data/from Octave..."), NULL, open_data, APPEND_OCTAVE, NULL, GNULL },
-    { N_("/File/Append data/from Gnumeric..."), NULL, open_data, 
-      APPEND_GNUMERIC, NULL, GNULL },
-    { N_("/File/Append data/from Excel..."), NULL, open_data, 
-      APPEND_EXCEL, NULL, GNULL },
-    { N_("/File/Append data/from Eviews..."), NULL, open_data, 
-      APPEND_WF1, NULL, GNULL },
-    { N_("/File/Append data/from Stata..."), NULL, open_data, 
-      APPEND_DTA, NULL, GNULL },
+    { N_("/File/Append data/from Gnumeric..."), NULL, open_data, APPEND_GNUMERIC, NULL, GNULL },
+    { N_("/File/Append data/from Excel..."), NULL, open_data, APPEND_EXCEL, NULL, GNULL },
+    { N_("/File/Append data/from Eviews..."), NULL, open_data, APPEND_WF1, NULL, GNULL },
+    { N_("/File/Append data/from Stata..."), NULL, open_data, APPEND_DTA, NULL, GNULL },
 
     /* File, Save data */
     { N_("/File/_Save data"), "<control>S", auto_store, 0, "<StockItem>", GTK_STOCK_SAVE },
@@ -266,25 +259,20 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/_Export data"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/Export data/_CSV..."), NULL, file_save, EXPORT_CSV, NULL, GNULL },
     { N_("/File/Export data/GNU _R..."), NULL, file_save, EXPORT_R, NULL, GNULL },
-    { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
-      EXPORT_OCTAVE, NULL, GNULL },
+    { N_("/File/Export data/GNU _octave..."), NULL, file_save, EXPORT_OCTAVE, NULL, GNULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL, GNULL },
 #ifdef ENABLE_MAILER
     { N_("/File/Send To..."), NULL, email_data, OPEN_DATA, "<StockItem>", GRETL_STOCK_MAIL },
 #endif
-    { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, 
-      "<StockItem>", GTK_STOCK_CLEAR },
+    { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, "<StockItem>", GTK_STOCK_CLEAR },
     { N_("/File/sep0"), NULL, NULL, 0, "<Separator>", GNULL },
 
     /* File, Browse databases */
     { N_("/File/_Browse databases"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/Browse databases/_gretl native"), NULL, display_files, 
-      NATIVE_DB, NULL, GNULL },
-    { N_("/File/Browse databases/_RATS 4"), NULL, display_files, 
-      RATS_DB, NULL, GNULL },
+    { N_("/File/Browse databases/_gretl native"), NULL, display_files, NATIVE_DB, NULL, GNULL },
+    { N_("/File/Browse databases/_RATS 4"), NULL, display_files, RATS_DB, NULL, GNULL },
     { N_("/File/Browse databases/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/File/Browse databases/on database _server"), NULL, display_files, 
-      REMOTE_DB, NULL, GNULL },
+    { N_("/File/Browse databases/on database _server"), NULL, display_files, REMOTE_DB, NULL, GNULL },
 
     /* File, Create dataset */
     { N_("/File/_Create data set"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -921,6 +909,7 @@ int main (int argc, char *argv[])
 	case GRETL_EXCEL:
 	case GRETL_GNUMERIC:
 	case GRETL_WF1:
+	case GRETL_DTA:
 	    err = get_worksheet_data(paths.datfile, ftype, 0, &gui_get_data);
 	    break;
 	case GRETL_SCRIPT:

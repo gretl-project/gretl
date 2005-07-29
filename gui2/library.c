@@ -4648,7 +4648,7 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
     view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
 }
 
-static void maybe_display_string_table (void)
+void maybe_display_string_table (void)
 {
     if (gretl_string_table_written()) {
 	char stname[MAXLEN];

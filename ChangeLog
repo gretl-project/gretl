@@ -11,6 +11,7 @@ version 1.4.2, in progress
 - Add combined plot of residuals for VARs
 - Add log-likelihood, AIC and BIC for VARs
 - Remove overly verbose notification dialogs
+- Add importers for Eviews workfiles and Stata .dta files
 - Editable windows: show Save button as disabled if there's
   nothing to be saved
 - Model selection dialog: ensure that the selected regressand 

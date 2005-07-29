@@ -983,13 +983,16 @@ int get_worksheet_data (char *fname, int datatype, int append,
 	if (errbuf != NULL && *errbuf != '\0') {
 	    errbox(errbuf);
 	} else {
-	    errbox(_("Failed to import spreadsheet data"));
+	    errbox(_("Failed to import data"));
 	}
 	gretl_print_destroy(errprn);
 	return 1;
     } else {
 	if (errbuf != NULL && *errbuf != '\0') {
 	    infobox(errbuf);
+	}
+	if (datatype == GRETL_DTA) {
+	    maybe_display_string_table();
 	}
     }
 

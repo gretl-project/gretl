@@ -28,6 +28,7 @@
 #include <math.h>
 
 #include "libgretl.h"
+#include "gretl_string_table.h"
 
 #include "swap_bytes.h"
 
@@ -81,6 +82,7 @@ enum {
 #define NA_INT -999
 
 static int stata_endian;
+static int stata_version;
 static int read_error;
 
 static void error (const char *s)
@@ -187,29 +189,29 @@ static void InStringBinary (FILE *fp, int nchar, char *buf)
 }
 
 static int 
-get_version_and_namelen (unsigned char abyte, int *version, int *vnamelen)
+get_version_and_namelen (unsigned char abyte, int *vnamelen)
 {
     int err = 0;
 
     switch (abyte) {
     case VERSION_5:
-        *version = 5;
+        stata_version = 5;
 	*vnamelen = 8;
 	break;
     case VERSION_6:
-        *version = 6;
+        stata_version = 6;
 	*vnamelen = 8;
 	break;
     case VERSION_7:
-	*version = 7;
+	stata_version = 7;
 	*vnamelen = 32;
 	break;
     case VERSION_7SE:
-	*version = -7;
+	stata_version = -7;
 	*vnamelen = 32; 
 	break;
     case VERSION_8:
-	*version = -8;  /* version 8 automatically uses SE format */
+	stata_version = -8;  /* version 8 automatically uses SE format */
 	*vnamelen = 32; 
 	break;
     default:
@@ -219,32 +221,35 @@ get_version_and_namelen (unsigned char abyte, int *version, int *vnamelen)
     return err;
 }
 
-#define stata_type_float(t,v)  ((v > 0 && t == STATA_FLOAT) || t == STATA_SE_FLOAT)
-#define stata_type_double(t,v) ((v > 0 && t == STATA_DOUBLE) || t == STATA_SE_DOUBLE)
-#define stata_type_int(t,v)    ((v > 0 && t == STATA_INT) || t == STATA_SE_INT)
-#define stata_type_short(t,v)  ((v > 0 && t == STATA_SHORTINT) || t == STATA_SE_SHORTINT)
-#define stata_type_byte(t,v)   ((v > 0 && t == STATA_BYTE) || t == STATA_SE_BYTE)
-#define stata_type_string(t,v) ((v > 0 && t >= STATA_STRINGOFFSET) || t <= 244)
+#define stata_type_float(t)  ((stata_version > 0 && t == STATA_FLOAT) || t == STATA_SE_FLOAT)
+#define stata_type_double(t) ((stata_version > 0 && t == STATA_DOUBLE) || t == STATA_SE_DOUBLE)
+#define stata_type_int(t)    ((stata_version > 0 && t == STATA_INT) || t == STATA_SE_INT)
+#define stata_type_short(t)  ((stata_version > 0 && t == STATA_SHORTINT) || t == STATA_SE_SHORTINT)
+#define stata_type_byte(t)   ((stata_version > 0 && t == STATA_BYTE) || t == STATA_SE_BYTE)
+#define stata_type_string(t) ((stata_version > 0 && t >= STATA_STRINGOFFSET) || t <= 244)
 
-static int check_variable_types (FILE *fp, int *types, int nvar, int version)
+static int check_variable_types (FILE *fp, int *types, int nvar, int *nsv)
 {
     unsigned char abyte;
     int err = 0;
     int i;
 
+    *nsv = 0;
+
     for (i=0; i<nvar && !read_error; i++) {
    	abyte = RawByteBinary(fp, 1);
 	types[i] = abyte;
 
-	if (stata_type_float(abyte, version) ||
-	    stata_type_double(abyte, version)) {
+	if (stata_type_float(abyte) ||
+	    stata_type_double(abyte)) {
 	    printf("variable %d: float type\n", i);
-	} else if (stata_type_int(abyte, version) ||
-		   stata_type_short(abyte, version) ||
-		   stata_type_byte(abyte, version)) {
+	} else if (stata_type_int(abyte) ||
+		   stata_type_short(abyte) ||
+		   stata_type_byte(abyte)) {
 	    printf("variable %d: int type\n", i);
-	} else if (stata_type_string(abyte, version)) {
+	} else if (stata_type_string(abyte)) {
 	    printf("variable %d: string type\n", i);
+	    *nsv += 1;
 	} else {
 	    error(_("unknown data type"));
 	    err = 1;
@@ -258,18 +263,47 @@ static int check_variable_types (FILE *fp, int *types, int nvar, int version)
     return err;
 }
 
+static gretl_string_table *dta_make_string_table (int *types, int nvar, int ncols)
+{
+    gretl_string_table *st;
+    int *list;
+    int i, j;
+
+    list = gretl_list_new(ncols);
+    if (list == NULL) {
+	return NULL;
+    }
+
+    j = 1;
+    for (i=0; i<nvar && j<=list[0]; i++) {
+	if (!stata_type_float(types[i]) &&
+	    !stata_type_double(types[i]) &&
+	    !stata_type_int(types[i]) &&
+	    !stata_type_short(types[i]) &&
+	    !stata_type_byte(types[i])) {
+	    list[j++] = i + 1;
+	}
+    }
+
+    st = string_table_new_from_cols_list(list);
+
+    free(list);
+
+    return st;
+}
+
 /*
    Turn a .dta file into a gretl dataset.
 */
 
 static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
-			  int version, int namelen, int swapends,
+			  gretl_string_table **pst, int namelen, int swapends,
 			  int *realv, PRN *prn)
 {
-    int i, j, clen;
+    int i, j, t, clen;
     int labellen, nlabels, totlen;
-    int nvar = dinfo->v - 1;
-    int soffset, voffset = 0;
+    int nvar = dinfo->v - 1, nsv = 0;
+    int soffset;
     char datalabel[81], timestamp[18], aname[33];
     int *types = NULL;
     char strbuf[129];
@@ -277,8 +311,8 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     int *off = NULL;
     int err = 0;
     
-    labellen = (version == 5)? 32 : 81;
-    soffset = (version > 0)? STATA_STRINGOFFSET : STATA_SE_STRINGOFFSET;
+    labellen = (stata_version == 5)? 32 : 81;
+    soffset = (stata_version > 0)? STATA_STRINGOFFSET : STATA_SE_STRINGOFFSET;
     *realv = dinfo->v;
 
     printf("Max length of labels = %d\n", labellen);
@@ -300,27 +334,22 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	return 1; /* E_ALLOC */
     }
 
-    err = check_variable_types(fp, types, nvar, version);
+    err = check_variable_types(fp, types, nvar, &nsv);
     if (err) {
 	free(types);
 	return err;
     }
 
-    if (stata_type_string(types[0], version)) {
-	/* read first variable into obs labels */
-	printf("interpreting first column as obs labels\n");
-	voffset = 1;
-	*realv -= 1;
+    if (nsv > 0) {
+	/* we have string variables */
+	*pst = dta_make_string_table(types, nvar, nsv);
     }
 
     /* names */
-    j = 1;
     for (i=0; i<nvar && !read_error; i++) {
         InStringBinary(fp, namelen + 1, aname);
 	printf("variable %d: name = '%s'\n", i, aname);
-	if (i >= voffset) {
-	    strncat(dinfo->varname[j++], aname, 8);
-	}
+	strncat(dinfo->varname[i+1], aname, 8);
     }
 
     /* sortlist -- not relevant */
@@ -346,21 +375,17 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     }
 
     /* variable descriptive labels */
-    j = 1;
     for (i=0; i<nvar && !read_error; i++) {
 	InStringBinary(fp, labellen, datalabel);
-	printf("variable %d: label = '%s'\n", i, datalabel);
-	if (i >= voffset) {
-	    if (*datalabel != '\0') {
-		strncat(VARLABEL(dinfo, j), datalabel, MAXLABEL - 1);
-	    }
-	    j++;
+	if (*datalabel != '\0') {
+	    printf("variable %d: label = '%s'\n", i, datalabel);
+	    strncat(VARLABEL(dinfo, i+1), datalabel, MAXLABEL - 1);
 	}
     }
 
     /* variable 'characteristics' -- not handled */
     while (RawByteBinary(fp, 1)) {
-	if (abs(version) >= 7) { /* manual is wrong here */
+	if (abs(stata_version) >= 7) { /* manual is wrong here */
 	    clen = InIntegerBinary(fp, 1, swapends);
 	} else {
 	    clen = InShortIntBinary(fp, 1);
@@ -369,7 +394,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	    InByteBinary(fp, 1);
 	}
     }
-    if (abs(version) >= 7) {
+    if (abs(stata_version) >= 7) {
         clen = InIntegerBinary(fp, 1, swapends);
     } else {
 	clen = InShortIntBinary(fp, 1);
@@ -378,53 +403,47 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	error(_("something strange in the file\n (Type 0 characteristic of nonzero length)"));
     }
 
-    /* for first-column observation labels */
-    if (voffset > 0) {
-	dataset_allocate_obs_markers(dinfo);
-    }		
-
     /* actual data values */
-    for (i=0; i<dinfo->n && !read_error; i++) {
-	for (j=0; j<nvar; j++) {
-	    int v = j + 1 - voffset;
-	    int xi;
+    for (t=0; t<dinfo->n && !read_error; t++) {
+	for (i=0; i<nvar; i++) {
+	    int v = i + 1;
+	    int ix;
 
-	    if (j == 0 && voffset) {
-		clen = types[j] - soffset;
-		InStringBinary(fp, clen, strbuf);
-		strbuf[clen] = 0;
-		if (dinfo->S != NULL) {
-		    strncat(dinfo->S[i], strbuf, OBSLEN - 1);
-		}
-		continue;
-	    }
+	    Z[v][t] = NADBL; 
 
-	    if (stata_type_float(types[j], version)) {
-		Z[v][i] = InFloatBinary(fp, 0, swapends);
-	    } else if (stata_type_double(types[j], version)) {
-		Z[v][i] = InDoubleBinary(fp, 0, swapends);
-	    } else if (stata_type_int(types[j], version)) {
-		xi = InIntegerBinary(fp, 0, swapends);
-		Z[v][i] = (xi == NA_INT)? NADBL : xi;
-	    } else if (stata_type_short(types[j], version)) {
-		xi = InShortIntBinary(fp, 0);
-		Z[v][i] = (xi == NA_INT)? NADBL : xi;
-	    } else if (stata_type_byte(types[j], version)) {
-		xi = InByteBinary(fp, 0);
-		Z[v][i] = (xi == NA_INT)? NADBL : xi;
+	    if (stata_type_float(types[i])) {
+		Z[v][t] = InFloatBinary(fp, 0, swapends);
+	    } else if (stata_type_double(types[i])) {
+		Z[v][t] = InDoubleBinary(fp, 0, swapends);
+	    } else if (stata_type_int(types[i])) {
+		ix = InIntegerBinary(fp, 0, swapends);
+		Z[v][t] = (ix == NA_INT)? NADBL : ix;
+	    } else if (stata_type_short(types[i])) {
+		ix = InShortIntBinary(fp, 0);
+		Z[v][t] = (ix == NA_INT)? NADBL : ix;
+	    } else if (stata_type_byte(types[i])) {
+		ix = InByteBinary(fp, 0);
+		Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else {
-		clen = types[j] - soffset;
+		clen = types[i] - soffset;
 		InStringBinary(fp, clen, strbuf);
 		strbuf[clen] = 0;
-		printf("Z[%d][%d] = '%s'\n", v, i, strbuf);
-		Z[v][i] = NADBL; /* FIXME */
+#if 0
+		printf("Z[%d][%d] = '%s'\n", v, t, strbuf);
+#endif
+		if (*strbuf != '\0' && strcmp(strbuf, ".") && *pst != NULL) {
+		    ix = gretl_string_table_index(*pst, strbuf, v, 0, prn);
+		    if (ix >= 0) {
+			Z[v][t] = ix;
+		    }	
+		}
 	    }
 	}
     }
 
     /* value labels (??) */
 
-    if (abs(version) > 5) {
+    if (abs(stata_version) > 5) {
 	for (j=0; j<nvar; j++) {
 	    /* first int not needed, use fread directly to trigger EOF */
 	    fread((int *) aname, sizeof(int), 1, fp);
@@ -477,21 +496,20 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     return err;
 }
 
-static int parse_dta_header (FILE *fp, int *version, int *namelen, 
-			     int *nvar, int *nobs, int *swapends)
+static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs, int *swapends)
 {
     unsigned char abyte;
     int err = 0;
     
     abyte = RawByteBinary(fp,1);   /* release version */
 
-    err = get_version_and_namelen(abyte, version, namelen);
+    err = get_version_and_namelen(abyte, namelen);
     if (err) {
 	error(_("not a Stata version 5-8 .dta file"));
 	return err;
     }
 
-    printf("Stata file version %d\n", *version);
+    printf("Stata file version %d\n", stata_version);
 
     stata_endian = (int) RawByteBinary(fp, 1); /* byte ordering */
     *swapends = stata_endian != CN_TYPE_NATIVE;
@@ -515,11 +533,12 @@ static int parse_dta_header (FILE *fp, int *version, int *namelen,
 int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		  PRN *prn)
 {
-    int version, namelen, swapends;
+    int namelen, swapends;
     int nvar, nobs, realv;
     FILE *fp;
     double **newZ = NULL;
     DATAINFO *newinfo = NULL;
+    gretl_string_table *st = NULL;
     int err = 0;
 
     if ((sizeof(double) != 8) | (sizeof(int) != 4) | (sizeof(float) != 4)) {
@@ -531,7 +550,7 @@ int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	return E_FOPEN;
     }
 
-    err = parse_dta_header(fp, &version, &namelen, &nvar, &nobs, &swapends);
+    err = parse_dta_header(fp, &namelen, &nvar, &nobs, &swapends);
     if (err) {
 	fclose(fp);
 	pputs(prn, "This file does not seem to be a valid Stata dta file");
@@ -548,12 +567,12 @@ int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	newinfo->v = nvar + 1;
 	newinfo->n = nobs;
+	/* time-series info?? */
 	err = start_new_Z(&newZ, newinfo, 0);
     }
 
     if (!err) {
-	err = read_dta_data(fp, newZ, newinfo, version, namelen, 
-			    swapends, &realv, prn);
+	err = read_dta_data(fp, newZ, newinfo, &st, namelen, swapends, &realv, prn);
     }
 
     if (!err) {
@@ -563,7 +582,11 @@ int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	
 	if (fix_varname_duplicates(newinfo)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
-	}	
+	}
+
+	if (st != NULL) {
+	    gretl_string_table_print(st, newinfo, prn);
+	}
 
 	if (*pZ == NULL) {
 	    *pZ = newZ;

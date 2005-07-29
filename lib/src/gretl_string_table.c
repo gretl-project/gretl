@@ -35,40 +35,73 @@ struct _gretl_string_table {
 
 static col_table *col_table_new (int colnum)
 {
-    col_table *ct;
+    col_table *ct = malloc(sizeof *ct);
 
-    ct = malloc(sizeof *ct);
-    if (ct == NULL) return NULL;
-
-    ct->strs = NULL;
-    ct->n_strs = 0;
-    ct->idx = colnum;
+    if (ct != NULL) {
+	ct->strs = NULL;
+	ct->n_strs = 0;
+	ct->idx = colnum;
+    }
 
     return ct;
 }
 
 gretl_string_table *gretl_string_table_new (void)
 {
+    gretl_string_table *st = malloc(sizeof *st);
+
+    if (st != NULL) {
+	st->cols = NULL;
+	st->n_cols = 0;
+    }
+
+    return st;
+}
+
+gretl_string_table *string_table_new_from_cols_list (int *list)
+{
     gretl_string_table *st;
+    int ncols = list[0];
+    int i, j;
 
     st = malloc(sizeof *st);
     if (st == NULL) return NULL;
 
-    st->cols = NULL;
-    st->n_cols = 0;
+    st->cols = malloc(ncols * sizeof *st->cols);
+    if (st->cols == NULL) {
+	free(st);
+	st = NULL;
+    } else {
+	st->n_cols = ncols;
+	for (i=0; i<ncols; i++) {
+	    st->cols[i] = col_table_new(list[i+1]);
+	    if (st->cols[i] == NULL) {
+		for (j=0; j<i; j++) {
+		    free(st->cols[j]);
+		}
+		free(st->cols);
+		free(st);
+		st = NULL;
+	    } 
+	}
+    }
 
     return st;
 }
 
 static int col_table_get_index (const col_table *ct, const char *s)
 {
+    int ret = -1;
     int i;
 
     for (i=0; i<ct->n_strs; i++) {
-	if (!strcmp(s, ct->strs[i])) return i;
+	if (!strcmp(s, ct->strs[i])) {
+	    ret = i + 1;
+	    break;
+	}
     }
 
-    return -1;
+    return ret;
 }
 
 static int 
@@ -76,18 +109,23 @@ col_table_add_string (col_table *ct, const char *s)
 {
     char **strs;
     int n = ct->n_strs + 1;
+    int ret = n;
 
     strs = realloc(ct->strs, n * sizeof *strs);
-    if (strs == NULL) return -1;
+    if (strs == NULL) {
+	ret = -1;
+    } else {
+	ct->strs = strs;
+	strs[n-1] = gretl_strdup(s);
 
-    ct->strs = strs;
-    strs[n-1] = malloc(strlen(s) + 1);
-    if (strs[n-1] == NULL) return -1;
+	if (strs[n-1] == NULL) {
+	    ret = -1;
+	} else {
+	    ct->n_strs += 1;
+	}
+    }
 
-    strcpy(strs[n-1], s);
-    ct->n_strs += 1;
-
-    return n - 1;
+    return ret;
 }
 
 static col_table *
@@ -139,7 +177,7 @@ gretl_string_table_index (gretl_string_table *st, const char *s, int col,
     if (idx < 0 && ct != NULL) {
 	idx = col_table_add_string(ct, s);
     }
-	    
+
     return idx;
 }
 
@@ -199,9 +237,9 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
 	}
 	for (j=0; j<ct->n_strs; j++) {
 	    if (!err) {
-		fprintf(fp, "%3d = '%s'\n", j, ct->strs[j]);
+		fprintf(fp, "%3d = '%s'\n", j+1, ct->strs[j]);
 	    } else {
-		pprintf(prn, "%3d = '%s'\n", j, ct->strs[j]);
+		pprintf(prn, "%3d = '%s'\n", j+1, ct->strs[j]);
 	    }
 	}
     }

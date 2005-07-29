@@ -163,14 +163,15 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open data/user file..."), NULL, open_data, OPEN_DATA, NULL },
     { N_("/File/Open data/sample file..."), NULL, display_files, TEXTBOOK_DATA, NULL },
     { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>" },    
-    { N_("/File/Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL },
-    { N_("/File/Open data/import ASCII..."), NULL, open_data, OPEN_ASCII, NULL },
-    { N_("/File/Open data/import Octave..."), NULL, open_data, OPEN_OCTAVE, NULL },
-    { N_("/File/Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL },
-    { N_("/File/Open data/import Gnumeric..."), NULL, open_data, OPEN_GNUMERIC, NULL },
-    { N_("/File/Open data/import Excel..."), NULL, open_data, OPEN_EXCEL, NULL },
-    { N_("/File/Open data/import Eviews..."), NULL, open_data, OPEN_WF1, NULL },
-    { N_("/File/Open data/import Stata..."), NULL, open_data, OPEN_DTA, NULL },
+    { N_("/File/Open data/Import"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Open data/Import/CSV..."), NULL, open_data, OPEN_CSV, NULL },
+    { N_("/File/Open data/Import/ASCII..."), NULL, open_data, OPEN_ASCII, NULL },
+    { N_("/File/Open data/Import/Octave..."), NULL, open_data, OPEN_OCTAVE, NULL },
+    { N_("/File/Open data/Import/Gnumeric..."), NULL, open_data, OPEN_GNUMERIC, NULL },
+    { N_("/File/Open data/Import/Excel..."), NULL, open_data, OPEN_EXCEL, NULL },
+    { N_("/File/Open data/Import/Eviews..."), NULL, open_data, OPEN_WF1, NULL },
+    { N_("/File/Open data/Import/Stata..."), NULL, open_data, OPEN_DTA, NULL },
+    { N_("/File/Open data/Import/BOX..."), NULL, open_data, OPEN_BOX, NULL },
 
     /* File, Append data */
     { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>" },
@@ -742,6 +743,7 @@ int main (int argc, char *argv[])
 	case GRETL_EXCEL:
 	case GRETL_GNUMERIC:
 	case GRETL_WF1:
+	case GRETL_DTA:
 	    err = get_worksheet_data(paths.datfile, ftype, 0, &gui_get_data);
 	    break;
 	case GRETL_SCRIPT:

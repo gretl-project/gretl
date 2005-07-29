@@ -277,5 +277,7 @@ void add_pca_data (windata_t *vwin);
 
 void add_fcast_data (windata_t *vwin);
 
+void maybe_display_string_table (void);
+
 #endif /* LIBRARY_H */
 
