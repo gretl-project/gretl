@@ -170,6 +170,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open data/import Gnumeric..."), NULL, open_data, OPEN_GNUMERIC, NULL },
     { N_("/File/Open data/import Excel..."), NULL, open_data, OPEN_EXCEL, NULL },
     { N_("/File/Open data/import Eviews..."), NULL, open_data, OPEN_WF1, NULL },
+    { N_("/File/Open data/import Stata..."), NULL, open_data, OPEN_DTA, NULL },
 
     /* File, Append data */
     { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>" },
@@ -180,6 +181,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Append data/from Gnumeric..."), NULL, open_data, APPEND_GNUMERIC, NULL },
     { N_("/File/Append data/from Excel..."), NULL, open_data, APPEND_EXCEL, NULL },
     { N_("/File/Append data/from Eviews..."), NULL, open_data, APPEND_WF1, NULL },
+    { N_("/File/Append data/from Stata..."), NULL, open_data, APPEND_DTA, NULL },
 
     /* File, Save data */
     { N_("/File/_Save data"), NULL, auto_store, 0, NULL },

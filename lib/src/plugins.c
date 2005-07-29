@@ -32,9 +32,6 @@ enum {
     P_LAD,
     P_VIF,
     P_LEVERAGE,
-#ifdef WIN32
-    P_LONGNAME,
-#endif
     P_MP_OLS,
     P_PANEL_DATA,
     P_PCA,
@@ -55,7 +52,8 @@ enum {
     P_FRACTAL,
     P_POISSON,
     P_MAILER,
-    P_EVIEWS_IMPORT
+    P_EVIEWS_IMPORT,
+    P_STATA_IMPORT
 } plugin_codes;
 
 struct plugin_info {
@@ -76,9 +74,6 @@ struct plugin_info plugins[] = {
     { P_LAD,             "lad" },
     { P_VIF,             "vif" },
     { P_LEVERAGE,        "leverage" },
-#ifdef WIN32
-    { P_LONGNAME,        "longname" },
-#endif
     { P_MP_OLS,          "mp_ols" },
     { P_PANEL_DATA,      "panel_data" },
     { P_PCA,             "pca" },
@@ -99,7 +94,8 @@ struct plugin_info plugins[] = {
     { P_FRACTAL,         "fractals" },
     { P_POISSON,         "poisson" },
     { P_MAILER,          "mailer" },
-    { P_EVIEWS_IMPORT,   "eviews_import" }
+    { P_EVIEWS_IMPORT,   "eviews_import" },
+    { P_STATA_IMPORT,    "stata_import" },
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -107,6 +103,7 @@ struct plugin_function plugin_functions[] = {
     { "excel_get_data", P_EXCEL_IMPORT },
     { "wbook_get_data", P_GNUMERIC_IMPORT },
     { "wf1_get_data",   P_EVIEWS_IMPORT },
+    { "dta_get_data",   P_STATA_IMPORT },
 
     /* Johansen cointegration test */
     { "johansen_eigenvals", P_JOHANSEN },
@@ -158,10 +155,6 @@ struct plugin_function plugin_functions[] = {
     /* NIST test suite */
     { "run_nist_tests", P_NISTCHECK },    
 
-#ifdef WIN32
-    { "real_unmangle", P_LONGNAME },
-#endif
-    
     /* modeling */
     { "arma_model",        P_ARMA },
     { "arma_x12_model",    P_ARMA_X12 },

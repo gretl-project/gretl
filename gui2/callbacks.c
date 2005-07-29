@@ -245,6 +245,10 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     case APPEND_WF1:
 	file_selector(_("Open Eviews workfile"), code, NULL);
 	break;
+    case OPEN_DTA:
+    case APPEND_DTA:
+	file_selector(_("Open Stata file"), code, NULL);
+	break;
     case OPEN_MARKERS:
 	file_selector(_("gretl: add markers"), code, NULL);
 	break;

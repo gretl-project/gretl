@@ -61,8 +61,8 @@ static int get_data (FILE *fp, long pos, double **Z, int i, int n)
     return err;
 }
 
-static int read_wf1_variables (FILE *fp, long pos, double ***pZ,
-			       DATAINFO *dinfo, PRN *prn)
+static int read_wf1_variables (FILE *fp, long pos, double **Z,
+			       DATAINFO *dinfo, int *realv, PRN *prn)
 {
     int nv = dinfo->v + 1; /* RESID */
     char vname[32];
@@ -107,15 +107,13 @@ static int read_wf1_variables (FILE *fp, long pos, double ***pZ,
 	fread(&u, sizeof u, 1, fp);
 	if (u > 0) {
 	    /* follow up at the pos given above, if non-zero */
-	    err = get_data(fp, u, *pZ, j++, dinfo->n);
+	    err = get_data(fp, u, Z, j++, dinfo->n);
 	} else {
 	    fputs("Couldn't find the data: skipping this variable\n", stderr);
 	}
     }
 
-    if (j < dinfo->v) {
-	dataset_drop_last_variables(dinfo->v - j, pZ, dinfo);
-    }
+    *realv = j;
 
     return err;
 }
@@ -202,7 +200,7 @@ int wf1_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     double **newZ = NULL;
     DATAINFO *newinfo = NULL;
     long offset;
-    int err = 0;
+    int realv, err = 0;
 
     fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
@@ -229,10 +227,14 @@ int wf1_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = read_wf1_variables(fp, offset, &newZ, newinfo, prn);
+	err = read_wf1_variables(fp, offset, newZ, newinfo, &realv, prn);
     }
 
     if (!err) {
+	if (realv < newinfo->v) {
+	    dataset_drop_last_variables(newinfo->v - realv, &newZ, newinfo);
+	}
+
 	if (fix_varname_duplicates(newinfo)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}	

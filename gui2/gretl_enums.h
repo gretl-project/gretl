@@ -90,6 +90,8 @@ enum file_ops {
     APPEND_EXCEL,
     OPEN_WF1,
     APPEND_WF1,
+    OPEN_DTA,
+    APPEND_DTA,
     OPEN_SESSION,
     OPEN_MARKERS,
     END_OPEN,      /* marker for end of file open section */

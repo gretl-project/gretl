@@ -52,7 +52,8 @@
 	                      i == OPEN_BOX || \
                               i == OPEN_GNUMERIC || \
 	                      i == OPEN_EXCEL || \
-                              i == OPEN_WF1)
+                              i == OPEN_WF1 || \
+                              i == OPEN_DTA)
 
 #define APPEND_DATA_ACTION(i) (i == APPEND_DATA || \
                                i == APPEND_CSV || \
@@ -60,7 +61,8 @@
                                i == APPEND_GNUMERIC || \
                                i == APPEND_EXCEL || \
                                i == APPEND_ASCII || \
-                               i == APPEND_WF1)
+                               i == APPEND_WF1 || \
+                               i == APPEND_DTA)
 
 #define SAVE_GRAPH_ACTION(i) (i == SAVE_GNUPLOT || \
                               i == SAVE_THIS_GRAPH || \
@@ -124,6 +126,8 @@ static struct extmap action_map[] = {
     { APPEND_EXCEL,      ".xls" },
     { OPEN_WF1,          ".wf1" },
     { APPEND_WF1,        ".wf1" },
+    { OPEN_DTA,          ".dta" },
+    { APPEND_DTA,        ".dta" },
     { FILE_OP_MAX,       NULL }
 };
 
@@ -628,6 +632,8 @@ static struct winfilter get_filter (int action, gpointer data)
 	{APPEND_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
 	{OPEN_WF1,     { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
 	{APPEND_WF1,   { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
+	{OPEN_DTA,     { N_("Stata files (*.dta)"), "*.dta" }},
+	{APPEND_DTA,   { N_("Stata files (*.dta)"), "*.dta" }},
 	{SET_PATH,     { N_("program files (*.exe)"), "*.exe" }}
     };
 
