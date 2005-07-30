@@ -261,6 +261,10 @@ int wf1_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     long offset;
     int realv, err = 0;
 
+#if WORDS_BIGENDIAN
+    swapends = 1;
+#endif
+
     fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
 	return E_FOPEN;

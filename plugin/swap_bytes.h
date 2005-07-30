@@ -26,7 +26,7 @@
 #ifndef SWAP_BYTES_H
 #define SWAP_BYTES_H
 
-#ifdef HAVE_BYTESWAP_H  /* use gnu bswap macros */
+#ifdef HAVE_BYTESWAP_H  /* use GNU bswap macros */
 
 #include <byteswap.h>
 

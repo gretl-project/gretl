@@ -43,10 +43,8 @@ enum {
 
 #ifdef WORDS_BIGENDIAN
 # define CN_TYPE_NATIVE CN_TYPE_IEEEB
-# define endian BIG
 #else
 # define CN_TYPE_NATIVE CN_TYPE_IEEEL
-# define endian LITTLE
 #endif /* not WORDS_BIGENDIAN */
 
 /* versions */
@@ -57,18 +55,18 @@ enum {
 #define VERSION_8 113
 
 /* Stata format constants */
-#define STATA_FLOAT  'f'
-#define STATA_DOUBLE 'd'
-#define STATA_INT    'l'
+#define STATA_FLOAT    'f'
+#define STATA_DOUBLE   'd'
+#define STATA_INT      'l'
 #define STATA_SHORTINT 'i'
-#define STATA_BYTE  'b'
+#define STATA_BYTE     'b'
 
 #define STATA_SE_STRINGOFFSET 0
-#define STATA_SE_FLOAT  254
-#define STATA_SE_DOUBLE 255
-#define STATA_SE_INT    253
+#define STATA_SE_FLOAT    254
+#define STATA_SE_DOUBLE   255
+#define STATA_SE_INT      253
 #define STATA_SE_SHORTINT 252
-#define STATA_SE_BYTE  251
+#define STATA_SE_BYTE     251
 
 #define STATA_STRINGOFFSET 0x7f
 
