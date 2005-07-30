@@ -20,7 +20,8 @@
 
      Versions of Stata before 4.0 used different file formats.
 
-  This modified version for gretl by Allin Cottrell, July 2005.
+  This version was fairly substantially modified for gretl 
+  by Allin Cottrell, July 2005.
 */
 
 #include <stdio.h>
@@ -99,7 +100,7 @@ static int read_int (FILE *fp, int naok, int *err)
 	reverse_int(i);
     }
 
-    return ((i==STATA_INT_NA) & !naok ? NA_INT : i);
+    return ((i == STATA_INT_NA) & !naok ? NA_INT : i);
 }
 
 /* read a 1-byte signed integer */
@@ -111,7 +112,7 @@ static int read_signed_byte (FILE *fp, int naok, int *err)
 	bin_error(err);
     }
 
-    return ((b==STATA_BYTE_NA) & !naok)? NA_INT : (int) b;
+    return ((b == STATA_BYTE_NA) & !naok)? NA_INT : (int) b;
 }
 
 /* read a single byte  */
@@ -123,7 +124,7 @@ static int read_byte (FILE *fp, int naok, int *err)
 	bin_error(err);
     }
 
-    return ((u==STATA_BYTE_NA) & !naok)? NA_INT : (int) u;
+    return ((u == STATA_BYTE_NA) & !naok)? NA_INT : (int) u;
 }
 
 static int read_short (FILE *fp, int naok, int *err)
@@ -144,7 +145,7 @@ static int read_short (FILE *fp, int naok, int *err)
 	s -= 65536;
     }
 
-    return ((s==STATA_SHORTINT_NA) & !naok)? NA_INT : s;
+    return ((s == STATA_SHORTINT_NA) & !naok)? NA_INT : s;
 }
 
 static double read_double (FILE *fp, int *err)
