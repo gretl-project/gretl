@@ -81,9 +81,9 @@ enum {
 
 #define NA_INT -999
 
-static int stata_endian;
-static int stata_version;
-static int read_error;
+int stata_endian;
+int stata_version;
+int read_error;
 
 static void error (const char *s)
 {
@@ -94,11 +94,11 @@ static void error (const char *s)
 
 /** Low-level input **/
 
-static int InIntegerBinary (FILE *fp, int naok, int swapends)
+static int read_int (FILE *fp, int naok, int swapends)
 {
     int i;
 
-    if (fread(&i, sizeof(int), 1, fp) != 1) {
+    if (fread(&i, sizeof i, 1, fp) != 1) {
 	error(_("a binary read error occurred"));
     }
     if (swapends) {
@@ -109,81 +109,81 @@ static int InIntegerBinary (FILE *fp, int naok, int swapends)
 }
 
 /* read a 1-byte signed integer */
-static int InByteBinary (FILE *fp, int naok)
+static int read_signed_byte (FILE *fp, int naok)
 { 
-    signed char i;
+    signed char b;
 
-    if (fread(&i, 1, 1, fp) != 1) {
+    if (fread(&b, 1, 1, fp) != 1) {
 	error(_("a binary read error occurred"));
     }
 
-    return ((i==STATA_BYTE_NA) & !naok)? NA_INT : (int) i;
+    return ((b==STATA_BYTE_NA) & !naok)? NA_INT : (int) b;
 }
 
 /* read a single byte  */
-static int RawByteBinary (FILE *fp, int naok)
+static int read_byte (FILE *fp, int naok)
 { 
-    unsigned char i;
+    unsigned char u;
 
-    if (fread(&i, 1, 1, fp) != 1) {
+    if (fread(&u, 1, 1, fp) != 1) {
 	error(_("a binary read error occurred"));
     }
 
-    return ((i==STATA_BYTE_NA) & !naok)? NA_INT : (int) i;
+    return ((u==STATA_BYTE_NA) & !naok)? NA_INT : (int) u;
 }
 
-static int InShortIntBinary (FILE *fp, int naok)
+static int read_short (FILE *fp, int naok)
 {
     unsigned first, second;
-    int ret;
+    int s;
 	
-    first = RawByteBinary(fp, 1);
-    second = RawByteBinary(fp, 1);
+    first = read_byte(fp, 1);
+    second = read_byte(fp, 1);
 
     if (stata_endian == CN_TYPE_BIG) {
-	ret = (first << 8) | second;
+	s = (first << 8) | second;
     } else {
-	ret = (second << 8) | first;
+	s = (second << 8) | first;
     }
 
-    if (ret > STATA_SHORTINT_NA) {
-	ret -= 65536;
+    if (s > STATA_SHORTINT_NA) {
+	s -= 65536;
     }
 
-    return ((ret==STATA_SHORTINT_NA) & !naok)? NA_INT : ret;
+    return ((s==STATA_SHORTINT_NA) & !naok)? NA_INT : s;
 }
 
-static double InDoubleBinary (FILE *fp, int naok, int swapends)
+static double read_double (FILE *fp, int naok, int swapends)
 {
-    double i;
+    double d;
 
-    if (fread(&i, sizeof(double), 1, fp) != 1) {
+    if (fread(&d, sizeof d, 1, fp) != 1) {
 	error(_("a binary read error occurred"));
     }
     if (swapends) {
-	reverse_double(i);
+	reverse_double(d);
     }
 
-    return ((i==STATA_DOUBLE_NA) & !naok)? NADBL : i;
+    return ((d==STATA_DOUBLE_NA) & !naok)? NADBL : d;
 }
 
-static double InFloatBinary (FILE *fp, int naok, int swapends)
+static double read_float (FILE *fp, int naok, int swapends)
 {
-    float i;
+    float f;
 
-    if (fread(&i, sizeof(float), 1, fp) != 1) {
+    if (fread(&f, sizeof f, 1, fp) != 1) {
 	error(_("a binary read error occurred"));
     }
     if (swapends) {
-	reverse_float(i);
+	reverse_float(f);
     }
 
-    return ((i==STATA_FLOAT_NA) & !naok)? NADBL : (double) i;
+    return ((f==STATA_FLOAT_NA) & !naok)? NADBL : (double) f;
 }
 
-static void InStringBinary (FILE *fp, int nchar, char *buf)
+static void read_string (FILE *fp, int nc, char *buf)
 {
-    if (fread(buf, nchar, 1, fp) != 1) {
+    if (fread(buf, 1, nc, fp) != 1) {
 	error(_("a binary read error occurred"));
     }
 }
@@ -237,7 +237,7 @@ static int check_variable_types (FILE *fp, int *types, int nvar, int *nsv)
     *nsv = 0;
 
     for (i=0; i<nvar && !read_error; i++) {
-   	abyte = RawByteBinary(fp, 1);
+   	abyte = read_byte(fp, 1);
 	types[i] = abyte;
 
 	if (stata_type_float(abyte) ||
@@ -318,11 +318,11 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     printf("Max length of labels = %d\n", labellen);
 
     /* data label - zero terminated string */
-    InStringBinary(fp, labellen, datalabel);
+    read_string(fp, labellen, datalabel);
     printf("datalabel: '%s'\n", datalabel);
 
     /* file creation time - zero terminated string */
-    InStringBinary(fp, 18, timestamp);  
+    read_string(fp, 18, timestamp);  
     printf("timestamp: '%s'\n", timestamp);
   
     /** read variable descriptors **/
@@ -347,19 +347,19 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     /* names */
     for (i=0; i<nvar && !read_error; i++) {
-        InStringBinary(fp, namelen + 1, aname);
+        read_string(fp, namelen + 1, aname);
 	printf("variable %d: name = '%s'\n", i, aname);
 	strncat(dinfo->varname[i+1], aname, 8);
     }
 
     /* sortlist -- not relevant */
     for (i=0; i<2*(nvar+1) && !read_error; i++) {
-        RawByteBinary(fp, 1);
+        read_byte(fp, 1);
     }
     
     /* format list (R uses it to identify date variables) */
     for (i=0; i<nvar && !read_error; i++){
-        InStringBinary(fp, 12, timestamp);
+        read_string(fp, 12, timestamp);
 #if 0
 	printf("variable %d: format = '%s'\n", i, timestamp);
 #endif
@@ -368,7 +368,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     /* "value labels": these are stored as the names of label formats, 
        which are themselves stored later in the file. */
     for (i=0; i<nvar && !read_error; i++) {
-        InStringBinary(fp, namelen + 1, aname);
+        read_string(fp, namelen + 1, aname);
 	if (*aname != '\0') {
 	    printf("variable %d: \"value label\" = '%s'\n", i, aname);
 	}
@@ -376,7 +376,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     /* variable descriptive labels */
     for (i=0; i<nvar && !read_error; i++) {
-	InStringBinary(fp, labellen, datalabel);
+	read_string(fp, labellen, datalabel);
 	if (*datalabel != '\0') {
 	    printf("variable %d: label = '%s'\n", i, datalabel);
 	    strncat(VARLABEL(dinfo, i+1), datalabel, MAXLABEL - 1);
@@ -384,20 +384,20 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     }
 
     /* variable 'characteristics' -- not handled */
-    while (RawByteBinary(fp, 1)) {
+    while (read_byte(fp, 1)) {
 	if (abs(stata_version) >= 7) { /* manual is wrong here */
-	    clen = InIntegerBinary(fp, 1, swapends);
+	    clen = read_int(fp, 1, swapends);
 	} else {
-	    clen = InShortIntBinary(fp, 1);
+	    clen = read_short(fp, 1);
 	}
 	for (i=0; i<clen; i++) {
-	    InByteBinary(fp, 1);
+	    read_signed_byte(fp, 1);
 	}
     }
     if (abs(stata_version) >= 7) {
-        clen = InIntegerBinary(fp, 1, swapends);
+        clen = read_int(fp, 1, swapends);
     } else {
-	clen = InShortIntBinary(fp, 1);
+	clen = read_short(fp, 1);
     }
     if (clen != 0) {
 	error(_("something strange in the file\n (Type 0 characteristic of nonzero length)"));
@@ -412,21 +412,21 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	    Z[v][t] = NADBL; 
 
 	    if (stata_type_float(types[i])) {
-		Z[v][t] = InFloatBinary(fp, 0, swapends);
+		Z[v][t] = read_float(fp, 0, swapends);
 	    } else if (stata_type_double(types[i])) {
-		Z[v][t] = InDoubleBinary(fp, 0, swapends);
+		Z[v][t] = read_double(fp, 0, swapends);
 	    } else if (stata_type_int(types[i])) {
-		ix = InIntegerBinary(fp, 0, swapends);
+		ix = read_int(fp, 0, swapends);
 		Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else if (stata_type_short(types[i])) {
-		ix = InShortIntBinary(fp, 0);
+		ix = read_short(fp, 0);
 		Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else if (stata_type_byte(types[i])) {
-		ix = InByteBinary(fp, 0);
+		ix = read_signed_byte(fp, 0);
 		Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else {
 		clen = types[i] - soffset;
-		InStringBinary(fp, clen, strbuf);
+		read_string(fp, clen, strbuf);
 		strbuf[clen] = 0;
 #if 0
 		printf("Z[%d][%d] = '%s'\n", v, t, strbuf);
@@ -452,32 +452,32 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		break;
 	    }
 
-	    InStringBinary(fp, namelen + 1, aname);
+	    read_string(fp, namelen + 1, aname);
 	    printf("variable %d: \"aname\" = '%s'\n", i, aname);
 
 	    /* padding */
-	    RawByteBinary(fp, 1);
-	    RawByteBinary(fp, 1);
-	    RawByteBinary(fp, 1);
+	    read_byte(fp, 1);
+	    read_byte(fp, 1);
+	    read_byte(fp, 1);
 
-	    nlabels = InIntegerBinary(fp, 1, swapends);
-	    totlen = InIntegerBinary(fp, 1, swapends);
+	    nlabels = read_int(fp, 1, swapends);
+	    totlen = read_int(fp, 1, swapends);
 
 	    off = malloc(nlabels * sizeof *off);
 
 	    for (i=0; i<nlabels; i++) {
-		off[i] = InIntegerBinary(fp, 1, swapends);
+		off[i] = read_int(fp, 1, swapends);
 		printf("label offset %d = %d\n", i, off[i]);
 	    }
 
 	    for (i=0; i<nlabels; i++) {
-		double lev = (double) InIntegerBinary(fp, 0, swapends);
+		double lev = (double) read_int(fp, 0, swapends);
 
 		printf("level %d = %g\n", i, lev);
 	    }
 
 	    txt = calloc(totlen, 1);
-	    InStringBinary(fp, totlen, txt);
+	    read_string(fp, totlen, txt);
 	    for (i=0; i<nlabels; i++) {
 		printf("label %d = '%s'\n", i, txt + off[i]);
 	    }
@@ -501,7 +501,7 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs, int *
     unsigned char abyte;
     int err = 0;
     
-    abyte = RawByteBinary(fp,1);   /* release version */
+    abyte = read_byte(fp,1);   /* release version */
 
     err = get_version_and_namelen(abyte, namelen);
     if (err) {
@@ -511,13 +511,13 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs, int *
 
     printf("Stata file version %d\n", stata_version);
 
-    stata_endian = (int) RawByteBinary(fp, 1); /* byte ordering */
+    stata_endian = (int) read_byte(fp, 1); /* byte ordering */
     *swapends = stata_endian != CN_TYPE_NATIVE;
 
-    RawByteBinary(fp, 1);                      /* filetype -- junk */
-    RawByteBinary(fp, 1);                      /* padding */
-    *nvar = InShortIntBinary(fp, 1);            /* number of variables */
-    *nobs = InIntegerBinary(fp, 1, *swapends);  /* number of observations */
+    read_byte(fp, 1);                   /* filetype -- junk */
+    read_byte(fp, 1);                   /* padding */
+    *nvar = read_short(fp, 1);          /* number of variables */
+    *nobs = read_int(fp, 1, *swapends); /* number of observations */
 
     if (read_error) {
 	err = 1;

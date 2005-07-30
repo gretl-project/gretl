@@ -30,10 +30,11 @@
 
 int swapends = 0;
 
-static void error (const char *s)
+static void bin_error (int *err)
 {
-    fputs(s, stderr);
+    fputs(_("binary read error"), stderr);
     fputc('\n', stderr);
+    *err = 1;
 }
 
 static int read_int (FILE *fp, int *err)
@@ -41,8 +42,7 @@ static int read_int (FILE *fp, int *err)
     int i;
 
     if (fread(&i, sizeof i, 1, fp) != 1) {
-	error(_("a binary read error occurred"));
-	*err = 1;
+	bin_error(err);
     }
     if (swapends) {
 	reverse_int(i);
@@ -51,29 +51,37 @@ static int read_int (FILE *fp, int *err)
     return i;
 }
 
-#if 0 /* needs to be figured */
-static long read_long (FILE *fp)
+static int read_short (FILE *fp, int *err)
+{
+    short s;
+
+    if (fread(&s, sizeof s, 1, fp) != 1) {
+	bin_error(err);
+    }
+
+    return s;
+}
+
+static long read_long (FILE *fp, int *err)
 {
     long int l;
 
     if (fread(&l, sizeof l, 1, fp) != 1) {
-	error(_("a binary read error occurred"));
+	bin_error(err);
     }
     if (swapends) {
-	reverse_long(l);
+	reverse_int(l);
     }
 
     return l;
 }
-#endif
 
 static double read_double (FILE *fp, int *err)
 {
     double x;
 
     if (fread(&x, sizeof x, 1, fp) != 1) {
-	error(_("a binary read error occurred"));
-	*err = 1;
+	bin_error(err);
     }
     if (swapends) {
 	reverse_double(x);
@@ -117,13 +125,13 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
 {
     int nv = dinfo->v + 1; /* RESID */
     char vname[32];
-    short code;
+    short code = 0;
     long u;
     int i, j = 1;
     int err = 0;
 
     fseek(fp, pos + 62, SEEK_SET);
-    fread(&code, sizeof code, 1, fp);
+    code = read_short(fp, &err);
     if (code == 0) {
 	fprintf(stderr, "Did not get sensible code: trying skipping forward 32 bytes\n");
 	pos += 32;
@@ -133,7 +141,7 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
 	/* read the 'code' for the 'object' (should be 44 for a regular
 	   variable?) */
 	fseek(fp, pos + 62, SEEK_SET);
-	fread(&code, sizeof code, 1, fp);
+	code = read_short(fp, &err);
 	if (code == 43) {
 	    /* constant: skip */
 	    continue;
@@ -155,7 +163,7 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
 
 	/* get stream position for the data */
 	fseek(fp, pos + 14, SEEK_SET);
-	fread(&u, sizeof u, 1, fp);
+	u = read_long(fp, &err);
 	if (u > 0) {
 	    /* follow up at the pos given above, if non-zero */
 	    err = get_data(fp, u, Z, j++, dinfo->n);
@@ -177,23 +185,23 @@ static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
     int err = 0;
 
     fseek(fp, 80, SEEK_SET);
-    fread(&off, sizeof off, 1, fp);
+    off = read_long(fp, &err);
     *offset = off + 26;
 
     fseek(fp, 114, SEEK_SET);
-    fread(&nvars, sizeof nvars, 1, fp);
+    nvars = read_int(fp, &err);
 
     fseek(fp, 124, SEEK_SET);
-    fread(&pd, sizeof pd, 1, fp);
+    pd = read_short(fp, &err);
 
     fseek(fp, 126, SEEK_SET);
-    fread(&startper, sizeof startper, 1, fp);
+    startper = read_short(fp, &err);
 
     fseek(fp, 128, SEEK_SET);
-    fread(&startyr, sizeof startyr, 1, fp);
+    startyr = read_int(fp, &err);
 
     fseek(fp, 140, SEEK_SET);
-    fread(&nobs, sizeof nobs, 1, fp);
+    nobs = read_int(fp, &err);
 
     if (nvars <= 2 || nobs <= 0 || startyr <= 0 ||
 	pd <= 0 || startper < 0) {
