@@ -53,10 +53,16 @@ static int read_int (FILE *fp, int *err)
 
 static int read_short (FILE *fp, int *err)
 {
-    short s;
-
-    if (fread(&s, sizeof s, 1, fp) != 1) {
-	bin_error(err);
+    unsigned char first, second;
+    int s;
+    
+    fread(&first, 1, 1, fp);
+    fread(&second, 1, 1, fp);
+    
+    if (swapends) {
+        s = (second << 8) | first;
+    } else {
+        s = (first << 8) | second;
     }
 
     return s;
