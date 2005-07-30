@@ -85,9 +85,9 @@ int stata_endian;
 int stata_version;
 int read_error;
 
-static void error (const char *s)
+static void bin_error (void)
 {
-    fputs(s, stderr);
+    fputs(_("binary read error"), stderr);
     fputc('\n', stderr);
     read_error = 1;
 }
@@ -99,7 +99,7 @@ static int read_int (FILE *fp, int naok, int swapends)
     int i;
 
     if (fread(&i, sizeof i, 1, fp) != 1) {
-	error(_("a binary read error occurred"));
+	bin_error();
     }
     if (swapends) {
 	reverse_int(i);
@@ -114,7 +114,7 @@ static int read_signed_byte (FILE *fp, int naok)
     signed char b;
 
     if (fread(&b, 1, 1, fp) != 1) {
-	error(_("a binary read error occurred"));
+	bin_error();
     }
 
     return ((b==STATA_BYTE_NA) & !naok)? NA_INT : (int) b;
@@ -126,7 +126,7 @@ static int read_byte (FILE *fp, int naok)
     unsigned char u;
 
     if (fread(&u, 1, 1, fp) != 1) {
-	error(_("a binary read error occurred"));
+	bin_error();
     }
 
     return ((u==STATA_BYTE_NA) & !naok)? NA_INT : (int) u;
@@ -158,7 +158,7 @@ static double read_double (FILE *fp, int naok, int swapends)
     double d;
 
     if (fread(&d, sizeof d, 1, fp) != 1) {
-	error(_("a binary read error occurred"));
+	bin_error();
     }
     if (swapends) {
 	reverse_double(d);
@@ -172,7 +172,7 @@ static double read_float (FILE *fp, int naok, int swapends)
     float f;
 
     if (fread(&f, sizeof f, 1, fp) != 1) {
-	error(_("a binary read error occurred"));
+	bin_error();
     }
     if (swapends) {
 	reverse_float(f);
@@ -183,8 +183,8 @@ static double read_float (FILE *fp, int naok, int swapends)
 
 static void read_string (FILE *fp, int nc, char *buf)
 {
-    if (fread(buf, 1, nc, fp) != 1) {
-	error(_("a binary read error occurred"));
+    if (fread(buf, 1, nc, fp) != nc) {
+	bin_error();
     }
 }
 
@@ -251,7 +251,8 @@ static int check_variable_types (FILE *fp, int *types, int nvar, int *nsv)
 	    printf("variable %d: string type\n", i);
 	    *nsv += 1;
 	} else {
-	    error(_("unknown data type"));
+	    fputs(_("unknown data type"), stderr);
+	    fputc('\n', stderr);
 	    err = 1;
 	}
     }
@@ -400,7 +401,9 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	clen = read_short(fp, 1);
     }
     if (clen != 0) {
-	error(_("something strange in the file\n (Type 0 characteristic of nonzero length)"));
+	fputs(_("something strange in the file\n"
+		"(Type 0 characteristic of nonzero length)"), stderr);
+	fputc('\n', stderr);
     }
 
     /* actual data values */
@@ -505,11 +508,12 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs, int *
 
     err = get_version_and_namelen(abyte, namelen);
     if (err) {
-	error(_("not a Stata version 5-8 .dta file"));
+	fputs(_("not a Stata version 5-8 .dta file"), stderr);
+	fputc('\n', stderr);
 	return err;
     }
 
-    printf("Stata file version %d\n", stata_version);
+    printf("Stata file version %d\n", abs(stata_version));
 
     stata_endian = (int) read_byte(fp, 1); /* byte ordering */
     *swapends = stata_endian != CN_TYPE_NATIVE;
