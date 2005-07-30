@@ -2786,13 +2786,13 @@ static void check_first_field (const char *line, char delim,
     }
 }
 
-#define ISNA(s) (strcmp(s, "NA") == 0 || \
-                 strcmp(s, "N.A.") == 0 || \
-                 strcmp(s, "n.a.") == 0 || \
-                 strcmp(s, "na") == 0 || \
-                 strcmp(s, ".") == 0 || \
-                 strcmp(s, "..") == 0 || \
-                 strncmp(s, "-999", 4) == 0)
+#define ISNA(s) (!strcmp(s, "NA") || \
+                 !strcmp(s, "N.A.") || \
+                 !strcmp(s, "n.a.") || \
+                 !strcmp(s, "na") || \
+                 !strcmp(s, ".") || \
+                 !strcmp(s, "..") || \
+                 !strncmp(s, "-999", 4))
 
 static int csv_missval (const char *str, int i, int t, PRN *prn)
 {
@@ -3284,7 +3284,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 #endif
 
     if (st != NULL) {
-	gretl_string_table_print(st, csvinfo, prn);
+	gretl_string_table_print(st, csvinfo, fname, prn);
     }
 
     csvinfo->t1 = 0;

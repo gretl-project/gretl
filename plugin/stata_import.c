@@ -35,19 +35,15 @@
 enum {
     CN_TYPE_BIG = 1,
     CN_TYPE_LITTLE,
-    CN_TYPE_XPORT
 };
 
-#define CN_TYPE_IEEEB   CN_TYPE_BIG
-#define CN_TYPE_IEEEL   CN_TYPE_LITTLE
-
 #ifdef WORDS_BIGENDIAN
-# define CN_TYPE_NATIVE CN_TYPE_IEEEB
+# define CN_TYPE_NATIVE CN_TYPE_BIG
 #else
-# define CN_TYPE_NATIVE CN_TYPE_IEEEL
-#endif /* not WORDS_BIGENDIAN */
+# define CN_TYPE_NATIVE CN_TYPE_LITTLE
+#endif
 
-/* versions */
+/* Stata versions */
 #define VERSION_5 0x69
 #define VERSION_6 'l'
 #define VERSION_7 0x6e
@@ -55,12 +51,14 @@ enum {
 #define VERSION_8 113
 
 /* Stata format constants */
+#define STATA_STRINGOFFSET 0x7f
 #define STATA_FLOAT    'f'
 #define STATA_DOUBLE   'd'
 #define STATA_INT      'l'
 #define STATA_SHORTINT 'i'
 #define STATA_BYTE     'b'
 
+/* Stata SE format constants */
 #define STATA_SE_STRINGOFFSET 0
 #define STATA_SE_FLOAT    254
 #define STATA_SE_DOUBLE   255
@@ -68,36 +66,34 @@ enum {
 #define STATA_SE_SHORTINT 252
 #define STATA_SE_BYTE     251
 
-#define STATA_STRINGOFFSET 0x7f
-
-#define STATA_BYTE_NA 127
-#define STATA_SHORTINT_NA 32767
-#define STATA_INT_NA 2147483647
-
+/* Stata missing value codes */
 #define STATA_FLOAT_NA pow(2.0, 127)
 #define STATA_DOUBLE_NA pow(2.0, 1023)
+#define STATA_INT_NA 2147483647
+#define STATA_SHORTINT_NA 32767
+#define STATA_BYTE_NA 127
 
 #define NA_INT -999
 
-int stata_endian;
+/* it's convenient to have these as file-scope globals */
 int stata_version;
-int read_error;
+int stata_endian;
+int swapends;
 
-static void bin_error (void)
+static void bin_error (int *err)
 {
-    fputs(_("binary read error"), stderr);
-    fputc('\n', stderr);
-    read_error = 1;
+    fputs("binary read error\n", stderr);
+    *err = 1;
 }
 
 /** Low-level input **/
 
-static int read_int (FILE *fp, int naok, int swapends)
+static int read_int (FILE *fp, int naok, int *err)
 {
     int i;
 
     if (fread(&i, sizeof i, 1, fp) != 1) {
-	bin_error();
+	bin_error(err);
     }
     if (swapends) {
 	reverse_int(i);
@@ -107,36 +103,36 @@ static int read_int (FILE *fp, int naok, int swapends)
 }
 
 /* read a 1-byte signed integer */
-static int read_signed_byte (FILE *fp, int naok)
+static int read_signed_byte (FILE *fp, int naok, int *err)
 { 
     signed char b;
 
     if (fread(&b, 1, 1, fp) != 1) {
-	bin_error();
+	bin_error(err);
     }
 
     return ((b==STATA_BYTE_NA) & !naok)? NA_INT : (int) b;
 }
 
 /* read a single byte  */
-static int read_byte (FILE *fp, int naok)
+static int read_byte (FILE *fp, int naok, int *err)
 { 
     unsigned char u;
 
     if (fread(&u, 1, 1, fp) != 1) {
-	bin_error();
+	bin_error(err);
     }
 
     return ((u==STATA_BYTE_NA) & !naok)? NA_INT : (int) u;
 }
 
-static int read_short (FILE *fp, int naok)
+static int read_short (FILE *fp, int naok, int *err)
 {
     unsigned first, second;
     int s;
 	
-    first = read_byte(fp, 1);
-    second = read_byte(fp, 1);
+    first = read_byte(fp, 1, err);
+    second = read_byte(fp, 1, err);
 
     if (stata_endian == CN_TYPE_BIG) {
 	s = (first << 8) | second;
@@ -151,47 +147,47 @@ static int read_short (FILE *fp, int naok)
     return ((s==STATA_SHORTINT_NA) & !naok)? NA_INT : s;
 }
 
-static double read_double (FILE *fp, int naok, int swapends)
+static double read_double (FILE *fp, int *err)
 {
     double d;
 
     if (fread(&d, sizeof d, 1, fp) != 1) {
-	bin_error();
+	bin_error(err);
     }
     if (swapends) {
 	reverse_double(d);
     }
 
-    return ((d==STATA_DOUBLE_NA) & !naok)? NADBL : d;
+    return (d == STATA_DOUBLE_NA)? NADBL : d;
 }
 
-static double read_float (FILE *fp, int naok, int swapends)
+static double read_float (FILE *fp, int *err)
 {
     float f;
 
     if (fread(&f, sizeof f, 1, fp) != 1) {
-	bin_error();
+	bin_error(err);
     }
     if (swapends) {
 	reverse_float(f);
     }
 
-    return ((f==STATA_FLOAT_NA) & !naok)? NADBL : (double) f;
+    return (f == STATA_FLOAT_NA)? NADBL : (double) f;
 }
 
-static void read_string (FILE *fp, int nc, char *buf)
+static void read_string (FILE *fp, int nc, char *buf, int *err)
 {
     if (fread(buf, 1, nc, fp) != nc) {
-	bin_error();
+	bin_error(err);
     }
 }
 
 static int 
-get_version_and_namelen (unsigned char abyte, int *vnamelen)
+get_version_and_namelen (unsigned char u, int *vnamelen)
 {
     int err = 0;
 
-    switch (abyte) {
+    switch (u) {
     case VERSION_5:
         stata_version = 5;
 	*vnamelen = 8;
@@ -228,24 +224,21 @@ get_version_and_namelen (unsigned char abyte, int *vnamelen)
 
 static int check_variable_types (FILE *fp, int *types, int nvar, int *nsv)
 {
-    unsigned char abyte;
-    int err = 0;
-    int i;
+    int i, err = 0;
 
     *nsv = 0;
 
-    for (i=0; i<nvar && !read_error; i++) {
-   	abyte = read_byte(fp, 1);
-	types[i] = abyte;
+    for (i=0; i<nvar && !err; i++) {
+   	unsigned char u = read_byte(fp, 1, &err);
 
-	if (stata_type_float(abyte) ||
-	    stata_type_double(abyte)) {
+	types[i] = u;
+	if (stata_type_float(u) || stata_type_double(u)) {
 	    printf("variable %d: float type\n", i);
-	} else if (stata_type_int(abyte) ||
-		   stata_type_short(abyte) ||
-		   stata_type_byte(abyte)) {
+	} else if (stata_type_int(u) ||
+		   stata_type_short(u) ||
+		   stata_type_byte(u)) {
 	    printf("variable %d: int type\n", i);
-	} else if (stata_type_string(abyte)) {
+	} else if (stata_type_string(u)) {
 	    printf("variable %d: string type\n", i);
 	    *nsv += 1;
 	} else {
@@ -255,12 +248,10 @@ static int check_variable_types (FILE *fp, int *types, int nvar, int *nsv)
 	}
     }
 
-    if (read_error) {
-	err = 1;
-    }
-
     return err;
 }
+
+/* mechanism for handling (coding) non-numeric variables */
 
 static gretl_string_table *dta_make_string_table (int *types, int nvar, int ncols)
 {
@@ -291,13 +282,28 @@ static gretl_string_table *dta_make_string_table (int *types, int nvar, int ncol
     return st;
 }
 
-/*
-   Turn a .dta file into a gretl dataset.
-*/
+static int 
+save_dataset_info (DATAINFO *dinfo, const char *s1, const char *s2)
+{
+    int len = strlen(s1) + strlen(s2) + 2;
+    int err = 0;
+
+    dinfo->descrip = malloc(len);
+    if (dinfo->descrip != NULL) {
+	*dinfo->descrip = '\0';
+	strcat(dinfo->descrip, s1);
+	strcat(dinfo->descrip, "\n");
+	strcat(dinfo->descrip, s2);
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
 
 static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
-			  gretl_string_table **pst, int namelen, int swapends,
-			  int *realv, PRN *prn)
+			  gretl_string_table **pst, int namelen,
+			  int *nvread, PRN *prn)
 {
     int i, j, t, clen;
     int labellen, nlabels, totlen;
@@ -312,17 +318,21 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     
     labellen = (stata_version == 5)? 32 : 81;
     soffset = (stata_version > 0)? STATA_STRINGOFFSET : STATA_SE_STRINGOFFSET;
-    *realv = dinfo->v;
+    *nvread = nvar;
 
     printf("Max length of labels = %d\n", labellen);
 
     /* data label - zero terminated string */
-    read_string(fp, labellen, datalabel);
+    read_string(fp, labellen, datalabel, &err);
     printf("datalabel: '%s'\n", datalabel);
 
     /* file creation time - zero terminated string */
-    read_string(fp, 18, timestamp);  
+    read_string(fp, 18, timestamp, &err);  
     printf("timestamp: '%s'\n", timestamp);
+
+    if (*datalabel != '\0' || *timestamp != '\0') {
+	save_dataset_info(dinfo, datalabel, timestamp);
+    }
   
     /** read variable descriptors **/
     
@@ -330,7 +340,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     types = malloc(nvar * sizeof *types);
     if (types == NULL) {
-	return 1; /* E_ALLOC */
+	return E_ALLOC;
     }
 
     err = check_variable_types(fp, types, nvar, &nsv);
@@ -340,25 +350,25 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     }
 
     if (nsv > 0) {
-	/* we have string variables */
+	/* we have 1 or more non-numeric variables */
 	*pst = dta_make_string_table(types, nvar, nsv);
     }
 
     /* names */
-    for (i=0; i<nvar && !read_error; i++) {
-        read_string(fp, namelen + 1, aname);
+    for (i=0; i<nvar && !err; i++) {
+        read_string(fp, namelen + 1, aname, &err);
 	printf("variable %d: name = '%s'\n", i, aname);
 	strncat(dinfo->varname[i+1], aname, 8);
     }
 
     /* sortlist -- not relevant */
-    for (i=0; i<2*(nvar+1) && !read_error; i++) {
-        read_byte(fp, 1);
+    for (i=0; i<2*(nvar+1) && !err; i++) {
+        read_byte(fp, 1, &err);
     }
     
     /* format list (R uses it to identify date variables) */
-    for (i=0; i<nvar && !read_error; i++){
-        read_string(fp, 12, timestamp);
+    for (i=0; i<nvar && !err; i++){
+        read_string(fp, 12, timestamp, &err);
 #if 0
 	printf("variable %d: format = '%s'\n", i, timestamp);
 #endif
@@ -366,16 +376,16 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     /* "value labels": these are stored as the names of label formats, 
        which are themselves stored later in the file. */
-    for (i=0; i<nvar && !read_error; i++) {
-        read_string(fp, namelen + 1, aname);
+    for (i=0; i<nvar && !err; i++) {
+        read_string(fp, namelen + 1, aname, &err);
 	if (*aname != '\0') {
 	    printf("variable %d: \"value label\" = '%s'\n", i, aname);
 	}
     }
 
     /* variable descriptive labels */
-    for (i=0; i<nvar && !read_error; i++) {
-	read_string(fp, labellen, datalabel);
+    for (i=0; i<nvar && !err; i++) {
+	read_string(fp, labellen, datalabel, &err);
 	if (*datalabel != '\0') {
 	    printf("variable %d: label = '%s'\n", i, datalabel);
 	    strncat(VARLABEL(dinfo, i+1), datalabel, MAXLABEL - 1);
@@ -383,20 +393,20 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     }
 
     /* variable 'characteristics' -- not handled */
-    while (read_byte(fp, 1)) {
+    while (read_byte(fp, 1, &err)) {
 	if (abs(stata_version) >= 7) { /* manual is wrong here */
-	    clen = read_int(fp, 1, swapends);
+	    clen = read_int(fp, 1, &err);
 	} else {
-	    clen = read_short(fp, 1);
+	    clen = read_short(fp, 1, &err);
 	}
 	for (i=0; i<clen; i++) {
-	    read_signed_byte(fp, 1);
+	    read_signed_byte(fp, 1, &err);
 	}
     }
     if (abs(stata_version) >= 7) {
-        clen = read_int(fp, 1, swapends);
+        clen = read_int(fp, 1, &err);
     } else {
-	clen = read_short(fp, 1);
+	clen = read_short(fp, 1, &err);
     }
     if (clen != 0) {
 	fputs(_("something strange in the file\n"
@@ -405,29 +415,28 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     }
 
     /* actual data values */
-    for (t=0; t<dinfo->n && !read_error; t++) {
-	for (i=0; i<nvar; i++) {
-	    int v = i + 1;
-	    int ix;
+    for (t=0; t<dinfo->n && !err; t++) {
+	for (i=0; i<nvar && !err; i++) {
+	    int ix, v = i + 1;
 
 	    Z[v][t] = NADBL; 
 
 	    if (stata_type_float(types[i])) {
-		Z[v][t] = read_float(fp, 0, swapends);
+		Z[v][t] = read_float(fp, &err);
 	    } else if (stata_type_double(types[i])) {
-		Z[v][t] = read_double(fp, 0, swapends);
+		Z[v][t] = read_double(fp, &err);
 	    } else if (stata_type_int(types[i])) {
-		ix = read_int(fp, 0, swapends);
+		ix = read_int(fp, 0, &err);
 		Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else if (stata_type_short(types[i])) {
-		ix = read_short(fp, 0);
+		ix = read_short(fp, 0, &err);
 		Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else if (stata_type_byte(types[i])) {
-		ix = read_signed_byte(fp, 0);
+		ix = read_signed_byte(fp, 0, &err);
 		Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else {
 		clen = types[i] - soffset;
-		read_string(fp, clen, strbuf);
+		read_string(fp, clen, strbuf, &err);
 		strbuf[clen] = 0;
 #if 0
 		printf("Z[%d][%d] = '%s'\n", v, t, strbuf);
@@ -453,43 +462,46 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		break;
 	    }
 
-	    read_string(fp, namelen + 1, aname);
+	    read_string(fp, namelen + 1, aname, &err);
 	    printf("variable %d: \"aname\" = '%s'\n", i, aname);
 
 	    /* padding */
-	    read_byte(fp, 1);
-	    read_byte(fp, 1);
-	    read_byte(fp, 1);
+	    read_byte(fp, 1, &err);
+	    read_byte(fp, 1, &err);
+	    read_byte(fp, 1, &err);
 
-	    nlabels = read_int(fp, 1, swapends);
-	    totlen = read_int(fp, 1, swapends);
+	    nlabels = read_int(fp, 1, &err);
+	    totlen = read_int(fp, 1, &err);
 
 	    off = malloc(nlabels * sizeof *off);
 
-	    for (i=0; i<nlabels; i++) {
-		off[i] = read_int(fp, 1, swapends);
+	    for (i=0; i<nlabels && !err; i++) {
+		off[i] = read_int(fp, 1, &err);
 		printf("label offset %d = %d\n", i, off[i]);
 	    }
 
-	    for (i=0; i<nlabels; i++) {
-		double lev = (double) read_int(fp, 0, swapends);
+	    for (i=0; i<nlabels && !err; i++) {
+		double lev = (double) read_int(fp, 0, &err);
 
 		printf("level %d = %g\n", i, lev);
 	    }
 
 	    txt = calloc(totlen, 1);
-	    read_string(fp, totlen, txt);
+	    read_string(fp, totlen, txt, &err);
 	    for (i=0; i<nlabels; i++) {
 		printf("label %d = '%s'\n", i, txt + off[i]);
 	    }
 
-	    /* namesgets(levels, labels); */
-	    /* SET_VECTOR_ELT(labeltable, j, levels); */
-
+#if 0 /* R-specific code */
+	    namesgets(levels, labels);
+	    SET_VECTOR_ELT(labeltable, j, levels);
+#endif
 	    free(off);
 	    free(txt);
 	}
-	/* namesgets(labeltable, tmp); */
+#if 0 /* R-specific code */
+	namesgets(labeltable, tmp);
+#endif
     }
 
     free(types);
@@ -497,33 +509,40 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     return err;
 }
 
-static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs, int *swapends)
+static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
 {
-    unsigned char abyte;
+    unsigned char u;
     int err = 0;
     
-    abyte = read_byte(fp,1);   /* release version */
+    u = read_byte(fp, 1, &err);   /* release version */
 
-    err = get_version_and_namelen(abyte, namelen);
-    if (err) {
-	fputs(_("not a Stata version 5-8 .dta file"), stderr);
-	fputc('\n', stderr);
-	return err;
+    if (!err) {
+	err = get_version_and_namelen(u, namelen);
     }
+
+    if (err) {
+	fputs("not a Stata version 5-8 .dta file\n", stderr);
+	return err;
+    } 
 
     printf("Stata file version %d\n", abs(stata_version));
 
-    stata_endian = (int) read_byte(fp, 1); /* byte ordering */
-    *swapends = stata_endian != CN_TYPE_NATIVE;
+    /* these are file-scope globals */
+    stata_endian = (int) read_byte(fp, 1, &err);
+    swapends = stata_endian != CN_TYPE_NATIVE;
 
-    read_byte(fp, 1);                   /* filetype -- junk */
-    read_byte(fp, 1);                   /* padding */
-    *nvar = read_short(fp, 1);          /* number of variables */
-    *nobs = read_int(fp, 1, *swapends); /* number of observations */
+    read_byte(fp, 1, &err);           /* filetype -- junk */
+    read_byte(fp, 1, &err);           /* padding */
+    *nvar = read_short(fp, 1, &err);  /* number of variables */
+    *nobs = read_int(fp, 1, &err);    /* number of observations */
 
-    if (read_error) {
-	err = 1;
-    } else {
+    if (!err) {
+	/* sanity check */
+	if (*nvar <= 0) err = 1;
+	if (*nobs <= 0) err = 1;
+    }
+
+    if (!err) {
 	printf("number of variables = %d\n", *nvar);
 	printf("number of observations = %d\n", *nobs);
 	printf("length of varnames = %d\n", *namelen);
@@ -535,8 +554,8 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs, int *
 int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		  PRN *prn)
 {
-    int namelen, swapends;
-    int nvar, nobs, realv;
+    int namelen;
+    int nvar, nobs, nvread;
     FILE *fp;
     double **newZ = NULL;
     DATAINFO *newinfo = NULL;
@@ -552,10 +571,10 @@ int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	return E_FOPEN;
     }
 
-    err = parse_dta_header(fp, &namelen, &nvar, &nobs, &swapends);
+    err = parse_dta_header(fp, &namelen, &nvar, &nobs);
     if (err) {
+	pputs(prn, _("This file does not seem to be a valid Stata dta file"));
 	fclose(fp);
-	pputs(prn, "This file does not seem to be a valid Stata dta file");
 	return E_DATA;
     }
 
@@ -566,20 +585,30 @@ int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    if (!err) {
-	newinfo->v = nvar + 1;
-	newinfo->n = nobs;
-	/* time-series info?? */
-	err = start_new_Z(&newZ, newinfo, 0);
-    }
+    newinfo->v = nvar + 1;
+    newinfo->n = nobs;
+    /* time-series info?? */
 
-    if (!err) {
-	err = read_dta_data(fp, newZ, newinfo, &st, namelen, swapends, &realv, prn);
-    }
+    err = start_new_Z(&newZ, newinfo, 0);
+    if (err) {
+	pputs(prn, _("Out of memory\n"));
+	free_datainfo(newinfo);
+	fclose(fp);
+	return E_ALLOC;
+    }	
 
-    if (!err) {
-	if (realv < newinfo->v) {
-	    dataset_drop_last_variables(newinfo->v - realv, &newZ, newinfo);
+    err = read_dta_data(fp, newZ, newinfo, &st, namelen, &nvread, prn);
+
+    if (err) {
+	destroy_dataset(newZ, newinfo);
+	if (st != NULL) {
+	    gretl_string_table_destroy(st);
+	}	
+    } else {
+	int nvtarg = newinfo->v - 1;
+
+	if (nvread < nvtarg) {
+	    dataset_drop_last_variables(nvtarg - nvread, &newZ, newinfo);
 	}
 	
 	if (fix_varname_duplicates(newinfo)) {
@@ -587,7 +616,7 @@ int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (st != NULL) {
-	    gretl_string_table_print(st, newinfo, prn);
+	    gretl_string_table_print(st, newinfo, fname, prn);
 	}
 
 	if (*pZ == NULL) {

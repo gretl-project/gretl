@@ -24,16 +24,16 @@
 #include <string.h>
 
 #include "libgretl.h"
-#include "swap_bytes.h"
+
+#if WORDS_BIGENDIAN
+# include "swap_bytes.h"
+#endif
 
 #define WF1_NA 1e-37
 
-int swapends = 0;
-
 static void bin_error (int *err)
 {
-    fputs(_("binary read error"), stderr);
-    fputc('\n', stderr);
+    fputs("binary read error\n", stderr);
     *err = 1;
 }
 
@@ -44,26 +44,28 @@ static int read_int (FILE *fp, int *err)
     if (fread(&i, sizeof i, 1, fp) != 1) {
 	bin_error(err);
     }
-    if (swapends) {
-	reverse_int(i);
-    }
+#if WORDS_BIGENDIAN
+    reverse_int(i);
+#endif
 
     return i;
 }
 
 static int read_short (FILE *fp, int *err)
 {
-    unsigned char first, second;
     int s;
+#if WORDS_BIGENDIAN /* check this!! */
+    unsigned first, second; /* char? */
     
     fread(&first, 1, 1, fp);
     fread(&second, 1, 1, fp);
-    
-    if (swapends) {
-        s = (second << 8) | first;
-    } else {
-        s = (first << 8) | second;
-    }
+    /* s = (second << 8) | first; */
+    s = (first << 8) | second;
+#else
+    if (fread(&s, sizeof s, 1, fp) != 1) {
+	bin_error(err);
+    }    
+#endif
 
     return s;
 }
@@ -75,9 +77,9 @@ static long read_long (FILE *fp, int *err)
     if (fread(&l, sizeof l, 1, fp) != 1) {
 	bin_error(err);
     }
-    if (swapends) {
-	reverse_int(l);
-    }
+#if WORDS_BIGENDIAN
+    reverse_int(l);
+#endif
 
     return l;
 }
@@ -89,9 +91,9 @@ static double read_double (FILE *fp, int *err)
     if (fread(&x, sizeof x, 1, fp) != 1) {
 	bin_error(err);
     }
-    if (swapends) {
-	reverse_double(x);
-    }
+#if WORDS_BIGENDIAN
+    reverse_double(x);
+#endif
 
     return (x == WF1_NA)? NADBL : x;
 }
@@ -127,13 +129,14 @@ static int get_data (FILE *fp, long pos, double **Z, int i, int n)
 }
 
 static int read_wf1_variables (FILE *fp, long pos, double **Z,
-			       DATAINFO *dinfo, int *realv, PRN *prn)
+			       DATAINFO *dinfo, int *nvread, PRN *prn)
 {
     int nv = dinfo->v + 1; /* RESID */
+    int msg_done = 0;
     char vname[32];
     short code = 0;
     long u;
-    int i, j = 1;
+    int i, j = 0;
     int err = 0;
 
     fseek(fp, pos + 62, SEEK_SET);
@@ -152,8 +155,11 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
 	    /* constant: skip */
 	    continue;
 	} else if (code != 44) {
-	    pprintf(prn, "byte %ld: unknown object code %d\n", 
-		    pos + 62, (int) code);
+	    if (!msg_done) {
+		pprintf(prn, "byte %ld: unknown object code %d\n", 
+			pos + 62, (int) code);
+		msg_done = 1;
+	    }
 	    continue;
 	}
 
@@ -163,8 +169,8 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
 	if (!strcmp(vname, "C") || !strcmp(vname, "RESID")) {
 	    continue;
 	}
-	fprintf(stderr, "Got variable '%s'\n", vname);
-	dinfo->varname[j][0] = 0;
+	fprintf(stderr, "Got variable %d, '%s'\n", j + 1, vname);
+	dinfo->varname[++j][0] = 0;
 	strncat(dinfo->varname[j], vname, 8);
 
 	/* get stream position for the data */
@@ -172,13 +178,19 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
 	u = read_long(fp, &err);
 	if (u > 0) {
 	    /* follow up at the pos given above, if non-zero */
-	    err = get_data(fp, u, Z, j++, dinfo->n);
+	    err = get_data(fp, u, Z, j, dinfo->n);
 	} else {
 	    fputs("Couldn't find the data: skipping this variable\n", stderr);
 	}
     }
 
-    *realv = j;
+    *nvread = j;
+
+    fprintf(stderr, "actual number of variables read = %d\n", *nvread);
+    if (*nvread == 0) {
+	pputs(prn, _("No variables were read\n"));
+	err = E_DATA;
+    }
 
     return err;
 }
@@ -246,12 +258,12 @@ static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
 
 static int check_file_type (FILE *fp)
 {
-    char test[22] = {0};
+    char s[22] = {0};
     int err = 0;
 
-    fread(test, 1, 21, fp);
-
-    if (strcmp(test, "New MicroTSP Workfile")) {
+    if (fread(s, 1, 21, fp) != 21) {
+	err = 1;
+    } else if (strcmp(s, "New MicroTSP Workfile")) {
 	err = 1;
     }
 
@@ -265,11 +277,7 @@ int wf1_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     double **newZ = NULL;
     DATAINFO *newinfo = NULL;
     long offset;
-    int realv, err = 0;
-
-#if WORDS_BIGENDIAN
-    swapends = 1;
-#endif
+    int nvread, err = 0;
 
     fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
@@ -290,18 +298,30 @@ int wf1_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     err = parse_wf1_header(fp, newinfo, &offset);
-
-    if (!err) {
-	err = start_new_Z(&newZ, newinfo, 0);
+    if (err) {
+	pputs(prn, _("Error reading workfile header\n"));
+	free_datainfo(newinfo);
+	fclose(fp);
+	return err;
     }
 
-    if (!err) {
-	err = read_wf1_variables(fp, offset, newZ, newinfo, &realv, prn);
-    }
+    err = start_new_Z(&newZ, newinfo, 0);
+    if (err) {
+	pputs(prn, _("Out of memory\n"));
+	free_datainfo(newinfo);
+	fclose(fp);
+	return E_ALLOC;
+    }	
 
-    if (!err) {
-	if (realv < newinfo->v) {
-	    dataset_drop_last_variables(newinfo->v - realv, &newZ, newinfo);
+    err = read_wf1_variables(fp, offset, newZ, newinfo, &nvread, prn);
+
+    if (err) {
+	destroy_dataset(newZ, newinfo);
+    } else {
+	int nvtarg = newinfo->v - 1;
+
+	if (nvread < nvtarg) {
+	    dataset_drop_last_variables(nvtarg - nvread, &newZ, newinfo);
 	}
 
 	if (fix_varname_duplicates(newinfo)) {

@@ -126,11 +126,11 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	    free(pdinfo->varinfo);
 	    pdinfo->varinfo = NULL;
 	}
-	if (pdinfo->descrip) {
+	if (pdinfo->descrip != NULL) {
 	    free(pdinfo->descrip);
 	    pdinfo->descrip = NULL;
 	}
-	if (pdinfo->vector) {
+	if (pdinfo->vector != NULL) {
 	    free(pdinfo->vector);
 	    pdinfo->vector = NULL;
 	}
@@ -496,12 +496,14 @@ int allocate_Z (double ***pZ, const DATAINFO *pdinfo)
  * Initializes the data matrix pointed to by @pZ (adding the constant in
  * position 0) and the data information struct @pdinfo.
  * 
- * Returns: 0 on successful completion, 1 on error.
+ * Returns: 0 on successful completion, non-zero on error.
  */
 
 int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
 {
-    if (allocate_Z(pZ, pdinfo)) return 1;
+    if (allocate_Z(pZ, pdinfo)) {
+	return E_ALLOC;
+    }
 
     pdinfo->t1 = 0; 
     pdinfo->t2 = pdinfo->n - 1;
@@ -510,7 +512,9 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
 	pdinfo->varname = NULL;
 	pdinfo->varinfo = NULL;
     } else if (dataset_allocate_varnames(pdinfo)) {
-	return 1;
+	free_Z(*pZ, pdinfo);
+	*pZ = NULL;
+	return E_ALLOC;
     }
 
     pdinfo->S = NULL;

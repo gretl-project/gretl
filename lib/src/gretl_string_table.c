@@ -208,10 +208,11 @@ void gretl_string_table_destroy (gretl_string_table *st)
 }
 
 int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
-			      PRN *prn)
+			      const char *fname, PRN *prn)
 {
     int i, j;
     const col_table *ct;
+    const char *fshort;
     char stname[MAXLEN];
     FILE *fp;
     int err = 0;
@@ -221,10 +222,22 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
     strcpy(stname, "string_table.txt");
     gretl_path_prepend(stname, gretl_user_dir());
 
-    fp = fopen(stname, "w");
+    fp = gretl_fopen(stname, "w");
     if (fp == NULL) {
-	err = 1;
+	err = E_FOPEN;
+	goto bailout;
     }
+
+    fshort = strrchr(fname, SLASH);
+    if (fshort != NULL) {
+	fprintf(fp, "%s\n\n", fshort + 1);
+    } else {
+	fprintf(fp, "%s\n\n", fname);
+    }
+
+    fputs(M_("One or more non-numeric variables were found.\n"
+	     "Gretl cannot handle such variables directly, so they\n"
+	     "have been given numeric codes as follows.\n\n"), fp);
 
     for (i=0; i<st->n_cols; i++) {
 	ct = st->cols[i];
@@ -249,6 +262,8 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
 	fclose(fp);
 	set_string_table_written();
     }
+
+ bailout:
 
     gretl_string_table_destroy(st);
 
