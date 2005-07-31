@@ -302,6 +302,37 @@ save_dataset_info (DATAINFO *dinfo, const char *s1, const char *s2)
     return err;
 }
 
+/* use Stata's "date formats" to reonstruct time series information
+   FIXME: add recognition for daily data too? 
+   (Stata dates are all zero at the start of 1960.)
+*/
+
+static int set_time_info (int t1, int pd, DATAINFO *dinfo)
+{
+    int yr, mo, qt;
+
+    if (pd == 12) {
+	yr = (t1 / 12) + 1960;
+	mo = t1 % 12 + 1;
+	sprintf(dinfo->stobs, "%d:%02d", yr, mo);
+    } else if (pd == 4) {
+	yr = (t1 / 4) + 1960;
+	qt = t1 % 4 + 1;
+	sprintf(dinfo->stobs, "%d:%d", yr, qt);
+    } else {
+	yr = t1 + 1960;
+	sprintf(dinfo->stobs, "%d", yr);
+    }
+
+    printf("starting obs seems to be %s\n", dinfo->stobs);
+    
+    dinfo->pd = pd;
+    dinfo->structure = TIME_SERIES;
+    dinfo->sd0 = get_date_x(dinfo->pd, dinfo->stobs);
+
+    return 0;
+}
+
 static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 			  gretl_string_table **pst, int namelen,
 			  int *nvread, PRN *prn)
@@ -309,8 +340,8 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     int i, j, t, clen;
     int labellen, nlabels, totlen;
     int nvar = dinfo->v - 1, nsv = 0;
-    int soffset;
-    char datalabel[81], timestamp[18], aname[33];
+    int soffset, pd = 0, tnum = -1;
+    char datalabel[81], c18[18], aname[33];
     int *types = NULL;
     char strbuf[129];
     char *txt = NULL; 
@@ -328,11 +359,11 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     printf("datalabel: '%s'\n", datalabel);
 
     /* file creation time - zero terminated string */
-    read_string(fp, 18, timestamp, &err);  
-    printf("timestamp: '%s'\n", timestamp);
+    read_string(fp, 18, c18, &err);  
+    printf("timestamp: '%s'\n", c18);
 
-    if (*datalabel != '\0' || *timestamp != '\0') {
-	save_dataset_info(dinfo, datalabel, timestamp);
+    if (*datalabel != '\0' || *c18 != '\0') {
+	save_dataset_info(dinfo, datalabel, c18);
     }
   
     /** read variable descriptors **/
@@ -358,7 +389,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     /* names */
     for (i=0; i<nvar && !err; i++) {
         read_string(fp, namelen + 1, aname, &err);
-	printf("variable %d: name = '%s'\n", i, aname);
+	printf("variable %d: name = '%s'\n", i+1, aname);
 	strncat(dinfo->varname[i+1], aname, 8);
     }
 
@@ -367,12 +398,22 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
         read_byte(fp, 1, &err);
     }
     
-    /* format list (R uses it to identify date variables) */
+    /* format list (use it to identify date variables?) */
     for (i=0; i<nvar && !err; i++){
-        read_string(fp, 12, timestamp, &err);
-#if 0
-	printf("variable %d: format = '%s'\n", i, timestamp);
-#endif
+        read_string(fp, 12, c18, &err);
+	if (*c18 != '\0' && c18[strlen(c18)-1] != 'g') {
+	    printf("variable %d: format = '%s'\n", i+1, c18);
+	    if (!strcmp(c18, "%tm")) {
+		pd = 12;
+		tnum = i;
+	    } else if (!strcmp(c18, "%tq")) {
+		pd = 4;
+		tnum = i;
+	    } else if (!strcmp(c18, "%ty")) {
+		pd = 1;
+		tnum = i;
+	    }
+	}
     }
 
     /* "value labels": these are stored as the names of label formats, 
@@ -380,7 +421,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     for (i=0; i<nvar && !err; i++) {
         read_string(fp, namelen + 1, aname, &err);
 	if (*aname != '\0') {
-	    printf("variable %d: \"value label\" = '%s'\n", i, aname);
+	    printf("variable %d: \"value label\" = '%s'\n", i+1, aname);
 	}
     }
 
@@ -388,7 +429,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     for (i=0; i<nvar && !err; i++) {
 	read_string(fp, labellen, datalabel, &err);
 	if (*datalabel != '\0') {
-	    printf("variable %d: label = '%s'\n", i, datalabel);
+	    printf("variable %d: label = '%s'\n", i+1, datalabel);
 	    strncat(VARLABEL(dinfo, i+1), datalabel, MAXLABEL - 1);
 	}
     }
@@ -448,6 +489,10 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 			Z[v][t] = ix;
 		    }	
 		}
+	    }
+
+	    if (i == tnum && t == 0) {
+		set_time_info((int) Z[v][t], pd, dinfo);
 	    }
 	}
     }

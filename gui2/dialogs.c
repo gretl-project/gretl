@@ -3364,6 +3364,11 @@ static void dwiz_spinner (GtkWidget *dialog, DATAINFO *dwinfo, int step)
     gtk_widget_show(hbox);
 }
 
+static void reactivate_main_menus (GtkWidget *w, gpointer p)
+{
+    main_menus_enable(TRUE);
+}
+
 static int datawiz_dialog (int step, DATAINFO *dwinfo)
 {
     GtkWidget *dialog;
@@ -3393,6 +3398,8 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(dialog_unblock), NULL);
+    g_signal_connect(G_OBJECT(dialog), "destroy", 
+		     G_CALLBACK(reactivate_main_menus), NULL);
 
     if (step == DW_SET_TYPE) {
 	nopts = 3;
@@ -3501,7 +3508,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 
     gtk_widget_show(dialog);
-    gretl_set_window_modal(dialog);
+    main_menus_enable(FALSE);
     gtk_main();
 
     return ret;

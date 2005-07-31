@@ -242,6 +242,18 @@ void compact_data_state (gboolean s)
     }
 }
 
+void main_menus_enable (gboolean s)
+{
+    if (mdata->ifac != NULL) {
+	flip(mdata->ifac, "/File", s);
+	flip(mdata->ifac, "/Utilities", s);
+	flip(mdata->ifac, "/Session", s);
+	flip(mdata->ifac, "/Data", s);
+	flip(mdata->ifac, "/Sample", s);
+	flip(mdata->ifac, "/Model", s);
+    }
+}
+
 static gint var_popup_click (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;

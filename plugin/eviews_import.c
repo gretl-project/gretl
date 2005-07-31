@@ -53,21 +53,26 @@ static int read_int (FILE *fp, int *err)
 
 static int read_short (FILE *fp, int *err)
 {
-    int s;
-#if WORDS_BIGENDIAN /* check this!! */
-    unsigned first, second; /* char? */
-    
-    fread(&first, 1, 1, fp);
-    fread(&second, 1, 1, fp);
-    /* s = (second << 8) | first; */
-    s = (first << 8) | second;
+    int i;
+#if WORDS_BIGENDIAN
+    union {
+	short s;
+	unsigned char c[2];
+    } sc;
+
+    fread(&(sc.c[1]), 1, 1, fp);
+    fread(&(sc.c[0]), 1, 1, fp);
+    i = sc.s;
 #else
+    short s;
+
     if (fread(&s, sizeof s, 1, fp) != 1) {
 	bin_error(err);
-    }    
+    } 
+    i = s;
 #endif
 
-    return s;
+    return i;
 }
 
 static long read_long (FILE *fp, int *err)

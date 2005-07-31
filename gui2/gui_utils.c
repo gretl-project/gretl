@@ -1008,6 +1008,19 @@ int get_worksheet_data (char *fname, int datatype, int append,
 	if (mdata != NULL) {
 	    register_data(fname, NULL, 1);
 	}
+	if (!dataset_is_time_series(datainfo) && 
+	    !dataset_is_panel(datainfo) && mdata != NULL) {
+	    int resp;
+
+	    resp = yes_no_dialog(_("gretl: open data"),
+				 _("The imported data have been interpreted as undated\n"
+				   "(cross-sectional).  Do you want to give the data a\n"
+				   "time-series or panel interpretation?"),
+				 0);
+	    if (resp == GRETL_YES) {
+		data_structure_wizard(NULL, 0, NULL);
+	    }
+	}
     }
 
     return err;

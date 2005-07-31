@@ -16,6 +16,8 @@ void restore_sample_state (gboolean s);
 void compact_data_state (gboolean s);
 void drop_obs_state (gboolean s);
 
+void main_menus_enable (gboolean s);
+
 GtkWidget *build_var_popup (void);
 GtkWidget *build_selection_popup (void);
 
