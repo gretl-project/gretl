@@ -145,6 +145,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { VAR,      "var" },
     { VARLIST,  "varlist" },
     { VARTEST,  "vartest" },
+    { VECM,     "vecm" },
     { VIF,      "vif" },
     { WLS,      "wls" },
     { NC,       NULL}

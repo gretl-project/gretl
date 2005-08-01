@@ -169,12 +169,11 @@ static int inverse_compare_doubles (const void *a, const void *b)
 }
 
 static int 
-johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv,
-		    const double *eigvals)
+johansen_normalize (JVAR *jv, gretl_matrix *evecs, const double *eigvals)
 {
     gretl_matrix *a = NULL, *b = NULL;
     double x, den;
-    int i, j, k = Svv->rows;
+    int i, j, k = gretl_matrix_rows(jv->Svv);
     int err = 0;
 
     a = gretl_column_vector_alloc(k);
@@ -187,21 +186,21 @@ johansen_normalize (gretl_matrix *A, const gretl_matrix *Svv,
     }
 
     for (j=0; j<k; j++) {
-	/* select column from A */
+	/* select column from evecs */
 	for (i=0; i<k; i++) {
-	    x = gretl_matrix_get(A, i, j);
+	    x = gretl_matrix_get(evecs, i, j);
 	    gretl_vector_set(a, i, x);
 	}
 
 	/* find value of appropriate denominator */
-	gretl_matrix_multiply(Svv, a, b);
+	gretl_matrix_multiply(jv->Svv, a, b);
 	den = gretl_vector_dot_product(a, b, &err);
 
 	if (!err) {
 	    den = sqrt(den);
 	    for (i=0; i<k; i++) {
-		x = gretl_matrix_get(A, i, j);
-		gretl_matrix_set(A, i, j, x / den);
+		x = gretl_matrix_get(evecs, i, j);
+		gretl_matrix_set(evecs, i, j, x / den);
 	    }
 	} 
     }
@@ -217,10 +216,11 @@ enum {
     PRINT_BETA
 };
 
-/* print cointegrating vectors or loadings, either "raw" or
+/* print cointegrating vectors or adjustments, either "raw" or
    normalized */
 
-static void print_beta_or_alpha (JVAR *jv, const gretl_matrix *beta,
+static void print_beta_or_alpha (JVAR *jv, 
+				 const gretl_matrix *beta,
 				 const gretl_matrix *alpha,
 				 struct eigval *evals, int k, 
 				 const DATAINFO *pdinfo, PRN *prn,
@@ -238,7 +238,7 @@ static void print_beta_or_alpha (JVAR *jv, const gretl_matrix *beta,
     } else {
 	pprintf(prn, "\n%s\n", (alpha == NULL)? 
 		_("beta (cointegrating vectors)") : 
-		_("alpha (loadings vectors)"));
+		_("alpha (adjustment vectors)"));
     }
 
     for (j=0; j<rows; j++) {
@@ -269,7 +269,7 @@ static void print_beta_or_alpha (JVAR *jv, const gretl_matrix *beta,
 /* calculate alpha matrix as per Johansen, 1991, eqn 2.8 p. 1554 */
 
 static gretl_matrix *
-calculate_alpha (JVAR *jv, const gretl_matrix *evecs, int hmax)
+compute_alpha (JVAR *jv, const gretl_matrix *evecs, int h)
 {
     gretl_matrix *alpha = NULL;
     gretl_matrix *tmp1 = NULL;
@@ -277,9 +277,9 @@ calculate_alpha (JVAR *jv, const gretl_matrix *evecs, int hmax)
     int n = gretl_matrix_rows(evecs);
     int err = 0;
 
-    tmp1 = gretl_matrix_alloc(n, n);
-    tmp2 = gretl_matrix_alloc(n, n);
-    alpha = gretl_matrix_alloc(hmax, n);
+    tmp1 = gretl_matrix_alloc(n, h);
+    tmp2 = gretl_matrix_alloc(h, h);
+    alpha = gretl_matrix_alloc(n, h);
 
     if (tmp1 == NULL || tmp2 == NULL || alpha == NULL) {
 	err = E_ALLOC;
@@ -297,7 +297,7 @@ calculate_alpha (JVAR *jv, const gretl_matrix *evecs, int hmax)
 	gretl_matrix_multiply(evecs, tmp2, tmp1);
 	gretl_matrix_multiply(jv->Suv, tmp1, alpha);
     }
-    
+
     gretl_matrix_free(tmp1);
     gretl_matrix_free(tmp2);
 
@@ -309,92 +309,277 @@ calculate_alpha (JVAR *jv, const gretl_matrix *evecs, int hmax)
     return alpha;
 }
 
-/* calculate and print the "long-run matrix", \alpha \beta',
-   (or what Hamilton calls \Zeta_0) */
-
-static int print_log_run_matrix (JVAR *jv, gretl_matrix *evecs, int h,
-				 const DATAINFO *pdinfo, PRN *prn)
+static void print_lr_matrix (JVAR *jv, gretl_matrix *Zeta_0, int n, int h,
+			     const DATAINFO *pdinfo, PRN *prn)
 {
-    gretl_matrix *Zeta_0 = NULL;
-    gretl_matrix *tmp = NULL;
-    int n = gretl_matrix_rows(evecs);
-    int i, j, err = 0;
+    int i, j;
 
-    Zeta_0 = gretl_matrix_alloc(h, n);
+    pprintf(prn, "%s\n", _("long-run matrix (alpha * beta')"));
+    pprintf(prn, "%22s", pdinfo->varname[jv->list[1]]);
+    for (j=1; j<n; j++) {
+	if (j < jv->list[0]) {
+	    pprintf(prn, "%13s", pdinfo->varname[jv->list[j+1]]);
+	} else if (jv->code == J_REST_CONST) {
+	    pprintf(prn, "%13s", "const");
+	} else if (jv->code == J_REST_TREND) {
+	    pprintf(prn, "%13s", "trend");
+	}
+    }
+    pputc(prn, '\n');
+    for (i=0; i<h; i++) {
+	pprintf(prn, "%-10s", pdinfo->varname[jv->list[i+1]]);
+	for (j=0; j<n; j++) {
+	    pprintf(prn, "%#12.5g ", gretl_matrix_get(Zeta_0, i, j));
+	}
+	pputc(prn, '\n');
+    }
+    pputc(prn, '\n');
+}
+
+static gretl_matrix *select_eigvecs (JVAR *jv, const gretl_matrix *evecs,
+				     struct eigval *evals, int hmax)
+{
+    gretl_matrix *A;
+    double x;
+    int i, j, col;
+
+    A = gretl_matrix_alloc(jv->neqns, hmax);
+
+    if (A != NULL) {
+	for (j=0; j<hmax; j++) {
+	    col = evals[j].idx;
+	    for (i=0; i<jv->neqns; i++) {
+		x = gretl_matrix_get(evecs, i, col);
+		gretl_matrix_set(A, i, j, x);
+	    }
+	}
+    }
+
+    return A;
+}
+
+static int compute_omega (JVAR *jv, const gretl_matrix *Z0, PRN *prn)
+{
+    gretl_matrix *resids = NULL;
+    gretl_matrix *omega = NULL;
+    gretl_matrix *tmp = NULL;
+    int n = jv->neqns;
+    int T = jv->t2 - jv->t1 + 1;
+    int df_adj = 1;
+    int i, err = 0;
+    
+    resids = gretl_matrix_alloc(n, T);
+    omega = gretl_matrix_alloc(n, n);
+    tmp = gretl_matrix_alloc(n, T);
+
+    if (resids == NULL || omega == NULL || tmp == NULL) {
+	err = E_ALLOC;
+    } else {
+	int den = T;
+
+	gretl_matrix_copy_values(resids, jv->u);
+	gretl_matrix_multiply(Z0, jv->v, tmp);
+	gretl_matrix_subtract_from(resids, tmp);
+
+	gretl_matrix_multiply_mod(resids, GRETL_MOD_NONE,
+				  resids, GRETL_MOD_TRANSPOSE,
+				  omega);
+
+	if (df_adj) {
+	    /* Eviews applies df adjustment here */
+	    den -= 1 + jv->neqns * (jv->order - 1)
+		+ (jv->code >= J_UNREST_CONST) 
+		+ (jv->code == J_UNREST_TREND);
+	}
+
+	gretl_matrix_divide_by_scalar(omega, den);
+	gretl_matrix_print(omega, "omega", prn);
+
+	for (i=0; i<n; i++) {
+	    double x = gretl_matrix_get(omega, i, i);
+
+	    pprintf(prn, "SE[%d] = %g\n", i+1, sqrt(x));
+	}
+
+	pprintf(prn, "\ndeterminant = %g\n", gretl_matrix_determinant(omega));
+    }
+
+    gretl_matrix_free(resids);
+    gretl_matrix_free(omega);
+    gretl_matrix_free(tmp);
+
+    return err;
+}
+
+#if 0 /* this seems to be broken (at least does not agree w Eviews) */
+
+/* find \alpha(\alpha' \alpha)^{-1} \alpha' \mu */
+
+static int coint_consts_from_mu (const gretl_matrix *mu, const gretl_matrix *alpha)
+{
+    gretl_matrix *tmp1 = NULL;
+    gretl_matrix *tmp2 = NULL;
+    gretl_matrix *tmp3 = NULL;
+    gretl_matrix *c = NULL;
+    int h = gretl_matrix_cols(alpha);
+    int n = gretl_matrix_rows(mu);
+    int err = 0;
+
+    tmp1 = gretl_matrix_alloc(h, h);
+    tmp2 = gretl_matrix_alloc(h, 1);
+    tmp3 = gretl_matrix_alloc(h, 1);
+    c = gretl_matrix_alloc(n, 1);
+
+    /* FIXME checking */
+
+    gretl_matrix_multiply_mod(alpha, GRETL_MOD_TRANSPOSE,
+			      alpha, GRETL_MOD_NONE,
+			      tmp1);
+
+    gretl_invert_symmetric_matrix(tmp1);
+
+    gretl_matrix_multiply_mod(alpha, GRETL_MOD_TRANSPOSE,
+			      mu, GRETL_MOD_NONE,
+			      tmp2);
+
+    gretl_matrix_multiply(tmp1, tmp2, tmp3);
+    gretl_matrix_reuse(tmp1, 4, 1);
+    gretl_matrix_multiply(alpha, tmp3, c);
+
+    gretl_matrix_print(c, "consts in coint relations (?)", NULL);
+
+    gretl_matrix_free(tmp1);
+    gretl_matrix_free(tmp2);
+    gretl_matrix_free(tmp3);
+    gretl_matrix_free(c);
+    
+    return err;
+}
+
+#endif
+
+static int compute_vecm (JVAR *jv, const gretl_matrix *alpha, 
+			 const DATAINFO *pdinfo, PRN *prn)
+{
+    char msg[32];
+    gretl_matrix *Z0 = NULL;
+    gretl_matrix *Zeta = NULL;
+    gretl_matrix *mu = NULL;
+    gretl_matrix *tmp = NULL;
+    int n = jv->neqns;
+    int p = jv->order - 1;
+    int i, err = 0;
+
+    Z0 = gretl_matrix_alloc(n, n);
+    Zeta = gretl_matrix_alloc(n, n);
     tmp = gretl_matrix_alloc(n, n);
 
-    if (Zeta_0 == NULL || tmp == NULL) {
+    if (jv->code >= J_UNREST_CONST) {
+	mu = gretl_column_vector_alloc(n);
+    }
+
+    if (Z0 == NULL || Zeta == NULL || tmp == NULL) {
+	err = E_ALLOC;
+    } else {
+	gretl_matrix_multiply_mod(jv->A, GRETL_MOD_NONE,
+				  jv->A, GRETL_MOD_TRANSPOSE,
+				  tmp);
+
+	/* \zeta_0 = \Sigma_{uv} A A' */
+	gretl_matrix_multiply(jv->Suv, tmp, Z0);
+
+	for (i=0; i<p; i++) {
+	    gretl_matrix_copy_values(Zeta, jv->Pi[i]);
+	    gretl_matrix_multiply(Z0, jv->Theta[i], tmp);
+	    gretl_matrix_subtract_from(Zeta, tmp);
+	    sprintf(msg, "Zeta[%d]", i+1);
+	    gretl_matrix_print(Zeta, msg, prn);
+	}
+
+	if (mu != NULL) {
+	    gretl_matrix_copy_values(mu, jv->Pi[i]);
+	    gretl_matrix_reuse(tmp, n, 1);
+	    gretl_matrix_multiply(Z0, jv->Theta[i], tmp);
+	    gretl_matrix_subtract_from(mu, tmp);
+	    gretl_matrix_print(mu, "mu", prn);
+	    gretl_matrix_reuse(tmp, n, n);
+#if 0
+	    coint_consts_from_mu(mu, alpha);
+#endif
+	}
+
+	compute_omega(jv, Z0, prn);
+    }
+
+    gretl_matrix_free(Z0);
+    gretl_matrix_free(Zeta);
+    gretl_matrix_free(mu);
+    gretl_matrix_free(tmp);
+
+    return err;
+}
+
+/* calculate and print the "long-run matrix", \alpha \beta', (what
+   Hamilton calls \Zeta_0) */
+
+static int 
+compute_long_run_matrix (JVAR *jv, struct eigval *evals, int h, 
+			 const DATAINFO *pdinfo, PRN *prn)
+{
+    gretl_matrix *Z0 = NULL;
+    gretl_matrix *tmp = NULL;
+    int n = jv->neqns;
+    int err = 0;
+
+    Z0 = gretl_matrix_alloc(h, n); 
+    tmp = gretl_matrix_alloc(n, n);
+
+    if (Z0 == NULL || tmp == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
-	gretl_matrix_multiply_mod(evecs, GRETL_MOD_NONE,
-				  evecs, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(jv->A, GRETL_MOD_NONE,
+				  jv->A, GRETL_MOD_TRANSPOSE,
 				  tmp);
 
-	/* \zeta_0 = \Sigma_{uv} A A' */
-	gretl_matrix_multiply(jv->Suv, tmp, Zeta_0);
-
-	pprintf(prn, "%s\n", _("long-run matrix"));
-	pprintf(prn, "%22s", pdinfo->varname[jv->list[1]]);
-	for (j=1; j<n; j++) {
-	    if (j < jv->list[0]) {
-		pprintf(prn, "%13s", pdinfo->varname[jv->list[j+1]]);
-	    } else if (jv->code == J_REST_CONST) {
-		pprintf(prn, "%13s", "const");
-	    } else if (jv->code == J_REST_TREND) {
-		pprintf(prn, "%13s", "trend");
-	    }
-	}
-	pputc(prn, '\n');
-	for (i=0; i<h; i++) {
-	    pprintf(prn, "%-10s", pdinfo->varname[jv->list[i+1]]);
-	    for (j=0; j<n; j++) {
-		pprintf(prn, "%#12.5g ", gretl_matrix_get(Zeta_0, i, j));
-	    }
-	    pputc(prn, '\n');
-	}
-	pputc(prn, '\n');
+	/* \Zeta_0 = \Sigma_{uv} A A' */
+	gretl_matrix_multiply(jv->Suv, tmp, Z0);
+	print_lr_matrix(jv, Z0, n, h, pdinfo, prn);
     }
 
-    gretl_matrix_free(Zeta_0);
+    gretl_matrix_free(Z0);
     gretl_matrix_free(tmp);
     
     return err;
 }
 
 static int
-print_beta_and_alpha (JVAR *jv, struct eigval *evals, const gretl_matrix *evecs, 
-		      int k, const DATAINFO *pdinfo, PRN *prn)
+print_beta_and_alpha (JVAR *jv, const gretl_matrix *beta, const gretl_matrix *alpha,
+		      struct eigval *evals, int h, const DATAINFO *pdinfo, PRN *prn)
 {
-    gretl_matrix *alpha = NULL;
     int i, err = 0;
 
     pprintf(prn, "\n%s", _("eigenvalue"));
-    for (i=0; i<k; i++) {
+    for (i=0; i<h; i++) {
 	pprintf(prn, "%#12.5g ", evals[i].v);
     }
     pputc(prn, '\n');
 
-    alpha = calculate_alpha(jv, evecs, k);
-    if (alpha == NULL) {
-	err = 1;
+    if (jv->rank == 0) {
+	print_beta_or_alpha(jv, beta, NULL, evals, h, pdinfo, prn, 0);
+	if (alpha != NULL) {
+	    print_beta_or_alpha(jv, beta, alpha, evals, h, pdinfo, prn, 0);
+	}
     }
 
-    print_beta_or_alpha(jv, evecs, NULL, evals, k, pdinfo, prn, 0);
+    print_beta_or_alpha(jv, beta, NULL, evals, h, pdinfo, prn, 1);
     if (alpha != NULL) {
-	print_beta_or_alpha(jv, evecs, alpha, evals, k, pdinfo, prn, 0);
-    }
-
-    print_beta_or_alpha(jv, evecs, NULL, evals, k, pdinfo, prn, 1);
-    if (alpha != NULL) {
-	print_beta_or_alpha(jv, evecs, alpha, evals, k, pdinfo, prn, 1);
+	print_beta_or_alpha(jv, beta, alpha, evals, h, pdinfo, prn, 1);
     }
 
     pputc(prn, '\n');
     
-    gretl_matrix_free(alpha);
-
     return err;
 }
 
@@ -442,6 +627,7 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 {
     int k = gretl_matrix_cols(jv->Suu);
     int kv = gretl_matrix_cols(jv->Svv);
+    gretl_matrix *alpha = NULL;
     gretl_matrix *M = NULL;
     gretl_matrix *TmpL = NULL, *TmpR = NULL;
     gretl_matrix *Suu = NULL, *Svv = NULL;
@@ -509,6 +695,11 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 	hmax = k;
 	k = kv;
 
+	/* needs more work */
+	if (jv->rank > 0) {
+	    hmax = jv->rank;
+	}
+
 	trace = malloc(k * sizeof *trace);
 	lambdamax = malloc(k * sizeof *lambdamax);
 	evals = malloc(k * sizeof *evals);
@@ -521,6 +712,9 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 	}
 
 	for (i=0; i<k; i++) {
+#if JDEBUG
+	    fprintf(stderr, "unsorted eigvals[%d] = %g\n", i, eigvals[i]);
+#endif
 	    evals[i].v = eigvals[i];
 	    evals[i].idx = i;
 	}
@@ -549,11 +743,23 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 	}
 	pputc(prn, '\n');
 
-	/* tmpR holds the eigenvectors */
-	johansen_normalize(TmpR, jv->Svv, eigvals);
-
-	print_beta_and_alpha(jv, evals, TmpR, hmax, pdinfo, prn);
-	print_log_run_matrix(jv, TmpR, hmax, pdinfo, prn);
+	/* TmpR holds the full set of eigenvectors: normalize before
+	   shrinking to rank 
+	*/
+	johansen_normalize(jv, TmpR, eigvals);
+	
+	if (jv->rank == 0) {
+	    jv->A = TmpR;
+	    TmpR = NULL;
+	    alpha = compute_alpha(jv, jv->A, hmax);
+	    print_beta_and_alpha(jv, jv->A, alpha, evals, hmax, pdinfo, prn);
+	    compute_long_run_matrix(jv, evals, hmax, pdinfo, prn);
+	} else {
+	    jv->A = select_eigvecs(jv, TmpR, evals, hmax);
+	    alpha = compute_alpha(jv, jv->A, hmax);
+	    print_beta_and_alpha(jv, jv->A, alpha, evals, hmax, pdinfo, prn);
+	    compute_vecm(jv, alpha, pdinfo, prn);
+	}
 
 	free(eigvals);
 	free(evals);
@@ -569,6 +775,7 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
     gretl_matrix_free(TmpL);
     gretl_matrix_free(TmpR);
     gretl_matrix_free(M);
+    gretl_matrix_free(alpha);
     gretl_matrix_free(Svv);
     gretl_matrix_free(Suu);
 

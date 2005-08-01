@@ -1652,6 +1652,14 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	break;
 
+    case VECM:
+	order = atoi(cmd.param);
+	err = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
+	break;
+
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
 		       "in gretlcli\n"), cmd.word);

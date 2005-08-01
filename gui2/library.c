@@ -2426,7 +2426,7 @@ void do_model (GtkWidget *widget, gpointer p)
     gretl_command_sprintf("%s %s%s", estimator, buf, 
 			  print_flags(cmd.opt, action));
 
-#if 0
+#if 1
     fprintf(stderr, "do_model: cmdline = '%s'\n", cmdline);
 #endif
 
@@ -2438,7 +2438,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    if (action != VAR) {
+    if (action != VAR && action != VECM) {
 	pmod = gretl_model_new();
 	if (pmod == NULL) {
 	    errbox(_("Out of memory"));
@@ -2510,6 +2510,26 @@ void do_model (GtkWidget *widget, gpointer p)
 	} else {
 	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
 			VAR, var);
+	}
+	return; /* special */
+
+    case VECM:
+	/* also special */
+	sscanf(buf, "%d", &order);
+	if (order > var_max_order(cmd.list, datainfo)) {
+	    errbox(_("Insufficient degrees of freedom for regression"));
+	    gretl_print_destroy(prn);
+	    return;
+	}
+	err = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, prn);
+	if (err) {
+	    const char *msg = get_gretl_errmsg();
+
+	    errbox((*msg)? msg : _("Command failed"));
+	    gretl_print_destroy(prn);
+	} else {
+	    view_buffer(prn, 78, 450, _("gretl: VECM"), 
+			PRINT, NULL);
 	}
 	return; /* special */
 
@@ -6401,6 +6421,11 @@ int gui_exec_line (char *line,
 	if (!err) {
 	    err = maybe_save_var(&cmd, &Z, datainfo, prn);
 	}
+	break;
+
+    case VECM:
+	order = atoi(cmd.param);
+	err = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, outprn);
 	break;
 
     default:

@@ -251,7 +251,8 @@ static int catch_command_alias (CMD *cmd)
                             c == COINT || \
                             c == COINT2 || \
                             c == KPSS || \
-                            c == VAR)
+                            c == VAR || \
+                            c == VECM)
 
 #define DEFAULTS_TO_FULL_LIST(c) (c == CORR || \
                                   c == DIFF || \
@@ -1411,17 +1412,17 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	nf--;
 	pos = 0;
 	linelen = strlen(line);
-    } else if (cmd->ci == MULTIPLY) { 
-	char suffix[4];
+    } else if (cmd->ci == MULTIPLY || cmd->ci == VECM) { 
+	char extra[4];
 
-	sscanf(line, "%3s", suffix);
+	sscanf(line, "%3s", extra);
 	free(cmd->extra);
-	cmd->extra = gretl_strdup(suffix);
-	shift_string_left(line, strlen(suffix));
+	cmd->extra = gretl_strdup(extra);
+	shift_string_left(line, strlen(extra));
 	nf--;
 	pos = 0;
 	linelen = strlen(line);
-    }
+    } 
 
     if (cmd->ci == AR || cmd->ci == ARMA ||
 	cmd->ci == GARCH) {
@@ -1560,7 +1561,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		    poly = 1;
 		}
 		continue;
-	    } else if (cmd->ci == VAR) {
+	    } else if (cmd->ci == VAR || cmd->ci == VECM) {
 		pos += strlen(field) + 1;
 		cmd->list[lnum++] = LISTSEP;
 		continue;
@@ -2131,6 +2132,8 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 	if (cmd->ci == REMEMBER) {
 	    fputs(" =", stdout);
 	    *stdlen += 2;
+	} else if (cmd->ci == VECM) {
+	    *stdlen += printf(" %s", cmd->extra);
 	}
     }
 
@@ -2150,7 +2153,10 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 	}
 	if (cmd->ci == REMEMBER) {
 	    *prnlen += pputs(prn, " =");
-	}	
+	} else if (cmd->ci == VECM) {
+	    pprintf(prn, " %s", cmd->extra);
+	    *prnlen += 1 + strlen(cmd->extra);
+	}
     }
 
 #if 0

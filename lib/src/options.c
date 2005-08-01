@@ -173,6 +173,12 @@ struct gretl_option gretl_opts[] = {
     { TSLS,     OPT_S, "save" },
     { VAR,      OPT_V, "impulse-responses" },
     { VAR,      OPT_R, "robust" }, 
+    { VECM,     OPT_A, "crt" },
+    { VECM,     OPT_D, "seasonals" },
+    { VECM,     OPT_N, "nc" },
+    { VECM,     OPT_R, "rc" },
+    { VECM,     OPT_T, "ct" },
+    { VECM,     OPT_V, "verbose" },
     { WLS,      OPT_Q, "quiet" },
     { 0,        0L,    NULL }
 };

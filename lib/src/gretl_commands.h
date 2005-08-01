@@ -135,6 +135,7 @@ typedef enum {
     VAR,
     VARLIST,
     VARTEST,
+    VECM,
     VIF,
     WLS,
     NC

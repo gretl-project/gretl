@@ -1206,8 +1206,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a,
     double targ;
 
     if (gretl_is_vector(a)) {
-	fprintf(stderr, "matrix_multiply_self_transpose: got vector!");
-	;
+	fprintf(stderr, "matrix_multiply_self_transpose: got vector\n");
     }
 
     for (i=0; i<nc; i++) {
@@ -2937,6 +2936,52 @@ int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x)
     }
 
     return err;
+}
+
+/**
+ * gretl_matrix_array_alloc:
+ * @n: number of matrices.
+ *
+ * Allocates an array of @n gretl matrix pointers. On successful
+ * allocation of the array, each element is initialized to %NULL.
+ * @x, which should already be allocated to the correct size.
+ *
+ * Returns: pointer on sucess, %NULL on failure.
+ */
+
+gretl_matrix **gretl_matrix_array_alloc (int n)
+{
+    gretl_matrix **A = malloc(n * sizeof *A);
+    int i;
+
+    if (A != NULL) {
+	for (i=0; i<n; i++) {
+	    A[i] = NULL;
+	}
+    }
+
+    return A;
+}
+
+/**
+ * gretl_matrix_array_free:
+ * @A: dyamically allocated array of gretl matrices.
+ * @n: number of matrices in array.
+ *
+ * Frees each of the @n gretl matrices in the array @A, and
+ * the array itself.  See also gretl_matrix_array_alloc().
+ */
+
+void gretl_matrix_array_free (gretl_matrix **A, int n)
+{
+    int i;
+
+    if (A != NULL) {
+	for (i=0; i<n; i++) {
+	    gretl_matrix_free(A[i]);
+	}
+	free(A);
+    }
 }
 
 #if 0

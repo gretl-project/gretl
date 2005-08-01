@@ -231,4 +231,8 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
 
 int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x);
 
+gretl_matrix **gretl_matrix_array_alloc (int n);
+
+void gretl_matrix_array_free (gretl_matrix **A, int n);
+
 #endif /* GRETL_MATRIX_H */

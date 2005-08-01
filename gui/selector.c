@@ -26,8 +26,8 @@
 
 static int default_var;
 static int *xlist;
-static int *auxlist;
-static int *calist;
+static int *rulist;
+static int *veclist;
 
 static GtkWidget *scatters_label;
 static GtkWidget *scatters_menu;
@@ -39,8 +39,8 @@ struct _selector {
     GtkWidget *dlg;
     GtkWidget *varlist;
     GtkWidget *depvar;
-    GtkWidget *rightvars;
-    GtkWidget *auxvars;
+    GtkWidget *rlvars;
+    GtkWidget *ruvars;
     GtkWidget *default_check;
     GtkWidget *add_button;
     GtkWidget *extra[N_EXTRA];
@@ -68,11 +68,11 @@ void clear_selector (void)
     free(xlist);
     xlist = NULL;
 
-    free(auxlist);
-    auxlist = NULL;
+    free(rulist);
+    rulist = NULL;
 
-    free(calist);
-    calist = NULL;
+    free(veclist);
+    veclist = NULL;
 }
 
 static gint list_sorter (gconstpointer a, gconstpointer b)
@@ -111,8 +111,8 @@ static void set_dummy (gint i, selector *sr)
 
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &vnum); 
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 1, &vname);
-    gtk_entry_set_text(GTK_ENTRY(sr->rightvars), vname);
-    gtk_object_set_user_data(GTK_OBJECT(sr->rightvars),
+    gtk_entry_set_text(GTK_ENTRY(sr->rlvars), vname);
+    gtk_object_set_user_data(GTK_OBJECT(sr->rlvars),
 			     GINT_TO_POINTER(atoi(vnum)));
 }
 
@@ -128,13 +128,13 @@ static void select_factor_callback (GtkWidget *w, selector *sr)
 
 static void remove_specified_var_from_right (selector *sr, gint ynum)
 {
-    gint i, nrows = GTK_CLIST(sr->rightvars)->rows; 
+    gint i, nrows = GTK_CLIST(sr->rlvars)->rows; 
     gchar *rnum;
 
     for (i=0; i<nrows; i++) {
-	gtk_clist_get_text(GTK_CLIST(sr->rightvars), i, 0, &rnum);
+	gtk_clist_get_text(GTK_CLIST(sr->rlvars), i, 0, &rnum);
 	if (ynum == atoi(rnum)) {
-	    gtk_clist_remove(GTK_CLIST(sr->rightvars), i);
+	    gtk_clist_remove(GTK_CLIST(sr->rlvars), i);
 	    break;
 	}
     }
@@ -176,14 +176,14 @@ static void select_dependent_callback (GtkWidget *w, selector *sr)
 static void add_auxvar (gint i, selector *sr)
 {
     gchar *row[2];
-    gint j, rows = GTK_CLIST(sr->auxvars)->rows;
+    gint j, rows = GTK_CLIST(sr->ruvars)->rows;
     gint already_there = 0;
 
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &row[0]);
     for (j=0; j<rows; j++) {
 	gchar *test;
 
-	gtk_clist_get_text(GTK_CLIST(sr->auxvars), j, 0, &test);
+	gtk_clist_get_text(GTK_CLIST(sr->ruvars), j, 0, &test);
 	if (!strcmp(test, row[0])) {
 	    already_there = 1; 
 	    break;
@@ -191,7 +191,7 @@ static void add_auxvar (gint i, selector *sr)
     }
     if (!already_there) {
 	gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 1, &row[1]);
-	gtk_clist_append(GTK_CLIST(sr->auxvars), row);
+	gtk_clist_append(GTK_CLIST(sr->ruvars), row);
     }
 }
 
@@ -221,9 +221,9 @@ static void add_to_right (gint i, selector *sr)
     gint already_there = 0;
     gint at_max = 0;
 
-    if (!GTK_IS_CLIST(sr->rightvars)) return;
+    if (!GTK_IS_CLIST(sr->rlvars)) return;
 
-    rows = GTK_CLIST(sr->rightvars)->rows;
+    rows = GTK_CLIST(sr->rlvars)->rows;
 
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &row[0]);
 
@@ -244,7 +244,7 @@ static void add_to_right (gint i, selector *sr)
 	    at_max = 1; 
 	    break;
 	}	    
-	gtk_clist_get_text(GTK_CLIST(sr->rightvars), j, 0, &test);
+	gtk_clist_get_text(GTK_CLIST(sr->rlvars), j, 0, &test);
 	if (!strcmp(test, row[0])) {
 	    already_there = 1; 
 	    break;
@@ -253,7 +253,7 @@ static void add_to_right (gint i, selector *sr)
 
     if (!already_there && !at_max) {
 	gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 1, &row[1]);
-	gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+	gtk_clist_append(GTK_CLIST(sr->rlvars), row);
     }
 
     if (sr->add_button != NULL && at_max) {
@@ -266,7 +266,7 @@ static void add_all_to_right_callback (GtkWidget *w, selector *sr)
     GList *mylist;
 
     if (!GTK_IS_CLIST(sr->varlist) ||
-	!GTK_IS_CLIST(sr->rightvars)) return;
+	!GTK_IS_CLIST(sr->rlvars)) return;
 
     gtk_clist_select_all(GTK_CLIST(sr->varlist));
     mylist = GTK_CLIST(sr->varlist)->selection;
@@ -281,7 +281,7 @@ static void add_to_right_callback (GtkWidget *w, selector *sr)
     GList *mylist;
 
     if (!GTK_IS_CLIST(sr->varlist) ||
-	!GTK_IS_CLIST(sr->rightvars)) return;
+	!GTK_IS_CLIST(sr->rlvars)) return;
 
     mylist = GTK_CLIST(sr->varlist)->selection;
 
@@ -309,25 +309,25 @@ static void set_single_var (selector *sr, int v)
     row[0] = vstr;
     row[1] = datainfo->varname[v];
 
-    gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+    gtk_clist_append(GTK_CLIST(sr->rlvars), row);
     
     g_free(vstr);
 }
 
 static void remove_right_var (gint i, selector *sr)
 {
-    gtk_clist_remove(GTK_CLIST(sr->rightvars), i);
+    gtk_clist_remove(GTK_CLIST(sr->rlvars), i);
 }
 
 static void remove_from_right_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = g_list_copy(GTK_CLIST(sr->rightvars)->selection);
+    GList *mylist = g_list_copy(GTK_CLIST(sr->rlvars)->selection);
     mylist = g_list_sort(mylist, list_sorter);
 
     g_list_foreach(mylist, (GFunc) remove_right_var, sr);
 
     if (sr->add_button != NULL && !GTK_WIDGET_SENSITIVE(sr->add_button)) {
-	int nsel = GTK_CLIST(sr->rightvars)->rows;
+	int nsel = GTK_CLIST(sr->rlvars)->rows;
 
 	if (!selection_at_max(sr, nsel)) {
 	    gtk_widget_set_sensitive(sr->add_button, TRUE);
@@ -337,12 +337,12 @@ static void remove_from_right_callback (GtkWidget *w, selector *sr)
 
 static void remove_auxvar (gint i, selector *sr)
 {
-    gtk_clist_remove(GTK_CLIST(sr->auxvars), i);
+    gtk_clist_remove(GTK_CLIST(sr->ruvars), i);
 }
 
 static void remove_auxvar_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = g_list_copy(GTK_CLIST(sr->auxvars)->selection);
+    GList *mylist = g_list_copy(GTK_CLIST(sr->ruvars)->selection);
     mylist = g_list_sort(mylist, list_sorter);
 
     g_list_foreach(mylist, (GFunc) remove_auxvar, sr);
@@ -359,9 +359,9 @@ static void clear_vars (GtkWidget *w, selector *sr)
     }
 
     if (sr->code == GR_DUMMY || sr->code == GR_3D) {
-	gtk_entry_set_text(GTK_ENTRY(sr->rightvars), "");
+	gtk_entry_set_text(GTK_ENTRY(sr->rlvars), "");
     } else {
-	gtk_clist_clear(GTK_CLIST(sr->rightvars));
+	gtk_clist_clear(GTK_CLIST(sr->rlvars));
 	if (sr->add_button != NULL) {
 	    gtk_widget_set_sensitive(sr->add_button, TRUE);
 	}
@@ -370,7 +370,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
     if (MODEL_CODE(sr->code)) {
 	row[0] = "0";
 	row[1] = "const";
-	gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+	gtk_clist_append(GTK_CLIST(sr->rlvars), row);
     }
 }
 
@@ -473,9 +473,9 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     sr->cmdlist[0] = 0;
 
     if (sr->code != GR_DUMMY && sr->code != GR_3D)
-	rows = GTK_CLIST(sr->rightvars)->rows;
+	rows = GTK_CLIST(sr->rlvars)->rows;
 
-    /* first deal with content of "extra" widget */
+    /* first deal with content of "extra" widget(s) */
     if (sr->code == WLS) {
 	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 
@@ -505,13 +505,19 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    add_to_cmdlist(sr, lags);
 	    add_to_cmdlist(sr, " ; ");
 	}
-    } else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
+    } else if (VEC_CODE(sr->code)) {
 	GtkAdjustment *adj;
  
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[0]));
 	i = (gint) adj->value;
 	sprintf(numstr, "%d ", i);
 	add_to_cmdlist(sr, numstr);
+	if (sr->code == VECM) {
+	    adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[1]));
+	    i = (gint) adj->value;
+	    sprintf(numstr, "%d", i);
+	    add_to_cmdlist(sr, numstr);
+	}
     } else if (sr->code == ARMA || sr->code == GARCH) {
 	add_pq_vals_to_cmdlist(sr);
     } else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
@@ -558,7 +564,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     if (sr->code == SCATTERS) add_to_cmdlist(sr, ";");
 
     if (sr->code == GR_DUMMY || sr->code == GR_3D) { /* special cases */
-	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->rightvars));
+	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->rlvars));
 
 	if (str == NULL || !*str) {
 	    if (sr->code == GR_3D) {
@@ -568,7 +574,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    }	    
 	    sr->error = 1;
 	} else {
-	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->rightvars)));
+	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->rlvars)));
 	    sprintf(numstr, " %d", i);
 	    add_to_cmdlist(sr, numstr);
 	}
@@ -581,8 +587,8 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
 	if (MODEL_CODE(sr->code)) {
 	    plist = &xlist;
-	} else if (COINT_CODE(sr->code)) {
-	    plist = &calist;
+	} else if (VEC_CODE(sr->code)) {
+	    plist = &veclist;
 	}
 	if (plist != NULL) {
 	    int *tmplist;
@@ -598,32 +604,32 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     for (i=0; i<rows; i++) {
 	gchar *rvar;
 
-	gtk_clist_get_text(GTK_CLIST(sr->rightvars), i, 0, &rvar);
+	gtk_clist_get_text(GTK_CLIST(sr->rlvars), i, 0, &rvar);
 	add_to_cmdlist(sr, " ");
 	add_to_cmdlist(sr, rvar);
 	if (MODEL_CODE(sr->code) && xlist != NULL) { 
 	    xlist[i+1] = atoi(rvar);
-	} else if (COINT_CODE(sr->code) && calist != NULL) {
-	    calist[i+1] = atoi(rvar);
+	} else if (VEC_CODE(sr->code) && veclist != NULL) {
+	    veclist[i+1] = atoi(rvar);
 	}
     }
 
     if (sr->code == TSLS || sr->code == VAR) {
-	rows = GTK_CLIST(sr->auxvars)->rows;
+	rows = GTK_CLIST(sr->ruvars)->rows;
 	if (rows > 0) {
-	    auxlist = realloc(auxlist, (rows + 1) * sizeof *auxlist);
-	    if (auxlist != NULL) {
-		auxlist[0] = rows;
+	    rulist = realloc(rulist, (rows + 1) * sizeof *rulist);
+	    if (rulist != NULL) {
+		rulist[0] = rows;
 	    }
 	    add_to_cmdlist(sr, " ;");
 	    for (i=0; i<rows; i++) {
 		gchar *inst;
 
-		gtk_clist_get_text(GTK_CLIST(sr->auxvars), i, 0, &inst);
+		gtk_clist_get_text(GTK_CLIST(sr->ruvars), i, 0, &inst);
 		add_to_cmdlist(sr, " ");
 		add_to_cmdlist(sr, inst);
-		if (auxlist != NULL) {
-		    auxlist[i+1] = atoi(inst);
+		if (rulist != NULL) {
+		    rulist[i+1] = atoi(inst);
 		}
 	    }
 	} else if (sr->code == TSLS) {
@@ -695,6 +701,8 @@ static char *est_str (int cmdnum)
 	return N_("GARCH");
     case VAR:
 	return N_("VAR");
+    case VECM:
+	return N_("VECM");
     case LAD:
 	return N_("LAD");
     case COINT:
@@ -754,13 +762,13 @@ listvar_special_click (GtkWidget *widget, GdkEventButton *event,
     GdkWindow *topwin;
     GdkModifierType mods;
 
-    topwin = gtk_widget_get_parent_window(sr->rightvars);
+    topwin = gtk_widget_get_parent_window(sr->rlvars);
     gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
 
     if (mods & GDK_BUTTON2_MASK) {
-	gtk_clist_set_selection_mode(GTK_CLIST(sr->rightvars), 
+	gtk_clist_set_selection_mode(GTK_CLIST(sr->rlvars), 
 				     GTK_SELECTION_SINGLE);
-	gtk_clist_set_reorderable(GTK_CLIST(sr->rightvars), TRUE);
+	gtk_clist_set_reorderable(GTK_CLIST(sr->rlvars), TRUE);
     } 
 
     if (mods & GDK_BUTTON3_MASK) {
@@ -869,7 +877,7 @@ static void build_depvar_section (selector *sr, GtkWidget *right_vbox,
     GtkWidget *tmp, *depvar_hbox;
     int yvar = (preselect)? preselect : default_var;
 
-    if (sr->code == VAR) {
+    if (sr->code == VAR || sr->code == VECM) {
 	tmp = gtk_label_new (_("First dependent variable"));
     } else {
 	tmp = gtk_label_new (_("Dependent variable"));
@@ -909,7 +917,7 @@ static void build_depvar_section (selector *sr, GtkWidget *right_vbox,
 
 static void lag_order_spin (selector *sr, GtkWidget *right_vbox)
 {
-    GtkWidget *tmp, *midhbox;
+    GtkWidget *tmp, *hbox;
     GtkObject *adj;
     gfloat order; 
     gfloat ordermax;
@@ -922,17 +930,35 @@ static void lag_order_spin (selector *sr, GtkWidget *right_vbox)
 
     order = (datainfo->pd > 12)? 12 : datainfo->pd;
 
-    midhbox = gtk_hbox_new(FALSE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("lag order:"));
     adj = gtk_adjustment_new(order, 1, ordermax, 1, 1, 1);
     sr->extra[0] = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
-    gtk_box_pack_start (GTK_BOX (midhbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
-    gtk_box_pack_start (GTK_BOX (midhbox), sr->extra[0], FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 5);
     gtk_widget_show(sr->extra[0]);
 
-    gtk_box_pack_start(GTK_BOX(right_vbox), midhbox, FALSE, TRUE, 0);
-    gtk_widget_show(midhbox); 
+    gtk_box_pack_start(GTK_BOX(right_vbox), hbox, FALSE, TRUE, 0);
+    gtk_widget_show(hbox); 
+}
+
+static void rank_spin (selector *sr, GtkWidget *right_vbox)
+{
+    GtkWidget *tmp, *hbox;
+    GtkObject *adj;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("cointegration rank:"));
+    adj = gtk_adjustment_new(1, 1, 10, 1, 1, 1);
+    sr->extra[1] = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[1], FALSE, FALSE, 5);
+    gtk_widget_show(sr->extra[1]);
+
+    gtk_box_pack_start(GTK_BOX(right_vbox), hbox, FALSE, TRUE, 0);
+    gtk_widget_show(hbox); 
 }
 
 static void dummy_box (selector *sr, GtkWidget *hbox)
@@ -945,9 +971,9 @@ static void dummy_box (selector *sr, GtkWidget *hbox)
 			GTK_SIGNAL_FUNC(select_factor_callback), sr);
     gtk_widget_show(tmp); 
 
-    sr->rightvars = gtk_entry_new_with_max_length(8);
-    gtk_box_pack_start(GTK_BOX(hbox), sr->rightvars, FALSE, TRUE, 0);
-    gtk_widget_show(sr->rightvars); 
+    sr->rlvars = gtk_entry_new_with_max_length(8);
+    gtk_box_pack_start(GTK_BOX(hbox), sr->rlvars, FALSE, TRUE, 0);
+    gtk_widget_show(sr->rlvars); 
 }
 
 static void extra_var_box (selector *sr, GtkWidget *right_vbox)
@@ -998,34 +1024,34 @@ static void auxiliary_varlist_box (selector *sr, GtkWidget *right_vbox)
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
 				    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 
-    sr->auxvars = gtk_clist_new(2);
-    gtk_clist_clear(GTK_CLIST(sr->auxvars));
+    sr->ruvars = gtk_clist_new(2);
+    gtk_clist_clear(GTK_CLIST(sr->ruvars));
 
-    if (auxlist != NULL) {
+    if (rulist != NULL) {
 	int i;
 
-	for (i=1; i<=auxlist[0]; i++) {
+	for (i=1; i<=rulist[0]; i++) {
 	    gchar *row[2];
 	    gchar id[4];
 
-	    sprintf(id, "%d", auxlist[i]);
+	    sprintf(id, "%d", rulist[i]);
 	    row[0] = id;
-	    row[1] = datainfo->varname[auxlist[i]];
-	    gtk_clist_append(GTK_CLIST(sr->auxvars), row);
+	    row[1] = datainfo->varname[rulist[i]];
+	    gtk_clist_append(GTK_CLIST(sr->ruvars), row);
 	}
     } else {
 	gchar *row[2];
 
 	row[0] = "0";
 	row[1] = "const";
-	gtk_clist_append(GTK_CLIST(sr->auxvars), row);
+	gtk_clist_append(GTK_CLIST(sr->ruvars), row);
     }
 
-    gtk_clist_set_column_width (GTK_CLIST(sr->auxvars), 1, 80 * gui_scale);
-    gtk_widget_set_usize (sr->auxvars, 80 * gui_scale, 120 * gui_scale);
+    gtk_clist_set_column_width (GTK_CLIST(sr->ruvars), 1, 80 * gui_scale);
+    gtk_widget_set_usize (sr->ruvars, 80 * gui_scale, 120 * gui_scale);
 
-    gtk_widget_show(sr->auxvars); 
-    gtk_container_add(GTK_CONTAINER(scroller), sr->auxvars);
+    gtk_widget_show(sr->ruvars); 
+    gtk_container_add(GTK_CONTAINER(scroller), sr->ruvars);
 
     gtk_widget_show(scroller);
     gtk_box_pack_start(GTK_BOX(midhbox), scroller, TRUE, TRUE, 0);
@@ -1048,8 +1074,6 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     if (sr->code == WLS || sr->code == POISSON ||
 	sr->code == GR_DUMMY || sr->code == GR_3D) {
 	extra_var_box (sr, right_vbox);
-    } else if (sr->code == COINT || sr->code == COINT2) {
-	lag_order_spin (sr, right_vbox);
     } else if (sr->code == TSLS) {
 	auxiliary_varlist_box (sr, right_vbox);
     } else if (sr->code == AR) {
@@ -1058,7 +1082,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 			   FALSE, TRUE, 0);
 	gtk_widget_show(sr->extra[0]); 
     } else if (sr->code == VAR) {
-	lag_order_spin (sr, right_vbox);
+	lag_order_spin(sr, right_vbox);
 	tmp = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
@@ -1066,6 +1090,11 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
 	auxiliary_varlist_box (sr, right_vbox);
+    } else if (VEC_CODE(sr->code)) {
+	lag_order_spin(sr, right_vbox);
+	if (sr->code == VECM) {
+	    rank_spin(sr, right_vbox);
+	}
     }
 
     tmp = gtk_hseparator_new();
@@ -1075,7 +1104,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 
 static int screen_scalar (int i, int c)
 {
-    if ((MODEL_CODE(c) || COINT_CODE(c) || GRAPH_CODE(c) || 
+    if ((MODEL_CODE(c) || VEC_CODE(c) || GRAPH_CODE(c) || 
 	 c == LAGS || c == DIFF || c == LDIFF)
 	&& datainfo->vector[i] == 0)
 	return 1;
@@ -1088,8 +1117,8 @@ static void selector_init (selector *sr, guint code, const char *title)
 
     sr->varlist = NULL;
     sr->depvar = NULL;
-    sr->rightvars = NULL;
-    sr->auxvars = NULL;
+    sr->rlvars = NULL;
+    sr->ruvars = NULL;
     sr->default_check = NULL;
     sr->add_button = NULL;
 
@@ -1404,8 +1433,7 @@ static int list_show_var (int v, int code)
 	ret = 0;
     } else if (screen_scalar(v, code)) {
 	ret = 0;
-    } else if ((COINT_CODE(code) || code == VAR) 
-	       && is_standard_lag(v, datainfo)) {
+    } else if (VEC_CODE(code) && is_standard_lag(v, datainfo)) {
 	ret = 0;
     }  
 
@@ -1434,7 +1462,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
 
     selector_init(sr, cmdcode, title);
 
-    if (MODEL_CODE(cmdcode) || COINT_CODE(cmdcode))
+    if (MODEL_CODE(cmdcode) || VEC_CODE(cmdcode))
 	strcpy(topstr, _(est_str(cmdcode)));
     else if (cmdcode == GR_XY)
 	strcpy(topstr, _("XY scatterplot"));
@@ -1504,15 +1532,17 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
     }
 
     /* middle right: used for some estimators and factored plot */
-    if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || 
-	cmdcode == VAR || cmdcode == COINT || cmdcode == COINT2 ||
-	cmdcode == POISSON || cmdcode == GR_DUMMY || cmdcode == GR_3D) {
+    if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS ||
+	VEC_CODE(cmdcode) || cmdcode == POISSON || 
+	cmdcode == GR_DUMMY || cmdcode == GR_3D) {
 	build_mid_section(sr, right_vbox);
     }
     
     /* lower right: selected (independent) variables */
     if (COINT_CODE(cmdcode)) {
 	tmp = gtk_label_new(_("Variables to test"));
+    } else if (VEC_CODE(cmdcode)) {
+	tmp = gtk_label_new(_("Endogenous variables"));
     } else if (MODEL_CODE(cmdcode)) {
 	tmp = gtk_label_new(_("Independent variables"));
     } else if (cmdcode == GR_XY || cmdcode == GR_IMP) {
@@ -1557,16 +1587,16 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
 					GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 
-	sr->rightvars = gtk_clist_new(2);
-	gtk_clist_clear(GTK_CLIST(sr->rightvars));
+	sr->rlvars = gtk_clist_new(2);
+	gtk_clist_clear(GTK_CLIST(sr->rlvars));
 
 	if (MODEL_CODE(cmdcode)) {
-	    if (cmdcode != VAR) {
+	    if (cmdcode != VAR && cmdcode != VECM) {
 		gchar *row[2];
 
 		row[0] = "0";
 		row[1] = "const";
-		gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+		gtk_clist_append(GTK_CLIST(sr->rlvars), row);
 	    }	    
 	    if (xlist != NULL) {
 		for (i=1; i<=xlist[0]; i++) {
@@ -1577,32 +1607,32 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
 			sprintf(id, "%d", xlist[i]);
 			row[0] = id;
 			row[1] = datainfo->varname[xlist[i]];
-			gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+			gtk_clist_append(GTK_CLIST(sr->rlvars), row);
 		    }
 		}
 	    }
-	} else if (COINT_CODE(cmdcode) && calist != NULL) {
-	    for (i=1; i<=calist[0]; i++) {
+	} else if (VEC_CODE(cmdcode) && veclist != NULL) {
+	    for (i=1; i<=veclist[0]; i++) {
 		gchar *row[2];
 		gchar id[4];
 
-		sprintf(id, "%d", calist[i]);
+		sprintf(id, "%d", veclist[i]);
 		row[0] = id;
-		row[1] = datainfo->varname[calist[i]];
-		gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+		row[1] = datainfo->varname[veclist[i]];
+		gtk_clist_append(GTK_CLIST(sr->rlvars), row);
 	    }
 	}
 
-	gtk_clist_set_column_width (GTK_CLIST(sr->rightvars), 1, 80 * gui_scale);
-	gtk_widget_set_usize (sr->rightvars, 80 * gui_scale, 120 * gui_scale);
-	gtk_clist_set_selection_mode (GTK_CLIST(sr->rightvars),
+	gtk_clist_set_column_width (GTK_CLIST(sr->rlvars), 1, 80 * gui_scale);
+	gtk_widget_set_usize (sr->rlvars, 80 * gui_scale, 120 * gui_scale);
+	gtk_clist_set_selection_mode (GTK_CLIST(sr->rlvars),
 				      GTK_SELECTION_EXTENDED);
-	gtk_signal_connect(GTK_OBJECT(sr->rightvars), "row-move",
+	gtk_signal_connect(GTK_OBJECT(sr->rlvars), "row-move",
 			   (GtkSignalFunc) listvar_special_undo, sr);
-	gtk_signal_connect(GTK_OBJECT(sr->rightvars), "button_press_event",
+	gtk_signal_connect(GTK_OBJECT(sr->rlvars), "button_press_event",
 			   (GtkSignalFunc) listvar_special_click, sr);
-	gtk_widget_show(sr->rightvars); 
-	gtk_container_add(GTK_CONTAINER(scroller), sr->rightvars);
+	gtk_widget_show(sr->rlvars); 
+	gtk_container_add(GTK_CONTAINER(scroller), sr->rlvars);
 
 	gtk_widget_show(scroller);
 	gtk_box_pack_start(GTK_BOX(indepvar_hbox), scroller, TRUE, TRUE, 0);
@@ -1862,15 +1892,15 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
 				    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 
-    sr->rightvars = gtk_clist_new(2);
-    gtk_clist_clear(GTK_CLIST(sr->rightvars));
+    sr->rlvars = gtk_clist_new(2);
+    gtk_clist_clear(GTK_CLIST(sr->rlvars));
 
-    gtk_clist_set_column_width (GTK_CLIST(sr->rightvars), 1, 80 * gui_scale);
-    gtk_widget_set_usize (sr->rightvars, 80 * gui_scale, 120 * gui_scale);
-    gtk_clist_set_selection_mode (GTK_CLIST(sr->rightvars),
+    gtk_clist_set_column_width (GTK_CLIST(sr->rlvars), 1, 80 * gui_scale);
+    gtk_widget_set_usize(sr->rlvars, 80 * gui_scale, 120 * gui_scale);
+    gtk_clist_set_selection_mode (GTK_CLIST(sr->rlvars),
 				  GTK_SELECTION_EXTENDED);
-    gtk_container_add(GTK_CONTAINER(scroller), sr->rightvars);
-    gtk_widget_show(sr->rightvars); 
+    gtk_container_add(GTK_CONTAINER(scroller), sr->rlvars);
+    gtk_widget_show(sr->rlvars); 
 
     gtk_box_pack_start(GTK_BOX(right_vbox), scroller, TRUE, TRUE, 0);
     gtk_widget_show(scroller);

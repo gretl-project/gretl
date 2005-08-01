@@ -33,16 +33,22 @@ typedef enum {
 typedef struct JVAR_ JVAR;
 
 struct JVAR_ {
-    JohansenCode code;
-    int *list;
-    int t1;
-    int t2;
-    gretl_matrix *Suu;
-    gretl_matrix *Svv;
-    gretl_matrix *Suv;
-    gretl_matrix *pi;
-    gretl_matrix *theta;
-    int err;
+    JohansenCode code;    /* see above */
+    int *list;            /* list of endogenous and exogenous vars */
+    int order;            /* order of VAR (order of VECM will be 1 less) */
+    int neqns;            /* number of equations = number of endogenous vars */
+    int t1;               /* starting observation */
+    int t2;               /* ending observation */
+    int rank;             /* if specified, chosen cointegration rank, else 0 */
+    gretl_matrix *u;      /* resids, VAR in differences */
+    gretl_matrix *v;      /* resids, second regressions */
+    gretl_matrix *Suu;    /* matrix of cross-products of residuals */
+    gretl_matrix *Svv;    /* matrix of cross-products of residuals */
+    gretl_matrix *Suv;    /* matrix of cross-products of residuals */
+    gretl_matrix **Pi;    /* matrices of coefficients, VAR in differences */
+    gretl_matrix **Theta; /* matrices of coefficients, second regressions */
+    gretl_matrix *A;      /* matrix of eigenvectors */
+    int err;              /* error code */
 };
 
 void johansen_VAR_free (JVAR *jv);
