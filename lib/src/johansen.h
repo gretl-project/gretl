@@ -40,6 +40,7 @@ struct JVAR_ {
     int t1;               /* starting observation */
     int t2;               /* ending observation */
     int rank;             /* if specified, chosen cointegration rank, else 0 */
+    double ll;            /* log-likelihood */
     gretl_matrix *u;      /* resids, VAR in differences */
     gretl_matrix *v;      /* resids, second regressions */
     gretl_matrix *Suu;    /* matrix of cross-products of residuals */
@@ -47,7 +48,14 @@ struct JVAR_ {
     gretl_matrix *Suv;    /* matrix of cross-products of residuals */
     gretl_matrix **Pi;    /* matrices of coefficients, VAR in differences */
     gretl_matrix **Theta; /* matrices of coefficients, second regressions */
-    gretl_matrix *A;      /* matrix of eigenvectors */
+    gretl_matrix *Beta;   /* matrix of eigenvectors */
+    gretl_matrix *Alpha;  /* matrix of adjustments */
+    gretl_matrix *Omega;  /* cross-equation variance matrix */
+    gretl_matrix *A;      /* VECM coefficient matrix */
+    gretl_matrix *Ase;    /* VECM standard errors matrix */
+    gretl_matrix *mu;     /* constants in EC equations */
+    gretl_matrix *uhat;   /* residuals from EC equations */
+    gretl_matrix *Data;   /* data array for figuring variance of estimator */
     int err;              /* error code */
 };
 

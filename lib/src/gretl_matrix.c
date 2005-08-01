@@ -2984,105 +2984,43 @@ void gretl_matrix_array_free (gretl_matrix **A, int n)
     }
 }
 
-#if 0
+/**
+ * gretl_matrix_data_subset:
+ * @list: list of variable to process.
+ * @Z: data array.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ *
+ * Creates a gretl matrix holding the subset of variables from
+ * @Z specified by @list, over the sample range @t1 to @t2,
+ * inclusive.  Variables are in columns.
+ *
+ * Returns: allocated matrix or %NULL on failure. 
+ */
 
-/* Some of the following may be useful later. */
-
-int gretl_vector_normal_fill (gretl_vector *v, double *sigma)
+gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
+					int t1, int t2)
 {
-    int i, n = gretl_vector_get_length(v);
+    gretl_matrix *M;
+    int T = t2 - t1 + 1;
+    int n = list[0];
+    int j, t, v;
 
-    if (opt & OPT_N) {
-	gretl_normal_dist(v->val, 0, n - 1);
-    } else {
-	gretl_uniform_dist(v->val, 0, n - 1);
+    if (T <= 0 || n <= 0) {
+	return NULL;
     }
 
-    if (sigma != 1.0) {
-	for (i=0; i<n; i++) {
-	    v->val *= sigma;
+    M = gretl_matrix_alloc(T, n);
+    if (M == NULL) {
+	return NULL;
+    }
+
+    for (j=0; j<n; j++) {
+	v = list[j + 1];
+	for (t=0; t<T; t++) {
+	    gretl_matrix_set(M, t, j, Z[v][t + t1]);
 	}
     }
 
-    return 0;
+    return M;
 }
-
-int gretl_matrix_set_column_value (gretl_matrix *m,
-				   int column,
-				   double val)
-{
-    for (i=0; i<m->rows; i++) {
-	gretl_matrix_set(m, i, column, val);
-    }
-
-    return 0;
-}
-
-int gretl_matrix_set_column_values (gretl_matrix *m,
-				    int column,
-				    const gretl_vector *v)
-{
-    int i, n = gretl_vector_get_length(v);
-
-    if (n != m->rows) {
-	return GRETL_MATRIX_NON_CONFORM;
-    }
-
-    for (i=0; i<m->rows; i++) {
-	gretl_matrix_set(m, i, column, v->val[i]);
-    }
-
-    return 0;
-}
-
-int gretl_matrix_drop_initial_rows (gretl_matrix *targ,
-				    const gretl_matrix *src,
-				    int rows)
-{
-    int i, j;
-    double srcv;
-
-    if (rows >= src->rows) {
-	return 1;
-    }
-
-    if (targ->rows != src->rows - rows ||
-	targ->cols != src->cols) {
-	return GRETL_MATRIX_NON_CONFORM;
-    }
-
-    for (i=0; i<targ->rows; i++) {
-	for (j=0; j<targ->cols; j++) {
-	    srcv = gretl_matrix_get(src, i + rows, j);
-	    gretk_matrix_set(targ, i, j, srcv);
-	}
-    }
-
-    return 0;
-}
-
-int gretl_vector_drop_initial_vals (gretl_vector *targ,
-				    const gretl_vector *src,
-				    int drop)
-{
-    int i;
-    int lsrc = gretl_vector_get_length(src);
-    int ltarg = gretl_vector_get_length(targ);
-
-    if (drop >= lsrc) {
-	return 1;
-    }
-
-    if (ltarg != lsrc - drop) {
-	return GRETL_MATRIX_NON_CONFORM;
-    }
-
-    for (i=0; i<ltarg; i++) {
-	targ->val[i] = src->val[i + drop];
-    }    
-
-    return 0;
-}
-
-#endif
-

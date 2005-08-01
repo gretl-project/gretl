@@ -2536,6 +2536,50 @@ transcribe_johansen_coeffs (JVAR *jv, int i, const MODEL *jmod, int code)
     }
 }
 
+static int add_data_to_jvar (JVAR *jv, int *dlist, int *llist, 
+			     const double **Z, const DATAINFO *pdinfo)
+{
+    int nd = dlist[0] - 1;
+    int nl = llist[0];
+    int llen, *list;
+    int p = jv->order - 1;
+    int n = jv->neqns;
+    int i, j, err = 0;
+
+    /* skip the constant */
+    llen = nd + nl - (jv->code >= J_UNREST_CONST);
+    list = gretl_list_new(llen);
+
+    /* this may be too wasteful of memory: there's a more
+       compact, if more complicated, way of doing it */
+    
+    if (list == NULL) {
+	err = E_ALLOC;
+    } else {
+	int pn = p * n;
+
+	j = 1;
+	for (i=0; i<pn; i++) {
+	    list[j++] = dlist[i+2];
+	}
+	for (i=1; i<=llist[0]; i++) {
+	    list[j++] = llist[i];
+	}
+	for (i=pn+2; i<=dlist[0]; i++) {
+	    if (dlist[i] != 0) {
+		list[j++] = dlist[i];
+	    }
+	}	
+
+	jv->Data = gretl_matrix_data_subset(list, Z, pdinfo->t1, pdinfo->t2);
+	if (jv->Data == NULL) {
+	    err = E_ALLOC;
+	} 
+    }
+
+    return err;
+}
+
 static int johansen_VAR (int order, const int *inlist, 
 			 double ***pZ, DATAINFO *pdinfo,
 			 JVAR *jv, struct var_resids *resids, 
@@ -2587,6 +2631,10 @@ static int johansen_VAR (int order, const int *inlist,
 	err = allocate_johansen_pi_theta(jv);
 	if (err) {
 	    goto var_bailout;
+	}
+	if (vlists.reglist[0] > 1) {
+	    err = add_data_to_jvar(jv, vlists.reglist, resids->levels_list,
+				   (const double **) *pZ, pdinfo);
 	}
     }    
 
@@ -2725,7 +2773,14 @@ void johansen_VAR_free (JVAR *jv)
 	gretl_matrix_free(jv->Suu);
 	gretl_matrix_free(jv->Svv);
 	gretl_matrix_free(jv->Suv);
+	gretl_matrix_free(jv->Beta);
+	gretl_matrix_free(jv->Alpha);
+	gretl_matrix_free(jv->Omega);
 	gretl_matrix_free(jv->A);
+	gretl_matrix_free(jv->Ase);
+	gretl_matrix_free(jv->mu);
+	gretl_matrix_free(jv->uhat);
+	gretl_matrix_free(jv->Data);
 
 	destroy_johansen_pi_theta(jv);
 
@@ -2751,14 +2806,23 @@ static JVAR *johansen_VAR_new (const int *list, int rank, int order, gretlopt op
 	    jv->Svv = NULL;
 	    jv->Suv = NULL;
 
+	    /* mostly used in VECM application */
 	    jv->Pi = NULL;
 	    jv->Theta = NULL;
+	    jv->Beta = NULL;
+	    jv->Alpha = NULL;
+	    jv->Omega = NULL;
 	    jv->A = NULL;
+	    jv->Ase = NULL;
+	    jv->mu = NULL;
+	    jv->uhat = NULL;
+	    jv->Data = NULL;
 
 	    jv->err = 0;
 	    jv->t1 = jv->t2 = 0;
 	    jv->rank = rank;
 	    jv->order = order;
+	    jv->ll = NADBL;
 	}
     }
 
