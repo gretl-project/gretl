@@ -1458,11 +1458,23 @@ gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a,
     return c;
 }
 
-static double 
-gretl_matrix_column_mean (const gretl_matrix *m, int col)
+/**
+ * gretl_matrix_column_mean:
+ * @m: source matrix.
+ * @col: zero-based index of column.
+ *
+ * Returns: the mean of the elements in column @col of @m,
+ * or #NADBL if the column is out of bounds.
+ */
+
+double gretl_matrix_column_mean (const gretl_matrix *m, int col)
 {
-    int i;
     double sum = 0.0;
+    int i;
+
+    if (col >= m->cols) {
+	return NADBL;
+    }
 
     for (i=0; i<m->rows; i++) {
 	sum += m->val[mdx(m, i, col)];

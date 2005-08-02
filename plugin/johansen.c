@@ -229,7 +229,7 @@ static void print_coint_eqns (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
     pprintf(prn, "%s\n\n", _("Cointegrating vectors"));
 
     for (j=0; j<jv->rank; j++) {
-	sprintf(s, "CE%d", j + 1);
+	sprintf(s, "CV%d", j + 1);
 	if (j == 0) {
 	    pprintf(prn, "%22s", s);
 	} else {
@@ -307,6 +307,7 @@ static void print_beta_or_alpha (JVAR *jv,
     }
 }
 
+#if 0
 static void normalize_alpha (JVAR *jv)
 {
     double x, r;
@@ -334,6 +335,7 @@ static void normalize_beta (JVAR *jv)
 	}
     }
 }
+#endif
 
 /* calculate alpha (adjustments) matrix as per Johansen, 1991, eqn
    2.8, p. 1554 */
@@ -685,9 +687,37 @@ static int print_omega (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
     }
 }
 
-static int print_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
+static double get_tss (JVAR *jv, double *xd, const double **Z, int i)
+{
+    double x, xbar, tss = 0.0;
+    int T = jv->t2 - jv->t1 + 1;
+    int t, v = jv->list[i+1];
+    
+    for (t=jv->t1; t<=jv->t2; t++) {
+	xd[t - jv->t1] = Z[v][t] - Z[v][t - 1];
+    }
+
+    xbar = gretl_mean(0, T - 1, xd);
+
+    if (na(xbar)) {
+	tss = NADBL;
+    } else {
+	for (t=0; t<T; t++) {
+	    x = xd[t];
+	    x -= xbar;
+	    tss += x * x;
+	}
+    }
+
+    return tss;
+}
+
+static int 
+print_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
 {
     char s[32];
+    double *ess = NULL;
+    double *xd = NULL;
     double x;
     int doconst = 0, dotrend = 0;
     int T = jv->t2 - jv->t1 + 1;
@@ -695,10 +725,22 @@ static int print_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
     int p = jv->order - 1;
     int i, j, m, k;
 
+    ess = malloc(jv->neqns * sizeof *ess);
+    if (ess == NULL) {
+	return E_ALLOC;
+    }
+
+    xd = malloc(T * sizeof *xd);
+    if (xd == NULL) {
+	free(ess);
+	return E_ALLOC;
+    }    
+
     doconst = jv->code >= J_REST_CONST;
     dotrend = jv->code == J_REST_TREND;
 
-    pprintf(prn, "%s\n\n", _("Error correction equations"));
+    pprintf(prn, "%s\n", _("Error correction equations"));
+    pprintf(prn, "%s\n\n", _("standard errors in (); t-ratios in []"));
 
     for (i=0; i<jv->neqns; i++) {
 	sprintf(s, "d_%s", pdinfo->varname[jv->list[i+1]]);
@@ -714,7 +756,7 @@ static int print_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 
     for (i=0; i<rows; i++) {
 	if (i < jv->rank) {
-	    sprintf(s, "CE%d", i + 1);
+	    sprintf(s, "CV%d", i + 1);
 	    pprintf(prn, "%-10s", s);
 	} else if (k <= jv->list[0]) {
 	    sprintf(s, "d_%s(-%d)", pdinfo->varname[jv->list[k]], m++);
@@ -736,6 +778,15 @@ static int print_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 		sprintf(s, "(%#.5g)", gretl_matrix_get(jv->Ase, i-1, j));
 		pprintf(prn, " %12s", s);
 	    }
+	    pputc(prn, '\n');
+	    pprintf(prn, "%-10s", " ");
+	    for (j=0; j<jv->neqns; j++) {
+		double tr =  gretl_matrix_get(jv->A, i, j)/
+		    gretl_matrix_get(jv->Ase, i-1, j);
+
+		sprintf(s, "[%#.4g]", tr);
+		pprintf(prn, " %12s", s);
+	    }	    
 	}	
 	pputs(prn, "\n\n");
 
@@ -748,13 +799,14 @@ static int print_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
     /* per-equation SSR */
     pprintf(prn, "%-10s", "SSR");
     for (i=0; i<jv->neqns; i++) {
-	double u, ess = 0.0;
+	double u;
 
+	ess[i] = 0.0;
 	for (j=0; j<T; j++) {
 	    u = gretl_matrix_get(jv->uhat, i, j);
-	    ess += u * u;
+	    ess[i] += u * u;
 	}
-	pprintf(prn, "%#12.5g ", ess);
+	pprintf(prn, "%#12.5g ", ess[i]);
     }    
 
     /* per-equation standard errors */
@@ -764,7 +816,16 @@ static int print_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 	x = gretl_matrix_get(jv->Omega, i, i);
 	pprintf(prn, "%#12.5g ", sqrt(x));
     }
-    pputs(prn, "\n\n");
+
+    /* per-equation R-squared */
+    pputc(prn, '\n');
+    pprintf(prn, "%-10s", "R-squared");
+    for (i=0; i<jv->neqns; i++) {
+	double tss = get_tss(jv, xd, Z, i);
+
+	pprintf(prn, "%#12.5g ", 1.0 - ess[i] / tss);
+    }
+    pputs(prn, "\n\n");    
 
     print_omega(jv, pdinfo, prn);
 
@@ -777,21 +838,27 @@ static int print_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 	aic = (-2.0 * jv->ll + 2.0 * k * n) / T;
 	bic = (-2.0 * jv->ll + log(T) * k * n) / T;
 
-	pprintf(prn, "log-likelihood = %g\n", jv->ll);
+	pprintf(prn, "\nlog-likelihood = %g\n", jv->ll);
 	pprintf(prn, "AIC = %g\n", aic);
 	pprintf(prn, "BIC = %g\n", bic);
 
 	aic = (-2.0 * ll_adj + 2.0 * k * n) / T;
 	bic = (-2.0 * ll_adj + log(T) * k * n) / T;
 
-	pputs(prn, "d.f. adjusted\n");
-	pprintf(prn, " log-likelihood = %g\n", ll_adj);
-	pprintf(prn, " AIC = %g\n", aic);
-	pprintf(prn, " BIC = %g\n", bic);
+	pputs(prn, "\nd.f. adjusted\n");
+	pprintf(prn, "log-likelihood = %g\n", ll_adj);
+	pprintf(prn, "AIC = %g\n", aic);
+	pprintf(prn, "BIC = %g\n", bic);
     }
+
+    free(ess);
+    free(xd);
+
+    return 0;
 }
 
-static int compute_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
+static int 
+compute_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
 {
     gretl_matrix *Z0 = NULL;
     gretl_matrix *Zeta = NULL;
@@ -821,7 +888,7 @@ static int compute_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 	err = E_ALLOC;
     } else {
 	int j, k, arow = 0;
-	double x;
+	double r, x;
 
 	gretl_matrix_multiply_mod(jv->Beta, GRETL_MOD_NONE,
 				  jv->Beta, GRETL_MOD_TRANSPOSE,
@@ -835,8 +902,9 @@ static int compute_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 	/* put adjustment (alpha) terms in first */
 	for (i=0; i<jv->rank; i++) {
 	    for (j=0; j<n; j++) {
+		r = gretl_matrix_get(jv->Beta, i, i);
 		x = gretl_matrix_get(jv->Alpha, j, i);
-		gretl_matrix_set(jv->A, i, j, x);
+		gretl_matrix_set(jv->A, i, j, x * r);
 	    }
 	}
 
@@ -886,7 +954,7 @@ static int compute_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
     }
 
     if (!err) {
-	print_vecm(jv, pdinfo, prn);
+	print_vecm(jv, Z, pdinfo, prn);
     }
 
     gretl_matrix_free(Z0);
@@ -947,7 +1015,7 @@ print_beta_and_alpha (JVAR *jv, struct eigval *evals, int h,
     print_beta_or_alpha(jv, evals, h, pdinfo, prn, PRINT_BETA, 0);
     print_beta_or_alpha(jv, evals, h, pdinfo, prn, PRINT_ALPHA, 0);
 
-    /* normalized */
+    /* normalized versions */
     print_beta_or_alpha(jv, evals, h, pdinfo, prn, PRINT_BETA, 1);
     print_beta_or_alpha(jv, evals, h, pdinfo, prn, PRINT_ALPHA, 1);
 
@@ -1025,7 +1093,8 @@ static int johansen_ll_init (JVAR *jv, int T)
     return err;
 }
 
-int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
+int johansen_eigenvals (JVAR *jv, const double **Z, const DATAINFO *pdinfo, 
+			PRN *prn)
 {
     int k = gretl_matrix_cols(jv->Suu);
     int kv = gretl_matrix_cols(jv->Svv);
@@ -1164,9 +1233,8 @@ int johansen_eigenvals (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 	} else {
 	    jv->Beta = select_eigvecs(jv, TmpR, evals, hmax);
 	    err = compute_alpha(jv, hmax);
-	    normalize_alpha(jv);
 	    print_coint_eqns(jv, pdinfo, prn);
-	    compute_vecm(jv, pdinfo, prn);
+	    compute_vecm(jv, Z, pdinfo, prn);
 	}
 
 	free(eigvals);

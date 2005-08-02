@@ -2448,10 +2448,10 @@ transcribe_data_as_uhat (int v, const double **Z, gretl_matrix *u,
 }
 
 static int 
-johansen_complete (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
+johansen_complete (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
 {
     void *handle = NULL;
-    int (*johansen) (JVAR *, const DATAINFO *, PRN *);
+    int (*johansen) (JVAR *, const double **, const DATAINFO *, PRN *);
     int err = 0;
 
     *gretl_errmsg = 0;
@@ -2461,7 +2461,7 @@ johansen_complete (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
     if (johansen == NULL) {
 	err = 1;
     } else {
-	err = (* johansen) (jv, pdinfo, prn);
+	err = (* johansen) (jv, Z, pdinfo, prn);
 	close_plugin(handle);
     }
     
@@ -2550,8 +2550,10 @@ static int add_data_to_jvar (JVAR *jv, int *dlist, int *llist,
     llen = nd + nl - (jv->code >= J_UNREST_CONST);
     list = gretl_list_new(llen);
 
-    /* this may be too wasteful of memory: there's a more
-       compact, if more complicated, way of doing it */
+    /* this may be too wasteful of memory: there's a more compact, if
+       more complicated, way of doing it: send the Johansen plugin a
+       list of variables to access, rather than an actual data matrix
+    */
     
     if (list == NULL) {
 	err = E_ALLOC;
@@ -2704,7 +2706,7 @@ static int johansen_VAR (int order, const int *inlist,
 	    vlists.reglist[1] = gettrend(pZ, pdinfo, 0);
 	}
 	if (vlists.reglist[0] == 1) {
-	    /* degenerate */
+	    /* degenerate case */
 	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
 				    resids->v, i, resids->t1);
 	} else {	    
@@ -2994,6 +2996,7 @@ static JVAR *johansen_analysis (int order, int rank, const int *list,
 	}
 
 	if (jv->rank > 0) {
+	    /* steal the resids for VECM analysis */
 	    jv->u = resids.u;
 	    jv->v = resids.v;
 	    resids.u = NULL;
@@ -3001,7 +3004,7 @@ static JVAR *johansen_analysis (int order, int rank, const int *list,
 	}	
 
 	/* now get johansen plugin to finish the job */
-	jv->err = johansen_complete(jv, pdinfo, prn);
+	jv->err = johansen_complete(jv, (const double **) *pZ, pdinfo, prn);
     } 
 
 johansen_exit:
@@ -3077,6 +3080,11 @@ int vecm (int order, int rank, const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (rank <= 0) {
 	return E_DATA;
+    }
+
+    if (opt != OPT_NONE && opt != OPT_V) {
+	pputs(prn, "Sorry, this VECM option not yet implemented\n");
+	return 1;
     }
 
     jv = johansen_analysis(order, rank, list, pZ, pdinfo, opt, prn);
