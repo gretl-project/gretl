@@ -2426,7 +2426,7 @@ void do_model (GtkWidget *widget, gpointer p)
     gretl_command_sprintf("%s %s%s", estimator, buf, 
 			  print_flags(cmd.opt, action));
 
-#if 1
+#if 0
     fprintf(stderr, "do_model: cmdline = '%s'\n", cmdline);
 #endif
 

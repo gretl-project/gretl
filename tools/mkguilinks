@@ -10,8 +10,7 @@ fi
 
 cd ${TOPSRC}/gui && \
 for f in \
-  gretl.h gretltypes.h gretl_enums.h guiprint.h \
-  selector.h ssheet.h \
+  gretl.h gretltypes.h gretl_enums.h guiprint.h ssheet.h \
   about.c \
   boxplots.c boxplots.h \
   calculator.c guiprint_common.c \
@@ -34,6 +33,7 @@ for f in \
   menustate.c menustate.h \
   model_table.c model_table.h \
   objectsave.c objectsave.h \
+  selector.c selector.h \
   series_view.c series_view.h \
   session.c session.h \
   settings.c settings.h \

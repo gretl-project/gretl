@@ -20,32 +20,6 @@
 #ifndef SELECTOR_H
 #define SELECTOR_H
 
-#ifdef ENABLE_GMP
-#define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
-                       c == POOLED || c == HCCM || c == HSK || c == ARMA || \
-                       c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
-                       c == AR || c == MPOLS || c == LAD || c == LOGISTIC || \
-                       c == TOBIT || c == PWE || c == POISSON)
-#else
-#define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
-                       c == POOLED || c == HCCM || c == HSK || c == ARMA || \
-                       c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
-                       c == AR || c == LAD || c == LOGISTIC || \
-                       c == TOBIT || c == PWE || c == POISSON)
-#endif
-
-#define COINT_CODE(c) (c == COINT || c == COINT2)
-
-#define VEC_CODE(c) (c == COINT || c == COINT2 || c == VAR || c == VECM)
-
-#define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE || \
-                        c == DIFF || c == LDIFF)
-
-#define GRAPH_CODE(c) (c == GR_PLOT || c == GR_XY || c == GR_IMP || GR_DUMMY)
-
-#define TWO_VARS_CODE(c) (c == SPEARMAN || c == MEANTEST || c == MEANTEST2 || \
-                          c == VARTEST)
-
 typedef struct _selector selector;
 
 void clear_selector (void);

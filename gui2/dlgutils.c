@@ -32,6 +32,7 @@ GtkWidget *standard_button (int code)
     const char *button_strings[] = {
 	N_("OK"),
 	N_("Cancel"),
+	N_("Clear"),
 	N_("Close"),
 	N_("Apply"),
 	N_("Help"),
