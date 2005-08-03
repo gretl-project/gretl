@@ -2550,9 +2550,10 @@ static int add_data_to_jvar (JVAR *jv, int *dlist, int *llist,
     llen = nd + nl - (jv->code >= J_UNREST_CONST);
     list = gretl_list_new(llen);
 
-    /* this may be too wasteful of memory: there's a more compact, if
-       more complicated, way of doing it: send the Johansen plugin a
-       list of variables to access, rather than an actual data matrix
+    /* this may be considered a waste of RAM: there's a more compact,
+       if more complicated, way of doing it: send the Johansen plugin
+       a list of variables to access, rather than an actual data
+       matrix
     */
     
     if (list == NULL) {
@@ -2561,12 +2562,16 @@ static int add_data_to_jvar (JVAR *jv, int *dlist, int *llist,
 	int pn = p * n;
 
 	j = 1;
+
+	/* put first differences into list */
 	for (i=0; i<pn; i++) {
 	    list[j++] = dlist[i+2];
 	}
+	/* put (lagged) levels into list */
 	for (i=1; i<=llist[0]; i++) {
 	    list[j++] = llist[i];
 	}
+	/* add seasonals (FIXME skip trend here?) */
 	for (i=pn+2; i<=dlist[0]; i++) {
 	    if (dlist[i] != 0) {
 		list[j++] = dlist[i];
@@ -2577,10 +2582,16 @@ static int add_data_to_jvar (JVAR *jv, int *dlist, int *llist,
 	if (jv->Data == NULL) {
 	    err = E_ALLOC;
 	} 
+
+	free(list);
     }
 
     return err;
 }
+
+/* For Johansen analysis: estimate VAR in differences along with the
+   other auxiliary regressions required to compute the relevant
+   matrices of residuals */
 
 static int johansen_VAR (int order, const int *inlist, 
 			 double ***pZ, DATAINFO *pdinfo,
@@ -2630,6 +2641,7 @@ static int johansen_VAR (int order, const int *inlist,
     }
 
     if (jv->rank > 0) {
+	/* doing VECM for specified rank: need to store more info */
 	err = allocate_johansen_pi_theta(jv);
 	if (err) {
 	    goto var_bailout;
@@ -2655,7 +2667,7 @@ static int johansen_VAR (int order, const int *inlist,
 	    /* degenerate model (nothing to concentrate out) */
 	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
 				    resids->u, i, resids->t1);
-	    /* rank > 0? */
+	    /* VECM?? */
 	} else {
 	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
 	    if ((err = jmod.errcode)) {
@@ -2670,6 +2682,9 @@ static int johansen_VAR (int order, const int *inlist,
 	    if (jv->rank > 0) {
 		transcribe_johansen_coeffs(jv, i, &jmod, JV_PI);
 	    }
+	    if (i == 0 && jv->rank > 0) {
+		jv->nparam = jmod.ncoeff + jv->rank;
+	    }
 	    clear_model(&jmod);
 	}
 
@@ -2679,7 +2694,7 @@ static int johansen_VAR (int order, const int *inlist,
 	    /* degenerate */
 	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
 				    resids->v, i, resids->t1);
-	    /* rank > 0? */
+	    /* VECM?? */
 	} else {
 	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
 	    if ((err = jmod.errcode)) {
@@ -2727,7 +2742,7 @@ static int johansen_VAR (int order, const int *inlist,
     pputc(prn, '\n');
 
 #if JOHANSEN_DEBUG
-    if (jv->rank > 0) {
+    if (jv->rank > 0) { /* VECM */
 	for (i=0; i<jv->order - 1; i++) {
 	    gretl_matrix_print(jv->Pi[i], "Pi", NULL);
 	    gretl_matrix_print(jv->Theta[i], "Theta", NULL);
@@ -2824,6 +2839,7 @@ static JVAR *johansen_VAR_new (const int *list, int rank, int order, gretlopt op
 	    jv->t1 = jv->t2 = 0;
 	    jv->rank = rank;
 	    jv->order = order;
+	    jv->nparam = 0;
 	    jv->ll = NADBL;
 	}
     }

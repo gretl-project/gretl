@@ -440,7 +440,7 @@ static void set_data_from_filelist (gpointer data, guint i,
 {
     copy_sys_filename(trydatfile, datap[i]);
     if (strstr(trydatfile, ".csv")) {
-	delimiter_dialog();
+	delimiter_dialog(NULL);
     }
     verify_open_data(NULL, 0);
 }

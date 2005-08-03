@@ -1153,10 +1153,11 @@ static int real_csv_to_clipboard (const char *liststr)
 
 int csv_to_clipboard (void)
 {
+    gretlopt opt = OPT_NONE;
     int err = 0;
 
-    delimiter_dialog();
-    data_save_selection_wrapper(COPY_CSV);
+    delimiter_dialog(&opt);
+    data_save_selection_wrapper(COPY_CSV, GINT_TO_POINTER(opt));
 
     if (storelist != NULL && *storelist != 0) {
 	err = real_csv_to_clipboard(storelist);
@@ -1175,7 +1176,7 @@ int csv_selected_to_clipboard (void)
     liststr = main_window_selection_as_string();
 
     if (liststr != NULL) {
-	delimiter_dialog();
+	delimiter_dialog(NULL);
 	err = real_csv_to_clipboard(liststr);
 	free(liststr);
     }

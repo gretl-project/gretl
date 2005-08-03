@@ -1154,6 +1154,7 @@ int write_data (const char *fname, const int *list,
     GretlDataFormat fmt;
     char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
+    int omit_obs = 0;
     int n = pdinfo->n;
     FILE *fp = NULL;
     int *pmax = NULL;
@@ -1188,6 +1189,11 @@ int write_data (const char *fname, const int *list,
 
     if (fmt == GRETL_DATA_R && pdinfo->structure == TIME_SERIES) {
 	fmt = GRETL_DATA_R_ALT;
+    }
+
+    if (fmt == GRETL_DATA_CSV && (opt & OPT_X)) {
+	/* don't print a first column with observations */
+	omit_obs = 1;
     }
 
     /* write header and label files if not exporting to other formats */
@@ -1299,7 +1305,7 @@ int write_data (const char *fname, const int *list,
 	else delim = ' ';
 
 	/* variable names */
-	if (fmt == GRETL_DATA_CSV && 
+	if (fmt == GRETL_DATA_CSV && !omit_obs && 
 	    (pdinfo->S != NULL || pdinfo->structure != CROSS_SECTION)) {
 	    fprintf(fp, "obs%c", delim);
 	}
@@ -1309,13 +1315,15 @@ int write_data (const char *fname, const int *list,
 	fprintf(fp, "%s\n", pdinfo->varname[list[l0]]);
 	
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (pdinfo->S != NULL) {
-		fprintf(fp, "\"%s\"%c", pdinfo->S[t], delim);
-	    } else if (pdinfo->structure != CROSS_SECTION) {
-		char tmp[OBSLEN];
+	    if (!omit_obs) {
+		if (pdinfo->S != NULL) {
+		    fprintf(fp, "\"%s\"%c", pdinfo->S[t], delim);
+		} else if (pdinfo->structure != CROSS_SECTION) {
+		    char tmp[OBSLEN];
 
-		ntodate_full(tmp, t, pdinfo);
-		fprintf(fp, "\"%s\"%c", tmp, delim);
+		    ntodate_full(tmp, t, pdinfo);
+		    fprintf(fp, "\"%s\"%c", tmp, delim);
+		}
 	    }
 	    for (i=1; i<=l0; i++) { 
 		v = list[i];

@@ -2943,6 +2943,7 @@ static const char *data_save_title (int code)
 static void data_save_selection_callback (GtkWidget *w, gpointer p)
 {
     selector *sr = (selector *) p;
+    gpointer data = sr->data;
     int code = sr->code;
 
     if (sr->cmdlist == NULL || *sr->cmdlist == 0) {
@@ -2959,16 +2960,16 @@ static void data_save_selection_callback (GtkWidget *w, gpointer p)
     gtk_widget_destroy(sr->dlg);
 
     if (code != COPY_CSV) {
-	file_selector(data_save_title(code), code, NULL);
+	file_selector(data_save_title(code), code, data);
     }
 }
 
-void data_save_selection_wrapper (int file_code)
+void data_save_selection_wrapper (int file_code, gpointer p)
 {
     simple_selection((file_code == COPY_CSV)? 
 		     _("Copy data") : _("Save data"), 
 		     data_save_selection_callback, file_code, 
-		     NULL);
+		     p);
 #ifndef OLD_GTK
     gtk_main(); /* the corresponding gtk_main_quit() is in
 		   the function destroy_selector() */

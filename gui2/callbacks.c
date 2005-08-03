@@ -223,7 +223,7 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
 	break;
     case OPEN_CSV:
     case APPEND_CSV:
-	delimiter_dialog();
+	delimiter_dialog(NULL);
 	file_selector(_("Open CSV file"), code, NULL);
 	break;
     case OPEN_OCTAVE:
@@ -270,6 +270,8 @@ void open_script (gpointer data, guint action, GtkWidget *widget)
 void file_save (gpointer data, guint file_code, GtkWidget *widget)
 {
     windata_t *vwin = (windata_t *) data;
+    gretlopt opt = OPT_NONE;
+    gpointer p = NULL;
 
     switch (file_code) {
     case SAVE_OUTPUT:
@@ -290,15 +292,16 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     case SAVE_BIN1:
     case SAVE_BIN2:
     case SAVE_DBDATA:
-	data_save_selection_wrapper(file_code);
+	data_save_selection_wrapper(file_code, NULL);
 	break;
     case EXPORT_CSV:
-	delimiter_dialog();
+	delimiter_dialog(&opt);
+	p = GINT_TO_POINTER(opt);
     case EXPORT_R:
     case EXPORT_R_ALT:
     case EXPORT_OCTAVE:
     case EXPORT_DAT:
-	data_save_selection_wrapper(file_code);
+	data_save_selection_wrapper(file_code, p);
 	break;
     case SAVE_TEX:
 	file_selector(_("Save LaTeX file"), file_code, vwin->data);

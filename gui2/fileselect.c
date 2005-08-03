@@ -131,20 +131,28 @@ static struct extmap action_map[] = {
     { FILE_OP_MAX,       NULL }
 };
 
-static gretlopt action_to_opt (const int action)
+static gretlopt save_action_to_opt (int action, gpointer p)
 {
+    gretlopt opt = OPT_NONE;
+
     switch (action) {
-    case SAVE_GZDATA:   return OPT_Z;
-    case SAVE_BIN1:     return OPT_S;
-    case SAVE_BIN2:     return OPT_O;
-    case SAVE_DBDATA:   return OPT_D;
-    case EXPORT_OCTAVE: return OPT_M;
-    case EXPORT_R:      return OPT_R;
-    case EXPORT_R_ALT:  return OPT_A;
-    case EXPORT_CSV:    return OPT_C;
-    case EXPORT_DAT:    return OPT_G; /* PcGive */
-    default: return 0L;
+    case SAVE_GZDATA:   opt = OPT_Z; break;
+    case SAVE_BIN1:     opt = OPT_S; break;
+    case SAVE_BIN2:     opt = OPT_O; break;
+    case SAVE_DBDATA:   opt = OPT_D; break;
+    case EXPORT_OCTAVE: opt = OPT_M; break;
+    case EXPORT_R:      opt = OPT_R; break;
+    case EXPORT_R_ALT:  opt = OPT_A; break;
+    case EXPORT_CSV:    opt = OPT_C; break;
+    case EXPORT_DAT:    opt = OPT_G; break; /* PcGive */
+    default: break;
     }
+
+    if (p != NULL) {
+	opt |= GPOINTER_TO_INT(p);
+    }
+
+    return opt;
 }
 
 static const char *get_gp_ext (const char *termtype)
@@ -502,7 +510,7 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	if (!strcmp(fname, paths.datfile) || action == SAVE_DBDATA) {
 	    overwrite = 1;
 	}
-	do_store(fname, action_to_opt(action), overwrite);
+	do_store(fname, save_action_to_opt(action, data), overwrite);
     } else if (action == SAVE_GNUPLOT) {
 	int err = 0;
 	GPT_SPEC *plot = (GPT_SPEC *) data;

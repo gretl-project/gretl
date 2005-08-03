@@ -306,10 +306,9 @@ typedef struct {
 } csv_stuff;
 
 #ifdef ENABLE_NLS
-static void set_dec (GtkWidget *w, gpointer p)
+static void set_dec (GtkWidget *w, csv_stuff *csv)
 {
     gint i;
-    csv_stuff *csv = (csv_stuff *) p;
 
     if (GTK_TOGGLE_BUTTON(w)->active) {
 	i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
@@ -323,9 +322,8 @@ static void set_dec (GtkWidget *w, gpointer p)
 }
 #endif
 
-static void set_delim (GtkWidget *w, gpointer p)
+static void set_delim (GtkWidget *w, csv_stuff *csv)
 {
-    csv_stuff *csv = (csv_stuff *) p;
     gint i;
 
     if (GTK_TOGGLE_BUTTON(w)->active) {
@@ -340,12 +338,20 @@ static void set_delim (GtkWidget *w, gpointer p)
     }
 }
 
-static void really_set_csv_stuff (GtkWidget *w, gpointer p)
+static void set_obscol (GtkWidget *w, gretlopt *optp)
 {
-    csv_stuff *stuff = (csv_stuff *) p;
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	*optp = OPT_NONE;
+    } else {
+	/* omit-obs option to "store" command */
+	*optp = OPT_X;
+    }
+}
 
-    datainfo->delim = stuff->delim;
-    datainfo->decpoint = stuff->decpoint;
+static void really_set_csv_stuff (GtkWidget *w, csv_stuff *csv)
+{
+    datainfo->delim = csv->delim;
+    datainfo->decpoint = csv->decpoint;
 }
 
 static void destroy_delim_dialog (GtkWidget *w, gint *p)
@@ -354,19 +360,19 @@ static void destroy_delim_dialog (GtkWidget *w, gint *p)
     gtk_main_quit();
 }
 
-void delimiter_dialog (void)
+void delimiter_dialog (gretlopt *optp)
 {
-    GtkWidget *dialog, *tempwid, *button, *hbox;
+    GtkWidget *dialog, *tmp, *button, *hbox;
     GtkWidget *myvbox;
     GSList *group;
-    csv_stuff *csvptr = NULL;
+    csv_stuff *csvp = NULL;
 
-    csvptr = mymalloc(sizeof *csvptr);
-    if (csvptr == NULL) return;
+    csvp = mymalloc(sizeof *csvp);
+    if (csvp == NULL) return;
 
-    csvptr->delim = datainfo->delim;
-    csvptr->decpoint = '.';
-    csvptr->point_button = NULL;
+    csvp->delim = datainfo->delim;
+    csvp->decpoint = '.';
+    csvp->point_button = NULL;
 
     dialog = gretl_dialog_new(_("gretl: data delimiter"));
 
@@ -374,24 +380,24 @@ void delimiter_dialog (void)
     set_dialog_border_widths(dialog);
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
-		     G_CALLBACK(destroy_delim_dialog), csvptr);
+		     G_CALLBACK(destroy_delim_dialog), csvp);
 
     myvbox = gtk_vbox_new(FALSE, 5);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    tempwid = gtk_label_new(_("separator for data columns:"));
-    gtk_box_pack_start(GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
-    gtk_widget_show(tempwid);
+    tmp = gtk_label_new(_("separator for data columns:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    gtk_widget_show(tmp);
     gtk_box_pack_start(GTK_BOX(myvbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox);    
 
     /* comma separator */
     button = gtk_radio_button_new_with_label(NULL, _("comma (,)"));
     gtk_box_pack_start(GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-    if (csvptr->delim == ',')
+    if (csvp->delim == ',')
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_delim), csvptr);
+		     G_CALLBACK(set_delim), csvp);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(','));
     gtk_widget_show(button);
@@ -399,12 +405,12 @@ void delimiter_dialog (void)
     /* space separator */
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("space"));
-    csvptr->space_button = button;
+    csvp->space_button = button;
     gtk_box_pack_start(GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-    if (csvptr->delim == ' ')
+    if (csvp->delim == ' ')
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_delim), csvptr);
+		     G_CALLBACK(set_delim), csvp);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(' '));  
     gtk_widget_show(button);
@@ -413,11 +419,11 @@ void delimiter_dialog (void)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("tab"));
     gtk_box_pack_start(GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-    if (csvptr->delim == '\t') {
+    if (csvp->delim == '\t') {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
     }
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_delim), csvptr);
+		     G_CALLBACK(set_delim), csvp);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER('\t'));    
     gtk_widget_show (button);
@@ -429,21 +435,21 @@ void delimiter_dialog (void)
 	vbox_add_hsep(myvbox);
 
 	hbox = gtk_hbox_new(FALSE, 5);
-	tempwid = gtk_label_new(_("decimal point character:"));
-	gtk_box_pack_start(GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
-	gtk_widget_show(tempwid);
+	tmp = gtk_label_new(_("decimal point character:"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(myvbox), hbox, TRUE, TRUE, 5);
 	gtk_widget_show(hbox);    
 
 	/* period decpoint */
 	button = gtk_radio_button_new_with_label(NULL, _("period (.)"));
-	csvptr->point_button = button;
+	csvp->point_button = button;
 	gtk_box_pack_start(GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-	if (csvptr->decpoint == '.') {
+	if (csvp->decpoint == '.') {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	}
 	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(set_dec), csvptr);
+			 G_CALLBACK(set_dec), csvp);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER('.'));
 	gtk_widget_show(button);
@@ -452,16 +458,25 @@ void delimiter_dialog (void)
 	decgroup = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 	button = gtk_radio_button_new_with_label(decgroup, _("comma (,)"));
 	gtk_box_pack_start(GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-	if (csvptr->decpoint == ',') {
+	if (csvp->decpoint == ',') {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	}
 	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(set_dec), csvptr);
+			 G_CALLBACK(set_dec), csvp);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(','));   
 	gtk_widget_show(button);
     }
 #endif /* ENABLE_NLS */
+
+    if (optp != NULL) {
+	vbox_add_hsep(myvbox);
+	tmp = gtk_check_button_new_with_label(_("include observations column"));
+	g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(set_obscol), optp);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+	gtk_box_pack_start(GTK_BOX(myvbox), tmp, TRUE, TRUE, 0);
+	gtk_widget_show(tmp);
+    }
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), myvbox, TRUE, TRUE, 5);
@@ -473,13 +488,13 @@ void delimiter_dialog (void)
     gtk_widget_show(hbox);
 
     /* Create the "OK" button */
-    tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
-    g_signal_connect(G_OBJECT(tempwid), "clicked",
-		     G_CALLBACK(really_set_csv_stuff), csvptr);
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+    tmp = ok_button(GTK_DIALOG(dialog)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(really_set_csv_stuff), csvp);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(delete_widget), dialog);
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
+    gtk_widget_grab_default(tmp);
+    gtk_widget_show(tmp);
 
     gtk_widget_show(dialog);
 

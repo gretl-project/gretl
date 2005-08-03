@@ -34,7 +34,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 
 char *main_window_selection_as_string (void);
 
-void data_save_selection_wrapper (int file_code);
+void data_save_selection_wrapper (int file_code, gpointer p);
 
 int selector_code (const selector *sr);
 

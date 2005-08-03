@@ -37,6 +37,7 @@ struct JVAR_ {
     int *list;            /* list of endogenous and exogenous vars */
     int order;            /* order of VAR (order of VECM will be 1 less) */
     int neqns;            /* number of equations = number of endogenous vars */
+    int nparam;           /* number of parameters per VECM equation */
     int t1;               /* starting observation */
     int t2;               /* ending observation */
     int rank;             /* if specified, chosen cointegration rank, else 0 */
