@@ -830,10 +830,11 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     view_buffer(prn, hsize, vsize, title, action, obj);
 }
 
-static void real_do_coint (gpointer p, int action, gretlopt jopt)
+void do_coint (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
     const char *buf = selector_list(sr);
+    int action = selector_code(sr);
     JVAR *jv = NULL;
     PRN *prn;
     int err = 0, order = 0;
@@ -841,7 +842,6 @@ static void real_do_coint (gpointer p, int action, gretlopt jopt)
     if (buf == NULL) return;
 
     cmd.opt = selector_get_opts(sr);
-    cmd.opt |= jopt;
 
     if (action == COINT) {
 	gretl_command_sprintf("coint %s%s", buf, print_flags(cmd.opt, action));
@@ -877,42 +877,6 @@ static void real_do_coint (gpointer p, int action, gretlopt jopt)
 
     view_buffer(prn, 78, 400, _("gretl: cointegration test"), 
 		action, (action == COINT2)? jv : NULL);
-}
-
-void do_coint (GtkWidget *widget, gpointer p)
-{
-    real_do_coint(p, COINT, OPT_NONE);
-}
-
-void do_coint2 (GtkWidget *widget, gpointer p)
-{
-    const char *opts[] = {
-	N_("No constant"),
-	N_("Restricted constant"),
-	N_("Unrestricted constant"),
-	N_("Restricted trend"),
-	N_("Unrestricted trend")
-    };
-    int resp;
-
-    resp = radio_dialog("gretl: cointegration test", opts, 
-			5, 2, COINT2);
-
-    if (resp >= 0) {
-	gretlopt opt = OPT_NONE;
-
-	if (resp == 0) {
-	    opt = OPT_N;
-	} else if (resp == 1) {
-	    opt = OPT_R;
-	} else if (resp == 3) {
-	    opt = OPT_A;
-	} else if (resp == 4) {
-	    opt = OPT_T;
-	}
-
-	real_do_coint(p, COINT2, opt);
-    }
 }
 
 static int ok_obs_in_series (int varno)

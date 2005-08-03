@@ -555,7 +555,10 @@ static int hansen_sargan_test (gretl_equation_system *sys,
     }
 
     err = gretl_invert_symmetric_matrix(WTW);
-    if (err) goto bailout;
+    if (err) {
+	sys->X2 = NADBL;
+	goto bailout;
+    }
 
     /* set up vectors of SUR or 3SLS residuals, transposed, times W:
        these are stacked in an m * nx matrix

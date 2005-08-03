@@ -103,8 +103,6 @@ int get_original_n (void);
 
 void do_coint (GtkWidget *widget, gpointer p);
 
-void do_coint2 (GtkWidget *widget, gpointer p);
-
 void do_forecast (gpointer data, guint u, GtkWidget *w);
 
 void do_coeff_sum (GtkWidget *widget, gpointer p);

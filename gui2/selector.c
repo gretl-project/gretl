@@ -92,6 +92,8 @@ struct _selector {
                          c == TSLS || \
                          c == VAR)
 
+#define WANT_RADIOS(c) (c == COINT2 || c == VECM)
+
 static int default_var;
 static int *xlist;
 static int *rulist;
@@ -2004,6 +2006,10 @@ static void selector_init (selector *sr, guint code, const char *title,
 	dlgheight += 40;
     }
 
+    if (WANT_RADIOS(code)) {
+	dlgheight += 40;
+    }
+
     if (code == ARMA && datainfo->pd > 1) {
 	dlgheight += 60;
     }
@@ -2280,6 +2286,44 @@ build_selector_switches (selector *sr)
 } 
 
 static void 
+build_selector_radios (selector *sr)
+{
+    GtkWidget *tmp;
+    GtkWidget *button = NULL;
+    GSList *group = NULL;
+    const char *opt_strs[] = {
+	N_("No constant"),
+	N_("Restricted constant"),
+	N_("Unrestricted constant"),
+	N_("Restricted trend"),
+	N_("Unrestricted trend"),
+	NULL
+    };
+    gretlopt opts[] = { 
+	OPT_N, 
+	OPT_R, 
+	OPT_NONE, 
+	OPT_A, 
+	OPT_T 
+    };
+    int i, deflt = 0;
+
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
+    gtk_widget_show(tmp);
+
+    for (i=0; opt_strs[i] != NULL; i++) {
+	if (button != NULL) {
+	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	} else {
+	    group = NULL;
+	}
+	button = gtk_radio_button_new_with_label(group, _(opt_strs[i]));
+	pack_switch(button, sr, (opts[i] == deflt), FALSE, opts[i]);
+    }
+}
+
+static void 
 build_selector_buttons (selector *sr, void (*okfunc)())
 {
     GtkWidget *tmp;
@@ -2526,6 +2570,11 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
     /* toggle switches for some cases */
     if (WANT_TOGGLES(sr->code)) {
 	build_selector_switches(sr);
+    }
+
+    /* and radio buttons for some */
+    if (WANT_RADIOS(sr->code)) {
+	build_selector_radios(sr);
     }
 
     /* buttons: OK, Clear, Cancel, Help */

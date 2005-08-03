@@ -3098,7 +3098,7 @@ int vecm (int order, int rank, const int *list, double ***pZ, DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    if (0 && opt != OPT_NONE && opt != OPT_V) {
+    if (opt & (OPT_A | OPT_D | OPT_R | OPT_T)) {
 	pputs(prn, "Sorry, this VECM option not yet implemented\n");
 	return 1;
     }
