@@ -965,6 +965,24 @@ static int matrix_is_symmetric (const gretl_matrix *m)
     return 1;
 }
 
+static double gretl_matrix_one_norm (const gretl_matrix *m)
+{
+    double colsum, colmax = 0.0;
+    int i, j;
+
+    for (j=0; j<m->cols; j++) {
+	colsum = 0.0;
+	for (i=0; i<m->rows; i++) {
+	    colsum += fabs(m->val[mdx(m, i, j)]);
+	}
+	if (colsum > colmax) {
+	    colmax = colsum;
+	}
+    }
+
+    return colmax;
+}
+
 /**
  * gretl_vcv_log_determinant:
  * @m: gretl_matrix.
@@ -1579,6 +1597,58 @@ int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 }
 
 /**
+ * gretl_symmetric_matrix_rcond:
+ * @a: matrix to examine.
+ * 
+ * Estimates the reciprocal condition number of the real symmetric
+ * positive definite matrix @a (in the 1-norm), using the lapack 
+ * functions %dpotrf and %dpocon.
+ *
+ * Returns: the estimate, or #NADBL on failure to allocate memory.
+ */
+
+double gretl_symmetric_matrix_rcond (const gretl_matrix *m)
+{
+    gretl_matrix *a = NULL;
+    char uplo = 'L';
+    integer n = a->rows;
+    integer lda = a->rows;
+    integer info, *iwork = NULL;
+    double *work = NULL;
+    double anorm, rcond = NADBL;
+
+    a = gretl_matrix_copy(m);
+    work = malloc((3 * n) * sizeof *work);
+    iwork = malloc(n * sizeof *iwork);
+
+    if (a == NULL || work == NULL || iwork == NULL) {
+	goto bailout;
+    }
+
+    dpotrf_(&uplo, &n, a->val, &n, &info);   
+
+    if (info != 0) {
+	fprintf(stderr, "gretl_symmetric_matrix_rcond:\n"
+		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
+	rcond = 0.0;
+    } else {
+	anorm = gretl_matrix_one_norm(a);
+	dpocon_(&uplo, &n, a->val, &lda, &anorm, &rcond, work, iwork, &info);
+	if (info != 0) {
+	    rcond = NADBL;
+	}
+    }
+
+ bailout:
+
+    free(work);
+    free(iwork);
+    gretl_matrix_free(a);
+
+    return rcond;
+}
+
+/**
  * gretl_matrix_cholesky_decomp:
  * @a: matrix to operate on.
  * 
@@ -1803,7 +1873,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	    fputs(" matrix is not positive definite\n", stderr);
 	}
 	return GRETL_MATRIX_SINGULAR;
-    }
+    } 
 
     dpotri_(&uplo, &n, a->val, &n, &info);
 
@@ -2284,6 +2354,109 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
     gretl_matrix_free(B);
     free(work);
     free(s);
+
+    return err;
+}
+
+/**
+ * gretl_SVD_invert_matrix:
+ * @a: matrix to invert.
+ * 
+ * Computes the inverse of a general matrix using SVD
+ * factorization.  Uses the lapack function %dgesvd.
+ * Prints to stderr an estimate of the reciprocal
+ * condition number of the matrix if it is less then 1e-9.
+ * On exit the original matrix is overwritten by the inverse.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_SVD_invert_matrix (gretl_matrix *a)
+{
+    gretl_matrix *u = NULL;
+    gretl_matrix *vt = NULL;
+    integer n = a->rows;
+    char jobu = 'A';
+    char jobvt = 'A';
+    integer lwork = -1;
+    integer info;
+
+    double *work2, *work = NULL;
+    double *s = NULL;
+
+    int i, j, err = GRETL_MATRIX_OK;
+
+    if (a->rows != a->cols) {
+	err = GRETL_MATRIX_NON_CONFORM;
+	goto bailout;
+    }	
+
+    /* a = USV' ; a^{-1} = VWU' where W holds inverse of diag elements of S */
+
+    s = malloc(n * sizeof *s);
+    u = gretl_matrix_alloc(n, n);
+    vt = gretl_matrix_alloc(n, n);
+    work = malloc(sizeof *work);
+
+    if (s == NULL || u == NULL || vt == NULL || work == NULL) {
+	err = GRETL_MATRIX_NOMEM; 
+	goto bailout;
+    }	
+
+    /* workspace query */
+    dgesvd_(&jobu, &jobvt, &n, &n, a->val, &n, s, u->val, &n, vt->val, &n, 
+	    work, &lwork, &info);
+
+    if (info != 0 || work[0] <= 0.0) {
+	fputs(wspace_fail, stderr);
+	goto bailout;
+    }	
+
+    lwork = (integer) work[0];
+
+    work2 = realloc(work, lwork * sizeof *work);
+    if (work2 == NULL) {
+	err = GRETL_MATRIX_NOMEM; 
+	goto bailout;
+    } 
+    work = work2;
+
+    /* actual computation */
+    dgesvd_(&jobu, &jobvt, &n, &n, a->val, &n, s, u->val, &n, vt->val, &n, 
+	    work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "gretl_matrix_SVD_inverse: info = %d\n", (int) info);
+	err = GRETL_MATRIX_ERR;
+    }
+
+    if (!err) {
+	/* invert singular values */
+	for (i=0; i<n; i++) {
+	    double wi = 0.0;
+
+	    if (s[i] != 0.0) {
+		wi = 1.0 / s[i];
+	    }
+	    for (j=0; j<n; j++) {
+		u->val[mdx(u, j, i)] *= wi;
+	    }
+	}
+	if (s[n-1] == 0.0) {
+	    fputs("gretl_SVD_invert_matrix: matrix is not of full rank\n", stderr);
+	} else if (s[n-1] / s[0] < 1e-9) {
+	    fprintf(stderr, "rcond = %g\n", s[n-1] / s[0]);
+	}	
+	gretl_matrix_multiply_mod(vt, GRETL_MOD_TRANSPOSE,
+				  u, GRETL_MOD_TRANSPOSE,
+				  a);
+    }
+
+ bailout:
+    
+    free(s);
+    free(work);
+    gretl_matrix_free(u);
+    gretl_matrix_free(vt);
 
     return err;
 }

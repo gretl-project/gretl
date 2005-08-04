@@ -303,7 +303,12 @@ calculate_sys_coefficients (gretl_equation_system *sys,
     gretl_matrix_print(y, "in calc_coeffs, betahat", NULL);
 #endif
 
+#if 1
     err = gretl_invert_general_matrix(vcv);
+#else
+    /* very memory-intensive for big matrices */
+    err = gretl_SVD_invert_matrix(vcv);
+#endif
     if (err) {
 	return err;
     }
@@ -547,7 +552,7 @@ static int hansen_sargan_test (gretl_equation_system *sys,
 	for (j=i; j<nx; j++) {
 	    Wj = Z[exlist[j+1]] + sys->t1;
 	    x = 0.0;
-	    for (t=0; t<T; t++) {
+	    for (t=0; t<sys->n_obs; t++) {
 		x += Wi[t] * Wj[t];
 	    }
 	    gretl_matrix_set(WTW, i, j, x);
@@ -559,7 +564,6 @@ static int hansen_sargan_test (gretl_equation_system *sys,
 
     err = gretl_invert_symmetric_matrix(WTW);
     if (err) {
-	fputs("hansen_sargan_test: failed to invert matrix WTW\n", stderr);
 	sys->X2 = NADBL;
 	goto bailout;
     }
