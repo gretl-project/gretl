@@ -1797,18 +1797,17 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
     if (info != 0) {
+	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+		" dpotrf failed with info = %d\n", (int) info);
 	return GRETL_MATRIX_SINGULAR;
     }
 
     dpotri_(&uplo, &n, a->val, &n, &info);
 
-#ifdef LAPACK_DEBUG
-    printf("dpotri: info = %d\n", (int) info);
-#endif
-    
     if (info != 0) {
 	err = GRETL_MATRIX_SINGULAR;
-	fputs("gretl_invert_symmetric_matrix: dpotri failed\n", stderr);
+	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+		" dpotri failed with info = %d\n", (int) info);
     } else {
 	gretl_symmetric_matrix_expand(a, uplo);
     }

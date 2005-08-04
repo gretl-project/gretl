@@ -556,6 +556,7 @@ static int hansen_sargan_test (gretl_equation_system *sys,
 
     err = gretl_invert_symmetric_matrix(WTW);
     if (err) {
+	fputs("hansen_sargan_test: failed to invert matrix WTW\n", stderr);
 	sys->X2 = NADBL;
 	goto bailout;
     }
