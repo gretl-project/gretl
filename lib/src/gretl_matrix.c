@@ -946,6 +946,21 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
     }
 }
 
+static int matrix_is_symmetric (const gretl_matrix *m)
+{
+    int i, j, ret = 1;
+
+    for (i=1; i<m->rows && ret; i++) {
+	for (j=0; j<i && ret; j++) {
+	    if (m->val[mdx(m, i, j)] != m->val[mdx(m, j, i)]) {
+		ret = 0;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /**
  * gretl_vcv_log_determinant:
  * @m: gretl_matrix.
@@ -967,6 +982,11 @@ double gretl_vcv_log_determinant (const gretl_matrix *m)
 
     if (m->rows != m->cols) {
 	fputs("gretl_vcv_log_determinant: matrix must be square\n", stderr);
+	return det;
+    }
+
+    if (!matrix_is_symmetric(m)) {
+	fputs("gretl_vcv_log_determinant: matrix is not symmetric\n", stderr);
 	return det;
     }
 
@@ -1574,6 +1594,11 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     integer lda = a->rows;
     integer info;
 
+    if (!matrix_is_symmetric(a)) {
+	fputs("gretl_matrix_cholesky_decomp: matrix is not symmetric\n", stderr);
+	return GRETL_MATRIX_ERR;
+    }
+
     dpotrf_(&uplo, &n, a->val, &lda, &info);
 
 #ifdef LAPACK_DEBUG
@@ -1751,6 +1776,11 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
+    if (!matrix_is_symmetric(a)) {
+	fputs("gretl_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
+	return GRETL_MATRIX_ERR;
+    }
+
     n = a->cols;
 
     if (n == 1) {
@@ -1907,6 +1937,11 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs)
     double *w;
 
     char uplo = 'U', jobz = (eigenvecs)? 'V' : 'N';
+
+    if (!matrix_is_symmetric(m)) {
+	fputs("gretl_symmetric_matrix_eigenvals: matrix is not symmetric\n", stderr);
+	return NULL;
+    }
 
     work = malloc(sizeof *work);
     if (work == NULL) {

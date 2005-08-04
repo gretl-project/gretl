@@ -693,10 +693,12 @@ static double get_lag_at_obs (int v, int tmp, int lag,
 	}
     } else if (dated_daily_data(genr->pdinfo)) {
 	lt = t - lag;
-	while (lt >= 0 && na(Z[v][lt])) {
-	    lt--;
+	if (lt >= 0 && lt < genr->pdinfo->n) {
+	    while (lt >= 0 && na(Z[v][lt])) {
+		lt--;
+	    }
+	    x = Z[v][lt];
 	}
-	x = Z[v][lt];
     } else { /* the "standard" time-series case */
 	lt = t - lag;
 	if (lt >= 0 && lt < genr->pdinfo->n) {
