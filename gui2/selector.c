@@ -1998,7 +1998,7 @@ static void selector_init (selector *sr, guint code, const char *title,
 	dlgheight += 80;
     }
 
-    if (code == VAR || code == VECM) {
+    if (VEC_CODE(code)) {
 	dlgheight = 450;
     }
 

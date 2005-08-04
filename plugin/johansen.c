@@ -687,7 +687,7 @@ static int print_omega (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
     for (i=0; i<jv->neqns; i++) {
 	sprintf(s, "d_%s", pdinfo->varname[jv->list[i+1]]);
 	if (i == 0) {
-	    pprintf(prn, "%22s", s);
+	    pprintf(prn, "%25s", s);
 	} else {
 	    pprintf(prn, "%13s", s);
 	}
@@ -696,7 +696,7 @@ static int print_omega (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 
     for (i=0; i<jv->neqns; i++) {
 	sprintf(s, "d_%s", pdinfo->varname[jv->list[i+1]]);
-	pprintf(prn, "%-10s", s);
+	pprintf(prn, "%-13s", s);
 	for (j=0; j<jv->neqns; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(jv->Omega, i, j));
 	}
@@ -777,7 +777,7 @@ print_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
     for (i=0; i<jv->neqns; i++) {
 	sprintf(s, "d_%s", pdinfo->varname[jv->list[i+1]]);
 	if (i == 0) {
-	    pprintf(prn, "%22s", s);
+	    pprintf(prn, "%25s", s);
 	} else {
 	    pprintf(prn, "%13s", s);
 	}
@@ -789,15 +789,15 @@ print_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
     for (i=0; i<rows; i++) {
 	if (i < h) {
 	    sprintf(s, "CV%d", i + 1);
-	    pprintf(prn, "%-10s", s);
+	    pprintf(prn, "%-13s", s);
 	} else if (k <= jv->list[0]) {
 	    sprintf(s, "d_%s(-%d)", pdinfo->varname[jv->list[k]], m++);
-	    pprintf(prn, "%-10s", s);
+	    pprintf(prn, "%-13s", s);
 	} else if (doconst) {
-	    pprintf(prn, "%-10s", "const");
+	    pprintf(prn, "%-13s", "const");
 	    doconst = 0;
 	} else if (dotrend) {
-	    pprintf(prn, "%-10s", "trend");
+	    pprintf(prn, "%-13s", "trend");
 	    dotrend = 0;
 	}
 	for (j=0; j<n; j++) {
@@ -805,13 +805,13 @@ print_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
 	}
 	if (i < p * n + h) {
 	    pputc(prn, '\n');
-	    pprintf(prn, "%-10s", " ");
+	    pprintf(prn, "%-13s", " ");
 	    for (j=0; j<n; j++) {
 		sprintf(s, "(%#.5g)", gretl_matrix_get(jv->Ase, i, j));
 		pprintf(prn, " %12s", s);
 	    }
 	    pputc(prn, '\n');
-	    pprintf(prn, "%-10s", " ");
+	    pprintf(prn, "%-13s", " ");
 	    for (j=0; j<n; j++) {
 		double tr =  gretl_matrix_get(jv->A, i, j)/
 		    gretl_matrix_get(jv->Ase, i, j);
@@ -829,7 +829,7 @@ print_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
     }
 
     /* per-equation SSR */
-    pprintf(prn, "%-10s", "SSR");
+    pprintf(prn, "%-13s", "SSR");
     for (i=0; i<n; i++) {
 	double u;
 
@@ -843,7 +843,7 @@ print_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
 
     /* per-equation standard errors */
     pputc(prn, '\n');
-    pprintf(prn, "%-10s", "SE");
+    pprintf(prn, "%-13s", "SE");
     for (i=0; i<n; i++) {
 	x = gretl_matrix_get(jv->Omega, i, i);
 	pprintf(prn, "%#12.5g ", sqrt(x));
@@ -851,7 +851,7 @@ print_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
 
     /* per-equation R-squared */
     pputc(prn, '\n');
-    pprintf(prn, "%-10s", "R-squared");
+    pprintf(prn, "%-13s", "R-squared");
     for (i=0; i<n; i++) {
 	double tss = get_tss(jv, xd, Z, i);
 

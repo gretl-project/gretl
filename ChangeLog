@@ -31,6 +31,11 @@ version 1.4.2, in progress
 - "store" command: take file type from filename suffix for
   ".R" (GNU R format), ".m" (Octave format) and ".csv" (comma-
   separated)
+- Add new "set" variable, "csv_delim", which sets the delimiter
+  used when exporting data as CSV -- valid options are "comma"
+  (the default), "space" and "tab"
+- Add a new option for CSV export, "--omit-obs": suppresses
+  the printing of a first column containing the observations
 
 06/30/2005 version 1.4.1
 - Fix horrid unnoticed breakage in bhhh_max (broke both arma 
