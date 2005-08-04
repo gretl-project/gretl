@@ -1601,9 +1601,15 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
 
     dpotrf_(&uplo, &n, a->val, &lda, &info);
 
-#ifdef LAPACK_DEBUG
-    printf("dpotrf: info = %d\n", (int) info);
-#endif
+    if (info != 0) {
+	if (info > 0) {
+	    fputs("gretl_matrix_cholesky_decomp: matrix not positive definite\n", 
+		  stderr);
+	} else {
+	    fputs("gretl_matrix_cholesky_decomp: illegal argument to dpotrf\n", 
+		  stderr);
+	}
+    } 
 
     return (info == 0)? GRETL_MATRIX_OK : GRETL_MATRIX_ERR;
 }
@@ -1791,8 +1797,6 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
     if (info != 0) {
-	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
-		" dpotrf failed with info = %d\n", (int) info);
 	return GRETL_MATRIX_SINGULAR;
     }
 
@@ -1804,7 +1808,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     
     if (info != 0) {
 	err = GRETL_MATRIX_SINGULAR;
-	fputs("gretl_invert_symmetric_matrix: dpotrf failed\n", stderr);
+	fputs("gretl_invert_symmetric_matrix: dpotri failed\n", stderr);
     } else {
 	gretl_symmetric_matrix_expand(a, uplo);
     }
