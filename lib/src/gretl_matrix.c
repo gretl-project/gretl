@@ -1791,7 +1791,8 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
     if (info != 0) {
-	fputs("gretl_invert_symmetric_matrix: dpotrf failed\n", stderr);
+	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+		" dpotrf failed with info = %d\n", (int) info);
 	return GRETL_MATRIX_SINGULAR;
     }
 
