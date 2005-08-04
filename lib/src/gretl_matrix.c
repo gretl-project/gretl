@@ -1799,6 +1799,9 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     if (info != 0) {
 	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
 		" dpotrf failed with info = %d\n", (int) info);
+	if (info > 0) {
+	    fputs(" matrix is not positive definite\n", stderr);
+	}
 	return GRETL_MATRIX_SINGULAR;
     }
 
