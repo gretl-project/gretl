@@ -489,7 +489,10 @@ print_system_overidentification_test (const gretl_equation_system *sys,
 	pputc(prn, '\n');
     } else if ((sys->method == SYS_3SLS || sys->method == SYS_SUR) && df > 0) {
 
-	if (na(sys->X2) || sys->X2 == 0.0) {
+	if (na(sys->X2) || sys->X2 <= 0.0) {
+	    pputs(prn, _("Warning: the Hansen-Sargan over-identification test "
+		  "failed.\nThis probably indicates that the estimation "
+		  "problem is ill-conditioned.\n"));
 	    return;
 	}
 

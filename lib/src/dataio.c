@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_string_table.h"
 #include "dbwrite.h"
+#include "libset.h"
 
 #include <ctype.h>
 #include <time.h>
@@ -1178,7 +1179,7 @@ int write_data (const char *fname, const int *list,
 	return write_db_data(fname, list, opt, Z, pdinfo);
     }
 
-    if (fmt == GRETL_DATA_CSV && pdinfo->delim == ',' && 
+    if (fmt == GRETL_DATA_CSV && get_csv_delim(pdinfo) == ',' && 
 	',' == pdinfo->decpoint) {
 	sprintf(gretl_errmsg, _("You can't use the same character for "
 				"the column delimiter and the decimal point"));
@@ -1301,8 +1302,11 @@ int write_data (const char *fname, const int *list,
 	/* export CSV or GNU R (dataframe) */
 	char delim;
 	
-	if (fmt == GRETL_DATA_CSV) delim = pdinfo->delim;
-	else delim = ' ';
+	if (fmt == GRETL_DATA_CSV) {
+	    delim = get_csv_delim(pdinfo);
+	} else {
+	    delim = ' ';
+	}
 
 	/* variable names */
 	if (fmt == GRETL_DATA_CSV && !omit_obs && 

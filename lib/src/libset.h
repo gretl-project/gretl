@@ -80,6 +80,8 @@ int gretl_echo_on (void);
 void set_gretl_messages (int e);
 int gretl_messages_on (void);
 
+char get_csv_delim (const DATAINFO *pdinfo);
+
 int execute_set_line (const char *line, PRN *prn);
 
 #endif /* LIBSET_H */

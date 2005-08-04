@@ -948,17 +948,21 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
 
 static int matrix_is_symmetric (const gretl_matrix *m)
 {
-    int i, j, ret = 1;
+    int i, j;
 
-    for (i=1; i<m->rows && ret; i++) {
-	for (j=0; j<i && ret; j++) {
+    for (i=1; i<m->rows; i++) {
+	for (j=0; j<i; j++) {
 	    if (m->val[mdx(m, i, j)] != m->val[mdx(m, j, i)]) {
-		ret = 0;
+		fprintf(stderr, "M(%d,%d) = %.12g but M(%d,%d) = %.12g\n",
+			i, j, m->val[mdx(m, i, j)], 
+			j, i, m->val[mdx(m, j, i)]);
+		gretl_matrix_print(m, "matrix_is_symmetric()", NULL);
+		return 0;
 	    }
 	}
     }
 
-    return ret;
+    return 1;
 }
 
 /**
@@ -1594,15 +1598,11 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     integer lda = a->rows;
     integer info;
 
-    if (!matrix_is_symmetric(a)) {
-	fputs("gretl_matrix_cholesky_decomp: matrix is not symmetric\n", stderr);
-	return GRETL_MATRIX_ERR;
-    }
-
     dpotrf_(&uplo, &n, a->val, &lda, &info);
 
     if (info != 0) {
 	if (info > 0) {
+	    fprintf(stderr, "n = %d, info = %d\n", (int) n, (int) info);
 	    fputs("gretl_matrix_cholesky_decomp: matrix not positive definite\n", 
 		  stderr);
 	} else {
@@ -1798,7 +1798,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 
     if (info != 0) {
 	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
-		" dpotrf failed with info = %d\n", (int) info);
+		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	if (info > 0) {
 	    fputs(" matrix is not positive definite\n", stderr);
 	}

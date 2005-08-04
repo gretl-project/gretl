@@ -65,6 +65,7 @@ struct set_vars_ {
     double nls_toler;           /* NLS convergence criterion */
     int gretl_echo;             /* echoing commands or not */
     int gretl_msgs;             /* emitting non-error messages or not */
+    char delim;                 /* delimiter for CSV data export */
     struct robust_opts ropts;   /* robust standard error options */
     struct garch_opts gopts;    /* GARCH covariance matrix */
     struct bkbp_opts bkopts;    /* Baxter-King filter */
@@ -137,6 +138,7 @@ static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
     sv->nls_toler = state->nls_toler;
     sv->gretl_echo = state->gretl_echo; 
     sv->gretl_msgs = state->gretl_msgs; 
+    sv->delim = state->delim; 
 
     robust_opts_copy(&sv->ropts);
     garch_opts_copy(&sv->gopts);
@@ -161,6 +163,7 @@ static void state_vars_init (set_vars *sv)
     sv->nls_toler = NADBL;
     sv->gretl_echo = 1; 
     sv->gretl_msgs = 1; 
+    sv->delim = UNSET_INT;
 
     robust_opts_init(&sv->ropts);
     garch_opts_init(&sv->gopts);
@@ -348,6 +351,16 @@ int gretl_messages_on (void)
     return state->gretl_msgs;
 }
 
+char get_csv_delim (const DATAINFO *pdinfo)
+{
+    check_for_state();
+    if (state->delim > 0) {
+	return state->delim;
+    } else {
+	return pdinfo->delim;
+    }
+}
+
 int get_hac_lag (int m)
 {
     check_for_state();
@@ -513,6 +526,21 @@ static int parse_set_plotfile (const char *s)
     return err;
 }
 
+static char delim_from_arg (const char *s)
+{
+    char ret = 0;
+
+    if (!strcmp(s, "comma")) {
+	ret = ',';
+    } else if (!strcmp(s, "space")) {
+	ret = ' ';
+    } else if (!strcmp(s, "tab")) {
+	ret = '\t';
+    }
+
+    return ret;
+}
+
 static int display_settings (PRN *prn)
 {
     unsigned int uval;
@@ -604,6 +632,13 @@ int execute_set_line (const char *line, PRN *prn)
 		err = 0;
 	    } else if (!strcmp(setarg, "on")) {
 		state->gretl_msgs = 1;
+		err = 0;
+	    }
+	} else if (!strcmp(setobj, "csv_delim")) {
+	    char c = delim_from_arg(setarg);
+
+	    if (c > 0) {
+		state->delim = c;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "hac_lag")) {
