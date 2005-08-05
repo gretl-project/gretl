@@ -160,19 +160,6 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
 double ll_adj;
 #endif
 
-struct eigval {
-    double v;
-    int idx;
-};
-
-static int inverse_compare_doubles (const void *a, const void *b)
-{
-    const double *da = (const double *) a;
-    const double *db = (const double *) b;
-
-    return (*da < *db) - (*da > *db);
-}
-
 static int 
 johansen_normalize (JVAR *jv, gretl_matrix *evecs, const double *eigvals)
 {
@@ -255,7 +242,7 @@ static void print_coint_eqns (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 	    pprintf(prn, "%-10s", "trend");
 	}
 	for (j=0; j<jv->rank; j++) {
-	    /* normalize */
+	    /* re-scale */
 	    r = gretl_matrix_get(jv->Beta, j, j);
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(jv->Beta, i, j) / r);
 	}
@@ -266,19 +253,18 @@ static void print_coint_eqns (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 }
 
 /* print cointegrating vectors or adjustments, either "raw" or
-   normalized */
+   re-scaled */
 
-static void print_beta_or_alpha (JVAR *jv, 
-				 struct eigval *evals, int k, 
+static void print_beta_or_alpha (JVAR *jv, int k,
 				 const DATAINFO *pdinfo, PRN *prn,
-				 int which, int normalize)
+				 int which, int rescale)
 {
     gretl_matrix *c = (which == PRINT_BETA)? jv->Beta : jv->Alpha;
     int rows = gretl_matrix_rows(c);
-    int i, j, col;
+    int i, j;
     double x;
 
-    if (normalize) {
+    if (rescale) {
 	pprintf(prn, "\n%s\n", (which == PRINT_BETA)? 
 		_("renormalized beta") :
 		_("renormalized alpha"));
@@ -288,25 +274,24 @@ static void print_beta_or_alpha (JVAR *jv,
 		_("alpha (adjustment vectors)"));
     }
 
-    for (j=0; j<rows; j++) {
-	if (j < jv->list[0]) {
-	    pprintf(prn, "%-10s", pdinfo->varname[jv->list[j+1]]);
+    for (i=0; i<rows; i++) {
+	if (i < jv->list[0]) {
+	    pprintf(prn, "%-10s", pdinfo->varname[jv->list[i+1]]);
 	} else if (jv->code == J_REST_CONST) {
 	    pprintf(prn, "%-10s", "const");
 	} else if (jv->code == J_REST_TREND) {
 	    pprintf(prn, "%-10s", "trend");
 	}
-	for (i=0; i<k; i++) {
-	    col = evals[i].idx;
-	    if (normalize) {
-		x = gretl_matrix_get(jv->Beta, i, col);
+	for (j=0; j<k; j++) {
+	    if (rescale) {
+		x = gretl_matrix_get(jv->Beta, j, j);
 		if (which == PRINT_BETA) {
-		    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, j, col) / x);
+		    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j) / x);
 		} else {
-		    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, j, col) * x);
+		    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j) * x);
 		}
 	    } else {
-		pprintf(prn, "%#12.5g ", gretl_matrix_get(c, j, col));
+		pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j));
 	    }
 	}
 	pputc(prn, '\n');
@@ -314,7 +299,7 @@ static void print_beta_or_alpha (JVAR *jv,
 }
 
 #if 0
-static void normalize_alpha (JVAR *jv)
+static void rescale_alpha (JVAR *jv)
 {
     double x, r;
     int i, j;
@@ -328,7 +313,7 @@ static void normalize_alpha (JVAR *jv)
     }
 }
 
-static void normalize_beta (JVAR *jv)
+static void rescale_beta (JVAR *jv)
 {
     double x, r;
     int i, j;
@@ -347,15 +332,23 @@ static void normalize_beta (JVAR *jv)
    2.8, p. 1554.
 */
 
-static int compute_alpha (JVAR *jv, int h)
+static int compute_alpha (JVAR *jv)
 {
     gretl_matrix *alpha = NULL;
     gretl_matrix *tmp1 = NULL;
     gretl_matrix *tmp2 = NULL;
-    int n = gretl_matrix_rows(jv->Beta);
+    int nv = gretl_matrix_rows(jv->Svv);
+    int h, n = jv->neqns;
     int err = 0;
 
-    tmp1 = gretl_matrix_alloc(n, h);
+    /* FIXME? */
+    if (jv->rank > 0) {
+	h = jv->rank;
+    } else {
+	h = nv;
+    }
+
+    tmp1 = gretl_matrix_alloc(nv, h);
     tmp2 = gretl_matrix_alloc(h, h);
     alpha = gretl_matrix_alloc(n, h);
 
@@ -392,15 +385,16 @@ static int compute_alpha (JVAR *jv, int h)
    in Johansen's notation or \Zeta_0 in Hamilton's.
 */
 
-static void print_lr_matrix (JVAR *jv, gretl_matrix *Zeta_0, int n, int h,
+static void print_lr_matrix (JVAR *jv, gretl_matrix *Zeta_0,
 			     const DATAINFO *pdinfo, PRN *prn)
 {
+    int cols = gretl_matrix_rows(jv->Svv);
     int i, j;
 
     pprintf(prn, "%s\n", _("long-run matrix (alpha * beta')"));
     pprintf(prn, "%22s", pdinfo->varname[jv->list[1]]);
 
-    for (j=1; j<n; j++) {
+    for (j=1; j<=cols; j++) {
 	if (j < jv->list[0]) {
 	    pprintf(prn, "%13s", pdinfo->varname[jv->list[j+1]]);
 	} else if (jv->code == J_REST_CONST) {
@@ -412,41 +406,15 @@ static void print_lr_matrix (JVAR *jv, gretl_matrix *Zeta_0, int n, int h,
 
     pputc(prn, '\n');
 
-    for (i=0; i<h; i++) {
+    for (i=0; i<jv->neqns; i++) {
 	pprintf(prn, "%-10s", pdinfo->varname[jv->list[i+1]]);
-	for (j=0; j<n; j++) {
+	for (j=0; j<cols; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(Zeta_0, i, j));
 	}
 	pputc(prn, '\n');
     }
 
     pputc(prn, '\n');
-}
-
-/* Make a matrix containing the eigenvectors corresponding to
-   the hmax largest eigenvalues (Hamilton's "A").
-*/
-
-static gretl_matrix *select_eigvecs (JVAR *jv, const gretl_matrix *evecs,
-				     struct eigval *evals, int hmax)
-{
-    gretl_matrix *A;
-    double x;
-    int i, j, col;
-
-    A = gretl_matrix_alloc(jv->neqns, hmax);
-
-    if (A != NULL) {
-	for (j=0; j<hmax; j++) {
-	    col = evals[j].idx;
-	    for (i=0; i<jv->neqns; i++) {
-		x = gretl_matrix_get(evecs, i, col);
-		gretl_matrix_set(A, i, j, x);
-	    }
-	}
-    }
-
-    return A;
 }
 
 /* Calculate the variance of the AR coefficients and the "adjustments"
@@ -546,7 +514,7 @@ static int compute_estimator_variance (JVAR *jv)
 
 	/* get the standard errors off the diagonal; shift the std
 	   errs of the adjustments into the leading places in Ase, and
-	   scale them using beta (?) */
+	   scale them using beta (FIXME?) */
 	for (j=0; j<n; j++) {
 	    a = gretl_matrix_get(jv->Omega, j, j) / T;
 	    k = jv->rank;
@@ -590,7 +558,8 @@ static int compute_estimator_variance (JVAR *jv)
 }
 
 /* Compute Hamilton's Omega (Johansen 1991 calls it Lambda): the
-   cross-equation variance matrix. 
+   cross-equation variance matrix.  This is not yet set up to
+   handle the restricted cases.
 */
 
 static int compute_omega (JVAR *jv, const gretl_matrix *Z0)
@@ -923,6 +892,38 @@ print_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
+/* restricted case: copy out first column into \mu, and
+   copy the square remainder of the matriz into \Zeta_0 
+*/
+
+static gretl_matrix *get_real_zeta_0 (JVAR *jv, gretl_matrix *C)
+{
+    gretl_matrix *Z0;
+    int n = jv->neqns;
+    int i, j;
+
+    Z0 = gretl_matrix_alloc(n, n);
+    if (Z0 == NULL) {
+	Z0 = C;
+    } else {
+	double x;
+
+	for (i=0; i<n; i++) {
+	    x = gretl_matrix_get(C, i, 0);
+	    gretl_vector_set(jv->mu, i, x);
+	}
+	for (j=0; j<n; j++) {
+	    for (i=0; i<n; i++) {
+		x = gretl_matrix_get(C, i, j + 1);
+		gretl_matrix_set(Z0, i, j, x);
+	    }
+	}
+	gretl_matrix_free(C);
+    }
+
+    return Z0;
+}
+
 /* main driver for computing VECM results */
 
 static int 
@@ -934,6 +935,7 @@ compute_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
     gretl_matrix *det = NULL;
     int n = jv->neqns;
     int p = jv->order - 1;
+    int nv = gretl_matrix_cols(jv->Suv);
     int nc = n * p + jv->rank;
     int i, err = 0;
 
@@ -946,16 +948,14 @@ compute_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
 	return E_ALLOC;
     }
 
-    Z0 = gretl_matrix_alloc(n, n);
+    Z0 = gretl_matrix_alloc(n, nv);
     Zeta = gretl_matrix_alloc(n, n);
-    tmp = gretl_matrix_alloc(n, n);
+    tmp = gretl_matrix_alloc(nv, nv);
 
     /* handle intercept */
-    if (jv->code >= J_UNREST_CONST) {
-	jv->mu = gretl_column_vector_alloc(n);
-	if (jv->mu == NULL) {
-	    err = E_ALLOC;
-	}
+    jv->mu = gretl_column_vector_alloc(n);
+    if (jv->mu == NULL) {
+	err = E_ALLOC;
     }
 
     /* handle seasonals and/or trend */
@@ -979,6 +979,11 @@ compute_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
 	/* \Zeta_0 = \Sigma_{uv} A A' (Hamilton eq. 20.2.12) */
 	gretl_matrix_multiply(jv->Suv, tmp, Z0);
 
+	if (nv > n) {
+	    /* restricted case */
+	    Z0 = get_real_zeta_0(jv, Z0);
+	}
+
 	gretl_matrix_zero(jv->A);
 
 	/* put adjustment (alpha) terms in first */
@@ -995,6 +1000,12 @@ compute_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
 	    gretl_matrix_copy_values(Zeta, jv->Pi[i]);
 	    gretl_matrix_multiply(Z0, jv->Theta[i], tmp);
 	    gretl_matrix_subtract_from(Zeta, tmp);
+	    if (jv->code == J_REST_CONST) {
+		gretl_matrix_multiply_mod(jv->mu, GRETL_MOD_NONE,
+					  jv->Aux[i], GRETL_MOD_TRANSPOSE,
+					  tmp);
+		gretl_matrix_subtract_from(Zeta, tmp);
+	    }
 #if 0
 	    gretl_matrix_print(Zeta, "Zeta", prn);
 #endif
@@ -1081,16 +1092,16 @@ compute_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
    Hamilton calls \Zeta_0) */
 
 static int 
-compute_long_run_matrix (JVAR *jv, struct eigval *evals, int h, 
-			 const DATAINFO *pdinfo, PRN *prn)
+compute_long_run_matrix (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 {
     gretl_matrix *Z0 = NULL;
     gretl_matrix *tmp = NULL;
+    int nv = gretl_matrix_rows(jv->Svv);
     int n = jv->neqns;
     int err = 0;
 
-    Z0 = gretl_matrix_alloc(h, n); 
-    tmp = gretl_matrix_alloc(n, n);
+    Z0 = gretl_matrix_alloc(n, nv); 
+    tmp = gretl_matrix_alloc(nv, nv);
 
     if (Z0 == NULL || tmp == NULL) {
 	err = E_ALLOC;
@@ -1103,7 +1114,7 @@ compute_long_run_matrix (JVAR *jv, struct eigval *evals, int h,
 
 	/* \Zeta_0 = \Sigma_{uv} A A' */
 	gretl_matrix_multiply(jv->Suv, tmp, Z0);
-	print_lr_matrix(jv, Z0, n, h, pdinfo, prn);
+	print_lr_matrix(jv, Z0, pdinfo, prn);
     }
 
     gretl_matrix_free(Z0);
@@ -1112,30 +1123,30 @@ compute_long_run_matrix (JVAR *jv, struct eigval *evals, int h,
     return err;
 }
 
-/* Print both "raw" and re-normalized versions of the beta and alpha
+/* Print both "raw" and re-scaled versions of the beta and alpha
    matrices (cointegrating vectors and vectors of adjustments
    respectively).
 */
 
 static int
-print_beta_and_alpha (JVAR *jv, struct eigval *evals, int h, 
+print_beta_and_alpha (JVAR *jv, double *evals, int h,
 		      const DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0;
 
     pprintf(prn, "\n%s", _("eigenvalue"));
     for (i=0; i<h; i++) {
-	pprintf(prn, "%#12.5g ", evals[i].v);
+	pprintf(prn, "%#12.5g ", evals[i]);
     }
     pputc(prn, '\n');
 
     /* "raw" vectors */
-    print_beta_or_alpha(jv, evals, h, pdinfo, prn, PRINT_BETA, 0);
-    print_beta_or_alpha(jv, evals, h, pdinfo, prn, PRINT_ALPHA, 0);
+    print_beta_or_alpha(jv, h, pdinfo, prn, PRINT_BETA, 0);
+    print_beta_or_alpha(jv, h, pdinfo, prn, PRINT_ALPHA, 0);
 
-    /* normalized versions */
-    print_beta_or_alpha(jv, evals, h, pdinfo, prn, PRINT_BETA, 1);
-    print_beta_or_alpha(jv, evals, h, pdinfo, prn, PRINT_ALPHA, 1);
+    /* re-scaled versions */
+    print_beta_or_alpha(jv, h, pdinfo, prn, PRINT_BETA, 1);
+    print_beta_or_alpha(jv, h, pdinfo, prn, PRINT_ALPHA, 1);
 
     pputc(prn, '\n');
     
@@ -1216,6 +1227,25 @@ static int johansen_ll_init (JVAR *jv, int T)
     return err;
 }
 
+static gretl_matrix *reduced_beta (const gretl_matrix *a, int cols)
+{
+    int i, j, r = gretl_matrix_rows(a);
+    gretl_matrix *b;
+    double x;
+
+    b = gretl_matrix_alloc(r, cols);
+    if (b != NULL) {
+	for (j=0; j<cols; j++) {
+	    for (i=0; i<r; i++) {
+		x = gretl_matrix_get(a, i, j);
+		gretl_matrix_set(b, i, j, x);
+	    }
+	}
+    }
+
+    return b;
+}
+
 /* Public entry point for both cointegration test and VECM
    estimation */
 
@@ -1275,17 +1305,23 @@ int johansen_eigenvals (JVAR *jv, const double **Z, const DATAINFO *pdinfo,
     }
 
     if (kv > k) {
-	/* "shrink" this matrix */
+	/* "re-expand" this matrix */
 	gretl_matrix_reuse(TmpR, kv, kv);
     }
 
     eigvals = gretl_general_matrix_eigenvals(M, TmpR);
+    if (eigvals == NULL) {
+	pputs(prn, _("Failed to find eigenvalues\n"));
+	err = E_ALLOC;
+    } else {
+	/* FIXME restricted VECM cases? */
+	err = gretl_eigen_sort(eigvals, TmpR, kv);
+    }
 
-    if (eigvals != NULL) {
+    if (!err) {
 	int T = jv->t2 - jv->t1 + 1;
 	double cumeig = 0.0;
 	double *lambdamax = NULL, *trace = NULL;
-	struct eigval *evals;
 	double pval[2];
 	int hmax, i;
 
@@ -1298,29 +1334,17 @@ int johansen_eigenvals (JVAR *jv, const double **Z, const DATAINFO *pdinfo,
 	    hmax = jv->rank;
 	}
 
-	trace = malloc(k * sizeof *trace);
-	lambdamax = malloc(k * sizeof *lambdamax);
-	evals = malloc(k * sizeof *evals);
-	if (trace == NULL || lambdamax == NULL || evals == NULL) {
+	trace = malloc(hmax * sizeof *trace);
+	lambdamax = malloc(hmax * sizeof *lambdamax);
+	if (trace == NULL || lambdamax == NULL) {
 	    free(trace);
 	    free(lambdamax);
-	    free(evals);
 	    err = 1;
 	    goto eigenvals_bailout;
 	}
 
-	for (i=0; i<k; i++) {
-#if JDEBUG
-	    fprintf(stderr, "unsorted eigvals[%d] = %g\n", i, eigvals[i]);
-#endif
-	    evals[i].v = eigvals[i];
-	    evals[i].idx = i;
-	}
-
-	qsort(evals, k, sizeof *evals, inverse_compare_doubles);
-
 	for (i=hmax-1; i>=0; i--){
-      	    lambdamax[i] = -T * log(1.0 - evals[i].v); 
+      	    lambdamax[i] = -T * log(1.0 - eigvals[i]); 
 	    cumeig += lambdamax[i];
  	    trace[i] = cumeig; 
 	}
@@ -1343,37 +1367,33 @@ int johansen_eigenvals (JVAR *jv, const double **Z, const DATAINFO *pdinfo,
 	    }
 	    gamma_par_asymp(trace[i], lambdamax[i], jv->code, hmax - i, pval);
 	    pprintf(prn, "%4d%#11.5g%#11.5g [%s]%#11.5g [%s]\n", \
-		    i, evals[i].v, trace[i], safe_print_pval(pval[0], 0), 
+		    i, eigvals[i], trace[i], safe_print_pval(pval[0], 0), 
 		    lambdamax[i], safe_print_pval(pval[1], 1));
 	}
 	pputc(prn, '\n');
 
-	/* TmpR holds the full set of eigenvectors: normalize before
-	   shrinking to rank 
+	/* TmpR holds the full set of eigenvectors: normalize at
+	   this point 
 	*/
 	johansen_normalize(jv, TmpR, eigvals);
-	
+
 	if (jv->rank == 0) {
 	    jv->Beta = TmpR;
 	    TmpR = NULL;
-	    err = compute_alpha(jv, hmax);
-	    print_beta_and_alpha(jv, evals, hmax, pdinfo, prn);
-	    compute_long_run_matrix(jv, evals, hmax, pdinfo, prn);
+	    err = compute_alpha(jv);
+	    print_beta_and_alpha(jv, eigvals, hmax, pdinfo, prn);
+	    compute_long_run_matrix(jv, pdinfo, prn);
 	} else {
-	    jv->Beta = select_eigvecs(jv, TmpR, evals, hmax);
-	    err = compute_alpha(jv, hmax); /* FIXME check err */
+	    jv->Beta = reduced_beta(TmpR, hmax);
+	    err = compute_alpha(jv); /* FIXME check err */
 	    print_coint_eqns(jv, pdinfo, prn);
 	    compute_vecm(jv, Z, pdinfo, prn);
 	}
 
 	free(eigvals);
-	free(evals);
 	free(lambdamax);
 	free(trace);
-
-    } else {
-	pputs(prn, _("Failed to find eigenvalues\n"));
-    }
+    } 
 
  eigenvals_bailout:    
 

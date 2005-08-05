@@ -1888,6 +1888,86 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     return err;
 }
 
+static int inverse_compare_doubles (const void *a, const void *b)
+{
+    const double *da = (const double *) a;
+    const double *db = (const double *) b;
+
+    return (*da < *db) - (*da > *db);
+}
+
+/**
+ * gretl_eigen_sort:
+ * @evals: array of eigenvalues.
+ * @evecs: matrix of eigenvectors.
+ * @rank: desired number of columns in output.
+ * 
+ * Sorts the eigenvalues in @evals from largest to smallest,
+ * and rearranges the column in @evecs correspondingly.  If
+ * @rank is greater than zero and less than the number of
+ * columns in @evecs, then on output @evecs is shrunk so
+ * that it contains only the columns associated with the
+ * largest @rank eigenvalues.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
+{
+    struct esort {
+	double v;
+	int idx;
+    }; 
+    struct esort *es;
+    gretl_matrix *tmp;
+    double x;
+    int i, j, h, n;
+
+    h = n = evecs->rows;
+    if (rank > 0 && rank < h) {
+	h = rank;
+    }
+
+    es = malloc(n * sizeof *es);
+    if (es == NULL) {
+	return E_ALLOC;
+    }
+
+    tmp = gretl_matrix_alloc(n, h);
+    if (tmp == NULL) {
+	free(es);
+	return E_ALLOC;
+    }
+
+    for (i=0; i<n; i++) {
+	es[i].v = evals[i];
+	es[i].idx = i;
+    }
+
+    qsort(es, n, sizeof *es, inverse_compare_doubles);
+
+    for (i=0; i<n; i++) {
+	evals[i] = es[i].v;
+    }
+
+    for (j=0; j<h; j++) {
+	for (i=0; i<n; i++) {
+	    x = evecs->val[mdx(evecs, i, es[j].idx)];
+	    tmp->val[mdx(tmp, i, j)] = x;
+	}
+    }
+
+    free(evecs->val);
+    evecs->val = tmp->val;
+    evecs->cols = tmp->cols;
+    tmp->val = NULL;
+    free(tmp);
+
+    free(es);
+
+    return 0;
+}
+
 /**
  * gretl_general_matrix_eigenvals:
  * @m: matrix to operate on.
