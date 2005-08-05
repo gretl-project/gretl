@@ -90,7 +90,8 @@ struct _selector {
                          c == OLS || \
                          c == TOBIT || \
                          c == TSLS || \
-                         c == VAR)
+                         c == VAR || \
+                         c == VECM)
 
 #define WANT_RADIOS(c) (c == COINT2 || c == VECM)
 
@@ -2260,13 +2261,13 @@ build_selector_switches (selector *sr)
     if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH) {
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
-    } else if (sr->code == COINT2) {
+    } else if (sr->code == COINT2 || sr->code == VECM) {
 	tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
-	if (datainfo->pd == 4 || datainfo->pd == 12) {
-	    tmp = gtk_check_button_new_with_label
-		(_("Include centered seasonal dummies"));
-	    pack_switch(tmp, sr, FALSE, FALSE, OPT_D);
+	tmp = gtk_check_button_new_with_label(_("Include centered seasonal dummies"));
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_D);
+	if (datainfo->pd != 4 && datainfo->pd != 12) {
+	    gtk_widget_set_sensitive(tmp, FALSE);
 	}
     } else if (sr->code == HILU) {
 	tmp = gtk_check_button_new_with_label(_("Fine-tune using Cochrane-Orcutt"));

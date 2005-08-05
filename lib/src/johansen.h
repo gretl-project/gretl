@@ -38,6 +38,7 @@ struct JVAR_ {
     int order;            /* order of VAR (order of VECM will be 1 less) */
     int neqns;            /* number of equations = number of endogenous vars */
     int nparam;           /* number of parameters per VECM equation */
+    int nseas;            /* number of seasonal dummy variables included */
     int t1;               /* starting observation */
     int t2;               /* ending observation */
     int rank;             /* if specified, chosen cointegration rank, else 0 */
@@ -49,6 +50,7 @@ struct JVAR_ {
     gretl_matrix *Suv;    /* matrix of cross-products of residuals */
     gretl_matrix **Pi;    /* matrices of coefficients, VAR in differences */
     gretl_matrix **Theta; /* matrices of coefficients, second regressions */
+    gretl_matrix **Aux;   /* coeff vectors, regressions for restricted cases */
     gretl_matrix *Beta;   /* matrix of eigenvectors */
     gretl_matrix *Alpha;  /* matrix of adjustments */
     gretl_matrix *Omega;  /* cross-equation variance matrix */

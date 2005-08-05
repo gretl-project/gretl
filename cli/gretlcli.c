@@ -1654,7 +1654,8 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case VECM:
 	order = atoi(cmd.param);
-	err = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, prn);
+	err = vecm_simple(order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
+			  cmd.opt, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}

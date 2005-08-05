@@ -2290,30 +2290,43 @@ int kpss_test (int order, int varno, double ***pZ,
 
 static void destroy_johansen_pi_theta (JVAR *jv)
 {
+    int p = jv->order - 1;
     int nmat;
 
     if (jv == NULL || jv->rank == 0) {
 	return;
     }
 
-    nmat = jv->order - 1 + (jv->code >= J_UNREST_CONST) 
+    nmat = p + (jv->code >= J_UNREST_CONST) + jv->nseas
 	+ (jv->code == J_UNREST_TREND);
 
     gretl_matrix_array_free(jv->Pi, nmat);
     gretl_matrix_array_free(jv->Theta, nmat);
+    gretl_matrix_array_free(jv->Aux, p);
 
     jv->Pi = NULL;
     jv->Theta = NULL;
+    jv->Aux = NULL;
 }
+
+/* Allocate storage (in the form of an array of gretl matrices) in
+   which to save the coefficients from the initial OLS regressions
+   required for VECM estmation.  We create a matrix (or vector) for
+   each variable in the system.  The \Delta Xs each get an n * n
+   matrix (n = number of equations in VECM), at each of p lags.  The
+   constant and trend (if present) each get a n-vector.  If seasonal
+   dummies are present, they each get an n-vector.
+*/
 
 static int allocate_johansen_pi_theta (JVAR *jv)
 {
-    int k = jv->neqns;
+    int restr = jv->code == J_REST_CONST || jv->code == J_REST_TREND;
+    int n = jv->neqns;
     int p = jv->order - 1;
     int i, nmat, err = 0;
 
     /* FIXME degenerate cases */
-    nmat = p + (jv->code >= J_UNREST_CONST) 
+    nmat = p + (jv->code >= J_UNREST_CONST) + jv->nseas 
 	+ (jv->code == J_UNREST_TREND);
 
     jv->Pi = gretl_matrix_array_alloc(nmat);
@@ -2323,13 +2336,18 @@ static int allocate_johansen_pi_theta (JVAR *jv)
 	jv->Theta = gretl_matrix_array_alloc(nmat);
 	if (jv->Theta == NULL) {
 	    err = E_ALLOC;
-	}
+	} else if (restr) {
+	    jv->Aux = gretl_matrix_array_alloc(p);
+	    if (jv->Aux == NULL) {
+		err = E_ALLOC;
+	    }
+	}	    
     }
 
     if (!err) {
 	for (i=0; i<p && !err; i++) {
-	    jv->Pi[i] = gretl_matrix_alloc(k, k);
-	    jv->Theta[i] = gretl_matrix_alloc(k, k);
+	    jv->Pi[i] = gretl_matrix_alloc(n, n);
+	    jv->Theta[i] = gretl_matrix_alloc(n, n);
 	    if (jv->Pi[i] == NULL || jv->Theta[i] == NULL) {
 		err = E_ALLOC;
 	    }
@@ -2337,20 +2355,42 @@ static int allocate_johansen_pi_theta (JVAR *jv)
     }
 
     if (!err && jv->code >= J_UNREST_CONST) {
-	jv->Pi[i] = gretl_column_vector_alloc(k);
-	jv->Theta[i] = gretl_column_vector_alloc(k);
+	jv->Pi[i] = gretl_column_vector_alloc(n);
+	jv->Theta[i] = gretl_column_vector_alloc(n);
 	if (jv->Pi[i] == NULL || jv->Theta[i] == NULL) {
 	    err = E_ALLOC;
 	}
 	i++;
     }
 
+    if (!err && jv->nseas > 0) {
+	int s;
+
+	for (s=0; s<jv->nseas; s++) {
+	    jv->Pi[i] = gretl_column_vector_alloc(n);
+	    jv->Theta[i] = gretl_column_vector_alloc(n);
+	    if (jv->Pi[i] == NULL || jv->Theta[i] == NULL) {
+		err = E_ALLOC;
+	    }
+	    i++;
+	}
+    }
+
     if (!err && jv->code == J_UNREST_TREND) {
-	jv->Pi[i] = gretl_column_vector_alloc(k);
-	jv->Theta[i] = gretl_column_vector_alloc(k);
+	jv->Pi[i] = gretl_column_vector_alloc(n);
+	jv->Theta[i] = gretl_column_vector_alloc(n);
 	if (jv->Pi[i] == NULL || jv->Theta[i] == NULL) {
 	    err = E_ALLOC;
 	}	
+    }
+
+    if (!err && restr) {
+	for (i=0; i<p && !err; i++) {
+	    jv->Aux[i] = gretl_column_vector_alloc(n); /* column? */
+	    if (jv->Aux[i] == NULL) {
+		err = E_ALLOC;
+	    }
+	}
     }
 
     if (err) {
@@ -2497,20 +2537,37 @@ allocate_residual_matrices (struct var_resids *resids, int k,
 
 enum {
     JV_PI = 1,
-    JV_THETA
+    JV_THETA,
+    JV_AUX
 };
+
+/* Transcribe the coefficients from the VAR in differences (Pi) or
+   the equation with the lagged level on the LHS (Theta).  The
+   coefficients on the lagged differences of X come first, then
+   the coeffs on the deterministic terms, if any.
+*/
 
 static void 
 transcribe_johansen_coeffs (JVAR *jv, int i, const MODEL *jmod, int code)
 {
     gretl_matrix *C;
-    int lmax = jv->order - 1;
-    int k = jmod->ifc;
-    int j, m;
+    int p = jv->order - 1;
+    int j, k, m, s;
 
-    /* FIXME handling seasonal dummies */
+    if (code == JV_AUX) {
+	/* special: aux regression for restricted const or trend */
+	for (m=0; m<p; m++) {
+	    k = m;
+	    for (j=0; j<jv->neqns; j++) {
+		gretl_vector_set(jv->Aux[m], j, jmod->coeff[k]);
+		k += p;
+	    }
+	}
+	return;
+    }
 
-    for (m=0; m<lmax; m++) {
+    /* the first p matrices relate to the lagged \Delta Xs */
+    for (m=0; m<p; m++) {
 	C = (code == JV_PI)? jv->Pi[m] : jv->Theta[m];
 	k = jmod->ifc + m;
 	for (j=0; j<jv->neqns; j++) {
@@ -2519,9 +2576,12 @@ transcribe_johansen_coeffs (JVAR *jv, int i, const MODEL *jmod, int code)
 		    (code == JV_PI)? "Pi" : "Theta", m, i, j, k, jmod->coeff[k]);
 #endif
 	    gretl_matrix_set(C, i, j, jmod->coeff[k]);
-	    k += lmax;
+	    k += p;
 	}
     }
+
+    /* ordering of deterministic vars in coeff matrices is
+       as in JMulTi: const, dummies, trend */
 
     if (jv->code >= J_UNREST_CONST) {
 	C = (code == JV_PI)? jv->Pi[m] : jv->Theta[m];
@@ -2529,8 +2589,15 @@ transcribe_johansen_coeffs (JVAR *jv, int i, const MODEL *jmod, int code)
 	m++;
     }
 
+    k = p * jv->neqns + jmod->ifc;
+    for (s=0; s<jv->nseas; s++) {
+	C = (code == JV_PI)? jv->Pi[m] : jv->Theta[m];
+	gretl_vector_set(C, i, jmod->coeff[k++]);
+	m++;
+    }	
+
     if (jv->code == J_UNREST_TREND) {
-	k = jmod->ncoeff - 1; /* FIXME dummies */
+	k = jmod->ncoeff - 1;
 	C = (code == JV_PI)? jv->Pi[m] : jv->Theta[m];
 	gretl_vector_set(C, i, jmod->coeff[k]);
     }
@@ -2539,15 +2606,14 @@ transcribe_johansen_coeffs (JVAR *jv, int i, const MODEL *jmod, int code)
 static int add_data_to_jvar (JVAR *jv, int *dlist, int *llist, 
 			     const double **Z, const DATAINFO *pdinfo)
 {
-    int nd = dlist[0] - 1;
-    int nl = llist[0];
-    int llen, *list;
+    int llen = jv->neqns + dlist[0] - 1;
     int p = jv->order - 1;
     int n = jv->neqns;
+    int *list;
     int i, j, err = 0;
 
     /* skip the constant */
-    llen = nd + nl - (jv->code >= J_UNREST_CONST);
+    llen -= (jv->code >= J_UNREST_CONST);
     list = gretl_list_new(llen);
 
     /* this may be considered a waste of RAM: there's a more compact,
@@ -2555,6 +2621,9 @@ static int add_data_to_jvar (JVAR *jv, int *dlist, int *llist,
        a list of variables to access, rather than an actual data
        matrix
     */
+
+    printlist(dlist, "dlist");
+    printlist(llist, "llist");
     
     if (list == NULL) {
 	err = E_ALLOC;
@@ -2567,16 +2636,20 @@ static int add_data_to_jvar (JVAR *jv, int *dlist, int *llist,
 	for (i=0; i<pn; i++) {
 	    list[j++] = dlist[i+2];
 	}
-	/* put (lagged) levels into list */
-	for (i=1; i<=llist[0]; i++) {
-	    list[j++] = llist[i];
+	/* put levels (at lag 1) into list */
+	for (i=0; i<n; i++) {
+	    list[j++] = llist[i+1];
+	    fprintf(stderr, "adding llist[%d] = %d to list\n", i, llist[i+1]);
 	}
-	/* add seasonals (FIXME skip trend here?) */
+	/* add deterministic terms, skipping const */
 	for (i=pn+2; i<=dlist[0]; i++) {
 	    if (dlist[i] != 0) {
 		list[j++] = dlist[i];
+		fprintf(stderr, "adding dlist[%d] = %d to list\n", i, dlist[i]);
 	    }
-	}	
+	}
+
+	printlist(list, "data list");
 
 	jv->Data = gretl_matrix_data_subset(list, Z, pdinfo->t1, pdinfo->t2);
 	if (jv->Data == NULL) {
@@ -2735,6 +2808,9 @@ static int johansen_VAR (int order, const int *inlist,
 		printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	    }
 	    transcribe_uhat_to_matrix(&jmod, resids->v, i);
+	    if (jv->rank > 0) {
+		transcribe_johansen_coeffs(jv, 0, &jmod, JV_AUX);
+	    }
 	    clear_model(&jmod);
 	}
     }     
@@ -2826,6 +2902,7 @@ static JVAR *johansen_VAR_new (const int *list, int rank, int order, gretlopt op
 	    /* mostly used in VECM application */
 	    jv->Pi = NULL;
 	    jv->Theta = NULL;
+	    jv->Aux = NULL;
 	    jv->Beta = NULL;
 	    jv->Alpha = NULL;
 	    jv->Omega = NULL;
@@ -2840,6 +2917,7 @@ static JVAR *johansen_VAR_new (const int *list, int rank, int order, gretlopt op
 	    jv->rank = rank;
 	    jv->order = order;
 	    jv->nparam = 0;
+	    jv->nseas = 0;
 	    jv->ll = NADBL;
 	}
     }
@@ -2887,7 +2965,8 @@ static JVAR *johansen_analysis (int order, int rank, const int *list,
 
     if (seasonals) {
 	if (pdinfo->pd > 1) {
-	    l0 += pdinfo->pd - 1;
+	    jv->nseas = pdinfo->pd - 1;
+	    l0 += jv->nseas;
 	    jv->err = dummy(pZ, pdinfo, 1);
 	} else {
 	    fprintf(stderr, "seasonals option ignored\n");
@@ -3046,7 +3125,8 @@ johansen_exit:
  * @prn: gretl printing struct.
  *
  *
- * Returns:
+ * Returns: pointer to struct containing information on 
+ * the test.
  */
 
 JVAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
@@ -3057,15 +3137,15 @@ JVAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 
 /**
  * johansen_test_simple:
- * @order:
- * @list:
- * @pZ:
- * @pdinfo:
+ * @order: lag order for test.
+ * @list: list of variables to test for cointegration.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  * @opt:
- * @prn:
+ * @prn: gretl printing struct.
  *
  *
- * Returns:
+ * Returns: 0 on success, non-zero code on error.
  */
 
 int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
@@ -3088,22 +3168,64 @@ int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pd
     return err;
 }
 
-int vecm (int order, int rank, const int *list, double ***pZ, DATAINFO *pdinfo,
-	  gretlopt opt, PRN *prn)
+/**
+ * vecm:
+ * @order: lag order for test.
+ * @rank: pre-specified cointegration rank.
+ * @list: list of variables to test for cointegration.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt:
+ * @prn: gretl printing struct.
+ *
+ *
+ * Returns: pointer to struct containing information on 
+ * the VECM system.
+ */
+
+JVAR *vecm (int order, int rank, const int *list, 
+	    double ***pZ, DATAINFO *pdinfo,
+	    gretlopt opt, PRN *prn)
+{
+    JVAR *jv = NULL;
+
+    if (rank <= 0) {
+	/* error message */
+	return jv;
+    }
+
+    if (opt & (OPT_A | OPT_R | OPT_D)) {
+	pputs(prn, "Sorry, this VECM option not yet implemented\n");
+	return jv;
+    }
+
+    jv = johansen_analysis(order, rank, list, pZ, pdinfo, opt, prn);
+
+    return jv;
+}
+
+/**
+ * vecm:
+ * @order: lag order for test.
+ * @rank: pre-specified cointegration rank.
+ * @list: list of variables to test for cointegration.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt:
+ * @prn: gretl printing struct.
+ *
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int vecm_simple (int order, int rank, const int *list, 
+		 double ***pZ, DATAINFO *pdinfo,
+		 gretlopt opt, PRN *prn)
 {
     JVAR *jv;
     int err;
 
-    if (rank <= 0) {
-	return E_DATA;
-    }
-
-    if (opt & (OPT_A | OPT_D | OPT_R | OPT_T)) {
-	pputs(prn, "Sorry, this VECM option not yet implemented\n");
-	return 1;
-    }
-
-    jv = johansen_analysis(order, rank, list, pZ, pdinfo, opt, prn);
+    jv = vecm(order, rank, list, pZ, pdinfo, opt, prn);
     if (jv == NULL) {
 	err = E_ALLOC;
     } else {

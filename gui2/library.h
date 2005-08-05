@@ -127,6 +127,8 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg);
 
 void do_model (GtkWidget *widget, gpointer p);
 
+void do_vector_model (GtkWidget *widget, gpointer p);
+
 void do_kernel (gpointer data, guint u, GtkWidget *w);
 
 void do_vif (gpointer data, guint u, GtkWidget *w);

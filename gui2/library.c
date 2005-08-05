@@ -2367,11 +2367,11 @@ void do_model (GtkWidget *widget, gpointer p)
     selector *sr = (selector *) p; 
     const char *buf;
     PRN *prn;
+    MODEL *pmod;
     char title[26], estimator[9];
-    int order, err = 0, action;
+    int action;
     double rho;
-    MODEL *pmod = NULL;
-    GRETL_VAR *var = NULL;
+    int err = 0;
 
     if (selector_error(sr)) {
 	return;
@@ -2402,13 +2402,11 @@ void do_model (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    if (action != VAR && action != VECM) {
-	pmod = gretl_model_new();
-	if (pmod == NULL) {
-	    errbox(_("Out of memory"));
-	    return;
-	}
-    } 
+    pmod = gretl_model_new();
+    if (pmod == NULL) {
+	errbox(_("Out of memory"));
+	return;
+    }
 
     switch (action) {
 
@@ -2456,46 +2454,6 @@ void do_model (GtkWidget *widget, gpointer p)
 			&Z, datainfo, OPT_NONE, prn);
 	err = model_error(pmod);
 	break;
-
-    case VAR:
-	/* Note: requires special treatment: doesn't return model */
-	sscanf(buf, "%d", &order);
-	if (order > var_max_order(cmd.list, datainfo)) {
-	    errbox(_("Insufficient degrees of freedom for regression"));
-	    gretl_print_destroy(prn);
-	    return;
-	}
-	var = full_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn);
-	if (var == NULL) {
-	    const char *msg = get_gretl_errmsg();
-
-	    errbox((*msg)? msg : _("Command failed"));
-	    gretl_print_destroy(prn);
-	} else {
-	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
-			VAR, var);
-	}
-	return; /* special */
-
-    case VECM:
-	/* also special */
-	sscanf(buf, "%d", &order);
-	if (order > var_max_order(cmd.list, datainfo)) {
-	    errbox(_("Insufficient degrees of freedom for regression"));
-	    gretl_print_destroy(prn);
-	    return;
-	}
-	err = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, prn);
-	if (err) {
-	    const char *msg = get_gretl_errmsg();
-
-	    errbox((*msg)? msg : _("Command failed"));
-	    gretl_print_destroy(prn);
-	} else {
-	    view_buffer(prn, 78, 450, _("gretl: VECM"), 
-			PRINT, NULL);
-	}
-	return; /* special */
 
     case LOGIT:
     case PROBIT:
@@ -2577,6 +2535,82 @@ void do_model (GtkWidget *widget, gpointer p)
     
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title); 
+}
+
+void do_vector_model (GtkWidget *widget, gpointer p) 
+{
+    selector *sr = (selector *) p; 
+    char estimator[9];
+    const char *buf;
+    PRN *prn;
+    int order, action;
+    int err = 0;
+
+    if (selector_error(sr)) {
+	return;
+    }
+
+    buf = selector_list(sr);
+    if (buf == NULL) {
+	return;
+    }
+
+    action = selector_code(sr);
+    strcpy(estimator, gretl_command_word(action));
+
+    cmd.opt = selector_get_opts(sr);
+
+    gretl_command_sprintf("%s %s%s", estimator, buf, 
+			  print_flags(cmd.opt, action));
+
+#if 0
+    fprintf(stderr, "do_vector_model: cmdline = '%s'\n", cmdline);
+#endif
+
+    if (check_model_cmd()) {
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    sscanf(buf, "%d", &order);
+    if (order > var_max_order(cmd.list, datainfo)) {
+	errbox(_("Insufficient degrees of freedom for regression"));
+	gretl_print_destroy(prn);
+	return;
+    }    
+
+    if (action == VAR) {
+	GRETL_VAR *var;
+
+	var = full_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn);
+	if (var == NULL) {
+	    err = 1;
+	} else {
+	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
+			VAR, var);
+	}
+    } else if (action == VECM) {
+	JVAR *jv;
+
+	jv = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, prn);
+	if (jv == NULL) {
+	    err = 1;
+	} else {
+	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, vecm);
+	}
+    } else {
+	err = 1;
+    }
+
+    if (err) {
+	const char *msg = get_gretl_errmsg();
+
+	errbox((*msg)? msg : _("Command failed"));
+	gretl_print_destroy(prn);
+    }	
 }
 
 void do_simdata (GtkWidget *widget, dialog_t *dlg) 
@@ -6389,7 +6423,8 @@ int gui_exec_line (char *line,
 
     case VECM:
 	order = atoi(cmd.param);
-	err = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, outprn);
+	err = vecm_simple(order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
+			  cmd.opt, outprn);
 	break;
 
     default:

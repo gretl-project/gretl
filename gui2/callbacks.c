@@ -410,8 +410,9 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 
     if (action == COINT || action == COINT2) {
 	selection_dialog(_("gretl: cointegration test"), do_coint, action, 0);
-    } else if (action == VECM) {
-	selection_dialog(_("gretl: VECM"), do_model, action, 0);
+    } else if (action == VAR || action == VECM) {
+	selection_dialog((action == VAR)? _("gretl: VAR") : _("gretl: VECM"),
+			 do_vector_model, action, 0);
     } else if (action == GR_XY || action == GR_IMP || action == GR_DUMMY
 	       || action == SCATTERS || action == GR_3D) {
 	void (*okfunc)() = NULL;
