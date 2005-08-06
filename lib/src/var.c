@@ -2386,7 +2386,7 @@ static int allocate_johansen_pi_theta (JVAR *jv)
 
     if (!err && restr) {
 	for (i=0; i<p && !err; i++) {
-	    jv->Aux[i] = gretl_column_vector_alloc(n); /* column? */
+	    jv->Aux[i] = gretl_column_vector_alloc(n);
 	    if (jv->Aux[i] == NULL) {
 		err = E_ALLOC;
 	    }
@@ -2556,8 +2556,8 @@ transcribe_johansen_coeffs (JVAR *jv, int i, const MODEL *jmod, int code)
 
     if (code == JV_AUX) {
 	/* special: aux regression for restricted const or trend */
+	k = 0;
 	for (m=0; m<p; m++) {
-	    k = m;
 	    for (j=0; j<jv->neqns; j++) {
 		gretl_vector_set(jv->Aux[m], j, jmod->coeff[k]);
 		k += p;
@@ -3194,7 +3194,7 @@ JVAR *vecm (int order, int rank, const int *list,
 	return jv;
     }
 
-    if (opt & (OPT_A | OPT_R | OPT_D)) {
+    if (opt & (OPT_A | OPT_D)) {
 	pputs(prn, "Sorry, this VECM option not yet implemented\n");
 	return jv;
     }

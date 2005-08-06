@@ -161,15 +161,22 @@ double ll_adj;
 #endif
 
 static int 
-johansen_normalize (JVAR *jv, gretl_matrix *evecs, const double *eigvals)
+johansen_normalize (JVAR *jv, gretl_matrix *evecs)
 {
     gretl_matrix *a = NULL, *b = NULL;
     double x, den;
-    int i, j, k = gretl_matrix_rows(jv->Svv);
+    int nv = gretl_matrix_rows(jv->Svv);
+    int i, j, h;
     int err = 0;
 
-    a = gretl_column_vector_alloc(k);
-    b = gretl_column_vector_alloc(k);
+    if (jv->rank > 0) {
+	h = jv->rank;
+    } else {
+	h = nv;
+    }
+
+    a = gretl_column_vector_alloc(nv);
+    b = gretl_column_vector_alloc(nv);
 
     if (a == NULL || b == NULL) {
 	gretl_matrix_free(a);
@@ -177,9 +184,9 @@ johansen_normalize (JVAR *jv, gretl_matrix *evecs, const double *eigvals)
 	return E_ALLOC;
     }
 
-    for (j=0; j<k; j++) {
+    for (j=0; j<h; j++) {
 	/* select column from evecs */
-	for (i=0; i<k; i++) {
+	for (i=0; i<nv; i++) {
 	    x = gretl_matrix_get(evecs, i, j);
 	    gretl_vector_set(a, i, x);
 	}
@@ -190,7 +197,7 @@ johansen_normalize (JVAR *jv, gretl_matrix *evecs, const double *eigvals)
 
 	if (!err) {
 	    den = sqrt(den);
-	    for (i=0; i<k; i++) {
+	    for (i=0; i<nv; i++) {
 		x = gretl_matrix_get(evecs, i, j);
 		gretl_matrix_set(evecs, i, j, x / den);
 	    }
@@ -341,7 +348,6 @@ static int compute_alpha (JVAR *jv)
     int h, n = jv->neqns;
     int err = 0;
 
-    /* FIXME? */
     if (jv->rank > 0) {
 	h = jv->rank;
     } else {
@@ -1227,25 +1233,6 @@ static int johansen_ll_init (JVAR *jv, int T)
     return err;
 }
 
-static gretl_matrix *reduced_beta (const gretl_matrix *a, int cols)
-{
-    int i, j, r = gretl_matrix_rows(a);
-    gretl_matrix *b;
-    double x;
-
-    b = gretl_matrix_alloc(r, cols);
-    if (b != NULL) {
-	for (j=0; j<cols; j++) {
-	    for (i=0; i<r; i++) {
-		x = gretl_matrix_get(a, i, j);
-		gretl_matrix_set(b, i, j, x);
-	    }
-	}
-    }
-
-    return b;
-}
-
 /* Public entry point for both cointegration test and VECM
    estimation */
 
@@ -1314,8 +1301,7 @@ int johansen_eigenvals (JVAR *jv, const double **Z, const DATAINFO *pdinfo,
 	pputs(prn, _("Failed to find eigenvalues\n"));
 	err = E_ALLOC;
     } else {
-	/* FIXME restricted VECM cases? */
-	err = gretl_eigen_sort(eigvals, TmpR, kv);
+	err = gretl_eigen_sort(eigvals, TmpR, jv->rank);
     }
 
     if (!err) {
@@ -1329,7 +1315,6 @@ int johansen_eigenvals (JVAR *jv, const double **Z, const DATAINFO *pdinfo,
 	hmax = k;
 	k = kv;
 
-	/* needs more work? */
 	if (jv->rank > 0) {
 	    hmax = jv->rank;
 	}
@@ -1372,22 +1357,20 @@ int johansen_eigenvals (JVAR *jv, const double **Z, const DATAINFO *pdinfo,
 	}
 	pputc(prn, '\n');
 
-	/* TmpR holds the full set of eigenvectors: normalize at
-	   this point 
-	*/
-	johansen_normalize(jv, TmpR, eigvals);
+	/* normalize the eigenvectors and compute adjustments */
+	johansen_normalize(jv, TmpR);
+	jv->Beta = TmpR;
+	TmpR = NULL;
+	err = compute_alpha(jv);
 
-	if (jv->rank == 0) {
-	    jv->Beta = TmpR;
-	    TmpR = NULL;
-	    err = compute_alpha(jv);
-	    print_beta_and_alpha(jv, eigvals, hmax, pdinfo, prn);
-	    compute_long_run_matrix(jv, pdinfo, prn);
-	} else {
-	    jv->Beta = reduced_beta(TmpR, hmax);
-	    err = compute_alpha(jv); /* FIXME check err */
-	    print_coint_eqns(jv, pdinfo, prn);
-	    compute_vecm(jv, Z, pdinfo, prn);
+	if (!err) {
+	    if (jv->rank == 0) {
+		print_beta_and_alpha(jv, eigvals, hmax, pdinfo, prn);
+		compute_long_run_matrix(jv, pdinfo, prn);
+	    } else {
+		print_coint_eqns(jv, pdinfo, prn);
+		compute_vecm(jv, Z, pdinfo, prn);
+	    }
 	}
 
 	free(eigvals);

@@ -1903,7 +1903,7 @@ static int inverse_compare_doubles (const void *a, const void *b)
  * @rank: desired number of columns in output.
  * 
  * Sorts the eigenvalues in @evals from largest to smallest,
- * and rearranges the column in @evecs correspondingly.  If
+ * and rearranges the columns in @evecs correspondingly.  If
  * @rank is greater than zero and less than the number of
  * columns in @evecs, then on output @evecs is shrunk so
  * that it contains only the columns associated with the
