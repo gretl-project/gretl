@@ -45,6 +45,7 @@ struct JVAR_ {
     double ll;            /* log-likelihood */
     gretl_matrix *u;      /* resids, VAR in differences */
     gretl_matrix *v;      /* resids, second regressions */
+    gretl_matrix *w;      /* resids, extra equation for restrictions */
     gretl_matrix *Suu;    /* matrix of cross-products of residuals */
     gretl_matrix *Svv;    /* matrix of cross-products of residuals */
     gretl_matrix *Suv;    /* matrix of cross-products of residuals */
@@ -61,6 +62,10 @@ struct JVAR_ {
     gretl_matrix *Data;   /* data array for figuring variance of estimator */
     int err;              /* error code */
 };
+
+#define jv_T(j) (j->t2 - j->t1 + 1)
+#define restricted(j) (j->code == J_REST_CONST || \
+                       j->code == J_REST_TREND)
 
 void johansen_VAR_free (JVAR *jv);
 

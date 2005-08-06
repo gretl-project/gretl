@@ -2556,8 +2556,8 @@ transcribe_johansen_coeffs (JVAR *jv, int i, const MODEL *jmod, int code)
 
     if (code == JV_AUX) {
 	/* special: aux regression for restricted const or trend */
-	k = 0;
 	for (m=0; m<p; m++) {
+	    k = m;
 	    for (j=0; j<jv->neqns; j++) {
 		gretl_vector_set(jv->Aux[m], j, jmod->coeff[k]);
 		k += p;
@@ -2622,9 +2622,6 @@ static int add_data_to_jvar (JVAR *jv, int *dlist, int *llist,
        matrix
     */
 
-    printlist(dlist, "dlist");
-    printlist(llist, "llist");
-    
     if (list == NULL) {
 	err = E_ALLOC;
     } else {
@@ -2639,17 +2636,13 @@ static int add_data_to_jvar (JVAR *jv, int *dlist, int *llist,
 	/* put levels (at lag 1) into list */
 	for (i=0; i<n; i++) {
 	    list[j++] = llist[i+1];
-	    fprintf(stderr, "adding llist[%d] = %d to list\n", i, llist[i+1]);
 	}
 	/* add deterministic terms, skipping const */
 	for (i=pn+2; i<=dlist[0]; i++) {
 	    if (dlist[i] != 0) {
 		list[j++] = dlist[i];
-		fprintf(stderr, "adding dlist[%d] = %d to list\n", i, dlist[i]);
 	    }
 	}
-
-	printlist(list, "data list");
 
 	jv->Data = gretl_matrix_data_subset(list, Z, pdinfo->t1, pdinfo->t2);
 	if (jv->Data == NULL) {
@@ -2787,7 +2780,7 @@ static int johansen_VAR (int order, const int *inlist,
     }
 
     /* supplementary regressions for restricted cases */
-    if (jv->code == J_REST_CONST || jv->code == J_REST_TREND) {
+    if (restricted(jv)) {
 	if (jv->code == J_REST_CONST) {
 	    vlists.reglist[1] = 0;
 	} else {
@@ -2862,6 +2855,7 @@ void johansen_VAR_free (JVAR *jv)
 
 	gretl_matrix_free(jv->u);
 	gretl_matrix_free(jv->v);
+	gretl_matrix_free(jv->w);
 
 	gretl_matrix_free(jv->Suu);
 	gretl_matrix_free(jv->Svv);
@@ -2894,6 +2888,7 @@ static JVAR *johansen_VAR_new (const int *list, int rank, int order, gretlopt op
 	} else {
 	    jv->u = NULL;
 	    jv->v = NULL;
+	    jv->w = NULL;
 
 	    jv->Suu = NULL;
 	    jv->Svv = NULL;
@@ -2923,6 +2918,45 @@ static JVAR *johansen_VAR_new (const int *list, int rank, int order, gretlopt op
     }
 
     return jv;
+}
+
+/* VECM with restricted const or trend: split the "v" residuals
+   matrix into two components */
+
+static int split_v_resids (JVAR *jv, gretl_matrix *v)
+{
+    double x;
+    int T = jv_T(jv);
+    int n = jv->neqns;
+    int i, j;
+
+    jv->v = gretl_matrix_alloc(n, T);
+    if (jv->v == NULL) {
+	return E_ALLOC;
+    } 
+
+    jv->w = gretl_vector_alloc(T);
+    if (jv->w == NULL) {
+	gretl_matrix_free(jv->v);
+	jv->v = NULL;
+	return E_ALLOC;
+    } 
+
+    for (i=0; i<n; i++) {
+	for (j=0; j<T; j++) {
+	    x = gretl_matrix_get(v, i, j);
+	    gretl_matrix_set(jv->v, i, j, x);
+	}
+    }
+
+    for (j=0; j<T; j++) {
+	x = gretl_matrix_get(v, n, j);
+	gretl_vector_set(jv->w, j, x);
+    }  
+
+    gretl_matrix_free(v);
+	
+    return 0;
 }
 
 static JVAR *johansen_analysis (int order, int rank, const int *list, 
@@ -3093,13 +3127,19 @@ static JVAR *johansen_analysis (int order, int rank, const int *list,
 	if (jv->rank > 0) {
 	    /* steal the resids for VECM analysis */
 	    jv->u = resids.u;
-	    jv->v = resids.v;
+	    if (restricted(jv)) {
+		jv->err = split_v_resids(jv, resids.v);
+	    } else {
+		jv->v = resids.v;
+	    }
 	    resids.u = NULL;
 	    resids.v = NULL;
 	}	
 
 	/* now get johansen plugin to finish the job */
-	jv->err = johansen_complete(jv, (const double **) *pZ, pdinfo, prn);
+	if (!jv->err) {
+	    jv->err = johansen_complete(jv, (const double **) *pZ, pdinfo, prn);
+	}
     } 
 
 johansen_exit:
