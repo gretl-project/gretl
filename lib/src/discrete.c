@@ -26,15 +26,15 @@
 static int neginv (const double *xpx, double *diag, int nv);
 static int cholesky_decomp (double *xpx, int nv);
 
-#undef LPDEBUG
+#define LPDEBUG 0
 
 static double logit (double x)
 {
     double l = 1.0 / (1.0 + exp(-x));
 
-#ifdef LPDEBUG
+#if LPDEBUG
     if (x > 40 || x < -40) {
-	fprintf(stderr, "x = %g, logit = %g\n", x, l);
+	fprintf(stderr, "x = %g, logit(x) = %g\n", x, l);
     }
 #endif
 
@@ -47,11 +47,18 @@ static double logit_pdf (double x)
 
     l = z / ((1.0 + z) * (1.0 + z));
 
-#ifdef LPDEBUG
+#if LPDEBUG
     if (x > 40 || x < -40) {
-	fprintf(stderr, "x = %g, logit_pdf = %g\n", x, l);
+	fprintf(stderr, "x = %g, logit_pdf(x) = %g\n", x, l);
     }
 #endif
+
+    if (x < 0 && isnan(l)) {
+#if LPDEBUG
+	fprintf(stderr, "logit_pdf(): x = %g, forcing l to zero\n", x);
+#endif
+	l = 0;
+    }
 
     return l;
 }
@@ -62,7 +69,7 @@ static void Lr_chisq (MODEL *pmod, double **Z)
     double Lr, chisq;
     
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (floateq(Z[pmod->list[1]][t], 1.0)) {
+	if (Z[pmod->list[1]][t] == 1.0) {
 	    ones++;
 	} 
     }
@@ -228,7 +235,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     int oldt2 = pdinfo->t2;
     int oldv = pdinfo->v;
     int itermax = 250;
-    double tol = 1.0e-9; /* ? */
+    double tol = 1.0e-9; /* ? 1.0e-9 */
     int *dmodlist = NULL;
     int *act_pred = NULL;
     MODEL dmod;
@@ -317,7 +324,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     /* BRMR, Davidson and MacKinnon, ETM, p. 461 */
 
     for (iters=0; iters<itermax; iters++) {
-	double vt;
+	double wt;
 
 	/* construct BRMR dataset */
 	for (t=dmod.t1; t<=dmod.t2; t++) {
@@ -334,16 +341,24 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 		}
 
 		if (Fx < 1.0) {
-		    vt = 1.0 / sqrt(Fx * (1.0 - Fx));
+		    wt = 1.0 / sqrt(Fx * (1.0 - Fx));
 		} else {
-		    vt = 0.0;
+		    wt = 0.0;
 		}
 
-		(*pZ)[v][t] = vt * ((*pZ)[depvar][t] - Fx);
-
-		vt *= fx;
+		(*pZ)[v][t] = wt * ((*pZ)[depvar][t] - Fx);
+#if LPDEBUG
+		fprintf(stderr, "creating Z[%d][%d] = %g * (%g - %g) = %g\n",
+			v, t, wt, (*pZ)[depvar][t], Fx, (*pZ)[v][t]);
+#endif
+		wt *= fx;
 		for (i=2; i<=dmodlist[0]; i++) {
-		    (*pZ)[dmodlist[i]][t] = vt * (*pZ)[list[i]][t];
+		    (*pZ)[dmodlist[i]][t] = wt * (*pZ)[list[i]][t];
+#if LPDEBUG
+		    fprintf(stderr, "creating Z[%d][%d] = %g * %g = %g\n",
+			    dmodlist[i], t, wt, (*pZ)[list[i]][t], 
+			    (*pZ)[dmodlist[i]][t]);
+#endif
 		}
 	    }
 	}
@@ -356,14 +371,26 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	}
 
 #if LPDEBUG
-	fprintf(stderr, "\n*** iteration %d: log-likelihood = %g\n", i, dmod.lnL);
+	fprintf(stderr, "\n*** iteration %d: log-likelihood = %g\n", iters, dmod.lnL);
 #endif
 
 	llbak = dmod.lnL;
 	clear_model(&dmod);
 	dmod = lsq(dmodlist, pZ, pdinfo, OLS, OPT_A, 0);
 	if (dmod.errcode) {
-	    fprintf(stderr, "logit_probit: dmod errcode=%d\n", dmod.errcode);
+	    fprintf(stderr, "logit_probit: dmod errcode = %d\n", dmod.errcode);
+	    if (iters > 0) {
+		dmod.errcode = E_NOCONV;
+	    }
+#if LPDEBUG
+	    fputs("BRMR dataset\n", stderr);
+	    for (t=dmod.t1; t<=dmod.t2; t++) {
+		for (i=1; i<=dmodlist[0]; i++) {
+		    fprintf(stderr, "%g ", (*pZ)[dmodlist[i]][t]);
+		}
+		fputc('\n', stderr);
+	    }
+#endif
 	    goto bailout;
 	}
 
@@ -371,7 +398,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	for (i=0; i<dmod.ncoeff; i++) {
 	    if (isnan(dmod.coeff[i])) {
 		fprintf(stderr, "BRMR produced NaN coeff\n");
-		dmod.errcode = E_DATA;
+		dmod.errcode = E_NOCONV;
 		goto bailout;
 	    }
 	    beta[i] += dmod.coeff[i];
@@ -461,7 +488,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 
     if (opt == LOGIT) {
 	fbx = logit_pdf(xx);
-#ifdef LPDEBUG
+#if LPDEBUG
 	fprintf(stderr, "xx = %.8g, fbx = %.8g\n", xx, fbx);
 #endif
     } else {
