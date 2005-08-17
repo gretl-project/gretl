@@ -571,7 +571,8 @@ static int compute_estimator_variance (JVAR *jv)
 
 /* Compute Hamilton's Omega (Johansen 1991 calls it Lambda): the
    cross-equation variance matrix.  Uses Hamilton's eq. 20.2.15,
-   p. 638, or equation at top of p. 645 in restricted case.
+   p. 638, or equation at top of p. 645 in restricted const case.
+   FIXME case of unrestricted const, restricted trend.
 */
 
 static int compute_omega (JVAR *jv, const gretl_matrix *Z0)
@@ -594,10 +595,13 @@ static int compute_omega (JVAR *jv, const gretl_matrix *Z0)
 	gretl_matrix_multiply(Z0, jv->v, tmp);
 	gretl_matrix_subtract_from(uhat, tmp);
 
-	if (restricted(jv)) {
+	if (jv->code == J_REST_CONST) {
 	    gretl_matrix_multiply(jv->mu, jv->w, tmp);
 	    gretl_matrix_subtract_from(uhat, tmp);
-	} 
+	} else if (jv->code == J_REST_TREND) {
+	    gretl_matrix_multiply(jv->rho, jv->w, tmp);
+	    gretl_matrix_subtract_from(uhat, tmp);
+	}
 
 	gretl_matrix_multiply_mod(uhat, GRETL_MOD_NONE,
 				  uhat, GRETL_MOD_TRANSPOSE,
@@ -841,8 +845,9 @@ print_vecm (JVAR *jv, const double **Z, const DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
-/* restricted case: copy out last column into \mu, and
-   copy the square remainder of the matrix into \Zeta_0 
+/* Restricted const: copy out last column into \mu, and
+   copy the square remainder of the matrix into \Zeta_0.
+   Restricted trend: copy last column into \rho.
 */
 
 static gretl_matrix *get_real_zeta_0 (JVAR *jv, gretl_matrix *C)
@@ -859,7 +864,11 @@ static gretl_matrix *get_real_zeta_0 (JVAR *jv, gretl_matrix *C)
 
 	for (i=0; i<n; i++) {
 	    x = gretl_matrix_get(C, i, n);
-	    gretl_vector_set(jv->mu, i, x);
+	    if (jv->code == J_REST_TREND) {
+		gretl_vector_set(jv->rho, i, x);;
+	    } else {
+		gretl_vector_set(jv->mu, i, x);
+	    }
 	}
 	for (j=0; j<n; j++) {
 	    for (i=0; i<n; i++) {
@@ -881,7 +890,9 @@ static void print_dims (gretl_matrix *m, const char *name)
 }
 #endif
 
-/* main driver for computing VECM results */
+/* main driver for computing VECM results --
+   FIXME case of unrestricted const, restricted trend 
+*/
 
 static int compute_vecm (JVAR *jv, PRN *prn)
 {
@@ -914,7 +925,15 @@ static int compute_vecm (JVAR *jv, PRN *prn)
 	err = E_ALLOC;
     }
 
-    /* handle seasonals and/or trend */
+    /* handle restricted trend */
+    if (!err && jv->code == J_REST_TREND) {
+	jv->rho = gretl_column_vector_alloc(n);
+	if (jv->rho == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    /* handle seasonals and/or unrestricted trend */
     if (!err && (jv->code == J_UNREST_TREND || jv->nseas > 0)) {
 	det = gretl_column_vector_alloc(n);
 	if (det == NULL) {
@@ -969,8 +988,14 @@ static int compute_vecm (JVAR *jv, PRN *prn)
 	    gretl_matrix_copy_values(Zeta, jv->Pi[i]);
 	    gretl_matrix_multiply(Z0, jv->Theta[i], tmp);
 	    gretl_matrix_subtract_from(Zeta, tmp);
-	    if (restricted(jv)) {
+	    if (jv->code == J_REST_CONST) {
 		gretl_matrix_multiply_mod(jv->mu, GRETL_MOD_NONE,
+					  jv->Aux[i], GRETL_MOD_TRANSPOSE,
+					  tmp);
+		gretl_matrix_subtract_from(Zeta, tmp);
+	    } else if (jv->code == J_REST_TREND) {
+		/* FIXME this seems to be wrong */
+		gretl_matrix_multiply_mod(jv->rho, GRETL_MOD_NONE,
 					  jv->Aux[i], GRETL_MOD_TRANSPOSE,
 					  tmp);
 		gretl_matrix_subtract_from(Zeta, tmp);

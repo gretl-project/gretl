@@ -58,6 +58,7 @@ struct JVAR_ {
     gretl_matrix *A;      /* VECM coefficient matrix */
     gretl_matrix *Ase;    /* VECM standard errors matrix */
     gretl_matrix *mu;     /* constants in EC equations */
+    gretl_matrix *rho;    /* trends in EC equations */
     gretl_matrix *uhat;   /* residuals from EC equations */
     gretl_matrix *Data;   /* data array for figuring variance of estimator */
     int err;              /* error code */

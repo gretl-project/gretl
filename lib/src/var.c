@@ -2866,6 +2866,7 @@ void johansen_VAR_free (JVAR *jv)
 	gretl_matrix_free(jv->A);
 	gretl_matrix_free(jv->Ase);
 	gretl_matrix_free(jv->mu);
+	gretl_matrix_free(jv->rho);
 	gretl_matrix_free(jv->uhat);
 	gretl_matrix_free(jv->Data);
 
@@ -2904,6 +2905,7 @@ static JVAR *johansen_VAR_new (const int *list, int rank, int order, gretlopt op
 	    jv->A = NULL;
 	    jv->Ase = NULL;
 	    jv->mu = NULL;
+	    jv->rho = NULL;
 	    jv->uhat = NULL;
 	    jv->Data = NULL;
 
@@ -3234,7 +3236,8 @@ JVAR *vecm (int order, int rank, const int *list,
 	return jv;
     }
 
-    if (opt & (OPT_A | OPT_D)) {
+    if (opt & OPT_D) { /* (OPT_A | OPT_D) */
+	strcpy(gretl_errmsg, "Sorry, this VECM option not yet implemented");
 	pputs(prn, "Sorry, this VECM option not yet implemented\n");
 	return jv;
     }
