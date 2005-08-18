@@ -746,7 +746,7 @@ static void print_model_heading (const MODEL *pmod,
     int tex = tex_format(prn);
     int utf = plain_format(prn);
 
-    if (pmod->aux != AUX_VAR) {
+    if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
 	ntodate(startdate, t1, pdinfo);
 	ntodate(enddate, t2, pdinfo);
     }
@@ -799,6 +799,10 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, "\n%s %d: ", 
 		(utf)? _("Equation") : I_("Equation"), pmod->ID);
 	break;
+    case AUX_VECM:
+	pprintf(prn, "%s %d: ", 
+		(utf)? _("Equation") : I_("Equation"), pmod->ID);
+	break;
     case AUX_ADD:
     default:
 	if (pmod->ID < 0 || (opt & OPT_S)) {
@@ -811,7 +815,7 @@ static void print_model_heading (const MODEL *pmod,
 	break;
     }
 
-    if (pmod->aux == AUX_VAR) {
+    if (pmod->aux == AUX_VAR || pmod->aux == AUX_VECM) {
 	;
     } else if (pmod->aux == AUX_SYS) {
 	pprintf(prn, (utf)?
@@ -854,7 +858,7 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
-    if (pmod->aux != AUX_VAR) {
+    if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
 	model_print_newline(prn);
     }
 
@@ -881,7 +885,7 @@ static void print_model_heading (const MODEL *pmod,
 	int v = gretl_model_get_depvar(pmod);
 
 	if (tex) tex_escape(vname, pdinfo->varname[v]);
-	if (pmod->aux == AUX_VAR) {
+	if (pmod->aux == AUX_VAR || pmod->aux == AUX_VECM) {
 	    pputs(prn, (tex)? vname : pdinfo->varname[v]);
 	} else {
 	    pprintf(prn, "%s: %s", 
@@ -1373,7 +1377,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     if (!pmod->ifc && pmod->ci != NLS && pmod->aux != AUX_VAR
-	&& pmod->aux != AUX_JOHANSEN && plain_format(prn)) {
+	&& pmod->aux != AUX_JOHANSEN && pmod->aux != AUX_VECM
+	&& plain_format(prn)) {
 	noconst(pmod, prn);
     }
     
@@ -1403,7 +1408,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
 	rsqline(pmod, prn);
 
-	if (pmod->ci != NLS) {
+	if (pmod->ci != NLS && pmod->aux != AUX_VECM) {
 	    Fline(pmod, prn);
 	}
 
@@ -1411,7 +1416,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	    if (pmod->ci == OLS || pmod->ci == VAR ||
 		(pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
 		dwline(pmod, prn);
-		if (pmod->ci != VAR && gretl_model_get_int(pmod, "ldepvar")) {
+		if (pmod->ci != VAR && pmod->aux != AUX_VECM &&
+		    gretl_model_get_int(pmod, "ldepvar")) {
 		    dhline(pmod, prn);
 		} 
 	    }
@@ -1423,7 +1429,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
 	if (pmod->ci == ARMA) {
 	    print_arma_stats(pmod, prn);
-	} else {
+	} else if (pmod->aux != AUX_VECM) {
 	    info_stats_lines(pmod, prn);
 	}
 

@@ -35,6 +35,8 @@ typedef struct JVAR_ JVAR;
 struct JVAR_ {
     JohansenCode code;    /* see above */
     int *list;            /* list of endogenous and exogenous vars */
+    int *difflist;        /* list containing first diffs of endogenous vars */
+    int *biglist;         /* list containing all regressors in each eqn */
     int order;            /* order of VAR (order of VECM will be 1 less) */
     int neqns;            /* number of equations = number of endogenous vars */
     int nparam;           /* number of parameters per VECM equation */
@@ -49,18 +51,13 @@ struct JVAR_ {
     gretl_matrix *Suu;    /* matrix of cross-products of residuals */
     gretl_matrix *Svv;    /* matrix of cross-products of residuals */
     gretl_matrix *Suv;    /* matrix of cross-products of residuals */
-    gretl_matrix **Pi;    /* matrices of coefficients, VAR in differences */
-    gretl_matrix **Theta; /* matrices of coefficients, second regressions */
-    gretl_matrix **Aux;   /* coeff vectors, regressions for restricted cases */
     gretl_matrix *Beta;   /* matrix of eigenvectors */
     gretl_matrix *Alpha;  /* matrix of adjustments */
     gretl_matrix *Omega;  /* cross-equation variance matrix */
     gretl_matrix *A;      /* VECM coefficient matrix */
-    gretl_matrix *Ase;    /* VECM standard errors matrix */
-    gretl_matrix *mu;     /* constants in EC equations */
-    gretl_matrix *rho;    /* trends in EC equations */
+    gretl_matrix *rho;    /* restricted const or trend in EC equations */
     gretl_matrix *uhat;   /* residuals from EC equations */
-    gretl_matrix *Data;   /* data array for figuring variance of estimator */
+    MODEL **models;       /* pointers to individual equation estimates */
     int err;              /* error code */
 };
 

@@ -47,7 +47,8 @@ typedef enum {
     AUX_OMIT,  /* aux. regression for omitting variables */
     AUX_RESET, /* aux. regression for Ramsey's RESET */
     AUX_SYS,   /* single equation from multivariate system */
-    AUX_VAR,   /* single equation from VAR */
+    AUX_VAR,   /* single equation from VAR system */
+    AUX_VECM,  /* single equation from VECM system */
     AUX_JOHANSEN,  /* Johansen cointegration test */
     AUX_GROUPWISE, /* testing for groupwise heteroskedasticity */
     AUX_AUX    /* auxiliary regression not otherwise specified */
