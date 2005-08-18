@@ -553,7 +553,7 @@ static void print_ll_stats (JVAR *jv, PRN *prn)
     int k = n * (jv->order - 1);
     double aic, bic;
 
-    /* FIXME: is k right in all cases? */
+    /* FIXME: is k right (in all cases)? */
     k += (jv->code >= J_UNREST_CONST) + jv->nseas + 
 	(jv->code == J_UNREST_TREND);
     
@@ -586,7 +586,8 @@ print_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
 /* compute the EC terms and add them to the dataset, Z, so we
    can run OLS */
 
-static int add_EC_terms_to_dataset (JVAR *jv, double ***pZ, DATAINFO *pdinfo)
+static int 
+add_EC_terms_to_dataset (JVAR *jv, double ***pZ, DATAINFO *pdinfo)
 {
     double xt, bxt, sb;
     int i, j, t, v = pdinfo->v;
@@ -627,8 +628,15 @@ static int add_EC_terms_to_dataset (JVAR *jv, double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
-/* run OLS, taking the betas, as calculated via the eigen-analysis,
-   as given */
+/* Run OLS taking the betas, as calculated via the eigen-analysis,
+   as given.  So obtain estimates and standard errors for the
+   coefficients on the lagged differences and the unrestricted
+   deterministic vars.  
+
+   FIXME: when seasonals are included, we're not getting the
+   same results as JMulTi for the constant (though the results
+   are the same for the seasonal dummies themselves).
+*/
 
 static int build_VECM_models (JVAR *jv, double ***pZ, DATAINFO *pdinfo,
 			      PRN *prn)
@@ -916,7 +924,7 @@ int johansen_analysis (JVAR *jv, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
 	compute_and_print_coint_test(jv, eigvals, prn);
 
-	/* normalize the eigenvectors and compute adjustments */
+	/* normalize the eigenvectors */
 	johansen_normalize(jv, TmpR);
 	jv->Beta = TmpR;
 	TmpR = NULL;

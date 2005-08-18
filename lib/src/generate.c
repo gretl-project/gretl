@@ -4316,7 +4316,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 	int di = orig_v + vi - 1;
 
 	if (center) {
-	    sprintf(vname, "dc%d", vi);
+	    sprintf(vname, "S%d", vi);
 	    strcpy(vlabel, "centered periodic dummy");
 	} else if (pdinfo->pd == 4 && pdinfo->structure == TIME_SERIES) {
 	    sprintf(vname, "dq%d", vi);

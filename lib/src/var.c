@@ -2856,7 +2856,7 @@ static JVAR *johansen_driver (int order, int rank, const int *list,
 
     if (seasonals) {
 	/* add centered seasonal dummies to list */
-	for (i=1; i<pdinfo->pd; i++) {
+	for (i=0; i<pdinfo->pd-1; i++) {
 	    resids.levels_list[j++] = orig_v + i;
 	    varlist[k++] = orig_v + i;
 	}
@@ -3033,12 +3033,6 @@ JVAR *vecm (int order, int rank, const int *list,
 
     if (rank <= 0) {
 	/* error message */
-	return jv;
-    }
-
-    if (opt & OPT_D) { /* (OPT_A | OPT_D) */
-	strcpy(gretl_errmsg, "Sorry, this VECM option not yet implemented");
-	pputs(prn, "Sorry, this VECM option not yet implemented\n");
 	return jv;
     }
 
