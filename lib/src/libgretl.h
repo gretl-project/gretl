@@ -170,6 +170,7 @@ typedef struct PRN_ PRN;
 typedef struct FITRESID_ FITRESID;
 typedef struct DATASET_ DATASET;
 typedef struct GRETL_VAR_ GRETL_VAR;
+typedef struct JVAR_ JVAR;
 
 typedef struct mp_results_ mp_results;
 typedef struct model_data_item_ model_data_item;

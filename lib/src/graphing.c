@@ -2747,19 +2747,13 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     return gnuplot_make_graph();
 }
 
-int gretl_VAR_residual_plot (const GRETL_VAR *var, 
-			     double ***pZ, DATAINFO *pdinfo)
+static int real_VAR_residual_plot (const gretl_matrix *E, int t1, double ***pZ,
+				   DATAINFO *pdinfo)
 {
-    const gretl_matrix *E;
     FILE *fp = NULL;
     char title[32];
     int nvars, nobs, pv;
-    int i, t, t1, err;
-
-    E = gretl_VAR_get_residual_matrix(var);
-    if (E == NULL) {
-	return E_DATA;
-    }
+    int i, t, err;
 
     err = gnuplot_init(PLOT_REGULAR, &fp);
     if (err) {
@@ -2786,7 +2780,6 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var,
     }
 
     pv = plotvar(pZ, pdinfo, get_timevar_name(pdinfo));
-    t1 = gretl_VAR_get_t1(var);
 	
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -2812,6 +2805,37 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var,
     fclose(fp);
 
     return gnuplot_make_graph();
+}
+
+int gretl_VAR_residual_plot (const GRETL_VAR *var, 
+			     double ***pZ, DATAINFO *pdinfo)
+{
+    const gretl_matrix *E;
+    int t1;
+
+    E = gretl_VAR_get_residual_matrix(var);
+    if (E == NULL) {
+	return E_DATA;
+    }
+
+    t1 = gretl_VAR_get_t1(var);
+
+    return real_VAR_residual_plot(E, t1, pZ, pdinfo);
+}
+
+int gretl_VECM_residual_plot (JVAR *jv, double ***pZ, DATAINFO *pdinfo)
+{
+    const gretl_matrix *E;
+    int t1;
+
+    E = gretl_VECM_get_residual_matrix(jv);
+    if (E == NULL) {
+	return E_DATA;
+    }
+
+    t1 = gretl_VECM_get_t1(jv);
+
+    return real_VAR_residual_plot(E, t1, pZ, pdinfo);
 }
 
 int is_auto_ols_string (const char *s)

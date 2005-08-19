@@ -203,6 +203,8 @@ int add_fit_resid (MODEL *pmod, int code, int undo);
 
 int add_var_resid (GRETL_VAR *var, int eqnum);
 
+int add_vecm_resid (JVAR *jv, int eqnum);
+
 void add_model_stat (MODEL *pmod, int which);
 
 void resid_plot (gpointer data, guint xvar, GtkWidget *widget);

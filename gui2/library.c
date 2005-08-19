@@ -2599,7 +2599,7 @@ void do_vector_model (GtkWidget *widget, gpointer p)
 	if (jv == NULL) {
 	    err = 1;
 	} else {
-	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, vecm);
+	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, jv);
 	}
     } else {
 	err = 1;
@@ -3571,6 +3571,35 @@ int add_var_resid (GRETL_VAR *var, int eqnum)
 
     err = gretl_VAR_add_resids_to_dataset(var, eqnum,
 					  &Z, datainfo);
+
+    if (err) {
+	errbox(_("Out of memory attempting to add variable"));
+	return 1;
+    }
+
+    v = datainfo->v - 1;
+
+    /* give the user a chance to choose a different name */
+    varinfo_dialog(v, 0);
+
+    if (*datainfo->varname[v] == '\0') {
+	/* the user canceled */
+	dataset_drop_last_variables(1, &Z, datainfo);
+	return 0;
+    }    
+
+    populate_varlist();
+    mark_dataset_as_modified();
+
+    return 0;
+}
+
+int add_vecm_resid (JVAR *jv, int eqnum)
+{
+    int err, v;
+
+    err = gretl_VECM_add_resids_to_dataset(jv, eqnum,
+					   &Z, datainfo);
 
     if (err) {
 	errbox(_("Out of memory attempting to add variable"));
@@ -6425,6 +6454,9 @@ int gui_exec_line (char *line,
 	order = atoi(cmd.param);
 	err = vecm_simple(order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
 			  cmd.opt, outprn);
+	if (!err) {
+	    err = maybe_save_vecm(&cmd, &Z, datainfo, prn);
+	}
 	break;
 
     default:

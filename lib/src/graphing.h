@@ -192,6 +192,8 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 int gretl_VAR_residual_plot (const GRETL_VAR *var, 
 			     double ***pZ, DATAINFO *pdinfo);
 
+int gretl_VECM_residual_plot (JVAR *jv, double ***pZ, DATAINFO *pdinfo);
+
 int is_auto_ols_string (const char *s);
 
 int gnuplot_has_ttf (void);

@@ -30,8 +30,6 @@ typedef enum {
     J_UNREST_TREND
 } JohansenCode;
 
-typedef struct JVAR_ JVAR;
-
 struct JVAR_ {
     JohansenCode code;    /* see above */
     int *list;            /* list of endogenous and exogenous vars */
@@ -56,9 +54,10 @@ struct JVAR_ {
     gretl_matrix *Omega;  /* cross-equation variance matrix */
     gretl_matrix *A;      /* VECM coefficient matrix */
     gretl_matrix *rho;    /* restricted const or trend in EC equations */
-    gretl_matrix *uhat;   /* residuals from EC equations */
+    gretl_matrix *E;      /* residuals from EC equations */
     MODEL **models;       /* pointers to individual equation estimates */
     int err;              /* error code */
+    char *name;           /* for use in session management */
 };
 
 #define jv_T(j) (j->t2 - j->t1 + 1)
@@ -72,6 +71,9 @@ JVAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 
 int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn);
+
+void print_Johansen_test_case (JohansenCode jcode, PRN *prn);
+    
     
 #endif /* JOHANSEN_H_ */
 

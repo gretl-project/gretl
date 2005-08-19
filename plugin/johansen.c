@@ -213,48 +213,6 @@ enum {
     PRINT_BETA
 };
 
-/* VECM: print the cointegrating vectors, up to the specified
-   rank */
-
-static void print_coint_eqns (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
-{
-    char s[16];
-    int rows = gretl_matrix_rows(jv->Beta);
-    int i, j;
-    double r;
-
-    pprintf(prn, "%s\n\n", _("Cointegrating vectors"));
-
-    for (j=0; j<jv->rank; j++) {
-	sprintf(s, "CV%d", j + 1);
-	if (j == 0) {
-	    pprintf(prn, "%22s", s);
-	} else {
-	    pprintf(prn, "%13s", s);
-	}
-    }
-    pputc(prn, '\n');
-
-    for (i=0; i<rows; i++) {
-	if (i < jv->list[0]) {
-	    sprintf(s, "%s(-1)", pdinfo->varname[jv->list[i+1]]);
-	    pprintf(prn, "%-10s", s);
-	} else if (jv->code == J_REST_CONST) {
-	    pprintf(prn, "%-10s", "const");
-	} else if (jv->code == J_REST_TREND) {
-	    pprintf(prn, "%-10s", "trend");
-	}
-	for (j=0; j<jv->rank; j++) {
-	    /* re-scale */
-	    r = gretl_matrix_get(jv->Beta, j, j);
-	    pprintf(prn, "%#12.5g ", gretl_matrix_get(jv->Beta, i, j) / r);
-	}
-	pputc(prn, '\n');
-    }
-
-    pputc(prn, '\n');
-}
-
 /* for cointegration test: print cointegrating vectors or adjustments,
    either "raw" or re-scaled */
 
@@ -498,89 +456,14 @@ static int compute_omega (JVAR *jv)
     gretl_matrix_free(tmp);
 
     if (!err) {
-	jv->uhat = uhat;
 	jv->Omega = omega;
     } else {
 	gretl_matrix_free(omega);
-	gretl_matrix_free(uhat);
     }
+
+    gretl_matrix_free(uhat);
 
     return err;
-}
-
-/* VECM: print the cross-equation variance matrix */
-
-static int print_omega (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
-{
-    gretl_matrix *M;
-    char s[32];
-    int i, j;
-
-    pprintf(prn, "%s\n\n", _("Cross-equation covariance matrix"));
-
-    for (i=0; i<jv->neqns; i++) {
-	sprintf(s, "d_%s", pdinfo->varname[jv->list[i+1]]);
-	if (i == 0) {
-	    pprintf(prn, "%25s", s);
-	} else {
-	    pprintf(prn, "%13s", s);
-	}
-    }
-    pputc(prn, '\n');
-
-    for (i=0; i<jv->neqns; i++) {
-	sprintf(s, "d_%s", pdinfo->varname[jv->list[i+1]]);
-	pprintf(prn, "%-13s", s);
-	for (j=0; j<jv->neqns; j++) {
-	    pprintf(prn, "%#12.5g ", gretl_matrix_get(jv->Omega, i, j));
-	}
-	pputc(prn, '\n');
-    }
-
-    pputc(prn, '\n');
-
-    M = gretl_matrix_copy(jv->Omega);
-    if (M != NULL) {
-	pprintf(prn, "determinant = %g\n", gretl_matrix_determinant(M));
-	gretl_matrix_free(M);
-    }
-}
-
-static void print_ll_stats (JVAR *jv, PRN *prn)
-{
-    int T = jv_T(jv);
-    int n = jv->neqns;
-    int k = n * (jv->order - 1);
-    double aic, bic;
-
-    /* FIXME: is k right (in all cases)? */
-    k += (jv->code >= J_UNREST_CONST) + jv->nseas + 
-	(jv->code == J_UNREST_TREND);
-    
-    aic = (-2.0 * jv->ll + 2.0 * k * n) / T;
-    bic = (-2.0 * jv->ll + log(T) * k * n) / T;
-
-    pprintf(prn, "\nlog-likelihood = %g\n", jv->ll);
-    pprintf(prn, "AIC = %g\n", aic);
-    pprintf(prn, "BIC = %g\n", bic);
-}
-
-/* VECM: print the results of estimation */
-
-static int 
-print_vecm (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
-{
-    int i;
-
-    for (i=0; i<jv->neqns; i++) {
-	printmodel(jv->models[i], pdinfo, OPT_NONE, prn);
-    }    
-
-    print_omega(jv, pdinfo, prn);
-
-    if (!na(jv->ll)) {
-	print_ll_stats(jv, prn);
-    }
 }
 
 /* compute the EC terms and add them to the dataset, Z, so we
@@ -598,6 +481,8 @@ add_EC_terms_to_dataset (JVAR *jv, double ***pZ, DATAINFO *pdinfo)
     if (!err) {
 	for (j=0; j<jv->rank; j++) {
 	    sprintf(pdinfo->varname[v+j], "CV%d", j + 1);
+	    /* FIXME numbering */
+	    sprintf(VARLABEL(pdinfo, v+j), "cointegrating vector %d", j + 1);
 	    for (t=0; t<pdinfo->n; t++) {
 		if (t < jv->t1 || t > jv->t2) {
 		    (*pZ)[v+j][t] = NADBL;
@@ -729,46 +614,6 @@ print_beta_and_alpha (JVAR *jv, double *evals,
     return err;
 }
 
-static void print_test_case (JohansenCode jcode, PRN *prn)
-{
-    pputc(prn, '\n');
-
-    switch (jcode) {
-    case J_NO_CONST:
-	pputs(prn, "Case 1: No constant");
-	break;
-    case J_REST_CONST:
-	pputs(prn, "Case 2: Restricted constant");
-	break;
-    case J_UNREST_CONST:
-	pputs(prn, "Case 3: Unrestricted constant");
-	break;
-    case J_REST_TREND:
-	pputs(prn, "Case 4: Restricted trend, unrestricted constant");
-	break;
-    case J_UNREST_TREND:
-	pputs(prn, "Case 5: Unrestricted trend and constant");
-	break;
-    default:
-	break;
-    }
-
-    pputc(prn, '\n');
-}
-
-static char *safe_print_pval (double p, int i)
-{
-    static char pv[2][32];
-
-    if (!na(p)) {
-	sprintf(pv[i], "%6.4f", p);
-    } else {
-	strcpy(pv[i], "  NA  ");
-    }
-
-    return pv[i];
-}
-
 /* Calculate the "base" component of the log-likelihood for a VECM,
    prior to adding the component associated with the eigenvalues.
 */
@@ -795,12 +640,13 @@ static int johansen_ll_init (JVAR *jv)
 }
 
 static int 
-compute_and_print_coint_test (JVAR *jv, const double *eigvals, PRN *prn)
+compute_coint_test (JVAR *jv, const double *eigvals, PRN *prn)
 {
     int T = jv_T(jv);
     double cumeig = 0.0;
-    double *lambdamax = NULL, *trace = NULL;
-    double pval[2];
+    double *lambdamax = NULL;
+    double *trace = NULL;
+    double pvals[2];
     int h, i;
 
     if (jv->rank > 0) {
@@ -811,6 +657,7 @@ compute_and_print_coint_test (JVAR *jv, const double *eigvals, PRN *prn)
 
     trace = malloc(h * sizeof *trace);
     lambdamax = malloc(h * sizeof *lambdamax);
+
     if (trace == NULL || lambdamax == NULL) {
 	free(trace);
 	free(lambdamax);
@@ -823,22 +670,23 @@ compute_and_print_coint_test (JVAR *jv, const double *eigvals, PRN *prn)
 	trace[i] = cumeig; 
     }
 
-    print_test_case(jv->code, prn);
+    if (jv->rank == 0) {
+	/* just doing cointegration test */
+	pputc(prn, '\n');
+	print_Johansen_test_case(jv->code, prn);
+    }
 
-    /* first column shows cointegration rank under H0, 
-       second shows associated eigenvalue */
     pprintf(prn, "\n%s %s %s %s   %s  %s\n", _("Rank"), _("Eigenvalue"), 
 	    _("Trace test"), _("p-value"),
-	    _("Lmax test"), _("p-value"));
+	    _("Lmax test"), _("p-value"));	
 
     for (i=0; i<h; i++) {
 	if (!na(jv->ll)) {
 	    jv->ll += lambdamax[i] / 2.0;
 	}
-	gamma_par_asymp(trace[i], lambdamax[i], jv->code, h - i, pval);
-	pprintf(prn, "%4d%#11.5g%#11.5g [%s]%#11.5g [%s]\n", \
-		i, eigvals[i], trace[i], safe_print_pval(pval[0], 0), 
-		lambdamax[i], safe_print_pval(pval[1], 1));
+	gamma_par_asymp(trace[i], lambdamax[i], jv->code, h - i, pvals);
+	pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]%#11.5g [%6.4f]\n", \
+		i, eigvals[i], trace[i], pvals[0], lambdamax[i], pvals[1]);
     }
     pputc(prn, '\n');
 
@@ -922,7 +770,7 @@ int johansen_analysis (JVAR *jv, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     if (!err) {
 	johansen_ll_init(jv);
 
-	compute_and_print_coint_test(jv, eigvals, prn);
+	compute_coint_test(jv, eigvals, prn);
 
 	/* normalize the eigenvectors */
 	johansen_normalize(jv, TmpR);
@@ -939,13 +787,9 @@ int johansen_analysis (JVAR *jv, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 		}
 	    } else {
 		/* estimating VECM */
-		print_coint_eqns(jv, pdinfo, prn);
 		err = build_VECM_models(jv, pZ, pdinfo, prn);
 		if (!err) {
 		    err = compute_omega(jv);
-		}
-		if (!err) {
-		    print_vecm(jv, pdinfo, prn);
 		}
 	    }
 	}

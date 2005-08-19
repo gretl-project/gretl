@@ -252,6 +252,15 @@ void gretl_VAR_free_unnamed (GRETL_VAR *var)
     }
 }
 
+void gretl_VECM_free_unnamed (JVAR *jv)
+{
+    if (jv == NULL) return;
+
+    if (jv->name == NULL || *jv->name == '\0') {
+	johansen_VAR_free(jv);
+    }
+}
+
 static int
 gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z, 
 			const DATAINFO *pdinfo, gretlopt opt)
@@ -404,6 +413,33 @@ gretl_VAR_get_residual_matrix (const GRETL_VAR *var)
     return var->E;
 }
 
+const gretl_matrix *
+gretl_VECM_get_residual_matrix (JVAR *jv)
+{
+    gretl_matrix *E;
+    
+    if (jv->E != NULL) {
+	E = jv->E;
+    } else {
+	int T = jv->t2 - jv->t1 + 1;
+	int k = jv->neqns;
+	int i, t;
+
+	E = gretl_matrix_alloc(T, k);
+
+	if (E != NULL) {
+	    for (i=0; i<k; i++) {
+		for (t=0; t<T; t++) {
+		    gretl_matrix_set(E, t, i, jv->models[i]->uhat[t + jv->t1]);
+		}
+	    }
+	    jv->E = E;
+	} 
+    }
+
+    return E;
+}
+
 static int
 get_moments (const gretl_matrix *M, int row, double *skew, double *kurt)
 {
@@ -443,7 +479,9 @@ get_moments (const gretl_matrix *M, int row, double *skew, double *kurt)
     return err;
 }
 
-int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn)
+static int 
+real_VAR_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma, 
+			 PRN *prn)
 {
     gretl_matrix *S = NULL;
     gretl_matrix *V = NULL;
@@ -464,21 +502,20 @@ int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn)
     int i, j;
     int err = 0;
 
-    if (var->E == NULL) {
+    if (E == NULL) {
 	err = 1;
+	goto bailout;
     }
 
-    p = gretl_matrix_cols(var->E);
-    n = gretl_matrix_rows(var->E);
+    p = gretl_matrix_cols(E);
+    n = gretl_matrix_rows(E);
 
-    if (!err) {
-	S = gretl_matrix_copy(var->S);
-	V = gretl_vector_alloc(p);
-	C = gretl_matrix_alloc(p, p);
-	X = gretl_matrix_copy_transpose(var->E);
-	R = gretl_matrix_alloc(p, n);
-	tmp = gretl_matrix_alloc(p, p);
-    }
+    S = gretl_matrix_copy(Sigma);
+    V = gretl_vector_alloc(p);
+    C = gretl_matrix_alloc(p, p);
+    X = gretl_matrix_copy_transpose(E);
+    R = gretl_matrix_alloc(p, n);
+    tmp = gretl_matrix_alloc(p, p);
 
     if (S == NULL || V == NULL || C == NULL || X == NULL || 
 	R == NULL || tmp == NULL) {
@@ -590,6 +627,27 @@ int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn)
     return err;
 }
 
+int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn)
+{
+    return real_VAR_normality_test(var->E, var->S, prn);    
+}
+
+int gretl_VECM_normality_test (JVAR *jv, PRN *prn)
+{
+    const gretl_matrix *E;
+    int err = 0;
+
+    E = gretl_VECM_get_residual_matrix(jv);
+
+    if (E == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = real_VAR_normality_test(E, jv->Omega, prn);  
+    }
+
+    return err;
+}
+
 int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order, 
 				    double ***pZ, DATAINFO *pdinfo,
 				    PRN *prn)
@@ -619,6 +677,40 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
 			       prn);
 	gretl_model_test_print(var->models[i], 0, prn);
 	gretl_model_destroy_tests(var->models[i]);
+    }
+
+    return err;
+}
+
+int gretl_VECM_autocorrelation_test (JVAR *jv, int order, 
+				     double ***pZ, DATAINFO *pdinfo,
+				     PRN *prn)
+{
+    int i, err = 0;
+
+    for (i=0; i<jv->neqns && !err; i++) {
+	pprintf(prn, "Equation %d:\n", i + 1);
+	err = autocorr_test(jv->models[i], order, pZ, pdinfo,
+			    OPT_Q | OPT_S, prn);
+	gretl_model_test_print(jv->models[i], 0, prn);
+	gretl_model_destroy_tests(jv->models[i]);
+    }
+
+    return err;
+}
+
+int gretl_VECM_arch_test (JVAR *jv, int order, 
+			  double ***pZ, DATAINFO *pdinfo,
+			  PRN *prn)
+{
+    int i, err = 0;
+
+    for (i=0; i<jv->neqns && !err; i++) {
+	pprintf(prn, "Equation %d:\n", i + 1);
+	err = arch_test_simple(jv->models[i], order, pZ, pdinfo,
+			       prn);
+	gretl_model_test_print(jv->models[i], 0, prn);
+	gretl_model_destroy_tests(jv->models[i]);
     }
 
     return err;
@@ -674,6 +766,11 @@ int gretl_VAR_get_n_equations (const GRETL_VAR *var)
     return var->neqns;
 }
 
+int gretl_VECM_get_n_equations (const JVAR *jv)
+{
+    return jv->neqns;
+}
+
 int gretl_VAR_get_t1 (const GRETL_VAR *var)
 {
     return var->models[0]->t1;
@@ -682,6 +779,11 @@ int gretl_VAR_get_t1 (const GRETL_VAR *var)
 int gretl_VAR_get_t2 (const GRETL_VAR *var)
 {
     return var->models[0]->t2;
+}
+
+int gretl_VECM_get_t1 (const JVAR *jv)
+{
+    return jv->t1;
 }
 
 const MODEL *gretl_VAR_get_model (const GRETL_VAR *var, int i)
@@ -2662,9 +2764,11 @@ void johansen_VAR_free (JVAR *jv)
 	gretl_matrix_free(jv->Omega);
 	gretl_matrix_free(jv->A);
 	gretl_matrix_free(jv->rho);
-	gretl_matrix_free(jv->uhat);
+	gretl_matrix_free(jv->E);
 
 	destroy_VAR_models(jv->models, jv->neqns);
+
+	free(jv->name);
 
 	free(jv);
     }
@@ -2692,11 +2796,13 @@ static JVAR *johansen_VAR_new (const int *list, int rank, int order, gretlopt op
 	    jv->Beta = NULL;
 	    jv->Alpha = NULL;
 
+	    jv->name = NULL;
+
 	    /* used in VECM application */
 	    jv->Omega = NULL;
 	    jv->A = NULL; /* currently unused */
 	    jv->rho = NULL;
-	    jv->uhat = NULL;
+	    jv->E = NULL;
 	    jv->difflist = NULL;
 	    jv->biglist = NULL;
 	    jv->models = NULL;
@@ -2855,7 +2961,8 @@ static JVAR *johansen_driver (int order, int rank, const int *list,
     }
 
     if (seasonals) {
-	/* add centered seasonal dummies to list */
+	/* add centered seasonal dummies to list 
+	   FIXME these variables may already exist */
 	for (i=0; i<pdinfo->pd-1; i++) {
 	    resids.levels_list[j++] = orig_v + i;
 	    varlist[k++] = orig_v + i;
@@ -2907,12 +3014,14 @@ static JVAR *johansen_driver (int order, int rank, const int *list,
 	gretl_matrix_divide_by_scalar(jv->Svv, T);
 	gretl_matrix_divide_by_scalar(jv->Suv, T);
 
-	pprintf(prn, "%s:\n", (jv->rank > 0)? _("VECM") : _("Johansen test"));
-	pprintf(prn, "%s = %d\n", _("Number of equations"), k);
-	pprintf(prn, "%s = %d\n", _("Lag order"), order);
-	pprintf(prn, "%s: %s - %s (T = %d)\n", _("Estimation period"),
-		ntodate(stobs, resids.t1, pdinfo), 
-		ntodate(endobs, resids.t2, pdinfo), T);
+	if (jv->rank == 0) {
+	    pprintf(prn, "%s:\n", _("Johansen test"));
+	    pprintf(prn, "%s = %d\n", _("Number of equations"), k);
+	    pprintf(prn, "%s = %d\n", _("Lag order"), order);
+	    pprintf(prn, "%s: %s - %s (T = %d)\n", _("Estimation period"),
+		    ntodate(stobs, resids.t1, pdinfo), 
+		    ntodate(endobs, resids.t2, pdinfo), T);
+	}
 
 	if (opt & OPT_V) {
 	    print_johansen_sigmas(jv, prn);
@@ -2952,7 +3061,9 @@ johansen_exit:
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
 
-    dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
+    if (jv->err || !(opt & OPT_S)) {
+	dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
+    }
 
     return jv;
 }
@@ -3036,7 +3147,11 @@ JVAR *vecm (int order, int rank, const int *list,
 	return jv;
     }
 
-    jv = johansen_driver(order, rank, list, pZ, pdinfo, opt, prn);
+    jv = johansen_driver(order, rank, list, pZ, pdinfo, opt | OPT_S, prn);
+    
+    if (jv != NULL && !jv->err) {
+	gretl_VECM_print(jv, pdinfo, OPT_NONE, prn);
+    }
 
     return jv;
 }
@@ -3747,6 +3862,170 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     return 0;
 }
 
+void print_Johansen_test_case (JohansenCode jcode, PRN *prn)
+{
+    switch (jcode) {
+    case J_NO_CONST:
+	pputs(prn, "Case 1: No constant");
+	break;
+    case J_REST_CONST:
+	pputs(prn, "Case 2: Restricted constant");
+	break;
+    case J_UNREST_CONST:
+	pputs(prn, "Case 3: Unrestricted constant");
+	break;
+    case J_REST_TREND:
+	pputs(prn, "Case 4: Restricted trend, unrestricted constant");
+	break;
+    case J_UNREST_TREND:
+	pputs(prn, "Case 5: Unrestricted trend and constant");
+	break;
+    default:
+	break;
+    }
+
+    pputc(prn, '\n');
+}
+
+static void print_VECM_coint_eqns (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
+{
+    char s[16];
+    int rows = gretl_matrix_rows(jv->Beta);
+    int i, j;
+    double r;
+
+    pprintf(prn, "%s\n\n", _("Cointegrating vectors"));
+
+    for (j=0; j<jv->rank; j++) {
+	sprintf(s, "CV%d", j + 1);
+	if (j == 0) {
+	    pprintf(prn, "%22s", s);
+	} else {
+	    pprintf(prn, "%13s", s);
+	}
+    }
+    pputc(prn, '\n');
+
+    for (i=0; i<rows; i++) {
+	if (i < jv->list[0]) {
+	    sprintf(s, "%s(-1)", pdinfo->varname[jv->list[i+1]]);
+	    pprintf(prn, "%-10s", s);
+	} else if (jv->code == J_REST_CONST) {
+	    pprintf(prn, "%-10s", "const");
+	} else if (jv->code == J_REST_TREND) {
+	    pprintf(prn, "%-10s", "trend");
+	}
+	for (j=0; j<jv->rank; j++) {
+	    /* re-scale */
+	    r = gretl_matrix_get(jv->Beta, j, j);
+	    pprintf(prn, "%#12.5g ", gretl_matrix_get(jv->Beta, i, j) / r);
+	}
+	pputc(prn, '\n');
+    }
+
+    pputc(prn, '\n');
+}
+
+static int print_VECM_omega (JVAR *jv, const DATAINFO *pdinfo, PRN *prn)
+{
+    gretl_matrix *M;
+    char s[32];
+    int i, j;
+
+    pprintf(prn, "%s\n\n", _("Cross-equation covariance matrix"));
+
+    for (i=0; i<jv->neqns; i++) {
+	sprintf(s, "d_%s", pdinfo->varname[jv->list[i+1]]);
+	if (i == 0) {
+	    pprintf(prn, "%25s", s);
+	} else {
+	    pprintf(prn, "%13s", s);
+	}
+    }
+    pputc(prn, '\n');
+
+    for (i=0; i<jv->neqns; i++) {
+	sprintf(s, "d_%s", pdinfo->varname[jv->list[i+1]]);
+	pprintf(prn, "%-13s", s);
+	for (j=0; j<jv->neqns; j++) {
+	    pprintf(prn, "%#12.5g ", gretl_matrix_get(jv->Omega, i, j));
+	}
+	pputc(prn, '\n');
+    }
+
+    pputc(prn, '\n');
+
+    M = gretl_matrix_copy(jv->Omega);
+    if (M != NULL) {
+	pprintf(prn, "determinant = %g\n", gretl_matrix_determinant(M));
+	gretl_matrix_free(M);
+    }
+}
+
+static void print_VECM_ll_stats (JVAR *jv, PRN *prn)
+{
+    int T = jv_T(jv);
+    int n = jv->neqns;
+    int k = n * (jv->order - 1);
+    double aic, bic;
+
+    /* FIXME: is k right (in all cases)? */
+    k += (jv->code >= J_UNREST_CONST) + jv->nseas + 
+	(jv->code == J_UNREST_TREND);
+    
+    aic = (-2.0 * jv->ll + 2.0 * k * n) / T;
+    bic = (-2.0 * jv->ll + log(T) * k * n) / T;
+
+    pprintf(prn, "%s = %g\n", _("log-likelihood"), jv->ll);
+    pprintf(prn, "%s = %g\n", _("AIC"), aic);
+    pprintf(prn, "%s = %g\n", _("BIC"), bic);
+}
+
+/**
+ * gretl_VECM_print:
+ * @jv: pointer to JVAR (VECM) struct.
+ * @pdinfo: dataset information.
+ * @opt: unused at present.
+ * @prn: pointer to printing struct.
+ *
+ * Prints the models in @jv, along with system-wide statistics.
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
+int gretl_VECM_print (JVAR *jv, const DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+{
+    char stobs[OBSLEN], endobs[OBSLEN];
+    int i, err = 0;
+
+    pprintf(prn, "%s:\n", _("VECM"));
+    pprintf(prn, "%s = %d\n", _("Number of equations"), jv->neqns);
+    pprintf(prn, "%s = %d\n", _("Lag order"), jv->order);
+    pprintf(prn, "%s = %d\n", _("Cointegration rank"), jv->rank);
+    pprintf(prn, "%s: %s - %s (T = %d)\n", _("Estimation period"),
+	    ntodate(stobs, jv->t1, pdinfo), 
+	    ntodate(endobs, jv->t2, pdinfo), jv->t2 - jv->t1 + 1);
+
+    print_Johansen_test_case(jv->code, prn); 
+    pputc(prn, '\n');
+
+    print_VECM_coint_eqns(jv, pdinfo, prn);
+
+    for (i=0; i<jv->neqns; i++) {
+	printmodel(jv->models[i], pdinfo, OPT_NONE, prn);
+    }    
+
+    print_VECM_omega(jv, pdinfo, prn);
+
+    if (!na(jv->ll)) {
+	print_VECM_ll_stats(jv, prn);
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
 void gretl_VAR_assign_name (GRETL_VAR *var)
 {
     static int n = 0;
@@ -3775,6 +4054,34 @@ const char *gretl_VAR_get_name (const GRETL_VAR *var)
     return var->name;
 }
 
+void gretl_VECM_assign_name (JVAR *jv)
+{
+    static int n = 0;
+
+    if (jv->name != NULL) {
+	free(jv->name);
+    }
+
+    jv->name = malloc(10);
+    if (jv->name != NULL) {
+	sprintf(jv->name, "%s %d", _("VECM"), ++n);
+    }
+}
+
+void gretl_VECM_assign_specific_name (JVAR *jv, const char *name)
+{
+    if (jv->name != NULL) {
+	free(jv->name);
+    }
+
+    jv->name = gretl_strdup(name);
+}
+
+const char *gretl_VECM_get_name (const JVAR *jv)
+{
+    return jv->name;
+}
+
 int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 				     double ***pZ, DATAINFO *pdinfo)
 {
@@ -3800,6 +4107,31 @@ int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
     return 0;
 }
 
+int gretl_VECM_add_resids_to_dataset (JVAR *jv, int eqnum,
+				      double ***pZ, DATAINFO *pdinfo)
+{
+    MODEL *pmod = jv->models[eqnum];
+    int i, t;
+
+    if (dataset_add_series(1, pZ, pdinfo)) return E_ALLOC;
+
+    i = pdinfo->v - 1;
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (t < pmod->t1 || t > pmod->t2) {
+	    (*pZ)[i][t] = NADBL;
+	} else {
+	    (*pZ)[i][t] = pmod->uhat[t];
+	}
+    }
+
+    sprintf(pdinfo->varname[i], "uhat%d", eqnum + 1);
+    sprintf(VARLABEL(pdinfo, i), _("residual from VECM system, equation %d"), 
+	    eqnum + 1);
+
+    return 0;
+}
+
 int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
 				    const DATAINFO *pdinfo)
 {
@@ -3807,6 +4139,18 @@ int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
 
     if (var->models != NULL && var->neqns >= 1) {
 	vmax = highest_numbered_var_in_model(var->models[0], pdinfo);
+    }
+
+    return vmax;
+}
+
+int gretl_VECM_get_highest_variable (const JVAR *jv,
+				     const DATAINFO *pdinfo)
+{
+    int vmax = 0;
+
+    if (jv->models != NULL && jv->neqns >= 1) {
+	vmax = highest_numbered_var_in_model(jv->models[0], pdinfo);
     }
 
     return vmax;

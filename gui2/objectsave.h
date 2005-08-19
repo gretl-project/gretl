@@ -26,6 +26,9 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
 int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, 
 		    PRN *prn);
 
+int maybe_save_vecm (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, 
+		     PRN *prn);
+
 int maybe_save_graph (const CMD *cmd, const char *fname, int code, PRN *prn);
 
 int save_text_buffer (PRN *prn, const char *savename, PRN *errprn);

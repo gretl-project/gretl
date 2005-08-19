@@ -279,6 +279,36 @@ int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
+int maybe_save_vecm (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    const char *savename;
+    JVAR *jv;
+    int err;
+
+    savename = gretl_cmd_get_savename(cmd);
+
+    if (*savename == 0) return 0;
+
+    jv = vecm(atoi(cmd->param), atoi(cmd->extra), cmd->list, pZ, pdinfo, 
+	      cmd->opt, NULL);
+
+    if (jv == NULL) {
+	err = E_ALLOC;
+    } else {
+	gretl_VECM_assign_specific_name(jv, savename);
+	err = try_add_vecm_to_session(jv);
+
+	if (!err) {
+	    pprintf(prn, _("%s saved\n"), savename);
+	} else {
+	    johansen_VAR_free(jv);
+	    err = E_ALLOC;
+	}
+    }
+
+    return err;
+}
+
 int maybe_save_graph (const CMD *cmd, const char *fname, int code,
 		      PRN *prn)
 {
