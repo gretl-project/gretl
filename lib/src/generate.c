@@ -2432,9 +2432,15 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     /* special cases which are not of the form "lhs=rhs" */
     if (strcmp(s, "dummy") == 0) {
-	genr.err = dummy(pZ, pdinfo, 0) == 0;
-	if (!genr.err) {
+	int di0, orig_v = pdinfo->v;
+
+	di0 = dummy(pZ, pdinfo, 0);
+	if (di0 == 0) {
+	    genr.err = 1;
+	} else if (di0 == orig_v) {
 	    strcpy(gretl_msg, _("Periodic dummy variables generated.\n"));
+	} else {
+	    strcpy(gretl_msg, _("Periodic dummy variables already present.\n"));
 	}
 	return genr.err;
     } else if (strcmp(s, "paneldum") == 0) {
@@ -4310,8 +4316,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     char vlabel[MAXLABEL];
     int vi, t, yy, pp, mm;
     int ndums, nnew = 0;
-    int orig_v = pdinfo->v;
-    int di, di0 = 0;
+    int di, di0 = pdinfo->v;
     double xx, cx, dx;
 
     if (pdinfo->structure == STACKED_CROSS_SECTION) {
@@ -4331,20 +4336,20 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     for (vi=0; vi<ndums; vi++) {
 	make_dummy_name_and_label(vi + 1, pdinfo, center, vname, vlabel);
 	di = varindex(pdinfo, vname);
-	if (di >= orig_v || strcmp(vlabel, VARLABEL(pdinfo, di))) {
+	if (di >= pdinfo->v || strcmp(vlabel, VARLABEL(pdinfo, di))) {
 	    nnew++;
-	} else if (vi == 1) {
+	} else if (vi == 0) {
 	    di0 = di;
 	} else if (di != di0 + vi) {
 	    /* dummies not consecutive: problem */
+	    di0 = pdinfo->v;
 	    nnew = ndums;
 	    break;
 	}
     }
 
-    if (nnew > 0 && nnew < ndums) {
-	fprintf(stderr, "Some but not all dummies exist already: could get messy\n");
-    } else if (nnew == 0) {
+    if (nnew == 0) {
+	/* all dummies already present */
 	return di0;
     }
 
@@ -4365,9 +4370,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 	cx = 0.0;
     }
 
-    di0 = di = orig_v;
-
-    for (vi=1; vi<=ndums; vi++) {
+    for (vi=1, di = di0; vi<=ndums; vi++, di++) {
 	make_dummy_name_and_label(vi, pdinfo, center, vname, vlabel);
 	strcpy(pdinfo->varname[di], vname);
 	strcpy(VARLABEL(pdinfo, di), vlabel);
@@ -4389,7 +4392,6 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 		(*pZ)[di][t] = dx;
 	    }
 	}
-	di++;
     }
 
     return di0;
