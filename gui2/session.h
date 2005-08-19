@@ -56,23 +56,17 @@ void remember_model (gpointer data, guint close, GtkWidget *widget);
 
 void remember_var (gpointer data, guint close, GtkWidget *widget);
 
-void remember_vecm (gpointer data, guint close, GtkWidget *widget);
-
 int model_already_saved (const MODEL *pmod);
 
 int try_add_model_to_session (MODEL *pmod);
 
 int try_add_var_to_session (GRETL_VAR *var);
 
-int try_add_vecm_to_session (JVAR *jv);
-
 void *get_session_object_by_name (const char *name, char *which);
 
 void delete_model_from_session (MODEL *pmod);
 
 void delete_var_from_session (GRETL_VAR *var);
-
-void delete_vecm_from_session (JVAR *jv);
 
 void delete_text_from_session (const char *tname);
 

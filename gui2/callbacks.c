@@ -360,14 +360,6 @@ void VAR_resid_callback (gpointer data, guint eqnum, GtkWidget *widget)
     add_var_resid(var, eqnum);
 }
 
-void VECM_resid_callback (gpointer data, guint eqnum, GtkWidget *widget)
-{
-    windata_t *mydata = (windata_t *) data; 
-    JVAR *jv = (JVAR *) mydata->data;
-
-    add_vecm_resid(jv, eqnum);
-}
-
 void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
 {
     windata_t *mydata = (windata_t *) data; 

@@ -40,9 +40,9 @@ GRETL_VAR *full_VAR (int order, const int *list,
 		     double ***pZ, DATAINFO *pdinfo,
 		     gretlopt opt, PRN *prn);
 
-JVAR *vecm (int order, int rank, const int *list, 
-	    double ***pZ, DATAINFO *pdinfo,
-	    gretlopt opt, PRN *prn);
+GRETL_VAR *vecm (int order, int rank, const int *list, 
+		 double ***pZ, DATAINFO *pdinfo,
+		 gretlopt opt, PRN *prn);
 
 int vecm_simple (int order, int rank, const int *list, 
 		 double ***pZ, DATAINFO *pdinfo,
@@ -57,9 +57,6 @@ gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2,
 const gretl_matrix *
 gretl_VAR_get_residual_matrix (const GRETL_VAR *var);
 
-const gretl_matrix *
-gretl_VECM_get_residual_matrix (JVAR *jv);
-
 int gretl_VAR_print_VCV (const GRETL_VAR *var, PRN *prn);
 
 int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order, 
@@ -70,23 +67,11 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
 			 double ***pZ, DATAINFO *pdinfo,
 			 PRN *prn);
 
-int gretl_VECM_autocorrelation_test (JVAR *jv, int order, 
-				     double ***pZ, DATAINFO *pdinfo,
-				     PRN *prn);
-
-int gretl_VECM_arch_test (JVAR *jv, int order, 
-			  double ***pZ, DATAINFO *pdinfo,
-			  PRN *prn);
-
 int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
-
-int gretl_VECM_normality_test (JVAR *jv, PRN *prn);
 
 void gretl_VAR_free (GRETL_VAR *var);
 
 void gretl_VAR_free_unnamed (GRETL_VAR *var);
-
-void gretl_VECM_free_unnamed (JVAR *jv);
 
 int coint (int order, const int *list, 
 	   double ***pZ, DATAINFO *pdinfo, 
@@ -111,9 +96,6 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
 int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		     PRN *prn);
 
-int gretl_VECM_print (JVAR *jv, const DATAINFO *pdinfo, gretlopt opt,
-		      PRN *prn);
-
 int 
 gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATAINFO *pdinfo, 
@@ -130,38 +112,21 @@ void gretl_VAR_assign_specific_name (GRETL_VAR *var, const char *name);
 
 const char *gretl_VAR_get_name (const GRETL_VAR *var);
 
-void gretl_VECM_assign_name (JVAR *jv);
-
-void gretl_VECM_assign_specific_name (JVAR *jv, const char *name);
-
-const char *gretl_VECM_get_name (const JVAR *jv);
-
 int gretl_VAR_get_variable_number (const GRETL_VAR *var, int k);
 
 int gretl_VAR_get_n_equations (const GRETL_VAR *var);
 
-int gretl_VECM_get_n_equations (const JVAR *jv);
-
 int gretl_VAR_get_t1 (const GRETL_VAR *var);
 
 int gretl_VAR_get_t2 (const GRETL_VAR *var);
-
-int gretl_VECM_get_t1 (const JVAR *jv);
 
 const MODEL *gretl_VAR_get_model (const GRETL_VAR *var, int i);
 
 int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 				     double ***pZ, DATAINFO *pdinfo);
 
-int gretl_VECM_add_resids_to_dataset (JVAR *jv, int eqnum,
-				      double ***pZ, DATAINFO *pdinfo);
-
 int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
 				    const DATAINFO *pdinfo);
-
-int gretl_VECM_get_highest_variable (const JVAR *jv,
-				     const DATAINFO *pdinfo);
-
 
 #endif /* VAR_H_ */
 

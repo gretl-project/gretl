@@ -2823,21 +2823,6 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var,
     return real_VAR_residual_plot(E, t1, pZ, pdinfo);
 }
 
-int gretl_VECM_residual_plot (JVAR *jv, double ***pZ, DATAINFO *pdinfo)
-{
-    const gretl_matrix *E;
-    int t1;
-
-    E = gretl_VECM_get_residual_matrix(jv);
-    if (E == NULL) {
-	return E_DATA;
-    }
-
-    t1 = gretl_VECM_get_t1(jv);
-
-    return real_VAR_residual_plot(E, t1, pZ, pdinfo);
-}
-
 int is_auto_ols_string (const char *s)
 {
     if (strstr(s, "automatic OLS")) return 1;

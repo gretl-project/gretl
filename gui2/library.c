@@ -835,7 +835,7 @@ void do_coint (GtkWidget *widget, gpointer p)
     selector *sr = (selector *) p;
     const char *buf = selector_list(sr);
     int action = selector_code(sr);
-    JVAR *jv = NULL;
+    GRETL_VAR *jvar = NULL;
     PRN *prn;
     int err = 0, order = 0;
 
@@ -863,9 +863,9 @@ void do_coint (GtkWidget *widget, gpointer p)
     if (action == COINT) {
 	err = coint(order, cmd.list, &Z, datainfo, cmd.opt, prn);
     } else {
-	jv = johansen_test(order, cmd.list, &Z, datainfo, cmd.opt, prn);
-	if ((err = jv->err)) {
-	    johansen_VAR_free(jv);
+	jvar = johansen_test(order, cmd.list, &Z, datainfo, cmd.opt, prn);
+	if ((err = jvar->err)) {
+	    gretl_VAR_free(jvar);
 	}
     }
 
@@ -876,7 +876,7 @@ void do_coint (GtkWidget *widget, gpointer p)
     } 
 
     view_buffer(prn, 78, 400, _("gretl: cointegration test"), 
-		action, (action == COINT2)? jv : NULL);
+		action, (action == COINT2)? jvar : NULL);
 }
 
 static int ok_obs_in_series (int varno)
@@ -2540,6 +2540,7 @@ void do_model (GtkWidget *widget, gpointer p)
 void do_vector_model (GtkWidget *widget, gpointer p) 
 {
     selector *sr = (selector *) p; 
+    GRETL_VAR *var;
     char estimator[9];
     const char *buf;
     PRN *prn;
@@ -2583,8 +2584,6 @@ void do_vector_model (GtkWidget *widget, gpointer p)
     }    
 
     if (action == VAR) {
-	GRETL_VAR *var;
-
 	var = full_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn);
 	if (var == NULL) {
 	    err = 1;
@@ -2593,13 +2592,11 @@ void do_vector_model (GtkWidget *widget, gpointer p)
 			VAR, var);
 	}
     } else if (action == VECM) {
-	JVAR *jv;
-
-	jv = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, prn);
-	if (jv == NULL) {
+	var = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, prn);
+	if (var == NULL) {
 	    err = 1;
 	} else {
-	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, jv);
+	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, var);
 	}
     } else {
 	err = 1;
@@ -3360,7 +3357,7 @@ void add_dummies (gpointer data, guint u, GtkWidget *widget)
     }
 
     if (u == 0) {
-	err = dummy(&Z, datainfo, 0);
+	err = dummy(&Z, datainfo, 0) == 0;
     } else if (u == 1) {
 	err = panel_unit_dummies(&Z, datainfo);
     } else if (u == 2) {
@@ -3571,35 +3568,6 @@ int add_var_resid (GRETL_VAR *var, int eqnum)
 
     err = gretl_VAR_add_resids_to_dataset(var, eqnum,
 					  &Z, datainfo);
-
-    if (err) {
-	errbox(_("Out of memory attempting to add variable"));
-	return 1;
-    }
-
-    v = datainfo->v - 1;
-
-    /* give the user a chance to choose a different name */
-    varinfo_dialog(v, 0);
-
-    if (*datainfo->varname[v] == '\0') {
-	/* the user canceled */
-	dataset_drop_last_variables(1, &Z, datainfo);
-	return 0;
-    }    
-
-    populate_varlist();
-    mark_dataset_as_modified();
-
-    return 0;
-}
-
-int add_vecm_resid (JVAR *jv, int eqnum)
-{
-    int err, v;
-
-    err = gretl_VECM_add_resids_to_dataset(jv, eqnum,
-					   &Z, datainfo);
 
     if (err) {
 	errbox(_("Out of memory attempting to add variable"));
@@ -6455,7 +6423,7 @@ int gui_exec_line (char *line,
 	err = vecm_simple(order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
 			  cmd.opt, outprn);
 	if (!err) {
-	    err = maybe_save_vecm(&cmd, &Z, datainfo, prn);
+	    err = maybe_save_var(&cmd, &Z, datainfo, prn);
 	}
 	break;
 

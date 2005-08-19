@@ -30,19 +30,16 @@ typedef enum {
     J_UNREST_TREND
 } JohansenCode;
 
-struct JVAR_ {
+typedef struct JohansenInfo_ JohansenInfo;
+
+struct JohansenInfo_ {
+    int ID;               /* for identifying saved vars */
     JohansenCode code;    /* see above */
     int *list;            /* list of endogenous and exogenous vars */
     int *difflist;        /* list containing first diffs of endogenous vars */
     int *biglist;         /* list containing all regressors in each eqn */
-    int order;            /* order of VAR (order of VECM will be 1 less) */
-    int neqns;            /* number of equations = number of endogenous vars */
-    int nparam;           /* number of parameters per VECM equation */
-    int nseas;            /* number of seasonal dummy variables included */
-    int t1;               /* starting observation */
-    int t2;               /* ending observation */
     int rank;             /* if specified, chosen cointegration rank, else 0 */
-    double ll;            /* log-likelihood */
+    int seasonals;        /* = 1 if seasonal dummies included, else 0 */
     gretl_matrix *u;      /* resids, VAR in differences */
     gretl_matrix *v;      /* resids, second regressions */
     gretl_matrix *w;      /* resids, extra equation for restrictions */
@@ -51,29 +48,49 @@ struct JVAR_ {
     gretl_matrix *Suv;    /* matrix of cross-products of residuals */
     gretl_matrix *Beta;   /* matrix of eigenvectors */
     gretl_matrix *Alpha;  /* matrix of adjustments */
-    gretl_matrix *Omega;  /* cross-equation variance matrix */
-    gretl_matrix *A;      /* VECM coefficient matrix */
-    gretl_matrix *rho;    /* restricted const or trend in EC equations */
-    gretl_matrix *E;      /* residuals from EC equations */
-    MODEL **models;       /* pointers to individual equation estimates */
-    int err;              /* error code */
-    char *name;           /* for use in session management */
 };
 
-#define jv_T(j) (j->t2 - j->t1 + 1)
-#define restricted(j) (j->code == J_REST_CONST || \
-                       j->code == J_REST_TREND)
+struct GRETL_VAR_ {
+    int ci;              /* command index */
+    int err;             /* error code */
+    int neqns;           /* number of equations in system */
+    int order;           /* lag order */
+    int t1;              /* starting observation */
+    int t2;              /* ending observation */
+    int T;               /* number of observations */
+    int ifc;             /* equations include a constant (1) or not (0) */
+    int ncoeff;          /* total coefficients per equation */
+    gretl_matrix *A;     /* augmented coefficient matrix */
+    gretl_matrix *E;     /* residuals matrix */
+    gretl_matrix *C;     /* augmented Cholesky-decomposed error matrix */
+    gretl_matrix *S;     /* cross-equation variance matrix */
+    gretl_matrix *F;     /* optional forecast matrix */
+    MODEL **models;      /* pointers to individual equation estimates */
+    double *Fvals;       /* hold results of F-tests */
+    double ldet;         /* log-determinant of S */
+    double ll;           /* log-likelihood */
+    double AIC;          /* Akaike criterion */
+    double BIC;          /* Bayesian criterion */
+    double LR;           /* for likelihood-ration testing */
+    JohansenInfo *jinfo; /* extra information for VECMs */
+    char *name;          /* for use in session management */
+};
+    
+#define restricted(v) (v->jinfo->code == J_REST_CONST || \
+                       v->jinfo->code == J_REST_TREND)
 
-void johansen_VAR_free (JVAR *jv);
+#define jcode(v) (v->jinfo->code)
+#define jrank(v) (v->jinfo->rank)
 
-JVAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
-		     gretlopt opt, PRN *prn);
+GRETL_VAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
+			  gretlopt opt, PRN *prn);
 
 int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn);
 
 void print_Johansen_test_case (JohansenCode jcode, PRN *prn);
-    
+
+int gretl_VECM_id (GRETL_VAR *vecm);
     
 #endif /* JOHANSEN_H_ */
 

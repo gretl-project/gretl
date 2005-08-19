@@ -253,6 +253,7 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
 int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     const char *savename;
+    int order = atoi(cmd->param);
     GRETL_VAR *var;
     int err;
 
@@ -260,7 +261,11 @@ int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     if (*savename == 0) return 0;
 
-    var = full_VAR(atoi(cmd->param), cmd->list, pZ, pdinfo, cmd->opt, NULL);
+    if (cmd->ci == VAR) {
+	var = full_VAR(order, cmd->list, pZ, pdinfo, cmd->opt, NULL);
+    } else {
+	var = vecm(order, atoi(cmd->extra), cmd->list, pZ, pdinfo, cmd->opt, NULL);
+    }
 
     if (var == NULL) {
 	err = E_ALLOC;
@@ -272,36 +277,6 @@ int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	    pprintf(prn, _("%s saved\n"), savename);
 	} else {
 	    gretl_VAR_free(var);
-	    err = E_ALLOC;
-	}
-    }
-
-    return err;
-}
-
-int maybe_save_vecm (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
-{
-    const char *savename;
-    JVAR *jv;
-    int err;
-
-    savename = gretl_cmd_get_savename(cmd);
-
-    if (*savename == 0) return 0;
-
-    jv = vecm(atoi(cmd->param), atoi(cmd->extra), cmd->list, pZ, pdinfo, 
-	      cmd->opt, NULL);
-
-    if (jv == NULL) {
-	err = E_ALLOC;
-    } else {
-	gretl_VECM_assign_specific_name(jv, savename);
-	err = try_add_vecm_to_session(jv);
-
-	if (!err) {
-	    pprintf(prn, _("%s saved\n"), savename);
-	} else {
-	    johansen_VAR_free(jv);
 	    err = E_ALLOC;
 	}
     }

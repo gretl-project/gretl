@@ -122,7 +122,7 @@ static int irf_boot_init (irfboot *boot, const GRETL_VAR *var,
 
     boot->sample = NULL;
 
-    boot->n = var->n;
+    boot->n = var->T;
     boot->neqns = var->neqns;
     boot->order = var->order;
     boot->ifc = var->ifc;

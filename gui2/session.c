@@ -76,12 +76,10 @@ struct SESSION_ {
     int nmodels;
     int ngraphs;
     int nvars;
-    int nvecms;
     int ntexts;
     MODEL **models;
     GRAPHT **graphs;
     GRETL_VAR **vars;
-    JVAR **vecms;
     GRETL_TEXT **texts;
     char *notes;
 };
@@ -217,7 +215,6 @@ static void info_popup_activated (GtkWidget *widget, gpointer data);
 static void session_delete_icon (gui_obj *gobj);
 static void open_gui_model (gui_obj *gobj);
 static void open_gui_var (gui_obj *gobj);
-static void open_gui_vecm (gui_obj *gobj);
 static void open_gui_graph (gui_obj *gobj);
 static void open_boxplot (gui_obj *gobj);
 static gboolean session_icon_click (GtkWidget *widget, 
@@ -242,10 +239,6 @@ static void print_session (const char *msg)
     fprintf(stderr, "Session contains %d VARs\n", session.nvars);
     for (i=0; i<session.nvars; i++) {
 	fprintf(stderr, " var '%s'\n", gretl_VAR_get_name(session.vars[i]));
-    }
-    fprintf(stderr, "Session contains %d VECMs\n", session.nvecms);
-    for (i=0; i<session.nvecms; i++) {
-	fprintf(stderr, " vecm '%s'\n", gretl_VECM_get_name(session.vecms[i]));
     }
     fprintf(stderr, "Session contains %d graphs\n", session.ngraphs);
     for (i=0; i<session.ngraphs; i++) {
@@ -335,18 +328,6 @@ static int look_up_var_by_name (const char *vname)
 
     for (i=0; i<session.nvars; i++) {
 	if (!strcmp(vname, gretl_VAR_get_name(session.vars[i]))) {
-	    return i;
-	}
-    }
-    return -1;
-}
-
-static int look_up_vecm_by_name (const char *vname)
-{
-    int i;
-
-    for (i=0; i<session.nvecms; i++) {
-	if (!strcmp(vname, gretl_VECM_get_name(session.vecms[i]))) {
 	    return i;
 	}
     }
@@ -490,18 +471,6 @@ static int var_already_saved (GRETL_VAR *var)
     return 0;
 }
 
-static int vecm_already_saved (JVAR *jv)
-{
-    int i;
-
-    for (i=0; i<session.nvecms; i++) {
-	if (session.vecms[i] == jv) {
-	    return 1;
-	}
-    }
-    return 0;
-}
-
 static int real_add_model_to_session (MODEL *pmod)
 {
     MODEL **models;
@@ -547,28 +516,6 @@ static int real_add_var_to_session (GRETL_VAR *var)
     /* add var icon to session display */
     if (icon_list != NULL) {
 	session_add_icon(session.vars[nv], 'v', ICON_ADD_SINGLE);
-    }    
-
-    return 0;
-}
-
-static int real_add_vecm_to_session (JVAR *jv)
-{
-    JVAR **vecms;
-    int nv = session.nvecms; 
-
-    vecms = myrealloc(session.vecms, (nv + 1) * sizeof *vecms);
-    if (vecms == NULL) {
-	return 1;
-    }
-
-    session.vecms = vecms;
-    session.vecms[nv] = jv;
-    session.nvecms += 1;
-
-    /* add vecm icon to session display */
-    if (icon_list != NULL) {
-	session_add_icon(session.vecms[nv], 'j', ICON_ADD_SINGLE);
     }    
 
     return 0;
@@ -637,13 +584,6 @@ void *get_session_object_by_name (const char *name, char *which)
 	}
     }
 
-    for (i=0; i<session.nvecms; i++) {
-	if (strcmp(name, gretl_VECM_get_name(session.vecms[i])) == 0) {
-	    *which = 'j';
-	    return session.vecms[i];
-	}
-    }
-
     for (i=0; i<session.ngraphs; i++) {
 	if (strcmp(name, (session.graphs[i])->name) == 0) {
 	    *which = 'g';
@@ -701,29 +641,6 @@ int try_add_var_to_session (GRETL_VAR *var)
     }
 
     if (real_add_var_to_session(var)) {
-	return 1;
-    }
-
-    return 0;
-}
-
-int try_add_vecm_to_session (JVAR *jv)
-{
-    int nv;
-
-    if (vecm_already_saved(jv)) {
-	return 1;
-    }
-
-    nv = look_up_vecm_by_name(gretl_VECM_get_name(jv));
-    if (nv >= 0) {
-	/* replace existing VECM of the same name */
-	johansen_VAR_free(session.vecms[nv]);
-	session.vecms[nv] = jv;
-	return 0;
-    }
-
-    if (real_add_vecm_to_session(jv)) {
 	return 1;
     }
 
@@ -788,32 +705,6 @@ void remember_var (gpointer data, guint close, GtkWidget *widget)
     } 
 }
 
-void remember_vecm (gpointer data, guint close, GtkWidget *widget)
-{
-    windata_t *vwin = (windata_t *) data;
-    JVAR *jv = (JVAR *) vwin->data;
-
-    if (jv == NULL) return;
-
-    if (vecm_already_saved(jv)) {
-	infobox(_("VECM is already saved"));
-	return;
-    }
-
-    gretl_VECM_assign_name(jv);
-
-    if (real_add_vecm_to_session(jv)) {
-	return;
-    }
-
-    session_changed(1);
-
-    /* close VECM window? */
-    if (close) {
-	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
-    } 
-}
-
 int session_changed (int set)
 {
     static int has_changed;
@@ -835,7 +726,6 @@ void session_init (void)
     session.nmodels = 0;
     session.ngraphs = 0;
     session.nvars = 0;
-    session.nvecms = 0;
     session.ntexts = 0;
     *session.name = '\0';
 
@@ -1012,14 +902,6 @@ void free_session (void)
 	session.vars = NULL;
     }
 
-    if (session.vecms) {
-	for (i=0; i<session.nvecms; i++) {
-	    johansen_VAR_free(session.vecms[i]);
-	}
-	free(session.vecms);
-	session.vecms = NULL;
-    }
-
     if (session.graphs) {
 	free(session.graphs);
 	session.graphs = NULL;
@@ -1040,7 +922,6 @@ void free_session (void)
 
     session.nmodels = 0;
     session.nvars = 0;
-    session.nvecms = 0;
     session.ngraphs = 0;
     session.ntexts = 0;
 
@@ -1070,16 +951,6 @@ int highest_numbered_variable_in_session (void)
 	    }
 	}
     }
-
-    if (session.vecms) {
-	for (i=0; i<session.nvecms; i++) {
-	    mvm = gretl_VECM_get_highest_variable(session.vecms[i],
-						  datainfo);
-	    if (mvm > vmax) {
-		vmax = mvm;
-	    }
-	}
-    }	
 
     return vmax;
 }
@@ -1559,20 +1430,7 @@ static void open_gui_var (gui_obj *gobj)
     }
 
     gretl_VAR_print(var, datainfo, OPT_NONE, prn);
-    view_buffer(prn, 78, 450, gobj->name, VAR, var);
-}
-
-static void open_gui_vecm (gui_obj *gobj)
-{ 
-    JVAR *jv = (JVAR *) gobj->data;
-    PRN *prn;
-
-    if (bufopen(&prn)) {
-	return;
-    }
-
-    gretl_VECM_print(jv, datainfo, OPT_NONE, prn);
-    view_buffer(prn, 78, 450, gobj->name, VECM, jv);
+    view_buffer(prn, 78, 450, gobj->name, var->ci, var);
 }
 
 static void open_boxplot (gui_obj *gobj)
@@ -1684,36 +1542,6 @@ static int real_delete_var_from_session (GRETL_VAR *junk)
     return 0;
 }
 
-static int real_delete_vecm_from_session (JVAR *junk)
-{
-    if (session.nvecms == 1) {
-	johansen_VAR_free(session.vecms[0]);
-    } else {
-	JVAR **ppjv;
-	int i, j;
-
-	ppjv = mymalloc((session.nvecms - 1) * sizeof *ppjv);
-	if (session.nvecms > 1 && ppjv == NULL) {
-	    return 1;
-	}
-	j = 0;
-	for (i=0; i<session.nvecms; i++) {
-	    if (session.vecms[i] != junk) {
-		ppjv[j++] = session.vecms[i];
-	    } else {
-		johansen_VAR_free(session.vecms[i]);
-	    }
-	}
-	free(session.vecms);
-	session.vecms = ppjv;
-    }
-
-    session.nvecms -= 1;
-    session_changed(1);
-
-    return 0;
-}
-
 static void gretl_text_free (GRETL_TEXT *text)
 {
     free(text->buf);
@@ -1795,9 +1623,6 @@ static int delete_session_object (gui_obj *obj)
     } else if (obj->sort == 'v') { 
 	/* it's a VAR */
 	real_delete_var_from_session(junk);
-    } else if (obj->sort == 'j') { 
-	/* it's a VECM */
-	real_delete_vecm_from_session(junk);
     } else if (obj->sort == 'g' || obj->sort == 'b') { 
 	/* it's a graph */    
 	real_delete_graph_from_session(junk);
@@ -1869,9 +1694,6 @@ static void rename_session_object (gui_obj *obj, const char *newname)
     } else if (obj->sort == 'v') { 
 	/* it's a VAR */
 	rename_session_var(obj->data, newname);
-    } if (obj->sort == 'j') { 
-	/* it's a VECM */
-	rename_session_vecm(obj->data, newname);
     } else if (obj->sort == 'g' || obj->sort == 'b') { 
 	/* it's a graph */    
 	rename_session_graph(obj->data, newname);
@@ -2190,13 +2012,6 @@ static void add_all_icons (void)
 	session_add_icon(session.vars[i], 'v', ICON_ADD_BATCH);
     }
 
-    for (i=0; i<session.nvecms; i++) {
-#ifdef SESSION_DEBUG
-	fprintf(stderr, "adding session.vecms[%d] to view\n", i);
-#endif
-	session_add_icon(session.vecms[i], 'j', ICON_ADD_BATCH);
-    }
-
     for (i=0; i<session.ngraphs; i++) {
 #ifdef SESSION_DEBUG
 	fprintf(stderr, "adding session.graphs[%d] to view\n", i);
@@ -2256,7 +2071,6 @@ static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
 	break;
     case 'v': 
     case 'x':
-    case 'j':
 	w = var_popup; 
 	break;
     case 'g': 
@@ -2330,8 +2144,6 @@ static gboolean session_icon_click (GtkWidget *widget,
 	    open_gui_model(gobj); break;
 	case 'v':
 	    open_gui_var(gobj); break;
-	case 'j':
-	    open_gui_vecm(gobj); break;
 	case 'b':
 	    open_boxplot(gobj); break;
 	case 'g':
@@ -2361,7 +2173,7 @@ static gboolean session_icon_click (GtkWidget *widget,
     if (mods & GDK_BUTTON3_MASK) {
 	if (gobj->sort == 'm' || gobj->sort == 'g' || gobj->sort == 'x' || 
 	    gobj->sort == 'd' || gobj->sort == 'i' || gobj->sort == 'q' ||
-	    gobj->sort == 'p' || gobj->sort == 'b' || gobj->sort == 'j' ||
+	    gobj->sort == 'p' || gobj->sort == 'b' || 
 	    gobj->sort == 't' || gobj->sort == 'v') {
 	    object_popup_show(gobj, (GdkEventButton *) event);
 	}
@@ -2427,8 +2239,6 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	    open_gui_model(obj);
 	} else if (obj->sort == 'v') {
 	    open_gui_var(obj);
-	} else if (obj->sort == 'j') {
-	    open_gui_vecm(obj);
 	} else if (obj->sort == 'x') {
 	    open_gui_text(obj);
 	} else if (obj->sort == 't') {
@@ -2583,7 +2393,6 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     gchar *name = NULL;
     MODEL *pmod = NULL;
     GRETL_VAR *var = NULL;
-    JVAR *jv = NULL;
     GRAPHT *graph = NULL;
     GRETL_TEXT *text = NULL;
     int icon_named = 0;
@@ -2596,10 +2405,6 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     case 'v':
 	var = (GRETL_VAR *) data;
 	name = g_strdup(gretl_VAR_get_name(var));
-	break;
-    case 'j':
-	jv = (JVAR *) data;
-	name = g_strdup(gretl_VECM_get_name(jv));
 	break;
     case 'b':
     case 'g':
@@ -2674,7 +2479,6 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     }	    
 
     else if (sort == 'v') gobj->data = var;
-    else if (sort == 'j') gobj->data = jv;
     else if (sort == 'x') gobj->data = text;
     else if (sort == 'd') gobj->data = paths.datfile;
     else if (sort == 'p') gobj->data = cmdfile;
@@ -3192,7 +2996,7 @@ static void create_gobj_icon (gui_obj *gobj, const char **xpm)
     }
 
     if (gobj->sort == 'm' || gobj->sort == 'g' ||
-	gobj->sort == 'v' || gobj->sort == 'b' || gobj->sort == 'j') { 
+	gobj->sort == 'v' || gobj->sort == 'b') { 
 	gobj->label = gtk_entry_new();
 	/* on gtk 2.0.N, the text is/was not going into the selected font */
 	gtk_entry_set_text(GTK_ENTRY(gobj->label), gobj->name);
@@ -3234,7 +3038,6 @@ static gui_obj *gui_object_new (gchar *name, int sort)
     switch (sort) {
     case 'm': xpm = model_xpm; break;
     case 'v': xpm = model_xpm; break;	
-    case 'j': xpm = model_xpm; break;	
     case 'b': xpm = boxplot_xpm; break;
     case 'g': xpm = gnuplot_xpm; break;
     case 'd': xpm = dot_sc_xpm; break;

@@ -2432,7 +2432,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     /* special cases which are not of the form "lhs=rhs" */
     if (strcmp(s, "dummy") == 0) {
-	genr.err = dummy(pZ, pdinfo, 0);
+	genr.err = dummy(pZ, pdinfo, 0) == 0;
 	if (!genr.err) {
 	    strcpy(gretl_msg, _("Periodic dummy variables generated.\n"));
 	}
@@ -4260,6 +4260,36 @@ static int n_new_dummies (const DATAINFO *pdinfo,
     return nnew;
 }
 
+static void 
+make_dummy_name_and_label (int vi, const DATAINFO *pdinfo, int center,
+			   char *vname, char *vlabel)
+{
+    if (center) {
+	sprintf(vname, "S%d", vi);
+	strcpy(vlabel, "centered periodic dummy");
+    } else if (pdinfo->pd == 4 && pdinfo->structure == TIME_SERIES) {
+	sprintf(vname, "dq%d", vi);
+	sprintf(vlabel, 
+		_("= 1 if quarter = %d, 0 otherwise"), vi);
+    } else if (pdinfo->pd == 12 && pdinfo->structure == TIME_SERIES) {
+	char mname[8];
+
+	get_month_name(mname, vi);
+	sprintf(vname, "d%s", mname);
+	sprintf(vlabel, _("= 1 if month is %s, 0 otherwise"), mname);
+    } else {
+	char dumstr[8] = "dummy_";
+	char numstr[8];
+	int len;
+
+	sprintf(numstr, "%d", vi);
+	len = strlen(numstr);
+	dumstr[8 - len] = '\0';
+	sprintf(vname, "%s%d", dumstr, vi);
+	sprintf(vlabel, _("%s = 1 if period is %d, 0 otherwise"), vname, vi);
+    }
+}
+
 /**
  * dummy:
  * @pZ: pointer to data matrix.
@@ -4267,10 +4297,11 @@ static int n_new_dummies (const DATAINFO *pdinfo,
  * @center: if non-zero, subtract the sample mean from
  * each of the generated dummies.
  *
- * Adds to the data set a set of periodic (usually seasonal)
- * dummy variables.
+ * Adds to the data set (if these variables are not already 
+ * present) a set of periodic (usually seasonal) dummy variables.
  *
- * Returns: 0 on successful completion, error code on error.
+ * Returns: the ID number of the first dummy variable on success,
+ * or 0 on error.
  */
 
 int dummy (double ***pZ, DATAINFO *pdinfo, int center)
@@ -4278,7 +4309,9 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     char vname[USER_VLEN];
     char vlabel[MAXLABEL];
     int vi, t, yy, pp, mm;
-    int newvnum, ndums, orig_v = pdinfo->v;
+    int ndums, nnew = 0;
+    int orig_v = pdinfo->v;
+    int di, di0 = 0;
     double xx, cx, dx;
 
     if (pdinfo->structure == STACKED_CROSS_SECTION) {
@@ -4291,11 +4324,33 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     }
 
     if (ndums == 1 || ndums > 99999) {
-	return E_PDWRONG;
+	strcpy(gretl_errmsg, _("This command won't work with the current periodicity"));
+	return 0;
+    }
+
+    for (vi=0; vi<ndums; vi++) {
+	make_dummy_name_and_label(vi + 1, pdinfo, center, vname, vlabel);
+	di = varindex(pdinfo, vname);
+	if (di >= orig_v || strcmp(vlabel, VARLABEL(pdinfo, di))) {
+	    nnew++;
+	} else if (vi == 1) {
+	    di0 = di;
+	} else if (di != di0 + vi) {
+	    /* dummies not consecutive: problem */
+	    nnew = ndums;
+	    break;
+	}
+    }
+
+    if (nnew > 0 && nnew < ndums) {
+	fprintf(stderr, "Some but not all dummies exist already: could get messy\n");
+    } else if (nnew == 0) {
+	return di0;
     }
 
     if (dataset_add_series(ndums, pZ, pdinfo)) {
-	return E_ALLOC;
+	strcpy(gretl_errmsg, _("Out of memory error"));
+	return 0;
     }
 
     pp = pdinfo->pd;
@@ -4310,41 +4365,10 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 	cx = 0.0;
     }
 
-    newvnum = orig_v;
+    di0 = di = orig_v;
 
     for (vi=1; vi<=ndums; vi++) {
-	int di = orig_v + vi - 1;
-
-	if (center) {
-	    sprintf(vname, "S%d", vi);
-	    strcpy(vlabel, "centered periodic dummy");
-	} else if (pdinfo->pd == 4 && pdinfo->structure == TIME_SERIES) {
-	    sprintf(vname, "dq%d", vi);
-	    sprintf(vlabel, 
-		    _("= 1 if quarter = %d, 0 otherwise"), vi);
-	} else if (pdinfo->pd == 12 && pdinfo->structure == TIME_SERIES) {
-	    char mname[8];
-
-	    get_month_name(mname, vi);
-	    sprintf(vname, "d%s", mname);
-	    sprintf(vlabel, _("= 1 if month is %s, 0 otherwise"), mname);
-	} else {
-	    char dumstr[8] = "dummy_";
-	    char numstr[8];
-	    int len;
-
-	    sprintf(numstr, "%d", vi);
-	    len = strlen(numstr);
-	    dumstr[8 - len] = '\0';
-	    sprintf(vname, "%s%d", dumstr, vi);
-	    sprintf(vlabel, _("%s = 1 if period is %d, 0 otherwise"), vname, vi);
-	}
-
-	di = varindex(pdinfo, vname);
-	if (di >= orig_v) {
-	    di = newvnum++;
-	}
-
+	make_dummy_name_and_label(vi, pdinfo, center, vname, vlabel);
 	strcpy(pdinfo->varname[di], vname);
 	strcpy(VARLABEL(pdinfo, di), vlabel);
 
@@ -4365,11 +4389,10 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 		(*pZ)[di][t] = dx;
 	    }
 	}
+	di++;
     }
 
-    dataset_drop_last_variables(ndums - (newvnum - orig_v), pZ, pdinfo);
-
-    return 0;
+    return di0;
 }
 
 /* if both == 1, generate both unit and period dummies,
