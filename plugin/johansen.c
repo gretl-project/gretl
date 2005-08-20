@@ -652,7 +652,7 @@ static int johansen_ll_init (GRETL_VAR *vecm)
     return err;
 }
 
-#define NOTYET 1
+#define NOTYET 0
 
 #if NOTYET 
 /* Johansen (1995, p. 184):
