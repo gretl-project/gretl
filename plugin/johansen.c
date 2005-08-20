@@ -652,6 +652,8 @@ static int johansen_ll_init (GRETL_VAR *vecm)
     return err;
 }
 
+#define NOTYET 1
+
 #if NOTYET 
 /* Johansen (1995, p. 184):
 
@@ -672,6 +674,7 @@ static int beta_variance (GRETL_VAR *vecm)
     gretl_matrix *LH;
     gretl_matrix *alpha;
     gretl_matrix *beta;
+    gretl_matrix *beta_c;
     gretl_matrix *c, *IB1, *IB2;
     int r = jrank(vecm);
     int n = vecm->neqns; /* ?? */
@@ -731,14 +734,24 @@ static int beta_variance (GRETL_VAR *vecm)
 
     gretl_matrix_print(c, "c", NULL);
 
+    /* try forming \beta_c = \beta (c' \beta)^{-1) ?? */
+    gretl_matrix_reuse(tmp, r, r);
+    gretl_matrix_multiply_mod(c, GRETL_MOD_TRANSPOSE,
+			     beta, GRETL_MOD_NONE,
+			     tmp);
+    gretl_invert_general_matrix(tmp);
+    beta_c = gretl_matrix_copy(vecm->jinfo->Beta);
+    gretl_matrix_multiply(beta, tmp, beta_c);
+
     IB1 = gretl_identity_matrix_new(n);
     IB2 = gretl_identity_matrix_new(n);
     LH = gretl_matrix_alloc(n, n); /* nv? */
 
     gretl_matrix_print(beta, "beta", NULL);
+    gretl_matrix_print(beta_c, "beta_c", NULL);
 
     gretl_matrix_reuse(tmp, n, n);
-    gretl_matrix_multiply_mod(beta, GRETL_MOD_NONE,
+    gretl_matrix_multiply_mod(beta_c, GRETL_MOD_NONE,
 			      c, GRETL_MOD_TRANSPOSE,
 			      tmp);
     gretl_matrix_subtract_from(IB1, tmp);
@@ -746,7 +759,7 @@ static int beta_variance (GRETL_VAR *vecm)
     gretl_matrix_print(IB1, "IB1", NULL);
 
     gretl_matrix_multiply_mod(c, GRETL_MOD_NONE,
-			      beta, GRETL_MOD_TRANSPOSE,
+			      beta_c, GRETL_MOD_TRANSPOSE,
 			      tmp);
     gretl_matrix_subtract_from(IB2, tmp);
 
