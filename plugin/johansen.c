@@ -652,6 +652,133 @@ static int johansen_ll_init (GRETL_VAR *vecm)
     return err;
 }
 
+#if NOTYET 
+/* Johansen (1995, p. 184):
+
+   T(I - \beta c')S_{11}^{-1}(I - c \beta') Kr 
+       (\alpha' \Omega^{-1} \a)^{-1}
+
+   The following is not right yet: I haven't got the normalization
+   correct, I think.
+
+*/
+
+static int beta_variance (GRETL_VAR *vecm)
+{
+    gretl_matrix *O;
+    gretl_matrix *aOa;
+    gretl_matrix *Svv;
+    gretl_matrix *tmp;
+    gretl_matrix *LH;
+    gretl_matrix *alpha;
+    gretl_matrix *beta;
+    gretl_matrix *c, *IB1, *IB2;
+    int r = jrank(vecm);
+    int n = vecm->neqns; /* ?? */
+    int i, j, err = 0;
+
+    tmp = gretl_matrix_alloc(n, n);
+    aOa = gretl_matrix_alloc(r, r);
+
+    alpha = gretl_matrix_copy(vecm->jinfo->Alpha);
+    for (i=0; i<n; i++) {
+	for (j=0; j<r; j++) {
+	    double x = gretl_matrix_get(vecm->jinfo->Beta, j, j);
+	    
+	    gretl_matrix_set(alpha, i, j, gretl_matrix_get(vecm->jinfo->Alpha, i, j) * x);
+	}
+    }
+
+    gretl_matrix_print(alpha, "alpha", NULL);
+
+    /* compute right hand inverse matrix */
+    O = gretl_matrix_copy(vecm->S);
+    gretl_invert_symmetric_matrix(O);
+
+    gretl_matrix_print(vecm->S, "jv->S", NULL);
+    gretl_matrix_print(O, "O", NULL);
+
+    gretl_matrix_reuse(tmp, r, n);
+    gretl_matrix_multiply_mod(alpha, GRETL_MOD_TRANSPOSE,
+			      O, GRETL_MOD_NONE,
+			      tmp);
+    gretl_matrix_multiply(tmp, alpha, aOa);
+    gretl_invert_symmetric_matrix(aOa);
+
+    gretl_matrix_print(aOa, "aOa", NULL);
+
+    /* compute left-hand matrix */
+    Svv = gretl_matrix_copy(vecm->jinfo->Svv);
+    gretl_invert_symmetric_matrix(Svv);
+
+    gretl_matrix_print(vecm->jinfo->Svv, "Svv", NULL);
+    gretl_matrix_print(Svv, "Svv(-1)", NULL);
+
+    beta = gretl_matrix_copy(vecm->jinfo->Beta);
+    for (i=0; i<n; i++) {
+	for (j=0; j<r; j++) {
+	    double x = gretl_matrix_get(vecm->jinfo->Beta, j, j);
+
+	    gretl_matrix_set(beta, i, j, gretl_matrix_get(vecm->jinfo->Beta, i, j) / x);
+	}
+    }
+
+    c = gretl_matrix_alloc(n, r);
+    gretl_matrix_zero(c);
+    for (i=0; i<r; i++) {
+	gretl_matrix_set(c, i, i, 1.0);
+    }
+
+    gretl_matrix_print(c, "c", NULL);
+
+    IB1 = gretl_identity_matrix_new(n);
+    IB2 = gretl_identity_matrix_new(n);
+    LH = gretl_matrix_alloc(n, n); /* nv? */
+
+    gretl_matrix_print(beta, "beta", NULL);
+
+    gretl_matrix_reuse(tmp, n, n);
+    gretl_matrix_multiply_mod(beta, GRETL_MOD_NONE,
+			      c, GRETL_MOD_TRANSPOSE,
+			      tmp);
+    gretl_matrix_subtract_from(IB1, tmp);
+
+    gretl_matrix_print(IB1, "IB1", NULL);
+
+    gretl_matrix_multiply_mod(c, GRETL_MOD_NONE,
+			      beta, GRETL_MOD_TRANSPOSE,
+			      tmp);
+    gretl_matrix_subtract_from(IB2, tmp);
+
+    gretl_matrix_print(IB2, "IB2", NULL);
+
+    gretl_matrix_multiply(Svv, IB2, tmp);
+    gretl_matrix_multiply(IB1, tmp, LH);
+
+    gretl_matrix_print(LH, "LH", NULL);
+
+    for (i=0; i<n; i++) {
+	double lh = gretl_matrix_get(LH, i, i);
+	double rh = gretl_matrix_get(aOa, 0, 0);
+
+	fprintf(stderr, "diag[%d] = %g\n", i+1, sqrt(lh * rh / vecm->T));
+    }
+    
+    gretl_matrix_free(O);
+    gretl_matrix_free(aOa);
+    gretl_matrix_free(tmp);
+    gretl_matrix_free(c);
+    gretl_matrix_free(IB1);
+    gretl_matrix_free(IB2);
+    gretl_matrix_free(Svv);
+    gretl_matrix_free(LH);
+    gretl_matrix_free(beta);
+    gretl_matrix_free(alpha);
+
+    return err;
+}
+#endif /* NOTYET */
+
 static int 
 compute_coint_test (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
 {
@@ -805,6 +932,11 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 		err = build_VECM_models(jvar, pZ, pdinfo, prn);
 		if (!err) {
 		    err = compute_omega(jvar);
+#if NOTYET
+		    /* testing */
+		    compute_alpha(jvar->jinfo, n);
+		    beta_variance(jvar);
+#endif
 		}
 	    }
 	}
