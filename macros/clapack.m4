@@ -9,9 +9,11 @@ AC_DEFUN([AM_PATH_LAPACK],
 AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is installed (optional)],
             lapack_config_prefix="$withval", lapack_config_prefix="")
 
-  if test x$lapack_config_prefix != x ; then
-     lapack_config_args="$lapack_config_args --prefix=$lapack_config_prefix"
+  if test x$lapack_config_prefix = x ; then
+     lapack_config_prefix="/usr"
   fi
+
+  lapack_config_args="$lapack_config_args --prefix=$lapack_config_prefix"
 
   if test x"${LAPACK_LIBS}" = x ; then 
      AC_MSG_CHECKING(for libg2c or libf2c)
