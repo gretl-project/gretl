@@ -157,7 +157,7 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
     return 0;
 }
 
-/* normalize the eigenvectors based on the Svv matrix */
+/* normalize the eigenvectors, based on the Svv matrix */
 
 static int johansen_normalize (JohansenInfo *jv, gretl_matrix *evecs)
 {
@@ -310,8 +310,8 @@ static int compute_alpha (JohansenInfo *jv, int n)
     return err;
 }
 
-/* For cointegration test, print the "long-run matrix," \alpha \beta'
-   in Johansen's notation or \Zeta_0 in Hamilton's.
+/* For cointegration test: print the "long-run matrix," \alpha \beta'
+   in Johansen's notation, or \Zeta_0 in Hamilton's.
 */
 
 static void print_lr_matrix (JohansenInfo *jv, gretl_matrix *Zeta_0,
@@ -485,6 +485,7 @@ add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
     if (!err) {
 	for (j=0; j<rank; j++) {
 	    sprintf(pdinfo->varname[v+j], "CV%d", j + 1);
+	    make_varname_unique(pdinfo->varname[v+j], v + j, pdinfo);
 	    sprintf(VARLABEL(pdinfo, v+j), "cointegrating vector %d from VECM %d", 
 		    j + 1, id);
 	    for (t=0; t<pdinfo->n; t++) {

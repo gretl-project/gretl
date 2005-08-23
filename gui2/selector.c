@@ -96,6 +96,8 @@ struct _selector {
 #define WANT_RADIOS(c) (c == COINT2 || c == VECM)
 
 static int default_var;
+static int want_seasonals;
+static int default_order;
 static int *xlist;
 static int *rulist;
 static int *veclist;
@@ -337,6 +339,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int which)
 void clear_selector (void)
 {
     default_var = 0;
+    default_order = 0;
 
     free(xlist);
     xlist = NULL;
@@ -1287,6 +1290,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 {
     gint i = 0, rows = 0;
     gchar numstr[8], endbit[12] = {0};
+    int order = 0;
 #ifndef OLD_GTK
     GtkTreeModel *model;
     GtkTreeIter iter;
@@ -1337,12 +1341,14 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	}
     } else if (VEC_CODE(sr->code)) {
 	GtkAdjustment *adj;
- 
+
+	/* lag order */
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[0]));
-	i = (gint) adj->value;
-	sprintf(numstr, "%d ", i);
+	order = (gint) adj->value;
+	sprintf(numstr, "%d ", order);
 	add_to_cmdlist(sr, numstr);
 	if (sr->code == VECM) {
+	    /* cointegration rank */
 	    adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[1]));
 	    i = (gint) adj->value;
 	    sprintf(numstr, "%d", i);
@@ -1534,6 +1540,16 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
 #endif
 	return TRUE;
+    }
+
+    if (!sr->error) {
+	/* record some choices as defaults */
+	if (sr->code == VECM && (sr->opts & OPT_D)) {
+	    want_seasonals = 1;
+	}
+	if (sr->code == VECM || sr->code == VAR) {
+	    default_order = order;
+	}
     }
 
     return FALSE;
@@ -1831,8 +1847,13 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
     };
     int i, nspin = (code == LAG_AND_RANK)? 2 : 1;
 
-    order = (datainfo->pd > 12)? 12 : datainfo->pd;
     ordermax = (datainfo->n < 72)? (datainfo->n / 2) : 36;
+
+    if (default_order > 0 && default_order <= ordermax) {
+	order = default_order;
+    } else {
+	order = (datainfo->pd > 12)? 12 : datainfo->pd;
+    }
 
     for (i=0; i<nspin; i++) {
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -2265,7 +2286,10 @@ build_selector_switches (selector *sr)
 	tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
 	tmp = gtk_check_button_new_with_label(_("Include centered seasonal dummies"));
-	pack_switch(tmp, sr, FALSE, FALSE, OPT_D);
+	pack_switch(tmp, sr, 
+		    want_seasonals && (datainfo->pd == 4 || datainfo->pd == 12),
+		    FALSE,
+		    OPT_D);
 	if (datainfo->pd != 4 && datainfo->pd != 12) {
 	    gtk_widget_set_sensitive(tmp, FALSE);
 	}

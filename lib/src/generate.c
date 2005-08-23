@@ -4296,6 +4296,8 @@ make_dummy_name_and_label (int vi, const DATAINFO *pdinfo, int center,
     }
 }
 
+#define DM_VERSION 0
+
 /**
  * dummy:
  * @pZ: pointer to data matrix.
@@ -4317,7 +4319,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     int vi, t, yy, pp, mm;
     int ndums, nnew = 0;
     int di, di0 = pdinfo->v;
-    double xx, cx, dx;
+    double xx, dx;
 
     if (pdinfo->structure == STACKED_CROSS_SECTION) {
 	ndums = pdinfo->n / pdinfo->pd;
@@ -4364,12 +4366,6 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 	mm *= 10;
     }
 
-    if (center) {
-	cx = 1.0 / pdinfo->pd;
-    } else {
-	cx = 0.0;
-    }
-
     for (vi=1, di = di0; vi<=ndums; vi++, di++) {
 	make_dummy_name_and_label(vi, pdinfo, center, vname, vlabel);
 	strcpy(pdinfo->varname[di], vname);
@@ -4386,12 +4382,30 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 		yy = (int) xx;
 		pp = (int) (mm * (xx - yy) + 0.5);
 		dx = (pp == vi)? 1.0 : 0.0;
-		if (center) {
-		    dx -= cx;
-		}
 		(*pZ)[di][t] = dx;
 	    }
 	}
+    }
+
+    if (center) {
+#if DM_VERSION
+	int dmax = di0 + pdinfo->pd - 1;
+	int vimax = dmax - 1;
+#else
+	double cx = 1.0 / pdinfo->pd;
+	int vimax = di0 + pdinfo->pd - 1;
+#endif
+	
+
+	for (vi=di0; vi<=vimax; vi++) {
+	    for (t=0; t<pdinfo->n; t++) {
+#if DM_VERSION
+		(*pZ)[vi][t] -= (*pZ)[dmax][t];
+#else
+		(*pZ)[vi][t] -= cx;
+#endif
+	    }
+	}	
     }
 
     return di0;
