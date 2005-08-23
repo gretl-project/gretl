@@ -309,7 +309,8 @@ char *get_src_version (void)
     FILE *fp;
     char fname[MYLEN];
     char line[MYLEN];
-    static char verstr[8];
+    static char verstr[16] = {0};
+    char *p;
     int err = 1;
 
     sprintf(fname, "%s/lib/src/version.h", SRCDIR);
@@ -317,16 +318,18 @@ char *get_src_version (void)
     if (fp == NULL) return NULL;
 
     while (fgets(line, sizeof line, fp)) {
-	if (strstr(line, "version_string")) {
-	    if (sscanf(line, "const char *version_string = \"%7[^\"]", 
-		       verstr)) {
-		err = 0;
-		break;
-	    }
+	if (sscanf(line, "#define GRETL_VERSION \"%15[^\"]", verstr)) {
+	    err = 0;
+	    break;
 	}
     }
 
     fclose(fp);
+
+    p = strstr(verstr, "cvs");
+    if (p != NULL) {
+	*p = '\0';
+    }
 
     return (err)? NULL : verstr;
 }

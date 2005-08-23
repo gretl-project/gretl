@@ -78,7 +78,7 @@ ahora Vd. tiene que instalarlo desde el código fuente. Aquí se indica cómo hacer
 <ol>
 <li><p class="in-list">Descargar el paquete de código fuente:<br>
 
-   <kbd>curl -O ftp://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.tar.bz2</kbd></p></li>
+   <kbd>curl -O http://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.tar.bz2</kbd></p></li>
 
 <li><p class="in-list">Descomprimir las fuentes:<br>
 
@@ -124,7 +124,7 @@ output regression results in LaTeX format.
 License: GPL
 Depends: gtk+2-shlibs, libxml2-shlibs, gmp-shlibs, dlcompat-shlibs, readline-shlibs, gnuplot (>= 3.8i.0-2)
 BuildDepends: gtk+2-dev, libxml2, gmp, dlcompat-dev, readline, recode (>=3.6)
-Source: ftp://ricardo.ecn.wfu.edu/pub/gretl/%n-%v.tar.bz2
+Source: http://ricardo.ecn.wfu.edu/pub/gretl/%n-%v.tar.bz2
 setCFLAGS: -Wno-long-double -g -O2
 DocFiles: README COPYING NEWS INSTALL
 ConfigureParams: --disable-png-comments --with-gmp-prefix=%p --with-readline-prefix=%p --with-libintl-prefix=%p --with-iconv-prefix=%p
