@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<head><title>Eseguire gretl via rete</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="../css-gretl.html">
+<META NAME="GENERATOR" CONTENT="GNU Emacs">
+</head>
+<body>
+
+<p>[<a href="./gretl_italiano.html">pagina principale</a>]</p>
+
+<center>
+<h1>Eseguire gretl via rete</h1>
+</center>
+
+<p>In alcuni casi può essere utile poter eseguire gretl via rete; ad
+esempio quando l'eseguibile di gretl risiede su un server in un laboratorio
+informatico e gli utenti accedono al programma attraverso dei PC su cui
+gretl non è installato.</p>
+
+<p>In questo caso, il meccanismo normale usato dalla versione Windows
+di gretl per leggere le informazioni di configurazione, ossia leggerle
+dal registro di Windows sulla macchina locale, non funzionerà. Poiché
+gretl non è installato sulla macchina locale, non si troveranno le voci
+di registro necessarie (e i valori predefiniti non saranno appropriati).</p>
+
+<p>Per risolvere questo problema, gretl (dalla versione 1.2.1) offre un'opzione
+di configurazione speciale: se esiste un file di configurazione chiamato
+<b>gretlnet.txt</b> nella stessa cartella che ospita l'eseguibile di gretl,
+<b>gretlw32.exe</b>, verrà letto questo file al posto del registro locale.
+Le opzioni di configurazione contenute in <b>gretlnet.txt</b> prevarranno
+su quelle del registro locale e verranno visualizzate come "fisse" per l'utente
+(le voci corrispondenti nella finestra di dialogo delle preferenze di gretl
+appariranno non modificabili). Per fare in modo che gretl trovi il file
+di configurazione speciale, occorre invocare il programma sulla macchina client
+indicando il percorso completo del file eseguibile installato, ad esempio
+<kbd>L:\userdata\gretl\gretlw32.exe</kbd>.  </p>
+
+<p>L'amministratore di rete che prevede di usare questa funzionalità
+deve scegliere quali tra le opzioni di gretl devono essere preimpostate
+centralmente e quali possono essere lasciate all'utente locale (queste
+ultime <i>non</i> dovranno comparire in <b>gretlnet.txt</b>).  Tipicamente
+le impostazioni dei percorsi dovrebbero essere impostate centralmente, mentre
+le opzioni di tipo booleano possono essere lasciate al controllo dell'utente
+(si noti che, a differenza dei percorsi, le opzioni booleane saranno impostate
+con valori predefiniti appropriati anche se non possono essere lette dal
+registro locale all'avvio del programma).</p>
+
+<p>Di seguito, ecco un esempio commentato di <b>gretlnet.txt</b>.  Il formato di
+questo file testuale dovrebbe essere auto-evidente: le righe che iniziano con un
+carattere cancelletto (<kbd>#</kbd>) sono commenti, mentre le vere righe di
+configurazione hanno la forma <kbd>opzione = valore</kbd> (è obbligatorio che a
+destra e a sinistra del segno uguale ci sia esattamente uno spazio). L'esempio
+che segue si basa su queste ipotesi: </p>
+
+<ul>
+  <li><p class="in-list">gretl è installato su un server che è mappato come
+  disco <kbd>L</kbd> dal punto di vista dei PC client.</p>
+  <li><p class="in-list">Il disco fisso primario sulle macchine client è chiamato
+  <kbd>C</kbd>.</p>
+  <li><p class="in-list">gretl è stato installato sul server usando il percorso
+  di installazione predefinito <kbd>c:\userdata\gretl</kbd>.</p>
+  <li><p class="in-list">Gli utenti dei PC client hanno il permesso di scrittura
+  su una cartella chiamata <kbd>c:\userdata</kbd> sulla macchina locale.</p>
+ </ul>
+
+<p>È possibile modificare questo file con qualunque editor di testo (ad esempio
+il notepad di Windows). Se la propria installazione differisce in merito al nome
+del disco di rete sul server, occorre sostituire <kbd>L:</kbd>; se invece gretl
+è stato installato in <kbd>c:\Program Files</kbd> sul server, occorre sostituire
+<kbd>L:\userdata</kbd> con <kbd>L:\Program Files</kbd>.  I valori che contengono
+spazi, ad esempio "Program Files" verranno gestiti correttamente, senza bisogno
+di racchiuderli tra virgolette. È possibile scaricare una copia del file di
+esempio (formattato con terminatori di fine riga DOS) qui:
+<a href="./gretlnet.txt">gretlnet.txt</a>.</p>
+  
+
+<pre>  
+# gretlnet.txt: gretl network config file for Windows
+
+# Main gretl directory on server (users do not need write permission)
+gretldir = L:\userdata\gretl
+
+# User's gretl directory (users must have permission to write
+# to this dir -- it will be created if it does not exist)
+userdir = C:\userdata\gretl
+
+# Command to launch gnuplot (required)
+gnuplot = L:\userdata\gretl\wgnuplot.exe
+
+# Command to launch GNU R (optional)
+Rcommand = RGui.exe
+
+# Command to view DVI files (optional)
+viewdvi = windvi.exe
+
+# Calculator (optional)
+calculator = calc.exe
+
+# path to x12arima (optional)
+x12a = L:\userdata\x12arima\x12a.exe
+
+# path to tramo (optional)
+tramo = L:\userdata\tramo\tramo.exe
+
+# gretl database directory (write permission not needed)
+binbase = L:\userdata\gretl\db
+
+# RATS data directory (optional, write permission not needed)
+ratsbase = L:\userdata\rats
+
+# Database server name (should be left alone)
+dbhost = ricardo.ecn.wfu.edu
+
+# HTTP proxy (ipnumber:port)
+# Change "useproxy" to "true" and set this if you're behind a firewall
+dbproxy = 
+
+# Use HTTP proxy (see previous entry)
+useproxy = false
+
+# Fixed (monospaced) font
+Fixed_font = Courier New 10
+
+# Menu font
+App_font = Tahoma 8
+
+# PNG graph font
+Png_font = verdana 8
+
+# Boolean options below can probably be left to default.
+# The default values are shown, commented out; you may 
+# uncomment and set these if you wish.
+
+# Expert mode (no warnings)?
+# expert = false
+
+# Tell user about gretl updates?
+# updater = false
+
+# Show gretl toolbar?
+# toolbar = true
+
+# Use locale setting for decimal point?
+# lcnumeric = true
+
+# Use current working directory as default?
+# usecwd = false
+
+# Use ".dat" as default datafile suffix?
+# olddat = false
+
+# Use QR decomposition?
+# useqr = false
+
+# Emulate Windows look?
+# wimp = false
+
+</pre>
+
+
+ 
+
+</body>
+
+
