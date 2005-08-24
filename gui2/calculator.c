@@ -46,7 +46,9 @@ struct _GretlChild {
 };
 
 typedef struct {
+    int code;
     GtkWidget *entry[NTESTENTRY];
+    GtkWidget *combo[2];
     GtkWidget *book;
     GtkWidget *check;
     GtkWidget *graph;
@@ -71,6 +73,15 @@ enum {
     CHISQ_PVAL,
     F_PVAL,
     GAMMA_PVAL
+};
+
+enum {
+    ONE_MEAN,
+    ONE_VARIANCE,
+    ONE_PROPN,
+    TWO_MEANS,
+    TWO_VARIANCES,
+    TWO_PROPNS
 };
 
 static int printnum (char *dest, const char *s, int d) 
@@ -498,42 +509,39 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
 static void h_test (GtkWidget *w, gpointer data)
 {
-    test_t **test = (test_t **) data;
-    int i, j, n1, n2, grf = 0;
+    test_t *test = (test_t *) data;
+    int j, n1, n2, grf;
     double x[5], sderr, ts, pv;
     const gchar *tmp;
     PRN *prn;
 
-    i = gtk_notebook_get_current_page(GTK_NOTEBOOK(test[0]->book));
-
     if (bufopen(&prn)) return;
 
-    if (GTK_TOGGLE_BUTTON(test[i]->graph)->active) 
-	grf = 1;
+    grf = GTK_TOGGLE_BUTTON(test->graph)->active;
 
     x[4] = 0.0;
 
-    switch (i) {
+    switch (test->code) {
 
-    case 0: /* mean */
+    case ONE_MEAN:
 	for (j=0; j<2; j++) {
 	    /* get sample mean and std dev */
-	    tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[j]));
+	    tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[j]));
 	    x[j] = getval(tmp, prn, (j==1)? 1 : 0);
 	    if (na(x[j])) return;
 	}
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[3]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[3]));
 	x[2] = getval(tmp, prn, 0);
 	if (na(x[2])) return;
-	sderr = x[1]/sqrt((double) n1);
+	sderr = x[1] / sqrt((double) n1);
 	ts = (x[0] - x[2])/sderr;
 	pprintf(prn, _("Null hypothesis: population mean = %g\n"), x[2]);
 	pprintf(prn, _("Sample size: n = %d\n"), n1);
 	pprintf(prn, _("Sample mean = %g, std. deviation = %g\n"), 
 		x[0], x[1]);
-	if (GTK_TOGGLE_BUTTON(test[i]->check)->active) {
+	if (GTK_TOGGLE_BUTTON(test->check)->active) {
 	    pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"), 
 		    x[0], x[2], sderr, ts);
 	    pv = normal_pvalue_2(ts);
@@ -548,13 +556,13 @@ static void h_test (GtkWidget *w, gpointer data)
 	}
 	break;
 
-    case 1: /* variance */
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[0]));
+    case ONE_VARIANCE:
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
 	x[0] = getval(tmp, prn, 1);
 	if (na(x[0])) return;
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[1]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
 	x[1] = getval(tmp, prn, 1);
 	if (na(x[1])) return;
 	ts = (n1 - 1) * x[0] / x[1];
@@ -563,21 +571,22 @@ static void h_test (GtkWidget *w, gpointer data)
 	pprintf(prn, _("Sample variance = %g\n"), x[0]);
 	pprintf(prn, _("Test statistic: chi-square(%d) = %d * %g/%g = %g\n"), 
 		n1-1, n1-1, x[0], x[1], ts);
-	if (x[0] > x[1])
-	    pv = chisq(ts, n1-1);
-	else
-	    pv = 1.0 - chisq(ts, n1-1);
+	if (x[0] > x[1]) {
+	    pv = chisq(ts, n1 - 1);
+	} else {
+	    pv = 1.0 - chisq(ts, n1 -1);
+	}
 	print_pv(prn, 2.0 * pv, pv);
-	if (grf) htest_graph(2, ts, n1-1, 0);
+	if (grf) htest_graph(2, ts, n1 - 1, 0);
 	break;
 
-    case 2: /* proportion */
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[0]));
+    case ONE_PROPN: /* proportion */
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
 	x[0] = getval(tmp, prn, 1);
 	if (na(x[0])) return;
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[1]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
 	x[1] = getval(tmp, prn, 1);
 	if (na(x[1])) return;
 	if (n1 * x[1] < 5.0 || n1 * (1.0 - x[1]) < 5.0) {
@@ -598,24 +607,24 @@ static void h_test (GtkWidget *w, gpointer data)
 	if (grf) htest_graph(0, ts, 0, 0);
 	break;
 
-    case 3: /* two means */
+    case TWO_MEANS:
 	for (j=0; j<2; j++) {
 	    /* mean and std dev, sample 1 */
-	    tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[j]));
+	    tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[j]));
 	    x[j] = getval(tmp, prn, (j==1)? 1 : 0);
 	    if (na(x[j])) return;
 	}
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
 	for (j=2; j<4; j++) {
 	    /* mean and std dev, sample 2 */
-	    tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[j+1]));
+	    tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[j+1]));
 	    x[j] = getval(tmp, prn, (j==3)? 1 : 0);
 	    if (na(x[j])) return;
 	}
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[5]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[5]));
 	if ((n2 = getint(tmp, prn)) == -1) return;
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[6]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[6]));
 	x[4] = getval(tmp, prn, 0);
 	if (na(x[4])) return;
 	pprintf(prn, _("Null hypothesis: Difference of means = %g\n"), x[4]);
@@ -625,13 +634,13 @@ static void h_test (GtkWidget *w, gpointer data)
 		n2, x[2], x[3]);
 	/* are we assuming a common variance? */
 	j = 0;
-	if (GTK_TOGGLE_BUTTON(test[i]->check)->active) j = 1;
+	if (GTK_TOGGLE_BUTTON(test->check)->active) j = 1;
 	if (n1 < 30 || n2 < 30) j = 2;
 	if (j > 0) {
 	    ts = ((n1-1)*x[1]*x[1] + (n2-1)*x[3]*x[3])/(n1 + n2 - 2);
-	    sderr = sqrt(ts/n1 + ts/n2);
+	    sderr = sqrt(ts / n1 + ts /n2);
 	} else {
-	    sderr = sqrt(x[1]*x[1]/n1 + x[3]*x[3]/n2);
+	    sderr = sqrt(x[1] * x[1] / n1 + x[3] * x[3] / n2);
 	}
 	ts = (x[0] - x[2] - x[4]) / sderr;
 	if (j) {
@@ -639,14 +648,14 @@ static void h_test (GtkWidget *w, gpointer data)
 		pprintf(prn, _("Small samples: assuming normality and common "
 			       "variance\n"));
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"),
-		    n1+n2-2, x[0], x[2], sderr, ts);
+		    n1 + n2 - 2, x[0], x[2], sderr, ts);
 	    if (ts > 0) {
-		pv = t_pvalue_2(ts, n1+n2-2);
+		pv = t_pvalue_2(ts, n1 + n2 - 2);
 	    } else {
-		pv = t_pvalue_2(-ts, n1+n2-2);
+		pv = t_pvalue_2(-ts, n1 + n2 - 2);
 	    }
 	    print_pv(prn, pv, 0.5 * pv);
-	    if (grf) htest_graph(1, ts, n1+n2-2, 0);
+	    if (grf) htest_graph(1, ts, n1 + n2 - 2, 0);
 	} else {
 	    if (x[4] > 0.0) {
 		pprintf(prn, _("Test statistic: z = (%g - %g - %g)/%g = %g\n"),
@@ -664,48 +673,48 @@ static void h_test (GtkWidget *w, gpointer data)
 	}
 	break;
 
-    case 4: /* two variances */
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[0]));
+    case TWO_VARIANCES:
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
 	x[0] = getval(tmp, prn, 1);
 	if (na(x[0])) return;
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[1]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
 	x[1] = getval(tmp, prn, 1);
 	if (na(x[1])) return;
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[3]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[3]));
 	if ((n2 = getint(tmp, prn)) == -1) return;
 	pprintf(prn, _("Null hypothesis: The population variances are "
 		       "equal\n"));
 	pprintf(prn, _("Sample 1:\n n = %d, variance = %g\n"), n1, x[0]);
 	pprintf(prn, _("Sample 2:\n n = %d, variance = %g\n"), n2, x[1]);
 	if (x[0] > x[1]) {
-	    ts = x[0]/x[1];
+	    ts = x[0] / x[1];
 	    pprintf(prn, _("Test statistic: F(%d, %d) = %g\n"), 
-		    n1-1, n2-1, ts);
-	    pv = fdist(ts, n1-1, n2-1);
+		    n1 - 1, n2 - 1, ts);
+	    pv = fdist(ts, n1 - 1, n2 - 1);
 	} else {
 	    ts = x[1]/x[0];
 	    pprintf(prn, _("Test statistic: F(%d, %d) = %g\n"), 
-		    n2-1, n1-1, ts);
-	    pv = fdist(ts, n2-1, n1-1);
+		    n2 - 1, n1 - 1, ts);
+	    pv = fdist(ts, n2 - 1, n1 - 1);
 	}
 	print_pv(prn, 2.0 * pv, pv);
-	if (grf) htest_graph(3, ts, n1-1, n2-1);
+	if (grf) htest_graph(3, ts, n1 - 1, n2 - 1);
 	break;
 
-    case 5: /* two proportions */
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[0]));
+    case TWO_PROPNS: /* two proportions */
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
 	x[0] = getval(tmp, prn, 1);
 	if (na(x[0])) return;
 
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[1]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
 	x[1] = getval(tmp, prn, 1);
 	if (na(x[1])) return;
 
-	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[3]));
+	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[3]));
 	if ((n2 = getint(tmp, prn)) == -1) return;
 
 	pprintf(prn, _("Null hypothesis: the population proportions are "
@@ -728,6 +737,15 @@ static void h_test (GtkWidget *w, gpointer data)
 
     view_buffer(prn, 78, 300, _("gretl: hypothesis test"), H_TEST,
                 NULL);
+}
+
+static void h_test_global (GtkWidget *w, gpointer data)
+{
+    test_t **test = (test_t **) data;
+    int i;
+
+    i = gtk_notebook_get_current_page(GTK_NOTEBOOK(test[0]->book));
+    h_test(NULL, test[i]);
 }
 
 static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len, 
@@ -905,60 +923,193 @@ static void trash_test (GtkWidget *w, gpointer data)
     free(test);
 }
 
-static void add_test_entry (GtkWidget *tbl, gint *tbl_len, 
-			    const gchar *label, test_t **test, int code)
+static void 
+populate_stats (GtkWidget *w, gpointer p)
 {
-    GtkWidget *tempwid;
+    test_t *test = g_object_get_data(G_OBJECT(p), "test");
+    int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
+    int v, n = datainfo->t2 - datainfo->t1 + 1;
+    const gchar *vname;
+    char numstr[16];
+    double x;
+
+    vname = gtk_entry_get_text(GTK_ENTRY(w));
+
+    if (*vname == 0) {
+	return;
+    }
+
+    v = varindex(datainfo, vname);
+    if (v >= datainfo->v) {
+	return;
+    }
+
+    if (test->code == ONE_MEAN || test->code == TWO_MEANS) {
+	x = gretl_mean(datainfo->t1, datainfo->t2, Z[v]);
+	sprintf(numstr, "%.10g", x);
+	gtk_entry_set_text(GTK_ENTRY(test->entry[pos]), numstr);
+
+	x = gretl_stddev(datainfo->t1, datainfo->t2, Z[v]);
+	sprintf(numstr, "%.10g", x);
+	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 1]), numstr);
+
+	sprintf(numstr, "%d", n);
+	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 2]), numstr);
+    } else if (test->code == ONE_VARIANCE || test->code == TWO_VARIANCES) {
+	x = gretl_variance(datainfo->t1, datainfo->t2, Z[v]);
+	sprintf(numstr, "%.10g", x);
+	gtk_entry_set_text(GTK_ENTRY(test->entry[pos]), numstr);
+
+	sprintf(numstr, "%d", n);
+	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 1]), numstr);
+    } 
+}
+
+static void add_vars_to_combo (GtkWidget *w, int pos)
+{
+    GList *vlist = NULL;
+    int i, vmin = (pos > 0)? 2 : 1;
+
+    for (i=vmin; i<datainfo->v; i++) {
+	if (!is_hidden_variable(i, datainfo)) {
+	    vlist = g_list_append(vlist, datainfo->varname[i]);
+	}
+    }
+
+    gtk_combo_set_popdown_strings(GTK_COMBO(w), vlist);
+}
+
+static void switch_combo_ok (GtkWidget *b, gpointer p)
+{
+    test_t *test = g_object_get_data(G_OBJECT(p), "test");
+    int use_combo = GTK_TOGGLE_BUTTON(b)->active;
+    int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
+    int i, maxent = 0;
+
+    gtk_widget_set_sensitive(GTK_WIDGET(p), use_combo);
+
+    if (test->code == ONE_MEAN || test->code == TWO_MEANS) {
+	maxent = pos + 3;
+    } else if (test->code == ONE_VARIANCE || test->code == TWO_VARIANCES) {
+	maxent = pos + 2;
+    }
+
+    for (i=pos; i<maxent && test->entry[i] != NULL; i++) {
+	gtk_editable_set_editable(GTK_EDITABLE(test->entry[i]), !use_combo);
+    }
+
+    if (use_combo) {
+	populate_stats(GTK_COMBO(p)->entry, p);
+    }
+}
+
+static void add_test_combo (GtkWidget *tbl, gint *tbl_len, 
+			    test_t *test, int pos)
+{
+    GtkWidget *button, *tmp;
 
     *tbl_len += 1;
-    gtk_table_resize (GTK_TABLE (tbl), *tbl_len, 2);
-    tempwid = gtk_label_new (label);
-    gtk_misc_set_alignment (GTK_MISC (tempwid), 1, 0.5);
-    gtk_table_attach_defaults (GTK_TABLE (tbl), 
-			       tempwid, 0, 1, *tbl_len - 1, *tbl_len);
-    gtk_widget_show (tempwid);
-    tempwid = gtk_entry_new ();
-    gtk_table_attach_defaults (GTK_TABLE (tbl), 
-			       tempwid, 1, 2, *tbl_len - 1, *tbl_len);
-    gtk_widget_show (tempwid);
-    test[code]->entry[*tbl_len - 2] = tempwid;
+    gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
+    button = gtk_check_button_new_with_label(_("Use variable from dataset"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      button, 0, 1, *tbl_len - 1, *tbl_len);
+    gtk_widget_show(button);
 
-    g_signal_connect(G_OBJECT(tempwid), "activate", 
+    tmp = gtk_combo_new();
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      tmp, 1, 2, *tbl_len - 1, *tbl_len);
+    gtk_widget_show(tmp);
+    g_object_set_data(G_OBJECT(tmp), "test", test);
+    g_object_set_data(G_OBJECT(tmp), "pos", GINT_TO_POINTER(pos));
+
+    if (pos > 0) {
+	test->combo[1] = tmp;
+    } else {
+	test->combo[0] = tmp;
+    }
+
+    add_vars_to_combo(tmp, pos);
+    gtk_widget_set_sensitive(tmp, FALSE);
+    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(tmp)->entry), FALSE);
+
+    g_signal_connect(GTK_ENTRY(GTK_COMBO(tmp)->entry), "changed", 
+		     G_CALLBACK(populate_stats), tmp);
+    g_signal_connect(GTK_ENTRY(GTK_COMBO(tmp)->entry), "activate", 
+		     G_CALLBACK(h_test), test);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(switch_combo_ok), tmp);
+}
+
+static void add_test_entry (GtkWidget *tbl, gint *tbl_len, 
+			    const gchar *label, test_t *test, int i)
+{
+    GtkWidget *tmp;
+
+    *tbl_len += 1;
+    gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
+    tmp = gtk_label_new(label);
+    gtk_misc_set_alignment(GTK_MISC(tmp), 1, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      tmp, 0, 1, *tbl_len - 1, *tbl_len);
+    gtk_widget_show(tmp);
+    tmp = gtk_entry_new();
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      tmp, 1, 2, *tbl_len - 1, *tbl_len);
+    gtk_widget_show(tmp);
+    test->entry[i] = tmp;
+
+    g_signal_connect(G_OBJECT(tmp), "activate", 
 		     G_CALLBACK(h_test), test);
 }
 
 static void add_test_label (GtkWidget *tbl, gint *tbl_len, 
 			    const gchar *label)
 {
-    GtkWidget *tempwid;
+    GtkWidget *tmp;
 
     *tbl_len += 1;
-    gtk_table_resize (GTK_TABLE (tbl), *tbl_len, 2);
-    tempwid = gtk_label_new (label);
-    gtk_misc_set_alignment (GTK_MISC (tempwid), 0, 0.5);
-    gtk_table_attach_defaults (GTK_TABLE (tbl), 
-			       tempwid, 0, 2, *tbl_len - 1, *tbl_len);
-    gtk_widget_show (tempwid);
+    gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
+    tmp = gtk_label_new(label);
+    gtk_misc_set_alignment(GTK_MISC(tmp), 0, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      tmp, 0, 2, *tbl_len - 1, *tbl_len);
+    gtk_widget_show(tmp);
 }
 
 static void add_test_check (GtkWidget *tbl, gint *tbl_len, 
-			    const gchar *label, test_t **test, int code)
+			    const gchar *label, test_t *test)
 {
     GtkWidget *tempwid;
 
     *tbl_len += 1;
-    gtk_table_resize (GTK_TABLE (tbl), *tbl_len, 2);
-    tempwid = gtk_check_button_new_with_label (label);
-    gtk_table_attach_defaults (GTK_TABLE (tbl), 
-			       tempwid, 0, 2, *tbl_len - 1, *tbl_len);
-    gtk_widget_show (tempwid);
-    test[code]->check = tempwid;
+    gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
+    tempwid = gtk_check_button_new_with_label(label);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      tempwid, 0, 2, *tbl_len - 1, *tbl_len);
+    gtk_widget_show(tempwid);
+    test->check = tempwid;
 }
 
-static void make_test_tab (GtkWidget *notebook, int code, test_t **test) 
+static int n_non_hidden_vars (void)
+{
+    int i, nv = 0;
+
+    if (datainfo != NULL) {
+	for (i=1; i<datainfo->v; i++) {
+	    if (!is_hidden_variable(i, datainfo)) {
+		nv++;
+	    }
+	}
+    }
+
+    return nv;
+}
+
+static void make_test_tab (GtkWidget *notebook, int code, test_t *test) 
 {
     GtkWidget *tempwid, *box, *tbl;
-    gint tbl_len;
+    int nv = n_non_hidden_vars();
+    gint i, tbl_len;
     const gchar *titles[] = {
 	N_("mean"), 
 	N_("variance"), 
@@ -968,70 +1119,88 @@ static void make_test_tab (GtkWidget *notebook, int code, test_t **test)
 	N_("2 proportions")
     };
    
-    box = gtk_vbox_new (FALSE, 0);
-    gtk_container_set_border_width (GTK_CONTAINER (box), 10);
-    gtk_widget_show (box);
+    box = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(box), 10);
+    gtk_widget_show(box);
 
-    tempwid = gtk_label_new (_(titles[code]));
-    gtk_widget_show (tempwid);
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
+    tempwid = gtk_label_new(_(titles[code]));
+    gtk_widget_show(tempwid);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, tempwid);   
 
     tbl_len = 1;
-    tbl = gtk_table_new (tbl_len, 2, FALSE);
-    gtk_table_set_row_spacings (GTK_TABLE (tbl), 5);
-    gtk_table_set_col_spacings (GTK_TABLE (tbl), 5);
-    gtk_box_pack_start (GTK_BOX (box), tbl, FALSE, FALSE, 0);
-    gtk_widget_show (tbl);
+    tbl = gtk_table_new(tbl_len, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
+    gtk_widget_show(tbl);
+
+    test->combo[0] = test->combo[1] = NULL;
+
+    for (i=0; i<NTESTENTRY; i++) {
+	test->entry[i] = NULL;
+    }
+
+    if ((code == ONE_MEAN || code == ONE_VARIANCE) && nv > 0) {
+	add_test_combo(tbl, &tbl_len, test, 0);
+    } else if ((code == TWO_MEANS || code == TWO_VARIANCES) && nv > 1) {
+	add_test_combo(tbl, &tbl_len, test, 0);
+    }
    
     switch (code) {
 
-    case 0: /* mean */
-	add_test_entry(tbl, &tbl_len, _("sample mean"), test, code);
-	add_test_entry(tbl, &tbl_len, _("std. deviation"), test, code);
-	add_test_entry(tbl, &tbl_len, _("sample size"), test, code);
-	add_test_entry(tbl, &tbl_len, _("H0: mean ="), test, code);
+    case ONE_MEAN: 
+	add_test_entry(tbl, &tbl_len, _("sample mean"), test, 0);
+	add_test_entry(tbl, &tbl_len, _("std. deviation"), test, 1);
+	add_test_entry(tbl, &tbl_len, _("sample size"), test, 2);
+	add_test_entry(tbl, &tbl_len, _("H0: mean ="), test, 3);
 	add_test_check(tbl, &tbl_len, _("Assume standard deviation is "
-		       "population value"), test, code);
+		       "population value"), test);
 	break;
 
-    case 1: /* variance */
-	add_test_entry(tbl, &tbl_len, _("sample variance"), test, code);
-	add_test_entry(tbl, &tbl_len, _("sample size"), test, code);
-	add_test_entry(tbl, &tbl_len, _("H0: variance ="), test, code);
+    case ONE_VARIANCE: 
+	add_test_entry(tbl, &tbl_len, _("sample variance"), test, 0);
+	add_test_entry(tbl, &tbl_len, _("sample size"), test, 1);
+	add_test_entry(tbl, &tbl_len, _("H0: variance ="), test, 2);
 	break;
 
-    case 2: /* proportion */
-	add_test_entry(tbl, &tbl_len, _("sample proportion"), test, code);
-	add_test_entry(tbl, &tbl_len, _("sample size"), test, code);
-	add_test_entry(tbl, &tbl_len, _("H0: proportion ="), test, code);
+    case ONE_PROPN: /* proportion */
+	add_test_entry(tbl, &tbl_len, _("sample proportion"), test, 0);
+	add_test_entry(tbl, &tbl_len, _("sample size"), test, 1);
+	add_test_entry(tbl, &tbl_len, _("H0: proportion ="), test, 2);
 	break;
 
-    case 3: /* two means */
-	add_test_entry(tbl, &tbl_len, _("mean of sample 1"), test, code);
-	add_test_entry(tbl, &tbl_len, _("std. deviation, sample 1"), test, code);
-	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, code);
-	add_test_entry(tbl, &tbl_len, _("mean of sample 2"), test, code);
-	add_test_entry(tbl, &tbl_len, _("std. deviation, sample 2"), test, code);
-	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, code);
-	add_test_entry(tbl, &tbl_len, _("H0: Difference of means ="), test, code);
-	gtk_entry_set_text(GTK_ENTRY(test[3]->entry[6]), "0");
+    case TWO_MEANS:
+	add_test_entry(tbl, &tbl_len, _("mean of sample 1"), test, 0);
+	add_test_entry(tbl, &tbl_len, _("std. deviation, sample 1"), test, 1);
+	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, 2);
+	if (nv > 1) {
+	    add_test_combo(tbl, &tbl_len, test, 3);
+	}
+	add_test_entry(tbl, &tbl_len, _("mean of sample 2"), test, 3);
+	add_test_entry(tbl, &tbl_len, _("std. deviation, sample 2"), test, 4);
+	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, 5);
+	add_test_entry(tbl, &tbl_len, _("H0: Difference of means ="), test, 6);
+	gtk_entry_set_text(GTK_ENTRY(test->entry[6]), "0");
 	add_test_check(tbl, &tbl_len, _("Assume common population standard "
-		       "deviation"), test, code);
+		       "deviation"), test);
 	break;
 
-    case 4: /* two variances */
-	add_test_entry(tbl, &tbl_len, _("variance of sample 1"), test, code);
-	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, code);
-	add_test_entry(tbl, &tbl_len, _("variance of sample 2"), test, code);
-	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, code);
+    case TWO_VARIANCES:
+	add_test_entry(tbl, &tbl_len, _("variance of sample 1"), test, 0);
+	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, 1);
+	if (nv > 1) {
+	    add_test_combo(tbl, &tbl_len, test, 2);
+	}	
+	add_test_entry(tbl, &tbl_len, _("variance of sample 2"), test, 2);
+	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, 3);
 	add_test_label(tbl, &tbl_len, _("H0: Ratio of variances = 1"));
 	break;
 
-    case 5: /* two proportions */
-	add_test_entry(tbl, &tbl_len, _("proportion, sample 1"), test, code);
-	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, code);
-	add_test_entry(tbl, &tbl_len, _("proportion, sample 2"), test, code);
-	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, code);
+    case TWO_PROPNS:
+	add_test_entry(tbl, &tbl_len, _("proportion, sample 1"), test, 0);
+	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, 1);
+	add_test_entry(tbl, &tbl_len, _("proportion, sample 2"), test, 2);
+	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, 3);
 	add_test_label(tbl, &tbl_len, _("H0: Difference of proportions = 0"));
 	break;
 
@@ -1046,10 +1215,10 @@ static void make_test_tab (GtkWidget *notebook, int code, test_t **test)
 						"distribution"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), tempwid, 0, 2, 
 			      tbl_len - 1, tbl_len);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (tempwid), TRUE);
-    gtk_widget_show (tempwid);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tempwid), TRUE);
+    gtk_widget_show(tempwid);
 
-    test[code]->graph = tempwid; 
+    test->graph = tempwid; 
 }
 
 static void gretl_child_destroy (GtkWidget *w, gpointer data)
@@ -1153,7 +1322,8 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	    test[i] = mymalloc(sizeof **test);
 	    if (test[i] == NULL) return;
 	    test[i]->book = notebook;
-	    make_test_tab(notebook, i, test);
+	    test[i]->code = i;
+	    make_test_tab(notebook, i, test[i]);
 	}
     } else {
 	for (i=0; i<NLOOKUPS; i++) {
@@ -1176,7 +1346,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
 		      (code == CALC_PVAL)? G_CALLBACK(get_pvalue) :
 		      (code == CALC_DIST)? G_CALLBACK(get_critical) :
-		      G_CALLBACK(h_test),
+		      G_CALLBACK(h_test_global),
 		      statp);
 
     gtk_widget_show (tempwid);
