@@ -711,7 +711,9 @@ int session_changed (int set)
     int orig;
 
     orig = has_changed;
-    has_changed = set;
+    if (set >= 0) {
+	has_changed = set;
+    }
 
     return orig;
 }
@@ -969,6 +971,7 @@ void close_session (void)
 
     session_menu_state(FALSE);
     session_file_open = 0;
+    *scriptfile = '\0';
 
     if (iconview != NULL) {
 	gtk_widget_destroy(iconview);

@@ -475,7 +475,7 @@ int check_specific_command (char *s)
 {
     int err;
 
-    /* cmd is global */
+    /* "cmd" is global */
     err = parse_command_line(s, &cmd, &Z, datainfo); 
     if (err) {
 	gui_errmsg(err);
@@ -1462,9 +1462,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
     update_model_tests(vwin);
 
-    /* FIXME: model_command_init ?? */
-
-    if (lib_cmd_init() || stack_model(pmod)) {
+    if (check_lib_command() || lib_cmd_init() || stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -2520,7 +2518,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	gretl_command_strcat(cmd.param);
     }
 
-    if (lib_cmd_init() || stack_model(pmod)) {
+    if (check_lib_command() || lib_cmd_init() || stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }

@@ -1182,6 +1182,28 @@ void verify_open_session (gpointer userdata)
     do_open_session(NULL, userdata);
 }
 
+static int session_overwrite_check (const char *fname)
+{
+    int ret = 0;
+
+    if (strcmp(fname, scriptfile)) {
+	FILE *fp = fopen(fname, "r");
+
+	if (fp != NULL) {
+	    int resp;
+
+	    fclose(fp);
+	    resp = yes_no_dialog("gretl", _("There is already a session file of this name.\n"
+					    "OK to overwrite it?"), 0);
+	    if (resp == GRETL_NO) {
+		ret = 1;
+	    }
+	}
+    } 
+
+    return ret;
+}
+
 void save_session (char *fname) 
 {
     char msg[MAXLEN], savedir[MAXLEN], fname2[MAXLEN];
@@ -1189,6 +1211,10 @@ void save_session (char *fname)
     int spos;
     FILE *fp;
     PRN *prn;
+
+    if (session_overwrite_check(fname)) {
+	return;
+    }
 
     *savedir = '\0';
 
@@ -1317,6 +1343,7 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     } else if (vwin->role == EDIT_NOTES) {
 	mark_content_saved(vwin);
 	session_changed(1);
+	set_replay_off();
     }
 }
 

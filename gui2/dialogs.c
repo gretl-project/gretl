@@ -240,7 +240,7 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 #endif
 
     if (!expert && !replaying() && 
-	(session_changed(0) || (work_done() && !session_is_saved()))) {
+	(session_changed(-1) || (work_done() && !session_is_saved()))) {
 
 	resp = yes_no_dialog ("gretl", 
 			      (session_file_is_open()) ?
