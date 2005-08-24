@@ -2932,13 +2932,13 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	    dumitem.callback = NULL;
 	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<Separator>";
-	    dumitem.path = g_strdup(_(mpath[0]));
+	    dumitem.path = g_strdup_printf(_("%s"), mpath[0]);
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	    g_free(dumitem.path);
 
 	    /* add menu branch */
 	    dumitem.item_type = "<Branch>";
-	    dumitem.path = g_strdup(_(mpath[1]));
+	    dumitem.path = g_strdup_printf(_("%s"), mpath[1]);
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	    g_free(dumitem.path);
 
