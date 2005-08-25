@@ -788,6 +788,7 @@ static int beta_variance (GRETL_VAR *vecm)
     gretl_matrix_free(LH);
     gretl_matrix_free(beta);
     gretl_matrix_free(alpha);
+    gretl_matrix_free(beta_c);
 
     return err;
 }

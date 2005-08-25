@@ -644,20 +644,6 @@ static void add_to_right_callback (GtkWidget *w, selector *sr)
     }
 }
 
-static gint
-dialog_right_click (GtkWidget *widget, GdkEventButton *event, 
-		    selector *sr)
-{
-    GdkWindow *topwin;
-    GdkModifierType mods;
-
-    topwin = gtk_widget_get_parent_window(sr->varlist);
-    gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
-    if (mods & GDK_BUTTON3_MASK)  
-	add_to_right_callback(NULL, sr);
-    return TRUE;
-}
-
 static void set_vars_from_main (selector *sr)
 {
     GList *mylist = GTK_CLIST(mdata->listbox)->selection;

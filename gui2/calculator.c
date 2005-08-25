@@ -1032,9 +1032,9 @@ static void add_test_combo (GtkWidget *tbl, gint *tbl_len,
     gtk_widget_set_sensitive(tmp, FALSE);
     gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(tmp)->entry), FALSE);
 
-    g_signal_connect(GTK_ENTRY(GTK_COMBO(tmp)->entry), "changed", 
+    g_signal_connect(G_OBJECT(GTK_ENTRY(GTK_COMBO(tmp)->entry)), "changed", 
 		     G_CALLBACK(populate_stats), tmp);
-    g_signal_connect(GTK_ENTRY(GTK_COMBO(tmp)->entry), "activate", 
+    g_signal_connect(G_OBJECT(GTK_ENTRY(GTK_COMBO(tmp)->entry)), "activate", 
 		     G_CALLBACK(h_test), test);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(switch_combo_ok), tmp);
