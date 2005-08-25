@@ -17,6 +17,9 @@
  *
  */
 
+/* A collaborative effort between Allin Cottrell and Riccardo "Jack"
+   Lucchetti */
+
 #include "libgretl.h"
 #include "pvalues.h"
 #include "gretl_matrix.h"
@@ -384,7 +387,7 @@ get_real_zeta_0 (gretl_matrix *C, gretl_matrix *rho, int n)
    p. 638, or equation at top of p. 645 in restricted const case.
 */
 
-static int compute_omega (GRETL_VAR *vecm)
+static int compute_omega (GRETL_VAR *vecm, gretl_matrix *beta)
 {
     gretl_matrix *Z0 = NULL;
     gretl_matrix *tmp = NULL;
@@ -412,8 +415,8 @@ static int compute_omega (GRETL_VAR *vecm)
 	}
     }
 
-    gretl_matrix_multiply_mod(vecm->jinfo->Beta, GRETL_MOD_NONE,
-			      vecm->jinfo->Beta, GRETL_MOD_TRANSPOSE,
+    gretl_matrix_multiply_mod(beta, GRETL_MOD_NONE,
+			      beta, GRETL_MOD_TRANSPOSE,
 			      tmp);
 
     /* \Zeta_0 = \Sigma_{uv} A A' (Hamilton eq. 20.2.12) */
@@ -653,17 +656,76 @@ static int johansen_ll_init (GRETL_VAR *vecm)
     return err;
 }
 
-#define NOTYET 1
+/*
+   renormalize \beta such that its uppermost submatrix of
+   size rank * rank is the identity matrix:
+
+   \beta' = [ I | *free elements* ]
+*/
+
+static int phillips_normalize_beta (GRETL_VAR *vecm)
+{
+    gretl_matrix *c = NULL;
+    gretl_matrix *beta_c = NULL;
+
+    int r = jrank(vecm);
+    int n = gretl_matrix_rows(vecm->jinfo->Beta);
+    int i, j, err = 0;
+
+    double x;
+
+    c = gretl_matrix_alloc(r, r);
+    beta_c = gretl_matrix_alloc(n, r);
+    if (c == NULL || beta_c == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=0; i<r; i++) {
+        for (j=0; j<r; j++) {
+	    x = gretl_matrix_get(vecm->jinfo->Beta, i, j);
+	    gretl_matrix_set(c, i, j, x);
+	}
+    }
+
+    /* form \beta_c = \beta c^{-1} */
+    gretl_invert_general_matrix(c);
+    gretl_matrix_multiply(vecm->jinfo->Beta, c, beta_c);
+
+    /* correct rounding error: set true zeros in \beta_c */
+    for (i=0; i<r; i++) {
+	for (j=0; j<r; j++) {
+	    if (i == j) {
+		gretl_matrix_set(beta_c, i, j, 1.0);
+	    } else {
+		gretl_matrix_set(beta_c, i, j, 0.0);
+	    }
+	}
+    }
+
+#if JDEBUG
+    gretl_matrix_print(vecm->jinfo->Beta, "original beta", NULL);
+    gretl_matrix_print(beta_c, "beta_c = beta * c^{-1}", NULL);
+#endif
+
+    gretl_matrix_copy_values(vecm->jinfo->Beta, beta_c);
+
+ bailout:
+    
+    gretl_matrix_free(c);
+    gretl_matrix_free(beta_c);
+
+    return err;
+}
+
+/* compute the variance of the estimator of \beta, after doing
+   Phillips normalization */
 
 static int beta_variance (GRETL_VAR *vecm)
 {
     gretl_matrix *tmp = NULL;
     gretl_matrix *O = NULL;
     gretl_matrix *aOa = NULL;
-    gretl_matrix *c = NULL;
-    gretl_matrix *cinv = NULL;
-    gretl_matrix *alpha_c = NULL;
-    gretl_matrix *beta_c = NULL;
     gretl_matrix *HSH = NULL;
     gretl_matrix *varbeta = NULL;
 
@@ -678,59 +740,26 @@ static int beta_variance (GRETL_VAR *vecm)
     tmp = gretl_matrix_alloc(r, nv);
     O = gretl_matrix_copy(vecm->S);
     aOa = gretl_matrix_alloc(r, r);
-
-    c = gretl_matrix_alloc(r, r);
-    beta_c = gretl_matrix_alloc(n, r);
-    alpha_c = gretl_matrix_alloc(nv, r);
-
     HSH = gretl_matrix_alloc(n - r, n - r);
 
-    if (tmp == NULL || O == NULL || aOa == NULL || 
-	c == NULL || alpha_c == NULL || beta_c == NULL ||
-	HSH == NULL) {
+    if (tmp == NULL || O == NULL || aOa == NULL || HSH == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    /* get the eigenvalues and proceed with Phillips normalization */
-
-    for (i=0; i<r; i++) {
-        for (j=0; j<r; j++) {
-	    x = gretl_matrix_get(vecm->jinfo->Beta, i, j);
-	    gretl_matrix_set(c, i, j, x);
-	}
-    }
-
-    gretl_matrix_print(c, "c", NULL);
-
-    /* form \beta_c = \beta c^{-1} */
-    cinv = gretl_matrix_copy(c);
-    if (cinv == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-    gretl_invert_general_matrix(cinv);
-    gretl_matrix_print(cinv, "cinv", NULL);
-    gretl_matrix_multiply(vecm->jinfo->Beta, cinv, beta_c);
-    gretl_matrix_print(vecm->jinfo->Beta, "beta", NULL);
-    gretl_matrix_print(beta_c, "beta_c = beta * c^{-1}", NULL);
-
-    /* form \alpha_c = \alpha c' */
-    gretl_matrix_multiply_mod(vecm->jinfo->Alpha, GRETL_MOD_NONE,
-			      c, GRETL_MOD_TRANSPOSE,
-			      alpha_c);
-    gretl_matrix_print(vecm->jinfo->Alpha, "alpha", NULL);
-    gretl_matrix_print(alpha_c, "alpha_c = alpha * c'", NULL);
-
-    /* compute right-hand matrix */
+    /* compute right-hand matrix, \alpha' \Omega^{-1} \alpha */
     gretl_invert_symmetric_matrix(O);
-    gretl_matrix_print(vecm->S, "vecm->S", NULL);
-    gretl_matrix_print(O, "O = inverse(vecm->S)", NULL);
-    gretl_matrix_multiply_mod(alpha_c, GRETL_MOD_TRANSPOSE,
+    gretl_matrix_multiply_mod(vecm->jinfo->Alpha, GRETL_MOD_TRANSPOSE,
 			      O, GRETL_MOD_NONE,
 			      tmp);
-    gretl_matrix_multiply(tmp, alpha_c, aOa);
+    gretl_matrix_multiply(tmp, vecm->jinfo->Alpha, aOa);
+
+#if JDEBUG
+    gretl_matrix_print(vecm->S, "vecm->S", NULL);
+    gretl_matrix_print(O, "O = inverse(vecm->S)", NULL);
+    gretl_matrix_print(vecm->jinfo->Alpha, "alpha_c", NULL);
     gretl_matrix_print(aOa, "aOa = alpha_c' * O * alpha_c", NULL);
+#endif
 
     /* compute H'SH (just keep the south-east corner) */
     for (i=r; i<n; i++) {
@@ -740,8 +769,10 @@ static int beta_variance (GRETL_VAR *vecm)
 	}
     }
 
+#if JDEBUG
     gretl_matrix_print(vecm->jinfo->Svv, "full Svv", NULL);
     gretl_matrix_print(HSH, "HSH = subset(Svv)", NULL);
+#endif
 
     varbeta = gretl_matrix_kronecker_product(aOa, HSH);
     if (varbeta == NULL) {
@@ -751,7 +782,6 @@ static int beta_variance (GRETL_VAR *vecm)
 
     gretl_invert_symmetric_matrix(varbeta);
     gretl_matrix_divide_by_scalar(varbeta, vecm->T);
-    gretl_matrix_print(varbeta, "varbeta", NULL);
 
     vecm->jinfo->Bse = gretl_matrix_alloc(n - r, r);
     if (vecm->jinfo->Bse == NULL) {
@@ -769,17 +799,16 @@ static int beta_variance (GRETL_VAR *vecm)
 	}
     }
 
-    gretl_matrix_print(vecm->jinfo->Bse, "Bse", NULL);
+#if JDEBUG
+    gretl_matrix_print(varbeta, "varbeta", NULL);
+    gretl_matrix_print(vecm->jinfo->Bse, "se(beta)", NULL);
+#endif
 
  bailout:
 
     gretl_matrix_free(tmp);
     gretl_matrix_free(O);
     gretl_matrix_free(aOa);
-    gretl_matrix_free(c);
-    gretl_matrix_free(cinv);
-    gretl_matrix_free(alpha_c);
-    gretl_matrix_free(beta_c);
     gretl_matrix_free(HSH);
     gretl_matrix_free(varbeta);
 
@@ -923,12 +952,12 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 
 	/* normalize the eigenvectors */
 	johansen_normalize(jvar->jinfo, TmpR);
-	jvar->jinfo->Beta = TmpR;
-	TmpR = NULL;
 
 	if (!err) {
 	    if (rank == 0) {
 		/* just running cointegration test */
+		jvar->jinfo->Beta = TmpR;
+		TmpR = NULL;
 		err = compute_alpha(jvar->jinfo, n);
 		if (!err) {
 		    print_beta_and_alpha(jvar->jinfo, eigvals, n, pdinfo, prn);
@@ -936,14 +965,24 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 		}
 	    } else {
 		/* estimating VECM */
-		err = build_VECM_models(jvar, pZ, pdinfo, prn);
+		jvar->jinfo->Beta = gretl_matrix_copy(TmpR);
+		if (jvar->jinfo->Beta == NULL) {
+		    err = E_ALLOC;
+		}
 		if (!err) {
-		    err = compute_omega(jvar);
-#if NOTYET
-		    /* testing */
-		    compute_alpha(jvar->jinfo, n);
-		    beta_variance(jvar);
-#endif
+		    err = phillips_normalize_beta(jvar); 
+		}
+		if (!err) {
+		    err = build_VECM_models(jvar, pZ, pdinfo, prn);
+		}
+		if (!err) {
+		    err = compute_omega(jvar, TmpR);
+		}
+		if (!err) {
+		    err = compute_alpha(jvar->jinfo, n);
+		}
+		if (!err) {
+		    err = beta_variance(jvar);
 		}
 	    }
 	}

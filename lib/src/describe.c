@@ -627,6 +627,7 @@ double dh_root_b1_to_z1 (double rb1, double n)
 
 /**
  * dh_b2_to_z2:
+ * @b1: skewness.
  * @b2: kurtosis.
  * @n: number of observations.
  *

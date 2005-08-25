@@ -1623,8 +1623,8 @@ static GRETL_VAR *real_var (int order, const int *inlist,
  * @list: specification for the first model in the set.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @opts: if OPT_R, use robust VCV,
- *        if OPT_V, print impulse responses.
+ * @opt: if includes OPT_R, use robust VCV;
+ *       if includes OPT_V, print impulse responses.
  * @prn: gretl printing struct.
  *
  * Estimate a vector auto-regression (VAR) and print the results.
@@ -1654,8 +1654,8 @@ int simple_VAR (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
  * @list: specification for the first model in the set.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @opts: if OPT_R, use robust VCV,
- *        if OPT_V, print impulse responses.
+ * @opt: if includes OPT_R, use robust VCV;
+ *       if includes OPT_V, print impulse responses.
  * @prn: gretl printing struct.
  *
  * Estimate a vector auto-regression (VAR), print and save
@@ -3593,9 +3593,10 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
     char s[16];
     int rows = gretl_matrix_rows(jv->Beta);
     int i, j;
-    double r;
+    double se;
 
-    pprintf(prn, "%s\n\n", _("Cointegrating vectors"));
+    pprintf(prn, "%s (%s)\n\n", _("Cointegrating vectors"),
+	    _("standard errors in parentheses"));
 
     for (j=0; j<jv->rank; j++) {
 	sprintf(s, "CV%d", j + 1);
@@ -3616,10 +3617,21 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
 	} else if (jv->code == J_REST_TREND) {
 	    pprintf(prn, "%-10s", "trend");
 	}
+	/* coefficients */
 	for (j=0; j<jv->rank; j++) {
-	    /* re-scale */
-	    r = gretl_matrix_get(jv->Beta, j, j);
-	    pprintf(prn, "%#12.5g ", gretl_matrix_get(jv->Beta, i, j) / r);
+	    pprintf(prn, "%#12.5g ", gretl_matrix_get(jv->Beta, i, j));
+	}
+	pputc(prn, '\n');
+	/* standard errors */
+	pprintf(prn, "%11s", " ");
+	for (j=0; j<jv->rank; j++) {
+	    if (i < jv->rank) {
+		se = 0.0;
+	    } else {
+		se = gretl_matrix_get(jv->Bse, i - jv->rank, j);
+	    }
+	    sprintf(s, "(%#.5g)", se);
+	    pprintf(prn, "%12s ", s);
 	}
 	pputc(prn, '\n');
     }
@@ -3684,7 +3696,7 @@ print_VECM_ll_stats (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 
     pprintf(prn, "%s = %g\n", _("log-likelihood"), vecm->ll);
     pprintf(prn, "%s = %g\n", _("AIC"), vecm->AIC);
-    pprintf(prn, "%s = %g\n", _("BIC"), vecm->AIC);
+    pprintf(prn, "%s = %g\n", _("BIC"), vecm->BIC);
 }
 
 static int 

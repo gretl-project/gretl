@@ -1598,10 +1598,10 @@ int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 
 /**
  * gretl_symmetric_matrix_rcond:
- * @a: matrix to examine.
+ * @m: matrix to examine.
  * 
  * Estimates the reciprocal condition number of the real symmetric
- * positive definite matrix @a (in the 1-norm), using the lapack 
+ * positive definite matrix @m (in the 1-norm), using the lapack 
  * functions %dpotrf and %dpocon.
  *
  * Returns: the estimate, or #NADBL on failure to allocate memory.
@@ -3251,7 +3251,6 @@ int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x)
  *
  * Allocates an array of @n gretl matrix pointers. On successful
  * allocation of the array, each element is initialized to %NULL.
- * @x, which should already be allocated to the correct size.
  *
  * Returns: pointer on sucess, %NULL on failure.
  */

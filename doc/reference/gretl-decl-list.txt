@@ -7,6 +7,7 @@ gretl_command_number
 gretl_command_word
 gretl_command_complete_next
 gretl_command_complete
+gretl_command_hash_cleanup
 </SECTION>
 
 <SECTION>
@@ -85,7 +86,6 @@ lsq
 estimate_rho
 lad
 arma
-arma_x12
 logistic_model
 tobit_model
 poisson_model
@@ -99,6 +99,7 @@ hsk_func
 whites_test
 ar_func
 arch_test
+arch_test_simple
 arch_model
 makevcv
 augment_regression_list
@@ -174,6 +175,8 @@ gretl_corrmx
 means_test
 vars_test
 matrix_print_corr
+dh_root_b1_to_z1
+dh_b2_to_z2
 doornik_chisq
 mahalanobis_distance
 get_mahal_distances
@@ -214,10 +217,10 @@ MAX_PLOT_LINES
 GPT_LINE
 PLOT_LABEL_TEXT_LEN
 gp_just_codes
-GPT_LABEL
-GPT_SPEC
 DistCode
 PlotType
+GPT_LABEL
+GPT_SPEC
 frequency_plot_code
 set_png_output
 get_png_output
@@ -226,6 +229,7 @@ get_gretl_emf_term_line
 get_timevar_name
 gp_justification_string
 gnuplot_init
+plot_type_from_string
 gnuplot_make_graph
 gnuplot
 multi_scatters
@@ -239,9 +243,11 @@ get_termstr
 rmplot
 hurstplot
 plot_fcast_errs
-gretl_var_plot_impulse_response
+gretl_VAR_plot_impulse_response
+gretl_VAR_residual_plot
 is_auto_ols_string
 gnuplot_has_ttf
+gnuplot_has_pdf
 gnuplot_has_specified_colors
 set_gnuplot_pallette
 get_gnuplot_pallette
@@ -325,29 +331,38 @@ safe_print_line
 
 <SECTION>
 <FILE>var</FILE>
+AdfCode
 var_max_order
-simple_var
-full_var
-gretl_var_get_forecast_matrix
-gretl_var_free
-gretl_var_free_unnamed
+simple_VAR
+full_VAR
+vecm
+vecm_simple
+gretl_VAR_get_forecast_matrix
+gretl_VAR_get_residual_matrix
+gretl_VAR_print_VCV
+gretl_VAR_autocorrelation_test
+gretl_VAR_arch_test
+gretl_VAR_normality_test
+gretl_VAR_free
+gretl_VAR_free_unnamed
 coint
 adf_test
 kpss_test
-johansen_test
 default_VAR_horizon
-gretl_var_get_impulse_responses
-gretl_var_print
-gretl_var_assign_name
-gretl_var_assign_specific_name
-gretl_var_get_name
-gretl_var_get_variable_number
-gretl_var_get_n_equations
-gretl_var_get_t1
-gretl_var_get_t2
-gretl_var_get_model
-gretl_var_add_resids_to_dataset
-gretl_var_get_highest_variable
+gretl_VAR_get_impulse_response
+gretl_VAR_print
+gretl_VAR_print_impulse_response
+gretl_VAR_print_fcast_decomp
+gretl_VAR_assign_name
+gretl_VAR_assign_specific_name
+gretl_VAR_get_name
+gretl_VAR_get_variable_number
+gretl_VAR_get_n_equations
+gretl_VAR_get_t1
+gretl_VAR_get_t2
+gretl_VAR_get_model
+gretl_VAR_add_resids_to_dataset
+gretl_VAR_get_highest_variable
 </SECTION>
 
 <SECTION>
@@ -580,6 +595,7 @@ text_print_model_confints
 print_freq
 printcorr
 print_smpl
+print_contemp_covariance_matrix
 outcovmx
 print_obs_marker
 printdata
@@ -631,7 +647,9 @@ gretl_vector_alloc
 gretl_column_vector_alloc
 gretl_vector_free
 gretl_matrix_alloc
+gretl_matrix_reuse
 gretl_packed_matrix_alloc
+gretl_identity_matrix_new
 gretl_matrix_copy
 gretl_matrix_copy_transpose
 gretl_column_vector_from_array
@@ -660,8 +678,11 @@ gretl_square_matrix_transpose
 gretl_matrix_add_self_transpose
 gretl_matrix_multiply_mod
 gretl_matrix_multiply
+gretl_matrix_kronecker_product
 gretl_matrix_dot_product
+gretl_vector_dot_product
 gretl_matrix_dot_multiply
+gretl_matrix_column_mean
 gretl_matrix_vcv
 gretl_matrix_determinant
 gretl_matrix_log_determinant
@@ -671,6 +692,9 @@ gretl_LU_solve
 gretl_invert_general_matrix
 gretl_invert_symmetric_matrix
 gretl_invert_diagonal_matrix
+gretl_SVD_invert_matrix
+gretl_symmetric_matrix_rcond
+gretl_eigen_sort
 gretl_general_matrix_eigenvals
 gretl_symmetric_matrix_eigenvals
 gretl_matrix_cholesky_decomp
@@ -680,6 +704,7 @@ gretl_matrix_svd_ols
 gretl_scalar_b_prime_X_b
 gretl_scalar_b_X_b_prime
 gretl_matrix_A_X_A_prime
+gretl_matrix_diagonal_sandwich
 gretl_vcv_matrix_from_model
 gretl_coeff_vector_from_model
 gretl_matrix_print
@@ -691,6 +716,10 @@ gretl_matrix_rows
 gretl_is_identity_matrix
 gretl_is_zero_vector
 gretl_covariance_matrix_from_varlist
+gretl_matrix_row_to_array
+gretl_matrix_array_alloc
+gretl_matrix_array_free
+gretl_matrix_data_subset
 </SECTION>
 
 <SECTION>
@@ -791,6 +820,8 @@ set_gretl_user_dir
 gretl_gnuplot_path
 gretl_plotfile
 set_gretl_plotfile
+gretl_x12_arima
+gretl_x12_arima_dir
 gretl_png_font
 set_gretl_png_font
 </SECTION>
@@ -828,8 +859,12 @@ free_coeff_intervals
 gretl_model_get_coeff_intervals
 gretl_model_get_depvar
 gretl_model_get_x_list
-gretl_arma_model_get_AR_order
-gretl_arma_model_get_MA_order
+gretl_arma_model_get_nonseasonal_AR_order
+gretl_arma_model_get_nonseasonal_MA_order
+gretl_arma_model_get_max_AR_lag
+gretl_arma_model_get_max_MA_lag
+gretl_arma_model_get_AR_MA_coeffs
+gretl_arma_model_get_x_coeffs
 gretl_model_new_vcv
 gretl_model_get_vcv
 debug_print_model_info
@@ -854,10 +889,12 @@ model_test_set_param
 model_test_set_allocated_param
 gretl_model_test_print
 gretl_model_print_last_test
+gretl_model_destroy_tests
 model_list_to_string
 highest_numbered_var_in_model
 mle_aic_bic
 coeff_pval
+gretl_model_add_arma_varnames
 </SECTION>
 
 <SECTION>
@@ -896,6 +933,7 @@ set_gretl_echo
 gretl_echo_on
 set_gretl_messages
 gretl_messages_on
+get_csv_delim
 execute_set_line
 </SECTION>
 
@@ -911,6 +949,7 @@ check_for_loop_only_options
 <FILE>gretl_string_table</FILE>
 gretl_string_table
 gretl_string_table_new
+string_table_new_from_cols_list
 gretl_string_table_index
 gretl_string_table_print
 gretl_string_table_destroy
@@ -994,6 +1033,7 @@ set_miss
 <SECTION>
 <FILE>transforms</FILE>
 default_lag_order
+is_standard_lag
 diffgenr
 laggenr
 loggenr
@@ -1017,6 +1057,7 @@ gretl_print_new_with_buffer
 gretl_print_reset_buffer
 gretl_print_get_buffer
 gretl_print_set_format
+gretl_print_toggle_doc_flag
 pprintf
 pputs
 pputc
@@ -1027,6 +1068,7 @@ print_start_redirection
 print_end_redirection
 plain_format
 rtf_format
+rtf_doc_format
 tex_format
 tex_doc_format
 tex_eqn_format
@@ -1094,12 +1136,14 @@ dataset_is_panel
 free_Z
 datainfo_new
 create_new_dataset
+destroy_dataset
 clear_datainfo
 allocate_Z
 dataset_allocate_varnames
 dataset_allocate_obs_markers
 dataset_destroy_obs_markers
 dataset_obs_info_default
+copy_dataset_obs_info
 set_sorted_markers
 dataset_set_regular_markers
 start_new_Z
@@ -1123,5 +1167,20 @@ is_hidden_variable
 <SECTION>
 <FILE>dbwrite</FILE>
 write_db_data
+</SECTION>
+
+<SECTION>
+<FILE>johansen</FILE>
+JohansenCode
+JohansenInfo
+JohansenInfo_
+GRETL_VAR_
+restricted
+jcode
+jrank
+johansen_test
+johansen_test_simple
+print_Johansen_test_case
+gretl_VECM_id
 </SECTION>
 
