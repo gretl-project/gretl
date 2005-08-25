@@ -162,7 +162,7 @@ const char *gretl_command_word (int i)
 
 static GHashTable *ht;
 
-static int gretl_command_hash_init (void)
+static void gretl_command_hash_init (void)
 {
     int i;
 

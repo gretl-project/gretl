@@ -3651,7 +3651,7 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
     pputc(prn, '\n');
 }
 
-static int print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
+static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 {
     gretl_matrix *M;
     int *list = jvar->jinfo->list;

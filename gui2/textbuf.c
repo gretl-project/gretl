@@ -252,10 +252,17 @@ void create_source (windata_t *vwin, GtkSourceBuffer **buf,
     GtkSourceLanguagesManager *lm;
     GtkSourceBuffer *sbuf;
     GtkSourceTagStyle *tagstyle;
+    GdkColormap *cmap;
     GdkColor blue;
 
+#if 1
+    cmap = gdk_colormap_get_system ();
+    gdk_color_parse ("blue", &blue);
+    gdk_colormap_alloc_color (cmap, &blue, FALSE, TRUE);
+#else
     blue.green = blue.red = 0;
     blue.blue = 65535.0;
+#endif
 
     lm = gtk_source_languages_manager_new ();
     tagstyle = gtk_source_tag_style_new ();
@@ -289,6 +296,8 @@ void create_source (windata_t *vwin, GtkSourceBuffer **buf,
     gtk_window_set_default_size (GTK_WINDOW(vwin->dialog), hsize, vsize); 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), editable);
+
+    g_object_unref(cmap);
 }
 
 #endif /* USE_GTKSOURCEVIEW */

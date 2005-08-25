@@ -1014,7 +1014,7 @@ static double genr_get_child_status (GENERATE *genr, genatom *atom)
     if (child != NULL) {
 	if (atom->func == T_VARNUM || atom->func == T_VECTOR) {
 	    if (child->varnum >= 0 && child->varnum < genr->pdinfo->v) {
-		val == (atom->func == T_VARNUM)? child->varnum :
+		val = (atom->func == T_VARNUM)? child->varnum :
 		    genr->pdinfo->vector[child->varnum];
 	    } 
 	} else if (atom->func == T_ISLIST || atom->func == T_NELEM) {

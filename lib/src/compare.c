@@ -442,7 +442,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     MODEL rep;
     double rho = 0.0;
     int *list = *plist;
-    int pos, mc = get_model_count();
+    int pos = 0, mc = get_model_count();
     int repci = orig->ci;
 
     gretl_model_init(&rep);
