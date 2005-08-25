@@ -2,6 +2,9 @@
 # suit your project. See the GTK+ Makefiles in gtk+/docs/reference for examples
 # of using the various options.
 
+# modify for local use
+HTML_DIR = /home/cottrell/stats/esl/website/API
+
 srcdir = .
 LIBTOOL = ../../libtool
 
@@ -58,9 +61,6 @@ GTKDOC_LD = $(LIBTOOL) --mode=link $(CC)
 # If you need to override some of the declarations, place them in this file
 # and uncomment this line.
 #DOC_OVERRIDES = $(DOC_MODULE)-overrides.txt
-
-# For installation
-HTML_DIR = /home/cottrell/stats/esl/website/API
 
 ###########################################################################
 # Everything below here is generic
