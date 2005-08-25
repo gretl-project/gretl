@@ -255,14 +255,11 @@ void create_source (windata_t *vwin, GtkSourceBuffer **buf,
     GdkColormap *cmap;
     GdkColor blue;
 
-#if 1
+    /* set up paren-matching in blue */
+
     cmap = gdk_colormap_get_system ();
     gdk_color_parse ("blue", &blue);
     gdk_colormap_alloc_color (cmap, &blue, FALSE, TRUE);
-#else
-    blue.green = blue.red = 0;
-    blue.blue = 65535.0;
-#endif
 
     lm = gtk_source_languages_manager_new ();
     tagstyle = gtk_source_tag_style_new ();
