@@ -668,23 +668,22 @@ static int beta_variance (GRETL_VAR *vecm)
     gretl_matrix *varbeta = NULL;
 
     int r = jrank(vecm);
-    int n = vecm->neqns;
-    int brows = gretl_matrix_rows(vecm->jinfo->Beta);
-    int arows = gretl_matrix_rows(vecm->jinfo->Alpha);
+    int nv = vecm->neqns;
+    int n = gretl_matrix_rows(vecm->jinfo->Beta);
     int i, j, k, err = 0;
 
     double x;
 
     /* initial allocations */
-    tmp = gretl_matrix_alloc(r, n);
+    tmp = gretl_matrix_alloc(r, nv);
     O = gretl_matrix_copy(vecm->S);
     aOa = gretl_matrix_alloc(r, r);
 
     c = gretl_matrix_alloc(r, r);
-    beta_c = gretl_matrix_alloc(brows, r); /* rows? */
-    alpha_c = gretl_matrix_alloc(arows, r); /* rows? */
+    beta_c = gretl_matrix_alloc(n, r);
+    alpha_c = gretl_matrix_alloc(nv, r);
 
-    HSH = gretl_matrix_alloc(brows - r, brows - r);
+    HSH = gretl_matrix_alloc(n - r, n - r);
 
     if (tmp == NULL || O == NULL || aOa == NULL || 
 	c == NULL || alpha_c == NULL || beta_c == NULL ||
@@ -734,8 +733,8 @@ static int beta_variance (GRETL_VAR *vecm)
     gretl_matrix_print(aOa, "aOa = alpha_c' * O * alpha_c", NULL);
 
     /* compute H'SH (just keep the south-east corner) */
-    for (i=r; i<brows; i++) {
-	for (j=r; j<brows; j++) {
+    for (i=r; i<n; i++) {
+	for (j=r; j<n; j++) {
 	    x = gretl_matrix_get(vecm->jinfo->Svv, i, j);
 	    gretl_matrix_set(HSH, i - r, j - r, x);
 	}
@@ -754,24 +753,22 @@ static int beta_variance (GRETL_VAR *vecm)
     gretl_matrix_divide_by_scalar(varbeta, vecm->T);
     gretl_matrix_print(varbeta, "varbeta", NULL);
 
-    vecm->jinfo->Bse = gretl_matrix_alloc(brows, r);
+    vecm->jinfo->Bse = gretl_matrix_alloc(n - r, r);
     if (vecm->jinfo->Bse == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    gretl_matrix_zero(vecm->jinfo->Bse);
     k = 0;
     for (j=0; j<r; j++) {
 	/* cointegrating vector j */
-        for (i=0; i<brows-r; i++) {
+        for (i=0; i<n-r; i++) {
 	    x = gretl_matrix_get(varbeta, k, k);
 	    gretl_matrix_set(vecm->jinfo->Bse, i, j, sqrt(x));
 	    k++;
 	}
     }
 
-    /* FIXME location of zero elements */
     gretl_matrix_print(vecm->jinfo->Bse, "Bse", NULL);
 
  bailout:
