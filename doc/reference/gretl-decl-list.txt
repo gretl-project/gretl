@@ -701,9 +701,8 @@ gretl_matrix_cholesky_decomp
 gretl_matrix_ols
 gretl_matrix_restricted_ols
 gretl_matrix_svd_ols
-gretl_scalar_b_prime_X_b
-gretl_scalar_b_X_b_prime
-gretl_matrix_A_X_A_prime
+gretl_scalar_b_X_b
+gretl_matrix_A_X_A
 gretl_matrix_diagonal_sandwich
 gretl_vcv_matrix_from_model
 gretl_coeff_vector_from_model

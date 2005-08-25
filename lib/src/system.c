@@ -642,7 +642,7 @@ system_print_F_test (const gretl_equation_system *sys,
 	goto bailout;
     }
 
-    F = gretl_scalar_b_prime_X_b(Rbq, RvR, &err);
+    F = gretl_scalar_b_X_b(Rbq, GRETL_MOD_TRANSPOSE, RvR, &err);
     if (err) {
 	pputs(prn, "Matrix multiplication failed in F test\n");
 	goto bailout;

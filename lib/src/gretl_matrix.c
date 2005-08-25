@@ -2747,13 +2747,26 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     return err;
 }
 
-/* computes either b'Xb (if bmod = GRETL_MOD_TRANSPOSE), 
-   or bXb' (bmod = GRETL_MOD_NONE) */
+/**
+ * gretl_scalar_b_X_b:
+ * @b: k-vector.
+ * @bmod: either %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE.
+ * @X: k x k matrix.
+ * @errp: pointer to receive error code, or %NULL.
+ *
+ * If @bmod = %GRETL_MOD_NONE, computes the scalar product
+ * b * X * b'; if @bmod = %GRETL_MOD_TRANSPOSE, computes
+ * the scalar product b' * X * b.
+ * If @errp is not %NULL its content is set to 0 on success, non-zero
+ * on failure.
+ * 
+ * Returns: the scalar product, or #NADBL on failure.
+ */
 
-static double gretl_scalar_b_X_b (const gretl_vector *b, 
-				  GretlMatrixMod bmod,
-				  const gretl_matrix *X,
-				  int *errp)
+double gretl_scalar_b_X_b (const gretl_vector *b, 
+			   GretlMatrixMod bmod,
+			   const gretl_matrix *X,
+			   int *errp)
 {
     gretl_matrix *tmp = NULL;
     double ret = NADBL;
@@ -2801,65 +2814,32 @@ static double gretl_scalar_b_X_b (const gretl_vector *b,
     return ret;
 }
 
-/**
- * gretl_scalar_b_prime_X_b:
- * @b: column k-vector.
- * @X: k x k matrix.
- * @errp: pointer to receive error code, or %NULL.
- *
- * Computes the scalar product, @b transpose times @X times @b.
- * If @errp is not %NULL its content is set to 0 on success, non-zero
- * on failure.
- * 
- * Returns: the scalar product, or #NADBL on failure.
- */
-
-double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
-				 int *errp)
-{
-    return gretl_scalar_b_X_b(b, GRETL_MOD_TRANSPOSE, X, errp);
-}
+#define mod_complement(m) ((m)? GRETL_MOD_NONE : GRETL_MOD_TRANSPOSE)
 
 /**
- * gretl_scalar_b_X_b_prime:
- * @b: column k-vector.
- * @X: k x k matrix.
- * @errp: pointer to receive error code, or %NULL.
- *
- * Computes the scalar product, @b times @X times @b transpose.
- * If @errp is not %NULL its content is set to 0 on success, non-zero
- * on failure.
- * 
- * Returns: the scalar product, or #NADBL on failure.
- */
-
-double gretl_scalar_b_X_b_prime (const gretl_vector *b, const gretl_matrix *X,
-				 int *errp)
-{
-    return gretl_scalar_b_X_b(b, GRETL_MOD_NONE, X, errp);
-}
-
-/**
- * gretl_matrix_A_X_A_prime:
- * @A: m * k matrix.
+ * gretl_matrix_A_X_A:
+ * @A: m * k matrix or k * m matrix, depending on @amod.
+ * @amod: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE: in the first
+ * case @A should be m * k; in the second, k * m;
  * @X: k * k matrix.
  * @errp: pointer to receive error code, or %NULL.
  *
- * Computes A * X * A'.
+ * Computes either A * X * A' (if amod = %GRETL_MOD_NONE) or
+ * A' * X * A (if amod = %GRETL_MOD_TRANSPOSE).
  * If @errp is not %NULL its content is set to 0 on success, non-zero
  * on failure.
  * 
- * Returns: m * m matrix product, or %NULL on error.
+ * Returns: allocated m * m matrix product, or %NULL on error.
  */
 
 gretl_matrix *
-gretl_matrix_A_X_A_prime (const gretl_matrix *A, const gretl_matrix *X,
-			  int *errp)
+gretl_matrix_A_X_A (const gretl_matrix *A, GretlMatrixMod amod,
+		    const gretl_matrix *X, int *errp)
 {
     gretl_matrix *tmp = NULL;
     gretl_matrix *ret = NULL;
-    int m = A->rows;
-    int k = A->cols;
+    int m = (amod)? A->cols : A->rows;
+    int k = (amod)? A->rows : A->cols;
     int err = 0;
 
     if (errp != NULL) {
@@ -2885,13 +2865,13 @@ gretl_matrix_A_X_A_prime (const gretl_matrix *A, const gretl_matrix *X,
 	return NULL;
     }
 
-    err = gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
+    err = gretl_matrix_multiply_mod(A, amod,
 				    X, GRETL_MOD_NONE,
 				    tmp);
 
     if (!err) {
 	err = gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
-					A, GRETL_MOD_TRANSPOSE,
+					A, mod_complement(amod),
 					ret);
     }
 

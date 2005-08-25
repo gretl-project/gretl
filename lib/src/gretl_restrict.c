@@ -751,7 +751,7 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
 	Rv = vcv;
 	freeRv = 0;
     } else {
-	Rv = gretl_matrix_A_X_A_prime(R, vcv, &err);
+	Rv = gretl_matrix_A_X_A(R, GRETL_MOD_NONE, vcv, &err);
 	if (err) goto bailout;
 #if RDEBUG
 	gretl_matrix_print(Rv, "Rv", prn);
@@ -765,7 +765,7 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
 	goto bailout;
     }
     
-    F = gretl_scalar_b_prime_X_b(br, Rv, &err);
+    F = gretl_scalar_b_X_b(br, GRETL_MOD_TRANSPOSE, Rv, &err);
     if (err) {
 	pputs(prn, _("Failed to compute F statistic for test\n"));
 	goto bailout;

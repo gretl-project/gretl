@@ -723,36 +723,33 @@ static int phillips_normalize_beta (GRETL_VAR *vecm)
 
 static int beta_variance (GRETL_VAR *vecm)
 {
-    gretl_matrix *tmp = NULL;
     gretl_matrix *O = NULL;
     gretl_matrix *aOa = NULL;
     gretl_matrix *HSH = NULL;
     gretl_matrix *varbeta = NULL;
 
     int r = jrank(vecm);
-    int nv = vecm->neqns;
     int n = gretl_matrix_rows(vecm->jinfo->Beta);
     int i, j, k, err = 0;
 
     double x;
 
     /* initial allocations */
-    tmp = gretl_matrix_alloc(r, nv);
     O = gretl_matrix_copy(vecm->S);
-    aOa = gretl_matrix_alloc(r, r);
     HSH = gretl_matrix_alloc(n - r, n - r);
 
-    if (tmp == NULL || O == NULL || aOa == NULL || HSH == NULL) {
+    if (O == NULL || HSH == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    /* compute right-hand matrix, \alpha' \Omega^{-1} \alpha */
+    /* compute \alpha' \Omega^{-1} \alpha */
     gretl_invert_symmetric_matrix(O);
-    gretl_matrix_multiply_mod(vecm->jinfo->Alpha, GRETL_MOD_TRANSPOSE,
-			      O, GRETL_MOD_NONE,
-			      tmp);
-    gretl_matrix_multiply(tmp, vecm->jinfo->Alpha, aOa);
+    aOa = gretl_matrix_A_X_A(vecm->jinfo->Alpha, GRETL_MOD_TRANSPOSE, O, &err);
+    if (aOa == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }    
 
 #if JDEBUG
     gretl_matrix_print(vecm->S, "vecm->S", NULL);
@@ -806,7 +803,6 @@ static int beta_variance (GRETL_VAR *vecm)
 
  bailout:
 
-    gretl_matrix_free(tmp);
     gretl_matrix_free(O);
     gretl_matrix_free(aOa);
     gretl_matrix_free(HSH);
