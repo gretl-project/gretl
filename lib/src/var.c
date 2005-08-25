@@ -3073,8 +3073,8 @@ GRETL_VAR *vecm (int order, int rank, const int *list,
 {
     GRETL_VAR *jvar = NULL;
 
-    if (rank <= 0) {
-	/* error message */
+    if (rank <= 0 || rank > list[0]) {
+	sprintf(gretl_errmsg, _("vecm: rank %d is out of bounds"), rank);
 	return jvar;
     }
 
