@@ -7531,7 +7531,7 @@ fi
 AC_SUBST($1)dnl
 ])
 
-m4_include([./macros/clapack.m4])
+m4_include([./macros/lapack.m4])
 m4_include([./macros/flite.m4])
 m4_include([./macros/gconf.m4])
 m4_include([./macros/gmp.m4])

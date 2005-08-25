@@ -1,5 +1,5 @@
 # Configure paths for lapack
-# Allin Cottrell <cottrell@wfu.edu>, March 2003
+# Allin Cottrell <cottrell@wfu.edu>, last updated August 2005
 
 dnl AM_PATH_LAPACK([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for LAPACK, and define LAPACK_CFLAGS and LAPACK_LIBS.
@@ -16,13 +16,16 @@ AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is i
   lapack_config_args="$lapack_config_args --prefix=$lapack_config_prefix"
 
   if test x"${LAPACK_LIBS}" = x ; then 
-     AC_MSG_CHECKING(for libg2c or libf2c)
-     AC_CHECK_LIB(g2c,c_sqrt,FLIB="-lg2c",FLIB="none")
+     AC_MSG_CHECKING(for libgfortran, libg2c or libf2c)
+     AC_CHECK_LIB(gfortran,etime_,FLIB="-lgfortran",FLIB="none")
+     if test $FLIB = "none" ; then
+        AC_CHECK_LIB(g2c,c_sqrt,FLIB="-lg2c",FLIB="none")
+     fi
      if test $FLIB = "none" ; then
         AC_CHECK_LIB(f2c,c_sqrt,FLIB="-lf2c",FLIB="none")
      fi
      if test $FLIB = "none" ; then
-        echo "*** Couldn't find either libg2c or libf2c"
+        echo "*** Couldn't find ligfortran, libg2c or libf2c"
      fi
   fi
 
