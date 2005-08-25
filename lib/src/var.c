@@ -229,6 +229,7 @@ static void johansen_info_free (JohansenInfo *jv)
 
     gretl_matrix_free(jv->Beta);
     gretl_matrix_free(jv->Alpha);
+    gretl_matrix_free(jv->Bse);
 
     free(jv);
 }
@@ -2671,28 +2672,6 @@ static JohansenCode jcode_from_opt (gretlopt opt)
     return jc;
 }
 
-void Johansen_Info_free (JohansenInfo *jv)
-{
-    if (jv != NULL) {
-
-	free(jv->list);
-	free(jv->difflist);
-	free(jv->biglist);
-
-	gretl_matrix_free(jv->u);
-	gretl_matrix_free(jv->v);
-	gretl_matrix_free(jv->w);
-
-	gretl_matrix_free(jv->Suu);
-	gretl_matrix_free(jv->Svv);
-	gretl_matrix_free(jv->Suv);
-	gretl_matrix_free(jv->Beta);
-	gretl_matrix_free(jv->Alpha);
-
-	free(jv);
-    }
-}
-
 static JohansenInfo *
 johansen_info_new (const int *list, int rank, gretlopt opt)
 {
@@ -2717,6 +2696,7 @@ johansen_info_new (const int *list, int rank, gretlopt opt)
 
 	    jv->Beta = NULL;
 	    jv->Alpha = NULL;
+	    jv->Bse = NULL;
 
 	    jv->difflist = NULL;
 	    jv->biglist = NULL;

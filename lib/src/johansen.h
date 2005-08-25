@@ -48,6 +48,7 @@ struct JohansenInfo_ {
     gretl_matrix *Suv;    /* matrix of cross-products of residuals */
     gretl_matrix *Beta;   /* matrix of eigenvectors */
     gretl_matrix *Alpha;  /* matrix of adjustments */
+    gretl_matrix *Bse;    /* standard errors of EC terms */
 };
 
 struct GRETL_VAR_ {

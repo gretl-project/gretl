@@ -310,7 +310,7 @@ static int compute_alpha (JohansenInfo *jv, int n)
     return err;
 }
 
-/* For cointegration test: print the "long-run matrix," \alpha \beta'
+/* For cointegration test, print the "long-run matrix," \alpha \beta'
    in Johansen's notation, or \Zeta_0 in Hamilton's.
 */
 
@@ -655,127 +655,139 @@ static int johansen_ll_init (GRETL_VAR *vecm)
 
 #define NOTYET 1
 
-#if NOTYET 
-
 static int beta_variance (GRETL_VAR *vecm)
 {
+    gretl_matrix *tmp = NULL;
     gretl_matrix *O = NULL;
     gretl_matrix *aOa = NULL;
-    gretl_matrix *HSH = NULL;
-    gretl_matrix *tmp = NULL;
     gretl_matrix *c = NULL;
     gretl_matrix *cinv = NULL;
     gretl_matrix *alpha_c = NULL;
-    gretl_matrix *beta = NULL;
     gretl_matrix *beta_c = NULL;
+    gretl_matrix *HSH = NULL;
     gretl_matrix *varbeta = NULL;
-
-    double x;
 
     int r = jrank(vecm);
     int n = vecm->neqns;
-    int i, j, err = 0;
+    int brows = gretl_matrix_rows(vecm->jinfo->Beta);
+    int arows = gretl_matrix_rows(vecm->jinfo->Alpha);
+    int i, j, k, err = 0;
 
+    double x;
+
+    /* initial allocations */
     tmp = gretl_matrix_alloc(r, n);
+    O = gretl_matrix_copy(vecm->S);
     aOa = gretl_matrix_alloc(r, r);
 
-    /* first get the eigenvalues and proceed with the Phillips normalization */
-
-    beta_c = gretl_matrix_alloc(n, r);
-
     c = gretl_matrix_alloc(r, r);
+    beta_c = gretl_matrix_alloc(brows, r); /* rows? */
+    alpha_c = gretl_matrix_alloc(arows, r); /* rows? */
+
+    HSH = gretl_matrix_alloc(brows - r, brows - r);
+
+    if (tmp == NULL || O == NULL || aOa == NULL || 
+	c == NULL || alpha_c == NULL || beta_c == NULL ||
+	HSH == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* get the eigenvalues and proceed with Phillips normalization */
+
     for (i=0; i<r; i++) {
         for (j=0; j<r; j++) {
-	    gretl_matrix_set(c, i, j, gretl_matrix_get(vecm->jinfo->Beta, i, j));
+	    x = gretl_matrix_get(vecm->jinfo->Beta, i, j);
+	    gretl_matrix_set(c, i, j, x);
 	}
     }
 
     gretl_matrix_print(c, "c", NULL);
 
     /* form \beta_c = \beta c^{-1} */
-
-    beta = gretl_matrix_alloc(n, r);
-    for (i=0; i<n; i++) {
-	for (j=0; j<r; j++) {
-	    x = gretl_matrix_get(vecm->jinfo->Beta, i, j);
-	    gretl_matrix_set(beta, i, j, x);
-	}
-    }
-
     cinv = gretl_matrix_copy(c);
+    if (cinv == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
     gretl_invert_general_matrix(cinv);
-
-    gretl_matrix_print(beta, "beta", NULL);
     gretl_matrix_print(cinv, "cinv", NULL);
+    gretl_matrix_multiply(vecm->jinfo->Beta, cinv, beta_c);
+    gretl_matrix_print(vecm->jinfo->Beta, "beta", NULL);
+    gretl_matrix_print(beta_c, "beta_c = beta * c^{-1}", NULL);
 
-    gretl_matrix_multiply(beta, cinv, beta_c);
-
-    gretl_matrix_print(beta_c, "product: beta_c", NULL);
-
-    /* now normalize \alpha accordingly */
-
-    alpha_c = gretl_matrix_alloc(n, r);
-
-    gretl_matrix_print(vecm->jinfo->Alpha, "Alpha", NULL);
-    gretl_matrix_print(c, "c", NULL);
-
+    /* form \alpha_c = \alpha c' */
     gretl_matrix_multiply_mod(vecm->jinfo->Alpha, GRETL_MOD_NONE,
 			      c, GRETL_MOD_TRANSPOSE,
 			      alpha_c);
+    gretl_matrix_print(vecm->jinfo->Alpha, "alpha", NULL);
+    gretl_matrix_print(alpha_c, "alpha_c = alpha * c'", NULL);
 
-    gretl_matrix_print(alpha_c, "product: alpha_c", NULL);
-
-    /* compute right hand inverse matrix */
-    O = gretl_matrix_copy(vecm->S);
+    /* compute right-hand matrix */
     gretl_invert_symmetric_matrix(O);
-
     gretl_matrix_print(vecm->S, "vecm->S", NULL);
-    gretl_matrix_print(O, "O (vecm->S inverse)", NULL);
-
+    gretl_matrix_print(O, "O = inverse(vecm->S)", NULL);
     gretl_matrix_multiply_mod(alpha_c, GRETL_MOD_TRANSPOSE,
 			      O, GRETL_MOD_NONE,
- 			      tmp);
+			      tmp);
     gretl_matrix_multiply(tmp, alpha_c, aOa);
-    gretl_matrix_print(aOa, "aOa = alpha_c' * O", NULL);
+    gretl_matrix_print(aOa, "aOa = alpha_c' * O * alpha_c", NULL);
 
     /* compute H'SH (just keep the south-east corner) */
-    HSH = gretl_matrix_alloc(n - r, n - r);
-    
-    for (i=r; i<n; i++) {
-	for (j=r; j<n; j++) {
+    for (i=r; i<brows; i++) {
+	for (j=r; j<brows; j++) {
 	    x = gretl_matrix_get(vecm->jinfo->Svv, i, j);
 	    gretl_matrix_set(HSH, i - r, j - r, x);
 	}
     }
 
-    gretl_matrix_print(HSH, "HSH", NULL);
- 
+    gretl_matrix_print(vecm->jinfo->Svv, "full Svv", NULL);
+    gretl_matrix_print(HSH, "HSH = subset(Svv)", NULL);
+
     varbeta = gretl_matrix_kronecker_product(aOa, HSH);
-    gretl_matrix_print(varbeta, "almost varbeta", NULL);
+    if (varbeta == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
 
     gretl_invert_symmetric_matrix(varbeta);
     gretl_matrix_divide_by_scalar(varbeta, vecm->T);
     gretl_matrix_print(varbeta, "varbeta", NULL);
 
-    for (i=0; i<r * (n-r); i++) {
-	x = gretl_matrix_get(varbeta, i, i);
-	printf("sqrt(diag(varbeta(%d)) = %g\n", i, x);
+    vecm->jinfo->Bse = gretl_matrix_alloc(brows, r);
+    if (vecm->jinfo->Bse == NULL) {
+	err = E_ALLOC;
+	goto bailout;
     }
 
+    gretl_matrix_zero(vecm->jinfo->Bse);
+    k = 0;
+    for (j=0; j<r; j++) {
+	/* cointegrating vector j */
+        for (i=0; i<brows-r; i++) {
+	    x = gretl_matrix_get(varbeta, k, k);
+	    gretl_matrix_set(vecm->jinfo->Bse, i, j, sqrt(x));
+	    k++;
+	}
+    }
+
+    /* FIXME location of zero elements */
+    gretl_matrix_print(vecm->jinfo->Bse, "Bse", NULL);
+
+ bailout:
+
+    gretl_matrix_free(tmp);
     gretl_matrix_free(O);
     gretl_matrix_free(aOa);
-    gretl_matrix_free(HSH);
-    gretl_matrix_free(tmp);
     gretl_matrix_free(c);
     gretl_matrix_free(cinv);
     gretl_matrix_free(alpha_c);
-    gretl_matrix_free(beta);
     gretl_matrix_free(beta_c);
+    gretl_matrix_free(HSH);
     gretl_matrix_free(varbeta);
 
     return err;
 }
-#endif /* NOTYET */
 
 static int 
 compute_coint_test (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
