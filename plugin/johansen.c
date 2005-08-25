@@ -965,11 +965,13 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 		}
 	    } else {
 		/* estimating VECM */
+		int do_stderrs = jrank(jvar) < jvar->neqns;
+
 		jvar->jinfo->Beta = gretl_matrix_copy(TmpR);
 		if (jvar->jinfo->Beta == NULL) {
 		    err = E_ALLOC;
 		}
-		if (!err) {
+		if (!err && do_stderrs) {
 		    err = phillips_normalize_beta(jvar); 
 		}
 		if (!err) {
@@ -978,10 +980,10 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 		if (!err) {
 		    err = compute_omega(jvar, TmpR);
 		}
-		if (!err) {
+		if (!err && do_stderrs) {
 		    err = compute_alpha(jvar->jinfo, n);
 		}
-		if (!err) {
+		if (!err && do_stderrs) {
 		    err = beta_variance(jvar);
 		}
 	    }

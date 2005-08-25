@@ -3593,10 +3593,14 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
     char s[16];
     int rows = gretl_matrix_rows(jv->Beta);
     int i, j;
-    double se;
+    double x;
 
-    pprintf(prn, "%s (%s)\n\n", _("Cointegrating vectors"),
-	    _("standard errors in parentheses"));
+    pputs(prn, _("Cointegrating vectors"));
+    if (jv->Bse != NULL) {
+	pprintf(prn, " (%s)\n\n", _("standard errors in parentheses"));
+    } else {
+	pputs(prn, "\n\n");
+    }
 
     for (j=0; j<jv->rank; j++) {
 	sprintf(s, "CV%d", j + 1);
@@ -3617,23 +3621,31 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
 	} else if (jv->code == J_REST_TREND) {
 	    pprintf(prn, "%-10s", "trend");
 	}
+
 	/* coefficients */
 	for (j=0; j<jv->rank; j++) {
-	    pprintf(prn, "%#12.5g ", gretl_matrix_get(jv->Beta, i, j));
-	}
-	pputc(prn, '\n');
-	/* standard errors */
-	pprintf(prn, "%11s", " ");
-	for (j=0; j<jv->rank; j++) {
-	    if (i < jv->rank) {
-		se = 0.0;
-	    } else {
-		se = gretl_matrix_get(jv->Bse, i - jv->rank, j);
+	    x = gretl_matrix_get(jv->Beta, i, j);
+	    if (jv->Bse == NULL) {
+		x /= gretl_matrix_get(jv->Beta, j, j);
 	    }
-	    sprintf(s, "(%#.5g)", se);
-	    pprintf(prn, "%12s ", s);
+	    pprintf(prn, "%#12.5g ", x);
 	}
 	pputc(prn, '\n');
+
+	if (jv->Bse != NULL) {
+	    /* standard errors */
+	    pprintf(prn, "%11s", " ");
+	    for (j=0; j<jv->rank; j++) {
+		if (i < jv->rank) {
+		    x = 0.0;
+		} else {
+		    x = gretl_matrix_get(jv->Bse, i - jv->rank, j);
+		}
+		sprintf(s, "(%#.5g)", x);
+		pprintf(prn, "%12s ", s);
+	    }
+	    pputc(prn, '\n');
+	}
     }
 
     pputc(prn, '\n');
