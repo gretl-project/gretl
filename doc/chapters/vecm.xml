@@ -1,0 +1,202 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
+<!-- FIXME: the TeX below all needs to be properly converted -->
+
+  <chapter id="vecm-explanation"><title>Cointegration and Vector Error
+    Correction Models</title>
+
+  <sect1 id="johansen-test"><title>The Johansen cointegration test</title>
+
+    <para>
+      The Johansen test for cointegration has to take into account what
+      hypotheses one is willing to make on the deterministic terms, which leads
+      to the famous <quote>five cases.</quote> A full and general illustration
+      of the five cases requires a fair amount of matrix algebra, but an
+      intuitive understanding of the issue can be gained by means of a simple
+      example. 
+    </para>
+
+    <para>
+    Suppose we observe a series $x_t$, which is a random walk with drift,
+      <informalequation><alt role="tex">
+	\[ x_t = m + x_{t-1} + \varepsilon_t \]
+	</alt><graphic fileref="figures/vecm1"/>
+      </informalequation>
+      where $m$ is a real number and $\varepsilon_t$ is a white noise process.
+      As is easy to show, $x_t$ is a random walk which fluctuates around
+      a deterministic trend with slope $m$. In the special case $m=0$,
+      the deterministic trend disappears and $x_t$ is a pure random walk.
+    </para>
+
+    <para>
+      Consider now another process $y_t$, defined by 
+      <informalequation><alt role="tex">
+	  \[ y_t = k + x_t + u_t \]
+	</alt><graphic fileref="figures/vecm2"/>
+      </informalequation>
+      where, again, $k$ is
+      a real number and $u_t$ is a white noise process. Since $u_t$ is stationary
+      by definition, $x_t$ and $y_t$ cointegrate, since their difference $z_t =
+      y_t - x_t$ is a stationary process. For $k = 0$, $z_t$ is simply a white
+      noise, whereas for $k \ne 0$ the process $z_t$ is a white noise with
+      non-zero mean.
+  </para>
+
+    <para>
+      After some simple substitutions, the two equations above can be represented
+      together as a VAR(1) system:
+      <informalequation><alt role="tex">
+	\[ \left[  \begin{array}{c} y_t \\ x_t \end{array} \right] = \left[
+	\begin{array}{c} k + m \\ m \end{array} \right] + \left[
+	\begin{array}{rr} 0 & 1 \\ 0 & 1 \end{array} \right] \left[
+	\begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \left[
+	\begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array}
+	\right] \]
+	</alt><graphic fileref="figures/vecm3"/>
+      </informalequation>
+      or in VECM form
+      <informalequation><alt role="tex">
+\begin{eqnarray*}
+  \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  & = & 
+    \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
+    \left[  \begin{array}{rr} -1 & 1 \\ 0 & 0 \end{array} \right] 
+    \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
+    \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
+  & = & 
+    \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
+    \left[  \begin{array}{r} -1 \\ 0 \end{array} \right]
+    \left[  \begin{array}{rr} 1 & -1 \end{array} \right] 
+    \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
+    \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
+  & = & 
+    \mu_0 + \alpha \beta' \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \eta_t = 
+    \mu_0 + \alpha z_{t-1} + \eta_t ,
+\end{eqnarray*}
+	</alt><graphic fileref="figures/vecm4"/>
+      </informalequation>
+      where &beta; is the cointegration vector and &alpha; is the
+      <quote>loadings</quote> or <quote>adjustments</quote> vector.
+    </para>
+
+    <para> 
+      We are now in the position of considering three different cases:
+    </para>
+
+    <orderedlist>
+      <listitem>
+	<para>
+	  $m \ne 0$: In this case, $x_t$ is trended, as we just saw; it follows
+	  (from equation (\ref{eq:ytcoint})) that $y_t$ also follows a linear
+	  trend, because on average it keeps at a distance $k$ from $x_t$. The
+	  vector $\mu_0$ is unrestricted.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  $m = 0$ and $k \ne 0$: In this case, $x_t$ is not trended, and as a
+	  consequence neither $y_t$ is. However, the mean distance between $y_t$
+	  and $x_t$ is non-zero. The vector $\mu_0$ equals
+	  <informalequation><alt role="tex">
+	      \[
+	      \mu_0 = \left[  \begin{array}{c} k \\ 0 \end{array} \right]
+	      \]
+	    </alt><graphic fileref="figures/vecm5"/>
+	  </informalequation>
+	  which is not null and therefore the VECM in equation (\ref{eq:VAR})
+	  does have a constant term. The constant, however, is subject to the
+	  restriction that its second element must be 0. More in general,
+	  &mu;<subscript>0</subscript> is a multiple of the vector &alpha;. Note that the VECM
+	  could also be written as
+	  <informalequation><alt role="tex">
+   \[
+     \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  =  
+     \left[  \begin{array}{r} -1 \\ 0 \end{array} \right]
+     \left[  \begin{array}{rrr} 1 & -1 & -k \end{array} \right] 
+     \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \\ 1 \end{array} \right] + 
+     \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t  \end{array} \right] ,
+   \]
+	   </alt><graphic fileref="figures/vecm6"/>   
+	  </informalequation>
+	  which incorporates the intercept into the cointegration
+	  vector. This is known as the <quote>restricted constant</quote> case.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  $m = 0$ and $k = 0$: This case is the most restrictive: clearly,
+	  neither $x_t$ nor $y_t$ are trended, and the mean distance between
+	  them is zero. The vector &mu;<subscript>0</subscript> is also 0, which
+	  explains why this case is referred to as <quote>no constant.</quote>
+	</para>
+      </listitem>
+    </orderedlist>
+
+    <para>
+      In most cases, the choice between the three possibilities is based on a
+      mix of empirical observation and economic reasoning. If the two series
+      under consideration seem to follow a linear trend, then restrictions on
+      the intercept must be ruled out. If not, the question arises on whether it
+      makes sense to specify a cointegration relationship which includes an
+      intercept. The classic case when this applies arises when we consider two
+      interest rates: normally these are not trended, but the VAR might still
+      have an intercept, because the difference between the two (the
+      <quote>interest rate spread</quote>) might be stationary around a non-zero
+      mean (for example, because of a risk or liquidity premium).
+    </para>
+
+    <para>
+      The previous example can be generalized in three directions:
+    </para>
+
+    <orderedlist>
+      <listitem>
+	<para>
+	  If a VAR of order greater than 1 is considered, the algebra gets
+	  more convoluted but the conclusions are identical.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  If we consider a VAR that includes more than two endogenous variables
+	  the cointegration rank <emphasis>r</emphasis> can be greater than 1.
+	  In this case, &alpha; is a matrix with <emphasis>r</emphasis> columns,
+	  and the case with restricted constant entails the restriction that
+	  &mu;<subscript>0</subscript> should be some linear combination of the
+	  columns of &alpha;.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  If a linear trend is included, the deterministic part of the VAR
+	  becomes &mu;<subscript>0</subscript> +
+	  &mu;<subscript>1</subscript><emphasis>t</emphasis>. The reasoning is
+	  practically the same, except that the focus now centers on
+	  &mu;<subscript>1</subscript> rather than &mu;<subscript>0</subscript>,
+	  so with &mu;<subscript>1</subscript> unrestricted the series follow a
+	  quadratic trend, while &mu;<subscript>1</subscript> restricted implies
+	  that the observed series follow a linear trend and the cointegration
+	  relationships also include a trend.
+	</para>
+      </listitem>
+    </orderedlist>
+
+  </sect1>
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+
+
+
+
+
+
+
+
+

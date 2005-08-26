@@ -19,6 +19,7 @@
 <!ENTITY nls SYSTEM "chapters/nls.xml">
 <!ENTITY looping SYSTEM "chapters/looping.xml">
 <!ENTITY functions SYSTEM "chapters/functions.xml">
+<!ENTITY vecm SYSTEM "chapters/vecm.xml">
 <!ENTITY optarg SYSTEM "chapters/optarg.xml">
 <!ENTITY cmdref SYSTEM "chapters/cmdref.xml">
 <!ENTITY cmdlist SYSTEM "chapters/cmdlist.xml">
@@ -55,7 +56,7 @@
       <holder>Allin Cottrell</holder>
     </copyright>
 
-    <date>April, 2005</date>
+    <date>August, 2005</date>
 
     <legalnotice id="legalnotice">
       <para>Permission is granted to copy, distribute and/or modify
@@ -84,6 +85,7 @@
   &nls;
   &looping;
   &functions;
+  &vecm;
   &optarg;
   &cmdref;
   &trouble;

@@ -1,4 +1,6 @@
 version 1.4.2, in progress
+- Add VECM (Vector Error Correction Models) for time-series
+  data
 - More XLS importer fixes
 - Add seasonal ARMA
 - Johansen cointegration test: extend to cover all 5 cases, 

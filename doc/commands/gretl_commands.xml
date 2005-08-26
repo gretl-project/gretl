@@ -5107,6 +5107,11 @@
         <argument>variable</argument>
         <argument>value</argument>
       </arguments>
+      <examples>
+        <example>set qr on</example>
+        <example>set csv_delim tab</example>
+	<example>set horizon 10</example>
+      </examples>    
     </usage>
 
     <description>
@@ -5229,6 +5234,13 @@
 	    frequency of the data).  Sets the horizon for impulse
 	    responses and forecast variance decompositions in the
 	    context of vector autoregressions.
+	  </cell>
+	</row>
+	<row>
+	  <cell><lit>csv_delim</lit></cell>
+	  <cell>value: either <lit>comma</lit> (the default), <lit>space</lit>
+	    or <lit>tab</lit>.  Sets the column delimiter used when saving data
+	    to file in CSV format.
 	  </cell>
 	</row>
       </table>
@@ -5617,6 +5629,10 @@
 	  <effect>use CSV format</effect>
         </option>
         <option>
+	  <flag>--omit-obs</flag>
+	  <effect>see below, on CSV format</effect>
+        </option>
+        <option>
 	  <flag>--gnu-octave</flag>
 	  <effect>use GNU Octave format</effect>
         </option>
@@ -5665,6 +5681,15 @@
 	respective programs.  Gzip compression may be useful for large
 	datasets.  See <manref targ="datafiles"/> for details on the
 	various formats.</para>
+
+      <para>
+	The option flag <lit>--omit-obs</lit> is applicable only when saving
+	data in CSV format.  By default, if the data are time series or panel or
+	if the dataset includes specific observation markers, the CSV file
+	includes a first column identifying the observations (e.g. by date).  If
+	the <lit>--omit-obs</lit> flag is given this column is omitted; only the
+	actual data are printed.
+      </para>
 
       <para>
 	Note that any scalar variables will not be saved
@@ -6118,6 +6143,100 @@
 
     <gui-access>
       <menu-path>/Data/Difference of variances</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="vecm" section="Estimation"
+    label="Vector Error Correction Model">
+
+    <usage>
+      <arguments>
+        <argument>order</argument>
+	<argument>rank</argument>
+        <argument>varlist</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--nc</flag>
+	  <effect>no constant</effect>
+        </option>
+        <option>
+	  <flag>--rc</flag>
+	  <effect>restricted constant</effect>
+        </option>
+        <option>
+	  <flag>--crt</flag>
+	  <effect>constant and restricted trend</effect>
+        </option>
+        <option>
+	  <flag>--ct</flag>
+	  <effect>constant and unrestricted trend</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>include centered seasonal dummies</effect>
+        </option>
+      </options>
+      <examples>
+        <example>vecm 4 1 Y1 Y2 Y3</example>
+        <example>vecm 3 2 Y1 Y2 Y3 --rc</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	A VECM is a form of vector autoregression or VAR (see <cmdref
+	  targ="var"/>), applicable where the variables in the model are
+	individually integrated of order 1 (that is, are random walks, with or
+	without drift), but exhibit cointegration.  This command is closely
+	related to the Johansen test for cointegration (see <cmdref
+	  targ="coint2"/>).
+      </para>
+      <para>
+	The <repl>order</repl> parameter to this command represents the lag
+	order of the VAR system.  The number of lags in the VECM itself (where
+	the dependent variable is given as a first difference) is one less than
+	<repl>order</repl>.
+      </para>
+      <para>
+	The <repl>rank</repl> parameter represents the cointegration rank, or in
+	other words the number of cointegrating vectors.  This must be greater
+	than zero and less than or equal to (generally, less than) the number of
+	endogenous variables gven in <repl>varlist</repl>.
+      </para>
+      <para>
+	<repl>varlist</repl> supplies the list of endogenous variables, in
+	levels. The inclusion of deterministic terms in the model is controlled
+	by the option flags.  The default if no option is specified is to
+	include an <quote>unrestricted constant</quote>, which allows for the
+	presence of a non-zero intercept in the cointegrating relations as well
+	as a trend in the levels of the endogenous variables.  In the literature
+	stemming from the work of Johensen (see for example his 1995 book) this
+	is often referred to as <quote>case 3</quote>.  The first four options
+	given above, which are mutually exclusive, produce cases 1, 2, 4 and 5
+	respectively.  The meaning of these cases and the criteria for selecting
+	a case are explained in <manref targ="vecm-explanation"/>.
+      </para>
+      <para>
+	The <lit>--seasonals</lit> option, which may be combined with any of the
+	other options, specifies the inclusion of a set of centered seasonal
+	dummy variables.  This option is available only for quarterly or monthly
+	data.
+      </para>
+      <para>
+	The first example above specifies a VECM with lag order 4 and a single
+	cointegrating vector.  The endogenous variables are <lit>Y1</lit>,
+	<lit>Y2</lit> and <lit>Y3</lit>.  The second example uses the same
+	variables but specifies a lag order of 3 and two cointegrating vectors;
+	it also specifies a <quote>restricted constant</quote>, which is
+	appropriate if the coinegrating vectors may have a non-zero intercept
+	but the <lit>Y</lit> variables have no trend.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Time series/VECM</menu-path>
     </gui-access>
 
   </command>
