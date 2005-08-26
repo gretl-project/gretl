@@ -101,7 +101,7 @@
 ;;1.2
 
 (define %ss-size-factor% 0.7)
-(define %ss-shift-factor% 0.3)
+(define %ss-shift-factor% 0.2)
 
 (define (BULLSIZE m lvl)
   (let ((md (case-fold-down m)))
@@ -114,6 +114,11 @@
           (("dash") (MSIZE m lvl 1.0 1.0))
           (("none") (MSIZE m lvl 1.0 1.0))
           (else (MSIZE m lvl 1.0 1.0)))))
+
+(element (mathvar)
+   (make sequence
+   font-posture: 'italic
+   (process-children)))
 
 (element (varlistentry term)
     (make paragraph
@@ -133,7 +138,7 @@
         (normalize "graphic")
         (normalize "subtitle")
         (normalize "author")
-	    (normalize "othercredit")
+	(normalize "othercredit")
         (normalize "date")))
 
 ;; These elements appear in this order on the title page of an article.

@@ -1,13 +1,18 @@
 <?xml version="1.0"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
 "/usr/share/sgml/docbook-xml-4.3/docbookx.dtd" [
-
+<!ENTITY % mathextra SYSTEM "mathextra.inc">
 <!ENTITY version "1.0.10">
 <!ENTITY latex "LaTeX">
 <!ENTITY tex "TeX">
+<!ENTITY varepsilon "&#x025B;">
 <!ENTITY opto "<literal>[ -o ]</literal>">
 <!ENTITY cmdcol "82pt">
 <!ENTITY rsqu "<emphasis>R</emphasis><superscript>2</superscript>">
+<!ENTITY xt "<emphasis>x<subscript>t</subscript></emphasis>">
+<!ENTITY yt "<emphasis>y<subscript>t</subscript></emphasis>">
+<!ENTITY ut "<emphasis>u<subscript>t</subscript></emphasis>">
+<!ENTITY zt "<emphasis>z<subscript>t</subscript></emphasis>">
 <!ENTITY introduction SYSTEM "chapters/intro.xml">
 <!ENTITY starting SYSTEM "chapters/starting.xml">
 <!ENTITY modes SYSTEM "chapters/modes.xml">
@@ -27,6 +32,7 @@
 <!ENTITY cli SYSTEM "chapters/cli.xml">
 <!ENTITY appendices SYSTEM "chapters/appendices.xml">
 <!ENTITY biblio SYSTEM "chapters/biblio.xml">
+%mathextra;
 ]>
 
 <!-- =============Document Header ============================= -->

@@ -1,7 +1,5 @@
 <?PSGML NOFILL programlisting example informalequation?>
 
-<!-- FIXME: the TeX below all needs to be properly converted -->
-
   <chapter id="vecm-explanation"><title>Cointegration and Vector Error
     Correction Models</title>
 
@@ -17,35 +15,41 @@
     </para>
 
     <para>
-    Suppose we observe a series $x_t$, which is a random walk with drift,
-      <informalequation><alt role="tex">
-	\[ x_t = m + x_{t-1} + \varepsilon_t \]
+      Consider a series &xt; which behaves as follows
+      <equation id="vecm1"><alt role="tex">
+	  \[ x_t = m + x_{t-1} + \varepsilon_t \]
 	</alt><graphic fileref="figures/vecm1"/>
-      </informalequation>
-      where $m$ is a real number and $\varepsilon_t$ is a white noise process.
-      As is easy to show, $x_t$ is a random walk which fluctuates around
-      a deterministic trend with slope $m$. In the special case $m=0$,
-      the deterministic trend disappears and $x_t$ is a pure random walk.
+      </equation> where <mathvar>m</mathvar> is a real number and
+      &varepsilon;<mathvar><subscript>t</subscript></mathvar> is a white noise
+      process. As is easy to show, &xt; is a random walk which fluctuates around
+      a deterministic trend with slope <mathvar>m</mathvar>. In the special
+      case <mathvar>m</mathvar> = 0, the deterministic trend disappears and
+      &xt; is a pure random walk.
     </para>
 
     <para>
-      Consider now another process $y_t$, defined by 
+      Consider now another process &yt;, defined by 
       <informalequation><alt role="tex">
 	  \[ y_t = k + x_t + u_t \]
 	</alt><graphic fileref="figures/vecm2"/>
-      </informalequation>
-      where, again, $k$ is
-      a real number and $u_t$ is a white noise process. Since $u_t$ is stationary
-      by definition, $x_t$ and $y_t$ cointegrate, since their difference $z_t =
-      y_t - x_t$ is a stationary process. For $k = 0$, $z_t$ is simply a white
-      noise, whereas for $k \ne 0$ the process $z_t$ is a white noise with
-      non-zero mean.
+      </informalequation> where, again, <mathvar>k</mathvar> is a real number
+      and &ut; is a white noise process. Since &ut; is stationary by definition,
+      &xt; and &yt; cointegrate: that is, their difference 
+      <inlineequation><alt role="tex">
+	  $z_t = y_t - x_t = k + u_t$
+	</alt><graphic fileref="figures/vecm2a"/>
+      </inlineequation>
+      is a stationary process. For <mathvar>k</mathvar> = 0, &zt; is simple zero-mean
+      white noise, whereas for <mathvar>k</mathvar> &ne; 0 the process &zt; is
+      white noise with a non-zero mean.
   </para>
 
     <para>
       After some simple substitutions, the two equations above can be represented
-      together as a VAR(1) system:
+      jointly as a VAR(1) system
       <informalequation><alt role="tex">
+\renewcommand{\arraystretch}{1.3}
+\setlength{\arraycolsep}{.05in}
 	\[ \left[  \begin{array}{c} y_t \\ x_t \end{array} \right] = \left[
 	\begin{array}{c} k + m \\ m \end{array} \right] + \left[
 	\begin{array}{rr} 0 & 1 \\ 0 & 1 \end{array} \right] \left[
@@ -56,6 +60,8 @@
       </informalequation>
       or in VECM form
       <informalequation><alt role="tex">
+\renewcommand{\arraystretch}{1.3}
+\setlength{\arraycolsep}{.05in}
 \begin{eqnarray*}
   \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  & = & 
     \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
@@ -69,7 +75,7 @@
     \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
     \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
   & = & 
-    \mu_0 + \alpha \beta' \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \eta_t = 
+    \mu_0 + \alpha \beta^' \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \eta_t = 
     \mu_0 + \alpha z_{t-1} + \eta_t ,
 \end{eqnarray*}
 	</alt><graphic fileref="figures/vecm4"/>
@@ -79,69 +85,81 @@
     </para>
 
     <para> 
-      We are now in the position of considering three different cases:
+      We are now in a position to consider three possible cases:
     </para>
 
     <orderedlist>
       <listitem>
 	<para>
-	  $m \ne 0$: In this case, $x_t$ is trended, as we just saw; it follows
-	  (from equation (\ref{eq:ytcoint})) that $y_t$ also follows a linear
-	  trend, because on average it keeps at a distance $k$ from $x_t$. The
-	  vector $\mu_0$ is unrestricted.
+	  <mathvar>m</mathvar> &ne; 0: In this case &xt; is trended, as we
+	  just saw; it follows that &yt; also follows a linear trend because on
+	  average it keeps at a distance <mathvar>k</mathvar> from &xt;. The
+	  vector &mu;<subscript>0</subscript> is unrestricted.  This case is
+	  the default for gretl's <xref linkend="cmd-vecm"/> command.
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  $m = 0$ and $k \ne 0$: In this case, $x_t$ is not trended, and as a
-	  consequence neither $y_t$ is. However, the mean distance between $y_t$
-	  and $x_t$ is non-zero. The vector $\mu_0$ equals
+	  <mathvar>m</mathvar> = 0 and <mathvar>k</mathvar> &ne; 0: 
+	  In this case, &xt; is not trended and as a
+	  consequence neither is &yt;. However, the mean distance between &yt;
+	  and &xt; is non-zero. The vector &mu;<subscript>0</subscript> is given by
 	  <informalequation><alt role="tex">
+\renewcommand{\arraystretch}{1.3}
+\setlength{\arraycolsep}{.05in}
 	      \[
 	      \mu_0 = \left[  \begin{array}{c} k \\ 0 \end{array} \right]
 	      \]
 	    </alt><graphic fileref="figures/vecm5"/>
 	  </informalequation>
-	  which is not null and therefore the VECM in equation (\ref{eq:VAR})
+	  which is not null and therefore the VECM shown above
 	  does have a constant term. The constant, however, is subject to the
-	  restriction that its second element must be 0. More in general,
+	  restriction that its second element must be 0. More generally,
 	  &mu;<subscript>0</subscript> is a multiple of the vector &alpha;. Note that the VECM
 	  could also be written as
 	  <informalequation><alt role="tex">
+\renewcommand{\arraystretch}{1.3}
+\setlength{\arraycolsep}{.05in}
    \[
      \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  =  
      \left[  \begin{array}{r} -1 \\ 0 \end{array} \right]
      \left[  \begin{array}{rrr} 1 & -1 & -k \end{array} \right] 
      \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \\ 1 \end{array} \right] + 
-     \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t  \end{array} \right] ,
+     \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t  \end{array} \right]
    \]
 	   </alt><graphic fileref="figures/vecm6"/>   
 	  </informalequation>
 	  which incorporates the intercept into the cointegration
-	  vector. This is known as the <quote>restricted constant</quote> case.
+	  vector. This is known as the <quote>restricted constant</quote> case;
+	  it may be specified in gretl's <xref linkend="cmd-vecm"/> command using
+	  the option flag <literal>--rc</literal>.
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  $m = 0$ and $k = 0$: This case is the most restrictive: clearly,
-	  neither $x_t$ nor $y_t$ are trended, and the mean distance between
-	  them is zero. The vector &mu;<subscript>0</subscript> is also 0, which
-	  explains why this case is referred to as <quote>no constant.</quote>
+	  <mathvar>m</mathvar> = 0 and <mathvar>k</mathvar> = 0: This case
+	  is the most restrictive: clearly, neither &xt; nor &yt; are trended,
+	  and the mean distance between them is zero. The vector
+	  &mu;<subscript>0</subscript> is also 0, which explains why this case
+	  is referred to as <quote>no constant.</quote>  This case is specified
+	  using the option flag <literal>--nc</literal> with
+	  <xref linkend="cmd-vecm"/>.
 	</para>
       </listitem>
     </orderedlist>
 
     <para>
       In most cases, the choice between the three possibilities is based on a
-      mix of empirical observation and economic reasoning. If the two series
-      under consideration seem to follow a linear trend, then restrictions on
-      the intercept must be ruled out. If not, the question arises on whether it
-      makes sense to specify a cointegration relationship which includes an
-      intercept. The classic case when this applies arises when we consider two
-      interest rates: normally these are not trended, but the VAR might still
-      have an intercept, because the difference between the two (the
-      <quote>interest rate spread</quote>) might be stationary around a non-zero
-      mean (for example, because of a risk or liquidity premium).
+      mix of empirical observation and economic reasoning. If the variables
+      under consideration seem to follow a linear trend then we should not
+      place any restriction on the intercept. Otherwise, the question arises of
+      whether it makes sense to specify a cointegration relationship which
+      includes a non-zero intercept. One example where this is appropriate is the
+      relationship between two interest rates: generally these are not trended,
+      but the VAR might still have an intercept because the difference between
+      the two (the <quote>interest rate spread</quote>) might be stationary
+      around a non-zero mean (for example, because of a risk or liquidity
+      premium).
     </para>
 
     <para>
@@ -157,9 +175,9 @@
       </listitem>
       <listitem>
 	<para>
-	  If we consider a VAR that includes more than two endogenous variables
-	  the cointegration rank <emphasis>r</emphasis> can be greater than 1.
-	  In this case, &alpha; is a matrix with <emphasis>r</emphasis> columns,
+	  If the VAR includes more than two endogenous variables the
+	  cointegration rank <mathvar>r</mathvar> can be greater than 1. In
+	  this case, &alpha; is a matrix with <mathvar>r</mathvar> columns,
 	  and the case with restricted constant entails the restriction that
 	  &mu;<subscript>0</subscript> should be some linear combination of the
 	  columns of &alpha;.
@@ -167,15 +185,22 @@
       </listitem>
       <listitem>
 	<para>
-	  If a linear trend is included, the deterministic part of the VAR
-	  becomes &mu;<subscript>0</subscript> +
-	  &mu;<subscript>1</subscript><emphasis>t</emphasis>. The reasoning is
-	  practically the same, except that the focus now centers on
-	  &mu;<subscript>1</subscript> rather than &mu;<subscript>0</subscript>,
-	  so with &mu;<subscript>1</subscript> unrestricted the series follow a
-	  quadratic trend, while &mu;<subscript>1</subscript> restricted implies
-	  that the observed series follow a linear trend and the cointegration
-	  relationships also include a trend.
+	  If a linear trend is included in the model, the deterministic part of
+	  the VAR becomes &mu;<subscript>0</subscript> +
+	  &mu;<subscript>1</subscript><mathvar>t</mathvar>. The reasoning is
+	  practically the same as above except that the focus now centers on
+	  &mu;<subscript>1</subscript> rather than &mu;<subscript>0</subscript>.
+	  The counterpart to the <quote>restricted constant</quote> case
+	  discussed above is a <quote>restricted trend</quote> case, such that
+	  the cointegration relationships include a trend but the first
+	  differences of the variables in question do not. In the case of an
+	  unrestricted trend, the trend appears in both the cointegration
+	  relationships and the first differences, which corresponds to the
+	  presence of a quadratic trend in the variables themselves (in levels).
+	  These two cases are specified by the option flags
+	  <literal>--crt</literal> and <literal>--ct</literal>, respectively,
+	  with the <xref
+	    linkend="cmd-vecm"/> command.
 	</para>
       </listitem>
     </orderedlist>
