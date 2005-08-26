@@ -3,7 +3,7 @@
 parent=/home/cottrell/stats/esl
 WWW='allin@gretl.sourceforge.net:~/www/'
 
-version=$(cat ${parent}/gretl/lib/src/version.h | grep version_ | \
+version=$(cat ${parent}/gretl/lib/src/version.h | grep GRETL_VERSION[^_] | \
      awk '{ print $NF}' | sed s/[\"\;]//g)
 tarfile="gretl-${version}.tar.bz2"
 topdir=/home/cottrell/stats/esl/gretl
