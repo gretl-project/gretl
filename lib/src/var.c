@@ -3742,13 +3742,21 @@ gretl_VECM_print (GRETL_VAR *vecm, const DATAINFO *pdinfo, gretlopt opt, PRN *pr
     print_Johansen_test_case(jcode(vecm), prn); 
     gretl_prn_newline(prn);
 
-    print_VECM_coint_eqns(vecm->jinfo, pdinfo, prn);
+    if (tex_format(prn)) {
+	tex_print_VECM_coint_eqns(vecm, pdinfo, prn);
+    } else {
+	print_VECM_coint_eqns(vecm->jinfo, pdinfo, prn);
+    }
 
     for (i=0; i<vecm->neqns; i++) {
 	printmodel(vecm->models[i], pdinfo, OPT_NONE, prn);
-    }    
+    } 
 
-    print_VECM_omega(vecm, pdinfo, prn);
+    if (tex_format(prn)) {
+	tex_print_VECM_omega(vecm, pdinfo, prn);
+    } else {
+	print_VECM_omega(vecm, pdinfo, prn);
+    }
 
     if (!na(vecm->ll)) {
 	print_VECM_ll_stats(vecm, pdinfo, prn);

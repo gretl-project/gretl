@@ -20,6 +20,7 @@
 /* texprint.c for gretl - LaTeX output from modeling */
 
 #include "libgretl.h"
+#include "johansen.h"
 
 static void tex_modify_exponent (char *numstr)
 {
@@ -238,6 +239,28 @@ static void tex_lagname (char *s, const DATAINFO *pdinfo, int v)
     }
 }
 
+static void tex_vecm_varname (char *s, const DATAINFO *pdinfo, int v)
+{
+    const char *lbl = VARLABEL(pdinfo, v);
+    int gotit = 0;
+
+    if (strlen(lbl) > 2) {
+	char myvar[24], tmp[9];
+	int lag;
+
+	lbl += 2;
+	if (sscanf(lbl, "d_%8[^(](t - %d)", tmp, &lag) == 2) {
+	    tex_escape(myvar, tmp);
+	    sprintf(s, "$\\Delta$%s$_{t-%d}$", myvar, lag);
+	    gotit = 1;
+	}
+    }
+
+    if (!gotit) {
+	tex_escape(s, pdinfo->varname[v]); 
+    }
+}
+
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 		     int i, PRN *prn)
 {
@@ -273,6 +296,8 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	tex_garch_coeff_name(tmp, pmod->params[i+1], 0);
     } else if (pmod->ci == VAR) {
 	tex_lagname(tmp, pdinfo, pmod->list[i+2]);
+    } else if (pmod->aux == AUX_VECM) {
+	tex_vecm_varname(tmp, pdinfo, pmod->list[i+2]);
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
     }
@@ -309,6 +334,145 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     }
 
     return 0;
+}
+
+void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
+{
+    char vname[32];
+    const int *list = vecm->jinfo->list;
+    gretl_matrix *M;
+    double x;
+    int i, j;
+
+    pprintf(prn, "%s\n\n", _("Cross-equation covariance matrix"));
+    pputs(prn, "\\vspace{1em}\n");
+
+    pputs(prn, "\\begin{tabular}{");
+    pputs(prn, "l");
+    for (i=0; i<vecm->neqns; i++) {
+	pputs(prn, "r");
+    }
+    pputs(prn, "}\n & ");
+
+    for (i=0; i<vecm->neqns; i++) {
+	tex_escape(vname, pdinfo->varname[list[i+1]]);
+	pprintf(prn, "$\\Delta$%s ", vname);
+	if (i == vecm->neqns - 1) {
+	    pputs(prn, "\\\\\n");
+	} else {
+	    pputs(prn, "& ");
+	}
+    }
+    pputc(prn, '\n');
+
+    for (i=0; i<vecm->neqns; i++) {
+	tex_escape(vname, pdinfo->varname[list[i+1]]);
+	pprintf(prn, "$\\Delta$%s & ", vname);
+	for (j=0; j<vecm->neqns; j++) {
+	    x = gretl_matrix_get(vecm->S, i, j);
+	    if (x < 0) {
+		pputs(prn, "$-$");
+	    }
+	    tex_print_float(x, prn);
+	    if (j == vecm->neqns - 1) {
+		pputs(prn, "\\\\\n");
+	    } else {
+		pputs(prn, "& ");
+	    }
+	}
+    }
+
+    pputs(prn, "\\end{tabular}\n\n");
+    pputs(prn, "\\vspace{1em}\n");
+
+    M = gretl_matrix_copy(vecm->S);
+    if (M != NULL) {
+	pputs(prn, "\\noindent\n");
+	pprintf(prn, "determinant = %g\\\\\n", gretl_matrix_determinant(M));
+	gretl_matrix_free(M);
+    }
+}
+
+void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
+{
+    char s[16];
+    JohansenInfo *jv = vecm->jinfo;
+    int rows = gretl_matrix_rows(jv->Beta);
+    int i, j;
+    double x;
+
+    pputs(prn, _("Cointegrating vectors"));
+    if (jv->Bse != NULL) {
+	pprintf(prn, " (%s)\n\n", _("standard errors in parentheses"));
+    } else {
+	pputs(prn, "\n\n");
+    }
+
+    pputs(prn, "\\begin{tabular}{");
+    pputs(prn, "l");
+    for (i=0; i<jv->rank; i++) {
+	pputs(prn, "r");
+    }
+    pputs(prn, "}\n & ");
+
+    for (j=0; j<jv->rank; j++) {
+	pprintf(prn, "CV%d", j + 1);
+	if (j == jv->rank - 1) {
+	    pputs(prn, "\\\\\n");
+	} else {
+	    pputs(prn, "& ");
+	}
+    }
+
+    for (i=0; i<rows; i++) {
+	if (i < jv->list[0]) {
+	    tex_escape(s, pdinfo->varname[jv->list[i+1]]);
+	    pprintf(prn, "%s$_{t-1}$ & ", s);
+	} else if (jv->code == J_REST_CONST) {
+	    pputs(prn, "const & ");
+	} else if (jv->code == J_REST_TREND) {
+	    pputs(prn, "trend & ");
+	}
+
+	/* coefficients */
+	for (j=0; j<jv->rank; j++) {
+	    x = gretl_matrix_get(jv->Beta, i, j);
+	    if (jv->Bse == NULL) {
+		x /= gretl_matrix_get(jv->Beta, j, j);
+	    }
+	    if (x < 0) {
+		pputs(prn, "$-$");
+	    }
+	    tex_print_float(x, prn);
+	    if (j == jv->rank - 1) {
+		pputs(prn, "\\\\\n");
+	    } else {
+		pputs(prn, "& ");
+	    }	    
+	}
+
+	if (jv->Bse != NULL) {
+	    /* standard errors */
+	    pputs(prn, " & ");
+	    for (j=0; j<jv->rank; j++) {
+		if (i < jv->rank) {
+		    x = 0.0;
+		} else {
+		    x = gretl_matrix_get(jv->Bse, i - jv->rank, j);
+		}
+		pputc(prn, '(');
+		tex_print_float(x, prn);
+		pputc(prn, ')');
+		if (j == jv->rank - 1) {
+		    pputs(prn, "\\\\\n");
+		} else {
+		    pputs(prn, "& ");
+		}
+	    }
+	}
+    }
+
+    pputs(prn, "\\end{tabular}\n\n");
 }
 
 static PRN *make_tex_prn (int ID, char *texfile,

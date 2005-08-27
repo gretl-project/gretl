@@ -29,6 +29,10 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 		     int i, PRN *prn);
 
+void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn);
+
+void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn);
+
 int texprint (MODEL *pmod, const DATAINFO *pdinfo,
 	      char *texfile, gretlopt opt);
 
