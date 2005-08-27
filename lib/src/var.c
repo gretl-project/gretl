@@ -3584,7 +3584,7 @@ void print_Johansen_test_case (JohansenCode jcode, PRN *prn)
 	break;
     }
 
-    pputc(prn, '\n');
+    gretl_prn_newline(prn);
 }
 
 static void 
@@ -3706,9 +3706,12 @@ print_VECM_ll_stats (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
     vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * n) / T;
     vecm->BIC = (-2.0 * vecm->ll + log(T) * k * n) / T;
 
-    pprintf(prn, "%s = %g\n", _("log-likelihood"), vecm->ll);
-    pprintf(prn, "%s = %g\n", _("AIC"), vecm->AIC);
-    pprintf(prn, "%s = %g\n", _("BIC"), vecm->BIC);
+    pprintf(prn, "%s = %g", _("log-likelihood"), vecm->ll);
+    gretl_prn_newline(prn);
+    pprintf(prn, "%s = %g", _("AIC"), vecm->AIC);
+    gretl_prn_newline(prn);
+    pprintf(prn, "%s = %g", _("BIC"), vecm->BIC);
+    gretl_prn_newline(prn);
 }
 
 static int 
@@ -3717,16 +3720,27 @@ gretl_VECM_print (GRETL_VAR *vecm, const DATAINFO *pdinfo, gretlopt opt, PRN *pr
     char stobs[OBSLEN], endobs[OBSLEN];
     int i, err = 0;
 
-    pprintf(prn, "%s:\n", _("VECM"));
-    pprintf(prn, "%s = %d\n", _("Number of equations"), vecm->neqns);
-    pprintf(prn, "%s = %d\n", _("Lag order"), vecm->order);
-    pprintf(prn, "%s = %d\n", _("Cointegration rank"), jrank(vecm));
-    pprintf(prn, "%s: %s - %s (T = %d)\n", _("Estimation period"),
+    if (tex_format(prn)) {
+	pputs(prn, "\\noindent\n");
+    }
+    pprintf(prn, "%s:", _("VECM"));
+    gretl_prn_newline(prn);
+    pprintf(prn, "%s = %d", _("Number of equations"), vecm->neqns);
+    gretl_prn_newline(prn);
+    pprintf(prn, "%s = %d", _("Lag order"), vecm->order);
+    gretl_prn_newline(prn);
+    pprintf(prn, "%s = %d", _("Cointegration rank"), jrank(vecm));
+    gretl_prn_newline(prn);
+    pprintf(prn, "%s: %s %s %s %s(T = %d)%s", _("Estimation period"),
 	    ntodate(stobs, vecm->t1, pdinfo), 
-	    ntodate(endobs, vecm->t2, pdinfo), vecm->T);
+	    (tex_format(prn))? "--" : "-",
+	    ntodate(endobs, vecm->t2, pdinfo), 
+	    (tex_format(prn))? "$" : "",
+	    vecm->T, (tex_format(prn))? "$" : "");
+    gretl_prn_newline(prn); 
 
     print_Johansen_test_case(jcode(vecm), prn); 
-    pputc(prn, '\n');
+    gretl_prn_newline(prn);
 
     print_VECM_coint_eqns(vecm->jinfo, pdinfo, prn);
 

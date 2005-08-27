@@ -63,6 +63,8 @@ int pputs (PRN *prn, const char *s);
 
 int pputc (PRN *prn, int c);
 
+void gretl_prn_newline (PRN *prn);
+
 void gretl_print_flush_stream (PRN *prn);
 
 int printing_to_standard_stream (PRN *prn);

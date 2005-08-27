@@ -459,6 +459,25 @@ int pputc (PRN *prn, int c)
 }
 
 /**
+ * gretl_prn_newline:
+ * @prn: gretl printing struct.
+ * 
+ * Print a line break, in the mode appropriate to the
+ * format of @prn (plain text, TeX or RTF).
+ */
+
+void gretl_prn_newline (PRN *prn)
+{
+    if (tex_format(prn)) {
+	pputs(prn, "\\\\\n");
+    } else if (rtf_format(prn)) {
+	pputs(prn, "\\par\n");
+    } else {
+	pputc(prn, '\n');
+    }
+}
+
+/**
  * gretl_print_flush_stream:
  * @prn: gretl printing struct.
  * 

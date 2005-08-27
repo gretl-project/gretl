@@ -725,17 +725,6 @@ static void garch_vcv_line (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void model_print_newline (PRN *prn)
-{
-    if (tex_format(prn)) {
-	pputs(prn, "\\\\\n");
-    } else if (rtf_format(prn)) {
-	pputs(prn, "\\par\n");
-    } else {
-	pputc(prn, '\n');
-    }
-}
-
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 gretlopt opt, 
@@ -832,7 +821,7 @@ static void print_model_heading (const MODEL *pmod,
 		    I_("%s estimates using %d observations from %s%s%s"),
 		    _(my_estimator_string(pmod, prn)), 
 		    pmod->nobs, startdate, (tex)? "--" : "-", enddate);
-	    model_print_newline(prn);
+	    gretl_prn_newline(prn);
 	    pprintf(prn, "%s: %d",
 		    (utf)? _("Missing or incomplete observations dropped") :
 		    I_("Missing or incomplete observations dropped"), mc);
@@ -852,14 +841,14 @@ static void print_model_heading (const MODEL *pmod,
 		_(my_estimator_string(pmod, prn)), 
 		pmod->nobs);
 	if (effn > 0) {
-	    model_print_newline(prn);
+	    gretl_prn_newline(prn);
 	    pprintf(prn, (utf)? _("Included %d cross-sectional units") :
 		    I_("Included %d cross-sectional units"), effn);
 	}
     }
 
     if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
-	model_print_newline(prn);
+	gretl_prn_newline(prn);
     }
 
     /* special formulations for dependent variable in cases of certain
@@ -894,7 +883,7 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
-    model_print_newline(prn);
+    gretl_prn_newline(prn);
 
     /* supplementary strings below the estimator and sample info */
 

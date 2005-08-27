@@ -1373,6 +1373,11 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	}
     }
 
+    if (VEC_CODE(sr->code) && rows < 2) {
+	errbox(_("You must select two or more endogenous variables"));
+	sr->error = 1;
+    }
+
     /* bail out if things have gone wrong already */
     if (sr->error) {
 #ifdef OLD_GTK
