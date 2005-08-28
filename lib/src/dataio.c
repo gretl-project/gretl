@@ -704,8 +704,7 @@ real_dateton (const char *date, const DATAINFO *pdinfo,
     /* now try treating as an undated time series */
 
     else if (dataset_is_daily(pdinfo) ||
-	     dataset_is_weekly(pdinfo) ||
-	     custom_time_series(pdinfo)) {
+	     dataset_is_weekly(pdinfo)) {
 	if (sscanf(date, "%d", &t) && t > 0) {
 	    n = t - 1;
 	}
@@ -835,8 +834,7 @@ real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 	}
 	return datestr;
     } else if (dataset_is_daily(pdinfo) || 
-	       dataset_is_weekly(pdinfo) ||
-	       custom_time_series(pdinfo)) {
+	       dataset_is_weekly(pdinfo)) {
 	/* undated time series */
 	x = date(t, 1, pdinfo->sd0);
 	sprintf(datestr, "%d", (int) x);

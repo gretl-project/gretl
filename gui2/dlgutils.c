@@ -135,12 +135,6 @@ GtkWidget *back_button (GtkWidget *hbox)
     return w;
 }
 
-gint dialog_unblock (GtkWidget *w, gpointer p)
-{
-    gtk_main_quit();
-    return FALSE;
-}
-
 /* ........................................................... */
 
 static GtkWidget *open_dialog;
@@ -157,16 +151,38 @@ void set_open_dialog (GtkWidget *w)
 
 /* ........................................................... */
 
+static gint dialog_unblock (GtkWidget *w, gpointer p)
+{
+    gtk_main_quit();
+    return FALSE;
+}
+
+#if 0
+/* prevents gtk_main_quit() from being called */
+static gint dialog_set_destruction (GtkWidget *w, gpointer p)
+{
+    gtk_window_set_transient_for(GTK_WINDOW(w), GTK_WINDOW(mdata->w));
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(w), TRUE);
+    return FALSE;
+}
+#endif
+
 GtkWidget *gretl_dialog_new (const char *title)
 {
-    GtkWidget *d;
-
-    d = gtk_dialog_new();
+    GtkWidget *d = gtk_dialog_new();
 
     gtk_window_set_title(GTK_WINDOW(d), title);
-
     gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(d)->action_area), TRUE);
     gtk_window_set_position(GTK_WINDOW(d), GTK_WIN_POS_MOUSE);
+
+    g_signal_connect(G_OBJECT(d), "destroy", 
+		     G_CALLBACK(dialog_unblock), NULL);
+#if 0
+    g_signal_connect(G_OBJECT(d), "show", 
+		     G_CALLBACK(dialog_set_destruction), NULL);
+#endif
+    g_signal_connect(G_OBJECT(d), "show", 
+		     G_CALLBACK(gtk_main), NULL);
 
     return d;
 }

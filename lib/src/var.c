@@ -3590,6 +3590,7 @@ void print_Johansen_test_case (JohansenCode jcode, PRN *prn)
 static void 
 print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
 {
+    int rtf = rtf_format(prn);
     char s[16];
     int rows = gretl_matrix_rows(jv->Beta);
     int i, j;
@@ -3597,29 +3598,43 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
 
     pputs(prn, _("Cointegrating vectors"));
     if (jv->Bse != NULL) {
-	pprintf(prn, " (%s)\n\n", _("standard errors in parentheses"));
-    } else {
-	pputs(prn, "\n\n");
-    }
+	pprintf(prn, " (%s)", _("standard errors in parentheses"));
+    } 
+    gretl_prn_newline(prn);
+    gretl_prn_newline(prn);
 
     for (j=0; j<jv->rank; j++) {
 	sprintf(s, "CV%d", j + 1);
 	if (j == 0) {
-	    pprintf(prn, "%22s", s);
+	    if (rtf) {
+		pprintf(prn, "\t\t%s", s);
+	    } else {
+		pprintf(prn, "%22s", s);
+	    }
 	} else {
-	    pprintf(prn, "%13s", s);
+	    if (rtf) {
+		pprintf(prn, "\t%s", s);;
+	    } else {
+		pprintf(prn, "%13s", s);
+	    }
 	}
     }
-    pputc(prn, '\n');
+    gretl_prn_newline(prn);
 
     for (i=0; i<rows; i++) {
+	char vname[16];
+
 	if (i < jv->list[0]) {
-	    sprintf(s, "%s(-1)", pdinfo->varname[jv->list[i+1]]);
-	    pprintf(prn, "%-10s", s);
+	    sprintf(vname, "%s(-1)", pdinfo->varname[jv->list[i+1]]);
 	} else if (jv->code == J_REST_CONST) {
-	    pprintf(prn, "%-10s", "const");
+	    strcpy(vname, "const");
 	} else if (jv->code == J_REST_TREND) {
-	    pprintf(prn, "%-10s", "trend");
+	    strcpy(vname, "trend");
+	}
+	if (rtf) {
+	    pputs(prn, vname);
+	} else {
+	    pprintf(prn, "%-10s", vname);
 	}
 
 	/* coefficients */
@@ -3628,13 +3643,21 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
 	    if (jv->Bse == NULL) {
 		x /= gretl_matrix_get(jv->Beta, j, j);
 	    }
-	    pprintf(prn, "%#12.5g ", x);
+	    if (rtf) {
+		pprintf(prn, "\t%#.5g ", x);
+	    } else {
+		pprintf(prn, "%#12.5g ", x);
+	    }
 	}
-	pputc(prn, '\n');
+	gretl_prn_newline(prn);
 
 	if (jv->Bse != NULL) {
 	    /* standard errors */
-	    pprintf(prn, "%11s", " ");
+	    if (rtf) {
+		pputs(prn, "\t");
+	    } else {
+		pprintf(prn, "%11s", " ");
+	    }
 	    for (j=0; j<jv->rank; j++) {
 		if (i < jv->rank) {
 		    x = 0.0;
@@ -3642,48 +3665,74 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
 		    x = gretl_matrix_get(jv->Bse, i - jv->rank, j);
 		}
 		sprintf(s, "(%#.5g)", x);
-		pprintf(prn, "%12s ", s);
+		if (rtf) {
+		    pprintf(prn, "\t%s", s);
+		} else {
+		    pprintf(prn, "%12s ", s);
+		}
 	    }
-	    pputc(prn, '\n');
+	    gretl_prn_newline(prn);
 	}
     }
 
-    pputc(prn, '\n');
+    gretl_prn_newline(prn);
 }
 
 static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 {
+    int rtf = rtf_format(prn);
     gretl_matrix *M;
     int *list = jvar->jinfo->list;
     char s[32];
     int i, j;
 
-    pprintf(prn, "%s\n\n", _("Cross-equation covariance matrix"));
+    pprintf(prn, "%s\n", _("Cross-equation covariance matrix"));
+    gretl_prn_newline(prn);
 
     for (i=0; i<jvar->neqns; i++) {
 	sprintf(s, "d_%s", pdinfo->varname[list[i+1]]);
 	if (i == 0) {
-	    pprintf(prn, "%25s", s);
+	    if (rtf) {
+		pprintf(prn, "\t\t%s", s);
+	    } else {
+		pprintf(prn, "%25s", s);
+	    }
 	} else {
-	    pprintf(prn, "%13s", s);
+	    if (rtf) {
+		pprintf(prn, "\t%s", s);
+	    } else {
+		pprintf(prn, "%13s", s);
+	    }
 	}
     }
-    pputc(prn, '\n');
+    gretl_prn_newline(prn);
 
     for (i=0; i<jvar->neqns; i++) {
 	sprintf(s, "d_%s", pdinfo->varname[list[i+1]]);
-	pprintf(prn, "%-13s", s);
-	for (j=0; j<jvar->neqns; j++) {
-	    pprintf(prn, "%#12.5g ", gretl_matrix_get(jvar->S, i, j));
+	if (rtf) {
+	    pputs(prn, s);
+	    if (strlen(s) < 8) {
+		pputc(prn, '\t');
+	    }	    
+	} else {
+	    pprintf(prn, "%-13s", s);
 	}
-	pputc(prn, '\n');
+	for (j=0; j<jvar->neqns; j++) {
+	    if (rtf) {
+		pprintf(prn, "\t%#.5g", gretl_matrix_get(jvar->S, i, j));
+	    } else {
+		pprintf(prn, "%#12.5g ", gretl_matrix_get(jvar->S, i, j));
+	    }
+	}
+	gretl_prn_newline(prn);
     }
 
-    pputc(prn, '\n');
+    gretl_prn_newline(prn);
 
     M = gretl_matrix_copy(jvar->S);
     if (M != NULL) {
-	pprintf(prn, "determinant = %g\n", gretl_matrix_determinant(M));
+	pprintf(prn, "%s = %g", _("determinant"), gretl_matrix_determinant(M));
+	gretl_prn_newline(prn);
 	gretl_matrix_free(M);
     }
 }
@@ -3722,7 +3771,11 @@ gretl_VECM_print (GRETL_VAR *vecm, const DATAINFO *pdinfo, gretlopt opt, PRN *pr
 
     if (tex_format(prn)) {
 	pputs(prn, "\\noindent\n");
+    } else if (rtf_format(prn)) {
+	pputs(prn, "{\\rtf1\\par\n\n");
+	gretl_print_toggle_doc_flag(prn);
     }
+
     pprintf(prn, "%s:", _("VECM"));
     gretl_prn_newline(prn);
     pprintf(prn, "%s = %d", _("Number of equations"), vecm->neqns);
@@ -3759,9 +3812,17 @@ gretl_VECM_print (GRETL_VAR *vecm, const DATAINFO *pdinfo, gretlopt opt, PRN *pr
     }
 
     if (!na(vecm->ll)) {
-	print_VECM_ll_stats(vecm, pdinfo, prn);
+	if (tex_format(prn)) {
+	    tex_print_VECM_ll_stats(vecm, pdinfo, prn);
+	} else {
+	    print_VECM_ll_stats(vecm, pdinfo, prn);
+	}
     } else {
 	err = 1;
+    }
+    
+    if (rtf_format(prn)) {
+	pputs(prn, "}\n");
     }
 
     return err;
@@ -3796,7 +3857,6 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	return 0;
     }
 
-    /* FIXME rtf and tex */
     if (var->ci == VECM) {
 	return gretl_VECM_print(var, pdinfo, OPT_NONE, prn);
     }

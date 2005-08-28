@@ -725,12 +725,30 @@ static void garch_vcv_line (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void tex_vecm_depvar_name (char *s, const char *vname)
+{
+    char tmp[9];
+    int gotit = 0;
+
+    if (sscanf(vname, "d_%8s", tmp)) {
+	char myvar[16];
+
+	tex_escape(myvar, tmp);
+	sprintf(s, "$\\Delta$%s", myvar);
+	gotit = 1;
+    }
+
+    if (!gotit) {
+	tex_escape(s, vname); 
+    }    
+}
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 gretlopt opt, 
 				 PRN *prn)
 {
-    char startdate[OBSLEN], enddate[OBSLEN], vname[16];
+    char startdate[OBSLEN], enddate[OBSLEN], vname[32];
     int t1 = pmod->t1, t2 = pmod->t2;
     int tex = tex_format(prn);
     int utf = plain_format(prn);
@@ -873,7 +891,13 @@ static void print_model_heading (const MODEL *pmod,
     } else { 
 	int v = gretl_model_get_depvar(pmod);
 
-	if (tex) tex_escape(vname, pdinfo->varname[v]);
+	if (tex) {
+	    if (pmod->aux == AUX_VECM) {
+		tex_vecm_depvar_name(vname, pdinfo->varname[v]);
+	    } else {
+		tex_escape(vname, pdinfo->varname[v]);
+	    }
+	}
 	if (pmod->aux == AUX_VAR || pmod->aux == AUX_VECM) {
 	    pputs(prn, (tex)? vname : pdinfo->varname[v]);
 	} else {

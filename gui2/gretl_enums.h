@@ -223,7 +223,7 @@ enum dynamic_forecast_status {
 	                         c == CORR || c == FCASTERR || \
 	                         c == FCAST || c == COEFFINT || \
 	                         c == COVAR || c == VIEW_MODEL || \
-                                 c == VIEW_MODELTABLE || c == VAR || \
+                                 c == VIEW_MODELTABLE || c == VAR || c == VECM || \
                                  c == VAR_IRF || c == VAR_DECOMP)
 
 #endif /* GRETL_ENUMS_H */

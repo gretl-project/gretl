@@ -39,8 +39,6 @@ GtkWidget *next_button (GtkWidget *hbox);
 
 GtkWidget *back_button (GtkWidget *hbox);
 
-gint dialog_unblock (GtkWidget *w, gpointer p);
-
 GtkWidget *get_open_dialog (void);
 
 void set_open_dialog (GtkWidget *w);

@@ -404,8 +404,8 @@
 	  <effect>print covariance matrix</effect>
         </option>
         <option>
-	  <flag>--suppress-const</flag>
-	  <effect>do not include an intercept</effect>
+	  <flag>--nc</flag>
+	  <effect>do not include a constant</effect>
         </option>
       </options>
       <examples>
@@ -427,12 +427,11 @@
       </para>
 
       <para context="cli">
-	In the univariate case the default is to include an intercept
-	in the model but this can be suppressed with the
-	<lit>--suppress-const</lit> flag.  If <repl>indepvars</repl>
-	are added, the model becomes ARMAX; in this case the constant
-	should be included explicitly if you want an intercept (as in
-	the second example above).
+	In the univariate case the default is to include an intercept in the
+	model but this can be suppressed with the <lit>--nc</lit> flag.  If
+	<repl>indepvars</repl> are added, the model becomes ARMAX; in this case
+	the constant should be included explicitly if you want an intercept (as
+	in the second example above).
       </para>
 
       <para context="gui">
@@ -696,6 +695,26 @@
       </arguments>
       <options>
         <option>
+	  <flag>--nc</flag>
+	  <effect>no constant</effect>
+        </option>
+        <option>
+	  <flag>--rc</flag>
+	  <effect>restricted constant</effect>
+        </option>
+        <option>
+	  <flag>--crt</flag>
+	  <effect>constant and restricted trend</effect>
+        </option>
+        <option>
+	  <flag>--ct</flag>
+	  <effect>constant and unrestricted trend</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>include centered seasonal dummies</effect>
+        </option>
+        <option>
 	  <flag>--verbose</flag>
 	  <effect>print details of auxiliary regressions</effect>
         </option>
@@ -703,18 +722,54 @@
       <examples>
         <example>coint2 2 y x</example>
 	<example>coint2 4 y x1 x2 --verbose</example>
+	<example>coint2 3 y x1 x2 --rc</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Carries out the Johansen trace test for cointegration among
-	the listed variables for the given order. Critical values are
-	computed via J. Doornik's gamma approximation (Doornik, 1998).
-	For details of this test see Hamilton, <book>Time Series
-	Analysis</book> (1994), Chapter 20.
+	Carries out the Johansen test for cointegration among the listed
+	variables for the given lag order. Critical values are computed via J.
+	Doornik's gamma approximation (Doornik, 1998). For details of this test
+	see Hamilton, <book>Time Series Analysis</book> (1994), Chapter 20.
       </para>
-
+      <para context="cli">
+	The inclusion of deterministic terms in the model is controlled
+	by the option flags.  The default if no option is specified is to
+	include an <quote>unrestricted constant</quote>, which allows for the
+	presence of a non-zero intercept in the cointegrating relations as well
+	as a trend in the levels of the endogenous variables.  In the literature
+	stemming from the work of Johensen (see for example his 1995 book) this
+	is often referred to as <quote>case 3</quote>.  The first four options
+	given above, which are mutually exclusive, produce cases 1, 2, 4 and 5
+	respectively.  The meaning of these cases and the criteria for selecting
+	a case are explained in <manref targ="vecm-explanation"/>.
+      </para>
+      <para context="gui">
+	The inclusion of deterministic terms in the model is controlled by the
+	option buttons.  The default is to include an <quote>unrestricted
+	  constant</quote>, which allows for the presence of a non-zero
+	intercept in the cointegrating relations as well as a trend in the
+	levels of the endogenous variables.  In the literature stemming from the
+	work of Johensen (see for example his 1995 book) this is often referred
+	to as <quote>case 3</quote>.  The other four <quote>radio</quote>
+	buttons produce cases 1, 2, 4 and 5 respectively. The meaning of these
+	cases and the criteria for selecting a case are explained in <manref
+	  targ="vecm-explanation"/>.
+      </para>
+      <para context="cli">
+	The <lit>--seasonals</lit> option, which may be combined with any of the
+	other options, specifies the inclusion of a set of centered seasonal
+	dummy variables.  This option is available only for quarterly or monthly
+	data.
+      </para>
+      <para context="gui">
+	If the data are quarterly or monthly, a check box is shown that allows
+	you to include a set of centered seasonal dummy variables.  In all
+	cases, an additional check box (<quote>Show details</quote>) allows
+	for the printing of the auxiliary regressions that form the starting
+	point of the Johansen maximum likelihood estimation procedure.
+      </para>
       <para>
 	The following table is offered as a guide to the
 	interpretation of the results shown for the test, for the
@@ -731,6 +786,10 @@
                   2      c = 2  c = 3       c = 2  c = 3
                  ---------------------------------------
       </code>
+
+      <para>
+	See also the <cmdref targ="vecm"/> command.
+      </para>
 
     </description>
 
@@ -6193,19 +6252,30 @@
 	related to the Johansen test for cointegration (see <cmdref
 	  targ="coint2"/>).
       </para>
-      <para>
+      <para context="cli">
 	The <repl>order</repl> parameter to this command represents the lag
 	order of the VAR system.  The number of lags in the VECM itself (where
 	the dependent variable is given as a first difference) is one less than
 	<repl>order</repl>.
       </para>
-      <para>
+      <para context="gui">
+	The lag order selected in the VECM dialog box is that of the VAR system.
+	The number of lags in the VECM itself (where the dependent variable is
+	given as a first difference) is one less than this number.
+      </para>
+      <para context="cli">
 	The <repl>rank</repl> parameter represents the cointegration rank, or in
 	other words the number of cointegrating vectors.  This must be greater
 	than zero and less than or equal to (generally, less than) the number of
-	endogenous variables gven in <repl>varlist</repl>.
+	endogenous variables given in <repl>varlist</repl>.
       </para>
-      <para>
+      <para context="gui">
+	The <quote>cointegration rank</quote> represents the number of
+	cointegrating vectors.  This must be greater than zero and less than or
+	equal to (generally, less than) the number of endogenous variables 
+	selected.
+      </para>
+      <para context="cli">
 	<repl>varlist</repl> supplies the list of endogenous variables, in
 	levels. The inclusion of deterministic terms in the model is controlled
 	by the option flags.  The default if no option is specified is to
@@ -6218,19 +6288,39 @@
 	respectively.  The meaning of these cases and the criteria for selecting
 	a case are explained in <manref targ="vecm-explanation"/>.
       </para>
-      <para>
+      <para context="gui">
+	In the <quote>Endogenous variables</quote> box you select the vector of
+	endogenous variables, in levels. The inclusion of deterministic terms in
+	the model is controlled by the option buttons.  The default is to
+	include an <quote>unrestricted constant</quote>, which allows for the
+	presence of a non-zero intercept in the cointegrating relations as well
+	as a trend in the levels of the endogenous variables.  In the literature
+	stemming from the work of Johensen (see for example his 1995 book) this
+	is often referred to as <quote>case 3</quote>.  The other four
+	<quote>radio</quote> buttons produce cases 1, 2, 4 and 5 respectively.
+	The meaning of these cases and the criteria for selecting a case are
+	explained in <manref targ="vecm-explanation"/>.
+      </para>
+      <para context="cli">
 	The <lit>--seasonals</lit> option, which may be combined with any of the
 	other options, specifies the inclusion of a set of centered seasonal
 	dummy variables.  This option is available only for quarterly or monthly
 	data.
       </para>
-      <para>
+      <para context="gui">
+	If the data are quarterly or monthly, a check box is shown that allows
+	you to include a set of centered seasonal dummy variables.  In all
+	cases, an additional check box (<quote>Show details</quote>) allows
+	for the printing of the auxiliary regressions that form the starting
+	point of the Johansen maximum likelihood estimation procedure.
+      </para>
+      <para context="cli">
 	The first example above specifies a VECM with lag order 4 and a single
 	cointegrating vector.  The endogenous variables are <lit>Y1</lit>,
 	<lit>Y2</lit> and <lit>Y3</lit>.  The second example uses the same
 	variables but specifies a lag order of 3 and two cointegrating vectors;
 	it also specifies a <quote>restricted constant</quote>, which is
-	appropriate if the coinegrating vectors may have a non-zero intercept
+	appropriate if the cointegrating vectors may have a non-zero intercept
 	but the <lit>Y</lit> variables have no trend.
       </para>
     </description>

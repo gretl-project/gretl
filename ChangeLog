@@ -3,6 +3,7 @@ version 1.4.2, in progress
   data
 - More XLS importer fixes
 - Add seasonal ARMA
+- Accommodate custom time-series frequencies
 - Johansen cointegration test: extend to cover all 5 cases, 
   produce a fuller report (loadings, long-run matrix)
 - Add bootstrapped confidence intervals for impulse responses 

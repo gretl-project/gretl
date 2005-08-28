@@ -49,6 +49,22 @@ static void tex_print_float (double x, PRN *prn)
     pprintf(prn, "%s", (x < 0.0)? (number + 1) : number);
 }
 
+static void tex_print_signed_float (double x, PRN *prn)
+{
+    char number[48];
+
+    x = screen_zero(x);
+
+    sprintf(number, "%#.*g", GRETL_DIGITS, x);
+    tex_modify_exponent(number);
+
+    if (x < 0.0) {
+	pprintf(prn, "$-$%s", number + 1);
+    } else {
+	pputs(prn, number);
+    }
+}
+
 /**
  * tex_escape:
  * @targ: target string (must be pre-allocated)
@@ -336,6 +352,36 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     return 0;
 }
 
+void tex_print_VECM_ll_stats (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
+{
+    int code = jcode(vecm);
+    int T = vecm->T;
+    int n = vecm->neqns;
+    int k = n * (vecm->order - 1);
+
+    /* FIXME: is k right (in all cases)? */
+    k += (code >= J_UNREST_CONST) + (code == J_UNREST_TREND);
+
+    if (vecm->jinfo->seasonals) {
+	k += pdinfo->pd - 1;
+    }
+    
+    vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * n) / T;
+    vecm->BIC = (-2.0 * vecm->ll + log(T) * k * n) / T;
+
+    pprintf(prn, "%s = ", _("log-likelihood"));
+    tex_print_signed_float(vecm->ll, prn);
+    pputs(prn, "\\\\\n");
+
+    pprintf(prn, "%s = ", _("AIC"));
+    tex_print_signed_float(vecm->AIC, prn);
+    pputs(prn, "\\\\\n");
+
+    pprintf(prn, "%s = ", _("BIC"));
+    tex_print_signed_float(vecm->BIC, prn);
+    pputs(prn, "\\\\\n");
+}
+
 void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 {
     char vname[32];
@@ -370,10 +416,7 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, "$\\Delta$%s & ", vname);
 	for (j=0; j<vecm->neqns; j++) {
 	    x = gretl_matrix_get(vecm->S, i, j);
-	    if (x < 0) {
-		pputs(prn, "$-$");
-	    }
-	    tex_print_float(x, prn);
+	    tex_print_signed_float(x, prn);
 	    if (j == vecm->neqns - 1) {
 		pputs(prn, "\\\\\n");
 	    } else {
@@ -440,10 +483,7 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
 	    if (jv->Bse == NULL) {
 		x /= gretl_matrix_get(jv->Beta, j, j);
 	    }
-	    if (x < 0) {
-		pputs(prn, "$-$");
-	    }
-	    tex_print_float(x, prn);
+	    tex_print_signed_float(x, prn);
 	    if (j == jv->rank - 1) {
 		pputs(prn, "\\\\\n");
 	    } else {

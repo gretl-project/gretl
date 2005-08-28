@@ -33,6 +33,8 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn);
 
 void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn);
 
+void tex_print_VECM_ll_stats (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn);
+
 int texprint (MODEL *pmod, const DATAINFO *pdinfo,
 	      char *texfile, gretlopt opt);
 

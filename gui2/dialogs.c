@@ -28,6 +28,8 @@
 #include "dlgutils.h"
 #include "database.h"
 
+static int all_done;
+
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 				  int spinmin, int spinmax,
 				  GtkObject **padj);
@@ -147,7 +149,6 @@ static void yes_no_callback (GtkWidget *w, gpointer data)
     struct yes_no_data *mydata = data;
 
     *(mydata->ret) = mydata->button;
-    gtk_main_quit();
     gtk_widget_destroy(mydata->dialog);
 }
 
@@ -207,8 +208,6 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
    }
 
    gtk_widget_show(dialog);
-
-   gtk_main();
 
    return ret;
 }
@@ -270,6 +269,8 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
     } 
 
     write_rc();
+
+    all_done = 1;
 
     return FALSE;
 }
@@ -357,7 +358,6 @@ static void really_set_csv_stuff (GtkWidget *w, csv_stuff *csv)
 static void destroy_delim_dialog (GtkWidget *w, gint *p)
 {
     free(p);
-    gtk_main_quit();
 }
 
 void delimiter_dialog (gretlopt *optp)
@@ -497,8 +497,6 @@ void delimiter_dialog (gretlopt *optp)
     gtk_widget_show(tmp);
 
     gtk_widget_show(dialog);
-
-    gtk_main();
 }
 
 /* selection of format in which to copy material to clipboard  */
@@ -513,7 +511,6 @@ struct format_info {
 static void destroy_format_dialog (GtkWidget *w, struct format_info *finfo)
 {
     free(finfo);
-    gtk_main_quit();
 }
 
 static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
@@ -650,8 +647,6 @@ void copy_format_dialog (windata_t *vwin, int unused)
     cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog);
 
     gtk_widget_show(dialog);
-
-    gtk_main();
 }
 
 #else /* gtk 2 version follows */
@@ -797,8 +792,6 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
     cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog);
 
     gtk_widget_show(dialog);
-
-    gtk_main();
 }
 
 #endif /* gtk variants */
@@ -2300,9 +2293,6 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(d)->action_area), 15);
 
-    g_signal_connect(G_OBJECT(d), "destroy", 
-		     G_CALLBACK(dialog_unblock), NULL);
-
     tempwid = gtk_label_new(labelstr);
     g_free(labelstr);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d)->vbox), 
@@ -2359,8 +2349,6 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
     gtk_widget_show(d);
     gtk_window_set_transient_for(GTK_WINDOW(d), GTK_WINDOW(w));
-
-    gtk_main();
 }
 
 static void set_radio_opt (GtkWidget *w, int *opt)
@@ -2381,8 +2369,6 @@ int real_radio_dialog (const char *title, const char **opts,
 
     dialog = gretl_dialog_new(title);
     dialog_set_no_resize(dialog);
-    g_signal_connect(G_OBJECT(dialog), "destroy", 
-		     G_CALLBACK(dialog_unblock), NULL);
 
     for (i=0; i<nopts; i++) {
 
@@ -2434,8 +2420,6 @@ int real_radio_dialog (const char *title, const char **opts,
 
     gtk_widget_show(dialog);
 
-    gtk_main();
-
     return ret;
 }
 
@@ -2483,9 +2467,6 @@ int density_dialog (int vnum, double *bw)
     dialog = gretl_dialog_new(_("density estimation options"));
 
     dialog_set_no_resize(dialog);
-
-    g_signal_connect(G_OBJECT(dialog), "destroy", 
-		     G_CALLBACK(dialog_unblock), NULL);
 
     /* kernel option buttons */
 
@@ -2556,8 +2537,6 @@ int density_dialog (int vnum, double *bw)
 
     gtk_widget_show(dialog);
 
-    gtk_main();
-
     return ret;
 }
 
@@ -2627,9 +2606,6 @@ int checks_dialog (const char *title, const char **opts, int nopts,
 
     dialog_set_no_resize(dialog);
 
-    g_signal_connect(G_OBJECT(dialog), "destroy", 
-		     G_CALLBACK(dialog_unblock), NULL);
-
     /* create spinner if wanted */
     if (spinvar != NULL) {
 	tempwid = option_spinbox(spinvar, spintxt, spinmin, spinmax, NULL);
@@ -2670,9 +2646,6 @@ int checks_dialog (const char *title, const char **opts, int nopts,
     }
 
     gtk_widget_show(dialog);
-
-    /* block */
-    gtk_main();
 
     return ret;
 }
@@ -2864,13 +2837,8 @@ enum {
 
 static void dwinfo_init (DATAINFO *dwinfo)
 {
-    if (datainfo->structure == SPECIAL_TIME_SERIES) {
-	dwinfo->pd = PD_SPECIAL;
-	dwinfo->structure = TIME_SERIES;
-    } else {
-	dwinfo->pd = datainfo->pd;
-	dwinfo->structure = datainfo->structure;
-    }
+    dwinfo->pd = datainfo->pd;
+    dwinfo->structure = datainfo->structure;
 
     dwinfo->sd0 = datainfo->sd0;
 
@@ -2942,14 +2910,9 @@ datawiz_make_changes (DATAINFO *dwinfo)
     int err = 0;
 
     /* preliminaries */
-    if (dwinfo->structure == TIME_SERIES) {
-	if (dwinfo->pd == PD_SPECIAL) {
-	    dwinfo->structure = SPECIAL_TIME_SERIES;
-	    dwinfo->pd = 1;
-	    strcpy(dwinfo->stobs, "1");
-	} else {
-	    ntodate_full(dwinfo->stobs, dwinfo->t1, dwinfo);
-	}
+    if (dwinfo->structure == TIME_SERIES || 
+	dwinfo->structure == SPECIAL_TIME_SERIES) {
+	ntodate_full(dwinfo->stobs, dwinfo->t1, dwinfo);
     } else if (dataset_is_panel(dwinfo)) {
 	if (test_for_unbalanced(dwinfo)) {
 	    return 1;
@@ -3059,11 +3022,12 @@ static int radio_default (DATAINFO *dwinfo, int code)
     if (code == DW_SET_TYPE) {
 	deflt = dwinfo->structure;
     } else if (code == DW_TS_FREQUENCY) {
-	if (dwinfo->pd == 6 || dwinfo->pd == 7) {
+	if (dwinfo->structure == SPECIAL_TIME_SERIES) {
+	    deflt = PD_SPECIAL;
+	} else if (dwinfo->pd == 6 || dwinfo->pd == 7) {
 	    deflt = 5;
 	} else if (dwinfo->pd == 5 || dwinfo->pd == 4 || dwinfo->pd == 10 ||
-		   dwinfo->pd == 12 || dwinfo->pd == 52 || 
-		   dwinfo->pd == PD_SPECIAL) {
+		   dwinfo->pd == 12 || dwinfo->pd == 52) {
 	    deflt = dwinfo->pd;
 	} 
     } else if (code == DW_WEEK_DAYS) {
@@ -3134,15 +3098,36 @@ static const char *datawiz_radio_strings (int wizcode, int idx)
     return "";
 }  
 
-static void datawiz_set_radio_opt (GtkWidget *w, int *setvar)
+struct setvar_and_spin {
+    int *setvar;
+    int *extra;
+    GtkWidget *spinner;
+};
+
+static void datawiz_set_radio_opt (GtkWidget *w, struct setvar_and_spin *sspin)
 {
     int val = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 
+    if (sspin->spinner != NULL) {
+	if (val == PD_SPECIAL) {
+	    GtkAdjustment *adj = 
+		gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sspin->spinner));
+
+	    gtk_widget_set_sensitive(sspin->spinner, TRUE);
+	    val = (int) adj->value;
+	    if (sspin->extra != NULL) {
+		*sspin->extra = SPECIAL_TIME_SERIES;
+	    }
+	} else {
+	    gtk_widget_set_sensitive(sspin->spinner, FALSE);
+	}
+    }
+
 #if DWDEBUG
-    fprintf(stderr, "radio opt set to %d\n", val);
+    fprintf(stderr, "setting setvar to %d\n", val);
 #endif
 
-    *setvar = val;
+    *sspin->setvar = val;
 }
 
 static void set_back_code (GtkWidget *w, int *ret)
@@ -3167,43 +3152,36 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 	{  7, N_("daily data") },
 	{ 24, N_("hourly data") },
 	{ 10, N_("decennial data") },
-	{  PD_SPECIAL, N_("time-series data") }
+	{  0, NULL }
     };
 
     if (dwinfo->structure == CROSS_SECTION) {
 	sprintf(ctxt, _("%s, observations 1 to %d"), _("cross-sectional data"), 
 		datainfo->n);
-    } else if (dwinfo->structure == TIME_SERIES) {
+    } else if (dwinfo->structure == TIME_SERIES || 
+	       dwinfo->structure == SPECIAL_TIME_SERIES) {
+	int lastobs = dwinfo->t1 + datainfo->n - 1;
 	char stobs[OBSLEN];
 	char endobs[OBSLEN];
-	const char *tslabel = NULL;
+	const char *tslabel = N_("time-series data");
 	int i;
 
-	for (i=0; ok_pd[i].pd != 0; i++) { 
-	    if (dwinfo->pd == ok_pd[i].pd) {
-		tslabel = _(ok_pd[i].label);
-		break;
-	    }
-	} 
-
-	if (tslabel == NULL) {
-	    tslabel = N_("time-series data");
+	if (dwinfo->structure == TIME_SERIES) {
+	    for (i=0; ok_pd[i].pd != 0; i++) { 
+		if (dwinfo->pd == ok_pd[i].pd) {
+		    tslabel = _(ok_pd[i].label);
+		    break;
+		}
+	    } 
 	}
 
-	if (dwinfo->pd != PD_SPECIAL) {
-	    int lastobs = dwinfo->t1 + datainfo->n - 1;
-
-	    if (lastobs > dwinfo->n - 1) {
-		dwinfo->n = lastobs + 1;
-	    }
-
-	    ntodate_full(stobs, dwinfo->t1, dwinfo);
-	    ntodate_full(endobs, lastobs, dwinfo);
-	    sprintf(ctxt, "%s, %s to %s", tslabel, stobs, endobs);
-	} else {
-	    sprintf(ctxt, _("%s, observations 1 to %d"), tslabel,
-		    datainfo->n);
+	if (lastobs > dwinfo->n - 1) {
+	    dwinfo->n = lastobs + 1;
 	}
+
+	ntodate_full(stobs, dwinfo->t1, dwinfo);
+	ntodate_full(endobs, lastobs, dwinfo);
+	sprintf(ctxt, "%s, %s to %s", tslabel, stobs, endobs);
     } else if (dataset_is_panel(dwinfo)) {
 	int nunits = dwinfo->t1;
 	int nperiods = datainfo->n / nunits;
@@ -3250,6 +3228,20 @@ void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
 	dwinfo->n = 500;
 	dwinfo->t1 = 0;
 	strcpy(dwinfo->stobs, "1");
+    } else if (dwinfo->structure == SPECIAL_TIME_SERIES) {
+	dwinfo->n = 500;
+	dwinfo->t1 = 0;
+	if (dwinfo->pd > 1) {
+	    int p = dwinfo->pd / 10;
+
+	    strcpy(dwinfo->stobs, "1:");
+	    while (p / 10 > 0) {
+		strcat(dwinfo->stobs, "0");
+	    }
+	    strcat(dwinfo->stobs, "1");
+	} else {
+	    strcpy(dwinfo->stobs, "1");
+	}
     } else if (dwinfo->pd == 1) {
 	strcpy(dwinfo->stobs, "1700");
 	dwinfo->n = 400;
@@ -3314,12 +3306,20 @@ void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
 
 #if DWDEBUG
     ntodate_full(obsstr, dwinfo->t1, dwinfo);
-    fprintf(stderr, "dwinfo: v=%d, pd=%d, stobs='%s', sd0=%g, t1=%d (%s)\n",
-	    dwinfo->v, dwinfo->pd, dwinfo->stobs, dwinfo->sd0, dwinfo->t1, obsstr);
+    fprintf(stderr, "dwinfo: v=%d, pd=%d, stobs='%s', endobs='%s', sd0=%g, t1=%d (%s)\n",
+	    dwinfo->v, dwinfo->pd, dwinfo->stobs, dwinfo->endobs, dwinfo->sd0, dwinfo->t1, obsstr);
 
     ntodate_full(obsstr, datainfo->t1, datainfo);
     fprintf(stderr, "datainfo: pd=%d, stobs='%s', sd0=%g, t1=%d (%s)\n",
 	    datainfo->pd, datainfo->stobs, datainfo->sd0, datainfo->t1, obsstr);
+#endif
+}
+
+static void dw_set_custom_frequency (GtkWidget *w, DATAINFO *dwinfo)
+{
+    dwinfo->pd = (int) GTK_ADJUSTMENT(w)->value;
+#if DWDEBUG
+    fprintf(stderr, "set dwinfo->pd = %d\n", dwinfo->pd);
 #endif
 }
 
@@ -3329,27 +3329,36 @@ static void dw_set_t1 (GtkWidget *w, DATAINFO *dwinfo)
        number of cross-sectional units
     */
     dwinfo->t1 = (int) GTK_ADJUSTMENT(w)->value;
+#if DWDEBUG
+    fprintf(stderr, "set dwinfo->t1 = %d\n", dwinfo->t1);
+#endif
+
 }
 
-static void dwiz_spinner (GtkWidget *dialog, DATAINFO *dwinfo, int step)
+static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATAINFO *dwinfo, int step)
 {
     GtkObject *adj;
-    GtkWidget *hbox;
     GtkWidget *label;
     GtkWidget *dwspin;
     int spinmin, spinmax, spinstart;
 
-    hbox = gtk_hbox_new(FALSE, 5);
+    if (step != DW_TS_FREQUENCY) {
+	label = gtk_label_new(_(wizcode_string(step)));
+	gtk_widget_show(label);
+	gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
+    }
 
-    label = gtk_label_new(_(wizcode_string(step)));
-    gtk_widget_show(label);
-    gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
-
-    if (step == DW_STARTING_OBS && dwinfo->structure == TIME_SERIES) {
+    if (step == DW_STARTING_OBS && 
+	(dwinfo->structure == TIME_SERIES || 
+	 dwinfo->structure == SPECIAL_TIME_SERIES)) {
 	compute_default_ts_info(dwinfo, 0);
 	spinmin = 0;
 	spinmax = dwinfo->n - 1;
 	spinstart = dwinfo->t1;
+    } else if (step == DW_TS_FREQUENCY) {
+	spinmin = 1;
+	spinmax = 100; /* arbitrary */
+	spinstart = 1;
     } else {
 	spinmin = least_factor(datainfo->n);
 	spinmax = datainfo->n / 2;
@@ -3359,8 +3368,13 @@ static void dwiz_spinner (GtkWidget *dialog, DATAINFO *dwinfo, int step)
     /* appropriate step size? */
     adj = gtk_adjustment_new(spinstart, spinmin, spinmax,
 			     1, 10, 1);
-    g_signal_connect(G_OBJECT(adj), "value-changed", 
-		     G_CALLBACK(dw_set_t1), dwinfo);
+    if (step == DW_TS_FREQUENCY) {
+	g_signal_connect(G_OBJECT(adj), "value-changed", 
+			 G_CALLBACK(dw_set_custom_frequency), dwinfo);
+    } else {
+	g_signal_connect(G_OBJECT(adj), "value-changed", 
+			 G_CALLBACK(dw_set_t1), dwinfo);
+    }
 
     if (step == DW_STARTING_OBS) {
 	dwspin = obs_button_new(GTK_ADJUSTMENT(adj), dwinfo);
@@ -3370,13 +3384,10 @@ static void dwiz_spinner (GtkWidget *dialog, DATAINFO *dwinfo, int step)
 
     gtk_entry_set_activates_default(GTK_ENTRY(dwspin), TRUE);
 
-    gtk_box_pack_start(GTK_BOX(hbox), dwspin, TRUE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), dwspin, (step != DW_TS_FREQUENCY), FALSE, 0);
     gtk_widget_show(dwspin);
 
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, 
-		       FALSE, FALSE, 5);
-
-    gtk_widget_show(hbox);
+    return dwspin;
 }
 
 static void reactivate_main_menus (GtkWidget *w, gpointer p)
@@ -3386,6 +3397,7 @@ static void reactivate_main_menus (GtkWidget *w, gpointer p)
 
 static int datawiz_dialog (int step, DATAINFO *dwinfo)
 {
+    struct setvar_and_spin sspin;
     GtkWidget *dialog;
     GtkWidget *tempwid;
     GtkWidget *button = NULL;
@@ -3393,12 +3405,11 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     int nopts = 0;
     int deflt = radio_default(dwinfo, step);
     int setval = 0;
-    int *setint = NULL;
     int i, ret = DW_FORWARD;
 
 #if DWDEBUG
-    fprintf(stderr, "datawiz_dialog: radio_default = %d\n",
-	    deflt);
+    fprintf(stderr, "datawiz_dialog: step = %d, radio_default = %d\n",
+	    step, deflt);
 #endif
 
     if (step == DW_CONFIRM && dataset_is_panel(dwinfo) &&
@@ -3411,28 +3422,31 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     dialog_set_no_resize(dialog);
     set_dialog_border_widths(dialog);
 
-    g_signal_connect(G_OBJECT(dialog), "destroy", 
-		     G_CALLBACK(dialog_unblock), NULL);
-    g_signal_connect(G_OBJECT(dialog), "destroy", 
-		     G_CALLBACK(reactivate_main_menus), NULL);
+    g_signal_connect_after(G_OBJECT(dialog), "destroy", 
+			   G_CALLBACK(reactivate_main_menus), NULL);
+
+    sspin.setvar = NULL;
+    sspin.extra = NULL;
+    sspin.spinner = NULL;
 
     if (step == DW_SET_TYPE) {
 	nopts = 3;
-	setint = &dwinfo->structure;
+	sspin.setvar = &dwinfo->structure;
     } else if (step == DW_TS_FREQUENCY) {
 	nopts = TS_INFO_MAX;
-	setint = &dwinfo->pd;
+	sspin.setvar = &dwinfo->pd;
+	sspin.extra = &dwinfo->structure;
     } else if (step == DW_WEEK_DAYS) {
 	nopts = 3;
-	setint = &dwinfo->pd;
+	sspin.setvar = &dwinfo->pd;
     } else if (step == DW_WEEKLY_SELECT) {
 	nopts = 8;
-	setint = &dwinfo->v;
+	sspin.setvar = &dwinfo->v;
     } else if (step == DW_PANEL_MODE) {
 	nopts = PANEL_INFO_MAX;
-	setint = &dwinfo->structure;
+	sspin.setvar = &dwinfo->structure;
     } else if (step == DW_PANEL_SIZE) {
-	setint = &dwinfo->pd;
+	sspin.setvar = &dwinfo->pd;
     } 
 
     /* top label */
@@ -3445,8 +3459,14 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 
     /* radio options? */
     for (i=0; i<nopts; i++) {
+	GtkWidget *hbox;
 
 	setval = datawiz_i_to_setval(step, i);
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+			   hbox, TRUE, TRUE, 0);
+	gtk_widget_show(hbox);
 
 	if (button != NULL) {
 	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
@@ -3456,18 +3476,26 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 
 	button = gtk_radio_button_new_with_label(group, 
 						 _(datawiz_radio_strings(step, setval)));
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-			   button, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+
+	if (step == DW_TS_FREQUENCY && i == nopts - 1) {
+	    /* time series, "other" (custom) frequency: need spinner */
+	    GtkWidget *freqspin = dwiz_spinner(hbox, dwinfo, step);
+
+	    if (i != deflt) {
+		gtk_widget_set_sensitive(freqspin, FALSE);
+	    }
+	    sspin.spinner = freqspin;
+	} 
 
 	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(datawiz_set_radio_opt), setint);
-	g_object_set_data(G_OBJECT(button), "action", 
-			  GINT_TO_POINTER(setval));
+			 G_CALLBACK(datawiz_set_radio_opt), &sspin);
+	g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(setval));
 
 	if (deflt == setval) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	    if (setint != NULL) {
-		*setint = setval;
+	    if (sspin.setvar != NULL) {
+		*sspin.setvar = setval;
 	    }
 	} 
 
@@ -3478,7 +3506,12 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
        cross sectional units (panel)
     */
     if (step == DW_STARTING_OBS || step == DW_PANEL_SIZE) {
-	dwiz_spinner(dialog, dwinfo, step);
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+
+	dwiz_spinner(hbox, dwinfo, step);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, 
+			   FALSE, FALSE, 5);
+	gtk_widget_show(hbox);
     }
 
     /* confirming? */
@@ -3522,9 +3555,8 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     /* "Cancel" button */
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 
-    gtk_widget_show(dialog);
     main_menus_enable(FALSE);
-    gtk_main();
+    gtk_widget_show(dialog);
 
     return ret;
 }
@@ -3537,7 +3569,7 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 {
     DATAINFO *dwinfo;
     int step = DW_SET_TYPE;
-    int ret;
+    int ret = DW_CANCEL;
 
     dwinfo = datainfo_new();
     if (dwinfo == NULL) {
@@ -3548,7 +3580,7 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
     /* copy current relevant info */
     dwinfo_init(dwinfo);
 
-    while (step != DW_DONE) {
+    while (step != DW_DONE && !all_done) {
 
 	ret = datawiz_dialog(step, dwinfo);
 
@@ -3562,7 +3594,8 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 	    if (step == DW_CONFIRM) {
 		step = DW_DONE;
 	    } else if (step == DW_SET_TYPE) {
-		if (dwinfo->structure == TIME_SERIES) {
+		if (dwinfo->structure == TIME_SERIES || 
+		    dwinfo->structure == SPECIAL_TIME_SERIES) {
 		    step = DW_TS_FREQUENCY;
 		} else if (dwinfo->structure == STACKED_TIME_SERIES ||
 			   dwinfo->structure == STACKED_CROSS_SECTION) {
@@ -3577,13 +3610,14 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 		    step = DW_CONFIRM;
 		}		
 	    } else if (step == DW_TS_FREQUENCY) {
-		if (dwinfo->pd == 5 || dwinfo->pd == 6 || dwinfo->pd == 7) {
-		    step = DW_WEEK_DAYS;
-		} else if (dwinfo->pd == 52) {
-		    step = DW_WEEKLY_SELECT;
-		} else if (dwinfo->pd == PD_SPECIAL) {
-		    /* no 'dates' for special frequencies */
-		    step = DW_CONFIRM;
+		if (dwinfo->structure != SPECIAL_TIME_SERIES) {
+		    if (dwinfo->pd == 5 || dwinfo->pd == 6 || dwinfo->pd == 7) {
+			step = DW_WEEK_DAYS;
+		    } else if (dwinfo->pd == 52) {
+			step = DW_WEEKLY_SELECT;
+		    } else {
+			step = DW_STARTING_OBS;
+		    }
 		} else {
 		    step = DW_STARTING_OBS;
 		}
@@ -3612,12 +3646,9 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 	    } else if (step == DW_PANEL_SIZE) {
 		step = DW_PANEL_MODE;
 	    } else if (step == DW_CONFIRM) {
-		if (dwinfo->structure == TIME_SERIES) {
-		    if (dwinfo->pd != PD_SPECIAL) {
-			step = DW_STARTING_OBS;
-		    } else {
-			step = DW_TS_FREQUENCY;
-		    }
+		if (dwinfo->structure == TIME_SERIES || 
+		    dwinfo->structure == SPECIAL_TIME_SERIES) {
+		    step = DW_STARTING_OBS;
 		} else if (dwinfo->structure == STACKED_TIME_SERIES ||
 			   dwinfo->structure == STACKED_CROSS_SECTION) {
 		    step = DW_PANEL_SIZE;
@@ -3626,11 +3657,10 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 		}
 	    }
 	    break;
-
 	}
     }
-    
-    if (ret != DW_CANCEL) {
+
+    if (ret != DW_CANCEL && !all_done) {
 	datawiz_make_changes(dwinfo);
     }
 
