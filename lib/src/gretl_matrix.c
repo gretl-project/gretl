@@ -946,14 +946,29 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
     }
 }
 
+#define EQTOL 1.0e-15
+
+static int sneq (double x, double y)
+{
+    if (x == 0.0) {
+	return fabs(y) > EQTOL;
+    } else if (y == 0.0) {
+	return fabs(x) > EQTOL;
+    } else if (x > y) {
+	return fabs((x - y) / y) > EQTOL;
+    } else {
+	return fabs((y - x) / x) > EQTOL;
+    }
+}
+
 static int matrix_is_symmetric (const gretl_matrix *m)
 {
     int i, j;
 
     for (i=1; i<m->rows; i++) {
 	for (j=0; j<i; j++) {
-	    if (m->val[mdx(m, i, j)] != m->val[mdx(m, j, i)]) {
-		fprintf(stderr, "M(%d,%d) = %.12g but M(%d,%d) = %.12g\n",
+	    if (sneq(m->val[mdx(m, i, j)], m->val[mdx(m, j, i)])) {
+		fprintf(stderr, "M(%d,%d) = %.18g but M(%d,%d) = %.18g\n",
 			i, j, m->val[mdx(m, i, j)], 
 			j, i, m->val[mdx(m, j, i)]);
 		gretl_matrix_print(m, "matrix_is_symmetric()", NULL);

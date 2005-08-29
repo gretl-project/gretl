@@ -452,7 +452,7 @@ static void name_var_dialog (Spreadsheet *sheet)
 		 _("Enter name for new variable\n"
 		   "(max. 8 characters)"),
 		 NULL, name_new_var, sheet, 
-		 0, 0, 0);
+		 0, 0);
 }
 
 static void new_case_dialog (Spreadsheet *sheet) 
@@ -461,7 +461,7 @@ static void new_case_dialog (Spreadsheet *sheet)
 		 _("Enter case marker for new obs\n"
 		   "(max. 8 characters)"),
 		 NULL, name_new_obs, sheet, 
-		 0, 0, 0);
+		 0, 0);
 }
 
 /* ........................................................... */

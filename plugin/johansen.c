@@ -828,8 +828,8 @@ compute_coint_test (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
 	h = jvar->neqns;
     }
 
-    trace = malloc(h * sizeof *trace);
-    lambdamax = malloc(h * sizeof *lambdamax);
+    trace = malloc(jvar->neqns * sizeof *trace);
+    lambdamax = malloc(jvar->neqns * sizeof *lambdamax);
 
     if (trace == NULL || lambdamax == NULL) {
 	free(trace);
@@ -837,7 +837,7 @@ compute_coint_test (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
 	return E_ALLOC;
     }
 
-    for (i=h-1; i>=0; i--){
+    for (i=jvar->neqns-1; i>=0; i--){
 	lambdamax[i] = -T * log(1.0 - eigvals[i]); 
 	cumeig += lambdamax[i];
 	trace[i] = cumeig; 

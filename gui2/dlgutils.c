@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "textbuf.h"
 #include "menustate.h"
+#include "dlgutils.h"
 
 /* Various buttons, usable in several sorts of dialogs */
 
@@ -135,59 +136,7 @@ GtkWidget *back_button (GtkWidget *hbox)
     return w;
 }
 
-/* ........................................................... */
-
-static GtkWidget *open_dialog;
-
-GtkWidget *get_open_dialog (void)
-{
-    return open_dialog;
-}
-
-void set_open_dialog (GtkWidget *w)
-{
-    open_dialog = w;
-}
-
-/* ........................................................... */
-
-static gint dialog_unblock (GtkWidget *w, gpointer p)
-{
-    gtk_main_quit();
-    return FALSE;
-}
-
-#if 0
-/* prevents gtk_main_quit() from being called */
-static gint dialog_set_destruction (GtkWidget *w, gpointer p)
-{
-    gtk_window_set_transient_for(GTK_WINDOW(w), GTK_WINDOW(mdata->w));
-    gtk_window_set_destroy_with_parent(GTK_WINDOW(w), TRUE);
-    return FALSE;
-}
-#endif
-
-GtkWidget *gretl_dialog_new (const char *title)
-{
-    GtkWidget *d = gtk_dialog_new();
-
-    gtk_window_set_title(GTK_WINDOW(d), title);
-    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(d)->action_area), TRUE);
-    gtk_window_set_position(GTK_WINDOW(d), GTK_WIN_POS_MOUSE);
-
-    g_signal_connect(G_OBJECT(d), "destroy", 
-		     G_CALLBACK(dialog_unblock), NULL);
-#if 0
-    g_signal_connect(G_OBJECT(d), "show", 
-		     G_CALLBACK(dialog_set_destruction), NULL);
-#endif
-    g_signal_connect(G_OBJECT(d), "show", 
-		     G_CALLBACK(gtk_main), NULL);
-
-    return d;
-}
-
-void set_dialog_border_widths (GtkWidget *dlg)
+static void set_dialog_border_widths (GtkWidget *dlg)
 {
     int w1 = 10, w2 = 5;
 
@@ -206,14 +155,89 @@ void set_dialog_border_widths (GtkWidget *dlg)
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dlg)->vbox), w2);
 }
 
-void dialog_set_no_resize (GtkWidget *w)
+static void gretl_dialog_set_resizeable (GtkWidget *w, gboolean s)
 {
 #ifdef OLD_GTK
-    gtk_window_set_policy(GTK_WINDOW(w), FALSE, FALSE, FALSE);
+    gtk_window_set_policy(GTK_WINDOW(w), FALSE, s, !s);
 #else
-    gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
+    gtk_window_set_resizable(GTK_WINDOW(w), s);
 #endif
-}    
+}
+
+/* ........................................................... */
+
+static GtkWidget *current_dialog;
+
+int maybe_raise_dialog (void)
+{
+    int ret = 0;
+
+    if (current_dialog != NULL) {
+	gdk_window_raise(current_dialog->window);
+	ret = 1;
+    }
+
+    return ret;
+}
+
+static gint dialog_unblock (GtkWidget *w, gpointer p)
+{
+    gtk_main_quit();
+    current_dialog = NULL;
+    return FALSE;
+}
+
+static gint dialog_set_destruction (GtkWidget *w, gpointer p)
+{
+    gtk_window_set_transient_for(GTK_WINDOW(w), GTK_WINDOW(p));
+#ifndef OLD_GTK
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(w), TRUE);
+#endif
+    return FALSE;
+}
+
+GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
+			     unsigned char flags)
+{
+    GtkWidget *d = gtk_dialog_new();
+
+    if (title != NULL) {
+	gtk_window_set_title(GTK_WINDOW(d), title);
+    }
+
+    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(d)->action_area), TRUE);
+    set_dialog_border_widths(d);
+    gtk_window_set_position(GTK_WINDOW(d), GTK_WIN_POS_MOUSE);
+
+    if (flags & GRETL_DLG_BLOCK) {
+	current_dialog = d;
+    }
+    
+    if (flags & GRETL_DLG_MODAL) {
+	gretl_set_window_modal(d);
+    }
+
+    if (!(flags & GRETL_DLG_RESIZE)) {
+	gretl_dialog_set_resizeable(d, FALSE);
+    }
+
+    if (flags & GRETL_DLG_BLOCK) {
+	g_signal_connect(G_OBJECT(d), "destroy", 
+			 G_CALLBACK(dialog_unblock), NULL);
+    }
+
+    if (parent != NULL) {
+	g_signal_connect(G_OBJECT(d), "show", 
+			 G_CALLBACK(dialog_set_destruction), parent);
+    }
+
+    if (flags & GRETL_DLG_BLOCK) {
+	g_signal_connect(G_OBJECT(d), "show", 
+			 G_CALLBACK(gtk_main), NULL);
+    }
+
+    return d;
+}
 
 /* "edit dialog" apparatus */
 
@@ -227,20 +251,17 @@ struct dialog_t_ {
     gpointer data;
     gint code;
     gretlopt opt;
-    int blocking;
 };
+
+static GtkWidget *open_edit_dialog;
 
 static void destroy_dialog_data (GtkWidget *w, gpointer data) 
 {
     dialog_t *d = (dialog_t *) data;
 
-    if (d->blocking) {
-	gtk_main_quit();
-    }
-
     g_free(d); 
 
-    open_dialog = NULL;
+    open_edit_dialog = NULL;
 
     if (active_edit_id) active_edit_id = NULL;
     if (active_edit_name) active_edit_name = NULL;
@@ -248,8 +269,7 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
 }
 
 static dialog_t *
-dialog_data_new (gpointer data, gint code, const char *title,
-		 int blocking)
+dialog_data_new (gpointer data, gint code, const char *title)
 {
     dialog_t *d = mymalloc(sizeof *d);
 
@@ -261,7 +281,6 @@ dialog_data_new (gpointer data, gint code, const char *title,
     d->code = code;
     d->opt = OPT_NONE;
     d->dialog = gtk_dialog_new();
-    d->blocking = blocking;
 
     gtk_window_set_title(GTK_WINDOW(d->dialog), title);
 
@@ -439,25 +458,24 @@ static void sample_replace_buttons (GtkWidget *box, gpointer data)
 
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
-		  guint cmdcode, guint varclick, int blocking)
+		  guint cmdcode, guint varclick)
 {
     dialog_t *d;
     GtkWidget *tempwid;
     GtkWidget *top_vbox, *button_box;
     int modal = 0;
 
-    if (open_dialog != NULL) {
-	gdk_window_raise(open_dialog->window);
+    if (open_edit_dialog != NULL) {
+	gdk_window_raise(open_edit_dialog->window);
 	return;
     }
 
-    d = dialog_data_new(okptr, cmdcode, diagtxt, blocking);
+    d = dialog_data_new(okptr, cmdcode, diagtxt);
     if (d == NULL) return;
 
-    open_dialog = d->dialog;
-    dialog_set_no_resize(d->dialog);
-
+    open_edit_dialog = d->dialog;
     set_dialog_border_widths(d->dialog);
+    gretl_dialog_set_resizeable(d->dialog, FALSE);
 
     /* convenience pointers */
     top_vbox = GTK_DIALOG(d->dialog)->vbox;
@@ -543,9 +561,5 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     if (modal) {
 	gretl_set_window_modal(d->dialog);
-    }
-
-    if (d->blocking) {
-	gtk_main();
     }
 } 

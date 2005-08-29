@@ -133,6 +133,8 @@ static int selection_at_max (selector *sr, int nsel)
     return ret;
 }
 
+static GtkWidget *open_selector;
+
 #ifndef OLD_GTK
 
 static gboolean set_active_var (GtkWidget *widget, GdkEventButton *event,
@@ -1553,18 +1555,14 @@ void delete_selection_dialog (selector *sr)
 
 static void maybe_delete_dialog (GtkWidget *widget, selector *sr)
 {
-    GtkWidget *open_dialog = get_open_dialog();
-
-    if (open_dialog != NULL && !sr->error) {
+    if (open_selector != NULL && !sr->error) {
 	gtk_widget_destroy(sr->dlg);
     }
 }
 
 static void cancel_selector (GtkWidget *widget, selector *sr)
 {
-    GtkWidget *open_dialog = get_open_dialog();
-
-    if (open_dialog != NULL) {
+    if (open_selector != NULL) {
 	gtk_widget_destroy(sr->dlg);
     }
 }
@@ -1580,7 +1578,7 @@ static void destroy_selector (GtkWidget *w, selector *sr)
     free(sr->cmdlist);
     free(sr);
 
-    set_open_dialog(NULL);
+    open_selector = NULL;
 }
 
 static char *est_str (int cmdnum)
@@ -2046,7 +2044,7 @@ static void selector_init (selector *sr, guint code, const char *title,
 
     sr->code = code;
     sr->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    set_open_dialog(sr->dlg);
+    open_selector = sr->dlg;
 
     gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
 
@@ -2408,7 +2406,6 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
     GtkWidget *store;
     gint iter = 0;
 #endif
-    GtkWidget *open_dialog;
     GtkWidget *right_vbox, *tmp;
     GtkWidget *big_hbox;
     GtkWidget *button_vbox;
@@ -2416,9 +2413,8 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
     gchar *topstr;
     int i;
 
-    open_dialog = get_open_dialog();
-    if (open_dialog != NULL) {
-	gdk_window_raise(open_dialog->window);
+    if (open_selector != NULL) {
+	gdk_window_raise(open_selector->window);
 	return;
     }
 
@@ -2761,16 +2757,13 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     GtkWidget *store;
     gint iter = 0;
 #endif
-    GtkWidget *open_dialog;
     GtkWidget *left_vbox, *mid_vbox, *right_vbox, *tmp;
     GtkWidget *top_hbox, *big_hbox, *remove_button;
     selector *sr;
     int i, vnum = 0;
 
-    open_dialog = get_open_dialog();
-
-    if (open_dialog != NULL) {
-	gdk_window_raise(open_dialog->window);
+    if (open_selector != NULL) {
+	gdk_window_raise(open_selector->window);
 	return;
     }
 

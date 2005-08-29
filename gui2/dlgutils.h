@@ -20,11 +20,16 @@
 #ifndef DLGUTILS_H
 #define DLGUTILS_H
 
-GtkWidget *gretl_dialog_new (const char *title);
+enum {
+    GRETL_DLG_MODAL  = 1 << 0,
+    GRETL_DLG_BLOCK  = 1 << 1,
+    GRETL_DLG_RESIZE = 1 << 2
+};
 
-void set_dialog_border_widths (GtkWidget *dlg);
+GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
+			     unsigned char flags);
 
-void dialog_set_no_resize (GtkWidget *w);
+int maybe_raise_dialog (void);
 
 GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode);
 
@@ -39,13 +44,9 @@ GtkWidget *next_button (GtkWidget *hbox);
 
 GtkWidget *back_button (GtkWidget *hbox);
 
-GtkWidget *get_open_dialog (void);
-
-void set_open_dialog (GtkWidget *w);
-
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
-		  guint hlpcode, guint varclick, int blocking);
+		  guint hlpcode, guint varclick);
 
 const gchar *edit_dialog_get_text (dialog_t *dlg);
 

@@ -158,7 +158,7 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
    int ret;
    struct yes_no_data yesdata, nodata, canceldata;
 
-   dialog = gretl_dialog_new(title);
+   dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
 
    yesdata.dialog = nodata.dialog = canceldata.dialog 
        = dialog;
@@ -169,9 +169,6 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
    
    gtk_grab_add(dialog);
 
-   dialog_set_no_resize(dialog);
-   set_dialog_border_widths(dialog);
-   
    tempwid = gtk_label_new(msg);
    gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), tempwid, 
 		      TRUE, TRUE, FALSE);
@@ -216,8 +213,6 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 
 #endif /* gtk 1.2 */
 
-/* ........................................................... */
-
 gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data) 
 {
     int resp;
@@ -237,6 +232,10 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
     strcat(fname, "session.inp");
     dump_cmd_stack(fname, 0);
 #endif
+
+    if (maybe_raise_dialog()) {
+	return TRUE;
+    }
 
     if (!expert && !replaying() && 
 	(session_changed(-1) || (work_done() && !session_is_saved()))) {
@@ -374,10 +373,7 @@ void delimiter_dialog (gretlopt *optp)
     csvp->decpoint = '.';
     csvp->point_button = NULL;
 
-    dialog = gretl_dialog_new(_("gretl: data delimiter"));
-
-    dialog_set_no_resize(dialog);
-    set_dialog_border_widths(dialog);
+    dialog = gretl_dialog_new(_("gretl: data delimiter"), NULL, GRETL_DLG_BLOCK);
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(destroy_delim_dialog), csvp);
@@ -572,16 +568,13 @@ void copy_format_dialog (windata_t *vwin, int unused)
     finfo = mymalloc(sizeof *finfo);
     if (finfo == NULL) return;
 
-    dialog = gretl_dialog_new(_("gretl: copy formats"));
+    dialog = gretl_dialog_new(_("gretl: copy formats"), vwin->dialog,
+			      GRETL_DLG_BLOCK);
     
     finfo->vwin = vwin;
     finfo->dialog = dialog;
     finfo->format = GRETL_FORMAT_TEX;
     finfo->multi = 1;
-
-    set_dialog_border_widths(dialog);
-
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG (dialog)->vbox), 5);
 
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(destroy_format_dialog), finfo);
@@ -712,16 +705,14 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
     finfo = mymalloc(sizeof *finfo);
     if (finfo == NULL) return;
 
-    dialog = gretl_dialog_new(_("gretl: copy formats"));
+    dialog = gretl_dialog_new(_("gretl: copy formats"), vwin->dialog,
+			      GRETL_DLG_BLOCK);
 
     finfo->vwin = vwin;
     finfo->dialog = dialog;
 
     finfo->format = pref = preferred_format(0, multicopy);
     finfo->multi = multicopy;
-
-    dialog_set_no_resize(dialog);
-    set_dialog_border_widths(dialog);
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(destroy_format_dialog), finfo);
@@ -979,12 +970,8 @@ static void varinfo_cancel (GtkWidget *w, struct varinfo_settings *vset)
     gtk_widget_destroy(vset->dlg);
 }
 
-static void free_vsettings (GtkWidget *w, 
-			    struct varinfo_settings *vset)
+static void free_vsettings (GtkWidget *w, struct varinfo_settings *vset)
 {
-    if (!vset->full) {
-	gtk_main_quit();
-    }
     free(vset);
 }
 
@@ -1003,6 +990,7 @@ void varinfo_dialog (int varnum, int full)
     GtkWidget *tempwid, *hbox;
     struct varinfo_settings *vset;
     int entrylen = 8, canedit = 1;
+    unsigned char flags;
 
     vset = mymalloc(sizeof *vset);
     if (vset == NULL) return;
@@ -1012,18 +1000,20 @@ void varinfo_dialog (int varnum, int full)
 	canedit = 0;
     }
 
+    if (full) {
+	flags = GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
+    } else {
+	flags = GRETL_DLG_MODAL | GRETL_DLG_RESIZE;
+    }
+
     vset->varnum = varnum;
-    vset->dlg = gtk_dialog_new();
+    vset->dlg = gretl_dialog_new(_("gretl: variable attributes"), NULL, flags);
     vset->display_name_entry = NULL;
     vset->compaction_menu = NULL;
     vset->full = full;
 
     g_signal_connect(G_OBJECT(vset->dlg), "destroy", 
 		     G_CALLBACK(free_vsettings), vset);
-
-    gtk_window_set_title(GTK_WINDOW(vset->dlg), _("gretl: variable attributes"));
-    set_dialog_border_widths(vset->dlg);
-    gtk_window_set_position(GTK_WINDOW(vset->dlg), GTK_WIN_POS_MOUSE);
 
     /* read/set name of variable */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -1178,11 +1168,6 @@ void varinfo_dialog (int varnum, int full)
     }
 
     gtk_widget_show(vset->dlg);
-
-    if (!full) {
-	gretl_set_window_modal(vset->dlg);
-	gtk_main();
-    }
 }
 
 static void db_descrip_callback (GtkWidget *w, GtkWidget *dlg)
@@ -1220,11 +1205,8 @@ void database_description_dialog (const char *binname)
 
     fname = g_strdup(binname);
 
-    dlg = gtk_dialog_new();
-
-    gtk_window_set_title(GTK_WINDOW(dlg), _("gretl: database description"));
-    set_dialog_border_widths(dlg);
-    gtk_window_set_position(GTK_WINDOW(dlg), GTK_WIN_POS_MOUSE);
+    dlg = gretl_dialog_new(_("gretl: database description"), NULL,
+			   GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
 
     hbox = gtk_hbox_new(FALSE, 5);
     tempwid = gtk_label_new (_("description:"));
@@ -1263,8 +1245,8 @@ void database_description_dialog (const char *binname)
     gtk_widget_grab_default(tempwid);
     gtk_widget_show(tempwid);
 
-    gtk_widget_show(dlg);
     gretl_set_window_modal(dlg);
+    gtk_widget_show(dlg);
 }
 
 /* apparatus for setting sample range */
@@ -1286,7 +1268,6 @@ struct range_setting {
 static void free_rsetting (GtkWidget *w, struct range_setting *rset)
 {
     free(rset);
-    gtk_main_quit();
 }
 
 static gboolean
@@ -1461,7 +1442,8 @@ static int default_randsize (void)
 }
 
 static struct range_setting *rset_new (guint code, gpointer p,
-				       int *t1, int *t2)
+				       int *t1, int *t2,
+				       const gchar *title)
 {
     struct range_setting *rset;
 
@@ -1478,7 +1460,7 @@ static struct range_setting *rset_new (guint code, gpointer p,
 	rset->opt = OPT_NONE;
     }
 
-    rset->dlg = gtk_dialog_new();
+    rset->dlg = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
     rset->combo = NULL;
     rset->adj1 = rset->adj2 = NULL;
     rset->startspin = rset->endspin = NULL;
@@ -1560,12 +1542,8 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     struct range_setting *rset;
     char obstext[32];
 
-    rset = rset_new(u, p, NULL, NULL);
+    rset = rset_new(u, p, NULL, NULL, _("gretl: set sample"));
     if (rset == NULL) return;
-
-    gtk_window_set_title(GTK_WINDOW(rset->dlg), _("gretl: set sample"));
-    set_dialog_border_widths(rset->dlg);
-    gtk_window_set_position(GTK_WINDOW(rset->dlg), GTK_WIN_POS_MOUSE);
 
     if (u == SMPLDUM) {
 	GList *dumlist;
@@ -1672,8 +1650,6 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 		     G_CALLBACK(free_rsetting), rset);
 
     gtk_widget_show_all(rset->dlg);
-
-    gtk_main();
 }
 
 /* general purpose dialog box for getting from the user either one or
@@ -1690,15 +1666,10 @@ int get_obs_dialog (const char *title, const char *text,
     struct range_setting *rset;
     int ret = 0;
 
-    rset = rset_new(0, NULL, t1, t2);
+    rset = rset_new(0, NULL, t1, t2, title);
     if (rset == NULL) {
 	return -1;
     }
-
-    gtk_window_set_title(GTK_WINDOW(rset->dlg), title);
-    set_dialog_border_widths(rset->dlg);
-    gtk_window_set_position(GTK_WINDOW(rset->dlg), GTK_WIN_POS_MOUSE);
-    dialog_set_no_resize(rset->dlg);
 
     tempwid = obs_spinbox(rset, text, t1str, t2str, 
 			  t1min, t1max, t1, 
@@ -1720,11 +1691,8 @@ int get_obs_dialog (const char *title, const char *text,
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);
 
-    gtk_widget_show_all(rset->dlg);
-
     gretl_set_window_modal(rset->dlg);
-
-    gtk_main();
+    gtk_widget_show_all(rset->dlg);
 
     return ret;
 }
@@ -1766,15 +1734,10 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     struct range_setting *rset;
     int i, ret = 0;
 
-    rset = rset_new(0, NULL, t1, t2);
+    rset = rset_new(0, NULL, t1, t2, _("gretl: forecast"));
     if (rset == NULL) {
 	return -1;
     }
-
-    gtk_window_set_title(GTK_WINDOW(rset->dlg), _("gretl: forecast"));
-    set_dialog_border_widths(rset->dlg);
-    gtk_window_set_position(GTK_WINDOW(rset->dlg), GTK_WIN_POS_MOUSE);
-    dialog_set_no_resize(rset->dlg);
 
     tmp = obs_spinbox(rset, _("Forecast range:"), 
 		      _("Start"), _("End"), 
@@ -1853,9 +1816,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);
 
-    gtk_widget_show_all(rset->dlg);
     gretl_set_window_modal(rset->dlg);
-    gtk_main();
+    gtk_widget_show_all(rset->dlg);
 
     return ret;
 }
@@ -1886,14 +1848,8 @@ int add_obs_dialog (const char *blurb, int addmin)
 
     ainfo.val = 1;
 
-    ainfo.dlg = gtk_dialog_new();
-    gtk_window_set_title(GTK_WINDOW(ainfo.dlg), _("Add observations"));
-    set_dialog_border_widths(ainfo.dlg);
-    gtk_window_set_position(GTK_WINDOW(ainfo.dlg), GTK_WIN_POS_MOUSE);
-    dialog_set_no_resize(ainfo.dlg);
-
-    g_signal_connect(G_OBJECT(ainfo.dlg), "destroy", 
-		     G_CALLBACK(gtk_main_quit), NULL);
+    ainfo.dlg = gretl_dialog_new(_("Add observations"), NULL,
+				 GRETL_DLG_MODAL);
 
     if (blurb != NULL) {
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -1924,8 +1880,6 @@ int add_obs_dialog (const char *blurb, int addmin)
 			  &ainfo.val);
 
     gtk_widget_show_all(ainfo.dlg);
-    gretl_set_window_modal(ainfo.dlg);
-    gtk_main();
 
     return ainfo.val;
 }
@@ -1953,11 +1907,6 @@ static void set_var_from_combo (GtkWidget *w, GtkWidget *dlg)
     *selvar = varindex(datainfo, vname);
 }
 
-static void exit_var_select (GtkWidget *w, gpointer data) 
-{
-    gtk_main_quit();
-}
-
 int select_var_from_list (const int *list, const char *query)
 {
     GtkWidget *tempwid, *hbox;
@@ -1965,14 +1914,7 @@ int select_var_from_list (const int *list, const char *query)
     GList *varlist;
     int selvar = -1;
 
-    dlg = gtk_dialog_new();
-
-    g_signal_connect(G_OBJECT(dlg), "destroy", 
-		     G_CALLBACK(exit_var_select), NULL);
-    
-    gtk_window_set_title(GTK_WINDOW(dlg), _("gretl: define graph"));
-    set_dialog_border_widths(dlg);
-    gtk_window_set_position(GTK_WINDOW(dlg), GTK_WIN_POS_MOUSE);
+    dlg = gretl_dialog_new(_("gretl: define graph"), NULL, GRETL_DLG_MODAL);
 
     tempwid = gtk_label_new(query);
     hbox = gtk_hbox_new(TRUE, 5);
@@ -2012,9 +1954,6 @@ int select_var_from_list (const int *list, const char *query)
     cancel_delete_button(GTK_DIALOG(dlg)->action_area, dlg);
 
     gtk_widget_show_all(dlg);
-
-    gretl_set_window_modal(dlg);
-    gtk_main();
 
     return selvar;
 }
@@ -2247,7 +2186,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     struct compaction_info cinfo;
     gchar *labelstr = NULL;
 
-    d = gretl_dialog_new(_("gretl: compact data"));
+    d = gretl_dialog_new(_("gretl: compact data"), w, GRETL_DLG_BLOCK);
 
     cinfo.target_pd = target_pd;
     cinfo.monday_button = NULL;
@@ -2287,9 +2226,6 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	}
 	methods_set = compact_methods_set();
     }
-
-    dialog_set_no_resize(d);
-    set_dialog_border_widths(d);
 
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(d)->action_area), 15);
 
@@ -2348,7 +2284,6 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     context_help_button(GTK_DIALOG(d)->action_area, COMPACT);
 
     gtk_widget_show(d);
-    gtk_window_set_transient_for(GTK_WINDOW(d), GTK_WINDOW(w));
 }
 
 static void set_radio_opt (GtkWidget *w, int *opt)
@@ -2367,8 +2302,7 @@ int real_radio_dialog (const char *title, const char **opts,
     GSList *group = NULL;
     int i, ret = -1;
 
-    dialog = gretl_dialog_new(title);
-    dialog_set_no_resize(dialog);
+    dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
 
     for (i=0; i<nopts; i++) {
 
@@ -2464,9 +2398,8 @@ int density_dialog (int vnum, double *bw)
     GSList *group;
     int ret = 0;
 
-    dialog = gretl_dialog_new(_("density estimation options"));
-
-    dialog_set_no_resize(dialog);
+    dialog = gretl_dialog_new(_("density estimation options"), NULL,
+			      GRETL_DLG_BLOCK);
 
     /* kernel option buttons */
 
@@ -2602,9 +2535,7 @@ int checks_dialog (const char *title, const char **opts, int nopts,
     GtkWidget *tempwid;
     int i, ret = 0;
 
-    dialog = gretl_dialog_new(title);
-
-    dialog_set_no_resize(dialog);
+    dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
 
     /* create spinner if wanted */
     if (spinvar != NULL) {
@@ -3417,10 +3348,8 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 	return DW_BACK;
     }
 
-    dialog = gretl_dialog_new(_("Data structure wizard"));
-
-    dialog_set_no_resize(dialog);
-    set_dialog_border_widths(dialog);
+    dialog = gretl_dialog_new(_("Data structure wizard"), NULL,
+			      GRETL_DLG_BLOCK);
 
     g_signal_connect_after(G_OBJECT(dialog), "destroy", 
 			   G_CALLBACK(reactivate_main_menus), NULL);
