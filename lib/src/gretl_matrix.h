@@ -238,6 +238,9 @@ int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x);
 
 gretl_matrix **gretl_matrix_array_alloc (int n);
 
+gretl_matrix **
+gretl_matrix_array_alloc_with_size (int n, int rows, int cols);
+
 void gretl_matrix_array_free (gretl_matrix **A, int n);
 
 gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,

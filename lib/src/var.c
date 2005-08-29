@@ -1614,6 +1614,12 @@ static GRETL_VAR *real_var (int order, const int *inlist,
 	var = NULL;
     }
 
+#if 0
+    if (!*err) {
+	gretl_matrix_print(var->A, "var->A", NULL);
+    }
+#endif
+
     return var;
 }
 
@@ -2828,7 +2834,7 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 
     if (seasonals) {
 	if (pdinfo->pd > 1) {
-	    jvar->jinfo->seasonals = 1;
+	    jvar->jinfo->seasonals = pdinfo->pd - 1;
 	    l0 += pdinfo->pd - 1;
 	    di0 = dummy(pZ, pdinfo, 1);
 	    if (di0 == 0) {
@@ -3747,10 +3753,7 @@ print_VECM_ll_stats (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 
     /* FIXME: is k right (in all cases)? */
     k += (code >= J_UNREST_CONST) + (code == J_UNREST_TREND);
-
-    if (vecm->jinfo->seasonals) {
-	k += pdinfo->pd - 1;
-    }
+    k += vecm->jinfo->seasonals;
     
     vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * n) / T;
     vecm->BIC = (-2.0 * vecm->ll + log(T) * k * n) / T;

@@ -3265,6 +3265,42 @@ gretl_matrix **gretl_matrix_array_alloc (int n)
 }
 
 /**
+ * gretl_matrix_array_alloc_with_size:
+ * @n: number of matrices.
+ * @rows: number of rows in each matrix.
+ * @cols: number of columns in each matrix.
+ *
+ * Allocates an array of @n gretl matrix pointers, each one
+ * with size @rows * @cols.
+ *
+ * Returns: pointer on sucess, %NULL on failure.
+ */
+
+gretl_matrix **
+gretl_matrix_array_alloc_with_size (int n, int rows, int cols)
+{
+    gretl_matrix **A = malloc(n * sizeof *A);
+    int i, j;
+
+    if (A != NULL) {
+	for (i=0; i<n; i++) {
+	    A[i] = gretl_matrix_alloc(rows, cols);
+	    if (A[i] == NULL) {
+		for (j=0; j<i; j++) {
+		    gretl_matrix_free(A[i]);
+		}
+		free(A);
+		A = NULL;
+		break;
+	    }
+	}
+    }
+
+    return A;
+}
+
+
+/**
  * gretl_matrix_array_free:
  * @A: dyamically allocated array of gretl matrices.
  * @n: number of matrices in array.
