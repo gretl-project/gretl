@@ -511,14 +511,14 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
 
     for (i=0; i<rows; i++) {
 	for (j=0; j<jmax; j++) {
-	    pprintf(prn, "%#10.5g ", gretl_matrix_get(m, i, j));
+	    pprintf(prn, "%#13.5g", gretl_matrix_get(m, i, j));
 	}
 	for (j=jmax; j<cols; j++) {
 	    x = gretl_matrix_get(m, i, i) * gretl_matrix_get(m, j, j);
 	    x = sqrt(x);
 	    x = gretl_matrix_get(m, i, j) / x;
 	    sprintf(numstr,"(%.3f)", x); 
-	    pprintf(prn, "%11s", numstr);
+	    pprintf(prn, "%13s", numstr);
 	}
 	pputc(prn, '\n');
 	if (jmax < cols) {

@@ -22,14 +22,19 @@
 #include "libgretl.h"
 #include "johansen.h"
 
+#define tex_screen_zero(x)  ((fabs(x) > 1.0e-17)? x : 0.0)
+
 static void tex_modify_exponent (char *numstr)
 {
     char *p = strchr(numstr, 'e');
 
     if (p != NULL) {
 	int expon = atoi(p + 1);
-
+#if 0
 	sprintf(p, "\\times 10^{%d}", expon);
+#else
+	sprintf(p, "\\mbox{e%s%d}", (expon > 0)? "+" : "", expon);
+#endif
     }
 }
 
@@ -42,7 +47,7 @@ static void tex_print_float (double x, PRN *prn)
 {
     char number[48];
 
-    x = screen_zero(x);
+    x = tex_screen_zero(x);
 
     sprintf(number, "%#.*g", GRETL_DIGITS, x);
     tex_modify_exponent(number);
@@ -53,7 +58,7 @@ static void tex_print_signed_float (double x, PRN *prn)
 {
     char number[48];
 
-    x = screen_zero(x);
+    x = tex_screen_zero(x);
 
     sprintf(number, "%#.*g", GRETL_DIGITS, x);
     tex_modify_exponent(number);
@@ -63,6 +68,18 @@ static void tex_print_signed_float (double x, PRN *prn)
     } else {
 	pputs(prn, number);
     }
+}
+
+static void tex_print_math_float (double x, PRN *prn)
+{
+    char number[48];
+
+    x = tex_screen_zero(x);
+
+    sprintf(number, "%#.*g", GRETL_DIGITS, x);
+    tex_modify_exponent(number);
+
+    pprintf(prn, "$%s$", number);
 }
 
 /**
@@ -258,9 +275,13 @@ static void tex_lagname (char *s, const DATAINFO *pdinfo, int v)
 static void tex_vecm_varname (char *s, const DATAINFO *pdinfo, int v)
 {
     const char *lbl = VARLABEL(pdinfo, v);
+    int cvnum;
     int gotit = 0;
 
-    if (strlen(lbl) > 2) {
+    if (sscanf(pdinfo->varname[v], "EC%d", &cvnum)) {
+	sprintf(s, "EC%d$_{t-1}$", cvnum);
+	gotit = 1;
+    } else if (strlen(lbl) > 2) {
 	char myvar[24], tmp[9];
 	int lag;
 
@@ -352,45 +373,14 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     return 0;
 }
 
-void tex_print_VECM_ll_stats (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
-{
-    int code = jcode(vecm);
-    int T = vecm->T;
-    int n = vecm->neqns;
-    int k = n * (vecm->order - 1);
-
-    /* FIXME: is k right (in all cases)? */
-    k += (code >= J_UNREST_CONST) + (code == J_UNREST_TREND);
-
-    if (vecm->jinfo->seasonals) {
-	k += pdinfo->pd - 1;
-    }
-    
-    vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * n) / T;
-    vecm->BIC = (-2.0 * vecm->ll + log(T) * k * n) / T;
-
-    pprintf(prn, "%s = ", _("log-likelihood"));
-    tex_print_signed_float(vecm->ll, prn);
-    pputs(prn, "\\\\\n");
-
-    pprintf(prn, "%s = ", _("AIC"));
-    tex_print_signed_float(vecm->AIC, prn);
-    pputs(prn, "\\\\\n");
-
-    pprintf(prn, "%s = ", _("BIC"));
-    tex_print_signed_float(vecm->BIC, prn);
-    pputs(prn, "\\\\\n");
-}
-
 void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 {
     char vname[32];
     const int *list = vecm->jinfo->list;
-    gretl_matrix *M;
     double x;
     int i, j;
 
-    pprintf(prn, "%s\n\n", _("Cross-equation covariance matrix"));
+    pprintf(prn, "%s\n\n", I_("Cross-equation covariance matrix"));
     pputs(prn, "\\vspace{1em}\n");
 
     pputs(prn, "\\begin{tabular}{");
@@ -416,11 +406,11 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, "$\\Delta$%s & ", vname);
 	for (j=0; j<vecm->neqns; j++) {
 	    x = gretl_matrix_get(vecm->S, i, j);
-	    tex_print_signed_float(x, prn);
+	    tex_print_math_float(x, prn);
 	    if (j == vecm->neqns - 1) {
 		pputs(prn, "\\\\\n");
 	    } else {
-		pputs(prn, "& ");
+		pputs(prn, " & ");
 	    }
 	}
     }
@@ -428,12 +418,10 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
     pputs(prn, "\\end{tabular}\n\n");
     pputs(prn, "\\vspace{1em}\n");
 
-    M = gretl_matrix_copy(vecm->S);
-    if (M != NULL) {
-	pputs(prn, "\\noindent\n");
-	pprintf(prn, "determinant = %g\\\\\n", gretl_matrix_determinant(M));
-	gretl_matrix_free(M);
-    }
+    pputs(prn, "\\noindent\n");
+    pprintf(prn, "%s = ", I_("determinant"));
+    tex_print_math_float(exp(vecm->ldet), prn);
+    pputs(prn, "\\\\\n");
 }
 
 void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
@@ -444,28 +432,20 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
     int i, j;
     double x;
 
+    pputs(prn, "\\noindent\n");
     pputs(prn, _("Cointegrating vectors"));
     if (jv->Bse != NULL) {
-	pprintf(prn, " (%s)\n\n", _("standard errors in parentheses"));
-    } else {
-	pputs(prn, "\n\n");
-    }
+	pprintf(prn, " (%s)\n", _("standard errors in parentheses"));
+    } 
+
+    pputs(prn, "\n\\vspace{1em}\n");
 
     pputs(prn, "\\begin{tabular}{");
     pputs(prn, "l");
     for (i=0; i<jv->rank; i++) {
 	pputs(prn, "r");
     }
-    pputs(prn, "}\n & ");
-
-    for (j=0; j<jv->rank; j++) {
-	pprintf(prn, "CV%d", j + 1);
-	if (j == jv->rank - 1) {
-	    pputs(prn, "\\\\\n");
-	} else {
-	    pputs(prn, "& ");
-	}
-    }
+    pputs(prn, "}\n");
 
     for (i=0; i<rows; i++) {
 	if (i < jv->list[0]) {
@@ -512,7 +492,21 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
 	}
     }
 
-    pputs(prn, "\\end{tabular}\n\n");
+    pputs(prn, "\\end{tabular}\n\n\\vspace{1em}\n");
+}
+
+void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn)
+{
+    pprintf(prn, "\\noindent\n%s = ", I_("Log-likelihood"));
+    tex_print_math_float(var->ll, prn);
+    pputs(prn, "\\par\n");
+
+    pprintf(prn, "\\noindent\n%s = ", I_("Determinant of covariance matrix"));
+    tex_print_math_float(exp(var->ldet), prn);
+    pputs(prn, "\\par\n");
+
+    pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("AIC"), var->AIC);
+    pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("BIC"), var->BIC);
 }
 
 static PRN *make_tex_prn (int ID, char *texfile,

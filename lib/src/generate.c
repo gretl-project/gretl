@@ -4270,9 +4270,12 @@ static void
 make_dummy_name_and_label (int vi, const DATAINFO *pdinfo, int center,
 			   char *vname, char *vlabel)
 {
-    if (center) {
+    if (center > 0) {
 	sprintf(vname, "S%d", vi);
 	strcpy(vlabel, "centered periodic dummy");
+    } else if (center < 0) {
+	sprintf(vname, "S%d", vi);
+	strcpy(vlabel, "uncentered periodic dummy");
     } else if (pdinfo->pd == 4 && pdinfo->structure == TIME_SERIES) {
 	sprintf(vname, "dq%d", vi);
 	sprintf(vlabel, 
@@ -4296,14 +4299,15 @@ make_dummy_name_and_label (int vi, const DATAINFO *pdinfo, int center,
     }
 }
 
-#define DM_VERSION 0
-
 /**
  * dummy:
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @center: if non-zero, subtract the sample mean from
- * each of the generated dummies.
+ * @center: if greater than zero subtract the population mean from
+ * each of the generated dummies; if less than zero, do not
+ * subtract the mean but generate dummies with labels on the
+ * same pattern as centered dummies (for internal use in VECMs).
+ * Usually this argument is set to zero.
  *
  * Adds to the data set (if these variables are not already 
  * present) a set of periodic (usually seasonal) dummy variables.
@@ -4387,23 +4391,13 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 	}
     }
 
-    if (center) {
-#if DM_VERSION
-	int dmax = di0 + pdinfo->pd - 1;
-	int vimax = dmax - 1;
-#else
+    if (center > 0) {
 	double cx = 1.0 / pdinfo->pd;
 	int vimax = di0 + pdinfo->pd - 1;
-#endif
-	
 
 	for (vi=di0; vi<=vimax; vi++) {
 	    for (t=0; t<pdinfo->n; t++) {
-#if DM_VERSION
-		(*pZ)[vi][t] -= (*pZ)[dmax][t];
-#else
 		(*pZ)[vi][t] -= cx;
-#endif
 	    }
 	}	
     }

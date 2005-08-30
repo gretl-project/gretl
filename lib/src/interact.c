@@ -1167,12 +1167,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     fprintf(stderr, "parsing '%s'\n", line);
 #endif
 
-    /* extract any options first */
-    cmd->opt = get_gretl_options(line, &cmd->errcode);
-    if (cmd->errcode) {
-	return cmd->errcode;
-    }
-
     /* look for ramu practice files */
     if (line[0] == '(' && line[1] == '*') {
 	cmd->ignore = 1;
@@ -1192,6 +1186,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (trap_comments(line, cmd)) {
 	return cmd->errcode;
     } 
+
+    /* extract any options */
+    cmd->opt = get_gretl_options(line, &cmd->errcode);
+    if (cmd->errcode) {
+	return cmd->errcode;
+    }    
 
     /* extract "savename" for storing an object? */
     get_savename(line, cmd);

@@ -303,6 +303,18 @@ double gretl_model_get_double (const MODEL *pmod, const char *key)
     return NADBL;
 }
 
+static void adjust_vecm_name (const char *orig, char *cname)
+{
+    int cnum;
+    char cc;
+
+    if (sscanf(orig, "EC%d%c", &cnum, &cc) == 2) {
+	sprintf(cname, "EC%d", cnum);
+    } else {
+	strcpy(cname, orig);
+    }
+}
+
 static void make_cname (const char *orig, char *cname)
 {
     char *p;
@@ -353,6 +365,8 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	    make_cname(pdinfo->varname[pmod->list[i + 2]], targ);
 	} else if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
 	    strcpy(targ, pmod->params[i + 1]);
+	} else if (pmod->aux == AUX_VECM) {
+	    adjust_vecm_name(pdinfo->varname[pmod->list[i + 2]], targ);
 	} else {
 	    strcpy(targ, pdinfo->varname[pmod->list[i + 2]]);
 	}

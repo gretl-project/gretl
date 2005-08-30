@@ -497,9 +497,9 @@ add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 
     if (!err) {
 	for (j=0; j<rank; j++) {
-	    sprintf(pdinfo->varname[v+j], "CV%d", j + 1);
+	    sprintf(pdinfo->varname[v+j], "EC%d", j + 1);
 	    make_varname_unique(pdinfo->varname[v+j], v + j, pdinfo);
-	    sprintf(VARLABEL(pdinfo, v+j), "cointegrating vector %d from VECM %d", 
+	    sprintf(VARLABEL(pdinfo, v+j), "error correction term %d from VECM %d", 
 		    j + 1, id);
 	    for (t=0; t<pdinfo->n; t++) {
 		if (t < vecm->t1 || t > vecm->t2) {
@@ -549,15 +549,18 @@ static void copy_coeffs_to_Gamma (MODEL *pmod, int i, gretl_matrix **G,
     }
 }
 
-static void copy_coeffs_to_Alpha (MODEL *pmod, int i, gretl_matrix *Alpha,
-				  int maxlag, int r, int seasonals)
+static void copy_coeffs_to_Alpha (GRETL_VAR *vecm, int i, gretl_matrix *Alpha,
+				  int maxlag)
 {
     double x;
-    int base = pmod->ifc + seasonals + 
-	gretl_matrix_rows(Alpha) * maxlag; /* ?? */
+    const MODEL *pmod = vecm->models[i];
+    /* position in coeff array of first \alpha term */
+    int base = pmod->ifc + vecm->jinfo->seasonals + 
+	(vecm->jinfo->code == J_UNREST_TREND) +
+	gretl_matrix_rows(Alpha) * maxlag;
     int j;
 
-    for (j=0; j<r; j++) {
+    for (j=0; j<vecm->jinfo->rank; j++) {
 	x = pmod->coeff[base + j];
 	gretl_matrix_set(Alpha, i, j, x);
     }
@@ -570,7 +573,7 @@ static int form_Pi (GRETL_VAR *vecm, const gretl_matrix *Alpha,
     int err = 0, freeit = 0;
 
     if (gretl_matrix_rows(Beta) > vecm->neqns) {
-	/* make row-reduced copy of Beta */
+	/* make row-reduced copy of Beta if need be */
 	Beta = gretl_matrix_alloc(vecm->neqns, vecm->jinfo->rank);
 	if (Beta == NULL) {
 	    err = E_ALLOC;
@@ -676,8 +679,7 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
 	    vecm->models[i]->aux = AUX_VECM;
 	    vecm->models[i]->adjrsq = NADBL;
 	    copy_coeffs_to_Gamma(vecm->models[i], i, G, p, nv);
-	    copy_coeffs_to_Alpha(vecm->models[i], i, Alpha, p, r,
-				 vecm->jinfo->seasonals);
+	    copy_coeffs_to_Alpha(vecm, i, Alpha, p);
 	    if (vecm->E != NULL) {
 		for (t=0; t<vecm->T; t++) {
 		    mt = t + vecm->t1;
@@ -713,7 +715,7 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
 	    gretl_matrix_copy_values(A, G[i]);
 	    gretl_matrix_subtract_from(A, G[i-1]);
 	}
-#if 1
+#if JDEBUG
 	gretl_matrix_print(A, "A_i", NULL);
 #endif
 	add_Ai_to_VAR_A(A, vecm, i);
@@ -982,6 +984,32 @@ static int johansen_ll_calc (GRETL_VAR *jvar, const double *eigvals)
     return err;
 }
 
+static int vecm_ll_stats (GRETL_VAR *vecm)
+{
+    gretl_matrix *S;
+    int code = jcode(vecm);
+    int T = vecm->T;
+    int n = vecm->neqns;
+    int k = n * (vecm->order - 1);
+
+    S = gretl_matrix_copy(vecm->S);
+    if (S == NULL) {
+	return E_ALLOC;
+    } 
+
+    vecm->ldet = gretl_vcv_log_determinant(S);
+    gretl_matrix_free(S);
+
+    /* FIXME: is k right (in all cases)? */
+    k += (code >= J_UNREST_CONST) + (code == J_UNREST_TREND);
+    k += vecm->jinfo->seasonals;
+    
+    vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * n) / T;
+    vecm->BIC = (-2.0 * vecm->ll + log(T) * k * n) / T;
+
+    return 0;
+}
+
 static int 
 compute_coint_test (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
 {
@@ -1141,6 +1169,9 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 		}
 		if (!err) {
 		    err = gretl_VAR_do_error_decomp(jvar->neqns, jvar->S, jvar->C);
+		}
+		if (!err) {
+		    err = vecm_ll_stats(jvar);
 		}
 	    }
 	}

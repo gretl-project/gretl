@@ -36,11 +36,6 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 				    const double **Z, 
 				    const DATAINFO *pdinfo);
 
-static int 
-gretl_VECM_print (GRETL_VAR *vecm, const DATAINFO *pdinfo, gretlopt opt, 
-		  PRN *prn);
-
-
 #define VAR_DEBUG 0
 
 struct var_resids {
@@ -710,7 +705,11 @@ int gretl_VAR_do_error_decomp (int g, const gretl_matrix *S,
 
 int gretl_VAR_get_variable_number (const GRETL_VAR *var, int k)
 {
-    return (var->models[k])->list[1];
+    if (var->ci == VECM) {
+	return var->jinfo->list[k + 1];
+    } else {
+	return (var->models[k])->list[1];
+    }
 }
 
 int gretl_VAR_get_n_equations (const GRETL_VAR *var)
@@ -2849,9 +2848,12 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 
     if (seasonals) {
 	if (pdinfo->pd > 1) {
+	    int flag = (jcode(jvar) >= J_UNREST_CONST)? 1 : -1;
+
 	    jvar->jinfo->seasonals = pdinfo->pd - 1;
 	    l0 += pdinfo->pd - 1;
-	    di0 = dummy(pZ, pdinfo, 1);
+	    /* center the dummies only if there's a constant in the VAR */
+	    di0 = dummy(pZ, pdinfo, flag);
 	    if (di0 == 0) {
 		jvar->err = E_ALLOC;
 	    }
@@ -2914,7 +2916,7 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
     }
 
     if (seasonals) {
-	/* add centered seasonal dummies to list */
+	/* add seasonal dummies to list */
 	for (i=0; i<pdinfo->pd-1; i++) {
 	    resids.levels_list[j++] = di0 + i;
 	    varlist[k++] = di0 + i;
@@ -3603,27 +3605,21 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 
 void print_Johansen_test_case (JohansenCode jcode, PRN *prn)
 {
-    switch (jcode) {
-    case J_NO_CONST:
-	pputs(prn, "Case 1: No constant");
-	break;
-    case J_REST_CONST:
-	pputs(prn, "Case 2: Restricted constant");
-	break;
-    case J_UNREST_CONST:
-	pputs(prn, "Case 3: Unrestricted constant");
-	break;
-    case J_REST_TREND:
-	pputs(prn, "Case 4: Restricted trend, unrestricted constant");
-	break;
-    case J_UNREST_TREND:
-	pputs(prn, "Case 5: Unrestricted trend and constant");
-	break;
-    default:
-	break;
-    }
+    const char *jcase[] = {
+	N_("Case 1: No constant"),
+	N_("Case 2: Restricted constant"),
+	N_("Case 3: Unrestricted constant"),
+	N_("Case 4: Restricted trend, unrestricted constant"),
+	N_("Case 5: Unrestricted trend and constant")
+    };
 
-    gretl_prn_newline(prn);
+    if (jcode <= J_UNREST_TREND) {
+	if (plain_format(prn)) {
+	    pputs(prn, _(jcase[jcode]));
+	} else {
+	    pputs(prn, I_(jcase[jcode]));
+	}
+    }
 }
 
 static void 
@@ -3640,24 +3636,6 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, " (%s)", _("standard errors in parentheses"));
     } 
     gretl_prn_newline(prn);
-    gretl_prn_newline(prn);
-
-    for (j=0; j<jv->rank; j++) {
-	sprintf(s, "CV%d", j + 1);
-	if (j == 0) {
-	    if (rtf) {
-		pprintf(prn, "\t\t%s", s);
-	    } else {
-		pprintf(prn, "%22s", s);
-	    }
-	} else {
-	    if (rtf) {
-		pprintf(prn, "\t%s", s);;
-	    } else {
-		pprintf(prn, "%13s", s);
-	    }
-	}
-    }
     gretl_prn_newline(prn);
 
     for (i=0; i<rows; i++) {
@@ -3720,7 +3698,6 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
 static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 {
     int rtf = rtf_format(prn);
-    gretl_matrix *M;
     int *list = jvar->jinfo->list;
     char s[32];
     int i, j;
@@ -3768,100 +3745,19 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 
     gretl_prn_newline(prn);
 
-    M = gretl_matrix_copy(jvar->S);
-    if (M != NULL) {
-	pprintf(prn, "%s = %g", _("determinant"), gretl_matrix_determinant(M));
-	gretl_prn_newline(prn);
-	gretl_matrix_free(M);
-    }
+    pprintf(prn, "%s = %g", _("determinant"), exp(jvar->ldet));
+    gretl_prn_newline(prn);
 }
 
 static void 
-print_VECM_ll_stats (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
+print_vecm_header_info (GRETL_VAR *vecm, PRN *prn)
 {
-    int code = jcode(vecm);
-    int T = vecm->T;
-    int n = vecm->neqns;
-    int k = n * (vecm->order - 1);
-
-    /* FIXME: is k right (in all cases)? */
-    k += (code >= J_UNREST_CONST) + (code == J_UNREST_TREND);
-    k += vecm->jinfo->seasonals;
-    
-    vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * n) / T;
-    vecm->BIC = (-2.0 * vecm->ll + log(T) * k * n) / T;
-
-    pprintf(prn, "%s = %g", _("log-likelihood"), vecm->ll);
     gretl_prn_newline(prn);
-    pprintf(prn, "%s = %g", _("AIC"), vecm->AIC);
+    pprintf(prn, "%s = %d", 
+	    (plain_format(prn))? _("Cointegration rank") : I_("Cointegration rank"),
+	    jrank(vecm));
     gretl_prn_newline(prn);
-    pprintf(prn, "%s = %g", _("BIC"), vecm->BIC);
-    gretl_prn_newline(prn);
-}
-
-static int 
-gretl_VECM_print (GRETL_VAR *vecm, const DATAINFO *pdinfo, gretlopt opt, PRN *prn)
-{
-    char stobs[OBSLEN], endobs[OBSLEN];
-    int i, err = 0;
-
-    if (tex_format(prn)) {
-	pputs(prn, "\\noindent\n");
-    } else if (rtf_format(prn)) {
-	pputs(prn, "{\\rtf1\\par\n\n");
-	gretl_print_toggle_doc_flag(prn);
-    }
-
-    pprintf(prn, "%s:", _("VECM"));
-    gretl_prn_newline(prn);
-    pprintf(prn, "%s = %d", _("Number of equations"), vecm->neqns);
-    gretl_prn_newline(prn);
-    pprintf(prn, "%s = %d", _("Lag order"), vecm->order);
-    gretl_prn_newline(prn);
-    pprintf(prn, "%s = %d", _("Cointegration rank"), jrank(vecm));
-    gretl_prn_newline(prn);
-    pprintf(prn, "%s: %s %s %s %s(T = %d)%s", _("Estimation period"),
-	    ntodate(stobs, vecm->t1, pdinfo), 
-	    (tex_format(prn))? "--" : "-",
-	    ntodate(endobs, vecm->t2, pdinfo), 
-	    (tex_format(prn))? "$" : "",
-	    vecm->T, (tex_format(prn))? "$" : "");
-    gretl_prn_newline(prn); 
-
     print_Johansen_test_case(jcode(vecm), prn); 
-    gretl_prn_newline(prn);
-
-    if (tex_format(prn)) {
-	tex_print_VECM_coint_eqns(vecm, pdinfo, prn);
-    } else {
-	print_VECM_coint_eqns(vecm->jinfo, pdinfo, prn);
-    }
-
-    for (i=0; i<vecm->neqns; i++) {
-	printmodel(vecm->models[i], pdinfo, OPT_NONE, prn);
-    } 
-
-    if (tex_format(prn)) {
-	tex_print_VECM_omega(vecm, pdinfo, prn);
-    } else {
-	print_VECM_omega(vecm, pdinfo, prn);
-    }
-
-    if (!na(vecm->ll)) {
-	if (tex_format(prn)) {
-	    tex_print_VECM_ll_stats(vecm, pdinfo, prn);
-	} else {
-	    print_VECM_ll_stats(vecm, pdinfo, prn);
-	}
-    } else {
-	err = 1;
-    }
-    
-    if (rtf_format(prn)) {
-	pputs(prn, "}\n");
-    }
-
-    return err;
 }
 
 /**
@@ -3883,6 +3779,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 {
     char startdate[OBSLEN], enddate[OBSLEN];
     char Vstr[72];
+    int vecm = var->ci == VECM;
     int dfd = var->models[0]->dfd;
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
@@ -3891,10 +3788,6 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 
     if (prn == NULL) {
 	return 0;
-    }
-
-    if (var->ci == VECM) {
-	return gretl_VECM_print(var, pdinfo, OPT_NONE, prn);
     }
 
     ntodate(startdate, var->t1, pdinfo);
@@ -3908,42 +3801,62 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	goto print_extras;
     }
 
-    if (tex || rtf) {
-	sprintf(Vstr, I_("VAR system, lag order %d"), var->order);
+    if (vecm) {
+	if (tex || rtf) {
+	    sprintf(Vstr, I_("VECM system, lag order %d"), var->order);
+	} else {
+	    sprintf(Vstr, _("VECM system, lag order %d"), var->order);
+	}
     } else {
-	sprintf(Vstr, _("VAR system, lag order %d"), var->order);
+	if (tex || rtf) {
+	    sprintf(Vstr, I_("VAR system, lag order %d"), var->order);
+	} else {
+	    sprintf(Vstr, _("VAR system, lag order %d"), var->order);
+	}
     }
 
     if (tex) {
 	pputs(prn, "\\begin{center}");
 	pprintf(prn, "\n%s\\\\\n", Vstr);
-	pprintf(prn, I_("%s estimates using %d observations from %s%s%s"),
-		I_("OLS"), var->T, startdate, "--", enddate);
-	pputs(prn, "\n\\end{center}");
-	pputs(prn, "\\vspace{1ex}\n");
+	pprintf(prn, I_("%s estimates, observations %s--%s ($T=%d$)"),
+		(vecm)? I_("Maximum likelihood") : I_("OLS"), startdate, enddate, var->T);
+	if (vecm) {
+	    print_vecm_header_info(var, prn);
+	}
+	pputs(prn, "\n\\end{center}\n");
     } else if (rtf) {
 	gretl_print_toggle_doc_flag(prn);
 	pprintf(prn, "\n%s\\par\n", Vstr);
-	pprintf(prn, I_("%s estimates using %d observations from %s%s%s"),
-		I_("OLS"), var->T, startdate, "-", enddate);
+	pprintf(prn, I_("%s estimates, observations %s%-%s (T = %d)"),
+		(vecm)? I_("Maximum likelihood") : I_("OLS"), startdate, enddate, var->T);
+	if (vecm) {
+	    print_vecm_header_info(var, prn);
+	}	
 	pputs(prn, "\\par\n\n");
     } else {
 	pause = gretl_get_text_pause();
 	pprintf(prn, "\n%s\n", Vstr);
-	pprintf(prn, _("%s estimates using %d observations from %s%s%s"),
-		_("OLS"), var->T, startdate, "-", enddate);
+	pprintf(prn, _("%s estimates, observations %s-%s (T = %d)"),
+		(vecm)? ("Maximum likelihood") : _("OLS"), startdate, enddate, var->T);
+	if (vecm) {
+	    print_vecm_header_info(var, prn);
+	}
 	pputs(prn, "\n\n");
     }
 
+    if (vecm) {
+	if (tex_format(prn)) {
+	    tex_print_VECM_coint_eqns(var, pdinfo, prn);
+	} else {
+	    print_VECM_coint_eqns(var->jinfo, pdinfo, prn);
+	}
+    }
+
     if (tex) {
-	pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("Log-likelihood"), var->ll);
-	pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("Determinant of covariance matrix"), 
-		exp(var->ldet));
-	pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("AIC"), var->AIC);
-	pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("BIC"), var->BIC);
+	tex_print_VAR_ll_stats(var, prn);
     } else if (rtf) {
-	pprintf(prn, "%s = %.4f\\par\n", I_("Log-likelihood"), var->ll);
-	pprintf(prn, "%s = %.4f\\par\n", I_("Determinant of covariance matrix"), 
+	pprintf(prn, "%s = %#g\\par\n", I_("Log-likelihood"), var->ll);
+	pprintf(prn, "%s = %#g\\par\n", I_("Determinant of covariance matrix"), 
 		exp(var->ldet));
 	pprintf(prn, "%s = %.4f\\par\n", I_("AIC"), var->AIC);
 	pprintf(prn, "%s = %.4f\\par\n", I_("BIC"), var->BIC);
@@ -3952,6 +3865,10 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	pprintf(prn, "%s = %#g\n", _("Determinant of covariance matrix"), exp(var->ldet));
 	pprintf(prn, "%s = %.4f\n", _("AIC"), var->AIC);
 	pprintf(prn, "%s = %.4f\n", _("BIC"), var->BIC);
+    }
+
+    if (vecm) {
+	pputc(prn, '\n');
     }
 
     k = 0;
@@ -3963,6 +3880,10 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 
 	if (pause) {
 	    scroll_pause();
+	}
+
+	if (vecm) {
+	    continue;
 	}
 
 	if (tex) {
@@ -4073,7 +3994,15 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	}
     }
 
-    pputc(prn, '\n');
+    if (vecm) {
+	if (tex_format(prn)) {
+	    tex_print_VECM_omega(var, pdinfo, prn);
+	} else {
+	    print_VECM_omega(var, pdinfo, prn);
+	}
+    } else {
+	pputc(prn, '\n');
+    }
 
  print_extras:
 

@@ -3123,6 +3123,7 @@ static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    int vecm = (var->ci == VECM);
     gchar *title;
     int h = default_VAR_horizon(datainfo);
     gint targ;
@@ -3137,7 +3138,10 @@ static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
 
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
 
-    err = checks_dialog(title, impulse_opts, 1, active,
+    err = checks_dialog(title, 
+			(vecm)? NULL : impulse_opts, 
+			(vecm)? 0 : 1, 
+			(vecm)? NULL : active,
 			&h, _("forecast horizon (periods):"),
 			2, datainfo->n / 2, IRF_BOOT);
     g_free(title);
@@ -3378,16 +3382,14 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);
 
-    if (!vecm) {
-	/* cross-equation VCV */
-	varitem.path = g_strdup_printf("%s/%s", _(mpath), 
-				       _("Cross-equation covariance matrix"));
-	varitem.callback = VAR_model_data_callback;
-	varitem.callback_action = VAR_VCV;
-	varitem.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	g_free(varitem.path);
-    }
+    /* cross-equation VCV */
+    varitem.path = g_strdup_printf("%s/%s", _(mpath), 
+				   _("Cross-equation covariance matrix"));
+    varitem.callback = VAR_model_data_callback;
+    varitem.callback_action = VAR_VCV;
+    varitem.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
 
     /* impulse response printout */
     varitem.path = g_strdup_printf("%s/%s", _(mpath), _("impulse responses"));
@@ -3438,11 +3440,6 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 	varitem.item_type = NULL;
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	g_free(varitem.path);
-
-	if (vecm) {
-	    /* the rest is not implemented yet */
-	    continue;
-	}
 
 	/* impulse response plots: make branch for target */
 	vtarg = gretl_VAR_get_variable_number(var, i);
