@@ -2,7 +2,7 @@ version 1.4.2, in progress
 - Add VECM (Vector Error Correction Models) for time-series
   data
 - More XLS importer fixes
-- Add seasonal ARMA
+- Add support for seasonal ARMA
 - Accommodate custom time-series frequencies
 - Johansen cointegration test: extend to cover all 5 cases, 
   produce a fuller report (loadings, long-run matrix)
