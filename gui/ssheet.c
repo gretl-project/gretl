@@ -44,22 +44,27 @@ static int sheet_modified;
 static int origvars;
 static int orig_main_v;
 
-static void sheet_add_var (void);
-static void sheet_add_obs (void);
-static void sheet_insert_obs (void);
+static void sheet_add_var_callback (void);
+static void sheet_add_obs_callback (void);
+static void sheet_insert_obs_callback (void);
 static void sheet_clear (gpointer *data, guint all, GtkWidget *w);
 static void get_data_from_sheet (void);
 static void set_dataset_locked (gboolean s);
 
 static GtkItemFactoryEntry sheet_items[] = {
     { N_("/_Observation"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Observation/_Append obs"), NULL, sheet_add_obs, 0, NULL },
-    { N_("/Observation/_Insert obs"), NULL, sheet_insert_obs, 0, NULL },
+    { N_("/Observation/_Append obs"), NULL, sheet_add_obs_callback, 0, NULL },
+    { N_("/Observation/_Insert obs"), NULL, sheet_insert_obs_callback, 0, NULL },
     { N_("/_Variable"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Variable/_Add"), NULL, sheet_add_var, 0, NULL },
+    { N_("/Variable/_Add"), NULL, sheet_add_var_callback, 0, NULL },
     { N_("/_Clear"), NULL, NULL, 0, "<Branch>" },
     { N_("/_Clear/_Selected cells"), NULL, sheet_clear, 0, NULL },
     { N_("/_Clear/_All data"), NULL, sheet_clear, 1, NULL }
+};
+
+enum {
+    SHEET_AT_END,
+    SHEET_AT_POINT
 };
 
 static void disable_obs_menu (GtkItemFactory *ifac)
@@ -81,8 +86,6 @@ static int spreadsheet_hide (int i, const DATAINFO *pdinfo)
 
     return ret;
 }
-
-/* ........................................................... */
 
 static int check_data_in_sheet (void)
 {
@@ -108,10 +111,9 @@ static int check_data_in_sheet (void)
     return 0;
 }
 
-/* ........................................................... */
-
-static void name_new_var (GtkWidget *widget, dialog_t *ddata) 
+static void real_add_new_var (GtkWidget *widget, dialog_t *ddata) 
 {
+    GtkSheet *sheet = GTK_SHEET(gretlsheet);     
     const char *buf = edit_dialog_get_text(ddata);
 
     if (buf == NULL || validate_varname(buf)) {
@@ -122,47 +124,6 @@ static void name_new_var (GtkWidget *widget, dialog_t *ddata)
     strncat(newvarname, buf, 8);
 
     close_dialog(ddata);
-}
-
-static void name_new_obs (GtkWidget *widget, dialog_t *ddata) 
-{
-    const char *buf = edit_dialog_get_text(ddata);
-
-    if (buf == NULL) return;
-
-    *newobsmarker = '\0';
-    strncat(newobsmarker, buf, 8);
-
-    close_dialog(ddata);
-}
-
-static void name_var_dialog (void) 
-{
-    edit_dialog (_("gretl: name variable"), 
-		 _("Enter name for new variable\n"
-		 "(max. 8 characters)"),
-		 NULL, name_new_var, mdata, 
-		 0, 0, 1);
-}
-
-static void new_case_dialog (void) 
-{
-    edit_dialog (_("gretl: case marker"), 
-		 _("Enter case marker for new obs\n"
-		 "(max. 8 characters)"),
-		 NULL, name_new_obs, mdata, 
-		 0, 0, 1);
-}
-
-/* ........................................................... */
-
-static void sheet_add_var (void)
-{
-    GtkSheet *sheet = GTK_SHEET(gretlsheet); 
-
-    *newvarname = '\0';
-    
-    name_var_dialog();
 
     if (*newvarname != '\0') {
 	gtk_sheet_add_column(sheet, 1);
@@ -175,69 +136,124 @@ static void sheet_add_var (void)
     }
 }
 
-static void sheet_add_obs (void)
+static void real_add_named_obs (dialog_t *ddata, int flag) 
+{
+    GtkSheet *sheet = GTK_SHEET(gretlsheet);
+    const char *buf = edit_dialog_get_text(ddata);
+
+    if (buf == NULL) return;
+
+    *newobsmarker = '\0';
+    strncat(newobsmarker, buf, 8);
+
+    close_dialog(ddata);
+
+    if (*newobsmarker != '\0') {
+	int addrow;
+
+	if (flag == SHEET_AT_POINT) {
+	    addrow = sheet->active_cell.row;
+	    gtk_sheet_insert_rows(sheet, addrow, 1);
+	} else {
+	    addrow = numrows;
+	    gtk_sheet_add_row(sheet, 1);
+	}
+
+	gtk_sheet_row_button_add_label(sheet, addrow, newobsmarker);
+	gtk_sheet_set_row_title(sheet, addrow, newobsmarker);
+	gtk_sheet_set_active_cell(sheet, addrow, 0);
+	gtk_sheet_moveto(sheet, addrow, 0, 0.8, 0.0);
+	numrows++;
+	sheet_modified = 1;
+    }
+}
+
+static void insert_named_obs (GtkWidget *widget, dialog_t *ddata)
+{
+    real_add_named_obs(ddata, SHEET_AT_POINT);
+}
+
+static void append_named_obs (GtkWidget *widget, dialog_t *ddata)
+{
+    real_add_named_obs(ddata, SHEET_AT_END);
+}
+
+static void name_var_dialog (void) 
+{
+    edit_dialog (_("gretl: name variable"), 
+		 _("Enter name for new variable\n"
+		 "(max. 8 characters)"),
+		 NULL, real_add_new_var, mdata, 
+		 0, 0);
+}
+
+static void name_obs_dialog (int flag) 
+{
+    edit_dialog (_("gretl: case marker"), 
+		 _("Enter case marker for new obs\n"
+		 "(max. 8 characters)"),
+		 NULL, 
+		 (flag == SHEET_AT_POINT)? insert_named_obs : append_named_obs, 
+		 mdata, 
+		 0, 0);
+}
+
+static void sheet_add_var_callback (void)
+{
+    *newvarname = '\0';
+    name_var_dialog();
+}
+
+static void sheet_add_obs_callback (void)
 {
     GtkSheet *sheet = GTK_SHEET(gretlsheet);
     char rowlabel[OBSLEN];
     int i, n = 1;
 
-    *newobsmarker = '\0';
-
     if (datainfo->markers) {
-	new_case_dialog();
+	name_obs_dialog(SHEET_AT_END);
+	return;
     } else {
 	n = add_obs_dialog(NULL, 1);
     }
 
     if (n <= 0) return;
 
-    if (!datainfo->markers || *newobsmarker != '\0') {
-	for (i=0; i<n; i++) {
-	    gtk_sheet_add_row(sheet, 1);
-	    get_full_obs_string(rowlabel, numrows + i, datainfo);
-	    gtk_sheet_row_button_add_label(sheet, numrows + i, rowlabel);
-	    gtk_sheet_set_row_title(sheet, numrows + i, rowlabel);
-	}
-	gtk_sheet_set_active_cell(sheet, numrows, 0);
-	gtk_sheet_moveto(sheet, numrows, 0, 0.8, 0.0);
-	numrows += n;
-	sheet_modified = 1;
+    for (i=0; i<n; i++) {
+	gtk_sheet_add_row(sheet, 1);
+	get_full_obs_string(rowlabel, numrows + i, datainfo);
+	gtk_sheet_row_button_add_label(sheet, numrows + i, rowlabel);
+	gtk_sheet_set_row_title(sheet, numrows + i, rowlabel);
     }
+
+    gtk_sheet_set_active_cell(sheet, numrows, 0);
+    gtk_sheet_moveto(sheet, numrows, 0, 0.8, 0.0);
+    numrows += n;
+    sheet_modified = 1;
 }
 
-static void sheet_insert_obs (void)
+static void sheet_insert_obs_callback (void)
 {
     GtkSheet *sheet = GTK_SHEET(gretlsheet);
     char rowlabel[10];
     int i;
 
-    newobsmarker[0] = '\0';
-
     if (datainfo->markers) {
-	new_case_dialog();
+	name_obs_dialog(SHEET_AT_POINT);
+	return;
     }
 
-    if (!datainfo->markers || *newobsmarker != '\0') {
-	gtk_sheet_insert_rows(sheet, sheet->active_cell.row, 1);
-	numrows++;
-	if (datainfo->markers) {
-	    strcpy(rowlabel, newobsmarker);
-	    gtk_sheet_row_button_add_label(sheet, sheet->active_cell.row, 
-					   rowlabel);
-	    gtk_sheet_set_row_title(sheet, sheet->active_cell.row, 
-				    rowlabel);
-	} else {
-	    for (i=sheet->active_cell.row; i<numrows; i++) {
-		get_full_obs_string(rowlabel, i, datainfo);
-		gtk_sheet_row_button_add_label(sheet, i, rowlabel);
-		gtk_sheet_set_row_title(sheet, i, rowlabel);
-	    }
-	}
-	sheet_modified = 1;
+    gtk_sheet_insert_rows(sheet, sheet->active_cell.row, 1);
+    numrows++;
+
+    for (i=sheet->active_cell.row; i<numrows; i++) {
+	get_full_obs_string(rowlabel, i, datainfo);
+	gtk_sheet_row_button_add_label(sheet, i, rowlabel);
+	gtk_sheet_set_row_title(sheet, i, rowlabel);
     }
+
+    sheet_modified = 1;
 }
-
-/* ........................................................... */
 
 static void sheet_clear (gpointer *data, guint all, GtkWidget *w)
 {
@@ -250,18 +266,16 @@ static void sheet_clear (gpointer *data, guint all, GtkWidget *w)
     }	
 }
 
-/* ........................................................... */
-
 static gint popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
 
     if (strcmp(item, _("Add Variable")) == 0) { 
-	sheet_add_var();
+	sheet_add_var_callback();
     } else if (strcmp(item, _("Add Observation")) == 0) {
-	sheet_add_obs();
+	sheet_add_obs_callback();
     } else if (strcmp(item, _("Insert Observation")) == 0) {
-	sheet_insert_obs();
+	sheet_insert_obs_callback();
     } else if (strcmp(item, _("Clear Cells")) == 0) {
 	sheet_clear(NULL, 0, NULL);
     } 
@@ -270,8 +284,6 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
 
     return TRUE;
 }
-
-/* ........................................................... */
 
 static GtkWidget *build_menu (GtkWidget *sheet)
 {
@@ -300,8 +312,6 @@ static GtkWidget *build_menu (GtkWidget *sheet)
     return menu;
 }
 
-/* ........................................................... */
-
 static gint do_sheet_popup (GtkWidget *widget, GdkEventButton *event, 
 			    gpointer data)
 {
@@ -320,8 +330,6 @@ static gint do_sheet_popup (GtkWidget *widget, GdkEventButton *event,
 
     return TRUE;
 }
-
-/* ........................................................... */
 
 static void parse_numbers (GtkWidget *widget, gpointer data)
 {
@@ -347,8 +355,6 @@ static void parse_numbers (GtkWidget *widget, gpointer data)
     sheet_modified = 1;
 }
 
-/* ........................................................... */
-
 static void show_sheet_entry (GtkWidget *widget, gpointer data)
 {
     gchar *text;
@@ -364,8 +370,6 @@ static void show_sheet_entry (GtkWidget *widget, gpointer data)
         gtk_entry_set_text(sheet_entry, text);
     }
 }
-
-/* ........................................................... */
 
 static void activate_sheet_entry (GtkWidget *widget, gpointer data)
 {
@@ -387,8 +391,6 @@ static void activate_sheet_entry (GtkWidget *widget, gpointer data)
 
 }
 
-/* ........................................................... */
-
 static void show_entry (GtkWidget *widget, gpointer data)
 {
     gchar *text; 
@@ -401,8 +403,6 @@ static void show_entry (GtkWidget *widget, gpointer data)
 	gtk_entry_set_text(GTK_ENTRY(topentry), text);
     }
 }
-
-/* ........................................................... */
 
 static gint activate_sheet_cell (GtkWidget *w, gint row, gint column, 
 				 gpointer data) 
@@ -434,8 +434,6 @@ static gint activate_sheet_cell (GtkWidget *w, gint row, gint column,
 
     return TRUE;
 }
-
-/* ........................................................... */
 
 static int var_added_since_ssheet_opened (int i, int main_v)
 {
@@ -518,8 +516,6 @@ static void get_data_from_sheet (void)
     sheet_modified = 0;
 }
 
-/* ........................................................... */
-
 static void add_data_to_sheet (GtkWidget *w)
 {
     gchar label[32], rowlabel[10];
@@ -601,15 +597,11 @@ static void add_skel_to_sheet (GtkWidget *w)
     sheet_modified = 0;
 }
 
-/* ........................................................... */
-
 static void free_spreadsheet (GtkWidget *widget, gpointer data) 
 {
     gretlsheet = NULL;
     set_dataset_locked(FALSE);
 }
-
-/* ........................................................... */
 
 static void maybe_exit_sheet (GtkWidget *w, GtkWidget *swin)
 {
@@ -627,8 +619,6 @@ static void maybe_exit_sheet (GtkWidget *w, GtkWidget *swin)
   
     gtk_widget_destroy(swin);
 }
-
-/* ........................................................... */
 
 void show_spreadsheet (SheetCode code) 
 {

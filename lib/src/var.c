@@ -117,10 +117,39 @@ static MODEL **allocate_VAR_models (int neqns)
     return models;
 }
 
+int gretl_VAR_add_coeff_matrix (GRETL_VAR *var)
+{
+    int n = var->neqns * var->order;
+    int err = 0;
+
+    var->A = gretl_matrix_alloc(n, n);
+    if (var->A == NULL) {
+	err = E_ALLOC;
+    } else {
+	pad_var_coeff_matrix(var->A, var->neqns, var->order);
+    }
+
+    return err;
+}
+
+int gretl_VAR_add_C_matrix (GRETL_VAR *var)
+{
+    int n = var->neqns * var->order;
+    int err = 0;
+
+    var->C = gretl_matrix_alloc(n, var->neqns);
+    if (var->C == NULL) {
+	err = 1;
+    } else {
+	gretl_matrix_zero(var->C);
+    }
+
+    return err;
+}
+
 static GRETL_VAR *gretl_VAR_new (int neqns, int order, const DATAINFO *pdinfo)
 {
     GRETL_VAR *var;
-    int rows;
     int err = 0;
 
     if (neqns == 0 || order == 0) {
@@ -156,24 +185,10 @@ static GRETL_VAR *gretl_VAR_new (int neqns, int order, const DATAINFO *pdinfo)
 
     var->jinfo = NULL;
 
-    rows = neqns * order;
-
-    var->A = gretl_matrix_alloc(rows, rows);
-    if (var->A == NULL) {
-	err = 1;
-    } else {
-	pad_var_coeff_matrix(var->A, var->neqns, var->order);
-    }
+    err = gretl_VAR_add_coeff_matrix(var);
 
     if (!err) {
-	var->C = gretl_matrix_alloc(rows, neqns);
-	if (var->C == NULL) {
-	    err = 1;
-	    gretl_matrix_free(var->A);
-	    var->A = NULL;
-	} else {
-	    gretl_matrix_zero(var->C);
-	}
+	err = gretl_VAR_add_C_matrix(var);
     }
 
     if (!err) {
@@ -653,10 +668,11 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
     return err;
 }
 
-static int gretl_VAR_do_error_decomp (int g, const gretl_matrix *S,
-				      gretl_matrix *C)
+int gretl_VAR_do_error_decomp (int g, const gretl_matrix *S,
+			       gretl_matrix *C)
 {
     gretl_matrix *tmp = NULL;
+    double x;
     int i, j, err = 0;
 
     /* copy cross-equation covariance matrix */
@@ -679,8 +695,7 @@ static int gretl_VAR_do_error_decomp (int g, const gretl_matrix *S,
     if (!err) {
 	for (i=0; i<g; i++) {
 	    for (j=0; j<g; j++) {
-		double x = gretl_matrix_get(tmp, i, j);
-
+		x = gretl_matrix_get(tmp, i, j);
 		gretl_matrix_set(C, i, j, x);
 	    }
 	}
@@ -3249,13 +3264,12 @@ static void VAR_info_header_block (int code, int v, int block,
     } else if (rtf) {
 	pprintf(prn, "\\intbl \\qc %s\\cell ", I_("period"));
     } else {
-	pprintf(prn, "%s ", _("period"));
+	pputs(prn, _("period"));
     }
 }
 
-static void VAR_info_print_vname (int v, int endrow, 
-				  const DATAINFO *pdinfo, 
-				  PRN *prn)
+static void VAR_info_print_vname (int code, int i, int v, int endrow, 
+				  const DATAINFO *pdinfo, PRN *prn)
 {
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
@@ -3274,7 +3288,10 @@ static void VAR_info_print_vname (int v, int endrow,
 	    pputs(prn, " \\intbl \\row");
 	} 
     } else {
-	pprintf(prn, "  %8s  ", pdinfo->varname[v]);
+	int w = (code == IRF)? 13 : 11;
+
+	if (code == IRF && i == 0) w--; /* FIXME width for i18n */
+	pprintf(prn, "%*s", w, pdinfo->varname[v]);
     }
 }
 
@@ -3361,7 +3378,11 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 	return E_ALLOC;
     }
 
-    vsrc = (var->models[shock])->list[1];
+    if (var->ci == VECM) {
+	vsrc = var->jinfo->list[shock + 1];
+    } else {
+	vsrc = (var->models[shock])->list[1];
+    }
 
     blockmax = var->neqns / IRF_ROW_MAX;
     if (var->neqns % IRF_ROW_MAX) {
@@ -3379,9 +3400,13 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 	    if (k >= var->neqns) {
 		break;
 	    }
-	    vtarg = (var->models[k])->list[1];
+	    if (var->ci == VECM) {
+		vtarg = var->jinfo->list[k + 1];
+	    } else {
+		vtarg = (var->models[k])->list[1];
+	    }
 	    endrow = !(i < IRF_ROW_MAX - 1 && k < var->neqns - 1);
-	    VAR_info_print_vname(vtarg, endrow, pdinfo, prn);
+	    VAR_info_print_vname(IRF, i, vtarg, endrow, pdinfo, prn);
 	}
 
 	if (tex || rtf) {
@@ -3481,7 +3506,11 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 	return E_ALLOC;
     }
 
-    vtarg = (var->models[targ])->list[1];
+    if (var->ci == VECM) {
+	vtarg = var->jinfo->list[targ + 1];
+    } else {
+	vtarg = (var->models[targ])->list[1];
+    }
 
     blockmax = (var->neqns + 1) / VDC_ROW_MAX;
     if ((var->neqns + 1) % VDC_ROW_MAX) {
@@ -3509,9 +3538,13 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 	    if (k >= var->neqns) {
 		break;
 	    }
-	    vsrc = (var->models[k])->list[1];
+	    if (var->ci == VECM) {
+		vsrc = var->jinfo->list[k + 1];
+	    } else {
+		vsrc = (var->models[k])->list[1];
+	    }
 	    endrow = !(i < VDC_ROW_MAX - 1 && k < var->neqns - 1);
-	    VAR_info_print_vname(vsrc, endrow, pdinfo, prn);
+	    VAR_info_print_vname(VDC, i, vsrc, endrow, pdinfo, prn);
 	}
 
 	if (tex || rtf) {

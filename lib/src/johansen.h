@@ -92,6 +92,13 @@ int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pd
 void print_Johansen_test_case (JohansenCode jcode, PRN *prn);
 
 int gretl_VECM_id (GRETL_VAR *vecm);
+
+int gretl_VAR_add_coeff_matrix (GRETL_VAR *var);
+
+int gretl_VAR_add_C_matrix (GRETL_VAR *var);
+
+int gretl_VAR_do_error_decomp (int g, const gretl_matrix *S,
+			       gretl_matrix *C);
     
 #endif /* JOHANSEN_H_ */
 

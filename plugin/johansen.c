@@ -534,14 +534,16 @@ add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 static void copy_coeffs_to_Gamma (MODEL *pmod, int i, gretl_matrix **G,
 				  int maxlag, int nv)
 {
+    int j, k, h;
     double x;
-    int j, k;
-
+    
     for (k=0; k<maxlag; k++) {
-	/* successive lags */
+	h = k + pmod->ifc;
+	/* successive lags (distinct \Gamma_i matrices) */
 	for (j=0; j<nv; j++) {
 	    /* successive \Delta x_j */
-	    x = pmod->coeff[j + pmod->ifc];
+	    x = pmod->coeff[h];
+	    h += maxlag;
 	    gretl_matrix_set(G[k], i, j, x);
 	}
     }
@@ -599,6 +601,19 @@ static int form_Pi (GRETL_VAR *vecm, const gretl_matrix *Alpha,
     return err;
 }
 
+static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm, int k)
+{
+    int i, j, offset = k * vecm->neqns;
+    double x;
+
+    for (i=0; i<vecm->neqns; i++) {
+	for (j=0; j<vecm->neqns; j++) {
+	    x = gretl_matrix_get(Ai, i, j);
+	    gretl_matrix_set(vecm->A, i, j + offset, x);
+	}
+    }
+}
+
 /* Run OLS taking the betas, as calculated via the eigen-analysis,
    as given.  So obtain estimates and standard errors for the
    coefficients on the lagged differences and the unrestricted
@@ -624,6 +639,15 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
     int nv = vecm->neqns;
     int *biglist = vecm->jinfo->biglist;
     int err = 0;
+
+    /* the following two matrices are used for IRFs and
+       forecast variance decompositions */
+    if ((err = gretl_VAR_add_coeff_matrix(vecm))) {
+	goto bailout;
+    }
+    if ((err = gretl_VAR_add_C_matrix(vecm))) {
+	goto bailout;
+    }
 
     /* for computing VAR representation */
     Pi = gretl_matrix_alloc(nv, nv);
@@ -669,7 +693,7 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-#if 0
+#if JDEBUG
     gretl_matrix_print(Alpha, "Alpha from models", NULL);
     gretl_matrix_print(Pi, "Pi", NULL);
     for (i=0; i<p; i++) {
@@ -689,16 +713,27 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
 	    gretl_matrix_copy_values(A, G[i]);
 	    gretl_matrix_subtract_from(A, G[i-1]);
 	}
+#if 1
 	gretl_matrix_print(A, "A_i", NULL);
-	/* FIXME assemble full VAR 'A' matrix */
+#endif
+	add_Ai_to_VAR_A(A, vecm, i);
     }
+
+#if JDEBUG
+    gretl_matrix_print(vecm->A, "vecm->A", NULL);
+#endif
 
  bailout:
 
     gretl_matrix_free(Pi);
     gretl_matrix_array_free(G, p);
-    gretl_matrix_free(Alpha);
     gretl_matrix_free(A);
+
+    if (err) {
+	gretl_matrix_free(Alpha);
+    } else {
+	vecm->jinfo->Alpha = Alpha;
+    }
 
     return err;
 }
@@ -1102,10 +1137,10 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 		    err = compute_omega(jvar, TmpR);
 		}
 		if (!err && do_stderrs) {
-		    err = compute_alpha(jvar->jinfo, n);
-		}
-		if (!err && do_stderrs) {
 		    err = beta_variance(jvar);
+		}
+		if (!err) {
+		    err = gretl_VAR_do_error_decomp(jvar->neqns, jvar->S, jvar->C);
 		}
 	    }
 	}

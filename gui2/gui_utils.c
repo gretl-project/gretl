@@ -3379,7 +3379,6 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     g_free(varitem.path);
 
     if (!vecm) {
-
 	/* cross-equation VCV */
 	varitem.path = g_strdup_printf("%s/%s", _(mpath), 
 				       _("Cross-equation covariance matrix"));
@@ -3388,25 +3387,24 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 	varitem.item_type = NULL;
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	g_free(varitem.path);
-
-	/* impulse response printout */
-	varitem.path = g_strdup_printf("%s/%s", _(mpath), _("impulse responses"));
-	varitem.callback = VAR_model_data_callback;
-	varitem.callback_action = VAR_IRF;
-	varitem.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	g_free(varitem.path);    
-
-	/* variance decomp printout */
-	varitem.path = g_strdup_printf("%s/%s", _(mpath), 
-				       _("forecast variance decomposition"));
-	varitem.callback = VAR_model_data_callback;
-	varitem.callback_action = VAR_DECOMP;
-	varitem.item_type = NULL;
-	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	g_free(varitem.path); 
-
     }
+
+    /* impulse response printout */
+    varitem.path = g_strdup_printf("%s/%s", _(mpath), _("impulse responses"));
+    varitem.callback = VAR_model_data_callback;
+    varitem.callback_action = VAR_IRF;
+    varitem.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);    
+
+    /* variance decomp printout */
+    varitem.path = g_strdup_printf("%s/%s", _(mpath), 
+				   _("forecast variance decomposition"));
+    varitem.callback = VAR_model_data_callback;
+    varitem.callback_action = VAR_DECOMP;
+    varitem.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path); 
 
     /* combined residual plot */
     varitem.path = g_strdup_printf("%s/%s", _(gpath), _("residual plot"));

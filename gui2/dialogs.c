@@ -1849,7 +1849,7 @@ int add_obs_dialog (const char *blurb, int addmin)
     ainfo.val = 1;
 
     ainfo.dlg = gretl_dialog_new(_("Add observations"), NULL,
-				 GRETL_DLG_MODAL);
+				 GRETL_DLG_MODAL | GRETL_DLG_BLOCK);
 
     if (blurb != NULL) {
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -3351,8 +3351,8 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     dialog = gretl_dialog_new(_("Data structure wizard"), NULL,
 			      GRETL_DLG_BLOCK);
 
-    g_signal_connect_after(G_OBJECT(dialog), "destroy", 
-			   G_CALLBACK(reactivate_main_menus), NULL);
+    g_signal_connect(G_OBJECT(dialog), "destroy", 
+		     G_CALLBACK(reactivate_main_menus), NULL);
 
     sspin.setvar = NULL;
     sspin.extra = NULL;
