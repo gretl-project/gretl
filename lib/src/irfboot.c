@@ -251,6 +251,8 @@ static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
     MODEL var_model;
     int i, err = 0;
 
+    /* changes needed here for VECM */
+
     for (i=0; i<boot->neqns && !err; i++) {
 	var_model = lsq(boot->lists[i], &boot->Z, boot->dinfo, VAR, OPT_A, 0.0);
 	err = var_model.errcode;
@@ -282,7 +284,7 @@ static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
     return err;
 }
 
-/* Allocate storage for the regressions lists that will be
+/* Allocate storage for the regression lists that will be
    used for the bootstrap VAR models */
 
 static int allocate_bootstrap_lists (irfboot *boot)

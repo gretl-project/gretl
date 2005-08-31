@@ -272,7 +272,7 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
     gretl_invert_symmetric_matrix(H);
     gretl_matrix_multiply_by_scalar(H, -1.0);
 
-    /* form S = gg' */
+    /* form S = GG' */
     gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
 			      G, GRETL_MOD_TRANSPOSE,
 			      S);
