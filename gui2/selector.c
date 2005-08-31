@@ -87,7 +87,9 @@ struct _selector {
                          c == COINT2 || \
                          c == GARCH || \
                          c == HILU || \
+                         c == LOGIT || \
                          c == OLS || \
+                         c == PROBIT || \
                          c == TOBIT || \
                          c == TSLS || \
                          c == VAR || \
@@ -2227,14 +2229,17 @@ static void pack_switch (GtkWidget *b, selector *sr,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), dflt);
 }
 
+#define robust_conf(c) (c != LOGIT && c != PROBIT)
+
 static void 
 build_selector_switches (selector *sr) 
 {
     GtkWidget *hbox, *tmp;
 
     if (sr->code == OLS || sr->code == GARCH || 
-	sr->code == TSLS || sr->code == VAR) {
-	GtkWidget *b1, *b2;
+	sr->code == TSLS || sr->code == VAR || 
+	sr->code == LOGIT || sr->code == PROBIT) {
+	GtkWidget *b1;
 
 	tmp = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
@@ -2244,25 +2249,29 @@ build_selector_switches (selector *sr)
 	g_object_set_data(G_OBJECT(b1), "opt", GINT_TO_POINTER(OPT_R));
 	g_signal_connect(G_OBJECT(b1), "toggled",
 			 G_CALLBACK(option_callback), sr);
-	if (using_hc_by_default()) {
+
+	if (robust_conf(sr->code) && using_hc_by_default()) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
 	}
 
 	hbox = gtk_hbox_new(FALSE, 5);
-
 	gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 0);
 	gtk_widget_show(b1);
 
-	b2 = gtk_button_new_with_label(_("configure"));
-	g_signal_connect(G_OBJECT(b2), "clicked",
-			 G_CALLBACK(hc_config), sr);
-	gtk_widget_set_sensitive(b2, using_hc_by_default());
+	if (robust_conf(sr->code)) {
+	    GtkWidget *b2;
 
-	g_signal_connect(G_OBJECT(b1), "toggled",
-			 G_CALLBACK(robust_config_button), b2);	
+	    b2 = gtk_button_new_with_label(_("configure"));
+	    g_signal_connect(G_OBJECT(b2), "clicked",
+			     G_CALLBACK(hc_config), sr);
+	    gtk_widget_set_sensitive(b2, using_hc_by_default());
 
-	gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 0);
-	gtk_widget_show(b2);
+	    g_signal_connect(G_OBJECT(b1), "toggled",
+			     G_CALLBACK(robust_config_button), b2);	
+
+	    gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 0);
+	    gtk_widget_show(b2);
+	}
 
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 	gtk_widget_show(hbox);
@@ -2274,7 +2283,7 @@ build_selector_switches (selector *sr)
     } else if (sr->code == COINT2 || sr->code == VECM) {
 	tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
-	tmp = gtk_check_button_new_with_label(_("Include centered seasonal dummies"));
+	tmp = gtk_check_button_new_with_label(_("Include seasonal dummies"));
 	pack_switch(tmp, sr, 
 		    want_seasonals && (datainfo->pd == 4 || datainfo->pd == 12),
 		    FALSE,
