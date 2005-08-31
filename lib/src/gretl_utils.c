@@ -679,7 +679,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 	break;
     case LOGIT:
     case PROBIT:
-	*tmpmod = logit_probit(cmd.list, pZ, pdinfo, cmd.ci);
+	*tmpmod = logit_probit(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt);
 	break;
     case TOBIT:
 	*tmpmod = tobit_model(cmd.list, pZ, pdinfo, NULL);

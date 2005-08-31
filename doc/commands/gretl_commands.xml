@@ -3336,6 +3336,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
@@ -3353,7 +3357,14 @@
 	those variables. The chi-square statistic tests the null hypothesis that
 	all coefficients are zero apart from the constant.
       </para>
-
+      <para>
+	By default, standard errors are computed using the negative inverse of
+	the Hessian.  If the <lit>--robust</lit> flag is given, then QML or
+	Huber&ndash;White standard errors are calculated instead. In this case
+	the estimated covariance matrix is a <quote>sandwich</quote> of the
+	inverse of the estimated Hessian and the outer product of the gradient.
+	See Davidson and MacKinnon (2004, Chapter 10) for details.
+      </para>
       <para>
 	If you want to use logit for analysis of proportions (where
 	the dependent variable is the proportion of cases having a
@@ -4661,6 +4672,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
@@ -4669,17 +4684,23 @@
 
     <description>
       <para>
-	The dependent variable should be a binary variable. Maximum
-	likelihood estimates of the coefficients on
-	<repl>indepvars</repl> are obtained via iterated least squares
-	(the EM or Expectation&ndash;Maximization method).  As the
-	model is nonlinear the slopes depend on the values of the
-	independent variables: the reported slopes are evaluated at
-	the means of those variables.  The chi-square statistic tests
-	the null hypothesis that all coefficients are zero apart from
-	the constant.
+	The dependent variable should be a binary variable. Maximum likelihood
+	estimates of the coefficients on <repl>indepvars</repl> are obtained via
+	the <quote>binary response model regression</quote> (BRMR) method
+	outlined by Davidson and MacKinnon (2004). As the model is nonlinear the
+	slopes depend on the values of the independent variables: the reported
+	slopes are evaluated at the means of those variables. The chi-square
+	statistic tests the null hypothesis that all coefficients are zero apart
+	from the constant.
       </para>
-
+      <para>
+	By default, standard errors are computed using the negative inverse of
+	the Hessian.  If the <lit>--robust</lit> flag is given, then QML or
+	Huber&ndash;White standard errors are calculated instead. In this case
+	the estimated covariance matrix is a <quote>sandwich</quote> of the
+	inverse of the estimated Hessian and the outer product of the gradient.
+	See Davidson and MacKinnon (2004, Chapter 10) for details.
+      </para>
       <para>
 	Probit for analysis of proportions is not implemented in
 	<program>gretl</program> at this point.

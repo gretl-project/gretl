@@ -485,7 +485,12 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	break;
     case LOGIT:
     case PROBIT:
-	rep = logit_probit(list, pZ, pdinfo, orig->ci);
+	if (gretl_model_get_int(orig, "robust")) {
+	    lsqopt = OPT_R;
+	} else {
+	    lsqopt = OPT_NONE;
+	}
+	rep = logit_probit(list, pZ, pdinfo, orig->ci, lsqopt);
 	break;
     case TOBIT:
 	rep = tobit_model(list, pZ, pdinfo, NULL);

@@ -2455,7 +2455,7 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case LOGIT:
     case PROBIT:
-	*pmod = logit_probit(cmd.list, &Z, datainfo, action);
+	*pmod = logit_probit(cmd.list, &Z, datainfo, action, cmd.opt);
 	err = model_output(pmod, prn);
 	break;
 
@@ -6132,7 +6132,7 @@ int gui_exec_line (char *line,
     case TSLS:
 	clear_or_save_model(&models[0], datainfo, rebuild);
 	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
-	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
+	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci, cmd.opt);
 	} else if (cmd.ci == LOGISTIC) {
 	    *models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
 	} else if (cmd.ci == TOBIT) {

@@ -1361,7 +1361,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case TSLS:
 	clear_model(models[0]);
 	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
-	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
+	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci, cmd.opt);
 	} else if (cmd.ci == HSK) {
 	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
 	} else if (cmd.ci == LOGISTIC) {

@@ -195,7 +195,7 @@ static double *hessian (MODEL *pmod, const double **Z, int opt)
 	    xx = 0.0;
 	    for (t=pmod->t1; t<=pmod->t2; t++) {
 		if (!model_missing(pmod, t)) {
-		    xx += wt[t-pmod->t1] * Z[li][t] * Z[lj][t];
+		    xx += wt[t - pmod->t1] * Z[li][t] * Z[lj][t];
 		}
 	    }
 	    if (floateq(xx, 0.0) && li == lj) {
@@ -212,13 +212,113 @@ static double *hessian (MODEL *pmod, const double **Z, int opt)
     return xpx; 
 }
 
+static int 
+compute_QML_vcv (MODEL *pmod, const double **Z)
+{
+    gretl_matrix *G = NULL;
+    gretl_matrix *H = NULL;
+    gretl_matrix *S = NULL;
+    gretl_matrix *tmp = NULL;
+
+    const double *y = Z[pmod->list[1]];
+    const double *xi;
+
+    double x;
+    int k = pmod->ncoeff;
+    int T = pmod->nobs;
+    int i, j, t, gt, err = 0;
+
+    G = gretl_matrix_alloc(k, T);
+    H = gretl_matrix_alloc(k, k);
+    S = gretl_matrix_alloc(k, k);
+    tmp = gretl_matrix_alloc(k, k);
+
+    if (G == NULL || H == NULL || S == NULL || tmp == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* compute gradient or score matrix */
+    for (i=0; i<k; i++) {
+	xi = Z[pmod->list[i+2]];
+	gt = 0;
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->yhat[t])) {
+		/* score for obs t */
+		if (pmod->ci == LOGIT) {
+		    x = (y[t] - logit(pmod->yhat[t])) * xi[t];
+		} else {
+		    double c = normal_cdf(pmod->yhat[t]);
+
+		    x = (y[t] - c) * normal_pdf(pmod->yhat[t]) * xi[t] /
+			(c * (1.0 - c));
+		}
+		gretl_matrix_set(G, i, gt++, x);
+	    }
+	}
+    }
+
+    /* transcribe Hessian from model */
+    for (i=0; i<k; i++) {
+	for (j=0; j<=i; j++) {
+	    x = pmod->xpx[ijton(i, j, k)];
+	    gretl_matrix_set(H, i, j, x);
+	    if (i != j) {
+		gretl_matrix_set(H, j, i, x);
+	    }
+	}
+    }   
+
+    gretl_invert_symmetric_matrix(H);
+    gretl_matrix_multiply_by_scalar(H, -1.0);
+
+    /* form S = gg' */
+    gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
+			      G, GRETL_MOD_TRANSPOSE,
+			      S);
+
+    /* form sandwich: H^{-1} S H^{-1} */
+    gretl_matrix_multiply(H, S, tmp);
+    gretl_matrix_multiply(tmp, H, S);
+
+    pmod->vcv = malloc((k * (k + 1) / 2) * sizeof *pmod->vcv);
+    if (pmod->vcv == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* set VCV and std err values */
+    for (i=0; i<k; i++) {
+	for (j=0; j<=i; j++) {
+	    x = gretl_matrix_get(S, i, j);
+	    pmod->vcv[ijton(i, j, k)] = x;
+	    if (i == j) {
+		pmod->sderr[i] = sqrt(x);
+	    }
+	}
+    }
+
+    gretl_model_set_int(pmod, "robust", 1);
+
+ bailout:
+
+    gretl_matrix_free(G);
+    gretl_matrix_free(H);
+    gretl_matrix_free(S);
+    gretl_matrix_free(tmp);
+
+    return err;
+}
+
 /**
  * logit_probit:
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: option flag: If = LOGIT, perform logit regression, otherwise
+ * @ci: command index: if = %LOGIT, perform logit regression, otherwise
  * perform probit regression.
+ * @opt: if includes %OPT_R form robust (QML) estimates of standard
+ * errors and covariance matrix.
  *
  * Computes estimates of the discrete model specified by @list,
  * using an estimator determined by the value of @opt.  Uses the
@@ -227,7 +327,8 @@ static double *hessian (MODEL *pmod, const double **Z, int opt)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
+MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		    int ci, gretlopt opt)
 {
     int i, t, v, depvar = list[1];
     int nx = list[0] - 1;
@@ -244,8 +345,6 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     double lldiff, llbak;
     int iters;
     double *xbar = NULL;
-    double *diag = NULL;
-    double *xpx = NULL;
     double *beta = NULL;
 
     gretl_model_init(&dmod);
@@ -332,7 +431,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	    if (na(xx)) {
 		(*pZ)[v][t] = NADBL;
 	    } else {
-		if (opt == LOGIT) {
+		if (ci == LOGIT) {
 		    fx = logit_pdf(xx);
 		    Fx = logit(xx);
 		} else {
@@ -363,7 +462,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	    }
 	}
 
-	dmod.lnL = logit_probit_llhood((*pZ)[depvar], &dmod, opt);
+	dmod.lnL = logit_probit_llhood((*pZ)[depvar], &dmod, ci);
 
 	lldiff = fabs(dmod.lnL - llbak);
 	if (lldiff < tol) {
@@ -433,9 +532,9 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	dmod.coeff[i] = beta[i];
     }
 
-    dmod.lnL = logit_probit_llhood((*pZ)[depvar], &dmod, opt);
+    dmod.lnL = logit_probit_llhood((*pZ)[depvar], &dmod, ci);
     Lr_chisq(&dmod, *pZ);
-    dmod.ci = opt;
+    dmod.ci = ci;
 
     /* calculate standard errors etc using the Hessian */
 
@@ -448,37 +547,45 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	free(dmod.xpx);
     }
 
-    dmod.xpx = hessian(&dmod, (const double **) *pZ, opt);
+    dmod.xpx = hessian(&dmod, (const double **) *pZ, ci);
     if (dmod.xpx == NULL) {
 	dmod.errcode = E_ALLOC;
 	strcpy(gretl_errmsg, _("Failed to construct Hessian matrix"));
 	goto bailout;
     } 
 
-    /* obtain negative inverse of Hessian */
+    if (opt & OPT_R) {
+	dmod.errcode = compute_QML_vcv(&dmod, (const double **) *pZ);
+	if (dmod.errcode) {
+	    goto bailout;
+	}
+    } else {    
+	/* obtain negative inverse of Hessian */
+	double *xpx = NULL, *diag = NULL;
 
-    cholesky_decomp(dmod.xpx, dmod.ncoeff); 
-    diag = malloc(dmod.ncoeff * sizeof *diag); 
-    if (diag == NULL) {
-	dmod.errcode = E_ALLOC;
-	goto bailout;
+	cholesky_decomp(dmod.xpx, dmod.ncoeff); 
+	diag = malloc(dmod.ncoeff * sizeof *diag); 
+	if (diag == NULL) {
+	    dmod.errcode = E_ALLOC;
+	    goto bailout;
+	}
+
+	xpx = copyvec(dmod.xpx, dmod.ncoeff * (dmod.ncoeff + 1) / 2);
+	if (xpx == NULL) {
+	    free(diag);
+	    dmod.errcode = E_ALLOC;
+	    goto bailout;
+	}
+
+	neginv(xpx, diag, dmod.ncoeff);
+
+	for (i=0; i<dmod.ncoeff; i++) {
+	    dmod.sderr[i] = sqrt(diag[i]);
+	}
+
+	free(diag);
+	free(xpx);
     }
-
-    xpx = copyvec(dmod.xpx, dmod.ncoeff * (dmod.ncoeff + 1) / 2);
-    if (xpx == NULL) {
-	dmod.errcode = E_ALLOC;
-	goto bailout;
-    }
-
-    neginv(xpx, diag, dmod.ncoeff);
-
-    /* std errors: square roots of diagonal elements */
-    for (i=0; i<dmod.ncoeff; i++) {
-	dmod.sderr[i] = sqrt(diag[i]);
-    }
-
-    free(diag);
-    free(xpx);
 
     /* apparatus for calculating slopes at means */
     xx = 0.0;
@@ -486,7 +593,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	xx += dmod.coeff[i] * xbar[i];
     }
 
-    if (opt == LOGIT) {
+    if (ci == LOGIT) {
 	fbx = logit_pdf(xx);
 #if LPDEBUG
 	fprintf(stderr, "xx = %.8g, fbx = %.8g\n", xx, fbx);
@@ -577,8 +684,11 @@ static int neginv (const double *xpx, double *diag, int nv)
         tmp[l] = d;
         e = d * d;
         m = 0;
-        if (l > 1) 
-	    for (j=1; j<=l-1; j++) m += nv - j;
+        if (l > 1) {
+	    for (j=1; j<=l-1; j++) {
+		m += nv - j;
+	    }
+	}
         for (i=l+1; i<=nv; i++) {
             d = 0.0;
             k = i + m - 1;
@@ -586,7 +696,7 @@ static int neginv (const double *xpx, double *diag, int nv)
                 d += tmp[j] * xpx[k];
                 k += nv - j;
             }
-            d = (-1.0) * d * xpx[k];
+            d = -d * xpx[k];
             tmp[i] = d;
             e += d * d;
         }
@@ -594,7 +704,7 @@ static int neginv (const double *xpx, double *diag, int nv)
         diag[l-1] = e;
     }
 
-    diag[nv-1] = xpx[nxpx-1] * xpx[nxpx-1];
+    diag[nv - 1] = xpx[nxpx - 1] * xpx[nxpx - 1];
 
     free(tmp);
 

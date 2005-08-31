@@ -13,6 +13,8 @@ version 1.4.2, in progress
 - Add printing of cross-equation covariance matrix for VARs
 - Add combined plot of residuals for VARs
 - Add log-likelihood, AIC and BIC for VARs
+- Add "robust" option for logit and probit (compute QML
+  or Huber-White covariance matrix)
 - Remove overly verbose notification dialogs
 - Add importers for Eviews workfiles and Stata .dta files
 - Editable windows: show Save button as disabled if there's

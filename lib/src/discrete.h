@@ -19,9 +19,8 @@
 
 /* functions follow */
 
-MODEL logit_probit (const int *list, 
-		    double ***pZ, DATAINFO *pdinfo, 
-		    int opt);
+MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		    int ci, gretlopt opt);
 
 
 
