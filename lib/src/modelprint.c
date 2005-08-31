@@ -725,6 +725,13 @@ static void garch_vcv_line (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void qml_vcv_line (PRN *prn)
+{
+    const char *vcvstr = N_("QML standard errors");
+
+    pprintf(prn, "%s\n", (plain_format(prn))? _(vcvstr) : I_(vcvstr));
+}
+
 static void tex_vecm_depvar_name (char *s, const char *vname)
 {
     char tmp[9];
@@ -927,6 +934,9 @@ static void print_model_heading (const MODEL *pmod,
 	hc_vcv_line(pmod, prn);
     } else if (gretl_model_get_int(pmod, "garch_vcv")) {
 	garch_vcv_line(pmod, prn);
+    } else if ((pmod->ci == LOGIT || pmod->ci == PROBIT) && 
+	       gretl_model_get_int(pmod, "robust")) {
+	qml_vcv_line(prn);
     }
 
     /* WLS on panel data */
