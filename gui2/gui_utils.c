@@ -3421,7 +3421,7 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 	int dv;
 
 	if (!vecm) {
-	    /* forecast items (FIXME vecm) */
+	    /* forecast items (doesn't yet work for VECMs) */
 	    dv = gretl_VAR_get_variable_number(var, i);
 	    varitem.path = g_strdup_printf("%s/%s", _(fpath), 
 					   datainfo->varname[dv]);

@@ -2038,7 +2038,7 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
  * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
  * a static forecast.  By default, the forecast is static within
  * the data range over which the model was estimated, and dynamic
- * out of sample (in cases where a dynamic forecast is meaningful).
+ * out of sample.
  *
  * Allocates a #FITRESID structure and fills it out with forecasts
  * based on @var, over the specified range of observations.  

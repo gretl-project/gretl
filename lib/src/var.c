@@ -277,6 +277,12 @@ void gretl_VAR_free_unnamed (GRETL_VAR *var)
     }
 }
 
+/* FIXME: the following function has to be re-done for VECMs, since in
+   the case of VECMs, var->models contains the VECM models where the
+   dependent variable is the first difference.  This should be
+   converted into a forecast for the level, I think.
+*/
+
 static int
 gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z, 
 			const DATAINFO *pdinfo, gretlopt opt)
@@ -370,6 +376,7 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 
 	for (i=0; i<var->neqns; i++) {
 	    gretl_matrix *vd;
+
 	    vd = gretl_VAR_get_fcast_decomp(var, i, nf);
 	    if (vd != NULL) {
 		totcol = gretl_matrix_cols(vd) - 1;

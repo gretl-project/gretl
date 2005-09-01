@@ -628,11 +628,9 @@ static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm, int k)
    are the same for the seasonal dummies themselves).
 */
 
-static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
-			      PRN *prn)
+static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 {
     gretl_matrix *Pi = NULL;
-    gretl_matrix *Alpha = NULL;
     gretl_matrix *A = NULL;
     gretl_matrix **G = NULL;
 
@@ -645,24 +643,33 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
 
     /* the following two matrices are used for IRFs and
        forecast variance decompositions */
-    if ((err = gretl_VAR_add_coeff_matrix(vecm))) {
+    if (vecm->A == NULL && (err = gretl_VAR_add_coeff_matrix(vecm))) {
 	goto bailout;
     }
-    if ((err = gretl_VAR_add_C_matrix(vecm))) {
+    if (vecm->C == NULL && (err = gretl_VAR_add_C_matrix(vecm))) {
 	goto bailout;
     }
 
     /* for computing VAR representation */
     Pi = gretl_matrix_alloc(nv, nv);
     G = gretl_matrix_array_alloc_with_size(p, nv, nv);
-    Alpha = gretl_matrix_alloc(nv, r);
     A = gretl_matrix_alloc(nv, nv);
-    if (Pi == NULL || G == NULL || Alpha == NULL || A == NULL) {
+    if (Pi == NULL || G == NULL || A == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    vecm->E = gretl_matrix_alloc(vecm->T, vecm->neqns);
+    if (vecm->jinfo->Alpha != NULL) {
+	vecm->jinfo->Alpha = gretl_matrix_alloc(nv, r);
+	if (vecm->jinfo->Alpha == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    if (vecm->E == NULL) {
+	vecm->E = gretl_matrix_alloc(vecm->T, vecm->neqns);
+    }
 
     err = add_EC_terms_to_dataset(vecm, pZ, pdinfo);
 
@@ -679,7 +686,7 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
 	    vecm->models[i]->aux = AUX_VECM;
 	    vecm->models[i]->adjrsq = NADBL;
 	    copy_coeffs_to_Gamma(vecm->models[i], i, G, p, nv);
-	    copy_coeffs_to_Alpha(vecm, i, Alpha, p);
+	    copy_coeffs_to_Alpha(vecm, i, vecm->jinfo->Alpha, p);
 	    if (vecm->E != NULL) {
 		for (t=0; t<vecm->T; t++) {
 		    mt = t + vecm->t1;
@@ -690,13 +697,13 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* \Pi = \alpha \beta' */
-    err = form_Pi(vecm, Alpha, Pi);
+    err = form_Pi(vecm, vecm->jinfo->Alpha, Pi);
     if (err) {
 	goto bailout;
     }
 
 #if JDEBUG
-    gretl_matrix_print(Alpha, "Alpha from models", NULL);
+    gretl_matrix_print(vecm->jinfo->Alpha, "Alpha from models", NULL);
     gretl_matrix_print(Pi, "Pi", NULL);
     for (i=0; i<p; i++) {
 	gretl_matrix_print(G[i], "Gamma_i", NULL);
@@ -730,12 +737,6 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix_free(Pi);
     gretl_matrix_array_free(G, p);
     gretl_matrix_free(A);
-
-    if (err) {
-	gretl_matrix_free(Alpha);
-    } else {
-	vecm->jinfo->Alpha = Alpha;
-    }
 
     return err;
 }
@@ -1149,7 +1150,7 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 		}
 	    } else {
 		/* estimating VECM */
-		int do_stderrs = jrank(jvar) < jvar->neqns;
+		int do_stderrs = rank < jvar->neqns;
 
 		jvar->jinfo->Beta = gretl_matrix_copy(TmpR);
 		if (jvar->jinfo->Beta == NULL) {
@@ -1159,7 +1160,7 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 		    err = phillips_normalize_beta(jvar); 
 		}
 		if (!err) {
-		    err = build_VECM_models(jvar, pZ, pdinfo, prn);
+		    err = build_VECM_models(jvar, pZ, pdinfo);
 		}
 		if (!err) {
 		    err = compute_omega(jvar, TmpR);
@@ -1184,6 +1185,82 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
     gretl_matrix_free(M);
     gretl_matrix_free(Svv);
     gretl_matrix_free(Suu);
+
+    free(eigvals);
+
+    return err;
+}
+
+int johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo)
+{
+    gretl_matrix *M = NULL;
+    gretl_matrix *TmpL = NULL;
+    gretl_matrix *TmpR = NULL;
+
+    double *eigvals = NULL;
+
+    int n = jvar->neqns;
+    int nv = gretl_matrix_cols(jvar->jinfo->Svv);
+    int err = 0;
+
+    TmpL = gretl_matrix_alloc(nv, n);
+    TmpR = gretl_matrix_alloc(n, nv);
+    M = gretl_matrix_alloc(nv, nv);
+
+    if (TmpL == NULL || TmpR == NULL || M == NULL) {
+	err = 1;
+	goto eigenvals_bailout;
+    }
+
+    /* calculate Suu^{-1} Suv */
+    err = gretl_invert_general_matrix(jvar->jinfo->Suu);
+    if (!err) {
+	err = gretl_matrix_multiply(jvar->jinfo->Suu, jvar->jinfo->Suv, TmpR);
+    }
+
+    /* calculate Svv^{-1} Suv' */
+    if (!err) {
+	err = gretl_invert_general_matrix(jvar->jinfo->Svv);
+    }
+    if (!err) {
+	err = gretl_matrix_multiply_mod(jvar->jinfo->Svv, GRETL_MOD_NONE,
+					jvar->jinfo->Suv, GRETL_MOD_TRANSPOSE, 
+					TmpL);
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply(TmpL, TmpR, M);
+    }
+
+    if (!err) {
+	eigvals = gretl_general_matrix_eigenvals(M, jvar->jinfo->Beta);
+	if (eigvals == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gretl_eigen_sort(eigvals, jvar->jinfo->Beta, jrank(jvar));
+	}
+    }
+
+    if (!err) {
+	if (!err) {
+	    err = phillips_normalize_beta(jvar); 
+	}
+	if (!err) {
+	    err = build_VECM_models(jvar, pZ, pdinfo);
+	}
+	if (!err) {
+	    err = compute_omega(jvar, TmpR);
+	}
+	if (!err) {
+	    err = gretl_VAR_do_error_decomp(jvar->neqns, jvar->S, jvar->C);
+	}
+    } 
+
+ eigenvals_bailout:    
+
+    gretl_matrix_free(TmpL);
+    gretl_matrix_free(TmpR);
+    gretl_matrix_free(M);
 
     free(eigvals);
 
