@@ -456,10 +456,14 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	if (parent == NULL) {
 	    errbox("Couldn't find the VAR");
 	} else {
-	    gretlopt opt = (cmd == VAR_IRF)? OPT_I : OPT_D;
 	    GRETL_VAR *var = (GRETL_VAR *) parent->data;
+	    int h = vwin->active_var; /* here records preferred horizon */
 
-	    gretl_VAR_print(var, datainfo, opt, prn);
+	    if (cmd == VAR_IRF) {
+		gretl_VAR_print_all_impulse_responses(var, datainfo, h, prn);
+	    } else {
+		gretl_VAR_print_all_fcast_decomps(var, datainfo, h, prn);
+	    }
 	}
     } else if (cmd == VIEW_MODELTABLE) {
 	err = special_print_model_table(prn);

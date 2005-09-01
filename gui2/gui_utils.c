@@ -3020,16 +3020,15 @@ static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = vwin->data;
-    int h, neqns;
     gchar *title;
     PRN *prn;
-    int i, err;
+    int h = 0;
+    int err;
 
     if (var == NULL) return;
     if (bufopen(&prn)) return;
 
     if (code != VAR_VCV) {
-	neqns = gretl_VAR_get_n_equations(var);
 	h = default_VAR_horizon(datainfo);
 	title = g_strdup_printf("gretl: %s", 
 				(code == VAR_IRF)? _("impulse responses") :
@@ -3049,14 +3048,10 @@ static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
 	err = gretl_VAR_print_VCV(var, prn);
     } else if (code == VAR_IRF) {
 	title = g_strdup(_("gretl: VAR impulse responses"));
-	for (i=0; i<neqns && !err; i++) {
-	    err = gretl_VAR_print_impulse_response(var, i, h, datainfo, 0, prn);
-	}
+	err = gretl_VAR_print_all_impulse_responses(var, datainfo, h, prn);
     } else if (code == VAR_DECOMP) {
 	title = g_strdup(_("gretl: VAR variance decompositions"));
-	for (i=0; i<neqns && !err; i++) {
-	    err = gretl_VAR_print_fcast_decomp(var, i, h, datainfo, 0, prn);
-	}
+	err = gretl_VAR_print_all_fcast_decomps(var, datainfo, h, prn);
     } else {
 	err = 1;
     }
@@ -3069,6 +3064,7 @@ static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
 
 	viewer = view_buffer(prn, 80, 400, title, code, NULL);
 	vwin_add_child(vwin, viewer);
+	viewer->active_var = h;
     }
 
     g_free(title);

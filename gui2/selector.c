@@ -1539,7 +1539,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
     if (!sr->error) {
 	/* record some choices as defaults */
-	if (sr->code == VECM && (sr->opts & OPT_D)) {
+	if ((sr->code == VECM || sr->code == VAR) && (sr->opts & OPT_D)) {
 	    want_seasonals = 1;
 	}
 	if (sr->code == VECM || sr->code == VAR) {
@@ -1932,7 +1932,7 @@ static void auxiliary_varlist_box (selector *sr, GtkWidget *right_vbox)
 	for (i=1; i<=rulist[0]; i++) {
 	    list_append_var(store, &iter, rulist, i);
 	}
-    } else {
+    } else if (!VEC_CODE(sr->code)) {
 	list_append_var(store, &iter, NULL, 0);
     }
 
@@ -2280,9 +2280,14 @@ build_selector_switches (selector *sr)
     if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH) {
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
-    } else if (sr->code == COINT2 || sr->code == VECM) {
-	tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
-	pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
+    } else if (sr->code == COINT2 || sr->code == VECM || sr->code == VAR) {
+	if (sr->code == VAR) {
+	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
+	    pack_switch(tmp, sr, TRUE, TRUE, OPT_N);
+	} else {
+	    tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
+	    pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
+	}
 	tmp = gtk_check_button_new_with_label(_("Include seasonal dummies"));
 	pack_switch(tmp, sr, 
 		    want_seasonals && (datainfo->pd == 4 || datainfo->pd == 12),

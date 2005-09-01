@@ -6092,6 +6092,14 @@
       </arguments>
       <options>
         <option>
+	  <flag>--nc</flag>
+	  <effect>do not include a constant</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>include seasonal dummy variables</effect>
+        </option>
+        <option>
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
         </option>
@@ -6099,9 +6107,14 @@
 	  <flag>--impulse-responses</flag>
 	  <effect>print impulse responses</effect>
         </option>
+        <option>
+	  <flag>--variance-decomp</flag>
+	  <effect>print forecast variance decompositions</effect>
+        </option>
       </options>
       <examples>
-        <example>var 4 x1 x2 x3 ; const time</example>
+        <example>var 4 x1 x2 x3 ; time mydum</example>
+	<example>var 4 x1 x2 x3 --seasonals</example>
       </examples>
     </usage>
 
@@ -6111,21 +6124,19 @@
 	This command requires specification of:</para>
 
       <ilist context="gui">
-	<li><para context="gui">- the dependent variable for the first
-	    equation in the VAR system;</para>
-	</li>
-
 	<li><para context="gui">- the lag order, that is, the number of
 	    lags of each variable that should be included in the
 	    system;</para>
 	</li>
 
-	<li><para context="gui">- any "deterministic" terms (e.g. the
-	    constant, a time trend, seasonal dummy variables and so
-	    on); and</para>
+	<li><para context="gui">- any "deterministic" or exogenous terms (but
+	    note that a constant is included automatically unless you
+	    specify otherwise, and seasonal dummy variables can be added
+	    using the seasonals checkbox); and
+	  </para>
 	</li>
 
-	<li><para context="gui">- a list of independent variables, lags
+	<li><para context="gui">- a list of endogenous variables, lags
 	    of which will be included on the right-hand side of the
 	    equations (note: do not include lagged variables in this
 	    list -- they will be added automatically).</para>
@@ -6140,23 +6151,24 @@
 	response functions.</para>
 
       <para context="cli">
-	Sets up and estimates (using OLS) a vector autoregression
-	(VAR).  The first argument specifies the lag order, then
-	follows the setup for the first equation.  Don't include lags
-	among the elements of <repl>varlist</repl> &mdash; they will
-	be added automatically.  The semi-colon separates the
-	stochastic variables, for which <repl>order</repl> lags will
-	be included, from deterministic terms in <repl>detlist</repl>,
-	such as the constant, a time trend, and dummy
-	variables.</para>
+	Sets up and estimates (using OLS) a vector autoregression (VAR).  The
+	first argument specifies the lag order, then follows the setup for the
+	first equation.  Don't include lags among the elements of
+	<repl>varlist</repl> &mdash; they will be added automatically.  The
+	semi-colon separates the stochastic variables, for which
+	<repl>order</repl> lags will be included, from deterministic or
+	exogenous terms in <repl>detlist</repl>.</para>
 
       <para context="cli">
-	In fact, gretl is able to recognize the more common
-	deterministic variables (constant, time trend, dummy variables
-	with no values other than 0 and 1) as such, so these do not
-	have to placed after the semi-colon.  More complex
-	deterministic variables (e.g. a time trend interacted with a
-	dummy variable) must be put after the semi-colon.</para>
+	In fact, gretl is able to recognize the more common deterministic
+	variables (time trend, dummy variables with no values other than 0 and
+	1) as such, so these do not have to placed after the semi-colon.  More
+	complex deterministic variables (e.g. a time trend interacted with a
+	dummy variable) must be put after the semi-colon.  Note that a constant
+	is included automatically unless you give the <lit>--nc</lit> flag, and
+	seaonal dummy variables may be added using the <lit>--seasonals</lit>
+	flag.
+      </para>
 
       <para context="cli">
 	A separate regression is run for each variable in

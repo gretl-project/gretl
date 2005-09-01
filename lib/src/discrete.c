@@ -76,8 +76,8 @@ static void Lr_chisq (MODEL *pmod, double **Z)
 
     zeros = m - ones;
 
-    Lr = (double) ones * log((double) ones/ (double) m);
-    Lr += (double) zeros * log((double) zeros/(double) m);
+    Lr = (double) ones * log((double) ones / (double) m);
+    Lr += (double) zeros * log((double) zeros /(double) m);
 
     chisq = 2.0 * (pmod->lnL - Lr);
     gretl_model_set_double(pmod, "chisq", chisq);

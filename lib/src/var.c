@@ -1644,17 +1644,84 @@ static GRETL_VAR *real_var (int order, const int *inlist,
     return var;
 }
 
+static int *
+maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		       gretlopt opt, int *err)
+{
+    int needsep, addconst = 0, addseas = 0;
+    int *vlist = NULL;
+    int i, l0, di0 = 0;
+
+    if (!gretl_list_has_const(list) && !(opt & OPT_N)) {
+	addconst = 1;
+    }
+
+    if (pdinfo->pd > 1 && (opt & OPT_D)) {
+	addseas = 1;
+    }
+
+    if (!addconst && !addseas) {
+	return NULL;
+    }
+
+    if (addseas) {
+	di0 = dummy(pZ, pdinfo, 0);
+	if (di0 == 0) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+    } 
+
+    needsep = !gretl_list_has_separator(list);
+    l0 = list[0] + needsep;
+
+    if (addconst) {
+	l0 += 1;
+    }
+    if (addseas) {
+	l0 += pdinfo->pd - 1;
+    }
+
+    vlist = gretl_list_new(l0);
+
+    if (vlist == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int j = 1;
+
+	for (i=1; i<=list[0]; i++) {
+	    vlist[j++] = list[i];
+	}
+	if (needsep) {
+	    vlist[j++] = LISTSEP;
+	}    
+	if (addseas) {
+	    for (i=0; i<pdinfo->pd - 1; i++) {
+		vlist[j++] = di0 + i;
+	    }
+	}
+	if (addconst) {
+	    vlist[j++] = 0;
+	}
+    }
+
+    return vlist;
+}
+
 /**
  * simple_VAR:
  * @order: lag order for the VAR
  * @list: specification for the first model in the set.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @opt: if includes OPT_R, use robust VCV;
- *       if includes OPT_V, print impulse responses.
+ * @opt: if includes %OPT_R, use robust VCV;
+ *       if includes %OPT_I, print impulse responses;
+ *       if includes %OPT_F, print forecast variance decompositions;
+ *       if includes %OPT_D, add seasonal dummies;
+ *       if includes %OPT_N, do not include a constant.
  * @prn: gretl printing struct.
  *
- * Estimate a vector auto-regression (VAR) and print the results.
+ * Estimate a vector autoregression (VAR) and print the results.
  *
  * Returns: 0 on successful completion, 1 on error.
  */
@@ -1662,15 +1729,23 @@ static GRETL_VAR *real_var (int order, const int *inlist,
 int simple_VAR (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 		gretlopt opt, PRN *prn)
 {
-    GRETL_VAR *var;
+    GRETL_VAR *var = NULL;
+    int *vlist = NULL;
     int err = 0;
 
-    var = real_var(order, list, pZ, pdinfo, opt, &err);
+    vlist = maybe_expand_VAR_list(list, pZ, pdinfo, opt, &err);
+
+    if (!err) {
+	var = real_var(order, (vlist != NULL)? vlist : list, 
+		       pZ, pdinfo, opt, &err);
+    }
 
     if (var != NULL) {
 	gretl_VAR_print(var, pdinfo, opt, prn);
 	gretl_VAR_free(var);
     }
+
+    free(vlist);
 
     return err;
 }
@@ -1681,8 +1756,11 @@ int simple_VAR (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
  * @list: specification for the first model in the set.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @opt: if includes OPT_R, use robust VCV;
- *       if includes OPT_V, print impulse responses.
+ * @opt: if includes %OPT_R, use robust VCV;
+ *       if includes %OPT_I, print impulse responses;
+ *       if includes %OPT_F, print forecast variance decompositions;
+ *       if includes %OPT_D, add seasonal dummies;
+ *       if includes %OPT_N, do not include a constant.
  * @prn: gretl printing struct.
  *
  * Estimate a vector auto-regression (VAR), print and save
@@ -1694,14 +1772,22 @@ int simple_VAR (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 GRETL_VAR *full_VAR (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 		     gretlopt opt, PRN *prn)
 {
-    GRETL_VAR *var;
+    GRETL_VAR *var = NULL;
+    int *vlist = NULL;
     int err = 0;
 
-    var = real_var(order, list, pZ, pdinfo, opt, &err);
+    vlist = maybe_expand_VAR_list(list, pZ, pdinfo, opt, &err);
+
+    if (!err) {
+	var = real_var(order, (vlist != NULL)? vlist : list, 
+		       pZ, pdinfo, opt, &err);
+    }
 
     if (var != NULL) {
 	gretl_VAR_print(var, pdinfo, opt, prn);
     }
+
+    free(vlist);
 
     return var;
 }
@@ -2855,11 +2941,14 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 
     if (seasonals) {
 	if (pdinfo->pd > 1) {
+#if 0
+	    /* center the dummies only if there's a constant in the VAR? */
 	    int flag = (jcode(jvar) >= J_UNREST_CONST)? 1 : -1;
-
+#else
+	    int flag = 1;
+#endif
 	    jvar->jinfo->seasonals = pdinfo->pd - 1;
 	    l0 += pdinfo->pd - 1;
-	    /* center the dummies only if there's a constant in the VAR */
 	    di0 = dummy(pZ, pdinfo, flag);
 	    if (di0 == 0) {
 		jvar->err = E_ALLOC;
@@ -3235,7 +3324,7 @@ static void VAR_info_header_block (int code, int v, int block,
 	    pprintf(prn, " (%s)\n\n", I_("continued"));
 	}
 	pprintf(prn, "\\vspace{1em}\n\n\\begin{longtable}{%s}\n",
-		(code == IRF)? "rcccc" : "rccccc");
+		(code == IRF)? "rrrrr" : "rrrrrr");
     } else if (rtf) {
 	pputs(prn, "\\par\n\n");
 	if (code == IRF) {
@@ -3473,6 +3562,33 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
     return err;
 }
 
+int gretl_VAR_print_all_impulse_responses (GRETL_VAR *var, const DATAINFO *pdinfo, 
+					   int horizon, PRN *prn)
+{
+    int i, pause = 0, err = 0;
+
+    if (horizon <= 0) {
+	horizon = default_VAR_horizon(pdinfo);
+    }
+
+    if (plain_format(prn)) {
+	pause = gretl_get_text_pause();
+    } else if (rtf_format(prn)) {
+	pputs(prn, "{\\rtf1\\par\n\\qc ");
+    }
+
+    for (i=0; i<var->neqns && !err; i++) {
+	err = gretl_VAR_print_impulse_response(var, i, horizon, pdinfo, 
+					       pause, prn);
+    }
+
+    if (rtf_format(prn)) {
+	pputs(prn, "}\n");
+    }   
+
+    return err;
+}
+
 #define VD_ROW_MAX 5
 
 /**
@@ -3605,6 +3721,33 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 
     if (vd != NULL) {
 	gretl_matrix_free(vd);
+    }
+
+    return err;
+}
+
+int gretl_VAR_print_all_fcast_decomps (GRETL_VAR *var, const DATAINFO *pdinfo, 
+				       int horizon, PRN *prn)
+{
+    int i, pause = 0, err = 0;
+
+    if (horizon <= 0) {
+	horizon = default_VAR_horizon(pdinfo);
+    }
+
+    if (plain_format(prn)) {
+	pause = gretl_get_text_pause();
+    } else if (rtf_format(prn)) {
+	pputs(prn, "{\\rtf1\\par\n\\qc ");
+    }
+
+    for (i=0; i<var->neqns && !err; i++) {
+	err = gretl_VAR_print_fcast_decomp(var, i, horizon, pdinfo, 
+					   pause, prn);
+    }
+
+    if (rtf_format(prn)) {
+	pputs(prn, "}\n");
     }
 
     return err;
@@ -3771,12 +3914,12 @@ print_vecm_header_info (GRETL_VAR *vecm, PRN *prn)
  * gretl_VAR_print:
  * @var: pointer to VAR struct.
  * @pdinfo: dataset information.
- * @opt: if %OPT_V, include impulse responses and forecast
- * variance decomposition; if %OPT_I, only print the impulse
- * responses; if %OPT_D, only print forecast decompositions.
+ * @opt: if includes %OPT_I, include impulse responses; if
+ * includes %OPT_F, include forecast variance decompositions.
  * @prn: pointer to printing struct.
  *
- * Prints the models in @var, along with relevant F-tests.
+ * Prints the models in @var, along with relevant F-tests and
+ * possibly impulse responses and variance decompositions.
  *
  * Returns: 0 on success, 1 on failure.
  */
@@ -3802,10 +3945,6 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 
     if (rtf) {
 	pputs(prn, "{\\rtf1\\par\n\\qc ");
-    }
-
-    if (opt & (OPT_I | OPT_D)) {
-	goto print_extras;
     }
 
     if (vecm) {
@@ -4011,21 +4150,12 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	pputc(prn, '\n');
     }
 
- print_extras:
+    if (opt & OPT_I) {
+	gretl_VAR_print_all_impulse_responses(var, pdinfo, 0, prn);
+    }
 
-    if (opt & (OPT_V | OPT_I | OPT_D)) {
-	int horizon = default_VAR_horizon(pdinfo);
-
-	for (i=0; i<var->neqns; i++) {
-	    if (!(opt & OPT_D)) {
-		gretl_VAR_print_impulse_response(var, i, horizon, pdinfo, 
-						 pause, prn);
-	    } 
-	    if (!(opt & OPT_I)) {
-		gretl_VAR_print_fcast_decomp(var, i, horizon, pdinfo, 
-					     pause, prn);
-	    }
-	}
+    if (opt & OPT_F) {
+	gretl_VAR_print_all_fcast_decomps(var, pdinfo, 0, prn);
     }
 
     if (rtf) {
