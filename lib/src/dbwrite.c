@@ -30,11 +30,17 @@ static void dotify (char *s)
     }
 }
 
-static char pd_char (int pd)
+static char pd_char (const DATAINFO *pdinfo)
 {
-    if (pd == 4) return 'Q';
-    if (pd == 12) return 'M';
-    return 'A';
+    if (pdinfo->pd == 4) {
+	return 'Q';
+    } else if (pdinfo->pd == 12) {
+	return 'M';
+    } else if (dataset_is_time_series(pdinfo)) {
+	return 'A';
+    } else {
+	return 'U';
+    }
 }
 
 static char **get_db_series_names (const char *idxname)
@@ -163,15 +169,17 @@ static int output_db_var (int v, const double **Z, const DATAINFO *pdinfo,
     float val;
 
     t1 = 0;
-    for (t=0; t<pdinfo->n; t++) {
-	if (na(Z[v][t])) t1++;
-	else break;
-    }
-
     t2 = pdinfo->n - 1;
-    for (t=pdinfo->n - 1; t>=t1; t--) {
-	if (na(Z[v][t])) t2--;
-	else break;
+
+    if (dataset_is_time_series(pdinfo)) {
+	for (t=0; t<pdinfo->n; t++) {
+	    if (na(Z[v][t])) t1++;
+	    else break;
+	}
+	for (t=pdinfo->n - 1; t>=t1; t--) {
+	    if (na(Z[v][t])) t2--;
+	    else break;
+	}
     }
 
     nobs = t2 - t1 + 1;
@@ -185,7 +193,7 @@ static int output_db_var (int v, const double **Z, const DATAINFO *pdinfo,
     dotify(endobs);	
 
     fprintf(fidx, "%s  %s\n", pdinfo->varname[v], VARLABEL(pdinfo, v));
-    fprintf(fidx, "%c  %s - %s  n = %d\n", pd_char(pdinfo->pd),
+    fprintf(fidx, "%c  %s - %s  n = %d\n", pd_char(pdinfo),
 	    stobs, endobs, nobs);
 
     for (t=t1; t<=t2; t++) {
@@ -532,8 +540,11 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
     int force = (opt & OPT_F);
     int i, err = 0;
 
-    if (!dataset_is_time_series(pdinfo) ||
-	(pdinfo->pd != 1 && pdinfo->pd != 4 && pdinfo->pd != 12)) {
+    if (dataset_is_time_series(pdinfo)) {
+	if (pdinfo->pd != 1 && pdinfo->pd != 4 && pdinfo->pd != 12) {
+	    return 1;
+	}
+    } else if (pdinfo->pd != 1) {
 	return 1;
     }
 

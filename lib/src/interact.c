@@ -1536,6 +1536,16 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    }
 	} /* end if isalpha(*field) */
 
+#if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
+	else if (*field == '*') {
+	    if (wildcard_expand_ok(field, &lnum, pdinfo, cmd)) {
+		/* handled, get on with it */
+		pos += strlen(field) + 1;
+		continue; 			
+	    }
+	}
+#endif
+
 	else if (isdigit(*field)) {
 	    /* could be the ID number of a variable */
 	    v = atoi(field);

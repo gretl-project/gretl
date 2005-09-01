@@ -1914,7 +1914,8 @@ int select_var_from_list (const int *list, const char *query)
     GList *varlist;
     int selvar = -1;
 
-    dlg = gretl_dialog_new(_("gretl: define graph"), NULL, GRETL_DLG_MODAL);
+    dlg = gretl_dialog_new(_("gretl: define graph"), NULL, 
+			   GRETL_DLG_MODAL | GRETL_DLG_BLOCK);
 
     tempwid = gtk_label_new(query);
     hbox = gtk_hbox_new(TRUE, 5);

@@ -1090,11 +1090,12 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
 {
-    if (pdinfo->markers) { 
-	pprintf(prn, "%8s ", pdinfo->S[t]); 
-    } else {
-	char tmp[OBSLEN]; 
+    char tmp[OBSLEN] = {0};
 
+    if (pdinfo->markers) { 
+	strncat(tmp, pdinfo->S[t], 8); /* long labels? */
+	pprintf(prn, "%8s ", tmp); 
+    } else {
 	ntodate(tmp, t, pdinfo);
 	pprintf(prn, "%8s ", tmp);
     }

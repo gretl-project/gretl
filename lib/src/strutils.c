@@ -974,7 +974,7 @@ real_get_obs_string (char *obs, int t, const DATAINFO *pdinfo, int full)
 
 /**
  * get_obs_string:
- * @obs: char array big enough to hold the observation (OBSLEN).
+ * @obs: char array big enough to hold the observation (#OBSLEN).
  * @t: zero-based observation number.
  * @pdinfo: pointer to dataset information.
  *
