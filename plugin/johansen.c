@@ -262,8 +262,10 @@ static void print_beta_or_alpha (JohansenInfo *jv, int k,
     }
 }
 
-/* Calculate alpha (adjustments) matrix as per Johansen, 1991, eqn
-   2.8, p. 1554.
+/* Calculate \alpha (adjustments) matrix as per Johansen, 1991, eqn
+   2.8, p. 1554.  Required for the cointegration test, but not
+   needed when doing a VECM (in which case we get \alpha via
+   build_VECM_models() below).
 */
 
 static int compute_alpha (JohansenInfo *jv, int n)
@@ -349,8 +351,8 @@ static void print_lr_matrix (JohansenInfo *jv, gretl_matrix *Zeta_0,
     pputc(prn, '\n');
 }
 
-/* Restricted const or trend: copy out last column into \rho, and copy
-   the square remainder of the matrix into \Zeta_0.
+/* Restricted const or trend: copy out last column of C into \rho, and
+   copy the square remainder of the matrix into \Zeta_0.
 */
 
 static gretl_matrix *
@@ -480,7 +482,7 @@ static void gretl_matrix_I (gretl_matrix *A, int n)
 }
 
 /* compute the EC terms and add them to the dataset, Z, so we
-   can run OLS */
+   can estimate the VECM by OLS (conditional on \beta) */
 
 static int 
 add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
@@ -531,6 +533,10 @@ add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
+/* After doing OLS estimation of the VECM conditional on \beta: copy
+   the coefficients on the lagged differences (i.e. form the \Gamma
+   matrices) so we can compute the VAR representation */
+
 static void copy_coeffs_to_Gamma (MODEL *pmod, int i, gretl_matrix **G,
 				  int maxlag, int nv)
 {
@@ -549,6 +555,10 @@ static void copy_coeffs_to_Gamma (MODEL *pmod, int i, gretl_matrix **G,
     }
 }
 
+/* Again, after doing OLS estimation of the VECM conditional on \beta:
+   copy the coefficients on the EC terms (\beta' X) into the \alpha
+   matrix. */
+
 static void copy_coeffs_to_Alpha (GRETL_VAR *vecm, int i, gretl_matrix *Alpha,
 				  int maxlag)
 {
@@ -566,6 +576,10 @@ static void copy_coeffs_to_Alpha (GRETL_VAR *vecm, int i, gretl_matrix *Alpha,
     }
 }
 
+/* Form the matrix \Pi = \alpha \beta': since \beta is augmented
+   in the case of restricted constant or restricted trend, we
+   may have to make a reduced copy */
+
 static int form_Pi (GRETL_VAR *vecm, const gretl_matrix *Alpha,
 		    gretl_matrix *Pi)
 {
@@ -573,7 +587,6 @@ static int form_Pi (GRETL_VAR *vecm, const gretl_matrix *Alpha,
     int err = 0, freeit = 0;
 
     if (gretl_matrix_rows(Beta) > vecm->neqns) {
-	/* make row-reduced copy of Beta if need be */
 	Beta = gretl_matrix_alloc(vecm->neqns, vecm->jinfo->rank);
 	if (Beta == NULL) {
 	    err = E_ALLOC;
@@ -604,6 +617,9 @@ static int form_Pi (GRETL_VAR *vecm, const gretl_matrix *Alpha,
     return err;
 }
 
+/* VAR representation: transcribe the coefficient matrix A_i (for lag
+   i) into its place in the full VAR coefficient matrix, A */
+
 static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm, int k)
 {
     int i, j, offset = k * vecm->neqns;
@@ -625,7 +641,7 @@ static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm, int k)
 
    FIXME: when seasonals are included, we're not getting the
    same results as JMulTi for the constant (though the results
-   are the same for the seasonal dummies themselves).
+   are the same for the seasonal dummies themselves)?
 */
 
 static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
@@ -741,8 +757,8 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
-/* Calculate and print the "long-run matrix", \alpha \beta', (what
-   Hamilton calls \Zeta_0) */
+/* Cointegration test: calculate and print the "long-run matrix",
+   \alpha \beta', (what Hamilton calls \Zeta_0) */
 
 static int 
 compute_long_run_matrix (JohansenInfo *jv, int n, const DATAINFO *pdinfo, PRN *prn)
@@ -867,7 +883,7 @@ static int phillips_normalize_beta (GRETL_VAR *vecm)
     return err;
 }
 
-/* compute the variance of the estimator of \beta, after doing
+/* VECM: compute the variance of the estimator of \beta, after doing
    Phillips normalization */
 
 static int beta_variance (GRETL_VAR *vecm)
@@ -1190,6 +1206,12 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 
     return err;
 }
+
+/* Simplified version of the Johansen procedure, to be called in
+   the process of computing bootstrap confidence intervals for
+   impulse response functions.  We just have to do enough to
+   generate the VAR representation.
+*/
 
 int johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo)
 {
