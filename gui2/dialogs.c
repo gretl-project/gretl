@@ -531,7 +531,7 @@ static int preferred_format (int f, int multi)
     static int simple_pref = GRETL_FORMAT_TXT;
 #endif
     int ret;
-    
+
     if (multi) {
 	if (f) multi_pref = f;
 	ret = multi_pref;
@@ -549,9 +549,13 @@ static void set_copy_format (GtkWidget *w, struct format_info *finfo)
     gpointer p = g_object_get_data(G_OBJECT(w), "format");
 
     if (p != NULL) {
-	finfo->format = GPOINTER_TO_INT(p);
+	int f = GPOINTER_TO_INT(p);
+
+	finfo->format = f;
 #ifndef OLD_GTK
-	preferred_format(finfo->format, finfo->multi);
+	if (f != GRETL_FORMAT_CSV) {
+	    preferred_format(finfo->format, finfo->multi);
+	}
 #endif	
     }
 }
@@ -693,6 +697,24 @@ RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
     return button;
 }
 
+static GtkWidget *
+CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
+{
+    GtkWidget *button;
+
+    button = gtk_radio_button_new_with_label(group, "CSV (spreadsheet)");
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_copy_format), finfo);
+    g_object_set_data(G_OBJECT(button), "format", 
+		      GINT_TO_POINTER(GRETL_FORMAT_CSV));  
+    gtk_widget_show(button);
+
+    return button;
+}
+
+#define can_do_csv(v) (v->role == PRINT && v->data != NULL)
+
 void copy_format_dialog (windata_t *vwin, int multicopy)
 {
     GtkWidget *dialog, *tempwid, *hbox;
@@ -751,6 +773,11 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 
 # endif /* G_OS_WIN32 */
+
+    if (can_do_csv(vwin)) {
+	button = CSV_copy_button(group, myvbox, finfo);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    }	
 
     /* plain text option */
     button = gtk_radio_button_new_with_label (group, _("plain text"));

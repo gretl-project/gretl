@@ -36,5 +36,7 @@ GtkItemFactoryEntry *get_series_view_menu_items (int code);
 
 void series_view_sort_by (GtkWidget *w, windata_t *vwin);
 
+const int *series_view_get_list (windata_t *vwin);
+
 #endif
 

@@ -305,13 +305,14 @@ static void multi_series_view_print (windata_t *vwin)
 
     err = print_data_sorted(mview->list, obsvec, (const double **) Z, 
 			    datainfo, prn);
-    free(obsvec);
-
-    if (!err) {
+    if (err) {
+	gui_errmsg(err);
+    } else {
 	pbuf = gretl_print_get_buffer(prn);
 	replace_window_text(vwin, pbuf);
     }
 
+    free(obsvec);
     gretl_print_destroy(prn);
 }
 
@@ -408,6 +409,18 @@ scalar_to_clipboard (windata_t *vwin, guint action, GtkWidget *w)
 #endif
 
     g_free(buf);
+}
+
+const int *series_view_get_list (windata_t *vwin)
+{
+    multi_series_view *mview = (multi_series_view *) vwin->data; 
+    const int *list = NULL;
+
+    if (mview != NULL) {
+	list = mview->list;
+    }
+
+    return list;
 }
 
 void series_view_connect (windata_t *vwin, int varnum)

@@ -659,7 +659,7 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 	goto bailout;
     }
 
-    if (vecm->jinfo->Alpha != NULL) {
+    if (vecm->jinfo->Alpha == NULL) {
 	vecm->jinfo->Alpha = gretl_matrix_alloc(nv, r);
 	if (vecm->jinfo->Alpha == NULL) {
 	    err = E_ALLOC;

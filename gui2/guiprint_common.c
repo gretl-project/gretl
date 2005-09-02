@@ -1183,3 +1183,29 @@ int csv_selected_to_clipboard (void)
 
     return err;
 }
+
+int csv_listed_to_clipboard (const int *list)
+{
+    PRN *prn = NULL;
+    int i, err = 0;
+
+    if (list != NULL) {
+	for (i=1; i<=list[0]; i++) {
+	    if (list[i] >= datainfo->v) {
+		gui_errmsg(E_DATA);
+		return E_DATA;
+	    }
+	}
+
+	err = bufopen(&prn);
+	if (!err) {
+	    err = data_to_buf_as_csv(list, prn);
+	}
+	if (!err) {
+	    err = prn_to_clipboard(prn, COPY_CSV);
+	}
+	gretl_print_destroy(prn);
+    }
+
+    return err;
+}

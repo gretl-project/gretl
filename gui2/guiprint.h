@@ -53,4 +53,6 @@ int csv_to_clipboard (void);
 
 int csv_selected_to_clipboard (void);
 
+int csv_listed_to_clipboard (const int *list);
+
 #endif /* GUIPRINT_H */

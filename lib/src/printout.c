@@ -1388,11 +1388,16 @@ int print_data_sorted (const int *list, const int *obsvec,
 	return E_DATA;
     }
 
-    /* ...with no scalars */
+    /* ...with no scalars or bad variable numbers */
     for (i=1; i<=list[0]; i++) {
-	if (!pdinfo->vector[list[i]]) {
+	if (list[i] >= pdinfo->v || !pdinfo->vector[list[i]]) {
 	    return E_DATA;
 	}
+    }
+
+    /* and T must be in bounds */
+    if (T > pdinfo->n - pdinfo->t1) {
+	return E_DATA;
     }
 
     pmax = malloc(list[0] * sizeof *pmax);
@@ -1409,6 +1414,9 @@ int print_data_sorted (const int *list, const int *obsvec,
     /* print data by observations */
     for (s=0; s<T; s++) {
 	t = obsvec[s+1];
+	if (t >= pdinfo->n) {
+	    continue;
+	}
 	get_obs_string(obs_string, t, pdinfo);
 	sprintf(line, "%8s ", obs_string);
 	for (i=1; i<=list[0]; i++) {

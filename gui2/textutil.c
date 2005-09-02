@@ -24,6 +24,7 @@
 #include "guiprint.h"
 #include "model_table.h"
 #include "clipboard.h"
+#include "series_view.h"
 
 #ifdef OLD_GTK
 # include "menustate.h"
@@ -528,14 +529,12 @@ void var_tex_callback (gpointer data, guint opt, GtkWidget *w)
 void window_copy (gpointer data, guint fmt, GtkWidget *w) 
 {
     windata_t *vwin = (windata_t *) data;
-    int err = 0;
 
     /* copying from window with special stuff enabled */
     if (MULTI_FORMAT_ENABLED(vwin->role) && SPECIAL_FORMAT(fmt)) {
-	err = special_text_handler(vwin, fmt, W_COPY);
-	if (err) {
-	    return;
-	}
+	special_text_handler(vwin, fmt, W_COPY);
+    } else if (fmt == GRETL_FORMAT_CSV) {
+	csv_listed_to_clipboard(series_view_get_list(vwin));
     }
 
     /* copying plain text from window */
@@ -583,7 +582,6 @@ void window_copy (gpointer data, guint fmt, GtkWidget *w)
 	gretl_print_destroy(textprn);
     } else { /* COPY_SELECTION */
 	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
-	return;
     }
 #endif
 }
