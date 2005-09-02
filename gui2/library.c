@@ -4002,6 +4002,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
     } else { 
 	/* use buffer */
+	multi_series_view *mview = NULL;
 	int err;
 
 	if (bufopen(&prn)) {
@@ -4009,13 +4010,16 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	}
 
 	err = printdata(list, (const double **) Z, datainfo, OPT_O, prn);
-	free(list);
 	if (err) {
 	    errbox(_("Out of memory in display buffer"));
 	    gretl_print_destroy(prn);
+	    free(list);
 	    return;
 	}
-	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, NULL);
+	if (list[0] <= 5) {
+	    mview = multi_series_view_new(list);
+	}
+	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, mview);
     }
 }
 

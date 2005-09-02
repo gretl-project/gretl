@@ -60,6 +60,7 @@ char *storelist = NULL;
 #include "../pixmaps/stock_help_16.xpm"
 #include "../pixmaps/stock_add_16.xpm"
 #include "../pixmaps/stock_close_16.xpm"
+#include "../pixmaps/stock_sort_16.xpm"
 # if defined(USE_GNOME)
 #  include "../pixmaps/stock_print_16.xpm"
 # endif
@@ -101,7 +102,8 @@ enum {
     TEX_ITEM,
     ADD_ITEM,
     MAIL_ITEM,
-    HELP_ITEM
+    HELP_ITEM,
+    SORT_ITEM
 } viewbar_flags;
 
 static GtkWidget *get_toolbar_button_by_flag (GtkToolbar *tb, int flag)
@@ -1512,6 +1514,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_mahal_dist(vwin->data);
 	} else if (vwin->role == COINT2) {
 	    gretl_VAR_free(vwin->data);
+	} else if (vwin->role == PRINT && vwin->data != NULL) {
+	    free_multi_series_view(vwin->data);
 	}
 
 	if (vwin->dialog) {
@@ -1638,6 +1642,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Find..."), GTK_STOCK_FIND, text_find_callback, 0 },
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
+    { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, series_view_sort_by, SORT_ITEM },    
     { N_("Send To..."), GRETL_STOCK_MAIL, mail_script_callback, MAIL_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, window_tex_callback, TEX_ITEM },
@@ -1661,6 +1666,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Find..."), stock_search_16_xpm, text_find_callback, 0 },
     { N_("Replace..."), stock_search_replace_16_xpm, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), stock_undo_16_xpm, text_undo_callback, EDIT_ITEM },
+    { N_("Sort by..."), stock_sort_16, series_view_sort_by, SORT_ITEM },  
     { N_("Send To..."), mail_16_xpm, mail_script_callback, MAIL_ITEM },
     { N_("Help on command"), stock_help_16_xpm, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), mini_tex_xpm, window_tex_callback, TEX_ITEM },
@@ -1706,6 +1712,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
 		   vwin->role == HURST ||
 		   vwin->role == RMPLOT ||
 		   vwin->role == MAHAL);
+
+    int sort_ok = (vwin->role == PRINT && vwin->data != NULL);
 
     int latex_ok = latex_is_ok();
 
@@ -1773,6 +1781,10 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	if (vwin->role != PCA && vwin->role != LEVERAGE && 
 	    vwin->role != MAHAL && vwin->role != FCASTERR &&
 	    viewbar_items[i].flag == ADD_ITEM) {
+	    continue;
+	}
+
+	if (!sort_ok && viewbar_items[i].flag == SORT_ITEM) {
 	    continue;
 	}
 
@@ -2023,8 +2035,9 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     viewer_box_config(vwin);
 
-    /* in a few special cases, add a text-based menu bar */
-    if (role == VAR || role == VECM || role == VIEW_SERIES || role == VIEW_SCALAR) {
+    /* in some cases add a text-based menu bar */
+    if (role == VAR || role == VECM || 
+	role == VIEW_SERIES || role == VIEW_SCALAR) {
 	GtkItemFactoryEntry *menu_items;
 
 	if (role == VAR || role == VECM) {

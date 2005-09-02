@@ -41,6 +41,12 @@ version 1.4.2, in progress
   (the default), "space" and "tab"
 - Add a new option for CSV export, "--omit-obs": suppresses
   the printing of a first column containing the observations
+- X-Y graphs: display equation of fitted line when a fitted line
+  is shown
+- X-Y graphs: when fitted line is shown, add "OLS estimates"
+  menu item to see details of the simple regression
+- Windows displaying two to five data series: add toolbar option
+  to sort the data, with choice of variable by which to sort
 
 06/30/2005 version 1.4.1
 - Fix horrid unnoticed breakage in bhhh_max (broke both arma 

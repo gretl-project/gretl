@@ -1912,10 +1912,12 @@ int select_var_from_list (const int *list, const char *query)
     GtkWidget *tempwid, *hbox;
     GtkWidget *dlg, *combo;
     GList *varlist;
+    gchar *title;
     int selvar = -1;
 
-    dlg = gretl_dialog_new(_("gretl: define graph"), NULL, 
-			   GRETL_DLG_MODAL | GRETL_DLG_BLOCK);
+    title = g_strdup_printf("gretl: %s", _("select variable"));
+    dlg = gretl_dialog_new(title, NULL, GRETL_DLG_MODAL | GRETL_DLG_BLOCK);
+    g_free(title);
 
     tempwid = gtk_label_new(query);
     hbox = gtk_hbox_new(TRUE, 5);
