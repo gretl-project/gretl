@@ -865,7 +865,9 @@ get_ols_line (struct gnuplot_info *gpinfo, const int *list,
 	      double ***pZ, DATAINFO *pdinfo, char *ols_line)
 {
     MODEL plotmod;
+    char title[48];
     int olslist[4];
+    double pval = 1.0;
     int err = 0;
 
 #if GP_DEBUG
@@ -880,18 +882,23 @@ get_ols_line (struct gnuplot_info *gpinfo, const int *list,
     plotmod = lsq(olslist, pZ, pdinfo, OLS, OPT_A, 0.0);
     err = plotmod.errcode;
 
+    if (!err) {
+	pval = t_pvalue_2(plotmod.coeff[1] / plotmod.sderr[1], plotmod.dfd);
+	if (pval < .10) {
+	    sprintf(title, "Y = %#.3g %c %#.3gX", plotmod.coeff[0],
+		    (plotmod.coeff[1] > 0)? '+' : '-', 
+		    fabs(plotmod.coeff[1]));
+	}
+    }
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    if (!err) {
-	/* is the fit significant? */
-	if (t_pvalue_2(plotmod.coeff[1] / plotmod.sderr[1], plotmod.dfd) < .10) {
-	    sprintf(ols_line, "%g + %g*x title '%s' w lines\n", 
-		    plotmod.coeff[0], plotmod.coeff[1], 
-		    I_("least squares fit"));
-	    gpinfo->ols_ok = 1;
-	} 
+    if (!err && pval < .10) {
+	sprintf(ols_line, "%g + %g*x title '%s' w lines\n", 
+		plotmod.coeff[0], plotmod.coeff[1], title);
+	gpinfo->ols_ok = 1;
     }
 
 #ifdef ENABLE_NLS
@@ -1224,12 +1231,9 @@ int gnuplot (int *list, const int *lines, const char *literal,
     print_gnuplot_flags(flags);
 #endif
 
-#ifdef WIN32
-    /* only gnuplot 3.8 or higher will accept "height" here */
-    strcpy(keystr, "set key left top height 1 width 1 box\n");
-#else
-    strcpy(keystr, "set key left top width 1 box\n");
-#endif
+    /* below: did have "height 1 width 1 box" for win32,
+       "width 1 box" otherwise */
+    strcpy(keystr, "set key left top\n");
 
     if (get_gnuplot_output_file(&fp, flags, plot_count, PLOT_REGULAR)) {
 	return E_FOPEN;
@@ -1269,6 +1273,10 @@ int gnuplot (int *list, const int *lines, const char *literal,
     if (!gpinfo.impulses && !(flags & GP_OLS_OMIT) && gpinfo.lo == 2 && 
 	!gpinfo.ts_plot && !(flags & GP_RESIDS)) {
 	get_ols_line(&gpinfo, list, pZ, pdinfo, ols_line);
+	if (gpinfo.ols_ok) {
+	    fprintf(fp, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
+	    fprintf(fp, "# Y = '%s' (%d)\n", pdinfo->varname[list[1]], list[1]);
+	}
     }
 
     /* adjust sample range, and reject if it's empty */
@@ -1330,7 +1338,9 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	} else {
 	    fprintf(fp, "set ylabel '%s'\n", series_name(pdinfo, list[1]));
 	}
-	strcpy(keystr, "set nokey\n");
+	if (!gpinfo.ols_ok) {
+	    strcpy(keystr, "set nokey\n");
+	}
     } else if ((flags & GP_RESIDS) && (flags & GP_DUMMY)) { 
 	make_gtitle(fp, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
 	fprintf(fp, "set ylabel '%s'\n", I_("residual"));
@@ -1396,6 +1406,8 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	for (i=1; i<gpinfo.lo; i++)  {
 	    if (flags & GP_FA) {
 		strcpy(s1, (i == 1)? I_("fitted") : I_("actual"));
+	    } else if (gpinfo.lo == 2) {
+		*s1 = '\0';
 	    } else {
 		strcpy(s1, series_name(pdinfo, list[i]));
 	    }
@@ -2162,6 +2174,7 @@ void free_plotspec (GPT_SPEC *spec)
 
     if (spec->lines != NULL) free(spec->lines);
     if (spec->data != NULL) free(spec->data);
+    if (spec->reglist != NULL) free(spec->reglist);
 
     for (i=0; i<4; i++) {
 	if (spec->literal[i] != NULL) {

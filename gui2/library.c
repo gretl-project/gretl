@@ -2608,6 +2608,59 @@ void do_vector_model (GtkWidget *widget, gpointer p)
     }	
 }
 
+void do_graph_model (GPT_SPEC *spec)
+{
+    char *buf;
+    PRN *prn;
+    MODEL *pmod = NULL;
+    char title[26];
+    int err = 0;
+
+    if (spec == NULL || spec->reglist == NULL) {
+	return;
+    }
+
+    buf = gretl_list_to_string(spec->reglist);
+    if (buf == NULL) {
+	return;
+    }
+
+    gretl_command_sprintf("ols%s", buf);
+    free(buf);
+
+    if (check_model_cmd() || bufopen(&prn)) {
+	return;
+    }
+
+    pmod = gretl_model_new();
+    if (pmod == NULL) {
+	errbox(_("Out of memory"));
+	return;
+    }
+
+    *pmod = lsq(cmd.list, &Z, datainfo, OLS, cmd.opt, 0.0);
+    err = model_output(pmod, prn);
+
+    if (err) {
+	gretl_print_destroy(prn);
+	return;
+    }
+
+    if (check_lib_command() || lib_cmd_init() || stack_model(pmod)) {
+	errbox(_("Error saving model information"));
+	return;
+    }
+
+    if (copy_model(models[2], pmod, datainfo)) {
+	errbox(_("Out of memory copying model"));
+    }
+
+    attach_subsample_to_model(pmod, datainfo);
+    
+    sprintf(title, _("gretl: model %d"), pmod->ID);
+    view_model(prn, pmod, 78, 420, title);     
+}
+
 void do_simdata (GtkWidget *widget, dialog_t *dlg) 
 {
     const gchar *buf;
