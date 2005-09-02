@@ -56,6 +56,10 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 int printdata (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 
+int print_data_sorted (const int *list, const int *obsvec, 
+		       const double **Z, const DATAINFO *pdinfo, 
+		       PRN *prn);
+
 int text_print_fit_resid (const FITRESID *fr, 
 			  const DATAINFO *pdinfo, 
 			  PRN *prn);

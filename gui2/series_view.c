@@ -269,54 +269,48 @@ static void series_view_print (windata_t *vwin)
     gretl_print_destroy(prn);
 }
 
+static int *make_obsvec (multi_series_view *mview)
+{
+    int *ov;
+    int t;
+
+    ov = mymalloc((mview->npoints + 1) * sizeof *ov);
+    if (ov != NULL) {
+	ov[0] = mview->npoints;
+	for (t=0; t<mview->npoints; t++) {
+	    ov[t+1] = mview->points[t].obsnum;
+	}
+    }
+
+    return ov;
+}
+
 static void multi_series_view_print (windata_t *vwin)
 {
-    const char *pbuf;
-    PRN *prn;
     multi_series_view *mview = (multi_series_view *) vwin->data;
-    int i, vi, t, s;
+    const char *pbuf;
+    int *obsvec;
+    PRN *prn;
     int err = 0;
 
-    if (bufopen(&prn)) return;
-
-    pprintf(prn, "\n%9s", " ");
-    for (i=1; i<=mview->list[0]; i++) {
-	vi = mview->list[i];
-	if (vi >= datainfo->v) {
-	    err = 1;
-	    break;
-	}
-	pprintf(prn, "%12s", datainfo->varname[vi]);
-    }
-
-    if (err) {
-	gretl_print_destroy(prn);
+    obsvec = make_obsvec(mview);
+    if (obsvec == NULL) {
 	return;
     }
 
-    pputs(prn, "\n\n"); 
-
-    for (t=0; t<mview->npoints; t++) {
-	s = mview->points[t].obsnum;
-	if (s >= datainfo->n) {
-	    err = 1;
-	    break;
-	}
-	print_obs_marker(s, datainfo, prn);
-	for (i=1; i<=mview->list[0]; i++) {
-	    vi = mview->list[i];
-	    pprintf(prn, "%#12.4g", Z[vi][s]);
-	}
-	pputc(prn, '\n');    
-    }
-
-    if (err) {
-	gretl_print_destroy(prn);
+    if (bufopen(&prn)) {
+	free(obsvec);
 	return;
     }
 
-    pbuf = gretl_print_get_buffer(prn);
-    replace_window_text(vwin, pbuf);
+    err = print_data_sorted(mview->list, obsvec, (const double **) Z, 
+			    datainfo, prn);
+    free(obsvec);
+
+    if (!err) {
+	pbuf = gretl_print_get_buffer(prn);
+	replace_window_text(vwin, pbuf);
+    }
 
     gretl_print_destroy(prn);
 }
@@ -437,7 +431,27 @@ void series_view_connect (windata_t *vwin, int varnum)
 
 multi_series_view *multi_series_view_new (int *list)
 {
-    multi_series_view *mview;
+    multi_series_view *mview = NULL;
+    int i, err = 0;
+
+    /* we do this only for a list of up to five variables,
+       with no scalars */
+
+    if (list == NULL || list[0] > 5) {
+	err = 1;
+    } else {
+	for (i=1; i<=list[0]; i++) {
+	    if (!datainfo->vector[list[i]]) {
+		err = 1;
+		break;
+	    }
+	} 
+    }
+
+    if (err) {
+	free(list);
+	return NULL;
+    }
 
     mview = malloc(sizeof *mview);
 

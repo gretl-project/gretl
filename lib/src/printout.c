@@ -430,7 +430,7 @@ static void cut_extra_zero (char *numstr, int digits)
    decimal point will be printed in the same position for all
    numbers printed this way.  The total width of the number
    string (including possible padding on left or right) is 
-   2*P + 5 characters, where P denotes the precision ("digits"). 
+   2 * P + 5 characters, where P denotes the precision ("digits"). 
 */
 
 void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
@@ -455,7 +455,11 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
     p = strchr(numstr, decpoint);
     if (p != NULL) {
 	forept = p - numstr;
+    } else {
+	/* handle case of no decimal point, added Sept 2, 2005 */
+	forept = strlen(numstr);
     }
+
     tmp = digits + 1 - forept;
     *final = 0;
     for (i=0; i<tmp; i++) {
@@ -743,12 +747,10 @@ static void fit_resid_head (const FITRESID *fr,
     pputs(prn, "\n\n");
 }
 
-/*  skips to new page and prints names of variables
-    from v1 to v2 */
+/* prints names of variables in @list, positions v1 to v2 */
 
-static void varheading (int v1, int v2, 
-			const DATAINFO *pdinfo, const int *list,
-			PRN *prn)
+static void varheading (const int *list, int v1, int v2, 
+			const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
         
@@ -1291,7 +1293,7 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    /* starting a new block of variables */
 	    v2 = (ncol > nvj5)? nvj5 : ncol;
 	    v2 += j5;
-	    varheading(v1, v2, pdinfo, plist, prn);
+	    varheading(plist, v1, v2, pdinfo, prn);
 
 	    if (pause && j > 0 && takenotes(1)) {
 		goto endprint;
@@ -1353,6 +1355,78 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
     free(pmax);
 
     return err;
+}
+
+/**
+ * print_data_sorted:
+ * @list: list of variables to print.
+ * @obsvec: list of observation numbers.
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ *
+ * Print the data for the variables in @list, using the sort order 
+ * given in @obsvec.  The first element of @obsvec must contain the
+ * number of observations that follow.
+ *
+ * Returns: 0 on successful completion, non-zero code on error.
+ */
+
+int print_data_sorted (const int *list, const int *obsvec, 
+		       const double **Z, const DATAINFO *pdinfo, 
+		       PRN *prn)
+{
+    int *pmax = NULL; 
+    double xx;
+    char obs_string[OBSLEN];
+    char line[128];
+    int T = obsvec[0];
+    int i, s, t;
+
+    /* must have a list of up to 5 variables... */
+    if (list == NULL || list[0] > 5) {
+	return E_DATA;
+    }
+
+    /* ...with no scalars */
+    for (i=1; i<=list[0]; i++) {
+	if (!pdinfo->vector[list[i]]) {
+	    return E_DATA;
+	}
+    }
+
+    pmax = malloc(list[0] * sizeof *pmax);
+    if (pmax == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	pmax[i-1] = get_signif(Z[list[i]] + pdinfo->t1, T);
+    }
+
+    varheading(list, 1, list[0], pdinfo, prn);
+
+    /* print data by observations */
+    for (s=0; s<T; s++) {
+	t = obsvec[s+1];
+	get_obs_string(obs_string, t, pdinfo);
+	sprintf(line, "%8s ", obs_string);
+	for (i=1; i<=list[0]; i++) {
+	    xx = Z[list[i]][t];
+	    if (na(xx)) {
+		strcat(line, "             ");
+	    } else { 
+		bufprintnum(line, xx, pmax[i-1], 13);
+	    }
+	}
+	pputs(prn, line);
+	pputc(prn, '\n');
+    } 
+
+    pputc(prn, '\n');
+    free(pmax);
+
+    return 0;
 }
 
 int
