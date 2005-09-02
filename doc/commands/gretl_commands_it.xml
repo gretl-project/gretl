@@ -392,7 +392,7 @@
 	  <effect>mostra la matrice di covarianza</effect>
         </option>
         <option>
-         <flag>--suppress-const</flag>
+         <flag>--nc</flag>
          <effect>non include l'intercetta</effect>
         </option>
       </options>
@@ -416,7 +416,7 @@
       <para context="cli">
         Nel caso univariato la scelta predefinita include un'intercetta nel
         modello, ma questa può essere soppressa con l'opzione
-        <lit>--suppress-const</lit>.  Se vengono aggiunte delle
+        <lit>--nc</lit>.  Se vengono aggiunte delle
         <repl>variabili-indipendenti</repl>, il modello diventa un ARMAX: in
         questo caso occorre indicare esplicitamente la costante se si
         desidera un'intercetta (come nel secondo degli esempi proposti).
@@ -512,7 +512,7 @@
       <para context="cli">Dopo ogni variabile specificata nel comando
 	boxplot, è possibile aggiungere un'espressione booleana tra
         parentesi per limitare il campione per la variabile in questione.
-	Ocorre inserire uno spazio tra il nome o il numero della variabile
+	Occorre inserire uno spazio tra il nome o il numero della variabile
         e l'espressione. Si supponga di avere dati sui salari di uomini e
         donne e di avere una variabile dummy <lit>GENERE</lit> che vale 1
 	per gli uomini e 0 per le donne. In questo caso, è possibile generare
@@ -666,6 +666,26 @@
       </arguments>
       <options>
         <option>
+	  <flag>--nc</flag>
+	  <effect>senza costante</effect>
+        </option>
+        <option>
+	  <flag>--rc</flag>
+	  <effect>costante vincolata</effect>
+        </option>
+        <option>
+	  <flag>--crt</flag>
+	  <effect>costante e trend vincolato</effect>
+        </option>
+        <option>
+	  <flag>--ct</flag>
+	  <effect>costante e trend non vincolato</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>include dummy stagionali centrate</effect>
+        </option>
+        <option>
 	  <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle regressioni ausiliarie</effect>
         </option>
@@ -673,18 +693,58 @@
       <examples>
         <example>coint2 2 y x</example>
 	<example>coint2 4 y x1 x2 --verbose</example>
+	<example>coint2 3 y x1 x2 --rc</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Esegue il test traccia di Johansen per la cointegrazione tra
-        le variabili elencate per l'ordine specificato.
-        I valori critici sono calcolati con l'approssimazione gamma di
-	J. Doornik's (Doornik, 1998). Per i dettagli su questo test, si
-        veda Hamilton, <book>Time Series Analysis</book> (1994), Cap. 20.
+        Esegue il test di Johansen per la cointegrazione tra le variabili
+        elencate per l'ordine specificato.  I valori critici sono calcolati con
+        l'approssimazione gamma di J. Doornik (Doornik, 1998). Per i dettagli su
+        questo test, si veda Hamilton, <book>Time Series Analysis</book> (1994),
+        Cap. 20.
       </para>
-
+      <para context="cli">
+	L'inclusione di trend deterministici nel modello è controllata dalle
+        opzioni del comando. Se non si indica alcuna opzione, viene inclusa una
+	<quote>costante non vincolata</quote>, che permette la presenza di
+        un'intercetta diversa da zero nelle relazioni di cointegrazione e di un
+        trend nei livelli delle variabili endogene. Nella letteratura originata
+        dal lavoro di Johansen (si veda ad esempio il suo libro del 1995),
+        si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
+        quattro opzioni mostrate sopra, che sono mutualmente esclusive,
+        producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
+        casi e i criteri per scegliere tra di essi sono spiegati in
+	<manref targ="vecm-explanation"/>.
+      </para>
+      <para context="gui">
+	L'inclusione di termini deterministici nel modello è controllata dai
+        pulsanti delle opzioni. L'opzione predefinita è di includere una
+	<quote>costante non vincolata</quote>, che permette la presenza di
+        un'intercetta diversa da zero nelle relazioni di cointegrazione e di un
+        trend nei livelli delle variabili endogene. Nella letteratura originata
+        dal lavoro di Johansen (si veda ad esempio il suo libro del 1995),
+        si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
+        quattro opzioni mostrate sopra, che sono mutualmente esclusive,
+        producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
+        casi e i criteri per scegliere tra di essi sono spiegati in
+	<manref targ="vecm-explanation"/>.
+      </para>
+      <para context="cli">
+        L'opzione <lit>--seasonals</lit>, che può accompagnare una qualsiasi
+        delle altre opzioni, specifica l'inclusione di un gruppo di variabili
+        dummy stagionali centrate. Questa opzione è disponibile solo per dati
+        trimestrali o mensili.
+      </para>
+      <para context="gui">
+	Se i dati sono trimestrali o mensili, è presente anche una casella che
+        permette di includere un gruppo di variabili dummy stagionali centrate.
+	In tutti i casi, la casella <quote>Mostra dettagli</quote> permette di
+        vedere il risultato delle regressioni ausiliarie che sono il punto di
+        partenza per la procedura di stima di massima verosimiglianza di
+        Johansen.
+      </para>
       <para>
 	La tabella seguente fornisce un esempio di interpretazione dei
 	risultati del test nel caso di 3 variabili. <lit>H0</lit> denota
@@ -700,6 +760,10 @@
                   2      c = 2  c = 3       c = 2  c = 3
                  ---------------------------------------
       </code>
+ 
+      <para>
+	Si veda anche il comando <cmdref targ="vecm"/>.
+      </para>
 
     </description>
 
@@ -1110,7 +1174,7 @@
         lista di sinistra e premere il pulsante <quote>Aggiungi</quote> (o fare clic
         col pulsante destro del mouse). È possibile selezionare più variabili
         contigue trascinando il mouse; se le variabili da selezionare non sono
-        contigue, occorre fare clic tenendo prenuto il tasto <lit>Ctrl</lit>.</para>
+        contigue, occorre fare clic tenendo premuto il tasto <lit>Ctrl</lit>.</para>
 
     </description>
 
@@ -1227,7 +1291,7 @@
 
     <description>
       <para>
-	Specifica un'equazione all'interno di un sistema di equzioni
+	Specifica un'equazione all'interno di un sistema di equazioni
         (si veda <cmdref targ="system"/>). La sintassi per specificare
         un'equazione in un sistema SUR è la stessa usata ad esempio in <cmdref
         targ="ols"/>. Per un'equazione in un sistema con minimi quadrati 
@@ -1293,11 +1357,11 @@
        stima.
       </para>
       <para>Se vengono scelti gli stimatori "equazione per equazione"
-      <cmd>ols</cmd> o <cmd>tsls</cmd> are chosen, nel calcolo degli errori
-       standard viene applicata in modo predefinito una correzione per i gradi
-       di libertà, che può essere disabilitata usando l'opzione
-       <lit>--no-df-corr</lit>. Questa opzione non ha effetti nel caso vengano
-       usati altri stimatori, che non prevedono correzioni per i gradi di libertà.
+      <cmd>ols</cmd> o <cmd>tsls</cmd>, nel calcolo degli errori standard viene
+      applicata in modo predefinito una correzione per i gradi di libertà, che
+      può essere disabilitata usando l'opzione <lit>--no-df-corr</lit>. Questa
+      opzione non ha effetti nel caso vengano usati altri stimatori, che non
+      prevedono correzioni per i gradi di libertà.
       </para>
       <para>La formula usata in modo predefinito per calcolare gli elementi della matrice
        di covarianza tra equazioni è
@@ -1452,7 +1516,7 @@
  	richiede come input il valore di <mathvar>y</mathvar> nel 2007,
         non è possibile calcolare una previsione statica se non si hanno dati
         per il 2007. È possibile calcolare una previsione dinamica per il 2008
-        se si dispone di una precendente previsione per
+        se si dispone di una precedente previsione per
  	<mathvar>y</mathvar> nel 2007.
        </para>
  
@@ -1759,7 +1823,7 @@
             deviazioni dalla media), <func>sum</func>.</para>
         </li>
         <li>
-          <para>Funzioni statistiche che accettano una serie com argomento e
+          <para>Funzioni statistiche che accettano una serie con argomento e
           producono una serie o un vettore: <func>sort</func> (ordina una serie
           in ordine ascendente di grandezza), <func>cum</func> (somma cumulata).
           </para>
@@ -2802,7 +2866,7 @@
         che appare accanto al nome della variabile nella finestra
         principale di gretl.</para>
 
-      <para>* Aggiugere o modificare il "nome per i grafici" della
+      <para>* Aggiungere o modificare il "nome per i grafici" della
         variabile. Questa stringa (lunga al massimo 19 caratteri) viene
         usata al posto del nome della variabile quando questa compare in
         un grafico. Così, ad esempio, è possibile associare una stringa
@@ -3092,7 +3156,7 @@
     <description context="gui">
       <para>
 	Questo comando racchiude vari test di ipotesi. La caratteristica
-        comune è che ttti i test prevedono la stima di una regressione
+        comune è che tutti i test prevedono la stima di una regressione
         ausiliaria in cui la variabile dipendente è il residuo di una
         regressione <quote>originale</quote>. Le variabili indipendenti
         della regressione ausiliaria comprendono quelle della
@@ -3216,6 +3280,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--robust</flag>
+	  <effect>errori standard robusti</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
 	</option>
@@ -3234,7 +3302,15 @@
         statistica chi-quadro testa l'ipotesi nulla che tutti i
         coefficienti tranne la costante siano pari a zero.
       </para>
-
+      <para>
+        In modalità predefinita, gli errori standard sono calcolati con
+        l'inversa negativa dell'Hessiana.  Se si usa l'opzione
+        <lit>--robust</lit>, verranno calcolati gli errori standard QML o quelli
+        di Huber&ndash;White. In questo caso, la matrice di covarianza stimata è
+        un <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e del
+        prodotto esterno del gradiente. Per i dettagli, si veda Davidson e
+        MacKinnon 2004, cap. 10.
+      </para>
       <para>
 	Per condurre un'analisi delle proporzioni (dove la variabile
 	dipendente è la proporzione dei casi che hanno una certa
@@ -3472,8 +3548,8 @@
     <description>
       <para>Imposta un valore numerico che sarà interpretato come
 	<quote>mancante</quote> o <quote>non disponibile</quote>, per
-        una serie particolare (nel menu Variabile) o globalmente per
-        l'intero dataset (nel menu Campione).</para> 
+        una serie particolare (nel menù Variabile) o globalmente per
+        l'intero dataset (nel menù Campione).</para> 
 
       <para>Gretl ha un codice interno per i valori mancanti, che non
       sempre può coincidere con quello usato dai dati importati. Ad
@@ -4275,7 +4351,7 @@
     </usage>
 
     <description>
-      <para>Stimates una regressione di Poisson, in cui la variabile dipendente
+      <para>Stima una regressione di Poisson, in cui la variabile dipendente
       rappresenta le occorrenze di un qualche tipo di evento e può assumere solo
       valori interi non negativi.
       </para>
@@ -4518,6 +4594,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--robust</flag>
+	  <effect>errori standard robusti</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
 	</option>
@@ -4526,17 +4606,25 @@
 
     <description>
       <para>
-	Stima un modello probit, per variabili dipendenti binarie.
+        Stima un modello probit, per variabili dipendenti binarie.
         Le stime di massima verosimiglianza dei coefficienti delle
-	<repl>variabili-indipendenti</repl> sono ottenute con i minimi
-        quadrati iterati (il metodo EM, Expectation&ndash;Maximization).
-	Poiché il modello è non-lineare, le pendenze dipendono dai
-        valori delle variabili indipendenti: le pendenze riportate sono
-        valutate nelle medie di queste variabili. La statistica
-        chi-quadro testa l'ipotesi nulla che tutti i coefficienti tranne
-        la costante siano pari a zero.
+        <repl>variabili-indipendenti</repl> sono ottenute con il metodo
+        <quote>binary response model regression</quote> (BRMR) descritto in
+        Davidson e MacKinnon (2004). Visto che il modello è nonlineare, le
+        pendenze dipendono dai valori delle variabili indipendenti: le pendenze
+        riportate sono valutate nelle medie di queste variabili. La
+        statistica chi-quadro testa l'ipotesi nulla che tutti i
+        coefficienti tranne la costante siano pari a zero.
       </para>
-
+      <para>
+        In modalità predefinita, gli errori standard sono calcolati con
+        l'inversa negativa dell'Hessiana.  Se si usa l'opzione
+        <lit>--robust</lit>, verranno calcolati gli errori standard QML o quelli
+        di Huber&ndash;White. In questo caso, la matrice di covarianza stimata è
+        un <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e del
+        prodotto esterno del gradiente. Per i dettagli, si veda Davidson e
+        MacKinnon 2004, cap. 10.
+      </para>
       <para>
 	Il probit per l'analisi delle proporzioni non è ancora stato
         implementato in	<program>gretl</program>.
@@ -4747,7 +4835,7 @@
 	 b[3,4] + 2*b[3,5] = 1
 	end restrict</code>
 
-      <para>Nel casdo dell'equazione singola, i vincoli sono valutati
+      <para>Nel caso dell'equazione singola, i vincoli sono valutati
       attraverso un test <mathvar>F</mathvar> di Wald, usando la matrice di
       covarianza dei coefficienti del modello in questione. Nel caso del
       sistema, vengono presentati i risultati completi della stima del sistema
@@ -5021,6 +5109,11 @@
         <argument>variabile</argument>
         <argument>valore</argument>
       </arguments>
+      <examples>
+        <example>set qr on</example>
+        <example>set csv_delim tab</example>
+	<example>set horizon 10</example>
+      </examples>    
     </usage>
 
     <description>
@@ -5140,6 +5233,13 @@
           frequenza dei dati). Imposta l'orizzonte per le funzioni impulso-risposta
           e per la decomposizione della varianza nel contesto delle autoregressioni
           vettoriali.
+	  </cell>
+	</row>
+	<row>
+	  <cell><lit>csv_delim</lit></cell>
+	  <cell>Valori: <lit>comma</lit> (virgola, valore predefinito), <lit>space</lit>
+            (spazio), o <lit>tab</lit>. Imposta il delimitatore di colonna usato nel
+            salvataggio di dati su file in formato CSV.
 	  </cell>
 	</row>
       </table>
@@ -5531,6 +5631,10 @@
 	  <effect>usa il formato CSV</effect>
         </option>
         <option>
+	  <flag>--omit-obs</flag>
+	  <effect>si veda oltre, a proposito del formato CSV</effect>
+        </option>
+        <option>
 	  <flag>--gnu-octave</flag>
 	  <effect>usa il formato GNU Octave</effect>
         </option>
@@ -5579,6 +5683,15 @@
         rispettivi programmi. La compressione con gzip può essere utile per
         grandi dataset. Si veda il <manref targ="datafiles"/> per i dettagli sui
         vari formati.</para>
+
+      <para>
+	L'opzione <lit>--omit-obs</lit> è applicabile solo quando si salvano
+        dati in formato CSV. In modalità predefinita, se i dati sono serie
+        storiche o panel, o se il dataset include marcatori per osservazioni
+        specifiche, il file CSV comprende una prima colonna che identifica le
+        osservazioni (ad esempio per data). Se si usa <lit>--omit-obs</lit>,
+        questa colonna verrà omessa e verranno salvati solo i dati effettivi.
+      </para>
 
       <para>
 	Si noti che le variabili scalari non saranno salvate
@@ -5696,7 +5809,7 @@
         definiti i quattro tipi di istruzioni seguenti.</para>
 
       <ilist context="cli">
-	<li><para><cmdref targ="equation"/>: specifca un'equazione del sistema.
+	<li><para><cmdref targ="equation"/>: specifica un'equazione del sistema.
 	    Occorre indicarne almeno due.</para>
 	</li>
 	<li><para><cmd>instr</cmd>: per i sistemi da stimare con i minimi
@@ -5899,6 +6012,14 @@
       </arguments>
       <options>
         <option>
+	  <flag>--nc</flag>
+	  <effect>non include una costante</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>include variabili dummy stagionali</effect>
+        </option>
+        <option>
 	  <flag>--robust</flag>
 	  <effect>errori standard robusti</effect>
         </option>
@@ -5906,9 +6027,14 @@
 	  <flag>--impulse-responses</flag>
 	  <effect>mostra impulso-risposta</effect>
         </option>
+        <option>
+	  <flag>--variance-decomp</flag>
+	  <effect>mostra decomposizioni della varianza delle previsioni</effect>
+        </option>
       </options>
       <examples>
-        <example>var 4 x1 x2 x3 ; const time</example>
+        <example>var 4 x1 x2 x3 ; time mydum</example>
+	<example>var 4 x1 x2 x3 --seasonals</example>
       </examples>
     </usage>
 
@@ -5918,20 +6044,18 @@
 	Questo comando richiede la specificazione dei seguenti elementi:</para>
 
       <ilist context="gui">
-	<li><para context="gui">- La variabile dipendente per la prima
-        equazione nel sistema VAR;</para>
-	</li>
-
 	<li><para context="gui">- L'ordine di ritardi, ossia il numero
         di ritardi di ogni variabile presente nel sistema;</para>
 	</li>
 
-	<li><para context="gui">- Eventuali termini "deterministici" (ad
-        es. la costante, un trend temporale, variabili dummy stagionali
-        e così via; e</para>
+        <li><para context="gui">- Eventuali termini "deterministici" o esogeni
+        (ma si noti che una costante viene inclusa automaticamente, a meno che
+        non si richieda altrimenti; inoltre è possibile includere variabili
+        dummy stagionali con l'apposita casella); e
+        </para>
 	</li>
 
-	<li><para context="gui">- Una lista di variabili indipendenti,
+	<li><para context="gui">- Una lista di variabili esogene,
         i cui ritardi saranno inclusi a destra delle equazioni (nota:
         non includere variabili ritardate in questa lista, verranno
         aggiunte automaticamente).</para>
@@ -5952,17 +6076,19 @@
         tra gli elementi della <repl>lista-variabili</repl>:
         verranno aggiunti automaticamente. Il punto e virgola separa le
         variabili stocastiche, per cui verrà incluso un numero di
-        ritardi pari a <repl>ordine</repl>, dai termini deterministici
-        presenti nella <repl>lista-deterministica</repl>, come la
-        costante, un trend temporale o variabili dummy.</para>
+        ritardi pari a <repl>ordine</repl>, dai termini deterministici o esogeni
+        presenti nella <repl>lista-deterministica</repl>.</para>
 
       <para context="cli">
 	gretl è in grado di riconoscere le più comuni variabili
-        deterministiche (costante, trend temporale, variabili dummy con
+        deterministiche (trend temporale, variabili dummy con
         valori 0 o 1), quindi queste non devono necessariamente essere
         elencate dopo il punto e virgola. Variabili deterministiche più
         complesse (ad es. un trend temporale moltiplicato per una
-        variabile dummy) devono invece essere indicate esplicitamente.</para>
+        variabile dummy) devono invece essere indicate esplicitamente.
+        Si noti che viene inclusa automaticamente una costante, a meno che
+        non si usi l'opzione <lit>--nc</lit>; inoltre è possibile aggiungere
+        variabili dummy stagionali con l'opzione <lit>--seasonals</lit>.</para>
 
       <para context="cli">
 	Viene calcolata una regressione separata per ognuna delle
@@ -6034,6 +6160,134 @@
 
   </command>
 
+  <command name="vecm" section="Estimation"
+    label="Vector Error Correction Model">
+
+    <usage>
+      <arguments>
+        <argument>ordine</argument>
+	<argument>rango</argument>
+        <argument>lista-variabili</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--nc</flag>
+	  <effect>senza costante</effect>
+        </option>
+        <option>
+	  <flag>--rc</flag>
+	  <effect>costante vincolata</effect>
+        </option>
+        <option>
+	  <flag>--crt</flag>
+	  <effect>costante e trend vincolato</effect>
+        </option>
+        <option>
+	  <flag>--ct</flag>
+	  <effect>costante e trend non vincolato</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>include dummy stagionali centrate</effect>
+        </option>
+      </options>
+      <examples>
+        <example>vecm 4 1 Y1 Y2 Y3</example>
+        <example>vecm 3 2 Y1 Y2 Y3 --rc</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Un VECM è un tipo di autoregressione vettoriale, o VAR (si veda <cmdref
+	  targ="var"/>), applicabile quando le variabili del modello sono
+        individualmente integrate di ordine 1 (ossia, sono <quote>random walk</quote>
+        con o senza deriva), ma esibiscono cointegrazione. Questo comando è
+        strettamente connesso al test di Johansen per la cointegrazione (si veda
+	<cmdref targ="coint2"/>).
+      </para>
+      <para context="cli">
+        Il parametro <repl>ordine</repl> rappresenta l'ordine di ritardo del
+        sistema VAR. Il numero di ritardi nel VECM (dove la variabile dipendente
+        è data da una differenza prima) è pari a <repl>ordine</repl> meno uno.
+      </para>
+      <para context="gui">
+        L'ordine di ritardo selezionato nella finestra di dialogo del VECM è
+        quello del sistema VAR.  Per ottenere il numero di ritardi nel VECM
+        (dove la variabile dipendente è data da una differenza prima) occorre
+        sottrarre uno da questo numero.
+      </para>
+      <para context="cli">
+        Il parametro <repl>rango</repl> rappresenta il rango di cointegrazione,
+        o in altre parole il numero di vettori di cointegrazione. Questo deve
+        essere maggiore di zero e minore o uguale (in genere minore) al numero
+        di variabili endogene contenute nella <repl>lista variabili</repl>.
+      </para>
+      <para context="gui">
+	Il <quote>rango di cointegrazione</quote> rappresenta il numero di
+        vettori di cointegrazione. Questo deve essere maggiore di zero e minore
+        o uguale (in genere minore) al numero di variabili endogene selezionate.
+      </para>
+      <para context="cli">
+        La <repl>lista-variabili</repl> rappresenta l'elenco delle variabili
+        endogene, nei livelli. L'inclusione di trend deterministici nel modello
+        è controllata dalle opzioni del comando. Se non si indica alcuna
+        opzione, viene inclusa una <quote>costante non vincolata</quote>, che
+        permette la presenza di un'intercetta diversa da zero nelle relazioni di
+        cointegrazione e di un trend nei livelli delle variabili endogene. Nella
+        letteratura originata dal lavoro di Johansen (si veda ad esempio il suo
+        libro del 1995), si fa riferimento a questo come al <quote>caso
+        3</quote>.  Le prime quattro opzioni mostrate sopra, che sono
+        mutualmente esclusive, producono rispettivamente i casi 1, 2, 4 e 5. Il
+        significato di questi casi e i criteri per scegliere tra di essi sono
+        spiegati in <manref targ="vecm-explanation"/>.
+      </para>
+      <para context="gui">
+        Nel riquadro <quote>Variabili endogene</quote>, è possibile selezionare
+        il vettore delle variabili endogene, in livelli. L'inclusione di trend
+        deterministici nel modello è controllata dai pulsanti opzionali.  Se non
+        si seleziona alcuna opzione, viene inclusa una <quote>costante non
+        vincolata</quote>, che permette la presenza di un'intercetta diversa da
+        zero nelle relazioni di cointegrazione e di un trend nei livelli delle
+        variabili endogene. Nella letteratura originata dal lavoro di Johansen
+        (si veda ad esempio il suo libro del 1995), si fa riferimento a questo
+        come al <quote>caso 3</quote>.  Le prime quattro opzioni mostrate sopra,
+        che sono mutualmente esclusive, producono rispettivamente i casi 1, 2, 4
+        e 5. Il significato di questi casi e i criteri per scegliere tra di essi
+        sono spiegati in <manref targ="vecm-explanation"/>.
+      </para>
+      <para context="cli">
+        L'opzione <lit>--seasonals</lit>, che può accompagnare una qualsiasi
+        delle altre opzioni, specifica l'inclusione di un gruppo di variabili
+        dummy stagionali centrate. Questa opzione è disponibile solo per dati
+        trimestrali o mensili.
+      </para>
+      <para context="gui">
+	Se i dati sono trimestrali o mensili, è presente anche una casella che
+        permette di includere un gruppo di variabili dummy stagionali centrate.
+	In tutti i casi, la casella <quote>Mostra dettagli</quote> permette di
+        vedere il risultato delle regressioni ausiliarie che sono il punto di
+        partenza per la procedura di stima di massima verosimiglianza di
+        Johansen.
+      </para>
+      <para context="cli">
+        Il primo degli esempi mostrati sopra specifica un VECM con ordine di
+        ritardo pari a 4 e un unico vettore di cointegrazione. Le variabili
+        endogene sono <lit>Y1</lit>, <lit>Y2</lit> e <lit>Y3</lit>. Il secondo
+        esempio usa le stesse variabili ma specifica un ritardo di ordine 3 e
+        due vettori di cointegrazione, oltre a specificare una <quote>costante
+        vincolata</quote>, che è appropriata se i vettori di cointegrazione
+        possono avere un'intercetta diversa da zero, ma le variabili
+        <lit>Y</lit> non hanno trend.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Time series/VECM</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="vif" section="Tests" context="cli"
     label="Fattori di inflazione della varianza">
 
@@ -6094,7 +6348,7 @@
       </para>
       <para context="gui">
 	Detta "variabile-pesi" la variabile scelta nel campo "Variabile
-        pesi", viena stimata una regressione OLS in cui la variabile
+        pesi", viene stimata una regressione OLS in cui la variabile
         dipendente è il prodotto della variabile dipendente selezionata
         e della variabile-pesi, e anche le variabili indipendenti sono
         moltiplicate per la variabile-pesi. Se la variabile-pesi è una
