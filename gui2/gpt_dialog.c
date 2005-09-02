@@ -53,6 +53,7 @@ static GtkWidget *keycombo;
 static GtkWidget *termcombo;
 static GtkWidget *fitline_check;
 static GtkWidget *border_check;
+static GtkWidget *markers_check;
 static GtkWidget *y2_check;
 static GtkWidget *ttfcombo;
 static GtkWidget *ttfspin;
@@ -383,6 +384,14 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
+    if (!err && markers_check != NULL) {
+	if (GTK_TOGGLE_BUTTON(markers_check)->active) {
+	    spec->flags |= GPTSPEC_ALL_MARKERS;
+	} else {
+	    spec->flags &= ~GPTSPEC_ALL_MARKERS;
+	}
+    }
+
     if (!err && ttfcombo != NULL && ttfspin != NULL) {
 	const gchar *tmp = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry));
 #ifdef OLD_GTK
@@ -677,6 +686,22 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(fitline_check);
     } else {
 	fitline_check = NULL;
+    }
+
+    /* give option of showing all case markers */
+    if (spec->n_markers > 0 && spec->n_markers < 55) { 
+	tbl_len++;
+	markers_check = gtk_check_button_new_with_label(_("Show all data labels"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  markers_check, 0, TAB_MAIN_COLS, 
+				  tbl_len-1, tbl_len);
+	if (spec->flags & GPTSPEC_ALL_MARKERS) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(markers_check),
+					 TRUE);
+	}	
+	gtk_widget_show(markers_check);
+    } else {
+	markers_check = NULL;
     }
 
     /* set TT font (if gnuplot uses libgd and freetype) */

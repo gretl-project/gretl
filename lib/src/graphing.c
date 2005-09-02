@@ -2316,6 +2316,74 @@ print_plot_labelspec (const GPT_LABEL *lbl, int png, FILE *fp)
     }
 }
 
+static int print_all_markers (const GPT_SPEC *spec, FILE *fp)
+{
+    const double *x, *y;
+    double xrange, yrange;
+    double yoff;
+    int t;
+
+    if (spec->n_lines > 2 || 
+	spec->lines[0].ncols != 2 || 
+	spec->markers == NULL) {
+	return 1;
+    }
+
+    x = spec->data;
+    y = x + spec->nobs;
+
+    xrange = spec->range[0][1] - spec->range[0][0];
+    yrange = spec->range[1][1] - spec->range[1][0];
+
+    if (xrange == 0.0 || yrange == 0.0) {
+	double ymin = 1.0e+16, ymax = -1.0e+16;
+	double xmin = 1.0e+16, xmax = -1.0e+16;
+
+	for (t=0; t<spec->nobs; t++) {
+	    if (!na(x[t]) && !na(y[t])) {
+		if (yrange == 0.0) {
+		    if (y[t] < ymin) {
+			ymin = y[t];
+		    } else if (y[t] > ymax) {
+			ymax = y[t];
+		    }
+		}
+		if (xrange == 0.0) {
+		    if (x[t] < xmin) {
+			xmin = x[t];
+		    } else if (x[t] > xmax) {
+			xmax = x[t];
+		    }
+		}		
+	    }
+	}
+	if (yrange == 0.0) {
+	    yrange = ymax - ymin;
+	}
+	if (xrange == 0.0) {
+	    xrange = xmax - xmin;
+	}
+    }   
+
+    yoff = 0.03 * yrange;
+
+    fputs("# printing all markers\n", fp);
+
+    for (t=0; t<spec->nobs; t++) {
+	double xoff = 0.0;
+
+	if (!na(x[t]) && !na(y[t])) {
+	    if (x[t] > .90 * xrange) {
+		xoff = -.02 * xrange;
+	    }
+	    fprintf(fp, "set label '%s' at %.8g,%.8g\n", spec->markers[t],
+		    x[t] + xoff, y[t] + yoff);
+	}
+    }
+
+    return 0;
+}
+
 int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 {
     int i, k, t;
@@ -2428,6 +2496,10 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	 spec->code == PLOT_FREQ_GAMMA) && gnuplot_has_style_fill()) {
 	fputs("set style fill solid 0.5\n", fp);
     }  
+
+    if (spec->flags & GPTSPEC_ALL_MARKERS) {
+	print_all_markers(spec, fp);
+    }
 
     fputs("plot \\\n", fp);
 

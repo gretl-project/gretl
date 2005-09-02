@@ -43,7 +43,8 @@ typedef enum {
     GPTSPEC_AUTO_OLS      = 1 << 2,
     GPTSPEC_OLS_HIDDEN    = 1 << 3,
     GPTSPEC_BORDER_HIDDEN = 1 << 4,
-    GPTSPEC_PNG_OUTPUT    = 1 << 5
+    GPTSPEC_PNG_OUTPUT    = 1 << 5,
+    GPTSPEC_ALL_MARKERS   = 1 << 6
 } gptspec_flags; 
 
 #define MAXTITLE 128

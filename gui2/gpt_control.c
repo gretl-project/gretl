@@ -90,6 +90,7 @@ enum {
 #define plot_is_hurst(p)        (p->spec->code == PLOT_HURST)
 
 #define plot_has_regression_list(p) (p->spec->reglist != NULL)
+#define plot_show_all_markers(p) (p->spec->flags & GPTSPEC_ALL_MARKERS)
 
 enum {
     PNG_START,
@@ -1120,6 +1121,11 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    continue;
 	}
 
+	if (strstr(gpline, "printing all markers")) {
+	    spec->flags |= GPTSPEC_ALL_MARKERS;
+	    continue;
+	}	
+
 	if (!strncmp(gpline, "# ", 2)) {
 	    /* ignore unknown comment lines */
 	    continue;
@@ -1567,7 +1573,7 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	get_data_xy(plot, x, y, &data_x, &data_y);
 	if (na(data_x)) return TRUE;
 
-	if (!(plot_has_no_markers(plot)) && 
+	if (!plot_has_no_markers(plot) && !plot_show_all_markers(plot) &&
 	    datainfo->t2 - datainfo->t1 < MAX_MARKERS_SHOWN &&
 	    !plot_is_zooming(plot) &&
 	    !na(data_y)) {
@@ -2232,7 +2238,7 @@ static void render_pngfile (png_plot *plot, int view)
     if (plot->labeled != NULL) {
 	free(plot->labeled);
 	plot->labeled = NULL;
-	plot->format ^= PLOT_MARKERS_UP;
+	plot->format &= ~PLOT_MARKERS_UP;
     }
 #endif
 
