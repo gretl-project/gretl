@@ -45,6 +45,8 @@ version 1.4.2, in progress
   is shown
 - X-Y graphs: when fitted line is shown, add "OLS estimates"
   menu item to see details of the simple regression
+- Graphs with labeled data-points: give option of showing all
+  labels (for n < 55)
 - Windows displaying two to five data series: add toolbar option
   to sort the data, with choice of variable by which to sort
 
