@@ -2,13 +2,19 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
 "/usr/share/sgml/docbook-xml-4.3/docbookx.dtd" [
 
+<!ENTITY % mathextra SYSTEM "mathextra.inc">
 <!ENTITY version "1.0.10">
 <!ENTITY latex "LaTeX">
 <!ENTITY tex "TeX">
+<!ENTITY varepsilon "&#x025B;">
 <!ENTITY opto "<literal>[ -o ]</literal>">
 <!ENTITY cmdcol "82pt">
 <!ENTITY figures "figures_it">
 <!ENTITY rsqu "<emphasis>R</emphasis><superscript>2</superscript>">
+<!ENTITY xt "<emphasis>x<subscript>t</subscript></emphasis>">
+<!ENTITY yt "<emphasis>y<subscript>t</subscript></emphasis>">
+<!ENTITY ut "<emphasis>u<subscript>t</subscript></emphasis>">
+<!ENTITY zt "<emphasis>z<subscript>t</subscript></emphasis>">
 <!ENTITY introduction SYSTEM "chapters_it/intro.xml">
 <!ENTITY starting SYSTEM "chapters_it/starting.xml">
 <!ENTITY modes SYSTEM "chapters_it/modes.xml">
@@ -20,6 +26,7 @@
 <!ENTITY nls SYSTEM "chapters_it/nls.xml">
 <!ENTITY looping SYSTEM "chapters_it/looping.xml">
 <!ENTITY functions SYSTEM "chapters_it/functions.xml">
+<!ENTITY vecm SYSTEM "chapters_it/vecm.xml">
 <!ENTITY optarg SYSTEM "chapters_it/optarg.xml">
 <!ENTITY cmdref SYSTEM "chapters_it/cmdref.xml">
 <!ENTITY cmdlist SYSTEM "chapters_it/cmdlist.xml">
@@ -27,6 +34,7 @@
 <!ENTITY cli SYSTEM "chapters_it/cli.xml">
 <!ENTITY appendices SYSTEM "chapters_it/appendices.xml">
 <!ENTITY biblio SYSTEM "chapters_it/biblio.xml">
+%mathextra;
 ]>
 
 <!-- =============Document Header ============================= -->
@@ -62,7 +70,7 @@
       <holder>Allin Cottrell</holder>
     </copyright>
 
-    <date>Aprile 2005</date>
+    <date>Agosto 2005</date>
 
     <legalnotice id="legalnotice">
       <para>
@@ -91,6 +99,7 @@
   &nls;
   &looping;
   &functions;
+  &vecm;
   &optarg;
   &cmdref;
   &trouble;
