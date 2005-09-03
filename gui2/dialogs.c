@@ -1030,7 +1030,7 @@ void varinfo_dialog (int varnum, int full)
     if (full) {
 	flags = GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
     } else {
-	flags = GRETL_DLG_MODAL | GRETL_DLG_RESIZE;
+	flags = GRETL_DLG_MODAL | GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
     }
 
     vset->varnum = varnum;
