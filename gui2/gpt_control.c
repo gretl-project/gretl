@@ -123,9 +123,6 @@ struct png_plot_t {
     int screen_xmin, screen_ymin;
     unsigned long status; 
     unsigned char format;
-#ifndef OLD_GTK
-    char *labeled;
-#endif
 };
 
 static void render_pngfile (png_plot *plot, int view);
@@ -589,6 +586,7 @@ static GPT_SPEC *plotspec_new (void)
     spec->data = NULL;
     spec->markers = NULL;
     spec->n_markers = 0;
+    spec->labeled = NULL;
     spec->ptr = NULL;
     spec->reglist = NULL;
     spec->n_lines = 0;
@@ -1135,7 +1133,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    continue;
 	}
 
-	if (strstr(gpline, "printing all markers")) {
+	if (strstr(gpline, "printing data labels")) {
 	    spec->flags |= GPTSPEC_ALL_MARKERS;
 	    continue;
 	}	
@@ -1441,7 +1439,7 @@ write_label_to_plot (png_plot *plot, const gchar *label,
     pango_layout_set_text(pl, label, -1);
 
     /* draw the label */
-    gdk_draw_layout (plot->pixmap, plot->invert_gc, x, y, pl);
+    gdk_draw_layout(plot->pixmap, plot->invert_gc, x, y, pl);
 
     /* show the modified pixmap */
     gdk_window_copy_area(plot->canvas->window,
@@ -1485,12 +1483,12 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 
 #ifndef OLD_GTK
     /* need array to keep track of which points are labeled */
-    if (plot->labeled == NULL) {
-	plot->labeled = mymalloc(plot->spec->nobs);
-	if (plot->labeled == NULL) {
+    if (plot->spec->labeled == NULL) {
+	plot->spec->labeled = mymalloc(plot->spec->nobs);
+	if (plot->spec->labeled == NULL) {
 	    return TRUE;
 	}
-	memset(plot->labeled, 0, plot->spec->nobs);
+	memset(plot->spec->labeled, 0, plot->spec->nobs);
     }
 #endif
 
@@ -1541,7 +1539,7 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 
 #ifndef OLD_GTK
     /* if the point is already labeled, skip */
-    if (plot->labeled[best_match]) {
+    if (plot->spec->labeled[best_match]) {
 	return TRUE;
     }
 #endif
@@ -1553,7 +1551,7 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 			    pixel_x, pixel_y);
 #ifndef OLD_GTK
 	/* flag the point as labeled already */
-	plot->labeled[best_match] = 1;
+	plot->spec->labeled[best_match] = 1;
 #endif
     }
 
@@ -1749,7 +1747,10 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	context_help(NULL, GINT_TO_POINTER(HURST));
     }
 #ifndef OLD_GTK
-    else if (!strcmp(item, _("Clear data labels"))) { 
+    else if (!strcmp(item, _("Freeze data labels"))) {
+	plot->spec->flags |= GPTSPEC_ALL_MARKERS;
+	redisplay_edited_png(plot);
+    } else if (!strcmp(item, _("Clear data labels"))) { 
 	zoom_unzoom_png(plot, PNG_START);
     }
 #endif
@@ -1828,6 +1829,7 @@ static void build_plot_menu (png_plot *plot)
 #endif
 	N_("Save to session as icon"),
 #ifndef OLD_GTK
+	N_("Freeze data labels"),
 	N_("Clear data labels"),
 #endif
 	N_("Zoom..."),
@@ -1892,7 +1894,8 @@ static void build_plot_menu (png_plot *plot)
 	}	    
 #ifndef OLD_GTK
 	if (!plot_has_data_markers(plot) &&
-	    !strcmp(plot_items[i], "Clear data labels")) {
+	    (!strcmp(plot_items[i], "Freeze data labels") ||
+	     !strcmp(plot_items[i], "Clear data labels"))) {
 	    i++;
 	    continue;
 	}
@@ -2253,9 +2256,9 @@ static void render_pngfile (png_plot *plot, int view)
 
 #ifndef OLD_GTK
     /* scrap any old record of which points are labeled */
-    if (plot->labeled != NULL) {
-	free(plot->labeled);
-	plot->labeled = NULL;
+    if (plot->spec->labeled != NULL) {
+	free(plot->spec->labeled);
+	plot->spec->labeled = NULL;
 	plot->format &= ~PLOT_MARKERS_UP;
     }
 #endif
@@ -2305,10 +2308,9 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 	free_plotspec(plot->spec);
     }
 
-    /* free allocated elements of png_plot struct */
 #ifndef OLD_GTK
-    if (plot->labeled != NULL) {
-	free(plot->labeled);
+    if (plot->spec->labeled != NULL) {
+	free(plot->spec->labeled);
     }
 #endif
     if (plot->invert_gc != NULL) {
@@ -2655,10 +2657,6 @@ static png_plot *png_plot_new (void)
     plot->cid = 0;
     plot->status = 0;
     plot->format = 0;
-
-#ifndef OLD_GTK
-    plot->labeled = NULL;
-#endif
 
     return plot;
 }

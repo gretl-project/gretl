@@ -386,6 +386,8 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
     if (!err && markers_check != NULL) {
 	if (GTK_TOGGLE_BUTTON(markers_check)->active) {
+	    free(spec->labeled);
+	    spec->labeled = NULL;
 	    spec->flags |= GPTSPEC_ALL_MARKERS;
 	} else {
 	    spec->flags &= ~GPTSPEC_ALL_MARKERS;

@@ -125,6 +125,7 @@ typedef struct {
     int n_markers;             /* number of such markers */
     GPT_LABEL labels[MAX_PLOT_LABELS];  /* textual labels written onto graph */
     int *reglist;              /* regression list for X-Y plot with fitted line */
+    char *labeled;             /* for GUI use */
     void *ptr;                 /* for GUI use */
 } GPT_SPEC;
 

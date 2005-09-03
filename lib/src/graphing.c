@@ -2316,7 +2316,7 @@ print_plot_labelspec (const GPT_LABEL *lbl, int png, FILE *fp)
     }
 }
 
-static int print_all_markers (const GPT_SPEC *spec, FILE *fp)
+static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 {
     const double *x, *y;
     double xrange, yrange;
@@ -2367,10 +2367,15 @@ static int print_all_markers (const GPT_SPEC *spec, FILE *fp)
 
     yoff = 0.03 * yrange;
 
-    fputs("# printing all markers\n", fp);
+    fputs("# printing data labels\n", fp);
 
     for (t=0; t<spec->nobs; t++) {
 	double xoff = 0.0;
+
+	if (spec->labeled != NULL && !spec->labeled[t]) {
+	    /* printing only specified labels */
+	    continue;
+	}
 
 	if (!na(x[t]) && !na(y[t])) {
 	    if (x[t] > .90 * xrange) {
@@ -2498,7 +2503,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     }  
 
     if (spec->flags & GPTSPEC_ALL_MARKERS) {
-	print_all_markers(spec, fp);
+	print_data_labels(spec, fp);
     }
 
     fputs("plot \\\n", fp);

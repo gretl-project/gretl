@@ -2,6 +2,8 @@
 
   <sect1 id="gnuplot-graphs"><title>Gnuplot graphs</title>
 
+    <sect2 id="gnuplot-opts"><title>General gnuplot options</title>
+
     <para>A separate program, <application>gnuplot</application>, is
       called to generate graphs. Gnuplot is a very full-featured
       graphing program with myriad options. It is available from
@@ -55,6 +57,55 @@
       </listitem>
     </itemizedlist>
 
+    </sect2>
+
+    <sect2 id="plot-labels"><title>Displaying data labels</title>      
+
+    <para>
+      In the case of a simple X-Y scatterplot (with or without a line of best
+	  fit displayed), some further options are available if the dataset
+	  includes <quote>case markers</quote> (that is, labels identifying each
+	  observation).<footnote><para>For an example of such a dataset, see
+	      the Ramanathan file <filename>data4-10</filename>: this contains
+	      data on private school enrollment for the 50 states of the USA
+	      plus Washington, DC; the case markers are the two-letter codes for
+	      the states.</para>
+	  </footnote> With a scatter plot displayed, when you move the mouse
+	  pointer over a data point its label is shown on the graph.  By default
+	  these labels are transient: they do not appear in the printed or
+	  copied version of the graph.  They can be removed by selecting
+	  <quote>Clear data labels</quote> from the graph pop-up menu. If you
+	  want the labels to be affixed permanently (so they will show up when
+	  the graph is printed or copied), you have two options.  
+    </para>
+
+    <itemizedlist>
+      <listitem>
+	<para>To affix the labels currently shown on the graph, select
+	  <quote>Freeze data labels</quote> from the graph pop-up menu.
+	</para>
+      </listitem>
+      <listitem>
+	<para>To affix labels for all points in the graph, select
+	  <quote>Edit</quote> from the graph pop-up and check the box titled
+	  <quote>Show all data labels</quote>.  This option is available
+	  only if there are less than 55 data points, and it is unlikely
+	  to produce good results if the points are tightly clustered
+	  since the labels will tend to overlap.
+	</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>
+      To remove labels that have been affixed in either of these ways, select
+      <quote>Edit</quote> from the graph pop-up and uncheck <quote>Show all data
+	labels</quote>.
+    </para>
+
+    </sect2>
+
+    <sect2 id="plot-advanced"><title>Advanced options</title>      
+
     <para>If you know something about
       <application>gnuplot</application> and wish to get finer control
       over the appearance of a graph than is available via the
@@ -99,6 +150,8 @@
 	<graphic fileref="figures/plot_control" align="center"/>
       </screenshot>
     </figure>
+
+    </sect2>
 
   </sect1>
 
