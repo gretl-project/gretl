@@ -38,13 +38,14 @@ typedef enum {
 } gnuplot_flags;
 
 typedef enum {
-    GPTSPEC_TS            = 1 << 0,
-    GPTSPEC_Y2AXIS        = 1 << 1,
-    GPTSPEC_AUTO_OLS      = 1 << 2,
-    GPTSPEC_OLS_HIDDEN    = 1 << 3,
-    GPTSPEC_BORDER_HIDDEN = 1 << 4,
-    GPTSPEC_PNG_OUTPUT    = 1 << 5,
-    GPTSPEC_ALL_MARKERS   = 1 << 6
+    GPTSPEC_TS             = 1 << 0,
+    GPTSPEC_Y2AXIS         = 1 << 1,
+    GPTSPEC_AUTO_OLS       = 1 << 2,
+    GPTSPEC_OLS_HIDDEN     = 1 << 3,
+    GPTSPEC_BORDER_HIDDEN  = 1 << 4,
+    GPTSPEC_PNG_OUTPUT     = 1 << 5,
+    GPTSPEC_ALL_MARKERS    = 1 << 6,
+    GPTSPEC_ALL_MARKERS_OK = 1 << 7,
 } gptspec_flags; 
 
 #define MAXTITLE 128

@@ -643,7 +643,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 			      keycombo, 1, TAB_MAIN_COLS, tbl_len-1, tbl_len);
     gtk_combo_set_popdown_strings(GTK_COMBO(keycombo), keypos_list); 
     gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(keycombo)->entry), spec->keyspec);
-    gtk_widget_show (keycombo);	
+    gtk_widget_show(keycombo);	
 
     /* give option of removing top & right border */
     if (!(spec->flags & GPTSPEC_Y2AXIS)) { 
@@ -689,7 +689,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     }
 
     /* give option of showing all case markers */
-    if (spec->n_markers > 0 && spec->n_markers < 55) { 
+    if (spec->flags & GPTSPEC_ALL_MARKERS_OK) { 
 	tbl_len++;
 	markers_check = gtk_check_button_new_with_label(_("Show all data labels"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
