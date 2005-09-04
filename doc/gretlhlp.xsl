@@ -11,6 +11,10 @@
   <xsl:call-template name="inline.monoseq"/>
 </xsl:template>
 
+<xsl:template match="mathvar">
+  <emphasis><xsl:apply-templates/></emphasis>
+</xsl:template>
+
 <xsl:param name="htmlhelp.hhp" select="'gretl.hhp'"/>
 <xsl:param name="htmlhelp.chm" select="'gretl.chm'"/>
 <xsl:param name="admon.graphics" select="1"/>
