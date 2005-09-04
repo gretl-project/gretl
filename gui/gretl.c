@@ -809,6 +809,7 @@ int main (int argc, char *argv[])
 
     if (!gui_get_data) {
 	register_data(paths.datfile, trydatfile, 1);
+	maybe_display_string_table();
 	*trydatfile = 0;
     }
 

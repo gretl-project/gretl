@@ -753,14 +753,24 @@ static void varheading (const int *list, int v1, int v2,
 			const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
-        
-    pputs(prn, "\n     Obs ");
 
-    for (i=v1; i<=v2; i++) { 
-	pprintf(prn, "%13s", pdinfo->varname[list[i]]);
+    if (csv_format(prn)) {
+	pputs(prn, "Obs");
+	pputc(prn, pdinfo->delim);
+	for (i=v1; i<=v2; i++) { 
+	    pprintf(prn, "%s", pdinfo->varname[list[i]]);
+	    if (i < v2) {
+		pputc(prn, pdinfo->delim);
+	    } 
+	}
+	pputc(prn, '\n');
+    } else {
+	pputs(prn, "\n     Obs ");
+	for (i=v1; i<=v2; i++) { 
+	    pprintf(prn, "%13s", pdinfo->varname[list[i]]);
+	}
+	pputs(prn, "\n\n");
     }
-
-    pputs(prn, "\n\n");
 }
 
 /**
@@ -1367,7 +1377,10 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
  *
  * Print the data for the variables in @list, using the sort order 
  * given in @obsvec.  The first element of @obsvec must contain the
- * number of observations that follow.
+ * number of observations that follow.  By default, printing is plain 
+ * text, formatted in columns using space characters, but if the @prn 
+ * format is set to %GRETL_FORMAT_CSV then printing respects the user's 
+ * choice of column delimiter.
  *
  * Returns: 0 on successful completion, non-zero code on error.
  */
@@ -1376,6 +1389,8 @@ int print_data_sorted (const int *list, const int *obsvec,
 		       const double **Z, const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
+    char sdelim[2] = {0};
+    int csv = csv_format(prn);
     int *pmax = NULL; 
     double xx;
     char obs_string[OBSLEN];
@@ -1411,6 +1426,10 @@ int print_data_sorted (const int *list, const int *obsvec,
 
     varheading(list, 1, list[0], pdinfo, prn);
 
+    if (csv) {
+	sdelim[0] = pdinfo->delim;
+    }
+
     /* print data by observations */
     for (s=0; s<T; s++) {
 	t = obsvec[s+1];
@@ -1418,13 +1437,29 @@ int print_data_sorted (const int *list, const int *obsvec,
 	    continue;
 	}
 	get_obs_string(obs_string, t, pdinfo);
-	sprintf(line, "%8s ", obs_string);
+	if (csv) {
+	    sprintf(line, "%s", obs_string);
+	    strcat(line, sdelim);
+	} else {
+	    sprintf(line, "%8s ", obs_string);
+	}
 	for (i=1; i<=list[0]; i++) {
 	    xx = Z[list[i]][t];
 	    if (na(xx)) {
-		strcat(line, "             ");
+		if (csv) {
+		    strcat(line, "NA");
+		} else {
+		    strcat(line, "             ");
+		}
 	    } else { 
-		bufprintnum(line, xx, pmax[i-1], 13);
+		if (csv) {
+		    bufprintnum(line, xx, pmax[i-1], 0);
+		} else {
+		    bufprintnum(line, xx, pmax[i-1], 13);
+		}
+	    }
+	    if (csv && i < list[0]) {
+		strcat(line, sdelim);
 	    }
 	}
 	pputs(prn, line);

@@ -87,4 +87,6 @@ int tex_doc_format (PRN *prn);
 
 int tex_eqn_format (PRN *prn);
 
+int csv_format (PRN *prn);
+
 #endif /* GRETL_PRN_H */

@@ -38,5 +38,9 @@ void series_view_sort_by (GtkWidget *w, windata_t *vwin);
 
 const int *series_view_get_list (windata_t *vwin);
 
+int series_view_is_sorted (windata_t *vwin);
+
+PRN *vwin_print_sorted_as_csv (windata_t *vwin);
+
 #endif
 

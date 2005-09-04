@@ -1184,8 +1184,11 @@ int csv_selected_to_clipboard (void)
     return err;
 }
 
-int csv_listed_to_clipboard (const int *list)
+#include "series_view.h"
+
+int csv_listed_to_clipboard (windata_t *vwin)
 {
+    const int *list = series_view_get_list(vwin);
     PRN *prn = NULL;
     int i, err = 0;
 
@@ -1197,9 +1200,18 @@ int csv_listed_to_clipboard (const int *list)
 	    }
 	}
 
-	err = bufopen(&prn);
-	if (!err) {
-	    err = data_to_buf_as_csv(list, prn);
+	delimiter_dialog(NULL);
+
+	if (series_view_is_sorted(vwin)) {
+	    prn = vwin_print_sorted_as_csv(vwin);
+	    if (prn == NULL) {
+		err = 1;
+	    }
+	} else {
+	    err = bufopen(&prn);
+	    if (!err) {
+		err = data_to_buf_as_csv(list, prn);
+	    }
 	}
 	if (!err) {
 	    err = prn_to_clipboard(prn, COPY_CSV);

@@ -4720,9 +4720,17 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
 
 void maybe_display_string_table (void)
 {
-    if (gretl_string_table_written()) {
+    static int s_table_waiting;
+
+    if (gretl_string_table_written() || s_table_waiting) {
 	char stname[MAXLEN];
 
+	if (mdata == NULL) {
+	    s_table_waiting = 1;
+	    return;
+	} 
+
+	s_table_waiting = 0;
 	build_path(paths.userdir, "string_table.txt", stname, NULL);
 	view_file(stname, 0, 0, 78, 350, VIEW_FILE);
     }

@@ -665,3 +665,15 @@ int tex_eqn_format (PRN *prn)
 	    (prn->format & GRETL_FORMAT_TEX) &&
 	    (prn->format & GRETL_FORMAT_EQN));
 }
+
+/**
+ * csv_format:
+ * @prn: gretl printing struct.
+ * 
+ * Returns: 1 if the format of @prn is CSV, else 0.
+ */
+
+int csv_format (PRN *prn)
+{
+    return (prn != NULL && (prn->format & GRETL_FORMAT_CSV));
+}

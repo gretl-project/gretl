@@ -285,7 +285,7 @@ static int *make_obsvec (multi_series_view *mview)
     return ov;
 }
 
-static void multi_series_view_print (windata_t *vwin)
+static void multi_series_view_print_sorted (windata_t *vwin)
 {
     multi_series_view *mview = (multi_series_view *) vwin->data;
     const char *pbuf;
@@ -314,6 +314,44 @@ static void multi_series_view_print (windata_t *vwin)
 
     free(obsvec);
     gretl_print_destroy(prn);
+}
+
+int series_view_is_sorted (windata_t *vwin)
+{
+    multi_series_view *mview = (multi_series_view *) vwin->data;
+
+    return mview->sortvar != 0;
+}
+
+PRN *vwin_print_sorted_as_csv (windata_t *vwin)
+{
+    multi_series_view *mview = (multi_series_view *) vwin->data;
+    int *obsvec;
+    PRN *prn;
+    int err = 0;
+
+    obsvec = make_obsvec(mview);
+    if (obsvec == NULL) {
+	return NULL;
+    }
+
+    if (bufopen(&prn)) {
+	free(obsvec);
+	return NULL;
+    }
+
+    gretl_print_set_format(prn, GRETL_FORMAT_CSV);
+    err = print_data_sorted(mview->list, obsvec, (const double **) Z, 
+			    datainfo, prn);
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+	prn = NULL;
+    } 
+
+    free(obsvec);
+
+    return prn;
 }
 
 static int compare_points (const void *a, const void *b)
@@ -372,7 +410,7 @@ void series_view_sort_by (GtkWidget *w, windata_t *vwin)
     qsort((void *) mview->points, (size_t) mview->npoints, 
 	  sizeof mview->points[0], compare_mpoints);
 
-    multi_series_view_print(vwin);
+    multi_series_view_print_sorted(vwin);
 }
 
 static void 

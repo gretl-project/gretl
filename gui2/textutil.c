@@ -24,7 +24,6 @@
 #include "guiprint.h"
 #include "model_table.h"
 #include "clipboard.h"
-#include "series_view.h"
 
 #ifdef OLD_GTK
 # include "menustate.h"
@@ -534,7 +533,7 @@ void window_copy (gpointer data, guint fmt, GtkWidget *w)
     if (MULTI_FORMAT_ENABLED(vwin->role) && SPECIAL_FORMAT(fmt)) {
 	special_text_handler(vwin, fmt, W_COPY);
     } else if (fmt == GRETL_FORMAT_CSV) {
-	csv_listed_to_clipboard(series_view_get_list(vwin));
+	csv_listed_to_clipboard(vwin);
     }
 
     /* copying plain text from window */
