@@ -3,6 +3,8 @@
  <chapter id="chap-graphs"><title>Grafici e diagrammi</title>
 
   <sect1 id="gnuplot-graphs"><title>Grafici gnuplot</title>
+
+    <sect2 id="gnuplot-opts"><title>Opzioni generali di gnuplot</title>
     
     <para>Gretl richiama un programma separato,
     <application>gnuplot</application>, per generare i grafici. Gnuplot
@@ -58,7 +60,55 @@
         finestra del grafico</para>
         </listitem>
     </itemizedlist>
+
+    </sect2>
+
+    <sect2 id="plot-labels"><title>Mostrare le etichette dei dati</title>
+
+    <para>
+      Nel caso di semplici diagrammi a dispersione X-Y (con o senza la retta di
+      regressione), sono disponibili altre opzioni se il dataset contiene
+      <quote>marcatori</quote> (ossia etichette che identificano ogni
+      osservazione)<footnote><para>Per un esempio di dataset simili, si veda il
+      file di Ramanathan <filename>data4-10</filename>: esso contiene dati sulle
+      iscrizioni alle scuole private per i 50 stati degli USA, incluso 
+      Washington DC; i marcatori rappresentano i codici a due lettere per i vari
+      stati.</para></footnote>.
+      Quando il diagramma a dispersione è visualizzato, muovendo il puntatore
+      del mouse su un punto dei dati, viene mostrata l'etichetta corrispondente.
+      In modalità predefinita, queste etichette non compaiono nelle versioni
+      stampate o copiate del grafico, e possono essere rimosse selezionando
+      <quote>Cancella le etichette dei dati</quote> dal menù pop-up del grafico.
+      Se si desidera rendere permanenti le etichette (cosicché siano visibili
+      anche se il grafico è stampato o copiato), ci sono due opzioni:
+    </para>
+    <itemizedlist>
+      <listitem>
+       <para>Per fissare le etichette che sono mostrate in un dato momento,
+       selezionare <quote>Fissa le etichette dei dati</quote> dal menù pop-up
+       del grafico.
+       </para>
+      </listitem>
+      <listitem>
+       <para>Per fissare le etichette per tutti i punti del grafico, selezionare
+         <quote>Modifica</quote> dal menù pop-up e marcare la casella
+         <quote>Mostra tutte le etichette dei dati</quote>. Questa opzione è
+         disponibile solo se ci sono meno di 55 punti, e produrrà i risultati
+         migliori se i punti del grafico non sono troppo addensati, altrimenti
+         le etichette tenderanno a sovrapporsi.
+       </para>
+      </listitem>
+    </itemizedlist>
+
+    <para>
+      Per rimuovere le etichette che sono state fissate in uno di questi due
+      modi, basta selezionare <quote>Modifica</quote> dal menù pop-up e
+      disattivare la casella <quote>Mostra tutte le etichette dei dati</quote>.
+    </para>
+
+    </sect2>
     
+    <sect2 id="plot-advanced"><title>Opzioni avanzate</title>
     
     <para>Se si conosce <application>gnuplot</application> e si desidera
     un controllo sull'aspetto del grafico più preciso di quello fornito
@@ -102,6 +152,8 @@
 	<graphic fileref="&figures;/plot_control" align="center"/>
       </screenshot>
     </figure>
+
+    </sect2>
 
   </sect1>
 
