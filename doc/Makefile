@@ -64,7 +64,7 @@ thumbs_it: manual_it.pdf
 	thumbpdf manual_it
 	pdfjadetex manual_it
 
-manual.tex: manual.xml $(CHAPTERS) mathextra.inc $(DSL) $(MATHSS) $(TITLESS) \
+manual.tex: manual.xml $(CHAPTERS) $(CMDLIST) mathextra.inc $(DSL) $(MATHSS) $(TITLESS) \
 	$(CMDLIST) jadetex.cfg.en lucidabr.tex
 	rm -f jadetex.cfg && ln -s jadetex.cfg.en jadetex.cfg
 	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
@@ -76,7 +76,7 @@ manual-a4.tex: manual-a4.xml $(CHAPTERS) mathextra.inc $(ALTDSL) $(MATHSS) \
 	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
-manual_it.tex: manual_it.xml $(CHAPTERS_IT) mathextra.inc $(ALTDSL) $(MATHSS) \
+manual_it.tex: manual_it.xml $(CHAPTERS_IT) $(CMDLIST_IT) mathextra.inc $(ALTDSL) $(MATHSS) \
 	$(TITLESS) $(CMDLIST_IT) jadetex.cfg.it lucidabr.tex
 	rm -f jadetex.cfg && ln -s jadetex.cfg.it jadetex.cfg
 	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
