@@ -30,7 +30,7 @@ enum {
 #ifndef BUILDING_PLUGIN
 typedef struct dialog_t_ dialog_t;
 
-void copy_format_dialog (windata_t *vwin, int multicopy);
+void copy_format_dialog (windata_t *vwin, int multicopy, int action);
 #endif
 
 void errbox (const char *msg);

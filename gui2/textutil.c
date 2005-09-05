@@ -390,12 +390,6 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
 
 #endif /* old versus new gtk */
 
-enum {
-    W_PREVIEW,
-    W_COPY,
-    W_SAVE
-};
-
 static int special_text_handler (windata_t *vwin, guint fmt, int what)
 {
     int cmd = vwin->role;
@@ -525,15 +519,13 @@ void var_tex_callback (gpointer data, guint opt, GtkWidget *w)
 #define SPECIAL_FORMAT(f) ((f & GRETL_FORMAT_TEX) || \
                            (f & GRETL_FORMAT_RTF)) 
 
-void window_copy (gpointer data, guint fmt, GtkWidget *w) 
+static void window_copy_or_save (windata_t *vwin, guint fmt, int action) 
 {
-    windata_t *vwin = (windata_t *) data;
-
     /* copying from window with special stuff enabled */
     if (MULTI_FORMAT_ENABLED(vwin->role) && SPECIAL_FORMAT(fmt)) {
-	special_text_handler(vwin, fmt, W_COPY);
+	special_text_handler(vwin, fmt, action);
     } else if (fmt == GRETL_FORMAT_CSV) {
-	csv_listed_to_clipboard(vwin);
+	csv_copy_listed_vars(vwin, action);
     }
 
     /* copying plain text from window */
@@ -543,7 +535,7 @@ void window_copy (gpointer data, guint fmt, GtkWidget *w)
 	     fmt == GRETL_FORMAT_SELECTION) {
 	GtkTextBuffer *textbuf = 
 	    gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-	PRN *textprn;
+	gchar *selbuf = NULL;
 	int myfmt = fmt;
 
 	if (myfmt == GRETL_FORMAT_SELECTION) {
@@ -553,22 +545,21 @@ void window_copy (gpointer data, guint fmt, GtkWidget *w)
 	if (gtk_text_buffer_get_selection_bounds(textbuf, NULL, NULL)) {
 	    /* there is a selection in place */
 	    GtkTextIter selstart, selend;
-	    gchar *selbuf;
 
 	    gtk_text_buffer_get_selection_bounds(textbuf, &selstart, &selend);
 	    selbuf = gtk_text_buffer_get_text(textbuf, &selstart, &selend, FALSE);
+	} else {
+	    /* no selection: copy everything */
+	    selbuf = textview_get_text(GTK_TEXT_VIEW(vwin->w)); 
+	}
+
+	if (selbuf != NULL) {
+	    PRN *textprn;
+
 	    textprn = gretl_print_new_with_buffer(selbuf);
 	    prn_to_clipboard(textprn, myfmt);
 	    gretl_print_destroy(textprn);
-	    return;
-	} else {
-	    /* no selection: copy everything */
-	    char *buf = textview_get_text(GTK_TEXT_VIEW(vwin->w)); 
-
-	    textprn = gretl_print_new_with_buffer(buf);
-	    prn_to_clipboard(textprn, myfmt);
-	    gretl_print_destroy(textprn);
-	}
+	}	    
     }
 #else
     else if (fmt == GRETL_FORMAT_TXT) {
@@ -583,6 +574,18 @@ void window_copy (gpointer data, guint fmt, GtkWidget *w)
 	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
     }
 #endif
+}
+
+void window_copy (gpointer data, guint fmt, GtkWidget *w) 
+{
+    windata_t *vwin = (windata_t *) data;
+
+    window_copy_or_save(vwin, fmt, W_COPY);
+}
+
+void window_save (windata_t *vwin, guint fmt) 
+{
+    window_copy_or_save(vwin, fmt, W_SAVE);
 }
 
 /* native printing from gretl windows */

@@ -20,6 +20,12 @@
 #ifndef TEXTUTIL_H
 #define TEXTUTIL_H
 
+enum {
+    W_PREVIEW,
+    W_COPY,
+    W_SAVE
+};
+
 int prn_to_clipboard (PRN *prn, int copycode);
 
 void window_tex_callback (GtkWidget *w, windata_t *vwin);
@@ -31,6 +37,8 @@ void model_tex_save (gpointer data, guint fmt, GtkWidget *w);
 void var_tex_callback (gpointer data, guint opt, GtkWidget *w);
 
 void window_copy (gpointer data, guint how, GtkWidget *w);
+
+void window_save (windata_t *vwin, guint fmt);
 
 void text_replace (windata_t *mydata, guint u, GtkWidget *widget);
 

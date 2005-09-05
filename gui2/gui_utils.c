@@ -384,7 +384,7 @@ static GtkItemFactoryEntry VAR_items[] = {
 
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
 {
-    copy_format_dialog((windata_t *) p, 1);
+    copy_format_dialog((windata_t *) p, 1, W_COPY);
 }
 
 #ifdef ENABLE_NLS
@@ -1574,7 +1574,7 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
 
 static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 {
-    copy_format_dialog(vwin, MULTI_FORMAT_ENABLED(vwin->role));
+    copy_format_dialog(vwin, MULTI_FORMAT_ENABLED(vwin->role), W_COPY);
 }
 
 static void add_data_callback (GtkWidget *w, windata_t *vwin)

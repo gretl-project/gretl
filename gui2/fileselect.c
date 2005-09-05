@@ -340,6 +340,21 @@ static void set_startdir (char *startdir, int action)
 #endif
 }
 
+static void filesel_save_prn_buffer (const char *fname, PRN *prn)
+{
+    FILE *fp = gretl_fopen(fname, "w");
+
+    if (fp == NULL) {
+	sprintf(errtext, _("Couldn't write to %s"), fname);
+	errbox(errtext);
+    } else {
+	const char *buf = gretl_print_get_buffer(prn);
+
+	fputs(buf, fp);
+	fclose(fp);
+    }
+}
+
 static void filesel_open_script (const char *fname)
 {
     int spos;
@@ -494,7 +509,7 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	return;
     }
 
-    /* now for the save options */
+    /* now for the save/export options */
 
     if (action > SAVE_BIN2 && action != EXPORT_DAT && dat_ext(fname, 1)) { 
 	return;
@@ -1006,24 +1021,18 @@ void file_selector (const char *msg, int action, gpointer data)
 					savename);
 	if (!strstr(savename, startdir)) do_glob = 0;
 	g_free(savename);
-    }
-
-    else if (EXPORT_ACTION(action) && paths.datfile[0]) {
+    } else if (EXPORT_ACTION(action) && paths.datfile[0]) {
 	char *savename = suggested_exportname(paths.datfile, action);
 
 	gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
 					savename);
 	if (!strstr(savename, startdir)) do_glob = 0;
 	g_free(savename);
-    }	
-
-    else if ((action == SAVE_SESSION) && *scriptfile != '\0') {
+    } else if ((action == SAVE_SESSION) && *scriptfile != '\0') {
 	gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
 					scriptfile);
 	if (!strstr(scriptfile, startdir)) do_glob = 0;
-    }
-
-    else if (action == SET_PATH) {
+    } else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 
 	if (strvar != NULL && slashpos(strvar) > 0) {
@@ -1056,7 +1065,7 @@ void file_selector (const char *msg, int action, gpointer data)
 
     if (*fsinfo.fname != '\0') {
 	file_selector_process_result(fsinfo.fname, action, data);
-    }
+    } 
 }
 
 # endif
@@ -1103,9 +1112,7 @@ void file_selector (const char *msg, int action, gpointer data)
 	    gotdir = 1;
 	}
 	g_free(savename);
-    }
-
-    else if (EXPORT_ACTION(action) && paths.datfile[0]) {
+    } else if (EXPORT_ACTION(action) && paths.datfile[0]) {
 	char *savename = suggested_exportname(paths.datfile, action);
 	char startd[MAXLEN];
 
@@ -1116,9 +1123,7 @@ void file_selector (const char *msg, int action, gpointer data)
 	    gotdir = 1;
 	}
 	g_free(savename);
-    }	
-
-    else if (action == SET_PATH) {
+    } else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 	char startd[MAXLEN];
 
@@ -1149,10 +1154,12 @@ void file_selector (const char *msg, int action, gpointer data)
 
     if (*fsinfo.fname != '\0') {
 	file_selector_process_result(fsinfo.fname, action, data);
-    }
+    } 
 }
 
 # endif /* old gtk */
 
 #endif /* end of non-MS Windows code */
+
+
 

@@ -495,13 +495,15 @@ void delimiter_dialog (gretlopt *optp)
     gtk_widget_show(dialog);
 }
 
-/* selection of format in which to copy material to clipboard  */
+/* selection of format in which to copy material to clipboard,
+   or save to file */
 
 struct format_info {
     GtkWidget *dialog;
     windata_t *vwin;
     int format;
     int multi;
+    int action;
 };
 
 static void destroy_format_dialog (GtkWidget *w, struct format_info *finfo)
@@ -512,11 +514,11 @@ static void destroy_format_dialog (GtkWidget *w, struct format_info *finfo)
 static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
 {
     gtk_widget_hide(finfo->dialog);
-#ifdef OLD_GTK
-    window_copy(finfo->vwin, finfo->format, NULL);
-#else
-    window_copy(finfo->vwin, finfo->format, w);
-#endif
+    if (finfo->action == W_COPY) {
+	window_copy(finfo->vwin, finfo->format, NULL);
+    } else {
+	window_save(finfo->vwin, finfo->format);
+    }
     gtk_widget_destroy(finfo->dialog);
 }
 
@@ -562,7 +564,7 @@ static void set_copy_format (GtkWidget *w, struct format_info *finfo)
 
 #ifdef OLD_GTK
 
-void copy_format_dialog (windata_t *vwin, int unused)
+void copy_format_dialog (windata_t *vwin, int unused, int action)
 {
     GtkWidget *dialog, *tempwid, *button, *hbox;
     GtkWidget *myvbox;
@@ -579,6 +581,7 @@ void copy_format_dialog (windata_t *vwin, int unused)
     finfo->dialog = dialog;
     finfo->format = GRETL_FORMAT_TEX;
     finfo->multi = 1;
+    finfo->action = action;
 
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(destroy_format_dialog), finfo);
@@ -586,7 +589,11 @@ void copy_format_dialog (windata_t *vwin, int unused)
     myvbox = gtk_vbox_new(FALSE, 5);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    tempwid = gtk_label_new (_("Copy as:"));
+    if (action == W_COPY) {
+	tempwid = gtk_label_new (_("Copy as:"));
+    } else {
+	tempwid = gtk_label_new (_("Save as:"));
+    }
     gtk_box_pack_start (GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
     gtk_widget_show(tempwid);
     gtk_box_pack_start (GTK_BOX(myvbox), hbox, TRUE, TRUE, 5);
@@ -715,7 +722,7 @@ CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
 
 #define can_do_csv(v) (v->role == PRINT && v->data != NULL)
 
-void copy_format_dialog (windata_t *vwin, int multicopy)
+void copy_format_dialog (windata_t *vwin, int multicopy, int action)
 {
     GtkWidget *dialog, *tempwid, *hbox;
     GtkWidget *button;
@@ -735,6 +742,7 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
 
     finfo->format = pref = preferred_format(0, multicopy);
     finfo->multi = multicopy;
+    finfo->action = action;
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(destroy_format_dialog), finfo);

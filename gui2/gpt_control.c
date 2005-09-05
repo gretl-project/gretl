@@ -1751,7 +1751,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	plot->spec->flags |= GPTSPEC_ALL_MARKERS;
 	redisplay_edited_png(plot);
     } else if (!strcmp(item, _("Clear data labels"))) { 
-	zoom_unzoom_png(plot, PNG_START);
+	zoom_unzoom_png(plot, PNG_REDISPLAY);
     }
 #endif
     else if (!strcmp(item, _("Zoom..."))) { 
@@ -2027,7 +2027,8 @@ static int zoom_unzoom_png (png_plot *plot, int view)
 
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 				  zoomname);
-    } else { /* PNG_UNZOOM or PNG_START */
+    } else { 
+	/* PNG_UNZOOM or PNG_START */
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 				  plot->spec->fname);
     }

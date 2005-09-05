@@ -562,7 +562,10 @@ void file_save_callback (GtkWidget *w, gpointer data)
     guint u = 0;
     windata_t *vwin = (windata_t *) data;
 
-    if (g_object_get_data(G_OBJECT(vwin->dialog), "text_out")) {
+    if (0 && vwin->role == PRINT && vwin->data != NULL) {
+	copy_format_dialog(vwin, 0, W_SAVE); /* FIXME!! */
+	return;
+    } else if (g_object_get_data(G_OBJECT(vwin->dialog), "text_out")) {
 	u = SAVE_OUTPUT;
     } else {
 	switch (vwin->role) {
