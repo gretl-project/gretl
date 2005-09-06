@@ -194,11 +194,18 @@ static int latex_is_ok (void)
     return latex_ok;
 }
 
+static void model_output_save_callback (gpointer p, guint u, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+
+    copy_format_dialog(vwin, 1, W_SAVE);    
+}
+
 #ifndef OLD_GTK
 
 static GtkItemFactoryEntry model_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, 
+    { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, 
       "<StockItem>", GTK_STOCK_SAVE_AS },
     { N_("/File/Save to session as icon"), NULL, remember_model, 0, NULL, GNULL },
     { N_("/File/Save as icon and close"), NULL, remember_model, 1, NULL, GNULL },
@@ -249,7 +256,7 @@ static GtkItemFactoryEntry model_items[] = {
 
 static GtkItemFactoryEntry model_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, NULL },
+    { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, NULL },
     { N_("/File/Save to session as icon"), NULL, remember_model, 0, NULL },
     { N_("/File/Save as icon and close"), NULL, remember_model, 1, NULL },
 # if defined(USE_GNOME)
@@ -327,7 +334,7 @@ static GtkItemFactoryEntry VAR_tex_items[] = {
 
 static GtkItemFactoryEntry VAR_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, "<StockItem>", 
+    { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, "<StockItem>", 
       GTK_STOCK_SAVE_AS },
     { N_("/File/Save to session as icon"), NULL, remember_var, 0, NULL, GNULL },
     { N_("/File/Save as icon and close"), NULL, remember_var, 1, NULL, GNULL },
@@ -369,7 +376,7 @@ static GtkItemFactoryEntry VAR_tex_items[] = {
 
 static GtkItemFactoryEntry VAR_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, NULL },
+    { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, NULL },
     { N_("/File/Save to session as icon"), NULL, remember_var, 0, NULL },
     { N_("/File/Save as icon and close"), NULL, remember_var, 1, NULL },
 # if defined(USE_GNOME)
@@ -1616,6 +1623,11 @@ static void window_help (GtkWidget *w, windata_t *vwin)
     context_help(NULL, GINT_TO_POINTER(vwin->role));
 }
 
+static void multi_save_as_callback (GtkWidget *w, windata_t *vwin)
+{
+    copy_format_dialog(vwin, MULTI_FORMAT_ENABLED(vwin->role), W_SAVE);
+}
+
 struct viewbar_item {
     const char *str;
 #ifndef OLD_GTK
@@ -1753,10 +1765,6 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
-	if (!save_as_ok && viewbar_items[i].flag == SAVE_AS_ITEM) {
-	    continue;
-	}
-
 	if (!run_ok && viewbar_items[i].flag == RUN_ITEM) {
 	    continue;
 	}
@@ -1788,17 +1796,10 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
-#ifndef OLD_GTK
 	if (viewbar_items[i].flag == COPY_ITEM && 
 	    !editor_role(vwin->role)) {
 	    toolfunc = choose_copy_format_callback;
 	}
-#else
-        if (viewbar_items[i].flag == COPY_ITEM && 
-            MULTI_FORMAT_ENABLED(vwin->role)) {
-            toolfunc = choose_copy_format_callback;
-        }
-#endif
 
 	if (viewbar_items[i].flag == SAVE_ITEM) { 
 	    if (!edit_ok || vwin->role == SCRIPT_OUT) {
@@ -1809,6 +1810,15 @@ static void make_viewbar (windata_t *vwin, int text_out)
 		toolfunc = buf_edit_save;
 	    } else if (vwin->role == GR_PLOT) {
 		toolfunc = save_plot_commands_callback;
+	    }
+	}
+
+	if (viewbar_items[i].flag == SAVE_AS_ITEM) {
+	    if (!save_as_ok) {
+		continue;
+	    } else if (MULTI_FORMAT_ENABLED(vwin->role) ||
+		       (vwin->role == PRINT && vwin->data != NULL)) {
+		toolfunc = multi_save_as_callback;
 	    }
 	}
 

@@ -233,8 +233,6 @@ static void gretl_clipboard_set (int copycode)
 
 #endif
 
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
-
 int prn_to_clipboard (PRN *prn, int fmt)
 {
     const char *buf = gretl_print_get_buffer(prn);
@@ -247,8 +245,12 @@ int prn_to_clipboard (PRN *prn, int fmt)
     gretl_clipboard_free();
 
     if (fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT) { 
+#ifndef OLD_GTK
 	/* need to convert from utf8 */
 	gchar *trbuf = my_locale_from_utf8(buf);
+#else
+	const char *trbuf = buf;
+#endif
 
 	if (trbuf == NULL) {
 	    err = 1;
@@ -257,14 +259,17 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	    if (clipboard_buf == NULL) {
 		err = 1;
 	    }
-	    g_free(trbuf);
 	} else if (fmt == GRETL_FORMAT_RTF_TXT) {
 	    clipboard_buf = dosify_buffer(trbuf, fmt);
 	    if (clipboard_buf == NULL) {
 		err = 1;
 	    }
+	}
+#ifndef OLD_GTK
+	if (trbuf != NULL) {
 	    g_free(trbuf);
 	}
+#endif
     } else { 
 	/* copying TeX, RTF or CSV */
 	clipboard_buf = gretl_strdup(buf);
@@ -277,31 +282,5 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
     return err;
 }
-
-#else /* plain GTK, no utf-8 */
-
-int prn_to_clipboard (PRN *prn, int copycode)
-{
-    const char *buf;
-    int err = 0;
-
-    buf = gretl_print_get_buffer(prn);
-
-    if (buf == NULL || *buf == '\0') {
-	return 0;
-    }
-
-    gretl_clipboard_free();
-    clipboard_buf = gretl_strdup(buf);
-    err = (clipboard_buf == NULL);
-
-    if (!err) {
-	gretl_clipboard_set(copycode);
-    }
-
-    return err;
-}
-
-#endif /* switch for prn_to_clipboard */
 
 

@@ -307,9 +307,6 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     case SAVE_TEX:
 	file_selector(_("Save LaTeX file"), file_code, FSEL_DATA_MISC, vwin->data);
 	break;
-    case SAVE_MODEL:
-	file_selector(_("Save model output"), file_code, FSEL_DATA_MISC, vwin);
-	break; 
     case SAVE_GP_CMDS:
 	file_selector(_("Save gnuplot commands"), file_code, FSEL_DATA_MISC, vwin);
 	break;
@@ -563,10 +560,7 @@ void file_save_callback (GtkWidget *w, gpointer data)
     guint u = 0;
     windata_t *vwin = (windata_t *) data;
 
-    if (vwin->role == PRINT && vwin->data != NULL) {
-	copy_format_dialog(vwin, 0, W_SAVE);
-	return;
-    } else if (g_object_get_data(G_OBJECT(vwin->dialog), "text_out")) {
+    if (g_object_get_data(G_OBJECT(vwin->dialog), "text_out")) {
 	u = SAVE_OUTPUT;
     } else {
 	switch (vwin->role) {

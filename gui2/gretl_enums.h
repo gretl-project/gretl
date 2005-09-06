@@ -110,10 +110,10 @@ enum file_ops {
     END_SAVE_DATA,  /* marker for end of data-saving section */
     SAVE_CMDS,
     SAVE_TEX,
+    SAVE_RTF,
     SAVE_SCRIPT,
     SAVE_OUTPUT,
     SAVE_SESSION,
-    SAVE_MODEL,
     SAVE_GNUPLOT,
     SAVE_BOXPLOT_EPS,
     SAVE_BOXPLOT_PS,

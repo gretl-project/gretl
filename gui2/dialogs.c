@@ -639,7 +639,7 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
     finfo = mymalloc(sizeof *finfo);
     if (finfo == NULL) return;
 
-    dialog = gretl_dialog_new(_("gretl: copy formats"), vwin->dialog,
+    dialog = gretl_dialog_new(_("gretl: select format"), vwin->dialog, 
 			      GRETL_DLG_BLOCK);
 
     finfo->vwin = vwin;
@@ -655,7 +655,7 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
     myvbox = gtk_vbox_new(FALSE, 5);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    tempwid = gtk_label_new(_("Copy as:"));
+    tempwid = gtk_label_new((action == W_COPY)? _("Copy as:") : _("Save as"));
     gtk_box_pack_start(GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
     gtk_widget_show(tempwid);
     gtk_box_pack_start(GTK_BOX(myvbox), hbox, TRUE, TRUE, 5);

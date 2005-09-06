@@ -97,7 +97,6 @@ static struct extmap action_map[] = {
     { SAVE_CMDS,         ".inp" },
     { SAVE_SCRIPT,       ".inp" },
     { SAVE_CONSOLE,      ".inp" },
-    { SAVE_MODEL,        ".txt" },
     { SAVE_SESSION,      ".gretl" },
     { SAVE_GP_CMDS,      ".plt" },
     { SAVE_BOXPLOT_EPS,  ".eps" },
@@ -112,6 +111,7 @@ static struct extmap action_map[] = {
     { EXPORT_DAT,        ".dat" },
     { SAVE_OUTPUT,       ".txt" },
     { SAVE_TEX,          ".tex" },
+    { SAVE_RTF,          ".rtf" },
     { OPEN_DATA,         ".gdt" },
     { APPEND_DATA,       ".gdt" },    
     { OPEN_SCRIPT,       ".inp" },
@@ -341,7 +341,7 @@ static void set_startdir (char *startdir, int action)
 #endif
 }
 
-static void filesel_save_prn_buffer (const char *fname, PRN *prn)
+static void filesel_save_prn_buffer (PRN *prn, const char *fname)
 {
     FILE *fp = gretl_fopen(fname, "w");
 
@@ -522,7 +522,11 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     }
 
     if (src == FSEL_DATA_PRN) {
-	filesel_save_prn_buffer(fname, (PRN *) data);
+	if (action == SAVE_TEX) {
+	    save_latex((PRN *) data, fname);
+	} else {
+	    filesel_save_prn_buffer((PRN *) data, fname);
+	}
     } else if (SAVE_DATA_ACTION(action)) {
 	int overwrite = 0;
 
@@ -553,10 +557,6 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	}
     } else if (action == SAVE_SESSION) {
 	save_session(fname);
-    } else if (action == SAVE_TEX) {
-	PRN *prn = (PRN *) data;
-
-	save_latex(prn, fname);
     } else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 
@@ -630,7 +630,6 @@ static struct winfilter get_filter (int action, gpointer data)
 	{SAVE_CMDS,    { N_("gretl command files (*.inp)"), "*.inp" }},
 	{SAVE_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},
 	{SAVE_CONSOLE, { N_("gretl command files (*.inp)"), "*.inp" }},
-	{SAVE_MODEL,   { N_("text files (*.txt)"), "*.txt" }},
 	{SAVE_SESSION, { N_("session files (*.gretl)"), "*.gretl" }},
 	{SAVE_BOXPLOT_EPS, { N_("postscript files (*.eps)"), "*.eps" }},
 	{SAVE_BOXPLOT_PS,  { N_("postscript files (*.ps)"), "*.ps" }},
@@ -644,6 +643,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{EXPORT_DAT,   { N_("PcGive files (*.dat)"), "*.dat" }},
 	{SAVE_OUTPUT,  { N_("text files (*.txt)"), "*.txt" }},
 	{SAVE_TEX,     { N_("TeX files (*.tex)"), "*.tex" }},
+	{SAVE_RTF,     { N_("RTF files (*.rtf)"), "*.rtf" }},
 	{OPEN_DATA,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{APPEND_DATA,  { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{OPEN_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},
