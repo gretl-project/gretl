@@ -38,6 +38,7 @@ struct JohansenInfo_ {
     int *list;            /* list of endogenous and exogenous vars */
     int *difflist;        /* list containing first diffs of endogenous vars */
     int *biglist;         /* list containing all regressors in each eqn */
+    int *exolist;         /* list containing user-listed exogenous vars */
     int rank;             /* if specified, chosen cointegration rank, else 0 */
     int seasonals;        /* number of seasonal dummies included */
     gretl_matrix *u;      /* resids, VAR in differences */

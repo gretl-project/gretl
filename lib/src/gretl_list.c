@@ -995,6 +995,61 @@ int gretl_list_has_separator (const int *list)
     return 0;
 }
 
+/**
+ * gretl_list_split_on_separator:
+ * @list: source list.
+ * @plist1: pointer to accept first sub-list.
+ * @plist2: pointer to accept second sub-list.
+ *
+ * If @list contains the list separator, #LISTSEP, creates two
+ * sub-lists, one containing the elements of @list preceding
+ * the separator and one containing the elements following
+ * the separator.  The sub-lists are newly allocated, and assigned
+ * as the content of @plist1 and @plist2 respectively.
+ *
+ * Returns: 0 on success, %E_ALLOC is memory allocation fails,
+ * or %E_DATA if @list does not contain a separator.
+ */
+
+int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
+{
+    int *list1 = NULL, *list2 = NULL;
+    int i, n = -1;
+
+    for (i=1; i<list[0] && n<0; i++) {
+	if (list[i] == LISTSEP) {
+	    n = i;
+	}
+    }
+
+    if (n < 0) {
+	return 1;
+    }
+
+    list1 = gretl_list_new(n - 1);
+    if (list1 == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=1; i<n; i++) {
+	list1[i] = list[i];
+    }
+
+    list2 = gretl_list_new(list[0] - n);
+    if (list2 == NULL) {
+	free(list1);
+	return E_ALLOC;
+    }
+
+    for (i=1; i<=list2[0]; i++) {
+	list2[i] = list[i + n];
+    }
+
+    *plist1 = list1;
+    *plist2 = list2;
+    
+    return 0;
+}
 
 /**
  * gretl_list_duplicates:

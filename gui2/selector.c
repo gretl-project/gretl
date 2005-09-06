@@ -1472,7 +1472,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
     }
 #endif
 
-    if (sr->code == TSLS || sr->code == VAR) {
+    if (sr->code == TSLS || sr->code == VAR || sr->code == VECM) {
 #ifndef OLD_GTK
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->ruvars));
 	gtk_tree_model_get_iter_first(model, &iter);
@@ -1976,9 +1976,17 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
 	auxiliary_varlist_box(sr, right_vbox);
+    } else if (sr->code == VECM) {
+	lag_order_spin(sr, right_vbox, LAG_AND_RANK);
+	tmp = gtk_hseparator_new();
+	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
+	gtk_widget_show(tmp);
+	tmp = gtk_label_new(_("Exogenous variables"));
+	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
+	gtk_widget_show(tmp);
+	auxiliary_varlist_box(sr, right_vbox);	
     } else if (VEC_CODE(sr->code)) {
-	lag_order_spin(sr, right_vbox, (sr->code == VECM)? 
-		       LAG_AND_RANK : LAG_ONLY);
+	lag_order_spin(sr, right_vbox, LAG_ONLY);
     }
 
     tmp = gtk_hseparator_new();
@@ -2014,6 +2022,9 @@ static void selector_init (selector *sr, guint code, const char *title,
 
     if (VEC_CODE(code)) {
 	dlgheight = 450;
+	if (code == VECM) {
+	    dlgheight += 80;
+	}
     }
 
     if (WANT_TOGGLES(code)) {

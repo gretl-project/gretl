@@ -228,6 +228,7 @@ static void johansen_info_free (JohansenInfo *jv)
     free(jv->list);
     free(jv->difflist);
     free(jv->biglist);
+    free(jv->exolist);
 
     gretl_matrix_free(jv->u);
     gretl_matrix_free(jv->v);
@@ -2813,6 +2814,7 @@ johansen_info_new (const int *list, int rank, gretlopt opt)
 
 	    jv->difflist = NULL;
 	    jv->biglist = NULL;
+	    jv->exolist = NULL; /* FIXME */
 
 	    jv->rank = rank;
 
@@ -2901,8 +2903,10 @@ johansen_VAR_new (const int *list, int rank, int order, gretlopt opt)
     return var;
 }
 
+/* FIXME below: exolist is not actually handled yet */
+
 static GRETL_VAR *johansen_driver (int order, int rank, const int *list, 
-				   double ***pZ, DATAINFO *pdinfo,
+				   const int *exolist, double ***pZ, DATAINFO *pdinfo,
 				   gretlopt opt, PRN *prn)
 {
     PRN *varprn = NULL;
@@ -2938,6 +2942,12 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 	jvar->err = 1;
 	return jvar;
     }
+
+#if 0 /* FIXME */
+    if (exolist != NULL) {
+	l0 += exolist[0];
+    }
+#endif
 
     if (seasonals) {
 	if (pdinfo->pd > 1) {
@@ -2976,6 +2986,7 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 	goto johansen_exit;
     }
 
+    /* FIXME exog vars */
     varlist[0] = resids.levels_list[0] = l0 - hasconst;
 
     /* try to respect the chosen sample period: don't limit the
@@ -3135,7 +3146,7 @@ johansen_exit:
 GRETL_VAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn)
 {
-    return johansen_driver(order, 0, list, pZ, pdinfo, opt, prn);
+    return johansen_driver(order, 0, list, NULL, pZ, pdinfo, opt, prn);
 }
 
 /**
@@ -3157,7 +3168,7 @@ int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pd
     GRETL_VAR *jvar;
     int err;
 
-    jvar = johansen_driver(order, 0, list, pZ, pdinfo, opt, prn);
+    jvar = johansen_driver(order, 0, list, NULL, pZ, pdinfo, opt, prn);
     if (jvar == NULL) {
 	err = E_ALLOC;
     } else {
@@ -3191,17 +3202,32 @@ GRETL_VAR *vecm (int order, int rank, const int *list,
 		 gretlopt opt, PRN *prn)
 {
     GRETL_VAR *jvar = NULL;
+    int *endo_list = NULL, *exo_list = NULL;
+    const int *vecm_list = list;
+    int err = 0;
+
+    if (gretl_list_has_separator(list)) {
+	err = gretl_list_split_on_separator(list, &endo_list, &exo_list);
+	if (err) {
+	    return jvar;
+	}
+	vecm_list = endo_list;
+    } 
 
     if (rank <= 0 || rank > list[0]) {
 	sprintf(gretl_errmsg, _("vecm: rank %d is out of bounds"), rank);
 	return jvar;
     }
 
-    jvar = johansen_driver(order, rank, list, pZ, pdinfo, opt | OPT_S, prn);
+    jvar = johansen_driver(order, rank, vecm_list, exo_list,
+			   pZ, pdinfo, opt | OPT_S, prn);
     
     if (jvar != NULL && !jvar->err) {
 	gretl_VAR_print(jvar, pdinfo, OPT_NONE, prn);
     }
+
+    free(endo_list);
+    free(exo_list);
 
     return jvar;
 }
@@ -3225,9 +3251,10 @@ int vecm_simple (int order, int rank, const int *list,
 		 gretlopt opt, PRN *prn)
 {
     GRETL_VAR *jvar;
-    int err;
+    int err = 0;
 
     jvar = vecm(order, rank, list, pZ, pdinfo, opt, prn);
+
     if (jvar == NULL) {
 	err = E_ALLOC;
     } else {
