@@ -21,6 +21,7 @@
 #include "cmdstack.h"
 #include "lib_private.h"
 #include "cmd_private.h"
+#include "fileselect.h"
 
 #undef CMD_DEBUG
 
@@ -339,7 +340,7 @@ static int maybe_prepend_open_data (FILE *fp)
     if (*paths.datfile == '\0') {
 	/* current data not saved yet */
 	infobox(_("Please give the current dataset a name"));
-	file_selector(_("Save data file"), SAVE_DATA, NULL);
+	file_selector(_("Save data file"), SAVE_DATA, FSEL_DATA_NONE, NULL);
     }
 
     if (*paths.datfile != '\0') {

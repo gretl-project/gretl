@@ -32,6 +32,7 @@
 #include "cmdstack.h"
 #include "filelists.h"
 #include "dlgutils.h"
+#include "fileselect.h"
 
 #include "var.h"
 
@@ -1316,7 +1317,7 @@ void save_session_callback (GtkWidget *w, guint code, gpointer data)
 	save_session(scriptfile);
 	session_changed(0);
     } else {
-	file_selector(_("Save session"), SAVE_SESSION, NULL);
+	file_selector(_("Save session"), SAVE_SESSION, FSEL_DATA_NONE, NULL);
     }
 }
 
@@ -2109,7 +2110,7 @@ static void graph_page_save_wrapper (void)
     if (graph_page_get_n_graphs() == 0) {
 	errbox(_("The graph page is empty"));
     } else {
-	file_selector(_("Save LaTeX file"), SAVE_TEX, NULL);
+	file_selector(_("Save LaTeX file"), SAVE_TEX, FSEL_DATA_NONE, NULL);
     }
 }
 

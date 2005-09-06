@@ -130,7 +130,6 @@ int restore_sample (gretlopt opt);
 /* functions defined in files other than gretl.c */
 
 void about_dialog (gpointer data);
-void file_selector (const char *msg, int action, gpointer data);
 void gui_get_series (gpointer data, guint bci_code, GtkWidget *widget);
 void import_db_series (windata_t *dbwin);
 void display_files (gpointer data, guint code, GtkWidget *widget);

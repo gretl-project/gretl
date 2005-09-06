@@ -23,6 +23,7 @@
 #include "gpt_control.h"
 #include "session.h"
 #include "gpt_dialog.h"
+#include "fileselect.h"
 
 #define GPDEBUG 0
 #undef POINTS_DEBUG
@@ -1703,14 +1704,14 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
 	    strcat(plot->spec->termtype, " color");
 	}
 	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
-		      plot->spec);
+		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(parent_item, _("Save as Windows metafile (EMF)..."))) {
 	strcpy(plot->spec->termtype, "emf");
 	if (color) {
 	    strcat(plot->spec->termtype, " color");
 	}
 	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
-		      plot->spec);
+		      FSEL_DATA_MISC, plot->spec);
     } 
 #ifdef G_OS_WIN32
     else if (!strcmp(parent_item, _("Copy to clipboard"))) {
@@ -1735,10 +1736,12 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 
     if (!strcmp(item, _("Save as PNG..."))) {
 	strcpy(plot->spec->termtype, "png");
-        file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, plot->spec);
+        file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
+		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(item, _("Save as PDF..."))) {
 	strcpy(plot->spec->termtype, "PDF");
-        file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, plot->spec);
+        file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
+		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_graph_to_session(plot->spec, GRETL_GNUPLOT_GRAPH, NULL);
     } else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 

@@ -522,7 +522,6 @@ static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
     gtk_widget_destroy(finfo->dialog);
 }
 
-#ifndef OLD_GTK
 static int preferred_format (int f, int multi)
 {
 # ifdef G_OS_WIN32
@@ -544,7 +543,6 @@ static int preferred_format (int f, int multi)
 
     return ret;
 }
-#endif
 
 static void set_copy_format (GtkWidget *w, struct format_info *finfo)
 {
@@ -561,99 +559,6 @@ static void set_copy_format (GtkWidget *w, struct format_info *finfo)
 #endif	
     }
 }
-
-#ifdef OLD_GTK
-
-void copy_format_dialog (windata_t *vwin, int unused, int action)
-{
-    GtkWidget *dialog, *tempwid, *button, *hbox;
-    GtkWidget *myvbox;
-    GSList *group;
-    struct format_info *finfo;
-
-    finfo = mymalloc(sizeof *finfo);
-    if (finfo == NULL) return;
-
-    dialog = gretl_dialog_new(_("gretl: copy formats"), vwin->dialog,
-			      GRETL_DLG_BLOCK);
-    
-    finfo->vwin = vwin;
-    finfo->dialog = dialog;
-    finfo->format = GRETL_FORMAT_TEX;
-    finfo->multi = 1;
-    finfo->action = action;
-
-    gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
-		       GTK_SIGNAL_FUNC(destroy_format_dialog), finfo);
-
-    myvbox = gtk_vbox_new(FALSE, 5);
-
-    hbox = gtk_hbox_new(FALSE, 5);
-    if (action == W_COPY) {
-	tempwid = gtk_label_new (_("Copy as:"));
-    } else {
-	tempwid = gtk_label_new (_("Save as:"));
-    }
-    gtk_box_pack_start (GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
-    gtk_widget_show(tempwid);
-    gtk_box_pack_start (GTK_BOX(myvbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox); 
-
-    /* LaTeX option */
-    button = gtk_radio_button_new_with_label(NULL, "LaTeX");
-    gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		       GTK_SIGNAL_FUNC(set_copy_format), finfo);
-    gtk_object_set_data(GTK_OBJECT(button), "format", 
-			GINT_TO_POINTER(GRETL_FORMAT_TEX));    
-    gtk_widget_show(button);   
-
-    /* RTF option */
-    group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label(group, "RTF");
-    gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		       GTK_SIGNAL_FUNC(set_copy_format), finfo);
-    gtk_object_set_data(GTK_OBJECT(button), "format", 
-			GINT_TO_POINTER(GRETL_FORMAT_RTF));    
-    gtk_widget_show(button);
-
-    /* plain text option */
-    group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label (group, _("plain text"));
-    gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		       GTK_SIGNAL_FUNC(set_copy_format), finfo);
-    gtk_object_set_data(GTK_OBJECT(button), "format", 
-			GINT_TO_POINTER(GRETL_FORMAT_TXT));
-    gtk_widget_show (button);
-
-    hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), myvbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox);
-
-    gtk_widget_show(myvbox);
-
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show(hbox);
-
-    /* Create the "OK" button */
-    tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
-    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
-		       GTK_SIGNAL_FUNC(copy_with_format_callback), finfo);
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
-
-    /* "Cancel" button */
-    cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog);
-
-    gtk_widget_show(dialog);
-}
-
-#else /* gtk 2 version follows */
 
 static GtkWidget *
 TeX_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
@@ -819,8 +724,6 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
 
     gtk_widget_show(dialog);
 }
-
-#endif /* gtk variants */
 
 /* dialog for setting various properties of individual variables */
 

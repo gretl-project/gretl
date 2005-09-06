@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "session.h"
 #include "boxplots.h"
+#include "fileselect.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -139,7 +140,8 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
 	gtk_widget_destroy(w);
     }
     else if (key->keyval == GDK_s) {
-        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_EPS, data);
+        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_EPS, 
+		      FSEL_DATA_MISC, data);
     }
     else if (key->keyval == GDK_p) {  
 	five_numbers(data);
@@ -150,7 +152,8 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
     }
 #else
     else if (key->keyval == GDK_c) { 
-        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_XPM, data);	
+        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_XPM, 
+		      FSEL_DATA_MISC, data);	
     }
 #endif
     return TRUE;
@@ -178,10 +181,12 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
 	}
     }
     else if (!strcmp(item, _("Save as EPS..."))) {
-        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_EPS, ptr);
+        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_EPS, 
+		      FSEL_DATA_MISC, ptr);
     }
     else if (!strcmp(item, _("Save as PS..."))) {
-        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_PS, ptr);
+        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_PS, 
+		      FSEL_DATA_MISC, ptr);
     }
 #ifdef G_OS_WIN32
     else if (!strcmp(item, _("Copy to clipboard"))) {
@@ -189,7 +194,8 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
     }
 #else
     else if (!strcmp(item, _("Save as XPM..."))) {
-        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_XPM, ptr);
+        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_XPM, 
+		      FSEL_DATA_MISC, ptr);
     }
 #endif
     else if (!strcmp(item, _("Help"))) {

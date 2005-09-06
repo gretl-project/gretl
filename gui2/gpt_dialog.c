@@ -23,6 +23,7 @@
 #include "gpt_control.h"
 #include "session.h"
 #include "dlgutils.h"
+#include "fileselect.h"
 
 #include "../pixmaps/mouse.xpm"
 
@@ -417,7 +418,8 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
     if (!err) {
 	if (save) { /* do something other than a screen graph? */
-	    file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, spec);
+	    file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
+			  FSEL_DATA_MISC, spec);
 	} else { 
 	    png_plot *plot = (png_plot *) spec->ptr;
 

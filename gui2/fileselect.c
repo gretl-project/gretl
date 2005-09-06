@@ -27,6 +27,7 @@
 #include "textbuf.h"
 #include "textutil.h"
 #include "filelists.h"
+#include "fileselect.h"
 
 #if (GTK_MAJOR_VERSION >= 2) && (GTK_MINOR_VERSION >= 4)
 # ifndef G_OS_WIN32
@@ -71,11 +72,11 @@
                               i == SAVE_BOXPLOT_PS || \
                               i == SAVE_BOXPLOT_XPM)
 
-#define EXPORT_ACTION(i) (i == EXPORT_OCTAVE || \
-                          i == EXPORT_R || \
-                          i == EXPORT_R_ALT || \
-                          i == EXPORT_CSV || \
-                          i == EXPORT_DAT)
+#define EXPORT_ACTION(a,s) ((a == EXPORT_OCTAVE || \
+                             a == EXPORT_R || \
+                             a == EXPORT_R_ALT || \
+                             a == EXPORT_CSV || \
+                             a == EXPORT_DAT) && s != FSEL_DATA_PRN)
 
 #ifdef REMEMBER_DIR
 static char remember_dir[MAXLEN];
@@ -466,7 +467,8 @@ static void remember_this_dir (const char *fname)
 #endif
 
 static void
-file_selector_process_result (const char *in_fname, int action, gpointer data)
+file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
+			      gpointer data)
 {
     char fname[FILENAME_MAX];
 
@@ -519,7 +521,9 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	return;
     }
 
-    if (SAVE_DATA_ACTION(action)) {
+    if (src == FSEL_DATA_PRN) {
+	filesel_save_prn_buffer(fname, (PRN *) data);
+    } else if (SAVE_DATA_ACTION(action)) {
 	int overwrite = 0;
 
 	if (!strcmp(fname, paths.datfile) || action == SAVE_DBDATA) {
@@ -723,7 +727,7 @@ static char *make_winfilter (int action, gpointer data)
     return start;
 }
 
-void file_selector (const char *msg, int action, gpointer data) 
+void file_selector (const char *msg, int action, FselDataSrc src, gpointer data) 
 {
     OPENFILENAME of;
     int retval;
@@ -745,7 +749,7 @@ void file_selector (const char *msg, int action, gpointer data)
 	if (!(data_status & BOOK_DATA)) {
 	    get_base(startdir, paths.datfile, SLASH);
 	}
-    } else if (EXPORT_ACTION(action) && paths.datfile[0]) {
+    } else if (EXPORT_ACTION(action, src) && paths.datfile[0]) {
 	char *savename = suggested_exportname(paths.datfile, action);
 
 	strcpy(fname, savename);
@@ -809,7 +813,7 @@ void file_selector (const char *msg, int action, gpointer data)
     my_filename_to_utf8(fname);
 #endif
 
-    file_selector_process_result(fname, action, data);
+    file_selector_process_result(fname, action, src, data);
 }
 
 #else /* End of MS Windows file selection code, start GTK */
@@ -883,7 +887,7 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
     return filter;
 }
 
-void file_selector (const char *msg, int action, gpointer data) 
+void file_selector (const char *msg, int action, FselDataSrc src, gpointer data) 
 {
     GtkWidget *filesel;
     char startdir[MAXLEN];
@@ -923,7 +927,7 @@ void file_selector (const char *msg, int action, gpointer data)
 	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(filesel), 
 					  savename);
 	g_free(savename);
-    } else if (EXPORT_ACTION(action) && paths.datfile[0]) {
+    } else if (EXPORT_ACTION(action, src) && paths.datfile[0]) {
 	char *savename = suggested_exportname(paths.datfile, action);
 
 	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(filesel), 
@@ -949,7 +953,7 @@ void file_selector (const char *msg, int action, gpointer data)
 
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filesel));
 	gtk_widget_destroy(filesel);
-	file_selector_process_result(fname, action, data);
+	file_selector_process_result(fname, action, src, data);
 	g_free(fname);
     } else {
 	gtk_widget_destroy(filesel);
@@ -993,7 +997,7 @@ gtk_file_selection_glob_populate (GtkFileSelection *fs,
     g_free(pattern);
 }
 
-void file_selector (const char *msg, int action, gpointer data) 
+void file_selector (const char *msg, int action, FselDataSrc src, gpointer data) 
 {
     struct fsinfo_t fsinfo;
     GtkWidget *filesel;
@@ -1021,7 +1025,7 @@ void file_selector (const char *msg, int action, gpointer data)
 					savename);
 	if (!strstr(savename, startdir)) do_glob = 0;
 	g_free(savename);
-    } else if (EXPORT_ACTION(action) && paths.datfile[0]) {
+    } else if (EXPORT_ACTION(action, src) && paths.datfile[0]) {
 	char *savename = suggested_exportname(paths.datfile, action);
 
 	gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
@@ -1064,7 +1068,7 @@ void file_selector (const char *msg, int action, gpointer data)
     gtk_main(); 
 
     if (*fsinfo.fname != '\0') {
-	file_selector_process_result(fsinfo.fname, action, data);
+	file_selector_process_result(fsinfo.fname, action, src, data);
     } 
 }
 
@@ -1072,7 +1076,7 @@ void file_selector (const char *msg, int action, gpointer data)
 
 # else /* gtk version diffs continue */
 
-void file_selector (const char *msg, int action, gpointer data) 
+void file_selector (const char *msg, int action, FselDataSrc src, gpointer data) 
 {
     struct fsinfo_t fsinfo;
     GtkWidget *filesel;
@@ -1112,7 +1116,7 @@ void file_selector (const char *msg, int action, gpointer data)
 	    gotdir = 1;
 	}
 	g_free(savename);
-    } else if (EXPORT_ACTION(action) && paths.datfile[0]) {
+    } else if (EXPORT_ACTION(action, src) && paths.datfile[0]) {
 	char *savename = suggested_exportname(paths.datfile, action);
 	char startd[MAXLEN];
 
@@ -1153,7 +1157,7 @@ void file_selector (const char *msg, int action, gpointer data)
     gtk_main(); 
 
     if (*fsinfo.fname != '\0') {
-	file_selector_process_result(fsinfo.fname, action, data);
+	file_selector_process_result(fsinfo.fname, action, src, data);
     } 
 }
 

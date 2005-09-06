@@ -24,6 +24,7 @@
 #include "webget.h"
 #include "toolbar.h"
 #include "dlgutils.h"
+#include "fileselect.h"
 
 #include "libset.h"
 #include "version.h"
@@ -739,7 +740,7 @@ void filesel_set_path_callback (const char *setting, char *strvar)
 
 static void browse_button_callback (GtkWidget *w, RCVAR *rc)
 {
-    file_selector(_(rc->description), SET_PATH, rc->var);
+    file_selector(_(rc->description), SET_PATH, FSEL_DATA_MISC, rc->var);
 }
 
 static GtkWidget *make_path_browse_button (RCVAR *rc)

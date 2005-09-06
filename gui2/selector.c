@@ -23,6 +23,7 @@
 #include "selector.h"
 #include "dlgutils.h"
 #include "menustate.h"
+#include "fileselect.h"
 
 #ifndef OLD_GTK
 # include "treeutils.h"
@@ -3032,7 +3033,7 @@ static void data_save_selection_callback (GtkWidget *w, gpointer p)
     gtk_widget_destroy(sr->dlg);
 
     if (code != COPY_CSV) {
-	file_selector(data_save_title(code), code, data);
+	file_selector(data_save_title(code), code, FSEL_DATA_MISC, data);
     }
 }
 

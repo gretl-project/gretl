@@ -29,6 +29,7 @@
 #include "textutil.h"
 #include "boxplots.h"
 #include "dlgutils.h"
+#include "fileselect.h"
 
 #ifdef OLD_GTK
 # include <gtkextra/gtkiconfilesel.h>
@@ -219,38 +220,38 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     case APPEND_DATA:
     case OPEN_ASCII:
     case APPEND_ASCII:
-	file_selector(_("Open data file"), code, NULL);
+	file_selector(_("Open data file"), code, FSEL_DATA_NONE, NULL);
 	break;
     case OPEN_CSV:
     case APPEND_CSV:
 	delimiter_dialog(NULL);
-	file_selector(_("Open CSV file"), code, NULL);
+	file_selector(_("Open CSV file"), code, FSEL_DATA_NONE, NULL);
 	break;
     case OPEN_OCTAVE:
     case APPEND_OCTAVE:
-	file_selector(_("Open Octave file"), code, NULL);
+	file_selector(_("Open Octave file"), code, FSEL_DATA_NONE, NULL);
 	break;
     case OPEN_BOX:
-	file_selector(_("Open BOX file"), code, NULL);
+	file_selector(_("Open BOX file"), code, FSEL_DATA_NONE, NULL);
 	break;
     case OPEN_GNUMERIC:
     case APPEND_GNUMERIC:
-	file_selector(_("Open Gnumeric file"), code, NULL);
+	file_selector(_("Open Gnumeric file"), code, FSEL_DATA_NONE, NULL);
 	break;
     case OPEN_EXCEL:
     case APPEND_EXCEL:
-	file_selector(_("Open Excel file"), code, NULL);
+	file_selector(_("Open Excel file"), code, FSEL_DATA_NONE, NULL);
 	break;
     case OPEN_WF1:
     case APPEND_WF1:
-	file_selector(_("Open Eviews workfile"), code, NULL);
+	file_selector(_("Open Eviews workfile"), code, FSEL_DATA_NONE, NULL);
 	break;
     case OPEN_DTA:
     case APPEND_DTA:
-	file_selector(_("Open Stata file"), code, NULL);
+	file_selector(_("Open Stata file"), code, FSEL_DATA_NONE, NULL);
 	break;
     case OPEN_MARKERS:
-	file_selector(_("gretl: add markers"), code, NULL);
+	file_selector(_("gretl: add markers"), code, FSEL_DATA_NONE, NULL);
 	break;
     default:
 	errbox("Unrecognized data code");
@@ -261,9 +262,9 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
 void open_script (gpointer data, guint action, GtkWidget *widget)
 {
     if (action == OPEN_SCRIPT) {
-	file_selector(_("Open script file"), action, NULL);
+	file_selector(_("Open script file"), action, FSEL_DATA_NONE, NULL);
     } else if (action == OPEN_SESSION) {
-	file_selector(_("Open session file"), action, NULL);
+	file_selector(_("Open session file"), action, FSEL_DATA_NONE, NULL);
     }
 }
 
@@ -275,16 +276,16 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 
     switch (file_code) {
     case SAVE_OUTPUT:
-	file_selector(_("Save output file"), SAVE_OUTPUT, vwin);
+	file_selector(_("Save output file"), SAVE_OUTPUT, FSEL_DATA_MISC, vwin);
 	break;
     case SAVE_CONSOLE:
-	file_selector(_("Save console output"), SAVE_CONSOLE, vwin);
+	file_selector(_("Save console output"), SAVE_CONSOLE, FSEL_DATA_MISC, vwin);
 	break;
     case SAVE_CMDS: 
-	file_selector(_("Save command log"), SAVE_CMDS, vwin);
+	file_selector(_("Save command log"), SAVE_CMDS, FSEL_DATA_MISC, vwin);
 	break;
     case SAVE_SCRIPT:
-	file_selector(_("Save command script"), SAVE_SCRIPT, vwin);
+	file_selector(_("Save command script"), SAVE_SCRIPT, FSEL_DATA_MISC, vwin);
 	break;
     case SAVE_DATA:
     case SAVE_DATA_AS:
@@ -304,13 +305,13 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 	data_save_selection_wrapper(file_code, p);
 	break;
     case SAVE_TEX:
-	file_selector(_("Save LaTeX file"), file_code, vwin->data);
+	file_selector(_("Save LaTeX file"), file_code, FSEL_DATA_MISC, vwin->data);
 	break;
     case SAVE_MODEL:
-	file_selector(_("Save model output"), file_code, vwin);
-	break;
+	file_selector(_("Save model output"), file_code, FSEL_DATA_MISC, vwin);
+	break; 
     case SAVE_GP_CMDS:
-	file_selector(_("Save gnuplot commands"), file_code, vwin);
+	file_selector(_("Save gnuplot commands"), file_code, FSEL_DATA_MISC, vwin);
 	break;
     default:
 	dummy_call();
@@ -562,8 +563,8 @@ void file_save_callback (GtkWidget *w, gpointer data)
     guint u = 0;
     windata_t *vwin = (windata_t *) data;
 
-    if (0 && vwin->role == PRINT && vwin->data != NULL) {
-	copy_format_dialog(vwin, 0, W_SAVE); /* FIXME!! */
+    if (vwin->role == PRINT && vwin->data != NULL) {
+	copy_format_dialog(vwin, 0, W_SAVE);
 	return;
     } else if (g_object_get_data(G_OBJECT(vwin->dialog), "text_out")) {
 	u = SAVE_OUTPUT;

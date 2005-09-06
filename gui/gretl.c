@@ -32,6 +32,7 @@
 #include "cmdstack.h"
 #include "toolbar.h"
 #include "menustate.h"
+#include "fileselect.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -1377,7 +1378,7 @@ static void auto_store (void)
     if ((data_status & USER_DATA) && native_datafile()) {
 	do_store(paths.datfile, oflag, 1);
     } else {
-	file_selector(_("Save data file"), SAVE_DATA, NULL);
+	file_selector(_("Save data file"), SAVE_DATA, FSEL_DATA_NONE, NULL);
     }	
 }
 

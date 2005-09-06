@@ -24,6 +24,7 @@
 #include "guiprint.h"
 #include "model_table.h"
 #include "clipboard.h"
+#include "fileselect.h"
 
 #ifdef OLD_GTK
 # include "menustate.h"
@@ -470,7 +471,8 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	} else if (what == W_COPY) {
 	    prn_to_clipboard(prn, fmt);
 	} else if (what == W_SAVE) {
-	    file_selector(_("Save LaTeX file"), SAVE_TEX, prn);
+	    /* FIXME check this */
+	    file_selector(_("Save LaTeX file"), SAVE_TEX, FSEL_DATA_MISC, prn);
 	}
     }
 
