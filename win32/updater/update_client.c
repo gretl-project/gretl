@@ -517,7 +517,9 @@ static void create_main_window (void)
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 8);
     gtk_container_add(GTK_CONTAINER(mainwin), main_vbox);
 
-    mainlabel = gtk_label_new("Press OK to start");
+    mainlabel = gtk_label_new("If gretl is running, please close it "
+			      "down before running the updater.\n\n"
+			      "Press OK to proceed or Cancel to quit");
     gtk_box_pack_start(GTK_BOX(main_vbox), mainlabel, TRUE, TRUE, 0);
 
     buttonbox = gtk_hbox_new(TRUE, 4);
