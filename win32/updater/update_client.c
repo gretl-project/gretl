@@ -59,6 +59,14 @@ static void getout (int err)
 
 #ifdef WIN32 /* Windows-specific code */
 
+enum {
+    GRETL_NOT_RUNNING = 0,
+    GRETL_RUNNING,
+    GRETL_RUN_UNKNOWN
+};
+
+static int gretl_run_status;
+
 static int win_error (void)
 {
     LPVOID msg;
@@ -166,6 +174,43 @@ static int ws_startup (void)
     return 0;
 }
 
+BOOL CALLBACK record_gretl_running (HWND hw, LPARAM lp)
+{
+    if (gretl_run_status == GRETL_RUNNING) {
+	return TRUE;
+    } else if (hw == NULL) {
+	return FALSE;
+    } else {
+	char wtitle[128];
+	int len;
+
+	len = GetWindowText(hw, wtitle, sizeof wtitle);
+	if (len > 0) {
+#if 1
+	    if (strstr(wtitle, "gretl")) {
+		msgbox(wtitle, 0);
+	    }
+#endif
+	    if (!strncmp(wtitle, "gretl", 5) &&
+		strstr(wtitle, "dater") == NULL) {
+		gretl_run_status = GRETL_RUNNING;
+	    }
+	}
+	return TRUE;
+    } 
+}
+
+static int check_for_gretl (void)
+{
+    int ok = EnumWindows(record_gretl_running, 0);
+
+    if (!ok) {
+	gretl_run_status = GRETL_RUN_UNKNOWN;
+    }
+
+    return gretl_run_status;
+}
+
 #else /* ! WIN32 */
 
 gint yes_no_dialog (char *msg)
@@ -191,9 +236,9 @@ gint yes_no_dialog (char *msg)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox),
 		       hbox, FALSE, FALSE, 10);
 
-    ret = gtk_dialog_run (GTK_DIALOG(dialog));
+    ret = gtk_dialog_run(GTK_DIALOG(dialog));
 					  
-    gtk_widget_destroy (dialog);
+    gtk_widget_destroy(dialog);
 
     switch (ret) {
     case GTK_RESPONSE_ACCEPT: 
@@ -397,9 +442,7 @@ static gint real_program (void)
 		    fputs("no new files on server\n", flg);
 		}
 		break;
-	    } 
-
-	    else if (ask_before_download) {
+	    } else if (ask_before_download) {
 		int resp;
 		char query[128];
 
@@ -500,7 +543,7 @@ static gint cancel_callback (void)
     return FALSE;
 }
 
-static void create_main_window (void)
+static void create_main_window (int warn)
 {
     GtkWidget *main_vbox;
     GtkWidget *buttonbox;
@@ -517,9 +560,14 @@ static void create_main_window (void)
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 8);
     gtk_container_add(GTK_CONTAINER(mainwin), main_vbox);
 
-    mainlabel = gtk_label_new("If gretl is running, please close it "
-			      "down before running the updater.\n\n"
-			      "Press OK to proceed or Cancel to quit");
+    if (warn) {
+	mainlabel = gtk_label_new("If gretl is running, please close it "
+				  "down before running the updater.\n\n"
+				  "Press OK to proceed or Cancel to quit");
+    } else {
+	mainlabel = gtk_label_new("Press OK to proceed or Cancel to quit");
+    }
+	
     gtk_box_pack_start(GTK_BOX(main_vbox), mainlabel, TRUE, TRUE, 0);
 
     buttonbox = gtk_hbox_new(TRUE, 4);
@@ -546,6 +594,7 @@ static void create_main_window (void)
 int main (int argc, char *argv[])
 {
     const char *testfile = "gretl.stamp";
+    int warn = 1;
 #ifdef WIN32
     char gretldir[MAXLEN];
 #endif
@@ -565,6 +614,7 @@ int main (int argc, char *argv[])
 	   the question whether the user wants to download */
 	argcount--;
 	ask_before_download = 0;
+	warn = 0;
     }
 
     if (argcount == 2 && !strcmp(argv[1], "-l")) {
@@ -592,6 +642,16 @@ int main (int argc, char *argv[])
 	exit(EXIT_FAILURE);
     }
 
+    if (warn) {
+	check_for_gretl();
+	if (gretl_run_status == GRETL_RUNNING) {
+	    errbox("Please close gretl before running the updater");
+	    exit(EXIT_FAILURE);
+	} else if (gretl_run_status == GRETL_NOT_RUNNING) {
+	    warn = 0;
+	}
+    }
+
     if (ws_startup()) exit(EXIT_FAILURE);
 #endif
 
@@ -615,7 +675,7 @@ int main (int argc, char *argv[])
     } 
 
     gtk_init(&argc, &argv);
-    create_main_window();
+    create_main_window(warn);
     gtk_main();
 
     getout(0);
