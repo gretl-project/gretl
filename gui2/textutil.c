@@ -519,40 +519,38 @@ void var_tex_callback (gpointer data, guint opt, GtkWidget *w)
 
 #ifdef OLD_GTK
 
-static gchar *text_window_get_copy_buf (windata_t *vwin)
+static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
 {
     GtkEditable *ed = GTK_EDITABLE(vwin->w);
     gchar *cpybuf = NULL;
 
-    if (ed->has_selection) {
+    if (!select) {
+	cpybuf = gtk_editable_get_chars(ed, 0, -1);
+    } else if (ed->has_selection) {
 	cpybuf = gtk_editable_get_chars(ed, 
 					ed->selection_start_pos,
 					ed->selection_end_pos);
-    } else {
-	cpybuf = gtk_editable_get_chars(ed, 0, -1);
-    }
+    } 
 
     return cpybuf;
 }
 
 #else
 
-static gchar *text_window_get_copy_buf (windata_t *vwin)
+static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
 {
     GtkTextBuffer *textbuf = 
 	gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
     gchar *cpybuf = NULL;
 
-    if (gtk_text_buffer_get_selection_bounds(textbuf, NULL, NULL)) {
-	/* there is a selection in place */
+    if (!select) {
+	cpybuf = textview_get_text(GTK_TEXT_VIEW(vwin->w)); 
+    } else if (gtk_text_buffer_get_selection_bounds(textbuf, NULL, NULL)) {
 	GtkTextIter selstart, selend;
 
 	gtk_text_buffer_get_selection_bounds(textbuf, &selstart, &selend);
 	cpybuf = gtk_text_buffer_get_text(textbuf, &selstart, &selend, FALSE);
-    } else {
-	/* no selection: copy everything */
-	cpybuf = textview_get_text(GTK_TEXT_VIEW(vwin->w)); 
-    }
+    } 
 
     return cpybuf;
 }
@@ -592,22 +590,18 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 	special_text_handler(vwin, fmt, action);
     } else if (fmt == GRETL_FORMAT_CSV) {
 	csv_copy_listed_vars(vwin, action);
-    } else if (fmt == GRETL_FORMAT_TXT || 
-	       fmt == GRETL_FORMAT_RTF_TXT ||
-	       fmt == GRETL_FORMAT_SELECTION) {
-	cpybuf = text_window_get_copy_buf(vwin);
-    } 
+    } else if (fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT) {
+	cpybuf = text_window_get_copy_buf(vwin, 0);
+    } else if (fmt == GRETL_FORMAT_SELECTION) {
+	cpybuf = text_window_get_copy_buf(vwin, 1);
+	fmt = GRETL_FORMAT_TXT;
+    }
 
     if (cpybuf != NULL) {
-	int myfmt = fmt;
 	PRN *textprn;
 
-	if (myfmt == GRETL_FORMAT_SELECTION) {
-	    myfmt = GRETL_FORMAT_TXT;
-	} 
-
 	if (action == W_SAVE) {
-	    cpybuf = maybe_amend_buffer(cpybuf, myfmt);
+	    cpybuf = maybe_amend_buffer(cpybuf, fmt);
 	    if (cpybuf == NULL) {
 		return;
 	    }
@@ -615,7 +609,7 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 
 	textprn = gretl_print_new_with_buffer(cpybuf);
 	if (action == W_COPY) {
-	    prn_to_clipboard(textprn, myfmt);
+	    prn_to_clipboard(textprn, fmt);
 	} else {
 	    int fcode = (fmt == GRETL_FORMAT_RTF_TXT)? 
 		SAVE_RTF : SAVE_OUTPUT;

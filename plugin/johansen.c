@@ -565,9 +565,7 @@ static void copy_coeffs_to_Alpha (GRETL_VAR *vecm, int i, gretl_matrix *Alpha,
     double x;
     const MODEL *pmod = vecm->models[i];
     /* position in coeff array of first \alpha term */
-    int base = pmod->ifc + vecm->jinfo->seasonals + 
-	(vecm->jinfo->code == J_UNREST_TREND) +
-	gretl_matrix_rows(Alpha) * maxlag;
+    int base = vecm->jinfo->nexo + gretl_matrix_rows(Alpha) * maxlag;
     int j;
 
     for (j=0; j<vecm->jinfo->rank; j++) {
@@ -909,7 +907,11 @@ static int beta_variance (GRETL_VAR *vecm)
     }
 
     /* compute \alpha' \Omega^{-1} \alpha */
-    gretl_invert_symmetric_matrix(O);
+    err = gretl_invert_symmetric_matrix(O);
+    if (err) {
+	goto bailout;
+    }
+
     aOa = gretl_matrix_A_X_A(vecm->jinfo->Alpha, GRETL_MOD_TRANSPOSE, O, &err);
     if (aOa == NULL) {
 	err = E_ALLOC;
@@ -942,7 +944,11 @@ static int beta_variance (GRETL_VAR *vecm)
 	goto bailout;
     }
 
-    gretl_invert_symmetric_matrix(varbeta);
+    err = gretl_invert_symmetric_matrix(varbeta);
+    if (err) {
+	goto bailout;
+    }
+
     gretl_matrix_divide_by_scalar(varbeta, vecm->T);
 
     vecm->jinfo->Bse = gretl_matrix_alloc(n - r, r);
@@ -1004,7 +1010,6 @@ static int johansen_ll_calc (GRETL_VAR *jvar, const double *eigvals)
 static int vecm_ll_stats (GRETL_VAR *vecm)
 {
     gretl_matrix *S;
-    int code = jcode(vecm);
     int T = vecm->T;
     int n = vecm->neqns;
     int k = n * (vecm->order - 1);
@@ -1018,8 +1023,7 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     gretl_matrix_free(S);
 
     /* FIXME: is k right (in all cases)? */
-    k += (code >= J_UNREST_CONST) + (code == J_UNREST_TREND);
-    k += vecm->jinfo->seasonals;
+    k += vecm->jinfo->nexo;
     
     vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * n) / T;
     vecm->BIC = (-2.0 * vecm->ll + log(T) * k * n) / T;

@@ -1579,9 +1579,61 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
 }
 #endif
 
+/* when copying from windows where a choice of copy format
+   is appropriate */
+
 static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 {
     copy_format_dialog(vwin, MULTI_FORMAT_ENABLED(vwin->role), W_COPY);
+}
+
+/* is any text selected? */
+
+static int vwin_selection_present (gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    int ret = 0;
+#ifndef OLD_GTK
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+
+    if (gtk_text_buffer_get_selection_bounds(buf, NULL, NULL)) {
+	ret = 1;
+    }
+#else
+    GtkEditable *ed = GTK_EDITABLE(vwin->w);
+
+    ret = ed->has_selection;
+#endif
+
+    return ret;
+}
+
+/* copying when only plain text is appropriate */
+
+static void text_copy_callback (GtkWidget *w, gpointer p)
+{
+    int fmt = GRETL_FORMAT_TXT;
+
+    if (vwin_selection_present(p)) {
+	fmt = GRETL_FORMAT_SELECTION;
+    }
+
+    window_copy(p, fmt, w);
+}
+
+static void text_paste_callback (GtkWidget *w, gpointer p)
+{
+    text_paste(p, 0, w);
+}
+
+static void text_replace_callback (GtkWidget *w, gpointer p)
+{
+    text_replace(p, 0, w);
+}
+
+static void text_undo_callback (GtkWidget *w, gpointer p)
+{
+    text_undo(p, 0, w);
 }
 
 static void add_data_callback (GtkWidget *w, windata_t *vwin)

@@ -525,26 +525,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 		action, varclick);   
 }
 
-void text_copy_callback (GtkWidget *w, gpointer data)
-{
-    window_copy(data, GRETL_FORMAT_SELECTION, w);
-}
-
-void text_paste_callback (GtkWidget *w, gpointer data)
-{
-    text_paste(data, 0, w);
-}
-
-void text_replace_callback (GtkWidget *w, gpointer data)
-{
-    text_replace(data, 0, w);
-}
-
-void text_undo_callback (GtkWidget *w, gpointer data)
-{
-    text_undo(data, 0, w);
-}
-
 void run_script_callback (GtkWidget *w, gpointer data)
 {
     do_run_script(data, SCRIPT_EXEC, w);

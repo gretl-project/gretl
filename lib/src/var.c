@@ -228,7 +228,6 @@ static void johansen_info_free (JohansenInfo *jv)
     free(jv->list);
     free(jv->difflist);
     free(jv->biglist);
-    free(jv->exolist);
 
     gretl_matrix_free(jv->u);
     gretl_matrix_free(jv->v);
@@ -1535,7 +1534,7 @@ static GRETL_VAR *real_var (int order, const int *inlist,
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
     struct var_lists vlists;
-    gretlopt lsqopt = OPT_A;
+    gretlopt lsqopt = OPT_A | OPT_Z;
     int i, k, neqns;
 
     if (order < 1) {
@@ -2700,7 +2699,7 @@ static int johansen_VAR (int order, const int *inlist,
 	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
 				    resids->u, i, resids->t1);
 	} else {
-	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z, 0.0);
 	    if ((err = jmod.errcode)) {
 		goto var_bailout;
 	    }
@@ -2720,7 +2719,7 @@ static int johansen_VAR (int order, const int *inlist,
 	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
 				    resids->v, i, resids->t1);
 	} else {
-	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z, 0.0);
 	    if ((err = jmod.errcode)) {
 		goto var_bailout;
 	    }	
@@ -2814,11 +2813,11 @@ johansen_info_new (const int *list, int rank, gretlopt opt)
 
 	    jv->difflist = NULL;
 	    jv->biglist = NULL;
-	    jv->exolist = NULL; /* FIXME */
 
 	    jv->rank = rank;
 
 	    jv->seasonals = 0;
+	    jv->nexo = 0;
 	}
     }
 
@@ -2903,8 +2902,6 @@ johansen_VAR_new (const int *list, int rank, int order, gretlopt opt)
     return var;
 }
 
-/* FIXME below: exolist is not actually handled yet */
-
 static GRETL_VAR *johansen_driver (int order, int rank, const int *list, 
 				   const int *exolist, double ***pZ, DATAINFO *pdinfo,
 				   gretlopt opt, PRN *prn)
@@ -2918,9 +2915,8 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
     int orig_t2 = pdinfo->t2;
     int orig_v = pdinfo->v;
     int *varlist = NULL;
-    int di0 = 0, hasconst = 0;
-    int l0 = list[0];
-    int i, j, k;
+    int nexo, di0 = 0, l0 = list[0];
+    int i, k;
 
     jvar = johansen_VAR_new(list, rank, order, opt);
     if (jvar == NULL) {
@@ -2929,25 +2925,15 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 
     var_resids_init(&resids);
 
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == 0) {
-	    hasconst = 1;
-	    break;
-	}
-    }
-
-    if (order <= 0 || list[0] - hasconst < 2) {
+    if (order <= 0 || list[0] < 2) {
 	strcpy(gretl_errmsg, "coint2: needs a positive lag order "
 	       "and at least two variables");
 	jvar->err = 1;
 	return jvar;
     }
 
-#if 0 /* FIXME */
-    if (exolist != NULL) {
-	l0 += exolist[0];
-    }
-#endif
+    /* nexo will hold total number of deterministic/exogenous vars */
+    nexo = 0;
 
     if (seasonals) {
 	if (pdinfo->pd > 1) {
@@ -2958,7 +2944,7 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 	    int flag = 1;
 #endif
 	    jvar->jinfo->seasonals = pdinfo->pd - 1;
-	    l0 += pdinfo->pd - 1;
+	    nexo += pdinfo->pd - 1;
 	    di0 = dummy(pZ, pdinfo, flag);
 	    if (di0 == 0) {
 		jvar->err = E_ALLOC;
@@ -2972,22 +2958,34 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 	return jvar;
     }
 
-    /* we're assuming that the list we are fed is in levels */
-    resids.levels_list = gretl_list_new(l0);
+    if (jcode(jvar) >= J_UNREST_CONST) {
+	nexo++;
+    }
+    if (jcode(jvar) == J_UNREST_TREND) {
+	nexo++;
+    }
+    if (exolist != NULL) {
+	nexo += exolist[0];
+    }
+    if (nexo > 0) {
+	l0 += nexo + 1; /* include list separator */
+    } 
+
+    /* "levels_list" will hold the first lags of the endogenous variables,
+       which figure as the dependent variables in the second set of
+       Johansen preliminary regressions */
+    resids.levels_list = gretl_list_new(list[0]);
     if (resids.levels_list == NULL) {
 	jvar->err = E_ALLOC;
 	goto johansen_exit;
     }
 
-    /* make list long enough to accommodate trend, if wanted */
-    varlist = gretl_list_new(l0 + 2);
+    /* full VAR list, including both endog and exog vars */
+    varlist = gretl_list_new(l0);
     if (varlist == NULL) {
 	jvar->err = E_ALLOC;
 	goto johansen_exit;
     }
-
-    /* FIXME exog vars */
-    varlist[0] = resids.levels_list[0] = l0 - hasconst;
 
     /* try to respect the chosen sample period: don't limit the
        generation of lags unnecessarily */
@@ -2996,50 +2994,54 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 	pdinfo->t1 = 0;
     }
 
-    /* add lags to levels list */
-    j = 1;
+    /* put first lags of endog vars into "levels_list" */
     for (i=1; i<=list[0]; i++) {
-	if (list[i] != 0) {
-	    resids.levels_list[j] = laggenr(list[i], 1, pZ, pdinfo);
-	    if (resids.levels_list[j] < 0) {
-		jvar->err = E_ALLOC;
-		goto johansen_exit;
-	    }
-	    j++;
+	resids.levels_list[i] = laggenr(list[i], 1, pZ, pdinfo);
+	if (resids.levels_list[i] < 0) {
+	    jvar->err = E_ALLOC;
+	    goto johansen_exit;
 	}
     }
 
-    /* now get first differences and put them into list */
+    /* put first differences of endog vars into VAR list */
     k = 1;
     for (i=1; i<=list[0]; i++) {
-	if (list[i] != 0) {
-	    varlist[k] = diffgenr(list[i], pZ, pdinfo, 0);
-	    if (varlist[k] < 0) {
-		jvar->err = E_ALLOC;
-		goto johansen_exit;
-	    } 
-	    k++;
-	}
+	varlist[k] = diffgenr(list[i], pZ, pdinfo, 0);
+	if (varlist[k] < 0) {
+	    jvar->err = E_ALLOC;
+	    goto johansen_exit;
+	} 
+	k++;
     }
+
+    if (nexo > 0) {
+	/* add separator before exog vars */
+	varlist[k++] = LISTSEP;
+	jvar->jinfo->nexo = nexo;
+    }
+
+    if (exolist != NULL) {
+	/* add specified exogenous variables to list */
+	for (i=1; i<=exolist[0]; i++) {
+	    varlist[k++] = exolist[i];
+	}
+    }	    
 
     if (seasonals) {
 	/* add seasonal dummies to list */
 	for (i=0; i<pdinfo->pd-1; i++) {
-	    resids.levels_list[j++] = di0 + i;
 	    varlist[k++] = di0 + i;
 	}
     }
 
     if (jcode(jvar) == J_UNREST_TREND) {
 	/* add trend to VAR list */
-	varlist[0] += 1;
-	varlist[varlist[0]] = gettrend(pZ, pdinfo, 0);
+	varlist[k++] = gettrend(pZ, pdinfo, 0);
     }	
 
     if (jcode(jvar) >= J_UNREST_CONST) {
 	/* add the constant to the VAR list */
-	varlist[0] += 1;
-	varlist[varlist[0]] = 0;
+	varlist[k++] = 0;
     }
 
     if (opt & OPT_V) {

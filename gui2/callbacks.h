@@ -53,14 +53,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget);
 
 void model_genr_callback (gpointer data, guint u, GtkWidget *widget);
 
-void text_copy_callback (GtkWidget *w, gpointer data);
-
-void text_paste_callback (GtkWidget *w, gpointer data);
-
-void text_replace_callback (GtkWidget *w, gpointer data);
-
-void text_undo_callback (GtkWidget *w, gpointer data);
-
 void run_script_callback (GtkWidget *w, gpointer data);
 
 void gp_send_callback (GtkWidget *w, gpointer data);
