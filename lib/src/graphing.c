@@ -30,7 +30,6 @@
 
 #ifdef _WIN32
 # include <windows.h>
-# define EMF_USER_COLORS
 #else
 # ifdef USE_GTK2
 #  define GLIB2
@@ -320,6 +319,12 @@ int gnuplot_has_specified_colors (void)
     return 1;
 }
 
+static int gnuplot_has_specified_emf_colors (void)
+{
+    /* ... and we know it does specified emf colors */
+    return 1;
+}
+
 static int gnuplot_has_style_fill (void)
 {
     /* ... and that it does style fill */
@@ -376,6 +381,17 @@ int gnuplot_has_specified_colors (void)
     }
 
     return err;
+}
+
+static int gnuplot_has_specified_emf_colors (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set term emf color xff0000");
+    }
+
+    return !err;
 }
 
 static int gnuplot_has_style_fill (void)
@@ -470,6 +486,28 @@ const char *get_gretl_png_term_line (PlotType ptype)
     return png_term_line;
 }
 
+static void png_font_to_emf (const char *pngfont, char *emfline)
+{
+    char name[32];
+    int pt;
+
+    if (sscanf(pngfont, "%31s %d", name, &pt) == 2) {
+	char ptstr[8];
+
+	if (pt <= 8) {
+	    pt = 12;
+	} else {
+	    pt = 16;
+	}
+
+	strcat(emfline, "'");
+	strcat(emfline, name);
+	strcat(emfline, "' ");
+	sprintf(ptstr, "%d ", pt);
+	strcat(emfline, ptstr);
+    }
+}
+
 /**
  * get_gretl_emf_term_line:
  * @ptype: indication of the sort of plot to be made.
@@ -484,32 +522,38 @@ const char *get_gretl_png_term_line (PlotType ptype)
 const char *get_gretl_emf_term_line (PlotType ptype, int color)
 {
     static char emf_term_line[256];
+    const char *grfont = NULL;
+    
+    strcpy(emf_term_line, "set term emf ");
 
-    if (!color) {
-	strcpy(emf_term_line, "set term emf mono dash");
-	return emf_term_line;
+    if (color) {
+	strcat(emf_term_line, "color ");
+    } else {
+	strcat(emf_term_line, "mono dash ");
     }
 
-#ifdef EMF_USER_COLORS
-    if (frequency_plot_code(ptype)) {
-	sprintf(emf_term_line, "set term emf color %s",
-		get_gnuplot_pallette(0, PLOT_FREQ_SIMPLE));
-    } else {
-	int i;
+    /* font spec */
+    grfont = gretl_png_font();
+    if (grfont != NULL && *grfont != 0) {
+	png_font_to_emf(grfont, emf_term_line);
+    }
 
-	strcpy(emf_term_line, "set term emf color ");
-	for (i=0; i<3; i++) {
-	    const char *colstr = get_gnuplot_pallette(i, 0);
+    if (color && gnuplot_has_specified_emf_colors()) {
+	if (frequency_plot_code(ptype)) {
+	    strcat(emf_term_line, get_gnuplot_pallette(0, PLOT_FREQ_SIMPLE));
+	} else {
+	    int i;
 
-	    if (*colstr != '\0') {
-		strcat(emf_term_line, colstr);
-		strcat(emf_term_line, " ");
+	    for (i=0; i<3; i++) {
+		const char *colstr = get_gnuplot_pallette(i, 0);
+
+		if (*colstr != '\0') {
+		    strcat(emf_term_line, colstr);
+		    strcat(emf_term_line, " ");
+		}
 	    }
 	}
-    }
-#else
-    strcpy(emf_term_line, "set term emf color");
-#endif
+    } 
 
     return emf_term_line;
 }

@@ -1376,6 +1376,7 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 
 int show_gnuplot_dialog (GPT_SPEC *spec) 
 {
+    png_plot *plot = (png_plot *) spec->ptr;
     GtkWidget *button, *notebook;
     int i;
 
@@ -1403,6 +1404,11 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 15);
     gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), TRUE);
     gtk_window_set_position(GTK_WINDOW(gpt_control), GTK_WIN_POS_MOUSE);
+
+    if (plot != NULL) {
+	gtk_window_set_transient_for(GTK_WINDOW(gpt_control), 
+				     GTK_WINDOW(plot_get_shell(plot)));
+    }
 
     g_signal_connect(G_OBJECT(gpt_control), "destroy",
 		     G_CALLBACK(close_plot_controller), 

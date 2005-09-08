@@ -1141,7 +1141,7 @@ static int real_csv_to_clipboard (const char *liststr)
 	    err = data_to_buf_as_csv(list, prn);
 	}
 	if (!err) {
-	    err = prn_to_clipboard(prn, COPY_CSV);
+	    err = prn_to_clipboard(prn, GRETL_FORMAT_CSV);
 	}
     }
 
@@ -1216,7 +1216,7 @@ int csv_copy_listed_vars (windata_t *vwin, int action)
 	}
 	if (!err) {
 	    if (action == W_COPY) {
-		err = prn_to_clipboard(prn, COPY_CSV);
+		err = prn_to_clipboard(prn, GRETL_FORMAT_CSV);
 	    } else {
 		file_selector(_("Save data"), EXPORT_CSV, FSEL_DATA_PRN, prn);
 	    }

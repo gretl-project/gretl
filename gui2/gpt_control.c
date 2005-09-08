@@ -187,6 +187,11 @@ void plot_remove_controller (png_plot *plot)
     }
 }
 
+GtkWidget *plot_get_shell (png_plot *plot) 
+{
+    return plot->shell;
+}
+
 int plot_is_mouseable (const png_plot *plot)
 {
     return !(plot->status & PLOT_DONT_MOUSE);
@@ -418,6 +423,32 @@ void display_session_graph_png (char *fname)
     }
 }
 
+static int maybe_switch_emf_point_style (char *s, PRN *prn)
+{
+    char *p = strstr(s, "w points");
+    int do_pt2 = 0;
+
+    if (p != NULL) {
+	if (strncmp(p + 8, " pt", 3)) {
+	    do_pt2 = 1;
+	}
+    }
+
+    if (do_pt2) {
+	int i, len = p + 8 - s;
+
+	for (i=0; i<len; i++) {
+	    pputc(prn, s[i]);
+	}
+	pputs(prn, " pt 2");
+	pputs(prn, p + 8);
+    } else {
+	pputs(prn, s);
+    }
+
+    return do_pt2;
+}
+
 #ifdef G_OS_WIN32
 static void win32_process_graph (GPT_SPEC *spec, int color, int dest);
 #endif
@@ -449,15 +480,20 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 	}
 	return;
     } else {
+	int done_pt2 = strncmp(termstr, "emf", 3);
+
 #ifdef ENABLE_NLS
 	pprint_gnuplot_encoding(termstr, prn);
 #endif /* ENABLE_NLS */
 	pprintf(prn, "set term %s\n", termstr);
 	pprintf(prn, "set output '%s'\n", fname);
 	while (fgets(plotline, MAXLEN-1, fq)) {
-	    if (strncmp(plotline, "set term", 8) && 
-		strncmp(plotline, "set output", 10))
+	    if (!done_pt2 && strstr(plotline, "using 1:2")) {
+		done_pt2 = maybe_switch_emf_point_style(plotline, prn);
+	    } else if (strncmp(plotline, "set term", 8) && 
+		       strncmp(plotline, "set output", 10)) {
 		pputs(prn, plotline);
+	    }
 	}
     }
 
@@ -3083,7 +3119,7 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     char plottmp[MAXLEN], plotline[MAXLEN];
     gchar *plotcmd = NULL;
     gchar *emfname = NULL;
-    int err;
+    int err, done_pt2 = 0;
 
     /* create temporary file to hold the special gnuplot commands */
     if (user_fopen("gptout.tmp", plottmp, &prn)) return;
@@ -3102,9 +3138,12 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     pprintf(prn, "set output '%s'\n", emfname);
     pprintf(prn, "set size 0.8,0.8\n");
     while (fgets(plotline, MAXLEN-1, fq)) {
-	if (strncmp(plotline, "set term", 8) && 
-	    strncmp(plotline, "set output", 10))
-	    pprintf(prn, "%s", plotline);
+	if (!done_pt2 && strstr(plotline, "using 1:2")) {
+	    done_pt2 = maybe_switch_emf_point_style(plotline, prn);
+	} else if (strncmp(plotline, "set term", 8) && 
+	    strncmp(plotline, "set output", 10)) {
+	    pputs(prn, plotline);
+	}
     }
 
     gretl_print_destroy(prn);

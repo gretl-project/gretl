@@ -1058,20 +1058,17 @@ static void set_lcnumeric (void)
 	    if (set == NULL) {
 		set = setlocale(LC_NUMERIC, "es");
 	    }
-	}
-	else if (lang != NULL && !strcmp(lang, "fr")) {
+	} else if (lang != NULL && !strcmp(lang, "fr")) {
 	    set = setlocale(LC_NUMERIC, "French");
 	    if (set == NULL) {
 		set = setlocale(LC_NUMERIC, "fr");
 	    }	    
-	}
-	else if (lang != NULL && !strcmp(lang, "it")) {
+	} else if (lang != NULL && !strcmp(lang, "it")) {
 	    set = setlocale(LC_NUMERIC, "Italian");
 	    if (set == NULL) {
 		set = setlocale(LC_NUMERIC, "it");
 	    }
-	}
-	else if (lang != NULL && !strcmp(lang, "pl")) {
+	} else if (lang != NULL && !strcmp(lang, "pl")) {
 	    set = setlocale(LC_NUMERIC, "Polish");
 	    if (set == NULL) {
 		set = setlocale(LC_NUMERIC, "pl");

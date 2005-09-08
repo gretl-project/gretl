@@ -185,16 +185,8 @@ BOOL CALLBACK record_gretl_running (HWND hw, LPARAM lp)
 	int len;
 
 	len = GetWindowText(hw, wtitle, sizeof wtitle);
-	if (len > 0) {
-#if 1
-	    if (strstr(wtitle, "gretl")) {
-		msgbox(wtitle, 0);
-	    }
-#endif
-	    if (!strncmp(wtitle, "gretl", 5) &&
-		strstr(wtitle, "dater") == NULL) {
-		gretl_run_status = GRETL_RUNNING;
-	    }
+	if (len > 0 && !strncmp(wtitle, "gretlw32", 7)) {
+	    gretl_run_status = GRETL_RUNNING;
 	}
 	return TRUE;
     } 
