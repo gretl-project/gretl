@@ -1652,7 +1652,7 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
     int *vlist = NULL;
     int i, l0, di0 = 0;
 
-    if (!gretl_list_has_const(list) && !(opt & OPT_N)) {
+    if (!(opt & OPT_N)) {
 	addconst = 1;
     }
 
@@ -1726,13 +1726,14 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int simple_VAR (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
+int simple_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 		gretlopt opt, PRN *prn)
 {
     GRETL_VAR *var = NULL;
     int *vlist = NULL;
     int err = 0;
-
+    
+    gretl_list_purge_const(list);
     vlist = maybe_expand_VAR_list(list, pZ, pdinfo, opt, &err);
 
     if (!err) {
@@ -1769,13 +1770,14 @@ int simple_VAR (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: pointer to VAR struct, which may be %NULL on error.
  */
 
-GRETL_VAR *full_VAR (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
+GRETL_VAR *full_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 		     gretlopt opt, PRN *prn)
 {
     GRETL_VAR *var = NULL;
     int *vlist = NULL;
     int err = 0;
 
+    gretl_list_purge_const(list);
     vlist = maybe_expand_VAR_list(list, pZ, pdinfo, opt, &err);
 
     if (!err) {
@@ -3199,7 +3201,7 @@ int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pd
  * the VECM system.
  */
 
-GRETL_VAR *vecm (int order, int rank, const int *list, 
+GRETL_VAR *vecm (int order, int rank, int *list, 
 		 double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt, PRN *prn)
 {
@@ -3207,6 +3209,8 @@ GRETL_VAR *vecm (int order, int rank, const int *list,
     int *endo_list = NULL, *exo_list = NULL;
     const int *vecm_list = list;
     int err = 0;
+
+    gretl_list_purge_const(list);
 
     if (gretl_list_has_separator(list)) {
 	err = gretl_list_split_on_separator(list, &endo_list, &exo_list);
@@ -3248,7 +3252,7 @@ GRETL_VAR *vecm (int order, int rank, const int *list,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int vecm_simple (int order, int rank, const int *list, 
+int vecm_simple (int order, int rank, int *list, 
 		 double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt, PRN *prn)
 {

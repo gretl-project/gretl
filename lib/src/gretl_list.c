@@ -553,6 +553,51 @@ int gretl_list_delete_at_pos (int *list, int pos)
 }
 
 /**
+ * gretl_list_purge_const:
+ * @list: an array of integers, the first element of which holds
+ * a count of the number of elements following.
+ *
+ * Checks @list from position 1 onward for the presence of a constant
+ * (the variable with ID number 0).  If this is found, is is deleted
+ * from list (that is, any following elements are moved forward by one
+ * and list[0] is decremented by 1.
+ *
+ * Returns: 1 if the constant was found and deleted, else 0.
+ */
+
+int gretl_list_purge_const (int *list)
+{
+    int i, gotc = 0;
+    int l0 = list[0];
+
+    /* handle the case where the constant comes last; if it's
+       the only element behind the list separator, remove both
+       the constant and the separator */
+    if (list[l0] == 0) {
+	gotc = 1;
+	list[0] -= 1;
+	if (list[l0 - 1] == LISTSEP) {
+	    list[l0 - 1] = 0;
+	    list[0] -= 1;
+	}
+    } else {
+	for (i=1; i<l0; i++) {
+	    if (list[i] == 0) {
+		for ( ; i<l0; i++) {
+		    list[i] = list[i+1];
+		}
+		list[l0] = 0;
+		list[0] -= 1;
+		gotc = 1;
+		break;
+	    }
+	}
+    }
+
+    return gotc;
+}
+
+/**
  * gretl_list_add:
  * @orig: an array of integers, the first element of which holds
  * a count of the number of elements following.

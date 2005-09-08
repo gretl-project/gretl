@@ -2228,9 +2228,6 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     int pos, nelem, orig_nvar = pdinfo->v;
     MODEL tsls;
 
-    /* pos: position in list of the separator element between
-       dep. var. plus regressors and the list of instruments
-    */    
     if (pos_in > 0) {
 	pos = pos_in;
     } else {
