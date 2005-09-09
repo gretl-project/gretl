@@ -318,7 +318,7 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 	return 1;
     }
 
-    else if (ci == NLS || ci == END) {
+    else if (ci == NLS || ci == MLE || ci == END) {
 	ok = 1;
     }
 
@@ -2699,21 +2699,22 @@ int loop_exec (LOOPSET *loop, char *line,
 		}
 		break;	
 
+	    case MLE:
 	    case NLS:
 		if (loop_is_progressive(loop) || (cmd.opt & OPT_P)) {
 		    err = 1;
 		} else {
-		    err = nls_parse_line(linecpy, (const double **) *pZ, *ppdinfo);
+		    err = nls_parse_line(cmd.ci, linecpy, (const double **) *pZ, *ppdinfo);
 		    if (err) {
 			errmsg(err, prn);
 		    } else {
-			gretl_cmd_set_context(&cmd, NLS);
+			gretl_cmd_set_context(&cmd, cmd.ci);
 		    }
 		}
 		break;
 
 	    case END:
-		if (!strcmp(cmd.param, "nls")) {
+		if (!strcmp(cmd.param, "nls") || !strcmp(cmd.param, "mle")) {
 		    clear_model(models[0]);
 		    *models[0] = nls(pZ, *ppdinfo, prn);
 		    if ((err = (models[0])->errcode)) {

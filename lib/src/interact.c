@@ -214,6 +214,7 @@ static int catch_command_alias (CMD *cmd)
                        c == LEVERAGE || \
                        c == LMTEST || \
                        c == LOOP || \
+                       c == MLE || \
                        c == MODELTAB || \
                        c == NLS || \
                        c == NULLDATA || \
@@ -917,6 +918,7 @@ static int fix_semicolon_after_var (char *s)
 /* apparatus for checking that the "end" command is valid */
 
 #define COMMAND_CAN_END(c) (c == FUNC || \
+                            c == MLE || \
                             c == NLS || \
 			    c == RESTRICT || \
 			    c == SYSTEM)
@@ -2359,8 +2361,12 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	const char *flagstr;
 	int ci = cmd->ci;
 
-	if (cmd->ci == END && !strcmp(cmd->param, "nls")) {
-	    ci = NLS;
+	if (cmd->ci == END) {
+	    if (!strcmp(cmd->param, "nls")) {
+		ci = NLS;
+	    } else if (!strcmp(cmd->param, "mle")) {
+		ci = MLE;
+	    }
 	}
 	flagstr = print_flags(cmd->opt, ci);
 	len = strlen(flagstr);
@@ -3049,6 +3055,8 @@ int get_command_index (const char *line, CMD *cmd)
 
     if (cmd->ci == NLS) {
 	context = NLS;
+    } else if (cmd->ci == MLE) {
+	context = MLE;
     }
 
     if (!strcmp(line, "end loop")) {

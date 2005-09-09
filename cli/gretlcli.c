@@ -1077,7 +1077,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 		errmsg(err, prn);
 	    }
 	    sys = NULL;
-	} else if (!strcmp(cmd.param, "nls")) {
+	} else if (!strcmp(cmd.param, "mle") || !strcmp(cmd.param, "nls")) {
 	    clear_model(models[0]);
 	    *models[0] = nls(&Z, datainfo, prn);
 	    if ((err = (models[0])->errcode)) {
@@ -1391,12 +1391,13 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	break;
 
+    case MLE:
     case NLS:
-	err = nls_parse_line(line, (const double **) Z, datainfo);
+	err = nls_parse_line(cmd.ci, line, (const double **) Z, datainfo);
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    gretl_cmd_set_context(&cmd, NLS);
+	    gretl_cmd_set_context(&cmd, cmd.ci);
 	}
 	break;
 

@@ -86,6 +86,7 @@ typedef enum {
     LOOP,
     MAHAL,
     MEANTEST,
+    MLE,
     MODELTAB,
     MPOLS,
     MULTIPLY,

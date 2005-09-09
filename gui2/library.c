@@ -2238,13 +2238,15 @@ static int do_nls_genr (void)
     return err;
 }
 
+/* FIXME for mle command */
+
 void do_nls_model (GtkWidget *widget, dialog_t *dlg)
 {
     gchar *buf;
     PRN *prn;
     char bufline[MAXLINE];
     char title[26];
-    int err = 0, started = 0;
+    int ci = NLS, err = 0, started = 0;
     MODEL *pmod = NULL;
 
     buf = edit_dialog_special_get_text(dlg);
@@ -2259,7 +2261,9 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg)
 	    continue;
 	}
 
-	if (started && !strncmp(bufline, "end nls", 7)) {
+	if (started && 
+	    (!strncmp(bufline, "end nls", 7) ||
+	     !strncmp(bufline, "end mle", 7))) {
 	    break;
 	}
 
@@ -2269,15 +2273,23 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg)
 	    continue;
 	}
 
-	if (!started && strncmp(bufline, "nls", 3)) {
+	if (!started && strncmp(bufline, "mle", 3)) {
+	    char tmp[MAXLINE];
+	    
+	    strcpy(tmp, bufline);
+	    strcpy(bufline, "mle ");
+	    strcat(bufline, tmp);
+	    ci == MLE;
+	} else if (!started && strncmp(bufline, "nls", 3)) {
 	    char tmp[MAXLINE];
 	    
 	    strcpy(tmp, bufline);
 	    strcpy(bufline, "nls ");
 	    strcat(bufline, tmp);
+	    ci == NLS;
 	}
 
-	err = nls_parse_line(bufline, (const double **) Z, datainfo);
+	err = nls_parse_line(ci, bufline, (const double **) Z, datainfo);
 	started = 1;
 
 	if (err) {
@@ -2293,11 +2305,11 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg)
 	return;
     }
 
-    /* if the user didn't give "end nls", supply it */
+    /* if the user didn't give "end XXX", supply it */
     if (strncmp(bufline, "end nls", 7)) {
 	gretl_command_strcpy("end nls");
 	lib_cmd_init();
-    }
+    } 
 
     if (bufopen(&prn)) return;
 
@@ -6234,12 +6246,13 @@ int gui_exec_line (char *line,
 	}
 	break;
 
+    case MLE:
     case NLS:
-	err = nls_parse_line(line, (const double **) Z, datainfo);
+	err = nls_parse_line(cmd.ci, line, (const double **) Z, datainfo);
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    gretl_cmd_set_context(&cmd, NLS);
+	    gretl_cmd_set_context(&cmd, cmd.ci);
 	}
 	break;
 

@@ -43,6 +43,7 @@ struct _nls_param {
 };
 
 struct _nls_spec {
+    int ci;             /* NLS or MLE */
     int mode;           /* derivatives: numeric or analytic */
     int depvar;         /* ID number of dependent variable */
     int uhatnum;        /* ID number of variable holding residuals */
@@ -53,6 +54,7 @@ struct _nls_spec {
     int t1;             /* starting observation */
     int t2;             /* ending observation */
     double ess;         /* error sum of squares */
+    double ll;          /* log likelihood */
     double tol;         /* tolerance for stopping iteration */
     nls_param *params;  /* array of information on function parameters
 			   (see the _nls_param struct above) */
@@ -113,12 +115,12 @@ static int nls_auto_genr (int i, double ***pZ, DATAINFO *pdinfo)
 
 /* three wrappers for the above to enhance comprehensibility below */
 
-static int nls_calculate_uhat (void)
+static int nls_calculate_fvec (void)
 {
     return nls_auto_genr(0, NULL, NULL);
 }
 
-static int nls_test_calculate_uhat (double ***pZ, DATAINFO *pdinfo)
+static int nls_test_calculate_fvec (double ***pZ, DATAINFO *pdinfo)
 {
     return nls_auto_genr(0, pZ, pdinfo);
 }
@@ -287,7 +289,7 @@ nls_missval_check (double ***pZ, DATAINFO *pdinfo, nls_spec *spec)
     int err = 0;
 
     /* generate the nls residual variable */
-    err = nls_test_calculate_uhat(pZ, pdinfo);
+    err = nls_test_calculate_fvec(pZ, pdinfo);
     if (err) {
 	return err;
     }
@@ -335,17 +337,17 @@ nls_missval_check (double ***pZ, DATAINFO *pdinfo, nls_spec *spec)
 
 /* this function is used in the context of the minpack callback */
 
-static int get_nls_resid (double *uhat)
+static int get_nls_fvec (double *fvec)
 {
     int j, t, v;
 
     /* calculate residual given current parameter estimates */
-    if (nls_calculate_uhat()) {
+    if (nls_calculate_fvec()) {
 	return 1;
     }
 
     if (pspec->uhatnum == 0) {
-	/* look up ID number of the uhat variable if we don't know
+	/* look up ID number of the fvec variable if we don't know
 	   it already */
 	v = varindex(ndinfo, "$nl_y");
 	if (v == ndinfo->v) {
@@ -357,19 +359,30 @@ static int get_nls_resid (double *uhat)
     }
 
     pspec->ess = 0.0;
+    pspec->ll = 0.0;
     j = 0;
 
-    /* transcribe from dataset to uhat array */
+    /* transcribe from dataset to fvec array */
     for (t=pspec->t1; t<=pspec->t2; t++) {
-	uhat[j] = (*nZ)[v][t];
-	pspec->ess += uhat[j] * uhat[j];
+	fvec[j] = (*nZ)[v][t];
+	if (pspec->ci == MLE) {
+	    pspec->ll -= fvec[j];
+	} else {
+	    pspec->ess += fvec[j] * fvec[j];
+	}
 	j++;
     }
 
     pspec->iters += 1;
 
+    if (pspec->ci == MLE) {
+	pprintf(nprn, "iteration %2d: ll = %.8g\n", pspec->iters, pspec->ll);
+    }
+
 #if NLS_DEBUG
-    fprintf(stderr, "iteration %2d: SSR = %.8g\n", pspec->iters, pspec->ess);
+    if (pspec->ci == NLS) {
+	fprintf(stderr, "iteration %2d: SSR = %.8g\n", pspec->iters, pspec->ess);
+    }
 #endif
 
     return 0;
@@ -437,9 +450,13 @@ static void add_stats_to_model (MODEL *pmod, nls_spec *spec,
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	d = Z[dv][t] - pmod->ybar;
 	tss += d * d;
-    }    
+    }  
 
-    pmod->rsq = 1.0 - pmod->ess / tss;
+    if (tss == 0.0) {
+	pmod->rsq = NADBL;
+    } else {
+	pmod->rsq = 1.0 - pmod->ess / tss;
+    }
     pmod->adjrsq = NADBL;
 }
 
@@ -699,6 +716,7 @@ static void clear_nls_spec (nls_spec *spec)
     free(spec->coeff);
     spec->coeff = NULL;
 
+    spec->ci = NLS;
     spec->mode = NUMERIC_DERIVS;
     spec->nparam = 0;
 
@@ -713,7 +731,7 @@ static void clear_nls_spec (nls_spec *spec)
    Next block: functions that interface with minpack.
 
    The details below may be obscure, but here's the basic idea: The
-   minpack functions are passed an array ("uhat") that holds the
+   minpack functions are passed an array ("fvec") that holds the
    calculated values of the function to be minimized, at a given value
    of the parameters, and also (in the case of analytic derivatives)
    an array holding the Jacobian ("jac").  Minpack is also passed a
@@ -731,7 +749,7 @@ static void clear_nls_spec (nls_spec *spec)
    function that we supply to minpack first transcribes the revised
    parameter estimates into the dataset, then invokes genr() to
    recalculate the residual and derivatives, then transcribes the
-   results back into the uhat and jac arrays.
+   results back into the fvec and jac arrays.
 */
 
 static void update_nls_param_values (const double *x)
@@ -742,12 +760,13 @@ static void update_nls_param_values (const double *x)
     for (i=0; i<pspec->nparam; i++) {
 	v = pspec->params[i].varnum;
 	(*nZ)[v][0] = x[i];
+	fprintf(stderr, "revised param[%d] = %g\n", i, x[i]);
     }
 }
 
 /* callback for lm_calculate (below) to be used by minpack */
 
-static int nls_calc (integer *m, integer *n, double *x, double *uhat, 
+static int nls_calc (integer *m, integer *n, double *x, double *fvec, 
 		     double *jac, integer *ldjac, integer *iflag)
 {
     int T = *m;
@@ -762,8 +781,8 @@ static int nls_calc (integer *m, integer *n, double *x, double *uhat,
     update_nls_param_values(x);
 
     if (*iflag == 1) {
-	/* calculate function at x, results into uhat */
-	if (get_nls_resid(uhat)) {
+	/* calculate function at x, results into fvec */
+	if (get_nls_fvec(fvec)) {
 	    *iflag = -1;
 	}
     } else if (*iflag == 2) {
@@ -782,43 +801,43 @@ static int nls_calc (integer *m, integer *n, double *x, double *uhat,
    NLS regression parameters, check them for sanity */
 
 static int check_nls_derivs (integer m, integer n, double *x,
-			     double *uhat, double *jac,
+			     double *fvec, double *jac,
 			     integer ldjac, PRN *prn)
 {
     integer mode = 1;
     integer iflag;
     doublereal *xp = NULL;
     doublereal *err = NULL;
-    doublereal *uhatp = NULL;
+    doublereal *fvecp = NULL;
     int i, badcount = 0, zerocount = 0;
 
     xp = malloc(m * sizeof *xp);
     err = malloc(m * sizeof *err);
-    uhatp = malloc(m * sizeof *uhatp);
+    fvecp = malloc(m * sizeof *fvecp);
 
-    if (xp == NULL || err == NULL || uhatp == NULL) {
+    if (xp == NULL || err == NULL || fvecp == NULL) {
 	free(err);
 	free(xp);
-	free(uhatp);
+	free(fvecp);
 	return 1;
     }
 
     iflag = 1;
-    nls_calc(&m, &n, x, uhat, jac, &ldjac, &iflag);
+    nls_calc(&m, &n, x, fvec, jac, &ldjac, &iflag);
     if (iflag == -1) goto chkderiv_abort;
 
-    chkder_(&m, &n, x, uhat, jac, &ldjac, xp, uhatp, &mode, err);
+    chkder_(&m, &n, x, fvec, jac, &ldjac, xp, fvecp, &mode, err);
 
     iflag = 2;
-    nls_calc(&m, &n, x, uhat, jac, &ldjac, &iflag);
+    nls_calc(&m, &n, x, fvec, jac, &ldjac, &iflag);
     if (iflag == -1) goto chkderiv_abort;
 
     iflag = 1;
-    nls_calc(&m, &n, xp, uhatp, jac, &ldjac, &iflag);
+    nls_calc(&m, &n, xp, fvecp, jac, &ldjac, &iflag);
     if (iflag == -1) goto chkderiv_abort; 
 
     mode = 2;
-    chkder_(&m, &n, x, uhat, jac, &ldjac, xp, uhatp, &mode, err);
+    chkder_(&m, &n, x, fvec, jac, &ldjac, xp, fvecp, &mode, err);
 
     /* examine "err" vector */
     for (i=0; i<m; i++) {
@@ -843,7 +862,7 @@ static int check_nls_derivs (integer m, integer n, double *x,
  chkderiv_abort:
     free(xp);
     free(err);
-    free(uhatp);
+    free(fvecp);
 
     return (zerocount > m/4);
 }
@@ -851,7 +870,7 @@ static int check_nls_derivs (integer m, integer n, double *x,
 /* driver for minpack levenberg-marquandt code for use when analytical
    derivatives have been supplied */
 
-static int lm_calculate (nls_spec *spec, double *uhat, double *jac, PRN *prn)
+static int lm_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 {
     integer info, lwa;
     integer m, n, ldjac;
@@ -872,14 +891,19 @@ static int lm_calculate (nls_spec *spec, double *uhat, double *jac, PRN *prn)
 	goto nls_cleanup;
     }
 
-    err = check_nls_derivs(m, n, spec->coeff, uhat, jac, ldjac, prn);
+    err = check_nls_derivs(m, n, spec->coeff, fvec, jac, ldjac, prn);
     if (err) {
 	goto nls_cleanup; 
     }
 
     /* call minpack */
-    lmder1_(nls_calc, &m, &n, spec->coeff, uhat, jac, &ldjac, &spec->tol, 
-	    &info, ipvt, wa, &lwa);
+    if (spec->ci == MLE) {
+	lmmle1_(nls_calc, &m, &n, spec->coeff, fvec, jac, &ldjac, &spec->tol, 
+		&info, ipvt, wa, &lwa);
+    } else {
+	lmder1_(nls_calc, &m, &n, spec->coeff, fvec, jac, &ldjac, &spec->tol, 
+		&info, ipvt, wa, &lwa);
+    }
 
     switch ((int) info) {
     case -1: 
@@ -919,14 +943,14 @@ static int lm_calculate (nls_spec *spec, double *uhat, double *jac, PRN *prn)
 /* callback for lm_approximate (below) to be used by minpack */
 
 static int 
-nls_calc_approx (integer *m, integer *n, double *x, double *uhat,
+nls_calc_approx (integer *m, integer *n, double *x, double *fvec,
 		 integer *iflag)
 {
     /* write current parameter values into dataset Z */
     update_nls_param_values(x);
 
-    /* calculate regression function at x, results into uhat */    
-    if (get_nls_resid(uhat)) {
+    /* calculate function at x, results into fvec */    
+    if (get_nls_fvec(fvec)) {
 	*iflag = -1;
     }
 
@@ -937,7 +961,7 @@ nls_calc_approx (integer *m, integer *n, double *x, double *uhat,
    Jacobian must be approximated numerically */
 
 static int 
-lm_approximate (nls_spec *spec, double *uhat, double *jac, PRN *prn)
+lm_approximate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 {
     integer info, m, n, ldjac;
     integer maxfev, mode = 1, nprint = 0, nfev = 0;
@@ -971,7 +995,7 @@ lm_approximate (nls_spec *spec, double *uhat, double *jac, PRN *prn)
     }
 
     /* call minpack */
-    lmdif_(nls_calc_approx, &m, &n, spec->coeff, uhat, 
+    lmdif_(nls_calc_approx, &m, &n, spec->coeff, fvec, 
 	   &spec->tol, &spec->tol, &gtol, &maxfev, &epsfcn, diag, &mode, &factor,
 	   &nprint, &info, &nfev, jac, &ldjac, 
 	   ipvt, qtf, wa1, wa2, wa3, wa4);
@@ -1011,7 +1035,7 @@ lm_approximate (nls_spec *spec, double *uhat, double *jac, PRN *prn)
 	int iters = spec->iters;
 
 	/* call minpack again */
-	fdjac2_(nls_calc_approx, &m, &n, spec->coeff, uhat, jac, 
+	fdjac2_(nls_calc_approx, &m, &n, spec->coeff, fvec, jac, 
 		&ldjac, &iflag, &epsfcn, wa4);
 	spec->ess = ess;
 	spec->iters = iters;
@@ -1136,15 +1160,15 @@ nls_spec_set_regression_function (nls_spec *spec, const char *fnstr,
     const char *p = fnstr;
     char *vname = NULL;
     char *rhs = NULL;
-    int err = 0;
+    int flen, err = 0;
 
     if (spec->nlfunc != NULL) {
 	free(spec->nlfunc);
 	spec->nlfunc = NULL;
     }
 
-    if (!strncmp(p, "nls ", 4)) {
-	/* starting with "nls" is optional here */
+    if (!strncmp(p, "nls ", 4) || !strncmp(p, "mle ", 4)) {
+	/* starting with "nls" / "mle" is optional here */
 	p += 4;
     }    
 
@@ -1154,6 +1178,7 @@ nls_spec_set_regression_function (nls_spec *spec, const char *fnstr,
     }
 
     if (!err) {
+	/* FIXME mle */
 	spec->depvar = varindex(pdinfo, vname);
 
 	if (spec->depvar == pdinfo->v) {
@@ -1162,15 +1187,21 @@ nls_spec_set_regression_function (nls_spec *spec, const char *fnstr,
 	}
     }
 
-    if (!err) {
-	spec->nlfunc = malloc(strlen(vname) + strlen(rhs) + 6);
-	if (spec->nlfunc == NULL) {
-	    err = E_ALLOC;
-	}
+    if (spec->ci == MLE) {
+	flen = strlen(rhs) + 4;
+    } else {
+	flen = strlen(vname) + strlen(rhs) + 6;
     }
 
-    if (!err) {
-	sprintf(spec->nlfunc, "%s - (%s)", vname, rhs);
+    spec->nlfunc = malloc(flen);
+    if (spec->nlfunc == NULL) {
+	err = E_ALLOC;
+    } else {
+	if (spec->ci == MLE) {
+	    sprintf(spec->nlfunc, "-(%s)", rhs);
+	} else {
+	    sprintf(spec->nlfunc, "%s - (%s)", vname, rhs);
+	}
     }
 
     free(vname);
@@ -1199,6 +1230,7 @@ void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2)
 
 /**
  * nls_parse_line:
+ * @ci: either %NLS or %MLE (doco not finished on this)
  * @line: specification of regression function or derivative
  *        of this function with respect to a parameter.
  * @Z: data array.
@@ -1221,12 +1253,13 @@ void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2)
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int nls_parse_line (const char *line, const double **Z,
+int nls_parse_line (int ci, const char *line, const double **Z,
 		    const DATAINFO *pdinfo)
 {
     int err = 0;
 
     pspec = &private_spec;
+    pspec->ci = ci;
 
     if (strncmp(line, "deriv", 5) == 0) {
 	if (pspec->nlfunc == NULL) {
@@ -1274,7 +1307,7 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 		       PRN *prn)
 {
     MODEL nlsmod;
-    double *uhat = NULL;
+    double *fvec = NULL;
     double *jac = NULL;
     int origv = pdinfo->v;
     int err = 0;
@@ -1326,10 +1359,10 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* allocate (full-length) arrays to be passed to minpack */
-    uhat = malloc(pdinfo->n * sizeof *uhat);
+    fvec = malloc(pdinfo->n * sizeof *fvec);
     jac = malloc(pdinfo->n * pspec->nparam * sizeof *jac);
 
-    if (uhat == NULL || jac == NULL) {
+    if (fvec == NULL || jac == NULL) {
 	nlsmod.errcode = E_ALLOC;
 	goto bailout;
     }
@@ -1343,10 +1376,10 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     /* invoke minpack driver function */
     if (pspec->mode == NUMERIC_DERIVS) {
 	pputs(prn, _("Using numerical derivatives\n"));
-	err = lm_approximate(pspec, uhat, jac, prn);
+	err = lm_approximate(pspec, fvec, jac, prn);
     } else {
 	pputs(prn, _("Using analytical derivatives\n"));
-	err = lm_calculate(pspec, uhat, jac, prn);
+	err = lm_calculate(pspec, fvec, jac, prn);
     }
 
     /* re-attach data array pointer: may have moved! */
@@ -1357,7 +1390,7 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	/* We have parameter estimates; now use a Gauss-Newton
 	   regression for covariance matrix, standard errors. */
-	nlsmod = GNR(uhat, jac, pspec, (const double **) *pZ, 
+	nlsmod = GNR(fvec, jac, pspec, (const double **) *pZ, 
 		     pdinfo, prn);
     } else {
 	if (nlsmod.errcode == 0) { 
@@ -1371,7 +1404,7 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 
  bailout:
 
-    free(uhat);
+    free(fvec);
     free(jac);
 
     if (spec == NULL) {
@@ -1431,13 +1464,14 @@ MODEL model_from_nls_spec (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 
 /**
  * nls_spec_new:
+ * @ci: either %NLS or %MLE.
  * @pdinfo: information on dataset.
  *
  * Returns: a pointer to a newly allocated nls specification,
  * or %NULL on failure.
  */
 
-nls_spec *nls_spec_new (const DATAINFO *pdinfo)
+nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo)
 {
     nls_spec *spec;
 
@@ -1453,6 +1487,7 @@ nls_spec *nls_spec_new (const DATAINFO *pdinfo)
     
     spec->coeff = NULL;
 
+    spec->ci = ci;
     spec->mode = NUMERIC_DERIVS;
 
     spec->nparam = 0;
