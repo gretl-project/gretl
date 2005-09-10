@@ -519,6 +519,7 @@ const char *estimator_string (int ci, PRN *prn)
     else if (ci == POISSON) return N_("Poisson");
     else if (ci == POOLED) return N_("Pooled OLS");
     else if (ci == NLS) return N_("NLS");
+    else if (ci == MLE) return N_("ML");
     else if (ci == LOGISTIC) return N_("Logistic");
     else if (ci == GARCH) return N_("GARCH");
     else if (ci == CORC) {
@@ -895,6 +896,12 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? vname : pmod->params[0]);
+    } else if (pmod->ci == MLE) {
+	if (tex) {
+	    pprintf(prn, "\\verb!%s!", pmod->params[0]);
+	} else {
+	    pputs(prn, pmod->params[0]);
+	}
     } else { 
 	int v = gretl_model_get_depvar(pmod);
 
@@ -1028,13 +1035,15 @@ static void model_format_start (PRN *prn)
 
 static void print_coeff_table_start (const MODEL *pmod, PRN *prn, int discrete)
 {
+    int use_param = pmod->ci == NLS || pmod->ci == MLE;
+
     if (plain_format(prn)) {
 	if (discrete) {
 	    pputs(prn, _("      VARIABLE      COEFFICIENT        STDERROR"
 			   "       T STAT       SLOPE\n"));
 	    pprintf(prn, "                                                 "
 		    "                 %s\n", _("(at mean)"));
-	} else if (pmod->ci == NLS) {
+	} else if (use_param) {
 	    pputs(prn, _("      PARAMETER      ESTIMATE          STDERROR"
 			   "       T STAT   2Prob(t > |T|)\n\n"));
 	} else {
@@ -1045,7 +1054,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn, int discrete)
     } else {
 	char col1[16], col2[16];
 
-	if (pmod->ci == NLS) {
+	if (use_param) {
 	    strcpy(col1, N_("Parameter"));
 	    strcpy(col2, N_("Estimate"));
 	} else {
@@ -1260,9 +1269,9 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
 static void print_ll (const MODEL *pmod, PRN *prn)
 {
     if (plain_format(prn)) {
-	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
+	pprintf(prn, "  %s = %#.8g\n", _("Log-likelihood"), pmod->lnL);
     } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
+	pprintf(prn, RTFTAB "%s = %#.8g\n", I_("Log-likelihood"), pmod->lnL);
     } else if (tex_format(prn)) {
 	char xstr[32];
 
@@ -1293,6 +1302,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	return 0;
     }
 
+    /* FIXME utf vs iso-88* */
+
     if (!plain_format(prn)) {
 	model_format_start(prn);
     } else if (pmod->ci == ARMA || pmod->ci == GARCH || 
@@ -1303,6 +1314,14 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
 	if (iters > 0) {
 	    pprintf(prn, _("Convergence achieved after %d iterations\n"), iters);
+	}
+    } else if (pmod->ci == MLE) {
+	int fncount = gretl_model_get_int(pmod, "fncount");
+	int grcount = gretl_model_get_int(pmod, "grcount");
+
+	if (fncount > 0) {
+	    pprintf(prn, _("Function evaluations: %d\n"), fncount);
+	    pprintf(prn, _("Evaluations of gradient: %d\n"), grcount);
 	}
     }
 
@@ -1401,7 +1420,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (!pmod->ifc && pmod->ci != NLS && pmod->aux != AUX_VAR
 	&& pmod->aux != AUX_JOHANSEN && pmod->aux != AUX_VECM
-	&& plain_format(prn)) {
+	&& pmod->ci != MLE && plain_format(prn)) {
 	noconst(pmod, prn);
     }
     
@@ -1476,6 +1495,13 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_end(prn);
     }
 
+    else if (pmod->ci == MLE) {
+	print_middle_table_start(prn);
+	print_ll(pmod, prn);
+	info_stats_lines(pmod, prn);
+	print_middle_table_end(prn);
+    }	
+
     else if (pmod->ci == HSK || pmod->ci == ARCH ||
 	     (pmod->ci == WLS && !gretl_model_get_int(pmod, "wt_dummy"))) {
 
@@ -1527,7 +1553,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_end(prn);
     }
 
-    if (plain_format(prn) && 
+    if (plain_format(prn) && pmod->ci != MLE &&
 	pmod->ci != ARMA && pmod->ci != NLS && !pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);
     }
@@ -1573,7 +1599,6 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     char varname[24];
 
     gretl_model_get_param_name(pmod, pdinfo, i, varname);
-
     pprintf(prn, " %13s ", varname);
 
     bufspace((strlen(varname) > 12)? 1 : 2, prn);
@@ -1638,8 +1663,8 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	} else if (pvalue < 0.10) {
 	    pputs(prn, " *");
 	}
-    } else if (pmod->list[i+2] != 0 && 
-	     (pmod->ci == LOGIT || pmod->ci == PROBIT)) { 
+    } else if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
+	       pmod->list[i+2] != 0) { 
 	double *slopes = gretl_model_get_data(pmod, "slopes");
 
 	if (slopes != NULL) {

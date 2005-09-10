@@ -360,10 +360,11 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
     *targ = '\0';
 
     if (pmod != NULL) {
-	/* special treatment for ARCH, ARMA, GARCH, NLS */
+	/* special treatment for ARCH, ARMA, GARCH, NLS, MLE */
 	if (pmod->aux == AUX_ARCH) {
 	    make_cname(pdinfo->varname[pmod->list[i + 2]], targ);
-	} else if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
+	} else if (pmod->ci == NLS || pmod->ci == MLE ||
+		   pmod->ci == ARMA || pmod->ci == GARCH) {
 	    strcpy(targ, pmod->params[i + 1]);
 	} else if (pmod->aux == AUX_VECM) {
 	    adjust_vecm_name(pdinfo->varname[pmod->list[i + 2]], targ);
@@ -782,7 +783,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		}
 	    }
 	}
-    } else if (pmod->ci != NLS) {
+    } else if (pmod->ci != NLS && pmod->ci != MLE) {
 	nx = pmod->ncoeff;
 	list = gretl_list_new(nx);
 	if (list != NULL) {
@@ -1960,6 +1961,10 @@ int command_ok_for_model (int test_ci, int model_ci)
 {
     int ok = 1;
 
+    if (model_ci == MLE) {
+	return 0;
+    }
+
     switch (test_ci) {
     case ADD:
     case ADDTO:
@@ -2059,6 +2064,10 @@ int highest_numbered_var_in_model (const MODEL *pmod,
     int i, v, vmax = 0;
     int gotsep = 0;
 
+    if (pmod->ci == MLE) {
+	return 0;
+    }
+
     for (i=1; i<=pmod->list[0]; i++) {
 	v = pmod->list[i];
 	if (v == LISTSEP) {
@@ -2112,7 +2121,10 @@ int mle_aic_bic (MODEL *pmod, int addk)
 
 double coeff_pval (const MODEL *pmod, double x, int df)
 {
-    if (0 && ML_ESTIMATOR(pmod->ci)) {
+    if (pmod->ci == MLE) {
+	return normal_pvalue_2(x);
+    } else if (0 && ML_ESTIMATOR(pmod->ci)) {
+	/* not ready */
 	return normal_pvalue_2(x);
     } else {
 	return t_pvalue_2(x, df);

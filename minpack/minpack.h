@@ -11,11 +11,6 @@ int lmder1_(U_fp fcn, integer *m, integer *n,
 	    integer *ldfjac, doublereal *tol, integer *info, 
 	    integer *ipvt, doublereal *wa, integer *lwa);
 
-int lmmle1_(U_fp fcn, integer *m, integer *n, 
-	    doublereal *x, doublereal *fvec, doublereal *fjac, 
-	    integer *ldfjac, doublereal *tol, integer *info, 
-	    integer *ipvt, doublereal *wa, integer *lwa);
-
 int lmdif_(S_fp fcn, integer *m, integer *n, doublereal *x, 
 	   doublereal *fvec, doublereal *ftol, doublereal *xtol, 
 	   doublereal *gtol, integer *maxfev, doublereal *epsfcn, 

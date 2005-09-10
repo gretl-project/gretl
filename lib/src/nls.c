@@ -51,6 +51,8 @@ struct _nls_spec {
 			   expressed in terms of the residuals */
     int nparam;         /* number of parameters to be estimated */
     int iters;          /* number of iterations performed */
+    int fncount;        /* number of function evaluations (ML) */
+    int grcount;        /* number of gradient evaluations (ML) */
     int t1;             /* starting observation */
     int t2;             /* ending observation */
     double ess;         /* error sum of squares */
@@ -78,8 +80,8 @@ static int genr_err;
 
 static void update_nls_param_values (const double *x);
 
-static int BFGS_min (int n, double *b, double *Fmin, 
-		     int maxit, int trace, double abstol, double reltol,
+static int BFGS_min (int n, double *b, int maxit,
+		     double abstol, double reltol,
 		     int *fncount, int *grcount);
 
 /* Use the genr() function to create/update the values of the residual
@@ -373,7 +375,7 @@ static double get_mle_ll (const double *b)
 
     /* FIXME iteration number is wrong */
     pspec->iters += 1;
-    pprintf(nprn, "iteration %2d: ll = %.8g\n", pspec->iters, pspec->ll);
+    pprintf(nprn, "ll = %.8g\n", pspec->ll);
 
     return -pspec->ll;
 }
@@ -536,12 +538,69 @@ static void add_stats_to_model (MODEL *pmod, nls_spec *spec,
     } else {
 	pmod->rsq = 1.0 - pmod->ess / tss;
     }
+
     pmod->adjrsq = NADBL;
 }
 
-/* add coefficient covariance matrix and standard errors */
+/* MLE: add variance matrix elements and standard errors based
+   on OPG: (GG')^{-1} */
 
-static int add_std_errs_to_model (MODEL *pmod)
+static int add_OPG_vcv (MODEL *pmod, nls_spec *spec)
+{
+    gretl_matrix *G = NULL;
+    gretl_matrix *V = NULL;
+    double x;
+    int k = spec->nparam;
+    int T = spec->t2 - spec->t1 + 1;
+    int i, v, t, err = 0;
+
+    G = gretl_matrix_alloc(k, T);
+    V = gretl_matrix_alloc(k, k);
+    if (G == NULL || V == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=0; i<k; i++) {
+	v = spec->params[i].dernum;
+	for (t=0; t<T; t++) {
+	    x = (*nZ)[v][t + spec->t1];
+	    gretl_matrix_set(G, i, t, x);
+	}
+    }
+
+    gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
+			      G, GRETL_MOD_TRANSPOSE,
+			      V);
+
+    err = gretl_invert_symmetric_matrix(V);
+
+    if (!err) {
+	int j;
+
+	for (i=0; i<k; i++) {
+	    for (j=0; j<=i; j++) {
+		x = gretl_matrix_get(V, i, j);
+		pmod->vcv[ijton(i, j, k)] = x;
+		if (i == j) {
+		    pmod->sderr[i] = sqrt(x);
+		} 
+	    }
+	}
+    }
+
+ bailout:
+
+    gretl_matrix_free(G);
+    gretl_matrix_free(V);
+
+    return err;
+}
+
+/* NLS: add coefficient covariance matrix and standard errors 
+   based on GNR */
+
+static int add_nls_std_errs_to_model (MODEL *pmod)
 {
     int i, k;
 
@@ -577,26 +636,34 @@ static void add_coeffs_to_model (MODEL *pmod, double *coeff)
 static int 
 add_param_names_to_model (MODEL *pmod, nls_spec *spec, const DATAINFO *pdinfo)
 {
-    int i;
-    int np = pmod->ncoeff + 1;
+    int i, np = pmod->ncoeff + 1;
 
     pmod->params = malloc(np * sizeof *pmod->params);
     if (pmod->params == NULL) {
 	return 1;
     }
-
     pmod->nparams = np;
 
-    pmod->params[0] = malloc(VNAMELEN);
+    if (spec->ci == MLE) {
+	int n = strlen(spec->nlfunc);
+
+	pmod->params[0] = malloc(n + 3);
+	if (pmod->params[0] != NULL) {
+	    sprintf(pmod->params[0], "l = %s", spec->nlfunc + 2);
+	    n = strlen(pmod->params[0]);
+	    pmod->params[0][n-1] = '\0';
+	} 
+    } else {
+	pmod->params[0] = gretl_strdup(pdinfo->varname[spec->depvar]);
+    } 
+
     if (pmod->params[0] == NULL) {
 	free(pmod->params);
 	return 1;
-    }
-
-    strcpy(pmod->params[0], pdinfo->varname[spec->depvar]);
+    }    
 
     for (i=1; i<=pmod->ncoeff; i++) {
-	pmod->params[i] = malloc(VNAMELEN);
+	pmod->params[i] = gretl_strdup(spec->params[i-1].name);
 	if (pmod->params[i] == NULL) {
 	    int j;
 
@@ -608,7 +675,6 @@ add_param_names_to_model (MODEL *pmod, nls_spec *spec, const DATAINFO *pdinfo)
 	    pmod->nparams = 0;
 	    return 1;
 	}
-	strcpy(pmod->params[i], spec->params[i-1].name);
     }
 
     return 0;
@@ -657,8 +723,10 @@ static int transcribe_nls_function (MODEL *pmod, const char *s)
     return err;
 }
 
-/* Gauss-Newton regression to calculate standard errors for the
-   NLS parameters (see Davidson and MacKinnon) */
+/* Gauss-Newton regression to calculate standard errors for the NLS
+   parameters (see Davidson and MacKinnon).  This may be modifiable
+   for MLE, but at present we're not using it in that context.
+*/
 
 static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 		  const double **Z, const DATAINFO *pdinfo, 
@@ -705,7 +773,7 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     for (i=0; i<=spec->nparam; i++) {
 	glist[i+1] = i;
 	if (i == 0) {
-	    /* dependent variable (NLS residual) */
+	    /* dependent variable (NLS residual or constant) */
 	    j = 0;
 	    for (t=0; t<gdinfo->n; t++) {
 		if (t < gdinfo->t1 || t > gdinfo->t2) {
@@ -745,15 +813,15 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     }
 
     if (gnr.errcode == 0) {
+	gnr.ci = spec->ci;
 	add_stats_to_model(&gnr, spec, Z);
-	if (add_std_errs_to_model(&gnr)) {
+	if (add_nls_std_errs_to_model(&gnr)) {
 	    gnr.errcode = E_ALLOC;
 	}
     }
 
     if (gnr.errcode == 0) {
 	ls_aic_bic(&gnr);
-	gnr.ci = NLS;
 	add_coeffs_to_model(&gnr, spec->coeff);
 	add_param_names_to_model(&gnr, spec, pdinfo);
 	add_fit_resid_to_model(&gnr, spec, uhat, Z, perfect);
@@ -769,6 +837,72 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     free(glist);
 
     return gnr;
+}
+
+/* allocate space to copy info into MLE model struct */
+
+static int mle_model_allocate (MODEL *pmod, nls_spec *spec)
+{
+    int k = spec->nparam;
+    int nvc = (k * k + k) / 2;
+    int err = 0;
+
+    pmod->list = gretl_list_new(0); /* ?? */
+    pmod->coeff = malloc(k * sizeof *pmod->coeff);
+    pmod->sderr = malloc(k * sizeof *pmod->sderr);
+    pmod->vcv = malloc(nvc * sizeof *pmod->vcv);
+
+    if (pmod->list == NULL ||
+	pmod->coeff == NULL || pmod->sderr == NULL ||
+	pmod->vcv == NULL) {
+	err = E_ALLOC;
+    } else {
+	pmod->ncoeff = k;
+    }
+
+    return err;
+}
+
+/* work up the results of ML estimation into the form of a gretl
+   MODEL */
+
+static int make_mle_model (MODEL *pmod, nls_spec *spec, 
+			   const DATAINFO *pdinfo)
+{
+    int err;
+    
+    err = mle_model_allocate(pmod, spec);
+    if (err) {
+	return err;
+    }
+
+    pmod->t1 = pspec->t1;
+    pmod->t2 = pspec->t2;
+    pmod->nobs = pmod->t2 - pmod->t1 + 1;
+    
+    /* hmm */
+    pmod->dfn = pmod->ncoeff;
+    pmod->dfd = pmod->nobs - pmod->ncoeff;
+
+    pmod->ci = MLE;
+    pmod->lnL = pspec->ll;
+    mle_aic_bic(pmod, 0);
+
+    add_coeffs_to_model(pmod, spec->coeff);
+
+    err = add_param_names_to_model(pmod, spec, pdinfo);
+
+    if (!err) {
+	err = add_OPG_vcv(pmod, spec);
+    }
+
+    if (!err) {
+	gretl_model_set_int(pmod, "fncount", pspec->fncount);
+	gretl_model_set_int(pmod, "grcount", pspec->grcount);
+	gretl_model_set_double(pmod, "tol", spec->tol);
+    }
+
+    return err;
 }
 
 /* free up resources associated with the nlspec struct */
@@ -803,6 +937,9 @@ static void clear_nls_spec (nls_spec *spec)
     spec->uhatnum = 0;
 
     spec->iters = 0;
+    spec->fncount = 0;
+    spec->grcount = 0;
+
     spec->t1 = spec->t2 = 0;
 }
 
@@ -954,17 +1091,14 @@ static int check_derivatives (integer m, integer n, double *x,
 static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 {
     integer m, n, ldjac;
-    int fncount = 0, grcount = 0;
     /* FIXME these params */
     double abstol = pspec->tol;
     double reltol = pspec->tol;
-    double llneg;
     int maxit = 200;
-    int trace = 1;
     /* end FIXME */
     int err = 0;
 
-    if (spec->mode = NUMERIC_DERIVS) {
+    if (spec->mode == NUMERIC_DERIVS) {
 	return 1; /* not handled yet */
     }
 
@@ -975,8 +1109,8 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     err = check_derivatives(m, n, spec->coeff, fvec, jac, ldjac, prn);
 
     if (!err) {
-	err = BFGS_min(n, spec->coeff, &llneg, maxit, trace, 
-		       abstol, reltol, &fncount, &grcount);
+	err = BFGS_min(n, spec->coeff, maxit, abstol, reltol, 
+		       &spec->fncount, &spec->grcount);
     }
 
     return err;    
@@ -1287,10 +1421,8 @@ nls_spec_set_regression_function (nls_spec *spec, const char *fnstr,
 	err = E_PARSE;
     }
 
-    if (!err) {
-	/* FIXME mle */
+    if (!err && spec->ci == NLS) {
 	spec->depvar = varindex(pdinfo, vname);
-
 	if (spec->depvar == pdinfo->v) {
 	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
 	    err = E_UNKVAR;
@@ -1483,15 +1615,15 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     /* export Z pointer for minpack's benefit */
     nZ = pZ;
 
-    /* invoke minpack driver function */
-    if (pspec->mode == NUMERIC_DERIVS) {
-	pputs(prn, _("Using numerical derivatives\n"));
-	err = lm_approximate(pspec, fvec, jac, prn);
+    if (pspec->ci == MLE) {
+	err = mle_calculate(pspec, fvec, jac, prn);
     } else {
-	pputs(prn, _("Using analytical derivatives\n"));
-	if (pspec->ci == MLE) {
-	    err = mle_calculate(pspec, fvec, jac, prn);
+	/* invoke appropriate minpack driver function */
+	if (pspec->mode == NUMERIC_DERIVS) {
+	    pputs(prn, _("Using numerical derivatives\n"));
+	    err = lm_approximate(pspec, fvec, jac, prn);
 	} else {
+	    pputs(prn, _("Using analytical derivatives\n"));
 	    err = lm_calculate(pspec, fvec, jac, prn);
 	}
     }
@@ -1502,10 +1634,14 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     pprintf(prn, _("Tolerance = %g\n"), pspec->tol);
 
     if (!err) {
-	/* We have parameter estimates; now use a Gauss-Newton
-	   regression for covariance matrix, standard errors. */
-	nlsmod = GNR(fvec, jac, pspec, (const double **) *pZ, 
-		     pdinfo, prn);
+	if (pspec->ci == NLS) {
+	    /* We have parameter estimates; now use a Gauss-Newton
+	       regression for covariance matrix, standard errors. */
+	    nlsmod = GNR(fvec, jac, pspec, (const double **) *pZ, 
+			 pdinfo, prn);
+	} else {
+	    make_mle_model(&nlsmod, pspec, pdinfo);
+	}
     } else {
 	if (nlsmod.errcode == 0) { 
 	    if (genr_err != 0) {
@@ -1606,7 +1742,10 @@ nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo)
 
     spec->nparam = 0;
     spec->depvar = 0;
+
     spec->iters = 0;
+    spec->fncount = 0;
+    spec->grcount = 0;
 
     spec->t1 = pdinfo->t1;
     spec->t2 = pdinfo->t2;
@@ -1668,24 +1807,18 @@ static void free_Lmatrix (double **m, int n)
     Allin Cottrell.
 */
 
-static int BFGS_min (int n, double *b, double *Fmin, 
-		     int maxit, int trace, double abstol, double reltol,
+static int BFGS_min (int n, double *b, int maxit,
+		     double abstol, double reltol,
 		     int *fncount, int *grcount)
 {
     int accpoint, enough;
     double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **B = NULL;
     int count, funcount, gradcount;
-    double f, gradproj;
+    double Fmin, f, gradproj;
     int i, j, ilast, iter = 0;
     double s, steplength;
     double D1, D2;
     int err = 0;
-
-    if (maxit <= 0) {
-	*Fmin = get_mle_ll(b);
-	*fncount = *grcount = 0;
-	return 0;
-    }
 
     g = malloc(n * sizeof *g);
     t = malloc(n * sizeof *t);
@@ -1706,11 +1839,7 @@ static int BFGS_min (int n, double *b, double *Fmin,
 	goto bailout;
     }
 
-    if (trace) {
-	fprintf(stderr, "initial value %#.8g\n", f);
-    }
-
-    *Fmin = f;
+    Fmin = f;
     funcount = gradcount = 1;
     get_mle_gradient(b, g);
     iter++;
@@ -1759,7 +1888,7 @@ static int BFGS_min (int n, double *b, double *Fmin,
 		    f = get_mle_ll(b);
 		    funcount++;
 		    accpoint = !na(f) &&
-			(f <= *Fmin + gradproj * steplength * acctol);
+			(f <= Fmin + gradproj * steplength * acctol);
 		    if (!accpoint) {
 			steplength *= stepredn;
 		    }
@@ -1767,17 +1896,17 @@ static int BFGS_min (int n, double *b, double *Fmin,
 	    } while (!(count == n || accpoint));
 
 	    enough = (f > abstol) &&
-		fabs(f - *Fmin) > reltol * (fabs(*Fmin) + reltol);
+		fabs(f - Fmin) > reltol * (fabs(Fmin) + reltol);
 
 	    /* stop if value if small or if relative change is low */
 	    if (!enough) {
 		count = n;
-		*Fmin = f;
+		Fmin = f;
 	    }
 
 	    if (count < n) {
 		/* making progress */
-		*Fmin = f;
+		Fmin = f;
 		get_mle_gradient(b, g);
 		gradcount++;
 		iter++;
@@ -1836,16 +1965,8 @@ static int BFGS_min (int n, double *b, double *Fmin,
 	}
     } while (count != n || ilast != gradcount);
 
-    if (trace) {
-	fprintf(stderr, "final value %#.8g\n", *Fmin);
-	if (iter < maxit) {
-	    fprintf(stderr, "converged\n");
-	} else {
-	    fprintf(stderr, "stopped after %d iterations\n", iter);
-	}
-    }
-
     if (iter >= maxit) {
+	fprintf(stderr, "stopped after %d iterations\n", iter);
 	err = E_NOCONV;
     }
 
