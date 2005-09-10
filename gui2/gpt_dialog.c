@@ -89,7 +89,8 @@ static void close_plot_controller (GtkWidget *widget, gpointer data)
 
     gpt_control = NULL;
 
-    if (plot != NULL) { /* PNG plot window open */
+    if (plot != NULL) { 
+	/* PNG plot window open */
 	plot_remove_controller(plot);
     } else {
 	free_plotspec(spec); 

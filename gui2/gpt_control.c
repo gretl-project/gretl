@@ -1264,7 +1264,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	}
     }
 
-#if 0
+#if GPDEBUG
     fprintf(stderr, "allocating: nobs=%d, datacols=%d, size=%d\n", 
 	    spec->nobs, datacols, spec->nobs * datacols * sizeof *spec->data);
 #endif    
@@ -1289,7 +1289,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     /* Read the data (and markers) from the plot file */
     err = get_gpt_data(spec, have_markers, fp);
 
-#if 0
+#if GPDEBUG
     fprintf(stderr, "spec->markers = %p, spec->n_markers = %d\n",
 	    (void *) spec->markers, spec->n_markers);
 #endif
@@ -1298,7 +1298,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	spec->reglist = gretl_list_copy(reglist);
     }
 
-    if (!err) {
+    if (!err && spec->markers != NULL) {
 	maybe_set_all_markers_ok(spec);
     }
 
@@ -2338,6 +2338,11 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 	remove(plot->spec->fname);
     }
 
+#if GPDEBUG
+    fprintf(stderr, "destroy_png_plot: plot = %p, spec = %p\n",
+	    (void *) plot, (void *) plot->spec);
+#endif
+
     if (plot_has_controller(plot)) {
 	/* if the png plot has a controller, destroy it too */
 	plot->spec->ptr = NULL;
@@ -2348,14 +2353,11 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 	free_plotspec(plot->spec);
     }
 
-#ifndef OLD_GTK
-    if (plot->spec->labeled != NULL) {
-	free(plot->spec->labeled);
-    }
-#endif
     if (plot->invert_gc != NULL) {
 	gdk_gc_destroy(plot->invert_gc);
     }
+
+    gtk_widget_unref(plot->shell);
 
     free(plot);
 }
@@ -2763,6 +2765,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 #endif
 
+    /* note need for corresponding unref */
     gtk_widget_ref(plot->shell);
 
     gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: gnuplot graph")); 

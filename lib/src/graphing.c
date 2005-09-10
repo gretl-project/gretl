@@ -2233,6 +2233,10 @@ void free_plotspec (GPT_SPEC *spec)
 	free(spec->markers);
     }
 
+    if (spec->labeled != NULL) {
+	free(spec->labeled);
+    }
+
     free(spec);
 }
 

@@ -91,7 +91,7 @@ static void printfilelist (int filetype, GConfClient *client)
     }
 
     for (i=0; i<MAXRECENT; i++) {
-	flist = g_slist_append(flist, g_strdup(filep[i]));
+	flist = g_slist_append(flist, filep[i]);
     }
 
     key = g_strdup_printf("/apps/gretl/%s", file_sections[filetype]);
