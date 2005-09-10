@@ -355,7 +355,7 @@ static double get_mle_ll (const double *b)
     }
 
     if (pspec->uhatnum == 0) {
-	/* look up ID number of the fvec variable if we don't know
+	/* look up ID number of the l(t) variable if we don't know
 	   it already */
 	v = varindex(ndinfo, "$nl_y");
 	if (v == ndinfo->v) {
@@ -879,11 +879,11 @@ static int nls_calc (integer *m, integer *n, double *x, double *fvec,
 }
 
 /* in case the user supplied analytical derivatives for the
-   NLS regression parameters, check them for sanity */
+   parameters, check them for sanity */
 
-static int check_nls_derivs (integer m, integer n, double *x,
-			     double *fvec, double *jac,
-			     integer ldjac, PRN *prn)
+static int check_derivatives (integer m, integer n, double *x,
+			      double *fvec, double *jac,
+			      integer ldjac, PRN *prn)
 {
     integer mode = 1;
     integer iflag;
@@ -949,7 +949,7 @@ static int check_nls_derivs (integer m, integer n, double *x,
 }
 
 /* driver for BFGS code for use when analytical derivatives have been
-   supplied */
+   supplied (FIXME case of numerical derivs) */
 
 static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 {
@@ -964,11 +964,15 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     /* end FIXME */
     int err = 0;
 
+    if (spec->mode = NUMERIC_DERIVS) {
+	return 1; /* not handled yet */
+    }
+
     m = spec->t2 - spec->t1 + 1; /* number of observations */
     n = spec->nparam;            /* number of parameters */
     ldjac = m;                   /* leading dimension of jac array */
 
-    err = check_nls_derivs(m, n, spec->coeff, fvec, jac, ldjac, prn);
+    err = check_derivatives(m, n, spec->coeff, fvec, jac, ldjac, prn);
 
     if (!err) {
 	err = BFGS_min(n, spec->coeff, &llneg, maxit, trace, 
@@ -1002,7 +1006,7 @@ static int lm_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 	goto nls_cleanup;
     }
 
-    err = check_nls_derivs(m, n, spec->coeff, fvec, jac, ldjac, prn);
+    err = check_derivatives(m, n, spec->coeff, fvec, jac, ldjac, prn);
     if (err) {
 	goto nls_cleanup; 
     }
