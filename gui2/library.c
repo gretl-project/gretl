@@ -2279,14 +2279,13 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg)
 	    strcpy(tmp, bufline);
 	    strcpy(bufline, "mle ");
 	    strcat(bufline, tmp);
-	    ci == MLE;
+	    ci = MLE;
 	} else if (!started && strncmp(bufline, "nls", 3)) {
 	    char tmp[MAXLINE];
 	    
 	    strcpy(tmp, bufline);
 	    strcpy(bufline, "nls ");
 	    strcat(bufline, tmp);
-	    ci == NLS;
 	}
 
 	err = nls_parse_line(ci, bufline, (const double **) Z, datainfo);
@@ -5916,7 +5915,7 @@ int gui_exec_line (char *line,
 		errmsg(err, prn);
 	    }
 	    sys = NULL;
-	} else if (!strcmp(cmd.param, "nls")) {
+	} else if (!strcmp(cmd.param, "mle") || !strcmp(cmd.param, "nls")) {
 	    clear_or_save_model(&models[0], datainfo, rebuild);
 	    *models[0] = nls(&Z, datainfo, outprn);
 	    if ((err = (models[0])->errcode)) {

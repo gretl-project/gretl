@@ -563,8 +563,13 @@ static int add_OPG_vcv (MODEL *pmod, nls_spec *spec)
 
     for (i=0; i<k; i++) {
 	v = spec->params[i].dernum;
+	if (!ndinfo->vector[v]) {
+	    x = (*nZ)[v][0];
+	}
 	for (t=0; t<T; t++) {
-	    x = (*nZ)[v][t + spec->t1];
+	    if (ndinfo->vector[v]) {
+		x = (*nZ)[v][t + spec->t1];
+	    }
 	    gretl_matrix_set(G, i, t, x);
 	}
     }

@@ -33,6 +33,7 @@
                        c == LOGIT || \
                        c == OLS || \
                        c == OMIT || \
+                       c == MLE || \
                        c == NLS || \
                        c == POISSON || \
                        c == POOLED || \
