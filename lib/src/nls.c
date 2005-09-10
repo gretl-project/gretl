@@ -76,6 +76,12 @@ static nls_spec *pspec;
 static integer one = 1;
 static int genr_err;
 
+static void update_nls_param_values (const double *x);
+
+static int BFGS_min (int n, double *b, double *Fmin, 
+		     int maxit, int trace, double abstol, double reltol,
+		     int *fncount, int *grcount);
+
 /* Use the genr() function to create/update the values of the residual
    from the regression function (if i = 0), or the derivatives of the
    regression function with respect to the parameters.  The formulae
@@ -113,7 +119,7 @@ static int nls_auto_genr (int i, double ***pZ, DATAINFO *pdinfo)
     return genr_err;
 }
 
-/* three wrappers for the above to enhance comprehensibility below */
+/* wrappers for the above to enhance comprehensibility below */
 
 static int nls_calculate_fvec (void)
 {
@@ -335,6 +341,86 @@ nls_missval_check (double ***pZ, DATAINFO *pdinfo, nls_spec *spec)
     return 0;
 }
 
+/* this function is used in the context of BFGS */
+
+static double get_mle_ll (const double *b)
+{
+    int t, v;
+
+    update_nls_param_values(b);
+
+    /* calculate ll given current parameter estimates */
+    if (nls_calculate_fvec()) {
+	return NADBL;
+    }
+
+    if (pspec->uhatnum == 0) {
+	/* look up ID number of the fvec variable if we don't know
+	   it already */
+	v = varindex(ndinfo, "$nl_y");
+	if (v == ndinfo->v) {
+	    return 1;
+	}
+	pspec->uhatnum = v;
+    } else {
+	v = pspec->uhatnum;
+    }
+
+    pspec->ll = 0.0;
+    for (t=pspec->t1; t<=pspec->t2; t++) {
+	pspec->ll -= (*nZ)[v][t];
+    }
+
+    /* FIXME iteration number is wrong */
+    pspec->iters += 1;
+    pprintf(nprn, "iteration %2d: ll = %.8g\n", pspec->iters, pspec->ll);
+
+    return -pspec->ll;
+}
+
+/* used in the context of BFGS */
+
+static int get_mle_gradient (const double *b, double *g)
+{
+    int i, t, v;
+
+    update_nls_param_values(b);
+
+    for (i=0; i<pspec->nparam; i++) {
+	if (nls_calculate_deriv(i)) {
+	    fprintf(stderr, "error calculating deriv\n");
+	    return 1;
+	}
+	
+	if (pspec->params[i].dernum == 0) {
+	    char varname[VNAMELEN];
+
+	    /* look up ID number of the derivative if not known */
+	    sprintf(varname, "$nl_x%d", i + 1);
+	    v = varindex(ndinfo, varname);
+	    if (v == ndinfo->v) {
+		return 1;
+	    }
+	    pspec->params[i].dernum = v;
+	} else {
+	    v = pspec->params[i].dernum;
+	}
+
+	g[i] = 0.0;
+
+	/* derivative may be vector or scalar */
+	if (ndinfo->vector[v]) {
+	    for (t=pspec->t1; t<=pspec->t2; t++) {
+		g[i] -= (*nZ)[v][t];
+	    }
+	} else {
+	    g[i] -= (*nZ)[v][0];
+	}
+    }
+
+    return 0;
+}
+
 /* this function is used in the context of the minpack callback */
 
 static int get_nls_fvec (double *fvec)
@@ -374,15 +460,8 @@ static int get_nls_fvec (double *fvec)
     }
 
     pspec->iters += 1;
-
-    if (pspec->ci == MLE) {
-	pprintf(nprn, "iteration %2d: ll = %.8g\n", pspec->iters, pspec->ll);
-    }
-
 #if NLS_DEBUG
-    if (pspec->ci == NLS) {
-	fprintf(stderr, "iteration %2d: SSR = %.8g\n", pspec->iters, pspec->ess);
-    }
+    fprintf(stderr, "iteration %2d: SSR = %.8g\n", pspec->iters, pspec->ess);
 #endif
 
     return 0;
@@ -760,7 +839,9 @@ static void update_nls_param_values (const double *x)
     for (i=0; i<pspec->nparam; i++) {
 	v = pspec->params[i].varnum;
 	(*nZ)[v][0] = x[i];
+#if NLS_DEBUG
 	fprintf(stderr, "revised param[%d] = %g\n", i, x[i]);
+#endif
     }
 }
 
@@ -867,6 +948,36 @@ static int check_nls_derivs (integer m, integer n, double *x,
     return (zerocount > m/4);
 }
 
+/* driver for BFGS code for use when analytical derivatives have been
+   supplied */
+
+static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
+{
+    integer m, n, ldjac;
+    int fncount = 0, grcount = 0;
+    /* FIXME these params */
+    double abstol = pspec->tol;
+    double reltol = pspec->tol;
+    double llneg;
+    int maxit = 200;
+    int trace = 1;
+    /* end FIXME */
+    int err = 0;
+
+    m = spec->t2 - spec->t1 + 1; /* number of observations */
+    n = spec->nparam;            /* number of parameters */
+    ldjac = m;                   /* leading dimension of jac array */
+
+    err = check_nls_derivs(m, n, spec->coeff, fvec, jac, ldjac, prn);
+
+    if (!err) {
+	err = BFGS_min(n, spec->coeff, &llneg, maxit, trace, 
+		       abstol, reltol, &fncount, &grcount);
+    }
+
+    return err;    
+}
+
 /* driver for minpack levenberg-marquandt code for use when analytical
    derivatives have been supplied */
 
@@ -897,13 +1008,8 @@ static int lm_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     }
 
     /* call minpack */
-    if (spec->ci == MLE) {
-	lmmle1_(nls_calc, &m, &n, spec->coeff, fvec, jac, &ldjac, &spec->tol, 
-		&info, ipvt, wa, &lwa);
-    } else {
-	lmder1_(nls_calc, &m, &n, spec->coeff, fvec, jac, &ldjac, &spec->tol, 
-		&info, ipvt, wa, &lwa);
-    }
+    lmder1_(nls_calc, &m, &n, spec->coeff, fvec, jac, &ldjac, &spec->tol, 
+	    &info, ipvt, wa, &lwa);
 
     switch ((int) info) {
     case -1: 
@@ -1379,7 +1485,11 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	err = lm_approximate(pspec, fvec, jac, prn);
     } else {
 	pputs(prn, _("Using analytical derivatives\n"));
-	err = lm_calculate(pspec, fvec, jac, prn);
+	if (pspec->ci == MLE) {
+	    err = mle_calculate(pspec, fvec, jac, prn);
+	} else {
+	    err = lm_calculate(pspec, fvec, jac, prn);
+	}
     }
 
     /* re-attach data array pointer: may have moved! */
@@ -1514,9 +1624,237 @@ void nls_spec_destroy (nls_spec *spec)
     free(spec);
 }
 
+/* below: apparatus for BFGS, borrowed from R */
 
+static double **Lmatrix (int n)
+{
+    double **m;
+    int i;
 
+    m = malloc(n * sizeof *m);
 
+    if (m != NULL) {
+	for (i=0; i<n; i++) {
+	    m[i] = malloc((i + 1) * sizeof **m);
+	}
+    }
 
+    return m;
+}
 
+static void free_Lmatrix (double **m, int n)
+{
+    int i;
 
+    if (m != NULL) {
+	for (i=0; i<n; i++) {
+	    free(m[i]);
+	}
+	free(m);
+    }
+}
+
+#define stepredn	0.2
+#define acctol		0.0001 
+#define reltest		10.0
+
+/*  BFGS variable-metric method, based on Pascal code in J. C. Nash,
+    "Compact Numerical Methods for Computers," 2nd edition, converted
+    by p2c then re-crafted by B. D. Ripley.  Revised for gretl by
+    Allin Cottrell.
+*/
+
+static int BFGS_min (int n, double *b, double *Fmin, 
+		     int maxit, int trace, double abstol, double reltol,
+		     int *fncount, int *grcount)
+{
+    int accpoint, enough;
+    double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **B = NULL;
+    int count, funcount, gradcount;
+    double f, gradproj;
+    int i, j, ilast, iter = 0;
+    double s, steplength;
+    double D1, D2;
+    int err = 0;
+
+    if (maxit <= 0) {
+	*Fmin = get_mle_ll(b);
+	*fncount = *grcount = 0;
+	return 0;
+    }
+
+    g = malloc(n * sizeof *g);
+    t = malloc(n * sizeof *t);
+    X = malloc(n * sizeof *X);
+    c = malloc(n * sizeof *c);
+    B = Lmatrix(n);
+
+    if (g == NULL || t == NULL || X == NULL || c == NULL || B == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    f = get_mle_ll(b);
+
+    if (na(f)) {
+	fprintf(stderr, "initial value in 'vmmin' is not finite\n");
+	err = E_DATA;
+	goto bailout;
+    }
+
+    if (trace) {
+	fprintf(stderr, "initial value %#.8g\n", f);
+    }
+
+    *Fmin = f;
+    funcount = gradcount = 1;
+    get_mle_gradient(b, g);
+    iter++;
+    ilast = gradcount;
+
+    do {
+	if (ilast == gradcount) {
+	    for (i=0; i<n; i++) {
+		for (j=0; j<i; j++) {
+		    B[i][j] = 0.0;
+		}
+		B[i][i] = 1.0;
+	    }
+	}
+	for (i=0; i<n; i++) {
+	    X[i] = b[i];
+	    c[i] = g[i];
+	}
+	gradproj = 0.0;
+	for (i=0; i<n; i++) {
+	    s = 0.0;
+	    for (j=0; j<=i; j++) {
+		s -= B[i][j] * g[j];
+	    }
+	    for (j=i+1; j<n; j++) {
+		s -= B[j][i] * g[j];
+	    }
+	    t[i] = s;
+	    gradproj += s * g[i];
+	}
+
+	if (gradproj < 0.0) {	
+	    /* search direction is downhill */
+	    steplength = 1.0;
+	    accpoint = 0;
+	    do {
+		count = 0;
+		for (i=0; i<n; i++) {
+		    b[i] = X[i] + steplength * t[i];
+		    if (reltest + X[i] == reltest + b[i]) {
+			/* no change */
+			count++;
+		    }
+		}
+		if (count < n) {
+		    f = get_mle_ll(b);
+		    funcount++;
+		    accpoint = !na(f) &&
+			(f <= *Fmin + gradproj * steplength * acctol);
+		    if (!accpoint) {
+			steplength *= stepredn;
+		    }
+		}
+	    } while (!(count == n || accpoint));
+
+	    enough = (f > abstol) &&
+		fabs(f - *Fmin) > reltol * (fabs(*Fmin) + reltol);
+
+	    /* stop if value if small or if relative change is low */
+	    if (!enough) {
+		count = n;
+		*Fmin = f;
+	    }
+
+	    if (count < n) {
+		/* making progress */
+		*Fmin = f;
+		get_mle_gradient(b, g);
+		gradcount++;
+		iter++;
+		D1 = 0.0;
+		for (i=0; i<n; i++) {
+		    t[i] = steplength * t[i];
+		    c[i] = g[i] - c[i];
+		    D1 += t[i] * c[i];
+		}
+		if (D1 > 0) {
+		    D2 = 0.0;
+		    for (i=0; i<n; i++) {
+			s = 0.0;
+			for (j=0; j<=i; j++) {
+			    s += B[i][j] * c[j];
+			}
+			for (j=i+1; j<n; j++) {
+			    s += B[j][i] * c[j];
+			}
+			X[i] = s;
+			D2 += s * c[i];
+		    }
+		    D2 = 1.0 + D2 / D1;
+		    for (i=0; i<n; i++) {
+			for (j=0; j<=i; j++) {
+			    B[i][j] += (D2 * t[i] * t[j]
+					- X[i] * t[j] - t[i] * X[j]) / D1;
+			}
+		    }
+		} else {
+		    /* D1 < 0 */
+		    ilast = gradcount;
+		}
+	    } else {
+		/* no progress */
+		if (ilast < gradcount) {
+		    count = 0;
+		    ilast = gradcount;
+		}
+	    }
+	} else {
+	    /* uphill search */
+	    count = 0;
+	    if (ilast == gradcount) {
+		count = n;
+	    } else {
+		ilast = gradcount;
+	    }
+	    /* Resets unless has just been reset */
+	}
+	if (iter >= maxit) {
+	    break;
+	}
+	if (gradcount - ilast > 2 * n) {
+	    ilast = gradcount;	/* periodic restart */
+	}
+    } while (count != n || ilast != gradcount);
+
+    if (trace) {
+	fprintf(stderr, "final value %#.8g\n", *Fmin);
+	if (iter < maxit) {
+	    fprintf(stderr, "converged\n");
+	} else {
+	    fprintf(stderr, "stopped after %d iterations\n", iter);
+	}
+    }
+
+    if (iter >= maxit) {
+	err = E_NOCONV;
+    }
+
+    *fncount = funcount;
+    *grcount = gradcount;
+
+ bailout:
+
+    free(g);
+    free(t);
+    free(X);
+    free(c);
+    free_Lmatrix(B, n);
+
+    return err;
+}
