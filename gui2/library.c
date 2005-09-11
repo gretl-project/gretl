@@ -2238,20 +2238,39 @@ static int do_nls_genr (void)
     return err;
 }
 
-/* FIXME for mle command */
+static int is_genr_line (const char *s)
+{
+    if (!strncmp(s, "genr", 4) ||
+	!strncmp(s, "series", 6) ||
+	!strncmp(s, "scalar", 6)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
 
-void do_nls_model (GtkWidget *widget, dialog_t *dlg)
+static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 {
     gchar *buf;
     PRN *prn;
     char bufline[MAXLINE];
     char title[26];
-    int ci = NLS, err = 0, started = 0;
+    int err = 0, started = 0;
     MODEL *pmod = NULL;
+    const char *cstr;
+    const char *endstr;
 
     buf = edit_dialog_special_get_text(dlg);
     if (buf == NULL) {
 	return;
+    }
+
+    if (ci == NLS) {
+	cstr = "nls";
+	endstr = "end nls";
+    } else {
+	cstr = "mle";
+	endstr = "end mle";
     }
 
     bufgets(NULL, 0, buf);
@@ -2261,32 +2280,24 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg)
 	    continue;
 	}
 
-	if (started && 
-	    (!strncmp(bufline, "end nls", 7) ||
-	     !strncmp(bufline, "end mle", 7))) {
+	if (started && !strncmp(bufline, endstr, 7)) {
 	    break;
 	}
 
-	if (!started && !strncmp(bufline, "genr", 4)) {
+	if (!started && is_genr_line(bufline)) {
 	    gretl_command_strcpy(bufline);
 	    err = do_nls_genr();
 	    continue;
 	}
 
-	if (!started && strncmp(bufline, "mle", 3)) {
+	if (!started && strncmp(bufline, cstr, 3)) {
 	    char tmp[MAXLINE];
 	    
 	    strcpy(tmp, bufline);
-	    strcpy(bufline, "mle ");
+	    strcpy(bufline, cstr);
+	    strcat(bufline, " ");
 	    strcat(bufline, tmp);
-	    ci = MLE;
-	} else if (!started && strncmp(bufline, "nls", 3)) {
-	    char tmp[MAXLINE];
-	    
-	    strcpy(tmp, bufline);
-	    strcpy(bufline, "nls ");
-	    strcat(bufline, tmp);
-	}
+	} 
 
 	err = nls_parse_line(ci, bufline, (const double **) Z, datainfo);
 	started = 1;
@@ -2305,10 +2316,10 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg)
     }
 
     /* if the user didn't give "end XXX", supply it */
-    if (strncmp(bufline, "end nls", 7)) {
-	gretl_command_strcpy("end nls");
+    if (strncmp(bufline, endstr, 7)) {
+	gretl_command_strcpy(endstr);
 	lib_cmd_init();
-    } 
+    }    
 
     if (bufopen(&prn)) return;
 
@@ -2344,6 +2355,16 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg)
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
     view_model(prn, pmod, 78, 420, title); 
+}
+
+void do_nls_model (GtkWidget *widget, dialog_t *dlg)
+{
+    real_do_nonlinear_model(dlg, NLS);
+}
+
+void do_mle_model (GtkWidget *widget, dialog_t *dlg)
+{
+    real_do_nonlinear_model(dlg, MLE);
 }
 
 static void arma_maybe_suppress_const (void)

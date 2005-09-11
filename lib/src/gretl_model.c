@@ -1144,8 +1144,6 @@ MODEL *gretl_model_new (void)
     return pmod;
 }
 
-/* .......................................................... */
-
 static void clear_ar_info (MODEL *pmod)
 {
     if (pmod->arinfo->arlist) {
@@ -1818,38 +1816,58 @@ static char *copy_missmask (const MODEL *pmod)
 
 int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
 {
-    int i = src->list[0] - 1;
-    int m = i * (i + 1) / 2;
+    int k = src->ncoeff;
+    int m = k * (k + 1) / 2;
 
     /* monolithic copy of structure */
     *targ = *src;
 
     /* now work on pointer members */
     gretl_model_init_pointers(targ);
-    if ((targ->coeff = copyvec(src->coeff, src->ncoeff)) == NULL) 
+
+    if (targ->coeff != NULL &&
+	(targ->coeff = copyvec(src->coeff, src->ncoeff)) == NULL) {
 	return 1;
-    if ((targ->sderr = copyvec(src->sderr, src->ncoeff))  == NULL)   
+    }
+
+    if (targ->sderr != NULL &&
+	(targ->sderr = copyvec(src->sderr, src->ncoeff)) == NULL) {  
 	return 1;
-    if ((targ->uhat = copyvec(src->uhat, pdinfo->n)) == NULL) 
+    }
+
+    if (src->uhat != NULL && 
+	(targ->uhat = copyvec(src->uhat, pdinfo->n)) == NULL) {
 	return 1;
-    if ((targ->yhat = copyvec(src->yhat, pdinfo->n)) == NULL) 
+    }
+
+    if (src->yhat != NULL && 
+	(targ->yhat = copyvec(src->yhat, pdinfo->n)) == NULL) {
 	return 1;
+    }
+
     if (src->submask != NULL && 
-	(targ->submask = copy_subsample_mask(src->submask, pdinfo->n)) == NULL) 
+	(targ->submask = copy_subsample_mask(src->submask, pdinfo->n)) == NULL) { 
 	return 1;
+    }
+
     if (src->missmask != NULL && 
-	(targ->missmask = copy_missmask(src)) == NULL) 
+	(targ->missmask = copy_missmask(src)) == NULL) { 
 	return 1;
+    }
 
-    if (src->xpx != NULL &&
-	(targ->xpx = copyvec(src->xpx, m)) == NULL) return 1;
+    if (src->xpx != NULL && 
+	(targ->xpx = copyvec(src->xpx, m)) == NULL) {
+	return 1;
+    }
+
     if (src->vcv != NULL && 
-	(targ->vcv = copyvec(src->vcv, m)) == NULL) return 1;
+	(targ->vcv = copyvec(src->vcv, m)) == NULL) {
+	return 1;
+    }
 
-    if (src->arinfo != NULL) {
-	targ->arinfo = copy_ar_info(src->arinfo);
-	if (targ->arinfo == NULL) 
-	    return 1; 
+    if (src->arinfo != NULL && 
+	(targ->arinfo = copy_ar_info(src->arinfo)) == NULL) {
+	return 1; 
     }
 
     if (src->ntests > 0 && src->tests != NULL) {
@@ -1873,10 +1891,10 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
 	}
     }
 
-    m = src->list[0];
-    targ->list = malloc((m + 1) * sizeof *targ->list);
-    if (targ->list == NULL) return 1;
-    for (i=0; i<=m; i++) targ->list[i] = src->list[i];    
+    if (src->list != NULL && 
+	(targ->list = gretl_list_copy(src->list)) == NULL) {
+	return 1;
+    } 
 
     return 0;
 }

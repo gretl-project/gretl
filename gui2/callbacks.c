@@ -504,6 +504,12 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	okfunc = do_box_graph;
 	varclick = VARCLICK_INSERT_NAME;
 	strcpy(defstr, get_boxplots_string());
+	break;
+    case MLE:
+	strcpy(title, _("gretl: maximum likelihood"));
+	strcpy(query, _("MLE: Specify function and derivatives:"));
+	okfunc = do_mle_model;
+	varclick = VARCLICK_INSERT_TEXT;
 	break;	
     case NLS:
 	strcpy(title, _("gretl: nonlinear least squares"));

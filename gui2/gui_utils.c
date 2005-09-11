@@ -2508,13 +2508,16 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     viewer_box_config(vwin);
 
     set_up_viewer_menu(vwin->dialog, vwin, model_items);
-    add_vars_to_plot_menu(vwin);
+    if (pmod->ci != MLE) {
+	add_vars_to_plot_menu(vwin);
+    }
     add_model_dataset_items(vwin);
     if (latex_is_ok() && !pmod->errcode) {
 	add_model_tex_items(vwin);
     }
 
-    if (pmod->ci != ARMA && pmod->ci != GARCH && pmod->ci != NLS) {
+    if (pmod->ci != ARMA && pmod->ci != GARCH && 
+	pmod->ci != NLS && pmod->ci != MLE) {
 	add_dummies_to_plot_menu(vwin);
     }
 

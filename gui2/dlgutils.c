@@ -481,7 +481,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     top_vbox = GTK_DIALOG(d->dialog)->vbox;
     button_box = GTK_DIALOG(d->dialog)->action_area;
 
-    if (cmdcode == NLS || cmdcode == RESTRICT) {
+    if (cmdcode == NLS || cmdcode == MLE || cmdcode == RESTRICT) {
 	int hsize = 62;
 	gchar *lbl;
 

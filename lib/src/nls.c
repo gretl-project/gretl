@@ -549,7 +549,7 @@ static int add_OPG_vcv (MODEL *pmod, nls_spec *spec)
 {
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
-    double x;
+    double x = 0.0;
     int k = spec->nparam;
     int T = spec->t2 - spec->t1 + 1;
     int i, v, t, err = 0;
@@ -852,14 +852,11 @@ static int mle_model_allocate (MODEL *pmod, nls_spec *spec)
     int nvc = (k * k + k) / 2;
     int err = 0;
 
-    pmod->list = gretl_list_new(0); /* ?? */
     pmod->coeff = malloc(k * sizeof *pmod->coeff);
     pmod->sderr = malloc(k * sizeof *pmod->sderr);
     pmod->vcv = malloc(nvc * sizeof *pmod->vcv);
 
-    if (pmod->list == NULL ||
-	pmod->coeff == NULL || pmod->sderr == NULL ||
-	pmod->vcv == NULL) {
+    if (pmod->coeff == NULL || pmod->sderr == NULL || pmod->vcv == NULL) {
 	err = E_ALLOC;
     } else {
 	pmod->ncoeff = k;
