@@ -5569,8 +5569,8 @@ int gui_exec_line (char *line,
 		   const char *myname) 
 {
     int i, err = 0, chk = 0, order, nulldata_n, lines[1];
-    int dbdata = 0, do_arch = 0, do_nls = 0, renumber;
-    int fncall = 0;
+    int dbdata = 0, do_arch = 0, do_nls = 0, do_mle = 0;
+    int renumber, fncall = 0;
     int script_code = exec_code;
     int loopstack = *plstack, looprun = *plrun;
     int rebuild = (exec_code == REBUILD_EXEC);
@@ -5944,6 +5944,8 @@ int gui_exec_line (char *line,
 	    } else {
 		if (!strcmp(cmd.param, "nls")) {
 		    do_nls = 1;
+		} else if (!strcmp(cmd.param, "mle")) {
+		    do_mle = 1;
 		}
 		printmodel(models[0], datainfo, cmd.opt, outprn);
 	    }
@@ -6551,10 +6553,12 @@ int gui_exec_line (char *line,
 	outprn = NULL;
     }
 
-    if (!err && (is_model_cmd(cmd.word) || do_nls || do_arch)
+    if (!err && (is_model_cmd(cmd.word) || do_nls || do_mle || do_arch)
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) {
 	gretl_model_set_int(models[0], "script", 1);
-	err = stack_model(models[0]);
+	if (!do_mle) {
+	    err = stack_model(models[0]);
+	}
 	if (exec_code != REBUILD_EXEC && !do_arch && *cmd.savename != '\0') {
 	    maybe_save_model(&cmd, &models[0], datainfo, prn);
 	}

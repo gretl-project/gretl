@@ -1337,7 +1337,9 @@ static char *model_cmd_str (MODEL *pmod)
         strcat(str, "; ");
     }
 
-    model_list_to_string(pmod->list, str); 
+    if (pmod->ci != MLE) {
+	model_list_to_string(pmod->list, str); 
+    }
 
     return str;
 }
