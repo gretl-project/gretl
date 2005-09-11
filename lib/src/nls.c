@@ -79,8 +79,7 @@ static int genr_err;
 
 static void update_nls_param_values (const double *x);
 
-static int BFGS_min (int n, double *b, int maxit,
-		     double abstol, double reltol,
+static int BFGS_min (int n, double *b, int maxit, double reltol,
 		     int *fncount, int *grcount);
 
 /* Use the genr() function to create/update the values of the residual
@@ -387,6 +386,7 @@ static double get_mle_ll (const double *b)
 static int get_mle_gradient (const double *b, double *g)
 {
     int i, t, v;
+    int err = 0;
 
     update_nls_param_values(b);
 
@@ -415,14 +415,19 @@ static int get_mle_gradient (const double *b, double *g)
 	/* derivative may be vector or scalar */
 	if (ndinfo->vector[v]) {
 	    for (t=pspec->t1; t<=pspec->t2; t++) {
-		g[i] -= (*nZ)[v][t];
+		if (na((*nZ)[v][t])) {
+		    fprintf(stderr, "NA in gradient calculation\n");
+		    err = 1;
+		} else {
+		    g[i] -= (*nZ)[v][t];
+		}
 	    }
 	} else {
 	    g[i] -= (*nZ)[v][0];
 	}
     }
 
-    return 0;
+    return err;
 }
 
 /* this function is used in the context of the minpack callback */
@@ -1095,11 +1100,7 @@ static int check_derivatives (integer m, integer n, double *x,
 static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 {
     integer m, n, ldjac;
-    /* FIXME these params */
-    double abstol = pspec->tol;
-    double reltol = pspec->tol;
-    int maxit = 200;
-    /* end FIXME */
+    int maxit = 200; /* ?? */
     int err = 0;
 
     if (spec->mode == NUMERIC_DERIVS) {
@@ -1113,7 +1114,7 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     err = check_derivatives(m, n, spec->coeff, fvec, jac, ldjac, prn);
 
     if (!err) {
-	err = BFGS_min(n, spec->coeff, maxit, abstol, reltol, 
+	err = BFGS_min(n, spec->coeff, maxit, pspec->tol, 
 		       &spec->fncount, &spec->grcount);
     }
 
@@ -1801,7 +1802,7 @@ static void free_Lmatrix (double **m, int n)
     }
 }
 
-#define BFGS_DEBUG 1
+#define BFGS_DEBUG 0
 
 #define stepredn	0.2
 #define acctol		0.0001 
@@ -1813,8 +1814,7 @@ static void free_Lmatrix (double **m, int n)
     Allin Cottrell.
 */
 
-static int BFGS_min (int n, double *b, int maxit,
-		     double abstol, double reltol,
+static int BFGS_min (int n, double *b, int maxit, double reltol,
 		     int *fncount, int *grcount)
 {
     int accpoint, enough;
@@ -1901,13 +1901,12 @@ static int BFGS_min (int n, double *b, int maxit,
 		}
 	    } while (!(count == n || accpoint));
 
-	    enough = (f > abstol) &&
-		fabs(f - Fmin) > reltol * (fabs(Fmin) + reltol);
+	    enough = fabs(f - Fmin) > reltol * (fabs(Fmin) + reltol);
 #if BFGS_DEBUG
-	    fprintf(stderr, "enough = %d: f=%g, abstol=%g, "
+	    fprintf(stderr, "enough = %d: f=%g, "
 		    "fabs(f - Fmin) = %g,\n reltol * "
 		    "(fabs(Fmin) + reltol) = %g\n",
-		    enough, f, abstol, fabs(f - Fmin), 
+		    enough, f, fabs(f - Fmin), 
 		    reltol * (fabs(Fmin) + reltol));
 #endif
 
