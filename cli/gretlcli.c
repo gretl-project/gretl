@@ -1083,7 +1083,9 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    if ((err = (models[0])->errcode)) {
 		errmsg(err, prn);
 	    } else {
-		do_nls = 1;
+		if (!strcmp(cmd.param, "nls")) {
+		    do_nls = 1;
+		}
 		printmodel(models[0], datainfo, cmd.opt, prn);
 	    }
 	} else if (!strcmp(cmd.param, "restrict")) {
@@ -1675,7 +1677,6 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     if (!err && (is_model_cmd(cmd.word) || do_nls || do_arch)
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) { 
-
 	attach_subsample_to_model(models[0], datainfo);
 #ifdef MSPEC_DEBUG
 	fprintf(stderr, "\ngretlcli: saving spec: model.ID = %d, model_count = %d\n",

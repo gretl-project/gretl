@@ -767,18 +767,15 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
 	    x = evaluate_math_function(a, atom->func, &genr->err);
 	    DPRINTF(("evaluated math func %d: %g -> %g\n", 
 		     atom->func, a, x));
-	}
-	else if (MISSVAL_FUNC(atom->func)) {
+	} else if (MISSVAL_FUNC(atom->func)) {
 	    x = evaluate_missval_func(a, atom->func);
 	    DPRINTF(("evaluated missval func %d: %g -> %g\n", 
 		     atom->func, a, x));
-	}
-	else if (atom->func == T_OBSNUM) {
+	} else if (atom->func == T_OBSNUM) {
 	    x = (t + 1 == atom->val)? atom->val : 0.0;
 	    DPRINTF(("evaluated obsnum at t=%d, returning %g\n",
 		     t, x));
-	}
-	else if (atom->func == T_IDENTITY) {
+	} else if (atom->func == T_IDENTITY) {
 	    DPRINTF(("identity func: passed along %g\n", a));
 	    x = a;
 	}

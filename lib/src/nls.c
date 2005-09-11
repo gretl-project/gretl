@@ -25,8 +25,7 @@
 #include "f2c.h"
 #include "../../minpack/minpack.h"  
 
-#undef NLS_DEBUG
-
+#define NLS_DEBUG 0
 enum {
     NUMERIC_DERIVS,
     ANALYTIC_DERIVS
@@ -353,6 +352,9 @@ static double get_mle_ll (const double *b)
 
     /* calculate ll given current parameter estimates */
     if (nls_calculate_fvec()) {
+#if NLS_DEBUG
+	fprintf(stderr, "get_mle_ll: returning NA\n");
+#endif
 	return NADBL;
     }
 
@@ -1799,6 +1801,8 @@ static void free_Lmatrix (double **m, int n)
     }
 }
 
+#define BFGS_DEBUG 1
+
 #define stepredn	0.2
 #define acctol		0.0001 
 #define reltest		10.0
@@ -1899,8 +1903,15 @@ static int BFGS_min (int n, double *b, int maxit,
 
 	    enough = (f > abstol) &&
 		fabs(f - Fmin) > reltol * (fabs(Fmin) + reltol);
+#if BFGS_DEBUG
+	    fprintf(stderr, "enough = %d: f=%g, abstol=%g, "
+		    "fabs(f - Fmin) = %g,\n reltol * "
+		    "(fabs(Fmin) + reltol) = %g\n",
+		    enough, f, abstol, fabs(f - Fmin), 
+		    reltol * (fabs(Fmin) + reltol));
+#endif
 
-	    /* stop if value if small or if relative change is low */
+	    /* stop if value is small or if relative change is low */
 	    if (!enough) {
 		count = n;
 		Fmin = f;
@@ -1966,6 +1977,11 @@ static int BFGS_min (int n, double *b, int maxit,
 	    ilast = gradcount;	/* periodic restart */
 	}
     } while (count != n || ilast != gradcount);
+
+#if BFGS_DEBUG
+    fprintf(stderr, "terminated: count=%d, n=%d, ilast=%d, gradcount=%d\n",
+	    count, n, ilast, gradcount);
+#endif
 
     if (iter >= maxit) {
 	fprintf(stderr, "stopped after %d iterations\n", iter);

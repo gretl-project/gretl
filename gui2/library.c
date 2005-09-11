@@ -5942,7 +5942,9 @@ int gui_exec_line (char *line,
 	    if ((err = (models[0])->errcode)) {
 		errmsg(err, prn);
 	    } else {
-		do_nls = 1;
+		if (!strcmp(cmd.param, "nls")) {
+		    do_nls = 1;
+		}
 		printmodel(models[0], datainfo, cmd.opt, outprn);
 	    }
 	} else if (!strcmp(cmd.param, "restrict")) {
