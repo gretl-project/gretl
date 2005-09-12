@@ -2349,11 +2349,11 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	errbox(_("Out of memory copying model"));
     }
 
+    sprintf(title, _("gretl: model %d"), pmod->ID);
+
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
     
-    sprintf(title, _("gretl: model %d"), pmod->ID);
-
     view_model(prn, pmod, 78, 420, title); 
 }
 

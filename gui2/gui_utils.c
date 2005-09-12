@@ -2508,13 +2508,14 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     viewer_box_config(vwin);
 
     set_up_viewer_menu(vwin->dialog, vwin, model_items);
+
     if (pmod->ci != MLE) {
 	add_vars_to_plot_menu(vwin);
-    }
-    add_model_dataset_items(vwin);
-    if (latex_is_ok() && !pmod->errcode) {
-	add_model_tex_items(vwin);
-    }
+	add_model_dataset_items(vwin);
+	if (latex_is_ok() && !pmod->errcode) {
+	    add_model_tex_items(vwin);
+	}
+    } 
 
     if (pmod->ci != ARMA && pmod->ci != GARCH && 
 	pmod->ci != NLS && pmod->ci != MLE) {
@@ -2666,6 +2667,11 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 {
     int i, cmd_ci, ok;
 
+    if (pmod->ci == MLE) {
+	flip(ifac, "/Tests", FALSE);
+	return;
+    }
+
     for (i=0; model_items[i].path != NULL; i++) {
 	if (model_items[i].item_type == NULL &&
 	    strstr(model_items[i].path, "Tests")) {
@@ -2719,7 +2725,11 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	model_save_state(vwin->ifac, FALSE);
     }
 
-    if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
+    if (pmod->ci == MLE) {
+	/* some of this could be relaxed later */
+	flip(vwin->ifac, "/Model data", FALSE);
+	flip(vwin->ifac, "/Graphs", FALSE);
+    } else if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
     }	
 
@@ -2760,7 +2770,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	MODEL *pmod = (MODEL *) vwin->data;
 
 	adjust_model_menu_state(vwin, pmod);
-    } else if (vwin->role == VAR) {
+    } else if (vwin->role == VAR || vwin->role == VECM) {
 	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
 	const char *name = gretl_VAR_get_name(var);
 
@@ -3581,6 +3591,10 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	flip(mwin->ifac, "/Model data", FALSE);
 	flip(mwin->ifac, "/LaTeX", FALSE);
 
+	return FALSE;
+    }
+
+    if (pmod->ci == MLE) {
 	return FALSE;
     }
 

@@ -1426,11 +1426,16 @@ nls_spec_set_regression_function (nls_spec *spec, const char *fnstr,
 	err = E_PARSE;
     }
 
-    if (!err && spec->ci == NLS) {
+    if (!err) {
 	spec->depvar = varindex(pdinfo, vname);
 	if (spec->depvar == pdinfo->v) {
-	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
-	    err = E_UNKVAR;
+	    if (spec->ci == NLS) {
+		sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
+		err = E_UNKVAR;
+	    } else {
+		/* MLE: don't need depvar */
+		spec->depvar = 0;
+	    }
 	}
     }
 
@@ -1547,6 +1552,20 @@ double get_default_nls_toler (void)
     return default_nls_toler;
 }
 
+static void 
+save_likelihood_vector (nls_spec *spec, double ***pZ, DATAINFO *pdinfo)
+{
+    int t;
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (t < spec->t1 || t > spec->t2) {
+	    (*pZ)[spec->depvar][t] = NADBL;
+	} else {
+	    (*pZ)[spec->depvar][t] = - (*pZ)[spec->uhatnum][t];
+	}
+    }
+}
+
 /* static function providing the real content for the two public
    wrapper functions below */
 
@@ -1617,7 +1636,7 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     /* get tolerance from user setting or default */
     pspec->tol = get_nls_toler();
 
-    /* export Z pointer for minpack's benefit */
+    /* export Z pointer for callbacks */
     nZ = pZ;
 
     if (pspec->ci == MLE) {
@@ -1646,6 +1665,9 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 			 pdinfo, prn);
 	} else {
 	    make_mle_model(&nlsmod, pspec, pdinfo);
+	    if (pspec->depvar > 0) {
+		save_likelihood_vector(pspec, pZ, pdinfo);
+	    }
 	}
     } else {
 	if (nlsmod.errcode == 0) { 
