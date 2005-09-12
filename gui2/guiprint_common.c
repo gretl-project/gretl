@@ -1187,7 +1187,7 @@ int csv_selected_to_clipboard (void)
 #include "series_view.h"
 #include "fileselect.h"
 
-int csv_copy_listed_vars (windata_t *vwin, int action)
+int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 {
     const int *list = series_view_get_list(vwin);
     PRN *prn = NULL;
@@ -1216,7 +1216,7 @@ int csv_copy_listed_vars (windata_t *vwin, int action)
 	}
 	if (!err) {
 	    if (action == W_COPY) {
-		err = prn_to_clipboard(prn, GRETL_FORMAT_CSV);
+		err = prn_to_clipboard(prn, fmt);
 	    } else {
 		file_selector(_("Save data"), EXPORT_CSV, FSEL_DATA_PRN, prn);
 	    }

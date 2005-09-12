@@ -610,6 +610,26 @@ RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 }
 
 static GtkWidget *
+table_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
+{
+    GtkWidget *button;
+
+#ifdef G_OS_WIN32
+    button = gtk_radio_button_new_with_label(group, "Table (MS Word)");
+#else
+    button = gtk_radio_button_new_with_label(group, "Table");
+#endif
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_copy_format), finfo);
+    g_object_set_data(G_OBJECT(button), "format", 
+		      GINT_TO_POINTER(GRETL_FORMAT_TABLE));  
+    gtk_widget_show(button);
+
+    return button;
+}
+
+static GtkWidget *
 CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
 {
     GtkWidget *button;
@@ -688,6 +708,8 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
 # endif /* G_OS_WIN32 */
 
     if (can_do_csv(vwin)) {
+	button = table_copy_button(group, myvbox, finfo);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 	button = CSV_copy_button(group, myvbox, finfo);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }	

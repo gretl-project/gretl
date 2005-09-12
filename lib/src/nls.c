@@ -44,6 +44,7 @@ struct _nls_param {
 struct _nls_spec {
     int ci;             /* NLS or MLE */
     int mode;           /* derivatives: numeric or analytic */
+    gretlopt opt;       /* can include OPT_V for verbose output */
     int depvar;         /* ID number of dependent variable */
     int uhatnum;        /* ID number of variable holding residuals */
     char *nlfunc;       /* string representation of nonlinear function,
@@ -374,9 +375,16 @@ static double get_mle_ll (const double *b)
 	pspec->ll -= (*nZ)[v][t];
     }
 
-    /* FIXME iteration number is wrong */
-    pspec->iters += 1;
-    pprintf(nprn, "ll = %.8g\n", pspec->ll);
+    if (pspec->opt & OPT_V) {
+	int i;
+
+	pprintf(nprn, "Parameters: ");
+	for (i=0; i<pspec->nparam; i++) {
+	    pprintf(nprn, "%#12.5g", b[i]);
+	}
+	pputc(nprn, '\n');
+	pprintf(nprn, "log likelihood = %.8g\n", pspec->ll);	
+    }
 
     return -pspec->ll;
 }
@@ -996,6 +1004,7 @@ static void clear_nls_spec (nls_spec *spec)
 
     spec->ci = NLS;
     spec->mode = NUMERIC_DERIVS;
+    spec->opt = OPT_NONE;
     spec->nparam = 0;
 
     spec->depvar = 0;
@@ -1625,7 +1634,7 @@ save_likelihood_vector (nls_spec *spec, double ***pZ, DATAINFO *pdinfo)
    wrapper functions below */
 
 static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo, 
-		       PRN *prn)
+		       gretlopt opt, PRN *prn)
 {
     MODEL nlsmod;
     double *fvec = NULL;
@@ -1637,16 +1646,6 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     gretl_model_init(&nlsmod);
     gretl_model_smpl_init(&nlsmod, pdinfo);
 
-    if (pspec->nlfunc == NULL) {
-	strcpy(gretl_errmsg, _("No regression function has been specified"));
-	nlsmod.errcode = E_PARSE;
-	goto bailout;
-    } 
-
-    /* publish pdinfo and prn */
-    ndinfo = pdinfo;
-    nprn = prn;
-
     if (spec != NULL) {
 	/* the caller supplied an nls specification directly */
 	pspec = spec;
@@ -1654,6 +1653,18 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	/* we use the static spec composed via nls_parse_line() */
 	pspec = &private_spec;
     }
+
+    if (pspec->nlfunc == NULL) {
+	strcpy(gretl_errmsg, _("No regression function has been specified"));
+	nlsmod.errcode = E_PARSE;
+	goto bailout;
+    } 
+
+    pspec->opt = opt;
+
+    /* publish pdinfo and prn */
+    ndinfo = pdinfo;
+    nprn = prn;
 
     if (pspec->mode == NUMERIC_DERIVS) {
 	err = get_params_from_nlfunc(pspec, (const double **) *pZ, pdinfo);
@@ -1758,6 +1769,7 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
  * nls:
  * @pZ: pointer to data array.
  * @pdinfo: information on dataset.
+ * @opt: may include %OPT_V for verbose output.
  * @prn: printing struct.
  *
  * Computes estimates of a model via nonlinear least squares.
@@ -1768,9 +1780,9 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
  * and associated statistics.
  */
 
-MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
+MODEL nls (double ***pZ, DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
-    return real_nls(NULL, pZ, pdinfo, prn);
+    return real_nls(NULL, pZ, pdinfo, opt, prn);
 }
 
 /**
@@ -1778,6 +1790,7 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
  * @spec: nls specification.
  * @pZ: pointer to data array.
  * @pdinfo: information on dataset.
+ * @opt: may include %OPT_V for verbose output.
  * @prn: printing struct.
  *
  * Computes estimates of the model specified in @spec, via nonlinear 
@@ -1791,9 +1804,9 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn)
  */
 
 MODEL model_from_nls_spec (nls_spec *spec, double ***pZ, DATAINFO *pdinfo, 
-			   PRN *prn)
+			   gretlopt opt, PRN *prn)
 {
-    return real_nls(spec, pZ, pdinfo, prn);
+    return real_nls(spec, pZ, pdinfo, opt, prn);
 }
 
 /**
@@ -1823,6 +1836,7 @@ nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo)
 
     spec->ci = ci;
     spec->mode = NUMERIC_DERIVS;
+    spec->opt = OPT_NONE;
 
     spec->nparam = 0;
     spec->depvar = 0;

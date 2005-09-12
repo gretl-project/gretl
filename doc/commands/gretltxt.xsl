@@ -37,7 +37,8 @@
 <xsl:apply-templates/> 
 </xsl:template>
 
-<xsl:template match="command[not(@context) or @context=$hlp]">
+<xsl:template match="command">
+  <xsl:if test="not(@context) or @context=$hlp">
   <xsl:if test="position() > 1">
     <xsl:call-template name="nl"/>
   </xsl:if>
@@ -70,15 +71,14 @@
     <xsl:value-of select="@name"></xsl:value-of>
     <xsl:call-template name="nl"/>
   </xsl:if>
+</xsl:if>
 </xsl:template>
 
-<xsl:template match="command[@context and @context!=$hlp]"/>
-
-<xsl:template match="description[not(@context) or @context=$hlp]">
-  <xsl:apply-templates/>
+<xsl:template match="description">
+  <xsl:if test="not(@context) or @context=$hlp">
+    <xsl:apply-templates/>
+  </xsl:if>
 </xsl:template>
-
-<xsl:template match="description[@context and @context!=$hlp]"/>
 
 <xsl:template match="usage">
   <xsl:if test="$hlp='cli'">
@@ -257,7 +257,8 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="para[not(@context) or @context=$hlp]">
+<xsl:template match="para">
+  <xsl:if test="not(@context) or @context=$hlp">
   <xsl:choose>
     <xsl:when test="parent::li and ancestor::ilist">
       <xsl:text>&#xa;[ILISTPAR]</xsl:text>
@@ -275,30 +276,29 @@
       <xsl:text>&#xa;[PARA]</xsl:text>
       <xsl:apply-templates/>[/PARA]
     </xsl:otherwise>
-  </xsl:choose>  
+  </xsl:choose> 
+ </xsl:if>
 </xsl:template>
 
-<xsl:template match="para[@context and @context!=$hlp]"/>
-
-<xsl:template match="code[not(@context) or @context=$hlp]">
-  <xsl:call-template name="dnl"/>
-  <xsl:apply-templates/>
-  <xsl:call-template name="dnl"/>
+<xsl:template match="code">
+  <xsl:if test="not(@context) or @context=$hlp">
+    <xsl:call-template name="dnl"/>
+    <xsl:apply-templates/>
+    <xsl:call-template name="dnl"/>
+  </xsl:if>
 </xsl:template>
 
-<xsl:template match="code[@context and @context!=$hlp]"/>
-
-<xsl:template match="ilist[not(@context) or @context=$hlp]">
-  <xsl:apply-templates/>
+<xsl:template match="ilist">
+  <xsl:if test="not(@context) or @context=$hlp">
+    <xsl:apply-templates/>
+  </xsl:if>
 </xsl:template>
 
-<xsl:template match="ilist[@context and @context!=$hlp]"/>
-
-<xsl:template match="nlist[not(@context) or @context=$hlp]">
-  <xsl:apply-templates/>
+<xsl:template match="nlist">
+  <xsl:if test="not(@context) or @context=$hlp">
+    <xsl:apply-templates/>
+  </xsl:if>
 </xsl:template>
-
-<xsl:template match="nlist[@context and @context!=$hlp]"/>
 
 <xsl:template match="li">
   <xsl:apply-templates/>
@@ -338,23 +338,23 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="table[not(@context) or @context=$hlp]"> 
-<xsl:text>[TABLE]&#xa;</xsl:text>
-<xsl:if test="@id">
-  <xsl:text>[ROW]&#xa;[CELL]&#xa;</xsl:text>
-  <xsl:value-of select="@lhead"/>
-  <xsl:text>[/CELL]&#xa;[CELL]&#xa;</xsl:text>
-  <xsl:value-of select="@rhead"/>
-  <xsl:text>[/CELL]&#xa;[/ROW]&#xa;</xsl:text>
-  <xsl:text>[ROW]&#xa;[CELL]&#xa;-------</xsl:text>
-  <xsl:text>[/CELL]&#xa;[CELL]&#xa;-------</xsl:text>
-  <xsl:text>[/CELL]&#xa;[/ROW]&#xa;</xsl:text>
+<xsl:template match="table"> 
+<xsl:if test="not(@context) or @context=$hlp">
+  <xsl:text>[TABLE]&#xa;</xsl:text>
+  <xsl:if test="@id">
+    <xsl:text>[ROW]&#xa;[CELL]&#xa;</xsl:text>
+    <xsl:value-of select="@lhead"/>
+    <xsl:text>[/CELL]&#xa;[CELL]&#xa;</xsl:text>
+    <xsl:value-of select="@rhead"/>
+    <xsl:text>[/CELL]&#xa;[/ROW]&#xa;</xsl:text>
+    <xsl:text>[ROW]&#xa;[CELL]&#xa;-------</xsl:text>
+    <xsl:text>[/CELL]&#xa;[CELL]&#xa;-------</xsl:text>
+    <xsl:text>[/CELL]&#xa;[/ROW]&#xa;</xsl:text>
+  </xsl:if>
+  <xsl:apply-templates/>
+  <xsl:text>[/TABLE]&#xa;</xsl:text>  
 </xsl:if>
-<xsl:apply-templates/>
-<xsl:text>[/TABLE]&#xa;</xsl:text>
 </xsl:template>
-
-<xsl:template match="table[@context and @context!=$hlp]"/>
 
 <xsl:template match="row">
   <xsl:text>[ROW]&#xa;</xsl:text>

@@ -29,7 +29,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define LOOP_DEBUG 0
+#define LOOP_DEBUG 8
 
 #if defined(ENABLE_GMP)
 # include <gmp.h>
@@ -778,8 +778,8 @@ static int allocate_each_strings (LOOPSET *loop, int n)
     return err;
 }
 
-static int each_strings_from_named_list (LOOPSET *loop, char *s,
-					 int *nf)
+static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
+					 char *s, int *nf)
 {
     int *list;
     int err = 0;
@@ -793,6 +793,24 @@ static int each_strings_from_named_list (LOOPSET *loop, char *s,
 	err = allocate_each_strings(loop, list[0]);
     }
 
+#if 1 
+    /* when cashing out list-members, use varnames rather than numbers */
+    if (!err) {
+	int i, li;
+
+	for (i=1; i<=list[0] && !err; i++) {
+	    li = list[i];
+	    if (li < 0 || li >= pdinfo->v) {
+		err = 1;
+	    } else {
+		loop->eachstrs[i-1] = gretl_strdup(pdinfo->varname[li]);
+		if (loop->eachstrs[i-1] == NULL) {
+		    err = 1;
+		}
+	    }
+	}
+    }
+#else
     if (!err) {
 	char numstr[16];
 	int i, li;
@@ -810,6 +828,7 @@ static int each_strings_from_named_list (LOOPSET *loop, char *s,
 	    }
 	}
     }
+#endif
 
     if (err && loop->eachstrs != NULL) {
 	destroy_each_strings(loop, list[0]);
@@ -912,7 +931,7 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 	err = each_strings_from_list_of_vars(loop, pdinfo, s, &nf);
     } else if (nf == 1) {
 	/* named list? */
-	err = each_strings_from_named_list(loop, s, &nf);
+	err = each_strings_from_named_list(loop, pdinfo, s, &nf);
     } else {
 	/* simple list of values */
 	err = allocate_each_strings(loop, nf);
@@ -2266,6 +2285,10 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
     int idx = 0;
     int err = 0;
 
+#if LOOP_DEBUG
+    fprintf(stderr, "subst_dollar_targ:\n original: '%s'\n", str);
+#endif
+
     if (loop->type == FOR_LOOP) {
 	sprintf(targ, "$%s", pdinfo->varname[loop->left.vnum]);
 	targlen = strlen(targ);
@@ -2315,6 +2338,10 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 	strcpy(p + strlen(pins), q);
 	free(q);	
     }
+
+#if LOOP_DEBUG
+    fprintf(stderr, " after: '%s'\n", str);
+#endif
 
     return err;
 }
@@ -2716,7 +2743,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case END:
 		if (!strcmp(cmd.param, "nls") || !strcmp(cmd.param, "mle")) {
 		    clear_model(models[0]);
-		    *models[0] = nls(pZ, *ppdinfo, prn);
+		    *models[0] = nls(pZ, *ppdinfo, cmd.opt, prn);
 		    if ((err = (models[0])->errcode)) {
 			errmsg(err, prn);
 		    } else {

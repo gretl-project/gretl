@@ -25,7 +25,8 @@ CHAPTERS_IT = chapters_it/cmdref.xml chapters_it/intro.xml chapters_it/modes.xml
 	chapters_it/panel.xml chapters_it/appendices.xml chapters_it/datafiles.xml \
 	chapters_it/nls.xml chapters_it/looping.xml chapters_it/starting.xml \
 	chapters_it/cli.xml chapters_it/graphs.xml chapters_it/optarg.xml \
-	chapters_it/trouble.xml chapters_it/biblio.xml chapters_it/sampling.xml
+	chapters_it/trouble.xml chapters_it/biblio.xml chapters_it/sampling.xml \
+        chapters_it/functions.xml chapters_it/genr.xml chapters_it/vecm.xml
 
 CMDLIST = chapters/cmdlist.xml
 CMDLIST_IT = chapters_it/cmdlist.xml

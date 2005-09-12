@@ -42,10 +42,11 @@ void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2);
 int nls_parse_line (int ci, const char *line, const double **Z,
 		    const DATAINFO *pdinfo);
 
-MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn);
+MODEL nls (double ***pZ, DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
 MODEL model_from_nls_spec (nls_spec *spec, double ***pZ, 
-			   DATAINFO *pdinfo, PRN *prn);
+			   DATAINFO *pdinfo, gretlopt opt, 
+			   PRN *prn);
 
 double get_default_nls_toler (void);
 

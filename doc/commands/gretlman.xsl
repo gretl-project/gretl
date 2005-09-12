@@ -6,7 +6,7 @@
 <xsl:param name="standalone">false</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
-<xsl:output method="xml" omit-xml-declaration="yes" indent="yes"/>
+<xsl:output method="xml" omit-xml-declaration="yes" indent="yes" encoding="iso-8859-1"/>
 
 <xsl:variable name="phrases"
   select="document('hlpstrings.xml')/phrases"/>
@@ -35,24 +35,24 @@
  <xsl:apply-templates/> 
 </xsl:template>
 
-<xsl:template match="command[not(@context) or @context=$hlp]">
-  <xsl:text>&#xa;</xsl:text>
-  <sect2 id="cmd-{@name}" xreflabel="{@name}">
-    <title><xsl:value-of select="@name"/></title>
-    <xsl:call-template name="nl"/>
+<xsl:template match="command">
+  <xsl:if test="not(@context) or @context=$hlp">
+    <xsl:text>&#xa;</xsl:text>
+    <sect2 id="cmd-{@name}" xreflabel="{@name}">
+      <title><xsl:value-of select="@name"/></title>
+      <xsl:call-template name="nl"/>
+      <xsl:apply-templates/>
+      <xsl:call-template name="nl"/>
+    </sect2>
+    <xsl:call-template name="nl"/>    
+  </xsl:if>
+</xsl:template>
+
+<xsl:template match="description">
+  <xsl:if test="not(@context) or @context=$hlp">  
     <xsl:apply-templates/>
-    <xsl:call-template name="nl"/>
-  </sect2>
-  <xsl:call-template name="nl"/>
+  </xsl:if>
 </xsl:template>
-
-<xsl:template match="command[@context and @context!=$hlp]"/>
-
-<xsl:template match="description[not(@context) or @context=$hlp]">
-  <xsl:apply-templates/>
-</xsl:template>
-
-<xsl:template match="description[@context and @context!=$hlp]"/>
 
 <xsl:template match="usage">
   <xsl:text>&#xa;</xsl:text>
@@ -274,41 +274,41 @@
  </xsl:choose>
 </xsl:template>
 
-<xsl:template match="ilist[not(@context) or @context=$hlp]">
-  <itemizedlist><xsl:apply-templates/></itemizedlist>
-  <xsl:call-template name="nl"/>
+<xsl:template match="ilist">
+  <xsl:if test="not(@context) or @context=$hlp">
+    <itemizedlist><xsl:apply-templates/></itemizedlist>
+    <xsl:call-template name="nl"/>
+  </xsl:if>
 </xsl:template>
 
-<xsl:template match="ilist[@context and @context!=$hlp]"/>
-
-<xsl:template match="nlist[not(@context) or @context=$hlp]">
-  <orderedlist><xsl:apply-templates/></orderedlist>
-  <xsl:call-template name="nl"/>
+<xsl:template match="nlist">
+  <xsl:if test="not(@context) or @context=$hlp">
+    <orderedlist><xsl:apply-templates/></orderedlist>
+    <xsl:call-template name="nl"/>
+  </xsl:if>  
 </xsl:template>
-
-<xsl:template match="nlist[@context and @context!=$hlp]"/>
 
 <xsl:template match="li">
   <listitem><xsl:apply-templates/></listitem>
   <xsl:call-template name="nl"/>
 </xsl:template>
 
-<xsl:template match="para[not(@context) or @context=$hlp]">
-  <xsl:call-template name="nl"/>
-  <para>
-    <xsl:apply-templates/>
-  </para>
-  <xsl:call-template name="nl"/>
+<xsl:template match="para">
+  <xsl:if test="not(@context) or @context=$hlp">
+    <xsl:call-template name="nl"/>
+    <para>
+      <xsl:apply-templates/>
+    </para>
+    <xsl:call-template name="nl"/>
+  </xsl:if>   
 </xsl:template>
 
-<xsl:template match="para[@context and @context!=$hlp]"/>
-
-<xsl:template match="code[not(@context) or @context=$hlp]">
-<programlisting>
-<xsl:apply-templates/></programlisting>
+<xsl:template match="code">
+  <xsl:if test="not(@context) or @context=$hlp">
+    <programlisting>
+      <xsl:apply-templates/></programlisting>
+   </xsl:if>   
 </xsl:template>
-
-<xsl:template match="code[@context and @context!=$hlp]"/>
 
 <xsl:template match="cmdref">
   <xref linkend="cmd-{@targ}"/>
@@ -347,7 +347,8 @@
   <xsl:apply-templates/></para>
 </xsl:template>
 
-<xsl:template match="table[not(@context) or @context=$hlp]">
+<xsl:template match="table">
+  <xsl:if test="not(@context) or @context=$hlp">
   <xsl:choose>
     <xsl:when test="@id">
       <table id="{@id}" frame="none">
@@ -378,10 +379,9 @@
         </tgroup>
       </informaltable>
     </xsl:otherwise>
-  </xsl:choose>
+  </xsl:choose>    
+  </xsl:if>
 </xsl:template>
-
-<xsl:template match="table[@context and @context!=$hlp]"/>
 
 <xsl:template match="row">
   <row><xsl:apply-templates/></row>

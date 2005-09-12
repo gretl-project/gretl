@@ -53,6 +53,6 @@ int csv_to_clipboard (void);
 
 int csv_selected_to_clipboard (void);
 
-int csv_copy_listed_vars (windata_t *vwin, int action);
+int csv_copy_listed_vars (windata_t *vwin, int fmt, int action);
 
 #endif /* GUIPRINT_H */

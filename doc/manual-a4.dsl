@@ -109,6 +109,11 @@
           (("none") (MSIZE m lvl 1.0 1.0))
           (else (MSIZE m lvl 1.0 1.0)))))
 
+(element (mathvar)
+   (make sequence
+   font-posture: 'italic
+   (process-children)))
+
 (element (varlistentry term)
     (make paragraph
           space-before: (if (first-sibling?)

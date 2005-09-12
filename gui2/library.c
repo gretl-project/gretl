@@ -337,6 +337,10 @@ int gretl_command_sprintf (const char *template, ...)
     len = vsprintf(cmdline, template, args);
     va_end(args);
 
+#if 0
+    fprintf(stderr, "gretl_command_sprintf: cmdline = '%s'\n", cmdline);
+#endif
+
     return len;
 }
 
@@ -1429,7 +1433,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     }
 
     orig = vwin->data;
-    
+
     if (selector_code(sr) == ADD) {
         gretl_command_sprintf("addto %d %s", orig->ID, buf);
     } else {
@@ -1462,7 +1466,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
     update_model_tests(vwin);
 
-    if (check_lib_command() || lib_cmd_init() || stack_model(pmod)) {
+    if (lib_cmd_init() || stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -2329,7 +2333,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	return;
     }
 
-    *pmod = nls(&Z, datainfo, prn);
+    *pmod = nls(&Z, datainfo, OPT_NONE, prn); /* FIXME opt */
     err = model_output(pmod, prn);
 
     if (err) {
@@ -5938,7 +5942,7 @@ int gui_exec_line (char *line,
 	    sys = NULL;
 	} else if (!strcmp(cmd.param, "mle") || !strcmp(cmd.param, "nls")) {
 	    clear_or_save_model(&models[0], datainfo, rebuild);
-	    *models[0] = nls(&Z, datainfo, outprn);
+	    *models[0] = nls(&Z, datainfo, cmd.opt, outprn);
 	    if ((err = (models[0])->errcode)) {
 		errmsg(err, prn);
 	    } else {

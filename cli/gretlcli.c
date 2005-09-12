@@ -1079,7 +1079,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    sys = NULL;
 	} else if (!strcmp(cmd.param, "mle") || !strcmp(cmd.param, "nls")) {
 	    clear_model(models[0]);
-	    *models[0] = nls(&Z, datainfo, prn);
+	    *models[0] = nls(&Z, datainfo, cmd.opt, prn);
 	    if ((err = (models[0])->errcode)) {
 		errmsg(err, prn);
 	    } else {
