@@ -383,10 +383,38 @@ static double get_mle_ll (const double *b)
 
 /* used in the context of BFGS */
 
-static int get_mle_gradient (const double *b, double *g)
+static int get_mle_gradient (double *b, double *g)
 {
     int i, t, v;
     int err = 0;
+
+    if (pspec->mode == NUMERIC_DERIVS) {
+	const double eps = 1e-8;
+	double val1, val2;
+
+	for (i=0; i<pspec->nparam; i++) {
+	    val1 = val2 = 0.0;
+	    b[i] -= eps;
+	    update_nls_param_values(b);
+	    if (nls_calculate_fvec()) {
+		return 1;
+	    }
+	    for (t=pspec->t1; t<=pspec->t2; t++) {
+		val1 += (*nZ)[pspec->uhatnum][t];
+	    }
+	    b[i] += 2.0 * eps;
+	    update_nls_param_values(b);
+	    if (nls_calculate_fvec()) {
+		return 1;
+	    }
+	    for (t=pspec->t1; t<=pspec->t2; t++) {
+		val2 += (*nZ)[pspec->uhatnum][t];
+	    }
+	    b[i] -= eps;
+	    g[i] = (val2 - val1) / (2.0 * eps);
+	}
+	return 0;
+    }
 
     update_nls_param_values(b);
 
@@ -568,16 +596,44 @@ static int add_OPG_vcv (MODEL *pmod, nls_spec *spec)
 	goto bailout;
     }
 
-    for (i=0; i<k; i++) {
-	v = spec->params[i].dernum;
-	if (!ndinfo->vector[v]) {
-	    x = (*nZ)[v][0];
-	}
-	for (t=0; t<T; t++) {
-	    if (ndinfo->vector[v]) {
-		x = (*nZ)[v][t + spec->t1];
+    if (pspec->mode == NUMERIC_DERIVS) {
+	const double eps = 1e-8;
+	double bi, x0, x1;
+
+	/* construct approximation to G matrix based
+	   on finite differences */
+
+	for (i=0; i<pspec->nparam; i++) {
+	    bi = spec->coeff[i];
+	    spec->coeff[i] = bi - eps;
+	    update_nls_param_values(spec->coeff);
+	    nls_calculate_fvec();
+	    for (t=0; t<T; t++) {
+		x0 = (*nZ)[pspec->uhatnum][t + spec->t1];
+		gretl_matrix_set(G, i, t, x0);
 	    }
-	    gretl_matrix_set(G, i, t, x);
+	    spec->coeff[i] = bi + eps;
+	    update_nls_param_values(spec->coeff);
+	    nls_calculate_fvec();
+	    for (t=0; t<T; t++) {
+		x1 = (*nZ)[pspec->uhatnum][t + spec->t1];
+		x0 = gretl_matrix_get(G, i, t);
+		gretl_matrix_set(G, i, t, (x1 - x0) / (2.0 * eps));
+	    }
+	    spec->coeff[i] = bi;
+	}
+    } else {
+	for (i=0; i<k; i++) {
+	    v = spec->params[i].dernum;
+	    if (!ndinfo->vector[v]) {
+		x = (*nZ)[v][0];
+	    }
+	    for (t=0; t<T; t++) {
+		if (ndinfo->vector[v]) {
+		    x = (*nZ)[v][t + spec->t1];
+		}
+		gretl_matrix_set(G, i, t, x);
+	    }
 	}
     }
 
@@ -1099,19 +1155,18 @@ static int check_derivatives (integer m, integer n, double *x,
 
 static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 {
-    integer m, n, ldjac;
+    integer n;
     int maxit = 200; /* ?? */
     int err = 0;
 
-    if (spec->mode == NUMERIC_DERIVS) {
-	return 1; /* not handled yet */
-    }
-
-    m = spec->t2 - spec->t1 + 1; /* number of observations */
     n = spec->nparam;            /* number of parameters */
-    ldjac = m;                   /* leading dimension of jac array */
 
-    err = check_derivatives(m, n, spec->coeff, fvec, jac, ldjac, prn);
+    if (spec->mode == ANALYTIC_DERIVS) {
+	integer m = spec->t2 - spec->t1 + 1; /* number of observations */
+	integer ldjac = m; 
+
+	err = check_derivatives(m, n, spec->coeff, fvec, jac, ldjac, prn);
+    }
 
     if (!err) {
 	err = BFGS_min(n, spec->coeff, maxit, pspec->tol, 
@@ -1639,15 +1694,17 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     /* export Z pointer for callbacks */
     nZ = pZ;
 
+    pputs(prn, (pspec->mode == NUMERIC_DERIVS)?
+	  _("Using numerical derivatives\n") :
+	  _("Using analytical derivatives\n"));
+
     if (pspec->ci == MLE) {
 	err = mle_calculate(pspec, fvec, jac, prn);
     } else {
 	/* invoke appropriate minpack driver function */
 	if (pspec->mode == NUMERIC_DERIVS) {
-	    pputs(prn, _("Using numerical derivatives\n"));
 	    err = lm_approximate(pspec, fvec, jac, prn);
 	} else {
-	    pputs(prn, _("Using analytical derivatives\n"));
 	    err = lm_calculate(pspec, fvec, jac, prn);
 	}
     }

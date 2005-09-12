@@ -507,7 +507,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	break;
     case MLE:
 	strcpy(title, _("gretl: maximum likelihood"));
-	strcpy(query, _("MLE: Specify function and derivatives:"));
+	strcpy(query, _("MLE: Specify function, and derivatives if possible:"));
 	okfunc = do_mle_model;
 	varclick = VARCLICK_INSERT_TEXT;
 	break;	
