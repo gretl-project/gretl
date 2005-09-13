@@ -81,8 +81,6 @@ struct gretl_option gretl_opts[] = {
     { COINT2,   OPT_R, "rc" },
     { COINT2,   OPT_T, "ct" },
     { COINT2,   OPT_V, "verbose" },
-    { END,      OPT_O, "vcv" },
-    { END,      OPT_V, "verbose" },
     { EQNPRINT, OPT_O, "complete" },
     { TABPRINT, OPT_O, "complete" },
     { ESTIMATE, OPT_M, "geomean" },
@@ -468,6 +466,8 @@ gretlopt get_gretl_options (char *line, int *err)
 
     if (strstr(line, "end nls")) {
 	ci = NLS;
+    } else if (strstr(line, "end mle")) {
+	ci = MLE;
     } else {
 	ci = gretl_command_number(cmdword);
     }
