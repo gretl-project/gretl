@@ -130,6 +130,7 @@ char viewdvi[MAXSTR] = "xdvi";
 char viewps[MAXSTR] = "gv";
 char viewpdf[MAXSTR] = "acroread";
 char Rcommand[MAXSTR] = "xterm -e R";
+char Browser[MAXSTR] = "mozilla";
 #endif
 
 #ifdef HAVE_TRAMO

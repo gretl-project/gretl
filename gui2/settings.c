@@ -57,6 +57,10 @@
 char rcfile[MAXLEN];
 #endif
 
+#ifndef G_OS_WIN32
+extern char Browser[MAXSTR];
+#endif
+
 extern int want_toolbar;
 extern char Rcommand[MAXSTR];
 extern char dbproxy[21];
@@ -178,7 +182,10 @@ RCVAR rc_vars[] = {
 #endif
 #ifdef G_OS_WIN32
     { "wimp", N_("Emulate Windows look"), NULL, &wimp, 
-      BOOLSET, 0, 1, NULL },    
+      BOOLSET, 0, 1, NULL },
+#else
+    { "browser", N_("Web browser"), NULL, Browser, 
+      ROOTSET, MAXSTR, 3, NULL },
 #endif
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
       ROOTSET, MAXLEN, 3, NULL },

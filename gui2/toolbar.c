@@ -33,13 +33,17 @@
 #include "../pixmaps/mini.sh.xpm"
 #include "../pixmaps/mini.session.xpm"
 #include "../pixmaps/mini.manual.xpm"
-#include "../pixmaps/mini.netscape.xpm"
+#include "../pixmaps/mini.browser.xpm"
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.plot.xpm"
 #include "../pixmaps/mini.model.xpm"
 #include "../pixmaps/mini.ofolder.xpm"
 
 static GtkWidget *toolbar_box;
+
+#ifndef G_OS_WIN32
+extern char Browser[MAXSTR];
+#endif
 
 /* callbacks for gretl toolbar icons */
 
@@ -59,7 +63,7 @@ static void open_textbook_data (void)
 
 #ifndef G_OS_WIN32
 
-static void netscape_open (const char *url)
+static void browser_open (const char *url)
 {
 # ifdef USE_GNOME
 #  ifndef OLD_GTK
@@ -69,11 +73,11 @@ static void netscape_open (const char *url)
 #  endif  
 # else
     int err;
-    char ns_cmd[128];
+    char ns_cmd[256];
 
-    sprintf(ns_cmd, "netscape -remote \"openURLNewWindow(%s)\"", url);
+    sprintf(ns_cmd, "%s -remote \"openURLNewWindow(%s)\"", Browser, url);
     err = gretl_spawn(ns_cmd);
-    if (err) gretl_fork("netscape", url);
+    if (err) gretl_fork(Browser, url);
 # endif /* USE_GNOME */
 }
 
@@ -86,7 +90,7 @@ static void gretl_website (void)
 	errbox("Failed to open URL");
     }
 #else
-    netscape_open("http://gretl.sourceforge.net/");
+    browser_open("http://gretl.sourceforge.net/");
 #endif
 }
 
@@ -101,7 +105,7 @@ static void gretl_pdf (void)
 	errbox(_("Failed to open URL"));
     }
 #else
-    netscape_open(manurl);
+    browser_open(manurl);
 #endif
 }
 
@@ -244,7 +248,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    toolfunc = go_session;
 	    break;
 	case 4:
-	    toolxpm = mini_netscape_xpm;
+	    toolxpm = mini_browser_xpm;
 	    toolfunc = gretl_website;
 	    break;  
 	case 5:
