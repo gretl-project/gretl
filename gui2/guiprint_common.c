@@ -1191,6 +1191,7 @@ int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 {
     const int *list = series_view_get_list(vwin);
     PRN *prn = NULL;
+    char delim = datainfo->delim;
     int i, err = 0;
 
     if (list != NULL) {
@@ -1201,7 +1202,11 @@ int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 	    }
 	}
 
-	delimiter_dialog(NULL);
+	if (fmt == GRETL_FORMAT_CSV) {
+	    delimiter_dialog(NULL);
+	} else {
+	    datainfo->delim = '\t';
+	}
 
 	if (series_view_is_sorted(vwin)) {
 	    prn = vwin_print_sorted_as_csv(vwin);
@@ -1222,6 +1227,11 @@ int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 	    }
 	}
 	gretl_print_destroy(prn);
+    }
+
+    if (fmt == GRETL_FORMAT_TABLE) {
+	/* restore default after forcing to TAB */
+	datainfo->delim = delim;
     }
 
     return err;

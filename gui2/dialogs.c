@@ -617,7 +617,7 @@ table_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
 #ifdef G_OS_WIN32
     button = gtk_radio_button_new_with_label(group, "Table (MS Word)");
 #else
-    button = gtk_radio_button_new_with_label(group, "Table");
+    button = gtk_radio_button_new_with_label(group, "Tabbed text");
 #endif
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
