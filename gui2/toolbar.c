@@ -33,11 +33,15 @@
 #include "../pixmaps/mini.sh.xpm"
 #include "../pixmaps/mini.session.xpm"
 #include "../pixmaps/mini.manual.xpm"
-#include "../pixmaps/mini.browser.xpm"
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.plot.xpm"
 #include "../pixmaps/mini.model.xpm"
 #include "../pixmaps/mini.ofolder.xpm"
+#ifdef G_OS_WIN32
+# include "../pixmaps/mini.ie.xpm"
+#else
+# include "../pixmaps/mini.browser.xpm"
+#endif
 
 static GtkWidget *toolbar_box;
 
