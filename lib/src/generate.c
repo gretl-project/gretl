@@ -168,6 +168,8 @@ struct genr_func funcs[] = {
     { T_MPOW,     "mpow" },
     { T_DNORM,    "dnorm" },
     { T_CNORM,    "cnorm" },
+    { T_GAMMA,    "gamma" },
+    { T_LNGAMMA,  "lngamma" },
     { T_RESAMPLE, "resample" },
     { T_HPFILT,   "hpfilt" },    /* Hodrick-Prescott filter */
     { T_BKFILT,   "bkfilt" },    /* Baxter-King filter */
@@ -188,7 +190,8 @@ struct genr_func funcs[] = {
 #define STANDARD_MATH(f) (f == T_LOG || f == T_LN || f == T_EXP || \
                           f == T_SIN || f == T_COS || f == T_TAN || \
                           f == T_ATAN || f == T_INT || f == T_ABS || \
-                          f == T_DNORM || f == T_CNORM || f == T_SQRT)
+                          f == T_DNORM || f == T_CNORM || f == T_SQRT || \
+                          f == T_GAMMA || f == T_LNGAMMA)
 
 #define UNIVARIATE_STAT(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
                             t == T_VAR || t == T_MEDIAN || t == T_MIN || \
@@ -2926,6 +2929,12 @@ static double evaluate_math_function (double arg, int fn, int *err)
 	break;
     case T_DNORM:
 	x = normal_pdf(arg);
+	break;
+    case T_GAMMA:
+	x = gamma(arg);
+	break;
+    case T_LNGAMMA:
+	x = lgamma(arg);
 	break;
     default:
 	break;

@@ -29,7 +29,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define LOOP_DEBUG 8
+#define LOOP_DEBUG 0
 
 #if defined(ENABLE_GMP)
 # include <gmp.h>

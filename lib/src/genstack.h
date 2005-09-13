@@ -94,6 +94,8 @@ enum transformations {
     T_MPOW,
     T_DNORM,
     T_CNORM,
+    T_GAMMA,
+    T_LNGAMMA,
     T_RESAMPLE,
     T_HPFILT,
     T_BKFILT,

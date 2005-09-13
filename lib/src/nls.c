@@ -50,6 +50,7 @@ struct _nls_spec {
     char *nlfunc;       /* string representation of nonlinear function,
 			   expressed in terms of the residuals */
     int nparam;         /* number of parameters to be estimated */
+    int naux;           /* number of auxiliary commands */
     int iters;          /* number of iterations performed */
     int fncount;        /* number of function evaluations (ML) */
     int grcount;        /* number of gradient evaluations (ML) */
@@ -61,6 +62,7 @@ struct _nls_spec {
     nls_param *params;  /* array of information on function parameters
 			   (see the _nls_param struct above) */
     doublereal *coeff;  /* coefficient estimates */
+    char **aux;         /* auxiliary commands */
 };
 
 /* file-scope global variables: we need to access these variables in
@@ -93,6 +95,18 @@ static int BFGS_min (int n, double *b, int maxit, double reltol,
 static int nls_auto_genr (int i, double ***pZ, DATAINFO *pdinfo)
 {
     char formula[MAXLINE];
+    int j;
+
+    for (j=0; j<pspec->naux; j++) {
+#if NLS_DEBUG
+	fprintf(stderr, "nls_auto_genr: generating aux var:\n %s\n", pspec->aux[j]);
+#endif
+	if (pZ != NULL && pdinfo != NULL) {
+	    genr_err = generate(pspec->aux[j], pZ, pdinfo, NULL, OPT_P);
+	} else {
+	    genr_err = generate(pspec->aux[j], nZ, ndinfo, NULL, OPT_P);
+	}
+    }
 
     if (i == 0) {
 	/* note: $nl_y is the residual */
@@ -212,15 +226,17 @@ maybe_add_param_to_spec (nls_spec *spec, const char *word,
 
     /* try looking up word as the name of a variable */
     v = varindex(pdinfo, word);
-    if (v >= pdinfo->v) {
+
+    if (v < pdinfo->v) {
+	/* existing variable */
+	if (pdinfo->vector[v]) {
+	    /* if term is not a scalar, skip it: only scalars can figure
+	       as regression parameters */
+	    return 0;
+	}
+    } else {
 	sprintf(gretl_errmsg, _("Unknown variable '%s'"), word);
 	return E_UNKVAR;
-    }
-
-    /* if term is not a scalar, skip it: only scalars can figure
-       as regression parameters */
-    if (pdinfo->vector[v]) {
-	return 0;
     }
 
     /* if this term is already present in the specification, skip it */
@@ -229,6 +245,10 @@ maybe_add_param_to_spec (nls_spec *spec, const char *word,
 	    return 0;
 	}
     }
+
+#if NLS_DEBUG
+    fprintf(stderr, "maybe_add_param: adding '%s'\n", word);
+#endif
 
     /* else: add this param to the NLS specification */
     return real_add_param_to_spec(word, v, Z[v][0], spec);
@@ -277,6 +297,81 @@ get_params_from_nlfunc (nls_spec *spec, const double **Z,
 	    p++;
 	}
 	s = p;
+    }
+
+    return err;
+}
+
+/* For case where analytical derivatives are not given, the user
+   may supply a line like:
+
+     params b0 b1 b2 b3
+
+   specifying the paramters to be estimated.  Here we parse
+   such a list and add the parameter info to spec.  The terms
+   in the list must be pre-existing scalar variables.
+*/
+
+static int 
+nls_spec_add_param_list (nls_spec *spec, const char *s,
+			 const double **Z, const DATAINFO *pdinfo)
+{
+    int i, nf = count_fields(s);
+    const char *p = s;
+    int err = 0;
+
+    if (spec->params != NULL) {
+	return E_DATA;
+    }
+
+    if (nf == 0) {
+	return E_DATA;
+    }
+
+    spec->params = malloc(nf * sizeof *spec->params);
+    if (spec->params == NULL) {
+	return E_ALLOC;
+    }
+
+    spec->coeff = malloc(nf * sizeof *spec->coeff);
+    if (spec->coeff == NULL) {
+	free(spec->params);
+	spec->params = NULL;
+	return E_ALLOC;
+    }    
+
+    for (i=0; i<nf && !err; i++) {
+	char *pname = gretl_word_strdup(p, &p);
+	int v;
+
+	if (pname != NULL) {
+	    if (strlen(pname) > VNAMELEN - 1) {
+		pname[VNAMELEN - 1] = '\0';
+	    }
+	    v = varindex(pdinfo, pname);
+	    if (v >= pdinfo->v || pdinfo->vector[v]) {
+		err = E_DATA;
+	    } else {
+		spec->params[i].varnum = v;
+		spec->params[i].dernum = 0;
+		strcpy(spec->params[i].name, pname);
+		spec->params[i].deriv = NULL;
+		spec->coeff[i] = Z[v][0];
+	    }
+	    free(pname);
+	} else {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+	free(spec->params);
+	spec->params = NULL;
+	free(spec->coeff);
+	spec->coeff = NULL;
+	spec->nparam = 0;
+    } else {
+	spec->nparam = nf;
     }
 
     return err;
@@ -996,6 +1091,14 @@ static void clear_nls_spec (nls_spec *spec)
 	spec->params = NULL;
     }
 
+    if (spec->aux != NULL) {
+	for (i=0; i<spec->naux; i++) {
+	    free(spec->aux[i]);
+	}
+	free(spec->aux);
+	spec->aux = NULL;
+    }	
+
     free(spec->nlfunc);
     spec->nlfunc = NULL;
 
@@ -1005,7 +1108,9 @@ static void clear_nls_spec (nls_spec *spec)
     spec->ci = NLS;
     spec->mode = NUMERIC_DERIVS;
     spec->opt = OPT_NONE;
+
     spec->nparam = 0;
+    spec->naux = 0;
 
     spec->depvar = 0;
     spec->uhatnum = 0;
@@ -1450,6 +1555,48 @@ nls_spec_add_param_with_deriv (nls_spec *spec, const char *dstr,
 }
 
 /**
+ * nls_spec_add_aux:
+ * @spec: pointer to nls specification.
+ * @s: string specifying generation of an auxiliary variable
+ * (for use in calculating function or derivatives).
+ *
+ * Adds the specification of an auxiliary variable to @spec, 
+ * which pointer must have previously been obtained by a call 
+ * to #nls_spec_new.
+ *
+ * Returns: 0 on success, non-zero error code on error.
+ */
+
+int nls_spec_add_aux (nls_spec *spec, const char *s)
+{
+    char **aux;
+    char *this;
+    int nx = spec->naux + 1;
+    int err = 0;
+
+    this = gretl_strdup(s);
+    if (this == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	aux = realloc(spec->aux, nx * sizeof *spec->aux);
+	if (aux == NULL) {
+	    free(this);
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	spec->aux = aux;
+	spec->aux[nx - 1] = this;
+	spec->naux += 1;
+    }
+
+    return err;
+}
+
+/**
  * nls_spec_set_regression_function:
  * @spec: pointer to nls specification.
  * @fnstr: string specifying nonlinear regression function.
@@ -1577,12 +1724,18 @@ int nls_parse_line (int ci, const char *line, const double **Z,
     pspec = &private_spec;
     pspec->ci = ci;
 
-    if (strncmp(line, "deriv", 5) == 0) {
+    if (!strncmp(line, "series", 6) || !strncmp(line, "scalar", 6)) {
+	err = nls_spec_add_aux(pspec, line);
+    } else if (!strncmp(line, "deriv", 5) || !strncmp(line, "params", 6)) {
 	if (pspec->nlfunc == NULL) {
 	    strcpy(gretl_errmsg, _("No regression function has been specified"));
 	    err = E_PARSE;
 	} else {
-	    err = nls_spec_add_param_with_deriv(pspec, line, Z, pdinfo);
+	    if (*line == 'd') {
+		err = nls_spec_add_param_with_deriv(pspec, line, Z, pdinfo);
+	    } else {
+		err = nls_spec_add_param_list(pspec, line + 6, Z, pdinfo);
+	    }
 	}
     } else {
 	/* do we already have an nls specification under way? */
@@ -1666,7 +1819,7 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     ndinfo = pdinfo;
     nprn = prn;
 
-    if (pspec->mode == NUMERIC_DERIVS) {
+    if (pspec->mode == NUMERIC_DERIVS && pspec->nparam == 0) {
 	err = get_params_from_nlfunc(pspec, (const double **) *pZ, pdinfo);
 	if (err) {
 	    if (err == 1) {
@@ -1831,6 +1984,9 @@ nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo)
 
     spec->params = NULL;
     spec->nparam = 0;
+
+    spec->aux = NULL;
+    spec->naux = 0;
     
     spec->coeff = NULL;
 
