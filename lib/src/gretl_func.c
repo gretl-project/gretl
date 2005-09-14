@@ -1152,13 +1152,79 @@ int gretl_function_append_line (const char *line)
 #define LOCAL_COPY_LISTS 1
 
 #ifdef LOCAL_COPY_LISTS
+
+/* expand by one element the mapping (in the form of two parallel
+   lists) between the ID numbers of "outer scope" variables and
+   the ID numbers of the corresponding local copies of those
+   variables */
+
+static int 
+grow_vars_mapping (int outv, int inv, int **p_outlist, int **p_inlist)
+{
+    int *outlist = NULL, *inlist = NULL;
+    int n;
+
+    if (*p_outlist != NULL) {
+	n = (*p_outlist)[0] + 2;
+    } else {
+	n = 2;
+    }
+
+    outlist = realloc(*p_outlist, n * sizeof *outlist);
+    if (outlist == NULL) {
+	return 1;
+    }
+
+    inlist = realloc(*p_inlist, n * sizeof *inlist);
+    if (inlist == NULL) {
+	*p_outlist = outlist;
+	return 1;
+    }
+
+    outlist[0] = inlist[0] = n - 1;
+    
+    outlist[n-1] = outv;
+    inlist[n-1] = inv;
+
+    *p_outlist = outlist;
+    *p_inlist = inlist;
+
+    return 0;
+}
+
+/* look up a variable by its ID number: if we've already made 
+   a local copy of the variable, return the ID number of the
+   copy (otherwise return 0) */
+
+static int find_mapped_var (int v, const int *outlist, const int *inlist)
+{
+    int i, match = 0;
+
+    if (outlist != NULL && inlist != NULL) {
+	for (i=1; i<=outlist[0]; i++) {
+	    if (v == outlist[i]) {
+		match = inlist[i];
+		break;
+	    }
+	}
+    }
+
+    return match;
+}
+
+/* given a named list of variables supplied as an argument to a function,
+   make a revised version of the list in which the original variable
+   ID numbers are replaced by the ID numbers of local copies of those
+   variables */
+
 static int localize_list (const char *oldname, const char *newname,
-			  double ***pZ, DATAINFO *pdinfo)
+			  double ***pZ, DATAINFO *pdinfo,
+			  int **p_outlist, int **p_inlist)
 {
     int *orig = NULL;
     int *new = NULL;
     int origv = pdinfo->v;
-    int i, v, vnew, err = 0;
+    int i, v, match, err = 0;
 
     orig = get_list_by_name(oldname);
     if (orig == NULL) {
@@ -1170,18 +1236,22 @@ static int localize_list (const char *oldname, const char *newname,
 	return E_ALLOC;
     }
 
-    vnew = pdinfo->v;
-
     for (i=1; i<=orig[0] && !err; i++) {
 	v = orig[i];
 	if (v == pdinfo->v) {
+	    /* unknown variable */
 	    err = E_DATA;
+	} else if ((match = find_mapped_var(v, *p_outlist, *p_inlist))) {
+	    /* a local copy of this variable already exists */
+	    new[i] = match;
 	} else {
+	    /* add a local copy of the variable */
 	    err = dataset_copy_variable_as(v, pdinfo->varname[v], 
 					   pZ, pdinfo);
-	}
-	if (!err) {
-	    new[i] = vnew++;
+	    if (!err) {
+		new[i] = pdinfo->v - 1;
+		err = grow_vars_mapping(v, pdinfo->v - 1, p_outlist, p_inlist);
+	    }
 	}
     }
 	
@@ -1195,6 +1265,7 @@ static int localize_list (const char *oldname, const char *newname,
 
     return err;
 }
+
 #endif
 
 static int check_and_allocate_function_args (ufunc *fun,
@@ -1202,6 +1273,7 @@ static int check_and_allocate_function_args (ufunc *fun,
 					     double ***pZ,
 					     DATAINFO *pdinfo)
 {
+    int *outlist = NULL, *inlist = NULL;
     int i, v, err = 0;
 
     if (argc != fun->n_params) {
@@ -1224,6 +1296,9 @@ static int check_and_allocate_function_args (ufunc *fun,
 		v = varindex(pdinfo, argv[i]);
 		if (v < pdinfo->v && !pdinfo->vector[v]) {
 		    err = dataset_copy_variable_as(v, fun->params[i], pZ, pdinfo);
+		    if (!err) {
+			err = grow_vars_mapping(v, pdinfo->v - 1, &outlist, &inlist);
+		    }
 		} else {
 		    sprintf(gretl_errmsg, "argument %d (%s): not a scalar", i+1, argv[i]);
 		    err = 1;
@@ -1237,6 +1312,9 @@ static int check_and_allocate_function_args (ufunc *fun,
 	    }
 	    if (v < pdinfo->v && pdinfo->vector[v]) {
 		err = dataset_copy_variable_as(v, fun->params[i], pZ, pdinfo);
+		if (!err) {
+		    err = grow_vars_mapping(v, pdinfo->v - 1, &outlist, &inlist);
+		}
 	    } else {
 		sprintf(gretl_errmsg, "argument %d (%s): not a series", i+1, argv[i]);
 		err = 1;
@@ -1245,7 +1323,8 @@ static int check_and_allocate_function_args (ufunc *fun,
 	    /* should we make local copies of the listed variables here? */
 	    if (get_list_by_name(argv[i]) != NULL) {
 #ifdef LOCAL_COPY_LISTS
-		err = localize_list(argv[i], fun->params[i], pZ, pdinfo);
+		err = localize_list(argv[i], fun->params[i], pZ, pdinfo,
+				    &outlist, &inlist);
 #else
 		err = copy_named_list_as(argv[i], fun->params[i]);
 #endif
@@ -1258,6 +1337,9 @@ static int check_and_allocate_function_args (ufunc *fun,
 	    err = 1;
 	}
     }
+
+    free(outlist);
+    free(inlist);
 
     return err;
 }
