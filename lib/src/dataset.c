@@ -556,6 +556,8 @@ static int reallocate_markers (DATAINFO *pdinfo, int n)
     return 0;
 }
 
+/* FIXME allow for centered dummies */
+
 static int real_periodic_dummy (const double *x, int n,
 				int *pd, int *offset,
 				int *trail)

@@ -1149,6 +1149,54 @@ int gretl_function_append_line (const char *line)
     return err;
 }
 
+#define LOCAL_COPY_LISTS 1
+
+#ifdef LOCAL_COPY_LISTS
+static int localize_list (const char *oldname, const char *newname,
+			  double ***pZ, DATAINFO *pdinfo)
+{
+    int *orig = NULL;
+    int *new = NULL;
+    int origv = pdinfo->v;
+    int i, v, vnew, err = 0;
+
+    orig = get_list_by_name(oldname);
+    if (orig == NULL) {
+	return 1;
+    }
+
+    new = gretl_list_copy(orig);
+    if (new == NULL) {
+	return E_ALLOC;
+    }
+
+    vnew = pdinfo->v;
+
+    for (i=1; i<=orig[0] && !err; i++) {
+	v = orig[i];
+	if (v == pdinfo->v) {
+	    err = E_DATA;
+	} else {
+	    err = dataset_copy_variable_as(v, pdinfo->varname[v], 
+					   pZ, pdinfo);
+	}
+	if (!err) {
+	    new[i] = vnew++;
+	}
+    }
+	
+    if (!err) {
+	/* save the new list at appropriate stacking level */
+	err = stack_localized_list_as(new, newname);
+    } else {
+	dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
+	free(new);
+    }
+
+    return err;
+}
+#endif
+
 static int check_and_allocate_function_args (ufunc *fun,
 					     int argc, char **argv, 
 					     double ***pZ,
@@ -1194,8 +1242,13 @@ static int check_and_allocate_function_args (ufunc *fun,
 		err = 1;
 	    } 
 	} else if (fun->ptype[i] == ARG_LIST) {
+	    /* should we make local copies of the listed variables here? */
 	    if (get_list_by_name(argv[i]) != NULL) {
+#ifdef LOCAL_COPY_LISTS
+		err = localize_list(argv[i], fun->params[i], pZ, pdinfo);
+#else
 		err = copy_named_list_as(argv[i], fun->params[i]);
+#endif
 	    } else {
 		sprintf(gretl_errmsg, "argument %d (%s): not a list", i+1, argv[i]);
 		err = 1;

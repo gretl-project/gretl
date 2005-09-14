@@ -190,7 +190,34 @@ int remember_list (const int *list, const char *name, PRN *prn)
 }
 
 /**
- * copy_named_list:
+ * stack_localized_list_as:
+ * @list: the list to be saved.
+ * @name: the name to be given.
+ *
+ * For use in user-defined functions: take a list of
+ * variables that has been "localized" to function-scope
+ * and save it under the given @name.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int stack_localized_list_as (int *list, const char *name)
+{
+    saved_list *sl;
+    int err;
+
+    err = real_remember_list(list, name, 1, NULL);
+
+    if (!err) {
+	sl = list_stack[n_lists - 1];
+	sl->level += 1;
+    }
+
+    return err;
+}
+
+/**
+ * copy_named_list_as:
  * @orig: the name of the original list.
  * @new: the name to be given to the copy.
  *

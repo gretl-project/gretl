@@ -69,6 +69,8 @@ int *get_list_by_name (const char *name);
 
 int remember_list (const int *list, const char *name, PRN *prn);
 
+int stack_localized_list_as (int *list, const char *name);
+
 int copy_named_list_as (const char *orig, const char *new);
 
 int destroy_saved_lists_at_level (int level);
