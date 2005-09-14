@@ -290,6 +290,8 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (opt & OPT_V) { /* print raw and ranked data */
 	int i = 0;
 
+	obs_marker_init(pdinfo);
+
 	pprintf(prn, "\n     %s ", _("Obs"));
 	pprintf(prn, "%13s%13s%13s%13s\n\n", pdinfo->varname[vx], _("rank"),
 	       pdinfo->varname[vy], _("rank"));

@@ -498,6 +498,8 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 
     lp = 2.0 * n / m;
 
+    obs_marker_init(pdinfo);
+
     /* print the results */
     for (t=0; t<modn; t++) {
 	double h, s, d, f = NADBL;

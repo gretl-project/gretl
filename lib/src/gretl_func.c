@@ -1192,9 +1192,9 @@ grow_vars_mapping (int outv, int inv, int **p_outlist, int **p_inlist)
     return 0;
 }
 
-/* look up a variable by its ID number: if we've already made 
-   a local copy of the variable, return the ID number of the
-   copy (otherwise return 0) */
+/* look up a variable by its "outer" ID number: if we've already made
+   a local copy of the variable, return the ID number of the copy
+   (otherwise return 0) */
 
 static int find_mapped_var (int v, const int *outlist, const int *inlist)
 {

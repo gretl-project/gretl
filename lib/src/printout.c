@@ -1091,13 +1091,45 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 }
 
 /**
+ * obs_marker_init:
+ * @pdinfo: data information struct.
+ *
+ * Check the length to which observation markers should
+ * be printed, in a tabular context.  (We don't want to
+ * truncate 10-character date strings by chopping off the day.)
+ */
+
+static int oprintlen = 8;
+
+void obs_marker_init (const DATAINFO *pdinfo)
+{
+    int t, datestrs = 0;
+
+    if (pdinfo->markers) {
+	for (t=0; t<pdinfo->n; t++) {
+	    if (strlen(pdinfo->S[t]) == 10 && 
+		isdigit(pdinfo->S[t][0]) &&
+		strchr(pdinfo->S[t], '/')) {
+		datestrs = 1;
+		break;
+	    }
+	}
+    } 
+
+    if (datestrs) {
+	oprintlen = 10;
+    } else {
+	oprintlen = 8;
+    }
+}
+
+/**
  * print_obs_marker:
  * @t: observation number.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  *
  * Print a string (label, date or obs number) representing the given @t.
- *
  */
 
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
@@ -1105,8 +1137,8 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
     char tmp[OBSLEN] = {0};
 
     if (pdinfo->markers) { 
-	strncat(tmp, pdinfo->S[t], 8); /* long labels? */
-	pprintf(prn, "%8s ", tmp); 
+	strncat(tmp, pdinfo->S[t], oprintlen);
+	pprintf(prn, "%*s ", oprintlen, tmp); 
     } else {
 	ntodate(tmp, t, pdinfo);
 	pprintf(prn, "%8s ", tmp);
@@ -1480,6 +1512,8 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 
     fit_resid_head(fr, pdinfo, prn); 
 
+    obs_marker_init(pdinfo);
+
     for (t=0; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
 
@@ -1585,6 +1619,8 @@ int text_print_forecast (const FITRESID *fr,
 	    errpmax = pmax + 1;
 	}
     }
+
+    obs_marker_init(pdinfo);
 
     for (t=fr->pre_n; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
