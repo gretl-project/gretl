@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "glib.h"
 
 #undef MODEL_DEBUG
 
@@ -2242,6 +2243,82 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     }   
 
     return 0;
+}
+
+static int model_is_quadratic (const MODEL *pmod, const double **Z,
+			       const DATAINFO *pdinfo)
+{
+    const double *x1, *x2;
+    int t, ret = 1;
+
+    x1 = Z[pmod->list[3]];
+    x2 = Z[pmod->list[4]];
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (x2[t] != x1[t] * x1[t]) {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_model_get_fitted_formula:
+ * @pmod: pointer to target model.
+ * @xvar: ID number of variable that _may_ be "x" in the model.
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ * 
+ * If @pmod is a simple linear or quadratic model, return a
+ * string representing the formula for generating the fitted
+ * values in terms of the independent variable, with ID number
+ * @xvar.  The formula may be used in the context of a fitted
+ * versus actual plot.
+ *
+ * Returns: formula for fitted values, or %NULL if this is
+ * not appropriate.
+ */
+
+char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar, 
+				      const double **Z,
+				      const DATAINFO *pdinfo)
+{
+    const double **mZ;
+    const DATAINFO *mdinfo;
+    char *ret = NULL;
+
+    if (xvar == 0 || pmod->ci != OLS) {
+	/* FIXME: allow logistic too */
+	return NULL;
+    }
+
+    if (pmod->dataset != NULL) {
+	mZ = (const double **) pmod->dataset->Z;
+	mdinfo = pmod->dataset->dinfo;
+    } else {
+	mZ = Z;
+	mdinfo = pdinfo;
+    }
+
+    if (!pmod->ifc && pmod->ncoeff == 1 && xvar == pmod->list[2]) {
+	ret = g_strdup_printf("yformula: %g*x", pmod->coeff[0]);
+    } else if (pmod->ifc && pmod->ncoeff == 2 && xvar == pmod->list[3]) {
+	ret = g_strdup_printf("yformula: %g%s%g*x", pmod->coeff[0], 
+			      (pmod->coeff[1] >= 0)? "+" : "",
+			      pmod->coeff[1]);
+    } else if (pmod->ifc && pmod->ncoeff == 3 && xvar == pmod->list[3]) {
+	if (model_is_quadratic(pmod, mZ, mdinfo)) {
+	    ret = g_strdup_printf("yformula: %g%s%g*x%s%g*x**2", pmod->coeff[0], 
+				  (pmod->coeff[1] >= 0)? "+" : "",
+				  pmod->coeff[1], 
+				  (pmod->coeff[2] >= 0)? "+" : "",
+				  pmod->coeff[2]);
+	}
+    }
+	
+    return ret;
 }
 
 

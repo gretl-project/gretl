@@ -3857,19 +3857,12 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 
 void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 {
-    int err, origv, plot_list[4], lines[2];
+    int err, origv, plot_list[4], lines[2] = {0};
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
     double ***gZ;
     DATAINFO *ginfo;
-
-    origv = (pmod->dataset != NULL)?
-	pmod->dataset->dinfo->v : datainfo->v;
-
-    /* add fitted values to data set temporarily */
-    if (add_fit_resid(pmod, 1, 1)) {
-	return;
-    }
+    char *formula;
 
     /* handle model estimated on different subsample */
     if (pmod->dataset != NULL) {
@@ -3878,6 +3871,36 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     } else {
 	gZ = &Z;
 	ginfo = datainfo;
+    }
+
+    formula = gretl_model_get_fitted_formula(pmod, xvar, (const double **) Z,
+					     datainfo);
+
+    if (formula != NULL) {
+	/* fitted value can be represented as a formula: if feasible,
+	   produces a better-looking graph */
+	fprintf(stderr, "%s\n", formula);
+	plot_list[0] = 3;
+	plot_list[1] = 0;
+	plot_list[2] = gretl_model_get_depvar(pmod);
+	plot_list[3] = xvar;
+	err = gnuplot(plot_list, lines, formula, gZ, ginfo,
+		      &plot_count, GP_GUI | GP_FA);
+	if (err < 0) {
+	    errbox(_("gnuplot command failed"));
+	} else {
+	    register_graph();
+	}
+	free(formula);
+	return;
+    }
+
+    origv = (pmod->dataset != NULL)?
+	pmod->dataset->dinfo->v : datainfo->v;
+
+    /* add fitted values to data set temporarily */
+    if (add_fit_resid(pmod, 1, 1)) {
+	return;
     }
 
     plot_list[0] = 3;

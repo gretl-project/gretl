@@ -65,6 +65,7 @@ struct gnuplot_info {
     int miss;
     int oddman;
     int toomany;
+    int yformula;
     double xrange;
     double *yvar1;
     double *yvar2;
@@ -212,7 +213,8 @@ static int printvars (FILE *fp, int t, const int *list, const double **Z,
 	    fputs("? ", fp);
 	    miss = 1;
 	} else {
-	    if (i == 1) { /* the x variable */
+	    if (i == 1) { 
+		/* the x variable */
 		xx += offset;
 	    }
 	    fprintf(fp, "%.8g ", xx);
@@ -799,7 +801,7 @@ static void make_gtitle (FILE *fp, int code, const char *s1, const char *s2)
 	sprintf(title, I_("Actual and fitted %s"), s1);
 	break;
     case GTITLE_AFV:
-	if (auto_plot_var(s2)) {
+	if (s2 == NULL || auto_plot_var(s2)) {
 	    sprintf(title, I_("Actual and fitted %s"), s1);
 	} else {
 	    sprintf(title, I_("Actual and fitted %s versus %s"), s1, s2);
@@ -1112,6 +1114,7 @@ gp_info_init (struct gnuplot_info *gpinfo, unsigned char flags,
     gpinfo->oddman = 0;
     gpinfo->xrange = 0.0;
     gpinfo->toomany = 0;
+    gpinfo->yformula = 0;
 
     if (lo > MAX_PLOT_LINES + 1) {
 	gpinfo->toomany = 1;
@@ -1285,6 +1288,11 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     gp_info_init(&gpinfo, flags, list[0], pdinfo->t1, pdinfo->t2);
 
+    if ((flags & GP_FA) && literal != NULL) {
+	/* fitted vs actual plot with formula for fitted line */
+	gpinfo.yformula = 1;
+    }
+
     if (gpinfo.impulses) {
 	strcpy(withstr, "w i");
     }
@@ -1315,7 +1323,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     /* add a simple regression line if appropriate */
     if (!gpinfo.impulses && !(flags & GP_OLS_OMIT) && gpinfo.lo == 2 && 
-	!gpinfo.ts_plot && !(flags & GP_RESIDS)) {
+	!gpinfo.ts_plot && !(flags & GP_RESIDS) && !gpinfo.yformula) {
 	get_ols_line(&gpinfo, list, pZ, pdinfo, ols_line);
 	if (gpinfo.ols_ok) {
 	    fprintf(fp, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
@@ -1325,7 +1333,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     /* adjust sample range, and reject if it's empty */
     graph_list_adjust_sample(list, &gpinfo, (const double **) *pZ);
-    if (gpinfo.t1 == gpinfo.t2 || gpinfo.lo == 1) {
+    if (gpinfo.t1 == gpinfo.t2 || (!gpinfo.yformula && gpinfo.lo == 1)) {
 	fclose(fp);
 	return GRAPH_NO_DATA;
     }
@@ -1422,7 +1430,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	fputs("set y2tics\n", fp);
     }
 
-    if (literal != NULL && *literal != '\0') {
+    if (!gpinfo.yformula && literal != NULL && *literal != '\0') {
 	print_gnuplot_literal_lines(literal, fp);
     }
 
@@ -1448,6 +1456,12 @@ int gnuplot (int *list, const int *lines, const char *literal,
     } else {
 	fputs("plot \\\n", fp);
 	for (i=1; i<gpinfo.lo; i++)  {
+	    if (gpinfo.yformula && i == 1) {
+		fprintf(fp, "%s title '%s' w lines lt 2 ,\\\n", literal + 10, 
+			I_("fitted"));
+		i++;
+		goto data_spec;
+	    }
 	    if (flags & GP_FA) {
 		strcpy(s1, (i == 1)? I_("fitted") : I_("actual"));
 	    } else if (gpinfo.lo == 2) {
@@ -1458,6 +1472,8 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	    if (!gpinfo.impulses) { 
 		set_withstr(flags, lines, i, withstr);
 	    }
+
+	data_spec:
 	    fprintf(fp, " '-' using 1:2 title '%s' %s", 
 		    s1, withstr);
 	    if (flags & GP_FA) {
@@ -1478,6 +1494,14 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     if (*ols_line != '\0') {
         fputs(ols_line, fp);
+    }
+
+    if (gpinfo.yformula) {
+	/* cut out the "dummy" yvar that is in fact represented
+	   by a formula rather than raw data */
+	list[1] = list[2];
+	list[2] = list[3];
+	list[0] = gpinfo.lo = 2;
     }
 
     /* print the data to be graphed */

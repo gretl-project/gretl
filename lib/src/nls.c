@@ -437,6 +437,44 @@ nls_missval_check (double ***pZ, DATAINFO *pdinfo, nls_spec *spec)
     return 0;
 }
 
+static int spec_get_fvec_id (void)
+{
+    int v = -1;
+
+    if (pspec->uhatnum == 0) {
+	/* look up ID number of the "fvec" variable if we don't know
+	   it already */
+	v = varindex(ndinfo, "$nl_y");
+	if (v < ndinfo->v) {
+	    pspec->uhatnum = v;
+	}
+    } else {
+	v = pspec->uhatnum;
+    }
+
+    return v;
+}
+
+static int spec_get_deriv_id (int i)
+{
+    int v = -1;
+
+    if (pspec->params[i].dernum == 0) {
+	char varname[VNAMELEN];
+
+	/* look up ID number of the derivative if not known */
+	sprintf(varname, "$nl_x%d", i + 1);
+	v = varindex(ndinfo, varname);
+	if (v < ndinfo->v) {
+	    pspec->params[i].dernum = v;
+	}
+    } else {
+	v = pspec->params[i].dernum;
+    }
+
+    return v;
+}
+
 /* this function is used in the context of BFGS */
 
 static double get_mle_ll (const double *b)
@@ -453,16 +491,9 @@ static double get_mle_ll (const double *b)
 	return NADBL;
     }
 
-    if (pspec->uhatnum == 0) {
-	/* look up ID number of the l(t) variable if we don't know
-	   it already */
-	v = varindex(ndinfo, "$nl_y");
-	if (v == ndinfo->v) {
-	    return 1;
-	}
-	pspec->uhatnum = v;
-    } else {
-	v = pspec->uhatnum;
+    v = spec_get_fvec_id();
+    if (v < 0) {
+	return 1;
     }
 
     pspec->ll = 0.0;
@@ -526,19 +557,10 @@ static int get_mle_gradient (double *b, double *g)
 	    fprintf(stderr, "error calculating deriv\n");
 	    return 1;
 	}
-	
-	if (pspec->params[i].dernum == 0) {
-	    char varname[VNAMELEN];
 
-	    /* look up ID number of the derivative if not known */
-	    sprintf(varname, "$nl_x%d", i + 1);
-	    v = varindex(ndinfo, varname);
-	    if (v == ndinfo->v) {
-		return 1;
-	    }
-	    pspec->params[i].dernum = v;
-	} else {
-	    v = pspec->params[i].dernum;
+	v = spec_get_deriv_id(i);
+	if (v < 0) {
+	    return 1;
 	}
 
 	g[i] = 0.0;
@@ -572,16 +594,9 @@ static int get_nls_fvec (double *fvec)
 	return 1;
     }
 
-    if (pspec->uhatnum == 0) {
-	/* look up ID number of the fvec variable if we don't know
-	   it already */
-	v = varindex(ndinfo, "$nl_y");
-	if (v == ndinfo->v) {
-	    return 1;
-	}
-	pspec->uhatnum = v;
-    } else {
-	v = pspec->uhatnum;
+    v = spec_get_fvec_id();
+    if (v < 0) {
+	return 1;
     }
 
     pspec->ess = 0.0;
@@ -618,18 +633,9 @@ static int get_nls_deriv (int i, double *deriv)
 	return 1;
     }
 
-    if (pspec->params[i].dernum == 0) {
-	char varname[VNAMELEN];
-
-	/* look up ID number of the derivative if not known */
-	sprintf(varname, "$nl_x%d", i + 1);
-	v = varindex(ndinfo, varname);
-	if (v == ndinfo->v) {
-	    return 1;
-	}
-	pspec->params[i].dernum = v;
-    } else {
-	v = pspec->params[i].dernum;
+    v = spec_get_deriv_id(i);
+    if (v < 0) {
+	return 1;
     }
 
     /* derivative may be vector or scalar */

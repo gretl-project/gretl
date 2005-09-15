@@ -222,4 +222,8 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				   int yno, int p, int q, int P, int Q, 
 				   int r);
 
+char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
+				      const double **Z,
+				      const DATAINFO *pdinfo);
+
 #endif /* GRETL_MODEL_H */

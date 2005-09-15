@@ -195,6 +195,11 @@ static double get_lmax (const double *y, const DATAINFO *pdinfo,
 
     if (lmstr == NULL) {
 	lmax_dialog(&lmax);
+	if (lmax <= ymax) {
+	    gretl_errmsg_set(_("Invalid value for the maximum of the "
+			       "dependent variable"));
+	    lmax = NADBL;
+	}
     }
 	    
     return lmax;
