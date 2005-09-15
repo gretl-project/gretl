@@ -877,8 +877,7 @@ static void print_model_heading (const MODEL *pmod,
 	gretl_prn_newline(prn);
     }
 
-    /* special formulations for dependent variable in cases of certain
-       sorts of auxiliary regressions */
+    /* special formulations for dependent variable in various cases */
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG) {
 	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
@@ -979,6 +978,17 @@ static void print_model_heading (const MODEL *pmod,
 		    gretl_model_get_double(pmod, "rho_in"));
 	}
     } 
+
+    /* y-hat formula for logistic regression */
+    else if (pmod->ci == LOGISTIC) {
+	if (tex) {
+	    pprintf(prn, "$\\hat{y} = %g / (1 + e^{-X\\hat{\\beta}})$\n", 
+		    gretl_model_get_double(pmod, "lmax"));  
+	} else {
+	    pprintf(prn, "yhat = %g / (1 + exp(-X*b))\n",  
+		    gretl_model_get_double(pmod, "lmax"));
+	}
+    }
 
     /* message about new variable created */
     if (plain_format(prn) && gretl_msg[0] != '\0' &&

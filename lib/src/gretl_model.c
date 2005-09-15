@@ -2245,6 +2245,9 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     return 0;
 }
 
+/* try to tell if an OLS model with two independent variables is
+   actually a quadratic model (x_2 = x_1^2). */
+
 static int model_is_quadratic (const MODEL *pmod, const double **Z,
 			       const DATAINFO *pdinfo)
 {
@@ -2271,14 +2274,14 @@ static int model_is_quadratic (const MODEL *pmod, const double **Z,
  * @Z: data array.
  * @pdinfo: dataset information.
  * 
- * If @pmod is a simple linear or quadratic model, return a
- * string representing the formula for generating the fitted
- * values in terms of the independent variable, with ID number
- * @xvar.  The formula may be used in the context of a fitted
- * versus actual plot.
+ * If @pmod is a simple linear, quadratic or logistic model, 
+ * and if @xvar is in fact the "x" variable from the model, 
+ * returns a string representing the formula for generating the 
+ * fitted values as a function of x.  This formula may be used 
+ * in the context of a fitted versus actual plot.
  *
  * Returns: formula for fitted values, or %NULL if this is
- * not appropriate.
+ * not available.
  */
 
 char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar, 
@@ -2289,8 +2292,8 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
     const DATAINFO *mdinfo;
     char *ret = NULL;
 
-    if (xvar == 0 || pmod->ci != OLS) {
-	/* FIXME: allow logistic too */
+    /* only OLS and logistic are handled */
+    if (xvar == 0 || (pmod->ci != OLS && pmod->ci != LOGISTIC)) {
 	return NULL;
     }
 
@@ -2302,7 +2305,18 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 	mdinfo = pdinfo;
     }
 
-    if (!pmod->ifc && pmod->ncoeff == 1 && xvar == pmod->list[2]) {
+    if (pmod->ci == LOGISTIC) {
+	if (pmod->ifc && pmod->ncoeff == 2 && xvar == pmod->list[3]) {
+	    double lmax = gretl_model_get_double(pmod, "lmax");
+
+	    if (!na(lmax)) {
+		ret = g_strdup_printf("yformula: %g/(1.0+exp(-(%g%s%g*x)))",
+				      lmax, pmod->coeff[0], 
+				      (pmod->coeff[1] >= 0)? "+" : "",
+				      pmod->coeff[1]);
+	    }
+	}
+    } else if (!pmod->ifc && pmod->ncoeff == 1 && xvar == pmod->list[2]) {
 	ret = g_strdup_printf("yformula: %g*x", pmod->coeff[0]);
     } else if (pmod->ifc && pmod->ncoeff == 2 && xvar == pmod->list[3]) {
 	ret = g_strdup_printf("yformula: %g%s%g*x", pmod->coeff[0], 

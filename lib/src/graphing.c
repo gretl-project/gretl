@@ -65,8 +65,8 @@ struct gnuplot_info {
     int miss;
     int oddman;
     int toomany;
-    int yformula;
     double xrange;
+    const char *yformula;
     double *yvar1;
     double *yvar2;
 };
@@ -1099,7 +1099,7 @@ print_gp_data (struct gnuplot_info *gpinfo, const int *list,
 
 static void 
 gp_info_init (struct gnuplot_info *gpinfo, unsigned char flags,
-	      int lo, int t1, int t2)
+	      int lo, const char *literal, int t1, int t2)
 {
     gpinfo->flags = flags;
     gpinfo->ts_plot = 1;   /* plotting against time on x-axis? */
@@ -1114,7 +1114,7 @@ gp_info_init (struct gnuplot_info *gpinfo, unsigned char flags,
     gpinfo->oddman = 0;
     gpinfo->xrange = 0.0;
     gpinfo->toomany = 0;
-    gpinfo->yformula = 0;
+    gpinfo->yformula = NULL;
 
     if (lo > MAX_PLOT_LINES + 1) {
 	gpinfo->toomany = 1;
@@ -1122,12 +1122,19 @@ gp_info_init (struct gnuplot_info *gpinfo, unsigned char flags,
 
     if (lo > 2 && lo < 7 && !(flags & GP_RESIDS) && !(flags & GP_FA)
 	&& !(flags & GP_DUMMY)) {
+	/* allow probe for using two y axes */
 	gpinfo->yscale = 1;
     } 
 
     if (flags & GP_IMPULSES) {
 	gpinfo->impulses = 1;
     }    
+
+    if (flags & GP_FA && literal != NULL && 
+	!strncmp(literal, "yformula: ", 10)) {
+	/* fitted vs actual plot with fitted given by formula */
+	gpinfo->yformula = literal + 10;
+    }
 
     gpinfo->yvar1 = gpinfo->yvar2 = NULL;
 }
@@ -1286,12 +1293,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	return E_FOPEN;
     } 
 
-    gp_info_init(&gpinfo, flags, list[0], pdinfo->t1, pdinfo->t2);
-
-    if ((flags & GP_FA) && literal != NULL) {
-	/* fitted vs actual plot with formula for fitted line */
-	gpinfo.yformula = 1;
-    }
+    gp_info_init(&gpinfo, flags, list[0], literal, pdinfo->t1, pdinfo->t2);
 
     if (gpinfo.impulses) {
 	strcpy(withstr, "w i");
@@ -1323,7 +1325,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     /* add a simple regression line if appropriate */
     if (!gpinfo.impulses && !(flags & GP_OLS_OMIT) && gpinfo.lo == 2 && 
-	!gpinfo.ts_plot && !(flags & GP_RESIDS) && !gpinfo.yformula) {
+	!gpinfo.ts_plot && !(flags & GP_RESIDS)) {
 	get_ols_line(&gpinfo, list, pZ, pdinfo, ols_line);
 	if (gpinfo.ols_ok) {
 	    fprintf(fp, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
@@ -1333,7 +1335,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     /* adjust sample range, and reject if it's empty */
     graph_list_adjust_sample(list, &gpinfo, (const double **) *pZ);
-    if (gpinfo.t1 == gpinfo.t2 || (!gpinfo.yformula && gpinfo.lo == 1)) {
+    if (gpinfo.t1 == gpinfo.t2 || gpinfo.lo == 1) {
 	fclose(fp);
 	return GRAPH_NO_DATA;
     }
@@ -1418,25 +1420,29 @@ int gnuplot (int *list, const int *lines, const char *literal,
 #endif
 
     xvar = (flags & GP_DUMMY)? list[gpinfo.lo - 1] : list[gpinfo.lo];
-
     print_x_range(&gpinfo, (const double *) (*pZ)[xvar], fp);
 
     if (gpinfo.yscale) { 
 	check_for_yscale(&gpinfo, list, (const double **) *pZ);
+	if (gpinfo.yscale) {
+	    fputs("set ytics nomirror\n", fp);
+	    fputs("set y2tics\n", fp);
+	}
     }
 
-    if (gpinfo.yscale) {
-	fputs("set ytics nomirror\n", fp);
-	fputs("set y2tics\n", fp);
-    }
-
-    if (!gpinfo.yformula && literal != NULL && *literal != '\0') {
+    if (gpinfo.yformula != NULL) {
+	/* cut out the "dummy" yvar that is in fact represented
+	   by a formula rather than raw data */
+	list[1] = list[2];
+	list[2] = list[3];
+	list[0] = gpinfo.lo = 2;
+    } else if (literal != NULL && *literal != '\0') {
 	print_gnuplot_literal_lines(literal, fp);
     }
 
-    /* print the 'plot' lines */
+    /* now print the 'plot' lines */
+    fputs("plot \\\n", fp);
     if (gpinfo.yscale) {
-	fputs("plot \\\n", fp);
 	for (i=1; i<gpinfo.lo; i++) {
 	    fprintf(fp, "'-' using 1:2 axes %s title '%s (%s)' %s%s",
 		    (i == gpinfo.oddman)? "x1y2" : "x1y1",
@@ -1447,24 +1453,22 @@ int gnuplot (int *list, const int *lines, const char *literal,
 		    (i == gpinfo.lo - 1)? "\n" : " , \\\n");
 	}
     } else if (flags & GP_DUMMY) { 
-	fputs("plot \\\n", fp);
 	strcpy(s1, (flags & GP_RESIDS)? I_("residual") : 
 	       series_name(pdinfo, list[1]));
 	strcpy(s2, series_name(pdinfo, list[3]));
 	fprintf(fp, " '-' using 1:2 title '%s (%s=1)', \\\n", s1, s2);
 	fprintf(fp, " '-' using 1:2 title '%s (%s=0)'\n", s1, s2);
+    } else if (gpinfo.yformula != NULL) {
+	fprintf(fp, " '-' using 1:2 title '%s' w points , \\\n", I_("actual"));	
+	fprintf(fp, "%s title '%s' w lines\n", gpinfo.yformula, I_("fitted"));
+    } else if (flags & GP_FA) {
+	set_withstr(flags, lines, 1, withstr);
+	fprintf(fp, " '-' using 1:2 title '%s' %s lt 2, \\\n", I_("fitted"), withstr);
+	set_withstr(flags, lines, 2, withstr);
+	fprintf(fp, " '-' using 1:2 title '%s' %s lt 1\n", I_("actual"), withstr);	
     } else {
-	fputs("plot \\\n", fp);
 	for (i=1; i<gpinfo.lo; i++)  {
-	    if (gpinfo.yformula && i == 1) {
-		fprintf(fp, "%s title '%s' w lines lt 2 ,\\\n", literal + 10, 
-			I_("fitted"));
-		i++;
-		goto data_spec;
-	    }
-	    if (flags & GP_FA) {
-		strcpy(s1, (i == 1)? I_("fitted") : I_("actual"));
-	    } else if (gpinfo.lo == 2) {
+	    if (gpinfo.lo == 2) {
 		*s1 = '\0';
 	    } else {
 		strcpy(s1, series_name(pdinfo, list[i]));
@@ -1472,18 +1476,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	    if (!gpinfo.impulses) { 
 		set_withstr(flags, lines, i, withstr);
 	    }
-
-	data_spec:
-	    fprintf(fp, " '-' using 1:2 title '%s' %s", 
-		    s1, withstr);
-	    if (flags & GP_FA) {
-		/* reverse line types: make "actual" type 1 */
-		if (i == 1) {
-		    fputs(" lt 2", fp);
-		} else if (i == 2) {
-		    fputs(" lt 1", fp);
-		}
-	    }
+	    fprintf(fp, " '-' using 1:2 title '%s' %s", s1, withstr);
 	    if (i < gpinfo.lo - 1 || gpinfo.ols_ok) {
 	        fputs(" , \\\n", fp); 
 	    } else {
@@ -1494,14 +1487,6 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     if (*ols_line != '\0') {
         fputs(ols_line, fp);
-    }
-
-    if (gpinfo.yformula) {
-	/* cut out the "dummy" yvar that is in fact represented
-	   by a formula rather than raw data */
-	list[1] = list[2];
-	list[2] = list[3];
-	list[0] = gpinfo.lo = 2;
     }
 
     /* print the data to be graphed */

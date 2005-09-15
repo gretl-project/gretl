@@ -37,11 +37,7 @@
 #include "../pixmaps/mini.plot.xpm"
 #include "../pixmaps/mini.model.xpm"
 #include "../pixmaps/mini.ofolder.xpm"
-#ifdef G_OS_WIN32
-# include "../pixmaps/mini.ie.xpm"
-#else
-# include "../pixmaps/mini.browser.xpm"
-#endif
+#include "../pixmaps/mini.browser.xpm"
 
 static GtkWidget *toolbar_box;
 

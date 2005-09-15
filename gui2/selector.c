@@ -1551,11 +1551,6 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
     return FALSE;
 }
 
-void delete_selection_dialog (selector *sr)
-{
-    gtk_widget_destroy(sr->dlg);
-}
-
 static void maybe_delete_dialog (GtkWidget *widget, selector *sr)
 {
     if (open_selector != NULL && !sr->error) {

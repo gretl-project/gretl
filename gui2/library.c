@@ -2520,7 +2520,6 @@ void do_model (GtkWidget *widget, gpointer p)
 	break;
 
     case LOGISTIC:
-	delete_selection_dialog(sr);
 	*pmod = logistic_model(cmd.list, &Z, datainfo, NULL);
 	err = model_output(pmod, prn);
 	break;	
@@ -3873,15 +3872,14 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	ginfo = datainfo;
     }
 
-    formula = gretl_model_get_fitted_formula(pmod, xvar, (const double **) Z,
-					     datainfo);
+    formula = gretl_model_get_fitted_formula(pmod, xvar, (const double **) *gZ,
+					     ginfo);
 
     if (formula != NULL) {
 	/* fitted value can be represented as a formula: if feasible,
 	   produces a better-looking graph */
-	fprintf(stderr, "%s\n", formula);
 	plot_list[0] = 3;
-	plot_list[1] = 0;
+	plot_list[1] = 0; /* placeholder entry */
 	plot_list[2] = gretl_model_get_depvar(pmod);
 	plot_list[3] = xvar;
 	err = gnuplot(plot_list, lines, formula, gZ, ginfo,
@@ -3895,8 +3893,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	return;
     }
 
-    origv = (pmod->dataset != NULL)?
-	pmod->dataset->dinfo->v : datainfo->v;
+    origv = ginfo->v;
 
     /* add fitted values to data set temporarily */
     if (add_fit_resid(pmod, 1, 1)) {
@@ -3904,7 +3901,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     }
 
     plot_list[0] = 3;
-    plot_list[1] = ginfo->v - 1;    /* last var added (fitted vals) */
+    plot_list[1] = ginfo->v - 1; /* last var added (fitted vals) */
 
     /* depvar from regression */
     plot_list[2] = gretl_model_get_depvar(pmod);
@@ -3922,9 +3919,8 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     } else { 
 	/* plot against obs */
 	int ts = dataset_is_time_series(ginfo);
-	int pv;
+	int pv = plotvar(gZ, ginfo, get_timevar_name(ginfo));
 
-	pv = plotvar(gZ, ginfo, get_timevar_name(ginfo));
 	if (pv < 0) {
 	    errbox(_("Failed to add plotting index variable"));
 	    dataset_drop_last_variables(1, gZ, ginfo);

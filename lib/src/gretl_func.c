@@ -282,7 +282,7 @@ destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo,
 		copy_values_to_assignee(cv, i, *pZ, pdinfo);
 		saveit = 0;
 	    } else {
-		/* rename variable as caller desired: do not delete */
+		/* rename variable as caller desired: mark for preservation */
 		strcpy(pdinfo->varname[i], call->assv[v]);
 		STACK_LEVEL(pdinfo, i) -= 1; 
 	    }

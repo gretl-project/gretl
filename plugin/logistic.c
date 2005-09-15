@@ -25,10 +25,18 @@
 #define OLD_GTK
 #endif
 
+#ifdef WIN32
+# include "windows.h"
+#else
+# define BUILDING_PLUGIN
+# include "../gui2/dialogs.h" /* for errbox */
+#endif
+
 struct lmax_opt {
     GtkWidget *dlg;
     GtkWidget *entry;
     double *lmax;
+    double ymax;
 };
 
 static void lmax_opt_free (GtkWidget *w, struct lmax_opt *opt)
@@ -45,15 +53,22 @@ static void lmax_opt_finalize (GtkWidget *w, struct lmax_opt *opt)
 
     numstr = gtk_entry_get_text(GTK_ENTRY(opt->entry));
     x = strtod(numstr, &test);
-    if (*test != 0 || x < 0.0) {
-	gretl_errmsg_set(_("Invalid value for the maximum of the "
-			   "dependent variable"));
+
+    if (*test != 0 || x <= opt->ymax) {
+	char *msg;
+
+#ifdef WIN32
+	msg = g_strdup_printf(I_("The maximum must be greater than %g"), opt->ymax);
+	MessageBox(NULL, msg, "gretl", MB_OK | MB_ICONERROR);
+#else
+	msg = g_strdup_printf(_("The maximum must be greater than %g"), opt->ymax);
+	errbox(msg);
+#endif
 	*opt->lmax = NADBL;
     } else {
 	*opt->lmax = x;
+	gtk_widget_destroy(opt->dlg);
     }
-
-    gtk_widget_destroy(opt->dlg);
 }
 
 static void lmax_opt_cancel (GtkWidget *w, struct lmax_opt *opt)
@@ -62,7 +77,7 @@ static void lmax_opt_cancel (GtkWidget *w, struct lmax_opt *opt)
     gtk_widget_destroy(opt->dlg);
 }
 
-static void lmax_dialog (double *lmax)
+static void lmax_dialog (double *lmax, double ymax)
 {
     GtkWidget *tmp, *hbox;
     gchar *numstr;
@@ -73,6 +88,7 @@ static void lmax_dialog (double *lmax)
 
     opt->dlg = gtk_dialog_new();
     opt->lmax = lmax;
+    opt->ymax = ymax;
 
     gtk_window_set_title(GTK_WINDOW(opt->dlg), _("Logistic model"));
     gtk_container_set_border_width (GTK_CONTAINER 
@@ -194,12 +210,7 @@ static double get_lmax (const double *y, const DATAINFO *pdinfo,
     }
 
     if (lmstr == NULL) {
-	lmax_dialog(&lmax);
-	if (lmax <= ymax) {
-	    gretl_errmsg_set(_("Invalid value for the maximum of the "
-			       "dependent variable"));
-	    lmax = NADBL;
-	}
+	lmax_dialog(&lmax, ymax);
     }
 	    
     return lmax;
@@ -274,11 +285,8 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     }
 
     pmod->list[1] = dv;
-
     gretl_model_set_double(pmod, "lmax", lmax);
-
     pmod->ci = LOGISTIC;
-
     ls_aic_bic(pmod);
 
     return 0;
