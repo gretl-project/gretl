@@ -851,8 +851,8 @@ static int parse_fn_element (char *s, char **parmv, char *ptype, int i,
     if (ptype[i] == 0) {
 	sprintf(gretl_errmsg, "Unrecognized data type '%s'", tstr);
 	err = E_PARSE;
-    } else if (0 && ptype[i] == ARG_LIST && which == FN_RETURNS) {
-	/* work in progress! */
+    } else if (ptype[i] == ARG_LIST && which == FN_RETURNS) {
+	/* FIXME? */
 	strcpy(gretl_errmsg, "A function cannot return a list");
 	err = 1;
     }
@@ -1375,6 +1375,7 @@ static int check_function_assignments (ufunc *fun,
 		asslist[i+1] = v;
 	    }
 	} else if (fun->rtype[i] == ARG_LIST) {
+	    /* FIXME? */
 	    fprintf(stderr, "requested return of list as '%s'\n", assv[i]);
 	} else {
 	    err = check_varname(assv[i]);

@@ -645,7 +645,8 @@ CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
     return button;
 }
 
-#define can_do_csv(v) (v->role == PRINT && v->data != NULL)
+#define can_do_csv(v) ((v->role == PRINT && v->data != NULL) || \
+		        v->role == VIEW_SERIES)
 
 void copy_format_dialog (windata_t *vwin, int multicopy, int action)
 {

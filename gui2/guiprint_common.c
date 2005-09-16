@@ -1189,7 +1189,7 @@ int csv_selected_to_clipboard (void)
 
 int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 {
-    const int *list = series_view_get_list(vwin);
+    int *list = series_view_get_list(vwin);
     PRN *prn = NULL;
     char delim = datainfo->delim;
     int i, err = 0;
@@ -1227,6 +1227,7 @@ int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 	    }
 	}
 	gretl_print_destroy(prn);
+	free(list);
     }
 
     if (fmt == GRETL_FORMAT_TABLE) {

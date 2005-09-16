@@ -61,64 +61,6 @@ struct multi_series_view_t {
     multi_point *points;
 };
 
-static void series_view_format_dialog (windata_t *vwin, guint a, GtkWidget *w);
-static void series_view_sort (windata_t *vwin, guint a, GtkWidget *w);
-static void series_view_graph (windata_t *vwin, guint a, GtkWidget *w);
-static void scalar_to_clipboard (windata_t *vwin, guint a, GtkWidget *w);
-
-#ifndef OLD_GTK
-
-GtkItemFactoryEntry series_view_items[] = {
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, window_copy, GRETL_FORMAT_SELECTION, 
-      "<StockItem>", GTK_STOCK_COPY },
-    { N_("/Edit/Copy _all"), "", window_copy, GRETL_FORMAT_TXT, 
-      "<StockItem>", GTK_STOCK_COPY },
-    { N_("/Edit/_Format..."), NULL, series_view_format_dialog, 0, NULL, GNULL },
-    { N_("/_Series"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Series/_Sort"), NULL, series_view_sort, 0, NULL, GNULL },
-    { N_("/Series/_Graph"), NULL, series_view_graph, 0, NULL, GNULL },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
-};
-
-GtkItemFactoryEntry scalar_view_items[] = {
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Format..."), NULL, series_view_format_dialog, 0, NULL, GNULL },
-    { N_("/Edit/_Copy value"), NULL, scalar_to_clipboard, 0, NULL, GNULL },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
-};
-
-#else
-
-GtkItemFactoryEntry series_view_items[] = {
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, window_copy, GRETL_FORMAT_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, window_copy, GRETL_FORMAT_TXT, NULL },
-    { N_("/Edit/_Format..."), NULL, series_view_format_dialog, 0, NULL },
-    { N_("/_Series"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Series/_Sort"), NULL, series_view_sort, 0, NULL },
-    { N_("/Series/_Graph"), NULL, series_view_graph, 0, NULL },
-    { NULL, NULL, NULL, 0, NULL }
-};
-
-GtkItemFactoryEntry scalar_view_items[] = {
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Format..."), NULL, series_view_format_dialog, 0, NULL },
-    { N_("/Edit/_Copy value"), NULL, scalar_to_clipboard, 0, NULL },
-    { NULL, NULL, NULL, 0, NULL }
-};
-
-#endif
-
-GtkItemFactoryEntry *get_series_view_menu_items (int code)
-{
-    if (code == VIEW_SERIES) {
-	return series_view_items;
-    } else {
-	return scalar_view_items;
-    } 
-}
-
 void free_series_view (gpointer p)
 {
     series_view *sview = (series_view *) p;
@@ -225,11 +167,38 @@ static void replace_window_text (windata_t *vwin, const char *pbuf)
 #endif
 }
 
+static PRN *series_view_print_csv (windata_t *vwin)
+{
+    series_view *sview = (series_view *) vwin->data;
+    char dchar = datainfo->delim;
+    PRN *prn;
+    int t;
+
+    if (bufopen(&prn)) {
+	return NULL;
+    }
+    
+    pprintf(prn, "obs%c%s\n", dchar, datainfo->varname[sview->varnum]);
+    for (t=0; t<sview->npoints; t++) {
+	if (na(sview->points[t].val)) {
+	    pprintf(prn, "%s%cNA\n", sview->points[t].label, dchar);
+	} else {
+	    pprintf(prn, "\"%s\"%c%.8g\n", sview->points[t].label, dchar,
+		    sview->points[t].val);
+	}
+    }
+
+    return prn;
+}
+
+/* for printing sorted or reformatted data, window with a
+   single series */
+
 static void series_view_print (windata_t *vwin)
 {
+    series_view *sview = (series_view *) vwin->data;
     const char *pbuf;
     PRN *prn;
-    series_view *sview = (series_view *) vwin->data;
     int t;
 
     if (bufopen(&prn)) return;
@@ -257,7 +226,7 @@ static void series_view_print (windata_t *vwin)
 		    datainfo->varname[sview->varnum], 
 		    sview->digits, Z[sview->varnum][0]);
 	} else {
-	    pprintf(prn, "\n%*s = %13.*fg", OBSLEN - 1,
+	    pprintf(prn, "\n%*s = %13.*f", OBSLEN - 1, 
 		    datainfo->varname[sview->varnum], 
 		    sview->digits, Z[sview->varnum][0]);
 	}
@@ -325,10 +294,16 @@ int series_view_is_sorted (windata_t *vwin)
 
 PRN *vwin_print_sorted_as_csv (windata_t *vwin)
 {
-    multi_series_view *mview = (multi_series_view *) vwin->data;
+    multi_series_view *mview;
     int *obsvec;
     PRN *prn;
     int err = 0;
+
+    if (vwin->role == VIEW_SERIES) {
+	return series_view_print_csv(vwin);
+    }
+
+    mview = (multi_series_view *) vwin->data;
 
     obsvec = make_obsvec(mview);
     if (obsvec == NULL) {
@@ -370,7 +345,7 @@ static int compare_mpoints (const void *a, const void *b)
     return (pa->val > pb->val) - (pa->val < pb->val);
 }
 
-static void series_view_sort (windata_t *vwin, guint action, GtkWidget *w)
+void series_view_sort (GtkWidget *w, windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
     
@@ -413,8 +388,7 @@ void series_view_sort_by (GtkWidget *w, windata_t *vwin)
     multi_series_view_print_sorted(vwin);
 }
 
-static void 
-series_view_graph (windata_t *vwin, guint action, GtkWidget *w)
+void series_view_graph (GtkWidget *w, windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
 
@@ -425,8 +399,7 @@ series_view_graph (windata_t *vwin, guint action, GtkWidget *w)
     }
 }
 
-static void 
-scalar_to_clipboard (windata_t *vwin, guint action, GtkWidget *w)
+void scalar_to_clipboard (windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
     double val;
@@ -437,7 +410,7 @@ scalar_to_clipboard (windata_t *vwin, guint action, GtkWidget *w)
     if (sview->format == 'G') {
 	buf = g_strdup_printf("%#.*g", sview->digits, val);
     } else {
-	buf = g_strdup_printf("%.*fg", sview->digits, val);
+	buf = g_strdup_printf("%.*f", sview->digits, val);
     }
 
 #ifdef G_OS_WIN32
@@ -449,13 +422,25 @@ scalar_to_clipboard (windata_t *vwin, guint action, GtkWidget *w)
     g_free(buf);
 }
 
-const int *series_view_get_list (windata_t *vwin)
+int *series_view_get_list (windata_t *vwin)
 {
-    multi_series_view *mview = (multi_series_view *) vwin->data; 
-    const int *list = NULL;
+    int *list = NULL;
 
-    if (mview != NULL) {
-	list = mview->list;
+    if (vwin->role == VIEW_SERIES) {
+	series_view *sview = vwin->data;
+
+	if (sview != NULL) {
+	    list = gretl_list_new(1);
+	    if (list != NULL) {
+		list[1] = sview->varnum;
+	    }
+	}
+    } else {
+	multi_series_view *mview = (multi_series_view *) vwin->data;
+
+	if (mview != NULL) {
+	    list = gretl_list_copy(mview->list);
+	}
     }
 
     return list;
@@ -543,8 +528,7 @@ set_series_float_format (GtkWidget *w, gpointer p)
     }
 }
 
-static void 
-series_view_format_dialog (windata_t *vwin, guint action, GtkWidget *src)
+void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
 {
     GtkWidget *w, *tmp, *label;
     GtkWidget *vbox, *hbox;

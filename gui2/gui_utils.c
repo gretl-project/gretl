@@ -61,6 +61,7 @@ char *storelist = NULL;
 #include "../pixmaps/stock_add_16.xpm"
 #include "../pixmaps/stock_close_16.xpm"
 #include "../pixmaps/stock_sort_16.xpm"
+#include "../pixmaps/stock_convert_16.xpm"
 # if defined(USE_GNOME)
 #  include "../pixmaps/stock_print_16.xpm"
 # endif
@@ -68,6 +69,7 @@ char *storelist = NULL;
 
 #include "../pixmaps/mini.tex.xpm"
 #include "../pixmaps/mail_16.xpm"
+#include "../pixmaps/mini.plot.xpm"
 
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
@@ -97,13 +99,16 @@ enum {
     SAVE_AS_ITEM,
     EDIT_ITEM,
     GP_ITEM,
+    PLOT_ITEM,
     RUN_ITEM,
     COPY_ITEM,
     TEX_ITEM,
     ADD_ITEM,
     MAIL_ITEM,
     HELP_ITEM,
-    SORT_ITEM
+    SORT_ITEM,
+    SORT_BY_ITEM,
+    FORMAT_ITEM
 } viewbar_flags;
 
 static GtkWidget *get_toolbar_button_by_flag (GtkToolbar *tb, int flag)
@@ -1567,6 +1572,17 @@ void gretl_stock_icons_init (void)
 	gtk_icon_factory_add(ifac, GRETL_STOCK_MAIL, set);
 	gtk_icon_set_unref(set);
 
+	set = gtk_icon_set_new();
+	source = gtk_icon_source_new();
+	gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);
+	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mini_plot_xpm);
+	gtk_icon_source_set_pixbuf(source, pbuf);
+	g_object_unref(pbuf);
+	gtk_icon_set_add_source(set, source);
+	gtk_icon_source_free(source);
+	gtk_icon_factory_add(ifac, GRETL_STOCK_PLOT, set);
+	gtk_icon_set_unref(set);
+
 	gtk_icon_factory_add_default(ifac);
     }
 }
@@ -1584,7 +1600,11 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
 
 static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 {
-    copy_format_dialog(vwin, MULTI_FORMAT_ENABLED(vwin->role), W_COPY);
+    if (vwin->role == VIEW_SCALAR) {
+	scalar_to_clipboard(vwin);
+    } else {
+	copy_format_dialog(vwin, MULTI_FORMAT_ENABLED(vwin->role), W_COPY);
+    }
 }
 
 /* is any text selected? */
@@ -1706,10 +1726,13 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Find..."), GTK_STOCK_FIND, text_find_callback, 0 },
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
-    { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, series_view_sort_by, SORT_ITEM },    
+    { N_("Sort"), GTK_STOCK_SORT_ASCENDING, series_view_sort, SORT_ITEM },    
+    { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, series_view_sort_by, SORT_BY_ITEM },    
     { N_("Send To..."), GRETL_STOCK_MAIL, mail_script_callback, MAIL_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, window_tex_callback, TEX_ITEM },
+    { N_("Graph"), GRETL_STOCK_PLOT, series_view_graph, PLOT_ITEM },
+    { N_("Reformat..."), GTK_STOCK_CONVERT, series_view_format_dialog, FORMAT_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_ITEM },
     { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
@@ -1730,10 +1753,13 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Find..."), stock_search_16_xpm, text_find_callback, 0 },
     { N_("Replace..."), stock_search_replace_16_xpm, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), stock_undo_16_xpm, text_undo_callback, EDIT_ITEM },
-    { N_("Sort by..."), stock_sort_16, series_view_sort_by, SORT_ITEM },  
+    { N_("Sort"), stock_sort_16, series_view_sort, SORT_ITEM },  
+    { N_("Sort by..."), stock_sort_16, series_view_sort_by, SORT_BY_ITEM },  
     { N_("Send To..."), mail_16_xpm, mail_script_callback, MAIL_ITEM },
     { N_("Help on command"), stock_help_16_xpm, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), mini_tex_xpm, window_tex_callback, TEX_ITEM },
+    { N_("Graph"), mini_plot_xpm, series_view_graph, PLOT_ITEM },
+    { N_("Reformat..."), stock_convert_16_xpm, series_view_format_dialog, FORMAT_ITEM },
     { N_("Add to dataset..."), stock_add_16_xpm, add_data_callback, ADD_ITEM },
     { N_("Help"), stock_help_16_xpm, window_help, HELP_ITEM },
     { N_("Close"), stock_close_16_xpm, delete_file_viewer, 0 },
@@ -1760,26 +1786,25 @@ static void make_viewbar (windata_t *vwin, int text_out)
     int run_ok = (vwin->role == EDIT_SCRIPT ||
 		  vwin->role == VIEW_SCRIPT ||
 		  vwin->role == VIEW_LOG);
-
     int edit_ok = (vwin->role == EDIT_SCRIPT ||
 		   vwin->role == EDIT_HEADER ||
 		   vwin->role == EDIT_NOTES ||
 		   vwin->role == GR_PLOT || 
 		   vwin->role == GR_BOX ||
 		   vwin->role == SCRIPT_OUT);
-
     int save_as_ok = (vwin->role != EDIT_HEADER && 
-		      vwin->role != EDIT_NOTES);
-
+		      vwin->role != EDIT_NOTES &&
+                      vwin->role != VIEW_SCALAR);
     int help_ok = (vwin->role == LEVERAGE || 
 		   vwin->role == COINT2 ||
 		   vwin->role == HURST ||
 		   vwin->role == RMPLOT ||
 		   vwin->role == MAHAL);
-
-    int sort_ok = (vwin->role == PRINT && vwin->data != NULL);
-
-    int latex_ok = latex_is_ok();
+    int sort_ok    = (vwin->role == VIEW_SERIES);
+    int sort_by_ok = (vwin->role == PRINT && vwin->data != NULL);
+    int format_ok  = (vwin->role == VIEW_SERIES || vwin->role == VIEW_SCALAR);
+    int plot_ok    = (vwin->role == VIEW_SERIES);
+    int latex_ok   = latex_is_ok();
 
 #ifndef OLD_GTK
     if (MULTI_FORMAT_ENABLED(vwin->role) && latex_ok) {
@@ -1833,6 +1858,10 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
+	if (vwin->role == VIEW_SCALAR && viewbar_items[i].flag == 0) {
+	    continue;
+	}
+
 	if ((!latex_ok || !MULTI_FORMAT_ENABLED(vwin->role)) && 
 	    viewbar_items[i].flag == TEX_ITEM) {
 	    continue;
@@ -1845,6 +1874,18 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	}
 
 	if (!sort_ok && viewbar_items[i].flag == SORT_ITEM) {
+	    continue;
+	}
+
+	if (!sort_by_ok && viewbar_items[i].flag == SORT_BY_ITEM) {
+	    continue;
+	}
+
+	if (!plot_ok && viewbar_items[i].flag == PLOT_ITEM) {
+	    continue;
+	}
+
+	if (!format_ok && viewbar_items[i].flag == FORMAT_ITEM) {
 	    continue;
 	}
 
@@ -2097,26 +2138,14 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     viewer_box_config(vwin);
 
-    /* in some cases add a text-based menu bar */
-    if (role == VAR || role == VECM || 
-	role == VIEW_SERIES || role == VIEW_SCALAR) {
-	GtkItemFactoryEntry *menu_items;
-
-	if (role == VAR || role == VECM) {
-	    menu_items = VAR_items;
-	} else {
-	    menu_items = get_series_view_menu_items(role);
-	}
-	set_up_viewer_menu(vwin->dialog, vwin, menu_items);
+    if (role == VAR || role == VECM) {
+	/* special case: use a text-based menu bar */
+	set_up_viewer_menu(vwin->dialog, vwin, VAR_items);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
+	add_VAR_menu_items(vwin, role == VECM);
     } else if (role != IMPORT) {
 	make_viewbar(vwin, 1);
-    }
-
-    if (role == VAR || role == VECM) {
-	/* model-specific additions to menus */
-	add_VAR_menu_items(vwin, role == VECM);
     }
 
 #ifndef OLD_GTK

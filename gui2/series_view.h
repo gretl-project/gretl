@@ -32,15 +32,21 @@ void series_view_connect (windata_t *vwin, int varnum);
 
 multi_series_view *multi_series_view_new (int *list);
 
-GtkItemFactoryEntry *get_series_view_menu_items (int code);
+void series_view_graph (GtkWidget *w, windata_t *vwin);
+
+void series_view_format_dialog (GtkWidget *src, windata_t *vwin);
+
+void series_view_sort (GtkWidget *w, windata_t *vwin);
 
 void series_view_sort_by (GtkWidget *w, windata_t *vwin);
 
-const int *series_view_get_list (windata_t *vwin);
+int *series_view_get_list (windata_t *vwin);
 
 int series_view_is_sorted (windata_t *vwin);
 
 PRN *vwin_print_sorted_as_csv (windata_t *vwin);
+
+void scalar_to_clipboard (windata_t *vwin);
 
 #endif
 

@@ -287,6 +287,8 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
 	do_hurst(NULL, 0, NULL);
     else if (!strcmp(item, _("Edit attributes")))  
 	varinfo_dialog(mdata->active_var, 1);
+    else if (!strcmp(item, _("Copy to clipboard"))) 
+	csv_selected_to_clipboard();
     else if (!strcmp(item, _("Delete"))) 
 	delete_selected_vars(mdata->active_var);
     else if (!strcmp(item, _("Define new variable..."))) 
@@ -315,6 +317,7 @@ GtkWidget *build_var_popup (void)
 	N_("Runs test"),
 	N_("Hurst exponent"),
 	N_("Edit attributes"),
+	N_("Copy to clipboard"),
 	N_("Delete"),
 	N_("Define new variable...")
     };
