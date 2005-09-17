@@ -2102,15 +2102,13 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd)
 	}
     }
 
-#if 0
+#if 1
     fprintf(stderr, "check_daily_dates: pd = %d, err = %d\n", 
 	    pdinfo->pd, err);
 #endif
 
     return (err)? -1 : pdinfo->pd;
 }
-
-/* ......................................................... */
 
 static int complete_year_labels (DATAINFO *pdinfo)
 {
@@ -2187,23 +2185,89 @@ static int transform_daily_dates (DATAINFO *pdinfo, int dorder)
     return err;
 }
 
-static int csv_weekly_data (DATAINFO *pdinfo)
+static int 
+pad_weekly_data (double ***pZ, DATAINFO *pdinfo, int add)
+{
+    int oldn = pdinfo->n;
+    int ttarg, offset = 0, skip = 0;
+    int i, s, t, tc, err;
+
+    err = dataset_add_observations(add, pZ, pdinfo); 
+
+    if (!err) {
+	for (t=0; t<oldn; t++) {
+	    tc = calendar_obs_number(pdinfo->S[t], pdinfo) - offset;
+	    if (tc != t) {
+		skip = tc - t;
+		fprintf(stderr, "Gap of size %d at original t = %d\n", skip, t);
+		offset += skip;
+		ttarg = oldn - 1 + offset;
+		for (s=0; s<oldn-t+skip; s++) {
+		    for (i=1; i<pdinfo->v; i++) {
+			if (s < oldn - t) {
+			    if (s == 0 || s == oldn-t-1) {
+				fprintf(stderr, "shifting obs %d to obs %d\n",
+					ttarg-skip, ttarg);
+			    }
+			    (*pZ)[i][ttarg] = (*pZ)[i][ttarg - skip];
+			} else {
+			    fprintf(stderr, "inserting NA at obs %d\n", ttarg);
+			    (*pZ)[i][ttarg] = NADBL;
+			}
+		    }
+		    ttarg--;
+		}
+	    }
+	}
+    }
+
+    return err;
+}
+
+/* FIXME the following needs to be made more flexible */
+
+static int csv_weekly_data (double ***pZ, DATAINFO *pdinfo)
 {
     int ret = 1;
+    int misscount = 0;
     int t, tc;
 
     for (t=0; t<pdinfo->n; t++) {
-	tc = calendar_obs_number(pdinfo->S[t], pdinfo);
+	tc = calendar_obs_number(pdinfo->S[t], pdinfo) - misscount;
 	if (tc != t) {
-	    ret = 0;
-	    break;
+	    misscount += tc - t;
 	}
+    }
+
+    if (misscount > 0) {
+	double missfrac = (double) misscount / pdinfo->n;
+
+	fprintf(stderr, "nobs = %d, misscount = %d (%.2f%%)\n", pdinfo->n, misscount,
+		100.0 * missfrac);
+	if (missfrac > 0.05) {
+	    ret = 0;
+	} else {
+	    int Tc = calendar_obs_number(pdinfo->S[pdinfo->n - 1], pdinfo) + 1;
+	    int altmiss = Tc - pdinfo->n;
+
+	    fprintf(stderr, "check: Tc = %d, missing = %d\n", Tc, altmiss);
+	    if (altmiss != misscount) {
+		ret = 0;
+	    } else {
+		int err;
+
+		fprintf(stderr, "OK, consistent\n");
+		err = pad_weekly_data(pZ, pdinfo, misscount);
+		if (err) ret = 0;
+	    } 
+	} 
     }
     
     return ret;
 }
 
-static int csv_daily_date_check (DATAINFO *pdinfo, PRN *prn)
+static int 
+csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     int d1[3], d2[3];
     char *lbl1 = pdinfo->S[0];
@@ -2257,7 +2321,7 @@ static int csv_daily_date_check (DATAINFO *pdinfo, PRN *prn)
 	    ret = check_daily_dates(pdinfo, &pd);
 	    if (ret >= 0 && pd > 0) {
 		if (pd == 52) {
-		    if (csv_weekly_data(pdinfo)) {
+		    if (csv_weekly_data(pZ, pdinfo)) {
 			ret = 52;
 		    } else {
 			ret = -1;
@@ -2344,7 +2408,8 @@ static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn)
    observation numbers, else return the inferred data frequency 
 */
 
-static int test_markers_for_dates (DATAINFO *pdinfo, PRN *prn)
+static int 
+test_markers_for_dates (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     char endobs[OBSLEN];
     char *lbl1 = pdinfo->S[0];
@@ -2369,7 +2434,7 @@ static int test_markers_for_dates (DATAINFO *pdinfo, PRN *prn)
 
     if (n1 == 8 || n1 == 10) {
 	/* daily data? */
-	return csv_daily_date_check(pdinfo, prn);
+	return csv_daily_date_check(pZ, pdinfo, prn);
     } else if (n1 >= 4) {
 	/* annual, quarterly, monthly? */
 	if (isdigit((unsigned char) lbl1[0]) &&
@@ -3301,7 +3366,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     csvinfo->t2 = csvinfo->n - 1;
 
     if (blank_1 || obs_1) {
-	markertest = test_markers_for_dates(csvinfo, prn);
+	markertest = test_markers_for_dates(&csvZ, csvinfo, prn);
     }
     if (markertest > 0) {
 	pputs(prn, M_("taking date information from row labels\n\n"));

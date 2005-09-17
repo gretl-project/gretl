@@ -2063,7 +2063,7 @@ enum {
 };
 
 static void compact_method_buttons (GtkWidget *dlg, gint *compact_method,
-				    int methods_set)
+				    int current_pd, int methods_set)
 {
     GtkWidget *button;
     GtkWidget *vbox;
@@ -2086,7 +2086,6 @@ static void compact_method_buttons (GtkWidget *dlg, gint *compact_method,
 		     G_CALLBACK(set_compact_type), compact_method);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(COMPACT_AVG));
-
     gtk_widget_show(button);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
@@ -2096,8 +2095,8 @@ static void compact_method_buttons (GtkWidget *dlg, gint *compact_method,
 		     G_CALLBACK(set_compact_type), compact_method);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(COMPACT_SUM));
-
-    gtk_widget_show (button);
+    gtk_widget_show(button);
+    if (current_pd == 52) gtk_widget_set_sensitive(button, FALSE);
 
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label(group, _("Use end-of-period values"));
@@ -2106,7 +2105,8 @@ static void compact_method_buttons (GtkWidget *dlg, gint *compact_method,
 		     G_CALLBACK(set_compact_type), compact_method);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(COMPACT_EOP));
-    gtk_widget_show (button);
+    gtk_widget_show(button);
+    if (current_pd == 52) gtk_widget_set_sensitive(button, FALSE);
 
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label(group, _("Use start-of-period values"));
@@ -2115,8 +2115,8 @@ static void compact_method_buttons (GtkWidget *dlg, gint *compact_method,
 		     G_CALLBACK(set_compact_type), compact_method);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(COMPACT_SOP));
-
-    gtk_widget_show (button);
+    gtk_widget_show(button);
+    if (current_pd == 52) gtk_widget_set_sensitive(button, FALSE);
 }
 
 static int compact_methods_set (void)
@@ -2187,6 +2187,9 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	    if (mon_start != NULL) {
 		show_monday_buttons = 1;
 	    }
+	} else if (dated_weekly_data(datainfo)) {
+	    labelstr = g_strdup(_("Compact weekly data to monthly"));
+	    *target_pd = 12;
 	}
 	methods_set = compact_methods_set();
     }
@@ -2221,7 +2224,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     /* per-variable compaction methods not all set already: 
        give choice of default compaction method */
     if (show_method_buttons) {
-	compact_method_buttons(d, compact_method, methods_set);
+	compact_method_buttons(d, compact_method, spd, methods_set);
     } 
 
     /* Create the "OK" button */

@@ -135,9 +135,9 @@ static GtkItemFactoryEntry time_series_model_items[] = {
 
 #endif
 
-#define DATASET_COMPACTABLE(d) (d->structure == TIME_SERIES && \
-                                (d->pd == 4 || d->pd == 12 || \
-                                 d->pd == 5 || d->pd == 7))
+#define COMPACTABLE(d) (d->structure == TIME_SERIES && \
+                        (d->pd == 4 || d->pd == 12 || \
+                         d->pd == 5 || d->pd == 7))
 
 #define DATASET_DB_OK(d) (d->pd == 1 || (d->structure == TIME_SERIES && (d->pd == 4 || d->pd == 12)))
 
@@ -171,7 +171,7 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ifac, "/Model/Time series", s);
     /* Sample menu */
     flip(mdata->ifac, "/Sample/Compact data...", 
-	 s && DATASET_COMPACTABLE(datainfo));
+	 s && (COMPACTABLE(datainfo) || dated_weekly_data(datainfo)));
 
     if (s) {
 	GtkWidget *w =  

@@ -1734,10 +1734,214 @@ static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
     return nm;
 }
 
-/* driver for converting full dataset from daily to monthly */
+#define WEEKLY_DEBUG 0
 
-static int dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
-			       int default_method)
+static int 
+weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo, int mn)
+{ 
+    char obsstr[OBSLEN];
+    int *den;
+    int yr, mon, day;
+    int monbak = 0;
+    int i, s, t = 0;
+    int err = 0;
+
+    den = malloc(pdinfo->v * sizeof *den);
+    if (den == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=1; i<pdinfo->v; i++) {
+	/* initialize all series, first obs */
+	if (pdinfo->vector[i]) {
+	    mZ[i][0] = 0.0;
+	    den[i] = 0;
+	}
+    }    
+
+    for (s=0; s<pdinfo->n; s++) {
+	/* loop across the weekly obs in this month */
+#if WEEKLY_DEBUG
+	fprintf(stderr, "\n** weekly to monthly monthly loop, s = %d\n", s);
+#endif
+	ntodate_full(obsstr, s, pdinfo);
+	sscanf(obsstr, "%d/%d/%d", &yr, &mon, &day);
+#if WEEKLY_DEBUG
+	fprintf(stderr, " month = %d\n", mon);
+#endif
+
+	if (monbak > 0 && mon != monbak) {
+	    /* new month: finalize the previous one */
+	    for (i=1; i<pdinfo->v; i++) {
+		if (pdinfo->vector[i]) {
+#if WEEKLY_DEBUG
+		    fprintf(stderr, " finalizing monthly obs %d, var %d, den = %d\n", 
+			    t, i, den[i]);
+#endif
+		    if (den[i] > 0) {
+			mZ[i][t] /= (double) den[i];
+		    } else {
+			mZ[i][t] = NADBL;
+		    }
+		}
+	    }
+	    /* and start another? */
+	    if (s < pdinfo->n - 1) {
+		t++;
+		for (i=1; i<pdinfo->v; i++) {
+		    /* initialize all series, current obs */
+		    if (pdinfo->vector[i]) {
+			mZ[i][t] = 0.0;
+			den[i] = 0;
+		    }
+		}  		
+	    }
+	} 
+
+	/* cumulate non-missing weekly observations */
+	for (i=1; i<pdinfo->v; i++) {
+	    if (pdinfo->vector[i]) {
+		if (!na(Z[i][s])) {
+		    mZ[i][t] += Z[i][s];
+		    den[i] += 1;
+		}
+		if (mon == monbak && s == pdinfo->n - 1) {
+#if WEEKLY_DEBUG
+		    fprintf(stderr, " finalizing monthly obs %d, var %d, den = %d\n", 
+			    t, i, den[i]);
+#endif
+		    /* reached the end: ship out last obs */
+		    if (den[i] > 0) {
+			mZ[i][t] /= (double) den[i];
+		    } else {
+			mZ[i][t] = NADBL;
+		    }
+		}		    
+	    }
+	}
+
+	monbak = mon;
+    }
+
+    free(den);
+
+    return err;
+}
+
+static int 
+weeks_to_months_check (const DATAINFO *pdinfo, int *startyr, int *endyr,
+		       int *startmon, int *endmon)
+{ 
+    char obsstr[OBSLEN];
+    int yr, mon, day;
+    int wcount = 0, mcount = 0;
+    int monbak = 0;
+    int t, err = 0;
+
+    for (t=0; t<pdinfo->n; t++) {
+	ntodate_full(obsstr, t, pdinfo);
+	if (sscanf(obsstr, "%d/%d/%d", &yr, &mon, &day) != 3) {
+	    err = 1;
+	    break;
+	}
+	if (monbak == 0) {
+	    /* first obs */
+	    fprintf(stderr, "starting month = '%d'\n", mon);
+	    *startyr = yr;
+	    *startmon = mon;
+	    mcount++;
+	    wcount = 1;	
+	} else if (mon != monbak) {
+	    /* got a new month: report on previous one */
+#if WEEKLY_DEBUG
+	    fprintf(stderr, "month %d ('%d'), weekly obs = %d\n", 
+		    mcount, monbak, wcount);
+#endif
+	    mcount++;
+	    wcount = 1;
+	} else {
+	    /* continuation of current month */
+	    wcount++;
+	}
+	monbak = mon;
+    }
+
+    /* flush the last observation */
+#if WEEKLY_DEBUG
+    fprintf(stderr, "month %d ('%d'), weekly obs = %d\n", 
+	    mcount, monbak, wcount);
+#endif
+    *endyr = yr;
+    *endmon = mon;
+
+    return mcount;
+}
+
+/* for now, averaging is the only compaction option in this case */
+
+static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
+				      int default_method)
+{
+    double **mZ = NULL;
+    DATAINFO minfo;
+    int startyr, endyr;
+    int startmon, endmon;
+    double *x;
+    int nseries = 0;
+    int i, err = 0;
+
+    minfo.n = weeks_to_months_check(pdinfo, &startyr, &endyr, &startmon, &endmon);
+    fprintf(stderr, "Weekly data: found %d months\n", minfo.n);
+    if (minfo.n <= 0) {
+	return E_DATA;
+    }
+
+    minfo.v = pdinfo->v;
+    err = allocate_Z(&mZ, &minfo);
+    if (err) {
+	return err;
+    }
+
+    /* handle scalars */
+    for (i=1; i<pdinfo->v && !err; i++) {
+	if (!pdinfo->vector[i]) {
+	    x = realloc(mZ[i], sizeof *x);
+	    if (x == NULL) {
+		err = E_ALLOC;
+	    } else {
+		mZ[i] = x;
+		mZ[i][0] = (*pZ)[i][0];
+	    }
+	} else {
+	    nseries++;
+	}
+    }
+
+    /* compact series */
+    if (!err && nseries > 0) {
+	err = weeks_to_months_exec(mZ, (const double **) *pZ, pdinfo, minfo.n);
+    }
+
+    if (err) {
+	free_Z(mZ, &minfo);
+    } else {
+	free_Z(*pZ, pdinfo);
+	*pZ = mZ;
+
+	pdinfo->n = minfo.n;
+	pdinfo->pd = 12;
+	sprintf(pdinfo->stobs, "%04d:%02d", startyr, startmon);
+	sprintf(pdinfo->endobs, "%04d:%02d", endyr, endmon);
+	pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
+	pdinfo->t1 = 0;
+	pdinfo->t2 = pdinfo->n - 1;
+    }
+    
+    return err;
+}
+
+static int daily_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
+				     int default_method)
 {
     int nm, startyr, startmon, endyr, endmon;
     int offset, any_eop;
@@ -1877,6 +2081,10 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 
     *gretl_errmsg = '\0';
 
+    if (oldpd == 52) {
+	return weekly_dataset_to_monthly(pZ, pdinfo, default_method);
+    }
+
     if (dated_daily_data(pdinfo)) {
 	/* allow for the possibility that the daily dataset
 	   contains "hidden" or suppressed missing observations
@@ -1888,7 +2096,7 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 
     if (newpd == 12 && oldpd >= 5 && oldpd <= 7) {
 	/* daily to monthly: special */
-	return dataset_to_monthly(pZ, pdinfo, default_method);
+	return daily_dataset_to_monthly(pZ, pdinfo, default_method);
     } else if (oldpd >= 5 && oldpd <= 7) {
 	/* daily to weekly */
 	compfac = oldpd;
