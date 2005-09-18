@@ -66,7 +66,7 @@ static void invalid_varname (PRN *prn)
     pputs(prn, _("\nPlease rename this variable and try again"));
 }
 
-static int label_is_date (char *str)
+static int label_is_date (char *str, int d1904)
 {
     int len = strlen(str);
     int i, d, pd = 0;
@@ -88,16 +88,41 @@ static int label_is_date (char *str)
 	}
     }
 
+    if (sscanf(str, "%d", &d)) {
+	if (d > 14000 && d < 43000) {
+	    /* plausible MS-coded date? */
+	    static int dbak;
+	    char dstr[12];
+
+	    MS_excel_date_string(dstr, d, d1904);
+#if 0
+	    fprintf(stderr, "val = %d, dstr = '%s'\n", d, dstr);
+#endif
+	    if (dbak == 0) {
+		pd = 1;
+	    } else {
+		/* FIXME need to handle missing values, and dates */
+		if ((d - dbak) % 7 == 0) {
+		    if (d - dbak > 7) {
+			fprintf(stderr, "%s: %d missing value(s)?\n",
+				dstr, ((d - dbak) / 7) - 1);
+		    }
+		    pd = 52;
+		}
+	    }
+	    dbak = d;
+	    return pd;
+	}
+    }
+
     if (len == 4 && sscanf(str, "%4d", &d) == 1 &&
 	d > 0 && d < 3000) {
 	pd = 1;
-    }
-    else if (len == 6 && sscanf(str, "%lf", &dd) == 1 &&
+    } else if (len == 6 && sscanf(str, "%lf", &dd) == 1 &&
 	dd > 0 && dd < 3000) { 
 	sub = 10.0 * (dd - (int) dd);
 	if (sub >= .999 && sub <= 4.001) pd = 4;
-    }
-    else if (len == 7 && sscanf(str, "%lf", &dd) == 1 &&
+    } else if (len == 7 && sscanf(str, "%lf", &dd) == 1 &&
 	dd > 0 && dd < 3000) {
 	sub = 100.0 * (dd - (int) dd);
 	if (sub >= .9999 && sub <= 12.0001) pd = 12;
@@ -174,6 +199,7 @@ static void wbook_init (wbook *book)
     book->byte_offsets = NULL;
     book->selected = 0;
     book->debug = 0;
+    book->d1904 = 0;
 }
 
 static const char *column_label (int col)

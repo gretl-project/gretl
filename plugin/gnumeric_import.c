@@ -554,7 +554,7 @@ static int wsheet_labels_complete (wsheet *sheet)
     return complete;
 }
 
-static int consistent_date_labels (wsheet *sheet)
+static int consistent_date_labels (wsheet *sheet, int d1904)
 {
     int t, rows = sheet->maxrow + 1 - sheet->row_offset;
     int tstart = 1 + sheet->row_offset;
@@ -571,7 +571,7 @@ static int consistent_date_labels (wsheet *sheet)
 	    return 0;
 	}
 	if (*test == '"' || *test == '\'') test++;
-	pd = label_is_date(test);
+	pd = label_is_date(test, d1904);
 	if (pd == 0) {
 	    fprintf(stderr, " no: label '%s' at row %d is not a date\n", 
 		    test, t);
@@ -677,15 +677,13 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
     } /* else ??? */
 
-    wbook_free(&book);
-
     if (!err) {
 	int i, j, t, i_sheet, label_strings = sheet.text_cols;
 	int time_series = 0;
 	int blank_cols = 0;
 
 	if (obs_column_heading(sheet.label[0])) {
-	    int pd = consistent_date_labels(&sheet);
+	    int pd = consistent_date_labels(&sheet, book.d1904);
 
 	    if (pd) {
 		time_series_setup(sheet.label[1], newinfo, pd,
@@ -753,8 +751,9 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    err = merge_data(pZ, pdinfo, newZ, newinfo, prn);
 	}
-    } 	    
+    } 
 
+    wbook_free(&book);
     wsheet_free(&sheet);
 
 #ifdef ENABLE_NLS

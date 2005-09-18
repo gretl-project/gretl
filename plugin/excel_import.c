@@ -275,6 +275,8 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
     return 0;
 }
 
+#undef FORMAT_INFO
+
 static int process_item (BiffQuery *q, wbook *book, PRN *prn) 
 {
     struct sheetrow *prow = NULL;
@@ -514,6 +516,15 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	}
 	break;
 
+    case BIFF_FORMAT: {
+	int idx = MS_OLE_GET_GUINT16(q->data + 0);
+
+	if (idx >= 14 && idx <= 17) {
+	    fprintf(stderr, "Got date format: index %d\n", idx);
+	}
+	break;
+    }
+
 #ifdef FORMAT_INFO
     case BIFF_COLINFO:
 	fprintf(stderr, "Got BIFF_COLINFO: col range (%d, %d), XF index %d\n",
@@ -531,15 +542,6 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    fprintf(stderr, "(style XF)\n");
 	} else {
 	    fprintf(stderr, "(cell XF)\n");
-	}
-	break;
-    }
-
-    case BIFF_FORMAT: {
-	int idx = MS_OLE_GET_GUINT16(q->data + 0);
-
-	if ((idx >= 14 && idx <= 17) || idx >= 164) {
-	    fprintf(stderr, "Got BIFF_FORMAT: index %d\n", idx);
 	}
 	break;
     }
@@ -931,11 +933,11 @@ static void free_sheet (void)
 
 #define IS_STRING(v) ((v[0] == '"'))
 
-static int consistent_date_labels (int row_offset, int col_offset)
+static int consistent_date_labels (int row_offset, int col_offset, int d1904)
 {
     int i, startrow = 1 + row_offset;
     int pd = 0, pdbak = 0;
-    double x, xbak = 0.0;
+    double x, xbak = -1.0;
 
     fprintf(stderr, "testing for consistent date labels in col %d\n", 
 	    col_offset);
@@ -953,29 +955,26 @@ static int consistent_date_labels (int row_offset, int col_offset)
 	    test++;
 	}
 
-	pd = label_is_date(test);
+	pd = label_is_date(test, d1904);
 
 	if (pd == 0) {
-	    fprintf(stderr, " no: label '%s' on row %d is not a date\n", 
+	    fprintf(stderr, " no: label '%s' on row %d is not a valid date\n", 
 		    test, i + 1);
 	    return 0;
 	}
 
 	x = atof(test);
 
-	if (i == startrow) {
-	    pdbak = pd;
-	} else { 
-	    if (pd != pdbak) {
-		fprintf(stderr, " no: got inconsistent data frequencies %d and %d\n",
-			pdbak, pd);
-		return 0;
-	    }
-	    if (x <= xbak) {
-		fprintf(stderr, " no: got %g <= %g\n", x, xbak);
-		return 0;
-	    }
+	if (i > startrow + 1 && pd != pdbak) {
+	    fprintf(stderr, " no: got inconsistent data frequencies %d and %d\n",
+		    pdbak, pd);
+	    return 0;
+	} else if (xbak >= 0.0 && x <= xbak) {
+	    fprintf(stderr, " no: got %g <= %g\n", x, xbak);
+	    return 0;
 	}
+
+	pdbak = pd;
 	xbak = x;
     }
 
@@ -1417,7 +1416,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     /* do we have a first column containing dates? */
     if (obs_column_heading(rows[book.row_offset].cells[book.col_offset])) {
-	int pd = consistent_date_labels(book.row_offset, book.col_offset);
+	int pd = consistent_date_labels(book.row_offset, book.col_offset, book.d1904);
 
 	if (pd) {
 	    time_series_setup(rows[1 + book.row_offset].cells[book.col_offset],

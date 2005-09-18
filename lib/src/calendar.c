@@ -218,6 +218,65 @@ void calendar_date_string (char *str, int t, const DATAINFO *pdinfo)
 }
 
 /**
+ * calendar_date_string:
+ * @str: string to be filled out.
+ * @mst: Excel-type date code
+ * 
+ * Writes to @str the calendar representation of the date of
+ * observation @mst, in the form YY[YY]/MM/DD.
+ * 
+ */
+
+int MS_excel_date_string (char *date, int mst, int d1904)
+{
+    int yr = (d1904)? 1904 : 1900;
+    int mo = 1;
+    int day = 1;
+    int drem;
+
+    if (mst == 0) {
+	if (d1904) {
+	    strcpy(date, "1904/01/01");
+	} else {
+	    strcpy(date, "1899/12/31");
+	}
+	return 0;
+    } else if (mst < 0) {
+	/* not handled yet */
+	return 1;
+    } else {
+	drem = mst - 1;
+    }
+
+    while (1) {
+	int yd = 365 + leap_year(yr);
+
+	if (drem > yd) {
+	    drem -= yd;
+	    yr++;
+	} else {
+	    break;
+	}
+    }
+
+    for (mo=1; mo<13; mo++) {
+	int leap = leap_year(yr);
+	int md = days_in_month[leap][mo];
+
+	if (drem > md) {
+	    drem -= md;
+	} else {
+	    day = drem;
+	    break;
+	}
+    }
+	    
+    sprintf(date, "%04d/%02d/%02d", yr, mo, day);
+
+    return 0;
+}
+
+/**
  * get_dec_date:
  * @date: calendar representation of date.
  * 

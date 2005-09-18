@@ -40,6 +40,8 @@ int calendar_obs_number (const char *date, const DATAINFO *pdinfo);
 
 void calendar_date_string (char *str, int t, const DATAINFO *pdinfo);
 
+int MS_excel_date_string (char *date, int mst, int d1904);
+
 double get_dec_date (const char *date);
 
 int n_hidden_missing_obs (const DATAINFO *pdinfo);

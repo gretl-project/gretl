@@ -402,7 +402,7 @@ ms_excel_read_bof (BiffQuery *q,
 
 static int
 ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
-			int *nsheets)
+			int *nsheets, int *d1904)
 {
     MsOleStream *stream;
     MsOleErr result;
@@ -521,6 +521,23 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 #endif
 	    break;
 
+	case BIFF_1904:
+	    fprintf(stderr, "Got BIFF_1904: value ");
+	    if (q->data != NULL) {
+		guint16 val = (guint16) *q->data;
+		fprintf(stderr, "%d\n", (int) val);
+		*d1904 = (int) val;
+	    } else {
+		fputs("unknown\n", stderr);
+	    }
+	    if (1) {
+		const char *test = "1990/08/20";
+		long ed = get_epoch_day(test);
+
+		fprintf(stderr, "epoch day for %s = %d\n", test, (int) ed);
+	    }
+	    break;
+
 	case BIFF_WRITEACCESS:
 	case BIFF_HIDEOBJ:
 	case BIFF_FNGROUPCOUNT:
@@ -530,7 +547,6 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	case BIFF_COUNTRY:
 	case BIFF_INTERFACEHDR:
 	case BIFF_INTERFACEEND:
-	case BIFF_1904: /* 0, NOT 1 */
 	case BIFF_WINDOW1:
 	case BIFF_SELECTION: /* 0, NOT 10 */
 	    break;
@@ -588,7 +604,8 @@ int excel_book_get_info (const char *fname, wbook *book)
 	return 1;
     }
 
-    book->version = ms_excel_read_workbook(f, &bounds, &nsheets);
+    book->version = ms_excel_read_workbook(f, &bounds, &nsheets, 
+					   &book->d1904);
     ms_ole_destroy(&f);
 
     if (nsheets == 0 || bounds == NULL) {
