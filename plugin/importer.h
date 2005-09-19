@@ -25,6 +25,7 @@ typedef struct {
     char **sheetnames;
     guint32 *byte_offsets;
     void *colspin, *rowspin;
+    int *xf_list;
     int d1904;
     int debug;
 } wbook;

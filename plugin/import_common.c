@@ -124,6 +124,62 @@ static int label_is_date (char *str, int d1904)
     return pd;
 }
 
+static int consistent_date_labels (int nrows, int row_offset, int col_offset, 
+				   char **labels, int d1904)
+{
+    int t, tstart = 1 + row_offset;
+    int pd = 0, pdbak = 0;
+    double x, xbak = 0.0;
+    char *test;
+
+    fprintf(stderr, "testing for consistent date labels in col %d\n", 
+	    col_offset);
+
+    for (t=tstart; t<nrows; t++) {
+#ifdef EXCEL_IMPORTER
+	test = rows[t].cells[col_offset];
+#else
+	test = labels[t];
+#endif
+
+	if (*test == '\0') {
+	    fprintf(stderr, " no: blank cell at row %d\n", t + 1);
+	    return 0;
+	}
+
+	pd = label_is_date(test, d1904);
+
+	if (pd == 0) {
+	    fprintf(stderr, " no: label '%s' on row %d is not a valid date\n", 
+		    test, t + 1);
+	    return 0;
+	}
+
+	x = atof(test);
+
+	if (t <= tstart + 1) {
+	    pdbak = pd;
+	} else {
+	    if (pd != pdbak) {
+		fprintf(stderr, " no: got inconsistent data frequencies %d and %d\n",
+			pdbak, pd);
+		return 0;
+	    }
+	    if (x <= xbak) {
+		fprintf(stderr, " no: got %g <= %g\n", x, xbak);
+		return 0;
+	    }
+	}
+
+	pdbak = pd;
+	xbak = x;
+    }
+
+    fprintf(stderr, " yes: data frequency = %d\n", pd);
+
+    return pd;
+}
+
 static int obs_column_heading (const char *label)
 {
     int ret = 0;
@@ -181,6 +237,7 @@ static void wbook_free (wbook *book)
     }
     free(book->sheetnames);
     free(book->byte_offsets);
+    free(book->xf_list);
 }
 
 static void wbook_init (wbook *book)
@@ -193,6 +250,7 @@ static void wbook_init (wbook *book)
     book->selected = 0;
     book->debug = 0;
     book->d1904 = 0;
+    book->xf_list = NULL;
 }
 
 static const char *column_label (int col)

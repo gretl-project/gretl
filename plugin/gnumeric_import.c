@@ -554,56 +554,6 @@ static int wsheet_labels_complete (wsheet *sheet)
     return complete;
 }
 
-static int consistent_date_labels (wsheet *sheet, int d1904)
-{
-    int t, nrows = sheet->maxrow + 1 - sheet->row_offset;
-    int tstart = 1 + sheet->row_offset;
-    int pd = 0, pdbak = 0;
-    double x, xbak = 0.0;
-
-    fputs("testing for consistent date labels\n", stderr);
-
-    for (t=tstart; t<nrows; t++) {
-	char *test = sheet->label[t];
-
-	if (*test == '\0') {
-	    fprintf(stderr, " no: blank cell at row %d\n", t);
-	    return 0;
-	}
-
-	pd = label_is_date(test, d1904);
-
-	if (pd == 0) {
-	    fprintf(stderr, " no: label '%s' at row %d is not a date\n", 
-		    test, t);
-	    return 0;
-	}
-
-	x = atof(test);
-
-	if (t == tstart) {
-	    pdbak = pd;
-	} else { 
-	    if (pd != pdbak) {
-		fprintf(stderr, " no: got inconsistent data frequencies %d and %d\n",
-			pdbak, pd);
-		return 0;
-	    }		
-	    if (x <= xbak) {
-		fprintf(stderr, " no: got %g <= %g\n", x, xbak);
-		return 0;
-	    }
-	}
-
-	pdbak = pd;
-	xbak = x;
-    }
-
-    fprintf(stderr, " yes: data frequency = %d\n", pd);
-
-    return pd;
-}
-
 static int rigorous_dates_check (wsheet *sheet, DATAINFO *pdinfo)
 {
     int t, rows = sheet->maxrow + 1 - sheet->row_offset;
@@ -683,7 +633,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		wsheet_print_info(&sheet);
 	    }
 	}
-    } /* else ??? */
+    } /* else ? */
 
     if (!err) {
 	int i, j, t, i_sheet, label_strings = sheet.text_cols;
@@ -691,7 +641,9 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	int blank_cols = 0;
 
 	if (obs_column_heading(sheet.label[0])) {
-	    int pd = consistent_date_labels(&sheet, book.d1904);
+	    int pd = consistent_date_labels(sheet.maxrow + 1 - sheet.row_offset, 
+					    sheet.row_offset, 0, sheet.label,
+					    book.d1904);
 
 	    if (pd) {
 		time_series_setup(sheet.label[1], newinfo, pd,

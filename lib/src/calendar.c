@@ -218,21 +218,24 @@ void calendar_date_string (char *str, int t, const DATAINFO *pdinfo)
 }
 
 /**
- * calendar_date_string:
- * @str: string to be filled out.
- * @mst: Excel-type date code
+ * MS_excel_date_string:
+ * @str: date string to be filled out.
+ * @mst: MS Excel-type date code: days since base.
+ * @d1904: set to 1 if the base is 1904/01/01; otherwise
+ * the base is assumed to be 1899/12/31.
  * 
  * Writes to @str the calendar representation of the date of
- * observation @mst, in the form YY[YY]/MM/DD.
+ * observation @mst, in the form YYYY/MM/DD.
  * 
+ * Returns: 0.
  */
 
 int MS_excel_date_string (char *date, int mst, int d1904)
 {
     int yr = (d1904)? 1904 : 1900;
+    int day = (d1904)? 2 : 1;
     int mo = 1;
-    int day = 1;
-    int drem;
+    int leap, drem;
 
     if (mst == 0) {
 	if (d1904) {
@@ -240,34 +243,66 @@ int MS_excel_date_string (char *date, int mst, int d1904)
 	} else {
 	    strcpy(date, "1899/12/31");
 	}
-	return 0;
-    } else if (mst < 0) {
-	/* not handled yet */
-	return 1;
-    } else {
-	drem = mst - 1;
+	return 0; /* done */
     }
 
-    while (1) {
-	int yd = 365 + leap_year(yr);
+    if (mst > 0) {
+	drem = mst + d1904;
 
-	if (drem > yd) {
-	    drem -= yd;
-	    yr++;
-	} else {
-	    break;
+	while (1) {
+	    int yd = 365 + leap_year(yr);
+
+	    /* MS tomfoolery */
+	    if (yr == 1900) yd++;
+
+	    if (drem > yd) {
+		drem -= yd;
+		yr++;
+	    } else {
+		break;
+	    }
 	}
-    }
 
-    for (mo=1; mo<13; mo++) {
-	int leap = leap_year(yr);
-	int md = days_in_month[leap][mo];
+	leap = leap_year(yr) + (yr == 1900);
 
-	if (drem > md) {
-	    drem -= md;
-	} else {
-	    day = drem;
-	    break;
+	for (mo=1; mo<13; mo++) {
+	    int md = days_in_month[leap][mo];
+
+	    if (drem > md) {
+		drem -= md;
+	    } else {
+		day = drem;
+		break;
+	    }
+	}
+    } else {
+	/* mst < 0, date prior to base */
+	drem = - (mst + d1904);
+
+	yr = (d1904)? 1903 : 1899;
+
+	while (1) {
+	    int yd = 365 + leap_year(yr);
+
+	    if (drem > yd) {
+		drem -= yd;
+		yr--;
+	    } else {
+		break;
+	    }
+	}
+
+	leap = leap_year(yr);
+
+	for (mo=12; mo>0; mo--) {
+	    int md = days_in_month[leap][mo];
+
+	    if (drem >= md) {
+		drem -= md;
+	    } else {
+		day = md - drem;
+		break;
+	    }
 	}
     }
 	    

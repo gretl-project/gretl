@@ -400,9 +400,47 @@ ms_excel_read_bof (BiffQuery *q,
     }
 }
 
+static int is_date_format (guint16 fmt)
+{
+    int ret = 0;
+
+    /* FIXME additional date formats in the 50s? */
+
+    if ((fmt >= 14 && fmt <= 22) ||
+	(fmt >= 45 && fmt <= 47)) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
+static int extend_xf_list (int **plist, int fmt)
+{
+    int *xf_list = NULL;
+    int nxf = 0, ret = 0;
+
+    if (*plist == NULL) {
+	xf_list = malloc(2 * sizeof *xf_list);
+    } else {
+	nxf = (*plist)[0];
+	xf_list = realloc(*plist, (nxf + 2) * sizeof *xf_list);
+    }
+
+    if (xf_list != NULL) {
+	nxf++;
+	xf_list[0] = nxf;
+	xf_list[nxf] = fmt;
+	*plist = xf_list;
+    } else {
+	ret = 1;
+    }
+
+    return ret;
+}
+
 static int
 ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
-			int *nsheets, int *d1904)
+			int *nsheets, int **xf_list, int *d1904)
 {
     MsOleStream *stream;
     MsOleErr result;
@@ -473,14 +511,25 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	    }
 	    break;
 	}
+
 	case BIFF_PALETTE:
-	    break;
-
 	case BIFF_FONT:
+	case BIFF_XF_OLD:
 	    break;
 
-	case BIFF_XF_OLD:
 	case BIFF_XF:
+	    fprintf(stderr, "got BIFF_XF: FORMAT index ");
+	    if (q->data != NULL) {
+		guint16 val = (guint16) *(q->data + 2);
+
+		fprintf(stderr, "%d\n", (int) val);
+		if (is_date_format(val)) {
+		    fprintf(stderr, " seems to be date format\n");
+		}
+		extend_xf_list(xf_list, val);
+	    } else {
+		fputs("unknown\n", stderr);
+	    }
 	    break;
 
 	case BIFF_SST:
@@ -491,7 +540,18 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	    /* fprintf(stderr, "Got BIFF_EXTERNSHEET\n"); */
 	    break;
 
-	case BIFF_FORMAT: 
+	case BIFF_FORMAT:
+#if 0
+	    fprintf(stderr, "got BIFF_FORMAT: index ");
+	    if (q->data != NULL) {
+		guint16 val = (guint16) *q->data;
+		fprintf(stderr, "%d\n", (int) val);
+	    } else {
+		fputs("unknown\n", stderr);
+	    }
+#endif
+	    break;
+
 	case BIFF_EXTERNCOUNT:
 	case BIFF_CODEPAGE: 
 	case BIFF_OBJPROTECT:
@@ -529,12 +589,6 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 		*d1904 = (int) val;
 	    } else {
 		fputs("unknown\n", stderr);
-	    }
-	    if (1) {
-		const char *test = "1990/08/20";
-		long ed = get_epoch_day(test);
-
-		fprintf(stderr, "epoch day for %s = %d\n", test, (int) ed);
 	    }
 	    break;
 
@@ -605,6 +659,7 @@ int excel_book_get_info (const char *fname, wbook *book)
     }
 
     book->version = ms_excel_read_workbook(f, &bounds, &nsheets, 
+					   &book->xf_list,
 					   &book->d1904);
     ms_ole_destroy(&f);
 

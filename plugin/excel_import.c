@@ -51,9 +51,6 @@ FILE *fdb;
 static void make_debug_fname (void);
 #endif
 
-#define EXCEL_IMPORTER
-#include "import_common.c"
-
 #define cell_record(r) (r == BIFF_LABEL || \
                         r == BIFF_STRING || \
                         r == BIFF_NUMBER || \
@@ -78,6 +75,9 @@ char **sst = NULL;
 int sstsize = 0, sstnext = 0;
 struct sheetrow *rows = NULL;
 int nrows = 0;
+
+#define EXCEL_IMPORTER
+#include "import_common.c"
 
 const char *adjust_rc = N_("Perhaps you need to adjust the "
 			   "starting column or row?");
@@ -283,7 +283,6 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     static char **string_targ;
     static int slop; /* SST overslop */
     unsigned char *ptr = NULL;
-    int xfref = 0;
     int i = 0, j = 0;
     double val;
 
@@ -293,15 +292,19 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	if (row_col_err(i, j, prn)) {
 	    return 1;
 	}
-	xfref = EX_GETXF(q);
-    }
+	if (q->ls_op == BIFF_NUMBER || q->ls_op == BIFF_RK) {
+	    guint16 xfref = EX_GETXF(q);
+	    int fmt = -1;
 
-#ifdef FORMAT_INFO
-    if (q->ls_op == BIFF_NUMBER || q->ls_op == BIFF_RK) {
-	fprintf(stderr, "Numeric cell (%d, %d), format ref = %d\n", 
-		i, j, xfref);
+	    /* this seems to be a 0-based index into the array of 
+	       XF records for the workbook as a whole */
+	    if (book->xf_list != NULL && xfref <= book->xf_list[0]) {
+		fmt = book->xf_list[xfref + 1];
+	    }
+	    fprintf(stderr, "Numeric cell (%d, %d), XF index = %d, fmt = %d\n", 
+		    i, j, (int) xfref, fmt);
+	}
     }
-#endif
 
     switch (q->ls_op) {
 
@@ -933,56 +936,6 @@ static void free_sheet (void)
 
 #define IS_STRING(v) ((v[0] == '"'))
 
-static int consistent_date_labels (int row_offset, int col_offset, int d1904)
-{
-    int t, tstart = 1 + row_offset;
-    int pd = 0, pdbak = 0;
-    double x, xbak = 0.0;
-
-    fprintf(stderr, "testing for consistent date labels in col %d\n", 
-	    col_offset);
-
-    for (t=tstart; t<nrows; t++) {
-	char *test = rows[t].cells[col_offset];
-
-	if (*test == '\0') {
-	    fprintf(stderr, " no: blank cell at row %d\n", t + 1);
-	    return 0;
-	}
-
-	pd = label_is_date(test, d1904);
-
-	if (pd == 0) {
-	    fprintf(stderr, " no: label '%s' on row %d is not a valid date\n", 
-		    test, t + 1);
-	    return 0;
-	}
-
-	x = atof(test);
-
-	if (t == tstart) {
-	    pdbak = pd;
-	} else {
-	    if (pd != pdbak) {
-		fprintf(stderr, " no: got inconsistent data frequencies %d and %d\n",
-			pdbak, pd);
-		return 0;
-	    }
-	    if (x <= xbak) {
-		fprintf(stderr, " no: got %g <= %g\n", x, xbak);
-		return 0;
-	    }
-	}
-
-	pdbak = pd;
-	xbak = x;
-    }
-
-    fprintf(stderr, " yes: data frequency = %d\n", pd);
-
-    return pd;
-}
-
 /* check for full set of strings in first column to be read (which may
    be at an offset into the worksheet)
  */
@@ -1416,7 +1369,8 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     /* do we have a first column containing dates? */
     if (obs_column_heading(rows[book.row_offset].cells[book.col_offset])) {
-	int pd = consistent_date_labels(book.row_offset, book.col_offset, book.d1904);
+	int pd = consistent_date_labels(nrows, book.row_offset, book.col_offset, NULL, 
+					book.d1904);
 
 	if (pd) {
 	    time_series_setup(rows[1 + book.row_offset].cells[book.col_offset],
