@@ -72,6 +72,7 @@ static int label_is_date (char *str, int d1904)
     int i, d, pd = 0;
     double dd, sub;
 
+    /* skip quote */
     if (*str == '"' || *str == '\'') {
 	str++;
 	len--;
@@ -88,42 +89,34 @@ static int label_is_date (char *str, int d1904)
 	}
     }
 
-    if (sscanf(str, "%d", &d)) {
-	if (d > 14000 && d < 43000) {
-	    /* plausible MS-coded date? */
-	    static int dbak;
-	    char dstr[12];
+    if (sscanf(str, "%d", &d) && d > 14000 && d < 43000) {
+	/* plausible MS-coded date? */
+	static int dbak;
+	char dstr[12];
 
-	    MS_excel_date_string(dstr, d, d1904);
+	MS_excel_date_string(dstr, d, d1904);
 #if 0
-	    fprintf(stderr, "val = %d, dstr = '%s'\n", d, dstr);
+	fprintf(stderr, "val = %d, dstr = '%s'\n", d, dstr);
 #endif
-	    if (dbak == 0) {
-		pd = 1;
-	    } else {
-		/* FIXME need to handle missing values, and dates */
-		if ((d - dbak) % 7 == 0) {
-		    if (d - dbak > 7) {
-			fprintf(stderr, "%s: %d missing value(s)?\n",
-				dstr, ((d - dbak) / 7) - 1);
-		    }
-		    pd = 52;
+	if (dbak == 0) {
+	    pd = 1;
+	} else {
+	    /* FIXME need to handle missing values, and dates */
+	    if ((d - dbak) % 7 == 0) {
+		if (d - dbak > 7) {
+		    fprintf(stderr, "%s: %d missing value(s)?\n",
+			    dstr, ((d - dbak) / 7) - 1);
 		}
+		pd = 52;
 	    }
-	    dbak = d;
-	    return pd;
 	}
-    }
-
-    if (len == 4 && sscanf(str, "%4d", &d) == 1 &&
-	d > 0 && d < 3000) {
+	dbak = d;
+    } else if (len == 4 && sscanf(str, "%4d", &d) && d > 0 && d < 3000) {
 	pd = 1;
-    } else if (len == 6 && sscanf(str, "%lf", &dd) == 1 &&
-	dd > 0 && dd < 3000) { 
+    } else if (len == 6 && sscanf(str, "%lf", &dd) && dd > 0 && dd < 3000) { 
 	sub = 10.0 * (dd - (int) dd);
 	if (sub >= .999 && sub <= 4.001) pd = 4;
-    } else if (len == 7 && sscanf(str, "%lf", &dd) == 1 &&
-	dd > 0 && dd < 3000) {
+    } else if (len == 7 && sscanf(str, "%lf", &dd) && dd > 0 && dd < 3000) {
 	sub = 100.0 * (dd - (int) dd);
 	if (sub >= .9999 && sub <= 12.0001) pd = 12;
     }

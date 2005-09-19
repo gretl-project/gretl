@@ -935,43 +935,43 @@ static void free_sheet (void)
 
 static int consistent_date_labels (int row_offset, int col_offset, int d1904)
 {
-    int i, startrow = 1 + row_offset;
+    int t, tstart = 1 + row_offset;
     int pd = 0, pdbak = 0;
-    double x, xbak = -1.0;
+    double x, xbak = 0.0;
 
     fprintf(stderr, "testing for consistent date labels in col %d\n", 
 	    col_offset);
 
-    for (i=startrow; i<nrows; i++) {
-	char *test = rows[i].cells[col_offset];
+    for (t=tstart; t<nrows; t++) {
+	char *test = rows[t].cells[col_offset];
 
 	if (*test == '\0') {
-	    fprintf(stderr, " no: blank cell at row %d\n", i + 1);
+	    fprintf(stderr, " no: blank cell at row %d\n", t + 1);
 	    return 0;
-	}
-
-	/* skip quote */
-	if (*test == '"' || *test == '\'') {
-	    test++;
 	}
 
 	pd = label_is_date(test, d1904);
 
 	if (pd == 0) {
 	    fprintf(stderr, " no: label '%s' on row %d is not a valid date\n", 
-		    test, i + 1);
+		    test, t + 1);
 	    return 0;
 	}
 
 	x = atof(test);
 
-	if (i > startrow + 1 && pd != pdbak) {
-	    fprintf(stderr, " no: got inconsistent data frequencies %d and %d\n",
-		    pdbak, pd);
-	    return 0;
-	} else if (xbak >= 0.0 && x <= xbak) {
-	    fprintf(stderr, " no: got %g <= %g\n", x, xbak);
-	    return 0;
+	if (t == tstart) {
+	    pdbak = pd;
+	} else {
+	    if (pd != pdbak) {
+		fprintf(stderr, " no: got inconsistent data frequencies %d and %d\n",
+			pdbak, pd);
+		return 0;
+	    }
+	    if (x <= xbak) {
+		fprintf(stderr, " no: got %g <= %g\n", x, xbak);
+		return 0;
+	    }
 	}
 
 	pdbak = pd;

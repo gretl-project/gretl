@@ -556,28 +556,31 @@ static int wsheet_labels_complete (wsheet *sheet)
 
 static int consistent_date_labels (wsheet *sheet, int d1904)
 {
-    int t, rows = sheet->maxrow + 1 - sheet->row_offset;
+    int t, nrows = sheet->maxrow + 1 - sheet->row_offset;
     int tstart = 1 + sheet->row_offset;
     int pd = 0, pdbak = 0;
     double x, xbak = 0.0;
-    char *test;
 
     fputs("testing for consistent date labels\n", stderr);
 
-    for (t=tstart; t<rows; t++) {
-	test = sheet->label[t];
+    for (t=tstart; t<nrows; t++) {
+	char *test = sheet->label[t];
+
 	if (*test == '\0') {
 	    fprintf(stderr, " no: blank cell at row %d\n", t);
 	    return 0;
 	}
-	if (*test == '"' || *test == '\'') test++;
+
 	pd = label_is_date(test, d1904);
+
 	if (pd == 0) {
 	    fprintf(stderr, " no: label '%s' at row %d is not a date\n", 
 		    test, t);
 	    return 0;
 	}
+
 	x = atof(test);
+
 	if (t == tstart) {
 	    pdbak = pd;
 	} else { 
@@ -587,11 +590,16 @@ static int consistent_date_labels (wsheet *sheet, int d1904)
 		return 0;
 	    }		
 	    if (x <= xbak) {
+		fprintf(stderr, " no: got %g <= %g\n", x, xbak);
 		return 0;
 	    }
 	}
+
+	pdbak = pd;
 	xbak = x;
     }
+
+    fprintf(stderr, " yes: data frequency = %d\n", pd);
 
     return pd;
 }
