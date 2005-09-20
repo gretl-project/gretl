@@ -51,13 +51,14 @@ static void wsheet_init (wsheet *sheet)
     sheet->varname = NULL;
     sheet->label = NULL;
     sheet->name = NULL;
+    sheet->flags = 0;
 }
 
 static void wsheet_free (wsheet *sheet)
 {
-    int i;
     int rows = sheet->maxrow + 1 - sheet->row_offset;
     int cols = sheet->maxcol + 1 - sheet->col_offset;
+    int i;
 
     for (i=0; i<cols; i++) {
 	if (sheet->varname != NULL) {
@@ -117,9 +118,9 @@ static void wsheet_print_info (wsheet *sheet)
 #endif
 }
 
-#define VTYPE_IS_NUMERIC(v) (v) == VALUE_BOOLEAN || \
-                            (v) == VALUE_INTEGER || \
-                            (v) == VALUE_FLOAT
+#define VTYPE_IS_NUMERIC(v) ((v) == VALUE_BOOLEAN || \
+                             (v) == VALUE_INTEGER || \
+                             (v) == VALUE_FLOAT)
 
 
 static int wsheet_allocate (wsheet *sheet, int cols, int rows)
@@ -214,6 +215,15 @@ static int wsheet_get_real_size (xmlNodePtr node, wsheet *sheet)
     return 0;
 }
 
+static int check_for_date_format (wsheet *sheet, const char *fmt)
+{
+    fprintf(stderr, "check_for_date_format: fmt = '%s'\n", fmt);
+
+    if (strchr(fmt, '/') || strstr(fmt, "mm") || strstr(fmt, "yy")) {
+	sheet->flags |= FIRST_COL_DATE_FORMAT;
+    }
+}
+
 static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 {
     xmlNodePtr p = node->xmlChildrenNode;
@@ -274,6 +284,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 	    }
 	    if (i_real >= 0 && t_real >= 0) {
 		tmp = xmlGetProp(p, (UTF) "ValueType");
+
 		if (tmp) {
 		    vtype = atoi(tmp);
 		    free(tmp);
@@ -283,31 +294,41 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 			    i, t);
 		    err = 1;
 		}
+
 		/* check the top-left cell */
 		if (!err && i_real == 0 && t_real == 0) {
 		    if (VTYPE_IS_NUMERIC(vtype)) {
 			pputs(prn, _("Expected to find a variable name"));
 			err = 1;
 		    }
-		}
-		else if (!err && i_real >= 1 && t_real == 0 && 
-			 !(vtype == VALUE_STRING)) {
+		} else if (!err && i_real >= 1 && t_real == 0 && 
+			   !(vtype == VALUE_STRING)) {
 		    /* ought to be a varname here */
 		    pputs(prn, _("Expected to find a variable name"));
 		    err = 1;
 		}
+
 		if (!err && (tmp = xmlNodeGetContent(p))) {
 		    if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
 			if (i_real == 0) {
 			    strncat(sheet->label[t_real], tmp, OBSLEN - 1);
 			}
 		    }
+
+		    if (i_real == 0 && t_real == 1 && VTYPE_IS_NUMERIC(vtype)) {
+			char *fmt = xmlGetProp(p, (UTF) "ValueFormat");
+
+			if (fmt) {
+			    check_for_date_format(sheet, fmt);
+			    free(fmt);
+			}
+		    }
+
 		    if (VTYPE_IS_NUMERIC(vtype)) {
 			x = atof(tmp);
 			sheet->Z[i_real][t_real] = x;
 			toprows[t_real] = leftcols[i_real] = 0;
-		    }
-		    else if (vtype == VALUE_STRING) {
+		    } else if (vtype == VALUE_STRING) {
 			if (t_real == 0) {
 			    strncat(sheet->varname[i_real], tmp, VNAMELEN - 1);
 			    if (i_real == 0 && !strcmp(tmp, "obs")) {
@@ -452,7 +473,6 @@ static int wbook_record_name (char *name, wbook *book)
     int ns = book->nsheets + 1;
 
     sheetnames = realloc(book->sheetnames, ns * sizeof *sheetnames);
-
     if (sheetnames == NULL) {
 	return 1;
     }
@@ -582,9 +602,10 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 {
     wbook book;
     wsheet sheet;
-    int err = 0, sheetnum = -1;
+    int sheetnum = -1;
     double **newZ = NULL;
     DATAINFO *newinfo;
+    int err = 0;
 
     newinfo = datainfo_new();
     if (newinfo == NULL) {
@@ -592,35 +613,38 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
+    wsheet_init(&sheet);
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
 
     if (wbook_get_info(fname, &book, prn)) {
 	pputs(prn, _("Failed to get workbook info"));
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
-#endif
-	return 1;
-    } else {
-	wbook_print_info(&book);
-    }
+	err = 1;
+	goto getout;
+    } 
+
+    wbook_print_info(&book);
 
     if (book.nsheets == 0) {
 	pputs(prn, _("No worksheets found"));
+	err = 1;
+	goto getout;
     }
-    else if (book.nsheets > 1) {
+
+    if (book.nsheets > 1) {
 	wsheet_menu(&book, 1);
 	sheetnum = book.selected;
-    }
-    else {
+    } else {
 	wsheet_menu(&book, 0);
 	sheetnum = 0;
     }
 
-    if (book.selected == -1) err = -1;
-
-    wsheet_init(&sheet);
+    if (book.selected == -1) {
+	/* canceled */
+	err = -1;
+    }
 
     if (!err && sheetnum >= 0) {
 	fprintf(stderr, "Getting data...\n");
@@ -631,35 +655,46 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    err = wsheet_get_data(fname, &sheet, prn);
 	    if (!err) {
 		wsheet_print_info(&sheet);
-	    }
+		book.flags |= sheet.flags;
+	    } 
 	}
-    } /* else ? */
+    } 
 
-    if (!err) {
+    if (err) {
+	goto getout;
+    } else {
+	int nrows = sheet.maxrow + 1 - sheet.row_offset;
 	int i, j, t, i_sheet, label_strings = sheet.text_cols;
 	int time_series = 0;
 	int blank_cols = 0;
+	int pd = 0;
 
-	if (obs_column_heading(sheet.label[0])) {
-	    int pd = consistent_date_labels(sheet.maxrow + 1 - sheet.row_offset, 
-					    sheet.row_offset, 0, sheet.label,
-					    book.d1904);
-
-	    if (pd) {
-		time_series_setup(sheet.label[1], newinfo, pd,
-				  &sheet.text_cols,
-				  &time_series, &label_strings);
-		rigorous_dates_check(&sheet, newinfo);
-	    }
+	if (book_numeric_dates(book)) {
+	    pd = pd_from_numeric_dates(nrows, sheet.row_offset, 0, sheet.label,
+				       &book);
+	} else if (obs_column_heading(sheet.label[0])) {
+	    pd = consistent_date_labels(nrows, sheet.row_offset, 0, sheet.label);
 	}
 
+	if (pd) {
+	    time_series_setup(sheet.label[1], newinfo, pd,
+			      &sheet.text_cols, &time_series, 
+			      &label_strings, book.flags);
+	    if (!book_numeric_dates(book)) {
+		rigorous_dates_check(&sheet, newinfo);
+	    }
+	}	
+
 	newinfo->v = sheet.maxcol + 2 - sheet.col_offset - sheet.text_cols;
-	newinfo->n = sheet.maxrow - sheet.row_offset;
+	newinfo->n = sheet.maxrow - sheet.row_offset + book.totmiss;
 
 	fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
 		newinfo->v, newinfo->n);
 
-	start_new_Z(&newZ, newinfo, 0);
+	err = start_new_Z(&newZ, newinfo, 0);
+	if (err) {
+	    goto getout;
+	}
 
 	if (!time_series) {
 	    strcpy(newinfo->stobs, "1");
@@ -673,14 +708,22 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	j = 1;
+
 	for (i=1; i<newinfo->v; i++) {
 	    i_sheet = i - 1 + sheet.text_cols;
 	    if (*sheet.varname[i_sheet] == '\0') {
 		blank_cols++;
 	    } else {
+		int s = 1;
+
 		strcpy(newinfo->varname[j], sheet.varname[i_sheet]);
 		for (t=0; t<newinfo->n; t++) {
-		    newZ[j][t] = sheet.Z[i_sheet][t+1];
+		    if (book.missmask != NULL) {
+			while (book.missmask[t]) {
+			    newZ[j][t++] = NADBL;
+			}
+		    }
+		    newZ[j][t] = sheet.Z[i_sheet][s++];
 		}
 		j++;
 	    }
@@ -713,12 +756,18 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
     } 
 
+ getout:
+
     wbook_free(&book);
     wsheet_free(&sheet);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
+
+    if (err) {
+	free(newinfo);
+    }
 
     return err;
 }

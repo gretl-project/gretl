@@ -275,6 +275,33 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
     return 0;
 }
 
+static int is_date_format (int fmt)
+{
+    int ret = 0;
+
+    switch (fmt) {
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 20:
+    case 21:
+    case 22:
+    case 45:
+    case 46:
+    case 47:
+    case 50:
+	ret = 1;
+	break;
+    default:
+	break;
+    }
+
+    return ret;
+}
+
 static int wbook_find_format (wbook *book, int xfref)
 {
     int fmt = -1;
@@ -307,8 +334,17 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    guint16 xfref = EX_GETXF(q);
 	    int fmt = wbook_find_format(book, xfref);
 
+#if 0
 	    fprintf(stderr, "Numeric cell (%d, %d), XF index = %d, fmt = %d\n", 
 		    i, j, (int) xfref, fmt);
+#endif
+	    if (i == book->row_offset + 1 && 
+		j == book->col_offset && 
+		is_date_format(fmt)) {
+		fprintf(stderr, "Testing first obs cell (%d, %d): date format %d\n", 
+			i, j, fmt);
+		book->flags |= FIRST_COL_DATE_FORMAT;
+	    }
 	}
     }
 
@@ -1133,13 +1169,15 @@ n_vars_from_col (int totcols, char *blank_col, int offset, int first_special)
     return nv;
 }
 
-static int transcribe_data (double **Z, DATAINFO *pdinfo, 
-			    int row_offset, int totcols, int startcol, 
+static int transcribe_data (double **Z, DATAINFO *pdinfo, wbook *book,
+			    int totcols, int startcol, 
 			    char *blank_col)
 {
+    int roff = book->row_offset;
     int i, t, j = 1;
 
     for (i=startcol; i<totcols; i++) {
+	int ts, missing = 0;
 
 	if (blank_col[i]) {
 	    continue;
@@ -1150,28 +1188,38 @@ static int transcribe_data (double **Z, DATAINFO *pdinfo,
 	}
 
 	pdinfo->varname[j][0] = 0;
-	strncat(pdinfo->varname[j], rows[row_offset].cells[i] + 1, 
+	strncat(pdinfo->varname[j], rows[roff].cells[i] + 1, 
 		USER_VLEN - 1);
 	dprintf("accessing rows[%d].cells[%d] at %p\n",
-		row_offset, i, (void *) rows[row_offset].cells[i]);
+		roff, i, (void *) rows[roff].cells[i]);
 	dprintf("set varname[%d] = '%s'\n", j, pdinfo->varname[j]);
 
 	for (t=0; t<pdinfo->n; t++) {
-	    int ts = t + 1 + row_offset;
+	    if (book->missmask != NULL) {
+		while (book->missmask[t]) {
+		    Z[j][t++] = NADBL;
+		    missing++;
+		}
+	    }
+
+	    ts = t + 1 + roff - missing;
 
 	    if (rows[ts].cells == NULL || i >= rows[ts].end ||
 		rows[ts].cells[i] == NULL) {
 		continue;
 	    }
+
 	    dprintf("accessing rows[%d].cells[%d] at %p\n", ts, i,
 		    (void *) rows[ts].cells[i]);
 	    dprintf("setting Z[%d][%d] = rows[%d].cells[%d] "
 		    "= '%s'\n", j, t, i, ts, rows[ts].cells[i]);
+
 	    Z[j][t] = atof(rows[ts].cells[i]);
 	    if (Z[j][t] == -999.0) {
 		Z[j][t] = NADBL;
 	    }
 	}
+
 	j++;
     }
 
@@ -1262,7 +1310,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     int datacols, totcols;
     struct string_err strerr;
     char *blank_col = NULL;
-    int i, t;
+    int i, t, pd = 0;
     int err = 0;
 
     newinfo = datainfo_new();
@@ -1374,20 +1422,24 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }	    
 
     /* do we have a first column containing dates? */
-    if (obs_column_heading(rows[book.row_offset].cells[book.col_offset])) {
-	int pd = consistent_date_labels(nrows, book.row_offset, book.col_offset, NULL, 
-					book.d1904);
 
-	if (pd) {
-	    time_series_setup(rows[1 + book.row_offset].cells[book.col_offset],
-			      newinfo, pd, NULL, &time_series, &label_strings);
-	}
+    if (book_numeric_dates(book)) {
+	pd = pd_from_numeric_dates(nrows, book.row_offset, book.col_offset, NULL,
+				   &book);
+    } else if (obs_column_heading(rows[book.row_offset].cells[book.col_offset])) {
+	pd = consistent_date_labels(nrows, book.row_offset, book.col_offset, NULL); 
     }
+
+    if (pd) {
+	time_series_setup(rows[1 + book.row_offset].cells[book.col_offset],
+			  newinfo, pd, NULL, &time_series, &label_strings,
+			  book.flags);
+    }    
 
     /* number of variables and observations for import dataset */
     newinfo->v = n_vars_from_col(totcols, blank_col, book.col_offset,
 				 time_series || label_strings);
-    newinfo->n = nrows - 1 - book.row_offset;
+    newinfo->n = nrows - 1 - book.row_offset + book.totmiss;
     fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
 	    newinfo->v, newinfo->n);
 
@@ -1410,7 +1462,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* OK: actually populate the dataset */
-    transcribe_data(newZ, newinfo, book.row_offset, totcols,
+    transcribe_data(newZ, newinfo, &book, totcols,
 		    book.col_offset + (time_series || label_strings),
 		    blank_col);
 

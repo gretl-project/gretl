@@ -17,7 +17,18 @@
  *
  */
 
-typedef struct {
+typedef struct wbook_ wbook;
+typedef struct wsheet_ wsheet;
+
+typedef enum {
+    FIRST_COL_DATE_FORMAT = 1 << 0,
+    DATE_BASE_1904        = 1 << 1
+} BookFlag;
+
+#define book_numeric_dates(b) (b.flags & FIRST_COL_DATE_FORMAT)
+#define book_base_1904(b) (b.flags & DATE_BASE_1904)
+
+struct wbook_ {
     int version;
     int nsheets;
     int selected;
@@ -26,18 +37,21 @@ typedef struct {
     guint32 *byte_offsets;
     void *colspin, *rowspin;
     int *xf_list;
-    int d1904;
+    BookFlag flags;
+    int totmiss;
+    char *missmask;
     int debug;
-} wbook;
+};
 
-typedef struct {
+struct wsheet_ {
     int maxcol, maxrow;
     int text_cols, text_rows;
     int col_offset, row_offset;
     int ID;
+    BookFlag flags;
     char *name;
     double **Z;
     char **varname;
     char **label;
-} wsheet;
+};
 

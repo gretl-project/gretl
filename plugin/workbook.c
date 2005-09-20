@@ -400,50 +400,23 @@ ms_excel_read_bof (BiffQuery *q,
     }
 }
 
-static int is_date_format (guint16 fmt)
-{
-    int ret = 0;
-
-    switch (fmt) {
-    case 14:
-    case 15:
-    case 16:
-    case 17:
-    case 18:
-    case 19:
-    case 20:
-    case 21:
-    case 22:
-    case 45:
-    case 46:
-    case 47:
-    case 50:
-	ret = 1;
-	break;
-    default:
-	break;
-    }
-
-    return ret;
-}
-
-static int extend_xf_list (int **plist, int fmt)
+static int extend_xf_list (wbook *book, int fmt)
 {
     int *xf_list = NULL;
     int nxf = 0, ret = 0;
 
-    if (*plist == NULL) {
+    if (book->xf_list == NULL) {
 	xf_list = malloc(2 * sizeof *xf_list);
     } else {
-	nxf = (*plist)[0];
-	xf_list = realloc(*plist, (nxf + 2) * sizeof *xf_list);
+	nxf = book->xf_list[0];
+	xf_list = realloc(book->xf_list, (nxf + 2) * sizeof *xf_list);
     }
 
     if (xf_list != NULL) {
 	nxf++;
 	xf_list[0] = nxf;
 	xf_list[nxf] = fmt;
-	*plist = xf_list;
+	book->xf_list = xf_list;
     } else {
 	ret = 1;
     }
@@ -453,7 +426,7 @@ static int extend_xf_list (int **plist, int fmt)
 
 static int
 ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
-			int *nsheets, int **xf_list, int *d1904)
+			wbook *book)
 {
     MsOleStream *stream;
     MsOleErr result;
@@ -518,9 +491,9 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 #endif
 	    ans = biff_boundsheet_data_new(q, ver->version);
 	    if (ans != NULL) {
-		*bounds = g_realloc(*bounds, (*nsheets + 1) * sizeof **bounds);
-		(*bounds)[*nsheets] = ans;
-		*nsheets += 1;
+		*bounds = g_realloc(*bounds, (book->nsheets + 1) * sizeof **bounds);
+		(*bounds)[book->nsheets] = ans;
+		book->nsheets += 1;
 	    }
 	    break;
 	}
@@ -531,18 +504,11 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	    break;
 
 	case BIFF_XF:
-	    fprintf(stderr, "got BIFF_XF: FORMAT index ");
 	    if (q->data != NULL) {
 		guint16 val = (guint16) *(q->data + 2);
 
-		fprintf(stderr, "%d\n", (int) val);
-		if (is_date_format(val)) {
-		    fprintf(stderr, " seems to be date format\n");
-		}
-		extend_xf_list(xf_list, val);
-	    } else {
-		fputs("unknown\n", stderr);
-	    }
+		extend_xf_list(book, (int) val);
+	    } 
 	    break;
 
 	case BIFF_SST:
@@ -600,7 +566,9 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 		guint16 val = (guint16) *q->data;
 
 		fprintf(stderr, "%d\n", (int) val);
-		*d1904 = (int) val;
+		if (val) {
+		    book->flags |= DATE_BASE_1904;
+		}
 	    } else {
 		fputs("unknown\n", stderr);
 	    }
@@ -657,7 +625,7 @@ int excel_book_get_info (const char *fname, wbook *book)
     MsOleErr ole_error;
     MsOle *f;
     BiffBoundsheetData **bounds = NULL;
-    int i, nsheets = 0;
+    int i;
 
     ole_error = ms_ole_open(&f, fname);
 
@@ -672,24 +640,20 @@ int excel_book_get_info (const char *fname, wbook *book)
 	return 1;
     }
 
-    book->version = ms_excel_read_workbook(f, &bounds, &nsheets, 
-					   &book->xf_list,
-					   &book->d1904);
+    book->version = ms_excel_read_workbook(f, &bounds, book);
     ms_ole_destroy(&f);
 
-    if (nsheets == 0 || bounds == NULL) {
+    if (book->nsheets == 0 || bounds == NULL) {
 	return 1;
     }
 
-    book->sheetnames = g_malloc(nsheets * sizeof *book->sheetnames);
+    book->sheetnames = g_malloc(book->nsheets * sizeof *book->sheetnames);
     if (book->sheetnames == NULL) return 1;
 
-    book->byte_offsets = g_malloc(nsheets * sizeof *book->byte_offsets);
+    book->byte_offsets = g_malloc(book->nsheets * sizeof *book->byte_offsets);
     if (book->byte_offsets == NULL) return 1;
 
-    book->nsheets = nsheets;
-
-    for (i=0; i<nsheets; i++) {
+    for (i=0; i<book->nsheets; i++) {
 	book->sheetnames[i] = (bounds[i])->name;
 	book->byte_offsets[i] = (bounds[i])->streamStartPos;
 	g_free(bounds[i]);

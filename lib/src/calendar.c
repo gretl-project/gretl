@@ -221,16 +221,19 @@ void calendar_date_string (char *str, int t, const DATAINFO *pdinfo)
  * MS_excel_date_string:
  * @str: date string to be filled out.
  * @mst: MS Excel-type date code: days since base.
+ * @pd: periodicity of data (or 0 if unknown).
  * @d1904: set to 1 if the base is 1904/01/01; otherwise
  * the base is assumed to be 1899/12/31.
  * 
  * Writes to @str the calendar representation of the date of
- * observation @mst, in the form YYYY/MM/DD.
+ * observation @mst, in the form YYYY/MM/DD if @pd is 0, 5,
+ * 6, 7 or 52 (unknown, daily, or weekly frequency), otherwise 
+ * in the appropriate format for annual, quarterly or monthly data.
  * 
  * Returns: 0.
  */
 
-int MS_excel_date_string (char *date, int mst, int d1904)
+int MS_excel_date_string (char *date, int mst, int pd, int d1904)
 {
     int yr = (d1904)? 1904 : 1900;
     int day = (d1904)? 2 : 1;
@@ -239,14 +242,13 @@ int MS_excel_date_string (char *date, int mst, int d1904)
 
     if (mst == 0) {
 	if (d1904) {
-	    strcpy(date, "1904/01/01");
+	    day = 1;
 	} else {
-	    strcpy(date, "1899/12/31");
+	    yr = 1899;
+	    mo = 12;
+	    day = 31;
 	}
-	return 0; /* done */
-    }
-
-    if (mst > 0) {
+    } else if (mst > 0) {
 	drem = mst + d1904;
 
 	while (1) {
@@ -305,8 +307,18 @@ int MS_excel_date_string (char *date, int mst, int d1904)
 	    }
 	}
     }
-	    
-    sprintf(date, "%04d/%02d/%02d", yr, mo, day);
+
+    if (pd == 1) {
+	sprintf(date, "%d", yr);
+    } else if (pd == 12) {
+	sprintf(date, "%d:%02d", yr, mo);
+    } else if (pd == 4) {
+	int qtr = 1 + mo / 3.25;
+
+	sprintf(date, "%d:%d", yr, qtr);
+    } else {
+	sprintf(date, "%04d/%02d/%02d", yr, mo, day);
+    }
 
     return 0;
 }

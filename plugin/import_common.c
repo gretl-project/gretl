@@ -39,18 +39,24 @@ static void set_all_missing (double **Z, DATAINFO *pdinfo)
 
 static void time_series_setup (const char *s, DATAINFO *newinfo, int pd,
 			       int *text_cols, int *time_series, 
-			       int *label_strings)
+			       int *label_strings, BookFlag flags)
 {
-    if (*s == '"' || *s == '\'') s++;
+    if (flags & FIRST_COL_DATE_FORMAT) {
+	int d0 = atoi(s);
+
+	MS_excel_date_string(newinfo->stobs, d0, pd, flags & DATE_BASE_1904);
+    } else if (*s == '"' || *s == '\'') {
+	s++;
+	strcpy(newinfo->stobs, s);
+	colonize_obs(newinfo->stobs);
+    }
 
     newinfo->pd = pd;
     newinfo->structure = TIME_SERIES;
 
-    strcpy(newinfo->stobs, s);
-    colonize_obs(newinfo->stobs);
     fprintf(stderr, "stobs='%s'\n", newinfo->stobs);
-
     newinfo->sd0 = get_date_x(newinfo->pd, newinfo->stobs);
+    fprintf(stderr, "sd0=%g\n", newinfo->sd0);
 
     if (text_cols != NULL) {
 	*text_cols = 1;
@@ -66,7 +72,7 @@ static void invalid_varname (PRN *prn)
     pputs(prn, _("\nPlease rename this variable and try again"));
 }
 
-static int label_is_date (char *str, int d1904)
+static int label_is_date (char *str)
 {
     int len = strlen(str);
     int i, d, pd = 0;
@@ -89,29 +95,7 @@ static int label_is_date (char *str, int d1904)
 	}
     }
 
-    if (sscanf(str, "%d", &d) && d > 14000 && d < 43000) {
-	/* plausible MS-coded date? */
-	static int dbak;
-	char dstr[12];
-
-	MS_excel_date_string(dstr, d, d1904);
-#if 0
-	fprintf(stderr, "val = %d, dstr = '%s'\n", d, dstr);
-#endif
-	if (dbak == 0) {
-	    pd = 1;
-	} else {
-	    /* FIXME need to handle missing values, and dates */
-	    if ((d - dbak) % 7 == 0) {
-		if (d - dbak > 7) {
-		    fprintf(stderr, "%s: %d missing value(s)?\n",
-			    dstr, ((d - dbak) / 7) - 1);
-		}
-		pd = 52;
-	    }
-	}
-	dbak = d;
-    } else if (len == 4 && sscanf(str, "%4d", &d) && d > 0 && d < 3000) {
+    if (len == 4 && sscanf(str, "%4d", &d) && d > 0 && d < 3000) {
 	pd = 1;
     } else if (len == 6 && sscanf(str, "%lf", &dd) && dd > 0 && dd < 3000) { 
 	sub = 10.0 * (dd - (int) dd);
@@ -124,8 +108,167 @@ static int label_is_date (char *str, int d1904)
     return pd;
 }
 
-static int consistent_date_labels (int nrows, int row_offset, int col_offset, 
-				   char **labels, int d1904)
+static int pd_from_dmult (double dm)
+{
+    int pd = 0;
+
+    if (dm > 250.0) {
+	pd = 1;
+    } else if (dm > 90.0) {
+	pd = 4;
+    } else if (dm > 29.0) {
+	pd = 12;
+    } else if (dm > 6.0) {
+	pd = 52;
+    } else if (dm > 1.4) {
+	pd = 5;
+    } else if (dm > 1.16) {
+	pd = 6;
+    } else if (dm > 0.9) {
+	pd = 7;
+    }
+
+    return pd;
+}
+
+#define dmax(f) ((f == 1)? 366 : (f == 4)? 92 : 31)
+
+static int calendar_missing_obs (int diff, int pd)
+{
+    int mc = 0;
+
+    if (pd == 52) {
+	if (diff > 7) {
+	    mc = (diff / 7) - 1;
+	}
+    } else if (pd == 7) {
+	if (diff > 1) {
+	    mc = diff - 1;
+	}
+    } else if (pd == 1 || pd == 4 || pd == 12) {
+	if (diff > dmax(pd)) {
+	    double xmc = diff / (365.0 / pd);
+
+	    mc = floor(xmc - .5);
+	}
+    } else if (pd == 5 || pd == 6) {
+	/* FIXME: need to use calendar here! */
+	mc = 0;
+    }
+
+    return mc;
+}
+
+#ifdef EXCEL_IMPORTER
+# define cell_val(t,o) (rows[t].cells[o])
+#else
+# define cell_val(t,o) (labels[t])
+#endif
+
+static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
+				  char **labels, wbook *book)
+{
+    char dstr[12];
+    int tstart = 1 + row_offset;
+    int ndays, nobs = nrows - tstart;
+    int mc, t, pd = 0;
+    double x1, x2, dmult, diff;
+    char *test;
+
+    fprintf(stderr, "check for consistent numeric dates in col %d (nobs = %d)\n", 
+	    col_offset, nobs);
+
+    /* look at first date */
+    test = cell_val(tstart, col_offset);
+    if (sscanf(test, "%lf", &x1)) {
+	MS_excel_date_string(dstr, (int) x1, 0, book->flags & DATE_BASE_1904);
+	fprintf(stderr, "numeric date on row %d = %g (%s)\n", tstart, 
+		x1, dstr);
+    } else {
+	fprintf(stderr, "failed to read starting\n");
+	return 0;
+    }
+
+    /* look at last date */
+    test = cell_val(nrows - 1, col_offset);
+    if (sscanf(test, "%lf", &x2)) {
+	MS_excel_date_string(dstr, (int) x2, 0, book->flags & DATE_BASE_1904);
+	fprintf(stderr, "numeric date on row %d = %g (%s)\n", nrows - 1, 
+		x2, dstr);
+    } else {
+	fprintf(stderr, "failed to read ending date\n");
+	return 0;
+    }
+
+    /* compare number of obs and calendar span of data */
+    ndays = (int) x2 - (int) x1 + 1;
+    dmult = (double) ndays / nobs;
+    fprintf(stderr, "Calendar interval = %d days\n", ndays);
+    fprintf(stderr, "Calendar days per observation = %g\n", dmult);
+    pd = pd_from_dmult(dmult);
+
+    if (pd > 0) {
+	fprintf(stderr, "provisional data frequency = %d\n", pd);
+    } else {
+	fputs("Can't make sense of this\n", stderr);
+	return 0;
+    }
+
+    book->totmiss = 0;
+
+    for (t=tstart; t<nrows; t++) {
+	test = cell_val(t, col_offset);
+
+	if (sscanf(test, "%lf", &x1) != 1) {
+	    fprintf(stderr, "Problem: blank cell at row %d\n", t + 1);
+	    return 0;
+	}
+
+	if (t > tstart) {
+	    diff = x1 - x2;
+	    mc = calendar_missing_obs((int) diff, pd);
+	    if (mc > 0) {
+		fprintf(stderr, "row %d: calendar gap = %g, %d values missing?\n", 
+			t, diff, mc);
+		book->totmiss += mc;
+	    }
+	}
+
+	x2 = x1;
+    }
+
+    if (book->totmiss > 0) {
+	int i, s = 0;
+
+	fprintf(stderr, "Total missing values = %d\n", book->totmiss);
+	book->missmask = calloc(nobs + book->totmiss, 1);
+
+	if (book->missmask == NULL) {
+	    fprintf(stderr, "Out of memory allocating missing obs mask\n");
+	    return 0;
+	}
+
+	for (t=tstart; t<nrows; t++) {
+	    test = cell_val(t, col_offset);
+	    sscanf(test, "%lf", &x1);
+	    if (t > tstart) {
+		mc = calendar_missing_obs((int) (x1 - x2), pd);
+		for (i=0; i<mc; i++) {
+		    book->missmask[s++] = 1;
+		}
+	    }
+	    x2 = x1;
+	    s++;
+	}
+    }
+
+    fprintf(stderr, "Setting data frequency = %d\n", pd);
+
+    return pd;
+}
+
+static int 
+consistent_date_labels (int nrows, int row_offset, int col_offset, char **labels)
 {
     int t, tstart = 1 + row_offset;
     int pd = 0, pdbak = 0;
@@ -136,18 +279,14 @@ static int consistent_date_labels (int nrows, int row_offset, int col_offset,
 	    col_offset);
 
     for (t=tstart; t<nrows; t++) {
-#ifdef EXCEL_IMPORTER
-	test = rows[t].cells[col_offset];
-#else
-	test = labels[t];
-#endif
+	test = cell_val(t, col_offset);
 
 	if (*test == '\0') {
 	    fprintf(stderr, " no: blank cell at row %d\n", t + 1);
 	    return 0;
 	}
 
-	pd = label_is_date(test, d1904);
+	pd = label_is_date(test);
 
 	if (pd == 0) {
 	    fprintf(stderr, " no: label '%s' on row %d is not a valid date\n", 
@@ -238,6 +377,7 @@ static void wbook_free (wbook *book)
     free(book->sheetnames);
     free(book->byte_offsets);
     free(book->xf_list);
+    free(book->missmask);
 }
 
 static void wbook_init (wbook *book)
@@ -249,8 +389,10 @@ static void wbook_init (wbook *book)
     book->byte_offsets = NULL;
     book->selected = 0;
     book->debug = 0;
-    book->d1904 = 0;
+    book->flags = 0;
     book->xf_list = NULL;
+    book->totmiss = 0;
+    book->missmask = NULL;
 }
 
 static const char *column_label (int col)
