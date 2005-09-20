@@ -91,7 +91,7 @@ manual-a4.xml: manual.xml
 $(CMDLIST): $(CMDREF) $(MANXSL) 
 	make -C commands -f cmdref.mk docbook
 
-$(CMDLIST_IT): $(CMDREF) $(MANXSL) 
+$(CMDLIST_IT): $(CMDREF_IT) $(MANXSL) 
 	make -C commands -f cmdref.mk docbook_it
 
 html: manual.xml db2html $(DSL) $(HMATHSS) $(CMDLIST)
