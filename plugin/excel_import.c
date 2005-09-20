@@ -275,6 +275,17 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
     return 0;
 }
 
+static int wbook_find_format (wbook *book, int xfref)
+{
+    int fmt = -1;
+
+    if (book->xf_list != NULL && xfref < book->xf_list[0]) {
+	fmt = book->xf_list[xfref + 1];
+    }
+
+    return fmt;
+}
+
 #undef FORMAT_INFO
 
 static int process_item (BiffQuery *q, wbook *book, PRN *prn) 
@@ -294,13 +305,8 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	}
 	if (q->ls_op == BIFF_NUMBER || q->ls_op == BIFF_RK) {
 	    guint16 xfref = EX_GETXF(q);
-	    int fmt = -1;
+	    int fmt = wbook_find_format(book, xfref);
 
-	    /* this seems to be a 0-based index into the array of 
-	       XF records for the workbook as a whole */
-	    if (book->xf_list != NULL && xfref <= book->xf_list[0]) {
-		fmt = book->xf_list[xfref + 1];
-	    }
 	    fprintf(stderr, "Numeric cell (%d, %d), XF index = %d, fmt = %d\n", 
 		    i, j, (int) xfref, fmt);
 	}

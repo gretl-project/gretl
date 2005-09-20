@@ -404,11 +404,24 @@ static int is_date_format (guint16 fmt)
 {
     int ret = 0;
 
-    /* FIXME additional date formats in the 50s? */
-
-    if ((fmt >= 14 && fmt <= 22) ||
-	(fmt >= 45 && fmt <= 47)) {
+    switch (fmt) {
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 20:
+    case 21:
+    case 22:
+    case 45:
+    case 46:
+    case 47:
+    case 50:
 	ret = 1;
+	break;
+    default:
+	break;
     }
 
     return ret;
@@ -585,6 +598,7 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	    fprintf(stderr, "Got BIFF_1904: value ");
 	    if (q->data != NULL) {
 		guint16 val = (guint16) *q->data;
+
 		fprintf(stderr, "%d\n", (int) val);
 		*d1904 = (int) val;
 	    } else {
