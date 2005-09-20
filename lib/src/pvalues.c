@@ -36,6 +36,36 @@ static void getdf (const char *str);
 const char negval[] = N_("\nEnter x value (value < 0 will exit menu): "); 
 
 /**
+ * binomial_cdf:
+ * @k: maximum number of successes.
+ * @n: number of trials.
+ * @p: probability of success on each trial.
+ *
+ * Returns: the probability of @k or less successes on
+ * @n trials given binomial probability @p.
+ */
+
+double binomial_cdf (int k, int n, double p)
+{
+    return bdtr(k, n, p);
+}
+
+/**
+ * binomial_pvalue:
+ * @k: maximum number of successes.
+ * @n: number of trials.
+ * @p: probability of success on each trial.
+ *
+ * Returns: the probability of @k + 1 or more successes on
+ * @n trials given binomial probability @p.
+ */
+
+double binomial_pvalue (int k, int n, double p)
+{
+    return bdtrc(k, n, p);
+}
+
+/**
  * x_factorial:
  * @x: input value.
  * 

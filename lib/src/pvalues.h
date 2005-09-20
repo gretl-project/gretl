@@ -20,6 +20,10 @@
 #ifndef PVALUES_H
 #define PVALUES_H
 
+double binomial_cdf (int k, int n, double p);
+
+double binomial_pvalue (int k, int n, double p);
+
 double x_factorial (double x);
 
 double normal_pvalue_2 (double x);

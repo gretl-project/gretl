@@ -133,7 +133,8 @@ static int pd_from_dmult (double dm)
 
 #define dmax(f) ((f == 1)? 366 : (f == 4)? 92 : 31)
 
-static int calendar_missing_obs (int diff, int pd)
+static int 
+calendar_missing_obs (int diff, int pd, double d1, BookFlag flags)
 {
     int mc = 0;
 
@@ -151,9 +152,22 @@ static int calendar_missing_obs (int diff, int pd)
 
 	    mc = floor(xmc - .5);
 	}
-    } else if (pd == 5 || pd == 6) {
-	/* FIXME: need to use calendar here! */
-	mc = 0;
+    } else if ((pd == 5 || pd == 6) && diff > 1) {
+	char dstr[12];
+	int wday;
+
+	MS_excel_date_string(dstr, d1, 0, flags & DATE_BASE_1904);
+	wday = get_day_of_week(dstr);
+
+	if (wday == 1) {
+	    if (pd == 5) {
+		mc = diff - 3;
+	    } else {
+		mc = diff - 2;
+	    }
+	} else {
+	    mc = diff - 1;
+	}
     }
 
     return mc;
@@ -226,7 +240,7 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
 
 	if (t > tstart) {
 	    diff = x1 - x2;
-	    mc = calendar_missing_obs((int) diff, pd);
+	    mc = calendar_missing_obs((int) diff, pd, x1, book->flags);
 	    if (mc > 0) {
 		fprintf(stderr, "row %d: calendar gap = %g, %d values missing?\n", 
 			t, diff, mc);
@@ -252,7 +266,7 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
 	    test = cell_val(t, col_offset);
 	    sscanf(test, "%lf", &x1);
 	    if (t > tstart) {
-		mc = calendar_missing_obs((int) (x1 - x2), pd);
+		mc = calendar_missing_obs((int) (x1 - x2), pd, x1, book->flags);
 		for (i=0; i<mc; i++) {
 		    book->missmask[s++] = 1;
 		}

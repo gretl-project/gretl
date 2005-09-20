@@ -1,6 +1,20 @@
 #ifndef LIBPROB_H
 #define LIBPROB_H
 
+/* area under the binomial pdf, from 0 to k, of the
+ * binomial distribution with success probability p
+ * and n trials.
+*/
+
+double bdtr (int k, int n, double p);
+
+/* area under the binomial pdf, from k+1 to n, of the
+ * binomial distribution with success probability p
+ * and n trials. 
+*/
+
+double bdtrc (int k, int n, double p);
+
 /* area under the left hand tail (from 0 to x)
  * of the Chi square probability density function with
  * v degrees of freedom.
