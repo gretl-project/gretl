@@ -2204,3 +2204,84 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 
     return err;
 }
+
+/* Expand the data set from lower to higher frequency: an "expert"
+   option.  This is supported at present only for expansion from
+   annual to quarterly or monthly, or from quarterly to monthly.
+*/
+
+int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
+{
+    char stobs[12];
+    int oldn = pdinfo->n;
+    int mult, newn, addobs;
+    double *x = NULL;
+    int i, j, s, t;
+    int err = 0;
+
+    if (pdinfo->pd != 1 && pdinfo->pd != 4) {
+	return E_PDWRONG;
+    } else if (pdinfo->pd == 1 && newpd != 4 && newpd != 12) {
+	return E_DATA;
+    } else if (pdinfo->pd == 4 && newpd != 12) {
+	return E_DATA;
+    }
+
+    x = malloc(oldn * sizeof *x);
+    if (x == NULL) {
+	return E_ALLOC;
+    }
+
+    mult = newpd / pdinfo->pd;
+    newn = mult * pdinfo->n;
+    addobs = newn - oldn;
+
+    err = dataset_add_observations(addobs, pZ, pdinfo);
+    if (err) {
+	goto bailout;
+    }
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (!pdinfo->vector[i]) {
+	    continue;
+	}
+	for (t=0; t<oldn; t++) {
+	    x[t] = (*pZ)[i][t];
+	}
+	s = 0;
+	for (t=0; t<oldn; t++) {
+	    for (j=0; j<mult; j++) {
+		(*pZ)[i][s++] = x[t];
+	    }
+	}
+    }
+
+     if (pdinfo->pd == 1) {
+	strcpy(stobs, pdinfo->stobs);
+	if (newpd == 4) {
+	    strcat(stobs, ":1");
+	} else {
+	    strcat(stobs, ":01");
+	}
+    } else {
+	int yr, qtr, mo;
+
+	sscanf(pdinfo->stobs, "%d:%d", &yr, &qtr);
+	mo = (qtr - 1) * 3 + 1;
+	sprintf(stobs, "%d:%02d", yr, mo);
+    }
+
+    strcpy(pdinfo->stobs, stobs);
+    pdinfo->pd = newpd;
+    pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
+
+    if (pdinfo->markers) {
+	dataset_destroy_obs_markers(pdinfo);
+    }
+
+ bailout:
+    
+    free(x);
+
+    return err;
+}

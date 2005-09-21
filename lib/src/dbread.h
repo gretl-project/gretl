@@ -99,4 +99,6 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo);
 int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 		      int default_method, int monstart);
 
+int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd);
+
 #endif /* DBREAD_H */

@@ -2253,6 +2253,130 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     gtk_widget_show(d);
 }
 
+static void set_expand_target_pd (GtkWidget *w, gpointer data)
+{
+    int *targ_pd = (int *) data;
+
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	*targ_pd = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    }
+}
+
+static void expand_pd_buttons (GtkWidget *dlg, int spd, int *target_pd)
+{    
+    GtkWidget *button;
+    GtkWidget *vbox;
+    GSList *group;
+    gint f1, f2;
+    const char *f1str, *f2str;
+
+    if (spd == 1) {
+	f1 = 4;
+	f2 = 12;
+	f1str = N_("Quarterly");
+	f2str = N_("Monthly");
+    } else {
+	return;
+    }
+
+    vbox = GTK_DIALOG(dlg)->vbox;
+
+    button = gtk_radio_button_new_with_label(NULL, _(f1str));
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_expand_target_pd), target_pd);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(f1));
+
+    gtk_widget_show (button);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    button = gtk_radio_button_new_with_label(group, _(f2str));
+    gtk_box_pack_start (GTK_BOX(vbox), button, TRUE, TRUE, 0);
+
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_expand_target_pd), target_pd);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(f2));
+
+    gtk_widget_show (button);
+}
+
+static void abort_expand (GtkWidget *w, gpointer data)
+{
+    int *pd = (int *) data;
+
+    *pd = -1;
+}
+
+void data_expand_dialog (GtkWidget *w, int spd, int *target_pd)
+{
+    GtkWidget *d, *tempwid;
+    int show_pd_buttons = 0;
+    gchar *labelstr = NULL;
+
+    d = gretl_dialog_new(_("gretl: compact data"), w, GRETL_DLG_BLOCK);
+
+    if (*target_pd != 0) {
+	/* importing series from database */
+	labelstr = g_strdup_printf(_("Adding %s series to %s dataset"),
+				   (spd == 1)? _("annual") : _("quarterly"),
+				   (*target_pd == 4)? _("quarterly"): _("monthly"));
+    } else {
+	/* expanding whole data set */
+	if (spd == 1) {
+	    labelstr = g_strdup(_("Expand annual data to:"));
+	    *target_pd = 4;
+	    show_pd_buttons = 1;
+	} else if (spd == 4) {
+	    /* source data are monthly */
+	    labelstr = g_strdup(_("Expand quarterly data to monthly"));
+	    *target_pd = 12;
+	}
+    }
+
+    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(d)->action_area), 15);
+
+    tempwid = gtk_label_new(labelstr);
+    g_free(labelstr);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d)->vbox), 
+		       tempwid, TRUE, TRUE, 0);
+    gtk_widget_show(tempwid);
+
+    /* annual data: give choice of going to quarterly or monthly */
+    if (show_pd_buttons) {
+	expand_pd_buttons(d, spd, target_pd);
+    }
+
+    /* Create the "OK" button */
+    tempwid = ok_button(GTK_DIALOG(d)->action_area);
+    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     G_OBJECT(d));
+    gtk_widget_grab_default(tempwid);
+    gtk_widget_show(tempwid);
+
+    /* Create the "Cancel" button */
+    tempwid = standard_button(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d)->action_area), 
+		       tempwid, TRUE, TRUE, FALSE);
+    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     G_CALLBACK(abort_expand), target_pd);
+    g_signal_connect (G_OBJECT(tempwid), "clicked", 
+		      G_CALLBACK(delete_widget), 
+		      G_OBJECT(d));
+    gtk_widget_show(tempwid);
+
+    /* Create a "Help" button */
+    context_help_button(GTK_DIALOG(d)->action_area, EXPAND);
+
+    gtk_widget_show(d);
+}
+
 static void set_radio_opt (GtkWidget *w, int *opt)
 {
     *opt = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));

@@ -4863,17 +4863,22 @@ int maybe_restore_full_data (int action)
 	    resp = yes_no_dialog(_("gretl: save data"), 
 				 _("The data set is currently sub-sampled.\n"
 				   "Would you like to restore the full range?"), 1);
-	}
-	else if (action == COMPACT) {
+	} else if (action == COMPACT) {
 	    resp = yes_no_dialog(_("gretl: Compact data"), 
 				 _("The data set is currently sub-sampled.\n"
 				   "You must restore the full range before compacting.\n"
+				   "Restore the full range now?"), 1);
+	} else if (action == EXPAND) {
+	    resp = yes_no_dialog(_("gretl: Expand data"), 
+				 _("The data set is currently sub-sampled.\n"
+				   "You must restore the full range before expanding.\n"
 				   "Restore the full range now?"), 1);
 	}
 
 	if (resp == GRETL_YES) {
 	    restore_sample(OPT_C);
-	} else if (resp == GRETL_CANCEL || resp < 0 || action == COMPACT) {
+	} else if (resp == GRETL_CANCEL || resp < 0 || 
+		   action == COMPACT || action == EXPAND) {
 	    return 1;
 	}
     } 

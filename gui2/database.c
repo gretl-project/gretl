@@ -1994,12 +1994,36 @@ void do_compact_data_set (void)
     } else {
 	data_status |= MODIFIED_DATA;
 	set_sample_label(datainfo);
-
 	if (datainfo->pd == 1 || datainfo->pd == 52) {
 	    flip(mdata->ifac, "/Sample/Compact data...", FALSE);
 	}
-
 	set_compact_info_from_default(default_method);
+    }
+}
+
+void do_expand_data_set (void)
+{
+    int err, newpd = 0;
+
+    if (maybe_restore_full_data(EXPAND)) {
+	return;
+    }
+
+    data_expand_dialog(mdata->w, datainfo->pd, &newpd);
+    if (newpd < 0) {
+	return;
+    }
+
+    err = expand_data_set(&Z, datainfo, newpd);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	data_status |= MODIFIED_DATA;
+	set_sample_label(datainfo);
+	if (datainfo->pd == 12) {
+	    flip(mdata->ifac, "/Sample/Expand data...", FALSE);
+	}
     }
 }
 

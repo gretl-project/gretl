@@ -60,6 +60,8 @@ void panel_structure_dialog (DATAINFO *pdinfo);
 void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
 			  int *mon_start, gint *compact_method);
 
+void data_expand_dialog (GtkWidget *w, int spd, int *target_pd);
+
 int density_dialog (int vnum, double *bw);
 
 int radio_dialog (const char *title, const char **opts, 
