@@ -891,7 +891,7 @@ static int parse_genr_critical_input (const char *str,
 
     if (*i == -1) return 1;
 
-    if (dfnstr[0] != '\0') {
+    if (*dfnstr != '\0') {
 	val = get_number_or_val(dfnstr, Z, pdinfo);
 	if (na(val)) {
 	    *i = -1;
@@ -899,7 +899,8 @@ static int parse_genr_critical_input (const char *str,
 	    *dfn = val;
 	}
     }
-    if (dfdstr[0] != '\0') {
+
+    if (*dfdstr != '\0') {
 	val = get_number_or_val(dfdstr, Z, pdinfo);
 	if (na(val)) {
 	    *i = -1;
@@ -907,7 +908,8 @@ static int parse_genr_critical_input (const char *str,
 	    *dfd = val;
 	}
     }
-    if (astr[0] != '\0') {
+
+    if (*astr != '\0') {
 	*a = get_number_or_val(astr, Z, pdinfo);
 	if (na(*a) || *a < 0.0) {
 	    *i = -1;
