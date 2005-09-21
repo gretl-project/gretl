@@ -47,7 +47,9 @@ const char negval[] = N_("\nEnter x value (value < 0 will exit menu): ");
 
 double binomial_cdf (int k, int n, double p)
 {
-    return bdtr(k, n, p);
+    double x = bdtr(k, n, p);
+
+    return (isnan(x))? NADBL : x;
 }
 
 /**
@@ -62,7 +64,9 @@ double binomial_cdf (int k, int n, double p)
 
 double binomial_pvalue (int k, int n, double p)
 {
-    return bdtrc(k, n, p);
+    double x = bdtrc(k, n, p);
+
+    return (isnan(x))? NADBL : x;
 }
 
 /**

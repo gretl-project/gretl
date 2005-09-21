@@ -148,99 +148,89 @@ Copyright 1984, 1987, 1995, 2000 by Stephen L. Moshier
 
 #include "mconf.h"
 
-double bdtrc( int k, int n, double p )
+double bdtrc (int k, int n, double p)
 {
-double dk, dn;
+    double dk, dn;
 
-if( (p < 0.0) || (p > 1.0) )
+    if (p < 0.0 || p > 1.0)
 	goto domerr;
-if( k < 0 )
-	return( 1.0 );
+    if (k < 0)
+	return 1.0;
 
-if( n < k )
-	{
-domerr:
-	mtherr( "bdtrc", DOMAIN );
-	return( 0.0 );
-	}
+    if (n < k) {
+    domerr:
+	mtherr("bdtrc", DOMAIN);
+	return 0.0;
+    }
 
-if( k == n )
-	return( 0.0 );
-dn = n - k;
-if( k == 0 )
-	{
-	if( p < .01 )
-		dk = -cephes_exp( dn * cephes_log(-p) );
+    if (k == n)
+	return 0.0;
+    dn = n - k;
+    if (k == 0) {
+	if (p < .01)
+	    dk = -cephes_exp(dn * cephes_log(-p));
 	else
-		dk = 1.0 - pow( 1.0-p, dn );
-	}
-else
-	{
+	    dk = 1.0 - pow(1.0 - p, dn);
+    } else {
 	dk = k + 1;
-	dk = incbet( dk, dn, p );
-	}
-return( dk );
+	dk = incbet(dk, dn, p);
+    }
+
+    return dk;
 }
 
-double bdtr( int k, int n, double p )
+double bdtr (int k, int n, double p)
 {
-double dk, dn;
+    double dk, dn;
 
-if( (p < 0.0) || (p > 1.0) )
+    if (p < 0.0 || p > 1.0)
 	goto domerr;
-if( (k < 0) || (n < k) )
-	{
-domerr:
-	mtherr( "bdtr", DOMAIN );
-	return( 0.0 );
-	}
+    if (k < 0 || n < k) {
+    domerr:
+	mtherr("bdtr", DOMAIN);
+	return 0.0;
+    }
 
-if( k == n )
-	return( 1.0 );
+    if (k == n)
+	return 1.0;
 
-dn = n - k;
-if( k == 0 )
-	{
-	dk = pow( 1.0-p, dn );
-	}
-else
-	{
+    dn = n - k;
+    if (k == 0) {
+	dk = pow(1.0 - p, dn);
+    } else {
 	dk = k + 1;
-	dk = incbet( dn, dk, 1.0 - p );
-	}
-return( dk );
+	dk = incbet(dn, dk, 1.0 - p);
+    }
+
+    return dk;
 }
 
-
-double bdtri( int k, int n, double y )
+double bdtri (int k, int n, double y)
 {
-double dk, dn, p;
+    double dk, dn, p;
 
-if( (y < 0.0) || (y > 1.0) )
+    if (y < 0.0 || y > 1.0)
 	goto domerr;
-if( (k < 0) || (n <= k) )
-	{
-domerr:
-	mtherr( "bdtri", DOMAIN );
-	return( 0.0 );
-	}
+    if (k < 0 || n <= k) {
+    domerr:
+	mtherr("bdtri", DOMAIN);
+	return 0.0;
+    }
 
-dn = n - k;
-if( k == 0 )
-	{
-	if( y > 0.8 )
-		p = -cephes_exp( cephes_log(y-1.0) / dn );
+    dn = n - k;
+    if (k == 0) {
+	if (y > 0.8)
+	    p = -cephes_exp(cephes_log(y - 1.0) / dn);
 	else
-		p = 1.0 - pow( y, 1.0/dn );
-	}
-else
-	{
+	    p = 1.0 - pow(y, 1.0 / dn);
+    } else {
 	dk = k + 1;
-	p = incbet( dn, dk, 0.5 );
-	if( p > 0.5 )
-		p = incbi( dk, dn, 1.0-y );
+	p = incbet(dn, dk, 0.5);
+	if (p > 0.5)
+	    p = incbi(dk, dn, 1.0 - y);
 	else
-		p = 1.0 - incbi( dn, dk, y );
-	}
-return( p );
+	    p = 1.0 - incbi(dn, dk, y);
+    }
+
+    return p;
 }

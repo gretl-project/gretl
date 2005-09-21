@@ -20,6 +20,7 @@
 /* calculator.c for gretl */
 
 #define NTESTS 6
+#define NPVAL 6
 #define NLOOKUPS 5
 #define NTESTENTRY 7
 #define NLOOKUPENTRY 4
@@ -72,7 +73,8 @@ enum {
     T_PVAL,
     CHISQ_PVAL,
     F_PVAL,
-    GAMMA_PVAL
+    GAMMA_PVAL,
+    BINOMIAL_PVAL
 };
 
 enum {
@@ -113,7 +115,7 @@ static int printnum (char *dest, const char *s, int d)
 	    return 1;
 	}
     } else if (d != 0) {
-	sprintf(numstr, "%f ", atof(s));
+	sprintf(numstr, "%g ", atof(s));
     } else {
 	sprintf(numstr, "%d ", atoi(s));
     }
@@ -122,7 +124,6 @@ static int printnum (char *dest, const char *s, int d)
 
     return 0;
 }
-
 
 /* if pos != 0, value must be positive or it is invalid */ 
 
@@ -225,12 +226,10 @@ static void get_critical (GtkWidget *w, gpointer data)
     if ((0 < i && i < 4 && df <= 0) || (i == 3 && n <= 0)) {
 	errbox(_("Invalid degrees of freedom"));
 	err = 1;
-    }
-    else if (i == 4 && n <= 0) {
+    } else if (i == 4 && n <= 0) {
 	errbox(_("Invalid sample size"));
 	err = 1;
-    }
-    else if (i != 3 && funp == NULL)  {
+    } else if (i != 3 && funp == NULL)  {
 	err = 1;
     }
 
@@ -278,6 +277,45 @@ static void get_critical (GtkWidget *w, gpointer data)
 	view_buffer(prn, 77, winheight, _("gretl: statistical table"), 
 		    STAT_TABLE, NULL);
     }
+}
+
+static int do_binomial_pdf (const char *s, PRN *prn)
+{
+    int k, n;
+    double p, x1, x2;
+    int err = 0;
+
+    if (sscanf(s, "pvalue 6 %lf %d %d", &p, &n, &k) != 3) {
+	err = 1;
+    } else if (p < 0.0 || p > 1.0) {
+	err = 1;
+    } else if (n <= 0) {
+	err = 1;
+    } else if (k < 0 || k > n) {
+	err = 1;
+    }
+
+    if (err) {
+	errbox(_("Invalid entry"));
+	return err;
+    }
+
+    x1 = binomial_cdf(k, n, p);
+    x2 = binomial_pvalue(k, n, p);
+
+    if (na(x1) || na(x2)) {
+	err = 1;
+    } else {
+	pprintf(prn, _("Binomial distribution: p = %g, %d trials"), p, n);
+	pputc(prn, '\n');
+	pputs(prn, _("x = number of 'successes'"));
+	pputs(prn, "\n\n");
+	pprintf(prn, " P(x <= %d) = %g\n", k, x1);
+	pprintf(prn, " P(x > %d)  = %g\n", k, x2);
+	pprintf(prn, " P(x = %d)  = %g", k, binomial_cdf(k+1, n, p) - x1);
+    }
+
+    return err;
 }
 
 static void get_pvalue (GtkWidget *w, gpointer data)
@@ -373,16 +411,28 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 	}
 	break;
 
+    case BINOMIAL_PVAL: 
+	for (j=0; j<3; j++) {
+	    tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[j]));
+	    if (printnum(cmd, tmp, 1)) return;
+	}
+	break;
+
     default:
 	break;
     }
 
     if (bufopen(&prn)) return;
 
-    batch_pvalue(cmd, (const double **) Z, datainfo, prn);
-    view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, NULL);
+    if (i == BINOMIAL_PVAL) {
+	if (do_binomial_pdf(cmd, prn)) {
+	    return;
+	}
+    } else {
+	batch_pvalue(cmd, (const double **) Z, datainfo, prn);
+    }
 
-    return;
+    view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, NULL);
 }
 
 static void print_pv (PRN *prn, double p1, double p2)
@@ -846,7 +896,8 @@ static void make_dist_tab (GtkWidget *notebook, int code, lookup_t **pval)
 	N_(" t "), 
 	N_("chi-square"), 
 	N_(" F "), 
-	N_("gamma")
+	N_("gamma"),
+	N_("binomial")
     };
    
     box = gtk_vbox_new (FALSE, 0);
@@ -900,9 +951,24 @@ static void make_dist_tab (GtkWidget *notebook, int code, lookup_t **pval)
 	add_lookup_entry(tbl, &tbl_len, N_("x-value"), pval, code, 1);
 	break;
 
+    case BINOMIAL_PVAL:
+	add_lookup_entry(tbl, &tbl_len, N_("Prob"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("trials"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("x-value"), pval, code, 1);
+	break;
+
     default:
 	break;
     } 
+}
+
+static void trash_pval (GtkWidget *w, gpointer data)
+{
+    lookup_t **look = (lookup_t **) data;
+    int i;
+
+    for (i=0; i<NPVAL; i++) free(look[i]);
+    free(look);
 }
 
 static void trash_look (GtkWidget *w, gpointer data)
@@ -1301,6 +1367,10 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	test = mymalloc(NTESTS * sizeof *test);
 	if (test == NULL) return;
 	statp = test;
+    } else if (code == CALC_PVAL) {
+	look = mymalloc(NPVAL * sizeof *look);
+	if (look == NULL) return;
+	statp = look;
     } else {
 	look = mymalloc(NLOOKUPS * sizeof *look);
 	if (look == NULL) return;
@@ -1325,16 +1395,19 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	    test[i]->code = i;
 	    make_test_tab(notebook, i, test[i]);
 	}
+    } else if (code == CALC_PVAL) {
+	for (i=0; i<NPVAL; i++) {
+	    look[i] = mymalloc(sizeof **look);
+	    if (look[i] == NULL) return;
+	    look[i]->book = notebook;
+	    make_dist_tab(notebook, i, look);
+	}	
     } else {
 	for (i=0; i<NLOOKUPS; i++) {
 	    look[i] = mymalloc(sizeof **look);
 	    if (look[i] == NULL) return;
 	    look[i]->book = notebook;
-	    if (code == 0) {
-		make_dist_tab(notebook, i, look);
-	    } else {
-		make_lookup_tab(notebook, i, look);
-	    }
+	    make_lookup_tab(notebook, i, look);
 	}
     }	
 
@@ -1358,6 +1431,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 			tempwid, TRUE, TRUE, 0);
 
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     (code == CALC_PVAL)? G_CALLBACK(trash_pval) :
 		     (code == CALC_TEST)? G_CALLBACK(trash_test) :
 		     G_CALLBACK(trash_look),
 		     statp);
