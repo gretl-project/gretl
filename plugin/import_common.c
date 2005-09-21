@@ -45,8 +45,8 @@ static void time_series_setup (const char *s, DATAINFO *newinfo, int pd,
 	int d0 = atoi(s);
 
 	MS_excel_date_string(newinfo->stobs, d0, pd, flags & DATE_BASE_1904);
-    } else if (*s == '"' || *s == '\'') {
-	s++;
+    } else {
+	if (*s == '"' || *s == '\'') s++;
 	strcpy(newinfo->stobs, s);
 	colonize_obs(newinfo->stobs);
     }
@@ -77,12 +77,6 @@ static int label_is_date (char *str)
     int len = strlen(str);
     int i, d, pd = 0;
     double dd, sub;
-
-    /* skip quote */
-    if (*str == '"' || *str == '\'') {
-	str++;
-	len--;
-    }
 
 #if 0
     fprintf(stderr, "label_is_date: looking at '%s'\n", str);
@@ -298,6 +292,8 @@ consistent_date_labels (int nrows, int row_offset, int col_offset, char **labels
 	if (*test == '\0') {
 	    fprintf(stderr, " no: blank cell at row %d\n", t + 1);
 	    return 0;
+	} else if (*test == '"' || *test == '\'') {
+	    test++;
 	}
 
 	pd = label_is_date(test);
@@ -310,9 +306,7 @@ consistent_date_labels (int nrows, int row_offset, int col_offset, char **labels
 
 	x = atof(test);
 
-	if (t <= tstart + 1) {
-	    pdbak = pd;
-	} else {
+	if (t > tstart) {
 	    if (pd != pdbak) {
 		fprintf(stderr, " no: got inconsistent data frequencies %d and %d\n",
 			pdbak, pd);

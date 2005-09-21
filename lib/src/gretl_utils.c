@@ -808,8 +808,6 @@ int balanced_panel (const DATAINFO *pdinfo)
     return 1;
 }
 
-/* ........................................................... */
-
 double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo)
 {
     if (pdinfo->vector[i]) {
@@ -818,8 +816,6 @@ double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo)
 	return Z[i][0];
     }	
 }
-
-/* ........................................................... */
 
 static void free_mp_varnames (mp_results *mpvals)
 {

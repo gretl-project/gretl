@@ -219,7 +219,9 @@ static int check_for_date_format (wsheet *sheet, const char *fmt)
 {
     fprintf(stderr, "check_for_date_format: fmt = '%s'\n", fmt);
 
-    if (strchr(fmt, '/') || strstr(fmt, "mm") || strstr(fmt, "yy")) {
+    if (strchr(fmt, '/') || 
+	(strstr(fmt, "mm") && !(strchr(fmt, ':'))) || 
+	strstr(fmt, "yy")) {
 	sheet->flags |= FIRST_COL_DATE_FORMAT;
     }
 }
@@ -580,14 +582,15 @@ static int rigorous_dates_check (wsheet *sheet, DATAINFO *pdinfo)
     int startrow = 1 + sheet->row_offset;
     int n, nbak = 0, err = 0;
 
-    fputs("Doing rigorous dates check\n", stderr);
+    fprintf(stderr, "Doing rigorous dates check: pd = %d, stobs = '%s'\n", 
+	    pdinfo->pd, pdinfo->stobs);
 
     for (t=startrow; t<rows; t++) {
 	n = dateton(sheet->label[t], pdinfo);
 	if (t > startrow && n != nbak + 1) {
-	    fprintf(stderr, "problem: date[%d]='%s' but date[%d]='%s'\n",
-		    t - startrow + 1, sheet->label[t],
-		    t - startrow, sheet->label[t-1]);
+	    fprintf(stderr, "problem: date[%d]='%s' (%d) but date[%d]='%s' (%d)\n",
+		    t - startrow + 1, sheet->label[t], n,
+		    t - startrow, sheet->label[t-1], nbak);
 	    err = 1;
 	    break;
 	}

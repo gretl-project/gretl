@@ -54,7 +54,7 @@ double binomial_cdf (int k, int n, double p)
 
 /**
  * binomial_pvalue:
- * @k: maximum number of successes.
+ * @k: number of successes.
  * @n: number of trials.
  * @p: probability of success on each trial.
  *
@@ -291,6 +291,89 @@ static double get_number_or_val (const char *s,
     return NADBL;
 }
 
+static int val_from_string (const char *s, const double **Z,
+			    const DATAINFO *pdinfo, 
+			    double *px, int *pn)
+{
+    double x = NADBL;
+    int n = 0, err = 0;
+
+    if (isalpha((unsigned char) *s)) {
+	int v = varindex(pdinfo, s);
+
+	if (v < pdinfo->v) {
+	    if (pdinfo->vector[v]) {
+		x = Z[v][pdinfo->t1];
+	    } else {
+		x = Z[v][0];
+	    }
+	    if (na(x)) {
+		strcpy(gretl_errmsg, _("Missing values encountered"));
+		err = 1;
+	    } else {
+		n = (int) x;
+	    }
+	} else {
+	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), s);
+	    err = 1;
+	}
+    } else if (*s != '\0') {
+	if (check_atof(s)) {
+	    err = 1;
+	} else {
+	    n = atoi(s);
+	    x = atof(s);
+	}
+    }	
+
+    *px = x;
+    *pn = n;
+
+    return err;
+}
+
+static char normalize_stat (char c)
+{
+    char n = 0;
+
+    switch (c) {
+    case '1':
+    case 'z':
+    case 'n':
+	n = 'z';
+	break;
+    case '2':
+    case 't':
+	n = 't';
+	break;
+    case '3':
+    case 'c':
+    case 'x':
+    case 'X':
+	n = 'X';
+	break;
+    case '4':
+    case 'f':
+    case 'F':
+	n = 'F';
+	break;
+    case '5':
+    case 'g':
+    case 'G':
+	n = 'G';
+	break;
+    case '6':
+    case 'b':
+    case 'B':
+	n = 'B';
+	break;
+    default:
+	break;
+    }
+
+    return n;
+}
+
 /**
  * batch_pvalue:
  * @str: the command line, which should be of one of the following forms:
@@ -299,117 +382,73 @@ static double get_number_or_val (const char *s,
  * pvalue 3 df x (Chi-square);
  * pvalue 4 dfn dfd x (F-distribution); or
  * pvalue 5 mean variance x (Gamma distribution).
+ * pvalue 6 prob n x (Binomial distribution).
  * @Z: the data matrix.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  * 
  * Returns: the probability that a random variable distributed as
  * specified in the command line @str exceeds the value indicated
- * in @str, or a negative number in case of failure.
- *
+ * in @str, or #NADBL in case of failure.
  */
 
 double batch_pvalue (const char *str, 
 		     const double **Z, const DATAINFO *pdinfo, 
                      PRN *prn)
 {
-    int i, df1 = 0, df2 = 0;
+    int n1 = 0, n2 = 0, n3 = 0;
+    double x1 = 0, x2 = 0, x3 = 0;
     char stat = 0;
-    double xx = NADBL, mean = 0, variance = 0, xval = 0, tmp;
-    char cmd[7], df1str[9], df2str[9], fstr[9]; 
-    int gotvar, err = 0;
+    double tmp, pv = NADBL;
+    char s1[9] = {0};
+    char s2[9] = {0};
+    char s3[9] = {0};
+    char cmd[7];
+    int err = 0;
 
     for (;;) {
-	if (sscanf(str, "%c,%[^,],%[^,],%s", &stat, df1str, df2str, fstr) == 4)
+	if (sscanf(str, "%c,%[^,],%[^,],%s", &stat, s1, s2, s3) == 4) {
 	    break;
-	else *df1str = *df2str = *fstr = '\0';
-	if (sscanf(str, "%c,%[^,],%s", &stat, df1str, fstr) == 3)
+	}
+	*s1 = *s2 = *s3 = '\0';
+	if (sscanf(str, "%c,%[^,],%s", &stat, s1, s3) == 3) {
 	    break;
-	else *df1str = *df2str = *fstr = '\0';
-	if (sscanf(str, "%c,%s", &stat, fstr) == 2)
+	} 
+	*s1 = *s2 = *s3 = '\0';
+	if (sscanf(str, "%c,%s", &stat, s3) == 2) {
 	    break;
-	else *df1str = *df2str = *fstr = '\0';
-	if (sscanf(str, "%s %c %s %s %s", cmd, &stat, df1str, df2str, fstr) == 5)
+	} 
+	*s1 = *s2 = *s3 = '\0';
+	if (sscanf(str, "%s %c %s %s %s", cmd, &stat, s1, s2, s3) == 5) {
 	    break;
-	else *df1str = *df2str = *fstr = '\0';
-	if (sscanf(str, "%s %c %s %s", cmd, &stat, df1str, fstr) == 4)
+	} 
+	*s1 = *s2 = *s3 = '\0';
+	if (sscanf(str, "%s %c %s %s", cmd, &stat, s1, s3) == 4) {
 	    break;
-	else *df1str = *df2str = *fstr = '\0';
-	if (sscanf(str, "%s %c %s", cmd, &stat, fstr) == 3)
+	} 
+	*s1 = *s2 = *s3 = '\0';
+	if (sscanf(str, "%s %c %s", cmd, &stat, s3) == 3) {
 	    break;
-	else *df1str = *df2str = *fstr = '\0';
+	} 
+	*s1 = *s2 = *s3 = '\0';
 	break;
     }
 
-    if (isalpha((unsigned char) *df1str)) {
-	gotvar = 0;
-	for (i=0; i<pdinfo->v; i++) {
-	    if (strcmp(df1str, pdinfo->varname[i]) == 0) {
-		gotvar = 1;
-		df1 = (int) Z[i][0];
-		mean = Z[i][0];
-		break;
-	    }
-	}
-	if (!gotvar) {
-	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), df1str);
-	    err = 1;
-	}
-    } else {
-	if (*df1str && check_atof(df1str)) {
-	    err = 1;
-	} else {
-	    df1 = atoi(df1str);
-	    mean = atof(df1str);
-	}
+    stat = normalize_stat(stat);
+
+    if (stat == 0) {
+	pputs(prn, _("\nunrecognized pvalue code\n"));
+	return NADBL;
     }
 
-    if (isalpha((unsigned char) *df2str)) {
-	gotvar = 0;
-	for (i=0; i<pdinfo->v; i++) {
-	    if (strcmp(df2str, pdinfo->varname[i]) == 0) {
-		gotvar = 1;
-		df2 = (int) Z[i][0];
-		variance = Z[i][0];
-		break;
-	    }
-	}
-	if (!gotvar) {
-	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), df2str);
-	    err = 1;
-	}
-    } else {
-	if (*df2str && check_atof(df2str)) {
-	    err = 1;
-	} else {
-	    df2 = atoi(df2str);
-	    variance = atof(df2str);
-	}
+    err = val_from_string(s1, Z, pdinfo, &x1, &n1);
+
+    if (!err) {
+	err = val_from_string(s2, Z, pdinfo, &x2, &n2);
     }
 
-    if (isalpha((unsigned char) *fstr)) {
-	gotvar = 0;
-	for (i=0; i<pdinfo->v; i++) {
-	    if (strcmp(fstr, pdinfo->varname[i]) == 0) {
-		gotvar = 1;
-		xval = get_xvalue(i, Z, pdinfo);
-		if (na(xval)) {
-		    pputs(prn, _("\nstatistic has missing value code\n"));
-		    return NADBL;
-		}		
-		break;
-	    }
-	}
-	if (!gotvar) {
-	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), fstr);
-	    err = 1;
-	}
-    } else {
-	if (*fstr && check_atof(fstr)) {
-	    err = 1;
-	} else {
-	    xval = atof(fstr);
-	}
+    if (!err) {
+	err = val_from_string(s3, Z, pdinfo, &x3, &n3);
     }
 
     if (err) {
@@ -417,96 +456,106 @@ double batch_pvalue (const char *str,
 	return NADBL;
     }
 
+    /* check for missing params */
+    if (stat == 'z' && !*s3) {
+	err = 1;
+    } else if ((stat == 't' || stat == 'X') && (!*s1 || !*s3)) {
+	err = 1;
+    } else if ((stat == 'F' || stat == 'G' || stat == 'B') &&
+	(!*s1 || !*s2 || !*s3)) {
+	err = 1;
+    }
+
+    if (err) {
+	pputs(prn, _("\npvalue: missing parameter\n"));
+	return NADBL;
+    }	
+
     switch (stat) {
 
-    case '1':
     case 'z':
-    case 'n':
-	tmp = xval;
-	if (xval > 0.0) tmp = -tmp;
-	xx = normal_cdf(tmp);
-	if (xx < 0) {
-	    pputs(prn, _("\np-value calculation failed\n"));
-	    return -1;
-	}	
-	pprintf(prn, _("\nStandard normal: area to the %s "
-		"of %g = %g\n"), (xval > 0)? _("right"): _("left"), 
-		xval, xx);
-	pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
-		2.0 * xx, 1.0 - 2.0 * xx);
-	return xx;
+	tmp = x3;
+	if (x3 > 0.0) tmp = -tmp;
+	pv = normal_cdf(tmp);
+	if (pv < 0) {
+	    pv = NADBL;
+	} else if (!na(pv)) {	
+	    pprintf(prn, _("\nStandard normal: area to the %s "
+			   "of %g = %g\n"), (x3 > 0)? _("right"): _("left"), 
+		    x3, pv);
+	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
+		    2.0 * pv, 1.0 - 2.0 * pv);
+	}
+	break;
 
-    case '2':
     case 't':
-	if (!*fstr || !*df1str) {
-	    pputs(prn, _("\npvalue for t: missing parameter\n"));
-	    return -1;
+	pv = t_pvalue_2(x3, n1);
+	if (pv < 0) {
+	    pv = NADBL;
+	} else if (!na(pv)) {
+	    pv *= 0.5;
+	    pprintf(prn, _("\nt(%d): area to the %s of %g = %g\n"), 
+		    n1, (x3 > 0)? _("right"): _("left"),
+		    x3, pv);
+	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
+		    2.0 * pv, 1.0 - 2.0 * pv);
 	}
-	xx = t_pvalue_2(xval, df1);
-	if (xx < 0) {
-	    pputs(prn, _("\np-value calculation failed\n"));
-	    return -1;
-	}
-	xx *= 0.5;
-	pprintf(prn, _("\nt(%d): area to the %s of %g = %g\n"), 
-		df1, (xval > 0)? _("right"): _("left"),
-		xval, xx);
-	pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
-		2.0 * xx, 1.0 - 2.0 * xx);
-	return xx;
+	break;
 
-    case '3':
-    case 'c':
-    case 'x':
     case 'X':
-	if (!*fstr || !*df1str) {
-	    pputs(prn, _("\npvalue for chi-square: missing parameter\n"));
-	    return -1;
+	pv = chisq(x3, n1);
+	if (pv < 0) {
+	    pv = NADBL;
+	} else if (!na(pv)) {
+	    pprintf(prn, _("\nChi-square(%d): area to the right of %g = %g\n"), 
+		    n1, x3, pv);
+	    pprintf(prn, _("(to the left: %g)\n"), 1.0 - pv);
 	}
-	xx = chisq(xval, df1);
-	if (xx < 0) {
-	    pputs(prn, _("\np-value calculation failed\n"));
-	    return -1;
-	}
-	pprintf(prn, _("\nChi-square(%d): area to the right of %g = %g\n"), 
-		df1, xval, xx);
-	pprintf(prn, _("(to the left: %g)\n"), 1.0 - xx);
-	return xx;
+	break;
 
-    case '4':
-    case 'f':
     case 'F':
-	if (!*fstr || !*df1str || !*df2str) {
-	    pputs(prn, _("\npvalue for F: missing parameter\n"));
-	    return -1;
+	pv = fdist(x3, n1, n2);
+	if (pv < 0) {
+	    pv = NADBL;
+	} else if (!na(pv)) {
+	    pprintf(prn, _("\nF(%d, %d): area to the right of %g = %g\n"), 
+		    n1, n2, x3, pv);
+	    pprintf(prn, _("(to the left: %g)\n"), 1.0 - pv);
 	}
-	xx = fdist(xval, df1, df2);
-	if (xx < 0) {
-	    pputs(prn, _("\np-value calculation failed\n"));
-	    return -1;
-	}
-	pprintf(prn, _("\nF(%d, %d): area to the right of %g = %g\n"), 
-		df1, df2, xval, xx);
-	pprintf(prn, _("(to the left: %g)\n"), 1.0 - xx);
-	return xx;
+	break;
 
-    case '5':
-    case 'g':
     case 'G':
-	xx = gamma_dist(mean, variance, xval, 2);
-	if (na(xx))
-	    pputs(prn, _("\nError computing gamma distribution\n"));
-	else
+	pv = gamma_dist(x1, x2, x3, 2);
+	if (pv < 0) {
+	    pv = NADBL;
+	} else if (!na(pv)) {
 	    pprintf(prn, _("\nGamma (mean %g, variance %g, shape %g, scale %g):"
-		    "\n area to the right of %g = %g\n"), 
-		    mean, variance, mean*mean/variance, variance/mean,
-		    xval, 1.0 - xx);
-	return xx;
+			   "\n area to the right of %g = %g\n"), 
+		    x1, x2, x1*x1/x2, x2/x1,
+		    x3, 1.0 - pv);
+	}
+	break;
+
+    case 'B':
+	pv = binomial_pvalue(n3, n2, x1);
+	if (pv < 0) {
+	    pv = NADBL;
+	} else if (!na(pv)) {
+	    pprintf(prn, _("\nBinomial (p = %g, n = %d):"
+			   "\n Prob(x > %d) = %g\n"), 
+		    x1, n2, n3, pv);
+	}
+	break;
 
     default:
-	pputs(prn, _("\nunrecognized pvalue code\n"));
-	return NADBL;
+	break;
     }
+
+    if (na(pv)) {
+	pputs(prn, _("\nError computing pvalue\n"));
+    }
+
+    return pv;
 }
 
 static void putxx (double xx)

@@ -3393,7 +3393,7 @@ static double evaluate_pvalue (const char *s, const double **Z,
 {
     double x = batch_pvalue(s, Z, pdinfo, NULL);
 
-    if (na(x) || x == -1.0) {
+    if (na(x)) {
 	*err = E_INVARG;
     }
 

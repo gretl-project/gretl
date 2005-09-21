@@ -264,7 +264,11 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 	    if (pdinfo->markers) {
 		*marker = '\0';
 		fscanf(fp, sformat, marker);
-		strcpy(pdinfo->S[t], marker);
+		if (*marker == '"' || *marker == '\'') {
+		    strcpy(pdinfo->S[t], marker + 1);
+		} else {
+		    strcpy(pdinfo->S[t], marker);
+		}
 	    }
 	    for (i=1; i<pdinfo->v; i++) {
 		if ((fscanf(fp, "%lf", &Z[i][t])) != 1) {
@@ -664,6 +668,8 @@ static int get_dot_pos (const char *s)
     return pos;
 }
 
+#define DATES_DEBUG 0
+
 static int 
 real_dateton (const char *date, const DATAINFO *pdinfo,
 	      int nolimit)
@@ -674,6 +680,9 @@ real_dateton (const char *date, const DATAINFO *pdinfo,
        treat accordingly */
 
     if (calendar_data(pdinfo)) {
+#if DATES_DEBUG
+	fprintf(stderr, "dateton: treating as calendar data\n");
+#endif
 	if (pdinfo->markers && pdinfo->S != NULL) {
 	    /* "hard-wired" calendar dates as strings */
 	    for (t=0; t<pdinfo->n; t++) {
@@ -705,6 +714,9 @@ real_dateton (const char *date, const DATAINFO *pdinfo,
 
     else if (dataset_is_daily(pdinfo) ||
 	     dataset_is_weekly(pdinfo)) {
+#if DATES_DEBUG
+	fprintf(stderr, "dateton: treating as undated time series\n");
+#endif
 	if (sscanf(date, "%d", &t) && t > 0) {
 	    n = t - 1;
 	}
@@ -715,6 +727,9 @@ real_dateton (const char *date, const DATAINFO *pdinfo,
     else if (pdinfo->markers && pdinfo->S != NULL) {
 	char test[OBSLEN];
 
+#if DATES_DEBUG
+	fprintf(stderr, "dateton: working from marker strings\n");
+#endif
 	maybe_unquote_label(test, date);
 	for (t=0; t<pdinfo->n; t++) {
 	    if (!strcmp(test, pdinfo->S[t])) {
@@ -741,6 +756,9 @@ real_dateton (const char *date, const DATAINFO *pdinfo,
     else {
 	int dotpos1, dotpos2;
 
+#if DATES_DEBUG
+	fprintf(stderr, "dateton: treating as regular numeric obs\n");
+#endif
 	if (bad_date_string(date)) {
 	    return -1;
 	}
@@ -776,6 +794,7 @@ real_dateton (const char *date, const DATAINFO *pdinfo,
     }
 
     if (!nolimit && pdinfo->n > 0 && n >= pdinfo->n) {
+	fprintf(stderr, "n = %d, pdinfo->n = %d: out of bounds\n", n, pdinfo->n);
 	sprintf(gretl_errmsg, _("Observation number out of bounds"));
 	n = -1; 
     }
@@ -1318,13 +1337,18 @@ int write_data (const char *fname, const int *list,
 	
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (!omit_obs) {
+		/* note: we want the single quote before the obs
+		   string for use with spreadsheet programs, which may
+		   be tempted to read the cell content as numeric (and
+		   hence foul up date recognition)
+		*/
 		if (pdinfo->S != NULL) {
-		    fprintf(fp, "\"%s\"%c", pdinfo->S[t], delim);
+		    fprintf(fp, "\"'%s\"%c", pdinfo->S[t], delim);
 		} else if (pdinfo->structure != CROSS_SECTION) {
 		    char tmp[OBSLEN];
 
 		    ntodate_full(tmp, t, pdinfo);
-		    fprintf(fp, "\"%s\"%c", tmp, delim);
+		    fprintf(fp, "\"'%s\"%c", tmp, delim);
 		}
 	    }
 	    for (i=1; i<=l0; i++) { 
@@ -3345,8 +3369,13 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	    }
 	    csvstr[i] = 0;
 	    if (k == 0 && (blank_1 || obs_1) && csvinfo->S != NULL) {
+		char *S = csvstr;
+
 		csvinfo->S[t][0] = 0;
-		strncat(csvinfo->S[t], csvstr, OBSLEN - 1);
+		if (*S == '"' || *S == '\'') {
+		    S++;
+		}
+		strncat(csvinfo->S[t], S, OBSLEN - 1);
 		iso_to_ascii(csvinfo->S[t]);
 	    } else {
 		nv = (blank_1 || obs_1)? k : k + 1;
