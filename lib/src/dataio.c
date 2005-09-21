@@ -2517,9 +2517,15 @@ static int compare_ranges (const DATAINFO *pdinfo,
 #endif
 
     if (sd1 < 0) {
-	fprintf(stderr, "addinfo->stobs: '%s', can't figure\n", 
-		addinfo->stobs);
-	addobs = -1;
+	/* case: new data start earlier than old */
+	if (ed1 < 0) {
+	    fprintf(stderr, "no overlap in ranges, can't merge\n");
+	} else if (ed1 > ed0) {
+	    fprintf(stderr, "new data start earlier, end later, can't handle\n");
+	} else {
+	    *offset = sd1;
+	    addobs = 0;
+	}
     } else if (sd1 == 0 && ed1 == ed0) {
 	/* case: exact match of ranges */
 	*offset = 0;
@@ -2547,7 +2553,7 @@ static int compare_ranges (const DATAINFO *pdinfo,
 	}
     }
 
-    if (sd1 < 0) {
+    if (addobs < 0) {
 	fputs("compare_ranges: returning error\n", stderr);
     }
 
