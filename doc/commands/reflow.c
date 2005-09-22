@@ -421,7 +421,7 @@ int process_para (char *s, char *inbuf, int ptype)
 
 int main (void)
 { 
-    char buf[8096]; /* won't handle paragraphs > 8Kb */
+    char buf[32384]; /* won't handle paragraphs > 32Kb */
     char line[128];
     int blank = 0;
 
