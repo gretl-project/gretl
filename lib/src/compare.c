@@ -1690,7 +1690,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    fputs("set nokey\n", fq);
 	    fprintf(fq, "plot \\\n%g+%g*x title '' w lines lt 2, \\\n", xx - K*yy, yy);
 	    fprintf(fq, "%g-%g*x title '' w lines lt 2, \\\n", -xx + K*yy, yy);
-	    fputs("'-' using 1:2 w lp linespoints 1\n", fq);
+	    fputs("'-' using 1:2 w linespoints lt 1\n", fq);
 
 	    for (j=0; j<n_est; j++) { 
 		t = pmod->t1 + K + j;

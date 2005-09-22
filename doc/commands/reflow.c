@@ -410,6 +410,11 @@ int process_para (char *s, char *inbuf, int ptype)
 	}
     }
 
+#if 0
+    fprintf(stderr, "process_para: strlen(buf) = %d\n",
+	    (int) strlen(buf));
+#endif
+
     if (ptype != TABLE) {
 	format_buf(buf, ptype);
     } else {
