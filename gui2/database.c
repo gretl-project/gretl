@@ -204,7 +204,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 	list[0] = 1; list[1] = 1;
 	err = boxplots(list, NULL, dbZ, dbdinfo, 0);
 	if (err) {
-	   errbox(_("boxplot command failed"));
+	    errbox(_("boxplot command failed"));
 	}
 	return;
     }
@@ -294,10 +294,21 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 
 	n = datainfo->n;
 
-	if (sinfo->pd > datainfo->pd) {
+	if (sinfo->pd < datainfo->pd) {
+	    /* the frequency of the new var is lower (FIXME) */
+	    if (datainfo->pd != 1 && datainfo->pd != 4 && sinfo->pd != 12) {
+		errbox(_("Sorry, can't handle this conversion yet!"));
+		if (!overwrite) {
+		    dataset_drop_last_variables(1, &Z, datainfo);
+		}
+		return;
+	    }
+#if 0
+	    xvec = expand_db_series(dbZ[1], sinfo, datainfo->pd);
+#endif
+	} else if (sinfo->pd > datainfo->pd) {
 	    /* the frequency of the new var is higher */
-	    if (datainfo->pd != 1 && datainfo->pd != 4 &&
-		sinfo->pd != 12) {
+	    if (datainfo->pd != 1 && datainfo->pd != 4 && sinfo->pd != 12) {
 		errbox(_("Sorry, can't handle this conversion yet!"));
 		if (!overwrite) {
 		    dataset_drop_last_variables(1, &Z, datainfo);
@@ -959,7 +970,7 @@ static int populate_remote_series_list (windata_t *vwin, char *buf)
 #ifndef OLD_GTK
 static void insert_and_free_db_table (db_table *tbl, GtkTreeView *view)
 #else
-static void insert_and_free_db_table (db_table *tbl, GtkCList *clist)
+     static void insert_and_free_db_table (db_table *tbl, GtkCList *clist)
 #endif     
 {
     int i;

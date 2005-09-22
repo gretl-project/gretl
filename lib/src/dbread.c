@@ -1166,23 +1166,24 @@ void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo,
 int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 {
     double sd0, sdn_new, sdn_old;
+    int err = 0;
 
     if (sinfo->pd < pdinfo->pd) {
 	strcpy(gretl_errmsg, _("You can't add a lower frequency series to a\nhigher "
-	       "frequency working data set."));
-	return 1;
+			       "frequency working data set."));
+	err = 1;
+    } else {
+	sd0 = get_date_x(sinfo->pd, sinfo->stobs);
+	sdn_new = get_date_x(sinfo->pd, sinfo->endobs);
+	sdn_old = get_date_x(pdinfo->pd, pdinfo->endobs);
+	if (sd0 > sdn_old || sdn_new < pdinfo->sd0) {
+	    strcpy(gretl_errmsg, _("Observation range does not overlap\nwith the working "
+				   "data set"));
+	    err = 1;
+	}
     }
-
-    sd0 = get_date_x(sinfo->pd, sinfo->stobs);
-    sdn_new = get_date_x(sinfo->pd, sinfo->endobs);
-    sdn_old = get_date_x(pdinfo->pd, pdinfo->endobs);
-    if (sd0 > sdn_old || sdn_new < pdinfo->sd0) {
-	strcpy(gretl_errmsg, _("Observation range does not overlap\nwith the working "
-	       "data set"));
-	return 1;
-    }
-
-    return 0;
+    
+    return err;
 }
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
