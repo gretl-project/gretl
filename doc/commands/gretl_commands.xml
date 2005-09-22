@@ -3621,6 +3621,118 @@
     </description>
   </command>
 
+  <command name="mle" section="Estimation"
+    label="Maximum likelihood estimation">
+
+    <usage>
+      <arguments>
+        <argument>log-likelihood function</argument>
+        <argument>derivatives</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print details of iterations</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description context="gui">
+
+      <para>Performs Maximum Likelihood (ML) estimation using the BFGS
+	(Broyden, Fletcher, Goldfarb, Shanno) algorithm. You must
+	specify the log-likelihood function; it is recommended that you
+	also supply expressions for the derivatives of this function
+	with respect to each of the parameters if possible.</para>
+
+      <para>Simple example: Suppose we have a series X with values 0
+	or 1 and we wish to obtain the maximum likelihood estimate of
+	the probability, p, that X = 1.  (In this simple case we can
+	guess in advance that the ML estimate of p will simply equal
+	the proportion of Xs equal to 1 in the sample.)
+      </para>
+
+      <para>The parameter p must first be added to the dataset and
+	given an initial value.  This can be done using the genr
+	command or via menu choices.  Appropriate <quote>genr</quote>
+	lines may be typed into the MLE specification window prior to
+	the specification of the log-likelihood function.</para>
+
+      <para>In the MLE window we type the following
+	lines:</para>
+
+      <code>
+	loglik = X*log(p) + (1-X)*log(1-p)
+	deriv p = X/p - (1-X)/(1-p)
+      </code>
+
+      <para>
+	The first line specifies the log-likelihood function, and the
+	next line supplies the derivative of that function with
+	respect to the parameter p.  If no "deriv" lines are given, a
+	numerical approximation to the derivatives is computed.
+      </para>
+
+      <para>
+	If the parameter p was not previously declared we could
+	preface the above lines with something like the following:
+      </para>
+
+      <code>
+	genr p = 0.5
+      </code>
+
+    </description>
+
+    <description context="cli">
+
+      <para>
+	Performs Maximum Likelihood (ML) estimation using the BFGS
+	(Broyden, Fletcher, Goldfarb, Shanno) algorithm. The user must
+	specify the log-likelihood function.  The parameters of this
+	function must be declared and given starting values (using the
+	<cmd>genr</cmd> command) prior to estimation.  Optionally, the
+	user may specify the derivatives of the log-likelihood
+	function with respect to each of the parameters; if analytical
+	derivatives are not supplied, a numerical approximation is
+	computed.
+      </para>
+
+      <para>
+	It is easiest to show what is required by example.  FIXME
+	example needs to be added.
+      </para>
+
+      <para>
+	FIXME empty reference.  The actual MLE commands occupy lines 6
+	to 10. On line 6 the <cmd>mle</cmd> command is given: a
+	dependent variable is specified, followed by an equals sign,
+	followed by a function specification.  The syntax for the
+	expression on the right is the same as that for the
+	<cmd>genr</cmd> command.  The next three lines specify the
+	derivatives of the log-likelihood function with respect to
+	each of the parameters in turn.  Each line begins with the
+	keyword <cmd>deriv</cmd>, gives the name of a parameter, an
+	equals sign, and an expression whereby the derivative can be
+	calculated (again, the syntax here is the same as for
+	<cmd>genr</cmd>). These <cmd>deriv</cmd> lines are optional,
+	but it is recommended that you supply them if possible. Line
+	10, <cmd>end mle</cmd>, completes the command and calls for
+	estimation.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Maximum likelihood</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="modeltab" section="Utilities"
     label="The model table">
 
