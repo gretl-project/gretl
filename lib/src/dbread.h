@@ -83,6 +83,9 @@ int get_rats_data_by_series_number (const char *fname,
 double *compact_db_series (const double *src, SERIESINFO *sinfo,
 			   int target_pd, int method);
 
+double *expand_db_series (const double *src, SERIESINFO *sinfo,
+			  int target_pd);
+
 int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
 		 PRN *prn);
 

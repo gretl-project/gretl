@@ -913,6 +913,61 @@ double *compact_db_series (const double *src, SERIESINFO *sinfo,
     return x;
 }
 
+/* Expand a single series from a database, for importation 
+   into a working dataset of higher frequency.  At present
+   this is permitted only for the cases:
+
+     annual    -> quarterly
+     annual    -> monthly
+     quarterly -> monthly
+*/
+
+double *expand_db_series (const double *src, SERIESINFO *sinfo,
+			  int target_pd)
+{
+    char stobs[12] = {0};
+    int oldn = sinfo->nobs;
+    int mult, newn;
+    double *x = NULL;
+    int j, s, t;
+
+    mult = target_pd / sinfo->pd;
+    newn = mult * sinfo->nobs;
+
+    x = malloc(newn * sizeof *x);
+    if (x == NULL) {
+	return NULL;
+    }    
+
+    s = 0;
+    for (t=0; t<oldn; t++) {
+	for (j=0; j<mult; j++) {
+	    x[s++] = src[t];
+	}
+    }
+
+    if (sinfo->pd == 1) {
+	strcpy(stobs, sinfo->stobs);
+	if (target_pd == 4) {
+	    strcat(stobs, ":1");
+	} else {
+	    strcat(stobs, ":01");
+	}
+    } else {
+	int yr, qtr, mo;
+
+	sscanf(sinfo->stobs, "%d.%d", &yr, &qtr);
+	mo = (qtr - 1) * 3 + 1;
+	sprintf(stobs, "%d:%02d", yr, mo);
+    }
+
+    strcpy(sinfo->stobs, stobs);
+    sinfo->pd = target_pd;
+    sinfo->nobs = newn;
+
+    return x;
+}
+
 /* ........................................................... */
 
 int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
@@ -1160,7 +1215,11 @@ void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo,
 		     int *pad1, int *pad2)
 {
     *pad1 = dateton(sinfo->stobs, pdinfo); 
+    fprintf(stderr, "pad1 = dateton(%s) = %d\n", sinfo->stobs, *pad1);
+
     *pad2 = pdinfo->n - sinfo->nobs - *pad1;
+    fprintf(stderr, "pad2 = pdinfo->n - sinfo->nobs - pad1 = %d - %d - %d = %d\n", 
+	    pdinfo->n, sinfo->nobs, *pad1, *pad2);
 } 
 
 int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
@@ -1169,10 +1228,14 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
     int err = 0;
 
     if (sinfo->pd < pdinfo->pd) {
-	strcpy(gretl_errmsg, _("You can't add a lower frequency series to a\nhigher "
-			       "frequency working data set."));
-	err = 1;
-    } else {
+	if (sinfo->pd != 1 && sinfo->pd != 4 && 
+	    pdinfo->pd != 4 && pdinfo->pd != 12) {
+	    strcpy(gretl_errmsg, _("Sorry, can't handle this conversion yet!"));
+	    err = 1;
+	} 
+    }
+
+    if (!err) {
 	sd0 = get_date_x(sinfo->pd, sinfo->stobs);
 	sdn_new = get_date_x(sinfo->pd, sinfo->endobs);
 	sdn_old = get_date_x(pdinfo->pd, pdinfo->endobs);

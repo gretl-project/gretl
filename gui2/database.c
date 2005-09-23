@@ -258,24 +258,32 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
     int n, t, start, stop, pad1 = 0, pad2 = 0;
     int compact_method = COMPACT_AVG;
     int overwrite = 0;
-    int err = 0;
+    int resp, err = 0;
 
     if (data_status) { 
+	/* we already have data in gretl's workspace */
 	int dbv;
 
-	/* we already have data in gretl's workspace */
 	if (check_db_import(sinfo, datainfo)) {
 	    errbox(get_gretl_errmsg());
 	    return;
 	}
 
+	if (sinfo->pd < datainfo->pd) {
+	    resp = yes_no_dialog("gretl", 
+				 _("Do you really want to add a lower frequency series\n"
+				   "to a higher frequency dataset?"), 0);
+	    if (resp != GRETL_YES) {
+		return;
+	    }
+	}
+
 	/* is there already a var of this name? */
 	dbv = varindex(datainfo, sinfo->varname);
 	if (dbv < datainfo->v) {
-	    int resp = yes_no_dialog ("gretl",                      
-				      _("There is already a variable of this name\n"
-					"in the dataset.  OK to overwrite it?"), 0);
-
+	    resp = yes_no_dialog ("gretl",                      
+				  _("There is already a variable of this name\n"
+				    "in the dataset.  OK to overwrite it?"), 0);
 	    if (resp == GRETL_YES) {
 		overwrite = 1;
 		/* pick up on pre-registered compaction method? */
@@ -295,17 +303,19 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 	n = datainfo->n;
 
 	if (sinfo->pd < datainfo->pd) {
-	    /* the frequency of the new var is lower (FIXME) */
-	    if (datainfo->pd != 1 && datainfo->pd != 4 && sinfo->pd != 12) {
+	    /* the frequency of the new var is lower: we can handle
+	       annual to quarterly or monthly, and quarterly to
+	       monthly
+	    */
+	    if (sinfo->pd != 1 && sinfo->pd != 4 && 
+		datainfo->pd != 4 && datainfo->pd != 12) {
 		errbox(_("Sorry, can't handle this conversion yet!"));
 		if (!overwrite) {
 		    dataset_drop_last_variables(1, &Z, datainfo);
 		}
 		return;
 	    }
-#if 0
 	    xvec = expand_db_series(dbZ[1], sinfo, datainfo->pd);
-#endif
 	} else if (sinfo->pd > datainfo->pd) {
 	    /* the frequency of the new var is higher */
 	    if (datainfo->pd != 1 && datainfo->pd != 4 && sinfo->pd != 12) {
@@ -349,8 +359,6 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 	strcpy(datainfo->varname[dbv], sinfo->varname);
 	strcpy(VARLABEL(datainfo, dbv), sinfo->descrip);
 	get_db_padding(sinfo, datainfo, &pad1, &pad2);
-
-	fprintf(stderr, "pad1 = %d, pad2 = %d\n", pad1, pad2);
 
 	if (pad1 > 0) {
 	    fprintf(stderr, "Padding at start, %d obs\n", pad1);
