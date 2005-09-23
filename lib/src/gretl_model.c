@@ -2258,7 +2258,7 @@ static int model_is_quadratic (const MODEL *pmod, const double **Z,
     x2 = Z[pmod->list[4]];
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (x2[t] != x1[t] * x1[t]) {
+	if (!na(x1[t]) && x2[t] != x1[t] * x1[t]) {
 	    ret = 0;
 	    break;
 	}

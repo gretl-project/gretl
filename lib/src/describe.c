@@ -124,7 +124,7 @@ int gretl_minmax (int t1, int t2, const double *x,
  *
  * Returns: the arithmetic mean of the series @x from obs
  * @t1 to obs @t2, skipping any missing values, or #NADBL 
- * on failure.
+ * in case there are no valid observations.
  */
 
 double gretl_mean (int t1, int t2, const double *x)
@@ -146,11 +146,66 @@ double gretl_mean (int t1, int t2, const double *x)
 	}
     }
 
+    if (n == 0) {
+	return NADBL;
+    }
+
     xbar = sum / n;
     sum = 0.0;
 
     for (t=t1; t<=t2; t++) {
 	if (!(na(x[t]))) {
+	    sum += (x[t] - xbar); 
+	}
+    }
+
+    return xbar + sum / n;
+}
+
+/**
+ * gretl_restricted_mean:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ * @y: criterion series.
+ * @yval: criterion value.
+ *
+ * Returns: the arithmetic mean of the series @x in the
+ * range @t1 to @t2 (inclusive), but including only
+ * observations where the criterion variable @y has the
+ * value @yval -- or #NADBL in case there are no observations 
+ * that satisfy the restriction.
+ */
+
+double gretl_restricted_mean (int t1, int t2, const double *x,
+			      const double *y, double yval)
+{
+    int n;
+    register int t;
+    double xbar, sum = 0.0;
+
+    n = t2 - t1 + 1;
+    if (n <= 0) {
+	return NADBL;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t]) && y[t] == yval) {
+	    sum += x[t];
+	} else {
+	    n--;
+	}
+    }
+
+    if (n == 0) {
+	return NADBL;
+    }
+
+    xbar = sum / n;
+    sum = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t]) && y[t] == yval) {
 	    sum += (x[t] - xbar); 
 	}
     }
@@ -277,6 +332,51 @@ double gretl_variance (int t1, int t2, const double *x)
 }
 
 /**
+ * gretl_restricted_variance:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @y: criterion series.
+ * @yval: criterion value.
+ * @x: data series.
+ *
+ * Returns: the variance of the series @x from obs
+ * @t1 to obs @t2, skipping any missing values and
+ * observations where the series @y does not have value
+ * @yval, or #NADBL on failure.
+ */
+
+double gretl_restricted_variance (int t1, int t2, const double *x,
+				  const double *y, double yval)
+{
+    int t, n = t2 - t1 + 1;
+    double sumsq, xx, xbar;
+
+    if (n == 0) {
+	return NADBL;
+    }
+
+    xbar = gretl_restricted_mean(t1, t2, x, y, yval);
+    if (na(xbar)) {
+	return NADBL;
+    }
+
+    sumsq = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t]) && y[t] == yval) {
+	    xx = x[t] - xbar;
+	    sumsq += xx * xx;
+	} else {
+	    n--;
+	}
+    }
+
+    sumsq = (n > 1)? sumsq / (n - 1) : 0.0;
+
+    return (sumsq >= 0)? sumsq : NADBL;
+}
+
+/**
  * gretl_stddev:
  * @t1: starting observation.
  * @t2: ending observation.
@@ -290,6 +390,28 @@ double gretl_variance (int t1, int t2, const double *x)
 double gretl_stddev (int t1, int t2, const double *x)
 {
     double xx = gretl_variance(t1, t2, x);
+
+    return (na(xx))? xx : sqrt(xx);
+}
+
+/**
+ * gretl_restricted_stddev:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ * @y: criterion series.
+ * @yval: criterion value.
+ *
+ * Returns: the standard deviation of the series @x from obs
+ * @t1 to obs @t2, skipping any missing values and observation
+ * where the series @y does not have value @yval, or #NADBL 
+ * on failure.
+ */
+
+double gretl_restricted_stddev (int t1, int t2, const double *x,
+				const double *y, double yval)
+{
+    double xx = gretl_restricted_variance(t1, t2, x, y, yval);
 
     return (na(xx))? xx : sqrt(xx);
 }

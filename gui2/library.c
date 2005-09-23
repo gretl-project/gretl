@@ -2165,6 +2165,7 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
     char title[64], line[MAXLINE];
     windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
     MODEL *pmod = (MODEL *) vwin->data;
+    gretl_restriction_set *my_rset = NULL;
     int got_start_line = 0, got_end_line = 0;
     int err = 0;
 
@@ -2187,17 +2188,16 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 	    got_start_line = 1;
 	}
 
-	if (rset == NULL) {
-	    rset = restriction_set_start(line, pmod, datainfo);
-	    if (rset == NULL) {
+	if (my_rset == NULL) {
+	    my_rset = restriction_set_start(line, pmod, datainfo);
+	    if (my_rset == NULL) {
  		err = 1;
 		gui_errmsg(err);
 	    }
 	} else {
-	    err = restriction_set_parse_line(rset, line);
+	    err = restriction_set_parse_line(my_rset, line);
 	    if (err) {
 		gui_errmsg(err);
-		rset = NULL;
 	    }
 	}
     }
@@ -2211,8 +2211,7 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 
     if (bufopen(&prn)) return; 
 
-    err = gretl_restriction_set_finalize(rset, prn);
-    rset = NULL;
+    err = gretl_restriction_set_finalize(my_rset, prn);
 
     if (err) {
 	errmsg(err, prn);

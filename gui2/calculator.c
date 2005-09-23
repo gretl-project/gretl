@@ -989,46 +989,136 @@ static void trash_test (GtkWidget *w, gpointer data)
     free(test);
 }
 
-static void 
-populate_stats (GtkWidget *w, gpointer p)
+static int get_restriction_vxy (const char *s, int *vx, int *vy, double *yval)
+{
+    char test[16];
+    char *p, *q = NULL;
+    char *str = g_strdup(s);
+    int err = 0;
+
+    if (str == NULL) {
+	return 1;
+    }
+
+    p = strchr(str, '(');
+    *p = 0;
+    p++;
+
+    if (sscanf(str, "%8s", test) != 1) {
+	err = 1;
+    } else {
+	*vx = varindex(datainfo, test);
+	if (*vx >= datainfo->v) {
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	q = strchr(p, '=');
+	if (q == NULL) {
+	    err = 1;
+	} else {
+	    *q = 0;
+	    q++;
+	}
+    }
+
+    if (!err) {
+	if (sscanf(p, "%8s", test) != 1) {
+	    err = 1;
+	} else {
+	    *vy = varindex(datainfo, test);
+	    if (*vx >= datainfo->v) {
+		err = 1;
+	    }
+	}
+    }
+
+    if (!err) {
+	if (sscanf(q, "%lf", yval) != 1) {
+	    err = 1;
+	}
+    }
+
+    g_free(str);
+
+    return err;
+}
+
+/* fill out the sample statistics boxes based on the user's
+   choice or variable (or variable plus restriction) */
+
+static gint populate_stats (GtkWidget *w, gpointer p)
 {
     test_t *test = g_object_get_data(G_OBJECT(p), "test");
     int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
-    int v, n = datainfo->t2 - datainfo->t1 + 1;
+    int t, n = datainfo->t2 - datainfo->t1 + 1;
+    int vx, vy = -1;
     const gchar *vname;
     char numstr[16];
-    double x;
+    double x1, x2, yval;
 
-    vname = gtk_entry_get_text(GTK_ENTRY(w));
+    vname = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(p)->entry));
 
     if (*vname == 0) {
-	return;
+	return FALSE;
     }
 
-    v = varindex(datainfo, vname);
-    if (v >= datainfo->v) {
-	return;
+    if (strchr(vname, '(') != NULL) {
+	/* e.g. "cholest (gender = 1)" */
+	if (get_restriction_vxy(vname, &vx, &vy, &yval)) {
+	    return FALSE;
+	}
+    } else {
+	vx = varindex(datainfo, vname);
+	if (vx >= datainfo->v) {
+	    return FALSE;
+	}
+    }
+
+    for (t=datainfo->t1; t<=datainfo->t2; t++) {
+	if (na(Z[vx][t]) || (vy > 0 && Z[vy][t] != yval)) {
+	    n--;
+	}
+    }
+
+    if (n == 0) {		
+	sprintf(errtext, _("Data missing for variable '%s'"),
+		datainfo->varname[vx]);
+	errbox(errtext);
+	return FALSE;
     }
 
     if (test->code == ONE_MEAN || test->code == TWO_MEANS) {
-	x = gretl_mean(datainfo->t1, datainfo->t2, Z[v]);
-	sprintf(numstr, "%.10g", x);
+	if (vy < 0) {
+	    x1 = gretl_mean(datainfo->t1, datainfo->t2, Z[vx]);
+	    x2 = gretl_stddev(datainfo->t1, datainfo->t2, Z[vx]);
+	} else {
+	    x1 = gretl_restricted_mean(datainfo->t1, datainfo->t2, 
+				      Z[vx], Z[vy], yval);
+	    x2 = gretl_restricted_stddev(datainfo->t1, datainfo->t2, 
+					 Z[vx], Z[vy], yval);
+	}
+	sprintf(numstr, "%.10g", x1);
 	gtk_entry_set_text(GTK_ENTRY(test->entry[pos]), numstr);
-
-	x = gretl_stddev(datainfo->t1, datainfo->t2, Z[v]);
-	sprintf(numstr, "%.10g", x);
+	sprintf(numstr, "%.10g", x2);
 	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 1]), numstr);
-
 	sprintf(numstr, "%d", n);
 	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 2]), numstr);
     } else if (test->code == ONE_VARIANCE || test->code == TWO_VARIANCES) {
-	x = gretl_variance(datainfo->t1, datainfo->t2, Z[v]);
-	sprintf(numstr, "%.10g", x);
+	if (vy < 0) {
+	    x1 = gretl_variance(datainfo->t1, datainfo->t2, Z[vx]);
+	} else {
+	    x1 = gretl_restricted_variance(datainfo->t1, datainfo->t2, 
+					   Z[vx], Z[vy], yval);
+	}
+	sprintf(numstr, "%.10g", x1);
 	gtk_entry_set_text(GTK_ENTRY(test->entry[pos]), numstr);
-
 	sprintf(numstr, "%d", n);
 	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 1]), numstr);
     } 
+
+    return TRUE;
 }
 
 static void add_vars_to_combo (GtkWidget *w, int pos)
@@ -1042,6 +1132,16 @@ static void add_vars_to_combo (GtkWidget *w, int pos)
 	}
     }
 
+    if (pos > 0) {
+	/* add first variable at the end of the list */
+	for (i=1; i<datainfo->v; i++) {
+	    if (!is_hidden_variable(i, datainfo)) {
+		vlist = g_list_append(vlist, datainfo->varname[i]);
+		break;
+	    }
+	}
+    }	
+
     gtk_combo_set_popdown_strings(GTK_COMBO(w), vlist);
 }
 
@@ -1050,7 +1150,7 @@ static void switch_combo_ok (GtkWidget *b, gpointer p)
     test_t *test = g_object_get_data(G_OBJECT(p), "test");
     int use_combo = GTK_TOGGLE_BUTTON(b)->active;
     int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
-    int i, maxent = 0;
+    int maxent = 0;
 
     gtk_widget_set_sensitive(GTK_WIDGET(p), use_combo);
 
@@ -1060,13 +1160,19 @@ static void switch_combo_ok (GtkWidget *b, gpointer p)
 	maxent = pos + 2;
     }
 
-    for (i=pos; i<maxent && test->entry[i] != NULL; i++) {
-	gtk_editable_set_editable(GTK_EDITABLE(test->entry[i]), !use_combo);
-    }
-
     if (use_combo) {
 	populate_stats(GTK_COMBO(p)->entry, p);
     }
+}
+
+static gint catch_combo_key (GtkWidget *w, GdkEventKey *key, gpointer p)
+{
+    if (key->keyval == GDK_Return) { 
+	populate_stats(w, p);
+        return TRUE;
+    } 
+
+    return FALSE;
 }
 
 static void add_test_combo (GtkWidget *tbl, gint *tbl_len, 
@@ -1096,12 +1202,11 @@ static void add_test_combo (GtkWidget *tbl, gint *tbl_len,
 
     add_vars_to_combo(tmp, pos);
     gtk_widget_set_sensitive(tmp, FALSE);
-    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(tmp)->entry), FALSE);
 
-    g_signal_connect(G_OBJECT(GTK_ENTRY(GTK_COMBO(tmp)->entry)), "changed", 
+    g_signal_connect(G_OBJECT(GTK_LIST(GTK_COMBO(tmp)->list)), "selection-changed",
 		     G_CALLBACK(populate_stats), tmp);
-    g_signal_connect(G_OBJECT(GTK_ENTRY(GTK_COMBO(tmp)->entry)), "activate", 
-		     G_CALLBACK(h_test), test);
+    g_signal_connect(G_OBJECT(GTK_ENTRY(GTK_COMBO(tmp)->entry)), "key_press_event",
+		     G_CALLBACK(catch_combo_key), tmp);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(switch_combo_ok), tmp);
 }

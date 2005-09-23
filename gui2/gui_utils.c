@@ -2126,10 +2126,15 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 #endif
     windata_t *vwin;
 
-    vwin = common_viewer_new(role, 
-			     (title != NULL)? title : make_viewer_title(role, NULL), 
-			     data, 
-			     1);
+    if (title != NULL) {
+	vwin = common_viewer_new(role, title, data, 1);
+    } else {
+	gchar *tmp = make_viewer_title(role, NULL);
+
+	vwin = common_viewer_new(role, tmp, data, 1);
+	g_free(tmp);
+    }
+
     if (vwin == NULL) return NULL;
 
 #ifdef OLD_GTK
