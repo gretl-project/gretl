@@ -252,6 +252,19 @@ init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
     pdinfo->v = 2;
 }
 
+static gchar *expand_warning (int mult)
+{
+    gchar *msg;
+
+    msg = g_strdup_printf(_("Do you really want to add a lower frequency series\n"
+			    "to a higher frequency dataset?\n\n"
+			    "If you say 'yes' I will expand the source data by\n"
+			    "repeating each value %d times.  In general, this is\n"
+			    "not a valid thing to do."),
+			  mult);
+    return msg;
+}
+
 static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 {
     double *xvec = NULL;
@@ -270,9 +283,10 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 	}
 
 	if (sinfo->pd < datainfo->pd) {
-	    resp = yes_no_dialog("gretl", 
-				 _("Do you really want to add a lower frequency series\n"
-				   "to a higher frequency dataset?"), 0);
+	    gchar *msg = expand_warning(datainfo->pd / sinfo->pd);
+
+	    resp = yes_no_dialog("gretl", msg, 0);
+	    g_free(msg);
 	    if (resp != GRETL_YES) {
 		return;
 	    }
