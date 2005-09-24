@@ -1127,6 +1127,12 @@ static void populate_stats (GtkWidget *w, gpointer p)
 	}
     }
 
+    /* scalars are not valid input in this context */
+    if (!datainfo->vector[vx] || (vy > 0 && !datainfo->vector[vy])) {
+	errbox(_("Invalid entry"));
+	return;
+    }
+
     for (t=datainfo->t1; t<=datainfo->t2; t++) {
 	if (na(Z[vx][t]) || (vy > 0 && eval_ytest(Z[vy][t], yop, yval))) {
 	    n--;
