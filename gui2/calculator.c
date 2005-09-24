@@ -37,28 +37,30 @@
 # define OLD_GTK
 #endif
 
-typedef struct _GretlChild GretlChild;
+typedef struct GretlChild_ GretlChild;
+typedef struct test_t_ test_t;
+typedef struct lookup_t_ lookup_t;
 
-struct _GretlChild {
+struct GretlChild_ {
     GtkWidget *win;
     GtkWidget *vbox;
     GtkWidget *action_area;
     gpointer data;
 };
 
-typedef struct {
+struct test_t_ {
     int code;
     GtkWidget *entry[NTESTENTRY];
     GtkWidget *combo[2];
     GtkWidget *book;
     GtkWidget *check;
     GtkWidget *graph;
-} test_t;
+};
 
-typedef struct {
+struct lookup_t_ {
     GtkWidget *entry[NLOOKUPENTRY];
     GtkWidget *book;
-} lookup_t;
+};
 
 enum {
     NORMAL_DIST,
@@ -967,7 +969,9 @@ static void trash_pval (GtkWidget *w, gpointer data)
     lookup_t **look = (lookup_t **) data;
     int i;
 
-    for (i=0; i<NPVAL; i++) free(look[i]);
+    for (i=0; i<NPVAL; i++) {
+	free(look[i]);
+    }
     free(look);
 }
 
@@ -976,7 +980,9 @@ static void trash_look (GtkWidget *w, gpointer data)
     lookup_t **look = (lookup_t **) data;
     int i;
 
-    for (i=0; i<NLOOKUPS; i++) free(look[i]);
+    for (i=0; i<NLOOKUPS; i++) {
+	free(look[i]);
+    }
     free(look);
 }
 
@@ -985,7 +991,9 @@ static void trash_test (GtkWidget *w, gpointer data)
     test_t **test = (test_t **) data;
     int i;
 
-    for (i=0; i<NTESTS; i++) free(test[i]);
+    for (i=0; i<NTESTS; i++) {
+	free(test[i]);
+    }
     free(test);
 }
 
@@ -1014,13 +1022,10 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
 	}
     }
 
-    fprintf(stderr, "test='%s', vx=%d\n", test, *vx);
-
     if (!err) {
 	int len = strcspn(p, "=<>!");
 
 	q = p + len;
-	fprintf(stderr, "q='%s'\n", q);
 	if (*q == 0) {
 	    err = 1;
 	} else {
@@ -1046,13 +1051,10 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
 	    if (!err) {
 		*q = 0;
 		q += len;
-		fprintf(stderr, "q='%s'\n", q);
 	    }
 	}
     }
 
-    fprintf(stderr, "p='%s'\n", p);
-    
     if (!err) {
 	if (sscanf(p, "%8s", test) != 1) {
 	    err = 1;
@@ -1064,22 +1066,16 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
 	}
     }
 
-    fprintf(stderr, "test='%s', vy=%d\n", test, *vy);
-
     if (!err) {
 	if (sscanf(q, "%lf", yval) != 1) {
 	    err = 1;
 	}
     }
     
-    fprintf(stderr, "q='%s', yval=%g\n", q, *yval);
-
     g_free(str);
 
     return err;
 }
-
-static gchar *varbuf;
 
 /* fill out the sample statistics boxes based on the user's
    choice or variable (or variable plus restriction) */
@@ -1088,6 +1084,7 @@ static void populate_stats (GtkWidget *w, gpointer p)
 {
     test_t *test = g_object_get_data(G_OBJECT(p), "test");
     int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
+    gchar **pbuf = g_object_get_data(G_OBJECT(p), "pbuf");
     int t, n = datainfo->t2 - datainfo->t1 + 1;
     int vx, vy = -1;
     GretlOp yop;
@@ -1099,23 +1096,24 @@ static void populate_stats (GtkWidget *w, gpointer p)
     if (!GTK_WIDGET_SENSITIVE(p)) {
 	return;
     }
-    g_return_if_fail(GTK_IS_ENTRY(GTK_COMBO(p)->entry));
 
+    g_return_if_fail(GTK_IS_ENTRY(GTK_COMBO(p)->entry));
     buf = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(p)->entry));
     if (*buf == 0) {
 	return;
     }
 
-    fprintf(stderr, "populate_stats: buf = '%s'\n", buf);
-
-    if (varbuf != NULL && !strcmp(buf, varbuf)) {
-	/* no real change */
-	fprintf(stderr, " no change, returning\n");
-	return;
+    if (pbuf != NULL) {
+	if (*pbuf != NULL && !strcmp(buf, *pbuf)) {
+	    /* no real change */
+	    return;
+	}
+	if (*pbuf != NULL) {
+	    free(*pbuf);
+	    *pbuf = NULL;
+	}
+	*pbuf = g_strdup(buf);
     }
-
-    free(varbuf);
-    varbuf = g_strdup(buf);
 
     if (strchr(buf, '(') != NULL) {
 	/* e.g. "cholest (gender = 1)" */
@@ -1178,7 +1176,7 @@ static void add_vars_to_combo (GtkWidget *w, int pos)
     int i, vmin = (pos > 0)? 2 : 1;
 
     for (i=vmin; i<datainfo->v; i++) {
-	if (!is_hidden_variable(i, datainfo)) {
+	if (!is_hidden_variable(i, datainfo) && datainfo->vector[i]) {
 	    vlist = g_list_append(vlist, datainfo->varname[i]);
 	}
     }
@@ -1186,7 +1184,7 @@ static void add_vars_to_combo (GtkWidget *w, int pos)
     if (pos > 0) {
 	/* add first variable at the end of the list */
 	for (i=1; i<datainfo->v; i++) {
-	    if (!is_hidden_variable(i, datainfo)) {
+	    if (!is_hidden_variable(i, datainfo) && datainfo->vector[i]) {
 		vlist = g_list_append(vlist, datainfo->varname[i]);
 		break;
 	    }
@@ -1203,8 +1201,6 @@ static void switch_combo_ok (GtkWidget *b, gpointer p)
     int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
     int maxent = 0;
 
-    fprintf(stderr, "** switch_combo_ok\n");
-
     gtk_widget_set_sensitive(GTK_WIDGET(p), use_combo);
 
     if (test->code == ONE_MEAN || test->code == TWO_MEANS) {
@@ -1220,8 +1216,6 @@ static void switch_combo_ok (GtkWidget *b, gpointer p)
 
 static gint catch_combo_key (GtkWidget *w, GdkEventKey *key, gpointer p)
 {
-    fprintf(stderr, "** catch_combo_key\n");
-
     if (key->keyval == GDK_Return) { 
 	populate_stats(NULL, p);
         return TRUE;
@@ -1230,10 +1224,29 @@ static gint catch_combo_key (GtkWidget *w, GdkEventKey *key, gpointer p)
     return FALSE;
 }
 
+static void free_pbuf (GtkWidget *w, gpointer p)
+{
+    gchar **pbuf = g_object_get_data(G_OBJECT(w), "pbuf");
+
+    if (pbuf != NULL) {
+	if (*pbuf != NULL) {
+	    free(*pbuf);
+	}
+	free(pbuf);
+	g_object_set_data(G_OBJECT(w), "pbuf", NULL);
+    }
+}
+
+static void select_child_callback (GtkList *l, GtkWidget *w, gpointer p)
+{
+    populate_stats(NULL, p);
+}
+
 static void add_test_combo (GtkWidget *tbl, gint *tbl_len, 
 			    test_t *test, int pos)
 {
     GtkWidget *button, *tmp;
+    gchar **pbuf;
 
     *tbl_len += 1;
     gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
@@ -1249,6 +1262,13 @@ static void add_test_combo (GtkWidget *tbl, gint *tbl_len,
     g_object_set_data(G_OBJECT(tmp), "test", test);
     g_object_set_data(G_OBJECT(tmp), "pos", GINT_TO_POINTER(pos));
 
+    pbuf = malloc(sizeof *pbuf);
+    if (pbuf != NULL) {
+	*pbuf = NULL;
+	g_object_set_data(G_OBJECT(tmp), "pbuf", pbuf);
+	g_signal_connect(G_OBJECT(tmp), "destroy", G_CALLBACK(free_pbuf), NULL);
+    }
+
     if (pos > 0) {
 	test->combo[1] = tmp;
     } else {
@@ -1261,8 +1281,9 @@ static void add_test_combo (GtkWidget *tbl, gint *tbl_len,
 
     g_signal_connect(G_OBJECT(GTK_ENTRY(GTK_COMBO(tmp)->entry)), "key_press_event",
 		     G_CALLBACK(catch_combo_key), tmp);
-    g_signal_connect(G_OBJECT(GTK_LIST(GTK_COMBO(tmp)->list)), "selection-changed",
-		     G_CALLBACK(populate_stats), tmp);
+    g_signal_connect(G_OBJECT(GTK_LIST(GTK_COMBO(tmp)->list)), "select-child",
+		     G_CALLBACK(select_child_callback), tmp);
+
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(switch_combo_ok), tmp);
 }
