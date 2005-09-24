@@ -706,7 +706,7 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
 	    err = E_ALLOC;
 	}
 	goto bailout;
-    }	
+    }
 
     b = gretl_coeff_vector_from_model(rset->pmod, rset->mask);
     vcv = gretl_vcv_matrix_from_model(rset->pmod, rset->mask);

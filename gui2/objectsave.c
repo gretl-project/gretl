@@ -236,7 +236,7 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
     err = try_add_model_to_session(*ppmod);
 
     if (!err) {
-	MODEL *mnew = malloc(sizeof *mnew);
+	MODEL *mnew = gretl_model_new();
 
 	if (mnew != NULL) {
 	    copy_model(mnew, *ppmod, pdinfo);

@@ -1826,12 +1826,12 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
     /* now work on pointer members */
     gretl_model_init_pointers(targ);
 
-    if (targ->coeff != NULL &&
+    if (src->coeff != NULL &&
 	(targ->coeff = copyvec(src->coeff, src->ncoeff)) == NULL) {
 	return 1;
     }
 
-    if (targ->sderr != NULL &&
+    if (src->sderr != NULL &&
 	(targ->sderr = copyvec(src->sderr, src->ncoeff)) == NULL) {  
 	return 1;
     }
