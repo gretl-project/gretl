@@ -1079,35 +1079,53 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
     return err;
 }
 
+static gchar *varbuf;
+
 /* fill out the sample statistics boxes based on the user's
    choice or variable (or variable plus restriction) */
 
-static gint populate_stats (GtkWidget *w, gpointer p)
+static void populate_stats (GtkWidget *w, gpointer p)
 {
     test_t *test = g_object_get_data(G_OBJECT(p), "test");
     int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
     int t, n = datainfo->t2 - datainfo->t1 + 1;
     int vx, vy = -1;
     GretlOp yop;
-    const gchar *vname;
+    const gchar *buf;
     char numstr[16];
     double x1, x2, yval;
 
-    vname = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(p)->entry));
+    g_return_if_fail(GTK_IS_COMBO(p));
+    if (!GTK_WIDGET_SENSITIVE(p)) {
+	return;
+    }
+    g_return_if_fail(GTK_IS_ENTRY(GTK_COMBO(p)->entry));
 
-    if (*vname == 0) {
-	return FALSE;
+    buf = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(p)->entry));
+    if (*buf == 0) {
+	return;
     }
 
-    if (strchr(vname, '(') != NULL) {
+    fprintf(stderr, "populate_stats: buf = '%s'\n", buf);
+
+    if (varbuf != NULL && !strcmp(buf, varbuf)) {
+	/* no real change */
+	fprintf(stderr, " no change, returning\n");
+	return;
+    }
+
+    free(varbuf);
+    varbuf = g_strdup(buf);
+
+    if (strchr(buf, '(') != NULL) {
 	/* e.g. "cholest (gender = 1)" */
-	if (get_restriction_vxy(vname, &vx, &vy, &yop, &yval)) {
-	    return FALSE;
+	if (get_restriction_vxy(buf, &vx, &vy, &yop, &yval)) {
+	    return;
 	}
     } else {
-	vx = varindex(datainfo, vname);
+	vx = varindex(datainfo, buf);
 	if (vx >= datainfo->v) {
-	    return FALSE;
+	    return;
 	}
     }
 
@@ -1121,7 +1139,7 @@ static gint populate_stats (GtkWidget *w, gpointer p)
 	sprintf(errtext, _("Data missing for variable '%s'"),
 		datainfo->varname[vx]);
 	errbox(errtext);
-	return FALSE;
+	return;
     }
 
     if (test->code == ONE_MEAN || test->code == TWO_MEANS) {
@@ -1152,8 +1170,6 @@ static gint populate_stats (GtkWidget *w, gpointer p)
 	sprintf(numstr, "%d", n);
 	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 1]), numstr);
     } 
-
-    return TRUE;
 }
 
 static void add_vars_to_combo (GtkWidget *w, int pos)
@@ -1187,6 +1203,8 @@ static void switch_combo_ok (GtkWidget *b, gpointer p)
     int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
     int maxent = 0;
 
+    fprintf(stderr, "** switch_combo_ok\n");
+
     gtk_widget_set_sensitive(GTK_WIDGET(p), use_combo);
 
     if (test->code == ONE_MEAN || test->code == TWO_MEANS) {
@@ -1196,14 +1214,16 @@ static void switch_combo_ok (GtkWidget *b, gpointer p)
     }
 
     if (use_combo) {
-	populate_stats(GTK_COMBO(p)->entry, p);
+	populate_stats(NULL, p);
     }
 }
 
 static gint catch_combo_key (GtkWidget *w, GdkEventKey *key, gpointer p)
 {
+    fprintf(stderr, "** catch_combo_key\n");
+
     if (key->keyval == GDK_Return) { 
-	populate_stats(w, p);
+	populate_stats(NULL, p);
         return TRUE;
     } 
 
@@ -1237,11 +1257,12 @@ static void add_test_combo (GtkWidget *tbl, gint *tbl_len,
 
     add_vars_to_combo(tmp, pos);
     gtk_widget_set_sensitive(tmp, FALSE);
+    gtk_combo_disable_activate(GTK_COMBO(tmp));
 
-    g_signal_connect(G_OBJECT(GTK_LIST(GTK_COMBO(tmp)->list)), "selection-changed",
-		     G_CALLBACK(populate_stats), tmp);
     g_signal_connect(G_OBJECT(GTK_ENTRY(GTK_COMBO(tmp)->entry)), "key_press_event",
 		     G_CALLBACK(catch_combo_key), tmp);
+    g_signal_connect(G_OBJECT(GTK_LIST(GTK_COMBO(tmp)->list)), "selection-changed",
+		     G_CALLBACK(populate_stats), tmp);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(switch_combo_ok), tmp);
 }
@@ -1523,9 +1544,9 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 
     gtk_window_set_title(GTK_WINDOW(dialog->win), _(window_titles[code]));
 
-    notebook = gtk_notebook_new ();
+    notebook = gtk_notebook_new();
     gtk_box_pack_start(GTK_BOX(dialog->vbox), notebook, TRUE, TRUE, 0);
-    gtk_widget_show (notebook);
+    gtk_widget_show(notebook);
 
     if (code == CALC_TEST) {
 	for (i=0; i<NTESTS; i++) {
@@ -1557,12 +1578,12 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     gtk_box_pack_start(GTK_BOX(dialog->action_area), 
 		       tempwid, TRUE, TRUE, 0);
 
-    g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      (code == CALC_PVAL)? G_CALLBACK(get_pvalue) :
-		      (code == CALC_DIST)? G_CALLBACK(get_critical) :
-		      G_CALLBACK(h_test_global),
-		      statp);
-    gtk_widget_show (tempwid);
+    g_signal_connect(G_OBJECT (tempwid), "clicked", 
+		     (code == CALC_PVAL)? G_CALLBACK(get_pvalue) :
+		     (code == CALC_DIST)? G_CALLBACK(get_critical) :
+		     G_CALLBACK(h_test_global),
+		     statp);
+    gtk_widget_show(tempwid);
 
     /* Close button */
     tempwid = standard_button(GTK_STOCK_CLOSE);
