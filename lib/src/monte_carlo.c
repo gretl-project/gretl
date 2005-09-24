@@ -40,13 +40,6 @@ typedef long double bigval;
 typedef double bigval;
 #endif
 
-enum inequalities {
-    GT = 1,
-    LT,
-    GTE,
-    LTE
-};
-
 enum loop_types {
     COUNT_LOOP,
     WHILE_LOOP,
@@ -384,13 +377,13 @@ int opstr_to_op (const char *s)
     int op = LOOP_VAL_BAD;
 
     if (strstr(s, ">=")) {
-	op = GTE;
+	op = OP_GTE;
     } else if (strstr(s, ">")) {
-	op = GT;
+	op = OP_GT;
     } else if (strstr(s, "<=")) {
-	op = LTE;
+	op = OP_LTE;
     } else if (strstr(s, "<")) {
-	op = LT;
+	op = OP_LT;
     } 
     
     return op;
@@ -1212,22 +1205,22 @@ eval_numeric_condition (int op, double xl, double xr)
 #if LOOP_DEBUG
     char opstr[4];
 
-    if (op == GT) strcpy(opstr, "GT");
-    else if (op == GTE) strcpy(opstr, "GTE");
-    else if (op == LTE) strcpy(opstr, "LTE");
-    else if (op == LT) strcpy(opstr, "LT");
+    if (op == OP_GT) strcpy(opstr, "GT");
+    else if (op == OP_GTE) strcpy(opstr, "GTE");
+    else if (op == OP_LTE) strcpy(opstr, "LTE");
+    else if (op == OP_LT) strcpy(opstr, "LT");
     else strcpy(opstr, "??");
     fprintf(stderr, "** eval_numeric_condition: xl=%g, xr=%g, "
 	    "op=%s\n", xl, xr, opstr);
 #endif
 
-    if (op == GT) {
+    if (op == OP_GT) {
 	cont = (xl > xr);
-    } else if (op == GTE) {
+    } else if (op == OP_GTE) {
 	cont = (xl >= xr);
-    } else if (op == LTE) {
+    } else if (op == OP_LTE) {
 	cont = (xl <= xr);
-    } else if (op == LT) {
+    } else if (op == OP_LT) {
 	cont = (xl < xr);
     }
 

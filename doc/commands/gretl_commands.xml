@@ -2486,6 +2486,42 @@
 
     </description>
   </command>
+
+  <command name="gui-htest" section="Tests" context="gui"
+    label="Test statistic calculator">
+
+    <description>
+      <para>
+	The hypothesis test calculator will accept numerical values
+	for statistics such as mean, variance or proportion, derived
+	from sources other than the current data set, or (in the case
+	of means and variances) it will calculate values based on a
+	selected variable from the data set.
+      </para>
+
+      <para>
+	If you want to base your test on a variable in the data set,
+	first activate this option by checking the box titled
+	"Use variable from dataset".  Then the drop-down list of
+	variables will become active and you can select a variable.
+      </para>
+
+      <para>
+	In addition to the simple selection of a variable, you can
+	specify a restriction on that variable, by typing (after the
+	name of the primary variable) an expression of the form
+	(variable=value).  For example, suppose you have wage data
+	in the variable called "wage" and you also have a dummy
+	variable called "gender" that equals 1 for males and 0 for
+	females (or vice versa).  Then, in the test for the difference
+	of two means, you could select "wage" in both slots, but add
+	to the top slot "(gender=0)" and to the bottom "(gender=1)".
+	This would then give you a test for the difference between
+	mean male income and mean female income.
+      </para>
+
+    </description>
+  </command>
     
   <command name="hausman" section="Tests"
     label="Hausman test (panel diagnostics)">

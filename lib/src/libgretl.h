@@ -156,6 +156,15 @@ enum gretl_opt_flags {
     OPT_Z = 1 << 20
 };
 
+typedef enum {
+    OP_EQ  = '=',
+    OP_GT  = '>',
+    OP_LT  = '<',
+    OP_NEQ = 21,
+    OP_GTE = 22,
+    OP_LTE = 23
+} GretlOp;
+
 typedef unsigned long gretlopt;
 
 typedef struct VARINFO_ VARINFO;

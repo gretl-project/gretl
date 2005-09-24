@@ -113,12 +113,6 @@ enum retrieve {
     R_TEST_PVAL  /* p-value from last explicit test performed */
 };
 
-enum special_ops {
-    NEQ = 21,
-    GEQ,
-    LEQ
-};
-
 struct genr_func {
     int fnum;
     const char *fword;
@@ -1384,13 +1378,13 @@ static int catch_special_operators (char *s)
 	lshift = 0;
 
 	if (*s == '!' && *(s+1) == '=') {
-	    *s = NEQ;
+	    *s = OP_NEQ;
 	    lshift = 1;
 	} else if (*s == '>' && *(s+1) == '=') {
-	    *s = GEQ;
+	    *s = OP_GTE;
 	    lshift = 1;
 	} else if (*s == '<' && *(s+1) == '=') {
-	    *s = LEQ;
+	    *s = OP_LTE;
 	    lshift = 1;
 	} else if (*s == '*' && *(s+1) == '*') {
 	    *s = '^';
@@ -1426,9 +1420,9 @@ static int op_level (int c)
 	return 2;
     if (c == '+' || c == '-') 
 	return 3;
-    if (c == '>' || c == '<' || c == GEQ || c == LEQ) 
+    if (c == '>' || c == '<' || c == OP_GTE || c == OP_LTE) 
 	return 4;
-    if (c == '=' || c == NEQ) 
+    if (c == '=' || c == OP_NEQ) 
 	return 5;
     if (c == '&') 
 	return 6;
@@ -2820,14 +2814,14 @@ static double calc_xy (double x, double y, char op, int t, int *err)
 	    x = 0.0;
 	}
 	break;
-    case NEQ: /* not equals */
+    case OP_NEQ: /* not equals */
 	if (floateq(x, y)) {
 	    x = 0.0;
 	} else {
 	    x = 1.0;
 	}
 	break;
-    case GEQ: /* greater than or equal */
+    case OP_GTE: /* greater than or equal */
 	if (floateq(x, y)) {
 	    x = 1.0;
 	} else if (x > y) {
@@ -2836,7 +2830,7 @@ static double calc_xy (double x, double y, char op, int t, int *err)
 	    x = 0.0;
 	}
 	break;
-    case LEQ: /* less than or equal */
+    case OP_LTE: /* less than or equal */
 	if (floateq(x, y)) {
 	    x = 1.0;
 	} else if (x < y) {

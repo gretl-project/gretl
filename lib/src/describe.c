@@ -163,22 +163,64 @@ double gretl_mean (int t1, int t2, const double *x)
 }
 
 /**
+ * eval_ytest:
+ * @y: reference value.
+ * @op: operator.
+ * @test: test value.
+ *
+ * Returns: 1 if the expression @y @yop @test (for example
+ * "y = 2" or "y <= 45") evaluates as true, else 0.
+ */
+
+int eval_ytest (double y, GretlOp op, double test)
+{
+    int ret = 0;
+
+    switch (op) {
+    case OP_EQ:
+	ret = (y == test);
+	break;
+    case OP_GT:
+	ret = (y > test);
+	break;
+    case OP_LT:
+	ret = (y < test);
+	break;
+    case OP_NEQ:
+	ret = (y != test);
+	break;
+    case OP_GTE:
+	ret = (y <= test);
+	break;
+    case OP_LTE:
+	ret = (y <= test);
+	break;
+    default:
+	break;
+    }
+
+    return ret;
+}
+
+/**
  * gretl_restricted_mean:
  * @t1: starting observation.
  * @t2: ending observation.
  * @x: data series.
  * @y: criterion series.
+ * @yop: criterion operator.
  * @yval: criterion value.
  *
  * Returns: the arithmetic mean of the series @x in the
  * range @t1 to @t2 (inclusive), but including only
- * observations where the criterion variable @y has the
- * value @yval -- or #NADBL in case there are no observations 
- * that satisfy the restriction.
+ * observations where the criterion variable @y bears the
+ * relationship @yop to the value @yval -- or #NADBL in case 
+ * there are no observations that satisfy the restriction.
  */
 
 double gretl_restricted_mean (int t1, int t2, const double *x,
-			      const double *y, double yval)
+			      const double *y, GretlOp yop, 
+			      double yval)
 {
     int n;
     register int t;
@@ -190,7 +232,7 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
     }
 
     for (t=t1; t<=t2; t++) {
-	if (!na(x[t]) && y[t] == yval) {
+	if (!na(x[t]) && eval_ytest(y[t], yop, yval)) {
 	    sum += x[t];
 	} else {
 	    n--;
@@ -205,7 +247,7 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
     sum = 0.0;
 
     for (t=t1; t<=t2; t++) {
-	if (!na(x[t]) && y[t] == yval) {
+	if (!na(x[t]) && eval_ytest(y[t], yop, yval)) {
 	    sum += (x[t] - xbar); 
 	}
     }
@@ -335,18 +377,21 @@ double gretl_variance (int t1, int t2, const double *x)
  * gretl_restricted_variance:
  * @t1: starting observation.
  * @t2: ending observation.
- * @y: criterion series.
- * @yval: criterion value.
  * @x: data series.
+ * @y: criterion series.
+ * @yop: criterion operator. 
+ * @yval: criterion value.
  *
  * Returns: the variance of the series @x from obs
  * @t1 to obs @t2, skipping any missing values and
- * observations where the series @y does not have value
- * @yval, or #NADBL on failure.
+ * observations where the series @y does not bear the
+ * relationship @yop to the value @yval, or #NADBL on 
+ * failure.
  */
 
 double gretl_restricted_variance (int t1, int t2, const double *x,
-				  const double *y, double yval)
+				  const double *y, GretlOp yop, 
+				  double yval)
 {
     int t, n = t2 - t1 + 1;
     double sumsq, xx, xbar;
@@ -355,7 +400,7 @@ double gretl_restricted_variance (int t1, int t2, const double *x,
 	return NADBL;
     }
 
-    xbar = gretl_restricted_mean(t1, t2, x, y, yval);
+    xbar = gretl_restricted_mean(t1, t2, x, y, yop, yval);
     if (na(xbar)) {
 	return NADBL;
     }
@@ -363,7 +408,7 @@ double gretl_restricted_variance (int t1, int t2, const double *x,
     sumsq = 0.0;
 
     for (t=t1; t<=t2; t++) {
-	if (!na(x[t]) && y[t] == yval) {
+	if (!na(x[t]) && eval_ytest(y[t], yop, yval)) {
 	    xx = x[t] - xbar;
 	    sumsq += xx * xx;
 	} else {
@@ -400,18 +445,20 @@ double gretl_stddev (int t1, int t2, const double *x)
  * @t2: ending observation.
  * @x: data series.
  * @y: criterion series.
+ * @yop: criterion operator.
  * @yval: criterion value.
  *
  * Returns: the standard deviation of the series @x from obs
- * @t1 to obs @t2, skipping any missing values and observation
- * where the series @y does not have value @yval, or #NADBL 
- * on failure.
+ * @t1 to obs @t2, skipping any missing values and observations
+ * where the series @y does not bear the relationship @yop to
+ * the value @yval, or #NADBL on failure.
  */
 
 double gretl_restricted_stddev (int t1, int t2, const double *x,
-				const double *y, double yval)
+				const double *y, GretlOp yop, 
+				double yval)
 {
-    double xx = gretl_restricted_variance(t1, t2, x, y, yval);
+    double xx = gretl_restricted_variance(t1, t2, x, y, yop, yval);
 
     return (na(xx))? xx : sqrt(xx);
 }

@@ -500,7 +500,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
 	if (df1 > 69) {
 	    fputs("log2=log(2.0)\n", fp);
 	    fputs("chi(x)=exp((0.5*df1-1.0)*log(x)-0.5*x-"
-		    "lgamma(0.5*df1)-df1*0.5*log2)\n", fp);
+		  "lgamma(0.5*df1)-df1*0.5*log2)\n", fp);
 	} else {
 	    fprintf(fp, "chi(x)=x**(0.5*df1-1.0)*exp(-0.5*x)/gamma(0.5*df1)"
 		    "/2**(0.5*df1)\n");
@@ -989,7 +989,8 @@ static void trash_test (GtkWidget *w, gpointer data)
     free(test);
 }
 
-static int get_restriction_vxy (const char *s, int *vx, int *vy, double *yval)
+static int get_restriction_vxy (const char *s, int *vx, int *vy, 
+				GretlOp *yop, double *yval)
 {
     char test[16];
     char *p, *q = NULL;
@@ -1013,16 +1014,45 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy, double *yval)
 	}
     }
 
+    fprintf(stderr, "test='%s', vx=%d\n", test, *vx);
+
     if (!err) {
-	q = strchr(p, '=');
-	if (q == NULL) {
+	int len = strcspn(p, "=<>!");
+
+	q = p + len;
+	fprintf(stderr, "q='%s'\n", q);
+	if (*q == 0) {
 	    err = 1;
 	} else {
-	    *q = 0;
-	    q++;
+	    len = 1;
+	    if (!strncmp(q, "!=", 2)) {
+		*yop = OP_NEQ;
+		len = 2;
+	    } else if (!strncmp(q, ">=", 2)) {
+		*yop = OP_GTE;
+		len = 2;
+	    } else if (!strncmp(q, "<=", 2)) {
+		*yop = OP_LTE;
+		len = 2;
+	    } else if (*q == '=') {
+		*yop = OP_EQ;
+	    } else if (*q == '>') {
+		*yop = OP_GT;
+	    } else if (*q == '<') {
+		*yop = OP_LT;
+	    } else {
+		err = 1;
+	    }
+	    if (!err) {
+		*q = 0;
+		q += len;
+		fprintf(stderr, "q='%s'\n", q);
+	    }
 	}
     }
 
+    fprintf(stderr, "p='%s'\n", p);
+    
     if (!err) {
 	if (sscanf(p, "%8s", test) != 1) {
 	    err = 1;
@@ -1034,11 +1064,15 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy, double *yval)
 	}
     }
 
+    fprintf(stderr, "test='%s', vy=%d\n", test, *vy);
+
     if (!err) {
 	if (sscanf(q, "%lf", yval) != 1) {
 	    err = 1;
 	}
     }
+    
+    fprintf(stderr, "q='%s', yval=%g\n", q, *yval);
 
     g_free(str);
 
@@ -1054,6 +1088,7 @@ static gint populate_stats (GtkWidget *w, gpointer p)
     int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
     int t, n = datainfo->t2 - datainfo->t1 + 1;
     int vx, vy = -1;
+    GretlOp yop;
     const gchar *vname;
     char numstr[16];
     double x1, x2, yval;
@@ -1066,7 +1101,7 @@ static gint populate_stats (GtkWidget *w, gpointer p)
 
     if (strchr(vname, '(') != NULL) {
 	/* e.g. "cholest (gender = 1)" */
-	if (get_restriction_vxy(vname, &vx, &vy, &yval)) {
+	if (get_restriction_vxy(vname, &vx, &vy, &yop, &yval)) {
 	    return FALSE;
 	}
     } else {
@@ -1077,7 +1112,7 @@ static gint populate_stats (GtkWidget *w, gpointer p)
     }
 
     for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	if (na(Z[vx][t]) || (vy > 0 && Z[vy][t] != yval)) {
+	if (na(Z[vx][t]) || (vy > 0 && eval_ytest(Z[vy][t], yop, yval))) {
 	    n--;
 	}
     }
@@ -1095,9 +1130,9 @@ static gint populate_stats (GtkWidget *w, gpointer p)
 	    x2 = gretl_stddev(datainfo->t1, datainfo->t2, Z[vx]);
 	} else {
 	    x1 = gretl_restricted_mean(datainfo->t1, datainfo->t2, 
-				      Z[vx], Z[vy], yval);
+				      Z[vx], Z[vy], yop, yval);
 	    x2 = gretl_restricted_stddev(datainfo->t1, datainfo->t2, 
-					 Z[vx], Z[vy], yval);
+					 Z[vx], Z[vy], yop, yval);
 	}
 	sprintf(numstr, "%.10g", x1);
 	gtk_entry_set_text(GTK_ENTRY(test->entry[pos]), numstr);
@@ -1110,7 +1145,7 @@ static gint populate_stats (GtkWidget *w, gpointer p)
 	    x1 = gretl_variance(datainfo->t1, datainfo->t2, Z[vx]);
 	} else {
 	    x1 = gretl_restricted_variance(datainfo->t1, datainfo->t2, 
-					   Z[vx], Z[vy], yval);
+					   Z[vx], Z[vy], yop, yval);
 	}
 	sprintf(numstr, "%.10g", x1);
 	gtk_entry_set_text(GTK_ENTRY(test->entry[pos]), numstr);
@@ -1516,24 +1551,24 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	}
     }	
 
+    /* OK button */
     tempwid = standard_button(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX(dialog->action_area), 
-			tempwid, TRUE, TRUE, 0);
+    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(dialog->action_area), 
+		       tempwid, TRUE, TRUE, 0);
 
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
 		      (code == CALC_PVAL)? G_CALLBACK(get_pvalue) :
 		      (code == CALC_DIST)? G_CALLBACK(get_critical) :
 		      G_CALLBACK(h_test_global),
 		      statp);
-
     gtk_widget_show (tempwid);
 
     /* Close button */
     tempwid = standard_button(GTK_STOCK_CLOSE);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX(dialog->action_area), 
-			tempwid, TRUE, TRUE, 0);
+    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(dialog->action_area), 
+		       tempwid, TRUE, TRUE, 0);
 
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
 		     (code == CALC_PVAL)? G_CALLBACK(trash_pval) :
@@ -1543,8 +1578,19 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog->win);
-
     gtk_widget_show(tempwid);
+
+    /* Help button? */
+    if (code == CALC_TEST) {
+	tempwid = standard_button(GTK_STOCK_HELP);
+	GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+	gtk_box_pack_start(GTK_BOX(dialog->action_area), 
+			   tempwid, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(tempwid), "clicked", 
+			 G_CALLBACK(context_help), 
+			 GINT_TO_POINTER(HTEST));
+	gtk_widget_show(tempwid);
+    }	
 
     gtk_widget_show(dialog->win);
 }

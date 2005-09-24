@@ -69,6 +69,7 @@ enum extra_cmds {
     VAR_IRF,
     VAR_DECOMP,
     IRF_BOOT,
+    HTEST, 
     GUI_CMD_MAX
 };
 

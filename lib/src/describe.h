@@ -52,13 +52,16 @@ struct FreqDist_ {
 
 /* functions follow */
 
+int eval_ytest (double y, GretlOp op, double test);
+
 int gretl_minmax (int t1, int t2, const double *x, 
 		  double *min, double *max);
 
 double gretl_mean (int t1, int t2, const double *x);
 
 double gretl_restricted_mean (int t1, int t2, const double *x,
-			      const double *y, double yval);
+			      const double *y, GretlOp yop, 
+			      double yval);
 
 double gretl_median (int t1, int t2, const double *x);
 
@@ -67,12 +70,14 @@ double gretl_sst (int t1, int t2, const double *x);
 double gretl_variance (int t1, int t2, const double *x);
 
 double gretl_restricted_variance (int t1, int t2, const double *x,
-				  const double *y, double yval);
+				  const double *y, GretlOp yop,
+				  double yval);
 
 double gretl_stddev (int t1, int t2, const double *x);
 
 double gretl_restricted_stddev (int t1, int t2, const double *x,
-				const double *y, double yval);
+				const double *y, GretlOp yop,
+				double yval);
 
 double gretl_covar (int t1, int t2, const double *x, const double *y);
 
