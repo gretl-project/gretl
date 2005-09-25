@@ -1,6 +1,11 @@
 version 1.4.2, in progress
 - Add VECM (Vector Error Correction Models) for time-series
   data
+- New command "mle" : a general-purpose maximizer of log
+  likelihood, using the BFGS algorithm -- works much like the
+  "nls" command, taking a user-specified log likelihood function
+  as input, along with (optionally) derivatives of the log
+  likelihood with respect to the parameters
 - More XLS importer fixes
 - Add support for seasonal ARMA
 - Accommodate custom time-series frequencies
@@ -49,6 +54,11 @@ version 1.4.2, in progress
   labels (for n < 55)
 - Windows displaying two to five data series: add toolbar option
   to sort the data, with choice of variable by which to sort
+- Test statistic calculator (Utilities menu): besides the
+  entry of numerical values for sample statistics, enable the
+  calculation of sample statistics based on selection of variables
+  from the current data set, with or without sub-sampling
+  restrictions
 
 06/30/2005 version 1.4.1
 - Fix horrid unnoticed breakage in bhhh_max (broke both arma 

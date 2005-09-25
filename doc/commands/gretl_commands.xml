@@ -2492,32 +2492,46 @@
 
     <description>
       <para>
-	The hypothesis test calculator will accept numerical values
-	for statistics such as mean, variance or proportion, derived
-	from sources other than the current data set, or (in the case
-	of means and variances) it will calculate values based on a
-	selected variable from the data set.
+	Gretl's test calculator computes test statistics and p-values for
+	various common hypothesis tests concerning one or two populations.  The
+	required input takes the form of sample statistics derived from one or
+	two samples, depending on the test chosen.  These statistics can be
+	typed in as numerical values.  Alternatively, if you have a data file
+	open, you can get gretl to calculate sample statistics for a selected
+	variable or variables (in the case of means and variances, but not in
+	the case of proportions).
       </para>
 
       <para>
-	If you want to base your test on a variable in the data set,
-	first activate this option by checking the box titled
-	"Use variable from dataset".  Then the drop-down list of
-	variables will become active and you can select a variable.
+	If you want to base your test on a variable in the data set, first
+	activate this option by checking the box titled "Use variable from
+	dataset".  Then the drop-down list of variables will become active and
+	you can select a variable.  When you select a variable from the list,
+	the relevant statistics are automatically entered in the boxes below.
       </para>
 
       <para>
-	In addition to the simple selection of a variable, you can
-	specify a restriction on that variable, by typing (after the
-	name of the primary variable) an expression of the form
-	(variable=value).  For example, suppose you have wage data
-	in the variable called "wage" and you also have a dummy
-	variable called "gender" that equals 1 for males and 0 for
-	females (or vice versa).  Then, in the test for the difference
-	of two means, you could select "wage" in both slots, but add
-	to the top slot "(gender=0)" and to the bottom "(gender=1)".
-	This would then give you a test for the difference between
-	mean male income and mean female income.
+	In addition to the simple selection of a variable, you have the option
+	of specifying a restriction on the selected variable (that is, defining
+	a sub-sample).   For example, suppose you have wage data in a variable
+	called "wage" and you also have a dummy variable called "gender" that
+	equals 1 for males and 0 for females (or vice versa). Then, in the test
+	for the difference of two means, you could select "wage" in both slots,
+	but add to the top slot "(gender=0)" and to the bottom "(gender=1)".
+	This would then give you a test for the difference between mean male
+	income and mean female income.  Note that when you type a restriction in
+	this way, you must then press the Enter key to have the sample statistcs
+	calculated.  
+      </para>
+
+      <para>
+	The sub-sampling restriction must be placed in parentheses following the
+	selected variable, and in general the restriction takes the form "var2
+	op value," where var2 is the name of a variable in the current data set,
+	val is a numerical value, and op is a comparison operator chosen from =,
+	!=, &lt;, &gt;, &lt;= or &gt;= (respectively equality, inequality, less
+	than, greater than, less than or equal, and greater than or equal).  The
+	spaces around the operator are optional.
       </para>
 
     </description>
