@@ -26,6 +26,8 @@
 #include "libset.h"
 #include "modelspec.h"
 
+#include "../../cephes/libprob.h"
+
 #include <time.h>
 #include <errno.h>
 
