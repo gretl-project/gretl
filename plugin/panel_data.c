@@ -24,7 +24,7 @@
 #include "clapack_double.h"
 #include "gretl_model.h"
 
-#undef PDEBUG
+#define PDEBUG 0
 
 enum vcv_ops {
     VCV_INIT,
@@ -181,25 +181,37 @@ static void print_panel_coeff (const MODEL *pmod,
    are subtracted */
 
 static DATAINFO *
-within_groups_dataset (const double **Z, double ***wZ, 
-		       diagnostics_t *diag)
+within_groups_dataset (const double **Z, double ***wZ, diagnostics_t *diag)
 {
     DATAINFO *winfo;
+    int wnobs = 0;
     int i, j, k;
     int t, bigt;
 
 #if PDEBUG
-    fprintf(stderr, "within_groups_dataset: nvar=%d, nobs=%d, *wZ=%p\n", 
+    fprintf(stderr, "within_groups: nvar=%d, pooled model nobs=%d, *wZ=%p\n", 
 	    diag->vlist[0], diag->pooled->nobs, (void *) *wZ);
 #endif
 
-    winfo = create_new_dataset(wZ, diag->vlist[0], diag->pooled->nobs, 0);
+    for (i=0; i<diag->nunits; i++) { 
+	if (diag->unit_obs[i] > 1) {
+	    wnobs += diag->unit_obs[i];
+	}
+    }
+
+    winfo = create_new_dataset(wZ, diag->vlist[0], wnobs, 0);
     if (winfo == NULL) {
 	return NULL;
     }
 
+#if PDEBUG
+    fprintf(stderr, "within_groups_dataset: now *wZ=%p (wnobs = %d)\n", 
+	    (void *) *wZ, wnobs);
+#endif
+
     k = 0;
     for (j=1; j<=diag->vlist[0]; j++) { 
+	int s = 0;
 
 	if (diag->vlist[j] == 0) {
 	    continue;
@@ -216,7 +228,15 @@ within_groups_dataset (const double **Z, double ***wZ,
 	    int Ti = diag->unit_obs[i];
 	    double xbar = 0.0;
 
-	    if (Ti == 0) {
+#if PDEBUG
+	    fprintf(stderr, "looking at x-sect unit %d\n", i);
+#endif
+
+	    if (Ti <= 1) {
+		/* there's no within-group variation if we just have one obs */
+#if PDEBUG
+		fprintf(stderr, " skipping because Ti = %d\n", Ti);
+#endif
 		continue;
 	    }
 
@@ -226,20 +246,25 @@ within_groups_dataset (const double **Z, double ***wZ,
 		    xbar += Z[diag->vlist[j]][bigt];
 		}
 	    }
-
 	    xbar /= (double) Ti;
+
 #if PDEBUG > 1
 	    fprintf(stderr, "xbar for var %d, unit %d = %g\n", 
 		    diag->vlist[j], i, xbar);
 #endif
 	    for (t=0; t<diag->T; t++) {
+		if (s >= winfo->n) {
+		    fprintf(stderr, "*** Error: overflow of wZ at s = %d!\n", s);
+		    break;
+		}
 		bigt = panel_index(i, t);
 		if (!na(diag->pooled->uhat[bigt])) {
-		    (*wZ)[k][bigt] = Z[diag->vlist[j]][bigt] - xbar;
-		}
+		    (*wZ)[k][s] = Z[diag->vlist[j]][bigt] - xbar;
 #if PDEBUG > 1
-		fprintf(stderr, "Set wZ[%d][%d] = %g\n", k, bigt, (*wZ)[k][bigt]);
+		    fprintf(stderr, "Set wZ[%d][%d] = %g\n", k, s, (*wZ)[k][s]);
 #endif
+		    s++;
+		}
 	    }
 	}
     }
@@ -283,16 +308,20 @@ group_means_dataset (diagnostics_t *diag,
 	    if (Ti == 0) {
 		continue;
 	    }
+
 	    for (t=0; t<diag->T; t++) {
 		bigt = panel_index(i, t);
 		if (!na(diag->pooled->uhat[bigt])) {
 		    xx += Z[diag->pooled->list[j]][bigt];
 		}
 	    }
+
 	    (*gZ)[k][s] = xx / (double) Ti;
+
 #if PDEBUG > 1
-	    fprintf(stderr, "Set gZ[%d][%d] = %g\n", k, i, (*gZ)[k][i]);
+	    fprintf(stderr, "Set gZ[%d][%d] = %g\n", k, i, (*gZ)[k][s]);
 #endif
+
 	    s++;
 	}
 	k++;
@@ -509,20 +538,27 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
     ndum--;
 
 #if PDEBUG
-    fprintf(stderr, "ndum = %d, dvlen = %d\n", ndum, dvlen);
+    fprintf(stderr, "ndum = %d, dvlen = diag->vlist[0] + ndum = %d+%d = %d\n", 
+	    ndum, diag->vlist[0], ndum, dvlen);
 #endif
 
     /* should we use a set of dummy variables, or subtract
        the group means? */
 
     if (ndum <= 20 || ndum < diag->vlist[0]) {
+#if PDEBUG
+	fprintf(stderr, " using dummy variables approach\n");
+#endif
 	*usedum = 1;
     } else {
+#if PDEBUG
+	fprintf(stderr, " subtracting group means\n");
+#endif
 	*usedum = 0;
     }
 
     if (*usedum == 0) {
-	double **wZ;
+	double **wZ = NULL;
 	DATAINFO *winfo;
 
 	felist = malloc((diag->vlist[0]) * sizeof *felist);
@@ -1022,6 +1058,8 @@ int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
 	    ninc++;
 	}
     }
+
+    /* FIXME check for unbalanced panel here? */
 
     return ninc;
 }
@@ -1650,8 +1688,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     if (order > pdinfo->pd - 1) return E_DF;
     if (pmod->ncoeff + order >= sn) return E_DF;
 
-    if (pdinfo->structure != STACKED_TIME_SERIES ||
-	!balanced_panel(pdinfo)) { 
+    if (pdinfo->structure != STACKED_TIME_SERIES || !balanced_panel(pdinfo)) { 
         return E_DATA;
     }
 

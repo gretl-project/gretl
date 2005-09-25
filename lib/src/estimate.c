@@ -544,7 +544,7 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 	if (pmod->ci == POOLED && pmod->missmask != NULL) {
 	    if (!model_mask_leaves_balanced_panel(pmod, pdinfo)) {
 		gretl_model_set_int(pmod, "unbalanced", 1);
-	    }
+	    } 
 	}
     }
 

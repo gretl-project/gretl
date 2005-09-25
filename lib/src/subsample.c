@@ -387,7 +387,7 @@ static int block_retained (const char *s)
     int nrows = 0;
     int ret = 0;
 
-#if 0
+#if SUBDEBUG
     fprintf(stderr, "block_retained: s = '%s'\n", s);
 #endif
 
@@ -412,11 +412,20 @@ static char *make_panel_signature (const DATAINFO *pdinfo,
 {
     char *sig;
     size_t sz = pdinfo->n + pdinfo->n / pdinfo->pd;
+    int t;
 
     sig = calloc(sz, 1);
 
+#if SUBDEBUG
+    for (t=0; t<pdinfo->n; t++) {
+	if (t >= mt1 && t <= mt2) {
+	    fprintf(stderr, "mask[%d]=%c\n", t-mt1, mask[t-mt1]);
+	}
+    }
+#endif
+
     if (sig != NULL) {
-	int t, i = 0;
+	int i = 0;
 
 	for (t=0; t<pdinfo->n; t++) {
 	    if (t > 0 && t % pdinfo->pd == 0) {
@@ -426,8 +435,10 @@ static char *make_panel_signature (const DATAINFO *pdinfo,
 		sig[i++] = '0';
 	    } else {
 		if (neg) {
-		    sig[i++] = (mask[t - mt1] != 1)? '1' : '0';
+		    /* using model missmask: '1' for missing vs '0' */
+		    sig[i++] = (mask[t - mt1] != '1')? '1' : '0';
 		} else {
+		    /* using sample missmask: 0 for missing vs 1 */
 		    sig[i++] = (mask[t - mt1] != 0)? '1' : '0';
 		}
 	    }
@@ -457,6 +468,10 @@ real_mask_leaves_balanced_panel (const char *mask,
 
     for (i=0; i<nblocks; i++) {
 	char *sig_n = sig + i * (pdinfo->pd + 1);
+
+#if SUBDEBUG
+	fprintf(stderr, "block %d: sig_n = '%s'\n", i, sig_n);
+#endif
 
 	if (block_retained(sig_n)) {
 	    if (ok_blocks == 0) {
@@ -852,7 +867,7 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
 
     nf = count_fields(line);
 
-#ifdef SUBDEBUG
+#if SUBDEBUG
     fprintf(stderr, "set_sample: line='%s', nf=%d, pdinfo=%p\n", 
 	    line, nf, (void *) pdinfo);
     if (pdinfo != NULL) {
@@ -1078,7 +1093,7 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt)
     *gretl_errmsg = '\0';
     *gretl_msg = '\0';
 
-#ifdef SUBDEBUG
+#if SUBDEBUG
     fprintf(stderr, "restore_full_sample: pZ=%p, ppdinfo=%p opt=%lu\n",
 	    (void *) pZ, (void *) ppdinfo, opt);
     fprintf(stderr, "*pZ=%p, *ppdinfo=%p\n",
@@ -1255,7 +1270,7 @@ int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo)
     char *mask = NULL;
 
     if (fullZ == NULL || fullinfo == NULL) {
-#ifdef SUBDEBUG
+#if SUBDEBUG
 	fputs("add_subsampled_dataset_to_model: got NULL full dataset\n",
 	      stderr);
 #endif
@@ -1263,7 +1278,7 @@ int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo)
     }
 
     if (pmod->dataset != NULL) {
-#ifdef SUBDEBUG
+#if SUBDEBUG
 	fputs("add_subsampled_dataset_to_model: job already done\n",
 	      stderr);
 #endif	
@@ -1277,7 +1292,7 @@ int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 	/* no subsample info: model was estimated on full dataset,
 	   so we reconstruct the full dataset */
 	sn = fullinfo->n;
-#ifdef SUBDEBUG
+#if SUBDEBUG
 	fprintf(stderr, "pmod->submask = NULL, set sn = %d\n", sn);
 #endif
     } else {
@@ -1288,7 +1303,7 @@ int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 	if (mask == NULL) {
 	    return E_ALLOC;
 	}
-#ifdef SUBDEBUG
+#if SUBDEBUG
 	fprintf(stderr, "setting mask from pmod->submask: fullinfo->n = %d\n", 
 		fullinfo->n);
 #endif
@@ -1310,7 +1325,7 @@ int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 	return E_ALLOC;
     }
 
-#ifdef SUBDEBUG
+#if SUBDEBUG
     fprintf(stderr, "pmod->dataset allocated at %p\n", 
 	    (void *) pmod->dataset);
 #endif
@@ -1325,7 +1340,7 @@ int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 	return E_ALLOC;
     }
 
-#ifdef SUBDEBUG
+#if SUBDEBUG
     fprintf(stderr, "dataset created, copying series info\n");
 #endif
 
@@ -1337,7 +1352,7 @@ int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 			   (const double **) fullZ, fullinfo,
 			   mask);
 
-#ifdef SUBDEBUG
+#if SUBDEBUG
     fputs("data copied to subsampled dataset\n", stderr);
 #endif
 
@@ -1359,7 +1374,7 @@ int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 
     free(mask);
 
-#ifdef SUBDEBUG
+#if SUBDEBUG
     fputs("add_subsampled_dataset_to_model: success\n", stderr);
 #endif
 
@@ -1369,7 +1384,7 @@ int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 void free_model_dataset (MODEL *pmod)
 {
     if (pmod->dataset != NULL) {
-#ifdef SUBDEBUG
+#if SUBDEBUG
 	fprintf(stderr, "Deep freeing model->dataset\n");
 #endif
 	destroy_dataset(pmod->dataset->Z, pmod->dataset->dinfo);
