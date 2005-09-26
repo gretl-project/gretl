@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Ramu Ramanathan and Allin Cottrell
+ *   Copyright (c) by Allin Cottrell
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ enum vcv_ops {
 typedef struct diagnostics_t_ diagnostics_t;
 
 struct diagnostics_t_ {
-    int nunits;           /* total cross-section units */
+    int nunits;           /* total cross-sectional units */
     int effn;             /* effective (included) cross-section units */
     int T;                /* times-series length of panel */
     int effT;             /* effective times-series length */
@@ -49,7 +49,6 @@ struct diagnostics_t_ {
     double *sigma;        /* Hausman covariance matrix */
     double fe_var;        /* fixed-effects error variance */
     double gm_var;        /* group means error variance */
-    double theta;         /* GLS weighting coefficient */
     const MODEL *pooled;  /* reference model (pooled OLS) */
 };
 
@@ -133,8 +132,7 @@ static int var_is_varying (const int *list, int v)
     return ret;
 }
 
-static int 
-haus_alloc (diagnostics_t *diag)
+static int hausman_allocate (diagnostics_t *diag)
 {
     int nbeta = diag->vlist[0] - 2;
     int nsigma = (nbeta * nbeta + nbeta) / 2;
@@ -156,7 +154,7 @@ haus_alloc (diagnostics_t *diag)
     }
 
 #if PDEBUG
-    fprintf(stderr, "haus_alloc: allocated %d terms for bdiff, "
+    fprintf(stderr, "hausman_allocate: alloc'd %d terms for bdiff, "
 	    "%d for sigma\n", nbeta, nsigma);
 #endif
 
@@ -340,12 +338,11 @@ group_means_variance (diagnostics_t *diag, double ***gZ, DATAINFO *ginfo)
     int i, j;
     int err = 0;
 
-    gmlist = malloc((diag->pooled->list[0] + 1) * sizeof *gmlist);
+    gmlist = gretl_list_new(diag->pooled->list[0]);
     if (gmlist == NULL) {
 	return E_ALLOC;
     }
 
-    gmlist[0] = diag->pooled->list[0];
     j = 1;
     for (i=1; i<=gmlist[0]; i++) { 
 	if (diag->pooled->list[i] == 0) {
@@ -511,7 +508,7 @@ static void apply_panel_df_correction (MODEL *pmod, int ndf)
 #define MINOBS 1
 
 /* calculate the fixed effects regression, either using dummy variables
-   or by subtracting means from the data
+   or by subtracting the group means from the data
 */
 
 static MODEL
@@ -803,13 +800,14 @@ static int random_effects (diagnostics_t *diag,
     double **reZ;
     DATAINFO *reinfo;
     MODEL remod;
+    double theta;
     int *relist;
     int re_n = diag->T * diag->effn;
     int i, j, k, t;
     int err = 0;
 
     /* regression list */
-    relist = malloc((diag->pooled->list[0] + 1) * sizeof *relist);
+    relist = gretl_list_new(diag->pooled->list[0]);
     if (relist == NULL) {
 	return E_ALLOC;
     }
@@ -826,28 +824,41 @@ static int random_effects (diagnostics_t *diag,
 	    diag->T, diag->effn, diag->T * diag->effn);
 #endif
 
-    relist[0] = diag->pooled->list[0];
+    /* Create transformed variables: original data minus theta
+       times the appropriate group mean.  Note: for unbalanced
+       panels, theta varies across the units.
+    */
 
-    /* create transformed variables: original data minus theta
-       times the appropriate group mean */
+    theta = 1.0 - sqrt(diag->fe_var / (diag->effT * diag->gm_var));
 
-    k = 1;
+    k = 0;
     for (j=1; j<=relist[0]; j++) {
 	const double *xj = Z[diag->pooled->list[j]];
-	const double *gm = gZ[k];
+	const double *gm = NULL;
+	double theta_i;
 	int bigt, rt, u = 0;
 
 	if (diag->pooled->list[j] == 0) {
 	    relist[j] = 0;
-	    continue;
+	} else {
+	    k++;
+	    relist[j] = k;
+	    gm = gZ[k];
 	}
 
-	relist[j] = k;
-
 	for (i=0; i<diag->nunits; i++) {
-	    if (diag->unit_obs[i] == 0) {
+	    int Ti = diag->unit_obs[i];
+
+	    if (Ti == 0) {
 		continue;
 	    }
+
+	    if (Ti != diag->effT) {
+		theta_i = 1.0 - sqrt(diag->fe_var / (Ti * diag->gm_var));
+	    } else {
+		theta_i = theta;
+	    }
+
 	    for (t=0; t<diag->T; t++) {
 		bigt = panel_index(i, t);
 		if (pdinfo->structure == STACKED_TIME_SERIES) {
@@ -855,19 +866,17 @@ static int random_effects (diagnostics_t *diag,
 		} else {
 		    rt = t * diag->effn + u;
 		}
-		if (na(diag->pooled->uhat[bigt])) {
+		if (relist[j] == 0) {
+		    /* the intercept */
+		    reZ[0][rt] -= theta_i;
+		} else if (na(diag->pooled->uhat[bigt])) {
 		    reZ[k][rt] = NADBL;
 		} else {
-		    reZ[k][rt] = xj[bigt] - diag->theta * gm[u];
+		    reZ[k][rt] = xj[bigt] - theta_i * gm[u];
 		}
 	    }
 	    u++;
 	}
-	k++;
-    }
-
-    for (t=0; t<re_n; t++) {
-	reZ[0][t] -= diag->theta;
     }
 
     remod = lsq(relist, &reZ, reinfo, OLS, OPT_A | OPT_Z, 0.0);
@@ -902,8 +911,6 @@ static int random_effects (diagnostics_t *diag,
     return err;
 }
 
-/* .................................................................. */
-
 static void 
 unit_error_variances (double *uvar, const MODEL *pmod, const DATAINFO *pdinfo,
 		      int nunits, int T, const int *unit_obs)
@@ -928,15 +935,16 @@ unit_error_variances (double *uvar, const MODEL *pmod, const DATAINFO *pdinfo,
 static int 
 breusch_pagan_LM (diagnostics_t *diag, const DATAINFO *pdinfo, PRN *prn)
 {
-    double LM, eprime = 0.0;
-    int i, t;
+    double LM, A = 0.0;
+    int n = diag->pooled->nobs;
+    int i, t, M = 0;
 
     pputs(prn, _("\nMeans of pooled OLS residuals for cross-sectional "
 		 "units:\n\n"));
 
     for (i=0; i<diag->nunits; i++) {
 	int Ti = diag->unit_obs[i];
-	double u, ubar = 0.0;
+	double u, usum = 0.0;
 
 	if (Ti == 0) {
 	    continue;
@@ -945,18 +953,16 @@ breusch_pagan_LM (diagnostics_t *diag, const DATAINFO *pdinfo, PRN *prn)
 	for (t=0; t<diag->T; t++) {
 	    u = diag->pooled->uhat[panel_index(i, t)];
 	    if (!na(u)) {
-		ubar += u;
+		usum += u;
 	    }
 	}
-	ubar /= (double) Ti; 
-	pprintf(prn, _(" unit %2d: %13.5g\n"), i + 1, ubar);
-	eprime += ubar * ubar;
+
+	pprintf(prn, _(" unit %2d: %13.5g\n"), i + 1, usum / (double) Ti);
+	A += usum * usum;
+	M += Ti * Ti;
     }
 
-    /* FIXME unbalanced panels */
-
-    LM = (double) diag->pooled->nobs / (2.0 * (diag->effT - 1.0)) * 
-	pow((diag->effT * diag->effT * eprime / diag->pooled->ess) - 1.0, 2);
+    LM = (n * n /(2.0 * (M - n))) * pow((A / diag->pooled->ess) - 1.0, 2);
 
     pprintf(prn, _("\nBreusch-Pagan test statistic:\n"
 		   " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"), 
@@ -968,8 +974,6 @@ breusch_pagan_LM (diagnostics_t *diag, const DATAINFO *pdinfo, PRN *prn)
 
     return 0;
 }
-
-/* .................................................................. */
 
 static int do_hausman_test (diagnostics_t *diag, PRN *prn)
 {
@@ -1059,8 +1063,6 @@ int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
 	}
     }
 
-    /* FIXME check for unbalanced panel here? */
-
     return ninc;
 }
 
@@ -1130,6 +1132,8 @@ diagnostics_setup (diagnostics_t *diag, const MODEL *pmod,
 
 /* .................................................................. */
 
+#define ALLOW_UNBAL 1
+
 int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		       gretlopt opt, PRN *prn)
 {
@@ -1178,12 +1182,21 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     /* can we do the Hausman test or not? */
-    if (!unbal && xdf > 0) {
-	err = haus_alloc(&diag);
+#ifdef ALLOW_UNBAL
+    if (xdf > 0) {
+	err = hausman_allocate(&diag);
 	if (err) {
 	    goto bailout;
 	}
     } 
+#else
+    if (!unbal && xdf > 0) {
+	err = hausman_allocate(&diag);
+	if (err) {
+	    goto bailout;
+	}
+    } 
+#endif
 
     if (!unbal) {
 	pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
@@ -1197,11 +1210,13 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
+#ifndef ALLOW_UNBAL
     if (unbal) {
 	pprintf(prn, "Omitting random effects model since "
 		"panel is unbalanced\n");
 	goto bailout;
     }
+#endif
 
     breusch_pagan_LM(&diag, pdinfo, prn);
 
@@ -1227,7 +1242,6 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    pprintf(prn, _("Residual variance for group means "
 			   "regression: %g\n\n"), diag.gm_var);    
-	    diag.theta = 1.0 - sqrt(diag.fe_var / (diag.effT * diag.gm_var));
 	    random_effects(&diag, (const double **) *pZ, pdinfo, 
 			   (const double **) gZ, prn);
 	    do_hausman_test(&diag, prn);
@@ -1615,8 +1629,6 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     
     return mdl;
 }
-
-/* .................................................................. */
 
 static void panel_copy_var (double **targZ, DATAINFO *targinfo, int targv,
 			    double *src, DATAINFO *srcinfo, int srcv,

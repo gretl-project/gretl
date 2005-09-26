@@ -80,6 +80,15 @@ double ndtri (double y0);
 
 double cephes_gamma (double x); /* alias for gamma() */
 
+/*
+ * Returns the base e (2.718...) logarithm of the absolute
+ * value of the gamma function of the argument.
+ * The sign (+1 or -1) of the gamma function is returned in a
+ * global (extern) variable named sgngam.
+*/
+
+double cephes_lgamma (double x); /* alias for lgam() */
+
 #endif /* LIBPROB_H */
 
 

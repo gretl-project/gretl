@@ -446,3 +446,8 @@ double gamma (double x)
 {
     return cephes_gamma(x);
 }
+
+double cephes_lgamma (double x)
+{
+    return lgam(x);
+}

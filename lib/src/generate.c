@@ -2930,7 +2930,7 @@ static double evaluate_math_function (double arg, int fn, int *err)
 	x = cephes_gamma(arg);
 	break;
     case T_LNGAMMA:
-	x = lgamma(arg);
+	x = cephes_lgamma(arg);
 	break;
     default:
 	break;
