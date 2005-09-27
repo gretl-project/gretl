@@ -18,6 +18,7 @@ version 1.4.2, in progress
 - Add printing of cross-equation covariance matrix for VARs
 - Add combined plot of residuals for VARs
 - Add log-likelihood, AIC and BIC for VARs
+- Add inverse roots plot for VARs (Jack Lucchetti)
 - Add "robust" option for logit and probit (compute QML
   or Huber-White covariance matrix)
 - Remove overly verbose notification dialogs

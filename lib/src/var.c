@@ -1341,6 +1341,10 @@ static int gretl_VAR_add_roots (GRETL_VAR *var)
     double x, y;
     int i, err = 0;
 
+    if (var->A == NULL) {
+	return 1;
+    }
+
     var->lambda = gretl_matrix_alloc(np, 2);
     if (var->lambda == NULL) {
         err = E_ALLOC;
@@ -1365,7 +1369,7 @@ static int gretl_VAR_add_roots (GRETL_VAR *var)
 		gretl_matrix_set(var->lambda, i, 0, atan2(y, x));
 		gretl_matrix_set(var->lambda, i, 1, sqrt(x * x + y * y));
 	    }
-#if 1
+#if 0
 	    gretl_matrix_print(var->A, "Companion form matrix", NULL);
 	    gretl_matrix_print(var->lambda, "Eigenvalues in polar form", NULL);
 #endif
@@ -2949,6 +2953,7 @@ johansen_VAR_new (const int *list, int rank, int order, gretlopt opt)
 	var->ncoeff = 0;
 
 	var->A = NULL;
+	var->lambda = NULL;
 	var->E = NULL;
 	var->C = NULL;
 	var->S = NULL;
