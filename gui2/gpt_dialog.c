@@ -372,9 +372,9 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
     if (!err && border_check != NULL) {
 	if (GTK_TOGGLE_BUTTON(border_check)->active) {
-	    spec->flags &= ~GPTSPEC_BORDER_HIDDEN;
+	    spec->flags &= ~GPTSPEC_MINIMAL_BORDER;
 	} else {
-	    spec->flags |= GPTSPEC_BORDER_HIDDEN;
+	    spec->flags |= GPTSPEC_MINIMAL_BORDER;
 	}
     } 
 
@@ -658,7 +658,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  border_check, 0, TAB_MAIN_COLS, 
 				  tbl_len-1, tbl_len);
-	if (!(spec->flags & GPTSPEC_BORDER_HIDDEN)) {
+	if (!(spec->flags & GPTSPEC_MINIMAL_BORDER)) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(border_check),
 					 TRUE);
 	}	

@@ -57,6 +57,8 @@ gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2,
 const gretl_matrix *
 gretl_VAR_get_residual_matrix (const GRETL_VAR *var);
 
+const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var);
+
 int gretl_VAR_print_VCV (const GRETL_VAR *var, PRN *prn);
 
 int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order, 

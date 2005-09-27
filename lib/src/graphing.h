@@ -42,10 +42,11 @@ typedef enum {
     GPTSPEC_Y2AXIS         = 1 << 1,
     GPTSPEC_AUTO_OLS       = 1 << 2,
     GPTSPEC_OLS_HIDDEN     = 1 << 3,
-    GPTSPEC_BORDER_HIDDEN  = 1 << 4,
+    GPTSPEC_MINIMAL_BORDER = 1 << 4,
     GPTSPEC_PNG_OUTPUT     = 1 << 5,
     GPTSPEC_ALL_MARKERS    = 1 << 6,
     GPTSPEC_ALL_MARKERS_OK = 1 << 7,
+    GPTSPEC_NO_BORDER      = 1 << 8
 } gptspec_flags; 
 
 #define MAXTITLE 128
@@ -95,6 +96,7 @@ typedef enum {
     PLOT_LEVERAGE,
     PLOT_IRFBOOT,
     PLOT_KERNEL,
+    PLOT_VAR_ROOTS,
     PLOT_TYPE_MAX
 } PlotType;
 
@@ -108,7 +110,7 @@ typedef struct {
     FILE *fp;
     char fname[MAXLEN];        /* for gui purposes */
     PlotType code;             /* to deal with FREQ, FCASTERR... */
-    unsigned char flags;       /* bitwise OR of options (gptspec_flags) */
+    unsigned int flags;       /* bitwise OR of options (gptspec_flags) */
     int nobs;                  /* number of observations */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
     double range[3][2];        /* axis range specifiers */
@@ -154,15 +156,15 @@ int gnuplot_make_graph (void);
 
 int gnuplot (int *list, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, 
-	     int *plot_count, unsigned char flags);
+	     int *plot_count, unsigned int flags);
 
 int multi_scatters (const int *list, int pos, 
 		    double ***pZ, const DATAINFO *pdinfo, 
-		    int *plot_count, unsigned char flags);
+		    int *plot_count, unsigned int flags);
 
 int gnuplot_3d (int *list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo, 
-		int *plot_count, unsigned char flags);
+		int *plot_count, unsigned int flags);
 
 int plot_freq (FreqDist *freq, DistCode dist);
 
@@ -195,6 +197,8 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 
 int gretl_VAR_residual_plot (const GRETL_VAR *var, 
 			     double ***pZ, DATAINFO *pdinfo);
+
+int gretl_VAR_roots_plot (GRETL_VAR *var);
 
 int is_auto_ols_string (const char *s);
 

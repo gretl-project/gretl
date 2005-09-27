@@ -165,6 +165,7 @@ static GRETL_VAR *gretl_VAR_new (int neqns, int order, const DATAINFO *pdinfo)
     var->ncoeff = 0;
 
     var->A = NULL;
+    var->lambda = NULL;
     var->E = NULL;
     var->C = NULL;
     var->S = NULL;
@@ -249,6 +250,7 @@ void gretl_VAR_free (GRETL_VAR *var)
     if (var == NULL) return;
 
     gretl_matrix_free(var->A);
+    gretl_matrix_free(var->lambda);
     gretl_matrix_free(var->E);
     gretl_matrix_free(var->C);
     gretl_matrix_free(var->S);
@@ -1329,6 +1331,66 @@ static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
     }
 
     return err;
+}
+
+static int gretl_VAR_add_roots (GRETL_VAR *var)
+{
+    int np = var->neqns * var->order;
+    gretl_matrix *CompForm = NULL;
+    double *eigA = NULL;
+    double x, y;
+    int i, err = 0;
+
+    var->lambda = gretl_matrix_alloc(np, 2);
+    if (var->lambda == NULL) {
+        err = E_ALLOC;
+    }
+
+    if (!err) {
+	CompForm = gretl_matrix_copy(var->A);
+	if (CompForm == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    /* save eigenvalues of companion form matrix in polar form */
+    if (!err) {
+        eigA = gretl_general_matrix_eigenvals(CompForm, NULL);
+	if (eigA == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<np; i++) {
+		x = eigA[i];
+		y = eigA[np+i];
+		gretl_matrix_set(var->lambda, i, 0, atan2(y, x));
+		gretl_matrix_set(var->lambda, i, 1, sqrt(x * x + y * y));
+	    }
+#if 1
+	    gretl_matrix_print(var->A, "Companion form matrix", NULL);
+	    gretl_matrix_print(var->lambda, "Eigenvalues in polar form", NULL);
+#endif
+	}
+    }
+
+    free(eigA);
+    gretl_matrix_free(CompForm);
+
+    if (err) {
+	gretl_matrix_free(var->lambda);
+	var->lambda = NULL;
+    }
+
+    return err;
+}
+
+const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var)
+{
+    if (var->lambda == NULL) {
+	/* roots not computed yet */
+	gretl_VAR_add_roots(var);
+    }
+
+    return var->lambda;
 }
 
 static int VAR_LR_lag_test (GRETL_VAR *var)

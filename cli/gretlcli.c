@@ -227,9 +227,9 @@ int fn_get_line (void)
     return err;
 }
 
-unsigned char gp_flags (int batch, gretlopt opt)
+unsigned int gp_flags (int batch, gretlopt opt)
 {
-    unsigned char flags = 0;
+    unsigned int flags = 0;
 
     if (batch) flags |= GP_BATCH;
 

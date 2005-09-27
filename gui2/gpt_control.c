@@ -553,13 +553,13 @@ static int get_gpt_marker (const char *line, char *label)
     return 1;
 }
 
-/* graphs that show more than one plot: editing via GUI
-   is not supported */
+/* special graphs for which editing via GUI is not supported */
 
 #define cant_edit(p) (p == PLOT_CORRELOGRAM || \
                       p == PLOT_LEVERAGE || \
                       p == PLOT_MULTI_SCATTER || \
-                      p == PLOT_TRI_GRAPH)
+                      p == PLOT_TRI_GRAPH || \
+                      p == PLOT_VAR_ROOTS)
 
 static void plot_label_init (GPT_LABEL *lbl)
 {
@@ -864,7 +864,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 	spec->flags |= GPTSPEC_Y2AXIS;
 	return 0;
     } else if (strcmp(variable, "border 3") == 0) {
-	spec->flags |= GPTSPEC_BORDER_HIDDEN;
+	spec->flags |= GPTSPEC_MINIMAL_BORDER;
 	return 0;
     }    
 

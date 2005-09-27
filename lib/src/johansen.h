@@ -62,7 +62,8 @@ struct GRETL_VAR_ {
     int T;               /* number of observations */
     int ifc;             /* equations include a constant (1) or not (0) */
     int ncoeff;          /* total coefficients per equation */
-    gretl_matrix *A;     /* augmented coefficient matrix */
+    gretl_matrix *A;       /* augmented coefficient matrix (companion form) */
+    gretl_matrix *lambda;  /* inverse roots of A(L) polynomial */
     gretl_matrix *E;     /* residuals matrix */
     gretl_matrix *C;     /* augmented Cholesky-decomposed error matrix */
     gretl_matrix *S;     /* cross-equation variance matrix */

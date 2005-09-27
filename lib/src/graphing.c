@@ -53,7 +53,7 @@ static char gnuplot_path[MAXLEN];
 static const char *auto_ols_string = "# plot includes automatic OLS line\n";
 
 struct gnuplot_info {
-    unsigned char flags;
+    unsigned int flags;
     int ts_plot;
     int yscale;
     int impulses;
@@ -94,6 +94,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_RANGE_MEAN,     "range-mean plot" },
     { PLOT_SAMPLING_DIST,  "sampling distribution" },
     { PLOT_TRI_GRAPH,      "TRAMO / X12A tri-graph" },
+    { PLOT_VAR_ROOTS,      "VAR inverse roots plot" },
     { PLOT_TYPE_MAX,       NULL }
 };
     
@@ -872,7 +873,7 @@ static const char *series_name (const DATAINFO *pdinfo, int v)
 }
 
 static int
-get_gnuplot_output_file (FILE **fpp, unsigned char flags, 
+get_gnuplot_output_file (FILE **fpp, unsigned int flags, 
 			 int *plot_count, int code)
 {
     const char *plotfile = gretl_plotfile();
@@ -1098,7 +1099,7 @@ print_gp_data (struct gnuplot_info *gpinfo, const int *list,
 }
 
 static void 
-gp_info_init (struct gnuplot_info *gpinfo, unsigned char flags,
+gp_info_init (struct gnuplot_info *gpinfo, unsigned int flags,
 	      int lo, const char *literal, int t1, int t2)
 {
     gpinfo->flags = flags;
@@ -1140,7 +1141,7 @@ gp_info_init (struct gnuplot_info *gpinfo, unsigned char flags,
 }
 
 #if GP_DEBUG
-static void print_gnuplot_flags (unsigned char flags)
+static void print_gnuplot_flags (unsigned int flags)
 {
     fprintf(stderr, "*** gnuplot() called with flags:\n");
 
@@ -1171,7 +1172,7 @@ static void print_gnuplot_flags (unsigned char flags)
 }
 #endif
 
-static void set_withstr (unsigned char flags, const int *lines, 
+static void set_withstr (unsigned int flags, const int *lines, 
 			 int i, char *str)
 {
     int ltest = 0;
@@ -1266,7 +1267,7 @@ static void graph_list_adjust_sample (int *list,
 
 int gnuplot (int *list, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, 
-	     int *plot_count, unsigned char flags)
+	     int *plot_count, unsigned int flags)
 {
     FILE *fp = NULL;
     char s1[MAXDISP] = {0};
@@ -1531,7 +1532,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
 int multi_scatters (const int *list, int pos, double ***pZ, 
 		    const DATAINFO *pdinfo, int *plot_count, 
-		    unsigned char flags)
+		    unsigned int flags)
 {
     int i, t, err = 0, xvar, yvar;
     int *plotlist = NULL;
@@ -1677,7 +1678,7 @@ static int get_3d_output_file (FILE **fpp)
 
 static void 
 maybe_add_surface (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		   unsigned char flags, char *surface)
+		   unsigned int flags, char *surface)
 {
     MODEL smod;
     double umin, umax, vmin, vmax;
@@ -1727,7 +1728,7 @@ maybe_add_surface (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 int gnuplot_3d (int *list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo,  
-		int *plot_count, unsigned char flags)
+		int *plot_count, unsigned int flags)
 {
     FILE *fq = NULL;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -2527,8 +2528,8 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     if (spec->flags & GPTSPEC_Y2AXIS) {
 	fputs("set ytics nomirror\n", fp);
 	fputs("set y2tics\n", fp);
-    } else if (spec->flags & GPTSPEC_BORDER_HIDDEN) {
-	/* suppressing border */
+    } else if (spec->flags & GPTSPEC_MINIMAL_BORDER) {
+	/* suppressing part of border */
 	fputs("set border 3\n", fp);
 	if (string_is_blank(spec->xtics)) {
 	    fputs("set xtics nomirror\n", fp);
@@ -2968,6 +2969,59 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var,
     t1 = gretl_VAR_get_t1(var);
 
     return real_VAR_residual_plot(E, t1, pZ, pdinfo);
+}
+
+int gretl_VAR_roots_plot (GRETL_VAR *var)
+{
+    const gretl_matrix *lam;
+    FILE *fp = NULL;
+    int n;
+    double x, y;
+    int i, err;
+
+    lam = gretl_VAR_get_roots(var);
+    if (lam == NULL) {
+	return E_ALLOC;
+    }
+
+    err = gnuplot_init(PLOT_VAR_ROOTS, &fp);
+    if (err) {
+	return err;
+    }
+
+    n = gretl_matrix_rows(lam);
+
+    fprintf(fp, "set title '%s'\n", I_("VAR inverse roots"));
+    fputs("# literal lines = 8\n", fp);
+    fputs("unset border\n", fp);
+    fputs("unset key\n", fp);
+    fputs("set xzeroaxis\n", fp);
+    fputs("set yzeroaxis\n", fp);
+    fputs("unset xtics\n", fp);
+    fputs("unset ytics\n", fp);
+    fputs("set size square\n", fp);
+    fputs("set polar\n", fp);
+    fputs("plot 1 w lines , \\\n"
+	  "'-' w points pt 7\n", fp);
+    	
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+    
+    for (i=0; i<n; i++) {
+        x = gretl_matrix_get(lam, i, 0);
+        y = gretl_matrix_get(lam, i, 1);
+	fprintf(fp, "%.8f %.8f\n", x, y);
+    }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    fputs("e\n", fp);
+    fclose(fp);
+
+    return gnuplot_make_graph();
 }
 
 int is_auto_ols_string (const char *s)

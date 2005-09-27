@@ -193,6 +193,8 @@ within_groups_dataset (const double **Z, double ***wZ, diagnostics_t *diag)
 
     for (i=0; i<diag->nunits; i++) { 
 	if (diag->unit_obs[i] > 1) {
+	    /* we need more than one observation to compute any
+	       within group variation */
 	    wnobs += diag->unit_obs[i];
 	}
     }
@@ -231,7 +233,6 @@ within_groups_dataset (const double **Z, double ***wZ, diagnostics_t *diag)
 #endif
 
 	    if (Ti <= 1) {
-		/* there's no within-group variation if we just have one obs */
 #if PDEBUG
 		fprintf(stderr, " skipping because Ti = %d\n", Ti);
 #endif

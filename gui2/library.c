@@ -5526,9 +5526,9 @@ static int script_model_test (int test_ci, int model_id, PRN *prn)
     return 0;
 }
 
-static unsigned char gp_flags (int batch, gretlopt opt)
+static unsigned int gp_flags (int batch, gretlopt opt)
 {
-    unsigned char flags = 0;
+    unsigned int flags = 0;
 
     if (batch) {
 	flags |= GP_BATCH;
@@ -5605,7 +5605,7 @@ int gui_exec_line (char *line,
     char runfile[MAXLEN], datfile[MAXLEN];
     char linecopy[1024];
     char texfile[MAXLEN];
-    unsigned char plotflags = 0;
+    unsigned int plotflags = 0;
     gretlopt testopt = OPT_NONE;
     MODEL tmpmod;
     LOOPSET *loop = *plp;

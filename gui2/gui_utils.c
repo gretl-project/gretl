@@ -3417,6 +3417,21 @@ static void VAR_test_call (gpointer p, guint code, GtkWidget *w)
     }
 }
 
+static void VAR_roots_plot_call (gpointer p, guint vecm, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    int err;
+
+    err = gretl_VAR_roots_plot(var);
+    
+    if (err) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	register_graph();
+    }
+}
+
 static void VAR_resid_plot_call (gpointer p, guint vecm, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
@@ -3529,6 +3544,14 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     /* combined residual plot */
     varitem.path = g_strdup_printf("%s/%s", _(gpath), _("residual plot"));
     varitem.callback = VAR_resid_plot_call;
+    varitem.callback_action = vecm;
+    varitem.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
+
+    /* VAR inverse roots */
+    varitem.path = g_strdup_printf("%s/%s", _(gpath), _("VAR inverse roots"));
+    varitem.callback = VAR_roots_plot_call;
     varitem.callback_action = vecm;
     varitem.item_type = NULL;
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
