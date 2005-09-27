@@ -1917,11 +1917,11 @@ static int inverse_compare_doubles (const void *a, const void *b)
  * @evecs: matrix of eigenvectors.
  * @rank: desired number of columns in output.
  * 
- * Sorts the eigenvalues in @evals from largest to smallest,
- * and rearranges the columns in @evecs correspondingly.  If
- * @rank is greater than zero and less than the number of
- * columns in @evecs, then on output @evecs is shrunk so
- * that it contains only the columns associated with the
+ * Sorts the real components of the eigenvalues in @evals from 
+ * largest to smallest, and rearranges the columns in @evecs 
+ * correspondingly.  If @rank is greater than zero and less than 
+ * the number of columns in @evecs, then on output @evecs is shrunk 
+ * so that it contains only the columns associated with the
  * largest @rank eigenvalues.
  *
  * Returns: 0 on success; non-zero error code on failure.
@@ -1930,7 +1930,8 @@ static int inverse_compare_doubles (const void *a, const void *b)
 int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
 {
     struct esort {
-	double v;
+	double vr;
+	double vi;
 	int idx;
     }; 
     struct esort *es;
@@ -1955,14 +1956,16 @@ int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
     }
 
     for (i=0; i<n; i++) {
-	es[i].v = evals[i];
+	es[i].vr = evals[i];
+	es[i].vi = evals[i + n];
 	es[i].idx = i;
     }
 
     qsort(es, n, sizeof *es, inverse_compare_doubles);
 
     for (i=0; i<n; i++) {
-	evals[i] = es[i].v;
+	evals[i] = es[i].vr;
+	evals[i + n] = es[i].vi;
     }
 
     for (j=0; j<h; j++) {
@@ -1985,16 +1988,20 @@ int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
 
 /**
  * gretl_general_matrix_eigenvals:
- * @m: matrix to operate on.
- * @ev: matrix to store eigenvectors, or %NULL if the eigenvectors
- * are not required.
+ * @m: square matrix on which to operate.
+ * @ev: matrix in which to store the eigenvectors, or %NULL if 
+ * the eigenvectors are not required.
  * 
  * Computes the eigenvalues of the general matrix @m.  If @ev is
  * non-%NULL, write the right eigenvectors of @m into @ev.
  * Uses the lapack function %dgeev.
  *
  * Returns: allocated storage containing the eigenvalues, or %NULL
- * on failure.
+ * on failure.  The returned array, on successful completion,
+ * has 2n elements (where n = the number of rows and columns in the
+ * matrix @m), the first n of which contain the real components of 
+ * the eigenvalues of @m, and the remainder of which hold the 
+ * imaginary components.
  */
 
 double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev) 
@@ -2029,10 +2036,11 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
 	return NULL;
     }
 
-    wr = malloc(n * sizeof *wr);
-    wi = malloc(n * sizeof *wi);
-    if (wr == NULL || wi == NULL) {
+    wr = malloc(2 * n * sizeof *wr);
+    if (wr == NULL) {
 	goto bailout;
+    } else {
+	wi = wr + n;
     }
 
     if (ev != NULL) {
@@ -2071,7 +2079,6 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
 	goto bailout;
     } 
 
-    free(wi);
     free(work);
 
     return wr;
@@ -2079,7 +2086,6 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
  bailout:
     free(work);
     free(wr);
-    free(wi);
 
     return NULL;    
 }
