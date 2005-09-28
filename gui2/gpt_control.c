@@ -2759,7 +2759,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     } 
 
     if (plot->spec->code == PLOT_VAR_ROOTS) {
-	plot->pixel_width = 480;
+	plot->pixel_width = plot->pixel_height;
     }
 
 #ifdef OLD_GTK
