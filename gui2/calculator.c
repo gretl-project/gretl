@@ -788,8 +788,11 @@ static void h_test (GtkWidget *w, gpointer data)
 
 	pprintf(prn, _("Null hypothesis: the population proportions are "
 		       "equal\n"));
+	pputc(prn, '\n');
 	pprintf(prn, _("Sample 1:\n n = %d, proportion = %g\n"), n1, x[0]);
+	pputc(prn, '\n');
 	pprintf(prn, _("Sample 2:\n n = %d, proportion = %g\n"), n2, x[1]);
+	pputc(prn, '\n');
 	x[2] = (n1*x[0] + n2*x[1]) / (n1 + n2);
 	sderr = sqrt((x[2] * (1.0-x[2])) * (1.0/n1 + 1.0/n2));
 	ts = (x[0] - x[1]) / sderr;
@@ -1190,16 +1193,43 @@ static void populate_stats (GtkWidget *w, gpointer p)
 	gtk_entry_set_text(GTK_ENTRY(test->entry[pos]), numstr);
 	sprintf(numstr, "%d", n);
 	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 1]), numstr);
-    } 
+    } else if (test->code == ONE_PROPN || test->code == TWO_PROPNS) {
+	if (vy < 0) {
+	    x1 = gretl_mean(datainfo->t1, datainfo->t2, Z[vx]);
+	} else {
+	    x1 = gretl_restricted_mean(datainfo->t1, datainfo->t2, 
+				      Z[vx], Z[vy], yop, yval);
+	}
+	sprintf(numstr, "%.10g", x1);
+	gtk_entry_set_text(GTK_ENTRY(test->entry[pos]), numstr);
+	sprintf(numstr, "%d", n);
+	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 1]), numstr);
+    }	
 }
 
-static void add_vars_to_combo (GtkWidget *w, int pos)
+static int var_is_ok (int i, int code)
+{
+    int ret = 1;
+
+    if (is_hidden_variable(i, datainfo)) {
+	ret = 0;
+    } else if (!datainfo->vector[i]) {
+	ret = 0;
+    } else if ((code == ONE_PROPN || code == TWO_PROPNS) &&
+	       !gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
+	ret = 0;
+    }
+
+    return ret;
+}
+
+static void add_vars_to_combo (GtkWidget *w, int code, int pos)
 {
     GList *vlist = NULL;
     int i, vmin = (pos > 0)? 2 : 1;
 
     for (i=vmin; i<datainfo->v; i++) {
-	if (!is_hidden_variable(i, datainfo) && datainfo->vector[i]) {
+	if (var_is_ok(i, code)) {
 	    vlist = g_list_append(vlist, datainfo->varname[i]);
 	}
     }
@@ -1207,7 +1237,7 @@ static void add_vars_to_combo (GtkWidget *w, int pos)
     if (pos > 0) {
 	/* add first variable at the end of the list */
 	for (i=1; i<datainfo->v; i++) {
-	    if (!is_hidden_variable(i, datainfo) && datainfo->vector[i]) {
+	    if (var_is_ok(i, code)) {
 		vlist = g_list_append(vlist, datainfo->varname[i]);
 		break;
 	    }
@@ -1217,23 +1247,13 @@ static void add_vars_to_combo (GtkWidget *w, int pos)
     gtk_combo_set_popdown_strings(GTK_COMBO(w), vlist);
 }
 
-static void switch_combo_ok (GtkWidget *b, gpointer p)
+static void toggle_combo_ok (GtkWidget *toggle, gpointer p)
 {
-    test_t *test = g_object_get_data(G_OBJECT(p), "test");
-    int use_combo = GTK_TOGGLE_BUTTON(b)->active;
-    int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
-    int maxent = 0;
-
-    gtk_widget_set_sensitive(GTK_WIDGET(p), use_combo);
-
-    if (test->code == ONE_MEAN || test->code == TWO_MEANS) {
-	maxent = pos + 3;
-    } else if (test->code == ONE_VARIANCE || test->code == TWO_VARIANCES) {
-	maxent = pos + 2;
-    }
-
-    if (use_combo) {
+    if (GTK_TOGGLE_BUTTON(toggle)->active) {
+	gtk_widget_set_sensitive(GTK_WIDGET(p), TRUE);
 	populate_stats(NULL, p);
+    } else {
+	gtk_widget_set_sensitive(GTK_WIDGET(p), FALSE);
     }
 }
 
@@ -1298,7 +1318,7 @@ static void add_test_combo (GtkWidget *tbl, gint *tbl_len,
 	test->combo[0] = tmp;
     }
 
-    add_vars_to_combo(tmp, pos);
+    add_vars_to_combo(tmp, test->code, pos);
     gtk_widget_set_sensitive(tmp, FALSE);
     gtk_combo_disable_activate(GTK_COMBO(tmp));
 
@@ -1308,7 +1328,7 @@ static void add_test_combo (GtkWidget *tbl, gint *tbl_len,
 		     G_CALLBACK(select_child_callback), tmp);
 
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(switch_combo_ok), tmp);
+		     G_CALLBACK(toggle_combo_ok), tmp);
 }
 
 static void add_test_entry (GtkWidget *tbl, gint *tbl_len, 
@@ -1361,13 +1381,30 @@ static void add_test_check (GtkWidget *tbl, gint *tbl_len,
     test->check = tempwid;
 }
 
-static int n_non_hidden_vars (void)
+static int n_ok_series (void)
 {
     int i, nv = 0;
 
     if (datainfo != NULL) {
 	for (i=1; i<datainfo->v; i++) {
-	    if (!is_hidden_variable(i, datainfo)) {
+	    if (datainfo->vector[i] && !is_hidden_variable(i, datainfo)) {
+		nv++;
+	    }
+	}
+    }
+
+    return nv;
+}
+
+static int n_ok_dummies (void)
+{
+    int i, nv = 0;
+
+    if (datainfo != NULL) {
+	for (i=1; i<datainfo->v; i++) {
+	    if (datainfo->vector[i] && 
+		!is_hidden_variable(i, datainfo) &&
+		gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
 		nv++;
 	    }
 	}
@@ -1379,7 +1416,7 @@ static int n_non_hidden_vars (void)
 static void make_test_tab (GtkWidget *notebook, int code, test_t *test) 
 {
     GtkWidget *tempwid, *box, *tbl;
-    int nv = n_non_hidden_vars();
+    int nv = 0;
     gint i, tbl_len;
     const gchar *titles[] = {
 	N_("mean"), 
@@ -1411,9 +1448,17 @@ static void make_test_tab (GtkWidget *notebook, int code, test_t *test)
 	test->entry[i] = NULL;
     }
 
-    if ((code == ONE_MEAN || code == ONE_VARIANCE) && nv > 0) {
-	add_test_combo(tbl, &tbl_len, test, 0);
-    } else if ((code == TWO_MEANS || code == TWO_VARIANCES) && nv > 1) {
+    if (code == ONE_MEAN || code == ONE_VARIANCE) {
+	nv = n_ok_series();
+    } else if (code == TWO_MEANS || code == TWO_VARIANCES) {
+	nv = (n_ok_series() > 1);
+    } else if (code == ONE_PROPN) {
+	nv = n_ok_dummies();
+    } else if (code == TWO_PROPNS) {
+	nv = (n_ok_dummies() > 1);
+    }
+
+    if (nv > 0) {
 	add_test_combo(tbl, &tbl_len, test, 0);
     }
    
@@ -1444,7 +1489,7 @@ static void make_test_tab (GtkWidget *notebook, int code, test_t *test)
 	add_test_entry(tbl, &tbl_len, _("mean of sample 1"), test, 0);
 	add_test_entry(tbl, &tbl_len, _("std. deviation, sample 1"), test, 1);
 	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, 2);
-	if (nv > 1) {
+	if (nv > 0) {
 	    add_test_combo(tbl, &tbl_len, test, 3);
 	}
 	add_test_entry(tbl, &tbl_len, _("mean of sample 2"), test, 3);
@@ -1459,7 +1504,7 @@ static void make_test_tab (GtkWidget *notebook, int code, test_t *test)
     case TWO_VARIANCES:
 	add_test_entry(tbl, &tbl_len, _("variance of sample 1"), test, 0);
 	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, 1);
-	if (nv > 1) {
+	if (nv > 0) {
 	    add_test_combo(tbl, &tbl_len, test, 2);
 	}	
 	add_test_entry(tbl, &tbl_len, _("variance of sample 2"), test, 2);
@@ -1470,6 +1515,9 @@ static void make_test_tab (GtkWidget *notebook, int code, test_t *test)
     case TWO_PROPNS:
 	add_test_entry(tbl, &tbl_len, _("proportion, sample 1"), test, 0);
 	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, 1);
+	if (nv > 0) {
+	    add_test_combo(tbl, &tbl_len, test, 2);
+	}	
 	add_test_entry(tbl, &tbl_len, _("proportion, sample 2"), test, 2);
 	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, 3);
 	add_test_label(tbl, &tbl_len, _("H0: Difference of proportions = 0"));

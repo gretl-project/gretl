@@ -1353,6 +1353,9 @@ static GList *get_dummy_list (int *thisdum)
 	if (!strcmp(datainfo->varname[i], "subdum")) {
 	    continue;
 	} 
+	if (!datainfo->vector[i]) {
+	    continue;
+	}
 	if (gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
 	    dumlist = g_list_append(dumlist, datainfo->varname[i]);
 	    if (i == mdata->active_var) *thisdum = 1;
