@@ -807,7 +807,7 @@ static void h_test (GtkWidget *w, gpointer data)
 	break;
     }
 
-    view_buffer(prn, 78, 300, _("gretl: hypothesis test"), H_TEST,
+    view_buffer(prn, 78, 340, _("gretl: hypothesis test"), H_TEST,
                 NULL);
 }
 

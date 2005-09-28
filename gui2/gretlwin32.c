@@ -25,6 +25,7 @@
 
 #include <dirent.h>
 #include <mapi.h>
+#include <shlobj.h>
 
 #define HUSH_RUNTIME_WARNINGS
 
@@ -659,3 +660,16 @@ int send_file (char *fullname)
 
     return err;
 }
+
+char *desktop_path (void)
+{
+    TCHAR dpath[MAX_PATH];
+
+    if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, 
+				  NULL, 0, dpath))) {
+	return g_strdup(dpath);
+    } else {
+	return NULL;
+    }
+}
+
