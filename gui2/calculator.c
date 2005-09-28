@@ -563,7 +563,7 @@ static void h_test (GtkWidget *w, gpointer data)
 {
     test_t *test = (test_t *) data;
     int j, n1, n2, grf;
-    double x[5], sderr, ts, pv;
+    double x[5], sderr, ts, pv, z;
     const gchar *tmp;
     PRN *prn;
 
@@ -679,11 +679,28 @@ static void h_test (GtkWidget *w, gpointer data)
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[6]));
 	x[4] = getval(tmp, prn, 0);
 	if (na(x[4])) return;
+
 	pprintf(prn, _("Null hypothesis: Difference of means = %g\n"), x[4]);
+	pputc(prn, '\n');
+
 	pprintf(prn, _("Sample 1:\n n = %d, mean = %g, s.d. = %g\n"),
 		n1, x[0], x[1]);
+	z = x[1] / sqrt((double) n1);
+	pprintf(prn, _(" standard error of mean = %g\n"), z);
+	z *= tcrit95(n1 - 1);
+	pprintf(prn, _(" 95%% confidence interval for mean: %g to %g\n"), 
+		x[0] - z, x[0] + z);
+	pputc(prn, '\n');
+
 	pprintf(prn, _("Sample 2:\n n = %d, mean = %g, s.d. = %g\n"),
 		n2, x[2], x[3]);
+	z = x[3] / sqrt((double) n2);
+	pprintf(prn, _(" standard error of mean = %g\n"), z);
+	z *= tcrit95(n2 - 1);
+	pprintf(prn, _(" 95%% confidence interval for mean: %g to %g\n"), 
+		x[2] - z, x[2] + z);
+	pputc(prn, '\n');
+
 	/* are we assuming a common variance? */
 	j = 0;
 	if (GTK_TOGGLE_BUTTON(test->check)->active) j = 1;
@@ -1134,7 +1151,7 @@ static void populate_stats (GtkWidget *w, gpointer p)
     }
 
     for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	if (na(Z[vx][t]) || (vy > 0 && eval_ytest(Z[vy][t], yop, yval))) {
+	if (na(Z[vx][t]) || (vy > 0 && !eval_ytest(Z[vy][t], yop, yval))) {
 	    n--;
 	}
     }
