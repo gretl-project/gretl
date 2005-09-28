@@ -113,6 +113,7 @@ struct png_plot_t {
     GPT_SPEC *spec;
     double xmin, xmax;
     double ymin, ymax;
+    int pixel_width, pixel_height;
     int pixel_xmin, pixel_xmax;
     int pixel_ymin, pixel_ymax;
     int xint, yint;
@@ -266,7 +267,8 @@ static int set_output_line (const char *s)
     return !strncmp(s, "set output", 10);
 }
 
-static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
+static int 
+add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 {
     FILE *fsrc, *ftmp;
     char temp[MAXLEN], fline[MAXLEN];
@@ -314,8 +316,10 @@ static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 	    }
 	}
 	if (need_term_line) {
-	    fprintf(ftmp, "%s\n",
-		    get_gretl_png_term_line(PLOT_REGULAR));
+	    int ptype = (spec != NULL)? spec->code : PLOT_REGULAR;
+	    const char *pline = get_gretl_png_term_line(ptype);
+
+	    fprintf(ftmp, "%s\n", pline);
 	}	    
 	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
 		paths.userdir);
@@ -1309,10 +1313,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     return err;
 }
 
-/* Size of drawing area */
-#define PLOT_PIXEL_WIDTH  640   /* try 576? 608? */
-#define PLOT_PIXEL_HEIGHT 480   /* try 432? 456? */
-
 #ifdef USE_GNOME
 extern void gnome_print_graph (const char *fname);
 #endif
@@ -1409,7 +1409,7 @@ static void draw_selection_rectangle (png_plot *plot,
 			 0, 0,
 			 plot->pixmap,
 			 0, 0,
-			 PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
+			 plot->pixel_width, plot->pixel_height);
     /* draw (invert) again to erase the rectangle */
     gdk_draw_rectangle(plot->pixmap,
 		       plot->invert_gc,
@@ -1447,7 +1447,7 @@ write_label_to_plot (png_plot *plot, const gchar *label,
 			 0, 0,
 			 plot->pixmap,
 			 0, 0,
-			 PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
+			 plot->pixel_width, plot->pixel_height);
 
     /* draw (invert) again to erase the text */
     gdk_draw_text (plot->pixmap,
@@ -1484,7 +1484,7 @@ write_label_to_plot (png_plot *plot, const gchar *label,
 			 0, 0,
 			 plot->pixmap,
 			 0, 0,
-			 PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
+			 plot->pixel_width, plot->pixel_height);
 
     /* trash the pango layout */
     g_object_unref(G_OBJECT(pl));
@@ -2322,7 +2322,7 @@ static void render_pngfile (png_plot *plot, int view)
 			     0, 0,
 			     plot->pixmap,
 			     0, 0,
-			     PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
+			     plot->pixel_width, plot->pixel_height);
 	if (view == PNG_ZOOM) {
 	    plot->status |= PLOT_ZOOMED;
 	} else if (view == PNG_UNZOOM) {
@@ -2367,9 +2367,9 @@ static void set_approx_pixel_bounds (png_plot *plot,
 				     int max_num2_width)
 {
     if (plot_has_xlabel(plot)) {
-	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 36;
+	plot->pixel_ymax = plot->pixel_height - 36;
     } else {
-	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 24;
+	plot->pixel_ymax = plot->pixel_height - 24;
     }
 
     if (plot_has_title(plot)) {
@@ -2383,7 +2383,7 @@ static void set_approx_pixel_bounds (png_plot *plot,
 	plot->pixel_xmin += 12;
     }
 
-    plot->pixel_xmax = PLOT_PIXEL_WIDTH - 20; 
+    plot->pixel_xmax = plot->pixel_width - 20; 
     if (plot_has_y2axis(plot)) {
 	plot->pixel_xmax -= 7 * (max_num2_width + 1);
     }
@@ -2612,8 +2612,8 @@ static int get_plot_ranges (png_plot *plot)
 	got_x = got_y = 1;
 	plot->pixel_xmin = b.xleft;
 	plot->pixel_xmax = b.xright;
-	plot->pixel_ymin = PLOT_PIXEL_HEIGHT - b.ytop;
-	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - b.ybot;
+	plot->pixel_ymin = plot->pixel_height - b.ytop;
+	plot->pixel_ymax = plot->pixel_height - b.ybot;
 	plot->xmin = b.xmin;
 	plot->xmax = b.xmax;
 	plot->ymin = b.ymin;
@@ -2686,6 +2686,9 @@ static png_plot *png_plot_new (void)
     plot->invert_gc = NULL;
     plot->spec = NULL;
 
+    plot->pixel_width = 640;
+    plot->pixel_height = 480;
+
     plot->xmin = plot->xmax = 0.0;
     plot->ymin = plot->ymax = 0.0;
     plot->xint = plot->yint = 0;
@@ -2755,6 +2758,10 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 	get_plot_ranges(plot);
     } 
 
+    if (plot->spec->code == PLOT_VAR_ROOTS) {
+	plot->pixel_width = 480;
+    }
+
 #ifdef OLD_GTK
     gtk_widget_push_visual(gdk_rgb_get_visual());
     gtk_widget_push_colormap(gdk_rgb_get_cmap());
@@ -2802,10 +2809,10 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     plot->canvas = gtk_drawing_area_new();
 #ifdef OLD_GTK
     gtk_drawing_area_size(GTK_DRAWING_AREA(plot->canvas), 
-			  PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
+			  plot->pixel_width, plot->pixel_height);
 #else
     gtk_widget_set_size_request(GTK_WIDGET(plot->canvas), 
-				PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
+				plot->pixel_width, plot->pixel_height);
 #endif
     gtk_widget_set_events (plot->canvas, GDK_EXPOSURE_MASK
                            | GDK_LEAVE_NOTIFY_MASK
@@ -2896,7 +2903,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     gtk_widget_grab_focus(plot->canvas);  
 
     plot->pixmap = gdk_pixmap_new(plot->shell->window, 
-				  PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT, 
+				  plot->pixel_width, plot->pixel_height, 
 				  -1);
     g_signal_connect(G_OBJECT(plot->canvas), "expose_event",
 		     G_CALLBACK(plot_expose), plot->pixmap);

@@ -443,11 +443,13 @@ const char *get_gretl_png_term_line (PlotType ptype)
 {
     static char png_term_line[256];
     char font_string[128];
+    char size_string[16];
     char color_string[64];
     int gpcolors = 1, gpttf = 1;
     const char *grfont = NULL;
 
     *font_string = 0;
+    *size_string = 0;
     *color_string = 0;
 
 #ifndef WIN32
@@ -479,8 +481,12 @@ const char *get_gretl_png_term_line (PlotType ptype)
 	strcpy(color_string, " color"); /* old PNG driver */
     }
 
-    sprintf(png_term_line, "set term png%s%s",
-	    font_string, color_string);
+    if (ptype == PLOT_VAR_ROOTS) {
+	strcpy(size_string, " size 480,480");
+    }
+
+    sprintf(png_term_line, "set term png%s%s%s",
+	    font_string, size_string, color_string);
 
 #if GP_DEBUG
     fprintf(stderr, "png term line:\n'%s'\n", png_term_line);
@@ -2991,7 +2997,8 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
 
     n = gretl_matrix_rows(lam);
 
-    fprintf(fp, "set title '%s'\n", I_("VAR inverse roots"));
+    fprintf(fp, "set title '%s'\n", 
+	    I_("VAR inverse roots in relation to the unit circle"));
     fputs("# literal lines = 8\n", fp);
     fputs("unset border\n", fp);
     fputs("unset key\n", fp);
