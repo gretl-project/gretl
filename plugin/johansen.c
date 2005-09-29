@@ -26,7 +26,7 @@
 #include "gretl_matrix_private.h"
 #include "var.h"
 
-#define JDEBUG 1
+#define JDEBUG 0
 
 /* 
    Critical values for Johansen's likelihood ratio tests
