@@ -20,9 +20,9 @@
 /* gretl_win32.c for gretl */
 
 #include "libgretl.h"
-#include <windows.h>
 
-/* ............................................................ */
+#include <windows.h>
+#include <shlobj.h>
 
 int read_reg_val (HKEY tree, const char *base, 
 		  char *keyname, char *keyval)
@@ -61,8 +61,6 @@ int read_reg_val (HKEY tree, const char *base,
     return error;
 }
 
-/* ............................................................ */
-
 int write_reg_val (HKEY tree, const char *base, 
 		   const char *keyname, const char *keyval)
 {
@@ -100,8 +98,6 @@ int write_reg_val (HKEY tree, const char *base,
 
     return error;
 }
-
-/* ............................................................ */
 
 void cli_read_registry (char *callname, PATHS *ppaths)
 {
@@ -154,8 +150,6 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     }
 }
 
-/* ............................................................ */
-
 void win_show_error (DWORD dw)
 {
     LPVOID buf;
@@ -174,8 +168,6 @@ void win_show_error (DWORD dw)
     MessageBox(NULL, (LPCTSTR) buf, "Error", MB_OK | MB_ICONERROR);
     LocalFree(buf);
 }
-
-/* ............................................................ */
 
 int winfork (char *cmdline, const char *dir, int wshow,
 	     DWORD flags)
@@ -215,7 +207,26 @@ int winfork (char *cmdline, const char *dir, int wshow,
     return 0;
 }
 
+char *desktop_path (void)
+{
+    TCHAR dpath[MAX_PATH];
+    LPITEMIDLIST id_list;
+    DWORD result;
+    LPMALLOC allocator;
 
+    if (SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOPDIRECTORY, &id_list) != S_OK) {
+	return NULL;
+    }
+
+    result = SHGetPathFromIDList(id_list, dpath);
+
+    if (SHGetMalloc(&allocator) == S_OK) {
+	allocator->lpVtbl->Free(allocator, id_list);
+	allocator->lpVtbl->Release(allocator);
+    }
+
+    return (result == TRUE) ? gretl_strdup(dpath) : NULL;
+}
 
 
 

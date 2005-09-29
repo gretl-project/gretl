@@ -37,6 +37,8 @@ void win_show_error (DWORD dw);
 int winfork (char *cmdline, const char *dir, int wshow,
 	     DWORD flags);
 
+char *desktop_path (void);
+
 #endif /* WIN32 */
 
 #endif /* GRETL_WIN32_H */

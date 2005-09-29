@@ -235,7 +235,7 @@ gretlcli.exe: $(CLIOBJ)
 	$(CC) -o $@ $^ $(LIBS) $(CLI_LIBS) -lz -lmingwex -s
 
 gretlw32.exe: $(GUIOBJ) gretlw32_res.o
-	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lpng12 -lz -lmingwex -s
+	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lpng13 -lz -lmingwex -s
 
 gretlw32_res.o: gretlw32.rc 
 	$(RC) $(RCFLAGS) $< $@

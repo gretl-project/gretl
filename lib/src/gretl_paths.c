@@ -411,6 +411,25 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 	return fname;
     }
 
+#ifdef WIN32
+    /* try looking on the desktop? */
+    if (1) {
+	char *dtdir = desktop_path();
+	char *ret = NULL;
+
+	fname = tmp;
+	strcpy(fname, orig);
+
+	if (dtdir != NULL) {
+	    ret = search_dir(fname, dtdir, CURRENT_DIR);
+	    free(dtdir);
+	}
+	if (ret != NULL) {
+	    return ret;
+	}
+    }	    
+#endif
+
     fname = tmp;
     strcpy(fname, orig);
 

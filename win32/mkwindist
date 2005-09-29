@@ -86,7 +86,7 @@ cd $THISDIR
 
 # auxiliary dlls
 for f in \
-    libgmp-3.dll libxml2.dll readline.dll zlib1.dll libpng12.dll \
+    libgmp-3.dll libxml2.dll readline.dll zlib1.dll \
     libblas.dll libf2c.dll liblapack.dll libgtksourceview.dll \
     iconv.dll intl.dll libpdf.dll
 do

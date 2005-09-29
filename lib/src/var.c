@@ -114,8 +114,12 @@ static MODEL **allocate_VAR_models (int neqns)
 
 int gretl_VAR_add_coeff_matrix (GRETL_VAR *var)
 {
-    int n = var->neqns * var->order;
+    int n = var->neqns;
     int err = 0;
+
+    if (var->order > 1) {
+	n *= var->order;
+    } 
 
     var->A = gretl_matrix_alloc(n, n);
     if (var->A == NULL) {
@@ -129,8 +133,12 @@ int gretl_VAR_add_coeff_matrix (GRETL_VAR *var)
 
 int gretl_VAR_add_C_matrix (GRETL_VAR *var)
 {
-    int n = var->neqns * var->order;
+    int n = var->neqns;
     int err = 0;
+
+    if (var->order > 1) {
+	n *= var->order;
+    } 
 
     var->C = gretl_matrix_alloc(n, var->neqns);
     if (var->C == NULL) {
@@ -906,7 +914,7 @@ gretl_matrix *
 gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods) 
 {
     int i, t;
-    int rows = var->neqns * var->order;
+    int rows = var->neqns;
     gretl_matrix *ctmp = NULL, *idx = NULL, *vtmp = NULL;
     gretl_matrix *cic = NULL, *vt = NULL;
     gretl_matrix *vd = NULL;
@@ -920,6 +928,10 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods)
     if (periods <= 0) {
 	fprintf(stderr, "Invalid number of periods\n");
 	return NULL;
+    }
+
+    if (var->order > 1) {
+	rows *= var->order;
     }
 
     vd = gretl_matrix_alloc(periods, var->neqns + 1);
@@ -1355,15 +1367,16 @@ static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
 
 static int gretl_VAR_add_roots (GRETL_VAR *var)
 {
-    int np = var->neqns * var->order;
     gretl_matrix *CompForm = NULL;
     double *eigA = NULL;
     double x, y;
-    int i, err = 0;
+    int i, np, err = 0;
 
     if (var->A == NULL) {
 	return 1;
     }
+
+    np = gretl_matrix_rows(var->A);
 
     var->lambda = gretl_matrix_alloc(np, 2);
     if (var->lambda == NULL) {
@@ -3591,7 +3604,7 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 {
     int i, t;
     int vsrc;
-    int rows = var->neqns * var->order;
+    int rows = var->neqns;
     gretl_matrix *rtmp, *ctmp;
     int block, blockmax;
     int tex = tex_format(prn);
@@ -3600,6 +3613,10 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 
     if (prn == NULL) {
 	return 0;
+    }
+
+    if (var->order > 1) {
+	rows *= var->order;
     }
 
     if (shock >= var->neqns) {

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.0-pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-06-14 16:19-0400\n"
-"PO-Revision-Date: 2005-06-21 20:00+0100\n"
+"PO-Revision-Date: 2005-09-21 20:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1676,7 +1676,7 @@ msgstr ""
 
 #: lib/src/estimate.c:3075
 msgid "Generalized Cochrane-Orcutt estimation"
-msgstr "Estymacja metod± uogólnion± Corchane'a-Orcutta"
+msgstr "Estymacja metod± uogólnion± Cochrane'a-Orcutta"
 
 #: lib/src/estimate.c:3078
 #, no-c-format
@@ -1801,7 +1801,7 @@ msgstr "Parametr \"toler\" musi byæ numeryczny"
 #: lib/src/generate.c:2397
 #, c-format
 msgid "Replaced after model %d: "
-msgstr "Zamiana modelu %d: "
+msgstr "Zamiana po modelu %d: "
 
 #: lib/src/generate.c:2471
 msgid "Periodic dummy variables generated.\n"
@@ -2037,7 +2037,7 @@ msgstr "empiryczne"
 
 #: lib/src/graphing.c:1785
 msgid "Test statistic for normality"
-msgstr "Test Jarque'a-Bera na normalno¶æ rozk³adu"
+msgstr "Test na normalno¶æ rozk³adu"
 
 #: lib/src/graphing.c:1787
 #, c-format
@@ -2333,7 +2333,7 @@ msgstr "Test White'a na heteroskedastyczno¶æ wariancji"
 
 #: lib/src/gretl_model.c:1247 lib/src/gretl_model.c:1255
 msgid "parameters are zero for the variables"
-msgstr "  Hipoteza zerowa: parametry regresji dla wskazanych zmiennych s± równe zero"
+msgstr "parametry regresji dla wskazanych zmiennych s± równe zero"
 
 #: lib/src/gretl_model.c:1248
 msgid "no ARCH effect is present"
@@ -7096,7 +7096,7 @@ msgstr "gretl: nieliniowa metoda najmniejszych kwadratów"
 
 #: gui2/callbacks.c:510
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr "NLS: Wyspecyfikuj funkcje i jej mo¿liwe pochodne:"
+msgstr "NLS: Wyspecyfikuj funkcje i mo¿liwe jej pochodne:"
 
 #: gui2/callbacks.c:515
 msgid "gretl: linear restrictions"
@@ -7108,7 +7108,7 @@ msgstr "Specyfikacja restrykcji:"
 
 #: gui2/callbacks.c:586
 msgid "Sorry, not yet implemented"
-msgstr "Sorry, nie jest jeszcze zaimplementodana"
+msgstr "Sorry, nie jest jeszcze zaimplementowana"
 
 #: gui2/callbacks.c:599
 msgid "gretl: uniform variable"
@@ -9894,7 +9894,7 @@ msgstr "Sorry, polecenie %s nie jest jeszcze zaimplementowane w libgretl\n"
 
 #: gui2/menustate.c:106 gui2/menustate.c:123
 msgid "/Model/Time series/_Cochrane-Orcutt..."
-msgstr "/Model/Szeregi czasowe/_Corchane-Orcutt..."
+msgstr "/Model/Szeregi czasowe/_Cochrane-Orcutt..."
 
 #: gui2/menustate.c:107 gui2/menustate.c:124
 msgid "/Model/Time series/_Hildreth-Lu..."
@@ -9906,7 +9906,7 @@ msgstr "/Model/Szeregi czasowe/_Prais-Winsten..."
 
 #: gui2/menustate.c:109 gui2/menustate.c:126
 msgid "/Model/Time series/_Autoregressive estimation..."
-msgstr "/Model/Szeregi czasowe/Uogólniony Corchane-Orcutt..."
+msgstr "/Model/Szeregi czasowe/Uogólniony Cochrane-Orcutt..."
 
 #: gui2/menustate.c:110 gui2/menustate.c:127
 msgid "/Model/Time series/ARMA_X..."
@@ -9922,15 +9922,15 @@ msgstr "/Model/Szeregi czasowe/model wektorowej autoregresji (VAR)..."
 
 #: gui2/menustate.c:113 gui2/menustate.c:130
 msgid "/Model/Time series/Cointegration test"
-msgstr "/Model/Szeregi czasowe/test kointegracji"
+msgstr "/Model/Szeregi czasowe/testy kointegracji"
 
 #: gui2/menustate.c:114 gui2/menustate.c:131
 msgid "/Model/Time series/Cointegration test/Engle-Granger..."
-msgstr "/Model/Szeregi czasowe/test kointegracji/test Engle'a-Grangera..."
+msgstr "/Model/Szeregi czasowe/testy kointegracji/test Engle'a-Grangera..."
 
 #: gui2/menustate.c:116 gui2/menustate.c:133
 msgid "/Model/Time series/Cointegration test/Johansen..."
-msgstr "/Model/Szeregi czasowe/test kointegracji/test Johansena..."
+msgstr "/Model/Szeregi czasowe/testy kointegracji/test Johansena..."
 
 #: gui2/menustate.c:246 gui2/menustate.c:289 gui2/menustate.c:339
 #: gui2/menustate.c:366

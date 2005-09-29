@@ -49,6 +49,4 @@ int win_buf_to_clipboard (const char *buf);
 
 int send_file (char *fullname);
 
-char *desktop_path (void);
-
 #endif /* GRETLWIN32_H */
