@@ -650,25 +650,21 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 
     int i, j, k, v = pdinfo->v;
     int mt, t, r = vecm->jinfo->rank;
-    int p = vecm->order - 1;
+    int p = vecm->order;
     int nv = vecm->neqns;
     int *biglist = vecm->jinfo->biglist;
     int err = 0;
 
-    /* FIXME: note "p = vecm->order - 1" above.  If the incoming order
-       is 1, then p = 0.  In which case we flame out below, with a
-       zero-size array of matrices G.  I have added a temporary
-       sentinel here.  But actually I'm quite confused: should 'p'
-       (the number of coefficient matrices for the lagged differences)
-       really be vecm->order - 1?  Or should it simply be vecm->order?
-       For the moment I've added the bodge of incrementing p.  
-
-       AC 2005-09-28 
+    /* Note: "vecm->order" is actually the order of the VAR system,
+       which corresponds to the number of lagged differences on the
+       RHS of the VAR system.  We need that number of G matrices to
+       hold the coefficients on those lagged differences.
     */
 
+#if JDEBUG
     fprintf(stderr, "build_VECM_models: vecm->order = %d\n", vecm->order);
+#endif
 
-    p++; /* bodge FIXME */
     if (p < 0) {
 	return E_DATA;
     }
@@ -710,25 +706,26 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 	vecm->E = gretl_matrix_alloc(vecm->T, vecm->neqns);
     }
 
-    fprintf(stderr, "about to add_EC_terms_to_dataset\n");
-
     err = add_EC_terms_to_dataset(vecm, pZ, pdinfo);
     
-    fprintf(stderr, "done add_EC_terms_to_dataset\n");
-
     for (i=0; i<nv && !err; i++) {
 	biglist[1] = vecm->jinfo->difflist[i+1];
 	k = biglist[0] - r + 1;
 	for (j=0; j<r; j++) {
 	    biglist[k++] = v + j;
 	}
+#if JDEBUG
+	printlist(biglist, "build_VECM_models: biglist");
+#endif
 	*vecm->models[i] = lsq(biglist, pZ, pdinfo, OLS, OPT_N | OPT_Z, 0.0);
 	err = vecm->models[i]->errcode;
 	if (!err) {
 	    vecm->models[i]->ID = i + 1;
 	    vecm->models[i]->aux = AUX_VECM;
 	    vecm->models[i]->adjrsq = NADBL;
-	    copy_coeffs_to_Gamma(vecm->models[i], i, G, p, nv);
+	    if (p > 0) {
+		copy_coeffs_to_Gamma(vecm->models[i], i, G, p, nv);
+	    }
 	    copy_coeffs_to_Alpha(vecm, i, vecm->jinfo->Alpha, p);
 	    if (vecm->E != NULL) {
 		for (t=0; t<vecm->T; t++) {
@@ -754,7 +751,6 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 #endif
 
     if (p == 0) {
-	/* FIXME: is this right? */
 	gretl_matrix_I(A, nv);
 	gretl_matrix_add_to(A, Pi);
 	add_Ai_to_VAR_A(A, vecm, 0);
@@ -1048,7 +1044,7 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     gretl_matrix *S;
     int T = vecm->T;
     int n = vecm->neqns;
-    int k = n * (vecm->order - 1);
+    int k = n * vecm->order;
 
     S = gretl_matrix_copy(vecm->S);
     if (S == NULL) {

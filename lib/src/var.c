@@ -1081,7 +1081,17 @@ static int var_lists_init (struct var_lists *vl,
 			   int order)
 {
     int nreg = 1 + ndet + nstoch * order;
-    int ntest = nstoch * 2 + ndet;
+    int ntest = nstoch + ndet;
+
+    if (order > 0) {
+	/* test max lag for missing values */
+	ntest += nstoch;
+    }
+
+#if VAR_DEBUG
+    fprintf(stderr, "var_lists_init: order = %d, nreg = %d, ntest = %d\n", 
+	    order, nreg, ntest);
+#endif
 
     vl->detvars = NULL;
     vl->stochvars = NULL;
@@ -1098,11 +1108,6 @@ static int var_lists_init (struct var_lists *vl,
 	vl->reglist == NULL || vl->testlist == NULL) {
 	goto bailout;
     }
-
-    vl->detvars[0] = ndet;
-    vl->stochvars[0] = nstoch;
-    vl->reglist[0] = nreg;
-    vl->testlist[0] = ntest;
 
     vl->lagvlist = lagvlist_construct(nstoch, order);
     if (vl->lagvlist == NULL) {
@@ -1237,18 +1242,24 @@ static int organize_var_lists (const int *list, const double **Z,
     return 0;
 }
 
-/* compose a VAR regression list: it may be complete, or one variable
+/* Compose a VAR regression list: it may be complete, or one variable
    may be omitted (to run an F-test), or the order may be one less
-   than the full VAR order (again, for an F-test)
+   than the full VAR order (again, for an F-test).  If test = 1, also
+   compose a list containing the maximum lag of each stochastic
+   variable, for use in testing for missing values.
 */
 
 static int
 compose_varlist (struct var_lists *vl, int depvar, int order, int omit, 
-		 const DATAINFO *pdinfo)
+		 int test, const DATAINFO *pdinfo)
 {
     int l0 = 1 + vl->detvars[0] + order * vl->stochvars[0];
     int i, j, pos;
     int err = 0;
+
+#if VAR_DEBUG
+    fprintf(stderr, "compose_varlist: order = %d\n", order);
+#endif
 
     if (omit) {
 	l0 -= order;
@@ -1272,24 +1283,29 @@ compose_varlist (struct var_lists *vl, int depvar, int order, int omit,
 	vl->reglist[pos++] = vl->detvars[i];
     }
 
-    /* now build the test list (to screen missing values) */
-    pos = 1;
-    if (order == 0) {
-	order = 1;
-    }
-    for (i=1; i<=vl->stochvars[0]; i++) {
-	vl->testlist[pos++] = vl->stochvars[i];
-	vl->testlist[pos++] = vl->lagvlist[i-1][order];
-    }
-
-    for (i=1; i<=vl->detvars[0]; i++) {
-	vl->testlist[pos++] = vl->detvars[i];
-    }    
-
 #if VAR_DEBUG
     printlist(vl->reglist, "composed VAR list");
-    printlist(vl->testlist, "composed test list");
 #endif
+
+    if (test) {
+	/* now build the test list (to screen missing values) */
+	pos = 1;
+	for (i=1; i<=vl->stochvars[0]; i++) {
+	    vl->testlist[pos++] = vl->stochvars[i];
+	    if (order > 0) {
+		/* include max lag */
+		vl->testlist[pos++] = vl->lagvlist[i-1][order];
+	    }
+	}
+
+	for (i=1; i<=vl->detvars[0]; i++) {
+	    vl->testlist[pos++] = vl->detvars[i];
+	}
+
+#if VAR_DEBUG
+	printlist(vl->testlist, "composed test list");
+#endif
+    }
 
     return err;
 }
@@ -1470,7 +1486,7 @@ static int VAR_compute_tests (MODEL *varmod, GRETL_VAR *var,
     /* restrictions for all lags of specific variables */
     for (j=0; j<var->neqns && !err; j++) {
 
-	compose_varlist(vl, depvar, var->order, j + 1, pdinfo);	
+	compose_varlist(vl, depvar, var->order, j + 1, 0, pdinfo);	
 
 	if (robust) {
 	    gretl_list_diff(outlist, varmod->list, vl->reglist);
@@ -1496,7 +1512,8 @@ static int VAR_compute_tests (MODEL *varmod, GRETL_VAR *var,
     
     /* restrictions for last lag, all variables */
     if (!err && var->order > 1) {
-	compose_varlist(vl, depvar, var->order - 1, 0, pdinfo);	
+
+	compose_varlist(vl, depvar, var->order - 1, 0, 0, pdinfo);	
 
 	testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
 	err = testmod.errcode;
@@ -1565,7 +1582,7 @@ static int VAR_add_stats (GRETL_VAR *var)
 	int T = var->T;
 	int g = var->neqns;
 	int k = var->ncoeff;
-	
+
 	var->ll = -(g * T / 2.0) * (LN_2_PI + 1) - (T / 2.0) * var->ldet;
 	var->AIC = (-2.0 * var->ll + 2.0 * k * g) / T;
 	var->BIC = (-2.0 * var->ll + log(T) * k * g) / T;
@@ -1635,7 +1652,7 @@ static GRETL_VAR *real_var (int order, const int *inlist,
     /* compose base VAR list (entry 1 will vary across equations);
        assemble test list for t1 and t2 while we're at it */
     *err = compose_varlist(&vlists, vlists.stochvars[1], 
-			   order, 0, pdinfo);
+			   order, 0, 1, pdinfo);
     if (*err) {
 	*err = E_DATA;
 	goto var_bailout;
@@ -1660,7 +1677,7 @@ static GRETL_VAR *real_var (int order, const int *inlist,
 	MODEL *pmod = var->models[i];
 
 	compose_varlist(&vlists, vlists.stochvars[i + 1], 
-			order, 0, pdinfo);
+			order, 0, 0, pdinfo);
 
 	*pmod = lsq(vlists.reglist, pZ, pdinfo, VAR, lsqopt, 0.0);
 
@@ -2686,8 +2703,10 @@ static int make_johansen_VECM_lists (JohansenInfo *jv, int *varlist,
 	}
     }
 
-    printlist(varlist, "varlist");
-    printlist(jv->biglist, "jv->biglist");
+#if VAR_DEBUG
+    printlist(varlist, "make_johansen_VECM_lists: varlist");
+    printlist(jv->biglist, "make_johansen_VECM_lists: jv->biglist");
+#endif
 
     return err;
 }
@@ -2712,11 +2731,13 @@ static int johansen_VAR (int order, const int *inlist,
 	return err;
     }
 
-    /* generate the required lags */
-    if (real_list_laggenr(vlists.stochvars, pZ, pdinfo, 
-			  (order)? order : 1, vlists.lagvlist)) {
-	err = E_ALLOC;
-	goto var_bailout;
+    /* generate the required lags, if any */
+    if (order > 0) {
+	if (real_list_laggenr(vlists.stochvars, pZ, pdinfo, 
+			      order, vlists.lagvlist)) {
+	    err = E_ALLOC;
+	    goto var_bailout;
+	}
     }
 
     jvar->neqns = vlists.stochvars[0];    
@@ -2725,7 +2746,7 @@ static int johansen_VAR (int order, const int *inlist,
        assemble test list for setting t1 and t2 while we're at it 
     */
     err = compose_varlist(&vlists, vlists.stochvars[1], 
-			  order, 0, pdinfo);
+			  order, 0, 1, pdinfo);
     if (err) {
 	err = E_DATA;
 	goto var_bailout;
@@ -2745,21 +2766,12 @@ static int johansen_VAR (int order, const int *inlist,
     }
 
     if (jrank(jvar) > 0) {
-	fprintf(stderr, "VECM: rank = %d, vlists.reglist[0] = %d\n",
-		jrank(jvar), vlists.reglist[0]);
-	/* doing VECM for specified rank: need to store more info */
-	if (1 || vlists.reglist[0] > 1) {
-	    /* FIXME: exactly when do we need to make these lists?  We
-	       had "if (1 || vlists.reglist[0] > 1)", but this causes
-	       problems with an order-1 VECM 
-	    */
-	    err = make_johansen_VECM_lists(jvar->jinfo, vlists.reglist, 
-					   jvar->neqns);
-	    if (err) {
-		goto var_bailout;
-	    }	    
-	}
-    }    
+	err = make_johansen_VECM_lists(jvar->jinfo, vlists.reglist, 
+				       jvar->neqns);
+	if (err) {
+	    goto var_bailout;
+	}	    
+    }
 
     gretl_model_init(&jmod);
 
@@ -2768,11 +2780,16 @@ static int johansen_VAR (int order, const int *inlist,
     }
 
     for (i=0; i<jvar->neqns; i++) {
-	compose_varlist(&vlists, vlists.stochvars[i + 1], 
-			order, 0, pdinfo);
+
+	/* insert the appropriate dependent variable */
+	vlists.reglist[1] = vlists.stochvars[i + 1];
 
 	if (jrank(jvar) > 0) {
-	    /* VECM: record ID number of first difference */
+	    /* VECM: record ID number of first difference.  Note:
+	       we'll need this information in johansen.c, for building
+	       the final VECM models, even if the order of the present
+	       VAR is zero.
+	    */
 	    jvar->jinfo->difflist[i+1] = vlists.reglist[1];
 	}
 
@@ -2796,7 +2813,7 @@ static int johansen_VAR (int order, const int *inlist,
 	}
 
 	/* y_{t-1} regressions */
-	vlists.reglist[1] = resids->levels_list[i + 1]; 
+	vlists.reglist[1] = resids->levels_list[i + 1];
 	if (vlists.reglist[0] == 1) {
 	    /* degenerate */
 	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
@@ -3022,7 +3039,9 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
     if (seasonals) {
 	if (pdinfo->pd > 1) {
 #if 0
-	    /* center the dummies only if there's a constant in the VAR? */
+	    /* Center the dummies only if there's a constant in the VAR? 
+	       This seems to be a bad idea.
+	    */
 	    int flag = (jcode(jvar) >= J_UNREST_CONST)? 1 : -1;
 #else
 	    int flag = 1;
@@ -3087,6 +3106,10 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 	}
     }
 
+#if VAR_DEBUG
+    printlist(resids.levels_list, "resids.levels_list (first lags)");
+#endif
+
     /* put first differences of endog vars into VAR list */
     k = 1;
     for (i=1; i<=list[0]; i++) {
@@ -3097,6 +3120,10 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 	} 
 	k++;
     }
+
+#if VAR_DEBUG
+    printlist(varlist, "varlist (first differences)");
+#endif
 
     if (nexo > 0) {
 	/* add separator before exog vars */
@@ -4064,9 +4091,9 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 
     if (vecm) {
 	if (tex || rtf) {
-	    sprintf(Vstr, I_("VECM system, lag order %d"), var->order);
+	    sprintf(Vstr, I_("VECM system, lag order %d"), var->order + 1);
 	} else {
-	    sprintf(Vstr, _("VECM system, lag order %d"), var->order);
+	    sprintf(Vstr, _("VECM system, lag order %d"), var->order + 1);
 	}
     } else {
 	if (tex || rtf) {
