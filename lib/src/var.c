@@ -3179,7 +3179,7 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 	k = gretl_matrix_rows(resids.u);
 	jvar->err = allocate_johansen_sigmas(jvar->jinfo, k);
     }
-    
+
     if (!jvar->err) {
 	char stobs[OBSLEN], endobs[OBSLEN];
 

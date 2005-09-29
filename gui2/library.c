@@ -2619,6 +2619,8 @@ void do_vector_model (GtkWidget *widget, gpointer p)
 	var = full_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn);
 	if (var == NULL) {
 	    err = 1;
+	} else if (var->err != 0) {
+	    err = var->err;
 	} else {
 	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
 			VAR, var);
@@ -2627,6 +2629,8 @@ void do_vector_model (GtkWidget *widget, gpointer p)
 	var = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, prn);
 	if (var == NULL) {
 	    err = 1;
+	} else if (var->err != 0) {
+	    err = var->err;
 	} else {
 	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, var);
 	}
@@ -2635,9 +2639,7 @@ void do_vector_model (GtkWidget *widget, gpointer p)
     }
 
     if (err) {
-	const char *msg = get_gretl_errmsg();
-
-	errbox((*msg)? msg : _("Command failed"));
+	gui_errmsg(err);
 	gretl_print_destroy(prn);
     }	
 }
