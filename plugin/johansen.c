@@ -669,7 +669,7 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
     fprintf(stderr, "build_VECM_models: vecm->order = %d\n", vecm->order);
 
     p++; /* bodge FIXME */
-    if (p <= 0) {
+    if (p < 0) {
 	return E_DATA;
     }
 
@@ -684,12 +684,19 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 
     /* for computing VAR representation */
     Pi = gretl_matrix_alloc(nv, nv);
-    G = gretl_matrix_array_alloc_with_size(p, nv, nv);
     A = gretl_matrix_alloc(nv, nv);
-    if (Pi == NULL || G == NULL || A == NULL) {
+    if (Pi == NULL || A == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
+
+    if (p > 0) {
+	G = gretl_matrix_array_alloc_with_size(p, nv, nv);
+	if (G == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}	
+    }    
 
     if (vecm->jinfo->Alpha == NULL) {
 	vecm->jinfo->Alpha = gretl_matrix_alloc(nv, r);
@@ -746,22 +753,29 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
     } 
 #endif
 
-    for (i=0; i<=p; i++) {
-	if (i == 0) {
-	    gretl_matrix_I(A, nv);
-	    gretl_matrix_add_to(A, Pi);
-	    gretl_matrix_add_to(A, G[0]);
-	} else if (i == p) {
-	    gretl_matrix_zero(A);
-	    gretl_matrix_subtract_from(A, G[i-1]);
-	} else {
-	    gretl_matrix_copy_values(A, G[i]);
-	    gretl_matrix_subtract_from(A, G[i-1]);
-	}
+    if (p == 0) {
+	/* FIXME: is this right? */
+	gretl_matrix_I(A, nv);
+	gretl_matrix_add_to(A, Pi);
+	add_Ai_to_VAR_A(A, vecm, 0);
+    } else {
+	for (i=0; i<=p; i++) {
+	    if (i == 0) {
+		gretl_matrix_I(A, nv);
+		gretl_matrix_add_to(A, Pi);
+		gretl_matrix_add_to(A, G[0]);
+	    } else if (i == p) {
+		gretl_matrix_zero(A);
+		gretl_matrix_subtract_from(A, G[i-1]);
+	    } else {
+		gretl_matrix_copy_values(A, G[i]);
+		gretl_matrix_subtract_from(A, G[i-1]);
+	    }
 #if JDEBUG
-	gretl_matrix_print(A, "A_i", NULL);
+	    gretl_matrix_print(A, "A_i", NULL);
 #endif
-	add_Ai_to_VAR_A(A, vecm, i);
+	    add_Ai_to_VAR_A(A, vecm, i);
+	}
     }
 
 #if JDEBUG
