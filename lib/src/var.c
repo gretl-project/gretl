@@ -1089,10 +1089,10 @@ static int var_lists_init (struct var_lists *vl,
     vl->testlist = NULL;
     vl->lagvlist = NULL;
 
-    vl->detvars = malloc((ndet + 1) * sizeof *vl->detvars);
-    vl->stochvars = malloc((nstoch + 1) * sizeof *vl->stochvars);
-    vl->reglist = malloc((nreg + 1) * sizeof *vl->reglist);
-    vl->testlist = malloc((ntest + 1) * sizeof *vl->testlist);
+    vl->detvars = gretl_list_new(ndet);
+    vl->stochvars = gretl_list_new(nstoch);
+    vl->reglist = gretl_list_new(nreg);
+    vl->testlist = gretl_list_new(ntest);
 
     if (vl->detvars == NULL || vl->stochvars == NULL ||
 	vl->reglist == NULL || vl->testlist == NULL) {
@@ -1274,10 +1274,14 @@ compose_varlist (struct var_lists *vl, int depvar, int order, int omit,
 
     /* now build the test list (to screen missing values) */
     pos = 1;
+    if (order == 0) {
+	order = 1;
+    }
     for (i=1; i<=vl->stochvars[0]; i++) {
 	vl->testlist[pos++] = vl->stochvars[i];
 	vl->testlist[pos++] = vl->lagvlist[i-1][order];
     }
+
     for (i=1; i<=vl->detvars[0]; i++) {
 	vl->testlist[pos++] = vl->detvars[i];
     }    
@@ -2669,7 +2673,9 @@ static int make_johansen_VECM_lists (JohansenInfo *jv, int *varlist,
     jv->difflist = gretl_list_new(neqns);
     if (jv->difflist == NULL) {
 	err = E_ALLOC;
-    } else {
+    }
+
+    if (!err) {
 	jv->biglist = gretl_list_new(k);
 	if (jv->biglist == NULL) {
 	    err = E_ALLOC;
@@ -2679,6 +2685,9 @@ static int make_johansen_VECM_lists (JohansenInfo *jv, int *varlist,
 	    }
 	}
     }
+
+    printlist(varlist, "varlist");
+    printlist(jv->biglist, "jv->biglist");
 
     return err;
 }
@@ -2705,7 +2714,7 @@ static int johansen_VAR (int order, const int *inlist,
 
     /* generate the required lags */
     if (real_list_laggenr(vlists.stochvars, pZ, pdinfo, 
-			  order, vlists.lagvlist)) {
+			  (order)? order : 1, vlists.lagvlist)) {
 	err = E_ALLOC;
 	goto var_bailout;
     }
@@ -2736,8 +2745,14 @@ static int johansen_VAR (int order, const int *inlist,
     }
 
     if (jrank(jvar) > 0) {
+	fprintf(stderr, "VECM: rank = %d, vlists.reglist[0] = %d\n",
+		jrank(jvar), vlists.reglist[0]);
 	/* doing VECM for specified rank: need to store more info */
-	if (vlists.reglist[0] > 1) {
+	if (1 || vlists.reglist[0] > 1) {
+	    /* FIXME: exactly when do we need to make these lists?  We
+	       had "if (1 || vlists.reglist[0] > 1)", but this causes
+	       problems with an order-1 VECM 
+	    */
 	    err = make_johansen_VECM_lists(jvar->jinfo, vlists.reglist, 
 					   jvar->neqns);
 	    if (err) {
@@ -2987,7 +3002,7 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
     int nexo, di0 = 0, l0 = list[0];
     int i, k;
 
-    jvar = johansen_VAR_new(list, rank, order, opt);
+    jvar = johansen_VAR_new(list, rank, order - 1, opt);
     if (jvar == NULL) {
 	return NULL;
     }    
@@ -3177,7 +3192,7 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 		    jvar->err = E_ALLOC;
 		}
 	    }
-	}	
+	}
 
 	/* now get johansen plugin to finish the job */
 	if (!jvar->err) {

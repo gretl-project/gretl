@@ -655,6 +655,24 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
     int *biglist = vecm->jinfo->biglist;
     int err = 0;
 
+    /* FIXME: note "p = vecm->order - 1" above.  If the incoming order
+       is 1, then p = 0.  In which case we flame out below, with a
+       zero-size array of matrices G.  I have added a temporary
+       sentinel here.  But actually I'm quite confused: should 'p'
+       (the number of coefficient matrices for the lagged differences)
+       really be vecm->order - 1?  Or should it simply be vecm->order?
+       For the moment I've added the bodge of incrementing p.  
+
+       AC 2005-09-28 
+    */
+
+    fprintf(stderr, "build_VECM_models: vecm->order = %d\n", vecm->order);
+
+    p++; /* bodge FIXME */
+    if (p <= 0) {
+	return E_DATA;
+    }
+
     /* the following two matrices are used for IRFs and
        forecast variance decompositions */
     if (vecm->A == NULL && (err = gretl_VAR_add_coeff_matrix(vecm))) {
@@ -685,7 +703,11 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 	vecm->E = gretl_matrix_alloc(vecm->T, vecm->neqns);
     }
 
+    fprintf(stderr, "about to add_EC_terms_to_dataset\n");
+
     err = add_EC_terms_to_dataset(vecm, pZ, pdinfo);
+    
+    fprintf(stderr, "done add_EC_terms_to_dataset\n");
 
     for (i=0; i<nv && !err; i++) {
 	biglist[1] = vecm->jinfo->difflist[i+1];
