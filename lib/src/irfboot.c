@@ -56,18 +56,24 @@ static void irf_boot_free (irfboot *boot)
 
 static int boot_A_C_init (irfboot *boot)
 {
-    int rows = boot->neqns * boot->order;
+    int n = boot->neqns * boot->order; /* FIXME vecm */
     int err = 0;
 
-    boot->A = gretl_matrix_alloc(rows, rows);
+    boot->A = gretl_matrix_alloc(n, n);
     if (boot->A == NULL) {
 	err = 1;
     } else {
-	pad_var_coeff_matrix(boot->A, boot->neqns, boot->order);
+	int i, j;
+
+	for (i=boot->neqns; i<n; i++) {
+	    for (j=0; j<n; j++) {
+		gretl_matrix_set(boot->A, i, j, (j == i - boot->neqns)? 1.0 : 0.0);
+	    }
+	}
     }
 
     if (!err) {
-	boot->C = gretl_matrix_alloc(rows, boot->neqns);
+	boot->C = gretl_matrix_alloc(n, boot->neqns);
 	if (boot->C == NULL) {
 	    err = 1;
 	    gretl_matrix_free(boot->A);

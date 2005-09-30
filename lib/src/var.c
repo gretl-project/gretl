@@ -79,18 +79,6 @@ static void var_resids_free (struct var_resids *vr)
     gretl_matrix_free(vr->v);
 }
 
-static void pad_var_coeff_matrix (gretl_matrix *A, int neqns, int order)
-{
-    int i, j;
-    int rowmax = neqns * order;
-
-    for (i=neqns; i<rowmax; i++) {
-	for (j=0; j<rowmax; j++) {
-	    gretl_matrix_set(A, i, j, (j == i - neqns)? 1.0 : 0.0);
-	}
-    }
-}
-
 static MODEL **allocate_VAR_models (int neqns)
 {
     MODEL **models = malloc(neqns * sizeof *models);
@@ -114,18 +102,20 @@ static MODEL **allocate_VAR_models (int neqns)
 
 int gretl_VAR_add_coeff_matrix (GRETL_VAR *var)
 {
-    int n = var->neqns;
+    int n = var->neqns * (var->order + var->ecm);
     int err = 0;
-
-    if (var->order > 1) {
-	n *= var->order;
-    } 
 
     var->A = gretl_matrix_alloc(n, n);
     if (var->A == NULL) {
 	err = E_ALLOC;
     } else {
-	pad_var_coeff_matrix(var->A, var->neqns, var->order);
+	int i, j;
+
+	for (i=var->neqns; i<n; i++) {
+	    for (j=0; j<n; j++) {
+		gretl_matrix_set(var->A, i, j, (j == i - var->neqns)? 1.0 : 0.0);
+	    }
+	}
     }
 
     return err;
@@ -133,12 +123,8 @@ int gretl_VAR_add_coeff_matrix (GRETL_VAR *var)
 
 int gretl_VAR_add_C_matrix (GRETL_VAR *var)
 {
-    int n = var->neqns;
+    int n = var->neqns * (var->order + var->ecm);
     int err = 0;
-
-    if (var->order > 1) {
-	n *= var->order;
-    } 
 
     var->C = gretl_matrix_alloc(n, var->neqns);
     if (var->C == NULL) {
@@ -171,6 +157,7 @@ static GRETL_VAR *gretl_VAR_new (int neqns, int order, const DATAINFO *pdinfo)
     var->neqns = neqns;
     var->order = order;
     var->ncoeff = 0;
+    var->ecm = 0;
 
     var->A = NULL;
     var->lambda = NULL;
@@ -786,7 +773,7 @@ static gretl_matrix *
 gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
 			       int periods) 
 {
-    int rows = var->neqns * var->order;
+    int rows = var->neqns * (var->order + var->ecm);
     gretl_matrix *rtmp = NULL;
     gretl_matrix *ctmp = NULL;
     gretl_matrix *resp = NULL;
@@ -914,7 +901,7 @@ gretl_matrix *
 gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods) 
 {
     int i, t;
-    int rows = var->neqns;
+    int rows = var->neqns * (var->order + var->ecm);
     gretl_matrix *ctmp = NULL, *idx = NULL, *vtmp = NULL;
     gretl_matrix *cic = NULL, *vt = NULL;
     gretl_matrix *vd = NULL;
@@ -928,10 +915,6 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods)
     if (periods <= 0) {
 	fprintf(stderr, "Invalid number of periods\n");
 	return NULL;
-    }
-
-    if (var->order > 1) {
-	rows *= var->order;
     }
 
     vd = gretl_matrix_alloc(periods, var->neqns + 1);
@@ -2996,6 +2979,7 @@ johansen_VAR_new (const int *list, int rank, int order, gretlopt opt)
 	var->neqns = 0;
 	var->order = order;
 	var->ncoeff = 0;
+	var->ecm = 1;
 
 	var->A = NULL;
 	var->lambda = NULL;
@@ -3604,7 +3588,7 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 {
     int i, t;
     int vsrc;
-    int rows = var->neqns;
+    int rows = var->neqns * (var->order + var->ecm);
     gretl_matrix *rtmp, *ctmp;
     int block, blockmax;
     int tex = tex_format(prn);
@@ -3613,10 +3597,6 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 
     if (prn == NULL) {
 	return 0;
-    }
-
-    if (var->order > 1) {
-	rows *= var->order;
     }
 
     if (shock >= var->neqns) {

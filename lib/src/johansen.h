@@ -62,6 +62,7 @@ struct GRETL_VAR_ {
     int T;               /* number of observations */
     int ifc;             /* equations include a constant (1) or not (0) */
     int ncoeff;          /* total coefficients per equation */
+    int ecm;             /* 0 for an ordinary VAR, 1 for VECM */
     gretl_matrix *A;       /* augmented coefficient matrix (companion form) */
     gretl_matrix *lambda;  /* inverse roots of A(L) polynomial */
     gretl_matrix *E;     /* residuals matrix */
