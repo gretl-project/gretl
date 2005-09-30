@@ -1337,18 +1337,18 @@ int write_data (const char *fname, const int *list,
 	
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (!omit_obs) {
-		/* note: we want the single quote before the obs
-		   string for use with spreadsheet programs, which may
-		   be tempted to read the cell content as numeric (and
-		   hence foul up date recognition)
-		*/
 		if (pdinfo->S != NULL) {
-		    fprintf(fp, "\"'%s\"%c", pdinfo->S[t], delim);
+		    fprintf(fp, "%s%c", pdinfo->S[t], delim);
 		} else if (pdinfo->structure != CROSS_SECTION) {
 		    char tmp[OBSLEN];
 
 		    ntodate_full(tmp, t, pdinfo);
-		    fprintf(fp, "\"'%s\"%c", tmp, delim);
+		    if (quarterly_or_monthly(pdinfo)) {
+			modify_date_for_csv(tmp, pdinfo->pd);
+			fprintf(fp, "\"%s\"%c", tmp, delim);
+		    } else {
+			fprintf(fp, "\"'%s\"%c", tmp, delim);
+		    }
 		}
 	    }
 	    for (i=1; i<=l0; i++) { 

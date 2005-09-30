@@ -1049,6 +1049,53 @@ char *colonize_obs (char *obs)
     return obs;
 }
 
+/**
+ * modify_obs_for_csv:
+ * @s: observation string (date).
+ * @pd: data frequency.
+ *
+ * Modifies the observation string corresponding to obervation @t to
+ * producing a form suitable for a CSV file.  This applies only to
+ * time series data. The string @s should be obtained by calling
+ * ntodate();
+ */
+
+void modify_date_for_csv (char *s, int pd)
+{
+    if (pd == 4) {
+	charsub(s, ':', 'Q');
+    } else {
+	charsub(s, ':', '-');
+    }
+}
+
+/**
+ * csv_obs_string_to_prn:
+ * @t: 0-based observation number.
+ * @pdinfo: data set information struct.
+ * @prn: printing struct.
+ *
+ * Prints the observation string corresponding to obervation @t to
+ * @prn, in a format suitable for a CSV file.
+ */
+
+void csv_obs_to_prn (int t, const DATAINFO *pdinfo, PRN *prn)
+{
+    if (pdinfo->S != NULL) {
+	pprintf(prn, "%s%c", pdinfo->S[t], pdinfo->delim);
+    } else if (pdinfo->structure != CROSS_SECTION) {
+	char tmp[OBSLEN];
+
+	ntodate_full(tmp, t, pdinfo);
+	if (quarterly_or_monthly(pdinfo)) {
+	    modify_date_for_csv(tmp, pdinfo->pd);
+	    pprintf(prn, "\"%s\"%c", tmp, pdinfo->delim);
+	} else {
+	    pprintf(prn, "\"'%s\"%c", tmp, pdinfo->delim);
+	}
+    }
+}	
+
 const char *print_time (const time_t *timep)
 {
     static char timestr[48];

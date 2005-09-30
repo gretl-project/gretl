@@ -1056,7 +1056,6 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     int tsamp = datainfo->t2 - datainfo->t1 + 1;
     char delim = datainfo->delim;
     double xx;
-    char tmp[OBSLEN];
 
     if (l0 == 0) return 1;
 
@@ -1093,13 +1092,7 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
 
     /* actual data values */
     for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	if (datainfo->S != NULL) {
-	    pprintf(prn, "%s%c", datainfo->S[t], delim);
-	} else {
-	    ntodate(tmp, t, datainfo);
-	    /* Does the "'" work correctly below? */
-	    pprintf(prn, "\"'%s\"%c", tmp, delim); 
-	}
+	csv_obs_to_prn(t, datainfo, prn);
 	for (i=1; i<=l0; i++) { 
 	    xx = (datainfo->vector[list[i]])? 
 		Z[list[i]][t] : Z[list[i]][0];

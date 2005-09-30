@@ -128,7 +128,18 @@ typedef enum {
 #define calendar_data(p) (p->structure == TIME_SERIES && \
                           (p->pd == 5 || p->pd == 6 || p->pd == 7 \
                            || p->pd == 52) && p->sd0 > 10000.0) 
-                          
+
+
+/**
+ * quarterly_or_monthly:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a data set is a quarterly
+ * or monthly time series (1), or something else (0).
+ */
+#define quarterly_or_monthly(p) (p->structure == TIME_SERIES && \
+                                 (p->pd == 4 || p->pd == 12))
+
 /**
  * dataset_is_panel:
  * @p: pointer to data information struct.

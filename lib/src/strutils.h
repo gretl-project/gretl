@@ -107,6 +107,10 @@ double obs_str_to_double (const char *obs);
 
 char *colonize_obs (char *obs);
 
+void modify_date_for_csv (char *s, int pd);
+
+void csv_obs_to_prn (int t, const DATAINFO *pdinfo, PRN *prn);
+
 const char *print_time (const time_t *timep);
 
 char *gretl_xml_encode (char *buf);
