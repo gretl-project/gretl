@@ -71,7 +71,7 @@
 #define MAXLABEL 128  /* maximum length of descriptive labels for variables */
 #define MAXLEN   512  /* max length of regular "long" strings */
 #define ERRLEN   256  /* max length of libgretl error messages */
-#define MAXDISP   20  /* max length of "display names" for variables */
+#define MAXDISP   32  /* max length of "display names" for variables */
 #define VNAMELEN  14  /* space allocated for var names (including termination) */
 #define USER_VLEN  9  /* max allocation for varname constructed by user */
 #define OBSLEN    11  /* space allocated for obs strings (including termination) */

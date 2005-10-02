@@ -10,7 +10,8 @@ struct irfboot_ {
     int n;              /* number of observations */
     int neqns;          /* number of equations */
     int order;          /* VAR lag order */
-    int nc;             /* number of coefficients per equation */
+    int ecm;            /* 0 for an ordinary VAR, 1 for VECM */
+    int ncoeff;         /* number of coefficients per equation */
     int ifc;            /* equations include intercept? */
     int t1;             /* starting observation */
     int t2;             /* ending observation */
@@ -18,8 +19,8 @@ struct irfboot_ {
     double **Z;         /* artificial dataset */
     DATAINFO *dinfo;    /* datainfo for artificial dataset */
     int **lists;        /* regression lists for VAR models */
-    gretl_matrix *C;    /* error covariance matrix */
     gretl_matrix *A;    /* augmented coefficient matrix */
+    gretl_matrix *C;    /* error covariance matrix */
     gretl_matrix *E;    /* matrix of residuals */
     gretl_matrix *S;    /* covariance matrix of residuals */
     gretl_matrix *rE;   /* matrix of resampled original residuals */
@@ -56,7 +57,7 @@ static void irf_boot_free (irfboot *boot)
 
 static int boot_A_C_init (irfboot *boot)
 {
-    int n = boot->neqns * boot->order; /* FIXME vecm */
+    int n = boot->neqns * (boot->order + boot->ecm);
     int err = 0;
 
     boot->A = gretl_matrix_alloc(n, n);
@@ -88,16 +89,16 @@ static int boot_A_C_init (irfboot *boot)
 
 static int boot_tmp_init (irfboot *boot)
 {
-    int rows = boot->neqns * boot->order;
+    int n = boot->neqns * (boot->order + boot->ecm);
     int err = 0;
 
-    boot->rtmp = gretl_matrix_alloc(rows, boot->neqns);
+    boot->rtmp = gretl_matrix_alloc(n, boot->neqns);
     if (boot->rtmp == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
-	boot->ctmp = gretl_matrix_alloc(rows, boot->neqns);
+	boot->ctmp = gretl_matrix_alloc(n, boot->neqns);
 	if (boot->ctmp == NULL) {
 	    gretl_matrix_free(boot->rtmp);
 	    boot->rtmp = NULL;
@@ -131,19 +132,20 @@ static int irf_boot_init (irfboot *boot, const GRETL_VAR *var,
     boot->n = var->T;
     boot->neqns = var->neqns;
     boot->order = var->order;
+    boot->ecm = var->ecm;
     boot->ifc = var->ifc;
 
     boot->t1 = var->models[0]->t1;
     boot->t2 = var->models[0]->t2;
-    boot->nc = var->models[0]->list[0] - 1;
+    boot->ncoeff = var->models[0]->list[0] - 1;
 
     boot->horizon = periods;
 
 #if BDEBUG
-    fprintf(stderr, "boot: t1=%d, t2=%d, nc=%d, horizon=%d\n",
-	    boot->t1, boot->t2, boot->nc, boot->horizon);
-    fprintf(stderr, " n=%d, neqns=%d, order=%d, ifc=%d\n",
-	    boot->n, boot->neqns, boot->order, boot->ifc);
+    fprintf(stderr, "boot: t1=%d, t2=%d, ncoeff=%d, horizon=%d\n",
+	    boot->t1, boot->t2, boot->ncoeff, boot->horizon);
+    fprintf(stderr, " n=%d, neqns=%d, order=%d, ecm=%d, ifc=%d\n",
+	    boot->n, boot->neqns, boot->order, boot->ecm, boot->ifc);
 #endif
 
     err = boot_A_C_init(boot);
@@ -231,7 +233,7 @@ static void irf_record_model_data (irfboot *boot, const MODEL *pmod, int k)
 {
     int v = 0, lag = 0;
     int start = pmod->ifc;
-    int rowmax = boot->neqns * boot->order + start;
+    int rowmax = start + boot->neqns * (boot->order + boot->ecm);
     int i, j;
 
     /* record residuals */
@@ -239,7 +241,7 @@ static void irf_record_model_data (irfboot *boot, const MODEL *pmod, int k)
 	gretl_matrix_set(boot->E, i, k, pmod->uhat[pmod->t1 + i]);
     }
 
-    /* record coefficients */
+    /* record coefficients (FIXME vecm?) */
     for (i=start; i<rowmax; i++) {
 	if ((i - start) % boot->order == 0) {
 	    v++;
@@ -257,7 +259,7 @@ static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
     MODEL var_model;
     int i, err = 0;
 
-    /* changes needed here for VECM */
+    /* changes needed here for VECM? */
 
     for (i=0; i<boot->neqns && !err; i++) {
 	var_model = lsq(boot->lists[i], &boot->Z, boot->dinfo, VAR, OPT_A, 0.0);
@@ -303,7 +305,7 @@ static int allocate_bootstrap_lists (irfboot *boot)
     }
 
     for (i=0; i<boot->neqns && !err; i++) {
-	boot->lists[i] = gretl_list_new(boot->nc + 1);
+	boot->lists[i] = gretl_list_new(boot->ncoeff + 1);
 	if (boot->lists[i] == NULL) {
 	    int j;
 
@@ -336,9 +338,9 @@ static int make_bs_dataset_and_lists (irfboot *boot,
     int v, t;
     int err = 0;
 
-    ns = var->order * var->neqns; /* stochastic regressors per equation */
-    nd = boot->nc - ns;           /* number of deterministic regressors */
-    nv = boot->nc + boot->neqns;  /* total variables required */
+    ns = var->order * var->neqns;     /* stochastic regressors per equation */
+    nd = boot->ncoeff - ns;           /* number of deterministic regressors */
+    nv = boot->ncoeff + boot->neqns;  /* total variables required */
 
     if (!boot->ifc) {
 	/* a gretl dataset includes a constant, regardless */
@@ -369,6 +371,7 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 	fprintf(stderr, "dv = %d\n", dv);
 
 	for (i=0; i<var->neqns; i++) {
+
 	    /* copy stochastic vars into positions 1 to var->neqns */
 	    pmod = var->models[i];
 	    v = pmod->list[1];
@@ -378,6 +381,7 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 	    for (t=0; t<pdinfo->n; t++) {
 		bZ[i+1][t] = Z[v][t];
 	    }
+
 	    /* create lags */
 	    for (j=1; j<=var->order; j++) {
 #if BDEBUG
@@ -389,6 +393,7 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 		}
 		lv++;
 	    }
+
 	    /* deterministic vars: copy once */
 	    if (i == 0) {
 		for (j=ns+2+pmod->ifc; j<=pmod->list[0]; j++) {
@@ -440,7 +445,7 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 static void compute_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var)
 {
     const MODEL *pmod;
-    int ns = boot->order * boot->neqns;
+    int ns = boot->order * boot->neqns; /* FIXME vecm */
     double xti, bti, eti;
     int i, j, vj, t;
 
@@ -453,7 +458,7 @@ static void compute_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var)
 	    pmod = var->models[i];
 	    bti = 0.0;
 
-	    for (j=0; j<boot->nc; j++) {
+	    for (j=0; j<boot->ncoeff; j++) {
 		vj = boot->lists[i][j+2];
 		if (j < ns + boot->ifc && vj > 0) {
 		    /* stochastic variable */

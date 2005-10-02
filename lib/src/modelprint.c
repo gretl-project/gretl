@@ -751,6 +751,20 @@ static void tex_vecm_depvar_name (char *s, const char *vname)
     }    
 }
 
+void print_model_vcv_info (const MODEL *pmod, PRN *prn)
+{
+    if (pmod->aux == AUX_SCR || gretl_model_get_int(pmod, "hac_lag")) {
+	hac_vcv_line(pmod, prn);
+    } else if (gretl_model_get_int(pmod, "hc")) {
+	hc_vcv_line(pmod, prn);
+    } else if (gretl_model_get_int(pmod, "garch_vcv")) {
+	garch_vcv_line(pmod, prn);
+    } else if ((pmod->ci == LOGIT || pmod->ci == PROBIT) && 
+	       gretl_model_get_int(pmod, "robust")) {
+	qml_vcv_line(prn);
+    }
+}
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 gretlopt opt, 
@@ -934,19 +948,10 @@ static void print_model_heading (const MODEL *pmod,
     }
 
     /* VCV variants */
-    if (pmod->aux == AUX_SCR || gretl_model_get_int(pmod, "hac_lag")) {
-	hac_vcv_line(pmod, prn);
-    } else if (gretl_model_get_int(pmod, "hc")) {
-	hc_vcv_line(pmod, prn);
-    } else if (gretl_model_get_int(pmod, "garch_vcv")) {
-	garch_vcv_line(pmod, prn);
-    } else if ((pmod->ci == LOGIT || pmod->ci == PROBIT) && 
-	       gretl_model_get_int(pmod, "robust")) {
-	qml_vcv_line(prn);
-    }
+    print_model_vcv_info(pmod, prn);
 
     /* WLS on panel data */
-    else if (gretl_model_get_int(pmod, "unit_weights") && !pmod->aux) {
+    if (gretl_model_get_int(pmod, "unit_weights") && !pmod->aux) {
 	if (tex) {
 	    pputs(prn, "\\\\\n");
 	}

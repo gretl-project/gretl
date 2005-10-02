@@ -24,5 +24,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
 const char *estimator_string (int ci, PRN *prn);
 
+void print_model_vcv_info (const MODEL *pmod, PRN *prn);
+
 void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
 			  PRN *prn);

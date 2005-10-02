@@ -25,6 +25,7 @@
 #include "libset.h"
 #include "compat.h"
 #include "cmd_private.h"
+#include "var.h"
 
 #include <time.h>
 #include <unistd.h>
@@ -74,15 +75,8 @@ typedef struct {
 /* below: used for special "progressive" loop */ 
 
 typedef struct {
-    int ID;                      /* ID number for model */
-    int ci;                      /* command index for model */
-    int t1, t2, nobs;            /* starting observation, ending
-                                    observation, and number of obs */
-    int ncoeff, dfn, dfd;        /* number of coefficents; degrees of
-                                    freedom in numerator and denominator */
-    int *list;                   /* list of variables by ID number */
-    int ifc;                     /* = 1 if the equation includes a constant,
-                                    else = 0 */
+    int ID;                 /* ID number for model */
+    MODEL *model0;          /* copy of initial model */
     bigval *sum_coeff;      /* sums of coefficient estimates */
     bigval *ssq_coeff;      /* sums of squares of coeff estimates */
     bigval *sum_sderr;      /* sums of estimated std. errors */
@@ -297,7 +291,6 @@ int ok_in_loop (int ci, const LOOPSET *loop)
     }
 
     /* modeling commands */
-
     else if (ci == ARMA ||
 	     ci == CORC ||
 	     ci == GARCH ||
@@ -311,18 +304,23 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 	return 1;
     }
 
+    /* vector models */
+    else if (ci == VAR || ci == VECM) {
+	ok = 1;
+    }
+    
+    /* nonlinear models */
     else if (ci == NLS || ci == MLE || ci == END) {
 	ok = 1;
     }
 
+    /* basic model tests */
     else if (ci == ADD || ci == OMIT) {
 	ok = 1;
     }
 
     return ok;
 }
-
-/* ......................................................  */
 
 static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
 {
@@ -1286,8 +1284,6 @@ loop_condition (LOOPSET *loop, double **Z, DATAINFO *pdinfo)
     return ok;
 }
 
-/* ......................................................  */
-
 static void controller_init (controller *clr)
 {
     clr->val = NADBL;
@@ -1439,6 +1435,7 @@ void gretl_loop_destroy (LOOPSET *loop)
  * loop_model_init:
  * @lmod: pointer to struct to initialize.
  * @pmod: model to take as basis.
+ * @pdinfo: data set information.
  * @id: ID number to assign to @lmod.
  *
  * Initialize a #LOOP_MODEL struct, based on @pmod.
@@ -1447,26 +1444,34 @@ void gretl_loop_destroy (LOOPSET *loop)
  */
 
 static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
-			    int id)
+			    const DATAINFO *pdinfo, int id)
 {
-    int i, ncoeff = pmod->ncoeff;
+    int i, nc = pmod->ncoeff;
+    int err;
 
-    lmod->sum_coeff = malloc(ncoeff * sizeof *lmod->sum_coeff);
-    if (lmod->sum_coeff == NULL) return 1;
+    lmod->model0 = gretl_model_new();
+    if (lmod->model0 == NULL) {
+	return E_ALLOC;
+    }
 
-    lmod->ssq_coeff = malloc(ncoeff * sizeof *lmod->ssq_coeff);
+    err = copy_model(lmod->model0, pmod, pdinfo);
+    if (err) {
+	return err;
+    }
+
+    lmod->sum_coeff = malloc(nc * sizeof *lmod->sum_coeff);
+    if (lmod->sum_coeff == NULL) return E_ALLOC;
+
+    lmod->ssq_coeff = malloc(nc * sizeof *lmod->ssq_coeff);
     if (lmod->ssq_coeff == NULL) goto cleanup;
 
-    lmod->sum_sderr = malloc(ncoeff * sizeof *lmod->sum_sderr);
+    lmod->sum_sderr = malloc(nc * sizeof *lmod->sum_sderr);
     if (lmod->sum_sderr == NULL) goto cleanup;
 
-    lmod->ssq_sderr = malloc(ncoeff * sizeof *lmod->ssq_sderr);
+    lmod->ssq_sderr = malloc(nc * sizeof *lmod->ssq_sderr);
     if (lmod->ssq_sderr == NULL) goto cleanup;
 
-    lmod->list = gretl_list_copy(pmod->list);
-    if (lmod->list == NULL) goto cleanup;
-
-    for (i=0; i<ncoeff; i++) {
+    for (i=0; i<nc; i++) {
 #ifdef ENABLE_GMP
 	mpf_init(lmod->sum_coeff[i]);
 	mpf_init(lmod->ssq_coeff[i]);
@@ -1478,12 +1483,7 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
 #endif
     }
 
-    lmod->ncoeff = ncoeff;
-    lmod->t1 = pmod->t1;
-    lmod->t2 = pmod->t2;
-    lmod->nobs = pmod->nobs;
     lmod->ID = id;
-    lmod->ci = pmod->ci;
 
     return 0;
 
@@ -1726,7 +1726,6 @@ static int add_loop_print (LOOPSET *loop, const int *list, int cmdnum)
  * Returns: 0 on successful completion.
  */
 
-
 static int update_loop_print (LOOPSET *loop, int cmdnum, 
 			      const int *list, double ***pZ, 
 			      const DATAINFO *pdinfo)
@@ -1767,7 +1766,6 @@ static int update_loop_print (LOOPSET *loop, int cmdnum,
  * @prn: gretl printing struct.
  *
  * Print out the results after completion of the loop @loop.
- *
  */
 
 static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo, 
@@ -1819,14 +1817,12 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
     }
 }
 
-/* ......................................................  */
-
 static void free_loop_model (LOOP_MODEL *lmod)
 {
 #ifdef ENABLE_GMP
     int i;
 
-    for (i=0; i<lmod->ncoeff; i++) {
+    for (i=0; i<lmod->model0->ncoeff; i++) {
 	mpf_clear(lmod->sum_coeff[i]);
 	mpf_clear(lmod->sum_sderr[i]);
 	mpf_clear(lmod->ssq_coeff[i]);
@@ -1838,10 +1834,9 @@ static void free_loop_model (LOOP_MODEL *lmod)
     free(lmod->sum_sderr);
     free(lmod->ssq_coeff);
     free(lmod->ssq_sderr);
-    free(lmod->list);
-}
 
-/* ......................................................  */
+    free_model(lmod->model0);
+}
 
 static void free_loop_print (LOOP_PRINT *lprn)
 {
@@ -1987,24 +1982,25 @@ LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
     return NULL;
 }
 
-/* ......................................................... */ 
+/* FIXME: additional model info such as robust std errs method */
 
 static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
 			      const DATAINFO *pdinfo, PRN *prn)
 {
-    int i;
     char startdate[OBSLEN], enddate[OBSLEN];
+    int i;
 
-    ntodate(startdate, lmod->t1, pdinfo);
-    ntodate(enddate, lmod->t2, pdinfo);
+    ntodate(startdate, lmod->model0->t1, pdinfo);
+    ntodate(enddate, lmod->model0->t2, pdinfo);
 
     pputc(prn, '\n');
     pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
-	    _(estimator_string(lmod->ci, prn)), lmod->t2 - lmod->t1 + 1, 
+	    _(estimator_string(lmod->model0->ci, prn)), lmod->model0->nobs, 
 	    startdate, enddate);
+    print_model_vcv_info(lmod->model0, prn);
     pprintf(prn, _("Statistics for %d repetitions\n"), loopnum); 
     pprintf(prn, _("Dependent variable: %s\n\n"), 
-	    pdinfo->varname[lmod->list[1]]);
+	    pdinfo->varname[lmod->model0->list[1]]);
 
     pputs(prn, _("                     mean of      std. dev. of     mean of"
 		 "     std. dev. of\n"
@@ -2013,13 +2009,12 @@ static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
 		 "      Variable     coefficients   coefficients   std. errors"
 		 "    std. errors\n\n"));
 
-    for (i=0; i<lmod->ncoeff; i++) {
+    for (i=0; i<lmod->model0->ncoeff; i++) {
 	print_loop_coeff(pdinfo, lmod, i, loopnum, prn);
     }
+
     pputc(prn, '\n');
 }
-
-/* ......................................................... */ 
 
 static void print_loop_coeff (const DATAINFO *pdinfo, 
 			      const LOOP_MODEL *lmod, 
@@ -2057,8 +2052,8 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 	mpf_set_d(sd2, 0.0);
     }
 
-    pprintf(prn, " %3d) %8s ", lmod->list[c+2], 
-	   pdinfo->varname[lmod->list[c+2]]);
+    pprintf(prn, " %3d) %8s ", lmod->model0->list[c+2], 
+	   pdinfo->varname[lmod->model0->list[c+2]]);
 
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", mpf_get_d(c1), mpf_get_d(sd1), 
 	    mpf_get_d(c2), mpf_get_d(sd2));
@@ -2086,8 +2081,6 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 	    (double) m2, (double) sd2);
 #endif
 }
-
-/* ......................................................... */ 
 
 static void print_loop_prn (LOOP_PRINT *lprn, int n,
 			    const DATAINFO *pdinfo, PRN *prn)
@@ -2133,8 +2126,6 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
 #endif
     pputc(prn, '\n');
 }
-
-/* ......................................................... */ 
 
 static int print_loop_store (LOOPSET *loop, PRN *prn)
 {
@@ -2224,8 +2215,6 @@ static int print_loop_store (LOOPSET *loop, PRN *prn)
 
     return 0;
 }
-
-/* ......................................................... */ 
 
 static int get_prnnum_by_id (LOOPSET *loop, int id)
 {
@@ -2669,7 +2658,7 @@ int loop_exec (LOOPSET *loop, char *line,
 
 		if (loop_is_progressive(loop)) {
 		    if (loop->iter == 0 && loop_model_init(&loop->lmodels[loop->nmod - 1], 
-						       models[0], j)) { 
+							   models[0], *ppdinfo, j)) { 
 			gretl_errmsg_set(_("Failed to initialize model for loop\n"));
 			err = 1;
 			break;
@@ -2817,6 +2806,16 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case PVALUE:
 		batch_pvalue(linecpy, (const double **) *pZ, *ppdinfo, prn);
 		break;
+
+	    case VAR:
+		err = simple_VAR(atoi(cmd.param), cmd.list, pZ, *ppdinfo, 
+				 cmd.opt, prn);
+		break;
+
+	    case VECM:
+		err = vecm_simple(atoi(cmd.param), atoi(cmd.extra), cmd.list, 
+				  pZ, *ppdinfo, cmd.opt, prn);
+		break;	    
 
 	    default: 
 		/* not reachable (since commands were screened in advance) */
