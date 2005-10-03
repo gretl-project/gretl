@@ -2074,8 +2074,8 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
     var2 = (lmod->ssq_sderr[c] - n * m2 * m2) / n;
     sd2 = (var2 <= 0.0)? 0 : sqrt((double) var2);
 
-    pprintf(prn, " %3d) %8s ", lmod->list[c+2], 
-	   pdinfo->varname[lmod->list[c+2]]);
+    pprintf(prn, " %3d) %8s ", lmod->model0->list[c+2], 
+	   pdinfo->varname[lmod->model0->list[c+2]]);
 
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", (double) m1, (double) sd1, 
 	    (double) m2, (double) sd2);
