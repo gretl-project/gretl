@@ -90,7 +90,12 @@ static void close_plot_controller (GtkWidget *widget, gpointer data)
     gpt_control = NULL;
 
     if (plot != NULL) { 
-	/* PNG plot window open */
+	/* PNG plot window is open */
+#ifdef G_OS_WIN32 /* z-order gets messed up */
+	GtkWidget *shell = plot_get_shell(plot);
+
+	gdk_window_raise(shell->window);
+#endif
 	plot_remove_controller(plot);
     } else {
 	free_plotspec(spec); 
@@ -1375,6 +1380,11 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
     }
 }
 
+void close_gnuplot_dialog (GtkWidget *w, gpointer p)
+{
+    gtk_widget_destroy(GTK_WIDGET(p));
+}
+
 int show_gnuplot_dialog (GPT_SPEC *spec) 
 {
     png_plot *plot = (png_plot *) spec->ptr;
@@ -1449,16 +1459,16 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(apply_gpt_changes), spec);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget), gpt_control);
+		     G_CALLBACK(close_gnuplot_dialog), gpt_control);
     gtk_widget_show(button);
 
-    /* Close button (do not apply changes */
+    /* Close button (do not apply changes) */
     button = standard_button(GTK_STOCK_CLOSE);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
 		       button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget), gpt_control);
+		     G_CALLBACK(close_gnuplot_dialog), gpt_control);
     gtk_widget_show(button);
 
     button = standard_button(GTK_STOCK_HELP);
