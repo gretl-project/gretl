@@ -7,11 +7,13 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <gtk/gtk.h>
-
 #ifdef WIN32
 # include <windows.h>
 # include <winsock.h>
+#endif
+
+#ifdef USE_GTK
+# include <gtk/gtk.h>
 #endif
 
 #include "updater.h"
@@ -29,16 +31,22 @@ enum {
     UPDATER_GET_FILE
 } program_opts;
 
-static char infobuf[256];
 static char errbuf[256];
 static char get_fname[48];
-static void put_text_on_window (void);
-static GtkWidget *mainwin;
-static GtkWidget *mainlabel;
 static int ask_before_download = 1;
 static time_t filedate;
 static int argcount;
 static int prog_opt;
+
+#ifdef USE_GTK
+static GtkWidget *mainwin;
+static GtkWidget *mainlabel;
+static char infobuf[256];
+static void put_text_on_window (void);
+#else
+# define GTK_RESPONSE_ACCEPT IDYES
+# define GTK_RESPONSE_NO     IDNO
+#endif
 
 static void getout (int err)
 {
@@ -272,10 +280,14 @@ static char *get_size_string (size_t fsize)
     return sizestr;
 }
 
+#ifdef USE_GTK
+
 static void put_text_on_window (void)
 {
     gtk_label_set_text(GTK_LABEL(mainlabel), infobuf);
 }
+
+#endif
 
 int errbox (const char *msg) 
 {
@@ -380,7 +392,7 @@ time_t get_time_from_stamp_file (const char *fname)
     return mktime(&stime);
 }
 
-static gint real_program (void)
+static int real_program (void)
 {
     int i, err = 0, tarerr = 0, remerr = 0;
     int unpack_ok = 0;
@@ -391,8 +403,10 @@ static gint real_program (void)
     if (argcount == 1) {
 	/* no arguments: a default update */
 
+#ifdef USE_GTK
 	strcpy(infobuf, "Looking for gretl updates...");
 	put_text_on_window();
+#endif
 
 	if (logit) {
 	    fputs("doing default update (argcount = 1)\n", flg);
@@ -444,9 +458,11 @@ static gint real_program (void)
 		if (resp != GTK_RESPONSE_ACCEPT) break;
 	    }
 
+#ifdef USE_GTK
 	    sprintf(infobuf, "Downloading %s", get_fname);
 	    put_text_on_window();    
 	    while (gtk_events_pending()) gtk_main_iteration();
+#endif
 	    
 	    if (logit) {
 		fprintf(flg, "trying to get '%s'\n", get_fname);
@@ -524,10 +540,14 @@ static gint real_program (void)
 
     getout(err);
 
+#ifdef USE_GTK
     gtk_main_quit();
+#endif
 
     return TRUE;
 }
+
+#ifdef USE_GTK
 
 static gint cancel_callback (void)
 {
@@ -535,7 +555,7 @@ static gint cancel_callback (void)
     return FALSE;
 }
 
-static void create_main_window (int warn)
+static void create_main_gtk_window (int warn)
 {
     GtkWidget *main_vbox;
     GtkWidget *buttonbox;
@@ -583,7 +603,41 @@ static void create_main_window (int warn)
     gtk_widget_show_all(mainwin);
 }
 
+#else 
+
+static void win32_start (int warn)
+{
+    LPCTSTR msg;
+    int resp;
+
+    if (warn) {
+	msg = "If gretl is running, please close it "
+	    "down before running the updater.\n\n"
+	    "Press OK to proceed or Cancel to quit";
+    } else {
+	msg = "Press OK to proceed or Cancel to quit";
+    }
+
+    resp = MessageBox(GetActiveWindow(), msg, "gretl updater", MB_OKCANCEL);
+
+    if (resp == IDOK) {
+	real_program();
+    }
+}
+
+int show_progress (long res, long expected, int flag)
+{
+    return 0;
+}
+
+#endif
+
+#ifdef WIN32
 int main (int argc, char *argv[])
+#else
+int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, 
+		    LPSTR CmdLine, int Show)
+#endif
 {
     const char *testfile = "gretl.stamp";
     int warn = 1;
@@ -666,9 +720,13 @@ int main (int argc, char *argv[])
 	getout(1);
     } 
 
+#ifdef USE_GTK
     gtk_init(&argc, &argv);
-    create_main_window(warn);
+    create_main_gtk_window(warn);
     gtk_main();
+#else
+    win32_start(warn);
+#endif
 
     getout(0);
 

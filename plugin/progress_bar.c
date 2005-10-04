@@ -35,16 +35,12 @@ typedef struct _ProgressData {
     GtkWidget *pbar;
 } ProgressData;
 
-/* ........................................................... */
-
 static void destroy_progress (GtkWidget *widget, ProgressData **ppdata)
 {
     (*ppdata)->window = NULL;
     g_free(*ppdata);
     *ppdata = NULL;
 }
-
-/* ........................................................... */
 
 static int progress_window (ProgressData **ppdata, int flag)
 {
@@ -75,11 +71,9 @@ static int progress_window (ProgressData **ppdata, int flag)
 
     if (flag == SP_LOAD_INIT) {
 	gtk_window_set_title(GTK_WINDOW((*ppdata)->window), _("gretl: loading data"));
-    }
-    else if (flag == SP_SAVE_INIT) {
+    } else if (flag == SP_SAVE_INIT) {
 	gtk_window_set_title(GTK_WINDOW((*ppdata)->window), _("gretl: storing data"));
-    } 
-    else if (flag == SP_FONT_INIT) {
+    } else if (flag == SP_FONT_INIT) {
 	gtk_window_set_title(GTK_WINDOW((*ppdata)->window), _("gretl: scanning fonts"));
     }
 	
@@ -131,8 +125,6 @@ static int progress_window (ProgressData **ppdata, int flag)
     return 0;
 }
 
-/* ........................................................... */
-
 int show_progress (long res, long expected, int flag)
 {
     static long offs;
@@ -151,26 +143,32 @@ int show_progress (long res, long expected, int flag)
 	gchar *bytestr = NULL;
 
 	offs = 0L;
-	if (progress_window(&pdata, flag)) return 0; 
+	if (progress_window(&pdata, flag)) {
+	    return 0; 
+	}
+
 #if GTK_MAJOR_VERSION >= 2
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), (gdouble) 0);
 #else
 	gtk_progress_bar_update(GTK_PROGRESS_BAR(pdata->pbar), (gfloat) 0);
 #endif
+
 	if (flag == SP_LOAD_INIT) {
 	    bytestr = g_strdup_printf("%s %ld Kbytes", _("Retrieving"),
 				      expected / 1024);
-	}
-	else if (flag == SP_SAVE_INIT) {
+	} else if (flag == SP_SAVE_INIT) {
 	    bytestr = g_strdup_printf("%s %ld Kbytes", _("Storing"),
 				      expected / 1024);
-	}
-	else if (flag == SP_FONT_INIT) {
+	} else if (flag == SP_FONT_INIT) {
 	    bytestr = g_strdup_printf(_("Scanning %ld fonts"), expected);
 	}
+
 	gtk_label_set_text(GTK_LABEL(pdata->label), bytestr);
 	g_free(bytestr);
-	while (gtk_events_pending()) gtk_main_iteration();
+
+	while (gtk_events_pending()) {
+	    gtk_main_iteration();
+	}
     }
 
     if (flag == SP_NONE && (pdata == NULL || pdata->window == NULL)) {

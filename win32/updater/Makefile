@@ -5,12 +5,10 @@ include ../config.mk
 
 CC = $(MGW_PREFIX)gcc -O2 -Wall -mms-bitfields
 CFLAGS = -DUPDATER -I../../lib/src -I../../gui2 -I../../win32/updater
-SRC = update_client.c webget.c untgz.c progress_bar.c
-OBJ = update_client.o webget.o untgz.o progress_bar.o
+SRC = update_client.c webget.c untgz.c
+OBJ = update_client.o webget.o untgz.o
 
-GTKLIBS = $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
-	pkg-config --libs gtk+-win32-2.0)
-LIBS = -lz -lwsock32 $(GTKLIBS)
+LIBS = -lz -lwsock32
 
 CFLAGS += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
 	pkg-config --cflags gtk+-win32-2.0)
@@ -19,7 +17,7 @@ vpath %.h ../../lib/src ../../win32/updater
 vpath %.c ../../win32/updater ../../gui2 ../../plugin
 
 gretl_updater.exe: $(OBJ) version.h
-	 $(CC) -mwindows -s -o $@ $(OBJ) $(LIBS)
+	 $(CC) -mwindows -s -o $@ $^ $(LIBS)
 
 .PHONY :
 

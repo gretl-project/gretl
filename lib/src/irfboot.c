@@ -259,7 +259,7 @@ static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
     MODEL var_model;
     int i, err = 0;
 
-    /* changes needed here for VECM? */
+    /* changes needed here for VECM */
 
     for (i=0; i<boot->neqns && !err; i++) {
 	var_model = lsq(boot->lists[i], &boot->Z, boot->dinfo, VAR, OPT_A, 0.0);

@@ -196,6 +196,7 @@ static void root_check (void)
 #endif
 
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
+extern void get_user_main_size (int *width, int *height); /* settings.c */
 
 static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
 {
@@ -1261,13 +1262,16 @@ static GtkWidget *make_main_window (int gui_get_data)
 	_("Variable name"), 
 	_("Descriptive label")
     };
-    int mainwin_width = 580;  
-    int mainwin_height = 420; 
+    int mainwin_width = -1;  
+    int mainwin_height = -1; 
 
+    get_user_main_size(&mainwin_width, &mainwin_height);
     gui_scale = get_gui_scale();
 
-    mainwin_width *= gui_scale;
-    mainwin_height *= gui_scale;
+    if (mainwin_width == -1 || mainwin_height == -1) {
+	mainwin_width = 580 * gui_scale;
+	mainwin_height = 420 *gui_scale;
+    }
 
     mdata->data = NULL;  
     mdata->listbox = NULL;

@@ -114,6 +114,8 @@ static int usecwd;
 static int olddat;
 static int useqr;
 char gpcolors[32];
+static int mwidth = -1;
+static int mheight = -1;
 static char datapage[24];
 static char scriptpage[24];
 
@@ -138,9 +140,10 @@ enum {
     ROOTSET = 1 << 0,
     USERSET = 1 << 1,
     BOOLSET = 1 << 2,
-    LISTSET = 1 << 3,
-    INVISET = 1 << 4,
-    FIXSET  = 1 << 5  /* setting fixed by admin (Windows network use) */
+    INTSET  = 1 << 3,
+    LISTSET = 1 << 4,
+    INVISET = 1 << 5,
+    FIXSET  = 1 << 6  /* setting fixed by admin (Windows network use) */
 };
 
 typedef struct {
@@ -151,6 +154,7 @@ typedef struct {
     char type;         /* ROOTSET user string
 			  USERSET root string
 			  BOOLSET boolean (user)
+                          INTSET integer (user)
 			  LISTSET user string, from fixed menu
 			  INVISET "invisible" (user) string 
 		       */
@@ -254,6 +258,10 @@ RCVAR rc_vars[] = {
       INVISET, 32, 0, NULL },
     { "Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 
       INVISET, sizeof gpcolors, 0, NULL },
+    { "main_width", "main window width", NULL, &mwidth, 
+      INVISET | INTSET, 0, 0, NULL },
+    { "main_height", "main window height", NULL, &mheight, 
+      INVISET | INTSET, 0, 0, NULL },
     { "HC_by_default", N_("Use robust covariance matrix by default"), NULL,
       &hc_by_default, BOOLSET, 0, 5, NULL },
     { "HC_xsect", N_("For cross-sectional data"), NULL, hc_xsect, 
@@ -1217,6 +1225,7 @@ void write_rc (void)
     GConfClient *client;   
     char key[MAXSTR];
     gboolean bval;
+    int ival;
     char *strvar;
     int i;
 
@@ -1227,6 +1236,9 @@ void write_rc (void)
 	if (rc_vars[i].type == BOOLSET) {
 	    bval = *(gboolean *) rc_vars[i].var;
 	    gconf_client_set_bool(client, key, bval, NULL);
+	} else if (rc_vars[i].type & INTSET) {
+	    ival = *(int *) rc_vars[i].var;
+	    gconf_client_set_int(client, key, ival, NULL);
 	} else {
 	    strvar = (char *) rc_vars[i].var;
 	    gconf_client_set_string(client, key, strvar, NULL);
@@ -1268,6 +1280,16 @@ static void read_rc (void)
 	    } else {
 		*(int *) rc_vars[i].var = val;
 	    }
+	} else if (rc_vars[i].type & INTSET) {
+	    int val;
+
+	    val = gconf_client_get_int(client, key, &error);
+	    if (error) {
+		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
+		g_clear_error(&error);
+	    } else {
+		*(int *) rc_vars[i].var = val;
+	    }	    
 	} else {
 	    value = gconf_client_get_string(client, key, &error);
 
@@ -1313,7 +1335,7 @@ static void read_rc (void)
 void write_rc (void) 
 {
     char key[MAXSTR];
-    char cval[6];
+    char cval[8];
     char *strvar;
     int i;
 
@@ -1321,6 +1343,9 @@ void write_rc (void)
 	sprintf(key, "/gretl/%s/%s", rc_vars[i].description, rc_vars[i].key);
 	if (rc_vars[i].type == BOOLSET) {
 	    boolvar_to_str(rc_vars[i].var, cval);
+	    gnome_config_set_string(key, cval);
+	} else if (rc_vars[i].type & INTSET) {
+	    sprintf(cval, "%d", *(int *) rc_vars[i].var);
 	    gnome_config_set_string(key, cval);
 	} else {
 	    strvar = (char *) rc_vars[i].var;
@@ -1354,6 +1379,8 @@ static void read_rc (void)
 	if (value != NULL) {
 	    if (rc_vars[i].type == BOOLSET) {
 		str_to_boolvar(value, rc_vars[i].var);
+	    } else if (rc_vars[i].type & INTSET) {
+		*(int *) rc_vars[i].var = atoi(value);
 	    } else {
 		strvar = (char *) rc_vars[i].var;
 		*strvar = '\0';
@@ -1387,7 +1414,7 @@ static void read_rc (void)
 
 void write_rc (void) 
 {
-    char bval[6];
+    char bval[8];
     char *strvar;
     int i = 0;
 
@@ -1401,6 +1428,12 @@ void write_rc (void)
 			  "gretl", 
 			  rc_vars[i].key, 
 			  bval);
+	} else if (rc_vars[i].type & INTSET) {
+	    sprintf(bval, "%d", *(int *) rc_vars[i].var);
+	    write_reg_val(HKEY_CURRENT_USER, 
+			  "gretl", 
+			  rc_vars[i].key, 
+			  bval);	    
 	} else if (rc_vars[i].type == ROOTSET) {
 	    strvar = (char *) rc_vars[i].var;
 	    write_reg_val(HKEY_CLASSES_ROOT, 
@@ -1449,6 +1482,8 @@ static int get_network_settings (void)
 		    if (!strcmp(key, rc_vars[j].key)) {
 			if (rc_vars[j].type == BOOLSET) {
 			    str_to_boolvar(linevar, rc_vars[j].var);
+			} else if (rc_vars[j].type & INTSET) {
+			    *(int *) rc_vars[j].var = atoi(linevar);
 			} else {
 			    if (!strcmp(key, "gretldir") && 
 				tolower(linevar[0]) != calldrive) {
@@ -1517,6 +1552,8 @@ void read_rc (void)
 	if (!err && *value != '\0') {
 	    if (rc_vars[i].type == BOOLSET) {
 		str_to_boolvar(value, rc_vars[i].var);
+	    } else if (rc_vars[i].type & INTSET) {
+		*(int *) rc_vars[i].var = atoi(value);
 	    } else {
 		strvar = (char *) rc_vars[i].var;
 		*strvar = '\0';
@@ -1567,6 +1604,8 @@ void write_rc (void)
 	if (rc_vars[i].type == BOOLSET) {
 	    boolvar_to_str(rc_vars[i].var, val);
 	    fprintf(rc, "%s = %s\n", rc_vars[i].key, val);
+	} else if (rc_vars[i].type & INTSET) {
+	    fprintf(rc, "%s = %d\n", rc_vars[i].key, *(int *) rc_vars[i].var);
 	} else {
 	    strvar = (char *) rc_vars[i].var;
 	    fprintf(rc, "%s = %s\n", rc_vars[i].key, strvar);
@@ -1615,6 +1654,8 @@ static void read_rc (void)
 		if (!strcmp(key, rc_vars[j].key)) {
 		    if (rc_vars[j].type == BOOLSET) {
 			str_to_boolvar(linevar, rc_vars[j].var);
+		    } else if (rc_vars[j].type & INTSET) {
+			*(int *) rc_vars[j].var = atoi(linevar);
 		    } else {
 			strvar = (char *) rc_vars[j].var;
 			*strvar = '\0';
@@ -2333,6 +2374,8 @@ void dump_rc (void)
 	if (rc_vars[i].type == BOOLSET) {
 	    boolvar_to_str(rc_vars[i].var, val);
 	    fprintf(fp, "%s = %s\n", rc_vars[i].key, val);
+	} else if (rc_vars[i].type & INTSET) {
+	    fprintf(fp, "%s = %d\n", rc_vars[i].key, *(int *) rc_vars[i].var);
 	} else {
 	    fprintf(fp, "%s = %s\n", rc_vars[i].key, (char *) rc_vars[i].var);
 	}
@@ -2345,4 +2388,10 @@ void dump_rc (void)
 
     fclose(fp);
     free(dumper);
+}
+
+void get_user_main_size (int *width, int *height)
+{
+    *width = mwidth;
+    *height = mheight;
 }
