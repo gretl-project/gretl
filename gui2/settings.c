@@ -114,8 +114,6 @@ static int usecwd;
 static int olddat;
 static int useqr;
 char gpcolors[32];
-static int mwidth = -1;
-static int mheight = -1;
 static char datapage[24];
 static char scriptpage[24];
 
@@ -136,7 +134,7 @@ static int lcnumeric = 1;
 char midiplayer[MAXSTR];
 #endif
 
-enum {
+typedef enum {
     ROOTSET = 1 << 0,
     USERSET = 1 << 1,
     BOOLSET = 1 << 2,
@@ -144,14 +142,14 @@ enum {
     LISTSET = 1 << 4,
     INVISET = 1 << 5,
     FIXSET  = 1 << 6  /* setting fixed by admin (Windows network use) */
-};
+} rcflags;
 
 typedef struct {
     char *key;         /* config file variable name */
     char *description; /* How the field will show up in the options dialog */
     char *link;        /* in case of radio button pair, alternate string */
     void *var;         /* pointer to variable */
-    char type;         /* ROOTSET user string
+    rcflags flags;     /* ROOTSET user string
 			  USERSET root string
 			  BOOLSET boolean (user)
                           INTSET integer (user)
@@ -258,9 +256,9 @@ RCVAR rc_vars[] = {
       INVISET, 32, 0, NULL },
     { "Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 
       INVISET, sizeof gpcolors, 0, NULL },
-    { "main_width", "main window width", NULL, &mwidth, 
+    { "main_width", "main window width", NULL, &mainwin_width, 
       INVISET | INTSET, 0, 0, NULL },
-    { "main_height", "main window height", NULL, &mheight, 
+    { "main_height", "main window height", NULL, &mainwin_height, 
       INVISET | INTSET, 0, 0, NULL },
     { "HC_by_default", N_("Use robust covariance matrix by default"), NULL,
       &hc_by_default, BOOLSET, 0, 5, NULL },
@@ -814,9 +812,9 @@ static void get_table_sizes (int page, int *b_count, int *s_count)
 	if (rc_vars[i].tab != page) {
 	    continue;
 	}
-	if (rc_vars[i].type & BOOLSET) {
+	if (rc_vars[i].flags & BOOLSET) {
 	    *b_count += 1;
-	} else if (!(rc_vars[i].type & INVISET)) {
+	} else if (!(rc_vars[i].flags & INVISET)) {
 	    *s_count += 1;
 	}
     }
@@ -876,7 +874,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    continue;
 	}
 
-	if ((rc->type & BOOLSET) && rc->link == NULL) { 
+	if ((rc->flags & BOOLSET) && rc->link == NULL) { 
 	    /* simple boolean variable (check box) */
 	    int rcval = *(int *)(rc->var);
 
@@ -898,7 +896,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    }
 
 	    /* special case: link between toggle and preceding entry */
-	    if (rc->len && !(rc->type & FIXSET)) {
+	    if (rc->len && !(rc->flags & FIXSET)) {
 		gtk_widget_set_sensitive(rc_vars[i-1].widget,
 					 GTK_TOGGLE_BUTTON(rc->widget)->active);
 		g_signal_connect(G_OBJECT(rc->widget), "clicked",
@@ -915,14 +913,14 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_table_resize(GTK_TABLE(b_table), b_len + 1, 2);
 	    }
 
-	    if (rc->type & FIXSET) {
+	    if (rc->flags & FIXSET) {
 		gtk_widget_set_sensitive(rc->widget, FALSE);
 		if (rc->len) {
 		    gtk_widget_set_sensitive(rc_vars[i-1].widget, FALSE);
 		}
 	    }
 
-	} else if (rc->type & BOOLSET) { 
+	} else if (rc->flags & BOOLSET) { 
 	    /* radio-button dichotomy */
 	    int rcval = *(int *)(rc->var);
 	    GtkWidget *button;
@@ -972,11 +970,11 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    }
 	    gtk_widget_show(rc->widget);
 
-	    if (rc->type & FIXSET) {
+	    if (rc->flags & FIXSET) {
 		gtk_widget_set_sensitive(button, FALSE);
 		gtk_widget_set_sensitive(rc->widget, FALSE);
 	    }
-	} else if (rc->type & LISTSET) {
+	} else if (rc->flags & LISTSET) {
 	    char *strvar = (char *) rc->var;
 	    GList *list;
 
@@ -1004,7 +1002,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rc->widget)->entry), 
 				      FALSE);
 	    gtk_widget_show(rc->widget);
-	} else if (!(rc->type & INVISET)) { 
+	} else if (!(rc->flags & INVISET)) { 
 	    /* visible string variable */
 	    char *strvar = (char *) rc->var;
 
@@ -1031,7 +1029,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_widget_show(w);
 	    }
 
-	    if (rc->type & FIXSET) {
+	    if (rc->flags & FIXSET) {
 		gtk_widget_set_sensitive(rc->widget, FALSE);
 		gtk_widget_set_sensitive(w, FALSE);
 	    }
@@ -1128,20 +1126,20 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	if (rc_vars[i].widget != NULL) {
-	    if (rc_vars[i].type == BOOLSET) {
+	    if (rc_vars[i].flags & BOOLSET) {
 		if (GTK_TOGGLE_BUTTON(rc_vars[i].widget)->active) {
 		    *(int *)(rc_vars[i].var) = TRUE;
 		} else {
 		    *(int *)(rc_vars[i].var) = FALSE;
 		}
-	    } else if (rc_vars[i].type == USERSET || rc_vars[i].type == ROOTSET) {
+	    } else if (rc_vars[i].flags & USERSET || rc_vars[i].flags & ROOTSET) {
 		str = gtk_entry_get_text(GTK_ENTRY(rc_vars[i].widget));
 		if (str != NULL && *str != '\0') { 
 		    strvar = (char *) rc_vars[i].var;
 		    *strvar = '\0';
 		    strncat(strvar, str, rc_vars[i].len - 1);
 		}
-	    } else if (rc_vars[i].type == LISTSET) {
+	    } else if (rc_vars[i].flags & LISTSET) {
 		GtkWidget *entry = GTK_COMBO(rc_vars[i].widget)->entry;
 
 		str = gtk_entry_get_text(GTK_ENTRY(entry));
@@ -1213,6 +1211,20 @@ static void common_read_rc_setup (void)
 # endif
 }
 
+static void get_mainwin_size (void)
+{
+    if (mdata->w != NULL) {
+#ifdef OLD_GTK
+	mainwin_width = mdata->w->allocation.width;
+	mainwin_height = mdata->w->allocation.height;
+#else
+	gtk_window_get_size(GTK_WINDOW(mdata->w), 
+			    &mainwin_width,
+			    &mainwin_height);
+#endif
+    }
+}
+
 /* next section: variant versions of write_rc and read_rc, depending
    on both GTK version and platform
 */
@@ -1231,12 +1243,14 @@ void write_rc (void)
 
     client = gconf_client_get_default();
 
+    get_mainwin_size();
+
     for (i=0; rc_vars[i].key != NULL; i++) {
 	sprintf(key, "/apps/gretl/%s", rc_vars[i].key);
-	if (rc_vars[i].type == BOOLSET) {
+	if (rc_vars[i].flags & BOOLSET) {
 	    bval = *(gboolean *) rc_vars[i].var;
 	    gconf_client_set_bool(client, key, bval, NULL);
-	} else if (rc_vars[i].type & INTSET) {
+	} else if (rc_vars[i].flags & INTSET) {
 	    ival = *(int *) rc_vars[i].var;
 	    gconf_client_set_int(client, key, ival, NULL);
 	} else {
@@ -1270,7 +1284,7 @@ static void read_rc (void)
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	sprintf(key, "/apps/gretl/%s", rc_vars[i].key);
-	if (rc_vars[i].type == BOOLSET) {
+	if (rc_vars[i].flags & BOOLSET) {
 	    gboolean val;
 
 	    val = gconf_client_get_bool(client, key, &error);
@@ -1280,7 +1294,7 @@ static void read_rc (void)
 	    } else {
 		*(int *) rc_vars[i].var = val;
 	    }
-	} else if (rc_vars[i].type & INTSET) {
+	} else if (rc_vars[i].flags & INTSET) {
 	    int val;
 
 	    val = gconf_client_get_int(client, key, &error);
@@ -1339,12 +1353,14 @@ void write_rc (void)
     char *strvar;
     int i;
 
+    get_mainwin_size();
+
     for (i=0; rc_vars[i].key != NULL; i++) {
 	sprintf(key, "/gretl/%s/%s", rc_vars[i].description, rc_vars[i].key);
-	if (rc_vars[i].type == BOOLSET) {
+	if (rc_vars[i].flags & BOOLSET) {
 	    boolvar_to_str(rc_vars[i].var, cval);
 	    gnome_config_set_string(key, cval);
-	} else if (rc_vars[i].type & INTSET) {
+	} else if (rc_vars[i].flags & INTSET) {
 	    sprintf(cval, "%d", *(int *) rc_vars[i].var);
 	    gnome_config_set_string(key, cval);
 	} else {
@@ -1377,9 +1393,9 @@ static void read_rc (void)
 		rc_vars[i].key);
 	value = gnome_config_get_string(gpath);
 	if (value != NULL) {
-	    if (rc_vars[i].type == BOOLSET) {
+	    if (rc_vars[i].flags & BOOLSET) {
 		str_to_boolvar(value, rc_vars[i].var);
-	    } else if (rc_vars[i].type & INTSET) {
+	    } else if (rc_vars[i].flags & INTSET) {
 		*(int *) rc_vars[i].var = atoi(value);
 	    } else {
 		strvar = (char *) rc_vars[i].var;
@@ -1418,23 +1434,25 @@ void write_rc (void)
     char *strvar;
     int i = 0;
 
+    get_mainwin_size();
+
     for (i=0; rc_vars[i].key != NULL; i++) {
 
-	if (rc_vars[i].type & FIXSET) continue;
+	if (rc_vars[i].flags & FIXSET) continue;
 
-	if (rc_vars[i].type == BOOLSET) {
+	if (rc_vars[i].flags & BOOLSET) {
 	    boolvar_to_str(rc_vars[i].var, bval);
 	    write_reg_val(HKEY_CURRENT_USER, 
 			  "gretl", 
 			  rc_vars[i].key, 
 			  bval);
-	} else if (rc_vars[i].type & INTSET) {
+	} else if (rc_vars[i].flags & INTSET) {
 	    sprintf(bval, "%d", *(int *) rc_vars[i].var);
 	    write_reg_val(HKEY_CURRENT_USER, 
 			  "gretl", 
 			  rc_vars[i].key, 
 			  bval);	    
-	} else if (rc_vars[i].type == ROOTSET) {
+	} else if (rc_vars[i].flags & ROOTSET) {
 	    strvar = (char *) rc_vars[i].var;
 	    write_reg_val(HKEY_CLASSES_ROOT, 
 			  get_reg_base(rc_vars[i].key),
@@ -1480,9 +1498,9 @@ static int get_network_settings (void)
 		gotvar = 0;
 		for (j=0; rc_vars[j].key != NULL; j++) {
 		    if (!strcmp(key, rc_vars[j].key)) {
-			if (rc_vars[j].type == BOOLSET) {
+			if (rc_vars[j].flags & BOOLSET) {
 			    str_to_boolvar(linevar, rc_vars[j].var);
-			} else if (rc_vars[j].type & INTSET) {
+			} else if (rc_vars[j].flags & INTSET) {
 			    *(int *) rc_vars[j].var = atoi(linevar);
 			} else {
 			    if (!strcmp(key, "gretldir") && 
@@ -1495,7 +1513,7 @@ static int get_network_settings (void)
 				strncat(strvar, linevar, rc_vars[j].len - 1);
 			    }
 			}
-			rc_vars[j].type |= FIXSET;
+			rc_vars[j].flags |= FIXSET;
 			gotvar = gotini = 1;
 		    }
 		    if (gotvar) break;
@@ -1525,7 +1543,7 @@ void read_rc (void)
 	for (i=0; rc_vars[i].key != NULL; i++) {
 	    if (rc_vars[i].var == tramodir ||
 		rc_vars[i].var == paths.x12adir) {
-		rc_vars[i].type |= FIXSET;
+		rc_vars[i].flags |= FIXSET;
 	    }
 	}
     } 
@@ -1533,11 +1551,11 @@ void read_rc (void)
     for (i=0; rc_vars[i].key != NULL; i++) {
 	int err = 0;
 
-	if (rc_vars[i].type & FIXSET) {
+	if (rc_vars[i].flags & FIXSET) {
 	    continue;
 	}
 
-	if (rc_vars[i].type == ROOTSET) {
+	if (rc_vars[i].flags & ROOTSET) {
 	    err = read_reg_val (HKEY_CLASSES_ROOT, 
 				get_reg_base(rc_vars[i].key),
 				rc_vars[i].key, 
@@ -1550,9 +1568,9 @@ void read_rc (void)
 	}
 	    
 	if (!err && *value != '\0') {
-	    if (rc_vars[i].type == BOOLSET) {
+	    if (rc_vars[i].flags & BOOLSET) {
 		str_to_boolvar(value, rc_vars[i].var);
-	    } else if (rc_vars[i].type & INTSET) {
+	    } else if (rc_vars[i].flags & INTSET) {
 		*(int *) rc_vars[i].var = atoi(value);
 	    } else {
 		strvar = (char *) rc_vars[i].var;
@@ -1599,12 +1617,14 @@ void write_rc (void)
 
     fprintf(rc, "# gretl config file (note: not used by gnome version)\n");
 
+    get_mainwin_size();
+
     for (i=0; rc_vars[i].var != NULL; i++) {
 	fprintf(rc, "# %s\n", rc_vars[i].description);
-	if (rc_vars[i].type == BOOLSET) {
+	if (rc_vars[i].flags & BOOLSET) {
 	    boolvar_to_str(rc_vars[i].var, val);
 	    fprintf(rc, "%s = %s\n", rc_vars[i].key, val);
-	} else if (rc_vars[i].type & INTSET) {
+	} else if (rc_vars[i].flags & INTSET) {
 	    fprintf(rc, "%s = %d\n", rc_vars[i].key, *(int *) rc_vars[i].var);
 	} else {
 	    strvar = (char *) rc_vars[i].var;
@@ -1652,9 +1672,9 @@ static void read_rc (void)
 	    chopstr(linevar); 
 	    for (j=0; rc_vars[j].key != NULL; j++) {
 		if (!strcmp(key, rc_vars[j].key)) {
-		    if (rc_vars[j].type == BOOLSET) {
+		    if (rc_vars[j].flags & BOOLSET) {
 			str_to_boolvar(linevar, rc_vars[j].var);
-		    } else if (rc_vars[j].type & INTSET) {
+		    } else if (rc_vars[j].flags & INTSET) {
 			*(int *) rc_vars[j].var = atoi(linevar);
 		    } else {
 			strvar = (char *) rc_vars[j].var;
@@ -2371,10 +2391,10 @@ void dump_rc (void)
 
     for (i=0; rc_vars[i].var != NULL; i++) {
 	fprintf(fp, "# %s\n", rc_vars[i].description);
-	if (rc_vars[i].type == BOOLSET) {
+	if (rc_vars[i].flags & BOOLSET) {
 	    boolvar_to_str(rc_vars[i].var, val);
 	    fprintf(fp, "%s = %s\n", rc_vars[i].key, val);
-	} else if (rc_vars[i].type & INTSET) {
+	} else if (rc_vars[i].flags & INTSET) {
 	    fprintf(fp, "%s = %d\n", rc_vars[i].key, *(int *) rc_vars[i].var);
 	} else {
 	    fprintf(fp, "%s = %s\n", rc_vars[i].key, (char *) rc_vars[i].var);
@@ -2390,8 +2410,3 @@ void dump_rc (void)
     free(dumper);
 }
 
-void get_user_main_size (int *width, int *height)
-{
-    *width = mwidth;
-    *height = mheight;
-}

@@ -106,6 +106,8 @@ float gui_scale;
 int expert = FALSE; 
 int updater = FALSE;
 int want_toolbar = TRUE;
+int mainwin_width = 520;
+int mainwin_height = 420;
 
 char dbproxy[21];
 
@@ -1108,8 +1110,6 @@ static GtkWidget *make_main_window (int gui_get_data)
 	_("Variable name"), 
 	_("Descriptive label")
     };
-    int mainwin_width = 540;
-    int mainwin_height = 420;
 
     mdata->data = NULL;  
     mdata->listbox = NULL;
@@ -1123,15 +1123,17 @@ static GtkWidget *make_main_window (int gui_get_data)
     mdata->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 #endif
 
+    gui_scale = get_gui_scale();
+
+    if (mainwin_width <= 200 || mainwin_height <= 200) {
+	mainwin_width = 580 * gui_scale;
+	mainwin_height = 420 * gui_scale;
+    }
+
     gtk_signal_connect (GTK_OBJECT (mdata->w), "delete_event",
 			GTK_SIGNAL_FUNC (exit_check), NULL);
     gtk_signal_connect (GTK_OBJECT (mdata->w), "destroy",
 			GTK_SIGNAL_FUNC (destroy), NULL);
-
-    gui_scale = get_gui_scale();
-
-    mainwin_width *= gui_scale;
-    mainwin_height *= gui_scale;
 
     gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
     gtk_window_set_default_size(GTK_WINDOW (mdata->w), 
