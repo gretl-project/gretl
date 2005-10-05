@@ -703,14 +703,23 @@ static void h_test (GtkWidget *w, gpointer data)
 
 	/* are we assuming a common variance? */
 	j = 0;
-	if (GTK_TOGGLE_BUTTON(test->check)->active) j = 1;
-	if (n1 < 30 || n2 < 30) j = 2;
+	if (GTK_TOGGLE_BUTTON(test->check)->active) {
+	    j = 1;
+	}
+	if (n1 < 30 || n2 < 30) {
+	    j = 2;
+	}
+
 	if (j > 0) {
 	    ts = ((n1-1)*x[1]*x[1] + (n2-1)*x[3]*x[3])/(n1 + n2 - 2);
 	    sderr = sqrt(ts / n1 + ts /n2);
 	} else {
-	    sderr = sqrt(x[1] * x[1] / n1 + x[3] * x[3] / n2);
+	    double v1 = x[1] * x[1] / n1;
+	    double v2 = x[3] * x[3] / n2;
+
+	    sderr = sqrt(v1 + v2);
 	}
+
 	ts = (x[0] - x[2] - x[4]) / sderr;
 	if (j) {
 	    if (j == 2)
