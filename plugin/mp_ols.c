@@ -665,6 +665,15 @@ int mplsq (const int *list, const int *polylist,
 
 /* .......................................................... */
 
+static void mp_xpxxpy_init (MPXPXXPY *m)
+{
+    m->xpy = NULL;
+    m->xpx = NULL;
+    m->errcode = 0;
+    m->nv = 0;
+    m->ivalue = 0;
+}
+
 static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
 {
     int i, j, li, lj, m, t;
@@ -672,6 +681,8 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
     const int yno = list[1];
     mpf_t xx, yy, z1, z2, tmp;
     MPXPXXPY xpxxpy;
+
+    mp_xpxxpy_init(&xpxxpy);
 
     i = l0 - 1;
     m = i * (i + 1) / 2;

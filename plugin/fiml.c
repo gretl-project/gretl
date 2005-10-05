@@ -809,13 +809,14 @@ fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1,
 	err = fiml_ll(fsys, Z, t1);
 	if (!err) {
 	    if (fsys->ll > llbak) {
-		*instep = step;
 		improved = 1;
 	    } else {
 		step /= 2.0;
 	    } 
 	}
     }
+
+    *instep = step;
 
     return err;
 }

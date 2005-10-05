@@ -215,9 +215,11 @@ static int wsheet_get_real_size (xmlNodePtr node, wsheet *sheet)
     return 0;
 }
 
-static int check_for_date_format (wsheet *sheet, const char *fmt)
+static void check_for_date_format (wsheet *sheet, const char *fmt)
 {
+#if 0
     fprintf(stderr, "check_for_date_format: fmt = '%s'\n", fmt);
+#endif
 
     if (strchr(fmt, '/') || 
 	(strstr(fmt, "mm") && !(strchr(fmt, ':'))) || 

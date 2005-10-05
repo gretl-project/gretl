@@ -865,7 +865,8 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
     }
 
     if (fc->dvlags != NULL) {
-	int pmax, ns = fc->t2 - pmod->t2;
+	int ns = fc->t2 - pmod->t2;
+	int pmax = 0;
 	
 	if (ns > 0) {
 	    phi = garch_ldv_phi(pmod, xlist, fc->dvlags, &pmax);

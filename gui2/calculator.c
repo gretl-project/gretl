@@ -1106,8 +1106,8 @@ static void populate_stats (GtkWidget *w, gpointer p)
     int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
     gchar **pbuf = g_object_get_data(G_OBJECT(p), "pbuf");
     int t, n = datainfo->t2 - datainfo->t1 + 1;
-    int vx, vy = -1;
-    GretlOp yop;
+    int vx = -1, vy = -1;
+    GretlOp yop = 0;
     const gchar *buf;
     char numstr[16];
     double x1, x2, yval;

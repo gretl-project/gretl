@@ -242,6 +242,7 @@ static int parse_b_bit (const char *s, int *eq, int *bnum)
 static int 
 parse_coeff_chunk (const char *s, double *x, int *eq, int *bnum)
 {
+    const char *s0 = s;
     int err = E_PARSE;
 
     *eq = 0;
@@ -263,7 +264,7 @@ parse_coeff_chunk (const char *s, double *x, int *eq, int *bnum)
     }
 
     if (err) {
-	sprintf(gretl_errmsg, _("parse error in '%s'\n"), s);
+	sprintf(gretl_errmsg, _("parse error in '%s'\n"), s0);
     } 
 
 #if RDEBUG
@@ -807,6 +808,10 @@ int
 gretl_restriction_set_finalize (gretl_restriction_set *rset, PRN *prn)
 {
     int err = 0;
+
+    if (rset == NULL) {
+	return 1;
+    }
 
     if (rset->sys == NULL) {
 	/* single model */

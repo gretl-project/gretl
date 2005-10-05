@@ -1948,8 +1948,8 @@ static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 {
     double **mZ = NULL;
     DATAINFO minfo;
-    int startyr, endyr;
-    int startmon, endmon;
+    int startyr = 1, endyr;
+    int startmon = 1, endmon;
     double *x;
     int nseries = 0;
     int i, err = 0;

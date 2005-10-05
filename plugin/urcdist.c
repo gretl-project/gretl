@@ -679,7 +679,7 @@ static double ddnor (double ystar)
 
 double mackinnon_pvalue (double tval, int n, int niv, int itv, char *path)
 {
-    double val;
+    double val = NADBL;
     int check;
 
 #ifdef URDEBUG

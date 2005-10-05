@@ -922,7 +922,7 @@ static int parse_genr_critical_input (const char *str,
 double genr_get_critical (const char *line, const double **Z, 
 			  const DATAINFO *pdinfo)
 {
-    double alpha, ret = NADBL;
+    double alpha = 0.0, ret = NADBL;
     int st, dfn = -1, dfd = -1;
 
     if (parse_genr_critical_input(line, Z, pdinfo,
