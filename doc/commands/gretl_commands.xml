@@ -6570,6 +6570,10 @@
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
         </option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>
       </options> 
     </usage>
 

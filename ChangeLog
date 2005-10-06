@@ -21,6 +21,7 @@ version 1.4.2, in progress
 - Add inverse roots plot for VARs (Jack Lucchetti)
 - Add "robust" option for logit and probit (compute QML
   or Huber-White covariance matrix)
+- Add "robust" standard errors option for WLS
 - Remove overly verbose notification dialogs
 - Add importers for Eviews workfiles and Stata .dta files
 - Editable windows: show Save button as disabled if there's

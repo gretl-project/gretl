@@ -94,7 +94,8 @@ struct _selector {
                          c == TOBIT || \
                          c == TSLS || \
                          c == VAR || \
-                         c == VECM)
+                         c == VECM || \
+                         c == WLS)
 
 #define WANT_RADIOS(c) (c == COINT2 || c == VECM)
 
@@ -2243,8 +2244,8 @@ build_selector_switches (selector *sr)
 {
     GtkWidget *hbox, *tmp;
 
-    if (sr->code == OLS || sr->code == GARCH || 
-	sr->code == TSLS || sr->code == VAR || 
+    if (sr->code == OLS || sr->code == WLS ||  
+	sr->code == GARCH || sr->code == TSLS || sr->code == VAR || 
 	sr->code == LOGIT || sr->code == PROBIT) {
 	GtkWidget *b1;
 

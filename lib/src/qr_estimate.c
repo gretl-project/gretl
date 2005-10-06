@@ -217,7 +217,11 @@ get_data_X (gretl_matrix *X, const MODEL *pmod, const double **Z)
     for (i=start; i<=pmod->list[0]; i++) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!model_missing(pmod, t)) {
-		X->val[j++] = Z[pmod->list[i]][t];
+		if (pmod->nwt) {
+		    X->val[j++] = Z[pmod->nwt][t] * Z[pmod->list[i]][t];
+		} else {
+		    X->val[j++] = Z[pmod->list[i]][t];
+		}
 	    }
 	}
     }
@@ -226,7 +230,11 @@ get_data_X (gretl_matrix *X, const MODEL *pmod, const double **Z)
     if (pmod->ifc) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!model_missing(pmod, t)) {
-		X->val[j++] = 1.0;
+		if (pmod->nwt) {
+		    X->val[j++] = Z[pmod->nwt][t];
+		} else {
+		    X->val[j++] = 1.0;
+		}
 	    }
 	}
     }

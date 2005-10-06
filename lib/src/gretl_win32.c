@@ -53,6 +53,7 @@ int read_reg_val (HKEY tree, const char *base,
 			keyval,
 			&datalen
 			) != ERROR_SUCCESS) {
+	*keyval = '\0';
 	error = 1;
     }
 

@@ -368,7 +368,9 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 	int lv = var->neqns + 1;
 	int dv = lv + ns;
 
+#if BDEBUG
 	fprintf(stderr, "dv = %d\n", dv);
+#endif
 
 	for (i=0; i<var->neqns; i++) {
 
@@ -445,7 +447,7 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 static void compute_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var)
 {
     const MODEL *pmod;
-    int ns = boot->order * boot->neqns; /* FIXME vecm */
+    int ns = boot->order * boot->neqns; /* FIXME vecm? */
     double xti, bti, eti;
     int i, j, vj, t;
 
@@ -471,7 +473,7 @@ static void compute_bootstrap_dataset (irfboot *boot, const GRETL_VAR *var)
 			k++;
 		    }
 		} else {
-		    /* deterministic variable */
+		    /* exogenous variable */
 		    xti = boot->Z[vj][t];
 		}
 		bti += pmod->coeff[j] * xti;
@@ -543,7 +545,7 @@ static int irf_boot_quantiles (irfboot *boot, gretl_matrix *R)
     ilo = (BOOT_ITERS + 1) * alpha / 2.0;
     ihi = (BOOT_ITERS + 1) * (1.0 - alpha / 2.0);
 
-#if 1
+#if BDEBUG
     fprintf(stderr, "IRF bootstrap, 0.025 and 0.975 quantiles\n");
     fprintf(stderr, " based on %d iterations, ilo = %d, ihi = %d\n", 
 	    BOOT_ITERS, ilo, ihi);
@@ -552,7 +554,7 @@ static int irf_boot_quantiles (irfboot *boot, gretl_matrix *R)
     for (k=0; k<boot->horizon; k++) {
 	gretl_matrix_row_to_array(boot->resp, k, rk);
 	qsort(rk, BOOT_ITERS, sizeof *rk, gretl_compare_doubles);
-#if 1
+#if BDEBUG
 	fprintf(stderr, "%10g, %10g\n", rk[ilo-1], rk[ihi-1]);
 #endif
 	gretl_matrix_set(R, k, 1, rk[ilo-1]);

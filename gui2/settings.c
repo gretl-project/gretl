@@ -178,6 +178,8 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, 1, NULL },
     { "toolbar", N_("Show gretl toolbar"), NULL, &want_toolbar, 
       BOOLSET, 0, 1, NULL },
+    { "winsize", N_("Remember main window size"), NULL, &winsize, 
+      BOOLSET, 0, 1, NULL },
 #ifdef ENABLE_NLS
     { "lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
       BOOLSET, 0, 1, NULL },
@@ -1271,7 +1273,9 @@ static void read_rc (void)
     GConfClient *client;
     GError *error = NULL;
     GSList *flist = NULL;
-    gchar *value;
+    gboolean bval;
+    int ival;
+    gchar *strval;
     char key[MAXSTR];
     const char *file_sections[] = {
 	"recent_data_files",
@@ -1285,37 +1289,32 @@ static void read_rc (void)
     for (i=0; rc_vars[i].key != NULL; i++) {
 	sprintf(key, "/apps/gretl/%s", rc_vars[i].key);
 	if (rc_vars[i].flags & BOOLSET) {
-	    gboolean val;
-
-	    val = gconf_client_get_bool(client, key, &error);
+	    bval = gconf_client_get_bool(client, key, &error);
 	    if (error) {
 		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
 		g_clear_error(&error);
 	    } else {
-		*(int *) rc_vars[i].var = val;
+		*(int *) rc_vars[i].var = bval;
 	    }
 	} else if (rc_vars[i].flags & INTSET) {
-	    int val;
-
-	    val = gconf_client_get_int(client, key, &error);
+	    ival = gconf_client_get_int(client, key, &error);
 	    if (error) {
 		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
 		g_clear_error(&error);
 	    } else {
-		*(int *) rc_vars[i].var = val;
+		*(int *) rc_vars[i].var = ival;
 	    }	    
 	} else {
-	    value = gconf_client_get_string(client, key, &error);
-
+	    strval = gconf_client_get_string(client, key, &error);
 	    if (error) {
 		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
 		g_clear_error(&error);
-	    } else if (value != NULL) {
+	    } else if (strval != NULL && *strval != '\0') {
 		char *strvar = (char *) rc_vars[i].var;
 
 		*strvar = '\0';
-		strncat(strvar, value, rc_vars[i].len - 1);
-		g_free(value);
+		strncat(strvar, strval, rc_vars[i].len - 1);
+		g_free(strval);
 	    }
 	}
     }
@@ -1392,7 +1391,7 @@ static void read_rc (void)
 	sprintf(gpath, "/gretl/%s/%s", rc_vars[i].description, 
 		rc_vars[i].key);
 	value = gnome_config_get_string(gpath);
-	if (value != NULL) {
+	if (value != NULL && *value != '\0') {
 	    if (rc_vars[i].flags & BOOLSET) {
 		str_to_boolvar(value, rc_vars[i].var);
 	    } else if (rc_vars[i].flags & INTSET) {
@@ -1490,8 +1489,8 @@ static int get_network_settings (void)
 	    char *p = line;
 
 	    while (isspace(*p)) p++;
-
 	    if (*p == '#') continue;
+
 	    if (sscanf(p, "%31s", key) == 1) {
 		strcpy(linevar, p + strlen(key) + 3); 
 		chopstr(linevar); 
@@ -1554,6 +1553,8 @@ void read_rc (void)
 	if (rc_vars[i].flags & FIXSET) {
 	    continue;
 	}
+
+	*value = '\0';
 
 	if (rc_vars[i].flags & ROOTSET) {
 	    err = read_reg_val (HKEY_CLASSES_ROOT, 

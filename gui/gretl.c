@@ -106,6 +106,7 @@ float gui_scale;
 int expert = FALSE; 
 int updater = FALSE;
 int want_toolbar = TRUE;
+int winsize = TRUE;
 int mainwin_width = 520;
 int mainwin_height = 420;
 
@@ -1125,7 +1126,7 @@ static GtkWidget *make_main_window (int gui_get_data)
 
     gui_scale = get_gui_scale();
 
-    if (mainwin_width <= 200 || mainwin_height <= 200) {
+    if (!winsize || mainwin_width <= 200 || mainwin_height <= 200) {
 	mainwin_width = 580 * gui_scale;
 	mainwin_height = 420 * gui_scale;
     }

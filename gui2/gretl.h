@@ -92,6 +92,7 @@ extern char *errtext;
 /* global option-related vars */
 extern int expert;
 extern int updater;
+extern int winsize;
 extern int mainwin_width;
 extern int mainwin_height;
 #ifdef G_OS_WIN32
