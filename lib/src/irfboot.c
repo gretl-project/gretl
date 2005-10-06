@@ -254,12 +254,44 @@ static void irf_record_model_data (irfboot *boot, const MODEL *pmod, int k)
     }
 }
 
+#if 0
+static int 
+re_estimate_VECM (irfboot *boot, GRETL_VAR *jvar, int targ, int shock, int iter)
+{
+    int err = 0;
+
+    /* do all kinds of stuff ... */
+
+    err = johansen_bootstrap_round(jvar, &boot->Z, boot->dinfo);
+
+    /* now transcribe info from "jvar" to "boot" */
+
+    if (!err) {    
+	gretl_matrix_multiply_mod(boot->E, GRETL_MOD_TRANSPOSE,
+				  boot->E, GRETL_MOD_NONE,
+				  boot->S);
+	gretl_matrix_divide_by_scalar(boot->S, boot->n);
+	err = gretl_VAR_do_error_decomp(boot->neqns, boot->S, boot->C);
+    }
+
+    if (!err) {
+	recalculate_impulse_responses(boot, targ, shock, iter);
+    }
+
+# if BDEBUG > 1
+    fprintf(stderr, "\ntarg=%d, shock = %d:\n", targ, shock);
+    for (i=0; i<boot->horizon && !err; i++) {
+	fprintf(stderr, "resp[%d] = %g\n", i, boot->resp[i]);
+    }
+# endif
+
+}
+#endif
+
 static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
 {
     MODEL var_model;
     int i, err = 0;
-
-    /* changes needed here for VECM */
 
     for (i=0; i<boot->neqns && !err; i++) {
 	var_model = lsq(boot->lists[i], &boot->Z, boot->dinfo, VAR, OPT_A, 0.0);
