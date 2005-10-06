@@ -281,9 +281,6 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     case SAVE_CONSOLE:
 	file_selector(_("Save console output"), SAVE_CONSOLE, FSEL_DATA_MISC, vwin);
 	break;
-    case SAVE_CMDS: 
-	file_selector(_("Save command log"), SAVE_CMDS, FSEL_DATA_MISC, vwin);
-	break;
     case SAVE_SCRIPT:
 	file_selector(_("Save command script"), SAVE_SCRIPT, FSEL_DATA_MISC, vwin);
 	break;
@@ -552,10 +549,8 @@ void file_save_callback (GtkWidget *w, gpointer data)
 	switch (vwin->role) {
 	case EDIT_SCRIPT:
 	case VIEW_SCRIPT:
-	    u = SAVE_SCRIPT;
-	    break;
 	case VIEW_LOG:
-	    u = SAVE_CMDS;
+	    u = SAVE_SCRIPT;
 	    break;
 	case GR_PLOT:
 	    u = SAVE_GP_CMDS;
