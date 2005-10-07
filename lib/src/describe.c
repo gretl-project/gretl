@@ -962,6 +962,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     freq->endpt = malloc((nbins + 1) * sizeof *freq->endpt);
     freq->midpt = malloc(nbins * sizeof *freq->midpt);
     freq->f = malloc(nbins * sizeof *freq->f);
+
     if (freq->endpt == NULL || freq->midpt == NULL || freq->f == NULL) {
 	gretl_errno = E_ALLOC;
 	strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
@@ -988,7 +989,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	freq->midpt[k] = freq->endpt[k] + .5 * binwidth;
     }
 
-    for (t=pdinfo->t1; t<pdinfo->t2; t++) {
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	xx = x[t];
 	if (na(xx)) {
 	    continue;
