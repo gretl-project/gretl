@@ -915,7 +915,7 @@ int gretl_vector_set (gretl_vector *v, int i, double x)
  * @msg: accompanying message text (or %NULL if no message is wanted).
  * @prn: pointer to gretl printing struct (or %NULL).
  *
- * Prints the matrix @m to @prn (or to %stdout if @prn is %NULL).
+ * Prints the matrix @m to @prn (or to %stderr if @prn is %NULL).
  */
 
 void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
@@ -924,7 +924,7 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
     PRN *myprn = NULL;
 
     if (prn == NULL) {
-	myprn = gretl_print_new(GRETL_PRINT_STDOUT);
+	myprn = gretl_print_new(GRETL_PRINT_STDERR);
 	prn = myprn;
     }
 

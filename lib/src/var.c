@@ -875,6 +875,7 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
     gretl_matrix *ret = NULL;
     int i;
 
+    /* FIXME don't we already have these? */
     point = gretl_VAR_get_point_responses(var, targ, shock, periods);
 
     if (Z == NULL) {
@@ -3000,9 +3001,13 @@ johansen_VAR_new (const int *list, int rank, int order, gretlopt opt)
     return var;
 }
 
-static GRETL_VAR *johansen_driver (int order, int rank, const int *list, 
-				   const int *exolist, double ***pZ, DATAINFO *pdinfo,
-				   gretlopt opt, PRN *prn)
+/* Below: the "vlist" arg is used in IRF context: we fill out
+   a list corresponding to the VAR representation of the VECM.
+*/
+
+static GRETL_VAR *
+johansen_driver (int order, int rank, const int *list, const int *exolist, 
+		 double ***pZ, DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     PRN *varprn = NULL;
     GRETL_VAR *jvar;
@@ -3219,7 +3224,7 @@ static GRETL_VAR *johansen_driver (int order, int rank, const int *list,
 	}
 
 	/* now get johansen plugin to finish the job */
-	if (!jvar->err) {
+	if (!jvar->err && !(opt & OPT_I)) {
 	    jvar->err = johansen_complete(jvar, pZ, pdinfo, prn);
 	}
     } 
@@ -3245,9 +3250,14 @@ johansen_exit:
  * @list: list of variables to test for cointegration.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt:
+ * @opt: %OPT_A: include constant plus restricted trend; %OPT_D:
+ * include centered seasonals; %OPT_N: no constant; %OPT_R:
+ * restricted constant; %OPT_T: constant and unrestricted trend
+ * (note: default "case" is unrestricted constant).
+ * %OPT_V: produce verbose results.
  * @prn: gretl printing struct.
  *
+ * Carries out the Johansen test for cointegration.
  *
  * Returns: pointer to struct containing information on 
  * the test.
@@ -3265,9 +3275,16 @@ GRETL_VAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pd
  * @list: list of variables to test for cointegration.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt:
+ * @opt: %OPT_A: include constant plus restricted trend; %OPT_D:
+ * include centered seasonals; %OPT_N: no constant; %OPT_R:
+ * restricted constant; %OPT_T: constant and unrestricted trend
+ * (note: default "case" is unrestricted constant).
+ * %OPT_V: produce verbose results.
  * @prn: gretl printing struct.
  *
+ * Carries out the Johansen test for cointegration and prints the
+ * results (but unlike johansen_test(), does not return the
+ * allocated results in VAR form).
  *
  * Returns: 0 on success, non-zero code on error.
  */

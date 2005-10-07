@@ -106,7 +106,8 @@ struct plugin_function plugin_functions[] = {
     { "dta_get_data",   P_STATA_IMPORT },
 
     /* Johansen cointegration test and VECM */
-    { "johansen_analysis", P_JOHANSEN },
+    { "johansen_analysis",        P_JOHANSEN },
+    { "johansen_bootstrap_round", P_JOHANSEN },
 
     /* least absolute deviations */
     { "lad_driver", P_LAD },

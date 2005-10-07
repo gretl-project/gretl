@@ -3252,6 +3252,10 @@ static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
     };
     static int active[] = { 0 };
 
+#if 1
+    vecm = 0;
+#endif
+
     targ = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "targ"));
 
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
@@ -3275,7 +3279,9 @@ static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
     err = gretl_VAR_plot_impulse_response(var, targ, shock, h, vZ,
 					  datainfo);
 
-    if (!err) {
+    if (err) {
+	gui_errmsg(err);
+    } else {
 	register_graph();
     }
 }

@@ -26,7 +26,7 @@
 #include "gretl_matrix_private.h"
 #include "var.h"
 
-#define JDEBUG 0
+#define JDEBUG 1
 
 /* 
    Critical values for Johansen's likelihood ratio tests
@@ -1124,6 +1124,10 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
     int rank = jrank(jvar);
     int err = 0;
 
+#if JDEBUG
+    fprintf(stderr, "\n*** starting johansen_analysis()\n\n");
+#endif
+
     TmpL = gretl_matrix_alloc(nv, n);
     TmpR = gretl_matrix_alloc(nv, nv);
     M = gretl_matrix_alloc(nv, nv);
@@ -1179,6 +1183,10 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
     } else {
 	err = gretl_eigen_sort(eigvals, TmpR, rank);
     }
+
+#if JDEBUG
+    gretl_matrix_print(TmpR, "raw eigenvector(s)", NULL);
+#endif
 
     if (!err) {
 	johansen_ll_calc(jvar, eigvals);
@@ -1261,14 +1269,22 @@ int johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo)
     int nv = gretl_matrix_cols(jvar->jinfo->Svv);
     int err = 0;
 
+#if JDEBUG
+    fprintf(stderr, "\n*** starting johansen_bootstrap_round()\n\n");
+#endif
+
     TmpL = gretl_matrix_alloc(nv, n);
-    TmpR = gretl_matrix_alloc(n, nv);
+    TmpR = gretl_matrix_alloc(nv, nv);
     M = gretl_matrix_alloc(nv, nv);
 
     if (TmpL == NULL || TmpR == NULL || M == NULL) {
 	err = 1;
 	goto eigenvals_bailout;
     }
+
+    if (nv > n) {
+	gretl_matrix_reuse(TmpR, n, nv);
+    }    
 
     /* calculate Suu^{-1} Suv */
     err = gretl_invert_general_matrix(jvar->jinfo->Suu);
@@ -1290,16 +1306,33 @@ int johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo)
 	err = gretl_matrix_multiply(TmpL, TmpR, M);
     }
 
-    if (!err) {
-	eigvals = gretl_general_matrix_eigenvals(M, jvar->jinfo->Beta);
-	if (eigvals == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    err = gretl_eigen_sort(eigvals, jvar->jinfo->Beta, jrank(jvar));
-	}
+    if (err) {
+	goto eigenvals_bailout;
+    }    
+
+    if (nv > n) {
+	/* "re-expand" this matrix */
+	gretl_matrix_reuse(TmpR, nv, nv);
     }
 
     if (!err) {
+	eigvals = gretl_general_matrix_eigenvals(M, TmpR);
+	if (eigvals == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gretl_eigen_sort(eigvals, TmpR, jrank(jvar));
+	}
+    }
+
+#if JDEBUG
+    gretl_matrix_print(TmpR, "raw eigenvector(s)", NULL);
+#endif
+
+    if (!err) {
+	jvar->jinfo->Beta = gretl_matrix_copy(TmpR);
+	if (jvar->jinfo->Beta == NULL) {
+	    err = E_ALLOC;
+	}
 	if (!err) {
 	    err = phillips_normalize_beta(jvar); 
 	}
