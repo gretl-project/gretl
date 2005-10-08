@@ -3241,7 +3241,6 @@ static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-    int vecm = (var->ci == VECM);
     gchar *title;
     int h = default_VAR_horizon(datainfo);
     gint targ;
@@ -3252,18 +3251,14 @@ static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
     };
     static int active[] = { 0 };
 
-#if 1
-    vecm = 0;
-#endif
-
     targ = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "targ"));
 
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
 
     err = checks_dialog(title, 
-			(vecm)? NULL : impulse_opts, 
-			(vecm)? 0 : 1, 
-			(vecm)? NULL : active,
+			impulse_opts, 
+			1, 
+			active,
 			&h, _("forecast horizon (periods):"),
 			2, datainfo->n / 2, IRF_BOOT);
     g_free(title);

@@ -1,6 +1,6 @@
 /* bootstrapped confidence intervals for impulse response functions */
 
-#define BDEBUG 1
+#define BDEBUG 0
 
 #if BDEBUG
 # define BOOT_ITERS 9
@@ -38,7 +38,7 @@ struct irfboot_ {
 
 static void irf_boot_free (irfboot *boot)
 {
-    int i, nl = (boot->ecm)? 3 : boot->neqns;
+    int i, nl = (boot->ecm)? 2 : boot->neqns;
 
     destroy_dataset(boot->Z, boot->dinfo);
 
@@ -413,7 +413,7 @@ static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
 
 static int allocate_bootstrap_lists (irfboot *boot, const GRETL_VAR *var)
 {
-    int nl = (var->ecm)? 3 : boot->neqns;
+    int nl = (var->ecm)? 2 : boot->neqns;
     int i, err = 0;
 
     boot->lists = malloc(nl * sizeof *boot->lists);
@@ -427,16 +427,16 @@ static int allocate_bootstrap_lists (irfboot *boot, const GRETL_VAR *var)
     }
 
     if (boot->ecm) {
-	int nv = 1 + var->neqns * (var->order + 1) + var->jinfo->nexo;
-
-	if (gretl_list_has_separator(var->jinfo->list)) {
-	    err = gretl_list_split_on_separator(var->jinfo->list, 
-						&boot->lists[0], 
-						&boot->lists[1]);
-	} else {
-	    boot->lists[0] = gretl_list_copy(var->jinfo->list);
+#if BDEBUG
+	printlist(var->jinfo->list, "var->jinfo->list");
+	printlist(var->jinfo->exolist, "var->jinfo->exolist");
+#endif
+	boot->lists[0] = gretl_list_copy(var->jinfo->list);
+	boot->lists[1] = gretl_list_copy(var->jinfo->exolist);
+	if (boot->lists[0] == NULL || 
+	    (var->jinfo->exolist != NULL && boot->lists[1] == NULL)) {
+	    err = 1;
 	}
-	boot->lists[2] = gretl_list_new(nv);
     } else {
 	for (i=0; i<nl && !err; i++) {
 	    boot->lists[i] = gretl_list_new(boot->ncoeff + 1);
@@ -480,7 +480,7 @@ static int make_bs_dataset_and_lists (irfboot *boot,
     }
 
     if (var->ecm) {
-	ns = (var->order + 2) * var->neqns;
+	ns = var->neqns;
 	nd = (boot->lists[1] != NULL)? boot->lists[1][0] : 0;
 	nv = ns + nd + 1;
     } else {
@@ -494,7 +494,7 @@ static int make_bs_dataset_and_lists (irfboot *boot,
     }
 
 #if BDEBUG
-    fprintf(stderr, "ns=%d, nd=%d, nv=%d\n", ns, nd, nv);
+    fprintf(stderr, "make_bs_dataset_and_lists: ns=%d, nd=%d, nv=%d\n", ns, nd, nv);
     if (var->ecm) {
 	printlist(boot->lists[0], "boot->lists[0]");
 	printlist(boot->lists[1], "boot->lists[1]");
@@ -513,9 +513,6 @@ static int make_bs_dataset_and_lists (irfboot *boot,
     boot->dinfo = binfo;
 
     if (var->ecm) {
-	int order = var->order + 1;
-	int lv = var->neqns + 1;
-
 	j = 1;
 	for (i=0; i<var->neqns; i++) {
 	    v = boot->lists[0][i+1];
@@ -525,23 +522,10 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 	    for (t=0; t<pdinfo->n; t++) {
 		bZ[j][t] = Z[v][t];
 	    }
-	    for (k=1; k<=order; k++) {
-#if BDEBUG
-		fprintf(stderr, "creating lag %d of %s as var %d\n", 
-			k, pdinfo->varname[v], lv);
-#endif
-		for (t=0; t<pdinfo->n; t++) {
-		    bZ[lv][t] = Z[v][t-k];
-		}
-		lv++;
-	    }		
 	    boot->lists[0][i+1] = j;
 	    j++;
 	}
 
-	fprintf(stderr, "j=%d, lv=%d, binfo->v=%d\n", j, lv, binfo->v);
-
-	j += lv;
 	for (i=0; i<nd; i++) {
 	    v = boot->lists[1][i+1];
 #if BDEBUG
@@ -633,56 +617,78 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 
 static void compute_VECM_dataset (irfboot *boot, const GRETL_VAR *var)
 {
+    const MODEL *pmod;
     int order = var->order + 1;
-    int ns = order * boot->neqns;
-    double aij, xti, bti, eti;
-    int i, j, vj, t;
+    int nexo = (boot->lists[1] != NULL)? boot->lists[1][0] : 0;
+    int ndelta = var->order * var->neqns;
+    int nseas = var->jinfo->seasonals;
+    int trendpos = 0;
+    int X0 = 0, S0 = 0, T0 = 0;
+    double aij, bti, eti;
+    int i, j, k, vj, t;
 
-#if 1
-    fprintf(stderr, "compute_VECM_dataset: order=%d, ns=%d, not ready!\n",
-	    order, ns);
-    return;
+#if BDEBUG
+    fprintf(stderr, "compute_VECM_dataset: order=%d, nexo=%d, nseas=%d\n",
+	    order, nexo, nseas);
 #endif
 
+    if (nexo > 0) {
+	/* position of first exog var coefficient in VECM model */
+	X0 = var->ifc + ndelta;
+    }
+
+    if (nseas > 0) {
+	/* position of first seasonal coefficient in VECM model */
+	S0 = var->ifc + ndelta + nexo;
+    }
+
+    if (jcode(var) == J_UNREST_TREND) { 
+	/* position of trend coefficient in VECM model */
+	T0 = var->ifc + ndelta + nexo + nseas;
+	/* position of trend in dataset */
+	trendpos = 1 + 3 * var->neqns + nexo + nseas;
+    }
+
     for (t=boot->t1; t<=boot->t2; t++) {
-	int lv = boot->neqns + 1;
-
 	for (i=0; i<boot->neqns; i++) {
-	    int m, lag = 1;
 
+	    pmod = var->models[i];
 	    bti = 0.0;
 
-	    for (j=0; j<boot->ncoeff; j++) {
-		vj = boot->neqns + 1; /* FIXME */
-		if (j < ns + boot->ifc && vj > 0) {
-		    /* stochastic variable */
-		    m = (j - boot->ifc) / order;
-		    vj = boot->lists[0][m+1];
-		    xti = boot->Z[vj][t-lag];
-		    lag++;
-		    if (lag > order) {
-			lag = 1;
-		    }
-		} else {
-		    /* exogenous variable */
-		    xti = boot->Z[vj][t];
+	    /* constant, if present */
+	    if (var->ifc) {
+		bti += pmod->coeff[0];
+	    }
+
+	    /* endogenous vars */
+	    for (j=0; j<boot->neqns; j++) {
+		vj = var->jinfo->list[j+1];
+		for (k=0; k<order; k++) {
+		    aij = gretl_matrix_get(var->A, i, k * boot->neqns + j);
+		    bti += aij * boot->Z[vj][t-k-1];
 		}
-		/* rubbish below! */
-		aij = gretl_matrix_get(var->A, i, j);
-		bti += aij * xti;
+	    }
+
+	    /* exogenous vars */
+	    for (j=0; j<nexo; j++) {
+		vj = var->jinfo->exolist[j+1];
+		bti += pmod->coeff[X0+j] * boot->Z[vj][t];
+	    }
+
+	    /* seasonals, if present */
+	    for (j=0; j<var->jinfo->seasonals; j++) {
+		vj = boot->neqns + nexo + 1 + j;
+		bti += pmod->coeff[S0+j] * boot->Z[vj][t];
+	    }
+
+	    /* trend, if present */
+	    if (trendpos > 0) {
+		bti += pmod->coeff[T0] * boot->Z[trendpos][t];
 	    }
 
 	    /* set value of dependent var to forecast + re-sampled error */
 	    eti = gretl_matrix_get(boot->rE, t - boot->t1, i);
 	    boot->Z[i+1][t] = bti + eti;
-
-	    /* and recreate the lags */
-	    for (j=1; j<=order; j++) {
-		if (t - j >= 0) {
-		    boot->Z[lv][t] = boot->Z[i+1][t-j];
-		}
-		lv++;
-	    }
 	}
     }
 }

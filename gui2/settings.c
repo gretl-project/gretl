@@ -1309,11 +1309,13 @@ static void read_rc (void)
 	    if (error) {
 		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
 		g_clear_error(&error);
-	    } else if (strval != NULL && *strval != '\0') {
-		char *strvar = (char *) rc_vars[i].var;
+	    } else if (strval != NULL) {
+		if (*strval != '\0') {
+		    char *strvar = (char *) rc_vars[i].var;
 
-		*strvar = '\0';
-		strncat(strvar, strval, rc_vars[i].len - 1);
+		    *strvar = '\0';
+		    strncat(strvar, strval, rc_vars[i].len - 1);
+		}
 		g_free(strval);
 	    }
 	}

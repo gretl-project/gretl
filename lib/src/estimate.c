@@ -1339,7 +1339,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     diaginv(pmod->xpx, xpy, diag, pmod->ncoeff);
 
     for (v=0; v<pmod->ncoeff; v++) { 
-       pmod->sderr[v] = pmod->sigma * sqrt(diag[v]); 
+	pmod->sderr[v] = pmod->sigma * sqrt(diag[v]); 
     }
 
     free(diag); 

@@ -372,7 +372,7 @@ int *gretl_null_list (void)
  * @src: an array of integers, the first element of which holds
  * a count of the number of elements following.
  *
- * Returns: an allocated copy @src.
+ * Returns: an allocated copy @src (or %NULL if @src is %NULL).
  */
 
 int *gretl_list_copy (const int *src)

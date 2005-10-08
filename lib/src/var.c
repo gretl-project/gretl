@@ -222,6 +222,7 @@ static void destroy_VAR_models (MODEL **models, int neqns)
 static void johansen_info_free (JohansenInfo *jv)
 {
     free(jv->list);
+    free(jv->exolist);
     free(jv->difflist);
     free(jv->biglist);
 
@@ -1719,7 +1720,7 @@ static GRETL_VAR *real_var (int order, const int *inlist,
 	var = NULL;
     }
 
-#if 0
+#if VAR_DEBUG
     if (!*err) {
 	gretl_matrix_print(var->A, "var->A", NULL);
     }
@@ -2806,6 +2807,9 @@ static int johansen_VAR (int order, const int *inlist,
 		printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	    }
 	    transcribe_uhat_to_matrix(&jmod, resids->u, i);
+	    if (i == 0) {
+		jvar->ifc = jmod.ifc;
+	    }
 	    clear_model(&jmod);
 	}
 
@@ -2883,40 +2887,54 @@ static JohansenCode jcode_from_opt (gretlopt opt)
 }
 
 static JohansenInfo *
-johansen_info_new (const int *list, int rank, gretlopt opt)
+johansen_info_new (const int *list, const int *exolist, int rank, gretlopt opt)
 {
     JohansenInfo *jv = malloc(sizeof *jv);
 
-    if (jv != NULL) {
-	jv->code = jcode_from_opt(opt);
-	jv->list = gretl_list_copy(list);
-	if (jv->list == NULL) {
-	    free(jv);
-	    jv = NULL;
-	} else {
-	    jv->ID = 0;
-
-	    jv->u = NULL;
-	    jv->v = NULL;
-	    jv->w = NULL;
-
-	    jv->Suu = NULL;
-	    jv->Svv = NULL;
-	    jv->Suv = NULL;
-
-	    jv->Beta = NULL;
-	    jv->Alpha = NULL;
-	    jv->Bse = NULL;
-
-	    jv->difflist = NULL;
-	    jv->biglist = NULL;
-
-	    jv->rank = rank;
-
-	    jv->seasonals = 0;
-	    jv->nexo = 0;
-	}
+    if (jv == NULL) {
+	return NULL;
     }
+
+    jv->list = gretl_list_copy(list);
+    if (jv->list == NULL) {
+	free(jv);
+	return NULL;
+    }
+
+    if (exolist != NULL) {
+	jv->exolist = gretl_list_copy(exolist);
+	if (jv->exolist == NULL) {
+	    free(jv->list);
+	    free(jv);
+	    return NULL;
+	}
+    } else {
+	jv->exolist = NULL;
+    }
+
+    jv->code = jcode_from_opt(opt);
+
+    jv->ID = 0;
+
+    jv->u = NULL;
+    jv->v = NULL;
+    jv->w = NULL;
+
+    jv->Suu = NULL;
+    jv->Svv = NULL;
+    jv->Suv = NULL;
+
+    jv->Beta = NULL;
+    jv->Alpha = NULL;
+    jv->Bse = NULL;
+
+    jv->difflist = NULL;
+    jv->biglist = NULL;
+
+    jv->rank = rank;
+
+    jv->seasonals = 0;
+    jv->nexo = 0;
 
     return jv;
 }
@@ -2961,42 +2979,47 @@ static int split_v_resids (GRETL_VAR *jvar, gretl_matrix *v)
 }
 
 static GRETL_VAR *
-johansen_VAR_new (const int *list, int rank, int order, gretlopt opt)
+johansen_VAR_new (const int *list, const int *exolist, int rank, int order, gretlopt opt)
 {
     GRETL_VAR *var = malloc(sizeof *var);
 
-    if (var != NULL) {
-	var->jinfo = johansen_info_new(list, rank, opt);
-	if (var->jinfo == NULL) {
-	    free(var);
-	    var = NULL;
-	}
+    if (var == NULL) {
+	return NULL;
     }
 
-    if (var != NULL) {
-	var->ci = VECM;
-	var->err = 0;
-
-	var->neqns = 0;
-	var->order = order;
-	var->ncoeff = 0;
-	var->ecm = 1;
-
-	var->A = NULL;
-	var->lambda = NULL;
-	var->E = NULL;
-	var->C = NULL;
-	var->S = NULL;
-	var->F = NULL;
-
-	var->models = NULL;
-	var->Fvals = NULL;
-	var->name = NULL;
-
-	var->ll = var->ldet = NADBL;
-	var->AIC = var->BIC = NADBL;
-	var->LR = NADBL;
+    var->jinfo = johansen_info_new(list, exolist, rank, opt);
+    if (var->jinfo == NULL) {
+	free(var);
+	return NULL;
     }
+
+    var->ci = VECM;
+    var->err = 0;
+
+    var->neqns = 0;
+    var->order = order;
+    var->t1 = 0;
+    var->t2 = 0;
+    var->T = 0;
+    var->ifc = 0;
+    var->ncoeff = 0;
+
+    var->ecm = 1;
+
+    var->A = NULL;
+    var->lambda = NULL;
+    var->E = NULL;
+    var->C = NULL;
+    var->S = NULL;
+    var->F = NULL;
+
+    var->models = NULL;
+    var->Fvals = NULL;
+    var->name = NULL;
+
+    var->ll = var->ldet = NADBL;
+    var->AIC = var->BIC = NADBL;
+    var->LR = NADBL;
 
     return var;
 }
@@ -3021,7 +3044,7 @@ johansen_driver (int order, int rank, const int *list, const int *exolist,
     int nexo, di0 = 0, l0 = list[0];
     int i, k;
 
-    jvar = johansen_VAR_new(list, rank, order - 1, opt);
+    jvar = johansen_VAR_new(list, exolist, rank, order - 1, opt);
     if (jvar == NULL) {
 	return NULL;
     }    

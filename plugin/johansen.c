@@ -26,7 +26,7 @@
 #include "gretl_matrix_private.h"
 #include "var.h"
 
-#define JDEBUG 1
+#define JDEBUG 0
 
 /* 
    Critical values for Johansen's likelihood ratio tests
@@ -746,6 +746,7 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
     gretl_matrix_print(vecm->jinfo->Alpha, "Alpha from models", NULL);
     gretl_matrix_print(Pi, "Pi", NULL);
     for (i=0; i<p; i++) {
+	fprintf(stderr, "Gamma matrix, lag %d\n", i+1);
 	gretl_matrix_print(G[i], "Gamma_i", NULL);
     } 
 #endif
@@ -768,6 +769,7 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 		gretl_matrix_subtract_from(A, G[i-1]);
 	    }
 #if JDEBUG
+	    fprintf(stderr, "A matrix, lag %d\n", i+1);
 	    gretl_matrix_print(A, "A_i", NULL);
 #endif
 	    add_Ai_to_VAR_A(A, vecm, i);
@@ -1043,8 +1045,8 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
 {
     gretl_matrix *S;
     int T = vecm->T;
-    int n = vecm->neqns;
-    int k = n * vecm->order;
+    int g = vecm->neqns;
+    int k = g * (vecm->order + 1);
 
     S = gretl_matrix_copy(vecm->S);
     if (S == NULL) {
@@ -1056,9 +1058,9 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
 
     /* FIXME: is k right (in all cases)? */
     k += vecm->jinfo->nexo;
-    
-    vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * n) / T;
-    vecm->BIC = (-2.0 * vecm->ll + log(T) * k * n) / T;
+
+    vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * g) / T;
+    vecm->BIC = (-2.0 * vecm->ll + log(T) * k * g) / T;
 
     return 0;
 }
@@ -1216,7 +1218,7 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 		if (jvar->jinfo->Beta == NULL) {
 		    err = E_ALLOC;
 		}
-		if (!err && do_stderrs) {
+		if (!err) {
 		    err = phillips_normalize_beta(jvar); 
 		}
 		if (!err) {

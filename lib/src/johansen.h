@@ -35,9 +35,10 @@ typedef struct JohansenInfo_ JohansenInfo;
 struct JohansenInfo_ {
     int ID;               /* for identifying saved vars */
     JohansenCode code;    /* see above */
-    int *list;            /* list of endogenous and exogenous vars */
+    int *list;            /* list of endogenous variables */
     int *difflist;        /* list containing first diffs of endogenous vars */
     int *biglist;         /* list containing all regressors in each eqn */
+    int *exolist;         /* list containing user-specified exogenous vars */
     int rank;             /* if specified, chosen cointegration rank, else 0 */
     int seasonals;        /* number of seasonal dummies included */
     int nexo;             /* total deterministic/exogenous variables */
@@ -75,7 +76,7 @@ struct GRETL_VAR_ {
     double ll;           /* log-likelihood */
     double AIC;          /* Akaike criterion */
     double BIC;          /* Bayesian criterion */
-    double LR;           /* for likelihood-ration testing */
+    double LR;           /* for likelihood-ratio testing */
     JohansenInfo *jinfo; /* extra information for VECMs */
     char *name;          /* for use in session management */
 };
