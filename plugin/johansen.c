@@ -733,6 +733,9 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 		    gretl_matrix_set(vecm->E, t, i, vecm->models[i]->uhat[mt]);
 		}
 	    }
+	    if (i == 0) {
+		vecm->ncoeff = vecm->models[i]->ncoeff;
+	    }
 	}
     }
 
