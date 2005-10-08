@@ -5758,6 +5758,7 @@ int gui_exec_line (char *line,
     case SQUARE: 
     case STORE:
     case SUMMARY:
+    case TRANSPOSE:
     case VARLIST:
     case VARTEST: 
 	err = simple_commands(&cmd, line, &Z, datainfo, outprn);

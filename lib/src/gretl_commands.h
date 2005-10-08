@@ -132,6 +132,7 @@ typedef enum {
     TABPRINT,
     TESTUHAT,
     TOBIT,
+    TRANSPOSE,
     TSLS,    
     VAR,
     VARLIST,

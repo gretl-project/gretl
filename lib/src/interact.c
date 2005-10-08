@@ -51,8 +51,6 @@ typedef struct {
 
 static void get_optional_filename (const char *line, CMD *cmd);
 
-/* ........................................................... */
-
 static int trydatafile (char *line, CMD *cmd)
 {
     int i, m, n = strlen(line);
@@ -235,6 +233,7 @@ static int catch_command_alias (CMD *cmd)
                        c == SYSTEM || \
                        c == TABPRINT || \
                        c == TESTUHAT || \
+                       c == TRANSPOSE || \
                        c == VARLIST || \
                        c == VIF)
 
@@ -273,8 +272,6 @@ static int catch_command_alias (CMD *cmd)
 
 #define HIDDEN_COMMAND(c) (c == FUNCERR || \
                            c == REMEMBER)
-
-/* ........................................................... */
 
 static int flow_control (const char *line, double ***pZ, 
 			 DATAINFO *pdinfo, CMD *cmd)
@@ -2986,6 +2983,10 @@ int simple_commands (CMD *cmd, const char *line,
 	} else if (cmd->opt & OPT_L) {
 	    err = remember_list(cmd->list, cmd->param, prn);
 	} 
+	break;
+
+    case TRANSPOSE:
+	err = transpose_data(pZ, datainfo);
 	break;
 
     default:

@@ -901,7 +901,8 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case SPEARMAN:
     case SQUARE: 
     case STORE:
-    case SUMMARY: 
+    case SUMMARY:
+    case TRANSPOSE:
     case VARLIST:
     case VARTEST: 
 	err = simple_commands(&cmd, line, &Z, datainfo, prn);
