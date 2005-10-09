@@ -431,7 +431,12 @@ static int compute_omega (GRETL_VAR *vecm, gretl_matrix *beta)
     }
 
     uhat = gretl_matrix_alloc(n, T);
-    omega = gretl_matrix_alloc(n, n);
+
+    if (vecm->S != NULL) {
+	omega = vecm->S;
+    } else {
+	omega = gretl_matrix_alloc(n, n);
+    }
 
     gretl_matrix_free(tmp);
     tmp = gretl_matrix_alloc(n, T);
@@ -457,10 +462,12 @@ static int compute_omega (GRETL_VAR *vecm, gretl_matrix *beta)
 
  bailout:
 
-    if (!err) {
-	vecm->S = omega;
-    } else {
-	gretl_matrix_free(omega);
+    if (omega != vecm->S) {
+	if (!err) {
+	    vecm->S = omega;
+	} else {
+	    gretl_matrix_free(omega);
+	}
     }
 
     gretl_matrix_free(Z0);
@@ -485,7 +492,8 @@ static void gretl_matrix_I (gretl_matrix *A, int n)
    can estimate the VECM by OLS (conditional on \beta) */
 
 static int 
-add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
+add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
+			 int iter)
 {
     const gretl_matrix *Beta = vecm->jinfo->Beta;
     int rank = jrank(vecm);
@@ -493,19 +501,32 @@ add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
     double xt, bxt, sb;
     int i, j, t, v = pdinfo->v;
     int id = gretl_VECM_id(vecm);
-    int err;
+    int vj, err = 0;
 
-    err = dataset_add_series(rank, pZ, pdinfo);
+    if (iter == 0) {
+	err = dataset_add_series(rank, pZ, pdinfo);
+    }
 
     if (!err) {
+	char vname[VNAMELEN];
+
 	for (j=0; j<rank; j++) {
-	    sprintf(pdinfo->varname[v+j], "EC%d", j + 1);
-	    make_varname_unique(pdinfo->varname[v+j], v + j, pdinfo);
-	    sprintf(VARLABEL(pdinfo, v+j), "error correction term %d from VECM %d", 
-		    j + 1, id);
+	    sprintf(vname, "EC%d", j + 1);
+
+	    if (iter > 0) {
+		/* series already allocated */
+		vj = varindex(pdinfo, vname);
+	    } else {
+		vj = v + j;
+		strcpy(pdinfo->varname[vj], vname);
+		make_varname_unique(pdinfo->varname[vj], vj, pdinfo);
+		sprintf(VARLABEL(pdinfo, vj), "error correction term %d from VECM %d", 
+			j + 1, id);
+	    }
+
 	    for (t=0; t<pdinfo->n; t++) {
 		if (t < vecm->t1 || t > vecm->t2) {
-		    (*pZ)[v+j][t] = NADBL;
+		    (*pZ)[vj][t] = NADBL;
 		} else { 
 		    bxt = 0.0;
 		    /* beta * X(t-1) */
@@ -524,7 +545,7 @@ add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 			}
 			bxt += sb;
 		    }
-		    (*pZ)[v+j][t] = bxt;
+		    (*pZ)[vj][t] = bxt;
 		}
 	    }
 	}
@@ -642,17 +663,20 @@ static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm, int k)
    are the same for the seasonal dummies themselves)?
 */
 
-static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
+static int 
+build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
 {
     gretl_matrix *Pi = NULL;
     gretl_matrix *A = NULL;
     gretl_matrix **G = NULL;
 
-    int i, j, k, v = pdinfo->v;
+    int rv0 = pdinfo->v;
     int mt, t, r = vecm->jinfo->rank;
     int p = vecm->order;
     int nv = vecm->neqns;
     int *biglist = vecm->jinfo->biglist;
+    gretlopt lsqopt = OPT_N | OPT_Z;
+    int i, j, k;
     int err = 0;
 
     /* Note: "vecm->order" is actually the order of the VAR system,
@@ -706,18 +730,24 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 	vecm->E = gretl_matrix_alloc(vecm->T, vecm->neqns);
     }
 
-    err = add_EC_terms_to_dataset(vecm, pZ, pdinfo);
-    
+    if (iter > 0) {
+	/* bootstrapping: EC terms already in dataset */
+	rv0 -= r;
+	lsqopt |= OPT_A;
+    }
+
+    err = add_EC_terms_to_dataset(vecm, pZ, pdinfo, iter);
+
     for (i=0; i<nv && !err; i++) {
 	biglist[1] = vecm->jinfo->difflist[i+1];
 	k = biglist[0] - r + 1;
 	for (j=0; j<r; j++) {
-	    biglist[k++] = v + j;
+	    biglist[k++] = rv0 + j;
 	}
 #if JDEBUG
 	printlist(biglist, "build_VECM_models: biglist");
 #endif
-	*vecm->models[i] = lsq(biglist, pZ, pdinfo, OLS, OPT_N | OPT_Z, 0.0);
+	*vecm->models[i] = lsq(biglist, pZ, pdinfo, OLS, lsqopt, 0.0);
 	err = vecm->models[i]->errcode;
 	if (!err) {
 	    vecm->models[i]->ID = i + 1;
@@ -736,11 +766,17 @@ static int build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 	    if (i == 0) {
 		vecm->ncoeff = vecm->models[i]->ncoeff;
 	    }
+	} else {
+	    fprintf(stderr, "build_VECM_models: error %d from lsq, eqn %d, iter %d\n",
+		    err, i + 1, iter);
 	}
     }
 
-    /* \Pi = \alpha \beta' */
-    err = form_Pi(vecm, vecm->jinfo->Alpha, Pi);
+    if (!err) {
+	/* \Pi = \alpha \beta' */
+	err = form_Pi(vecm, vecm->jinfo->Alpha, Pi);
+    }
+
     if (err) {
 	goto bailout;
     }
@@ -1225,7 +1261,7 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 		    err = phillips_normalize_beta(jvar); 
 		}
 		if (!err) {
-		    err = build_VECM_models(jvar, pZ, pdinfo);
+		    err = build_VECM_models(jvar, pZ, pdinfo, 0);
 		}
 		if (!err) {
 		    err = compute_omega(jvar, TmpR);
@@ -1262,7 +1298,9 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
    generate the VAR representation.
 */
 
-int johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo)
+int 
+johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
+			  int iter)
 {
     gretl_matrix *M = NULL;
     gretl_matrix *TmpL = NULL;
@@ -1334,7 +1372,11 @@ int johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo)
 #endif
 
     if (!err) {
-	jvar->jinfo->Beta = gretl_matrix_copy(TmpR);
+	if (jvar->jinfo->Beta == NULL) {
+	    jvar->jinfo->Beta = gretl_matrix_copy(TmpR);
+	} else {
+	    gretl_matrix_copy_values(jvar->jinfo->Beta, TmpR);
+	}
 	if (jvar->jinfo->Beta == NULL) {
 	    err = E_ALLOC;
 	}
@@ -1342,7 +1384,7 @@ int johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo)
 	    err = phillips_normalize_beta(jvar); 
 	}
 	if (!err) {
-	    err = build_VECM_models(jvar, pZ, pdinfo);
+	    err = build_VECM_models(jvar, pZ, pdinfo, iter);
 	}
 	if (!err) {
 	    err = compute_omega(jvar, TmpR);

@@ -19,7 +19,7 @@
 
 #include "libgretl.h"
 
-#undef TRDEBUG
+#define TRDEBUG 0
 
 enum {
     VARS_IDENTICAL,
@@ -371,6 +371,10 @@ check_add_transform (int vnum, const double *x,
 	} else {
 	    if (!strcmp(label, VARLABEL(pdinfo, vnum))) {
 		/* labels match: update the values */
+#if TRDEBUG
+		fprintf(stderr, "check_add_transform: updating var %d (%s)\n",
+			vnum, vname);
+#endif
 		for (t=0; t<pdinfo->n; t++) {
 		    (*pZ)[vnum][t] = x[t];
 		}
@@ -673,14 +677,14 @@ real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 	for (l=1; l<=maxlag; l++) {
 	    lagnum = get_transform(LAGS, v, l, pZ, pdinfo, startlen);
-#if TRDEBUG
+#if TRDEBUG > 1
 	    fprintf(stderr, "base var '%s', lag %d: lagnum = %d\n",
 		    pdinfo->varname[v], l, lagnum);
 #endif
 	    if (lagnum < 0) {
 		return 1;
 	    }
-#if TRDEBUG
+#if TRDEBUG > 1
 	    fprintf(stderr, "lag var name '%s', label '%s'\n",
 		    pdinfo->varname[lagnum], VARLABEL(pdinfo, lagnum));
 #endif

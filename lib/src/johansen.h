@@ -34,11 +34,13 @@ typedef struct JohansenInfo_ JohansenInfo;
 
 struct JohansenInfo_ {
     int ID;               /* for identifying saved vars */
-    JohansenCode code;    /* see above */
+    JohansenCode code;    /* see enumeration above */
     int *list;            /* list of endogenous variables */
     int *difflist;        /* list containing first diffs of endogenous vars */
     int *biglist;         /* list containing all regressors in each eqn */
     int *exolist;         /* list containing user-specified exogenous vars */
+    int *levels_list;     /* for use in auxiliary regressions */
+    int *varlist;         /* for use in auxiliary regressions */
     int rank;             /* if specified, chosen cointegration rank, else 0 */
     int seasonals;        /* number of seasonal dummies included */
     int nexo;             /* total deterministic/exogenous variables */

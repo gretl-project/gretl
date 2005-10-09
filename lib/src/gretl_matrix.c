@@ -629,7 +629,9 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 	n = src->rows * src->cols;
     }
     
-    for (i=0; i<n; i++) targ->val[i] += src->val[i];
+    for (i=0; i<n; i++) {
+	targ->val[i] += src->val[i];
+    }
 
     return GRETL_MATRIX_OK;
 }
@@ -666,7 +668,9 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
 	n = src->rows * src->cols;
     }
     
-    for (i=0; i<n; i++) targ->val[i] -= src->val[i];
+    for (i=0; i<n; i++) {
+	targ->val[i] -= src->val[i];
+    }
 
     return GRETL_MATRIX_OK;
 }
@@ -932,14 +936,17 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
 	pprintf(prn, "%s\n\n", msg);
     }
 
-    for (i=0; i<m->rows; i++) {
-	for (j=0; j<m->cols; j++) {
-	    pprintf(prn, "%#12.5g ", gretl_matrix_get(m, i, j));
+    if (m == NULL) {
+	pputs(prn, " matrix is NULL\n");
+    } else {
+	for (i=0; i<m->rows; i++) {
+	    for (j=0; j<m->cols; j++) {
+		pprintf(prn, "%#12.5g ", gretl_matrix_get(m, i, j));
+	    }
+	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
     }
-
-    pputc(prn, '\n');
 
     if (myprn != NULL) {
 	gretl_print_destroy(myprn);

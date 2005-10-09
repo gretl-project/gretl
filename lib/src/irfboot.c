@@ -3,7 +3,7 @@
 #define BDEBUG 0
 
 #if BDEBUG
-# define BOOT_ITERS 9
+# define BOOT_ITERS 5
 #else
 # define BOOT_ITERS 999
 #endif
@@ -34,7 +34,6 @@ struct irfboot_ {
     gretl_matrix *ctmp; /* temporary storage */
     gretl_matrix *resp; /* impulse response matrix */
     gretl_matrix *C0;   /* initial coefficient estimates (VECM only) */
-    gretl_matrix *E0;   /* initial residuals (VECM only) */
     int *sample;        /* resampling array */
 };
 
@@ -60,7 +59,6 @@ static void irf_boot_free (irfboot *boot)
     gretl_matrix_free(boot->ctmp);
     gretl_matrix_free(boot->resp);
     gretl_matrix_free(boot->C0);
-    gretl_matrix_free(boot->E0);
 
     free(boot->sample);
 }
@@ -175,7 +173,6 @@ static int irf_boot_init (irfboot *boot, const GRETL_VAR *var,
     boot->ctmp = NULL;
     boot->resp = NULL;
     boot->C0 = NULL;
-    boot->E0 = NULL;
 
     boot->sample = NULL;
 
@@ -312,41 +309,51 @@ static void irf_record_VAR_data (irfboot *boot, const MODEL *pmod, int k)
     }
 }
 
-static int 
-re_estimate_VECM (irfboot *boot, int targ, int shock, int iter)
-{
-    static int (*jbr) (GRETL_VAR *, double ***, DATAINFO *) = NULL;
-    static void *handle = NULL;
+/* we'll tolerate at most 4 cases of near-perfect collinearity:
+   maybe this should be more flexible? */
 
-    GRETL_VAR *jvar = NULL;
+#define MAXSING 5
+#define VAR_FATAL(e,i,s) (e && (e != E_SINGULAR || i == 0 || s >= MAXSING))
+
+static int 
+re_estimate_VECM (irfboot *boot, int targ, int shock, int iter, int scount)
+{
+    static int (*jbr) (GRETL_VAR *, double ***, DATAINFO *, int) = NULL;
+    static void *handle = NULL;
+    static GRETL_VAR *jvar = NULL;
+
     int *vecm_list = boot->lists[0];
     int *exo_list = boot->lists[1];
-    int origv = boot->dinfo->v;
     int err = 0;
 
     *gretl_errmsg = 0;
 
-    if (handle == NULL) {
-	/* first round: open the Johansen plugin */
-	jbr = get_plugin_function("johansen_bootstrap_round", &handle);
-	if (jbr == NULL) {
-	    err = 1;
-	}
-    }
-
-    if (!err) {
-	jvar = johansen_driver(boot->order + 1, boot->rank, vecm_list, 
-			       exo_list, &boot->Z, boot->dinfo, 
-			       boot->opt | OPT_I, NULL);
+    if (iter == 0) {
+	/* create and populate the VAR object */
+	jvar = johansen_wrapper(boot->order + 1, boot->rank, vecm_list, 
+				exo_list, &boot->Z, boot->dinfo, 
+				boot->opt, NULL);
 	if (jvar == NULL) {
 	    err = 1;
 	} else {
 	    err = jvar->err;
 	}
+
+	if (!err) {
+	    /* open the Johansen plugin */
+	    jbr = get_plugin_function("johansen_bootstrap_round", &handle);
+	    if (jbr == NULL) {
+		err = 1;
+	    }
+	}
+    } else {
+	/* subsequent rounds: re-use the VAR object */
+	err = johansen_driver(jvar, &boot->Z, boot->dinfo, boot->opt, NULL);
     }
 
     if (!err) {
-	err = jbr(jvar, &boot->Z, boot->dinfo);
+	/* call the plugin function */
+	err = jbr(jvar, &boot->Z, boot->dinfo, iter);
     }
 
     if (!err) {   
@@ -363,21 +370,17 @@ re_estimate_VECM (irfboot *boot, int targ, int shock, int iter)
 	recalculate_impulse_responses(boot, targ, shock, iter);
     }
 
-    if (iter == BOOT_ITERS - 1 || (err && handle != NULL)) {
-	/* done with the Johansen plugin */
-	close_plugin(handle);
-	handle = NULL;
-	jbr = NULL;
+    if (iter == BOOT_ITERS - 1 || VAR_FATAL(err, iter, scount)) {
+	if (handle != NULL) {
+	    close_plugin(handle);
+	    handle = NULL;
+	    jbr = NULL;
+	}
+	if (jvar != NULL) {
+	    gretl_VAR_free(jvar);
+	    jvar = NULL;
+	}
     }
-
-    /* It would be nice to keep the allocated memory from one round to
-       the next (this would speed things up considerably), but that
-       would involve complex modifications to several of the Johansen
-       functions, so for now we'll free and reallocate on each iteration. 
-    */
-    gretl_VAR_free(jvar);
-    dataset_drop_last_variables(boot->dinfo->v - origv, 
-				&boot->Z, boot->dinfo);
 
     return err;
 }
@@ -385,10 +388,11 @@ re_estimate_VECM (irfboot *boot, int targ, int shock, int iter)
 static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
 {
     MODEL var_model;
+    gretlopt lsqopt = OPT_A | OPT_Z;
     int i, err = 0;
 
     for (i=0; i<boot->neqns && !err; i++) {
-	var_model = lsq(boot->lists[i], &boot->Z, boot->dinfo, VAR, OPT_A, 0.0);
+	var_model = lsq(boot->lists[i], &boot->Z, boot->dinfo, VAR, lsqopt, 0.0);
 	err = var_model.errcode;
 	if (!err) {
 	    irf_record_VAR_data(boot, &var_model, i);
@@ -620,11 +624,9 @@ static int make_bs_dataset_and_lists (irfboot *boot,
     return err;
 }
 
-/* VECM: make a record of all the original coefficients in the
-   VAR representation, so we have these on hand for recomputing
-   the dataset after resampling the residuals.  This is required
-   because the coefficients will be ovewritten on each iteration
-   of the bootstrap (unlike in the simple VAR case).
+/* VECM: make a record of all the original coefficients in the VAR
+   representation of the VECM, so we have these on hand in convenient
+   form for recomputing the dataset after resampling the residuals.
 */
 
 static void record_base_coeffs (irfboot *boot, const GRETL_VAR *var)
@@ -661,7 +663,7 @@ static void record_base_coeffs (irfboot *boot, const GRETL_VAR *var)
 	    gretl_matrix_set(boot->C0, i, col++, pmod->coeff[0]);
 	}
 
-	/* endogenous vars */
+	/* endogenous vars: use companion matrix */
 	for (j=0; j<boot->neqns; j++) {
 	    for (k=0; k<order; k++) {
 		aij = gretl_matrix_get(var->A, i, k * boot->neqns + j);
@@ -691,7 +693,8 @@ static void record_base_coeffs (irfboot *boot, const GRETL_VAR *var)
 #endif
 }
 
-static void compute_VECM_dataset (irfboot *boot, const GRETL_VAR *var)
+static void 
+compute_VECM_dataset (irfboot *boot, const GRETL_VAR *var, int iter)
 {
     int order = var->order + 1;
     int nexo = (boot->lists[1] != NULL)? boot->lists[1][0] : 0;
@@ -752,6 +755,19 @@ static void compute_VECM_dataset (irfboot *boot, const GRETL_VAR *var)
 	    /* set value of dependent var to fitted + re-sampled error */
 	    eti = gretl_matrix_get(boot->rE, t - boot->t1, i);
 	    boot->Z[i+1][t] = bti + eti;
+	}
+    }
+
+    if (iter > 0) {
+	/* now recompute first lags and first differences */
+	for (i=0; i<boot->neqns; i++) {
+	    int vl = var->jinfo->levels_list[i+1];
+	    int vd = var->jinfo->varlist[i+1];
+	
+	    for (t=1; t<boot->dinfo->n; t++) {
+		boot->Z[vl][t] = boot->Z[i+1][t-1];
+		boot->Z[vd][t] = boot->Z[i+1][t] - boot->Z[i+1][t-1];
+	    }
 	}
     }
 }
@@ -840,11 +856,7 @@ static void resample_resids (irfboot *boot, const GRETL_VAR *var)
     /* draw sample from the original residuals */
     for (s=0; s<boot->n; s++) {
 	for (i=0; i<boot->neqns; i++) {
-	    if (boot->ecm) {
-		e = gretl_matrix_get(boot->E0, boot->sample[s], i);
-	    } else {
-		e = gretl_matrix_get(var->E, boot->sample[s], i);
-	    }
+	    e = gretl_matrix_get(var->E, boot->sample[s], i);
 	    gretl_matrix_set(boot->rE, s, i, e);
 	}
     }
@@ -861,18 +873,13 @@ static int irf_boot_quantiles (irfboot *boot, gretl_matrix *R)
 	return E_ALLOC;
     }
 
+#if BDEBUG
+    ilo = 1;
+    ihi = BOOT_ITERS;
+    fprintf(stderr, "IRF bootstrap (%d iters), min and max values\n", BOOT_ITERS);
+#else
     ilo = (BOOT_ITERS + 1) * alpha / 2.0;
     ihi = (BOOT_ITERS + 1) * (1.0 - alpha / 2.0);
-
-    if (ilo < 1) {
-	free(rk);
-	return 1;
-    }
-
-#if BDEBUG
-    fprintf(stderr, "IRF bootstrap, 0.025 and 0.975 quantiles\n");
-    fprintf(stderr, " based on %d iterations, ilo = %d, ihi = %d\n", 
-	    BOOT_ITERS, ilo, ihi);
 #endif
 
     for (k=0; k<boot->horizon; k++) {
@@ -897,7 +904,8 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 {
     gretl_matrix *R;
     irfboot boot;
-    int i, err = 0;
+    int scount = 0;
+    int iter, err = 0;
 
 #if BDEBUG
     fprintf(stderr, "irf_bootstrap() called\n");
@@ -916,24 +924,28 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
     err = make_bs_dataset_and_lists(&boot, var, Z, pdinfo);
 
     if (var->ecm && !err) {
-	/* record the original VAR info */
-	boot.E0 = gretl_matrix_copy(var->E);
-	if (boot.E0 == NULL) {
-	    err = 1;
+	record_base_coeffs(&boot, var);
+    }
+
+    for (iter=0; iter<BOOT_ITERS && !err; iter++) {
+	resample_resids(&boot, var);
+	if (var->ecm) {
+	    compute_VECM_dataset(&boot, var, iter);
+	    err = re_estimate_VECM(&boot, targ, shock, iter, scount);
 	} else {
-	    record_base_coeffs(&boot, var);
+	    compute_VAR_dataset(&boot, var);
+	    err = re_estimate_VAR(&boot, targ, shock, iter);
+	}
+	if (err && !VAR_FATAL(err, iter, scount)) {
+	    /* excessive collinearity: try again, unless this is becoming a habit */
+	    scount++;
+	    iter--;
+	    err = 0;
 	}
     }
 
-    for (i=0; i<BOOT_ITERS && !err; i++) {
-	resample_resids(&boot, var);
-	if (var->ecm) {
-	    compute_VECM_dataset(&boot, var);
-	    err = re_estimate_VECM(&boot, targ, shock, i);
-	} else {
-	    compute_VAR_dataset(&boot, var);
-	    err = re_estimate_VAR(&boot, targ, shock, i);
-	}
+    if (err && scount == MAXSING) {
+	strcpy(gretl_errmsg, "Excessive collinearity in resampled datasets");
     }
 
     if (!err) {
