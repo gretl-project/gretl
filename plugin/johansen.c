@@ -468,7 +468,7 @@ static int compute_omega (GRETL_VAR *vecm, gretl_matrix *beta)
 	} else {
 	    gretl_matrix_free(omega);
 	}
-    }
+    } 
 
     gretl_matrix_free(Z0);
     gretl_matrix_free(tmp);
@@ -1390,6 +1390,7 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	    err = compute_omega(jvar, TmpR);
 	}
 	if (!err) {
+	    /* should we be doing this here? */
 	    err = gretl_VAR_do_error_decomp(jvar->neqns, jvar->S, jvar->C);
 	}
     } 

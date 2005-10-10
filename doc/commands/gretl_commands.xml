@@ -6182,6 +6182,24 @@
 
   </command>
 
+  <command name="transpos" section="Dataset" label="Transpose data">
+
+    <description>
+      <para>
+	Transposes the current data set.  That is, each observation
+	(row) in the current data set will be treated as a variable
+	(column), and each variable as an observation.  This command
+	may be useful if data have been read from some external source 
+	in which the rows of the data table represent variables.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Sample/Transpose data</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="tsls" section="Estimation"
     label="Two-Stage Least Squares">
 

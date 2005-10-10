@@ -358,11 +358,16 @@ re_estimate_VECM (irfboot *boot, int targ, int shock, int iter, int scount)
 
     if (!err) {   
 	gretl_matrix_copy_values(boot->A, jvar->A);
-	gretl_matrix_copy_values(boot->E, jvar->E);
-	gretl_matrix_multiply_mod(boot->E, GRETL_MOD_TRANSPOSE,
-				  boot->E, GRETL_MOD_NONE,
+	/* is the following right?? */
+	gretl_matrix_multiply_mod(jvar->E, GRETL_MOD_TRANSPOSE,
+				  jvar->E, GRETL_MOD_NONE,
 				  boot->S);
 	gretl_matrix_divide_by_scalar(boot->S, boot->n);
+#if 0
+	gretl_matrix_print(jvar->S, "re-estimated jvar->S (Omega)", NULL);
+	gretl_matrix_print(boot->S, "versus boot->S (E'E)", NULL);
+#endif
+	/* should we be using jvar->S (Omega) here? */
 	err = gretl_VAR_do_error_decomp(boot->neqns, boot->S, boot->C);
     }
 
