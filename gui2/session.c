@@ -35,6 +35,7 @@
 #include "fileselect.h"
 
 #include "var.h"
+#include "varprint.h"
 
 #include <sys/stat.h>
 #include <unistd.h>

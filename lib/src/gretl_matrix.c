@@ -17,51 +17,110 @@
  *
  */
 
-/* LAPACK-based matrix routines for gretl */
+/* LAPACK-related matrix routines for gretl */
 
 #include "libgretl.h"
 #include "gretl_matrix.h"
-#include "gretl_matrix_private.h"
 
 #include "f2c.h"
 #include "clapack_double.h"
 
 static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 
-static int packed_idx (int nrows, int i, int j);
-
 #define gretl_is_vector(v) (v->rows == 1 || v->cols == 1)
 
+/**
+ * gretl_matrix_get:
+ * @m: matrix to get data from.
+ * @i: row index (zero-based).
+ * @j: column index (zero-based).
+ *
+ * Retrieves the data value from the specified row and column
+ * of @m.
+ * 
+ * Returns: the data value, or #NADBL if the indices are out
+ * of range for @m.
+ */
 
-static gretl_matrix *real_gretl_matrix_alloc (int rows, int cols,
-					      int packed)
+double gretl_matrix_get (const gretl_matrix *m, int i, int j)
 {
-    gretl_matrix *m = malloc(sizeof *m);
-    int n;
-
-    if (m == NULL) {
-	return m;
+    if (m == NULL || m->val == NULL ||
+	i >= m->rows || j >= m->cols) {
+	return NADBL;
     }
 
-    if (packed) {
-	/* symmetric, only triangle stored */	
-	n = (rows * rows + rows) / 2;
-    } else {
-	n = rows * cols;
+    return m->val[mdx(m, i, j)];
+}
+
+/**
+ * gretl_vector_get:
+ * @v: vector to get data from.
+ * @i: index (zero-based).
+ *
+ * Retrieves the ith value from the specified vector.
+ * 
+ * Returns: the data value, or #NADBL if the index is out
+ * of range for @v.
+ */
+
+double gretl_vector_get (const gretl_vector *v, int i)
+{
+    if (v == NULL || v->val == NULL ||
+	(i >= v->rows && i >= v->cols)) {
+	return NADBL;
     }
 
-    m->val = malloc(n * sizeof *m->val);
-    if (m->val == NULL) {
-	free(m);
-	return NULL;
+    return v->val[i];
+}
+
+/**
+ * gretl_matrix_set:
+ * @m: matrix to operate on.
+ * @i: row index (zero-based).
+ * @j: column index (zero-based).
+ * @x: value to set.
+ *
+ * Sets element @i, @j of @m to the value @x, if the 
+ * row and column are within bounds.
+ *
+ * Returns: %GRETL_MATRIX_OK, or %GRETL_MATRIX_ERR if the
+ * indices are out of range for @m.
+ */
+
+int gretl_matrix_set (gretl_matrix *m, int i, int j, double x)
+{
+    if (m == NULL || m->val == NULL ||
+	i >= m->rows || j >= m->cols) {
+	return GRETL_MATRIX_ERR;
     }
 
-    m->rows = rows;
-    m->cols = cols;
-    m->packed = packed;
-    m->t = 0;
+    m->val[mdx(m, i, j)] = x;
 
-    return m;
+    return GRETL_MATRIX_OK;
+}
+
+/**
+ * gretl_vector_set:
+ * @v: vector to operate on.
+ * @i: index (zero-based).
+ * @x: value to set.
+ *
+ * Sets element i of @v to the value @x.
+ * 
+ * Returns: %GRETL_MATRIX_OK, or %GRETL_MATRIX_ERR if the
+ * given index is out of range for @v.
+ */
+
+int gretl_vector_set (gretl_vector *v, int i, double x)
+{
+    if (v == NULL || v->val == NULL ||
+	(i >= v->rows && i >= v->cols)) {
+	return GRETL_MATRIX_ERR;
+    }
+
+    v->val[i] = x;
+
+    return GRETL_MATRIX_OK;
 }
 
 /**
@@ -76,20 +135,23 @@ static gretl_matrix *real_gretl_matrix_alloc (int rows, int cols,
 
 gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 {
-    return real_gretl_matrix_alloc(rows, cols, 0);
-}
+    gretl_matrix *m = malloc(sizeof *m);
 
-/**
- * gretl_packed_matrix_alloc:
- * @rows: desired number of rows and columns in (symmetric) matrix.
- *
- * Returns: pointer to a newly allocated gretl_matrix, or %NULL
- * on failure.  The matrix is in packed (triangular) form.
- */
+    if (m == NULL) {
+	return m;
+    }
 
-gretl_matrix *gretl_packed_matrix_alloc (int rows)
-{
-    return real_gretl_matrix_alloc(rows, rows, 1);
+    m->val = malloc(rows * cols * sizeof *m->val);
+    if (m->val == NULL) {
+	free(m);
+	return NULL;
+    }
+
+    m->rows = rows;
+    m->cols = cols;
+    m->t = 0;
+
+    return m;
 }
 
 /**
@@ -135,7 +197,7 @@ gretl_matrix *gretl_identity_matrix_new (int n)
     gretl_matrix *m;
     int i, j;
 
-    m = real_gretl_matrix_alloc(n, n, 0);
+    m = gretl_matrix_alloc(n, n);
 
     if (m != NULL) {
 	for (i=0; i<n; i++) {
@@ -238,7 +300,7 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 	cols = m->cols;
     }
 
-    c = real_gretl_matrix_alloc(rows, cols, m->packed);
+    c = gretl_matrix_alloc(rows, cols);
     if (c == NULL) {
 	return NULL;
     }
@@ -246,12 +308,7 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
     if (mod == GRETL_MOD_TRANSPOSE) {
 	for (i=0; i<c->rows; i++) {
 	    for (j=0; j<c->cols; j++) {
-		if (m->packed) { 
-		    c->val[packed_idx(c->rows, i, j)] = 
-			m->val[packed_idx(m->rows, j, i)];
-		} else {
-		    c->val[mdx(c, i, j)] = m->val[mdx(m, j, i)];
-		}
+		c->val[mdx(c, i, j)] = m->val[mdx(m, j, i)];
 	    }
 	}
     } else { 
@@ -300,7 +357,9 @@ void gretl_matrix_free (gretl_matrix *m)
 {
     if (m == NULL) return;
 
-    if (m->val != NULL) free(m->val);
+    if (m->val != NULL) {
+	free(m->val);
+    }
     free(m);
 }
 
@@ -318,13 +377,11 @@ void gretl_matrix_zero (gretl_matrix *m)
 
     if (m == NULL || m->val == NULL) return;
 
-    if (m->packed) {
-	n = (m->rows * m->rows + m->rows) / 2;
-    } else {
-	n = m->rows * m->cols;
-    }
+    n = m->rows * m->cols;
     
-    for (i=0; i<n; i++) m->val[i] = 0.0;
+    for (i=0; i<n; i++) {
+	m->val[i] = 0.0;
+    }
 }
 
 /**
@@ -340,13 +397,11 @@ void gretl_matrix_log (gretl_matrix *m)
 
     if (m == NULL || m->val == NULL) return;
 
-    if (m->packed) {
-	n = (m->rows * m->rows + m->rows) / 2;
-    } else {
-	n = m->rows * m->cols;
-    }
+    n = m->rows * m->cols;
     
-    for (i=0; i<n; i++) m->val[i] = log(m->val[i]);
+    for (i=0; i<n; i++) {
+	m->val[i] = log(m->val[i]);
+    }
 }
 
 /**
@@ -437,7 +492,7 @@ static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)
 {
     int i, j;
 
-    if (m == NULL || m->val == NULL || m->packed) 
+    if (m == NULL || m->val == NULL) 
 	return GRETL_MATRIX_ERR;
 
     if (m->rows != m->cols)
@@ -503,13 +558,11 @@ void gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x)
 
     if (m == NULL || m->val == NULL) return;
 
-    if (m->packed) {
-	n = (m->rows * m->rows + m->rows) / 2;
-    } else {
-	n = m->rows * m->cols;
-    }
+    n = m->rows * m->cols;
     
-    for (i=0; i<n; i++) m->val[i] *= x;
+    for (i=0; i<n; i++) {
+	m->val[i] *= x;
+    }
 }
 
 /**
@@ -526,13 +579,11 @@ void gretl_matrix_divide_by_scalar (gretl_matrix *m, double x)
 
     if (m == NULL || m->val == NULL) return;
 
-    if (m->packed) {
-	n = (m->rows * m->rows + m->rows) / 2;
-    } else {
-	n = m->rows * m->cols;
-    }
+    n = m->rows * m->cols;
     
-    for (i=0; i<n; i++) m->val[i] /= x;
+    for (i=0; i<n; i++) {
+	m->val[i] /= x;
+    }
 }
 
 /**
@@ -549,11 +600,7 @@ void gretl_matrix_dot_pow (gretl_matrix *m, double x)
 
     if (m == NULL || m->val == NULL) return;
 
-    if (m->packed) {
-	n = (m->rows * m->rows + m->rows) / 2;
-    } else {
-	n = m->rows * m->cols;
-    }
+    n = m->rows * m->cols;
     
     for (i=0; i<n; i++) {
 	m->val[i] = pow(m->val[i], x);
@@ -582,17 +629,11 @@ int gretl_matrix_copy_values (gretl_matrix *targ,
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
-    if (targ->packed != src->packed) {
-	return GRETL_MATRIX_NON_CONFORM;
-    }
-
-    if (src->packed) {
-	n = (src->rows * src->rows + src->rows) / 2;
-    } else {
-	n = src->rows * src->cols;
-    }
+    n = src->rows * src->cols;
     
-    for (i=0; i<n; i++) targ->val[i] = src->val[i];
+    for (i=0; i<n; i++) {
+	targ->val[i] = src->val[i];
+    }
 
     return GRETL_MATRIX_OK;
 }
@@ -619,15 +660,7 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
-    if (targ->packed != src->packed) {
-	return GRETL_MATRIX_NON_CONFORM;
-    }
-
-    if (src->packed) {
-	n = (src->rows * src->rows + src->rows) / 2;
-    } else {
-	n = src->rows * src->cols;
-    }
+    n = src->rows * src->cols;
     
     for (i=0; i<n; i++) {
 	targ->val[i] += src->val[i];
@@ -658,15 +691,7 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
-    if (targ->packed != src->packed) {
-	return GRETL_MATRIX_NON_CONFORM;
-    }
-
-    if (src->packed) {
-	n = (src->rows * src->rows + src->rows) / 2;
-    } else {
-	n = src->rows * src->cols;
-    }
+    n = src->rows * src->cols;
     
     for (i=0; i<n; i++) {
 	targ->val[i] -= src->val[i];
@@ -793,124 +818,8 @@ double *gretl_matrix_steal_data (gretl_matrix *m)
 	vals = m->val;
 	m->val = NULL;
     }
+
     return vals;
-}
-
-static int packed_idx (int nrows, int i, int j)
-{
-    int idx;
-
-    if (i > j) {
-	int tmp = i;
-
-	i = j;
-	j = tmp;
-    }
-
-    idx = nrows * i + j - i - ((i - 1) * i/2);
-    return idx;
-}
-
-/**
- * gretl_matrix_get:
- * @m: matrix to get data from.
- * @i: row index (zero-based).
- * @j: column index (zero-based).
- *
- * Retrieves the data value from the specified row and column
- * of @m.
- * 
- * Returns: the data value, or #NADBL if the indices are out
- * of range for @m.
- */
-
-double gretl_matrix_get (const gretl_matrix *m, int i, int j)
-{
-    double x;
-
-    if (m == NULL || m->val == NULL) return NADBL;
-
-    if (i >= m->rows || j >= m->cols) return NADBL;
-
-    if (m->packed) {
-	x = m->val[packed_idx(m->rows, i, j)];
-    } else {
-	x = m->val[mdx(m, i, j)];
-    }
-
-    return x;
-}
-
-/**
- * gretl_vector_get:
- * @v: vector to get data from.
- * @i: index (zero-based).
- *
- * Retrieves the ith value from the specified vector.
- * 
- * Returns: the data value, or #NADBL if the index is out
- * of range for @v.
- */
-
-double gretl_vector_get (const gretl_vector *v, int i)
-{
-    if (v == NULL || v->val == NULL) return NADBL;
-
-    if (i >= v->rows && i >= v->cols) return NADBL;
-
-    return v->val[i];
-}
-
-/**
- * gretl_matrix_set:
- * @m: matrix to operate on.
- * @i: row index (zero-based).
- * @j: column index (zero-based).
- * @x: value to set.
- *
- * Sets element i, j of @m to the value @x.
- * 
- * Returns: %GRETL_MATRIX_OK, or %GRETL_MATRIX_ERR if the
- * indices are out of range for @m.
- * 
- */
-
-int gretl_matrix_set (gretl_matrix *m, int i, int j, double x)
-{
-    if (m == NULL || m->val == NULL) return GRETL_MATRIX_ERR;
-
-    if (i >= m->rows || j >= m->cols) return GRETL_MATRIX_ERR;
-
-    if (m->packed) {
-	m->val[packed_idx(m->rows, i, j)] = x;
-    } else {
-	m->val[mdx(m, i, j)] = x;
-    }
-
-    return GRETL_MATRIX_OK;
-}
-
-/**
- * gretl_vector_set:
- * @v: vector to operate on.
- * @i: index (zero-based).
- * @x: value to set.
- *
- * Sets element i of @v to the value @x.
- * 
- * Returns: %GRETL_MATRIX_OK, or %GRETL_MATRIX_ERR if the
- * given index is out of range for @v.
- */
-
-int gretl_vector_set (gretl_vector *v, int i, double x)
-{
-    if (v == NULL || v->val == NULL) return GRETL_MATRIX_ERR;
-
-    if (i >= v->rows && i >= v->cols) return GRETL_MATRIX_ERR;
-
-    v->val[i] = x;
-
-    return GRETL_MATRIX_OK;
 }
 
 /**
@@ -1383,7 +1292,7 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B)
     int ioff, joff;
     int Ki, Kj;
     
-    K = real_gretl_matrix_alloc(p * r, q * s, 0);
+    K = gretl_matrix_alloc(p * r, q * s);
 
     if (K != NULL) {
 	for (i=0; i<p; i++) {
@@ -2198,43 +2107,6 @@ void gretl_matrix_set_int (gretl_matrix *m, int t)
 int gretl_matrix_get_int (const gretl_matrix *m)
 {
     return m->t;
-}
-
-/**
- * gretl_vector_get_length:
- * @v: vector to examine.
- * 
- * Returns: the length of vector @v (without regard to whether
- * it is a row or column vector).
- */
-
-int gretl_vector_get_length (const gretl_vector *v) 
-{
-    return (v->cols > v->rows)? v->cols : v->rows;
-}
-
-/**
- * gretl_matrix_cols:
- * @m: matrix to query.
- * 
- * Returns: the number of columns in @m. 
- */
-
-int gretl_matrix_cols (const gretl_matrix *m)
-{
-    return m->cols;
-}
-
-/**
- * gretl_matrix_rows:
- * @m: matrix to query.
- * 
- * Returns: the number of rows in @m. 
- */
-
-int gretl_matrix_rows (const gretl_matrix *m)
-{
-    return m->rows;
 }
 
 static int
@@ -3091,12 +2963,7 @@ int gretl_is_identity_matrix (const gretl_matrix *m)
 
     for (i=0; i<m->rows; i++) {
 	for (j=0; j<m->cols; j++) {
-	    if (m->packed) {
-		if (i > j) continue;
-		idx = packed_idx(m->rows, i, j);
-	    } else {
-		idx = mdx(m, i, j);
-	    }
+	    idx = mdx(m, i, j);
 	    if (i == j && m->val[idx] != 1.0) return 0;
 	    if (i != j && m->val[idx] != 0.0) return 0;
 	}

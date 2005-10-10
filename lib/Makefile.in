@@ -110,7 +110,8 @@ PUBLIC_HDRS = \
 	system.h \
 	texprint.h \
 	transforms.h \
-	var.h
+	var.h \
+	varprint.h
 
 SRCS = bhhh_max.c \
 	calendar.c \
@@ -158,7 +159,8 @@ SRCS = bhhh_max.c \
 	system.c \
 	texprint.c \
 	transforms.c \
-	var.c
+	var.c \
+	varprint.c
 
 CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 	   fdtr.c gamma.c gdtr.c igam.c igami.c incbet.c incbi.c \

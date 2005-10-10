@@ -26,6 +26,7 @@
 
 #include "cmd_private.h"
 #include "var.h"
+#include "varprint.h"
 
 enum {
     OBJ_NONE,

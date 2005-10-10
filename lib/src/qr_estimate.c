@@ -20,7 +20,6 @@
 #include "libgretl.h"
 #include "qr_estimate.h"
 #include "gretl_matrix.h"
-#include "gretl_matrix_private.h"
 #include "libset.h"
 
 #include "f2c.h"

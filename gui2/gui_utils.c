@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "var.h"
+#include "varprint.h"
 #include "modelspec.h"
 #include "forecast.h"
 

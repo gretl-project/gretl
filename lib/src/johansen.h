@@ -103,8 +103,9 @@ int gretl_VAR_add_coeff_matrix (GRETL_VAR *var);
 
 int gretl_VAR_add_C_matrix (GRETL_VAR *var);
 
-int gretl_VAR_do_error_decomp (int g, const gretl_matrix *S,
-			       gretl_matrix *C);
-    
+int 
+gretl_VAR_do_error_decomp (const gretl_matrix *S, gretl_matrix *C);
+
+
 #endif /* JOHANSEN_H_ */
 

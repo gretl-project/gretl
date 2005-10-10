@@ -19,7 +19,6 @@
 
 #include "libgretl.h"
 #include "gretl_matrix.h"
-#include "gretl_matrix_private.h"
 #include "system.h"
 
 #define FDEBUG 0

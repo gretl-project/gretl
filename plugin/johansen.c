@@ -23,7 +23,6 @@
 #include "libgretl.h"
 #include "pvalues.h"
 #include "gretl_matrix.h"
-#include "gretl_matrix_private.h"
 #include "var.h"
 
 #define JDEBUG 0
@@ -745,9 +744,12 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
 	    biglist[k++] = rv0 + j;
 	}
 #if JDEBUG
-	printlist(biglist, "build_VECM_models: biglist");
+	printlist(biglist, "build_VECM_models: biglist (before)");
 #endif
 	*vecm->models[i] = lsq(biglist, pZ, pdinfo, OLS, lsqopt, 0.0);
+#if JDEBUG
+	printlist(biglist, "build_VECM_models: biglist (after)");
+#endif
 	err = vecm->models[i]->errcode;
 	if (!err) {
 	    vecm->models[i]->ID = i + 1;
@@ -1270,7 +1272,7 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 		    err = beta_variance(jvar);
 		}
 		if (!err) {
-		    err = gretl_VAR_do_error_decomp(jvar->neqns, jvar->S, jvar->C);
+		    err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
 		}
 		if (!err) {
 		    err = vecm_ll_stats(jvar);
@@ -1388,10 +1390,6 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	}
 	if (!err) {
 	    err = compute_omega(jvar, TmpR);
-	}
-	if (!err) {
-	    /* should we be doing this here? */
-	    err = gretl_VAR_do_error_decomp(jvar->neqns, jvar->S, jvar->C);
 	}
     } 
 

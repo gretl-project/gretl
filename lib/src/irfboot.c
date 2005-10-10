@@ -18,7 +18,7 @@ struct irfboot_ {
     int rank;           /* rank, in case of VECM */
     gretlopt opt;       /* VECM options flags */
     int ncoeff;         /* number of coefficients per equation */
-    int ifc;            /* equations include intercept? */
+    int ifc;            /* equations include an intercept? */
     int t1;             /* starting observation */
     int t2;             /* ending observation */
     int horizon;        /* horizon for impulse responses */
@@ -213,14 +213,17 @@ static int irf_boot_init (irfboot *boot, const GRETL_VAR *var,
 	goto bailout;
     }
 
-    boot->rE = gretl_matrix_alloc(boot->n, boot->neqns);
-    if (boot->rE == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+    if (!boot->ecm) {
+	/* we don't need this matrix for VECMs */
+	boot->E = gretl_matrix_alloc(boot->n, boot->neqns);
+	if (boot->E == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
     }
 
-    boot->E = gretl_matrix_alloc(boot->n, boot->neqns);
-    if (boot->E == NULL) {
+    boot->rE = gretl_matrix_alloc(boot->n, boot->neqns);
+    if (boot->rE == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -263,7 +266,7 @@ recalculate_impulse_responses (irfboot *boot, int targ, int shock, int iter)
 
     for (t=0; t<boot->horizon && !err; t++) {
 	if (t == 0) {
-	    /* calculate initial estimated responses */
+	    /* initial estimated responses */
 	    err = gretl_matrix_copy_values(boot->rtmp, boot->C);
 	} else {
 	    /* calculate further estimated responses */
@@ -358,17 +361,21 @@ re_estimate_VECM (irfboot *boot, int targ, int shock, int iter, int scount)
 
     if (!err) {   
 	gretl_matrix_copy_values(boot->A, jvar->A);
-	/* is the following right?? */
+#ifdef USE_OMEGA
+	/* use variance matrix calculated in johansen.c (jvar->S) */
+	err = gretl_VAR_do_error_decomp(jvar->S, boot->C);
+#else 
+	/* use residuals from VECM models (jvar->E) */
 	gretl_matrix_multiply_mod(jvar->E, GRETL_MOD_TRANSPOSE,
 				  jvar->E, GRETL_MOD_NONE,
 				  boot->S);
-	gretl_matrix_divide_by_scalar(boot->S, boot->n);
-#if 0
+# if 0
 	gretl_matrix_print(jvar->S, "re-estimated jvar->S (Omega)", NULL);
 	gretl_matrix_print(boot->S, "versus boot->S (E'E)", NULL);
+# endif
+	gretl_matrix_divide_by_scalar(boot->S, boot->n);
+	err = gretl_VAR_do_error_decomp(boot->S, boot->C);
 #endif
-	/* should we be using jvar->S (Omega) here? */
-	err = gretl_VAR_do_error_decomp(boot->neqns, boot->S, boot->C);
     }
 
     if (!err) {
@@ -410,7 +417,7 @@ static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
 				  boot->E, GRETL_MOD_NONE,
 				  boot->S);
 	gretl_matrix_divide_by_scalar(boot->S, boot->n);
-	err = gretl_VAR_do_error_decomp(boot->neqns, boot->S, boot->C);
+	err = gretl_VAR_do_error_decomp(boot->S, boot->C);
     }
 
     if (!err) {
@@ -422,7 +429,7 @@ static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
 
 /* Allocate storage for the regression lists that will be used for the
    bootstrap VAR models; or in case of a VECM, create the "master" lists
-   of endogenous and exogenous variables, plus one VAR list.
+   of endogenous and exogenous variables.
 */
 
 static int allocate_bootstrap_lists (irfboot *boot, const GRETL_VAR *var)
@@ -764,7 +771,7 @@ compute_VECM_dataset (irfboot *boot, const GRETL_VAR *var, int iter)
     }
 
     if (iter > 0) {
-	/* now recompute first lags and first differences */
+	/* recompute first lags and first differences */
 	for (i=0; i<boot->neqns; i++) {
 	    int vl = var->jinfo->levels_list[i+1];
 	    int vd = var->jinfo->varlist[i+1];
@@ -913,7 +920,7 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
     int iter, err = 0;
 
 #if BDEBUG
-    fprintf(stderr, "irf_bootstrap() called\n");
+    fprintf(stderr, "\n*** irf_bootstrap() called\n");
 #endif
 
     R = gretl_matrix_alloc(periods, 3);

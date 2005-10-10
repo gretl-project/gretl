@@ -40,11 +40,49 @@ typedef enum {
 typedef struct _gretl_matrix gretl_matrix;
 typedef struct _gretl_matrix gretl_vector;
 
+struct _gretl_matrix {
+    int rows;
+    int cols;
+    int t;
+    double *val;
+};
+
+#define mdx(a,i,j)   ((j)*(a)->rows+(i))
+#define mdxtr(a,i,j) ((i)*(a)->rows+(j))
+
+/**
+ * gretl_matrix_cols:
+ * @m: matrix to query.
+ * 
+ * Returns: the number of columns in @m. 
+ */
+#define gretl_matrix_cols(m) ((m == NULL)? 0 : m->cols)
+
+/**
+ * gretl_matrix_rows:
+ * @m: matrix to query.
+ * 
+ * Returns: the number of rows in @m. 
+ */
+#define gretl_matrix_rows(m) ((m == NULL)? 0 : m->rows)
+
+/**
+ * gretl_vector_get_length:
+ * @v: vector to examine.
+ * 
+ * Returns: the length of vector @v (without regard to whether
+ * it is a row or column vector).
+ */
+
+#define gretl_vector_get_length(v) ((v == NULL)? 0 : \
+                                    (v->cols > v->rows)? v->cols : \
+                                    v->rows)
+
 /**
  * gretl_vector_alloc:
  * @i: number of columns.
  *
- * Allocates a new #gretl_vector with %i columns.
+ * Allocates a new #gretl_vector with @i columns.
  */
 #define gretl_vector_alloc(i) gretl_matrix_alloc(1,(i))
 
@@ -63,6 +101,14 @@ typedef struct _gretl_matrix gretl_vector;
  * Frees the vector @v and its associated storage.
  */
 #define gretl_vector_free(v) gretl_matrix_free(v)
+
+double gretl_matrix_get (const gretl_matrix *m, int i, int j);
+
+double gretl_vector_get (const gretl_vector *v, int i);
+
+int gretl_matrix_set (gretl_matrix *m, int i, int j, double x);
+
+int gretl_vector_set (gretl_vector *v, int i, double x);
 
 gretl_matrix *gretl_matrix_alloc (int rows, int cols);
 
@@ -109,14 +155,6 @@ double *gretl_matrix_steal_data (gretl_matrix *m);
 
 int gretl_matrix_copy_values (gretl_matrix *targ, 
 			      const gretl_matrix *src);
-
-double gretl_matrix_get (const gretl_matrix *m, int i, int j);
-
-double gretl_vector_get (const gretl_vector *v, int i);
-
-int gretl_matrix_set (gretl_matrix *m, int i, int j, double x);
-
-int gretl_vector_set (gretl_vector *v, int i, double x);
 
 int gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src);
 
@@ -218,12 +256,6 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn);
 void gretl_matrix_set_int (gretl_matrix *m, int t);
 
 int gretl_matrix_get_int (const gretl_matrix *m);
-
-int gretl_vector_get_length (const gretl_vector *v);
-
-int gretl_matrix_cols (const gretl_matrix *m);
-
-int gretl_matrix_rows (const gretl_matrix *m);
 
 int gretl_is_identity_matrix (const gretl_matrix *m);
 

@@ -160,7 +160,8 @@ LIBSRC = bhhh_max.c \
 	system.c \
 	texprint.c \
 	transforms.c \
-	var.c
+	var.c \
+	varprint.c
 
 LIBOBJ = $(LIBSRC:.c=.o)
 
