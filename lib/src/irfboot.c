@@ -1,7 +1,5 @@
 /* bootstrapped confidence intervals for impulse response functions */
 
-#define BDEBUG 0
-
 #if BDEBUG
 # define BOOT_ITERS 5
 #else
@@ -146,7 +144,7 @@ static gretlopt boot_get_opt (const GRETL_VAR *var)
 	}
 
 	if (var->jinfo->seasonals) {
-	    opt != OPT_D;
+	    opt |= OPT_D;
 	}
 
 	opt |= (OPT_S | OPT_I);
@@ -319,38 +317,24 @@ static void irf_record_VAR_data (irfboot *boot, const MODEL *pmod, int k)
 #define VAR_FATAL(e,i,s) (e && (e != E_SINGULAR || i == 0 || s >= MAXSING))
 
 static int 
-re_estimate_VECM (irfboot *boot, int targ, int shock, int iter, int scount)
+re_estimate_VECM (irfboot *boot, GRETL_VAR *jvar, int targ, int shock, 
+		  int iter, int scount)
 {
     static int (*jbr) (GRETL_VAR *, double ***, DATAINFO *, int) = NULL;
     static void *handle = NULL;
-    static GRETL_VAR *jvar = NULL;
-
-    int *vecm_list = boot->lists[0];
-    int *exo_list = boot->lists[1];
     int err = 0;
 
     *gretl_errmsg = 0;
 
     if (iter == 0) {
-	/* create and populate the VAR object */
-	jvar = johansen_wrapper(boot->order + 1, boot->rank, vecm_list, 
-				exo_list, &boot->Z, boot->dinfo, 
-				boot->opt, NULL);
-	if (jvar == NULL) {
+	/* open the Johansen plugin */
+	jbr = get_plugin_function("johansen_bootstrap_round", &handle);
+	if (jbr == NULL) {
 	    err = 1;
-	} else {
-	    err = jvar->err;
 	}
+    }
 
-	if (!err) {
-	    /* open the Johansen plugin */
-	    jbr = get_plugin_function("johansen_bootstrap_round", &handle);
-	    if (jbr == NULL) {
-		err = 1;
-	    }
-	}
-    } else {
-	/* subsequent rounds: re-use the VAR object */
+    if (!err) {
 	err = johansen_driver(jvar, &boot->Z, boot->dinfo, boot->opt, NULL);
     }
 
@@ -369,11 +353,11 @@ re_estimate_VECM (irfboot *boot, int targ, int shock, int iter, int scount)
 	gretl_matrix_multiply_mod(jvar->E, GRETL_MOD_TRANSPOSE,
 				  jvar->E, GRETL_MOD_NONE,
 				  boot->S);
-# if 0
+	gretl_matrix_divide_by_scalar(boot->S, boot->n);
+# if BDEBUG
 	gretl_matrix_print(jvar->S, "re-estimated jvar->S (Omega)", NULL);
 	gretl_matrix_print(boot->S, "versus boot->S (E'E)", NULL);
 # endif
-	gretl_matrix_divide_by_scalar(boot->S, boot->n);
 	err = gretl_VAR_do_error_decomp(boot->S, boot->C);
 #endif
     }
@@ -387,10 +371,6 @@ re_estimate_VECM (irfboot *boot, int targ, int shock, int iter, int scount)
 	    close_plugin(handle);
 	    handle = NULL;
 	    jbr = NULL;
-	}
-	if (jvar != NULL) {
-	    gretl_VAR_free(jvar);
-	    jvar = NULL;
 	}
     }
 
@@ -782,6 +762,21 @@ compute_VECM_dataset (irfboot *boot, const GRETL_VAR *var, int iter)
 	    }
 	}
     }
+
+#if BDEBUG > 1
+    if (1) {
+	PRN *prn;
+	int list[5];
+
+	list[0] = 4;
+	for (i=1; i<5; i++) {
+	    list[i] = i;
+	}
+	prn = gretl_print_new(GRETL_PRINT_STDERR);
+	printdata(list, (const double **) boot->Z, boot->dinfo, OPT_O, prn);
+	gretl_print_destroy(prn);
+    }
+#endif
 }
 
 /* (Re-)fill the bootstrap dataset with artificial data, based on the
@@ -859,7 +854,11 @@ static void resample_resids (irfboot *boot, const GRETL_VAR *var)
 
     /* construct sampling array */
     for (s=0; s<boot->n; s++) {
+#if BDEBUG >= 4
+	boot->sample[s] = s;
+#else
 	boot->sample[s] = gretl_rand_int_max(boot->n);
+#endif
 #if BDEBUG > 1
 	fprintf(stderr, "boot->sample[%d] = %d\n", s, boot->sample[s]);
 #endif
@@ -914,6 +913,7 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 				    const double **Z, 
 				    const DATAINFO *pdinfo)
 {
+    GRETL_VAR *jvar = NULL;
     gretl_matrix *R;
     irfboot boot;
     int scount = 0;
@@ -937,13 +937,21 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 
     if (var->ecm && !err) {
 	record_base_coeffs(&boot, var);
+	jvar = johansen_VAR_prepare(boot.order + 1, boot.rank, 
+				    boot.lists[0], boot.lists[1],
+				    &boot.Z, boot.dinfo, boot.opt);
+	if (jvar == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = jvar->err;
+	}
     }
 
     for (iter=0; iter<BOOT_ITERS && !err; iter++) {
 	resample_resids(&boot, var);
 	if (var->ecm) {
 	    compute_VECM_dataset(&boot, var, iter);
-	    err = re_estimate_VECM(&boot, targ, shock, iter, scount);
+	    err = re_estimate_VECM(&boot, jvar, targ, shock, iter, scount);
 	} else {
 	    compute_VAR_dataset(&boot, var);
 	    err = re_estimate_VAR(&boot, targ, shock, iter);
@@ -965,6 +973,10 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
     }
 
     irf_boot_free(&boot);
+
+    if (jvar != NULL) {
+	gretl_VAR_free(jvar);
+    }
 
  bailout:
 

@@ -24,6 +24,9 @@
 #include "varprint.h"
 #include "libset.h"
 
+#define VAR_DEBUG 0
+#define BDEBUG 0    /* for debugging bootstrap IRFs */
+
 /* in transforms.c */
 extern int 
 real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
@@ -33,8 +36,6 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 				    int targ, int shock, int periods,
 				    const double **Z, 
 				    const DATAINFO *pdinfo);
-
-#define VAR_DEBUG 0
 
 struct var_lists {
     int *detvars;
@@ -1028,8 +1029,6 @@ static void var_lists_free (struct var_lists *vl)
     free(vl->reglist);
     free(vl->testlist);
 }
-
-/* FIXME case of order = 0 */
 
 static int **lagvlist_construct (int nstoch, int order)
 {
@@ -3089,6 +3088,7 @@ johansen_VAR_prepare (int order, int rank, const int *list, const int *exolist,
 	    jvar->jinfo->seasonals = pdinfo->pd - 1;
 	    nexo += pdinfo->pd - 1;
 	    di0 = dummy(pZ, pdinfo, flag);
+fprintf(stderr, "seasonals, starting at var %d\n", di0);
 	    if (di0 == 0) {
 		jvar->err = E_ALLOC;
 	    }
@@ -3453,7 +3453,7 @@ int vecm_simple (int order, int rank, int *list,
 	err = jvar->err;
     }
 
-#if 0 /* just for testing */
+#if BDEBUG > 1 /* just for testing */
     if (jvar != NULL) {
 	gretl_matrix *R;
 	int targ = 1;

@@ -1177,8 +1177,6 @@ static int form_xpxxpy (const int *list, int t1, int t2,
     return 0; 
 }
 
-/* .......................................................... */
-
 static int make_ess (MODEL *pmod, double **Z)
 {
     int i, t, yno = pmod->list[1], l0 = pmod->list[0];
@@ -1338,8 +1336,12 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
     diaginv(pmod->xpx, xpy, diag, pmod->ncoeff);
 
-    for (v=0; v<pmod->ncoeff; v++) { 
-	pmod->sderr[v] = pmod->sigma * sqrt(diag[v]); 
+    for (v=0; v<pmod->ncoeff; v++) {
+	if (diag[v] >= 0.0) {
+	    pmod->sderr[v] = pmod->sigma * sqrt(diag[v]);
+	} else {
+	    pmod->sderr[v] = 0.0;
+	}
     }
 
     free(diag); 
@@ -1367,6 +1369,10 @@ cholbeta (double *xpx, double *xpy, double *coeff, double *rss, int nv)
 {
     int i, j, k, kk, l, jm1;
     double e, d, d1, d2, test, xx;
+
+    if (xpx[0] <= 0.0) {
+	return E_NAN;
+    }
 
     e = 1.0 / sqrt(xpx[0]);
     xpx[0] = e;
@@ -1441,7 +1447,12 @@ cholbeta (double *xpx, double *xpy, double *coeff, double *rss, int nv)
 	    }
 	    kk--;
 	    coeff[j-1] = d * xpx[kk];
-	}  
+	}
+	for (j=0; j<nv; j++) {
+	    if (isnan(coeff[j])) {
+		return E_NAN;
+	    }
+	}	
     } 
 
     return 0; 

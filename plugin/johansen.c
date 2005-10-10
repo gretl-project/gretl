@@ -744,12 +744,9 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
 	    biglist[k++] = rv0 + j;
 	}
 #if JDEBUG
-	printlist(biglist, "build_VECM_models: biglist (before)");
+	printlist(biglist, "build_VECM_models: biglist");
 #endif
 	*vecm->models[i] = lsq(biglist, pZ, pdinfo, OLS, lsqopt, 0.0);
-#if JDEBUG
-	printlist(biglist, "build_VECM_models: biglist (after)");
-#endif
 	err = vecm->models[i]->errcode;
 	if (!err) {
 	    vecm->models[i]->ID = i + 1;
@@ -1240,43 +1237,44 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 
 	/* normalize the eigenvectors */
 	johansen_normalize(jvar->jinfo, TmpR);
+#if JDEBUG
+	gretl_matrix_print(TmpR, "normalized tmpR", NULL);
+#endif
 
-	if (!err) {
-	    if (rank == 0) {
-		/* just running cointegration test */
-		jvar->jinfo->Beta = TmpR;
-		TmpR = NULL;
-		err = compute_alpha(jvar->jinfo, n);
-		if (!err) {
-		    print_beta_and_alpha(jvar->jinfo, eigvals, n, pdinfo, prn);
-		    compute_long_run_matrix(jvar->jinfo, n, pdinfo, prn);
-		}
-	    } else {
-		/* estimating VECM */
-		int do_stderrs = rank < jvar->neqns;
+	if (rank == 0) {
+	    /* just running cointegration test */
+	    jvar->jinfo->Beta = TmpR;
+	    TmpR = NULL;
+	    err = compute_alpha(jvar->jinfo, n);
+	    if (!err) {
+		print_beta_and_alpha(jvar->jinfo, eigvals, n, pdinfo, prn);
+		compute_long_run_matrix(jvar->jinfo, n, pdinfo, prn);
+	    }
+	} else {
+	    /* estimating VECM */
+	    int do_stderrs = rank < jvar->neqns;
 
-		jvar->jinfo->Beta = gretl_matrix_copy(TmpR);
-		if (jvar->jinfo->Beta == NULL) {
-		    err = E_ALLOC;
-		}
-		if (!err) {
-		    err = phillips_normalize_beta(jvar); 
-		}
-		if (!err) {
-		    err = build_VECM_models(jvar, pZ, pdinfo, 0);
-		}
-		if (!err) {
-		    err = compute_omega(jvar, TmpR);
-		}
-		if (!err && do_stderrs) {
-		    err = beta_variance(jvar);
-		}
-		if (!err) {
-		    err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
-		}
-		if (!err) {
-		    err = vecm_ll_stats(jvar);
-		}
+	    jvar->jinfo->Beta = gretl_matrix_copy(TmpR);
+	    if (jvar->jinfo->Beta == NULL) {
+		err = E_ALLOC;
+	    }
+	    if (!err) {
+		err = phillips_normalize_beta(jvar); 
+	    }
+	    if (!err) {
+		err = build_VECM_models(jvar, pZ, pdinfo, 0);
+	    }
+	    if (!err) {
+		err = compute_omega(jvar, TmpR);
+	    }
+	    if (!err && do_stderrs) {
+		err = beta_variance(jvar);
+	    }
+	    if (!err) {
+		err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
+	    }
+	    if (!err) {
+		err = vecm_ll_stats(jvar);
 	    }
 	}
     } 
@@ -1307,6 +1305,7 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix *M = NULL;
     gretl_matrix *TmpL = NULL;
     gretl_matrix *TmpR = NULL;
+    gretl_matrix *Svv = NULL;
 
     double *eigvals = NULL;
 
@@ -1321,8 +1320,9 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     TmpL = gretl_matrix_alloc(nv, n);
     TmpR = gretl_matrix_alloc(nv, nv);
     M = gretl_matrix_alloc(nv, nv);
+    Svv = gretl_matrix_copy(jvar->jinfo->Svv);
 
-    if (TmpL == NULL || TmpR == NULL || M == NULL) {
+    if (TmpL == NULL || TmpR == NULL || M == NULL || Svv == NULL) {
 	err = 1;
 	goto eigenvals_bailout;
     }
@@ -1339,10 +1339,10 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 
     /* calculate Svv^{-1} Suv' */
     if (!err) {
-	err = gretl_invert_general_matrix(jvar->jinfo->Svv);
+	err = gretl_invert_general_matrix(Svv);
     }
     if (!err) {
-	err = gretl_matrix_multiply_mod(jvar->jinfo->Svv, GRETL_MOD_NONE,
+	err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
 					jvar->jinfo->Suv, GRETL_MOD_TRANSPOSE, 
 					TmpL);
     }
@@ -1374,6 +1374,10 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     if (!err) {
+	johansen_normalize(jvar->jinfo, TmpR); 
+#if JDEBUG
+	gretl_matrix_print(TmpR, "normalized tmpR", NULL);
+#endif
 	if (jvar->jinfo->Beta == NULL) {
 	    jvar->jinfo->Beta = gretl_matrix_copy(TmpR);
 	} else {
@@ -1389,6 +1393,7 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	    err = build_VECM_models(jvar, pZ, pdinfo, iter);
 	}
 	if (!err) {
+	    /* this may be redundant */
 	    err = compute_omega(jvar, TmpR);
 	}
     } 
@@ -1398,6 +1403,7 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix_free(TmpL);
     gretl_matrix_free(TmpR);
     gretl_matrix_free(M);
+    gretl_matrix_free(Svv);
 
     free(eigvals);
 

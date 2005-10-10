@@ -1594,8 +1594,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     return gotnan;
 }
 
-/* ......................................................... */ 
-
 static void print_pval_str (double pval, char *str)
 {
     if (pval < .00001) {
