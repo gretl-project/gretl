@@ -368,6 +368,7 @@ struct mp_results_ {
 #include "nonparam.h"
 #include "options.h"
 #include "discrete.h"
+#include "adf_kpss.h"
 #include "subsample.h"
 #include "calendar.h"
 #include "plugins.h"

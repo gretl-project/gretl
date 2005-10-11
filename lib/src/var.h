@@ -23,13 +23,6 @@
 #include "gretl_matrix.h"
 #include "johansen.h"
 
-typedef enum {
-    UR_NO_CONST = 1,
-    UR_CONST,
-    UR_TREND,
-    UR_TREND_SQUARED
-} AdfCode;
-
 int var_max_order (const int *list, const DATAINFO *pdinfo);
 
 int simple_VAR (int order, int *list, 
@@ -75,17 +68,6 @@ int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
 void gretl_VAR_free (GRETL_VAR *var);
 
 void gretl_VAR_free_unnamed (GRETL_VAR *var);
-
-int coint (int order, const int *list, 
-	   double ***pZ, DATAINFO *pdinfo, 
-	   gretlopt opt, PRN *prn);
-
-int adf_test (int order, int varno, 
-	      double ***pZ, DATAINFO *pdinfo, 
-	      gretlopt opt, PRN *prn);
-
-int kpss_test (int order, int varno, double ***pZ,
-	       DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
 int default_VAR_horizon (const DATAINFO *pdinfo);
 

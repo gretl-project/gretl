@@ -350,131 +350,27 @@ static void print_lr_matrix (JohansenInfo *jv, gretl_matrix *Zeta_0,
     pputc(prn, '\n');
 }
 
-/* Restricted const or trend: copy out last column of C into \rho, and
-   copy the square remainder of the matrix into \Zeta_0.
-*/
-
-static gretl_matrix *
-get_real_zeta_0 (gretl_matrix *C, gretl_matrix *rho, int n)
-{
-    gretl_matrix *Z0 = gretl_matrix_alloc(n, n);
-    int i, j;
-
-    if (Z0 == NULL) {
-	Z0 = C;
-    } else {
-	double x;
-
-	for (i=0; i<n; i++) {
-	    x = gretl_matrix_get(C, i, n);
-	    gretl_vector_set(rho, i, x);
-	}
-
-	for (j=0; j<n; j++) {
-	    for (i=0; i<n; i++) {
-		x = gretl_matrix_get(C, i, j);
-		gretl_matrix_set(Z0, i, j, x);
-	    }
-	}
-
-	gretl_matrix_free(C);
-    }
-
-    return Z0;
-}
-
 /* Compute Hamilton's Omega (Johansen 1991 calls it Lambda): the
-   cross-equation variance matrix.  Uses Hamilton's eq. 20.2.15,
-   p. 638, or equation at top of p. 645 in restricted const case.
+   cross-equation variance matrix.
 */
 
-static int compute_omega (GRETL_VAR *vecm, gretl_matrix *beta)
+static int compute_omega (GRETL_VAR *vecm)
 {
-    gretl_matrix *Z0 = NULL;
-    gretl_matrix *tmp = NULL;
-    gretl_matrix *uhat = NULL;
-    gretl_matrix *omega = NULL;
-    gretl_matrix *rho = NULL;
-    int n = vecm->neqns;
-    int nv = gretl_matrix_cols(vecm->jinfo->Suv);
-    int T = vecm->T;
-    int err = 0;
-
-    Z0 = gretl_matrix_alloc(n, nv);
-    tmp = gretl_matrix_alloc(nv, nv);
-
-    if (Z0 == NULL || tmp == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+    if (vecm->S == NULL) {
+	vecm->S = gretl_matrix_alloc(vecm->neqns, vecm->neqns);
     }
 
-    if (restricted(vecm)) {
-	rho = gretl_column_vector_alloc(n);
-	if (rho == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	}
+    if (vecm->S == NULL) {
+	return E_ALLOC;
     }
 
-    gretl_matrix_multiply_mod(beta, GRETL_MOD_NONE,
-			      beta, GRETL_MOD_TRANSPOSE,
-			      tmp);
+    gretl_matrix_multiply_mod(vecm->E, GRETL_MOD_TRANSPOSE,
+			      vecm->E, GRETL_MOD_NONE,
+			      vecm->S);
 
-    /* \Zeta_0 = \Sigma_{uv} A A' (Hamilton eq. 20.2.12) */
-    gretl_matrix_multiply(vecm->jinfo->Suv, tmp, Z0);
-
-    if (restricted(vecm)) {
-	/* in the restricted cases "Z0" contains an extra column,
-	   which has to be separated out */
-	Z0 = get_real_zeta_0(Z0, rho, n);
-    }
-
-    uhat = gretl_matrix_alloc(n, T);
-
-    if (vecm->S != NULL) {
-	omega = vecm->S;
-    } else {
-	omega = gretl_matrix_alloc(n, n);
-    }
-
-    gretl_matrix_free(tmp);
-    tmp = gretl_matrix_alloc(n, T);
-
-    if (uhat == NULL || omega == NULL || tmp == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    gretl_matrix_copy_values(uhat, vecm->jinfo->u);
-    gretl_matrix_multiply(Z0, vecm->jinfo->v, tmp);
-    gretl_matrix_subtract_from(uhat, tmp);
-
-    if (restricted(vecm)) {
-	gretl_matrix_multiply(rho, vecm->jinfo->w, tmp);
-	gretl_matrix_subtract_from(uhat, tmp);
-    }
-
-    gretl_matrix_multiply_mod(uhat, GRETL_MOD_NONE,
-			      uhat, GRETL_MOD_TRANSPOSE,
-			      omega);
-    gretl_matrix_divide_by_scalar(omega, T);
-
- bailout:
-
-    if (omega != vecm->S) {
-	if (!err) {
-	    vecm->S = omega;
-	} else {
-	    gretl_matrix_free(omega);
-	}
-    } 
-
-    gretl_matrix_free(Z0);
-    gretl_matrix_free(tmp);
-    gretl_matrix_free(uhat);
-    gretl_matrix_free(rho);
-
-    return err;
+    gretl_matrix_divide_by_scalar(vecm->S, vecm->T);
+    
+    return 0;
 }
 
 static void gretl_matrix_I (gretl_matrix *A, int n)
@@ -692,15 +588,6 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
 	return E_DATA;
     }
 
-    /* the following two matrices are used for IRFs and
-       forecast variance decompositions */
-    if (vecm->A == NULL && (err = gretl_VAR_add_coeff_matrix(vecm))) {
-	goto bailout;
-    }
-    if (vecm->C == NULL && (err = gretl_VAR_add_C_matrix(vecm))) {
-	goto bailout;
-    }
-
     /* for computing VAR representation */
     Pi = gretl_matrix_alloc(nv, nv);
     A = gretl_matrix_alloc(nv, nv);
@@ -723,10 +610,6 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
 	    err = E_ALLOC;
 	    goto bailout;
 	}
-    }
-
-    if (vecm->E == NULL) {
-	vecm->E = gretl_matrix_alloc(vecm->T, vecm->neqns);
     }
 
     if (iter > 0) {
@@ -756,11 +639,9 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
 		copy_coeffs_to_Gamma(vecm->models[i], i, G, p, nv);
 	    }
 	    copy_coeffs_to_Alpha(vecm, i, vecm->jinfo->Alpha, p);
-	    if (vecm->E != NULL) {
-		for (t=0; t<vecm->T; t++) {
-		    mt = t + vecm->t1;
-		    gretl_matrix_set(vecm->E, t, i, vecm->models[i]->uhat[mt]);
-		}
+	    for (t=0; t<vecm->T; t++) {
+		mt = t + vecm->t1;
+		gretl_matrix_set(vecm->E, t, i, vecm->models[i]->uhat[mt]);
 	    }
 	    if (i == 0) {
 		vecm->ncoeff = vecm->models[i]->ncoeff;
@@ -784,8 +665,8 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
     gretl_matrix_print(vecm->jinfo->Alpha, "Alpha from models", NULL);
     gretl_matrix_print(Pi, "Pi", NULL);
     for (i=0; i<p; i++) {
-	fprintf(stderr, "Gamma matrix, lag %d\n", i+1);
-	gretl_matrix_print(G[i], "Gamma_i", NULL);
+	fprintf(stderr, "Gamma matrix, lag %d\n\n", i+1);
+	gretl_matrix_print(G[i], NULL, NULL);
     } 
 #endif
 
@@ -807,8 +688,8 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
 		gretl_matrix_subtract_from(A, G[i-1]);
 	    }
 #if JDEBUG
-	    fprintf(stderr, "A matrix, lag %d\n", i+1);
-	    gretl_matrix_print(A, "A_i", NULL);
+	    fprintf(stderr, "A matrix, lag %d\n\n", i+1);
+	    gretl_matrix_print(A, NULL, NULL);
 #endif
 	    add_Ai_to_VAR_A(A, vecm, i);
 	}
@@ -1265,7 +1146,7 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 		err = build_VECM_models(jvar, pZ, pdinfo, 0);
 	    }
 	    if (!err) {
-		err = compute_omega(jvar, TmpR);
+		err = compute_omega(jvar);
 	    }
 	    if (!err && do_stderrs) {
 		err = beta_variance(jvar);
@@ -1393,8 +1274,7 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	    err = build_VECM_models(jvar, pZ, pdinfo, iter);
 	}
 	if (!err) {
-	    /* this may be redundant */
-	    err = compute_omega(jvar, TmpR);
+	    err = compute_omega(jvar);
 	}
     } 
 

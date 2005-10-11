@@ -2916,12 +2916,12 @@
       <para>If you select the bootstrap confidence interval when plotting
 	impulse responses, gretl computes a 95 percent confidence interval for
 	the responses using the bootstrap method.  The residuals from the
-	original VAR are resampled with replacement; an artificial dataset is
-	constructed based on the original parameter estimates and the resampled
-	residuals; the VAR is recomputed and the impulse responses are
-	re-evaluated.  This is repeated 999 times and the 0.025 and 0.975
-	quantiles for the responses are found and plotted along with the point
-	estimates.
+	original VAR (or VECM) are resampled with replacement; an artificial
+	dataset is constructed based on the original parameter estimates and the
+	resampled residuals; the system is re-estimated and the impulse
+	responses are re-evaluated.  This is repeated 999 times and the 0.025
+	and 0.975 quantiles for the responses are found and plotted along with
+	the point estimates.
       </para>
 
     </description>
@@ -6448,6 +6448,14 @@
         <option>
 	  <flag>--seasonals</flag>
 	  <effect>include centered seasonal dummies</effect>
+        </option>
+        <option>
+	  <flag>--impulse-responses</flag>
+	  <effect>print impulse responses</effect>
+        </option>
+        <option>
+	  <flag>--variance-decomp</flag>
+	  <effect>print forecast variance decompositions</effect>
         </option>
       </options>
       <examples>

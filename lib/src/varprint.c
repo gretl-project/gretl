@@ -926,6 +926,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	    tex_print_VECM_omega(var, pdinfo, prn);
 	} else {
 	    print_VECM_omega(var, pdinfo, prn);
+	    pputc(prn, '\n');
 	}
     } else {
 	pputc(prn, '\n');

@@ -63,6 +63,7 @@ minpacksrc = $(topsrc)/minpack
 VPATH = $(libsrc):$(cephessrc):$(minpacksrc)
 
 PUBLIC_HDRS = \
+	adf_kpss.h \
 	bhhh_max.h \
 	calendar.h \
 	compare.h \
@@ -113,7 +114,8 @@ PUBLIC_HDRS = \
 	var.h \
 	varprint.h
 
-SRCS = bhhh_max.c \
+SRCS = adf_kpss.c \
+	bhhh_max.c \
 	calendar.c \
 	compare.c \
 	compat.c \

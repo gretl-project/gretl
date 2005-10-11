@@ -46,7 +46,6 @@ struct JohansenInfo_ {
     int nexo;             /* total deterministic/exogenous variables */
     gretl_matrix *u;      /* resids, VAR in differences */
     gretl_matrix *v;      /* resids, second regressions */
-    gretl_matrix *w;      /* resids, extra equation for restrictions */
     gretl_matrix *Suu;    /* matrix of cross-products of residuals */
     gretl_matrix *Svv;    /* matrix of cross-products of residuals */
     gretl_matrix *Suv;    /* matrix of cross-products of residuals */
@@ -98,10 +97,6 @@ int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pd
 void print_Johansen_test_case (JohansenCode jcode, PRN *prn);
 
 int gretl_VECM_id (GRETL_VAR *vecm);
-
-int gretl_VAR_add_coeff_matrix (GRETL_VAR *var);
-
-int gretl_VAR_add_C_matrix (GRETL_VAR *var);
 
 int 
 gretl_VAR_do_error_decomp (const gretl_matrix *S, gretl_matrix *C);

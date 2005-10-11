@@ -20,6 +20,8 @@
 #ifndef TRANSFORMS_H
 #define TRANSFORMS_H
 
+#define TREND_FAILED 9999
+
 int default_lag_order (const DATAINFO *pdinfo);
 
 int is_standard_lag (int v, const DATAINFO *pdinfo);
@@ -42,6 +44,8 @@ int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo);
 
 int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt);
+
+int gettrend (double ***pZ, DATAINFO *pdinfo, int square);
 
 void gretl_transforms_cleanup (void);
 

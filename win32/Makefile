@@ -113,7 +113,8 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/vif.dll \
 	plugins/urcdist.dll
 
-LIBSRC = bhhh_max.c \
+LIBSRC = adf_kpss.c \
+	bhhh_max.c \
 	calendar.c \
 	compare.c \
 	compat.c \

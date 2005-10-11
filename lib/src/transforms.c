@@ -884,3 +884,33 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     return (xpxlist[0] > 0)? 0 : E_SQUARES;
 }
 
+int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
+{
+    int idx, t, v = pdinfo->v;
+    double x;
+
+    idx = varindex(pdinfo, (square)? "timesq" : "time");
+
+    if (idx < v) {
+	return idx;
+    }
+    
+    if (dataset_add_series(1, pZ, pdinfo)) {
+	return TREND_FAILED;
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	x = (double) t + 1;
+	(*pZ)[v][t] = (square)? x * x : x;
+    }
+
+    if (square) {
+	strcpy(pdinfo->varname[v], "timesq");
+	strcpy(VARLABEL(pdinfo, v), _("squared time trend variable"));
+    } else {
+	strcpy(pdinfo->varname[v], "time");
+	strcpy(VARLABEL(pdinfo, v), _("time trend variable"));
+    }
+	    
+    return idx;
+}
