@@ -36,7 +36,7 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 				    int targ, int shock, int periods,
 				    const double **Z, 
 				    const DATAINFO *pdinfo);
-
+static gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var);
 struct var_lists {
     int *detvars;
     int *stochvars;
@@ -277,12 +277,6 @@ void gretl_VAR_free_unnamed (GRETL_VAR *var)
     }
 }
 
-/* FIXME: the following function has to be re-done for VECMs, since in
-   the case of VECMs, var->models contains the VECM models where the
-   dependent variable is the first difference.  This should be
-   converted into a forecast for the level, I think.
-*/
-
 static int
 gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z, 
 			const DATAINFO *pdinfo, gretlopt opt)
@@ -290,20 +284,13 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
     const MODEL *pmod;
     gretl_matrix *F;
     double fti, xti;
+    int nf = t2 - t1 + 1;
+    int staticfc = (opt & OPT_S);
     int i, j, k, s, t;
-    int nf, ns, lag, vj, m;
-    int staticfc, fcols;
+    int ns, lag, vj, m;
+    int fcols;
 
-    pmod = var->models[0];
-
-    nf = t2 - t1 + 1;
-
-    staticfc = (opt & OPT_S);
-    if (staticfc) {
-	fcols = var->neqns;
-    } else {
-	fcols = 2 * var->neqns;
-    }
+    fcols = (staticfc)? var->neqns : 2 * var->neqns;
 
     /* rows = number of forecast periods; cols = 1 to hold forecast
        for each variable, plus 1 to hold variance for each variable
@@ -393,13 +380,111 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 	}
     }
 
+    gretl_matrix_set_int(F, t1);
+    var->F = F;
+
 #if 0
     gretl_matrix_print(F, "var->F", NULL);
 #endif
 
-    gretl_matrix_set_int(F, t1);
+    return 0;
+}
 
+static int
+gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z, 
+			 const DATAINFO *pdinfo, gretlopt opt)
+{
+    gretl_matrix *F;
+    gretl_matrix *B;
+
+    int order = var->order + 1;
+    int nexo = (var->jinfo->exolist != NULL)? var->jinfo->exolist[0] : 0;
+    int nseas = var->jinfo->seasonals;
+    int nf = t2 - t1 + 1;
+    int staticfc = (opt & OPT_S);
+    int i, j, k, vj, t;
+    int fcols;
+
+    fcols = (staticfc)? var->neqns : 2 * var->neqns;
+
+    F = gretl_matrix_alloc(nf, fcols);
+    if (F == NULL) {
+	return E_ALLOC;
+    }
+
+    B = VAR_coeff_matrix_from_VECM(var);
+    if (B == NULL) {
+	gretl_matrix_free(F);
+	return E_ALLOC;
+    }
+
+    gretl_matrix_zero(F);
+
+    for (t=t1; t<=t2; t++) {
+
+	for (i=0; i<var->neqns; i++) {
+	    double y, bij, fti = 0.0;
+	    int ft, col = 0;
+
+	    /* unrestricted constant, if present */
+	    if (var->ifc) {
+		bij = gretl_matrix_get(B, i, col++);
+		fti += bij;
+	    }
+
+	    /* lags of endogenous vars */
+	    for (j=0; j<var->neqns; j++) {
+		vj = var->jinfo->list[j+1];
+		for (k=0; k<order; k++) {
+		    bij = gretl_matrix_get(B, i, col++);
+		    ft = t - k - 1 - t1;
+		    if (ft >= 0 && !staticfc) {
+			/* use prior forecast if available */
+			y = gretl_matrix_get(F, ft, j);
+		    } else {
+			y = Z[vj][t-k-1];
+		    }
+		    fti += bij * y;
+		}
+	    }
+
+	    /* exogenous vars, if present */
+	    for (j=0; j<nexo; j++) {
+		vj = var->jinfo->exolist[j+1];
+		bij = gretl_matrix_get(B, i, col++);
+		fti += bij * Z[vj][t];
+	    }
+
+	    /* seasonals, if present */
+	    for (j=0; j<nseas; j++) {
+		vj = var->neqns + nexo + 1 + j; /* FIXME vj */
+		bij = gretl_matrix_get(B, i, col++);
+		fti += bij * Z[vj][t];
+	    }
+
+	    if (jcode(var) == J_UNREST_TREND) {
+		/* unrestricted trend */
+		bij = gretl_matrix_get(B, i, col);
+		fti += bij * (t + 1);
+	    } else if (jcode(var) == J_REST_CONST) {
+		/* restricted constant */
+		fti += gretl_matrix_get(B, i, col);
+	    } else if (jcode(var) == J_REST_TREND) {
+		/* restricted trend */
+		bij = gretl_matrix_get(B, i, col);
+		fti += bij * t;
+	    }
+
+	    gretl_matrix_set(F, t - t1, i, fti);
+	}
+    }
+
+    gretl_matrix_set_int(F, t1);
     var->F = F;
+
+#if 0
+    gretl_matrix_print(F, "var->F", NULL);
+#endif
 
     return 0;
 }
@@ -424,7 +509,11 @@ gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, const double **Z,
     }
 
     if (var->F == NULL) {
-	gretl_VAR_add_forecast(var, t1, t2, Z, pdinfo, opt);
+	if (var->ecm) {
+	    gretl_VECM_add_forecast(var, t1, t2, Z, pdinfo, opt);
+	} else {
+	    gretl_VAR_add_forecast(var, t1, t2, Z, pdinfo, opt);
+	}
     }
 
     return var->F;
