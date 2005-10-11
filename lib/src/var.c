@@ -457,7 +457,7 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 
 	    /* seasonals, if present */
 	    for (j=0; j<nseas; j++) {
-		vj = var->neqns + nexo + 1 + j; /* FIXME vj */
+		vj = var->neqns + nexo + 1 + j; /* FIXME vj !! */
 		bij = gretl_matrix_get(B, i, col++);
 		fti += bij * Z[vj][t];
 	    }
@@ -478,6 +478,8 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 	    gretl_matrix_set(F, t - t1, i, fti);
 	}
     }
+
+    gretl_matrix_free(B);
 
     gretl_matrix_set_int(F, t1);
     var->F = F;
