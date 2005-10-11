@@ -4359,6 +4359,8 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     if (nnew == 0) {
 	/* all dummies already present */
 	return di0;
+    } else if (pZ == NULL) {
+	return -1;
     }
 
     if (dataset_add_series(ndums, pZ, pdinfo)) {

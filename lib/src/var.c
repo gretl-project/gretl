@@ -392,7 +392,7 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 
 static int
 gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z, 
-			 const DATAINFO *pdinfo, gretlopt opt)
+			 DATAINFO *pdinfo, gretlopt opt)
 {
     gretl_matrix *F;
     gretl_matrix *B;
@@ -403,10 +403,17 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
     int nf = t2 - t1 + 1;
     int staticfc = (opt & OPT_S);
     int i, j, k, vj, t;
-    int fcols;
+    int fcols, d0 = 0;
+
+    if (nseas > 0) {
+	/* find where the seasonal dummies are */
+	d0 = dummy(NULL, pdinfo, 1);
+	if (d0 < 0) {
+	    return E_DATA;
+	}
+    }
 
     fcols = (staticfc)? var->neqns : 2 * var->neqns;
-
     F = gretl_matrix_alloc(nf, fcols);
     if (F == NULL) {
 	return E_ALLOC;
@@ -457,9 +464,8 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 
 	    /* seasonals, if present */
 	    for (j=0; j<nseas; j++) {
-		vj = var->neqns + nexo + 1 + j; /* FIXME vj !! */
 		bij = gretl_matrix_get(B, i, col++);
-		fti += bij * Z[vj][t];
+		fti += bij * Z[d0+j][t];
 	    }
 
 	    if (jcode(var) == J_UNREST_TREND) {
@@ -493,7 +499,7 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 
 const gretl_matrix *
 gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, const double **Z, 
-			       const DATAINFO *pdinfo, gretlopt opt)
+			       DATAINFO *pdinfo, gretlopt opt)
 {
     if (var->F != NULL) {
 	int ncols, nf = t2 - t1 + 1;
