@@ -569,8 +569,8 @@ static void copy_coeffs_to_Gamma (MODEL *pmod, int i, gretl_matrix **G,
 	for (j=0; j<nv; j++) {
 	    /* successive \Delta x_j */
 	    x = pmod->coeff[h];
-	    h += maxlag;
 	    gretl_matrix_set(G[k], i, j, x);
+	    h += maxlag;
 	}
     }
 }

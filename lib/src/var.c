@@ -25,7 +25,7 @@
 #include "libset.h"
 
 #define VAR_DEBUG 0
-#define BDEBUG 0    /* for debugging bootstrap IRFs */
+#define BDEBUG    0  /* for debugging bootstrap IRFs */
 
 /* in transforms.c */
 extern int 
@@ -2632,24 +2632,23 @@ johansen_complete (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 static int 
 allocate_johansen_residual_matrices (GRETL_VAR *jvar)
 {
-    int T, err = 0;
+    int T = jvar->t2 - jvar->t1 + 1;
+    int vk = jvar->neqns;
+    int err = 0;
 
-    if (jvar->jinfo->u != NULL) {
-	/* already done */
-	return 0;
+    if (jvar->jinfo->u == NULL) {
+	jvar->jinfo->u = gretl_matrix_alloc(jvar->neqns, T);
+	if (jvar->jinfo->u == NULL) {
+	    return E_ALLOC;
+	}
     }
 
-    T = jvar->t2 - jvar->t1 + 1;
+    if (restricted(jvar)) {
+	vk++;
+    }
 
-    jvar->jinfo->u = gretl_matrix_alloc(jvar->neqns, T);
-    if (jvar->jinfo->u == NULL) {
-	err = E_ALLOC;
-    } else {
-	int vk = jvar->neqns;
-
-	if (jcode(jvar) == J_REST_CONST || jcode(jvar) == J_REST_TREND) {
-	    vk++;
-	}	
+    if (gretl_matrix_rows(jvar->jinfo->v) < vk) {
+	gretl_matrix_free(jvar->jinfo->v);
 	jvar->jinfo->v = gretl_matrix_alloc(vk, T);
 	if (jvar->jinfo->v == NULL) {
 	    gretl_matrix_free(jvar->jinfo->u);
