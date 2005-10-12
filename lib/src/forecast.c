@@ -2055,7 +2055,7 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
 {
     FITRESID *fr;
     const gretl_matrix *F;
-    const MODEL *pmod;
+    const MODEL *pmod = NULL;
     int nf = t2 - t1 + 1;
     int yno, nobs = nf + pre_n;
     int m, s, t;
@@ -2064,9 +2064,11 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
 	return NULL;
     }
 
-    pmod = gretl_VAR_get_model(var, i);
-    if (pmod == NULL) {
-	return NULL;
+    if (!var->ecm) {
+	pmod = gretl_VAR_get_model(var, i);
+	if (pmod == NULL) {
+	    return NULL;
+	}
     }
 
     F = gretl_VAR_get_forecast_matrix(var, t1, t2, Z, pdinfo, opt);
@@ -2092,17 +2094,27 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
     fr->t2 = t2;
     fr->pre_n = pre_n;  
 
-    yno = pmod->list[1];
+    if (var->ecm) {
+	yno = var->jinfo->list[i+1];
+    } else {
+	yno = pmod->list[1];
+    }
+
     strcpy(fr->depvar, pdinfo->varname[yno]);
 
-    m = gretl_VAR_get_n_equations(var);
+    m = var->neqns;
+
+    if (var->ecm) {
+	/* FIXME */
+	pre_n = 0;
+    }
 
     nf = 0;
     for (s=0; s<fr->nobs; s++) {
 	t = s + fr->t1 - fr->pre_n;
 	fr->actual[s] = Z[yno][t];
 	if (s < fr->pre_n) {
-	    fr->fitted[s] = pmod->yhat[t];
+	    fr->fitted[s] = pmod->yhat[t]; /* FIXME ecm */
 	    if (fr->sderr != NULL) {
 		fr->sderr[s] = NADBL;
 	    }
@@ -2120,10 +2132,14 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
     if (nf == 0) {
 	fr->err = E_MISSDATA;
     } else {
-	fr->tval = tcrit95(pmod->dfd);
+	if (pmod != NULL) {
+	    fr->df = pmod->dfd;
+	} else {
+	    fr->df = var->T;
+	}	
+	fr->tval = tcrit95(fr->df);
 	fit_resid_set_dec_places(fr);
 	strcpy(fr->depvar, pdinfo->varname[yno]);
-	fr->df = pmod->dfd;
     }
 
     fr->t1 -= pre_n;

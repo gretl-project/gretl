@@ -3319,7 +3319,7 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	}
 	dyn_ok = 1;
     } else {
-	t1 = 0;
+	t1 = var->order + var->ecm;
 	pre_n = 0;
 	dyn_ok = 0;
     }
@@ -3563,17 +3563,15 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 	char maj[32], min[16];
 	int dv;
 
-	if (!vecm) {
-	    /* forecast items (doesn't yet work for VECMs) */
-	    dv = gretl_VAR_get_variable_number(var, i);
-	    varitem.path = g_strdup_printf("%s/%s", _(fpath), 
-					   datainfo->varname[dv]);
-	    varitem.callback = VAR_forecast_callback;
-	    varitem.callback_action = i;
-	    varitem.item_type = NULL;
-	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	    g_free(varitem.path);
-	}
+	/* forecast items */
+	dv = gretl_VAR_get_variable_number(var, i);
+	varitem.path = g_strdup_printf("%s/%s", _(fpath), 
+				       datainfo->varname[dv]);
+	varitem.callback = VAR_forecast_callback;
+	varitem.callback_action = i;
+	varitem.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	g_free(varitem.path);
 
 	/* save resids items */
 	varitem.path = g_strdup_printf("%s/%s %d", _(dpath), 

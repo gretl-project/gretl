@@ -451,16 +451,28 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 		    } else {
 			y = Z[vj][t-k-1];
 		    }
-		    fti += bij * y;
+		    if (na(y)) {
+			fti = NADBL;
+		    } else {
+			fti += bij * y;
+		    }
 		}
 	    }
+
+	    if (na(fti)) goto set_fcast;
 
 	    /* exogenous vars, if present */
 	    for (j=0; j<nexo; j++) {
 		vj = var->jinfo->exolist[j+1];
 		bij = gretl_matrix_get(B, i, col++);
-		fti += bij * Z[vj][t];
+		if (na(Z[vj][t])) {
+		    fti = NADBL;
+		} else {
+		    fti += bij * Z[vj][t];
+		}
 	    }
+
+	    if (na(fti)) goto set_fcast;
 
 	    /* seasonals, if present */
 	    for (j=0; j<nseas; j++) {
@@ -480,6 +492,8 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 		bij = gretl_matrix_get(B, i, col);
 		fti += bij * t;
 	    }
+	    
+	set_fcast:
 
 	    gretl_matrix_set(F, t - t1, i, fti);
 	}
