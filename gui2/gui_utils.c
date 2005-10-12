@@ -3324,6 +3324,8 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	dyn_ok = 0;
     }
 
+    /* FIXME pre_n with static fcast? */
+
     resp = forecast_dialog(t1, t1, &t1,
 			   t1, t2, &t2,
 			   0, premax, &pre_n,
@@ -3338,7 +3340,7 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	opt = OPT_S;
     }
 
-    fr = get_VAR_forecast(var, i, t1, t2, pre_n, (const double **) Z, 
+    fr = get_VAR_forecast(var, i, t1 - pre_n, t2, pre_n, (const double **) Z, 
 			  datainfo, opt);
 
     if (fr == NULL) {

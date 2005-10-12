@@ -278,8 +278,9 @@ void gretl_VAR_free_unnamed (GRETL_VAR *var)
 }
 
 static int
-gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z, 
-			const DATAINFO *pdinfo, gretlopt opt)
+gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
+			const double **Z, const DATAINFO *pdinfo, 
+			gretlopt opt)
 {
     const MODEL *pmod;
     gretl_matrix *F;
@@ -318,7 +319,7 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 		vj = pmod->list[j + 2];
 		if (j < ns + pmod->ifc && vj > 0) {
 		    /* stochastic var */
-		    if (staticfc || s - lag < 0) {
+		    if (s < pre_obs || staticfc || s - lag < 0) {
 			/* pre-forecast value */
 			m = (j - pmod->ifc) / var->order;
 			vj = var->models[m]->list[1];
@@ -364,12 +365,16 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 	for (i=0; i<var->neqns; i++) {
 	    gretl_matrix *vd;
 
-	    vd = gretl_VAR_get_fcast_decomp(var, i, nf);
+	    vd = gretl_VAR_get_fcast_decomp(var, i, nf - pre_obs);
 	    if (vd != NULL) {
 		totcol = gretl_matrix_cols(vd) - 1;
 		for (s=0; s<nf; s++) {
-		    vti = gretl_matrix_get(vd, s, totcol);
-		    gretl_matrix_set(F, s, var->neqns + i, vti);
+		    if (s < pre_obs) {
+			gretl_matrix_set(F, s, var->neqns + i, NADBL);
+		    } else {
+			vti = gretl_matrix_get(vd, s, totcol);
+			gretl_matrix_set(F, s, var->neqns + i, vti);
+		    }
 		}
 		gretl_matrix_free(vd);
 	    } else {
@@ -391,8 +396,9 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 }
 
 static int
-gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z, 
-			 DATAINFO *pdinfo, gretlopt opt)
+gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
+			 const double **Z, DATAINFO *pdinfo, 
+			 gretlopt opt)
 {
     gretl_matrix *F;
     gretl_matrix *B;
@@ -402,11 +408,11 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
     int nseas = var->jinfo->seasonals;
     int nf = t2 - t1 + 1;
     int staticfc = (opt & OPT_S);
-    int i, j, k, vj, t;
+    int i, j, k, vj, s, t;
     int fcols, d0 = 0;
 
     if (nseas > 0) {
-	/* find where the seasonal dummies are */
+	/* find out where the seasonal dummies are */
 	d0 = dummy(NULL, pdinfo, 1);
 	if (d0 < 0) {
 	    return E_DATA;
@@ -429,6 +435,8 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 
     for (t=t1; t<=t2; t++) {
 
+	s = t - t1;
+
 	for (i=0; i<var->neqns; i++) {
 	    double y, bij, fti = 0.0;
 	    int ft, col = 0;
@@ -444,8 +452,8 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 		vj = var->jinfo->list[j+1];
 		for (k=0; k<order; k++) {
 		    bij = gretl_matrix_get(B, i, col++);
-		    ft = t - k - 1 - t1;
-		    if (ft >= 0 && !staticfc) {
+		    ft = s - k - 1;
+		    if (s >= pre_obs && ft >= 0 && !staticfc) {
 			/* use prior forecast if available */
 			y = gretl_matrix_get(F, ft, j);
 		    } else {
@@ -495,9 +503,11 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 	    
 	set_fcast:
 
-	    gretl_matrix_set(F, t - t1, i, fti);
+	    gretl_matrix_set(F, s, i, fti);
 	}
     }
+
+    /* forecast variances? */
 
     gretl_matrix_free(B);
 
@@ -512,8 +522,9 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, const double **Z,
 }
 
 const gretl_matrix *
-gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, const double **Z, 
-			       DATAINFO *pdinfo, gretlopt opt)
+gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, int pre_obs,
+			       const double **Z, DATAINFO *pdinfo, 
+			       gretlopt opt)
 {
     if (var->F != NULL) {
 	int ncols, nf = t2 - t1 + 1;
@@ -532,9 +543,9 @@ gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, const double **Z,
 
     if (var->F == NULL) {
 	if (var->ecm) {
-	    gretl_VECM_add_forecast(var, t1, t2, Z, pdinfo, opt);
+	    gretl_VECM_add_forecast(var, t1, t2, pre_obs, Z, pdinfo, opt);
 	} else {
-	    gretl_VAR_add_forecast(var, t1, t2, Z, pdinfo, opt);
+	    gretl_VAR_add_forecast(var, t1, t2, pre_obs, Z, pdinfo, opt);
 	}
     }
 

@@ -556,26 +556,68 @@ static int reallocate_markers (DATAINFO *pdinfo, int n)
     return 0;
 }
 
-/* FIXME allow for centered dummies */
+/* Allow for the possibility of centered seasonal dummies: usually
+   xon = 1 and xoff = 0, but in the centered case xon = 1 - 1/pd 
+   and xoff = -1/pd.
+*/
+
+static int get_xon_xoff (const double *x, int n, int pd, double *xon, double *xoff)
+{
+    double cfac = 1.0 / pd;
+    double xc = 1.0 - cfac, yc = -cfac;
+    double x0 = 999, y0 = 999;
+    int t, ret = 1;
+
+    for (t=0; t<n && ret; t++) {
+	if (x[t] == 1.0) {
+	    if (x0 == 999) x0 = 1.0;
+	    else if (x[t] != x0) ret = 0;
+	} else if (x[t] == 0.0) {
+	    if (y0 == 999) y0 = 0.0;
+	    else if (x[t] != y0) ret = 0;
+	} else if (x[t] == xc) {
+	    if (x0 == 999) x0 = xc;
+	    else if (x[t] != x0) ret = 0;
+	} else if (x[t] == yc) {
+	    if (y0 == 999) y0 = yc;
+	    else if (x[t] != y0) ret = 0;
+	} else {
+	    ret = 0;
+	}
+    }
+
+    if (ret) {
+	*xon = x0;
+	*xoff = y0;
+    }
+
+    return ret;
+}
 
 static int real_periodic_dummy (const double *x, int n,
-				int *pd, int *offset,
-				int *trail)
+				int *pd, int *offset, 
+				double *pxon, double *pxoff)
 {
-    int onebak = 0;
+    double xon = 1.0, xoff = 0.0;
+    int onbak = 0;
     int gap = 0;
+    int trail = 0;
     int t, m = n - 1, ret = 1;
+
+    if (!get_xon_xoff(x, n, *pd, &xon, &xoff)) {
+	return 0;
+    }
 
     *pd = -1;
     *offset = -1;
-    *trail = 0;
+    trail = 0;
 
-    /* find number of trailing zeros */
+    /* find number of trailing "off" values */
     for (t=n-1; t>0; t--) {
-	if (x[t] == 0.0) {
-	    *trail += 1;
+	if (x[t] == xoff) {
+	    trail++;
 	} else {
-	    if (x[t] == 1.0) {
+	    if (x[t] == xon) {
 		m = t;
 	    } else {
 		ret = 0;
@@ -586,11 +628,11 @@ static int real_periodic_dummy (const double *x, int n,
 
     /* check for dummyhood and periodicity */
     for (t=0; t<=m && ret; t++) {
-	if (x[t] == 0.0) {
-	    onebak = 0;
+	if (x[t] == xoff) {
+	    onbak = 0;
 	    gap++;
-	} else if (x[t] == 1.0) {
-	    if (onebak) {
+	} else if (x[t] == xon) {
+	    if (onbak) {
 		ret = 0;
 	    } else if (*offset < 0) {
 		*offset = gap;
@@ -601,15 +643,20 @@ static int real_periodic_dummy (const double *x, int n,
 		}
 	    } else if (gap != *pd - 1) {
 		ret = 0;
-	    } else if (gap < *trail) {
+	    } else if (gap < trail) {
 		ret = 0;
 	    }
 	    gap = 0;
-	    onebak = 1;
+	    onbak = 1;
 	} else {
 	    ret = 0;
 	    break;
 	}
+    }
+
+    if (ret && pxon != NULL && pxoff != NULL) {
+	*pxon = xon;
+	*pxoff = xoff;
     }
 
     return ret;
@@ -624,24 +671,14 @@ static int real_periodic_dummy (const double *x, int n,
  * 0 otherwise.
  */
 
-int is_periodic_dummy (const double *x, int n)
+int is_periodic_dummy (const double *x, const DATAINFO *pdinfo)
 {
-    int pd, offset, trail;
+    int offset, pd = pdinfo->pd;
 
-    return real_periodic_dummy(x, n, &pd, &offset, &trail);
+    return real_periodic_dummy(x, pdinfo->n, &pd, &offset, NULL, NULL);
 }
 
-/**
- * is_trend_variable:
- * @x: array to examine.
- * @n: number of elements in array.
- *
- * Returns: 1 if @x is a simple linear trend variable, with each
- * observation equal to the preceding observation plus 1, 
- * 0 otherwise.
- */
-
-int is_trend_variable (const double *x, int n)
+static int is_linear_trend (const double *x, int n)
 {
     int t, ret = 1;
     
@@ -655,33 +692,76 @@ int is_trend_variable (const double *x, int n)
     return ret;
 }
 
+static int is_quadratic_trend (const double *x, int n)
+{
+    double t2;
+    int t, ret = 1;
+    
+    for (t=0; t<n; t++) {
+	t2 = (t + 1) * (t + 1);
+	if (x[t] != t2) {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+/**
+ * is_trend_variable:
+ * @x: array to examine.
+ * @n: number of elements in array.
+ *
+ * Returns: 1 if @x is a simple linear trend variable, with each
+ * observation equal to the preceding observation plus 1, or
+ * if @x is a quadratic trend starting at 1 for the first 
+ * observation in the data set, and 0 otherwise.
+ */
+
+int is_trend_variable (const double *x, int n)
+{
+    int ret = 0;
+
+    if (is_linear_trend(x, n)) {
+	ret = 1;
+    } else if (is_quadratic_trend(x, n)) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
 static void 
 maybe_extend_trends (double **Z, const DATAINFO *pdinfo, int oldn)
 {
     int i, t;
 
     for (i=1; i<pdinfo->v; i++) {
-	if (is_trend_variable(Z[i], oldn)) {
+	if (is_linear_trend(Z[i], oldn)) {
 	    for (t=oldn; t<pdinfo->n; t++) {
 		Z[i][t] = Z[i][t-1] + 1.0;
 	    }
-	}
+	} else if (is_quadratic_trend(Z[i], oldn)) {
+	    for (t=oldn; t<pdinfo->n; t++) {
+		Z[i][t] = (t + 1) * (t + 1);
+	    }
+	}	    
     }
 }
 
 static void 
 maybe_extend_dummies (double **Z, const DATAINFO *pdinfo, int oldn)
 {
-    int pd, offset, trail;
+    int pd = pdinfo->pd;
+    double xon = 1.0, xoff = 0.0;
+    int offset;
     int i, t;
 
-    for (i=0; i<pdinfo->v; i++) {
-	if (real_periodic_dummy(Z[i], oldn, &pd, &offset, &trail)) {
-	    int s = pd - offset;
-
+    for (i=1; i<pdinfo->v; i++) {
+	if (real_periodic_dummy(Z[i], oldn, &pd, &offset, &xon, &xoff)) {
 	    for (t=oldn; t<pdinfo->n; t++) {
-		Z[i][t] = (s % pd)? 0.0 : 1.0;
-		s++;
+		Z[i][t] = ((t - offset) % pd)? xoff : xon;
 	    }
 	}
     }
@@ -694,8 +774,10 @@ maybe_extend_dummies (double **Z, const DATAINFO *pdinfo, int oldn)
  * @pdinfo: dataset information.
  *
  * Extends all series in the dataset by the specified number of
- * extra observations, and initializes all the added values to
- * the missing value code, #NADBL.
+ * extra observations.  The added values are initialized to
+ * the missing value code, #NADBL, with the exception of
+ * simple deterministic variables such as a time trend and
+ * periodic dummy variables, which are extrapolated.
  *
  * Returns: 0 on success, %E_ALLOC on error.
  */

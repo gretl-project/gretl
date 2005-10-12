@@ -360,7 +360,7 @@ has_real_exog_regressors (MODEL *pmod, const int *dvlags,
 	    if (xi != 0 && (dvlags == NULL || dvlags[i] == 0)) {
 		if (is_trend_variable(Z[xi], pdinfo->n)) {
 		    continue;
-		} else if (is_periodic_dummy(Z[xi], pdinfo->n)) {
+		} else if (is_periodic_dummy(Z[xi], pdinfo)) {
 		    continue;
 		} else {
 		    ret = 1;
@@ -381,7 +381,7 @@ static int
 fit_resid_init (int t1, int t2, int pre_n, const MODEL *pmod, 
 		const DATAINFO *pdinfo, FITRESID *fr)
 {
-    if (pre_n > t1) {
+    if (pre_n > t1) { /* is this right? */
 	pre_n = t1;
     }
 
@@ -2031,8 +2031,8 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
  * @i: 0-based index for the variable to forecast, within
  * the VAR system (the dependent variable in the ith equation,
  * counting from 0).
- * @t1: start of forecast range.
- * @t2: end of forecast range.
+ * @t1: start of range.
+ * @t2: end of range.
  * @pre_n: number of pre-forecast observations to display.
  * @Z: data array using which @var was estimated.
  * @pdinfo: dataset information.
@@ -2043,6 +2043,8 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
  *
  * Allocates a #FITRESID structure and fills it out with forecasts
  * based on @var, over the specified range of observations.  
+ * The first @pre_n observations, starting at @t1, will be not
+ * contain forecasts (FIXME).
  * 
  * Returns: pointer to allocated structure, or %NULL on failure.
  * The %err member of the returned object should be checked:
@@ -2057,8 +2059,7 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
     const gretl_matrix *F;
     const MODEL *pmod = NULL;
     int nf = t2 - t1 + 1;
-    int yno, nobs = nf + pre_n;
-    int m, s, t;
+    int yno, m, s, t;
 
     if (nf <= 0) {
 	return NULL;
@@ -2071,13 +2072,13 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
 	}
     }
 
-    F = gretl_VAR_get_forecast_matrix(var, t1, t2, Z, pdinfo, opt);
+    F = gretl_VAR_get_forecast_matrix(var, t1, t2, pre_n, Z, pdinfo, opt);
     if (F == NULL) {
 	fprintf(stderr, "gretl_VAR_get_forecast_matrix() gave NULL\n");
 	return NULL;
     }
 
-    fr = fit_resid_new(nobs);
+    fr = fit_resid_new(nf);
     if (fr == NULL) {
 	return NULL;
     }
@@ -2090,9 +2091,9 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
     }
 
     fr->model_ci = VAR;
+    fr->pre_n = pre_n;
     fr->t1 = t1;
     fr->t2 = t2;
-    fr->pre_n = pre_n;  
 
     if (var->ecm) {
 	yno = var->jinfo->list[i+1];
@@ -2104,45 +2105,31 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
 
     m = var->neqns;
 
-    if (var->ecm) {
-	/* FIXME */
-	pre_n = 0;
-    }
-
     nf = 0;
     for (s=0; s<fr->nobs; s++) {
-	t = s + fr->t1 - fr->pre_n;
+	t = s + fr->t1;
 	fr->actual[s] = Z[yno][t];
-	if (s < fr->pre_n) {
-	    fr->fitted[s] = pmod->yhat[t]; /* FIXME ecm */
-	    if (fr->sderr != NULL) {
-		fr->sderr[s] = NADBL;
-	    }
-	} else {
-	    fr->fitted[s] = gretl_matrix_get(F, s - pre_n, i);
-	    if (!na(fr->fitted[s])) {
-		nf++;
-	    }
-	    if (fr->sderr != NULL) {
-		fr->sderr[s] = gretl_matrix_get(F, s - pre_n, i + m);
-	    }
+	fr->fitted[s] = gretl_matrix_get(F, s, i);
+	if (!na(fr->fitted[s])) {
+	    nf++;
+	}
+	if (fr->sderr != NULL) {
+	    fr->sderr[s] = gretl_matrix_get(F, s, i + m);
 	}
     }
 
     if (nf == 0) {
 	fr->err = E_MISSDATA;
     } else {
-	if (pmod != NULL) {
-	    fr->df = pmod->dfd;
-	} else {
+	if (var->ecm) {
 	    fr->df = var->T;
-	}	
+	} else {
+	    fr->df = pmod->dfd;
+	} 
 	fr->tval = tcrit95(fr->df);
 	fit_resid_set_dec_places(fr);
 	strcpy(fr->depvar, pdinfo->varname[yno]);
     }
-
-    fr->t1 -= pre_n;
 
     return fr;
 }
