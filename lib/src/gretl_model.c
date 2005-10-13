@@ -1145,6 +1145,62 @@ MODEL *gretl_model_new (void)
     return pmod;
 }
 
+/**
+ * gretl_model_array_new:
+ * @n: number of models in array.
+ * 
+ * Allocates memory for an array of @n gretl #MODEL structs and 
+ * initializes each model using gretl_model_init().
+ *
+ * Returns: pointer to models array (or %NULL if allocation fails).
+ */
+
+MODEL **gretl_model_array_new (int n)
+{
+    MODEL **models;
+    int i, j;
+
+    models = malloc(n * sizeof *models);
+
+    if (models != NULL) {
+	for (i=0; i<n; i++) {
+	    models[i] = gretl_model_new();
+	    if (models[i] == NULL) {
+		for (j=0; j<i; j++) {
+		    free(models[i]);
+		}
+		free(models);
+		models = NULL;
+		break;
+	    }
+	}
+    } 
+
+    return models;
+}
+
+/**
+ * gretl_model_array_destroy:
+ * @models: array of gretl models.
+ * @n: number of models in array.
+ * 
+ * Frees all resources associated with an array of models, which
+ * should have been obtained via gretl_model_array_new().
+ */
+
+void gretl_model_array_destroy (MODEL **models, int n)
+{
+    int i;
+
+    if (models != NULL) {
+	for (i=0; i<n; i++) {
+	    clear_model(models[i]);
+	    free(models[i]);
+	}
+	free(models);
+    }
+}
+
 static void clear_ar_info (MODEL *pmod)
 {
     if (pmod->arinfo->arlist) {

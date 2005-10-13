@@ -98,6 +98,10 @@ const gretl_matrix *system_get_q_matrix (const gretl_equation_system *sys);
 
 int system_get_method (const gretl_equation_system *sys);
 
+int gretl_system_method_from_string (const char *s);
+const char *system_method_full_string (int method);
+const char *system_method_short_string (int method);
+
 int *system_get_endog_vars (const gretl_equation_system *sys);
 int *system_get_instr_vars (const gretl_equation_system *sys);
 

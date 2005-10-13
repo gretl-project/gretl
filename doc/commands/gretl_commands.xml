@@ -1415,6 +1415,46 @@
 
   </command>
 
+  <command name="expand" section="Dataset" context="gui"
+    label="Expand data">
+
+    <description>
+
+      <para>
+	If you wish to add to a dataset a series that is of lower frequency, it
+	is necessary to <quote>expand</quote> the new series.  For instance, a
+	quarterly series will have to be expanded to fit into a monthly dataset.
+	In addition, you may sometimes want to expand an entire dataset to a
+	higher frequency (perhaps, prior to adding a higher-frequency variable
+	to the dataset).
+      </para>
+
+      <para>
+	Expansion of data should be considered an <quote>expert</quote> option:
+	you need to know what you are doing.  What gretl does is simply
+	replicate the values of the lower-frequency series as many times as
+	required.  For example, suppose we have a quarterly series with the
+	value 35.5 in 1990:1, the first quarter of 1990.  On expansion to
+	monthly, the value 35.5 will be assigned to the observations for
+	January, February and March of 1990.  The expanded variable is 
+	therefore useless for fine-grained time-series analysis, outside
+	of the special case where you know that the variable in question 
+	does in fact remain constant over the sub-periods.  
+      </para>
+
+      <para>
+	Two related commands should be mentioned here.  First, when you are
+	combining series of differing original frequencies within one dataset,
+	you should consider the option of compacting the higher-frequency data
+	rather than expanding the lower-frequency series.  This option can be
+	found under gretl's Sample menu.  Second, if you choose to expand
+	a series, you may wish to consider smoothing the result.  Various
+	options are available using the <cmd>genr</cmd> command.
+      </para>
+
+    </description>
+  </command>
+
   <command name="export" section="Dataset" context="gui"
     label="Export data">
 

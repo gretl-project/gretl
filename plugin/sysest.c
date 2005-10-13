@@ -626,31 +626,12 @@ static int basic_system_allocate (gretl_equation_system *sys,
 				  gretl_matrix **X,
 				  gretl_matrix **y)
 {
-    MODEL **pmods;
     int m = sys->n_equations;
     int T = sys->n_obs;
     int ldx = mk + nr;
-    int i, j;
-
-    sys->models = NULL;
 
     /* allocate a model for each stochastic equation */
-    pmods = malloc(m * sizeof *pmods);
-    if (pmods == NULL) {
-	return E_ALLOC;
-    }
-    for (i=0; i<m; i++) {
-	pmods[i] = gretl_model_new();
-	if (pmods[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free_model(pmods[j]);
-	    }
-	    free(pmods);
-	    return E_ALLOC;
-	}
-    }
-
-    sys->models = pmods;
+    sys->models = gretl_model_array_new(m);
 
     sys->uhat = gretl_matrix_alloc(m, T);
     if (sys->uhat == NULL) {
@@ -931,7 +912,8 @@ static void clean_up_models (gretl_equation_system *sys)
     sys->ess = ess;
 }
 
-/* general function that forms the basis for all system estimates */
+/* general function that forms the basis for all specific system
+   estimators */
 
 int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo, 
 		     gretlopt opt, PRN *prn)

@@ -24,6 +24,8 @@
 #include "menustate.h"
 #include "dlgutils.h"
 
+#include "system.h"
+
 /* Various buttons, usable in several sorts of dialogs */
 
 #ifdef OLD_GTK
@@ -451,6 +453,59 @@ static void sample_replace_buttons (GtkWidget *box, gpointer data)
     gtk_widget_show(tmp);
 }
 
+static void free_sys_strings (GtkWidget *w, char **strs)
+{
+    free_strings_array(strs,  SYS_MAX - 1); 
+}
+
+static void set_sys_method (GtkEditable *entry, dialog_t *d)
+{
+    const gchar *s = gtk_entry_get_text(GTK_ENTRY(entry));
+    
+    if (*s != '\0') {
+	char mstr[8] = {0};
+
+	s = strrchr(s, '(');
+	if (s != NULL) {
+	    sscanf(s + 1, "%7[^)]", mstr);
+	    d->opt = gretl_system_method_from_string(mstr);
+	}
+    } 
+}
+
+static void system_estimator_list (GtkWidget *vbox, gpointer data)
+{
+    GList *items = NULL;
+    GtkWidget *w, *hbox;
+    gchar **strs;
+    int i;
+
+    strs = create_strings_array(SYS_MAX - 1);
+
+    for (i=SYS_SUR; i<SYS_MAX; i++) {
+	strs[i] = g_strdup_printf("%s (%s)", _(system_method_full_string(i)),
+				  system_method_short_string(i));
+	items = g_list_append(items, strs[i]);
+    }
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    gtk_widget_show(hbox);
+
+    w = gtk_label_new(_("Estimator"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_widget_show(w);
+
+    w = gtk_combo_new();
+    gtk_combo_set_popdown_strings(GTK_COMBO(w), items); 
+    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(w)->entry), FALSE);
+    g_signal_connect(G_OBJECT(w), "destroy", G_CALLBACK(free_sys_strings), strs);
+    g_signal_connect(G_OBJECT(GTK_COMBO(w)->entry), "changed",
+		     G_CALLBACK(set_sys_method), data);
+    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
+    gtk_widget_show(w);  
+}
+
 #define dialog_help_available(c) (c != 0 && c != PRINT && \
                                   c != CREATE_USERDIR && \
                                   c != GENR_NORMAL && \
@@ -481,7 +536,8 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     top_vbox = GTK_DIALOG(d->dialog)->vbox;
     button_box = GTK_DIALOG(d->dialog)->action_area;
 
-    if (cmdcode == NLS || cmdcode == MLE || cmdcode == RESTRICT) {
+    if (cmdcode == NLS || cmdcode == MLE || 
+	cmdcode == SYSTEM || cmdcode == RESTRICT) {
 	int hsize = 62;
 	gchar *lbl;
 
@@ -509,7 +565,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 			     G_CALLBACK(okfunc), d);
 	}
 	
-	if (deftext) {
+	if (deftext != NULL && *deftext != '\0') {
 	    gtk_entry_set_text(GTK_ENTRY(d->edit), deftext);
 	    gtk_editable_select_region(GTK_EDITABLE(d->edit), 0, strlen(deftext));
 	}
@@ -519,6 +575,8 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     if (cmdcode == SMPLBOOL && dataset_is_restricted()) {
 	sample_replace_buttons(top_vbox, d);
+    } else if (cmdcode == SYSTEM) {
+	system_estimator_list(top_vbox, d);
     }
 
     if (varclick == VARCLICK_INSERT_ID) { 

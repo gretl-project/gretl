@@ -117,12 +117,22 @@ enum {
     SAVEFILE_ERROR
 } savefile_returns;
 
-enum {
+typedef enum {
     OBJ_UNKNOWN,
+    OBJ_DATASET,
+    OBJ_INFO,
+    OBJ_STATS,
+    OBJ_CORR,
+    OBJ_SCRIPT,
+    OBJ_NOTES,
+    OBJ_MODTAB,
+    OBJ_GPAGE,
     OBJ_MODEL,
     OBJ_GRAPH,
-    OBJ_PLOT
-} saved_object_types;
+    OBJ_PLOT,
+    OBJ_VAR,
+    OBJ_TEXT
+} SessionObjType;
 
 static GtkTargetEntry session_drag_targets[] = {
     { "model_pointer", GTK_TARGET_SAME_APP, GRETL_MODEL_POINTER },
@@ -400,7 +410,7 @@ int real_add_graph_to_session (const char *fname, const char *grname,
 
     if (icon_list != NULL && !replace) {
 	session_add_icon(session.graphs[ng], 
-			 (code == GRETL_GNUPLOT_GRAPH)? 'g' : 'b',
+			 (code == GRETL_GNUPLOT_GRAPH)? OBJ_GRAPH : OBJ_PLOT,
 			 ICON_ADD_SINGLE);
     }
 
@@ -495,7 +505,7 @@ static int real_add_model_to_session (MODEL *pmod)
 
     /* add model icon to session display */
     if (icon_list != NULL) {
-	session_add_icon(session.models[nm], 'm', ICON_ADD_SINGLE);
+	session_add_icon(session.models[nm], OBJ_MODEL, ICON_ADD_SINGLE);
     }    
 
     return 0;
@@ -517,7 +527,7 @@ static int real_add_var_to_session (GRETL_VAR *var)
 
     /* add var icon to session display */
     if (icon_list != NULL) {
-	session_add_icon(session.vars[nv], 'v', ICON_ADD_SINGLE);
+	session_add_icon(session.vars[nv], OBJ_VAR, ICON_ADD_SINGLE);
     }    
 
     return 0;
@@ -562,40 +572,40 @@ int real_add_text_to_session (PRN *prn, const char *tname)
     session_changed(1);
 
     if (icon_list != NULL && !replace) {
-	session_add_icon(session.texts[nt], 'x', ICON_ADD_SINGLE);
+	session_add_icon(session.texts[nt], OBJ_TEXT, ICON_ADD_SINGLE);
     }
 
     return (replace)? ADD_OBJECT_REPLACE : ADD_OBJECT_OK;
 }
 
-void *get_session_object_by_name (const char *name, char *which)
+void *get_session_object_by_name (const char *name, int *which)
 {
     int i;
 
     for (i=0; i<session.nmodels; i++) {
 	if (strcmp(name, (session.models[i])->name) == 0) {
-	    *which = 'm';
+	    *which = OBJ_MODEL;
 	    return session.models[i];
 	}
     }
 
     for (i=0; i<session.nvars; i++) {
 	if (strcmp(name, gretl_VAR_get_name(session.vars[i])) == 0) {
-	    *which = 'v';
+	    *which = OBJ_VAR;
 	    return session.vars[i];
 	}
     }
 
     for (i=0; i<session.ngraphs; i++) {
 	if (strcmp(name, (session.graphs[i])->name) == 0) {
-	    *which = 'g';
+	    *which = OBJ_GRAPH;
 	    return session.graphs[i];
 	}
     }
 
     for (i=0; i<session.ntexts; i++) {
 	if (strcmp(name, (session.texts[i])->name) == 0) {
-	    *which = 'x';
+	    *which = OBJ_TEXT;
 	    return session.texts[i];
 	}
     }
@@ -1257,6 +1267,8 @@ int parse_savefile (const char *fname)
 	    objtype = saved_object_type(objstr);
 	}
 
+	/* FIXME types other than models, graphs? */
+
 	if (objtype == OBJ_MODEL) {
 	    if (grab_model_from_session_file(fline, id)) {
 		err = 1;
@@ -1624,17 +1636,13 @@ static int delete_session_object (gui_obj *obj)
 {
     gpointer junk = obj->data;
 
-    if (obj->sort == 'm') { 
-	/* it's a model */
+    if (obj->sort == OBJ_MODEL) { 
 	real_delete_model_from_session(junk);
-    } else if (obj->sort == 'v') { 
-	/* it's a VAR */
+    } else if (obj->sort == OBJ_VAR) { 
 	real_delete_var_from_session(junk);
-    } else if (obj->sort == 'g' || obj->sort == 'b') { 
-	/* it's a graph */    
+    } else if (obj->sort == OBJ_GRAPH || obj->sort == OBJ_PLOT) { 
 	real_delete_graph_from_session(junk);
-    } else if (obj->sort == 'x') { 
-	/* it's a piece of text output */    
+    } else if (obj->sort == OBJ_TEXT) { 
 	real_delete_text_from_session(junk);
     }
 
@@ -1695,14 +1703,11 @@ static void rename_session_graph (GRAPHT *graph, const char *newname)
 
 static void rename_session_object (gui_obj *obj, const char *newname)
 {
-    if (obj->sort == 'm') { 
-	/* it's a model */
+    if (obj->sort == OBJ_MODEL) { 
 	rename_session_model(obj->data, newname);
-    } else if (obj->sort == 'v') { 
-	/* it's a VAR */
+    } else if (obj->sort == OBJ_VAR) { 
 	rename_session_var(obj->data, newname);
-    } else if (obj->sort == 'g' || obj->sort == 'b') { 
-	/* it's a graph */    
+    } else if (obj->sort == OBJ_GRAPH || obj->sort == OBJ_PLOT) { 
 	rename_session_graph(obj->data, newname);
     }
 
@@ -1988,18 +1993,18 @@ static void add_all_icons (void)
     active_object = NULL;
 
     if (data_status) {
-	session_add_icon(NULL, 'i', ICON_ADD_BATCH);     /* data info */
-	session_add_icon(NULL, 'd', ICON_ADD_BATCH);     /* data file */
-	session_add_icon(NULL, 'n', ICON_ADD_BATCH);     /* session notes */
-	session_add_icon(NULL, 's', ICON_ADD_BATCH);     /* summary stats */
-	session_add_icon(NULL, 'r', ICON_ADD_BATCH);     /* correlation matrix */
-	session_add_icon(NULL, 't', ICON_ADD_BATCH);     /* model table */
+	session_add_icon(NULL, OBJ_INFO,    ICON_ADD_BATCH);  /* data info */
+	session_add_icon(NULL, OBJ_DATASET, ICON_ADD_BATCH);  /* data file */
+	session_add_icon(NULL, OBJ_NOTES,   ICON_ADD_BATCH);  /* session notes */
+	session_add_icon(NULL, OBJ_STATS,   ICON_ADD_BATCH);  /* summary stats */
+	session_add_icon(NULL, OBJ_CORR,    ICON_ADD_BATCH);  /* correlation matrix */
+	session_add_icon(NULL, OBJ_MODTAB,  ICON_ADD_BATCH);  /* model table */
 	if (show_graph_page) {
-	    session_add_icon(NULL, 'q', ICON_ADD_BATCH); /* graph page */
+	    session_add_icon(NULL, OBJ_GPAGE, ICON_ADD_BATCH); /* graph page */
 	}
     }
 
-    session_add_icon(NULL, 'p', ICON_ADD_BATCH);         /* script file */
+    session_add_icon(NULL, OBJ_SCRIPT, ICON_ADD_BATCH);        /* script file */
 
 #ifdef SESSION_DEBUG
     print_session("view_session");
@@ -2009,14 +2014,14 @@ static void add_all_icons (void)
 #ifdef SESSION_DEBUG
 	fprintf(stderr, "adding session.models[%d] to view\n", i);
 #endif
-	session_add_icon(session.models[i], 'm', ICON_ADD_BATCH);
+	session_add_icon(session.models[i], OBJ_MODEL, ICON_ADD_BATCH);
     }
 
     for (i=0; i<session.nvars; i++) {
 #ifdef SESSION_DEBUG
 	fprintf(stderr, "adding session.vars[%d] to view\n", i);
 #endif
-	session_add_icon(session.vars[i], 'v', ICON_ADD_BATCH);
+	session_add_icon(session.vars[i], OBJ_VAR, ICON_ADD_BATCH);
     }
 
     for (i=0; i<session.ngraphs; i++) {
@@ -2026,7 +2031,7 @@ static void add_all_icons (void)
 #endif
 	/* distinguish gnuplot graphs from gretl boxplots */
 	session_add_icon(session.graphs[i], 
-			 ((session.graphs[i])->sort == GRETL_BOXPLOT)? 'b' : 'g',
+			 ((session.graphs[i])->sort == GRETL_BOXPLOT)? OBJ_PLOT : OBJ_GRAPH,
 			 ICON_ADD_BATCH);
     }
 
@@ -2034,7 +2039,7 @@ static void add_all_icons (void)
 #ifdef SESSION_DEBUG
 	fprintf(stderr, "adding session.texts[%d] to view\n", i);
 #endif
-	session_add_icon(session.texts[i], 'x', ICON_ADD_BATCH);
+	session_add_icon(session.texts[i], OBJ_TEXT, ICON_ADD_BATCH);
     }
 
     batch_pack_icons();
@@ -2067,32 +2072,32 @@ static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
     active_object = gobj;
 
     switch (gobj->sort) {
-    case 'm': 
+    case OBJ_MODEL: 
 	w = model_popup; 
 	break;
-    case 't': 
+    case OBJ_MODTAB: 
 	w = model_table_popup;
 	break;
-    case 'q':
+    case OBJ_GPAGE:
 	w = graph_page_popup; 
 	break;
-    case 'v': 
-    case 'x':
+    case OBJ_VAR: 
+    case OBJ_TEXT:
 	w = var_popup; 
 	break;
-    case 'g': 
+    case OBJ_GRAPH: 
 	w = graph_popup; 
 	break;
-    case 'b': 
+    case OBJ_PLOT: 
 	w = boxplot_popup; 
 	break;
-    case 'd': 
+    case OBJ_DATASET: 
 	w = data_popup; 
 	break;
-    case 'i': 
+    case OBJ_INFO: 
 	w = info_popup; 
 	break;
-    case 'p': 
+    case OBJ_SCRIPT: 
 	w = session_popup; 
 	break;
     default: 
@@ -2147,41 +2152,42 @@ static gboolean session_icon_click (GtkWidget *widget,
 
     if (event->type == GDK_2BUTTON_PRESS) {
 	switch (gobj->sort) {
-	case 'm':
+	case OBJ_MODEL:
 	    open_gui_model(gobj); break;
-	case 'v':
+	case OBJ_VAR:
 	    open_gui_var(gobj); break;
-	case 'b':
+	case OBJ_PLOT:
 	    open_boxplot(gobj); break;
-	case 'g':
+	case OBJ_GRAPH:
 	    open_gui_graph(gobj); break;
-	case 'x':
+	case OBJ_TEXT:
 	    open_gui_text(gobj); break;
-	case 'd':
+	case OBJ_DATASET:
 	    show_spreadsheet(SHEET_EDIT_DATASET); break;
-	case 'i':
+	case OBJ_INFO:
 	    open_info(NULL, 0, NULL); break;
-	case 'p':
+	case OBJ_SCRIPT:
 	    view_script_default(); break;
-	case 'n':
+	case OBJ_NOTES:
 	    edit_session_notes(); break;
-	case 't':
+	case OBJ_MODTAB:
 	    display_model_table_wrapper(); break;
-	case 'q':
+	case OBJ_GPAGE:
 	    display_graph_page(); break;
-	case 'r':
+	case OBJ_CORR:
 	    do_menu_op(NULL, CORR, NULL); break;
-	case 's':
+	case OBJ_STATS:
 	    do_menu_op(NULL, SUMMARY, NULL); break;
 	}
 	return TRUE;
     }
 
     if (mods & GDK_BUTTON3_MASK) {
-	if (gobj->sort == 'm' || gobj->sort == 'g' || gobj->sort == 'x' || 
-	    gobj->sort == 'd' || gobj->sort == 'i' || gobj->sort == 'q' ||
-	    gobj->sort == 'p' || gobj->sort == 'b' || 
-	    gobj->sort == 't' || gobj->sort == 'v') {
+	if (gobj->sort == OBJ_MODEL  || gobj->sort == OBJ_GRAPH || 
+	    gobj->sort == OBJ_TEXT   || gobj->sort == OBJ_DATASET || 
+	    gobj->sort == OBJ_INFO   || gobj->sort == OBJ_GPAGE ||
+	    gobj->sort == OBJ_SCRIPT || gobj->sort == OBJ_PLOT || 
+	    gobj->sort == OBJ_MODTAB || gobj->sort == OBJ_VAR) {
 	    object_popup_show(gobj, (GdkEventButton *) event);
 	}
 	return TRUE;
@@ -2242,57 +2248,57 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     obj = active_object;
 
     if (strcmp(item, _("Display")) == 0) {
-	if (obj->sort == 'm') {
+	if (obj->sort == OBJ_MODEL) {
 	    open_gui_model(obj);
-	} else if (obj->sort == 'v') {
+	} else if (obj->sort == OBJ_VAR) {
 	    open_gui_var(obj);
-	} else if (obj->sort == 'x') {
+	} else if (obj->sort == OBJ_TEXT) {
 	    open_gui_text(obj);
-	} else if (obj->sort == 't') {
+	} else if (obj->sort == OBJ_MODTAB) {
 	    display_model_table_wrapper();
-	} else if (obj->sort == 'q') {
+	} else if (obj->sort == OBJ_GPAGE) {
 	    display_graph_page();
-	} else if (obj->sort == 'g') {
+	} else if (obj->sort == OBJ_GRAPH) {
 	    open_gui_graph(obj);
-	} else if (obj->sort == 'b') {
+	} else if (obj->sort == OBJ_PLOT) {
 	    open_boxplot(obj);
 	}
     } else if (strcmp(item, _("Edit plot commands")) == 0) {
-	if (obj->sort == 'g' || obj->sort == 'b') {
+	if (obj->sort == OBJ_GRAPH || obj->sort == OBJ_PLOT) {
 	    GRAPHT *graph = (GRAPHT *) obj->data;
 
 	    remove_png_term_from_plotfile(graph->fname, NULL);
 	    view_file(graph->fname, 1, 0, 78, 400, 
-		      (obj->sort == 'g')? GR_PLOT : GR_BOX);
+		      (obj->sort == OBJ_GRAPH)? GR_PLOT : GR_BOX);
 	}
     } else if (strcmp(item, _("Delete")) == 0) {
 	maybe_delete_session_object(obj);
     } else if (strcmp(item, _("Add to model table")) == 0) {
-	if (obj->sort == 'm') {
+	if (obj->sort == OBJ_MODEL) {
 	    MODEL *pmod = (MODEL *) obj->data;
 	    add_to_model_table_list((const MODEL *) pmod, MODEL_ADD_FROM_MENU,
 				    NULL);
 	}
     } else if (strcmp(item, _("Clear")) == 0) {
-	if (obj->sort == 't') {
+	if (obj->sort == OBJ_MODTAB) {
 	    free_model_table_list(NULL);
-	} else if (obj->sort == 'q') {
+	} else if (obj->sort == OBJ_GPAGE) {
 	    clear_graph_page();
 	}
     } else if (strcmp(item, _("Help")) == 0) {
-	if (obj->sort == 't') {
+	if (obj->sort == OBJ_MODTAB) {
 	    context_help(NULL, GINT_TO_POINTER(MODELTAB));
-	} else if (obj->sort == 'q') {
+	} else if (obj->sort == OBJ_GPAGE) {
 	    context_help(NULL, GINT_TO_POINTER(GRAPHPAGE));
 	}
     } else if (strcmp(item, _("Options")) == 0) {
-	if (obj->sort == 't') {
+	if (obj->sort == OBJ_MODTAB) {
 	    model_table_dialog();
 	} else {
 	    dummy_call();
 	}
     } else if (strcmp(item, _("Save as TeX...")) == 0) {   
-	if (obj->sort == 'q') {
+	if (obj->sort == OBJ_GPAGE) {
 	    graph_page_save_wrapper();
 	}
     }
@@ -2344,7 +2350,7 @@ static void session_drag_setup (gui_obj *gobj)
     GtkWidget *w = GTK_WIDGET(gobj->icon);
     GtkTargetEntry *targ;
     
-    if (gobj->sort == 't') {
+    if (gobj->sort == OBJ_MODTAB) {
 	targ = &session_drag_targets[0];
     } else {
 	targ = &session_drag_targets[1];
@@ -2405,45 +2411,45 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     int icon_named = 0;
 
     switch (sort) {
-    case 'm':
+    case OBJ_MODEL:
 	pmod = (MODEL *) data;
 	name = g_strdup(pmod->name);
 	break;
-    case 'v':
+    case OBJ_VAR:
 	var = (GRETL_VAR *) data;
 	name = g_strdup(gretl_VAR_get_name(var));
 	break;
-    case 'b':
-    case 'g':
+    case OBJ_PLOT:
+    case OBJ_GRAPH:
 	graph = (GRAPHT *) data;
 	name = g_strdup(graph->name);
 	break;
-    case 'x':
+    case OBJ_TEXT:
 	text = (GRETL_TEXT *) data;
 	name = g_strdup(text->name);
 	break;
-    case 'd':
+    case OBJ_DATASET:
 	name = g_strdup(_("Data set"));
 	break;
-    case 'i':
+    case OBJ_INFO:
 	name = g_strdup(_("Data info"));
 	break;
-    case 'p':
+    case OBJ_SCRIPT:
 	name = g_strdup(_("Session"));
 	break;
-    case 'n':
+    case OBJ_NOTES:
 	name = g_strdup(_("Notes"));
 	break;
-    case 'r':
+    case OBJ_CORR:
 	name = g_strdup(_("Correlations"));
 	break;
-    case 's':
+    case OBJ_STATS:
 	name = g_strdup(_("Summary"));
 	break;
-    case 't':
+    case OBJ_MODTAB:
 	name = g_strdup(_("Model table"));
 	break;
-    case 'q':
+    case OBJ_GPAGE:
 	name = g_strdup(_("Graph page"));
 	break;
     default:
@@ -2457,13 +2463,13 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	icon_named = 1;
     }
 
-    if (sort == 'm' || sort == 'g' || sort == 'b') {
-	if (sort == 'm') {
+    if (sort == OBJ_MODEL || sort == OBJ_GRAPH || sort == OBJ_PLOT) {
+	if (sort == OBJ_MODEL) {
 	    gobj->data = pmod;
 	    model_drag_connect(gobj->icon, pmod);
 	} else {
 	    gobj->data = graph;
-	    if (sort == 'g') {
+	    if (sort == OBJ_GRAPH) {
 		graph_drag_connect(gobj->icon, graph);
 	    }
 	} 
@@ -2471,11 +2477,11 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	if (!icon_named) {
 	    char *str = NULL;
 	    
-	    if (sort == 'm') {
+	    if (sort == OBJ_MODEL) {
 		str = model_cmd_str(pmod);
-	    } else if (sort == 'g') {
+	    } else if (sort == OBJ_GRAPH) {
 		str = graph_str(graph);
-	    } else if (sort == 'b') {
+	    } else if (sort == OBJ_PLOT) {
 		str = boxplot_str(graph);
 	    }
 	    if (str != NULL) {
@@ -2485,11 +2491,11 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	}
     }	    
 
-    else if (sort == 'v') gobj->data = var;
-    else if (sort == 'x') gobj->data = text;
-    else if (sort == 'd') gobj->data = paths.datfile;
-    else if (sort == 'p') gobj->data = cmdfile;
-    else if (sort == 't') gobj->data = NULL;
+    else if (sort == OBJ_VAR)     gobj->data = var;
+    else if (sort == OBJ_TEXT)    gobj->data = text;
+    else if (sort == OBJ_DATASET) gobj->data = paths.datfile;
+    else if (sort == OBJ_SCRIPT)  gobj->data = cmdfile;
+    else if (sort == OBJ_MODTAB)  gobj->data = NULL;
 
     if (mode == ICON_ADD_SINGLE) {
 	pack_single_icon(gobj);
@@ -2965,7 +2971,7 @@ static void create_gobj_icon (gui_obj *gobj, char **xpm)
     gtk_container_add(GTK_CONTAINER(gobj->icon), image);
     gtk_widget_show(image);
 
-    if (gobj->sort == 't' || gobj->sort == 'q') {
+    if (gobj->sort == OBJ_MODTAB || gobj->sort == OBJ_GPAGE) {
 	session_drag_setup(gobj);
     }
 
@@ -2998,12 +3004,12 @@ static void create_gobj_icon (gui_obj *gobj, const char **xpm)
     gtk_container_add(GTK_CONTAINER(gobj->icon), image);
     gtk_widget_show(image);
 
-    if (gobj->sort == 't' || gobj->sort == 'q') {
+    if (gobj->sort == OBJ_MODTAB || gobj->sort == OBJ_GPAGE) {
 	session_drag_setup(gobj);
     }
 
-    if (gobj->sort == 'm' || gobj->sort == 'g' ||
-	gobj->sort == 'v' || gobj->sort == 'b') { 
+    if (gobj->sort == OBJ_MODEL || gobj->sort == OBJ_GRAPH ||
+	gobj->sort == OBJ_VAR || gobj->sort == OBJ_PLOT) { 
 	gobj->label = gtk_entry_new();
 	/* on gtk 2.0.N, the text is/was not going into the selected font */
 	gtk_entry_set_text(GTK_ENTRY(gobj->label), gobj->name);
@@ -3043,19 +3049,19 @@ static gui_obj *gui_object_new (gchar *name, int sort)
     gobj->data = NULL;
 
     switch (sort) {
-    case 'm': xpm = model_xpm; break;
-    case 'v': xpm = model_xpm; break;	
-    case 'b': xpm = boxplot_xpm; break;
-    case 'g': xpm = gnuplot_xpm; break;
-    case 'd': xpm = dot_sc_xpm; break;
-    case 'i': xpm = xfm_info_xpm; break;
-    case 'p': xpm = xfm_make_xpm; break;
-    case 'n': xpm = text_xpm; break;
-    case 'r': xpm = rhohat_xpm; break;
-    case 's': xpm = summary_xpm; break;
-    case 't': xpm = model_table_xpm; break;
-    case 'q': xpm = graph_page_xpm; break;
-    case 'x': xpm = text_xpm; break;
+    case OBJ_MODEL:   xpm = model_xpm;    break;
+    case OBJ_VAR:     xpm = model_xpm;    break;	
+    case OBJ_PLOT:    xpm = boxplot_xpm;  break;
+    case OBJ_GRAPH:   xpm = gnuplot_xpm;  break;
+    case OBJ_DATASET: xpm = dot_sc_xpm;   break;
+    case OBJ_INFO:    xpm = xfm_info_xpm; break;
+    case OBJ_SCRIPT:  xpm = xfm_make_xpm; break;
+    case OBJ_NOTES:   xpm = text_xpm;     break;
+    case OBJ_CORR:    xpm = rhohat_xpm;   break;
+    case OBJ_STATS:   xpm = summary_xpm;  break;
+    case OBJ_MODTAB:  xpm = model_table_xpm; break;
+    case OBJ_GPAGE:   xpm = graph_page_xpm;  break;
+    case OBJ_TEXT:    xpm = text_xpm;     break;
     default: break;
     }
 

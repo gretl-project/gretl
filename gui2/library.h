@@ -127,6 +127,8 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg);
 
 void do_mle_model (GtkWidget *widget, dialog_t *dlg);
 
+void do_eqn_system (GtkWidget *widget, dialog_t *dlg);
+
 void do_model (GtkWidget *widget, gpointer p);
 
 void do_vector_model (GtkWidget *widget, gpointer p);

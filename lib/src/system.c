@@ -102,6 +102,10 @@ get_equation_system_by_name (const char *sysname, int *snum)
 {
     int i;
 
+    if (sysname == NULL) {
+	return NULL;
+    }
+
     for (i=0; i<n_systems; i++) {
 	if (!strcmp(sysname, system_stack[i]->name)) {
 	    if (snum != NULL) {
@@ -211,18 +215,36 @@ print_equation_system_info (const gretl_equation_system *sys,
 
 }
 
-static int gretl_system_method_from_string (const char *str)
+int gretl_system_method_from_string (const char *s)
 {
     int i = 0;
 
     while (gretl_system_method_strings[i] != NULL) {
-	if (!strcmp(str, gretl_system_method_strings[i])) {
+	if (!strcmp(s, gretl_system_method_strings[i])) {
 	    return i;
 	}
 	i++;
     }
 
     return i;
+}
+
+const char *system_method_full_string (int method)
+{
+    if (method >= SYS_SUR && method < SYS_MAX) {
+	return gretl_system_long_strings[method];
+    } else {
+	return NULL;
+    }
+}
+
+const char *system_method_short_string (int method)
+{
+    if (method >= SYS_SUR && method < SYS_MAX) {
+	return gretl_system_method_strings[method];
+    } else {
+	return NULL;
+    }
 }
 
 static gretl_equation_system *
@@ -557,7 +579,18 @@ gretl_equation_system *system_start (const char *line)
 	}
     }
 
-    sys = gretl_equation_system_new(method, sysname);
+    /* see if there's already a system with this name */
+    if (sysname != NULL) {
+	sys = get_equation_system_by_name(sysname, NULL);
+	if (sys != NULL) {
+	    gretl_equation_system_clear(sys);   
+	}
+    }
+
+    if (sys == NULL) {
+	sys = gretl_equation_system_new(method, sysname);
+    }
+
     if (sys == NULL) {
 	return NULL;
     }
@@ -1202,8 +1235,6 @@ gretl_matrix *system_get_sigma (const gretl_equation_system *sys)
     return sys->sigma;
 }
 
-
-
 MODEL *system_get_model (const gretl_equation_system *sys, int i)
 {
     if (sys->models == NULL || i >= sys->n_equations) {
@@ -1562,7 +1593,7 @@ int
 system_parse_line (gretl_equation_system *sys, const char *line,
 		   const DATAINFO *pdinfo)
 {
-    int err = 1;
+    int err = 0;
 
     *gretl_errmsg = '\0';
 
@@ -1572,6 +1603,8 @@ system_parse_line (gretl_equation_system *sys, const char *line,
 	err = add_aux_list_to_sys(sys, line + 5, pdinfo, ENDOG_LIST);
     } else if (strncmp(line, "instr", 5) == 0) {
 	err = add_aux_list_to_sys(sys, line + 5, pdinfo, INSTR_LIST);
+    } else {
+	err = E_PARSE;
     }
 
     if (err) {

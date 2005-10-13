@@ -108,6 +108,10 @@ MODEL *gretl_model_new (void);
 
 void gretl_model_init (MODEL *pmod);
 
+MODEL **gretl_model_array_new (int n);
+
+void gretl_model_array_destroy (MODEL **models, int n);
+
 void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo);
 
 void impose_model_smpl (const MODEL *pmod, DATAINFO *pdinfo);

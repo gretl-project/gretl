@@ -2162,7 +2162,7 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 {
     gchar *buf;
     PRN *prn;
-    char title[64], line[MAXLINE];
+    char title[64], bufline[MAXLINE];
     windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
     MODEL *pmod = (MODEL *) vwin->data;
     gretl_restriction_set *my_rset = NULL;
@@ -2174,28 +2174,28 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 
     bufgets(NULL, 0, buf);
 
-    while (bufgets(line, MAXLINE, buf) && !err) {
-	if (string_is_blank(line)) {
+    while (bufgets(bufline, MAXLINE, buf) && !err) {
+	if (string_is_blank(bufline)) {
 	    continue;
 	}
 
-	top_n_tail(line);
+	top_n_tail(bufline);
 
-	if (!strcmp(line, "end restrict")) {
+	if (!strcmp(bufline, "end restrict")) {
 	    got_end_line = 1;
 	    break;
-	} else if (!strncmp(line, "restrict", 8)) {
+	} else if (!strncmp(bufline, "restrict", 8)) {
 	    got_start_line = 1;
 	}
 
 	if (my_rset == NULL) {
-	    my_rset = restriction_set_start(line, pmod, datainfo);
+	    my_rset = restriction_set_start(bufline, pmod, datainfo);
 	    if (my_rset == NULL) {
  		err = 1;
 		gui_errmsg(err);
 	    }
 	} else {
-	    err = restriction_set_parse_line(my_rset, line);
+	    err = restriction_set_parse_line(my_rset, bufline);
 	    if (err) {
 		gui_errmsg(err);
 	    }
@@ -2226,6 +2226,127 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
     strcat(title, _("linear restrictions"));
 
     view_buffer(prn, 78, 300, title, PRINT, NULL);
+}
+
+static int 
+record_sys_commands_from_buf (const gchar *buf, int method, int got_end_line)
+{
+    char bufline[MAXLINE];
+
+    sprintf(bufline, "system method=%s", system_method_short_string(method));
+
+    bufgets(NULL, 0, buf);
+    while (bufgets(bufline, MAXLINE, buf)) {
+	if (string_is_blank(bufline)) {
+	    continue;
+	}
+	if (!strncmp(bufline, "system", 6)) {
+	    continue;
+	}
+	top_n_tail(bufline);
+	add_command_to_stack(bufline);
+    }
+
+    if (!got_end_line) {
+	add_command_to_stack("end system");
+    }
+
+    return 0;
+}
+
+void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
+{
+    gretl_equation_system *my_sys = NULL;
+    gchar *buf;
+    PRN *prn;
+    char bufline[MAXLINE];
+    int *slist = NULL;
+    char *title, *sname = NULL;
+    int got_end_line = 0;
+    int method, err = 0;
+
+    buf = edit_dialog_special_get_text(dlg);
+    if (buf == NULL) {
+	return;
+    }
+
+    method = edit_dialog_get_opt(dlg);
+
+    bufgets(NULL, 0, buf);
+
+    while (bufgets(bufline, MAXLINE, buf) && !err) {
+	if (string_is_blank(bufline)) {
+	    continue;
+	}
+
+	top_n_tail(bufline);
+
+	if (!strncmp(bufline, "system", 6)) {
+	    sname = get_system_name_from_line(bufline);
+	    continue;
+	} else if (!strcmp(bufline, "end system")) {
+	    got_end_line = 1;
+	    break;
+	}	    
+
+	if (my_sys == NULL) {
+	    gchar *starter = g_strdup_printf("system method=%s", 
+					     system_method_short_string(method));
+
+	    my_sys = system_start(starter);
+	    g_free(starter);
+	    if (my_sys == NULL) {
+		fprintf(stderr, "do_eqn_system: sys is NULL\n");
+ 		err = 1;
+		gui_errmsg(err);
+	    }
+	}
+
+	if (!strncmp(bufline, "equation", 8)) {
+	    slist = command_list_from_string(bufline);
+	    err = gretl_equation_system_append(my_sys, slist);
+	    free(slist);
+	    if (err) {
+		gui_errmsg(err);
+	    }
+	} else {
+	    err = system_parse_line(my_sys, bufline, datainfo);
+	    if (err) {
+		gui_errmsg(err);
+	    }
+	} 
+    }
+
+    if (err) {
+	g_free(buf);
+	free(sname);
+	return;
+    }
+
+    close_dialog(dlg);
+
+    if (bufopen(&prn)) return; 
+
+    err = gretl_equation_system_finalize(my_sys, &Z, datainfo, prn);
+    if (err) {
+	errmsg(err, prn);
+    } else {
+	record_sys_commands_from_buf(buf, method, got_end_line);
+    }
+
+    g_free(buf);
+
+    if (sname != NULL) {
+	title = g_strdup_printf("gretl: %s", sname);
+	free(sname);
+    } else {
+	title = g_strdup(_("gretl: simultaneous equations system"));
+    }
+
+    view_buffer(prn, 78, 450, _("gretl: simultaneous equations system"), 
+		PRINT, NULL); /* FIXME data */
+
+    g_free(title);
 }
 
 static int do_nls_genr (void)
@@ -5346,8 +5467,8 @@ int execute_script (const char *runfile, const char *buf,
 		    PRN *prn, int exec_code)
 {
     FILE *fb = NULL;
-    char line[MAXLINE];
-    char tmp[MAXLINE];
+    char line[MAXLINE] = {0};
+    char tmp[MAXLINE] = {0};
     int loopstack = 0, looprun = 0;
     int including = (exec_code & INCLUDE_EXEC);
     int exec_err = 0;

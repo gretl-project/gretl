@@ -2002,7 +2002,7 @@ static void set_compact_info_from_default (int method)
 
 void do_compact_data_set (void)
 {
-    int default_method = COMPACT_AVG;
+    CompactMethod default_method = COMPACT_AVG;
     int err, newpd = 0, monstart = 1;
     int *pmonstart = NULL;
 

@@ -88,9 +88,8 @@ static int db_type;
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    double ***pZ, DATAINFO *pdinfo,
-			    int compact_method, int dbv);
+			    CompactMethod method, int dbv);
 
-/* ........................................................... */
 
 int get_native_db_data (const char *dbbase, SERIESINFO *sinfo, 
 			double **Z)
@@ -812,8 +811,8 @@ get_rats_data_by_offset (const char *fname,
 
 /* For importation of database series */
 
-static double *get_compacted_xt (const double *src,
-				 int n, int method, int compfac,
+static double *get_compacted_xt (const double *src, int n, 
+				 CompactMethod method, int compfac,
 				 int skip)
 {
     int p, t;
@@ -860,7 +859,7 @@ static double *get_compacted_xt (const double *src,
 */
 
 double *compact_db_series (const double *src, SERIESINFO *sinfo,
-			   int target_pd, int method)
+			   int target_pd, CompactMethod method)
 {
     int p0, y0, endskip, goodobs;
     int skip = 0, compfac = sinfo->pd / target_pd;
@@ -1071,7 +1070,7 @@ get_word_and_advance (const char *s, char *word, size_t maxlen)
 }
 
 static const char *
-get_compact_method_and_advance (const char *s, int *method)
+get_compact_method_and_advance (const char *s, CompactMethod *method)
 {
     const char *p;
 
@@ -1139,7 +1138,7 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn)
 {
     char series[16];
-    int comp_method;
+    CompactMethod method;
     SERIESINFO sinfo;
     double **dbZ;
     int err = 0;
@@ -1154,19 +1153,19 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }   
 
-    line = get_compact_method_and_advance(line, &comp_method);
+    line = get_compact_method_and_advance(line, &method);
 
     /* now loop over variable names given on the line */
 
     while ((line = get_word_and_advance(line, series, 8))) {
-	int v, this_var_method = comp_method; 
+	int v, this_var_method = method; 
 
 	/* see if the series is already in the dataset */
 	v = varindex(pdinfo, series);
 #ifdef DB_DEBUG
 	fprintf(stderr, "db_get_series: pdinfo->v = %d, v = %d\n", pdinfo->v, v);
 #endif
-	if (v < pdinfo->v && comp_method == COMPACT_NONE) {
+	if (v < pdinfo->v && method == COMPACT_NONE) {
 	    this_var_method = COMPACT_METHOD(pdinfo, v);
 	}
 
@@ -1251,7 +1250,7 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    double ***pZ, DATAINFO *pdinfo,
-			    int compact_method, int dbv)
+			    CompactMethod method, int dbv)
 {
     double *xvec = NULL;
     int n, t, start, stop, pad1 = 0, pad2 = 0;
@@ -1294,7 +1293,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    }
 	    return 1;
 	}
-	if (compact_method == COMPACT_NONE) {
+	if (method == COMPACT_NONE) {
 	    sprintf(gretl_errmsg, _("%s: you must specify a compaction method"), 
 		    sinfo->varname);
 	    if (new) {
@@ -1302,7 +1301,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    }
 	    return 1;
 	}
-	xvec = compact_db_series(dbZ[1], sinfo, pdinfo->pd, compact_method);
+	xvec = compact_db_series(dbZ[1], sinfo, pdinfo->pd, method);
     } else {  
 	/* series does not need compacting */
 	xvec = malloc(sinfo->nobs * sizeof *xvec);
@@ -1324,7 +1323,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     /* common stuff for adding a var */
     strcpy(pdinfo->varname[dbv], sinfo->varname);
     strcpy(VARLABEL(pdinfo, dbv), sinfo->descrip);
-    COMPACT_METHOD(pdinfo, dbv) = compact_method;
+    COMPACT_METHOD(pdinfo, dbv) = method;
     get_db_padding(sinfo, pdinfo, &pad1, &pad2);
 
     if (pad1 > 0) {
@@ -1367,7 +1366,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 
 static double *compact_series (const double *src, int i, int n, int oldn,
 			       int startskip, int min_startskip, int compfac,
-			       int method)
+			       CompactMethod method)
 {
     int t, idx;
     int lead = startskip - min_startskip;
@@ -1461,7 +1460,7 @@ static double *extend_series (const double *z, int n)
 static double *
 daily_series_to_monthly (const double *src, DATAINFO *pdinfo, int i, 
 			 int nm, int yr, int mon, int offset, 
-			 int any_eop, int method)
+			 int any_eop, CompactMethod method)
 {
     double *x;
     const double *z;
@@ -1580,7 +1579,7 @@ daily_series_to_monthly (const double *src, DATAINFO *pdinfo, int i,
 
 static void 
 get_startskip_etc (int compfac, int startmin, int endmin, 
-		   int oldn, int method, 
+		   int oldn, CompactMethod method, 
 		   int *startskip, int *newn) 
 {
     int ss = compfac - (startmin % compfac) + 1;
@@ -1613,7 +1612,7 @@ get_startskip_etc (int compfac, int startmin, int endmin,
 /* specific to compaction of daily time series */
 
 static void 
-get_daily_compact_params (int default_method, 
+get_daily_compact_params (CompactMethod default_method, 
 			  int *any_eop, int *any_sop,
 			  int *all_same,
 			  const DATAINFO *pdinfo)
@@ -1625,7 +1624,7 @@ get_daily_compact_params (int default_method,
     *any_sop = (default_method == COMPACT_SOP)? 1 : 0;
 
     for (i=1; i<pdinfo->v; i++) {
-	int method = COMPACT_METHOD(pdinfo, i);
+	CompactMethod method = COMPACT_METHOD(pdinfo, i);
 
 	if (method != default_method && method != COMPACT_NONE) {
 	    *all_same = 0;
@@ -1655,12 +1654,13 @@ get_daily_compact_params (int default_method,
 
 static void 
 get_global_compact_params (int compfac, int startmin, int endmin,
-			   int default_method, 
+			   CompactMethod default_method, 
 			   int *min_startskip, int *max_n,
 			   int *any_eop, int *all_same,
 			   DATAINFO *pdinfo)
 {
-    int i, startskip, n, method;
+    CompactMethod method;
+    int i, startskip, n;
     int n_not_eop = 0;
 
     for (i=0; i<pdinfo->v; i++) {
@@ -1733,7 +1733,8 @@ static int get_daily_offset (const DATAINFO *pdinfo,
    observations that can be constructed by compaction
 */
 
-static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
+static int get_n_ok_months (const DATAINFO *pdinfo, 
+			    CompactMethod default_method,
 			    int *startyr, int *startmon,
 			    int *endyr, int *endmon,
 			    int *offset, int *p_any_eop)
@@ -1944,7 +1945,7 @@ weeks_to_months_check (const DATAINFO *pdinfo, int *startyr, int *endyr,
 /* for now, averaging is the only compaction option in this case */
 
 static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
-				      int default_method)
+				      CompactMethod default_method)
 {
     double **mZ = NULL;
     DATAINFO minfo;
@@ -2005,7 +2006,7 @@ static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 }
 
 static int daily_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
-				     int default_method)
+				     CompactMethod default_method)
 {
     int nm, startyr, startmon, endyr, endmon;
     int offset, any_eop;
@@ -2019,7 +2020,7 @@ static int daily_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 	err = 1;
     } else {
 	for (i=0; i<pdinfo->v && !err; i++) {
-	    int method;
+	    CompactMethod method;
 	    double *x;
 
 	    if (i > 0 && !pdinfo->vector[i]) {
@@ -2131,8 +2132,21 @@ int maybe_expand_daily_data (double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
+/**
+ * compact_data_set:
+ * @pZ: pointer to data array.
+ * @pdinfo: data information struct.
+ * @newpd: target data frequency.
+ * @default_method: code for the default compaction method.
+ * @monstart: FIXME add explanation.
+ * 
+ * Compact the data set from higher to lower frequency.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
 int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
-		      int default_method, int monstart)
+		      CompactMethod default_method, int monstart)
 {
     int newn, oldn = pdinfo->n, oldpd = pdinfo->pd;
     int compfac;
@@ -2235,7 +2249,7 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     /* compact the individual data series */
     for (i=0; i<pdinfo->v && err == 0; i++) {
 	if (pdinfo->vector[i]) {
-	    int this_method = default_method;
+	    CompactMethod this_method = default_method;
 	    int startskip = min_startskip;
 	    double *x;
 
@@ -2269,10 +2283,18 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     return err;
 }
 
-/* Expand the data set from lower to higher frequency: an "expert"
-   option.  This is supported at present only for expansion from
-   annual to quarterly or monthly, or from quarterly to monthly.
-*/
+/**
+ * expand_data_set:
+ * @pZ: pointer to data array.
+ * @pdinfo: data information struct.
+ * @newpd: target data frequency
+ * 
+ * Expand the data set from lower to higher frequency: an "expert"
+ * option.  This is supported at present only for expansion from
+ * annual to quarterly or monthly, or from quarterly to monthly.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
 
 int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
 {

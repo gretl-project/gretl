@@ -452,71 +452,76 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 
 void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 {
-    char title[64], query[MAXLABEL], defstr[MAXLEN];
+    const char *title = NULL;
+    const char *query = NULL;
+    const char *defstr = NULL;
     void (*okfunc)() = NULL;
     guint varclick = VARCLICK_NONE;
-    windata_t *mydata = (windata_t *) data;
-
-    *defstr = '\0';
 
     switch (action) {
     case SMPLBOOL:
-	strcpy(title, _("gretl: restrict sample"));
-	strcpy(query, _("Enter boolean condition for selecting cases:"));
+	title = N_("gretl: restrict sample");
+	query = N_("Enter boolean condition for selecting cases:");
 	okfunc = do_samplebool;
 	varclick = VARCLICK_INSERT_NAME;
 	break;
     case SETSEED:
-	strcpy(title, _("gretl: random variables"));
-	strcpy(query, _("Enter integer seed for\n"
-	       "pseudo-random number generator:"));
+	title = N_("gretl: random variables");
+	query = N_("Enter integer seed for\n"
+	       "pseudo-random number generator:");
 	okfunc = do_seed;
 	break; 
     case NULLDATA:
-	strcpy(title, _("gretl: simulation data"));
-	strcpy(query, _("Series length for simulation data set:"));
-	strcpy(defstr, "100");
+	title = N_("gretl: simulation data");
+	query = N_("Series length for simulation data set:");
+	defstr = "100";
 	okfunc = do_simdata;
 	break;         
     case GENR:
-	strcpy(title, _("gretl: add var"));
-	strcpy(query, _("Enter formula for new variable:"));
+	title = N_("gretl: add var");
+	query = N_("Enter formula for new variable:");
 	okfunc = do_genr;
 	varclick = VARCLICK_INSERT_NAME;
 	break;
     case VSETMISS:
-	strcpy(title, _("gretl: missing code"));
-	strcpy(query, _("Enter value to be read as \"missing\":"));
+	title = N_("gretl: missing code");
+	query = N_("Enter value to be read as \"missing\":");
 	okfunc = do_variable_setmiss;
 	break;
     case GSETMISS:
-	strcpy(title, _("gretl: missing code"));
-	strcpy(query, _("Enter value to be read as \"missing\":"));
+	title = N_("gretl: missing code");
+	query = N_("Enter value to be read as \"missing\":");
 	okfunc = do_global_setmiss;
 	break;
     case GR_BOX:
     case GR_NBOX:
-	strcpy(title, _("gretl: boxplots"));
-	strcpy(query, _("Specify variables to plot:"));
+	title = N_("gretl: boxplots");
+	query = N_("Specify variables to plot:");
 	okfunc = do_box_graph;
 	varclick = VARCLICK_INSERT_NAME;
-	strcpy(defstr, get_boxplots_string());
+	defstr = get_boxplots_string();
 	break;
     case MLE:
-	strcpy(title, _("gretl: maximum likelihood"));
-	strcpy(query, _("MLE: Specify function, and derivatives if possible:"));
+	title = N_("gretl: maximum likelihood");
+	query = N_("MLE: Specify function, and derivatives if possible:");
 	okfunc = do_mle_model;
 	varclick = VARCLICK_INSERT_TEXT;
 	break;	
     case NLS:
-	strcpy(title, _("gretl: nonlinear least squares"));
-	strcpy(query, _("NLS: Specify function, and derivatives if possible:"));
+	title = N_("gretl: nonlinear least squares");
+	query = N_("NLS: Specify function, and derivatives if possible:");
 	okfunc = do_nls_model;
 	varclick = VARCLICK_INSERT_TEXT;
 	break;	
+    case SYSTEM:
+	title = N_("gretl: simultaneous equations system");
+	query = N_("Specify simultaneous equations:");
+	okfunc = do_eqn_system;
+	varclick = VARCLICK_INSERT_TEXT;
+	break;
     case RESTRICT:
-	strcpy(title, _("gretl: linear restrictions"));
-	strcpy(query, _("Specify restrictions:"));
+	title = N_("gretl: linear restrictions");
+	query = N_("Specify restrictions:");
 	okfunc = do_restrict;
 	break;	
     default:
@@ -524,7 +529,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
-    edit_dialog(title, query, defstr, okfunc, mydata, 
+    edit_dialog(_(title), _(query), defstr, okfunc, data, 
 		action, varclick);   
 }
 
@@ -707,7 +712,6 @@ void do_nistcheck (gpointer p, guint v, GtkWidget *w)
     close_plugin(handle);
 
     view_file(fname, 0, 1, 78, 400, VIEW_CODEBOOK);
-
     g_free(fname);
 }
 

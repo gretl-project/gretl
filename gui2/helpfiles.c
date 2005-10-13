@@ -117,6 +117,7 @@ static struct gui_help_item gui_help_items[] = {
     { SMPLBOOL,       "sampling" },
     { SMPLDUM,        "sampling" },
     { COMPACT,        "compact" },
+    { EXPAND,         "expand" },
     { VSETMISS,       "missing" },
     { GSETMISS,       "missing" },
     { GUI_HELP,       "dialog" },

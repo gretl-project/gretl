@@ -37,7 +37,7 @@ typedef enum {
     COMPACT_SOP,
     COMPACT_EOP,
     COMPACT_MAX
-} compaction_methods; 
+} CompactMethod; 
 
 typedef float dbnumber;
 
@@ -81,7 +81,7 @@ int get_rats_data_by_series_number (const char *fname,
 				    double **Z);
 
 double *compact_db_series (const double *src, SERIESINFO *sinfo,
-			   int target_pd, int method);
+			   int target_pd, CompactMethod method);
 
 double *expand_db_series (const double *src, SERIESINFO *sinfo,
 			  int target_pd);
@@ -100,7 +100,7 @@ void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo,
 int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo);
 
 int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
-		      int default_method, int monstart);
+		      CompactMethod default_method, int monstart);
 
 int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd);
 

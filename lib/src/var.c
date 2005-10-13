@@ -48,45 +48,20 @@ struct var_lists {
 static int gretl_VAR_add_models (GRETL_VAR *var)
 {
     int n = var->neqns;
-    int i, j, err = 0;
+    int i, err = 0;
 
     if (var->models != NULL) {
 	for (i=0; i<n; i++) {
 	    clear_model(var->models[i]);
 	}
     } else {
-	var->models = malloc(n * sizeof *var->models);
-	if (var->models != NULL) {
-	    for (i=0; i<n && !err; i++) {
-		var->models[i] = gretl_model_new();
-		if (var->models[i] == NULL) {
-		    for (j=0; j<i; j++) {
-			free(var->models[i]);
-		    }
-		    free(var->models);
-		    var->models = NULL;
-		    err = E_ALLOC;
-		}
-	    }
-	} else {
+	var->models = gretl_model_array_new(n);
+	if (var->models == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     return err;
-}
-
-static void models_array_destroy (MODEL **models, int n)
-{
-    int i;
-
-    if (models != NULL) {
-	for (i=0; i<n; i++) {
-	    clear_model(models[i]);
-	    free(models[i]);
-	}
-	free(models);
-    }
 }
 
 static int gretl_VAR_add_A_matrix (GRETL_VAR *var)
@@ -258,7 +233,7 @@ void gretl_VAR_free (GRETL_VAR *var)
     free(var->name);
 
     if (var->models != NULL) {
-	models_array_destroy(var->models, var->neqns);
+	gretl_model_array_destroy(var->models, var->neqns);
     }
 
     if (var->jinfo != NULL) {

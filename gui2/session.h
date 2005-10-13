@@ -62,7 +62,7 @@ int try_add_model_to_session (MODEL *pmod);
 
 int try_add_var_to_session (GRETL_VAR *var);
 
-void *get_session_object_by_name (const char *name, char *which);
+void *get_session_object_by_name (const char *name, int *which);
 
 void delete_model_from_session (MODEL *pmod);
 
