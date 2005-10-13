@@ -277,6 +277,40 @@ void gretl_VAR_free_unnamed (GRETL_VAR *var)
     }
 }
 
+static int add_VAR_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
+				   int nf, int pre_obs)
+{
+    double vti;
+    int i, s;
+    int err = 0;
+
+    for (i=0; i<var->neqns; i++) {
+	gretl_matrix *vd;
+	int totcol;
+
+	vd = gretl_VAR_get_fcast_decomp(var, i, nf - pre_obs);
+	if (vd != NULL) {
+	    totcol = gretl_matrix_cols(vd) - 1;
+	    for (s=0; s<nf; s++) {
+		if (s < pre_obs) {
+		    gretl_matrix_set(F, s, var->neqns + i, NADBL);
+		} else {
+		    vti = gretl_matrix_get(vd, s - pre_obs, totcol);
+		    gretl_matrix_set(F, s, var->neqns + i, vti);
+		}
+	    }
+	    gretl_matrix_free(vd);
+	} else {
+	    err = E_ALLOC;
+	    for (s=0; s<nf; s++) {
+		gretl_matrix_set(F, s, var->neqns + i, NADBL);
+	    }
+	}
+    }
+
+    return err;
+}
+
 static int
 gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 			const double **Z, const DATAINFO *pdinfo, 
@@ -359,30 +393,7 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 
     /* now get variances, if not static */
     if (!staticfc) {
-	double vti;
-	int totcol;
-
-	for (i=0; i<var->neqns; i++) {
-	    gretl_matrix *vd;
-
-	    vd = gretl_VAR_get_fcast_decomp(var, i, nf - pre_obs);
-	    if (vd != NULL) {
-		totcol = gretl_matrix_cols(vd) - 1;
-		for (s=0; s<nf; s++) {
-		    if (s < pre_obs) {
-			gretl_matrix_set(F, s, var->neqns + i, NADBL);
-		    } else {
-			vti = gretl_matrix_get(vd, s, totcol);
-			gretl_matrix_set(F, s, var->neqns + i, vti);
-		    }
-		}
-		gretl_matrix_free(vd);
-	    } else {
-		for (s=0; s<nf; s++) {
-		    gretl_matrix_set(F, s, var->neqns + i, NADBL);
-		}
-	    }
-	}
+	add_VAR_fcast_variance(var, F, nf, pre_obs);
     }
 
     gretl_matrix_set_int(F, t1);
@@ -507,9 +518,12 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 	}
     }
 
-    /* forecast variances? */
-
     gretl_matrix_free(B);
+
+    /* now get variances, if not static */
+    if (!staticfc) {
+	add_VAR_fcast_variance(var, F, nf, pre_obs);
+    }
 
     gretl_matrix_set_int(F, t1);
     var->F = F;

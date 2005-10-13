@@ -1589,7 +1589,7 @@ int text_print_forecast (const FITRESID *fr,
     pputc(prn, '\n');
 
     if (do_errs) {
-	if (fr->model_ci == ARMA) {
+	if (fr->model_ci == ARMA || fr->model_ci == VECM) {
 	    pprintf(prn, _(" For 95%% confidence intervals, z(.025) = %.2f\n"), 
 		    1.96);
 	} else {
@@ -1630,6 +1630,7 @@ int text_print_forecast (const FITRESID *fr,
 	    pputc(prn, '\n');
 	    continue;
 	}
+
 	fcast_print_x(fr->fitted[t], 15, pmax, prn);
 
 	if (do_errs) {

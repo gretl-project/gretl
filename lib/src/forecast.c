@@ -2005,7 +2005,7 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
 		continue;
 	    } else if (is_trend_variable(Z[vi], pdinfo->n)) {
 		continue;
-	    } else if (is_periodic_dummy(Z[vi], pdinfo->n)) {
+	    } else if (is_periodic_dummy(Z[vi], pdinfo)) {
 		continue;
 	    }
 	    if (na(Z[vi][t])) {
@@ -2090,7 +2090,7 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
 	}
     }
 
-    fr->model_ci = VAR;
+    fr->model_ci = var->ci;
     fr->pre_n = pre_n;
     fr->t1 = t1;
     fr->t2 = t2;
@@ -2123,10 +2123,12 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
     } else {
 	if (var->ecm) {
 	    fr->df = var->T;
+	    /* asymptotic normal */
+	    fr->tval = 1.96;
 	} else {
 	    fr->df = pmod->dfd;
-	} 
-	fr->tval = tcrit95(fr->df);
+	    fr->tval = tcrit95(fr->df);
+	}
 	fit_resid_set_dec_places(fr);
 	strcpy(fr->depvar, pdinfo->varname[yno]);
     }
