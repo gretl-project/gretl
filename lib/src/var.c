@@ -462,6 +462,10 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 	    for (j=0; j<var->neqns; j++) {
 		vj = var->jinfo->list[j+1];
 		for (k=0; k<order; k++) {
+		    if (t - k - 1 < 0) {
+			fti = NADBL;
+			break;
+		    }			
 		    bij = gretl_matrix_get(B, i, col++);
 		    ft = s - k - 1;
 		    if (s >= pre_obs && ft >= 0 && !staticfc) {
@@ -472,9 +476,13 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 		    }
 		    if (na(y)) {
 			fti = NADBL;
+			break;
 		    } else {
 			fti += bij * y;
 		    }
+		}
+		if (na(fti)) {
+		    break;
 		}
 	    }
 
@@ -528,7 +536,7 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
     gretl_matrix_set_int(F, t1);
     var->F = F;
 
-#if 0
+#if 1
     gretl_matrix_print(F, "var->F", NULL);
 #endif
 
