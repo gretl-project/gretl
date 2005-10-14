@@ -58,7 +58,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w);
 void panel_structure_dialog (DATAINFO *pdinfo);
 
 void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
-			  int *mon_start, gint *compact_method);
+			  int *mon_start, CompactMethod *method);
 
 void data_expand_dialog (GtkWidget *w, int spd, int *target_pd);
 

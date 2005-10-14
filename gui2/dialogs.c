@@ -2065,7 +2065,7 @@ enum {
     ALL_METHODS_SET
 };
 
-static void compact_method_buttons (GtkWidget *dlg, gint *compact_method,
+static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 				    int current_pd, int methods_set)
 {
     GtkWidget *button;
@@ -2086,7 +2086,7 @@ static void compact_method_buttons (GtkWidget *dlg, gint *compact_method,
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_compact_type), compact_method);
+		     G_CALLBACK(set_compact_type), method);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(COMPACT_AVG));
     gtk_widget_show(button);
@@ -2095,7 +2095,7 @@ static void compact_method_buttons (GtkWidget *dlg, gint *compact_method,
     button = gtk_radio_button_new_with_label (group, _("Compact by summing"));
     gtk_box_pack_start (GTK_BOX(vbox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_compact_type), compact_method);
+		     G_CALLBACK(set_compact_type), method);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(COMPACT_SUM));
     gtk_widget_show(button);
@@ -2105,7 +2105,7 @@ static void compact_method_buttons (GtkWidget *dlg, gint *compact_method,
     button = gtk_radio_button_new_with_label(group, _("Use end-of-period values"));
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_compact_type), compact_method);
+		     G_CALLBACK(set_compact_type), method);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(COMPACT_EOP));
     gtk_widget_show(button);
@@ -2115,7 +2115,7 @@ static void compact_method_buttons (GtkWidget *dlg, gint *compact_method,
     button = gtk_radio_button_new_with_label(group, _("Use start-of-period values"));
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_compact_type), compact_method);
+		     G_CALLBACK(set_compact_type), method);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(COMPACT_SOP));
     gtk_widget_show(button);
@@ -2143,7 +2143,7 @@ static int compact_methods_set (void)
 }
 
 void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
-			  int *mon_start, gint *compact_method)
+			  int *mon_start, CompactMethod *method)
 {
     GtkWidget *d, *tempwid;
     int show_pd_buttons = 0;
@@ -2227,7 +2227,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     /* per-variable compaction methods not all set already: 
        give choice of default compaction method */
     if (show_method_buttons) {
-	compact_method_buttons(d, compact_method, spd, methods_set);
+	compact_method_buttons(d, method, spd, methods_set);
     } 
 
     /* Create the "OK" button */
@@ -2244,7 +2244,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d)->action_area), 
 		       tempwid, TRUE, TRUE, FALSE);
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
-		     G_CALLBACK(abort_compact), compact_method);
+		     G_CALLBACK(abort_compact), method);
     g_signal_connect (G_OBJECT(tempwid), "clicked", 
 		      G_CALLBACK(delete_widget), 
 		      G_OBJECT(d));

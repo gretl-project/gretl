@@ -182,7 +182,7 @@ static int parse_object_request (const char *line,
 				 void **pptr, PRN *prn)
 {
     char word[MAXSAVENAME] = {0};
-    char sort = 0;
+    int sort = 0;
     int action;
 
     /* get object name (if any) and dot param */

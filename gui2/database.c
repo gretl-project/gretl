@@ -269,7 +269,7 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 {
     double *xvec = NULL;
     int n, t, start, stop, pad1 = 0, pad2 = 0;
-    int compact_method = COMPACT_AVG;
+    CompactMethod method = COMPACT_AVG;
     int overwrite = 0;
     int resp, err = 0;
 
@@ -302,7 +302,7 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 		overwrite = 1;
 		/* pick up on pre-registered compaction method? */
 		if (COMPACT_METHOD(datainfo, dbv) != COMPACT_NONE) {
-		    compact_method = COMPACT_METHOD(datainfo, dbv);
+		    method = COMPACT_METHOD(datainfo, dbv);
 		}
 	    } else {
 		return;
@@ -341,16 +341,16 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 	    }
 
 	    data_compact_dialog(vwin->w, sinfo->pd, &datainfo->pd, NULL, 
-				&compact_method);
+				&method);
 
-	    if (compact_method == COMPACT_NONE) {
+	    if (method == COMPACT_NONE) {
 		if (!overwrite) {
 		    dataset_drop_last_variables(1, &Z, datainfo);
 		}
 		return;
 	    }
 	    xvec = compact_db_series(dbZ[1], sinfo, datainfo->pd, 
-				     compact_method);
+				     method);
 	} else {  
 	    /* series does not need compacting */
 	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
@@ -2002,7 +2002,7 @@ static void set_compact_info_from_default (int method)
 
 void do_compact_data_set (void)
 {
-    CompactMethod default_method = COMPACT_AVG;
+    CompactMethod method = COMPACT_AVG;
     int err, newpd = 0, monstart = 1;
     int *pmonstart = NULL;
 
@@ -2014,13 +2014,13 @@ void do_compact_data_set (void)
 	pmonstart = &monstart;
     }
 
-    data_compact_dialog(mdata->w, datainfo->pd, &newpd, pmonstart, &default_method);
-    if (default_method == COMPACT_NONE) {
+    data_compact_dialog(mdata->w, datainfo->pd, &newpd, pmonstart, &method);
+    if (method == COMPACT_NONE) {
 	/* the user cancelled */
 	return;
     }
 
-    err = compact_data_set(&Z, datainfo, newpd, default_method, monstart);
+    err = compact_data_set(&Z, datainfo, newpd, method, monstart);
 
     if (err) {
 	gui_errmsg(err);
@@ -2030,7 +2030,7 @@ void do_compact_data_set (void)
 	if (datainfo->pd == 1 || datainfo->pd == 52) {
 	    flip(mdata->ifac, "/Sample/Compact data...", FALSE);
 	}
-	set_compact_info_from_default(default_method);
+	set_compact_info_from_default(method);
     }
 }
 
