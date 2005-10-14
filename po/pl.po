@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.0-pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-06-14 16:19-0400\n"
-"PO-Revision-Date: 2005-09-21 20:00+0100\n"
+"PO-Revision-Date: 2005-10-12 20:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -55,7 +55,7 @@ msgstr "Robust F"
 #: lib/src/compare.c:247 lib/src/compare.c:2179 lib/src/gretl_restrict.c:782
 #, c-format
 msgid "with p-value = %g\n"
-msgstr "z p-value = %g\n"
+msgstr "z warto¶ci± p = %g\n"
 
 #: lib/src/compare.c:263 lib/src/gretl_model.c:1394
 msgid "Asymptotic test statistic"
@@ -77,7 +77,7 @@ msgid ""
 "with p-value = %g\n"
 "\n"
 msgstr ""
-"z p-value = %g\n"
+"z warto¶ci± p = %g\n"
 "\n"
 
 #: lib/src/compare.c:284
@@ -103,7 +103,7 @@ msgid ""
 "with p-value = prob(Chi-square(%d) > %g) = %g\n"
 "\n"
 msgstr ""
-"z p-value = prob(Chi-kwadrat(%d) > %g) = %g\n"
+"z warto¶ci± p = prob(Chi-kwadrat(%d) > %g) = %g\n"
 "\n"
 
 #: lib/src/compare.c:1044 lib/src/compare.c:1310 lib/src/compare.c:1315
@@ -116,7 +116,7 @@ msgstr ""
 #: plugin/panel_data.c:1752 plugin/panel_data.c:1757 plugin/sysest.c:83
 #: plugin/sysest.c:93 plugin/sysest.c:520 plugin/sysest.c:530
 msgid "with p-value"
-msgstr "z p-value"
+msgstr "z warto¶ci± p"
 
 #: lib/src/compare.c:1273 lib/src/graphing.c:1251 lib/src/graphing.c:1258
 #: lib/src/graphing.c:1311 lib/src/graphing.c:2049 gui2/guiprint_common.c:592
@@ -148,7 +148,7 @@ msgid ""
 msgstr ""
 "\n"
 "Test Chowa na wystêpowanie za³amania strukturalnego w momencie %s:\n"
-"  F(%d, %d) = %f  z  p-value %f\n"
+"  F(%d, %d) = %f  z warto¶ci± p = %f\n"
 "\n"
 
 #: lib/src/compare.c:1617
@@ -188,7 +188,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Statystyka testu Harvey'a-Colliera t(%d) = %g  z  p-value %.4g\n"
+"Statystyka testu Harvey'a-Colliera t(%d) = %g z warto¶ci± p = %.4g\n"
 "\n"
 
 #: lib/src/compare.c:1674
@@ -1223,7 +1223,7 @@ msgid ""
 "Degrees of freedom = %d, p-value = %.4f\n"
 "\n"
 msgstr ""
-"Stopnie swobody = %d, p-value = %.4f\n"
+"Stopnie swobody = %d, warto¶æ p = %.4f\n"
 "\n"
 
 #: lib/src/describe.c:1124 gui2/menustate.c:258 gui2/menustate.c:295
@@ -1520,7 +1520,7 @@ msgid ""
 "   p-value (two-tailed) = %g\n"
 "\n"
 msgstr ""
-"   p-value (dwustronny obszar krytyczny) = %g\n"
+"   warto¶æ p (dwustronny obszar krytyczny) = %g\n"
 "\n"
 
 #: lib/src/describe.c:2368 lib/src/describe.c:2447
@@ -2042,7 +2042,7 @@ msgstr "Test na normalno¶æ rozk³adu"
 #: lib/src/graphing.c:1787
 #, c-format
 msgid "Chi-squared(2) = %.3f pvalue = %.5f"
-msgstr "Chi-kwadrat(2) = %.3f, p-value = %.5f"
+msgstr "Chi-kwadrat(2) = %.3f, warto¶æ p = %.5f"
 
 #: lib/src/graphing.c:1815
 msgid "Test statistic for gamma"
@@ -2051,7 +2051,7 @@ msgstr "Test statystyczny dla gamma"
 #: lib/src/graphing.c:1817
 #, c-format
 msgid "z = %.3f pvalue = %.5f"
-msgstr "z = %.3f, p-value = %.5f"
+msgstr "z = %.3f, warto¶æ p = %.5f"
 
 #: lib/src/graphing.c:1844
 msgid "Frequency distribution for"
@@ -2313,7 +2313,7 @@ msgstr "Test na nieliniowo¶æ (logarytmy)"
 
 #: lib/src/gretl_model.c:1170
 msgid "Test for normality of residual"
-msgstr "Test Jarque'a-Bera na normalno¶æ rozk³adu reszt"
+msgstr "Test na normalno¶æ rozk³adu reszt"
 
 #: lib/src/gretl_model.c:1171
 msgid "Test for omission of variables"
@@ -2969,11 +2969,11 @@ msgstr ""
 #: lib/src/var.c:1201 lib/src/var.c:1799 lib/src/var.c:1802
 #: plugin/johansen.c:362 plugin/johansen.c:363
 msgid "p-value"
-msgstr "p-value"
+msgstr "warto¶æ p"
 
 #: lib/src/modelprint.c:320
 msgid "p-value for"
-msgstr "p-value dla"
+msgstr "warto¶æ p dla"
 
 #: lib/src/modelprint.c:329 lib/src/modelprint.c:331 lib/src/modelprint.c:333
 msgid "Degrees of freedom"
@@ -3012,7 +3012,7 @@ msgstr "Statystyka testu Durbina - $h$ ="
 #: lib/src/modelprint.c:474
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr "Wy³±czaj±c sta³±, najwiêkszy b³±d p-value jest dla zmiennej %d (%s)"
+msgstr "Wy³±czaj±c sta³±, najwiêksza warto¶æ p jest dla zmiennej %d (%s)"
 
 #: lib/src/modelprint.c:485
 msgid "Auxiliary regression for non-linearity test (squared terms)"
@@ -3287,7 +3287,7 @@ msgid ""
 "      PARAMETER      ESTIMATE          STDERROR       T STAT   2Prob(t > |T|)\n"
 "\n"
 msgstr ""
-"      Parametr     Ocena parametru   B³±d stand.   Statystyka t   p-value\n"
+"      Parametr     Ocena parametru   B³±d stand.   Statystyka t   warto¶æ p\n"
 "\n"
 
 #: lib/src/modelprint.c:1013
@@ -3295,7 +3295,7 @@ msgid ""
 "      VARIABLE      COEFFICIENT        STDERROR       T STAT   2Prob(t > |T|)\n"
 "\n"
 msgstr ""
-"       Zmienna     Wspó³czynnik       B³±d stand.  Statystyka t   p-value\n"
+"       Zmienna     Wspó³czynnik       B³±d stand.  Statystyka t   warto¶æ p\n"
 "\n"
 
 #: lib/src/modelprint.c:1021
@@ -3713,7 +3713,7 @@ msgstr "Hipoteza zerowa: rho = 0, dla (rho) odpowiednio N(0, %f)\n"
 #: lib/src/nonparam.c:275
 #, c-format
 msgid "z-score = %f, with one-tailed p-value %f\n"
-msgstr "test z-score = %f, przy jednostronym obszarze krytycznym p-value = %f\n"
+msgstr "test z-score = %f, przy jednostronym obszarze krytycznym warto¶æ p = %f\n"
 
 #: lib/src/nonparam.c:280
 #, c-format
@@ -3727,7 +3727,7 @@ msgstr "nieistotno¶æ przy poziomie 10 procent\n"
 
 #: lib/src/nonparam.c:286
 msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr "Za ma³a próba do oszacowania p-value dla oceny normalno¶ci dystrybuanty\n"
+msgstr "Za ma³a próba do oszacowania warto¶ci p dla oceny normalno¶ci dystrybuanty\n"
 
 #: lib/src/nonparam.c:293 lib/src/printout.c:681 gui2/guiprint_common.c:721
 #: gui2/guiprint_common.c:772 gui2/guiprint_common.c:825
@@ -3764,7 +3764,7 @@ msgstr "Hipoteza zerowa: próba jest losowa, dla R odpowiednio N(%f, %f)\n"
 #: lib/src/nonparam.c:507
 #, c-format
 msgid "z-score = %f, with two-tailed p-value %f\n"
-msgstr "test z-score = %f, przy dwustronym obszarze krytycznym p-value = %f\n"
+msgstr "test z-score = %f, przy dwustronym obszarze krytycznym warto¶æ p = %f\n"
 
 #: lib/src/options.c:533
 #, c-format
@@ -3975,7 +3975,7 @@ msgid ""
 "p-value calculation failed\n"
 msgstr ""
 "\n"
-"b³±d w obliczaniu p-value\n"
+"b³±d w wyznaczeniu warto¶ci p\n"
 
 #: lib/src/pvalues.c:398
 #, c-format
@@ -4014,7 +4014,7 @@ msgid ""
 "pvalue for chi-square: missing parameter\n"
 msgstr ""
 "\n"
-"p-value dla chi-kwadrat: brak parameteru\n"
+"warto¶æ p dla chi-kwadrat: brak parameteru\n"
 
 #: lib/src/pvalues.c:437
 #, c-format
@@ -4036,7 +4036,7 @@ msgid ""
 "pvalue for F: missing parameter\n"
 msgstr ""
 "\n"
-"p-value dla F: brak parameteru\n"
+"Warto¶æ p dla F: brak parameteru\n"
 
 #: lib/src/pvalues.c:454
 #, c-format
@@ -4506,7 +4506,7 @@ msgstr "z wyrazem wolnym, trendem liniowym i trendem kwadratowym "
 
 #: lib/src/var.c:1802
 msgid "asymptotic p-value"
-msgstr "asymptotyczne p-value"
+msgstr "asymptotyczna warto¶æ p"
 
 #: lib/src/var.c:1808
 #, c-format
@@ -4545,7 +4545,7 @@ msgstr "estymowana warto¶æ (a-1) wynosi"
 
 #: lib/src/var.c:1998
 msgid "P-values based on MacKinnon (JAE, 1996)\n"
-msgstr "P-values z pracy MacKinnon (Journal of Applied Econometrics, 1996)\n"
+msgstr "Warto¶ci p z pracy MacKinnon (Journal of Applied Econometrics, 1996)\n"
 
 #: lib/src/var.c:2140
 msgid "Robust estimate of variance"
@@ -4622,12 +4622,12 @@ msgstr "Test F dla hipotezy o braku restrykcji"
 #: lib/src/var.c:2570
 #, c-format
 msgid "p-value %f"
-msgstr "p-value %f"
+msgstr "warto¶æ p %f"
 
 #: lib/src/var.c:2575 lib/src/var.c:2585 lib/src/var.c:2589
 #, c-format
 msgid "p-value %f\n"
-msgstr "p-value %f\n"
+msgstr "warto¶æ p %f\n"
 
 #: lib/src/var.c:2624 gui/selector.c:627 gui2/selector.c:948
 msgid "VAR"
@@ -5191,7 +5191,7 @@ msgstr "/Narzêdzia/Tablice statystyczne"
 
 #: gui/gretl.c:264 gui2/gretl.c:335
 msgid "/Utilities/p-value finder"
-msgstr "/Narzêdzia/Wyznaczanie p-value"
+msgstr "/Narzêdzia/Wyznaczanie warto¶ci p"
 
 #: gui/gretl.c:265 gui2/gretl.c:336
 msgid "/Utilities/Test statistic calculator"
@@ -6497,7 +6497,7 @@ msgstr ""
 
 #: gui2/calculator.c:83
 msgid "Incomplete entry for p-value"
-msgstr "Brak danych dla p-value"
+msgstr "Brak danych dla warto¶ci p"
 
 #: gui2/calculator.c:94
 #, c-format
@@ -6507,7 +6507,7 @@ msgstr "Brak danych dla zmiennej '%s'"
 #: gui2/calculator.c:102
 #, c-format
 msgid "Unrecognized variable '%s' in p-value command"
-msgstr "Nierozpoznana zmienna '%s' w poleceniu p-value"
+msgstr "Nierozpoznana zmienna '%s' w poleceniu warto¶æ p"
 
 #: gui2/calculator.c:125
 msgid "Incomplete entry"
@@ -6544,7 +6544,7 @@ msgstr "B³êdne odchylenie standardowe"
 
 #: gui2/calculator.c:380
 msgid "gretl: p-value"
-msgstr "gretl: p-value"
+msgstr "gretl: warto¶æ p"
 
 #: gui2/calculator.c:389
 #, c-format
@@ -6552,7 +6552,7 @@ msgid ""
 "Two-tailed p-value = %.4g\n"
 "(one-tailed = %.4g)\n"
 msgstr ""
-"Dwustronny obszar krytyczny p-value = %.4g\n"
+"Dwustronny obszar krytyczny  p = %.4g\n"
 "(jednostronny obszar krytyczny = %.4g)\n"
 
 #: gui2/calculator.c:440
@@ -6924,7 +6924,7 @@ msgstr "Poka¿ wykres rozk³adu z próby"
 
 #: gui2/calculator.c:1150
 msgid "gretl: p-value finder"
-msgstr "gretl: wyznaczanie p-value"
+msgstr "gretl: wyznaczanie warto¶ci p"
 
 #: gui2/calculator.c:1151
 msgid "gretl: statistical tables"
@@ -11078,7 +11078,7 @@ msgid ""
 msgstr ""
 "                          Oszacowane ustalone efekty\n"
 "  uwzglêdniaj±ce zró¿nicowanie wyrazu wolnego wed³ug jednostek w przekroju,\n"
-"(wspó³czynniki, b³êdy stand. w nawiasach, p-value w nawiasach kwadratowych).\n"
+"(wspó³czynniki, b³êdy stand. w nawiasach, warto¶æ p w nawiasach kwadratowych).\n"
 
 #: plugin/panel_data.c:684
 msgid "a_i = intercepts"
@@ -11112,7 +11112,7 @@ msgid ""
 "is adequate, in favor of the fixed effects alternative.)\n"
 "\n"
 msgstr ""
-"(Niskie p-value oznacza odrzucenie hipotezy H0, ¿e model panelowy MNK jest\n"
+"(Niska warto¶æ p oznacza odrzucenie hipotezy H0, ¿e model panelowy MNK jest\n"
 " poprawny, wobec hipotezy H1, ¿e model o ustalonych efektach jest w³a¶ciwszy.)\n"
 "\n"
 
@@ -11129,7 +11129,7 @@ msgid ""
 msgstr ""
 "                         Oszacowane losowe efekty\n"
 "           allows for a unit-specific component to the error term\n"
-"(wspó³czynniki, b³êdy stand. w nawiasach, p-value w nawiasach kwadratowych)\n"
+"(wspó³czynniki, b³êdy stand. w nawiasach, warto¶æ p w nawiasach kwadratowych)\n"
 "\n"
 
 #: plugin/panel_data.c:904
@@ -11156,7 +11156,7 @@ msgid ""
 msgstr ""
 "\n"
 "Statystyka testu Breuscha-Pagana:\n"
-" LM = %g  z  p-value = prob(chi-square(1) > %g) = %g\n"
+" LM = %g z warto¶ci± p = prob(chi-square(1) > %g) = %g\n"
 
 #: plugin/panel_data.c:935
 msgid ""
@@ -11164,7 +11164,7 @@ msgid ""
 "is adequate, in favor of the random effects alternative.)\n"
 "\n"
 msgstr ""
-"(Niskie p-value oznacza odrzucenie hipotezy H0, ¿e model panelowy MNK jest\n"
+"(Niska warto¶æ p oznacza odrzucenie hipotezy H0, ¿e model panelowy MNK jest\n"
 " poprawny, wobec hipotezy H1, ¿e model o losowych efektach jest w³a¶ciwszy.)\n"
 "\n"
 
@@ -11191,14 +11191,14 @@ msgid ""
 msgstr ""
 "\n"
 "Statystyka testu Hausmana:\n"
-" H = %g  z  p-value = prob(chi-square(%d) > %g) = %g\n"
+" H = %g z warto¶ci± p = prob(chi-square(%d) > %g) = %g\n"
 
 #: plugin/panel_data.c:973
 msgid ""
 "(A low p-value counts against the null hypothesis that the random effects\n"
 "model is consistent, in favor of the fixed effects model.)\n"
 msgstr ""
-"(Niskie p-value oznacza odrzucenie hipotezy zerowej o modelu z losowymi\n"
+"(Niska warto¶æ p oznacza odrzucenie hipotezy zerowej o modelu z losowymi\n"
 " efektami, wobec hipotezy alternatywej o modelu z ustalonymi efektami.)\n"
 "\n"
 
@@ -11329,7 +11329,7 @@ msgstr "nachylenie prostej dla przedzia³ów wg. ¶redniej = %g\n"
 #: plugin/range-mean.c:200
 #, c-format
 msgid "p-value for H0: slope = 0 is %g\n"
-msgstr "H0: kierunek-nachylenie prostej = 0; p-value = %g\n"
+msgstr "H0: kierunek-nachylenie prostej = 0; warto¶æ p = %g\n"
 
 #: plugin/stats_tables.c:298
 msgid ""
@@ -11415,7 +11415,7 @@ msgstr "Macierz wariancji i kowariancji dla reszt poszczególnych równañ"
 
 #: plugin/sysest.c:48
 msgid "correlations above the diagonal"
-msgstr "skorelowania powy¿ej elemetów diagonalnych - w nawiasach"
+msgstr "skorelowania w nawisach - powy¿ej elemetów diagonalnych"
 
 #: plugin/sysest.c:71
 msgid "log determinant"
