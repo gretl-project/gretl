@@ -197,8 +197,8 @@ static void console_scroll_to_end (GtkTextBuffer *buf,
 
     gtk_text_buffer_place_cursor(buf, start);
     mark = gtk_text_buffer_create_mark(buf, NULL, start, FALSE);
-    gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW(console_view),
-					mark);
+    gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(console_view),
+				       mark);
 }
 
 #endif

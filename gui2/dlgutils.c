@@ -166,8 +166,6 @@ static void gretl_dialog_set_resizeable (GtkWidget *w, gboolean s)
 #endif
 }
 
-/* ........................................................... */
-
 static GtkWidget *current_dialog;
 
 int maybe_raise_dialog (void)
@@ -250,6 +248,7 @@ GtkWidget *active_edit_text;
 struct dialog_t_ {
     GtkWidget *dialog;
     GtkWidget *edit;
+    GtkWidget *popup;
     gpointer data;
     gint code;
     gretlopt opt;
@@ -283,6 +282,7 @@ dialog_data_new (gpointer data, gint code, const char *title)
     d->code = code;
     d->opt = OPT_NONE;
     d->dialog = gtk_dialog_new();
+    d->popup = NULL;
 
     gtk_window_set_title(GTK_WINDOW(d->dialog), title);
 
@@ -419,6 +419,148 @@ static GtkWidget *text_edit_new (int *hsize)
 
 #endif
 
+enum {
+    ADD_EQN,
+    ADD_DERIV,
+    ADD_IDENT,
+    ADD_ENDO_LIST,
+    ADD_INSTR_LIST
+};
+
+static int edit_has_list (GtkWidget *w, int i)
+{
+    gchar *buf;
+    int ret = 0;
+
+#ifdef OLD_GTK
+    buf = gtk_editable_get_chars(GTK_EDITABLE(w), 0, -1);
+#else
+    buf = textview_get_text(GTK_TEXT_VIEW(w));
+#endif
+
+    if (buf != NULL) {
+	if (i == ADD_ENDO_LIST) {
+	    if (strstr(buf, "endog ")) ret = 1;
+	} else if (i == ADD_INSTR_LIST) {
+	    if (strstr(buf, "instr ")) ret = 1;
+	}
+	g_free(buf);
+    }
+
+    return ret;
+}
+
+static gint edit_popup_click (GtkWidget *w, dialog_t *d)
+{
+    gint action = 
+	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    const char *ins = NULL;
+
+    if (action == ADD_EQN) {
+	ins = "equation ";
+    } else if (action == ADD_DERIV) {
+	ins = "deriv ";
+    } else if (action == ADD_IDENT) {
+	ins = "identity ";
+    } else if (action == ADD_ENDO_LIST) {
+	ins = "endog ";
+    } else if (action == ADD_INSTR_LIST) {
+	ins = "instr ";
+    }
+
+    if (ins != NULL) {
+#ifndef OLD_GTK
+	GtkTextBuffer *tbuf;
+	GtkTextIter pos;
+
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(d->edit));
+	gtk_text_buffer_get_end_iter(tbuf, &pos);
+	gtk_text_buffer_insert(tbuf, &pos, ins, strlen(ins));
+#else
+	int pos = gtk_editable_get_position(GTK_EDITABLE(d->edit));
+
+	gtk_editable_insert_text(GTK_EDITABLE(d->edit), 
+				 ins, strlen(ins), &pos);
+#endif
+    }
+
+    gtk_widget_destroy(d->popup);
+
+    return FALSE;
+}
+
+static GtkWidget *build_edit_popup (dialog_t *d)
+{
+    const char *items[] = {
+	N_("Add equation"),
+	N_("Add derivative"),
+	N_("Add identity"),
+	N_("Add list of endogenous variables"),
+	N_("Add list of instruments")
+    };
+
+    GtkWidget *menu;
+    GtkWidget *item;
+    int i, n_items = sizeof items / sizeof items[0];
+
+    menu = gtk_menu_new();
+
+    for (i=0; i<n_items; i++) {
+	if (d->code == NLS && (i != ADD_DERIV)) {
+	    continue;
+	} else if (d->code == MLE && (i != ADD_DERIV)) {
+	    continue;
+	} else if (d->code == SYSTEM) {
+	    if (i == ADD_DERIV) continue;
+	    if ((i == ADD_ENDO_LIST || i == ADD_INSTR_LIST) &&
+		edit_has_list(d->edit, i)) {
+		continue;
+	    }
+	}
+	item = gtk_menu_item_new_with_label(_(items[i]));
+	g_object_set_data(G_OBJECT(item), "action", GINT_TO_POINTER(i));
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(edit_popup_click), d);
+	gtk_widget_show(item);
+#ifndef OLD_GTK
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+#else
+	GTK_WIDGET_SET_FLAGS(item, GTK_SENSITIVE | GTK_CAN_FOCUS);
+	gtk_menu_append(GTK_MENU(menu), item);
+#endif
+    }
+
+    return menu;
+}
+
+static gboolean 
+edit_dialog_popup_handler (GtkWidget *w, GdkEventButton *event, dialog_t *d)
+{
+    GdkModifierType mods;
+
+    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+
+    if (mods & GDK_BUTTON3_MASK) {
+	if (d->popup != NULL) {
+	    gtk_widget_destroy(d->popup);
+	    d->popup = NULL;
+	}
+
+	d->popup = build_edit_popup(d);
+
+	if (d->popup != NULL) {
+	    gtk_menu_popup(GTK_MENU(d->popup), NULL, NULL, NULL, NULL,
+			   event->button, event->time);
+	    gtk_signal_connect(GTK_OBJECT(d->popup), "destroy",
+			       GTK_SIGNAL_FUNC(gtk_widget_destroyed), 
+			       &d->popup);
+	}
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
 static void set_replace_restrictions (GtkWidget *w, gpointer p)
 {
     dialog_t *d = (dialog_t *) p;
@@ -551,6 +693,11 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
 	d->edit = text_edit_new(&hsize);
 	dialog_table_setup(d, hsize);
+
+	if (cmdcode != RESTRICT) {
+	    g_signal_connect(G_OBJECT(d->edit), "button_press_event", 
+			     G_CALLBACK(edit_dialog_popup_handler), d);
+	}
     } else {
 	tempwid = gtk_label_new(infotxt);
 	gtk_box_pack_start (GTK_BOX(top_vbox), tempwid, TRUE, TRUE, 5);

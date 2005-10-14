@@ -1233,8 +1233,6 @@ static void sort_varlist (gpointer p, guint col, GtkWidget *w)
 					  col, GTK_SORT_ASCENDING);
 }
 
-/* ......................................................... */
-
 void clear_varlist (GtkWidget *widget)
 {
     GtkListStore *store;
@@ -1242,8 +1240,6 @@ void clear_varlist (GtkWidget *widget)
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(widget)));
     gtk_list_store_clear(store);
 }
-
-/* ......................................................... */
 
 static float get_gui_scale (void)
 {
@@ -1258,7 +1254,7 @@ static float get_gui_scale (void)
 
     if (fontname != NULL) {
 	if (sscanf(fontname, "%*s %d", &fsize) == 1) {
-	    if (fsize > 10.0) {
+	    if (fsize > 10 && fsize < 100) {
 		scale = fsize / 10.0;
 	    }
 	}
@@ -1268,7 +1264,14 @@ static float get_gui_scale (void)
     return scale;
 }
 
-/* ......................................................... */
+static gboolean 
+mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
+{
+    mainwin_width = event->width;
+    mainwin_height = event->height;
+
+    return FALSE;
+}
 
 static GtkWidget *make_main_window (int gui_get_data) 
 {
@@ -1283,8 +1286,9 @@ static GtkWidget *make_main_window (int gui_get_data)
     gui_scale = get_gui_scale();
 
     if (!winsize || mainwin_width <= 200 || mainwin_height <= 200) {
+	/* set default window size */
 	mainwin_width = 580 * gui_scale;
-	mainwin_height = 420 *gui_scale;
+	mainwin_height = 420 * gui_scale;
     }
 
     mdata->data = NULL;  
@@ -1303,6 +1307,8 @@ static GtkWidget *make_main_window (int gui_get_data)
     set_up_windows_look();
 #endif
 
+    g_signal_connect(G_OBJECT(mdata->w), "configure_event",
+		     G_CALLBACK(mainwin_config), NULL);
     g_signal_connect(G_OBJECT(mdata->w), "delete_event",
 		     G_CALLBACK(exit_check), NULL);
     g_signal_connect(G_OBJECT(mdata->w), "destroy",

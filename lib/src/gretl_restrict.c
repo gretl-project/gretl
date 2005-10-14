@@ -643,7 +643,7 @@ restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
 #endif
 
     if (!strncmp(line, "restrict", 8)) {
-	sysname = get_system_name_from_line(line + 8);
+	sysname = get_system_name_from_line(line);
     }
 
     /* are we applying a restriction to a named system of equations? */

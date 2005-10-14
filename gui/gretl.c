@@ -1101,7 +1101,14 @@ static GtkWidget *list_box_create (GtkBox *box, char *titles[])
     return view;
 }
 
-/* ......................................................... */
+static gboolean 
+mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
+{
+    mainwin_width = event->width;
+    mainwin_height = event->height;
+
+    return FALSE;
+}
 
 static GtkWidget *make_main_window (int gui_get_data) 
 {
@@ -1132,10 +1139,12 @@ static GtkWidget *make_main_window (int gui_get_data)
 	mainwin_height = 420 * gui_scale;
     }
 
-    gtk_signal_connect (GTK_OBJECT (mdata->w), "delete_event",
-			GTK_SIGNAL_FUNC (exit_check), NULL);
-    gtk_signal_connect (GTK_OBJECT (mdata->w), "destroy",
-			GTK_SIGNAL_FUNC (destroy), NULL);
+    gtk_signal_connect(GTK_OBJECT(mdata->w), "configure_event",
+		       GTK_SIGNAL_FUNC(mainwin_config), NULL);
+    gtk_signal_connect(GTK_OBJECT(mdata->w), "delete_event",
+		       GTK_SIGNAL_FUNC(exit_check), NULL);
+    gtk_signal_connect(GTK_OBJECT(mdata->w), "destroy",
+		       GTK_SIGNAL_FUNC(destroy), NULL);
 
     gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
     gtk_window_set_default_size(GTK_WINDOW (mdata->w), 

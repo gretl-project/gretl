@@ -6046,10 +6046,10 @@
 
     <description>
 
-      <para context="gui">Gretl offers a mechanism for estimating
-	systems of equations, but at present this is available only in
-	script mode.  Please see the online help for script command
-	syntax, or the gretl manual.
+      <para context="gui">
+	In this window you can define a system of equations and choose an
+	estimator for the system.  Four sorts of statement may be given here, as
+	follows:
       </para>
 
       <para context="cli">
@@ -6084,7 +6084,7 @@
 	<cmd>end system</cmd>.  Within the system four sorts of
 	statement may be given, as follows.</para>
 
-      <ilist context="cli">
+      <ilist>
 	<li><para><cmdref targ="equation"/>: specify an equation
 	    within the system.  At least two such statements must be
 	    provided.</para>
@@ -6118,7 +6118,8 @@
 	and/or the fitted values (<cmd>fitted</cmd>).
       </para>
 
-      <para context="cli">For full examples of the specification and
+      <para>
+	For full examples of the specification and
 	estimation of systems of equations, please see the scripts
 	<filename>klein.inp</filename> and
 	<filename>greene14_2.inp</filename> (supplied with the gretl
@@ -6126,6 +6127,10 @@
       </para>
 
     </description>
+
+    <gui-access>
+      <menu-path>/Model/Simultaneous equations</menu-path>
+    </gui-access>
 
   </command>
 

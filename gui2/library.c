@@ -2160,14 +2160,33 @@ record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 
 void do_restrict (GtkWidget *widget, dialog_t *dlg)
 {
+    MODEL *pmod = NULL;
+    gretl_equation_system *sys = NULL;
+    GRETL_VAR *vecm = NULL;
+
     gchar *buf;
     PRN *prn;
     char title[64], bufline[MAXLINE];
     windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
-    MODEL *pmod = (MODEL *) vwin->data;
     gretl_restriction_set *my_rset = NULL;
     int got_start_line = 0, got_end_line = 0;
+    int height = 300;
     int err = 0;
+
+    if (vwin->role == VIEW_MODEL) {
+	pmod = (MODEL *) vwin->data;
+    } else if (vwin->role == VECM) {
+	vecm = (GRETL_VAR *) vwin->data;
+    } else if (vwin->role == SYSTEM) {
+	const char *sysname = (char *) vwin->data;
+
+	sys = get_equation_system_by_name(sysname, NULL);
+    }
+
+    if (pmod == NULL && vecm == NULL && sys == NULL) {
+	close_dialog(dlg);
+	return;
+    }
 
     buf = edit_dialog_special_get_text(dlg);
     if (buf == NULL) return;
@@ -2189,7 +2208,11 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 	}
 
 	if (my_rset == NULL) {
-	    my_rset = restriction_set_start(bufline, pmod, datainfo);
+	    if (pmod != NULL) {
+		my_rset = restriction_set_start(bufline, pmod, datainfo);
+	    } else if (sys != NULL) {
+		my_rset = cross_restriction_set_start(bufline, sys);
+	    } 
 	    if (my_rset == NULL) {
  		err = 1;
 		gui_errmsg(err);
@@ -2216,8 +2239,13 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
     if (err) {
 	errmsg(err, prn);
     } else {
-	record_model_commands_from_buf(buf, pmod, got_start_line,
-				       got_end_line);
+	if (pmod != NULL) {
+	    record_model_commands_from_buf(buf, pmod, got_start_line,
+					   got_end_line);
+	} else if (sys != NULL) {
+	    gretl_equation_system_estimate(sys, &Z, datainfo, OPT_NONE, prn);
+	    height = 450;
+	}
     }
 
     g_free(buf);
@@ -2225,26 +2253,27 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
     strcpy(title, "gretl: ");
     strcat(title, _("linear restrictions"));
 
-    view_buffer(prn, 78, 300, title, PRINT, NULL);
+    view_buffer(prn, 78, height, title, PRINT, NULL);
 }
 
 static int 
-record_sys_commands_from_buf (const gchar *buf, int method, int got_end_line)
+record_sys_commands_from_buf (const gchar *buf, const char *startline, 
+			      int got_end_line)
 {
-    char bufline[MAXLINE];
-
-    sprintf(bufline, "system method=%s", system_method_short_string(method));
+    char bufline[MAXLINE];    
 
     bufgets(NULL, 0, buf);
+
     while (bufgets(bufline, MAXLINE, buf)) {
 	if (string_is_blank(bufline)) {
 	    continue;
 	}
 	if (!strncmp(bufline, "system", 6)) {
-	    continue;
+	    add_command_to_stack(startline);
+	} else {
+	    top_n_tail(bufline);
+	    add_command_to_stack(bufline);
 	}
-	top_n_tail(bufline);
-	add_command_to_stack(bufline);
     }
 
     if (!got_end_line) {
@@ -2256,11 +2285,14 @@ record_sys_commands_from_buf (const gchar *buf, int method, int got_end_line)
 
 void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 {
+    static int sysnum;
+
     gretl_equation_system *my_sys = NULL;
     gchar *buf;
     PRN *prn;
     char bufline[MAXLINE];
     int *slist = NULL;
+    char *startline = NULL;
     char *title, *sname = NULL;
     int got_end_line = 0;
     int method, err = 0;
@@ -2275,26 +2307,29 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
     bufgets(NULL, 0, buf);
 
     while (bufgets(bufline, MAXLINE, buf) && !err) {
-	if (string_is_blank(bufline)) {
+	if (string_is_blank(bufline) || *bufline == '#') {
 	    continue;
 	}
 
 	top_n_tail(bufline);
 
-	if (!strncmp(bufline, "system", 6)) {
-	    sname = get_system_name_from_line(bufline);
-	    continue;
-	} else if (!strcmp(bufline, "end system")) {
+	if (!strcmp(bufline, "end system")) {
 	    got_end_line = 1;
 	    break;
 	}	    
 
-	if (my_sys == NULL) {
-	    gchar *starter = g_strdup_printf("system method=%s", 
-					     system_method_short_string(method));
+	if (!strncmp(bufline, "system", 6)) {
+	    sname = get_system_name_from_line(bufline);
+	    continue;
+	} 
 
-	    my_sys = system_start(starter);
-	    g_free(starter);
+	if (my_sys == NULL) {
+	    if (sname == NULL) {
+		sname = g_strdup_printf("System %d", ++sysnum);
+	    }
+	    startline = g_strdup_printf("system name=\"%s\" method=%s", sname,
+					system_method_short_string(method));
+	    my_sys = system_start(startline);
 	    if (my_sys == NULL) {
 		fprintf(stderr, "do_eqn_system: sys is NULL\n");
  		err = 1;
@@ -2331,20 +2366,20 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
     if (err) {
 	errmsg(err, prn);
     } else {
-	record_sys_commands_from_buf(buf, method, got_end_line);
+	record_sys_commands_from_buf(buf, startline, got_end_line);
     }
 
     g_free(buf);
+    g_free(startline);
 
     if (sname != NULL) {
 	title = g_strdup_printf("gretl: %s", sname);
-	free(sname);
     } else {
 	title = g_strdup(_("gretl: simultaneous equations system"));
     }
 
     view_buffer(prn, 78, 450, _("gretl: simultaneous equations system"), 
-		PRINT, NULL); /* FIXME data */
+		SYSTEM, sname);
 
     g_free(title);
 }

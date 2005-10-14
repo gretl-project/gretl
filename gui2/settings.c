@@ -878,7 +878,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 	if ((rc->flags & BOOLSET) && rc->link == NULL) { 
 	    /* simple boolean variable (check box) */
-	    int rcval = *(int *)(rc->var);
+	    int rcval = *(int *) (rc->var);
 
 	    rc->widget = gtk_check_button_new_with_label(_(rc->description));
 	    gtk_table_attach_defaults(GTK_TABLE (b_table), rc->widget, 
@@ -924,7 +924,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 	} else if (rc->flags & BOOLSET) { 
 	    /* radio-button dichotomy */
-	    int rcval = *(int *)(rc->var);
+	    int rcval = *(int *) (rc->var);
 	    GtkWidget *button;
 	    GSList *group = NULL;
 
@@ -1130,9 +1130,9 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	if (rc_vars[i].widget != NULL) {
 	    if (rc_vars[i].flags & BOOLSET) {
 		if (GTK_TOGGLE_BUTTON(rc_vars[i].widget)->active) {
-		    *(int *)(rc_vars[i].var) = TRUE;
+		    *(int *) (rc_vars[i].var) = TRUE;
 		} else {
-		    *(int *)(rc_vars[i].var) = FALSE;
+		    *(int *) (rc_vars[i].var) = FALSE;
 		}
 	    } else if (rc_vars[i].flags & USERSET || rc_vars[i].flags & ROOTSET) {
 		str = gtk_entry_get_text(GTK_ENTRY(rc_vars[i].widget));
@@ -1176,9 +1176,9 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 static void str_to_boolvar (char *s, void *b)
 {
     if (strcmp(s, "true") == 0 || strcmp(s, "1") == 0) {
-	*(int *)b = TRUE;
+	*(int *) b = TRUE;
     } else {
-	*(int *)b = FALSE;
+	*(int *) b = FALSE;
     }	
 }
 
@@ -1186,7 +1186,7 @@ static void str_to_boolvar (char *s, void *b)
 
 static void boolvar_to_str (void *b, char *s)
 {
-    if (*(int *)b) {
+    if (*(int *) b) {
 	strcpy(s, "true");
     } else {
 	strcpy(s, "false");
@@ -1213,20 +1213,6 @@ static void common_read_rc_setup (void)
 # endif
 }
 
-static void get_mainwin_size (void)
-{
-    if (mdata->w != NULL) {
-#ifdef OLD_GTK
-	mainwin_width = mdata->w->allocation.width;
-	mainwin_height = mdata->w->allocation.height;
-#else
-	gtk_window_get_size(GTK_WINDOW(mdata->w), 
-			    &mainwin_width,
-			    &mainwin_height);
-#endif
-    }
-}
-
 /* next section: variant versions of write_rc and read_rc, depending
    on both GTK version and platform
 */
@@ -1244,8 +1230,6 @@ void write_rc (void)
     int i;
 
     client = gconf_client_get_default();
-
-    get_mainwin_size();
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	sprintf(key, "/apps/gretl/%s", rc_vars[i].key);
@@ -1354,8 +1338,6 @@ void write_rc (void)
     char *strvar;
     int i;
 
-    get_mainwin_size();
-
     for (i=0; rc_vars[i].key != NULL; i++) {
 	sprintf(key, "/gretl/%s/%s", rc_vars[i].description, rc_vars[i].key);
 	if (rc_vars[i].flags & BOOLSET) {
@@ -1431,11 +1413,10 @@ static void read_rc (void)
 
 void write_rc (void) 
 {
-    char bval[8];
-    char *strvar;
+    char bval[6];
+    char ival[16];
+    const char *strval;
     int i = 0;
-
-    get_mainwin_size();
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 
@@ -1448,23 +1429,23 @@ void write_rc (void)
 			  rc_vars[i].key, 
 			  bval);
 	} else if (rc_vars[i].flags & INTSET) {
-	    sprintf(bval, "%d", *(int *) rc_vars[i].var);
+	    sprintf(ival, "%d", *(int *) rc_vars[i].var);
 	    write_reg_val(HKEY_CURRENT_USER, 
 			  "gretl", 
 			  rc_vars[i].key, 
-			  bval);	    
+			  ival);	    
 	} else if (rc_vars[i].flags & ROOTSET) {
-	    strvar = (char *) rc_vars[i].var;
+	    strval = (char *) rc_vars[i].var;
 	    write_reg_val(HKEY_CLASSES_ROOT, 
 			  get_reg_base(rc_vars[i].key),
 			  rc_vars[i].key, 
-			  strvar);
+			  strval);
 	} else {
-	    strvar = (char *) rc_vars[i].var;
+	    strval = (char *) rc_vars[i].var;
 	    write_reg_val(HKEY_CURRENT_USER, 
 			  get_reg_base(rc_vars[i].key),
 			  rc_vars[i].key, 
-			  strvar);
+			  strval);
 	}
     }
 
@@ -1619,8 +1600,6 @@ void write_rc (void)
     }
 
     fprintf(rc, "# gretl config file (note: not used by gnome version)\n");
-
-    get_mainwin_size();
 
     for (i=0; rc_vars[i].var != NULL; i++) {
 	fprintf(rc, "# %s\n", rc_vars[i].description);

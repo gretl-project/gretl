@@ -305,7 +305,7 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
 
 GtkWidget *build_var_popup (void)
 {
-    const char *var_items[]={
+    const char *var_items[] = {
 	N_("Display values"),
 	N_("Descriptive statistics"),
 	N_("Time series plot"),

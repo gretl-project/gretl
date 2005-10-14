@@ -22,6 +22,7 @@
 #include "varprint.h"
 #include "modelspec.h"
 #include "forecast.h"
+#include "system.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -220,7 +221,7 @@ static GtkItemFactoryEntry model_items[] = {
 # endif
     { N_("/File/Close"), NULL, close_model, 0, "<StockItem>", GTK_STOCK_CLOSE },
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy"), "", model_copy_callback, 0, "<StockItem>", GTK_STOCK_COPY },
+    { N_("/Edit/_Copy"), "", model_copy_callback, 1, "<StockItem>", GTK_STOCK_COPY },
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>", GNULL },    
     { N_("/Tests/omit variables"), NULL, selector_callback, OMIT, NULL, GNULL },
     { N_("/Tests/add variables"), NULL, selector_callback, ADD, NULL, GNULL },
@@ -271,7 +272,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/File/Close"), NULL, close_model, 0, NULL },
 
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy"), "", model_copy_callback, 0, NULL },
+    { N_("/Edit/_Copy"), "", model_copy_callback, 1, NULL },
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>" },    
     { N_("/Tests/omit variables"), NULL, selector_callback, OMIT, NULL },
     { N_("/Tests/add variables"), NULL, selector_callback, ADD, NULL },
@@ -348,7 +349,21 @@ static GtkItemFactoryEntry VAR_items[] = {
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 # endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/_Copy"), "", model_copy_callback, 1, "<StockItem>", GTK_STOCK_COPY },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
+};
+
+static GtkItemFactoryEntry SYS_items[] = {
+    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/File/Save to session as icon"), NULL, remember_sys, 0, NULL, GNULL },
+    { N_("/File/Save as icon and close"), NULL, remember_sys, 1, NULL, GNULL },
+# if defined(G_OS_WIN32) || defined(USE_GNOME)
+    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
+# endif
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy"), "", model_copy_callback, 0, "<StockItem>", GTK_STOCK_COPY },
+    { N_("/_Tests"), NULL, NULL, 0, "<Branch>", GNULL },    
+    { N_("/Tests/linear restrictions"), NULL, gretl_callback, RESTRICT, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
@@ -389,15 +404,30 @@ static GtkItemFactoryEntry VAR_items[] = {
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 # endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy"), "", model_copy_callback, 0, NULL },
+    { N_("/Edit/_Copy"), "", model_copy_callback, 1, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
+
+static GtkItemFactoryEntry SYS_items[] = {
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Save to session as icon"), NULL, remember_sys, 0, NULL },
+    { N_("/File/Save as icon and close"), NULL, remember_sys, 1, NULL },
+# if defined(USE_GNOME)
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
+# endif
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy"), "", model_copy_callback, 0, NULL },
+    { N_("/_Tests"), NULL, NULL, 0, "<Branch>" },    
+    { N_("/Tests/linear restrictions"), NULL, gretl_callback, RESTRICT, NULL },
+    { NULL, NULL, NULL, 0, NULL }
+};
+
 
 #endif /* old versus new GTK */
 
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
 {
-    copy_format_dialog((windata_t *) p, 1, W_COPY);
+    copy_format_dialog((windata_t *) p, u, W_COPY);
 }
 
 #ifdef ENABLE_NLS
@@ -1527,6 +1557,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_mahal_dist(vwin->data);
 	} else if (vwin->role == COINT2) {
 	    gretl_VAR_free(vwin->data);
+	} else if (vwin->role == SYSTEM && vwin->data != NULL) {
+	    free(vwin->data); /* system name */
 	} else if (vwin->role == PRINT && vwin->data != NULL) {
 	    free_multi_series_view(vwin->data);
 	}
@@ -2144,12 +2176,15 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     viewer_box_config(vwin);
 
-    if (role == VAR || role == VECM) {
+    if (role == VAR || role == VECM || role == SYSTEM) {
 	/* special case: use a text-based menu bar */
-	set_up_viewer_menu(vwin->dialog, vwin, VAR_items);
+	set_up_viewer_menu(vwin->dialog, vwin, 
+			   (role == SYSTEM)? SYS_items : VAR_items);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
-	add_VAR_menu_items(vwin, role == VECM);
+	if (role != SYSTEM) {
+	    add_VAR_menu_items(vwin, role == VECM);
+	}
     } else if (role != IMPORT) {
 	make_viewbar(vwin, 1);
     }

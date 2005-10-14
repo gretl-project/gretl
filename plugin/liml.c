@@ -372,7 +372,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
 */
 
 int liml_driver (gretl_equation_system *sys, double ***pZ, 
-		 DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+		 DATAINFO *pdinfo, PRN *prn)
 {
     int g = system_n_equations(sys);
     int i, err = 0;

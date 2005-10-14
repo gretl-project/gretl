@@ -357,14 +357,6 @@ static void gretl_equation_system_clear (gretl_equation_system *sys)
 {
     if (sys == NULL || sys->lists == NULL) return;
 
-    sys->flags = 0;
-    sys->method = -1;
-
-    /* if restrictions in place, reset the restricted flag */
-    if (sys->R != NULL && sys->q != NULL) {
-	sys->flags |= GRETL_SYS_RESTRICT;
-    }
-
     system_clear_results(sys);
 }
 
@@ -454,10 +446,29 @@ int gretl_equation_system_append (gretl_equation_system *sys,
 char *get_system_name_from_line (const char *s)
 {
     char *name = NULL;
-    const char *p;
+    const char *p = strstr(s, " name");
     int pchars = 0;
 
-    while (isspace((unsigned char) *s)) s++;
+    if (p != NULL) {
+	p += 5;
+    } else {
+	p = strstr(s, "estimate ");
+	if (p == NULL) {
+	    p = strstr(s, "restrict ");
+	}
+	if (p != NULL) {
+	    p += 9;
+	}	
+    }
+
+    if (p == NULL) {
+	return NULL;
+    }
+
+    s = p;
+    while (isspace((unsigned char) *s) || *s == '=') {
+	s++;
+    }
 
     if (*s == '"') {
 	if (*(s + 1) != '\0') s++;
@@ -487,14 +498,30 @@ char *get_system_name_from_line (const char *s)
 
 /* parse a system estimation method out of a command line */
 
-static int get_estimation_method (const char *s)
+static int get_estimation_method_from_line (const char *s)
 {
+    const char *p = strstr(s, " method");
     char mstr[9];
     int method = -1;
 
-    while (isspace((unsigned char) *s)) s++;
+    if (p != NULL) {
+	p += 7;
+    } else {
+	p = strstr(s, " type");
+	if (p != NULL) {
+	    p += 5;
+	}
+    }
 
-    if (sscanf(s, "%8s", mstr) == 1) {
+    if (p == NULL) {
+	return -1;
+    }
+
+    while (isspace((unsigned char) *p) || *p == '=') {
+	p++;
+    }
+
+    if (sscanf(p, "%8s", mstr) == 1) {
 	lower(mstr);
 	method = gretl_system_method_from_string(mstr);
     }
@@ -502,58 +529,33 @@ static int get_estimation_method (const char *s)
     return method;
 }
 
-static char *system_start_get_name (const char *s)
+static void 
+system_set_save_flags (gretl_equation_system *sys, const char *s)
 {
-    char *sysname = NULL;
-    const char *p = strstr(s, "system name=");
+    s = strstr(s, " save");
 
-    if (p != NULL) {
-	sysname = get_system_name_from_line(p + 12);
+    if (s != NULL) {
+	s += 5;
+	if (*s != ' ' && *s != '=') {
+	    return;
+	}
+	if (strstr(s, "resids") || strstr(s, "uhat")) {
+	    sys->flags |= GRETL_SYSTEM_SAVE_UHAT;
+	}
+	if (strstr(s, "fitted") || strstr(s, "yhat")) {
+	    sys->flags |= GRETL_SYSTEM_SAVE_YHAT;
+	}
     }
-
-    return sysname;
-}
-
-static int system_start_get_method (const char *s)
-{
-    int method = -1;
-    int offset = 14;
-    const char *p;
-
-    p = strstr(s, "system method=");
-
-    if (p == NULL) {
-	/* backward compatibility */
-	p = strstr(s, "system type=");
-	offset = 12;
-    }
-
-    if (p != NULL) {
-	method = get_estimation_method(p + offset);
-    }
-
-    return method;
-}
-
-static int named_system_get_method (const char *s)
-{
-    int method = -1;
-    const char *p = strstr(s, "method=");
-
-    if (p != NULL) {
-	method = get_estimation_method(p + 7);
-    }
-
-    return method;
 }
 
 /* Start compiling an equation system in response to gretl's "system"
-   command: the command must specify either a "method" (estimation
-   method) or a name for the system.  In the former case (method
-   given, but no name), the system will be estimated as soon as its
-   definition is complete, then it will be destroyed.  In the latter
-   case the system definition is saved on a stack, and it can be
-   estimated via various methods (the "estimate" command).
+   command: the command must specify a "method" (estimation method)
+   and/or a name for the system.  If a method is given, the system
+   will be estimated as soon as its definition is complete.  If a name
+   is given, the system definition is saved on a stack, and it can
+   subsequently be estimated via various methods (the "estimate"
+   command).  If both a name and an estimation method are given, the
+   system is both estimated and saved.
 */
 
 gretl_equation_system *system_start (const char *line)
@@ -562,7 +564,7 @@ gretl_equation_system *system_start (const char *line)
     char *sysname = NULL;
     int method;
 
-    method = system_start_get_method(line);
+    method = get_estimation_method_from_line(line);
 
     if (method == SYS_MAX) {
 	/* invalid method was given */
@@ -570,39 +572,20 @@ gretl_equation_system *system_start (const char *line)
 	return NULL;
     }
 
-    if (method < 0) {
-	/* no method was specified: look for a name */
-	sysname = system_start_get_name(line);
-	if (sysname == NULL) {
-	    strcpy(gretl_errmsg, _(badsystem));
-	    return NULL;
-	}
+    sysname = get_system_name_from_line(line);
+
+    if (method < 0 && sysname == NULL) {
+	/* neither a method nor a name was specified */
+	strcpy(gretl_errmsg, _(badsystem));
+	return NULL;
     }
 
-    /* see if there's already a system with this name */
-    if (sysname != NULL) {
-	sys = get_equation_system_by_name(sysname, NULL);
-	if (sys != NULL) {
-	    gretl_equation_system_clear(sys);   
-	}
-    }
-
-    if (sys == NULL) {
-	sys = gretl_equation_system_new(method, sysname);
-    }
-
+    sys = gretl_equation_system_new(method, sysname);
     if (sys == NULL) {
 	return NULL;
     }
 
-    if (strstr(line, "save=")) {
-	if (strstr(line, "resids") || strstr(line, "uhat")) {
-	    sys->flags |= GRETL_SYSTEM_SAVE_UHAT;
-	}
-	if (strstr(line, "fitted") || strstr(line, "yhat")) {
-	    sys->flags |= GRETL_SYSTEM_SAVE_YHAT;
-	}
-    }
+    system_set_save_flags(sys, line);
 
     if (sysname != NULL) {
 	free(sysname);
@@ -718,13 +701,13 @@ system_print_LR_test (const gretl_equation_system *sys,
     pputc(prn, '\n');    
 }
 
-static int sys_test_type (gretl_equation_system *sys, gretlopt opt)
+static int sys_test_type (gretl_equation_system *sys)
 {
     int ret = SYS_NO_TEST;
 
     if (system_n_restrictions(sys) > 0) {
 	if (sys->method == SYS_SUR || sys->method == SYS_WLS) {
-	    if (opt & OPT_T) {
+	    if (sys->flags & GRETL_SYS_ITERATE) {
 		ret = SYS_LR_TEST;
 	    } else {
 		ret = SYS_F_TEST;
@@ -809,7 +792,7 @@ static int estimate_with_test (gretl_equation_system *sys,
 
 /* driver function for the routines in the "sysest" plugin */
 
-static int 
+int 
 gretl_equation_system_estimate (gretl_equation_system *sys, 
 				double ***pZ, DATAINFO *pdinfo, 
 				gretlopt opt, PRN *prn)
@@ -836,7 +819,7 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
 	goto system_bailout;
     }
 
-    stest = sys_test_type(sys, opt);
+    stest = sys_test_type(sys);
 
     if (stest == SYS_TEST_NOTIMP) {
 	pprintf(prn, _("Sorry, command not available for this estimator"));
@@ -867,8 +850,9 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
 }
 
 /* Finalize an equation system in response to "end system".  If the
-   system has no name but has a method specified, we go ahead and
-   estimate it; otherwise we save it on a stack of defined systems.
+   system has a specified name, we save it on a stack of defined
+   systems.  If it has a specified estimation method, we go ahead
+   and estimate it.  If it has both, we do both.
 */
 
 int gretl_equation_system_finalize (gretl_equation_system *sys, 
@@ -877,6 +861,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 {
     gretlopt opt = OPT_NONE;
     *gretl_errmsg = 0;
+    int err = 0;
 
     if (sys == NULL) {
 	strcpy(gretl_errmsg, _(nosystem));
@@ -889,18 +874,76 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	return 1;
     }
 
-    if (sys->name != NULL) {
-	/* save the system for subsequent estimation */
-	return stack_system(sys, prn);
-    }
-
-    if (sys->method < 0 || sys->method >= SYS_MAX) {
+    if (sys->method >= SYS_MAX) {
 	strcpy(gretl_errmsg, _(badsystem));
 	gretl_equation_system_destroy(sys);
 	return 1;
+    }    
+
+    if (sys->name != NULL) {
+	/* save the system for subsequent estimation */
+	err = stack_system(sys, prn);
     }
 
-    return gretl_equation_system_estimate(sys, pZ, pdinfo, opt, prn);
+    if (!err && sys->method >= 0) {
+	err = gretl_equation_system_estimate(sys, pZ, pdinfo, opt, prn);
+    }
+
+    return err;
+}
+
+static void 
+adjust_sys_flags_for_method (gretl_equation_system *sys, int method)
+{
+    char old_flags = sys->flags;
+
+    sys->flags = 0;
+
+    if (old_flags & GRETL_SYS_ITERATE) {
+	/* the iterate option is only available for WLS, SUR or 3SLS */
+	if (sys->method == SYS_WLS || sys->method == SYS_SUR ||
+	    sys->method == SYS_3SLS) {
+	    sys->flags |= GRETL_SYS_ITERATE;
+	}
+    }
+
+    /* by default, apply a df correction for single-equation methods */
+    if (sys->method == SYS_OLS || sys->method == SYS_WLS ||
+	sys->method == SYS_TSLS || sys->method == SYS_LIML) {
+	if (old_flags & GRETL_SYSTEM_DFCORR) {
+	    sys->flags |= GRETL_SYSTEM_DFCORR;
+	}
+    } 
+
+    if (old_flags & GRETL_SYS_VCV_GEOMEAN) {
+	sys->flags |= GRETL_SYS_VCV_GEOMEAN;
+    }    
+}
+
+static void 
+set_sys_flags_from_opt (gretl_equation_system *sys, gretlopt opt)
+{
+    sys->flags = 0;
+
+    if (opt & OPT_T) {
+	/* the iterate option is only available for WLS, SUR or 3SLS */
+	if (sys->method == SYS_WLS || sys->method == SYS_SUR ||
+	    sys->method == SYS_3SLS) {
+	    sys->flags |= GRETL_SYS_ITERATE;
+	}
+    }
+
+    /* by default, apply a df correction for single-equation methods */
+    if (sys->method == SYS_OLS || sys->method == SYS_WLS ||
+	sys->method == SYS_TSLS || sys->method == SYS_LIML) {
+	if (!(opt & OPT_N)) {
+	    sys->flags |= GRETL_SYSTEM_DFCORR;
+	}
+    } 
+
+    if (opt & OPT_M) {
+	sys->flags |= GRETL_SYS_VCV_GEOMEAN;
+    } 
 }
 
 /* Implement the "estimate" command, which must give the name of a pre-defined
@@ -921,7 +964,7 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    sysname = get_system_name_from_line(line + 9);
+    sysname = get_system_name_from_line(line);
     if (sysname == NULL) {
 	strcpy(gretl_errmsg, "estimate: no system name was provided");
 	return 1;
@@ -936,7 +979,11 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     free(sysname);
 
-    method = named_system_get_method(line);
+    method = get_estimation_method_from_line(line);
+    if (method < 0 || method >= SYS_MAX) {
+	method = sys->method;
+    }
+
     if (method < 0 || method >= SYS_MAX) {
 	strcpy(gretl_errmsg, "estimate: no valid method was specified");
 	return 1;
@@ -944,24 +991,17 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     sys->method = method;
 
-    if (opt & OPT_T) {
-	/* the iterate option is available for WLS, SUR or 3SLS */
-	if (method != SYS_WLS && method != SYS_SUR && method != SYS_3SLS) {
-	    opt ^= OPT_T;
-	}
+    if (opt == OPT_UNSET) {
+	opt = OPT_NONE;
+	adjust_sys_flags_for_method(sys, method);
+    } else {
+	set_sys_flags_from_opt(sys, opt);
     }
 
-    /* by default, apply a df correction for single-equation methods */
-    if (method == SYS_OLS || method == SYS_WLS ||
-	method == SYS_TSLS || method == SYS_LIML) {
-	if (!(opt & OPT_N)) {
-	    sys->flags |= GRETL_SYSTEM_DFCORR;
-	}
+    /* if restrictions are in place, reset the restricted flag */
+    if (sys->R != NULL && sys->q != NULL) {
+	sys->flags |= GRETL_SYS_RESTRICT;
     } 
-
-    if (opt & OPT_M) {
-	sys->flags |= GRETL_SYS_VCV_GEOMEAN;
-    }    
 
     return gretl_equation_system_estimate(sys, pZ, pdinfo, opt, prn);
 }
@@ -1082,10 +1122,9 @@ void system_set_iters (gretl_equation_system *sys, int n)
 
 /* simple accessor functions */
 
-const char *system_get_full_string (const gretl_equation_system *sys,
-				    gretlopt opt)
+const char *system_get_full_string (const gretl_equation_system *sys)
 {
-    if (opt & OPT_T) {
+    if (sys->flags & GRETL_SYS_ITERATE) {
 	static char sysstr[64];
 
 	sprintf(sysstr, _("iterated %s"), gretl_system_long_strings[sys->method]);
@@ -1740,6 +1779,3 @@ system_set_restriction_matrices (gretl_equation_system *sys,
 
     sys->flags |= GRETL_SYS_RESTRICT;
 }
-
-
-

@@ -53,13 +53,17 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 				    double ***pZ, DATAINFO *pdinfo,
 				    PRN *prn);
 
+int 
+gretl_equation_system_estimate (gretl_equation_system *sys, 
+				double ***pZ, DATAINFO *pdinfo, 
+				gretlopt opt, PRN *prn);
+
 int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo, 
 			   gretlopt opt, PRN *prn);
 
 void gretl_equation_system_destroy (gretl_equation_system *sys);
 
-const char *system_get_full_string (const gretl_equation_system *sys,
-				    gretlopt opt);
+const char *system_get_full_string (const gretl_equation_system *sys);
 
 int system_save_uhat (const gretl_equation_system *sys);
 int system_save_yhat (const gretl_equation_system *sys);

@@ -30,7 +30,7 @@ extern int fiml_driver (gretl_equation_system *sys, double ***pZ,
 
 /* liml.c */
 extern int liml_driver (gretl_equation_system *sys, double ***pZ, 
-			DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+			DATAINFO *pdinfo, PRN *prn);
 
 static void 
 print_system_vcv (const gretl_equation_system *sys, PRN *prn)
@@ -717,10 +717,10 @@ save_and_print_results (gretl_equation_system *sys,
     if (sys->name != NULL) {
 	pprintf(prn, "%s, %s\n", _("Equation system"), sys->name);
 	pprintf(prn, "%s: %s\n", _("Estimator"), 
-		system_get_full_string(sys, opt));
+		system_get_full_string(sys));
     } else {
 	pprintf(prn, "%s, %s\n", _("Equation system"),
-		system_get_full_string(sys, opt));
+		system_get_full_string(sys));
     }
 
     if (sys->iters > 0) {
@@ -940,7 +940,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     sys->iters = 0;
 
-    if (opt & OPT_T) {
+    if (sys->flags & GRETL_SYS_ITERATE) {
 	do_iteration = 1;
     }
     
@@ -1049,7 +1049,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     if (method == SYS_LIML) {
 	/* compute the minimum eigenvalues and generated the
 	   suitably transformed data matrices */
-	err = liml_driver(sys, pZ, pdinfo, opt, prn);
+	err = liml_driver(sys, pZ, pdinfo, prn);
 	if (err) goto cleanup;
     }
 

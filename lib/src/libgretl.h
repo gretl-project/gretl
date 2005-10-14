@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
+#include <limits.h>
 
 #include <zlib.h>
 
@@ -85,7 +86,6 @@
 
 #define LISTSEP            999
 #define PMAX_NOT_AVAILABLE 666
-#define OPT_NONE           0L
 
 /* numbers smaller than the given limit will print as zero */
 #define screen_zero(x)  ((fabs(x) > 1.0e-13)? x : 0.0)
@@ -133,6 +133,7 @@ enum test_stats {
 };
 
 enum gretl_opt_flags {
+    OPT_NONE = 0,
     OPT_A = 1 <<  0,
     OPT_B = 1 <<  1,
     OPT_C = 1 <<  2,
@@ -153,7 +154,8 @@ enum gretl_opt_flags {
     OPT_V = 1 << 17,
     OPT_W = 1 << 18,
     OPT_X = 1 << 19,
-    OPT_Z = 1 << 20
+    OPT_Z = 1 << 20,
+    OPT_UNSET = ULONG_MAX
 };
 
 typedef enum {
