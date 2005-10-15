@@ -93,6 +93,8 @@ extern char *errtext;
 extern int expert;
 extern int updater;
 extern int winsize;
+extern int main_x;
+extern int main_y;
 extern int mainwin_width;
 extern int mainwin_height;
 #ifdef G_OS_WIN32

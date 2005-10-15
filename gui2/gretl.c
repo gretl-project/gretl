@@ -116,6 +116,8 @@ int expert = FALSE;
 int updater = FALSE;
 int want_toolbar = TRUE;
 int winsize = TRUE;
+int main_x = -1;
+int main_y = -1;
 int mainwin_width = 520;
 int mainwin_height = 420;
 
@@ -1267,6 +1269,8 @@ static float get_gui_scale (void)
 static gboolean 
 mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
 {
+    main_x = event->x;
+    main_y = event->y;
     mainwin_width = event->width;
     mainwin_height = event->height;
 
@@ -1314,8 +1318,8 @@ static GtkWidget *make_main_window (int gui_get_data)
     g_signal_connect(G_OBJECT(mdata->w), "destroy",
 		     G_CALLBACK(destroy), NULL);
 
-    gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
-    gtk_window_set_default_size(GTK_WINDOW (mdata->w), 
+    gtk_window_set_title(GTK_WINDOW(mdata->w), "gretl");
+    gtk_window_set_default_size(GTK_WINDOW(mdata->w), 
 				mainwin_width, mainwin_height);
 #ifndef G_OS_WIN32
     g_signal_connect_after(G_OBJECT(mdata->w), "realize", 
@@ -1343,13 +1347,13 @@ static GtkWidget *make_main_window (int gui_get_data)
 
     g_object_set_data(G_OBJECT(mdata->w), "dlabel", dlabel);
 
-    box = gtk_vbox_new (FALSE, 0);
+    box = gtk_vbox_new(FALSE, 0);
     align = gtk_alignment_new(0, 0, 0, 0);
     gtk_box_pack_start(GTK_BOX(box), align, FALSE, FALSE, 0);
     gtk_widget_show(align);
     gtk_container_add(GTK_CONTAINER(align), dlabel);
    
-    mdata->listbox = list_box_create (mdata, GTK_BOX(box), 3, 0, titles);
+    mdata->listbox = list_box_create(mdata, GTK_BOX(box), 3, 0, titles);
     gtk_widget_show(box);
 
     gtk_drag_dest_set (mdata->listbox,
@@ -1365,7 +1369,7 @@ static GtkWidget *make_main_window (int gui_get_data)
 
     mdata->status = gtk_label_new("");
     
-    gtk_box_pack_start (GTK_BOX(main_vbox), mdata->status, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(main_vbox), mdata->status, FALSE, TRUE, 0);
 
     /* put stuff into list box, activate menus */
     if (!gui_get_data) {
@@ -1384,6 +1388,10 @@ static GtkWidget *make_main_window (int gui_get_data)
 
     /* create gretl toolbar? */
     show_or_hide_toolbar(want_toolbar);
+
+    if (winsize && main_x >= 0 && main_y >= 0) {
+	gtk_window_move(GTK_WINDOW(mdata->w), main_x, main_y);
+    }
 
     return main_vbox;
 }

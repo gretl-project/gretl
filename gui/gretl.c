@@ -107,6 +107,8 @@ int expert = FALSE;
 int updater = FALSE;
 int want_toolbar = TRUE;
 int winsize = TRUE;
+int main_x = -1;
+int main_y = -1;
 int mainwin_width = 520;
 int mainwin_height = 420;
 
@@ -1104,6 +1106,8 @@ static GtkWidget *list_box_create (GtkBox *box, char *titles[])
 static gboolean 
 mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
 {
+    main_x = event->x;
+    main_y = event->y;
     mainwin_width = event->width;
     mainwin_height = event->height;
 
@@ -1207,6 +1211,12 @@ static GtkWidget *make_main_window (int gui_get_data)
     set_fixed_font();
 
     gtk_widget_show_all(mdata->w); 
+
+#if 0
+    if (winsize && main_x >= 0 && main_y >= 0) {
+	gtk_window_move(GTK_WINDOW(mdata->w), main_x, main_y);
+    }
+#endif
 
     return main_vbox;
 }
