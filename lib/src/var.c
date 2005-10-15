@@ -511,7 +511,7 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
     gretl_matrix_set_int(F, t1);
     var->F = F;
 
-#if 1
+#if 0
     gretl_matrix_print(F, "var->F", NULL);
 #endif
 
