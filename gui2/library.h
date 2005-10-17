@@ -205,9 +205,11 @@ void do_remove_obs (gpointer data, guint u, GtkWidget *widget);
 
 void add_logs_etc (gpointer data, guint action, GtkWidget *widget);
 
+int add_system_resid (gpointer data, int eqnum, int ci);
+
 int add_fit_resid (MODEL *pmod, int code, int undo);
 
-int add_var_resid (GRETL_VAR *var, int eqnum);
+int add_system_resid (gpointer data, int eqnum, int ci);
 
 void add_model_stat (MODEL *pmod, int which);
 

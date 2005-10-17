@@ -858,6 +858,197 @@ double doornik_chisq (double skew, double xkurt, int n)
     return z1*z1 + z2*z2;
 }
 
+static int
+get_moments (const gretl_matrix *M, int row, double *skew, double *kurt)
+{
+    int j, n = gretl_matrix_cols(M);
+    double xi, xbar, dev, var;
+    double s = 0.0;
+    double s2 = 0.0;
+    double s3 = 0.0;
+    double s4 = 0.0;
+    int err = 0;
+    
+    for (j=0; j<n; j++) {
+	s += gretl_matrix_get(M, row, j);
+    }
+
+    xbar = s / n;
+
+    for (j=0; j<n; j++) {
+	xi = gretl_matrix_get(M, row, j);
+	dev = xi - xbar;
+	s2 += dev * dev;
+	s3 += pow(dev, 3);
+	s4 += pow(dev, 4);
+    }
+
+    var = s2 / n;
+
+    if (var > 0.0) {
+	/* if variance is effectively zero, these should be undef'd */
+	*skew = (s3 / n) / pow(s2 / n, 1.5);
+	*kurt = ((s4 / n) / pow(s2 / n, 2));
+    } else {
+	*skew = *kurt = NADBL;
+	err = 1;
+    }
+
+    return err;
+}
+
+int 
+gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma, 
+			     PRN *prn)
+{
+    gretl_matrix *S = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *C = NULL;
+    gretl_matrix *X = NULL;
+    gretl_matrix *R = NULL;
+    gretl_matrix *tmp = NULL;
+
+    /* convenience pointers: do not free! */
+    gretl_matrix *H;
+    gretl_vector *Z1;
+    gretl_vector *Z2;
+
+    double *evals = NULL;
+    double x, skew, kurt;
+    double X2 = NADBL;
+    int n, p;
+    int i, j;
+    int err = 0;
+
+    if (E == NULL || Sigma == NULL) {
+	err = 1;
+	goto bailout;
+    }
+
+    p = gretl_matrix_cols(E);
+    n = gretl_matrix_rows(E);
+
+    S = gretl_matrix_copy(Sigma);
+    V = gretl_vector_alloc(p);
+    C = gretl_matrix_alloc(p, p);
+    X = gretl_matrix_copy_transpose(E);
+    R = gretl_matrix_alloc(p, n);
+    tmp = gretl_matrix_alloc(p, p);
+
+    if (S == NULL || V == NULL || C == NULL || X == NULL || 
+	R == NULL || tmp == NULL) {
+	err = 1;
+	goto bailout;
+    }
+
+    for (i=0; i<p; i++) {
+	x = gretl_matrix_get(S, i, i);
+	gretl_vector_set(V, i, 1.0 / sqrt(x));
+    }
+
+    err = gretl_matrix_diagonal_sandwich(V, S, C);
+    if (err) {
+	goto bailout;
+    }
+
+    gretl_matrix_print(C, "\nResidual correlation matrix, C", prn);
+
+    evals = gretl_symmetric_matrix_eigenvals(C, 1);
+    if (evals == NULL) {
+	goto bailout;
+    }
+
+    pputs(prn, "Eigenvalues of the correlation matrix:\n\n");
+    for (i=0; i<p; i++) {
+	pprintf(prn, " %10g\n", evals[i]);
+    }
+    pputc(prn, '\n');
+
+    /* C should now contain eigenvectors of the original C:
+       relabel as 'H' for perspicuity */
+    H = C;
+#if 0
+    gretl_matrix_print(H, "Eigenvectors, H", prn);
+#endif
+    gretl_matrix_copy_values(tmp, H);
+
+    /* make "tmp" into $H \Lambda^{-1/2}$ */
+    for (i=0; i<p; i++) {
+	for (j=0; j<p; j++) {
+	    x = gretl_matrix_get(tmp, i, j);
+	    x *= 1.0 / sqrt(evals[j]);
+	    gretl_matrix_set(tmp, i, j, x);
+	}
+    }
+
+    /* make S into $H \Lambda^{-1/2} H'$ */
+    gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
+			      H, GRETL_MOD_TRANSPOSE,
+			      S);
+
+#if 1
+    gretl_matrix_demean_by_row(X);
+#endif
+
+    /* compute VX', in X (don't need to subtract means, because these
+       are OLS residuals)
+    */
+    for (i=0; i<p; i++) {
+	for (j=0; j<n; j++) {
+	    x = gretl_matrix_get(X, i, j);
+	    x *= gretl_vector_get(V, i);
+	    gretl_matrix_set(X, i, j, x);
+	}
+    }
+
+    /* finally, compute $R' = H  \Lambda^{-1/2} H' V X'$ 
+       Doornik and Hansen, 1994, section 3 */
+    gretl_matrix_multiply(S, X, R);
+
+    /* Z_1 and Z_2 are p-vectors: use existing storage */
+    Z1 = V;
+    Z2 = gretl_matrix_reuse(tmp, p, 1);
+
+    for (i=0; i<p && !err; i++) {
+	get_moments(R, i, &skew, &kurt);
+	if (na(skew) || na(kurt)) {
+	    err = 1;
+	} else {
+	    double z1i = dh_root_b1_to_z1(skew, n);
+	    double z2i = dh_b2_to_z2(skew * skew, kurt, n);
+
+	    gretl_vector_set(Z1, i, z1i);
+	    gretl_vector_set(Z2, i, z2i);
+	}
+    }
+	
+    if (!err) {
+	X2 = gretl_vector_dot_product(Z1, Z1, &err);
+	X2 += gretl_vector_dot_product(Z2, Z2, &err);
+    }
+
+    if (na(X2)) {
+	pputs(prn, "Calculation of test statistic failed\n");
+    } else {
+	pputs(prn, "Test for multivariate normality of residuals\n");
+	pprintf(prn, "Doornik-Hansen Chi-square(%d) = %g, ", 2 * p, X2);
+	pprintf(prn, "with p-value = %g\n", chisq(X2, 2 * p));
+    }
+
+ bailout:
+
+    gretl_matrix_free(S);
+    gretl_matrix_free(V);
+    gretl_matrix_free(C);
+    gretl_matrix_free(X);
+    gretl_matrix_free(R);
+    gretl_matrix_free(tmp);
+
+    free(evals);
+
+    return err;
+}
+
 /**
  * get_freq:
  * @varno: ID number of variable to process.
@@ -2883,3 +3074,5 @@ MahalDist *get_mahal_distances (const int *list, double ***pZ,
 
     return md;
 }
+
+

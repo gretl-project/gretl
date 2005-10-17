@@ -65,5 +65,7 @@ struct _gretl_equation_system {
 				*/
 };
 
+void make_system_data_info (gretl_equation_system *sys, int eqn, 
+			    DATAINFO *pdinfo, int v, int code);
 
 #endif /* GRETL_SYSTEM_PRIVATE_H */

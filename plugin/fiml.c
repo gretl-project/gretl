@@ -467,7 +467,7 @@ static void fiml_uhat_init (fiml_system *fsys)
 
     for (i=0; i<fsys->g; i++) {
 	for (t=0; t<fsys->n; t++) {
-	    x = gretl_matrix_get(uhat, i, t);
+	    x = gretl_matrix_get(uhat, t, i);
 	    gretl_matrix_set(fsys->uhat, t, i, x);
 	}
     }

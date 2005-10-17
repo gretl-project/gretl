@@ -187,9 +187,15 @@ double gretl_vector_dot_product (const gretl_vector *a, const gretl_vector *b,
 gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a, 
 					 const gretl_matrix *b);
 
+double gretl_matrix_row_mean (const gretl_matrix *m, int row);
+
 double gretl_matrix_column_mean (const gretl_matrix *m, int col);
 
-gretl_matrix *gretl_matrix_vcv (const gretl_matrix *m);
+void gretl_matrix_demean_by_row (gretl_matrix *m);
+
+void gretl_matrix_demean_by_column (gretl_matrix *m);
+
+gretl_matrix *gretl_matrix_vcv (gretl_matrix *m);
 
 double gretl_matrix_determinant (gretl_matrix *a);
 

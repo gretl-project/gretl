@@ -156,7 +156,7 @@ gls_sigma_from_uhat (gretl_equation_system *sys, gretl_matrix *sigma)
 	for (j=i; j<m; j++) {
 	    xx = 0.0;
 	    for (t=0; t<T; t++) {
-		xx += gretl_matrix_get(e, i, t) * gretl_matrix_get(e, j, t);
+		xx += gretl_matrix_get(e, t, i) * gretl_matrix_get(e, t, j);
 	    }
 	    if (geomean) {
 		xx /= system_vcv_denom(sys, i, j);
@@ -206,7 +206,7 @@ sys_resids (gretl_equation_system *sys, int eq, const double **Z)
 	pmod->yhat[t] = yh;
 	pmod->uhat[t] = Z[pmod->list[1]][t] - yh;
 	/* for cross-equation vcv */
-	gretl_matrix_set(sys->uhat, pmod->ID, t - pmod->t1, pmod->uhat[t]);
+	gretl_matrix_set(sys->uhat, t - pmod->t1, pmod->ID, pmod->uhat[t]);
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
@@ -374,11 +374,10 @@ calculate_sys_coefficients (gretl_equation_system *sys,
     return err;
 }
 
-/* FIXME below: naming and labeling of added variables */
-
-static void add_results_to_dataset (gretl_equation_system *sys, 
-				    int i, int *pj,
-				    double **Z, DATAINFO *pdinfo)
+static void 
+add_system_results_to_dataset (gretl_equation_system *sys, 
+			       int i, int *pj,
+			       double **Z, DATAINFO *pdinfo)
 {
     const MODEL *pmod = sys->models[i];
     int t;
@@ -391,17 +390,7 @@ static void add_results_to_dataset (gretl_equation_system *sys,
 		Z[*pj][t] = pmod->uhat[t];
 	    }
 	}
-	sprintf(pdinfo->varname[*pj], "uhat_s%02d", i + 1);
-	if (sys->method == SYS_SUR) {
-	    sprintf(VARLABEL(pdinfo, *pj), _("SUR residual, equation %d"), 
-		    i + 1);
-	} else if (sys->method == SYS_3SLS) {
-	    sprintf(VARLABEL(pdinfo, *pj), _("3SLS residual, equation %d"), 
-		    i + 1);
-	} else {
-	    sprintf(VARLABEL(pdinfo, *pj), "system residual, equation %d", 
-		    i + 1);
-	}
+	make_system_data_info(sys, i + 1, pdinfo, *pj, GRETL_SYSTEM_SAVE_UHAT);
 	*pj += 1;
     }
 
@@ -412,18 +401,8 @@ static void add_results_to_dataset (gretl_equation_system *sys,
 	    } else {
 		Z[*pj][t] = pmod->yhat[t];
 	    }
-	}	
-	sprintf(pdinfo->varname[*pj], "yhat_s%02d", i + 1);
-	if (sys->method == SYS_SUR) {
-	    sprintf(VARLABEL(pdinfo, *pj), _("SUR fitted value, equation %d"), 
-		    i + 1);
-	} else if (sys->method == SYS_3SLS) {
-	    sprintf(VARLABEL(pdinfo, *pj), _("3SLS fitted value, equation %d"), 
-		    i + 1);
-	} else {
-	    sprintf(VARLABEL(pdinfo, *pj), "system fitted value, equation %d", 
-		    i + 1);
-	}	    
+	}
+	make_system_data_info(sys, i + 1, pdinfo, *pj, GRETL_SYSTEM_SAVE_YHAT);
 	*pj += 1;
     }
 }
@@ -575,7 +554,7 @@ static int hansen_sargan_test (gretl_equation_system *sys,
 	    Wj = Z[exlist[j+1]] + sys->t1;
 	    x = 0.0;
 	    for (t=0; t<T; t++) {
-		x += gretl_matrix_get(sys->uhat, i, t) * Wj[t];
+		x += gretl_matrix_get(sys->uhat, t, i) * Wj[t];
 	    }
 	    gretl_matrix_set(eW, i, j, x);
 	}
@@ -633,7 +612,7 @@ static int basic_system_allocate (gretl_equation_system *sys,
     /* allocate a model for each stochastic equation */
     sys->models = gretl_model_array_new(m);
 
-    sys->uhat = gretl_matrix_alloc(m, T);
+    sys->uhat = gretl_matrix_alloc(T, m);
     if (sys->uhat == NULL) {
 	return E_ALLOC;
     }
@@ -738,7 +717,7 @@ save_and_print_results (gretl_equation_system *sys,
     for (i=0; i<m; i++) {
 	printmodel(sys->models[i], pdinfo, OPT_NONE, prn);
 	if (!err) {
-	    add_results_to_dataset(sys, i, &j, *pZ, pdinfo);
+	    add_system_results_to_dataset(sys, i, &j, *pZ, pdinfo);
 	}
     }
 
@@ -1040,7 +1019,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	for (t=0; t<T; t++) {
-	    gretl_matrix_set(sys->uhat, i, t, pmod->uhat[t + sys->t1]);
+	    gretl_matrix_set(sys->uhat, t, i, pmod->uhat[t + sys->t1]);
 	}
     }
 

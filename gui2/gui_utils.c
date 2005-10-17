@@ -85,6 +85,7 @@ static void add_model_tex_items (windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
 static void add_VAR_menu_items (windata_t *vwin, int vecm);
+static void add_SYS_menu_items (windata_t *vwin);
 static void add_x12_output_menu_item (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
@@ -2182,7 +2183,9 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 			   (role == SYSTEM)? SYS_items : VAR_items);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
-	if (role != SYSTEM) {
+	if (role == SYSTEM) {
+	    add_SYS_menu_items(vwin);
+	} else {
 	    add_VAR_menu_items(vwin, role == VECM);
 	}
     } else if (role != IMPORT) {
@@ -3664,6 +3667,97 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 	    gtk_item_factory_create_item(vwin->ifac, &VAR_tex_items[i], 
 					 vwin, 1);
 	}
+    }
+}
+
+enum {
+    SYS_RESTRICT,
+    SYS_NORMALITY
+};
+
+static void SYS_test_call (gpointer p, guint code, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    const char *sysname = (const char *) vwin->data;
+    gretl_equation_system *sys = NULL;
+    char title[72];
+    PRN *prn;
+    int err;
+
+    sys = get_equation_system_by_name(sysname);
+    if (sys == NULL) {
+	/* error message? */
+	return;
+    }    
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    if (code == SYS_NORMALITY) {
+	sprintf(title, "gretl: %s", _("Test for normality of residual"));
+	err = system_normality_test(sys, prn);
+    } else {
+	err = 1;
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	view_buffer(prn, 78, 400, title, PRINT, NULL); 
+    }
+}
+
+static void add_SYS_menu_items (windata_t *vwin)
+{
+    GtkItemFactoryEntry sysitem;
+    const gchar *tpath = N_("/Tests");
+    const gchar *dpath = N_("/Model data/Add to data set");
+    gretl_equation_system *sys = NULL;
+    const char *sysname = (const char *) vwin->data;
+    int i, neqns;
+
+    sys = get_equation_system_by_name(sysname);
+    if (sys == NULL) {
+	return;
+    }
+
+    neqns = system_n_equations(sys);
+
+    sysitem.accelerator = NULL;
+    sysitem.callback = NULL;
+    sysitem.callback_action = 0;
+    sysitem.item_type = "<Branch>";
+
+    /* model data menu path */
+    sysitem.path = g_strdup(_("/_Model data"));
+    gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
+    g_free(sysitem.path);
+
+    /* add to dataset menu path */
+    sysitem.path = g_strdup(_(dpath));
+    gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
+    g_free(sysitem.path);
+
+    /* multivariate normality test */
+    sysitem.path = g_strdup_printf("%s/%s", _(tpath), 
+				   _("normality of residuals"));
+    sysitem.callback = SYS_test_call;
+    sysitem.callback_action = SYS_NORMALITY;
+    sysitem.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
+    g_free(sysitem.path);  
+
+    for (i=0; i<neqns; i++) {
+	/* save resids items */
+	sysitem.path = g_strdup_printf("%s/%s %d", _(dpath), 
+				       _("residuals from equation"), i + 1);
+	sysitem.callback = SYS_resid_callback;
+	sysitem.callback_action = i;
+	sysitem.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
+	g_free(sysitem.path);
     }
 }
 

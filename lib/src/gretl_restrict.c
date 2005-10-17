@@ -650,7 +650,7 @@ restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
     if (sysname != NULL) {
 	gretl_equation_system *sys;
 
-	sys = get_equation_system_by_name(sysname, NULL);
+	sys = get_equation_system_by_name(sysname);
 	if (sys == NULL) {
 	    sprintf(gretl_errmsg, "'%s': unrecognized name", sysname);
 	} else {

@@ -2180,7 +2180,7 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
     } else if (vwin->role == SYSTEM) {
 	const char *sysname = (char *) vwin->data;
 
-	sys = get_equation_system_by_name(sysname, NULL);
+	sys = get_equation_system_by_name(sysname);
     }
 
     if (pmod == NULL && vecm == NULL && sys == NULL) {
@@ -3805,12 +3805,22 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
     return 0;
 }
 
-int add_var_resid (GRETL_VAR *var, int eqnum)
+int add_system_resid (gpointer data, int eqnum, int ci)
 {
+    windata_t *vwin = (windata_t *) data;
     int err, v;
 
-    err = gretl_VAR_add_resids_to_dataset(var, eqnum,
-					  &Z, datainfo);
+    if (ci == VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+
+	err = gretl_VAR_add_resids_to_dataset(var, eqnum,
+					      &Z, datainfo);
+    } else {
+	const char *sysname = (const char *) vwin->data;
+
+	err = gretl_system_add_resids_to_dataset(sysname, eqnum,
+						 &Z, datainfo);
+    }	
 
     if (err) {
 	errbox(_("Out of memory attempting to add variable"));
@@ -6665,6 +6675,7 @@ int gui_exec_line (char *line,
 		errmsg(err, prn);
 	    } else {
 		gretl_cmd_set_context(&cmd, SYSTEM);
+		maybe_save_system(&cmd, sys, prn);
 	    }
 	} else {
 	    err = system_parse_line(sys, line, datainfo);

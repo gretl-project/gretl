@@ -22,6 +22,8 @@
 #ifndef SESSION_H
 #define SESSION_H
 
+#include "system.h"
+
 enum {
     SCHEDULE_FOR_DELETION,
     REALLY_DELETE_ALL,
@@ -38,6 +40,24 @@ enum {
     ADD_OBJECT_REPLACE,
     ADD_OBJECT_FAIL
 };
+
+typedef enum {
+    OBJ_UNKNOWN,
+    OBJ_DATASET,
+    OBJ_INFO,
+    OBJ_STATS,
+    OBJ_CORR,
+    OBJ_SCRIPT,
+    OBJ_NOTES,
+    OBJ_MODTAB,
+    OBJ_GPAGE,
+    OBJ_MODEL,
+    OBJ_GRAPH,
+    OBJ_PLOT,
+    OBJ_VAR,
+    OBJ_SYS,
+    OBJ_TEXT
+} SessionObjType;
 
 int session_is_saved (void);
 
@@ -63,6 +83,9 @@ int model_already_saved (const MODEL *pmod);
 int try_add_model_to_session (MODEL *pmod);
 
 int try_add_var_to_session (GRETL_VAR *var);
+
+int try_add_system_to_session (gretl_equation_system *sys,
+			       const char *savename);
 
 void *get_session_object_by_name (const char *name, int *which);
 

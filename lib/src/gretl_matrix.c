@@ -1442,6 +1442,31 @@ gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a,
 }
 
 /**
+ * gretl_matrix_row_mean:
+ * @m: source matrix.
+ * @col: zero-based index of row.
+ *
+ * Returns: the mean of the elements in row @row of @m,
+ * or #NADBL if the row is out of bounds.
+ */
+
+double gretl_matrix_row_mean (const gretl_matrix *m, int row)
+{
+    double sum = 0.0;
+    int j;
+
+    if (row >= m->rows) {
+	return NADBL;
+    }
+
+    for (j=0; j<m->cols; j++) {
+	sum += m->val[mdx(m, row, j)];
+    }
+
+    return sum / (double) m->cols;
+}
+
+/**
  * gretl_matrix_column_mean:
  * @m: source matrix.
  * @col: zero-based index of column.
@@ -1467,6 +1492,48 @@ double gretl_matrix_column_mean (const gretl_matrix *m, int col)
 }
 
 /**
+ * gretl_matrix_demean_by_row:
+ * @m: matrix on which to operate.
+ * 
+ * For each row of @m, subtracts the row mean from each 
+ * element on the row.
+ */
+
+void gretl_matrix_demean_by_row (gretl_matrix *m)
+{
+    double rowmean;  
+    int i, j;
+
+    for (i=0; i<m->rows; i++) {
+	rowmean = gretl_matrix_row_mean(m, i);
+	for (j=0; j<m->cols; j++) {
+	    m->val[mdx(m, i, j)] -= rowmean;
+	}
+    }    
+}
+
+/**
+ * gretl_matrix_demean_by_column:
+ * @m: matrix on which to operate.
+ * 
+ * For each column of @m, subtracts the column mean from each 
+ * element in the column.
+ */
+
+void gretl_matrix_demean_by_column (gretl_matrix *m)
+{
+    double colmean; 
+    int i, j;
+
+    for (j=0; j<m->cols; j++) {
+	colmean = gretl_matrix_column_mean(m, j);
+	for (i=0; i<m->rows; i++) {
+	    m->val[mdx(m, i, j)] -= colmean;
+	}
+    }    
+}
+
+/**
  * gretl_matrix_vcv:
  * @m: source matrix (expected to have rows >= cols).
  *
@@ -1477,14 +1544,14 @@ double gretl_matrix_column_mean (const gretl_matrix *m, int col)
  *   in @m.
  * 
  * Returns: the allocated variance-covariance matrix, or %NULL
- * on failure.
+ * on failure.  Note that on return the column means have
+ * been subtracted from @m.
  */
 
-gretl_matrix *gretl_matrix_vcv (const gretl_matrix *m)
+gretl_matrix *gretl_matrix_vcv (gretl_matrix *m)
 {
-    int i, j, err = 0;
-    double colmean;
     gretl_matrix *v;
+    int err = 0;
 
     if (m->cols > m->rows) {
 	fputs("gretl_matrix_vcv: expected rows >= cols\n", stderr);
@@ -1494,13 +1561,7 @@ gretl_matrix *gretl_matrix_vcv (const gretl_matrix *m)
     v = gretl_matrix_alloc(m->cols, m->cols);
     if (v == NULL) return NULL;
 
-    /* subtract the column means from the column elements */
-    for (j=0; j<m->cols; j++) {
-	colmean = gretl_matrix_column_mean(m, j);
-	for (i=0; i<m->rows; i++) {
-	    m->val[mdx(m, i, j)] -= colmean;
-	}
-    }
+    gretl_matrix_demean_by_column(m);
 
     /* v = m'm */
     err = gretl_matrix_multiply_mod(m, GRETL_MOD_TRANSPOSE,

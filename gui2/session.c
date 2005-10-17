@@ -72,6 +72,7 @@ static void auto_save_gp (windata_t *vwin);
 typedef struct SESSION_ SESSION;
 typedef struct SESSIONBUILD_ SESSIONBUILD;
 typedef struct GRETL_TEXT_ GRETL_TEXT;
+typedef struct GRETL_SYS_ GRETL_SYS;
 typedef struct gui_obj_ gui_obj;
 
 struct SESSION_ {
@@ -84,7 +85,7 @@ struct SESSION_ {
     MODEL **models;
     GRAPHT **graphs;
     GRETL_VAR **vars;
-    char **sysnames;
+    GRETL_SYS **systems;
     GRETL_TEXT **texts;
     char *notes;
 };
@@ -98,6 +99,11 @@ struct SESSIONBUILD_ {
 struct GRETL_TEXT_ {
     char name[OBJNAMLEN];
     char *buf;
+};
+
+struct GRETL_SYS_ {
+    char name[OBJNAMLEN];
+    char *sysname;
 };
 
 struct gui_obj_ {
@@ -119,24 +125,6 @@ enum {
     SAVEFILE_SCRIPT,
     SAVEFILE_ERROR
 } savefile_returns;
-
-typedef enum {
-    OBJ_UNKNOWN,
-    OBJ_DATASET,
-    OBJ_INFO,
-    OBJ_STATS,
-    OBJ_CORR,
-    OBJ_SCRIPT,
-    OBJ_NOTES,
-    OBJ_MODTAB,
-    OBJ_GPAGE,
-    OBJ_MODEL,
-    OBJ_GRAPH,
-    OBJ_PLOT,
-    OBJ_VAR,
-    OBJ_SYS,
-    OBJ_TEXT
-} SessionObjType;
 
 static GtkTargetEntry session_drag_targets[] = {
     { "model_pointer", GTK_TARGET_SAME_APP, GRETL_MODEL_POINTER },
@@ -238,6 +226,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 				    GdkEventButton *event,
 				    gpointer data);
 static void gretl_text_free (GRETL_TEXT *text);
+static void rename_session_object (gui_obj *obj, const char *newname);
 
 #ifdef SESSION_DEBUG
 static void print_session (const char *msg)
@@ -259,7 +248,7 @@ static void print_session (const char *msg)
     }
     fprintf(stderr, "Session contains %d systemss\n", session.nsys);
     for (i=0; i<session.nsys; i++) {
-	fprintf(stderr, " sys '%s'\n", session.sysnames[i]);
+	fprintf(stderr, " sys '%s'\n", (session.systems[i])->name);
     }
     fprintf(stderr, "Session contains %d graphs\n", session.ngraphs);
     for (i=0; i<session.ngraphs; i++) {
@@ -496,8 +485,12 @@ static int sys_already_saved (const char *sysname)
 {
     int i;
 
+    if (sysname == NULL) {
+	return 0;
+    }
+
     for (i=0; i<session.nsys; i++) {
-	if (strcmp(session.sysnames[i], sysname) == 0) {
+	if (strcmp(session.systems[i]->sysname, sysname) == 0) {
 	    return 1;
 	}
     }
@@ -554,24 +547,57 @@ static int real_add_var_to_session (GRETL_VAR *var)
     return 0;
 }
 
-static int real_add_sys_to_session (const char *sname)
+static GRETL_SYS *
+session_sys_new (const char *sname, const char *savename)
 {
-    char **sysnames;
+    GRETL_SYS *newsys;
+
+    newsys = malloc(sizeof *newsys);
+    if (newsys == NULL) {
+	return NULL;
+    }  
+
+    newsys->sysname = gretl_strdup(sname);
+    if (newsys->sysname == NULL) {
+	free(newsys);
+	return NULL;
+    }
+
+    *newsys->name = '\0';
+    if (savename != NULL) {
+	strncat(newsys->name, savename, OBJNAMLEN - 1);
+    } else {
+	strncat(newsys->name, sname, OBJNAMLEN - 1);
+    }
+
+    return newsys;
+}
+
+static int 
+real_add_sys_to_session (const char *sname, const char *savename)
+{
+    GRETL_SYS **systems;
+    GRETL_SYS *newsys;
     int ns = session.nsys; 
 
-    sysnames = myrealloc(session.sysnames, (ns + 1) * sizeof *sysnames);
-    if (sysnames == NULL) {
+    newsys = session_sys_new(sname, savename);
+    if (newsys == NULL) {
 	return 1;
     }
 
-    session.sysnames = sysnames;
-    session.sysnames[ns] = gretl_strdup(sname);
+    systems = myrealloc(session.systems, (ns + 1) * sizeof *systems);
+    if (systems == NULL) {
+	return 1;
+    }
+
+    session.systems = systems;
+    session.systems[ns] = newsys;
     session.nsys += 1;
 
     /* add sys icon to session display */
     if (icon_list != NULL) {
-	session_add_icon(session.sysnames[ns], OBJ_SYS, ICON_ADD_SINGLE);
-    }    
+	session_add_icon(session.systems[ns], OBJ_SYS, ICON_ADD_SINGLE);
+    }
 
     return 0;
 }
@@ -640,9 +666,9 @@ void *get_session_object_by_name (const char *name, int *which)
     }
 
     for (i=0; i<session.nsys; i++) {
-	if (strcmp(name, session.sysnames[i]) == 0) {
+	if (strcmp(name, (session.systems[i])->name) == 0) {
 	    *which = OBJ_SYS;
-	    return session.sysnames[i];
+	    return session.systems[i];
 	}
     }
 
@@ -707,6 +733,28 @@ int try_add_var_to_session (GRETL_VAR *var)
     }
 
     return 0;
+}
+
+int try_add_system_to_session (gretl_equation_system *sys,
+			       const char *savename)
+{
+    const char *sysname = gretl_system_get_name(sys);
+    int err = 0;
+
+    if (sys_already_saved(sysname)) {
+	return 1;
+    }
+
+    if (sysname == NULL) {
+	err = stack_system_as(sys, savename);
+	sysname = savename;
+    }
+
+    if (!err) {
+	err = real_add_sys_to_session(sysname, savename);
+    }
+
+    return err;
 }
 
 /* called directly from model window */
@@ -778,7 +826,7 @@ void remember_sys (gpointer data, guint close, GtkWidget *widget)
 	return;
     }
 
-    if (real_add_sys_to_session(sysname)) {
+    if (real_add_sys_to_session(sysname, NULL)) {
 	return;
     }
 
@@ -807,7 +855,7 @@ void session_init (void)
 {
     session.models = NULL;
     session.vars = NULL;
-    session.sysnames = NULL;
+    session.systems = NULL;
     session.graphs = NULL;
     session.texts = NULL;
     session.notes = NULL;
@@ -971,6 +1019,12 @@ void verify_clear_data (void)
     close_session();
 }
 
+static void free_session_sys (GRETL_SYS *sys)
+{
+    free(sys->sysname);
+    free(sys);
+}
+
 void free_session (void)
 {
     int i;
@@ -991,12 +1045,12 @@ void free_session (void)
 	session.vars = NULL;
     }
 
-    if (session.sysnames) {
+    if (session.systems) {
 	for (i=0; i<session.nsys; i++) {
-	    free(session.sysnames[i]);
+	    free_session_sys(session.systems[i]);
 	}
-	free(session.sysnames);
-	session.sysnames = NULL;
+	free(session.systems);
+	session.systems = NULL;
     }    
 
     if (session.graphs) {
@@ -1538,7 +1592,7 @@ static void open_gui_var (gui_obj *gobj)
 
 static void open_gui_sys (gui_obj *gobj)
 { 
-    char *sysname = (char *) gobj->data;
+    GRETL_SYS *sys = (GRETL_SYS *) gobj->data;
     char *line, *cpy;
     PRN *prn;
     int err;
@@ -1547,12 +1601,12 @@ static void open_gui_sys (gui_obj *gobj)
 	return;
     }
 
-    line = g_strdup_printf("estimate \"%s\"", sysname);
+    line = g_strdup_printf("estimate \"%s\"", sys->sysname);
     err = estimate_named_system(line, &Z, datainfo, OPT_UNSET, prn);
     if (err) {
 	gui_errmsg(err);
     } else {
-	cpy = gretl_strdup(sysname);
+	cpy = gretl_strdup(sys->sysname);
 	view_buffer(prn, 78, 450, gobj->name, SYSTEM, cpy);
     }
     g_free(line);
@@ -1667,28 +1721,28 @@ static int real_delete_var_from_session (GRETL_VAR *junk)
     return 0;
 }
 
-static int real_delete_sys_from_session (char *junk)
+static int real_delete_sys_from_session (GRETL_SYS *junk)
 {
     if (session.nsys == 1) {
-	free(session.sysnames[0]);
+	free_session_sys(session.systems[0]);
     } else {
-	char **names;
+	GRETL_SYS **systems;
 	int i, j;
 
-	names = mymalloc((session.nsys - 1) * sizeof *names);
-	if (session.nsys > 1 && names == NULL) {
+	systems = mymalloc((session.nsys - 1) * sizeof *systems);
+	if (session.nsys > 1 && systems == NULL) {
 	    return 1;
 	}
 	j = 0;
 	for (i=0; i<session.nsys; i++) {
-	    if (strcmp(session.sysnames[i], junk)) {
-		names[j++] = session.sysnames[i];
+	    if (session.systems[i] != junk) {
+		systems[j++] = session.systems[i];
 	    } else {
-		free(session.sysnames[i]);
+		free_session_sys(session.systems[i]);
 	    }
 	}
-	free(session.sysnames);
-	session.sysnames = names;
+	free(session.systems);
+	session.systems = systems;
     }
 
     session.nsys -= 1;
@@ -2164,9 +2218,9 @@ static void add_all_icons (void)
 
     for (i=0; i<session.nsys; i++) {
 #ifdef SESSION_DEBUG
-	fprintf(stderr, "adding session.sysnames[%d] to view\n", i);
+	fprintf(stderr, "adding session.systems[%d] to view\n", i);
 #endif
-	session_add_icon(session.sysnames[i], OBJ_SYS, ICON_ADD_BATCH);
+	session_add_icon(session.systems[i], OBJ_SYS, ICON_ADD_BATCH);
     }
 
     for (i=0; i<session.ngraphs; i++) {
@@ -2559,7 +2613,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     GRETL_VAR *var = NULL;
     GRAPHT *graph = NULL;
     GRETL_TEXT *text = NULL;
-    char *sysname = NULL;
+    GRETL_SYS *sys = NULL;
     int icon_named = 0;
 
     switch (sort) {
@@ -2572,8 +2626,8 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	name = g_strdup(gretl_VAR_get_name(var));
 	break;
     case OBJ_SYS:
-	sysname = (char *) data;
-	name = g_strdup(sysname);
+	sys = (GRETL_SYS *) data;
+	name = g_strdup(sys->name);
 	break;
     case OBJ_PLOT:
     case OBJ_GRAPH:
@@ -2648,7 +2702,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     }	    
 
     else if (sort == OBJ_VAR)     gobj->data = var;
-    else if (sort == OBJ_SYS)     gobj->data = sysname;
+    else if (sort == OBJ_SYS)     gobj->data = sys;
     else if (sort == OBJ_TEXT)    gobj->data = text;
     else if (sort == OBJ_DATASET) gobj->data = paths.datfile;
     else if (sort == OBJ_SCRIPT)  gobj->data = cmdfile;

@@ -36,7 +36,7 @@ typedef enum {
 gretl_equation_system *system_start (const char *line);
 
 gretl_equation_system *
-get_equation_system_by_name (const char *sysname, int *snum);
+get_equation_system_by_name (const char *sysname);
 
 char *get_system_name_from_line (const char *s);
 
@@ -60,6 +60,8 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
 
 int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo, 
 			   gretlopt opt, PRN *prn);
+
+int stack_system_as (gretl_equation_system *sys, const char *sname);
 
 void gretl_equation_system_destroy (gretl_equation_system *sys);
 
@@ -147,5 +149,11 @@ print_equation_system_info (const gretl_equation_system *sys,
 void 
 system_set_restriction_matrices (gretl_equation_system *sys,
 				 gretl_matrix *R, gretl_matrix *q);
+
+int 
+system_normality_test (const gretl_equation_system *sys, PRN *prn);
+
+int gretl_system_add_resids_to_dataset (const char *sysname, int eqnum,
+					double ***pZ, DATAINFO *pdinfo);
 
 #endif /* GRETL_EQUATION_SYSTEM_H */

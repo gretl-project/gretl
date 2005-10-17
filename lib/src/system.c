@@ -97,8 +97,8 @@ static int make_instrument_list (gretl_equation_system *sys);
 static gretl_equation_system **system_stack;
 static int n_systems;
 
-gretl_equation_system *
-get_equation_system_by_name (const char *sysname, int *snum)
+static gretl_equation_system *
+real_get_equation_system_by_name (const char *sysname, int *snum)
 {
     int i;
 
@@ -118,17 +118,32 @@ get_equation_system_by_name (const char *sysname, int *snum)
     return NULL;
 }
 
-static int stack_system (gretl_equation_system *sys, PRN *prn)
+gretl_equation_system *
+get_equation_system_by_name (const char *sysname)
+{
+    return real_get_equation_system_by_name(sysname, NULL);
+}
+
+static int stack_system (gretl_equation_system *sys, 
+			 const char *sname,
+			 PRN *prn)
 {
     gretl_equation_system *orig;
     int snum;
 
-    /* only feasible for named systems */
-    if (sys == NULL || sys->name == NULL) {
+    if (sys == NULL) {
 	return 1;
     }
 
-    orig = get_equation_system_by_name(sys->name, &snum);
+    if (sname != NULL) {
+	sys->name = gretl_strdup(sname);
+    }
+
+    if (sys->name == NULL) {
+	return 1;
+    }
+
+    orig = real_get_equation_system_by_name(sys->name, &snum);
 
     if (orig != NULL) {
 	/* replace existing system of same name */
@@ -148,6 +163,11 @@ static int stack_system (gretl_equation_system *sys, PRN *prn)
     }
 
     return 0;
+}
+
+int stack_system_as (gretl_equation_system *sys, const char *sname)
+{
+    return stack_system(sys, sname, NULL);
 }
 
 void gretl_equation_systems_cleanup (void)
@@ -351,13 +371,6 @@ static void system_clear_results (gretl_equation_system *sys)
 	gretl_matrix_free(sys->uhat);
 	sys->uhat = NULL;
     }
-}
-
-static void gretl_equation_system_clear (gretl_equation_system *sys)
-{
-    if (sys == NULL || sys->lists == NULL) return;
-
-    system_clear_results(sys);
 }
 
 void gretl_equation_system_destroy (gretl_equation_system *sys)
@@ -805,6 +818,9 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
 
     *gretl_errmsg = 0;
 
+    /* in case we're re-estimating */
+    system_clear_results(sys);
+
     err = make_instrument_list(sys);
     if (err) goto system_bailout;
     
@@ -841,10 +857,7 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
     if (sys->name == NULL) {
 	/* discard the system */
 	gretl_equation_system_destroy(sys);
-    } else {
-	/* retain the system for possible re-estimation */
-	gretl_equation_system_clear(sys);
-    }
+    } 
 
     return err;
 }
@@ -882,7 +895,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 
     if (sys->name != NULL) {
 	/* save the system for subsequent estimation */
-	err = stack_system(sys, prn);
+	err = stack_system(sys, NULL, prn);
     }
 
     if (!err && sys->method >= 0) {
@@ -970,7 +983,7 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    sys = get_equation_system_by_name(sysname, NULL);
+    sys = get_equation_system_by_name(sysname);
     if (sys == NULL) {
 	sprintf(gretl_errmsg, "'%s': unrecognized name", sysname);
 	free(sysname);
@@ -1118,6 +1131,71 @@ void system_set_n_obs (gretl_equation_system *sys, int n)
 void system_set_iters (gretl_equation_system *sys, int n)
 {
     sys->iters = n;
+}
+
+int system_normality_test (const gretl_equation_system *sys, PRN *prn)
+{
+    int err = 0;
+
+    if (sys->uhat == NULL || sys->sigma == NULL) {
+	err = 1;
+    } else {
+	err = gretl_system_normality_test(sys->uhat, sys->sigma, prn);
+    }
+
+    return err;
+}
+
+void make_system_data_info (gretl_equation_system *sys, int eqn, 
+			    DATAINFO *pdinfo, int v, int code)
+{
+    if (code == GRETL_SYSTEM_SAVE_UHAT) {
+	sprintf(pdinfo->varname[v], "uhat_s%02d", eqn);
+	if (sys->method == SYS_SUR) {
+	    sprintf(VARLABEL(pdinfo, v), _("SUR residual, equation %d"), eqn);
+	} else if (sys->method == SYS_3SLS) {
+	    sprintf(VARLABEL(pdinfo, v), _("3SLS residual, equation %d"), eqn);
+	} else {
+	    sprintf(VARLABEL(pdinfo, v), "system residual, equation %d", eqn);
+	}
+    } else if (code == GRETL_SYSTEM_SAVE_YHAT) {
+	sprintf(pdinfo->varname[v], "yhat_s%02d", eqn);
+	if (sys->method == SYS_SUR) {
+	    sprintf(VARLABEL(pdinfo, v), _("SUR fitted value, equation %d"), eqn);
+	} else if (sys->method == SYS_3SLS) {
+	    sprintf(VARLABEL(pdinfo, v), _("3SLS fitted value, equation %d"), eqn);
+	} else {
+	    sprintf(VARLABEL(pdinfo, v), "system fitted value, equation %d", eqn);
+	}
+    }
+}
+
+int gretl_system_add_resids_to_dataset (const char *sysname, int eqnum,
+					double ***pZ, DATAINFO *pdinfo)
+{
+    gretl_equation_system *sys;
+    int v, t;
+
+    sys = get_equation_system_by_name(sysname);
+    if (sys == NULL || sys->uhat == NULL) {
+	return 1;
+    }
+
+    if (dataset_add_series(1, pZ, pdinfo)) return E_ALLOC;
+
+    v = pdinfo->v - 1;
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (t < sys->t1 || t > sys->t2) {
+	    (*pZ)[v][t] = NADBL;
+	} else {
+	    (*pZ)[v][t] = gretl_matrix_get(sys->uhat, t - sys->t1, eqnum);
+	}
+    }
+
+    make_system_data_info(sys, eqnum + 1, pdinfo, v, GRETL_SYSTEM_SAVE_UHAT);
+
+    return 0;
 }
 
 /* simple accessor functions */

@@ -349,10 +349,12 @@ void fit_resid_callback (gpointer data, guint code, GtkWidget *widget)
 
 void VAR_resid_callback (gpointer data, guint eqnum, GtkWidget *widget)
 {
-    windata_t *mydata = (windata_t *) data; 
-    GRETL_VAR *var = (GRETL_VAR *) mydata->data;
+    add_system_resid(data, eqnum, VAR);
+}
 
-    add_var_resid(var, eqnum);
+void SYS_resid_callback (gpointer data, guint eqnum, GtkWidget *widget)
+{
+    add_system_resid(data, eqnum, SYSTEM);
 }
 
 void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
