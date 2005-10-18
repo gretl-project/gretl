@@ -723,12 +723,21 @@ static gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
 static void print_boot_dataset (const irfboot *boot)
 {
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
-    int list[5] = { 4, 1, 2, 3, 4 };
+    int t1 = boot->dinfo->t1;
+    int *list;
+    int i;
 
+    list = gretl_list_new(boot->dinfo->v - 1);
+    for (i=1; i<boot->dinfo->v; i++) {
+	list[i] = i;
+    }
     fprintf(stderr, "boot->dinfo->t1 = %d, boot->dinfo->t2 = %d\n",
 	    boot->dinfo->t1, boot->dinfo->t2);
+    boot->dinfo->t1 = 0;
     printdata(list, (const double **) boot->Z, boot->dinfo, OPT_O, prn);
+    boot->dinfo->t1 = t1;
     gretl_print_destroy(prn);
+    free(list);
 }
 #endif
 
@@ -801,6 +810,12 @@ compute_VECM_dataset (irfboot *boot, const GRETL_VAR *var, int iter)
     if (iter > 0) {
 	int vl = 1 + var->neqns + nexo + nseas;
 	int vd = vl + var->neqns;
+
+	if (nseas > 0) {
+	    /* allow for the unused seasonal */
+	    vl++;
+	    vd++;
+	}
 
 	/* recompute first lags and first differences */
 	for (i=0; i<boot->neqns; i++) {

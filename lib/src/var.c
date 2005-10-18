@@ -2055,8 +2055,9 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z, 0.0);
 	    if ((err = jmod.errcode)) {
-		fprintf(stderr, "johansen_VAR: VAR in differences, eqn %d, lsq err %d\n",
-			i+1, err);
+		fprintf(stderr, "*** johansen_VAR: VAR in differences, eqn %d, "
+			"lsq err %d\n", i+1, err);
+		printlist(vlists.reglist, "list for this model");
 		goto var_bailout;
 	    }
 	    if (opt & OPT_V) {

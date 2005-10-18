@@ -36,6 +36,7 @@ enum {
     OBJ_ACTION_MODEL_FREE,
     OBJ_ACTION_MODEL_STAT,
     OBJ_ACTION_VAR_SHOW,
+    OBJ_ACTION_VAR_IRF,
     OBJ_ACTION_VAR_FREE,
     OBJ_ACTION_GRAPH_SHOW,
     OBJ_ACTION_GRAPH_FREE,
@@ -57,6 +58,7 @@ static int match_object_command (const char *s, char sort)
     if (sort == OBJ_VAR) {
 	if (*s == 0) return OBJ_ACTION_VAR_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_VAR_SHOW;
+	if (strcmp(s, "irf") == 0)  return OBJ_ACTION_VAR_IRF;
 	if (strcmp(s, "free") == 0) return OBJ_ACTION_VAR_FREE; 
     }
 
@@ -120,6 +122,53 @@ static void show_saved_var (GRETL_VAR *var, const DATAINFO *pdinfo)
 
     gretl_VAR_print(var, pdinfo, OPT_NONE, prn);
     view_buffer(prn, 78, 450, gretl_VAR_get_name(var), VAR, var);
+}
+
+/* this should probably be elsewhere? */
+
+static void var_do_irf (GRETL_VAR *var, const char *line)
+{
+    int targ = -1, shock = 1;
+    int h = 0, boot = 0;
+    int err = 0;
+    char *p;
+
+    p = strstr(line, "--targ=");
+    if (p != NULL) {
+	targ = atoi(p + 7) - 1;
+    }
+
+    p = strstr(line, "--shock=");
+    if (p != NULL) {
+	shock = atoi(p + 8) - 1;
+    }
+
+    p = strstr(line, "--horizon=");
+    if (p != NULL) {
+	h = atoi(p + 10);
+    } else {
+	h = 20;
+    }
+
+    if (strstr(line, "--bootstrap") != NULL) {
+	boot = 1;
+    }
+
+#if 0
+    fprintf(stderr, "targ=%d, shock=%d, h=%d, boot=%d\n", 
+	    targ, shock, h, boot);
+#endif
+
+    if (targ >= 0 && shock >= 0 && h > 0) {
+	err = gretl_VAR_plot_impulse_response(var, targ, shock, h, 
+					      (const double **) Z,
+					      datainfo);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    register_graph();
+	}
+    }
 }
 
 static void get_word_and_command (const char *s, char *word, 
@@ -401,8 +450,10 @@ int saved_object_action (const char *line,
 	pprintf(prn, _("Freed %s\n"), savename);
     } else if (code == OBJ_ACTION_MODEL_STAT) {
 	print_model_stat((MODEL *) ptr, param, prn);
-    } if (code == OBJ_ACTION_VAR_SHOW) {
+    } else if (code == OBJ_ACTION_VAR_SHOW) {
 	show_saved_var((GRETL_VAR *) ptr, pdinfo);
+    } else if (code == OBJ_ACTION_VAR_IRF) {
+	var_do_irf((GRETL_VAR *) ptr, line);
     } else if (code == OBJ_ACTION_VAR_FREE) {
 	delete_var_from_session((GRETL_VAR *) ptr);
 	pprintf(prn, _("Freed %s\n"), savename);
