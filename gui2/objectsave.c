@@ -122,25 +122,6 @@ static void show_saved_var (GRETL_VAR *var, const DATAINFO *pdinfo)
     view_buffer(prn, 78, 450, gretl_VAR_get_name(var), VAR, var);
 }
 
-static void show_saved_system (const char *sysname)
-{
-    char *line, *cpy;
-    PRN *prn;
-    int err;
-
-    if (bufopen(&prn)) return;
-
-    line = g_strdup_printf("estimate \"%s\"", sysname);
-    err = estimate_named_system(line, &Z, datainfo, OPT_UNSET, prn);
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	cpy = g_strdup(sysname); /* FIXME? */
-	view_buffer(prn, 78, 450, sysname, SYSTEM, cpy);
-    }
-    g_free(line);
-}
-
 static void get_word_and_command (const char *s, char *word, 
 				  char *cmd)
 {
@@ -439,11 +420,9 @@ int saved_object_action (const char *line,
 	delete_text_from_session(savename);
 	pprintf(prn, _("Freed %s\n"), savename);
     } else if (code == OBJ_ACTION_SYS_SHOW) {
-	show_saved_system((const char *) ptr);
+	display_saved_equation_system((const char *) ptr);
     } else if (code == OBJ_ACTION_SYS_FREE) {
-	/* FIXME */
-	dummy_call();
-	fprintf(stderr, "Got request to delete system\n");
+	delete_system_from_session((const char *) ptr);
     }
 
     return 1;

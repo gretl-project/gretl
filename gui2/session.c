@@ -226,7 +226,9 @@ static gboolean session_icon_click (GtkWidget *widget,
 				    GdkEventButton *event,
 				    gpointer data);
 static void gretl_text_free (GRETL_TEXT *text);
+#ifndef OLD_GTK
 static void rename_session_object (gui_obj *obj, const char *newname);
+#endif
 
 #ifdef SESSION_DEBUG
 static void print_session (const char *msg)
@@ -1590,9 +1592,21 @@ static void open_gui_var (gui_obj *gobj)
     view_buffer(prn, 78, 450, gobj->name, var->ci, var);
 }
 
-static void open_gui_sys (gui_obj *gobj)
-{ 
-    GRETL_SYS *sys = (GRETL_SYS *) gobj->data;
+static GRETL_SYS *get_sys_by_savename (const char *savename)
+{
+    int i;
+
+    for (i=0; i<session.nsys; i++) {
+	if (!strcmp(savename, session.systems[i]->name)) {
+	    return session.systems[i];
+	}
+    }
+
+    return NULL;
+}
+
+static void real_open_gui_sys (GRETL_SYS *sys)
+{
     char *line, *cpy;
     PRN *prn;
     int err;
@@ -1607,9 +1621,28 @@ static void open_gui_sys (gui_obj *gobj)
 	gui_errmsg(err);
     } else {
 	cpy = gretl_strdup(sys->sysname);
-	view_buffer(prn, 78, 450, gobj->name, SYSTEM, cpy);
+	view_buffer(prn, 78, 450, sys->name, SYSTEM, cpy);
     }
     g_free(line);
+}
+
+int display_saved_equation_system (const char *savename)
+{
+    GRETL_SYS *sys = get_sys_by_savename(savename);
+
+    if (sys != NULL) {
+	real_open_gui_sys(sys);
+	return 0;
+    }
+
+    return 1;
+}
+
+static void open_gui_sys (gui_obj *gobj)
+{ 
+    GRETL_SYS *sys = (GRETL_SYS *) gobj->data;
+
+    real_open_gui_sys(sys);
 }
 
 static void open_boxplot (gui_obj *gobj)
@@ -1913,20 +1946,18 @@ static void rename_session_object (gui_obj *obj, const char *newname)
 
 static gui_obj *get_gui_obj_from_data (void *finddata)
 {
+    GList *mylist = icon_list;
     gui_obj *gobj = NULL;
-    int found = 0;
 
-    icon_list = g_list_first(icon_list);
-
-    while (icon_list != NULL) {
-	gobj = (gui_obj *) icon_list->data;
-
-	if (gobj->data == finddata) break;
-	if (icon_list->next == NULL) break;
-	icon_list = icon_list->next;
+    while (mylist != NULL) {
+	gobj = (gui_obj *) mylist->data;
+	if (gobj->data == finddata) {
+	    return gobj;
+	}
+	mylist = mylist->next;
     }
 
-    return (found)? gobj : NULL;
+    return NULL;
 }
 
 void delete_model_from_session (MODEL *pmod)
@@ -1941,6 +1972,7 @@ void delete_model_from_session (MODEL *pmod)
     }
 
     real_delete_model_from_session(pmod);
+
     if (obj != NULL) {
 	session_delete_icon(obj);
     }
@@ -1958,6 +1990,24 @@ void delete_var_from_session (GRETL_VAR *var)
     }
 
     real_delete_var_from_session(var);
+    if (obj != NULL) {
+	session_delete_icon(obj);
+    }
+}
+
+void delete_system_from_session (const char *savename)
+{
+    GRETL_SYS *sys;
+    gui_obj *obj;
+
+    sys = get_sys_by_savename(savename);
+    if (sys == NULL) {
+	return;
+    }
+
+    obj = get_gui_obj_from_data(sys);
+
+    real_delete_sys_from_session(sys);
     if (obj != NULL) {
 	session_delete_icon(obj);
     }

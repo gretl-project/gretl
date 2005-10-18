@@ -87,6 +87,10 @@ int try_add_var_to_session (GRETL_VAR *var);
 int try_add_system_to_session (gretl_equation_system *sys,
 			       const char *savename);
 
+int display_saved_equation_system (const char *savename);
+
+void delete_system_from_session (const char *savename);
+
 void *get_session_object_by_name (const char *name, int *which);
 
 void delete_model_from_session (MODEL *pmod);
