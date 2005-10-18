@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.0-pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-06-14 16:19-0400\n"
-"PO-Revision-Date: 2005-10-12 20:00+0100\n"
+"PO-Revision-Date: 2005-10-18 18:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1695,7 +1695,7 @@ msgstr "B³êdny rz±d opó¼nienia dla ARCH(%d)"
 #: lib/src/estimate.c:3457
 #, c-format
 msgid "No of obs. = %d, unadjusted R^2 = %f\n"
-msgstr "Liczba obserwacji = %d, nieskorygowany R^2 = %f\n"
+msgstr "Liczba obserwacji = %d, wsp. determinacji R^2 = %f\n"
 
 #: lib/src/estimate.c:3477
 #, c-format
@@ -2903,7 +2903,7 @@ msgstr "B³±d standardowy reszt"
 
 #: lib/src/modelprint.c:164 lib/src/modelprint.c:2194
 msgid "Unadjusted R-squared"
-msgstr "Nieskorygowany R-kwadrat"
+msgstr "Wsp. determinacji R-kwadrat"
 
 #: lib/src/modelprint.c:168 lib/src/modelprint.c:2198
 msgid "Adjusted R-squared"
@@ -2911,7 +2911,7 @@ msgstr "Skorygowany R-kwadrat"
 
 #: lib/src/modelprint.c:173
 msgid "Unadjusted R{\\super 2}"
-msgstr "Nieskorygowany R{\\super 2}"
+msgstr "Wsp. determinacji R{\\super 2}"
 
 #: lib/src/modelprint.c:176
 msgid "Adjusted R{\\super 2}"
@@ -2919,7 +2919,7 @@ msgstr "Skorygowany R{\\super 2}"
 
 #: lib/src/modelprint.c:184
 msgid "Unadjusted $R^2$"
-msgstr "Nieskorygowany $R^2$"
+msgstr "Wsp. determinacji $R^2$"
 
 #: lib/src/modelprint.c:188
 msgid "Adjusted $\\bar{R}^2$"
@@ -3287,7 +3287,7 @@ msgid ""
 "      PARAMETER      ESTIMATE          STDERROR       T STAT   2Prob(t > |T|)\n"
 "\n"
 msgstr ""
-"      Parametr     Ocena parametru   B³±d stand.   Statystyka t   warto¶æ p\n"
+"      Parametr     Ocena parametru   B³±d stand.   Statystyka t   Warto¶æ p\n"
 "\n"
 
 #: lib/src/modelprint.c:1013
@@ -3295,7 +3295,7 @@ msgid ""
 "      VARIABLE      COEFFICIENT        STDERROR       T STAT   2Prob(t > |T|)\n"
 "\n"
 msgstr ""
-"       Zmienna     Wspó³czynnik       B³±d stand.  Statystyka t   warto¶æ p\n"
+"       Zmienna     Wspó³czynnik       B³±d stand.  Statystyka t   Warto¶æ p\n"
 "\n"
 
 #: lib/src/modelprint.c:1021
@@ -3317,7 +3317,7 @@ msgstr "B³±d\\ stand."
 
 #: lib/src/modelprint.c:1046
 msgid "$t$-statistic"
-msgstr "statystyka $t$"
+msgstr "Statystyka $t$"
 
 #: lib/src/modelprint.c:1047 lib/src/modelprint.c:1063
 msgid "Slope"
@@ -3329,7 +3329,7 @@ msgstr "B³±d stand."
 
 #: lib/src/modelprint.c:1063 lib/src/modelprint.c:1075
 msgid "t-statistic"
-msgstr "statystyka t"
+msgstr "Statystyka t"
 
 #: lib/src/modelprint.c:1192
 msgid ""
@@ -3477,15 +3477,15 @@ msgstr "       Zmienna        Wspó³czynnik            B³±d standardowy\n"
 
 #: lib/src/modelspec.c:231 lib/src/modelspec.c:232
 msgid "dataset is subsampled, model is not\n"
-msgstr "dane s± podprób±, a model oszacowano nie dla tego zakresu danych\n"
+msgstr "Dane s± podprób±, a model oszacowano nie dla tego zakresu danych\n"
 
 #: lib/src/modelspec.c:239 lib/src/modelspec.c:240
 msgid "model is subsampled, dataset is not\n"
-msgstr "model wyznaczono dla podpróby, a dane aktualnie posiadaj± odmienny zakres\n"
+msgstr "Model wyznaczono dla podpróby, a dane aktualnie posiadaj± odmienny zakres\n"
 
 #: lib/src/modelspec.c:247
 msgid "model and dataset subsamples not the same\n"
-msgstr "podpróba dla modelu i danych nie jest jednakowa\n"
+msgstr "Podpróba dla modelu i danych nie jest jednakowa\n"
 
 #: lib/src/monte_carlo.c:395 lib/src/monte_carlo.c:2322
 #, c-format
