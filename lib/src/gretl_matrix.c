@@ -823,22 +823,21 @@ double *gretl_matrix_steal_data (gretl_matrix *m)
 }
 
 /**
- * gretl_matrix_print:
+ * gretl_matrix_print_to_prn:
  * @m: matrix to print.
  * @msg: accompanying message text (or %NULL if no message is wanted).
- * @prn: pointer to gretl printing struct (or %NULL).
+ * @prn: pointer to gretl printing struct.
  *
- * Prints the matrix @m to @prn (or to %stderr if @prn is %NULL).
+ * Prints the matrix @m to @prn.
  */
 
-void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
+void 
+gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
 {
     int i, j;
-    PRN *myprn = NULL;
 
     if (prn == NULL) {
-	myprn = gretl_print_new(GRETL_PRINT_STDERR);
-	prn = myprn;
+	return;
     }
 
     if (msg != NULL && *msg != '\0') {
@@ -856,10 +855,22 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
 	}
 	pputc(prn, '\n');
     }
+}
 
-    if (myprn != NULL) {
-	gretl_print_destroy(myprn);
-    }
+/**
+ * gretl_matrix_print:
+ * @m: matrix to print.
+ * @msg: accompanying message text (or %NULL if no message is wanted).
+ *
+ * Prints the matrix @m to stderr.
+ */
+
+void gretl_matrix_print (const gretl_matrix *m, const char *msg)
+{
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
+
+    gretl_matrix_print_to_prn(m, msg, prn);
+    gretl_print_destroy(prn);
 }
 
 #define EQTOL 1.0e-12
@@ -897,7 +908,7 @@ static int matrix_is_symmetric (const gretl_matrix *m)
 
 		fprintf(stderr, "M(%d,%d) = %.16g but M(%d,%d) = %.16g\n",
 			i, j, x, j, i, y);
-		gretl_matrix_print(m, "matrix_is_symmetric()", NULL);
+		gretl_matrix_print(m, "matrix_is_symmetric()");
 		return 0;
 	    }
 	}
@@ -1831,6 +1842,31 @@ int gretl_invert_diagonal_matrix (gretl_matrix *a)
     return 0;
 }
 
+#if 0
+static int spd_matrix_check_scaling (const gretl_matrix *a)
+{
+    integer n = a->rows;
+    integer info;
+    double *s;
+    double scond, amax;
+
+    s = malloc(n * sizeof *s);
+    if (s == NULL) {
+	return 1;
+    }
+
+    dpoequ_(&n, a->val, &n, s, &scond, &amax, &info);
+
+    gretl_matrix_print(a, "a: check for scaling");
+    fprintf(stderr, "info = %d, scond = %g, amax = %g\n",
+	    (int) info, scond, amax);
+
+    free(s);
+
+    return 0;
+}
+#endif
+
 /**
  * gretl_invert_symmetric_matrix:
  * @a: matrix to invert.
@@ -1865,6 +1901,10 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	a->val[0] = 1.0 / a->val[0];
 	return 0;
     }
+
+#if 0
+    spd_matrix_check_scaling(a);
+#endif
 
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
@@ -2154,16 +2194,90 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs)
     return w;
 }
 
+static int max_abs_index (const gretl_matrix *X, int col) 
+{
+    double aij, tmp = 0.0;
+    int i, idx = 0;
+
+    for (i=0; i<X->rows; i++) {
+	aij = fabs(X->val[mdx(X, i, col)]);
+	if (aij > tmp) {
+	    tmp = aij;
+	    idx = i;
+	}
+    }
+
+    return idx;
+}
+
+/* given M = I - X'(XX')^{-1}X, normalize M and reduce to rank */
+
+static gretl_matrix *find_base (gretl_matrix *M)
+{
+    gretl_matrix *C = NULL;
+    char *keep = NULL;
+    double TOL = 1.0e-15;
+    double x, tmp;
+    int idx, rank = 0;
+    int i, j, k;
+
+    keep = calloc(M->cols, 1);
+    if (keep == NULL) {
+	return NULL;
+    }
+
+    for (j=0; j<M->cols; j++) {
+	idx = max_abs_index(M, j);
+	tmp = M->val[mdx(M, idx, j)];
+
+	if (fabs(tmp) > TOL) {
+	    rank++;
+	    keep[j] = 1;
+	    /* normalize column j */
+	    for (i=0; i<M->rows; i++) {
+		M->val[mdx(M, i, j)] /= tmp;
+	    }
+	    /* normalize columns to the right */
+	    for (k=j+1; k<M->cols; k++) {
+		tmp = M->val[mdx(M, idx, k)];
+		if (fabs(tmp) > TOL) {
+		    for (i=0; i<M->rows; i++) {
+			x = M->val[mdx(M, i, j)] * tmp;
+			M->val[mdx(M, i, k)] -= x;
+		    }
+		}
+	    }
+	} 
+    }
+
+    if (rank > 0) {
+	C = gretl_matrix_alloc(M->rows, rank);
+    }
+
+    if (C != NULL) {
+	k = 0;
+	for (j=0; j<M->cols && k<rank; j++) {
+	    if (keep[j]) {
+		for (i=0; i<M->rows; i++) {
+		    C->val[mdx(C, i, k)] = M->val[mdx(M, i, j)];
+		}
+		k++;
+	    }
+	}
+    }
+
+    free(keep);
+
+    return C;
+}
+
 /**
  * gretl_matrix_right_nullspace:
  * @M: matrix to operate on.
  * 
- * Given an m x n matrix @M, construct an n x n matrix
+ * Given an m x n matrix @M, construct a conformable matrix
  * R such that MR = 0 (that is, all the columns of R are
  * orthogonal to the space spanned by the rows of @M).
- * For each column of R = I - M'(MM')^{-1}M, if the diagonal
- * element is greater than 1.0e-13 in absolute magnitude 
- * the column is scaled such that the diagonal element = 1.
  *
  * Returns: the allocated matrix R, or %NULL on failure.
  */
@@ -2172,6 +2286,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
 {
     gretl_matrix *A = NULL;
     gretl_matrix *B = NULL;
+    gretl_matrix *C = NULL;
     gretl_matrix *R = NULL;
     int m = gretl_matrix_rows(M);
     int n = gretl_matrix_cols(M);
@@ -2180,9 +2295,9 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
 
     A = gretl_matrix_alloc(n, m);
     B = gretl_matrix_alloc(m, m);
-    R = gretl_matrix_alloc(n, n);
+    C = gretl_matrix_alloc(n, n);
 
-    if (A == NULL || B == NULL || R == NULL) {
+    if (A == NULL || B == NULL || C == NULL) {
 	err = 1;
     }
 
@@ -2206,38 +2321,32 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
     }
 
     if (!err) {
-	/* R = M'(MM')^{-1}M */
-	err = gretl_matrix_multiply(A, M, R);
+	/* C = M'(MM')^{-1}M */
+	err = gretl_matrix_multiply(A, M, C);
     } 
 
     if (!err) {
-	/* make R = I - M'(MM')^{-1}M */
+	/* make C = I - M'(MM')^{-1}M */
 	for (i=0; i<n; i++) {
 	    for (j=0; j<n; j++) {
 		if (i == j) {
-		    x = 1.0 - R->val[mdx(R, i, j)];
+		    x = 1.0 - C->val[mdx(C, i, j)];
 		} else {
-		    x = - R->val[mdx(R, i, j)];
+		    x = - C->val[mdx(C, i, j)];
 		}
-		R->val[mdx(R, i, j)] = x;
+		C->val[mdx(C, i, j)] = x;
 	    }
 	}
     }
 
     if (!err) {
-	/* normalize R by column */
-	for (j=0; j<n; j++) {
-	    x = R->val[mdx(R, j, j)];
-	    if (fabs(x) > 1.0e-13) {
-		for (i=0; i<n; i++) {
-		    R->val[mdx(R, i, j)] /= x;
-		}
-	    }
-	}
-    }	
+	/* now make R into the normalized matrix */
+	R = find_base(C);
+    }
 
     gretl_matrix_free(A);
     gretl_matrix_free(B);
+    gretl_matrix_free(C);
     
     if (err) {
 	gretl_matrix_free(R);
@@ -2324,7 +2433,7 @@ get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
 	     double *s2)
 {
     if (gretl_invert_general_matrix(vcv)) {
-	gretl_matrix_print(vcv, "vcv: inversion failed", NULL);
+	gretl_matrix_print(vcv, "vcv: inversion failed");
 	return 1;
     }
 

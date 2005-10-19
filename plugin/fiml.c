@@ -265,7 +265,7 @@ static void fiml_form_uhat (fiml_system *fsys, const double **Z, int t1)
     }
 
 #if FDEBUG
-    gretl_matrix_print(fsys->uhat, "fiml uhat", NULL);
+    gretl_matrix_print(fsys->uhat, "fiml uhat");
 #endif
 }
 
@@ -291,7 +291,7 @@ fiml_form_sigma_and_psi (fiml_system *fsys, const double **Z, int t1)
     gretl_matrix_divide_by_scalar(fsys->sigma, fsys->n);
 
 #if FDEBUG
-    gretl_matrix_print(fsys->sigma, "fiml Sigma", NULL);
+    gretl_matrix_print(fsys->sigma, "fiml Sigma");
 #endif
 
     if (!err) {
@@ -300,7 +300,7 @@ fiml_form_sigma_and_psi (fiml_system *fsys, const double **Z, int t1)
     }
 
 #if FDEBUG
-    gretl_matrix_print(fsys->psi, "Sigma-inverse", NULL);
+    gretl_matrix_print(fsys->psi, "Sigma-inverse");
 #endif
 
     if (!err) {
@@ -311,7 +311,7 @@ fiml_form_sigma_and_psi (fiml_system *fsys, const double **Z, int t1)
     }
 
 #if FDEBUG
-    gretl_matrix_print(fsys->psi, "fiml Psi-transpose", NULL);
+    gretl_matrix_print(fsys->psi, "fiml Psi-transpose");
 #endif
 
     return err;
@@ -378,7 +378,7 @@ static void fiml_form_depvar (fiml_system *fsys)
     }
 
 #if FDEBUG > 1
-    gretl_matrix_print(fsys->arty, "fiml artificial Y", NULL);
+    gretl_matrix_print(fsys->arty, "fiml artificial Y");
 #endif
 }
 
@@ -451,7 +451,7 @@ fiml_form_indepvars (fiml_system *fsys, const double **Z, int t1)
     }
 
 #if FDEBUG > 1
-    gretl_matrix_print(fsys->artx, "fiml artificial X", NULL);
+    gretl_matrix_print(fsys->artx, "fiml artificial X");
 #endif
 }
 
@@ -472,7 +472,7 @@ static void fiml_uhat_init (fiml_system *fsys)
 	}
     }
 
-    gretl_matrix_print(fsys->uhat, "uhat from 3SLS", NULL);
+    gretl_matrix_print(fsys->uhat, "uhat from 3SLS");
 }
 
 #endif
@@ -551,7 +551,7 @@ static void fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
 	printf(" %s", pdinfo->varname[enlist[i]]);
     }
     putchar('\n');
-    gretl_matrix_print(fsys->G, "fiml Gamma", NULL);
+    gretl_matrix_print(fsys->G, "fiml Gamma");
 #endif
 }
 
@@ -579,7 +579,7 @@ static void fiml_G_update (fiml_system *fsys)
     }
 
 #if FDEBUG
-    gretl_matrix_print(fsys->G, "fiml Gamma", NULL);
+    gretl_matrix_print(fsys->G, "fiml Gamma");
 #endif
 }
 
@@ -627,7 +627,7 @@ static void fiml_B_init (fiml_system *fsys, const DATAINFO *pdinfo)
 	printf(" %s", pdinfo->varname[exlist[i]]);
     }
     putchar('\n');
-    gretl_matrix_print(fsys->B, "fiml B", NULL);
+    gretl_matrix_print(fsys->B, "fiml B");
 #endif
 }
 
@@ -652,7 +652,7 @@ static void fiml_B_update (fiml_system *fsys)
     }
 
 #if FDEBUG
-    gretl_matrix_print(fsys->B, "fiml B", NULL);
+    gretl_matrix_print(fsys->B, "fiml B");
 #endif
 }
 
@@ -741,7 +741,7 @@ static int fiml_endog_rhs (fiml_system *fsys, const double **Z, int t1)
 	fputs("inversion of G failed\n", stderr);
     } else {
 #if FDEBUG
-	gretl_matrix_print(fsys->Gtmp, "G-inverse", NULL);
+	gretl_matrix_print(fsys->Gtmp, "G-inverse");
 #endif
 	gretl_matrix_multiply(fsys->WB1, fsys->Gtmp, fsys->WB2);
     } 
@@ -781,8 +781,8 @@ fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1,
     copy_estimates_to_btmp(fsys);
 
 #if FDEBUG
-    gretl_matrix_print(fsys->btmp, "parameter estimates", NULL);
-    gretl_matrix_print(fsys->artb, "estimated gradients", NULL);
+    gretl_matrix_print(fsys->btmp, "parameter estimates");
+    gretl_matrix_print(fsys->artb, "estimated gradients");
 #endif
 
     while (!improved && !err && step > minstep) {

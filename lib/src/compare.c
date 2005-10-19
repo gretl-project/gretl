@@ -121,8 +121,8 @@ static double wald_test (const int *list, MODEL *pmod, int form)
 
     if (!err) {
 #if WDEBUG
-	gretl_matrix_print(C, "Wald VCV matrix", NULL);
-	gretl_matrix_print(b, "Wald coeff vector", NULL);
+	gretl_matrix_print(C, "Wald VCV matrix");
+	gretl_matrix_print(b, "Wald coeff vector");
 #endif
 	err = gretl_invert_symmetric_matrix(C);
     }

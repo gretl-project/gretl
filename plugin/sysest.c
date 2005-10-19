@@ -299,7 +299,7 @@ calculate_sys_coefficients (gretl_equation_system *sys,
     }
 
 #if SDEBUG
-    gretl_matrix_print(y, "in calc_coeffs, betahat", NULL);
+    gretl_matrix_print(y, "in calc_coeffs, betahat");
 #endif
 
 #if 1
@@ -313,7 +313,7 @@ calculate_sys_coefficients (gretl_equation_system *sys,
     }
 
 #if SDEBUG
-    gretl_matrix_print(vcv, "in calc_coeffs, vcv", NULL);
+    gretl_matrix_print(vcv, "in calc_coeffs, vcv");
 #endif
 
     j0 = 0;
@@ -1041,7 +1041,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     gls_sigma_from_uhat(sys, sys->sigma);
 
 #if SDEBUG
-    gretl_matrix_print(sys->sigma, "gls_sigma_from_uhat", NULL);
+    gretl_matrix_print(sys->sigma, "gls_sigma_from_uhat");
 #endif
 
     /* simple single-equation method, no restrictions to test and 
@@ -1196,8 +1196,8 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     }
 
 #if SDEBUG
-    gretl_matrix_print(X, "sys X", NULL);
-    gretl_matrix_print(y, "sys y", NULL);
+    gretl_matrix_print(X, "sys X");
+    gretl_matrix_print(y, "sys y");
 #endif    
 
     /* The estimates calculated below will be SUR, 3SLS or LIML,

@@ -375,7 +375,7 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
     var->F = F;
 
 #if 0
-    gretl_matrix_print(F, "var->F", NULL);
+    gretl_matrix_print(F, "var->F");
 #endif
 
     return 0;
@@ -512,7 +512,7 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
     var->F = F;
 
 #if 0
-    gretl_matrix_print(F, "var->F", NULL);
+    gretl_matrix_print(F, "var->F");
 #endif
 
     return 0;
@@ -1282,8 +1282,8 @@ static int gretl_VAR_add_roots (GRETL_VAR *var)
 		gretl_matrix_set(var->lambda, i, 1, sqrt(x * x + y * y));
 	    }
 #if 0
-	    gretl_matrix_print(var->A, "Companion form matrix", NULL);
-	    gretl_matrix_print(var->lambda, "Eigenvalues in polar form", NULL);
+	    gretl_matrix_print(var->A, "Companion form matrix");
+	    gretl_matrix_print(var->lambda, "Eigenvalues in polar form");
 #endif
 	}
     }
@@ -1617,7 +1617,7 @@ static GRETL_VAR *real_var (int order, const int *inlist,
 
 #if VAR_DEBUG
     if (!*err) {
-	gretl_matrix_print(var->A, "var->A", NULL);
+	gretl_matrix_print(var->A, "var->A");
     }
 #endif
 
@@ -2654,7 +2654,7 @@ int vecm_simple (int order, int rank, int *list,
 
 	R = gretl_VAR_get_impulse_response(jvar, targ, shock, 20, 
 					   (const double **) *pZ, pdinfo);
-	gretl_matrix_print(R, "Response", NULL);
+	gretl_matrix_print(R, "Response");
 	gretl_matrix_free(R);
     }
 #endif

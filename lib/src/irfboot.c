@@ -335,7 +335,7 @@ re_estimate_VECM (irfboot *boot, GRETL_VAR *jvar, int targ, int shock,
 
     if (!err) {   
 #if BDEBUG
-	gretl_matrix_print(jvar->S, "jvar->S (Omega)", NULL);
+	gretl_matrix_print(jvar->S, "jvar->S (Omega)");
 #endif
 	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
     }
@@ -606,8 +606,8 @@ static gretl_matrix *make_restricted_coeff_vector (const GRETL_VAR *var)
     gretl_matrix_multiply(var->jinfo->Alpha, b, rbeta);
 
 #if BDEBUG > 1
-    gretl_matrix_print(b, "restricted var row of beta'", NULL);
-    gretl_matrix_print(rbeta, "coeffs for restricted term", NULL);
+    gretl_matrix_print(b, "restricted var row of beta'");
+    gretl_matrix_print(rbeta, "coeffs for restricted term");
 #endif
 
     gretl_matrix_free(b);
@@ -712,8 +712,8 @@ static gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
     }
 
 #if BDEBUG > 1
-    gretl_matrix_print(var->A, "var->A", NULL);
-    gretl_matrix_print(C0, "C0", NULL);
+    gretl_matrix_print(var->A, "var->A");
+    gretl_matrix_print(C0, "C0");
 #endif
 
     return C0;

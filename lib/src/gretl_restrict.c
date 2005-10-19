@@ -148,7 +148,7 @@ static int form_explicit_matrix (const gretl_matrix *R)
     }
 
     if (!err) {
-	gretl_matrix_print(S, "S", NULL);
+	gretl_matrix_print(S, "S");
     }
     
     gretl_matrix_free(D);
@@ -204,10 +204,9 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
 	gretl_vector_set(q, i, r->rhs);
     }
 
-
 #if RDEBUG
-    gretl_matrix_print(R, "R", NULL);
-    gretl_matrix_print(q, "q", NULL);
+    gretl_matrix_print(R, "R");
+    gretl_matrix_print(q, "q");
 #endif
 
     *Rin = R;
@@ -742,8 +741,8 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     }
 
 #if RDEBUG
-    gretl_matrix_print(R, "R matrix", prn);
-    gretl_matrix_print(q, "q vector", prn);
+    gretl_matrix_print_to_prn(R, "R matrix", prn);
+    gretl_matrix_print_to_prn(q, "q vector", prn);
 #endif
 
     if ((err = check_R_matrix(R))) {
@@ -770,8 +769,8 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     }
 
 #if RDEBUG
-    gretl_matrix_print(vcv, "VCV matrix", prn);
-    gretl_matrix_print(b, "coeff vector", prn);
+    gretl_matrix_print_to_prn(vcv, "VCV matrix", prn);
+    gretl_matrix_print_to_prn(b, "coeff vector", prn);
 #endif  
 
     err = gretl_matrix_multiply(R, b, br);
@@ -781,7 +780,7 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     }
 
 #if RDEBUG
-    gretl_matrix_print(br, "br", prn);
+    gretl_matrix_print_to_prn(br, "br", prn);
 #endif  
 
     if (!gretl_is_zero_vector(q)) {
@@ -802,7 +801,7 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
 	Rv = gretl_matrix_A_X_A(R, GRETL_MOD_NONE, vcv, &err);
 	if (err) goto bailout;
 #if RDEBUG
-	gretl_matrix_print(Rv, "Rv", prn);
+	gretl_matrix_print_to_prn(Rv, "Rv", prn);
 #endif  
     }
 

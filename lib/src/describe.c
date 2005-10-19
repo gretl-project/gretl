@@ -951,7 +951,7 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
 	goto bailout;
     }
 
-    gretl_matrix_print(C, "\nResidual correlation matrix, C", prn);
+    gretl_matrix_print_to_prn(C, "\nResidual correlation matrix, C", prn);
 
     evals = gretl_symmetric_matrix_eigenvals(C, 1);
     if (evals == NULL) {
@@ -968,7 +968,7 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
        relabel as 'H' for perspicuity */
     H = C;
 #if 0
-    gretl_matrix_print(H, "Eigenvectors, H", prn);
+    gretl_matrix_print_to_prn(H, "Eigenvectors, H", prn);
 #endif
     gretl_matrix_copy_values(tmp, H);
 
@@ -2970,13 +2970,13 @@ real_mahalanobis_distance (const int *list, double ***pZ,
 
     if (!err) {
 	if (opt & OPT_V) {
-	    gretl_matrix_print(S, _("Covariance matrix"), prn);
+	    gretl_matrix_print_to_prn(S, _("Covariance matrix"), prn);
 	}
 	err = gretl_invert_symmetric_matrix(S);
 	if (err) {
 	    fprintf(stderr, "error inverting covariance matrix\n");
 	} else if (opt & OPT_V) {
-	    gretl_matrix_print(S, _("Inverse of covariance matrix"), prn);
+	    gretl_matrix_print_to_prn(S, _("Inverse of covariance matrix"), prn);
 	}
     }
 
