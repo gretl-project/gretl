@@ -938,8 +938,8 @@ static int beta_variance (GRETL_VAR *vecm)
 static int johansen_ll_calc (GRETL_VAR *jvar, const double *eigvals)
 {
     gretl_matrix *Suu;
-    double T_2 = (double) jvar->T / 2.0;
-    double ldet, n = jvar->neqns;
+    double ldet, T_2 = (double) jvar->T / 2.0;
+    int n = jvar->neqns;
     int h, i, err = 0;
 
     h = (jrank(jvar) > 0)? jrank(jvar) : n;
@@ -1289,3 +1289,132 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 
     return err;
 }
+
+#if 0 /* not ready yet */
+
+static void johansen_LR_calc (GRETL_VAR *jvar, const double *eigvals)
+{
+    double llu, llr;
+    int h, i;
+
+    h = (jrank(jvar) > 0)? jrank(jvar) : jvar->neqns;
+
+    llu = jvar->ll - jvar->ldet;
+    llr = 0.0;
+
+    for (i=0; i<h; i++) {
+	llr -= T_2 * log(1.0 - eigvals[i]); 
+    }
+}
+
+int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
+{
+    gretl_matrix *M = NULL;
+    gretl_matrix *TmpL = NULL;
+    gretl_matrix *TmpR = NULL;
+    gretl_matrix *Svv = NULL;
+    gretl_matrix *Suv = NULL;
+
+    double *eigvals = NULL;
+
+    int n = jvar->neqns;
+    int nv = gretl_matrix_cols(jvar->jinfo->Svv);
+    int m = gretl_matrix_cols(jvar->jinfo->D);
+    int err = 0;
+
+    TmpL = gretl_matrix_alloc(nv, n);
+    TmpR = gretl_matrix_alloc(nv, nv);
+    M = gretl_matrix_alloc(nv, nv);
+    Svv = gretl_matrix_alloc(m, m);
+    Suv = gretl_matrix_alloc(n, m);
+
+    if (TmpL == NULL || TmpR == NULL || M == NULL || 
+	Svv == NULL || Suv == NULL) {
+	err = 1;
+	goto eigenvals_bailout;
+    }
+
+    /* calculate D'Svv */
+    gretl_matrix_use(TmpR, m, nv);
+    err = gretl_matrix_multiply_mod(jvar->jinfo->D, GRETL_MOD_TRANSPOSE,
+				    jvar->jinfo->Svv, GRETL_MOD_NONE, 
+				    TmpR);
+
+    if (!err) {
+	/* Svv <- D'SvvD */
+	err = gretl_matrix_multiply(TmpR, jvar->jinfo->D, Svv);
+    }
+    
+    if (!err) {
+	/* Suv <- SuvD */
+	err = gretl_matrix_multiply(jvar->jinfo->Suv, 
+				    jvar->jinfo->D,
+				    Suv);
+    }
+
+    if (!err) {
+	/* calculate Suu^{-1} Suv */
+	err = gretl_invert_general_matrix(Suu);
+	if (!err) {
+	    gretl_matrix_use(TmpR, n, m);
+	    err = gretl_matrix_multiply(Suu, Suv, TmpR);
+	}
+    }
+
+    /* calculate Svv^{-1} Suv' */
+    if (!err) {
+	err = gretl_invert_general_matrix(Svv);
+    }
+    if (!err) {
+	err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
+					Suv, GRETL_MOD_TRANSPOSE, 
+					TmpL);
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply(TmpL, TmpR, M);
+    }
+
+    if (err) {
+	goto eigenvals_bailout;
+    }    
+
+    if (nv > n) {
+	/* "re-expand" this matrix */
+	gretl_matrix_reuse(TmpR, nv, nv);
+    }
+
+    if (!err) {
+	eigvals = gretl_general_matrix_eigenvals(M, TmpR);
+	if (eigvals == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gretl_eigen_sort(eigvals, TmpR, jrank(jvar));
+	}
+    }
+
+#if JDEBUG
+    gretl_matrix_print(TmpR, "raw eigenvector(s)");
+#endif
+
+    if (!err) {
+	johansen_normalize(jvar->jinfo, TmpR); 
+#if JDEBUG
+	gretl_matrix_print(TmpR, "normalized tmpR");
+#endif
+	johansen_LR_calc(jvar);
+    } 
+
+ eigenvals_bailout:    
+
+    gretl_matrix_free(TmpL);
+    gretl_matrix_free(TmpR);
+    gretl_matrix_free(M);
+    gretl_matrix_free(Svv);
+
+    free(eigvals);
+
+    return err;
+}
+
+#endif

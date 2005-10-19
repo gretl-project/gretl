@@ -37,6 +37,7 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 				    const double **Z, 
 				    const DATAINFO *pdinfo);
 static gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var);
+
 struct var_lists {
     int *detvars;
     int *stochvars;
@@ -214,6 +215,7 @@ static void johansen_info_free (JohansenInfo *jv)
     gretl_matrix_free(jv->Beta);
     gretl_matrix_free(jv->Alpha);
     gretl_matrix_free(jv->Bse);
+    gretl_matrix_free(jv->D);
 
     free(jv);
 }
@@ -2196,6 +2198,7 @@ johansen_info_new (const int *list, const int *exolist, int rank, gretlopt opt)
     jv->Beta = NULL;
     jv->Alpha = NULL;
     jv->Bse = NULL;
+    jv->D = NULL;
 
     jv->difflist = NULL;
     jv->biglist = NULL;
@@ -2664,6 +2667,17 @@ int vecm_simple (int order, int rank, int *list,
     }
 
     return err;
+}
+
+int gretl_VAR_attach_restrictions (GRETL_VAR *var, gretl_matrix *D)
+{
+    if (var->jinfo == NULL) {
+	return 1;
+    }
+
+    var->jinfo->D = D;
+
+    return 0;
 }
 
 void gretl_VAR_assign_name (GRETL_VAR *var)

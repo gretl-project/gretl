@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "system.h"
+#include "var.h"
 #include "gretl_restrict.h"
 
 #define RDEBUG 0
@@ -117,54 +118,6 @@ static int R_n_columns (gretl_restriction_set *rset)
     return cols;
 }
 
-#if RDEBUG /* not quite ready yet */
-
-/* Make explicit restriction matrix starting from the implicit
-   form of the restrictions.  Thanks to Jack Lucchetti for the
-   algorithm. */
-
-static int form_explicit_matrix (const gretl_matrix *R)
-{
-    gretl_matrix *S = NULL;
-    gretl_matrix *D = NULL;
-    int p = gretl_matrix_rows(R);
-    int n = gretl_matrix_cols(R);
-    int i, j, err = 0;
-
-    S = gretl_matrix_alloc(n, n - p);
-    if (S == NULL) {
-	err = E_ALLOC;
-    }
-
-    if (!err) {
-	D = gretl_matrix_right_nullspace(R);
-    }
-
-    if (!err) {
-	gretl_matrix_print(D, "D");
-    }    
-
-    if (!err) {
-	/* FIXME shouldn't have to do this */
-	for (i=0; i<n; i++) {
-	    for (j=0; j<n-p; j++) {
-		gretl_matrix_set(S, i, j, gretl_matrix_get(D, i, j));
-	    }
-	}
-    }
-
-    if (!err) {
-	gretl_matrix_print(S, "S");
-    }
-    
-    gretl_matrix_free(D);
-    gretl_matrix_free(S);
-
-    return err;
-}
-
-#endif /* not ready */
-
 static int 
 restriction_set_form_matrices (gretl_restriction_set *rset,
 			       gretl_matrix **Rin,
@@ -215,12 +168,16 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
     gretl_matrix_print(q, "q");
 #endif
 
-    *Rin = R;
-    *qin = q;
-
-#if RDEBUG
-    form_explicit_matrix(R);
-#endif
+    if (rset->var != NULL) {
+	gretl_matrix *D = gretl_matrix_right_nullspace(R);
+	
+	gretl_VAR_attach_restrictions(rset->var, D);
+	gretl_matrix_free(R);
+	gretl_matrix_free(q);
+    } else {
+	*Rin = R;
+	*qin = q;
+    }
 
     return 0;
 }
@@ -888,15 +845,12 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset, PRN *prn)
 	return 1;
     }
 
-    if (rset->sys == NULL) {
-	/* single model */
-	err = restriction_set_make_mask(rset);
-	if (!err) {
-	    print_restriction_set(rset, prn);
-	    test_restriction_set(rset, prn);
-	    destroy_restriction_set(rset);
-	}
-    } else {
+    if (rset->var != NULL) {
+	/* vecm */
+	err = restriction_set_form_matrices(rset, NULL, NULL);
+	/* FIXME now actually run the test */
+    } else if (rset->sys != NULL) {
+	/* simultaneous equtions system */
 	gretl_matrix *R;
 	gretl_matrix *q;
 
@@ -917,7 +871,15 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset, PRN *prn)
 	    system_set_restriction_matrices(rset->sys, R, q);
 	    destroy_restriction_set(rset);
 	}
-    }
+    } else {
+	/* single model */
+	err = restriction_set_make_mask(rset);
+	if (!err) {
+	    print_restriction_set(rset, prn);
+	    test_restriction_set(rset, prn);
+	    destroy_restriction_set(rset);
+	}
+    }	
 
     return err;
 }

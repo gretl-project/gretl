@@ -81,6 +81,8 @@ void gretl_VAR_assign_name (GRETL_VAR *var);
 
 void gretl_VAR_assign_specific_name (GRETL_VAR *var, const char *name);
 
+int gretl_VAR_attach_restrictions (GRETL_VAR *var, gretl_matrix *D);
+
 const char *gretl_VAR_get_name (const GRETL_VAR *var);
 
 int gretl_VAR_get_variable_number (const GRETL_VAR *var, int k);
