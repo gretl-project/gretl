@@ -2194,6 +2194,10 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs)
     return w;
 }
 
+/* return the row-index of the element in column col of
+   matrix X that has the greatest absolute magnitude
+*/
+
 static int max_abs_index (const gretl_matrix *X, int col) 
 {
     double aij, tmp = 0.0;
@@ -2210,7 +2214,9 @@ static int max_abs_index (const gretl_matrix *X, int col)
     return idx;
 }
 
-/* given M = I - X'(XX')^{-1}X, normalize M and reduce to rank */
+/* given M = I - X'(XX')^{-1}X, normalize M and reduce to rank:
+   return result in newly allocate matrix
+*/
 
 static gretl_matrix *find_base (gretl_matrix *M)
 {
@@ -2237,7 +2243,7 @@ static gretl_matrix *find_base (gretl_matrix *M)
 	    for (i=0; i<M->rows; i++) {
 		M->val[mdx(M, i, j)] /= tmp;
 	    }
-	    /* normalize columns to the right */
+	    /* normalize columns to the right of j */
 	    for (k=j+1; k<M->cols; k++) {
 		tmp = M->val[mdx(M, idx, k)];
 		if (fabs(tmp) > TOL) {

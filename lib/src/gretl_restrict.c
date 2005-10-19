@@ -40,6 +40,7 @@ struct restriction_set_ {
     restriction **restrictions;
     MODEL *pmod;
     gretl_equation_system *sys;
+    GRETL_VAR *var;
     const DATAINFO *pdinfo;
 };
 
@@ -140,6 +141,11 @@ static int form_explicit_matrix (const gretl_matrix *R)
     }
 
     if (!err) {
+	gretl_matrix_print(D, "D");
+    }    
+
+    if (!err) {
+	/* FIXME shouldn't have to do this */
 	for (i=0; i<n; i++) {
 	    for (j=0; j<n-p; j++) {
 		gretl_matrix_set(S, i, j, gretl_matrix_get(D, i, j));
@@ -399,16 +405,13 @@ static void print_mult (double mult, int first, PRN *prn)
 {
     if (mult == 1.0) {
 	if (!first) pputs(prn, " + ");
-    }
-    else if (mult == -1.0) {
+    } else if (mult == -1.0) {
 	if (first) pputs(prn, "-");
 	else pputs(prn, " - ");
-    }
-    else if (mult > 0.0) {
+    } else if (mult > 0.0) {
 	if (first) pprintf(prn, "%g*", mult);
 	else pprintf(prn, " + %g*", mult);
-    }
-    else if (mult < 0.0) {
+    } else if (mult < 0.0) {
 	if (first) pprintf(prn, "%g*", mult);
 	else pprintf(prn, " - %g*", fabs(mult));
     }	
@@ -481,7 +484,8 @@ add_term_to_restriction (restriction *r, double mult, int eq, int bnum, int i)
 
 static gretl_restriction_set *
 real_restriction_set_start (MODEL *pmod, const DATAINFO *pdinfo,
-			    gretl_equation_system *sys)
+			    gretl_equation_system *sys,
+			    GRETL_VAR *var)
 {
     gretl_restriction_set *rset;
 
@@ -491,10 +495,13 @@ real_restriction_set_start (MODEL *pmod, const DATAINFO *pdinfo,
     rset->pmod = pmod;
     rset->pdinfo = pdinfo;
     rset->sys = sys;
+    rset->var = var;
 
     rset->k = 0;
     rset->mask = NULL;
     rset->restrictions = NULL;
+
+    /* FIXME vecm */
 
     if (sys != NULL) {
 	rset->cross = 1;
@@ -656,15 +663,37 @@ restriction_set_parse_line (gretl_restriction_set *rset, const char *line)
     return real_restriction_set_parse_line(rset, line, 0);
 }
 
+/* special set-up for a set of restrictions for a VAR (vecm,
+   actually) */
+
+gretl_restriction_set *
+var_restriction_set_start (const char *line, GRETL_VAR *var)
+{
+    gretl_restriction_set *rset;
+
+    rset = real_restriction_set_start(NULL, NULL, NULL, var);
+    if (rset == NULL) {
+	strcpy(gretl_errmsg, _("Out of memory!"));
+	return NULL;
+    }
+
+    if (real_restriction_set_parse_line(rset, line, 1)) {
+	sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
+	return NULL;
+    }
+
+    return rset;
+}
+
 /* special set-up for a set of cross-equation restrictions, for
-   a system of equations */
+   a system of simultaneous equations */
 
 gretl_restriction_set *
 cross_restriction_set_start (const char *line, gretl_equation_system *sys)
 {
     gretl_restriction_set *rset;
 
-    rset = real_restriction_set_start(NULL, NULL, sys);
+    rset = real_restriction_set_start(NULL, NULL, sys, NULL);
     if (rset == NULL) {
 	strcpy(gretl_errmsg, _("Out of memory!"));
 	return NULL;
@@ -700,14 +729,14 @@ restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
 	if (sys == NULL) {
 	    sprintf(gretl_errmsg, "'%s': unrecognized name", sysname);
 	} else {
-	    rset = real_restriction_set_start(NULL, NULL, sys);
+	    rset = real_restriction_set_start(NULL, NULL, sys, NULL);
 	    if (rset == NULL) {
 		strcpy(gretl_errmsg, _("Out of memory!"));
 	    }	    
 	}
 	free(sysname);
     } else {
-	rset = real_restriction_set_start(pmod, pdinfo, NULL);
+	rset = real_restriction_set_start(pmod, pdinfo, NULL, NULL);
 
 	if (rset == NULL) {
 	    strcpy(gretl_errmsg, _("Out of memory!"));
@@ -741,8 +770,8 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     }
 
 #if RDEBUG
-    gretl_matrix_print_to_prn(R, "R matrix", prn);
-    gretl_matrix_print_to_prn(q, "q vector", prn);
+    gretl_matrix_print(R, "R matrix");
+    gretl_matrix_print(q, "q vector");
 #endif
 
     if ((err = check_R_matrix(R))) {
@@ -769,8 +798,8 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     }
 
 #if RDEBUG
-    gretl_matrix_print_to_prn(vcv, "VCV matrix", prn);
-    gretl_matrix_print_to_prn(b, "coeff vector", prn);
+    gretl_matrix_print(vcv, "VCV matrix");
+    gretl_matrix_print(b, "coeff vector");
 #endif  
 
     err = gretl_matrix_multiply(R, b, br);
@@ -780,7 +809,7 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     }
 
 #if RDEBUG
-    gretl_matrix_print_to_prn(br, "br", prn);
+    gretl_matrix_print(br, "br");
 #endif  
 
     if (!gretl_is_zero_vector(q)) {
@@ -801,7 +830,7 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
 	Rv = gretl_matrix_A_X_A(R, GRETL_MOD_NONE, vcv, &err);
 	if (err) goto bailout;
 #if RDEBUG
-	gretl_matrix_print_to_prn(Rv, "Rv", prn);
+	gretl_matrix_print(Rv, "Rv");
 #endif  
     }
 

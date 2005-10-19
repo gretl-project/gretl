@@ -28,6 +28,9 @@ restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo);
 gretl_restriction_set *
 cross_restriction_set_start (const char *line, gretl_equation_system *sys);
 
+gretl_restriction_set *
+var_restriction_set_start (const char *line, GRETL_VAR *var);
+
 int 
 restriction_set_parse_line (gretl_restriction_set *rset, const char *line);
 
