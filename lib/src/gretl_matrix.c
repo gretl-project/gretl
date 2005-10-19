@@ -2155,6 +2155,99 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs)
 }
 
 /**
+ * gretl_matrix_right_nullspace:
+ * @M: matrix to operate on.
+ * 
+ * Given an m x n matrix @M, construct an n x n matrix
+ * R such that MR = 0 (that is, all the columns of R are
+ * orthogonal to the space spanned by the rows of @M).
+ * For each column of R = I - M'(MM')^{-1}M, if the diagonal
+ * element is greater than 1.0e-13 in absolute magnitude 
+ * the column is scaled such that the diagonal element = 1.
+ *
+ * Returns: the allocated matrix R, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
+{
+    gretl_matrix *A = NULL;
+    gretl_matrix *B = NULL;
+    gretl_matrix *R = NULL;
+    int m = gretl_matrix_rows(M);
+    int n = gretl_matrix_cols(M);
+    double x;
+    int i, j, err = 0;
+
+    A = gretl_matrix_alloc(n, m);
+    B = gretl_matrix_alloc(m, m);
+    R = gretl_matrix_alloc(n, n);
+
+    if (A == NULL || B == NULL || R == NULL) {
+	err = 1;
+    }
+
+    if (!err) {
+	/* B = MM' */
+	err = gretl_matrix_multiply_mod(M, GRETL_MOD_NONE,
+					M, GRETL_MOD_TRANSPOSE,
+					B);
+    }
+
+    if (!err) {
+	/* B = (MM')^{-1} */
+	err = gretl_invert_symmetric_matrix(B);
+    }
+
+    if (!err) {
+	/* A = M'(MM')^{-1} */
+	err = gretl_matrix_multiply_mod(M, GRETL_MOD_TRANSPOSE,
+					B, GRETL_MOD_NONE,
+					A);
+    }
+
+    if (!err) {
+	/* R = M'(MM')^{-1}M */
+	err = gretl_matrix_multiply(A, M, R);
+    } 
+
+    if (!err) {
+	/* make R = I - M'(MM')^{-1}M */
+	for (i=0; i<n; i++) {
+	    for (j=0; j<n; j++) {
+		if (i == j) {
+		    x = 1.0 - R->val[mdx(R, i, j)];
+		} else {
+		    x = - R->val[mdx(R, i, j)];
+		}
+		R->val[mdx(R, i, j)] = x;
+	    }
+	}
+    }
+
+    if (!err) {
+	/* normalize R by column */
+	for (j=0; j<n; j++) {
+	    x = R->val[mdx(R, j, j)];
+	    if (fabs(x) > 1.0e-13) {
+		for (i=0; i<n; i++) {
+		    R->val[mdx(R, i, j)] /= x;
+		}
+	    }
+	}
+    }	
+
+    gretl_matrix_free(A);
+    gretl_matrix_free(B);
+    
+    if (err) {
+	gretl_matrix_free(R);
+	R = NULL;
+    }
+
+    return R;
+}
+
+/**
  * gretl_matrix_set_int:
  * @m: matrix to operate on.
  * @t: value to set

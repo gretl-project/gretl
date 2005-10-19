@@ -122,80 +122,35 @@ static int R_n_columns (gretl_restriction_set *rset)
    form of the restrictions.  Thanks to Jack Lucchetti for the
    algorithm. */
 
-static int form_explicit_matrices (const gretl_matrix *R,
-				   const gretl_vector *q)
+static int form_explicit_matrix (const gretl_matrix *R)
 {
     gretl_matrix *S = NULL;
     gretl_matrix *D = NULL;
-    gretl_matrix *A = NULL;
-    gretl_matrix *B = NULL;
-    double x;
     int p = gretl_matrix_rows(R);
     int n = gretl_matrix_cols(R);
     int i, j, err = 0;
 
-    A = gretl_matrix_alloc(n, p);
-    B = gretl_matrix_alloc(p, p);
-    D = gretl_matrix_alloc(n, n);
     S = gretl_matrix_alloc(n, n - p);
-
-    if (A == NULL || B == NULL || D == NULL || S == NULL) {
+    if (S == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
-	/* B = RR' */
-	err = gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
-					R, GRETL_MOD_TRANSPOSE,
-					B);
-    }
-
-    if (!err) {
-	/* B = (RR')^{-1} */
-	err = gretl_invert_symmetric_matrix(B);
-    }
-
-    if (!err) {
-	/* A = R'(RR')^{-1} */
-	err = gretl_matrix_multiply_mod(R, GRETL_MOD_TRANSPOSE,
-					B, GRETL_MOD_NONE,
-					A);
-    }
-
-    if (!err) {
-	/* D = R'(RR')^{-1}R */
-	err = gretl_matrix_multiply(A, R, D);
-    } 
-
-    if (!err) {
-	/* make D = I - R'(RR')^{-1}R */
-	for (i=0; i<n; i++) {
-	    for (j=0; j<n; j++) {
-		if (i == j) {
-		    x = 1.0 - gretl_matrix_get(D, i, j);
-		} else {
-		    x = - gretl_matrix_get(D, i, j);
-		}
-		gretl_matrix_set(D, i, j, x);
-	    }
-	}
+	D = gretl_matrix_right_nullspace(R);
     }
 
     if (!err) {
 	for (i=0; i<n; i++) {
 	    for (j=0; j<n-p; j++) {
-		x = gretl_matrix_get(D, i, j);
-		/* FIXME normalization */
-		x /= gretl_matrix_get(D, 0, j);
-		gretl_matrix_set(S, i, j, x);
+		gretl_matrix_set(S, i, j, gretl_matrix_get(D, i, j));
 	    }
 	}
     }
 
-    gretl_matrix_print(S, "S", NULL);
+    if (!err) {
+	gretl_matrix_print(S, "S", NULL);
+    }
     
-    gretl_matrix_free(A);
-    gretl_matrix_free(B);
     gretl_matrix_free(D);
     gretl_matrix_free(S);
 
@@ -259,7 +214,7 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
     *qin = q;
 
 #if RDEBUG
-    form_explicit_matrices(R, q);
+    form_explicit_matrix(R);
 #endif
 
     return 0;

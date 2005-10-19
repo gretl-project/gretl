@@ -224,6 +224,8 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev);
 double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 					  int eigenvecs);
 
+gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M);
+
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
