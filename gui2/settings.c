@@ -178,8 +178,10 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, 1, NULL },
     { "toolbar", N_("Show gretl toolbar"), NULL, &want_toolbar, 
       BOOLSET, 0, 1, NULL },
+#ifndef G_OS_WIN32
     { "winsize", N_("Remember main window size"), NULL, &winsize, 
       BOOLSET, 0, 1, NULL },
+#endif
 #ifdef ENABLE_NLS
     { "lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
       BOOLSET, 0, 1, NULL },

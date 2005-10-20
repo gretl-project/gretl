@@ -1364,11 +1364,11 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
     /* calculate Svv^{-1} Suv' */
     if (!err) {
 	err = gretl_invert_general_matrix(Svv);
-    }
-    if (!err) {
-	err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
-					Suv, GRETL_MOD_TRANSPOSE, 
-					TmpL);
+	if (!err) {
+	    err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
+					    Suv, GRETL_MOD_TRANSPOSE, 
+					    TmpL);
+	}
     }
 
     if (!err) {

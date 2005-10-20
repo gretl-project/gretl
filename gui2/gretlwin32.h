@@ -35,6 +35,8 @@ int unmangle (const char *dosname, char *longname);
 
 void set_up_windows_look (void);
 
+void menu_font_option_off (void);
+
 void win_help (void);
 
 void gretl_win32_init (const char *progname);

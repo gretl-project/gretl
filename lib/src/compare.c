@@ -221,8 +221,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
     stat_ok = !na(cmp->F) || !na(cmp->chisq);
 
     if (stat_ok && (opt & OPT_S)) {
-	test = new_test_on_model(new, (cmp->cmd == OMIT)? 
-				 GRETL_TEST_OMIT : GRETL_TEST_ADD);
+	test = model_test_new((cmp->cmd == OMIT)? GRETL_TEST_OMIT : GRETL_TEST_ADD);
     }
 
     if (verbosity > 1) {
@@ -278,6 +277,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 
     if (test != NULL) {
 	add_diffvars_to_test(test, diffvars, pdinfo);
+	maybe_add_test_to_model(new, test);
     }
 
     if (verbosity > 1) {
@@ -592,13 +592,14 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 	if (opt & OPT_S) {
 	    ModelTest *test;
 
-	    test = new_test_on_model(pmod, (aux_code == AUX_SQ)?
-				     GRETL_TEST_SQUARES : GRETL_TEST_LOGS);
+	    test = model_test_new((aux_code == AUX_SQ)?
+				  GRETL_TEST_SQUARES : GRETL_TEST_LOGS);
 	    if (test != NULL) {
 		model_test_set_teststat(test, GRETL_STAT_TR2);
 		model_test_set_dfn(test, df);
 		model_test_set_value(test, trsq);
 		model_test_set_pvalue(test, chisq(trsq, df));
+		maybe_add_test_to_model(pmod, test);
 	    }
 	}
 
@@ -1050,15 +1051,15 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		2, aux.dfd, RF, pval);
 
 	if (opt & OPT_S) {
-	    ModelTest *test;
+	    ModelTest *test = model_test_new(GRETL_TEST_RESET);
 
-	    test = new_test_on_model(pmod, GRETL_TEST_RESET);
 	    if (test != NULL) {
 		model_test_set_teststat(test, GRETL_STAT_RESET);
 		model_test_set_dfn(test, 2);
 		model_test_set_dfd(test, aux.dfd);
 		model_test_set_value(test, RF);
 		model_test_set_pvalue(test, pval);
+		maybe_add_test_to_model(pmod, test);
 	    }	    
 	}
 
@@ -1070,125 +1071,6 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     clear_model(&aux); 
 
     return err;
-}
-
-/* Below: apparatus for generating standard errors that are robust in 
-   face of general serial correlation (see Wooldridge, Introductory
-   Econometrics, chapter 12)
-*/
-
-static double get_vhat (double *ahat, int g, int t1, int t2)
-{
-    int t, h;
-    double weight, a_cross_sum;
-    double vhat;
-
-    vhat = 0.0;
-
-    for (t=t1; t<=t2; t++) {
-	vhat += ahat[t] * ahat[t];
-    }
-
-    for (h=1; h<=g; h++) {
-	weight = 1.0 - (double) h / (g + 1);
-	a_cross_sum = 0.0;
-	for (t=h+t1; t<=t2; t++) {
-	    a_cross_sum += ahat[t] * ahat[t-h];
-	}
-	vhat += 2.0 * weight * a_cross_sum;
-    }
-
-    return vhat;
-}
-
-static int autocorr_standard_errors (MODEL *pmod, double ***pZ, 
-				     DATAINFO *pdinfo, PRN *prn)
-{
-    int *auxlist = NULL;
-    double *ahat = NULL;
-    double *robust = NULL;
-    double *tmp;
-    int i, j, g;
-    int aux = AUX_NONE, order = 0;
-    MODEL auxmod;
-
-    auxlist = malloc(pmod->list[0] * sizeof *auxlist);
-    ahat = malloc(pdinfo->n * sizeof *ahat);
-    robust = malloc(pmod->ncoeff * sizeof *robust);
-
-    if (auxlist == NULL || ahat == NULL || robust == NULL) {
-	free(auxlist);
-	free(ahat);
-	free(robust);
-	return E_ALLOC;
-    }
-
-    g = get_hac_lag(pmod->nobs);
-
-    auxlist[0] = pmod->list[0] - 1;
-
-    gretl_model_init(&auxmod);
-
-    /* loop across the indep vars in the original model */
-    for (i=2; i<=pmod->list[0]; i++) {
-	double vhat = 0;
-	double sderr;
-	int k, t;
-
-	/* set the given indep var as the dependent */
-	auxlist[1] = pmod->list[i];
-
-	k = 2;
-	for (j=2; j<=pmod->list[0]; j++) {
-	    /* add other indep vars as regressors */
-	    if (pmod->list[j] == auxlist[1]) continue;
-	    auxlist[k++] = pmod->list[j];
-	}
-
-	auxmod = lsq(auxlist, pZ, pdinfo, OLS, OPT_A, 0.0);
-
-	if (auxmod.errcode) {
-	    fprintf(stderr, "Error estimating auxiliary model, code=%d\n", 
-		    auxmod.errcode);
-	    pmod->sderr[i-2] = NADBL;
-	} else {
-	    /* compute robust standard error */
-	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		ahat[t] = pmod->uhat[t] * auxmod.uhat[t];
-	    }
-	    vhat = get_vhat(ahat, g, pmod->t1, pmod->t2);
-	    sderr = pmod->sderr[i-2] / pmod->sigma;
-	    sderr = sderr * sderr;
-	    sderr *= sqrt(vhat);
-	    robust[i-2] = sderr;
-	}
-
-	clear_model(&auxmod);
-    }
-
-    /* save original model data */
-    tmp = pmod->sderr;
-    aux = pmod->aux;
-    order = pmod->order;
-
-    /* adjust data for SC-robust version */
-    pmod->sderr = robust;
-    pmod->aux = AUX_SCR;
-    pmod->order = g;
-
-    /* print original model, showing robust std errors */
-    printmodel(pmod, pdinfo, OPT_NONE, prn);  
-
-    /* reset the original model data */
-    pmod->sderr = tmp;
-    pmod->aux = aux;
-    pmod->order = order;
-
-    free(auxlist);
-    free(ahat);
-    free(robust);
-	
-    return 0;
 }
 
 /**
@@ -1327,9 +1209,8 @@ int autocorr_test (MODEL *pmod, int order,
 	}
 
 	if (opt & OPT_S) {
-	    ModelTest *test;
+	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);
 
-	    test = new_test_on_model(pmod, GRETL_TEST_AUTOCORR);
 	    if (test != NULL) {
 		model_test_set_teststat(test, GRETL_STAT_LMF);
 		model_test_set_dfn(test, order);
@@ -1337,6 +1218,7 @@ int autocorr_test (MODEL *pmod, int order,
 		model_test_set_order(test, order);
 		model_test_set_value(test, LMF);
 		model_test_set_pvalue(test, pval);
+		maybe_add_test_to_model(pmod, test);
 	    }	    
 	}
     }
@@ -1344,12 +1226,6 @@ int autocorr_test (MODEL *pmod, int order,
     free(newlist);
     dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo); 
     clear_model(&aux); 
-
-    if (!(opt & OPT_Q)) {
-	if (pval < 0.05 && !gretl_model_get_int(pmod, "robust")) {
-	    autocorr_standard_errors(pmod, pZ, pdinfo, prn);
-	}
-    }
 
     /* reset sample as it was */
     pdinfo->t1 = smpl_t1;
@@ -1473,9 +1349,8 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		    newvars, chow_mod.dfd, F, pval);
 
 	    if (opt & OPT_S) {
-		ModelTest *test;
+		ModelTest *test = model_test_new(GRETL_TEST_CHOW);
 
-		test = new_test_on_model(pmod, GRETL_TEST_CHOW);
 		if (test != NULL) {
 		    model_test_set_teststat(test, GRETL_STAT_F);
 		    model_test_set_param(test, chowdate);
@@ -1483,6 +1358,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		    model_test_set_dfd(test, chow_mod.dfd);
 		    model_test_set_value(test, F);
 		    model_test_set_pvalue(test, pval);
+		    maybe_add_test_to_model(pmod, test);
 		}	  
 	    }
 
@@ -1663,14 +1539,14 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		T-K-1, hct, pval);
 
 	if (opt & OPT_S) {
-	    ModelTest *test;
+	    ModelTest *test = model_test_new(GRETL_TEST_CUSUM);
 
-	    test = new_test_on_model(pmod, GRETL_TEST_CUSUM);
 	    if (test != NULL) {
 		model_test_set_teststat(test, GRETL_STAT_HARVEY_COLLIER);
 		model_test_set_dfn(test, T-K-1);
 		model_test_set_value(test, hct);
 		model_test_set_pvalue(test, pval);
+		maybe_add_test_to_model(pmod, test);
 	    }
 	}
 

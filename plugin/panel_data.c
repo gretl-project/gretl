@@ -1380,12 +1380,13 @@ ml_hetero_test (MODEL *pmod, double s2, const double *uvar,
     x2 = pmod->nobs * log(s2) - s2h;
     df--;
 
-    test = new_test_on_model(pmod, GRETL_TEST_GROUPWISE);
+    test = model_test_new(GRETL_TEST_GROUPWISE);
     if (test != NULL) {
 	model_test_set_teststat(test, GRETL_STAT_LR);
 	model_test_set_dfn(test, df);
 	model_test_set_value(test, x2);
 	model_test_set_pvalue(test, chisq(x2, df));
+	maybe_add_test_to_model(pmod, test);
     } else {
 	err = 1;
     }
@@ -1800,9 +1801,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
 		_("Chi-square"), order, trsq, chisq(trsq, order));
 
 	if (opt & OPT_S) {
-	    ModelTest *test;
-
-	    test = new_test_on_model(pmod, GRETL_TEST_AUTOCORR);
+	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);
 
 	    if (test != NULL) {
 		int dfd = aux.nobs - pmod->ncoeff - order;
@@ -1813,6 +1812,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
 		model_test_set_dfd(test, dfd);
 		model_test_set_value(test, LMF);
 		model_test_set_pvalue(test, pval);
+		maybe_add_test_to_model(pmod, test);
 	    }	    
 	}
     }

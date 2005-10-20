@@ -197,7 +197,9 @@ void model_count_minus (void);
 
 void set_model_id (MODEL *pmod);
 
-ModelTest *new_test_on_model (MODEL *pmod, ModelTestType ttype);
+ModelTest *model_test_new (ModelTestType ttype);
+
+int maybe_add_test_to_model (MODEL *pmod, ModelTest *test);
 
 void model_test_set_teststat (ModelTest *test, unsigned char ts);
 void model_test_set_order (ModelTest *test, int order);

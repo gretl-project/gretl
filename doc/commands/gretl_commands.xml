@@ -3324,15 +3324,7 @@
 	heteroskedasticity, and the LMF test for serial correlation up
 	to the periodicity (see Kiviet, 1986).  The corresponding
 	auxiliary regression coefficients are also printed out.  See
-	Ramanathan, Chapters 7, 8, and 9 for details. In the case of
-	White's test, only the squared independent variables are used
-	and not their cross products.  In the case of the
-	autocorrelation test, if the p-value of the LMF statistic is
-	less than 0.05 (and the model was not originally estimated
-	with robust standard errors) then serial correlation-robust
-	standard errors are calculated and displayed.  For details on
-	the calculation of these standard errors see Wooldridge (2002,
-	Chapter 12).
+	Ramanathan, Chapters 7, 8, and 9 for details. 
       </para>
     </description>
 

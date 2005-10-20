@@ -187,15 +187,15 @@ static int make_vcv (MODEL *pmod, gretl_matrix *v, double scale)
 
 static int add_norm_test_to_model (MODEL *pmod, double chi2)
 {
-    ModelTest *test;
+    ModelTest *test = model_test_new(GRETL_TEST_NORMAL);
     int err = 0;
 
-    test = new_test_on_model(pmod, GRETL_TEST_NORMAL);
     if (test != NULL) {
 	model_test_set_teststat(test, GRETL_STAT_NORMAL_CHISQ);
 	model_test_set_dfn(test, 2);
 	model_test_set_value(test, chi2);
 	model_test_set_pvalue(test, chisq(chi2, 2));
+	maybe_add_test_to_model(pmod, test);
     } else {
 	err = 1;
     }

@@ -3143,14 +3143,14 @@ int record_varlabel_change (int v)
 
 static void normal_test (MODEL *pmod, FreqDist *freq)
 {
-    ModelTest *test;
+    ModelTest *test = model_test_new(GRETL_TEST_NORMAL);
 
-    test = new_test_on_model(pmod, GRETL_TEST_NORMAL);
     if (test != NULL) {
 	model_test_set_teststat(test, GRETL_STAT_NORMAL_CHISQ);
 	model_test_set_dfn(test, 2);
 	model_test_set_value(test, freq->test);
 	model_test_set_pvalue(test, chisq(freq->test, 2));
+	maybe_add_test_to_model(pmod, test);
     }
 }
 

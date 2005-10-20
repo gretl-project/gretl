@@ -2956,14 +2956,14 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	pval = chisq(TR2, white.ncoeff - 1);
 
 	if (opt & OPT_S) {
-	    ModelTest *test;
+	    ModelTest *test = model_test_new(GRETL_TEST_WHITES);
 
-	    test = new_test_on_model(pmod, GRETL_TEST_WHITES);
 	    if (test != NULL) {
 		model_test_set_teststat(test, GRETL_STAT_TR2);
 		model_test_set_dfn(test, white.ncoeff - 1);
 		model_test_set_value(test, TR2);
 		model_test_set_pvalue(test, pval);
+		maybe_add_test_to_model(pmod, test);
 	    }	  
 	}
 
@@ -3460,15 +3460,15 @@ real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (opt & OPT_S) {
-	    ModelTest *test;
+	    ModelTest *test = model_test_new(GRETL_TEST_ARCH);
 
-	    test = new_test_on_model(pmod, GRETL_TEST_ARCH);
 	    if (test != NULL) {
 		model_test_set_teststat(test, GRETL_STAT_TR2);
 		model_test_set_order(test, order);
 		model_test_set_dfn(test, order);
 		model_test_set_value(test, LM);
 		model_test_set_pvalue(test, xx);
+		maybe_add_test_to_model(pmod, test);
 	    }	    
 	}
 

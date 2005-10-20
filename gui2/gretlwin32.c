@@ -331,6 +331,13 @@ static void try_to_get_windows_font (void)
     }
 }
 
+void menu_font_option_off (void)
+{
+    if (mdata->ifac != NULL) {
+	flip(mdata->ifac, "/File/Preferences/Menu font...", FALSE);
+    }
+}
+
 void set_up_windows_look (void)
 {
     if (wimp) { 

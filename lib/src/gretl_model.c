@@ -1337,6 +1337,7 @@ static void copy_test (ModelTest *targ, const ModelTest *src)
     targ->teststat = src->teststat;
     targ->dfn = src->dfn;
     targ->dfd = src->dfd;
+    targ->order = src->order;
     targ->value = src->value;
     targ->pvalue = src->pvalue;
 }
@@ -1364,36 +1365,75 @@ static void gretl_test_init (ModelTest *test, ModelTestType ttype)
     test->type = ttype;
     test->order = 0;
     test->param = NULL;
-    test->teststat = 0;
+    test->teststat = GRETL_STAT_NONE;
     test->dfn = test->dfd = 0;
     test->value = test->pvalue = NADBL;
 }
 
+static int model_tests_differ (ModelTest *mt1, ModelTest *mt2)
+{
+    int ret = 0;
+
+    if (mt1->type != mt2->type) {
+	ret = 1;
+    } else if (mt1->order != mt2->order) {
+	ret = 1;
+    } else if (mt1->param != NULL && mt2->param != NULL &&
+	       strcmp(mt1->param, mt2->param)) {
+	ret = 1;
+    } else if (mt1->teststat != mt2->teststat) {
+	ret = 1;
+    } else if (mt1->value != mt2->value) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
 /**
- * new_test_on_model:
- * @pmod: pointer to model.
+ * model_test_new:
  * @ttype: type of test to add.
  *
- * Adds a #ModelTest to @pmod, if a test of the given type has
- * not already been performed and recorded.
- *
- * Returns: model test pointer, or %NULL if the test is
- * already present or on failure.
+ * Returns: new #ModelTest pointer, or %NULL on failure.
  */
 
-ModelTest *new_test_on_model (MODEL *pmod, ModelTestType ttype)
+ModelTest *model_test_new (ModelTestType ttype)
+{
+    ModelTest *test = malloc(sizeof *test);
+
+    if (test != NULL) {
+	gretl_test_init(test, ttype);
+    }
+
+    return test;
+}
+
+/**
+ * maybe_add_test_to_model:
+ * @pmod: pointer to model.
+ * @test: model test to be added.
+ *
+ * Adds a #ModelTest to @pmod, if the test in question has
+ * not already been performed and recorded.
+ *
+ * Returns: 1 if the test was added, otherwise 0.
+ */
+
+int maybe_add_test_to_model (MODEL *pmod, ModelTest *test)
 {
     ModelTest *tests = NULL;
-    ModelTest *ret = NULL;
     int i, nt = pmod->ntests;
-    int done = 0;
+    int done = 0, add = 0;
+
+    if (test == NULL || test->teststat == GRETL_STAT_NONE) {
+	return 0;
+    }
 
     for (i=0; i<nt; i++) {
-	if (ttype == pmod->tests[i].type) {
-	    /* already done */
+	if (!model_tests_differ(test, &pmod->tests[i])) {
 	    done = 1;
 	}
-    }
+    } 
 
     if (!done) {
 	tests = realloc(pmod->tests, (nt + 1) * sizeof *tests);
@@ -1402,11 +1442,14 @@ ModelTest *new_test_on_model (MODEL *pmod, ModelTestType ttype)
     if (tests != NULL) {
 	pmod->tests = tests;
 	pmod->ntests += 1;
-	ret = &pmod->tests[nt];
-	gretl_test_init(ret, ttype);
+	copy_test(&pmod->tests[nt], test);
+	add = 1;
     }
 
-    return ret;
+    free(test->param);
+    free(test);
+
+    return add;
 }
 
 void model_test_set_teststat (ModelTest *test, unsigned char ts)

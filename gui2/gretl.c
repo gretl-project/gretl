@@ -115,7 +115,7 @@ float gui_scale;
 int expert = FALSE; 
 int updater = FALSE;
 int want_toolbar = TRUE;
-int winsize = TRUE;
+int winsize = FALSE;
 int main_x = -1;
 int main_y = -1;
 int mainwin_width = 520;
@@ -1269,10 +1269,10 @@ static float get_gui_scale (void)
 static gboolean 
 mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
 {
-    main_x = event->x;
-    main_y = event->y;
     mainwin_width = event->width;
     mainwin_height = event->height;
+
+    gdk_window_get_root_origin(mdata->w->window, &main_x, &main_y);
 
     return FALSE;
 }
@@ -1392,6 +1392,12 @@ static GtkWidget *make_main_window (int gui_get_data)
     if (winsize && main_x >= 0 && main_y >= 0) {
 	gtk_window_move(GTK_WINDOW(mdata->w), main_x, main_y);
     }
+
+#ifdef G_OS_WIN32
+    if (wimp) {
+	menu_font_option_off();
+    }
+#endif
 
     return main_vbox;
 }
