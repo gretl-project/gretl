@@ -493,7 +493,9 @@ real_restriction_set_start (MODEL *pmod, const DATAINFO *pdinfo,
 	rset->cross = 1;
     } else if (rset->var != NULL && gretl_VECM_rank(rset->var) > 1) {
 	rset->cross = 1;
-    }    
+    } else {
+	rset->cross = 0;
+    }
 
     return rset;
 }
