@@ -1868,6 +1868,30 @@ transcribe_data_as_uhat (int v, const double **Z, gretl_matrix *u,
     }
 }
 
+int gretl_VECM_test_beta (GRETL_VAR *vecm, PRN *prn)
+{
+    void *handle = NULL;
+    int (*vecm_beta_test) (GRETL_VAR *, PRN *);
+    int err = 0;
+
+    if (vecm->jinfo == NULL || vecm->jinfo->D == NULL) {
+	return E_DATA;
+    }    
+
+    *gretl_errmsg = 0;
+    
+    vecm_beta_test = get_plugin_function("vecm_beta_test", &handle);
+    
+    if (vecm_beta_test == NULL) {
+	err = 1;
+    } else {
+	err = (* vecm_beta_test) (vecm, prn);
+	close_plugin(handle);
+    }
+    
+    return err;    
+}
+
 static int 
 johansen_complete (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
@@ -2765,6 +2789,28 @@ int gretl_VECM_id (GRETL_VAR *vecm)
     }
 
     return vecm->jinfo->ID;
+}
+
+int gretl_VECM_n_beta (const GRETL_VAR *vecm)
+{
+    int nb = 0;
+
+    if (vecm->jinfo != NULL && vecm->jinfo->Beta != NULL) {
+	nb = gretl_matrix_rows(vecm->jinfo->Beta);
+    }
+
+    return nb;
+}
+
+int gretl_VECM_rank (const GRETL_VAR *vecm)
+{
+    int r = 0;
+
+    if (vecm->jinfo != NULL) {
+	r = vecm->jinfo->rank;
+    }
+
+    return r;
 }
 
 #include "irfboot.c"

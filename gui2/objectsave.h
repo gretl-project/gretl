@@ -23,8 +23,7 @@
 int maybe_save_model (const CMD *cmd, MODEL **ppmod, 
 		      DATAINFO *pdinfo, PRN *prn);
 
-int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, 
-		    PRN *prn);
+int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn);
 
 int maybe_save_system (const CMD *cmd, gretl_equation_system *sys, PRN *prn);
 

@@ -1290,22 +1290,51 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-#if 0 /* not ready yet */
-
-static void johansen_LR_calc (GRETL_VAR *jvar, const double *eigvals)
+static int
+johansen_LR_calc (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
 {
-    double llu, llr;
-    int h, i;
+    gretl_matrix *Suu;
+    double llr, ldet, T_2 = (double) jvar->T / 2.0;
+    int n = jvar->neqns;
+    int h, i, err = 0;
 
-    h = (jrank(jvar) > 0)? jrank(jvar) : jvar->neqns;
+    h = (jrank(jvar) > 0)? jrank(jvar) : n;
 
-    llu = jvar->ll - jvar->ldet;
-    llr = 0.0;
+    Suu = gretl_matrix_copy(jvar->jinfo->Suu);
 
-    for (i=0; i<h; i++) {
-	llr -= T_2 * log(1.0 - eigvals[i]); 
+    if (Suu == NULL) {
+	err = E_ALLOC;
+    } else {
+	ldet = gretl_matrix_log_determinant(Suu);
+	llr = - T_2 * n * (1.0 + LN_2_PI) - T_2 * ldet;
+	for (i=0; i<h; i++) {
+	    pprintf(prn, "eigenvalue %d = %g\n", i+1, eigvals[i]);
+	    llr -= T_2 * log(1.0 - eigvals[i]); 
+	}
+	pputc(prn, '\n');
+	gretl_matrix_free(Suu);
     }
+
+    if (!err) {
+	double x = 2.0 * (jvar->ll - llr);
+	int nb = gretl_matrix_rows(jvar->jinfo->Beta);
+	int df = h * (nb - gretl_matrix_cols(jvar->jinfo->D));
+
+	pprintf(prn, "Unrestricted loglikelihood (lu) = %g\n", jvar->ll);
+	pprintf(prn, "Restricted loglikelihood (lr) = %g\n", llr);
+	pprintf(prn, "2 * (lu - lr) = %g\n", x);
+	pprintf(prn, "P(Chi-Square(%d) > %g = %g\n", df, x, chisq(x, df));
+    }
+
+    return err;
 }
+
+/* 
+   Test of (homogeneous) linear restrictions on the cointegrating
+   relations in a VECM.  This all needs verification and possibly
+   fixing in the case where the "unrestricted" VECM includes a
+   restricted constant or trend
+*/
 
 int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 {
@@ -1314,6 +1343,7 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
     gretl_matrix *TmpR = NULL;
     gretl_matrix *Svv = NULL;
     gretl_matrix *Suv = NULL;
+    gretl_matrix *Suu = NULL;
 
     double *eigvals = NULL;
 
@@ -1322,20 +1352,25 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
     int m = gretl_matrix_cols(jvar->jinfo->D);
     int err = 0;
 
-    TmpL = gretl_matrix_alloc(nv, n);
+    M = gretl_matrix_alloc(m, m);
+    TmpL = gretl_matrix_alloc(m, n); /* FIXME n or nv? */
     TmpR = gretl_matrix_alloc(nv, nv);
-    M = gretl_matrix_alloc(nv, nv);
     Svv = gretl_matrix_alloc(m, m);
     Suv = gretl_matrix_alloc(n, m);
+    Suu = gretl_matrix_copy(jvar->jinfo->Suu);
 
     if (TmpL == NULL || TmpR == NULL || M == NULL || 
-	Svv == NULL || Suv == NULL) {
-	err = 1;
-	goto eigenvals_bailout;
+	Svv == NULL || Suv == NULL || Suu == NULL) {
+	err = E_ALLOC;
+	goto bailout;
     }
 
+    pputs(prn, "Test of restrictions on cointegrating relations\n\n");
+
+    gretl_matrix_print_to_prn(jvar->jinfo->D, "Restriction matrix, D", prn);
+
     /* calculate D'Svv */
-    gretl_matrix_use(TmpR, m, nv);
+    gretl_matrix_reuse(TmpR, m, nv);
     err = gretl_matrix_multiply_mod(jvar->jinfo->D, GRETL_MOD_TRANSPOSE,
 				    jvar->jinfo->Svv, GRETL_MOD_NONE, 
 				    TmpR);
@@ -1344,6 +1379,8 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 	/* Svv <- D'SvvD */
 	err = gretl_matrix_multiply(TmpR, jvar->jinfo->D, Svv);
     }
+
+    gretl_matrix_print_to_prn(Svv, "D'SvvD", prn);
     
     if (!err) {
 	/* Suv <- SuvD */
@@ -1352,11 +1389,13 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 				    Suv);
     }
 
+    gretl_matrix_print_to_prn(Suv, "SuvD", prn);
+
     if (!err) {
 	/* calculate Suu^{-1} Suv */
 	err = gretl_invert_general_matrix(Suu);
 	if (!err) {
-	    gretl_matrix_use(TmpR, n, m);
+	    gretl_matrix_reuse(TmpR, n, m);
 	    err = gretl_matrix_multiply(Suu, Suv, TmpR);
 	}
     }
@@ -1375,16 +1414,10 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 	err = gretl_matrix_multiply(TmpL, TmpR, M);
     }
 
-    if (err) {
-	goto eigenvals_bailout;
-    }    
-
-    if (nv > n) {
-	/* "re-expand" this matrix */
-	gretl_matrix_reuse(TmpR, nv, nv);
-    }
+    gretl_matrix_print_to_prn(M, "M", prn);
 
     if (!err) {
+	gretl_matrix_reuse(TmpR, m, m);
 	eigvals = gretl_general_matrix_eigenvals(M, TmpR);
 	if (eigvals == NULL) {
 	    err = E_ALLOC;
@@ -1393,28 +1426,20 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 	}
     }
 
-#if JDEBUG
-    gretl_matrix_print(TmpR, "raw eigenvector(s)");
-#endif
-
     if (!err) {
-	johansen_normalize(jvar->jinfo, TmpR); 
-#if JDEBUG
-	gretl_matrix_print(TmpR, "normalized tmpR");
-#endif
-	johansen_LR_calc(jvar);
+	johansen_LR_calc(jvar, eigvals, prn);
     } 
 
- eigenvals_bailout:    
+ bailout:    
 
+    gretl_matrix_free(M);
     gretl_matrix_free(TmpL);
     gretl_matrix_free(TmpR);
-    gretl_matrix_free(M);
     gretl_matrix_free(Svv);
+    gretl_matrix_free(Suv);
+    gretl_matrix_free(Suu);
 
     free(eigvals);
 
     return err;
 }
-
-#endif

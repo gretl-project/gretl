@@ -2265,7 +2265,9 @@ static gretl_matrix *find_base (gretl_matrix *M)
 	for (j=0; j<M->cols && k<rank; j++) {
 	    if (keep[j]) {
 		for (i=0; i<M->rows; i++) {
-		    C->val[mdx(C, i, k)] = M->val[mdx(M, i, j)];
+		    x = M->val[mdx(M, i, j)];
+		    if (fabs(x) < 1.0e-16) x = 0.0; /* ? */
+		    C->val[mdx(C, i, k)] = x;
 		}
 		k++;
 	    }

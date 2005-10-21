@@ -35,8 +35,8 @@ struct restriction_ {
 };
 
 struct restriction_set_ {
-    int cross;                    /* 1 for cross-equation set, else 0 */
     int k;                        /* number of restrictions (rows) */
+    int cross;                    /* includes cross-equation restrictions? */
     char *mask;                   /* selection mask for coeffs */
     restriction **restrictions;
     MODEL *pmod;
@@ -44,7 +44,6 @@ struct restriction_set_ {
     GRETL_VAR *var;
     const DATAINFO *pdinfo;
 };
-
 
 static void destroy_restriction_set (gretl_restriction_set *rset);
 
@@ -69,7 +68,22 @@ static int check_R_matrix (const gretl_matrix *R)
 }
 
 static int 
-get_R_column (const gretl_restriction_set *rset, int i, int j)
+get_R_vecm_column (const gretl_restriction_set *rset, int i, int j)
+{
+    const restriction *r = rset->restrictions[i];
+    int nb = gretl_VECM_n_beta(rset->var);
+    int col = r->coeff[j];
+    int k;
+
+    for (k=0; k<r->eq[j]; k++) {
+	col += nb;
+    }
+
+    return col;
+}
+
+static int 
+get_R_sys_column (const gretl_restriction_set *rset, int i, int j)
 {
     const restriction *r = rset->restrictions[i];
     const int *list;
@@ -82,6 +96,17 @@ get_R_column (const gretl_restriction_set *rset, int i, int j)
     }
 
     return col;
+}
+
+static int get_R_column (const gretl_restriction_set *rset, int i, int j)
+{
+    if (rset->sys != NULL) {
+	return get_R_sys_column(rset, i, j);
+    } else if (rset->var != NULL) {
+	return get_R_vecm_column(rset, i, j);
+    } else {
+	return 0;
+    }
 }
 
 static double get_restriction_param (const restriction *r, int k)
@@ -101,13 +126,13 @@ static double get_restriction_param (const restriction *r, int k)
 
 static int R_n_columns (gretl_restriction_set *rset)
 {
-    int cols = 0;
+    int i, cols = 0;
 
-    if (rset->cross) {
+    if (rset->var) {
+	cols = gretl_VECM_n_beta(rset->var);
+    } else if (rset->sys) {
 	cols = system_n_indep_vars(rset->sys);
     } else {
-	int i;
-
 	for (i=0; i<rset->pmod->ncoeff; i++) {
 	    if (rset->mask[i]) {
 		cols++;
@@ -145,13 +170,7 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
 
     for (i=0; i<rset->k; i++) { 
 	r = rset->restrictions[i];
-	if (rset->cross) {
-	    for (j=0; j<r->nterms; j++) {
-		col = get_R_column(rset, i, j);
-		x = r->mult[j];
-		gretl_matrix_set(R, i, col, x);
-	    }
-	} else {
+	if (rset->pmod != NULL) {
 	    col = 0;
 	    for (j=0; j<rset->pmod->ncoeff; j++) {
 		if (rset->mask[j]) {
@@ -159,7 +178,13 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
 		    gretl_matrix_set(R, i, col++, x);
 		}
 	    }
-	}
+	} else {	    
+	    for (j=0; j<r->nterms; j++) {
+		col = get_R_column(rset, i, j);
+		x = r->mult[j];
+		gretl_matrix_set(R, i, col, x);
+	    }
+	} 
 	gretl_vector_set(q, i, r->rhs);
     }
 
@@ -170,7 +195,10 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
 
     if (rset->var != NULL) {
 	gretl_matrix *D = gretl_matrix_right_nullspace(R);
-	
+
+#if RDEBUG
+	gretl_matrix_print(D, "D");
+#endif
 	gretl_VAR_attach_restrictions(rset->var, D);
 	gretl_matrix_free(R);
 	gretl_matrix_free(q);
@@ -342,8 +370,8 @@ static restriction *restriction_new (int n, int cross)
 static restriction *
 augment_restriction_set (gretl_restriction_set *rset, int n_terms)
 {
-    int n = rset->k;
     restriction **rlist = NULL;
+    int n = rset->k;
 
     rlist = realloc(rset->restrictions, (n + 1) * sizeof *rlist);
     if (rlist == NULL) return NULL;
@@ -385,6 +413,9 @@ static void print_restriction (const gretl_restriction_set *rset,
 	print_mult(r->mult[i], i == 0, prn);
 	if (rset->cross) {
 	    pprintf(prn, "b[%d,%d]", r->eq[i] + 1, r->coeff[i]);
+	} else if (rset->var) {
+	    /* FIXME get a varname here? */
+	    pprintf(prn, "b[%d]", r->coeff[i]);
 	} else {
 	    gretl_model_get_param_name(rset->pmod, rset->pdinfo, 
 				       r->coeff[i], vname);
@@ -458,14 +489,12 @@ real_restriction_set_start (MODEL *pmod, const DATAINFO *pdinfo,
     rset->mask = NULL;
     rset->restrictions = NULL;
 
-    /* FIXME vecm */
-
-    if (sys != NULL) {
+    if (rset->sys != NULL) {
 	rset->cross = 1;
-    } else {
-	rset->cross = 0;
-    }
-    
+    } else if (rset->var != NULL && gretl_VECM_rank(rset->var) > 1) {
+	rset->cross = 1;
+    }    
+
     return rset;
 }
 
@@ -478,7 +507,17 @@ static int bnum_out_of_bounds (const gretl_restriction_set *rset,
 {
     int ret = 1;
 
-    if (rset->cross) {
+    if (rset->var) {
+	if (eq >= gretl_VECM_rank(rset->var)) {
+	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
+		    eq + 1);
+	} else if (bnum >= gretl_VECM_n_beta(rset->var)) {
+	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
+		    bnum);
+	} else {
+	    ret = 0;
+	}
+    } else if (rset->sys) {
 	const int *list = system_get_list(rset->sys, eq);
 
 	if (list == NULL) {
@@ -589,7 +628,13 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
     }
 
     if (!err) {
-	if (!sscanf(p, " = %lf", &r->rhs)) err = E_PARSE;
+	if (!sscanf(p, " = %lf", &r->rhs)) {
+	    err = E_PARSE;
+	} else if (r->rhs != 0.0 && rset->var != NULL) {
+	    strcpy(gretl_errmsg, "VECM restrictions: the equations must "
+		   "be homogeneous");
+	    err = 1;
+	}
     }
 
     if (err) {
@@ -608,7 +653,9 @@ restriction_set_parse_line (gretl_restriction_set *rset, const char *line)
 	nx = rset->pmod->ncoeff;
     } else if (rset->sys != NULL) {
 	nx = system_n_indep_vars(rset->sys);
-    } 
+    } else if (rset->var != NULL) {
+	nx = gretl_VECM_n_beta(rset->var);
+    }
 
     if (rset->k >= nx) {
 	sprintf(gretl_errmsg, _("Too many restrictions (maximum is %d)"), 
@@ -634,8 +681,12 @@ var_restriction_set_start (const char *line, GRETL_VAR *var)
 	return NULL;
     }
 
+    *gretl_errmsg = '\0';
+
     if (real_restriction_set_parse_line(rset, line, 1)) {
-	sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
+	if (*gretl_errmsg == '\0') {
+	    sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
+	}
 	return NULL;
     }
 
@@ -663,6 +714,8 @@ cross_restriction_set_start (const char *line, gretl_equation_system *sys)
 
     return rset;
 }
+
+/* FIXME how to incorporate the vecm case below? */
 
 gretl_restriction_set *
 restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)

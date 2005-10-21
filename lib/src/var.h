@@ -101,5 +101,11 @@ int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
 				    const DATAINFO *pdinfo);
 
+int gretl_VECM_n_beta (const GRETL_VAR *vecm);
+
+int gretl_VECM_test_beta (GRETL_VAR *vecm, PRN *prn);
+
+int gretl_VECM_rank (const GRETL_VAR *vecm);
+
 #endif /* VAR_H_ */
 

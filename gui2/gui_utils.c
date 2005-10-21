@@ -3148,7 +3148,6 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	dumitem.path = g_strdup_printf(_("%s/by %s"), mpath[1], tmp);
 	gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	g_free(dumitem.path);
-
     }
 
     g_free(radiopath);
@@ -3405,7 +3404,8 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 enum {
     VAR_AUTOCORR_TEST,
     VAR_ARCH_TEST,
-    VAR_NORMALITY_TEST
+    VAR_NORMALITY_TEST,
+    VAR_RESTRICT
 };
 
 static void VAR_test_call (gpointer p, guint code, GtkWidget *w)
@@ -3556,6 +3556,17 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     varitem.item_type = NULL;
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);
+
+    /* linear restrictions on cointegrating relations */
+    if (vecm) {
+	varitem.path = g_strdup_printf("%s/%s", _(tpath), 
+				       _("linear restrictions"));
+	varitem.callback = gretl_callback;
+	varitem.callback_action = RESTRICT;
+	varitem.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	g_free(varitem.path);
+    }	
 
     /* cross-equation VCV */
     varitem.path = g_strdup_printf("%s/%s", _(mpath), 

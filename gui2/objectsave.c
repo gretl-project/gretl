@@ -121,7 +121,7 @@ static void show_saved_var (GRETL_VAR *var, const DATAINFO *pdinfo)
     if (bufopen(&prn)) return;
 
     gretl_VAR_print(var, pdinfo, OPT_NONE, prn);
-    view_buffer(prn, 78, 450, gretl_VAR_get_name(var), VAR, var);
+    view_buffer(prn, 78, 450, gretl_VAR_get_name(var), var->ci, var);
 }
 
 /* this should probably be elsewhere? */
@@ -306,35 +306,31 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
     return err;
 }
 
-int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
 {
     const char *savename;
-    int order = atoi(cmd->param);
     GRETL_VAR *var;
     int err;
 
     savename = gretl_cmd_get_savename(cmd);
 
-    if (*savename == 0) return 0;
-
-    if (cmd->ci == VAR) {
-	var = full_VAR(order, cmd->list, pZ, pdinfo, cmd->opt, NULL);
-    } else {
-	var = vecm(order, atoi(cmd->extra), cmd->list, pZ, pdinfo, cmd->opt, NULL);
+    if (*savename == 0) {
+	gretl_VAR_free(*pvar);
+	*pvar = NULL;
+	return 0;
     }
 
-    if (var == NULL) {
-	err = E_ALLOC;
-    } else {
-	gretl_VAR_assign_specific_name(var, savename);
-	err = try_add_var_to_session(var);
+    var = *pvar;
+    *pvar = NULL;
 
-	if (!err) {
-	    pprintf(prn, _("%s saved\n"), savename);
-	} else {
-	    gretl_VAR_free(var);
-	    err = E_ALLOC;
-	}
+    gretl_VAR_assign_specific_name(var, savename);
+    err = try_add_var_to_session(var);
+
+    if (!err) {
+	pprintf(prn, _("%s saved\n"), savename);
+    } else {
+	gretl_VAR_free(var);
+	err = E_ALLOC;
     }
 
     return err;

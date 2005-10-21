@@ -2212,7 +2212,9 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 		my_rset = restriction_set_start(bufline, pmod, datainfo);
 	    } else if (sys != NULL) {
 		my_rset = cross_restriction_set_start(bufline, sys);
-	    } 
+	    } else {
+		my_rset = var_restriction_set_start(bufline, vecm);
+	    }
 	    if (my_rset == NULL) {
  		err = 1;
 		gui_errmsg(err);
@@ -2244,6 +2246,9 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 					   got_end_line);
 	} else if (sys != NULL) {
 	    gretl_equation_system_estimate(sys, &Z, datainfo, OPT_NONE, prn);
+	    height = 450;
+	} else if (vecm != NULL) {
+	    gretl_VECM_test_beta(vecm, prn);
 	    height = 450;
 	}
     }
@@ -5776,6 +5781,7 @@ int gui_exec_line (char *line,
     unsigned int plotflags = 0;
     gretlopt testopt = OPT_NONE;
     MODEL tmpmod;
+    GRETL_VAR *var = NULL;
     LOOPSET *loop = *plp;
     PRN *outprn = NULL;
 
@@ -6709,18 +6715,22 @@ int gui_exec_line (char *line,
 
     case VAR:
 	order = atoi(cmd.param);
-	err = simple_VAR(order, cmd.list, &Z, datainfo, cmd.opt, outprn);
-	if (!err) {
-	    err = maybe_save_var(&cmd, &Z, datainfo, prn);
+	var = full_VAR(order, cmd.list, &Z, datainfo, cmd.opt, outprn);
+	if (var == NULL) {
+	    err = 1;
+	} else {
+	    err = maybe_save_var(&cmd, &var, prn);
 	}
 	break;
 
     case VECM:
 	order = atoi(cmd.param);
-	err = vecm_simple(order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
-			  cmd.opt, outprn);
-	if (!err) {
-	    err = maybe_save_var(&cmd, &Z, datainfo, prn);
+	var = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
+		   cmd.opt, outprn);
+	if (var == NULL) {
+	    err = 1;
+	} else {
+	    err = maybe_save_var(&cmd, &var, prn);
 	}
 	break;
 
