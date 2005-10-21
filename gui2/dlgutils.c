@@ -656,10 +656,27 @@ static void raise_and_focus_dialog (GtkEditable *editable, gpointer p)
     gtk_widget_grab_focus(d->edit);
 }
 
-#define dialog_help_available(c) (c != 0 && c != PRINT && \
-                                  c != CREATE_USERDIR && \
-                                  c != GENR_NORMAL && \
-                                  c != GENR_UNIFORM)
+static int edit_dialog_help_code (int ci, void *p)
+{
+    int hc = ci;
+
+    if (ci == PRINT || ci == CREATE_USERDIR ||
+	ci == GENR_NORMAL || ci == GENR_UNIFORM) {
+	hc = 0;
+    } else if (ci == RESTRICT) {
+	windata_t *vwin = (windata_t *) p;
+
+	if (vwin->role == VIEW_MODEL) {
+	    hc = MODEL_RESTR;
+	} else if (vwin->role == SYSTEM) {
+	    hc = SYS_RESTR;
+	} else if (vwin->role == VECM) {
+	    hc = VECM_RESTR;
+	} 
+    } 
+
+    return hc;
+}
 
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
@@ -668,7 +685,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     dialog_t *d;
     GtkWidget *tempwid;
     GtkWidget *top_vbox, *button_box;
-    int modal = 0;
+    int hlpcode, modal = 0;
 
     if (open_edit_dialog != NULL) {
 	gdk_window_raise(open_edit_dialog->window);
@@ -764,8 +781,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     }
 
     /* Create a "Help" button if wanted */
-    if (dialog_help_available(cmdcode)) {
-	context_help_button(button_box, cmdcode);
+    hlpcode = edit_dialog_help_code(cmdcode, okptr);
+    if (hlpcode > 0) {
+	context_help_button(button_box, hlpcode);
 	modal = 0;
     }
 

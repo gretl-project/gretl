@@ -70,6 +70,9 @@ enum extra_cmds {
     VAR_DECOMP,
     IRF_BOOT,
     HTEST, 
+    MODEL_RESTR,
+    SYS_RESTR,
+    VECM_RESTR,
     GUI_CMD_MAX
 };
 

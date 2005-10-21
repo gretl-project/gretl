@@ -122,12 +122,15 @@ static struct gui_help_item gui_help_items[] = {
     { GSETMISS,       "missing" },
     { GUI_HELP,       "dialog" },
     { MODELTABLE,     "modeltab" },
-    { GRAPHPAGE ,     "graphpag" },
+    { GRAPHPAGE,      "graphpag" },
     { SETSEED,        "seed" },
     { KERNEL_DENSITY, "density" },
     { HCCME,          "hccme" },
     { IRF_BOOT,       "irfboot" },
     { HTEST,          "gui-htest" },
+    { MODEL_RESTR,    "restrict-model" },
+    { SYS_RESTR,      "restrict-system" },
+    { VECM_RESTR,     "restrict-vecm" },
     { -1,          NULL },
 };
 
@@ -416,10 +419,10 @@ char *quoted_help_string (char *str)
 static int new_add_topic_to_heading (struct help_head_t **heads, 
 				     int nh, char *str, int pos)
 {
-    char word[12], section[32];
+    char word[32], section[32];
     int n, m, nt;
 
-    if (sscanf(str + 1, "%11s %31s", word, section) != 2) {
+    if (sscanf(str + 1, "%31s %31s", word, section) != 2) {
 	return 1;
     }
 
