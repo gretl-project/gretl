@@ -648,6 +648,14 @@ static void system_estimator_list (GtkWidget *vbox, gpointer data)
     gtk_widget_show(w);  
 }
 
+static void raise_and_focus_dialog (GtkEditable *editable, gpointer p)
+{
+    dialog_t *d = (dialog_t *) p;
+
+    gdk_window_raise(d->dialog->window);
+    gtk_widget_grab_focus(d->edit);
+}
+
 #define dialog_help_available(c) (c != 0 && c != PRINT && \
                                   c != CREATE_USERDIR && \
                                   c != GENR_NORMAL && \
@@ -711,6 +719,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	    g_signal_connect(G_OBJECT(d->edit), "activate", 
 			     G_CALLBACK(okfunc), d);
 	}
+
+	g_signal_connect(G_OBJECT(GTK_EDITABLE(d->edit)), "changed", 
+			 G_CALLBACK(raise_and_focus_dialog), d);
 	
 	if (deftext != NULL && *deftext != '\0') {
 	    gtk_entry_set_text(GTK_ENTRY(d->edit), deftext);
