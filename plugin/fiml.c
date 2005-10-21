@@ -706,14 +706,14 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
 
     tr = 0.0;
     for (i=0; i<fsys->g; i++) {
-	double epe, eit, ejt, sij;
+	double epe, eti, etj, sij;
 
 	for (j=0; j<fsys->g; j++) {
 	    epe = 0.0;
 	    for (t=0; t<fsys->n; t++) {
-		eit = gretl_matrix_get(fsys->uhat, t, i);
-		ejt = gretl_matrix_get(fsys->uhat, t, j);
-		epe += eit * ejt;
+		eti = gretl_matrix_get(fsys->uhat, t, i);
+		etj = gretl_matrix_get(fsys->uhat, t, j);
+		epe += eti * etj;
 	    }
 	    sij = gretl_matrix_get(fsys->Stmp, i, j);
 	    tr += sij * epe;
