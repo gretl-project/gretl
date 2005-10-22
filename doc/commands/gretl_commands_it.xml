@@ -1382,6 +1382,47 @@
 
   </command>
 
+  <command name="expand" section="Dataset" context="gui"
+    label="Espansione dei dati">
+
+    <description>
+
+      <para>
+	Se si vuole aggiungere a un dataset una serie di frequenza inferiore, è
+        necessario <quote>espandere</quote> la nuova serie. Ad esempio, una serie
+        trimestrale dovrà essere espansa per essere aggiunta a un dataset
+        mensile. Altre volte occorrerà espandere un intero dataset a una
+        frequenza superiore prima di aggiungervi una serie che ha una frequenza
+        superiore.
+      </para>
+
+      <para>
+        L'operazione di espansione dei dati è riservata gli utenti
+        <quote>esperti</quote>: occorre sapere bene cosa si sta facendo. In
+        pratica, gretl replica i valori della serie a minore frequenza tante
+        volte quanto è richiesto dai dati. Ad esempio, se si ha una
+        serie trimestrale con il valore 35.5 per l'osservazione 1990:1 (il primo
+        trimestre del 1990), espandendo la serie, il valore 35.5 verrà assegnato
+        alle osservazioni per gennaio, febbraio e marzo del 1990. La variabile
+        espansa non potrà quindi essere utilizzata per analisi temporali
+        "a grana fine", tranne nel caso si abbia ragione di ritenere che la
+        variabile in questione rimanga costante nei vari sotto-periodi.
+      </para>
+
+      <para>
+	È utile tenere presenti due altri comandi. Per prima cosa, se si
+        combinano serie di diversa frequenza in un dataset, è opportuno
+        considerare la possibilità di compattare i dati a frequenza più alta,
+        invece che espandere quelli a frequenza più bassa, utilizzando il
+        comando presente nel menù Campione. In secondo luogo, se si sceglie di
+        espandere una serie, può essere utile applicare un'operazione di
+        smorzamento (smoothing) ai dati, fra quelle disponibili utilizzando il
+        comando <cmd>genr</cmd>.
+      </para>
+
+    </description>
+  </command>
+
   <command name="export" section="Dataset" context="gui"
     label="Esportazione dei dati">
 
@@ -2440,6 +2481,56 @@
 
     </description>
   </command>
+
+  <command name="gui-htest" section="Tests" context="gui"
+    label="Calcolatore per le statistiche test">
+
+    <description>
+      <para>
+	Il calcolatore dei test di Gretl calcola statistiche test e p-value
+        per molti tipi di test di ipotesi su una o più popolazioni.
+        Per utilizzarlo, occorre indicare le statistiche campionarie derivate
+        da uno o due campioni, a seconda del test scelto. Queste possono essere
+        indicate esplicitamente in forma numerica, oppure, se si ha un file di
+        dati aperto, è possibile far calcolare a gretl le statistiche test per
+        una o più variabili selezionate dal dataset (nel caso delle medie e
+        varianze, ma non nel caso delle proporzioni).
+      </para>
+
+      <para>
+	Per eseguire un test indicando una variabile del dataset, occorre per
+        prima cosa attivare questa opzione selezionando la casella "Usa
+        variabile dal dataset", e poi scegliere la variabile nella lista.
+        Appena si sceglie una variabile, i valori della statistica rilevante
+        sono automaticamente inseriti nelle caselle sottostanti.
+      </para>
+
+      <para>
+	Oltre che selezionare semplicemente una variabile, è possibile
+        specificare un sotto-campione. Ad esempio, si ipotizzi di avere dei dati
+        sui salari in una variabile chiamata "salari" e una variabile dummy
+        chiamata "genere", pari a 1 per gli uomini e 0 per le donne (o
+        viceversa). Quindi, nel test per la differenza fra le medie, è possibile
+        selezionare "salari" in entrambi i campi, ma aggiungendo nel campo
+        superiore "(genere=0)" e nel campo inferiore "(genere=1)" si otterrà
+        un test per la differenza tra il reddito medio degli uomini e delle
+        donne. Quando si specifica un vincolo che identifica un sotto-campione,
+        occorre premere il tasto Invio perché le statistiche campionarie siano
+        calcolate.
+      </para>
+
+      <para>
+	Il vincolo che definisce il sotto-campione deve essere indicato tra
+        parentesi e in generale prende la forma "variabile operatore valore",
+        dove "variabile" è il nome di una variabile nel dataset attuale,
+        "valore" è un valore numerico e "operatore" è un operatore di confronto,
+        da scegliere tra =, !=, &lt;, &gt;, &lt;= or &gt;= (rispettivamente uguale
+        diverso, minore, maggiore, minore o uguale, maggiore o uguale). Gli
+        spazi prima e dopo l'operatore sono opzionali.
+      </para>
+
+    </description>
+  </command>
     
   <command name="hausman" section="Tests"
     label="Test di Hausman (diagnosi panel)">
@@ -2815,14 +2906,14 @@
 
     <description>
       <para>Se si sceglie l'intervallo di confidenza bootstrap nella
-       visualizzazione delle funzioni di impulso-risposta, gretl calcola
-       un intervallo di confidenza al 95 per cento per le risposte usando il
-       metodo bootstrap. Si effettua un campionamento (con reimmissione) dai
-       residui del VAR originale, viene costruito un dataset artificiale usando
-       le stime originali dei parametri e i residui ri-campionati, viene
-       ricalcolato il VAR e vengono ri-stimate le funzioni di impulso-risposta.
-       Questa procedura viene ripetuta 999 volte e vengono mostrati i quantili
-       0.025 e 0.975 per le risposte, insieme alle stime puntuali.
+      visualizzazione delle funzioni di impulso-risposta, gretl calcola un
+      intervallo di confidenza al 95 per cento per le risposte usando il metodo
+      bootstrap. Si effettua un campionamento (con reimmissione) dai residui del
+      VAR (o VECM) originale, viene costruito un dataset artificiale usando le
+      stime originali dei parametri e i residui ri-campionati, viene ri-stimato
+      il sistema e vengono ri-calcolate le funzioni di impulso-risposta.  Questa
+      procedura viene ripetuta 999 volte e vengono mostrati i quantili 0.025 e
+      0.975 per le risposte, insieme alle stime puntuali.
       </para>
 
     </description>
@@ -3179,14 +3270,7 @@
         seriale di ordine pari alla periodicità (si veda Kiviet, 1986),
         mostrando anche i coefficienti delle corrispondenti regressioni
         ausiliarie. Si veda Ramanathan, capitoli 7, 8 e 9 per i
-        dettagli. Nel caso del test di White, vengono usati solo i
-        quadrati delle variabili indipendenti, non i loro prodotti
-        incrociati. Nel caso del test sull'autocorrelazione, se il
-        p-value della statistica LMF è minore di 0.05 (e il modello
-        non è stato stimato con errori standard robusti), vengono
-        calcolati e mostrati errori standard robusti rispetto alla
-        correlazione seriale. Per i dettagli sul calcolo di questi
-        errori standard, si veda Wooldridge (2002, capitolo 12).
+        dettagli.
       </para>
     </description>
 
@@ -3560,6 +3644,127 @@
       virgolette); gretl interpreterà quindi i valori -1 come osservazioni
       mancanti.</para>
     </description>
+  </command>
+
+  <command name="mle" section="Estimation"
+    label="Stima di massima verosimiglianza">
+
+    <usage>
+      <arguments>
+        <argument>funzione di log-verosimiglianza</argument>
+        <argument>derivate</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>mostra i dettagli delle iterazioni</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description context="gui">
+
+      <para>Esegue la stima di massima verosimiglianza (ML, Performs Maximum
+        Likelihood) usando l'algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno).
+        Occorre specificare la funzione di log-verosimiglianza, e se possibile è
+        consigliabile indicare anche espressioni per le derivate di questa
+        funzione, rispetto ad ognuno dei parametri.
+      </para>
+
+      <para>Esempio: si supponga di avere una serie X con valori 0 o 1 e di
+        voler ottenere la stima di massima verosimiglianza della probabilità p
+        che X valga 1 (è semplice intuire che la stima ML di p
+        corrisponderà alla proporzione dei valori 1 nel campione).
+      </para>
+
+      <para>Occorre per prima cosa aggiungere p al dataset e assegnargli un
+        valore iniziale, attraverso il comando genr o i comandi del menù.
+	È possibile scrivere delle istruzioni <quote>genr</quote> appropriate
+        nella finestra di specificazione del comando di stima, prima di indicare
+        la specificazione della funzione di log-verosimiglianza.
+      </para>
+
+      <para>Si scrivano i seguenti comandi nella finestra del comando:</para>
+
+      <code>
+	loglik = X*log(p) + (1-X)*log(1-p)
+	deriv p = X/p - (1-X)/(1-p)
+      </code>
+
+      <para>
+	La prima riga specifica la funzione di log-verosimiglianza, mentre
+        la seconda indica la derivata della funzione rispetto a p. Se non si
+        indicanto righe "deriv", viene calcolata un'approssimazione numerica
+        delle derivate.
+      </para>
+
+      <para>
+	Se non si era dichiarato in precedenza il parametro p, sarabbe stato
+        necessario premettere alle righe precedenti la riga:
+      </para>
+
+      <code>
+	genr p = 0.5
+      </code>
+
+    </description>
+
+    <description context="cli">
+
+      <para>
+	Performs Maximum Likelihood (ML) estimation using the BFGS
+	(Broyden, Fletcher, Goldfarb, Shanno) algorithm. The user must
+	specify the log-verosimiglianza function.  The parameters of this
+	function must be declared and given starting values (using the
+	<cmd>genr</cmd> command) prior to estimation.  Optionally, the
+	user may specify the derivatives of the log-verosimiglianza
+	function with respect to each of the parameters; if analytical
+	derivatives are not supplied, a numerical approximation is
+	computed.
+      </para>
+      <para>Esegue la stima di massima verosimiglianza (ML, Performs Maximum
+        Likelihood) usando l'algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno).
+        Occorre specificare la funzione di log-verosimiglianza e indicare dei
+        valori iniziali per i parametri della funzione (utilizzando il comando
+        <cmd>genr</cmd>.  Se possibile è consigliabile indicare anche
+        espressioni per le derivate di questa funzione, rispetto ad ognuno dei
+        parametri; se non si indicano le derivate analitiche, verrà calcolata
+        un'approssimazione numerica.
+      </para>
+
+      <para>
+	It is easiest to show what is required by example.  FIXME
+	example needs to be added.
+      </para>
+
+      <para>
+	FIXME empty reference.  The actual MLE commands occupy lines 6
+	to 10. On line 6 the <cmd>mle</cmd> command is given: a
+	dependent variable is specified, followed by an equals sign,
+	followed by a function specification.  The syntax for the
+	expression on the right is the same as that for the
+	<cmd>genr</cmd> command.  The next three lines specify the
+	derivatives of the log-verosimiglianza function with respect to
+	each of the parameters in turn.  Each line begins with the
+	keyword <cmd>deriv</cmd>, gives the name of a parameter, an
+	equals sign, and an expression whereby the derivative can be
+	calculated (again, the syntax here is the same as for
+	<cmd>genr</cmd>). These <cmd>deriv</cmd> lines are optional,
+	but it is recommended that you supply them if possible. Line
+	10, <cmd>end mle</cmd>, completes the command and calls for
+	estimation.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Modello/Massima verosimiglianza</menu-path>
+    </gui-access>
+
   </command>
 
   <command name="modeltab" section="Utilities"
@@ -4771,7 +4976,7 @@
 
   </command>
 
-  <command name="restrict" section="Tests" label="Test per vincoli lineari">
+  <command name="restrict" section="Tests" context="cli" label="Test per vincoli lineari">
 
     <description>
       <para>
@@ -4850,6 +5055,114 @@
     <gui-access>
       <menu-path>Modello, /Test/Vincoli lineari</menu-path>
     </gui-access>
+
+  </command>
+  
+  <command name="restrict-model" section="Tests" context="gui"
+    label="Vincoli su un modello">
+
+    <description>
+
+      <para>Ognuno dei vincoli da imporre a un modello deve essere espresso
+        sotto forma di equazione con una combinazione lineare dei parametri al
+        primo membro e un valore numerico al secondo. Nel caso della singola
+        equazione, i parametri sono indicati con la sintassi b<repl>N</repl>,
+        dove <repl>N</repl> rappresenta la posizione nella lista dei regressori,
+        a partire da zero. Ad esempio, <lit>b1</lit> indica il secondo parametro
+        della regressione.
+      </para>
+
+      <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
+        possono essere prefissati con un moltiplicatore numerico usando il
+        carattere <lit>*</lit> per indicare la moltiplicazione, ad esempio
+        <lit>3.5*b4</lit>.
+      </para>
+
+      <para>Ecco ad esempio un insieme di vincoli:</para>
+
+      <code>
+	b1 = 0
+	b2 - b3 = 0
+	b4 + 2*b5 = 1</code>
+
+    </description>
+
+  </command>
+
+  <command name="restrict-system" section="Tests" context="gui"
+    label="Vincoli su un sistema di equazioni">
+
+    <description>
+
+      <para>Ognuno dei vincoli da imporre a un sistema deve essere espresso
+        sotto forma di equazione con una combinazione lineare dei parametri al
+        primo membro e un valore numerico al secondo. 
+        I parametri vengono indicati con la sintassi <lit>b</lit> seguita da due
+        numeri tra parentesi quadre.  Il primo numero rappresenta la posizione
+        dell'equazione all'interno del sistema a partire da 1, mentre il secondo
+        indica la posizione nella lista dei regressori, a partire da zero. Ad
+        esempio <lit>b[2,0]</lit> indica il primo parametro della seconda
+        equazione, mentre <lit>b[3,1]</lit> il secondo parametro della terza
+        equazione.
+      </para>
+
+      <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
+        possono essere prefissati con un moltiplicatore numerico usando il
+        carattere <lit>*</lit> per indicare la moltiplicazione, ad esempio
+        <lit>3.5*b4</lit>.
+      </para>
+
+      <para>Ecco ad esempio un insieme di vincoli:</para>
+
+      <code>
+	b[1,1] = 0
+	b[1,2] - b[2,2] = 0
+	b[3,4] + 2*b[3,5] = 1</code>
+
+    </description>
+
+  </command>
+
+  <command name="restrict-vecm" section="Tests" context="gui"
+    label="Vincoli su un VECM">
+
+    <description>
+
+      <para>
+	Questo comando impone restrizioni lineari omogenee sulle relazioni
+        di cointegrazione in un modello vettoriale a correzione d'errore (VECM).
+      </para>
+
+      <para>Ognuno dei vincoli deve essere espresso sotto forma di equazione,
+        con una combinazione lineare dei parametri al primo membro e il valore
+        zero al secondo membro (al momento gretl supporta solo vincoli omogenei
+        in un contesto VECM).
+      </para>
+
+      <para>Se il VECM è di rango 1, è possibile esprimere i parametri nella
+        forma b<repl>N</repl>, dove <repl>N</repl> rappresenta la posizione nel
+        vettore di correzione dell'errore, a partire da zero. Ad esempio,
+        <lit>b1</lit> indica il secondo parametro di correzione dell'errore.
+      </para>
+
+      <para>Se il rango è maggiore di 1, è possibile esprimere i parametri
+        usando <lit>b</lit> seguito da due numeri tra parentesi quadre.
+      </para>
+
+      <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
+        possono essere prefissati con un moltiplicatore numerico usando il
+        carattere <lit>*</lit> per indicare la moltiplicazione, ad esempio
+        <lit>3.5*b4</lit>.
+      </para>
+
+      <para>Ecco ad esempio un insieme di vincoli su un VECM di rango 1.
+      </para>
+
+      <code>
+	b0 + b1 = 0
+	b0 + b2 = 0</code>
+
+    </description>
 
   </command>
 
@@ -5769,9 +6082,9 @@
 
     <description>
 
-      <para context="gui">Gretl offre la possibilità di stimare sistemi di
-        equazioni, ma al momento solo tramite l'interfaccia a riga di comando.
-        Si veda l'aiuto online per i comandi testuali o il manuale di gretl.
+      <para context="gui">In questa finestra, è possibile stimare sistemi di
+        equazioni e scegliere uno stimatore per il sistema. È possibile indicare
+        i seguenti quattro tipi di comandi:
       </para>
 
       <para context="cli">
@@ -5808,7 +6121,7 @@
 	<cmd>end system</cmd>.  All'interno del sistema possono essere
         definiti i quattro tipi di istruzioni seguenti.</para>
 
-      <ilist context="cli">
+      <ilist>
 	<li><para><cmdref targ="equation"/>: specifica un'equazione del sistema.
 	    Occorre indicarne almeno due.</para>
 	</li>
@@ -5838,7 +6151,7 @@
 	i valori stimati (<cmd>fitted</cmd>).
       </para>
       
-      <para context="cli">Per esempi completi di specificazione e stima
+      <para>Per esempi completi di specificazione e stima
       di un sistema di equazioni, si vedano gli script
 	<filename>klein.inp</filename> e
 	<filename>greene14_2.inp</filename> forniti con la distribuzione
@@ -5846,6 +6159,10 @@
        </para>
 
     </description>
+    
+    <gui-access>
+      <menu-path>/Modello/Equazioni simultanee</menu-path>
+    </gui-access>
 
   </command>
 
@@ -5941,6 +6258,24 @@
 
   </command>
 
+  <command name="transpos" section="Dataset" label="Trasposizione dei dati">
+
+    <description>
+      <para>
+	Traspone il dataset attuale, ossia, ogni osservazione (riga) del
+        dataset attuale verrà trattata come una variabile (colonna) e
+        ogni variabile come un'osservazione. Questo comando è utile se
+        sono stati importati da una fonte esterna dati in cui le righe
+        rappresentano variabili e le colonne osservazioni.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Campione/Trasponi dati</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="tsls" section="Estimation"
     label="Stima minimi quadrati a due stadi">
 
@@ -6029,7 +6364,7 @@
         </option>
         <option>
 	  <flag>--variance-decomp</flag>
-	  <effect>mostra decomposizioni della varianza delle previsioni</effect>
+	  <effect>mostra decomposizioni della varianza della previsione</effect>
         </option>
       </options>
       <examples>
@@ -6190,6 +6525,14 @@
 	  <flag>--seasonals</flag>
 	  <effect>include dummy stagionali centrate</effect>
         </option>
+        <option>
+	  <flag>--impulse-responses</flag>
+	  <effect>mostra impulso-risposta</effect>
+        </option>
+        <option>
+	  <flag>--variance-decomp</flag>
+	  <effect>mostra decomposizioni della varianza delle previsioni</effect>
+        </option>
       </options>
       <examples>
         <example>vecm 4 1 Y1 Y2 Y3</example>
@@ -6330,6 +6673,10 @@
         <option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
+        </option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>errori standard robusti</effect>
         </option>
       </options> 
     </usage>
