@@ -808,7 +808,7 @@ static void helpwin_scroll_to_topic (windata_t *hwin, int pos)
     gfloat adj;
 
     frac = (double) pos * (double) GTK_TEXT(hwin->w)->vadj->upper;
-    frac /= (double) (cli)? script_help_length : gui_help_length;
+    frac /= (double) script_help_length;
     adj = 0.999 * frac;
     gtk_adjustment_set_value(GTK_TEXT(hwin->w)->vadj, adj);
 #endif 
