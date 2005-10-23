@@ -939,7 +939,7 @@ static int populate_remote_series_list (windata_t *vwin, char *buf)
     i = 0;
 #endif
 
-    bufgets(NULL, 0, buf);
+    bufgets_init(buf);
 
     while (bufgets(line1, sizeof line1, buf)) {
 

@@ -835,7 +835,7 @@ static gint populate_remote_db_list (windata_t *win)
     gtk_clist_freeze(GTK_CLIST(win->listbox));
 #endif
 
-    bufgets(NULL, 0, buf);
+    bufgets_init(buf);
     i = 0;
 
     while (bufgets(line, sizeof line, buf)) {

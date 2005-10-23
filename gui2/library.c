@@ -1387,8 +1387,6 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
     MODEL *pmod;
     gint err;
 
-    unset_window_busy(vwin);
-
     if (buf == NULL) {
 	return;
     }
@@ -1425,8 +1423,6 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     char title[48];
     MODEL *orig, *pmod;
     gint err;
-
-    unset_window_busy(vwin);
 
     if (buf == NULL) {
 	return;
@@ -2131,7 +2127,7 @@ static int
 record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 				int got_start, int got_end)
 {
-    bufgets(NULL, 0, buf);
+    bufgets_init(buf);
 
     if (!got_start) {
 	gretl_command_strcpy("restrict");
@@ -2191,7 +2187,7 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
     buf = edit_dialog_special_get_text(dlg);
     if (buf == NULL) return;
 
-    bufgets(NULL, 0, buf);
+    bufgets_init(buf);
 
     while (bufgets(bufline, MAXLINE, buf) && !err) {
 	if (string_is_blank(bufline)) {
@@ -2267,7 +2263,7 @@ record_sys_commands_from_buf (const gchar *buf, const char *startline,
 {
     char bufline[MAXLINE];    
 
-    bufgets(NULL, 0, buf);
+    bufgets_init(buf);
 
     while (bufgets(bufline, MAXLINE, buf)) {
 	if (string_is_blank(bufline)) {
@@ -2309,7 +2305,7 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 
     method = edit_dialog_get_opt(dlg);
 
-    bufgets(NULL, 0, buf);
+    bufgets_init(buf);
 
     while (bufgets(bufline, MAXLINE, buf) && !err) {
 	if (string_is_blank(bufline) || *bufline == '#') {
@@ -2437,7 +2433,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	endstr = "end mle";
     }
 
-    bufgets(NULL, 0, buf);
+    bufgets_init(buf);
 
     while (bufgets(bufline, MAXLINE-1, buf) && !err) {
 	if (string_is_blank(bufline)) {
@@ -5540,7 +5536,7 @@ int execute_script (const char *runfile, const char *buf,
 	    errbox(_("No commands to execute"));
 	    return -1;	
 	}
-	bufgets(NULL, 0, buf);
+	bufgets_init(buf);
     }
 
     /* reset model count to 0 if starting/saving session */

@@ -28,7 +28,7 @@
 # include "treeutils.h"
 #endif
 
-#undef HDEBUG
+#define HDEBUG 1
 
 #ifdef ENABLE_NLS
 static int translated_helpfile = -1;
@@ -95,8 +95,6 @@ GtkItemFactoryEntry english_help_items[] = {
 # endif
 #endif
 
-/* ......................................................... */
-
 struct gui_help_item {
     int code;
     char *string;
@@ -149,8 +147,6 @@ const char *intl_topics[] = {
     N_("Utilities")
 };
 
-/* ......................................................... */
-
 static int extra_command_number (const char *s)
 {
     int i;
@@ -163,8 +159,6 @@ static int extra_command_number (const char *s)
 
     return -1;
 }
-
-/* ......................................................... */
 
 static char *help_string_from_cmd (int cmd)
 {
@@ -230,6 +224,7 @@ static void set_english_help_file (int script)
 	}
 
 	fp = gretl_fopen(tmp, "r");
+
 	if (fp != NULL) {
 	    char test[128];
 	    int len = 0;
@@ -245,6 +240,7 @@ static void set_english_help_file (int script)
 		    len++;
 		}
 	    }
+
 	    fclose(fp);
 
 	    if (script) {
@@ -283,8 +279,6 @@ static void set_translated_helpfile (void)
 }
 #endif
 
-/* ......................................................... */
-
 int match_heading (struct help_head_t **heads, int nh,
 		   const char *str)
 {
@@ -294,7 +288,7 @@ int match_heading (struct help_head_t **heads, int nh,
 
     for (i=0; i<nh; i++) {
 	if (!strcmp(str, (heads[i])->name)) {
-#ifdef HDEBUG
+#if HDEBUG
 	    fprintf(stderr, "str='%s', heads[%d].name='%s', matched\n",
 		    str, i, (heads[i])->name);
 #endif
@@ -321,7 +315,7 @@ static int add_help_heading (struct help_head_t ***pheads,
 	(heads[nh])->name = malloc(strlen(str) + 1);
 	if ((heads[nh])->name != NULL) {
 	    strcpy((heads[nh])->name, str);
-#ifdef HDEBUG
+#if HDEBUG
 	    fprintf(stderr, "str='%s', heads[%d].name added new\n", str, nh);
 #endif
 	    (heads[nh])->ntopics = 1;
@@ -340,10 +334,9 @@ static int add_help_heading (struct help_head_t ***pheads,
 static int allocate_heads_info (struct help_head_t **heads, int nh,
 				int newhelp)
 {
-    int i, nt;
     int *topics = NULL, *pos = NULL;
     char **topicnames = NULL;
-    int err = 0;
+    int i, nt, err = 0;
 
     for (i=0; i<nh && !err; i++) {
 	nt = (heads[i])->ntopics;
@@ -361,12 +354,12 @@ static int allocate_heads_info (struct help_head_t **heads, int nh,
 	} 
 
 	if (!err) {
-	    (heads[i])->topics = topics;
-	    (heads[i])->topicnames = topicnames;
-	    (heads[i])->pos = pos;
+	    heads[i]->topics = topics;
+	    heads[i]->topicnames = topicnames;
+	    heads[i]->pos = pos;
 	}
 
-	(heads[i])->ntopics = 0;
+	heads[i]->ntopics = 0;
     }
 
     /* sentinel */
@@ -378,24 +371,26 @@ static int allocate_heads_info (struct help_head_t **heads, int nh,
 static int add_topic_to_heading (struct help_head_t **heads, int i,
 				 const char *word, int pos)
 {
-    int n, m = (heads[i])->ntopics;
+    int n = gretl_command_number(word);
+    int m = heads[i]->ntopics;
 
-    n = gretl_command_number(word);
     if (n <= 0) {
 	n = extra_command_number(word);
     }
+
     if (n > 0) {
-	(heads[i])->topics[m] = n;
+	heads[i]->topics[m] = n;
     } else {
 	return 1;
     }
 
-    (heads[i])->pos[m] = pos - 1;
-    (heads[i])->ntopics += 1;
+    heads[i]->pos[m] = pos - 1;
+    heads[i]->ntopics += 1;
 
-#ifdef HDEBUG
-    fprintf(stderr, "add_topic_to_hdg: word='%s', heads[%d].topics[%d]=%d\n",
+#if HDEBUG
+    fprintf(stderr, "add_topic_to_hdg: word='%s', heads[%d].topics[%d]=%d, ",
 	    word, i, m, n);
+    fprintf(stderr, "heads[%d].pos[%d]=%d\n", i, m, heads[i]->pos[m]);
 #endif
 
     return 0;
@@ -430,9 +425,11 @@ static int new_add_topic_to_heading (struct help_head_t **heads,
     nt = (heads[m])->ntopics;
 
     n = gretl_command_number(word);
+
     if (n <= 0) {
 	n = extra_command_number(word);
     }
+
     if (n > 0) {
 	(heads[m])->topics[nt] = n;
     } else {
@@ -440,7 +437,7 @@ static int new_add_topic_to_heading (struct help_head_t **heads,
     }
 
     (heads[m])->topicnames[nt] = quoted_help_string(str);
-#ifdef HDEBUG
+#if HDEBUG
     fprintf(stderr, "Set (heads[%d])->topicnames[%d] = \n"
 	    "  quoted_help_string(%s) = '%s'\n",
 	    m, nt, str, (heads[m])->topicnames[nt]);
@@ -569,7 +566,7 @@ static int real_helpfile_init (int cli)
     /* first pass: find length and number of topics */
     err = get_help_length(&heads, &nh, &length, newhelp, fp);
 
-#ifdef HDEBUG
+#if HDEBUG
     fprintf(stderr, "got help length = %d, nh = %d\n", length, nh);
 #endif
 
@@ -596,15 +593,11 @@ static int real_helpfile_init (int cli)
     return length;
 }
 
-/* ......................................................... */
-
 void helpfile_init (void)
 {
     gui_help_length = real_helpfile_init(0);
     script_help_length = real_helpfile_init(1);
 }
-
-/* ......................................................... */
 
 static char *get_gui_help_string (int pos)
 {
@@ -620,8 +613,6 @@ static char *get_gui_help_string (int pos)
 
     return NULL;
 }
-
-/* ........................................................... */
 
 #ifdef ENABLE_NLS
 static void english_help_callback (gpointer p, int script, 
@@ -643,8 +634,6 @@ static void add_english_help_item (windata_t *hwin, int script)
     gtk_item_factory_create_item(hwin->ifac, &helpitem, NULL, 1);
 }
 #endif
-
-/* ........................................................... */
 
 static void add_help_topics (windata_t *hwin, int script)
 {
@@ -683,7 +672,7 @@ static void add_help_topics (windata_t *hwin, int script)
 		    g_strdup_printf("%s/%s/%s", 
 				    mpath, _((hds[i])->name), 
 				    (hds[i])->topicnames[j]);
-#ifdef HDEBUG
+#if HDEBUG
 		fprintf(stderr, "(1) Built help topic path from\n"
 			" '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
 			(hds[i])->topicnames[j]);
@@ -697,7 +686,7 @@ static void add_help_topics (windata_t *hwin, int script)
 			g_strdup_printf("%s/%s/%s", 
 					mpath, _((hds[i])->name), 
 					gretl_command_word(tnum));
-#ifdef HDEBUG
+#if HDEBUG
 		    fprintf(stderr, "(2) Built help topic path from\n"
 			    " '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
 			    gretl_command_word(tnum));
@@ -710,7 +699,7 @@ static void add_help_topics (windata_t *hwin, int script)
 			hitem.path = 
 			    g_strdup_printf("%s/%s/%s", 
 					    mpath, _((hds[i])->name), gstr);
-#ifdef HDEBUG
+#if HDEBUG
 			fprintf(stderr, "(3) Built help topic path from\n"
 				" '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
 				gstr);
@@ -732,8 +721,6 @@ static void add_help_topics (windata_t *hwin, int script)
     }
 }
 
-/* ........................................................... */
-
 GtkItemFactoryEntry *get_help_menu_items (int code)
 {
     if (code == CLI_HELP_ENGLISH || code == GUI_HELP_ENGLISH) {
@@ -742,8 +729,6 @@ GtkItemFactoryEntry *get_help_menu_items (int code)
 	return help_items;
     }
 }
-
-/* ........................................................... */
 
 static windata_t *helpwin (int script, int english) 
 {
@@ -771,7 +756,7 @@ static windata_t *helpwin (int script, int english)
 
     if (helpfile == NULL) return NULL;
 
-    vwin = view_file(helpfile, 0, 0, 80, 400, helpcode);
+    vwin = view_help_file(helpfile, helpcode);
 
     if (!english) {
 	add_help_topics(vwin, script);
@@ -786,12 +771,10 @@ static windata_t *helpwin (int script, int english)
     return vwin;
 }
 
-/* ........................................................... */
-
 void context_help (GtkWidget *widget, gpointer data)
 {
     int i, j, help_code = GPOINTER_TO_INT(data);
-    int pos = 0;
+    int pos = -1;
 
     for (i=0; gui_heads[i] != NULL; i++) {
 	for (j=0; j<(gui_heads[i])->ntopics; j++) {
@@ -800,11 +783,11 @@ void context_help (GtkWidget *widget, gpointer data)
 		break;
 	    }
 	}
-	if (pos > 0) break;
+	if (pos >= 0) break;
     }
 
     /* special for gui-specific help items */
-    if (pos == 0) {
+    if (pos < 0) {
 	char *helpstr = help_string_from_cmd(help_code);
 
 	if (helpstr != NULL) {
@@ -822,20 +805,62 @@ void context_help (GtkWidget *widget, gpointer data)
 	}
     }
 
-    if (pos == 0) {
+    if (pos < 0) {
 	dummy_call();
     } else {
 	do_gui_help(NULL, pos, NULL);
     }
 }
 
-/* ........................................................... */
+static gboolean nullify_hwin (GtkWidget *w, windata_t **phwin)
+{
+    *phwin = NULL;
+    return FALSE;
+}
+
+/* FIXME pos is not working yet */
+
+static char *help_topic_buffer (windata_t *hwin, int pos, int *len)
+{
+    char line[128];
+    gchar *p = (gchar *) hwin->data;
+    int nl = -2, mylen = 0;
+
+    bufgets_init(p);
+
+    while (bufgets(line, 127, p)) {
+	if (*line == '#') {
+	    nl += 2;
+	} else {
+	    nl++;
+	}
+	if (nl == pos) {
+	    fprintf(stderr, "got nl = pos = %d\n", nl);
+	    bufgets(line, 127, p);
+	    fprintf(stderr, "'%s'\n", line);
+	    while (bufgets(line, 127, p)) {
+		if (*line == '#') {
+		    break;
+		} else {
+		    fprintf(stderr, "'%s'\n", line);
+		    mylen++;
+		}
+	    }
+	    break;
+	}
+    }
+
+    *len = mylen;
+	
+    return p;
+}
 
 static void real_do_help (guint pos, int cli)
 {
-    static GtkWidget *gui_help_view;
-    static GtkWidget *script_help_view;
-    GtkWidget *w = (cli)? script_help_view : gui_help_view;
+    static windata_t *gui_hwin;
+    static windata_t *script_hwin;
+
+    windata_t *hwin = (cli)? script_hwin : gui_hwin;
 #ifndef OLD_GTK
     GtkTextBuffer *buf;
     GtkTextIter iter;
@@ -845,52 +870,56 @@ static void real_do_help (guint pos, int cli)
     gfloat adj;
 #endif
 
-    if (w == NULL) {
-	windata_t *hwin = helpwin(cli, 0);
-
+    if (hwin == NULL) {
+	hwin = helpwin(cli, 0);
 	if (hwin != NULL) {
 	    if (cli) {
-		w = script_help_view = hwin->w;
+		script_hwin = hwin;
 	    } else {
-		w = gui_help_view = hwin->w;
+		gui_hwin = hwin;
 	    }
-	    g_signal_connect(G_OBJECT(w), "destroy",
-			     G_CALLBACK(gtk_widget_destroyed),
-			     (cli)? &script_help_view : &gui_help_view);
+	    g_signal_connect(G_OBJECT(hwin->w), "destroy",
+			     G_CALLBACK(nullify_hwin),
+			     (cli)? &script_hwin : &gui_hwin);
 	}
     } else {
-	gdk_window_show(w->parent->window);
-	gdk_window_raise(w->parent->window);
+	gdk_window_show(hwin->w->parent->window);
+	gdk_window_raise(hwin->w->parent->window);
     }
 
-#ifndef OLD_GTK    
-    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+#if 0
+    if (hwin->data != NULL) {
+	gchar *p;
+	int len;
+
+	fprintf(stderr, "real_do_help: pos=%d\n", (int) pos);
+
+	p = help_topic_buffer(hwin, pos, &len);
+    }
+#endif  
+
+#ifndef OLD_GTK  
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hwin->w));
     gtk_text_buffer_get_iter_at_line_index(buf, &iter, pos, 0);
     vis = gtk_text_buffer_create_mark(buf, "vis", &iter, FALSE);
-    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(w), vis, 0.0, TRUE, 0.1, 0.0);
+    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(hwin->w), vis, 0.0, TRUE, 0.1, 0.0);
 #else
-    frac = (double) pos * (double) GTK_TEXT(w)->vadj->upper;
+    frac = (double) pos * (double) GTK_TEXT(hwin->w)->vadj->upper;
     frac /= (double) (cli)? script_help_length : gui_help_length;
     adj = 0.999 * frac;
-    gtk_adjustment_set_value(GTK_TEXT(w)->vadj, adj);
+    gtk_adjustment_set_value(GTK_TEXT(hwin->w)->vadj, adj);
 #endif    
 }
-
-/* ........................................................... */
 
 void do_gui_help (gpointer data, guint pos, GtkWidget *widget) 
 {
     real_do_help(pos, 0);
 }
 
-/* ........................................................... */
-
 void do_script_help (gpointer data, guint pos, GtkWidget *widget) 
 {
     real_do_help(pos, 1);
 }
-
-/* ........................................................... */
 
 static int pos_from_cmd (int cmd)
 {
@@ -906,8 +935,6 @@ static int pos_from_cmd (int cmd)
 
     return 0;
 }
-
-/* ........................................................... */
 
 gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 		       windata_t *vwin)
@@ -987,8 +1014,6 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
     return FALSE;
 }
 
-/* ........................................................... */
-
 void menu_find (gpointer data, guint db, GtkWidget *widget)
 {
     if (db) {
@@ -1002,29 +1027,21 @@ void menu_find (gpointer data, guint db, GtkWidget *widget)
     }
 }
 
-/* ........................................................... */
-
 void datafile_find (GtkWidget *widget, gpointer data)
 {
     find_string_dialog(find_in_listbox, data);
 }
-
-/* ........................................................... */
 
 void find_var (gpointer p, guint u, GtkWidget *w)
 {
     find_string_dialog(find_in_listbox, mdata);
 }
 
-/* .................................................................. */
-
 static gint close_find_dialog (GtkWidget *widget, gpointer data)
 {
     find_window = NULL;
     return FALSE;
 }
-
-/* .................................................................. */
 
 static int look_for_string (const char *haystack, const char *needle, 
 			    int start)
@@ -1041,8 +1058,6 @@ static int look_for_string (const char *haystack, const char *needle,
 
     return -1;
 }
-
-/* .................................................................. */
 
 #ifdef OLD_GTK
 
@@ -1171,31 +1186,31 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar* str,
     if (from_cursor) {
 	GtkTextIter sel_bound;
 		
-	gtk_text_buffer_get_iter_at_mark (buf,			
-					  &iter,
-					  gtk_text_buffer_get_mark (buf,
-								    "insert"));
-	gtk_text_buffer_get_iter_at_mark (buf,			
-					  &sel_bound,
-					  gtk_text_buffer_get_mark (buf,
-								    "selection_bound"));
-	gtk_text_iter_order (&sel_bound, &iter);		
+	gtk_text_buffer_get_iter_at_mark(buf,			
+					 &iter,
+					 gtk_text_buffer_get_mark(buf,
+								  "insert"));
+	gtk_text_buffer_get_iter_at_mark(buf,			
+					 &sel_bound,
+					 gtk_text_buffer_get_mark(buf,
+								  "selection_bound"));
+	gtk_text_iter_order(&sel_bound, &iter);		
     } else {		
-	gtk_text_buffer_get_iter_at_offset (buf, &iter, 0);
+	gtk_text_buffer_get_iter_at_offset(buf, &iter, 0);
     }
 
     if (*str != '\0') {
 	GtkTextIter match_start, match_end;
 	GtkTextMark *vis;
 
-	found = gtk_text_iter_forward_search (&iter, str, search_flags,
-					      &match_start, &match_end,
-					      NULL);	
+	found = gtk_text_iter_forward_search(&iter, str, search_flags,
+					     &match_start, &match_end,
+					     NULL);	
 	if (found) {
-	    gtk_text_buffer_place_cursor (buf, &match_start);
-	    gtk_text_buffer_move_mark_by_name (buf, "selection_bound", &match_end);
-	    vis = gtk_text_buffer_create_mark (buf, "vis", &match_end, FALSE);
-	    gtk_text_view_scroll_to_mark (view, vis, 0.0, TRUE, 0.1, 0.0);
+	    gtk_text_buffer_place_cursor(buf, &match_start);
+	    gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &match_end);
+	    vis = gtk_text_buffer_create_mark(buf, "vis", &match_end, FALSE);
+	    gtk_text_view_scroll_to_mark(view, vis, 0.0, TRUE, 0.1, 0.0);
 	} else if (from_cursor && !wrapped) {
 	    /* try wrapping */
 	    from_cursor = FALSE;
@@ -1226,10 +1241,7 @@ static void find_in_text (GtkWidget *widget, gpointer data)
     }
 }
 
-
 #endif /* new vs old gtk */
-
-/* .................................................................. */
 
 static void find_in_listbox (GtkWidget *w, gpointer data)
 {
@@ -1367,8 +1379,6 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 #endif /* OLD_GTK */
 }
 
-/* .................................................................. */
- 
 static void cancel_find (GtkWidget *widget, gpointer data)
 {
     if (find_window != NULL) {
@@ -1376,8 +1386,6 @@ static void cancel_find (GtkWidget *widget, gpointer data)
 	find_window = NULL;
     }
 }
-
-/* .................................................................. */
 
 static void parent_find (GtkWidget *finder, windata_t *caller)
 {
@@ -1416,8 +1424,6 @@ static void parent_find (GtkWidget *finder, windata_t *caller)
 #endif
 }
 
-/* .................................................................. */
-
 static void find_string_dialog (void (*findfunc)(), gpointer data)
 {
     GtkWidget *label;
@@ -1440,12 +1446,12 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
     g_object_set_data(G_OBJECT(find_window), "windat", mydat);
     parent_find(find_window, mydat);
 
-    g_signal_connect (G_OBJECT (find_window), "destroy",
-		      G_CALLBACK (close_find_dialog),
-		      find_window);
+    g_signal_connect(G_OBJECT(find_window), "destroy",
+		     G_CALLBACK(close_find_dialog),
+		     find_window);
 
-    gtk_window_set_title (GTK_WINDOW (find_window), _("gretl: find"));
-    gtk_container_set_border_width (GTK_CONTAINER (find_window), 5);
+    gtk_window_set_title(GTK_WINDOW(find_window), _("gretl: find"));
+    gtk_container_set_border_width(GTK_CONTAINER(find_window), 5);
 
     hbox = gtk_hbox_new(TRUE, TRUE);
     label = gtk_label_new(_(" Find what:"));
@@ -1453,9 +1459,9 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
     find_entry = gtk_entry_new();
 
     if (needle) {
-	gtk_entry_set_text(GTK_ENTRY (find_entry), needle);
-	gtk_editable_select_region (GTK_EDITABLE (find_entry), 0, 
-				    strlen (needle));
+	gtk_entry_set_text(GTK_ENTRY(find_entry), needle);
+	gtk_editable_select_region(GTK_EDITABLE(find_entry), 0, 
+				   strlen(needle));
     }
 
     g_signal_connect(G_OBJECT(find_entry), "activate", 
@@ -1463,42 +1469,40 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
 
     gtk_widget_show(find_entry);
 
-    gtk_box_pack_start (GTK_BOX(hbox), label, TRUE, TRUE, 0);
-    gtk_box_pack_start (GTK_BOX(hbox), find_entry, TRUE, TRUE, 0);
-    gtk_widget_show (hbox);
+    gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), find_entry, TRUE, TRUE, 0);
+    gtk_widget_show(hbox);
 
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->vbox), 
-                        hbox, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX (GTK_DIALOG(find_window)->vbox), 
+		       hbox, TRUE, TRUE, 0);
 
-    gtk_box_set_spacing(GTK_BOX (GTK_DIALOG (find_window)->action_area), 15);
+    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(find_window)->action_area), 15);
     gtk_box_set_homogeneous(GTK_BOX 
-			     (GTK_DIALOG (find_window)->action_area), TRUE);
-    gtk_window_set_position(GTK_WINDOW (find_window), GTK_WIN_POS_MOUSE);
+			    (GTK_DIALOG(find_window)->action_area), TRUE);
+    gtk_window_set_position(GTK_WINDOW(find_window), GTK_WIN_POS_MOUSE);
 
     /* find button -- make this the default */
     button = standard_button(GTK_STOCK_FIND);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
-    g_signal_connect(G_OBJECT (button), "clicked",
-		     G_CALLBACK (findfunc), find_window);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(findfunc), find_window);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
     /* cancel button */
     button = standard_button(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
-    g_signal_connect(G_OBJECT (button), "clicked",
-		     G_CALLBACK (cancel_find), find_window);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(cancel_find), find_window);
     gtk_widget_show(button);
 
     gtk_widget_grab_focus(find_entry);
-    gtk_widget_show (find_window);
+    gtk_widget_show(find_window);
 }
-
-/* ........................................................... */
 
 void text_find_callback (GtkWidget *w, gpointer data)
 {
@@ -1514,8 +1518,6 @@ void text_find_callback (GtkWidget *w, gpointer data)
     find_string_dialog(find_in_text, data);
 #endif
 }
-
-/* ........................................................... */
 
 #ifdef OLD_GTK
 

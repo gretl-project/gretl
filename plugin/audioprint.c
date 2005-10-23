@@ -197,7 +197,8 @@ static int speak_buffer (const char *buf, int (*should_stop)())
     flite_init();
     v = register_cmu_us_kal();
 
-    bufgets(NULL, 0, buf);
+    bufgets_init(buf);
+
     while (bufgets(line, 127, buf)) {
 	if (should_stop()) {
 	    flite_text_to_speech("OK, stopping", v, "play");
@@ -263,7 +264,8 @@ static int speak_buffer (const char *buf, int (*should_stop)())
     v = get_sapi_voice();
     if (v == NULL) return 1;
 
-    bufgets(NULL, 0, buf);
+    bufgets_init(buf);
+
     while (bufgets(line, 127, buf)) {
 	if (should_stop()) {
 	    ISpVoice_Speak(v, L"OK, stopping", 0, NULL);

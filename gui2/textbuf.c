@@ -372,7 +372,7 @@ void text_buffer_insert_colorized_buffer (GtkTextBuffer *tbuf, PRN *prn)
 
     thiscolor = PLAIN_TEXT;
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
-    bufgets(NULL, 0, pbuf);
+    bufgets_init(pbuf);
 
     while (bufgets(readbuf, sizeof readbuf, pbuf)) {
 
@@ -458,8 +458,7 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 
 	if (*chunk == '?') {
 	    thiscolor = (role == CONSOLE)? RED_TEXT : BLUE_TEXT;
-	} 
-	else if (*chunk == '#') {
+	} else if (*chunk == '#') {
 	    if (help_role(role)) {
 		*chunk = ' ';
 		nextcolor = RED_TEXT;

@@ -96,6 +96,8 @@ int in_usa (void);
 
 char *bufgets (char *s, size_t size, const char *buf);
 
+void bufgets_init (const char *buf);
+
 void scroll_pause (void);
 
 int scroll_pause_or_quit (void);

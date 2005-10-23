@@ -2769,6 +2769,14 @@ static GtkWidget *selection_top_label (int code)
     return label;
 }
 
+static gboolean remove_busy_signal (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin != NULL) {
+	unset_window_busy(vwin);
+    }
+    return FALSE;
+}
+
 void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 		       gpointer p) 
 {
@@ -2838,6 +2846,9 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 
     if (cmdcode == OMIT || cmdcode == ADD || cmdcode == COEFFSUM) {
         add_omit_list(p, sr);
+	g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
+			 G_CALLBACK(remove_busy_signal), 
+			 p);
     } else {
 	int nleft = 0;
 

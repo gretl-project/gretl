@@ -2179,7 +2179,7 @@ int in_usa (void)
  * @buf: source buffer
  *
  * This function (which works rather like fgets) must be initialized 
- * via the call: bufgets(NULL, 0, buf);
+ * via the call: bufgets_init(buf);
  * 
  * Returns: @s (%NULL if nothing more can be read from @buf).
  */
@@ -2243,4 +2243,16 @@ char *bufgets (char *s, size_t size, const char *buf)
     else if (status == GOT_CRLF) p += 2;
 
     return s;
+}
+
+/**
+ * bufgets_init:
+ * @buf: source buffer.
+ *
+ * Initializes a text buffer for use with bufgets(). 
+ */
+
+void bufgets_init (const char *buf)
+{
+    bufgets(NULL, 0, buf);
 }

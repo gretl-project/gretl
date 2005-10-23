@@ -104,7 +104,7 @@ void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn)
 
     buf = gretl_print_get_buffer(prn);
 
-    bufgets(NULL, 0, buf);
+    bufgets_init(buf);
 
     while (bufgets(readbuf, sizeof readbuf, buf)) {
 
