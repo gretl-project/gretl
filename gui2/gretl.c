@@ -184,6 +184,19 @@ static void osx_help (void)
 }
 #endif 
 
+static void menu_manual_call (gpointer p, guint u, GtkWidget *w)
+{
+#if defined(USE_GNOME)
+    gnome_help();
+#elif defined(G_OS_WIN32)
+    win_help();
+#elif defined(OSX_PKG)
+    osx_help();
+#else
+    gretl_pdf_manual();
+#endif
+}
+
 #ifndef G_OS_WIN32
 static void root_check (void)
 {
@@ -551,21 +564,11 @@ GtkItemFactoryEntry data_items[] = {
 
     /* Help menu */
     { N_("/_Help"), NULL, NULL, 0, "<LastBranch>", NULL },
-    { N_("/Help/_GUI commands"), NULL, do_gui_help, 0, NULL, GNULL },
-    { N_("/Help/_Script commands syntax"), NULL, do_script_help, 1, NULL, GNULL },
-    { N_("/Help/sep1"), NULL, NULL, 0, "<Separator>", NULL },
-#if defined(USE_GNOME)
-    { N_("/Help/Manual in HTML"), NULL, gnome_help, 0, NULL, GNULL },
-    { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
-#elif defined(G_OS_WIN32)
-    { N_("/Help/Manual in HTML"), NULL, win_help, 0, NULL, GNULL },
-    { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
-#elif defined(OSX_PKG)
-    { N_("/Help/Manual in PDF"), NULL, osx_help, 0, NULL, GNULL },
-    { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
-#endif
-    { N_("/Help/_Check for updates"), NULL, manual_update_query, 0, NULL, GNULL },
-    { N_("/Help/sep3"), NULL, NULL, 0, "<Separator>", NULL },
+    { N_("/Help/_Command reference"), NULL, do_script_help, 1, NULL, GNULL },
+    { N_("/Help/_Manual"), NULL, menu_manual_call, 0, NULL, GNULL },
+    { N_("/Help/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
+    { N_("/Help/Check for _updates"), NULL, manual_update_query, 0, NULL, GNULL },
+    { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Help/_About gretl"), NULL, about_dialog, 0, NULL, GNULL }
 };
 

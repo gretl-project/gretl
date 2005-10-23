@@ -1562,6 +1562,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free(vwin->data); /* system name */
 	} else if (vwin->role == PRINT && vwin->data != NULL) {
 	    free_multi_series_view(vwin->data);
+	} else if (vwin->role == GUI_HELP || vwin->role == GUI_HELP_ENGLISH) {
+	    free(vwin->data); /* help file text */
 	}
 
 	if (vwin->dialog) {
@@ -2400,7 +2402,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 
 #ifdef OLD_GTK
 
-static int g_file_get_contents (const char *fname, char **pbuf, void *u1, void *u2)
+static int g_file_get_contents (const char *fname, char **pbuf, void *v1, void *v2)
 {
     char *buf = NULL;
     FILE *fp = NULL;
@@ -2418,6 +2420,7 @@ static int g_file_get_contents (const char *fname, char **pbuf, void *u1, void *
     if (sz > 0) {
 	buf = malloc(sz + 1);
 	if (buf != NULL) {
+	    rewind(fp);
 	    fread(buf, 1, sz, fp);
 	    buf[sz] = 0;
 	    *pbuf = buf;
@@ -2432,13 +2435,13 @@ static int g_file_get_contents (const char *fname, char **pbuf, void *u1, void *
 
 #endif /* OLD_GTK */
 
-windata_t *view_help_file (const char *filename, int role)
+windata_t *
+view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
 {
 #ifndef OLD_GTK
     GtkTextBuffer *tbuf = NULL;
 #endif
     GtkWidget *close;
-    GtkItemFactoryEntry *menu_items;
     windata_t *vwin;
     gchar *title = NULL;
     int hsize = 80, vsize = 400;
@@ -2456,10 +2459,8 @@ windata_t *view_help_file (const char *filename, int role)
 #endif
 
     viewer_box_config(vwin);
-    menu_items = get_help_menu_items(role);
     set_up_viewer_menu(vwin->dialog, vwin, menu_items);
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
-		       vwin->mbar, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
 
 #ifndef OLD_GTK
@@ -2478,22 +2479,19 @@ windata_t *view_help_file (const char *filename, int role)
 		     G_CALLBACK(delete_file_viewer), vwin);
     gtk_widget_show(close);
 
-#ifndef OLD_GTK
-    text_buffer_insert_file(tbuf, filename, role); 
-    g_object_set_data(G_OBJECT(vwin->w), "tbuf", tbuf);
-#else
-    text_buffer_insert_file(vwin->w, filename, role);
-#endif
-
-#if 0 /* needs work in helpfiles.c */
     if (role == GUI_HELP_ENGLISH || role == GUI_HELP) {
-	gchar *fbuf;
+	gchar *fbuf = NULL;
 
 	if (g_file_get_contents(filename, &fbuf, NULL, NULL)) {
 	    vwin->data = fbuf;
 	}
-    }
+    } else {
+#ifndef OLD_GTK
+	text_buffer_insert_file(tbuf, filename, role); 
+#else
+	text_buffer_insert_file(vwin->w, filename, role);
 #endif
+    }
 
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
@@ -2510,7 +2508,7 @@ windata_t *view_help_file (const char *filename, int role)
     gtk_widget_show(vwin->dialog);
 
 #ifndef OLD_GTK
-    cursor_to_top(vwin);
+    cursor_to_top(vwin); /* ? */
 #endif
 
     gtk_widget_grab_focus(vwin->w);

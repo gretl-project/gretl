@@ -953,8 +953,13 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	    err = gretl_matrix_restricted_ols(fsys->arty, fsys->artx, R, NULL,
 					      fsys->artb, NULL, NULL);
 	} else {
+#if 0
+	    err = gretl_matrix_svd_ols(fsys->arty, fsys->artx, fsys->artb, 
+				       NULL, NULL, NULL);
+#else
 	    err = gretl_matrix_ols(fsys->arty, fsys->artx, fsys->artb, 
 				   NULL, NULL, NULL);
+#endif
 	}
 
 	if (err) {

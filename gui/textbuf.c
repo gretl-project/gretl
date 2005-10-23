@@ -88,10 +88,10 @@ void text_table_setup (windata_t *vwin)
     gtk_widget_show(vwin->w);
 
     vscroll = gtk_vscrollbar_new(GTK_TEXT(vwin->w)->vadj);
-    gtk_table_attach (GTK_TABLE (table), 
-		      vscroll, 1, 2, 0, 1,
-		      GTK_FILL, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
-    gtk_widget_show (vscroll);
+    gtk_table_attach(GTK_TABLE (table), 
+		     vscroll, 1, 2, 0, 1,
+		     GTK_FILL, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
+    gtk_widget_show(vscroll);
 
     gtk_widget_show(table);
 }
@@ -134,17 +134,11 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
     void *colptr = NULL, *nextcolor = NULL;
     char buf[MAXSTR];
     FILE *fp;
-    int started = 0;
-    int newhelp = 0;
 
     fp = fopen(filename, "r");
     if (fp == NULL) return 1;
 
     memset(buf, 0, sizeof buf);
-
-    if (role == GUI_HELP || role == GUI_HELP_ENGLISH) {
-	newhelp = new_style_gui_help(fp);
-    }
 
     while (fgets(buf, sizeof buf, fp)) {
 
@@ -152,32 +146,13 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 
 	nextcolor = NULL;
 
-	if (newhelp && *buf == '#') {
-	    char *p;
-
-	    if (started) {
-		gtk_text_insert(GTK_TEXT(w), fixed_font, 
-				NULL, NULL, "\n", 1);
-	    } else {
-		started = 1;
-	    }
-	    p = quoted_help_string(buf);
-	    gtk_text_insert(GTK_TEXT(w), fixed_font, 
-			    &red, NULL, p, strlen(p));
-	    gtk_text_insert(GTK_TEXT(w), fixed_font, 
-			    NULL, NULL, "\n", 1);
-	    free(p);
-	    continue;
-	}
-
 	if (role == SCRIPT_OUT && ends_with_backslash(buf)) {
 	    nextcolor = &blue;
 	}	
 
 	if (*buf == '?') {
 	    colptr = (role == CONSOLE)? &red : &blue;
-	}
-	else if (*buf == '#') {
+	} else if (*buf == '#') {
 	    if (help_role(role)) {
 		*buf = ' ';
 		nextcolor = &red;
@@ -197,6 +172,52 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
     fclose(fp);
 
     return 0;
+}
+
+void set_gui_help_topic_buffer (windata_t *hwin, int pos)
+{
+    char line[128];
+    gchar *hbuf = (gchar *) hwin->data;
+    int len = gtk_text_get_length(GTK_TEXT(hwin->w));
+    int nl = -2;
+
+    gtk_text_freeze(GTK_TEXT(hwin->w));
+    gtk_text_set_point(GTK_TEXT(hwin->w), 0);
+    gtk_text_forward_delete(GTK_TEXT(hwin->w), len);
+
+    bufgets_init(hbuf);
+
+    while (bufgets(line, sizeof line, hbuf)) {
+	if (*line == '#') {
+	    nl += 2;
+	} else {
+	    nl++;
+	}
+	if (nl == pos) {
+	    gchar *p;
+
+	    bufgets(line, sizeof line, hbuf);
+	    p = quoted_help_string(line);
+	    gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, 
+			    &red, NULL, p, strlen(p));
+	    gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, 
+			    NULL, NULL, "\n", 1);
+	    free(p);
+	    while (bufgets(line, sizeof line, hbuf)) {
+		if (*line == '#') {
+		    break;
+		} else {
+		    gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, 
+				    NULL, NULL, line, -1);
+		    gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, 
+				    NULL, NULL, "\n", 1);
+		}
+	    }
+	    break;
+	}
+    }
+
+    gtk_text_thaw(GTK_TEXT(hwin->w));
 }
 
 int viewer_char_count (windata_t *vwin)

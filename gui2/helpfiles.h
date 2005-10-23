@@ -37,15 +37,11 @@ void menu_find (gpointer data, guint dbfind, GtkWidget *widget);
 
 void text_find_callback (GtkWidget *w, gpointer data);
 
-int new_style_gui_help (FILE *fp);
-
 char *quoted_help_string (char *str);
 
 void gretl_tooltips_init (void);
 
 void gretl_tooltips_add (GtkWidget *w, const gchar *str);
-
-GtkItemFactoryEntry *get_help_menu_items (int code);
 
 #ifdef OLD_GTK
 void colorize_tooltips (GtkTooltips *tip);

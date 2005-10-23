@@ -38,6 +38,8 @@ void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn);
 
 int text_buffer_insert_file (GtkWidget *w, const char *filename, int role);
 
+void set_gui_help_topic_buffer (windata_t *hwin, int pos);
+
 int viewer_char_count (windata_t *vwin);
 
 #endif /* TEXTBUF_H */

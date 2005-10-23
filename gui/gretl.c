@@ -147,6 +147,15 @@ static void gnome_help (void)
 }
 #endif /* USE_GNOME */
 
+static void menu_manual_call (gpointer p, guint u, GtkWidget *w)
+{
+#if defined(USE_GNOME)
+    gnome_help();
+#else
+    gretl_pdf_manual();
+#endif
+}
+
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
 static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
@@ -473,15 +482,11 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/High precision OLS..."), NULL, mp_ols_callback, MPOLS, NULL },
 #endif
     { N_("/_Help"), NULL, NULL, 0, "<LastBranch>" },
-    { N_("/Help/_GUI commands"), NULL, do_gui_help, 0, NULL },
-    { N_("/Help/_Script commands syntax"), NULL, do_script_help, 1, NULL },
+    { N_("/Help/_Command reference"), NULL, do_script_help, 1, NULL },
+    { N_("/Help/_Manual"), NULL, menu_manual_call, 0, NULL },
     { N_("/Help/sep1"), NULL, NULL, 0, "<Separator>" },
-#if defined(USE_GNOME)
-    { N_("/Help/Manual in HTML"), NULL, gnome_help, 0, NULL },
+    { N_("/Help/Check for _updates"), NULL, manual_update_query, 0, NULL },
     { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>" },
-#endif
-    { N_("/Help/_Check for updates"), NULL, manual_update_query, 0, NULL },
-    { N_("/Help/sep3"), NULL, NULL, 0, "<Separator>" },
     { N_("/Help/_About gretl"), NULL, about_dialog, 0, NULL }
 };
 

@@ -361,6 +361,38 @@ static gchar *my_utf_string (char *t)
     return s;
 }
 
+static GtkTextTagTable *gretl_tags_new (void)
+{
+    GtkTextTagTable *table;
+    GtkTextTag *tag;
+
+    table = gtk_text_tag_table_new(); 
+
+    tag = gtk_text_tag_new("bluetext");
+    g_object_set(tag, "foreground", "blue", NULL);
+    gtk_text_tag_table_add(table, tag);
+    
+    tag = gtk_text_tag_new("redtext");
+    g_object_set(tag, "foreground", "red", NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    return table;
+}
+
+static GtkTextBuffer *gretl_text_buf_new (void)
+{
+    static GtkTextTagTable *tags = NULL;
+    GtkTextBuffer *tbuf; 
+
+    if (tags == NULL) {
+	tags = gretl_tags_new();
+    }
+
+    tbuf = gtk_text_buffer_new(tags);
+
+    return tbuf;
+}
+
 void text_buffer_insert_colorized_buffer (GtkTextBuffer *tbuf, PRN *prn)
 {
     GtkTextIter iter;    
@@ -408,8 +440,6 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
     GtkTextIter iter;    
     int thiscolor, nextcolor;
     char readbuf[MAXSTR], *chunk;
-    int started = 0;
-    int newhelp = 0;
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) return;
@@ -419,10 +449,6 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
 
     memset(readbuf, 0, sizeof readbuf);
-
-    if (role == GUI_HELP || role == GUI_HELP_ENGLISH) {
-	newhelp = new_style_gui_help(fp);
-    }
 
     while (fgets(readbuf, sizeof readbuf, fp)) {
 #ifdef ENABLE_NLS
@@ -435,23 +461,6 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 
 	nextcolor = PLAIN_TEXT;
 	
-	if (newhelp && *chunk == '#') { /* help topic line */
-	    char *p;
-
-	    if (started) {
-		gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
-	    } else {
-		started = 1;
-	    }
-	    p = quoted_help_string(chunk);
-	    gtk_text_buffer_insert_with_tags_by_name (tbuf, &iter,
-						      p, -1,
-						      "redtext", NULL);
-	    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
-	    free(p);
-	    continue;
-	}
-
 	if (role == SCRIPT_OUT && ends_with_backslash(chunk)) {
 	    nextcolor = BLUE_TEXT;
 	}
@@ -472,14 +481,14 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 	    gtk_text_buffer_insert(tbuf, &iter, chunk, -1);
 	    break;
 	case BLUE_TEXT:
-	    gtk_text_buffer_insert_with_tags_by_name (tbuf, &iter,
-						      chunk, -1,
-						      "bluetext", NULL);
+	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+						     chunk, -1,
+						     "bluetext", NULL);
 	    break;
 	case RED_TEXT:
-	    gtk_text_buffer_insert_with_tags_by_name (tbuf, &iter,
-						      chunk, -1,
-						      "redtext", NULL);
+	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+						     chunk, -1,
+						     "redtext", NULL);
 	    break;
 	}
 
@@ -490,22 +499,48 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
     fclose(fp);
 }
 
-static GtkTextTagTable *gretl_tags_new (void)
+void set_gui_help_topic_buffer (windata_t *hwin, int pos)
 {
-    GtkTextTagTable *table;
-    GtkTextTag *tag;
+    GtkTextBuffer *tbuf;
+    GtkTextIter iter;
+    char line[128];
+    gchar *hbuf = (gchar *) hwin->data;
+    int nl = -2;
 
-    table = gtk_text_tag_table_new(); 
+    tbuf = gretl_text_buf_new();
+    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
 
-    tag = gtk_text_tag_new("bluetext");
-    g_object_set(tag, "foreground", "blue", NULL);
-    gtk_text_tag_table_add(table, tag);
-    
-    tag = gtk_text_tag_new("redtext");
-    g_object_set(tag, "foreground", "red", NULL);
-    gtk_text_tag_table_add(table, tag);
+    bufgets_init(hbuf);
 
-    return table;
+    while (bufgets(line, 127, hbuf)) {
+	if (*line == '#') {
+	    nl += 2;
+	} else {
+	    nl++;
+	}
+	if (nl == pos) {
+	    gchar *p;
+
+	    bufgets(line, 127, hbuf);
+	    p = quoted_help_string(line);
+	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+						     p, -1,
+						     "redtext", NULL);
+	    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
+	    free(p);
+	    while (bufgets(line, 127, hbuf)) {
+		if (*line == '#') {
+		    break;
+		} else {
+		    gtk_text_buffer_insert(tbuf, &iter, line, -1);
+		    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
+		}
+	    }
+	    break;
+	}
+    }
+
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
 }
 
 #ifndef USE_GTKSOURCEVIEW
@@ -538,12 +573,8 @@ void correct_line_color (windata_t *vwin)
 void create_text (windata_t *vwin, GtkTextBuffer **buf, 
 		  int hsize, int vsize, gboolean editable)
 {
-    static GtkTextTagTable *tags = NULL;
-    GtkTextBuffer *tbuf; 
+    GtkTextBuffer *tbuf = gretl_text_buf_new();
 
-    if (tags == NULL) tags = gretl_tags_new();
-
-    tbuf = gtk_text_buffer_new(tags);
     vwin->w = gtk_text_view_new_with_buffer(tbuf);
     *buf = tbuf;
 
@@ -556,7 +587,7 @@ void create_text (windata_t *vwin, GtkTextBuffer **buf,
     hsize *= get_char_width(vwin->w);
     hsize += 48;
 
-    gtk_window_set_default_size (GTK_WINDOW(vwin->dialog), hsize, vsize); 
+    gtk_window_set_default_size(GTK_WINDOW(vwin->dialog), hsize, vsize); 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), editable);
 }
@@ -565,15 +596,15 @@ void text_table_setup (windata_t *vwin)
 {
     GtkWidget *sw;
 
-    sw = gtk_scrolled_window_new (NULL, NULL);
+    sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 		       sw, TRUE, TRUE, FALSE);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
-				    GTK_POLICY_AUTOMATIC,
-				    GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw),
-					 GTK_SHADOW_IN);
-    gtk_container_add (GTK_CONTAINER(sw), vwin->w); 
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
+				   GTK_POLICY_AUTOMATIC,
+				   GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
+					GTK_SHADOW_IN);
+    gtk_container_add(GTK_CONTAINER(sw), vwin->w); 
     gtk_widget_show(vwin->w);
     gtk_widget_show(sw);
 }

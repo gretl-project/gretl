@@ -94,7 +94,7 @@ static void gretl_website (void)
 #endif
 }
 
-static void gretl_pdf (void)
+void gretl_pdf_manual (void)
 {
     char manurl[64];
 
@@ -194,7 +194,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	N_("session icon view"),
 	N_("gretl website"), 
 	N_("gretl manual (PDF)"),
-	N_("show help"), 
+	N_("command reference"), 
 	N_("X-Y graph"), 
 	N_("OLS model"),
 	N_("open dataset"),
@@ -253,11 +253,11 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    break;  
 	case 5:
 	    toolxpm = mini_pdf_xpm;
-	    toolfunc = gretl_pdf;
+	    toolfunc = gretl_pdf_manual;
 	    break;    
 	case 6:
 	    toolxpm = mini_manual_xpm;
-	    toolfunc = do_gui_help;
+	    toolfunc = do_script_help;
 	    break;
 	case 7:
 	    toolxpm = mini_plot_xpm;
