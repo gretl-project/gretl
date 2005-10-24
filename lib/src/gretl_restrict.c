@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "system.h"
 #include "var.h"
+#include "varstack.h"
 #include "gretl_restrict.h"
 
 #define RDEBUG 0
@@ -75,8 +76,10 @@ get_R_vecm_column (const gretl_restriction_set *rset, int i, int j)
     int col = r->coeff[j];
     int k;
 
-    for (k=0; k<r->eq[j]; k++) {
-	col += nb;
+    if (r->eq != NULL) {
+	for (k=0; k<r->eq[j]; k++) {
+	    col += nb;
+	}
     }
 
     return col;
@@ -403,7 +406,8 @@ static void print_mult (double mult, int first, PRN *prn)
 }
 
 static void print_restriction (const gretl_restriction_set *rset,
-			       int j, PRN *prn)
+			       int j, const DATAINFO *pdinfo, 
+			       PRN *prn)
 {
     const restriction *r = rset->restrictions[j];
     char vname[24];
@@ -414,10 +418,16 @@ static void print_restriction (const gretl_restriction_set *rset,
 	if (rset->cross) {
 	    pprintf(prn, "b[%d,%d]", r->eq[i] + 1, r->coeff[i]);
 	} else if (rset->var) {
-	    /* FIXME get a varname here? */
-	    pprintf(prn, "b[%d]", r->coeff[i]);
+	    const int *list = gretl_VECM_list(rset->var);
+	    int li = (list == NULL)? 0 : r->coeff[i] + 1;
+
+	    if (li > 0 && li <= list[0]) {
+		pprintf(prn, "b[%s]", pdinfo->varname[list[li]]);
+	    } else {
+		pprintf(prn, "b[%d]", r->coeff[i]);
+	    }
 	} else {
-	    gretl_model_get_param_name(rset->pmod, rset->pdinfo, 
+	    gretl_model_get_param_name(rset->pmod, pdinfo, 
 				       r->coeff[i], vname);
 	    pprintf(prn, "b[%s]", vname);
 	}
@@ -426,7 +436,8 @@ static void print_restriction (const gretl_restriction_set *rset,
 }
 
 static void 
-print_restriction_set (const gretl_restriction_set *rset, PRN *prn)
+print_restriction_set (const gretl_restriction_set *rset, 
+		       const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
 
@@ -443,7 +454,7 @@ print_restriction_set (const gretl_restriction_set *rset, PRN *prn)
 	} else {
 	    pputc(prn, ' ');
 	}
-	print_restriction(rset, i, prn);
+	print_restriction(rset, i, pdinfo, prn);
     }
 
 #if RDEBUG
@@ -632,7 +643,7 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
     if (!err) {
 	if (!sscanf(p, " = %lf", &r->rhs)) {
 	    err = E_PARSE;
-	} else if (r->rhs != 0.0 && rset->var != NULL) {
+	} else if (rset->var != NULL && r->rhs != 0.0) {
 	    strcpy(gretl_errmsg, "VECM restrictions: the equations must "
 		   "be homogeneous");
 	    err = 1;
@@ -717,36 +728,46 @@ cross_restriction_set_start (const char *line, gretl_equation_system *sys)
     return rset;
 }
 
-/* FIXME how to incorporate the vecm case below? */
-
 gretl_restriction_set *
 restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
 {
     gretl_restriction_set *rset = NULL;
-    char *sysname = NULL;
+    char *sname = NULL;
 
 #if RDEBUG
     fprintf(stderr, "restriction_set_start: line='%s'\n", line);
 #endif
 
     if (!strncmp(line, "restrict", 8)) {
-	sysname = get_system_name_from_line(line);
+	sname = get_system_name_from_line(line);
     }
 
     /* are we applying a restriction to a named system of equations? */
-    if (sysname != NULL) {
-	gretl_equation_system *sys;
+    if (sname != NULL) {
+	gretl_equation_system *sys = NULL;
+	GRETL_VAR *var = NULL;
 
-	sys = get_equation_system_by_name(sysname);
-	if (sys == NULL) {
-	    sprintf(gretl_errmsg, "'%s': unrecognized name", sysname);
-	} else {
+	sys = get_equation_system_by_name(sname);
+	if (sys != NULL) {
 	    rset = real_restriction_set_start(NULL, NULL, sys, NULL);
 	    if (rset == NULL) {
 		strcpy(gretl_errmsg, _("Out of memory!"));
 	    }	    
+	} else {
+	    var = get_VECM_by_name(sname);
+	    if (var != NULL) {
+		rset = real_restriction_set_start(NULL, NULL, NULL, var);
+		if (rset == NULL) {
+		    strcpy(gretl_errmsg, _("Out of memory!"));
+		}
+	    }
 	}
-	free(sysname);
+
+	if (sys == NULL && var == NULL) {
+	    sprintf(gretl_errmsg, "'%s': unrecognized name", sname);
+	}
+
+	free(sname);
     } else {
 	rset = real_restriction_set_start(pmod, pdinfo, NULL, NULL);
 
@@ -892,7 +913,9 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
 */
 
 int
-gretl_restriction_set_finalize (gretl_restriction_set *rset, PRN *prn)
+gretl_restriction_set_finalize (gretl_restriction_set *rset, 
+				const DATAINFO *pdinfo,
+				PRN *prn)
 {
     int err = 0;
 
@@ -903,14 +926,17 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset, PRN *prn)
     if (rset->var != NULL) {
 	/* vecm */
 	err = restriction_set_form_matrices(rset, NULL, NULL);
-	/* FIXME now actually run the test */
+	if (!err) {
+	    print_restriction_set(rset, pdinfo, prn);
+	    gretl_VECM_test_beta(rset->var, prn);
+	}
     } else if (rset->sys != NULL) {
-	/* simultaneous equtions system */
+	/* simultaneous equations system */
 	gretl_matrix *R;
 	gretl_matrix *q;
 
 #if RDEBUG
-	print_restriction_set(rset, prn);
+	print_restriction_set(rset, pdinfo, prn);
 #endif
 	err = restriction_set_form_matrices(rset, &R, &q);
 	if (!err) {
@@ -930,7 +956,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset, PRN *prn)
 	/* single model */
 	err = restriction_set_make_mask(rset);
 	if (!err) {
-	    print_restriction_set(rset, prn);
+	    print_restriction_set(rset, pdinfo, prn);
 	    test_restriction_set(rset, prn);
 	    destroy_restriction_set(rset);
 	}

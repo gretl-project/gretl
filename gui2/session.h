@@ -82,24 +82,28 @@ int model_already_saved (const MODEL *pmod);
 
 int try_add_model_to_session (MODEL *pmod);
 
-int try_add_var_to_session (GRETL_VAR *var);
+int try_add_var_to_session (GRETL_VAR *var, const char *savename);
 
 int try_add_system_to_session (gretl_equation_system *sys,
 			       const char *savename);
 
-int display_saved_equation_system (const char *savename);
+int display_saved_equation_system (void *p);
 
-void delete_system_from_session (const char *savename);
+int display_saved_VAR (void *p);
+
+void saved_VAR_do_irf (void *p, const char *line);
+
+void delete_system_from_session (void *p);
+
+void delete_VAR_from_session (void *p);
 
 void *get_session_object_by_name (const char *name, int *which);
 
 void delete_model_from_session (MODEL *pmod);
 
-void delete_var_from_session (GRETL_VAR *var);
+void delete_text_from_session (void *p);
 
-void delete_text_from_session (const char *tname);
-
-void display_text_by_name (const char *tname);
+void display_saved_text (void *p);
 
 int session_changed (int set);
 

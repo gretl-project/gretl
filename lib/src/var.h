@@ -77,7 +77,7 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
 				const double **Z,
 				const DATAINFO *pdinfo);
 
-void gretl_VAR_assign_name (GRETL_VAR *var);
+void gretl_VAR_auto_assign_name (GRETL_VAR *var);
 
 void gretl_VAR_assign_specific_name (GRETL_VAR *var, const char *name);
 
@@ -106,6 +106,8 @@ int gretl_VECM_n_beta (const GRETL_VAR *vecm);
 int gretl_VECM_test_beta (GRETL_VAR *vecm, PRN *prn);
 
 int gretl_VECM_rank (const GRETL_VAR *vecm);
+
+const int *gretl_VECM_list (const GRETL_VAR *vecm);
 
 #endif /* VAR_H_ */
 

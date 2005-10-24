@@ -162,7 +162,8 @@ LIBSRC = adf_kpss.c \
 	texprint.c \
 	transforms.c \
 	var.c \
-	varprint.c
+	varprint.c \
+	varstack.c
 
 LIBOBJ = $(LIBSRC:.c=.o)
 

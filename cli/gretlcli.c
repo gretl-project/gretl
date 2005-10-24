@@ -34,6 +34,7 @@
 #include "libset.h"
 #include "forecast.h"
 #include "cmd_private.h"
+#include "varstack.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -312,6 +313,7 @@ static int clear_data (void)
     modelspec = NULL;
 
     gretl_equation_systems_cleanup();
+    gretl_VARs_cleanup();
 
     reset_model_count();
 
@@ -745,6 +747,7 @@ static int do_autofit_plot (PRN *prn)
 static int exec_line (char *line, LOOPSET **ploop, PRN *prn) 
 {
     LOOPSET *loop = *ploop;
+    GRETL_VAR *var = NULL;
     int chk, nulldata_n, renumber;
     int dbdata = 0, do_arch = 0, do_nls = 0;
     unsigned char echo_flags;
@@ -1090,7 +1093,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 		printmodel(models[0], datainfo, cmd.opt, prn);
 	    }
 	} else if (!strcmp(cmd.param, "restrict")) {
-	    err = gretl_restriction_set_finalize(rset, prn);
+	    err = gretl_restriction_set_finalize(rset, datainfo, prn);
 	    if (err) {
 		errmsg(err, prn);
 	    }
@@ -1650,19 +1653,25 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case VAR:
 	order = atoi(cmd.param);
-	err = simple_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn);
-	if (err) {
-	    errmsg(err, prn);
+	var = full_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn);
+	if (var == NULL) {
+	    err = 1;
+	} else {
+	    err = maybe_stack_var(var, &cmd);
 	}
+	if (err) errmsg(err, prn);
 	break;
 
     case VECM:
 	order = atoi(cmd.param);
-	err = vecm_simple(order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
-			  cmd.opt, prn);
-	if (err) {
-	    errmsg(err, prn);
+	var = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
+		   cmd.opt, prn);
+	if (var == NULL) {
+	    err = 1;
+	} else {
+	    err = maybe_stack_var(var, &cmd);
 	}
+	if (err) errmsg(err, prn);
 	break;
 
     default:

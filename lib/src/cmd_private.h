@@ -10,6 +10,7 @@ struct _CMD {
     int ci;                     /* command index number */
     int context;                /* context for subsetted commands */
     gretlopt opt;               /* option flags */
+    char name[MAXSAVENAME];     /* name used for equation systems */
     char savename[MAXSAVENAME]; /* name used to save an object from the command */
     int nolist;                 /* = 1 if the command does not take a list */
     int *list;                  /* list of variables by ID number */

@@ -36,6 +36,7 @@
 #include "lib_private.h"
 #include "cmd_private.h"
 #include "libset.h"
+#include "varstack.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -320,6 +321,7 @@ void clear_data (void)
     modelspec = NULL;
 
     gretl_equation_systems_cleanup();
+    gretl_VARs_cleanup();
 
     reset_model_count();
 
@@ -2232,7 +2234,7 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 
     if (bufopen(&prn)) return; 
 
-    err = gretl_restriction_set_finalize(my_rset, prn);
+    err = gretl_restriction_set_finalize(my_rset, datainfo, prn);
 
     if (err) {
 	errmsg(err, prn);
@@ -2244,7 +2246,6 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 	    gretl_equation_system_estimate(sys, &Z, datainfo, OPT_NONE, prn);
 	    height = 450;
 	} else if (vecm != NULL) {
-	    gretl_VECM_test_beta(vecm, prn);
 	    height = 450;
 	}
     }
@@ -5807,7 +5808,7 @@ int gui_exec_line (char *line,
 
     /* catch requests relating to saved objects, which are not
        really "commands" as such */
-    chk = saved_object_action(line, datainfo, prn);
+    chk = saved_object_action(line, prn);
     if (chk == 1) return 0;   /* action was OK */
     if (chk == -1) return 1;  /* action was faulty */
 	
@@ -6148,7 +6149,7 @@ int gui_exec_line (char *line,
 		printmodel(models[0], datainfo, cmd.opt, outprn);
 	    }
 	} else if (!strcmp(cmd.param, "restrict")) {
-	    err = gretl_restriction_set_finalize(rset, prn);
+	    err = gretl_restriction_set_finalize(rset, datainfo, prn);
 	    if (err) {
 		errmsg(err, prn);
 	    }
@@ -6763,7 +6764,7 @@ int gui_exec_line (char *line,
 	    err = stack_model(models[0]);
 	}
 	if (exec_code != REBUILD_EXEC && !do_arch && *cmd.savename != '\0') {
-	    maybe_save_model(&cmd, &models[0], datainfo, prn);
+	    maybe_save_model(&cmd, &models[0], prn);
 	}
     }
 

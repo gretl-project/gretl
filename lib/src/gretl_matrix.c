@@ -834,6 +834,7 @@ double *gretl_matrix_steal_data (gretl_matrix *m)
 void 
 gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
 {
+    char numstr[32];
     int i, j;
 
     if (prn == NULL) {
@@ -849,7 +850,11 @@ gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
     } else {
 	for (i=0; i<m->rows; i++) {
 	    for (j=0; j<m->cols; j++) {
-		pprintf(prn, "%#12.5g ", gretl_matrix_get(m, i, j));
+		sprintf(numstr, "%#.5g", m->val[mdx(m, i, j)]);
+		if (strstr(numstr, ".00000")) {
+		    numstr[strlen(numstr) - 1] = 0;
+		}
+		pprintf(prn, "%12s ", numstr);
 	    }
 	    pputc(prn, '\n');
 	}

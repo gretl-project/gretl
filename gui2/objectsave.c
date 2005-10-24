@@ -27,6 +27,7 @@
 #include "cmd_private.h"
 #include "var.h"
 #include "varprint.h"
+#include "varstack.h"
 
 enum {
     OBJ_ACTION_NONE,
@@ -102,73 +103,26 @@ static void print_model_stat (MODEL *pmod, const char *param, PRN *prn)
     }	
 }
 
-static void show_saved_model (MODEL *pmod, const DATAINFO *pdinfo)
+static void show_saved_model (MODEL *pmod)
 {
     char title[26];
     PRN *prn;
 
     if (bufopen(&prn)) return;
 
-    printmodel(pmod, pdinfo, OPT_NONE, prn);
+    printmodel(pmod, datainfo, OPT_NONE, prn);
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 400, title); 
 }
 
-static void show_saved_var (GRETL_VAR *var, const DATAINFO *pdinfo)
+static void show_saved_var (GRETL_VAR *var)
 {
     PRN *prn;
 
     if (bufopen(&prn)) return;
 
-    gretl_VAR_print(var, pdinfo, OPT_NONE, prn);
+    gretl_VAR_print(var, datainfo, OPT_NONE, prn);
     view_buffer(prn, 78, 450, gretl_VAR_get_name(var), var->ci, var);
-}
-
-/* this should probably be elsewhere? */
-
-static void var_do_irf (GRETL_VAR *var, const char *line)
-{
-    int targ = -1, shock = 1;
-    int h = 0, boot = 0;
-    int err = 0;
-    char *p;
-
-    p = strstr(line, "--targ=");
-    if (p != NULL) {
-	targ = atoi(p + 7) - 1;
-    }
-
-    p = strstr(line, "--shock=");
-    if (p != NULL) {
-	shock = atoi(p + 8) - 1;
-    }
-
-    p = strstr(line, "--horizon=");
-    if (p != NULL) {
-	h = atoi(p + 10);
-    } else {
-	h = 20;
-    }
-
-    if (strstr(line, "--bootstrap") != NULL) {
-	boot = 1;
-    }
-
-#if 0
-    fprintf(stderr, "targ=%d, shock=%d, h=%d, boot=%d\n", 
-	    targ, shock, h, boot);
-#endif
-
-    if (targ >= 0 && shock >= 0 && h > 0) {
-	err = gretl_VAR_plot_impulse_response(var, targ, shock, h, 
-					      (const double **) Z,
-					      datainfo);
-	if (err) {
-	    gui_errmsg(err);
-	} else {
-	    register_graph();
-	}
-    }
 }
 
 static void get_word_and_command (const char *s, char *word, 
@@ -246,7 +200,7 @@ static int parse_object_request (const char *line,
     /* if no dot param, nothing doing */
     if (*param == 0) return OBJ_ACTION_NONE;
 
-    /* see if the object name actually belongs to an object */
+    /* see if there's an object associated with the name */
     *pptr = get_session_object_by_name(word, &sort);
 
     if (*pptr == NULL) {
@@ -271,8 +225,7 @@ static int parse_object_request (const char *line,
 
 /* public interface below */
 
-int maybe_save_model (const CMD *cmd, MODEL **ppmod, 
-		      DATAINFO *pdinfo, PRN *prn)
+int maybe_save_model (const CMD *cmd, MODEL **ppmod, PRN *prn)
 {
     const char *savename;
     int err;
@@ -295,7 +248,7 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
 	MODEL *mnew = gretl_model_new();
 
 	if (mnew != NULL) {
-	    copy_model(mnew, *ppmod, pdinfo);
+	    copy_model(mnew, *ppmod, datainfo);
 	    *ppmod = mnew;
 	    pprintf(prn, _("%s saved\n"), savename);
 	} else {
@@ -309,12 +262,15 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
 int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
 {
     const char *savename;
+    const char *vname;
+    const char *usename;
     GRETL_VAR *var;
-    int err;
+    int err = 0;
 
     savename = gretl_cmd_get_savename(cmd);
+    vname = gretl_cmd_get_name(cmd);
 
-    if (*savename == 0) {
+    if (*savename == 0 && *vname == 0) {
 	gretl_VAR_free(*pvar);
 	*pvar = NULL;
 	return 0;
@@ -323,14 +279,26 @@ int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
     var = *pvar;
     *pvar = NULL;
 
-    gretl_VAR_assign_specific_name(var, savename);
-    err = try_add_var_to_session(var);
+    if (*vname != '\0') {
+	usename = vname;
+    } else {
+	usename = savename;
+    }
+
+    err = stack_VAR_as(var, usename);
 
     if (!err) {
-	pprintf(prn, _("%s saved\n"), savename);
-    } else {
+	if (*savename != '\0') {
+	    usename = savename;
+	}
+	err = try_add_var_to_session(var, usename);
+	if (!err) {
+	    pprintf(prn, _("%s saved\n"), usename);
+	}
+    }
+
+    if (err) {
 	gretl_VAR_free(var);
-	err = E_ALLOC;
     }
 
     return err;
@@ -415,9 +383,7 @@ int save_text_buffer (PRN *prn, const char *savename, PRN *errprn)
     return err;
 }
 
-int saved_object_action (const char *line, 
-			 const DATAINFO *pdinfo,
-			 PRN *prn)
+int saved_object_action (const char *line, PRN *prn)
 {
     char savename[MAXSAVENAME] = {0};
     char param[9] = {0};
@@ -440,19 +406,18 @@ int saved_object_action (const char *line,
     }
 
     if (code == OBJ_ACTION_MODEL_SHOW) {
-	show_saved_model((MODEL *) ptr, pdinfo);
+	show_saved_model(ptr);
     } else if (code == OBJ_ACTION_MODEL_FREE) {
-	delete_model_from_session((MODEL *) ptr);
+	delete_model_from_session(ptr);
 	pprintf(prn, _("Freed %s\n"), savename);
     } else if (code == OBJ_ACTION_MODEL_STAT) {
 	print_model_stat((MODEL *) ptr, param, prn);
     } else if (code == OBJ_ACTION_VAR_SHOW) {
-	show_saved_var((GRETL_VAR *) ptr, pdinfo);
+	display_saved_VAR(ptr);
     } else if (code == OBJ_ACTION_VAR_IRF) {
-	var_do_irf((GRETL_VAR *) ptr, line);
+	saved_VAR_do_irf(ptr, line);
     } else if (code == OBJ_ACTION_VAR_FREE) {
-	delete_var_from_session((GRETL_VAR *) ptr);
-	pprintf(prn, _("Freed %s\n"), savename);
+	delete_VAR_from_session(ptr);
     } else if (code == OBJ_ACTION_GRAPH_SHOW) {
 	GRAPHT *graph = (GRAPHT *) ptr;
 
@@ -462,14 +427,14 @@ int saved_object_action (const char *line,
 	dummy_call();
 	fprintf(stderr, "Got request to delete graph\n");
     } else if (code == OBJ_ACTION_TEXT_SHOW) {
-	display_text_by_name(savename);
+	display_saved_text(ptr);
     } else if (code == OBJ_ACTION_TEXT_FREE) {
-	delete_text_from_session(savename);
+	delete_text_from_session(ptr);
 	pprintf(prn, _("Freed %s\n"), savename);
     } else if (code == OBJ_ACTION_SYS_SHOW) {
-	display_saved_equation_system((const char *) ptr);
+	display_saved_equation_system(ptr);
     } else if (code == OBJ_ACTION_SYS_FREE) {
-	delete_system_from_session((const char *) ptr);
+	delete_system_from_session(ptr);
     }
 
     return 1;

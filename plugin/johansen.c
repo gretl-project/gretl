@@ -1365,7 +1365,7 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 	goto bailout;
     }
 
-    pputs(prn, "Test of restrictions on cointegrating relations\n\n");
+    pputs(prn, "\nTest of restrictions on cointegrating relations\n\n");
 
     gretl_matrix_print_to_prn(jvar->jinfo->D, "Restriction matrix, D", prn);
 

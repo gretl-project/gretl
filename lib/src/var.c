@@ -2704,7 +2704,7 @@ int gretl_VAR_attach_restrictions (GRETL_VAR *var, gretl_matrix *D)
     return 0;
 }
 
-void gretl_VAR_assign_name (GRETL_VAR *var)
+void gretl_VAR_auto_assign_name (GRETL_VAR *var)
 {
     static int nvar = 0;
 
@@ -2811,6 +2811,15 @@ int gretl_VECM_rank (const GRETL_VAR *vecm)
     }
 
     return r;
+}
+
+const int *gretl_VECM_list (const GRETL_VAR *vecm)
+{
+    if (vecm->jinfo != NULL) {
+	return vecm->jinfo->list;
+    }
+
+    return NULL;
 }
 
 #include "irfboot.c"

@@ -17,19 +17,13 @@
  *
  */
 
-#ifndef OBJECTSAVE_H
-#define OBJECTSAVE_H
+GRETL_VAR *get_VAR_by_name (const char *vname);
 
-int maybe_save_model (const CMD *cmd, MODEL **ppmod, PRN *prn);
+GRETL_VAR *get_VECM_by_name (const char *vname);
 
-int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn);
+int stack_VAR_as (GRETL_VAR *var, const char *vname);
 
-int maybe_save_system (const CMD *cmd, gretl_equation_system *sys, PRN *prn);
+int maybe_stack_var (GRETL_VAR *var, const CMD *cmd);
 
-int maybe_save_graph (const CMD *cmd, const char *fname, int code, PRN *prn);
+void gretl_VARs_cleanup (void);
 
-int save_text_buffer (PRN *prn, const char *savename, PRN *errprn);
-
-int saved_object_action (const char *line, PRN *prn);
-
-#endif /* OBJECTSAVE_H */

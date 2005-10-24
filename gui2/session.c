@@ -36,6 +36,7 @@
 
 #include "var.h"
 #include "varprint.h"
+#include "varstack.h"
 #include "system.h"
 
 #include <sys/stat.h>
@@ -71,8 +72,9 @@ static void auto_save_gp (windata_t *vwin);
 
 typedef struct SESSION_ SESSION;
 typedef struct SESSIONBUILD_ SESSIONBUILD;
-typedef struct GRETL_TEXT_ GRETL_TEXT;
-typedef struct GRETL_SYS_ GRETL_SYS;
+typedef struct SESSION_TEXT_ SESSION_TEXT;
+typedef struct SESSION_SYS_ SESSION_SYS;
+typedef struct SESSION_VAR_ SESSION_VAR;
 typedef struct gui_obj_ gui_obj;
 
 struct SESSION_ {
@@ -84,9 +86,9 @@ struct SESSION_ {
     int ntexts;
     MODEL **models;
     GRAPHT **graphs;
-    GRETL_VAR **vars;
-    GRETL_SYS **systems;
-    GRETL_TEXT **texts;
+    SESSION_VAR **vars;
+    SESSION_SYS **systems;
+    SESSION_TEXT **texts;
     char *notes;
 };
 
@@ -96,14 +98,19 @@ struct SESSIONBUILD_ {
     char **model_name;
 };
 
-struct GRETL_TEXT_ {
+struct SESSION_TEXT_ {
     char name[OBJNAMLEN];
     char *buf;
 };
 
-struct GRETL_SYS_ {
+struct SESSION_SYS_ {
     char name[OBJNAMLEN];
     char *sysname;
+};
+
+struct SESSION_VAR_ {
+    char name[OBJNAMLEN];
+    char *varname;
 };
 
 struct gui_obj_ {
@@ -225,7 +232,7 @@ static void open_boxplot (gui_obj *gobj);
 static gboolean session_icon_click (GtkWidget *widget, 
 				    GdkEventButton *event,
 				    gpointer data);
-static void gretl_text_free (GRETL_TEXT *text);
+static void gretl_text_free (SESSION_TEXT *text);
 #ifndef OLD_GTK
 static void rename_session_object (gui_obj *obj, const char *newname);
 #endif
@@ -241,25 +248,25 @@ static void print_session (const char *msg)
 
     fprintf(stderr, "Session contains %d models\n", session.nmodels);
     for (i=0; i<session.nmodels; i++) {
-	fprintf(stderr, " model %d %s\n", (session.models[i])->ID,
-		(session.models[i])->name);
+	fprintf(stderr, " model %d %s\n", session.models[i]->ID,
+		session.models[i]->name);
     }
     fprintf(stderr, "Session contains %d VARs\n", session.nvars);
     for (i=0; i<session.nvars; i++) {
-	fprintf(stderr, " var '%s'\n", gretl_VAR_get_name(session.vars[i]));
+	fprintf(stderr, " var '%s'\n", session.vars[i]->name);
     }
     fprintf(stderr, "Session contains %d systemss\n", session.nsys);
     for (i=0; i<session.nsys; i++) {
-	fprintf(stderr, " sys '%s'\n", (session.systems[i])->name);
+	fprintf(stderr, " sys '%s'\n", session.systems[i]->name);
     }
     fprintf(stderr, "Session contains %d graphs\n", session.ngraphs);
     for (i=0; i<session.ngraphs; i++) {
-	fprintf(stderr, " graph: %s (%s)\n", (session.graphs[i])->name,
-		(session.graphs[i])->fname);
+	fprintf(stderr, " graph: %s (%s)\n", session.graphs[i]->name,
+		session.graphs[i]->fname);
     }
     fprintf(stderr, "Session contains %d texts\n", session.ntexts);
     for (i=0; i<session.ntexts; i++) {
-	fprintf(stderr, " text: '%s'\n", (session.texts[i])->name);
+	fprintf(stderr, " text: '%s'\n", session.texts[i]->name);
     }
 }
 #endif
@@ -328,18 +335,6 @@ static int look_up_model_by_name (const char *mname)
 
     for (i=0; i<session.nmodels; i++) {
 	if (!strcmp(mname, (session.models[i])->name)) {
-	    return i;
-	}
-    }
-    return -1;
-}
-
-static int look_up_var_by_name (const char *vname)
-{
-    int i;
-
-    for (i=0; i<session.nvars; i++) {
-	if (!strcmp(vname, gretl_VAR_get_name(session.vars[i]))) {
 	    return i;
 	}
     }
@@ -471,12 +466,16 @@ int model_already_saved (const MODEL *pmod)
     return 0;
 }
 
-static int var_already_saved (GRETL_VAR *var)
+static int var_already_saved (const char *varname)
 {
     int i;
 
+    if (varname == NULL || *varname == 0) {
+	return 0;
+    }
+
     for (i=0; i<session.nvars; i++) {
-	if (session.vars[i] == var) {
+	if (!strcmp(session.vars[i]->varname, varname)) {
 	    return 1;
 	}
     }
@@ -487,12 +486,12 @@ static int sys_already_saved (const char *sysname)
 {
     int i;
 
-    if (sysname == NULL) {
+    if (sysname == NULL || *sysname == 0) {
 	return 0;
     }
 
     for (i=0; i<session.nsys; i++) {
-	if (strcmp(session.systems[i]->sysname, sysname) == 0) {
+	if (!strcmp(session.systems[i]->sysname, sysname)) {
 	    return 1;
 	}
     }
@@ -527,32 +526,10 @@ static int real_add_model_to_session (MODEL *pmod)
     return 0;
 }
 
-static int real_add_var_to_session (GRETL_VAR *var)
-{
-    GRETL_VAR **vars;
-    int nv = session.nvars; 
-
-    vars = myrealloc(session.vars, (nv + 1) * sizeof *vars);
-    if (vars == NULL) {
-	return 1;
-    }
-
-    session.vars = vars;
-    session.vars[nv] = var;
-    session.nvars += 1;
-
-    /* add var icon to session display */
-    if (icon_list != NULL) {
-	session_add_icon(session.vars[nv], OBJ_VAR, ICON_ADD_SINGLE);
-    }    
-
-    return 0;
-}
-
-static GRETL_SYS *
+static SESSION_SYS *
 session_sys_new (const char *sname, const char *savename)
 {
-    GRETL_SYS *newsys;
+    SESSION_SYS *newsys;
 
     newsys = malloc(sizeof *newsys);
     if (newsys == NULL) {
@@ -575,11 +552,37 @@ session_sys_new (const char *sname, const char *savename)
     return newsys;
 }
 
+static SESSION_VAR *
+session_var_new (const char *vname, const char *savename)
+{
+    SESSION_VAR *newvar;
+
+    newvar = malloc(sizeof *newvar);
+    if (newvar == NULL) {
+	return NULL;
+    }  
+
+    newvar->varname = gretl_strdup(vname);
+    if (newvar->varname == NULL) {
+	free(newvar);
+	return NULL;
+    }
+
+    *newvar->name = '\0';
+    if (savename != NULL) {
+	strncat(newvar->name, savename, OBJNAMLEN - 1);
+    } else {
+	strncat(newvar->name, vname, OBJNAMLEN - 1);
+    }
+
+    return newvar;
+}
+
 static int 
 real_add_sys_to_session (const char *sname, const char *savename)
 {
-    GRETL_SYS **systems;
-    GRETL_SYS *newsys;
+    SESSION_SYS **systems;
+    SESSION_SYS *newsys;
     int ns = session.nsys; 
 
     newsys = session_sys_new(sname, savename);
@@ -604,6 +607,35 @@ real_add_sys_to_session (const char *sname, const char *savename)
     return 0;
 }
 
+static int 
+real_add_var_to_session (const char *vname, const char *savename)
+{
+    SESSION_VAR **vars;
+    SESSION_VAR *newvar;
+    int nv = session.nvars; 
+
+    newvar = session_var_new(vname, savename);
+    if (newvar == NULL) {
+	return 1;
+    }
+
+    vars = myrealloc(session.vars, (nv + 1) * sizeof *vars);
+    if (vars == NULL) {
+	return 1;
+    }
+
+    session.vars = vars;
+    session.vars[nv] = newvar;
+    session.nvars += 1;
+
+    /* add var icon to session display */
+    if (icon_list != NULL) {
+	session_add_icon(session.vars[nv], OBJ_VAR, ICON_ADD_SINGLE);
+    }
+
+    return 0;
+}
+
 int real_add_text_to_session (PRN *prn, const char *tname)
 {
     const char *pbuf;
@@ -616,7 +648,7 @@ int real_add_text_to_session (PRN *prn, const char *tname)
 	session.texts[nt]->buf = g_strdup(pbuf);
 	replace = 1;
     } else {
-	GRETL_TEXT **texts;
+	SESSION_TEXT **texts;
 
 	nt = session.ntexts;
 
@@ -654,35 +686,35 @@ void *get_session_object_by_name (const char *name, int *which)
     int i;
 
     for (i=0; i<session.nmodels; i++) {
-	if (strcmp(name, (session.models[i])->name) == 0) {
+	if (strcmp(name, session.models[i]->name) == 0) {
 	    *which = OBJ_MODEL;
 	    return session.models[i];
 	}
     }
 
     for (i=0; i<session.nvars; i++) {
-	if (strcmp(name, gretl_VAR_get_name(session.vars[i])) == 0) {
+	if (strcmp(name, session.vars[i]->name) == 0) {
 	    *which = OBJ_VAR;
 	    return session.vars[i];
 	}
     }
 
     for (i=0; i<session.nsys; i++) {
-	if (strcmp(name, (session.systems[i])->name) == 0) {
+	if (strcmp(name, session.systems[i]->name) == 0) {
 	    *which = OBJ_SYS;
 	    return session.systems[i];
 	}
     }
 
     for (i=0; i<session.ngraphs; i++) {
-	if (strcmp(name, (session.graphs[i])->name) == 0) {
+	if (strcmp(name, session.graphs[i]->name) == 0) {
 	    *which = OBJ_GRAPH;
 	    return session.graphs[i];
 	}
     }
 
     for (i=0; i<session.ntexts; i++) {
-	if (strcmp(name, (session.texts[i])->name) == 0) {
+	if (strcmp(name, session.texts[i]->name) == 0) {
 	    *which = OBJ_TEXT;
 	    return session.texts[i];
 	}
@@ -714,29 +746,6 @@ int try_add_model_to_session (MODEL *pmod)
     return 0;
 }
 
-int try_add_var_to_session (GRETL_VAR *var)
-{
-    int nv;
-
-    if (var_already_saved(var)) {
-	return 1;
-    }
-
-    nv = look_up_var_by_name(gretl_VAR_get_name(var));
-    if (nv >= 0) {
-	/* replace existing VAR of the same name */
-	gretl_VAR_free(session.vars[nv]);
-	session.vars[nv] = var;
-	return 0;
-    }
-
-    if (real_add_var_to_session(var)) {
-	return 1;
-    }
-
-    return 0;
-}
-
 int try_add_system_to_session (gretl_equation_system *sys,
 			       const char *savename)
 {
@@ -759,7 +768,28 @@ int try_add_system_to_session (gretl_equation_system *sys,
     return err;
 }
 
-/* called directly from model window */
+int try_add_var_to_session (GRETL_VAR *var, const char *savename)
+{
+    const char *varname = gretl_VAR_get_name(var);
+    int err = 0;
+
+    if (var_already_saved(varname)) {
+	return 1;
+    }
+
+    if (varname == NULL) {
+	err = stack_VAR_as(var, savename);
+	varname = savename;
+    }
+
+    if (!err) {
+	err = real_add_var_to_session(varname, savename);
+    }
+
+    return err;
+}
+
+/* called from model window */
 
 void remember_model (gpointer data, guint close, GtkWidget *widget)
 {
@@ -783,39 +813,12 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
 
     session_changed(1);
 
-    /* close model window? */
     if (close && !window_is_busy(vwin)) {
 	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
     } 
 }
 
-/* called directly from VAR window */
-
-void remember_var (gpointer data, guint close, GtkWidget *widget)
-{
-    windata_t *vwin = (windata_t *) data;
-    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-
-    if (var == NULL) return;
-
-    if (var_already_saved(var)) {
-	infobox(_("VAR is already saved"));
-	return;
-    }
-
-    gretl_VAR_assign_name(var);
-
-    if (real_add_var_to_session(var)) {
-	return;
-    }
-
-    session_changed(1);
-
-    /* close VAR window */
-    if (close) {
-	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
-    } 
-}
+/* called from system window */
 
 void remember_sys (gpointer data, guint close, GtkWidget *widget)
 {
@@ -834,8 +837,38 @@ void remember_sys (gpointer data, guint close, GtkWidget *widget)
 
     session_changed(1);
 
-    /* close system window */
-    if (close) {
+    if (close && !window_is_busy(vwin)) {
+	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
+    } 
+}
+
+/* called from VAR window */
+
+void remember_var (gpointer data, guint close, GtkWidget *widget)
+{
+    windata_t *vwin = (windata_t *) data;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    const char *varname;
+
+    if (var == NULL) return;
+
+    varname = gretl_VAR_get_name(var);
+
+    if (varname == NULL || *varname == 0) {
+	gretl_VAR_auto_assign_name(var);
+	varname = gretl_VAR_get_name(var);
+    } else if (var_already_saved(varname)) {
+	infobox(_("VAR is already saved"));
+	return;
+    }
+
+    if (real_add_var_to_session(varname, NULL)) {
+	return;
+    }
+
+    session_changed(1);
+
+    if (close && !window_is_busy(vwin)) {
 	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
     } 
 }
@@ -1021,10 +1054,16 @@ void verify_clear_data (void)
     close_session();
 }
 
-static void free_session_sys (GRETL_SYS *sys)
+static void free_session_sys (SESSION_SYS *sys)
 {
     free(sys->sysname);
     free(sys);
+}
+
+static void free_session_var (SESSION_VAR *var)
+{
+    free(var->varname);
+    free(var);
 }
 
 void free_session (void)
@@ -1041,7 +1080,7 @@ void free_session (void)
 
     if (session.vars) {
 	for (i=0; i<session.nvars; i++) {
-	    gretl_VAR_free(session.vars[i]);
+	    free_session_var(session.vars[i]);
 	}
 	free(session.vars);
 	session.vars = NULL;
@@ -1097,11 +1136,15 @@ int highest_numbered_variable_in_session (void)
     }
 
     if (session.vars) {
+	GRETL_VAR *var;
+
 	for (i=0; i<session.nvars; i++) {
-	    mvm = gretl_VAR_get_highest_variable(session.vars[i],
-						 datainfo);
-	    if (mvm > vmax) {
-		vmax = mvm;
+	    var = get_VAR_by_name(session.vars[i]->varname);
+	    if (var != NULL) {
+		mvm = gretl_VAR_get_highest_variable(var, datainfo);
+		if (mvm > vmax) {
+		    vmax = mvm;
+		}
 	    }
 	}
     }
@@ -1579,33 +1622,33 @@ static void open_gui_model (gui_obj *gobj)
     view_model(prn, pmod, 78, 400, gobj->name);
 }
 
-static void open_gui_var (gui_obj *gobj)
+static void real_open_gui_var (SESSION_VAR *svar)
 { 
-    GRETL_VAR *var = (GRETL_VAR *) gobj->data;
+    GRETL_VAR *var;
     PRN *prn;
+
+    var = get_VAR_by_name(svar->varname);
+    if (var == NULL) {
+	fprintf(stderr, "No saved VAR of name '%s'\n", svar->varname);
+	return;
+    }
 
     if (bufopen(&prn)) {
 	return;
     }
 
     gretl_VAR_print(var, datainfo, OPT_NONE, prn);
-    view_buffer(prn, 78, 450, gobj->name, var->ci, var);
+    view_buffer(prn, 78, 450, svar->name, var->ci, var);
 }
 
-static GRETL_SYS *get_sys_by_savename (const char *savename)
-{
-    int i;
+static void open_gui_var (gui_obj *gobj)
+{ 
+    SESSION_VAR *svar = (SESSION_VAR *) gobj->data;
 
-    for (i=0; i<session.nsys; i++) {
-	if (!strcmp(savename, session.systems[i]->name)) {
-	    return session.systems[i];
-	}
-    }
-
-    return NULL;
+    real_open_gui_var(svar);
 }
 
-static void real_open_gui_sys (GRETL_SYS *sys)
+static void real_open_gui_sys (SESSION_SYS *sys)
 {
     char *line, *cpy;
     PRN *prn;
@@ -1626,9 +1669,9 @@ static void real_open_gui_sys (GRETL_SYS *sys)
     g_free(line);
 }
 
-int display_saved_equation_system (const char *savename)
+int display_saved_equation_system (void *p)
 {
-    GRETL_SYS *sys = get_sys_by_savename(savename);
+    SESSION_SYS *sys = (SESSION_SYS *) p;
 
     if (sys != NULL) {
 	real_open_gui_sys(sys);
@@ -1638,9 +1681,73 @@ int display_saved_equation_system (const char *savename)
     return 1;
 }
 
+int display_saved_VAR (void *p)
+{
+    SESSION_VAR *svar = (SESSION_VAR *) p;
+
+    if (svar != NULL) {
+	real_open_gui_var(svar);
+	return 0;
+    }
+
+    return 1;
+}
+
+void saved_VAR_do_irf (void *p, const char *line)
+{
+    SESSION_VAR *svar = (SESSION_VAR *) p;
+    GRETL_VAR *var;
+    int targ = -1, shock = 1;
+    int h = 0, boot = 0;
+    int err = 0;
+    char *s;
+
+    var = get_VAR_by_name(svar->varname);
+    if (var == NULL) {
+	return;
+    }
+
+    s = strstr(line, "--targ=");
+    if (s != NULL) {
+	targ = atoi(s + 7) - 1;
+    }
+
+    s = strstr(line, "--shock=");
+    if (s != NULL) {
+	shock = atoi(s + 8) - 1;
+    }
+
+    s = strstr(line, "--horizon=");
+    if (s != NULL) {
+	h = atoi(s + 10);
+    } else {
+	h = 20;
+    }
+
+    if (strstr(line, "--bootstrap") != NULL) {
+	boot = 1;
+    }
+
+#if 0
+    fprintf(stderr, "targ=%d, shock=%d, h=%d, boot=%d\n", 
+	    targ, shock, h, boot);
+#endif
+
+    if (targ >= 0 && shock >= 0 && h > 0) {
+	err = gretl_VAR_plot_impulse_response(var, targ, shock, h, 
+					      (const double **) Z,
+					      datainfo);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    register_graph();
+	}
+    }
+}
+
 static void open_gui_sys (gui_obj *gobj)
 { 
-    GRETL_SYS *sys = (GRETL_SYS *) gobj->data;
+    SESSION_SYS *sys = (SESSION_SYS *) gobj->data;
 
     real_open_gui_sys(sys);
 }
@@ -1654,7 +1761,7 @@ static void open_boxplot (gui_obj *gobj)
 
 static void open_gui_text (gui_obj *gobj)
 { 
-    GRETL_TEXT *text = (GRETL_TEXT *) gobj->data;
+    SESSION_TEXT *text = (SESSION_TEXT *) gobj->data;
     PRN *prn;
 
     prn = gretl_print_new_with_buffer(g_strdup(text->buf));
@@ -1724,12 +1831,12 @@ static int real_delete_model_from_session (MODEL *junk)
     return 0;
 }
 
-static int real_delete_var_from_session (GRETL_VAR *junk)
+static int real_delete_var_from_session (SESSION_VAR *junk)
 {
     if (session.nvars == 1) {
-	gretl_VAR_free(session.vars[0]);
+	free_session_var(session.vars[0]);
     } else {
-	GRETL_VAR **ppvar;
+	SESSION_VAR **ppvar;
 	int i, j;
 
 	ppvar = mymalloc((session.nvars - 1) * sizeof *ppvar);
@@ -1741,7 +1848,7 @@ static int real_delete_var_from_session (GRETL_VAR *junk)
 	    if (session.vars[i] != junk) {
 		ppvar[j++] = session.vars[i];
 	    } else {
-		gretl_VAR_free(session.vars[i]);
+		free_session_var(session.vars[i]);
 	    }
 	}
 	free(session.vars);
@@ -1754,12 +1861,12 @@ static int real_delete_var_from_session (GRETL_VAR *junk)
     return 0;
 }
 
-static int real_delete_sys_from_session (GRETL_SYS *junk)
+static int real_delete_sys_from_session (SESSION_SYS *junk)
 {
     if (session.nsys == 1) {
 	free_session_sys(session.systems[0]);
     } else {
-	GRETL_SYS **systems;
+	SESSION_SYS **systems;
 	int i, j;
 
 	systems = mymalloc((session.nsys - 1) * sizeof *systems);
@@ -1784,18 +1891,18 @@ static int real_delete_sys_from_session (GRETL_SYS *junk)
     return 0;
 }
 
-static void gretl_text_free (GRETL_TEXT *text)
+static void gretl_text_free (SESSION_TEXT *text)
 {
     free(text->buf);
     free(text);
 }
 
-static int real_delete_text_from_session (GRETL_TEXT *junk)
+static int real_delete_text_from_session (SESSION_TEXT *junk)
 {
     if (session.ntexts == 1) {
 	gretl_text_free(session.texts[0]);
     } else {
-	GRETL_TEXT **pptext;
+	SESSION_TEXT **pptext;
 	int i, j;
 
 	pptext = mymalloc((session.ntexts - 1) * sizeof *pptext);
@@ -1907,11 +2014,6 @@ static void rename_session_model (MODEL *pmod, const char *newname)
     }
 }
 
-static void rename_session_var (GRETL_VAR *var, const char *newname)
-{
-    gretl_VAR_assign_specific_name(var, newname);
-}
-
 static void rename_session_graph (GRAPHT *graph, const char *newname)
 {
     int i;
@@ -1930,8 +2032,6 @@ static void rename_session_object (gui_obj *obj, const char *newname)
 {
     if (obj->sort == OBJ_MODEL) { 
 	rename_session_model(obj->data, newname);
-    } else if (obj->sort == OBJ_VAR) { 
-	rename_session_var(obj->data, newname);
     } else if (obj->sort == OBJ_GRAPH || obj->sort == OBJ_PLOT) { 
 	rename_session_graph(obj->data, newname);
     }
@@ -1978,32 +2078,30 @@ void delete_model_from_session (MODEL *pmod)
     }
 }
 
-void delete_var_from_session (GRETL_VAR *var)
+void delete_VAR_from_session (void *p)
 {
+    SESSION_VAR *svar = (SESSION_VAR *) p;
+    GRETL_VAR *var;
     gui_obj *obj;
 
-    obj = get_gui_obj_from_data((void *) var);
+    obj = get_gui_obj_from_data(svar);
 
+    var = get_VAR_by_name(svar->varname);
     if (winstack_match_data(var)) {
 	errbox(_("Please close this object's window first"));
 	return;
     }
 
-    real_delete_var_from_session(var);
+    real_delete_var_from_session(svar);
     if (obj != NULL) {
 	session_delete_icon(obj);
     }
 }
 
-void delete_system_from_session (const char *savename)
+void delete_system_from_session (void *p)
 {
-    GRETL_SYS *sys;
+    SESSION_SYS *sys = (SESSION_SYS *) p;
     gui_obj *obj;
-
-    sys = get_sys_by_savename(savename);
-    if (sys == NULL) {
-	return;
-    }
 
     obj = get_gui_obj_from_data(sys);
 
@@ -2013,27 +2111,11 @@ void delete_system_from_session (const char *savename)
     }
 }
 
-static GRETL_TEXT *get_text_by_name (const char *tname)
+void delete_text_from_session (void *p)
 {
-    GRETL_TEXT *text = NULL;
-    int i;
-
-    for (i=0; i<session.ntexts; i++) {
-	if (!strcmp((session.texts[i])->name, tname)) {
-	    text = session.texts[i];
-	    break;
-	}
-    }
-
-    return text;
-}
-
-void delete_text_from_session (const char *tname)
-{
-    GRETL_TEXT *text;
+    SESSION_TEXT *text = (SESSION_TEXT *) p;
     gui_obj *obj;
 
-    text = get_text_by_name(tname);
     if (text == NULL) return;
 
     obj = get_gui_obj_from_data((void *) text);
@@ -2045,17 +2127,16 @@ void delete_text_from_session (const char *tname)
     }
 }
 
-void display_text_by_name (const char *tname)
+void display_saved_text (void *p)
 {
-    GRETL_TEXT *text;
+    SESSION_TEXT *text = (SESSION_TEXT *) p;
     PRN *prn;
 
-    text = get_text_by_name(tname);
     if (text == NULL) return;
 
     prn = gretl_print_new_with_buffer(g_strdup(text->buf));
     if (prn != NULL) { 
-	view_buffer(prn, 80, 400, tname, INFO, NULL);
+	view_buffer(prn, 80, 400, text->name, INFO, NULL);
     }
 }
 
@@ -2660,10 +2741,10 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     gui_obj *gobj;
     gchar *name = NULL;
     MODEL *pmod = NULL;
-    GRETL_VAR *var = NULL;
     GRAPHT *graph = NULL;
-    GRETL_TEXT *text = NULL;
-    GRETL_SYS *sys = NULL;
+    SESSION_VAR *var = NULL;
+    SESSION_TEXT *text = NULL;
+    SESSION_SYS *sys = NULL;
     int icon_named = 0;
 
     switch (sort) {
@@ -2672,11 +2753,11 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	name = g_strdup(pmod->name);
 	break;
     case OBJ_VAR:
-	var = (GRETL_VAR *) data;
-	name = g_strdup(gretl_VAR_get_name(var));
+	var = (SESSION_VAR *) data;
+	name = g_strdup(var->name);
 	break;
     case OBJ_SYS:
-	sys = (GRETL_SYS *) data;
+	sys = (SESSION_SYS *) data;
 	name = g_strdup(sys->name);
 	break;
     case OBJ_PLOT:
@@ -2685,7 +2766,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	name = g_strdup(graph->name);
 	break;
     case OBJ_TEXT:
-	text = (GRETL_TEXT *) data;
+	text = (SESSION_TEXT *) data;
 	name = g_strdup(text->name);
 	break;
     case OBJ_DATASET:
