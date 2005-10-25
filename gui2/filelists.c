@@ -68,8 +68,6 @@ static char **get_file_list (int filetype)
     }
 }
 
-/* .................................................................. */
-
 #if defined(USE_GNOME) && !defined(OLD_GTK)
 
 static void printfilelist (int filetype, GConfClient *client)
@@ -274,24 +272,24 @@ static void clear_files_list (int filetype, char **filep)
     }
 }
 
-/* .................................................................. */
-
 static char *cut_multiple_slashes (char *fname)
 {
-    int i, n = strlen(fname);
+    char *s = fname;
+
 #ifdef G_OS_WIN32
     /* may be ok for a filename to start with a double backslash */
-    int start = 1;
-#else
-    int start = 0;
+    s++;
 #endif
 
-    for (i=start; i<n-1; i++) {
-	if (fname[i] == SLASH && fname[i+1] == SLASH) {
-	    memmove(fname + i, fname + i + 1, strlen(fname + i + 1) + 1);
-	    i--;
-	    n--;
+    while (*s) {
+	if (*s == SLASH) {
+	    if (*(s+1) == SLASH) {
+		memmove(s, s + 1, strlen(s + 1) + 1);
+	    } else if (*(s+1) == '.' && *(s+2) == SLASH) {
+		memmove(s, s + 2, strlen(s + 2) + 1);
+	    }
 	}
+	s++;
     }
 
     return fname;
@@ -371,8 +369,6 @@ void mkfilelist (int filetype, char *fname)
     add_files_to_menu(filetype);
 }
 
-/* .................................................................. */
-
 void write_filename_to_list (int filetype, int i, char *fname)
 {
     if (filetype == FILE_LIST_DATA) {
@@ -383,8 +379,6 @@ void write_filename_to_list (int filetype, int i, char *fname)
 	strcpy(scriptlist[i], fname);
     } 
 }
-
-/* .................................................................. */
 
 void delete_from_filelist (int filetype, const char *fname)
 {
@@ -423,8 +417,6 @@ void delete_from_filelist (int filetype, const char *fname)
     /* need to save to file at this point? */
 }
 
-/* ........................................................... */
-
 static void copy_sys_filename (char *targ, const char *src)
 {
     strcpy(targ, src);
@@ -432,8 +424,6 @@ static void copy_sys_filename (char *targ, const char *src)
     my_filename_from_utf8(targ);
 #endif
 }    
-
-/* ........................................................... */
 
 static void set_data_from_filelist (gpointer data, guint i, 
 				    GtkWidget *widget)
@@ -458,8 +448,6 @@ static void set_script_from_filelist (gpointer data, guint i,
     copy_sys_filename(tryscript, scriptp[i]);
     do_open_script();
 }
-
-/* ........................................................... */
 
 static void real_add_files_to_menus (int ftype)
 {

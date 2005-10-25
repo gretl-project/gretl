@@ -286,6 +286,35 @@ int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
     return ret;
 }
 
+int maybe_stack_model (MODEL **ppmod, const CMD *cmd, const DATAINFO *pdinfo,
+		       PRN *prn)
+{
+    const char *mname = gretl_cmd_get_savename(cmd);
+    int err;
+
+    mname = gretl_cmd_get_savename(cmd);
+
+    if (*mname == 0) {
+	return 0;
+    }
+
+    err = stack_model_as(*ppmod, mname);
+
+    if (!err) {
+	MODEL *mnew = gretl_model_new();
+
+	if (mnew != NULL) {
+	    copy_model(mnew, *ppmod, pdinfo);
+	    *ppmod = mnew;
+	    pprintf(prn, _("%s saved\n"), mname);
+	} else {
+	    err = E_ALLOC;
+	}
+    }
+
+    return err;
+}
+
 #define INVALID_STAT -999.999
 
 double maybe_get_value (void *p, int type, const char *valname)

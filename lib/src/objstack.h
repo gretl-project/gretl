@@ -42,6 +42,9 @@ int stack_VAR (GRETL_VAR *var);
 
 int stack_VAR_as (GRETL_VAR *var, const char *vname);
 
+int maybe_stack_model (MODEL **ppmod, const CMD *cmd, const DATAINFO *pdinfo,
+		       PRN *prn);
+
 int maybe_stack_var (GRETL_VAR *var, const CMD *cmd);
 
 double saved_object_get_value (const char *oname, const char *valname, int *err);
