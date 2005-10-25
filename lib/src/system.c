@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "system.h"
 #include "system_private.h"
+#include "objstack.h"
 
 enum {
     OP_PLUS,
@@ -90,100 +91,6 @@ const char *toofew = N_("An equation system must have at least two equations");
 
 static void destroy_ident (identity *pident);
 static int make_instrument_list (gretl_equation_system *sys);
-
-
-/* ------------------------------------------------------------ */
-
-static gretl_equation_system **system_stack;
-static int n_systems;
-
-static gretl_equation_system *
-real_get_equation_system_by_name (const char *sysname, int *snum)
-{
-    int i;
-
-    if (sysname == NULL) {
-	return NULL;
-    }
-
-    for (i=0; i<n_systems; i++) {
-	if (!strcmp(sysname, system_stack[i]->name)) {
-	    if (snum != NULL) {
-		*snum = i;
-	    }
-	    return system_stack[i];
-	}
-    }
-
-    return NULL;
-}
-
-gretl_equation_system *
-get_equation_system_by_name (const char *sysname)
-{
-    return real_get_equation_system_by_name(sysname, NULL);
-}
-
-static int stack_system (gretl_equation_system *sys, 
-			 const char *sname,
-			 PRN *prn)
-{
-    gretl_equation_system *orig;
-    int snum;
-
-    if (sys == NULL) {
-	return 1;
-    }
-
-    if (sname != NULL) {
-	sys->name = gretl_strdup(sname);
-    }
-
-    if (sys->name == NULL) {
-	return 1;
-    }
-
-    orig = real_get_equation_system_by_name(sys->name, &snum);
-
-    if (orig != NULL) {
-	/* replace existing system of same name */
-	gretl_equation_system_destroy(orig);
-	system_stack[snum] = sys;
-	pprintf(prn, "Replaced equation system '%s'\n", sys->name);
-    } else {
-	gretl_equation_system **sstack;
-
-	sstack = realloc(system_stack, (n_systems + 1) * sizeof *sstack);
-	if (sstack == NULL) {
-	    return E_ALLOC;
-	}
-	system_stack = sstack;
-	system_stack[n_systems++] = sys;
-	pprintf(prn, "Added equation system '%s'\n", sys->name);
-    }
-
-    return 0;
-}
-
-int stack_system_as (gretl_equation_system *sys, const char *sname)
-{
-    return stack_system(sys, sname, NULL);
-}
-
-void gretl_equation_systems_cleanup (void)
-{
-    int i;
-
-    for (i=0; i<n_systems; i++) {
-	gretl_equation_system_destroy(system_stack[i]);
-    }
-
-    free(system_stack);
-    system_stack = NULL;
-    n_systems = 0;
-}
-
-/* ------------------------------------------------------------ */
 
 static void 
 print_system_identity (const identity *pident, const DATAINFO *pdinfo, 
@@ -895,7 +802,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 
     if (sys->name != NULL) {
 	/* save the system for subsequent estimation */
-	err = stack_system(sys, NULL, prn);
+	err = stack_system(sys, prn);
     }
 
     if (!err && sys->method >= 0) {
@@ -1067,6 +974,15 @@ const char *gretl_system_short_string (const MODEL *pmod)
 const char *gretl_system_get_name (const gretl_equation_system *sys)
 {
     return sys->name;
+}
+
+void gretl_system_set_name (gretl_equation_system *sys, const char *name)
+{
+    if (sys->name != NULL) {
+	free(sys->name);
+    }
+
+    sys->name = gretl_strdup(name);
 }
 
 int system_adjust_t1t2 (gretl_equation_system *sys,

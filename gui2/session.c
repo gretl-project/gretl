@@ -36,7 +36,7 @@
 
 #include "var.h"
 #include "varprint.h"
-#include "varstack.h"
+#include "objstack.h"
 #include "system.h"
 
 #include <sys/stat.h>

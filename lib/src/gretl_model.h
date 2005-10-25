@@ -232,4 +232,6 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 				      const double **Z,
 				      const DATAINFO *pdinfo);
 
+void gretl_model_set_name (MODEL *pmod, const char *name);
+
 #endif /* GRETL_MODEL_H */

@@ -22,7 +22,7 @@
 #include "varprint.h"
 #include "modelspec.h"
 #include "forecast.h"
-#include "system.h"
+#include "objstack.h"
 
 #include <sys/stat.h>
 #include <unistd.h>

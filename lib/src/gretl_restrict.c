@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "system.h"
 #include "var.h"
-#include "varstack.h"
+#include "objstack.h"
 #include "gretl_restrict.h"
 
 #define RDEBUG 0

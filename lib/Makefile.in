@@ -100,6 +100,7 @@ PUBLIC_HDRS = \
 	monte_carlo.h \
 	nls.h \
 	nonparam.h \
+	objstack.h \
 	options.h \
 	plugins.h \
 	printout.h \
@@ -112,8 +113,7 @@ PUBLIC_HDRS = \
 	texprint.h \
 	transforms.h \
 	var.h \
-	varprint.h \
-	varstack.h
+	varprint.h
 
 SRCS = adf_kpss.c \
 	bhhh_max.c \
@@ -151,6 +151,7 @@ SRCS = adf_kpss.c \
 	monte_carlo.c \
 	nls.c \
 	nonparam.c \
+	objstack.c \
 	options.c \
 	plugins.c \
 	printout.c \
@@ -163,8 +164,7 @@ SRCS = adf_kpss.c \
 	texprint.c \
 	transforms.c \
 	var.c \
-	varprint.c \
-	varstack.c
+	varprint.c
 
 CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 	   fdtr.c gamma.c gdtr.c igam.c igami.c incbet.c incbi.c \

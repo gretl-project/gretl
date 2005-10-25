@@ -2434,6 +2434,11 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
     return ret;
 }
 
+void gretl_model_set_name (MODEL *pmod, const char *name)
+{
+    if (pmod->name != NULL) {
+	free(pmod->name);
+    }
 
-
-
+    pmod->name = gretl_strdup(name);
+}

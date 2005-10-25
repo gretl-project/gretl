@@ -25,6 +25,7 @@
 #include "genstack.h"
 #include "libset.h"
 #include "modelspec.h"
+#include "objstack.h"
 
 #include "../../cephes/libprob.h"
 
@@ -1726,8 +1727,6 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
     return genr->err;
 }
 
-/* ...................................................... */
-
 static int count_ops (char *s, int *opcount)
 {
     int level, maxlev = 0;
@@ -2376,6 +2375,39 @@ write_genr_label (GENERATE *genr, char *genrs, int oldv)
     strcpy(VARLABEL(genr->pdinfo, genr->varnum), genr->label);    
 }
 
+static void catch_saved_object_refs (char *s)
+{
+    char *test = NULL;
+    char *p = strchr(s, '.');
+
+    if (p != NULL) {
+	int i, len = strcspn(s, ".");
+	int gotit = 0;
+
+	for (i=len; i>0; i--) {
+	    if (op_level(s[i])) {
+		test = gretl_strndup(s+i+1, len-i-1);
+		gotit = 1;
+		break;
+	    }
+	}
+	if (!gotit && len > 0) {
+	    test = gretl_strndup(s+i, len-i);
+	}
+	p++;
+    }
+
+    if (test != NULL) {
+	double x;
+
+	fprintf(stderr, "obj = '%s'\n", test);
+	fprintf(stderr, "stat = '%s'\n", p);
+	x = saved_object_get_value(test, p);
+	fprintf(stderr, "value = %g\n", x);
+	free(test);
+    }	
+}
+
 /**
  * generate:
  * @line: command line (formula for generating variable).
@@ -2500,6 +2532,8 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    goto genr_return;
 	}
     }
+
+    catch_saved_object_refs(s);
 
     /* process any daily dates in brackets */
     if ((genr.err = fix_obs_in_brackets(s))) {

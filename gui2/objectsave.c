@@ -27,7 +27,7 @@
 #include "cmd_private.h"
 #include "var.h"
 #include "varprint.h"
-#include "varstack.h"
+#include "objstack.h"
 
 enum {
     OBJ_ACTION_NONE,
@@ -113,16 +113,6 @@ static void show_saved_model (MODEL *pmod)
     printmodel(pmod, datainfo, OPT_NONE, prn);
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 400, title); 
-}
-
-static void show_saved_var (GRETL_VAR *var)
-{
-    PRN *prn;
-
-    if (bufopen(&prn)) return;
-
-    gretl_VAR_print(var, datainfo, OPT_NONE, prn);
-    view_buffer(prn, 78, 450, gretl_VAR_get_name(var), var->ci, var);
 }
 
 static void get_word_and_command (const char *s, char *word, 

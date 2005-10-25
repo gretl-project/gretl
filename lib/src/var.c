@@ -2723,7 +2723,7 @@ void gretl_VAR_auto_assign_name (GRETL_VAR *var)
     }
 }
 
-void gretl_VAR_assign_specific_name (GRETL_VAR *var, const char *name)
+void gretl_VAR_set_name (GRETL_VAR *var, const char *name)
 {
     if (var->name != NULL) {
 	free(var->name);

@@ -34,7 +34,7 @@
 #include "libset.h"
 #include "forecast.h"
 #include "cmd_private.h"
-#include "varstack.h"
+#include "objstack.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -312,8 +312,7 @@ static int clear_data (void)
     free_modelspec(modelspec);
     modelspec = NULL;
 
-    gretl_equation_systems_cleanup();
-    gretl_VARs_cleanup();
+    gretl_saved_objects_cleanup();
 
     reset_model_count();
 

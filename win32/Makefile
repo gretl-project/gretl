@@ -150,6 +150,7 @@ LIBSRC = adf_kpss.c \
 	monte_carlo.c \
 	nls.c \
 	nonparam.c \
+	objstack.c \
 	options.c \
 	plugins.c \
 	printout.c \
@@ -162,8 +163,7 @@ LIBSRC = adf_kpss.c \
 	texprint.c \
 	transforms.c \
 	var.c \
-	varprint.c \
-	varstack.c
+	varprint.c
 
 LIBOBJ = $(LIBSRC:.c=.o)
 
