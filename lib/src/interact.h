@@ -66,8 +66,6 @@ void gretl_cmd_destroy_context (CMD *cmd);
 
 const char *gretl_cmd_get_savename (const CMD *cmd);
 
-const char *gretl_cmd_get_name (const CMD *cmd);
-
 gretlopt gretl_cmd_get_opt (const CMD *cmd);
 
 void gretl_cmd_set_opt (CMD *cmd, gretlopt opt);

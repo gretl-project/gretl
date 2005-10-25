@@ -530,7 +530,7 @@ enum winstack_codes {
     STACK_MAXVAR
 };
 
-static int winstack (int code, GtkWidget *w, gpointer ptest)
+static int winstack (int code, GtkWidget *w, gpointer ptest, GtkWidget **pw)
 {
     static int n_windows;
     static GtkWidget **wstack;
@@ -582,6 +582,9 @@ static int winstack (int code, GtkWidget *w, gpointer ptest)
 	    if (wstack[i] != NULL) {
 		gpointer p = g_object_get_data(G_OBJECT(wstack[i]), "object");
 		if (p == ptest) {
+		    if (pw != NULL) {
+			*pw = wstack[i];
+		    }
 		    ret = 1;
 		    break;
 		}
@@ -602,32 +605,40 @@ static int winstack (int code, GtkWidget *w, gpointer ptest)
 
 void winstack_init (void)
 {
-    winstack(STACK_INIT, NULL, NULL);
+    winstack(STACK_INIT, NULL, NULL, NULL);
 }
     
 void winstack_destroy (void)
 {
-    winstack(STACK_DESTROY, NULL, NULL);
+    winstack(STACK_DESTROY, NULL, NULL, NULL);
 }
 
 int winstack_match_data (gpointer p)
 {
-    return winstack(STACK_QUERY, NULL, p);
+    return winstack(STACK_QUERY, NULL, p, NULL);
+}
+
+GtkWidget *match_window_by_data (gpointer p)
+{
+    GtkWidget *w = NULL;
+
+    winstack(STACK_QUERY, NULL, p, &w);
+    return w;
 }
 
 int highest_numbered_variable_in_winstack (void)
 {
-    return winstack(STACK_MAXVAR, NULL, NULL);
+    return winstack(STACK_MAXVAR, NULL, NULL, NULL);
 }
 
 static void winstack_add (GtkWidget *w)
 {
-    winstack(STACK_ADD, w, NULL);
+    winstack(STACK_ADD, w, NULL, NULL);
 }
 
 static void winstack_remove (GtkWidget *w)
 {
-    winstack(STACK_REMOVE, w, NULL);
+    winstack(STACK_REMOVE, w, NULL, NULL);
 }
 
 /* ........................................................... */
@@ -1558,8 +1569,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_mahal_dist(vwin->data);
 	} else if (vwin->role == COINT2) {
 	    gretl_VAR_free(vwin->data);
-	} else if (vwin->role == SYSTEM && vwin->data != NULL) {
-	    free(vwin->data); /* system name */
+	} else if (vwin->role == SYSTEM) {
+	    gretl_system_free_unnamed(vwin->data);
 	} else if (vwin->role == PRINT && vwin->data != NULL) {
 	    free_multi_series_view(vwin->data);
 	} else if (vwin->role == GUI_HELP || vwin->role == GUI_HELP_ENGLISH) {
@@ -3791,13 +3802,12 @@ enum {
 static void SYS_test_call (gpointer p, guint code, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
-    const char *sysname = (const char *) vwin->data;
-    gretl_equation_system *sys = NULL;
+    gretl_equation_system *sys;
     char title[72];
     PRN *prn;
     int err;
 
-    sys = get_equation_system_by_name(sysname);
+    sys = (gretl_equation_system *) vwin->data;
     if (sys == NULL) {
 	/* error message? */
 	return;
@@ -3827,11 +3837,10 @@ static void add_SYS_menu_items (windata_t *vwin)
     GtkItemFactoryEntry sysitem;
     const gchar *tpath = N_("/Tests");
     const gchar *dpath = N_("/Model data/Add to data set");
-    gretl_equation_system *sys = NULL;
-    const char *sysname = (const char *) vwin->data;
+    gretl_equation_system *sys;
     int i, neqns;
 
-    sys = get_equation_system_by_name(sysname);
+    sys = (gretl_equation_system *) vwin->data;
     if (sys == NULL) {
 	return;
     }

@@ -2375,10 +2375,16 @@ write_genr_label (GENERATE *genr, char *genrs, int oldv)
     strcpy(VARLABEL(genr->pdinfo, genr->varnum), genr->label);    
 }
 
-static void catch_saved_object_refs (char *s)
+/* for the present we handle only one such saved value, and
+   it must be the only element in the genr formula, e.g.
+   "genr x = Kmenta.$ess"
+*/
+
+static int catch_saved_object_scalar (char *s, double *x)
 {
     char *test = NULL;
-    char *p = strchr(s, '.');
+    char *p = strstr(s, ".$");
+    int ret = 0;
 
     if (p != NULL) {
 	int i, len = strcspn(s, ".");
@@ -2398,14 +2404,14 @@ static void catch_saved_object_refs (char *s)
     }
 
     if (test != NULL) {
-	double x;
+	int err = 0;
 
-	fprintf(stderr, "obj = '%s'\n", test);
-	fprintf(stderr, "stat = '%s'\n", p);
-	x = saved_object_get_value(test, p);
-	fprintf(stderr, "value = %g\n", x);
+	*x = saved_object_get_value(test, p, &err);
+	if (!err) ret = 1;
 	free(test);
-    }	
+    }
+
+    return ret;
 }
 
 /**
@@ -2427,6 +2433,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	      MODEL *pmod, gretlopt opt)
 {
     int i;
+    double val;
     char s[MAXLINE], genrs[MAXLINE];
     char newvar[USER_VLEN];
     int oldv = pdinfo->v;
@@ -2533,8 +2540,6 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    catch_saved_object_refs(s);
-
     /* process any daily dates in brackets */
     if ((genr.err = fix_obs_in_brackets(s))) {
 	return genr.err;
@@ -2577,6 +2582,12 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     for (i=0; i<pdinfo->n; i++) {
 	genr.xvec[i] = 0.0;
+    }
+
+    /* scalar value from saved object? */
+    if (catch_saved_object_scalar(s, &val)) {
+	genr.xvec[0] = val;
+	goto genr_return;
     }
 
     /* impose operator hierarchy */

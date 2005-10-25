@@ -65,7 +65,7 @@ extern char tramodir[];
 /* private functions */
 static void update_model_tests (windata_t *vwin);
 static int finish_genr (MODEL *pmod, dialog_t *dlg);
-static gint stack_model (MODEL *pmod);
+static gint my_stack_model (MODEL *pmod);
 #ifndef G_OS_WIN32
 static int get_terminal (char *s);
 #endif
@@ -530,7 +530,7 @@ int *command_list_from_string (char *s)
     return list;    
 }
 
-static gint stack_model (MODEL *pmod)
+static gint my_stack_model (MODEL *pmod)
 {
     int script = gretl_model_get_int(pmod, "script");
     int err = 0;
@@ -1463,7 +1463,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
     update_model_tests(vwin);
 
-    if (lib_cmd_init() || stack_model(pmod)) {
+    if (lib_cmd_init() || my_stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -2175,9 +2175,7 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
     } else if (vwin->role == VECM) {
 	vecm = (GRETL_VAR *) vwin->data;
     } else if (vwin->role == SYSTEM) {
-	const char *sysname = (char *) vwin->data;
-
-	sys = get_equation_system_by_name(sysname);
+	sys = (gretl_equation_system *) vwin->data;
     }
 
     if (pmod == NULL && vecm == NULL && sys == NULL) {
@@ -2286,15 +2284,12 @@ record_sys_commands_from_buf (const gchar *buf, const char *startline,
 
 void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 {
-    static int sysnum;
-
     gretl_equation_system *my_sys = NULL;
     gchar *buf;
     PRN *prn;
     char bufline[MAXLINE];
     int *slist = NULL;
     char *startline = NULL;
-    char *title, *sname = NULL;
     int got_end_line = 0;
     int method, err = 0;
 
@@ -2320,15 +2315,11 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 	}	    
 
 	if (!strncmp(bufline, "system", 6)) {
-	    sname = get_system_name_from_line(bufline);
 	    continue;
 	} 
 
 	if (my_sys == NULL) {
-	    if (sname == NULL) {
-		sname = g_strdup_printf("System %d", ++sysnum);
-	    }
-	    startline = g_strdup_printf("system name=\"%s\" method=%s", sname,
+	    startline = g_strdup_printf("system method=%s", 
 					system_method_short_string(method));
 	    my_sys = system_start(startline);
 	    if (my_sys == NULL) {
@@ -2355,7 +2346,6 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 
     if (err) {
 	g_free(buf);
-	free(sname);
 	return;
     }
 
@@ -2373,16 +2363,8 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
     g_free(buf);
     g_free(startline);
 
-    if (sname != NULL) {
-	title = g_strdup_printf("gretl: %s", sname);
-    } else {
-	title = g_strdup(_("gretl: simultaneous equations system"));
-    }
-
     view_buffer(prn, 78, 450, _("gretl: simultaneous equations system"), 
-		SYSTEM, sname);
-
-    g_free(title);
+		SYSTEM, my_sys);
 }
 
 static int do_nls_genr (void)
@@ -2499,7 +2481,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 
     close_dialog(dlg);
 
-    if (stack_model(pmod)) {
+    if (my_stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -2709,7 +2691,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	gretl_command_strcat(cmd.param);
     }
 
-    if (check_lib_command() || lib_cmd_init() || stack_model(pmod)) {
+    if (check_lib_command() || lib_cmd_init() || my_stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -2839,7 +2821,7 @@ void do_graph_model (GPT_SPEC *spec)
 	return;
     }
 
-    if (check_lib_command() || lib_cmd_init() || stack_model(pmod)) {
+    if (check_lib_command() || lib_cmd_init() || my_stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -6760,7 +6742,7 @@ int gui_exec_line (char *line,
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) {
 	gretl_model_set_int(models[0], "script", 1);
 	if (!do_mle) {
-	    err = stack_model(models[0]);
+	    err = my_stack_model(models[0]);
 	}
 	if (exec_code != REBUILD_EXEC && !do_arch && *cmd.savename != '\0') {
 	    maybe_save_model(&cmd, &models[0], prn);

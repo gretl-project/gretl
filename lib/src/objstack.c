@@ -23,6 +23,8 @@
 #include "system.h"
 #include "objstack.h"
 
+#define ODEBUG 0
+
 typedef struct stacker_ stacker;
 
 struct stacker_ {
@@ -32,6 +34,8 @@ struct stacker_ {
 
 static stacker *obj_stack;
 static int n_obj;
+static int n_sys;
+static int n_vars;
 
 static void gretl_saved_object_free (stacker *s)
 {
@@ -62,6 +66,7 @@ static const char *saved_object_get_name (stacker *s)
 
 static void *get_object_by_name (const char *oname, int type, int *onum)
 {
+    void *ptr = NULL;
     const char *test;
     int i;
 
@@ -78,11 +83,22 @@ static void *get_object_by_name (const char *oname, int type, int *onum)
 	    if (onum != NULL) {
 		*onum = i;
 	    }
-	    return obj_stack[i].ptr;
+	    ptr = obj_stack[i].ptr;
+	    break;
 	}
     }
 
-    return NULL;
+#if ODEBUG
+    fprintf(stderr, "get_object_by_name: name='%s', type=%d, ptr=%p\n",
+	    oname, type, (void *) ptr);
+#endif    
+
+    return ptr;
+}
+
+MODEL *get_model_by_name (const char *mname)
+{
+    return get_object_by_name(mname, EQUATION, NULL);
 }
 
 GRETL_VAR *get_VAR_by_name (const char *vname)
@@ -106,6 +122,37 @@ gretl_equation_system *get_equation_system_by_name (const char *sname)
     return get_object_by_name(sname, SYSTEM, NULL);
 }
 
+static int gretl_object_auto_assign_name (void *p, int type)
+{
+    char name[32];
+    int err = 0;
+
+    if (type == EQUATION) {
+	MODEL *pmod = (MODEL *) p;
+
+	sprintf(name, "%s %d", _("Model"), pmod->ID);
+	gretl_model_set_name(pmod, name);
+    } else if (type == VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) p;
+
+	if (var->ci == VAR) {
+	    sprintf(name, "%s %d", _("VAR"), ++n_vars);
+	} else {
+	    sprintf(name, "%s %d", _("VECM"), gretl_VECM_id(var));
+	}
+	gretl_VAR_set_name(var, name);
+    } else if (type == SYSTEM) {
+	gretl_equation_system *sys = (gretl_equation_system *) p;
+
+	sprintf(name, "%s %d", _("System"), ++n_sys);
+	gretl_system_set_name(sys, name);
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
 static int gretl_object_set_name (void *p, int type, const char *oname)
 {
     int err = 0;
@@ -123,6 +170,27 @@ static int gretl_object_set_name (void *p, int type, const char *oname)
     return err;
 }
 
+int object_on_stack (void *p)
+{
+    int i, ret = -1;
+
+    for (i=0; i<n_obj; i++) {
+	if (p == obj_stack[i].ptr) {
+	    ret = i;
+	    break;
+	}
+    }
+
+#if ODEBUG
+    if (ret >= 0) {
+	fprintf(stderr, "object_on_stack: object at %p already stacked at pos %d\n",
+		p, ret);
+    }
+#endif
+
+    return ret;
+}
+
 static int stack_object (void *p, int type, const char *oname, PRN *prn)
 {
     stacker *orig;
@@ -132,12 +200,17 @@ static int stack_object (void *p, int type, const char *oname, PRN *prn)
 	return 1;
     }
 
-    if (oname != NULL) {
-	err = gretl_object_set_name(p, type, oname);
-	if (err) {
-	    return err;
-	}
+    if (object_on_stack(p) >= 0) {
+	return 0;
     }
+
+    if (oname == NULL) {
+	err = gretl_object_auto_assign_name(p, type);
+    } else {
+	err = gretl_object_set_name(p, type, oname);
+    }
+
+    if (err) return err;
 
     orig = get_object_by_name(oname, type, &onum);
 
@@ -161,7 +234,27 @@ static int stack_object (void *p, int type, const char *oname, PRN *prn)
 	pprintf(prn, "Added object '%s'\n", oname);
     }
 
+#if ODEBUG
+    fprintf(stderr, "stack_object: oname='%s', type=%d, ptr=%p (n_obj=%d)\n",
+	    oname, type, (void *) p, n_obj);
+#endif  
+
     return 0;
+}
+
+int stack_model (MODEL *pmod)
+{
+    return stack_object(pmod, EQUATION, NULL, NULL);
+}
+
+int stack_model_as (MODEL *pmod, const char *mname)
+{
+    return stack_object(pmod, EQUATION, mname, NULL);
+}
+
+int stack_VAR (GRETL_VAR *var)
+{
+    return stack_object(var, VAR, NULL, NULL);
 }
 
 int stack_VAR_as (GRETL_VAR *var, const char *vname)
@@ -181,7 +274,7 @@ int stack_system (gretl_equation_system *sys, PRN *prn)
 
 int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
 {
-    const char *vname = gretl_cmd_get_name(cmd);
+    const char *vname = gretl_cmd_get_savename(cmd);
     int ret = 0;
 
     if (*vname) {
@@ -193,11 +286,64 @@ int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
     return ret;
 }
 
-double saved_object_get_value (const char *oname, const char *valname)
+#define INVALID_STAT -999.999
+
+double maybe_get_value (void *p, int type, const char *valname)
+{
+    double x = INVALID_STAT;
+
+    if (type == EQUATION) {
+	MODEL *pmod = (MODEL *) p;
+
+	if (!strcmp(valname, "$ess")) {
+	    x = pmod->ess;
+	} else if (!strcmp(valname, "$rsq")) {
+	    x = pmod->rsq;
+	} else if (!strcmp(valname, "$lnl")) {
+	    x = pmod->lnL;
+	} else if (!strcmp(valname, "$aic")) {
+	    x = pmod->criterion[C_AIC];
+	} else if (!strcmp(valname, "$bic")) {
+	    x = pmod->criterion[C_BIC];
+	} else if (!strcmp(valname, "$df")) {
+	    x = pmod->dfd;
+	} else if (!strcmp(valname, "$sigma")) {
+	    if (pmod->nwt) x = pmod->sigma_wt;
+	    else x = pmod->sigma;
+	} else if (!strcmp(valname, "$nrsq")) {
+	    x = pmod->nobs * pmod->rsq;
+	} else if (!strcmp(valname, "$trsq")) {
+	    x = pmod->nobs * pmod->rsq;
+	}
+    } else if (type == SYSTEM) {
+	gretl_equation_system *sys = (gretl_equation_system *) p;
+
+	if (!strcmp(valname, "$lnl")) {
+	    x = system_get_ll(sys);
+	} else if (!strcmp(valname, "$ess")) {
+	    x = system_get_ess(sys);
+	}
+    } else if (type == VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) p;
+
+	if (!strcmp(valname, "$lnl")) {
+	    x = var->ll;
+	} else if (!strcmp(valname, "$aic")) {
+	    x = var->AIC;
+	} else if (!strcmp(valname, "$bic")) {
+	    x = var->BIC;	
+	}
+    }
+
+    return x;
+}
+
+double saved_object_get_value (const char *oname, const char *valname,
+			       int *err)
 {
     stacker *smatch = NULL;
     const char *test;
-    double ret = NADBL;
+    double ret = INVALID_STAT;
     int i;
 
     for (i=0; i<n_obj; i++) {
@@ -209,8 +355,11 @@ double saved_object_get_value (const char *oname, const char *valname)
     }
 
     if (smatch != NULL) {
-	fprintf(stderr, "'%s': matched object %p, type %d\n", 
-		oname, smatch->ptr, smatch->type);
+	ret = maybe_get_value(smatch->ptr, smatch->type, valname);
+    }
+
+    if (ret == INVALID_STAT) {
+	*err = 1;
     }
 
     return ret;
@@ -226,5 +375,8 @@ void gretl_saved_objects_cleanup (void)
 
     free(obj_stack);
     obj_stack = NULL;
+
     n_obj = 0;
+    n_sys = 0;
+    n_vars = 0;
 }

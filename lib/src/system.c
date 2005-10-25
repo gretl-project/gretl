@@ -315,6 +315,13 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
     free(sys);
 }
 
+void gretl_system_free_unnamed (gretl_equation_system *sys)
+{
+    if (sys != NULL && sys->name == NULL) {
+	gretl_equation_system_destroy(sys);
+    }
+}
+
 static void sur_rearrange_lists (gretl_equation_system *sys)
 {
     if (sys->method == SYS_SUR) {
@@ -800,10 +807,12 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	return 1;
     }    
 
+#if 1 /* for cli program */
     if (sys->name != NULL) {
 	/* save the system for subsequent estimation */
-	err = stack_system(sys, prn);
+	err = stack_system_as(sys, sys->name);
     }
+#endif
 
     if (!err && sys->method >= 0) {
 	err = gretl_equation_system_estimate(sys, pZ, pdinfo, opt, prn);
@@ -971,18 +980,22 @@ const char *gretl_system_short_string (const MODEL *pmod)
     return gretl_system_short_strings[i];
 }
 
-const char *gretl_system_get_name (const gretl_equation_system *sys)
-{
-    return sys->name;
-}
-
 void gretl_system_set_name (gretl_equation_system *sys, const char *name)
 {
+    if (sys->name != NULL && !strcmp(sys->name, name)) {
+	return;
+    }
+
     if (sys->name != NULL) {
 	free(sys->name);
     }
 
     sys->name = gretl_strdup(name);
+}
+
+const char *gretl_system_get_name (const gretl_equation_system *sys)
+{
+    return sys->name;
 }
 
 int system_adjust_t1t2 (gretl_equation_system *sys,
@@ -1285,6 +1298,11 @@ double system_get_ll (const gretl_equation_system *sys)
 double system_get_llu (const gretl_equation_system *sys)
 {
     return sys->llu;
+}
+
+double system_get_ess (const gretl_equation_system *sys)
+{
+    return sys->ess;
 }
 
 double system_get_X2 (const gretl_equation_system *sys)

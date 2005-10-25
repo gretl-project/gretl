@@ -84,8 +84,12 @@ static int match_object_command (const char *s, char sort)
     return OBJ_ACTION_INVALID;
 }
 
-static void print_model_stat (MODEL *pmod, const char *param, PRN *prn)
+static void print_model_stat (const char *modname, const char *param, PRN *prn)
 {
+    MODEL *pmod = get_model_by_name(modname);
+
+    if (pmod == NULL) return;
+
     if (!strcmp(param, "ess")) {
 	pprintf(prn, _("%s: ess = %.8g\n"), pmod->name, pmod->ess);
     }
@@ -101,18 +105,6 @@ static void print_model_stat (MODEL *pmod, const char *param, PRN *prn)
     else {
 	pprintf(prn, _("%s: no data for '%s'\n"), pmod->name, param);
     }	
-}
-
-static void show_saved_model (MODEL *pmod)
-{
-    char title[26];
-    PRN *prn;
-
-    if (bufopen(&prn)) return;
-
-    printmodel(pmod, datainfo, OPT_NONE, prn);
-    sprintf(title, _("gretl: model %d"), pmod->ID);
-    view_model(prn, pmod, 78, 400, title); 
 }
 
 static void get_word_and_command (const char *s, char *word, 
@@ -230,9 +222,11 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod, PRN *prn)
 	return 0;
     }
 
-    (*ppmod)->name = g_strdup(savename);
+    err = stack_model_as(*ppmod, savename);
 
-    err = try_add_model_to_session(*ppmod);
+    if (!err) {
+	err = try_add_model_to_session(*ppmod);
+    }
 
     if (!err) {
 	MODEL *mnew = gretl_model_new();
@@ -252,15 +246,12 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod, PRN *prn)
 int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
 {
     const char *savename;
-    const char *vname;
-    const char *usename;
     GRETL_VAR *var;
     int err = 0;
 
     savename = gretl_cmd_get_savename(cmd);
-    vname = gretl_cmd_get_name(cmd);
 
-    if (*savename == 0 && *vname == 0) {
+    if (*savename == 0) {
 	gretl_VAR_free(*pvar);
 	*pvar = NULL;
 	return 0;
@@ -269,21 +260,12 @@ int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
     var = *pvar;
     *pvar = NULL;
 
-    if (*vname != '\0') {
-	usename = vname;
-    } else {
-	usename = savename;
-    }
-
-    err = stack_VAR_as(var, usename);
+    err = stack_VAR_as(var, savename);
 
     if (!err) {
-	if (*savename != '\0') {
-	    usename = savename;
-	}
-	err = try_add_var_to_session(var, usename);
+	err = try_add_var_to_session(var);
 	if (!err) {
-	    pprintf(prn, _("%s saved\n"), usename);
+	    pprintf(prn, _("%s saved\n"), savename);
 	}
     }
 
@@ -301,12 +283,18 @@ int maybe_save_system (const CMD *cmd, gretl_equation_system *sys, PRN *prn)
 
     savename = gretl_cmd_get_savename(cmd);
 
-    if (*savename == 0) return 0;
+    if (*savename == 0) {
+	return 0;
+    }
 
-    err = try_add_system_to_session(sys, savename);
+    err = stack_system_as(sys, savename);
+
     if (!err) {
-	pprintf(prn, _("%s saved\n"), savename);
-    } 
+	err = try_add_system_to_session(sys);
+	if (!err) {
+	    pprintf(prn, _("%s saved\n"), savename);
+	} 
+    }
 
     return err;
 }
@@ -375,7 +363,7 @@ int save_text_buffer (PRN *prn, const char *savename, PRN *errprn)
 
 int saved_object_action (const char *line, PRN *prn)
 {
-    char savename[MAXSAVENAME] = {0};
+    char objname[MAXSAVENAME] = {0};
     char param[9] = {0};
     void *ptr = NULL;
     int code;
@@ -385,7 +373,7 @@ int saved_object_action (const char *line, PRN *prn)
 	return 0;
     }
 
-    code = parse_object_request(line, savename, param, &ptr, prn);
+    code = parse_object_request(line, objname, param, &ptr, prn);
 
     if (code == OBJ_ACTION_NONE) {
 	return 0;
@@ -396,18 +384,18 @@ int saved_object_action (const char *line, PRN *prn)
     }
 
     if (code == OBJ_ACTION_MODEL_SHOW) {
-	show_saved_model(ptr);
+	display_saved_model(objname);
     } else if (code == OBJ_ACTION_MODEL_FREE) {
-	delete_model_from_session(ptr);
-	pprintf(prn, _("Freed %s\n"), savename);
+	delete_model_from_session(objname);
+	pprintf(prn, _("Freed %s\n"), objname);
     } else if (code == OBJ_ACTION_MODEL_STAT) {
-	print_model_stat((MODEL *) ptr, param, prn);
+	print_model_stat(objname, param, prn);
     } else if (code == OBJ_ACTION_VAR_SHOW) {
-	display_saved_VAR(ptr);
+	display_saved_VAR(objname);
     } else if (code == OBJ_ACTION_VAR_IRF) {
-	saved_VAR_do_irf(ptr, line);
+	saved_VAR_do_irf(objname, line);
     } else if (code == OBJ_ACTION_VAR_FREE) {
-	delete_VAR_from_session(ptr);
+	delete_VAR_from_session(objname);
     } else if (code == OBJ_ACTION_GRAPH_SHOW) {
 	GRAPHT *graph = (GRAPHT *) ptr;
 
@@ -420,11 +408,11 @@ int saved_object_action (const char *line, PRN *prn)
 	display_saved_text(ptr);
     } else if (code == OBJ_ACTION_TEXT_FREE) {
 	delete_text_from_session(ptr);
-	pprintf(prn, _("Freed %s\n"), savename);
+	pprintf(prn, _("Freed %s\n"), objname);
     } else if (code == OBJ_ACTION_SYS_SHOW) {
-	display_saved_equation_system(ptr);
+	display_saved_equation_system(objname);
     } else if (code == OBJ_ACTION_SYS_FREE) {
-	delete_system_from_session(ptr);
+	delete_system_from_session(objname);
     }
 
     return 1;

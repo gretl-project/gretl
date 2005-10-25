@@ -374,10 +374,13 @@ char *lower (char *str)
 
 char *gretl_strdup (const char *src)
 {
-    char *targ = malloc(strlen(src) + 1);
+    char *targ = NULL;
 
-    if (targ != NULL) {
-        strcpy(targ, src);
+    if (src != NULL) {
+	targ = malloc(strlen(src) + 1);
+	if (targ != NULL) {
+	    strcpy(targ, src);
+	}
     }
 
     return targ;
@@ -396,7 +399,7 @@ char *gretl_strndup (const char *src, size_t n)
 {
     char *targ = NULL;
 
-    if (n > 0) {
+    if (src != NULL && n > 0) {
 	size_t len = strlen(src);
 
 	if (len > n) {

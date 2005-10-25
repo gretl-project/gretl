@@ -2704,25 +2704,6 @@ int gretl_VAR_attach_restrictions (GRETL_VAR *var, gretl_matrix *D)
     return 0;
 }
 
-void gretl_VAR_auto_assign_name (GRETL_VAR *var)
-{
-    static int nvar = 0;
-
-    if (var->name != NULL) {
-	free(var->name);
-    }
-
-    var->name = malloc(10);
-
-    if (var->name != NULL) {
-	if (var->ci == VAR) {
-	    sprintf(var->name, "%s %d", _("VAR"), ++nvar);
-	} else {
-	    sprintf(var->name, "%s %d", _("VECM"), gretl_VECM_id(var));
-	}
-    }
-}
-
 void gretl_VAR_set_name (GRETL_VAR *var, const char *name)
 {
     if (var->name != NULL) {

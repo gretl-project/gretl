@@ -77,8 +77,6 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
 				const double **Z,
 				const DATAINFO *pdinfo);
 
-void gretl_VAR_auto_assign_name (GRETL_VAR *var);
-
 void gretl_VAR_set_name (GRETL_VAR *var, const char *name);
 
 int gretl_VAR_attach_restrictions (GRETL_VAR *var, gretl_matrix *D);

@@ -2442,3 +2442,12 @@ void gretl_model_set_name (MODEL *pmod, const char *name)
 
     pmod->name = gretl_strdup(name);
 }
+
+const char *gretl_model_get_name (const MODEL *pmod)
+{
+    if (pmod != NULL) {
+	return pmod->name;
+    }
+
+    return NULL;
+}

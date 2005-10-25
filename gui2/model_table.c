@@ -168,7 +168,7 @@ int add_to_model_table_list (const MODEL *pmod, int add_mode, PRN *prn)
 	model_list = tmp;
     }
 
-    if (model_already_saved(pmod)) {
+    if (model_already_saved(pmod->name)) {
 	model_list[model_list_len - 1] = pmod;
     } else {
 	MODEL *mcopy = gretl_model_new();

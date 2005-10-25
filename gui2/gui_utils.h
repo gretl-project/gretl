@@ -100,6 +100,8 @@ void winstack_destroy (void);
 
 int winstack_match_data (gpointer p);
 
+GtkWidget *match_window_by_data (gpointer p);
+
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role,
 			gpointer data);

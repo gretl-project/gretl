@@ -58,6 +58,8 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 void gretl_equation_system_destroy (gretl_equation_system *sys);
 
+void gretl_system_free_unnamed (gretl_equation_system *sys);
+
 const char *system_get_full_string (const gretl_equation_system *sys);
 
 int system_save_uhat (const gretl_equation_system *sys);
@@ -90,8 +92,9 @@ int *compose_tsls_list (gretl_equation_system *sys, int i);
 int system_get_depvar (const gretl_equation_system *sys, int i);
 
 const char *gretl_system_short_string (const MODEL *pmod);
-const char *gretl_system_get_name (const gretl_equation_system *sys);
+
 void gretl_system_set_name (gretl_equation_system *sys, const char *name);
+const char *gretl_system_get_name (const gretl_equation_system *sys);
 
 const gretl_matrix *system_get_R_matrix (const gretl_equation_system *sys);
 const gretl_matrix *system_get_q_matrix (const gretl_equation_system *sys);
@@ -119,6 +122,7 @@ MODEL *system_get_model (const gretl_equation_system *sys, int i);
 double system_get_ll (const gretl_equation_system *sys);
 double system_get_llu (const gretl_equation_system *sys);
 double system_get_X2 (const gretl_equation_system *sys);
+double system_get_ess (const gretl_equation_system *sys);
 double system_get_diag_stat (const gretl_equation_system *sys);
 
 void system_set_ll (gretl_equation_system *sys, double ll);

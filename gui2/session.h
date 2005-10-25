@@ -78,28 +78,29 @@ void remember_var (gpointer data, guint close, GtkWidget *widget);
 
 void remember_sys (gpointer data, guint close, GtkWidget *widget);
 
-int model_already_saved (const MODEL *pmod);
+int model_already_saved (const char *modname);
 
 int try_add_model_to_session (MODEL *pmod);
 
-int try_add_var_to_session (GRETL_VAR *var, const char *savename);
+int try_add_var_to_session (GRETL_VAR *var);
 
-int try_add_system_to_session (gretl_equation_system *sys,
-			       const char *savename);
+int try_add_system_to_session (gretl_equation_system *sys);
 
-int display_saved_equation_system (void *p);
+int display_saved_model (const char *modname);
 
-int display_saved_VAR (void *p);
+int display_saved_equation_system (const char *sysname);
 
-void saved_VAR_do_irf (void *p, const char *line);
+int display_saved_VAR (const char *varname);
 
-void delete_system_from_session (void *p);
+void saved_VAR_do_irf (const char *varname, const char *line);
 
-void delete_VAR_from_session (void *p);
+void delete_system_from_session (const char *sysname);
+
+void delete_VAR_from_session (const char *varname);
 
 void *get_session_object_by_name (const char *name, int *which);
 
-void delete_model_from_session (MODEL *pmod);
+void delete_model_from_session (const char *modname);
 
 void delete_text_from_session (void *p);
 

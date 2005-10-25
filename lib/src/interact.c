@@ -308,10 +308,9 @@ static int flow_control (const char *line, double ***pZ,
     return 1;
 }
 
-static void get_name_or_savename (char *s, CMD *cmd)
+static void get_savename (char *s, CMD *cmd)
 {
     *cmd->savename = 0;
-    *cmd->name = 0;
 
     if (strncmp(s, "genr ", 5) && strstr(s, " <- ")) {
 	int n, len, quote;
@@ -331,31 +330,6 @@ static void get_name_or_savename (char *s, CMD *cmd)
 	}
 	shift_string_left(s, len + 3);
     }
-
-    if (strstr(s, "--name=")) {
-	char *p = strstr(s, "--name=") + 7;
-	int n, quote, len = 0;
-
-	quote = (*p == '"');
-	if (quote) {
-	    p++;
-	    if (strchr(p, '"')) {
-		len = strcspn(p, "\"");
-	    }
-	} else {
-	    len = strcspn(p, " ");
-	}
-	if (len < 2) {
-	    return;
-	}
-	n = len;
-	if (n > MAXSAVENAME - 1) {
-	    n = MAXSAVENAME - 1;
-	}
-	strncat(cmd->name, p, n);
-	p = strstr(s, "--name=");
-	shift_string_left(p, len + 7 + 2 * quote);
-    }	
 }
 
 static int 
@@ -1218,8 +1192,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->errcode;
     }    
 
-    /* extract name or "savename" for storing an object? */
-    get_name_or_savename(line, cmd);
+    /* extract "savename" for storing an object? */
+    get_savename(line, cmd);
 
     /* no command here? */
     if (sscanf(line, "%8s", cmd->word) != 1) {
@@ -3145,7 +3119,6 @@ int gretl_cmd_init (CMD *cmd)
     cmd->context = 0;
     cmd->ignore = 0;
     *cmd->word = '\0';
-    *cmd->name = '\0';
 
     cmd->list = NULL;
     cmd->param = NULL;
@@ -3230,8 +3203,4 @@ const char *gretl_cmd_get_savename (const CMD *cmd)
     return cmd->savename;
 }
 
-const char *gretl_cmd_get_name (const CMD *cmd)
-{
-    return cmd->name;
-}
 
