@@ -119,10 +119,12 @@ void gretl_delete_saved_object (void *p)
 	for (i=delpos; i<n_obj-1; i++) {
 	    obj_stack[i] = obj_stack[i+1];
 	}
+
+	n_obj--;
+
 	new_stack = realloc(obj_stack, (n_obj - 1) * sizeof *new_stack);
 	if (new_stack != NULL) {
 	    obj_stack = new_stack;
-	    n_obj--;
 	}
     }
 }
