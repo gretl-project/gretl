@@ -92,15 +92,15 @@ int display_saved_equation_system (const char *sysname);
 
 int display_saved_VAR (const char *varname);
 
-void saved_VAR_do_irf (const char *varname, const char *line);
+void session_VAR_do_irf (const char *varname, const char *line);
 
-void delete_system_from_session (const char *sysname);
+int delete_model_from_session (const char *modname);
 
-void delete_VAR_from_session (const char *varname);
+int delete_system_from_session (const char *sysname);
+
+int delete_VAR_from_session (const char *varname);
 
 void *get_session_object_by_name (const char *name, int *which);
-
-void delete_model_from_session (const char *modname);
 
 void delete_text_from_session (void *p);
 

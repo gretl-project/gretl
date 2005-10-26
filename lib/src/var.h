@@ -96,6 +96,9 @@ const MODEL *gretl_VAR_get_model (const GRETL_VAR *var, int i);
 int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 				     double ***pZ, DATAINFO *pdinfo);
 
+int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
+		      const double **Z, const DATAINFO *pdinfo);
+
 int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
 				    const DATAINFO *pdinfo);
 

@@ -66,7 +66,6 @@ static int genr_write_var (double ***pZ, DATAINFO *pdinfo,
 static int math_tokenize (char *s, GENERATE *genr, int level);
 static double get_obs_value (const char *s, const double **Z, 
 			     const DATAINFO *pdinfo, int *err);
-static int model_scalar_stat_index (const char *s);
 static int model_vector_index (const char *s);
 static int dataset_var_index (const char *s);
 static int test_stat_index (const char *s);
@@ -84,7 +83,6 @@ static double get_tnum (const DATAINFO *pdinfo, int t);
 static double evaluate_statistic (double *z, GENERATE *genr, int fn);
 static double get_model_data_element (const char *s, GENERATE *genr,
 				      MODEL *pmod, int idx);
-static double get_model_scalar_stat (const MODEL *pmod, int idx, int *err);
 static double get_dataset_statistic (DATAINFO *pdinfo, int idx);
 static double get_test_stat_value (char *label, int idx);
 static double evaluate_math_function (double arg, int fn, int *err);
@@ -98,18 +96,8 @@ static double evaluate_critval (const char *s, const double **Z,
 				const DATAINFO *pdinfo, int *err);
 static void free_genr_S (GENERATE *genr);
 
-
 enum retrieve {
-    R_ESS = 1,   /* error sum of squares, last model */
-    R_T,         /* observations used, last model */
-    R_RSQ,       /* R-squared, last model */
-    R_SIGMA,     /* standard error of residuals, last model */
-    R_DF,        /* degrees of freedom, last model */
-    R_LNL,       /* log-likelihood, last model */
-    R_AIC,       /* Akaike info criterion, last model */
-    R_BIC,       /* Bayesian info criterion, last model */
-    R_TRSQ,      /* T * R-squared, last model */
-    R_NOBS,      /* number of observations in current sample range */
+    R_NOBS = 1,  /* number of observations in current sample range */
     R_NVARS,     /* number of variables in dataset (including the constant) */
     R_PD,        /* periodicity of dataset */
     R_TEST_STAT, /* test statistic from last explicit test performed */
@@ -620,10 +608,10 @@ static genatom *parse_token (const char *s, char op,
 	if ((i = get_lagvar(s, &lag, genr)) > 0) {
 	    DPRINTF(("recognized var #%d lag %d\n", i, lag));
 	    v = i;
-	} else if ((i = model_scalar_stat_index(s)) > 0) {
+	} else if ((i = gretl_model_stat_index(s)) > 0) {
 	    DPRINTF(("recognized '%s' as model variable, index #%d\n", 
 		     s, i));
-	    val = get_model_scalar_stat(genr->pmod, i, &genr->err);
+	    val = gretl_model_get_scalar(genr->pmod, i, &genr->err);
 	    scalar = 1;
 	} else if ((i = model_vector_index(s)) > 0) { 
 	    DPRINTF(("recognized '%s' as model vector, index #%d\n", 
@@ -3763,73 +3751,6 @@ static double *get_tmp_series (double *mvec, GENERATE *genr,
     return x;
 }
 
-static int check_modelstat (const MODEL *pmod, int idx)
-{
-    if (pmod == NULL || pmod->list == NULL) {
-	switch (idx) {
-	case R_T:
-	    strcpy(gretl_errmsg, 
-		   _("No $T (number of obs for model) value is available"));
-	    return 1;
-	case R_ESS:
-	    strcpy(gretl_errmsg, 
-		   _("No $ess (error sum of squares) value is available"));
-	    return 1;
-	case R_RSQ:
-	    strcpy(gretl_errmsg, 
-		   _("No $rsq (R-squared) value is available"));
-	    return 1;
-	case R_TRSQ:
-	    strcpy(gretl_errmsg, 
-		   _("No $trsq (T*R-squared) value is available"));
-	    return 1;
-	case R_DF:
-	    strcpy(gretl_errmsg, 
-		   _("No $df (degrees of freedom) value is available"));
-	    return 1;
-	case R_SIGMA:
-	    strcpy(gretl_errmsg, 
-		   _("No $sigma (std. err. of model) value is available"));
-	    return 1;
-	case R_LNL:
-	    strcpy(gretl_errmsg, 
-		   _("No $lnl (log-likelihood) value is available"));
-	    return 1;
-	case R_AIC:
-	    strcpy(gretl_errmsg, 
-		   _("No $aic (Akaike Information Criterion) value is available"));
-	    return 1;
-	case R_BIC:
-	    strcpy(gretl_errmsg, 
-		   _("No $bic (Bayesian Information Criterion) value is available"));
-	    return 1;
-	default:
-	    return 0;
-	}
-    }
-
-    if (pmod != NULL && pmod->ci != LOGIT && pmod->ci != PROBIT &&
-	idx == R_LNL) {
-	strcpy(gretl_errmsg, 
-	       _("$lnl (log-likelihood) is not available for the last model"));
-	return 1;
-    }
-
-    if (pmod != NULL && idx == R_AIC && na(pmod->criterion[C_AIC])) {
-	strcpy(gretl_errmsg, 
-	       _("No $aic (Akaike Information Criterion) value is available"));
-	return 1;
-    }
-
-    if (pmod != NULL && idx == R_BIC && na(pmod->criterion[C_BIC])) {
-	strcpy(gretl_errmsg, 
-	       _("No $bic (Bayesian Information Criterion) value is available"));
-	return 1;
-    }	
-
-    return 0;
-}
-
 static int arma_model_stat_pos (const char *s, const MODEL *pmod)
 {
     int p = -1;
@@ -3925,64 +3846,6 @@ get_model_data_element (const char *s, GENERATE *genr,
     }
 
     DPRINTF(("get_model_data_element: err = %d\n", genr->err));
-
-    return x;
-}
-
-/* retrieve scalar statistic from model */
-
-static double 
-get_model_scalar_stat (const MODEL *pmod, int idx, int *err)
-{
-    double x = NADBL;
-
-    if (pmod == NULL) {
-	*err = 1;
-    }
-    else if (check_modelstat(pmod, idx)) {
-	*err = 1;
-    }
-    else if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
-	(idx == R_RSQ || idx == R_ESS || idx == R_SIGMA || 
-	 idx == R_TRSQ)) {
-	*err = E_BADSTAT;
-    }
-    else if (pmod->ci == LAD && (idx == R_RSQ || idx == R_TRSQ)) {
-	*err = E_BADSTAT;
-    }
-
-    if (*err) return x;
-
-    switch (idx) {  
-    case R_ESS:
-	x = pmod->ess;
-	break;
-    case R_RSQ:
-	x = pmod->rsq;
-	break;
-    case R_LNL:
-	x = pmod->lnL;
-	break;
-    case R_AIC:
-	x = pmod->criterion[C_AIC];
-	break;
-    case R_BIC:
-	x = pmod->criterion[C_BIC];
-	break;
-    case R_SIGMA:
-	if (pmod->nwt) x = pmod->sigma_wt;
-	else x = pmod->sigma;
-	break;
-    case R_TRSQ:
-	x = pmod->nobs * pmod->rsq;
-	break;
-    case R_DF:
-	x = (double) pmod->dfd;
-	break;
-    case R_T:
-	x = (double) pmod->nobs;
-	break;	
-    }
 
     return x;
 }
@@ -4195,37 +4058,6 @@ static int test_stat_index (const char *s)
 	return R_TEST_PVAL;
     if (!strcmp(test, "$test")) 
 	return R_TEST_STAT;
-
-    return 0;
-}
-
-static int model_scalar_stat_index (const char *s)
-{
-    char test[USER_VLEN];
-
-    *test = '\0';
-    strncat(test, s, USER_VLEN - 1);
-    lower(test);
-
-    if (!strcmp(test, "$ess"))  
-	return R_ESS;
-    if (!strcmp(test, "$t")) 
-	return R_T;
-    if (!strcmp(test, "$rsq"))  
-	return R_RSQ;
-    if (!strcmp(test, "$sigma"))  
-	return R_SIGMA;
-    if (!strcmp(test, "$df"))   
-	return R_DF;
-    if (!strcmp(test, "$lnl"))   
-	return R_LNL;
-    if (!strcmp(test, "$aic"))   
-	return R_AIC;
-    if (!strcmp(test, "$bic"))   
-	return R_BIC;
-    if (!strcmp(test, "$nrsq") || 
-	!strcmp(test, "$trsq")) 
-	return R_TRSQ;
 
     return 0;
 }

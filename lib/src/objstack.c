@@ -75,7 +75,7 @@ static void *get_object_by_name (const char *oname, int type, int *onum)
     }
 
     for (i=0; i<n_obj; i++) {
-	if (type != obj_stack[i].type) {
+	if (type >= 0 && type != obj_stack[i].type) {
 	    continue;
 	}
 	test = saved_object_get_name(&obj_stack[i]);
@@ -94,6 +94,37 @@ static void *get_object_by_name (const char *oname, int type, int *onum)
 #endif    
 
     return ptr;
+}
+
+void *gretl_get_object_by_name (const char *name)
+{
+    return get_object_by_name(name, -1, NULL);
+}
+
+void gretl_delete_saved_object (void *p)
+{
+    int i, delpos = -1;
+
+    for (i=0; i<n_obj; i++) {
+	if (p == obj_stack[i].ptr) {
+	    delpos = i;
+	    break;
+	}
+    }
+    
+    if (delpos >= 0) {
+	stacker *new_stack;
+
+	gretl_saved_object_free(&obj_stack[i]);
+	for (i=delpos; i<n_obj-1; i++) {
+	    obj_stack[i] = obj_stack[i+1];
+	}
+	new_stack = realloc(obj_stack, (n_obj - 1) * sizeof *new_stack);
+	if (new_stack != NULL) {
+	    obj_stack = new_stack;
+	    n_obj--;
+	}
+    }
 }
 
 MODEL *get_model_by_name (const char *mname)
@@ -170,7 +201,19 @@ static int gretl_object_set_name (void *p, int type, const char *oname)
     return err;
 }
 
-int object_on_stack (void *p)
+void gretl_rename_saved_object (void *p, const char *name)
+{
+    int i;
+
+    for (i=0; i<n_obj; i++) {
+	if (p == obj_stack[i].ptr) {
+	    gretl_object_set_name(p, obj_stack[i].type, name);
+	    break;
+	}
+    }
+}
+
+static int object_on_stack (void *p)
 {
     int i, ret = -1;
 
@@ -320,46 +363,36 @@ int maybe_stack_model (MODEL **ppmod, const CMD *cmd, const DATAINFO *pdinfo,
 double maybe_get_value (void *p, int type, const char *valname)
 {
     double x = INVALID_STAT;
+    int idx = gretl_model_stat_index(valname);
+    int err = 0;
+    
+    if (idx <= 0) {
+	return x;
+    }
 
     if (type == EQUATION) {
 	MODEL *pmod = (MODEL *) p;
 
-	if (!strcmp(valname, "$ess")) {
-	    x = pmod->ess;
-	} else if (!strcmp(valname, "$rsq")) {
-	    x = pmod->rsq;
-	} else if (!strcmp(valname, "$lnl")) {
-	    x = pmod->lnL;
-	} else if (!strcmp(valname, "$aic")) {
-	    x = pmod->criterion[C_AIC];
-	} else if (!strcmp(valname, "$bic")) {
-	    x = pmod->criterion[C_BIC];
-	} else if (!strcmp(valname, "$df")) {
-	    x = pmod->dfd;
-	} else if (!strcmp(valname, "$sigma")) {
-	    if (pmod->nwt) x = pmod->sigma_wt;
-	    else x = pmod->sigma;
-	} else if (!strcmp(valname, "$nrsq")) {
-	    x = pmod->nobs * pmod->rsq;
-	} else if (!strcmp(valname, "$trsq")) {
-	    x = pmod->nobs * pmod->rsq;
+	x = gretl_model_get_scalar(pmod, idx, &err);
+	if (err) {
+	    x = INVALID_STAT;
 	}
     } else if (type == SYSTEM) {
 	gretl_equation_system *sys = (gretl_equation_system *) p;
 
-	if (!strcmp(valname, "$lnl")) {
+	if (idx == M_LNL) {
 	    x = system_get_ll(sys);
-	} else if (!strcmp(valname, "$ess")) {
+	} else if (idx == M_ESS) {
 	    x = system_get_ess(sys);
 	}
     } else if (type == VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) p;
 
-	if (!strcmp(valname, "$lnl")) {
+	if (idx == M_LNL) {
 	    x = var->ll;
-	} else if (!strcmp(valname, "$aic")) {
+	} else if (idx == M_AIC) {
 	    x = var->AIC;
-	} else if (!strcmp(valname, "$bic")) {
+	} else if (idx == M_BIC) {
 	    x = var->BIC;	
 	}
     }

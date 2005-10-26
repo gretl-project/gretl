@@ -90,7 +90,7 @@ void remove_from_model_table_list (const MODEL *pmod)
 {
     int i;
 
-    if (model_list_len == 0 || model_list == NULL) 
+    if (model_list_len == 0 || model_list == NULL || pmod == NULL) 
 	return;
 
     for (i=0; i<model_list_len; i++) {

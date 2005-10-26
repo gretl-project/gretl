@@ -30,6 +30,8 @@ GRETL_VAR *get_VECM_by_name (const char *vname);
 
 gretl_equation_system *get_equation_system_by_name (const char *sname);
 
+void *gretl_get_object_by_name (const char *name);
+
 int stack_model (MODEL *pmod);
 
 int stack_model_as (MODEL *pmod, const char *mname);
@@ -48,6 +50,10 @@ int maybe_stack_model (MODEL **ppmod, const CMD *cmd, const DATAINFO *pdinfo,
 int maybe_stack_var (GRETL_VAR *var, const CMD *cmd);
 
 double saved_object_get_value (const char *oname, const char *valname, int *err);
+
+void gretl_rename_saved_object (void *p, const char *name);
+
+void gretl_delete_saved_object (void *p);
 
 void gretl_saved_objects_cleanup (void);
 

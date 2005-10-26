@@ -47,6 +47,10 @@ enum {
     OBJ_ACTION_SYS_FREE
 };
 
+#define obj_action_free(a) (a == OBJ_ACTION_MODEL_FREE || \
+                            a == OBJ_ACTION_VAR_FREE || \
+                            a == OBJ_ACTION_SYS_FREE)   
+
 static int match_object_command (const char *s, char sort)
 {
     if (sort == OBJ_MODEL) {
@@ -87,24 +91,18 @@ static int match_object_command (const char *s, char sort)
 static void print_model_stat (const char *modname, const char *param, PRN *prn)
 {
     MODEL *pmod = get_model_by_name(modname);
+    int idx = gretl_model_stat_index(param);
+    double x;
+    int err = 0;
 
-    if (pmod == NULL) return;
+    if (pmod == NULL || idx <= 0) return;
 
-    if (!strcmp(param, "ess")) {
-	pprintf(prn, _("%s: ess = %.8g\n"), pmod->name, pmod->ess);
-    }
-    else if (!strcmp(param, "rsq")) {
-	pprintf(prn, _("%s: R^2 = %.8g\n"), pmod->name, pmod->rsq);
-    }
-    else if (!strcmp(param, "sigma")) {
-	pprintf(prn, _("%s: sigma = %.8g\n"), pmod->name, pmod->sigma);
-    }
-    else if (!strcmp(param, "df")) {
-	pprintf(prn, _("%s: df = %d\n"), pmod->name, pmod->dfd);
-    }
-    else {
+    x = gretl_model_get_scalar(pmod, idx, &err);
+    if (err) {
 	pprintf(prn, _("%s: no data for '%s'\n"), pmod->name, param);
-    }	
+    } else {
+	pprintf(prn, "%s: %s = %.8g\n", pmod->name, param + 1);
+    }
 }
 
 static void get_word_and_command (const char *s, char *word, 
@@ -366,7 +364,7 @@ int saved_object_action (const char *line, PRN *prn)
     char objname[MAXSAVENAME] = {0};
     char param[9] = {0};
     void *ptr = NULL;
-    int code;
+    int code, err;
 
     if (*line == '!' || *line == '#') { 
 	/* shell command or comment */
@@ -386,16 +384,16 @@ int saved_object_action (const char *line, PRN *prn)
     if (code == OBJ_ACTION_MODEL_SHOW) {
 	display_saved_model(objname);
     } else if (code == OBJ_ACTION_MODEL_FREE) {
-	delete_model_from_session(objname);
-	pprintf(prn, _("Freed %s\n"), objname);
+	err = delete_model_from_session(objname);
     } else if (code == OBJ_ACTION_MODEL_STAT) {
 	print_model_stat(objname, param, prn);
     } else if (code == OBJ_ACTION_VAR_SHOW) {
 	display_saved_VAR(objname);
     } else if (code == OBJ_ACTION_VAR_IRF) {
-	saved_VAR_do_irf(objname, line);
+	session_VAR_do_irf(objname, line);
     } else if (code == OBJ_ACTION_VAR_FREE) {
-	delete_VAR_from_session(objname);
+	err = delete_VAR_from_session(objname);
+	if (!err) pprintf(prn, _("Freed %s\n"), objname);
     } else if (code == OBJ_ACTION_GRAPH_SHOW) {
 	GRAPHT *graph = (GRAPHT *) ptr;
 
@@ -408,11 +406,14 @@ int saved_object_action (const char *line, PRN *prn)
 	display_saved_text(ptr);
     } else if (code == OBJ_ACTION_TEXT_FREE) {
 	delete_text_from_session(ptr);
-	pprintf(prn, _("Freed %s\n"), objname);
     } else if (code == OBJ_ACTION_SYS_SHOW) {
 	display_saved_equation_system(objname);
     } else if (code == OBJ_ACTION_SYS_FREE) {
-	delete_system_from_session(objname);
+	err = delete_system_from_session(objname);
+    }
+
+    if (obj_action_free(code) && !err) {
+	pprintf(prn, _("Freed %s\n"), objname);
     }
 
     return 1;

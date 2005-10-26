@@ -70,8 +70,7 @@ const char *gretl_error_messages[] = {
     N_("There were missing observations for the added "
        "variable(s).\nReset the sample and rerun the original "
        "regression first"),                                      /* E_MISS */
-    N_("The statistic you requested is not meaningful "
-       "for this model"),                                        /* E_BADSTAT */
+    N_("The statistic you requested is not available"),          /* E_BADSTAT */
     N_("Missing sub-sample information; can't merge data"),      /* E_NOMERGE */
     N_("The convergence criterion was not met"),                 /* E_NOCONV */
     N_("The operation was canceled"),                            /* E_CANCEL */

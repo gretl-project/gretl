@@ -2451,3 +2451,84 @@ const char *gretl_model_get_name (const MODEL *pmod)
 
     return NULL;
 }
+
+int gretl_model_stat_index (const char *s)
+{
+    char test[8] = {0};
+
+    strncat(test, s, 7);
+    lower(test);
+
+    if (!strcmp(test, "$ess"))  
+	return M_ESS;
+    if (!strcmp(test, "$t")) 
+	return M_T;
+    if (!strcmp(test, "$rsq"))  
+	return M_RSQ;
+    if (!strcmp(test, "$sigma"))  
+	return M_SIGMA;
+    if (!strcmp(test, "$df"))   
+	return M_DF;
+    if (!strcmp(test, "$lnl"))   
+	return M_LNL;
+    if (!strcmp(test, "$aic"))   
+	return M_AIC;
+    if (!strcmp(test, "$bic"))   
+	return M_BIC;
+    if (!strcmp(test, "$nrsq") || 
+	!strcmp(test, "$trsq")) 
+	return M_TRSQ;
+
+    return 0;
+}
+
+double gretl_model_get_scalar (const MODEL *pmod, int idx, int *err)
+{
+    double x = NADBL;
+
+    if (pmod == NULL) {
+	*err = E_BADSTAT;
+	return x;
+    }
+
+    if (*err) return x;
+
+    switch (idx) {  
+    case M_ESS:
+	x = pmod->ess;
+	break;
+    case M_RSQ:
+	x = pmod->rsq;
+	break;
+    case M_LNL:
+	x = pmod->lnL;
+	break;
+    case M_AIC:
+	x = pmod->criterion[C_AIC];
+	break;
+    case M_BIC:
+	x = pmod->criterion[C_BIC];
+	break;
+    case M_SIGMA:
+	if (pmod->nwt) x = pmod->sigma_wt;
+	else x = pmod->sigma;
+	break;
+    case M_TRSQ:
+	if (!na(pmod->rsq)) {
+	    x = pmod->nobs * pmod->rsq;
+	}
+	break;
+    case M_DF:
+	x = (double) pmod->dfd;
+	break;
+    case M_T:
+	x = (double) pmod->nobs;
+	break;	
+    }
+
+    if (na(x)) {
+	*err = E_BADSTAT;
+    }
+
+    return x;
+}

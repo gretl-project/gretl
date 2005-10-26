@@ -2749,6 +2749,53 @@ int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
     return 0;
 }
 
+int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
+		      const double **Z, const DATAINFO *pdinfo)
+{
+    int targ = -1, shock = 1;
+    int h = 0, boot = 0;
+    int err = 0;
+    char *s;
+
+    s = strstr(line, "--targ=");
+    if (s != NULL) {
+	targ = atoi(s + 7) - 1;
+    }
+
+    s = strstr(line, "--shock=");
+    if (s != NULL) {
+	shock = atoi(s + 8) - 1;
+    }
+
+    s = strstr(line, "--horizon=");
+    if (s != NULL) {
+	h = atoi(s + 10);
+    } else {
+	h = 20;
+    }
+
+    if (strstr(line, "--bootstrap") != NULL) {
+	boot = 1;
+    }
+
+#if 0
+    fprintf(stderr, "targ=%d, shock=%d, h=%d, boot=%d\n", 
+	    targ, shock, h, boot);
+#endif
+
+    if (targ >= 0 && shock >= 0 && h > 0) {
+        if (boot) {
+	    err = gretl_VAR_plot_impulse_response(var, targ, shock, h,
+						  Z, pdinfo);
+	} else {
+	    err = gretl_VAR_plot_impulse_response(var, targ, shock, h, 
+						  NULL, pdinfo);
+	}
+    }
+
+    return err;
+}
+
 int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
 				    const DATAINFO *pdinfo)
 {
