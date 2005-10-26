@@ -27,14 +27,15 @@
 #define GRAPH_NO_DATA -999
 
 typedef enum {
-    GP_IMPULSES = 1 << 0,  /* use impulses for plotting */
-    GP_RESIDS   = 1 << 1,  /* doing residual plot */
-    GP_FA       = 1 << 2,  /* doing fitted/actual plot */
-    GP_DUMMY    = 1 << 3,  /* using a dummy for separation */
-    GP_BATCH    = 1 << 4,  /* working in batch mode */
-    GP_GUI      = 1 << 5,  /* called from GUI context */
-    GP_OLS_OMIT = 1 << 6,  /* Don't draw fitted line on graph */
-    GP_FILE     = 1 << 7   /* send output to named file */
+    GP_IMPULSES   = 1 << 0,  /* use impulses for plotting */
+    GP_RESIDS     = 1 << 1,  /* doing residual plot */
+    GP_FA         = 1 << 2,  /* doing fitted/actual plot */
+    GP_DUMMY      = 1 << 3,  /* using a dummy for separation */
+    GP_BATCH      = 1 << 4,  /* working in batch mode */
+    GP_GUI        = 1 << 5,  /* called from GUI context */
+    GP_OLS_OMIT   = 1 << 6,  /* Don't draw fitted line on graph */
+    GP_DATA_STYLE = 1 << 7,  /* data style is set by user */
+    GP_FILE       = 1 << 8   /* send output to named file */
 } gnuplot_flags;
 
 typedef enum {
@@ -110,7 +111,7 @@ typedef struct {
     FILE *fp;
     char fname[MAXLEN];        /* for gui purposes */
     PlotType code;             /* to deal with FREQ, FCASTERR... */
-    unsigned int flags;       /* bitwise OR of options (gptspec_flags) */
+    unsigned int flags;        /* bitwise OR of options (gptspec_flags) */
     int nobs;                  /* number of observations */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
     double range[3][2];        /* axis range specifiers */
@@ -156,15 +157,15 @@ int gnuplot_make_graph (void);
 
 int gnuplot (int *list, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, 
-	     int *plot_count, unsigned int flags);
+	     int *plot_count, gnuplot_flags flags);
 
 int multi_scatters (const int *list, int pos, 
 		    double ***pZ, const DATAINFO *pdinfo, 
-		    int *plot_count, unsigned int flags);
+		    int *plot_count, gnuplot_flags flags);
 
 int gnuplot_3d (int *list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo, 
-		int *plot_count, unsigned int flags);
+		int *plot_count, gnuplot_flags flags);
 
 int plot_freq (FreqDist *freq, DistCode dist);
 

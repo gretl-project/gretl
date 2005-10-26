@@ -937,6 +937,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     plot_types = g_list_append(plot_types, "linespoints"); 
     plot_types = g_list_append(plot_types, "impulses");
     plot_types = g_list_append(plot_types, "dots");
+    plot_types = g_list_append(plot_types, "steps");
 
     if (do_scale_axis) {
 	yaxis_loc = g_list_append(yaxis_loc, "left");

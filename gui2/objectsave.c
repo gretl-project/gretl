@@ -364,7 +364,7 @@ int saved_object_action (const char *line, PRN *prn)
     char objname[MAXSAVENAME] = {0};
     char param[9] = {0};
     void *ptr = NULL;
-    int code, err;
+    int code, err = 0;
 
     if (*line == '!' || *line == '#') { 
 	/* shell command or comment */

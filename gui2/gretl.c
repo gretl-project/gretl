@@ -736,6 +736,7 @@ static void force_language (int f)
 
 #endif /* ENABLE_NLS */
 
+#ifndef G_OS_WIN32
 static void record_filearg (char *targ, const char *src)
 {
     if (*src == '.') {
@@ -749,6 +750,7 @@ static void record_filearg (char *targ, const char *src)
 	strcpy(targ, src);
     }
 }
+#endif
 
 int main (int argc, char *argv[])
 {

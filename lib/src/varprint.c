@@ -696,7 +696,8 @@ print_vecm_header_info (GRETL_VAR *vecm, PRN *prn)
  * @var: pointer to VAR struct.
  * @pdinfo: dataset information.
  * @opt: if includes %OPT_I, include impulse responses; if
- * includes %OPT_F, include forecast variance decompositions.
+ * includes %OPT_F, include forecast variance decompositions;
+ * if includes %OPT_Q, don't print individual regressions.
  * @prn: pointer to printing struct.
  *
  * Prints the models in @var, along with relevant F-tests and
@@ -714,8 +715,9 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     int dfd = var->models[0]->dfd;
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
-    int i, j, k, v;
+    int quiet = (opt & OPT_Q);
     int pause = 0;
+    int i, j, k, v;
 
     if (prn == NULL) {
 	return 0;
@@ -803,7 +805,25 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     for (i=0; i<var->neqns; i++) {
 	char Fstr[24];
 
-	printmodel(var->models[i], pdinfo, OPT_NONE, prn);
+	if(!quiet) {
+	    printmodel(var->models[i], pdinfo, OPT_NONE, prn);
+	} else {
+	    if (!var->ecm) {
+	        v = var->models[i]->list[1];
+		if (tex) {
+		    pputs(prn, "\n\\begin{center}\n");
+		    pprintf(prn, "%s\\\\[1em]\n", I_("Equation for "));
+		    pprintf(prn, "%s\\\n", pdinfo->varname[v]);
+		    pputs(prn, "\n\\end{center}\n");
+		} else if (rtf) {
+		    pprintf(prn, "\\par\n%s", I_("Equation for "));
+		    pprintf(prn, "%s:\\par\n\n", pdinfo->varname[v]);
+		} else {
+		    pprintf(prn, "\n%s", I_("Equation for "));
+		    pprintf(prn, "%s:\n", pdinfo->varname[v]);
+		}
+	    }
+	}
 
 	if (pause) {
 	    scroll_pause();

@@ -1701,6 +1701,7 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
  *       if includes %OPT_F, print forecast variance decompositions;
  *       if includes %OPT_D, add seasonal dummies;
  *       if includes %OPT_N, do not include a constant.
+ *       if includes %OPT_Q, do not show individual regressions.
  * @prn: gretl printing struct.
  *
  * Estimate a vector autoregression (VAR) and print the results.
@@ -1746,6 +1747,7 @@ int simple_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
  *       if includes %OPT_F, print forecast variance decompositions;
  *       if includes %OPT_D, add seasonal dummies;
  *       if includes %OPT_N, do not include a constant.
+ *       if includes %OPT_Q, do not show individual regressions.
  * @prn: gretl printing struct.
  *
  * Estimate a vector auto-regression (VAR), print and save

@@ -488,6 +488,24 @@ static int get_arg_string (char *str, const char *s, int func, GENERATE *genr)
     return err;
 }
 
+static int catch_saved_object_scalar (const char *s, double *x)
+{
+    const char *p = strstr(s, ".$");
+    int len = strcspn(s, ".");
+    char *test;
+    int err = 0, ret = 0;
+
+    test = gretl_strndup(s, len);
+
+    if (test != NULL) {
+	*x = saved_object_get_value(test, p + 1, &err);
+	if (!err) ret = 1;
+	free(test);
+    }
+
+    return ret;
+}
+
 static genatom *parse_token (const char *s, char op,
 			     GENERATE *genr, int level)
 {
@@ -506,6 +524,13 @@ static genatom *parse_token (const char *s, char op,
 	    } else if (!strcmp(s, "NA")) {
 		val = NADBL;
 		scalar = 1;
+	    } else if (strstr(s, ".$")) {
+		if (catch_saved_object_scalar(s, &val)) {
+		    scalar = 1;
+		} else {
+		    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
+		    genr->err = E_UNKVAR;
+		}
 	    } else {
 		v = varindex(genr->pdinfo, s);
 
@@ -515,8 +540,7 @@ static genatom *parse_token (const char *s, char op,
 			v = -1;
 			strncat(str, s, ARGLEN - 1);
 		    } else {
-			sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"),
-				s);
+			sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
 			genr->err = E_UNKVAR;
 		    }
 		} else {
@@ -2363,45 +2387,6 @@ write_genr_label (GENERATE *genr, char *genrs, int oldv)
     strcpy(VARLABEL(genr->pdinfo, genr->varnum), genr->label);    
 }
 
-/* for the present we handle only one such saved value, and
-   it must be the only element in the genr formula, e.g.
-   "genr x = Kmenta.$ess"
-*/
-
-static int catch_saved_object_scalar (char *s, double *x)
-{
-    char *test = NULL;
-    char *p = strstr(s, ".$");
-    int ret = 0;
-
-    if (p != NULL) {
-	int i, len = strcspn(s, ".");
-	int gotit = 0;
-
-	for (i=len; i>0; i--) {
-	    if (op_level(s[i])) {
-		test = gretl_strndup(s+i+1, len-i-1);
-		gotit = 1;
-		break;
-	    }
-	}
-	if (!gotit && len > 0) {
-	    test = gretl_strndup(s+i, len-i);
-	}
-	p++;
-    }
-
-    if (test != NULL) {
-	int err = 0;
-
-	*x = saved_object_get_value(test, p, &err);
-	if (!err) ret = 1;
-	free(test);
-    }
-
-    return ret;
-}
-
 /**
  * generate:
  * @line: command line (formula for generating variable).
@@ -2421,7 +2406,6 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	      MODEL *pmod, gretlopt opt)
 {
     int i;
-    double val;
     char s[MAXLINE], genrs[MAXLINE];
     char newvar[USER_VLEN];
     int oldv = pdinfo->v;
@@ -2570,12 +2554,6 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     for (i=0; i<pdinfo->n; i++) {
 	genr.xvec[i] = 0.0;
-    }
-
-    /* scalar value from saved object? */
-    if (catch_saved_object_scalar(s, &val)) {
-	genr.xvec[0] = val;
-	goto genr_return;
     }
 
     /* impose operator hierarchy */

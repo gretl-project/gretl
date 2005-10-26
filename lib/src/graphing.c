@@ -26,7 +26,7 @@
 
 #include <unistd.h>
 
-#undef GP_DEBUG
+#define GP_DEBUG 0
 
 #ifdef _WIN32
 # include <windows.h>
@@ -53,7 +53,7 @@ static char gnuplot_path[MAXLEN];
 static const char *auto_ols_string = "# plot includes automatic OLS line\n";
 
 struct gnuplot_info {
-    unsigned int flags;
+    gnuplot_flags flags;
     int ts_plot;
     int yscale;
     int impulses;
@@ -879,7 +879,7 @@ static const char *series_name (const DATAINFO *pdinfo, int v)
 }
 
 static int
-get_gnuplot_output_file (FILE **fpp, unsigned int flags, 
+get_gnuplot_output_file (FILE **fpp, gnuplot_flags flags, 
 			 int *plot_count, int code)
 {
     const char *plotfile = gretl_plotfile();
@@ -1105,7 +1105,7 @@ print_gp_data (struct gnuplot_info *gpinfo, const int *list,
 }
 
 static void 
-gp_info_init (struct gnuplot_info *gpinfo, unsigned int flags,
+gp_info_init (struct gnuplot_info *gpinfo, gnuplot_flags flags,
 	      int lo, const char *literal, int t1, int t2)
 {
     gpinfo->flags = flags;
@@ -1143,6 +1143,10 @@ gp_info_init (struct gnuplot_info *gpinfo, unsigned int flags,
 	gpinfo->yformula = literal + 10;
     }
 
+    if (literal != NULL && strstr(literal, "set style data")) {
+	gpinfo->flags |= GP_DATA_STYLE;
+    }
+
     gpinfo->yvar1 = gpinfo->yvar2 = NULL;
 }
 
@@ -1172,16 +1176,24 @@ static void print_gnuplot_flags (unsigned int flags)
     if (flags & GP_OLS_OMIT) {
 	fprintf(stderr, " GP_OLS_OMIT\n");
     }
+    if (flags & GP_DATA_STYLE) {
+	fprintf(stderr, " GP_DATA_STYLE\n");
+    }
     if (flags & GP_FILE) {
 	fprintf(stderr, " GP_FILE\n");
     }
 }
 #endif
 
-static void set_withstr (unsigned int flags, const int *lines, 
+static void set_withstr (gnuplot_flags flags, const int *lines, 
 			 int i, char *str)
 {
     int ltest = 0;
+
+    if (flags & GP_DATA_STYLE) {
+	*str = 0;
+	return;
+    }
 
     if (lines != NULL) {
 	ltest = lines[(flags & GP_GUI)? i - 1 : 0];
@@ -1273,7 +1285,7 @@ static void graph_list_adjust_sample (int *list,
 
 int gnuplot (int *list, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, 
-	     int *plot_count, unsigned int flags)
+	     int *plot_count, gnuplot_flags flags)
 {
     FILE *fp = NULL;
     char s1[MAXDISP] = {0};
@@ -1437,6 +1449,11 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	}
     }
 
+#if GP_DEBUG    
+    fprintf(stderr, "literal = '%s', yformula = '%s'\n", literal,
+	    gpinfo.yformula);
+#endif
+
     if (gpinfo.yformula != NULL) {
 	/* cut out the "dummy" yvar that is in fact represented
 	   by a formula rather than raw data */
@@ -1481,7 +1498,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 		strcpy(s1, series_name(pdinfo, list[i]));
 	    }
 	    if (!gpinfo.impulses) { 
-		set_withstr(flags, lines, i, withstr);
+		set_withstr(gpinfo.flags, lines, i, withstr);
 	    }
 	    fprintf(fp, " '-' using 1:2 title '%s' %s", s1, withstr);
 	    if (i < gpinfo.lo - 1 || gpinfo.ols_ok) {
@@ -1538,7 +1555,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
 int multi_scatters (const int *list, int pos, double ***pZ, 
 		    const DATAINFO *pdinfo, int *plot_count, 
-		    unsigned int flags)
+		    gnuplot_flags flags)
 {
     int i, t, err = 0, xvar, yvar;
     int *plotlist = NULL;
@@ -1734,7 +1751,7 @@ maybe_add_surface (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 int gnuplot_3d (int *list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo,  
-		int *plot_count, unsigned int flags)
+		int *plot_count, gnuplot_flags flags)
 {
     FILE *fq = NULL;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;

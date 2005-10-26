@@ -5677,9 +5677,9 @@ static int script_model_test (int test_ci, int model_id, PRN *prn)
     return 0;
 }
 
-static unsigned int gp_flags (int batch, gretlopt opt)
+static gnuplot_flags gp_flags (int batch, gretlopt opt)
 {
-    unsigned int flags = 0;
+    gnuplot_flags flags = 0;
 
     if (batch) {
 	flags |= GP_BATCH;
@@ -6234,7 +6234,7 @@ int gui_exec_line (char *line,
 	
 	if (cmd.ci == GNUPLOT) {
 	    if ((cmd.opt & OPT_M) || (cmd.opt & OPT_Z) || (cmd.opt & OPT_S)) { 
-		err = gnuplot(cmd.list, NULL, NULL, &Z, datainfo,
+		err = gnuplot(cmd.list, NULL, cmd.param, &Z, datainfo,
 			      &plot_count, plotflags); 
 	    } else {
 		lines[0] = (cmd.opt != 0);

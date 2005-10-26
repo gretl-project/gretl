@@ -228,9 +228,9 @@ int fn_get_line (void)
     return err;
 }
 
-unsigned int gp_flags (int batch, gretlopt opt)
+gnuplot_flags gp_flags (int batch, gretlopt opt)
 {
-    unsigned int flags = 0;
+    gnuplot_flags flags = 0;
 
     if (batch) flags |= GP_BATCH;
 
@@ -1186,7 +1186,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    break;
 	}
 	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_Z) || (cmd.opt & OPT_S)) { 
-	    err = gnuplot(cmd.list, NULL, NULL, &Z, datainfo,
+	    err = gnuplot(cmd.list, NULL, cmd.param, &Z, datainfo,
 			  &plot_count, gp_flags(batch, cmd.opt));
 	} else {
 	    lines[0] = (cmd.opt != 0);
