@@ -771,6 +771,7 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     mdl.t1 = pdinfo->t1;
     mdl.t2 = pdinfo->t2;
+    mdl.full_n = pdinfo->n;
     mdl.ci = ci;
 
     /* Doing weighted least squares? */

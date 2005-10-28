@@ -853,7 +853,7 @@ static int real_run_check (int round, PRN *prn)
 		strcpy(worst_sderr_name, tester.datname);
 	    }
 	}
-	free_model(pmod);
+	gretl_model_free(pmod);
 	pmod = NULL;
     }
 

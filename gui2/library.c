@@ -65,7 +65,6 @@ extern char tramodir[];
 /* private functions */
 static void update_model_tests (windata_t *vwin);
 static int finish_genr (MODEL *pmod, dialog_t *dlg);
-static gint my_stack_model (MODEL *pmod);
 #ifndef G_OS_WIN32
 static int get_terminal (char *s);
 #endif
@@ -131,26 +130,6 @@ void set_replay_on (void)
 void set_replay_off (void)
 {
     replay = 0;
-}
-
-static char get_or_set_last_model_status (char c, int set)
-{
-    static char last_model = 's';
-
-    if (set) {
-	last_model = c;
-    }
-
-    return last_model;
-}
-
-static void set_last_model_status (int script)
-{
-    if (script) {
-	get_or_set_last_model_status('s', 1);
-    } else {
-	get_or_set_last_model_status('g', 1);
-    }
 }
 
 void register_graph (void)
@@ -519,22 +498,17 @@ int *command_list_from_string (char *s)
     return list;    
 }
 
-static gint my_stack_model (MODEL *pmod)
+/* Model estimated via console or script: unlike a gui model, which is
+   kept in memory so long as its window is open, these models are
+   immediately discarded.  So if we want to be able to refer back to
+   them later we need to record their specification */
+
+static gint stack_script_modelspec (MODEL *pmod)
 {
-    int script = gretl_model_get_int(pmod, "script");
-    int err = 0;
+    int err;
 
-    set_last_model_status(script); /* FIXME is this needed? */
-
-    if (script) { 
-	/* Model estimated via console or script: unlike a gui model,
-	   which is kept in memory so long as its window is open,
-	   these models are immediately discarded.  So if we want to
-	   be able to refer back to them later we need to record their
-	   specification */
-	attach_subsample_to_model(models[0], datainfo);
-	err = modelspec_save(models[0], &modelspec);
-    }
+    attach_subsample_to_model(models[0], datainfo);
+    err = modelspec_save(models[0], &modelspec);
 
     return err;
 }
@@ -1452,12 +1426,10 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
     update_model_tests(vwin);
 
-    if (lib_cmd_init() || my_stack_model(pmod)) {
+    if (lib_cmd_init()) {
 	errbox(_("Error saving model information"));
 	return;
     }
-
-    /* FIXME set as last_model or not? */
 
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
@@ -2017,7 +1989,7 @@ static int model_error (MODEL *pmod)
 	if (pmod->errcode != E_CANCEL) {
 	    gui_errmsg(pmod->errcode);
 	}
-	free_model(pmod);
+	gretl_model_free(pmod);
 	err = 1;
     }
 
@@ -2467,13 +2439,6 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 
     close_dialog(dlg);
 
-    if (my_stack_model(pmod)) {
-	errbox(_("Error saving model information"));
-	return;
-    }
-
-    /* FIXME set as last_model or not? */
-
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
     /* record sub-sample info (if any) with the model */
@@ -2674,12 +2639,10 @@ void do_model (GtkWidget *widget, gpointer p)
 	gretl_command_strcat(cmd.param);
     }
 
-    if (check_lib_command() || lib_cmd_init() || my_stack_model(pmod)) {
+    if (check_lib_command() || lib_cmd_init()) {
 	errbox(_("Error saving model information"));
 	return;
     }
-
-    /* FIXME set as last_model or not */
 
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
@@ -2801,12 +2764,10 @@ void do_graph_model (GPT_SPEC *spec)
 	return;
     }
 
-    if (check_lib_command() || lib_cmd_init() || my_stack_model(pmod)) {
+    if (check_lib_command() || lib_cmd_init()) {
 	errbox(_("Error saving model information"));
 	return;
     }
-
-    /* FIXME set as last_model or not? */
 
     attach_subsample_to_model(pmod, datainfo);
     
@@ -6492,7 +6453,6 @@ int gui_exec_line (char *line,
 	break;
 
     case PRINTF:
-	/* FIXME reference_model() */
 	err = do_printf(line, &Z, datainfo, prn);
 	break;
 
@@ -6713,11 +6673,8 @@ int gui_exec_line (char *line,
 
     if (!err && (is_model_cmd(cmd.word) || do_nls || do_mle || do_arch)
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) {
-	gretl_model_set_int(models[0], "script", 1);
-	if (!do_mle) {
-	    err = my_stack_model(models[0]);
-	}
-	if (exec_code != REBUILD_EXEC && !do_arch && *cmd.savename != '\0') {
+	stack_script_modelspec(models[0]);
+	if (exec_code != REBUILD_EXEC && !do_arch) {
 	    maybe_save_model(&cmd, &models[0], prn);
 	}
     }

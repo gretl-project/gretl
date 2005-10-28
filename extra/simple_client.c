@@ -123,7 +123,7 @@ int main (void)
 
     /* memory management check -- try explicitly freeing all allocated
        memory */
-    free_model(model);
+    gretl_model_free(model);
     free(list);
     destroy_dataset(Z, datainfo); 
     gretl_print_destroy(prn);

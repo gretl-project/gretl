@@ -35,6 +35,7 @@ typedef struct identity_ identity;
 
 struct _gretl_equation_system {
     char *name;                 /* user-specified name for system, or NULL */
+    int refcount;               /* for saving/deleting */
     int t1;                     /* starting observation number */
     int t2;                     /* ending observation number */
     int method;                 /* estimation method */

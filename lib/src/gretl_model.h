@@ -43,18 +43,6 @@ struct CoeffIntervals_ {
     int ifc;
 };
 
-/**
- * free_model:
- * @p: pointer to #MODEL.
- *
- * Free allocated content of MODEL then the pointer itself.
- */
-
-#define free_model(p) if (p != NULL) { \
-                             clear_model(p); \
-                             free(p); \
-                          }
-
 #define AR_MODEL(c) (c == AR || \
                      c == ARMA || \
                      c == CORC || \
@@ -120,6 +108,8 @@ MODEL *gretl_model_new (void);
 
 void gretl_model_init (MODEL *pmod);
 
+void gretl_model_increment_refcount (MODEL *pmod);
+
 MODEL **gretl_model_array_new (int n);
 
 void gretl_model_array_destroy (MODEL **models, int n);
@@ -131,6 +121,10 @@ void impose_model_smpl (const MODEL *pmod, DATAINFO *pdinfo);
 void gretl_model_set_auxiliary (MODEL *pmod, ModelAuxCode aux);
 
 void clear_model (MODEL *pmod);
+
+void gretl_model_free (MODEL *pmod);
+
+void gretl_model_free_on_exit (MODEL *pmod);
 
 int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, 
 					  void *ptr, size_t size, 
@@ -187,9 +181,7 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 
 VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo);
 
-void debug_print_model_info (const MODEL *pmod, const char *msg);
-
-int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo);
+int copy_model (MODEL *targ, const MODEL *src);
 
 int swap_models (MODEL **targ, MODEL **src);
 

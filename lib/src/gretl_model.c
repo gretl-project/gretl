@@ -18,9 +18,11 @@
  */
 
 #include "libgretl.h"
+#include "objstack.h"
+
 #include "glib.h"
 
-#undef MODEL_DEBUG
+#define MDEBUG 0
 
 struct model_data_item_ {
     char *key;
@@ -1089,7 +1091,13 @@ void gretl_model_init (MODEL *pmod)
 
     if (pmod == NULL) return;
 
+#if MDEBUG
+    fprintf(stderr, "gretl_model_init: pmod at %p\n", (void *) pmod);
+#endif
+
     pmod->ID = 0;
+    pmod->refcount = 1;
+    pmod->full_n = 0;
 
     pmod->ntests = 0;
     pmod->nparams = 0;
@@ -1141,7 +1149,14 @@ MODEL *gretl_model_new (void)
 {
     MODEL *pmod = malloc(sizeof *pmod);
 
-    gretl_model_init(pmod);
+#if MDEBUG
+    fprintf(stderr, "gretl_model_new: model at %p\n", (void *) pmod);
+#endif
+
+    if (pmod != NULL) {
+	gretl_model_init(pmod);
+    }
+
     return pmod;
 }
 
@@ -1217,7 +1232,7 @@ static void clear_ar_info (MODEL *pmod)
     pmod->arinfo = NULL;
 }
 
-#ifdef MODEL_DEBUG
+#if MDEBUG > 1
 
 static void 
 debug_print_model_info (const MODEL *pmod, const char *msg)
@@ -1248,7 +1263,7 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    (void *) pmod->data);
 }
 
-#endif /* MODEL_DEBUG */
+#endif /* MDEBUG */
 
 /**
  * gretl_model_destroy_tests:
@@ -1291,7 +1306,11 @@ void clear_model (MODEL *pmod)
     if (pmod != NULL) {
 	int i;
 
-#ifdef MODEL_DEBUG
+#if MDEBUG
+	fprintf(stderr, "clear model: model at %p\n", (void *) pmod);
+#endif
+
+#if MDEBUG > 1
 	debug_print_model_info(pmod, "Doing clear_model");
 #endif
 	if (pmod->list) free(pmod->list);
@@ -1321,7 +1340,74 @@ void clear_model (MODEL *pmod)
     }
 
     /* this may be redundant */
+#if MDEBUG
+    fprintf(stderr, "clear_model, calling gretl_model_init\n");
+#endif
+#if 1
     gretl_model_init(pmod);
+#endif
+}
+
+/**
+ * gretl_model_free:
+ * @p: pointer to #MODEL.
+ *
+ * Free allocated content of MODEL then the pointer itself,
+ * if the model's reference count has reached zero.
+ */
+
+void gretl_model_free (MODEL *pmod)
+{
+    if (pmod != NULL) {
+	pmod->refcount -= 1;
+#if MDEBUG
+	fprintf(stderr, "gretl_model_free: model at %p: refcount was %d, now %d\n", 
+		(void *) pmod, pmod->refcount + 1, pmod->refcount);
+#endif
+	if (pmod->refcount <= 0) {
+#if MDEBUG
+	    fprintf(stderr, " really freeing at %p\n", (void *) pmod);
+#endif
+	    clear_model(pmod);
+	    free(pmod);
+	}
+    }
+}
+
+/**
+ * gretl_model_free_on_exit:
+ * @p: pointer to #MODEL.
+ *
+ * Free allocated content of MODEL then the pointer itself,
+ * forcing the model's reference count to zero.
+ */
+
+void gretl_model_free_on_exit (MODEL *pmod)
+{
+    if (pmod != NULL) {
+#if MDEBUG
+	fprintf(stderr, " really freeing at %p\n", (void *) pmod);
+#endif
+	clear_model(pmod);
+	free(pmod);
+    }
+}
+
+/**
+ * gretl_model_increment_refcount:
+ * @p: pointer to #MODEL.
+ *
+ */
+
+void gretl_model_increment_refcount (MODEL *pmod)
+{
+    if (pmod != NULL) {
+#if MDEBUG
+	fprintf(stderr, "model_increment_refcount: model at %p: old refcount %d\n", 
+		(void *) pmod, pmod->refcount);
+#endif
+	pmod->refcount += 1;
+    }
 }
 
 static void copy_test (ModelTest *targ, const ModelTest *src)
@@ -1914,7 +2000,7 @@ static char *copy_missmask (const MODEL *pmod)
  * Returns: 0 on success, 1 on failure.
  */
 
-int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
+int copy_model (MODEL *targ, const MODEL *src)
 {
     int k = src->ncoeff;
     int m = k * (k + 1) / 2;
@@ -1936,17 +2022,17 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
     }
 
     if (src->uhat != NULL && 
-	(targ->uhat = copyvec(src->uhat, pdinfo->n)) == NULL) {
+	(targ->uhat = copyvec(src->uhat, src->full_n)) == NULL) {
 	return 1;
     }
 
     if (src->yhat != NULL && 
-	(targ->yhat = copyvec(src->yhat, pdinfo->n)) == NULL) {
+	(targ->yhat = copyvec(src->yhat, src->full_n)) == NULL) {
 	return 1;
     }
 
     if (src->submask != NULL && 
-	(targ->submask = copy_subsample_mask(src->submask, pdinfo->n)) == NULL) { 
+	(targ->submask = copy_subsample_mask(src->submask)) == NULL) { 
 	return 1;
     }
 
@@ -2013,8 +2099,15 @@ int swap_models (MODEL **targ, MODEL **src)
 {
     MODEL *tmp = *targ;
 
+#if MDEBUG
+    fprintf(stderr, "swap_models: %p <-> %p\n", *targ, *src);
+#endif
+
     *targ = *src;
     *src = tmp;
+
+    set_last_model(*targ, EQUATION);
+
     return 0;
 }
 

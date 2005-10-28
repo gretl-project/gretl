@@ -668,19 +668,6 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
     }
 }
 
-static void delete_unnamed_model (GtkWidget *widget, gpointer data) 
-{
-    MODEL *pmod = (MODEL *) data;
-
-    if (pmod->dataset != NULL) {
-	free_model_dataset(pmod);
-    }
-
-    if (pmod->name == NULL) {
-	free_model(pmod);
-    }
-}
-
 void delete_widget (GtkWidget *widget, gpointer data)
 {
     gtk_widget_destroy(GTK_WIDGET(data));
@@ -1561,8 +1548,10 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_gretl_mp_results(vwin->data);
 	} else if (vwin->role == VIEW_SERIES) {
 	    free_series_view(vwin->data);
+	} else if (vwin->role == VIEW_MODEL) {
+	    gretl_model_free(vwin->data);
 	} else if (vwin->role == VAR || vwin->role == VECM) { 
-	    gretl_VAR_free_unnamed(vwin->data);
+	    gretl_VAR_free(vwin->data);
 	} else if (vwin->role == LEVERAGE) {
 	    gretl_matrix_free(vwin->data);
 	} else if (vwin->role == MAHAL) {
@@ -1570,7 +1559,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	} else if (vwin->role == COINT2) {
 	    gretl_VAR_free(vwin->data);
 	} else if (vwin->role == SYSTEM) {
-	    gretl_system_free_unnamed(vwin->data);
+	    gretl_equation_system_destroy(vwin->data);
 	} else if (vwin->role == PRINT && vwin->data != NULL) {
 	    free_multi_series_view(vwin->data);
 	} else if (vwin->role == GUI_HELP || vwin->role == GUI_HELP_ENGLISH) {
@@ -2199,6 +2188,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	if (role == SYSTEM) {
 	    add_SYS_menu_items(vwin);
 	} else {
+	    set_last_model(data, VAR);
 	    add_VAR_menu_items(vwin, role == VECM);
 	}
     } else if (role != IMPORT) {
@@ -2687,6 +2677,9 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 	return 1;
     }
 
+    /* set this model as target for genr etc */
+    set_last_model(pmod, EQUATION);
+
 #ifdef OLD_GTK
     create_text(vwin, hsize, vsize, FALSE);
 #endif
@@ -2757,9 +2750,6 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 		     vwin);
 
     /* clean up when dialog is destroyed */
-    g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
-		     G_CALLBACK(delete_unnamed_model), 
-		     vwin->data);
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), 
 		     vwin);

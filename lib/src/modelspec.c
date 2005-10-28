@@ -174,9 +174,7 @@ int modelspec_save (MODEL *pmod, MODELSPEC **pmspec)
     model_list_to_string(pmod->list, spec[i].cmd);
 
     if (pmod->submask != NULL) {
-	int n = get_full_length_n();
-
-	spec[i].submask = copy_subsample_mask(pmod->submask, n);
+	spec[i].submask = copy_subsample_mask(pmod->submask);
 	if (spec[i].submask == NULL) return 1;
     }
 

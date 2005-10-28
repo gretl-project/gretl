@@ -24,7 +24,9 @@
 
 /* functions follow */
 
-char *copy_subsample_mask (const char *src, int n);
+#define SUBMASK_SENTINEL 127
+
+char *copy_subsample_mask (const char *src);
 
 int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo);
 

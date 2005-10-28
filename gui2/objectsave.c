@@ -207,14 +207,10 @@ static int parse_object_request (const char *line,
 
 int maybe_save_model (const CMD *cmd, MODEL **ppmod, PRN *prn)
 {
-    const char *savename;
+    const char *savename = gretl_cmd_get_savename(cmd);
     int err;
 
-    if ((*ppmod)->errcode) {
-	return 1;
-    }
-
-    savename = gretl_cmd_get_savename(cmd);
+    set_last_model(*ppmod, EQUATION);
 
     if (*savename == 0) {
 	return 0;
@@ -230,7 +226,7 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod, PRN *prn)
 	MODEL *mnew = gretl_model_new();
 
 	if (mnew != NULL) {
-	    copy_model(mnew, *ppmod, datainfo);
+	    copy_model(mnew, *ppmod);
 	    *ppmod = mnew;
 	    pprintf(prn, _("%s saved\n"), savename);
 	} else {
@@ -243,14 +239,13 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod, PRN *prn)
 
 int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
 {
-    const char *savename;
+    const char *savename = gretl_cmd_get_savename(cmd);
     GRETL_VAR *var;
     int err = 0;
 
-    savename = gretl_cmd_get_savename(cmd);
+    set_last_model(*pvar, VAR);
 
     if (*savename == 0) {
-	gretl_VAR_free(*pvar);
 	*pvar = NULL;
 	return 0;
     }
@@ -267,19 +262,13 @@ int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
 	}
     }
 
-    if (err) {
-	gretl_VAR_free(var);
-    }
-
     return err;
 }
 
 int maybe_save_system (const CMD *cmd, gretl_equation_system *sys, PRN *prn)
 {
-    const char *savename;
+    const char *savename = gretl_cmd_get_savename(cmd);
     int err;
-
-    savename = gretl_cmd_get_savename(cmd);
 
     if (*savename == 0) {
 	return 0;
@@ -300,12 +289,10 @@ int maybe_save_system (const CMD *cmd, gretl_equation_system *sys, PRN *prn)
 int maybe_save_graph (const CMD *cmd, const char *fname, int code,
 		      PRN *prn)
 {
-    const char *savename;
+    const char *savename = gretl_cmd_get_savename(cmd);
     char savedir[MAXLEN];
     gchar *tmp, *plotfile;
     int err = 0;
-
-    savename = gretl_cmd_get_savename(cmd);
 
     if (*savename == 0) return 0;
 

@@ -267,6 +267,7 @@ struct ARINFO_ {
 /* struct to hold model results */
 struct MODEL_ {
     int ID;                      /* ID number for model */
+    int refcount;                /* for saving/deleting */
     int t1, t2, nobs;            /* starting observation, ending
                                     observation, and number of obs */
     char *submask;               /* keep track of sub-sample in force
@@ -274,6 +275,7 @@ struct MODEL_ {
     char *missmask;              /* missing observations mask */
     SAMPLE smpl;                 /* numeric start and end of current sample
                                     when model was estimated */
+    int full_n;                  /* full length of dataset on estimation */
     int ncoeff, dfn, dfd;        /* number of coefficents; degrees of
                                     freedom in numerator and denominator */
     int *list;                   /* list of variables by ID number */

@@ -1388,7 +1388,7 @@ void gretl_loop_destroy (LOOPSET *loop)
 
     if (loop->models != NULL) {
 	for (i=0; i<loop->nmod; i++) {
-	    free_model(loop->models[i]);
+	    gretl_model_free(loop->models[i]);
 	}
 	free(loop->models);
     } 
@@ -1436,7 +1436,6 @@ void gretl_loop_destroy (LOOPSET *loop)
  * loop_model_init:
  * @lmod: pointer to struct to initialize.
  * @pmod: model to take as basis.
- * @pdinfo: data set information.
  * @id: ID number to assign to @lmod.
  *
  * Initialize a #LOOP_MODEL struct, based on @pmod.
@@ -1445,7 +1444,7 @@ void gretl_loop_destroy (LOOPSET *loop)
  */
 
 static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
-			    const DATAINFO *pdinfo, int id)
+			    int id)
 {
     int i, nc = pmod->ncoeff;
     int err;
@@ -1455,7 +1454,7 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
 	return E_ALLOC;
     }
 
-    err = copy_model(lmod->model0, pmod, pdinfo);
+    err = copy_model(lmod->model0, pmod);
     if (err) {
 	return err;
     }
@@ -1836,7 +1835,7 @@ static void free_loop_model (LOOP_MODEL *lmod)
     free(lmod->ssq_coeff);
     free(lmod->ssq_sderr);
 
-    free_model(lmod->model0);
+    gretl_model_free(lmod->model0);
 }
 
 static void free_loop_print (LOOP_PRINT *lprn)
@@ -2484,7 +2483,6 @@ int loop_exec (LOOPSET *loop, char *line,
 	       MODEL **models, PRN *prn)
 {
     CMD cmd;
-    MODEL *lastmod = models[0]; /* FIXME relationship to last_model in objstack */
     char errline[MAXLINE];
     char linecpy[MAXLINE];
     int m = 0;
@@ -2655,11 +2653,11 @@ int loop_exec (LOOPSET *loop, char *line,
 
 		if ((err = (models[0])->errcode)) {
 		    break;
-		}
+		} 
 
 		if (loop_is_progressive(loop)) {
 		    if (loop->iter == 0 && loop_model_init(&loop->lmodels[loop->nmod - 1], 
-							   models[0], *ppdinfo, j)) { 
+							   models[0], j)) { 
 			gretl_errmsg_set(_("Failed to initialize model for loop\n"));
 			err = 1;
 			break;
@@ -2673,11 +2671,11 @@ int loop_exec (LOOPSET *loop, char *line,
 		    /* deferred printing of model results */
 		    m = get_modnum_by_cmdnum(loop, j);
 		    swap_models(&models[0], &loop->models[m]);
-		    (loop->models[m])->ID = j;
-		    lastmod = loop->models[m];
+		    loop->models[m]->ID = j;
+		    set_last_model(loop->models[m], EQUATION);
 		    model_count_minus();
 		} else {
-		    (models[0])->ID = ++modnum; /* FIXME? */
+		    models[0]->ID = ++modnum; /* FIXME? */
 		    printmodel(models[0], *ppdinfo, cmd.opt, prn);
 		    set_last_model(models[0], EQUATION);
 		}
@@ -2721,6 +2719,7 @@ int loop_exec (LOOPSET *loop, char *line,
 			gretl_cmd_set_context(&cmd, cmd.ci);
 		    }
 		}
+		/* set last model */
 		break;
 
 	    case END:
@@ -2852,14 +2851,6 @@ int loop_exec (LOOPSET *loop, char *line,
 
     if (!err && loop->iter > 0) {
 	print_loop_results(loop, *ppdinfo, prn); 
-    }
-
-    if (lastmod != models[0]) {
-	/* to get genr commands that reference model statistics --
-	   after the loop has finished -- to come out right
-	*/
-	/* FIXME !!! */
-	swap_models(&models[0], &loop->models[m]);
     }
 
     gretl_cmd_free(&cmd);

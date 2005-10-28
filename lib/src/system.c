@@ -196,6 +196,7 @@ gretl_equation_system_new (int method, const char *name)
 	sys->name = NULL;
     }
 
+    sys->refcount = 1;
     sys->method = method;
 
     sys->t1 = sys->t2 = 0;
@@ -286,6 +287,11 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
 
     if (sys == NULL || sys->lists == NULL) return;
 
+    sys->refcount -= 1;
+    if (sys->refcount > 0) {
+	return;
+    }
+
     for (i=0; i<sys->n_equations; i++) {
 	free(sys->lists[i]);
     }
@@ -315,10 +321,10 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
     free(sys);
 }
 
-void gretl_system_free_unnamed (gretl_equation_system *sys)
+void gretl_system_increment_refcount (gretl_equation_system *sys)
 {
-    if (sys != NULL && sys->name == NULL) {
-	gretl_equation_system_destroy(sys);
+    if (sys != NULL) {
+	sys->refcount += 1;
     }
 }
 
@@ -768,8 +774,7 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
 	close_plugin(handle);
     }
 
-    if (sys->name == NULL) {
-	/* FIXME should we do this even if the system has a name? */
+    if (!err) {
 	set_last_model(sys, SYSTEM);
     } 
 

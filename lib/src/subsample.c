@@ -46,13 +46,24 @@ static double **fullZ;
 static DATAINFO *fullinfo;
 static const DATAINFO *peerinfo;
 
-/* .......................................................... */
-
-char *copy_subsample_mask (const char *src, int n)
+static int get_submask_length (const char *s)
 {
+    int n = 1;
+
+    while (*s != SUBMASK_SENTINEL) {
+	n++;
+	s++;
+    }
+
+    return n;
+}
+
+char *copy_subsample_mask (const char *src)
+{
+    int n = get_submask_length(src);
     char *ret = NULL;
 
-    if (n != 0 && src != NULL) {
+    if (src != NULL) {
 	ret = malloc(n * sizeof *ret);
 	if (ret != NULL) {
 	    memcpy(ret, src, n);
@@ -61,8 +72,6 @@ char *copy_subsample_mask (const char *src, int n)
 
     return ret;
 }
-
-/* .......................................................... */
 
 void maybe_free_full_dataset (const DATAINFO *pdinfo)
 {
@@ -92,15 +101,13 @@ static void sync_dataset_elements (const DATAINFO *pdinfo)
     fullinfo->descrip = pdinfo->descrip;      
 }
 
-/* .......................................................... */
-
 static int 
 attach_subsample_to_datainfo (DATAINFO *subinfo, const double **Z, 
 			      const DATAINFO *pdinfo)
 {
     int s, t;
 
-    subinfo->submask = malloc(pdinfo->n * sizeof *subinfo->submask);
+    subinfo->submask = malloc((pdinfo->n + 1) * sizeof *subinfo->submask);
     if (subinfo->submask == NULL) {
 	return E_ALLOC;
     }
@@ -116,6 +123,8 @@ attach_subsample_to_datainfo (DATAINFO *subinfo, const double **Z,
     for (t=0; t<pdinfo->n; t++) {
 	subinfo->submask[t] = Z[s][t];
     }
+
+    subinfo->submask[pdinfo->n] = SUBMASK_SENTINEL;
 
     return 0;
 }
@@ -139,7 +148,7 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 	/* sync, in case anything has moved */
 	sync_dataset_elements(pdinfo);
 
-	pmod->submask = copy_subsample_mask(pdinfo->submask, fullinfo->n);
+	pmod->submask = copy_subsample_mask(pdinfo->submask);
 	if (pmod->submask == NULL) {
 	    err = E_ALLOC;
 	}
@@ -147,8 +156,6 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 
     return err;
 }
-
-/* .......................................................... */
 
 static double *get_old_mask (double **Z, const DATAINFO *pdinfo)
 {

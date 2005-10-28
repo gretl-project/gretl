@@ -57,6 +57,7 @@ struct JohansenInfo_ {
 
 struct GRETL_VAR_ {
     int ci;              /* command index */
+    int refcount;        /* for saving/deleting */
     int err;             /* error code */
     int neqns;           /* number of equations in system */
     int order;           /* lag order */

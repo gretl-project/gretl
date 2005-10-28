@@ -654,8 +654,8 @@ int main (int argc, char *argv[])
 
     /* leak check -- try explicitly freeing all memory allocated */
 
-    free_model(models[0]);
-    free_model(models[1]);
+    gretl_model_free_on_exit(models[0]);
+    gretl_model_free_on_exit(models[1]);
     free(models);
 
     destroy_dataset(Z, datainfo);
@@ -942,7 +942,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case OMITFROM:
 	i = atoi(cmd.param);
 	if ((err = model_test_start(cmd.ci, i, prn))) break;
-	if (i == (models[0])->ID) goto plain_add_omit;
+	if (i == models[0]->ID) goto plain_add_omit;
 	err = re_estimate(modelspec_get_command_by_id(modelspec, i), 
 			  &tmpmod, &Z, datainfo);
 	if (err) {
@@ -975,7 +975,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	clear_model(models[0]);
 	*models[0] = ar_func(cmd.list, atoi(cmd.param), &Z, 
 			     datainfo, cmd.opt, prn);
-	if ((err = (models[0])->errcode)) { 
+	if ((err = models[0]->errcode)) { 
 	    errmsg(err, prn); 
 	}
 	break;
@@ -985,10 +985,10 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	clear_model(models[1]);
 	*models[1] = arch_model(cmd.list, order, &Z, datainfo, 
 				cmd.opt, prn);
-	if ((err = (models[1])->errcode)) { 
+	if ((err = models[1]->errcode)) { 
 	    errmsg(err, prn);
 	}
-	if ((models[1])->ci == ARCH) {
+	if (models[1]->ci == ARCH) {
 	    do_arch = 1;
 	    swap_models(&models[0], &models[1]); 
 	}
@@ -1440,7 +1440,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	} else {
 	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
 	}
-	if ((err = (models[0])->errcode)) {
+	if ((err = models[0]->errcode)) {
 	    errmsg(err, prn);
 	} else {
 	    printmodel(models[0], datainfo, cmd.opt, prn);
@@ -1657,7 +1657,6 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    err = 1;
 	} else {
 	    err = maybe_stack_var(var, &cmd);
-	    set_last_model(var, VAR);
 	}
 	if (err) errmsg(err, prn);
 	break;
@@ -1670,7 +1669,6 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    err = 1;
 	} else {
 	    err = maybe_stack_var(var, &cmd);
-	    set_last_model(var, VAR);
 	}
 	if (err) errmsg(err, prn);
 	break;
@@ -1694,8 +1692,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 		(models[0])->ID, get_model_count());
 #endif
 	err = modelspec_save(models[0], &modelspec);
-	maybe_stack_model(&models[0], &cmd, datainfo, prn);
-	set_last_model(models[0], EQUATION);
+	maybe_stack_model(&models[0], &cmd, prn);
     }
 
     return err;

@@ -838,7 +838,7 @@ int run_gretl_comparison (const char *datname,
 
  free_stuff:
     free(list);
-    free_model(model);
+    gretl_model_free(model);
 
     return 0;
 }

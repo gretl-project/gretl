@@ -882,7 +882,7 @@ static void clean_up_models (gretl_equation_system *sys)
 	    sys->method == SYS_TSLS || sys->method == SYS_LIML) {
 	    tsls_free_data(sys->models[i]);
 	}
-	free_model(sys->models[i]);
+	gretl_model_free(sys->models[i]);
     }
 
     free(sys->models);

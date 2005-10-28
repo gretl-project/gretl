@@ -1044,9 +1044,9 @@ int main (int argc, char *argv[])
 	free_Z(Z, datainfo);
     }
 
-    free_model(models[0]);
-    free_model(models[1]);
-    free_model(models[2]);
+    gretl_model_free_on_exit(models[0]);
+    gretl_model_free_on_exit(models[1]);
+    gretl_model_free_on_exit(models[2]);
     free(models);
 
     library_command_free();
