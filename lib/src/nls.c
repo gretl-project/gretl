@@ -102,9 +102,9 @@ static int nls_auto_genr (int i, double ***pZ, DATAINFO *pdinfo)
 	fprintf(stderr, "nls_auto_genr: generating aux var:\n %s\n", pspec->aux[j]);
 #endif
 	if (pZ != NULL && pdinfo != NULL) {
-	    genr_err = generate(pspec->aux[j], pZ, pdinfo, NULL, OPT_P);
+	    genr_err = generate(pspec->aux[j], pZ, pdinfo, OPT_P);
 	} else {
-	    genr_err = generate(pspec->aux[j], nZ, ndinfo, NULL, OPT_P);
+	    genr_err = generate(pspec->aux[j], nZ, ndinfo, OPT_P);
 	}
     }
 
@@ -117,10 +117,10 @@ static int nls_auto_genr (int i, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (pZ != NULL && pdinfo != NULL) {
-	genr_err = generate(formula, pZ, pdinfo, NULL, OPT_P);
+	genr_err = generate(formula, pZ, pdinfo, OPT_P);
     } else {
 	/* using "global" nZ and ndinfo pointers here */
-	genr_err = generate(formula, nZ, ndinfo, NULL, OPT_P);
+	genr_err = generate(formula, nZ, ndinfo, OPT_P);
     }
 
 #if NLS_DEBUG

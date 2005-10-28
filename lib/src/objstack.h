@@ -22,6 +22,10 @@
 
 #include "system.h"
 
+void *get_last_model (int *type);
+
+void set_last_model (void *ptr, int type);
+
 MODEL *get_model_by_name (const char *mname);
 
 GRETL_VAR *get_VAR_by_name (const char *vname);
@@ -50,6 +54,8 @@ int maybe_stack_model (MODEL **ppmod, const CMD *cmd, const DATAINFO *pdinfo,
 int maybe_stack_var (GRETL_VAR *var, const CMD *cmd);
 
 double saved_object_get_value (const char *oname, const char *valname, int *err);
+
+double last_model_get_value_by_type (int idx, int *err);
 
 void gretl_rename_saved_object (void *p, const char *name);
 

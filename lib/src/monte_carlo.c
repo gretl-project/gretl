@@ -26,6 +26,7 @@
 #include "compat.h"
 #include "cmd_private.h"
 #include "var.h"
+#include "objstack.h"
 
 #include <time.h>
 #include <unistd.h>
@@ -2483,7 +2484,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	       MODEL **models, PRN *prn)
 {
     CMD cmd;
-    MODEL *lastmod = models[0];
+    MODEL *lastmod = models[0]; /* FIXME relationship to last_model in objstack */
     char errline[MAXLINE];
     char linecpy[MAXLINE];
     int m = 0;
@@ -2600,7 +2601,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    case GENR:
-		err = generate(linecpy, pZ, *ppdinfo, lastmod, cmd.opt);
+		err = generate(linecpy, pZ, *ppdinfo, cmd.opt);
 		if (loop_is_verbose(loop) && !err) { 
 		    print_gretl_msg(prn);
 		}
@@ -2667,7 +2668,7 @@ int loop_exec (LOOPSET *loop, char *line,
 			err = 1;
 			break;
 		    }
-		    lastmod = models[0];
+		    set_last_model(models[0], EQUATION);
 		} else if (cmd.opt & OPT_P) {
 		    /* deferred printing of model results */
 		    m = get_modnum_by_cmdnum(loop, j);
@@ -2678,7 +2679,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		} else {
 		    (models[0])->ID = ++modnum; /* FIXME? */
 		    printmodel(models[0], *ppdinfo, cmd.opt, prn);
-		    lastmod = models[0];
+		    set_last_model(models[0], EQUATION);
 		}
 		break;
 
@@ -2703,7 +2704,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		    clear_model(models[1]);
 		} else {
 		    swap_models(&models[0], &models[1]);
-		    lastmod = models[0];
+		    set_last_model(models[0], EQUATION);
 		    clear_model(models[1]);
 		}
 		break;	
@@ -2730,7 +2731,7 @@ int loop_exec (LOOPSET *loop, char *line,
 			errmsg(err, prn);
 		    } else {
 			printmodel(models[0], *ppdinfo, cmd.opt, prn);
-			lastmod = models[0];
+			set_last_model(models[0], EQUATION);
 		    }
 		} else {
 		    err = 1;
@@ -2757,7 +2758,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    case PRINTF:
-		err = do_printf(linecpy, pZ, *ppdinfo, models[0], prn);
+		err = do_printf(linecpy, pZ, *ppdinfo, prn);
 		break;
 
 	    case SMPL:
@@ -2857,6 +2858,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	/* to get genr commands that reference model statistics --
 	   after the loop has finished -- to come out right
 	*/
+	/* FIXME !!! */
 	swap_models(&models[0], &loop->models[m]);
     }
 
@@ -2981,7 +2983,7 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 
     sprintf(formula, "__iftest=%s", line);
 
-    err = generate(formula, pZ, pdinfo, NULL, OPT_P);
+    err = generate(formula, pZ, pdinfo, OPT_P);
 #if IFDEBUG
     fprintf(stderr, "if_eval: generate returned %d\n", err);
 #endif

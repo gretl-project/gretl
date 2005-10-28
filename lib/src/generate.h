@@ -20,8 +20,7 @@
 #ifndef GENERATE_H
 #define GENERATE_H
 
-int generate (const char *line, double ***pZ, DATAINFO *pdinfo, 
-	      MODEL *pmod, gretlopt opt); 
+int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt); 
 
 int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
 
@@ -50,7 +49,7 @@ int genr_fit_resid (const MODEL *pmod,
 
 int get_generated_value (const char *argv, double *val,
 			 double ***pZ, DATAINFO *pdinfo,
-			 MODEL *pmod, int t);
+			 int t);
 
 int gretl_reserved_word (const char *str);
 

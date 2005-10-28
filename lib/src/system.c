@@ -769,8 +769,8 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
     }
 
     if (sys->name == NULL) {
-	/* discard the system */
-	gretl_equation_system_destroy(sys);
+	/* FIXME should we do this even if the system has a name? */
+	set_last_model(sys, SYSTEM);
     } 
 
     return err;

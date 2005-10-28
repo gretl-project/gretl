@@ -136,7 +136,6 @@ struct _GENERATE {
     double **tmpZ;
     DATAINFO *pdinfo;
     double ***pZ;
-    MODEL *pmod;
     atomset *aset;
     double valstack[VALSTACK_SIZE];
     int nvals;

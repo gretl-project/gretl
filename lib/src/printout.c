@@ -1902,8 +1902,7 @@ static int get_conversion (const char *s, int *skip)
 }
 
 static int real_do_printf (const char *line, double ***pZ, 
-			   DATAINFO *pdinfo, MODEL *pmod,
-			   PRN *prn, int t)
+			   DATAINFO *pdinfo, PRN *prn, int t)
 {
     const char *p;
     char format[128];
@@ -2043,8 +2042,7 @@ static int real_do_printf (const char *line, double ***pZ,
 		    xvals[i] = (*pZ)[v][0];
 		}
 	    } else {
-		err = get_generated_value(argv, &xvals[i], pZ, pdinfo, 
-					  pmod, t);
+		err = get_generated_value(argv, &xvals[i], pZ, pdinfo, t);
 	    }
 	}
 
@@ -2102,10 +2100,9 @@ static int real_do_printf (const char *line, double ***pZ,
 }
 
 int do_printf (const char *line, double ***pZ, 
-	       DATAINFO *pdinfo, MODEL *pmod,
-	       PRN *prn)
+	       DATAINFO *pdinfo, PRN *prn)
 {
-    return real_do_printf(line, pZ, pdinfo, pmod, prn, -1);
+    return real_do_printf(line, pZ, pdinfo, prn, -1);
 }
 
 /* originating command is of form:
@@ -2134,7 +2131,7 @@ int generate_obs_markers (double ***pZ, DATAINFO *pdinfo, char *s)
 
 	for (t=0; t<pdinfo->n && !err; t++) {
 	    gretl_print_reset_buffer(prn);
-	    err = real_do_printf(s, pZ, pdinfo, NULL, prn, t);
+	    err = real_do_printf(s, pZ, pdinfo, prn, t);
 	    if (!err) {
 		buf = gretl_print_get_buffer(prn);
 		pdinfo->S[t][0] = '\0';

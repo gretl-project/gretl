@@ -133,7 +133,7 @@ void set_replay_off (void)
     replay = 0;
 }
 
-static char get_or_set_last_model (char c, int set)
+static char get_or_set_last_model_status (char c, int set)
 {
     static char last_model = 's';
 
@@ -144,23 +144,12 @@ static char get_or_set_last_model (char c, int set)
     return last_model;
 }
 
-static void set_last_model (int script)
+static void set_last_model_status (int script)
 {
     if (script) {
-	get_or_set_last_model('s', 1);
+	get_or_set_last_model_status('s', 1);
     } else {
-	get_or_set_last_model('g', 1);
-    }
-}
-
-static MODEL *reference_model (void)
-{
-    char c = get_or_set_last_model(0, 0);
-    
-    if (c == 's') {
-	return models[0];
-    } else {
-	return models[2];
+	get_or_set_last_model_status('g', 1);
     }
 }
 
@@ -535,14 +524,14 @@ static gint my_stack_model (MODEL *pmod)
     int script = gretl_model_get_int(pmod, "script");
     int err = 0;
 
-    set_last_model(script);
+    set_last_model_status(script); /* FIXME is this needed? */
 
-    if (script) { /* Model estimated via console or script: unlike a gui
-		     model, which is kept in memory so long as its window
-		     is open, these models are immediately discarded.  So
-		     if we want to be able to refer back to them later we
-		     need to record their specification */
-
+    if (script) { 
+	/* Model estimated via console or script: unlike a gui model,
+	   which is kept in memory so long as its window is open,
+	   these models are immediately discarded.  So if we want to
+	   be able to refer back to them later we need to record their
+	   specification */
 	attach_subsample_to_model(models[0], datainfo);
 	err = modelspec_save(models[0], &modelspec);
     }
@@ -1468,10 +1457,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    /* update copy of most recently estimated model */
-    if (copy_model(models[2], pmod, datainfo)) {
-	errbox(_("Out of memory copying model"));
-    }
+    /* FIXME set as last_model or not? */
 
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
@@ -2486,10 +2472,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	return;
     }
 
-    /* make copy of most recent model */
-    if (copy_model(models[2], pmod, datainfo)) {
-	errbox(_("Out of memory copying model"));
-    }
+    /* FIXME set as last_model or not? */
 
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
@@ -2696,10 +2679,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    /* make copy of most recent model */
-    if (copy_model(models[2], pmod, datainfo)) {
-	errbox(_("Out of memory copying model"));
-    }
+    /* FIXME set as last_model or not */
 
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
@@ -2826,9 +2806,7 @@ void do_graph_model (GPT_SPEC *spec)
 	return;
     }
 
-    if (copy_model(models[2], pmod, datainfo)) {
-	errbox(_("Out of memory copying model"));
-    }
+    /* FIXME set as last_model or not? */
 
     attach_subsample_to_model(pmod, datainfo);
     
@@ -2989,12 +2967,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 {
     int err = 0;
 
-    if (pmod != NULL) {
-	err = generate(cmdline, &Z, datainfo, pmod, OPT_NONE); 
-    } else {
-	err = generate(cmdline, &Z, datainfo, reference_model(),
-		       OPT_NONE);
-    }
+    err = generate(cmdline, &Z, datainfo, OPT_NONE); 
 
     if (err) {
 	gui_errmsg(err);
@@ -6218,7 +6191,7 @@ int gui_exec_line (char *line,
 	break;
 
     case GENR:
-	err = generate(line, &Z, datainfo, reference_model(), cmd.opt);
+	err = generate(line, &Z, datainfo, cmd.opt);
 	if (err) {
 	    errmsg(err, prn);
 	} else {
@@ -6519,8 +6492,8 @@ int gui_exec_line (char *line,
 	break;
 
     case PRINTF:
-	err = do_printf(line, &Z, datainfo, reference_model(),
-			prn);
+	/* FIXME reference_model() */
+	err = do_printf(line, &Z, datainfo, prn);
 	break;
 
     case PVALUE:

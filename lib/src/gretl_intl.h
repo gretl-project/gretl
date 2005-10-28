@@ -31,6 +31,7 @@ char *iso_to_ascii (char *s);
 char *get_month_name (char *mname, int m);
 
 #ifdef ENABLE_NLS
+
 char *iso_gettext (const char *msgid);
 
 char *maybe_iso_gettext (const char *msgid);
@@ -55,11 +56,17 @@ int print_as_locale (const char *s, FILE *fp);
 
 int get_utf_width (const char *str, int width);
 
+int get_translated_width (const char *str);
+
 # define UTF_WIDTH(s, w) get_utf_width(s, w) 
-int get_utf_width (const char *str, int width);
+# define TRANSLATED_WIDTH(s) get_translated_width(s)
+
 #else
-# define UTF_WIDTH(s, w)    w
-#endif  /* ENABLE_NLS */
+
+# define UTF_WIDTH(s, w) w
+# define TRANSLATED_WIDTH(s) strlen(s)
+
+#endif /* ENABLE_NLS */
 
 #ifndef USE_GTK2
 int

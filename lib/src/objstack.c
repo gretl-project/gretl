@@ -37,6 +37,8 @@ static int n_obj;
 static int n_sys;
 static int n_vars;
 
+static stacker last_model;
+
 static void gretl_saved_object_free (stacker *s)
 {
     if (s->type == EQUATION) {
@@ -46,6 +48,24 @@ static void gretl_saved_object_free (stacker *s)
     } else if (s->type == SYSTEM) {
 	gretl_equation_system_destroy(s->ptr);
     }
+}
+
+void *get_last_model (int *type)
+{
+    if (last_model.type == 0) {
+	*type = 0;
+	return NULL;
+    } else {
+	*type = last_model.type;
+	return last_model.ptr;
+    }
+}
+
+void set_last_model (void *ptr, int type)
+{
+    gretl_saved_object_free(&last_model);
+    last_model.ptr = ptr;
+    last_model.type = type;
 }
 
 static const char *saved_object_get_name (stacker *s)
@@ -362,14 +382,18 @@ int maybe_stack_model (MODEL **ppmod, const CMD *cmd, const DATAINFO *pdinfo,
 
 #define INVALID_STAT -999.999
 
-double maybe_get_value (void *p, int type, const char *valname)
+static double maybe_get_value (void *p, int type, int idx)
 {
     double x = INVALID_STAT;
-    int idx = gretl_model_stat_index(valname);
     int err = 0;
     
     if (idx <= 0) {
 	return x;
+    }
+
+    if (p == NULL) {
+	p = last_model.ptr;
+	type = last_model.type;
     }
 
     if (type == EQUATION) {
@@ -408,7 +432,7 @@ double saved_object_get_value (const char *oname, const char *valname,
     stacker *smatch = NULL;
     const char *test;
     double ret = INVALID_STAT;
-    int i;
+    int idx, i;
 
     for (i=0; i<n_obj; i++) {
 	test = saved_object_get_name(&obj_stack[i]);
@@ -419,7 +443,8 @@ double saved_object_get_value (const char *oname, const char *valname,
     }
 
     if (smatch != NULL) {
-	ret = maybe_get_value(smatch->ptr, smatch->type, valname);
+	idx = gretl_model_stat_index(valname);
+	ret = maybe_get_value(smatch->ptr, smatch->type, idx);
     }
 
     if (ret == INVALID_STAT) {
@@ -427,6 +452,18 @@ double saved_object_get_value (const char *oname, const char *valname,
     }
 
     return ret;
+}
+
+double last_model_get_value_by_type (int idx, int *err)
+{
+    double x = maybe_get_value(NULL, 0, idx);
+
+    if (x == INVALID_STAT) {
+	*err = E_BADSTAT;
+	x = NADBL;
+    }
+
+    return x;
 }
 
 void gretl_saved_objects_cleanup (void)

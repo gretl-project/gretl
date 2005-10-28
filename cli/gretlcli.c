@@ -1169,7 +1169,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case GENR:
-	err = generate(line, &Z, datainfo, models[0], cmd.opt);
+	err = generate(line, &Z, datainfo, cmd.opt);
 	if (err) { 
 	    errmsg(err, prn);
 	} else {
@@ -1469,7 +1469,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case PRINTF:
-	err = do_printf(line, &Z, datainfo, models[0], prn);
+	err = do_printf(line, &Z, datainfo, prn);
 	break;
 
     case PVALUE:
@@ -1657,6 +1657,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    err = 1;
 	} else {
 	    err = maybe_stack_var(var, &cmd);
+	    set_last_model(var, VAR);
 	}
 	if (err) errmsg(err, prn);
 	break;
@@ -1669,6 +1670,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    err = 1;
 	} else {
 	    err = maybe_stack_var(var, &cmd);
+	    set_last_model(var, VAR);
 	}
 	if (err) errmsg(err, prn);
 	break;
@@ -1693,6 +1695,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 #endif
 	err = modelspec_save(models[0], &modelspec);
 	maybe_stack_model(&models[0], &cmd, datainfo, prn);
+	set_last_model(models[0], EQUATION);
     }
 
     return err;

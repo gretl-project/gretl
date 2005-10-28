@@ -87,8 +87,7 @@ void bufspace (int n, PRN *prn);
 void gretl_printxn (double x, int n, PRN *prn);
 
 int do_printf (const char *line, double ***pZ, 
-	       DATAINFO *pdinfo, MODEL *pmod,
-	       PRN *prn);
+	       DATAINFO *pdinfo, PRN *prn);
 
 int generate_obs_markers (double ***pZ, DATAINFO *pdinfo, char *s);
 

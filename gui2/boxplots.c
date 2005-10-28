@@ -1783,7 +1783,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 	    char formula[80];
 	    
 	    sprintf(formula, "bool_%d = %s", i-1, bools[i-1]);
-	    err = generate(formula, pZ, pdinfo, NULL, OPT_P);
+	    err = generate(formula, pZ, pdinfo, OPT_P);
 	    if (err) {
 		char errtxt[128];
 

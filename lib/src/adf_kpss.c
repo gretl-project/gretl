@@ -559,11 +559,14 @@ int kpss_test (int order, int varno, double ***pZ,
 		(hastrend)? _("(including trend)") : _("(without trend)"));
 	pprintf(prn, _("Lag truncation parameter = %d\n"), order);
 	pprintf(prn, "%s = %g\n\n", _("Test statistic"), teststat);
-	pprintf(prn, "		    10%%\t   5%%\t 2.5%%\t   1%%\n");
+	pprintf(prn, "%*s    ", TRANSLATED_WIDTH(_("Critical values")), " ");
+	pprintf(prn, "%g%%      %g%%    %g%%      %g%%\n", 10.0, 5.0, 2.5, 1.0);
 	if (hastrend) {
-	    pprintf(prn, "%s: 0.119\t0.146\t0.176\t0.216\n\n", _("Critical values"));
+	    pprintf(prn, "%s: %.3f   %.3f   %.3f   %.3f\n\n", 
+		    _("Critical values"), 0.119, 0.146, 0.176, 0.216);
 	} else {
-	    pprintf(prn, "%s: 0.347\t0.463\t0.574\t0.739\n\n", _("Critical values"));
+	    pprintf(prn, "%s: %.3f   %.3f   %.3f   %.3f\n\n", 
+		    _("Critical values"), 0.347, 0.463, 0.574, 0.739);
 	}
     }
 

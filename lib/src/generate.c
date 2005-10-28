@@ -71,8 +71,7 @@ static int dataset_var_index (const char *s);
 static int test_stat_index (const char *s);
 static int op_level (int c);
 
-static double *get_model_series (const DATAINFO *pdinfo,
-				 const MODEL *pmod, int v);
+static double *get_model_series (const DATAINFO *pdinfo, int v);
 static double *get_random_series (DATAINFO *pdinfo, int fn);
 static double *get_mp_series (const char *s, GENERATE *genr,
 			      int fn, int *err);
@@ -82,7 +81,7 @@ static double *get_tmp_series (double *x, GENERATE *genr,
 static double get_tnum (const DATAINFO *pdinfo, int t);
 static double evaluate_statistic (double *z, GENERATE *genr, int fn);
 static double get_model_data_element (const char *s, GENERATE *genr,
-				      MODEL *pmod, int idx);
+				      int idx);
 static double get_dataset_statistic (DATAINFO *pdinfo, int idx);
 static double get_test_stat_value (char *label, int idx);
 static double evaluate_math_function (double arg, int fn, int *err);
@@ -234,8 +233,7 @@ static const char *get_func_word (int fnum);
 
 #define genr_single_obs(g) ((g)->obs >= 0)
 
-static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
-		       MODEL *pmod, gretlopt opt)
+static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 {
     genr->err = 0;
     genr->flags = GENR_SAVE | GENR_SCALAR;
@@ -248,7 +246,6 @@ static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
     genr->tmpZ = NULL;
     genr->pdinfo = pdinfo;
     genr->pZ = pZ;
-    genr->pmod = pmod;
     genr->aset = NULL;
     genr->S = NULL;
 
@@ -384,7 +381,7 @@ static int get_lagvar (const char *s, int *lag, GENERATE *genr)
 
 int get_generated_value (const char *argv, double *val,
 			 double ***pZ, DATAINFO *pdinfo,
-			 MODEL *pmod, int t)
+			 int t)
 {
     char genline[MAXLINE];
     int err = 0;
@@ -393,7 +390,7 @@ int get_generated_value (const char *argv, double *val,
 #if GENR_DEBUG
     fprintf(stderr, "get_generated_value: trying '%s'\n", genline);
 #endif
-    err = generate(genline, pZ, pdinfo, pmod, OPT_P);
+    err = generate(genline, pZ, pdinfo, OPT_P);
     if (!err) {
 	int v = pdinfo->v - 1;
 
@@ -436,8 +433,7 @@ static int evaluate_genr_function_args (char *s, GENERATE *genr)
 	    vals[i] = dot_atof(arg);
 	} else {
 	    err = get_generated_value(arg, &vals[i], genr->pZ, 
-				      genr->pdinfo, genr->pmod, 
-				      0);
+				      genr->pdinfo, 0);
 	}
 	nf++;
     }
@@ -591,9 +587,7 @@ static genatom *parse_token (const char *s, char op,
 			   func == T_ISLIST || func == T_NELEM) {
 		    scalar = 1;
 		} else if (MODEL_DATA_ELEMENT(func)) {
-		    val = get_model_data_element(str, genr,
-						 genr->pmod, 
-						 func);
+		    val = get_model_data_element(str, genr, func);
 		    scalar = 1;
 		} else if (BIVARIATE_STAT(func)) {
 		    val = evaluate_bivariate_statistic(str, genr, func);
@@ -635,7 +629,7 @@ static genatom *parse_token (const char *s, char op,
 	} else if ((i = gretl_model_stat_index(s)) > 0) {
 	    DPRINTF(("recognized '%s' as model variable, index #%d\n", 
 		     s, i));
-	    val = gretl_model_get_scalar(genr->pmod, i, &genr->err);
+	    val = last_model_get_value_by_type(i, &genr->err);
 	    scalar = 1;
 	} else if ((i = model_vector_index(s)) > 0) { 
 	    DPRINTF(("recognized '%s' as model vector, index #%d\n", 
@@ -835,8 +829,7 @@ static int add_model_series_to_genr (GENERATE *genr, genatom *atom)
 {
     double *x;
 
-    x = get_model_series((const DATAINFO *) genr->pdinfo, 
-			 genr->pmod, atom->varnum);
+    x = get_model_series((const DATAINFO *) genr->pdinfo, atom->varnum);
     if (x == NULL) return 1;
 
     if (genr_add_temp_var(genr, x)) {
@@ -2392,18 +2385,16 @@ write_genr_label (GENERATE *genr, char *genrs, int oldv)
  * @line: command line (formula for generating variable).
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @pmod: pointer to a model, or NULL if not needed.
  * @opt: option flags (for future development).
  *
  * Generates a new variable, usually via some transformation of
  * existing variables, or by retrieving an internal variable associated
- * with the estimation of a model (@pmod).
+ * with the estimation of the last model.
  * 
  * Returns: 0 on success, integer error code on error.
  */
 
-int generate (const char *line, double ***pZ, DATAINFO *pdinfo, 
-	      MODEL *pmod, gretlopt opt)
+int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 {
     int i;
     char s[MAXLINE], genrs[MAXLINE];
@@ -2417,7 +2408,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
     *gretl_errmsg = *s = *genrs = '\0';
     *gretl_msg = '\0';
 
-    genr_init(&genr, pZ, pdinfo, pmod, opt);
+    genr_init(&genr, pZ, pdinfo, opt);
 
     /* grab the expression, skipping the command word 
        and compressing spaces */
@@ -3754,15 +3745,18 @@ static int arma_model_stat_pos (const char *s, const MODEL *pmod)
 #define AR1_MODEL(c) (c == CORC || c == HILU || c == PWE)
 
 static double 
-get_model_data_element (const char *s, GENERATE *genr,
-			MODEL *pmod, int idx)
+get_model_data_element (const char *s, GENERATE *genr, int idx)
 {
-    int lv, vi = 0;
+    MODEL *pmod = NULL;
+    int type, lv, vi = 0;
     double x = NADBL;
 
     DPRINTF(("get_model_data_element: looking at '%s'\n", s));
 
-    if (pmod == NULL) return x;
+    pmod = get_last_model(&type);
+    if (type != EQUATION) {
+	return x;
+    }
 
     if (idx == T_RHO) {
 	if (!(numeric_string(s))) {
@@ -3886,13 +3880,19 @@ static double get_obs_value (const char *s, const double **Z,
     return val;
 }
 
-static double *get_model_series (const DATAINFO *pdinfo,
-				 const MODEL *pmod, int v)
+static double *get_model_series (const DATAINFO *pdinfo, int v)
 {
+    MODEL *pmod;
+    int type;
     double *x, *garch_h = NULL;
     int t;
 
-    if (pmod == NULL || !MODEL_VAR_INDEX(v)) {
+    pmod = get_last_model(&type);
+    if (type != EQUATION) {
+	return NULL;
+    }
+
+    if (!MODEL_VAR_INDEX(v)) {
 	return NULL;
     }
 

@@ -518,7 +518,7 @@ struct l2sym {
     int ucs2val; /* corresponding UCS-2 code */
 };
 
-#ifndef WIN32
+# ifndef WIN32
 
 /* iso-8859-2 */
 
@@ -582,7 +582,7 @@ static struct l2sym l2table[] = {
     { 255, 729 }  /*  '. */
 };
 
-#else
+# else
 
 /* Windows codepage 1250 */
 
@@ -663,7 +663,7 @@ static struct l2sym l2table[] = {
     { 255,  729 }  /*  '. */
 };
 
-#endif
+# endif
 
 static int l2_lookup (int c)
 {
@@ -699,7 +699,7 @@ char *sprint_l2_to_html (char *targ, const char *s, size_t len)
     *p = '\0';
 
     while ((c = *s)) {
-#ifndef WIN32
+# ifndef WIN32
 	if (c > 160) {
 	    sprintf(p, "&#%d;", l2_lookup(c));
 	    p = strchr(p, ';') + 1;
@@ -709,14 +709,14 @@ char *sprint_l2_to_html (char *targ, const char *s, size_t len)
 	} else {
 	    *p++ = c;
 	}
-#else
+# else
 	if (c > 127) {
 	    sprintf(p, "&#%d;", l2_lookup(c));
 	    p = strchr(p, ';') + 1;
 	} else {
 	    *p++ = c;
 	}
-#endif
+# endif
 	s++;
 	if (p - targ > len - 8) {
 	    break;
@@ -807,20 +807,29 @@ char *get_month_name (char *mname, int m)
     strftime(mname, 7, "%b", &mt);
     *mname = tolower(*mname);
 
-#ifdef ENABLE_NLS
     real_iso_to_ascii(mname, gretl_cset_min);
-#endif
 
     return mname;
 }
 
 int get_utf_width (const char *str, int width)
 {
-#if defined(ENABLE_NLS) && defined(USE_GTK2)
+# ifdef USE_GTK2
     width += strlen(str) - g_utf8_strlen(str, -1);
-#endif
+# endif
 
     return width;
+}
+
+int get_translated_width (const char *str)
+{
+    int w = strlen(str);
+
+# ifdef USE_GTK2
+    w += w - g_utf8_strlen(str, -1);
+# endif
+
+    return w;
 }
 
 #endif /* ENABLE_NLS */
