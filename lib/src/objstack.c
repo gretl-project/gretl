@@ -118,7 +118,7 @@ void set_last_model (void *ptr, int type)
 {
     if (ptr != last_model.ptr) {
 	gretl_saved_object_free(&last_model, OBJ_FREE_NORMAL);
-	if (type == EQUATION) {
+	if (0 || type == EQUATION) {
 	    MODEL *cpy = gretl_model_new();
 
 	    copy_model(cpy, ptr);
