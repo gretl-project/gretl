@@ -2106,9 +2106,7 @@ int swap_models (MODEL **targ, MODEL **src)
     *targ = *src;
     *src = tmp;
 
-#if 0
-    set_last_model(*targ, EQUATION);
-#endif
+    maybe_swap_into_last_model(*targ, tmp);
 
     return 0;
 }

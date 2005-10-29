@@ -2478,6 +2478,13 @@ make_dollar_substitutions (char *str, const LOOPSET *loop,
     return err;
 }
 
+/* below, in loop_exec, as of October 28, 2005, the handling of the
+   multiple models is totally screwed by my attempt to allow VARs,
+   VECMs, simultaneous systems, et alia, to pose as "the last model".
+   This is a rather deep mess-up which requires careful thought
+   to fix.
+*/
+
 int loop_exec (LOOPSET *loop, char *line,
 	       double ***pZ, DATAINFO **ppdinfo, 
 	       MODEL **models, PRN *prn)
@@ -2651,7 +2658,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		    *models[0] = lsq(cmd.list, pZ, *ppdinfo, cmd.ci, cmd.opt, rho);
 		}
 
-		if ((err = (models[0])->errcode)) {
+		if ((err = models[0]->errcode)) {
 		    break;
 		} 
 
@@ -2670,8 +2677,11 @@ int loop_exec (LOOPSET *loop, char *line,
 		} else if (cmd.opt & OPT_P) {
 		    /* deferred printing of model results */
 		    m = get_modnum_by_cmdnum(loop, j);
+		    fprintf(stderr, "before swap, models[0] = %p\n", (void *) models[0]);
 		    swap_models(&models[0], &loop->models[m]);
+		    fprintf(stderr, "after swap, models[0] = %p\n", (void *) models[0]);
 		    loop->models[m]->ID = j;
+		    fprintf(stderr, "calling set_last on %p\n", (void *) loop->models[m]);
 		    set_last_model(loop->models[m], EQUATION);
 		    model_count_minus();
 		} else {
@@ -2719,7 +2729,7 @@ int loop_exec (LOOPSET *loop, char *line,
 			gretl_cmd_set_context(&cmd, cmd.ci);
 		    }
 		}
-		/* set last model */
+		/* FIXME set last model */
 		break;
 
 	    case END:

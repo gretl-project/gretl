@@ -26,6 +26,8 @@ void *get_last_model (int *type);
 
 void set_last_model (void *ptr, int type);
 
+void maybe_swap_into_last_model (MODEL *new, MODEL *old);
+
 MODEL *get_model_by_name (const char *mname);
 
 GRETL_VAR *get_VAR_by_name (const char *vname);

@@ -24,7 +24,7 @@
 #include "system_private.h"
 #include "objstack.h"
 
-#define ODEBUG 0
+#define ODEBUG 1
 
 typedef struct stacker_ stacker;
 
@@ -94,6 +94,10 @@ static void gretl_saved_object_free (stacker *s, FreeCode code)
 	gretl_object_set_refcount(s, REFCOUNT_ONE);
     }
 
+#if ODEBUG
+    fprintf(stderr, "gretl_saved_object_free, doing it on %p\n", (void *) s->ptr);    
+#endif
+
     if (s->type == EQUATION) {
 	gretl_model_free(s->ptr);
     } else if (s->type == VAR) {
@@ -118,7 +122,7 @@ void set_last_model (void *ptr, int type)
 {
     if (ptr != last_model.ptr) {
 	gretl_saved_object_free(&last_model, OBJ_FREE_NORMAL);
-	if (0 || type == EQUATION) {
+	if (0 && type == EQUATION) {
 	    MODEL *cpy = gretl_model_new();
 
 	    copy_model(cpy, ptr);
@@ -126,9 +130,21 @@ void set_last_model (void *ptr, int type)
 	    gretl_object_set_refcount(&last_model, REFCOUNT_ONE);
 	} else {
 	    last_model.ptr = ptr;
-	    gretl_object_set_refcount(&last_model, REFCOUNT_PLUS);
 	}
 	last_model.type = type;
+    }
+}
+
+void maybe_swap_into_last_model (MODEL *new, MODEL *old)
+{
+#if ODEBUG
+    fprintf(stderr, "maybe_swap_into_last_model: new=%p, old=%p\n",
+	    (void *) new, (void *) old);
+#endif
+    if (last_model.ptr == old) {
+	last_model.ptr = new;
+    } else if (last_model.ptr == new) {
+	last_model.ptr = old;
     }
 }
 
@@ -408,9 +424,15 @@ int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
     const char *vname = gretl_cmd_get_savename(cmd);
     int ret = 0;
 
+#if ODEBUG
     fprintf(stderr, "maybe_stack_var: refcount = %d\n", var->refcount);
+#endif
+
     set_last_model(var, VAR);
+
+#if ODEBUG
     fprintf(stderr, "maybe_stack_var: done set last, refcount = %d\n", var->refcount);
+#endif
 
     if (*vname) {
 	ret = stack_object(var, VAR, vname, NULL);
