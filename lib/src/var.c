@@ -1698,52 +1698,6 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
 }
 
 /**
- * simple_VAR:
- * @order: lag order for the VAR
- * @list: specification for the first model in the set.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- * @opt: if includes %OPT_R, use robust VCV;
- *       if includes %OPT_I, print impulse responses;
- *       if includes %OPT_F, print forecast variance decompositions;
- *       if includes %OPT_D, add seasonal dummies;
- *       if includes %OPT_N, do not include a constant.
- *       if includes %OPT_Q, do not show individual regressions.
- * @prn: gretl printing struct.
- *
- * Estimate a vector autoregression (VAR) and print the results.
- *
- * Returns: 0 on successful completion, 1 on error.
- */
-
-int simple_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
-		gretlopt opt, PRN *prn)
-{
-    GRETL_VAR *var = NULL;
-    int *vlist = NULL;
-    int err = 0;
-    
-    gretl_list_purge_const(list);
-    vlist = maybe_expand_VAR_list(list, pZ, pdinfo, opt, &err);
-
-    if (!err) {
-	var = real_var(order, (vlist != NULL)? vlist : list, 
-		       pZ, pdinfo, opt, &err);
-    }
-
-    if (var != NULL) {
-	gretl_VAR_print(var, pdinfo, opt, prn);
-	gretl_VAR_free(var);
-    }
-
-    if (vlist != NULL) {
-	free(vlist);
-    }
-
-    return err;
-}
-
-/**
  * full_VAR:
  * @order: lag order for the VAR
  * @list: specification for the first model in the set.
@@ -2651,56 +2605,6 @@ GRETL_VAR *vecm (int order, int rank, int *list,
     free(exo_list);
 
     return jvar;
-}
-
-/**
- * vecm_simple:
- * @order: lag order for test.
- * @rank: pre-specified cointegration rank.
- * @list: list of variables to test for cointegration.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
- * @opt:
- * @prn: gretl printing struct.
- *
- *
- * Returns: 0 on success, non-zero code on error.
- */
-
-int vecm_simple (int order, int rank, int *list, 
-		 double ***pZ, DATAINFO *pdinfo,
-		 gretlopt opt, PRN *prn)
-{
-    GRETL_VAR *jvar;
-    int err = 0;
-
-    jvar = vecm(order, rank, list, pZ, pdinfo, opt, prn);
-
-    if (jvar == NULL) {
-	err = E_ALLOC;
-    } else {
-	err = jvar->err;
-    }
-
-#if BDEBUG > 1 
-    /* for testing: append calculation of IRF bootstrap */
-    if (jvar != NULL) {
-	gretl_matrix *R;
-	int targ = 1;
-	int shock = 0;
-
-	R = gretl_VAR_get_impulse_response(jvar, targ, shock, 20, 
-					   (const double **) *pZ, pdinfo);
-	gretl_matrix_print(R, "Response");
-	gretl_matrix_free(R);
-    }
-#endif
-
-    if (jvar != NULL) {
-	gretl_VAR_free(jvar);
-    }
-
-    return err;
 }
 
 int gretl_VAR_attach_restrictions (GRETL_VAR *var, gretl_matrix *D)

@@ -2483,6 +2483,7 @@ int loop_exec (LOOPSET *loop, char *line,
 {
     CMD cmd;
     MODEL *lastmod = models[0];
+    GRETL_VAR *var;
     char errline[MAXLINE];
     char linecpy[MAXLINE];
     int m = 0;
@@ -2811,14 +2812,20 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    case VAR:
-		err = simple_VAR(atoi(cmd.param), cmd.list, pZ, *ppdinfo, 
-				 cmd.opt, prn);
-		break;
-
 	    case VECM:
-		err = vecm_simple(atoi(cmd.param), atoi(cmd.extra), cmd.list, 
-				  pZ, *ppdinfo, cmd.opt, prn);
-		break;	    
+		if (cmd.ci == VAR) {
+		    var = full_VAR(atoi(cmd.param), cmd.list, pZ, *ppdinfo, 
+				   cmd.opt, prn);
+		} else {
+		    var = vecm(atoi(cmd.param), atoi(cmd.extra), cmd.list, 
+			   pZ, *ppdinfo, cmd.opt, prn);
+		}
+		if (var == NULL) {
+		    err = 1;
+		} else {
+		    set_as_last_model(var, VAR);
+		}
+		break;
 
 	    default: 
 		/* not reachable (since commands were screened in advance) */

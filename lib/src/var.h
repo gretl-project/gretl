@@ -25,19 +25,11 @@
 
 int var_max_order (const int *list, const DATAINFO *pdinfo);
 
-int simple_VAR (int order, int *list, 
-		double ***pZ, DATAINFO *pdinfo,
-		gretlopt opt, PRN *prn);
-
 GRETL_VAR *full_VAR (int order, int *list, 
 		     double ***pZ, DATAINFO *pdinfo,
 		     gretlopt opt, PRN *prn);
 
 GRETL_VAR *vecm (int order, int rank, int *list, 
-		 double ***pZ, DATAINFO *pdinfo,
-		 gretlopt opt, PRN *prn);
-
-int vecm_simple (int order, int rank, int *list, 
 		 double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt, PRN *prn);
 
