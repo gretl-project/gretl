@@ -205,33 +205,33 @@ static int parse_object_request (const char *line,
 
 /* public interface below */
 
-int maybe_save_model (const CMD *cmd, MODEL **ppmod, PRN *prn)
+int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn)
 {
     const char *savename = gretl_cmd_get_savename(cmd);
-    int err;
+    MODEL *cpy = NULL;
+    int err = 0;
 
-    set_last_model(*ppmod, EQUATION);
+    set_as_last_model(pmod, EQUATION);
 
     if (*savename == 0) {
 	return 0;
     }
 
-    err = stack_model_as(*ppmod, savename);
-
-    if (!err) {
-	err = try_add_model_to_session(*ppmod);
+    cpy = gretl_model_copy(pmod);
+    if (cpy == NULL) {
+	err = E_ALLOC;
     }
 
     if (!err) {
-	MODEL *mnew = gretl_model_new();
+	err = stack_model_as(cpy, savename);
+    }
 
-	if (mnew != NULL) {
-	    copy_model(mnew, *ppmod);
-	    *ppmod = mnew;
-	    pprintf(prn, _("%s saved\n"), savename);
-	} else {
-	    err = E_ALLOC;
-	}
+    if (!err) {
+	err = try_add_model_to_session(cpy);
+    }
+
+    if (!err) {
+	pprintf(prn, _("%s saved\n"), savename);
     }
 
     return err;
@@ -243,7 +243,7 @@ int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
     GRETL_VAR *var;
     int err = 0;
 
-    set_last_model(*pvar, VAR);
+    set_as_last_model(*pvar, VAR);
 
     if (*savename == 0) {
 	*pvar = NULL;

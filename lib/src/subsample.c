@@ -46,6 +46,8 @@ static double **fullZ;
 static DATAINFO *fullinfo;
 static const DATAINFO *peerinfo;
 
+#define SUBMASK_SENTINEL 127
+
 static int get_submask_length (const char *s)
 {
     int n = 1;
@@ -823,8 +825,6 @@ int restrict_sample (const char *line,
     return 0;
 }
 
-/* .......................................................... */
-
 enum {
     SMPL_T1,
     SMPL_T2
@@ -1170,8 +1170,6 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt)
     return 0;
 }
 
-/* ........................................................... */
-
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     int i, t, tmiss;
@@ -1186,7 +1184,9 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	tmiss = 0;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (is_hidden_variable(i, pdinfo) || !pdinfo->vector[i]) continue;
+	    if (is_hidden_variable(i, pdinfo) || !pdinfo->vector[i]) {
+		continue;
+	    }
 	    if (na((*pZ)[i][t])) {
 		if (missvec[i] == 0) {
 		    missvec[0] += 1;

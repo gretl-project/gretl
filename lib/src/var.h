@@ -66,8 +66,6 @@ int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
 
 void gretl_VAR_free (GRETL_VAR *var);
 
-void gretl_VAR_increment_refcount (GRETL_VAR *var);
-
 int default_VAR_horizon (const DATAINFO *pdinfo);
 
 gretl_matrix *

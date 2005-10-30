@@ -196,7 +196,7 @@ gretl_equation_system_new (int method, const char *name)
 	sys->name = NULL;
     }
 
-    sys->refcount = 1;
+    sys->refcount = 0;
     sys->method = method;
 
     sys->t1 = sys->t2 = 0;
@@ -319,13 +319,6 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
     system_clear_results(sys);
 
     free(sys);
-}
-
-void gretl_system_increment_refcount (gretl_equation_system *sys)
-{
-    if (sys != NULL) {
-	sys->refcount += 1;
-    }
 }
 
 static void sur_rearrange_lists (gretl_equation_system *sys)
@@ -775,7 +768,7 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
     }
 
     if (!err) {
-	set_last_model(sys, SYSTEM);
+	set_as_last_model(sys, SYSTEM);
     } 
 
     return err;

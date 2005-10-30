@@ -1447,16 +1447,10 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
 			    int id)
 {
     int i, nc = pmod->ncoeff;
-    int err;
 
-    lmod->model0 = gretl_model_new();
+    lmod->model0 = gretl_model_copy(pmod);
     if (lmod->model0 == NULL) {
 	return E_ALLOC;
-    }
-
-    err = copy_model(lmod->model0, pmod);
-    if (err) {
-	return err;
     }
 
     lmod->sum_coeff = malloc(nc * sizeof *lmod->sum_coeff);
@@ -1492,7 +1486,7 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
     free(lmod->sum_sderr);
     free(lmod->ssq_sderr);
 
-    return 1;
+    return E_ALLOC;
 }
 
 /**
@@ -1624,8 +1618,8 @@ static int add_loop_model_record (LOOPSET *loop, int cmdnum)
 
 static int add_loop_model (LOOPSET *loop)
 {
-    int err = 0;
     int nm = loop->nmod + 1;
+    int err = 0;
 
     loop->lmodels = realloc(loop->lmodels, nm * sizeof *loop->lmodels);
     if (loop->lmodels == NULL) {
@@ -2478,11 +2472,9 @@ make_dollar_substitutions (char *str, const LOOPSET *loop,
     return err;
 }
 
-/* below, in loop_exec, as of October 28, 2005, the handling of the
-   multiple models is totally screwed by my attempt to allow VARs,
-   VECMs, simultaneous systems, et alia, to pose as "the last model".
-   This is a rather deep mess-up which requires careful thought
-   to fix.
+/* Below, in loop_exec, as of October 29, 2005, the handling of the
+   multiple models is probably not right yet -- needs more work in
+   light of the new object naming/saving mechanism in gretl.
 */
 
 int loop_exec (LOOPSET *loop, char *line,
@@ -2490,6 +2482,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	       MODEL **models, PRN *prn)
 {
     CMD cmd;
+    MODEL *lastmod = models[0];
     char errline[MAXLINE];
     char linecpy[MAXLINE];
     int m = 0;
@@ -2635,7 +2628,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		    }
 		} 
 
-		/* estimate the model called for */
+		/* estimate the model called for, using models[0] */
 		clear_model(models[0]);
 
 		if (cmd.ci == OLS || cmd.ci == WLS || cmd.ci == HCCM) {
@@ -2673,21 +2666,20 @@ int loop_exec (LOOPSET *loop, char *line,
 			err = 1;
 			break;
 		    }
-		    set_last_model(models[0], EQUATION);
+		    set_as_last_model(models[0], EQUATION);
 		} else if (cmd.opt & OPT_P) {
 		    /* deferred printing of model results */
 		    m = get_modnum_by_cmdnum(loop, j);
-		    fprintf(stderr, "before swap, models[0] = %p\n", (void *) models[0]);
-		    swap_models(&models[0], &loop->models[m]);
-		    fprintf(stderr, "after swap, models[0] = %p\n", (void *) models[0]);
+		    swap_models(&models[0], &loop->models[m]); /* direction? */
 		    loop->models[m]->ID = j;
-		    fprintf(stderr, "calling set_last on %p\n", (void *) loop->models[m]);
-		    set_last_model(loop->models[m], EQUATION);
+		    lastmod = loop->models[m];
+		    set_as_last_model(loop->models[m], EQUATION); /* FIXME? */
 		    model_count_minus();
 		} else {
 		    models[0]->ID = ++modnum; /* FIXME? */
 		    printmodel(models[0], *ppdinfo, cmd.opt, prn);
-		    set_last_model(models[0], EQUATION);
+		    lastmod = models[0];
+		    set_as_last_model(models[0], EQUATION);
 		}
 		break;
 
@@ -2712,7 +2704,8 @@ int loop_exec (LOOPSET *loop, char *line,
 		    clear_model(models[1]);
 		} else {
 		    swap_models(&models[0], &models[1]);
-		    set_last_model(models[0], EQUATION);
+		    lastmod = models[0];
+		    set_as_last_model(models[0], EQUATION);
 		    clear_model(models[1]);
 		}
 		break;	
@@ -2729,7 +2722,6 @@ int loop_exec (LOOPSET *loop, char *line,
 			gretl_cmd_set_context(&cmd, cmd.ci);
 		    }
 		}
-		/* FIXME set last model */
 		break;
 
 	    case END:
@@ -2740,7 +2732,8 @@ int loop_exec (LOOPSET *loop, char *line,
 			errmsg(err, prn);
 		    } else {
 			printmodel(models[0], *ppdinfo, cmd.opt, prn);
-			set_last_model(models[0], EQUATION);
+			lastmod = models[0];
+			set_as_last_model(models[0], EQUATION);
 		    }
 		} else {
 		    err = 1;
@@ -2861,6 +2854,13 @@ int loop_exec (LOOPSET *loop, char *line,
 
     if (!err && loop->iter > 0) {
 	print_loop_results(loop, *ppdinfo, prn); 
+    }
+
+    if (lastmod != models[0]) {
+	/* to get commands that reference models[0], after the loop
+	   has finished, to come out right
+	*/
+	swap_models(&models[0], &loop->models[m]);
     }
 
     gretl_cmd_free(&cmd);

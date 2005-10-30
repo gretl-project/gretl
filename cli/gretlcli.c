@@ -1692,7 +1692,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 		(models[0])->ID, get_model_count());
 #endif
 	err = modelspec_save(models[0], &modelspec);
-	maybe_stack_model(&models[0], &cmd, prn);
+	maybe_stack_model(models[0], &cmd, prn);
     }
 
     return err;

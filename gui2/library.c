@@ -6675,7 +6675,7 @@ int gui_exec_line (char *line,
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) {
 	stack_script_modelspec(models[0]);
 	if (exec_code != REBUILD_EXEC && !do_arch) {
-	    maybe_save_model(&cmd, &models[0], prn);
+	    maybe_save_model(&cmd, models[0], prn);
 	}
     }
 

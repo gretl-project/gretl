@@ -2186,9 +2186,11 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
 	if (role == SYSTEM) {
+	    gretl_object_ref(data, SYSTEM);
 	    add_SYS_menu_items(vwin);
 	} else {
-	    set_last_model(data, VAR);
+	    gretl_object_ref(data, VAR);
+	    set_as_last_model_if_unnamed(data, VAR);
 	    add_VAR_menu_items(vwin, role == VECM);
 	}
     } else if (role != IMPORT) {
@@ -2677,8 +2679,9 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 	return 1;
     }
 
-    /* set this model as target for genr etc */
-    set_last_model(pmod, EQUATION);
+    /* set this model as target for genr etc., if we're not viewing
+       a previously saved (and hence, named) model */
+    set_as_last_model_if_unnamed(pmod, EQUATION);
 
 #ifdef OLD_GTK
     create_text(vwin, hsize, vsize, FALSE);

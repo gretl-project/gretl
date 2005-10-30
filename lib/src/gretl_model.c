@@ -1360,14 +1360,7 @@ void gretl_model_free (MODEL *pmod)
 {
     if (pmod != NULL) {
 	pmod->refcount -= 1;
-#if MDEBUG
-	fprintf(stderr, "gretl_model_free: model at %p: refcount was %d, now %d\n", 
-		(void *) pmod, pmod->refcount + 1, pmod->refcount);
-#endif
 	if (pmod->refcount <= 0) {
-#if MDEBUG
-	    fprintf(stderr, " really freeing at %p\n", (void *) pmod);
-#endif
 	    clear_model(pmod);
 	    free(pmod);
 	}
@@ -1379,34 +1372,15 @@ void gretl_model_free (MODEL *pmod)
  * @p: pointer to #MODEL.
  *
  * Free allocated content of MODEL then the pointer itself,
- * forcing the model's reference count to zero.
+ * without regard to the model's reference count.
  */
 
 void gretl_model_free_on_exit (MODEL *pmod)
 {
     if (pmod != NULL) {
-#if MDEBUG
-	fprintf(stderr, " really freeing at %p\n", (void *) pmod);
-#endif
+	remove_model_from_stack(pmod);
 	clear_model(pmod);
 	free(pmod);
-    }
-}
-
-/**
- * gretl_model_increment_refcount:
- * @p: pointer to #MODEL.
- *
- */
-
-void gretl_model_increment_refcount (MODEL *pmod)
-{
-    if (pmod != NULL) {
-#if MDEBUG
-	fprintf(stderr, "model_increment_refcount: model at %p: old refcount %d\n", 
-		(void *) pmod, pmod->refcount);
-#endif
-	pmod->refcount += 1;
     }
 }
 
@@ -1988,19 +1962,7 @@ static char *copy_missmask (const MODEL *pmod)
     return mask;
 }
 
-/**
- * copy_model:
- * @targ: pointer to #MODEL to copy to.
- * @src: pointer to #MODEL to copy from.
- * @pdinfo: pointer to dataset information.
- *
- * Does a deep copy of @src to @targ.  That is, @targ ends up with
- * its own allocated copies of all the pointer members of @src.
- *
- * Returns: 0 on success, 1 on failure.
- */
-
-int copy_model (MODEL *targ, const MODEL *src)
+static int copy_model (MODEL *targ, const MODEL *src)
 {
     int k = src->ncoeff;
     int m = k * (k + 1) / 2;
@@ -2086,6 +2048,39 @@ int copy_model (MODEL *targ, const MODEL *src)
 }
 
 /**
+ * gretl_model_copy:
+ * @pmod: pointer to #MODEL to copy.
+ *
+ * Does a deep copy of @pmod: allocates a new #MODEL pointer
+ * which has its own allocated copies of all the pointer
+ * members of @pmod.  The only feature of @pmod that is
+ * not duplicated is the reference count, which is set
+ * to zero in the copy. 
+ *
+ * Returns: the copied model, or %NULL on failure.
+ */
+
+MODEL *gretl_model_copy (const MODEL *pmod)
+{
+    MODEL *new = malloc(sizeof *new);
+
+    if (new != NULL) {
+	int err = copy_model(new, pmod);
+
+	if (err) {
+	    clear_model(new);
+	    free(new);
+	    new = NULL;
+	} else {
+	    /* nota bene */
+	    new->refcount = 0;
+	}
+    }
+
+    return new;
+}
+
+/**
  * swap_models:
  * @targ: pointer to pointer to #MODEL.
  * @src: pointer to pointer to #MODEL.
@@ -2106,6 +2101,8 @@ int swap_models (MODEL **targ, MODEL **src)
     *targ = *src;
     *src = tmp;
 
+    /* handle the case where we have a model that is currently
+       defined as the "last model" (objstack.c) */
     maybe_swap_into_last_model(*targ, tmp);
 
     return 0;
@@ -2114,6 +2111,8 @@ int swap_models (MODEL **targ, MODEL **src)
 int is_model_cmd (const char *s)
 {
     int ret = 0;
+
+    /* FIXME mle? */
 
     if (s != NULL && *s != '\0') {
 	if (!strncmp(s, "ols", 3)  ||

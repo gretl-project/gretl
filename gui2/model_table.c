@@ -24,8 +24,8 @@
 #include "session.h"
 #include "textutil.h"
 
-static const MODEL **model_list;
-static int model_list_len;
+static MODEL **table_models;
+static int n_models;
 static int *grand_list;
 static int use_tstats;
 
@@ -42,12 +42,12 @@ static void mtable_errmsg (char *msg, int gui)
     }
 }
 
-static int real_model_table_list_length (void)
+static int real_table_n_models (void)
 {
     int i, len = 0;
 
-    for (i=0; i<model_list_len; i++) {
-	if (model_list[i] != NULL) len++;
+    for (i=0; i<n_models; i++) {
+	if (table_models[i] != NULL) len++;
     }
 
     return len;    
@@ -55,22 +55,10 @@ static int real_model_table_list_length (void)
 
 static int model_table_too_many (int gui)
 {
-    if (real_model_table_list_length() == MAX_TABLE_MODELS) {
+    if (real_table_n_models() == MAX_TABLE_MODELS) {
 	mtable_errmsg(_("Model table is full"), gui);
 	return 1;
     }
-    return 0;
-}
-
-static int model_already_in_table_by_ID (const MODEL *pmod)
-{
-    int i;
-
-    for (i=0; i<model_list_len; i++) {
-	if (model_list[i] == NULL) continue;
-	if (pmod->ID == (model_list[i])->ID) return 1;
-    }
-
     return 0;
 }
 
@@ -78,32 +66,42 @@ static int model_already_in_table (const MODEL *pmod)
 {
     int i;
 
-    for (i=0; i<model_list_len; i++) {
-	if (model_list[i] == NULL) continue;
-	if (pmod == model_list[i]) return 1;
+    for (i=0; i<n_models; i++) {
+	if (table_models[i] != NULL && pmod->ID == table_models[i]->ID) {
+	    return 1;
+	}
     }
 
     return 0;
 }
 
-void remove_from_model_table_list (const MODEL *pmod)
+void clear_model_table (PRN *prn)
 {
     int i;
 
-    if (model_list_len == 0 || model_list == NULL || pmod == NULL) 
-	return;
+    for (i=0; i<n_models; i++) {
+	gretl_model_free(table_models[i]);
+    }
 
-    for (i=0; i<model_list_len; i++) {
-	if (pmod == model_list[i]) {
-	    model_list[i] = NULL;
-	}
+    free(table_models);
+    table_models = NULL;
+
+    free(grand_list);
+    grand_list = NULL;
+    n_models = 0;
+    
+    if (prn != NULL) {
+	pputs(prn, _("Model table cleared"));
+	pputc(prn, '\n');
     }
 }
 
-int add_to_model_table_list (const MODEL *pmod, int add_mode, PRN *prn)
+int add_to_model_table (const MODEL *pmod, int add_mode, PRN *prn)
 {
-    const MODEL **tmp;
+    MODEL *mcpy;
     int gui = (add_mode != MODEL_ADD_BY_CMD);
+
+    /* FIXME update restrictions here (garch, mle?) */
 
     /* NLS models won't work */
     if (pmod->ci == NLS) {
@@ -113,7 +111,7 @@ int add_to_model_table_list (const MODEL *pmod, int add_mode, PRN *prn)
     }
 
     /* nor will ARMA */
-    if (pmod->ci == ARMA) {
+    if (pmod->ci == ARMA || pmod->ci == GARCH) {
 	mtable_errmsg(_("Sorry, ARMA models can't be put in the model table"),
 		      gui);
 	return 1;
@@ -127,57 +125,51 @@ int add_to_model_table_list (const MODEL *pmod, int add_mode, PRN *prn)
     }    
 
     /* is the list is started or not? */
-    if (model_list_len == 0) {
+    if (n_models == 0) {
 
-	model_list = mymalloc(sizeof *model_list);
-	if (model_list == NULL) return 1;
-	model_list_len = 1;
+	table_models = mymalloc(sizeof *table_models);
+	if (table_models == NULL) return 1;
+	n_models = 1;
 
     } else {
+	MODEL **mods;
 
 	/* check that the dependent variable is in common */
-	if (pmod->list[1] != (model_list[0])->list[1]) {
+	if (pmod->list[1] != table_models[0]->list[1]) {
 	    mtable_errmsg(_("Can't add model to table -- this model has a "
 			    "different dependent variable"), gui);
 	    return 1;
 	}
 
 	/* check that model is not already on the list */
-	if (gui) {
-	    if (model_already_in_table(pmod)) {
-		mtable_errmsg(_("Model is already included in the table"), 1);
-		return 0;
-	    }
-	} else {
-	    if (model_already_in_table_by_ID(pmod)) {
-		mtable_errmsg(_("Model is already included in the table"), 0);
-		return 1;
-	    }
-	}	
-
-	/* check that the model table is not already full */
-	if (model_table_too_many(gui)) return 1;
-
-	model_list_len++;
-	tmp = myrealloc(model_list, model_list_len * sizeof *model_list);
-	if (tmp == NULL) {
-	    free(model_list);
+	if (model_already_in_table(pmod)) {
+	    mtable_errmsg(_("Model is already included in the table"), 0);
 	    return 1;
 	}
 
-	model_list = tmp;
+	/* check that the model table is not already full */
+	if (model_table_too_many(gui)) {
+	    return 1;
+	}
+
+	n_models++;
+	mods = myrealloc(table_models, n_models * sizeof *mods);
+	if (mods == NULL) {
+	    clear_model_table(NULL);
+	    return 1;
+	}
+
+	table_models = mods;
     }
 
-    if (model_already_saved(pmod->name)) {
-	model_list[model_list_len - 1] = pmod;
-    } else {
-	MODEL *mcopy = gretl_model_new();
-
-	if (mcopy == NULL) return E_ALLOC;
-	if (copy_model(mcopy, pmod)) return E_ALLOC;
-	model_list[model_list_len - 1] = mcopy;
+    mcpy = gretl_model_copy(pmod);
+    if (mcpy == NULL) {
+	clear_model_table(NULL);
+	return E_ALLOC;
     }
 
+    table_models[n_models - 1] = mcpy;
+    
     if (add_mode == MODEL_ADD_FROM_MENU) {
 	infobox(_("Model added to table"));
     } else if (add_mode == MODEL_ADD_BY_CMD) {
@@ -186,20 +178,6 @@ int add_to_model_table_list (const MODEL *pmod, int add_mode, PRN *prn)
     }
 
     return 0;
-}
-
-void free_model_table_list (PRN *prn)
-{
-    free(model_list);
-    model_list = NULL;
-    free(grand_list);
-    grand_list = NULL;
-    model_list_len = 0;
-    
-    if (prn != NULL) {
-	pputs(prn, _("Model table cleared"));
-	pputc(prn, '\n');
-    }
 }
 
 static int var_is_in_model (int v, const MODEL *pmod)
@@ -237,7 +215,7 @@ static void add_to_grand_list (const int *list)
     }
 }
 
-static int get_real_model_list_length (int *list)
+static int real_list_length (int *list)
 {
     int i;
 
@@ -256,17 +234,17 @@ static int make_grand_varlist (void)
 
     free(grand_list);
 
-    for (i=0; i<model_list_len; i++) {
-	if (model_list[i] == NULL) continue;
-	l0 += get_real_model_list_length((model_list[i])->list);
+    for (i=0; i<n_models; i++) {
+	if (table_models[i] == NULL) continue;
+	l0 += real_list_length(table_models[i]->list);
     }
 
     grand_list = mymalloc((l0 + 1) * sizeof *grand_list);
     if (grand_list == NULL) return 1;
 
-    for (i=0; i<model_list_len; i++) {
-	if (model_list[i] == NULL) continue;
-	pmod = model_list[i];
+    for (i=0; i<n_models; i++) {
+	if (table_models[i] == NULL) continue;
+	pmod = table_models[i];
 	if (f == 1) {
 	    for (j=0; j<=pmod->list[0]; j++) {
 		if (pmod->list[j] == LISTSEP) break;
@@ -281,31 +259,33 @@ static int make_grand_varlist (void)
     return 0;
 }
 
-static int model_list_empty (void)
+static int model_table_is_empty (void)
 {
-    int i, real_n_models = 0;
+    int i, n = 0;
 
-    if (model_list_len == 0 || model_list == NULL) 
+    if (n_models == 0 || table_models == NULL) { 
 	return 1;
-
-    for (i=0; i<model_list_len; i++) {
-	if (model_list[i] != NULL) 
-	    real_n_models++;
     }
 
-    return (real_n_models == 0);
+    for (i=0; i<n_models; i++) {
+	if (table_models[i] != NULL) {
+	    n++;
+	}
+    }
+
+    return (n == 0);
 }
 
 static int common_estimator (void)
 {
     int i, ci0 = -1;
 
-    for (i=0; i<model_list_len; i++) {
-	if (model_list[i] == NULL) continue;
+    for (i=0; i<n_models; i++) {
+	if (table_models[i] == NULL) continue;
 	if (ci0 == -1) {
-	    ci0 = (model_list[i])->ci;
+	    ci0 = table_models[i]->ci;
 	} else {
-	    if ((model_list[i])->ci != ci0) return 0;
+	    if (table_models[i]->ci != ci0) return 0;
 	}
     }  
 
@@ -316,14 +296,14 @@ static int common_df (void)
 {
     int i, dfn0 = -1, dfd0 = -1;
 
-    for (i=0; i<model_list_len; i++) {
-	if (model_list[i] == NULL) continue;
+    for (i=0; i<n_models; i++) {
+	if (table_models[i] == NULL) continue;
 	if (dfn0 == -1) {
-	    dfn0 = (model_list[i])->dfn;
-	    dfd0 = (model_list[i])->dfd;
+	    dfn0 = table_models[i]->dfn;
+	    dfd0 = table_models[i]->dfd;
 	} else {
-	    if ((model_list[i])->dfn != dfn0) return 0;
-	    if ((model_list[i])->dfd != dfd0) return 0;
+	    if (table_models[i]->dfn != dfn0) return 0;
+	    if (table_models[i]->dfd != dfd0) return 0;
 	}
     }  
 
@@ -396,8 +376,8 @@ static void print_model_table_coeffs (PRN *prn)
 	}
 
 	/* print the coefficient estimates across a row */
-	for (j=0; j<model_list_len; j++) {
-	    pmod = model_list[j];
+	for (j=0; j<n_models; j++) {
+	    pmod = table_models[j];
 	    if (pmod == NULL) continue;
 	    if ((k = var_is_in_model(v, pmod))) {
 		double x = screen_zero(pmod->coeff[k-2]);
@@ -457,8 +437,8 @@ static void print_model_table_coeffs (PRN *prn)
 
 	/* print the t-stats or standard errors across a row */
 	f = 1;
-	for (j=0; j<model_list_len; j++) {
-	    pmod = model_list[j];
+	for (j=0; j<n_models; j++) {
+	    pmod = table_models[j];
 	    if (pmod == NULL) {
 		continue;
 	    }
@@ -516,9 +496,9 @@ static int any_log_lik (void)
 {
     int i;
 
-    for (i=0; i<model_list_len; i++) {
-	if (model_list[i] == NULL) continue;
-	if (!na((model_list[i])->lnL)) return 1;
+    for (i=0; i<n_models; i++) {
+	if (table_models[i] == NULL) continue;
+	if (!na(table_models[i]->lnL)) return 1;
     }
 
     return 0;
@@ -528,9 +508,9 @@ static int any_r_squared (void)
 {
     int i;
 
-    for (i=0; i<model_list_len; i++) {
-	if (model_list[i] == NULL) continue;
-	if (!na((model_list[i])->rsq)) return 1;
+    for (i=0; i<n_models; i++) {
+	if (table_models[i] == NULL) continue;
+	if (!na(table_models[i]->rsq)) return 1;
     }
 
     return 0;
@@ -550,8 +530,8 @@ static void print_n_r_squared (PRN *prn, int *binary)
     else if (rtf) pprintf(prn, "\\intbl \\qc %s\\cell ", _("n"));
     else pprintf(prn, "%8s ", _("n"));
 
-    for (j=0; j<model_list_len; j++) {
-	pmod = model_list[j];
+    for (j=0; j<n_models; j++) {
+	pmod = table_models[j];
 	if (pmod == NULL) continue;
 	if (tex) pprintf(prn, "& %d ", pmod->nobs);
 	else if (rtf) pprintf(prn, "\\qc %d\\cell ", pmod->nobs);
@@ -578,8 +558,8 @@ static void print_n_r_squared (PRN *prn, int *binary)
 	    pprintf(prn, "%9s", (same_df)? _("R-squared") : _("Adj. R**2"));
 	}
 
-	for (j=0; j<model_list_len; j++) {
-	    pmod = model_list[j];
+	for (j=0; j<n_models; j++) {
+	    pmod = table_models[j];
 	    if (pmod == NULL) continue;
 	    if (na(pmod->rsq)) {
 		if (tex) {
@@ -632,8 +612,8 @@ static void print_n_r_squared (PRN *prn, int *binary)
 	    pprintf(prn, "%9s", "lnL");
 	}
 
-	for (j=0; j<model_list_len; j++) {
-	    pmod = model_list[j];
+	for (j=0; j<n_models; j++) {
+	    pmod = table_models[j];
 	    if (pmod == NULL) continue;
 	    if (na(pmod->lnL)) {
 		if (tex) {
@@ -667,7 +647,7 @@ int display_model_table (int gui)
     int winwidth = 78;
     PRN *prn;
 
-    if (model_list_empty()) {
+    if (model_table_is_empty()) {
 	mtable_errmsg(_("The model table is empty"), gui);
 	return 1;
     }
@@ -675,7 +655,7 @@ int display_model_table (int gui)
     if (make_grand_varlist()) return 1;
 
     if (bufopen(&prn)) {
-	free_model_table_list(NULL);
+	clear_model_table(NULL);
 	return 1;
     }
 
@@ -693,11 +673,11 @@ int display_model_table (int gui)
 
     pputs(prn, "\n            ");
 
-    for (j=0; j<model_list_len; j++) {
+    for (j=0; j<n_models; j++) {
 	char modhd[16];
 
-	if (model_list[j] == NULL) continue;
-	sprintf(modhd, _("Model %d"), (model_list[j])->ID);
+	if (table_models[j] == NULL) continue;
+	sprintf(modhd, _("Model %d"), table_models[j]->ID);
 	center_in_field(modhd, 12, prn);
     }
     pputc(prn, '\n');
@@ -706,10 +686,10 @@ int display_model_table (int gui)
 	char est[12];	
 
 	pputs(prn, "            ");
-	for (j=0; j<model_list_len; j++) {
-	    if (model_list[j] == NULL) continue;
+	for (j=0; j<n_models; j++) {
+	    if (table_models[j] == NULL) continue;
 	    strcpy(est, 
-		   _(short_estimator_string((model_list[j])->ci,
+		   _(short_estimator_string(table_models[j]->ci,
 					    prn)));
 	    center_in_field(est, 12, prn);
 	}
@@ -734,7 +714,7 @@ int display_model_table (int gui)
 				 "McFadden's pseudo-R-squared"));
     }
 
-    if (real_model_table_list_length() > 5) winwidth = 90;
+    if (real_table_n_models() > 5) winwidth = 90;
 
     view_buffer(prn, winwidth, 450, _("gretl: model table"), VIEW_MODELTABLE, 
 		NULL);
@@ -748,7 +728,7 @@ static int tex_print_model_table (PRN *prn)
     int binary = 0;
     char tmp[16];
 
-    if (model_list_empty()) {
+    if (model_table_is_empty()) {
 	mtable_errmsg(_("The model table is empty"), 1);
 	return 1;
     }
@@ -773,16 +753,16 @@ static int tex_print_model_table (PRN *prn)
 
     pputs(prn, "\\vspace{1em}\n\n");
     pputs(prn, "\\begin{tabular}{l");
-    for (j=0; j<model_list_len; j++) {
+    for (j=0; j<n_models; j++) {
 	pputs(prn, "c");
     }
     pputs(prn, "}\n");
 
-    for (j=0; j<model_list_len; j++) {
+    for (j=0; j<n_models; j++) {
 	char modhd[16];
 
-	if (model_list[j] == NULL) continue;
-	sprintf(modhd, I_("Model %d"), (model_list[j])->ID);
+	if (table_models[j] == NULL) continue;
+	sprintf(modhd, I_("Model %d"), table_models[j]->ID);
 	pprintf(prn, " & %s ", modhd);
     }
     pputs(prn, "\\\\ ");
@@ -792,10 +772,10 @@ static int tex_print_model_table (PRN *prn)
 
 	pputc(prn, '\n');
 
-	for (j=0; j<model_list_len; j++) {
-	    if (model_list[j] == NULL) continue;
+	for (j=0; j<n_models; j++) {
+	    if (table_models[j] == NULL) continue;
 	    strcpy(est, 
-		   I_(short_estimator_string((model_list[j])->ci,
+		   I_(short_estimator_string(table_models[j]->ci,
 					     prn)));
 	    pprintf(prn, " & %s ", est);
 	}
@@ -833,7 +813,7 @@ static int tex_print_model_table (PRN *prn)
 
 static void print_rtf_row_spec (PRN *prn, int tall)
 {
-    int i, cols = 1 + real_model_table_list_length();
+    int i, cols = 1 + real_table_n_models();
     int col1 = 1000;
     int ht = (tall)? 362 : 262;
 
@@ -849,7 +829,7 @@ static int rtf_print_model_table (PRN *prn)
     int j, ci;
     int binary = 0;
 
-    if (model_list_empty()) {
+    if (model_table_is_empty()) {
 	mtable_errmsg(_("The model table is empty"), 1);
 	return 1;
     }
@@ -878,11 +858,11 @@ static int rtf_print_model_table (PRN *prn)
     print_rtf_row_spec(prn, 1);
 
     pputs(prn, "\\intbl \\qc \\cell ");
-    for (j=0; j<model_list_len; j++) {
+    for (j=0; j<n_models; j++) {
 	char modhd[16];
 
-	if (model_list[j] == NULL) continue;
-	sprintf(modhd, I_("Model %d"), (model_list[j])->ID);
+	if (table_models[j] == NULL) continue;
+	sprintf(modhd, I_("Model %d"), table_models[j]->ID);
 	pprintf(prn, "\\qc %s\\cell ", modhd);
     }
     pputs(prn, "\\intbl \\row\n");
@@ -892,11 +872,10 @@ static int rtf_print_model_table (PRN *prn)
 
 	pputs(prn, "\\intbl \\qc \\cell ");
 
-	for (j=0; j<model_list_len; j++) {
-	    if (model_list[j] == NULL) continue;
+	for (j=0; j<n_models; j++) {
+	    if (table_models[j] == NULL) continue;
 	    strcpy(est, 
-		   I_(short_estimator_string((model_list[j])->ci,
-					     prn)));
+		   I_(short_estimator_string(table_models[j]->ci, prn)));
 	    pprintf(prn, "\\qc %s\\cell ", est);
 	}
 	pputs(prn, "\\intbl \\row\n");
@@ -949,20 +928,16 @@ int modeltab_parse_line (const char *line, const MODEL *pmod, PRN *prn)
 	    gretl_errmsg_set(_("No model is available"));
 	    err = 1;
 	} else {
-	    err = add_to_model_table_list(pmod, MODEL_ADD_BY_CMD, prn);
+	    err = add_to_model_table(pmod, MODEL_ADD_BY_CMD, prn);
 	}
-    }
-
-    else if (!strcmp(cmdword, "show")) {
+    } else if (!strcmp(cmdword, "show")) {
 	err = display_model_table(0);
-    }
-
-    else if (!strcmp(cmdword, "free")) {
-	if (model_list_empty()) {
+    } else if (!strcmp(cmdword, "free")) {
+	if (model_table_is_empty()) {
 	    mtable_errmsg(_("The model table is empty"), 0);
 	    err = 1;
 	} else {
-	    free_model_table_list(prn);
+	    clear_model_table(prn);
 	}
     }
 

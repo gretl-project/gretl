@@ -24,7 +24,9 @@
 
 void *get_last_model (int *type);
 
-void set_last_model (void *ptr, int type);
+void set_as_last_model (void *ptr, int type);
+
+void set_as_last_model_if_unnamed (void *ptr, int type);
 
 void maybe_swap_into_last_model (MODEL *new, MODEL *old);
 
@@ -42,6 +44,8 @@ int stack_model (MODEL *pmod);
 
 int stack_model_as (MODEL *pmod, const char *mname);
 
+void remove_model_from_stack (MODEL *pmod);
+
 int stack_system (gretl_equation_system *sys, PRN *prn);
 
 int stack_system_as (gretl_equation_system *sys, const char *sname);
@@ -50,9 +54,11 @@ int stack_VAR (GRETL_VAR *var);
 
 int stack_VAR_as (GRETL_VAR *var, const char *vname);
 
-int maybe_stack_model (MODEL **ppmod, const CMD *cmd, PRN *prn);
+int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn);
 
 int maybe_stack_var (GRETL_VAR *var, const CMD *cmd);
+
+void gretl_object_ref (void *ptr, int type);
 
 double saved_object_get_value (const char *oname, const char *valname, int *err);
 

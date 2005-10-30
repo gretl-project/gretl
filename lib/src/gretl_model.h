@@ -108,8 +108,6 @@ MODEL *gretl_model_new (void);
 
 void gretl_model_init (MODEL *pmod);
 
-void gretl_model_increment_refcount (MODEL *pmod);
-
 MODEL **gretl_model_array_new (int n);
 
 void gretl_model_array_destroy (MODEL **models, int n);
@@ -181,7 +179,7 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 
 VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo);
 
-int copy_model (MODEL *targ, const MODEL *src);
+MODEL *gretl_model_copy (const MODEL *pmod);
 
 int swap_models (MODEL **targ, MODEL **src);
 

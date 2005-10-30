@@ -58,8 +58,6 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 void gretl_equation_system_destroy (gretl_equation_system *sys);
 
-void gretl_system_increment_refcount (gretl_equation_system *sys);
-
 const char *system_get_full_string (const gretl_equation_system *sys);
 
 int system_save_uhat (const gretl_equation_system *sys);

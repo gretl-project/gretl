@@ -161,7 +161,7 @@ static GRETL_VAR *gretl_VAR_new (int ci, int neqns, int order)
     }
 
     var->ci = ci;
-    var->refcount = 1;
+    var->refcount = 0;
 
     var->neqns = neqns;
     var->order = order;
@@ -226,9 +226,6 @@ void gretl_VAR_free (GRETL_VAR *var)
     if (var == NULL) return;
 
 #if 0
-    fprintf(stderr, "gretl_VAR_free: starting\n");
-    fflush(stderr);
-
     fprintf(stderr, "gretl_VAR_free: var = %p, refcount = %d\n",
 	    (void *) var, var->refcount);
 #endif
@@ -262,13 +259,6 @@ void gretl_VAR_free (GRETL_VAR *var)
     fprintf(stderr, "gretl_VAR_free: done\n");
     fflush(stderr);
 #endif
-}
-
-void gretl_VAR_increment_refcount (GRETL_VAR *var)
-{
-    if (var != NULL) {
-	var->refcount += 1;
-    }
 }
 
 static int add_VAR_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
@@ -2275,7 +2265,7 @@ johansen_VAR_new (const int *list, const int *exolist, int rank, int order, gret
     }
 
     var->ci = VECM;
-    var->refcount = 1;
+    var->refcount = 0;
 
     var->neqns = 0;
     var->order = order;

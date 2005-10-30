@@ -24,7 +24,7 @@
 #include "system_private.h"
 #include "objstack.h"
 
-#define ODEBUG 1
+#define ODEBUG 0
 
 typedef struct stacker_ stacker;
 
@@ -85,17 +85,52 @@ static void gretl_object_set_refcount (stacker *s, RefCountCode code)
     }
 }
 
-static void gretl_saved_object_free (stacker *s, FreeCode code)
+void gretl_object_ref (void *ptr, int type)
 {
+    stacker s;
+
+    s.ptr = ptr;
+    s.type = type;
+
+    gretl_object_set_refcount(&s, REFCOUNT_PLUS);
+}
+
+static int gretl_object_get_refcount (stacker *s)
+{
+    int rc = -1;
+
+    if (s->type == EQUATION) {
+	MODEL *pmod = (MODEL *) s->ptr;
+	rc = pmod->refcount;
+    } else if (s->type == VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) s->ptr;
+	rc = var->refcount;
+    } else if (s->type == SYSTEM) {
+	gretl_equation_system *sys = (gretl_equation_system *) s->ptr;
+	rc = sys->refcount;
+    }
+
+    return rc;
+}
+
+/* returns 1 if actual freeing will take place (the other possibility
+   is just a reduction in the object's refcount)
+*/
+
+static int saved_object_free (stacker *s, FreeCode code)
+{
+    int rc;
+
     if (code == OBJ_FREE_FINAL) {
-#if ODEBUG
-	fprintf(stderr, "gretl_saved_object_free, FINAL, setting refcount=1\n");
-#endif
 	gretl_object_set_refcount(s, REFCOUNT_ONE);
+	rc = 1;
+    } else {
+	rc = gretl_object_get_refcount(s);
     }
 
 #if ODEBUG
-    fprintf(stderr, "gretl_saved_object_free, doing it on %p\n", (void *) s->ptr);    
+    fprintf(stderr, "saved_object_free: ptr=%p, refcount=%d\n", 
+	    (void *) s->ptr, rc);    
 #endif
 
     if (s->type == EQUATION) {
@@ -105,6 +140,8 @@ static void gretl_saved_object_free (stacker *s, FreeCode code)
     } else if (s->type == SYSTEM) {
 	gretl_equation_system_destroy(s->ptr);
     }
+
+    return rc <= 1;
 }
 
 void *get_last_model (int *type)
@@ -118,34 +155,88 @@ void *get_last_model (int *type)
     }
 }
 
-void set_last_model (void *ptr, int type)
+void set_as_last_model (void *ptr, int type)
 {
-    if (ptr != last_model.ptr) {
-	gretl_saved_object_free(&last_model, OBJ_FREE_NORMAL);
-	if (0 && type == EQUATION) {
-	    MODEL *cpy = gretl_model_new();
+#if ODEBUG
+    fprintf(stderr, "set_as_last_model: ptr=%p, type=%d; old ptr=%p\n",
+	    ptr, type, last_model.ptr);
+#endif
 
-	    copy_model(cpy, ptr);
-	    last_model.ptr = cpy;
-	    gretl_object_set_refcount(&last_model, REFCOUNT_ONE);
-	} else {
-	    last_model.ptr = ptr;
+    if (ptr != last_model.ptr) {
+#if ODEBUG
+	if (last_model.ptr) {
+	    fprintf(stderr, " kicking old object at %p (type %d) off the stack\n",
+		last_model.ptr, last_model.type);
 	}
+	fprintf(stderr, " calling saved_object_free\n");
+#endif
+	saved_object_free(&last_model, OBJ_FREE_NORMAL);
+	last_model.ptr = ptr;
 	last_model.type = type;
+	if (type != EQUATION) {
+	    gretl_object_ref(ptr, type);
+	}
+    }
+
+    if (type == EQUATION) {
+	MODEL *pmod = (MODEL *) ptr;
+	pmod->refcount = 2;
+    } 
+
+#if ODEBUG
+    fprintf(stderr, " refcount on \"last_model\" = %d\n",
+	    gretl_object_get_refcount(&last_model));
+#endif
+}
+
+void set_as_last_model_if_unnamed (void *ptr, int type)
+{
+    if (type == EQUATION) {
+	MODEL *pmod = (MODEL *) ptr;
+	if (pmod->name == NULL) {
+	    set_as_last_model(ptr, type);
+	}
+    } else if (type == VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) ptr;
+	if (var->name == NULL) {
+	    set_as_last_model(ptr, type);
+	}
     }
 }
+
+/* Response to swap_models() in gretl_model.c.  This is done (only)
+   when we're swapping the content of the pointer models[0] with
+   something else, so that models[0] will continue to point to
+   the model most recently estimated.
+*/
 
 void maybe_swap_into_last_model (MODEL *new, MODEL *old)
 {
 #if ODEBUG
-    fprintf(stderr, "maybe_swap_into_last_model: new=%p, old=%p\n",
+    fprintf(stderr, "\nmaybe_swap_into_last_model: new=%p, old=%p\n",
 	    (void *) new, (void *) old);
 #endif
     if (last_model.ptr == old) {
+#if ODEBUG
+	fprintf(stderr, " doing swap 1\n");
+#endif
 	last_model.ptr = new;
+	if (new->refcount < 2) {
+	    new->refcount = 2;
+	}
     } else if (last_model.ptr == new) {
+#if ODEBUG
+	fprintf(stderr, " doing swap 2\n");
+#endif
 	last_model.ptr = old;
+    } else {
+	fprintf(stderr, " No swap done\n");
     }
+
+#if ODEBUG
+    fprintf(stderr, " refcount on last_model = %d\n",
+	    gretl_object_get_refcount(&last_model));
+#endif
 }
 
 static const char *saved_object_get_name (stacker *s)
@@ -201,22 +292,29 @@ void *gretl_get_object_by_name (const char *name)
     return get_object_by_name(name, -1, NULL);
 }
 
+/* Called from session.c when the user chooses to delete a model that
+   is stored in the session as an icon.  If the object in question is
+   also referenced as last_model, it won't actually be destroyed,
+   though it will be removed from the list of named objects.
+*/
+
 void gretl_delete_saved_object (void *p)
 {
-    int i, delpos = -1;
+    int i, pos = -1;
 
     for (i=0; i<n_obj; i++) {
 	if (p == obj_stack[i].ptr) {
-	    delpos = i;
+	    pos = i;
 	    break;
 	}
     }
     
-    if (delpos >= 0) {
+    if (pos >= 0) {
 	stacker *new_stack;
 
-	gretl_saved_object_free(&obj_stack[i], OBJ_FREE_NORMAL);
-	for (i=delpos; i<n_obj-1; i++) {
+	saved_object_free(&obj_stack[pos], OBJ_FREE_NORMAL);
+
+	for (i=pos; i<n_obj-1; i++) {
 	    obj_stack[i] = obj_stack[i+1];
 	}
 
@@ -315,6 +413,24 @@ void gretl_rename_saved_object (void *p, const char *name)
     }
 }
 
+void remove_model_from_stack (MODEL *pmod)
+{
+    int i;
+
+    for (i=0; i<n_obj; i++) {
+	if (pmod == obj_stack[i].ptr) {
+	    obj_stack[i].ptr = NULL;
+	    obj_stack[i].type = 0;
+	    break;
+	}
+    }
+
+    if (last_model.ptr == pmod) {
+	last_model.ptr = NULL;
+	last_model.type = 0;
+    }
+}
+
 static int object_on_stack (void *p)
 {
     int i, ret = -1;
@@ -361,7 +477,10 @@ static int stack_object (void *p, int type, const char *oname, PRN *prn)
 
     if (orig != NULL) {
 	/* replace existing object of same name */
-	gretl_saved_object_free(orig, OBJ_FREE_NORMAL);
+#if ODEBUG
+	fprintf(stderr, "stack_object: calling saved_object_free\n");
+#endif
+	saved_object_free(orig, OBJ_FREE_NORMAL);
 	obj_stack[onum].ptr = p;
 	obj_stack[onum].type = type;
 	pprintf(prn, "Replaced object '%s'\n", oname);
@@ -425,13 +544,14 @@ int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
     int ret = 0;
 
 #if ODEBUG
-    fprintf(stderr, "maybe_stack_var: refcount = %d\n", var->refcount);
+    fprintf(stderr, "\nmaybe_stack_var: initial refcount = %d\n", var->refcount);
 #endif
 
-    set_last_model(var, VAR);
+    set_as_last_model(var, VAR);
 
 #if ODEBUG
-    fprintf(stderr, "maybe_stack_var: done set last, refcount = %d\n", var->refcount);
+    fprintf(stderr, "maybe_stack_var: set %p as last model, refcount = %d\n", 
+	    (void *) var, var->refcount);
 #endif
 
     if (*vname) {
@@ -441,33 +561,54 @@ int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
     return ret;
 }
 
-int maybe_stack_model (MODEL **ppmod, const CMD *cmd, PRN *prn)
+/* Called in gretlcli.c, after sucessful estimation of a
+   (single-equation) model.  We automatically put the model in place
+   as the "last model" for reference purposes (e.g. in genr).  In
+   addition, if the model has been assigned a "savename" (via
+   something like "mymod <- ols 1 0 2"), we make a copy and add it to
+   the stack of saved objects.  We need to do the copying so that
+   if/when the original model pointer is reassigned to, via a further
+   estimation command, we do not lose the saved (named) model content.
+
+   Reference counting: the model that is passed in should have its
+   refcount raised to 2 on account of set_as_last_model.  The refcount of
+   the copy (if applicable) should be 1, since the only reference to
+   this model pointer is the one on the stack of named objects.
+*/
+
+int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn)
 {
     const char *mname = gretl_cmd_get_savename(cmd);
-    int err;
+    MODEL *cpy = NULL;
+    int err = 0;
 
-    set_last_model(*ppmod, EQUATION);
+#if ODEBUG
+    fprintf(stderr, "\nmaybe_stack_model: initial refcount = %d\n", 
+	    pmod->refcount);
+#endif
+
+    set_as_last_model(pmod, EQUATION);
+
 #if ODEBUG
     fprintf(stderr, "maybe_stack_model: set %p as last model, refcount %d\n",
-	    (void *) *ppmod, (*ppmod)->refcount);
+	    (void *) pmod, pmod->refcount);
 #endif
 
     if (*mname == 0) {
 	return 0;
     }
 
-    err = stack_model_as(*ppmod, mname);
+    cpy = gretl_model_copy(pmod);
+    if (cpy == NULL) {
+	err = E_ALLOC;
+    }
 
     if (!err) {
-	MODEL *mnew = gretl_model_new();
+	err = stack_model_as(cpy, mname);
+    }
 
-	if (mnew != NULL) {
-	    copy_model(mnew, *ppmod);
-	    *ppmod = mnew;
-	    pprintf(prn, _("%s saved\n"), mname);
-	} else {
-	    err = E_ALLOC;
-	}
+    if (!err) {
+	pprintf(prn, _("%s saved\n"), mname);
     }
 
     return err;
@@ -563,10 +704,12 @@ void gretl_saved_objects_cleanup (void)
 {
     int i;
 
-    /* FIXME cleaning up "last_model" */
-
     for (i=0; i<n_obj; i++) {
-	gretl_saved_object_free(&obj_stack[i], OBJ_FREE_FINAL);
+	if (obj_stack[i].ptr == last_model.ptr) {
+	    /* don't double-free! */
+	    last_model.ptr = NULL;
+	}
+	saved_object_free(&obj_stack[i], OBJ_FREE_FINAL);
     }
 
     free(obj_stack);
@@ -575,4 +718,10 @@ void gretl_saved_objects_cleanup (void)
     n_obj = 0;
     n_sys = 0;
     n_vars = 0;
+
+    if (last_model.ptr != NULL) {
+	saved_object_free(&last_model, OBJ_FREE_FINAL);
+	last_model.ptr = NULL;
+	last_model.type = 0;
+    }
 }

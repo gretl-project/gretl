@@ -20,7 +20,7 @@
 #ifndef OBJECTSAVE_H
 #define OBJECTSAVE_H
 
-int maybe_save_model (const CMD *cmd, MODEL **ppmod, PRN *prn);
+int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn);
 
 int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn);
 

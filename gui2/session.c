@@ -940,7 +940,7 @@ void close_session (void)
 {
     clear_data(); 
     free_session();
-    free_model_table_list(NULL);
+    clear_model_table(NULL);
     clear_graph_page();
 
     session_menu_state(FALSE);
@@ -1555,11 +1555,6 @@ static int
 real_delete_model_from_session (const char *modname, int type)
 {
     void *ptr;
-
-    if (type == OBJ_MODEL) {
-	MODEL *pmod = get_model_by_name(modname);
-	remove_from_model_table_list(pmod);
-    }
 
     if (session.nmodels == 1) {
 	free_session_model(session.models[0]);
@@ -2314,12 +2309,12 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     } else if (strcmp(item, _("Add to model table")) == 0) {
 	if (obj->sort == OBJ_MODEL) {
 	    MODEL *pmod = (MODEL *) obj->data;
-	    add_to_model_table_list((const MODEL *) pmod, MODEL_ADD_FROM_MENU,
-				    NULL);
+	    add_to_model_table((const MODEL *) pmod, MODEL_ADD_FROM_MENU,
+			       NULL);
 	}
     } else if (strcmp(item, _("Clear")) == 0) {
 	if (obj->sort == OBJ_MODTAB) {
-	    free_model_table_list(NULL);
+	    clear_model_table(NULL);
 	} else if (obj->sort == OBJ_GPAGE) {
 	    clear_graph_page();
 	}
@@ -2375,14 +2370,12 @@ session_data_received (GtkWidget *widget,
 	MODEL *pmod = get_model_by_name(mname);
 
 	if (pmod != NULL) {
-	    add_to_model_table_list((const MODEL *) pmod, 
-				    MODEL_ADD_BY_DRAG, 
-				    NULL);
+	    add_to_model_table((const MODEL *) pmod, 
+			       MODEL_ADD_BY_DRAG, 
+			       NULL);
 	}
-    }
-
-    else if (info == GRETL_FILENAME && data != NULL && 
-	     (fname = data->data) != NULL) {
+    } else if (info == GRETL_FILENAME && data != NULL && 
+	       (fname = data->data) != NULL) {
 	graph_page_add_file(fname);
     }
 }

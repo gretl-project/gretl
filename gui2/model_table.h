@@ -26,11 +26,9 @@ enum {
     MODEL_ADD_BY_CMD
 } model_add_modes;
 
-int add_to_model_table_list (const MODEL *pmod, int add_mode, PRN *prn);
+void clear_model_table (PRN *prn);
 
-void remove_from_model_table_list (const MODEL *pmod);
-
-void free_model_table_list (PRN *prn);
+int add_to_model_table (const MODEL *pmod, int add_mode, PRN *prn);
 
 int display_model_table (int gui);
 
