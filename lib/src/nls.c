@@ -927,7 +927,9 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 	spec->ess = 0.0;
     }
 
-    gdinfo = create_new_dataset(&gZ, spec->nparam + 1, pdinfo->n, 0);
+    /* number of variables = 1 (const) + 1 (depvar) + spec->nparam
+       (derivatives) */
+    gdinfo = create_new_dataset(&gZ, spec->nparam + 2, pdinfo->n, 0);
     if (gdinfo == NULL) {
 	gretl_model_init(&gnr);
 	gnr.errcode = E_ALLOC;
@@ -946,37 +948,48 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 	gnr.errcode = E_ALLOC;
 	return gnr;
     }
-    
-    for (i=0; i<=spec->nparam; i++) {
-	glist[i+1] = i;
-	if (i == 0) {
-	    /* dependent variable (NLS residual or constant) */
-	    j = 0;
+
+    j = 0;
+
+    /* dependent variable (NLS residual) */
+    glist[1] = 1;
+    strcpy(gdinfo->varname[1], "gnr_y");
+    for (t=0; t<gdinfo->n; t++) {
+	if (t < gdinfo->t1 || t > gdinfo->t2) {
+	    gZ[1][t] = NADBL;
+	} else {
+	    gZ[1][t] = uhat[j++];
+	}
+    }
+
+    for (i=0; i<spec->nparam; i++) {
+	int v = i + 2;
+
+	glist[v] = v;
+	/* independent vars: derivatives wrt NLS params */
+	sprintf(gdinfo->varname[v], "gnr_x%d", i + 1);
+	if (spec->mode == ANALYTIC_DERIVS) {
+	    get_nls_deriv(i, gZ[v]);
+	} else {
+	    j = gdinfo->n * i;
 	    for (t=0; t<gdinfo->n; t++) {
 		if (t < gdinfo->t1 || t > gdinfo->t2) {
-		    gZ[i][t] = NADBL;
+		    gZ[v][t] = NADBL;
 		} else {
-		    gZ[i][t] = uhat[j++];
-		}
-	    }
-	} else {
-	    /* independent vars: derivatives wrt params */
-	    if (spec->mode == ANALYTIC_DERIVS) {
-		get_nls_deriv(i-1, gZ[i]);
-	    } else {
-		j = gdinfo->n * (i - 1);
-		for (t=0; t<gdinfo->n; t++) {
-		    if (t < gdinfo->t1 || t > gdinfo->t2) {
-			gZ[i][t] = NADBL;
-		    } else {
-			gZ[i][t] = jac[j++];
-		    }
+		    gZ[v][t] = jac[j++];
 		}
 	    }
 	}
     }
 
     gnr = lsq(glist, &gZ, gdinfo, OLS, OPT_A, 0.0);
+
+#if 0
+    gnr.name = gretl_strdup("GNR for NLS");
+    printmodel(&gnr, gdinfo, OPT_NONE, prn);
+    free(gnr.name);
+    gnr.name = NULL;
+#endif
 
     if (gnr.errcode) {
 	pputs(prn, _("In Gauss-Newton Regression:\n"));
