@@ -35,7 +35,6 @@ enum {
     OBJ_ACTION_NULL,
     OBJ_ACTION_MODEL_SHOW,
     OBJ_ACTION_MODEL_FREE,
-    OBJ_ACTION_MODEL_STAT,
     OBJ_ACTION_VAR_SHOW,
     OBJ_ACTION_VAR_IRF,
     OBJ_ACTION_VAR_FREE,
@@ -44,20 +43,21 @@ enum {
     OBJ_ACTION_TEXT_SHOW,
     OBJ_ACTION_TEXT_FREE,
     OBJ_ACTION_SYS_SHOW,
-    OBJ_ACTION_SYS_FREE
+    OBJ_ACTION_SYS_FREE,
+    OBJ_ACTION_SHOW_STAT
 };
 
 #define obj_action_free(a) (a == OBJ_ACTION_MODEL_FREE || \
                             a == OBJ_ACTION_VAR_FREE || \
-                            a == OBJ_ACTION_SYS_FREE)   
+                            a == OBJ_ACTION_SYS_FREE)
 
-static int match_object_command (const char *s, char sort)
+static int match_object_command (const char *s, int sort)
 {
     if (sort == OBJ_MODEL) {
 	if (*s == 0) return OBJ_ACTION_MODEL_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_MODEL_SHOW;
-	if (strcmp(s, "free") == 0) return OBJ_ACTION_MODEL_FREE; 
-	return OBJ_ACTION_MODEL_STAT;
+	if (strcmp(s, "free") == 0) return OBJ_ACTION_MODEL_FREE;
+	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
     }
 
     if (sort == OBJ_VAR) {
@@ -65,7 +65,15 @@ static int match_object_command (const char *s, char sort)
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_VAR_SHOW;
 	if (strcmp(s, "irf") == 0)  return OBJ_ACTION_VAR_IRF;
 	if (strcmp(s, "free") == 0) return OBJ_ACTION_VAR_FREE; 
+	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
     }
+
+    if (sort == OBJ_SYS) {
+	if (*s == 0) return OBJ_ACTION_SYS_SHOW; /* default */
+	if (strcmp(s, "show") == 0) return OBJ_ACTION_SYS_SHOW;
+	if (strcmp(s, "free") == 0) return OBJ_ACTION_SYS_FREE; 
+	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
+    } 
 
     if (sort == OBJ_GRAPH) {
 	if (*s == 0) return OBJ_ACTION_GRAPH_SHOW; /* default */
@@ -79,91 +87,7 @@ static int match_object_command (const char *s, char sort)
 	if (strcmp(s, "free") == 0) return OBJ_ACTION_TEXT_FREE; 
     }  
 
-    if (sort == OBJ_SYS) {
-	if (*s == 0) return OBJ_ACTION_SYS_SHOW; /* default */
-	if (strcmp(s, "show") == 0) return OBJ_ACTION_SYS_SHOW;
-	if (strcmp(s, "free") == 0) return OBJ_ACTION_SYS_FREE; 
-    }  
-
     return OBJ_ACTION_INVALID;
-}
-
-static void print_model_stat (const char *modname, const char *param, PRN *prn)
-{
-    MODEL *pmod = get_model_by_name(modname);
-    int idx = gretl_model_stat_index(param);
-    double x;
-    int err = 0;
-
-    if (pmod == NULL || idx <= 0) return;
-
-    x = gretl_model_get_scalar(pmod, idx, &err);
-    if (err) {
-	pprintf(prn, _("%s: no data for '%s'\n"), pmod->name, param);
-    } else {
-	pprintf(prn, "%s: %s = %.8g\n", pmod->name, param + 1);
-    }
-}
-
-static void get_word_and_command (const char *s, char *word, 
-				  char *cmd)
-{
-    int start = 0, len, d;
-    int quoted = 0;
-    const char *p;
-
-    *word = 0;
-    *cmd = 0;
-
-    /* skip any leading whitespace */
-    while (*s && isspace(*s)) {
-	s++; start++;
-    }
-
-    /* skip an opening quote */
-    if (*s == '"') {
-	s++;
-	quoted = 1;
-    }
-
-    p = s;
-
-    /* crawl to end of (possibly quoted) "word" */
-    len = 0;
-    while (*s) {
-	if (*s == '"') quoted = 0;
-	if (!quoted && isspace(*s)) break;
-	s++; len++;
-    }
-
-#if 0
-    fprintf(stderr, "remaining s ='%s', len=%d\n", s, len);
-#endif
-
-    /* is an object command embedded? */
-    d = dotpos(p);
-    if (d < s - p) {
-	strncat(cmd, p + d + 1, len - d - 1);
-	len -= (len - d);
-    }
-
-    if (len == 0) {
-	return;
-    }
-
-    if (len > MAXSAVENAME - 1) {
-	len = MAXSAVENAME - 1;
-    }
-
-    strncat(word, p, len);
-
-    if (word[len - 1] == '"') {
-	word[len - 1] = 0;
-    }
-
-#if 0
-    fprintf(stderr, "word='%s', cmd='%s'\n", word, cmd);
-#endif
 }
 
 static int parse_object_request (const char *line, 
@@ -175,7 +99,7 @@ static int parse_object_request (const char *line,
     int action;
 
     /* get object name (if any) and dot param */
-    get_word_and_command(line, word, param);
+    parse_object_command(line, word, param);
 
     /* if no dot param, nothing doing */
     if (*param == 0) return OBJ_ACTION_NONE;
@@ -372,8 +296,6 @@ int saved_object_action (const char *line, PRN *prn)
 	display_saved_model(objname);
     } else if (code == OBJ_ACTION_MODEL_FREE) {
 	err = delete_model_from_session(objname);
-    } else if (code == OBJ_ACTION_MODEL_STAT) {
-	print_model_stat(objname, param, prn);
     } else if (code == OBJ_ACTION_VAR_SHOW) {
 	display_saved_VAR(objname);
     } else if (code == OBJ_ACTION_VAR_IRF) {
@@ -397,6 +319,8 @@ int saved_object_action (const char *line, PRN *prn)
 	display_saved_equation_system(objname);
     } else if (code == OBJ_ACTION_SYS_FREE) {
 	err = delete_system_from_session(objname);
+    } else if (code == OBJ_ACTION_SHOW_STAT) {
+	err = saved_object_print_value(objname, param, prn);
     }
 
     if (obj_action_free(code) && !err) {

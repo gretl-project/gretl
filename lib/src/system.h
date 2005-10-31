@@ -56,6 +56,10 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
 int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo, 
 			   gretlopt opt, PRN *prn);
 
+int estimate_saved_equation_system (gretl_equation_system *sys, 
+				    double ***pZ, DATAINFO *pdinfo,
+				    PRN *prn);
+
 void gretl_equation_system_destroy (gretl_equation_system *sys);
 
 const char *system_get_full_string (const gretl_equation_system *sys);

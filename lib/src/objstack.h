@@ -40,6 +40,8 @@ gretl_equation_system *get_equation_system_by_name (const char *sname);
 
 void *gretl_get_object_by_name (const char *name);
 
+int gretl_get_object_and_type (const char *name, void **pp, int *type);
+
 int stack_model (MODEL *pmod);
 
 int stack_model_as (MODEL *pmod, const char *mname);
@@ -60,13 +62,17 @@ int maybe_stack_var (GRETL_VAR *var, const CMD *cmd);
 
 void gretl_object_ref (void *ptr, int type);
 
-double saved_object_get_value (const char *oname, const char *valname, int *err);
+double saved_object_get_value (const char *oname, const char *key, int *err);
+
+int saved_object_print_value (const char *oname, const char *key, PRN *prn);
 
 double last_model_get_value_by_type (int idx, int *err);
 
 void gretl_rename_saved_object (void *p, const char *name);
 
 void gretl_delete_saved_object (void *p);
+
+int parse_object_command (const char *s, char *name, char *cmd);
 
 void gretl_saved_objects_cleanup (void);
 

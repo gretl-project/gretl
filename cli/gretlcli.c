@@ -91,6 +91,7 @@ gretl_restriction_set *rset;
 static int exec_line (char *line, LOOPSET **ploop, PRN *prn); 
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
+static int saved_object_action (const char *line, PRN *prn);
 
 static void usage(void)
 {
@@ -775,6 +776,12 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	return err;
     }  
+
+    /* catch requests relating to saved objects, which are not
+       really "commands" as such */
+    chk = saved_object_action(line, prn);
+    if (chk == 1) return 0;   /* action was OK */
+    if (chk == -1) return 1;  /* action was faulty */
     
     /* are we ready for this? */
     if (!data_status && !cmd.ignore && 
@@ -1728,3 +1735,5 @@ static FILE *pop_input_file (void)
 
     return ret;
 }
+
+#include "cli_object.c"

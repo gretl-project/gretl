@@ -1457,9 +1457,10 @@ int display_saved_VAR (const char *varname)
 int display_saved_equation_system (const char *sysname)
 {
     gretl_equation_system *sys = get_equation_system_by_name(sysname);
-    char *line;
     PRN *prn;
     int err = 0;
+
+    /* FIXME choice of estimator */
 
     if (sys == NULL) {
 	fprintf(stderr, "No saved system of name '%s'\n", sysname);
@@ -1474,14 +1475,12 @@ int display_saved_equation_system (const char *sysname)
 	return 1;
     }
 
-    line = g_strdup_printf("estimate \"%s\"", sysname);
-    err = estimate_named_system(line, &Z, datainfo, OPT_UNSET, prn);
+    err = estimate_saved_equation_system(sys, &Z, datainfo, prn);
     if (err) {
 	gui_errmsg(err);
     } else {
 	view_buffer(prn, 78, 450, sysname, SYSTEM, sys);
     }
-    g_free(line);
 
     return err;
 }

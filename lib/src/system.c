@@ -211,9 +211,9 @@ gretl_equation_system_new (int method, const char *name)
     sys->iters = 0;
     sys->flags = 0;
 
-    sys->ll = sys->llu = 0.0;
-    sys->X2 = 0.0;
-    sys->ess = 0.0;
+    sys->ll = sys->llu = NADBL;
+    sys->X2 = NADBL;
+    sys->ess = NADBL;
     sys->diag = 0.0;
     sys->bdiff = 0.0;
 
@@ -253,10 +253,11 @@ static void system_clear_results (gretl_equation_system *sys)
 
     sys->t1 = sys->t2 = 0;
 
-    sys->ll = 0.0;
-    sys->llu = 0.0;
-    sys->X2 = 0.0;
-    sys->ess = 0.0;
+    sys->ll = NADBL;
+    sys->llu = NADBL;
+    sys->X2 = NADBL;
+    sys->ess = NADBL;
+
     sys->diag = 0.0;
     sys->bdiff = 0.0;
 
@@ -931,6 +932,18 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
     } 
 
     return gretl_equation_system_estimate(sys, pZ, pdinfo, opt, prn);
+}
+
+int estimate_saved_equation_system (gretl_equation_system *sys, 
+				    double ***pZ, DATAINFO *pdinfo,
+				    PRN *prn)
+{
+    char line[128];
+    int err;
+
+    sprintf(line, "estimate \"%s\"", sys->name);
+    err = estimate_named_system(line, pZ, pdinfo, OPT_UNSET, prn);
+    return err;
 }
 
 static int get_real_list_length (const int *list)

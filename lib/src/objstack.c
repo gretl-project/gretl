@@ -292,10 +292,36 @@ void *gretl_get_object_by_name (const char *name)
     return get_object_by_name(name, -1, NULL);
 }
 
+int gretl_get_object_and_type (const char *name, void **pp, int *type)
+{
+    const char *test;
+    int i, err = E_DATA;
+
+    *pp = NULL;
+    *type = 0;
+
+    if (name == NULL) {
+	return err;
+    }
+
+    for (i=0; i<n_obj; i++) {
+	test = saved_object_get_name(&obj_stack[i]);
+	if (!strcmp(name, test)) {
+	    *pp = obj_stack[i].ptr;
+	    *type = obj_stack[i].type;
+	    err = 0;
+	    break;
+	}
+    }
+
+    return err;
+}
+
 /* Called from session.c when the user chooses to delete a model that
-   is stored in the session as an icon.  If the object in question is
-   also referenced as last_model, it won't actually be destroyed,
-   though it will be removed from the list of named objects.
+   is stored in the session as an icon; also called in cli program in
+   response to "Obj.free".  If the object in question is also
+   referenced as last_model, it won't actually be destroyed though it
+   will be removed from the list of named objects.
 */
 
 void gretl_delete_saved_object (void *p)
@@ -660,7 +686,7 @@ static double maybe_get_value (void *p, int type, int idx)
     return x;
 }
 
-double saved_object_get_value (const char *oname, const char *valname,
+double saved_object_get_value (const char *oname, const char *key,
 			       int *err)
 {
     stacker *smatch = NULL;
@@ -677,7 +703,7 @@ double saved_object_get_value (const char *oname, const char *valname,
     }
 
     if (smatch != NULL) {
-	idx = gretl_model_stat_index(valname);
+	idx = gretl_model_stat_index(key);
 	ret = maybe_get_value(smatch->ptr, smatch->type, idx);
     }
 
@@ -686,6 +712,21 @@ double saved_object_get_value (const char *oname, const char *valname,
     }
 
     return ret;
+}
+
+int 
+saved_object_print_value (const char *oname, const char *key, PRN *prn)
+{
+    int err = 0;
+    double val = saved_object_get_value(oname, key, &err);
+
+    if (err) {
+	pprintf(prn, _("%s: no data for '%s'\n"), oname, key);
+    } else {
+	pprintf(prn, "%s: %s = %.8g\n", oname, key + 1, val);
+    }
+
+    return err;
 }
 
 double last_model_get_value_by_type (int idx, int *err)
@@ -698,6 +739,71 @@ double last_model_get_value_by_type (int idx, int *err)
     }
 
     return x;
+}
+
+/* try to parse an "object-priented" command, such as
+   MyModel.free or "System 1".show */
+
+int parse_object_command (const char *s, char *name, char *cmd)
+{
+    int start = 0, len, d;
+    int quoted = 0;
+    const char *p;
+
+    *name = 0;
+    *cmd = 0;
+
+    /* skip any leading whitespace */
+    while (*s && isspace(*s)) {
+	s++; start++;
+    }
+
+    /* skip an opening quote */
+    if (*s == '"') {
+	s++;
+	quoted = 1;
+    }
+
+    p = s;
+
+    /* crawl to end of (possibly quoted) "name" */
+    len = 0;
+    while (*s) {
+	if (*s == '"') quoted = 0;
+	if (!quoted && isspace(*s)) break;
+	s++; len++;
+    }
+
+#if 0
+    fprintf(stderr, "remaining s ='%s', len=%d\n", s, len);
+#endif
+
+    /* is an object command embedded? */
+    d = dotpos(p);
+    if (d < s - p) {
+	strncat(cmd, p + d + 1, len - d - 1);
+	len -= (len - d);
+    }
+
+    if (len == 0) {
+	return 0;
+    }
+
+    if (len > MAXSAVENAME - 1) {
+	len = MAXSAVENAME - 1;
+    }
+
+    strncat(name, p, len);
+
+    if (name[len - 1] == '"') {
+	name[len - 1] = 0;
+    }
+
+#if 0
+    fprintf(stderr, "name='%s', cmd='%s'\n", name, cmd);
+#endif
+    
+    return 0;
 }
 
 void gretl_saved_objects_cleanup (void)
