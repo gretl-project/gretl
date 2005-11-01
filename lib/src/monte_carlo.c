@@ -2716,7 +2716,8 @@ int loop_exec (LOOPSET *loop, char *line,
 		if (loop_is_progressive(loop) || (cmd.opt & OPT_P)) {
 		    err = 1;
 		} else {
-		    err = nls_parse_line(cmd.ci, linecpy, (const double **) *pZ, *ppdinfo);
+		    err = nls_parse_line(cmd.ci, linecpy, (const double **) *pZ, 
+					 *ppdinfo, prn);
 		    if (err) {
 			errmsg(err, prn);
 		    } else {

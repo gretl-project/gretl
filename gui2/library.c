@@ -2399,7 +2399,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	    strcat(bufline, tmp);
 	} 
 
-	err = nls_parse_line(ci, bufline, (const double **) Z, datainfo);
+	err = nls_parse_line(ci, bufline, (const double **) Z, datainfo, NULL);
 	started = 1;
 
 	if (err) {
@@ -6386,7 +6386,7 @@ int gui_exec_line (char *line,
 
     case MLE:
     case NLS:
-	err = nls_parse_line(cmd.ci, line, (const double **) Z, datainfo);
+	err = nls_parse_line(cmd.ci, line, (const double **) Z, datainfo, prn);
 	if (err) {
 	    errmsg(err, prn);
 	} else {

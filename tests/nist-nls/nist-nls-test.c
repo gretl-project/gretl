@@ -282,7 +282,7 @@ static int print_derivs (char *line, PRN *prn)
 	for (i=0; i<tester.nparam; i++) {
 	    sprintf(line, "deriv %s = %s", tester.coeffs[i].name, derivs[i]);
 	    if (verbose) printf("%s\n", line);
-	    err = nls_parse_line(line, (const double **) Z, datainfo);
+	    err = nls_parse_line(line, (const double **) Z, datainfo, NULL);
 	    if (err) {
 		errmsg(err, prn);
 		break;

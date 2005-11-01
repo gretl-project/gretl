@@ -1405,7 +1405,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case MLE:
     case NLS:
-	err = nls_parse_line(cmd.ci, line, (const double **) Z, datainfo);
+	err = nls_parse_line(cmd.ci, line, (const double **) Z, datainfo, prn);
 	if (err) {
 	    errmsg(err, prn);
 	} else {

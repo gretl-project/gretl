@@ -963,10 +963,10 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     }
 
     for (i=0; i<spec->nparam; i++) {
+	/* independent vars: derivatives wrt NLS params */
 	int v = i + 2;
 
 	glist[v] = v;
-	/* independent vars: derivatives wrt NLS params */
 	sprintf(gdinfo->varname[v], "gnr_x%d", i + 1);
 	if (spec->mode == ANALYTIC_DERIVS) {
 	    get_nls_deriv(i, gZ[v]);
@@ -1289,10 +1289,10 @@ static int check_derivatives (integer m, integer n, double *x,
 static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 {
     integer n;
-    int maxit = 200; /* ?? */
+    int maxit = 200; /* arbitrary? */
     int err = 0;
 
-    n = spec->nparam;            /* number of parameters */
+    n = spec->nparam; /* number of parameters */
 
     if (spec->mode == ANALYTIC_DERIVS) {
 	integer m = spec->t2 - spec->t1 + 1; /* number of observations */
@@ -1716,6 +1716,7 @@ void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2)
 
 #define param_line(s) (!strncmp(s, "deriv", 5) || \
                        !strncmp(s, "params", 6))
+
 /**
  * nls_parse_line:
  * @ci: either %NLS or %MLE (doco not finished on this)
@@ -1723,6 +1724,7 @@ void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2)
  *        of this function with respect to a parameter.
  * @Z: data array.
  * @pdinfo: information on dataset.
+ * @prn: gretl printing struct (for warning messages).
  *
  * This function is used to create the specification of a
  * nonlinear regression function, to be estimated via #nls.
@@ -1742,7 +1744,7 @@ void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2)
  */
 
 int nls_parse_line (int ci, const char *line, const double **Z,
-		    const DATAINFO *pdinfo)
+		    const DATAINFO *pdinfo, PRN *prn)
 {
     int err = 0;
 
@@ -1757,11 +1759,22 @@ int nls_parse_line (int ci, const char *line, const double **Z,
 	    err = E_PARSE;
 	} else {
 	    if (*line == 'd') {
-		/* "deriv" */
-		err = nls_spec_add_param_with_deriv(pspec, line, Z, pdinfo);
+		if (pspec->mode != ANALYTIC_DERIVS && pspec->params != NULL) {
+		    strcpy(gretl_errmsg, "You cannot supply both a \"params\" "
+			   "line and analytical derivatives");
+		    err = E_PARSE;
+		} else {
+		    err = nls_spec_add_param_with_deriv(pspec, line, Z, pdinfo);
+		}
 	    } else {
 		/* "params" */
-		err = nls_spec_add_param_list(pspec, line + 6, Z, pdinfo);
+		if (pspec->mode != ANALYTIC_DERIVS) {
+		    err = nls_spec_add_param_list(pspec, line + 6, Z, pdinfo);
+		} else {
+		    pprintf(prn, _("Analytical derivatives supplied: "
+				   "\"params\" line will be ignored"));
+		    pputc(prn, '\n');
+		}
 	    }
 	}
     } else {

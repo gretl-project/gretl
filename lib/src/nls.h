@@ -40,7 +40,7 @@ nls_spec_set_regression_function (nls_spec *spec,
 void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2);
 
 int nls_parse_line (int ci, const char *line, const double **Z,
-		    const DATAINFO *pdinfo);
+		    const DATAINFO *pdinfo, PRN *prn);
 
 MODEL nls (double ***pZ, DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 

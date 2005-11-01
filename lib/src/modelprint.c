@@ -2127,14 +2127,13 @@ static void plain_print_act_pred (const int *ap, PRN *prn)
     pputs(prn, _("Predicted"));
     pputc(prn, '\n');
     bufspace(leftlen + 3, prn);
-    pprintf(prn, "%*d   %*d\n\n", numwidth, 0, numwidth, 1);
-    bufspace(leftlen, prn);
-    pprintf(prn, "0  %*d   %*d\n", numwidth, ap[0], numwidth, ap[1]);
+    pprintf(prn, "%*d   %*d\n", numwidth, 0, numwidth, 1);
     bufspace(2, prn);
-    pputs(prn, _("Actual"));  
-    pputc(prn, '\n');
+    pputs(prn, _("Actual"));
+    pprintf(prn, " 0  %*d   %*d\n", numwidth, ap[0], numwidth, ap[1]);
     bufspace(leftlen, prn);
     pprintf(prn, "1  %*d   %*d\n", numwidth, ap[2], numwidth, ap[3]);
+    pputc(prn, '\n');
 }
 
 static void print_discrete_statistics (const MODEL *pmod, 
