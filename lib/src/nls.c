@@ -26,6 +26,7 @@
 #include "../../minpack/minpack.h"  
 
 #define NLS_DEBUG 0
+
 enum {
     NUMERIC_DERIVS,
     ANALYTIC_DERIVS
@@ -56,6 +57,7 @@ struct _nls_spec {
     int grcount;        /* number of gradient evaluations (ML) */
     int t1;             /* starting observation */
     int t2;             /* ending observation */
+    int nobs;           /* number of observations used */
     double ess;         /* error sum of squares */
     double ll;          /* log likelihood */
     double tol;         /* tolerance for stopping iteration */
@@ -433,6 +435,7 @@ nls_missval_check (double ***pZ, DATAINFO *pdinfo, nls_spec *spec)
 
     spec->t1 = t1;
     spec->t2 = t2;
+    spec->nobs = t2 - t1 + 1;
 
     return 0;
 }
@@ -646,11 +649,10 @@ static int get_nls_deriv (int i, double *deriv)
     /* transcribe from dataset to deriv array */
     for (t=pspec->t1; t<=pspec->t2; t++) {
 	if (vec) {
-	    deriv[j] = - (*nZ)[v][t];
+	    deriv[j++] = - (*nZ)[v][t];
 	} else {
-	    deriv[j] = - (*nZ)[v][0];
+	    deriv[j++] = - (*nZ)[v][0];
 	}
-	j++;
     }
 
     return 0;
@@ -696,7 +698,7 @@ static int add_OPG_vcv (MODEL *pmod, nls_spec *spec)
     gretl_matrix *V = NULL;
     double x = 0.0;
     int k = spec->nparam;
-    int T = spec->t2 - spec->t1 + 1;
+    int T = spec->nobs;
     int i, v, t, err = 0;
 
     G = gretl_matrix_alloc(k, T);
@@ -901,6 +903,22 @@ static int transcribe_nls_function (MODEL *pmod, const char *s)
     return err;
 }
 
+#if NLS_DEBUG > 1
+static void 
+print_GNR_dataset (const int *list, double **gZ, DATAINFO *gdinfo)
+{
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
+    int t1 = gdinfo->t1;
+
+    fprintf(stderr, "gdinfo->t1 = %d, gdinfo->t2 = %d\n",
+	    gdinfo->t1, gdinfo->t2);
+    gdinfo->t1 = 0;
+    printdata(list, (const double **) gZ, gdinfo, OPT_O, prn);
+    gdinfo->t1 = t1;
+    gretl_print_destroy(prn);
+}
+#endif
+
 /* Gauss-Newton regression to calculate standard errors for the NLS
    parameters (see Davidson and MacKinnon).  This may be modifiable
    for MLE, but at present we're not using it in that context.
@@ -915,6 +933,7 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     int *glist;
     MODEL gnr;
     int i, j, t;
+    int T = spec->nobs;
     int iters = spec->iters;
     int perfect = 0;
     int err = 0;
@@ -970,9 +989,15 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 	glist[v] = v;
 	sprintf(gdinfo->varname[v], "gnr_x%d", i + 1);
 	if (spec->mode == ANALYTIC_DERIVS) {
-	    get_nls_deriv(i, gZ[v]);
+	    for (t=0; t<gdinfo->t1; t++) {
+		gZ[v][t] = NADBL;
+	    }
+	    for (t=gdinfo->t2; t<gdinfo->n; t++) {
+		gZ[v][t] = NADBL;
+	    }
+	    get_nls_deriv(i, gZ[v] + gdinfo->t1);
 	} else {
-	    j = gdinfo->n * i;
+	    j = T * i;
 	    for (t=0; t<gdinfo->n; t++) {
 		if (t < gdinfo->t1 || t > gdinfo->t2) {
 		    gZ[v][t] = NADBL;
@@ -983,9 +1008,13 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 	}
     }
 
+#if NLS_DEBUG > 1
+    print_GNR_dataset(glist, gZ, gdinfo);
+#endif
+
     gnr = lsq(glist, &gZ, gdinfo, OLS, OPT_A, 0.0);
 
-#if 0
+#if NLS_DEBUG
     gnr.name = gretl_strdup("GNR for NLS");
     printmodel(&gnr, gdinfo, OPT_NONE, prn);
     free(gnr.name);
@@ -1066,7 +1095,7 @@ static int make_mle_model (MODEL *pmod, nls_spec *spec,
 
     pmod->t1 = pspec->t1;
     pmod->t2 = pspec->t2;
-    pmod->nobs = pmod->t2 - pmod->t1 + 1;
+    pmod->nobs = pspec->nobs;
     
     /* hmm */
     pmod->dfn = pmod->ncoeff;
@@ -1140,6 +1169,7 @@ static void clear_nls_spec (nls_spec *spec)
     spec->grcount = 0;
 
     spec->t1 = spec->t2 = 0;
+    spec->nobs = 0;
 }
 
 /* 
@@ -1296,7 +1326,7 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     n = spec->nparam; /* number of parameters */
 
     if (spec->mode == ANALYTIC_DERIVS) {
-	integer m = spec->t2 - spec->t1 + 1; /* number of observations */
+	integer m = spec->nobs;
 	integer ldjac = m; 
 
 	err = check_derivatives(m, n, spec->coeff, fvec, jac, ldjac, prn);
@@ -1321,7 +1351,7 @@ static int lm_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     doublereal *wa;
     int err = 0;
 
-    m = spec->t2 - spec->t1 + 1; /* number of observations */
+    m = spec->nobs;              /* number of observations */
     n = spec->nparam;            /* number of parameters */
     lwa = 5 * n + m;             /* work array size */
     ldjac = m;                   /* leading dimension of jac array */
@@ -1411,7 +1441,7 @@ lm_approximate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     doublereal *wa1, *wa2, *wa3, *wa4;
     int err = 0;
     
-    m = spec->t2 - spec->t1 + 1; /* number of observations */
+    m = spec->nobs;              /* number of observations */
     n = spec->nparam;            /* number of parameters */
     ldjac = m;                   /* leading dimension of jac array */
 
@@ -2049,6 +2079,7 @@ nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo)
 
     spec->t1 = pdinfo->t1;
     spec->t2 = pdinfo->t2;
+    spec->nobs = 0;
 
     return spec;
 }

@@ -2338,11 +2338,17 @@ static int do_nls_genr (void)
     return err;
 }
 
-static int is_genr_line (const char *s)
+static int is_genr_line (char *s)
 {
     if (!strncmp(s, "genr", 4) ||
 	!strncmp(s, "series", 6) ||
 	!strncmp(s, "scalar", 6)) {
+	return 1;
+    } else if (!strncmp(s, "param ", 6) && strchr(s, '=')) {
+	gchar *tmp = g_strdup_printf("genr %s", s + 6);
+	
+	strcpy(s, tmp);
+	g_free(tmp);
 	return 1;
     } else {
 	return 0;
@@ -2379,6 +2385,8 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	if (string_is_blank(bufline)) {
 	    continue;
 	}
+
+	top_n_tail(bufline);
 
 	if (started && !strncmp(bufline, endstr, 7)) {
 	    break;
