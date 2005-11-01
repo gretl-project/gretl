@@ -615,9 +615,10 @@ static int get_nls_fvec (double *fvec)
     }
 
     pspec->iters += 1;
-#if NLS_DEBUG
-    fprintf(stderr, "iteration %2d: SSR = %.8g\n", pspec->iters, pspec->ess);
-#endif
+
+    if (pspec->opt & OPT_V) {
+	pprintf(nprn, "iteration %2d: SSR = %.8g\n", pspec->iters, pspec->ess);
+    }
 
     return 0;
 }
@@ -1470,12 +1471,16 @@ lm_approximate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     if (!err) {
 	double ess = spec->ess;
 	int iters = spec->iters;
+	gretlopt opt = spec->opt;
+
+	spec->opt = OPT_NONE;
 
 	/* call minpack again */
 	fdjac2_(nls_calc_approx, &m, &n, spec->coeff, fvec, jac, 
 		&ldjac, &iflag, &epsfcn, wa4);
 	spec->ess = ess;
 	spec->iters = iters;
+	spec->opt = opt;
     }
 
  nls_cleanup:

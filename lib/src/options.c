@@ -125,6 +125,7 @@ struct gretl_option gretl_opts[] = {
     { MAHAL,    OPT_V, "vcv" },
     { MEANTEST, OPT_O, "unequal-vars" },
     { MLE,      OPT_V, "verbose" },
+    { NLS,      OPT_V, "verbose" },
     { OLS,      OPT_N, "no-df-corr" },
     { OLS,      OPT_O, "vcv" }, 
     { OLS,      OPT_P, "print-final" },
@@ -394,6 +395,7 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 	} else if (is_long_opt(longopt)) {
 	    /* recognized option, but not valid for the command */
 	    sprintf(gretl_errmsg, "Invalid option '--%s'", longopt);
+	    fprintf(stderr, " line='%s', ci = %d\n", line, ci);
 	    *err = 1;
 	    return 0L;
 	} else {
