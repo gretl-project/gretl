@@ -504,17 +504,6 @@ static double get_mle_ll (const double *b)
 	pspec->ll -= (*nZ)[v][t];
     }
 
-    if (pspec->opt & OPT_V) {
-	int i;
-
-	pprintf(nprn, "Parameters: ");
-	for (i=0; i<pspec->nparam; i++) {
-	    pprintf(nprn, "%#12.5g", b[i]);
-	}
-	pputc(nprn, '\n');
-	pprintf(nprn, "log likelihood = %.8g\n", pspec->ll);	
-    }
-
     return -pspec->ll;
 }
 
@@ -586,6 +575,25 @@ static int get_mle_gradient (double *b, double *g)
     return err;
 }
 
+/* used in the context of BFGS */
+
+static void print_mle_iter_stats (double ll, const double *b, const double *g)
+{
+    int i;
+
+    pprintf(nprn, "log likelihood = %.8g\n", ll);	
+    pprintf(nprn, "Parameters: ");
+    for (i=0; i<pspec->nparam; i++) {
+	pprintf(nprn, "%#12.5g", b[i]);
+    }
+    pputc(nprn, '\n');
+    pprintf(nprn, "Gradients:    ");
+    for (i=0; i<pspec->nparam; i++) {
+	pprintf(nprn, "%#12.5g", g[i]);
+    }
+    pputs(nprn, "\n\n");
+}
+
 /* this function is used in the context of the minpack callback */
 
 static int get_nls_fvec (double *fvec)
@@ -604,6 +612,7 @@ static int get_nls_fvec (double *fvec)
 
     pspec->ess = 0.0;
     pspec->ll = 0.0;
+
     j = 0;
 
     /* transcribe from dataset to fvec array */
@@ -997,7 +1006,7 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 	    }
 	    get_nls_deriv(i, gZ[v] + gdinfo->t1);
 	} else {
-	    j = T * i;
+	    j = T * i; /* calculate offset into jac */
 	    for (t=0; t<gdinfo->n; t++) {
 		if (t < gdinfo->t1 || t > gdinfo->t2) {
 		    gZ[v][t] = NADBL;
@@ -1235,6 +1244,7 @@ static int nls_calc (integer *m, integer *n, double *x, double *fvec,
     } else if (*iflag == 2) {
 	/* calculate jacobian at x, results into jac */
 	for (i=0; i<*n; i++) {
+	    /* FIXME? */
 	    if (get_nls_deriv(i, &jac[i*T])) {
 		*iflag = -1; 
 	    }
@@ -1319,11 +1329,9 @@ static int check_derivatives (integer m, integer n, double *x,
 
 static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 {
-    integer n;
+    integer n = spec->nparam;
     int maxit = 200; /* arbitrary? */
     int err = 0;
-
-    n = spec->nparam; /* number of parameters */
 
     if (spec->mode == ANALYTIC_DERIVS) {
 	integer m = spec->nobs;
@@ -1919,9 +1927,9 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* allocate (full-length) arrays to be passed to minpack */
-    fvec = malloc(pdinfo->n * sizeof *fvec);
-    jac = malloc(pdinfo->n * pspec->nparam * sizeof *jac);
+    /* allocate arrays to be passed to minpack */
+    fvec = malloc(pspec->nobs * sizeof *fvec);
+    jac = malloc(pspec->nobs * pspec->nparam * sizeof *jac);
 
     if (fvec == NULL || jac == NULL) {
 	nlsmod.errcode = E_ALLOC;
@@ -2178,6 +2186,9 @@ static int BFGS_min (int n, double *b, int maxit, double reltol,
     ilast = gradcount;
 
     do {
+	if (pspec->opt & OPT_V) {
+	    print_mle_iter_stats(f, b, g);
+	}
 	if (ilast == gradcount) {
 	    for (i=0; i<n; i++) {
 		for (j=0; j<i; j++) {
@@ -2315,6 +2326,12 @@ static int BFGS_min (int n, double *b, int maxit, double reltol,
 
     *fncount = funcount;
     *grcount = gradcount;
+
+    if (pspec->opt & OPT_V) {
+	pputs(nprn, "\n--- FINAL VALUES: \n");	
+	print_mle_iter_stats(f, b, g);
+	pputs(nprn, "\n\n");	
+    }
 
  bailout:
 
