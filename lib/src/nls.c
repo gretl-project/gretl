@@ -1759,6 +1759,7 @@ int nls_parse_line (int ci, const char *line, const double **Z,
 	    err = E_PARSE;
 	} else {
 	    if (*line == 'd') {
+		/* "deriv" */
 		if (pspec->mode != ANALYTIC_DERIVS && pspec->params != NULL) {
 		    strcpy(gretl_errmsg, "You cannot supply both a \"params\" "
 			   "line and analytical derivatives");
