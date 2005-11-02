@@ -94,7 +94,7 @@ static int add_generator_for_formula (const char *s)
     GENERATOR *genrs;
     int err = 0;
 
-    genr = genr_compile(s, newvar, nZ, ndinfo, OPT_P);
+    genr = genr_compile(s, nZ, ndinfo, OPT_P);
 
     if (genr == NULL) {
 	err = E_ALLOC;

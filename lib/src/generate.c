@@ -2473,8 +2473,7 @@ static int genr_handle_special (const char *s, GENERATOR *genr,
 }
 
 GENERATOR *
-genr_compile (const char *line, char *newvar, double ***pZ, DATAINFO *pdinfo, 
-	      gretlopt opt)
+genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 {
 #if GENR_DEBUG
     genatom *atom;
@@ -2517,24 +2516,24 @@ genr_compile (const char *line, char *newvar, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* split into lhs = rhs */
-    genr->err = split_genr_formula(newvar, s, genr->obs);
+    genr->err = split_genr_formula(genr->lhs, s, genr->obs);
     if (genr->err) {
 	return genr;
     }
     
-    DPRINTF(("after split, newvar='%s', s='%s'\n", newvar, s));
+    DPRINTF(("after split, genr->lhs='%s', s='%s'\n", genr->lhs, s));
 
-    if (*newvar != '\0') {
-	if (strncmp(newvar, "$nl", 3) && 
-	    strncmp(newvar, "__", 2) && 
-	    check_varname(newvar)) {
+    if (*genr->lhs != '\0') {
+	if (strncmp(genr->lhs, "$nl", 3) && 
+	    strncmp(genr->lhs, "__", 2) && 
+	    check_varname(genr->lhs)) {
 	    genr->err = E_SYNTAX;
 	}
-	genr->varnum = varindex(pdinfo, newvar);
+	genr->varnum = varindex(pdinfo, genr->lhs);
     } else {
 	/* no "lhs=" bit */
 	if (!(genr_doing_save(genr))) {
-	    strcpy(newvar, "$eval");
+	    strcpy(genr->lhs, "$eval");
 	} else {
 	    genr->err = E_SYNTAX;
 	}
@@ -2562,13 +2561,13 @@ genr_compile (const char *line, char *newvar, double ***pZ, DATAINFO *pdinfo,
 
     /* special case of stacking a group of series */
     if (!strncmp(s, "stack(", 6)) {
-	genr->err = dataset_stack_variables(pZ, pdinfo, newvar, s);
+	genr->err = dataset_stack_variables(pZ, pdinfo, genr->lhs, s);
 	genr->done = 1;
 	return genr;
     }
 
     /* special case of generating observation labels */
-    if (!strcmp(newvar, "markers")) {
+    if (!strcmp(genr->lhs, "markers")) {
 	genr->err = generate_obs_markers(pZ, pdinfo, s);
 	genr->done = 1;
 	return genr;
@@ -2618,7 +2617,7 @@ genr_compile (const char *line, char *newvar, double ***pZ, DATAINFO *pdinfo,
     return genr;
 }
 
-static int finalize_genr (GENERATOR *genr, char *newvar, int oldv,
+static int finalize_genr (GENERATOR *genr, int oldv,
 			  double ***pZ, DATAINFO *pdinfo)
 {
     evaluate_genr(genr);
@@ -2630,7 +2629,7 @@ static int finalize_genr (GENERATOR *genr, char *newvar, int oldv,
 	if (!genr_doing_save(genr)) {
 	    eval_msg(genr);
 	} else {
-	    make_genr_varname(genr, newvar);
+	    make_genr_varname(genr, genr->lhs);
 	    genr->err = genr_write_var(pZ, pdinfo, genr);
 	    if (!genr->err && !genr_is_private(genr)) {
 		if (!genr_single_obs(genr)) {
@@ -2661,11 +2660,10 @@ static int finalize_genr (GENERATOR *genr, char *newvar, int oldv,
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 {
     GENERATOR *genr;
-    char newvar[USER_VLEN];
     int oldv = pdinfo->v;
     int err = 0;
 
-    genr = genr_compile(line, newvar, pZ, pdinfo, opt);
+    genr = genr_compile(line, pZ, pdinfo, opt);
     
     if (genr == NULL) {
 	err = E_ALLOC;
@@ -2674,7 +2672,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     }
 
     if (!err && !genr->done) {
-	err = finalize_genr(genr, newvar, oldv, pZ, pdinfo);
+	err = finalize_genr(genr, oldv, pZ, pdinfo);
     }
 
     if (genr != NULL) {

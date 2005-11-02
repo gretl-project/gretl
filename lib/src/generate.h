@@ -25,8 +25,7 @@ typedef struct _GENERATOR GENERATOR;
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt); 
 
 GENERATOR *
-genr_compile (const char *line, char *newvar, double ***pZ, DATAINFO *pdinfo, 
-	      gretlopt opt);
+genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt);
 
 int evaluate_genr (GENERATOR *genr);
 

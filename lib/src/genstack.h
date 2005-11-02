@@ -126,6 +126,7 @@ struct _GENERATOR {
     int err;
     int done;
     char orig_s[MAXLINE];
+    char lhs[USER_VLEN];
     unsigned char flags;
     double *xvec;
     int varnum;

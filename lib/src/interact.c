@@ -3012,7 +3012,9 @@ int simple_commands (CMD *cmd, const char *line,
  * @cmd: pointer to gretl command struct.
  *
  * Parse @line and assign to the %ci field of @cmd the index number of
- * the command embedded in @line.
+ * the command embedded in @line.  Note: this is a "lite" version of
+ * parse_command_line().  It is used when commands are being stacked
+ * for execution within a loop.
  *
  * Returns: 1 on error, otherwise 0.
  */
@@ -3020,14 +3022,16 @@ int simple_commands (CMD *cmd, const char *line,
 int get_command_index (const char *line, CMD *cmd)
 {
     static int context;
+    int done = 0;
 
     while (isspace(*line)) {
 	line++;
     }
 
+    cmd->ci = 0;
+
 #if CDEBUG
-    fprintf(stderr, "get_command_index: line='%s', initial ci = %d\n",
-	    line, cmd->ci);
+    fprintf(stderr, "get_command_index: line='%s'\n", line);
 #endif
 
     if (*line == '#' || *line == '(') {
@@ -3050,16 +3054,24 @@ int get_command_index (const char *line, CMD *cmd)
     if (!strcmp(cmd->word, "end")) {
 	context = 0;
 	cmd->ci = END;
+	done = 1;
     } else if (context && strcmp(cmd->word, "equation")) {
 	/* "equation" occurs in the SYSTEM context, but it is
-	   a command in its own right */
+	   a command in its own right, so we don't set cmd->ci
+	   to the context value */
 	cmd->ci = context;
+#if CDEBUG
+	fprintf(stderr, " context (static) = %d, ci = %d\n", context, cmd->ci);
+#endif
+	done = 1;
     } else if (catch_command_alias(cmd)) {
 #if CDEBUG
 	fprintf(stderr, " caught command alias, ci = %d\n", cmd->ci);
 #endif
-	; /* cmd->ci is set OK */
-    } else {
+	done = 1; /* cmd->ci should now be set OK */
+    } 
+
+    if (!done) {
 	cmd->ci = gretl_command_number(cmd->word);
 #if CDEBUG
 	fprintf(stderr, " gretl_command_number(%s) gave %d\n", cmd->word, cmd->ci);
@@ -3070,7 +3082,7 @@ int get_command_index (const char *line, CMD *cmd)
 		    cmd->word);
 	    return 1;
 	}
-    }
+    }	
 
     if (cmd->ci == NLS) {
 	context = NLS;
