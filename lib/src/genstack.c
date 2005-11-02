@@ -245,7 +245,7 @@ static genatom *atom_stack (genatom *atom, atomset *aset, int op)
     return ret;
 }
 
-int attach_atomset (GENERATE *genr)
+int attach_atomset (GENERATOR *genr)
 {
     atomset *aset = malloc(sizeof *aset);
 
@@ -266,7 +266,7 @@ int push_atom (genatom *atom)
     return (atom_stack(atom, atom->aset, STACK_PUSH) == NULL);
 }
 
-genatom *pop_atom (GENERATE *genr)
+genatom *pop_atom (GENERATOR *genr)
 {
     return atom_stack(NULL, genr->aset, STACK_POP);
 }
@@ -281,12 +281,12 @@ genatom *peek_child_atom (genatom *atom)
     return atom_stack(atom, atom->aset, STACK_PEEK_CHILDREN);
 }
 
-void reset_atom_stack (GENERATE *genr)
+void reset_atom_stack (GENERATOR *genr)
 {
     atom_stack(NULL, genr->aset, STACK_RESET);
 }
 
-void destroy_atom_stack (GENERATE *genr)
+void destroy_atom_stack (GENERATOR *genr)
 {
     if (genr->aset == NULL) return;
 
@@ -295,7 +295,7 @@ void destroy_atom_stack (GENERATE *genr)
     genr->aset = NULL;
 }
 
-void atom_stack_set_parentage (GENERATE *genr)
+void atom_stack_set_parentage (GENERATOR *genr)
 {
     atom_stack(NULL, genr->aset, STACK_DEPEND);
 }
@@ -305,22 +305,22 @@ void atom_eat_children (genatom *atom)
     atom_stack(atom, atom->aset, STACK_EAT_CHILDREN);
 }
 
-void atom_stack_bookmark (GENERATE *genr)
+void atom_stack_bookmark (GENERATOR *genr)
 {
     atom_stack(NULL, genr->aset, STACK_BOOKMARK);
 }
 
-void atom_stack_resume (GENERATE *genr)
+void atom_stack_resume (GENERATOR *genr)
 {
     atom_stack(NULL, genr->aset, STACK_RESUME);
 }
 
-int atom_stack_check_for_scalar (GENERATE *genr)
+int atom_stack_check_for_scalar (GENERATOR *genr)
 {
     return (atom_stack(NULL, genr->aset, STACK_SCALAR_CHECK) != NULL);
 }
 
-static double calc_stack (double val, int op, GENERATE *genr)
+static double calc_stack (double val, int op, GENERATOR *genr)
 {
     double *valstack = genr->valstack;
     int i;
@@ -354,18 +354,18 @@ static double calc_stack (double val, int op, GENERATE *genr)
     return x;
 }
 
-int calc_push (double x, GENERATE *genr)
+int calc_push (double x, GENERATOR *genr)
 {
     calc_stack(x, STACK_PUSH, genr);
     return genr->err;
 }
 
-double calc_pop (GENERATE *genr)
+double calc_pop (GENERATOR *genr)
 {
     return calc_stack(0., STACK_POP, genr);
 }
 
-void reset_calc_stack (GENERATE *genr)
+void reset_calc_stack (GENERATOR *genr)
 {
     calc_stack(0., STACK_RESET, genr);
 }

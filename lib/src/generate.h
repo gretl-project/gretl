@@ -20,7 +20,17 @@
 #ifndef GENERATE_H
 #define GENERATE_H
 
+typedef struct _GENERATOR GENERATOR;
+
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt); 
+
+GENERATOR *
+genr_compile (const char *line, char *newvar, double ***pZ, DATAINFO *pdinfo, 
+	      gretlopt opt);
+
+int evaluate_genr (GENERATOR *genr);
+
+int genr_get_varnum (const GENERATOR *genr);
 
 int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
 

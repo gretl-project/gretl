@@ -122,9 +122,7 @@ enum genr_flags {
     GENR_PRIVATE      = 1 << 6
 };
 
-typedef struct _GENERATE GENERATE;
-
-struct _GENERATE {
+struct _GENERATOR {
     int err;
     int done;
     char orig_s[MAXLINE];
@@ -144,21 +142,21 @@ struct _GENERATE {
     char **S;
 };
 
-int attach_atomset (GENERATE *genr);
+int attach_atomset (GENERATOR *genr);
 int push_atom (genatom *atom);
-genatom *pop_atom (GENERATE *genr);
+genatom *pop_atom (GENERATOR *genr);
 genatom *pop_child_atom (genatom *atom);
 genatom *peek_child_atom (genatom *atom);
-void reset_atom_stack (GENERATE *genr);
-void destroy_atom_stack (GENERATE *genr);
-void atom_stack_set_parentage (GENERATE *genr);
+void reset_atom_stack (GENERATOR *genr);
+void destroy_atom_stack (GENERATOR *genr);
+void atom_stack_set_parentage (GENERATOR *genr);
 void atom_eat_children (genatom *atom);
-void atom_stack_bookmark (GENERATE *genr);
-void atom_stack_resume (GENERATE *genr);
-int atom_stack_check_for_scalar (GENERATE *genr);
+void atom_stack_bookmark (GENERATOR *genr);
+void atom_stack_resume (GENERATOR *genr);
+int atom_stack_check_for_scalar (GENERATOR *genr);
 
-int calc_push (double x, GENERATE *genr);
-double calc_pop (GENERATE *genr);
-void reset_calc_stack (GENERATE *genr);
+int calc_push (double x, GENERATOR *genr);
+double calc_pop (GENERATOR *genr);
+void reset_calc_stack (GENERATOR *genr);
 
 #endif /* GENSTACK_H */

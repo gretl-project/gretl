@@ -87,6 +87,67 @@ static void update_nls_param_values (const double *x);
 static int BFGS_min (int n, double *b, int maxit, double reltol,
 		     int *fncount, int *grcount);
 
+#if 0 /* not ready !! */
+
+static int add_generator_for_formula (const char *s)
+{
+    GENERATOR *genrs;
+    int err = 0;
+
+    genr = genr_compile(s, newvar, nZ, ndinfo, OPT_P);
+
+    if (genr == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = genr->err;
+    }
+
+    /* attach genr to pspec here */
+
+    return err;
+}
+
+static int new_nls_auto_genr (int i)
+{
+    GENERATOR **genrs;
+    char formula[MAXLINE];
+    int j;
+
+    for (j=0; j<pspec->naux; j++) {
+#if NLS_DEBUG
+	fprintf(stderr, "nls_auto_genr: generating aux var:\n %s\n", pspec->aux[j]);
+#endif
+	genr_err = generate(pspec->aux[j], nZ, ndinfo, OPT_P);
+    }
+
+    /* FIXME do add_generator() only on first call */
+
+    if (i == 0) {
+	/* note: $nl_y is the residual */
+	sprintf(formula, "$nl_y = %s", pspec->nlfunc);
+	add_generator_for_formula(formula);
+    } else {
+	/* derivatives: artificial independent variables */
+	sprintf(formula, "$nl_x%d = %s", i, pspec->params[i-1].deriv);
+	add_generator_for_formula(formula);
+    }
+
+    /* using "global" nZ and ndinfo pointers here */
+    genr_err = generate(formula, nZ, ndinfo, OPT_P);
+
+#if NLS_DEBUG
+    if (genr_err) {
+	errmsg(genr_err, nprn);
+    } else {
+	fprintf(stderr, "nls_auto_genr: i=%d, formula='%s'\n", i, formula);
+    }
+#endif
+
+    return genr_err;    
+}
+
+#endif
+
 /* Use the genr() function to create/update the values of the residual
    from the regression function (if i = 0), or the derivatives of the
    regression function with respect to the parameters.  The formulae
@@ -94,7 +155,7 @@ static int BFGS_min (int n, double *b, int maxit, double reltol,
    struct.
 */
 
-static int nls_auto_genr (int i, double ***pZ, DATAINFO *pdinfo)
+static int nls_auto_genr (int i)
 {
     char formula[MAXLINE];
     int j;
@@ -103,11 +164,7 @@ static int nls_auto_genr (int i, double ***pZ, DATAINFO *pdinfo)
 #if NLS_DEBUG
 	fprintf(stderr, "nls_auto_genr: generating aux var:\n %s\n", pspec->aux[j]);
 #endif
-	if (pZ != NULL && pdinfo != NULL) {
-	    genr_err = generate(pspec->aux[j], pZ, pdinfo, OPT_P);
-	} else {
-	    genr_err = generate(pspec->aux[j], nZ, ndinfo, OPT_P);
-	}
+	genr_err = generate(pspec->aux[j], nZ, ndinfo, OPT_P);
     }
 
     if (i == 0) {
@@ -118,12 +175,8 @@ static int nls_auto_genr (int i, double ***pZ, DATAINFO *pdinfo)
 	sprintf(formula, "$nl_x%d = %s", i, pspec->params[i-1].deriv);
     }
 
-    if (pZ != NULL && pdinfo != NULL) {
-	genr_err = generate(formula, pZ, pdinfo, OPT_P);
-    } else {
-	/* using "global" nZ and ndinfo pointers here */
-	genr_err = generate(formula, nZ, ndinfo, OPT_P);
-    }
+    /* using "global" nZ and ndinfo pointers here */
+    genr_err = generate(formula, nZ, ndinfo, OPT_P);
 
 #if NLS_DEBUG
     if (genr_err) {
@@ -140,17 +193,12 @@ static int nls_auto_genr (int i, double ***pZ, DATAINFO *pdinfo)
 
 static int nls_calculate_fvec (void)
 {
-    return nls_auto_genr(0, NULL, NULL);
-}
-
-static int nls_test_calculate_fvec (double ***pZ, DATAINFO *pdinfo)
-{
-    return nls_auto_genr(0, pZ, pdinfo);
+    return nls_auto_genr(0);
 }
 
 static int nls_calculate_deriv (int i)
 {
-    return nls_auto_genr(i + 1, NULL, NULL);
+    return nls_auto_genr(i + 1);
 }
 
 static int nlspec_allocate_param (nls_spec *spec)
@@ -386,23 +434,23 @@ nls_spec_add_param_list (nls_spec *spec, const char *s,
 */
 
 static int 
-nls_missval_check (double ***pZ, DATAINFO *pdinfo, nls_spec *spec)
+nls_missval_check (nls_spec *spec)
 {
     int t, v, miss = 0;
     int t1 = spec->t1, t2 = spec->t2;
     int err = 0;
 
     /* generate the nls residual variable */
-    err = nls_test_calculate_fvec(pZ, pdinfo);
+    err = nls_calculate_fvec();
     if (err) {
 	return err;
     }
 	
     /* ID number of last variable generated, above */
-    v = pdinfo->v - 1;
+    v = ndinfo->v - 1;
 
     for (t=spec->t1; t<=spec->t2; t++) {
-	if (na((*pZ)[v][t])) {
+	if (na((*nZ)[v][t])) {
 	    t1++;
 	} else {
 	    break;
@@ -410,7 +458,7 @@ nls_missval_check (double ***pZ, DATAINFO *pdinfo, nls_spec *spec)
     }
 
     for (t=spec->t2; t>=spec->t1; t--) {
-	if (na((*pZ)[v][t])) {
+	if (na((*nZ)[v][t])) {
 	    t2--;
 	} else {
 	    break;
@@ -422,7 +470,7 @@ nls_missval_check (double ***pZ, DATAINFO *pdinfo, nls_spec *spec)
     }
 
     for (t=t1; t<=t2; t++) {
-	if (na((*pZ)[v][t])) {
+	if (na((*nZ)[v][t])) {
 	    miss = 1;
 	    break;
 	}
@@ -1899,7 +1947,8 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 
     pspec->opt = opt;
 
-    /* publish pdinfo and prn */
+    /* publish pZ, pdinfo and prn */
+    nZ = pZ;
     ndinfo = pdinfo;
     nprn = prn;
 
@@ -1921,9 +1970,10 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     } 
 
-    err = nls_missval_check(pZ, pdinfo, pspec);
+    err = nls_missval_check(pspec);
     if (err) {
 	nlsmod.errcode = err;
+	*pZ = *nZ;
 	goto bailout;
     }
 
@@ -1933,14 +1983,12 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 
     if (fvec == NULL || jac == NULL) {
 	nlsmod.errcode = E_ALLOC;
+	*pZ = *nZ;
 	goto bailout;
     }
 
     /* get tolerance from user setting or default */
     pspec->tol = get_nls_toler();
-
-    /* export Z pointer for callbacks */
-    nZ = pZ;
 
     pputs(prn, (pspec->mode == NUMERIC_DERIVS)?
 	  _("Using numerical derivatives\n") :

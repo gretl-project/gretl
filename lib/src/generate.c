@@ -43,7 +43,7 @@ enum {
 
 static double calc_xy (double x, double y, char op, int t, int *err);
 
-static void genr_free (GENERATE *genr);
+static void genr_free (GENERATOR *genr);
 static double genr_cov_corr (const char *str, double ***pZ,
 			     const DATAINFO *pdinfo, int fn);
 static double genr_vcv (const char *str, const DATAINFO *pdinfo, 
@@ -57,13 +57,13 @@ static int genr_mlog (const char *str, double *xvec, double **pZ,
 		      DATAINFO *pdinfo);
 #endif
 
-static void eval_msg (const GENERATE *genr);
-static void compose_genr_msg (const GENERATE *genr, int oldv);
+static void eval_msg (const GENERATOR *genr);
+static void compose_genr_msg (const GENERATOR *genr, int oldv);
 static int listpos (int v, const int *list);
 static int genr_write_var (double ***pZ, DATAINFO *pdinfo, 
-			   GENERATE *genr);
+			   GENERATOR *genr);
 
-static int math_tokenize (char *s, GENERATE *genr, int level);
+static int math_tokenize (char *s, GENERATOR *genr, int level);
 static double get_obs_value (const char *s, const double **Z, 
 			     const DATAINFO *pdinfo, int *err);
 static int model_vector_index (const char *s);
@@ -73,27 +73,27 @@ static int op_level (int c);
 
 static double *get_model_series (const DATAINFO *pdinfo, int v);
 static double *get_random_series (DATAINFO *pdinfo, int fn);
-static double *get_mp_series (const char *s, GENERATE *genr,
+static double *get_mp_series (const char *s, GENERATOR *genr,
 			      int fn, int *err);
-static double *get_tmp_series (double *x, GENERATE *genr,
+static double *get_tmp_series (double *x, GENERATOR *genr,
 			       int fn, double param);
 
 static double get_tnum (const DATAINFO *pdinfo, int t);
-static double evaluate_statistic (double *z, GENERATE *genr, int fn);
-static double get_model_data_element (const char *s, GENERATE *genr,
+static double evaluate_statistic (double *z, GENERATOR *genr, int fn);
+static double get_model_data_element (const char *s, GENERATOR *genr,
 				      int idx);
 static double get_dataset_statistic (DATAINFO *pdinfo, int idx);
 static double get_test_stat_value (char *label, int idx);
 static double evaluate_math_function (double arg, int fn, int *err);
 static double evaluate_missval_func (double arg, int fn);
 static double evaluate_bivariate_statistic (const char *s, 
-					    GENERATE *genr, 
+					    GENERATOR *genr, 
 					    int fn);
 static double evaluate_pvalue (const char *s, const double **Z,
 			       const DATAINFO *pdinfo, int *err);
 static double evaluate_critval (const char *s, const double **Z,
 				const DATAINFO *pdinfo, int *err);
-static void free_genr_S (GENERATE *genr);
+static void free_genr_S (GENERATOR *genr);
 
 enum retrieve {
     R_NOBS = 1,  /* number of observations in current sample range */
@@ -233,9 +233,9 @@ static const char *get_func_word (int fnum);
 
 #define genr_single_obs(g) ((g)->obs >= 0)
 
-static GENERATE *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
+static GENERATOR *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 {
-    GENERATE *genr;
+    GENERATOR *genr;
 
     genr = malloc(sizeof *genr);
     if (genr == NULL) {
@@ -269,6 +269,8 @@ static GENERATE *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     genr->pZ = pZ;
 
     reset_calc_stack(genr);
+
+    return genr;
 }
 
 static genatom *make_atom (int scalar, int varnum,
@@ -347,7 +349,7 @@ static int print_atom (genatom *atom)
 }
 #endif
 
-static int get_lagvar (const char *s, int *lag, GENERATE *genr)
+static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
 {
     static char format[16] = {0};
     char vname[USER_VLEN];
@@ -422,7 +424,7 @@ int get_generated_value (const char *argv, double *val,
 
 /* get the values of the scalar arguments to a genr function */
 
-static int evaluate_genr_function_args (char *s, GENERATE *genr)
+static int evaluate_genr_function_args (char *s, GENERATOR *genr)
 {
     char *tmp = gretl_strdup(s);
     char *st, *arg;
@@ -469,7 +471,7 @@ static int evaluate_genr_function_args (char *s, GENERATE *genr)
     return err;
 }
 
-static int get_arg_string (char *str, const char *s, int func, GENERATE *genr)
+static int get_arg_string (char *str, const char *s, int func, GENERATOR *genr)
 {
     const char *p = strchr(s, '(');
     int n = strlen(p) - 2;
@@ -518,7 +520,7 @@ static int catch_saved_object_scalar (const char *s, double *x)
 }
 
 static genatom *parse_token (const char *s, char op,
-			     GENERATE *genr, int level)
+			     GENERATOR *genr, int level)
 {
     int v = -1;
     int scalar = 0, lag = 0, func = 0;
@@ -694,7 +696,7 @@ static genatom *parse_token (const char *s, char op,
 }
 
 static double get_lag_at_obs (int v, int tmp, int lag, 
-			      const GENERATE *genr, int t)
+			      const GENERATOR *genr, int t)
 {
     int lt;
     double **Z;
@@ -741,7 +743,7 @@ static double get_lag_at_obs (int v, int tmp, int lag,
     return x;
 }
 
-static double eval_atom (genatom *atom, GENERATE *genr, int t, 
+static double eval_atom (genatom *atom, GENERATOR *genr, int t, 
 			 double a)
 {
     double x = NADBL;
@@ -805,7 +807,7 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
     return x;
 }
 
-static int genr_add_temp_var (GENERATE *genr, double *x)
+static int genr_add_temp_var (GENERATOR *genr, double *x)
 {
     double **gZ;    
     int v = genr->tmpv; 
@@ -823,7 +825,7 @@ static int genr_add_temp_var (GENERATE *genr, double *x)
     return 0;
 }
 
-static int add_random_series_to_genr (GENERATE *genr, genatom *atom)
+static int add_random_series_to_genr (GENERATOR *genr, genatom *atom)
 {
     double *x;
 
@@ -840,7 +842,7 @@ static int add_random_series_to_genr (GENERATE *genr, genatom *atom)
     return 0;
 }
 
-static int add_model_series_to_genr (GENERATE *genr, genatom *atom)
+static int add_model_series_to_genr (GENERATOR *genr, genatom *atom)
 {
     double *x;
 
@@ -857,7 +859,7 @@ static int add_model_series_to_genr (GENERATE *genr, genatom *atom)
     return genr->err;
 }
 
-static int add_mp_series_to_genr (GENERATE *genr, genatom *atom)
+static int add_mp_series_to_genr (GENERATOR *genr, genatom *atom)
 {
     double *x;
 
@@ -874,7 +876,7 @@ static int add_mp_series_to_genr (GENERATE *genr, genatom *atom)
     return genr->err;
 }
 
-static double *eval_compound_arg (GENERATE *genr,
+static double *eval_compound_arg (GENERATOR *genr,
 				  genatom *this_atom)
 {
     int t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
@@ -938,7 +940,7 @@ static double *eval_compound_arg (GENERATE *genr,
 }
 
 static double *
-get_target_fracdiff_series (GENERATE *genr, genatom *atom,
+get_target_fracdiff_series (GENERATOR *genr, genatom *atom,
 			    double *param)
 {
     char vname[9];
@@ -985,7 +987,7 @@ get_target_fracdiff_series (GENERATE *genr, genatom *atom,
     return x;
 }
 
-static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
+static int add_tmp_series_to_genr (GENERATOR *genr, genatom *atom)
 {
     double param = 0.0;
     double *x = NULL;
@@ -1023,7 +1025,7 @@ static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
     return genr->err;
 }
 
-static double genr_get_child_status (GENERATE *genr, genatom *atom)
+static double genr_get_child_status (GENERATOR *genr, genatom *atom)
 {
     double val = NADBL;
     genatom *child = pop_child_atom(atom);
@@ -1056,7 +1058,7 @@ static double genr_get_child_status (GENERATE *genr, genatom *atom)
     return val;
 }
 
-static int add_statistic_to_genr (GENERATE *genr, genatom *atom)
+static int add_statistic_to_genr (GENERATOR *genr, genatom *atom)
 {
     double val;
 
@@ -1093,7 +1095,7 @@ static int add_statistic_to_genr (GENERATE *genr, genatom *atom)
     return genr->err;
 }
 
-static int evaluate_genr (GENERATE *genr)
+int evaluate_genr (GENERATOR *genr)
 {
     int t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
     int m = 0, tstart = t1;
@@ -1472,7 +1474,7 @@ static int string_arg_function (const char *s)
     return 0;
 }
 
-static int token_is_atomic (const char *s, GENERATE *genr)
+static int token_is_atomic (const char *s, GENERATOR *genr)
 {
     int count = 0;
 
@@ -1509,7 +1511,7 @@ static int token_is_atomic (const char *s, GENERATE *genr)
     return (count == 0);
 }
 
-static int token_is_function (char *s, GENERATE *genr, int level)
+static int token_is_function (char *s, GENERATOR *genr, int level)
 {
     int wlen = 0;
     int ret;
@@ -1564,7 +1566,7 @@ static int contains_no_operator (const char *s)
 
 #define TOKENIZE_LEVEL_MAX 256	
 
-static int stack_op_and_token (char *s, GENERATE *genr, int level)
+static int stack_op_and_token (char *s, GENERATOR *genr, int level)
 {
     char tok[TOKLEN];
     int wrapped = 0;
@@ -1657,7 +1659,7 @@ static int strip_wrapper_parens (char *s)
     return strip;
 }
 
-static int math_tokenize (char *s, GENERATE *genr, int level)
+static int math_tokenize (char *s, GENERATOR *genr, int level)
 {
     static char prev[TOKLEN];
     static int oldlevel;
@@ -2252,7 +2254,7 @@ int get_t_from_obs_string (char *s, const double **Z,
 }
 
 static void get_genr_formula (char *formula, const char *line,
-			      GENERATE *genr)
+			      GENERATOR *genr)
 {
     char vname[USER_VLEN], obs[OBSLEN];
     char first[9];
@@ -2316,7 +2318,7 @@ static int gentoler (const char *s)
 }
 
 static void 
-make_genr_varname (GENERATE *genr, const char *vname)
+make_genr_varname (GENERATOR *genr, const char *vname)
 {
     if (!strncmp(vname, "__", 2)) {
 	strcpy(genr->varname, vname + 2);
@@ -2360,7 +2362,7 @@ static void substitute_in_genrs (char *genrs, char *src)
 }
 
 static void 
-write_genr_label (GENERATE *genr, int oldv)
+write_genr_label (GENERATOR *genr, int oldv)
 {
     char tmp[64] = {0};
     int llen = 0;
@@ -2393,7 +2395,7 @@ write_genr_label (GENERATE *genr, int oldv)
     strcpy(VARLABEL(genr->pdinfo, genr->varnum), genr->label);    
 }
 
-static int genr_add_xvec (GENERATE *genr)
+static int genr_add_xvec (GENERATOR *genr)
 {
     int i, n = genr->pdinfo->n;
 
@@ -2420,7 +2422,7 @@ static int genr_add_xvec (GENERATE *genr)
 
 /* special uses of genr which are not of the form "lhs=rhs" */
 
-static int genr_handle_special (const char *s, GENERATE *genr, 
+static int genr_handle_special (const char *s, GENERATOR *genr, 
 				double ***pZ, DATAINFO *pdinfo)
 {
     int orig_v = pdinfo->v;
@@ -2470,14 +2472,14 @@ static int genr_handle_special (const char *s, GENERATE *genr,
     return err;
 }
 
-GENERATE *
+GENERATOR *
 genr_compile (const char *line, char *newvar, double ***pZ, DATAINFO *pdinfo, 
 	      gretlopt opt)
 {
 #if GENR_DEBUG
     genatom *atom;
 #endif
-    GENERATE *genr;
+    GENERATOR *genr;
     char s[MAXLINE];
 
     *gretl_errmsg = *s = '\0';
@@ -2602,7 +2604,7 @@ genr_compile (const char *line, char *newvar, double ***pZ, DATAINFO *pdinfo,
     }
 
 #if GENR_DEBUG
-    i = 0;
+    int i = 0;
     while ((atom = pop_atom(genr))) {
 	fprintf(stderr, "*** atom %d ***\n", i++);
 	print_atom(atom);
@@ -2616,7 +2618,7 @@ genr_compile (const char *line, char *newvar, double ***pZ, DATAINFO *pdinfo,
     return genr;
 }
 
-static int finalize_genr (GENERATE *genr, char *newvar, int oldv,
+static int finalize_genr (GENERATOR *genr, char *newvar, int oldv,
 			  double ***pZ, DATAINFO *pdinfo)
 {
     evaluate_genr(genr);
@@ -2658,7 +2660,7 @@ static int finalize_genr (GENERATE *genr, char *newvar, int oldv,
 
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 {
-    GENERATE *genr;
+    GENERATOR *genr;
     char newvar[USER_VLEN];
     int oldv = pdinfo->v;
     int err = 0;
@@ -2682,7 +2684,12 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     return err;
 }
 
-static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
+int genr_get_varnum (const GENERATOR *genr)
+{
+    return genr->varnum;
+}
+
+static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATOR *genr)
 {
     double xt = genr->xvec[pdinfo->t1];
     int t, v = genr->varnum;
@@ -3349,7 +3356,7 @@ static int get_fracdiff (const double *y, double *diffvec, double d,
     return 0;
 }
 
-static double *get_mp_series (const char *s, GENERATE *genr,
+static double *get_mp_series (const char *s, GENERATOR *genr,
 			      int fn, int *err)
 {
     double *x = malloc(genr->pdinfo->n * sizeof *x);
@@ -3396,7 +3403,7 @@ static double *get_random_series (DATAINFO *pdinfo, int fn)
    can be calculated.
 */
 
-static double evaluate_statistic (double *z, GENERATE *genr, int fn)
+static double evaluate_statistic (double *z, GENERATOR *genr, int fn)
 {
     double x = NADBL;
     double *tmp = NULL;
@@ -3490,7 +3497,7 @@ static double evaluate_critval (const char *s, const double **Z,
 }
 
 static double 
-evaluate_bivariate_statistic (const char *s, GENERATE *genr, 
+evaluate_bivariate_statistic (const char *s, GENERATOR *genr, 
 			      int fn)
 {
     double x = NADBL;
@@ -3544,7 +3551,7 @@ static int compare_vms (const void *a, const void *b)
     return (va->x > vb->x) - (va->x < vb->x);
 }
 
-static void free_genr_S (GENERATE *genr)
+static void free_genr_S (GENERATOR *genr)
 {
     if (genr->S != NULL) {
 	int i, n = genr->pdinfo->n;
@@ -3559,7 +3566,7 @@ static void free_genr_S (GENERATE *genr)
     }
 }
 
-static int allocate_genr_S (GENERATE *genr)
+static int allocate_genr_S (GENERATOR *genr)
 {
     int i, n = genr->pdinfo->n;
     int err = 0;
@@ -3592,7 +3599,7 @@ static int allocate_genr_S (GENERATE *genr)
 */
 
 static int 
-sort_series (const double *mvec, double *x, GENERATE *genr)
+sort_series (const double *mvec, double *x, GENERATOR *genr)
 {
     DATAINFO *pdinfo = genr->pdinfo;
     double *tmp = NULL;
@@ -3674,7 +3681,7 @@ sort_series (const double *mvec, double *x, GENERATE *genr)
    length argument. 
 */
 
-static double *get_tmp_series (double *mvec, GENERATE *genr, 
+static double *get_tmp_series (double *mvec, GENERATOR *genr, 
 			       int fn, double param)
 {
     DATAINFO *pdinfo = genr->pdinfo;
@@ -3824,7 +3831,7 @@ static int arma_model_stat_pos (const char *s, const MODEL *pmod)
 #define AR1_MODEL(c) (c == CORC || c == HILU || c == PWE)
 
 static double 
-get_model_data_element (const char *s, GENERATE *genr, int idx)
+get_model_data_element (const char *s, GENERATOR *genr, int idx)
 {
     MODEL *pmod = NULL;
     int type, lv, vi = 0;
@@ -4869,7 +4876,7 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     return ret;
 }
 
-static void genr_free (GENERATE *genr)
+static void genr_free (GENERATOR *genr)
 {
     int i;
 
@@ -5102,7 +5109,7 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
     return ret;
 }
 
-static void eval_msg (const GENERATE *genr)
+static void eval_msg (const GENERATOR *genr)
 {
     double x = genr->xvec[genr->pdinfo->t1];
 
@@ -5113,7 +5120,7 @@ static void eval_msg (const GENERATE *genr)
     }
 }
 
-static void compose_genr_msg (const GENERATE *genr, int oldv)
+static void compose_genr_msg (const GENERATOR *genr, int oldv)
 {
     double x;
     int scalar = genr_is_scalar(genr);
