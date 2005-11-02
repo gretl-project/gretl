@@ -177,10 +177,6 @@ static void real_stack_set_parentage (genatom **atoms, int n)
     }
 }
 
-/* below: ths static stuff is a big problem if genr is
-   called within aa genr. 
-*/
-
 static genatom *atom_stack (genatom *atom, atomset *aset, int op)
 {
     genatom *ret = NULL;
@@ -342,15 +338,13 @@ static double calc_stack (double val, int op, GENERATE *genr)
 	    valstack[0] = val;
 	    genr->nvals += 1;
 	}
-    }
-    else if (op == STACK_POP && genr->nvals > 0) {
+    } else if (op == STACK_POP && genr->nvals > 0) {
 	x = valstack[0];
 	for (i=0; i<VALSTACK_SIZE-1; i++) {
 	    valstack[i] = valstack[i+1];
 	}
 	genr->nvals -= 1;
-    }
-    else if (op == STACK_RESET) {
+    } else if (op == STACK_RESET) {
 	for (i=0; i<VALSTACK_SIZE; i++) {
 	    valstack[i] = 0.0;
 	}

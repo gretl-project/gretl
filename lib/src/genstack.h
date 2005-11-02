@@ -126,6 +126,8 @@ typedef struct _GENERATE GENERATE;
 
 struct _GENERATE {
     int err;
+    int done;
+    char orig_s[MAXLINE];
     unsigned char flags;
     double *xvec;
     int varnum;

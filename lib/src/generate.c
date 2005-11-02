@@ -43,7 +43,7 @@ enum {
 
 static double calc_xy (double x, double y, char op, int t, int *err);
 
-static void genrfree (GENERATE *genr);
+static void genr_free (GENERATE *genr);
 static double genr_cov_corr (const char *str, double ***pZ,
 			     const DATAINFO *pdinfo, int fn);
 static double genr_vcv (const char *str, const DATAINFO *pdinfo, 
@@ -233,25 +233,40 @@ static const char *get_func_word (int fnum);
 
 #define genr_single_obs(g) ((g)->obs >= 0)
 
-static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
+static GENERATE *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 {
+    GENERATE *genr;
+
+    genr = malloc(sizeof *genr);
+    if (genr == NULL) {
+	return NULL;
+    }
+
     genr->err = 0;
+    genr->done = 0;
+
     genr->flags = GENR_SAVE | GENR_SCALAR;
     genr->xvec = NULL;
     genr->varnum = 0;
     genr->obs = -1;
+
     *genr->varname = '\0';
     *genr->label = '\0';
+    *genr->orig_s = '\0';
+
     genr->tmpv = 0;
     genr->tmpZ = NULL;
-    genr->pdinfo = pdinfo;
-    genr->pZ = pZ;
+
     genr->aset = NULL;
     genr->S = NULL;
 
     if (opt & OPT_P) {
 	genr_set_private(genr);
     }
+
+    /* pointers to "outside world" */
+    genr->pdinfo = pdinfo;
+    genr->pZ = pZ;
 
     reset_calc_stack(genr);
 }
@@ -1077,8 +1092,6 @@ static int add_statistic_to_genr (GENERATE *genr, genatom *atom)
 
     return genr->err;
 }
-
-/* ...................................................... */
 
 static int evaluate_genr (GENERATE *genr)
 {
@@ -2347,7 +2360,7 @@ static void substitute_in_genrs (char *genrs, char *src)
 }
 
 static void 
-write_genr_label (GENERATE *genr, char *genrs, int oldv)
+write_genr_label (GENERATE *genr, int oldv)
 {
     char tmp[64] = {0};
     int llen = 0;
@@ -2367,19 +2380,268 @@ write_genr_label (GENERATE *genr, char *genrs, int oldv)
 
     if (*tmp != '\0') {
 	*genr->label = '\0';
-	substitute_in_genrs(genrs, tmp);
+	substitute_in_genrs(genr->orig_s, tmp);
     }
 
-    if (strlen(genrs) > MAXLABEL - 1 - llen) {
-	strncat(genr->label, genrs, MAXLABEL - 4 - llen);
+    if (strlen(genr->orig_s) > MAXLABEL - 1 - llen) {
+	strncat(genr->label, genr->orig_s, MAXLABEL - 4 - llen);
 	strcat(genr->label, "...");
     } else {
-	strncat(genr->label, genrs, MAXLABEL - 1);
+	strncat(genr->label, genr->orig_s, MAXLABEL - 1);
     }
 
     strcpy(VARLABEL(genr->pdinfo, genr->varnum), genr->label);    
 }
 
+static int genr_add_xvec (GENERATE *genr)
+{
+    int i, n = genr->pdinfo->n;
+
+    genr->xvec = malloc(n * sizeof *genr->xvec);
+
+    if (genr->xvec == NULL) {
+	genr->err = E_ALLOC;
+    } else {
+	for (i=0; i<n; i++) {
+	    genr->xvec[i] = 0.0;
+	}
+    }
+
+    return genr->err;
+}
+
+#define genr_special_func(s) (strcmp(s, "dummy") == 0 || \
+                              strcmp(s, "paneldum") == 0 || \
+                              strcmp(s, "unitdum") == 0 || \
+                              strcmp(s, "time") == 0 || \
+                              strcmp(s, "index") == 0 || \
+                              strcmp(s, "unit") == 0 || \
+                              strncmp(s, "toler=", 6) == 0)
+
+/* special uses of genr which are not of the form "lhs=rhs" */
+
+static int genr_handle_special (const char *s, GENERATE *genr, 
+				double ***pZ, DATAINFO *pdinfo)
+{
+    int orig_v = pdinfo->v;
+    int do_message = 0;
+    int err = 0;
+
+    if (!strcmp(s, "dummy")) {
+	int di0 = dummy(pZ, pdinfo, 0);
+
+	if (di0 == 0) {
+	    err = 1;
+	} else if (di0 == orig_v) {
+	    strcpy(gretl_msg, _("Periodic dummy variables generated.\n"));
+	} else {
+	    strcpy(gretl_msg, _("Periodic dummy variables already present.\n"));
+	}
+    } else if (!strcmp(s, "paneldum")) {
+	err = paneldum(pZ, pdinfo);
+	if (!err) {
+	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
+	}
+    } else if (strcmp(s, "unitdum") == 0) {
+	err = panel_unit_dummies(pZ, pdinfo);
+	if (!err) {
+	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
+	}
+    } else if (!strncmp(s, "toler=", 6)) {
+	err = gentoler(s + 6);
+    } else if (!strcmp(s, "time")) {
+	err = genrtime(pZ, pdinfo, 1);
+	do_message = 1;
+    } else if (!strcmp(s, "index")) {
+	err = genrtime(pZ, pdinfo, 0);
+	do_message = 1;
+    } else if (!strcmp(s, "unit")) {
+	err = genrunit(pZ, pdinfo);
+	do_message = 1;
+    } 
+
+    if (!err && do_message) {
+	strcpy(genr->varname, s);
+	genr->varnum = varindex(pdinfo, s);
+	genr_unset_scalar(genr);
+	compose_genr_msg(genr, orig_v);
+    }	    
+
+    return err;
+}
+
+GENERATE *
+genr_compile (const char *line, char *newvar, double ***pZ, DATAINFO *pdinfo, 
+	      gretlopt opt)
+{
+#if GENR_DEBUG
+    genatom *atom;
+#endif
+    GENERATE *genr;
+    char s[MAXLINE];
+
+    *gretl_errmsg = *s = '\0';
+    *gretl_msg = '\0';
+
+    genr = genr_new(pZ, pdinfo, opt);
+    if (genr == NULL) {
+	return NULL;
+    }
+
+    /* grab the expression, skipping the command word 
+       and compressing spaces */
+    get_genr_formula(s, line, genr);
+
+    if (*s == '\0') {
+	genr->err = E_EQN;
+	return genr;
+    }
+
+    /* record the full genr expression */
+    strcpy(genr->orig_s, s);
+
+    DPRINTF(("\n*** starting genr, s='%s'\n", s));
+
+#ifdef ENABLE_NLS
+    if (',' == get_local_decpoint())
+	fix_decimal_commas(s);
+#endif
+    
+    /* special cases which are not of the form "lhs=rhs" */
+    if (genr_special_func(s)) {
+	genr->err = genr_handle_special(s, genr, pZ, pdinfo);
+	genr->done = 1;
+	return genr;
+    }
+
+    /* split into lhs = rhs */
+    genr->err = split_genr_formula(newvar, s, genr->obs);
+    if (genr->err) {
+	return genr;
+    }
+    
+    DPRINTF(("after split, newvar='%s', s='%s'\n", newvar, s));
+
+    if (*newvar != '\0') {
+	if (strncmp(newvar, "$nl", 3) && 
+	    strncmp(newvar, "__", 2) && 
+	    check_varname(newvar)) {
+	    genr->err = E_SYNTAX;
+	}
+	genr->varnum = varindex(pdinfo, newvar);
+    } else {
+	/* no "lhs=" bit */
+	if (!(genr_doing_save(genr))) {
+	    strcpy(newvar, "$eval");
+	} else {
+	    genr->err = E_SYNTAX;
+	}
+    }
+
+    if (genr->err) {
+	return genr;
+    }    
+
+    /* process any daily dates in brackets */
+    genr->err = fix_obs_in_brackets(s);
+
+    /* special case of generating a single observation */
+    if (!genr->err && genr->obs >= 0) {
+	if (genr->varnum >= pdinfo->v) {
+	    genr->err = E_UNKVAR;
+	} else if (!pdinfo->vector[genr->varnum]) {
+	    genr->err = E_DATA;
+	}
+    }
+
+    if (genr->err) {
+	return genr;
+    }
+
+    /* special case of stacking a group of series */
+    if (!strncmp(s, "stack(", 6)) {
+	genr->err = dataset_stack_variables(pZ, pdinfo, newvar, s);
+	genr->done = 1;
+	return genr;
+    }
+
+    /* special case of generating observation labels */
+    if (!strcmp(newvar, "markers")) {
+	genr->err = generate_obs_markers(pZ, pdinfo, s);
+	genr->done = 1;
+	return genr;
+    }
+
+    /* pre-process special operators */
+    if ((genr->err = catch_special_operators(s))) {
+	return genr;
+    }
+
+    DPRINTF(("after catch_special_operators: s='%s'\n", s));
+
+    /* basic memory allocation */
+    if ((genr->err = genr_add_xvec(genr))) {
+	return genr;
+    }
+
+    /* impose operator hierarchy */
+    if (parenthesize(s)) {
+	fprintf(stderr, "genr: parenthesize failed\n");
+	genr->err = E_ALLOC;
+	return genr;
+    }
+
+    DPRINTF(("after parenthesize: s='%s'\n", s));
+
+    if (!genr->err) {
+	genr->err = attach_atomset(genr);
+    }
+
+    if (!genr->err) {
+	genr->err = math_tokenize(s, genr, 0);
+    }
+
+#if GENR_DEBUG
+    i = 0;
+    while ((atom = pop_atom(genr))) {
+	fprintf(stderr, "*** atom %d ***\n", i++);
+	print_atom(atom);
+    }
+#endif
+
+#if GENR_DEBUG
+    fprintf(stderr, "\ngenerate: err = %d\n\n", genr->err);
+#endif
+
+    return genr;
+}
+
+static int finalize_genr (GENERATE *genr, char *newvar, int oldv,
+			  double ***pZ, DATAINFO *pdinfo)
+{
+    evaluate_genr(genr);
+
+    destroy_atom_stack(genr);
+    reset_calc_stack(genr);
+
+    if (!genr->err) {
+	if (!genr_doing_save(genr)) {
+	    eval_msg(genr);
+	} else {
+	    make_genr_varname(genr, newvar);
+	    genr->err = genr_write_var(pZ, pdinfo, genr);
+	    if (!genr->err && !genr_is_private(genr)) {
+		if (!genr_single_obs(genr)) {
+		    write_genr_label(genr, oldv);
+		}
+		compose_genr_msg(genr, oldv);
+	    }
+	} 
+    }
+
+    return genr->err;
+}
+    
 /**
  * generate:
  * @line: command line (formula for generating variable).
@@ -2396,211 +2658,28 @@ write_genr_label (GENERATE *genr, char *genrs, int oldv)
 
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 {
-    int i;
-    char s[MAXLINE], genrs[MAXLINE];
+    GENERATE *genr;
     char newvar[USER_VLEN];
     int oldv = pdinfo->v;
-    GENERATE genr;
-#if GENR_DEBUG
-    genatom *atom;
-#endif
+    int err = 0;
 
-    *gretl_errmsg = *s = *genrs = '\0';
-    *gretl_msg = '\0';
-
-    genr_init(&genr, pZ, pdinfo, opt);
-
-    /* grab the expression, skipping the command word 
-       and compressing spaces */
-    get_genr_formula(s, line, &genr);
-
-    if (*s == '\0') {
-	return E_EQN;
-    }
-
-    /* record the full genr expression */
-    strcpy(genrs, s);
-
-    DPRINTF(("\n*** starting genr, s='%s'\n", s));
-
-#ifdef ENABLE_NLS
-    if (',' == get_local_decpoint())
-	fix_decimal_commas(s);
-#endif
-
-    /* special cases which are not of the form "lhs=rhs" */
-    if (strcmp(s, "dummy") == 0) {
-	int di0, orig_v = pdinfo->v;
-
-	di0 = dummy(pZ, pdinfo, 0);
-	if (di0 == 0) {
-	    genr.err = 1;
-	} else if (di0 == orig_v) {
-	    strcpy(gretl_msg, _("Periodic dummy variables generated.\n"));
-	} else {
-	    strcpy(gretl_msg, _("Periodic dummy variables already present.\n"));
-	}
-	return genr.err;
-    } else if (strcmp(s, "paneldum") == 0) {
-	genr.err = paneldum(pZ, pdinfo);
-	if (!genr.err) {
-	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
-	}
-	return genr.err;
-    } else if (strcmp(s, "unitdum") == 0) {
-	genr.err = panel_unit_dummies(pZ, pdinfo);
-	if (!genr.err) {
-	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
-	}
-	return genr.err;
-    } else if (!strcmp(s, "time") || !strcmp(s, "index")) {
-	int tm = !strcmp(s, "time");
-
-	genr.err = genrtime(pZ, pdinfo, tm);
-	if (!genr.err) {
-	    strcpy(genr.varname, s);
-	    genr.varnum = varindex(pdinfo, s);
-	    genr_unset_scalar(&genr);
-	    compose_genr_msg(&genr, oldv);
-	}
-	return genr.err;
-    } else if (!strcmp(s, "unit")) {
-	genr.err = genrunit(pZ, pdinfo);
-	if (!genr.err) {
-	    strcpy(genr.varname, s);
-	    genr.varnum = varindex(pdinfo, s);
-	    genr_unset_scalar(&genr);
-	    compose_genr_msg(&genr, oldv);
-	}
-	return genr.err;	
-    } else if (strncmp(s, "toler=", 6) == 0) {
-	genr.err = gentoler(s + 6);
-	return genr.err;
-    }
-
-    /* split into lhs = rhs */
-    if ((genr.err = split_genr_formula(newvar, s, genr.obs))) {
-	return genr.err;
-    }
+    genr = genr_compile(line, newvar, pZ, pdinfo, opt);
     
-    DPRINTF(("after split, newvar='%s', s='%s'\n", newvar, s));
-
-    if (*newvar != '\0') {
-	if (strncmp(newvar, "$nl", 3) && 
-	    strncmp(newvar, "__", 2) && 
-	    check_varname(newvar)) {
-	    genr.err = E_SYNTAX;
-	    goto genr_return;
-	}
-	genr.varnum = varindex(pdinfo, newvar);
+    if (genr == NULL) {
+	err = E_ALLOC;
     } else {
-	/* no "lhs=" bit */
-	if (!(genr_doing_save(&genr))) {
-	    strcpy(newvar, "$eval");
-	} else {
-	    genr.err = E_SYNTAX;
-	    goto genr_return;
-	}
+	err = genr->err;
     }
 
-    /* process any daily dates in brackets */
-    if ((genr.err = fix_obs_in_brackets(s))) {
-	return genr.err;
+    if (!err && !genr->done) {
+	err = finalize_genr(genr, newvar, oldv, pZ, pdinfo);
     }
 
-    /* special case of generating a single observation */
-    if (genr.obs >= 0) {
-	if (genr.varnum >= pdinfo->v) {
-	    return E_UNKVAR;
-	}
-	if (!pdinfo->vector[genr.varnum]) {
-	    return E_DATA;
-	}
+    if (genr != NULL) {
+	genr_free(genr);
     }
 
-    /* special case of stacking a group of series */
-    if (!strncmp(s, "stack(", 6)) {
-	genr.err = dataset_stack_variables(pZ, pdinfo, newvar, s);
-	return genr.err;
-    }
-
-    /* special case of generating observation labels */
-    if (!strcmp(newvar, "markers")) {
-	genr.err = generate_obs_markers(pZ, pdinfo, s);
-	return genr.err;
-    }
-
-    /* pre-process special operators */
-    if ((genr.err = catch_special_operators(s))) {
-	return genr.err;
-    }
-
-    DPRINTF(("after catch_special_operators: s='%s'\n", s));
-
-    /* basic memory allocation */
-    if ((genr.xvec = malloc(pdinfo->n * sizeof *genr.xvec)) == NULL) {
-	genr.err = E_ALLOC;
-	goto genr_return;
-    }
-
-    for (i=0; i<pdinfo->n; i++) {
-	genr.xvec[i] = 0.0;
-    }
-
-    /* impose operator hierarchy */
-    if (parenthesize(s)) { 
-	fprintf(stderr, "genr: parenthesize failed\n");
-	genr.err = E_ALLOC;
-	goto genr_return;
-    }
-
-    DPRINTF(("after parenthesize: s='%s'\n", s));
-
-    genr.err = attach_atomset(&genr);
-
-    if (!genr.err) {
-	genr.err = math_tokenize(s, &genr, 0);
-    }
-
-#if GENR_DEBUG
-    i = 0;
-    while ((atom = pop_atom(&genr))) {
-	fprintf(stderr, "*** atom %d ***\n", i++);
-	print_atom(atom);
-    }
-#endif
-
-    if (!genr.err) {
-	evaluate_genr(&genr);
-    }
-
-    destroy_atom_stack(&genr);
-    reset_calc_stack(&genr);
-
- genr_return:
-
-    if (!genr.err) {
-	if (!genr_doing_save(&genr)) {
-	    eval_msg(&genr);
-	} else {
-	    make_genr_varname(&genr, newvar);
-	    genr.err = genr_write_var(pZ, pdinfo, &genr);
-	    if (!genr.err && !genr_is_private(&genr)) {
-		if (!genr_single_obs(&genr)) {
-		    write_genr_label(&genr, genrs, oldv);
-		}
-		compose_genr_msg(&genr, oldv);
-	    }
-	} 
-    }
-
-    genrfree(&genr);
-
-#if GENR_DEBUG
-    fprintf(stderr, "\ngenerate: err = %d\n\n", genr.err);
-#endif
-
-    return genr.err;
+    return err;
 }
 
 static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
@@ -4790,7 +4869,7 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     return ret;
 }
 
-static void genrfree (GENERATE *genr)
+static void genr_free (GENERATE *genr)
 {
     int i;
 
@@ -4798,14 +4877,18 @@ static void genrfree (GENERATE *genr)
 
     DPRINTF(("genrfree: freeing %d vars\n", genr->tmpv));
 
-    if (genr->tmpv > 0) {
+    if (genr->tmpv > 0 && genr->tmpZ != NULL) {
 	for (i=0; i<genr->tmpv; i++) {
 	    free(genr->tmpZ[i]);
 	}
 	free(genr->tmpZ);
     }
 
-    free(genr->xvec);
+    if (genr->xvec != NULL) {
+	free(genr->xvec);
+    }
+
+    free(genr);
 }
 
 static int genr_mpow (const char *str, double *xvec, double **Z, 

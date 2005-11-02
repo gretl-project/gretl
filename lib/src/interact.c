@@ -3004,6 +3004,8 @@ int simple_commands (CMD *cmd, const char *line,
     return err;
 }
 
+#define CDEBUG 0
+
 /**
  * get_command_index:
  * @line: command line.
@@ -3023,6 +3025,11 @@ int get_command_index (const char *line, CMD *cmd)
 	line++;
     }
 
+#if CDEBUG
+    fprintf(stderr, "get_command_index: line='%s', initial ci = %d\n",
+	    line, cmd->ci);
+#endif
+
     if (*line == '#' || *line == '(') {
 	cmd->nolist = 1;
 	cmd->ci = CMD_COMMENT;
@@ -3035,6 +3042,10 @@ int get_command_index (const char *line, CMD *cmd)
 	return 0;
     }
 
+#if CDEBUG
+    fprintf(stderr, " got command word = '%s'\n", cmd->word);
+#endif
+
     /* subsetted commands (e.g. "deriv" in relation to "nls") */
     if (!strcmp(cmd->word, "end")) {
 	context = 0;
@@ -3044,9 +3055,16 @@ int get_command_index (const char *line, CMD *cmd)
 	   a command in its own right */
 	cmd->ci = context;
     } else if (catch_command_alias(cmd)) {
+#if CDEBUG
+	fprintf(stderr, " caught command alias, ci = %d\n", cmd->ci);
+#endif
 	; /* cmd->ci is set OK */
-    } else if ((cmd->ci = gretl_command_number(cmd->word)) == 0) {
-	if (!plausible_genr_start(line, cmd)) {
+    } else {
+	cmd->ci = gretl_command_number(cmd->word);
+#if CDEBUG
+	fprintf(stderr, " gretl_command_number(%s) gave %d\n", cmd->word, cmd->ci);
+#endif
+	if (cmd->ci == 0 && !plausible_genr_start(line, cmd)) {
 	    cmd->errcode = 1;
 	    sprintf(gretl_errmsg, _("command '%s' not recognized"), 
 		    cmd->word);
