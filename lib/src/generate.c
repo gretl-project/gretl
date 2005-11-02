@@ -2617,11 +2617,21 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     return genr;
 }
 
+void destroy_genr (GENERATOR *genr)
+{
+    if (genr != NULL) {
+	destroy_atom_stack(genr);
+	reset_calc_stack(genr);
+	genr_free(genr);
+    }
+}
+
 static int finalize_genr (GENERATOR *genr, int oldv,
 			  double ***pZ, DATAINFO *pdinfo)
 {
     evaluate_genr(genr);
 
+    /* FIXME? */
     destroy_atom_stack(genr);
     reset_calc_stack(genr);
 
@@ -2685,6 +2695,15 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 int genr_get_varnum (const GENERATOR *genr)
 {
     return genr->varnum;
+}
+
+int genr_get_err (const GENERATOR *genr)
+{
+    if (genr == NULL) {
+	return E_ALLOC;
+    } else {
+	return genr->err;
+    }
 }
 
 static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATOR *genr)

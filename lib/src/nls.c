@@ -52,6 +52,7 @@ struct _nls_spec {
 			   expressed in terms of the residuals */
     int nparam;         /* number of parameters to be estimated */
     int naux;           /* number of auxiliary commands */
+    int ngenrs;         /* number of variable-generating formulae */
     int iters;          /* number of iterations performed */
     int fncount;        /* number of function evaluations (ML) */
     int grcount;        /* number of gradient evaluations (ML) */
@@ -65,6 +66,7 @@ struct _nls_spec {
 			   (see the _nls_param struct above) */
     doublereal *coeff;  /* coefficient estimates */
     char **aux;         /* auxiliary commands */
+    GENERATOR **genrs;  /* variable-generation pointers */
 };
 
 /* file-scope global variables: we need to access these variables in
@@ -87,66 +89,106 @@ static void update_nls_param_values (const double *x);
 static int BFGS_min (int n, double *b, int maxit, double reltol,
 		     int *fncount, int *grcount);
 
-#if 0 /* not ready !! */
+#if 0 /* not ready */
 
-static int add_generator_for_formula (const char *s)
+static void destroy_genrs_array (GENERATOR **genrs, int n)
 {
-    GENERATOR *genrs;
-    int err = 0;
+    int i;
 
-    genr = genr_compile(s, nZ, ndinfo, OPT_P);
-
-    if (genr == NULL) {
-	err = E_ALLOC;
-    } else {
-	err = genr->err;
+    for (i=0; i<n; i++) {
+	destroy_genr(genrs[i]);
     }
 
-    /* attach genr to pspec here */
-
-    return err;
+    free(genrs);
 }
 
-static int new_nls_auto_genr (int i)
+static int nls_genr_setup (void)
 {
     GENERATOR **genrs;
     char formula[MAXLINE];
+    int i, j, n_gen, nparam;
+    int err = 0;
+
+    pspec->ngenrs = 0;
+
+    nparam = (pspec->mode == ANALYTIC_DERIVS)? pspec->nparam : 0;
+
+    n_gen = 1 + pspec->naux + nparam;
+
+    genrs = malloc(n_gen * sizeof *genrs);
+    if (genrs == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<n_gen; i++) {
+	genrs[i] = NULL;
+    }
+
+    j = 0;
+
+    for (i=0; i<n_gen && !err; i++) {
+	if (i < pspec->naux) {
+	    /* auxiliary variables */
+	    *formula = '\0';
+	    genrs[i] = genr_compile(pspec->aux[i], nZ, ndinfo, OPT_P);
+	} else if (i == pspec->naux) {
+	    /* residual/likelihood function */
+	    sprintf(formula, "$nl_y = %s", pspec->nlfunc); 
+	} else {
+	    /* derivatives/gradients */
+	    sprintf(formula, "$nl_x%d = %s", i, pspec->params[j++].deriv);
+	}
+	
+	if (*formula != '\0') {
+	    genrs[i] = genr_compile(formula, nZ, ndinfo, OPT_P);
+	}
+
+	err = genr_get_err(genrs[i]);
+    }
+
+    if (err) {
+	destroy_genrs_array(genrs, n_gen);
+    } else {
+	pspec->ngenrs = n_gen;
+	pspec->genrs = genrs;
+    }
+    
+    return err;
+}
+
+static int nls_auto_genr (int i)
+{
     int j;
+
+    if (pspec->genrs == NULL) {
+	genr_err = nls_genr_setup();
+	if (genr_err) {
+	    fprintf(stderr, "nls_genr_setup failed\n");
+	    return genr_err;
+	}
+    }
 
     for (j=0; j<pspec->naux; j++) {
 #if NLS_DEBUG
 	fprintf(stderr, "nls_auto_genr: generating aux var:\n %s\n", pspec->aux[j]);
 #endif
-	genr_err = generate(pspec->aux[j], nZ, ndinfo, OPT_P);
+	genr_err = evaluate_genr(pspec->genrs[j]);
     }
 
-    /* FIXME do add_generator() only on first call */
-
-    if (i == 0) {
-	/* note: $nl_y is the residual */
-	sprintf(formula, "$nl_y = %s", pspec->nlfunc);
-	add_generator_for_formula(formula);
-    } else {
-	/* derivatives: artificial independent variables */
-	sprintf(formula, "$nl_x%d = %s", i, pspec->params[i-1].deriv);
-	add_generator_for_formula(formula);
-    }
-
-    /* using "global" nZ and ndinfo pointers here */
-    genr_err = generate(formula, nZ, ndinfo, OPT_P);
+    genr_err = evaluate_genr(pspec->genrs[pspec->naux + i]);
 
 #if NLS_DEBUG
     if (genr_err) {
 	errmsg(genr_err, nprn);
     } else {
-	fprintf(stderr, "nls_auto_genr: i=%d, formula='%s'\n", i, formula);
+	fprintf(stderr, "nls_auto_genr: i=%d\n", i);
     }
 #endif
 
     return genr_err;    
 }
 
-#endif
+#else
 
 /* Use the genr() function to create/update the values of the residual
    from the regression function (if i = 0), or the derivatives of the
@@ -188,6 +230,8 @@ static int nls_auto_genr (int i)
 
     return genr_err;
 }
+
+#endif
 
 /* wrappers for the above to enhance comprehensibility below */
 
@@ -1203,7 +1247,15 @@ static void clear_nls_spec (nls_spec *spec)
 	}
 	free(spec->aux);
 	spec->aux = NULL;
-    }	
+    }
+
+    if (spec->genrs != NULL) {
+	for (i=0; i<spec->ngenrs; i++) {
+	    destroy_genr(spec->genrs[i]);
+	}
+	free(spec->genrs);
+	spec->genrs = NULL;
+    }    
 
     free(spec->nlfunc);
     spec->nlfunc = NULL;
@@ -1217,6 +1269,7 @@ static void clear_nls_spec (nls_spec *spec)
 
     spec->nparam = 0;
     spec->naux = 0;
+    spec->ngenrs = 0;
 
     spec->depvar = 0;
     spec->uhatnum = 0;
@@ -2119,6 +2172,9 @@ nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo)
 
     spec->aux = NULL;
     spec->naux = 0;
+    
+    spec->genrs = NULL;
+    spec->ngenrs = 0;
     
     spec->coeff = NULL;
 

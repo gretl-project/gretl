@@ -3068,7 +3068,7 @@ int get_command_index (const char *line, CMD *cmd)
 #if CDEBUG
 	fprintf(stderr, " caught command alias, ci = %d\n", cmd->ci);
 #endif
-	done = 1; /* cmd->ci should now be set OK */
+	done = 1;
     } 
 
     if (!done) {

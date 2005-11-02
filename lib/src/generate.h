@@ -29,7 +29,11 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt);
 
 int evaluate_genr (GENERATOR *genr);
 
+void destroy_genr (GENERATOR *genr);
+
 int genr_get_varnum (const GENERATOR *genr);
+
+int genr_get_err (const GENERATOR *genr);
 
 int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
 
