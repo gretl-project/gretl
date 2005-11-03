@@ -38,6 +38,7 @@ struct genatom_ {
     char level;
     char scalar;
     int varnum;
+    int varobs;
     int tmpvar;
     char lag;
     double val;

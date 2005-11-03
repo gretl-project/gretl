@@ -26,6 +26,7 @@
 #include "../../minpack/minpack.h"  
 
 #define NLS_DEBUG 0
+#define NEW_GENR 1
 
 enum {
     NUMERIC_DERIVS,
@@ -89,8 +90,6 @@ static void update_nls_param_values (const double *x);
 static int BFGS_min (int n, double *b, int maxit, double reltol,
 		     int *fncount, int *grcount);
 
-#if 0 /* not ready !! */
-
 static void destroy_genrs_array (GENERATOR **genrs, int n)
 {
     int i;
@@ -101,6 +100,12 @@ static void destroy_genrs_array (GENERATOR **genrs, int n)
 
     free(genrs);
 }
+
+#if NEW_GENR
+
+/* new-style: "compile" the required equations first, so we can
+   subsequently execute the compiled versions for greater
+   efficiency */
 
 static int nls_genr_setup (void)
 {
@@ -115,8 +120,10 @@ static int nls_genr_setup (void)
 
     n_gen = 1 + pspec->naux + nparam;
 
+#if NLS_DEBUG
     fprintf(stderr, "nls_genr_setup: current v = %d, n_gen = %d\n", 
 	    ndinfo->v, n_gen);
+#endif
 
     genrs = malloc(n_gen * sizeof *genrs);
     if (genrs == NULL) {
@@ -143,11 +150,27 @@ static int nls_genr_setup (void)
 	
 	genrs[i] = genr_compile(formula, nZ, ndinfo, OPT_P);
 	err = genr_get_err(genrs[i]);
+#if NLS_DEBUG
+	fprintf(stderr, "genrs[%d] = %p, err = %d\n", i, (void *) genrs[i], err);
+#endif
+
+	if (!err) {
+	    err = execute_genr(genrs[i], ndinfo->v);
+	}
 
 	if (!err) {
 	    v = genr_get_varnum(genrs[i]);
-	    fprintf(stderr, "genrs[%d], varnum = %d\n", i, v);
+	    if (i == pspec->naux) {
+		pspec->uhatnum = v;
+	    } else if (j > 0) {
+		pspec->params[j-1].dernum = v;
+	    }
+#if NLS_DEBUG
+	    fprintf(stderr, " genr->varnum = %d\n", v);
 	    fprintf(stderr, " formula '%s'\n", formula);
+#endif
+	} else {
+	    fprintf(stderr, "execute_genr: formula '%s', error = %d\n", formula, err);
 	}
     }
 
@@ -158,8 +181,6 @@ static int nls_genr_setup (void)
 	pspec->genrs = genrs;
     }
 
-    fprintf(stderr, "nls_genr_setup: err at return = %d\n", err);
-    
     return err;
 }
 
@@ -171,25 +192,31 @@ static int nls_auto_genr (int i)
 	genr_err = nls_genr_setup();
 	if (genr_err) {
 	    fprintf(stderr, "nls_genr_setup failed\n");
-	    return genr_err;
 	}
+	return genr_err;
     }
 
     for (j=0; j<pspec->naux; j++) {
 #if NLS_DEBUG
 	fprintf(stderr, "nls_auto_genr: generating aux var:\n %s\n", pspec->aux[j]);
 #endif
-	genr_err = evaluate_genr(pspec->genrs[j], nZ);
+	genr_err = execute_genr(pspec->genrs[j], ndinfo->v);
     }
 
-    genr_err = evaluate_genr(pspec->genrs[pspec->naux + i], nZ);
+    j = pspec->naux + i;
+#if NLS_DEBUG
+    fprintf(stderr, "nls_auto_genr: executing genr[%d] at %p, with oldv = %d\n",
+	    j, (void *) pspec->genrs[j], ndinfo->v);
+#endif
+    genr_err = execute_genr(pspec->genrs[j], ndinfo->v);
+
 
 #if NLS_DEBUG
     if (genr_err) {
+	fprintf(stderr, " varnum = %d, err = %d\n", genr_get_varnum(pspec->genrs[j]), 
+		genr_err);
 	errmsg(genr_err, nprn);
-    } else {
-	fprintf(stderr, "nls_auto_genr: i=%d\n", i);
-    }
+    } 
 #endif
 
     return genr_err;    
@@ -197,12 +224,7 @@ static int nls_auto_genr (int i)
 
 #else
 
-/* Use the genr() function to create/update the values of the residual
-   from the regression function (if i = 0), or the derivatives of the
-   regression function with respect to the parameters.  The formulae
-   for generating these values are stored in string form in the nlspec
-   struct.
-*/
+/* old-style: run genr from scratch every time */
 
 static int nls_auto_genr (int i)
 {
@@ -227,6 +249,12 @@ static int nls_auto_genr (int i)
     /* using "global" nZ and ndinfo pointers here */
     genr_err = generate(formula, nZ, ndinfo, OPT_P);
 
+    if (i == 0 && pspec->uhatnum == 0) {
+	pspec->uhatnum = ndinfo->v - 1;
+    } else if (i > 0 && pspec->params[i-1].dernum == 0) {
+	pspec->params[i-1].dernum = ndinfo->v - 1;
+    }
+
 #if NLS_DEBUG
     if (genr_err) {
 	errmsg(genr_err, nprn);
@@ -238,7 +266,7 @@ static int nls_auto_genr (int i)
     return genr_err;
 }
 
-#endif
+#endif /* NEW_GENR */
 
 /* wrappers for the above to enhance comprehensibility below */
 
@@ -484,8 +512,7 @@ nls_spec_add_param_list (nls_spec *spec, const char *s,
    the nls residual variable.
 */
 
-static int 
-nls_missval_check (nls_spec *spec)
+static int nls_missval_check (nls_spec *spec)
 {
     int t, v, miss = 0;
     int t1 = spec->t1, t2 = spec->t2;
@@ -497,8 +524,13 @@ nls_missval_check (nls_spec *spec)
 	return err;
     }
 	
-    /* ID number of last variable generated, above */
-    v = ndinfo->v - 1;
+    /* ID number of LHS variable */
+    v = pspec->uhatnum;
+
+#if NLS_DEBUG
+    fprintf(stderr, "nls_missval_check: checking var %d (%s)\n",
+	    v, ndinfo->varname[v]);
+#endif
 
     for (t=spec->t1; t<=spec->t2; t++) {
 	if (na((*nZ)[v][t])) {
@@ -536,52 +568,19 @@ nls_missval_check (nls_spec *spec)
     spec->t2 = t2;
     spec->nobs = t2 - t1 + 1;
 
+#if NLS_DEBUG
+    fprintf(stderr, " spec->t1 = %d, spec->t2 = %d, spec->nobs = %d\n\n",
+	    spec->t1, spec->t2, spec->nobs);
+#endif
+
     return 0;
-}
-
-static int spec_get_fvec_id (void)
-{
-    int v = -1;
-
-    if (pspec->uhatnum == 0) {
-	/* look up ID number of the "fvec" variable if we don't know
-	   it already */
-	v = varindex(ndinfo, "$nl_y");
-	if (v < ndinfo->v) {
-	    pspec->uhatnum = v;
-	}
-    } else {
-	v = pspec->uhatnum;
-    }
-
-    return v;
-}
-
-static int spec_get_deriv_id (int i)
-{
-    int v = -1;
-
-    if (pspec->params[i].dernum == 0) {
-	char varname[VNAMELEN];
-
-	/* look up ID number of the derivative if not known */
-	sprintf(varname, "$nl_x%d", i + 1);
-	v = varindex(ndinfo, varname);
-	if (v < ndinfo->v) {
-	    pspec->params[i].dernum = v;
-	}
-    } else {
-	v = pspec->params[i].dernum;
-    }
-
-    return v;
 }
 
 /* this function is used in the context of BFGS */
 
 static double get_mle_ll (const double *b)
 {
-    int t, v;
+    int t, v = pspec->uhatnum;
 
     update_nls_param_values(b);
 
@@ -591,11 +590,6 @@ static double get_mle_ll (const double *b)
 	fprintf(stderr, "get_mle_ll: returning NA\n");
 #endif
 	return NADBL;
-    }
-
-    v = spec_get_fvec_id();
-    if (v < 0) {
-	return 1;
     }
 
     pspec->ll = 0.0;
@@ -649,10 +643,7 @@ static int get_mle_gradient (double *b, double *g)
 	    return 1;
 	}
 
-	v = spec_get_deriv_id(i);
-	if (v < 0) {
-	    return 1;
-	}
+	v = pspec->params[i].dernum;
 
 	g[i] = 0.0;
 
@@ -669,6 +660,9 @@ static int get_mle_gradient (double *b, double *g)
 	} else {
 	    g[i] -= (*nZ)[v][0];
 	}
+#if NLS_DEBUG > 1
+	fprintf(stderr, "g[%d] = %g, based on nZ[%d]\n", i, g[i], v);
+#endif
     }
 
     return err;
@@ -676,36 +670,44 @@ static int get_mle_gradient (double *b, double *g)
 
 /* used in the context of BFGS */
 
-static void print_mle_iter_stats (double ll, const double *b, const double *g)
+static void print_mle_iter_stats (double ll, const double *b, const double *g, 
+				  int iter, double sl)
 {
     int i;
 
-    pprintf(nprn, "log likelihood = %.8g\n", ll);	
-    pprintf(nprn, "Parameters: ");
+    pprintf(nprn, "Iteration %d; log likelihood = %.8g", iter, ll);	
+    if (iter > 1) {
+	pprintf(nprn, " (steplength = %.8g)", sl);
+    }	
+    pputc(nprn, '\n');
+	
+    pputs(nprn, "Parameters: ");
     for (i=0; i<pspec->nparam; i++) {
 	pprintf(nprn, "%#12.5g", b[i]);
     }
     pputc(nprn, '\n');
-    pprintf(nprn, "Gradients:    ");
+
+    pputs(nprn, "Gradients:  ");
     for (i=0; i<pspec->nparam; i++) {
 	pprintf(nprn, "%#12.5g", g[i]);
     }
     pputs(nprn, "\n\n");
 }
 
-/* this function is used in the context of the minpack callback */
+/* this function is used in the context of the minpack callback, and
+   also for checking derivatives in the MLE case
+*/
 
 static int get_nls_fvec (double *fvec)
 {
-    int j, t, v;
+    int j, t, v = pspec->uhatnum;
+
+#if NLS_DEBUG > 1
+    fprintf(stderr, "*** get_nls_fvec called\n");
+#endif
 
     /* calculate residual given current parameter estimates */
     if (nls_calculate_fvec()) {
-	return 1;
-    }
-
-    v = spec_get_fvec_id();
-    if (v < 0) {
 	return 1;
     }
 
@@ -717,6 +719,9 @@ static int get_nls_fvec (double *fvec)
     /* transcribe from dataset to fvec array */
     for (t=pspec->t1; t<=pspec->t2; t++) {
 	fvec[j] = (*nZ)[v][t];
+#if NLS_DEBUG > 1
+	fprintf(stderr, "fvec[%d] = nZ[%d][%d] = %g\n", j, v, t, fvec[j]);
+#endif
 	if (pspec->ci == MLE) {
 	    pspec->ll -= fvec[j];
 	} else {
@@ -727,7 +732,7 @@ static int get_nls_fvec (double *fvec)
 
     pspec->iters += 1;
 
-    if (pspec->opt & OPT_V) {
+    if (pspec->ci == NLS && (pspec->opt & OPT_V)) {
 	pprintf(nprn, "iteration %2d: SSR = %.8g\n", pspec->iters, pspec->ess);
     }
 
@@ -738,29 +743,41 @@ static int get_nls_fvec (double *fvec)
 
 static int get_nls_deriv (int i, double *deriv)
 {
-    int j, t, v, vec;
+    int j, t, vec, v = pspec->params[i].dernum;
+
+#if NLS_DEBUG
+    fprintf(stderr, "get_nls_deriv: getting deriv %d\n", i);
+#endif
 
     /* calculate value of deriv with respect to param */
     if (nls_calculate_deriv(i)) {
 	return 1;
     }
 
-    v = spec_get_deriv_id(i);
-    if (v < 0) {
-	return 1;
+    if (v == 0) { /* FIXME */
+	v = pspec->params[i].dernum = ndinfo->v - 1;
     }
 
     /* derivative may be vector or scalar */
     vec = ndinfo->vector[v];
 
+#if NLS_DEBUG
+    fprintf(stderr, " v = %d, vec = %d\n", v, vec);
+#endif
+
     j = 0;
     /* transcribe from dataset to deriv array */
     for (t=pspec->t1; t<=pspec->t2; t++) {
 	if (vec) {
-	    deriv[j++] = - (*nZ)[v][t];
+	    deriv[j] = - (*nZ)[v][t];
 	} else {
-	    deriv[j++] = - (*nZ)[v][0];
+	    deriv[j] = - (*nZ)[v][0];
 	}
+#if NLS_DEBUG > 1
+	fprintf(stderr, " set deriv[%d] = nZ[%d][%d] = %g\n", j, v, 
+		(vec)? t : 0, deriv[j]);
+#endif
+	j++;
     }
 
     return 0;
@@ -1046,10 +1063,10 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     int perfect = 0;
     int err = 0;
 
-    if (gretl_iszero(spec->t1, spec->t2, uhat)) {
+    if (gretl_iszero(0, spec->nobs - 1, uhat)) {
 	pputs(prn, _("Perfect fit achieved\n"));
 	perfect = 1;
-	for (t=spec->t1; t<=spec->t2; t++) {
+	for (t=0; t<spec->nobs; t++) {
 	    uhat[t] = 1.0;
 	}
 	spec->ess = 0.0;
@@ -1352,7 +1369,6 @@ static int nls_calc (integer *m, integer *n, double *x, double *fvec,
     } else if (*iflag == 2) {
 	/* calculate jacobian at x, results into jac */
 	for (i=0; i<*n; i++) {
-	    /* FIXME? */
 	    if (get_nls_deriv(i, &jac[i*T])) {
 		*iflag = -1; 
 	    }
@@ -1369,14 +1385,16 @@ static int check_derivatives (integer m, integer n, double *x,
 			      double *fvec, double *jac,
 			      integer ldjac, PRN *prn)
 {
-    integer mode = 1;
-    integer iflag;
+#if NLS_DEBUG > 1
+    int T = pspec->nobs * pspec->nparam;
+#endif
+    integer mode, iflag;
     doublereal *xp = NULL;
     doublereal *err = NULL;
     doublereal *fvecp = NULL;
     int i, badcount = 0, zerocount = 0;
 
-    xp = malloc(m * sizeof *xp);
+    xp = malloc(n * sizeof *xp);
     err = malloc(m * sizeof *err);
     fvecp = malloc(m * sizeof *fvecp);
 
@@ -1387,22 +1405,54 @@ static int check_derivatives (integer m, integer n, double *x,
 	return 1;
     }
 
-    iflag = 1;
-    nls_calc(&m, &n, x, fvec, jac, &ldjac, &iflag);
-    if (iflag == -1) goto chkderiv_abort;
+#if NLS_DEBUG > 1
+    fprintf(stderr, "\nchkder, starting: m=%d, n=%d, ldjac=%d\n",
+	    (int) m, (int) n, (int) ldjac);
+    for (i=0; i<pspec->nparam; i++) {
+	fprintf(stderr, "x[%d] = %g\n", i, x[i]);
+    }    
+    for (i=0; i<pspec->nobs; i++) {
+	fprintf(stderr, "fvec[%d] = %g\n", i, fvec[i]);
+    }
+#endif
 
+    /* mode 1: x contains the point of evaluation of the function; on
+       output xp is set to a neighboring point. */
+    mode = 1;
     chkder_(&m, &n, x, fvec, jac, &ldjac, xp, fvecp, &mode, err);
 
+    /* calculate gradient */
     iflag = 2;
     nls_calc(&m, &n, x, fvec, jac, &ldjac, &iflag);
     if (iflag == -1) goto chkderiv_abort;
 
+#if NLS_DEBUG > 1
+    fprintf(stderr, "\nchkder, calculated gradient\n");
+    for (i=0; i<T; i++) {
+	fprintf(stderr, "jac[%d] = %g\n", i, jac[i]);
+    }
+#endif
+
+    /* calculate function, at neighboring point xp */
     iflag = 1;
     nls_calc(&m, &n, xp, fvecp, jac, &ldjac, &iflag);
     if (iflag == -1) goto chkderiv_abort; 
 
+    /* mode 2: on input, fvec must contain the functions, the rows of
+       fjac must contain the gradients evaluated at x, and fvecp must
+       contain the functions evaluated at xp.  On output, err contains
+       measures of correctness of the respective gradients.
+    */
     mode = 2;
     chkder_(&m, &n, x, fvec, jac, &ldjac, xp, fvecp, &mode, err);
+
+#if NLS_DEBUG > 1
+    fprintf(stderr, "\nchkder, done mode 2:\n");
+    for (i=0; i<m; i++) {
+	fprintf(stderr, "%d: fvec = %.12g, fvecp = %.12g, err = %g\n", i, 
+		fvec[i], fvecp[i], err[i]);
+    }
+#endif
 
     /* examine "err" vector */
     for (i=0; i<m; i++) {
@@ -1432,8 +1482,7 @@ static int check_derivatives (integer m, integer n, double *x,
     return (zerocount > m/4);
 }
 
-/* driver for BFGS code for use when analytical derivatives have been
-   supplied (FIXME case of numerical derivs) */
+/* driver for BFGS code below */
 
 static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 {
@@ -1985,7 +2034,7 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     double *fvec = NULL;
     double *jac = NULL;
     int origv = pdinfo->v;
-    int err = 0;
+    int i, t, err = 0;
 
     genr_err = 0;
     gretl_model_init(&nlsmod);
@@ -2045,6 +2094,11 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	nlsmod.errcode = E_ALLOC;
 	*pZ = *nZ;
 	goto bailout;
+    }
+
+    i = 0;
+    for (t=pspec->t1; t<=pspec->t2; t++) {
+	fvec[i++] = (*nZ)[pspec->uhatnum][t];
     }
 
     /* get tolerance from user setting or default */
@@ -2267,7 +2321,7 @@ static int BFGS_min (int n, double *b, int maxit, double reltol,
     int count, funcount, gradcount;
     double Fmin, f, gradproj;
     int i, j, ilast, iter = 0;
-    double s, steplength;
+    double s, steplength = 0.0;
     double D1, D2;
     int err = 0;
 
@@ -2298,7 +2352,7 @@ static int BFGS_min (int n, double *b, int maxit, double reltol,
 
     do {
 	if (pspec->opt & OPT_V) {
-	    print_mle_iter_stats(f, b, g);
+	    print_mle_iter_stats(f, b, g, iter, steplength);
 	}
 	if (ilast == gradcount) {
 	    for (i=0; i<n; i++) {
@@ -2440,7 +2494,7 @@ static int BFGS_min (int n, double *b, int maxit, double reltol,
 
     if (pspec->opt & OPT_V) {
 	pputs(nprn, "\n--- FINAL VALUES: \n");	
-	print_mle_iter_stats(f, b, g);
+	print_mle_iter_stats(f, b, g, iter, steplength);
 	pputs(nprn, "\n\n");	
     }
 

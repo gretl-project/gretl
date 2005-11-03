@@ -43,7 +43,6 @@ enum {
 
 static double calc_xy (double x, double y, char op, int t, int *err);
 
-static void genr_free (GENERATOR *genr);
 static double genr_cov_corr (const char *str, double ***pZ,
 			     const DATAINFO *pdinfo, int fn);
 static double genr_vcv (const char *str, const DATAINFO *pdinfo, 
@@ -60,12 +59,11 @@ static int genr_mlog (const char *str, double *xvec, double **pZ,
 static void eval_msg (const GENERATOR *genr);
 static void compose_genr_msg (const GENERATOR *genr, int oldv);
 static int listpos (int v, const int *list);
-static int genr_write_var (double ***pZ, DATAINFO *pdinfo, 
-			   GENERATOR *genr);
+static int genr_write_var (GENERATOR *genr, double ***pZ);
 
 static int math_tokenize (char *s, GENERATOR *genr, int level);
-static double get_obs_value (const char *s, const double **Z, 
-			     const DATAINFO *pdinfo, int *err);
+static int get_obs_value (const char *s, const double **Z, 
+			  const DATAINFO *pdinfo, int *v, int *obsnum);
 static int model_vector_index (const char *s);
 static int dataset_var_index (const char *s);
 static int test_stat_index (const char *s);
@@ -273,7 +271,7 @@ static GENERATOR *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     return genr;
 }
 
-static genatom *make_atom (int scalar, int varnum,
+static genatom *make_atom (int scalar, int varnum, int varobs,
 			   int lag, double val,
 			   int func, char op, char *str,
 			   int level, atomset *aset)
@@ -285,6 +283,7 @@ static genatom *make_atom (int scalar, int varnum,
 
     atom->scalar = scalar;
     atom->varnum = varnum;
+    atom->varobs = varobs;
     atom->tmpvar = -1;
     atom->lag = lag;
     atom->val = val;
@@ -313,6 +312,9 @@ static int print_atom (genatom *atom)
 
     if (atom->varnum >= 0) {
 	fprintf(stderr, " atom->varnum = %d\n", atom->varnum);
+    }
+    if (atom->varobs >= 0) {
+	fprintf(stderr, " atom->varobs = %d\n", atom->varobs);
     }
     if (atom->tmpvar >= 0) {
 	fprintf(stderr, " atom->tmpvar = %d\n", atom->tmpvar);
@@ -522,7 +524,7 @@ static int catch_saved_object_scalar (const char *s, double *x)
 static genatom *parse_token (const char *s, char op,
 			     GENERATOR *genr, int level)
 {
-    int v = -1;
+    int v = -1, varobs = -1;
     int scalar = 0, lag = 0, func = 0;
     double val = 0.0;
     char str[ARGLEN] = {0};
@@ -567,7 +569,7 @@ static genatom *parse_token (const char *s, char op,
 		    scalar = 1;
 		} else if (v >= 0 && v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
 		    /* handle regular scalar variables here */
-		    val = (*genr->pZ)[v][0];
+		    varobs = 0;
 		    scalar = 1;
 		}
 	    }
@@ -622,10 +624,11 @@ static genatom *parse_token (const char *s, char op,
 		}
 	    }
 	} else if (strchr(s, '[')) {
+	    /* specific observation from a series */
 	    int err;
 
-	    val = get_obs_value(s, (const double **) *genr->pZ, genr->pdinfo,
-				&err);
+	    err = get_obs_value(s, (const double **) *genr->pZ, genr->pdinfo,
+				&v, &varobs);
 	    if (err) {
 		DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
 		genr->err = E_SYNTAX; 
@@ -691,7 +694,7 @@ static genatom *parse_token (const char *s, char op,
 
     if (genr->err) return NULL;
 
-    return make_atom(scalar, v, lag, val, func, op, str, 
+    return make_atom(scalar, v, varobs, lag, val, func, op, str, 
 		     level, genr->aset);
 }
 
@@ -750,7 +753,11 @@ static double eval_atom (genatom *atom, GENERATOR *genr, int t,
 
     /* constant, scalar variable, or specific obs from a series */
     if (atom->scalar) {
-	x = atom->val;
+	if (atom->varnum >= 0) {
+	    x = (*genr->pZ)[atom->varnum][atom->varobs];
+	} else {
+	    x = atom->val;
+	}
 	DPRINTF(("eval_atom: got scalar = %g\n", x));
     } 
 
@@ -1095,16 +1102,12 @@ static int add_statistic_to_genr (GENERATOR *genr, genatom *atom)
     return genr->err;
 }
 
-int evaluate_genr (GENERATOR *genr, double ***pZ)
+static int evaluate_genr (GENERATOR *genr)
 {
     int t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
     int m = 0, tstart = t1;
     int n_atoms = 0;
     genatom *atom;
-
-    if (pZ != NULL) {
-	genr->pZ = pZ;
-    }
 
     reset_atom_stack(genr);
 
@@ -2121,7 +2124,7 @@ static int fix_obs_in_brackets (char *s)
     return err;
 }
 
-/* standardize on '.' for decimal point character with a
+/* standardize on '.' for decimal point character within a
    genr formula
 */
 
@@ -2623,28 +2626,46 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 
 void destroy_genr (GENERATOR *genr)
 {
-    if (genr != NULL) {
-	destroy_atom_stack(genr);
-	reset_calc_stack(genr);
-	genr_free(genr);
+    if (genr == NULL) {
+	return;
     }
+
+    DPRINTF(("destroy_genr: freeing atom stack\n"));
+    destroy_atom_stack(genr);
+
+    DPRINTF(("genrfree: freeing %d vars\n", genr->tmpv));
+    if (genr->tmpv > 0 && genr->tmpZ != NULL) {
+	int i;
+
+	for (i=0; i<genr->tmpv; i++) {
+	    free(genr->tmpZ[i]);
+	}
+	free(genr->tmpZ);
+    }
+
+    if (genr->xvec != NULL) {
+	free(genr->xvec);
+    }
+
+    free(genr);
 }
 
-static int finalize_genr (GENERATOR *genr, int oldv,
-			  double ***pZ, DATAINFO *pdinfo)
+int execute_genr (GENERATOR *genr, int oldv)
 {
-    evaluate_genr(genr, NULL);
+    if (genr->err) {
+	/* reset the error in case we're recomputing a compiled
+	   generator */
+	genr->err = 0;
+    }
 
-    /* FIXME? */
-    destroy_atom_stack(genr);
-    reset_calc_stack(genr);
+    evaluate_genr(genr);
 
     if (!genr->err) {
 	if (!genr_doing_save(genr)) {
 	    eval_msg(genr);
 	} else {
 	    make_genr_varname(genr, genr->lhs);
-	    genr->err = genr_write_var(pZ, pdinfo, genr);
+	    genr->err = genr_write_var(genr, genr->pZ);
 	    if (!genr->err && !genr_is_private(genr)) {
 		if (!genr_single_obs(genr)) {
 		    write_genr_label(genr, oldv);
@@ -2655,6 +2676,23 @@ static int finalize_genr (GENERATOR *genr, int oldv,
     }
 
     return genr->err;
+}
+
+/**
+ * genr_get_err:
+ * @genr: pointer to variable-generator struct.
+ *
+ * Returns: the error code on @genr, or %E_ALLOC if @genr is
+ * %NULL (the code will be 0 on success).
+ */
+
+int genr_get_err (const GENERATOR *genr)
+{
+    if (genr == NULL) {
+	return E_ALLOC;
+    } else {
+	return genr->err;
+    }
 }
     
 /**
@@ -2678,19 +2716,14 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     int err = 0;
 
     genr = genr_compile(line, pZ, pdinfo, opt);
-    
-    if (genr == NULL) {
-	err = E_ALLOC;
-    } else {
-	err = genr->err;
-    }
+    err = genr_get_err(genr);
 
     if (!err && !genr->done) {
-	err = finalize_genr(genr, oldv, pZ, pdinfo);
+	err = execute_genr(genr, oldv);
     }
 
     if (genr != NULL) {
-	genr_free(genr);
+	destroy_genr(genr);
     }
 
     return err;
@@ -2701,17 +2734,9 @@ int genr_get_varnum (const GENERATOR *genr)
     return genr->varnum;
 }
 
-int genr_get_err (const GENERATOR *genr)
+static int genr_write_var (GENERATOR *genr, double ***pZ)
 {
-    if (genr == NULL) {
-	return E_ALLOC;
-    } else {
-	return genr->err;
-    }
-}
-
-static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATOR *genr)
-{
+    DATAINFO *pdinfo = genr->pdinfo;
     double xt = genr->xvec[pdinfo->t1];
     int t, v = genr->varnum;
     int modifying = 0;
@@ -2733,7 +2758,7 @@ static int genr_write_var (double ***pZ, DATAINFO *pdinfo, GENERATOR *genr)
 	}
     } 
 
-    if (v >= pdinfo->v) {
+    if (v >= genr->pdinfo->v) {
 	/* the generated var is an addition to the data set */
 	if (genr_is_vector(genr)) {
 	    err = dataset_add_series(1, pZ, pdinfo);
@@ -2991,6 +3016,7 @@ static double evaluate_math_function (double arg, int fn, int *err)
     case T_LOG:
     case T_LN:
 	if (arg <= 0.0) {
+	    fprintf(stderr, "genr: log arg = %g\n", arg);
 	    *err = E_LOGS;
 	} else {
 	    x = log(arg);
@@ -3959,13 +3985,12 @@ static double get_test_stat_value (char *label, int idx)
     return x;
 }
 
-static double get_obs_value (const char *s, const double **Z, 
-			     const DATAINFO *pdinfo, int *err)
+static int 
+get_obs_value (const char *s, const double **Z, const DATAINFO *pdinfo, 
+	       int *v, int *obsnum)
 {
     char vname[USER_VLEN], obs[OBSLEN];
-    double val = NADBL;
-
-    *err = 0;
+    int err = 0;
 
     if (sscanf(s, "%8[^[][%10[^]]]", vname, obs) == 2) {
 	int t, i = varindex(pdinfo, vname);
@@ -3973,18 +3998,19 @@ static double get_obs_value (const char *s, const double **Z,
 	if (i < pdinfo->v && pdinfo->vector[i]) {
 	    t = get_t_from_obs_string(obs, Z, pdinfo);
 	    if (t >= 0 && t < pdinfo->n) {
-		val = Z[i][t];
+		*v = i;
+		*obsnum = t;
 	    } else {
-		*err = 1;
+		err = 1;
 	    }
 	} else {
-	    *err = 1;
+	    err = 1;
 	}
     } else {
-	*err = 1;
+	err = 1;
     }
 
-    return val;
+    return err;
 }
 
 static double *get_model_series (const DATAINFO *pdinfo, int v)
@@ -4895,28 +4921,6 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 #endif 
 
     return ret;
-}
-
-static void genr_free (GENERATOR *genr)
-{
-    int i;
-
-    if (genr == NULL) return;
-
-    DPRINTF(("genrfree: freeing %d vars\n", genr->tmpv));
-
-    if (genr->tmpv > 0 && genr->tmpZ != NULL) {
-	for (i=0; i<genr->tmpv; i++) {
-	    free(genr->tmpZ[i]);
-	}
-	free(genr->tmpZ);
-    }
-
-    if (genr->xvec != NULL) {
-	free(genr->xvec);
-    }
-
-    free(genr);
 }
 
 static int genr_mpow (const char *str, double *xvec, double **Z, 
