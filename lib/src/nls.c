@@ -675,7 +675,7 @@ static void print_mle_iter_stats (double ll, const double *b, const double *g,
 {
     int i;
 
-    pprintf(nprn, "Iteration %d; log likelihood = %.8g", iter, ll);	
+    pprintf(nprn, "Iteration %d; log likelihood = %.8g", iter, -ll);	
     if (iter > 1) {
 	pprintf(nprn, " (steplength = %.8g)", sl);
     }	
@@ -689,7 +689,7 @@ static void print_mle_iter_stats (double ll, const double *b, const double *g,
 
     pputs(nprn, "Gradients:  ");
     for (i=0; i<pspec->nparam; i++) {
-	pprintf(nprn, "%#12.5g", g[i]);
+	pprintf(nprn, "%#12.5g", -g[i]);
     }
     pputs(nprn, "\n\n");
 }
