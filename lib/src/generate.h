@@ -27,7 +27,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt);
 GENERATOR *
 genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt);
 
-int evaluate_genr (GENERATOR *genr);
+int evaluate_genr (GENERATOR *genr, double ***pZ);
 
 void destroy_genr (GENERATOR *genr);
 

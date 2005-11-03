@@ -1095,12 +1095,16 @@ static int add_statistic_to_genr (GENERATOR *genr, genatom *atom)
     return genr->err;
 }
 
-int evaluate_genr (GENERATOR *genr)
+int evaluate_genr (GENERATOR *genr, double ***pZ)
 {
     int t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
     int m = 0, tstart = t1;
     int n_atoms = 0;
     genatom *atom;
+
+    if (pZ != NULL) {
+	genr->pZ = pZ;
+    }
 
     reset_atom_stack(genr);
 
@@ -2629,7 +2633,7 @@ void destroy_genr (GENERATOR *genr)
 static int finalize_genr (GENERATOR *genr, int oldv,
 			  double ***pZ, DATAINFO *pdinfo)
 {
-    evaluate_genr(genr);
+    evaluate_genr(genr, NULL);
 
     /* FIXME? */
     destroy_atom_stack(genr);

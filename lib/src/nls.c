@@ -89,7 +89,7 @@ static void update_nls_param_values (const double *x);
 static int BFGS_min (int n, double *b, int maxit, double reltol,
 		     int *fncount, int *grcount);
 
-#if 0 /* not ready */
+#if 0 /* not ready !! */
 
 static void destroy_genrs_array (GENERATOR **genrs, int n)
 {
@@ -107,13 +107,16 @@ static int nls_genr_setup (void)
     GENERATOR **genrs;
     char formula[MAXLINE];
     int i, j, n_gen, nparam;
-    int err = 0;
+    int v, err = 0;
 
     pspec->ngenrs = 0;
 
     nparam = (pspec->mode == ANALYTIC_DERIVS)? pspec->nparam : 0;
 
     n_gen = 1 + pspec->naux + nparam;
+
+    fprintf(stderr, "nls_genr_setup: current v = %d, n_gen = %d\n", 
+	    ndinfo->v, n_gen);
 
     genrs = malloc(n_gen * sizeof *genrs);
     if (genrs == NULL) {
@@ -129,8 +132,7 @@ static int nls_genr_setup (void)
     for (i=0; i<n_gen && !err; i++) {
 	if (i < pspec->naux) {
 	    /* auxiliary variables */
-	    *formula = '\0';
-	    genrs[i] = genr_compile(pspec->aux[i], nZ, ndinfo, OPT_P);
+	    strcpy(formula, pspec->aux[i]);
 	} else if (i == pspec->naux) {
 	    /* residual/likelihood function */
 	    sprintf(formula, "$nl_y = %s", pspec->nlfunc); 
@@ -139,11 +141,14 @@ static int nls_genr_setup (void)
 	    sprintf(formula, "$nl_x%d = %s", i, pspec->params[j++].deriv);
 	}
 	
-	if (*formula != '\0') {
-	    genrs[i] = genr_compile(formula, nZ, ndinfo, OPT_P);
-	}
-
+	genrs[i] = genr_compile(formula, nZ, ndinfo, OPT_P);
 	err = genr_get_err(genrs[i]);
+
+	if (!err) {
+	    v = genr_get_varnum(genrs[i]);
+	    fprintf(stderr, "genrs[%d], varnum = %d\n", i, v);
+	    fprintf(stderr, " formula '%s'\n", formula);
+	}
     }
 
     if (err) {
@@ -152,6 +157,8 @@ static int nls_genr_setup (void)
 	pspec->ngenrs = n_gen;
 	pspec->genrs = genrs;
     }
+
+    fprintf(stderr, "nls_genr_setup: err at return = %d\n", err);
     
     return err;
 }
@@ -172,10 +179,10 @@ static int nls_auto_genr (int i)
 #if NLS_DEBUG
 	fprintf(stderr, "nls_auto_genr: generating aux var:\n %s\n", pspec->aux[j]);
 #endif
-	genr_err = evaluate_genr(pspec->genrs[j]);
+	genr_err = evaluate_genr(pspec->genrs[j], nZ);
     }
 
-    genr_err = evaluate_genr(pspec->genrs[pspec->naux + i]);
+    genr_err = evaluate_genr(pspec->genrs[pspec->naux + i], nZ);
 
 #if NLS_DEBUG
     if (genr_err) {
@@ -540,12 +547,16 @@ static int spec_get_fvec_id (void)
 	/* look up ID number of the "fvec" variable if we don't know
 	   it already */
 	v = varindex(ndinfo, "$nl_y");
+	fprintf(stderr, "varindex of '$nl_y' = %d, (ndinfo->v = %d)\n",
+		v, ndinfo->v);
 	if (v < ndinfo->v) {
 	    pspec->uhatnum = v;
 	}
     } else {
 	v = pspec->uhatnum;
     }
+
+    fprintf(stderr, "spec_get_fvec_id: returning %d\n", v);
 
     return v;
 }
@@ -701,6 +712,9 @@ static int get_nls_fvec (double *fvec)
     if (v < 0) {
 	return 1;
     }
+
+    fprintf(stderr, "get_nls_fvec: ndinfo->v = %d, got v = %d\n",
+	    ndinfo->v, v);
 
     pspec->ess = 0.0;
     pspec->ll = 0.0;
