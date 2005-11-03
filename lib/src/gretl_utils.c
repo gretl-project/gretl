@@ -1068,19 +1068,20 @@ record_or_get_test_result (double teststat, double pval, char *blurb,
 {
     static double val = NADBL;
     static double pv = NADBL;
-    static char info[128] = {0};
+    static char info[MAXLABEL] = {0};
 
     double ret = NADBL;
 
     if (code == SET_TEST_STAT) {
 	val = teststat;
 	pv = pval;
+	*info = '\0';
 	if (blurb != NULL) {
-	    strncat(info, blurb, 127);
+	    strncat(info, blurb, MAXLABEL - 1);
 	} 
     } else if (code == GET_TEST_STAT || code == GET_TEST_PVAL) {
 	if (blurb != NULL) {
-	    strncat(info, blurb, 127);
+	    strncat(blurb, info, MAXLABEL - 1);
 	}
 	ret = (code == GET_TEST_STAT)? val : pv;
     } 
