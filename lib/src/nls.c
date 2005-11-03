@@ -547,16 +547,12 @@ static int spec_get_fvec_id (void)
 	/* look up ID number of the "fvec" variable if we don't know
 	   it already */
 	v = varindex(ndinfo, "$nl_y");
-	fprintf(stderr, "varindex of '$nl_y' = %d, (ndinfo->v = %d)\n",
-		v, ndinfo->v);
 	if (v < ndinfo->v) {
 	    pspec->uhatnum = v;
 	}
     } else {
 	v = pspec->uhatnum;
     }
-
-    fprintf(stderr, "spec_get_fvec_id: returning %d\n", v);
 
     return v;
 }
@@ -712,9 +708,6 @@ static int get_nls_fvec (double *fvec)
     if (v < 0) {
 	return 1;
     }
-
-    fprintf(stderr, "get_nls_fvec: ndinfo->v = %d, got v = %d\n",
-	    ndinfo->v, v);
 
     pspec->ess = 0.0;
     pspec->ll = 0.0;
