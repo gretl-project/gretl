@@ -1045,8 +1045,8 @@ print_GNR_dataset (const int *list, double **gZ, DATAINFO *gdinfo)
 #endif
 
 /* Gauss-Newton regression to calculate standard errors for the NLS
-   parameters (see Davidson and MacKinnon).  This may be modifiable
-   for MLE, but at present we're not using it in that context.
+   parameters (see Davidson and MacKinnon).  This model is also taken
+   as the basis for the model struct returned by the nls function.
 */
 
 static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
