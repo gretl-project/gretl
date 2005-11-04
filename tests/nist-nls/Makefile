@@ -7,3 +7,6 @@ nist-nls-test: nist-nls-test.c
 
 clean:
 	rm -f nist-nls-test
+
+distclean: clean
+	rm -f *.dat *.out

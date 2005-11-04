@@ -1,5 +1,5 @@
 /* driver for NIST nonlinear regression tests
-   Allin Cottrell, May 2003
+   Allin Cottrell, originally May 2003
 */
 
 #include <stdio.h>
@@ -282,7 +282,7 @@ static int print_derivs (char *line, PRN *prn)
 	for (i=0; i<tester.nparam; i++) {
 	    sprintf(line, "deriv %s = %s", tester.coeffs[i].name, derivs[i]);
 	    if (verbose) printf("%s\n", line);
-	    err = nls_parse_line(line, (const double **) Z, datainfo, NULL);
+	    err = nls_parse_line(NLS, line, (const double **) Z, datainfo, NULL);
 	    if (err) {
 		errmsg(err, prn);
 		break;
@@ -597,7 +597,7 @@ static int set_tolerance (char *line)
     if (toler == 0.0) return 0;
 
     sprintf(line, "genr toler = %g", toler);
-    return generate(&Z, datainfo, line, NULL);
+    return generate(line, &Z, datainfo, OPT_NONE);
 }
 
 static int generate_params (char *line, int round, PRN *prn)
@@ -611,7 +611,7 @@ static int generate_params (char *line, int round, PRN *prn)
 	x = (round == 1)? tester.coeffs[i].s1 : tester.coeffs[i].s2;
 	sprintf(line, "genr %s = %g", tester.coeffs[i].name, x);
 	if (verbose) printf("%s\n", line);
-	err = generate(&Z, datainfo, line, NULL);
+	err = generate(line, &Z, datainfo, OPT_NONE);
 	if (err) {
 	    fprintf(stderr, "%s: ERROR: genr failed in round %d\n '%s'\n", 
 		    tester.datname, round, line);
@@ -808,7 +808,8 @@ static int real_run_check (int round, PRN *prn)
 
     if (!err) {
 	catch_log_depvar();
-	err = nls_parse_line(tester.model_spec, (const double **) Z, datainfo);
+	err = nls_parse_line(NLS, tester.model_spec, (const double **) Z, 
+			     datainfo, prn);
 	if (verbose) printf("%s\n", tester.model_spec);
 	if (err) {
 	    fprintf(stderr, "%s: ERROR: in nls_parse_line\n '%s'\n",
@@ -823,7 +824,7 @@ static int real_run_check (int round, PRN *prn)
     }
 
     if (!err) {
-	*pmod = nls(&Z, datainfo, prn);
+	*pmod = nls(&Z, datainfo, OPT_NONE, prn);
 	if (pmod->errcode) {
 	    char errtext[128];
 
@@ -903,9 +904,9 @@ static int run_gretl_nls_check (void)
     PRN *prn;
 
     if (verbose) {
-	prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
+	prn = gretl_print_new(GRETL_PRINT_STDOUT);
     } else {
-	prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
+	prn = gretl_print_new(GRETL_PRINT_NULL);
     }
 
     err1 = real_run_check(1, prn);

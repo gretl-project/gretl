@@ -90,6 +90,8 @@ static void update_nls_param_values (const double *x);
 static int BFGS_min (int n, double *b, int maxit, double reltol,
 		     int *fncount, int *grcount);
 
+#if NEW_GENR
+
 static void destroy_genrs_array (GENERATOR **genrs, int n)
 {
     int i;
@@ -100,8 +102,6 @@ static void destroy_genrs_array (GENERATOR **genrs, int n)
 
     free(genrs);
 }
-
-#if NEW_GENR
 
 /* new-style: "compile" the required equations first, so we can
    subsequently execute the compiled versions for greater
@@ -2116,6 +2116,9 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	    err = lm_approximate(pspec, fvec, jac, prn);
 	} else {
 	    err = lm_calculate(pspec, fvec, jac, prn);
+	    if (err) {
+		fprintf(stderr, "lm_calculate returned %d\n", err);
+	    }
 	}
     }
 

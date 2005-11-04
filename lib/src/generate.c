@@ -1694,8 +1694,16 @@ static int math_tokenize (char *s, GENERATOR *genr, int level)
 	goto atomic_case; 
     } else if (!strcmp(prev, s) && level == oldlevel + 1) {
 	DPRINTF(("math_tokenize: going round in circles\n"));
+#if 0
+	/* This needs thought, work: generating an error here causes
+	   failure in some instances where, if we let computation
+	   proceed, we get OK results.  Specifically, this breaks the
+	   computation of derivatives in some of the NIST nls test
+	   cases (big, ugly formulae, e.g. Hahn1).  AC 2005/11/04.
+	*/
 	genr->err = E_PARSE;
 	return genr->err;
+#endif
     }
 
     *prev = 0;
