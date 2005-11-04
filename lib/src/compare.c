@@ -1552,9 +1552,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 	record_test_result(hct, pval, "Harvey-Collier");
 
-#ifdef ENABLE_NLS
-        setlocale(LC_NUMERIC, "C");
-#endif
+	gretl_push_c_numeric_locale();
+
 	/* plot with 95% confidence bands, if not batch mode */
 	if (!gretl_in_batch_mode() &&
 	    gnuplot_init(PLOT_CUSUM, &fq) == 0) {
@@ -1579,9 +1578,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    err = gnuplot_make_graph();
 	}
 
-#ifdef ENABLE_NLS
-        setlocale(LC_NUMERIC, "");
-#endif
+	gretl_pop_c_numeric_locale();
     }
 
     /* restore sample */

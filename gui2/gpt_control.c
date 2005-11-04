@@ -648,9 +648,7 @@ static int get_gpt_data (GPT_SPEC *spec, int have_markers, FILE *fp)
     int i, j, t;
     int err = 0;
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     for (i=0; i<spec->n_lines && !err; i++) {
 	int offset = 1;
@@ -711,9 +709,7 @@ static int get_gpt_data (GPT_SPEC *spec, int have_markers, FILE *fp)
 	x[1] += (spec->lines[i].ncols - 1) * spec->nobs;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     return err;
 }
@@ -785,13 +781,9 @@ static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
 
     p += 2;
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
     nc = sscanf(p, "%lf,%lf", &x, &y);
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     if (nc != 2) {
 	spec->labels[i].text[0] = '\0';
@@ -830,15 +822,11 @@ read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
     if (!strcmp(s, "[*:*]")) {
 	r0 = r1 = NADBL;
     } else {
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "C");
-#endif
+	gretl_push_c_numeric_locale();
 	if (!err && sscanf(s, "[%lf:%lf]", &r0, &r1) != 2) {
 	    err = 1;
 	}
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
-#endif
+	gretl_pop_c_numeric_locale();
     }
 
     if (!err) {
@@ -2044,16 +2032,12 @@ static int zoom_unzoom_png (png_plot *plot, int view)
 
 	/* write zoomed range into auxiliary gnuplot source file */
 
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "C");
-#endif
+	gretl_push_c_numeric_locale();
 	fprintf(fpout, "set xrange [%g:%g]\n", plot->zoom_xmin,
 		plot->zoom_xmax);
 	fprintf(fpout, "set yrange [%g:%g]\n", plot->zoom_ymin,
 		plot->zoom_ymax);
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
-#endif
+	gretl_pop_c_numeric_locale();
 
 	while (fgets(line, MAXLEN-1, fpin)) {
 	    if (strncmp(line, "set xrange", 10) &&
@@ -2476,9 +2460,9 @@ static int get_dumb_plot_yrange (png_plot *plot)
 	}
 
 	/* read the y-axis min and max from the ascii graph */
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "C");
-#endif
+
+	gretl_push_c_numeric_locale();
+
 	i = j = 0;
 	while (i < 16 && fgets(line, MAXLEN-1, fpin)) {
 	    const char *s = line;
@@ -2510,9 +2494,8 @@ static int get_dumb_plot_yrange (png_plot *plot)
 		}
 	    }
 	}
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
-#endif
+
+	gretl_pop_c_numeric_locale();
 
 	fclose(fpin);
 #ifndef POINTS_DEBUG
@@ -2588,9 +2571,7 @@ static int get_plot_ranges (png_plot *plot)
 	return 1;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     while (fgets(line, MAXLEN-1, fp) && strncmp(line, "plot ", 5)) {
 	if (sscanf(line, "set xrange [%lf:%lf]", 
@@ -2599,9 +2580,7 @@ static int get_plot_ranges (png_plot *plot)
 	} 
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -2946,9 +2925,7 @@ static int get_png_data_bounds (char *str, png_bounds *bounds)
 	p++;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     if (sscanf(str, "xmin=%lf xmax=%lf ymin=%lf ymax=%lf", 
 	       &bounds->xmin, &bounds->xmax,
@@ -2959,9 +2936,7 @@ static int get_png_data_bounds (char *str, png_bounds *bounds)
 	ret = GRETL_PNG_NO_COORDS;
     } 
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     return ret;
 }

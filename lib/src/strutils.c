@@ -68,13 +68,10 @@ double dot_atof (const char *s)
 {
     double x;
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
     x = atof(s);
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif    
+    gretl_pop_c_numeric_locale();
+
     return x;
 }
 
@@ -293,14 +290,16 @@ int numeric_string (const char *str)
     char *test;
     int ret = 1;
 
+    if (str == NULL || *str == '\0') {
+	return 0;
+    }
+
     if (!strcmp(str, "inf") || !strcmp(str, "nan")) {
 	/* could be variable names: they are not valid numbers */
 	return 0;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     errno = 0;
 
@@ -309,9 +308,7 @@ int numeric_string (const char *str)
 	ret = 0;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     return ret;
 }

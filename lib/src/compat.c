@@ -342,9 +342,7 @@ static int ascii_plot (const int *list, const double **Z,
 
 	drawline(ncols, prn);
 
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "C");
-#endif
+	gretl_push_c_numeric_locale();
 
 	lineno = 1;
 	for (t=t1; t<=t2; ++t) {
@@ -372,9 +370,7 @@ static int ascii_plot (const int *list, const double **Z,
 	    lineno++;
 	}
 
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
-#endif
+	gretl_pop_c_numeric_locale();
 
 	pputs(prn, "\n\n");
 
@@ -455,9 +451,7 @@ static int ascii_plot (const int *list, const double **Z,
 
     drawline(ncols, prn);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     lineno = 1;
 
@@ -508,9 +502,7 @@ static int ascii_plot (const int *list, const double **Z,
 	lineno++;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     pputs(prn, "\n\n");
 

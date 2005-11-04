@@ -1319,9 +1319,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     wbook_init(&book);
 
@@ -1495,9 +1493,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     wbook_free(&book);
     free_sheet();
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
 #ifdef WIN32
     if (fdb != NULL) {

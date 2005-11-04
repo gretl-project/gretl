@@ -45,18 +45,14 @@ do_hurst_plot (int n, double **Z, const MODEL *pmod, const char *vname)
 	    pmod->coeff[0], pmod->coeff[1]);
     fputs("'-' using 1:2 w points lt 1\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     for (t=0; t<n; t++) {
 	fprintf(fp, "%g %g\n", Z[2][t], Z[1][t]);
     }
     fputs("e\n", fp);
-
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 

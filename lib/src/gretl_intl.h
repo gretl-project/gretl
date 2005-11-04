@@ -20,6 +20,10 @@
 #ifndef GRETL_INTL_H
 #define GRETL_INTL_H
 
+void gretl_push_c_numeric_locale (void);
+
+void gretl_pop_c_numeric_locale (void);
+
 int doing_nls (void);
 
 int reset_local_decpoint (void);

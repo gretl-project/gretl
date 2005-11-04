@@ -186,9 +186,7 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 	return 1;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif 
+    gretl_push_c_numeric_locale();
 
     while (fgets(line, sizeof line, fp)) {
 	if (sscanf(line, "%11s %lf", statname, &x) == 2) {
@@ -199,9 +197,7 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 	}
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -232,9 +228,7 @@ static int get_roots (const char *fname, MODEL *pmod,
 	return 1;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif 
+    gretl_push_c_numeric_locale();
 
     i = 0;
     while (fgets(line, sizeof line, fp) && i < nr) {
@@ -248,10 +242,8 @@ static int get_roots (const char *fname, MODEL *pmod,
 	    }
 	}
     }
-
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -291,13 +283,11 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
 	return 1;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif 
-
     for (i=0; i<nt; i++) {
 	pmod->vcv[i] = NADBL;
     }
+
+    gretl_push_c_numeric_locale();
 
     j = 1;
     while (fgets(line, sizeof line, fp)) {
@@ -317,9 +307,7 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
 	}
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -359,9 +347,7 @@ get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
 	pmod->coeff[i] = pmod->sderr[i] = NADBL;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif 
+    gretl_push_c_numeric_locale();
 
     i = j = k = 0;
 
@@ -394,9 +380,7 @@ get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
 	}
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -451,9 +435,7 @@ get_uhat (const char *fname, MODEL *pmod, const DATAINFO *pdinfo)
 	return E_FOPEN;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif 
+    gretl_push_c_numeric_locale();
 
     while (fgets(line, sizeof line, fp)) {
 	if (*line == '-') {
@@ -469,9 +451,7 @@ get_uhat (const char *fname, MODEL *pmod, const DATAINFO *pdinfo)
 	}
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -603,11 +583,9 @@ static int write_spc_file (const char *fname,
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't write to '%s'\n", fname);
 	return 1;  
-    }  
+    } 
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif 
+    gretl_push_c_numeric_locale();
 
     dx = date(ainfo->t1, pdinfo->pd, pdinfo->sd0);
     startyr = (int) dx;
@@ -666,9 +644,7 @@ static int write_spc_file (const char *fname,
 
     fputs(" save = (rsd est lks acm rts rcm)\n}\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 

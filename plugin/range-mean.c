@@ -72,18 +72,14 @@ do_range_mean_plot (int n, const double **Z, double a, double b,
     }
     fputs("'-' using 1:2 w points lt 1\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     for (t=0; t<n; t++) {
 	fprintf(fp, "%g %g\n", Z[2][t], Z[1][t]);
     }
     fputs("e\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 

@@ -944,9 +944,7 @@ get_ols_line (struct gnuplot_info *gpinfo, const int *list,
 	}
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     if (!err && pval < .10) {
 	sprintf(ols_line, "%g + %g*x title '%s' w lines\n", 
@@ -954,9 +952,7 @@ get_ols_line (struct gnuplot_info *gpinfo, const int *list,
 	gpinfo->ols_ok = 1;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     clear_model(&plotmod);
 
@@ -1434,9 +1430,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     fputs(keystr, fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     xvar = (flags & GP_DUMMY)? list[gpinfo.lo - 1] : list[gpinfo.lo];
     print_x_range(&gpinfo, (const double *) (*pZ)[xvar], fp);
@@ -1523,9 +1517,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	print_gp_data(&gpinfo, list, (const double **) *pZ, pdinfo, fp);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -1606,9 +1598,7 @@ int multi_scatters (const int *list, int pos, double ***pZ,
     fputs("set nokey\n", fp);
     fputs("set noxtics\nset noytics\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     for (i=0; i<nplots; i++) {  
 	if (nplots <= 4) {
@@ -1665,9 +1655,7 @@ int multi_scatters (const int *list, int pos, double ***pZ,
 	fputs("e\n", fp);
     } 
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fputs("set nomultiplot\n", fp);
 
@@ -1780,9 +1768,7 @@ int gnuplot_3d (int *list, const char *literal,
     pdinfo->t1 = t1;
     pdinfo->t2 = t2;
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     maybe_add_surface(list, pZ, pdinfo, flags, surface);
 
@@ -1817,9 +1803,7 @@ int gnuplot_3d (int *list, const char *literal,
     }	
     fputs("e\n", fq);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
@@ -1832,13 +1816,9 @@ int gnuplot_3d (int *list, const char *literal,
 static void print_freq_test_label (char *s, const char *format, 
 				   double v, double pv)
 {
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
     sprintf(s, format, v, pv);
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 }
 
 static void print_freq_dist_label (char *s, int dist, double x, double y)
@@ -1847,7 +1827,7 @@ static void print_freq_dist_label (char *s, int dist, double x, double y)
 #ifdef ENABLE_NLS
     char test[8];
 
-    setlocale(LC_NUMERIC, "");
+    gretl_pop_c_numeric_locale();
     sprintf(test, "%g", 0.5);
     if (strchr(test, ',')) {
 	dcomma = 1;
@@ -1862,9 +1842,7 @@ static void print_freq_dist_label (char *s, int dist, double x, double y)
 		((dcomma)? ' ' : ','), y);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 }
 
 /**
@@ -1917,9 +1895,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	barskip /= 2.0;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     if (dist) {
 	double propn;
@@ -2054,9 +2030,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 
     fputs("e\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     if (fp != NULL) {
 	fclose(fp);
@@ -2109,13 +2083,12 @@ int plot_fcast_errs (int n, const double *obs,
     xmin -= xrange * .025;
     xmax += xrange * .025;
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
+
     fprintf(fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+
+    gretl_pop_c_numeric_locale();
+
 
     fputs("set missing \"?\"\n", fp);
 
@@ -2138,9 +2111,7 @@ int plot_fcast_errs (int n, const double *obs,
 	fputc('\n', fp);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     if (depvar_present) {
 	for (t=0; t<n; t++) {
@@ -2173,9 +2144,7 @@ int plot_fcast_errs (int n, const double *obs,
 	fputs("e\n", fp);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -2213,9 +2182,7 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 	    "'-' using 1:2 notitle w lines lt 2\n", 
 	    I_("residual"), I_("+- sqrt(h(t))"));
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	fprintf(fp, "%.8g %.8g\n", obs[t], pmod->uhat[t]);
@@ -2234,9 +2201,7 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     }
     fputs("e\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -2379,18 +2344,14 @@ print_plot_labelspec (const GPT_LABEL *lbl, int png, FILE *fp)
     gp_string(fp, "set label \"%s\" ", (label != NULL)? 
 	      label : lbl->text, png);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     fprintf(fp, "at %g,%g %s%s\n", 
 	    lbl->pos[0], lbl->pos[1],
 	    gp_justification_string(lbl->just),
 	    label_front());
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     if (label != NULL) {
 	free(label);
@@ -2521,9 +2482,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
     k = (spec->flags & GPTSPEC_Y2AXIS)? 3 : 2;
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     for (i=0; i<k; i++) {
 	if (na(spec->range[i][0]) || na(spec->range[i][1]) ||
@@ -2535,9 +2494,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 		spec->range[i][0], spec->range[i][1]);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     /* customized xtics? */
     if (!string_is_blank(spec->xtics)) {
@@ -2645,9 +2602,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
     /* supply the data to gnuplot inline */
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     for (i=0; i<spec->n_lines; i++) { 
 	int j;
@@ -2694,9 +2649,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	x[1] += (spec->lines[i].ncols - 1) * spec->nobs;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     return miss;
 }
@@ -2889,9 +2842,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	fputs("plot \\\n'-' using 1:2 w lines\n", fp);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     for (t=0; t<periods; t++) {
 	fprintf(fp, "%d %.8g\n", t+1, gretl_matrix_get(resp, t, 0));
@@ -2908,9 +2859,7 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	fputs("e\n", fp);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
     gretl_matrix_free(resp);
@@ -2952,9 +2901,7 @@ static int real_VAR_residual_plot (const gretl_matrix *E, int t1, double ***pZ,
 
     pv = plotvar(pZ, pdinfo, get_timevar_name(pdinfo));
 	
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     for (i=0; i<nvars; i++) {
 	for (t=0; t<nobs; t++) {
@@ -2969,9 +2916,7 @@ static int real_VAR_residual_plot (const gretl_matrix *E, int t1, double ***pZ,
 	fputs("e\n", fp);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -3028,9 +2973,7 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
     fputs("plot 1 w lines , \\\n"
 	  "'-' w points pt 7\n", fp);
     	
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
     
     for (i=0; i<n; i++) {
         x = gretl_matrix_get(lam, i, 0);
@@ -3038,9 +2981,7 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
 	fprintf(fp, "%.8f %.8f\n", x, y);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fputs("e\n", fp);
     fclose(fp);

@@ -248,9 +248,8 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 
 	sprintf(sformat, "%%%ds", OBSLEN - 1);
 
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "C");
-#endif
+	gretl_push_c_numeric_locale();
+
 	for (t=0; t<n && !err; t++) {
 	    eatspace(fp);
 	    c = fgetc(fp);  /* test for a #-opened comment line */
@@ -283,9 +282,8 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 		} 
 	    }
 	}
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
-#endif
+
+	gretl_pop_c_numeric_locale();
     }
 
     return err;
@@ -332,9 +330,7 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 
 	sprintf(sformat, "%%%ds", OBSLEN - 1);
 
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "C");
-#endif
+	gretl_push_c_numeric_locale();
 
 	for (t=0; t<n; t++) {
 	    offset = 0L;
@@ -384,10 +380,7 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 
 	free(line);
 
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
-#endif
-
+	gretl_pop_c_numeric_locale();
     }
 
     return err;
@@ -1288,10 +1281,8 @@ int write_data (const char *fname, const int *list,
 	}	
     }
 
-#ifdef ENABLE_NLS
     if (fmt == GRETL_DATA_CSV && pdinfo->decpoint == ',') ;
-    else setlocale(LC_NUMERIC, "C");
-#endif
+    else gretl_push_c_numeric_locale();
 
     if (fmt == GRETL_DATA_TRAD) { /* plain ASCII */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
@@ -1497,9 +1488,7 @@ int write_data (const char *fname, const int *list,
 	fputc('\n', fp);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     if (pmax != NULL) {
 	free(pmax);
@@ -3333,11 +3322,9 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	goto csv_bailout;
     }
     
-#ifdef ENABLE_NLS
     if (*ppdinfo != NULL && (*ppdinfo)->decpoint != ',') {
-	setlocale(LC_NUMERIC, "C");
+	gretl_push_c_numeric_locale();
     }
-#endif
 
     pputs(prn, M_("scanning for row labels and data...\n"));
 
@@ -3389,9 +3376,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	}
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     if (st != NULL) {
 	gretl_string_table_print(st, csvinfo, fname, prn);
@@ -3932,9 +3917,7 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
     }
     pputs(prn, M_("reading variable information...\n"));
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     /* second pass: get detailed info on variables */
     v = 0; realv = 1; t = 0;
@@ -4028,9 +4011,7 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 	}
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     pputs(prn, M_("done reading data\n"));
     fclose(fp);
@@ -4241,10 +4222,6 @@ static int write_xmldata (const char *fname, const int *list,
     int i, t;
     int err = 0;
 
-#ifdef ENABLE_NLS
-    int clocale = 0;
-#endif
-
 #ifdef USE_GTK2
     const char *enc = "UTF-8";
 #else
@@ -4375,10 +4352,7 @@ static int write_xmldata (const char *fname, const int *list,
 	}
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-    clocale = 1;
-#endif
+    gretl_push_c_numeric_locale();
 
     /* then listing of variable names and labels */
     if (gz) {
@@ -4503,11 +4477,7 @@ static int write_xmldata (const char *fname, const int *list,
 
  cleanup: 
 
-#ifdef ENABLE_NLS
-    if (clocale) {
-	setlocale(LC_NUMERIC, "");
-    }
-#endif
+    gretl_pop_c_numeric_locale();
 
     if (sz) {
 	(*show_progress)(0, pdinfo->t2 - pdinfo->t1 + 1, SP_FINISH);
@@ -4957,9 +4927,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	free(tmp);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     strcpy(tmpdinfo->stobs, "1");
 
@@ -5059,9 +5027,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	if (!err) cur = cur->next;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     xmlFreeDoc(doc);
     xmlCleanupParser();

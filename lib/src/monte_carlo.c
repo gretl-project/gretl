@@ -2162,9 +2162,7 @@ static int print_loop_store (LOOPSET *loop, PRN *prn)
     fprintf(fp, "<description>\n%s\n</description>\n", xmlbuf);
     free(xmlbuf);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     /* print info on variables */
     fprintf(fp, "<variables count=\"%d\">\n", loop->nstore);
@@ -2201,9 +2199,7 @@ static int print_loop_store (LOOPSET *loop, PRN *prn)
 
     fprintf(fp, "</observations>\n</gretldata>\n");
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 

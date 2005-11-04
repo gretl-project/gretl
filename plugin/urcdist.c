@@ -690,15 +690,10 @@ double mackinnon_pvalue (double tval, int n, int niv, int itv, char *path)
     fflush(fdb);
 #endif
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
-
+    gretl_push_c_numeric_locale();
     check = urcval(niv, itv, n, tval, &val, path);
+    gretl_pop_c_numeric_locale();
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
 
 #ifdef URDEBUG
     fclose(fdb);

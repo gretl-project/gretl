@@ -1753,18 +1753,14 @@ static int hilu_plot (double *ssr, double *rho, int n)
     fputs("set xrange [-1.0:1.0]\n", fp);
     fputs("plot '-' using 1:2 w impulses\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     for (i=0; i<n; i++) {
 	fprintf(fp, "%g %g\n", rho[i], ssr[i]);
     }
     fputs("e\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 

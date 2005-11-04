@@ -300,9 +300,7 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
 	return E_FOPEN;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     if (pdinfo->pd == 4) {
 	if ((pdinfo->t2 - pdinfo->t1) / 4 < 8) {
@@ -367,9 +365,7 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
 
     fputs("set nomultiplot\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -470,9 +466,7 @@ static int add_series_from_file (const char *fname, int code,
 	Z[v][t] = NADBL;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     if (opt == TRAMO_SEATS) {
 	int i = 0;
@@ -511,9 +505,7 @@ static int add_series_from_file (const char *fname, int code,
 	}
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -561,9 +553,7 @@ static int write_tramo_file (const char *fname,
     fp = gretl_fopen(fname, "w");
     if (fp == NULL) return 1;
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif   
+    gretl_push_c_numeric_locale();
 
     x = date(pdinfo->t1, pdinfo->pd, pdinfo->sd0);
     startyr = (int) x;
@@ -589,9 +579,7 @@ static int write_tramo_file (const char *fname,
 	request->code = TRAMO_ONLY; /* not running SEATS */
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -609,11 +597,9 @@ static int write_spc_file (const char *fname,
     char *p, tmp[8];
 
     fp = gretl_fopen(fname, "w");
-    if (fp == NULL) return 1;    
+    if (fp == NULL) return 1;   
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif 
+    gretl_push_c_numeric_locale();
 
     x = date(pdinfo->t1, pdinfo->pd, pdinfo->sd0);
     startyr = (int) x;
@@ -656,9 +642,7 @@ static int write_spc_file (const char *fname,
 
     fputs("}\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 

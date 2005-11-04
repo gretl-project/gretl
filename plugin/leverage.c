@@ -228,9 +228,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 	}
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fp);
     fputs("set xzeroaxis\n", fp);
@@ -293,9 +291,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     fputs("e\n", fp);
     fputs("set nomultiplot\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 

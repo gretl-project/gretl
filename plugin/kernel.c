@@ -120,9 +120,7 @@ static int density_plot (const double *x, double s, double h,
     get_xmin_xmax(x, s, n, &xmin, &xmax);
     xstep = (xmax - xmin) / kn;
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     fputs("set nokey\n", fp); 
     fprintf(fp, "set xrange [%g:%g]\n", xmin, xmax);
@@ -147,9 +145,7 @@ static int density_plot (const double *x, double s, double h,
     }
     fputs("e\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 

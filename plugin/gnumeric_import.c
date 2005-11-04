@@ -620,9 +620,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     wsheet_init(&sheet);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     if (wbook_get_info(fname, &book, prn)) {
 	pputs(prn, _("Failed to get workbook info"));
@@ -766,9 +764,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     wbook_free(&book);
     wsheet_free(&sheet);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     if (err) {
 	free(newinfo);

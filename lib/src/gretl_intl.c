@@ -23,6 +23,72 @@
 # include <glib.h>
 #endif
 
+#ifdef ENABLE_NLS
+
+static int numeric_c_locale_depth = 0;
+static char *numeric_locale = NULL;
+
+/**
+ * gretl_push_c_numeric_locale:
+ *
+ * Description:  Saves the current %LC_NUMERIC locale and sets it to "C"
+ * This way you can safely read write floating point numbers all in the
+ * same format.  You should make sure that code between
+ * gretl_push_c_numeric_locale() and gretl_pop_c_numeric_locale()
+ * doesn't do any setlocale calls or locale may end up in a strange setting.
+ * Also make sure to always pop the C numeric locale after you've pushed it.
+ * The calls can be nested.
+ **/
+
+void gretl_push_c_numeric_locale (void)
+{
+    if (numeric_c_locale_depth == 0) {
+	free(numeric_locale);
+	numeric_locale = gretl_strdup(setlocale(LC_NUMERIC, NULL));
+	setlocale(LC_NUMERIC, "C");
+    }
+    numeric_c_locale_depth++;
+}
+
+/**
+ * gretl_pop_c_numeric_locale:
+ *
+ * Description:  Restores the LC_NUMERIC locale to what it was 
+ * before the matching gretl_push_c_numeric_locale(). If these calls
+ * were nested, then this is a no-op until we get to the most outermost
+ * layer. Code in between these should not do any setlocale calls
+ * to change the %LC_NUMERIC locale or things may come out very strange.
+ **/
+
+void gretl_pop_c_numeric_locale (void)
+{
+    if (numeric_c_locale_depth == 0) {
+	return;
+    }
+
+    numeric_c_locale_depth--;
+
+    if (numeric_c_locale_depth == 0) {
+	setlocale(LC_NUMERIC, numeric_locale);
+	free(numeric_locale);
+	numeric_locale = NULL;
+    }
+}
+
+#else
+
+void gretl_push_c_numeric_locale (void)
+{
+    return;
+}
+
+void gretl_pop_c_numeric_locale (void)
+{
+    return;
+}
+
+#endif /* ENABLE_NLS */
+
 /**
  * doing_nls:
  *

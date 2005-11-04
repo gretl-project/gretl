@@ -1584,9 +1584,7 @@ int corrgram (int varno, int order, double ***pZ,
 	goto acf_getout;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     /* create two separate plots, if both are OK */
     if (!pacf_err) {
@@ -1633,9 +1631,7 @@ int corrgram (int varno, int order, double ***pZ,
 	fputs("set nomultiplot\n", fq);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fclose(fq);
 
@@ -2123,15 +2119,14 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     pputc(prn, '\n');
 
     if (do_graph) {
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "C");
-#endif
+	gretl_push_c_numeric_locale();
+
 	for (t=1; t<=nobs/2; t++) {
 	    fprintf(fq, "%d %f\n", t, savexx[t]);
 	}
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
-#endif
+
+	gretl_pop_c_numeric_locale();
+
 	fputs("e\n", fq);
 
 	fclose(fq);
