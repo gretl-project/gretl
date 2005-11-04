@@ -472,9 +472,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
     fprintf(fp, "set key right top\n");
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     if (dist == NORMAL_DIST || dist == T_DIST) {
 	xx = fabs(x);
@@ -544,11 +542,9 @@ static void htest_graph (int dist, double x, int df1, int df2)
     fprintf(fp, "'-' using 1:2 title '%s' w impulses\n",
 	    I_("test statistic"));
     fprintf(fp, "%g %g\n", x, spike);
-    fprintf(fp, "e\n");
+    fputs("e\n", fp);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_push_c_numeric_locale();
 
     fclose(fp);
 

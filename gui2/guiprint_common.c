@@ -1077,11 +1077,9 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
 	}
     }	
 
-#ifdef ENABLE_NLS
     if (datainfo->decpoint != ',') {
-	setlocale(LC_NUMERIC, "C");
+	gretl_push_c_numeric_locale();
     }
-#endif
 
     /* variable names */
     pprintf(prn, "obs%c", delim);
@@ -1107,9 +1105,9 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
 	}
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    if (datainfo->decpoint != ',') {
+	gretl_pop_c_numeric_locale();
+    }
 
     if (pmax != NULL) {
 	free(pmax);

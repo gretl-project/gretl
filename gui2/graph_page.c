@@ -131,18 +131,14 @@ static int geomline (int ng, FILE *fp)
 	tmarg = lmarg = 10.0;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     fprintf(fp, "\\usepackage[body={%g%s,%g%s},"
 	    "top=%g%s,left=%g%s,nohead]{geometry}\n\n",
 	    width, unit, height, unit, 
 	    tmarg, unit, lmarg, unit);
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     return 0;
 }
@@ -172,9 +168,7 @@ static int tex_graph_setup (int ng, FILE *fp)
 	return 1;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
 
     if (ng == 1) {
 	sprintf(fname, "%s_1", gpage_tex_base);
@@ -221,9 +215,7 @@ static int tex_graph_setup (int ng, FILE *fp)
 	fputs("\\end{tabular}\n", fp);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif 
+    gretl_pop_c_numeric_locale();
 
     return 0;
 }
@@ -320,9 +312,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 	return 1;
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
+    gretl_push_c_numeric_locale();
     
     if (gpage.output == PDF_OUTPUT) {
 	fputs("set term pdf\n", fq);
@@ -341,9 +331,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 	fname = gpage_fname(".ps", i);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
+    gretl_pop_c_numeric_locale();
 
     fprintf(fq, "set output '%s'\n", fname);
 

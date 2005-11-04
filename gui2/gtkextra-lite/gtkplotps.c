@@ -34,7 +34,6 @@
 #include <ctype.h>
 #include <time.h>
 #include <gtk/gtk.h>
-#include <locale.h>
 
 #include "gtkplot-lite.h"
 #include "gtkpsfontpango.h"
@@ -124,7 +123,6 @@ static void ps_reencode_font			(FILE *file, char *fontname);
 
 /*********************************************************************/
 static GtkPlotPCClass *parent_class = NULL;
-static gchar *locale = NULL;
 
 GtkType
 gtk_plot_ps_get_type (void)
@@ -403,8 +401,7 @@ psleave(GtkPlotPC *pc)
     fprintf(GTK_PLOT_PS(pc)->psfile, "%%%%Trailer\n");
     fprintf(GTK_PLOT_PS(pc)->psfile, "%%%%EOF\n");
     fclose(GTK_PLOT_PS(pc)->psfile);
-    setlocale(LC_NUMERIC, locale);
-    g_free(locale);
+    gretl_pop_c_numeric_locale();
 }
 
 gboolean 
@@ -415,9 +412,8 @@ psinit						(GtkPlotPC *pc)
     GtkPlotPS *ps;
 
     now = time(NULL);
-
-    locale = g_strdup(setlocale(LC_NUMERIC, NULL));
-    setlocale(LC_NUMERIC, "C");
+    
+    gretl_push_c_numeric_locale();
 
     ps = GTK_PLOT_PS(pc);
     psout = ps->psfile;

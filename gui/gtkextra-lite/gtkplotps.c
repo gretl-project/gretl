@@ -35,7 +35,6 @@
 #include <time.h>
 #include <gtk/gtk.h>
 #include <wctype.h>
-#include <locale.h>
 
 #include "gtkplot.h"
 #include "gtkpsfont.h"
@@ -124,7 +123,6 @@ static void color_to_hex                        (GdkColor color,
 
 /*********************************************************************/
 static GtkPlotPCClass *parent_class = NULL;
-static gchar *locale = NULL;
 
 GtkType
 gtk_plot_ps_get_type (void)
@@ -401,8 +399,7 @@ psleave(GtkPlotPC *pc)
     fprintf(GTK_PLOT_PS(pc)->psfile, "%%%%Trailer\n");
     fprintf(GTK_PLOT_PS(pc)->psfile, "%%%%EOF\n");
     fclose(GTK_PLOT_PS(pc)->psfile);
-    setlocale(LC_NUMERIC, locale);
-    g_free(locale);
+    gretl_pop_c_numeric_locale();
 }
 
 static gboolean 
@@ -414,8 +411,7 @@ psinit						(GtkPlotPC *pc)
 
     now = time(NULL);
 
-    locale = g_strdup(setlocale(LC_NUMERIC, NULL));
-    setlocale(LC_NUMERIC, "C");
+    gretl_push_c_numeric_locale();
 
     ps = GTK_PLOT_PS(pc);
     psout = ps->psfile;

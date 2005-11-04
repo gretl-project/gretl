@@ -175,7 +175,7 @@ static double entry_to_gp_double (GtkWidget *w)
 	    gchar *tmp = g_strdup(s);
 
 	    charsub(tmp, ',', '.');
-	    setlocale(LC_NUMERIC, "C");
+	    gretl_push_c_numeric_locale();
 #else
 	    const gchar *tmp = s;
 #endif
@@ -185,7 +185,7 @@ static double entry_to_gp_double (GtkWidget *w)
 		ret = atof(tmp);
 	    }
 #ifdef ENABLE_NLS
-	    setlocale(LC_NUMERIC, "");
+	    gretl_pop_c_numeric_locale();
 	    g_free(tmp);
 #endif
 	}
