@@ -307,7 +307,7 @@ static GtkItemFactoryEntry model_items[] = {
       do_forecast, FCASTERR, NULL },
     { N_("/Model data/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL },
-    { N_("/Model data/Confidence ellipse"), NULL, 
+    { N_("/Model data/Confidence ellipse..."), NULL, 
       selector_callback, ELLIPSE, NULL },
     { N_("/Model data/coefficient covariance matrix"), NULL, 
       do_outcovmx, 0, NULL },

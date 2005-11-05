@@ -2668,15 +2668,24 @@ static void add_omit_list (gpointer p, selector *sr)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
+    gchar *row[2];
+    gchar id[5];
     int i;
 
-    if (sr->code == OMIT || sr->code == COEFFSUM || sr->code == ELLIPSE) {
-	for (i=2; i<=pmod->list[0]; i++) {
-	    gchar *row[2];
-	    gchar id[5];
+    if (sr->code == ELLIPSE) {
+	char pname[VNAMELEN];
 
-	    if (pmod->list[i] == 0 && sr->code != ELLIPSE) {
-		/* FIXME? */
+	for (i=0; i<pmod->ncoeff; i++) {
+	    gretl_model_get_param_name(pmod, datainfo, i, pname);
+	    sprintf(id, "%d", i);
+	    row[0] = id;
+	    row[1] = pname;
+	    gtk_clist_append(GTK_CLIST(sr->varlist), row);
+
+	}
+    } else if (sr->code == OMIT || sr->code == COEFFSUM) {
+	for (i=2; i<=pmod->list[0]; i++) {
+	    if (pmod->list[i] == 0) {
 		continue;
 	    }
 	    if (pmod->list[i] == LISTSEP) {
@@ -2689,8 +2698,6 @@ static void add_omit_list (gpointer p, selector *sr)
 	} 
     } else {
 	for (i=1; i<datainfo->v; i++) {
-	    gchar *row[2];
-	    gchar id[5];
 	    int j, match = 0;
 
 	    for (j=1; j<=pmod->list[0]; j++) {
@@ -2721,11 +2728,21 @@ static void add_omit_list (gpointer p, selector *sr)
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->varlist)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-    
-    if (sr->code == OMIT || sr->code == COEFFSUM || sr->code == ELLIPSE) {
+
+    if (sr->code == ELLIPSE) {
+	char pname[VNAMELEN];
+
+	for (i=0; i<pmod->ncoeff; i++) {
+	    gretl_model_get_param_name(pmod, datainfo, i, pname);
+	    gtk_list_store_append(store, &iter);
+	    gtk_list_store_set(store, &iter, 
+			       0, i, 
+			       1, pname,
+			       -1);
+	}
+    } else if (sr->code == OMIT || sr->code == COEFFSUM) {
 	for (i=2; i<=pmod->list[0]; i++) {
-	    if (pmod->list[i] == 0 && sr->code != ELLIPSE) {
-		/* FIXME? */
+	    if (pmod->list[i] == 0) {
 		continue;
 	    }
 	    if (pmod->list[i] == LISTSEP) {

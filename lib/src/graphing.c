@@ -3043,7 +3043,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "%g,%g point lt 2 pt 1\n", b[0], b[1]);
+    fprintf(fp, "%g,%g point lt 2 pt 1 offset 3,3\n", b[0], b[1]);
 
     fprintf(fp, "x(t) = %g*cos(t)%+g*sin(t)%+g\n", xcoeff[0], xcoeff[1], b[0]);
     fprintf(fp, "y(t) = %g*cos(t)%+g*sin(t)%+g\n", ycoeff[0], ycoeff[1], b[1]);

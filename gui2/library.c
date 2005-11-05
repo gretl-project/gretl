@@ -1446,18 +1446,20 @@ void do_confidence_region (GtkWidget *widget, gpointer p)
     MODEL *pmod;
 
     char *mask = NULL;
+    char iname[VNAMELEN];
+    char jname[VNAMELEN];
     gretl_matrix *V = NULL;
     int v[2];
     double b[2] = { NADBL, NADBL };
     double t, kF;
-    int i, err, got = 0;
+    int err;
 
     if (buf == NULL || sscanf(buf, "%d %d", &v[0], &v[1]) != 2) {
 	return;
     }
 
     pmod = (MODEL *) vwin->data;
-    if (pmod == NULL || pmod->list == NULL) {
+    if (pmod == NULL) {
 	return;
     }
 
@@ -1466,22 +1468,10 @@ void do_confidence_region (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    for (i=2; i<=pmod->list[0] && got < 2; i++) {
-	if (pmod->list[i] == v[0]) {
-	    mask[i-2] = 1;
-	    b[0] = pmod->coeff[i-2];
-	    got++;
-	} else if (pmod->list[i] == v[1]) {
-	    mask[i-2] = 1;
-	    b[1] = pmod->coeff[i-2];
-	    got++;
-	}
-    }
+    mask[v[0]] = mask[v[1]] = 1;
 
-    if (na(b[0]) || na(b[1])) {
-	free(mask);
-	return;
-    }
+    b[0] = pmod->coeff[v[0]];
+    b[1] = pmod->coeff[v[1]];
 
     V = gretl_vcv_matrix_from_model(pmod, mask);
     if (V == NULL) {
@@ -1492,8 +1482,10 @@ void do_confidence_region (GtkWidget *widget, gpointer p)
     t = tcrit95(pmod->dfd);
     kF = 2.0 * f_crit_a(.05, 2, pmod->dfd);
 
-    err = confidence_ellipse_plot(V, b, t, kF, datainfo->varname[v[0]],
-				  datainfo->varname[v[1]]);
+    gretl_model_get_param_name(pmod, datainfo, v[0], iname);
+    gretl_model_get_param_name(pmod, datainfo, v[1], jname);
+
+    err = confidence_ellipse_plot(V, b, t, kF, iname, jname);
     gui_graph_handler(err);
 
     gretl_matrix_free(V);
