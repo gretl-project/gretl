@@ -2827,6 +2827,7 @@ static void minimal_model_check (GtkItemFactory *ifac, const MODEL *pmod)
     if (pmod->ncoeff == 1) {
 	flip(ifac, "/Tests/omit variables", FALSE);
 	flip(ifac, "/Tests/sum of coefficients", FALSE);
+	flip(ifac, "/Model data/Confidence ellipse...", FALSE);
 
 	if (pmod->ifc) {
 	    flip(ifac, "/Tests/heteroskedasticity", FALSE);
@@ -2914,7 +2915,9 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(vwin->ifac, "/Graphs", FALSE);
     } else if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
-    }	
+    }
+
+    /* FIXME restrictions on confidence ellipse */
 
     if (dataset_is_panel(datainfo)) {
 	arch_menu_off(vwin->ifac);

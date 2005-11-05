@@ -1452,15 +1452,15 @@ void do_confidence_region (GtkWidget *widget, gpointer p)
     double t, kF;
     int i, err, got = 0;
 
-    if (buf == NULL) {
-	return;
-    }
-
-    if (sscanf(buf, "%d %d", &v[0], &v[1]) != 2) {
+    if (buf == NULL || sscanf(buf, "%d %d", &v[0], &v[1]) != 2) {
 	return;
     }
 
     pmod = (MODEL *) vwin->data;
+    if (pmod == NULL || pmod->list == NULL) {
+	return;
+    }
+
     mask = calloc(pmod->ncoeff, 1);
     if (mask == NULL) {
 	return;
