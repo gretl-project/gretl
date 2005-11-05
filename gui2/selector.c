@@ -81,7 +81,7 @@ struct _selector {
 #define GRAPH_CODE(c) (c == GR_PLOT || c == GR_XY || c == GR_IMP || GR_DUMMY)
 
 #define TWO_VARS_CODE(c) (c == SPEARMAN || c == MEANTEST || c == MEANTEST2 || \
-                          c == VARTEST)
+                          c == VARTEST || c == ELLIPSE)
 
 #define WANT_TOGGLES(c) (c == ARMA || \
                          c == COINT || \
@@ -2640,6 +2640,7 @@ static char *get_topstr (int cmdnum)
     case MEANTEST:
     case MEANTEST2:
     case VARTEST:
+    case ELLIPSE:
 	return N_("Select two variables");
     case PRINT:
 	return N_("Select variables to display");
@@ -2669,12 +2670,13 @@ static void add_omit_list (gpointer p, selector *sr)
     MODEL *pmod = (MODEL *) vwin->data;
     int i;
 
-    if (sr->code == OMIT || sr->code == COEFFSUM) {
+    if (sr->code == OMIT || sr->code == COEFFSUM || sr->code == ELLIPSE) {
 	for (i=2; i<=pmod->list[0]; i++) {
 	    gchar *row[2];
 	    gchar id[5];
 
-	    if (pmod->list[i] == 0) {
+	    if (pmod->list[i] == 0 && sr->code != ELLIPSE) {
+		/* FIXME? */
 		continue;
 	    }
 	    if (pmod->list[i] == LISTSEP) {
@@ -2720,9 +2722,10 @@ static void add_omit_list (gpointer p, selector *sr)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     
-    if (sr->code == OMIT || sr->code == COEFFSUM) {
+    if (sr->code == OMIT || sr->code == COEFFSUM || sr->code == ELLIPSE) {
 	for (i=2; i<=pmod->list[0]; i++) {
-	    if (pmod->list[i] == 0) {
+	    if (pmod->list[i] == 0 && sr->code != ELLIPSE) {
+		/* FIXME? */
 		continue;
 	    }
 	    if (pmod->list[i] == LISTSEP) {
@@ -2844,7 +2847,8 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     store = sr->varlist;
 #endif
 
-    if (cmdcode == OMIT || cmdcode == ADD || cmdcode == COEFFSUM) {
+    if (cmdcode == OMIT || cmdcode == ADD || cmdcode == COEFFSUM ||
+	cmdcode == ELLIPSE) {
         add_omit_list(p, sr);
 	g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
 			 G_CALLBACK(remove_busy_signal), 
@@ -2913,7 +2917,8 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     /* buttons: "OK", Clear, Cancel, Help */
     build_selector_buttons(sr, okfunc);
 
-    if (TWO_VARS_CODE(sr->code) && mdata_selection_count() == 2) {
+    if (TWO_VARS_CODE(sr->code) && sr->code != ELLIPSE &&
+	mdata_selection_count() == 2) {
 	set_vars_from_main(sr);
     } else if (SAVE_DATA_ACTION(sr->code) && vnum > 0) {
 	set_single_var(sr, vnum);

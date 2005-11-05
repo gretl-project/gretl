@@ -109,6 +109,8 @@ void do_coeff_sum (GtkWidget *widget, gpointer p);
 
 void do_add_omit (GtkWidget *widget, gpointer p);
 
+void do_confidence_region (GtkWidget *widget, gpointer p);
+
 void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget);
 
 void do_autocorr (gpointer data, guint u, GtkWidget *widget);

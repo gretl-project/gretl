@@ -1,6 +1,7 @@
 version 1.4.2, in progress
 - Add VECM (Vector Error Correction Models) for time-series
   data
+- Add confidence ellipse option for two coefficients
 - New command "mle" : a general-purpose maximizer of log
   likelihood, using the BFGS algorithm -- works much like the
   "nls" command, taking a user-specified log likelihood function

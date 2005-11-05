@@ -563,7 +563,8 @@ static int get_gpt_marker (const char *line, char *label)
                       p == PLOT_LEVERAGE || \
                       p == PLOT_MULTI_SCATTER || \
                       p == PLOT_TRI_GRAPH || \
-                      p == PLOT_VAR_ROOTS)
+                      p == PLOT_VAR_ROOTS || \
+		      p == PLOT_ELLIPSE)
 
 static void plot_label_init (GPT_LABEL *lbl)
 {
@@ -1099,7 +1100,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     /* get the number of data-points, plot type, and check for markers */
     spec->nobs = get_plot_nobs(fp, &spec->code, &have_markers);
-    if (spec->nobs == 0) {
+    if (spec->nobs == 0 && spec->code != PLOT_ELLIPSE) {
 	/* failed reading plot data */
 #if GPDEBUG
 	fprintf(stderr, " got spec->nobs = 0\n");
@@ -1107,9 +1108,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	fclose(fp);
 	return 1;
     } else if (cant_edit(spec->code)) {
-#if GPDEBUG
-	fprintf(stderr, " got non-editable plot\n");
-#endif
+	fprintf(stderr, "read_plotspec_from_file: plot is not editable\n");
 	fclose(fp);
 	return 0;
     }

@@ -399,7 +399,8 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
     windata_t *vwin = (windata_t *) data;
     char title[64];
 
-    if (action == ADD || action == OMIT || action == COEFFSUM) {
+    if (action == ADD || action == OMIT || action == COEFFSUM ||
+	action == ELLIPSE) {
 	set_window_busy(vwin);
     }
 
@@ -436,8 +437,10 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	simple_selection(_("gretl: model tests"), do_add_omit, action, vwin);
     } else if (action == COEFFSUM) {
 	simple_selection(_("gretl: model tests"), do_coeff_sum, action, vwin);
+    } else if (action == ELLIPSE) {
+	simple_selection(_("gretl: model tests"), do_confidence_region, action, vwin);
     } else if (action == GR_PLOT) {
-	simple_selection(_("gretl: model tests"), do_graph_from_selector, action, vwin);
+	simple_selection(_("gretl: define graph"), do_graph_from_selector, action, vwin);
     } else if (action == SPEARMAN) {
 	strcat(title, _("rank correlation"));
 	simple_selection(title, do_spearman, action, vwin);

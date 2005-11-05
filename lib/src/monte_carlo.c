@@ -1125,7 +1125,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
     if (!err && !na(loop->init.val) && !na(loop->right.val)) {
 	int nt = loop->right.val - loop->init.val;
 
-	if (nt <= 0) {
+	if (loop->type != FOR_LOOP && nt <= 0) {
 	    strcpy(gretl_errmsg, _("Loop count missing or invalid\n"));
 	    err = 1;
 	}

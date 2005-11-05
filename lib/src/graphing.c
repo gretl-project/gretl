@@ -95,6 +95,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_SAMPLING_DIST,  "sampling distribution" },
     { PLOT_TRI_GRAPH,      "TRAMO / X12A tri-graph" },
     { PLOT_VAR_ROOTS,      "VAR inverse roots plot" },
+    { PLOT_ELLIPSE,        "confidence ellipse plot" },
     { PLOT_TYPE_MAX,       NULL }
 };
     
@@ -2984,6 +2985,77 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
     gretl_pop_c_numeric_locale();
 
     fputs("e\n", fp);
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
+int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
+			     const char *iname, const char *jname)
+{
+    FILE *fp = NULL;
+    double maxerr[2];
+    double xcoeff[2];
+    double ycoeff[2];
+    double *e = NULL;
+    int err;
+
+    maxerr[0] = t * sqrt(gretl_matrix_get(V, 0, 0));
+    maxerr[1] = t * sqrt(gretl_matrix_get(V, 1, 1));
+
+    err = gretl_invert_symmetric_matrix(V);
+    if (err) {
+	return err;
+    }
+
+    e = gretl_symmetric_matrix_eigenvals(V, 1);
+    if (e == NULL) {
+	return E_ALLOC;
+    }
+
+    e[0] = sqrt(1.0 / e[0] * c);
+    e[1] = sqrt(1.0 / e[1] * c);
+
+    xcoeff[0] = e[0] * gretl_matrix_get(V, 0, 0);
+    xcoeff[1] = e[1] * gretl_matrix_get(V, 0, 1);
+
+    ycoeff[0] = e[0] * gretl_matrix_get(V, 1, 0);
+    ycoeff[1] = e[1] * gretl_matrix_get(V, 1, 1);
+
+    free(e);
+
+    err = gnuplot_init(PLOT_ELLIPSE, &fp);
+    if (err) {
+	return err;
+    }
+
+    fprintf(fp, "set title '%s'\n",
+	    /* xgettext:no-c-format */
+	    I_("95% confidence ellipse and 95% marginal intervals"));
+    fputs("# literal lines = 9\n", fp);
+    fputs("set parametric\n", fp);
+    fputs("set xzeroaxis\n", fp);
+    fputs("set yzeroaxis\n", fp);
+
+    fprintf(fp, "set xlabel '%s'\n", iname);
+    fprintf(fp, "set ylabel '%s'\n", jname);
+    fprintf(fp, "set label '%.3g, %.3g' at ", b[0], b[1]);
+
+    gretl_push_c_numeric_locale();
+
+    fprintf(fp, "%g,%g point lt 2 pt 1\n", b[0], b[1]);
+
+    fprintf(fp, "x(t) = %g*cos(t)%+g*sin(t)%+g\n", xcoeff[0], xcoeff[1], b[0]);
+    fprintf(fp, "y(t) = %g*cos(t)%+g*sin(t)%+g\n", ycoeff[0], ycoeff[1], b[1]);
+
+    fputs("plot x(t), y(t) title '', \\\n", fp);
+    fprintf(fp, "%g, y(t) title '' w lines lt 2, \\\n", b[0] - maxerr[0]);
+    fprintf(fp, "%g, y(t) title '' w lines lt 2, \\\n", b[0] + maxerr[0]);
+    fprintf(fp, "x(t), %g title '' w lines lt 2, \\\n", b[1] - maxerr[1]);
+    fprintf(fp, "x(t), %g title '' w lines lt 2\n", b[1] + maxerr[1]);
+
+    gretl_pop_c_numeric_locale();
+
     fclose(fp);
 
     return gnuplot_make_graph();

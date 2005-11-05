@@ -33,7 +33,8 @@
 #include <errno.h>
 
 enum {
-    HNUM = 2000,
+    HIGHNUM = 5000,
+    HNUM,
     UHATNUM,
     YHATNUM,
     TNUM,
@@ -753,7 +754,7 @@ static double eval_atom (genatom *atom, GENERATOR *genr, int t,
 
     /* constant, scalar variable, or specific obs from a series */
     if (atom->scalar) {
-	if (atom->varnum >= 0) {
+	if (atom->varnum >= 0 && atom->varnum < HIGHNUM) {
 	    x = (*genr->pZ)[atom->varnum][atom->varobs];
 	} else {
 	    x = atom->val;

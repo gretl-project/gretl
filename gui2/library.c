@@ -1438,6 +1438,68 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     view_model(prn, pmod, 78, 420, title);
 }
 
+void do_confidence_region (GtkWidget *widget, gpointer p)
+{
+    selector *sr = (selector *) p;
+    windata_t *vwin = selector_get_data(sr);
+    const char *buf = selector_list(sr);
+    MODEL *pmod;
+
+    char *mask = NULL;
+    gretl_matrix *V = NULL;
+    int v[2];
+    double b[2] = { NADBL, NADBL };
+    double t, kF;
+    int i, err, got = 0;
+
+    if (buf == NULL) {
+	return;
+    }
+
+    if (sscanf(buf, "%d %d", &v[0], &v[1]) != 2) {
+	return;
+    }
+
+    pmod = (MODEL *) vwin->data;
+    mask = calloc(pmod->ncoeff, 1);
+    if (mask == NULL) {
+	return;
+    }
+
+    for (i=2; i<=pmod->list[0] && got < 2; i++) {
+	if (pmod->list[i] == v[0]) {
+	    mask[i-2] = 1;
+	    b[0] = pmod->coeff[i-2];
+	    got++;
+	} else if (pmod->list[i] == v[1]) {
+	    mask[i-2] = 1;
+	    b[1] = pmod->coeff[i-2];
+	    got++;
+	}
+    }
+
+    if (na(b[0]) || na(b[1])) {
+	free(mask);
+	return;
+    }
+
+    V = gretl_vcv_matrix_from_model(pmod, mask);
+    if (V == NULL) {
+	free(mask);
+	return;
+    }
+
+    t = tcrit95(pmod->dfd);
+    kF = 2.0 * f_crit_a(.05, 2, pmod->dfd);
+
+    err = confidence_ellipse_plot(V, b, t, kF, datainfo->varname[v[0]],
+				  datainfo->varname[v[1]]);
+    gui_graph_handler(err);
+
+    gretl_matrix_free(V);
+    free(mask);
+}
+
 #ifdef OLD_GTK
 
 static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
@@ -3455,7 +3517,7 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 		NULL);
 }
 
-void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
+void do_coeff_intervals (gpointer data, guint u, GtkWidget *w)
 {
     PRN *prn;
     windata_t *vwin = (windata_t *) data;

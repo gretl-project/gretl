@@ -98,6 +98,7 @@ typedef enum {
     PLOT_IRFBOOT,
     PLOT_KERNEL,
     PLOT_VAR_ROOTS,
+    PLOT_ELLIPSE,
     PLOT_TYPE_MAX
 } PlotType;
 
@@ -200,6 +201,9 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var,
 			     double ***pZ, DATAINFO *pdinfo);
 
 int gretl_VAR_roots_plot (GRETL_VAR *var);
+
+int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
+			     const char *iname, const char *jname);
 
 int is_auto_ols_string (const char *s);
 

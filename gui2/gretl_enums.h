@@ -73,6 +73,7 @@ enum extra_cmds {
     MODEL_RESTR,
     SYS_RESTR,
     VECM_RESTR,
+    ELLIPSE,
     GUI_CMD_MAX
 };
 
