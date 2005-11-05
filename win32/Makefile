@@ -263,7 +263,7 @@ dlls/libprob.dll: $(PROBOBJ) dllinit.o
 dlls/libgtkextra-lite.dll: $(EXTRAOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgtkextra-lite.def --implib $(imports)/libgtkextra-lite.a \
-	-o $@ $^ $(GTKLIBS)
+	-o $@ $^ $(GTKLIBS) $(GRETLLIB)
 
 plugins/stats_tables.dll: stats_tables.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
@@ -295,7 +295,7 @@ plugins/vif.dll: vif.o dllinit.o
 
 plugins/urcdist.dll: urcdist.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ -lz -lm -lintl 
+	--implib plugins/$(<:.o=.a) $^ -lz -lm -lintl $(GRETLLIB)
 
 plugins/panel_data.dll: panel_data.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
