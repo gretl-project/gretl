@@ -1450,7 +1450,7 @@ void do_confidence_region (GtkWidget *widget, gpointer p)
     char jname[VNAMELEN];
     gretl_matrix *V = NULL;
     int v[2];
-    double b[2] = { NADBL, NADBL };
+    double b[2];
     double t, kF;
     int err;
 
@@ -1470,14 +1470,14 @@ void do_confidence_region (GtkWidget *widget, gpointer p)
 
     mask[v[0]] = mask[v[1]] = 1;
 
-    b[0] = pmod->coeff[v[0]];
-    b[1] = pmod->coeff[v[1]];
-
     V = gretl_vcv_matrix_from_model(pmod, mask);
     if (V == NULL) {
 	free(mask);
 	return;
     }
+
+    b[0] = pmod->coeff[v[0]];
+    b[1] = pmod->coeff[v[1]];
 
     t = tcrit95(pmod->dfd);
     kF = 2.0 * f_crit_a(.05, 2, pmod->dfd);
