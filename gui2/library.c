@@ -2411,20 +2411,20 @@ static int is_genr_line (char *s)
 
 static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 {
-    gchar *buf;
-    PRN *prn;
+    gchar *buf = edit_dialog_special_get_text(dlg);
+    gretlopt opt = edit_dialog_get_opt(dlg);
     char bufline[MAXLINE];
     char title[26];
     int err = 0, started = 0;
     MODEL *pmod = NULL;
     const char *cstr;
     const char *endstr;
+    PRN *prn;
 
-    buf = edit_dialog_special_get_text(dlg);
     if (buf == NULL) {
 	return;
     }
-
+    
     if (ci == NLS) {
 	cstr = "nls";
 	endstr = "end nls";
@@ -2491,7 +2491,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	return;
     }
 
-    *pmod = nls(&Z, datainfo, OPT_NONE, prn); /* FIXME opt */
+    *pmod = nls(&Z, datainfo, opt, prn);
     err = model_output(pmod, prn);
 
     if (err) {

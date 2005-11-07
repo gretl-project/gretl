@@ -615,6 +615,33 @@ static void set_sys_method (GtkEditable *entry, dialog_t *d)
     } 
 }
 
+static gboolean opt_v_callback (GtkWidget *w, dialog_t *dlg)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	dlg->opt |= OPT_V;
+    } else {
+	dlg->opt &= ~OPT_V;
+    }
+
+    return FALSE;
+}
+
+static void verbosity_switch (GtkWidget *vbox, dialog_t *dlg)
+{
+    GtkWidget *b, *hbox;
+
+    b = gtk_check_button_new_with_label(_("Show details of iterations"));
+    g_signal_connect(G_OBJECT(b), "toggled", 
+		     G_CALLBACK(opt_v_callback), dlg);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 5);
+    gtk_widget_show(b);
+
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox);
+}
+
 static void system_estimator_list (GtkWidget *vbox, gpointer data)
 {
     GList *items = NULL;
@@ -752,6 +779,8 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	sample_replace_buttons(top_vbox, d);
     } else if (cmdcode == SYSTEM) {
 	system_estimator_list(top_vbox, d);
+    } else if (cmdcode == NLS || cmdcode == MLE) {
+	verbosity_switch(top_vbox, d);
     }
 
     if (varclick == VARCLICK_INSERT_ID) { 
