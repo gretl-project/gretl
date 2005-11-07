@@ -36,6 +36,8 @@
 #include <gtk/gtk.h>
 #include <wctype.h>
 
+#include "gretl_intl.h"
+
 #include "gtkplot.h"
 #include "gtkpsfont.h"
 #include "gtkplotpc.h"
@@ -44,7 +46,7 @@
 static void gtk_plot_ps_class_init 		(GtkPlotPSClass *klass);
 static void gtk_plot_ps_init 			(GtkPlotPS *ps);
 static void gtk_plot_ps_finalize 		(GtkObject *object);
-/*********************************************************************/
+
 /* Postscript specific functions */
 static gboolean psinit				(GtkPlotPC *pc); 
 static void pssetviewport			(GtkPlotPC *pc, 
