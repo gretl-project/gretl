@@ -8,8 +8,7 @@
 
       <para>Esta parte introductoria está enfocada principalmente hacia el
       programa de cliente gráfico; para más detalles del programa de línea de
-      instrucciones, <application>gretlcli</application>, consultar el
-       <xref linkend="c-cmdref" /> y el <xref linkend="c-cli" /></para>
+      instrucciones, <application>gretlcli</application>, consultar XXX.</para>
 
       <para>Aunque es posible abrir <application>gretl</application> tecleando
       el nombre de un archivo de datos como argumento, por el momento no vamos
@@ -20,8 +19,8 @@
       ordenador. En Linux se llama <filename>gretl_x11</filename> mientras que
       en MS Windows se llama <filename>gretlw32.exe</filename>. En sistemas
       Linux también se instala un lote de instrucciones de envoltura (wrapper
-      script) llamado <filename>gretl</filename> - véase también el <xref
-      linkend="c-optarg" />.</para></footnote>Aparecerá una ventana principal
+      script) llamado <filename>gretl</filename>.</para></footnote>
+      Aparecerá una ventana principal
       (que puede tener alguna información sobre los datos pero que al
       principio está vacía) y varios menús, algunos de los cuales están
       desactivados al principio.</para>
@@ -307,11 +306,11 @@
             </listitem>
 
             <listitem>
-              <para><guimenuitem>Buscador de valores p</guimenuitem>: Abre una ventana que nos permite consultar
+              <para><guimenuitem>Buscador de valores p</guimenuitem>: Abre una 
+	      ventana que nos permite consultar
               valores p de distribuciones gausianas,
               <emphasis>t</emphasis>, chi-cuadrado, <emphasis>F</emphasis> o
-              gamma. Véase también la instrucción <command>pvalue</command> en el
-              <xref linkend="c-cmdref" />.</para>
+              gamma. Véase también la instrucción <command>pvalue</command>.</para>
             </listitem>
 
             <listitem>
@@ -333,16 +332,14 @@
               tipo <quote>consola</quote> dentro de la cual podemos escribir
               instrucciones (en lugar de apuntar y hacer clic), del mismo
               modo que en el programa de línea de instrucciones,
-              <application>gretlcli</application>. Véase el <xref
-              linkend="c-cmdref" />.</para>
+              <application>gretlcli</application>.</para>
             </listitem>
 
             <listitem>
               <para><guimenuitem>Iniciar GNU R</guimenuitem>: Inicia una sesión
               de <application>R</application> (si está instalado en el
               sistema), y carga una copia del conjunto de datos que esté
-              abierto en <application>gretl</application>. Véase el <xref
-              linkend="app-advanced" />.</para>
+              abierto en <application>gretl</application>.</para>
             </listitem>
           </itemizedlist>
         </listitem>
@@ -527,8 +524,8 @@
               necesitamos una variable predefinida: escribimos una expresión
               booleana (por ejemplo <literal>sqft &gt; 1400</literal>) y la
               muestra se restringe a las observaciones que cumplen este
-              requisito. Véase la ayuda para <command>genr</command> en <xref
-              linkend="c-cmdref" /> para detalles sobre los operadores booleanos
+              requisito. Véase la ayuda para <command>genr</command> para 
+	      detalles sobre los operadores booleanos
               que se pueden utilizar.</para>
             </listitem>
 
@@ -576,8 +573,7 @@
           mediante una formula (por ejemplo, con una función de alguna/s
           variable/s ya existentes). Para conocer la sintaxis de estas
           fórmulas, consúltese el término <command>genr</command> en la ayuda
-	  <emphasis>en línea</emphasis> o véase la instrucción <command>genr</command> 
-	  en el <xref linkend="c-cmdref" />.
+	  <emphasis>en línea</emphasis> o véase la instrucción <command>genr</command>.
           Un ejemplo sencillo sería:
           <programlisting>
         foo = x1 * x2</programlisting>
@@ -591,7 +587,7 @@
           <para><guimenu>Menú de modelo</guimenu>: Ya comentado
           en el <xref linkend="c-getting-started" />. Para más detalles sobre los
           estimadores ofrecidos en este menú, consúltese <xref
-          linkend="estimators" />, el <xref linkend="c-cmdref" /> a continuación,
+          linkend="estimators" />, el XXX a continuación,
           y/o la ayuda <emphasis>en línea</emphasis> sobre <quote>estimación</quote>.</para>
         </listitem>
 

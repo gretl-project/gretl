@@ -28,6 +28,12 @@ CHAPTERS_IT = chapters_it/cmdref.xml chapters_it/intro.xml chapters_it/modes.xml
 	chapters_it/trouble.xml chapters_it/biblio.xml chapters_it/sampling.xml \
         chapters_it/functions.xml chapters_it/genr.xml chapters_it/vecm.xml
 
+CHAPTERS_ES = chapters_es/cmdref.xml chapters_es/intro.xml chapters_es/modes.xml \
+	chapters_es/panel.xml chapters_es/appendices.xml chapters_es/datafiles.xml \
+	chapters_es/looping.xml chapters_es/starting.xml \
+	chapters_es/cli.xml chapters_es/graphs.xml chapters_es/optarg.xml \
+	chapters_es/trouble.xml chapters_es/biblio.xml
+
 REF_CHAPTERS = chapters/cmdref.xml chapters/optarg.xml
 CMDLIST = chapters/cmdlist.xml
 CMDREF = commands/gretl_commands.xml
@@ -61,6 +67,8 @@ guide-a4.pdf: guide-a4.tex
 
 guide_it.pdf: guide_it.tex
 
+guide_es.pdf: guide_es.tex
+
 # Gretl Command Reference
 
 manual.pdf: manual.tex
@@ -82,6 +90,12 @@ guide-a4.tex: guide-a4.xml $(CHAPTERS) mathextra.inc $(ALTDSL) $(MATHSS) \
 	./unescape_math.pl $@
 
 guide_it.tex: guide_it.xml $(CHAPTERS_IT) mathextra.inc $(ALTDSL) $(MATHSS) \
+	$(TITLESS) jadetex.cfg.it lucidabr.tex
+	rm -f jadetex.cfg && ln -s jadetex.cfg.it jadetex.cfg
+	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
+	./unescape_math.pl $@
+
+guide_es.tex: guide_es.xml $(CHAPTERS_ES) mathextra.inc $(ALTDSL) $(MATHSS) \
 	$(TITLESS) jadetex.cfg.it lucidabr.tex
 	rm -f jadetex.cfg && ln -s jadetex.cfg.it jadetex.cfg
 	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
