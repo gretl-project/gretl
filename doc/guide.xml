@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+"/usr/share/sgml/docbook-xml-4.3/docbookx.dtd" [
+<!ENTITY % mathextra SYSTEM "mathextra.inc">
+<!ENTITY version "1.0.10">
+<!ENTITY latex "LaTeX">
+<!ENTITY tex "TeX">
+<!ENTITY varepsilon "&#x025B;">
+<!ENTITY opto "<literal>[ -o ]</literal>">
+<!ENTITY cmdcol "82pt">
+<!ENTITY rsqu "<emphasis>R</emphasis><superscript>2</superscript>">
+<!ENTITY xt "<emphasis>x<subscript>t</subscript></emphasis>">
+<!ENTITY yt "<emphasis>y<subscript>t</subscript></emphasis>">
+<!ENTITY ut "<emphasis>u<subscript>t</subscript></emphasis>">
+<!ENTITY zt "<emphasis>z<subscript>t</subscript></emphasis>">
+<!ENTITY introduction SYSTEM "chapters/intro.xml">
+<!ENTITY starting SYSTEM "chapters/starting.xml">
+<!ENTITY modes SYSTEM "chapters/modes.xml">
+<!ENTITY datafiles SYSTEM "chapters/datafiles.xml">
+<!ENTITY genr SYSTEM "chapters/genr.xml">
+<!ENTITY panel SYSTEM "chapters/panel.xml">
+<!ENTITY sampling SYSTEM "chapters/sampling.xml">
+<!ENTITY graphs SYSTEM "chapters/graphs.xml">
+<!ENTITY nls SYSTEM "chapters/nls.xml">
+<!ENTITY looping SYSTEM "chapters/looping.xml">
+<!ENTITY functions SYSTEM "chapters/functions.xml">
+<!ENTITY vecm SYSTEM "chapters/vecm.xml">
+<!ENTITY trouble SYSTEM "chapters/trouble.xml">
+<!ENTITY cli SYSTEM "chapters/cli.xml">
+<!ENTITY appendices SYSTEM "chapters/appendices.xml">
+<!ENTITY biblio SYSTEM "chapters/biblio.xml">
+%mathextra;
+]>
+
+<!-- =============Document Header ============================= -->
+
+<book id="index" lang="en">
+
+  <title>Gretl Users' Guide</title>
+
+  <bookinfo>
+
+    <subtitle>Gnu Regression, Econometrics and Time-series
+      Library</subtitle>
+
+    <author>
+      <firstname>Allin</firstname>
+      <surname>Cottrell</surname>
+      <affiliation>
+	<orgdiv>Department of Economics</orgdiv>
+	<orgdiv>Wake Forest University</orgdiv>
+      </affiliation>
+    </author>
+
+    <graphic fileref="figures/gretl-logo"/>
+    
+    <copyright>
+      <year>2001&ndash;2005</year>
+      <holder>Allin Cottrell</holder>
+    </copyright>
+
+    <date>August, 2005</date>
+
+    <legalnotice id="legalnotice">
+      <para>Permission is granted to copy, distribute and/or modify
+	this document under the terms of the <citetitle>GNU Free
+	  Documentation License</citetitle>, Version 1.1 or any later
+	version published by the Free Software Foundation (see
+	<ulink
+	  url="http://www.gnu.org/licenses/fdl.html">http://www.gnu.org/licenses/fdl.html</ulink>).
+      </para>
+    </legalnotice>
+
+    <releaseinfo>
+      This is version &version; of the Gretl users' guide.
+    </releaseinfo>
+
+  </bookinfo>
+
+  &introduction;
+  &starting;
+  &modes;
+  &datafiles;
+  &genr;
+  &sampling;
+  &panel;
+  &graphs;
+  &nls;
+  &looping;
+  &functions;
+  &vecm;
+  &trouble;
+  &cli;
+  &appendices;
+  &biblio;
+
+</book>
+
+
+
+
+
+
+
