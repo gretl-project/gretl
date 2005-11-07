@@ -54,21 +54,19 @@
       clipboard.
     </para>
 
-    <para>To learn more about the possibilities of scripting, take a
-      look at the <application>gretl</application> Help item
-      <quote>Script commands syntax,</quote> or start up the
-      command-line program <application>gretlcli</application> and
-      consult its help, or consult <xref linkend="cmdref"/> in this
-      manual. In addition, the <application>gretl</application>
-      package includes over 70 <quote>practice</quote> scripts.  Most
-      of these relate to Ramanathan (2002), but they may also be used
-      as a free-standing introduction to scripting in
-      <application>gretl</application> and to various points of
-      econometric theory.  You can explore the practice files under
-      <quote>File, Open command file, practice file</quote>  There you
-      will find a listing of the files along with a brief description
-      of the points they illustrate and the data they employ.  Open
-      any file and run it to see the output.
+    <para>To learn more about the possibilities of scripting, take a look at the
+      <application>gretl</application> Help item <quote>Script commands
+      syntax,</quote> or start up the command-line program
+      <application>gretlcli</application> and consult its help, or consult the
+      <citetitle>Gretl Command Reference</citetitle>. In addition, the
+      <application>gretl</application> package includes over 70
+      <quote>practice</quote> scripts.  Most of these relate to Ramanathan
+      (2002), but they may also be used as a free-standing introduction to
+      scripting in <application>gretl</application> and to various points of
+      econometric theory.  You can explore the practice files under <quote>File,
+      Open command file, practice file</quote> There you will find a listing of
+      the files along with a brief description of the points they illustrate and
+      the data they employ.  Open any file and run it to see the output.
     </para>
 
     <para>Note that long commands in a script can be broken over two
@@ -87,17 +85,16 @@
 	  generate a single file containing a concise record of your
 	  work.</para>
       </listitem>
-      <listitem><para>Start by establishing a new script file.  Type
-	  in any commands that may be required to set up
-	  transformations of the data (see the <command>genr</command>
-	  command in <xref linkend="cmdref"/> below). Typically this
-	  sort of thing can be accomplished more efficiently via
-	  commands assembled with forethought rather than
-	  point-and-click. Then save and run the script: the GUI data
-	  window will be updated accordingly. Now you can carry out
-	  further exploration of the data via the GUI. To revisit the
-	  data at a later point, open and rerun the
-	  <quote>preparatory</quote> script first.</para>
+      <listitem><para>Start by establishing a new script file.  Type in any
+	  commands that may be required to set up transformations of the data
+	  (see the <command>genr</command> command in the <citetitle>Gretl
+	    Command Reference</citetitle>). Typically this sort of thing can be
+	  accomplished more efficiently via commands assembled with forethought
+	  rather than point-and-click. Then save and run the script: the GUI
+	  data window will be updated accordingly. Now you can carry out further
+	  exploration of the data via the GUI. To revisit the data at a later
+	  point, open and rerun the <quote>preparatory</quote> script
+	  first.</para>
       </listitem>
     </itemizedlist>
 
@@ -268,8 +265,9 @@
 	in plain text, &latex; or Rich Text Format).  Here is how to
 	do it:<footnote><para>The model table can also be built
 	    non-interactively, in script mode.  For details on how to
-	    do this, see the <xref linkend="cmd-modeltab"/>
-	    command.</para></footnote>
+	    do this, see the entry for <command>modeltab</command> in the
+	    <citetitle>Gretl Command Reference</citetitle>.
+	   </para></footnote>
       </para>
 
       <orderedlist>

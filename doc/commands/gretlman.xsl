@@ -3,7 +3,7 @@
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
 <xsl:param name="hlp">cli</xsl:param>
-<xsl:param name="standalone">false</xsl:param>
+<xsl:param name="standalone">true</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
 <xsl:output method="xml" omit-xml-declaration="yes" indent="yes" encoding="iso-8859-1"/>
@@ -314,11 +314,11 @@
   <xref linkend="cmd-{@targ}"/>
 </xsl:template>
 
-<xsl:template match="manref">
+<xsl:template match="guideref">
   <xsl:choose>
     <xsl:when test="$standalone='true'">
       <xsl:call-template name="gettext">
-        <xsl:with-param name="key" select="'fullman'"/>
+        <xsl:with-param name="key" select="'guidebook'"/>
       </xsl:call-template>
     </xsl:when>
     <xsl:otherwise>

@@ -6,7 +6,7 @@
   <sect1 id="starting-regression"><title>Eseguire una regressione</title>
 
     <para>Questa introduzione è dedicata prevalentemente alla versione grafica
-      del programma; si veda il <xref linkend="cmdref"/> e il <xref linkend="cli"/>
+      del programma; si veda il XXX e il <xref linkend="cli"/>
       per i dettagli sulla versione a riga di comando del programma,
       <application>gretlcli</application>.
     </para>
@@ -20,8 +20,8 @@
       del programma è differente a seconda della piattaforma: su Linux si chiama
       <filename>gretl_x11</filename>, mentre su MS Windows è
       <filename>gretlw32.exe</filename>. Sui sistemi Linux viene installato anche
-      uno script chiamato <filename>gretl</filename>, si veda anche il <xref
-      linkend="optarg"/>.</para></footnote>. Apparirà la finestra principale (che
+      uno script chiamato <filename>gretl</filename>, si veda anche il XXX.
+      </para></footnote>. Apparirà la finestra principale (che
       di solito mostra le informazioni sul dataset, ma che ora è vuota) e vari
       menù, alcuni dei quali disabilitati.
     </para>
@@ -164,7 +164,7 @@
       del &latex; generato da <application>gretl</application> includendo un
       file chiamato <filename>gretlpre.tex</filename> nella propria
       directory utente <application>gretl</application> (si veda
-      <xref linkend="optarg"/>). Il contenuto di tale file verrà usato come
+      XXX). Il contenuto di tale file verrà usato come
       <quote>preambolo</quote> &latex;, il cui valore predefinito è il
       seguente:
     </para>
@@ -284,7 +284,7 @@
 	      o sopprime il controllo per la disponibilità in rete di
               aggiornamenti di <application>gretl</application>; configura o
               disattiva la barra degli strumenti nella finestra principale.
-              Si veda il <xref linkend="optarg"/> per i dettagli.</para></listitem>
+              Si veda il XXX per i dettagli.</para></listitem>
           <listitem><para><guimenuitem>Esci</guimenuitem>: abbandona il programma.
               Se non si è in modalità esperto, verrà proposto di salvare il
               lavoro svolto.</para></listitem>
@@ -303,8 +303,7 @@
 	      apre una finestra che mostra i p-value per le distribuzioni
 	      Gaussiana, <emphasis>t</emphasis>, chi-quadro,
 	      <emphasis>F</emphasis> o gamma. Si veda anche il comando
-	      <command>pvalue</command> nel <xref
-		linkend="cmdref"/>.</para></listitem>
+	      <command>pvalue</command> nel XXX.</para></listitem>
 	  <listitem><para><guimenuitem>Calcola test</guimenuitem>: calcola
               le statistiche test e i p-value per una serie di test di ipotesi
               di uso comune (media della popolazione, varianza e proporzione,
@@ -318,7 +317,7 @@
               una finestra di <quote>terminale</quote> in cui è possibile digitare
               dei comandi, come se si stesse usando la versione a riga di comando
 	      <application>gretlcli</application>, invece di quella con interfaccia
-              grafica. Si veda il <xref linkend="cmdref"/>.
+              grafica.
 	    </para></listitem> 
 	  <listitem><para><guimenuitem>Avvia Gnu R</guimenuitem>:
 	      Avvia <application>R</application> (se è presente sul sistema) e vi
@@ -488,8 +487,8 @@
           basta fornire una condizione Booleana (ad es.
 	  <literal>sqft &gt; 1400</literal>) e il campione sarà
           ristretto alle osservazioni che soddisfano la condizione. Si
-          veda la voce <command>genr</command> nel <xref
-	    linkend="cmdref"/> per maggiori dettagli sugli operatori
+          veda la voce <command>genr</command> nel XXX
+	    per maggiori dettagli sugli operatori
             Booleani che possono essere usati.</para>
 	  </listitem>
 	  <listitem><para><guimenuitem>Scarta valori
@@ -548,7 +547,7 @@
       una o più variabili esistenti). Per la sintassi di queste
       formule, si veda la sezione <quote>Definisci nuova
       variabile</quote> della guida in linea o la voce
-      <command>genr</command> nel <xref linkend="cmdref"/>. Un
+      <command>genr</command>. Un
       semplice esempio:
 	  <programlisting> 
 	    pippo = x1 * x2
@@ -559,9 +558,8 @@
           nome, non per numero identificativo.</para></listitem> 
 
       <listitem><para><guimenu>Menù modello</guimenu>: per i dettagli
-      sui vari stimatori offerti in questo menù, si consulti
-	  <xref linkend="estimators"/> e il resto del <xref
-	linkend="cmdref"/>, oppure il capitolo <quote>Stima</quote>
+      sui vari stimatori offerti in questo menù, si consulti XXX
+	oppure il capitolo <quote>Stima</quote>
         della guida in linea. Si veda anche il <xref
 	    linkend="chap-nls"/> a proposito della stima di modelli
             non lineari.</para></listitem>
@@ -614,8 +612,7 @@
           con i minimi quadrati ordinari.</para></listitem>
       <listitem><para>Apri una finestra che elenca i dataset relativi al libro
           <citetitle>Introductory Econometrics</citetitle> di Ramanathan (e anche
-          i dataset del libro di Jeffrey Wooldridge, se sono installati; si veda il
-	  <xref linkend="optarg"/>).</para></listitem>
+          i dataset del libro di Jeffrey Wooldridge, se sono installati).</para></listitem>
     </orderedlist>
 
     <para>

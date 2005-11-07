@@ -175,9 +175,9 @@
     osservazioni per una unità cross-section), allora il dataset ridotto
     è ancora trattato come panel.</para></footnote>.
     Se si vuole re-imporre un'interpretazione di tipo "serie
-    storiche" o "panel" al dataset ridotto, occorre usare il comando <xref
-    linkend="cmd-setobs"/>, o il comando dal menù <quote>Campione, Struttura
-    dataset</quote>, se appropriato).
+    storiche" o "panel" al dataset ridotto, occorre usare il comando 
+    <command>setobs</command>, o il comando dal menù <quote>Campione, 
+    Struttura dataset</quote>, se appropriato).
     </para> 
 
     <para>Il fatto che una <quote>restrizione</quote> del campione
@@ -222,7 +222,7 @@
       </programlisting> che seleziona 100 osservazioni.
     Se occorre che il campione sia riproducibile, occorre per prima
     cosa impostare il seme del generatore di numeri casuali, usando
-    il comando <xref linkend="cmd-set"/>.</para>
+    il comando <command>set</command>.</para>
 
     <para>Questo tipo di campionamento è un esempio di
       <quote>restrizione</quote> del campione: viene infatti generata
@@ -233,7 +233,7 @@
   <sect1 id="sample-menu"><title>I comandi del menù Campione</title>
 
     <para>Gli esempi visti finora hanno mostrato il comando testuale
-      <xref linkend="cmd-smpl"/>, ma è possibile creare un
+      <command>set</command>, ma è possibile creare un
       sotto-campione usando i comandi del menù <guimenuitem>Campione</guimenuitem>
       nell'interfaccia grafica del programma.</para>
 

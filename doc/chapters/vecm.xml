@@ -95,7 +95,7 @@
 	  just saw; it follows that &yt; also follows a linear trend because on
 	  average it keeps at a distance <mathvar>k</mathvar> from &xt;. The
 	  vector &mu;<subscript>0</subscript> is unrestricted.  This case is
-	  the default for gretl's <xref linkend="cmd-vecm"/> command.
+	  the default for gretl's <command>vecm</command> command.
 	</para>
       </listitem>
       <listitem>
@@ -131,7 +131,7 @@
 	  </informalequation>
 	  which incorporates the intercept into the cointegration
 	  vector. This is known as the <quote>restricted constant</quote> case;
-	  it may be specified in gretl's <xref linkend="cmd-vecm"/> command using
+	  it may be specified in gretl's <command>vecm</command> command using
 	  the option flag <literal>--rc</literal>.
 	</para>
       </listitem>
@@ -143,7 +143,7 @@
 	  &mu;<subscript>0</subscript> is also 0, which explains why this case
 	  is referred to as <quote>no constant.</quote>  This case is specified
 	  using the option flag <literal>--nc</literal> with
-	  <xref linkend="cmd-vecm"/>.
+	  <command>vecm</command>.
 	</para>
       </listitem>
     </orderedlist>
@@ -199,8 +199,7 @@
 	  presence of a quadratic trend in the variables themselves (in levels).
 	  These two cases are specified by the option flags
 	  <literal>--crt</literal> and <literal>--ct</literal>, respectively,
-	  with the <xref
-	    linkend="cmd-vecm"/> command.
+	  with the <command>vecm</command> command.
 	</para>
       </listitem>
     </orderedlist>

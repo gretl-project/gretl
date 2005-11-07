@@ -284,7 +284,7 @@
 	examine the frequency distribution of the estimates in
 	detail.</para>
 
-      <para>The command <xref linkend="cmd-nulldata"/> is useful for
+      <para>The command <command>nulldata</command> is useful for
 	Monte Carlo work.  Instead of opening a <quote>real</quote>
 	data set, <command>nulldata 50</command> (for instance) opens
 	a dummy data set, containing just a constant and an index
@@ -292,7 +292,7 @@
 	can then be added using the <command>genr</command>
 	command.</para>  
 
-      <para>See the <xref linkend="cmd-set"/> command for
+      <para>See the <command>set</command> command for
 	information on generating repeatable pseudo-random
 	series.</para>
 

@@ -443,7 +443,7 @@
 	a Riccardo <quote>Jack</quote> Lucchetti: utilizza una procedura di
 	massima verosimiglianza condizionale, implementata attraverso la stima 
 	iterata	con minimi quadrati della regressione del prodotto esterno del
-	gradiente (OPG). Si veda l'<manref targ="jack-arma"/> per la logica della
+	gradiente (OPG). Si veda l'<guideref targ="jack-arma"/> per la logica della
 	procedura. I coefficienti AR (e quelli per gli eventuali regressori 
 	aggiuntivi) sono inizializzati usando una auto-regressione OLS, mentre
 	i coefficienti MA sono inizializzati a zero.</para>
@@ -526,7 +526,7 @@
       <para>Alcuni dettagli del funzionamento dei boxplot di gretl possono
         essere controllati attraverso un file testuale chiamato
         <filename>.boxplotrc</filename>.  Per ulteriori dettagli, si veda
-	<manref targ="sect-boxplots"/>.</para>
+	<guideref targ="sect-boxplots"/>.</para>
 
     </description>
 
@@ -716,7 +716,7 @@
         quattro opzioni mostrate sopra, che sono mutualmente esclusive,
         producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
         casi e i criteri per scegliere tra di essi sono spiegati in
-	<manref targ="vecm-explanation"/>.
+	<guideref targ="vecm-explanation"/>.
       </para>
       <para context="gui">
 	L'inclusione di termini deterministici nel modello è controllata dai
@@ -729,7 +729,7 @@
         quattro opzioni mostrate sopra, che sono mutualmente esclusive,
         producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
         casi e i criteri per scegliere tra di essi sono spiegati in
-	<manref targ="vecm-explanation"/>.
+	<guideref targ="vecm-explanation"/>.
       </para>
       <para context="cli">
         L'opzione <lit>--seasonals</lit>, che può accompagnare una qualsiasi
@@ -1661,7 +1661,7 @@
       <para>
 	Apre un blocco di istruzioni che definiscono una funzione. Il blocco va
         chiuso con <lit>end function</lit>. Per i dettagli, si veda
-        <manref targ="functions"/>.
+        <guideref targ="functions"/>.
       </para>
     </description>
 
@@ -1794,7 +1794,7 @@
         La formula dev'essere una combinazione ben definita di nomi di
         variabile, costanti, operatori e funzioni (descritte oltre). Ulteriori
         dettagli su alcuni aspetti di questo comando si possono trovare in
-        <manref targ="chap-genr"/>.
+        <guideref targ="chap-genr"/>.
       </para>
 
       <para>
@@ -2074,7 +2074,7 @@
        <lit>$pvalue</lit>, contengono rispettivamente il valore e il
        p-value della statistica test che è stata generata dall'ultimo
        comando di test eseguito esplicitamente (ad es. <lit>chow</lit>).
-       Si veda <manref targ="chap-genr"/> per i dettagli.
+       Si veda <guideref targ="chap-genr"/> per i dettagli.
       </para>
 
       <para>La variabile <lit>t</lit> serve da indice per le osservazioni.
@@ -2850,7 +2850,7 @@
         dati nelle righe rimanenti. Le variabili devono essere disposte
 	<quote>per osservazione</quote> (una colonna per variabile, ogni
         riga rappresenta un'osservazione).
-	Si veda il <manref targ="datafiles"/> per i dettagli.
+	Si veda il <guideref targ="datafiles"/> per i dettagli.
       </para>
 
       <para>
@@ -3490,7 +3490,7 @@
         questo punto i comandi indicati vengono eseguiti.
       </para>
 
-      <para>Si veda il <manref targ="looping"/> per ulteriori dettagli,
+      <para>Si veda il <guideref targ="looping"/> per ulteriori dettagli,
       esempi e per la spiegazione dell'opzione <lit>--progressive</lit> (che è destinata
       ad essere usata nelle simulazioni Monte Carlo).</para>
     </description>
@@ -3843,7 +3843,7 @@
 
     <description context="cli">
       <para>Manipola la <quote>tabella modelli</quote> di gretl. Si veda il
-      	<manref targ="modes"/> per i dettagli. Le opzioni hanno i
+      	<guideref targ="modes"/> per i dettagli. Le opzioni hanno i
         seguenti effetti: <cmd>add</cmd> aggiunge l'ultimo modello
         stimato alla tabella modelli, se possibile; <cmd>show</cmd>
 	mostra la tabella modelli in una finestra; <cmd>free</cmd>
@@ -3999,7 +3999,7 @@
       </code>
 
       <para>Per ulteriori dettagli sulla stima NLS si veda il
-	<manref targ="chap-nls"/>.</para>
+	<guideref targ="chap-nls"/>.</para>
 
     </description>
 
@@ -4063,7 +4063,7 @@
         completa il comando ed esegue la stima.</para>
 
       <para>Per ulteriori dettagli sulla stima NLS si veda
-	<manref targ="chap-nls"/>.</para>
+	<guideref targ="chap-nls"/>.</para>
 
     </description>
 
@@ -4183,7 +4183,7 @@
       <para context="cli">L'opzione <lit>--print-final</lit> è utilizzabile solo nel contesto
 	di un <cmdref targ="loop"/>. L'effetto è quello di eseguire la
         regressione in modo silenzioso per tutte le iterazioni del loop
-        tranne l'ultima. Si veda <manref targ="loop-examples"/> per i dettagli.
+        tranne l'ultima. Si veda <guideref targ="loop-examples"/> per i dettagli.
       </para>
 
       <para context="cli">È possibile salvare alcune variabili
@@ -5340,7 +5340,7 @@
       dei dati) vengono perse. È possibile reimpostare la struttura
       originale con <quote>Campione/Imposta frequenza e inizio...</quote>.</para>
 
-      <para>Si veda <manref targ="sampling"/> per maggiori dettagli.</para>
+      <para>Si veda <guideref targ="sampling"/> per maggiori dettagli.</para>
 
     </description>
   </command>
@@ -5839,7 +5839,7 @@
       struttura originale con il comando <cmdref targ="setobs"/>.
       </para>
 
-      <para>Si veda il <manref targ="sampling"/> per ulteriori dettagli.</para>
+      <para>Si veda il <guideref targ="sampling"/> per ulteriori dettagli.</para>
     
     </description>
 
@@ -5994,7 +5994,7 @@
         <program>Octave</program>, <program>R</program> e
         <program>PcGive</program> sono destinati ad essere usati con i
         rispettivi programmi. La compressione con gzip può essere utile per
-        grandi dataset. Si veda il <manref targ="datafiles"/> per i dettagli sui
+        grandi dataset. Si veda il <guideref targ="datafiles"/> per i dettagli sui
         vari formati.</para>
 
       <para>
@@ -6583,7 +6583,7 @@
         3</quote>.  Le prime quattro opzioni mostrate sopra, che sono
         mutualmente esclusive, producono rispettivamente i casi 1, 2, 4 e 5. Il
         significato di questi casi e i criteri per scegliere tra di essi sono
-        spiegati in <manref targ="vecm-explanation"/>.
+        spiegati in <guideref targ="vecm-explanation"/>.
       </para>
       <para context="gui">
         Nel riquadro <quote>Variabili endogene</quote>, è possibile selezionare
@@ -6597,7 +6597,7 @@
         come al <quote>caso 3</quote>.  Le prime quattro opzioni mostrate sopra,
         che sono mutualmente esclusive, producono rispettivamente i casi 1, 2, 4
         e 5. Il significato di questi casi e i criteri per scegliere tra di essi
-        sono spiegati in <manref targ="vecm-explanation"/>.
+        sono spiegati in <guideref targ="vecm-explanation"/>.
       </para>
       <para context="cli">
         L'opzione <lit>--seasonals</lit>, che può accompagnare una qualsiasi

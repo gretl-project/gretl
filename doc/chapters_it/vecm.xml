@@ -98,7 +98,7 @@
           abbiamo appena visto; ne consegue che anche &yt; segue un trend lineare
           perché in media si mantiene a una distanza di <mathvar>k</mathvar> da &xt;.
           Il vettore &mu;<subscript>0</subscript> non ha restrizioni. Questo è
-          il caso predefinito per il comando <xref linkend="cmd-vecm"/> di
+          il caso predefinito per il comando <command>vecm</command> di
           gretl.
 	</para>
       </listitem>
@@ -135,7 +135,7 @@
 	  </informalequation>
 	  che incorpora l'intercetta nel vettore di cointegrazione. Questo è il
           caso di <quote>costante vincolata</quote>; può essere specificato nel
-          comando <xref linkend="cmd-vecm"/> di gretl usando l'opzione
+          comando <command>vecm</command> di gretl usando l'opzione
           <literal>--rc</literal>.
 	</para>
       </listitem>
@@ -146,7 +146,7 @@
           distanza media è zero. Anche il vettore &mu;<subscript>0</subscript>
           vale 0, quindi questo caso può essere chiamato <quote>senza costante</quote>.
           Questo caso è specificato usando l'opzione <literal>--nc</literal> con
-	  <xref linkend="cmd-vecm"/>.
+	  <command>vecm</command>.
 	</para>
       </listitem>
     </orderedlist>
@@ -202,7 +202,7 @@
           differenze prime, il che corrisponde alla presenza di un trend
           quadratico nelle variabili (espresse in livelli). Questi due casi sono
           specificati rispettivamente con le opzioni <literal>--crt</literal> e
-          <literal>--ct</literal> del comando <xref linkend="cmd-vecm"/>.
+          <literal>--ct</literal> del comando <command>vecm</command>.
 	</para>
       </listitem>
     </orderedlist>

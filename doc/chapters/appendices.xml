@@ -373,11 +373,11 @@
 
   <para>As mentioned above, all regression statistics are printed to 6
     significant figures in the current version of
-    <application>gretl</application> (except when the
-    multiple-precision plugin is used, then results are given to 12
-    figures).  If you want to examine a particular value more closely,
-    first save it (see <xref linkend="cmd-genr"/>) then print it using
-    <command>print --ten</command> (see <xref linkend="cmdref"/>).
+    <application>gretl</application> (except when the multiple-precision plugin
+    is used, then results are given to 12 figures).  If you want to examine a
+    particular value more closely, first save it (for example, using the
+    <command>genr</command> command) then print it using <command>print
+      --ten</command> (see the <citetitle>Gretl Command Reference</citetitle>).
     This will show the value to 10 digits.</para>
 
 </appendix>

@@ -71,7 +71,7 @@
 
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 lit | emphasis | book | quote | filename |
-                func | manref | cmdref| tabref | footnote | cmd)*>
+                func | guideref | cmdref| tabref | footnote | cmd)*>
 
 <!ATTLIST para
    context (cli | gui | both) "both"
@@ -101,8 +101,8 @@
    graphic CDATA #REQUIRED
 >
 
-<!ELEMENT manref EMPTY>
-<!ATTLIST manref
+<!ELEMENT guideref EMPTY>
+<!ATTLIST guideref
    targ    CDATA #REQUIRED
 >
 

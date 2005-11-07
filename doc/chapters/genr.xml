@@ -6,11 +6,11 @@
 
   <sect1 id="genr-intro"><title>Introduction</title>
 
-    <para>The <literal>genr</literal> command provides a flexible means of defining
-      new variables.  It is documented in the command reference chapter of this
-      manual (see <xref linkend="cmd-genr"/>).  This chapter offers a more expansive
-      discussion of some of the special functions available via
-      <literal>genr</literal> and some of the finer points of the command.
+    <para>The <literal>genr</literal> command provides a flexible means of
+      defining new variables.  It is documented in the <citetitle>Gretl Command
+	Reference</citetitle>.  This chapter offers a more expansive discussion
+      of some of the special functions available via <literal>genr</literal> and
+      some of the finer points of the command.
     </para>
 
   </sect1>
@@ -123,7 +123,7 @@
 
       <para>The default values for the frequency bounds are 8 and 32, and the
 	default value for the approximation order, <emphasis>k</emphasis>, is 8. You
-	can adjust these values using the <xref linkend="cmd-set"/> command. The
+	can adjust these values using the <command>set</command> command. The
 	keyword for setting the frequency limits is <literal>bkbp_limits</literal>
 	and the keyword for <emphasis>k</emphasis> is <literal>bkbp_k</literal>.
 	Thus for example if you were using monthly data and wanted to adjust the
@@ -200,35 +200,35 @@
   <sect1 id="genr-internal"><title>Retrieving internal variables</title>
     
     <para>The <literal>genr</literal> command provides a means of retrieving
-      various values calculated by the program in the course of
-      estimating models or testing hypotheses.  The variables that can be retrieved
-      in this way are listed in the <xref linkend="cmd-genr"/> reference; here we
-      say a bit more about the special variables <literal>$test</literal> and
-      <literal>$pvalue</literal>.</para>
+      various values calculated by the program in the course of estimating
+      models or testing hypotheses.  The variables that can be retrieved in this
+      way are listed in the <citetitle>Gretl Command Reference</citetitle>
+      reference; here we say a bit more about the special variables
+      <literal>$test</literal> and <literal>$pvalue</literal>.</para>
 
     <para>These variables hold, respectively, the value of the last test statistic
       calculated using an explicit testing command and the p-value for that test
       statistic.  If no such test has been performed at the time when these
       variables are referenced, they will produce the missing value code.  The
       <quote>explicit testing commands</quote> that work in this way are as follows:
-      <xref linkend="cmd-add"/> (joint test for the significance of variables added
+      <command>add</command> (joint test for the significance of variables added
       to a model); 
-      <xref linkend="cmd-adf"/> (Augmented Dickey&ndash;Fuller test, see below);
-      <xref linkend="cmd-arch"/> (test for ARCH);
-      <xref linkend="cmd-chow"/> (Chow test for a structural break);
-      <xref linkend="cmd-coeffsum"/> (test for the sum of specified coefficients);
-      <xref linkend="cmd-cusum"/> (the Harvey&ndash;Collier
+      <command>adf</command> (Augmented Dickey&ndash;Fuller test, see below);
+      <command>arch</command> (test for ARCH);
+      <command>chow</command> (Chow test for a structural break);
+      <command>coeffsum</command> (test for the sum of specified coefficients);
+      <command>cusum</command> (the Harvey&ndash;Collier
       <emphasis>t</emphasis>-statistic);
-      <xref linkend="cmd-kpss"/> (KPSS stationarity test, no p-value available);
-      <xref linkend="cmd-lmtest"/> (see below);
-      <xref linkend="cmd-meantest"/> (test for difference of means);
-      <xref linkend="cmd-omit"/> (joint test for the significance of variables
+      <command>kpss</command> (KPSS stationarity test, no p-value available);
+      <command>lmtest</command> (see below);
+      <command>meantest</command> (test for difference of means);
+      <command>omit</command> (joint test for the significance of variables
       omitted from a model);
-      <xref linkend="cmd-reset"/> (Ramsey's RESET);
-      <xref linkend="cmd-restrict"/> (general linear restriction);
-      <xref linkend="cmd-runs"/> (runs test for randomness); 
-      <xref linkend="cmd-testuhat"/> (test for normality of residual); and
-      <xref linkend="cmd-vartest"/> (test for difference of variances). In most
+      <command>reset</command> (Ramsey's RESET);
+      <command>restrict</command> (general linear restriction);
+      <command>runs</command> (runs test for randomness); 
+      <command>testuhat</command> (test for normality of residual); and
+      <command>vartest</command> (test for difference of variances). In most
       cases both a <literal>$test</literal> and a <literal>$pvalue</literal> are
       stored; the exception is the KPSS test, for which a p-value is not currently
       available.  
@@ -252,7 +252,7 @@
 
     <itemizedlist>
       <listitem>
-	<para>By default, the <xref linkend="cmd-adf"/> command generates three
+	<para>By default, the <command>adf</command> command generates three
 	  variants of the Dickey&ndash;Fuller test: one based on a regression
 	  including a constant, one using a constant and linear trend, and one using
 	  a constant and a quadratic trend.  When you wish to reference
@@ -264,7 +264,7 @@
 	</para>
       </listitem>
       <listitem>
-	<para>By default, the <xref linkend="cmd-lmtest"/> command (which must
+	<para>By default, the <command>lmtest</command> command (which must
 	  follow an OLS regression) performs several diagnostic tests on the
 	  regression in question.  To control what is recorded in
 	  <literal>$test</literal> and <literal>$pvalue</literal> you should limit
@@ -278,7 +278,7 @@
     <para>As an aid in working with values retrieved using <literal>$test</literal>
       and <literal>$pvalue</literal>, the nature of the test to which these values
       relate is written into the descriptive label for the generated variable.  You
-      can read the label for the variable using the <xref linkend="cmd-label"/>
+      can read the label for the variable using the <command>label</command>
       command (with just one argument, the name of the variable), to check that you
       have retrieved the right value.  The following interactive session illustrates
       this point.</para>

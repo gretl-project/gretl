@@ -139,7 +139,7 @@
 	url="http://www.gnuplot.info/">www.gnuplot.info</ulink>.</para>
 
     <para>See also the entry for <command>gnuplot</command> in 
-      <xref linkend="cmdref"/> below &mdash; and the
+	the <citetitle>Gretl Command Reference</citetitle> &mdash; and the
       <command>graph</command> and <command>plot</command> commands
       for <quote>quick and dirty</quote> ASCII graphs.</para>
 

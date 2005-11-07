@@ -27,7 +27,7 @@
       &mdash; Avvia il programma caricando nello spazio di lavoro il file di
       dati indicato. Il file può essere nel formato interno di
       <application>gretl</application>, in formato CSV, o BOX1 (si veda il
-      <xref linkend="datafiles"/>). Il programma cercherà di riconoscere
+      YYY). Il programma cercherà di riconoscere
       il formato del file e di trattarlo in modo appropriato. Si veda anche
       <xref linkend="path-search"/> per quanto riguarda la ricerca dei percorsi.
     </para>
@@ -76,8 +76,8 @@
     <para>&mdash; Avvia il programma e apre una finestra che mostra
       il database indicato. Se i file del database (il file
       <filename>.bin</filename> e il relativo file
-      <filename>.idx</filename>, si veda <xref
-	linkend="dbase"/>) non sono nella directory predefinita dei database,
+      <filename>.idx</filename>, si veda XXX)
+	non sono nella directory predefinita dei database,
         occorre specificare il percorso completo dei file.
     </para>
 
@@ -102,8 +102,7 @@
       <listitem><para>Il comando per eseguire
 	  <application>gnuplot</application>.
 	</para></listitem> 
-      <listitem><para>Il comando per eseguire GNU R (si veda <xref
-	    linkend="app-advanced"/>).</para></listitem>
+      <listitem><para>Il comando per eseguire GNU R.</para></listitem>
       <listitem><para>Il comando per visualizzare i file DVI di &tex;.</para></listitem> 
       <listitem><para>La directory in cui iniziare a cercare i database in
           formato interno di <application>gretl</application>.</para></listitem>
@@ -151,8 +150,7 @@
       <literal>.dat</literal>, che era lo standard nelle versioni precedenti
       del programma. Se si imposta l'estensione predefinita a
       <literal>.dat</literal>, i file di dati saranno salvati nel formato
-      <quote>tradizionale</quote> (si veda il <xref
-      linkend="datafiles"/>). Inoltre, nella sezione <quote>File di dati</quote>
+      <quote>tradizionale</quote>. Inoltre, nella sezione <quote>File di dati</quote>
       è possibile scegliere l'azione da associare alla piccola icona a forma
       di cartella presente sulla barra degli strumenti: se deve mostrare
       un elenco dei file di dati associati al libro di Ramanathan, o di quelli
@@ -199,7 +197,7 @@
       &mdash; Avvia il programma caricando nello spazio di lavoro il file di
       dati indicato. Il file può essere nel formato interno di
       <application>gretl</application>, in formato CSV, o BOX1 (si veda il
-      <xref linkend="datafiles"/>). Il programma cercherà di riconoscere
+      XXX). Il programma cercherà di riconoscere
       il formato del file e di trattarlo in modo appropriato. Si veda anche
       <xref linkend="path-search"/> per quanto riguarda la ricerca dei percorsi.
     </para>

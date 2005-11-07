@@ -61,8 +61,8 @@
     possibile usare il comando del menù <guimenuitem>Aiuto, Comandi
     testuali</guimenuitem>, o eseguire la versione a riga di comando
     del programma <application>gretlcli</application> e consultare il
-    suo aiuto, oppure consultare il <xref linkend="cmdref"/> in questo
-    manuale. In aggiunta, il pacchetto
+    suo aiuto, oppure consultare il XXX.
+    In aggiunta, il pacchetto
     <application>gretl</application> contiene più di 70 script
     <quote>di esempio</quote>: la maggior parte di essi sono
     relativi a Ramanathan (2002), ma possono essere usati in modo
@@ -97,7 +97,7 @@
       <listitem><para>Partire da un nuovo file script e scrivere i
       comandi necessari per eseguire le trasformazioni desiderate su
       un dataset (si veda il comando <command>genr</command> nel
-      <xref linkend="cmdref"/>). Tipicamente è possibile svolgere
+      XXX). Tipicamente è possibile svolgere
       questo tipo di operazioni in modo più efficace scrivendo una
       sequenza ben ragionata di comandi, piuttosto che puntando e
       cliccando nell'interfaccia grafica. Salvare ed eseguire lo
@@ -291,7 +291,7 @@
       RTF - Rich Text Format).  Ecco come fare:<footnote><para>La
       tabella modelli può anche essere costruita in modo non
       interattivo in uno script. Per i dettagli si veda il comando
-      <xref linkend="cmd-modeltab"/>.</para></footnote>
+      <command>modeltab</command>.</para></footnote>
       </para>
 
       <orderedlist>

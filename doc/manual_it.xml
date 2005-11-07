@@ -15,25 +15,9 @@
 <!ENTITY yt "<emphasis>y<subscript>t</subscript></emphasis>">
 <!ENTITY ut "<emphasis>u<subscript>t</subscript></emphasis>">
 <!ENTITY zt "<emphasis>z<subscript>t</subscript></emphasis>">
-<!ENTITY introduction SYSTEM "chapters_it/intro.xml">
-<!ENTITY starting SYSTEM "chapters_it/starting.xml">
-<!ENTITY modes SYSTEM "chapters_it/modes.xml">
-<!ENTITY datafiles SYSTEM "chapters_it/datafiles.xml">
-<!ENTITY genr SYSTEM "chapters_it/genr.xml">
-<!ENTITY panel SYSTEM "chapters_it/panel.xml">
-<!ENTITY sampling SYSTEM "chapters_it/sampling.xml">
-<!ENTITY graphs SYSTEM "chapters_it/graphs.xml">
-<!ENTITY nls SYSTEM "chapters_it/nls.xml">
-<!ENTITY looping SYSTEM "chapters_it/looping.xml">
-<!ENTITY functions SYSTEM "chapters_it/functions.xml">
-<!ENTITY vecm SYSTEM "chapters_it/vecm.xml">
-<!ENTITY optarg SYSTEM "chapters_it/optarg.xml">
 <!ENTITY cmdref SYSTEM "chapters_it/cmdref.xml">
 <!ENTITY cmdlist SYSTEM "chapters_it/cmdlist.xml">
-<!ENTITY trouble SYSTEM "chapters_it/trouble.xml">
-<!ENTITY cli SYSTEM "chapters_it/cli.xml">
-<!ENTITY appendices SYSTEM "chapters_it/appendices.xml">
-<!ENTITY biblio SYSTEM "chapters_it/biblio.xml">
+<!ENTITY optarg SYSTEM "chapters_it/optarg.xml">
 %mathextra;
 ]>
 
@@ -41,7 +25,7 @@
 
 <book id="index" lang="it">
 
-  <title>Manuale di Gretl</title>
+  <title>Gretl Command Reference</title>
 
   <bookinfo>
 
@@ -83,28 +67,12 @@
     </legalnotice>
 
     <releaseinfo>
-      Questa è la versione &version; del manuale di Gretl.
+      Questa è la versione &version; del XXX.
     </releaseinfo>
 
   </bookinfo>
 
-  &introduction;
-  &starting;
-  &modes;
-  &datafiles;
-  &genr;
-  &sampling;
-  &panel;
-  &graphs;
-  &nls;
-  &looping;
-  &functions;
-  &vecm;
-  &optarg;
   &cmdref;
-  &trouble;
-  &cli;
-  &appendices;
-  &biblio;
+  &optarg;
 
 </book>

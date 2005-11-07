@@ -14,11 +14,11 @@ MATHSS = TeXMath.dsl
 HMATHSS = HTMLMath.dsl
 TITLESS = titlepage.dsl
 
-CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
+CHAPTERS = chapters/intro.xml chapters/modes.xml \
 	chapters/panel.xml chapters/appendices.xml chapters/datafiles.xml \
 	chapters/nls.xml chapters/looping.xml chapters/starting.xml \
-	chapters/cli.xml chapters/graphs.xml chapters/optarg.xml \
-	chapters/trouble.xml chapters/biblio.xml chapters/sampling.xml \
+	chapters/cli.xml chapters/graphs.xml chapters/trouble.xml \
+	chapters/biblio.xml chapters/sampling.xml \
 	chapters/functions.xml chapters/genr.xml chapters/vecm.xml
 
 CHAPTERS_IT = chapters_it/cmdref.xml chapters_it/intro.xml chapters_it/modes.xml \
@@ -28,13 +28,18 @@ CHAPTERS_IT = chapters_it/cmdref.xml chapters_it/intro.xml chapters_it/modes.xml
 	chapters_it/trouble.xml chapters_it/biblio.xml chapters_it/sampling.xml \
         chapters_it/functions.xml chapters_it/genr.xml chapters_it/vecm.xml
 
+REF_CHAPTERS = chapters/cmdref.xml chapters/optarg.xml
 CMDLIST = chapters/cmdlist.xml
-CMDLIST_IT = chapters_it/cmdlist.xml
-
 CMDREF = commands/gretl_commands.xml
-CMDREF_IT = commands/gretl_commands_it.xml
+
+REF_CHAPTERS_IT = chapters_it/cmdref.xml chapters_it/optarg.xml
+CMDLIST_IT = chapters_it/cmdlist.xml
+CMDREF_IT = commands/gretl_commands.xml
 
 MANXSL = commands/gretlman.xsl
+
+THUMBS = guide.thumbs guide_a4.thumbs guide_it.thumbs \
+	man.thumbs man_a4.thumbs man_it.thumbs
 
 %.pdf: %.tex
 	pdfjadetex $<
@@ -43,9 +48,20 @@ MANXSL = commands/gretlman.xsl
 	-grep undefined $(<:.tex=.log) >/dev/null && pdfjadetex $<
 	-grep 'Rerun LaTeX' $(<:.tex=.log) >/dev/null && pdfjadetex $<
 
-all: thumbs altthumbs thumbs_it html chm html_it chm_it
+%.thumbs: %.pdf
+	thumbpdf $< && pdfjadetex $(<:.pdf=.tex) && touch $@
 
-# thumbs altthumbs
+all: $(THUMBS) html chm html_it chm_it
+
+# Gretl Users' Guide
+
+guide.pdf: guide.tex
+
+guide-a4.pdf: guide-a4.tex
+
+guide_it.pdf: guide_it.tex
+
+# Gretl Command Reference
 
 manual.pdf: manual.tex
 
@@ -53,35 +69,44 @@ manual-a4.pdf: manual-a4.tex
 
 manual_it.pdf: manual_it.tex
 
-thumbs: manual.pdf
-	thumbpdf manual
-	pdfjadetex manual
-
-altthumbs: manual-a4.pdf
-	thumbpdf manual-a4
-	pdfjadetex manual-a4
-
-thumbs_it: manual_it.pdf
-	thumbpdf manual_it
-	pdfjadetex manual_it
-
-manual.tex: manual.xml $(CHAPTERS) $(CMDLIST) mathextra.inc $(DSL) $(MATHSS) $(TITLESS) \
-	$(CMDLIST) jadetex.cfg.en lucidabr.tex
+guide.tex: guide.xml $(CHAPTERS) mathextra.inc $(DSL) $(MATHSS) \
+	$(TITLESS) jadetex.cfg.en lucidabr.tex
 	rm -f jadetex.cfg && ln -s jadetex.cfg.en jadetex.cfg
 	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
-manual-a4.tex: manual-a4.xml $(CHAPTERS) mathextra.inc $(ALTDSL) $(MATHSS) \
-	$(TITLESS) $(CMDLIST) jadetex.cfg.en lucidabr.tex
+guide-a4.tex: guide-a4.xml $(CHAPTERS) mathextra.inc $(ALTDSL) $(MATHSS) \
+	$(TITLESS) jadetex.cfg.en lucidabr.tex
 	rm -f jadetex.cfg && ln -s jadetex.cfg.en jadetex.cfg
 	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
-manual_it.tex: manual_it.xml $(CHAPTERS_IT) $(CMDLIST_IT) mathextra.inc $(ALTDSL) $(MATHSS) \
-	$(TITLESS) $(CMDLIST_IT) jadetex.cfg.it lucidabr.tex
+guide_it.tex: guide_it.xml $(CHAPTERS_IT) mathextra.inc $(ALTDSL) $(MATHSS) \
+	$(TITLESS) jadetex.cfg.it lucidabr.tex
 	rm -f jadetex.cfg && ln -s jadetex.cfg.it jadetex.cfg
 	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
+
+manual.tex: manual.xml $(REF_CHAPTERS) $(CMDLIST) mathextra.inc $(DSL) \
+	$(MATHSS) $(TITLESS) jadetex.cfg.en lucidabr.tex
+	rm -f jadetex.cfg && ln -s jadetex.cfg.en jadetex.cfg
+	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
+	./unescape_math.pl $@
+
+manual-a4.tex: manual-a4.xml $(REF_CHAPTERS) $(CMDLIST) mathextra.inc $(ALTDSL) \
+	$(MATHSS) $(TITLESS) jadetex.cfg.en lucidabr.tex
+	rm -f jadetex.cfg && ln -s jadetex.cfg.en jadetex.cfg
+	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
+	./unescape_math.pl $@
+
+manual_it.tex: manual_it.xml $(REF_CHAPTERS_IT) $(CMDLIST_IT) mathextra.inc $(ALTDSL) \
+	$(MATHSS) $(TITLESS) jadetex.cfg.it lucidabr.tex
+	rm -f jadetex.cfg && ln -s jadetex.cfg.it jadetex.cfg
+	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
+	./unescape_math.pl $@
+
+guide-a4.xml: guide.xml
+	cp $< $@
 
 manual-a4.xml: manual.xml
 	cp $< $@
@@ -133,11 +158,14 @@ chm_it: $(topdoc)/manual_it.xml $(topdoc)/chapters_it/*.xml $(CMDLIST_IT) chmfig
 	../fixfigs.sh && ../fixtoc.sh && $(HHC) gretl_it.hhp
 
 clean:
-	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex manual_it.tex
+	rm -f *.aux *.log *.out *.pdf 
+	rm -f guide.tex guide-a4.tex guide_it.tex
+	rm -f manual.tex manual-a4.tex manual_it.tex
 	rm -rf manual.html manual.chm manual_it.html manual_it.chm
 
 texclean:
 	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex manual_it.tex
 
 install: 
-	cp manual.pdf manual-a4.pdf manual_it.pdf $(WEBDIR)
+	cp guide.pdf guide-a4.pdf guide_it.pdf \
+	manual.pdf manual-a4.pdf manual_it.pdf $(WEBDIR)

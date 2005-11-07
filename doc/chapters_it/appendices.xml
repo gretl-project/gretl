@@ -378,9 +378,9 @@
     <application>gretl</application> (tranne quando viene usato il plugin
     per precisione multipla, e allora i risultati sono mostrati con 12
     cifre). Se occorre esaminare un valore più da vicino, basta per prima
-    cosa salvarlo (si veda il comando <xref linkend="cmd-genr"/>) e poi visualizzarlo
-    usando il comando <command>print --ten</command> (si veda il <xref
-    linkend="cmdref"/>): verrà mostrato con 10 cifre significative.</para>
+    cosa salvarlo (si veda il comando <command>genr</command>) e poi visualizzarlo
+    usando il comando <command>print --ten</command>:
+    verrà mostrato con 10 cifre significative.</para>
 
 </appendix>
 

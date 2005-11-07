@@ -13,7 +13,7 @@
       <application>gretlcli</application> has its own help file, which
       may be accessed by typing <quote>help</quote> at the prompt. It
       can be run in batch mode, sending outout directly to a file (see
-      <xref linkend="optarg2"/> above).
+      alse the <citetitle>Gretl Command Reference</citetitle>).
     </para>
 
     <para>

@@ -5,25 +5,24 @@
   <sect1 id="starting-regression"><title>Let's run a
       regression</title>
 
-    <para>This introduction is mostly angled towards the graphical
-      client program; please see <xref linkend="cmdref"/> and
-      <xref linkend="cli"/>  below for details on the command-line
-      program, <application>gretlcli</application>.
+    <para>This introduction is mostly angled towards the graphical client
+      program; please see <xref linkend="cli"/> below and the <citetitle>Gretl
+      Command Reference</citetitle> for details on the command-line program,
+      <application>gretlcli</application>.
     </para>
 
     <para>
       You can supply the name of a data file to open as an argument to
       <application>gretl</application>, but for the moment let's not
-      do that: just fire up the program.<footnote><para>For
-	  convenience I will refer to the graphical client program
-	  simply as <application>gretl</application> in this manual.
-	  Note, however, that the specific name of the program differs
-	  according to the computer platform.  On Linux it is called
-	  <filename>gretl_x11</filename> while on MS Windows it is
-	  <filename>gretlw32.exe</filename>. On Linux systems a
-	  wrapper script named <filename>gretl</filename> is also
-	  installed &mdash; see also <xref
-	    linkend="optarg"/>.</para></footnote> You should see a
+      do that: just fire up the program.<footnote><para>For convenience I will
+	  refer to the graphical client program simply as
+	  <application>gretl</application> in this manual. Note, however, that
+	  the specific name of the program differs according to the computer
+	  platform.  On Linux it is called <filename>gretl_x11</filename> while
+	  on MS Windows it is <filename>gretlw32.exe</filename>. On Linux
+	  systems a wrapper script named <filename>gretl</filename> is also
+	  installed &mdash; see also the <citetitle>Gretl Command
+	    Reference</citetitle>.</para></footnote> You should see a
       main window (which will hold information on the data set but
       which is at first blank) and various menus, some of them
       disabled at first.
@@ -155,20 +154,19 @@
       diagnostic tests on the model.</para>  
 
     <para>
-      For most models there is also an option to reprint the
-      regression output in &latex; format.  You can print the results
-      in a tabular format (similar to what's in the output window, but
-      properly typeset) or as an equation, across the page.  For each
-      of these options you can choose to preview the typeset product,
-      or save the output to file for incorporation in a &latex;
-      document.  Previewing requires that you have a functioning &tex;
-      system on your computer.  You can control the appearance of
-      <application>gretl</application>'s &latex; output using a file
-      named <filename>gretlpre.tex</filename>, which should be placed
-      in your <application>gretl</application> user directory (see
-      <xref linkend="optarg"/>).  If a file of this name is found, its
-      contents will be used as the &latex; <quote>preamble</quote>.
-      The default value of the preamble is as follows:
+      For most models there is also an option to reprint the regression output
+      in &latex; format.  You can print the results in a tabular format (similar
+      to what's in the output window, but properly typeset) or as an equation,
+      across the page.  For each of these options you can choose to preview the
+      typeset product, or save the output to file for incorporation in a &latex;
+      document.  Previewing requires that you have a functioning &tex; system on
+      your computer.  You can control the appearance of
+      <application>gretl</application>'s &latex; output using a file named
+      <filename>gretlpre.tex</filename>, which should be placed in your
+      <application>gretl</application> user directory (see the <citetitle>Gretl
+	Command Reference</citetitle>). If a file of this name is found, its
+      contents will be used as the &latex; <quote>preamble</quote>. The default
+      value of the preamble is as follows:
     </para>
 
     <programlisting>
@@ -289,8 +287,8 @@
 	      Activate or suppress <application>gretl</application>'s
 	      messaging about the availability of program updates.
 	      Configure or turn on/off the main-window toolbar. See
-	      <xref linkend="optarg"/> for
-	      details.</para></listitem>
+	      the <citetitle>Gretl Command Reference</citetitle>
+	      for further details.</para></listitem>
           <listitem><para><guimenuitem>Exit</guimenuitem>: Quit the
 	      program. If expert mode is not selected you'll be
 	      prompted to save any unsaved work.</para></listitem>
@@ -309,8 +307,9 @@
 	      Open a window which enables you to look up p-values from
 	      the Gaussian, <emphasis>t</emphasis>, chi-square,
 	      <emphasis>F</emphasis> or gamma distributions. See also
-	      the <command>pvalue</command> command in <xref
-		linkend="cmdref"/>.</para></listitem>
+	      the <command>pvalue</command> command in the
+	      <citetitle>Gretl Command Reference</citetitle>.
+	    </para></listitem>
 	  <listitem><para><guimenuitem>Test statistic
 		calculator</guimenuitem>: Calculate test statistics
 	      and p-values for a range of common hypothesis tests
@@ -326,7 +325,7 @@
 	      Open a <quote>console</quote> window into which you can
 	      type commands as you would using the command-line
 	      program, <application>gretlcli</application> (as opposed
-	      to using point-and-click). See <xref linkend="cmdref"/>.
+	      to using point-and-click).
 	    </para></listitem> 
 	  <listitem><para><guimenuitem>Start Gnu R</guimenuitem>:
 	      Start <application>R</application> (if it is installed
@@ -493,14 +492,13 @@
 	      value 0.</para>
 	  </listitem>
 	  <listitem><para><guimenuitem>Restrict, based on
-		criterion</guimenuitem>: Similar to the item above,
-	      except that you don't need a pre-defined variable: you
-	      supply a Boolean expression (e.g. <literal>sqft &gt;
-		1400</literal>) and the sample is restricted to
-	      observations satisfying that condition. See the help for
-	      <command>genr</command> in <xref
-	    linkend="cmdref"/> for details on the Boolean operators
-	      that can be used.</para>
+		criterion</guimenuitem>: Similar to the item above, except that
+	      you don't need a pre-defined variable: you supply a Boolean
+	      expression (e.g. <literal>sqft &gt; 1400</literal>) and the sample
+	      is restricted to observations satisfying that condition. See the
+	      entry for <command>genr</command> in the <citetitle>Gretl Command
+		Reference</citetitle> for details on the Boolean operators that
+	      can be used.</para>
 	  </listitem>
 	  <listitem><para><guimenuitem>Drop all obs with missing
 		values</guimenuitem>: Drop from the current sample all
@@ -557,8 +555,9 @@
 	  function of one or more existing variables). For the syntax
 	  of such formulae, look at the online help for
 	  <quote>Generate variable syntax</quote> or see the
-	  <command>genr</command> command in 
-	  <xref linkend="cmdref"/>. One simple example:
+	  <command>genr</command> command in the
+	  <citetitle>Gretl Command Reference</citetitle>.
+	  One simple example:
 	  <programlisting> 
 	    foo = x1 * x2</programlisting> will create a new variable
 	  <varname>foo</varname> as the product of the existing
@@ -566,10 +565,10 @@
 	  In these formulae, variables must be referenced by name, not
 	  number.</para></listitem> 
 
-      <listitem><para><guimenu>Model menu</guimenu> For details on the
-	  various estimators offered under this menu please consult
-	  <xref linkend="estimators"/> and <xref
-	linkend="cmdref"/> below, and/or the online help under
+      <listitem><para><guimenu>Model menu</guimenu> 
+	  For details on the various
+	  estimators offered under this menu please consult the <citetitle>Gretl
+	    Command Reference</citetitle> and/or the online help under
 	  <quote>Help, Estimation</quote>.  Also see <xref
 	    linkend="chap-nls"/> regarding the estimation of nonlinear
 	  models.</para></listitem>
@@ -626,9 +625,8 @@
       <listitem><para>Open a window listing the datasets associated
 	  with Ramanathan's <citetitle>Introductory
 	    Econometrics</citetitle> (and also the datasets from
-	  Jeffrey Wooldridge's text, if these are installed &mdash;
-	  see <xref
-	    linkend="optarg"/>).</para></listitem>
+	  the various other econometrics texts that are supported
+	  by gretl, if they are installed).</para></listitem>
     </orderedlist>
 
     <para>

@@ -282,14 +282,14 @@
         singoli coefficienti durante tutte le iterazioni, ed esaminare nel
         dettaglio la distribuzione di frequenza delle stime.</para>
 
-      <para>Il comando <xref linkend="cmd-nulldata"/> è utile per le procedure
+      <para>Il comando <command>nulldata</command> è utile per le procedure
         Monte Carlo: invece di aprire un <quote>vero</quote> dataset,
         <command>nulldata 50</command> (ad esempio) apre un finto dataset
         da 50 osservazioni, che contiene solo la costante e una variabile
         indice. Successivamente è possibile aggiungervi variabili usando il
         comando <command>genr</command>.</para>  
 
-      <para>Si veda il comando <xref linkend="cmd-set"/> per informazioni su
+      <para>Si veda il comando <command>set</command> per informazioni su
       come generare numeri pseudo-casuali in modo ripetibile.</para>
 
     </sect2>

@@ -141,7 +141,7 @@
 	url="http://www.gnuplot.info/">www.gnuplot.info</ulink>.</para>
 
     <para>Si veda anche la voce <command>gnuplot</command> nel
-      <xref linkend="cmdref"/> e i comandi
+      XXX e i comandi
       <command>graph</command> e <command>plot</command> per generare
       dei semplici <quote>grafici ASCII</quote>.</para>
 

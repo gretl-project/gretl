@@ -8,11 +8,11 @@
 
   <sect1 id="genr-intro"><title>Introduzione</title>
 
-    <para>Il comando <literal>genr</literal> offre un modo flessibile per definire
-      nuove variabili. Il comando è documentato nel capitolo della guida comandi
-      di questo manuale (si veda <xref linkend="cmd-genr"/>), mentre questo capitolo
-      offre una discussione più approfondita di alcune delle funzioni speciali
-      disponibili con <literal>genr</literal> e di alcune particolarità del comando.
+    <para>Il comando <literal>genr</literal> offre un modo flessibile per
+      definire nuove variabili. Il comando è documentato nel
+      <citetitle>XXX</citetitle>, mentre questo capitolo offre una discussione
+      più approfondita di alcune delle funzioni speciali disponibili con
+      <literal>genr</literal> e di alcune particolarità del comando.
     </para>
 
   </sect1>
@@ -124,7 +124,7 @@
 
       <para>I valori predefiniti per i limiti di frequenza sono 8 e 32, mentre il valore
         predefinito per l'ordine di approssimazione, <emphasis>k</emphasis>, è 8.
-        È possibile impostare questi valori usando il comando <xref linkend="cmd-set"/>.
+        È possibile impostare questi valori usando il comando <command>set</command>.
         La parola chiave per impostare i limiti di frequenza è <literal>bkbp_limits</literal>,
         mentre quella per <emphasis>k</emphasis> è <literal>bkbp_k</literal>.
 	Quindi ad esempio, se si stanno usando dati mensili e si vuole impostare i
@@ -202,7 +202,7 @@
     <para>Il comando <literal>genr</literal> fornisce un modo per recuperare vari
       valori calcolati dal programma nel corso della stima dei modelli o della
       verifica di ipotesi. Le variabili che possono essere richiamate in questo modo
-      sono elencate nella voce <xref linkend="cmd-genr"/> della guida comandi; qui
+      sono elencate nella XXX; qui
       ci occupiamo in particolare delle variabili speciali <literal>$test</literal>
       e <literal>$pvalue</literal>.</para>
 
@@ -212,27 +212,27 @@
       alcun comando di test, le variabili contengono il codice di valore
       mancante. I <quote>comandi espliciti di test</quote> che funzionano in
       questo modo sono i seguenti:
-      <xref linkend="cmd-add"/> (test congiunto per la significatività di
+      <command>add</command> (test congiunto per la significatività di
       variabili aggiunte a un modello);
-      <xref linkend="cmd-adf"/> (test di Dickey&ndash;Fuller aumentato, si veda
+      <command>adf</command> (test di Dickey&ndash;Fuller aumentato, si veda
       oltre);
-      <xref linkend="cmd-arch"/> (test per ARCH);
-      <xref linkend="cmd-chow"/> (test Chow per break strutturale);
-      <xref linkend="cmd-coeffsum"/> (test per la somma dei coefficienti
+      <command>arch</command> (test per ARCH);
+      <command>chow</command> (test Chow per break strutturale);
+      <command>coeffsum</command> (test per la somma dei coefficienti
       specificati);
-      <xref linkend="cmd-cusum"/> (la statistica <emphasis>t</emphasis> di
+      <command>cusum</command> (la statistica <emphasis>t</emphasis> di
       Harvey&ndash;Collier);
-      <xref linkend="cmd-kpss"/> (il test di stazionarietà KPSS, p-value non
+      <command>kpss</command> (il test di stazionarietà KPSS, p-value non
       disponibile);
-      <xref linkend="cmd-lmtest"/> (si veda oltre);
-      <xref linkend="cmd-meantest"/> (test per la differenza delle medie);
-      <xref linkend="cmd-omit"/> (test congiunto per la significatività delle
+      <command>lmtest</command> (si veda oltre);
+      <command>meantest</command> (test per la differenza delle medie);
+      <command>omit</command> (test congiunto per la significatività delle
       variabili omesse da un modello);
-      <xref linkend="cmd-reset"/> (test RESET di Ramsey);
-      <xref linkend="cmd-restrict"/> (vincolo lineare generale);
-      <xref linkend="cmd-runs"/> (test delle successioni per la casualità); 
-      <xref linkend="cmd-testuhat"/> (test per la normalità dei residui) e
-      <xref linkend="cmd-vartest"/> (test per la differenza delle varianze).
+      <command>reset</command> (test RESET di Ramsey);
+      <command>restrict</command> (vincolo lineare generale);
+      <command>runs</command> (test delle successioni per la casualità); 
+      <command>testuhat</command> (test per la normalità dei residui) e
+      <command>vartest</command> (test per la differenza delle varianze).
       Nella maggior parte dei casi, vengono salvati valori sia in
       <literal>$test</literal> che in <literal>$pvalue</literal>; l'eccezione è
       il test KPSS, per cui non è disponibile il p-value.
@@ -257,7 +257,7 @@
 
     <itemizedlist>
       <listitem>
-	<para>Di solito, il comando <xref linkend="cmd-adf"/> genera tre varianti
+	<para>Di solito, il comando <command>adf</command> genera tre varianti
           del test Dickey&ndash;Fuller: una basata su una regressione che
           include una costante, una che include costante e trend lineare, e una
           che include costante e trend quadratico. Se si intende estrarre valori
@@ -270,7 +270,7 @@
 	</para>
       </listitem>
       <listitem>
-	<para>Di solito, il comando <xref linkend="cmd-lmtest"/> (che deve
+	<para>Di solito, il comando <command>lmtest</command> (che deve
           seguire una regressione OLS) esegue vari test diagnostici sulla
           regressione in questione. Per controllare cosa viene salvato in
 	  <literal>$test</literal> e <literal>$pvalue</literal> occorre limitare
@@ -285,7 +285,7 @@
       e <literal>$pvalue</literal> è dato dal fatto che il tipo di test a cui si
       riferiscono questi valori viene scritto nell'etichetta descrittiva della
       variabile generata. Per controllare di aver recuperato il valore corretto,
-      è possibile leggere l'etichetta con il comando <xref linkend="cmd-label"/>
+      è possibile leggere l'etichetta con il comando <command>label</command>
       (il cui unico argomento è il nome della variabile). La seguente sessione
       interattiva illustra la procedura.
     </para>

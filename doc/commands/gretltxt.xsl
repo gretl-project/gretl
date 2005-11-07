@@ -310,9 +310,9 @@
 <xsl:text>"</xsl:text>
 </xsl:template>
 
-<xsl:template match="manref">
+<xsl:template match="guideref">
   <xsl:call-template name="gettext">
-    <xsl:with-param name="key" select="'fullman'"/>
+    <xsl:with-param name="key" select="'guidebook'"/>
   </xsl:call-template>
 </xsl:template>
 

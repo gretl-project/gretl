@@ -14,7 +14,7 @@
       <application>gretlcli</application> ha un file di aiuto, a cui si
       accede inserendo il comando <quote>help</quote> al prompt. Inoltre,
       può essere usato in modalità batch, inviando i risultati direttamente
-      a un file (si veda <xref linkend="optarg2"/>).
+      a un file (si veda XXX).
     </para>
 
     <para>

@@ -154,7 +154,7 @@
 	  still, by default, treated as a panel.</para>
       </footnote> If you wish to re-impose a time-series or panel
       interpretation of the reduced dataset you can do so using the
-      <xref linkend="cmd-setobs"/> command, or the GUI menu item
+      <command>setobs</command> command, or the GUI menu item
       <quote>Sample, Dataset structure</quote>.</para> 
 
     <para>The fact that <quote>restricting</quote> the sample results
@@ -197,7 +197,7 @@
 	smpl 100 --random</programlisting> to select 100 cases.  If
       you want the sample to be reproducible, you should set the seed
       for the random number generator first, using 
-      <xref linkend="cmd-set"/>.</para>
+      <command>set</command>.</para>
 
     <para>This sort of sampling falls under the
       <quote>restriction</quote> category: a reduced copy of the
@@ -208,7 +208,7 @@
   <sect1 id="sample-menu"><title>The Sample menu items</title>
 
     <para>The discussion above has focused on the script command 
-      <xref linkend="cmd-smpl"/>. You can also use the items under the
+      <command>smpl</command>. You can also use the items under the
       <guimenuitem>Sample</guimenuitem> menu in the GUI program to
       select a sub-sample.</para>
 
