@@ -2945,7 +2945,7 @@ static int get_png_data_bounds (char *str, png_bounds *bounds)
 static int get_png_bounds_info (png_bounds *bounds)
 {
     FILE *fp;
-    char header[PNG_CHECK_BYTES];
+    unsigned char header[PNG_CHECK_BYTES];
     char pngname[MAXLEN];
     png_structp png_ptr;
     png_infop info_ptr;

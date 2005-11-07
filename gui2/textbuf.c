@@ -334,7 +334,7 @@ static gchar *my_utf_string (char *t)
   
     if (s) g_free(s);
 
-    for (c = (unsigned char *)t; *c != 0; c++) {
+    for (c = (unsigned char *) t; *c != 0; c++) {
 	if (*c < 32 && *c != '\n') {
 	    *c = ' ';
 	}
@@ -347,7 +347,11 @@ static gchar *my_utf_string (char *t)
 
     if (s == NULL) {
 	s = g_strdup(t);
-	for (c = s; *c != 0; c++) if (*c > 128) *c = '?';
+	for (c = (unsigned char *) s; *c != 0; c++) {
+	    if (*c > 128) {
+		*c = '?';
+	    }
+	}
     }
 
     if (error) {

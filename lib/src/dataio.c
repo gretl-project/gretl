@@ -4504,7 +4504,8 @@ static int transcribe_string (char *targ, const char *src, int maxlen,
 	    maxlen = 128;
 	}
 	strncat(tmp, src, maxlen - 1);
-	utf8_to_iso_latin_1(targ, maxlen, tmp, maxlen);
+	utf8_to_iso_latin_1((unsigned char *) targ, maxlen, 
+			    (unsigned char *) tmp, maxlen);
     } else {
 	strncat(targ, src, maxlen - 1);
     }
@@ -4519,13 +4520,13 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
 			    int to_iso_latin)
 {
     xmlNodePtr cur;
-    char *tmp = xmlGetProp(node, (UTF) "count");
+    xmlChar *tmp = xmlGetProp(node, (UTF) "count");
     int i, err = 0;
 
     if (tmp != NULL) {
 	int v;
 
-	if (sscanf(tmp, "%d", &v) == 1) {
+	if (sscanf((char *) tmp, "%d", &v) == 1) {
 	    pdinfo->v = v + 1;
 	} else {
 	    sprintf(gretl_errmsg, _("Failed to parse count of variables"));
@@ -4566,7 +4567,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
         if (!xmlStrcmp(cur->name, (UTF) "variable")) {
 	    tmp = xmlGetProp(cur, (UTF) "name");
 	    if (tmp != NULL) {
-		transcribe_string(pdinfo->varname[i], tmp, VNAMELEN,
+		transcribe_string(pdinfo->varname[i], (char *) tmp, VNAMELEN,
 				  to_iso_latin); 
 		free(tmp);
 	    } else {
@@ -4575,25 +4576,25 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "label");
 	    if (tmp != NULL) {
-		transcribe_string(VARLABEL(pdinfo, i), tmp, MAXLABEL,
+		transcribe_string(VARLABEL(pdinfo, i), (char *) tmp, MAXLABEL,
 				  to_iso_latin);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "displayname");
 	    if (tmp != NULL) {
-		transcribe_string(DISPLAYNAME(pdinfo, i), tmp, MAXDISP,
+		transcribe_string(DISPLAYNAME(pdinfo, i), (char *) tmp, MAXDISP,
 				  to_iso_latin);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "compact-method");
 	    if (tmp != NULL) {
-		COMPACT_METHOD(pdinfo, i) = compact_string_to_int(tmp);
+		COMPACT_METHOD(pdinfo, i) = compact_string_to_int((char *) tmp);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "role");
 	    if (tmp != NULL) {
-		if (!strcmp(tmp, "scalar")) {
-		    char *val = xmlGetProp(cur, (UTF) "value");
+		if (!strcmp((char *) tmp, "scalar")) {
+		    char *val = (char *) xmlGetProp(cur, (UTF) "value");
 		    
 		    if (val) {
 			double xx = atof(val);
@@ -4669,7 +4670,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 				 long progress, int to_iso_latin)
 {
     xmlNodePtr cur;
-    char *tmp;
+    xmlChar *tmp;
     int n, i, t;
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
@@ -4679,7 +4680,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	return 1;
     } 
 
-    if (sscanf(tmp, "%d", &n) == 1) {
+    if (sscanf((char *) tmp, "%d", &n) == 1) {
 	pdinfo->n = n;
 	free(tmp);
     } else {
@@ -4697,12 +4698,12 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 
     tmp = xmlGetProp(node, (UTF) "labels");
     if (tmp) {
-	if (!strcmp(tmp, "true")) {
+	if (!strcmp((char *) tmp, "true")) {
 	    if (dataset_allocate_obs_markers(pdinfo)) {
 		sprintf(gretl_errmsg, "Out of memory");
 		return 1;
 	    }
-	} else if (strcmp(tmp, "false")) {
+	} else if (strcmp((char *) tmp, "false")) {
 	    sprintf(gretl_errmsg, _("labels attribute for observations must be "
 		    "'true' or 'false'"));
 	    return 1;
@@ -4752,7 +4753,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    if (pdinfo->markers) {
 		tmp = xmlGetProp(cur, (UTF) "label");
 		if (tmp) {
-		    transcribe_string(pdinfo->S[t], tmp, OBSLEN,
+		    transcribe_string(pdinfo->S[t], (char *) tmp, OBSLEN,
 				      to_iso_latin); 
 		    free(tmp);
 		} else {
@@ -4762,7 +4763,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    }
 	    tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 	    if (tmp) {
-		if (process_values(*pZ, pdinfo, t, tmp)) {
+		if (process_values(*pZ, pdinfo, t, (char *) tmp)) {
 		    return 1;
 		}
 		free(tmp);
@@ -4827,7 +4828,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
     double **tmpZ = NULL;
     xmlDocPtr doc;
     xmlNodePtr cur;
-    char *tmp;
+    xmlChar *tmp;
     int gotvars = 0, gotobs = 0, err = 0;
     int to_iso_latin = 0;
     long fsz, progress = 0L;
@@ -4862,7 +4863,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
     }
 
 #ifndef USE_GTK2
-    if (doc->encoding != NULL && strstr(doc->encoding, "UTF")) {
+    if (doc->encoding != NULL && strstr((char *) doc->encoding, "UTF")) {
 	to_iso_latin = 1;
     }
 #endif
@@ -4890,13 +4891,13 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	err = 1;
 	goto bailout;
     } else {
-	if (!strcmp(tmp, "cross-section")) {
+	if (!strcmp((char *) tmp, "cross-section")) {
 	    tmpdinfo->structure = CROSS_SECTION;
-	} else if (!strcmp(tmp, "time-series")) {
+	} else if (!strcmp((char *) tmp, "time-series")) {
 	    tmpdinfo->structure = TIME_SERIES;
-	} else if (!strcmp(tmp, "stacked-time-series")) {
+	} else if (!strcmp((char *) tmp, "stacked-time-series")) {
 	    tmpdinfo->structure = STACKED_TIME_SERIES;
-	} else if (!strcmp(tmp, "stacked-cross-section")) {
+	} else if (!strcmp((char *) tmp, "stacked-cross-section")) {
 	    tmpdinfo->structure = STACKED_CROSS_SECTION;
 	} else {
 	    sprintf(gretl_errmsg, _("Unrecognized type attribute for data file"));
@@ -4913,10 +4914,10 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
     if (tmp) {
 	int pd = 0;
 
-	if (!strcmp(tmp, "special")) {
+	if (!strcmp((char *)tmp, "special")) {
 	    tmpdinfo->structure = SPECIAL_TIME_SERIES;
 	    tmpdinfo->pd = 1;
-	} else if (sscanf(tmp, "%d", &pd) == 1) {
+	} else if (sscanf((char *) tmp, "%d", &pd) == 1) {
 	    tmpdinfo->pd = pd;
 	} else {
 	    strcpy(gretl_errmsg, _("Failed to parse data frequency"));
@@ -4937,13 +4938,13 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	char obstr[16];
 
 	obstr[0] = '\0';
-	strncat(obstr, tmp, 15);
+	strncat(obstr, (char *) tmp, 15);
 	charsub(obstr, ':', '.');
 	
 	if (strchr(obstr, '/') != NULL && 
 	    (dataset_is_daily(tmpdinfo) || 
 	     dataset_is_weekly(tmpdinfo))) {
-	    long ed = get_epoch_day(tmp);
+	    long ed = get_epoch_day((char *) tmp);
 
 	    if (ed < 0) {
 		err = 1;
@@ -4966,7 +4967,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	    goto bailout;
 	}
 	tmpdinfo->stobs[0] = '\0';
-	strncat(tmpdinfo->stobs, tmp, OBSLEN - 1);
+	strncat(tmpdinfo->stobs, (char *) tmp, OBSLEN - 1);
 	colonize_obs(tmpdinfo->stobs);
 	free(tmp);
     }
@@ -4977,13 +4978,13 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 
     if (tmp!= NULL) {
 	if (calendar_data(tmpdinfo)) {
-	    long ed = get_epoch_day(tmp);
+	    long ed = get_epoch_day((char *) tmp);
 
 	    if (ed < 0) err = 1;
 	} else {
 	    double x;
 
-	    if (sscanf(tmp, "%lf", &x) != 1) {
+	    if (sscanf((char *) tmp, "%lf", &x) != 1) {
 		err = 1;
 	    }
 	} 
@@ -4994,7 +4995,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	    goto bailout;
 	}
 	tmpdinfo->endobs[0] = '\0';
-	strncat(tmpdinfo->endobs, tmp, OBSLEN - 1);
+	strncat(tmpdinfo->endobs, (char *) tmp, OBSLEN - 1);
 	colonize_obs(tmpdinfo->endobs);
 	free(tmp);
     }
@@ -5003,7 +5004,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (UTF) "description")) {
-	    tmpdinfo->descrip = 
+	    tmpdinfo->descrip = (char *) 
 		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
         } else if (!xmlStrcmp(cur->name, (UTF) "variables")) {
 	    if (process_varlist(cur, tmpdinfo, &tmpZ, to_iso_latin)) {
@@ -5097,7 +5098,7 @@ char *get_xml_description (const char *fname)
 {
     xmlDocPtr doc;
     xmlNodePtr cur;
-    char *buf = NULL;
+    xmlChar *buf = NULL;
 
     *gretl_errmsg = '\0';
 
@@ -5135,7 +5136,7 @@ char *get_xml_description (const char *fname)
     xmlFreeDoc(doc);
     xmlCleanupParser();
 
-    return buf;
+    return (char *) buf;
 }
 
 int check_atof (const char *numstr)

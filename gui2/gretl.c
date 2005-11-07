@@ -1525,7 +1525,7 @@ drag_data_received  (GtkWidget *widget,
     }
 
     /* ignore the wrong sort of data */
-    if (data == NULL || (dfname = data->data) == NULL || 
+    if (data == NULL || (dfname = (gchar *) data->data) == NULL || 
 	strlen(dfname) <= 5 || strncmp(dfname, "file:", 5))
 	return;
 

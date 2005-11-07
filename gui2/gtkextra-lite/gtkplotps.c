@@ -35,6 +35,8 @@
 #include <time.h>
 #include <gtk/gtk.h>
 
+#include "gretl_intl.h"
+
 #include "gtkplot-lite.h"
 #include "gtkpsfontpango.h"
 #include "gtkplotpc.h"

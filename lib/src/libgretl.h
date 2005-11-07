@@ -214,7 +214,7 @@ struct DATAINFO_ {
     char decpoint;      /* character used to represent decimal point */
     char **S;           /* to hold observation markers */
     char *descrip;      /* to hold info on data sources etc. */
-    unsigned char *vector; /* hold info on vars: vector versus scalar */
+    char *vector;       /* hold info on vars: vector versus scalar */
     char *submask;      /* subsampling mask */
     void *data;         /* all-purpose pointer */
 };

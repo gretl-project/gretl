@@ -1488,7 +1488,8 @@ static int ggz_extract (char *errbuf, char *ggzname)
 {
     gzFile fgz = NULL;
     FILE *fidx = NULL, *fbin = NULL, *fcbk = NULL;
-    size_t idxlen, datalen, cblen, bytesleft, bgot;
+    size_t idxlen, datalen, bytesleft, bgot;
+    size_t cblen = 0;
     char idxname[MAXLEN], binname[MAXLEN], cbname[MAXLEN];
     char gzbuf[GRETL_BUFSIZE];
 #if G_BYTE_ORDER == G_BIG_ENDIAN

@@ -490,12 +490,12 @@ static int header_get (struct rbuf *rbuf, char **hdr,
 		if (!((flags & HG_NO_CONTINUATIONS)
 		      || i == 0
 		      || (i == 1 && (*hdr)[0] == '\r'))) {
-		    char next;
+		    char next = 0;
 
 		    /* If the header is non-empty, we need to check if
 		       it continues on to the other line.  We do that by
 		       peeking at the next character. */
-		    res = rbuf_peek (rbuf, &next);
+		    res = rbuf_peek(rbuf, &next);
 		    if (res == 0) {
 			return HG_EOF;
 		    } else if (res == -1) {

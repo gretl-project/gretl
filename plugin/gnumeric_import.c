@@ -189,7 +189,7 @@ static int wsheet_get_real_size (xmlNodePtr node, wsheet *sheet)
 	if (!xmlStrcmp(p->name, (UTF) "Cell")) {
 	    int i, j;
 
-	    tmp = xmlGetProp(p, (UTF) "Row");
+	    tmp = (char *) xmlGetProp(p, (UTF) "Row");
 	    if (tmp) {
 		i = atoi(tmp);
 		free(tmp);
@@ -197,7 +197,7 @@ static int wsheet_get_real_size (xmlNodePtr node, wsheet *sheet)
 		    sheet->maxrow = i;
 		}
 	    }
-	    tmp = xmlGetProp(p, (UTF) "Col");
+	    tmp = (char *) xmlGetProp(p, (UTF) "Col");
 	    if (tmp) {
 		j = atoi(tmp);
 		free(tmp);
@@ -274,20 +274,20 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 	    x = NADBL;
 	    i = 0; t = 0;
 
-	    tmp = xmlGetProp(p, (UTF) "Col");
+	    tmp = (char *) xmlGetProp(p, (UTF) "Col");
 	    if (tmp) {
 		i = atoi(tmp);
 		i_real = i - colmin;
 		free(tmp);
 	    }
-	    tmp = xmlGetProp(p, (UTF) "Row");
+	    tmp = (char *) xmlGetProp(p, (UTF) "Row");
 	    if (tmp) {
 		t = atoi(tmp);
 		t_real = t - rowmin;
 		free(tmp);
 	    }
 	    if (i_real >= 0 && t_real >= 0) {
-		tmp = xmlGetProp(p, (UTF) "ValueType");
+		tmp = (char *) xmlGetProp(p, (UTF) "ValueType");
 
 		if (tmp) {
 		    vtype = atoi(tmp);
@@ -312,7 +312,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		    err = 1;
 		}
 
-		if (!err && (tmp = xmlNodeGetContent(p))) {
+		if (!err && (tmp = (char *) xmlNodeGetContent(p))) {
 		    if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
 			if (i_real == 0) {
 			    strncat(sheet->label[t_real], tmp, OBSLEN - 1);
@@ -320,7 +320,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		    }
 
 		    if (i_real == 0 && t_real == 1 && VTYPE_IS_NUMERIC(vtype)) {
-			char *fmt = xmlGetProp(p, (UTF) "ValueFormat");
+			char *fmt = (char *) xmlGetProp(p, (UTF) "ValueFormat");
 
 			if (fmt) {
 			    check_for_date_format(sheet, fmt);
@@ -425,7 +425,7 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
 		    while (snode != NULL && !err) {
 			if (!xmlStrcmp(snode->name, (UTF) "Name")) {
 			    sheetcount++;
-			    tmp = xmlNodeGetContent(snode);
+			    tmp = (char *) xmlNodeGetContent(snode);
 			    if (tmp) {
 				if (!strcmp(tmp, sheet->name) &&
 				    sheetcount == sheet->ID + 1) {
@@ -435,14 +435,14 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
 			    }
 			} else if (got_sheet &&
 				 !xmlStrcmp(snode->name, (UTF) "MaxCol")) {
-			    tmp = xmlNodeGetContent(snode);
+			    tmp = (char *) xmlNodeGetContent(snode);
 			    if (tmp) {
 				sheet->maxcol = atoi(tmp);
 				free(tmp);
 			    }
 			} else if (got_sheet &&
 				 !xmlStrcmp(snode->name, (UTF) "MaxRow")) {
-			    tmp = xmlNodeGetContent(snode);
+			    tmp = (char *) xmlNodeGetContent(snode);
 			    if (tmp) {
 				sheet->maxrow = atoi(tmp);
 				free(tmp);
@@ -527,7 +527,7 @@ static int wbook_get_info (const char *fname, wbook *book, PRN *prn)
 	    sub = cur->xmlChildrenNode;
 	    while (sub != NULL && !err) {
 		if (!xmlStrcmp(sub->name, (UTF) "SheetName")) {
-		    tmp = xmlNodeGetContent(sub);
+		    tmp = (char *) xmlNodeGetContent(sub);
 		    if (tmp != NULL) {
 			if (wbook_record_name(tmp, book)) {
 			    err = 1;

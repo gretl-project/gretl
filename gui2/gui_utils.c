@@ -4093,7 +4093,7 @@ static int seven_bit_file (const char *fname)
     }
 
     while (fgets(line, sizeof line, fp)) {
-	if (!seven_bit_string(line)) {
+	if (!seven_bit_string((unsigned char *) line)) {
 	    ascii = 0;
 	    break;
 	}
@@ -4165,7 +4165,7 @@ gchar *my_filename_from_utf8 (char *fname)
     gsize bytes;
     GError *err = NULL;
 
-    if (seven_bit_string(fname)) {
+    if (seven_bit_string((unsigned char *) fname)) {
 	return fname;
     }
 

@@ -723,7 +723,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	GList *fontnames = NULL;
 	struct font_info *ttflist;
 	const char *default_font = NULL;
-	int nfonts;
+	int nfonts = 0;
 
 	ttflist = get_gnuplot_ttf_list(&nfonts);
 

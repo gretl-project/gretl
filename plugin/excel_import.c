@@ -38,7 +38,7 @@ static void free_sheet (void);
 static int allocate_row_col (int row, int col, wbook *book);
 static char *copy_unicode_string (unsigned char *src, int remlen, 
 				  int *skip, int *slop);
-static char *convert8to7 (const unsigned char *s, int count);
+static char *convert8to7 (const char *s, int count);
 static char *convert16to7 (const unsigned char *s, int count);
 static char *make_string (char *str);
 
@@ -431,7 +431,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	
 	    prow = rows + i;
 	    ptr = q->data + 8;
-	    prow->cells[j] = make_string(convert8to7(ptr, len));
+	    prow->cells[j] = make_string(convert8to7((char *) ptr, len));
 	}
 	break;
   
@@ -795,13 +795,13 @@ copy_unicode_string (unsigned char *src, int remlen,
 	/* let's not mess with excessive strings */
 	return g_strdup("bigstr");
     } else if (csize == 1) {
-	return convert8to7(src + this_skip, count);
+	return convert8to7((char *) src + this_skip, count);
     } else { 
 	return convert16to7(src + this_skip, count);
     }
 }
 
-static char *convert8to7 (const unsigned char *s, int count) 
+static char *convert8to7 (const char *s, int count) 
 {
     char *dest;
 

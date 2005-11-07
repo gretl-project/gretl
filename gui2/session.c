@@ -2365,7 +2365,7 @@ session_data_received (GtkWidget *widget,
     gchar *fname, *mname;
 
     if (info == GRETL_MODEL_POINTER && data != NULL && 
-	(mname = data->data) != NULL) {
+	(mname = (gchar *) data->data) != NULL) {
 	MODEL *pmod = get_model_by_name(mname);
 
 	if (pmod != NULL) {
@@ -2374,7 +2374,7 @@ session_data_received (GtkWidget *widget,
 			       NULL);
 	}
     } else if (info == GRETL_FILENAME && data != NULL && 
-	       (fname = data->data) != NULL) {
+	       (fname = (gchar *) data->data) != NULL) {
 	graph_page_add_file(fname);
     }
 }
@@ -2405,7 +2405,7 @@ static void drag_graph (GtkWidget *w, GdkDragContext *context,
 			GRAPHT *graph)
 {
     gtk_selection_data_set(sel, GDK_SELECTION_TYPE_STRING, 8, 
-                           graph->fname, strlen(graph->fname));
+                           (guchar *) graph->fname, strlen(graph->fname));
 }
 
 static void graph_drag_connect (GtkWidget *w, GRAPHT *graph)
@@ -2422,7 +2422,7 @@ static void drag_model (GtkWidget *w, GdkDragContext *context,
 			const char *modname)
 {
     gtk_selection_data_set(sel, GDK_SELECTION_TYPE_STRING, 8, 
-                           modname, strlen(modname));
+                           (guchar *) modname, strlen(modname));
 }
 
 static void model_drag_connect (GtkWidget *w, char *modname)
