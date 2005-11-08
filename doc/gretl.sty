@@ -6,6 +6,25 @@
 
 \setcounter{secnumdepth}{1}
 
+\newcounter{script}
+\renewcommand\thescript{\@arabic\c@script}
+\def\fps@script{tbp}
+\def\ftype@script{2}
+\def\ext@script{lot}
+\def\fnum@script{\scriptname~\thescript}
+\newenvironment{script}
+               {\@float{script}}
+               {\end@float}
+\newenvironment{script*}
+               {\@dblfloat{script}}
+               {\end@dblfloat}
+\newcommand\scriptname{Script}
+\newcommand\theHscript      {\arabic{script}}
+\def\toclevel@script{0}
+
+\newcommand{\tip}[1]{\textbf{Tip}: \sffamily #1}
+
+
 \def\@makechapterhead#1{%
   \vspace*{20\p@}%
   {\parindent \z@ \centering

@@ -195,4 +195,76 @@
   <xsl:value-of select="@fileref"/>
 </xsl:template>
 
+<xsl:template match="tip">
+  <xsl:text>\tip{</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>}</xsl:text>
+</xsl:template>
+
+<xsl:template match="example">
+  <xsl:text>\begin{script}[htbp]&#10;</xsl:text>
+  <xsl:text>\caption{</xsl:text>
+  <xsl:value-of select="title"/>
+  <xsl:text>}&#10;</xsl:text>
+  <xsl:text>\label{</xsl:text>
+  <xsl:value-of select="@id"/>
+  <xsl:text>}&#10;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>\end{script}&#10;</xsl:text>
+</xsl:template>
+
+<xsl:template match="entry">
+  <xsl:apply-templates/>
+  <xsl:choose>
+    <xsl:when test="following-sibling::entry">
+      <xsl:text> &amp; </xsl:text>
+    </xsl:when>
+    <xsl:when test="not(following-sibling)">
+      <xsl:text>\\</xsl:text>
+    </xsl:when>
+  </xsl:choose>
+</xsl:template>
+
+<xsl:template match="row">
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="tbody">
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="thead">
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="tgroup">
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="informaltable">
+  <xsl:text>\begin{center}&#10;</xsl:text>
+  <xsl:text>\begin{tabular}{}&#10;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>\end{tabular}&#10;</xsl:text>
+  <xsl:text>\end{center}&#10;</xsl:text>
+</xsl:template>
+
+<xsl:template match="table">
+  <xsl:text>\begin{table}[htbp]&#10;</xsl:text>
+  <xsl:text>\begin{center}&#10;</xsl:text>
+  <xsl:text>\caption{</xsl:text>
+  <xsl:value-of select="title"/>
+  <xsl:text>}&#10;</xsl:text>
+  <xsl:text>\label{</xsl:text>
+  <xsl:value-of select="@id"/>
+  <xsl:text>}&#10;</xsl:text>  
+  <xsl:text>\begin{tabular}{}&#10;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>\end{tabular}&#10;</xsl:text>
+  <xsl:text>\end{center}&#10;</xsl:text>
+  <xsl:text>\end{table}&#10;</xsl:text>
+</xsl:template>
+
+<xsl:template match="bookinfo"/>
+
 </xsl:stylesheet>
