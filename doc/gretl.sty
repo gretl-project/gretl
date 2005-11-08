@@ -6,6 +6,10 @@
 
 \setcounter{secnumdepth}{1}
 
+\newcommand{\app}[1]{\textsf{#1}}
+\newcommand{\cmd}[1]{\texttt{#1}}
+\newcommand{\refname}{References}
+
 \newcounter{script}
 \renewcommand\thescript{\@arabic\c@script}
 \def\fps@script{tbp}
@@ -18,25 +22,36 @@
 \newenvironment{script*}
                {\@dblfloat{script}}
                {\end@dblfloat}
-\newcommand\scriptname{Script}
+\newcommand\scriptname{Example}
 \newcommand\theHscript      {\arabic{script}}
 \def\toclevel@script{0}
 
-\newcommand{\tip}[1]{\textbf{Tip}: \sffamily #1}
+\newcommand{\tip}[1]{\textbf{Tip}: {\sffamily #1}}
+
+
+\renewenvironment{thebibliography}
+     {\section*{\refname
+        \@mkboth{\MakeUppercase\refname}{\MakeUppercase\refname}}%
+      \list{}{\itemindent -2em\listparindent\itemindent\leftmargin 2em
+      \sloppy
+      \clubpenalty4000
+      \@clubpenalty \clubpenalty
+      \widowpenalty4000%
+      \sfcode`\.\@m\item\relax}}
+      {\endlist}
 
 
 \def\@makechapterhead#1{%
-  \vspace*{20\p@}%
+  \vspace*{10\p@}%
   {\parindent \z@ \centering
     \normalfont
     \ifnum \c@secnumdepth >\m@ne
         \Large\sffamily
         \@chapapp\space \thechapter
         \par\nobreak
-%        \vskip 20\p@
     \fi
     \interlinepenalty\@M
-    \huge \bfseries #1\par\nobreak
+    \huge #1\par\nobreak
     \vskip 40\p@
   }}
 \def\@schapter#1{\if@twocolumn
@@ -46,7 +61,7 @@
                    \@afterheading
                  \fi}
 \def\@makeschapterhead#1{%
-  \vspace*{20\p@}%
+  \vspace*{10\p@}%
   {\parindent \z@ \centering
     \normalfont
     \scshape
@@ -60,13 +75,13 @@
                      the#1\endcsname\quad}}
 
 \renewcommand\section{\@startsection{section}{1}{\z@}%
-                                   {-3.5ex \@plus -1ex \@minus -.2ex}%
-                                   {2.3ex \@plus.2ex}%
-                                   {\normalfont\Large\sffamily\bfseries}}
+                                   {-3ex \@plus -1ex \@minus -.2ex}%
+                                   {.5ex \@plus.2ex}%
+                                   {\normalfont\Large\sffamily}}
 
 \renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
-                                     {-3.25ex\@plus -1ex \@minus -.2ex}%
-                                     {1.5ex \@plus .2ex}%
+                                     {-2.5ex\@plus -1ex \@minus -.2ex}%
+                                     {.2ex \@plus .5ex}%
                                      {\normalfont\large\bfseries}}
 
 \renewcommand\subsubsection{\@startsection{subsubsection}{2}{\z@}%

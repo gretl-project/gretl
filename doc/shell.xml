@@ -10,8 +10,8 @@
 <!ENTITY mu "$\mu$">
 <!ENTITY varepsilon "$\varepsilon$">
 <!ENTITY sigma "$\sigma$">
-<!ENTITY ne "\ne">
-<!ENTITY opto "<literal>[ -o ]</literal>">
+<!ENTITY ne "$\ne$">
+<!ENTITY opto "[ \texttt{-o} ]">
 <!ENTITY cmdcol "82pt">
 <!ENTITY mdash "---">
 <!ENTITY ndash "--">
@@ -22,6 +22,7 @@
 <!ENTITY yt "$y_t$">
 <!ENTITY ut "$u_t$">
 <!ENTITY zt "$z_t$">
+<!ENTITY dollar "\$">
 <!ENTITY introduction SYSTEM "chapters/intro.xml">
 <!ENTITY starting SYSTEM "chapters/starting.xml">
 <!ENTITY modes SYSTEM "chapters/modes.xml">
@@ -71,9 +72,8 @@
 
   </bookinfo>
 
-  &introduction;
-  &nls;
-  &looping;
+  &XXXX;
+
 
 
 </book>

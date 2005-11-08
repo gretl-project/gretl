@@ -85,7 +85,7 @@
       <programlisting>
 	smpl gender=0 --restrict</programlisting> to this effect.  Or
       suppose we want to restrict the sample to respondents with
-      incomes over $50,000.  Then we could use</para>
+      incomes over &dollar;50,000.  Then we could use</para>
 
       <programlisting>
 	smpl income>50000 --restrict</programlisting>
