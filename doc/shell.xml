@@ -16,7 +16,8 @@
 <!ENTITY mdash "---">
 <!ENTITY ndash "--">
 <!ENTITY hellip "\dots{}">
-<!ENTITY rsqu "<emphasis>R</emphasis><superscript>2</superscript>">
+<!ENTITY minus "$-$">
+<!ENTITY rsqu "$R^2$">
 <!ENTITY xt "$x_t$">
 <!ENTITY yt "$y_t$">
 <!ENTITY ut "$u_t$">
@@ -70,8 +71,9 @@
   </bookinfo>
 
   &introduction;
-  &starting;
-  &vecm;
+  &nls;
+  &looping;
+
 
 </book>
 

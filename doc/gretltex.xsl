@@ -147,6 +147,12 @@
   <xsl:text>}</xsl:text> 
 </xsl:template>
 
+<xsl:template match="varname">
+  <xsl:text>\verb+</xsl:text>  
+  <xsl:apply-templates/>
+  <xsl:text>+</xsl:text> 
+</xsl:template>
+
 <xsl:template match="informalequation">
   <xsl:value-of select="alt[@role='tex']"/>
 </xsl:template>
@@ -168,7 +174,10 @@
   <xsl:choose>
     <xsl:when test="screenshot">
       <xsl:apply-templates select="screenshot"/>
-    </xsl:when>    
+    </xsl:when> 
+    <xsl:when test="graphic">
+      <xsl:apply-templates select="graphic"/>
+    </xsl:when> 
   </xsl:choose>
   <xsl:text>}&#10;</xsl:text>
   <xsl:text>\end{figure}&#10;</xsl:text>

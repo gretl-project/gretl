@@ -33,13 +33,12 @@
 
     <sect2 id="baxter-king"><title>The Baxter and King filter</title>
 
-      <para>Consider the spectral representation of a time series
-	<emphasis>y<subscript>t</subscript></emphasis>:
+      <para>Consider the spectral representation of a time series &yt;:
 	<informalequation><alt role="tex">
 	    \[ y_t = \int_{-\pi}^{\pi} e^{i\omega} \mathrm{d} Z(\omega) \]
 	  </alt><graphic fileref="figures/bk1"/>
 	</informalequation> if we wanted to extract only that component of
-	<emphasis>y<subscript>t</subscript></emphasis> that lies between the
+	&yt; that lies between the
 	frequencies 
         <inlineequation>
 	  <alt role="tex">$\underline{\omega}$</alt>
@@ -80,18 +79,18 @@
 	</inlineequation> and 0 elsewhere. This would imply, in the time domain,
 	applying to the series a filter with an infinite number of coefficients,
 	which is undesirable. The Baxter and King bandpass filter applies to
-	<emphasis>y<subscript>t</subscript></emphasis> a finite polynomial in the
-	lag operator <emphasis>A</emphasis>(<emphasis>L</emphasis>):
+	<mathvar>y<subscript>t</subscript></mathvar> a finite polynomial in the
+	lag operator <mathvar>A</mathvar>(<mathvar>L</mathvar>):
 	<informalequation><alt role="tex">
 	    \[ c_t = A(L) y_t \]
 	  </alt><graphic fileref="figures/bk3"/>
-	</informalequation> where <emphasis>A</emphasis>(<emphasis>L</emphasis>) is
+	</informalequation> where <mathvar>A</mathvar>(<mathvar>L</mathvar>) is
 	defined as
 	<informalequation><alt role="tex">
 	    \[ A(L) = \sum_{i=-k}^{k} a_i L^i \]
 	  </alt><graphic fileref="figures/bk4"/>
 	</informalequation> The coefficients
-	<emphasis>a<subscript>i</subscript></emphasis> are chosen such that
+	<mathvar>a<subscript>i</subscript></mathvar> are chosen such that
         <inlineequation>
 	  <alt role="tex">$F(\omega) = A(e^{i\omega})A(e^{-i\omega})$</alt>
 	  <inlinemediaobject>
@@ -107,27 +106,27 @@
 	      <imagedata align="center" fileref="figures/bk4"/>
 	    </imageobject>
 	  </inlinemediaobject>
-	</inlineequation> for a given <emphasis>k</emphasis>. Clearly, the higher
-	<emphasis>k</emphasis> the better the approximation is, but since
-	2<emphasis>k</emphasis> observations have to be discarded, a compromise is
+	</inlineequation> for a given <mathvar>k</mathvar>. Clearly, the higher
+	<mathvar>k</mathvar> the better the approximation is, but since
+	2<mathvar>k</mathvar> observations have to be discarded, a compromise is
 	usually sought. Moreover, the filter has also other appealing theoretical
-	properties, among which the property that <emphasis>A</emphasis>(1) = 0, so
+	properties, among which the property that <mathvar>A</mathvar>(1) = 0, so
 	a series with a single unit root is made stationary by application of the
 	filter.</para>
 
       <para>In practice, the filter is normally used with monthly or quarterly data
 	to extract the <quote>business cycle</quote> component, namely the component
-	between 6 and 36 quarters. Usual choices for <emphasis>k</emphasis> are 8 or
+	between 6 and 36 quarters. Usual choices for <mathvar>k</mathvar> are 8 or
 	12 (maybe higher for monthly series).
       </para>
 
       <para>The default values for the frequency bounds are 8 and 32, and the
-	default value for the approximation order, <emphasis>k</emphasis>, is 8. You
+	default value for the approximation order, <mathvar>k</mathvar>, is 8. You
 	can adjust these values using the <command>set</command> command. The
 	keyword for setting the frequency limits is <literal>bkbp_limits</literal>
-	and the keyword for <emphasis>k</emphasis> is <literal>bkbp_k</literal>.
+	and the keyword for <mathvar>k</mathvar> is <literal>bkbp_k</literal>.
 	Thus for example if you were using monthly data and wanted to adjust the
-	frequency bounds to 18 and 96, and <emphasis>k</emphasis> to 24, you could
+	frequency bounds to 18 and 96, and <mathvar>k</mathvar> to 24, you could
 	do</para>
 
       <programlisting>
@@ -189,8 +188,8 @@
     <para>It may be worth commenting on the propagation of missing values within
       <literal>genr</literal> formulae.  The general rule is that in arithmetical
       operations involving two variables, if either of the variables has a missing
-      value at observation <emphasis>t</emphasis> then the resulting series will
-      also have a missing value at <emphasis>t</emphasis>.  The one exception to
+      value at observation <mathvar>t</mathvar> then the resulting series will
+      also have a missing value at <mathvar>t</mathvar>.  The one exception to
       this rule is multiplication by zero: zero times a missing value produces zero
       (since this is mathematically valid regardless of the unknown value).
     </para>
@@ -218,7 +217,7 @@
       <command>chow</command> (Chow test for a structural break);
       <command>coeffsum</command> (test for the sum of specified coefficients);
       <command>cusum</command> (the Harvey&ndash;Collier
-      <emphasis>t</emphasis>-statistic);
+      <mathvar>t</mathvar>-statistic);
       <command>kpss</command> (KPSS stationarity test, no p-value available);
       <command>lmtest</command> (see below);
       <command>meantest</command> (test for difference of means);
