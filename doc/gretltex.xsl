@@ -61,9 +61,9 @@
 </xsl:template>
 
 <xsl:template match="variablelist">
-  <xsl:text>\begin{itemize}&#10;</xsl:text>
+  <xsl:text>\begin{description}&#10;</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text>\end{itemize}&#10;</xsl:text>
+  <xsl:text>\end{description}&#10;</xsl:text>
 </xsl:template>
 
 <xsl:template match="varlistentry">
@@ -95,6 +95,12 @@
   <xsl:text>&#10;</xsl:text>
 </xsl:template>
 
+<xsl:template match="xref">
+  <xsl:text>\ref{</xsl:text>
+  <xsl:value-of select="@linkend"/>
+  <xsl:text>}</xsl:text>
+</xsl:template>
+
 <xsl:template match="mathvar">
   <xsl:text>$</xsl:text>
   <xsl:apply-templates/>
@@ -111,10 +117,73 @@
   <xsl:text>}</xsl:text> 
 </xsl:template>
 
+<xsl:template match="superscript">
+  <xsl:text>^{</xsl:text>  
+  <xsl:apply-templates/>
+  <xsl:text>}</xsl:text> 
+</xsl:template>
+
+<xsl:template match="subscript">
+  <xsl:text>_{</xsl:text>  
+  <xsl:apply-templates/>
+  <xsl:text>}</xsl:text> 
+</xsl:template>
+
 <xsl:template match="programlisting">
   <xsl:text>\begin{verbatim}</xsl:text>  
   <xsl:apply-templates/>
   <xsl:text>\end{verbatim}</xsl:text> 
+</xsl:template>
+
+<xsl:template match="literal">
+  <xsl:text>\verb+</xsl:text>  
+  <xsl:apply-templates/>
+  <xsl:text>+</xsl:text> 
+</xsl:template>
+
+<xsl:template match="filename">
+  <xsl:text>\url{</xsl:text>  
+  <xsl:apply-templates/>
+  <xsl:text>}</xsl:text> 
+</xsl:template>
+
+<xsl:template match="informalequation">
+  <xsl:value-of select="alt[@role='tex']"/>
+</xsl:template>
+
+<xsl:template match="inlineequation">
+  <xsl:value-of select="alt[@role='tex']"/>
+</xsl:template>
+
+<xsl:template match="figure">
+  <xsl:text>\begin{figure}[htbp]&#10;</xsl:text>
+  <xsl:text>\caption{</xsl:text>
+  <xsl:value-of select="title"/>
+  <xsl:text>}&#10;</xsl:text>  
+  <xsl:text>\label{</xsl:text>
+  <xsl:value-of select="@id"/>
+  <xsl:text>}&#10;</xsl:text>
+  <xsl:text>\centering&#10;</xsl:text>
+  <xsl:text>\includegraphics[scale=0.5]{</xsl:text>
+  <xsl:choose>
+    <xsl:when test="screenshot">
+      <xsl:apply-templates select="screenshot"/>
+    </xsl:when>    
+  </xsl:choose>
+  <xsl:text>}&#10;</xsl:text>
+  <xsl:text>\end{figure}&#10;</xsl:text>
+</xsl:template>
+
+<xsl:template match="screenshot">
+  <xsl:choose>
+    <xsl:when test="graphic">
+      <xsl:apply-templates select="graphic"/>
+    </xsl:when>
+  </xsl:choose> 
+</xsl:template>
+
+<xsl:template match="graphic">
+  <xsl:value-of select="@fileref"/>
 </xsl:template>
 
 </xsl:stylesheet>

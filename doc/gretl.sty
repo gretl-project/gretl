@@ -1,0 +1,58 @@
+%% gretl.sty, written by Allin Cottrell, <2005/11/07>
+%%
+
+\ProvidesPackage{gretl}
+
+\setcounter{secnumdepth}{1}
+
+\def\@makechapterhead#1{%
+  \vspace*{20\p@}%
+  {\parindent \z@ \centering
+    \normalfont
+    \ifnum \c@secnumdepth >\m@ne
+        \Large\sffamily
+        \@chapapp\space \thechapter
+        \par\nobreak
+%        \vskip 20\p@
+    \fi
+    \interlinepenalty\@M
+    \huge \bfseries #1\par\nobreak
+    \vskip 40\p@
+  }}
+\def\@schapter#1{\if@twocolumn
+                   \@topnewpage[\@makeschapterhead{#1}]%
+                 \else
+                   \@makeschapterhead{#1}%
+                   \@afterheading
+                 \fi}
+\def\@makeschapterhead#1{%
+  \vspace*{20\p@}%
+  {\parindent \z@ \centering
+    \normalfont
+    \scshape
+    \interlinepenalty\@M
+    \Large \bfseries #1\par\nobreak
+    \vskip 40\p@
+  }}
+
+
+\def\@seccntformat#1{\protect\makebox[0pt][r]{\csname
+                     the#1\endcsname\quad}}
+
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+                                   {-3.5ex \@plus -1ex \@minus -.2ex}%
+                                   {2.3ex \@plus.2ex}%
+                                   {\normalfont\Large\sffamily\bfseries}}
+
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+                                     {-3.25ex\@plus -1ex \@minus -.2ex}%
+                                     {1.5ex \@plus .2ex}%
+                                     {\normalfont\large\bfseries}}
+
+\renewcommand\subsubsection{\@startsection{subsubsection}{2}{\z@}%
+                                     {-3.0ex\@plus -1ex \@minus -.2ex}%
+                                     {1.1ex \@plus .2ex}%
+                                     {\normalfont\normalsize\itshape}}
+                             
+\endinput
+%% end of gretl.sty

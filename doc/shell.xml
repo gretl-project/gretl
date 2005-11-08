@@ -3,16 +3,24 @@
 "/usr/share/sgml/docbook-xml-4.3/docbookx.dtd" [
 <!ENTITY % mathextra SYSTEM "mathextra.inc">
 <!ENTITY version "1.0.10">
-<!ENTITY latex "LaTeX">
-<!ENTITY tex "TeX">
-<!ENTITY varepsilon "&#x025B;">
+<!ENTITY latex "{\LaTeX}">
+<!ENTITY tex "{\TeX}">
+<!ENTITY alpha "$\alpha$">
+<!ENTITY beta "$\beta$">
+<!ENTITY mu "$\mu$">
+<!ENTITY varepsilon "$\varepsilon$">
+<!ENTITY sigma "$\sigma$">
+<!ENTITY ne "\ne">
 <!ENTITY opto "<literal>[ -o ]</literal>">
 <!ENTITY cmdcol "82pt">
+<!ENTITY mdash "---">
+<!ENTITY ndash "--">
+<!ENTITY hellip "\dots{}">
 <!ENTITY rsqu "<emphasis>R</emphasis><superscript>2</superscript>">
-<!ENTITY xt "<emphasis>x<subscript>t</subscript></emphasis>">
-<!ENTITY yt "<emphasis>y<subscript>t</subscript></emphasis>">
-<!ENTITY ut "<emphasis>u<subscript>t</subscript></emphasis>">
-<!ENTITY zt "<emphasis>z<subscript>t</subscript></emphasis>">
+<!ENTITY xt "$x_t$">
+<!ENTITY yt "$y_t$">
+<!ENTITY ut "$u_t$">
+<!ENTITY zt "$z_t$">
 <!ENTITY introduction SYSTEM "chapters/intro.xml">
 <!ENTITY starting SYSTEM "chapters/starting.xml">
 <!ENTITY modes SYSTEM "chapters/modes.xml">
@@ -62,6 +70,8 @@
   </bookinfo>
 
   &introduction;
+  &starting;
+  &vecm;
 
 </book>
 
