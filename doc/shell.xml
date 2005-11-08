@@ -41,7 +41,8 @@
 %mathextra;
 ]>
 
-<!-- =============Document Header ============================= -->
+<!-- "shell" file for testing conversion from DB to LaTeX.  Include
+     below the specific chapters to be converted.  -->
 
 <book id="index" lang="en">
 
