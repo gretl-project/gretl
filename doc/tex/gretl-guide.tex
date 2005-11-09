@@ -26,8 +26,6 @@
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{1ex}
 
-%% titlepage
-
 \newcommand{\gtitle}[1]{\vspace*{1in}
    {\Huge \sffamily #1}\par
    \vspace{.5in}
@@ -39,9 +37,12 @@
    \vspace{.5in}
 }
 
+%% titlepage
+
 \thispagestyle{empty}
 
 \begin{center}
+\label{titlepage}
 
 \gtitle{Gretl Users' Guide}
 
@@ -59,7 +60,26 @@ November, 2005}
 
 %% end titlepage
 
+%% license page
+
+\thispagestyle{empty}
+
+\begin{center}
+\label{license}
+
+License, etc., goes here.
+
+\end{center}
+\clearpage
+
+%% end license page
+
+\pagenumbering{roman}
+
 \tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
 
 \include{introduction}
 \include{starting}
