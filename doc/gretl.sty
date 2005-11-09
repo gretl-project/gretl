@@ -4,12 +4,16 @@
 
 \ProvidesPackage{gretl}
 
+%% i18n: translate here
+\newcommand{\refname}{References}
+\newcommand{\scriptname}{Example}
+
 \setcounter{secnumdepth}{1}
 
 \newcommand{\app}[1]{\textsf{#1}}
 \newcommand{\cmd}[1]{\texttt{#1}}
-\newcommand{\refname}{References}
 
+%% add script example as float
 \newcounter{script}
 \renewcommand\thescript{\@arabic\c@script}
 \def\fps@script{tbp}
@@ -22,13 +26,12 @@
 \newenvironment{script*}
                {\@dblfloat{script}}
                {\end@dblfloat}
-\newcommand\scriptname{Example}
 \newcommand\theHscript      {\arabic{script}}
 \def\toclevel@script{0}
 
 \newcommand{\tip}[1]{\textbf{Tip}: {\sffamily #1}}
 
-
+%% define a very simple bibliography environment
 \renewenvironment{thebibliography}
      {\section*{\refname
         \@mkboth{\MakeUppercase\refname}{\MakeUppercase\refname}}%
@@ -64,15 +67,15 @@
   \vspace*{10\p@}%
   {\parindent \z@ \centering
     \normalfont
-    \scshape
+    \sffamily
     \interlinepenalty\@M
     \Large \bfseries #1\par\nobreak
     \vskip 40\p@
   }}
 
 
-\def\@seccntformat#1{\protect\makebox[0pt][r]{\csname
-                     the#1\endcsname\quad}}
+%% \def\@seccntformat#1{\protect\makebox[0pt][r]{\csname
+%%                      the#1\endcsname\quad}}
 
 \renewcommand\section{\@startsection{section}{1}{\z@}%
                                    {-3ex \@plus -1ex \@minus -.2ex}%

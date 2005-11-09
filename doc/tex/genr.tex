@@ -1,0 +1,230 @@
+\chapter{Special functions in genr}
+\label{chap-genr}
+
+
+
+\section{Introduction}
+\label{genr-intro}
+
+The \verb+genr+ command provides a flexible means of
+      defining new variables.  It is documented in the \emph{Gretl Command
+	Reference}.  This chapter offers a more expansive discussion
+      of some of the special functions available via \verb+genr+ and
+      some of the finer points of the command.
+    
+
+\section{Time-series filters}
+\label{genr-filter}
+
+One sort of specialized function in \verb+genr+ is the
+      time-series filter.  Two such filters are currently available, the
+      Hodrick--Prescott filter and the Baxter--King bandpass filter. These
+      are accessed using \verb+hpfilt()+ and \verb+bkfilt()+
+      respectively: in each case the function takes one argument, the name of the
+      variable to be processed.
+    
+
+\subsection{The Hodrick--Prescott filter}
+\label{hodrick-prescott}
+
+To be written.
+
+\subsection{The Baxter and King filter}
+\label{baxter-king}
+
+Consider the spectral representation of a time series $y_t$:
+	
+	    \[ y_t = \int_{-\pi}^{\pi} e^{i\omega} \mathrm{d} Z(\omega) \]
+	   if we wanted to extract only that component of
+	$y_t$ that lies between the
+	frequencies 
+        $\underline{\omega}$ and
+        $\overline{\omega}$ one could apply a bandpass filter:
+	
+	    \[ c^*_t = \int_{-\pi}^{\pi} F^*(\omega) e^{i\omega} \mathrm{d}
+	    Z(\omega) \]
+	   where 
+        $F^*(\omega) = 1$ for
+        $\underline{\omega} < |\omega| < \overline{\omega}$ and 0 elsewhere. This would imply, in the time domain,
+	applying to the series a filter with an infinite number of coefficients,
+	which is undesirable. The Baxter and King bandpass filter applies to
+	$y\ensuremath{_{t}}$ a finite polynomial in the
+	lag operator $A$($L$):
+	
+	    \[ c_t = A(L) y_t \]
+	   where $A$($L$) is
+	defined as
+	
+	    \[ A(L) = \sum_{i=-k}^{k} a_i L^i \]
+	   The coefficients
+	$a\ensuremath{_{i}}$ are chosen such that
+        $F(\omega) = A(e^{i\omega})A(e^{-i\omega})$ is the best approximation to
+        $F^*(\omega)$ for a given $k$. Clearly, the higher
+	$k$ the better the approximation is, but since
+	2$k$ observations have to be discarded, a compromise is
+	usually sought. Moreover, the filter has also other appealing theoretical
+	properties, among which the property that $A$(1) = 0, so
+	a series with a single unit root is made stationary by application of the
+	filter.In practice, the filter is normally used with monthly or quarterly data
+	to extract the ``business cycle'' component, namely the component
+	between 6 and 36 quarters. Usual choices for $k$ are 8 or
+	12 (maybe higher for monthly series).
+      The default values for the frequency bounds are 8 and 32, and the
+	default value for the approximation order, $k$, is 8. You
+	can adjust these values using the \cmd{set} command. The
+	keyword for setting the frequency limits is \verb+bkbp_limits+
+	and the keyword for $k$ is \verb+bkbp_k+.
+	Thus for example if you were using monthly data and wanted to adjust the
+	frequency bounds to 18 and 96, and $k$ to 24, you could
+	do
+\begin{verbatim}
+	set bkbp_limits 18 96
+	set bkbp_k 24\end{verbatim}
+These values would then remain in force for calls to the
+	\verb+bkfilt+ function until changed by a further use of
+	\verb+set+. 
+      
+
+\section{Resampling and bootstrapping}
+\label{genr-resample}
+
+Another specialized function is the resampling, with replacement, of a
+      series.  To be written.
+    
+
+\section{Handling missing values}
+\label{genr-missing}
+
+Four special functions are available for the handling of missing values.
+      The boolean function \verb+missing()+ takes the name of a variable
+      as its single argument; it returns a series with value 1 for each observation
+      at which the given variable has a missing value, and value 0 otherwise (that
+      is, if the given variable has a valid value at that observation).  The
+      function \verb+ok()+ is complementary to
+      \verb+missing+; it is just a shorthand for
+      \verb+!missing+ (where \verb+!+ is the boolean NOT
+      operator).
+    For example, one can count the missing values for variable
+      \verb+x+ using
+\begin{verbatim}
+      genr nmiss_x = sum(missing(x))\end{verbatim}
+The function \verb+zeromiss()+, which again takes a single
+      series as its argument, returns a series where all zero values are set to the
+      missing code.  This should be used with caution --- one does not want to
+      confuse missing values and zeros --- but it can be useful in some
+      contexts.  For example, one can determine the first valid observation for a
+      variable \verb+x+ using
+\begin{verbatim}
+      genr time
+      genr x0 = min(zeromiss(time * ok(x)))\end{verbatim}
+
+      The function \verb+misszero()+ does the opposite of
+      \verb+zeromiss+, that is, it converts all missing values to zero.
+    It may be worth commenting on the propagation of missing values within
+      \verb+genr+ formulae.  The general rule is that in arithmetical
+      operations involving two variables, if either of the variables has a missing
+      value at observation $t$ then the resulting series will
+      also have a missing value at $t$.  The one exception to
+      this rule is multiplication by zero: zero times a missing value produces zero
+      (since this is mathematically valid regardless of the unknown value).
+    
+
+\section{Retrieving internal variables}
+\label{genr-internal}
+
+The \verb+genr+ command provides a means of retrieving
+      various values calculated by the program in the course of estimating
+      models or testing hypotheses.  The variables that can be retrieved in this
+      way are listed in the \emph{Gretl Command Reference}
+      reference; here we say a bit more about the special variables
+      \verb+$test+ and \verb+$pvalue+.These variables hold, respectively, the value of the last test statistic
+      calculated using an explicit testing command and the p-value for that test
+      statistic.  If no such test has been performed at the time when these
+      variables are referenced, they will produce the missing value code.  The
+      ``explicit testing commands'' that work in this way are as follows:
+      \cmd{add} (joint test for the significance of variables added
+      to a model); 
+      \cmd{adf} (Augmented Dickey--Fuller test, see below);
+      \cmd{arch} (test for ARCH);
+      \cmd{chow} (Chow test for a structural break);
+      \cmd{coeffsum} (test for the sum of specified coefficients);
+      \cmd{cusum} (the Harvey--Collier
+      $t$-statistic);
+      \cmd{kpss} (KPSS stationarity test, no p-value available);
+      \cmd{lmtest} (see below);
+      \cmd{meantest} (test for difference of means);
+      \cmd{omit} (joint test for the significance of variables
+      omitted from a model);
+      \cmd{reset} (Ramsey's RESET);
+      \cmd{restrict} (general linear restriction);
+      \cmd{runs} (runs test for randomness); 
+      \cmd{testuhat} (test for normality of residual); and
+      \cmd{vartest} (test for difference of variances). In most
+      cases both a \verb+$test+ and a \verb+$pvalue+ are
+      stored; the exception is the KPSS test, for which a p-value is not currently
+      available.  
+    
+      An important point to notice about this mechanism is that the internal
+      variables \verb+$test+ and \verb+$pvalue+ are
+      over-written each time one of the tests listed above is performed.  If you
+      want to reference these values, you must do so at the correct point in the
+      sequence of \app{gretl} commands.
+      A related point is that some of the test commands generate, by default, more
+      than one test statistic and p-value; in these cases only the last values are
+      stored. To get proper control over the retrieval of values via
+      \verb+$test+ and \verb+$pvalue+ you should formulate
+      the test command in such a way that the result is unambiguous.  This comment
+      applies in particular to the \verb+adf+ and
+      \verb+lmtest+ commands.
+\begin{itemize}
+\item By default, the \cmd{adf} command generates three
+	  variants of the Dickey--Fuller test: one based on a regression
+	  including a constant, one using a constant and linear trend, and one using
+	  a constant and a quadratic trend.  When you wish to reference
+	  \verb+$test+ or \verb+$pvalue+ in connection with
+	  this command, you can control the variant that is recorded by using one of
+	  the flags \verb+--nc+, \verb+--c+,
+	  \verb+--ct+ or \verb+--ctt+ with
+	  \verb+adf+.
+	
+\item By default, the \cmd{lmtest} command (which must
+	  follow an OLS regression) performs several diagnostic tests on the
+	  regression in question.  To control what is recorded in
+	  \verb+$test+ and \verb+$pvalue+ you should limit
+	  the test using one of the flags \verb+--logs+,
+	  \verb+--autocorr+, \verb+--squares+ or
+	  \verb+--white+.
+	
+\end{itemize}
+
+As an aid in working with values retrieved using \verb+$test+
+      and \verb+$pvalue+, the nature of the test to which these values
+      relate is written into the descriptive label for the generated variable.  You
+      can read the label for the variable using the \cmd{label}
+      command (with just one argument, the name of the variable), to check that you
+      have retrieved the right value.  The following interactive session illustrates
+      this point.
+\begin{verbatim}
+      ? adf 4 x1 --c
+
+      Augmented Dickey-Fuller tests, order 4, for x1
+      sample size 59
+      unit-root null hypothesis: a = 1
+
+        test with constant
+        model: (1 - L)y = b0 + (a-1)*y(-1) + ... + e
+        estimated value of (a - 1): -0.216889
+        test statistic: t = -1.83491
+        asymptotic p-value 0.3638
+
+      P-values based on MacKinnon (JAE, 1996)
+      ? genr pv = $pvalue
+      Generated scalar pv (ID 13) = 0.363844
+      ? label pv    
+      pv=Dickey-Fuller pvalue (scalar)\end{verbatim}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+

@@ -1,0 +1,85 @@
+\documentclass{report}
+\usepackage{url,verbatim,fancyvrb,gretl}
+\usepackage{lucidabr} % optional
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage[pdftex]{graphicx}
+\usepackage[pdftex]{hyperref}
+\usepackage[pdftex]{thumbpdf}
+\usepackage[body={6.3in,8.9in},top=.75in,left=1.1in,nohead]{geometry}
+
+%% \pdfimageresolution=120
+\hypersetup{pdftitle={Gretl Manual},
+            pdfsubject={GNU Regression, Econometrics and Time Series Library},
+            pdfauthor={Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            plainpages=false
+}
+
+
+\begin{document}
+
+\VerbatimFootnotes
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+
+%% titlepage
+
+\newcommand{\gtitle}[1]{\vspace*{1in}
+   {\Huge \sffamily #1}\par
+   \vspace{.5in}
+  \includegraphics{figures/gretl-logo} 
+}
+
+\newcommand{\gsubtitle}[1]{%
+   {\Large \sffamily #1}
+   \vspace{.5in}
+}
+
+\thispagestyle{empty}
+
+\begin{center}
+
+\gtitle{Gretl Users' Guide}
+
+\gsubtitle{Gnu Regression, Econometrics and Time-series}
+
+{\large \sffamily 
+Allin Cottrell\\
+Department of Economics\\
+Wake Forest university\\
+\vspace{20pt}
+November, 2005}
+
+\end{center}
+\clearpage
+
+%% end titlepage
+
+\tableofcontents
+
+\include{introduction}
+\include{starting}
+\include{modes}
+\include{datafiles}
+\include{genr}
+\include{panel}
+\include{sampling}
+\include{graphs}
+\include{nls}
+\include{mle}
+\include{looping}
+\include{functions}
+\include{vecm}
+\include{trouble}
+\include{cli}
+
+\appendix
+
+\include{appendices}
+\include{biblio}
+
+\end{document}

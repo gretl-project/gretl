@@ -1,0 +1,399 @@
+\chapter{Data file details}
+\label{app-datafile}
+
+\section{Basic native format}
+\label{native}
+
+In \app{gretl}'s native data format, a data set is stored in XML
+(extensible mark-up language). Data files correspond to the simple DTD
+(document type definition) given in \verb+gretldata.dtd+, which is
+supplied with the \app{gretl} distribution and is installed in the
+system data directory (e.g. \url{/usr/share/gretl/data} on Linux.)
+Data files may be plain text or gzipped.  They contain the actual data
+values plus additional information such as the names and descriptions
+of variables, the frequency of the data, and so on.Most users will
+probably not have need to read or write such files other than via
+\app{gretl} itself, but if you want to manipulate them using other
+software tools you should examine the DTD and also take a look at a
+few of the supplied practice data files: \verb+data4-1.gdt+ gives a
+simple example; \verb+data4-10.gdt+ is an example where observation
+labels are included.
+
+\section{Traditional ESL format}
+\label{traddata}
+
+For backward compatibility, \app{gretl} can also handle data files in
+the ``traditional'' format inherited from Ramanathan's \app{ESL}
+program.  In this format (which was the default in \app{gretl} prior
+to version 0.98) a data set is represented by two files.  One contains
+the actual data and the other information on how the data should be
+read.  To be more specific:
+\begin{enumerate}
+\item \emph{Actual data}: A rectangular matrix of white-space
+  separated numbers.  Each column represents a variable, each row an
+  observation on each of the variables (spreadsheet style). Data
+  columns can be separated by spaces or tabs. The filename should have
+  the suffix \verb+.gdt+.  By default the data file is ASCII (plain
+  text).  Optionally it can be gzip-compressed to save disk space. You
+  can insert comments into a data file: if a line begins with the hash
+  mark (\verb+#+) the entire line is ignored. This is consistent with
+  gnuplot and octave data files.
+\item \emph{Header}: The data file must be accompanied by a header
+  file which has the same basename as the data file plus the suffix
+  \verb+.hdr+.  This file contains, in order:
+  \begin{itemize}
+  \item (Optional) \emph{comments} on the data, set off by the opening
+    string \verb+(*+ and the closing string \verb+*)+, each of these
+    strings to occur on lines by themselves.
+  \item (Required) list of white-space separated \emph{names of the
+      variables} in the data file. Names are limited to 8 characters,
+    must start with a letter, and are limited to alphanumeric
+    characters plus the underscore.  The list may continue over more
+    than one line; it is terminated with a semicolon, \verb+;+.
+  \item (Required) \emph{observations} line of the form \verb+1 1 85+.
+    The first element gives the data frequency (1 for undated or
+    annual data, 4 for quarterly, 12 for monthly).  The second and
+    third elements give the starting and ending observations.
+    Generally these will be 1 and the number of observations
+    respectively, for undated data.  For time-series data one can use
+    dates of the form \cmd{1959.1} (quarterly, one digit after the
+    point) or \cmd{1967.03} (monthly, two digits after the point). See
+    [?] for special use of this line in the case of panel data.
+  \item The keyword \verb+BYOBS+.
+  \end{itemize}
+
+
+\end{enumerate}
+
+Here is an example of a well-formed data header file.
+
+	
+\begin{verbatim} 
+	  (* 
+	  DATA9-6: 
+	  Data on log(money), log(income) and interest rate from US. 
+	  Source: Stock and Watson (1993) Econometrica 
+	  (unsmoothed data) Period is 1900-1989 (annual data). 
+	  Data compiled by Graham Elliott. 
+	  *) 
+	  lmoney lincome intrate ; 
+	  1 1900 1989 BYOBS
+\end{verbatim}
+
+The corresponding data file contains three columns of data, each
+having 90 entries.  Three further features of the ``traditional'' data
+format may be noted.
+    
+\begin{enumerate}
+\item If the \verb+BYOBS+ keyword is replaced by \verb+BYVAR+, and
+  followed by the keyword \verb+BINARY+, this indicates that the
+  corresponding data file is in binary format.  Such data files can be
+  written from \app{gretlcli} using the \cmd{store} command with the
+  \cmd{-s} flag (single precision) or the \cmd{-o} flag (double
+  precision).
+\item If \verb+BYOBS+ is followed by the keyword \verb+MARKERS+,
+  \app{gretl} expects a data file in which the \emph{first column}
+  contains strings (8 characters maximum) used to identify the
+  observations.  This may be handy in the case of cross-sectional data
+  where the units of observation are identifiable: countries, states,
+  cities or whatever.  It can also be useful for irregular time series
+  data, such as daily stock price data where some days are not trading
+  days --- in this case the observations can be marked with a date
+  string such as \cmd{10/01/98}.  (Remember the 8-character maximum.)
+  Note that \cmd{BINARY} and \cmd{MARKERS} are mutually exclusive
+  flags.  Also note that the ``markers'' are not considered to be a
+  variable: this column does not have a corresponding entry in the
+  list of variable names in the header file.
+\item If a file with the same base name as the data file and header
+  files, but with the suffix \verb+.lbl+, is found, it is read to fill
+  out the descriptive labels for the data series. The format of the
+  label file is simple: each line contains the name of one variable
+  (as found in the header file), followed by one or more spaces,
+  followed by the descriptive label. Here is an example:
+  \verb+price New car price index, 1982 base year+
+
+	
+\end{enumerate}
+
+If you want to save data in traditional format, use the \cmd{-t} flag
+with the \cmd{store} command, either in the command-line program or in
+the console window of the GUI program.
+
+\section{Binary database details}
+\label{dbdetails}
+
+A \app{gretl} database consists of two parts: an ASCII index file
+(with filename suffix \verb+.idx+) containing information on the
+series, and a binary file (suffix \verb+.bin+) containing the actual
+data.  Two examples of the format for an entry in the \verb+idx+ file
+are shown below:
+\begin{verbatim}
+      G0M910  Composite index of 11 leading indicators (1987=100) 
+      M 1948.01 - 1995.11  n = 575
+      currbal Balance of Payments: Balance on Current Account; SA 
+      Q 1960.1 - 1999.4 n = 160
+\end{verbatim}
+The first field is the series name.  The second is a description of
+the series (maximum 128 characters).  On the second line the first
+field is a frequency code: \verb+M+ for monthly, \verb+Q+ for
+quarterly, \verb+A+ for annual, \verb+B+ for business-daily (daily
+with five days per week) and \verb+D+ for daily (seven days per week).
+No other frequencies are accepted at present.  Then comes the starting
+date (N.B. with two digits following the point for monthly data, one
+for quarterly data, none for annual), a space, a hyphen, another
+space, the ending date, the string ``\verb+n = +'' and the integer
+number of observations. In the case of daily data the starting and
+ending dates should be given in the form \verb+YYYY/MM/DD+. This
+format must be respected exactly.Optionally, the first line of the
+index file may contain a short comment (up to 64 characters) on the
+source and nature of the data, following a hash mark.  For example:
+\begin{verbatim}
+      # Federal Reserve Board (interest rates)
+\end{verbatim}
+The corresponding binary database file holds the data values,
+represented as ``floats'', that is, single-precision floating-point
+numbers, typically taking four bytes apiece.  The numbers are packed
+``by variable'', so that the first \emph{n} numbers are the
+observations of variable 1, the next \emph{m} the observations on
+variable 2, and so on.
+
+\chapter{Technical notes}
+\label{app-technote}
+
+\app{Gretl} is written in the C programming language.  I have abided
+as far as possible by the ISO/ANSI C Standard (C89), although the
+graphical user interface and some other components necessarily make
+use of platform-specific extensions.
+  
+\app{gretl} was developed under Linux. The shared library and
+command-line client should compile and run on any platform that (a)
+supports ISO/ANSI C, (b) has the following libraries installed: zlib
+(data compression), libxml (XML manipulation), and LAPACK (linear
+algebra support). The homepage for zlib can be found at
+\href{http://www.info-zip.org/pub/infozip/zlib/}{info-zip.org}; libxml
+is at \href{http://xmlsoft.org/}{xmlsoft.org}; LAPACK is at
+\href{http://www.netlib.org/lapack/}{netlib.org}. If the GNU readline
+library is found on the host system this will be used for
+\app{gretcli}, providing a much enhanced editable command line.  See
+the
+\href{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}{readline
+  homepage}.  The graphical client program should compile and run on
+any system that, in addition to the above requirements, offers GTK
+version 1.2.3 or higher (see \href{http://www.gtk.org/}{gtk.org}).  As
+of this writing there are two main variants of the GTK libraries: the
+1.2 series and the 2.0 series which was launched in summer 2002.
+These variants are mutually incompatible.  \app{gretl} can be built
+using either one --- the source code package includes two
+sub-directories, \verb+gui+ for GTK 1.2 and \verb+gui2+ for GTK 2.0.
+I recommend use of GTK 2.0 if it is available, since it offers many
+enhancements over GTK 1.2.
+  
+\app{gretl} calls gnuplot for graphing. You can find gnuplot at
+\href{http://www.gnuplot.info/}{gnuplot.info}.  As of this writing the
+most recent official release is 4.0 (of April, 2004).  The MS Windows
+version of \app{gretl} comes with a Windows version gnuplot 4.0; the
+gretl website also offers an rpm of gnuplot 3.8j0 for x86 Linux
+systems.
+  
+Some features of \app{gretl} make use of Adrian Feguin's
+\app{gtkextra} library. You can find gtkextra at
+\href{http://gtkextra.sourceforge.net/}{gtkextra.sourceforge.net}.
+The relevant parts of this package are included (in slightly modified
+form) with the \app{gretl} source distribution.
+  
+A binary version of the program is available for the Microsoft Windows
+platform (32-bit version, i.e. Windows 95 or higher). This version was
+cross-compiled under Linux using mingw (the GNU C compiler, \app{gcc},
+ported for use with win32) and linked against the Microsoft C library,
+\verb+msvcrt.dll+.  It uses Tor Lillqvist's port of GTK 2.0 to win32.
+The (free, open-source) Windows installer program is courtesy of
+Jordan Russell (\href{http://www.jrsoftware.org/}{jrsoftware.org}).
+I'm hopeful that some users with coding skills may consider
+\app{gretl} sufficiently interesting to be worth improving and
+extending.  The documentation of the libgretl API is by no means
+complete, but you can find some details by following the link
+``Libgretl API docs'' on the \app{gretl} homepage.
+
+\chapter{Numerical accuracy}
+\label{app-accuracy}
+
+\app{gretl} uses double-precision arithmetic throughout --- except for
+the multiple-precision plugin invoked by the menu item ``Model/High
+precision OLS'' which represents floating-point values using a number
+of bits given by the environment variable \verb+GRETL_MP_BITS+
+(default value 256).  The normal equations of Least Squares are by
+default solved via Cholesky decomposition, which is accurate enough
+for most purposes (with the option of using QR decomposition instead).
+The program has been tested rather thoroughly on the statistical
+reference datasets provided by NIST (the U.S. National Institute of
+Standards and Technology) and a full account of the results may be
+found on the gretl website (follow the link ``Numerical accuracy'').In
+October 2002 I had a useful exchange with Giovanni Baiocchi and Walter
+Distaso, who were writing a review of \app{gretl} for the
+\emph{Journal of Applied Econometrics}, and James MacKinnon, software
+review editor for the journal.\footnote{This review has since been
+  published; see Baiocchi and Distaso (2003).} and I am grateful to
+Baiocchi and Distaso for their careful examination of the program,
+which prompted the following modifications.
+
+\begin{enumerate}
+\item The reviewers pointed out that there was a bug in \app{gretl}'s
+  ``p-value finder'', whereby the program printed the complement of
+  the correct probability for negative values of \emph{z}.  This was
+  fixed in version 0.998 of the program (released July 9, 2002).
+\item They also noted that the p-value finder produced inaccurate
+  results for extreme values of \emph{x} (e.g. values of around 8 to
+  10 in the \emph{t} distribution with 100 degrees of freedom).  This
+  too was fixed in \app{gretl} version 0.998, with a switch to more
+  accurate probability distribution code.
+\item The reviewers noted a flaw in the presentation of regression
+  coefficients in \app{gretl}, whereby some coefficients could be
+  printed to an unacceptably small number of significant figures.
+  This was fixed in version 0.999 (released August 25, 2002): now all
+  the statistics associated with a regression are printed to 6
+  significant figures.
+\item It transpired from the reviewer's tests that the numerical
+  accuracy of \app{gretl} on MS Windows was less than on Linux, where
+  I had done my testing.  For example, on the Longley data --- a
+  well-known ``ill-conditioned'' dataset often used for testing
+  econometrics programs --- the Windows version of gretl was getting
+  some coefficients wrong at the 7th digit while the same coefficients
+  were correct on Linux.  This anomaly was fixed in \app{gretl}
+  version 1.0pre3 (released October 10, 2002).
+\end{enumerate}
+
+The current version of \app{gretl} includes a ``plugin'' that runs the
+NIST linear regression test suite.  You can find this under the
+``Utilities'' menu in the main window.  When you run this test, the
+introductory text explains the expected result.  If you run this test
+and see anything other than the expected result, please send a bug
+report to \verb+cottrell@wfu.edu+.  As mentioned above, all regression
+statistics are printed to 6 significant figures in the current version
+of \app{gretl} (except when the multiple-precision plugin is used,
+then results are given to 12 figures).  If you want to examine a
+particular value more closely, first save it (for example, using the
+\cmd{genr} command) then print it using \cmd{print --ten} (see the
+\emph{Gretl Command Reference}).  This will show the value to 10
+digits.
+
+\chapter{Advanced econometric analysis with free software}
+\label{app-advanced}
+
+As mentioned in the main text, \app{gretl} offers a reasonably full
+selection of least-squares based estimators, plus a few additional
+estimators such as (binomial) logit and probit and Least Absolute
+Deviations. Advanced users may, however, find \app{gretl}'s menu of
+statistical routines restrictive.No doubt some advanced users will
+prefer to write their own statistical code in a fundamental computer
+language such as C, C++ or Fortran.  Another option is to use a
+relatively high-level language that offers easy matrix manipulation
+and that already has numerous statistical routines built in, or
+available as add-on packages. If the latter option sounds attractive,
+and you are interested in using free, open source software, I would
+recommend taking a look at either GNU R
+(\href{http://www.r-project.org/}{r-project.org}) or GNU Octave
+(\href{http://www.octave.org/}{www.octave.org}).  These programs are
+very close to the commercial programs S and Matlab respectively.
+  
+Also as mentioned above, \app{gretl} offers the facility of exporting
+data in the formats of both Octave and R.  In the case of Octave, the
+\app{gretl} data set is saved as a single matrix, \verb+X+. You can
+pull the \verb+X+ matrix apart if you wish, once the data are loaded
+in Octave; see the Octave manual for details.  As for R, the exported
+data file preserves any time series structure that is apparent to
+\app{gretl}.  The series are saved as individual structures. The data
+should be brought into R using the \cmd{source()} command.
+  
+Of these two programs, R is perhaps more likely to be of immediate
+interest to econometricians since it offers more in the way of
+statistical routines (e.g. generalized linear models, maximum
+likelihood estimation, time series methods). I have therefore supplied
+\app{gretl} with a convenience function for moving data quickly into
+R. Under \app{gretl}'s Session menu, you will find the entry ``Start
+GNU R''.  This writes out an R version of the current \app{gretl} data
+set (\verb+Rdata.tmp+, in the user's gretl directory), and sources it
+into a new R session. A few details on this follow.
+  
+First, the data are brought into R by writing a temporary version of
+\verb+.Rprofile+ in the current working directory.  (If such a file
+exists it is referenced by R at startup.)  In case you already have a
+personal \verb+.Rprofile+ in place, the original file is temporarily
+moved to \verb+.Rprofile.gretltmp+, and on exit from \app{gretl} it is
+restored.  (If anyone can suggest a cleaner way of doing this I'd be
+happy to hear of it.)
+  
+Second, the particular way R is invoked depends on the internal
+\app{gretl} variable \verb+Rcommand+, whose value may be set under the
+File, Preferences menu.  The default command is \cmd{RGui.exe} under
+MS Windows. Under X it is either \cmd{R --gui=gnome} if an
+installation of the Gnome desktop
+(\href{http://www.gnome.org/}{gnome.org}) was detected at compile
+time, or \cmd{xterm -e R} if Gnome was not found. Please note that at
+most three space-separated elements in this command string will be
+processed; any extra elements are ignored.
+
+\chapter{Listing of URLs}
+\label{app-urls}
+
+Below is a listing of the full URLs of websites mentioned in the text.
+
+\begin{description}
+
+\item[Census Bureau, Data Extraction Service]
+  \href{http://www.census.gov/ftp/pub/DES/www/welcome.html}{
+    http://www.census.gov/ftp/pub/DES/www/welcome.html}
+\item[Estima (RATS)] \href{http://www.estima.com/}{
+    http://www.estima.com/}
+\item[Gnome desktop homepage] \href{http://www.gnome.org/}{
+    http://www.gnome.org/}
+\item[GNU Multiple Precision (GMP) library]
+  \href{http://swox.com/gmp/}{ http://swox.com/gmp/}
+\item[GNU Octave homepage] \href{http://www.octave.org/}{
+    http://www.octave.org/}
+\item[GNU R homepage] \href{http://www.r-project.org/}{
+    http://www.r-project.org/}
+\item[GNU R manual]
+  \href{http://cran.r-project.org/doc/manuals/R-intro.pdf}{
+    http://cran.r-project.org/doc/manuals/R-intro.pdf}
+\item[Gnuplot homepage] \href{http://www.gnuplot.info/}{
+    http://www.gnuplot.info/}
+\item[Gnuplot manual] \href{http://ricardo.ecn.wfu.edu/gnuplot.html}{
+    http://ricardo.ecn.wfu.edu/gnuplot.html}
+\item[Gretl data page]
+  \url{http://gretl.sourceforge.net/gretl_data.html}
+\item[Gretl homepage] \href{http://gretl.sourceforge.net/}{
+    http://gretl.sourceforge.net/}
+\item[GTK+ homepage] \href{http://www.gtk.org/}{ http://www.gtk.org/}
+\item[GTK+ port for win32]
+  \href{http://user.sgic.fi/~tml/gimp/win32/}{
+    http://www.gimp.org/~tml/gimp/win32/}
+\item[Gtkextra homepage] \href{http://gtkextra.sourceforge.net/}{
+    http://gtkextra.sourceforge.net/}
+\item[InfoZip homepage]
+  \href{http://www.info-zip.org/pub/infozip/zlib/}{
+    http://www.info-zip.org/pub/infozip/zlib/}
+\item[JRSoftware] \href{http://www.jrsoftware.org/}{
+    http://www.jrsoftware.org/}
+\item[Mingw (gcc for win32) homepage] \href{http://www.mingw.org/}{
+    http://www.mingw.org/}
+\item[Minpack] \href{http://www.netlib.org/minpack/}{
+    http://www.netlib.org/minpack/}
+\item[Penn World Table] \href{http://pwt.econ.upenn.edu/}{
+    http://pwt.econ.upenn.edu/}
+\item[Readline homepage]
+  \href{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}{
+    http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}
+\item[Readline manual]
+  \href{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}{
+    http://cnswww.cns.cwru.edu/~chet/readline/readline.html}
+\item[Xmlsoft homepage] \href{http://xmlsoft.org/}{
+    http://xmlsoft.org/}
+
+\end{description}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+
